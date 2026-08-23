@@ -27,7 +27,8 @@ character lattices, the factorization is the homomorphism sending the `i`-th coo
 to `wt i`; contravariance of diagonalizable groups gives the required map of split tori. The
 scheme-valued point formula then follows from the existing point comparisons for diagonalizable
 groups and the diagonal torus. The file also computes the algebra-valued point map induced by the
-weight-torus coordinate morphism.
+weight-torus coordinate morphism and specializes the construction to the rank-one cocharacter
+attached to an integer weight on each coordinate.
 
 The construction is the scheme-level realization of `TauCeti.basisWeightTorus`. In particular,
 when `wt` is the weight function of a finite free admissible lattice, it supplies the split-torus
@@ -54,6 +55,10 @@ No faithfulness is asserted: an arbitrary weight family may have a common kernel
   algebra-valued points.
 * `TauCeti.GeneralLinear.diagonalTorusCoordinates_pointsMap_weightCharacterMap`: the diagonal
   coordinates of that point map are the prescribed characters.
+* `TauCeti.GeneralLinear.weightCocharacter`: the cocharacter attached to integer coordinate
+  weights.
+* `TauCeti.GeneralLinear.mapDomain_weightCocharacter`: its concrete action on algebra-valued
+  points.
 
 ## References
 
@@ -315,6 +320,118 @@ theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
     ← SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv]
 
 end PointsFunctor
+
+section WeightCocharacter
+
+/-- The diagonal unit family `i ↦ t ^ w i` attached to integer weights. -/
+def weightDiagonalUnits {A : Type v} [CommMonoid A] (w : Fin N → ℤ) :
+    Aˣ →* (Fin N → Aˣ) :=
+  MonoidHom.pi fun i ↦ zpowGroupHom (w i)
+
+/-- The `i`-th diagonal coordinate of the weight cocharacter is `t ^ w i`. -/
+@[simp]
+theorem weightDiagonalUnits_apply {A : Type v} [CommMonoid A] (w : Fin N → ℤ)
+    (t : Aˣ) (i : Fin N) : weightDiagonalUnits w t i = t ^ w i := by
+  rw [weightDiagonalUnits, MonoidHom.pi_apply, zpowGroupHom_apply]
+
+/-- The rank-one character group algebra, presented as Laurent polynomials. -/
+private noncomputable def rankOneCharacterBialgEquiv :
+    MonoidAlgebra R (Multiplicative (ULift.{u} Unit →₀ ℤ)) ≃ₐc[R]
+      LaurentPolynomial R :=
+  (MonoidAlgebra.domCongrBialgEquiv R R
+      (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ())))).trans
+    (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm
+
+/-- The coordinate Hopf-algebra morphism of the cocharacter with weights `w`. -/
+private noncomputable def weightCocharacterCoordinateMap (w : Fin N → ℤ) :
+    coordinateHopfAlgebra R N ⟶ _root_.CommHopfAlgCat.of R (LaurentPolynomial R) :=
+  weightTorusCoordinateMap (R := R) (fun i _ ↦ w i) ≫
+    _root_.CommHopfAlgCat.ofHom (rankOneCharacterBialgEquiv (R := R)).toBialgHom
+
+/-- The cocharacter of `GL_N` acting on the `i`-th coordinate with integer weight `w i`. -/
+noncomputable def weightCocharacter (w : Fin N → ℤ) :
+    coordinateHopfAlgebra R N →ₐc[R] LaurentPolynomial R :=
+  (weightCocharacterCoordinateMap (R := R) w).hom
+
+variable {A : Type v} [CommRing A] [Algebra R A]
+
+/-- The weight cocharacter on algebra-valued points. -/
+noncomputable def weightCocharacterPoints (w : Fin N → ℤ) :
+    WithConv (LaurentPolynomial R →ₐ[R] A) →*
+      WithConv (coordinateHopfAlgebra R N →ₐ[R] A) :=
+  (pointsMulEquiv (R := R) (A := A) N).symm.toMonoidHom.comp <|
+    (diagGL (k := A)).comp <|
+      (weightDiagonalUnits w).comp
+        (MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).toMonoidHom
+
+/-- Reading the weight cocharacter as a matrix gives `diag(t ^ w i)`. -/
+theorem pointsMulEquiv_weightCocharacterPoints (w : Fin N → ℤ)
+    (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
+    pointsMulEquiv N (weightCocharacterPoints w f) =
+      diagGL (weightDiagonalUnits w (MultiplicativeGroup.pointsMulEquiv f)) := by
+  simp [weightCocharacterPoints]
+
+private theorem rankOneCharacterBialgEquiv_single :
+    rankOneCharacterBialgEquiv (R := R)
+        (MonoidAlgebra.single
+          (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1) =
+      LaurentPolynomial.T 1 := by
+  rw [rankOneCharacterBialgEquiv]
+  apply (AlgEquiv.symm_apply_eq
+    (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).toAlgEquiv).mpr
+  -- `simp` does not unfold `domCongrBialgEquiv`, so expose its underlying `domCongr`.
+  change MonoidAlgebra.domCongr R R
+      (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ())))
+        (MonoidAlgebra.single
+          (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1) =
+    (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).toAlgEquiv (LaurentPolynomial.T 1)
+  simpa using
+    (AddMonoidAlgebra.toMultiplicativeBialgEquiv_single (R := R) (A := R) (M := ℤ) 1 1).symm
+
+private theorem mapPointsFunctor_weightCocharacterCoordinateMap_app (w : Fin N → ℤ)
+    (A : CommAlgCat.{v} R) (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
+    (CommHopfAlgCat.mapPointsFunctor
+      (weightCocharacterCoordinateMap (R := R) w)).app A f =
+      weightCocharacterPoints w f := by
+  let q : WithConv
+      (MonoidAlgebra R (Multiplicative (ULift.{u} Unit →₀ ℤ)) →ₐ[R] A) :=
+    (CommHopfAlgCat.mapPointsFunctor
+      (_root_.CommHopfAlgCat.ofHom
+        (rankOneCharacterBialgEquiv (R := R)).toBialgHom)).app A f
+  rw [weightCocharacterCoordinateMap,
+    CommHopfAlgCat.mapPointsFunctor_comp_app_apply]
+  change (CommHopfAlgCat.mapPointsFunctor
+    (weightTorusCoordinateMap (R := R) (fun i (_ : ULift.{u} Unit) ↦ w i))).app A q = _
+  rw [mapPointsFunctor_weightTorusCoordinateMap_app]
+  have hq : SplitTorus.pointsMulEquiv q (ULift.up ()) =
+      MultiplicativeGroup.pointsMulEquiv f := by
+    ext
+    rw [SplitTorus.pointsMulEquiv_apply_coe,
+      MultiplicativeGroup.pointsMulEquiv_apply,
+      MultiplicativeGroup.unitOfPoint_val]
+    simp only [q, CommHopfAlgCat.mapPointsFunctor_app_apply,
+      WithConv.ofConv_toConv, AlgHom.comp_apply]
+    congr 1
+    exact rankOneCharacterBialgEquiv_single (R := R)
+  apply (pointsMulEquiv (R := R) (A := A) N).injective
+  rw [pointsMulEquiv_diagonalTorusPoints,
+    pointsMulEquiv_weightCocharacterPoints]
+  congr 1
+  funext i
+  rw [diagonalTorusCoordinates_pointsMap_weightCharacterMap]
+  simp [torusCharacter_def, weightDiagonalUnits, hq]
+
+/-- Precomposition by the weight cocharacter sends a Laurent point to its concrete diagonal
+weight-cocharacter point. -/
+theorem mapDomain_weightCocharacter (w : Fin N → ℤ)
+    (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
+    AlgHom.mapDomain (weightCocharacter (R := R) w) f =
+      weightCocharacterPoints w f := by
+  change (CommHopfAlgCat.mapPointsFunctor
+      (weightCocharacterCoordinateMap (R := R) w)).app (CommAlgCat.of R A) f = _
+  exact mapPointsFunctor_weightCocharacterCoordinateMap_app w (CommAlgCat.of R A) f
+
+end WeightCocharacter
 
 variable {A : Type u} [CommRing A] [Algebra R A]
 

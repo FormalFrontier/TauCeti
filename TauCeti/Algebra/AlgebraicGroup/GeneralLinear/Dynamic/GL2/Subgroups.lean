@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Basic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.GL2.Basic
 
 /-!
 # The dynamic Levi and unipotent subgroups of `GL₂`
@@ -73,44 +73,17 @@ theorem mem_dynamicLevi_iff
     (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) :
     g ∈ Cocharacter.levi A (GL2.dynamicCocharacter (R := R)) ↔
       pointsMulEquiv 2 g ∈ TauCeti.diagonalTorus A 2 := by
+  rw [GL2.dynamicCocharacter, mem_levi_weightCocharacter_iff,
+    mem_diagonalTorus_iff]
   constructor
-  · intro hg
-    have hgP : g ∈ Cocharacter.parabolic A (GL2.dynamicCocharacter (R := R)) :=
-      Cocharacter.levi_le_parabolic hg
-    have hlimit := GL2.pointsMulEquiv_limit_dynamicCocharacter g hgP
-    rw [Cocharacter.limit_of_mem_levi hg] at hlimit
-    rw [mem_diagonalTorus_iff]
-    intro i j hij
-    have hentry := congrArg
-      (fun M : GL (Fin 2) A => (M : Matrix (Fin 2) (Fin 2) A) i j) hlimit
-    rw [GL2Borel.coe_torusHom] at hentry
-    fin_cases i <;> fin_cases j
-    · exact (hij rfl).elim
-    · simpa using hentry
-    · simpa using hentry
-    · exact (hij rfl).elim
-  · intro hg
-    have hgDiag : (pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A).IsDiag :=
-      mem_diagonalTorus_iff.mp hg
-    have hgP : g ∈ Cocharacter.parabolic A (GL2.dynamicCocharacter (R := R)) := by
-      rw [GL2.mem_dynamicParabolic_iff]
-      exact GL2Borel.mem_iff.mpr (hgDiag (by decide))
-    have hlimit := GL2.pointsMulEquiv_limit_dynamicCocharacter g hgP
-    have hlimit_eq :
-        Cocharacter.limit A (GL2.dynamicCocharacter (R := R)) ⟨g, hgP⟩ = g := by
-      apply (pointsMulEquiv (R := R) (A := A) 2).injective
-      rw [hlimit]
-      apply Matrix.GeneralLinearGroup.ext
-      intro i j
-      fin_cases i <;> fin_cases j
-      · simp [GL2Borel.coe_torusHom, GL2Borel.coe_mk]
-      · simpa [GL2Borel.coe_torusHom, GL2Borel.coe_mk] using
-          (hgDiag (by decide : (0 : Fin 2) ≠ 1)).symm
-      · simpa [GL2Borel.coe_torusHom, GL2Borel.coe_mk] using
-          (hgDiag (by decide : (1 : Fin 2) ≠ 0)).symm
-      · simp [GL2Borel.coe_torusHom, GL2Borel.coe_mk]
-    rw [← hlimit_eq]
-    exact Cocharacter.limit_mem_levi ⟨g, hgP⟩
+  · intro h i j hij
+    apply h i j
+    fin_cases i <;> fin_cases j <;> simp_all [GL2.dynamicWeights]
+  · intro h i j hij
+    apply h
+    intro hij'
+    subst j
+    exact hij rfl
 
 /-- The dynamic Levi subgroup for `t ↦ diag(t, 1)` is the preimage of the diagonal torus under
 the general-linear point equivalence. -/
@@ -156,38 +129,29 @@ theorem mem_dynamicUnipotent_iff
     (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) :
     g ∈ Cocharacter.unipotent A (GL2.dynamicCocharacter (R := R)) ↔
       ∃ b : A, pointsMulEquiv 2 g = Matrix.GeneralLinearGroup.upperRightHom b := by
+  rw [GL2.dynamicCocharacter, mem_unipotent_weightCocharacter_iff,
+    blockTriangular_toDual_weights_iff]
   constructor
-  · intro hg
-    obtain ⟨hgP, hgLimit⟩ := Cocharacter.mem_unipotent_iff.mp hg
-    have hlimit := GL2.pointsMulEquiv_limit_dynamicCocharacter g hgP
-    rw [hgLimit, map_one] at hlimit
-    let gB : GL2Borel A := ⟨pointsMulEquiv 2 g, (GL2.mem_dynamicParabolic_iff g).mp hgP⟩
-    have htorus : GL2Borel.torusHom (GL2Borel.diag gB) = 1 := by
-      apply Subtype.ext
-      exact hlimit.symm
-    have hdiag : GL2Borel.diag gB = 1 := by
-      have := congrArg GL2Borel.diag htorus
-      simpa using this
-    obtain ⟨b, hb⟩ := (GL2Borel.mem_ker_diag_iff gB).mp
-      (MonoidHom.mem_ker.mpr hdiag)
-    refine ⟨b, ?_⟩
-    have := congrArg (fun h : GL2Borel A => (h : GL (Fin 2) A)) hb
-    simpa [gB] using this
+  · rintro ⟨hblock, hgraded⟩
+    refine ⟨(pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 0 1, ?_⟩
+    apply Matrix.GeneralLinearGroup.ext
+    intro i j
+    fin_cases i <;> fin_cases j
+    · simpa [Matrix.GeneralLinearGroup.upperRightHom] using hgraded 0 0 (by rfl)
+    · simp [Matrix.GeneralLinearGroup.upperRightHom]
+    · simpa [Matrix.GeneralLinearGroup.upperRightHom] using
+        hblock 1 0 (by simp [GL2.dynamicWeights])
+    · simpa [Matrix.GeneralLinearGroup.upperRightHom] using hgraded 1 1 (by rfl)
   · rintro ⟨b, hb⟩
-    have hgP : g ∈ Cocharacter.parabolic A (GL2.dynamicCocharacter (R := R)) := by
-      rw [GL2.mem_dynamicParabolic_iff, hb]
-      exact GL2Borel.upperRightHom_mem A b
-    refine Cocharacter.mem_unipotent_iff.mpr ⟨hgP, ?_⟩
-    apply (pointsMulEquiv (R := R) (A := A) 2).injective
-    rw [GL2.pointsMulEquiv_limit_dynamicCocharacter, map_one]
-    let gB : GL2Borel A := ⟨pointsMulEquiv 2 g, (GL2.mem_dynamicParabolic_iff g).mp hgP⟩
-    have hgB : gB = GL2Borel.unipotentHom b := by
-      apply Subtype.ext
-      simpa [gB] using hb
-    have hdiag : GL2Borel.diag gB = 1 := by
-      rw [hgB, GL2Borel.diag_unipotentHom]
-    rw [hdiag, map_one]
-    rfl
+    constructor
+    · intro i j hij
+      rw [hb]
+      fin_cases i <;> fin_cases j <;>
+        simp_all [GL2.dynamicWeights, Matrix.GeneralLinearGroup.upperRightHom]
+    · intro i j hij
+      rw [hb]
+      fin_cases i <;> fin_cases j <;>
+        simp_all [GL2.dynamicWeights, Matrix.GeneralLinearGroup.upperRightHom]
 
 /-- The dynamic unipotent subgroup for `t ↦ diag(t, 1)` is the preimage of the standard
 upper-unitriangular subgroup `U₂` under the general-linear point equivalence. -/

@@ -22,8 +22,8 @@ Conjugation multiplies the `(i,j)` matrix entry by `t ^ (w i - w j)`. Consequent
 dynamic parabolic consists exactly of matrices that are block triangular for the weight
 filtration: an entry vanishes whenever `w i < w j`. The dynamic limit deletes the entries
 between distinct weight spaces. This also identifies the Levi subgroup with the block diagonal
-matrices and the dynamic unipotent subgroup with the matrices acting trivially on every
-associated-graded weight space.
+matrices and the dynamic unipotent subgroup with the block-triangular matrices acting as the
+identity on every associated-graded weight space.
 
 The results hold over every commutative base ring and every commutative value algebra. In
 particular they do not infer the vanishing of a negative Laurent coefficient by cancellation;
@@ -31,14 +31,14 @@ the coefficient is read directly, so zero divisors cause no problem.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinear.Dynamic.weightCocharacter`: the cocharacter attached to integer weights.
+* `TauCeti.GeneralLinear.weightCocharacter`: the cocharacter attached to integer weights.
 * `TauCeti.GeneralLinear.Dynamic.mem_parabolic_weightCocharacter_iff`: its dynamic parabolic is
   the block-triangular subgroup for the weight filtration.
 * `TauCeti.GeneralLinear.Dynamic.pointsMulEquiv_limit_weightCocharacter_apply`: its limit keeps
   exactly the entries between equal-weight coordinates.
 * `TauCeti.GeneralLinear.Dynamic.mem_levi_weightCocharacter_iff`: its Levi is block diagonal.
 * `TauCeti.GeneralLinear.Dynamic.mem_unipotent_weightCocharacter_iff`: its unipotent subgroup
-  acts trivially on the associated graded.
+  consists of block-triangular matrices acting as the identity on the associated graded.
 
 ## References
 
@@ -59,115 +59,28 @@ universe u v
 
 variable {R : Type u} [CommRing R] {N : ℕ}
 
-/-- The diagonal unit family `i ↦ t ^ w i` attached to integer weights. -/
-def weightDiagonalUnits {A : Type v} [CommMonoid A] (w : Fin N → ℤ) :
-    Aˣ →* (Fin N → Aˣ) where
-  toFun t i := t ^ w i
-  map_one' := by ext i; simp
-  map_mul' t s := by ext i; simp [mul_zpow]
-
-/-- The `i`-th diagonal coordinate of the weight cocharacter is `t ^ w i`. -/
+/-- Block triangularity for the dual order on integer weights is exactly vanishing of entries
+whose row weight is smaller than their column weight. -/
 @[simp]
-theorem weightDiagonalUnits_apply {A : Type v} [CommMonoid A] (w : Fin N → ℤ)
-    (t : Aˣ) (i : Fin N) : weightDiagonalUnits w t i = t ^ w i :=
-  (rfl)
-
-/-- The rank-one character group algebra, presented as Laurent polynomials. -/
-private noncomputable def rankOneCharacterBialgEquiv :
-    MonoidAlgebra R (Multiplicative (ULift.{u} Unit →₀ ℤ)) ≃ₐc[R]
-      LaurentPolynomial R :=
-  (MonoidAlgebra.domCongrBialgEquiv R R
-      (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ())))).trans
-    (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm
-
-/-- The coordinate Hopf-algebra morphism of the cocharacter with weights `w`. -/
-private noncomputable def weightCocharacterCoordinateMap (w : Fin N → ℤ) :
-    coordinateHopfAlgebra R N ⟶ _root_.CommHopfAlgCat.of R (LaurentPolynomial R) :=
-  weightTorusCoordinateMap (R := R) (fun i _ ↦ w i) ≫
-    _root_.CommHopfAlgCat.ofHom (rankOneCharacterBialgEquiv (R := R)).toBialgHom
-
-/-- The cocharacter of `GL_N` acting on the `i`-th coordinate with integer weight `w i`. -/
-noncomputable def weightCocharacter (w : Fin N → ℤ) :
-    coordinateHopfAlgebra R N →ₐc[R] LaurentPolynomial R :=
-  (weightCocharacterCoordinateMap (R := R) w).hom
+theorem blockTriangular_toDual_weights_iff
+    {A : Type v} [Zero A] (M : Matrix (Fin N) (Fin N) A) (w : Fin N → ℤ) :
+    M.BlockTriangular (OrderDual.toDual ∘ w) ↔
+      ∀ i j, w i < w j → M i j = 0 := by
+  constructor <;> intro h i j hij
+  · exact h (by simpa only [Function.comp_apply, OrderDual.toDual_lt_toDual] using hij)
+  · exact h i j (by simpa only [Function.comp_apply, OrderDual.toDual_lt_toDual] using hij)
 
 section Points
 
 variable {A : Type v} [CommRing A] [Algebra R A]
-
-/-- The weight cocharacter on algebra-valued points. -/
-noncomputable def weightCocharacterPoints (w : Fin N → ℤ) :
-    WithConv (LaurentPolynomial R →ₐ[R] A) →*
-      WithConv (coordinateHopfAlgebra R N →ₐ[R] A) :=
-  (pointsMulEquiv (R := R) (A := A) N).symm.toMonoidHom.comp <|
-    (diagGL (k := A)).comp <|
-      (weightDiagonalUnits w).comp
-        (MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).toMonoidHom
-
-/-- Reading the weight cocharacter as a matrix gives `diag(t ^ w i)`. -/
-theorem pointsMulEquiv_weightCocharacterPoints (w : Fin N → ℤ)
-    (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
-    pointsMulEquiv N (weightCocharacterPoints w f) =
-      diagGL (weightDiagonalUnits w (MultiplicativeGroup.pointsMulEquiv f)) := by
-  simp [weightCocharacterPoints]
-
-private theorem mapPointsFunctor_weightCocharacterCoordinateMap_app (w : Fin N → ℤ)
-    (A : CommAlgCat.{v} R) (f : WithConv (LaurentPolynomial R →ₐ[R] A)) :
-    (CommHopfAlgCat.mapPointsFunctor
-      (weightCocharacterCoordinateMap (R := R) w)).app A f =
-      weightCocharacterPoints w f := by
-  let q : WithConv
-      (MonoidAlgebra R (Multiplicative (ULift.{u} Unit →₀ ℤ)) →ₐ[R] A) :=
-    (CommHopfAlgCat.mapPointsFunctor
-      (_root_.CommHopfAlgCat.ofHom
-        (rankOneCharacterBialgEquiv (R := R)).toBialgHom)).app A f
-  rw [weightCocharacterCoordinateMap,
-    CommHopfAlgCat.mapPointsFunctor_comp_app_apply]
-  -- The composition lemma leaves the intermediate rank-one torus point definitionally equal
-  -- to `q`, but supplies no rewrite lemma for that local point.
-  change (CommHopfAlgCat.mapPointsFunctor
-    (weightTorusCoordinateMap (R := R) (fun i (_ : ULift.{u} Unit) ↦ w i))).app A q = _
-  rw [mapPointsFunctor_weightTorusCoordinateMap_app]
-  have hq : SplitTorus.pointsMulEquiv q (ULift.up ()) =
-      MultiplicativeGroup.pointsMulEquiv f := by
-    ext
-    rw [SplitTorus.pointsMulEquiv_apply_coe,
-      MultiplicativeGroup.pointsMulEquiv_apply,
-      MultiplicativeGroup.unitOfPoint_val]
-    simp only [q, CommHopfAlgCat.mapPointsFunctor_app_apply,
-      WithConv.ofConv_toConv, AlgHom.comp_apply]
-    congr 1
-    rw [rankOneCharacterBialgEquiv]
-    simp only [CommHopfAlgCat.hom_ofHom]
-    apply (AlgEquiv.symm_apply_eq
-      (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).toAlgEquiv).mpr
-    -- `simp` does not unfold `domCongrBialgEquiv`, so expose its underlying `domCongr`.
-    change MonoidAlgebra.domCongr R R
-        (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ())))
-          (MonoidAlgebra.single
-            (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1) =
-      (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).toAlgEquiv (LaurentPolynomial.T 1)
-    simpa using
-      (AddMonoidAlgebra.toMultiplicativeBialgEquiv_single (R := R) (A := R) (M := ℤ) 1 1).symm
-  apply (pointsMulEquiv (R := R) (A := A) N).injective
-  rw [pointsMulEquiv_diagonalTorusPoints,
-    pointsMulEquiv_weightCocharacterPoints]
-  congr 1
-  funext i
-  rw [diagonalTorusCoordinates_pointsMap_weightCharacterMap]
-  simp [torusCharacter_def, weightDiagonalUnits, hq]
 
 /-- The abstract cocharacter action agrees with the concrete weight cocharacter on points. -/
 theorem pointsHom_weightCocharacter (w : Fin N → ℤ) (t : Aˣ) :
     Cocharacter.pointsHom A (weightCocharacter (R := R) w) t =
       weightCocharacterPoints w
         ((MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).symm t) := by
-  rw [Cocharacter.pointsHom_apply]
-  -- Unfold only the public cocharacter wrapper to expose the coordinate morphism used above.
-  change (CommHopfAlgCat.mapPointsFunctor
-      (weightCocharacterCoordinateMap (R := R) w)).app (CommAlgCat.of R A)
-        ((MultiplicativeGroup.pointsMulEquiv (R := R) (A := A)).symm t) = _
-  rw [mapPointsFunctor_weightCocharacterCoordinateMap_app]
+  rw [Cocharacter.pointsHom_apply, mapDomain_weightCocharacter,
+    ← MultiplicativeGroup.pointsMulEquiv_symm_apply]
 
 /-- The cocharacter with weights `w` sends `t` to `diag(t ^ w i)`. -/
 theorem pointsMulEquiv_pointsHom_weightCocharacter (w : Fin N → ℤ) (t : Aˣ) :
@@ -212,7 +125,7 @@ theorem pointsMulEquiv_conjugate_weightCocharacter_apply (w : Fin N → ℤ)
   rw [pointsMulEquiv_conjugate_weightCocharacter]
   simp only [Units.val_mul, ← map_inv diagGL, diagGL_coe,
     Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.GeneralLinearGroup.map_apply,
-    weightDiagonalUnits, MonoidHom.coe_mk, OneHom.coe_mk]
+    Pi.inv_apply, weightDiagonalUnits_apply]
   have hinv :
       (((Cocharacter.genericUnit A ^ w j)⁻¹ : (LaurentPolynomial A)ˣ) :
           LaurentPolynomial A) = LaurentPolynomial.T (-w j) := by
@@ -224,9 +137,7 @@ theorem pointsMulEquiv_conjugate_weightCocharacter_apply (w : Fin N → ℤ)
       LaurentPolynomial.C ((pointsMulEquiv N g : Matrix (Fin N) (Fin N) A) i j) *
         (((Cocharacter.genericUnit A ^ w j)⁻¹ : (LaurentPolynomial A)ˣ) :
           LaurentPolynomial A) = _
-  rw [hinv]
-  rw [LaurentPolynomial.T_mul, LaurentPolynomial.mul_T_assoc]
-  congr 2
+  rw [hinv, LaurentPolynomial.T_mul, LaurentPolynomial.mul_T_assoc, ← sub_eq_add_neg]
 
 /-- The polynomial matrix obtained by removing the forbidden negative-weight entries and
 replacing a nonnegative weight difference by the corresponding power of `X`. -/
@@ -277,45 +188,13 @@ private theorem det_weightPolynomialMatrix (w : Fin N → ℤ)
     (weightPolynomialMatrix w g).det =
       Polynomial.C (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A).det := by
   apply Polynomial.toLaurent_injective
-  rw [RingHom.map_det]
-  -- `RingHom.map_det` uses `mapMatrix`, while the entrywise comparison is stated with the
-  -- definitionally equal `Matrix.map`; Mathlib has no bridge lemma in this direction.
-  change ((weightPolynomialMatrix w g).map Polynomial.toLaurent).det = _
-  rw [map_weightPolynomialMatrix w g hg, Polynomial.toLaurent_C]
-  rw [pointsMulEquiv_conjugate_weightCocharacter]
-  let d : GL (Fin N) (LaurentPolynomial A) :=
-    diagGL (weightDiagonalUnits w (Cocharacter.genericUnit A))
-  let m : GL (Fin N) (LaurentPolynomial A) :=
-    Matrix.GeneralLinearGroup.map
-      (IsScalarTower.toAlgHom R A (LaurentPolynomial A)).toRingHom
-      (pointsMulEquiv N g)
-  -- Multiplication in `GL_N` coerces definitionally to matrix multiplication; no coercion lemma
-  -- exposes the determinant of this three-factor product.
-  change (d * m * d⁻¹ : Matrix (Fin N) (Fin N) (LaurentPolynomial A)).det = _
-  calc
-    _ = (d : Matrix (Fin N) (Fin N) (LaurentPolynomial A)).det *
-          (m : Matrix (Fin N) (Fin N) (LaurentPolynomial A)).det *
-          ((d⁻¹ : GL (Fin N) (LaurentPolynomial A)) :
-            Matrix (Fin N) (Fin N) (LaurentPolynomial A)).det := by
-        rw [Matrix.det_mul, Matrix.det_mul]
-    _ = (m : Matrix (Fin N) (Fin N) (LaurentPolynomial A)).det := by
-        have hdet : Matrix.GeneralLinearGroup.det d *
-            Matrix.GeneralLinearGroup.det m *
-              (Matrix.GeneralLinearGroup.det d)⁻¹ =
-            Matrix.GeneralLinearGroup.det m := by
-          rw [mul_comm (Matrix.GeneralLinearGroup.det d), mul_assoc,
-            mul_inv_cancel, mul_one]
-        rw [← Matrix.GeneralLinearGroup.val_det_apply,
-          ← Matrix.GeneralLinearGroup.val_det_apply,
-          ← Matrix.GeneralLinearGroup.val_det_apply]
-        -- The determinant homomorphism's inverse law is available only as `map_inv`; this
-        -- typed `show` fixes its inferred homomorphism and argument.
-        rw [show Matrix.GeneralLinearGroup.det (d⁻¹) =
-          (Matrix.GeneralLinearGroup.det d)⁻¹ by exact map_inv _ d]
-        exact congrArg Units.val hdet
-    _ = _ := (RingHom.map_det
-      (IsScalarTower.toAlgHom R A (LaurentPolynomial A)).toRingHom
-      (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A)).symm
+  rw [RingHom.map_det, RingHom.mapMatrix_apply,
+    map_weightPolynomialMatrix w g hg, Polynomial.toLaurent_C,
+    pointsMulEquiv_conjugate_weightCocharacter, Units.val_mul, Units.val_mul,
+    Matrix.det_units_conj]
+  exact (RingHom.map_det
+    (IsScalarTower.toAlgHom R A (LaurentPolynomial A)).toRingHom
+    (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A)).symm
 
 /-- The polynomial-valued general-linear point extending weight conjugation. -/
 private noncomputable def weightPolynomialExtension (w : Fin N → ℤ)
@@ -336,7 +215,7 @@ private theorem pointsMulEquiv_weightPolynomialExtension (w : Fin N → ℤ)
     (pointsMulEquiv N (weightPolynomialExtension (R := R) w g hg) :
       Matrix (Fin N) (Fin N) (Polynomial A)) = weightPolynomialMatrix w g := by
   rw [weightPolynomialExtension, MulEquiv.apply_symm_apply]
-  rfl
+  exact Matrix.GeneralLinearGroup.val_mk'' _ _
 
 private theorem ofPolyPoint_weightPolynomialExtension (w : Fin N → ℤ)
     (g : WithConv (coordinateHopfAlgebra R N →ₐ[R] A))
@@ -361,12 +240,10 @@ theorem mem_parabolic_weightCocharacter_iff (w : Fin N → ℤ)
     g ∈ Cocharacter.parabolic A (weightCocharacter (R := R) w) ↔
       (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A).BlockTriangular
         (OrderDual.toDual ∘ w) := by
+  rw [blockTriangular_toDual_weights_iff]
   constructor
   · rw [Cocharacter.mem_parabolic_iff]
     rintro ⟨F, hF⟩ i j hij
-    -- `OrderDual.toDual ∘ w` reverses the block order definitionally; there is no
-    -- `BlockTriangular` lemma that restates this hypothesis in the original order.
-    change w i < w j at hij
     have hmat := congrArg (pointsMulEquiv (R := R) (A := LaurentPolynomial A) N) hF
     have hentry := congrArg
       (fun M : GL (Fin N) (LaurentPolynomial A) ↦
@@ -405,7 +282,8 @@ theorem mem_parabolic_weightCocharacter_iff (w : Fin N → ℤ)
     exact hcoeff.symm
   · intro hg
     exact Cocharacter.mem_parabolic_of_eq
-      (ofPolyPoint_weightPolynomialExtension w g hg)
+      (ofPolyPoint_weightPolynomialExtension w g
+        ((blockTriangular_toDual_weights_iff _ _).mpr hg))
 
 private theorem evalZero_weightPolynomialMatrix_apply (w : Fin N → ℤ)
     (g : WithConv (coordinateHopfAlgebra R N →ₐ[R] A)) (i j : Fin N) :
