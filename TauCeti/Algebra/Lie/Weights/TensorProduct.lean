@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.Lie.TensorProduct
 public import Mathlib.Algebra.Lie.Weights.Basic
-public import TauCeti.LinearAlgebra.Submodule.SupIndep
+public import Mathlib.LinearAlgebra.Dual.Lemmas
 
 /-!
 # Weight spaces of a tensor product of Lie modules
@@ -17,33 +17,30 @@ this file computes the generalized weight spaces of that action: the `χ`-weight
 spanned by the pure tensors `m ⊗ₜ n` with `m` of weight `μ`, `n` of weight `ν` and `μ + ν = χ`.
 
 Two facts meet. Mathlib's `LieModule.weight_vector_multiplication` already says that a pure tensor
-of a generalized eigenvector of weight `μ x` and one of weight `ν x` is a generalized eigenvector of
-weight `μ x + ν x`, so the *inclusion* `Mμ ⊗ Nν ≤ (M ⊗ N)_{μ+ν}` needs no hypothesis beyond
-nilpotency of `L`. The reverse inclusion is not a computation but a counting argument: over a field,
-in finite dimensions and with `M` and `N` triangularizable, the pure tensors of weight vectors
-already span `M ⊗ N`, so the coarse family indexed by `χ` refines the independent family of weight
-spaces of `M ⊗ N` and must agree with it termwise
-(`TauCeti.eq_of_le_of_iSup_eq_iSup`).
-
-The counting argument yields the exhaustion `⨆ χ, (M ⊗ N)_χ = ⊤` on the way, so `M ⊗ N` is itself
-triangularizable with no algebraic closure assumed: it is triangularizable as soon as `M` and `N`
-are. That instance is what lets the weight theory be applied again to the tensor product.
+of a generalized eigenvector of eigenvalue `φ` and one of eigenvalue `ψ` is a generalized
+eigenvector of eigenvalue `φ + ψ`, so the *inclusion* `Mμ ⊗ Nν ≤ (M ⊗ N)_{μ+ν}` needs no hypothesis
+beyond nilpotency of `L`, and the tensor product of two triangularizable modules is triangularizable
+over any commutative ring. The reverse inclusion is not a computation but a counting argument: over
+a field, in finite dimensions and with `M` and `N` triangularizable, the pure tensors of weight
+vectors already span `M ⊗ N`, so the coarse family indexed by `χ` refines the independent family of
+weight spaces of `M ⊗ N` and must agree with it termwise
+(`iSupIndep.le_iff_eq_of_iSup_eq_top`).
 
 ## Main results
 
+* `TauCeti.tmul_mem_maxGenEigenspace_add`: **generalized eigenvalues add on pure tensors**, the
+  elementwise form of `LieModule.weight_vector_multiplication`.
+* `TauCeti.isTriangularizable_tensorProduct`: a tensor product of triangularizable modules is
+  triangularizable, over any commutative ring and with no finiteness assumption.
 * `TauCeti.tmul_mem_genWeightSpace_add`: **weights add on pure tensors.** If `m` has weight `μ` and
   `n` has weight `ν`, then `m ⊗ₜ n` has weight `μ + ν`, and
   `TauCeti.map₂_mk_genWeightSpace_le` is the submodule form.
 * `TauCeti.iSup_map₂_mk_genWeightSpace_eq_top`: the pure tensors of weight vectors span `M ⊗ N`.
-* `TauCeti.iSup_genWeightSpace_tensorProduct_eq_top` and
-  `TauCeti.isTriangularizable_tensorProduct`: the weight spaces of `M ⊗ N` exhaust it, so the
-  tensor product of two triangularizable finite-dimensional modules is triangularizable.
 * `TauCeti.genWeightSpace_tensorProduct_eq_iSup`: **the weight-space decomposition of a tensor
   product.** The `χ`-weight space of `M ⊗ N` is the supremum, over the pairs `(μ, ν)` with
   `μ + ν = χ`, of the submodules spanned by `Mμ ⊗ Nν`.
-* `TauCeti.exists_add_eq_of_genWeightSpace_tensorProduct_ne_bot` and
-  `TauCeti.exists_weight_add_eq`: **every weight of `M ⊗ N` is a sum of a weight of `M` and a weight
-  of `N`.**
+* `TauCeti.genWeightSpace_tensorProduct_ne_bot` and `TauCeti.exists_weight_add_eq`: **the weights of
+  `M ⊗ N` are exactly the sums of a weight of `M` and a weight of `N`.**
 
 ## Implementation notes
 
@@ -78,32 +75,71 @@ namespace TauCeti
 
 universe u v w w₁
 
-/-! ### Weights add on pure tensors -/
-
 section CommRing
 
 variable {R : Type u} {L : Type v} {M : Type w} {N : Type w₁}
-  [CommRing R] [LieRing L] [LieAlgebra R L] [LieRing.IsNilpotent L]
+  [CommRing R] [LieRing L] [LieAlgebra R L]
   [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
   [AddCommGroup N] [Module R N] [LieRingModule L N] [LieModule R L N]
+
+/-! ### Generalized eigenvalues add on pure tensors -/
+
+/-- **Generalized eigenvalues add on pure tensors.** A pure tensor of a generalized eigenvector of
+`x` of eigenvalue `φ` in `M` and one of eigenvalue `ψ` in `N` is a generalized eigenvector of `x` of
+eigenvalue `φ + ψ` in `M ⊗ N`.
+
+This is the elementwise form of Mathlib's `LieModule.weight_vector_multiplication`, applied to the
+identity map of `M ⊗ N`. Neither nilpotency of `L` nor any finiteness is involved. -/
+theorem tmul_mem_maxGenEigenspace_add {φ ψ : R} {x : L} {m : M} {n : N}
+    (hm : m ∈ (toEnd R L M x).maxGenEigenspace φ)
+    (hn : n ∈ (toEnd R L N x).maxGenEigenspace ψ) :
+    m ⊗ₜ[R] n ∈ (toEnd R L (M ⊗[R] N) x).maxGenEigenspace (φ + ψ) := by
+  refine LieModule.weight_vector_multiplication (R := R) (L := L) M N (M ⊗[R] N)
+    (LieModuleHom.id : (M ⊗[R] N) →ₗ⁅R, L⁆ (M ⊗[R] N)) φ ψ x
+    ⟨(⟨m, hm⟩ : _) ⊗ₜ[R] (⟨n, hn⟩ : _), ?_⟩
+  simp [TensorProduct.mapIncl]
+
+/-- **A tensor product of triangularizable modules is triangularizable.** If every element of `L`
+acts on `M` and on `N` with its generalized eigenspaces spanning, then the same holds on `M ⊗ N`:
+the pure tensors of generalized eigenvectors span `M ⊗ N`, and they are generalized eigenvectors by
+`TauCeti.tmul_mem_maxGenEigenspace_add`. -/
+instance isTriangularizable_tensorProduct [IsTriangularizable R L M] [IsTriangularizable R L N] :
+    IsTriangularizable R L (M ⊗[R] N) := by
+  refine ⟨fun x ↦ top_le_iff.mp ?_⟩
+  calc (⊤ : Submodule R (M ⊗[R] N))
+      = Submodule.map₂ (TensorProduct.mk R M N) (⨆ φ : R, (toEnd R L M x).maxGenEigenspace φ)
+          (⨆ ψ : R, (toEnd R L N x).maxGenEigenspace ψ) := by
+        rw [IsTriangularizable.maxGenEigenspace_eq_top (R := R) (M := M) x,
+          IsTriangularizable.maxGenEigenspace_eq_top (R := R) (M := N) x,
+          TensorProduct.map₂_mk_top_top_eq_top]
+    _ ≤ ⨆ θ : R, (toEnd R L (M ⊗[R] N) x).maxGenEigenspace θ := by
+        rw [Submodule.map₂_iSup_left]
+        refine iSup_le fun φ ↦ ?_
+        rw [Submodule.map₂_iSup_right]
+        refine iSup_le fun ψ ↦ ?_
+        exact (Submodule.map₂_le.mpr fun _ hm _ hn ↦ tmul_mem_maxGenEigenspace_add hm hn).trans
+          (le_iSup (fun θ : R ↦ (toEnd R L (M ⊗[R] N) x).maxGenEigenspace θ) (φ + ψ))
+
+/-! ### Weights add on pure tensors -/
+
+section IsNilpotent
+
+variable [LieRing.IsNilpotent L]
 
 /-- **Weights add on pure tensors.** A pure tensor of a vector of generalized weight `χ` in `M` and
 a vector of generalized weight `ψ` in `N` has generalized weight `χ + ψ` in `M ⊗ N`.
 
-This is Mathlib's `LieModule.weight_vector_multiplication`, applied one element `x : L` at a time
-to the identity map of `M ⊗ N`. No finiteness or triangularizability is involved. -/
+This is `TauCeti.tmul_mem_maxGenEigenspace_add`, applied one element `x : L` at a time. No
+finiteness or triangularizability is involved. -/
 theorem tmul_mem_genWeightSpace_add {χ ψ : L → R} {m : M} {n : N}
     (hm : m ∈ genWeightSpace M χ) (hn : n ∈ genWeightSpace N ψ) :
     m ⊗ₜ[R] n ∈ genWeightSpace (M ⊗[R] N) (χ + ψ) := by
   rw [mem_genWeightSpace] at hm hn ⊢
   intro x
-  have key := LieModule.weight_vector_multiplication (R := R) (L := L) M N (M ⊗[R] N)
-    (LieModuleHom.id : (M ⊗[R] N) →ₗ⁅R, L⁆ (M ⊗[R] N)) (χ x) (ψ x) x
-  have hmem : m ⊗ₜ[R] n ∈ (toEnd R L (M ⊗[R] N) x).maxGenEigenspace (χ x + ψ x) := by
-    refine key ⟨(⟨m, (Module.End.mem_maxGenEigenspace _ _ _).mpr (hm x)⟩ : _) ⊗ₜ[R]
-      (⟨n, (Module.End.mem_maxGenEigenspace _ _ _).mpr (hn x)⟩ : _), ?_⟩
-    simp [TensorProduct.mapIncl]
-  simpa using (Module.End.mem_maxGenEigenspace _ _ _).mp hmem
+  have := tmul_mem_maxGenEigenspace_add (R := R) (x := x) (m := m) (n := n)
+    ((Module.End.mem_maxGenEigenspace _ _ _).mpr (hm x))
+    ((Module.End.mem_maxGenEigenspace _ _ _).mpr (hn x))
+  simpa using (Module.End.mem_maxGenEigenspace _ _ _).mp this
 
 variable (M N) in
 /-- The submodule of `M ⊗ N` spanned by the pure tensors of a `χ`-weight vector of `M` and a
@@ -116,9 +152,11 @@ theorem map₂_mk_genWeightSpace_le (χ ψ : L → R) :
     (LieSubmodule.mem_toSubmodule _).mpr (tmul_mem_genWeightSpace_add
       ((LieSubmodule.mem_toSubmodule _).mp hm) ((LieSubmodule.mem_toSubmodule _).mp hn))
 
+end IsNilpotent
+
 end CommRing
 
-/-! ### The decomposition over a field -/
+/-! ### The weights of a tensor product over a field -/
 
 section Field
 
@@ -126,7 +164,24 @@ variable {K : Type u} {L : Type v} {M : Type w} {N : Type w₁}
   [Field K] [LieRing L] [LieAlgebra K L] [LieRing.IsNilpotent L]
   [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
   [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
-  [FiniteDimensional K M] [FiniteDimensional K N]
+
+/-- **A sum of weights is a weight of the tensor product.** If the `μ`-weight space of `M` and the
+`ν`-weight space of `N` are both nonzero, then so is the `(μ + ν)`-weight space of `M ⊗ N`: a pure
+tensor of two nonzero vectors is nonzero over a field. This is the converse of
+`TauCeti.exists_weight_add_eq`. -/
+theorem genWeightSpace_tensorProduct_ne_bot {μ ν : L → K} (hμ : genWeightSpace M μ ≠ ⊥)
+    (hν : genWeightSpace N ν ≠ ⊥) : genWeightSpace (M ⊗[K] N) (μ + ν) ≠ ⊥ := by
+  rw [ne_eq, ← LieSubmodule.toSubmodule_eq_bot] at hμ hν ⊢
+  obtain ⟨m, hm, hm0⟩ := (Submodule.ne_bot_iff _).mp hμ
+  obtain ⟨n, hn, hn0⟩ := (Submodule.ne_bot_iff _).mp hν
+  obtain ⟨f, hf⟩ := Module.Projective.exists_dual_ne_zero K hm0
+  obtain ⟨g, hg⟩ := Module.Projective.exists_dual_ne_zero K hn0
+  refine (Submodule.ne_bot_iff _).mpr ⟨m ⊗ₜ[K] n, (LieSubmodule.mem_toSubmodule _).mpr
+    (tmul_mem_genWeightSpace_add ((LieSubmodule.mem_toSubmodule _).mp hm)
+      ((LieSubmodule.mem_toSubmodule _).mp hn)), fun h ↦ mul_ne_zero hf hg ?_⟩
+  simpa using congrArg (TensorProduct.lift (LinearMap.smulRight f g)) h
+
+variable [FiniteDimensional K M] [FiniteDimensional K N]
   [IsTriangularizable K L M] [IsTriangularizable K L N]
 
 variable (K L M N)
@@ -145,31 +200,6 @@ theorem iSup_map₂_mk_genWeightSpace_eq_top :
   simp_rw [← Submodule.map₂_iSup_right]
   rw [← Submodule.map₂_iSup_left, hM, hN, TensorProduct.map₂_mk_top_top_eq_top]
 
-/-- **The weight spaces of a tensor product exhaust it.** Every element of `M ⊗ N` is a sum of
-generalized weight vectors; this needs no algebraic closure, only that `M` and `N` are themselves
-triangularizable. -/
-theorem iSup_genWeightSpace_tensorProduct_eq_top :
-    ⨆ χ : L → K, genWeightSpace (M ⊗[K] N) χ = ⊤ := by
-  rw [← LieSubmodule.toSubmodule_inj, LieSubmodule.iSup_toSubmodule, LieSubmodule.top_toSubmodule,
-    ← top_le_iff, ← iSup_map₂_mk_genWeightSpace_eq_top K L M N]
-  exact iSup₂_le fun χ ψ ↦ (map₂_mk_genWeightSpace_le M N χ ψ).trans
-    (le_iSup (fun ξ : L → K ↦ (genWeightSpace (M ⊗[K] N) ξ).toSubmodule) (χ + ψ))
-
-/-- **A tensor product of triangularizable modules is triangularizable.** In finite dimensions over
-a field, if every element of `L` acts on `M` and on `N` with its generalized eigenspaces spanning,
-then the same holds on `M ⊗ N`. -/
-instance isTriangularizable_tensorProduct : IsTriangularizable K L (M ⊗[K] N) := by
-  refine ⟨fun x ↦ top_le_iff.mp ?_⟩
-  calc (⊤ : Submodule K (M ⊗[K] N))
-      = ⨆ χ : L → K, (genWeightSpace (M ⊗[K] N) χ).toSubmodule := by
-        rw [← LieSubmodule.iSup_toSubmodule, iSup_genWeightSpace_tensorProduct_eq_top K L M N,
-          LieSubmodule.top_toSubmodule]
-    _ ≤ ⨆ φ : K, (toEnd K L (M ⊗[K] N) x).maxGenEigenspace φ :=
-        iSup_le fun χ ↦ fun t ht ↦
-          le_iSup (fun φ : K ↦ (toEnd K L (M ⊗[K] N) x).maxGenEigenspace φ) (χ x)
-            ((Module.End.mem_maxGenEigenspace _ _ _).mpr
-              ((mem_genWeightSpace _ _ _).mp ((LieSubmodule.mem_toSubmodule _).mp ht) x))
-
 variable {K L M N}
 
 /-- **The weight-space decomposition of a tensor product.** The generalized `χ`-weight space of
@@ -177,8 +207,8 @@ variable {K L M N}
 spanned by the pure tensors `m ⊗ₜ n` with `m` of weight `μ` and `n` of weight `ν`.
 
 One inclusion is `TauCeti.map₂_mk_genWeightSpace_le`. For the other, the family on the right has
-the same supremum as the family of weight spaces of `M ⊗ N`, namely `⊤`, and the latter is
-independent, so the two families agree term by term. -/
+supremum `⊤`, and it lies inside the independent family of weight spaces of `M ⊗ N`, so
+`iSupIndep.le_iff_eq_of_iSup_eq_top` makes the two families agree term by term. -/
 theorem genWeightSpace_tensorProduct_eq_iSup (χ : L → K) :
     (genWeightSpace (M ⊗[K] N) χ).toSubmodule
       = ⨆ (μ : L → K) (ν : L → K) (_ : μ + ν = χ), Submodule.map₂ (TensorProduct.mk K M N)
@@ -187,11 +217,11 @@ theorem genWeightSpace_tensorProduct_eq_iSup (χ : L → K) :
     ⨆ (μ : L → K) (ν : L → K) (_ : μ + ν = ξ), Submodule.map₂ (TensorProduct.mk K M N)
       (genWeightSpace M μ).toSubmodule (genWeightSpace N ν).toSubmodule
   let q : (L → K) → Submodule K (M ⊗[K] N) := fun ξ ↦ (genWeightSpace (M ⊗[K] N) ξ).toSubmodule
-  have hle : ∀ ξ, p ξ ≤ q ξ := fun ξ ↦
+  have hle : p ≤ q := fun ξ ↦
     iSup₂_le fun μ ν ↦ iSup_le fun hμν ↦ hμν ▸ map₂_mk_genWeightSpace_le M N μ ν
   have hptop : ⨆ ξ, p ξ = ⊤ := by
     rw [← iSup_map₂_mk_genWeightSpace_eq_top K L M N]
-    change (⨆ (ξ : L → K) (μ : L → K) (ν : L → K) (_ : μ + ν = ξ), _) = _
+    simp only [p]
     rw [iSup_comm]
     refine iSup_congr fun μ ↦ ?_
     rw [iSup_comm]
@@ -199,13 +229,11 @@ theorem genWeightSpace_tensorProduct_eq_iSup (χ : L → K) :
   have hindep : iSupIndep q := by
     have := iSupIndep_genWeightSpace K L (M ⊗[K] N)
     rwa [← LieSubmodule.iSupIndep_toSubmodule] at this
-  have hsup : ⨆ ξ, p ξ = ⨆ ξ, q ξ :=
-    hptop.trans (le_antisymm le_top (hptop ▸ iSup_mono hle)).symm
-  exact (eq_of_le_of_iSup_eq_iSup hindep hle hsup χ).symm
+  exact (congr_fun ((hindep.le_iff_eq_of_iSup_eq_top hptop).mp hle) χ).symm
 
 /-- **Every weight of a tensor product is a sum of weights.** If the `χ`-weight space of `M ⊗ N` is
 nonzero, then `χ = μ + ν` for a weight `μ` of `M` and a weight `ν` of `N`. -/
-theorem exists_add_eq_of_genWeightSpace_tensorProduct_ne_bot {χ : L → K}
+private theorem exists_add_eq_of_genWeightSpace_tensorProduct_ne_bot {χ : L → K}
     (h : genWeightSpace (M ⊗[K] N) χ ≠ ⊥) :
     ∃ μ ν : L → K, μ + ν = χ ∧ genWeightSpace M μ ≠ ⊥ ∧ genWeightSpace N ν ≠ ⊥ := by
   by_contra hc
