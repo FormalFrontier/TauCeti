@@ -151,6 +151,7 @@ noncomputable def parabolicFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
     parabolicFunctor l ⟶ HopfAlgebra.pointsFunctor (R := R) (H := H) where
   app A := GrpCat.ofHom (parabolic A l).subtype
   naturality {A B} φ := by
+    -- Expose the restricted point map and subgroup inclusion beneath `GrpCat` composition.
     change GrpCat.ofHom (mapParabolic l φ) ≫ GrpCat.ofHom (parabolic B l).subtype =
       GrpCat.ofHom (parabolic A l).subtype ≫ HopfAlgebra.mapPoints (H := H) φ
     apply GrpCat.hom_ext
@@ -163,6 +164,7 @@ noncomputable def leviFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
     leviFunctor l ⟶ HopfAlgebra.pointsFunctor (R := R) (H := H) where
   app A := GrpCat.ofHom (levi A l).subtype
   naturality {A B} φ := by
+    -- Expose the restricted point map and subgroup inclusion beneath `GrpCat` composition.
     change GrpCat.ofHom (mapLevi l φ) ≫ GrpCat.ofHom (levi B l).subtype =
       GrpCat.ofHom (levi A l).subtype ≫ HopfAlgebra.mapPoints (H := H) φ
     apply GrpCat.hom_ext
@@ -175,6 +177,7 @@ noncomputable def unipotentFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
     unipotentFunctor l ⟶ HopfAlgebra.pointsFunctor (R := R) (H := H) where
   app A := GrpCat.ofHom (unipotent A l).subtype
   naturality {A B} φ := by
+    -- Expose the restricted point map and subgroup inclusion beneath `GrpCat` composition.
     change GrpCat.ofHom (mapUnipotent l φ) ≫ GrpCat.ofHom (unipotent B l).subtype =
       GrpCat.ofHom (unipotent A l).subtype ≫ HopfAlgebra.mapPoints (H := H) φ
     apply GrpCat.hom_ext
