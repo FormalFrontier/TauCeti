@@ -29,6 +29,9 @@ quotient, and the Hodge filtration is transported across that identification.
 * `TauCeti.Hodge.weightGradedRat`, `TauCeti.Hodge.weightGradedComplex`: the rational and complex
   graded pieces of a filtration.
 * `TauCeti.Hodge.gradedComplexEquiv`: complexification commutes with the weight-graded quotient.
+* `TauCeti.Hodge.weightGradedRatMap`, `TauCeti.Hodge.weightGradedComplexMap`: the maps induced on
+  the graded pieces by a linear map preserving every step of the filtration, together with their
+  functoriality and the naturality of `TauCeti.Hodge.gradedComplexEquiv` in that map.
 * `TauCeti.Hodge.complexGradedF`, `TauCeti.Hodge.gradedF`: the Hodge filtration induced on the
   complex graded piece and on the complexified rational graded piece.
 * `TauCeti.Hodge.gradedEquivOfEqBotOfEqTop`: across a step where the weight filtration jumps from
@@ -49,7 +52,7 @@ namespace TauCeti.Hodge
 
 open scoped TensorProduct
 
-universe u v w
+universe u v w u' v' w'
 
 variable {Vℤ : Type u} {Vℚ : Type v} {Vℂ : Type w}
 variable [AddCommGroup Vℤ]
@@ -137,6 +140,124 @@ theorem gradedComplexEquiv_tmul_mk (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBas
       TensorProduct.AlgebraTensorModule.tensorQuotientEquiv_apply_tmul,
       Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
     congr 1
+
+section Map
+
+variable {V'ℤ : Type u'} {V'ℚ : Type v'} {V'ℂ : Type w'}
+variable [AddCommGroup V'ℤ]
+variable [AddCommGroup V'ℚ] [Module ℚ V'ℚ]
+variable [AddCommGroup V'ℂ] [Module ℂ V'ℂ]
+variable {ι'ℚ : V'ℤ →ₗ[ℤ] V'ℚ} {ι'ℂ : V'ℤ →ₗ[ℤ] V'ℂ}
+
+/-- The map induced on the `k`-th rational graded piece by a linear map carrying every step of one
+increasing filtration into the corresponding step of another. -/
+noncomputable def weightGradedRatMap (WQ : ℤ → Submodule ℚ Vℚ) (W'Q : ℤ → Submodule ℚ V'ℚ)
+    (f : Vℚ →ₗ[ℚ] V'ℚ) (hf : ∀ k x, x ∈ WQ k → f x ∈ W'Q k) (k : ℤ) :
+    weightGradedRat WQ k →ₗ[ℚ] weightGradedRat W'Q k :=
+  Submodule.mapQ _ _ (f.restrict fun x hx ↦ hf k x hx) fun x hx ↦ hf (k - 1) x hx
+
+/-- The induced map on a rational graded piece sends the class of a vector to the class of its
+image. -/
+@[simp]
+theorem weightGradedRatMap_mk (WQ : ℤ → Submodule ℚ Vℚ) (W'Q : ℤ → Submodule ℚ V'ℚ)
+    (f : Vℚ →ₗ[ℚ] V'ℚ) (hf : ∀ k x, x ∈ WQ k → f x ∈ W'Q k) (k : ℤ) (x : WQ k) :
+    weightGradedRatMap WQ W'Q f hf k (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk ⟨f x, hf k x x.2⟩ :=
+  (rfl)
+
+/-- The map induced on the `k`-th graded piece of a complex filtration by a complex-linear map
+carrying every step into the corresponding step of another filtration. -/
+noncomputable def weightGradedComplexMap (WC : ℤ → Submodule ℂ Vℂ) (W'C : ℤ → Submodule ℂ V'ℂ)
+    (g : Vℂ →ₗ[ℂ] V'ℂ) (hg : ∀ k x, x ∈ WC k → g x ∈ W'C k) (k : ℤ) :
+    weightGradedComplex WC k →ₗ[ℂ] weightGradedComplex W'C k :=
+  Submodule.mapQ _ _ (g.restrict fun x hx ↦ hg k x hx) fun x hx ↦ hg (k - 1) x hx
+
+/-- The induced map on a complex graded piece sends the class of a vector to the class of its
+image. -/
+@[simp]
+theorem weightGradedComplexMap_mk (WC : ℤ → Submodule ℂ Vℂ) (W'C : ℤ → Submodule ℂ V'ℂ)
+    (g : Vℂ →ₗ[ℂ] V'ℂ) (hg : ∀ k x, x ∈ WC k → g x ∈ W'C k) (k : ℤ)
+    (x : WC k) :
+    weightGradedComplexMap WC W'C g hg k (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk ⟨g x, hg k x x.2⟩ :=
+  (rfl)
+
+/-- Passage to the complex graded pieces sends the identity map to the identity. -/
+@[simp]
+theorem weightGradedComplexMap_id (WC : ℤ → Submodule ℂ Vℂ) (k : ℤ) :
+    weightGradedComplexMap WC WC LinearMap.id (fun _ _ hx ↦ hx) k = LinearMap.id := by
+  have hrestrict : (LinearMap.id : Vℂ →ₗ[ℂ] Vℂ).restrict (fun x (hx : x ∈ WC k) ↦ hx) =
+      LinearMap.id := LinearMap.ext fun _ ↦ Subtype.ext rfl
+  simp only [weightGradedComplexMap, hrestrict, Submodule.mapQ_id]
+
+/-- Passage to the complex graded pieces is compatible with composition. -/
+@[simp]
+theorem weightGradedComplexMap_comp {V''ℂ : Type*} [AddCommGroup V''ℂ] [Module ℂ V''ℂ]
+    (WC : ℤ → Submodule ℂ Vℂ) (W'C : ℤ → Submodule ℂ V'ℂ) (W''C : ℤ → Submodule ℂ V''ℂ)
+    (f : Vℂ →ₗ[ℂ] V'ℂ) (hf : ∀ k x, x ∈ WC k → f x ∈ W'C k)
+    (g : V'ℂ →ₗ[ℂ] V''ℂ) (hg : ∀ k x, x ∈ W'C k → g x ∈ W''C k) (k : ℤ) :
+    weightGradedComplexMap WC W''C (g ∘ₗ f) (fun j x hx ↦ hg j _ (hf j x hx)) k =
+      weightGradedComplexMap W'C W''C g hg k ∘ₗ weightGradedComplexMap WC W'C f hf k := by
+  have hrestrict : (g ∘ₗ f).restrict (fun x (hx : x ∈ WC k) ↦ hg k _ (hf k x hx)) =
+      (g.restrict fun x (hx : x ∈ W'C k) ↦ hg k x hx) ∘ₗ
+        f.restrict fun x (hx : x ∈ WC k) ↦ hf k x hx :=
+    LinearMap.ext fun _ ↦ Subtype.ext rfl
+  simp only [weightGradedComplexMap, hrestrict]
+  exact Submodule.mapQ_comp _ _ _ _ _ _ _
+
+/-- Passage to the rational graded pieces sends the identity map to the identity. -/
+@[simp]
+theorem weightGradedRatMap_id (WQ : ℤ → Submodule ℚ Vℚ) (k : ℤ) :
+    weightGradedRatMap WQ WQ LinearMap.id (fun _ _ hx ↦ hx) k = LinearMap.id := by
+  have hrestrict : (LinearMap.id : Vℚ →ₗ[ℚ] Vℚ).restrict (fun x (hx : x ∈ WQ k) ↦ hx) =
+      LinearMap.id := LinearMap.ext fun _ ↦ Subtype.ext rfl
+  simp only [weightGradedRatMap, hrestrict, Submodule.mapQ_id]
+
+/-- Passage to the rational graded pieces is compatible with composition. -/
+@[simp]
+theorem weightGradedRatMap_comp {V''ℚ : Type*} [AddCommGroup V''ℚ] [Module ℚ V''ℚ]
+    (WQ : ℤ → Submodule ℚ Vℚ) (W'Q : ℤ → Submodule ℚ V'ℚ) (W''Q : ℤ → Submodule ℚ V''ℚ)
+    (f : Vℚ →ₗ[ℚ] V'ℚ) (hf : ∀ k x, x ∈ WQ k → f x ∈ W'Q k)
+    (g : V'ℚ →ₗ[ℚ] V''ℚ) (hg : ∀ k x, x ∈ W'Q k → g x ∈ W''Q k) (k : ℤ) :
+    weightGradedRatMap WQ W''Q (g ∘ₗ f) (fun j x hx ↦ hg j _ (hf j x hx)) k =
+      weightGradedRatMap W'Q W''Q g hg k ∘ₗ weightGradedRatMap WQ W'Q f hf k := by
+  have hrestrict : (g ∘ₗ f).restrict (fun x (hx : x ∈ WQ k) ↦ hg k _ (hf k x hx)) =
+      (g.restrict fun x (hx : x ∈ W'Q k) ↦ hg k x hx) ∘ₗ
+        f.restrict fun x (hx : x ∈ WQ k) ↦ hf k x hx :=
+    LinearMap.ext fun _ ↦ Subtype.ext rfl
+  simp only [weightGradedRatMap, hrestrict]
+  exact Submodule.mapQ_comp _ _ _ _ _ _ _
+
+/-- **The comparison `TauCeti.Hodge.gradedComplexEquiv` is natural in the filtered map**: the
+square formed by the map induced on the rational graded pieces, its base change, and the map
+induced by the complexification on the graded pieces of the complexified filtrations, commutes.
+Preservation of the complexified filtration is not a separate hypothesis: it follows from the
+rational one by `TauCeti.Hodge.map_rationalToComplexSubmodule_le`. -/
+theorem gradedComplexEquiv_baseChange_weightGradedRatMap (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (h'ℚ : IsBaseChange ℚ ι'ℚ) (h'ℂ : IsBaseChange ℂ ι'ℂ)
+    (WQ : ℤ → Submodule ℚ Vℚ) (hWQ : Monotone WQ) (W'Q : ℤ → Submodule ℚ V'ℚ)
+    (hW'Q : Monotone W'Q) (f : Vℚ →ₗ[ℚ] V'ℚ) (hf : ∀ k x, x ∈ WQ k → f x ∈ W'Q k)
+    (k : ℤ) (t : ℂ ⊗[ℚ] weightGradedRat WQ k) :
+    gradedComplexEquiv h'ℚ h'ℂ W'Q hW'Q k ((weightGradedRatMap WQ W'Q f hf k).baseChange ℂ t) =
+      weightGradedComplexMap (fun j ↦ rationalToComplexSubmodule hℚ hℂ (WQ j))
+          (fun j ↦ rationalToComplexSubmodule h'ℚ h'ℂ (W'Q j))
+          (rationalMapToComplex hℚ hℂ h'ℚ h'ℂ f)
+          (fun j _ hx ↦ map_rationalToComplexSubmodule_le hℚ hℂ h'ℚ h'ℂ f
+            (Submodule.map_le_iff_le_comap.2 fun y hy ↦ hf j y hy) ⟨_, hx, rfl⟩) k
+        (gradedComplexEquiv hℚ hℂ WQ hWQ k t) := by
+  induction t using TensorProduct.induction_on with
+  | zero => simp
+  | tmul z x =>
+      induction x using Submodule.Quotient.induction_on with
+      | _ x =>
+        rw [LinearMap.baseChange_tmul, weightGradedRatMap_mk, gradedComplexEquiv_tmul_mk,
+          gradedComplexEquiv_tmul_mk, weightGradedComplexMap_mk]
+        refine congrArg Submodule.Quotient.mk (Subtype.ext ?_)
+        simp only [coe_rationalToComplexSubmoduleEquiv, LinearMap.baseChange_tmul,
+          Submodule.subtype_apply, rationalMapToComplex_rationalToComplexLinearEquiv_tmul]
+  | add x y hx hy => simp only [map_add, hx, hy]
+
+end Map
 
 /-- The Hodge filtration induced on the `k`-th complex graded piece: the image of `F^p ∩ W_k`
 under the quotient map `W_k → W_k / W_{k-1}`. -/

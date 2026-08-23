@@ -61,7 +61,7 @@ incompatible, so no relation exists.
 As in `TauCeti.FieldTheory.FunctionField.Place.Degree`, the relation is taken over the
 polynomial subalgebra `k[x] = Algebra.adjoin k {x}` and upgraded by
 `LinearIndependent.iff_fractionRing`; the common power of `x` is cleared by
-`TauCeti.Polynomial.exists_forall_eq_X_pow_mul`. Orders are compared in the multiplicative form
+`TauCeti.Polynomial.exists_common_X_pow_factor`. Orders are compared in the multiplicative form
 `P.valuation`, which is free of the junk value `ord_P 0 = 0`, so no term of a sum has to be
 proved nonzero.
 
@@ -277,7 +277,7 @@ private theorem sum_toNat_mul_finrank_le {x : F} [FiniteDimensional k⟮x⟯ F]
       intro h
       exact hg0 (Subtype.ext (by simpa [h] using (hp i₁).symm))
     obtain ⟨m, q, hfactor, i₂, -, hq₂⟩ :=
-      TauCeti.Polynomial.exists_forall_eq_X_pow_mul Finset.univ p ⟨i₁, Finset.mem_univ _, hpne⟩
+      TauCeti.Polynomial.exists_common_X_pow_factor Finset.univ p ⟨i₁, Finset.mem_univ _, hpne⟩
     have hsumF : ∑ i, aeval x (q i) * (u i.1 i.2.2 * t i.1 ^ (i.2.1 : ℕ)) = 0 := by
       refine mul_left_cancel₀ (pow_ne_zero m hx0) ?_
       rw [Finset.mul_sum, mul_zero, ← hsum]

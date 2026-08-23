@@ -51,6 +51,8 @@ The definitions themselves need only a commutative ring, and are stated there.
 * `TauCeti.weightSpace_stdRep_single` and `TauCeti.weightSpace_stdRep_eq_bot`: the weight spaces of
   the standard representation are exactly its coordinate lines, the line `k ∙ eᵢ` carrying the
   weight `Pi.single i 1` and every other weight space vanishing.
+* `TauCeti.isInternal_weightSpace_of_iSup_eq_top`: **a representation whose weight spaces span it
+  is their internal direct sum**, as soon as distinct weights give distinct characters.
 * `TauCeti.isInternal_weightSpace_stdRep`: **the standard representation is the internal direct sum
   of its weight spaces.**
 * `TauCeti.weightSpace_detPowerRep`: all of `det ^ m` has the constant weight `m`, that is, its
@@ -134,7 +136,7 @@ theorem span_basisFun_le_weightSpace_stdRep (i : Fin n) :
   exact basisFun_mem_weightSpace_stdRep i
 
 /-- The weight spaces of the standard representation span it, being its coordinate lines. -/
-theorem iSup_weightSpace_stdRep :
+theorem iSup_weightSpace_stdRep_eq_top :
     ⨆ l : Fin n → ℤ, weightSpace (stdRep k n) l = ⊤ := by
   refine top_le_iff.mp ?_
   rw [← (Pi.basisFun k (Fin n)).span_eq, Submodule.span_le]
@@ -221,12 +223,21 @@ theorem iSupIndep_weightSpace (hchar : Function.Injective (weightChar k (κ := F
   (iSupIndep_iInf_eigenspace_unitHom
       (ρ := (ρ : GL (Fin n) k →* Module.End k W).comp diagGL)).comp hchar
 
+/-- **Spanning is the whole of the weight-space decomposition.** Once distinct weights give
+distinct characters, the weight spaces are independent for free, so a representation whose weight
+spaces span it is their internal direct sum. -/
+theorem isInternal_weightSpace_of_iSup_eq_top
+    (hchar : Function.Injective (weightChar k (κ := Fin n)))
+    {ρ : Representation k (GL (Fin n) k) W} (h : ⨆ l : Fin n → ℤ, weightSpace ρ l = ⊤) :
+    DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace ρ l :=
+  (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
+    ⟨iSupIndep_weightSpace hchar _, h⟩
+
 /-- **The standard representation is the internal direct sum of its weight spaces**: the
 weight-space decomposition in its smallest instance. -/
 theorem isInternal_weightSpace_stdRep (hchar : Function.Injective (weightChar k (κ := Fin n))) :
     DirectSum.IsInternal fun l : Fin n → ℤ ↦ weightSpace (stdRep k n) l :=
-  (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
-    ⟨iSupIndep_weightSpace hchar _, iSup_weightSpace_stdRep⟩
+  isInternal_weightSpace_of_iSup_eq_top hchar iSup_weightSpace_stdRep_eq_top
 
 end Field
 
