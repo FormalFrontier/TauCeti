@@ -36,9 +36,9 @@ the two marking permutations, hence the sign of the component permutation `𝕏�
 
 ## Main definitions
 
-* `TauCeti.GridDiagram.alexanderℤ`: half of the integral Alexander numerator; on diagrams with
-  odd component count, this agrees with the rational Alexander grading.
-* `TauCeti.GridDiagram.bidegree`: the (`O`-Maslov, Alexander) degree of a grid state.
+* `TauCeti.OddComponentGridDiagram`: a grid diagram with an odd number of link components.
+* `TauCeti.OddComponentGridDiagram.alexanderℤ`: the integer Alexander grading.
+* `TauCeti.OddComponentGridDiagram.bidegree`: the (`O`-Maslov, Alexander) degree of a grid state.
 
 ## Main results
 
@@ -360,36 +360,42 @@ theorem alexander_exists_int_of_isKnot (hG : G.IsKnot) (x : GridState n) :
   rw [G.isKnot_def.mp hG]
   exact odd_one
 
-/-- Half of the integer Alexander numerator of a grid state.
+end GridDiagram
 
-When the diagram has an odd number of link components, `alexanderTwoℤ` is even and this integer
-quotient agrees with the original rational-valued Alexander grading. -/
+/-- A grid diagram with an odd number of link components. -/
+abbrev OddComponentGridDiagram (n : ℕ) :=
+  {G : GridDiagram n // Odd G.componentCount}
+
+namespace OddComponentGridDiagram
+
+variable {n : ℕ} (G : OddComponentGridDiagram n)
+
+/-- The integer Alexander grading of a grid state. -/
 def alexanderℤ (x : GridState n) : ℤ :=
-  G.alexanderTwoℤ x / 2
+  G.1.alexanderTwoℤ x / 2
 
-/-- When the component count is odd, the integer Alexander grading is half of its numerator. -/
-theorem two_mul_alexanderℤ (h : Odd G.componentCount) (x : GridState n) :
-    2 * G.alexanderℤ x = G.alexanderTwoℤ x := by
-  obtain ⟨a, ha⟩ := (G.even_alexanderTwoℤ_iff x).mpr h
+/-- The integer Alexander grading is half of its numerator. -/
+theorem two_mul_alexanderℤ (x : GridState n) :
+    2 * G.alexanderℤ x = G.1.alexanderTwoℤ x := by
+  obtain ⟨a, ha⟩ := (G.1.even_alexanderTwoℤ_iff x).mpr G.2
   rw [alexanderℤ, ha]
   omega
 
-/-- On a grid with odd component count, the integer Alexander grading agrees with the original
-rational-valued Alexander grading. -/
-theorem alexander_eq_intCast (h : Odd G.componentCount) (x : GridState n) :
-    G.alexander x = (G.alexanderℤ x : ℚ) := by
-  have htwo := G.two_mul_alexander_eq_intCast x
-  rw [← G.two_mul_alexanderℤ h x] at htwo
+/-- The integer Alexander grading agrees with the original rational-valued Alexander grading. -/
+theorem alexander_eq_intCast (x : GridState n) :
+    G.1.alexander x = (G.alexanderℤ x : ℚ) := by
+  have htwo := G.1.two_mul_alexander_eq_intCast x
+  rw [← G.two_mul_alexanderℤ x] at htwo
   push_cast at htwo
   linarith
 
 /-- The (`O`-Maslov, Alexander) bidegree of a grid state. -/
 def bidegree (x : GridState n) : ℤ × ℤ :=
-  (G.maslovOℤ x, G.alexanderℤ x)
+  (G.1.maslovOℤ x, G.alexanderℤ x)
 
 /-- The first component of the grid bidegree is the integer `O`-Maslov grading. -/
 @[simp]
-theorem bidegree_fst (x : GridState n) : (G.bidegree x).1 = G.maslovOℤ x :=
+theorem bidegree_fst (x : GridState n) : (G.bidegree x).1 = G.1.maslovOℤ x :=
   by rw [bidegree]
 
 /-- The second component of the grid bidegree is the integer Alexander grading. -/
@@ -407,6 +413,6 @@ theorem mem_bidegreeSupport_iff (g : ℤ × ℤ) :
     g ∈ G.bidegreeSupport ↔ ∃ x : GridState n, G.bidegree x = g := by
   simp [bidegreeSupport]
 
-end GridDiagram
+end OddComponentGridDiagram
 
 end TauCeti

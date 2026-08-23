@@ -14,28 +14,29 @@ public import TauCeti.KnotTheory.Grid.StateCardinality
 /-!
 # The bigraded grid chain module
 
-This file turns the integer `O`-Maslov grading and the integer quotient of the Alexander numerator
-on the state basis into a direct-sum decomposition of the grid chain module. The summand in
-bidegree `(m, a)` is the direct sum of one copy of the coefficient ring for each state with
-`O`-Maslov grading `m` and Alexander grading `a`. On diagrams with odd component count, the latter
-agrees with the original rational Alexander grading.
+This file turns the integer `O`-Maslov and Alexander gradings of a grid diagram with odd component
+count into a direct-sum decomposition of the grid chain module. The summand in bidegree `(m, a)` is
+the direct sum of one copy of the coefficient ring for each state with `O`-Maslov grading `m` and
+Alexander grading `a`.
 
 The decomposition groups the standard basis through Mathlib's linear direct-sum reindexing and
 sigma-currying equivalences; no second direct-sum or graded-module framework is introduced.
 
 ## Main definitions
 
-* `TauCeti.GridDiagram.BigradedChainPiece`: the homogeneous grid-chain module in one bidegree.
-* `TauCeti.GridDiagram.bigradedChainEquiv`: the grid chain module as the direct sum of its
-  homogeneous pieces.
+* `TauCeti.OddComponentGridDiagram.BigradedChainPiece`: the homogeneous grid-chain module in one
+  bidegree.
+* `TauCeti.OddComponentGridDiagram.bigradedChainEquiv`: the grid chain module as the direct sum of
+  its homogeneous pieces.
 
 ## Main results
 
-* `TauCeti.GridDiagram.bigradedChainEquiv_single`: a state generator lies in its own bidegree.
-* `TauCeti.GridDiagram.finrank_bigradedChainPiece`: the rank of a homogeneous piece is the number
-  of states in that bidegree.
-* `TauCeti.GridDiagram.sum_finrank_bigradedChainPiece`: the ranks of the occupied pieces add to
-  `n!`.
+* `TauCeti.OddComponentGridDiagram.bigradedChainEquiv_single`: a state generator lies in its own
+  bidegree.
+* `TauCeti.OddComponentGridDiagram.finrank_bigradedChainPiece`: the rank of a homogeneous piece is
+  the number of states in that bidegree.
+* `TauCeti.OddComponentGridDiagram.sum_finrank_bigradedChainPiece`: the ranks of the occupied pieces
+  add to `n!`.
 
 ## References
 
@@ -52,9 +53,9 @@ open scoped DirectSum
 
 namespace TauCeti
 
-namespace GridDiagram
+namespace OddComponentGridDiagram
 
-variable {n : ℕ} (G : GridDiagram n)
+variable {n : ℕ} (G : OddComponentGridDiagram n)
 
 /-- The homogeneous grid-chain module in bidegree `g`: one copy of `R` for each state of that
 bidegree. -/
@@ -147,6 +148,6 @@ theorem sum_finrank_bigradedChainPiece (R : Type*) [Semiring R] [StrongRankCondi
   rw [Finset.sum_card_fiberwise_eq_card_filter]
   simp
 
-end GridDiagram
+end OddComponentGridDiagram
 
 end TauCeti
