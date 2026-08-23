@@ -36,10 +36,6 @@ sum.
 * `TauCeti.summable_idealTerm_of_nonneg` and
   `TauCeti.idealAbscissaOfAbsConv_eq_abscissaOfAbsConv`: the converse holds, and the two abscissae
   agree, when every *individual ideal summand* is nonnegative.
-* `TauCeti.exists_forall_normCoeff_nonneg_not_forall_nonneg`: nonnegativity of the grouped
-  coefficients is not a substitute for that hypothesis. As soon as two distinct nonzero ideals
-  share an absolute norm, an ideal arithmetic function with a negative value can regroup to the
-  zero arithmetic function.
 
 ## Implementation notes
 
@@ -52,13 +48,15 @@ convergence; no rearrangement hypothesis is therefore needed for the transfer.
 The converse is proved through `summable_partition` applied to the norms of the terms. The
 nonnegativity hypothesis is used exactly once, to identify the norm of a fibre sum with the sum of
 the norms over that fibre; this is the step that fails under cancellation, as the rejection test
-`TauCeti.exists_forall_normCoeff_nonneg_not_forall_nonneg` records.
+`TauCeti.exists_forall_normCoeff_nonneg_not_forall_nonneg` records. That test is a statement about
+`TauCeti.normCoeff` alone, so it lives with that definition rather than here.
 
 ## Roadmap role
 
-This is Layer **1.2** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`, together with the
-required worked example 9. The exact value of the abscissa for the trivial weight is deliberately
-not proved here: its divergence input is a Layer 5 ideal count.
+This is Layer **1.2** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`; the required worked
+example 9 accompanies it in `TauCeti/NumberTheory/ArithmeticDirichletSeries/NormCoeff.lean`. The
+exact value of the abscissa for the trivial weight is deliberately not proved here: its divergence
+input is a Layer 5 ideal count.
 
 ## References
 
@@ -84,6 +82,7 @@ noncomputable def idealTerm (f : IdealArithmeticFunction K) (s : ℂ) (I : (Idea
   f I / (Ideal.absNorm (I : Ideal (𝓞 K)) : ℂ) ^ s
 
 /-- Defining equation of `TauCeti.idealTerm`. -/
+@[simp]
 theorem idealTerm_def (f : IdealArithmeticFunction K) (s : ℂ) (I : (Ideal (𝓞 K))⁰) :
     idealTerm K f s I = f I / (Ideal.absNorm (I : Ideal (𝓞 K)) : ℂ) ^ s :=
   (rfl)
@@ -130,15 +129,14 @@ theorem term_normCoeff_eq_sum_normFiber (f : IdealArithmeticFunction K) (s : ℂ
   rw [idealTerm_def, (mem_normFiber K).mp hI]
 
 /-- The regrouped `LSeries` terms as the fibrewise sums of the ideal terms along the absolute
-norm. This is the form consumed by `HasSum.tsum_fiberwise`. -/
-theorem term_normCoeff (f : IdealArithmeticFunction K) (s : ℂ) :
+norm. This is the form consumed by `HasSum.tsum_fiberwise`; `term_normCoeff_eq_sum_normFiber` is
+the usable finite-fibre formula. -/
+private theorem term_normCoeff (f : IdealArithmeticFunction K) (s : ℂ) :
     LSeries.term (normCoeff K f) s = fun n ↦
       ∑' I : (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K))) ⁻¹' {n},
         idealTerm K f s I := by
   funext n
-  rw [show (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K))) ⁻¹' {n}
-      = (normFiber K n : Set ((Ideal (𝓞 K))⁰)) by ext I; simp,
-    Finset.tsum_subtype' (normFiber K n) (idealTerm K f s)]
+  rw [← coe_normFiber, Finset.tsum_subtype' (normFiber K n) (idealTerm K f s)]
   exact term_normCoeff_eq_sum_normFiber K f s n
 
 /-- **Regrouping by absolute norm.** If the Dirichlet series indexed by the nonzero integral ideals
@@ -208,13 +206,11 @@ theorem idealTerm_nonneg {f : IdealArithmeticFunction K} {I : (Ideal (𝓞 K))�
 /-- For a nonnegative ideal arithmetic function and a real `x`, the sum over an absolute-norm fibre
 of the absolute values of the ideal terms is the absolute value of the corresponding `LSeries`
 term. This is the step of the converse regrouping that cancellation destroys. -/
-theorem tsum_norm_idealTerm_fiber (f : IdealArithmeticFunction K) (hf : ∀ I, 0 ≤ f I) (x : ℝ)
-    (n : ℕ) :
+private theorem tsum_norm_idealTerm_fiber (f : IdealArithmeticFunction K) (hf : ∀ I, 0 ≤ f I)
+    (x : ℝ) (n : ℕ) :
     ∑' I : (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K))) ⁻¹' {n},
         ‖idealTerm K f x I‖ = ‖LSeries.term (normCoeff K f) x n‖ := by
-  rw [show (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K))) ⁻¹' {n}
-      = (normFiber K n : Set ((Ideal (𝓞 K))⁰)) by ext I; simp,
-    Finset.tsum_subtype' (normFiber K n) fun I ↦ ‖idealTerm K f x I‖,
+  rw [← coe_normFiber, Finset.tsum_subtype' (normFiber K n) fun I ↦ ‖idealTerm K f x I‖,
     term_normCoeff_eq_sum_normFiber]
   have hsum : ∑ I ∈ normFiber K n, idealTerm K f x I
       = ((∑ I ∈ normFiber K n, ‖idealTerm K f x I‖ : ℝ) : ℂ) := by
@@ -252,42 +248,5 @@ theorem idealAbscissaOfAbsConv_eq_abscissaOfAbsConv (f : IdealArithmeticFunction
     idealAbscissaOfAbsConv K f = LSeries.abscissaOfAbsConv (normCoeff K f) :=
   le_antisymm (sInf_le_sInf <| Set.image_mono fun _ hx ↦ summable_idealTerm_of_nonneg K f hf hx)
     (abscissaOfAbsConv_normCoeff_le K f)
-
-/-! ### The cancellation rejection test -/
-
-/-- **Rejection test.** A nonnegative sum over an absolute-norm fibre does not force the individual
-ideal summands to be nonnegative. As soon as two distinct nonzero integral ideals share an absolute
-norm — for instance the two primes above `5` in `ℚ(i)` — the two-summand witness `-1 + 1 = 0`
-produces a nonzero ideal arithmetic function with a negative value whose regrouping is the zero
-arithmetic function, hence has nonnegative coefficients.
-
-So the hypothesis of `TauCeti.summable_idealTerm_of_nonneg` cannot be weakened to nonnegativity of
-`TauCeti.normCoeff f`, and `TauCeti.normCoeff` is not injective. -/
-theorem exists_forall_normCoeff_nonneg_not_forall_nonneg {A B : (Ideal (𝓞 K))⁰} (hAB : A ≠ B)
-    (hN : Ideal.absNorm (A : Ideal (𝓞 K)) = Ideal.absNorm (B : Ideal (𝓞 K))) :
-    ∃ f : IdealArithmeticFunction K, f ≠ 0 ∧ normCoeff K f = 0 ∧ ¬ ∀ I, 0 ≤ f I := by
-  classical
-  set f : IdealArithmeticFunction K := fun I ↦ if I = A then -1 else if I = B then 1 else 0
-    with hfdef
-  have hfA : f A = -1 := by simp [hfdef]
-  have hfB : f B = 1 := by simp [hfdef, Ne.symm hAB]
-  have hf0 : ∀ I, I ≠ A → I ≠ B → f I = 0 := by
-    intro I h₁ h₂
-    simp [hfdef, h₁, h₂]
-  refine ⟨f, fun h ↦ ?_, ?_, fun h ↦ ?_⟩
-  · rw [h] at hfA
-    norm_num at hfA
-  · ext n
-    rw [normCoeff_eq_sum_normFiber, ArithmeticFunction.zero_apply]
-    by_cases hn : Ideal.absNorm (A : Ideal (𝓞 K)) = n
-    · rw [Finset.sum_eq_add_of_mem A B ((mem_normFiber K).mpr hn)
-        ((mem_normFiber K).mpr (hN ▸ hn)) hAB fun I _ hI ↦ hf0 I hI.1 hI.2, hfA, hfB]
-      ring
-    · refine Finset.sum_eq_zero fun I hI ↦ hf0 I ?_ ?_
-      · exact fun h ↦ hn (h ▸ (mem_normFiber K).mp hI)
-      · exact fun h ↦ hn (hN.trans (h ▸ (mem_normFiber K).mp hI))
-  · have := Complex.re_le_re (h A)
-    rw [hfA] at this
-    norm_num at this
 
 end TauCeti
