@@ -105,12 +105,18 @@ noncomputable abbrev baseChangeCoordinateHopfAlgebraIso
   (ObjectProperty.ι _).mapIso (baseChangeCoordinateRingIso k K G)
 
 /-- The forward map of the categorical coordinate-ring base-change isomorphism is the
-scalar-tensor bialgebra equivalence. -/
-@[simp]
+scalar-tensor bialgebra equivalence.
+
+This is the interface lemma for crossing the two bundling layers: forgetting the finite-type
+property leaves the underlying morphism untouched, so the underlying bialgebra map of
+`baseChangeCoordinateHopfAlgebraIso` is the one packaged by `CommHopfAlgCat.isoMk`. -/
+-- Not `@[simp]`: `simp` rewrites the left-hand side through `Functor.mapIso_hom` and
+-- `ObjectProperty.ι_map` into the `baseChangeCoordinateRingIso` spelling, so this equation is
+-- stated for `rw` in goals phrased with the `CommHopfAlgCat`-level isomorphism.
 theorem baseChangeCoordinateHopfAlgebraIso_hom_apply
     (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
     (G : FGCommGrpCat.{u}) (x : K ⊗[k] MonoidAlgebra k G) :
-    (baseChangeCoordinateRingIso k K G).hom.hom x =
+    (baseChangeCoordinateHopfAlgebraIso k K G).hom.hom x =
       TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K x :=
   rfl
 

@@ -256,7 +256,6 @@ theorem hom_weightTorusBaseChangeCoordinateMap
   apply coordinateHopfAlgebra_bialgHom_ext K N
   intro i j
   rw [coordinateHopfAlgebraBaseChangeMap_X]
-  change (DiagonalizableGroup.baseChangeCoordinateRingIso R K _).hom.hom _ = _
   rw [DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso_hom_apply,
     weightTorusCoordinateMap_X, weightTorusCoordinateBialgHom_X]
   split_ifs <;> simp

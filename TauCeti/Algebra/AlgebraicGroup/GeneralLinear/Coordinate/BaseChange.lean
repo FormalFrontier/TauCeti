@@ -373,10 +373,8 @@ theorem coordinateHopfAlgebraBaseChangeMap_X
         (1 ⊗ₜ[R] f.hom
           (coordinateHopfAlgebraAlgEquiv R n
             (coordinateRingMap R n (MvPolynomial.X (i, j))))) := by
-  change e.hom.hom ((CommHopfAlgCat.baseChangeMap f).hom
-    ((coordinateHopfAlgebraBaseChangeIso R K n).inv
-      (coordinateHopfAlgebraAlgEquiv K n
-        (coordinateRingMap K n (MvPolynomial.X (i, j)))))) = _
-  rw [coordinateHopfAlgebraBaseChangeIso_inv_X, CommHopfAlgCat.baseChangeMap_apply_tmul]
+  rw [_root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp,
+    Function.comp_apply, BialgHom.coe_comp, Function.comp_apply,
+    coordinateHopfAlgebraBaseChangeIso_inv_X, CommHopfAlgCat.baseChangeMap_apply_tmul]
 
 end TauCeti.GeneralLinear
