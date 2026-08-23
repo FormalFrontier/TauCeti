@@ -45,7 +45,8 @@ is built from; it is injective as soon as the value ring is reduced.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFunctor`: the resulting group-valued functor.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFrobenius`: the `p ^ n`-power Frobenius
   endomorphism, with `kostantElementaryFrobenius_injective` on a reduced value ring,
-  `kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change, and
+  `kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change,
+  `kostantElementaryFrobenius_mul` computing its powers, and
   `kostantElementaryMap_kostantElementaryFrobenius` its naturality in the value ring.
 
 ## References
@@ -405,15 +406,6 @@ theorem kostantElementaryFrobenius_mul (k : ℕ) :
   | succ k ih =>
       rw [Function.iterate_succ_apply, ih, Nat.mul_succ, kostantElementaryFrobenius_add,
         MonoidHom.comp_apply]
-
-/-- Pointwise form of `kostantElementaryFrobenius_mul`. -/
-theorem kostantElementaryFrobenius_iterate_apply (k : ℕ)
-    (g : kostantElementarySubgroup e h ρ M hM hnil A) :
-    (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A))^[k] g =
-      kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A g := by
-  change ((show Monoid.End _ from
-    kostantElementaryFrobenius e h ρ M hM hnil p n A) ^ k) g = _
-  exact congrArg (· g) (kostantElementaryFrobenius_mul e h ρ M hM hnil p n A k)
 
 /-- The Frobenius endomorphism of the elementary group commutes with base change of the value ring,
 because a ring homomorphism preserves `p ^ n`-th powers. -/

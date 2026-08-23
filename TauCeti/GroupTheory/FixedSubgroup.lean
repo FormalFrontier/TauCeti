@@ -101,13 +101,16 @@ theorem fixedSubgroup_le_fixedSubgroup_pow (F : Monoid.End G) (n : ℕ) :
 /-- A point fixed by each of two endomorphisms is fixed by their composite.
 
 The converse fails in general: a Steinberg endomorphism is a composite of a Frobenius with a
-diagram automorphism, and its fixed points are not in general fixed by either factor. -/
+diagram automorphism, and its fixed points are not in general fixed by either factor.
+
+This is the subgroup-packaged form of `Function.inter_subset_fixedPoints_comp`. -/
 theorem fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp (F F' : G →* G) :
     fixedSubgroup F ⊓ fixedSubgroup F' ≤ fixedSubgroup (F'.comp F) := by
   intro x hx
   obtain ⟨hF, hF'⟩ := Subgroup.mem_inf.mp hx
-  rw [mem_fixedSubgroup] at hF hF' ⊢
-  rw [MonoidHom.comp_apply, hF, hF']
+  rw [mem_fixedSubgroup] at hF hF'
+  rw [mem_fixedSubgroup, MonoidHom.coe_comp]
+  exact Function.inter_subset_fixedPoints_comp ⟨hF', hF⟩
 
 /-- Suppose that two endomorphisms commute and that `F' ^ d = 1`. Every point fixed by
 `F'.comp F` is then fixed by `F ^ d`.

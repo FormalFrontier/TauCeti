@@ -220,10 +220,12 @@ theorem kostantElementarySteinberg_iterate (k : ℕ) :
       (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A)) := fun x =>
     (kostantElementaryFrobenius_kostantElementaryNumberedSymmetryAut
       e h ρ M hM hnil σ θ hθM hθe hσ p n A x).symm
+  -- `Monoid.End.coe_pow` is `rfl`, so applying `kostantElementaryFrobenius_mul` at a point is the
+  -- pointwise iterate statement.
   have hFrob (x : kostantElementarySubgroup e h ρ M hM hnil A) :
       (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A))^[k] x =
-        kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A x := by
-    exact kostantElementaryFrobenius_iterate_apply e h ρ M hM hnil p n A k x
+        kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A x :=
+    congrArg (· x) (kostantElementaryFrobenius_mul e h ρ M hM hnil p n A k)
   rw [kostantElementarySteinberg, MonoidHom.coe_comp, MulEquiv.coe_toMonoidHom,
     hcomm.comp_iterate, Function.comp_apply, hFrob, MonoidHom.comp_apply]
   change _ =
