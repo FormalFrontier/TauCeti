@@ -19,8 +19,9 @@ This file adds the five missing counterparts, in the same shape. It also records
 representation action on a subrepresentation is the restriction of the original action, when an
 intertwining map is zero and when it is surjective in terms of the subrepresentation its range is,
 the inclusion of a subrepresentation as an intertwining map, that the group-algebra action on a
-subrepresentation coerces to the original action, and that a subrepresentation is minimal exactly
-when the `A[G]`-submodule it carries is simple.
+subrepresentation coerces to the original action, the canonical equivalence between the module of
+the restricted representation and the corresponding submodule, and that a subrepresentation is
+minimal exactly when the `A[G]`-submodule it carries is simple.
 
 They are stated at the typeclasses `Subrepresentation` itself asks for, so they apply wherever
 the abstraction does. The `⊥` and `⊤` lemmas let proofs about extreme subrepresentations avoid
@@ -60,6 +61,8 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.subtype_eq_zero_iff`
 * `Subrepresentation.subtype_surjective_iff`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
+* `Subrepresentation.asModuleEquivAsSubmodule`
+* `Subrepresentation.asSubmodule_subrepresentationSubmoduleOrderIso_symm`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
 -/
 
@@ -179,6 +182,51 @@ theorem coe_toRepresentation_asAlgebraHom_apply {k H V : Type*} [CommSemiring k]
   | single g r =>
       simp only [Representation.asAlgebraHom_single]
       congr 1
+
+section AsSubmoduleEquiv
+
+open scoped MonoidAlgebra
+
+variable {A G W : Type*} [CommSemiring A] [Monoid G] [AddCommMonoid W] [Module A W]
+  {ρ : Representation A G W}
+
+/-- **The module carried by a subrepresentation is canonically its associated submodule.**
+The equivalence identifies both with the same invariant subset of the ambient representation.
+
+The additive and inverse laws below use that `Representation.asModuleEquiv` is definitionally the
+identity linear equivalence, while the carrier identification uses that
+`Subrepresentation.mem_asSubmodule_iff` is definitionally `rfl`. -/
+noncomputable def asModuleEquivAsSubmodule (σ : Subrepresentation ρ) :
+    σ.toRepresentation.asModule ≃ₗ[A[G]] σ.asSubmodule where
+  toFun x := ⟨(_root_.Representation.asModuleEquiv ρ).symm
+      (σ.toRepresentation.asModuleEquiv x : W),
+    (Subrepresentation.mem_asSubmodule_iff
+      (v := (σ.toRepresentation.asModuleEquiv x : W))).mpr
+        (σ.toRepresentation.asModuleEquiv x).2⟩
+  invFun x := σ.toRepresentation.asModuleEquiv.symm
+    ⟨_root_.Representation.asModuleEquiv ρ x.1,
+      (Subrepresentation.mem_asSubmodule_iff
+        (v := _root_.Representation.asModuleEquiv ρ x.1)).mp x.2⟩
+  left_inv x := by rfl
+  right_inv x := by rfl
+  map_add' x y := by rfl
+  map_smul' a x := by
+    apply Subtype.ext
+    apply (_root_.Representation.asModuleEquiv ρ).injective
+    simp only [LinearEquiv.apply_symm_apply, RingHom.id_apply,
+      _root_.Representation.asModuleEquiv_map_smul]
+    exact coe_toRepresentation_asAlgebraHom_apply σ a
+      (σ.toRepresentation.asModuleEquiv x)
+
+/-- Converting a group-algebra submodule to a subrepresentation and back returns the original
+submodule. -/
+@[simp]
+theorem asSubmodule_subrepresentationSubmoduleOrderIso_symm
+    (T : Submodule A[G] ρ.asModule) :
+    (subrepresentationSubmoduleOrderIso.symm T).asSubmodule = T := by
+  rw [← subrepresentationSubmoduleOrderIso_apply, OrderIso.apply_symm_apply]
+
+end AsSubmoduleEquiv
 
 section AsSubmodule
 

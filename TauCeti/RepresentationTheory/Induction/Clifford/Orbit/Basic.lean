@@ -52,7 +52,8 @@ the packaged form of the theorem, which assumes finite-dimensionality and produc
   translate is produced rather than assumed.
 * `TauCeti.Representation.isotypicComponents_eq_range`: the isotypic components of the restriction
   are exactly the components of the translates of a given minimal `N`-stable subspace, so `G` acts
-  transitively on them; `TauCeti.Representation.finite_isotypicComponents` reads off from the same
+  transitively on them; `TauCeti.Representation.conjSubrepIsotypicComponent` packages each such
+  component, and `TauCeti.Representation.finite_isotypicComponents` reads off from the same
   hypothesis that there are finitely many of them when `G` is finite.
 * `TauCeti.Representation.isIsotypicOfType_asSubmodule_iff`: the restriction is isotypic exactly
   when every translate of one constituent is isomorphic to it — the case in which the inertia group
@@ -160,6 +161,25 @@ theorem isotypicComponents_eq_range [ρ.IsIrreducible]
   · rintro ⟨g, rfl⟩
     exact ⟨_, Subrepresentation.isSimpleModule_asSubmodule_iff.mpr
       (isAtom_conjSubrep_iff.mpr hσ), rfl⟩
+
+/-- The isotypic component cut out by the translate of a fixed constituent. -/
+noncomputable def conjSubrepIsotypicComponent [ρ.IsIrreducible]
+    (σ : Subrepresentation (ρ.comp N.subtype)) (hσ : IsAtom σ) (g : G) :
+    isotypicComponents k[N] (_root_.Representation.asModule (ρ.comp N.subtype)) :=
+  ⟨isotypicComponent k[N] (_root_.Representation.asModule (ρ.comp N.subtype))
+      (conjSubrep ρ g σ).asSubmodule,
+    (isotypicComponents_eq_range ρ hσ).symm ▸ Set.mem_range_self g⟩
+
+/-- The underlying submodule of the component indexed by `g` is the isotypic component of the
+translated constituent `conjSubrep ρ g σ`. -/
+@[simp]
+theorem coe_conjSubrepIsotypicComponent [ρ.IsIrreducible]
+    (σ : Subrepresentation (ρ.comp N.subtype)) (hσ : IsAtom σ) (g : G) :
+    (conjSubrepIsotypicComponent ρ σ hσ g :
+      Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype))) =
+      isotypicComponent k[N] (_root_.Representation.asModule (ρ.comp N.subtype))
+        (conjSubrep ρ g σ).asSubmodule :=
+  by simp only [conjSubrepIsotypicComponent]
 
 /-- **Given one minimal `N`-stable subspace, a restriction along a normal subgroup of a finite group
 has finitely many isotypic components.**  There is one component for each translate of that

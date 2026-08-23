@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.MonoidAlgebra.Conjugation
-public import TauCeti.RepresentationTheory.Induction.Clifford.Orbit
+public import TauCeti.RepresentationTheory.Induction.Clifford.Orbit.Basic
 public import TauCeti.RingTheory.Semisimple.Multiplicity
 
 /-!
