@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.Lie.Semisimple.Defs
 public import Mathlib.Algebra.Lie.Weights.Basic
-public import Mathlib.Algebra.Module.Submodule.Bilinear
+public import Mathlib.RingTheory.Finiteness.Bilinear
 
 public section
 
@@ -101,13 +101,6 @@ theorem mem_locallyNilpotentSubmodule {x : L} {hx : IsNilpotent (ad R L x)} {m :
   change m ∈ (toEnd R L M x).maxGenEigenspace 0 ↔ _
   simp
 
-omit [LieAlgebra R L] [LieModule R L M] in
-/-- A Lie submodule of an irreducible module that contains a nonzero vector is everything. -/
-private theorem eq_top_of_isIrreducible [LieModule.IsIrreducible R L M] {N : LieSubmodule R L M}
-    {m₀ : M} (hm₀ : m₀ ≠ 0) (hmem₀ : m₀ ∈ N) : N = ⊤ :=
-  (IsSimpleOrder.eq_bot_or_eq_top N).resolve_left fun h => hm₀ <| by
-    rw [h] at hmem₀; simpa using hmem₀
-
 /-- **Local nilpotence spreads over an irreducible module.** If `ad x` is nilpotent and some
 nonzero vector of an irreducible module `M` is annihilated by a power of `x`, then every vector of
 `M` is. -/
@@ -115,8 +108,10 @@ theorem exists_pow_toEnd_eq_zero_of_isIrreducible [LieModule.IsIrreducible R L M
     (hx : IsNilpotent (ad R L x)) {m₀ : M} (hm₀ : m₀ ≠ 0) {k₀ : ℕ}
     (hk₀ : ((toEnd R L M x) ^ k₀) m₀ = 0) (m : M) :
     ∃ k : ℕ, ((toEnd R L M x) ^ k) m = 0 := by
-  have htop := eq_top_of_isIrreducible (N := locallyNilpotentSubmodule R M x hx) hm₀
-    (mem_locallyNilpotentSubmodule.mpr ⟨k₀, hk₀⟩)
+  have : Nontrivial (locallyNilpotentSubmodule R M x hx) :=
+    nontrivial_of_ne ⟨m₀, mem_locallyNilpotentSubmodule.mpr ⟨k₀, hk₀⟩⟩ 0
+      (by simpa [Subtype.ext_iff] using hm₀)
+  have htop := (locallyNilpotentSubmodule R M x hx).eq_top_of_isIrreducible R L M
   exact mem_locallyNilpotentSubmodule.mp (htop ▸ LieSubmodule.mem_top m)
 
 /-! ### Locally finite vectors -/
@@ -148,17 +143,14 @@ def locallyFiniteSubmodule [Module.Finite R L] (S : Set L) : LieSubmodule R L M 
     exact ⟨N, hfg, hst, N.smul_mem c ha⟩
   lie_mem := by
     rintro y m ⟨N, hfg, hst, hm⟩
-    classical
-    obtain ⟨sL, hsL⟩ := (Module.finite_def (R := R) (M := L)).mp ‹_›
-    obtain ⟨sM, hsM⟩ := id hfg
     let br : L →ₗ[R] M →ₗ[R] M :=
       LinearMap.mk₂ R (fun (z : L) (u : M) => ⁅z, u⁆) add_lie smul_lie lie_add lie_smul
     set Q : Submodule R M := Submodule.map₂ br ⊤ N with hQ
     have hbr : ∀ (z : L) {u : M}, u ∈ N → ⁅z, u⁆ ∈ Q := fun z u hu =>
       Submodule.apply_mem_map₂ br Submodule.mem_top hu
     have hQfg : Q.FG := by
-      rw [hQ, ← hsL, ← hsM, Submodule.map₂_span_span]
-      exact Submodule.fg_span (Set.Finite.image2 _ sL.finite_toSet sM.finite_toSet)
+      rw [hQ]
+      exact Module.Finite.fg_top.map₂ br hfg
     refine ⟨N ⊔ Q, hfg.sup hQfg, fun x hx => ?_, Submodule.mem_sup_right (hbr y hm)⟩
     rw [← map_toEnd_le_iff, Submodule.map_sup]
     refine sup_le (((map_toEnd_le_iff).mpr (hst x hx)).trans le_sup_left) ?_
@@ -196,6 +188,9 @@ theorem locallyFiniteSubmodule_eq_top_of_isIrreducible [Module.Finite R L]
     [LieModule.IsIrreducible R L M] {S : Set L} {N₀ : Submodule R M} (hfg₀ : N₀.FG)
     (hst₀ : ∀ x ∈ S, ∀ u ∈ N₀, ⁅x, u⁆ ∈ N₀) {m₀ : M} (hm₀ : m₀ ≠ 0) (hmem₀ : m₀ ∈ N₀) :
     locallyFiniteSubmodule R M S = ⊤ :=
-  eq_top_of_isIrreducible hm₀ (mem_locallyFiniteSubmodule.mpr ⟨N₀, hfg₀, hst₀, hmem₀⟩)
+  have : Nontrivial (locallyFiniteSubmodule R M S) :=
+    nontrivial_of_ne ⟨m₀, mem_locallyFiniteSubmodule.mpr ⟨N₀, hfg₀, hst₀, hmem₀⟩⟩ 0
+      (by simpa [Subtype.ext_iff] using hm₀)
+  (locallyFiniteSubmodule R M S).eq_top_of_isIrreducible R L M
 
 end TauCeti
