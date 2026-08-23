@@ -150,6 +150,58 @@ theorem W2p.hessian_coe (u : W2p mu Omega p) :
     W2p.hessian u = WithLp.snd (u : Sobolev2JetLp mu Omega p) :=
   WeakDerivStep.weakFDeriv_coe (W1p.gradientL (mu := mu) (Omega := Omega) (p := p)) u
 
+/-- The order-two equivalence identifies the generic lower-order projection with `firstOrder`. -/
+theorem Wkp.firstOrder_orderTwoEquivW2p (u : Wkp mu Omega p 2) :
+    W2p.firstOrder
+        (Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p) u) =
+      Wkp.lowerOrder 1 u := by
+  rw [W2p.firstOrder_coe, Wkp.lowerOrder_succ, WeakDerivStep.prev_coe]
+  congr 1
+
+/-- The order-two equivalence identifies the generic highest derivative with the Hessian. -/
+theorem Wkp.hessian_orderTwoEquivW2p (u : Wkp mu Omega p 2) :
+    W2p.hessian
+        (Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p) u) =
+      Wkp.deriv 1 u := by
+  rw [W2p.hessian_coe, Wkp.deriv_succ, WeakDerivStep.weakFDeriv_coe]
+  congr 1
+
+/-- The inverse order-two equivalence identifies `firstOrder` with the generic lower-order
+projection. -/
+theorem Wkp.lowerOrder_orderTwoEquivW2p_symm (u : W2p mu Omega p) :
+    Wkp.lowerOrder 1
+        ((Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p)).symm u) =
+      W2p.firstOrder u := by
+  have h := Wkp.firstOrder_orderTwoEquivW2p
+    ((Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p)).symm u)
+  simpa only [ContinuousLinearEquiv.apply_symm_apply] using h.symm
+
+/-- The inverse order-two equivalence identifies the Hessian with the generic highest
+derivative. -/
+theorem Wkp.deriv_orderTwoEquivW2p_symm (u : W2p mu Omega p) :
+    Wkp.deriv 1
+        ((Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p)).symm u) =
+      W2p.hessian u := by
+  have h := Wkp.hessian_orderTwoEquivW2p
+    ((Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p)).symm u)
+  simpa only [ContinuousLinearEquiv.apply_symm_apply] using h.symm
+
+/-- The order-two equivalence preserves the underlying `Lᵖ` value. -/
+theorem Wkp.value_orderTwoEquivW2p (u : Wkp mu Omega p 2) :
+    W1p.value (W2p.firstOrder
+      (Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p) u)) = Wkp.value 2 u := by
+  rw [Wkp.firstOrder_orderTwoEquivW2p, Wkp.value_succ]
+  simp only [Wkp.value_succ, Wkp.value_zero, Wkp.lowerOrder_zero]
+
+/-- The inverse order-two equivalence preserves the underlying `Lᵖ` value. -/
+theorem Wkp.value_orderTwoEquivW2p_symm (u : W2p mu Omega p) :
+    Wkp.value 2
+        ((Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p)).symm u) =
+      W1p.value (W2p.firstOrder u) := by
+  have h := Wkp.value_orderTwoEquivW2p
+    ((Wkp.orderTwoEquivW2p (mu := mu) (Omega := Omega) (p := p)).symm u)
+  simpa only [ContinuousLinearEquiv.apply_symm_apply] using h.symm
+
 /-- Construct a second-order Sobolev function from a first-order Sobolev function and a weak
 Hessian. -/
 def W2p.mk (u : W1p mu Omega p) (H : Lp (E →L[ℝ] E) p (mu.restrict Omega))
