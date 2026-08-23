@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Localization.Module
+public import TauCeti.Algebra.Polynomial.CommonXPower
 public import TauCeti.FieldTheory.FunctionField.Basic
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
-public import TauCeti.FieldTheory.FunctionField.Place.Polynomial
 public import TauCeti.FieldTheory.IntermediateField.Adjoin.Inv
 
 /-!
