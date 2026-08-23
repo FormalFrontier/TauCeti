@@ -31,6 +31,8 @@ product then identifies `coact m` with a tensor in `N ⊗ C`.
 * `Submodule.coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange`: pointwise
   stability implies the tensor-product stability condition defining a subcomodule.
 * `TauCeti.Subcomodule.ofEndOfPointStable`: promote a point-stable submodule to a subcomodule.
+* `TauCeti.Subcomodule.endOfPoint_mapsTo_baseChange`: every algebra-valued point preserves
+  the scalar extension of a subcomodule.
 
 ## References
 
@@ -104,8 +106,8 @@ theorem coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange
       rw [map_zero] at heval
       have hcoeff :
           g (Comodule.matrixCoefficient (R := k) (C := C) (φ.comp q) m) = 0 := by
-        rw [TauCeti.baseChangeEvaluation_one_tmul_baseChange] at heval
-        simpa using heval
+        rw [TauCeti.Module.Dual.baseChangeEvaluation_one_tmul_baseChange] at heval
+        simpa only [Comodule.baseChangeEvaluation_endOfPoint_tmul, one_mul] using heval
       rw [map_zero]
       rw [← hcoeff]
       congr 1
@@ -133,12 +135,7 @@ theorem coact_mem_range_of_forall_endOfPoint_tmul_mem_baseChange
       LinearMap.ker (LinearMap.rTensor C q) := by
     rw [LinearMap.mem_ker]
     exact hz
-  have hexact : Function.Exact N.subtype q := LinearMap.exact_subtype_mkQ N
-  have hrange : LinearMap.ker (LinearMap.rTensor C q) =
-      LinearMap.range (LinearMap.rTensor C N.subtype) :=
-    Function.Exact.linearMap_ker_eq
-      (rTensor_exact C hexact (Submodule.mkQ_surjective N))
-  rw [hrange] at hzker
+  rw [rTensor_mkQ C N] at hzker
   simpa [LinearMap.rTensor_def] using hzker
 
 end Submodule
@@ -173,6 +170,22 @@ theorem endOfPoint_tmul_mem_baseChange (N : Subcomodule R C M) (g : C →ₐ[R] 
   obtain ⟨t, ht⟩ := N.coact_mem hm
   rw [Comodule.endOfPoint_tmul, ← ht]
   exact hmap t
+
+/-- Every algebra-valued point maps the scalar extension of a subcomodule into itself. -/
+theorem endOfPoint_mapsTo_baseChange (N : Subcomodule R C M) (g : C →ₐ[R] A) :
+    Set.MapsTo (Comodule.endOfPoint M g) (N.toSubmodule.baseChange A)
+      (N.toSubmodule.baseChange A) := by
+  intro x hx
+  rw [Submodule.baseChange] at hx
+  obtain ⟨t, rfl⟩ := hx
+  induction t using TensorProduct.induction_on with
+  | zero => simp
+  | add s t hs ht =>
+      rw [map_add, map_add]
+      exact (N.toSubmodule.baseChange A).add_mem hs ht
+  | tmul a m =>
+      rw [LinearMap.baseChange_tmul]
+      exact N.endOfPoint_tmul_mem_baseChange g a m.2
 
 end Preservation
 
