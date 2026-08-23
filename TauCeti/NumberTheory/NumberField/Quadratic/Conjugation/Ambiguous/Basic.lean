@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.NumberField.InfinitePlace
+public import TauCeti.NumberTheory.NumberField.TotallyPositive
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.ClassGroup
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Hilbert90
 
@@ -34,12 +34,14 @@ The proof is Hilbert's Theorem 90 for the quadratic extension `K/ℚ`, in the el
 available for a degree-two extension. If `[σJ] = [J]` then `(x) σJ = (y) J` for nonzero
 `x y : 𝓞 K`; conjugating and cancelling gives `(x σx) = (y σy)`, so `x σx` and `y σy` are
 associates. The unit relating them has norm the square of the rational `N(y) / N(x)`, and in a
-**totally complex** field the norm of a nonzero element is strictly positive
-(`NumberField.norm_pos_of_isTotallyComplex`), which forces `x σx = y σy` on the nose. Hilbert 90
-then produces `ε ≠ 0` with `x ε = y σε`, and `I = (ε) J` is an ambiguous ideal in `J`'s class. For a
-*real* quadratic field the positivity fails — that is exactly where the classical unit index
-`[E : E ∩ N K^×]` enters the ambiguous class number formula — so the hypothesis
-`IsTotallyComplex K` is essential rather than technical.
+**totally complex** field total positivity is vacuous, so the norm of a nonzero element is strictly
+positive (`NumberField.norm_pos_of_isTotallyPositive`), which forces `x σx = y σy` on the nose.
+Hilbert 90 then produces `ε ≠ 0` with `x ε = y σε`, and `I = (ε) J` is an ambiguous ideal in `J`'s
+class. For a *real* quadratic field the positivity fails — that is exactly where the classical
+unit index `[E : E ∩ N K^×]` enters the ambiguous class number formula — so the hypothesis
+`IsTotallyComplex K` is essential rather than technical. The repair is to pass to the **narrow**
+class group, where total positivity restores the sign for every quadratic field; see
+`Quadratic/Conjugation/Ambiguous/Narrow.lean`.
 
 The integral Hilbert 90 result used below is proved in `Quadratic.Conjugation.Hilbert90`.
 
@@ -49,6 +51,8 @@ ambiguous class number formula.
 
 ## Main results
 
+* `NumberField.mul_ringOfIntegersQuadraticConj_eq_mul_ringOfIntegersQuadraticConj_of_associated`:
+  associated norms with a positive norm product are equal, the archimedean input to the descent.
 * `NumberField.exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one`: a `2`-torsion ideal
   class of an imaginary quadratic field is the class of an ambiguous ideal.
 * `NumberField.classGroupMk0_sq_eq_one_of_map_ringOfIntegersQuadraticConj_eq_self`: conversely, the
@@ -75,13 +79,18 @@ theorem _root_.Ideal.map_map_of_involutive {R : Type*} [CommSemiring R] {f : R �
   rw [← Ideal.map_coe (f := f) I, ← Ideal.map_coe (f := f) (Ideal.map (f : R →+* R) I),
     Ideal.map_map, hcomp, Ideal.map_id]
 
-/-- **Two elements of an imaginary quadratic field with associated norms have equal norms.** If
-`x σx` and `y σy` are associates in `𝓞 K` then they are equal: their ratio is a unit whose norm is
-the square of a positive rational, hence `1`. This is the step where total complexity of `K` enters;
-over a real quadratic field the unit could have norm `-1`. -/
-private theorem mul_conj_eq_mul_conj_of_associated [IsTotallyComplex K]
+/-- **Two elements with associated norms and positive norm product have equal norms.** If
+`x σx` and `y σy` are associates in `𝓞 K` and the norm of `x y` is positive, then `x σx = y σy`:
+their ratio is a unit whose norm is the square of the rational `N(y) / N(x)`, so `N(x) = ± N(y)`,
+and the sign is fixed by `0 < N(x) N(y)`.
+
+This is where the archimedean input enters the ambiguous class number formula. For a totally complex
+field the norm of a nonzero element is automatically positive; for a real quadratic field the
+positivity has to come from total positivity of `x y`, which is what the *narrow* class group
+supplies. -/
+theorem mul_ringOfIntegersQuadraticConj_eq_mul_ringOfIntegersQuadraticConj_of_associated
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) {x y : 𝓞 K}
-    (hx : x ≠ 0) (hy : y ≠ 0)
+    (hnorm : 0 < Algebra.norm ℚ ((x : K) * (y : K)))
     (hassoc : Associated (x * ringOfIntegersQuadraticConj hmin hgen x)
       (y * ringOfIntegersQuadraticConj hmin hgen y)) :
     x * ringOfIntegersQuadraticConj hmin hgen x =
@@ -89,8 +98,7 @@ private theorem mul_conj_eq_mul_conj_of_associated [IsTotallyComplex K]
   obtain ⟨u, hu⟩ := hassoc
   set nx := Algebra.norm ℚ (algebraMap (𝓞 K) K x) with hnx
   set ny := Algebra.norm ℚ (algebraMap (𝓞 K) K y) with hny
-  have hxpos : 0 < nx := norm_pos_of_isTotallyComplex (RingOfIntegers.coe_ne_zero_iff.mpr hx)
-  have hypos : 0 < ny := norm_pos_of_isTotallyComplex (RingOfIntegers.coe_ne_zero_iff.mpr hy)
+  have hprod : 0 < nx * ny := by rw [hnx, hny, ← map_mul]; exact hnorm
   -- Passing to `K`, the associating unit satisfies `nx · u = ny`.
   have hK : algebraMap ℚ K nx * algebraMap (𝓞 K) K (u : 𝓞 K) = algebraMap ℚ K ny := by
     have h := congrArg (algebraMap (𝓞 K) K) hu
@@ -115,9 +123,9 @@ private theorem mul_conj_eq_mul_conj_of_associated [IsTotallyComplex K]
     rcases hnormu with h | h
     · rw [h, mul_one] at hsq
       have hfac : (nx - ny) * (nx + ny) = 0 := by linear_combination hsq
-      rcases mul_eq_zero.mp hfac with h' | h' <;> linarith
+      rcases mul_eq_zero.mp hfac with h' | h' <;> nlinarith [hprod, sq_nonneg nx]
     · rw [h] at hsq
-      nlinarith
+      nlinarith [hprod, sq_nonneg nx, sq_nonneg ny]
   apply RingOfIntegers.coe_injective
   rw [← algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj hmin hgen x,
     ← algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj hmin hgen y, ← hnx, ← hny, hnxny]
@@ -169,7 +177,10 @@ theorem exists_map_ringOfIntegersQuadraticConj_eq_self_of_sq_eq_one [IsTotallyCo
       _ = Ideal.span {y} * (Ideal.span {σ y} * Ideal.map σ (J : Ideal (𝓞 K))) := by rw [hxy2]
       _ = Ideal.span {y} * Ideal.span {σ y} * Ideal.map σ (J : Ideal (𝓞 K)) := by ring
   have hnorm : x * σ x = y * σ y :=
-    mul_conj_eq_mul_conj_of_associated hmin hgen hx hy
+    mul_ringOfIntegersQuadraticConj_eq_mul_ringOfIntegersQuadraticConj_of_associated hmin hgen
+      (norm_pos_of_isTotallyPositive (by
+        simpa using mul_ne_zero (RingOfIntegers.coe_ne_zero_iff.mpr hx)
+          (RingOfIntegers.coe_ne_zero_iff.mpr hy)) (by simp))
       (Ideal.span_singleton_eq_span_singleton.mp hspan)
   -- Hilbert 90 produces the twisting element.
   obtain ⟨ε, hε0, hε⟩ := exists_ne_zero_mul_eq_mul_ringOfIntegersQuadraticConj hmin hgen hx hnorm

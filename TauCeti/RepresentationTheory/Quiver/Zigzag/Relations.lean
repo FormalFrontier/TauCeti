@@ -104,6 +104,10 @@ noncomputable def quadraticZigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQu
 noncomputable def zigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQuiver G)) :=
   TwoSidedIdeal.span {x | IsZigzagRelator k G x}
 
+/-- The uniform relation ideal is the two-sided span of the uniform relators. -/
+theorem zigzagIdeal_eq_span :
+    zigzagIdeal k G = TwoSidedIdeal.span {x | IsZigzagRelator k G x} := (rfl)
+
 /-- Every quadratic relator lies in the ideal it spans. -/
 theorem mem_quadraticZigzagIdeal_of_isQuadraticZigzagRelator
     {x : pathAlgebra k (DoubledQuiver G)} (hx : IsQuadraticZigzagRelator k G x) :

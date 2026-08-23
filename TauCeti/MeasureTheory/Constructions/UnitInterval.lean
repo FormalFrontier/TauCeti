@@ -165,6 +165,28 @@ theorem volume_preimage_cellIdx (hi : i < m) :
 variable {V E : Type*} [Fintype V] [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
 
 open scoped Classical in
+/-- **The cells cut the cube into products of fibres, exactly one of which holds a given point.**
+Evaluating a function on the cell indices of `x` is the same as summing its indicator contributions
+over the products `univ.pi fun v => cellIdx m ⁻¹' {ψ v}` indexed by all `#V`-tuples of cells.
+
+Nothing measure-theoretic is involved: the boxes are just preimages of the cell map, and `E` needs
+only the additive structure that `Set.indicator` and the sum require. -/
+private theorem pi_comp_cellIdx_eq_sum_indicator {V E : Type*} [Fintype V] [AddCommMonoid E]
+    (hm : 0 < m)
+    (f : (V → ℕ) → E) (x : V → I) :
+    f (fun v => cellIdx m (x v))
+      = ∑ ψ : V → Fin m, (univ.pi fun v => cellIdx m ⁻¹' {((ψ v : ℕ))}).indicator
+          (fun _ => f fun v => (ψ v : ℕ)) x := by
+  set ψ₀ : V → Fin m := fun v => ⟨cellIdx m (x v), cellIdx_lt hm (x v)⟩ with hψ₀
+  -- membership in the box of `ψ` pins `ψ` down to `ψ₀`, so the sum is an equality test on the
+  -- index and `Finset.sum_ite_eq` collapses it
+  have hψ : ∀ ψ : V → Fin m,
+      x ∈ (univ.pi fun v => cellIdx m ⁻¹' {((ψ v : ℕ))}) ↔ ψ₀ = ψ := by
+    intro ψ
+    simp [hψ₀, Set.mem_pi, funext_iff, Fin.ext_iff, eq_comm]
+  simp [Set.indicator_apply, hψ, hψ₀]
+
+open scoped Classical in
 /-- **Independent uniform points, read through their cells.** The integral of a function of the
 cell indices of `#V` independent uniform points on `[0, 1]` is the average of that function over
 all `#V`-tuples of cells.
@@ -177,44 +199,24 @@ theorem integral_pi_comp_cellIdx_eq_inv_smul_sum (hm : 0 < m) (f : (V → ℕ) �
     ∫ x : V → I, f (fun v => cellIdx m (x v)) ∂(Measure.pi fun _ : V => (volume : Measure I))
       = ((m : ℝ) ^ Fintype.card V)⁻¹ • ∑ ψ : V → Fin m, f fun v => (ψ v : ℕ) := by
   classical
-  set box : (V → Fin m) → Set (V → I) :=
-    fun ψ => univ.pi fun v => cellIdx m ⁻¹' {((ψ v : ℕ))} with hbox
-  have hboxMeas : ∀ ψ, MeasurableSet (box ψ) := fun ψ =>
+  have hboxMeas : ∀ ψ : V → Fin m,
+      MeasurableSet (univ.pi fun v => cellIdx m ⁻¹' {((ψ v : ℕ))}) := fun ψ =>
     MeasurableSet.univ_pi fun v => measurableSet_preimage_cellIdx m _
-  have hboxVol : ∀ ψ, (Measure.pi fun _ : V => (volume : Measure I)) (box ψ)
-      = ((m : ℝ≥0∞)⁻¹) ^ Fintype.card V := by
+  have hboxVol : ∀ ψ : V → Fin m,
+      (Measure.pi fun _ : V => (volume : Measure I))
+          (univ.pi fun v => cellIdx m ⁻¹' {((ψ v : ℕ))})
+        = ((m : ℝ≥0∞)⁻¹) ^ Fintype.card V := by
     intro ψ
-    rw [hbox, Measure.pi_pi]
+    rw [Measure.pi_pi]
     simp [volume_preimage_cellIdx (ψ _).isLt, Finset.prod_const]
-  -- decompose the integrand into the cell boxes, exactly one of which contains a given point
-  have key : ∀ x : V → I, f (fun v => cellIdx m (x v))
-      = ∑ ψ : V → Fin m, (box ψ).indicator (fun _ => f fun v => (ψ v : ℕ)) x := by
-    intro x
-    set ψ₀ : V → Fin m := fun v => ⟨cellIdx m (x v), cellIdx_lt hm (x v)⟩ with hψ₀
-    rw [Finset.sum_eq_single ψ₀]
-    · have hx : x ∈ box ψ₀ := by
-        rw [hbox]
-        intro v _
-        rw [Set.mem_preimage, Set.mem_singleton_iff, hψ₀]
-      calc
-        f (fun v => cellIdx m (x v)) = f (fun v => (ψ₀ v : ℕ)) := by
-          simp only [hψ₀, Fin.val_mk]
-        _ = (box ψ₀).indicator (fun _ => f fun v => (ψ₀ v : ℕ)) x :=
-          (indicator_of_mem hx (fun _ => f fun v => (ψ₀ v : ℕ))).symm
-    · intro ψ _ hne
-      refine indicator_of_notMem (fun hmem => hne ?_) _
-      funext v
-      apply Fin.val_injective
-      rw [hψ₀]
-      exact (Set.mem_singleton_iff.mp (Set.mem_preimage.1 (hmem v (mem_univ v)))).symm
-    · intro h
-      exact absurd (Finset.mem_univ ψ₀) h
   calc ∫ x : V → I, f (fun v => cellIdx m (x v)) ∂(Measure.pi fun _ : V => (volume : Measure I))
       = ∑ ψ : V → Fin m,
-          ∫ x : V → I, (box ψ).indicator (fun _ => f fun v => (ψ v : ℕ)) x
+          ∫ x : V → I, (univ.pi fun v => cellIdx m ⁻¹' {((ψ v : ℕ))}).indicator
+              (fun _ => f fun v => (ψ v : ℕ)) x
             ∂(Measure.pi fun _ : V => (volume : Measure I)) := by
         rw [← integral_finsetSum _ fun ψ _ => (integrable_const _).indicator (hboxMeas ψ)]
-        exact integral_congr_ae (Filter.Eventually.of_forall key)
+        exact integral_congr_ae
+          (Filter.Eventually.of_forall (pi_comp_cellIdx_eq_sum_indicator hm f))
     _ = ∑ ψ : V → Fin m, ((m : ℝ)⁻¹) ^ Fintype.card V • f fun v => (ψ v : ℕ) := by
         refine Finset.sum_congr rfl fun ψ _ => ?_
         rw [integral_indicator_const _ (hboxMeas ψ), measureReal_def, hboxVol ψ]

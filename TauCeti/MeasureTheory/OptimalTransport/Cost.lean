@@ -6,8 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
-public import Mathlib.MeasureTheory.Integral.Lebesgue.Map
-public import TauCeti.MeasureTheory.OptimalTransport.Coupling
+public import TauCeti.MeasureTheory.OptimalTransport.GraphPlan
 
 /-!
 # The transport cost of two measures
@@ -48,12 +47,12 @@ large on every plan; the two are separated by
 * `TauCeti.transportCost_dirac_left`, `TauCeti.transportCost_dirac_right` and
   `TauCeti.transportCost_dirac_dirac` — the exact value when either marginal is a Dirac
   measure, where the plan is unique;
-* `TauCeti.transportCost_map_le_lintegral` — the Monge-to-Kantorovich inequality: the transport
-  cost of `μ` and a pushforward `μ.map T` is at most the cost `∫⁻ x, c (x, T x) ∂μ` of the map
-  `T` itself;
 * `TauCeti.isOptimalCoupling_iff` — optimality is minimality among feasible plans, so it does
   not depend on the value `transportCost c μ ν` being finite, with the left and right Dirac
-  lemmas giving the first families of optimal plans.
+  lemmas giving the first families of optimal plans;
+* `TauCeti.transportCost_le_lintegral_of_hasLaw` — the Monge-to-Kantorovich inequality: the
+  transport cost of `μ` and `ν` is at most the cost `∫⁻ x, c (x, T x) ∂μ` of any transport map
+  `T` from `μ` to `ν`, with `TauCeti.isOptimalCoupling_graphPlan_iff` its equality case.
 
 ## Implementation notes
 
@@ -69,8 +68,14 @@ so a `μ.prod ν`-null set can carry all the mass of some competitor. This is wh
 
 Measurability of the cost is assumed only where it is used, namely in the theorems that move an
 integral along a pushforward (`TauCeti.transportCost_comp_swap`,
-`TauCeti.transportCost_comp_prodMap`, the Dirac formulas and
-`TauCeti.transportCost_map_le_lintegral`). The order-theoretic API needs none.
+`TauCeti.transportCost_comp_prodMap` and the Dirac formulas). The order-theoretic API needs
+none.
+
+The Monge-to-Kantorovich inequality is a statement about the transport cost, so it is stated
+here; the graph plan that witnesses it and the change of variables it uses come from
+`TauCeti/MeasureTheory/OptimalTransport/GraphPlan.lean`, which is below this module. Its
+inequality half needs no measurability of the cost at all, since only one half of the change of
+variables, `MeasureTheory.lintegral_map_le`, is used.
 
 This supplies the nonnegative-cost interface from Layer 1, item 1 of the optimal-transport
 roadmap. The parallel signed `EReal` interface for costs bounded below by an integrable split
@@ -89,7 +94,7 @@ public section
 
 noncomputable section
 
-open MeasureTheory Set
+open MeasureTheory ProbabilityTheory Set
 open scoped ENNReal
 
 namespace TauCeti
@@ -98,7 +103,8 @@ universe u v w
 
 variable {X : Type u} {Y : Type v} {X' : Type w} {Y' : Type*}
   [MeasurableSpace X] [MeasurableSpace Y] [MeasurableSpace X'] [MeasurableSpace Y']
-  {c c' : X × Y → ℝ≥0∞} {π σ : Measure (X × Y)} {μ : Measure X} {ν : Measure Y} {a : ℝ≥0∞}
+  {c c' : X × Y → ℝ≥0∞} {π σ : Measure (X × Y)} {μ : Measure X} {ν : Measure Y} {T : X → Y}
+  {a : ℝ≥0∞}
 
 /-- The transport cost of `μ` and `ν` for the cost function `c`: the infimum of `∫⁻ z, c z ∂π`
 over the couplings `π` of `μ` and `ν`. It is `∞` when `μ` and `ν` have no coupling at all. -/
@@ -283,17 +289,6 @@ theorem transportCost_dirac_dirac (hc : Measurable c) (x : X) (y : Y) :
 
 end Dirac
 
-/-- **The Monge problem dominates the Kantorovich problem**: the graph plan of a measurable map
-`T` is a coupling of `μ` and `μ.map T`, so the transport cost of that pair is at most the cost
-of `T` itself. -/
-theorem transportCost_map_le_lintegral {T : X → Y} (hT : Measurable T) (hc : Measurable c)
-    (μ : Measure X) : transportCost c μ (μ.map T) ≤ ∫⁻ x, c (x, T x) ∂μ := by
-  have hgraph : IsCoupling (μ.map fun x ↦ (x, T x)) μ (μ.map T) :=
-    ⟨by rw [Measure.fst_map_prodMk hT, Measure.map_id'], Measure.snd_map_prodMk measurable_id⟩
-  calc transportCost c μ (μ.map T) ≤ ∫⁻ z, c z ∂μ.map fun x ↦ (x, T x) :=
-      transportCost_le_lintegral hgraph _
-    _ = ∫⁻ x, c (x, T x) ∂μ := lintegral_map hc (measurable_id.prodMk hT)
-
 /-- `IsOptimalCoupling c π μ ν` says that the plan `π` solves the primal transport problem: it
 couples `μ` and `ν`, and its cost is the transport cost of the pair. The optimal plans are the
 set cut out by this predicate. -/
@@ -360,5 +355,28 @@ theorem IsCoupling.isOptimalCoupling_dirac_right [IsProbabilityMeasure μ] (hc :
     MeasurableEquiv.map_map_symm (ν := π) MeasurableEquiv.prodComm
   rw [hmap] at hπ''
   simpa [Function.comp_def] using hπ''
+
+section Monge
+
+/-- **The Monge problem dominates the Kantorovich problem**: the transport cost of `μ` and `ν`
+is at most the cost of any transport map from `μ` to `ν`, that is, of any map whose graph plan
+`TauCeti.graphPlan` is a coupling of the two. Only one half of the change of variables is
+needed, `MeasureTheory.lintegral_map_le`, so the cost needs no measurability. -/
+theorem transportCost_le_lintegral_of_hasLaw (hT : HasLaw T ν μ) (c : X × Y → ℝ≥0∞) :
+    transportCost c μ ν ≤ ∫⁻ x, c (x, T x) ∂μ := by
+  refine (transportCost_le_lintegral (isCoupling_graphPlan hT) c).trans ?_
+  rw [graphPlan_def]
+  exact lintegral_map_le _ _
+
+/-- The graph plan of a transport map is an optimal plan exactly when the transport cost equals
+the cost of the map: the equality case of `TauCeti.transportCost_le_lintegral_of_hasLaw`. -/
+theorem isOptimalCoupling_graphPlan_iff (hT : HasLaw T ν μ)
+    (hc : AEMeasurable c (graphPlan T μ)) :
+    IsOptimalCoupling c (graphPlan T μ) μ ν ↔ transportCost c μ ν = ∫⁻ x, c (x, T x) ∂μ := by
+  refine ⟨fun h ↦ ?_, fun h ↦ ⟨isCoupling_graphPlan hT, ?_⟩⟩
+  · rw [← h.lintegral_eq, lintegral_graphPlan hT.aemeasurable hc]
+  · rw [lintegral_graphPlan hT.aemeasurable hc, h]
+
+end Monge
 
 end TauCeti
