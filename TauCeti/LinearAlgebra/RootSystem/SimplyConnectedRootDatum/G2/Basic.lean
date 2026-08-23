@@ -36,12 +36,18 @@ also make the reflection-stability axioms of `RootPairing` decidable finite calc
 ## Main definitions and results
 
 * `TauCeti.DynkinType.g2SimplyConnectedRootDatum` is the pinned twelve-root datum, with `g2Root`
-  and `g2Coroot` its coordinate tables and `g2SimplyConnectedRootDatum_root`,
+  and `g2Coroot` its coordinate tables, `g2Root_apply` and `g2Coroot_apply` their entries, and
+  `g2SimplyConnectedRootDatum_root`,
   `g2SimplyConnectedRootDatum_coroot`, `g2SimplyConnectedRootDatum_toLinearMap` and
   `g2SimplyConnectedRootDatum_pairing` the lemmas that expose them.
 * Its `RootPairing.IsRootSystem` instance records that the roots and the coroots span their
   lattices; coroot spanning is the simply connected condition.
 * Its `RootPairing.IsReduced` instance rules out nontrivial scalar multiples among the roots.
+* `TauCeti.DynkinType.g2Coeff` is the simple-root coordinate table of the twelve roots;
+  `TauCeti.DynkinType.g2Root_eq_smul_add_smul` expands each root along it, and
+  `TauCeti.DynkinType.eq_g2Coeff_of_root_eq` records the uniqueness of that expansion.
+* `TauCeti.DynkinType.linearIndepOn_g2Root_zero_one` records that the two simple roots are
+  linearly independent, which is what makes that expansion unique.
 * `TauCeti.DynkinType.g2SimplyConnectedBase` is its Bourbaki-numbered base.
 * `TauCeti.DynkinType.g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2` pins that numbering
   entrywise: on the two base indices the Cartan integers are the Bourbaki matrix `!![2, -1; -3, 2]`.
@@ -72,12 +78,24 @@ def g2Root : Fin 12 ↪ (Fin 2 → ℤ) where
     ![-2, 1], ![3, -2], ![1, -1], ![-1, 0], ![-3, 1], ![0, -1]]
   inj' := by decide
 
+/-- The explicit entries of the root coordinate table. -/
+theorem g2Root_apply (i : Fin 12) :
+    g2Root i = ![
+      ![2, -1], ![-3, 2], ![-1, 1], ![1, 0], ![3, -1], ![0, 1],
+      ![-2, 1], ![3, -2], ![1, -1], ![-1, 0], ![-3, 1], ![0, -1]] i := (rfl)
+
 /-- The coroots of `G2` in the simple-coroot basis, ordered compatibly with `g2Root`. -/
 def g2Coroot : Fin 12 ↪ (Fin 2 → ℤ) where
   toFun := ![
     ![1, 0], ![0, 1], ![1, 3], ![2, 3], ![1, 1], ![1, 2],
     ![-1, 0], ![0, -1], ![-1, -3], ![-2, -3], ![-1, -1], ![-1, -2]]
   inj' := by decide
+
+/-- The explicit entries of the coroot coordinate table. -/
+theorem g2Coroot_apply (i : Fin 12) :
+    g2Coroot i = ![
+      ![1, 0], ![0, 1], ![1, 3], ![2, 3], ![1, 1], ![1, 2],
+      ![-1, 0], ![0, -1], ![-1, -3], ![-2, -3], ![-1, -1], ![-1, -2]] i := (rfl)
 
 /-- The simple roots of `G2` sit at the first two indices, where they are the rows of its
 Bourbaki-numbered Cartan matrix. -/
@@ -90,6 +108,58 @@ the cocharacter lattice. -/
 @[simp] lemma g2Coroot_castAdd (i : Fin 2) :
     g2Coroot (Fin.castAdd 10 i) = Pi.single i 1 := by
   fin_cases i <;> decide
+
+/-- The simple-root coordinates of the twelve roots of the pinned `G2` datum, in the index order
+of `g2Root`: the positive roots are `alpha1, alpha2, alpha1 + alpha2, 2 alpha1 + alpha2,
+3 alpha1 + alpha2, 3 alpha1 + 2 alpha2`, and index `k + 6` is the negative of index `k`. -/
+def g2Coeff : Fin 12 → (Fin 2 → ℤ) :=
+  ![![1, 0], ![0, 1], ![1, 1], ![2, 1], ![3, 1], ![3, 2],
+    ![-1, 0], ![0, -1], ![-1, -1], ![-2, -1], ![-3, -1], ![-3, -2]]
+
+/-- The explicit entries of the simple-root coefficient table. -/
+theorem g2Coeff_apply (i : Fin 12) :
+    g2Coeff i = ![![1, 0], ![0, 1], ![1, 1], ![2, 1], ![3, 1], ![3, 2],
+      ![-1, 0], ![0, -1], ![-1, -1], ![-2, -1], ![-3, -1], ![-3, -2]] i := (rfl)
+
+/-- Each tabulated root is the tabulated combination of the two simple roots. -/
+theorem g2Root_eq_smul_add_smul (k : Fin 12) :
+    g2Root k = g2Coeff k 0 • g2Root 0 + g2Coeff k 1 • g2Root 1 := by
+  decide +revert
+
+/-- The two simple roots of `G2` are linearly independent. -/
+theorem linearIndepOn_g2Root_zero_one : LinearIndepOn ℤ g2Root ({0, 1} : Set (Fin 12)) := by
+  refine (LinearIndepOn.pair_iff g2Root (by decide : (0 : Fin 12) ≠ 1)).2 ?_
+  intro c d h
+  have h0 : c * 2 + -(d * 3) = 0 := by simpa [g2Root] using congrFun h 0
+  have h1 : -c + d * 2 = 0 := by simpa [g2Root] using congrFun h 1
+  omega
+
+private lemma g2_smul_add_smul_inj {a b a' b' : ℤ}
+    (h : a • g2Root 0 + b • g2Root 1 = a' • g2Root 0 + b' • g2Root 1) : a = a' ∧ b = b' := by
+  exact (LinearIndependent.pair_iff.2 ((LinearIndepOn.pair_iff g2Root
+    (by decide : (0 : Fin 12) ≠ 1)).1 linearIndepOn_g2Root_zero_one)).eq_of_pair h
+
+/-- The two simple roots are linearly independent, so the expansion
+`TauCeti.DynkinType.g2Root_eq_smul_add_smul` determines the coefficients. -/
+theorem eq_g2Coeff_of_root_eq {k : Fin 12} {c : Fin 2 → ℤ}
+    (h : g2Root k = c 0 • g2Root 0 + c 1 • g2Root 1) : c = g2Coeff k := by
+  obtain ⟨h0, h1⟩ := g2_smul_add_smul_inj (h.symm.trans (g2Root_eq_smul_add_smul k))
+  funext i
+  fin_cases i
+  · exact h0
+  · exact h1
+
+/-- The six positive roots come first: their simple-root coordinates are nonnegative. -/
+theorem g2Coeff_nonneg (k : Fin 12) (hk : (k : ℕ) < 6) (i : Fin 2) : 0 ≤ g2Coeff k i := by
+  decide +revert
+
+/-- The six negative roots come last: their simple-root coordinates are nonpositive. -/
+theorem g2Coeff_nonpos (k : Fin 12) (hk : 6 ≤ (k : ℕ)) (i : Fin 2) : g2Coeff k i ≤ 0 := by
+  decide +revert
+
+/-- The last six roots are the negatives of the first six, in simple-root coordinates. -/
+@[simp] theorem g2Coeff_add_six (k : Fin 12) : g2Coeff (k + 6) = -g2Coeff k := by
+  decide +revert
 
 /-- The permutation table for reflection in each of the twelve `G2` roots. -/
 private def g2ReflectionIndex : Fin 12 → Fin 12 → Fin 12 := ![
@@ -230,9 +300,8 @@ private lemma g2Root_mem_or_neg_mem (i : Fin 12) :
       -g2Root i ∈
         AddSubmonoid.closure (g2Root '' (↑({0, 1} : Finset (Fin 12)) : Set (Fin 12))) :=
   mem_or_neg_mem_of_table _
-    ![(true, 1, 0), (true, 0, 1), (true, 1, 1), (true, 2, 1), (true, 3, 1), (true, 3, 2),
-      (false, 1, 0), (false, 0, 1), (false, 1, 1), (false, 2, 1), (false, 3, 1), (false, 3, 2)]
-    (fun j => by fin_cases j <;> ext k <;> fin_cases k <;> norm_num [g2Root]) i
+    (fun k => (decide ((k : ℕ) < 6), (g2Coeff k 0).natAbs, (g2Coeff k 1).natAbs))
+    (fun j => by decide +revert) i
 
 /-- The `G2` coroots are, up to sign, `ℕ`-combinations of the two simple coroots. -/
 private lemma g2Coroot_mem_or_neg_mem (i : Fin 12) :
@@ -241,9 +310,8 @@ private lemma g2Coroot_mem_or_neg_mem (i : Fin 12) :
       -g2Coroot i ∈
         AddSubmonoid.closure (g2Coroot '' (↑({0, 1} : Finset (Fin 12)) : Set (Fin 12))) :=
   mem_or_neg_mem_of_table _
-    ![(true, 1, 0), (true, 0, 1), (true, 1, 3), (true, 2, 3), (true, 1, 1), (true, 1, 2),
-      (false, 1, 0), (false, 0, 1), (false, 1, 3), (false, 2, 3), (false, 1, 1), (false, 1, 2)]
-    (fun j => by fin_cases j <;> ext k <;> fin_cases k <;> norm_num [g2Coroot]) i
+    (fun k => (decide ((k : ℕ) < 6), (g2Coroot k 0).natAbs, (g2Coroot k 1).natAbs))
+    (fun j => by decide +revert) i
 
 /-- The Bourbaki-numbered base of the pinned simply connected `G2` root datum. Its support is the
 first two root indices, short root first and long root second; see
@@ -254,11 +322,7 @@ def g2SimplyConnectedBase : g2SimplyConnectedRootDatum.Base where
     have hli : LinearIndepOn ℤ g2Root
         (↑({0, 1} : Finset (Fin 12)) : Set (Fin 12)) := by
       rw [Finset.coe_insert, Finset.coe_singleton]
-      refine (LinearIndepOn.pair_iff g2Root (by decide : (0 : Fin 12) ≠ 1)).2 ?_
-      intro c d h
-      have h0 : c * 2 + -(d * 3) = 0 := by simpa [g2Root] using congrFun h 0
-      have h1 : -c + d * 2 = 0 := by simpa [g2Root] using congrFun h 1
-      omega
+      exact linearIndepOn_g2Root_zero_one
     simpa only [g2SimplyConnectedRootDatum_root] using hli
   linearIndepOn_coroot := by
     have hli : LinearIndepOn ℤ g2Coroot

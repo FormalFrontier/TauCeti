@@ -82,7 +82,7 @@ mentions a decomposition, an isotypic component, a multiplicity or a `G`-orbit o
 What the file does leave in place is the translation machinery the **Clifford's theorem** milestone
 runs on, since it is the same machinery the semisimplicity statement is proved from; the
 single-orbit half of that milestone is
-`TauCeti/RepresentationTheory/Induction/Clifford/Orbit.lean`.
+`TauCeti/RepresentationTheory/Induction/Clifford/Orbit/Basic.lean`.
 
 The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Representation Theory of
 Finite Groups and Associative Algebras*, §49.
