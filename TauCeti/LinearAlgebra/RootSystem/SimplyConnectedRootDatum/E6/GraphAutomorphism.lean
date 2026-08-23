@@ -29,7 +29,7 @@ automorphism of the pinned root datum. Its restriction to the pinned simple root
 * `TauCeti.DynkinType.e6GraphIndexEquiv`: the induced permutation of all root indices.
 * `TauCeti.DynkinType.e6GraphAut`: the graph automorphism of the pinned simply connected datum.
 * `TauCeti.DynkinType.e6GraphAut_sq`: the automorphism has square one.
-* `TauCeti.DynkinType.image_e6GraphAut_indexEquiv_e6SimplyConnectedBase_support`: the pinned base
+* `TauCeti.DynkinType.image_e6GraphIndexEquiv_e6SimplyConnectedBase_support`: the pinned base
   support is preserved.
 
 ## References
@@ -247,7 +247,7 @@ noncomputable def e6GraphAut : _root_.RootPairing.Aut e6SimplyConnectedRootDatum
 
 /-- The root-index permutation packaged by the type-`E₆` graph automorphism is the separately
 named induced permutation of all roots. -/
-theorem e6GraphAut_indexEquiv : e6GraphAut.indexEquiv = e6GraphIndexEquiv := by
+@[simp] theorem e6GraphAut_indexEquiv : e6GraphAut.indexEquiv = e6GraphIndexEquiv := by
   rw [e6GraphAut]
 
 /-- The character-lattice action of the type-`E₆` graph automorphism permutes the node
@@ -262,13 +262,10 @@ coordinates. -/
     e6GraphAut.coweightMap x i = x (graphPermE6 i) :=
   e6GraphLatticeEquiv_apply x i
 
-/-- The root-index action of the type-`E₆` graph automorphism restricts to the numbered diagram
-involution on the pinned simple roots. -/
-@[simp] theorem e6GraphAut_indexEquiv_e6SimpleIndex (i : Fin 6) :
-    e6GraphAut.indexEquiv (e6SimpleIndex i) = e6SimpleIndex (graphPermE6 i) := by
-  -- Unfold the automorphism field to the separately named induced root permutation before using
-  -- the characteristic equation proved from injectivity of the root embedding.
-  change e6GraphIndexEquiv (e6SimpleIndex i) = e6SimpleIndex (graphPermE6 i)
+/-- The type-`E₆` root permutation restricts to the numbered diagram involution on the pinned
+simple roots. -/
+@[simp] theorem e6GraphIndexEquiv_e6SimpleIndex (i : Fin 6) :
+    e6GraphIndexEquiv (e6SimpleIndex i) = e6SimpleIndex (graphPermE6 i) := by
   apply e6SimplyConnectedRootDatum.root.injective
   rw [← e6GraphLatticeEquiv_root, e6GraphLatticeEquiv_simpleRoot]
 
@@ -289,7 +286,7 @@ theorem e6GraphAut_ne_one : e6GraphAut ≠ 1 := by
   have hsimple : e6SimpleIndex 5 = e6SimpleIndex 0 := by
     calc
       e6SimpleIndex 5 = e6GraphAut.indexEquiv (e6SimpleIndex 0) := by
-        rw [e6GraphAut_indexEquiv_e6SimpleIndex, graphPermE6_apply_zero]
+        rw [e6GraphAut_indexEquiv, e6GraphIndexEquiv_e6SimpleIndex, graphPermE6_apply_zero]
       _ = (1 : _root_.RootPairing.Aut e6SimplyConnectedRootDatum).indexEquiv
           (e6SimpleIndex 0) := congrArg (fun e => e.indexEquiv (e6SimpleIndex 0)) h
       _ = e6SimpleIndex 0 := rfl
@@ -297,10 +294,10 @@ theorem e6GraphAut_ne_one : e6GraphAut ≠ 1 := by
   simp only [e6SimpleIndex_val] at this
   omega
 
-/-- The graph symmetry preserves the support of the pinned type-`E₆` base. Together with
+/-- The induced root permutation preserves the support of the pinned type-`E₆` base. Together with
 `RootPairing.Base.support_map_eq`, this computes the support of the transported base. -/
-@[simp] theorem image_e6GraphAut_indexEquiv_e6SimplyConnectedBase_support :
-    e6SimplyConnectedBase.support.image e6GraphAut.indexEquiv =
+@[simp] theorem image_e6GraphIndexEquiv_e6SimplyConnectedBase_support :
+    e6SimplyConnectedBase.support.image e6GraphIndexEquiv =
       e6SimplyConnectedBase.support := by
   ext i
   simp only [Finset.mem_image]
@@ -311,7 +308,7 @@ theorem e6GraphAut_ne_one : e6GraphAut ≠ 1 := by
     have hja : j = e6SimpleIndex a := by
       apply Fin.ext
       rw [e6SimpleIndex_val]
-    rw [hja, e6GraphAut_indexEquiv_e6SimpleIndex, e6SimpleIndex_val]
+    rw [hja, e6GraphIndexEquiv_e6SimpleIndex, e6SimpleIndex_val]
     exact (graphPermE6 a).isLt
   · intro hi
     rw [mem_e6SimplyConnectedBase_support] at hi
@@ -319,7 +316,7 @@ theorem e6GraphAut_ne_one : e6GraphAut ≠ 1 := by
     refine ⟨e6SimpleIndex (graphPermE6 a), ?_, ?_⟩
     · rw [mem_e6SimplyConnectedBase_support, e6SimpleIndex_val]
       exact (graphPermE6 a).isLt
-    · rw [e6GraphAut_indexEquiv_e6SimpleIndex]
+    · rw [e6GraphIndexEquiv_e6SimpleIndex]
       rw [graphPermE6_apply_apply]
       apply Fin.ext
       rw [e6SimpleIndex_val]
