@@ -29,6 +29,8 @@ on `[0, ∞)`, and its possibly infinite-measure counterpart on `(0, ∞)`.
   API and the bridge `TauCeti.laplaceTransform_eq_mgf` to Mathlib's moment-generating function.
 * `TauCeti.RepresentsLaplace`: the predicate that a finite measure represents a function by its
   Laplace transform on `[0, ∞)`, with `congr`/`add`/`smul`/`unique` API.
+* `TauCeti.representsLaplace_kernel`: the fibres of a finite kernel into `ℝ≥0` are represented
+  by its fibrewise Laplace transform `TauCeti.kernelLaplaceTransform`.
 * `TauCeti.RepresentsLaplaceOnIoi`: the corresponding predicate for a possibly infinite measure
   on `(0, ∞)`, with its basic API and the easy direction of the representation theorem.
 * `TauCeti.isContinuousCompletelyMonotoneOnIoi_laplaceTransform`,
@@ -506,6 +508,32 @@ protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
   rw [laplaceTransform_smul_measure, ENNReal.coe_toReal, ← hf.eq_laplaceTransform ht]
 
 end RepresentsLaplace
+
+/-! ## The fibres of a kernel and their fibrewise Laplace transform -/
+
+section Kernel
+
+variable {V : Type*} [MeasurableSpace V]
+
+/-- The real-valued fibrewise Laplace transform of a finite kernel is the Laplace transform of
+the fibre, in the sense of `TauCeti.laplaceTransform`. -/
+theorem toReal_kernelLaplaceTransform (κ : Kernel V ℝ≥0) [IsFiniteKernel κ] (t : ℝ≥0) (q : V) :
+    (kernelLaplaceTransform κ t q).toReal = laplaceTransform (κ q) (t : ℝ) := by
+  have h := ofReal_integral_eq_lintegral_ofReal (integrable_exp_neg_mul (κ q) t.coe_nonneg)
+    (.of_forall fun p => (Real.exp_pos _).le)
+  rw [laplaceTransform_apply, kernelLaplaceTransform_apply]
+  simp_rw [neg_mul]
+  rw [← h, ENNReal.toReal_ofReal (integral_nonneg fun p => (Real.exp_pos _).le)]
+
+/-- **The fibres of a finite kernel are Laplace-represented by its fibrewise Laplace
+transform.** This is the shape in which a Bernstein argument delivers a kernel prescribed by its
+fibrewise Laplace transforms. -/
+theorem representsLaplace_kernel (κ : Kernel V ℝ≥0) [IsFiniteKernel κ] (q : V) :
+    RepresentsLaplace (κ q) fun t : ℝ => (kernelLaplaceTransform κ t.toNNReal q).toReal := by
+  refine representsLaplace_iff.mpr ⟨inferInstance, fun t ht => ?_⟩
+  rw [toReal_kernelLaplaceTransform, Real.coe_toNNReal t ht]
+
+end Kernel
 
 /-! ## Open-half-line representation predicate -/
 

@@ -6,26 +6,31 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
+public import Mathlib.Probability.Kernel.Defs
 
 /-!
 # The Laplace kernel on `ℝ≥0`
 
 The exponential kernel `p ↦ e^{-xp}` of the Laplace transform on `ℝ≥0`, as a plain function
 and as a bundled bounded continuous function, together with its basic bounds and its
-integrability against finite measures. This lightweight module is shared by the Chafaï
-approximating-measure machinery and the Laplace-representation theory, which otherwise do not
-depend on each other.
+integrability against finite measures. Integrating that exponential kernel against each fibre
+of a *transition* kernel into `ℝ≥0` gives the fibrewise Laplace transform, which is also set up
+here. This lightweight module is shared by the Chafaï approximating-measure machinery and the
+Laplace-representation theory, which otherwise do not depend on each other.
 
 ## Main declarations
 
 * `TauCeti.laplaceKernelBoundedContinuous`: the kernel as a bounded continuous function.
 * `TauCeti.integrable_exp_neg_mul`: the kernel is integrable against any finite measure.
+* `TauCeti.kernelLaplaceTransform`: the fibrewise Laplace transform
+  `q ↦ ∫⁻ p, exp (-t p) ∂(κ q)` of a transition kernel `κ` into `ℝ≥0`, with its measurability,
+  its value at time `0`, and its monotonicity and finiteness bounds.
 -/
 
 public section
 
-open MeasureTheory
-open scoped BoundedContinuousFunction NNReal
+open MeasureTheory ProbabilityTheory
+open scoped BoundedContinuousFunction ENNReal NNReal
 
 namespace TauCeti
 
@@ -66,5 +71,67 @@ lemma integrable_exp_neg_mul (μ : Measure ℝ≥0) [IsFiniteMeasure μ] {x : �
     Integrable (fun p : ℝ≥0 => Real.exp (-(x * (p : ℝ)))) μ := by
   have h := (laplaceKernelBoundedContinuous hx).integrable μ
   rwa [funext (laplaceKernelBoundedContinuous_apply hx)] at h
+
+/-! ## The fibrewise Laplace transform of a kernel -/
+
+section Transform
+
+variable {V : Type*} [MeasurableSpace V]
+
+/-- The **fibrewise Laplace transform** of a kernel `κ` from `V` to `ℝ≥0`: the function
+`q ↦ ∫⁻ p, exp (-t p) ∂(κ q)` on `V`. It is the density that turns a spatial measure into the
+time-`t` spatial slice of the assembled measure on `ℝ≥0 × V`
+(`TauCeti.spatialSlice_timeKernelMeasure`). -/
+noncomputable def kernelLaplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V) : ℝ≥0∞ :=
+  ∫⁻ p, ENNReal.ofReal (Real.exp (-(t : ℝ) * (p : ℝ))) ∂(κ q)
+
+/-- The defining formula for `TauCeti.kernelLaplaceTransform`. Not `@[simp]`: simp should not
+unfold the abstraction into a raw integral. -/
+theorem kernelLaplaceTransform_apply (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V) :
+    kernelLaplaceTransform κ t q = ∫⁻ p, ENNReal.ofReal (Real.exp (-(t : ℝ) * (p : ℝ))) ∂(κ q) :=
+  (rfl)
+
+@[fun_prop]
+theorem measurable_kernelLaplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) :
+    Measurable (kernelLaplaceTransform κ t) := by
+  unfold kernelLaplaceTransform
+  fun_prop
+
+/-- At time `0` the exponential weight is trivial, so the fibrewise Laplace transform is the
+fibrewise total mass. -/
+@[simp]
+theorem kernelLaplaceTransform_zero (κ : Kernel V ℝ≥0) (q : V) :
+    kernelLaplaceTransform κ 0 q = κ q Set.univ := by
+  rw [kernelLaplaceTransform_apply]
+  simp
+
+/-- A Markov kernel has fibrewise Laplace transform `1` at time `0`. -/
+theorem kernelLaplaceTransform_zero_of_isMarkovKernel (κ : Kernel V ℝ≥0) [IsMarkovKernel κ] :
+    kernelLaplaceTransform κ 0 = 1 := by
+  funext q
+  rw [kernelLaplaceTransform_zero, measure_univ, Pi.one_apply]
+
+/-- The fibrewise Laplace transform is bounded by the fibrewise total mass. -/
+theorem kernelLaplaceTransform_le (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V) :
+    kernelLaplaceTransform κ t q ≤ κ q Set.univ := by
+  rw [kernelLaplaceTransform_apply, ← kernelLaplaceTransform_zero κ q,
+    kernelLaplaceTransform_apply]
+  refine lintegral_mono fun p => ENNReal.ofReal_le_ofReal (Real.exp_le_exp.mpr ?_)
+  simpa using mul_nonneg t.coe_nonneg p.coe_nonneg
+
+/-- The fibrewise Laplace transform decreases in time: the weight `exp (-t p)` is nonincreasing
+in `t` at every nonnegative frequency `p`. -/
+theorem kernelLaplaceTransform_antitone (κ : Kernel V ℝ≥0) (q : V) :
+    Antitone fun t : ℝ≥0 => kernelLaplaceTransform κ t q := by
+  intro t u htu
+  refine lintegral_mono fun p => ENNReal.ofReal_le_ofReal (Real.exp_le_exp.mpr ?_)
+  exact mul_le_mul_of_nonneg_right (neg_le_neg (mod_cast htu)) p.coe_nonneg
+
+/-- The fibrewise Laplace transform is finite against a finite kernel. -/
+theorem kernelLaplaceTransform_ne_top (κ : Kernel V ℝ≥0) [IsFiniteKernel κ] (t : ℝ≥0) (q : V) :
+    kernelLaplaceTransform κ t q ≠ ⊤ :=
+  ((kernelLaplaceTransform_le κ t q).trans_lt (measure_lt_top _ _)).ne
+
+end Transform
 
 end TauCeti

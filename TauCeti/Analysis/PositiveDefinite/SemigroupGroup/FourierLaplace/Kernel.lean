@@ -6,17 +6,21 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Measure.Decomposition.RadonNikodym
-public import Mathlib.Probability.Kernel.Disintegration.StandardBorel
+public import TauCeti.Analysis.CompletelyMonotone.Laplace.Kernel
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.FourierLaplace.Slice
-public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice.Measure
+-- Non-public: the standard-Borel conditional kernel and the time-regularity of the spatial
+-- Bochner measures are consumed inside proofs only.
+import Mathlib.Probability.Kernel.Disintegration.StandardBorel
+import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Slice.Measure
 
 /-!
 # Berg--Christensen--Ressel representing measures as time kernels
 
-Let `V` be a finite-dimensional real inner-product space. A measure on `ℝ≥0 × V` is the same
-thing as a measure `μ` on `V` together with a Markov kernel `κ` from `V` to `ℝ≥0`: the pair
-`(μ, κ)` assembles into `TauCeti.timeKernelMeasure μ κ`, and every finite measure on `ℝ≥0 × V`
-arises this way, by disintegration over its spatial marginal. This file reads the
+Let `V` be a finite-dimensional real inner-product space. A measure `μ` on `V` together with a
+Markov kernel `κ` from `V` to `ℝ≥0` assembles into a measure `TauCeti.timeKernelMeasure μ κ` on
+`ℝ≥0 × V`, and conversely every *finite* measure on `ℝ≥0 × V` admits such a disintegration over
+its spatial marginal (`TauCeti.exists_eq_timeKernelMeasure`); the kernel is not literally unique,
+only up to equality almost everywhere for that marginal. This file reads the
 Berg--Christensen--Ressel representation through that correspondence.
 
 The point is that the spatial slice of `timeKernelMeasure μ κ` at time `t` is computed by a
@@ -39,14 +43,14 @@ continuity and alternating finite differences of the slab masses — is in
 
 ## Main declarations
 
-* `TauCeti.kernelLaplaceTransform`: the fibrewise Laplace transform `q ↦ ∫⁻ p, exp (-t p) ∂(κ q)`
-  of a kernel from `V` to `ℝ≥0`, with `TauCeti.representsLaplace_kernel` identifying it with the
-  Laplace transform of `κ q` in the sense of `TauCeti.RepresentsLaplace`.
 * `TauCeti.timeKernelMeasure`: the measure on `ℝ≥0 × V` assembled from a spatial measure and a
   time kernel, with `TauCeti.timeKernelMeasure_prod` evaluating it on measurable rectangles.
 * `TauCeti.spatialSlice_timeKernelMeasure`: **its spatial slices are the fibrewise Laplace
   transforms**, `spatialSlice (timeKernelMeasure μ κ) t = μ.withDensity (kernelLaplaceTransform
-  κ t)`.
+  κ t)`. The fibrewise Laplace transform `TauCeti.kernelLaplaceTransform` itself, and its
+  identification with the Laplace transform of the fibre
+  (`TauCeti.representsLaplace_kernel`), are in the Laplace infrastructure under
+  `TauCeti.Analysis.CompletelyMonotone.Laplace`.
 * `TauCeti.representsLaplaceFourier_timeKernelMeasure`: a kernel whose fibrewise Laplace
   transforms are the densities of the spatial Bochner measures produces a
   Berg--Christensen--Ressel representing measure.
@@ -75,86 +79,6 @@ open MeasureTheory ProbabilityTheory Set
 open scoped ENNReal NNReal
 
 namespace TauCeti
-
-/-! ## The fibrewise Laplace transform of a kernel -/
-
-section Transform
-
-variable {V : Type*} [MeasurableSpace V]
-
-/-- The **fibrewise Laplace transform** of a kernel `κ` from `V` to `ℝ≥0`: the function
-`q ↦ ∫⁻ p, exp (-t p) ∂(κ q)` on `V`. It is the density that turns a spatial measure into the
-time-`t` spatial slice of the assembled measure on `ℝ≥0 × V`
-(`TauCeti.spatialSlice_timeKernelMeasure`). -/
-def kernelLaplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V) : ℝ≥0∞ :=
-  ∫⁻ p, ENNReal.ofReal (Real.exp (-(t : ℝ) * (p : ℝ))) ∂(κ q)
-
-/-- The defining formula for `TauCeti.kernelLaplaceTransform`. Not `@[simp]`: simp should not
-unfold the abstraction into a raw integral. -/
-theorem kernelLaplaceTransform_apply (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V) :
-    kernelLaplaceTransform κ t q = ∫⁻ p, ENNReal.ofReal (Real.exp (-(t : ℝ) * (p : ℝ))) ∂(κ q) :=
-  (rfl)
-
-@[fun_prop]
-theorem measurable_kernelLaplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) :
-    Measurable (kernelLaplaceTransform κ t) := by
-  unfold kernelLaplaceTransform
-  fun_prop
-
-/-- At time `0` the exponential weight is trivial, so the fibrewise Laplace transform is the
-fibrewise total mass. -/
-@[simp]
-theorem kernelLaplaceTransform_zero (κ : Kernel V ℝ≥0) (q : V) :
-    kernelLaplaceTransform κ 0 q = κ q univ := by
-  rw [kernelLaplaceTransform_apply]
-  simp
-
-/-- A Markov kernel has fibrewise Laplace transform `1` at time `0`. -/
-theorem kernelLaplaceTransform_zero_of_isMarkovKernel (κ : Kernel V ℝ≥0) [IsMarkovKernel κ] :
-    kernelLaplaceTransform κ 0 = 1 := by
-  funext q
-  rw [kernelLaplaceTransform_zero, measure_univ, Pi.one_apply]
-
-/-- The fibrewise Laplace transform is bounded by the fibrewise total mass. -/
-theorem kernelLaplaceTransform_le (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V) :
-    kernelLaplaceTransform κ t q ≤ κ q univ := by
-  rw [kernelLaplaceTransform_apply, ← kernelLaplaceTransform_zero κ q,
-    kernelLaplaceTransform_apply]
-  refine lintegral_mono fun p => ENNReal.ofReal_le_ofReal (Real.exp_le_exp.mpr ?_)
-  simpa using mul_nonneg t.coe_nonneg p.coe_nonneg
-
-/-- The fibrewise Laplace transform decreases in time: the weight `exp (-t p)` is nonincreasing
-in `t` at every nonnegative frequency `p`. -/
-theorem kernelLaplaceTransform_antitone (κ : Kernel V ℝ≥0) (q : V) :
-    Antitone fun t : ℝ≥0 => kernelLaplaceTransform κ t q := by
-  intro t u htu
-  refine lintegral_mono fun p => ENNReal.ofReal_le_ofReal (Real.exp_le_exp.mpr ?_)
-  exact mul_le_mul_of_nonneg_right (neg_le_neg (mod_cast htu)) p.coe_nonneg
-
-/-- The fibrewise Laplace transform is finite against a finite kernel. -/
-theorem kernelLaplaceTransform_ne_top (κ : Kernel V ℝ≥0) [IsFiniteKernel κ] (t : ℝ≥0) (q : V) :
-    kernelLaplaceTransform κ t q ≠ ⊤ :=
-  ((kernelLaplaceTransform_le κ t q).trans_lt (measure_lt_top _ _)).ne
-
-/-- The real-valued fibrewise Laplace transform is the Laplace transform of the fibre, in the
-sense of `TauCeti.laplaceTransform`. -/
-theorem toReal_kernelLaplaceTransform (κ : Kernel V ℝ≥0) [IsFiniteKernel κ] (t : ℝ≥0) (q : V) :
-    (kernelLaplaceTransform κ t q).toReal = laplaceTransform (κ q) (t : ℝ) := by
-  have h := ofReal_integral_eq_lintegral_ofReal (integrable_exp_neg_mul (κ q) t.coe_nonneg)
-    (.of_forall fun p => (Real.exp_pos _).le)
-  rw [laplaceTransform_apply, kernelLaplaceTransform_apply]
-  simp_rw [neg_mul]
-  rw [← h, ENNReal.toReal_ofReal (integral_nonneg fun p => (Real.exp_pos _).le)]
-
-/-- **The fibres of a finite kernel are Laplace-represented by its fibrewise Laplace
-transform.** This is the shape in which a Bernstein argument delivers the kernel asked for by
-`TauCeti.exists_representsLaplaceFourier_iff_exists_timeKernel`. -/
-theorem representsLaplace_kernel (κ : Kernel V ℝ≥0) [IsFiniteKernel κ] (q : V) :
-    RepresentsLaplace (κ q) fun t : ℝ => (kernelLaplaceTransform κ t.toNNReal q).toReal := by
-  refine representsLaplace_iff.mpr ⟨inferInstance, fun t ht => ?_⟩
-  rw [toReal_kernelLaplaceTransform, Real.coe_toNNReal t ht]
-
-end Transform
 
 /-! ## The measure assembled from a spatial measure and a time kernel -/
 
@@ -268,15 +192,16 @@ theorem withDensity_rnDeriv_bochnerMeasure_timeSlice (hFpd : IsSemigroupGroupPD 
 /-- **A time kernel with the prescribed fibrewise Laplace transforms represents `F`.** If the
 fibrewise Laplace transform of `κ` at every time `t` is a density of the spatial Bochner measure
 at `t` against the one at time `0`, then assembling `κ` over that time-`0` measure produces a
-Berg--Christensen--Ressel representing measure for `F`. -/
-theorem representsLaplaceFourier_timeKernelMeasure (hFpd : IsSemigroupGroupPD F)
-    (hFcont : Continuous F) (κ : Kernel V ℝ≥0) [IsFiniteKernel κ]
+Berg--Christensen--Ressel representing measure for `F`. Only the time slices of `F` are
+constrained: positive definiteness and continuity are what make the spatial Bochner measures
+represent them. -/
+theorem representsLaplaceFourier_timeKernelMeasure
+    (hFpd : ∀ t : ℝ≥0, IsPositiveDefiniteSub fun a => F (t, a))
+    (hFcont : ∀ t : ℝ≥0, Continuous fun a => F (t, a)) (κ : Kernel V ℝ≥0) [IsFiniteKernel κ]
     (hκ : ∀ t : ℝ≥0, (bochnerMeasure fun a => F (0, a)).withDensity (kernelLaplaceTransform κ t)
       = bochnerMeasure fun a => F (t, a)) :
     RepresentsLaplaceFourier (timeKernelMeasure (bochnerMeasure fun a => F (0, a)) κ) F :=
-  representsLaplaceFourier_of_forall_spatialSlice_eq inferInstance
-    (fun t => hFpd.isPositiveDefiniteSub_timeSlice t)
-    (fun t => hFcont.comp (.prodMk_right t))
+  representsLaplaceFourier_of_forall_spatialSlice_eq inferInstance hFpd hFcont
     fun t => by rw [spatialSlice_timeKernelMeasure, hκ t]
 
 /-- **The same criterion, phrased with Radon--Nikodym derivatives.** A bounded continuous
@@ -291,21 +216,23 @@ theorem representsLaplaceFourier_timeKernelMeasure_of_ae_rnDeriv (hFpd : IsSemig
       =ᵐ[bochnerMeasure fun a => F (0, a)]
         (bochnerMeasure fun a => F (t, a)).rnDeriv (bochnerMeasure fun a => F (0, a))) :
     RepresentsLaplaceFourier (timeKernelMeasure (bochnerMeasure fun a => F (0, a)) κ) F :=
-  representsLaplaceFourier_timeKernelMeasure hFpd hFcont κ fun t => by
+  representsLaplaceFourier_timeKernelMeasure (fun t => hFpd.isPositiveDefiniteSub_timeSlice t)
+    (fun t => hFcont.comp (.prodMk_right t)) κ fun t => by
     rw [withDensity_congr_ae (hκ t),
       withDensity_rnDeriv_bochnerMeasure_timeSlice hFpd hFcont hFbdd t]
 
 /-- **The existence half of the Berg--Christensen--Ressel representation is a kernel problem.**
-A bounded continuous positive-definite function on `ℝ≥0 × V` has a representing finite measure
-if and only if there is a Markov kernel from `V` to `ℝ≥0` whose fibrewise Laplace transform at
-each time `t` is a density of the spatial Bochner measure at time `t` against the one at time
-`0`.
+A function on `ℝ≥0 × V` whose time slices are continuous and positive-definite has a
+representing finite measure if and only if there is a Markov kernel from `V` to `ℝ≥0` whose
+fibrewise Laplace transform at each time `t` is a density of the spatial Bochner measure at time
+`t` against the one at time `0`.
 
 The forward direction disintegrates a representing measure over its spatial marginal, which is
 the time-`0` Bochner measure; the backward direction assembles the kernel into a measure and
 checks its spatial slices. -/
-theorem exists_representsLaplaceFourier_iff_exists_timeKernel (hFpd : IsSemigroupGroupPD F)
-    (hFcont : Continuous F) :
+theorem exists_representsLaplaceFourier_iff_exists_timeKernel
+    (hFpd : ∀ t : ℝ≥0, IsPositiveDefiniteSub fun a => F (t, a))
+    (hFcont : ∀ t : ℝ≥0, Continuous fun a => F (t, a)) :
     (∃ μ : Measure (ℝ≥0 × V), RepresentsLaplaceFourier μ F) ↔
       ∃ κ : Kernel V ℝ≥0, IsMarkovKernel κ ∧ ∀ t : ℝ≥0,
         (bochnerMeasure fun a => F (0, a)).withDensity (kernelLaplaceTransform κ t)
