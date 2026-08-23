@@ -231,9 +231,11 @@ theorem transportCost_le_liminf_transportCost (hcs : IsCostLiminfStable l cs μs
     eventually_inf_principal.mpr (Eventually.of_forall fun _ hi ↦ hi)
   obtain ⟨s, hs, hμs⟩ := hμt
   obtain ⟨t, ht, hνt⟩ := hνt
+  have hs' : ∀ᶠ i in l, i ∈ s := hs
+  have ht' : ∀ᶠ i in l, i ∈ t := ht
   obtain ⟨l'', π, hne'', hle'', hconv, hπcoup⟩ := exists_isCoupling_tendsto_of_isTightMeasureSet
-    (l := lb) ⟨s, (show ∀ᶠ i in l, i ∈ s from hs).filter_mono inf_le_left, hμs⟩
-    ⟨t, (show ∀ᶠ i in l, i ∈ t from ht).filter_mono inf_le_left, hνt⟩
+    (l := lb) ⟨s, hs'.filter_mono inf_le_left, hμs⟩
+    ⟨t, ht'.filter_mono inf_le_left, hνt⟩
     (hμ.mono_left inf_le_left) (hν.mono_left inf_le_left) (Eventually.of_forall hπs)
   have := hne''
   have hbd : liminf (fun i ↦ ∫⁻ z, cs i z ∂(πs i).toMeasure) l'' ≤ a :=

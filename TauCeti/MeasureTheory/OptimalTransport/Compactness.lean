@@ -248,7 +248,8 @@ theorem exists_isCoupling_tendsto_of_isTightMeasureSet [T2Space X] [T2Space Y]
   have hcompact : IsCompact (closure S) := isCompact_closure_of_isTightMeasureSet htight
   have hmem : ∀ᶠ i in l, πs i ∈ closure S := by
     filter_upwards [hπs, inter_mem hs ht] with i hi hit
-    exact subset_closure (show πs i ∈ S from ⟨i, hit, hi⟩)
+    have hiS : πs i ∈ S := ⟨i, hit, hi⟩
+    exact subset_closure hiS
   obtain ⟨π, -, hπ⟩ := hcompact.exists_mapClusterPt_of_frequently
     hmem.frequently
   have hne : (l ⊓ comap πs (𝓝 π)).NeBot := by
