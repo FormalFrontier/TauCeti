@@ -6,10 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Probability.Distributions.Beta
-public import TauCeti.Analysis.SpecialFunctions.IncompleteBeta
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+import TauCeti.Analysis.SpecialFunctions.IncompleteBeta
 
 /-!
 # Elementary theory of the beta distribution
