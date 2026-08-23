@@ -79,7 +79,7 @@ side `twoRank _`, so this closed form is not in simp-normal form (`simpNF` rejec
 non-unfolded `classNumber` companion. -/
 theorem twoRank_adjoinRoot_sqrt_neg_twenty_one_eq_two :
     TauCeti.ClassGroup.twoRank (𝓞 (AdjoinRoot (X ^ 2 - C (-21 : ℚ)))) = 2 := by
-  obtain ⟨θ, hmin, hgen⟩ := NumberField.exists_isIntegralGen_adjoinRoot_sqrt_neg_twenty_one
+  obtain ⟨θ, hmin, hgen⟩ := NumberField.exists_minpoly_eq_X_sq_add_twenty_one_and_adjoin_eq_top
   exact twoRank_eq_two_of_minpoly_eq_X_sq_add_twenty_one hmin hgen
 
 end TauCeti.Multiquadratic

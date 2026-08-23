@@ -308,7 +308,7 @@ has class number `4`. -/
 @[simp]
 theorem classNumber_adjoinRoot_sqrt_neg_twenty_one_eq_four :
     NumberField.classNumber (AdjoinRoot (X ^ 2 - C (-21 : ℚ))) = 4 := by
-  obtain ⟨θ, hmin, hgen⟩ := exists_isIntegralGen_adjoinRoot_sqrt_neg_twenty_one
+  obtain ⟨θ, hmin, hgen⟩ := exists_minpoly_eq_X_sq_add_twenty_one_and_adjoin_eq_top
   exact classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one hmin hgen
 
 end TauCeti.NumberField
