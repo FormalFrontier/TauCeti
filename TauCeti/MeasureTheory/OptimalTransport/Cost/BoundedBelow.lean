@@ -72,6 +72,17 @@ structure IntegrableSplitLowerBound (c : X × Y → EReal) (μ : Measure X) (ν 
 
 namespace IntegrableSplitLowerBound
 
+/-- Two integrable split lower bounds are equal when their source and target parts agree
+pointwise. -/
+@[ext]
+theorem ext {h k : IntegrableSplitLowerBound c μ ν}
+    (hfst : ∀ x, h.fst x = k.fst x) (hsnd : ∀ y, h.snd y = k.snd y) : h = k := by
+  have hfst_eq : h.fst = k.fst := funext hfst
+  have hsnd_eq : h.snd = k.snd := funext hsnd
+  cases h
+  cases k
+  simp_all
+
 variable (h : IntegrableSplitLowerBound c μ ν)
 
 /-- The nonnegative residual left after subtracting an integrable split lower bound from a cost. -/
