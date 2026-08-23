@@ -5,8 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import Mathlib.MeasureTheory.Measure.Dirac
 public import TauCeti.Analysis.CompletelyMonotone.Bernstein.Basic
-public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
+import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 import Mathlib.Analysis.Calculus.ParametricIntegral
 
 /-!
