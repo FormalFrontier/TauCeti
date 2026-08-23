@@ -20,7 +20,7 @@ Lie submodule and are therefore either vacuous or universal on an irreducible mo
 
 * `x : L` acts **locally nilpotently** at `m` when `x^k` annihilates `m` for some `k`. The set of
   such `m` is the generalized `0`-eigenspace of the action of `x`, and it is a Lie submodule as
-  soon as `ad x` is a nilpotent endomorphism of `L`: this is Mathlib's
+  soon as `ad x` acts locally nilpotently on `L`: this is Mathlib's
   `LieModule.lie_mem_maxGenEigenspace_toEnd` at the eigenvalue `0 + 0`.
 * A set `S ⊆ L` acts **locally finitely** at `m` when `m` lies in a finitely generated
   `R`-submodule of `M` stable under bracketing with every element of `S`. The set of such `m` is a
@@ -35,15 +35,16 @@ annihilated by a power of each simple root vector; see
 
 ## Main definitions
 
-* `TauCeti.locallyNilpotentSubmodule`: the vectors annihilated by a power of a fixed `ad`-nilpotent
-  element, as a Lie submodule.
+* `TauCeti.locallyNilpotentSubmodule`: the vectors annihilated by a power of a fixed element whose
+  adjoint action is locally nilpotent, as a Lie submodule.
 * `TauCeti.locallyFiniteSubmodule`: the vectors lying in a finitely generated subspace stable under
   a fixed set of elements, as a Lie submodule.
 
 ## Main results
 
-* `TauCeti.exists_pow_toEnd_eq_zero_of_isIrreducible`: on an irreducible module, an `ad`-nilpotent
-  element that is locally nilpotent at one nonzero vector is locally nilpotent everywhere.
+* `TauCeti.exists_pow_toEnd_eq_zero_of_isIrreducible`: on an irreducible module, an element whose
+  adjoint action is locally nilpotent and which is locally nilpotent at one nonzero vector is
+  locally nilpotent everywhere.
 * `TauCeti.locallyFiniteSubmodule_span`: only the span of `S` matters, so the condition may be
   stated against a generating set and consumed against the subalgebra it generates.
 * `TauCeti.locallyFiniteSubmodule_eq_top_of_isIrreducible`: on an irreducible module, a set that
@@ -55,9 +56,9 @@ The underlying subspace of `TauCeti.locallyNilpotentSubmodule` is Mathlib's
 `Module.End.maxGenEigenspace` of the action of `x` at the eigenvalue `0`, which Mathlib itself
 promotes to a Lie submodule only as `LieModule.genWeightSpaceOf`, under the hypothesis that `L` is
 a *nilpotent* Lie algebra. That hypothesis fails for the semisimple Lie algebras this file is
-written for, and the nilpotence of `ad x` replaces it: it is what makes every element of `L` lie
-in the generalized `0`-eigenspace of `ad x`, which is all the argument of `genWeightSpaceOf` ever
-uses.
+written for, and the local nilpotence of `ad x` replaces it: it is what makes every element of `L`
+lie in the generalized `0`-eigenspace of `ad x`, which is all the argument of `genWeightSpaceOf`
+ever uses.
 
 ## References
 
@@ -81,31 +82,34 @@ variable (R M) in
 /-- The vectors of `M` annihilated by some power of the action of `x`, as a Lie submodule.
 
 The underlying subspace is the generalized `0`-eigenspace of `x` acting on `M`; it is stable under
-all of `L` because `ad x` is assumed nilpotent, so that every element of `L` lies in the
+all of `L` because `ad x` is assumed locally nilpotent, so that every element of `L` lies in the
 generalized `0`-eigenspace of `ad x`. -/
-def locallyNilpotentSubmodule (x : L) (hx : IsNilpotent (ad R L x)) : LieSubmodule R L M where
+def locallyNilpotentSubmodule (x : L)
+    (hx : ∀ y : L, ∃ k : ℕ, ((ad R L x) ^ k) y = 0) : LieSubmodule R L M where
   __ := (toEnd R L M x).maxGenEigenspace 0
   lie_mem {y m} hm := by
     have hy : y ∈ (ad R L x).maxGenEigenspace 0 := by
-      obtain ⟨k, hk⟩ := hx
       simp only [Module.End.mem_maxGenEigenspace, zero_smul, sub_zero]
-      exact ⟨k, by rw [hk]; rfl⟩
+      exact hx y
     simp only [AddSubsemigroup.mem_carrier, AddSubmonoid.mem_toSubsemigroup,
       Submodule.mem_toAddSubmonoid] at hm ⊢
     rw [← zero_add (0 : R)]
     exact LieModule.lie_mem_maxGenEigenspace_toEnd hy hm
 
 @[simp]
-theorem mem_locallyNilpotentSubmodule {x : L} {hx : IsNilpotent (ad R L x)} {m : M} :
+theorem mem_locallyNilpotentSubmodule {x : L}
+    {hx : ∀ y : L, ∃ k : ℕ, ((ad R L x) ^ k) y = 0} {m : M} :
     m ∈ locallyNilpotentSubmodule R M x hx ↔ ∃ k : ℕ, ((toEnd R L M x) ^ k) m = 0 := by
+  -- The constructor has no named lemma for its inherited carrier, so expose the definitionally
+  -- equal generalized eigenspace before applying its membership simp lemma.
   change m ∈ (toEnd R L M x).maxGenEigenspace 0 ↔ _
   simp
 
-/-- **Local nilpotence spreads over an irreducible module.** If `ad x` is nilpotent and some
-nonzero vector of an irreducible module `M` is annihilated by a power of `x`, then every vector of
-`M` is. -/
+/-- **Local nilpotence spreads over an irreducible module.** If `ad x` is locally nilpotent and
+some nonzero vector of an irreducible module `M` is annihilated by a power of `x`, then every
+vector of `M` is. -/
 theorem exists_pow_toEnd_eq_zero_of_isIrreducible [LieModule.IsIrreducible R L M] {x : L}
-    (hx : IsNilpotent (ad R L x)) {m₀ : M} (hm₀ : m₀ ≠ 0) {k₀ : ℕ}
+    (hx : ∀ y : L, ∃ k : ℕ, ((ad R L x) ^ k) y = 0) {m₀ : M} (hm₀ : m₀ ≠ 0) {k₀ : ℕ}
     (hk₀ : ((toEnd R L M x) ^ k₀) m₀ = 0) (m : M) :
     ∃ k : ℕ, ((toEnd R L M x) ^ k) m = 0 := by
   have : Nontrivial (locallyNilpotentSubmodule R M x hx) :=
@@ -156,6 +160,8 @@ def locallyFiniteSubmodule [Module.Finite R L] (S : Set L) : LieSubmodule R L M 
     refine sup_le (((map_toEnd_le_iff).mpr (hst x hx)).trans le_sup_left) ?_
     rw [hQ, Submodule.map_le_iff_le_comap, Submodule.map₂_le]
     intro z _ u hu
+    -- `Submodule.map₂_le` exposes the locally defined bilinear map `br`; unfold its
+    -- definitional action to put the Jacobi identity into bracket notation.
     change ⁅x, ⁅z, u⁆⁆ ∈ N ⊔ Q
     rw [leibniz_lie]
     exact add_mem (Submodule.mem_sup_right (hbr ⁅x, z⁆ hu))
@@ -169,6 +175,7 @@ theorem mem_locallyFiniteSubmodule [Module.Finite R L] {S : Set L} {m : M} :
 
 /-- Only the span of `S` matters: a subspace stable under `S` is stable under the `R`-submodule
 that `S` generates, the stability condition being linear in the bracketing element. -/
+@[simp]
 theorem locallyFiniteSubmodule_span [Module.Finite R L] (S : Set L) :
     locallyFiniteSubmodule R M (Submodule.span R S : Set L) = locallyFiniteSubmodule R M S := by
   refine le_antisymm ?_ ?_

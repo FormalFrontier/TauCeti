@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Integrability
+public import TauCeti.Algebra.Lie.Sl2.WeightString
 public import TauCeti.Algebra.Lie.Submodule.LocallyFinite
 
 public section
@@ -41,14 +42,14 @@ weight vector settles which.
 * For the **simple lowering** vector `fᵢ` the input is the integrability relation of
   `TauCeti/Algebra/Lie/HighestWeight/Integrability.lean`: in an irreducible highest weight module
   `fᵢ^{n + 1} v = 0`, where `n = lam (αᵢ^∨)`.
-* Local finiteness needs one explicit finite-dimensional subspace, and the same relation supplies
-  it: the span of `v, fᵢ v, …, fᵢ^n v` is stable under the `sl₂` triple of `αᵢ`, because the ladder
-  lemmas of Mathlib's `Sl2.lean` evaluate `hᵢ` and `eᵢ` on each `fᵢ^k v` as a multiple of `fᵢ^k v`
-  and of `fᵢ^{k - 1} v`, while `fᵢ` moves along the list and off its end into `0`.
+* Local finiteness uses finite-dimensionality of `L` and the explicit stable weight-string
+  submodule `TauCeti.weightStringSubmodule`; the integrability relation truncates its generating
+  string to `v, fᵢ v, …, fᵢ^n v`, so its underlying submodule is finitely generated.
 
-Both conclusions need `ad` of the root vector to be nilpotent, which is Mathlib's
+The local-nilpotence results also need `ad` of the root vector to be nilpotent, which is Mathlib's
 `LieAlgebra.isNilpotent_ad_of_mem_rootSpace`: a root vector moves the root spaces of `L` by a
-nonzero root, and `L` has only finitely many.
+nonzero root, and `L` has only finitely many. The local-finiteness result does not use this
+hypothesis.
 
 ## Main results
 
@@ -100,7 +101,8 @@ theorem exists_pow_toEnd_eq_zero_of_mem_posRoots [LieModule.IsIrreducible K L M]
   have hα : (i : Weight K H L).IsNonZero := H.isNonZero_coe_root i
   have had : IsNilpotent (ad K L e) :=
     LieAlgebra.isNilpotent_ad_of_mem_rootSpace H (χ := ⇑(i : Weight K H L)) hα he
-  refine exists_pow_toEnd_eq_zero_of_isIrreducible had hv.ne_zero (k₀ := 1) ?_ m
+  refine exists_pow_toEnd_eq_zero_of_isIrreducible
+    (Module.End.isNilpotent_iff_of_finite.mp had) hv.ne_zero (k₀ := 1) ?_ m
   rw [pow_one]
   exact hv.lie_eq_zero_of_mem_rootSpace hi he
 
@@ -120,12 +122,14 @@ theorem exists_pow_toEnd_eq_zero_of_mem_rootSpace_neg [LieModule.IsIrreducible K
   have hα : (i : Weight K H L).IsNonZero := H.isNonZero_coe_root i
   have had : IsNilpotent (ad K L f) :=
     LieAlgebra.isNilpotent_ad_of_mem_rootSpace H (χ := ⇑(-(i : Weight K H L))) hα.neg hf
-  exact exists_pow_toEnd_eq_zero_of_isIrreducible had hv.ne_zero
+  exact exists_pow_toEnd_eq_zero_of_isIrreducible
+    (Module.End.isNilpotent_iff_of_finite.mp had) hv.ne_zero
     (pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible hv hi hn hf) m
 
-/-- **Local nilpotence along a simple root, from dominance.** A dominant integral highest weight is
-integral along every simple root, so both root vectors of a simple root act locally nilpotently on
-an irreducible highest weight module of that weight. -/
+/-- **Local nilpotence of a lowering vector, from dominance.** A dominant integral highest weight
+is integral along every simple root, so each simple lowering vector acts locally nilpotently on an
+irreducible highest weight module of that weight. The positive-root half is
+`TauCeti.exists_pow_toEnd_eq_zero_of_mem_posRoots`. -/
 theorem exists_pow_toEnd_eq_zero_of_mem_rootSpace_neg_of_isDominantIntegral
     [LieModule.IsIrreducible K L M]
     (hv : IsHighestWeightVector b lam v) (hlam : IsDominantIntegral b lam) {i : H.root}
@@ -163,39 +167,30 @@ theorem locallyFiniteSubmodule_eq_top_of_isSl2Triple [LieModule.IsIrreducible K 
       lie_e := hv.lie_eq_zero_of_mem_rootSpace hipos he₀ }
   have hzero : ((toEnd K L M f₀) ^ (n + 1)) v = 0 :=
     pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible hv hi hn hf₀
-  -- the span of the `αᵢ`-string below `v`
-  set N₀ : Submodule K M :=
-    Submodule.span K (Set.range fun k : Fin (n + 1) => ((toEnd K L M f₀) ^ (k : ℕ)) v) with hN₀
-  have hmemN₀ : ∀ k : Fin (n + 1), ((toEnd K L M f₀) ^ (k : ℕ)) v ∈ N₀ := fun k =>
-    Submodule.subset_span ⟨k, rfl⟩
-  -- it is stable under each member of the triple
-  have hgen : ∀ x ∈ ({e₀, f₀, h₀} : Set L), ∀ k : Fin (n + 1),
-      ⁅x, ((toEnd K L M f₀) ^ (k : ℕ)) v⁆ ∈ N₀ := by
-    rintro x (rfl | rfl | rfl) k
-    · rcases Nat.eq_zero_or_pos (k : ℕ) with hk | hk
-      · rw [hk, pow_zero, Module.End.one_apply, hP.lie_e]
-        exact zero_mem _
-      · obtain ⟨j, hj⟩ := Nat.exists_eq_add_of_lt hk
-        rw [show (k : ℕ) = j + 1 by lia, hP.lie_e_pow_succ_toEnd_f j]
-        exact Submodule.smul_mem _ _ (hmemN₀ ⟨j, by lia⟩)
-    · rw [hP.lie_f_pow_toEnd_f (k : ℕ)]
-      rcases eq_or_lt_of_le (Nat.lt_succ_iff.mp k.isLt) with hk | hk
-      · rw [hk, hzero]
-        exact zero_mem _
-      · exact hmemN₀ ⟨(k : ℕ) + 1, by lia⟩
-    · rw [hP.lie_h_pow_toEnd_f (k : ℕ)]
-      exact Submodule.smul_mem _ _ (hmemN₀ k)
-  have hst : ∀ x ∈ ({e₀, f₀, h₀} : Set L), ∀ u ∈ N₀, ⁅x, u⁆ ∈ N₀ := by
+  -- Reuse the stable weight-string submodule; `hzero` truncates its generators to a finite set.
+  set N₀ : Submodule K M := (weightStringSubmodule hP).toSubmodule with hN₀
+  have hspan : N₀ =
+      Submodule.span K (Set.range fun k : Fin (n + 1) => ((toEnd K L M f₀) ^ (k : ℕ)) v) := by
+    rw [hN₀, weightStringSubmodule_toSubmodule]
+    refine le_antisymm (Submodule.span_le.2 ?_) (Submodule.span_le.2 ?_)
+    · rintro _ ⟨k, rfl⟩
+      by_cases hk : k < n + 1
+      · exact Submodule.subset_span ⟨⟨k, hk⟩, rfl⟩
+      · have hkzero := Module.End.pow_map_zero_of_le (Nat.le_of_not_gt hk) hzero
+        dsimp only
+        rw [hkzero]
+        exact Submodule.zero_mem _
+    · rintro _ ⟨k, rfl⟩
+      exact Submodule.subset_span ⟨(k : ℕ), rfl⟩
+  have hfgN₀ : N₀.FG := hspan.symm ▸ Submodule.fg_span (Set.finite_range _)
+  have hst : ∀ x ∈ (t.toLieSubalgebra K : Set L), ∀ u ∈ N₀, ⁅x, u⁆ ∈ N₀ := by
     intro x hx u hu
-    have hle : N₀ ≤ Submodule.comap (toEnd K L M x) N₀ := by
-      rw [hN₀, Submodule.span_le]
-      rintro _ ⟨k, rfl⟩
-      exact hgen x hx k
-    exact hle hu
+    rw [hN₀] at hu ⊢
+    exact (weightStringSubmodule hP).lie_mem (x := ⟨x, hx⟩) hu
   -- irreducibility spreads local finiteness from `v` to all of `M`
-  have htop : locallyFiniteSubmodule K M ({e₀, f₀, h₀} : Set L) = ⊤ :=
-    locallyFiniteSubmodule_eq_top_of_isIrreducible (Submodule.fg_span (Set.finite_range _)) hst
-      hv.ne_zero (by simpa using hmemN₀ ⟨0, Nat.succ_pos n⟩)
-  rwa [← locallyFiniteSubmodule_span] at htop
+  have hvN₀ : v ∈ N₀ := by
+    rw [hN₀]
+    exact mem_weightStringSubmodule hP
+  exact locallyFiniteSubmodule_eq_top_of_isIrreducible hfgN₀ hst hv.ne_zero hvN₀
 
 end TauCeti
