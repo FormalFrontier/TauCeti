@@ -74,7 +74,7 @@ section Restrict
 variable (k F) (P' : Place k' F')
 
 /-- The valuation of `P'` restricted to `F` is trivial on the constants of `F`. -/
-theorem isTrivialOn_comap : (P'.valuation.comap (algebraMap F F')).IsTrivialOn k where
+private theorem isTrivialOn_comap : (P'.valuation.comap (algebraMap F F')).IsTrivialOn k where
   eq_one c hc := by
     have hmap : algebraMap F F' (algebraMap k F c) = algebraMap k' F' (algebraMap k k' c) := by
       rw [← IsScalarTower.algebraMap_apply k F F', IsScalarTower.algebraMap_apply k k' F']
@@ -84,14 +84,14 @@ theorem isTrivialOn_comap : (P'.valuation.comap (algebraMap F F')).IsTrivialOn k
 
 /-- The order function of `P'` restricted to `F` is the order function of the restricted
 valuation. -/
-theorem ord_comap (f : F) :
+private theorem ord_comap (f : F) :
     Valuation.ord (P'.valuation.comap (algebraMap F F')) f = P'.ord (algebraMap F F' f) := by
   rw [Valuation.ord_def, ord_def, Valuation.comap_apply]
 
 /-- The valuation of `P'` restricted to `F` is nontrivial: an algebraic extension of a field
 contained in a valuation ring is contained in that valuation ring, so a place of `F'` trivial on
 `F` would have all of `F'` as its valuation ring. -/
-theorem ordIndex_comap_ne_zero [Algebra.IsIntegral F F'] :
+private theorem ordIndex_comap_ne_zero [Algebra.IsIntegral F F'] :
     Valuation.ordIndex (P'.valuation.comap (algebraMap F F')) ≠ 0 := fun h ↦ by
   have hall := (Valuation.ordIndex_eq_zero_iff _).mp h
   refine P'.integers_ne_top (top_unique fun y _ ↦ ?_)
@@ -122,7 +122,7 @@ noncomputable def ramificationIdx : ℕ :=
 theorem ramificationIdx_pos : 0 < ramificationIdx F P' :=
   Nat.pos_of_ne_zero (ordIndex_comap_ne_zero F P')
 
-theorem valuation_restrict :
+private theorem valuation_restrict :
     (P'.restrict k F).valuation = (P'.valuation.comap (algebraMap F F')).normalization := (rfl)
 
 /-- **The defining property of the ramification index** (Stichtenoth, Definition 3.1.5): on `F`
@@ -216,6 +216,15 @@ section ResidueField
 
 variable (k F) (P' : Place k' F') [Algebra.IsIntegral F F']
 
+/-- The valuation of the restricted place extends along `F → F'`; hence Mathlib's generic
+valuation-extension API supplies the valuation-ring algebra map, its locality, and the induced
+residue-field extension. -/
+instance instHasExtensionValuation :
+    Valuation.HasExtension (P'.restrict k F).valuation P'.valuation where
+  val_isEquiv_comap := by
+    rw [valuation_restrict]
+    exact Valuation.isEquiv_normalization _
+
 /-- The valuation ring of the restriction is carried into the valuation ring of `P'`, so the
 latter is an algebra over the former. -/
 noncomputable instance instAlgebraIntegers : Algebra (P'.restrict k F).integers P'.integers :=
@@ -227,7 +236,10 @@ theorem coe_algebraMap_integers (x : (P'.restrict k F).integers) :
     ((algebraMap (P'.restrict k F).integers P'.integers x : P'.integers) : F') =
       algebraMap F F' (x : F) := (rfl)
 
-instance : IsLocalHom (algebraMap (P'.restrict k F).integers P'.integers) where
+/-- The valuation-ring algebra map is local, so it induces the residue-field extension used by
+`relativeDegree`. -/
+instance instIsLocalHomIntegers :
+    IsLocalHom (algebraMap (P'.restrict k F).integers P'.integers) where
   map_nonunit a ha := by
     have ha0 : (a : F) ≠ 0 := by
       rintro h
@@ -473,7 +485,7 @@ end RamificationIdxBound
 
 section Bound
 
-variable (k F) (P' : Place k' F') [Algebra.IsIntegral F F'] [FiniteDimensional F F']
+variable (k F) (P' : Place k' F') [FiniteDimensional F F']
 
 private theorem rank_residueField_le :
     Module.rank (P'.restrict k F).ResidueField P'.ResidueField ≤
