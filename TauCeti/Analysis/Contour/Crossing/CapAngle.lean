@@ -116,12 +116,17 @@ theorem exp_crossingCapSweep_mul_I (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0)
 of that radius about `s`, starting at the principal argument of `w_L` and sweeping through
 `crossingCapSweep`, starts at `s + w_L` and ends at `s + w_R`. -/
 theorem circleMap_crossingCapSweep_endpoints (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0)
-    (hw_L : w_L ≠ 0) (hnorm : ‖w_L‖ = ‖w_R‖)
+    (hnorm : ‖w_L‖ = ‖w_R‖)
     (h_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
     (h_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L)) :
     circleMap s ‖w_L‖ w_L.arg = s + w_L ∧
       circleMap s ‖w_L‖
           (w_L.arg + crossingCapSweep γ t₀ L_R L_L w_L w_R) = s + w_R := by
+  by_cases hw_L : w_L = 0
+  · have hw_R : w_R = 0 := by
+      apply norm_eq_zero.mp
+      rw [← hnorm, hw_L, norm_zero]
+    simp [circleMap, hw_L, hw_R]
   constructor
   · rw [circleMap, Complex.norm_mul_exp_arg_mul_I]
   · rw [circleMap, Complex.ofReal_add, add_mul, Complex.exp_add,

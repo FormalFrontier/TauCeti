@@ -10,7 +10,6 @@ public import TauCeti.Analysis.Contour.PwC1ImmersionOn
 public import TauCeti.Analysis.Contour.RegularityConditions
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
-import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.InvSubCPVExistence
 import TauCeti.Analysis.Contour.PerWindow.CPV
