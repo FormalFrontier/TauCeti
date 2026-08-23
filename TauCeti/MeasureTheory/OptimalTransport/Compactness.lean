@@ -39,10 +39,12 @@ only when Prokhorov's theorem is applied.
 
 ## Main statements
 
+* `TauCeti.continuous_map_fst_probabilityMeasure` and
+  `TauCeti.continuous_map_snd_probabilityMeasure` — continuity of the two marginal maps;
 * `TauCeti.isClosed_setOfPred_isCoupling` — the couplings of `μ` and `ν` are a weakly closed set of
   probability measures on the product, with canonical Polish and compact-metrizable
   specialisations;
-* `TauCeti.isTightMeasureSet_setOfPred_isCoupling_of_mem` and
+* `TauCeti.isTightMeasureSet_setOfPred_exists_isCoupling` and
   `TauCeti.isTightMeasureSet_setOfPred_isCoupling` — the couplings of two tight families of
   measures, and of two tight measures, form a tight family, with no topological hypothesis beyond
   the two topologies themselves;
@@ -74,6 +76,16 @@ section Closed
 variable {X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [BorelSpace X]
   [TopologicalSpace Y] [MeasurableSpace Y] [BorelSpace Y] [SecondCountableTopologyEither X Y]
 
+/-- The first-marginal map on probability measures is continuous for the weak topology. -/
+theorem continuous_map_fst_probabilityMeasure :
+    Continuous fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_fst.aemeasurable :=
+  ProbabilityMeasure.continuous_map (f := (Prod.fst : X × Y → X)) continuous_fst
+
+/-- The second-marginal map on probability measures is continuous for the weak topology. -/
+theorem continuous_map_snd_probabilityMeasure :
+    Continuous fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_snd.aemeasurable :=
+  ProbabilityMeasure.continuous_map (f := (Prod.snd : X × Y → Y)) continuous_snd
+
 /-- **The couplings of two probability measures are weakly closed.** The coupling set is the
 intersection of the preimages of `{μ}` and `{ν}` under the two marginal maps, both of which are
 continuous for the topology of convergence in distribution. The `T1Space` hypotheses are what make
@@ -83,10 +95,6 @@ Hausdorff by `MeasureTheory.ProbabilityMeasure.t2Space`. -/
 theorem isClosed_setOfPred_isCoupling [T1Space (ProbabilityMeasure X)]
     [T1Space (ProbabilityMeasure Y)] (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y) :
     IsClosed {π : ProbabilityMeasure (X × Y) | IsCoupling π.toMeasure μ.toMeasure ν.toMeasure} := by
-  have hfst : Continuous fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_fst.aemeasurable :=
-    ProbabilityMeasure.continuous_map (f := (Prod.fst : X × Y → X)) continuous_fst
-  have hsnd : Continuous fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_snd.aemeasurable :=
-    ProbabilityMeasure.continuous_map (f := (Prod.snd : X × Y → Y)) continuous_snd
   have hset : {π : ProbabilityMeasure (X × Y) | IsCoupling π.toMeasure μ.toMeasure ν.toMeasure} =
       (fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_fst.aemeasurable) ⁻¹' {μ} ∩
         (fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_snd.aemeasurable) ⁻¹' {ν} := by
@@ -94,7 +102,8 @@ theorem isClosed_setOfPred_isCoupling [T1Space (ProbabilityMeasure X)]
     simpa only [mem_ofPred_eq, mem_inter_iff, mem_preimage, mem_singleton_iff] using
       isCoupling_toMeasure_iff
   rw [hset]
-  exact (isClosed_singleton.preimage hfst).inter (isClosed_singleton.preimage hsnd)
+  exact (isClosed_singleton.preimage continuous_map_fst_probabilityMeasure).inter
+    (isClosed_singleton.preimage continuous_map_snd_probabilityMeasure)
 
 end Closed
 
@@ -109,7 +118,7 @@ two sides, and those bounds are uniform over the two families because a coupling
 its marginals. No hypothesis beyond the two topologies is needed. The marginals are allowed to
 range over sets rather than to be fixed, which is what a stability argument with moving marginals
 consumes. -/
-theorem isTightMeasureSet_setOfPred_isCoupling_of_mem {S : Set (Measure X)} {T : Set (Measure Y)}
+theorem isTightMeasureSet_setOfPred_exists_isCoupling {S : Set (Measure X)} {T : Set (Measure Y)}
     (hS : IsTightMeasureSet S) (hT : IsTightMeasureSet T) :
     IsTightMeasureSet {π : Measure (X × Y) | ∃ μ ∈ S, ∃ ν ∈ T, IsCoupling π μ ν} := by
   refine IsTightMeasureSet.prodMk (hS.subset ?_) (hT.subset ?_)
@@ -119,12 +128,12 @@ theorem isTightMeasureSet_setOfPred_isCoupling_of_mem {S : Set (Measure X)} {T :
     rwa [hπ.snd_eq]
 
 /-- **The couplings of two tight measures form a tight family.** This is the fixed-marginal case of
-`TauCeti.isTightMeasureSet_setOfPred_isCoupling_of_mem`, and it is the tightness that Prokhorov's
+`TauCeti.isTightMeasureSet_setOfPred_exists_isCoupling`, and it is the tightness that Prokhorov's
 theorem is applied to below. -/
 theorem isTightMeasureSet_setOfPred_isCoupling (hμ : IsTightMeasureSet {μ})
     (hν : IsTightMeasureSet {ν}) :
     IsTightMeasureSet {π : Measure (X × Y) | IsCoupling π μ ν} :=
-  (isTightMeasureSet_setOfPred_isCoupling_of_mem hμ hν).subset fun _ hπ ↦ ⟨μ, rfl, ν, rfl, hπ⟩
+  (isTightMeasureSet_setOfPred_exists_isCoupling hμ hν).subset fun _ hπ ↦ ⟨μ, rfl, ν, rfl, hπ⟩
 
 end Tight
 
