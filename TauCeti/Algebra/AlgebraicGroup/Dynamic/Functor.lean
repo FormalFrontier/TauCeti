@@ -50,21 +50,21 @@ variable {R : Type u} [CommRing R]
 variable {H : Type v} [CommRing H] [HopfAlgebra R H]
 
 /-- Change of value algebra, restricted to a dynamic parabolic subgroup. -/
-@[expose] noncomputable def mapParabolic (l : H →ₐc[R] LaurentPolynomial R)
+noncomputable def mapParabolic (l : H →ₐc[R] LaurentPolynomial R)
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     parabolic A l →* parabolic B l :=
   ((AlgHom.mapValue (H := H) φ.hom).domRestrict (parabolic A l)).codRestrict
     (parabolic B l) fun g ↦ parabolic_le_comap φ.hom g.2
 
 /-- Change of value algebra, restricted to a dynamic Levi subgroup. -/
-@[expose] noncomputable def mapLevi (l : H →ₐc[R] LaurentPolynomial R)
+noncomputable def mapLevi (l : H →ₐc[R] LaurentPolynomial R)
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     levi A l →* levi B l :=
   ((AlgHom.mapValue (H := H) φ.hom).domRestrict (levi A l)).codRestrict
     (levi B l) fun g ↦ levi_le_comap φ.hom g.2
 
 /-- Change of value algebra, restricted to a dynamic unipotent subgroup. -/
-@[expose] noncomputable def mapUnipotent (l : H →ₐc[R] LaurentPolynomial R)
+noncomputable def mapUnipotent (l : H →ₐc[R] LaurentPolynomial R)
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     unipotent A l →* unipotent B l :=
   ((AlgHom.mapValue (H := H) φ.hom).domRestrict (unipotent A l)).codRestrict
@@ -74,21 +74,22 @@ variable {H : Type v} [CommRing H] [HopfAlgebra R H]
 theorem coe_mapParabolic_apply (l : H →ₐc[R] LaurentPolynomial R)
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B) (g : parabolic A l) :
     (mapParabolic l φ g : WithConv (H →ₐ[R] B)) = AlgHom.mapValue φ.hom g :=
-  rfl
+  by unfold mapParabolic; rfl
 
 @[simp]
 theorem coe_mapLevi_apply (l : H →ₐc[R] LaurentPolynomial R)
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B) (g : levi A l) :
     (mapLevi l φ g : WithConv (H →ₐ[R] B)) = AlgHom.mapValue φ.hom g :=
-  rfl
+  by unfold mapLevi; rfl
 
 @[simp]
 theorem coe_mapUnipotent_apply (l : H →ₐc[R] LaurentPolynomial R)
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B) (g : unipotent A l) :
     (mapUnipotent l φ g : WithConv (H →ₐ[R] B)) = AlgHom.mapValue φ.hom g :=
-  rfl
+  by unfold mapUnipotent; rfl
 
 /-- The dynamic parabolic attached to a cocharacter, as a group-valued functor. -/
+-- The object carrier must unfold when downstream modules construct natural transformations.
 @[expose] noncomputable def parabolicFunctor (l : H →ₐc[R] LaurentPolynomial R) :
     CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
   obj A := GrpCat.of (parabolic A l)
@@ -97,6 +98,7 @@ theorem coe_mapUnipotent_apply (l : H →ₐc[R] LaurentPolynomial R)
   map_comp _ _ := by ext; rfl
 
 /-- The dynamic Levi attached to a cocharacter, as a group-valued functor. -/
+-- The object carrier must unfold when downstream modules construct natural transformations.
 @[expose] noncomputable def leviFunctor (l : H →ₐc[R] LaurentPolynomial R) :
     CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
   obj A := GrpCat.of (levi A l)
@@ -105,6 +107,7 @@ theorem coe_mapUnipotent_apply (l : H →ₐc[R] LaurentPolynomial R)
   map_comp _ _ := by ext; rfl
 
 /-- The dynamic unipotent subgroup attached to a cocharacter, as a group-valued functor. -/
+-- The object carrier must unfold when downstream modules construct natural transformations.
 @[expose] noncomputable def unipotentFunctor (l : H →ₐc[R] LaurentPolynomial R) :
     CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
   obj A := GrpCat.of (unipotent A l)
@@ -112,17 +115,14 @@ theorem coe_mapUnipotent_apply (l : H →ₐc[R] LaurentPolynomial R)
   map_id _ := by ext; rfl
   map_comp _ _ := by ext; rfl
 
-@[simp]
 theorem parabolicFunctor_obj (l : H →ₐc[R] LaurentPolynomial R) (A : CommAlgCat.{w} R) :
     (parabolicFunctor l).obj A = GrpCat.of (parabolic A l) :=
   rfl
 
-@[simp]
 theorem leviFunctor_obj (l : H →ₐc[R] LaurentPolynomial R) (A : CommAlgCat.{w} R) :
     (leviFunctor l).obj A = GrpCat.of (levi A l) :=
   rfl
 
-@[simp]
 theorem unipotentFunctor_obj (l : H →ₐc[R] LaurentPolynomial R)
     (A : CommAlgCat.{w} R) :
     (unipotentFunctor l).obj A = GrpCat.of (unipotent A l) :=
@@ -147,39 +147,57 @@ theorem unipotentFunctor_map (l : H →ₐc[R] LaurentPolynomial R)
   rfl
 
 /-- The dynamic parabolic functor includes naturally into the ambient functor of points. -/
-@[expose] noncomputable def parabolicFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
+noncomputable def parabolicFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
     parabolicFunctor l ⟶ HopfAlgebra.pointsFunctor (R := R) (H := H) where
   app A := GrpCat.ofHom (parabolic A l).subtype
-  naturality _ _ _ := by ext; rfl
+  naturality {A B} φ := by
+    change GrpCat.ofHom (mapParabolic l φ) ≫ GrpCat.ofHom (parabolic B l).subtype =
+      GrpCat.ofHom (parabolic A l).subtype ≫ HopfAlgebra.mapPoints (H := H) φ
+    apply GrpCat.hom_ext
+    apply MonoidHom.ext
+    intro g
+    exact coe_mapParabolic_apply l φ g
 
 /-- The dynamic Levi functor includes naturally into the ambient functor of points. -/
-@[expose] noncomputable def leviFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
+noncomputable def leviFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
     leviFunctor l ⟶ HopfAlgebra.pointsFunctor (R := R) (H := H) where
   app A := GrpCat.ofHom (levi A l).subtype
-  naturality _ _ _ := by ext; rfl
+  naturality {A B} φ := by
+    change GrpCat.ofHom (mapLevi l φ) ≫ GrpCat.ofHom (levi B l).subtype =
+      GrpCat.ofHom (levi A l).subtype ≫ HopfAlgebra.mapPoints (H := H) φ
+    apply GrpCat.hom_ext
+    apply MonoidHom.ext
+    intro g
+    exact coe_mapLevi_apply l φ g
 
 /-- The dynamic unipotent functor includes naturally into the ambient functor of points. -/
-@[expose] noncomputable def unipotentFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
+noncomputable def unipotentFunctorIncl (l : H →ₐc[R] LaurentPolynomial R) :
     unipotentFunctor l ⟶ HopfAlgebra.pointsFunctor (R := R) (H := H) where
   app A := GrpCat.ofHom (unipotent A l).subtype
-  naturality _ _ _ := by ext; rfl
+  naturality {A B} φ := by
+    change GrpCat.ofHom (mapUnipotent l φ) ≫ GrpCat.ofHom (unipotent B l).subtype =
+      GrpCat.ofHom (unipotent A l).subtype ≫ HopfAlgebra.mapPoints (H := H) φ
+    apply GrpCat.hom_ext
+    apply MonoidHom.ext
+    intro g
+    exact coe_mapUnipotent_apply l φ g
 
 @[simp]
 theorem parabolicFunctorIncl_app (l : H →ₐc[R] LaurentPolynomial R)
     (A : CommAlgCat.{w} R) :
     (parabolicFunctorIncl l).app A = GrpCat.ofHom (parabolic A l).subtype :=
-  rfl
+  by unfold parabolicFunctorIncl; rfl
 
 @[simp]
 theorem leviFunctorIncl_app (l : H →ₐc[R] LaurentPolynomial R)
     (A : CommAlgCat.{w} R) :
     (leviFunctorIncl l).app A = GrpCat.ofHom (levi A l).subtype :=
-  rfl
+  by unfold leviFunctorIncl; rfl
 
 @[simp]
 theorem unipotentFunctorIncl_app (l : H →ₐc[R] LaurentPolynomial R)
     (A : CommAlgCat.{w} R) :
     (unipotentFunctorIncl l).app A = GrpCat.ofHom (unipotent A l).subtype :=
-  rfl
+  by unfold unipotentFunctorIncl; rfl
 
 end TauCeti.Cocharacter

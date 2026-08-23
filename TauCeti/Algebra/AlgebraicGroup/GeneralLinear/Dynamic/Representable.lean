@@ -57,7 +57,7 @@ universe u w
 variable {R : Type u} [CommRing R]
 
 /-- The pointwise equivalence from the dynamic parabolic to the upper-triangular Borel. -/
-@[expose] noncomputable def parabolicBorelMulEquiv (A : CommAlgCat.{w} R) :
+noncomputable def parabolicBorelMulEquiv (A : CommAlgCat.{w} R) :
     Cocharacter.parabolic A (dynamicCocharacter (R := R)) ≃* GL2Borel A where
   toFun g := ⟨pointsMulEquiv (R := R) (A := A) 2 g,
     (mem_dynamicParabolic_iff (R := R) (A := A) g).mp g.2⟩
@@ -79,7 +79,8 @@ theorem coe_parabolicBorelMulEquiv_apply (A : CommAlgCat.{w} R)
     (g : Cocharacter.parabolic A (dynamicCocharacter (R := R))) :
     ((parabolicBorelMulEquiv A g : GL2Borel A) : GL (Fin 2) A) =
       pointsMulEquiv 2 (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) := by
-  -- The exposed equivalence stores this map under the `GL2Borel` subtype coercion.
+  unfold parabolicBorelMulEquiv
+  -- The equivalence stores this map under the `GL2Borel` subtype coercion.
   change pointsMulEquiv 2 (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) = _
   rfl
 
@@ -91,6 +92,7 @@ theorem pointToGeneralLinear_parabolicBorelMulEquiv_symm_apply (A : CommAlgCat.{
           Cocharacter.parabolic A (dynamicCocharacter (R := R))) :
             WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) =
       (g : GL (Fin 2) A) := by
+  unfold parabolicBorelMulEquiv
   -- The inverse field is the ambient inverse point equivalence, restricted to the subgroup.
   rw [← pointsMulEquiv_apply]
   change pointsMulEquiv 2 ((pointsMulEquiv 2).symm (g : GL (Fin 2) A)) = _
@@ -132,10 +134,30 @@ noncomputable def borelPointsIsoParabolicFunctor :
         congrArg Subtype.val
           (Borel.pointsMulEquiv_mapValue (R := R) (A := A) (B := B) φ.hom f))
 
+/-- The forward component of `borelPointsIsoParabolicFunctor` is the composite of the
+Borel point equivalence with the inverse pointwise parabolic equivalence. -/
+@[simp]
+theorem borelPointsIsoParabolicFunctor_hom_app_apply (A : CommAlgCat.{w} R)
+    (f : HopfAlgebra.points (R := R) (H := Borel.coordinateHopfAlgebra R) A) :
+    (borelPointsIsoParabolicFunctor (R := R)).hom.app A f =
+      (parabolicBorelMulEquiv A).symm (Borel.pointsMulEquiv (R := R) (A := A) f) := by
+  unfold borelPointsIsoParabolicFunctor
+  rfl
+
+/-- The inverse component of `borelPointsIsoParabolicFunctor` is the composite of the
+pointwise parabolic equivalence with the inverse Borel point equivalence. -/
+@[simp]
+theorem borelPointsIsoParabolicFunctor_inv_app_apply (A : CommAlgCat.{w} R)
+    (g : Cocharacter.parabolic A (dynamicCocharacter (R := R))) :
+    (borelPointsIsoParabolicFunctor (R := R)).inv.app A g =
+      (Borel.pointsMulEquiv (R := R) (A := A)).symm (parabolicBorelMulEquiv A g) := by
+  unfold borelPointsIsoParabolicFunctor
+  rfl
+
 /-! ## The dynamic Levi -/
 
 /-- The diagonal-torus point map, with codomain restricted to the dynamic Levi. -/
-@[expose] noncomputable def splitTorusToLevi (A : CommAlgCat.{w} R) :
+noncomputable def splitTorusToLevi (A : CommAlgCat.{w} R) :
     HopfAlgebra.points
         (R := R)
         (H := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) A →*
@@ -166,6 +188,7 @@ theorem coe_splitTorusLeviMulEquiv_apply (A : CommAlgCat.{w} R)
         Cocharacter.levi A (dynamicCocharacter (R := R))) :
       WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) =
       diagonalTorusPoints f := by
+  unfold splitTorusLeviMulEquiv splitTorusToLevi
   rfl
 
 /-- The rank-two split-torus coordinate Hopf algebra represents the dynamic Levi functor for
@@ -179,20 +202,54 @@ noncomputable def splitTorusPointsIsoLeviFunctor :
     (fun A ↦ (splitTorusLeviMulEquiv A).toGrpIso)
     (by
       intro A B φ
-      ext f
+      apply GrpCat.hom_ext
+      apply MonoidHom.ext
+      intro (f : HopfAlgebra.points
+        (R := R)
+        (H := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) A)
       apply Subtype.ext
       -- Both component maps are restrictions of the corresponding ambient point maps.
-      change diagonalTorusPoints
+      unfold HopfAlgebra.pointsFunctor Cocharacter.leviFunctor
+      change ((splitTorusLeviMulEquiv B
           (HopfAlgebra.mapPoints
-            (H := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) φ f) =
-        AlgHom.mapValue φ.hom (diagonalTorusPoints f)
+            (H := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) φ f) :
+              Cocharacter.levi B (dynamicCocharacter (R := R))) :
+            WithConv (coordinateHopfAlgebra R 2 →ₐ[R] B)) =
+        ((Cocharacter.mapLevi (dynamicCocharacter (R := R)) φ
+            (splitTorusLeviMulEquiv A f) :
+              Cocharacter.levi B (dynamicCocharacter (R := R))) :
+            WithConv (coordinateHopfAlgebra R 2 →ₐ[R] B))
+      rw [coe_splitTorusLeviMulEquiv_apply, Cocharacter.coe_mapLevi_apply,
+        coe_splitTorusLeviMulEquiv_apply]
       exact (mapValue_diagonalTorusPoints φ.hom f).symm)
+
+/-- The forward component of `splitTorusPointsIsoLeviFunctor` is the pointwise split-torus
+equivalence. -/
+@[simp]
+theorem splitTorusPointsIsoLeviFunctor_hom_app_apply (A : CommAlgCat.{w} R)
+    (f : HopfAlgebra.points
+      (R := R)
+      (H := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) A) :
+    (splitTorusPointsIsoLeviFunctor (R := R)).hom.app A f =
+      splitTorusLeviMulEquiv A f := by
+  unfold splitTorusPointsIsoLeviFunctor
+  rfl
+
+/-- The inverse component of `splitTorusPointsIsoLeviFunctor` is the inverse pointwise
+split-torus equivalence. -/
+@[simp]
+theorem splitTorusPointsIsoLeviFunctor_inv_app_apply (A : CommAlgCat.{w} R)
+    (g : Cocharacter.levi A (dynamicCocharacter (R := R))) :
+    (splitTorusPointsIsoLeviFunctor (R := R)).inv.app A g =
+      (splitTorusLeviMulEquiv A).symm g := by
+  unfold splitTorusPointsIsoLeviFunctor
+  rfl
 
 /-! ## The dynamic unipotent subgroup -/
 
 /-- The positive root-subgroup point map, with codomain restricted to the dynamic unipotent
 subgroup. -/
-@[expose] noncomputable def additiveToUnipotent (A : CommAlgCat.{w} R) :
+noncomputable def additiveToUnipotent (A : CommAlgCat.{w} R) :
     HopfAlgebra.points (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) A →*
       Cocharacter.unipotent A (dynamicCocharacter (R := R)) :=
   (rootSubgroupPoints (R := R) (N := 2) (A := A)
@@ -218,6 +275,7 @@ theorem coe_additiveUnipotentMulEquiv_apply (A : CommAlgCat.{w} R)
         Cocharacter.unipotent A (dynamicCocharacter (R := R))) :
       WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) =
       rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) f := by
+  unfold additiveUnipotentMulEquiv additiveToUnipotent
   rfl
 
 /-- The additive-group coordinate Hopf algebra represents the dynamic unipotent functor for
@@ -229,12 +287,43 @@ noncomputable def additivePointsIsoUnipotentFunctor :
     (fun A ↦ (additiveUnipotentMulEquiv A).toGrpIso)
     (by
       intro A B φ
-      ext f
+      apply GrpCat.hom_ext
+      apply MonoidHom.ext
+      intro (f : HopfAlgebra.points
+        (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) A)
       apply Subtype.ext
       -- Both component maps are restrictions of the corresponding ambient point maps.
-      change rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1)
-          (HopfAlgebra.mapPoints (H := AdditiveGroup.coordinateHopfAlgebra R) φ f) =
-        AlgHom.mapValue φ.hom (rootSubgroupPoints (by decide) f)
+      unfold HopfAlgebra.pointsFunctor Cocharacter.unipotentFunctor
+      change ((additiveUnipotentMulEquiv B
+          (HopfAlgebra.mapPoints (H := AdditiveGroup.coordinateHopfAlgebra R) φ f) :
+            Cocharacter.unipotent B (dynamicCocharacter (R := R))) :
+          WithConv (coordinateHopfAlgebra R 2 →ₐ[R] B)) =
+        ((Cocharacter.mapUnipotent (dynamicCocharacter (R := R)) φ
+            (additiveUnipotentMulEquiv A f) :
+              Cocharacter.unipotent B (dynamicCocharacter (R := R))) :
+            WithConv (coordinateHopfAlgebra R 2 →ₐ[R] B))
+      rw [coe_additiveUnipotentMulEquiv_apply, Cocharacter.coe_mapUnipotent_apply,
+        coe_additiveUnipotentMulEquiv_apply]
       exact (mapValue_rootSubgroupPoints φ.hom (by decide) f).symm)
+
+/-- The forward component of `additivePointsIsoUnipotentFunctor` is the pointwise additive
+equivalence. -/
+@[simp]
+theorem additivePointsIsoUnipotentFunctor_hom_app_apply (A : CommAlgCat.{w} R)
+    (f : HopfAlgebra.points (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) A) :
+    (additivePointsIsoUnipotentFunctor (R := R)).hom.app A f =
+      additiveUnipotentMulEquiv A f := by
+  unfold additivePointsIsoUnipotentFunctor
+  rfl
+
+/-- The inverse component of `additivePointsIsoUnipotentFunctor` is the inverse pointwise
+additive equivalence. -/
+@[simp]
+theorem additivePointsIsoUnipotentFunctor_inv_app_apply (A : CommAlgCat.{w} R)
+    (g : Cocharacter.unipotent A (dynamicCocharacter (R := R))) :
+    (additivePointsIsoUnipotentFunctor (R := R)).inv.app A g =
+      (additiveUnipotentMulEquiv A).symm g := by
+  unfold additivePointsIsoUnipotentFunctor
+  rfl
 
 end TauCeti.GeneralLinear.Dynamic.GL2
