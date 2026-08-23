@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.NumberTheory.ModularForms.CuspFormSubmodule
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
 
 /-!
@@ -107,13 +108,10 @@ theorem char_neg_one_of_mem_modFormCharSpace {f : ModularForm ((Gamma1 N).map (m
 /-- **The parity lemma for cusp forms.** If `S_k(Γ₁(N), χ)` contains a nonzero form then
 `χ(-1) = (-1)^k`. -/
 theorem char_neg_one_of_mem_cuspFormCharSpace {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ cuspFormCharSpace k χ) (hf0 : f ≠ 0) : (χ (-1) : ℂ) = (-1 : ℂ) ^ k := by
-  have hne : (⇑f : ℍ → ℂ) ≠ 0 := fun h ↦ hf0 (DFunLike.coe_injective (by simpa using h))
-  have h : ((-1 : ℂ) ^ k) • (⇑f : ℍ → ℂ) = (χ (-1) : ℂ) • (⇑f : ℍ → ℂ) := by
-    rw [← coe_diamondOpCusp_neg_one k f,
-      diamondOpCusp_apply_of_mem_cuspFormCharSpace k χ (-1) hf]
-    simp
-  exact ((smul_left_inj hne).mp h).symm
+    (hf : f ∈ cuspFormCharSpace k χ) (hf0 : f ≠ 0) : (χ (-1) : ℂ) = (-1 : ℂ) ^ k :=
+  char_neg_one_of_mem_modFormCharSpace ((coe_mem_modFormCharSpace_iff k χ f).mpr hf)
+    fun h ↦ hf0 (CuspForm.toModularFormₗ_injective
+      (by rw [map_zero, CuspForm.toModularFormₗ_eq_coe]; exact h))
 
 /-! ### The emptiness criterion -/
 
