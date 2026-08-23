@@ -9,7 +9,7 @@ public import TauCeti.Analysis.Contour.Crossing.Finiteness
 public import TauCeti.Analysis.Contour.PwC1ImmersionOn
 public import TauCeti.Analysis.Contour.RegularityConditions
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
-import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+import TauCeti.Analysis.Contour.Argument.Lift
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.InvSubCPVExistence
 import TauCeti.Analysis.Contour.PerWindow.CPV
@@ -118,13 +118,7 @@ theorem exp_log_norm_add_arg_eq_mul_exp_crossingAngle {γ : ℝ → ℂ} {t₀ :
     congr 1
     push_cast
     ring
-  have hangle_exp := congrArg (fun z : Circle => (z : ℂ))
-    (congrArg Real.Angle.toCircle hangle)
-  rw [Complex.exp_add, show
-      Complex.exp ((((-L_L) / w_L).arg + (w_R / L_R).arg : ℝ) * Complex.I) =
-        Complex.exp ((crossingAngle γ t₀ + (w_R / w_L).arg : ℝ) * Complex.I) by
-          simpa only [Real.Angle.toCircle_coe, Circle.coe_exp] using hangle_exp,
-    hnorm, hsplit]
+  rw [Complex.exp_add, exp_mul_I_congr_angle hangle, hnorm, hsplit]
   calc ((‖w_R / w_L‖ : ℝ) : ℂ) * (Complex.exp ((crossingAngle γ t₀ : ℂ) * Complex.I) *
         Complex.exp ((((w_R / w_L).arg : ℝ) : ℂ) * Complex.I))
       = (((‖w_R / w_L‖ : ℝ) : ℂ) * Complex.exp ((((w_R / w_L).arg : ℝ) : ℂ) * Complex.I)) *

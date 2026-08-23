@@ -7,8 +7,8 @@ module
 
 public import TauCeti.Analysis.Contour.Crossing.Excision
 public import TauCeti.Analysis.Contour.RegularityConditions
+import TauCeti.Analysis.Contour.Argument.Lift
 import TauCeti.Analysis.Contour.Chord.QuotientAsymptotics
-import TauCeti.Analysis.Contour.Winding.CrossingAngleSum
 
 /-!
 # The capping angle at a crossing
@@ -29,11 +29,12 @@ starting at `w_L` and sweeping through `δ` ends at `w_R`.  Moreover `δ` tends 
 the branch control needed to ensure that a sufficiently local cap is the reverse of the model
 sector arc, rather than that arc with an unnoticed extra turn.
 
-The final theorem records the exact local accounting.  Whenever the principal value on a window
-has the standard boundary-argument value supplied by the per-window calculation, subtracting the
-winding number of this cap leaves exactly `crossingAngle γ t₀ / 2π`.  Exit-time windows have
-equal endpoint radii, so these results are the geometric bridge from that analytic calculation to
-the excision identity in `TauCeti.Analysis.Contour.Crossing.Excision`.
+The final theorem records the exact local accounting.  Its chord identities, equal-radius
+condition, and tangent-limit hypotheses prove that the cap has the same endpoints as the crossing
+window.  Whenever the principal value on that window has the standard boundary-argument value
+supplied by the per-window calculation, subtracting the winding number of the cap leaves exactly
+`crossingAngle γ t₀ / 2π`.  This is the geometric bridge from that analytic calculation to the
+excision identity in `TauCeti.Analysis.Contour.Crossing.Excision`.
 
 ## Main definitions and results
 
@@ -97,12 +98,16 @@ theorem exp_crossingCapSweep_mul_I (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0)
     apply norm_ne_zero_iff.mp
     rw [← hnorm]
     exact norm_ne_zero_iff.mpr hw_L
-  have hwindow := exp_log_norm_add_arg_eq_mul_exp_crossingAngle
-    hL_L hL_R hw_L hw_R h_R h_L
-  have hlog : Real.log ‖w_R‖ - Real.log ‖w_L‖ = 0 := by rw [← hnorm]; ring
-  simp only [hlog, Complex.ofReal_zero, zero_add] at hwindow
-  rw [crossingCapSweep, Complex.ofReal_sub, sub_mul, Complex.exp_sub, hwindow]
-  exact mul_div_cancel_right₀ (w_R / w_L) (Complex.exp_ne_zero _)
+  rw [exp_mul_I_congr_angle
+    (coe_crossingCapSweep_eq_arg_div hL_L hL_R hw_L hw_R h_R h_L)]
+  have hratio_norm : ‖w_R / w_L‖ = 1 := by
+    rw [norm_div, ← hnorm, div_self (norm_ne_zero_iff.mpr hw_L)]
+  calc
+    Complex.exp (((w_R / w_L).arg : ℂ) * Complex.I) =
+        (‖w_R / w_L‖ : ℂ) * Complex.exp (((w_R / w_L).arg : ℂ) * Complex.I) := by
+          rw [hratio_norm]
+          simp
+    _ = w_R / w_L := Complex.norm_mul_exp_arg_mul_I _
 
 /-- **The cap has the prescribed endpoints.**  If the endpoint chords have equal norm, the circle
 of that radius about `s`, starting at the principal argument of `w_L` and sweeping through
@@ -151,31 +156,42 @@ theorem tendsto_crossingCapSweep (h_at : γ t₀ = s) (hL_L : L_L ≠ 0) (hL_R :
   simpa only [crossingCapSweep, Function.comp_apply, zero_add, zero_sub] using
     (hleft.add hright).sub tendsto_const_nhds
 
-/-- **The local crossing loop contributes exactly the crossing angle.**  Suppose the principal
-value on `[l, u]` is the standard pure-imaginary boundary-argument value
-`i · (arg (-L_L / w_L) + arg (w_R / L_R))`, as supplied by the separate per-window calculation
-under its full hypotheses, including equal endpoint radii.
-The winding number of the crossing window minus that of the circular cap with sweep
-`crossingCapSweep` is then exactly `crossingAngle γ t₀ / 2π`.
-
-Together with `circleMap_crossingCapSweep_endpoints`, this is the one-window local contribution in
-Hungerbühler–Wasem Proposition 2.2. -/
+/-- **The local crossing loop contributes exactly the crossing angle.**  Suppose `w_L` and `w_R`
+are the endpoint chords of `[l, u]`, have equal norm, and the one-sided tangent limits are nonzero.
+Then the circular cap with sweep `crossingCapSweep` joins `γ l` to `γ u`.  If the principal value
+on the window is the standard pure-imaginary boundary-argument value
+`i · (arg (-L_L / w_L) + arg (w_R / L_R))`, as supplied by the separate per-window calculation,
+the winding number of the crossing window minus that of the cap is exactly
+`crossingAngle γ t₀ / 2π`.  Thus the window followed by the reversed cap is the one-window local
+loop contribution in Hungerbühler–Wasem Proposition 2.2. -/
 theorem windingNumber_sub_circleCap_eq_crossingAngle_div_two_pi
-    (hw_L : w_L ≠ 0) (hlu : l ≠ u)
+    (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0) (hw_L : w_L ≠ 0) (hlu : l ≠ u)
+    (hw_l : w_L = γ l - s) (hw_u : w_R = γ u - s) (hnorm : ‖w_L‖ = ‖w_R‖)
+    (h_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
+    (h_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L))
     (hpv : HasCauchyPVAt γ l u (fun z => (z - s)⁻¹) s
       (((((-L_L) / w_L).arg + (w_R / L_R).arg : ℝ) : ℂ) * Complex.I)) :
-    windingNumber γ l u s -
-        windingNumber (circleCap s ‖w_L‖ l u w_L.arg
-          (w_L.arg + crossingCapSweep γ t₀ L_R L_L w_L w_R)) l u s
-      = (crossingAngle γ t₀ : ℂ) / (2 * (Real.pi : ℂ)) := by
-  rw [windingNumber_eq_of_hasCauchyPVAt hpv,
-    windingNumber_circleCap (norm_ne_zero_iff.mpr hw_L) hlu w_L.arg
-      (w_L.arg + crossingCapSweep γ t₀ L_R L_L w_L w_R)]
-  simp only [add_sub_cancel_left, crossingCapSweep]
-  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp
-  push_cast
-  ring
+    let cap := circleCap s ‖w_L‖ l u w_L.arg
+      (w_L.arg + crossingCapSweep γ t₀ L_R L_L w_L w_R)
+    cap l = γ l ∧ cap u = γ u ∧
+      windingNumber γ l u s - windingNumber cap l u s
+        = (crossingAngle γ t₀ : ℂ) / (2 * (Real.pi : ℂ)) := by
+  dsimp only
+  have hends := circleMap_crossingCapSweep_endpoints (s := s) hL_L hL_R hnorm h_R h_L
+  constructor
+  · rw [circleCap_left, hends.1, hw_l]
+    ring
+  constructor
+  · rw [circleCap_right s ‖w_L‖ hlu w_L.arg, hends.2, hw_u]
+    ring
+  · rw [windingNumber_eq_of_hasCauchyPVAt hpv,
+      windingNumber_circleCap (norm_ne_zero_iff.mpr hw_L) hlu w_L.arg
+        (w_L.arg + crossingCapSweep γ t₀ L_R L_L w_L w_R)]
+    simp only [add_sub_cancel_left, crossingCapSweep]
+    have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+    field_simp
+    push_cast
+    ring
 
 end TauCeti.Contour
 
