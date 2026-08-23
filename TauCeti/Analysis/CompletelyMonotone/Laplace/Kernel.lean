@@ -109,7 +109,7 @@ theorem laplaceTransformENN_antitone (μ : Measure ℝ≥0) : Antitone (laplaceT
 /-- The extended-real Laplace transform is bounded by the total mass. -/
 theorem laplaceTransformENN_le_apply_univ (μ : Measure ℝ≥0) (t : ℝ≥0) :
     laplaceTransformENN μ t ≤ μ Set.univ :=
-  (laplaceTransformENN_antitone μ (show (0 : ℝ≥0) ≤ t from zero_le)).trans_eq
+  (laplaceTransformENN_antitone μ (zero_le : (0 : ℝ≥0) ≤ t)).trans_eq
     (laplaceTransformENN_zero μ)
 
 /-- The extended-real Laplace transform of a finite measure is finite. -/
@@ -145,12 +145,23 @@ theorem measurable_laplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) :
   unfold laplaceTransform TauCeti.laplaceTransformENN
   fun_prop
 
+/-- At time `0`, the fibrewise Laplace transform is the total mass of the fibre. -/
+@[simp]
+theorem laplaceTransform_zero (κ : Kernel V ℝ≥0) (q : V) :
+    laplaceTransform κ 0 q = κ q Set.univ := by
+  rw [laplaceTransform_apply, TauCeti.laplaceTransformENN_zero]
+
+/-- The fibrewise Laplace transform decreases in time at each base point. -/
+theorem laplaceTransform_antitone (κ : Kernel V ℝ≥0) (q : V) :
+    Antitone fun t => laplaceTransform κ t q :=
+  TauCeti.laplaceTransformENN_antitone (κ q)
+
 /-- A Markov kernel has fibrewise Laplace transform `1` at time `0`. -/
 @[simp]
 theorem laplaceTransform_zero_of_isMarkovKernel (κ : Kernel V ℝ≥0)
     [IsMarkovKernel κ] :
     laplaceTransform κ 0 = 1 := by
   funext q
-  rw [laplaceTransform_apply, TauCeti.laplaceTransformENN_zero, measure_univ, Pi.one_apply]
+  rw [laplaceTransform_zero, measure_univ, Pi.one_apply]
 
 end ProbabilityTheory.Kernel

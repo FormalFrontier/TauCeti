@@ -69,9 +69,9 @@ then over the base measure. -/
 theorem lintegral_swapCompProd (μ : Measure V) [SFinite μ] (κ : Kernel V Ω)
     [IsSFiniteKernel κ] {f : Ω × V → ℝ≥0∞} (hf : Measurable f) :
     ∫⁻ y, f y ∂(swapCompProd μ κ) = ∫⁻ q, ∫⁻ p, f (p, q) ∂(κ q) ∂μ := by
+  have hf_swap : Measurable (fun z : V × Ω => f z.swap) := hf.comp measurable_swap
   rw [swapCompProd, lintegral_map hf measurable_swap,
-    Measure.lintegral_compProd
-      (show Measurable (fun z : V × Ω => f z.swap) from hf.comp measurable_swap)]
+    Measure.lintegral_compProd hf_swap]
   simp
 
 /-- The second marginal of an assembled measure is the measure it was assembled from. -/
