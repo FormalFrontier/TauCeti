@@ -90,7 +90,9 @@ variable [NeZero N]
 private theorem qExpansion_coeff_add_slash_scaleRep [NeZero p]
     {F G : Type*} [FunLike F ℍ ℂ] [FunLike G ℍ ℂ]
     [ModularFormClass F ((Gamma1 N).map (mapGL ℝ)) k]
-    [ModularFormClass G ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (g : G) (m : ℕ) :
+    [ModularFormClass G ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (g : G)
+    (hSum : AnalyticAt ℂ (cuspFunction 1
+      (heckeSlashUpperTri k p ⇑f + ⇑g ∣[k] (scaleRep p : GL (Fin 2) ℚ))) 0) (m : ℕ) :
     (qExpansion 1 (heckeSlashUpperTri k p ⇑f + ⇑g ∣[k] (scaleRep p : GL (Fin 2) ℚ))).coeff m =
       (qExpansion 1 f).coeff (p * m) +
         if p ∣ m then (p : ℂ) ^ (k - 1) * (qExpansion 1 g).coeff (m / p) else 0 := by
@@ -105,20 +107,10 @@ private theorem qExpansion_coeff_add_slash_scaleRep [NeZero p]
         (SlashInvariantFormClass.periodic_comp_ofComplex f hΓ))
       (mdifferentiable_heckeSlashUpperTri k p (ModularFormClass.holo f))
       (isBoundedAtImInfty_heckeSlashUpperTri k p (ModularFormClass.bdd_at_infty f))
-  have _ : NeZero (p * N) := ⟨Nat.mul_ne_zero (NeZero.ne p) (NeZero.ne N)⟩
   have hD : AnalyticAt ℂ (cuspFunction 1 (⇑g ∣[k] (scaleRep p : GL (Fin 2) ℚ))) 0 := by
-    rw [scaleRep_def]
-    change AnalyticAt ℂ (cuspFunction 1
-      (⇑(ModularFormClass.modularForm g) ∣[k]
-        (natDiagGL 2 ![p, 1] : GL (Fin 2) ℚ))) 0
-    let hle := TauCeti.Gamma1_map_le_conjAct_scaleGL N p
-    let g' := TauCeti.ModularForm.levelRaise p hle (ModularFormClass.modularForm g)
-    have hg' : AnalyticAt ℂ (cuspFunction 1 ⇑g') 0 :=
-      ModularFormClass.analyticAt_cuspFunction_zero g' one_pos
-        (by simp [CongruenceSubgroup.strictPeriods_Gamma1])
-    rw [TauCeti.slash_natDiagGL_d_one_eq_smul_levelRaise hle
-      (ModularFormClass.modularForm g), cuspFunction_smul hg'.continuousAt]
-    exact hg'.const_smul
+    have hsub := hSum.sub hU
+    rw [← cuspFunction_sub hSum.continuousAt hU.continuousAt] at hsub
+    simpa only [add_sub_cancel_left] using hsub
   rw [UpperHalfPlane.qExpansion_add hU hD, map_add]
   congr 1
   · exact qExpansion_coeff_heckeSlashUpperTri' k p hΓ hp f m
@@ -140,8 +132,13 @@ theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime
         if p ∣ m then (p : ℂ) ^ (k - 1) * (qExpansion 1 (diamondOpNat k p f)).coeff (m / p)
         else 0 := by
   have _ : NeZero p := ⟨hp.ne_zero⟩
+  have hΓ : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
+    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+  have hSum := ModularFormClass.analyticAt_cuspFunction_zero
+    (heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f) one_pos hΓ
+  rw [coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp f] at hSum
   rw [coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp f]
-  exact qExpansion_coeff_add_slash_scaleRep k f _ m
+  exact qExpansion_coeff_add_slash_scaleRep k f _ hSum m
 
 /-- **The Fourier-coefficient recurrence for `Tₚ` on `S_k(Γ₁(N))`, at every prime** — the same
 formula, with the cusp-form diamond operator. -/
@@ -152,8 +149,13 @@ theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime
         if p ∣ m then (p : ℂ) ^ (k - 1) * (qExpansion 1 (diamondOpCuspNat k p f)).coeff (m / p)
         else 0 := by
   have _ : NeZero p := ⟨hp.ne_zero⟩
+  have hΓ : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
+    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+  have hSum := ModularFormClass.analyticAt_cuspFunction_zero
+    (heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f) one_pos hΓ
+  rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f] at hSum
   rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f]
-  exact qExpansion_coeff_add_slash_scaleRep k f (diamondOpCuspNat k p f) m
+  exact qExpansion_coeff_add_slash_scaleRep k f (diamondOpCuspNat k p f) hSum m
 
 /-- **Diamond–Shurman's recurrence on a nebentypus space `M_k(N, χ)` at a good prime.**
 For `p ∤ N` the diamond acts by the scalar `χ(p)`, so
