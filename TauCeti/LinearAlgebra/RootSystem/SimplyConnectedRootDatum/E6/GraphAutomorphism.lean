@@ -11,15 +11,16 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6.Basic
 /-!
 # The graph automorphism of the pinned type `E₆` root datum
 
-This file records the type-`E₆` nontriviality consequence of applying the general
-diagram-automorphism construction `TauCeti.DynkinType.diagramAut` to the order-two symmetry
-`TauCeti.graphPermE6` of the Bourbaki-numbered `E₆` diagram. Preservation of the pinned base is
-the specialization of the generic simp theorem
+This file specializes the general diagram-automorphism construction
+`TauCeti.DynkinType.diagramAut` to the order-two symmetry `TauCeti.graphPermE6` of the
+Bourbaki-numbered `E₆` diagram. Preservation of the pinned base is the specialization of the
+generic simp theorem
 `TauCeti.DynkinType.image_diagramRootPerm_simplyConnectedBase_support`.
 
 ## Main declarations
 
-* `TauCeti.DynkinType.diagramAut_graphPermE6_ne_one`: the induced automorphism is nontrivial.
+* `TauCeti.DynkinType.e6GraphAut`: the graph automorphism of the pinned type-`E₆` root datum.
+* `TauCeti.DynkinType.e6GraphAut_ne_one`: this automorphism is nontrivial.
 
 ## References
 
@@ -39,14 +40,29 @@ open TauCeti
 
 noncomputable section
 
+/-- The graph automorphism of the pinned simply connected root datum of type `E₆`, induced by
+the nontrivial symmetry of the Bourbaki-numbered Dynkin diagram. -/
+def e6GraphAut : (E6.simplyConnectedRootDatum valid_E6).Aut :=
+  diagramAut valid_E6 (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6)
+
+/-- The root-index action bundled in the type-`E₆` graph automorphism is the permutation induced
+by the nontrivial symmetry of its Dynkin diagram. -/
+@[simp] theorem indexEquiv_e6GraphAut :
+    e6GraphAut.indexEquiv =
+      diagramRootPerm valid_E6
+        (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6) := by
+  rw [e6GraphAut]
+  exact diagramAut_indexEquiv valid_E6
+    (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6)
+
 /-- The type-`E₆` graph automorphism is nontrivial: it exchanges the first and sixth simple
 roots. -/
-theorem diagramAut_graphPermE6_ne_one :
-    diagramAut valid_E6 (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6) ≠ 1 := by
-  let hσ : graphPermE6 ∈ E6.diagramSymmetry :=
-    mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6
+theorem e6GraphAut_ne_one : e6GraphAut ≠ 1 := by
   intro h
-  have hσ_one : graphPermE6 = 1 := (diagramAut_eq_one_iff valid_E6 hσ).mp h
+  have hσ_one : graphPermE6 = 1 :=
+    (diagramAut_eq_one_iff valid_E6
+      (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6)).mp (by
+        simpa only [e6GraphAut] using h)
   have hzero := congrArg (fun e : Equiv.Perm (Fin 6) => e 0) hσ_one
   simp only [graphPermE6_apply_zero, Equiv.Perm.one_def, Equiv.refl_apply] at hzero
   omega
