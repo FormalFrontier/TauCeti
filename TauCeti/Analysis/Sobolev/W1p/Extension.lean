@@ -47,7 +47,7 @@ isometry of `Lᵖ` spaces, so the extension operator is an isometry of Sobolev s
   `TauCeti.W1p0.norm_extendByZeroL` and its value and gradient components; it is functorial in
   `Ω` by `TauCeti.W1p0.extendByZeroL_self` and
   `TauCeti.W1p0.extendByZeroL_extendByZeroL`.
-* `TauCeti.hasWeakFDerivOn_indicator_of_mem_w1p0Submodule`: the analytic content, that the
+* `TauCeti.W1p0.hasWeakFDerivOn_indicator`: the analytic content, that the
   zero-extension of `u` is weakly differentiable on `Ω'` with the zero-extension of `∇u` as its
   weak gradient.
 
@@ -277,7 +277,7 @@ is weakly differentiable on the larger open set `Ω'`, with weak gradient the ze
 weak gradient of `u`.  This is the statement that can *fail* for a general `u ∈ W^{1,p}(Ω)`: with
 no condition forcing `u` to vanish towards `∂Ω`, its zero-extension need not be weakly
 differentiable on `Ω'` at all. -/
-theorem hasWeakFDerivOn_indicator_of_mem_w1p0Submodule (hsub : Omega ≤ Omega')
+theorem W1p0.hasWeakFDerivOn_indicator (hsub : Omega ≤ Omega')
     (u : W1p0 mu Omega p) :
     HasWeakFDerivOn mu Omega'
       ((Omega : Set E).indicator (W1p.value (u : W1p mu Omega p) : E → ℝ))
