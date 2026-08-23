@@ -71,7 +71,7 @@ variable [AddCommGroup M] [Module R M] [Comodule R H M]
 
 variable (M) in
 /-- The submodule fixed by all base-valued points of the closed subgroup cut out by `I`. -/
-@[expose] def basePointFixedSubmodule (I : HopfIdeal R H) : Submodule R M :=
+def basePointFixedSubmodule (I : HopfIdeal R H) : Submodule R M :=
   Representation.invariants
     ((Comodule.basePointsRepresentation (R := R) (H := H) M).comp
       (CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) I
@@ -201,6 +201,7 @@ noncomputable abbrev basePointFixedSubrepresentation (hI : I.IsNormal) :
     Representation R
       (HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
       (I.basePointFixedSubmodule M) := by
+  rw [basePointFixedSubmodule_def]
   let N := CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) I
     (CommAlgCat.of R R)
   let _ : N.Normal := CommHopfAlgCat.quotientPointsSubgroup_normal
