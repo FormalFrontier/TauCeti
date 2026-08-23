@@ -7,8 +7,8 @@ module
 
 public import Mathlib.NumberTheory.NumberField.ClassNumber
 public import Mathlib.RingTheory.AdjoinRoot
+public import TauCeti.NumberTheory.Multiquadratic.MinusTwentyOne.Basic
 import Mathlib.Analysis.Real.Pi.Bounds
-import TauCeti.NumberTheory.Multiquadratic.MinusTwentyOne.Basic
 import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrime.Independence
 import TauCeti.NumberTheory.NumberField.ClassGroupElementaryTwoQuotient
 import TauCeti.NumberTheory.NumberField.PrimeIdeal
@@ -302,11 +302,6 @@ theorem classNumber_eq_four_of_minpoly_eq_X_sq_add_twenty_one
   -- The only multiple of `4` between `4` and `5` is `4`.
   obtain ⟨n, hn⟩ := hfourdvd
   omega
-
-local instance irreducible_sqrt_neg_twenty_one :
-    Fact (Irreducible (X ^ 2 - C (-21 : ℚ))) := ⟨by
-  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
-    (fun q _ => by nlinarith [sq_nonneg q])⟩
 
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 21)`, modelling `ℚ(√-21)`,
 has class number `4`. -/

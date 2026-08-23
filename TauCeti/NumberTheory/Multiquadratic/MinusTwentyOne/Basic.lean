@@ -30,12 +30,12 @@ open scoped NumberField
 
 namespace TauCeti.NumberField
 
-/-- `X² + 21` is irreducible over `ℚ`, so `AdjoinRoot (X² + 21)` is a field. The instance carries an
-explicit, field-specific name because an anonymous `Fact (Irreducible …)` instance receives an
-auto-generated name that ignores the radicand: the `-21` and `-5` instances would then collide under
-one name when the whole library is loaded for the axioms audit. -/
-local instance fact_irreducible_sqrt_neg_twenty_one :
-    Fact (Irreducible (X ^ 2 - C (-21 : ℚ))) := ⟨by
+/-- `X² + 21` is irreducible over `ℚ`, so `AdjoinRoot (X² + 21)` is a field. Declared once here (and
+reused via `public import` by both worked-example modules) with an explicit, field-specific name: an
+anonymous `Fact (Irreducible …)` instance receives an auto-generated name that ignores the radicand,
+so the `-21` and `-5` instances would collide under one name when the whole library is loaded for
+the axioms audit. -/
+instance irreducible_sqrt_neg_twenty_one : Fact (Irreducible (X ^ 2 - C (-21 : ℚ))) := ⟨by
   exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
     (fun q _ => by nlinarith [sq_nonneg q])⟩
 
