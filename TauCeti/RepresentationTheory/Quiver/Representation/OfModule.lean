@@ -350,12 +350,7 @@ noncomputable def moduleHomOfQuiverRepHom
       | add f g hf hg => simp only [add_smul, map_add, hf, hg]
       | single y c =>
         obtain ⟨b, c', p⟩ := y
-        -- the induction hands the basis element in the `single` form, while
-        -- `TauCeti.moduleHomAux_ofPath_smul` is stated on `TauCeti.ofPath`; the two differ by the
-        -- scalar `c`, which `single p c = c • ofPath p` extracts
-        have hsingle : (single (⟨b, c', p⟩ : Quiver.TotalPath Q) c : pathAlgebra k Q)
-            = c • ofPath ⟨b, c', p⟩ := by rw [ofPath_eq_single, smul_single, mul_one]
-        rw [hsingle, smul_assoc, map_smul, moduleHomAux_ofPath_smul, RingHom.id_apply,
+        rw [single_eq_smul_ofPath, smul_assoc, map_smul, moduleHomAux_ofPath_smul, RingHom.id_apply,
           smul_assoc] }
 
 /-- The recovered map, spelled out: glue the components of `φ` along the vertex projections. -/

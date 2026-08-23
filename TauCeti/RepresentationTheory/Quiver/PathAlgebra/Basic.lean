@@ -427,8 +427,14 @@ noncomputable def ofPath (x : Quiver.TotalPath Q) : pathAlgebra k Q :=
 theorem ofPath_eq_single (x : Quiver.TotalPath Q) :
     (ofPath x : pathAlgebra k Q) = single x 1 := (rfl)
 
-/-- **The defining product of two basis paths**: their concatenation when they are composable, and
-`0` otherwise. This is `TauCeti.PathAlgebra.single_mul_single` read on the path basis. -/
+/-- A scaled basis path is the corresponding `single`. -/
+theorem single_eq_smul_ofPath (x : Quiver.TotalPath Q) (c : k) :
+    (single x c : pathAlgebra k Q) = c • ofPath x := by
+  rw [ofPath_eq_single, smul_single, mul_one]
+
+/-- **The defining product of two basis paths**: their concatenation, later factor first, when
+they are composable, and `0` otherwise. This is `TauCeti.PathAlgebra.single_mul_single` read on the
+path basis. -/
 theorem ofPath_mul_ofPath (x y : Quiver.TotalPath Q) :
     (ofPath x * ofPath y : pathAlgebra k Q) = (x.mul? y).elim 0 fun z => ofPath z := by
   simp only [ofPath_eq_single, single_mul_single, mul_one]
@@ -459,6 +465,10 @@ noncomputable def vertexIdempotent (v : Q) : pathAlgebra k Q :=
 theorem vertexIdempotent_eq_single (v : Q) :
     vertexIdempotent k v
       = single (⟨v, v, _root_.Quiver.Path.nil⟩ : Quiver.TotalPath Q) (1 : k) := (rfl)
+
+/-- The basis element of the trivial path is the corresponding vertex idempotent. -/
+theorem ofPath_nil (v : Q) :
+    (ofPath ⟨v, v, _root_.Quiver.Path.nil⟩ : pathAlgebra k Q) = vertexIdempotent k v := (rfl)
 
 /-- The vertex idempotent at the target of a path is a left unit for it. -/
 @[simp]
@@ -739,9 +749,7 @@ private theorem liftLinear_ofPath (x : Quiver.TotalPath Q) : liftLinear k F (ofP
 
 private theorem liftLinear_single (x : Quiver.TotalPath Q) (c : k) :
     liftLinear k F (single x c) = c • F x := by
-  have hx : (single x c : pathAlgebra k Q) = c • ofPath x := by
-    rw [ofPath_eq_single, smul_single, mul_one]
-  rw [hx, map_smul, liftLinear_ofPath]
+  rw [single_eq_smul_ofPath, map_smul, liftLinear_ofPath]
 
 variable (hcomp : ∀ {a b c : Q} (p : _root_.Quiver.Path a b) (q : _root_.Quiver.Path c a),
     F ⟨a, b, p⟩ * F ⟨c, a, q⟩ = F ⟨c, b, q.comp p⟩)

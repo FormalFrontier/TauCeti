@@ -55,10 +55,12 @@ namespace TauCeti
 
 open DirectSum
 
-variable {ι σ A : Type*} [Ring A] [SetLike σ A] [AddSubmonoidClass σ A] (𝒜 : ι → σ)
-  [DecidableEq ι] [AddMonoid ι] [GradedRing 𝒜]
+variable {ι σ A : Type*}
 
 namespace Ideal
+
+variable [Semiring A] [SetLike σ A] [AddSubmonoidClass σ A] (𝒜 : ι → σ)
+  [DecidableEq ι] [AddMonoid ι] [GradedRing 𝒜]
 
 /-- **Left absorption of componentwise membership**: if every homogeneous component of `x` lies in
 an ideal, so does every homogeneous component of `a * x`. -/
@@ -79,6 +81,9 @@ theorem proj_mul_mem_left {I : _root_.Ideal A} {x : A}
 end Ideal
 
 namespace TwoSidedIdeal
+
+variable [Ring A] [SetLike σ A] [AddSubmonoidClass σ A] (𝒜 : ι → σ)
+  [DecidableEq ι] [AddMonoid ι] [GradedRing 𝒜]
 
 /-- The homogeneous components of `x * a`, for `x` a homogeneous element of a two-sided ideal,
 lie in that ideal. This is the mirror image of `Ideal.mul_homogeneous_element_mem_of_mem`, and it

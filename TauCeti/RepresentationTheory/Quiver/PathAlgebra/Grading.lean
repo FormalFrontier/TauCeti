@@ -19,11 +19,10 @@ the span `TauCeti.PathAlgebra.grade k Q n` of the paths of length `n` makes `kQ`
 submodules of `kQ` itself and the decomposition compares them with `kQ`, rather than with a
 separate graded copy of it.
 
-Degree `0` is the span of the vertex idempotents and degree `1` is the span of the arrows, so this
-is the grading for which `kQ` is generated in degrees `0` and `1`. Each piece is free on the paths
-of that length, and each sits inside the corresponding step `TauCeti.pathSpan k Q n` of the length
-filtration of `TauCeti.RepresentationTheory.Quiver.Radical`, which spans the paths of length *at
-least* `n`.
+Degree `0` is the span of the vertex idempotents and degree `1` is the span of the arrows. Each
+piece is free on the paths of that length, and each sits inside the corresponding step
+`TauCeti.pathSpan k Q n` of the length filtration of
+`TauCeti.RepresentationTheory.Quiver.Radical`, which spans the paths of length *at least* `n`.
 
 ## Main definitions
 
@@ -89,7 +88,7 @@ namespace PathAlgebra
 
 section Grade
 
-variable (k : Type w) (Q : Type u) [CommSemiring k] [Quiver.{v} Q]
+variable (k : Type w) (Q : Type u) [Semiring k] [Quiver.{v} Q]
 
 /-- The degree-`n` piece of the path-length grading of the path algebra: the `k`-span of the paths
 of length `n`. -/
@@ -133,24 +132,25 @@ theorem ofPath_mem_grade_of_length {n : ℕ} {x : Quiver.TotalPath Q} (hx : x.2.
     (ofPath x : pathAlgebra k Q) ∈ grade k Q n :=
   hx ▸ ofPath_mem_grade x
 
+/-- **A basis path has degree `n` exactly when its length is `n`.** -/
+@[simp]
+theorem ofPath_mem_grade_iff [Nontrivial k] {n : ℕ} {x : Quiver.TotalPath Q} :
+    (ofPath x : pathAlgebra k Q) ∈ grade k Q n ↔ x.2.2.length = n := by
+  refine ⟨fun hx => mem_grade_iff.1 hx x ?_, ofPath_mem_grade_of_length⟩
+  rw [ofPath_eq_single, pathAlgebraBasis_repr_single, Finsupp.mem_support_iff,
+    Finsupp.single_eq_same]
+  exact one_ne_zero
+
 /-- A scaled basis path is homogeneous of the length of that path. -/
 theorem single_mem_grade_of_length {n : ℕ} {x : Quiver.TotalPath Q} (hx : x.2.2.length = n)
     (c : k) : (single x c : pathAlgebra k Q) ∈ grade k Q n := by
-  have h : (single x c : pathAlgebra k Q) = c • ofPath x := by
-    rw [ofPath_eq_single, smul_single, mul_one]
-  rw [h]
+  rw [single_eq_smul_ofPath]
   exact Submodule.smul_mem _ c (ofPath_mem_grade_of_length hx)
 
 /-- A vertex idempotent is homogeneous of degree `0`. -/
 theorem vertexIdempotent_mem_grade_zero (v : Q) :
     (vertexIdempotent k v : pathAlgebra k Q) ∈ grade k Q 0 := by
-  rw [vertexIdempotent_eq_single]
-  exact single_mem_grade_of_length (x := ⟨v, v, _root_.Quiver.Path.nil⟩) rfl 1
-
-/-- An arrow is homogeneous of degree `1`. -/
-theorem ofArrow_mem_grade_one {a b : Q} (e : a ⟶ b) :
-    (ofArrow e : pathAlgebra k Q) ∈ grade k Q 1 := by
-  rw [ofArrow_eq_ofPath]
+  rw [← ofPath_nil]
   exact ofPath_mem_grade_of_length rfl
 
 /-- **Two paths multiply in the sum of their degrees**, whether or not they are composable. -/
@@ -160,17 +160,6 @@ theorem ofPath_mul_ofPath_mem_grade (x y : Quiver.TotalPath Q) :
   cases hxy : x.mul? y with
   | none => exact Submodule.zero_mem _
   | some z => exact ofPath_mem_grade_of_length (Quiver.TotalPath.length_of_mul?_eq_some hxy)
-
-/-- **Multiplication adds degrees.** -/
-theorem grade_mul_grade_le [Finite Q] (i j : ℕ) :
-    grade k Q i * grade k Q j ≤ grade k Q (i + j) := by
-  simp only [grade, Submodule.span_mul_span, Submodule.span_le]
-  rintro _ ⟨_, ⟨x, hx, rfl⟩, _, ⟨y, hy, rfl⟩, rfl⟩
-  replace hx : x.2.2.length = i := hx
-  replace hy : y.2.2.length = j := hy
-  subst hx
-  subst hy
-  exact SetLike.mem_coe.2 (ofPath_mul_ofPath_mem_grade x y)
 
 variable (k Q)
 
@@ -201,10 +190,29 @@ theorem grade_zero_eq_span_range_vertexIdempotent : grade k Q 0
     replace hp : p.length = 0 := hp
     obtain rfl := p.eq_of_length_zero hp
     obtain rfl := p.eq_nil_of_length_zero hp
-    exact ⟨a, (vertexIdempotent_eq_single a).trans (ofPath_eq_single _).symm⟩
+    exact ⟨a, (ofPath_nil (k := k) a).symm⟩
   · rintro ⟨v, rfl⟩
-    exact ⟨⟨v, v, _root_.Quiver.Path.nil⟩, rfl,
-      (ofPath_eq_single _).trans (vertexIdempotent_eq_single v).symm⟩
+    exact ⟨⟨v, v, _root_.Quiver.Path.nil⟩, rfl, ofPath_nil (k := k) v⟩
+
+/-- **The degree-`n` piece lies in the `n`-th step of the length filtration**: a path of length
+exactly `n` is in particular a path of length at least `n`. -/
+theorem grade_le_pathSpan (n : ℕ) : grade k Q n ≤ pathSpan k Q n := by
+  rw [grade]
+  refine Submodule.span_le.2 ?_
+  rintro _ ⟨x, hx, rfl⟩
+  exact ofPath_mem_pathSpan hx.ge
+
+end Grade
+
+section GradeComm
+
+variable {k : Type w} {Q : Type u} [CommSemiring k] [Quiver.{v} Q]
+
+/-- An arrow is homogeneous of degree `1`. -/
+theorem ofArrow_mem_grade_one {a b : Q} (e : a ⟶ b) :
+    (ofArrow e : pathAlgebra k Q) ∈ grade k Q 1 := by
+  rw [ofArrow_eq_ofPath]
+  exact ofPath_mem_grade_of_length rfl
 
 /-- **Degree `1` is the span of the arrows**: the length-one paths are exactly the arrows. -/
 theorem grade_one_eq_span_range_ofArrow : grade k Q 1 = Submodule.span k
@@ -219,15 +227,18 @@ theorem grade_one_eq_span_range_ofArrow : grade k Q 1 = Submodule.span k
   · rintro ⟨⟨a, b, e⟩, rfl⟩
     exact ⟨⟨a, b, e.toPath⟩, rfl, (ofArrow_eq_ofPath e).symm⟩
 
-/-- **The degree-`n` piece lies in the `n`-th step of the length filtration**: a path of length
-exactly `n` is in particular a path of length at least `n`. -/
-theorem grade_le_pathSpan (n : ℕ) : grade k Q n ≤ pathSpan k Q n := by
-  rw [grade]
-  refine Submodule.span_le.2 ?_
-  rintro _ ⟨x, hx, rfl⟩
-  exact ofPath_mem_pathSpan hx.ge
+/-- **Multiplication adds degrees.** -/
+theorem grade_mul_grade_le [Finite Q] (i j : ℕ) :
+    grade k Q i * grade k Q j ≤ grade k Q (i + j) := by
+  simp only [grade, Submodule.span_mul_span, Submodule.span_le]
+  rintro _ ⟨_, ⟨x, hx, rfl⟩, _, ⟨y, hy, rfl⟩, rfl⟩
+  replace hx : x.2.2.length = i := hx
+  replace hy : y.2.2.length = j := hy
+  subst hx
+  subst hy
+  exact SetLike.mem_coe.2 (ofPath_mul_ofPath_mem_grade x y)
 
-end Grade
+end GradeComm
 
 /-! ### The graded algebra structure -/
 
@@ -285,7 +296,7 @@ private theorem sum_gradeSummand_nil :
       = DirectSum.of (fun n => grade k Q n) 0
         ⟨vertexIdempotent k v, vertexIdempotent_mem_grade_zero v⟩ := fun v =>
     congrArg (DirectSum.of (fun n => grade k Q n) 0)
-      (Subtype.ext ((ofPath_eq_single _).trans (vertexIdempotent_eq_single v).symm))
+      (Subtype.ext (ofPath_nil (k := k) v))
   have hsum : ∑ v : Q, DirectSum.of (fun n => grade k Q n) 0
         ⟨vertexIdempotent k v, vertexIdempotent_mem_grade_zero v⟩
       = DirectSum.of (fun n => grade k Q n) 0
