@@ -40,9 +40,9 @@ with the square-centred convention is a separate correction to that predicate, s
 is phrased in terms of it.
 
 *Which grading the variables carry.* Giving `V_c` bidegree `(-2, -1)` makes the differential
-homogeneous of bidegree `(-1, 0)`: `maslovO_of_mem_unblockedRectangles` and
-`alexander_of_mem_unblockedRectangles` say exactly that the term `V^{O(r)} · y` contributed by a
-rectangle `r` from `x` to `y` has Maslov grading `M_O(x) - 1` and Alexander grading `A(x)`. The
+homogeneous of bidegree `(-1, 0)`: `maslovO_sub_two_mul_card_OColumns_eq_maslovO_sub_one` and
+`alexander_sub_card_OColumns_eq_alexander` say exactly that the term `V^{O(r)} · y` contributed by
+a rectangle `r` from `x` to `y` has Maslov grading `M_O(x) - 1` and Alexander grading `A(x)`. The
 Maslov statement needs the rectangle to be empty; the Alexander statement holds for every
 `X`-avoiding rectangle.
 
@@ -67,9 +67,9 @@ assignment, a later stage of the roadmap.
   whose degree is the number of `O`-markings the rectangle covers.
 * `TauCeti.GridDiagram.unblockedDifferentialOnGenerator_support_subset`: the differential of a
   generator is supported on the column transpositions of that generator.
-* `TauCeti.GridDiagram.maslovO_of_mem_unblockedRectangles`,
-  `TauCeti.GridDiagram.alexander_of_mem_unblockedRectangles`: the differential is homogeneous of
-  bidegree `(-1, 0)` once `V_c` is given bidegree `(-2, -1)`.
+* `TauCeti.GridDiagram.maslovO_sub_two_mul_card_OColumns_eq_maslovO_sub_one`,
+  `TauCeti.GridDiagram.alexander_sub_card_OColumns_eq_alexander`: the differential is homogeneous
+  of bidegree `(-1, 0)` once `V_c` is given bidegree `(-2, -1)`.
 * `TauCeti.GridDiagram.constantCoeff_unblockedCoefficient`: the constant term of a matrix
   coefficient counts the contributing rectangles that carry no `O`-marking either.
 
@@ -103,7 +103,7 @@ variable {n : ℕ} (G : GridDiagram n)
 
 The `O`-markings of a grid diagram are indexed by their columns, so this finite set of columns is
 the index set of the variables occurring in the rectangle's weight. -/
-@[expose] noncomputable def OColumns (r : GridRectangle n) : Finset (Fin n) :=
+noncomputable def OColumns (r : GridRectangle n) : Finset (Fin n) :=
   Finset.univ.filter fun c => (c, G.O c) ∈ r.coveredSquares
 
 /-- A column is a covered `O`-column exactly when its `O`-marking is a covered square. -/
@@ -144,11 +144,12 @@ variable (R : Type*) [CommSemiring R]
 
 An embedded rectangle covers each marked square at most once, so every exponent is `0` or `1`,
 and the Heegaard Floer weight `V₀^{O₀(r)} ⋯ V_{n-1}^{O_{n-1}(r)}` reduces to this product. -/
-@[expose] noncomputable def OMonomial (r : GridRectangle n) : MvPolynomial (Fin n) R :=
+noncomputable def OMonomial (r : GridRectangle n) : MvPolynomial (Fin n) R :=
   ∏ c ∈ G.OColumns r, MvPolynomial.X c
 
 /-- The weight of a rectangle covering no `O`-marking is `1`. -/
-theorem OMonomial_of_disjoint {r : GridRectangle n} (h : Disjoint r.coveredSquares G.OSet) :
+theorem OMonomial_eq_one_of_disjoint {r : GridRectangle n}
+    (h : Disjoint r.coveredSquares G.OSet) :
     G.OMonomial R r = 1 := by
   rw [OMonomial, (G.OColumns_eq_empty_iff r).mpr h, Finset.prod_empty]
 
@@ -187,7 +188,7 @@ whose covered squares carry no `X`-marking.
 
 Unlike the fully blocked count, `O`-markings are not forbidden; a covered `O`-marking is recorded
 by the variable `V_c` in the rectangle's weight instead. -/
-@[expose] noncomputable def unblockedRectangles (x y : GridState n) :
+noncomputable def unblockedRectangles (x y : GridState n) :
     Finset (GridRectangleBetween x y) :=
   (GridRectangleBetween.emptyRectangles x y).filter fun r =>
     Disjoint r.toGridRectangle.coveredSquares G.XSet
@@ -231,8 +232,14 @@ theorem unblockedRectangles_self (x : GridState n) : G.unblockedRectangles x x =
 
 /-- The matrix coefficient of the unblocked differential from `x` to `y`: the sum of the weights
 of the empty rectangles from `x` to `y` that carry no `X`-marking. -/
-@[expose] noncomputable def unblockedCoefficient (x y : GridState n) : MvPolynomial (Fin n) R :=
+noncomputable def unblockedCoefficient (x y : GridState n) : MvPolynomial (Fin n) R :=
   ∑ r ∈ G.unblockedRectangles x y, G.OMonomial R r.toGridRectangle
+
+/-- The matrix coefficient is the sum of the weights of its contributing rectangles. -/
+theorem unblockedCoefficient_def (x y : GridState n) :
+    G.unblockedCoefficient R x y =
+      ∑ r ∈ G.unblockedRectangles x y, G.OMonomial R r.toGridRectangle := by
+  rw [unblockedCoefficient]
 
 /-- The unblocked differential has no diagonal matrix coefficient. -/
 @[simp]
@@ -266,7 +273,7 @@ theorem constantCoeff_unblockedCoefficient (x y : GridState n) :
     nsmul_eq_mul, mul_one, add_zero]
 
 /-- The value of the unblocked differential on a single grid-state generator. -/
-@[expose] noncomputable def unblockedDifferentialOnGenerator (x : GridState n) :
+noncomputable def unblockedDifferentialOnGenerator (x : GridState n) :
     GridChainMinus R n :=
   Finset.univ.sum fun y : GridState n => Finsupp.single y (G.unblockedCoefficient R x y)
 
@@ -345,11 +352,10 @@ its weight `V^{O(r)}` is charged `-2` per variable.
 
 With `V_c` in Maslov degree `-2`, the term `V^{O(r)} · y` of `∂⁻ x` has Maslov grading
 `M_O(x) - 1`: the unblocked differential lowers the Maslov grading by exactly one. -/
-theorem maslovO_of_mem_unblockedRectangles {x y : GridState n} {r : GridRectangleBetween x y}
-    (hr : r ∈ G.unblockedRectangles x y) :
+theorem maslovO_sub_two_mul_card_OColumns_eq_maslovO_sub_one
+    {x y : GridState n} {r : GridRectangleBetween x y} (hr : r.IsEmpty) :
     G.maslovO y - 2 * ((G.OColumns r.toGridRectangle).card : ℚ) = G.maslovO x - 1 := by
-  have h := G.maslovO_sub_maslovO_eq_one_sub_two_mul_card r
-    (G.isEmpty_of_mem_unblockedRectangles hr)
+  have h := G.maslovO_sub_maslovO_eq_one_sub_two_mul_card r hr
   rw [G.card_OColumns r.toGridRectangle]
   linarith
 
@@ -359,11 +365,12 @@ weight `V^{O(r)}` is charged `-1` per variable.
 With `V_c` in Alexander degree `-1`, the term `V^{O(r)} · y` of `∂⁻ x` has Alexander grading
 `A(x)`. Unlike the Maslov statement, this uses only that the rectangle carries no
 `X`-marking. -/
-theorem alexander_of_mem_unblockedRectangles {x y : GridState n} {r : GridRectangleBetween x y}
-    (hr : r ∈ G.unblockedRectangles x y) :
+theorem alexander_sub_card_OColumns_eq_alexander
+    {x y : GridState n} {r : GridRectangleBetween x y}
+    (hr : Disjoint r.toGridRectangle.coveredSquares G.XSet) :
     G.alexander y - ((G.OColumns r.toGridRectangle).card : ℚ) = G.alexander x := by
   have hX : G.XSet ∩ r.toGridRectangle.coveredSquares = ∅ :=
-    Finset.disjoint_iff_inter_eq_empty.mp (G.disjoint_XSet_of_mem_unblockedRectangles hr).symm
+    Finset.disjoint_iff_inter_eq_empty.mp hr.symm
   have h := G.alexander_sub_alexander_eq_card_sub_card r
   rw [hX, Finset.card_empty, Nat.cast_zero] at h
   rw [G.card_OColumns r.toGridRectangle]
