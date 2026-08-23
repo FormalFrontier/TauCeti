@@ -219,6 +219,7 @@ noncomputable def symChartAt (s : Sym α n) :
   (exists_symOpenPartialHomeomorph (K := K) s).choose
 
 /-- The tuple lies in the source of its chosen elementary-symmetric chart. -/
+@[simp]
 theorem mem_symChartAt_source (s : Sym α n) : s ∈ (symChartAt (K := K) s).source :=
   (exists_symOpenPartialHomeomorph (K := K) s).choose_spec.1
 
@@ -259,6 +260,7 @@ theorem symChartedSpace_chartAt (s : Sym α n) :
 
 /-- The atlas of `symChartedSpace` consists of the chosen elementary-symmetric chart at every
 unordered tuple. -/
+@[simp]
 theorem symChartedSpace_atlas :
     @atlas (Fin n → K) _ (Sym α n) _ (symChartedSpace (K := K)) =
       Set.range (symChartAt (K := K)) :=
