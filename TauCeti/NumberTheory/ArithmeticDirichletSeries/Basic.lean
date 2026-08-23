@@ -46,6 +46,8 @@ special coefficient systems on this general carrier, not replacements for it.
 
 ## References
 
+* `TauCetiRoadmap/ArithmeticDirichletSeries/Suggested.lean`, whose Layer 0.1 nonzero-ideal
+  carrier and zero-extension design are adapted here.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters II--III.
 -/
@@ -77,6 +79,9 @@ Use `zeroExtend_bot` and `zeroExtend_coe` to simplify its two characteristic cas
 unfolding this definition. -/
 noncomputable def zeroExtend (f : IdealArithmeticFunction K) : Ideal (𝓞 K) → ℂ := fun I =>
   Function.extend Subtype.val f 0 I
+
+private theorem zeroExtend_eq_extend (f : IdealArithmeticFunction K) :
+    f.zeroExtend = Function.extend Subtype.val f 0 := (rfl)
 
 /-- Restrict a function on all integral ideals to the nonzero ideals. -/
 def restrict (g : Ideal (𝓞 K) → ℂ) : IdealArithmeticFunction K := fun I => g I
@@ -168,42 +173,42 @@ theorem zeroExtend_ne_zero (f : IdealArithmeticFunction K) (hf : ∀ I, f I ≠ 
 /-- Zero extension preserves the pointwise zero function. -/
 @[simp]
 theorem zeroExtend_zero : zeroExtend (0 : IdealArithmeticFunction K) = 0 := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_zero (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)))
 
 /-- Zero extension preserves pointwise addition. -/
 @[simp]
 theorem zeroExtend_add (f g : IdealArithmeticFunction K) :
     zeroExtend (f + g) = f.zeroExtend + g.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_add (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f g 0 0)
 
 /-- Zero extension preserves pointwise negation. -/
 @[simp]
 theorem zeroExtend_neg (f : IdealArithmeticFunction K) : zeroExtend (-f) = -f.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_neg (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f 0)
 
 /-- Zero extension preserves pointwise subtraction. -/
 @[simp]
 theorem zeroExtend_sub (f g : IdealArithmeticFunction K) :
     zeroExtend (f - g) = f.zeroExtend - g.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_sub (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f g 0 0)
 
 /-- Zero extension preserves pointwise complex scalar multiplication. -/
 @[simp]
 theorem zeroExtend_smul (c : ℂ) (f : IdealArithmeticFunction K) :
     zeroExtend (c • f) = c • f.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_smul c (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f 0)
 
 /-- Zero extension preserves pointwise multiplication. -/
 @[simp]
 theorem zeroExtend_mul (f g : IdealArithmeticFunction K) :
     zeroExtend (f * g) = f.zeroExtend * g.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_mul (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f g 0 0)
 
 /-- **Rejection test.** The everywhere-one function on *all* integral ideals is not the zero
 extension of any ideal arithmetic function, since its value at `⊥` is one rather than zero. This

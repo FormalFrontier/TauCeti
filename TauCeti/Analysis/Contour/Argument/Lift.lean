@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
+import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 import Mathlib.Topology.UnitInterval
 import TauCeti.Analysis.Contour.Curve.Distance
 
@@ -37,6 +38,8 @@ API does not expose.
   assemble the index integral downstream.
 * `TauCeti.Contour.div_norm_eq_exp_arg_mul_I` — the unit direction of a nonzero complex number
   in polar form, shared with the sector-resonance bridges.
+* `TauCeti.Contour.exp_mul_I_congr_angle` — equal real angles have equal unit complex
+  exponentials.
 
 ## Provenance
 
@@ -277,6 +280,13 @@ theorem div_norm_eq_exp_arg_mul_I {w : ℂ} (hw : w ≠ 0) :
     w / (‖w‖ : ℂ) = Complex.exp ((Complex.arg w : ℂ) * Complex.I) := by
   rw [div_eq_iff (Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hw)), mul_comm]
   exact (Complex.norm_mul_exp_arg_mul_I w).symm
+
+/-- Two real representatives of the same `Real.Angle` have the same unit complex exponential.
+This is the coercion bridge from the quotient-valued angle API to complex polar form. -/
+theorem exp_mul_I_congr_angle {x y : ℝ} (h : (x : Real.Angle) = (y : Real.Angle)) :
+    Complex.exp ((x : ℂ) * Complex.I) = Complex.exp ((y : ℂ) * Complex.I) := by
+  have hcircle := congrArg (fun z : Circle => (z : ℂ)) (congrArg Real.Angle.toCircle h)
+  simpa only [Real.Angle.toCircle_coe, Circle.coe_exp] using hcircle
 
 /-- For a nonzero complex number `z`, `exp(I · Im(log z)) = z / ↑‖z‖`. -/
 private lemma exp_I_log_im_eq_div_norm {z : ℂ} (hz : z ≠ 0) :
