@@ -59,15 +59,17 @@ base ring `R` (`TauCeti.KnotTheory.TemperleyLieb.algEquivOfLeOne`), matching the
 
 A presentation is only worth having if it does not collapse. Three theorems here rule that out:
 the base ring embeds (`TauCeti.KnotTheory.TemperleyLieb.algebraMap_injective`, from the
-augmentation killing every generator), the generator of the two-strand algebra is nonzero
-(`TauCeti.KnotTheory.TemperleyLieb.e_ne_zero_two`, from an explicit two-dimensional
-representation), and the Jones representation of `BraidGroup 2` is nontrivial
-(`TauCeti.KnotTheory.TemperleyLieb.jones_sigma_ne_one_two`).
+augmentation killing every generator), the generator of the two-strand algebra is nonzero over a
+nontrivial base ring (`TauCeti.KnotTheory.TemperleyLieb.e_ne_zero_two`, from an explicit
+two-dimensional representation), and the Jones representation of `BraidGroup 2` is nontrivial
+(`TauCeti.KnotTheory.TemperleyLieb.jones_sigma_ne_one_two`). The last two assume
+`[Nontrivial R]`, as they must: over the zero ring the whole algebra is zero.
 
-That `e i ≠ 0` for *every* `n` — indeed that `TemperleyLieb R δ n` is free of rank the Catalan
-number `C (n - 1)` on the planar-matching diagrams — is the fundamental structure theorem of the
-algebra, and it is not proved here: it needs the diagram basis, which is a separate construction.
-The two-strand case above is the part of it that the presentation alone can see.
+That `e i ≠ 0` for *every* `n` over a nontrivial base ring — indeed that `TemperleyLieb R δ n` is
+free of rank the Catalan number `catalan n` on the planar-matching diagrams, so that `TL_1` has
+basis `1` and `TL_2` has basis `1, e 0` — is the fundamental structure theorem of the algebra, and
+it is not proved here: it needs the diagram basis, which is a separate construction. The
+two-strand case above is the part of it that the presentation alone can see.
 
 ## Main definitions
 
