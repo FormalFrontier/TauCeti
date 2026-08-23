@@ -38,6 +38,9 @@ Where the two sides share a proof, the statement is parametrised over the within
   one-sided interval lie in the slit plane.
 * `Contour.arg_annular_quotient_tendsto_right` / `_left` — convergence of the annular
   quotient arguments along a positive cutoff `δ(ε) → 0⁺`.
+* `Contour.tendsto_arg_chord_div_tangent_nhdsGT` /
+  `Contour.tendsto_arg_neg_tangent_div_chord_nhdsLT` — the boundary chord-to-tangent arguments
+  converge to zero at the crossing.
 * `Contour.exists_chord_div_tangent_mem_slitPlane_right` /
   `Contour.exists_neg_tangent_div_chord_mem_slitPlane_left` — a window radius on which the
   boundary quotients (chord over tangent on the right, negated tangent over chord on the left)
@@ -208,6 +211,52 @@ theorem arg_tendsto_of_pos_mul_tendsto {α : Type*} {l : Filter α} {c : α → 
   refine ((Complex.continuousAt_arg hQ).tendsto.comp h).congr' ?_
   filter_upwards [hc] with ε hε
   exact Complex.arg_real_mul _ hε
+
+/-- Along the incoming side of a differentiable crossing, the boundary argument
+`arg (-L / (γ t - s))` tends to `0`.  Multiplication by the positive scalar `t₀ - t` removes the
+blow-up and exposes the limit `1`, without changing the argument. -/
+theorem tendsto_arg_neg_tangent_div_chord_nhdsLT (h_at : γ t₀ = s) (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) :
+    Tendsto (fun t => ((-L) / (γ t - s)).arg) (𝓝[<] t₀) (𝓝 0) := by
+  have hq := (chord_quotient_tendsto self_notMem_Iio h_deriv h_at).inv₀ hL
+  have hscaled : Tendsto (fun t => (((t₀ - t : ℝ) : ℂ) * ((-L) / (γ t - s))))
+      (𝓝[<] t₀) (𝓝 1) := by
+    convert hq.const_mul L using 1
+    · funext t
+      by_cases ht : t = t₀
+      · subst t
+        simp [h_at]
+      · field_simp
+        push_cast
+        ring
+    · field_simp
+  have hpos : ∀ᶠ t in 𝓝[<] t₀, 0 < t₀ - t := by
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    exact sub_pos.mpr ht
+  simpa using arg_tendsto_of_pos_mul_tendsto
+    (by simp [Complex.mem_slitPlane_iff]) hpos hscaled
+
+/-- Along the outgoing side of a differentiable crossing, the boundary argument
+`arg ((γ t - s) / L)` tends to `0`.  Dividing by the positive scalar `t - t₀` exposes the
+nonzero tangent limit and does not change the argument. -/
+theorem tendsto_arg_chord_div_tangent_nhdsGT (h_at : γ t₀ = s) (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) :
+    Tendsto (fun t => ((γ t - s) / L).arg) (𝓝[>] t₀) (𝓝 0) := by
+  have hq := (chord_quotient_tendsto self_notMem_Ioi h_deriv h_at).div_const L
+  rw [div_self hL] at hq
+  have hscaled : Tendsto
+      (fun t => ((((t - t₀)⁻¹ : ℝ) : ℂ) * ((γ t - s) / L)))
+      (𝓝[>] t₀) (𝓝 1) := by
+    refine hq.congr' ?_
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    have hne : t - t₀ ≠ 0 := sub_ne_zero.mpr ht.ne'
+    push_cast
+    field_simp
+  have hpos : ∀ᶠ t in 𝓝[>] t₀, 0 < (t - t₀)⁻¹ := by
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    exact inv_pos.mpr (sub_pos.mpr ht)
+  simpa using arg_tendsto_of_pos_mul_tendsto
+    (by simp [Complex.mem_slitPlane_iff]) hpos hscaled
 
 /-- **Right annular quotient argument convergence**: along a positive cutoff `δ(ε) → 0⁺`, the
 argument of the annular quotient `(γ (t₀ + r) - s) / (γ (t₀ + δ ε) - s)` converges to the
