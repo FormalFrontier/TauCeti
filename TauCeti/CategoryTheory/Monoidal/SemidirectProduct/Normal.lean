@@ -186,12 +186,8 @@ theorem inl_comp_normalSemidirectMul
   let A := normalConjugation i j
   let _ := A.semidirectProductGrpObj
   apply Grp.hom_ext
-  have hleft := congrArg SemidirectProduct.left
-    (A.pointMulEquiv_comp_inl (X := N) (𝟙 N))
-  have hright := congrArg SemidirectProduct.right
-    (A.pointMulEquiv_comp_inl (X := N) (𝟙 N))
-  simp only [pointMulEquiv_left, pointMulEquiv_right, SemidirectProduct.left_inl,
-    SemidirectProduct.right_inl, Category.id_comp] at hleft hright
+  have hleft := A.inl_hom_fst
+  have hright := A.inl_hom_snd
   dsimp only [A] at hleft hright
   rw [Grp.comp_hom_hom, comp_normalSemidirectMul]
   rw [← Category.assoc, hleft, Category.id_comp]
@@ -208,12 +204,8 @@ theorem inr_comp_normalSemidirectMul
   let A := normalConjugation i j
   let _ := A.semidirectProductGrpObj
   apply Grp.hom_ext
-  have hleft := congrArg SemidirectProduct.left
-    (A.pointMulEquiv_comp_inr (X := H) (𝟙 H))
-  have hright := congrArg SemidirectProduct.right
-    (A.pointMulEquiv_comp_inr (X := H) (𝟙 H))
-  simp only [pointMulEquiv_left, pointMulEquiv_right, SemidirectProduct.left_inr,
-    SemidirectProduct.right_inr, Category.id_comp] at hleft hright
+  have hleft := A.inr_hom_fst
+  have hright := A.inr_hom_snd
   dsimp only [A] at hleft hright
   rw [Grp.comp_hom_hom, comp_normalSemidirectMul]
   rw [← Category.assoc, hleft, MonObj.one_comp]

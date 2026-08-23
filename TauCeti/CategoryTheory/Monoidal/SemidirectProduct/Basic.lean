@@ -322,6 +322,46 @@ theorem pointMulEquiv_comp_inr {X : C} (g : X ⟶ G) :
   rw [h]
   exact A.pointIso.inv_hom_id_app_apply (op X) (SemidirectProduct.inr g)
 
+/-- The first projection of the canonical inclusion of the normal factor is the identity. -/
+@[simp, reassoc]
+theorem inl_hom_fst :
+    letI := A.semidirectProductGrpObj
+    A.inl.hom.hom ≫ fst N G = 𝟙 N := by
+  let _ := A.semidirectProductGrpObj
+  have h := congrArg SemidirectProduct.left
+    (A.pointMulEquiv_comp_inl (X := N) (𝟙 N))
+  simpa only [pointMulEquiv_left, SemidirectProduct.left_inl, Category.id_comp] using h
+
+/-- The second projection of the canonical inclusion of the normal factor is the unit. -/
+@[simp, reassoc]
+theorem inl_hom_snd :
+    letI := A.semidirectProductGrpObj
+    A.inl.hom.hom ≫ snd N G = (1 : N ⟶ G) := by
+  let _ := A.semidirectProductGrpObj
+  have h := congrArg SemidirectProduct.right
+    (A.pointMulEquiv_comp_inl (X := N) (𝟙 N))
+  simpa only [pointMulEquiv_right, SemidirectProduct.right_inl, Category.id_comp] using h
+
+/-- The first projection of the canonical inclusion of the acting factor is the unit. -/
+@[simp, reassoc]
+theorem inr_hom_fst :
+    letI := A.semidirectProductGrpObj
+    A.inr.hom.hom ≫ fst N G = (1 : G ⟶ N) := by
+  let _ := A.semidirectProductGrpObj
+  have h := congrArg SemidirectProduct.left
+    (A.pointMulEquiv_comp_inr (X := G) (𝟙 G))
+  simpa only [pointMulEquiv_left, SemidirectProduct.left_inr, Category.id_comp] using h
+
+/-- The second projection of the canonical inclusion of the acting factor is the identity. -/
+@[simp, reassoc]
+theorem inr_hom_snd :
+    letI := A.semidirectProductGrpObj
+    A.inr.hom.hom ≫ snd N G = 𝟙 G := by
+  let _ := A.semidirectProductGrpObj
+  have h := congrArg SemidirectProduct.right
+    (A.pointMulEquiv_comp_inr (X := G) (𝟙 G))
+  simpa only [pointMulEquiv_right, SemidirectProduct.right_inr, Category.id_comp] using h
+
 /-- On generalized points, the canonical projection is `SemidirectProduct.rightHom`. -/
 @[simp]
 theorem comp_rightHom {X : C} (x : X ⟶ N ⊗ G) :
