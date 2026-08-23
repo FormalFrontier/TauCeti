@@ -146,6 +146,8 @@ section LabellingMul
 
 variable [Monoid k]
 
+/-- Pointwise multiplication of labels on the original arrows becomes pointwise multiplication
+of their gauge labellings on the doubled quiver. -/
 theorem doubledLabelling_mul (u u' : ∀ ⦃i j : Q⦄, (i ⟶ j) → k) ⦃x y : Symmetrify Q⦄ (b : x ⟶ y) :
     doubledLabelling k (fun _ _ a => u a * u' a) b
       = doubledLabelling k u b * doubledLabelling k u' b := by
@@ -185,7 +187,7 @@ end RescaleBacktracks
 
 section RescaleRelator
 
-variable [CommRing k] [Finite Q]
+variable [CommRing k]
 
 /-- **The gauge transformation acts on the gauged relators**: rescaling the arrows of `Q` by `u`
 and fixing their formal reverses carries `ρ_ε` to `ρ_{uε}`. -/
@@ -273,8 +275,8 @@ noncomputable def gaugedPreprojectiveAlgebraEquiv (ε ε' : ∀ ⦃i j : Q⦄, (
       simp only [AlgHom.comp_apply, gaugedPreprojectiveLift_gaugedPreprojectiveMk, AlgHom.id_apply,
         rescale_doubledLabelling_rescale_doubledLabelling k _ _ (fun _ _ a => Units.inv_mul (u a))])
 
-/-- **The gauge isomorphism is the arrow rescaling**: it sends the class of a basis path to the
-class of that path scaled by the product of the units on the arrows of `Q` it traverses. -/
+/-- **The gauge isomorphism is the arrow rescaling**: on an arbitrary quotient representative,
+it applies the path-algebra rescaling and then the target quotient map. -/
 @[simp]
 theorem gaugedPreprojectiveAlgebraEquiv_gaugedPreprojectiveMk (ε ε' : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
     (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → kˣ)
@@ -326,7 +328,8 @@ noncomputable def preprojectiveAlgebraEquivGauged (ε : ∀ ⦃i j : Q⦄, (i �
   (preprojectiveAlgebraEquivGaugedOne (Q := Q) k).trans <|
     gaugedPreprojectiveAlgebraEquiv k (fun _ _ _ => 1) ε u fun _ _ a => by rw [h a, mul_one]
 
-/-- The isomorphism onto a unit-valued gauge, computed on the class of a basis path. -/
+/-- The isomorphism onto a unit-valued gauge applies arrow rescaling to an arbitrary quotient
+representative and then takes its class in the gauged quotient. -/
 @[simp]
 theorem preprojectiveAlgebraEquivGauged_preprojectiveMk (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)
     (u : ∀ ⦃i j : Q⦄, (i ⟶ j) → kˣ) (h : ∀ ⦃i j : Q⦄ (a : i ⟶ j), ε a = ((u a : kˣ) : k))

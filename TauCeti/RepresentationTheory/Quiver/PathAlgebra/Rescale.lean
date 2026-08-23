@@ -175,12 +175,14 @@ theorem rescale_ofArrow {a b : Q} (e : a âŸ¶ b) : rescale c (ofArrow e) = c e â€
   rw [ofArrow_eq_ofPath, rescale_ofPath, _root_.Quiver.Path.weight_toPath]
 
 /-- Rescaling by the constant labelling one is the identity. -/
+@[simp]
 theorem rescale_one : rescale (fun _ _ _ => (1 : k)) = AlgHom.id k (pathAlgebra k Q) :=
   AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
     simp only [AlgHom.toLinearMap_apply, coe_pathAlgebraBasis, rescale_ofPath,
       _root_.Quiver.Path.weight_one, one_smul, AlgHom.id_apply]
 
 /-- **Rescalings compose by multiplying labellings.** -/
+@[simp]
 theorem rescale_comp_rescale :
     (rescale c).comp (rescale d) = rescale (fun _ _ e => c e * d e) :=
   AlgHom.toLinearMap_injective <| (pathAlgebraBasis k Q).ext fun x => by
