@@ -250,7 +250,6 @@ theorem W1p0.extendByZeroL_extendByZeroL (hsub : Omega ≤ Omega') (hsub' : Omeg
 /-- **Extension by zero is an isometry of Sobolev spaces.**  The `W^{1,p}` norm — the `Lᵖ` norm
 of the value-gradient jet — is unchanged; the extension adds a region on which both components
 vanish. -/
-@[simp]
 theorem W1p0.norm_extendByZeroL (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
     ‖W1p0.extendByZeroL hsub u‖ = ‖u‖ :=
   (Sobolev1JetLp.extendByZeroₗᵢ hsub).norm_map _
