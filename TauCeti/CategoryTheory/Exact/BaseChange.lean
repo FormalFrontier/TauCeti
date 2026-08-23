@@ -188,6 +188,14 @@ theorem conflation_baseChange {S : ShortComplex C} (hS : E.Conflation S) {Z' Q :
   exact KernelFork.IsLimit.ofι' _ _ fun {A} k hk =>
     ⟨(key A k hk).choose, (key A k hk).choose_spec⟩
 
+/-- `TauCeti.ExactStructure.conflation_baseChange` with the base-changed short complex spelled
+out as a `CategoryTheory.ShortComplex.mk`, the shape in which its two maps are usually consumed
+and the one matching `TauCeti.ExactStructure.exists_conflation_comp'`. -/
+theorem conflation_baseChange' {S : ShortComplex C} (hS : E.Conflation S) {Z' Q : C}
+    {u : Z' ⟶ S.X₃} {v : Q ⟶ S.X₂} {w : Q ⟶ Z'} (sq : IsPullback v w S.g u) :
+    E.Conflation (ShortComplex.mk (baseChangeι S sq) w (baseChangeι_snd S sq)) :=
+  E.conflation_baseChange hS sq
+
 /-- **The cokernel of a composite of inflations.** If `X ⟶ Y ⟶ Z` and `Y ⟶ W ⟶ V` are
 conflations, then the pushout `Q` of the inflation `Y ⟶ W` along the deflation `Y ⟶ Z` is a
 cokernel of the composite inflation `X ⟶ W`. -/

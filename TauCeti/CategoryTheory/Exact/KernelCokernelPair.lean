@@ -318,6 +318,13 @@ noncomputable def splittingOfSection (h : IsKernelCokernelPair S) (s : S.X₃ �
   s_g := hs
   id := by rw [h.lift_f, sub_add_cancel]
 
+@[simp] theorem splittingOfSection_s (h : IsKernelCokernelPair S) (s : S.X₃ ⟶ S.X₂)
+    (hs : s ≫ S.g = 𝟙 S.X₃) : (h.splittingOfSection s hs).s = s := (rfl)
+
+@[simp] theorem splittingOfSection_r (h : IsKernelCokernelPair S) (s : S.X₃ ⟶ S.X₂)
+    (hs : s ≫ S.g = 𝟙 S.X₃) :
+    (h.splittingOfSection s hs).r = h.lift (𝟙 S.X₂ - S.g ≫ s) (by simp [hs]) := (rfl)
+
 /-- A kernel–cokernel pair with homology is a short exact short complex. -/
 theorem shortExact [S.HasHomology] (h : IsKernelCokernelPair S) : S.ShortExact where
   exact := ShortComplex.exact_of_f_is_kernel S h.fIsKernel

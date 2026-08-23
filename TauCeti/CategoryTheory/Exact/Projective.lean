@@ -30,10 +30,11 @@ K ↪ Q_X ⊞ Q_Z ↠ Y
 ```
 
 whose middle term is the direct sum of the two resolving terms and whose kernel `K` is itself an
-extension `K_X ↪ K ↠ K_Z` of the two syzygies. Iterating it resolves the middle term of a
-conflation from resolutions of the outer terms, and that is the form in which the last result of
-this file states it: for an object property `P` consisting of projectives, admitting a finite
-`P`-resolution is closed under extensions, with no increase in length.
+extension `K_X ↪ K ↠ K_Z` of the two syzygies, compatibly with the two given conflations.
+Iterating it resolves the middle term of a conflation from resolutions of the outer terms, and
+that is the form in which the last result of this file states it: for an object property `P`
+consisting of projectives, containing a zero object and closed under binary biproducts, admitting
+a finite `P`-resolution is closed under extensions, with no increase in length.
 
 That closure property is what makes the objects of finite projective dimension an
 extension-closed subcategory, so that
@@ -51,7 +52,7 @@ by the projectives themselves.
 
 ## Main results
 
-* `TauCeti.ExactStructure.projectives_split` and
+* `TauCeti.ExactStructure.split_projectives` and
   `TauCeti.ExactStructure.abelian_projectives_iff`: the two calibrating computations. Every
   object is projective for the split exact structure, and for the canonical exact structure of
   an abelian category the notion is Mathlib's `CategoryTheory.Projective`.
@@ -60,9 +61,10 @@ by the projectives themselves.
 * `TauCeti.ExactStructure.exists_conflations_biprod_of_conflations`: **the horseshoe lemma**.
 * `TauCeti.ExactStructure.exists_finiteResolution_length_le_of_conflation`: the middle term of a
   conflation admits a finite `P`-resolution of length at most the common bound on the lengths of
-  resolutions of the two outer terms, when `P` consists of projectives.
-* `TauCeti.ExactStructure.isExtensionClosed_admitsFiniteResolution`: admitting a finite
-  `P`-resolution is closed under extensions.
+  resolutions of the two outer terms, when `P` consists of projectives, contains a zero object
+  and is closed under binary biproducts.
+* `TauCeti.ExactStructure.isExtensionClosed_admitsFiniteResolution`: under those same hypotheses
+  on `P`, admitting a finite `P`-resolution is closed under extensions.
 
 ## Implementation notes
 
@@ -82,6 +84,12 @@ identifies its kernel in one step.
   the two basic constructions.
 * Charles A. Weibel, *The K-book: An Introduction to Algebraic K-theory*, Chapter II, Section 7,
   where finite resolutions and the resolution theorem consume this closure property.
+* `Mathlib/CategoryTheory/Preadditive/Projective/Basic.lean`, whose `factorThru`,
+  `factorThru_comp` and isomorphism, zero-object and biproduct closure API for absolute
+  projectivity is the layout adapted here to the relative setting, and
+  `Mathlib/Algebra/Homology/ShortComplex/Exact.lean`, whose
+  `CategoryTheory.ShortComplex.ShortExact.splittingOfProjective` is the balanced-category
+  ancestor of `TauCeti.ExactStructure.splittingOfProjective`.
 * [The Tau Ceti Grothendieck groups, Cartan maps, and Euler forms roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/GrothendieckEulerForms/README.md),
   Layer 3, whose projective-resolution calculus requires the horseshoe lemma and whose subsequent
   finite-resolution applications require the resulting extension-closed object property.
@@ -105,11 +113,18 @@ variable {E : ExactStructure C}
 every morphism out of `Q` factors through every deflation of `E`.
 
 This depends on `E` and not only on `C`. For the split exact structure every object is
-projective, by `TauCeti.ExactStructure.projectives_split`; for the canonical exact structure of
+projective, by `TauCeti.ExactStructure.split_projectives`; for the canonical exact structure of
 an abelian category the notion is Mathlib's `CategoryTheory.Projective`, by
 `TauCeti.ExactStructure.abelian_projectives_iff`. -/
 def projectives (E : ExactStructure C) : ObjectProperty C := fun Q =>
   ∀ ⦃X Y : C⦄ {p : X ⟶ Y}, E.IsDeflation p → ∀ f : Q ⟶ Y, ∃ g : Q ⟶ X, g ≫ p = f
+
+/-- The defining lifting property, as the characterisation of
+`TauCeti.ExactStructure.projectives` available to code that cannot unfold its body. -/
+theorem projectives_iff {Q : C} :
+    E.projectives Q ↔
+      ∀ ⦃X Y : C⦄ {p : X ⟶ Y}, E.IsDeflation p → ∀ f : Q ⟶ Y, ∃ g : Q ⟶ X, g ≫ p = f :=
+  Iff.rfl
 
 namespace projectives
 
@@ -145,28 +160,33 @@ theorem projectives_biprod {Q₁ Q₂ : C} (h₁ : E.projectives Q₁) (h₂ : E
 
 /-- The projectives are closed under binary products: in a preadditive category those are
 biproducts. -/
-instance : (E.projectives).IsClosedUnderBinaryProducts where
-  limitsOfShape_le := by
-    rintro X ⟨p⟩
-    refine (E.projectives).prop_of_iso
-      (IsLimit.conePointUniqueUpToIso (BinaryBiproduct.isLimit _ _)
-        ((IsLimit.postcomposeHomEquiv (diagramIsoPair p.diag) _).2 p.isLimit))
-      (projectives_biprod (p.prop_diag_obj ⟨.left⟩) (p.prop_diag_obj ⟨.right⟩))
+instance : (E.projectives).IsClosedUnderBinaryProducts :=
+  ObjectProperty.isClosedUnderBinaryProducts_of_prop_biprod (E.projectives)
+    fun _ _ h₁ h₂ => projectives_biprod h₁ h₂
 
 /-- **A conflation with projective third term splits.** The section of its deflation is the lift
-of the identity of that term. -/
+of the identity of that term.
+
+This is the exact-structure analogue of Mathlib's
+`CategoryTheory.ShortComplex.ShortExact.splittingOfProjective`, with the balancedness hypothesis
+on the ambient category replaced by the kernel–cokernel pair carried by a conflation. -/
 noncomputable def splittingOfProjective (E : ExactStructure C) {S : ShortComplex C}
     (hS : E.Conflation S) (h₃ : E.projectives S.X₃) : S.Splitting :=
   (E.isKernelCokernelPair S hS).splittingOfSection
     (h₃.factorThru (E.isDeflation_g hS) (𝟙 S.X₃)) (by simp)
 
-/-- **Every object is projective for the split exact structure.** Its deflations are the
-biproduct projections, along which every morphism visibly lifts. -/
+@[simp] theorem splittingOfProjective_s (E : ExactStructure C) {S : ShortComplex C}
+    (hS : E.Conflation S) (h₃ : E.projectives S.X₃) :
+    (E.splittingOfProjective hS h₃).s = h₃.factorThru (E.isDeflation_g hS) (𝟙 S.X₃) :=
+  (E.isKernelCokernelPair S hS).splittingOfSection_s _ _
+
+/-- **Every object is projective for the split exact structure.** Its deflations are split
+epimorphisms, along which every morphism visibly lifts. -/
 @[simp]
-theorem projectives_split (X : C) : (ExactStructure.split C).projectives X := by
+theorem split_projectives (X : C) : (ExactStructure.split C).projectives X := by
   intro Y Z p hp f
-  obtain ⟨W, e, he⟩ := (ExactStructure.split_isDeflation_iff p).mp hp
-  exact ⟨f ≫ biprod.inr ≫ e.inv, by rw [Category.assoc, Category.assoc, he]; simp⟩
+  have := isSplitEpi_of_split_isDeflation hp
+  exact ⟨f ≫ section_ p, by simp⟩
 
 /-- **For the canonical exact structure of an abelian category, relative projectivity is
 Mathlib's `CategoryTheory.Projective`.** The deflations there are exactly the epimorphisms. -/
@@ -192,14 +212,9 @@ theorem nonempty_iso_biprod_of_projective {X K Q : C} {m : K ⟶ Q} {a : Q ⟶ X
   have : HasPullback a a' := E.hasPullbacks_deflations.hasPullback a' (E.isDeflation_g hc)
   have sq : IsPullback (pullback.fst a a') (pullback.snd a a') a a' :=
     IsPullback.of_hasPullback _ _
-  have h₁ : E.Conflation (ShortComplex.mk (baseChangeι (ShortComplex.mk m a hm) sq)
-      (pullback.snd a a') (baseChangeι_snd (ShortComplex.mk m a hm) sq)) := by
-    have h := E.conflation_baseChange hc sq
-    rwa [baseChange_def] at h
-  have h₂ : E.Conflation (ShortComplex.mk (baseChangeι (ShortComplex.mk m' a' hm') sq.flip)
-      (pullback.fst a a') (baseChangeι_snd (ShortComplex.mk m' a' hm') sq.flip)) := by
-    have h := E.conflation_baseChange hc' sq.flip
-    rwa [baseChange_def] at h
+  -- the pullback as an extension of `Q'` by `K`, and as an extension of `Q` by `K'`
+  have h₁ := E.conflation_baseChange' hc sq
+  have h₂ := E.conflation_baseChange' hc' sq.flip
   exact ⟨(E.splittingOfProjective h₁ hQ').isoBinaryBiproduct.symm.trans
     (E.splittingOfProjective h₂ hQ).isoBinaryBiproduct⟩
 
@@ -208,8 +223,11 @@ section Horseshoe
 /-- **The horseshoe lemma.** Let `S : X ↪ Y ↠ Z` be a conflation and let
 `K_X ↪ Q_X ↠ X` and `K_Z ↪ Q_Z ↠ Z` be conflations resolving its two outer terms, with `Q_Z`
 projective. Then `Y` is the third term of a conflation whose middle term is `Q_X ⊞ Q_Z` and
-whose first term is an extension of `K_Z` by `K_X`; moreover the new deflation restricts on the
-first summand to `Q_X ↠ X ↪ Y`.
+whose first term is an extension of `K_Z` by `K_X`.
+
+The two conflations form a horseshoe over the given one: the new deflation `a` restricts on the
+first summand to `Q_X ↠ X ↪ Y` and covers `Q_Z ↠ Z` on the second, while the new inflation `u`
+restricts on `K_X` to `K_X ↪ Q_X ↪ Q_X ⊞ Q_Z` and covers `K_Z ↪ Q_Z` on the second summand.
 
 Iterating this is what lifts resolutions of `X` and of `Z` to a resolution of `Y`; see
 `TauCeti.ExactStructure.exists_finiteResolution_length_le_of_conflation`. -/
@@ -221,25 +239,23 @@ theorem exists_conflations_biprod_of_conflations {S : ShortComplex C} (hS : E.Co
     ∃ (K : C) (u : K ⟶ QX ⊞ QZ) (a : QX ⊞ QZ ⟶ S.X₂) (hu : u ≫ a = 0) (v : KX ⟶ K)
       (w : K ⟶ KZ) (hv : v ≫ w = 0),
       E.Conflation (ShortComplex.mk u a hu) ∧ E.Conflation (ShortComplex.mk v w hv) ∧
-        biprod.inl ≫ a = aX ≫ S.f := by
+        biprod.inl ≫ a = aX ≫ S.f ∧ a ≫ S.g = biprod.snd ≫ aZ ∧
+        v ≫ u = mX ≫ biprod.inl ∧ u ≫ biprod.snd = w ≫ mZ := by
   have hdZ : E.IsDeflation aZ := E.isDeflation_g hcZ
   have : HasPullback aZ S.g := E.hasPullbacks_deflations.hasPullback S.g hdZ
   have sq : IsPullback (pullback.fst aZ S.g) (pullback.snd aZ S.g) aZ S.g :=
     IsPullback.of_hasPullback _ _
   -- Pulling `S` back along `aZ` exhibits the pullback as an extension of `QZ` by `S.X₁` …
-  have hspl : E.Conflation (ShortComplex.mk (baseChangeι S sq.flip) (pullback.fst aZ S.g)
-      (baseChangeι_snd S sq.flip)) := by
-    have h := E.conflation_baseChange hS sq.flip
-    rwa [baseChange_def] at h
+  have hspl := E.conflation_baseChange' hS sq.flip
   -- … and pulling the resolving conflation of `Z` back along `S.g` exhibits the same pullback as
   -- an extension of `S.X₂` by `KZ`.
-  have hker : E.Conflation (ShortComplex.mk (baseChangeι (ShortComplex.mk mZ aZ hmZ) sq)
-      (pullback.snd aZ S.g) (baseChangeι_snd (ShortComplex.mk mZ aZ hmZ) sq)) := by
-    have h := E.conflation_baseChange hcZ sq
-    rwa [baseChange_def] at h
-  -- Projectivity of `QZ` splits the first of these two conflations.
+  have hker := E.conflation_baseChange' hcZ sq
+  -- Projectivity of `QZ` splits the first of these two conflations, and under that splitting the
+  -- deflation of the pullback onto `QZ` is the second projection.
   have sp : (ShortComplex.mk (baseChangeι S sq.flip) (pullback.fst aZ S.g)
       (baseChangeι_snd S sq.flip)).Splitting := E.splittingOfProjective hspl hQZ
+  have hinv : sp.isoBinaryBiproduct.inv ≫ pullback.fst aZ S.g = biprod.snd := by
+    apply biprod.hom_ext' <;> simp [sp.s_g]
   -- the direct sum of the resolving conflation of `X` with the trivial conflation on `QZ`
   have hbipzero : biprod.map mX (0 : (0 : C) ⟶ QZ) ≫ biprod.map aX (𝟙 QZ) = 0 := by
     apply biprod.hom_ext' <;> simp [reassoc_of% hmX]
@@ -254,12 +270,25 @@ theorem exists_conflations_biprod_of_conflations {S : ShortComplex C} (hS : E.Co
     refine E.conflation_of_iso ?_ hbip
     exact ShortComplex.isoMk (Iso.refl _) (Iso.refl _) sp.isoBinaryBiproduct.symm
       (by simp) (by simp)
-  obtain ⟨K, c, α, β, hcz, hβα, hK₁, hK₂, -, -⟩ := E.exists_conflation_comp' hker hc₁
+  obtain ⟨K, c, α, β, hcz, hβα, hK₁, hK₂, hcq, hβc⟩ := E.exists_conflation_comp' hker hc₁
   refine ⟨K, c, _, hcz, (isoBiprodZero (isZero_zero C)).hom ≫ β, α,
-    by rw [Category.assoc, hβα, comp_zero], hK₁, ?_, by simp⟩
-  refine E.conflation_of_iso ?_ hK₂
-  exact ShortComplex.isoMk (isoBiprodZero (isZero_zero C)).symm (Iso.refl _) (Iso.refl _)
-    (by simp only [Iso.symm_hom, Iso.inv_hom_id_assoc, Iso.refl_hom, Category.comp_id]) (by simp)
+    by rw [Category.assoc, hβα, comp_zero], hK₁, ?_, by simp, ?_, ?_, ?_⟩
+  · -- the syzygy conflation, after discarding the zero summand of its first term
+    refine E.conflation_of_iso ?_ hK₂
+    exact ShortComplex.isoMk (isoBiprodZero (isZero_zero C)).symm (Iso.refl _) (Iso.refl _)
+      (by simp only [Iso.symm_hom, Iso.inv_hom_id_assoc, Iso.refl_hom, Category.comp_id]) (by simp)
+  · -- the new deflation covers `aZ` on the second summand
+    simp only [Category.assoc]
+    rw [← sq.w, ← Category.assoc sp.isoBinaryBiproduct.inv, hinv]
+    simp
+  · -- the new inflation restricts to `mX` on `KX`
+    rw [Category.assoc, hβc]
+    apply biprod.hom_ext <;> simp
+  · -- and covers `mZ` on the second summand
+    have h := hcq =≫ pullback.fst aZ S.g
+    simp only [Category.assoc] at h
+    rw [hinv] at h
+    simpa using h
 
 end Horseshoe
 
@@ -267,36 +296,20 @@ section Resolutions
 
 variable {P : ObjectProperty C}
 
-/-- The first step of a finite `P`-resolution of length at most `n + 1`: a conflation
-`K ↪ Q ↠ X` with `P Q`, whose subobject `K` still admits a finite `P`-resolution of length at
-most `n`. A resolution of length zero contributes the trivial conflation `0 ↪ X ↠ X`. -/
-theorem exists_conflation_of_exists_length_le_succ [P.IsClosedUnderIsomorphisms]
-    [P.ContainsZero] {X : C} {n : ℕ} (h : ∃ r : E.FiniteResolution P X, r.length ≤ n + 1) :
-    ∃ (K Q : C) (m : K ⟶ Q) (a : Q ⟶ X) (hm : m ≫ a = 0), P Q ∧
-      E.Conflation (ShortComplex.mk m a hm) ∧ ∃ s : E.FiniteResolution P K, s.length ≤ n := by
-  obtain ⟨r, hr⟩ := h
-  cases r with
-  | base hX =>
-      exact ⟨0, X, 0, 𝟙 X, by simp, hX, E.conflation_zero_id X, .base P.prop_zero, by simp⟩
-  | step hQ i p zero hp r =>
-      exact ⟨_, _, i, p, zero, hQ, hp, r, by simpa using hr⟩
-
+/-- A property containing a zero object and closed under binary products is automatically
+replete, by `CategoryTheory.ObjectProperty.isClosedUnderIsomorphisms_of_containsZero`; so the
+results below need no separate repleteness hypothesis, even though the resolution API they call
+does. -/
 local instance [P.ContainsZero] [P.IsClosedUnderBinaryProducts] :
-    P.IsClosedUnderIsomorphisms where
-  of_iso {X Y} e hX := by
-    obtain ⟨Z, hZ, hZP⟩ := P.exists_prop_of_containsZero
-    let B : BinaryFan Z X := BinaryFan.mk (hZ.from_ Y) e.inv
-    have hB : IsLimit B := BinaryFan.IsLimit.mk B (fun _ g => g ≫ e.hom)
-      (fun _ _ => hZ.eq_of_tgt _ _)
-      (fun _ _ => by simp [B])
-      (fun _ _ _ _ hg => by simpa [B] using congrArg (fun k => k ≫ e.hom) hg)
-    exact P.prop_of_isLimit_binaryFan hB hZP hX
+    P.IsClosedUnderIsomorphisms :=
+  ObjectProperty.isClosedUnderIsomorphisms_of_containsZero P
 
 variable [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 
 /-- **Finite resolutions by projectives lift along a conflation.** If `P` consists of
-`E`-projectives and both outer terms of a conflation admit a finite `P`-resolution of length at
-most `n`, then so does its middle term.
+`E`-projectives, contains a zero object and is closed under binary biproducts, and both outer
+terms of a conflation admit a finite `P`-resolution of length at most `n`, then so does its
+middle term.
 
 This is the horseshoe lemma, iterated: at each stage the two resolving terms are added, and the
 new syzygy is an extension of the two old ones. -/
@@ -320,11 +333,9 @@ theorem exists_finiteResolution_length_le_of_conflation (hP : P ≤ E.projective
       refine ⟨.base (P.prop_of_iso (E.splittingOfProjective hS (hP _ hX₃)).isoBinaryBiproduct.symm
         (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX₁ hX₃)), by simp⟩
   | succ n ih =>
-      obtain ⟨KX, QX, mX, aX, hmX, hQX, hcX, hKX⟩ :=
-        exists_conflation_of_exists_length_le_succ h₁
-      obtain ⟨KZ, QZ, mZ, aZ, hmZ, hQZ, hcZ, hKZ⟩ :=
-        exists_conflation_of_exists_length_le_succ h₃
-      obtain ⟨K, u, a, hu, v, w, hv, hKu, hKv, -⟩ :=
+      obtain ⟨KX, QX, mX, aX, hmX, hQX, hcX, hKX⟩ := E.exists_conflation_of_exists_length_le_succ h₁
+      obtain ⟨KZ, QZ, mZ, aZ, hmZ, hQZ, hcZ, hKZ⟩ := E.exists_conflation_of_exists_length_le_succ h₃
+      obtain ⟨K, u, a, hu, v, w, hv, hKu, hKv, -, -, -, -⟩ :=
         E.exists_conflations_biprod_of_conflations hS hcX hcZ (hP _ hQZ)
       obtain ⟨s, hs⟩ := ih (S := ShortComplex.mk v w hv) hKv hKX hKZ
       have hQ : P (QX ⊞ QZ) :=
@@ -332,27 +343,23 @@ theorem exists_finiteResolution_length_le_of_conflation (hP : P ≤ E.projective
       exact ⟨.step hQ u a hu hKu s,
         by rw [FiniteResolution.length_step]; exact Nat.succ_le_succ hs⟩
 
-/-- The middle term of a conflation admits a finite `P`-resolution as soon as its two outer terms
-do, provided `P` consists of `E`-projectives. -/
-theorem admitsFiniteResolution_X₂_of_conflation (hP : P ≤ E.projectives) {S : ShortComplex C}
-    (hS : E.Conflation S) (h₁ : E.admitsFiniteResolution P S.X₁)
-    (h₃ : E.admitsFiniteResolution P S.X₃) : E.admitsFiniteResolution P S.X₂ := by
+/-- **The objects of finite `P`-dimension are extension closed**, for an object property `P`
+consisting of `E`-projectives which contains a zero object and is closed under binary
+biproducts. The middle term of a conflation is covered by
+`TauCeti.ExactStructure.IsExtensionClosed.prop_X₂`.
+
+Together with `TauCeti.ExactStructure.fullSubcategory` this equips them with an induced exact
+structure, in which the resolution theorem compares their Grothendieck group with the one
+generated by the objects satisfying `P`. -/
+theorem isExtensionClosed_admitsFiniteResolution (hP : P ≤ E.projectives) :
+    E.IsExtensionClosed (E.admitsFiniteResolution P) := by
+  refine ⟨fun {S} hS h₁ h₃ => ?_⟩
   rw [admitsFiniteResolution_iff] at h₁ h₃ ⊢
   obtain ⟨r⟩ := h₁
   obtain ⟨t⟩ := h₃
   obtain ⟨u, -⟩ := exists_finiteResolution_length_le_of_conflation hP
     (max r.length t.length) hS ⟨r, le_max_left _ _⟩ ⟨t, le_max_right _ _⟩
   exact ⟨u⟩
-
-/-- **The objects of finite `P`-dimension are extension closed**, for an object property `P`
-consisting of `E`-projectives.
-
-Together with `TauCeti.ExactStructure.fullSubcategory` this equips them with an induced exact
-structure, in which the resolution theorem compares their Grothendieck group with the one
-generated by the objects satisfying `P`. -/
-theorem isExtensionClosed_admitsFiniteResolution (hP : P ≤ E.projectives) :
-    E.IsExtensionClosed (E.admitsFiniteResolution P) :=
-  ⟨fun hS h₁ h₃ => admitsFiniteResolution_X₂_of_conflation hP hS h₁ h₃⟩
 
 end Resolutions
 
