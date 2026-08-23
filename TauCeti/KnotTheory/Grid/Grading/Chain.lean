@@ -7,34 +7,30 @@ module
 
 public import Mathlib.Algebra.DirectSum.Finsupp
 public import Mathlib.LinearAlgebra.Dimension.Constructions
-public import TauCeti.KnotTheory.Grid.ChainCardinality
+public import TauCeti.KnotTheory.Grid.Complex
 public import TauCeti.KnotTheory.Grid.Grading.Parity
+public import TauCeti.KnotTheory.Grid.StateCardinality
 
 /-!
 # The bigraded grid chain module
 
-For a knot grid diagram, both the Maslov and Alexander gradings of a grid state are integers.
-This file turns those two functions on the state basis into an actual direct-sum decomposition of
-the grid chain module. The summand in bidegree `(m, a)` is the direct sum of one copy of the
-coefficient ring for each state with Maslov grading `m` and Alexander grading `a`.
+This file turns the integer `O`-Maslov grading and the integer quotient of the Alexander numerator
+on the state basis into a direct-sum decomposition of the grid chain module. The summand in
+bidegree `(m, a)` is the direct sum of one copy of the coefficient ring for each state with
+`O`-Maslov grading `m` and Alexander grading `a`. On diagrams with odd component count, the latter
+agrees with the original rational Alexander grading.
 
-The integer Alexander grading `GridDiagram.alexanderℤ` is the half of the already-defined integer
-numerator `alexanderTwoℤ`. Its agreement with the rational grading uses the parity theorem for knot
-grids. The decomposition itself groups the standard basis through Mathlib's
-`DirectSum.sigmaFiberAddEquiv`; no second direct-sum or graded-module framework is introduced.
+The decomposition groups the standard basis through Mathlib's linear direct-sum reindexing and
+sigma-currying equivalences; no second direct-sum or graded-module framework is introduced.
 
 ## Main definitions
 
-* `TauCeti.GridDiagram.alexanderℤ`: the integer Alexander grading of a state in a knot grid.
-* `TauCeti.GridDiagram.bidegree`: the `(Maslov, Alexander)` degree of a state in a knot grid.
 * `TauCeti.GridDiagram.BigradedChainPiece`: the homogeneous grid-chain module in one bidegree.
 * `TauCeti.GridDiagram.bigradedChainEquiv`: the grid chain module as the direct sum of its
   homogeneous pieces.
 
 ## Main results
 
-* `TauCeti.GridDiagram.alexander_eq_intCast`: the integer Alexander grading agrees with the
-  original rational grading.
 * `TauCeti.GridDiagram.bigradedChainEquiv_single`: a state generator lies in its own bidegree.
 * `TauCeti.GridDiagram.finrank_bigradedChainPiece`: the rank of a homogeneous piece is the number
   of states in that bidegree.
@@ -60,147 +56,94 @@ namespace GridDiagram
 
 variable {n : ℕ} (G : GridDiagram n)
 
-/-- The integer Alexander grading of a state in a knot grid diagram.
-
-The numerator `alexanderTwoℤ` is even for knot grids, so integer division by two is exact. The
-knot hypothesis is part of the interface because the Alexander grading is a strict half-integer
-on every state of a diagram with an even number of link components. -/
-def alexanderℤ (_hG : G.IsKnot) (x : GridState n) : ℤ :=
-  G.alexanderTwoℤ x / 2
-
-/-- The integer Alexander grading is half of its integer numerator. -/
-theorem two_mul_alexanderℤ (hG : G.IsKnot) (x : GridState n) :
-    2 * G.alexanderℤ hG x = G.alexanderTwoℤ x := by
-  obtain ⟨a, ha⟩ := G.even_alexanderTwoℤ_of_isKnot hG x
-  rw [alexanderℤ, ha]
-  omega
-
-/-- The integer Alexander grading of a knot grid agrees with the original rational-valued
-Alexander grading. -/
-theorem alexander_eq_intCast (hG : G.IsKnot) (x : GridState n) :
-    G.alexander x = (G.alexanderℤ hG x : ℚ) := by
-  have h := G.two_mul_alexander_eq_intCast x
-  rw [← G.two_mul_alexanderℤ hG x] at h
-  push_cast at h
-  linarith
-
-/-- The `(Maslov, Alexander)` bidegree of a state in a knot grid diagram. -/
-def bidegree (hG : G.IsKnot) (x : GridState n) : ℤ × ℤ :=
-  (G.maslovOℤ x, G.alexanderℤ hG x)
-
-/-- The first component of the grid bidegree is the integer `O`-Maslov grading. -/
-@[simp]
-theorem bidegree_fst (hG : G.IsKnot) (x : GridState n) :
-    (G.bidegree hG x).1 = G.maslovOℤ x :=
-  (rfl)
-
-/-- The second component of the grid bidegree is the integer Alexander grading. -/
-@[simp]
-theorem bidegree_snd (hG : G.IsKnot) (x : GridState n) :
-    (G.bidegree hG x).2 = G.alexanderℤ hG x :=
-  (rfl)
-
-/-- The finite set of bidegrees occupied by grid states. -/
-noncomputable def bidegreeSupport (hG : G.IsKnot) : Finset (ℤ × ℤ) :=
-  Finset.univ.image (G.bidegree hG)
-
-/-- A bidegree is occupied exactly when some grid state has that bidegree. -/
-@[simp]
-theorem mem_bidegreeSupport_iff (hG : G.IsKnot) (g : ℤ × ℤ) :
-    g ∈ G.bidegreeSupport hG ↔ ∃ x : GridState n, G.bidegree hG x = g := by
-  simp [bidegreeSupport]
-
 /-- The homogeneous grid-chain module in bidegree `g`: one copy of `R` for each state of that
 bidegree. -/
-abbrev BigradedChainPiece (R : Type*) [Semiring R] (hG : G.IsKnot) (g : ℤ × ℤ) :=
-  ⨁ _ : {x : GridState n // G.bidegree hG x = g}, R
+abbrev BigradedChainPiece (R : Type*) [Semiring R] (g : ℤ × ℤ) :=
+  ⨁ _ : {x : GridState n // G.bidegree x = g}, R
 
 /-- Regroup a direct sum indexed by `ι` into the fibres of a degree function `f`.
 
-Mathlib provides the additive equivalence; scalar multiplication is pointwise on both direct
-sums, so it upgrades directly to a linear equivalence. -/
+This is the composite of Mathlib's linear reindexing and sigma-currying equivalences. -/
 private noncomputable def sigmaFiberLinearEquiv {R : Type*} [Semiring R]
-    {ι κ : Type} [DecidableEq κ] (f : ι → κ) :
-    (⨁ _ : ι, R) ≃ₗ[R] ⨁ k : κ, (⨁ _ : {i : ι // f i = k}, R) := by
-  let e : (⨁ _ : ι, R) ≃+ ⨁ k : κ, (⨁ _ : {i : ι // f i = k}, R) :=
-    DirectSum.sigmaFiberAddEquiv (β := fun _ : ι => R) f
-  exact
-  { e with
-    map_smul' := by
-      intro r x
-      -- Fix the additive equivalence in the goal so its fibre indices elaborate uniformly.
-      change e (r • x) = r • e x
-      ext k i
-      rfl }
+    {ι κ : Type*} [DecidableEq κ] (f : ι → κ) :
+    (⨁ _ : ι, R) ≃ₗ[R] ⨁ k : κ, (⨁ _ : {i : ι // f i = k}, R) :=
+  (DirectSum.lequivCongrLeft R (Equiv.sigmaFiberEquiv f).symm).trans
+    (DirectSum.sigmaLcurryEquiv R (δ := fun _ (_ : {i // f i = _}) => R))
 
-/-- The grid chain module decomposed as the direct sum of its `(Maslov, Alexander)`-homogeneous
+/-- The linear sigma-fibre equivalence preserves every coefficient. -/
+private theorem sigmaFiberLinearEquiv_apply_apply {R : Type*} [Semiring R]
+    {ι κ : Type*} [DecidableEq κ] (f : ι → κ) (x : ⨁ _ : ι, R) (k : κ)
+    (i : {i : ι // f i = k}) : sigmaFiberLinearEquiv f x k i = x i :=
+  rfl
+
+/-- The grid chain module decomposed as the direct sum of its (`O`-Maslov, Alexander)-homogeneous
 pieces. -/
-noncomputable def bigradedChainEquiv (R : Type*) [Semiring R] (hG : G.IsKnot) :
-    GridChain R n ≃ₗ[R] ⨁ g : ℤ × ℤ, G.BigradedChainPiece R hG g :=
+noncomputable def bigradedChainEquiv (R : Type*) [Semiring R] :
+    GridChain R n ≃ₗ[R] ⨁ g : ℤ × ℤ, G.BigradedChainPiece R g :=
   (finsuppLEquivDirectSum R R (GridState n)).trans
-    (sigmaFiberLinearEquiv (G.bidegree hG))
+    (sigmaFiberLinearEquiv G.bidegree)
 
 /-- In the bigraded decomposition, the coefficient at a state in degree `g` is its original grid
 chain coefficient. -/
 @[simp]
-theorem bigradedChainEquiv_apply_apply (R : Type*) [Semiring R] (hG : G.IsKnot)
-    (c : GridChain R n) (g : ℤ × ℤ) (x : {x : GridState n // G.bidegree hG x = g}) :
-    G.bigradedChainEquiv R hG c g x = c x := by
-  rw [bigradedChainEquiv, LinearEquiv.trans_apply, sigmaFiberLinearEquiv]
-  -- Expose the upgraded additive equivalence so Mathlib's pointwise fibre formula applies.
-  change ((DirectSum.sigmaFiberAddEquiv (β := fun _ : GridState n => R) (G.bidegree hG))
-      ((finsuppLEquivDirectSum R R (GridState n)) c)) g x = c x
-  rw [DirectSum.sigmaFiberAddEquiv_apply_apply, finsuppLEquivDirectSum_apply]
+theorem bigradedChainEquiv_apply_apply (R : Type*) [Semiring R]
+    (c : GridChain R n) (g : ℤ × ℤ) (x : {x : GridState n // G.bidegree x = g}) :
+    G.bigradedChainEquiv R c g x = c x := by
+  rw [bigradedChainEquiv, LinearEquiv.trans_apply, sigmaFiberLinearEquiv_apply_apply,
+    finsuppLEquivDirectSum_apply]
 
 /-- Reading a chain back off its homogeneous components: the coefficient at a state is the
 component of the state's own bidegree, at that state. -/
 @[simp]
-theorem bigradedChainEquiv_symm_apply_apply (R : Type*) [Semiring R] (hG : G.IsKnot)
-    (d : ⨁ g : ℤ × ℤ, G.BigradedChainPiece R hG g) (x : GridState n) :
-    (G.bigradedChainEquiv R hG).symm d x = d (G.bidegree hG x) ⟨x, rfl⟩ := by
-  conv_rhs => rw [← (G.bigradedChainEquiv R hG).apply_symm_apply d]
-  exact (G.bigradedChainEquiv_apply_apply R hG _ (G.bidegree hG x) ⟨x, rfl⟩).symm
+theorem bigradedChainEquiv_symm_apply_apply (R : Type*) [Semiring R]
+    (d : ⨁ g : ℤ × ℤ, G.BigradedChainPiece R g) (x : GridState n) :
+    (G.bigradedChainEquiv R).symm d x = d (G.bidegree x) ⟨x, rfl⟩ := by
+  conv_rhs => rw [← (G.bigradedChainEquiv R).apply_symm_apply d]
+  exact (G.bigradedChainEquiv_apply_apply R _ (G.bidegree x) ⟨x, rfl⟩).symm
 
 /-- A grid-state generator maps to the copy of the coefficient ring indexed by that state inside
 its own bidegree. -/
 @[simp]
-theorem bigradedChainEquiv_single (R : Type*) [Semiring R] (hG : G.IsKnot)
-    (x : GridState n) (r : R) :
-    G.bigradedChainEquiv R hG (Finsupp.single x r) =
-      DirectSum.lof R (ℤ × ℤ) (fun g => G.BigradedChainPiece R hG g) (G.bidegree hG x)
-        (DirectSum.lof R {y : GridState n // G.bidegree hG y = G.bidegree hG x}
+theorem bigradedChainEquiv_single (R : Type*) [Semiring R] (x : GridState n) (r : R) :
+    G.bigradedChainEquiv R (Finsupp.single x r) =
+      DirectSum.lof R (ℤ × ℤ) (fun g => G.BigradedChainPiece R g) (G.bidegree x)
+        (DirectSum.lof R {y : GridState n // G.bidegree y = G.bidegree x}
           (fun _ => R) ⟨x, rfl⟩ r) := by
-  rw [bigradedChainEquiv, LinearEquiv.trans_apply, sigmaFiberLinearEquiv,
-    finsuppLEquivDirectSum_single]
-  exact DirectSum.sigmaFiberAddEquiv_of (β := fun _ : GridState n => R)
-    (G.bidegree hG) x r
+  ext g y
+  by_cases h : G.bidegree x = g
+  · subst g
+    by_cases hxy : x = (y : GridState n)
+    · simp [G.bigradedChainEquiv_apply_apply, DirectSum.lof_eq_of, hxy]
+    · have hsub : (⟨x, rfl⟩ : {z : GridState n // G.bidegree z = G.bidegree x}) ≠ y :=
+        fun hsub => hxy (congrArg Subtype.val hsub)
+      simp [G.bigradedChainEquiv_apply_apply, DirectSum.lof_eq_of, DirectSum.of_apply,
+        hxy, hsub]
+  · have hxy : x ≠ (y : GridState n) := by
+      intro hxy
+      apply h
+      rw [hxy]
+      exact y.property
+    simp [G.bigradedChainEquiv_apply_apply, DirectSum.lof_eq_of, DirectSum.of_apply, h, hxy]
 
-/-- Over a division ring, the rank of a homogeneous grid-chain piece is the number of states in
-its bidegree. -/
-theorem finrank_bigradedChainPiece (R : Type*) [DivisionRing R] (hG : G.IsKnot) (g : ℤ × ℤ) :
-    Module.finrank R (G.BigradedChainPiece R hG g) =
-      (Finset.univ.filter fun x : GridState n => G.bidegree hG x = g).card := by
+/-- The rank of a homogeneous grid-chain piece is the number of states in its bidegree. -/
+theorem finrank_bigradedChainPiece (R : Type*) [Semiring R] [StrongRankCondition R]
+    (g : ℤ × ℤ) : Module.finrank R (G.BigradedChainPiece R g) =
+      (Finset.univ.filter fun x : GridState n => G.bidegree x = g).card := by
   rw [Module.finrank_directSum]
   simp [Fintype.card_subtype]
 
 /-- A homogeneous grid-chain piece has positive rank exactly when its bidegree is occupied by a
 grid state. -/
-theorem finrank_bigradedChainPiece_pos_iff (R : Type*) [DivisionRing R] (hG : G.IsKnot)
+theorem finrank_bigradedChainPiece_pos_iff (R : Type*) [Semiring R] [StrongRankCondition R]
     (g : ℤ × ℤ) :
-    0 < Module.finrank R (G.BigradedChainPiece R hG g) ↔ g ∈ G.bidegreeSupport hG := by
-  rw [G.finrank_bigradedChainPiece R hG g, Finset.card_pos,
-    G.mem_bidegreeSupport_iff hG g]
-  constructor
-  · rintro ⟨x, hx⟩
-    exact ⟨x, (Finset.mem_filter.mp hx).2⟩
-  · rintro ⟨x, hx⟩
-    exact ⟨x, Finset.mem_filter.mpr ⟨Finset.mem_univ x, hx⟩⟩
+    0 < Module.finrank R (G.BigradedChainPiece R g) ↔ g ∈ G.bidegreeSupport := by
+  rw [G.finrank_bigradedChainPiece R g, Finset.card_pos, G.mem_bidegreeSupport_iff g]
+  simp [Finset.filter_nonempty_iff]
 
 /-- The ranks of all occupied homogeneous pieces add to `n!`, the number of grid states. -/
-theorem sum_finrank_bigradedChainPiece (R : Type*) [DivisionRing R] (hG : G.IsKnot) :
-    ∑ g ∈ G.bidegreeSupport hG, Module.finrank R (G.BigradedChainPiece R hG g) =
-      n.factorial := by
-  simp_rw [G.finrank_bigradedChainPiece R hG]
+theorem sum_finrank_bigradedChainPiece (R : Type*) [Semiring R] [StrongRankCondition R] :
+    ∑ g ∈ G.bidegreeSupport, Module.finrank R (G.BigradedChainPiece R g) = n.factorial := by
+  simp_rw [G.finrank_bigradedChainPiece R]
   rw [Finset.sum_card_fiberwise_eq_card_filter]
   simp
 
