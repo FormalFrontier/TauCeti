@@ -270,6 +270,33 @@ private theorem eq_of_mul_add_natCast_eq {e : ℕ} {j j' : Fin e} {a b : ℤ}
   simp only [key] at h'
   exact Fin.ext (by exact_mod_cast h')
 
+private theorem sum_ne_zero_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F')
+    (hAord : ∀ j, A j ≠ 0 → ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ))
+    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) : ∑ j, A j ≠ 0 := by
+  classical
+  set J : Finset (Fin e) := {j | A j ≠ 0} with hJdef
+  have hJ : J.Nonempty := ⟨j₁, by simp [hJdef, hj₁]⟩
+  obtain ⟨j₀, hj₀J, hj₀⟩ := J.exists_min_image (fun j ↦ P'.ord (A j)) hJ
+  have hj₀A : A j₀ ≠ 0 := by simpa [hJdef] using hj₀J
+  have hlt : ∀ j ∈ (Finset.univ : Finset (Fin e)) \ {j₀},
+      P'.valuation (A j) < P'.valuation (A j₀) := by
+    intro j hj
+    simp only [Finset.mem_sdiff, Finset.mem_singleton] at hj
+    by_cases hAj : A j = 0
+    · rw [hAj, map_zero]
+      exact zero_lt_iff.mpr ((Valuation.ne_zero_iff _).mpr hj₀A)
+    · obtain ⟨m, hm⟩ := hAord j hAj
+      obtain ⟨m₀, hm₀⟩ := hAord j₀ hj₀A
+      have hne : P'.ord (A j) ≠ P'.ord (A j₀) := by
+        rw [hm, hm₀]
+        exact fun hcontra ↦ hj.2 (eq_of_mul_add_natCast_eq hcontra)
+      have hge := hj₀ j (by simp [hJdef, hAj])
+      exact valuation_lt_of_ord_lt P' hAj hj₀A (by omega)
+  intro hsum
+  have hval := P'.valuation.map_sum_eq_of_lt (Finset.mem_univ j₀) hlt
+  rw [hsum, map_zero] at hval
+  exact (Valuation.ne_zero_iff _).mpr hj₀A hval.symm
+
 /-- A combination of elements of `𝒪_{P'}` with coefficients in `𝒪_P`, one of them a unit, is a
 unit at `P'` as soon as the residues of the elements are independent over the residue field of
 `P`: its residue is the corresponding nontrivial combination of the residues. -/
@@ -386,37 +413,16 @@ theorem linearIndependent_mul_pow_of_linearIndependent_residue {ι : Type*} [Fin
     · exact absurd (by simp [hA, hall]) hj
     · obtain ⟨i, hi⟩ := not_forall.mp hall
       exact (exists_ord_sum_eq_mul k F P' s hind (fun i ↦ c (i, j)) hi).2
-  have hTord : ∀ j : Fin e, A j ≠ 0 →
+  have hTord : ∀ j : Fin e, A j * t ^ (j : ℕ) ≠ 0 →
       ∃ m : ℤ, P'.ord (A j * t ^ (j : ℕ)) = (e : ℤ) * m + (j : ℕ) := by
     intro j hj
-    obtain ⟨m, hm⟩ := hAord j hj
-    exact ⟨m, by rw [P'.ord_mul hj (pow_ne_zero _ ht0), P'.ord_pow, ht, hm, mul_one]⟩
+    have hAj : A j ≠ 0 := fun h ↦ hj (by simp [h])
+    obtain ⟨m, hm⟩ := hAord j hAj
+    exact ⟨m, by rw [P'.ord_mul hAj (pow_ne_zero _ ht0), P'.ord_pow, ht, hm, mul_one]⟩
   have hA₁ : A j₁ ≠ 0 :=
     (exists_ord_sum_eq_mul k F P' s hind (fun i ↦ c (i, j₁)) (i₁ := i₁) hp₁).1
-  set J : Finset (Fin e) := {j | A j ≠ 0} with hJdef
-  have hJ : J.Nonempty := ⟨j₁, by simp [hJdef, hA₁]⟩
-  obtain ⟨j₀, hj₀J, hj₀⟩ := J.exists_min_image (fun j ↦ P'.ord (A j * t ^ (j : ℕ))) hJ
-  have hj₀A : A j₀ ≠ 0 := by simpa [hJdef] using hj₀J
-  have hj₀ne : A j₀ * t ^ (j₀ : ℕ) ≠ 0 := mul_ne_zero hj₀A (pow_ne_zero _ ht0)
-  have hlt : ∀ j ∈ (Finset.univ : Finset (Fin e)) \ {j₀},
-      P'.valuation (A j * t ^ (j : ℕ)) < P'.valuation (A j₀ * t ^ (j₀ : ℕ)) := by
-    intro j hj
-    simp only [Finset.mem_sdiff, Finset.mem_singleton] at hj
-    by_cases hAj : A j = 0
-    · rw [hAj, zero_mul, map_zero]
-      exact zero_lt_iff.mpr ((Valuation.ne_zero_iff _).mpr hj₀ne)
-    · have hjJ : j ∈ J := by simp [hJdef, hAj]
-      obtain ⟨m, hm⟩ := hTord j hAj
-      obtain ⟨m₀, hm₀⟩ := hTord j₀ hj₀A
-      have hne : P'.ord (A j * t ^ (j : ℕ)) ≠ P'.ord (A j₀ * t ^ (j₀ : ℕ)) := by
-        rw [hm, hm₀]
-        exact fun hcontra ↦ hj.2 (eq_of_mul_add_natCast_eq hcontra)
-      have hge := hj₀ j hjJ
-      exact valuation_lt_of_ord_lt P' (mul_ne_zero hAj (pow_ne_zero _ ht0)) hj₀ne
-        (by omega)
-  have hval := P'.valuation.map_sum_eq_of_lt (Finset.mem_univ j₀) hlt
-  rw [hkey, map_zero] at hval
-  exact (Valuation.ne_zero_iff _).mpr hj₀ne hval.symm
+  exact (sum_ne_zero_of_ord_eq_mul_add_natCast P' (fun j ↦ A j * t ^ (j : ℕ)) hTord
+    (mul_ne_zero hA₁ (pow_ne_zero _ ht0))) hkey
 
 end Independence
 
@@ -437,12 +443,13 @@ private theorem linearIndependent_pow_fin_ramificationIdx {t : F'} (ht : P'.ord 
   set A : Fin e → F' := fun j ↦ algebraMap F F' (c j) * t ^ (j : ℕ) with hA
   have hsum : ∑ j, A j = 0 := by
     simpa only [hA, Algebra.smul_def] using hc
-  have hAord : ∀ j : Fin e, c j ≠ 0 →
+  have hAord : ∀ j : Fin e, A j ≠ 0 →
       ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ) := by
     intro j hj
+    have hjc : c j ≠ 0 := fun h ↦ hj (by simp [hA, h])
     obtain ⟨m, hm⟩ := Valuation.ordIndex_dvd_ord
       (P'.valuation.comap (algebraMap F F')) (c j)
-    have hmap : algebraMap F F' (c j) ≠ 0 := by simpa using hj
+    have hmap : algebraMap F F' (c j) ≠ 0 := by simpa using hjc
     refine ⟨m, ?_⟩
     rw [hA, P'.ord_mul hmap (pow_ne_zero _ ht0), P'.ord_pow, ht, mul_one,
       ← ord_comap F P' (c j), hm]
@@ -451,28 +458,8 @@ private theorem linearIndependent_pow_fin_ramificationIdx {t : F'} (ht : P'.ord 
     have hidx' : (Valuation.ordIndex (P'.valuation.comap (algebraMap F F')) : ℤ) = e := by
       exact_mod_cast hidx
     rw [hidx']
-  set J : Finset (Fin e) := {j | c j ≠ 0} with hJdef
-  have hJ : J.Nonempty := ⟨j₁, by simp [hJdef, hj₁]⟩
-  obtain ⟨j₀, hj₀J, hj₀⟩ := J.exists_min_image (fun j ↦ P'.ord (A j)) hJ
-  have hj₀c : c j₀ ≠ 0 := by simpa [hJdef] using hj₀J
-  have hj₀A : A j₀ ≠ 0 := by simp [hA, hj₀c, ht0]
-  have hlt : ∀ j ∈ (Finset.univ : Finset (Fin e)) \ {j₀},
-      P'.valuation (A j) < P'.valuation (A j₀) := by
-    intro j hj
-    simp only [Finset.mem_sdiff, Finset.mem_singleton] at hj
-    by_cases hjc : c j = 0
-    · simp only [hA, hjc, map_zero, zero_mul]
-      exact zero_lt_iff.mpr ((Valuation.ne_zero_iff _).mpr hj₀A)
-    · obtain ⟨m, hm⟩ := hAord j hjc
-      obtain ⟨m₀, hm₀⟩ := hAord j₀ hj₀c
-      have hne : P'.ord (A j) ≠ P'.ord (A j₀) := by
-        rw [hm, hm₀]
-        exact fun hcontra ↦ hj.2 (eq_of_mul_add_natCast_eq hcontra)
-      have hge := hj₀ j (by simp [hJdef, hjc])
-      exact valuation_lt_of_ord_lt P' (by simp [hA, hjc, ht0]) hj₀A (by omega)
-  have hval := P'.valuation.map_sum_eq_of_lt (Finset.mem_univ j₀) hlt
-  rw [hsum, map_zero] at hval
-  exact (Valuation.ne_zero_iff _).mpr hj₀A hval.symm
+  have hA₁ : A j₁ ≠ 0 := by simp [hA, hj₁, ht0]
+  exact (sum_ne_zero_of_ord_eq_mul_add_natCast P' A hAord hA₁) hsum
 
 variable [FiniteDimensional F F']
 
