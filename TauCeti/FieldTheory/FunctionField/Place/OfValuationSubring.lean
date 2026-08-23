@@ -9,6 +9,7 @@ public import Mathlib.RingTheory.Valuation.Discrete.IsDiscreteValuationRing
 public import TauCeti.FieldTheory.FunctionField.Basic
 public import TauCeti.FieldTheory.FunctionField.Place.Adic
 public import TauCeti.FieldTheory.FunctionField.Place.Polynomial
+public import TauCeti.RingTheory.Valuation.Polynomial
 
 /-!
 # Valuation rings of an algebraic function field are the rings of places
@@ -75,21 +76,14 @@ variable {k : Type u} {F : Type v} [Field k] [Field F] [Algebra k F] {A : Valuat
 
 /-! ### Polynomial expressions in an element of the maximal ideal -/
 
-/-- A polynomial expression in an element of a valuation subring containing the constants lies in
-that subring. -/
-theorem valuation_aeval_le_one (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F}
-    (hx : A.valuation x ≤ 1) (p : k[X]) : A.valuation (aeval x p) ≤ 1 := by
-  rw [aeval_eq_sum_range]
-  refine Valuation.map_sum_le _ fun i _ ↦ ?_
-  rw [Algebra.smul_def, map_mul, Valuation.map_pow]
-  exact mul_le_one' ((A.valuation_le_one_iff _).2 (hk _)) (pow_le_one' hx i)
-
 /-- A polynomial with nonzero constant term, evaluated at a nonunit of a valuation subring
 containing the constants, is a unit: the constant term dominates. -/
 theorem valuation_aeval_eq_one (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F}
     (hx : A.valuation x < 1) {p : k[X]} (hp : p.coeff 0 ≠ 0) :
     A.valuation (aeval x p) = 1 := by
-  have : A.valuation.IsTrivialOn k := .of_le_one _ fun c ↦ (A.valuation_le_one_iff _).2 (hk c)
+  have hkle : ∀ c : k, A.valuation (algebraMap k F c) ≤ 1 :=
+    fun c ↦ (A.valuation_le_one_iff _).2 (hk c)
+  have : A.valuation.IsTrivialOn k := .of_le_one _ hkle
   obtain ⟨q, hq⟩ : (X : k[X]) ∣ p - C (p.coeff 0) := X_dvd_iff.2 (by simp)
   have hsplit : aeval x p = x * aeval x q + algebraMap k F (p.coeff 0) := by
     have := congrArg (aeval x) hq
@@ -98,7 +92,7 @@ theorem valuation_aeval_eq_one (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F}
   rw [hsplit, Valuation.map_add_eq_of_lt_right, Valuation.IsTrivialOn.eq_one _ hp]
   rw [Valuation.IsTrivialOn.eq_one (A := k) _ hp, map_mul]
   calc A.valuation x * A.valuation (aeval x q)
-      ≤ A.valuation x * 1 := by gcongr; exact valuation_aeval_le_one hk hx.le q
+      ≤ A.valuation x * 1 := by gcongr; exact A.valuation.aeval_le_one hkle hx.le q
     _ = A.valuation x := mul_one _
     _ < 1 := hx
 
@@ -120,7 +114,9 @@ theorem linearIndependent_of_strictMono_valuation (hk : ∀ c : k, algebraMap k 
   classical
   have hxpos : 0 < A.valuation x := zero_lt_iff.2 ((Valuation.ne_zero_iff _).2 hx0)
   have hy0 : ∀ i, y i ≠ 0 := fun i ↦ (Valuation.ne_zero_iff _).1 (hxpos.trans_le (hxy i)).ne'
-  have : A.valuation.IsTrivialOn k := .of_le_one _ fun c ↦ (A.valuation_le_one_iff _).2 (hk c)
+  have hkle : ∀ c : k, A.valuation (algebraMap k F c) ≤ 1 :=
+    fun c ↦ (A.valuation_le_one_iff _).2 (hk c)
+  have : A.valuation.IsTrivialOn k := .of_le_one _ hkle
   have hxtr : Transcendental k x := Valuation.transcendental_of_ne_one k x hx0 hx.ne
   have hinj : Function.Injective (aeval x : k[X] →ₐ[k] F) := transcendental_iff_injective.mp hxtr
   rw [← LinearIndependent.iff_fractionRing (Algebra.adjoin k {x}) k⟮x⟯, linearIndependent_iff']
@@ -159,7 +155,7 @@ theorem linearIndependent_of_strictMono_valuation (hk : ∀ c : k, algebraMap k 
     rw [map_mul, map_mul, hvj, one_mul]
     rcases hij.lt_or_gt with hlt | hgt
     · calc A.valuation (aeval x (q i)) * A.valuation (y i)
-          ≤ 1 * A.valuation (y i) := by gcongr; exact valuation_aeval_le_one hk hx.le _
+          ≤ 1 * A.valuation (y i) := by gcongr; exact A.valuation.aeval_le_one hkle hx.le _
         _ = A.valuation (y i) := one_mul _
         _ < A.valuation (y j) := hmono hlt
     · have hqi0 : (q i).coeff 0 = 0 := by
@@ -172,7 +168,7 @@ theorem linearIndependent_of_strictMono_valuation (hk : ∀ c : k, algebraMap k 
           = A.valuation x * A.valuation (aeval x r) * A.valuation (y i) := by
             rw [hqix, map_mul]
         _ ≤ A.valuation x * 1 * A.valuation (y i) := by
-            gcongr; exact valuation_aeval_le_one hk hx.le _
+            gcongr; exact A.valuation.aeval_le_one hkle hx.le _
         _ = A.valuation x * A.valuation (y i) := by rw [mul_one]
         _ < A.valuation x * 1 := mul_lt_mul_of_pos_left (hy i) hxpos
         _ = A.valuation x := mul_one _
