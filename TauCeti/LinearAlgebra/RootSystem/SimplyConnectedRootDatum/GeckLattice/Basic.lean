@@ -37,6 +37,9 @@ coordinate lattice reduces finite generation to Noetherianity of `ℤ`.
 * `TauCeti.DynkinType.geckCoordinateBasis`: its standard coordinate basis.
 * `TauCeti.DynkinType.geckCoordinateBasisFin`: the same basis indexed by a finite ordinal, as
   required by the general-linear group-scheme construction.
+* `TauCeti.DynkinType.geckWeightFin`: the coordinate weights in that finite-ordinal indexing.
+* `TauCeti.DynkinType.isCartanWeightVector_geckCoordinateBasisFin`: every finite-ordinal basis
+  vector is a Cartan weight vector.
 * `TauCeti.DynkinType.geckRepresentation_lieBasis_e_mem_geckCoordinateLattice` and its lowering
   analogue: stability under the numbered root generators.
 * `TauCeti.DynkinType.geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice`:
@@ -104,7 +107,11 @@ theorem coe_geckCoordinateBasis (i : t.GeckIndex ht) :
   rw [Module.Basis.restrictScalars_apply, Pi.basisFun_apply]
 
 /-- The coordinate basis reindexed by a finite ordinal. This is the basis shape consumed by the
-Kostant generated-group-scheme construction. -/
+Kostant generated-group-scheme construction.
+
+The carrier subtype and `ℤ`-module structure of a submodule are definitionally equal to those of
+its underlying additive subgroup, so the reindexed submodule basis has the displayed target type.
+-/
 def geckCoordinateBasisFin :
     Module.Basis (Fin (t.geckDim ht)) ℤ (t.geckCoordinateLattice ht).toAddSubgroup :=
   (t.geckCoordinateBasis ht).reindex (Fintype.equivFin (t.GeckIndex ht))
@@ -118,9 +125,10 @@ theorem coe_geckCoordinateBasisFin (i : Fin (t.geckDim ht)) :
       Pi.single ((Fintype.equivFin (t.GeckIndex ht)).symm i) 1 := by
   rw [geckCoordinateBasisFin, Module.Basis.reindex_apply, coe_geckCoordinateBasis]
 
-/-- The integral weight of a finite-ordinal Geck coordinate basis vector, in the Bourbaki
-numbering. -/
-def geckWeightFin : Fin (t.geckDim ht) → Fin t.rank → ℤ :=
+/-- The integral weight of a finite-ordinal Geck coordinate basis vector. The Cartan argument uses
+the Bourbaki numbering, while the coordinate argument uses the `Fintype.equivFin` ordering of
+`GeckIndex`. -/
+abbrev geckWeightFin : Fin (t.geckDim ht) → Fin t.rank → ℤ :=
   fun i => t.geckWeight ht ((Fintype.equivFin (t.GeckIndex ht)).symm i)
 
 /-- Every finite-ordinal coordinate basis vector is a Cartan weight vector. -/
@@ -344,11 +352,11 @@ Every integral-form translate of a lattice vector stays in the lattice. Together
 `TauCeti.DynkinType.geckCoordinateLattice_le_geckOrbit` this identifies the integral orbit of the
 standard coordinate vectors with the lattice itself. -/
 theorem geckRepresentation_kostantForm_mem_geckCoordinateLattice
-    {u : _root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht)}
+    (u : _root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht))
     (hu : u ∈ UniversalEnvelopingAlgebra.kostantForm
-      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h) {v : t.GeckIndex ht → ℚ}
-    (hv : v ∈ t.geckCoordinateLattice ht) :
-    t.geckRepresentation ht u v ∈ t.geckCoordinateLattice ht :=
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h) (v : t.GeckIndex ht → ℚ)
+    (hv : v ∈ (t.geckCoordinateLattice ht).toAddSubgroup) :
+    t.geckRepresentation ht u v ∈ (t.geckCoordinateLattice ht).toAddSubgroup :=
   UniversalEnvelopingAlgebra.kostantForm_apply_mem
     (e := (t.lieBasis ht).rootGenerator) (h := (t.lieBasis ht).h)
     (ρ := t.geckRepresentation ht) (N := t.geckCoordinateLattice ht)
@@ -364,7 +372,7 @@ theorem geckOrbit_le_geckCoordinateLattice :
     t.geckOrbit ht ≤ t.geckCoordinateLattice ht := by
   rw [t.geckOrbit_le_iff ht]
   intro u hu x
-  refine t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht ?_ ?_
+  refine t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht u ?_ _ ?_
   · rw [← LieAlgebra.Basis.kostantForm_def, ← t.kostantForm_def ht]
     exact hu
   · rw [← Pi.basisFun_apply (R := ℚ)]

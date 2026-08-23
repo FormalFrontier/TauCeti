@@ -63,6 +63,8 @@ claimed. This file is the numbered input those later steps consume.
 * `TauCeti.DynkinType.kostantForm`: the pinned simple-generator Kostant form.
 * `TauCeti.DynkinType.geckRepresentation`: the defining matrix representation of `U(L)`.
 * `TauCeti.DynkinType.geckWeight`: the integral weight of a Geck coordinate.
+* `TauCeti.DynkinType.rootGeneratorWeight`: the integral root of a numbered raising or lowering
+  generator.
 * `TauCeti.DynkinType.geckOrbit`: the integral orbit of the standard coordinate vectors.
 
 ## Main results
@@ -75,6 +77,8 @@ claimed. This file is the numbered input those later steps consume.
   acts nilpotently.
 * `TauCeti.DynkinType.isCartanWeightVector_geckRepresentation_single`: the standard coordinate
   vectors are Cartan weight vectors with integer weights.
+* `TauCeti.DynkinType.lie_lieBasis_h_rootGenerator`: the Cartan action on each numbered root
+  generator is given by its integral root.
 * `TauCeti.DynkinType.geckRepresentation_mem_geckOrbit` and
   `TauCeti.DynkinType.span_geckOrbit_eq_top`: the integral orbit is stable under the Kostant form
   and spans the Geck module over `ℚ`.

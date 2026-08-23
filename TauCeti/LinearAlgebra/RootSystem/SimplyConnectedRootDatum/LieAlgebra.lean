@@ -46,6 +46,7 @@ and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is 
 
 * `TauCeti.DynkinType.GeckIndex`: the index set of the matrices, one coordinate per element of the
   pinned base support and one per root.
+* `TauCeti.DynkinType.geckDim`: the number of Geck coordinates.
 * `TauCeti.DynkinType.lieAlgebra`: the split Lie algebra of a valid Dynkin type.
 * `TauCeti.DynkinType.cartanSubalgebra`: its distinguished Cartan subalgebra.
 * `TauCeti.DynkinType.lieBasis`: its Chevalley generators, numbered by Bourbaki node.
@@ -57,6 +58,8 @@ and `f` are nilpotent as matrices. Their generation of the whole Lie algebra is 
 
 * `TauCeti.DynkinType.lieBasis_A_eq`: the Cartan matrix of the basis is the pinned Cartan matrix of
   the Dynkin type.
+* `TauCeti.DynkinType.geckDim_eq_rank_add_numRoots`: the Geck dimension is the rank plus the number
+  of roots.
 * `TauCeti.DynkinType.coe_lieBasis_h`, `coe_lieBasis_e`, and `coe_lieBasis_f`: each generator is
   the explicit matrix Geck attaches to the corresponding simple root.
 * `TauCeti.DynkinType.lie_lieBasis_h_e` and `TauCeti.DynkinType.lie_lieBasis_h_f`: the two
