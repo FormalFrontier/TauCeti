@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,6 +12,7 @@ public import Mathlib.NumberTheory.ZetaValues
 public import Mathlib.RingTheory.Ideal.Int
 public import Mathlib.RingTheory.RamificationInertia.Basic
 import Mathlib.Data.Set.Card.Arithmetic
+import TauCeti.NumberTheory.NumberField.PrimeIdeal
 
 /-!
 # An effective count of ideals of bounded norm
@@ -27,7 +29,7 @@ input to the effective class-number estimate.
 
 ## Main result
 
-* `TauCeti.NumberField.card_ideal_absNorm_le`: at most `X²·2^[F:ℚ]` nonzero ideals of norm
+* `NumberField.card_ideal_absNorm_le`: at most `X²·2^[F:ℚ]` nonzero ideals of norm
   `≤ X`.
 
 The `Consumer` section at the end restates this bound in the natural-number and degree-monotone
@@ -47,7 +49,7 @@ public section
 
 attribute [local instance] Classical.propDecidable
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 /-- The set of `n`-tuples of positive naturals with real product at most `X`. -/
 private def prodLeTuples (n : ℕ) (X : ℝ) : Set (Fin n → ℕ) :=
@@ -182,24 +184,6 @@ private theorem mem_primesOverFinset_under {P : Ideal (𝓞 F)} (hP : P.IsPrime)
   · exact Ideal.under_ne_bot (A := ℤ) hP0
 
 /-
-[foundational] At most `[F:ℚ]` primes of `𝓞 F` lie over a given nonzero prime of `ℤ`, since
-each contributes a positive `ramificationIdx * inertiaDeg` to the sum `[F:ℚ]`.
--/
-private theorem card_primesOverFinset_le_finrank {p : Ideal ℤ} [p.IsMaximal] (hp0 : p ≠ ⊥) :
-    (IsDedekindDomain.primesOverFinset p (𝓞 F)).card ≤ Module.finrank ℚ F :=
-  calc (IsDedekindDomain.primesOverFinset p (𝓞 F)).card
-      = ∑ _q : p.primesOver (𝓞 F), 1 := by
-        rw [Finset.sum_const, smul_eq_mul, mul_one, Finset.card_univ,
-          ← Nat.card_eq_fintype_card, Nat.card_coe_set_eq,
-          ← IsDedekindDomain.coe_primesOverFinset hp0 (𝓞 F), Set.ncard_coe_finset]
-    _ ≤ ∑ q : p.primesOver (𝓞 F), q.1.ramificationIdx ℤ * q.1.inertiaDeg ℤ :=
-        Finset.sum_le_sum fun q _ => Nat.one_le_iff_ne_zero.mpr
-          (Nat.mul_ne_zero (Ideal.ramificationIdx_pos q.1 ℤ).ne'
-            (Ideal.inertiaDeg_pos q.1 ℤ).ne')
-    _ = Module.finrank ℤ (𝓞 F) := Ideal.sum_ramification_inertia_eq_finrank p (𝓞 F)
-    _ = Module.finrank ℚ F := NumberField.RingOfIntegers.rank F
-
-/-
 [foundational] The coordinate of a nonzero prime ideal is `< [F:ℚ]`.
 -/
 private theorem primeCoord_lt {P : Ideal (𝓞 F)} (hP : P.IsPrime) (hP0 : P ≠ ⊥) :
@@ -212,7 +196,8 @@ private theorem primeCoord_lt {P : Ideal (𝓞 F)} (hP : P.IsPrime) (hP0 : P ≠
         exact List.idxOf_lt_length_iff.mpr
           (Finset.mem_toList.mpr (mem_primesOverFinset_under F hP hP0))
     _ = (IsDedekindDomain.primesOverFinset (Ideal.under ℤ P) (𝓞 F)).card := Finset.length_toList _
-    _ ≤ Module.finrank ℚ F := card_primesOverFinset_le_finrank F hp0
+    _ ≤ Module.finrank ℚ F :=
+      TauCeti.NumberField.card_primesOverFinset_le_finrank (K := F) hp0
 
 /-
 [foundational] `absNormUnder` injectivity: equal `absNormUnder` means the primes lie
@@ -485,7 +470,7 @@ theorem ncard_ideal_absNorm_le_nat (F : Type*) [Field F] [NumberField F] (N : �
 
 /-- If `1 ≤ X` and `[F : ℚ] ≤ n`, then the number of nonzero integral ideals of norm at most
 `X` is at most `X² * 2^n`. This is the degree-monotone form of
-`TauCeti.NumberField.card_ideal_absNorm_le`. -/
+`NumberField.card_ideal_absNorm_le`. -/
 theorem ncard_ideal_absNorm_le_of_finrank_le (F : Type*) [Field F] [NumberField F]
     {X : ℝ} {n : ℕ} (hX : 1 ≤ X) (hn : finrank ℚ F ≤ n) :
     (({I : Ideal (𝓞 F) | I ≠ ⊥ ∧ (Ideal.absNorm I : ℝ) ≤ X}.ncard : ℝ)) ≤
@@ -522,4 +507,4 @@ theorem ncard_ideal_absNorm_le_nat_of_finrank_le (F : Type*) [Field F] [NumberFi
 
 end Consumer
 
-end TauCeti.NumberField
+end NumberField

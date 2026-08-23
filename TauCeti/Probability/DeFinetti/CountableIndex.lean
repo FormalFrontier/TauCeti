@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -51,7 +52,8 @@ theorem conditionallyIID_of_exchangeableFamily_of_equiv_nat
     simpa only [Y] using hX.comp_injective (f := e.symm) e.symm.injective
   have hY : Exchangeable μ Y := hY_family.exchangeable
   obtain ⟨ν, hν⟩ :=
-    (conditionallyIID_of_exchangeable hY fun n => hX_meas (e.symm n)).exists_directing
+    (conditionallyIID_of_exchangeable hY fun n => (hX_meas (e.symm n)).aemeasurable)
+      |>.exists_directing
   refine ConditionallyIID.of_directing (ν := ν) ?_
   simpa only [Y, Equiv.symm_apply_apply] using
     hν.comp_injective (f := e) e.injective

@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Bases
+public import TauCeti.Topology.Sets.Opens
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset.Basic
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Spectral
 import TauCeti.RingTheory.Huber.OpenIdeal
@@ -35,16 +36,22 @@ the basis arguments uses it.
 
 * `TauCeti.ValuationSpectrum.spaRationalFamily`: the family of rational subsets with open
   numerator ideal, viewed as subsets of `spa Aplus`.
+* `TauCeti.ValuationSpectrum.spaRationalOpens`: the same family presented as a set of `Opens`,
+  the form the sheaf-theoretic consumers take.
 
 ## Main results
 
 * `TauCeti.ValuationSpectrum.inter_mem_spaRationalFamily`: the family is closed under binary
   intersections, completing Wedhorn Remark 7.30(5).
 * `TauCeti.ValuationSpectrum.isTopologicalBasis_spaRationalFamily`: the family is a basis for
-  the topology of `spa Aplus`.
+  the topology of `spa Aplus`, with `TauCeti.ValuationSpectrum.isBasis_spaRationalOpens` the same
+  statement in the `Opens.IsBasis` form.
 * `TauCeti.ValuationSpectrum.isCompact_of_mem_spaRationalFamily`: every member of the family is
   quasi-compact. Each result also has an `_of_pairOfDefinition` form for use with a specified
   pair of definition.
+* `TauCeti.ValuationSpectrum.exists_finite_spaRationalFamily_refinement`: every open cover of a
+  member of the family admits a finite refinement by members of the family — the two results
+  above combined, and the form a sheaf criterion on this basis consumes.
 * `TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_isTateRing_of_isOpen`: over a Tate
   ring, if a finite set `T` generates an open ideal, then the standard rational subsets cover
   `spa Aplus` (Wedhorn Corollary 7.53 specialization).
@@ -59,7 +66,7 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open Set Topology TopologicalSpace TauCeti TauCeti.Huber
+open Set Topology _root_.TopologicalSpace TauCeti TauCeti.Huber
 open scoped Pointwise
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A]
@@ -253,6 +260,57 @@ theorem isCompact_of_mem_spaRationalFamily [IsHuberRing A] {Aplus : Subring A}
     {U : Set (spa Aplus)} (hU : U ∈ spaRationalFamily Aplus) : IsCompact U :=
   (IsHuberRing.nonempty_pairOfDefinition (A := A)).elim
     fun P ↦ isCompact_of_mem_spaRationalFamily_of_pairOfDefinition P hU
+
+/-! ### The rational basis as a family of opens -/
+
+/-- The rational family of `Spa(A,A⁺)`, presented as a set of `Opens` rather than of sets. This is
+the form `Opens.IsBasis` and the sheaf criteria on a basis take. -/
+def spaRationalOpens (Aplus : Subring A) : Set (Opens (spa Aplus)) :=
+  {U : Opens (spa Aplus) | (U : Set (spa Aplus)) ∈ spaRationalFamily Aplus}
+
+omit [IsTopologicalRing A] in
+/-- An open lies in `spaRationalOpens` exactly when its underlying set is rational. -/
+@[simp]
+theorem mem_spaRationalOpens {Aplus : Subring A} {U : Opens (spa Aplus)} :
+    U ∈ spaRationalOpens Aplus ↔ (U : Set (spa Aplus)) ∈ spaRationalFamily Aplus := Iff.rfl
+
+/-- **The rational opens are a basis** in the `Opens.IsBasis` sense, which is the form the sheaf
+criterion on a basis consumes. -/
+theorem isBasis_spaRationalOpens [IsHuberRing A] (Aplus : Subring A) :
+    Opens.IsBasis (spaRationalOpens Aplus) :=
+  TauCeti.TopologicalSpace.Opens.isBasis_of_isTopologicalBasis
+    (isTopologicalBasis_spaRationalFamily Aplus)
+
+/-! ### Finite rational refinements -/
+
+/-- **Every open cover of a rational subset admits a finite refinement by rational subsets.**
+This is the previous two results combined: being a basis shrinks each point's cover member to a
+rational neighbourhood, and quasi-compactness then keeps finitely many of them. It is the shape a
+sheaf criterion on the rational basis consumes, where the cover is arbitrary but the Čech complex
+must be built from the basis itself.
+
+The two-step argument follows AINTLIB's `exists_finite_rational_refinement_huber` and its Tate-only
+`exists_finite_rational_refinement` (branch `dev/adic-spaces`, commit `37bbdaeb`, Apache 2.0), in
+`projects/AdicSpaces/Adic spaces/RestrictedLimitSheaf.lean`. Two differences: quasi-compactness is a
+hypothesis there and is discharged here by `isCompact_of_mem_spaRationalFamily`; and the conclusion
+there is a `Finset` of a bundled index type over `RationalLocData`, whereas this states a finite
+subfamily of `spaRationalFamily` with the containment as a side condition, matching the vocabulary
+this file already uses. -/
+theorem exists_finite_spaRationalFamily_refinement [IsHuberRing A] {Aplus : Subring A}
+    {U : Set (spa Aplus)} (hU : U ∈ spaRationalFamily Aplus) {ι : Type*}
+    (V : ι → Set (spa Aplus)) (hVopen : ∀ i, IsOpen (V i)) (hcover : U ⊆ ⋃ i, V i) :
+    ∃ 𝒲 ⊆ spaRationalFamily Aplus, 𝒲.Finite ∧ (∀ W ∈ 𝒲, ∃ i, W ⊆ V i) ∧ U ⊆ ⋃₀ 𝒲 := by
+  have hcov : U ⊆ ⋃ W ∈ {W ∈ spaRationalFamily Aplus | ∃ i, W ⊆ V i}, W := by
+    intro x hx
+    obtain ⟨i, hi⟩ := Set.mem_iUnion.mp (hcover hx)
+    obtain ⟨W, hWmem, hxW, hWV⟩ :=
+      (isTopologicalBasis_spaRationalFamily Aplus).exists_subset_of_mem_open hi (hVopen i)
+    exact Set.mem_biUnion ⟨hWmem, i, hWV⟩ hxW
+  obtain ⟨𝒲, h𝒲G, h𝒲fin, h𝒲cov⟩ :=
+    (isCompact_of_mem_spaRationalFamily hU).elim_finite_subcover_image
+      (fun W hW ↦ (isTopologicalBasis_spaRationalFamily Aplus).isOpen hW.1) hcov
+  exact ⟨𝒲, fun W hW ↦ (h𝒲G hW).1, h𝒲fin, fun W hW ↦ (h𝒲G hW).2,
+    by simpa [Set.sUnion_eq_biUnion] using h𝒲cov⟩
 
 /-! ### Standard rational covers -/
 

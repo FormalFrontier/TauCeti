@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -112,6 +113,14 @@ lemma pointsFunctor_obj (A : CommAlgCat.{w} R) :
 /-- The morphism part of `pointsFunctor` is post-composition in the value algebra. -/
 lemma pointsFunctor_map {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     (pointsFunctor (H := H)).map φ = mapPoints (H := H) φ :=
+  rfl
+
+/-- The map of `pointsFunctor`, transported along its concrete object presentations, is the
+corresponding map on points. -/
+lemma pointsFunctor_map_eqToHom {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
+    eqToHom (pointsFunctor_obj (H := H) A).symm ≫
+        (pointsFunctor (H := H)).map φ =
+      mapPoints (H := H) φ ≫ eqToHom (pointsFunctor_obj (H := H) B).symm :=
   rfl
 
 /-- The pointwise value of the image of an `A`-point under `pointsFunctor.map φ`. -/

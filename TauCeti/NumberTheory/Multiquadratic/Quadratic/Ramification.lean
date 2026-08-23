@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -54,7 +55,7 @@ public section
 
 open Polynomial
 open scoped NumberField
-open TauCeti.NumberField (ramifiedPrimes)
+open NumberField (ramifiedPrimes)
 
 namespace TauCeti.Multiquadratic
 
@@ -92,7 +93,7 @@ divides `fundamentalDiscriminant d`. -/
 theorem mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) {p : ℕ} (hp : p.Prime) :
     p ∈ ramifiedPrimes K ↔ (p : ℤ) ∣ fundamentalDiscriminant d := by
-  rw [TauCeti.NumberField.mem_ramifiedPrimes_iff_dvd_discr hp,
+  rw [NumberField.mem_ramifiedPrimes_iff_dvd_discr hp,
     discr_eq_fundamentalDiscriminant hmin hgen hsf]
 
 /-- **Exactly one rational prime ramifies in the quadratic field of a prime discriminant.** If `D`
@@ -111,7 +112,7 @@ theorem ramifiedPrimes_eq_singleton {D : ℤ} (hD : IsPrimeDiscriminant D)
       natCast_dvd_primeDiscriminant_iff hD hp]
   ext p
   rw [Set.mem_singleton_iff]
-  exact ⟨fun hp => (key p (TauCeti.NumberField.prime_of_mem_ramifiedPrimes hp)).mp hp,
+  exact ⟨fun hp => (key p (NumberField.prime_of_mem_ramifiedPrimes hp)).mp hp,
     fun hp => (key p (hp ▸ prime_primeDiscriminantPrime hD)).mpr hp⟩
 
 variable {s : Finset ℤ}
@@ -137,7 +138,7 @@ theorem ramifiedPrimes_eq_image (hmin : minpoly ℤ θ = X ^ 2 - C d)
   simp only [Finset.coe_image, Set.mem_image, Finset.mem_coe]
   constructor
   · intro hp
-    obtain ⟨P, hP, hpP⟩ := (hmem p (TauCeti.NumberField.prime_of_mem_ramifiedPrimes hp)).mp hp
+    obtain ⟨P, hP, hpP⟩ := (hmem p (NumberField.prime_of_mem_ramifiedPrimes hp)).mp hp
     exact ⟨P, hP, hpP.symm⟩
   · rintro ⟨P, hP, rfl⟩
     exact (hmem _ (prime_primeDiscriminantPrime (hs P hP))).mpr ⟨P, hP, rfl⟩
@@ -171,7 +172,7 @@ theorem exists_finset_primeDiscriminant_ncard_ramifiedPrimes (hmin : minpoly ℤ
 /-! ### Total ramification
 
 A ramified prime of a quadratic field is *totally* ramified: it has a single prime above it, with
-ramification index `2`. This is `TauCeti.NumberField.map_span_eq_sq_of_mem_ramifiedPrimes`, read
+ramification index `2`. This is `NumberField.map_span_eq_sq_of_mem_ramifiedPrimes`, read
 here through the discriminant criterion above. -/
 
 variable {p : ℕ} {𝔭 : Ideal (𝓞 K)} [𝔭.IsPrime] [𝔭.LiesOver (Ideal.span {(p : ℤ)})]
@@ -182,8 +183,8 @@ divides `fundamentalDiscriminant d` and `𝔭` is a prime of `𝓞 K` above `p`,
 theorem ramificationIdx_eq_two_of_dvd_fundamentalDiscriminant (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hp : p.Prime)
     (hdvd : (p : ℤ) ∣ fundamentalDiscriminant d) : 𝔭.ramificationIdx ℤ = 2 :=
-  TauCeti.NumberField.ramificationIdx_eq_two_of_mem_ramifiedPrimes
-    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
+  NumberField.ramificationIdx_eq_two_of_mem_ramifiedPrimes
+    (NumberField.finrank_rat_eq_two hmin hgen)
     ((mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant hmin hgen hsf hp).mpr hdvd) 𝔭
 
 /-- **`p 𝓞 K = 𝔭 ^ 2` at a prime dividing the discriminant of `ℚ(√d)`.** -/
@@ -191,8 +192,8 @@ theorem map_span_eq_sq_of_dvd_fundamentalDiscriminant (hmin : minpoly ℤ θ = X
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hp : p.Prime)
     (hdvd : (p : ℤ) ∣ fundamentalDiscriminant d) :
     (Ideal.span {(p : ℤ)} : Ideal ℤ).map (algebraMap ℤ (𝓞 K)) = 𝔭 ^ 2 :=
-  TauCeti.NumberField.map_span_eq_sq_of_mem_ramifiedPrimes
-    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
+  NumberField.map_span_eq_sq_of_mem_ramifiedPrimes
+    (NumberField.finrank_rat_eq_two hmin hgen)
     ((mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant hmin hgen hsf hp).mpr hdvd) 𝔭
 
 /-- **The quadratic field of a prime discriminant is totally ramified at its one ramified prime.**
@@ -204,8 +205,8 @@ theorem map_span_primeDiscriminantPrime_eq_sq {D : ℤ} (hD : IsPrimeDiscriminan
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {𝔮 : Ideal (𝓞 K)} [𝔮.IsPrime] [𝔮.LiesOver (Ideal.span {(primeDiscriminantPrime D : ℤ)})] :
     (Ideal.span {(primeDiscriminantPrime D : ℤ)} : Ideal ℤ).map (algebraMap ℤ (𝓞 K)) = 𝔮 ^ 2 :=
-  TauCeti.NumberField.map_span_eq_sq_of_mem_ramifiedPrimes
-    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
+  NumberField.map_span_eq_sq_of_mem_ramifiedPrimes
+    (NumberField.finrank_rat_eq_two hmin hgen)
     (by rw [ramifiedPrimes_eq_singleton hD hmin hgen]; exact rfl) 𝔮
 
 end TauCeti.Multiquadratic

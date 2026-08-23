@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,6 +9,7 @@ public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
+import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
 # The conormal sequence of a closed affine subgroup
@@ -36,6 +38,7 @@ needed in Layer 2 of the ReductiveGroups roadmap.
 * `TauCeti.HopfIdeal.quotientCotangentMap_surjective`: right exactness of the conormal sequence.
 * `TauCeti.HopfIdeal.ker_quotientCotangentMap`: its kernel is the conormal subspace.
 * `TauCeti.HopfIdeal.finrank_quotientLie_add_finrank_conormal`: the resulting dimension formula.
+* `TauCeti.HopfIdeal.finrank_quotientLie_le`: the resulting closed-subgroup dimension bound.
 
 ## References
 
@@ -61,9 +64,9 @@ variable [CommRing k] [CommRing H] [HopfAlgebra k H]
 /-- A Hopf ideal is contained in the augmentation ideal. -/
 private theorem toIdeal_le_augmentationIdeal (I : HopfIdeal k H) :
     I.toIdeal ≤ Bialgebra.AugmentationIdeal k H := by
-  intro x hx
-  rw [Bialgebra.AugmentationIdeal, RingHom.mem_ker]
-  exact I.counit_eq_zero (mem_toIdeal.mp hx)
+  have hI := toIdeal_le_toIdeal.mpr I.le_augmentation
+  rw [augmentation_toIdeal] at hI
+  exact hI
 
 /-- The image of a closed subgroup's defining Hopf ideal in the ambient augmentation cotangent
 space. This is the conormal space at the identity, equivalently
@@ -256,6 +259,18 @@ theorem finrank_quotientLie_add_finrank_conormal (I : HopfIdeal k H)
     Derivation.finrank_eq_finrank_cotangentSpace (k := k) (H := H)
   rw [hquotient, hambient]
   exact finrank_quotientCotangent_add_finrank_conormal I
+
+/-- The Lie dimension of a closed subgroup is at most the Lie dimension of the ambient affine
+group when the ambient cotangent space is finite-dimensional. -/
+theorem finrank_quotientLie_le (I : HopfIdeal k H)
+    [FiniteDimensional k (Bialgebra.CotangentSpace k H)] :
+    Module.finrank k
+        (Derivation k (H ⧸ I.toIdeal)
+          (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) ≤
+      Module.finrank k
+        (Derivation k H (Bialgebra.CounitAlgebra k H k)) := by
+  have h := finrank_quotientLie_add_finrank_conormal I
+  omega
 
 end Field
 

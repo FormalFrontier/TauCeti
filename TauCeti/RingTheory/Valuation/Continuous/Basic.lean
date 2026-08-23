@@ -13,7 +13,7 @@ public import Mathlib.Topology.Algebra.WithZeroTopology
 
 **Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Definition 7.7 and Remarks 7.8, 7.9.**
 
-`IsContinuous v` here says every `{a ; v a < v b}` is open, the quantifier running over the
+`IsContinuous v` here says every `{a | v a < v b}` is open, the quantifier running over the
 values `v` **attains**. Wedhorn's Definition 7.7 instead runs it over the whole value group
 `Γ_v`, whose general element is a ratio `v b / v c`. The two say the same thing as soon as
 right multiplication is continuous — `isOpen_lt_div` is precisely that step, and carries
@@ -37,7 +37,7 @@ asking for it.
 ## The quantifier ranges over the value group, not over the codomain
 
 Wedhorn quantifies `γ` over `Γ_v`, and that is load-bearing rather than incidental. Asking
-instead for `{a ; v a < γ}` to be open for every `γ` in the ambient codomain `Γ₀` **can be
+instead for `{a | v a < γ}` to be open for every `γ` in the ambient codomain `Γ₀` **can be
 strictly stronger** once `Γ₀` is larger than `Γ_v ∪ {0}` — not always, since on a discrete `A`
 both conditions hold outright — and where it is stronger it is **not an invariant of the
 equivalence class** of `v`, so it cannot cut out a subset of `Spv A`.
@@ -45,7 +45,7 @@ equivalence class** of `v`, so it cannot cut out a subset of `Spv A`.
 A witness: take `A = ℤ_p`, and let `w : A → (ℝ_{>0} ×ₗ p^ℤ) ∪ {0}` send `a ≠ 0` to `(1, |a|_p)`,
 the order being lexicographic with the first coordinate dominant. Then `w` is equivalent to the
 `p`-adic valuation, but for `γ = (1/2, 1)` — nonzero, yet below every value `w` attains — the set
-`{a ; w a < γ}` is `{0}`, which is not open. The `p`-adic valuation into its own value group has
+`{a | w a < γ}` is `{0}`, which is not open. The `p`-adic valuation into its own value group has
 no such `γ` available.
 
 So `IsContinuous` is stated by quantifying over the **values** `v b`. Nothing of Wedhorn's
@@ -57,28 +57,28 @@ sets are *literally equal* for equivalent valuations, which is
 
 ## Main definitions
 
-* `TauCeti.Valuation.IsContinuous` : continuity of a valuation, in attained-value form. It
+* `Valuation.IsContinuous` : continuity of a valuation, in attained-value form. It
   recovers **Definition 7.7** under `[ContinuousConstSMul Aᵐᵒᵖ A]`, via `isOpen_lt_div`.
 
 ## Main results
 
 * `Valuation.IsEquiv.isContinuous_iff` : continuity depends only on the equivalence class, so it
   descends to the valuation spectrum.
-* `TauCeti.Valuation.IsContinuous.isOpen_lt_div` and
-  `TauCeti.Valuation.isContinuous_iff_forall_isOpen_lt_div` : the defining sets for an arbitrary
+* `Valuation.IsContinuous.isOpen_lt_div` and
+  `Valuation.isContinuous_iff_forall_isOpen_lt_div` : the defining sets for an arbitrary
   element `v b / v c` of the value group — Wedhorn's quantifier in full, as an elimination rule
   and as an equivalence.
-* `TauCeti.Valuation.isContinuous_of_continuous` : the easy half of Remark 7.8(1), needing no
+* `Valuation.isContinuous_of_continuous` : the easy half of Remark 7.8(1), needing no
   hypothesis on `A` beyond its topology.
-* `TauCeti.Valuation.isContinuous_iff_continuous` : **Remark 7.8(1)**, that once the attained
+* `Valuation.isContinuous_iff_continuous` : **Remark 7.8(1)**, that once the attained
   ratios are coinitial in `Γ₀` — in particular on a codomain no larger than `Γ_v ∪ {0}` —
   continuity is ordinary continuity into `WithZeroTopology`.
-* `TauCeti.Valuation.IsContinuous.isOpen_le_div` : **Remark 7.8(3)**, the non-strict sets are
+* `Valuation.IsContinuous.isOpen_le_div` : **Remark 7.8(3)**, the non-strict sets are
   open too, again over the whole value group; `IsContinuous.isOpen_le` is its attained-value
   case.
-* `TauCeti.Valuation.isContinuous_of_discreteTopology` : **Remark 7.8(2)**, every valuation on
+* `Valuation.isContinuous_of_discreteTopology` : **Remark 7.8(2)**, every valuation on
   a discrete ring is continuous.
-* `TauCeti.Valuation.IsContinuous.comap` : **Remark 7.9**, continuity is inherited along a
+* `Valuation.IsContinuous.comap` : **Remark 7.9**, continuity is inherited along a
   continuous ring homomorphism.
 
 ## References
@@ -101,15 +101,15 @@ attained values instead makes `Valuation.IsEquiv.isContinuous_iff` immediate.
 
 public section
 
-namespace TauCeti.Valuation
+namespace Valuation
 
-open Set Topology TauCeti
+open Set Topology
 
 variable {A : Type*} [Ring A] [TopologicalSpace A]
   {Γ₀ : Type*} [LinearOrderedCommMonoidWithZero Γ₀]
   {Γ₀' : Type*} [LinearOrderedCommMonoidWithZero Γ₀']
 
-/-- **Continuity of a valuation, in attained-value form.** Every set `{a ; v a < v b}` is open.
+/-- **Continuity of a valuation, in attained-value form.** Every set `{a | v a < v b}` is open.
 
 This is *not* literally Wedhorn's Definition 7.7, which quantifies over the whole value group
 `Γ_v`: reaching a general element of `Γ_v`, being a ratio `v b / v c`, needs right multiplication
@@ -136,16 +136,16 @@ theorem isContinuous_iff_forall_ne_zero (v : Valuation A Γ₀) :
     v.IsContinuous ↔ ∀ b : A, v b ≠ 0 → IsOpen {a : A | v a < v b} :=
   ⟨fun h b _ ↦ h b, fun h b ↦ (eq_or_ne (v b) 0).elim (fun hb ↦ by simp [hb]) (h b)⟩
 
-/-- Openness of `{a ; v a < γ}` for every `γ` of the codomain is a sufficient — in general
+/-- Openness of `{a | v a < γ}` for every `γ` of the codomain is a sufficient — in general
 strictly stronger — condition for continuity. -/
 theorem isContinuous_of_forall_isOpen_lt {v : Valuation A Γ₀}
     (h : ∀ γ : Γ₀, IsOpen {a : A | v a < γ}) : v.IsContinuous := fun b ↦ h (v b)
 
 /-- **Continuity is an invariant of the equivalence class.** Equivalent valuations compare the
-same pairs of elements, so the sets `{a ; v a < v b}` cutting out continuity are not merely
+same pairs of elements, so the sets `{a | v a < v b}` cutting out continuity are not merely
 matched up but literally the same sets. This is what lets continuity be imposed on a point of
 the valuation spectrum. -/
-theorem _root_.Valuation.IsEquiv.isContinuous_iff {v : Valuation A Γ₀} {w : Valuation A Γ₀'}
+theorem IsEquiv.isContinuous_iff {v : Valuation A Γ₀} {w : Valuation A Γ₀'}
     (h : v.IsEquiv w) : v.IsContinuous ↔ w.IsContinuous :=
   forall_congr' fun _ ↦ iff_of_eq (congrArg IsOpen (Set.ext fun _ ↦ h.lt_iff_lt))
 
@@ -162,8 +162,8 @@ theorem IsContinuous.sub_lt_mem_nhds [SeparatelyContinuousAdd A] {v : Valuation 
   refine ((hv b).preimage hcont).mem_nhds ?_
   simpa using zero_lt_iff.mpr hb
 
-/-- **Wedhorn Remark 7.8(3), at an attained value.** The non-strict set `{a ; v a ≤ v b}` is
-open: it is a union of translates of the open `{a ; v a < v b}`, since adding an element of
+/-- **Wedhorn Remark 7.8(3), at an attained value.** The non-strict set `{a | v a ≤ v b}` is
+open: it is a union of translates of the open `{a | v a < v b}`, since adding an element of
 value `< v b` to one of value `≤ v b` keeps the value `≤ v b`. For an arbitrary element of the
 value group — which need not be attained — see `isOpen_le_div`. -/
 theorem IsContinuous.isOpen_le [SeparatelyContinuousAdd A] {v : Valuation A Γ₀}
@@ -194,17 +194,17 @@ section ValueGroup
 variable {Γ₀ : Type*} [LinearOrderedCommGroupWithZero Γ₀]
 
 /-- **Wedhorn's quantifier in full.** Every element of the value group `Γ_v` is a ratio
-`v b / v c` with `c` outside the support, and continuity makes `{a ; v a < v b / v c}` open for
+`v b / v c` with `c` outside the support, and continuity makes `{a | v a < v b / v c}` open for
 all of them. -/
 theorem IsContinuous.isOpen_lt_div [ContinuousConstSMul Aᵐᵒᵖ A] {v : Valuation A Γ₀}
     (hv : v.IsContinuous)
     (b : A) {c : A} (hc : v c ≠ 0) : IsOpen {a : A | v a < v b / v c} := by
-  -- the set is the preimage of `{x ; v x < v b}` under multiplication by `c` on the right
+  -- the set is the preimage of `{x | v x < v b}` under multiplication by `c` on the right
   simpa [lt_div_iff₀ (zero_lt_iff.mpr hc)] using
     (hv b).preimage (continuous_const_smul (MulOpposite.op c))
 
 /-- **Wedhorn's quantifier in full, as an equivalence.** Continuity is exactly openness of
-`{a ; v a < v b / v c}` for every ratio, i.e. for every element of the value group `Γ_v` — which
+`{a | v a < v b / v c}` for every ratio, i.e. for every element of the value group `Γ_v` — which
 is Definition 7.7 verbatim. The reverse direction is the case `c = 1`, so this is the named
 introduction rule for continuity that `isOpen_lt_div` alone does not provide. -/
 theorem isContinuous_iff_forall_isOpen_lt_div [ContinuousConstSMul Aᵐᵒᵖ A]
@@ -263,4 +263,4 @@ theorem isContinuous_iff_continuous [SeparatelyContinuousAdd A] [ContinuousConst
 
 end ValueGroup
 
-end TauCeti.Valuation
+end Valuation

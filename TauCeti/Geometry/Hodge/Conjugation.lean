@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -10,13 +11,14 @@ public import Mathlib.LinearAlgebra.TensorProduct.Map
 public import Mathlib.RingTheory.IsTensorProduct
 
 /-!
-# Conjugation on complexifications of integral modules
+# Conjugation and maps on complexifications of integral modules
 
 This file packages a conjugation on a complex vector space as a conjugate-linear involution and
 constructs the canonical conjugation on any abstract complexification of an integral module.
 The construction uses Mathlib's `IsBaseChange` interface: it transports coordinatewise conjugation
 on `ℂ ⊗[ℤ] V` to an arbitrary complex base-change model and is uniquely characterized by fixing the
-image of `V`.
+image of `V`. The same interface canonically complexifies integral linear maps between abstract
+complexification models.
 
 ## Main declarations
 
@@ -25,7 +27,10 @@ image of `V`.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
 * `TauCeti.Hodge.latticeConj_unique`: uniqueness among conjugate-linear maps fixing the integral
   module.
+* `TauCeti.Hodge.Conjugation.restrict`: the conjugation induced on a stable complex subspace.
 * `TauCeti.Hodge.latticeConjugation`: the abstract map bundled as a `Conjugation`.
+* `TauCeti.Hodge.integralMapToComplex`: complexification of an integral linear map between abstract
+  complexification models.
 
 The base-change design follows the Hodge structures roadmap and the discussion by Johan Commelin,
 Andrew Yang, Kevin Buzzard, and Joël Riou in the `#mathlib4` Zulip thread *Complexifications with a
@@ -72,6 +77,37 @@ theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
   have h : (U.map ω.toEquiv.toLinearMap).map ω.toEquiv.symm.toLinearMap = U :=
     (Submodule.map_symm_eq_iff ω.toEquiv).2 rfl
   simpa only [ω.toEquiv_symm] using h
+
+/-- A conjugation restricted to a stable complex subspace is involutive. -/
+private theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
+    Function.Involutive (ω.toEquiv.toLinearMap.restrict hU) := fun x ↦ by
+  ext
+  simp
+
+/-- The conjugation induced on a complex subspace stable under a given conjugation. -/
+noncomputable def restrict (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation U where
+  toEquiv := LinearEquiv.ofInvolutive _ (ω.restrict_involutive hU)
+  involutive := ω.restrict_involutive hU
+
+/-- A restricted conjugation acts as the ambient one. -/
+@[simp]
+theorem restrict_toEquiv_apply (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (x : U) :
+    ((ω.restrict hU).toEquiv x : W) = ω.toEquiv x :=
+  (rfl)
+
+/-- Conjugating inside a stable subspace is conjugating in the ambient space: the image of an
+intersection with the subspace under the restricted conjugation is the intersection with the
+conjugate subspace. -/
+@[simp]
+theorem map_restrict_comap_subtype (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (A : Submodule ℂ W) :
+    (A.comap U.subtype).map (ω.restrict hU).toEquiv.toLinearMap =
+      (A.map ω.toEquiv.toLinearMap).comap U.subtype := by
+  ext x
+  simp
 
 end Conjugation
 
@@ -224,11 +260,113 @@ theorem latticeConjugation_toEquiv_apply (hℂ : IsBaseChange ℂ ιℂ) (x : V�
     (latticeConjugation hℂ).toEquiv x = latticeConj hℂ x :=
   by simp [latticeConjugation]
 
+/-- The linear map underlying bundled lattice conjugation is `latticeConj`, bridging the bundled
+spelling used by `HodgeStructureOn` and the bare spelling used by the base-change API. This is not
+a `simp` lemma: rewriting with it discards the equivalence, and with it `simp`'s ability to see
+that conjugating a subspace preserves `⊤`. -/
+theorem latticeConjugation_toLinearMap (hℂ : IsBaseChange ℂ ιℂ) :
+    (latticeConjugation hℂ).toEquiv.toLinearMap = latticeConj hℂ :=
+  (rfl)
+
 /-- Bundled lattice conjugation fixes the image of the integral module. -/
 theorem latticeConjugation_toEquiv_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
     (latticeConjugation hℂ).toEquiv (ιℂ v) = ιℂ v := by
   simp
 
 end Abstract
+
+section IntegralMaps
+
+universe u₁ v₁ u₂ v₂ u₃ v₃
+
+variable {V₁ : Type u₁} {V₂ : Type u₂} {V₃ : Type u₃}
+variable {W₁ : Type v₁} {W₂ : Type v₂} {W₃ : Type v₃}
+variable [AddCommGroup V₁] [AddCommGroup V₂] [AddCommGroup V₃]
+variable [AddCommGroup W₁] [Module ℂ W₁]
+variable [AddCommGroup W₂] [Module ℂ W₂]
+variable [AddCommGroup W₃] [Module ℂ W₃]
+variable {ι₁ : V₁ →ₗ[ℤ] W₁} {ι₂ : V₂ →ₗ[ℤ] W₂} {ι₃ : V₃ →ₗ[ℤ] W₃}
+
+/-- The complexification of an integral linear map between abstract complexification models. -/
+noncomputable def integralMapToComplex (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f : V₁ →ₗ[ℤ] V₂) : W₁ →ₗ[ℂ] W₂ :=
+  h₁.lift (ι₂ ∘ₗ f)
+
+/-- Complexification agrees with the target lattice map on integral vectors. -/
+@[simp]
+theorem integralMapToComplex_apply_ι (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f : V₁ →ₗ[ℤ] V₂) (x : V₁) :
+    integralMapToComplex h₁ ι₂ f (ι₁ x) = ι₂ (f x) :=
+  h₁.lift_eq (ι₂ ∘ₗ f) x
+
+/-- Complexification sends the identity integral map to the identity complex map. -/
+@[simp]
+theorem integralMapToComplex_id (h₁ : IsBaseChange ℂ ι₁) :
+    integralMapToComplex h₁ ι₁ (LinearMap.id : V₁ →ₗ[ℤ] V₁) = LinearMap.id :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification sends the zero integral map to the zero complex map. -/
+@[simp]
+theorem integralMapToComplex_zero (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) :
+    integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves addition of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_add (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f g : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (f + g) =
+      integralMapToComplex h₁ ι₂ f + integralMapToComplex h₁ ι₂ g :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves negation of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_neg (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (-f) = -integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves subtraction of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_sub (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
+    (f g : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (f - g) =
+      integralMapToComplex h₁ ι₂ f - integralMapToComplex h₁ ι₂ g :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves natural-number multiples of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_nsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℕ)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves integer multiples of integral linear maps. -/
+@[simp]
+theorem integralMapToComplex_zsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℤ)
+    (f : V₁ →ₗ[ℤ] V₂) :
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- Complexification preserves composition of integral linear maps. -/
+theorem integralMapToComplex_comp (h₁ : IsBaseChange ℂ ι₁) (h₂ : IsBaseChange ℂ ι₂)
+    (ι₃ : V₃ →ₗ[ℤ] W₃) (f : V₁ →ₗ[ℤ] V₂) (g : V₂ →ₗ[ℤ] V₃) :
+    integralMapToComplex h₁ ι₃ (g ∘ₗ f) =
+      integralMapToComplex h₂ ι₃ g ∘ₗ integralMapToComplex h₁ ι₂ f :=
+  h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- The complexification of an integral map commutes with lattice-induced conjugation. -/
+@[simp]
+theorem integralMapToComplex_commutes_conj (h₁ : IsBaseChange ℂ ι₁)
+    (h₂ : IsBaseChange ℂ ι₂) (f : V₁ →ₗ[ℤ] V₂) (x : W₁) :
+    integralMapToComplex h₁ ι₂ f (latticeConj h₁ x) =
+      latticeConj h₂ (integralMapToComplex h₁ ι₂ f x) := by
+  induction x using h₁.inductionOn with
+  | zero => simp
+  | tmul x => simp
+  | smul z x hx => simp [hx]
+  | add x y hx hy => simp [hx, hy]
+
+end IntegralMaps
 
 end TauCeti.Hodge

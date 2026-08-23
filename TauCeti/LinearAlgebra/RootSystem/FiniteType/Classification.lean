@@ -1,12 +1,18 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Reindex
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.TripleEdge
+-- `TauCeti.LinearAlgebra.RootSystem.Isomorphism` supplies the rigidity theorem
+-- `TauCeti.nonempty_equiv_of_hasCartanType`, which `nonempty_equiv_of_classifiedDynkinType_eq`
+-- feeds the selected type to. Nothing from it appears in a statement here, so the import stays
+-- private.
+import TauCeti.LinearAlgebra.RootSystem.Isomorphism
 
 public section
 
@@ -41,6 +47,20 @@ Uniqueness among valid types is supplied by `TauCeti.DynkinType.eq_of_valid_of_f
   has a unique valid Dynkin type.
 * `TauCeti.existsUnique_dynkinType`: the Cartan-Killing classification for irreducible reduced
   crystallographic finite root systems.
+* `TauCeti.classifiedDynkinType`: the selected type as data, with
+  `TauCeti.valid_classifiedDynkinType`, `TauCeti.hasCartanType_classifiedDynkinType` and
+  `TauCeti.hasCartanType_iff_eq_classifiedDynkinType` characterizing it. This is what a consumer
+  names instead of rechoosing a witness out of the existence statement.
+* `TauCeti.nonempty_equiv_of_classifiedDynkinType_eq`: two root systems whose bases have the same
+  Dynkin type are isomorphic, the classification combined with the rigidity theorem
+  `TauCeti.nonempty_equiv_of_hasCartanType`.
+
+The roadmap's summit needs two ingredients beyond these, and neither is proved here. One is the
+coordinate realization of each valid type over `ℚ`, which turns a type into a model root system and
+so supplies the existence half. The other is the independence of the type from the chosen base,
+without which the classifier below classifies bases rather than root systems. With both, the
+statements here become the advertised bijection between isomorphism classes of irreducible reduced
+crystallographic finite root systems and valid Dynkin types.
 
 ## References
 
@@ -72,36 +92,14 @@ theorem existsUnique_dynkinType (h : IsFiniteType A) (hconn : (diagramGraph A).C
   · by_cases h2 : ∃ u v : B, A u v * A v u = 2
     · obtain ⟨u, v, huv⟩ := h2
       exact h.existsUnique_dynkinType_of_apply_mul_apply_eq_two hconn.preconnected huv
-    · have hsl : A.IsSimplyLaced := by
-        intro i j hij
+    · -- With the Cartan products `2` and `3` excluded, the rank-two bound leaves only `0` and `1`,
+      -- and a finite-type matrix all of whose edges are single is simply laced.
+      have hsl : A.IsSimplyLaced := h.isSimplyLaced_iff.mpr fun i j hij ↦ by
         have hmem := h.apply_mul_apply_mem_of_ne hij
-        have hle_i : A i j ≤ 0 := h.apply_le_zero_of_ne hij
-        have hle_j : A j i ≤ 0 := h.apply_le_zero_of_ne hij.symm
-        have hnot3 : A i j * A j i ≠ 3 := fun h' ↦ h3 ⟨i, j, h'⟩
         have hnot2 : A i j * A j i ≠ 2 := fun h' ↦ h2 ⟨i, j, h'⟩
+        have hnot3 : A i j * A j i ≠ 3 := fun h' ↦ h3 ⟨i, j, h'⟩
         simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hmem
-        rcases hmem with h0 | h1 | h2' | h3'
-        · have hz : A i j = 0 := by
-            by_contra hnz
-            have hjz : A j i = 0 := by
-              cases mul_eq_zero.mp h0 with
-              | inl h' => contradiction
-              | inr h' => exact h'
-            have hsymm := h.apply_eq_zero_symm hjz
-            exact hnz hsymm
-          left; exact hz
-        · have : A i j = -1 := by
-            have hne : A i j ≠ 0 := fun hc ↦ by rw [hc, zero_mul] at h1; contradiction
-            have hlt : A i j ≤ -1 := by omega
-            have hne' : A j i ≠ 0 := fun hc ↦ by rw [hc, mul_zero] at h1; contradiction
-            have hlt' : A j i ≤ -1 := by omega
-            by_contra hc
-            have : A i j ≤ -2 := by omega
-            have : 2 ≤ A i j * A j i := by nlinarith
-            omega
-          right; exact this
-        · contradiction
-        · contradiction
+        omega
       by_cases hc : ∃ c : B, (diagramGraph A).degree c = 3
       · obtain ⟨c, hc3⟩ := hc
         exact h.existsUnique_dynkinType_of_isSimplyLaced_of_degree_eq_three hconn hsl hc3
@@ -132,6 +130,64 @@ theorem existsUnique_dynkinType (b : P.Base) :
     (isFiniteType_cartanMatrix b).existsUnique_dynkinType
       (connected_diagramGraph_cartanMatrix b)
   exact ((hasCartanType_iff b t).mpr ⟨e, he⟩).existsUnique_of_valid ht
+
+/-- **The Dynkin type of a base**, the valid type that `TauCeti.existsUnique_dynkinType` selects,
+as data rather than as an existence statement. Its two defining properties are
+`TauCeti.valid_classifiedDynkinType` and `TauCeti.hasCartanType_classifiedDynkinType`, and
+`TauCeti.hasCartanType_iff_eq_classifiedDynkinType` says they pin it down.
+
+It is noncomputable: the classification says which types occur and that the type of a base is
+unique, not how to read it off a root system.
+
+The type is attached to a base, not to the root system. Classically it does not depend on the base,
+since the Weyl group acts transitively on bases, but that independence is a roadmap target of its
+own and nothing here assumes it. -/
+noncomputable def classifiedDynkinType (b : P.Base) : DynkinType :=
+  (existsUnique_dynkinType b).choose
+
+/-- The Dynkin type of a base is valid: it is one of `Aₙ` (`n ≥ 1`), `Bₙ` (`n ≥ 2`), `Cₙ`
+(`n ≥ 3`), `Dₙ` (`n ≥ 4`), `E₆`, `E₇`, `E₈`, `F₄`, `G₂`. -/
+lemma valid_classifiedDynkinType (b : P.Base) : (classifiedDynkinType b).Valid :=
+  (existsUnique_dynkinType b).choose_spec.1.1
+
+/-- The Cartan matrix of a base is the standard Cartan matrix of its Dynkin type, up to a
+relabelling of the simple roots by the nodes of that type. -/
+lemma hasCartanType_classifiedDynkinType (b : P.Base) :
+    HasCartanType P b (classifiedDynkinType b) :=
+  (existsUnique_dynkinType b).choose_spec.1.2
+
+/-- **A valid Cartan type of a base is its Dynkin type.** This is the uniqueness half of
+`TauCeti.existsUnique_dynkinType`, in the form that identifies a type produced elsewhere - by a
+coordinate model, say - with the selected one. -/
+lemma HasCartanType.classifiedDynkinType_eq {b : P.Base} {t : DynkinType}
+    (h : HasCartanType P b t) (ht : t.Valid) : classifiedDynkinType b = t :=
+  (hasCartanType_classifiedDynkinType b).eq_of_valid h (valid_classifiedDynkinType b) ht
+
+/-- A base has a given valid Cartan type exactly when that type is its Dynkin type. -/
+lemma hasCartanType_iff_eq_classifiedDynkinType (b : P.Base) {t : DynkinType} (ht : t.Valid) :
+    HasCartanType P b t ↔ t = classifiedDynkinType b :=
+  ⟨fun h ↦ (h.classifiedDynkinType_eq ht).symm, fun h ↦ h ▸ hasCartanType_classifiedDynkinType b⟩
+
+/-- The rank of the Dynkin type of a base is the number of simple roots. -/
+lemma rank_classifiedDynkinType (b : P.Base) :
+    (classifiedDynkinType b).rank = b.support.card :=
+  (hasCartanType_classifiedDynkinType b).card_support.symm
+
+variable {ι₂ M₂ N₂ : Type*} [AddCommGroup M₂] [Module R M₂] [AddCommGroup N₂] [Module R N₂]
+  {P₂ : RootPairing ι₂ R M₂ N₂} [Finite ι₂] [P₂.IsRootSystem] [P₂.IsCrystallographic]
+  [P₂.IsReduced] [P₂.IsIrreducible] [Nonempty ι₂]
+
+/-- **Two root systems whose bases have the same Dynkin type are isomorphic.** This is the
+classification and the rigidity theorem `TauCeti.nonempty_equiv_of_hasCartanType` in one statement:
+the Dynkin type of a base determines the root system it comes from, up to isomorphism.
+
+The converse - isomorphic root systems have bases of the same Dynkin type - needs the Dynkin type
+to be independent of the base, which is not proved here. -/
+theorem nonempty_equiv_of_classifiedDynkinType_eq (b : P.Base) (b₂ : P₂.Base)
+    (h : classifiedDynkinType b = classifiedDynkinType b₂) : Nonempty (P.Equiv P₂) :=
+  nonempty_equiv_of_hasCartanType b b₂ (classifiedDynkinType b)
+    (hasCartanType_classifiedDynkinType b)
+    ((hasCartanType_iff_eq_classifiedDynkinType b₂ (valid_classifiedDynkinType b)).mpr h)
 
 end RootPairing
 

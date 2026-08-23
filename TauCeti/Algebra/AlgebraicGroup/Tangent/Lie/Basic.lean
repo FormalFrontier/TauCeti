@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -33,9 +34,10 @@ need not satisfy the Leibniz rule, the obstruction being the value commutators
 
 ## Main declarations
 
-* the `Bracket`, `LieRing`, and `LieAlgebra R` instances on
-  `Derivation R A (Bialgebra.CounitAlgebra R A B)`;
-* `TauCeti.Derivation.coe_bracket`, `TauCeti.Derivation.bracket_apply`: the bracket
+* `Derivation.instBracketCounitAlgebra`, `Derivation.instLieRingCounitAlgebra`, and
+  `Derivation.instLieAlgebraCounitAlgebra`: the `Bracket`, `LieRing`, and `LieAlgebra R` instances
+  on `Derivation R A (Bialgebra.CounitAlgebra R A B)`;
+* `Derivation.coe_bracket`, `Derivation.bracket_apply`: the bracket
   is the convolution commutator.
 
 No antipode enters: everything is stated over a bialgebra. The ring (rather than
@@ -46,16 +48,16 @@ composition-commutator `LieRing (Derivation R A A)`, even at `B = A`: the two
 carrier types differ in their `Module A` instance argument — the coefficient action
 here is through the counit (`a • m = algebraMap R B (counit a) * m`,
 `Bialgebra.CounitAlgebra.algebraMap_apply`), not multiplication — so neither
-elaboration nor instance search can identify the types, and no diamond exists.
+elaboration nor instance search can identify the types, and no diamond exists. The
+`CounitAlgebra` suffix also distinguishes their declaration names from Mathlib's
+`Derivation.instBracket`, `Derivation.instLieRing`, and `Derivation.instLieAlgebra`.
 -/
 
 public section
 
-namespace TauCeti
-
-open _root_.Coalgebra WithConv TensorProduct
-
 namespace Derivation
+
+open TauCeti _root_.Coalgebra WithConv TensorProduct
 
 section Bracket
 
@@ -115,7 +117,7 @@ private lemma convMul_ofConv_mul (d₁ d₂ : Derivation R A (Bialgebra.CounitAl
 
 /-- The Lie bracket of tangent vectors at the identity: the commutator of the
 convolution product. -/
-noncomputable instance instBracket :
+noncomputable instance instBracketCounitAlgebra :
     Bracket (Derivation R A (Bialgebra.CounitAlgebra R A B))
       (Derivation R A (Bialgebra.CounitAlgebra R A B)) :=
   ⟨fun d₁ d₂ =>
@@ -179,7 +181,7 @@ variable {R A B : Type*} [CommRing R] [CommRing A] [Bialgebra R A]
 
 /-- The tangent space at the identity is a Lie ring under the convolution
 commutator. -/
-noncomputable instance instLieRing :
+noncomputable instance instLieRingCounitAlgebra :
     LieRing (Derivation R A (Bialgebra.CounitAlgebra R A B)) where
   add_lie d₁ d₂ d₃ := Derivation.ext fun a => by
     let _ : LieRing (WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :=
@@ -217,7 +219,7 @@ noncomputable instance instLieRing :
         (toConv (↑d₃ : A →ₗ[R] Bialgebra.CounitAlgebra R A B)))) a
 
 /-- The tangent space at the identity is a Lie algebra over the base ring. -/
-noncomputable instance instLieAlgebra :
+noncomputable instance instLieAlgebraCounitAlgebra :
     LieAlgebra R (Derivation R A (Bialgebra.CounitAlgebra R A B)) where
   lie_smul r d₁ d₂ := Derivation.ext fun a => by
     let _ : LieRing (WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :=
@@ -242,5 +244,3 @@ noncomputable instance instLieAlgebraCoefficients :
 end Lie
 
 end Derivation
-
-end TauCeti

@@ -1,10 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Basic
+-- Proof-only: `pullback_injective` is used inside `pullbackToIntermediateRing_injective`, not in
+-- any statement.
+import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.FunctionField
 
 /-!
 # The intermediate ring of an isogeny
@@ -26,6 +30,9 @@ because `mapsInfinity` is precisely the assertion that it lands there.
 
 * `TauCeti.Isogeny.algebraMap_mem_intermediateRing`: the source coordinate ring lands in it.
 * `TauCeti.Isogeny.pullback_mem_intermediateRing`: so does the target coordinate ring.
+* `TauCeti.Isogeny.toIntermediateRing_injective` and
+  `TauCeti.Isogeny.pullbackToIntermediateRing_injective`: both coordinate rings *embed* in it,
+  through the corestricted `algebraMap` and the corestricted pullback respectively.
 * `TauCeti.Isogeny.isIntegralClosure_intermediateRing`: it really is the integral closure, in
   Mathlib's `IsIntegralClosure` sense.
 * `TauCeti.Isogeny.isScalarTower_intermediateRing`: the corestricted pullback puts it in a scalar
@@ -54,8 +61,12 @@ one, which is all its proof uses; the elliptic case is that hypothesis discharge
 because nothing would consume it.
 
 The structural theory of this ring is not proved here. Module-finiteness over `W₂.CoordinateRing`
-is in the sibling `IntermediateRing/Finite.lean` as `moduleFinite_intermediateRing`, for a
-separable function-field extension; Dedekindness is still absent. Every route to either in Mathlib
+is in the sibling `IntermediateRing/Finite.lean` as `moduleFinite_intermediateRing`, and
+Dedekindness in `IntermediateRing/Dedekind.lean` as `isDedekindDomain_intermediateRing`, both for a
+separable function-field extension; integral closedness is in
+`IntermediateRing/IntegrallyClosed.lean` as `isIntegrallyClosed_intermediateRing`, which needs no
+separability. Its fraction field, rank, projectivity, and prime-counting theory are in
+`IntermediateRing/Rank.lean`. Every route to the first two in Mathlib
 (`IsIntegralClosure.finite`, `integralClosure.isDedekindDomain`) carries an `Algebra.IsSeparable`
 hypothesis, so the inseparable case — which is expected to be true, by Noether's finiteness
 theorem for the module-finiteness half — remains separate work rather than a corollary of the
@@ -69,6 +80,14 @@ This opens the "points come along" milestone of Layer 1 of
 
 ## Provenance
 
+⚠ *mathlib-track*. `TauCetiRoadmap/EllipticCurves/README.md:1092` lists the `IntermediateRing`,
+and `pushClass` by ideal extension and relative norm (`ClassGroup.extendedRelNormHom`), among the
+components of D. Angdinata's shared isogeny development, on the way to `toPointHom`; the two
+embeddings added here are what that relative-norm step requires of the intermediate ring, since
+ideal extension along a non-injective map loses the information the class-group route needs. The
+siblings `Finite.lean`, `Dedekind.lean`, `IntegrallyClosed.lean`, and `Rank.lean` carry the same
+flag for the same object.
+
 The choice of object is taken from the AINTLIB project (`github.com/CBirkbeck/AINTLIB`, at
 revision `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache 2.0 per the source file's header, by
 Chris Birkbeck): `projects/HasseWeil/HasseWeil/Curves/NormConormIntegralClosure.lean`, which
@@ -78,12 +97,30 @@ in `projects/HasseWeil/HasseWeil/Curves/RamificationFinite.lean`.
 
 What is adapted here is the object and the observation that the integral closure over the
 *coordinate* ring — rather than over a localization — is the right home for the norm and
-class-group route to the induced map on points. Of the structural instances, only
-module-finiteness is ported, and in the sibling `IntermediateRing/Finite.lean` rather than here,
-under the source's own `[Algebra.IsSeparable K L]`; the rest are not. The source proves them for
-a fixed extension with the algebra structures supplied as instance arguments, whereas this file
-takes the pullback-induced structure locally and assumes no separability. None of the declarations
+class-group route to the induced map on points. Of the structural instances, module-finiteness and
+Dedekindness are ported, in the siblings `IntermediateRing/Finite.lean` and
+`IntermediateRing/Dedekind.lean` rather than here, both under the source's own
+`[Algebra.IsSeparable K L]`; `IntermediateRing/IntegrallyClosed.lean` proves integral closedness
+without it. `instFractionRingB` is ported in `IntermediateRing/Rank.lean` as
+`isFractionRing_intermediateRing`, with the pullback-induced algebra structures installed locally
+and no separability assumption. Only `instTorsionFreeB` is not ported. None of the declarations
 below is a transcription of a source declaration.
+
+**`instTorsionFreeB` is unported but not missing, and should stay unported.** Its content is
+available from the two embeddings below composed with Mathlib's
+`Module.isTorsionFree_iff_algebraMap_injective`: a consumer holding the corestricted algebra
+structures writes
+
+```
+Module.isTorsionFree_iff_algebraMap_injective.mpr φ.toIntermediateRing_injective
+Module.isTorsionFree_iff_algebraMap_injective.mpr φ.pullbackToIntermediateRing_injective
+```
+
+for the source and target sides. Named `isTorsionFree_intermediateRing` lemmas of exactly that shape
+were written and then **deleted in review**, as one-step wrappers of that `iff` with no in-repo
+consumer: a `theorem` carrying an explicit pointwise hypothesis can never be selected by instance
+search, so it saves a caller nothing over the one-liner. Read "not ported" as "deliberately
+absent, content reachable in one step" rather than as a gap to be filled.
 
 ## References
 
@@ -145,6 +182,15 @@ theorem coe_toIntermediateRing (φ : Isogeny W₁ W₂) (x : W₁.CoordinateRing
     (φ.toIntermediateRing x : W₁.FunctionField) =
       algebraMap W₁.CoordinateRing W₁.FunctionField x := (rfl)
 
+/-- **The source coordinate ring embeds in the intermediate ring.** The corestricted map is
+`algebraMap W₁.CoordinateRing W₁.FunctionField`, injective because the function field is by
+definition the fraction field of the coordinate ring, and corestriction preserves that. -/
+@[grind inj]
+theorem toIntermediateRing_injective (φ : Isogeny W₁ W₂) :
+    Function.Injective φ.toIntermediateRing :=
+  RingHom.injective_codRestrict.mpr
+    (IsFractionRing.injective W₁.CoordinateRing W₁.FunctionField)
+
 /-- The target coordinate ring, corestricted into the intermediate ring along the pullback. The
 relative ideal norm back down to `W₂.CoordinateRing` is taken over this map. -/
 noncomputable def pullbackToIntermediateRing (φ : Isogeny W₁ W₂) :
@@ -154,6 +200,15 @@ noncomputable def pullbackToIntermediateRing (φ : Isogeny W₁ W₂) :
 @[simp]
 theorem coe_pullbackToIntermediateRing (φ : Isogeny W₁ W₂) (x : W₂.CoordinateRing) :
     (φ.pullbackToIntermediateRing x : W₁.FunctionField) = φ.pullback x := (rfl)
+
+/-- **The target coordinate ring embeds in the intermediate ring**, through the pullback. This is
+`pullback_injective` corestricted; the pullback of an isogeny is injective because `φ^*x₂` is
+transcendental over the base field. The source-side companion is `toIntermediateRing_injective`
+above. -/
+@[grind inj]
+theorem pullbackToIntermediateRing_injective (φ : Isogeny W₁ W₂) :
+    Function.Injective φ.pullbackToIntermediateRing :=
+  RingHom.injective_codRestrict.mpr φ.pullback_injective
 
 /-- **The corestricted pullback puts the intermediate ring in a scalar tower.** With
 `letI := φ.pullbackToIntermediateRing.toAlgebra`, the target coordinate ring acts on

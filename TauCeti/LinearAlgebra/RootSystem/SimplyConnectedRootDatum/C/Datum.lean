@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -356,6 +357,10 @@ def typeCSimplyConnectedRootDatum (n : ℕ) :
     simpa using
       typeCCoroot_typeCReflectionIdx ((typeCIndexEquiv n).symm k) ((typeCIndexEquiv n).symm l)
 
+/-- The pinned pairing of type `Cₙ` is the dot product of the two lattices. -/
+@[simp] theorem toLinearMap_typeCSimplyConnectedRootDatum (x y : Fin n → ℤ) :
+    (typeCSimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
+
 private lemma root_typeCSimplyConnectedRootDatum (k : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).root k = typeCRoot ((typeCIndexEquiv n).symm k) :=
   rfl
@@ -368,6 +373,14 @@ private lemma pairing_typeCSimplyConnectedRootDatum (k l : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).pairing k l =
       (typeCSimplyConnectedRootDatum n).root k ⬝ᵥ (typeCSimplyConnectedRootDatum n).coroot l :=
   rfl
+
+/-- Every Cartan integer between roots of the pinned type `C` datum has absolute value at most
+two. -/
+theorem abs_pairing_typeCSimplyConnectedRootDatum_le_two (k l : Fin (2 * n ^ 2)) :
+    |(typeCSimplyConnectedRootDatum n).pairing k l| ≤ 2 := by
+  rw [pairing_typeCSimplyConnectedRootDatum, root_typeCSimplyConnectedRootDatum,
+    coroot_typeCSimplyConnectedRootDatum]
+  exact abs_pairRoot_dotProduct_pairCoroot_le_two (typeCSnd_ne_signedNeg_typeCFst _)
 
 /-! ## The root and the coroot at an arbitrary index
 

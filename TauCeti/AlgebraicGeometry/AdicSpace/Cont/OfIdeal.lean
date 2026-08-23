@@ -64,7 +64,7 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open TauCeti TauCeti.Huber TauCeti.Valuation
+open TauCeti TauCeti.Huber Valuation
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
 

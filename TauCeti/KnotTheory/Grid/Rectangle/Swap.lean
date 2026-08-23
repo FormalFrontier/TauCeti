@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -77,6 +78,58 @@ theorem target_eq_swapColumns : y = x.swapColumns R.left R.right := by
   rw [GridState.swapColumns_apply]
   exact target_apply R c
 
+/-- The oriented rectangle associated to an equality expressing the target as a nontrivial
+column swap of the source. -/
+def ofSwapColumns (x y : GridState n) (a b : Fin n) (hab : a ≠ b)
+    (h : y = x.swapColumns a b) : GridRectangleBetween x y := by
+  subst y
+  exact
+    { left := a
+      right := b
+      left_ne_right := hab
+      map_left := by simp
+      map_right := by simp
+      map_of_ne := by
+        intro c ha hb
+        rw [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne ha hb] }
+
+/-- The initial side of the rectangle constructed from a column-swap equality. -/
+@[simp]
+theorem ofSwapColumns_left (x y : GridState n) (a b : Fin n) (hab : a ≠ b)
+    (h : y = x.swapColumns a b) : (ofSwapColumns x y a b hab h).left = a := by
+  subst y
+  rfl
+
+/-- The terminal side of the rectangle constructed from a column-swap equality. -/
+@[simp]
+theorem ofSwapColumns_right (x y : GridState n) (a b : Fin n) (hab : a ≠ b)
+    (h : y = x.swapColumns a b) : (ofSwapColumns x y a b hab h).right = b := by
+  subst y
+  rfl
+
+/-- The lower side of the rectangle constructed from a column-swap equality. -/
+@[simp]
+theorem ofSwapColumns_bottom (x y : GridState n) (a b : Fin n) (hab : a ≠ b)
+    (h : y = x.swapColumns a b) : (ofSwapColumns x y a b hab h).bottom = x a := by
+  subst y
+  rfl
+
+/-- The upper side of the rectangle constructed from a column-swap equality. -/
+@[simp]
+theorem ofSwapColumns_top (x y : GridState n) (a b : Fin n) (hab : a ≠ b)
+    (h : y = x.swapColumns a b) : (ofSwapColumns x y a b hab h).top = x b := by
+  subst y
+  rfl
+
+/-- The toroidal rectangle underlying the rectangle constructed from a column-swap equality. -/
+@[simp]
+theorem ofSwapColumns_toGridRectangle (x y : GridState n) (a b : Fin n) (hab : a ≠ b)
+    (h : y = x.swapColumns a b) :
+    (ofSwapColumns x y a b hab h).toGridRectangle =
+      { left := a, right := b, bottom := x a, top := x b } := by
+  subst y
+  rfl
+
 /-- Oriented rectangles between `x` and `y` exist exactly when `y` is a column transposition of
 `x`. A rectangle realizes its side columns as a transposition taking `x` to `y`, and conversely a
 column transposition exhibits an oriented rectangle on those two columns. -/
@@ -85,11 +138,7 @@ theorem nonempty_all_iff : (all x y).Nonempty ↔ ∃ a b : Fin n, a ≠ b ∧ y
   · rintro ⟨R, -⟩
     exact ⟨R.left, R.right, R.left_ne_right, R.target_eq_swapColumns⟩
   · rintro ⟨a, b, hab, hy⟩
-    refine ⟨⟨a, b, hab, ?_, ?_, ?_⟩, mem_all _⟩
-    · rw [hy, GridState.swapColumns_apply, Equiv.swap_apply_left]
-    · rw [hy, GridState.swapColumns_apply, Equiv.swap_apply_right]
-    · intro c hl hr
-      rw [hy, GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hl hr]
+    exact ⟨ofSwapColumns x y a b hab hy, mem_all _⟩
 
 /-- The source state of an oriented rectangle is the target state with its two side columns
 swapped: swapping the same pair of columns twice is the identity. -/

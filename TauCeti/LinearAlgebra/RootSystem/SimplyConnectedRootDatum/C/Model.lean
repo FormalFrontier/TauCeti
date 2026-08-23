@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -284,6 +285,32 @@ lemma pairRoot_dotProduct_pairCoroot_self {p q : Signed n} (h : q ≠ signedNeg 
       signedWeight_dotProduct_eq_zero hpq (ne_signedNeg_of_ne_signedNeg h),
       signedWeight_dotProduct_eq_zero hpq.symm h]
     ring
+
+/-- Cartan integers between roots in the classical type `C` model have absolute value at most
+two. -/
+lemma abs_pairRoot_dotProduct_pairCoroot_le_two {x y p q : Signed n}
+    (hpq : q ≠ signedNeg p) :
+    |pairRoot x y ⬝ᵥ pairCoroot p q| ≤ 2 := by
+  have atom_le_one (z : Signed n) : |signedWeight z ⬝ᵥ pairCoroot p q| ≤ 1 := by
+    rcases eq_or_ne p q with rfl | hpq_ne
+    · rw [pairCoroot_self, signedWeight_dotProduct_signedCoweight, abs_le]
+      constructor <;> split_ifs <;> omega
+    · rw [pairCoroot_of_ne hpq_ne, dotProduct_add,
+        signedWeight_dotProduct_signedCoweight,
+        signedWeight_dotProduct_signedCoweight, abs_le]
+      have hp_ne_neg_q : p ≠ signedNeg q := ne_signedNeg_of_ne_signedNeg hpq
+      have hnegp_ne_negq : signedNeg p ≠ signedNeg q := by
+        intro h
+        exact hpq_ne (by simpa using congrArg signedNeg h)
+      constructor <;> split_ifs <;> simp_all
+  rw [pairRoot, add_dotProduct]
+  have hx := atom_le_one x
+  have hy := atom_le_one y
+  calc
+    |signedWeight x ⬝ᵥ pairCoroot p q + signedWeight y ⬝ᵥ pairCoroot p q| ≤
+        |signedWeight x ⬝ᵥ pairCoroot p q| + |signedWeight y ⬝ᵥ pairCoroot p q| :=
+      abs_add_le _ _
+    _ ≤ 2 := by omega
 
 /-- A signed basis vector pairs to at least `1` with the coroot of `p + q` exactly when it is `p` or
 `q`. This is the recognition principle behind injectivity of the roots and coroots. -/

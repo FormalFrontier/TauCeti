@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,7 +30,7 @@ multiquadratic roadmap).
 
 ## Main results
 
-* `TauCeti.NumberField.ncard_primesOver_quadratic_iff`: the quadratic splitting law.
+* `NumberField.ncard_primesOver_quadratic_iff`: the quadratic splitting law.
 
 ## Provenance
 
@@ -41,7 +42,7 @@ public section
 
 open Polynomial NumberField Ideal Module RingOfIntegers UniqueFactorizationMonoid
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -168,4 +169,4 @@ theorem ncard_primesOver_quadratic_iff {θ : 𝓞 K} {d : ℤ}
   rw [hcard, hfr]
   exact card_monicFactorsMod_quadratic_iff hmin hodd hcop
 
-end TauCeti.NumberField
+end NumberField

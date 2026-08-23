@@ -10,6 +10,7 @@ public import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Basic
 
 import Mathlib.Algebra.Field.ZMod
+import TauCeti.Data.ZMod.Divisibility
 
 /-!
 # Congruence subgroups: the pair `Γ₁(N) ⊴ Γ₀(N)`, the index of `Γ₀(pᵏ)`, and the level
@@ -19,7 +20,8 @@ Foundational results about the pair `Γ₁(N) ≤ Γ₀(N)` beyond Mathlib's
 after mapping to `GL₂(ℝ)`), the ratio of two `Γ₀(N)`-elements with equal lower-right entry
 lies in `Γ₁(N)`, the lower-right-entry map `Γ₀(N) →* (ZMod N)ˣ` is surjective, and the
 location of `-I`: it always lies in `Γ₀(N)`, with lower-right entry the unit `-1`, and it
-lies in `Γ₁(N)` exactly when `N ∣ 2`.  The file then computes the index of `Γ₀` at
+lies in `Γ₁(N)` exactly when `N ∣ 2`; and every power of the translation matrix `T` lies in
+`Γ₁(N)`, at every level.  The file then computes the index of `Γ₀` at
 prime-power levels — the degree count of Shimura, Theorem 3.24 — which lives here because it
 is congruence-subgroup arithmetic consumed by, but independent of, the Hecke-ring layer.
 
@@ -43,8 +45,12 @@ infrastructure independent of the diamond operators.
 * `CongruenceSubgroup.Gamma1_le_Gamma1_of_dvd`, `CongruenceSubgroup.Gamma0_le_Gamma0_of_dvd`,
   `CongruenceSubgroup.Gamma_le_Gamma_of_dvd`: all three families are antitone in the level,
   `Γ(N) ≤ Γ(M)` whenever `M ∣ N`.
+* `CongruenceSubgroup.mem_Gamma1_iff`: `Γ₁(N)` is cut out inside `Γ₀(N)` by the
+  single congruence `d ≡ 1`.
 * `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0`: a `Γ₀(N)` matrix has
   unit upper-left entry modulo `N`.
+* `CongruenceSubgroup.intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0`: modulo its
+  level, a `Γ₀(N)` matrix has mutually inverse diagonal entries.
 * `CongruenceSubgroup.Gamma0_normalizes_Gamma1` and
   `CongruenceSubgroup.Gamma0_le_normalizer_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
 * `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
@@ -53,6 +59,8 @@ infrastructure independent of the diamond operators.
   under conjugation by `Γ₀(N)` elements in `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma0Map_toHomUnits_surjective`: every unit of `ZMod N` is the
   lower-right entry of a matrix in `Γ₀(N)` (via strong approximation for `SL₂`).
+* `CongruenceSubgroup.gamma0Twist`: an explicit `Γ₀(N)` element whose lower-right entry is any
+  natural number coprime to `N`.
 * `CongruenceSubgroup.neg_one_mem_Gamma0` and
   `CongruenceSubgroup.Gamma0Map_toHomUnits_negOne`: `-I ∈ Γ₀(N)`, with lower-right entry the
   unit `-1`; `CongruenceSubgroup.neg_one_mem_Gamma1_iff`: `-I ∈ Γ₁(N) ↔ N ∣ 2`.
@@ -112,13 +120,36 @@ theorem Gamma0_le_Gamma0_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma0 N ≤ Gamma0 
   rw [Gamma0_mem] at hA ⊢
   simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA
 
+/-- **`Γ₁(N)` is the fibre of `Gamma0Map` over `1`.** A matrix lies in `Γ₁(N)` exactly when it
+lies in `Γ₀(N)` and its lower-right entry is `1` modulo `N`; the congruence `a ≡ 1` that
+`CongruenceSubgroup.Gamma1_mem` also asks for is then forced by the determinant. This is the
+form in which membership is checked whenever a construction produces a `Γ₀(N)` matrix and
+controls only its lower-right entry. -/
+theorem mem_Gamma1_iff {γ : SL(2, ℤ)} :
+    γ ∈ Gamma1 N ↔ γ ∈ Gamma0 N ∧ ((γ 1 1 : ℤ) : ZMod N) = 1 :=
+  ⟨fun h ↦ ⟨Gamma1_in_Gamma0 N h, (Gamma1_mem N γ).mp h |>.2.1⟩,
+    fun ⟨h₀, h₁⟩ ↦ (Gamma1_mem N γ).mpr ((Gamma1_to_Gamma0_mem ⟨γ, h₀⟩).mp h₁)⟩
+
+/-- **The diagonal entries of a `Γ₀(M)` matrix are mutually inverse modulo `M`**: the determinant
+identity `ad - bc = 1` with the `bc` term killed by `M ∣ c`. It refines
+`CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0` by naming the inverse. -/
+theorem intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 {M : ℕ}
+    {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 M) :
+    ((γ 0 0 : ℤ) : ZMod M) * ((γ 1 1 : ℤ) : ZMod M) = 1 := by
+  have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 :=
+    Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one γ
+  have h := congrArg (Int.cast : ℤ → ZMod M) hdet
+  push_cast at h
+  rw [Gamma0_mem.mp hγ] at h
+  linear_combination h
+
 /-- The upper-left entry of a `Γ₀(N)` matrix is a unit modulo `N`: the determinant is one
 and the lower-left entry vanishes modulo `N`, so `ad ≡ 1`. -/
 theorem isUnit_intCast_apply_zero_zero_of_mem_Gamma0 {N : ℕ} {σ : SL(2, ℤ)} (hσ : σ ∈ Gamma0 N) :
     IsUnit ((σ.1 0 0 : ℤ) : ZMod N) := by
   have h10 : ((σ.1 1 0 : ℤ) : ZMod N) = 0 := Gamma0_mem.mp hσ
   have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 :=
-    Matrix.det_fin_two σ.1 ▸ σ.2
+    Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one σ
   have hcast := congrArg (fun z : ℤ ↦ (z : ZMod N)) hdet
   push_cast at hcast
   rw [h10, mul_zero, sub_zero] at hcast
@@ -199,6 +230,33 @@ theorem Gamma0Map_toHomUnits_surjective :
   have h11 : ((g 1 1 : ℤ) : ZMod N) = u := by rw [hentry]; simp
   exact ⟨⟨g, Gamma0_mem.mpr h10⟩, Units.ext (by simpa [Gamma0Map] using h11)⟩
 
+/-- A Bézout matrix with bottom row `(N, p)`, for `p` coprime to `N`. -/
+noncomputable def gamma0Twist (N p : ℕ) (h : Nat.Coprime p N) : SL(2, ℤ) :=
+  ((Nat.isCoprime_iff_coprime.mpr h.symm : IsCoprime (N : ℤ) (p : ℤ)).exists_SL2_row 1).choose
+
+/-- The lower-left entry of the Bézout twist is `N`. -/
+@[simp] lemma gamma0Twist_apply_one_zero {p : ℕ} (h : Nat.Coprime p N) :
+    gamma0Twist N p h 1 0 = (N : ℤ) := by
+  exact ((Nat.isCoprime_iff_coprime.mpr h.symm :
+    IsCoprime (N : ℤ) (p : ℤ)).exists_SL2_row 1).choose_spec.1
+
+/-- The lower-right entry of the Bézout twist is `p`. -/
+@[simp] lemma gamma0Twist_apply_one_one {p : ℕ} (h : Nat.Coprime p N) :
+    gamma0Twist N p h 1 1 = (p : ℤ) := by
+  exact ((Nat.isCoprime_iff_coprime.mpr h.symm :
+    IsCoprime (N : ℤ) (p : ℤ)).exists_SL2_row 1).choose_spec.2
+
+/-- The Bézout twist lies in `Γ₀(N)`. -/
+lemma gamma0Twist_mem_Gamma0 {p : ℕ} (h : Nat.Coprime p N) : gamma0Twist N p h ∈ Gamma0 N := by
+  rw [Gamma0_mem, gamma0Twist_apply_one_zero h]
+  simp
+
+/-- The unit-valued lower-right entry of the Bézout twist is the residue class of `p`. -/
+lemma Gamma0Map_toHomUnits_gamma0Twist {p : ℕ} (h : Nat.Coprime p N) :
+    (Gamma0Map N).toHomUnits ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩ =
+      ZMod.unitOfCoprime p h :=
+  Units.ext (by simp [Gamma0Map, gamma0Twist_apply_one_one h])
+
 /-- `-I` lies in `Γ₀(N)`: its lower-left entry is `0`. -/
 theorem neg_one_mem_Gamma0 : (-1 : SL(2, ℤ)) ∈ Gamma0 N := by
   simp
@@ -229,6 +287,12 @@ theorem neg_one_mem_Gamma1_iff : (-1 : SL(2, ℤ)) ∈ Gamma1 N ↔ N ∣ 2 := b
     norm_num
   simp [Gamma1_mem, h]
 
+/-- **Every power of the translation matrix lies in `Γ₁(N)`, at every level.** `Tⁿ` has diagonal
+`(1, 1)` and vanishing lower-left entry, so the three congruences of `Gamma1_mem` hold with no
+condition on `n` or `N`. (In particular the width of the cusp `∞` for `Γ₁(N)` is `1`.) -/
+theorem T_zpow_mem_Gamma1 (N : ℕ) (n : ℤ) : ModularGroup.T ^ n ∈ Gamma1 N := by
+  simp [Gamma1_mem, ModularGroup.coe_T_zpow]
+
 /-! ## The index of `Γ₀(pᵏ)`
 
 The coset representatives of `Γ₀(p)` in `SL₂(ℤ)` are `TʲS` for `0 ≤ j < p` together with the
@@ -236,17 +300,6 @@ identity, giving `[SL₂(ℤ) : Γ₀(p)] = p + 1`; the relative index of `Γ₀
 is `p` via lower-unitriangular representatives, and the tower multiplies to
 `[SL₂(ℤ) : Γ₀(pᵏ)] = p^(k-1)(p + 1)` for prime `p` and `k ≥ 1` — the degree count of
 Shimura, Theorem 3.24. -/
-
-private lemma exists_dvd_sub_val_mul (p : ℕ) [NeZero p] (a b : ℤ)
-    (hb : IsUnit ((b : ℤ) : ZMod p)) : ∃ j : ZMod p, (p : ℤ) ∣ a - (j.val : ℤ) * b := by
-  obtain ⟨u, hu⟩ := hb
-  refine ⟨(a : ZMod p) * ↑u⁻¹, ?_⟩
-  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-  push_cast
-  rw [ZMod.natCast_zmod_val, mul_assoc]
-  -- the coerced product collapses: `↑b = ↑u` by `hu`, and `u⁻¹ * u = 1` in the units
-  have hunit : (↑u⁻¹ * ((b : ℤ) : ZMod p) : ZMod p) = 1 := by rw [← hu, Units.inv_mul]
-  rw [hunit, mul_one, sub_self]
 
 section BaseCase
 
@@ -314,7 +367,7 @@ private lemma Gamma0_prime_index_surj :
       obtain ⟨j, hj⟩ : ∃ j : ZMod p, j * ((σ.1 1 0 : ℤ) : ZMod p) = 1 :=
         Finite.surjective_of_injective (mul_left_injective₀ h) 1
       exact IsUnit.of_mul_eq_one _ (by rwa [mul_comm] at hj)
-    obtain ⟨j₀, hj₀⟩ := exists_dvd_sub_val_mul p (σ.1 0 0) (σ.1 1 0) hunit
+    obtain ⟨j₀, hj₀⟩ := ZMod.exists_dvd_sub_val_mul p (σ.1 0 0) (σ.1 1 0) hunit
     refine ⟨⟨j₀.val, Nat.lt_succ_of_lt (ZMod.val_lt j₀)⟩, ?_⟩
     rw [QuotientGroup.eq, Gamma0_mem]
     simp only [Gamma0Rep, ZMod.val_lt j₀, ite_true]
@@ -387,7 +440,7 @@ private lemma Gamma0_relindex_step_surj (k : ℕ) (hk : 0 < k) :
     isUnit_intCast_apply_zero_zero_of_mem_Gamma0 (Gamma0_mem.mpr (by
       rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
       exact hq ▸ dvd_mul_of_dvd_left (dvd_pow_self _ hk.ne') q))
-  obtain ⟨c₀, hc₀⟩ := exists_dvd_sub_val_mul p q (σ.1 0 0) h00_unit
+  obtain ⟨c₀, hc₀⟩ := ZMod.exists_dvd_sub_val_mul p q (σ.1 0 0) h00_unit
   refine ⟨⟨c₀.val, ZMod.val_lt c₀⟩, ?_⟩
   rw [QuotientGroup.eq, Subgroup.mem_subgroupOf]
   simp only [relindexRep, InvMemClass.coe_inv, MulMemClass.coe_mul]

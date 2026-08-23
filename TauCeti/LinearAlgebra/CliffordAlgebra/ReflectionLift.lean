@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -19,9 +20,9 @@ automatically.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.reflection_mem_range_pinToOrthogonal_of_isSquare`: a reflection lifts
+* `CliffordAlgebra.reflection_mem_range_pinToOrthogonal_of_isSquare`: a reflection lifts
   through the Pin action when its normalization scalar is a square.
-* `TauCeti.CliffordAlgebra.reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare`: a
+* `CliffordAlgebra.reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare`: a
   product of two reflections lifts through the Spin action when the product of its normalization
   scalars is a square. The version without the suffix is a separably closed-field corollary.
 
@@ -34,13 +35,13 @@ See H. B. Lawson and M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra QuadraticMap
-
-namespace TauCeti
+open QuadraticMap
 
 universe u v
 
 namespace CliffordAlgebra
+
+open TauCeti
 
 section Square
 
@@ -229,4 +230,3 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal
 end IsSepClosed
 
 end CliffordAlgebra
-end TauCeti

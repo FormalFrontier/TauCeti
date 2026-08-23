@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.UpperUnitriangular.Coordinate.Bialgebra
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Basic
 
 /-!
 # The upper-unitriangular coordinate Hopf algebra

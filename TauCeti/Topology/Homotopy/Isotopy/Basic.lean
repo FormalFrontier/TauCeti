@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -78,7 +79,7 @@ As an equivalence this non-ambient relation is too coarse for classical knot the
 extend to a motion of the ambient space and therefore need not preserve knot complements. Use
 `AmbientIsotopy`/`AmbientIsotopic` for knot equivalence; see the module docstring and the
 comparison with the Burde--Zieschang definition there. -/
-abbrev Isotopy (f₀ f₁ : C(X, Y)) :=
+abbrev Isotopy (f₀ f₁ : C(X, Y)) : Type _ :=
   HomotopyWith f₀ f₁ fun g : C(X, Y) => IsEmbedding g
 
 namespace Isotopy

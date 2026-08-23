@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -22,6 +23,10 @@ without duplicating it.
 ## Main definitions
 
 * `InternalGrading`: an internal `ℤ`-grading of a module.
+
+## Main results
+
+* `TauCeti.InternalGrading.ext`: internal gradings are determined by their homogeneous pieces.
 
 This is the first graded-module target in Layer 0 of the `DGAInfinity` roadmap.  Later files use
 Mathlib's decomposition API to define maps of nonzero degree, shifts, tensor-product gradings, and
@@ -51,6 +56,14 @@ structure InternalGrading where
 namespace InternalGrading
 
 variable {R M}
+
+/-- Two internal gradings of the same module are equal as soon as their homogeneous pieces
+agree. -/
+@[ext]
+theorem ext : ∀ {G H : InternalGrading R M}, (∀ p, G.piece p = H.piece p) → G = H
+  | ⟨_, _⟩, ⟨_, _⟩, h => by
+    obtain rfl := funext h
+    rfl
 
 /-- The decomposition attached to an internal grading. -/
 noncomputable instance (G : InternalGrading R M) : DirectSum.Decomposition G.piece :=

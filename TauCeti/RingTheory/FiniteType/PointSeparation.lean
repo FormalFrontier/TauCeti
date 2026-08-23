@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -32,6 +33,8 @@ that ideal is finite over `k` by Zariski's lemma and therefore embeds into `K`.
   closed points is the nilradical.
 * `TauCeti.eq_one_of_isIdempotentElem_of_forall_algHom_apply_eq_one`: an idempotent evaluating to
   one at every algebraically closed point is one.
+* `TauCeti.eq_of_isIdempotentElem_of_forall_algHom_apply_eq`: two idempotents that agree at every
+  algebraically closed point are equal.
 * `TauCeti.exists_algHom_apply_ne_of_ne`: points of a reduced finite-type algebra distinguish
   distinct elements.
 * `TauCeti.eq_of_forall_algHom_apply_eq`: the corresponding point-separation principle.
@@ -128,6 +131,58 @@ theorem eq_one_of_isIdempotentElem_of_forall_algHom_apply_eq_one {a : A}
   intro f
   rw [map_sub, map_one, sub_eq_zero]
   exact h f
+
+/-- Two idempotents in a finite-type algebra are equal when they have the same value at every
+point valued in an algebraically closed extension of the ground field. No reducedness assumption
+is needed: idempotents are already insensitive to nilpotents. -/
+theorem eq_of_isIdempotentElem_of_forall_algHom_apply_eq {a b : A}
+    (ha : IsIdempotentElem a) (hb : IsIdempotentElem b)
+    (h : ∀ f : A →ₐ[k] K, f a = f b) : a = b := by
+  let x := a * b
+  let y := (1 - a) * (1 - b)
+  let c := x + y
+  have hc : IsIdempotentElem c := by
+    have hx : IsIdempotentElem x := ha.mul hb
+    have hy : IsIdempotentElem y := ha.one_sub.mul hb.one_sub
+    have hxy : x * y = 0 := by
+      dsimp only [x, y]
+      calc
+        a * b * ((1 - a) * (1 - b)) = (a * (1 - a)) * (b * (1 - b)) := by ring
+        _ = 0 := by rw [mul_sub, mul_one, ha.eq, sub_self, zero_mul]
+    dsimp only [c, IsIdempotentElem]
+    rw [add_mul, mul_add, mul_add, hxy, mul_comm y x, hxy, hx.eq, hy.eq]
+    simp
+  have hc_one : c = 1 := by
+    apply eq_one_of_isIdempotentElem_of_forall_algHom_apply_eq_one
+      (k := k) (A := A) (K := K) hc
+    intro (f : A →ₐ[k] K)
+    dsimp only [c, x, y]
+    calc
+      f (a * b + (1 - a) * (1 - b)) =
+          f (a * b) + f ((1 - a) * (1 - b)) := f.map_add _ _
+      _ = f a * f b + f (1 - a) * f (1 - b) :=
+        congrArg₂ (fun p q ↦ p + q) (f.map_mul _ _) (f.map_mul _ _)
+      _ = f a * f b + (1 - f a) * (1 - f b) := by
+        rw [map_sub, map_one, map_sub, map_one]
+      _ = f b * f b + (1 - f b) * (1 - f b) := by rw [h f]
+      _ = 1 - 2 * f b + 2 * (f b * f b) := by ring
+      _ = 1 := by rw [(hb.map f).eq]; ring
+  calc
+    a = a * c := by rw [hc_one, mul_one]
+    _ = a * b := by
+      dsimp only [c, x, y]
+      calc
+        a * (a * b + (1 - a) * (1 - b)) =
+            (a * a) * b + (a - a * a) * (1 - b) := by ring
+        _ = a * b := by rw [ha.eq]; ring
+    _ = b * c := by
+      symm
+      dsimp only [c, x, y]
+      calc
+        b * (a * b + (1 - a) * (1 - b)) =
+            a * (b * b) + (1 - a) * (b - b * b) := by ring
+        _ = a * b := by rw [hb.eq]; ring
+    _ = b := by rw [hc_one, mul_one]
 
 variable [IsReduced A]
 

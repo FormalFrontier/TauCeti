@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,11 +9,11 @@ public import TauCeti.LinearAlgebra.RootSystem.NumberOfRoots
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Datum
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.D
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.D.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E7.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Datum
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2
 
 public section
@@ -44,6 +45,11 @@ make this explicit data available without requiring downstream users to unfold t
   lattice.
 * `TauCeti.DynkinType.root_simpleIndex`, `coroot_simpleIndex`, and
   `mem_support_simplyConnectedBase`: the entrywise pinning of the simple roots and base.
+* `TauCeti.DynkinType.pairing_simpleIndex` and `TauCeti.DynkinType.pairingIn_simpleIndex`: the
+  Cartan integers at the simple indices are the entries of the Bourbaki-numbered Cartan matrix.
+* `TauCeti.DynkinType.card_support_simplyConnectedBase`: the pinned base has `t.rank` elements.
+* `TauCeti.DynkinType.toLinearMap_simplyConnectedRootDatum`: the pinned pairing is the dot
+  product, uniformly in the type.
 
 ## References
 
@@ -334,17 +340,17 @@ private theorem simpleIndex_G2 (ht : G2.Valid) (i : Fin 2) :
   | E6 =>
     change Fin 6 at i
     rw [simplyConnectedRootDatum_E6, simpleIndex_E6, cartanMatrix_E6]
-    change e6SimplyConnectedRootDatum.root (e6SimpleIndex i) = CartanMatrix.E₆ i
+    change e6SimplyConnectedRootDatum.root (e6SimpleIndex i) = CartanMatrix.E 6 i
     rw [e6SimplyConnectedRootDatum_root, root_e6SimpleIndex]
   | E7 =>
     change Fin 7 at i
     rw [simplyConnectedRootDatum_E7, simpleIndex_E7, cartanMatrix_E7]
-    change e7SimplyConnectedRootDatum.root (e7SimpleIndex i) = CartanMatrix.E₇ i
+    change e7SimplyConnectedRootDatum.root (e7SimpleIndex i) = CartanMatrix.E 7 i
     rw [e7SimplyConnectedRootDatum_root, root_e7SimpleIndex]
   | E8 =>
     change Fin 8 at i
     rw [simplyConnectedRootDatum_E8, simpleIndex_E8, cartanMatrix_E8]
-    change e8SimplyConnectedRootDatum.root (e8SimpleIndex i) = CartanMatrix.E₈ i
+    change e8SimplyConnectedRootDatum.root (e8SimpleIndex i) = CartanMatrix.E 8 i
     rw [e8SimplyConnectedRootDatum_root, root_e8SimpleIndex]
   | F4 =>
     change Fin 4 at i
@@ -384,6 +390,80 @@ private theorem simpleIndex_G2 (ht : G2.Valid) (i : Fin 2) :
     rw [g2SimplyConnectedBase_support]
     simp only [Finset.mem_insert, Finset.mem_singleton]
     omega
+
+/-- The Bourbaki numbering identifies the nodes with the support of the pinned integral base. -/
+def simpleSupportEquivSimplyConnectedBase (t : DynkinType) (ht : t.Valid) :
+    Fin t.rank ≃ (t.simplyConnectedBase ht).support where
+  toFun i := ⟨t.simpleIndex ht i, by simp⟩
+  invFun k := ⟨(k : Fin t.numRoots), (mem_support_simplyConnectedBase t ht).mp k.2⟩
+  left_inv i := Fin.ext (by simp [simpleIndex_val])
+  right_inv k := Subtype.ext (Fin.ext (by simp [simpleIndex_val]))
+
+@[simp] theorem coe_simpleSupportEquivSimplyConnectedBase (t : DynkinType) (ht : t.Valid)
+    (i : Fin t.rank) :
+    ((t.simpleSupportEquivSimplyConnectedBase ht i : Fin t.numRoots)) = t.simpleIndex ht i := by
+  simp [simpleSupportEquivSimplyConnectedBase]
+
+/-- The pinned base has one simple root per Bourbaki node. -/
+theorem card_support_simplyConnectedBase (t : DynkinType) (ht : t.Valid) :
+    (t.simplyConnectedBase ht).support.card = t.rank := by
+  classical
+  rw [← Fintype.card_coe,
+    ← Fintype.card_congr (t.simpleSupportEquivSimplyConnectedBase ht), Fintype.card_fin]
+
+/-- **The pinned pairing is the dot product** of the fundamental-weight and simple-coroot
+coordinates, uniformly in the Dynkin type. -/
+theorem toLinearMap_simplyConnectedRootDatum (t : DynkinType) (ht : t.Valid)
+    (x y : Fin t.rank → ℤ) :
+    (t.simplyConnectedRootDatum ht).toLinearMap x y = x ⬝ᵥ y := by
+  -- Unlike the entrywise pinning above, no index is retained in a dependent motive here: the case
+  -- split refines `t.rank` on a constructor, so `x` and `y` already have the family's index type.
+  -- Each branch therefore just rewrites the dispatcher into its family datum and applies that
+  -- family's own pairing equation.
+  cases t with
+  | A n =>
+    rw [simplyConnectedRootDatum_A]
+    exact toLinearMap_typeASimplyConnectedRootDatum x y
+  | B n =>
+    rw [simplyConnectedRootDatum_B]
+    exact toLinearMap_typeBSimplyConnectedRootDatum x y
+  | C n =>
+    rw [simplyConnectedRootDatum_C]
+    exact toLinearMap_typeCSimplyConnectedRootDatum x y
+  | D n =>
+    rw [simplyConnectedRootDatum_D]
+    exact toLinearMap_typeDSimplyConnectedRootDatum (valid_D.mp ht) x y
+  | E6 =>
+    rw [simplyConnectedRootDatum_E6]
+    exact e6SimplyConnectedRootDatum_toLinearMap x y
+  | E7 =>
+    rw [simplyConnectedRootDatum_E7]
+    exact e7SimplyConnectedRootDatum_toLinearMap_apply x y
+  | E8 =>
+    rw [simplyConnectedRootDatum_E8]
+    exact e8SimplyConnectedRootDatum_toLinearMap_apply x y
+  | F4 =>
+    rw [simplyConnectedRootDatum_F4]
+    exact f4SimplyConnectedRootDatum_toLinearMap_apply_apply x y
+  | G2 =>
+    rw [simplyConnectedRootDatum_G2]
+    exact g2SimplyConnectedRootDatum_toLinearMap x y
+
+/-- **The Cartan integers of the pinned datum at the simple indices are the entries of its
+Bourbaki-numbered Cartan matrix.** The simple root is a row of the Cartan matrix and the simple
+coroot is a standard basis vector, so the dot product picks out one entry. -/
+@[simp] theorem pairing_simpleIndex (t : DynkinType) (ht : t.Valid) (i j : Fin t.rank) :
+    (t.simplyConnectedRootDatum ht).pairing (t.simpleIndex ht i) (t.simpleIndex ht j) =
+      t.cartanMatrix i j := by
+  rw [← RootPairing.root_coroot_eq_pairing, toLinearMap_simplyConnectedRootDatum,
+    root_simpleIndex, coroot_simpleIndex, dotProduct_single, mul_one]
+
+/-- The integral form of `TauCeti.DynkinType.pairing_simpleIndex`. -/
+@[simp] theorem pairingIn_simpleIndex (t : DynkinType) (ht : t.Valid) (i j : Fin t.rank) :
+    (t.simplyConnectedRootDatum ht).pairingIn ℤ (t.simpleIndex ht i) (t.simpleIndex ht j) =
+      t.cartanMatrix i j := by
+  simpa using (t.simplyConnectedRootDatum ht).algebraMap_pairingIn ℤ (t.simpleIndex ht i)
+    (t.simpleIndex ht j) |>.trans (pairing_simpleIndex t ht i j)
 
 /-! ## Uniform acceptance theorems -/
 

@@ -23,7 +23,7 @@ of points whose ideal-indexed characteristic subgroup is everything.
 
 Points of `Spv A` are *classes* of valuations, so a condition on valuations cuts out a subset
 only if it is class-invariant. That is Lemma 7.4's role, recorded as
-`TauCeti.Valuation.characteristicSubgroupOfIdeal_eq_top_congr_of_isEquiv`. No quotient
+`Valuation.characteristicSubgroupOfIdeal_eq_top_congr_of_isEquiv`. No quotient
 eliminator is needed: `ValuationSpectrum.valuation` picks a canonical representative of each
 point and `ofValuation_valuation` says the choice round-trips, so the set is defined directly
 by that representative and `mem_spvOfIdeal_ofValuation` transfers the test to any other.
@@ -66,7 +66,7 @@ public section
 
 namespace TauCeti.ValuationSpectrum
 
-open TauCeti.Valuation MonoidWithZeroHom
+open Valuation MonoidWithZeroHom
 
 variable {A : Type*} [CommRing A]
 

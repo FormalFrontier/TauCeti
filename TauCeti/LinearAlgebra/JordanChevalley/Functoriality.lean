@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -25,17 +26,17 @@ representation of an affine algebraic group.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.isSemisimple_congrLinearEquiv_iff`: semisimplicity is invariant
+* `LinearMap.GeneralLinearGroup.isSemisimple_congrLinearEquiv_iff`: semisimplicity is invariant
   under linear conjugation.
-* `TauCeti.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
+* `LinearMap.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
   conjugation within the general linear group.
-* `TauCeti.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
+* `LinearMap.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
   equivariant under linear conjugation.
-* `TauCeti.GeneralLinearGroup.semisimplePart_congrLinearEquiv` and
-  `TauCeti.GeneralLinearGroup.unipotentPart_congrLinearEquiv`: the two factor formulas.
-* `TauCeti.GeneralLinearGroup.comp_semisimplePart_eq_of_comp_eq`: intertwiners commute with
+* `LinearMap.GeneralLinearGroup.semisimplePart_congrLinearEquiv` and
+  `LinearMap.GeneralLinearGroup.unipotentPart_congrLinearEquiv`: the two factor formulas.
+* `LinearMap.GeneralLinearGroup.comp_semisimplePart_eq_of_comp_eq`: intertwiners commute with
   semisimple factors.
-* `TauCeti.GeneralLinearGroup.comp_unipotentPart_eq_of_comp_eq`: intertwiners commute with
+* `LinearMap.GeneralLinearGroup.comp_unipotentPart_eq_of_comp_eq`: intertwiners commute with
   unipotent factors.
 
 ## References
@@ -45,11 +46,9 @@ representation of an affine algebraic group.
 
 public section
 
-namespace TauCeti
+open Polynomial
 
-open LinearMap Polynomial
-
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 open _root_.Module
 
@@ -193,13 +192,8 @@ theorem comp_unipotentPart_eq_of_comp_eq
       (unipotentPart h : Module.End K W).comp f := by
   have hs := comp_semisimplePart_eq_of_comp_eq f g h hfg
   have hs_inv := comp_inv_eq_of_comp_eq f (semisimplePart g) (semisimplePart h) hs
-  have hug : unipotentPart g = (semisimplePart g)⁻¹ * g := by
-    apply mul_left_cancel (a := semisimplePart g)
-    simp
-  have huh : unipotentPart h = (semisimplePart h)⁻¹ * h := by
-    apply mul_left_cancel (a := semisimplePart h)
-    simp
-  rw [hug, huh]
+  rw [unipotentPart_eq_semisimplePart_inv_mul,
+    unipotentPart_eq_semisimplePart_inv_mul]
   apply LinearMap.ext
   intro x
   -- Expose multiplication of automorphisms as composition of their underlying endomorphisms.
@@ -216,6 +210,4 @@ end Intertwining
 
 end PerfectField
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

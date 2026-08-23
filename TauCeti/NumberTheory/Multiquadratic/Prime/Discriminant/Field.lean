@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -75,10 +76,10 @@ theorem discr_eq_primeDiscriminant_of_sq {K : Type*} [Field K] [NumberField K] {
     (hx : x ^ 2 = algebraMap ℤ K (primeDiscriminantRadicand D))
     (hgen : Algebra.adjoin ℚ {x} = ⊤) : NumberField.discr K = D := by
   let d := primeDiscriminantRadicand D
-  let θ : 𝓞 K := TauCeti.NumberField.integralSqrt hx
-  have hθ : algebraMap (𝓞 K) K θ = x := TauCeti.NumberField.algebraMap_integralSqrt hx
+  let θ : 𝓞 K := NumberField.integralSqrt hx
+  have hθ : algebraMap (𝓞 K) K θ = x := NumberField.algebraMap_integralSqrt hx
   have hmin : minpoly ℤ θ = X ^ 2 - C d :=
-    TauCeti.NumberField.minpoly_integralSqrt hx (not_isSquare_primeDiscriminantRadicand_rat hD)
+    NumberField.minpoly_integralSqrt hx (not_isSquare_primeDiscriminantRadicand_rat hD)
   have hgenθ : Algebra.adjoin ℚ {(θ : K)} = ⊤ := by
     rw [NumberField.RingOfIntegers.coe_eq_algebraMap, hθ]
     exact hgen
@@ -97,16 +98,10 @@ theorem discr_adjoin_singleton_eq_primeDiscriminant {L : Type*} [Field L] [CharZ
     letI : NumberField (adjoin ℚ {x}) :=
       { to_finiteDimensional := adjoin.finiteDimensional hxint }
     NumberField.discr (adjoin ℚ {x}) = D := by
-  have hxint : IsIntegral ℚ x := IsIntegral.of_pow (n := 2) (by norm_num) (by
-    rw [hx, IsScalarTower.algebraMap_apply ℤ ℚ L]
-    exact isIntegral_algebraMap)
-  let _ : NumberField (adjoin ℚ {x}) :=
-    { to_finiteDimensional := adjoin.finiteDimensional hxint }
-  let pb : PowerBasis ℚ (adjoin ℚ {x}) := adjoin.powerBasis hxint
-  apply discr_eq_primeDiscriminant_of_sq hD (x := pb.gen)
-  · apply Subtype.ext
-    simpa [pb, adjoin.powerBasis_gen] using hx
-  · exact pb.adjoin_gen_eq_top
+  exact (discr_adjoin_singleton_eq_fundamentalDiscriminant
+    (squarefree_primeDiscriminantRadicand hD) hx
+    (not_isSquare_primeDiscriminantRadicand_rat hD)).trans
+      (fundamentalDiscriminant_primeDiscriminantRadicand hD)
 
 /-- Quadratic fields attached to distinct prime discriminants have coprime field discriminants,
 provided the two discriminants are not both even. The prime-discriminant factorization of a

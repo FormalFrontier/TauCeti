@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -21,11 +22,11 @@ irreducibles; deriving it is not done here.
 
 Both statements are read off the Schur orthogonality relations of
 `TauCeti/RepresentationTheory/Compact/SchurOrthogonality.lean` and
-`TauCeti/RepresentationTheory/Compact/Intertwiner.lean`: a character is, up to conjugation, the sum
-of the diagonal matrix coefficients in an orthonormal basis, so an inner product of characters is a
-double sum of inner products of matrix coefficients. The `[Finite G]` shadow of these two results is
-Mathlib's `Representation.char_orthonormal`, whose finite average is replaced here by the Haar
-integral.
+`TauCeti/RepresentationTheory/Compact/Intertwiner/Basic.lean`: a character is, up to conjugation,
+the sum of the diagonal matrix coefficients in an orthonormal basis, so an inner product of
+characters is a double sum of inner products of matrix coefficients. The `[Finite G]` shadow of
+these two results is Mathlib's `Representation.char_orthonormal`, whose finite average is replaced
+here by the Haar integral.
 
 ## Main definitions
 

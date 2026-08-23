@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Quotient
 public import TauCeti.LinearAlgebra.IntegralLattice.Dual.Basic
+import TauCeti.LinearAlgebra.IntegralLattice.Dual.Finiteness
 
 /-!
 # Discriminant groups of integral lattices
@@ -28,8 +29,12 @@ equivalence of discriminant groups.  The construction respects identity, inverse
 ## Main declarations
 
 * `TauCeti.IntegralLattice.carrierInDual`: the original carrier inside its dual carrier.
+* `TauCeti.IntegralLattice.carrierInDualBasis`: a carrier basis, regarded as a basis of its copy
+  inside the dual carrier.
 * `TauCeti.IntegralLattice.DiscriminantGroup`: the quotient `Lᵛ / L`.
 * `TauCeti.IntegralLattice.instFiniteDiscriminantGroup`: finiteness in the nondegenerate case.
+* `TauCeti.IntegralLattice.finite_discriminantGroup_iff_nondegenerate`: finiteness holds exactly
+  in the nondegenerate case.
 * `TauCeti.IntegralLattice.Isometry.discriminantGroupEquiv`: the induced equivalence of
   discriminant groups.
 
@@ -63,10 +68,41 @@ carrier. -/
 theorem mem_carrierInDual_iff (L : IntegralLattice V) (x : L.dualCarrier) :
     x ∈ L.carrierInDual ↔ (x : V) ∈ L.carrier := Iff.rfl
 
+/-- The embedded carrier is the copy of the ambient carrier inside the dual carrier. -/
+theorem carrierInDual_eq_submoduleOf (L : IntegralLattice V) :
+    L.carrierInDual = L.carrier.submoduleOf L.dualCarrier := by
+  ext x
+  exact L.mem_carrierInDual_iff x
+
+/-- Mapping the embedded carrier back into the ambient space recovers the original carrier. -/
+@[simp]
+theorem map_carrierInDual_subtype (L : IntegralLattice V) :
+    L.carrierInDual.map L.dualCarrier.subtype = L.carrier := by
+  rw [L.carrierInDual_eq_submoduleOf, Submodule.submoduleOf, Submodule.map_comap_subtype,
+    inf_of_le_right L.le_dualCarrier]
+
 /-- The copy of the carrier inside the dual carrier has the same rank as the carrier. -/
 theorem finrank_carrierInDual (L : IntegralLattice V) :
     Module.finrank ℤ L.carrierInDual = Module.finrank ℤ L :=
   (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).finrank_eq
+
+open Classical in
+/-- A basis of the carrier, regarded as a basis of its copy inside the dual carrier. -/
+noncomputable def carrierInDualBasis (L : IntegralLattice V) {ι : Type v}
+    (b : Basis ι ℤ L) : Basis ι ℤ L.carrierInDual :=
+  b.map (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).symm
+
+open Classical in
+/-- The vector of `carrierInDualBasis` indexed by `i` has underlying carrier vector `b i`. -/
+@[simp]
+theorem coe_carrierInDualBasis_apply (L : IntegralLattice V) {ι : Type v}
+    (b : Basis ι ℤ L) (i : ι) :
+    (L.carrierInDualBasis b i : L.dualCarrier) = ⟨b i, L.le_dualCarrier (b i).property⟩ := by
+  -- Mathlib has no `submoduleOfEquivOfLe_symm_apply` lemma, so compute the inverse by unfolding
+  -- its `invFun`; `carrierInDual` must also unfold to `submoduleOf` for the subtype to elaborate.
+  unfold carrierInDualBasis carrierInDual
+  rw [Basis.map_apply]
+  rfl
 
 /-- The discriminant group `A_L = Lᵛ / L`, as an actual quotient of the dual-carrier subtype by
 the inverse image of the original carrier. -/
@@ -92,6 +128,21 @@ noncomputable instance instFiniteDiscriminantGroup (L : IntegralLattice V) [L.Is
     Finite L.DiscriminantGroup := by
   apply Submodule.finiteQuotientOfFreeOfRankEq L.carrierInDual
   rw [L.finrank_carrierInDual, L.finrank_carrier, L.finrank_dualCarrier]
+
+/-- The discriminant group is finite exactly when the lattice form is nondegenerate. -/
+theorem finite_discriminantGroup_iff_nondegenerate (L : IntegralLattice V) :
+    Finite L.DiscriminantGroup ↔ L.form.Nondegenerate := by
+  constructor
+  · intro hfinite
+    let : Finite L.DiscriminantGroup := hfinite
+    let : Module.Finite ℤ L.carrierInDual :=
+      Module.Finite.equiv (Submodule.submoduleOfEquivOfLe L.le_dualCarrier).symm
+    let : Module.Finite ℤ L.dualCarrier :=
+      Module.Finite.of_submodule_quotient L.carrierInDual
+    exact L.nondegenerate_of_moduleFinite_dualCarrier
+  · intro hnondegenerate
+    let : L.IsNondegenerate := ⟨hnondegenerate⟩
+    infer_instance
 
 namespace Isometry
 

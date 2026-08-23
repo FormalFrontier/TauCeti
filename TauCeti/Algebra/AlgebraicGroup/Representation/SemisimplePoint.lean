@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,6 +9,7 @@ public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
 public import TauCeti.Algebra.AlgebraicGroup.Product
 public import TauCeti.Algebra.AlgebraicGroup.Representation.ScalarExtension
 public import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
+import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Semisimple points of a Hopf algebra
@@ -53,7 +55,7 @@ built in Layer 1.
 
 public section
 
-open WithConv
+open LinearMap WithConv
 open scoped TensorProduct
 
 namespace TauCeti
@@ -216,8 +218,8 @@ theorem IsSemisimplePoint.mul_of_commute {g h : WithConv (H →ₐ[k] K)}
   intro M
   rw [map_mul, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul]
   apply (hg M).mul_of_commute (hh M)
-  exact (hcomm.map (Comodule.pointsAction M)).map
-    (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm.toMonoidHom
+  exact (LinearMap.GeneralLinearGroup.commute_ofLinearEquiv_iff _ _).2
+    (hcomm.map (Comodule.pointsAction M))
 
 end PerfectField
 
@@ -253,17 +255,11 @@ theorem isSemisimplePoint_pointsMulEquiv_iff
         (R := k) (H₁ := H₁) (H₂ := H₂))
       simpa only [AlgHom.mapDomain_apply, gright, e,
         AffineGroup.Product.mapDomain_projectRight] using h
-    have hcomm : Commute gleft gright := by
-      rw [commute_iff_eq]
-      apply e.injective
-      simp only [map_mul, e, gleft, gright, MulEquiv.apply_symm_apply]
-      ext <;> simp
     have hfactor : g = gleft * gright := by
-      apply e.injective
-      simp only [map_mul, e, gleft, gright, MulEquiv.apply_symm_apply]
-      ext <;> simp
+      simpa only [e, gleft, gright, map_mul, MulEquiv.symm_apply_apply] using
+        congrArg e.symm (Prod.fst_mul_snd (e g)).symm
     rw [hfactor]
-    exact hgleft.mul_of_commute hgright hcomm
+    exact hgleft.mul_of_commute hgright <| (MonoidHom.commute_inl_inr _ _).map e.symm
 
 end Product
 

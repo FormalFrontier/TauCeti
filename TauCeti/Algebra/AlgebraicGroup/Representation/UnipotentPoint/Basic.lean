@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
+import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Unipotent points of an affine group
@@ -56,7 +58,7 @@ ReductiveGroups roadmap. It uses the representation--comodule dictionary built i
 
 public section
 
-open WithConv
+open LinearMap WithConv
 
 namespace TauCeti
 
@@ -159,10 +161,8 @@ theorem IsUnipotentPoint.mul_of_commute {g h : WithConv (H →ₐ[k] K)}
   intro M
   rw [map_mul, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul]
   apply (hg M).mul_of_commute (hh M)
-  have hactionComm := hcomm.map (Comodule.pointsAction M)
-  rw [commute_iff_eq] at hactionComm ⊢
-  rw [← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
-    ← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul, hactionComm]
+  exact (LinearMap.GeneralLinearGroup.commute_ofLinearEquiv_iff _ _).2
+    (hcomm.map (Comodule.pointsAction M))
 
 /-- Every natural power of a unipotent point is unipotent. -/
 theorem IsUnipotentPoint.pow {g : WithConv (H →ₐ[k] K)}

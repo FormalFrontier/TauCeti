@@ -8,36 +8,38 @@ module
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Reindex
 
 /-!
-# The slash sum is `SL₂(ℤ)`-invariant
+# The slash sum of a `Γ₁`-invariant function is `Γ₂`-invariant
 
 `heckeSlashSum` is a sum over *chosen* coset representatives, and `HeckeSlash/Basic.lean` records
 that on a general `f : ℍ → ℂ` the value depends on those choices. This file proves the theorem
-that repairs it: if `f` is invariant under the weight-`k` slash action of `SL₂(ℤ)`, then so is
-`heckeSlashSum k D f`.
+that repairs it: if `f` is invariant under the weight-`k` slash action of `Γ₁`, then
+`heckeSlashSum k D f` is invariant under that of `Γ₂`.
 
-That is the content of the proof of Shimura's Proposition 3.37 — right multiplication by
-`γ ∈ SL₂(ℤ)` merely **permutes** the representatives, so the sum is unchanged. The permutation is
-`MulAction.toPerm` for the action of `SL₂(ℤ)` on `DecompQuotient`, and the per-summand step is
-`slash_transposeRep_of_mem_SLnZ` from `HeckeSlash/Reindex.lean`.
+That is the content of Shimura's Proposition 3.37 — right multiplication by `γ ∈ Γ₂` merely
+**permutes** the right cosets `Γ₁ aᵥ` of the decomposition, so the sum is unchanged. Concretely
+`aᵥ γ = δ τᵥ⁻¹ γ = δ (γ⁻¹ τᵥ)⁻¹`, so the permutation is `v ↦ γ⁻¹ • v` for the action of `Γ₂` on
+`Γ₂ ⧸ (Γ₂ ∩ δ⁻¹Γ₁δ)` — `MulAction.toPerm` at `γ⁻¹` — and the per-summand step is
+`slash_rightCosetRep_of_mem_right` from `HeckeSlash/Reindex.lean`.
+
+⚠ The two groups are different: the hypothesis is invariance under `Γ₁` and the conclusion is
+invariance under `Γ₂`. They agree on a diagonal triple `HeckeCoset Δ Γ Γ`, which is where the
+Hecke operators of Layer 2(b) live, but nothing here needs them to.
 
 ## Main results
 
-* `HeckeRing.GL2.heckeSlashSum_slash_invariant_of_mem_SLnZ`: for `γ ∈ SL₂(ℤ)` and
-  slash-invariant `f`, `heckeSlashSum k D f ∣[k] γ = heckeSlashSum k D f`.
-* `HeckeRing.GL2.heckeSlashSumFormₗ`: the slash sum as a `ℂ`-linear operator on
-  `SlashInvariantForm`.
+* `HeckeRing.GL2.heckeSlashSum_slash_invariant`: for `γ ∈ Γ₂` and `Γ₁`-invariant `f`,
+  `heckeSlashSum k D f ∣[k] γ = heckeSlashSum k D f`.
 
 ## Provenance
 
-Ported from the AINTLIB `LeanModularForms` project
-([`LeanModularForms/HeckeRIngs/GL2/HeckeAction.lean`](https://github.com/CBirkbeck/AINTLIB),
-commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck), lines 198–224:
-`tRep_mul_eq_transpose` and `heckeSlash_slash_invariant`.
-
-Restated against TauCeti's `SLnZ`/`posDetInt` Hecke pair and `transposeGLEquiv`. As in
-`Reindex.lean`, the invariance hypothesis is carried at `SLnZ 2` under the rational slash action
-rather than routed through the real `𝒮ℒ`, so AINTLIB's `mem_SL_exists_H` bridge — which opens its
-proof — is not needed here and the statement quantifies over `γ ∈ SLnZ 2` directly.
+The statement corresponds to `heckeSlash_slash_invariant` in the AINTLIB `LeanModularForms`
+project ([`LeanModularForms/HeckeRIngs/GL2/HeckeAction.lean`](https://github.com/CBirkbeck/AINTLIB),
+commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck), lines 198–246,
+together with its helper `tRep_mul_eq_transpose`. No code is transcribed: that proof permutes a
+*left*-coset index by transposing, so it holds only where every group in sight is transpose-stable
+— level one — while the argument below is Shimura's own and quantifies over `γ ∈ Γ₂` at an
+arbitrary triple. As in `Reindex.lean`, invariance is carried under the rational slash action
+rather than routed through a real subgroup, so AINTLIB's `mem_SL_exists_H` bridge is not needed.
 
 ## References
 
@@ -53,70 +55,42 @@ open scoped MatrixGroups ModularForm
 
 namespace HeckeRing.GL2
 
-variable (k : ℤ) (D : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+variable (k : ℤ) {Δ : Submonoid (GL (Fin 2) ℚ)} {Γ₁ Γ₂ : Subgroup (GL (Fin 2) ℚ)}
+  (D : HeckeCoset Δ Γ₁ Γ₂) [Finite (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹)]
 
--- Right multiplication of a representative by `γ` is the transpose of left multiplication by
--- `γᵀ`, which is what turns the reindexing lemma into a permutation of the index type.
-private lemma transposeRep_mul (i : DecompQuotient (SLnZ 2) (SLnZ 2) D.out) (γ : GL (Fin 2) ℚ) :
-    transposeRep D i * γ = (transposeGLEquiv 2 ((transposeGLEquiv 2 γ).unop *
-      (i.out : GL (Fin 2) ℚ) * (D.out : GL (Fin 2) ℚ))).unop := by
-  simp [transposeRep_def, map_mul, MulOpposite.unop_mul, transposeGLEquiv_transposeGLEquiv,
-    mul_assoc]
+/-- The enumeration the reindexing argument needs, chosen exactly as in `HeckeSlash/Basic.lean`
+so that the two `∑`s are the same term. -/
+noncomputable local instance : Fintype (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹) :=
+  Fintype.ofFinite _
 
-/-- **The slash sum of a slash-invariant function is again slash-invariant.** For `f` invariant
-under the weight-`k` slash action of `SL₂(ℤ)` and `γ ∈ SL₂(ℤ)`,
+/-- **The slash sum of a `Γ₁`-invariant function is `Γ₂`-invariant.** For `f` invariant under the
+weight-`k` slash action of `Γ₁` and `γ ∈ Γ₂`,
 `heckeSlashSum k D f ∣[k] γ = heckeSlashSum k D f`.
 
 The proof is Shimura's — right multiplication by `γ` permutes the summands — and the permutation
-is `MulAction.toPerm` applied to `γᵀ`, the transpose appearing because the representatives are
-transposed.
+is `MulAction.toPerm` applied to `γ⁻¹`, acting on the right-coset index `Γ₂ ⧸ (Γ₂ ∩ δ⁻¹Γ₁δ)`.
 
-⚠ This proves invariance of the sum formed from the representatives `D.out` and `i.out` that
-`heckeSlashSum` fixes. It does **not** state that sums formed from *different* choices of
-representatives agree; that would be a separate theorem, and none is available yet. -/
-theorem heckeSlashSum_slash_invariant_of_mem_SLnZ (f : ℍ → ℂ) (hf : ∀ δ ∈ SLnZ 2, f ∣[k] δ = f)
-    {γ : GL (Fin 2) ℚ} (hγ : γ ∈ SLnZ 2) :
+⚠ This proves invariance of the sum formed from the representatives `D.out` and `v.out` that
+`heckeSlashSum` fixes. That sums formed from *different* choices of representatives agree is a
+separate theorem, `heckeSlashSum_eq_sum_of_rightCosets` in `HeckeSlash/Independence.lean`. -/
+theorem heckeSlashSum_slash_invariant (f : ℍ → ℂ) (hf : ∀ δ ∈ Γ₁, f ∣[k] δ = f)
+    {γ : GL (Fin 2) ℚ} (hγ : γ ∈ Γ₂) :
     heckeSlashSum k D f ∣[k] γ = heckeSlashSum k D f := by
-  have hγT : (transposeGLEquiv 2 γ).unop ∈ SLnZ 2 := transposeGLEquiv_mem_SLnZ 2 hγ
-  -- Slashing the `i`-th summand by `γ` gives the summand at the permuted index.
-  have hperm (i : DecompQuotient (SLnZ 2) (SLnZ 2) D.out) :
-      (f ∣[k] transposeRep D i) ∣[k] γ =
-        f ∣[k] transposeRep D ((⟨_, hγT⟩ : SLnZ 2) • i) := by
-    rw [← SlashAction.slash_mul k (transposeRep D i) γ f, transposeRep_mul, ← mul_one
-      ((⟨_, hγT⟩ : SLnZ 2) * (i.out : GL (Fin 2) ℚ) * (D.out : GL (Fin 2) ℚ)),
-      slash_transposeRep_of_mem_SLnZ k D (mul_mem hγT i.out.2) (one_mem _) f hf]
-    exact congrArg (f ∣[k] transposeRep D ·)
-      (MulAction.Quotient.mk_smul_out _ (⟨_, hγT⟩ : SLnZ 2) i)
+  -- Slashing the `v`-th summand by `γ` gives the summand at the permuted index.
+  have hperm (v : DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹) :
+      (f ∣[k] rightCosetRep D v) ∣[k] γ =
+        f ∣[k] rightCosetRep D ((⟨γ, hγ⟩ : Γ₂)⁻¹ • v) := by
+    -- `δ τᵥ⁻¹ γ = δ (γ⁻¹ τᵥ)⁻¹`: the right-hand factor is again the inverse of an element of `Γ₂`.
+    have hmul : (D.out : GL (Fin 2) ℚ) * ((v.out : GL (Fin 2) ℚ))⁻¹ * γ =
+        (D.out : GL (Fin 2) ℚ) * (γ⁻¹ * (v.out : GL (Fin 2) ℚ))⁻¹ := by group
+    rw [← SlashAction.slash_mul k (rightCosetRep D v) γ f, rightCosetRep_def D v, hmul,
+      slash_rightCosetRep_of_mem_right k D (mul_mem (inv_mem hγ) v.out.2) f hf]
+    exact congrArg (f ∣[k] rightCosetRep D ·)
+      (MulAction.Quotient.mk_smul_out _ (⟨γ, hγ⟩ : Γ₂)⁻¹ v)
   rw [heckeSlashSum_def, SlashAction.sum_slash]
-  -- `MulAction.toPerm` of the transposed `γ` is the reindexing bijection. Its compatibility
-  -- hypothesis is `hperm` up to `toPerm_apply`, which is stated rather than left to defeq.
-  exact Fintype.sum_equiv (MulAction.toPerm (⟨_, hγT⟩ : SLnZ 2)) _ _ fun i ↦ by
-    simpa only [MulAction.toPerm_apply] using hperm i
-
-/-- The double-coset slash sum as a `ℂ`-linear operator on `SlashInvariantForm`. -/
-noncomputable def heckeSlashSumFormₗ : SlashInvariantForm 𝒮ℒ k →ₗ[ℂ] SlashInvariantForm 𝒮ℒ k where
-  toFun f :=
-    SlashInvariantForm.mk (heckeSlashSum k D ⇑f) fun γ hγ ↦ by
-      obtain ⟨σ, rfl⟩ := MonoidHom.mem_range.mp hγ
-      have hSLnZ : (mapGL ℚ σ : GL (Fin 2) ℚ) ∈ SLnZ 2 := coe_mem_SLnZ 2 σ
-      rw [← map_mapGL (S := ℚ) (T := ℝ) σ, ← ModularForm.rat_slash]
-      exact heckeSlashSum_slash_invariant_of_mem_SLnZ k D (⇑f) (γ := mapGL ℚ σ)
-        (fun g hg ↦ SlashInvariantFormClass.slash_eq_of_mem_SLnZ f g hg) hSLnZ
-  map_add' f g := SlashInvariantForm.ext fun τ ↦ by
-    simp only [SlashInvariantForm.coe_mk, FunLike.coe_add]
-    exact congrFun (heckeSlashSum_add k D ⇑f ⇑g) τ
-  map_smul' c f := SlashInvariantForm.ext fun τ ↦ by
-    simp only [SlashInvariantForm.coe_mk, FunLike.coe_smul]
-    exact congrFun (heckeSlashSum_smul k D
-      (det_transposeRep_pos D (SLnZ_le_glpos 2) (posDetInt_le_glpos 2 D.out.2)) c ⇑f) τ
-
-@[simp]
-lemma coe_heckeSlashSumFormₗ (f : SlashInvariantForm 𝒮ℒ k) :
-    ⇑(heckeSlashSumFormₗ k D f) = heckeSlashSum k D ⇑f := (rfl)
-
-/-- Pointwise evaluation of `heckeSlashSumFormₗ`. -/
-@[simp]
-lemma heckeSlashSumFormₗ_apply (f : SlashInvariantForm 𝒮ℒ k) (τ : ℍ) :
-    heckeSlashSumFormₗ k D f τ = heckeSlashSum k D (⇑f) τ := (rfl)
+  -- `MulAction.toPerm` of `γ⁻¹` is the reindexing bijection. Its compatibility hypothesis is
+  -- `hperm` up to `toPerm_apply`, which is stated rather than left to defeq.
+  exact Fintype.sum_equiv (MulAction.toPerm (⟨γ, hγ⟩ : Γ₂)⁻¹) _ _ fun v ↦ by
+    simpa only [MulAction.toPerm_apply] using hperm v
 
 end HeckeRing.GL2

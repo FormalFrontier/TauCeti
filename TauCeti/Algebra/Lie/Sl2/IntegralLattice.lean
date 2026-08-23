@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -36,6 +37,7 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 * `TauCeti.Sl2Std.repEnveloping_ι`, `TauCeti.Sl2Std.repEnveloping_ι'`, and
   `TauCeti.Sl2Std.repEnveloping_ι_slFinTwoBasis`: evaluation on
   Lie algebra generators.
+* `TauCeti.Sl2Std.isNilpotent_repEnveloping_root`: both root operators are nilpotent.
 * `TauCeti.Sl2Std.integralLattice`: the coordinate `ℤ`-lattice in `V(n)`.
 * `TauCeti.Sl2Std.mem_integralLattice_iff`: integrality of coordinates.
 * `TauCeti.Sl2Std.integerCoordinatesLinearEquiv`: its identification with `Fin (n + 1) → ℤ`.
@@ -172,16 +174,22 @@ theorem ringChoose_diag_apply [Algebra ℚ K]
   have : IsAddTorsionFree K := .of_module_rat K
   exact (nsmul_right_inj (Nat.factorial_ne_zero k)).mp heq
 
-/-- The enveloping-algebra representation on the standard module `V(n)`. -/
+/-- The enveloping-algebra representation on the standard module `V(n)`: the general
+`TauCeti.UniversalEnvelopingAlgebra.representation` at the Lie module `V(n)`. -/
 noncomputable def repEnveloping (K : Type*) [CommRing K] (n : ℕ) :
     _root_.UniversalEnvelopingAlgebra K (LieAlgebra.SpecialLinear.sl (Fin 2) K) →ₐ[K]
       Module.End K (Sl2Std K n) :=
-  _root_.UniversalEnvelopingAlgebra.lift K (rep K n)
+  TauCeti.UniversalEnvelopingAlgebra.representation K (LieAlgebra.SpecialLinear.sl (Fin 2) K)
+    (Sl2Std K n)
 
 /-- The enveloping-algebra representation extends the standard `sl₂` representation. -/
 theorem repEnveloping_ι (x : LieAlgebra.SpecialLinear.sl (Fin 2) K) :
     repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K x) = rep K n x :=
-  _root_.UniversalEnvelopingAlgebra.lift_ι_apply K (rep K n) x
+  (TauCeti.UniversalEnvelopingAlgebra.representation_ι K
+        (LieAlgebra.SpecialLinear.sl (Fin 2) K) (Sl2Std K n) x).trans
+    (LinearMap.ext fun v => by
+      rw [LieModule.toEnd_apply_apply]
+      exact lie_eq_rep_apply x v)
 
 /-- The `simp`-normal form of `repEnveloping_ι`, stated for the canonical generators as `simp`
 writes them: `ι K x` unfolds to `mkAlgHom K _ (TensorAlgebra.ι K x)`. -/
@@ -198,6 +206,19 @@ theorem repEnveloping_ι_slFinTwoBasis (i : Fin 3) :
     repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K (slFinTwoBasis K i)) =
       ![raise K n, lower K n, diag K n] i := by
   rw [repEnveloping_ι, rep_apply_basis]
+
+/-- **Both root operators of the enveloping-algebra representation on `V(n)` are nilpotent.**
+They are the raising and lowering operators, whose `(n + 1)`-st powers vanish. -/
+theorem isNilpotent_repEnveloping_root (K : Type*) [CommRing K] (n : ℕ) (i : Fin 2) :
+    IsNilpotent (repEnveloping K n (_root_.UniversalEnvelopingAlgebra.ι K
+      (![slFinTwoBasis K 0, slFinTwoBasis K 1] i))) := by
+  fin_cases i
+  · simp only [Fin.isValue, Fin.zero_eta, Matrix.cons_val_zero]
+    rw [repEnveloping_ι_slFinTwoBasis]
+    exact ⟨n + 1, raise_pow_eq_zero⟩
+  · simp only [Fin.isValue, Fin.mk_one, Matrix.cons_val_one, Matrix.cons_val_fin_one]
+    rw [repEnveloping_ι_slFinTwoBasis]
+    exact ⟨n + 1, lower_pow_eq_zero⟩
 
 end GeneralCoefficients
 

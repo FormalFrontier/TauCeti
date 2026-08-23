@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -51,7 +51,7 @@ theorem coeFn_chebyshevCosineHilbertBasis (n : ℕ) :
   rw [chebyshevCosineHilbertBasis, HilbertBasis.mapₗᵢ_apply]
   filter_upwards [
     chebyshevCosineL2Equiv_apply 𝕜 (chebyshevTHilbertBasis 𝕜 n),
-    measurePreserving_cos_chebyshev.quasiMeasurePreserving.ae_eq
+    measurePreserving_cos_chebyshev.quasiMeasurePreserving.ae_eq_comp
       (coeFn_normalizedChebyshevTLp (𝕜 := 𝕜) n)] with θ hcos hmode
   rw [hcos, coe_chebyshevTHilbertBasis]
   exact hmode.trans (congrArg (algebraMap ℝ 𝕜) (by

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -20,9 +21,9 @@ packages the comparison as a Lie equivalence.
 
 ## Main declarations
 
-* `TauCeti.Derivation.cotangentDualLieEquiv`: the cotangent dual is canonically the tangent Lie
+* `Derivation.cotangentDualLieEquiv`: the cotangent dual is canonically the tangent Lie
   algebra of counit-valued derivations.
-* `TauCeti.Derivation.tangentScalarExtensionLieEquiv`: scalar extension of the cotangent-dual
+* `Derivation.tangentScalarExtensionLieEquiv`: scalar extension of the cotangent-dual
   Lie algebra agrees with coefficient-valued tangent derivations.
 
 ## References
@@ -37,9 +38,9 @@ public section
 
 open scoped TensorProduct
 
-namespace TauCeti.Derivation
+namespace Derivation
 
-open _root_.Coalgebra TensorProduct WithConv
+open TauCeti _root_.Coalgebra TensorProduct WithConv
 
 universe u v
 
@@ -201,4 +202,4 @@ end ScalarExtension
 
 end Bialgebra
 
-end TauCeti.Derivation
+end Derivation

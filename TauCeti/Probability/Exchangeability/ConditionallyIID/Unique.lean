@@ -1,14 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Moments
 -- Non-public: `measurable_probabilityMeasure_toMeasure_apply_toReal` evaluates a random measure at
 -- a fixed measurable set in the `.toReal` form.
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 -- Non-public: the countable set algebra that compares two random measures set by set.
 import Mathlib.MeasureTheory.SetAlgebra
 -- Non-public: `tendsto_const_div_atTop_nhds_zero_nat` closes the `O(1/n)` squeeze.

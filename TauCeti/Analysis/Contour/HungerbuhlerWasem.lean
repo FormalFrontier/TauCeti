@@ -9,14 +9,14 @@ public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.Meromorphic.Basic
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.On
+public import TauCeti.Analysis.Contour.MeromorphicLaurent
+public import TauCeti.Analysis.Contour.PolarPart.Decomposition
 public import TauCeti.Analysis.Contour.PwC1ImmersionOn
 public import TauCeti.Analysis.Contour.RegularityConditions
 public import TauCeti.Analysis.Contour.Residue.Basic
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 import TauCeti.Analysis.Contour.ConditionDischarge
 import TauCeti.Analysis.Contour.InvSubCPVExistence
-import TauCeti.Analysis.Contour.MeromorphicLaurent
-import TauCeti.Analysis.Contour.PolarPart.Decomposition
 import TauCeti.Analysis.Contour.Residue.Assembly
 import TauCeti.Analysis.Contour.Winding.Number.Reverse
 import Mathlib.Analysis.Complex.CauchyIntegral
@@ -38,10 +38,16 @@ value the valence formula uses at `i` and `ρ`.
 Both statements follow the roadmap signatures. The proof instantiates the canonical polar
 decomposition, discharges the conditions into the per-pole hypotheses, and assembles the
 residue sum; a reversed parametrization (`b ≤ a`) reduces to the oriented case through the
-orientation lemmas, every ingredient being endpoint-swap invariant.
+orientation lemmas, every ingredient being endpoint-swap invariant. That assembly is kept
+separate from the null-homology hypothesis, which enters only at the last step to kill the
+analytic remainder — so the splitting it factors through is available to callers that must add
+several curves up before any of them bounds.
 
 ## Main results
 
+* `Contour.PolarPartDecomposition.hasCauchyPV_analyticRemainder_add_residue_sum_of_conditions` —
+  the null-homology-free splitting of the principal value into the analytic remainder's contour
+  integral and the winding-weighted residue sum, in either parametrization orientation.
 * `Contour.hungerbuhlerWasem_residueTheorem` — HW Thm 3.3.
 * `Contour.hasCauchyPV_half_residue` — the winding-`½` on-cycle case.
 * `Contour.hungerbuhlerWasem_residueTheorem_of_simple_poles`,
@@ -67,29 +73,68 @@ namespace TauCeti.Contour
 
 open Filter Set Topology
 
-/-- The oriented (`a ≤ b`) case of the generalized residue theorem: instantiate the canonical
-polar decomposition, discharge conditions (A′) and (B) into the per-pole hypotheses, and
-assemble the residue sum. -/
-private theorem hungerbuhlerWasem_residueTheorem_of_le {f : ℂ → ℂ} {U : Set ℂ}
-    (hU : IsOpen U) (S : Finset ℂ) (γ : ℝ → ℂ) (a b : ℝ) (hγ_imm : IsPwC1ImmersionOn γ a b)
-    (hSU : (S : Set ℂ) ⊆ U) (hclosed : γ a = γ b) (hγa : γ a ∉ (S : Set ℂ))
-    (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U) (hf : DifferentiableOn ℂ f (U \ (S : Set ℂ)))
-    (hmero : ∀ s ∈ S, MeromorphicAt f s) (hnull : IsNullHomologous γ a b U)
-    (hA : ConditionAprime γ a b f S) (hB : ConditionB γ a b f) (hab : a ≤ b) :
+/-- **The winding-weighted residue sum splits off the generalized principal value.** For `f`
+holomorphic on `U ∖ S` and meromorphic at each point of the finite `S ⊆ U`, and a **closed**
+piecewise-`C¹` immersion `γ` in `U` rooted off the poles, under conditions (A′) and (B) the
+set-level Cauchy principal value of `f` along `γ` is the ordinary contour integral of the
+analytic remainder of a polar decomposition plus `2πi · Σ_{s ∈ S} n_s(γ) · Res_s f`.
+
+No null-homology is asked of `γ`, so this is the form that survives being summed over the
+generators of a formal cycle, none of which need bound on its own
+(`TauCeti.Contour.Cycle.hungerbuhlerWasem_residueTheorem`). Discharging the analytic remainder
+by the homology Cauchy theorem recovers HW Thm 3.3 itself.
+
+Both parametrization orientations are covered: the reversed case reduces to `a ≤ b` on `(b, a)`
+through the orientation lemmas, every ingredient being endpoint-swap invariant. -/
+theorem PolarPartDecomposition.hasCauchyPV_analyticRemainder_add_residue_sum_of_conditions
+    {f : ℂ → ℂ} {S : Finset ℂ} {U : Set ℂ} (decomp : PolarPartDecomposition f S U)
+    (hU : IsOpen U) (h_ord : ∀ s : S, decomp.order s = meromorphicPolarOrderAt f ↑s)
+    (hSU : (S : Set ℂ) ⊆ U) {γ : ℝ → ℂ} {a b : ℝ} (hγ_imm : IsPwC1ImmersionOn γ a b)
+    (hclosed : γ a = γ b) (hγa : γ a ∉ (S : Set ℂ)) (hγU : ∀ t ∈ Set.uIcc a b, γ t ∈ U)
+    (hmero : ∀ s ∈ S, MeromorphicAt f s) (hA : ConditionAprime γ a b f S)
+    (hB : ConditionB γ a b f) :
     HasCauchyPV γ a b f
-      (2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, windingNumber γ a b s * residue f s)) := by
+      ((∫ t in a..b, deriv γ t • decomp.analyticRemainder (γ t))
+        + 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ a b s * residue f s) := by
   classical
-  have h_interior : ∀ s : S, ∀ t ∈ Icc a b, γ t = (s : ℂ) → t ∈ Ioo a b := fun s =>
-    mem_Ioo_of_closed_of_ne hclosed fun h => hγa (h ▸ Finset.mem_coe.mpr s.2)
-  have h_ord : ∀ s : S, (PolarPartDecomposition.ofMeromorphic hU hf hmero).order s
-      = meromorphicPolarOrderAt f ↑s := fun s =>
-    PolarPartDecomposition.ofMeromorphic_order s
-  exact (PolarPartDecomposition.ofMeromorphic hU hf hmero).hasCauchyPV_residue_sum hU
-    hγ_imm hab hclosed hγU hnull h_interior
-    (fun s k hk1 _ => hA.flatOfOrder_of_crossing _ s s.2 hγ_imm hab (h_interior s)
-      (h_ord s) k hk1)
-    (fun s => hB.pow_unit_tangent_eq_of_coeff_ne_zero _ hU hSU s (hmero ↑s s.2) hγ_imm hab
-      (h_interior s) (h_ord s))
+  -- The oriented case: instantiate the null-homology-free splitting of the polar decomposition,
+  -- discharging conditions (A′) and (B) into its per-pole hypotheses.
+  have core : ∀ c d : ℝ, c ≤ d → IsPwC1ImmersionOn γ c d → γ c = γ d → γ c ∉ (S : Set ℂ) →
+      (∀ t ∈ Set.uIcc c d, γ t ∈ U) → ConditionAprime γ c d f S → ConditionB γ c d f →
+      HasCauchyPV γ c d f
+        ((∫ t in c..d, deriv γ t • decomp.analyticRemainder (γ t))
+          + 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ c d s * residue f s) := by
+    intro c d hcd h_imm hcl hc hcU hA' hB'
+    have h_interior : ∀ s : S, ∀ t ∈ Icc c d, γ t = (s : ℂ) → t ∈ Ioo c d := fun s =>
+      mem_Ioo_of_closed_of_ne hcl fun h => hc (h ▸ Finset.mem_coe.mpr s.2)
+    exact decomp.hasCauchyPV_analyticRemainder_add_residue_sum h_imm hcd hcl hcU h_interior
+      (fun s k hk1 _ => hA'.flatOfOrder_of_crossing _ s s.2 h_imm hcd (h_interior s)
+        (h_ord s) k hk1)
+      (fun s => hB'.pow_unit_tangent_eq_of_coeff_ne_zero _ hU hSU s (hmero ↑s s.2) h_imm hcd
+        (h_interior s) (h_ord s))
+  rcases le_total a b with hab | hba
+  · exact core a b hab hγ_imm hclosed hγa hγU hA hB
+  · -- reduce the reversed parametrization to the oriented case on `(b, a)`
+    have h_core := core b a hba hγ_imm.symm hclosed.symm (fun h => hγa (by rwa [hclosed]))
+      (fun t ht => hγU t (by rwa [Set.uIcc_comm])) (conditionAprime_comm.mp hA)
+      (conditionB_comm.mp hB)
+    have h_exists : ∀ s ∈ S, CauchyPVExistsAt γ b a (fun w => (w - s)⁻¹) s := fun s hs =>
+      hγ_imm.symm.cauchyPVExistsAt_inv_sub hba
+        (mem_Ioo_of_closed_of_ne hclosed.symm
+          (fun h => hγa (hclosed ▸ h ▸ Finset.mem_coe.mpr hs)))
+    have h_val : ((∫ t in b..a, deriv γ t • decomp.analyticRemainder (γ t))
+          + 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ b a s * residue f s)
+        = -((∫ t in a..b, deriv γ t • decomp.analyticRemainder (γ t))
+          + 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ a b s * residue f s) := by
+      have h_sum : (∑ s ∈ S, windingNumber γ b a s * residue f s)
+          = -∑ s ∈ S, windingNumber γ a b s * residue f s := by
+        rw [← Finset.sum_neg_distrib]
+        exact Finset.sum_congr rfl fun s hs => by
+          rw [windingNumber_symm (h_exists s hs)]; ring
+      rw [h_sum, intervalIntegral.integral_symm a b]
+      ring
+    have h := h_core.symm
+    rwa [h_val, neg_neg] at h
 
 /-- **The Hungerbühler–Wasem generalized residue theorem** (HW Thm 3.3): for `f` holomorphic
 on `U ∖ S` and meromorphic at each point of the finite `S ⊆ U`, and a null-homologous closed
@@ -105,34 +150,12 @@ theorem hungerbuhlerWasem_residueTheorem {f : ℂ → ℂ} {U : Set ℂ} (hU : I
     (hA : ConditionAprime γ a b f S) (hB : ConditionB γ a b f) :
     HasCauchyPV γ a b f
       (2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, windingNumber γ a b s * residue f s)) := by
-  classical
-  rcases le_total a b with hab | hba
-  · exact hungerbuhlerWasem_residueTheorem_of_le hU S γ a b hγ_imm hSU hclosed hγa hγU hf
-      hmero hnull hA hB hab
-  · -- reduce the reversed parametrization to the oriented case on `(b, a)`
-    have h_kernel_int : ∀ z ∉ U, IntervalIntegrable
-        (fun t => (γ t - z)⁻¹ * deriv γ t) MeasureTheory.volume a b := fun z hz =>
-      intervalIntegrable_inv_sub_mul_deriv hγ_imm.continuousOn
-        (fun t ht h_eq => hz (h_eq ▸ hγU t ht))
-        hγ_imm.isPiecewiseC1On.intervalIntegrable_deriv
-    have h_core := hungerbuhlerWasem_residueTheorem_of_le hU S γ b a hγ_imm.symm hSU
-      hclosed.symm (fun h => hγa (hclosed ▸ h))
-      (fun t ht => hγU t (by rwa [Set.uIcc_comm])) hf hmero
-      (hnull.symm_of_avoidance hγU hγ_imm.continuousOn h_kernel_int)
-      (conditionAprime_comm.mp hA) (conditionB_comm.mp hB) hba
-    have h_exists : ∀ s ∈ S, CauchyPVExistsAt γ b a (fun w => (w - s)⁻¹) s := fun s hs =>
-      (hγ_imm.symm.cauchyPVExistsAt_inv_sub hba
-        (mem_Ioo_of_closed_of_ne hclosed.symm
-          (fun h => hγa (hclosed ▸ h ▸ Finset.mem_coe.mpr hs))))
-    have h_val : (∑ s ∈ S, windingNumber γ b a s * residue f s)
-        = -∑ s ∈ S, windingNumber γ a b s * residue f s := by
-      rw [← Finset.sum_neg_distrib]
-      refine Finset.sum_congr rfl fun s hs => ?_
-      rw [windingNumber_symm (h_exists s hs)]
-      ring
-    have h := h_core.symm
-    rw [h_val] at h
-    simpa using h
+  have h := PolarPartDecomposition.hasCauchyPV_analyticRemainder_add_residue_sum_of_conditions
+    (PolarPartDecomposition.ofMeromorphic hU hf hmero) hU
+    (fun s => PolarPartDecomposition.ofMeromorphic_order s) hSU hγ_imm hclosed hγa hγU hmero hA hB
+  rwa [PolarPartDecomposition.intervalIntegral_deriv_smul_analyticRemainder_eq_zero
+    (PolarPartDecomposition.ofMeromorphic hU hf hmero) hU hγ_imm.isPiecewiseC1On hγU hclosed
+    hnull, zero_add] at h
 
 /-- **Half-residue: the winding-`½` on-cycle case of HW Thm 3.3** — the `S = {s}`
 specialisation: when the generalized winding number of the closed, null-homologous immersion

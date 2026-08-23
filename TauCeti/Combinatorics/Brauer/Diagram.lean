@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -57,7 +57,7 @@ namespace TauCeti
 /-- A **Brauer diagram** on `k` strands: a perfect matching of the `2 * k` boundary points
 `Fin k ⊕ Fin k`, with `Sum.inl i` the `i`-th bottom point and `Sum.inr j` the `j`-th top
 point.  The value `D.val x` is the boundary point that the diagram matches with `x`. -/
-abbrev BrauerDiagram (k : ℕ) := PerfectMatching (Fin k ⊕ Fin k)
+abbrev BrauerDiagram (k : ℕ) : Type _ := PerfectMatching (Fin k ⊕ Fin k)
 
 /-- **The number of Brauer diagrams.** There are `(2 * k - 1)‼` perfect matchings of the
 `2 * k` boundary points, hence `(2 * k - 1)‼` Brauer diagrams on `k` strands. -/
