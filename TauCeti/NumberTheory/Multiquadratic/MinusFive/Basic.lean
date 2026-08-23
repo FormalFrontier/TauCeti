@@ -6,7 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.AdjoinRoot
-public import TauCeti.NumberTheory.NumberField.IntegralSqrt
+public import Mathlib.NumberTheory.NumberField.Basic
+import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import Mathlib.FieldTheory.KummerPolynomial
 
 /-!
@@ -30,7 +31,11 @@ open scoped NumberField
 
 namespace TauCeti.NumberField
 
-local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
+/-- `X² + 5` is irreducible over `ℚ`, so `AdjoinRoot (X² + 5)` is a field. The instance carries an
+explicit, field-specific name because an anonymous `Fact (Irreducible …)` instance receives an
+auto-generated name that ignores the radicand: the `-5` and `-21` instances would then collide under
+one name when the whole library is loaded for the axioms audit. -/
+instance irreducible_sqrt_neg_five : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
   exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
     (fun q _ => by nlinarith [sq_nonneg q])⟩
 
@@ -51,12 +56,8 @@ theorem exists_minpoly_eq_X_sq_add_five_and_adjoin_eq_top :
   refine ⟨integralSqrt hx, minpoly_integralSqrt hx (fun ⟨q, hq⟩ => by
       norm_num at hq
       nlinarith [mul_self_nonneg q]), ?_⟩
-  have hfne : (X ^ 2 - C (-5 : ℚ)) ≠ 0 :=
-    (monic_X_pow_sub_C (-5 : ℚ) (by norm_num)).ne_zero
-  have hpb := (AdjoinRoot.powerBasis (f := X ^ 2 - C (-5 : ℚ)) hfne).adjoin_gen_eq_top
-  rw [AdjoinRoot.powerBasis_gen] at hpb
   have hθx : ((integralSqrt hx : 𝓞 K) : K) = x := algebraMap_integralSqrt hx
   rw [hθx]
-  exact hpb
+  exact AdjoinRoot.adjoinRoot_eq_top
 
 end TauCeti.NumberField

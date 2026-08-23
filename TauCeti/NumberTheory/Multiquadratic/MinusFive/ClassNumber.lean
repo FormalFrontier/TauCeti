@@ -6,12 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.ClassNumber
-public import Mathlib.RingTheory.AdjoinRoot
-import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
+public import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
 import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
 import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
-import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
@@ -265,10 +263,6 @@ theorem classNumber_eq_two_of_minpoly_eq_X_sq_add_five
     rw [NumberField.classNumber]
     exact Fintype.one_lt_card
   omega
-
-local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
-  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
-    (fun q _ => by nlinarith [sq_nonneg q])⟩
 
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`,
 has class number `2`. -/

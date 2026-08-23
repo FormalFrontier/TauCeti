@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.TwoRank
+public import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminants
-import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
 
 /-!
 # The `2`-rank of the class group of `ℚ(√-5)`
@@ -62,10 +62,6 @@ theorem twoRank_eq_one_of_minpoly_eq_X_sq_add_five
     rw [ncard_ramifiedPrimes_eq_card hmin hgen hsf hs heven hprod,
       Finset.card_pair (show (-4 : ℤ) ≠ 5 by decide)]
   rw [twoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf (by norm_num), hncard]
-
-local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
-  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
-    (fun q _ => by nlinarith [sq_nonneg q])⟩
 
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`, has
 class-group `2`-rank `1`. Not `@[simp]`: the `@[simp]` lemma `twoRank_def` unfolds the left-hand
