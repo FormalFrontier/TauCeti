@@ -1,11 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Geometry.Lie.Tangent.LieEquiv
-public import TauCeti.Geometry.Lie.Interior
 public import TauCeti.Geometry.Lie.Exponential.Basic
 
 /-!
@@ -136,8 +136,7 @@ private theorem lieMapTangent_map_lie
   rw [mvfderiv_mlieBracket
     (f := (F : G' → ℝ) ∘ φ)
     (V := mulInvariantVectorField X) (W := mulInvariantVectorField Y) (x := (1 : G))
-    ((F.contMDiff.comp φ.contMDiff_toFun).contMDiffAt.of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out))
+    (F.contMDiff.comp φ.contMDiff_toFun).contMDiffAt
     (by simp)
     ((contMDiff_mulInvariantVectorField_infty X).mdifferentiable (by simp)).mdifferentiableAt
     ((contMDiff_mulInvariantVectorField_infty Y).mdifferentiable (by simp)).mdifferentiableAt]
@@ -145,8 +144,7 @@ private theorem lieMapTangent_map_lie
     (f := (F : G' → ℝ))
     (V := mulInvariantVectorField (lieMapTangent φ X))
     (W := mulInvariantVectorField (lieMapTangent φ Y)) (x := (1 : G'))
-    (F.contMDiff.contMDiffAt.of_le
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out))
+    F.contMDiff.contMDiffAt
     (by simp)
     ((contMDiff_mulInvariantVectorField_infty (lieMapTangent φ X)).mdifferentiable
       (by simp)).mdifferentiableAt
