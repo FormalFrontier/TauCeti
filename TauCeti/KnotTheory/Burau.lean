@@ -28,10 +28,10 @@ identity by a **rank-one** matrix,
 where `burauCol t i = t • e i - e (i + 1)` and `burauRow R i = e i - e (i + 1)`. Products of
 rank-one matrices are governed by a single scalar, `vecMulVec u v * vecMulVec u' v' =
 (v ⬝ᵥ u') • vecMulVec u v'`, so all four dot products between the rows and columns attached to two
-elementary braids are computed once (`TauCeti.KnotTheory.burauRow_dotProduct_burauCol_self` and
-friends) and both defining braid relations, the inverse matrix, and the determinant follow from
-them by pure module algebra. This is what keeps the verification of the relations short: the braid
-relation reduces to `U * U = (t + 1) • U`, `U * V * U = t • U` and their mirror images.
+elementary braids are computed once, and both defining braid relations, the inverse matrix, and the
+determinant follow from them by pure module algebra. This is what keeps the verification of the
+relations short: the braid relation reduces to `U * U = (t + 1) • U`,
+`U * V * U = t • U` and their mirror images.
 
 Two theorems keep the representation honest. `TauCeti.KnotTheory.det_burauMatrix` computes the
 determinant of an elementary Burau matrix as `-t`, so the representation is by genuinely invertible
@@ -90,7 +90,11 @@ open Matrix
 
 namespace TauCeti.KnotTheory
 
-variable {R : Type*} [CommRing R] {n : ℕ}
+variable {R : Type*} {n : ℕ}
+
+section Ring
+
+variable [Ring R]
 
 /-! ### The rank-one part of an elementary Burau matrix -/
 
@@ -101,7 +105,7 @@ def burauCol (t : R) (i : Fin (n - 1)) : Fin n → R :=
 
 /-- The row vector `e i - e (i + 1)` indexed by the strands, where `i` and `i + 1` are the two
 strands crossed by the elementary braid `TauCeti.BraidGroup.sigma i`. -/
-def burauRow (R : Type*) [CommRing R] {n : ℕ} (i : Fin (n - 1)) : Fin n → R :=
+def burauRow (R : Type*) [Ring R] {n : ℕ} (i : Fin (n - 1)) : Fin n → R :=
   Pi.single (BraidGroup.strand i) 1 - Pi.single (BraidGroup.strandSucc i) 1
 
 /-- The entries of the Burau column vector. -/
@@ -128,34 +132,36 @@ theorem dotProduct_burauCol (t : R) (i : Fin (n - 1)) (w : Fin n → R) :
   simp [burauCol, dotProduct_sub, dotProduct_single]
 
 /-- The row and column vectors of one and the same elementary braid pair to `t + 1`. -/
-theorem burauRow_dotProduct_burauCol_self (t : R) (i : Fin (n - 1)) :
+private theorem burauRow_dotProduct_burauCol_self (t : R) (i : Fin (n - 1)) :
     burauRow R i ⬝ᵥ burauCol t i = t + 1 := by
   rw [burauRow_dotProduct, burauCol_apply, burauCol_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-  split_ifs <;> first | (exfalso; omega) | ring
+  split_ifs <;> first | (exfalso; omega) | noncomm_ring
 
 /-- For two consecutive elementary braids the row of the first pairs with the column of the second
 to `-t`. -/
-theorem burauRow_dotProduct_burauCol_of_succ (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
+private theorem burauRow_dotProduct_burauCol_of_succ (t : R) {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 1 = j) :
     burauRow R i ⬝ᵥ burauCol t j = -t := by
   rw [burauRow_dotProduct, burauCol_apply, burauCol_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-  split_ifs <;> first | (exfalso; omega) | ring
+  split_ifs <;> first | (exfalso; omega) | noncomm_ring
 
 /-- For two consecutive elementary braids the row of the second pairs with the column of the first
 to `-1`. -/
-theorem burauRow_dotProduct_burauCol_of_succ_rev (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
+private theorem burauRow_dotProduct_burauCol_of_succ_rev (t : R) {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 1 = j) :
     burauRow R j ⬝ᵥ burauCol t i = -1 := by
   rw [burauRow_dotProduct, burauCol_apply, burauCol_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-  split_ifs <;> first | (exfalso; omega) | ring
+  split_ifs <;> first | (exfalso; omega) | noncomm_ring
 
 /-- Two elementary braids that share no strand have orthogonal rows and columns. -/
-theorem burauRow_dotProduct_burauCol_of_not_adjacent (t : R) {i j : Fin (n - 1)}
+private theorem burauRow_dotProduct_burauCol_of_not_adjacent (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : burauRow R i ⬝ᵥ burauCol t j = 0 := by
   rw [burauRow_dotProduct, burauCol_apply, burauCol_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-  split_ifs <;> first | (exfalso; omega) | ring
+  split_ifs <;> first | (exfalso; omega) | noncomm_ring
 
 /-! ### The elementary Burau matrices -/
 
@@ -182,7 +188,7 @@ theorem burauMatrix_apply_strand_strand (t : R) (i : Fin (n - 1)) :
     burauMatrix t i (BraidGroup.strand i) (BraidGroup.strand i) = 1 - t := by
   rw [burauMatrix_apply, burauCol_apply, burauRow_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-  split_ifs <;> first | (exfalso; omega) | ring
+  split_ifs <;> first | (exfalso; omega) | noncomm_ring
 
 /-- The upper right entry of the nontrivial two-by-two block of an elementary Burau matrix. -/
 @[simp]
@@ -190,7 +196,7 @@ theorem burauMatrix_apply_strand_strandSucc (t : R) (i : Fin (n - 1)) :
     burauMatrix t i (BraidGroup.strand i) (BraidGroup.strandSucc i) = t := by
   rw [burauMatrix_apply, burauCol_apply, burauRow_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-  split_ifs <;> first | (exfalso; omega) | ring
+  split_ifs <;> first | (exfalso; omega) | noncomm_ring
 
 /-- The lower left entry of the nontrivial two-by-two block of an elementary Burau matrix. -/
 @[simp]
@@ -198,7 +204,7 @@ theorem burauMatrix_apply_strandSucc_strand (t : R) (i : Fin (n - 1)) :
     burauMatrix t i (BraidGroup.strandSucc i) (BraidGroup.strand i) = 1 := by
   rw [burauMatrix_apply, burauCol_apply, burauRow_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-  split_ifs <;> first | (exfalso; omega) | ring
+  split_ifs <;> first | (exfalso; omega) | noncomm_ring
 
 /-- The lower right entry of the nontrivial two-by-two block of an elementary Burau matrix. -/
 @[simp]
@@ -206,7 +212,7 @@ theorem burauMatrix_apply_strandSucc_strandSucc (t : R) (i : Fin (n - 1)) :
     burauMatrix t i (BraidGroup.strandSucc i) (BraidGroup.strandSucc i) = 0 := by
   rw [burauMatrix_apply, burauCol_apply, burauRow_apply]
   simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-  split_ifs <;> first | (exfalso; omega) | ring
+  split_ifs <;> first | (exfalso; omega) | noncomm_ring
 
 /-- Away from the two crossed strands the Burau matrix has the rows of the identity. -/
 theorem burauMatrix_apply_of_ne (t : R) (i : Fin (n - 1)) {a : Fin n}
@@ -214,6 +220,23 @@ theorem burauMatrix_apply_of_ne (t : R) (i : Fin (n - 1)) {a : Fin n}
     burauMatrix t i a b = if a = b then 1 else 0 := by
   rw [burauMatrix_apply, burauCol_apply]
   simp [h, h']
+
+/-- An elementary Burau matrix is never the identity: the entry at which the two crossed strands
+meet is `1` rather than `0`. Since an `i : Fin (n - 1)` exists exactly when `2 ≤ n`, this says that
+the Burau representation is nontrivial for `2 ≤ n` over a nontrivial ring. -/
+theorem burauMatrix_ne_one [Nontrivial R] (t : R) (i : Fin (n - 1)) : burauMatrix t i ≠ 1 := by
+  intro h
+  have hentry := congrArg (fun M : Matrix (Fin n) (Fin n) R =>
+    M (BraidGroup.strandSucc i) (BraidGroup.strand i)) h
+  rw [burauMatrix_apply_strandSucc_strand,
+    Matrix.one_apply_ne (BraidGroup.strand_ne_strandSucc i).symm] at hentry
+  exact one_ne_zero hentry
+
+end Ring
+
+section CommRing
+
+variable [CommRing R]
 
 /-- Multiplying two elementary Burau matrices: the two rank-one parts survive, and their product
 contributes a single further rank-one matrix. -/
@@ -286,17 +309,6 @@ theorem det_burauMatrix (t : R) (i : Fin (n - 1)) : (burauMatrix t i).det = -t :
   rw [h, vecMulVec_eq Unit, det_one_add_replicateCol_mul_replicateRow, dotProduct_neg,
     burauRow_dotProduct_burauCol_self]
   ring
-
-/-- An elementary Burau matrix is never the identity: the entry at which the two crossed strands
-meet is `1` rather than `0`. Since an `i : Fin (n - 1)` exists exactly when `2 ≤ n`, this says that
-the Burau representation is nontrivial for `2 ≤ n` over a nontrivial ring. -/
-theorem burauMatrix_ne_one [Nontrivial R] (t : R) (i : Fin (n - 1)) : burauMatrix t i ≠ 1 := by
-  intro h
-  have hentry := congrArg (fun M : Matrix (Fin n) (Fin n) R =>
-    M (BraidGroup.strandSucc i) (BraidGroup.strand i)) h
-  rw [burauMatrix_apply_strandSucc_strand,
-    Matrix.one_apply_ne (BraidGroup.strand_ne_strandSucc i).symm] at hentry
-  exact one_ne_zero hentry
 
 /-! ### The Burau representation -/
 
@@ -477,5 +489,7 @@ theorem vecMul_burau_geom (t : Rˣ) (b : BraidGroup n) :
     (fun k : Fin n => (t : R) ^ (k : ℕ)) ᵥ* (burau n t b : Matrix (Fin n) (Fin n) R) =
       fun k : Fin n => (t : R) ^ (k : ℕ) :=
   vecMul_burau_of_forall (fun i => vecMul_burauMatrix_geom (t : R) i) b
+
+end CommRing
 
 end TauCeti.KnotTheory
