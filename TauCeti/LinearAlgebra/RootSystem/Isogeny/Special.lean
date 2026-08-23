@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.SpecialMap
@@ -131,8 +130,9 @@ rescaling exponent needs no table of its own: the pinned datum is tabulated on i
 indices, so the squared-length table `TauCeti.DynkinType.g2Length` already is it. -/
 def g2SpecialIsogeny :
     RootPairingIsogeny g2SimplyConnectedRootDatum g2SimplyConnectedRootDatum :=
-  RootPairingIsogeny.ofMatrix _ g2SimplyConnectedRootDatum_toLinearMap g2SpecialIsogenyMatrix
-    g2SpecialIsogenyIndexEquiv g2Length g2Length_pos
+  RootPairingIsogeny.ofMatrix _ _ g2SimplyConnectedRootDatum_toLinearMap
+    g2SimplyConnectedRootDatum_toLinearMap g2SpecialIsogenyMatrix g2SpecialIsogenyIndexEquiv
+    g2Length g2Length_pos
     (by rw [det_g2SpecialIsogenyMatrix]; norm_num)
     g2SpecialIsogenyMatrix_mulVec_root
     g2SpecialIsogenyMatrix_transpose_mulVec_coroot
@@ -207,8 +207,9 @@ rescaling exponent needs no table of its own: the pinned datum is tabulated on i
 indices, so the squared-length table `TauCeti.DynkinType.f4Length` already is it. -/
 noncomputable def f4SpecialIsogeny :
     RootPairingIsogeny f4SimplyConnectedRootDatum f4SimplyConnectedRootDatum :=
-  RootPairingIsogeny.ofMatrix _ f4SimplyConnectedRootDatum_toLinearMap_apply_apply
-    f4SpecialIsogenyMatrix f4SpecialIsogenyIndexEquiv f4Length f4Length_pos
+  RootPairingIsogeny.ofMatrix _ _ f4SimplyConnectedRootDatum_toLinearMap_apply_apply
+    f4SimplyConnectedRootDatum_toLinearMap_apply_apply f4SpecialIsogenyMatrix
+    f4SpecialIsogenyIndexEquiv f4Length f4Length_pos
     (by rw [det_f4SpecialIsogenyMatrix]; norm_num)
     f4SpecialIsogenyMatrix_mulVec_root
     f4SpecialIsogenyMatrix_transpose_mulVec_coroot

@@ -31,7 +31,8 @@ coweightMap (Q.coroot (indexEquiv i)) = exponent i • P.coroot i.
 ```
 
 Both lattice maps are required to be injective with finite-index image. At `exponent = 1` the root
-and coroot equations are those of a `RootPairing.Hom`, and
+and coroot equations are those of a `RootPairing.Hom`,
+`TauCeti.RootPairingIsogeny.toHom` performs that conversion, and
 `TauCeti.RootPairingIsogeny.ofEquiv` turns a `RootPairing.Equiv` into an isogeny. The transpose
 condition is stated as the
 bilinear identity `Q.toLinearMap (weightMap x) y = P.toLinearMap x (coweightMap y)`, which is the
@@ -60,8 +61,10 @@ isogeny, which is what makes `f.comp f = smulId P p` the root-datum form of the 
 * `TauCeti.RootPairingIsogeny`: an isogeny of root pairings.
 * `TauCeti.RootPairingIsogeny.comp`: the composite of two isogenies.
 * `TauCeti.RootPairingIsogeny.smulId`: multiplication by a scalar, as an isogeny.
-* `TauCeti.RootPairingIsogeny.ofMatrix`: an isogeny of a root datum on coordinate lattices,
+* `TauCeti.RootPairingIsogeny.ofMatrix`: an isogeny between root data on coordinate lattices,
   presented by an integer matrix.
+* `TauCeti.RootPairingIsogeny.toHom`: an isogeny with constant exponent `1` as a root-pairing
+  morphism.
 * `TauCeti.RootPairingIsogeny.ofEquiv`: an equivalence of root pairings is an isogeny with all
   exponents `1`.
 
@@ -128,6 +131,33 @@ attribute [simp] RootPairingIsogeny.root_weightMap RootPairingIsogeny.coroot_cow
 namespace RootPairingIsogeny
 
 variable {P : RootPairing ι R M N} {Q : RootPairing ι₂ R M₂ N₂} {S : RootPairing ι₃ R M₃ N₃}
+
+/-- An isogeny whose exponents are all `1`, as a morphism of root pairings. -/
+def toHom (f : RootPairingIsogeny P Q) (h : ∀ i, f.exponent i = 1) : RootPairing.Hom P Q where
+  weightMap := f.weightMap
+  coweightMap := f.coweightMap
+  indexEquiv := f.indexEquiv
+  weight_coweight_transpose := by
+    ext y x
+    exact f.weight_coweight_transpose x y
+  root_weightMap := by
+    ext i
+    simp [f.root_weightMap, h i]
+  coroot_coweightMap := by
+    ext i
+    simpa [h] using f.coroot_coweightMap (f.indexEquiv.symm i)
+
+@[simp] theorem toHom_weightMap (f : RootPairingIsogeny P Q) (h : ∀ i, f.exponent i = 1) :
+    (toHom f h).weightMap = f.weightMap := by
+  rw [toHom]
+
+@[simp] theorem toHom_coweightMap (f : RootPairingIsogeny P Q) (h : ∀ i, f.exponent i = 1) :
+    (toHom f h).coweightMap = f.coweightMap := by
+  rw [toHom]
+
+@[simp] theorem toHom_indexEquiv (f : RootPairingIsogeny P Q) (h : ∀ i, f.exponent i = 1) :
+    (toHom f h).indexEquiv = f.indexEquiv := by
+  rw [toHom]
 
 /-- The exponents of an isogeny intertwine the Cartan matrices of its source and target. -/
 theorem exponent_mul_pairing (f : RootPairingIsogeny P Q) (i j : ι) :
@@ -291,17 +321,19 @@ private lemma matrix_mulVecLin_finiteIndex_of_det_ne_zero
     rw [map_neg, Matrix.mulVecLin_apply, Matrix.mulVec_cramer, ← neg_smul]
     exact congrArg (· • x) (Int.ofNat_natAbs_of_nonpos hdet).symm
 
-/-- An isogeny of a root datum on the coordinate lattices `Fin n → ℤ` with the dot-product
-pairing, presented by the integer matrix acting on the character lattice. The map on the
-cocharacter lattice is the transposed matrix, which is what the transpose condition forces.
+/-- An isogeny between root data on the coordinate lattices `Fin n → ℤ` with the
+dot-product pairing, presented by the integer matrix acting on the character lattice. The map on
+the cocharacter lattice is the transposed matrix, which is what the transpose condition forces.
 Nonvanishing of the determinant supplies injectivity and finite-index image for both maps. -/
 def ofMatrix (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
-    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
-    (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
+    (Q : RootDatum ι₂ (Fin n → ℤ) (Fin n → ℤ))
+    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y)
+    (hQ : ∀ x y : Fin n → ℤ, Q.toLinearMap x y = x ⬝ᵥ y)
+    (A : Matrix (Fin n) (Fin n) ℤ) (e : ι ≃ ι₂) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
     (hA : A.det ≠ 0)
-    (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
-    (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
-    RootPairingIsogeny P P where
+    (hroot : ∀ i, A *ᵥ P.root i = c i • Q.root (e i))
+    (hcoroot : ∀ i, Aᵀ *ᵥ Q.coroot (e i) = c i • P.coroot i) :
+    RootPairingIsogeny P Q where
   weightMap := A.mulVecLin
   coweightMap := Aᵀ.mulVecLin
   indexEquiv := e
@@ -312,45 +344,53 @@ def ofMatrix (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
   weightMap_finiteIndex := matrix_mulVecLin_finiteIndex_of_det_ne_zero A hA
   coweightMap_finiteIndex := matrix_mulVecLin_finiteIndex_of_det_ne_zero Aᵀ (by simpa using hA)
   weight_coweight_transpose x y := by
-    rw [hP, hP, Matrix.mulVecLin_apply, Matrix.mulVecLin_apply]
+    rw [hQ, hP, Matrix.mulVecLin_apply, Matrix.mulVecLin_apply]
     exact (dotProduct_comm _ _).trans (dotProduct_transpose_mulVec A x y).symm
   root_weightMap := hroot
   coroot_coweightMap := hcoroot
 
 @[simp] theorem ofMatrix_weightMap (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
-    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
-    (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
+    (Q : RootDatum ι₂ (Fin n → ℤ) (Fin n → ℤ))
+    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y)
+    (hQ : ∀ x y : Fin n → ℤ, Q.toLinearMap x y = x ⬝ᵥ y)
+    (A : Matrix (Fin n) (Fin n) ℤ) (e : ι ≃ ι₂) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
     (hA : A.det ≠ 0)
-    (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
-    (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
-    (ofMatrix P hP A e c hc hA hroot hcoroot).weightMap = A.mulVecLin := by
+    (hroot : ∀ i, A *ᵥ P.root i = c i • Q.root (e i))
+    (hcoroot : ∀ i, Aᵀ *ᵥ Q.coroot (e i) = c i • P.coroot i) :
+    (ofMatrix P Q hP hQ A e c hc hA hroot hcoroot).weightMap = A.mulVecLin := by
   rw [ofMatrix]
 
 @[simp] theorem ofMatrix_coweightMap (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
-    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
-    (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
+    (Q : RootDatum ι₂ (Fin n → ℤ) (Fin n → ℤ))
+    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y)
+    (hQ : ∀ x y : Fin n → ℤ, Q.toLinearMap x y = x ⬝ᵥ y)
+    (A : Matrix (Fin n) (Fin n) ℤ) (e : ι ≃ ι₂) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
     (hA : A.det ≠ 0)
-    (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
-    (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
-    (ofMatrix P hP A e c hc hA hroot hcoroot).coweightMap = Aᵀ.mulVecLin := by
+    (hroot : ∀ i, A *ᵥ P.root i = c i • Q.root (e i))
+    (hcoroot : ∀ i, Aᵀ *ᵥ Q.coroot (e i) = c i • P.coroot i) :
+    (ofMatrix P Q hP hQ A e c hc hA hroot hcoroot).coweightMap = Aᵀ.mulVecLin := by
   rw [ofMatrix]
 
 @[simp] theorem ofMatrix_indexEquiv (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
-    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
-    (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
+    (Q : RootDatum ι₂ (Fin n → ℤ) (Fin n → ℤ))
+    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y)
+    (hQ : ∀ x y : Fin n → ℤ, Q.toLinearMap x y = x ⬝ᵥ y)
+    (A : Matrix (Fin n) (Fin n) ℤ) (e : ι ≃ ι₂) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
     (hA : A.det ≠ 0)
-    (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
-    (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) :
-    (ofMatrix P hP A e c hc hA hroot hcoroot).indexEquiv = e := by
+    (hroot : ∀ i, A *ᵥ P.root i = c i • Q.root (e i))
+    (hcoroot : ∀ i, Aᵀ *ᵥ Q.coroot (e i) = c i • P.coroot i) :
+    (ofMatrix P Q hP hQ A e c hc hA hroot hcoroot).indexEquiv = e := by
   rw [ofMatrix]
 
 @[simp] theorem ofMatrix_exponent (P : RootDatum ι (Fin n → ℤ) (Fin n → ℤ))
-    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y) (A : Matrix (Fin n) (Fin n) ℤ)
-    (e : Equiv.Perm ι) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
+    (Q : RootDatum ι₂ (Fin n → ℤ) (Fin n → ℤ))
+    (hP : ∀ x y : Fin n → ℤ, P.toLinearMap x y = x ⬝ᵥ y)
+    (hQ : ∀ x y : Fin n → ℤ, Q.toLinearMap x y = x ⬝ᵥ y)
+    (A : Matrix (Fin n) (Fin n) ℤ) (e : ι ≃ ι₂) (c : ι → ℤ) (hc : ∀ i, 0 < c i)
     (hA : A.det ≠ 0)
-    (hroot : ∀ i, A *ᵥ P.root i = c i • P.root (e i))
-    (hcoroot : ∀ i, Aᵀ *ᵥ P.coroot (e i) = c i • P.coroot i) (i : ι) :
-    (ofMatrix P hP A e c hc hA hroot hcoroot).exponent i = c i := by
+    (hroot : ∀ i, A *ᵥ P.root i = c i • Q.root (e i))
+    (hcoroot : ∀ i, Aᵀ *ᵥ Q.coroot (e i) = c i • P.coroot i) (i : ι) :
+    (ofMatrix P Q hP hQ A e c hc hA hroot hcoroot).exponent i = c i := by
   rw [ofMatrix]
 
 end Coordinates
