@@ -51,18 +51,14 @@ open scoped ENNReal
 variable {α : Type*} [MeasurableSpace α] {F : Type*} [NormedAddCommGroup F] (𝕜 : Type*)
   [NormedRing 𝕜] [Module 𝕜 F] [IsBoundedSMul 𝕜 F] {p : ℝ≥0∞} {μ : Measure α} {s t : Set α}
 
-/-- **Extension by zero preserves `Lᵖ` membership**: Mathlib's
-`MeasureTheory.memLp_indicator_iff_restrict` against `μ.restrict t`, followed by
-`MeasureTheory.Measure.restrict_restrict_of_subset`.  It is needed as a *term* at each of the
-three places where the extension is built or computed, so it is named rather than inlined. -/
+/-- Extending by zero from `s` to `t` preserves `Lᵖ` membership when `s ⊆ t`. -/
 private theorem memLp_indicator_restrict (hs : MeasurableSet s) (hst : s ⊆ t)
     {g : α → F} (hg : MemLp g p (μ.restrict s)) : MemLp (s.indicator g) p (μ.restrict t) := by
   rw [memLp_indicator_iff_restrict hs, Measure.restrict_restrict_of_subset hst]
   exact hg
 
-/-- Transporting an almost-everywhere identity on `s` to the indicators, against `μ.restrict t`:
-Mathlib's `MeasureTheory.ae_eq_restrict_iff_indicator_ae_eq` gives the identity against `μ`, and
-`μ.restrict t` is absolutely continuous with respect to `μ`. -/
+/-- An almost-everywhere identity on `s` remains true after taking indicators, against
+`μ.restrict t`. -/
 private theorem indicator_ae_eq (hs : MeasurableSet s) {g h : α → F}
     (hgh : g =ᵐ[μ.restrict s] h) : s.indicator g =ᵐ[μ.restrict t] s.indicator h :=
   ((ae_eq_restrict_iff_indicator_ae_eq hs).mp hgh).filter_mono (ae_mono Measure.restrict_le_self)

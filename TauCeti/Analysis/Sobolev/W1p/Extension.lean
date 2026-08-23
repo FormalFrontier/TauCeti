@@ -172,15 +172,8 @@ theorem Sobolev1JetLp.extendByZeroₗᵢ_ofTestFunctionₗ (hsub : Omega ≤ Ome
 
 /-! ### The extension theorem -/
 
-/-- The closed-set argument behind the extension theorem.  It runs in the ambient jet space, so
-its conclusion is membership in the *image* of `W^{1,p}_0(Ω')` there; the two usable forms are
-`TauCeti.Sobolev1JetLp.extendByZeroₗᵢ_mem_w1pSubmodule` and
-`TauCeti.mem_w1p0Submodule_of_coe_eq`, the latter being what makes
-`TauCeti.W1p0.extendByZeroL` land in `W^{1,p}_0(Ω')`.
-
-Being closed is what the image contributes: `W^{1,p}_0(Ω')` is closed in `W^{1,p}(Ω')`, which is
-closed in the jet space, so the image is closed and its preimage under the (continuous) extension
-contains the whole of `W^{1,p}_0(Ω)` as soon as it contains every test function. -/
+/-- The zero-extension of a `W^{1,p}_0(Ω)` function belongs to the image of
+`W^{1,p}_0(Ω')` in the ambient jet space. -/
 private theorem extendByZero_mem_image (hsub : Omega ≤ Omega') {u : W1p mu Omega p}
     (hu : u ∈ w1p0Submodule mu Omega p) :
     Sobolev1JetLp.extendByZeroₗᵢ hsub (u : Sobolev1JetLp mu Omega p) ∈
@@ -257,6 +250,7 @@ theorem W1p0.extendByZeroL_extendByZeroL (hsub : Omega ≤ Omega') (hsub' : Omeg
 /-- **Extension by zero is an isometry of Sobolev spaces.**  The `W^{1,p}` norm — the `Lᵖ` norm
 of the value-gradient jet — is unchanged; the extension adds a region on which both components
 vanish. -/
+@[simp]
 theorem W1p0.norm_extendByZeroL (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
     ‖W1p0.extendByZeroL hsub u‖ = ‖u‖ :=
   (Sobolev1JetLp.extendByZeroₗᵢ hsub).norm_map _
