@@ -354,39 +354,22 @@ private theorem kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIs
       kostantGeneratedDefiningIdeal e h ρ M hM hnil b := by
   let c := kostantNumberedSymmetryCoordinateIso M b θ hθM
   let J := kostantGeneratedDefiningIdeal e h ρ M hM hnil b
+  -- `kostantGeneratedDefiningIdeal` is not exposed, so name the family the containment is about
+  have hfam : J = CommHopfAlgCat.commonKernelHopfIdeal
+      (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) :=
+    kostantGeneratedDefiningIdeal_def e h ρ M hM hnil b
+  -- the automorphism intertwines the family along a section of `σ`, its inverse along `σ` itself
   have hhom : J.comap c.hom.hom (ConcreteCategory.bijective_of_isIso c.hom).2 ≤ J := by
-    rw [le_kostantGeneratedDefiningIdeal_iff]
-    intro i
-    obtain ⟨j, rfl⟩ := hσ i
-    intro x hx
-    rw [RingHom.mem_ker]
-    have hzero := RingHom.mem_ker.mp
-      (kostantGeneratedDefiningIdeal_toIdeal_le_ker
-        e h ρ M hM hnil b j (HopfIdeal.mem_comap.mp hx))
-    have hcomp := congrArg
-      (fun f : GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
-          AdditiveGroup.coordinateHopfAlgebra ℤ => f.hom x)
-      (kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
-        e h ρ M hM hnil b σ θ hθM hθe j)
-    rw [_root_.CommHopfAlgCat.comp_apply] at hcomp
-    exact hcomp.symm.trans hzero
-  have hinv_root (i : I) : c.inv ≫
-        kostantRootSubgroupCoordinateMap e h ρ M hM (σ i) (hnil (σ i)) b =
-      kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b := by
+    rw [hfam]
+    refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq _ c.hom _
+      (Function.surjInv hσ) fun i => ?_
+    rw [kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
+      e h ρ M hM hnil b σ θ hθM hθe (Function.surjInv hσ i), Function.surjInv_eq hσ i]
+  have hinv : J.comap c.inv.hom (ConcreteCategory.bijective_of_isIso c.inv).2 ≤ J := by
+    rw [hfam]
+    refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq _ c.inv _ σ fun i => ?_
     rw [← kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
       e h ρ M hM hnil b σ θ hθM hθe i, Iso.inv_hom_id_assoc]
-  have hinv : J.comap c.inv.hom (ConcreteCategory.bijective_of_isIso c.inv).2 ≤ J := by
-    rw [le_kostantGeneratedDefiningIdeal_iff]
-    intro i x hx
-    rw [RingHom.mem_ker]
-    have hzero := RingHom.mem_ker.mp
-      (kostantGeneratedDefiningIdeal_toIdeal_le_ker
-        e h ρ M hM hnil b (σ i) (HopfIdeal.mem_comap.mp hx))
-    have hcomp := congrArg
-      (fun f : GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
-          AdditiveGroup.coordinateHopfAlgebra ℤ => f.hom x) (hinv_root i)
-    rw [_root_.CommHopfAlgCat.comp_apply] at hcomp
-    exact hcomp.symm.trans hzero
   apply le_antisymm hhom
   intro x hx
   rw [HopfIdeal.mem_comap]

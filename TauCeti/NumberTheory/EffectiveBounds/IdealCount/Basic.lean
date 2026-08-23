@@ -12,6 +12,7 @@ public import Mathlib.NumberTheory.ZetaValues
 public import Mathlib.RingTheory.Ideal.Int
 public import Mathlib.RingTheory.RamificationInertia.Basic
 import Mathlib.Data.Set.Card.Arithmetic
+import TauCeti.NumberTheory.NumberField.PrimeIdeal
 
 /-!
 # An effective count of ideals of bounded norm
@@ -183,24 +184,6 @@ private theorem mem_primesOverFinset_under {P : Ideal (𝓞 F)} (hP : P.IsPrime)
   · exact Ideal.under_ne_bot (A := ℤ) hP0
 
 /-
-[foundational] At most `[F:ℚ]` primes of `𝓞 F` lie over a given nonzero prime of `ℤ`, since
-each contributes a positive `ramificationIdx * inertiaDeg` to the sum `[F:ℚ]`.
--/
-private theorem card_primesOverFinset_le_finrank {p : Ideal ℤ} [p.IsMaximal] (hp0 : p ≠ ⊥) :
-    (IsDedekindDomain.primesOverFinset p (𝓞 F)).card ≤ Module.finrank ℚ F :=
-  calc (IsDedekindDomain.primesOverFinset p (𝓞 F)).card
-      = ∑ _q : p.primesOver (𝓞 F), 1 := by
-        rw [Finset.sum_const, smul_eq_mul, mul_one, Finset.card_univ,
-          ← Nat.card_eq_fintype_card, Nat.card_coe_set_eq,
-          ← IsDedekindDomain.coe_primesOverFinset hp0 (𝓞 F), Set.ncard_coe_finset]
-    _ ≤ ∑ q : p.primesOver (𝓞 F), q.1.ramificationIdx ℤ * q.1.inertiaDeg ℤ :=
-        Finset.sum_le_sum fun q _ => Nat.one_le_iff_ne_zero.mpr
-          (Nat.mul_ne_zero (Ideal.ramificationIdx_pos q.1 ℤ).ne'
-            (Ideal.inertiaDeg_pos q.1 ℤ).ne')
-    _ = Module.finrank ℤ (𝓞 F) := Ideal.sum_ramification_inertia_eq_finrank p (𝓞 F)
-    _ = Module.finrank ℚ F := NumberField.RingOfIntegers.rank F
-
-/-
 [foundational] The coordinate of a nonzero prime ideal is `< [F:ℚ]`.
 -/
 private theorem primeCoord_lt {P : Ideal (𝓞 F)} (hP : P.IsPrime) (hP0 : P ≠ ⊥) :
@@ -213,7 +196,8 @@ private theorem primeCoord_lt {P : Ideal (𝓞 F)} (hP : P.IsPrime) (hP0 : P ≠
         exact List.idxOf_lt_length_iff.mpr
           (Finset.mem_toList.mpr (mem_primesOverFinset_under F hP hP0))
     _ = (IsDedekindDomain.primesOverFinset (Ideal.under ℤ P) (𝓞 F)).card := Finset.length_toList _
-    _ ≤ Module.finrank ℚ F := card_primesOverFinset_le_finrank F hp0
+    _ ≤ Module.finrank ℚ F :=
+      TauCeti.NumberField.card_primesOverFinset_le_finrank (K := F) hp0
 
 /-
 [foundational] `absNormUnder` injectivity: equal `absNormUnder` means the primes lie

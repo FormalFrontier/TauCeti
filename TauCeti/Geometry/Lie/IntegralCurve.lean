@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Geometry.Manifold.IntegralCurve.UniformTime
-public import TauCeti.Geometry.Manifold.IntegralCurve
+public import TauCeti.Geometry.Manifold.IntegralCurve.Basic
 public import TauCeti.Geometry.Lie.InvariantVectorField.Basic
 
 /-!
