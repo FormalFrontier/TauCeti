@@ -411,6 +411,11 @@ noncomputable def ofPath (x : Quiver.TotalPath Q) : pathAlgebra k Q :=
 theorem ofPath_eq_single (x : Quiver.TotalPath Q) :
     (ofPath x : pathAlgebra k Q) = single x 1 := (rfl)
 
+/-- A basis path carrying a coefficient is that coefficient acting on the basis element. -/
+theorem single_eq_smul_ofPath (x : Quiver.TotalPath Q) (c : k) :
+    (single x c : pathAlgebra k Q) = c • ofPath x := by
+  rw [ofPath_eq_single, smul_single, mul_one]
+
 /-- Two composable paths multiply to their concatenation, later factor first. -/
 @[simp]
 theorem ofPath_mul_ofPath_of_comp {a b c : Q} (p : _root_.Quiver.Path a b)
@@ -697,20 +702,23 @@ section Lift
 variable (k : Type w) {Q : Type u} {B : Type*} [CommSemiring k] [Quiver.{v} Q]
   [Semiring B] [Algebra k B] (F : Quiver.TotalPath Q → B)
 
-/-- The `k`-linear map extending an assignment of algebra elements to the basis paths. Private:
-only its algebra-homomorphism upgrade `TauCeti.PathAlgebra.liftAlgHom` is public. -/
-private noncomputable def liftLinear : pathAlgebra k Q →ₗ[k] B :=
+/-- The `k`-linear map extending an assignment of algebra elements to the basis paths. Its
+algebra-homomorphism upgrade, available when the assignment is multiplicative, is
+`TauCeti.PathAlgebra.liftAlgHom`. -/
+noncomputable def liftLinear : pathAlgebra k Q →ₗ[k] B :=
   (pathAlgebraBasis k Q).constr k F
 
-private theorem liftLinear_ofPath (x : Quiver.TotalPath Q) : liftLinear k F (ofPath x) = F x := by
+/-- The linear extension of an assignment agrees with it on the basis paths. -/
+@[simp]
+theorem liftLinear_ofPath (x : Quiver.TotalPath Q) : liftLinear k F (ofPath x) = F x := by
   have h := (pathAlgebraBasis k Q).constr_basis k F x
   rwa [coe_pathAlgebraBasis] at h
 
-private theorem liftLinear_single (x : Quiver.TotalPath Q) (c : k) :
+/-- The linear extension of an assignment on a basis path with a coefficient. -/
+@[simp]
+theorem liftLinear_single (x : Quiver.TotalPath Q) (c : k) :
     liftLinear k F (single x c) = c • F x := by
-  have hx : (single x c : pathAlgebra k Q) = c • ofPath x := by
-    rw [ofPath_eq_single, smul_single, mul_one]
-  rw [hx, map_smul, liftLinear_ofPath]
+  rw [single_eq_smul_ofPath, map_smul, liftLinear_ofPath]
 
 variable (hcomp : ∀ {a b c : Q} (p : _root_.Quiver.Path a b) (q : _root_.Quiver.Path c a),
     F ⟨a, b, p⟩ * F ⟨c, a, q⟩ = F ⟨c, b, q.comp p⟩)
