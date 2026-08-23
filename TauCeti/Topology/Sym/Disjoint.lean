@@ -10,7 +10,7 @@ public import TauCeti.Data.Sym.Disjoint
 public import TauCeti.Topology.Sym.Basic
 
 /-!
-# The symmetric power is locally a product
+# Disjoint open embeddings into a symmetric power
 
 Given open embeddings with pairwise disjoint ranges, ordered tuples mapped pointwise through those
 embeddings embed openly as unordered tuples. In particular, given pairwise disjoint open
@@ -24,8 +24,9 @@ distinct points `z₁, …, z_k` of multiplicities `n₁, …, n_k` is a product
 `Sym^{n_j}` of disjoint coordinate discs, each of which is an open subspace of affine space by
 `TauCeti.Sym.isOpenEmbedding_coeffEquiv_comp_map`. Lane F4.1 of the analytic Heegaard Floer
 roadmap needs exactly this to give `Sym^g(Σ)` its complex structure, after Ozsváth--Szabó
-([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1); the charts themselves are in
-`TauCeti/Analysis/Polynomial/SymmetricPower.lean`. Family-level concatenation along disjoint open
+([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1). The coefficient homeomorphism
+is in `TauCeti/Analysis/Polynomial/SymmetricPower.lean`, while the charts and charted structure are
+in `TauCeti/Geometry/Manifold/SymmetricPower.lean`. Family-level concatenation along disjoint open
 sets, and the Hausdorff separation producing the family that a given tuple needs, are in
 `TauCeti/Topology/Sym/Family.lean`.
 

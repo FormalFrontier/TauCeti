@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.Fintype.BigOperators
 public import Mathlib.Topology.Homeomorph.Lemmas
 
 /-!
@@ -13,19 +12,18 @@ public import Mathlib.Topology.Homeomorph.Lemmas
 
 A family of spaces indexed by a sigma type has the same sections as the curried family: the
 equivalence `Equiv.piCurry` is a homeomorphism for the product topologies. Composing it with a
-bijection `(Σ i, Fin (m i)) ≃ Fin n`, available whenever the degrees `m i` add up to `n`, presents
-an `n`-tuple of points of a fixed space as a family of `m i`-tuples.
+bijection between the sigma index and another index presents a tuple as a family of tuples.
 
 Mathlib has `Homeomorph.piCurry` for a *product* index `X × Y`; the sigma-indexed version below is
-what a decomposition `n = ∑ i, m i` with varying `m i` needs.
+what a varying family of index types needs.
 
 ## Main declarations
 
 * `TauCeti.piCurryHomeomorph`: `Equiv.piCurry` as a homeomorphism.
 * `TauCeti.piSigmaHomeomorph`: reindex a curried dependent family along an equivalence from its
   sigma index.
-* `TauCeti.piFinSumHomeomorph`: along an explicit equivalence `(Σ i, Fin (m i)) ≃ Fin n`, a
-  homeomorphism between families of `m i`-tuples and `n`-tuples.
+* `TauCeti.piSigmaConstHomeomorph`: along an explicit equivalence from a sigma index, a
+  homeomorphism between a family of tuples and a tuple in a fixed space.
 -/
 
 public section
@@ -67,25 +65,27 @@ theorem piSigmaHomeomorph_apply {ι : Type*} {κ : ι → Type*} (Z : ι → Typ
     piSigmaHomeomorph Z e f j = f (e.symm j).1 (e.symm j).2 :=
   (rfl)
 
-/-- **Regrouping a tuple.** An explicit bijection `(Σ i, Fin (m i)) ≃ Fin n` identifies a family
-of `m i`-tuples of points of `Y` with an `n`-tuple of points of `Y`. -/
-def piFinSumHomeomorph (Y : Type*) [TopologicalSpace Y] {ι : Type*} {m : ι → ℕ} {n : ℕ}
-    (e : (Σ i, Fin (m i)) ≃ Fin n) : (∀ i, Fin (m i) → Y) ≃ₜ (Fin n → Y) :=
+/- **Regrouping a tuple in a fixed space.** An explicit bijection from a sigma type to another
+index type identifies a family of tuples of points of `Y` with one tuple of points of `Y`. -/
+def piSigmaConstHomeomorph (Y : Type*) [TopologicalSpace Y] {ι : Type*} {κ : ι → Type*}
+    {ι' : Type*} (e : (Σ i, κ i) ≃ ι') : (∀ i, κ i → Y) ≃ₜ (ι' → Y) :=
   piSigmaHomeomorph (fun _ : ι => Y) e
 
 @[simp]
-theorem piFinSumHomeomorph_apply (Y : Type*) [TopologicalSpace Y] {ι : Type*} {m : ι → ℕ}
-    {n : ℕ} (e : (Σ i, Fin (m i)) ≃ Fin n) (f : ∀ i, Fin (m i) → Y) (j : Fin n) :
-    piFinSumHomeomorph Y e f j = f (e.symm j).1 (e.symm j).2 :=
+theorem piSigmaConstHomeomorph_apply (Y : Type*) [TopologicalSpace Y] {ι : Type*}
+    {κ : ι → Type*} {ι' : Type*} (e : (Σ i, κ i) ≃ ι') (f : ∀ i, κ i → Y) (j : ι') :
+    piSigmaConstHomeomorph Y e f j = f (e.symm j).1 (e.symm j).2 :=
   (rfl)
 
 @[simp]
-theorem piFinSumHomeomorph_symm_apply (Y : Type*) [TopologicalSpace Y] {ι : Type*} {m : ι → ℕ}
-    {n : ℕ} (e : (Σ i, Fin (m i)) ≃ Fin n) (f : Fin n → Y) (i : ι) (j : Fin (m i)) :
-    (piFinSumHomeomorph Y e).symm f i j = f (e ⟨i, j⟩) :=
-  by
-    change (Homeomorph.piCongrLeft (Y := fun _ : (Σ i, Fin (m i)) => Y) e.symm) f ⟨i, j⟩ = _
-    simpa using Homeomorph.piCongrLeft_apply_apply
-      (Y := fun _ : (Σ i, Fin (m i)) => Y) e.symm f (e ⟨i, j⟩)
+theorem piSigmaConstHomeomorph_symm_apply (Y : Type*) [TopologicalSpace Y] {ι : Type*}
+    {κ : ι → Type*} {ι' : Type*} (e : (Σ i, κ i) ≃ ι') (f : ι' → Y) (i : ι)
+    (j : κ i) : (piSigmaConstHomeomorph Y e).symm f i j = f (e ⟨i, j⟩) := by
+  have h : (piSigmaConstHomeomorph Y e).symm f = fun i j => f (e ⟨i, j⟩) := by
+    rw [Homeomorph.symm_apply_eq]
+    funext k
+    rw [piSigmaConstHomeomorph_apply]
+    exact congrArg f (e.apply_symm_apply k).symm
+  exact congrFun (congrFun h i) j
 
 end TauCeti

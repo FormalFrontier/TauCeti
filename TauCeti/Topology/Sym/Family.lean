@@ -89,14 +89,10 @@ private theorem sumSubtype_comp_piMap_ofFn (hn : ∑ i, m i = n) (e : (Σ i, Fin
       = ofFn ∘ regroup U m e :=
   funext fun f => sumSubtype_ofFn hn e f
 
-private theorem exists_sigmaFinEquiv (hn : ∑ i, m i = n) :
-    Nonempty ((Σ i, Fin (m i)) ≃ Fin n) :=
-  ⟨Fintype.equivFinOfCardEq (by simpa using hn)⟩
-
 /-- Concatenating unordered tuples of points of the members of a family is continuous. -/
 @[continuity, fun_prop]
 theorem continuous_sumSubtype (hn : ∑ i, m i = n) : Continuous (sumSubtype U m hn) := by
-  obtain ⟨e⟩ := exists_sigmaFinEquiv hn
+  obtain ⟨e⟩ := nonempty_sigmaFinEquiv hn
   rw [isOpenQuotientMap_piMap_ofFn.isQuotientMap.continuous_iff,
     sumSubtype_comp_piMap_ofFn hn e]
   exact continuous_ofFn.comp (continuous_regroup e)
@@ -105,7 +101,7 @@ theorem continuous_sumSubtype (hn : ∑ i, m i = n) : Continuous (sumSubtype U m
 map. -/
 theorem isOpenMap_sumSubtype (hU : ∀ i, IsOpen (U i)) (hn : ∑ i, m i = n) :
     IsOpenMap (sumSubtype U m hn) := by
-  obtain ⟨e⟩ := exists_sigmaFinEquiv hn
+  obtain ⟨e⟩ := nonempty_sigmaFinEquiv hn
   rw [isOpenQuotientMap_piMap_ofFn.isOpenMap_iff, sumSubtype_comp_piMap_ofFn hn e]
   exact isOpenMap_ofFn.comp (isOpenMap_regroup hU e)
 
@@ -147,7 +143,7 @@ theorem exists_mem_range_sumSubtype_of_t2 {α : Type*} [TopologicalSpace α] [T2
     _root_.Sym.mem_coe.1 (Multiset.mem_toFinset.1 i.2)
   have hVdisj : Pairwise (Function.onFun Disjoint V) := fun i j hij =>
     ((hdisj (by simp) (by simp) (Subtype.coe_ne_coe.2 hij)).mono
-      Set.inter_subset_left Set.inter_subset_left :)
+      Set.inter_subset_left Set.inter_subset_left)
   have hm : ∑ i : ↥(w : Multiset α).toFinset,
       Multiset.count (i : α) (w : Multiset α) = n := by
     rw [Finset.sum_coe_sort (w : Multiset α).toFinset

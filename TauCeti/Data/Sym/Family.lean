@@ -6,7 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Data.Fintype.BigOperators
-public import TauCeti.Data.Sym.Disjoint
+public import Mathlib.Data.Multiset.Filter
+public import TauCeti.Data.Sym.Basic
 
 /-!
 # Splitting an unordered tuple along a pairwise disjoint family of sets
@@ -31,7 +32,7 @@ cast.
 
 * `TauCeti.Sym.sumSubtype`: the concatenation of a family of unordered tuples of points of the
   members of the family, as an unordered `n`-tuple of points of `α`.
-* `TauCeti.Sym.filter_mem_coe_sumSubtype` and `TauCeti.Sym.sumSubtype_injective`: for a pairwise
+* `TauCeti.Sym.filter_mem_sumSubtype` and `TauCeti.Sym.sumSubtype_injective`: for a pairwise
   disjoint family the concatenation determines all of its parts.
 * `TauCeti.Sym.mem_range_sumSubtype`: its range consists of the tuples supported in the union of
   the family with exactly `m i` of their points in `U i`.
@@ -48,6 +49,11 @@ namespace Sym
 variable {α ι : Type*} [Fintype ι] {U : ι → Set α} {m : ι → ℕ} {n : ℕ}
 
 /-! ### Ordered tuples and multiplicities -/
+
+/-- A sigma type of finite sets whose cardinalities add up to `n` is equivalent to `Fin n`. -/
+theorem nonempty_sigmaFinEquiv (hn : ∑ i, m i = n) :
+    Nonempty ((Σ i, Fin (m i)) ≃ Fin n) :=
+  ⟨Fintype.equivFinOfCardEq (by simpa using hn)⟩
 
 /-- The multiset underlying an ordered tuple, as a sum of singletons. This is the shape in which
 `TauCeti.Sym.ofFn` meets the sum of multisets defining `TauCeti.Sym.sumSubtype`. -/
@@ -99,7 +105,7 @@ private theorem filter_finsetSum (q : α → Prop) [DecidablePred q] (s : Finset
 
 /-- Filtering a concatenation on membership in `U i` recovers its `i`-th part: the other parts
 contribute nothing, being supported in sets disjoint from `U i`. -/
-theorem filter_mem_coe_sumSubtype [∀ i, DecidablePred (· ∈ U i)]
+theorem filter_mem_sumSubtype [∀ i, DecidablePred (· ∈ U i)]
     (h : Pairwise (Function.onFun Disjoint U)) (hn : ∑ i, m i = n) (p : ∀ i, Sym (U i) (m i))
     (i : ι) :
     Multiset.filter (· ∈ U i) (sumSubtype U m hn p : Multiset α)
@@ -120,7 +126,7 @@ theorem card_filter_mem_sumSubtype [∀ i, DecidablePred (· ∈ U i)]
     (h : Pairwise (Function.onFun Disjoint U)) (hn : ∑ i, m i = n) (p : ∀ i, Sym (U i) (m i))
     (i : ι) :
     Multiset.card (Multiset.filter (· ∈ U i) (sumSubtype U m hn p : Multiset α)) = m i := by
-  rw [filter_mem_coe_sumSubtype h, Multiset.card_map]
+  rw [filter_mem_sumSubtype h, Multiset.card_map]
   exact (p i).2
 
 /-- Concatenation along a pairwise disjoint family is injective: each part of the tuple is
@@ -131,7 +137,7 @@ theorem sumSubtype_injective (h : Pairwise (Function.onFun Disjoint U)) (hn : �
   intro p q hpq
   funext i
   have hfilter := congrArg (fun w : Sym α n => Multiset.filter (· ∈ U i) (w : Multiset α)) hpq
-  rw [filter_mem_coe_sumSubtype h, filter_mem_coe_sumSubtype h] at hfilter
+  rw [filter_mem_sumSubtype h, filter_mem_sumSubtype h] at hfilter
   exact Sym.coe_injective (Multiset.map_injective Subtype.val_injective hfilter)
 
 /-- A tuple supported in the union of a family, with exactly `m i` of its points
