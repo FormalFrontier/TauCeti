@@ -16,10 +16,10 @@ An extended-real transport cost may take negative values, so it cannot be integr
 `lintegral`. If `c : X × Y → EReal` is bounded below by a split function `a x + b y`, with `a`
 and `b` integrable against the two marginals, subtracting that lower bound leaves a nonnegative
 residual. Its `lintegral` is well-defined, and adding back the two fixed marginal integrals gives
-the signed extended cost of a plan.
+the signed extended cost of a coupling.
 
 This file packages the lower-bound hypothesis as `TauCeti.IntegrableSplitLowerBound`, defines the
-cost `TauCeti.planCostBddBelow` of an individual plan, and defines its infimum
+cost `TauCeti.planCostBddBelow` of an individual feasible plan, and defines its infimum
 `TauCeti.transportCostBddBelow`. The main theorem
 `TauCeti.transportCostBddBelow_congr_lowerBound` proves that the value is independent of the
 chosen split lower bound. The specialization
@@ -104,14 +104,16 @@ def ofNonneg (hc : ∀ z, 0 ≤ c z) (μ : Measure X) (ν : Measure Y) :
 
 end IntegrableSplitLowerBound
 
-/-- The signed cost of a plan, normalized using an integrable split lower bound. -/
-def planCostBddBelow (π : Measure (X × Y)) (h : IntegrableSplitLowerBound c μ ν) : EReal :=
+/-- The signed cost of a coupling, normalized using an integrable split lower bound. -/
+def planCostBddBelow (π : Measure (X × Y)) (_hπ : IsCoupling π μ ν)
+    (h : IntegrableSplitLowerBound c μ ν) : EReal :=
   ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
     ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal)
 
-/-- The characteristic formula for the normalized signed cost of a plan. -/
-theorem planCostBddBelow_def (π : Measure (X × Y)) (h : IntegrableSplitLowerBound c μ ν) :
-    planCostBddBelow π h =
+/-- The characteristic formula for the normalized signed cost of a coupling. -/
+theorem planCostBddBelow_def (π : Measure (X × Y)) (hπ : IsCoupling π μ ν)
+    (h : IntegrableSplitLowerBound c μ ν) :
+    planCostBddBelow π hπ h =
       ((∫⁻ z, h.residual z ∂π : ℝ≥0∞) : EReal) +
         ((∫ x, h.fst x ∂μ : ℝ) : EReal) + ((∫ y, h.snd y ∂ν : ℝ) : EReal) :=
   (rfl)
@@ -125,25 +127,25 @@ last two summands are finite real numbers. The value does not depend on `h`; see
 `transportCostBddBelow_congr_lowerBound`. -/
 def transportCostBddBelow (c : X × Y → EReal) (μ : Measure X) (ν : Measure Y)
     (h : IntegrableSplitLowerBound c μ ν) : EReal :=
-  ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν), planCostBddBelow π h
+  ⨅ (π : Measure (X × Y)) (hπ : IsCoupling π μ ν), planCostBddBelow π hπ h
 
 /-- The characteristic formula for the bounded-below signed transport cost. -/
 theorem transportCostBddBelow_def :
     transportCostBddBelow c μ ν h =
-      ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν),
-        planCostBddBelow π h :=
+      ⨅ (π : Measure (X × Y)) (hπ : IsCoupling π μ ν),
+        planCostBddBelow π hπ h :=
   (rfl)
 
 /-- The signed transport cost is bounded above by the normalized cost of every feasible plan. -/
 theorem transportCostBddBelow_le (hπ : IsCoupling π μ ν)
     (h : IntegrableSplitLowerBound c μ ν) :
-    transportCostBddBelow c μ ν h ≤ planCostBddBelow π h :=
+    transportCostBddBelow c μ ν h ≤ planCostBddBelow π hπ h :=
   iInf₂_le π hπ
 
 /-- A lower bound valid for the normalized cost of every coupling bounds the signed transport
 cost from below. -/
 theorem le_transportCostBddBelow {d : EReal} (h : IntegrableSplitLowerBound c μ ν)
-    (hd : ∀ π, IsCoupling π μ ν → d ≤ planCostBddBelow π h) :
+    (hd : ∀ π hπ, d ≤ planCostBddBelow π hπ h) :
     d ≤ transportCostBddBelow c μ ν h :=
   le_iInf₂ hd
 
@@ -193,7 +195,7 @@ private theorem residual_add_lowerBoundParts
 /-- On a coupling, the signed plan cost is independent of the chosen split lower bound. -/
 theorem planCostBddBelow_congr_lowerBound
     (h k : IntegrableSplitLowerBound c μ ν) (hπ : IsCoupling π μ ν) :
-    planCostBddBelow π h = planCostBddBelow π k := by
+    planCostBddBelow π hπ h = planCostBddBelow π hπ k := by
   simp only [planCostBddBelow]
   -- Split the change of normalization into its positive and negative marginal parts.
   let fx : X → ℝ := fun x ↦ h.fst x - k.fst x
