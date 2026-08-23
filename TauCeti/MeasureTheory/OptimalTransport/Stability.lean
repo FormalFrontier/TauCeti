@@ -141,8 +141,8 @@ least the limiting cost `c` of its limit, asymptotically. Quantifying over the r
 is what makes the hypothesis usable after passing to a convergent subfamily, exactly as the
 classical statement quantifies over subsequences. -/
 structure IsCostLiminfStable {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpace X]
-    [BorelSpace X] [TopologicalSpace Y] [MeasurableSpace Y] [BorelSpace Y]
-    [SecondCountableTopologyEither X Y] (l : Filter ι) (cs : ι → X × Y → ℝ≥0∞)
+    [TopologicalSpace Y] [MeasurableSpace Y] [OpensMeasurableSpace (X × Y)]
+    (l : Filter ι) (cs : ι → X × Y → ℝ≥0∞)
     (μs : ι → ProbabilityMeasure X) (νs : ι → ProbabilityMeasure Y) (c : X × Y → ℝ≥0∞) :
     Prop where
   /-- The cost of a weak limit of feasible plans is at most the asymptotic cost of the family. -/
@@ -156,8 +156,8 @@ structure IsCostLiminfStable {ι X Y : Type*} [TopologicalSpace X] [MeasurableSp
 by a weakly convergent family of plans that is eventually feasible for the moving marginals and
 costs no more asymptotically. -/
 structure HasRecoveryPlans {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpace X]
-    [BorelSpace X] [TopologicalSpace Y] [MeasurableSpace Y] [BorelSpace Y]
-    [SecondCountableTopologyEither X Y] (l : Filter ι) (cs : ι → X × Y → ℝ≥0∞)
+    [TopologicalSpace Y] [MeasurableSpace Y] [OpensMeasurableSpace (X × Y)]
+    (l : Filter ι) (cs : ι → X × Y → ℝ≥0∞)
     (μs : ι → ProbabilityMeasure X) (νs : ι → ProbabilityMeasure Y) (c : X × Y → ℝ≥0∞)
     (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y) : Prop where
   /-- Every coupling of the limiting marginals is recovered weakly and from above in cost. -/
@@ -168,8 +168,8 @@ structure HasRecoveryPlans {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpac
         Tendsto πs l (𝓝 π) ∧
         limsup (fun i ↦ ∫⁻ z, cs i z ∂(πs i).toMeasure) l ≤ ∫⁻ z, c z ∂π.toMeasure
 
-variable {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [BorelSpace X]
-  [TopologicalSpace Y] [MeasurableSpace Y] [BorelSpace Y] [SecondCountableTopologyEither X Y]
+variable {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpace X]
+  [TopologicalSpace Y] [MeasurableSpace Y] [OpensMeasurableSpace (X × Y)]
   {cs : ι → X × Y → ℝ≥0∞} {μs : ι → ProbabilityMeasure X} {νs : ι → ProbabilityMeasure Y}
   {c : X × Y → ℝ≥0∞} {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y}
 
@@ -359,8 +359,8 @@ section Upper
 
 /-! The upper bound needs neither compactness nor a Hausdorff space of marginals. -/
 
-variable {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [BorelSpace X]
-  [TopologicalSpace Y] [MeasurableSpace Y] [BorelSpace Y] [SecondCountableTopologyEither X Y]
+variable {ι X Y : Type*} [TopologicalSpace X] [MeasurableSpace X]
+  [TopologicalSpace Y] [MeasurableSpace Y] [OpensMeasurableSpace (X × Y)]
   {l : Filter ι} {μs : ι → ProbabilityMeasure X} {νs : ι → ProbabilityMeasure Y}
   {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y} {cs : ι → X × Y → ℝ≥0∞}
   {c : X × Y → ℝ≥0∞}
@@ -377,8 +377,8 @@ theorem limsup_transportCost_le_transportCost (hrec : HasRecoveryPlans l cs μs 
   exact (limsup_le_limsup (hπs.mono fun i hi ↦ transportCost_le_lintegral hi _)).trans hlim
 
 /-- **Fixed marginals admit recovery plans as soon as the costs do.** When the marginals are
-eventually the limiting ones, a coupling of them is already feasible for every problem in the
-family, so it recovers itself and only the asymptotic cost inequality is left to check. This is the
+eventually the limiting ones, a coupling of them is eventually feasible for the moving problems,
+so it recovers itself and only the asymptotic cost inequality is left to check. This is the
 regime in which nothing but the cost moves, for instance `cs i = c + ε i • d` with `ε i → 0` and `d`
 bounded. -/
 theorem hasRecoveryPlans_of_limsup_le (hμs : ∀ᶠ i in l, μs i = μ) (hνs : ∀ᶠ i in l, νs i = ν)
