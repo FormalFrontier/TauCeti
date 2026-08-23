@@ -232,6 +232,48 @@ theorem burauMatrix_ne_one [Nontrivial R] (t : R) (i : Fin (n - 1)) : burauMatri
     Matrix.one_apply_ne (BraidGroup.strand_ne_strandSucc i).symm] at hentry
   exact one_ne_zero hentry
 
+/-- At `t = 1` an elementary Burau matrix is the permutation matrix of the transposition of the two
+crossed strands. -/
+theorem burauMatrix_one (i : Fin (n - 1)) :
+    burauMatrix (1 : R) i = (BraidGroup.transposition i).permMatrix R := by
+  refine Matrix.ext fun a b => ?_
+  have hrhs : (BraidGroup.transposition i).permMatrix R a b =
+      if BraidGroup.transposition i a = b then 1 else 0 := by
+    simp [Equiv.Perm.permMatrix, PEquiv.toMatrix_apply]
+  rw [hrhs, burauMatrix_apply, burauCol_apply, burauRow_apply, BraidGroup.transposition_eq_swap]
+  rcases eq_or_ne a (BraidGroup.strand i) with rfl | ha
+  · rw [Equiv.swap_apply_left]
+    simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
+    split_ifs <;> first | (exfalso; omega) | noncomm_ring
+  · rcases eq_or_ne a (BraidGroup.strandSucc i) with rfl | ha'
+    · rw [Equiv.swap_apply_right]
+      simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
+      split_ifs <;> first | (exfalso; omega) | noncomm_ring
+    · have ha₁ : (a : ℕ) ≠ (i : ℕ) := by simpa [Fin.ext_iff] using ha
+      have ha₂ : (a : ℕ) ≠ (i : ℕ) + 1 := by simpa [Fin.ext_iff] using ha'
+      rw [Equiv.swap_apply_of_ne_of_ne ha ha']
+      simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
+      split_ifs <;> first | (exfalso; omega) | noncomm_ring
+
+/-- The action of an elementary Burau matrix on a row vector, in rank-one form. -/
+theorem vecMul_burauMatrix (t : R) (i : Fin (n - 1)) (w : Fin n → R) :
+    w ᵥ* burauMatrix t i = w - (w ⬝ᵥ burauCol t i) • burauRow R i := by
+  rw [burauMatrix_def, Matrix.vecMul_sub, Matrix.vecMul_one, vecMul_vecMulVec]
+
+/-- The all-ones column vector is fixed by every elementary Burau matrix. -/
+theorem burauMatrix_mulVec_one (t : R) (i : Fin (n - 1)) :
+    burauMatrix t i *ᵥ (fun _ => 1 : Fin n → R) = fun _ => 1 := by
+  rw [burauMatrix_def, Matrix.sub_mulVec, Matrix.one_mulVec, vecMulVec_mulVec,
+    burauRow_dotProduct, sub_self]
+  simp
+
+/-- The geometric row vector `(1, t, …, t ^ (n - 1))` is fixed by every elementary Burau matrix. -/
+theorem vecMul_burauMatrix_geom (t : R) (i : Fin (n - 1)) :
+    (fun k : Fin n => t ^ (k : ℕ)) ᵥ* burauMatrix t i = fun k : Fin n => t ^ (k : ℕ) := by
+  have h : (fun k : Fin n => t ^ (k : ℕ)) ⬝ᵥ burauCol t i = 0 := by
+    rw [dotProduct_burauCol, BraidGroup.val_strand, BraidGroup.val_strandSucc, pow_succ, sub_self]
+  rw [vecMul_burauMatrix, h, zero_smul, sub_zero]
+
 end Ring
 
 section CommRing
@@ -370,29 +412,6 @@ theorem det_burau (t : Rˣ) (b : BraidGroup n) :
 
 /-! ### The permutation representation as the specialisation at `t = 1` -/
 
-/-- At `t = 1` an elementary Burau matrix is the permutation matrix of the transposition of the two
-crossed strands. -/
-theorem burauMatrix_one (i : Fin (n - 1)) :
-    burauMatrix (1 : R) i = (BraidGroup.transposition i).permMatrix R := by
-  refine Matrix.ext fun a b => ?_
-  have hrhs : (BraidGroup.transposition i).permMatrix R a b =
-      if BraidGroup.transposition i a = b then 1 else 0 := by
-    simp [Equiv.Perm.permMatrix, PEquiv.toMatrix_apply]
-  rw [hrhs, burauMatrix_apply, burauCol_apply, burauRow_apply, BraidGroup.transposition_eq_swap]
-  rcases eq_or_ne a (BraidGroup.strand i) with rfl | ha
-  · rw [Equiv.swap_apply_left]
-    simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-    split_ifs <;> first | (exfalso; omega) | ring
-  · rcases eq_or_ne a (BraidGroup.strandSucc i) with rfl | ha'
-    · rw [Equiv.swap_apply_right]
-      simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-      split_ifs <;> first | (exfalso; omega) | ring
-    · have ha₁ : (a : ℕ) ≠ (i : ℕ) := by simpa [Fin.ext_iff] using ha
-      have ha₂ : (a : ℕ) ≠ (i : ℕ) + 1 := by simpa [Fin.ext_iff] using ha'
-      rw [Equiv.swap_apply_of_ne_of_ne ha ha']
-      simp only [Fin.ext_iff, BraidGroup.val_strand, BraidGroup.val_strandSucc]
-      split_ifs <;> first | (exfalso; omega) | ring
-
 /-- **The Burau representation at `t = 1` is the permutation representation of the strands.** Note
 that `TauCeti.BraidGroup.permHom` is a homomorphism while `Equiv.Perm.permMatrix` is an
 antihomomorphism, so the comparison is with `Matrix.permMatrixHom`, which inverts before taking the
@@ -423,11 +442,6 @@ theorem coe_burau_one (b : BraidGroup n) :
 theorem burauMatrix_mulVec (t : R) (i : Fin (n - 1)) (v : Fin n → R) :
     burauMatrix t i *ᵥ v = v - (burauRow R i ⬝ᵥ v) • burauCol t i := by
   rw [burauMatrix_def, Matrix.sub_mulVec, Matrix.one_mulVec, vecMulVec_mulVec, op_smul_eq_smul]
-
-/-- The action of an elementary Burau matrix on a row vector, in rank-one form. -/
-theorem vecMul_burauMatrix (t : R) (i : Fin (n - 1)) (w : Fin n → R) :
-    w ᵥ* burauMatrix t i = w - (w ⬝ᵥ burauCol t i) • burauRow R i := by
-  rw [burauMatrix_def, Matrix.vecMul_sub, Matrix.vecMul_one, vecMul_vecMulVec]
 
 /-- A column vector fixed by every elementary Burau matrix is fixed by the whole representation. -/
 theorem burau_mulVec_of_forall {t : Rˣ} {v : Fin n → R}
@@ -463,24 +477,12 @@ theorem vecMul_burau_of_forall {t : Rˣ} {w : Fin n → R}
         Units.val_one, Matrix.vecMul_one]
     rwa [hb] at hmul
 
-/-- The all-ones column vector is fixed by every elementary Burau matrix. -/
-theorem burauMatrix_mulVec_one (t : R) (i : Fin (n - 1)) :
-    burauMatrix t i *ᵥ (fun _ => 1 : Fin n → R) = fun _ => 1 := by
-  rw [burauMatrix_mulVec, burauRow_dotProduct, sub_self, zero_smul, sub_zero]
-
 /-- **The all-ones column vector is fixed by the Burau representation.** The line it spans is
 therefore an invariant submodule; for `2 ≤ n` over a nontrivial ring it is a proper nonzero one,
 so the unreduced Burau representation is reducible. -/
 theorem burau_mulVec_one (t : Rˣ) (b : BraidGroup n) :
     (burau n t b : Matrix (Fin n) (Fin n) R) *ᵥ (fun _ => 1) = fun _ => 1 :=
   burau_mulVec_of_forall (fun i => burauMatrix_mulVec_one (t : R) i) b
-
-/-- The geometric row vector `(1, t, …, t ^ (n - 1))` is fixed by every elementary Burau matrix. -/
-theorem vecMul_burauMatrix_geom (t : R) (i : Fin (n - 1)) :
-    (fun k : Fin n => t ^ (k : ℕ)) ᵥ* burauMatrix t i = fun k : Fin n => t ^ (k : ℕ) := by
-  have h : (fun k : Fin n => t ^ (k : ℕ)) ⬝ᵥ burauCol t i = 0 := by
-    rw [dotProduct_burauCol, BraidGroup.val_strand, BraidGroup.val_strandSucc, pow_succ, sub_self]
-  rw [vecMul_burauMatrix, h, zero_smul, sub_zero]
 
 /-- **The geometric row vector `(1, t, …, t ^ (n - 1))` is fixed by the Burau representation.** Its
 kernel is therefore an invariant submodule — for `2 ≤ n` over a nontrivial ring a proper nonzero
