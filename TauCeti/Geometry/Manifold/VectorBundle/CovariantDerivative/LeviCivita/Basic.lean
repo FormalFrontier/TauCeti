@@ -26,7 +26,9 @@ tensorial repackaging is `IsLeviCivita.difference_eq_zero`. The converse directi
 `isLeviCivita_iff` shows nothing is lost in the passage to `koszul`: a connection satisfying the
 Koszul formula is automatically torsion free and metric. Since `koszul I X Y · x` is moreover
 tensorial in its last slot, the Koszul formula is also the shape in which the Levi-Civita
-connection gets constructed; existence is left to a later file.
+connection gets constructed; that construction, together with the tensoriality in the first slot
+and the Leibniz rule in the second which it needs, is carried out in
+`TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.LeviCivita.Existence`.
 
 Two covariant derivatives can only be compared through sections that are differentiable at the
 point under consideration, because `CovariantDerivative` puts no constraint whatsoever on the
@@ -49,8 +51,10 @@ endomorphism-valued one-form `CovariantDerivative.difference ∇ ∇'` vanishes.
 * `TauCeti.Manifold.koszul_sub_koszul_swap_first_two` and
   `TauCeti.Manifold.koszul_add_koszul_swap_last_two`: the two symmetries of the Koszul expression
   from which the converse direction is read off.
-* `TauCeti.Manifold.tensorialAt_koszul`: the Koszul expression is tensorial in its last
-  argument.
+* `TauCeti.Manifold.tensorialAt_koszul` and `TauCeti.Manifold.tensorialAt_koszul_first`: the
+  Koszul expression is tensorial in its last argument and in its first.
+* `TauCeti.Manifold.koszul_add_second` and `TauCeti.Manifold.koszul_smul_second`: additivity and
+  the Leibniz rule in the middle argument, the slot which the connection differentiates.
 * `TauCeti.eq_of_forall_inner_section_eq`: a vector in a fibre of a Riemannian bundle is
   determined by its inner products against the differentiable sections.
 
@@ -165,6 +169,93 @@ section Tensorial
 
 variable [IsManifold I 2 M] [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)]
   [CompleteSpace E]
+
+/-! ### Behaviour in the first two arguments
+
+The Koszul expression is tensorial in its first argument, just as it is in its third, and obeys a
+Leibniz rule in its second. These are the identities which turn
+`CovariantDerivative.isLeviCivita_iff` into a construction of the Levi-Civita connection, carried
+out in `TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.LeviCivita.Existence`.
+-/
+
+variable {X' Y' : Π x : M, TangentSpace I x} {f : M → ℝ}
+
+/-- The Koszul expression is additive in its first argument. -/
+theorem koszul_add_first (hX : MDiffAt (T% X) x) (hX' : MDiffAt (T% X') x)
+    (hY : MDiffAt (T% Y) x) (hZ : MDiffAt (T% Z) x) :
+    koszul I (X + X') Y Z x = koszul I X Y Z x + koszul I X' Y Z x := by
+  have e₁ : (fun y ↦ inner ℝ (Z y) ((X + X') y)) =
+      fun y ↦ inner ℝ (Z y) (X y) + inner ℝ (Z y) (X' y) := funext fun _ ↦ inner_add_right ..
+  have e₂ : (fun y ↦ inner ℝ ((X + X') y) (Y y)) =
+      fun y ↦ inner ℝ (X y) (Y y) + inner ℝ (X' y) (Y y) := funext fun _ ↦ inner_add_left ..
+  have e₃ : (X + X') x = X x + X' x := rfl
+  rw [koszul, koszul, koszul, e₁, e₂, e₃,
+    mvfderiv_fun_add (mdifferentiableAt_inner hZ hX) (mdifferentiableAt_inner hZ hX'),
+    mvfderiv_fun_add (mdifferentiableAt_inner hX hY) (mdifferentiableAt_inner hX' hY),
+    mlieBracket_add_left hX hX', mlieBracket_add_left (W := Z) hX hX']
+  simp only [add_apply, map_add, inner_add_left, inner_add_right]
+  ring
+
+/-- The Koszul expression is tensorial in its first argument: replacing `X` by `f • X` multiplies
+it by `f x`. The four terms carrying a derivative of `f` cancel in pairs. -/
+theorem koszul_smul_first (hf : MDiffAt f x) (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+    (hZ : MDiffAt (T% Z) x) : koszul I (f • X) Y Z x = f x * koszul I X Y Z x := by
+  have e₁ : (fun y ↦ inner ℝ (Z y) ((f • X) y)) = fun y ↦ f y * inner ℝ (Z y) (X y) :=
+    funext fun _ ↦ real_inner_smul_right ..
+  have e₂ : (fun y ↦ inner ℝ ((f • X) y) (Y y)) = fun y ↦ f y * inner ℝ (X y) (Y y) :=
+    funext fun _ ↦ real_inner_smul_left ..
+  have e₃ : (f • X) x = f x • X x := rfl
+  rw [koszul, koszul, e₁, e₂, e₃, mvfderiv_fun_mul hf (mdifferentiableAt_inner hZ hX),
+    mvfderiv_fun_mul hf (mdifferentiableAt_inner hX hY),
+    mlieBracket_smul_left hf hX, mlieBracket_smul_left (W := Z) hf hX]
+  simp only [add_apply, smul_apply, smul_eq_mul, map_smul, inner_add_left, neg_smul,
+    inner_neg_left, real_inner_smul_left, real_inner_smul_right]
+  rw [real_inner_comm (Z x) (X x)]
+  ring
+
+/-- The Koszul expression is additive in its second argument. -/
+theorem koszul_add_second (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+    (hY' : MDiffAt (T% Y') x) (hZ : MDiffAt (T% Z) x) :
+    koszul I X (Y + Y') Z x = koszul I X Y Z x + koszul I X Y' Z x := by
+  have e₁ : (fun y ↦ inner ℝ ((Y + Y') y) (Z y)) =
+      fun y ↦ inner ℝ (Y y) (Z y) + inner ℝ (Y' y) (Z y) := funext fun _ ↦ inner_add_left ..
+  have e₂ : (fun y ↦ inner ℝ (X y) ((Y + Y') y)) =
+      fun y ↦ inner ℝ (X y) (Y y) + inner ℝ (X y) (Y' y) := funext fun _ ↦ inner_add_right ..
+  have e₃ : (Y + Y') x = Y x + Y' x := rfl
+  rw [koszul, koszul, koszul, e₁, e₂, e₃,
+    mvfderiv_fun_add (mdifferentiableAt_inner hY hZ) (mdifferentiableAt_inner hY' hZ),
+    mvfderiv_fun_add (mdifferentiableAt_inner hX hY) (mdifferentiableAt_inner hX hY'),
+    mlieBracket_add_right hY hY', mlieBracket_add_left hY hY']
+  simp only [add_apply, map_add, inner_add_left, inner_add_right]
+  ring
+
+/-- The Leibniz rule for the Koszul expression in its second argument: replacing `Y` by `f • Y`
+multiplies the expression by `f x` and adds `2 (df X) ⟪Y, Z⟫`. This is the identity behind the
+Leibniz axiom of the connection built from the Koszul formula. -/
+theorem koszul_smul_second (hf : MDiffAt f x) (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+    (hZ : MDiffAt (T% Z) x) :
+    koszul I X (f • Y) Z x =
+      f x * koszul I X Y Z x + 2 * d% f x (X x) * inner ℝ (Y x) (Z x) := by
+  have e₁ : (fun y ↦ inner ℝ ((f • Y) y) (Z y)) = fun y ↦ f y * inner ℝ (Y y) (Z y) :=
+    funext fun _ ↦ real_inner_smul_left ..
+  have e₂ : (fun y ↦ inner ℝ (X y) ((f • Y) y)) = fun y ↦ f y * inner ℝ (X y) (Y y) :=
+    funext fun _ ↦ real_inner_smul_right ..
+  have e₃ : (f • Y) x = f x • Y x := rfl
+  rw [koszul, koszul, e₁, e₂, e₃, mvfderiv_fun_mul hf (mdifferentiableAt_inner hY hZ),
+    mvfderiv_fun_mul hf (mdifferentiableAt_inner hX hY),
+    mlieBracket_smul_right hf hY, mlieBracket_smul_left (W := Z) hf hY]
+  simp only [add_apply, smul_apply, smul_eq_mul, map_smul, inner_add_left, neg_smul,
+    inner_neg_left, real_inner_smul_left, real_inner_smul_right]
+  rw [real_inner_comm (Y x) (X x)]
+  ring
+
+/-- The Koszul expression is tensorial in its first argument. Together with
+`TauCeti.Manifold.tensorialAt_koszul` this presents it as a continuous bilinear form on the tangent
+fibre, which is the shape in which the Levi-Civita connection gets built. -/
+theorem tensorialAt_koszul_first (hY : MDiffAt (T% Y) x) (hZ : MDiffAt (T% Z) x) :
+    TensorialAt I E (fun X : Π y : M, TangentSpace I y ↦ koszul I X Y Z x) x where
+  smul hf hX := by simpa using koszul_smul_first hf hX hY hZ
+  add hX hX' := koszul_add_first hX hX' hY hZ
 
 /-- The Koszul expression is tensorial in its third argument: replacing `Z` by `f • Z` multiplies
 it by `f x`, and it is additive in `Z`. Together with
