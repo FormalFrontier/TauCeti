@@ -221,8 +221,7 @@ theorem endOfPoint_le_comap_pointFixedSubmodule_baseChange (hI : I.IsNormal)
   rw [Submodule.baseChange_eq_span]
   refine Submodule.span_le.2 ?_
   rintro _ ⟨m, hm, rfl⟩
-  change Comodule.endOfPoint M g.ofConv (1 ⊗ₜ[R] m) ∈
-    Submodule.span R ((I.pointFixedSubmodule M).map (TensorProduct.mk R R M 1))
+  rw [SetLike.mem_coe, Submodule.mem_comap, TensorProduct.mk_apply]
   rw [Comodule.endOfPoint_tmul, one_smul,
     Comodule.endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation]
   exact Submodule.subset_span ⟨_, basePointsRepresentation_mem_pointFixedSubmodule hI g hm, rfl⟩
