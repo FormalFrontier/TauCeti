@@ -8,7 +8,6 @@ module
 public import Mathlib.Algebra.Algebra.Operations
 public import Mathlib.LinearAlgebra.Basis.Basic
 public import Mathlib.RingTheory.GradedAlgebra.Basic
-public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
 public import TauCeti.RepresentationTheory.Quiver.Radical
 
 /-!
