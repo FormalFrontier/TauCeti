@@ -65,7 +65,8 @@ is in the sibling `IntermediateRing/Finite.lean` as `moduleFinite_intermediateRi
 Dedekindness in `IntermediateRing/Dedekind.lean` as `isDedekindDomain_intermediateRing`, both for a
 separable function-field extension; integral closedness is in
 `IntermediateRing/IntegrallyClosed.lean` as `isIntegrallyClosed_intermediateRing`, which needs no
-separability. Every route to the first two in Mathlib
+separability. Its fraction field, rank, projectivity, and prime-counting theory are in
+`IntermediateRing/Rank.lean`. Every route to the first two in Mathlib
 (`IsIntegralClosure.finite`, `integralClosure.isDedekindDomain`) carries an `Algebra.IsSeparable`
 hypothesis, so the inseparable case — which is expected to be true, by Noether's finiteness
 theorem for the module-finiteness half — remains separate work rather than a corollary of the
@@ -84,8 +85,8 @@ and `pushClass` by ideal extension and relative norm (`ClassGroup.extendedRelNor
 components of D. Angdinata's shared isogeny development, on the way to `toPointHom`; the two
 embeddings added here are what that relative-norm step requires of the intermediate ring, since
 ideal extension along a non-injective map loses the information the class-group route needs. The
-siblings `Finite.lean`, `Dedekind.lean` and `IntegrallyClosed.lean` carry the same flag for the
-same object.
+siblings `Finite.lean`, `Dedekind.lean`, `IntegrallyClosed.lean`, and `Rank.lean` carry the same
+flag for the same object.
 
 The choice of object is taken from the AINTLIB project (`github.com/CBirkbeck/AINTLIB`, at
 revision `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache 2.0 per the source file's header, by
@@ -100,9 +101,9 @@ class-group route to the induced map on points. Of the structural instances, mod
 Dedekindness are ported, in the siblings `IntermediateRing/Finite.lean` and
 `IntermediateRing/Dedekind.lean` rather than here, both under the source's own
 `[Algebra.IsSeparable K L]`; `IntermediateRing/IntegrallyClosed.lean` proves integral closedness
-without it. `instFractionRingB` and `instTorsionFreeB` are not ported. The source proves them for
-a fixed extension with the algebra structures supplied as instance arguments, whereas this file
-takes the pullback-induced structure locally and assumes no separability. None of the declarations
+without it. `instFractionRingB` is ported in `IntermediateRing/Rank.lean` as
+`isFractionRing_intermediateRing`, with the pullback-induced algebra structures installed locally
+and no separability assumption. Only `instTorsionFreeB` is not ported. None of the declarations
 below is a transcription of a source declaration.
 
 **`instTorsionFreeB` is unported but not missing, and should stay unported.** Its content is

@@ -12,6 +12,7 @@ import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Naturality
 import TauCeti.Algebra.AlgebraicGroup.Unipotent.ClosedSubgroup
 import TauCeti.Algebra.AlgebraicGroup.UpperUnitriangular.Unipotent
 import TauCeti.Algebra.Coalgebra.Comodule.PointAction
+import TauCeti.CategoryTheory.Comma.Over
 import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Kolchin
 
 /-!
@@ -48,7 +49,9 @@ roadmap's smooth formulation.
 ## References
 
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2.
-* T. A. Springer, *Linear Algebraic Groups*, §2.4.
+* T. A. Springer, *Linear Algebraic Groups*, Proposition 2.4.12: a subgroup of `GLₙ` consisting
+  of unipotent matrices is conjugate into `Uₙ`. A. Borel, *Linear Algebraic Groups*, §4.8 has the
+  same statement, with its Corollary the closed-subgroup form proved here.
 
 This closes the Kolchin and faithful-embedding step of Layer 5, "Unipotent groups", of the
 ReductiveGroups roadmap for reduced groups over an algebraically closed field.
@@ -213,10 +216,6 @@ theorem of_isClosedImmersion_upperUnitriangularGroupScheme
   let F := hopfSpec (CommRingCat.of k)
   let hF := hopfSpec.fullyFaithful (R := CommRingCat.of k)
   let e := eqToHom (UpperUnitriangular.groupScheme_def k (Fin n))
-  let _ : IsIso e.hom.hom.left :=
-    ((Over.forget (Spec (CommRingCat.of k))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of k)))).mapIso
-        (eqToIso (UpperUnitriangular.groupScheme_def k (Fin n))))).isIso_hom
   let φ : (CommHopfAlgCat.of k (UpperUnitriangular.coordinateHopfAlgebra k (Fin n))) ⟶
       (CommHopfAlgCat.of k H) := (hF.preimage (f ≫ e)).unop
   have hmap : F.map φ.op = f ≫ e := by

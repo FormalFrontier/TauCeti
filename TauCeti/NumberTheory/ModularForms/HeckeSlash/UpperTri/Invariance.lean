@@ -140,7 +140,8 @@ theorem exists_mem_Gamma0_upperTriRep_mul [NeZero p] (hpN : p ∣ N) {γ : SL(2,
     (hγ : γ ∈ Gamma0 N) (j : Fin p) :
     ∃ γ' : SL(2, ℤ), γ' ∈ Gamma0 N ∧ ((γ' 1 1 : ℤ) : ZMod N) = ((γ 1 1 : ℤ) : ZMod N) ∧
       upperTriRep p j * mapGL ℚ γ = mapGL ℚ γ' * upperTriRep p (upperTriShift p γ j) := by
-  have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := Matrix.det_fin_two γ.1 ▸ γ.2
+  have hdet : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 :=
+    Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one γ
   have hcN : ((γ 1 0 : ℤ) : ZMod N) = 0 := Gamma0_mem.mp hγ
   have hγp : γ ∈ Gamma0 p := Gamma0_le_Gamma0_of_dvd hpN hγ
   have had := intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hγp

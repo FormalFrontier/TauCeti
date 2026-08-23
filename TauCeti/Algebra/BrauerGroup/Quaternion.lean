@@ -116,7 +116,7 @@ example : BrauerGroup.baseChange ℝ ℂ (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ])) 
 `BrauerGroup ℂ`: `TauCeti.Algebra.isSplittingField_of_isAlgClosed` says `ℂ` splits every
 finite-dimensional central simple `ℝ`-algebra, and a split algebra lies in the kernel. -/
 example : BrauerGroup.mk (CSA.of ℝ ℍ[ℝ]) ∈ (BrauerGroup.baseChange ℝ ℂ).ker :=
-  BrauerGroup.mk_mem_ker_baseChange_of_isSplittingField ℝ ℂ
+  (BrauerGroup.mk_mem_ker_baseChange_iff_isSplittingField ℝ ℂ).2
     (Algebra.isSplittingField_of_isAlgClosed ℝ ℍ[ℝ] ℂ)
 
 /-- `ℝ` does not split `ℍ[ℝ]`: the class of `ℍ[ℝ]` is not the identity, and by

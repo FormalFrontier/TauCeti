@@ -53,7 +53,7 @@ Ported from the AINTLIB `LeanModularForms` project
 
 public section
 
-open Matrix Matrix.SpecialLinearGroup HeckeRing.GLn
+open Matrix Matrix.SpecialLinearGroup HeckeRing.GLn CongruenceSubgroup
 
 open scoped Pointwise MatrixGroups
 
@@ -85,19 +85,20 @@ Coprimality stays in the signature because it is what puts the matrix in `Δ₀(
 under positivity: without it `natDiagGL` falls back to the identity, which lies in `Δ₀(N)`
 regardless of the level. -/
 noncomputable def diagCosetGamma0 (a : Fin 2 → ℕ) (hgcd : (∀ i, 0 < a i) → Nat.Coprime (a 0) N) :
-    HeckeCoset (Delta0 N) (Gamma0Image N) (Gamma0Image N) :=
+    HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) :=
   HeckeCoset.mk _ _ ⟨natDiagGL 2 a, natDiagGL_mem_Delta0_of_coprime N a hgcd⟩
 
 /-- Defining equation for the sealed definition `diagCosetGamma0`. -/
 lemma diagCosetGamma0_def (a : Fin 2 → ℕ) (hgcd : (∀ i, 0 < a i) → Nat.Coprime (a 0) N) :
     diagCosetGamma0 N a hgcd =
-      HeckeCoset.mk (Gamma0Image N) (Gamma0Image N)
+      HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))
         ⟨natDiagGL 2 a, natDiagGL_mem_Delta0_of_coprime N a hgcd⟩ := (rfl)
 
 /-- The underlying set of `diagCosetGamma0 a` is the `Γ₀(N)`-double coset of `diag(a)`. -/
 @[simp] lemma diagCosetGamma0_toSet (a : Fin 2 → ℕ) (hgcd : (∀ i, 0 < a i) → Nat.Coprime (a 0) N) :
     (diagCosetGamma0 N a hgcd).toSet =
-      DoubleCoset.doubleCoset (natDiagGL 2 a) (Gamma0Image N) (Gamma0Image N) :=
+      DoubleCoset.doubleCoset (natDiagGL 2 a) ((Gamma0 N).map (mapGL ℚ))
+        ((Gamma0 N).map (mapGL ℚ)) :=
   HeckeCoset.toSet_mk _
 
 /-- The `Γ₀(N)`-coset of `diag(a)` lies over the level-one coset `T(a)`: widening both

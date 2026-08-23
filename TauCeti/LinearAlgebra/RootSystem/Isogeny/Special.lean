@@ -7,7 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Basic
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2
 
 /-!
@@ -49,6 +49,14 @@ the simple roots to all twelve, respectively forty-eight, roots. They are not fr
 `A` is invertible over `ℚ`, so the index bijection and the exponents are determined by the matrix,
 and the tables merely record the resulting values so that the defining equations reduce.
 
+For `F₄` the tables and their equations are already those of
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/F4/SpecialMap.lean`: the matrix is
+`TauCeti.DynkinType.f4SpecialIsogenyMatrix`, the index bijection is
+`TauCeti.DynkinType.f4SpecialIsogenyIndexEquiv`, and the exponent is the squared-length table
+`TauCeti.DynkinType.f4Length`, so all this file adds there is the bundled isogeny and the relations
+that are statements about it. Only the `G₂` matrix action, which no file yet tabulates, is set up
+here, against `TauCeti.DynkinType.g2Root_specialIsogenyAction` and its coroot counterpart.
+
 ## Main definitions
 
 * `TauCeti.DynkinType.g2SpecialIsogeny`: the special isogeny of the pinned `G₂` root datum,
@@ -61,19 +69,19 @@ and the tables merely record the resulting values so that the defining equations
 * `TauCeti.DynkinType.g2SpecialIsogeny_comp_self` and
   `TauCeti.DynkinType.f4SpecialIsogeny_comp_self`: composing the special isogeny with itself gives
   scaling by the characteristic, which is the root-datum form of `τ ^ 2 = Frob_p`.
-* `TauCeti.DynkinType.g2SpecialIsogeny_indexEquiv_castAdd` and
-  `TauCeti.DynkinType.f4SpecialIsogeny_indexEquiv_castAdd`: on the simple roots the index bijection
-  is the pinned length-exchanging permutation.
+* `TauCeti.DynkinType.g2SpecialIsogeny_indexEquiv_castAdd`: on the simple roots the index bijection
+  is the pinned length-exchanging permutation, which for `F₄` is
+  `TauCeti.DynkinType.f4SpecialIsogenyIndex_castAdd`.
 * `TauCeti.DynkinType.g2SpecialIsogeny_weightMap_root_castAdd` and
   `TauCeti.DynkinType.f4SpecialIsogeny_weightMap_root_castAdd`: the defining relation on the simple
   roots, in the form the group-scheme isogeny is pinned by.
-* `TauCeti.DynkinType.g2SpecialIsogeny_exponent_castAdd` and
-  `TauCeti.DynkinType.f4SpecialIsogeny_exponent_castAdd`: on the simple roots the exponent is the
-  normalised squared root length, and
+* `TauCeti.DynkinType.g2SpecialIsogeny_exponent_castAdd`: on the simple roots the exponent is the
+  normalised squared root length, which for `F₄` is `TauCeti.DynkinType.f4Length_castAdd`, and
   `TauCeti.DynkinType.g2SpecialIsogeny_exponent_castAdd_eq_one_iff` and its `F₄` counterpart read
   that off as `TauCeti.DynkinType.IsLongSimpleRoot`.
-* `TauCeti.DynkinType.g2SpecialIsogeny_exponent_mul_exponent` and its `F₄` counterpart: the
-  exponents at a root and at its image multiply to the characteristic.
+* `TauCeti.DynkinType.g2SpecialIsogeny_exponent_mul_exponent`: the exponents at a root and at its
+  image multiply to the characteristic, which for `F₄` is
+  `TauCeti.DynkinType.f4Length_mul_f4Length_specialIsogenyIndex`.
 
 ## Roadmap and references
 
@@ -216,7 +224,7 @@ theorem g2SpecialIsogeny_comp_self :
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
 the squared length of that other node. This is the root-datum form of
 `τ (x_α (t)) = x_{σ(α)} (t ^ q)` with `q = 1` at a long simple root and `q = 3` at a short one. -/
-@[simp] theorem g2SpecialIsogeny_weightMap_root_castAdd (i : Fin 2) :
+theorem g2SpecialIsogeny_weightMap_root_castAdd (i : Fin 2) :
     g2SpecialIsogeny.weightMap
         (g2SimplyConnectedRootDatum.root (Fin.castAdd 10 (lengthPermRankTwo i))) =
       G2.rootLength (lengthPermRankTwo i) • g2SimplyConnectedRootDatum.root (Fin.castAdd 10 i) := by
@@ -237,65 +245,18 @@ theorem g2SpecialIsogeny_exponent_castAdd_eq_one_iff (i : Fin 2) :
 
 /-! ## `F₄` in characteristic two -/
 
-/-- The character-lattice matrix of the special isogeny of `F₄`, in the fundamental-weight basis.
-It sends `x` to `(x 3, x 2, 2 * x 1, 2 * x 0)`, reversing the four nodes and attaching the squared
-length of the node each entry came from. -/
-@[expose] def f4SpecialIsogenyMatrix : Matrix (Fin 4) (Fin 4) ℤ :=
-  !![0, 0, 0, 1; 0, 0, 1, 0; 0, 2, 0, 0; 2, 0, 0, 0]
-
-/-- The action of the special isogeny of `F₄` on the forty-eight pinned root indices. -/
-@[expose] def f4SpecialIsogenyIndex : Fin 48 → Fin 48 := ![
-  3, 2, 1, 0, 10, 7, 13, 5, 16, 11, 4, 9,
-  15, 6, 18, 12, 8, 21, 14, 22, 23, 17, 19, 20,
-  27, 26, 25, 24, 34, 31, 37, 29, 40, 35, 28, 33,
-  39, 30, 42, 36, 32, 45, 38, 46, 47, 41, 43, 44]
-
-/-- The scalar by which the special isogeny of `F₄` rescales each of the forty-eight pinned roots:
-`1` at a short root and `2` at a long one. -/
-@[expose] def f4SpecialIsogenyExponent : Fin 48 → ℤ := ![
-  2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1,
-  1, 2, 1, 2, 2, 1, 2, 1, 1, 2, 2, 2,
-  2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 1,
-  1, 2, 1, 2, 2, 1, 2, 1, 1, 2, 2, 2]
-
-lemma f4SpecialIsogenyIndex_involutive : Function.Involutive f4SpecialIsogenyIndex :=
-  fun i => by revert i; decide
-
-private lemma f4SpecialIsogeny_root_aux (i : Fin 48) :
-    f4SpecialIsogenyMatrix *ᵥ f4Root i =
-      f4SpecialIsogenyExponent i • f4Root (f4SpecialIsogenyIndex i) := by
-  revert i; decide
-
-private lemma f4SpecialIsogeny_coroot_aux (i : Fin 48) :
-    f4SpecialIsogenyMatrixᵀ *ᵥ f4Coroot (f4SpecialIsogenyIndex i) =
-      f4SpecialIsogenyExponent i • f4Coroot i := by
-  revert i; decide
-
-private lemma f4SpecialIsogenyMatrix_mulVecLin_sq :
-    f4SpecialIsogenyMatrix.mulVecLin ∘ₗ f4SpecialIsogenyMatrix.mulVecLin =
-      (2 : ℤ) • (LinearMap.id : (Fin 4 → ℤ) →ₗ[ℤ] (Fin 4 → ℤ)) := by
-  refine LinearMap.ext fun x => funext fun i => ?_
-  fin_cases i <;>
-    simp [f4SpecialIsogenyMatrix, mulVec, dotProduct, Fin.sum_univ_succ]
-
-private lemma f4SpecialIsogenyMatrix_transpose_mulVecLin_sq :
-    f4SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ f4SpecialIsogenyMatrixᵀ.mulVecLin =
-      (2 : ℤ) • (LinearMap.id : (Fin 4 → ℤ) →ₗ[ℤ] (Fin 4 → ℤ)) := by
-  refine LinearMap.ext fun x => funext fun i => ?_
-  fin_cases i <;>
-    simp [f4SpecialIsogenyMatrix, vecHead, vecTail, mul_comm]
-
 /-- **The special isogeny of the pinned `F₄` root datum**, belonging to characteristic two. Its
 character-lattice map is `TauCeti.DynkinType.f4SpecialIsogenyMatrix`; the map on cocharacters is
-the transposed matrix, and the two are related by the dot-product pairing of the datum. -/
+the transposed matrix, and the two are related by the dot-product pairing of the datum. The
+rescaling exponent needs no table of its own: the pinned datum is tabulated on its own root
+indices, so the squared-length table `TauCeti.DynkinType.f4Length` already is it. -/
 noncomputable def f4SpecialIsogeny :
     RootPairingIsogeny f4SimplyConnectedRootDatum f4SimplyConnectedRootDatum :=
   RootPairingIsogeny.ofMatrix _ f4SimplyConnectedRootDatum_toLinearMap_apply_apply
-    f4SpecialIsogenyMatrix (f4SpecialIsogenyIndex_involutive.toPerm _) f4SpecialIsogenyExponent
-    (fun i => by revert i; decide)
-    (by decide)
-    (fun i => by simpa using f4SpecialIsogeny_root_aux i)
-    (fun i => by simpa using f4SpecialIsogeny_coroot_aux i)
+    f4SpecialIsogenyMatrix f4SpecialIsogenyIndexEquiv f4Length f4Length_pos
+    (by rw [det_f4SpecialIsogenyMatrix]; norm_num)
+    f4SpecialIsogenyMatrix_mulVec_root
+    f4SpecialIsogenyMatrix_transpose_mulVec_coroot
 
 @[simp] lemma f4SpecialIsogeny_weightMap :
     f4SpecialIsogeny.weightMap = f4SpecialIsogenyMatrix.mulVecLin := by
@@ -313,36 +274,9 @@ noncomputable def f4SpecialIsogeny :
   simp
 
 @[simp] lemma f4SpecialIsogeny_exponent (i : Fin 48) :
-    f4SpecialIsogeny.exponent i = f4SpecialIsogenyExponent i := by
+    f4SpecialIsogeny.exponent i = f4Length i := by
   rw [f4SpecialIsogeny]
   simp
-
-/-- On the four simple roots, the index bijection of the special isogeny of `F₄` is the pinned
-length-exchanging permutation, the reversal of the diagram. -/
-@[simp] theorem f4SpecialIsogeny_indexEquiv_castAdd (i : Fin 4) :
-    f4SpecialIsogenyIndex (Fin.castAdd 44 i) = Fin.castAdd 44 (lengthPermF4 i) := by
-  simp only [lengthPermF4_apply]
-  revert i; decide
-
-/-- On the four simple roots, the exponent of the special isogeny of `F₄` is the normalised squared
-root length: `2` at the long nodes `0` and `1` and `1` at the short nodes `2` and `3`. -/
-@[simp] theorem f4SpecialIsogeny_exponent_castAdd (i : Fin 4) :
-    f4SpecialIsogenyExponent (Fin.castAdd 44 i) = F4.rootLength i := by
-  rw [rootLength_F4]
-  revert i; decide
-
-/-- The exponents of the special isogeny of `F₄` at a root and at its image multiply to the
-characteristic. -/
-@[simp] theorem f4SpecialIsogeny_exponent_mul_exponent (i : Fin 48) :
-    f4SpecialIsogenyExponent i *
-      f4SpecialIsogenyExponent (f4SpecialIsogenyIndex i) = 2 := by
-  revert i; decide
-
-/-- Every exponent of the special isogeny of `F₄` is `1` or the characteristic. -/
-theorem f4SpecialIsogeny_exponent_eq_one_or_eq_two (i : Fin 48) :
-    f4SpecialIsogeny.exponent i = 1 ∨ f4SpecialIsogeny.exponent i = 2 := by
-  simp only [f4SpecialIsogeny_exponent]
-  revert i; decide
 
 /-- **The square of the special isogeny of `F₄` is scaling by two.** This is the root-datum form of
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
@@ -350,8 +284,8 @@ theorem f4SpecialIsogeny_comp_self :
     f4SpecialIsogeny.comp f4SpecialIsogeny =
       RootPairingIsogeny.smulId f4SimplyConnectedRootDatum 2 := by
   refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
-  · simpa using f4SpecialIsogenyMatrix_mulVecLin_sq
-  · simpa using f4SpecialIsogenyMatrix_transpose_mulVecLin_sq
+  · simpa using f4SpecialIsogenyMatrix_mulVecLin_comp_self
+  · simpa using f4SpecialIsogenyMatrix_transpose_mulVecLin_comp_self
   · ext i
     simpa only [RootPairingIsogeny.comp_indexEquiv, RootPairingIsogeny.smulId_indexEquiv,
       Equiv.trans_apply, Equiv.refl_apply, f4SpecialIsogeny_indexEquiv_apply] using
@@ -361,20 +295,19 @@ theorem f4SpecialIsogeny_comp_self :
     have htwo : ((2 : ℕ+) : ℤ) = 2 := by norm_num
     rw [htwo]
     simpa only [f4SpecialIsogeny_exponent, f4SpecialIsogeny_indexEquiv_apply] using
-      f4SpecialIsogeny_exponent_mul_exponent i
+      f4Length_mul_f4Length_specialIsogenyIndex i
 
 /-- **The defining relation of the special isogeny of `F₄` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
 the squared length of that other node. This is the root-datum form of
 `τ (x_α (t)) = x_{σ(α)} (t ^ q)` with `q = 1` at a long simple root and `q = 2` at a short one. -/
-@[simp] theorem f4SpecialIsogeny_weightMap_root_castAdd (i : Fin 4) :
+theorem f4SpecialIsogeny_weightMap_root_castAdd (i : Fin 4) :
     f4SpecialIsogeny.weightMap
         (f4SimplyConnectedRootDatum.root (Fin.castAdd 44 (lengthPermF4 i))) =
       F4.rootLength (lengthPermF4 i) • f4SimplyConnectedRootDatum.root (Fin.castAdd 44 i) := by
   rw [f4SpecialIsogeny.root_weightMap]
-  simp only [f4SpecialIsogeny_exponent, f4SpecialIsogeny_indexEquiv_apply,
-    f4SpecialIsogeny_exponent_castAdd, f4SpecialIsogeny_indexEquiv_castAdd,
-    lengthPermF4_lengthPermF4]
+  simp only [f4SpecialIsogeny_exponent, f4SpecialIsogeny_indexEquiv_apply, f4Length_castAdd,
+    f4SpecialIsogenyIndex_castAdd, lengthPermF4_lengthPermF4]
   simp only [Int.cast_id]
 
 /-- The exponent of the special isogeny of `F₄` at a simple root is `1` exactly at a short node,
@@ -383,7 +316,6 @@ power and a short one to the characteristic. -/
 theorem f4SpecialIsogeny_exponent_castAdd_eq_one_iff (i : Fin 4) :
     f4SpecialIsogeny.exponent (Fin.castAdd 44 i) = 1 ↔ ¬ F4.IsLongSimpleRoot i := by
   rw [f4SpecialIsogeny_exponent]
-  rw [f4SpecialIsogeny_exponent_castAdd, rootLength_F4, isLongSimpleRoot_F4]
-  fin_cases i <;> simp
+  exact f4Length_castAdd_eq_one_iff i
 
 end TauCeti.DynkinType

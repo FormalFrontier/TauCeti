@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Data.Int.Interval
+public import Mathlib.LinearAlgebra.Complex.Module
 public import TauCeti.Geometry.Hodge.Conjugation
 
 /-!
@@ -33,7 +35,12 @@ Buzzard, and Joël Riou.
   complexification.
 * `TauCeti.Hodge.HodgeStructureOn.piece`: the Hodge component `H^{p,n-p}`.
 * `TauCeti.Hodge.HodgeStructureOn.conj_piece`: conjugation exchanges `H^{p,n-p}` and
-  `H^{n-p,p}`, with `TauCeti.Hodge.HodgeStructureOn.conj_mem_piece` its elementwise form.
+  `H^{n-p,p}`, with `TauCeti.Hodge.HodgeStructureOn.conj_mem_piece` its elementwise form and
+  `TauCeti.Hodge.HodgeStructureOn.pieceConjEquiv` its packaging as a real-linear isomorphism.
+* `TauCeti.Hodge.HodgeStructureOn.finite_setOf_piece_ne_bot`: only finitely many Hodge components
+  are nonzero, because the filtration is bounded.
+* `TauCeti.Hodge.HodgeStructureOn.comap`: transport of a Hodge structure along a linear
+  equivalence intertwining the conjugations.
 * `TauCeti.Hodge.HodgeStructureOn.IsEffective`: the filtration is supported in bidegrees with
   both indices nonnegative.
 -/
@@ -180,6 +187,103 @@ theorem conj_mem_piece (hs : HodgeStructureOn W ω n) {p : ℤ} {x : W} (hx : x 
     ω.toEquiv x ∈ hs.piece (n - p) :=
   hs.conj_piece p ▸ Submodule.mem_map_of_mem hx
 
+/-- Below a filtration index at which a Hodge filtration is the whole space, every Hodge component
+vanishes: the conjugate step cutting it out is already zero. -/
+theorem piece_eq_bot_of_F_eq_top (hs : HodgeStructureOn W ω n) {a p : ℤ} (ha : hs.F a = ⊤)
+    (hp : p < a) : hs.piece p = ⊥ := by
+  have hbot : hs.conjF (n + 1 - a) = ⊥ := by
+    apply eq_bot_of_top_isCompl
+    simpa only [ha] using hs.isCompl_F_conjF a
+  have hle : hs.conjF (n - p) ≤ hs.conjF (n + 1 - a) := hs.conjF_antitone (by omega)
+  rw [piece_def, le_bot_iff.1 (hle.trans_eq hbot), inf_bot_eq]
+
+/-- Above a filtration index at which a Hodge filtration vanishes, every Hodge component
+vanishes. -/
+theorem piece_eq_bot_of_F_eq_bot (hs : HodgeStructureOn W ω n) {b p : ℤ} (hb : hs.F b = ⊥)
+    (hp : b ≤ p) : hs.piece p = ⊥ := by
+  rw [piece_def, hs.F_eq_bot_of_le hb hp, bot_inf_eq]
+
+/-- A bounded Hodge filtration has only finitely many nonzero Hodge components. -/
+theorem finite_setOf_piece_ne_bot (hs : HodgeStructureOn W ω n) :
+    {p | hs.piece p ≠ ⊥}.Finite := by
+  obtain ⟨a, ha⟩ := hs.F_top
+  obtain ⟨b, hb⟩ := hs.F_bot
+  refine (Set.finite_Ico a b).subset fun p hp ↦ ?_
+  refine ⟨?_, ?_⟩
+  · by_contra hpa
+    exact hp (hs.piece_eq_bot_of_F_eq_top ha (by omega))
+  · by_contra hpb
+    exact hp (hs.piece_eq_bot_of_F_eq_bot hb (by omega))
+
+/-- Conjugation restricts to a **real**-linear isomorphism from the Hodge component `H^{p,n-p}`
+onto its conjugate `H^{n-p,p}`. It is not complex-linear: it is conjugate-linear, so it is only an
+isomorphism after restricting scalars to `ℝ`. -/
+def pieceConjEquiv (hs : HodgeStructureOn W ω n) (p : ℤ) :
+    hs.piece p ≃ₗ[ℝ] hs.piece (n - p) where
+  toFun x := ⟨ω.toEquiv x, hs.conj_mem_piece x.2⟩
+  invFun y := ⟨ω.toEquiv y, by simpa only [sub_sub_cancel] using hs.conj_mem_piece y.2⟩
+  map_add' x y := by ext; exact map_add _ _ _
+  map_smul' r x := by
+    ext
+    simp only [Submodule.coe_smul_of_tower, RingHom.id_apply, ← Complex.coe_smul,
+      ω.toEquiv.map_smulₛₗ, Complex.conj_ofReal]
+  left_inv x := by ext; exact ω.apply_apply _
+  right_inv y := by ext; exact ω.apply_apply _
+
+@[simp]
+theorem coe_pieceConjEquiv_apply (hs : HodgeStructureOn W ω n) (p : ℤ) (x : hs.piece p) :
+    (hs.pieceConjEquiv p x : W) = ω.toEquiv x :=
+  (rfl)
+
+@[simp]
+theorem coe_pieceConjEquiv_symm_apply (hs : HodgeStructureOn W ω n) (p : ℤ)
+    (y : hs.piece (n - p)) : ((hs.pieceConjEquiv p).symm y : W) = ω.toEquiv y :=
+  (rfl)
+
+section Comap
+
+variable {W' : Type*} [AddCommGroup W'] [Module ℂ W'] {ω' : Conjugation W'}
+
+/-- Pulling a Hodge structure back along a linear equivalence that intertwines the two
+conjugations. This is how a Hodge structure is transported between two models of the same complex
+vector space, for instance from a complexification to a graded piece identified with it. -/
+noncomputable def comap (e : W ≃ₗ[ℂ] W')
+    (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x)) (hs : HodgeStructureOn W' ω' n) :
+    HodgeStructureOn W ω n where
+  F p := (hs.F p).comap e.toLinearMap
+  F_antitone _ _ h := Submodule.comap_mono (hs.F_antitone h)
+  F_top := by
+    obtain ⟨p, hp⟩ := hs.F_top
+    exact ⟨p, by rw [hp, Submodule.comap_top]⟩
+  opposed p := by
+    have hmap : ((hs.F (n + 1 - p)).comap e.toLinearMap).map ω.toEquiv.toLinearMap =
+        ((hs.F (n + 1 - p)).map ω'.toEquiv.toLinearMap).comap e.toLinearMap := by
+      ext y
+      simp only [Submodule.mem_map, Submodule.mem_comap, LinearEquiv.coe_coe]
+      constructor
+      · rintro ⟨x, hx, rfl⟩
+        exact ⟨e x, hx, (he x).symm⟩
+      · rintro ⟨z, hz, hzy⟩
+        refine ⟨ω.toEquiv y, ?_, ω.apply_apply y⟩
+        rw [he y, ← hzy, ω'.apply_apply]
+        exact hz
+    rw [hmap]
+    refine ⟨?_, ?_⟩
+    · rw [disjoint_iff, ← Submodule.comap_inf, (hs.opposed p).disjoint.eq_bot,
+        Submodule.comap_bot, LinearMap.ker_eq_bot]
+      exact e.injective
+    · rw [codisjoint_iff, Submodule.comap_equiv_eq_map_symm, Submodule.comap_equiv_eq_map_symm,
+        ← Submodule.map_sup, (hs.opposed p).codisjoint.eq_top, Submodule.map_top,
+        LinearMap.range_eq_top]
+      exact e.symm.surjective
+
+@[simp]
+theorem comap_F (e : W ≃ₗ[ℂ] W') (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x))
+    (hs : HodgeStructureOn W' ω' n) (p : ℤ) :
+    (hs.comap e he).F p = (hs.F p).comap e.toLinearMap := (rfl)
+
+end Comap
+
 /-- A weight-`n` Hodge structure is effective when its Hodge filtration begins at `F 0 = ⊤`.
 Equivalently, it ends at `F (n + 1) = ⊥`, and its Hodge components can occur only when both
 bidegrees are nonnegative. -/
@@ -227,14 +331,13 @@ theorem IsEffective.F_eq_bot_of_weight_lt {hs : HodgeStructureOn W ω n}
 
 /-- In an effective Hodge structure, a component with negative first index vanishes. -/
 theorem IsEffective.piece_eq_bot_of_neg {hs : HodgeStructureOn W ω n}
-    (h : hs.IsEffective) {p : ℤ} (hp : p < 0) : hs.piece p = ⊥ := by
-  rw [piece_def, h.F_eq_top_of_nonpos hp.le, top_inf_eq]
-  rw [conjF_def, h.F_eq_bot_of_weight_lt (by omega), Submodule.map_bot]
+    (h : hs.IsEffective) {p : ℤ} (hp : p < 0) : hs.piece p = ⊥ :=
+  hs.piece_eq_bot_of_F_eq_top h hp
 
 /-- In an effective Hodge structure, a component with first index above the weight vanishes. -/
 theorem IsEffective.piece_eq_bot_of_weight_lt {hs : HodgeStructureOn W ω n}
-    (h : hs.IsEffective) {p : ℤ} (hp : n < p) : hs.piece p = ⊥ := by
-  rw [piece_def, h.F_eq_bot_of_weight_lt hp, bot_inf_eq]
+    (h : hs.IsEffective) {p : ℤ} (hp : n < p) : hs.piece p = ⊥ :=
+  hs.piece_eq_bot_of_F_eq_bot h.F_eq_bot (by omega)
 
 end HodgeStructureOn
 
