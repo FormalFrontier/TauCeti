@@ -10,24 +10,43 @@ public import Mathlib.NumberTheory.RamificationInertia.Galois
 /-!
 # Ramification and inertia counting criteria
 
-This file records a Galois form of the fundamental identity for primes in finite extensions
-of domains: in a Galois extension, the number of primes above a prime ideal is
-maximal exactly when the common ramification index and inertia degree are both `1`.
+This file records two Galois consequences of the fundamental identity for primes in finite
+extensions of domains. First, in a Galois extension the number of primes above a prime ideal is
+maximal exactly when the common ramification index and inertia degree are both `1`. Second, the
+cardinality of the inertia subgroup of a prime `P` upstairs is the ramification index of `P`
+itself over the base, rather than the `Ideal.ramificationIdxIn` of the prime below it.
 
 ## Main results
 
 * `TauCeti.RamificationInertia.ncard_primesOver_eq_natCard_iff_of_isGaloisGroup`:
   the domain/flat Galois counting criterion.
+* `Ideal.card_inertia_eq_ramificationIdx`: the un-`In` form of the inertia count.
 
 ## Provenance
 
 Built directly on Mathlib's Galois fundamental identity
-(`Ideal.ncard_primesOver_mul_ramificationIdxIn_mul_inertiaDegIn`).
+(`Ideal.ncard_primesOver_mul_ramificationIdxIn_mul_inertiaDegIn`) and on its inertia count
+(`Ideal.card_inertia_eq_ramificationIdxIn`).
 -/
 
 public section
 
 open Ideal Module
+
+namespace Ideal
+
+/-- The cardinality of the inertia subgroup of `P` is the ramification index of `P` over `R`.
+This is `Ideal.card_inertia_eq_ramificationIdxIn` stated with the ramification index of `P`
+itself rather than with `Ideal.ramificationIdxIn` of the ideal below it. -/
+theorem card_inertia_eq_ramificationIdx (R : Type*) {S : Type*} [CommRing R] [CommRing S]
+    [Algebra R S] [IsDomain R] [IsDomain S] [Module.Finite R S] [Module.Flat R S] (G : Type*)
+    [Group G] [Finite G] [MulSemiringAction G S] [IsGaloisGroup G R S] (P : Ideal S) [P.IsPrime]
+    [PerfectField (P.under R).ResidueField] :
+    Nat.card (P.inertia G) = P.ramificationIdx R :=
+  (card_inertia_eq_ramificationIdxIn (G := G) (P.under R) P).trans
+    (ramificationIdxIn_eq_ramificationIdx (P.under R) P G)
+
+end Ideal
 
 namespace TauCeti.RamificationInertia
 

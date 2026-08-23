@@ -59,6 +59,8 @@ canonical choice this development needs and the one the roadmap pins.
   Killing form may be moved from the first slot of `f` to the second.
 * `TauCeti.casimirElement_eq_sum`: the Casimir element is `∑ᵢ xᵢ yᵢ` for **any** basis `x` of `L`
   and its Killing-dual basis `y`, so the basis chosen in the definition does not matter.
+* `TauCeti.representation_casimirElement_apply_eq_zero_of_isTrivial`: the Casimir element acts by
+  zero on a module with trivial Lie action.
 * `TauCeti.ι_mul_casimirElement`: the Casimir element commutes with every canonical Lie generator.
 * `TauCeti.casimirElement_mem_center`: **the Casimir element is central in `U(L)`.**
 
@@ -275,6 +277,20 @@ theorem casimirElement_eq_sum {ι' : Type*} [DecidableEq ι'] [Fintype ι']
     casimirElement K L = ∑ i, ι K (b i) * ι K (killingDualBasis b i) := by
   simp only [casimirElement, ← genMul_apply]
   exact sum_apply_killingDualBasis_eq (genMul K L) (Module.finBasis K L) b
+
+/-- **The Casimir element acts by zero on a module with trivial action.** Every summand
+`xᵢ yᵢ` of `Ω` acts by a double bracket, and brackets vanish. -/
+@[simp]
+theorem representation_casimirElement_apply_eq_zero_of_isTrivial
+    {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+    [LieModule.IsTrivial L M] (m : M) :
+    UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m = 0 := by
+  classical
+  rw [casimirElement_eq_sum (Module.finBasis K L), map_sum, LinearMap.sum_apply]
+  refine Finset.sum_eq_zero fun i _ ↦ ?_
+  rw [map_mul, Module.End.mul_apply, UniversalEnvelopingAlgebra.representation_ι,
+    UniversalEnvelopingAlgebra.representation_ι]
+  simp [trivial_lie_zero]
 
 /-- **The Casimir element commutes with every canonical Lie generator.**  Expanding the commutator
 of `ι z` with each summand `xᵢ yᵢ` by the Leibniz rule replaces the bracket by the adjoint action

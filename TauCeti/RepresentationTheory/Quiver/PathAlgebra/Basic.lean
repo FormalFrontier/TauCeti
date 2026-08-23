@@ -427,7 +427,7 @@ noncomputable def ofPath (x : Quiver.TotalPath Q) : pathAlgebra k Q :=
 theorem ofPath_eq_single (x : Quiver.TotalPath Q) :
     (ofPath x : pathAlgebra k Q) = single x 1 := (rfl)
 
-/-- A scaled basis path is the corresponding `single`. -/
+/-- A basis path carrying a coefficient is that coefficient acting on the basis element. -/
 theorem single_eq_smul_ofPath (x : Quiver.TotalPath Q) (c : k) :
     (single x c : pathAlgebra k Q) = c • ofPath x := by
   rw [ofPath_eq_single, smul_single, mul_one]
@@ -466,9 +466,11 @@ theorem vertexIdempotent_eq_single (v : Q) :
     vertexIdempotent k v
       = single (⟨v, v, _root_.Quiver.Path.nil⟩ : Quiver.TotalPath Q) (1 : k) := (rfl)
 
-/-- The basis element of the trivial path is the corresponding vertex idempotent. -/
-theorem ofPath_nil (v : Q) :
-    (ofPath ⟨v, v, _root_.Quiver.Path.nil⟩ : pathAlgebra k Q) = vertexIdempotent k v := (rfl)
+variable (k) in
+/-- The vertex idempotent is the basis element of the trivial path at its vertex. -/
+theorem vertexIdempotent_eq_ofPath (v : Q) :
+    vertexIdempotent k v = ofPath (⟨v, v, _root_.Quiver.Path.nil⟩ : Quiver.TotalPath Q) := by
+  rw [vertexIdempotent_eq_single, ofPath_eq_single]
 
 /-- The vertex idempotent at the target of a path is a left unit for it. -/
 @[simp]
@@ -738,16 +740,21 @@ section Lift
 variable (k : Type w) {Q : Type u} {B : Type*} [CommSemiring k] [Quiver.{v} Q]
   [Semiring B] [Algebra k B] (F : Quiver.TotalPath Q → B)
 
-/-- The `k`-linear map extending an assignment of algebra elements to the basis paths. Private:
-only its algebra-homomorphism upgrade `TauCeti.PathAlgebra.liftAlgHom` is public. -/
-private noncomputable def liftLinear : pathAlgebra k Q →ₗ[k] B :=
+/-- The `k`-linear map extending an assignment of algebra elements to the basis paths. Its
+algebra-homomorphism upgrade, available when the assignment is multiplicative, is
+`TauCeti.PathAlgebra.liftAlgHom`. -/
+noncomputable def liftLinear : pathAlgebra k Q →ₗ[k] B :=
   (pathAlgebraBasis k Q).constr k F
 
-private theorem liftLinear_ofPath (x : Quiver.TotalPath Q) : liftLinear k F (ofPath x) = F x := by
+/-- The linear extension of an assignment agrees with it on the basis paths. -/
+@[simp]
+theorem liftLinear_ofPath (x : Quiver.TotalPath Q) : liftLinear k F (ofPath x) = F x := by
   have h := (pathAlgebraBasis k Q).constr_basis k F x
   rwa [coe_pathAlgebraBasis] at h
 
-private theorem liftLinear_single (x : Quiver.TotalPath Q) (c : k) :
+/-- The linear extension of an assignment on a basis path with a coefficient. -/
+@[simp]
+theorem liftLinear_single (x : Quiver.TotalPath Q) (c : k) :
     liftLinear k F (single x c) = c • F x := by
   rw [single_eq_smul_ofPath, map_smul, liftLinear_ofPath]
 

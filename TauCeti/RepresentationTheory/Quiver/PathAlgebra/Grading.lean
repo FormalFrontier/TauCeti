@@ -150,7 +150,7 @@ theorem single_mem_grade_of_length {n : ℕ} {x : Quiver.TotalPath Q} (hx : x.2.
 /-- A vertex idempotent is homogeneous of degree `0`. -/
 theorem vertexIdempotent_mem_grade_zero (v : Q) :
     (vertexIdempotent k v : pathAlgebra k Q) ∈ grade k Q 0 := by
-  rw [← ofPath_nil]
+  rw [vertexIdempotent_eq_ofPath]
   exact ofPath_mem_grade_of_length rfl
 
 /-- **Two paths multiply in the sum of their degrees**, whether or not they are composable. -/
@@ -190,9 +190,9 @@ theorem grade_zero_eq_span_range_vertexIdempotent : grade k Q 0
     replace hp : p.length = 0 := hp
     obtain rfl := p.eq_of_length_zero hp
     obtain rfl := p.eq_nil_of_length_zero hp
-    exact ⟨a, (ofPath_nil (k := k) a).symm⟩
+    exact ⟨a, vertexIdempotent_eq_ofPath k a⟩
   · rintro ⟨v, rfl⟩
-    exact ⟨⟨v, v, _root_.Quiver.Path.nil⟩, rfl, ofPath_nil (k := k) v⟩
+    exact ⟨⟨v, v, _root_.Quiver.Path.nil⟩, rfl, (vertexIdempotent_eq_ofPath k v).symm⟩
 
 /-- **The degree-`n` piece lies in the `n`-th step of the length filtration**: a path of length
 exactly `n` is in particular a path of length at least `n`. -/
@@ -298,7 +298,7 @@ private theorem sum_gradeSummand_nil :
       = DirectSum.of (fun n => grade k Q n) 0
         ⟨vertexIdempotent k v, vertexIdempotent_mem_grade_zero v⟩ := fun v =>
     congrArg (DirectSum.of (fun n => grade k Q n) 0)
-      (Subtype.ext (ofPath_nil (k := k) v))
+      (Subtype.ext (vertexIdempotent_eq_ofPath k v).symm)
   have hsum : ∑ v : Q, DirectSum.of (fun n => grade k Q n) 0
         ⟨vertexIdempotent k v, vertexIdempotent_mem_grade_zero v⟩
       = DirectSum.of (fun n => grade k Q n) 0
