@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Geometry.Hodge.Decomposition
 public import TauCeti.Geometry.Hodge.Graded
-public import TauCeti.Geometry.Hodge.Tate
+public import TauCeti.Geometry.Hodge.Tate.Basic
 
 /-!
 # Mixed Hodge structures
