@@ -27,6 +27,17 @@ regularity of `Ω` is used.  The graph norm is obtained recursively from Euclide
 at exponent two its square is the sum of the squared `L²` norms of the value and all weak
 derivatives through order `k`.
 
+## Implementation notes
+
+The bundled stage machinery `TauCeti.IteratedGradientModel`, `TauCeti.iteratedGradientModel`,
+`TauCeti.SobolevStage`, `TauCeti.firstSobolevStage`, `TauCeti.SobolevStage.next`, and
+`TauCeti.sobolevStage` is public and reducible on purpose: it is what indexes the types
+`TauCeti.IteratedGradient` and `TauCeti.Wkp`, so their normed, complete structures and the order
+`0` and `1` boundary cases are recovered by unfolding it rather than by transport.  The
+projections below are sealed instead, and are used through their characteristic equations
+`TauCeti.Wkp.lowerOrder_zero`, `TauCeti.Wkp.lowerOrder_succ`, `TauCeti.Wkp.deriv_zero`,
+`TauCeti.Wkp.deriv_succ`, `TauCeti.Wkp.value_zero`, and `TauCeti.Wkp.value_succ`.
+
 ## Main declarations
 
 * `TauCeti.IteratedGradient`: the basis-free target of an iterated weak derivative.
@@ -196,13 +207,13 @@ attribute [instance] Wkp.instCompleteSpace
 namespace Wkp
 
 /-- The continuous projection that forgets the highest weak derivative. -/
-@[expose] def lowerOrderL : (k : ℕ) → Wkp mu Omega p (k + 1) →L[ℝ] Wkp mu Omega p k
+def lowerOrderL : (k : ℕ) → Wkp mu Omega p (k + 1) →L[ℝ] Wkp mu Omega p k
   | 0 => W1p.valueL
   | k + 1 => WeakDerivStep.prevL
       (sobolevStage (mu := mu) (Omega := Omega) (p := p) k).derivL
 
 /-- A positive-order Sobolev function regarded as a Sobolev function of one lower order. -/
-@[expose] def lowerOrder (k : ℕ) (u : Wkp mu Omega p (k + 1)) : Wkp mu Omega p k :=
+def lowerOrder (k : ℕ) (u : Wkp mu Omega p (k + 1)) : Wkp mu Omega p k :=
   lowerOrderL k u
 
 /-- Evaluating the continuous lower-order projection equals `lowerOrder`. -/
@@ -212,12 +223,12 @@ theorem lowerOrderL_apply (k : ℕ) (u : Wkp mu Omega p (k + 1)) :
 
 /-- The continuous projection to the highest weak derivative of a positive-order Sobolev
 function.  For `W^{k+1,p}` its target is `Lᵖ(Ω; IteratedGradient E k)`. -/
-@[expose] def derivL (k : ℕ) : Wkp mu Omega p (k + 1) →L[ℝ]
+def derivL (k : ℕ) : Wkp mu Omega p (k + 1) →L[ℝ]
     Lp (IteratedGradient E k) p (mu.restrict Omega) :=
   (sobolevStage (mu := mu) (Omega := Omega) (p := p) k).derivL
 
 /-- The highest weak derivative recorded by a positive-order Sobolev function. -/
-@[expose] def deriv (k : ℕ) (u : Wkp mu Omega p (k + 1)) :
+def deriv (k : ℕ) (u : Wkp mu Omega p (k + 1)) :
     Lp (IteratedGradient E k) p (mu.restrict Omega) :=
   derivL k u
 
@@ -226,12 +237,12 @@ theorem derivL_apply (k : ℕ) (u : Wkp mu Omega p (k + 1)) : derivL k u = deriv
   (rfl)
 
 /-- The continuous projection of a Sobolev function to its `Lᵖ` value component. -/
-@[expose] def valueL : (k : ℕ) → Wkp mu Omega p k →L[ℝ] Lp ℝ p (mu.restrict Omega)
+def valueL : (k : ℕ) → Wkp mu Omega p k →L[ℝ] Lp ℝ p (mu.restrict Omega)
   | 0 => ContinuousLinearMap.id ℝ _
   | k + 1 => (valueL k).comp (lowerOrderL k)
 
 /-- The `Lᵖ` value component of an arbitrary-order Sobolev function. -/
-@[expose] def value (k : ℕ) (u : Wkp mu Omega p k) : Lp ℝ p (mu.restrict Omega) :=
+def value (k : ℕ) (u : Wkp mu Omega p k) : Lp ℝ p (mu.restrict Omega) :=
   valueL k u
 
 @[simp]
@@ -262,7 +273,7 @@ theorem deriv_zero (u : Wkp mu Omega p 1) : deriv 0 u = W1p.gradient u :=
 /-- The highest derivative projection is the one stored in the corresponding recursive stage. -/
 theorem deriv_eq_stage (k : ℕ) (u : Wkp mu Omega p (k + 1)) :
     deriv k u = (sobolevStage (mu := mu) (Omega := Omega) (p := p) k).derivL u :=
-  rfl
+  (rfl)
 
 /-- Above first order, the lower-order projection is the preceding-component projection of the
 generic weak-derivative graph step. -/
