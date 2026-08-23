@@ -309,13 +309,13 @@ def ofValuationSubring (hF : IsFunctionField k F) (hk : ∀ c : k, algebraMap k 
           _ < 1 := hlt⟩ }
 
 /-- The valuation of `TauCeti.Place.ofValuationSubring` is the adic valuation of the maximal
-ideal of the subring. The discrete valuation ring instance is a `Prop`, so the one this lemma
-takes as a hypothesis and the one `TauCeti.isDiscreteValuationRing_of_isFunctionField` supplies
-inside the definition agree. -/
-theorem valuation_ofValuationSubring [IsDiscreteValuationRing A] (hF : IsFunctionField k F)
+ideal of the subring. -/
+theorem valuation_ofValuationSubring (hF : IsFunctionField k F)
     (hk : ∀ c : k, algebraMap k F c ∈ A) (hA : A ≠ ⊤) :
     (ofValuationSubring hF hk hA).valuation =
+      let _ := isDiscreteValuationRing_of_isFunctionField hF hk hA
       (IsDiscreteValuationRing.maximalIdeal A).valuation F := by
+  let _ := isDiscreteValuationRing_of_isFunctionField hF hk hA
   -- Tactic `rfl`, not the term: the body of `ofValuationSubring` is not `@[expose]`d, so the
   -- projection is only reducible here, inside the module that defines it.
   rfl
