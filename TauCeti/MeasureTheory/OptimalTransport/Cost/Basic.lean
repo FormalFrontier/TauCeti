@@ -111,6 +111,11 @@ over the couplings `π` of `μ` and `ν`. It is `∞` when `μ` and `ν` have no
 def transportCost (c : X × Y → ℝ≥0∞) (μ : Measure X) (ν : Measure Y) : ℝ≥0∞ :=
   ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν), ∫⁻ z, c z ∂π
 
+/-- The transport cost as the infimum of the costs of all feasible plans. -/
+theorem transportCost_def :
+    transportCost c μ ν = ⨅ (π : Measure (X × Y)) (_ : IsCoupling π μ ν), ∫⁻ z, c z ∂π :=
+  (rfl)
+
 /-- Every coupling bounds the transport cost from above. -/
 theorem transportCost_le_lintegral (hπ : IsCoupling π μ ν) (c : X × Y → ℝ≥0∞) :
     transportCost c μ ν ≤ ∫⁻ z, c z ∂π :=

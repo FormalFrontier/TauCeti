@@ -112,6 +112,8 @@ is the statement the Nagell–Lutz layer consumes.
 * `WeierstrassCurve.zsmul_point_eq_smulEval`: **the headline**. Over a field, `n • (x, y)`
   in Jacobian
   coordinates is `(φₙ(x,y) : ωₙ(x,y) : ψₙ(x,y))`, for every nonsingular `(x, y)` and every `n`.
+* `WeierstrassCurve.two_zsmul_eq_zero_of_evalEval_ψ₂_eq_zero`: the converse at `n = 2` — a
+  vanishing `ψ₂` at a nonsingular point forces `2 • P = 0`.
 
 ## Provenance
 
@@ -1045,5 +1047,40 @@ theorem zsmul_point_eq_smulEval {x y : F} (h : Affine.Nonsingular W x y) (n : �
     refine Quotient.sound ⟨-1, ?_⟩
     simp_rw [smulEval_neg]
     rfl
+
+/-- If `ψ₂` vanishes at `(x, y)` then `2 • P = 0`: the point equals its own negation, so adding
+it to itself lands at infinity. Field-local — no base ring is involved.
+
+Stated for the Jacobian point, matching the rest of the torsion API and
+`evalEval_ψ_eq_zero_of_zsmul_eq_zero`. The affine group law is defined by cases and so needs
+`DecidableEq`, but only inside the proof, where `classical` supplies it; the statement does not. -/
+theorem two_zsmul_eq_zero_of_evalEval_ψ₂_eq_zero {x y : F}
+    (hns : W.toAffine.Nonsingular x y) (hψ : W.ψ₂.evalEval x y = 0) :
+    (2 : ℤ) • Jacobian.Point.fromAffine (Affine.Point.some _ _ hns) = 0 := by
+  classical
+  rw [WeierstrassCurve.ψ₂, Affine.evalEval_polynomialY] at hψ
+  have hy : y = W.toAffine.negY x y := by simp only [Affine.negY]; linear_combination hψ
+  have haff : (2 : ℕ) • (Affine.Point.some _ _ hns) = 0 := by
+    rw [two_nsmul]; exact Affine.Point.add_self_of_Y_eq hy
+  have h := congrArg (Jacobian.Point.toAffineAddEquiv W).symm haff
+  rw [map_nsmul, map_zero] at h
+  rw [← natCast_zsmul] at h
+  exact_mod_cast h
+
+/-- **A torsion point is a root of its division polynomial.** If `n • P = 0` in the Jacobian
+point group, then `ψₙ` vanishes at `P`.
+
+This is where `zsmul_point_eq_smulEval` is consumed: it identifies `n • P` with the class of
+`(φₙ(x,y) : ωₙ(x,y) : ψₙ(x,y))`, and a Jacobian class is the point at infinity exactly when its
+`Z`-coordinate vanishes. -/
+theorem evalEval_ψ_eq_zero_of_zsmul_eq_zero {x y : F}
+    (hns : W.toAffine.Nonsingular x y) (n : ℤ)
+    (htors : n • (Jacobian.Point.fromAffine (Affine.Point.some _ _ hns)) = 0) :
+    (W.ψ n).evalEval x y = 0 := by
+  have heval := zsmul_point_eq_smulEval W hns n
+  have hzero := Jacobian.Point.zero_point (W' := W.toJacobian)
+  rw [Jacobian.Point.ext_iff] at htors
+  rw [heval, hzero] at htors
+  exact (Jacobian.Z_eq_zero_of_equiv (Quotient.exact htors)).mpr rfl
 
 end WeierstrassCurve

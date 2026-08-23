@@ -276,6 +276,13 @@ theorem mem_maximalIdeal_iff_valuation_lt_one {f : P.integers} :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ P.valuation (f : F) < 1 :=
   Valuation.mem_maximalIdeal_iff (v := P.valuation)
 
+/-- The elements of positive order are exactly those of valuation less than one: the maximal
+ideal of `𝒪_P`, read at the level of `F`. -/
+theorem valuation_lt_one_iff_ord_pos {f : F} (hf : f ≠ 0) :
+    P.valuation f < 1 ↔ 0 < P.ord f := by
+  rw [P.valuation_eq_exp_neg_ord hf, ← WithZero.exp_zero, WithZero.exp_lt_exp]
+  omega
+
 theorem mem_maximalIdeal_iff_ord_pos {f : P.integers} (hf : (f : F) ≠ 0) :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ 0 < P.ord (f : F) :=
   Valuation.mem_maximalIdeal_iff_ord_pos P.valuation hf
