@@ -14,7 +14,8 @@ public import TauCeti.LinearAlgebra.TensorPower.Basic
 
 For an `R`-module `M`, reduced tensor words are the direct sum of its positive tensor powers.  This
 file constructs that module and its reduced deconcatenation map, which cuts a positive word at
-every nontrivial position.
+every nontrivial position.  It also defines blocks of consecutive letters in a tensor word, used
+to express iterated cuts.
 
 The construction uses Mathlib's `TensorPower` and direct-sum/tensor-product equivalences, together
 with `TensorPower.splitAt`.  It is the coalgebra-side input for the suspended bar construction in
@@ -24,6 +25,7 @@ the `DGAInfinity` roadmap.
 
 * `TauCeti.ReducedTensorWords`: the direct sum of positive tensor powers.
 * `TauCeti.ReducedTensorWords.deconcatenation`: sum over every nontrivial cut of a tensor word.
+* `TauCeti.ReducedTensorWords.subword`: a block of consecutive letters in a tensor word.
 
 ## References
 
@@ -112,6 +114,44 @@ theorem deconcatenation_of_length_one (x : TensorPower R 1 M) :
     ext i
     exact Fin.elim0 i
   rw [hempty, Finset.sum_empty, LinearMap.zero_apply]
+
+section Subword
+
+variable {M : Type uM} [AddCommMonoid M] [Module R M]
+
+/-- The tensor word `x a ⊗ ⋯ ⊗ x (a + b - 1)`, of length `b` and starting at position `a`.
+
+It is zero when the requested block is empty or runs past the end of `x`; the intended range of
+the definition is `0 < b` and `a + b ≤ n`. -/
+noncomputable def subword {n : ℕ} (x : Fin n → M) (a b : ℕ) : ReducedTensorWords R M :=
+  if h : 0 < b ∧ a + b ≤ n then
+    of R M ⟨b, h.1⟩ (PiTensorProduct.tprod R fun j : Fin b ↦ x ⟨a + j.1, by have := j.isLt; omega⟩)
+  else 0
+
+/-- On its intended range, a subword is the pure tensor of the selected block of letters. -/
+theorem subword_eq_of_tprod {n : ℕ} (x : Fin n → M) {a b : ℕ} (hb : 0 < b) (hab : a + b ≤ n) :
+    subword R x a b =
+      of R M ⟨b, hb⟩
+        (PiTensorProduct.tprod R fun j : Fin b ↦ x ⟨a + j.1, by have := j.isLt; omega⟩) := by
+  rw [subword, dite_eq_left ⟨hb, hab⟩]
+
+@[simp]
+theorem subword_zero {n : ℕ} (x : Fin n → M) (a : ℕ) : subword R x a 0 = 0 := by
+  simp [subword]
+
+/-- A block running past the end of the tuple is zero. -/
+theorem subword_eq_zero_of_lt {n : ℕ} (x : Fin n → M) {a b : ℕ} (hab : n < a + b) :
+    subword R x a b = 0 := by
+  rw [subword, dite_eq_right (by omega)]
+
+/-- A whole tuple is the subword of full length starting at its beginning. -/
+theorem of_tprod_eq_subword {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
+    of R M ⟨n, hn⟩ (PiTensorProduct.tprod R x) = subword R x 0 n := by
+  rw [subword_eq_of_tprod R x hn (by omega)]
+  congr 1
+  exact congrArg _ (funext fun j ↦ (congrArg x (Fin.ext (Nat.zero_add j.1))).symm)
+
+end Subword
 
 section Map
 

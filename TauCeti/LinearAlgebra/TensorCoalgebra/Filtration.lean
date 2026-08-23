@@ -25,7 +25,7 @@ reduced tensor word.
 
 ## Main results
 
-* `TauCeti.ReducedTensorWords.iSup_filtration`: the filtration is exhaustive.
+* `TauCeti.ReducedTensorWords.iSup_filtration_eq_top`: the filtration is exhaustive.
 * `TauCeti.ReducedTensorWords.deconcatenation_filtration_le`: deconcatenating a word of length at
   most `n + 1` produces a sum of tensors of two words of length at most `n`.
 
@@ -57,6 +57,17 @@ theorem of_mem_filtration {k : {k : ℕ // 0 < k}} {n : ℕ} (hk : k.1 ≤ n)
     (x : TensorPower R k.1 M) : of R M k x ∈ filtration R M n :=
   Submodule.mem_iSup_of_mem k (Submodule.mem_iSup_of_mem hk ⟨x, rfl⟩)
 
+/-- To prove that the `n`-th filtration step lies in a submodule, it suffices to check the
+generating tensor powers of length at most `n`. -/
+theorem filtration_le_iff {n : ℕ} {p : Submodule R (ReducedTensorWords R M)} :
+    filtration R M n ≤ p ↔
+      ∀ k : {k : ℕ // 0 < k}, k.1 ≤ n → LinearMap.range (of R M k) ≤ p := by
+  constructor
+  · intro h k hk x hx
+    exact h (Submodule.mem_iSup_of_mem k (Submodule.mem_iSup_of_mem hk hx))
+  · intro h
+    exact iSup_le fun k ↦ iSup_le fun hk ↦ h k hk
+
 /-- The conilpotence filtration is increasing. -/
 theorem filtration_monotone : Monotone (filtration R M) := fun _ _ hmn ↦
   iSup_le fun k ↦ iSup_le fun hk ↦ le_iSup_of_le k (le_iSup_of_le (hk.trans hmn) le_rfl)
@@ -67,12 +78,13 @@ theorem filtration_zero : filtration R M 0 = ⊥ :=
   le_antisymm (iSup_le fun k ↦ iSup_le fun hk ↦ absurd (k.2.trans_le hk) (lt_irrefl 0)) bot_le
 
 /-- The conilpotence filtration is exhaustive. -/
-theorem iSup_filtration : ⨆ n : ℕ, filtration R M n = ⊤ := by
+theorem iSup_filtration_eq_top : ⨆ n : ℕ, filtration R M n = ⊤ := by
   refine le_antisymm le_top ?_
-  rw [← show ⨆ k : {k : ℕ // 0 < k}, LinearMap.range (of R M k) = ⊤ by
+  have hgenerate : ⨆ k : {k : ℕ // 0 < k}, LinearMap.range (of R M k) = ⊤ := by
     simpa [of, DirectSum.lof] using
       (DFinsupp.iSup_range_lsingle (R := R)
-        (M := fun k : {k : ℕ // 0 < k} ↦ TensorPower R k.1 M))]
+        (M := fun k : {k : ℕ // 0 < k} ↦ TensorPower R k.1 M))
+  rw [← hgenerate]
   refine iSup_le fun k ↦ le_iSup_of_le k.1 ?_
   rintro _ ⟨x, rfl⟩
   exact of_mem_filtration R M le_rfl x
@@ -81,7 +93,7 @@ theorem iSup_filtration : ⨆ n : ℕ, filtration R M n = ⊤ := by
 theorem subword_mem_filtration {l : ℕ} (x : Fin l → M) (a : ℕ) {b n : ℕ} (hb : b ≤ n) :
     subword R x a b ∈ filtration R M n := by
   rcases Nat.eq_zero_or_pos b with hb0 | hb0
-  · rw [hb0, subword_length_zero]
+  · rw [hb0, subword_zero]
     exact Submodule.zero_mem _
   by_cases hab : a + b ≤ l
   · rw [subword_eq_of_tprod R x hb0 hab]
@@ -100,8 +112,8 @@ theorem deconcatenation_filtration_le (n : ℕ) :
         (filtration R M n)) := fun u v hu hv ↦
     ⟨(⟨u, hu⟩ : filtration R M n) ⊗ₜ[R] (⟨v, hv⟩ : filtration R M n), by
       simp [TensorProduct.mapIncl]⟩
-  rw [Submodule.map_le_iff_le_comap, filtration]
-  refine iSup_le fun k ↦ iSup_le fun hk ↦ ?_
+  rw [Submodule.map_le_iff_le_comap, filtration_le_iff]
+  intro k hk
   rintro _ ⟨z, rfl⟩
   simp only [Submodule.mem_comap]
   induction z using PiTensorProduct.induction_on with

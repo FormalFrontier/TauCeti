@@ -25,11 +25,6 @@ ordinary computation with natural numbers.  In these terms deconcatenation is
 `Δ (subword x a b) = ∑ c, subword x a c ⊗ subword x (a + c) (b - c)`, and coassociativity becomes
 `Finset.sum_comm` after both double sums have been extended over the same square of cut positions.
 
-## Main definitions
-
-* `TauCeti.ReducedTensorWords.subword`: the tensor word cut out of a tuple by a starting position
-  and a length.
-
 ## Main results
 
 * `TauCeti.ReducedTensorWords.deconcatenation_subword`: deconcatenation of a block is the sum over
@@ -53,38 +48,6 @@ namespace TauCeti
 namespace ReducedTensorWords
 
 variable (R : Type uR) {M : Type uM} [CommSemiring R] [AddCommMonoid M] [Module R M]
-
-/-- The tensor word `x a ⊗ ⋯ ⊗ x (a + b - 1)`, of length `b` and starting at position `a`.
-
-It is zero when the requested block is empty or runs past the end of `x`; the intended range of
-the definition is `0 < b` and `a + b ≤ n`. -/
-noncomputable def subword {n : ℕ} (x : Fin n → M) (a b : ℕ) : ReducedTensorWords R M :=
-  if h : 0 < b ∧ a + b ≤ n then
-    of R M ⟨b, h.1⟩ (PiTensorProduct.tprod R fun j : Fin b ↦ x ⟨a + j.1, by have := j.isLt; omega⟩)
-  else 0
-
-/-- On its intended range, a subword is the pure tensor of the selected block of letters. -/
-theorem subword_eq_of_tprod {n : ℕ} (x : Fin n → M) {a b : ℕ} (hb : 0 < b) (hab : a + b ≤ n) :
-    subword R x a b =
-      of R M ⟨b, hb⟩
-        (PiTensorProduct.tprod R fun j : Fin b ↦ x ⟨a + j.1, by have := j.isLt; omega⟩) := by
-  rw [subword, dite_eq_left ⟨hb, hab⟩]
-
-@[simp]
-theorem subword_length_zero {n : ℕ} (x : Fin n → M) (a : ℕ) : subword R x a 0 = 0 := by
-  simp [subword]
-
-/-- A block running past the end of the tuple is zero. -/
-theorem subword_eq_zero_of_lt {n : ℕ} (x : Fin n → M) {a b : ℕ} (hab : n < a + b) :
-    subword R x a b = 0 := by
-  rw [subword, dite_eq_right (by omega)]
-
-/-- A whole tuple is the subword of full length starting at its beginning. -/
-theorem of_tprod_eq_subword {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
-    of R M ⟨n, hn⟩ (PiTensorProduct.tprod R x) = subword R x 0 n := by
-  rw [subword_eq_of_tprod R x hn (by omega)]
-  congr 1
-  exact congrArg _ (funext fun j ↦ (congrArg x (Fin.ext (Nat.zero_add j.1))).symm)
 
 /-- Deconcatenating a block cuts it at each of its nontrivial internal positions. -/
 theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} :
@@ -168,7 +131,7 @@ theorem deconcatenation_coassoc :
       intro d hd hd'
       simp only [Finset.mem_Ioo] at hd hd'
       have hcd : c - d = 0 := by omega
-      rw [hcd, subword_length_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
+      rw [hcd, subword_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
     -- Cutting the right factor again, reindexing by the absolute position of the second cut.
     have hR : ∀ c ∈ Finset.Ioo 0 n,
         LinearMap.lTensor (ReducedTensorWords R M) (deconcatenation R M)
@@ -186,7 +149,7 @@ theorem deconcatenation_coassoc :
         intro q hq hq'
         simp only [Finset.mem_Ioo] at hq hq'
         have hqc : q - c = 0 := by omega
-        rw [hqc, subword_length_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
+        rw [hqc, subword_zero, TensorProduct.zero_tmul, TensorProduct.tmul_zero]
       · intro e he
         simp only [Finset.mem_Ioo] at he ⊢
         omega
