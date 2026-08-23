@@ -421,11 +421,13 @@ theorem laplaceTransform_bernsteinMeasure (hf : IsContinuousCompletelyMonotoneOn
   ((representsLaplace_bernsteinMeasure hf).eq_laplaceTransform ht).symm
 
 /-- The total mass of the Bernstein measure is the value of the function at `0`. -/
+@[simp]
 theorem bernsteinMeasure_real_univ (hf : IsContinuousCompletelyMonotoneOnIoi f) :
     (bernsteinMeasure f).real univ = f 0 :=
   ((representsLaplace_bernsteinMeasure hf).apply_zero).symm
 
 /-- The total mass of the Bernstein measure, as an extended nonnegative real. -/
+@[simp]
 theorem bernsteinMeasure_univ (hf : IsContinuousCompletelyMonotoneOnIoi f) :
     bernsteinMeasure f univ = ENNReal.ofReal (f 0) := by
   rw [← bernsteinMeasure_real_univ hf, measureReal_def,
