@@ -75,26 +75,22 @@ noncomputable def lieModuleEquivEquiv
       invFun := e.invFun
       left_inv := fun m => by
         change e.invFun ((lieModuleHomEquiv hM hN e.toLieModuleHom) m) = m
-        rw [show (lieModuleHomEquiv hM hN e.toLieModuleHom) m = e m by
-          exact congrFun (coe_lieModuleHomEquiv hM hN e.toLieModuleHom) m]
+        rw [coe_lieModuleHomEquiv]
         exact e.left_inv m
       right_inv := fun n => by
         change (lieModuleHomEquiv hM hN e.toLieModuleHom) (e.invFun n) = n
-        rw [show (lieModuleHomEquiv hM hN e.toLieModuleHom) (e.invFun n) = e (e.invFun n) by
-          exact congrFun (coe_lieModuleHomEquiv hM hN e.toLieModuleHom) (e.invFun n)]
+        rw [coe_lieModuleHomEquiv]
         exact e.right_inv n }
   invFun e :=
     { (lieModuleHomEquiv hM hN).symm e.toLinearMap with
       invFun := e.invFun
       left_inv := fun m => by
         change e.invFun (((lieModuleHomEquiv hM hN).symm e.toLinearMap) m) = m
-        rw [show ((lieModuleHomEquiv hM hN).symm e.toLinearMap) m = e m by
-          exact congrFun (coe_lieModuleHomEquiv_symm hM hN e.toLinearMap) m]
+        rw [coe_lieModuleHomEquiv_symm]
         exact e.left_inv m
       right_inv := fun n => by
         change ((lieModuleHomEquiv hM hN).symm e.toLinearMap) (e.invFun n) = n
-        rw [show ((lieModuleHomEquiv hM hN).symm e.toLinearMap) (e.invFun n) = e (e.invFun n) by
-          exact congrFun (coe_lieModuleHomEquiv_symm hM hN e.toLinearMap) (e.invFun n)]
+        rw [coe_lieModuleHomEquiv_symm]
         exact e.right_inv n }
   left_inv e := by
     apply LieModuleEquiv.ext
@@ -204,7 +200,7 @@ attribute [local instance] asModule isScalarTower_asModule
 /-- A Lie module `M` is isotypic of type `S` if every irreducible Lie submodule of `M` is
 equivalent to `S`. -/
 def IsIsotypicOfType (S : Type*) [AddCommGroup S] [Module R S]
-    [LieRingModule L S] [LieModule R L S] : Prop :=
+    [LieRingModule L S] : Prop :=
   ∀ (P : LieSubmodule R L M) [IsIrreducible R L P], Nonempty (P ≃ₗ⁅R,L⁆ S)
 
 /-- A Lie module is isotypic if all its irreducible Lie submodules are equivalent. -/
@@ -213,9 +209,10 @@ def IsIsotypic : Prop :=
 
 variable {R L M}
 
+omit [LieAlgebra R L] [LieModule R L M] in
 /-- A fixed isotypic type makes every pair of irreducible Lie submodules equivalent. -/
 theorem IsIsotypicOfType.isIsotypic {S : Type*} [AddCommGroup S] [Module R S]
-    [LieRingModule L S] [LieModule R L S] (h : IsIsotypicOfType R L M S) :
+    [LieRingModule L S] (h : IsIsotypicOfType R L M S) :
     IsIsotypic R L M :=
   fun P _ Q _ => ⟨(h Q).some.trans (h P).some.symm⟩
 
@@ -309,15 +306,9 @@ theorem isotypicComponent_eq_top_iff
   letI : IsSemisimpleModule U M :=
     (complementedLattice_lieSubmodule_iff_isSemisimpleModule
       (asModule_ι_smul R L M)).mp inferInstance
-  rw [isIsotypicOfType_iff_isIsotypicOfType_asModule]
-  constructor
-  · intro h
-    apply _root_.isotypicComponent_eq_top_iff.mp
-    rw [← lieSubmoduleOrderIsoAsModule_isotypicComponent S]
-    simpa using congrArg (lieSubmoduleOrderIsoAsModule R L M) h
-  · intro h
-    apply (lieSubmoduleOrderIsoAsModule R L M).injective
-    rw [lieSubmoduleOrderIsoAsModule_isotypicComponent S]
-    simpa using _root_.isotypicComponent_eq_top_iff.mpr h
+  rw [← map_eq_top_iff (lieSubmoduleOrderIsoAsModule R L M),
+    lieSubmoduleOrderIsoAsModule_isotypicComponent,
+    _root_.isotypicComponent_eq_top_iff,
+    isIsotypicOfType_iff_isIsotypicOfType_asModule]
 
 end LieModule
