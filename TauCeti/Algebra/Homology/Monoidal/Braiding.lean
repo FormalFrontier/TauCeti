@@ -184,6 +184,7 @@ lemma ι_koszulBraidingHom (X Y : CochainComplex (ModuleCat.{v} R) ℤ) (p q j :
   rw [koszulBraidingHom_f]
   apply HomologicalComplex.ι_mapBifunctorDesc
 
+/-- Composing the Koszul braiding with the braiding of the swapped factors is the identity. -/
 lemma koszulBraidingHom_comp (X Y : CochainComplex (ModuleCat.{v} R) ℤ) :
     koszulBraidingHom R X Y ≫ koszulBraidingHom R Y X = 𝟙 _ := by
   ext j : 1
