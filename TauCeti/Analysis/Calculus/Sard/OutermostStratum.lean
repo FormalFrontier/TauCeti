@@ -18,7 +18,9 @@ import TauCeti.MeasureTheory.Measure.LocallyNull
 
 The critical values of a sufficiently smooth map between finite-dimensional real normed spaces
 form a set of additive Haar measure zero, and its regular values are therefore dense. A point is
-critical when the Fréchet derivative there fails to be surjective.
+critical when the Fréchet derivative there fails to be surjective. The conclusion is recorded here
+in a measure-free form as well -- the critical values have empty interior -- for use where the
+target carries no measurable structure of its own.
 
 The strata of the critical set are handled in the neighbouring files, and this one supplies the
 outermost stratum, where the derivative is nonzero but not surjective, together with the assembly
@@ -58,6 +60,8 @@ in the descent, since the inverse function theorem returns a local inverse as sm
 * `TauCeti.ContDiff.addHaar_image_criticalPoints_eq_zero`: **the Morse--Sard theorem**, its global
   form.
 * `TauCeti.ContDiff.dense_compl_image_criticalPoints`: the regular values are dense.
+* `TauCeti.interior_image_criticalPoints_eq_empty`: the measure-free restatement, that the
+  critical values taken on an open set have empty interior.
 
 This is Lane F0 of the analytic Heegaard Floer roadmap, where finite-dimensional Sard is the
 prerequisite for Sard--Smale and hence for every transversality argument downstream.
