@@ -39,7 +39,7 @@ The real-variable theory of Euler's beta integral that the construction rests on
 * `TauCeti.regularizedIncompleteBeta_eq_zero_of_neg_left` and
   `TauCeti.regularizedIncompleteBeta_eq_zero_of_nonpos_right` — the default value `0` outside the
   parameter range;
-* `TauCeti.monotone_regularizedIncompleteBeta` — monotonicity, for every choice of parameters;
+* `TauCeti.regularizedIncompleteBeta_monotone` — monotonicity, for every choice of parameters;
 * `TauCeti.regularizedIncompleteBeta_nonneg` and `TauCeti.regularizedIncompleteBeta_le_one` —
   the range `[0, 1]`, for every choice of parameters;
 * `TauCeti.continuous_regularizedIncompleteBeta` — continuity on all of `ℝ`;
@@ -176,7 +176,7 @@ private lemma beta_integrand_nonneg {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
 /-- The regularized incomplete beta function is monotone, for every choice of parameters: it is a
 normalized integral of a nonnegative density when `0 < a` and `0 < b`, the unit step at `0` when
 `a = 0 < b`, and the zero function for all remaining parameters. -/
-theorem monotone_regularizedIncompleteBeta (a b : ℝ) :
+theorem regularizedIncompleteBeta_monotone (a b : ℝ) :
     Monotone (regularizedIncompleteBeta a b) := by
   rcases le_or_gt b 0 with hb | hb
   · exact fun x y _ => (regularizedIncompleteBeta_eq_zero_of_nonpos_right hb a x).le.trans
@@ -216,7 +216,7 @@ theorem regularizedIncompleteBeta_nonneg (a b x : ℝ) :
     0 ≤ regularizedIncompleteBeta a b x :=
   (regularizedIncompleteBeta_eq_zero_of_neg a b
       ((min_le_right x (-1)).trans_lt (by norm_num))).symm.trans_le
-    (monotone_regularizedIncompleteBeta a b (min_le_left x (-1)))
+    (regularizedIncompleteBeta_monotone a b (min_le_left x (-1)))
 
 /-- The regularized incomplete beta function is at most `1`. -/
 theorem regularizedIncompleteBeta_le_one (a b x : ℝ) :
@@ -228,7 +228,7 @@ theorem regularizedIncompleteBeta_le_one (a b x : ℝ) :
   · rcases le_or_gt 0 x with hx | hx
     · exact (regularizedIncompleteBeta_zero_left hb hx).le
     · exact (regularizedIncompleteBeta_eq_zero_of_neg 0 b hx).trans_le zero_le_one
-  · exact (monotone_regularizedIncompleteBeta a b (le_max_left x 1)).trans_eq
+  · exact (regularizedIncompleteBeta_monotone a b (le_max_left x 1)).trans_eq
       (regularizedIncompleteBeta_eq_one_of_one_le ha.le hb (le_max_right x 1))
 
 /-- The regularized incomplete beta function is continuous on all of `ℝ`, including at the two
@@ -333,8 +333,8 @@ theorem regularizedIncompleteBeta_add_one_left (ha : 0 < a) (hb : 0 < b)
         ((continuous_const.sub continuous_id).rpow_const fun _ => Or.inr hb.le)).continuousOn
     have hderivf : ∀ t ∈ Ioo (0 : ℝ) x, HasDerivWithinAt (fun t : ℝ => t ^ a * (1 - t) ^ b)
         (a * (t ^ (a - 1) * (1 - t) ^ b) - b * (t ^ a * (1 - t) ^ (b - 1))) (Ioi t) t :=
-      fun t ht => (hasDerivAt_rpow_mul_one_sub_rpow a b ht.1.ne'
-        (ht.2.trans_le hx1).ne).hasDerivWithinAt
+      fun t ht => (hasDerivAt_rpow_mul_one_sub_rpow a b (Or.inl ht.1.ne')
+        (Or.inl (ht.2.trans_le hx1).ne)).hasDerivWithinAt
     have hint : IntervalIntegrable (fun t : ℝ => a * (t ^ (a - 1) * (1 - t) ^ b) -
         b * (t ^ a * (1 - t) ^ (b - 1))) volume 0 x := (hA.const_mul a).sub (hJ.const_mul b)
     rw [intervalIntegral.integral_eq_sub_of_hasDeriv_right_of_le hx0 hcontf hderivf hint,

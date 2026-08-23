@@ -11,9 +11,10 @@ public import Mathlib.Probability.Distributions.Beta
 # Euler's beta integral, in real-valued interval form
 
 Mathlib defines Euler's beta function `ProbabilityTheory.beta` by the Gamma quotient, and proves
-that it is the value of the *complex* contour integral `Complex.betaIntegral`. This file records
-the real-variable facts about the beta integrand `t ^ (a - 1) * (1 - t) ^ (b - 1)` that a
-real-analysis consumer needs: its interval integrability on `[0, 1]`, the value `Β(a, b)` of its
+that it is the value of `Complex.betaIntegral`, the complex-valued interval integral of
+`t ^ (a - 1) * (1 - t) ^ (b - 1)` over `[0, 1]`. This file records the real-variable facts about
+the real-valued beta integrand `t ^ (a - 1) * (1 - t) ^ (b - 1)` that a real-analysis consumer
+needs: its interval integrability on `[0, 1]`, the value `Β(a, b)` of its
 integral over `[0, 1]`, the derivative of the kernel `t ^ a * (1 - t) ^ b` it primitivises, and
 the splitting of the integrand that raises the second parameter by one. Two parameter identities
 for `Β` itself — symmetry and the unit step in the first parameter — are recorded alongside.
@@ -105,16 +106,19 @@ theorem integral_rpow_mul_one_sub_rpow (ha : 0 < a) (hb : 0 < b) :
   · convert! Complex.betaIntegral_convergent (u := a) (v := b) (by simpa) (by simpa)
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one : (0 : ℝ) ≤ 1), IntegrableOn]
 
-/-- The derivative of the kernel `t ^ a * (1 - t) ^ b` primitivised by the beta integrand. Away
-from the two endpoints `0` and `1` no hypothesis on the exponents is needed. -/
-theorem hasDerivAt_rpow_mul_one_sub_rpow (a b : ℝ) {t : ℝ} (ht0 : t ≠ 0) (ht1 : t ≠ 1) :
+/-- The derivative of the kernel `t ^ a * (1 - t) ^ b` primitivised by the beta integrand. Each
+endpoint has to be avoided only when the exponent that degenerates there is smaller than `1`:
+`t ^ a` is differentiable at `0` as soon as `1 ≤ a`, and `(1 - t) ^ b` at `1` as soon as
+`1 ≤ b`. -/
+theorem hasDerivAt_rpow_mul_one_sub_rpow (a b : ℝ) {t : ℝ} (ht0 : t ≠ 0 ∨ 1 ≤ a)
+    (ht1 : t ≠ 1 ∨ 1 ≤ b) :
     HasDerivAt (fun t : ℝ => t ^ a * (1 - t) ^ b)
       (a * (t ^ (a - 1) * (1 - t) ^ b) - b * (t ^ a * (1 - t) ^ (b - 1))) t := by
-  have h1t : (1 : ℝ) - t ≠ 0 := sub_ne_zero_of_ne (Ne.symm ht1)
+  have h1t : (1 : ℝ) - t ≠ 0 ∨ 1 ≤ b := ht1.imp_left fun ht => sub_ne_zero_of_ne (Ne.symm ht)
   have h₁ : HasDerivAt (fun t : ℝ => t ^ a) (a * t ^ (a - 1)) t :=
-    Real.hasDerivAt_rpow_const (Or.inl ht0)
+    Real.hasDerivAt_rpow_const ht0
   have h₂ : HasDerivAt (fun t : ℝ => (1 - t) ^ b) (b * (1 - t) ^ (b - 1) * (-1)) t :=
-    (Real.hasDerivAt_rpow_const (Or.inl h1t)).comp t ((hasDerivAt_id t).const_sub 1)
+    (Real.hasDerivAt_rpow_const h1t).comp t ((hasDerivAt_id t).const_sub 1)
   refine (h₁.mul h₂).congr_deriv ?_
   ring
 
