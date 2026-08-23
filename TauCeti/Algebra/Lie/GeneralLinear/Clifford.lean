@@ -58,10 +58,8 @@ private theorem scalarTrace_lie (X : Matrix n n K)
     (c : CliffordAlgebra (traceQuadraticForm K n)) :
     ⁅scalarTrace (K := K) (n := n) X, c⁆ = 0 := by
   -- Expose the central scalar before using commutation with the algebra map.
-  change algebraMap K _ ((Fintype.card n / 2 : K) * X.trace) * c -
-    c * algebraMap K _ ((Fintype.card n / 2 : K) * X.trace) = 0
-  rw [Algebra.commutes]
-  simp
+  change ⁅algebraMap K _ ((Fintype.card n / 2 : K) * X.trace), c⁆ = 0
+  exact Commute.lie_eq (Algebra.commutes _ c)
 
 /-- The normal-ordered quadratic Clifford lift of the general linear Lie algebra. -/
 noncomputable def glCliffordHom :

@@ -177,6 +177,7 @@ theorem soEquivQuadratic_lie_ι (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
 
 /-- Two quadratic Clifford elements are equal when their commutator actions agree on every
 generator. -/
+@[ext]
 theorem quadraticLieSubalgebra_ext_lie_ι (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     {a b : quadraticLieSubalgebra Q}
     (h : ∀ x : V, ⁅(a : CliffordAlgebra Q), ι Q x⁆ = ⁅(b : CliffordAlgebra Q), ι Q x⁆) :

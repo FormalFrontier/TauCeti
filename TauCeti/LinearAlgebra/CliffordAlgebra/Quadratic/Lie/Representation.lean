@@ -65,6 +65,16 @@ theorem quadraticLift_apply {K : Type u} [Field K]
     quadraticLift Q hQ θ x = (soEquivQuadratic Q hQ (θ x) : CliffordAlgebra Q) := by
   rfl
 
+/-- Values of the quadratic lift lie in the quadratic Lie subalgebra. -/
+@[simp]
+theorem quadraticLift_mem_quadraticLieSubalgebra {K : Type u} [Field K]
+    {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    {L : Type w} [LieRing L] [LieAlgebra K L]
+    (θ : L →ₗ⁅K⁆ skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) (x : L) :
+    quadraticLift Q hQ θ x ∈ quadraticLieSubalgebra Q :=
+  (soEquivQuadratic Q hQ (θ x)).property
+
 /-- The quadratic lift acts on Clifford generators through the supplied skew-adjoint action. -/
 @[grind =]
 theorem quadraticLift_lie_ι {K : Type u} [Field K]
