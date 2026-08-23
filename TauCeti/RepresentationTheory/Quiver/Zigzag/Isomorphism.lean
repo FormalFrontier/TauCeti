@@ -20,7 +20,7 @@ isomorphism of path algebras, it matches the two relation families, and it there
 isomorphism of the two `TauCeti.nonisolatedZigzagQuotient`s.
 
 That quotient is, as its own docstring records, the intended zigzag algebra only for a graph
-without an isolated vertex; the componentwise public algebra is built from it elsewhere, and its
+without an isolated vertex; the componentwise public algebra remains to be built, and its
 invariance is not established here.
 
 Nothing here is specific to the *uniform* relation family beyond the fact that it is described by

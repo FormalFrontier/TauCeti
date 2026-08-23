@@ -314,6 +314,8 @@ theorem map_comp {W : Type v} {X : Type*} {H : SimpleGraph W} {K : SimpleGraph X
 /-- Mapping the identity graph isomorphism gives the identity doubled-quiver prefunctor. -/
 @[simp]
 theorem map_refl : map (SimpleGraph.Iso.refl (G := G)).toHom = Prefunctor.id (DoubledQuiver G) := by
+  -- `SimpleGraph.Iso.toHom` passes through two reducible projections, and Mathlib has no theorem
+  -- identifying the resulting homomorphism for `Iso.refl`; expose that equality extensionally.
   rw [show (SimpleGraph.Iso.refl (G := G)).toHom = SimpleGraph.Hom.id by
     ext i
     rfl, map_id]
@@ -322,6 +324,7 @@ theorem map_refl : map (SimpleGraph.Iso.refl (G := G)).toHom = Prefunctor.id (Do
 theorem map_trans {W : Type v} {X : Type*} {H : SimpleGraph W} {K : SimpleGraph X}
     (e : G ≃g H) (f : H ≃g K) :
     map (SimpleGraph.Iso.toHom (e.trans f : G ≃g K)) = map e.toHom ⋙q map f.toHom := by
+  -- Likewise, no Mathlib lemma exposes the homomorphism underlying `Iso.trans` as a composite.
   rw [show SimpleGraph.Iso.toHom (e.trans f : G ≃g K) = f.toHom.comp e.toHom by
     ext i
     rfl, map_comp]

@@ -13,15 +13,13 @@ public section
 # Prefunctors on paths and on vertices
 
 Elementary facts about a prefunctor `φ : Q ⥤q R` which `Prefunctor.mapPath` and `Prefunctor.comp`
-leave unrecorded: pushing a path along `φ` preserves its length, bijectivity on vertices is
-inherited by identities, composites and prefunctors with a two-sided inverse, and a pair of
-composable one-sided inverse pairs composes to a one-sided inverse pair.
+leave unrecorded: pushing a path along `φ` preserves its length, a prefunctor with a two-sided
+inverse is bijective on vertices, and a pair of composable one-sided inverse pairs composes to a
+one-sided inverse pair.
 
 ## Main results
 
 * `Prefunctor.length_mapPath`: pushing a path along a prefunctor preserves its length.
-* `Prefunctor.obj_bijective_id` and `Prefunctor.obj_bijective_comp`: the identity prefunctor and a
-  composite of prefunctors bijective on vertices are bijective on vertices.
 * `Prefunctor.obj_bijective_of_comp_eq_id`: mutually inverse prefunctors are bijective on vertices.
 * `Prefunctor.comp_comp_comp_eq_id`: composing two one-sided inverse pairs of prefunctors gives a
   one-sided inverse pair.
@@ -29,7 +27,7 @@ composable one-sided inverse pairs composes to a one-sided inverse pair.
 ## References
 
 They all feed `TauCeti.PathAlgebra.mapAlgHom` in
-`TauCeti/RepresentationTheory/Quiver/PathAlgebra/Map.lean`, whose hypothesis is exactly
+`TauCeti/RepresentationTheory/Quiver/PathAlgebra/Map.lean`, whose uniform hypothesis is
 bijectivity on vertices, and the transport of the zigzag relations in
 `TauCeti/RepresentationTheory/Quiver/Zigzag/Isomorphism.lean`, which is stated in terms of path
 lengths.
@@ -50,18 +48,6 @@ theorem _root_.Prefunctor.length_mapPath (φ : Q ⥤q R) {a b : Q} (p : Quiver.P
   | nil => rfl
   | cons p e ih => rw [Prefunctor.mapPath_cons, Quiver.Path.length_cons, ih,
       Quiver.Path.length_cons]
-
-/-- The identity prefunctor is bijective on vertices. Stated for `(Prefunctor.id Q).obj` rather
-than left to `Function.bijective_id`, which is about `id` and so does not fit a hypothesis
-`Function.Bijective (Prefunctor.id Q).obj` without unfolding `Prefunctor.id`. -/
-theorem _root_.Prefunctor.obj_bijective_id : Function.Bijective (Prefunctor.id Q).obj :=
-  Function.bijective_id
-
-/-- A composite of prefunctors bijective on vertices is bijective on vertices. -/
-theorem _root_.Prefunctor.obj_bijective_comp (φ : Q ⥤q R) (ψ : R ⥤q S)
-    (hφ : Function.Bijective φ.obj) (hψ : Function.Bijective ψ.obj) :
-    Function.Bijective (φ.comp ψ).obj :=
-  hψ.comp hφ
 
 /-- **Mutually inverse prefunctors are bijective on vertices.** -/
 theorem _root_.Prefunctor.obj_bijective_of_comp_eq_id (φ : Q ⥤q R) (ψ : R ⥤q Q)

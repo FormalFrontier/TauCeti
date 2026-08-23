@@ -17,14 +17,13 @@ A prefunctor `φ : Q ⥤q R` pushes a path of `Q` to a path of `R`, hence a basi
 basis element of `kR`. This file extends that assignment to an algebra homomorphism
 `TauCeti.PathAlgebra.mapAlgHom`, and shows that it is an isomorphism when `φ` is one.
 
-Two features of the path algebra bound what can be asked of `φ`. The unit of `kQ` is the sum of
-*all* the vertex idempotents, so the assignment sends `1` to `∑ v : Q, e_{φ v}`, and that is the
-unit of `kR` only when `φ` is **surjective** on vertices. Two paths of `Q` which do not meet
-multiply to `0`, while their images multiply to `0` only when they still do not meet, and that is
-guaranteed by **injectivity** on vertices. So `mapAlgHom` asks that `φ` be bijective on vertices,
-which is what the intended source of prefunctors — an isomorphism of the underlying graph or
-quiver — supplies. Nothing is asked of `φ` on arrows: a prefunctor which is not injective on
-arrows still gives an algebra homomorphism, just not an injective one.
+A uniform condition sufficient for this construction is that `φ` be bijective on vertices. The
+unit of `kQ` is the sum of *all* the vertex idempotents, so surjectivity ensures that their images
+sum to the unit of `kR`. Injectivity ensures that two paths which do not meet still do not meet
+after mapping, so their product remains zero. Thus `mapAlgHom` assumes vertex bijectivity, which
+the intended source of prefunctors — an isomorphism of the underlying graph or quiver — supplies.
+Nothing is asked of `φ` on arrows: a prefunctor which is not injective on arrows still gives an
+algebra homomorphism, just not an injective one.
 
 ## Main definitions
 
@@ -200,17 +199,25 @@ theorem mapAlgHom_congr {φ φ' : Q ⥤q R} (h : φ = φ') (hφ : Function.Bijec
     (hφ' : Function.Bijective φ'.obj) : mapAlgHom k φ hφ = mapAlgHom k φ' hφ' := by
   subst h; rfl
 
+-- The generated object projections of `Prefunctor.id` and `Prefunctor.comp` do not unfold at
+-- implicit transparency, so the `change`s below expose the functions handled by the generic API.
+
 /-- **The identity prefunctor induces the identity**. -/
 @[simp]
 theorem mapAlgHom_id :
-    mapAlgHom k (Prefunctor.id Q) Prefunctor.obj_bijective_id = AlgHom.id k (pathAlgebra k Q) :=
+    mapAlgHom k (Prefunctor.id Q) (by
+      change Function.Bijective (id : Q → Q)
+      exact Function.bijective_id) =
+      AlgHom.id k (pathAlgebra k Q) :=
   algHom_ext k fun x ↦ by rw [mapAlgHom_ofPath, mapTotalPath_id, AlgHom.id_apply]
 
 /-- **Composition of prefunctors induces composition**. The bijectivity of the composite is that
 of the two factors. -/
 theorem mapAlgHom_comp (φ : Q ⥤q R) (ψ : R ⥤q S) (hφ : Function.Bijective φ.obj)
     (hψ : Function.Bijective ψ.obj) :
-    mapAlgHom k (φ.comp ψ) (φ.obj_bijective_comp ψ hφ hψ) =
+    mapAlgHom k (φ.comp ψ) (by
+      change Function.Bijective (ψ.obj ∘ φ.obj)
+      exact hψ.comp hφ) =
       (mapAlgHom k ψ hψ).comp (mapAlgHom k φ hφ) :=
   algHom_ext k fun x ↦ by
     rw [mapAlgHom_ofPath, AlgHom.comp_apply, mapAlgHom_ofPath, mapAlgHom_ofPath,
@@ -223,7 +230,13 @@ private theorem mapAlgHom_comp_eq_id (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφ : Func
     (hψ : Function.Bijective ψ.obj) (hφψ : φ.comp ψ = Prefunctor.id Q) :
     (mapAlgHom k ψ hψ).comp (mapAlgHom k φ hφ) = AlgHom.id k (pathAlgebra k Q) :=
   (mapAlgHom_comp k φ ψ hφ hψ).symm.trans
-    ((mapAlgHom_congr k hφψ (φ.obj_bijective_comp ψ hφ hψ) Prefunctor.obj_bijective_id).trans
+    ((mapAlgHom_congr k hφψ
+      (by
+        change Function.Bijective (ψ.obj ∘ φ.obj)
+        exact hψ.comp hφ)
+      (by
+        change Function.Bijective (id : Q → Q)
+        exact Function.bijective_id)).trans
       (mapAlgHom_id k))
 
 /-- **The algebra isomorphism of path algebras induced by an isomorphism of quivers**, presented as
