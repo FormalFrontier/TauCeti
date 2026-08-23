@@ -315,8 +315,14 @@ theorem coe_burauGL (t : Rˣ) (i : Fin (n - 1)) :
     (burauGL t i : Matrix (Fin n) (Fin n) R) = burauMatrix (t : R) i :=
   (rfl)
 
-/-- The matrix underlying the inverse of `TauCeti.KnotTheory.burauGL`. -/
+/-- The nonsingular inverse of an elementary Burau matrix. -/
 @[simp]
+theorem inv_burauMatrix (t : Rˣ) (i : Fin (n - 1)) :
+    (burauMatrix (t : R) i)⁻¹ =
+      1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i) :=
+  Matrix.inv_eq_right_inv (burauMatrix_mul_inv t i)
+
+/-- The matrix underlying the inverse of `TauCeti.KnotTheory.burauGL`. -/
 theorem coe_inv_burauGL (t : Rˣ) (i : Fin (n - 1)) :
     ((burauGL t i)⁻¹ : GL (Fin n) R).val =
       1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i) :=
