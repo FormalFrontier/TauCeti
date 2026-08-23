@@ -234,8 +234,7 @@ private theorem rationalFunctionsEquiv_one (U : X.Opens) [Nonempty U] :
     rationalFunctionsEquiv U
       (id (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U)) :
         Γ(rationalFunctions X, U)) = 1 := by
-  change (ConcreteCategory.hom (functionFieldSectionsIso U).hom) 1 = 1
-  exact map_one _
+  exact map_one (ConcreteCategory.hom (functionFieldSectionsIso U).hom)
 
 /-- On a nonempty open subset, the inclusion `𝒪_X ⟶ 𝒦_X` is the germ map to the function
 field. -/
