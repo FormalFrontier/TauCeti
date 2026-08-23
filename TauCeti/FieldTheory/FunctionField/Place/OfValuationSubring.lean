@@ -75,21 +75,6 @@ variable {k : Type u} {F : Type v} [Field k] [Field F] [Algebra k F] {A : Valuat
 
 /-! ### Polynomial expressions in an element of the maximal ideal -/
 
-/-- A valuation subring containing the constants has a valuation trivial on the constants: a
-nonzero constant is a unit of the subring. -/
-theorem isTrivialOn_valuation (hk : ∀ c : k, algebraMap k F c ∈ A) :
-    A.valuation.IsTrivialOn k where
-  eq_one c hc := by
-    have h2 : A.valuation (algebraMap k F c⁻¹) ≤ 1 := (A.valuation_le_one_iff _).2 (hk c⁻¹)
-    have hprod : A.valuation (algebraMap k F c) * A.valuation (algebraMap k F c⁻¹) = 1 := by
-      rw [← map_mul, ← map_mul]
-      simp [hc]
-    refine le_antisymm ((A.valuation_le_one_iff _).2 (hk c)) (not_lt.1 fun hlt ↦ hprod.not_lt ?_)
-    calc A.valuation (algebraMap k F c) * A.valuation (algebraMap k F c⁻¹)
-        ≤ A.valuation (algebraMap k F c) * 1 := by gcongr
-      _ = A.valuation (algebraMap k F c) := mul_one _
-      _ < 1 := hlt
-
 /-- A polynomial expression in an element of a valuation subring containing the constants lies in
 that subring. -/
 theorem valuation_aeval_le_one (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F}
@@ -104,7 +89,7 @@ containing the constants, is a unit: the constant term dominates. -/
 theorem valuation_aeval_eq_one (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F}
     (hx : A.valuation x < 1) {p : k[X]} (hp : p.coeff 0 ≠ 0) :
     A.valuation (aeval x p) = 1 := by
-  have := isTrivialOn_valuation hk
+  have : A.valuation.IsTrivialOn k := .of_le_one _ fun c ↦ (A.valuation_le_one_iff _).2 (hk c)
   obtain ⟨q, hq⟩ : (X : k[X]) ∣ p - C (p.coeff 0) := X_dvd_iff.2 (by simp)
   have hsplit : aeval x p = x * aeval x q + algebraMap k F (p.coeff 0) := by
     have := congrArg (aeval x) hq
@@ -116,13 +101,6 @@ theorem valuation_aeval_eq_one (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F}
       ≤ A.valuation x * 1 := by gcongr; exact valuation_aeval_le_one hk hx.le q
     _ = A.valuation x := mul_one _
     _ < 1 := hx
-
-/-- A nonzero nonunit of a valuation subring containing the constants is transcendental over the
-constants (Stichtenoth, Proposition 1.1.5). -/
-theorem transcendental_of_valuation_lt_one (hk : ∀ c : k, algebraMap k F c ∈ A) {x : F}
-    (hx0 : x ≠ 0) (hx : A.valuation x < 1) : Transcendental k x :=
-  have := isTrivialOn_valuation hk
-  Valuation.transcendental_of_ne_one k x hx0 hx.ne
 
 /-! ### Stichtenoth's chain estimate -/
 
@@ -142,7 +120,8 @@ theorem linearIndependent_of_strictMono_valuation (hk : ∀ c : k, algebraMap k 
   classical
   have hxpos : 0 < A.valuation x := zero_lt_iff.2 ((Valuation.ne_zero_iff _).2 hx0)
   have hy0 : ∀ i, y i ≠ 0 := fun i ↦ (Valuation.ne_zero_iff _).1 (hxpos.trans_le (hxy i)).ne'
-  have hxtr : Transcendental k x := transcendental_of_valuation_lt_one hk hx0 hx
+  have : A.valuation.IsTrivialOn k := .of_le_one _ fun c ↦ (A.valuation_le_one_iff _).2 (hk c)
+  have hxtr : Transcendental k x := Valuation.transcendental_of_ne_one k x hx0 hx.ne
   have hinj : Function.Injective (aeval x : k[X] →ₐ[k] F) := transcendental_iff_injective.mp hxtr
   rw [← LinearIndependent.iff_fractionRing (Algebra.adjoin k {x}) k⟮x⟯, linearIndependent_iff']
   intro s g hsum i₀ hi₀
@@ -219,8 +198,10 @@ theorem not_exists_seq_valuation_strictMono (hF : IsFunctionField k F)
     (hxy : A.valuation x ≤ A.valuation (y 0)) : False := by
   have hx : A.valuation x < 1 := hxy.trans_lt (hy 0)
   have hmono : StrictMono fun n : ℕ ↦ A.valuation (y n) := strictMono_nat_of_lt_succ hstep
+  have : A.valuation.IsTrivialOn k :=
+    .of_le_one _ fun c ↦ (A.valuation_le_one_iff _).2 (hk c)
   have : FiniteDimensional k⟮x⟯ F :=
-    hF.finiteDimensional_adjoin (transcendental_of_valuation_lt_one hk hx0 hx)
+    hF.finiteDimensional_adjoin (Valuation.transcendental_of_ne_one k x hx0 hx.ne)
   have hli : LinearIndependent k⟮x⟯ fun i : Fin (Module.finrank k⟮x⟯ F + 1) ↦ y i :=
     linearIndependent_of_strictMono_valuation hk hx0 hx (fun i ↦ hy i)
       (fun _ _ hij ↦ hmono hij) fun i ↦ hxy.trans (hmono.monotone (Nat.zero_le _))
