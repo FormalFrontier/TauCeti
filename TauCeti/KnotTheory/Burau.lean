@@ -302,7 +302,7 @@ theorem burauMatrix_mul_comm (t : R) {i j : Fin (n - 1)}
 
 /-- The braid relation for two consecutive elementary Burau matrices, in the asymmetric form from
 which the symmetric statement `TauCeti.KnotTheory.burauMatrix_braid` follows. -/
-theorem burauMatrix_braid_of_succ (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
+private theorem burauMatrix_braid_of_succ (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
     burauMatrix t i * burauMatrix t j * burauMatrix t i =
       burauMatrix t j * burauMatrix t i * burauMatrix t j := by
   have hii := burauRow_dotProduct_burauCol_self (R := R) t i
@@ -377,12 +377,6 @@ theorem inv_burauMatrix (t : Rˣ) (i : Fin (n - 1)) :
     (burauMatrix (t : R) i)⁻¹ =
       1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i) :=
   Matrix.inv_eq_right_inv (burauMatrix_mul_inv t i)
-
-/-- The matrix underlying the inverse of `TauCeti.KnotTheory.burauGL`. -/
-theorem coe_inv_burauGL (t : Rˣ) (i : Fin (n - 1)) :
-    ((burauGL t i)⁻¹ : GL (Fin n) R).val =
-      1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i) :=
-  (rfl)
 
 /-- **The unreduced Burau representation** of the braid group on `n` strands at a unit `t`, sending
 the elementary braid `sigma i` to `TauCeti.KnotTheory.burauGL t i`. -/
