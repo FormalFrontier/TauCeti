@@ -7,6 +7,7 @@ module
 
 public import Mathlib.NumberTheory.NumberField.ClassNumber
 public import Mathlib.RingTheory.AdjoinRoot
+import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
 import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
 import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
@@ -268,31 +269,6 @@ theorem classNumber_eq_two_of_minpoly_eq_X_sq_add_five
 local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
   exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
     (fun q _ => by nlinarith [sq_nonneg q])⟩
-
-/-- The concrete model `AdjoinRoot (X² + 5)` of `ℚ(√-5)` carries an integral generator with minimal
-polynomial `X² + 5` generating the field over `ℚ`: the presentation data shared by the class-number
-and `2`-rank worked examples for this field. -/
-theorem exists_isIntegralGen_adjoinRoot_sqrt_neg_five :
-    ∃ θ : 𝓞 (AdjoinRoot (X ^ 2 - C (-5 : ℚ))),
-      minpoly ℤ θ = X ^ 2 - C (-5 : ℤ) ∧
-        Algebra.adjoin ℚ {(θ : AdjoinRoot (X ^ 2 - C (-5 : ℚ)))} = ⊤ := by
-  let K := AdjoinRoot (X ^ 2 - C (-5 : ℚ))
-  let x : K := AdjoinRoot.root (X ^ 2 - C (-5 : ℚ))
-  have hx : x ^ 2 = algebraMap ℤ K (-5 : ℤ) := by
-    have hroot := AdjoinRoot.eval₂_root (X ^ 2 - C (-5 : ℚ))
-    rw [eval₂_sub, eval₂_pow, eval₂_X, eval₂_C, ← AdjoinRoot.algebraMap_eq, sub_eq_zero] at hroot
-    rw [hroot, IsScalarTower.algebraMap_apply ℤ ℚ K]
-    norm_num
-  refine ⟨integralSqrt hx, minpoly_integralSqrt hx (fun ⟨q, hq⟩ => by
-      norm_num at hq
-      nlinarith [mul_self_nonneg q]), ?_⟩
-  have hfne : (X ^ 2 - C (-5 : ℚ)) ≠ 0 :=
-    (monic_X_pow_sub_C (-5 : ℚ) (by norm_num)).ne_zero
-  have hpb := (AdjoinRoot.powerBasis (f := X ^ 2 - C (-5 : ℚ)) hfne).adjoin_gen_eq_top
-  rw [AdjoinRoot.powerBasis_gen] at hpb
-  have hθx : ((integralSqrt hx : 𝓞 K) : K) = x := algebraMap_integralSqrt hx
-  rw [hθx]
-  exact hpb
 
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`,
 has class number `2`. -/

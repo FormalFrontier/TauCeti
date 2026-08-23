@@ -7,7 +7,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.TwoRank
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminants
-import TauCeti.NumberTheory.Multiquadratic.MinusFive.ClassNumber
+import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
 
 /-!
 # The `2`-rank of the class group of `ℚ(√-5)`
@@ -19,8 +19,7 @@ rational primes ramify (`2` and `5`) and the `2`-rank of the class group is `1`.
 This corroborates the independently proved `NumberField.classNumber ℚ(√-5) = 2`
 (`MinusFive/ClassNumber.lean`): the class group is `ℤ/2ℤ`, whose `2`-rank is indeed `1`, so genus
 theory (predicting `t - 1 = 1` purely from ramification) and the direct class-number computation
-agree. The concrete corollary reuses the shared integral-generator construction
-`NumberField.exists_isIntegralGen_adjoinRoot_sqrt_neg_five`.
+agree.
 
 ## Main results
 
@@ -69,9 +68,9 @@ local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
     (fun q _ => by nlinarith [sq_nonneg q])⟩
 
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`, has
-class-group `2`-rank `1`. Reuses the shared integral-generator construction. Not `@[simp]`: the
-`@[simp]` lemma `twoRank_def` unfolds the left-hand side `twoRank _`, so this closed form is not in
-simp-normal form (`simpNF` rejects it), unlike the non-unfolded `classNumber` companion. -/
+class-group `2`-rank `1`. Not `@[simp]`: the `@[simp]` lemma `twoRank_def` unfolds the left-hand
+side `twoRank _`, so this closed form is not in simp-normal form (`simpNF` rejects it), unlike the
+non-unfolded `classNumber` companion. -/
 theorem twoRank_adjoinRoot_sqrt_neg_five_eq_one :
     TauCeti.ClassGroup.twoRank (𝓞 (AdjoinRoot (X ^ 2 - C (-5 : ℚ)))) = 1 := by
   obtain ⟨θ, hmin, hgen⟩ := NumberField.exists_isIntegralGen_adjoinRoot_sqrt_neg_five
