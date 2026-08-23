@@ -124,13 +124,12 @@ theorem fixedSubgroup_comp_le_fixedSubgroup_pow_of_commute_of_pow_eq_one
   rw [mem_fixedSubgroup] at hx
   rw [mem_fixedSubgroup_end_pow_iff]
   have hcomp : Function.IsFixedPt ((⇑F) ∘ (⇑F')) x := by
-    change F (F' x) = x
-    rw [← hcomm x]
-    exact hx
+    simpa only [Function.IsFixedPt, Function.comp_apply, MonoidHom.comp_apply] using
+      (hcomm x).symm.trans hx
   have hF' : Function.IsPeriodicPt (⇑F') d x := by
-    change (F' ^ d) x = x
-    rw [hpow]
-    rfl
+    rw [Function.IsPeriodicPt, Function.IsFixedPt,
+      ← congrFun (Monoid.End.coe_pow _ F' d) x, hpow]
+    simp only [Monoid.End.coe_one, id_eq]
   exact Function.IsPeriodicPt.left_of_comp hcomm.symm (hcomp.isPeriodicPt d) hF'
 
 variable {G' : Type*} [Group G']

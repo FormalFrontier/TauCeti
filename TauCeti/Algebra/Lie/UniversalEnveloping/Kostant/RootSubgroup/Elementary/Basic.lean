@@ -395,11 +395,15 @@ theorem kostantElementaryFrobenius_add (m : ℕ) :
     kostantElementaryMap_comp]
 
 /-- Iterating the `p ^ n`-power Frobenius `k` times gives the `p ^ (n * k)`-power Frobenius. -/
+-- `Monoid.End` is definitionally a bundled `MonoidHom`; the `show` fixes its composition-monoid
+-- instance before elaborating the power.
 theorem kostantElementaryFrobenius_mul (k : ℕ) :
     (show Monoid.End _ from kostantElementaryFrobenius e h ρ M hM hnil p n A) ^ k =
       kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A := by
   apply MonoidHom.ext
   intro g
+  -- Applying the bundled equality hides the `Monoid.End` coercion under its definition as a
+  -- `MonoidHom`; this exposes the pointwise iterate equality `Monoid.End.coe_pow`, which is `rfl`.
   change (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A))^[k] g = _
   induction k generalizing g with
   | zero => simp
