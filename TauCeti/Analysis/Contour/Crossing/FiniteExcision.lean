@@ -75,6 +75,12 @@ namespace CircularCapWindow
 /-- The closed parameter interval replaced by a circular cap. -/
 def interval (W : CircularCapWindow) : Set ℝ := Icc W.lower W.upper
 
+/-- Membership in a window is membership in its closed endpoint interval. -/
+@[simp]
+theorem mem_interval_iff {W : CircularCapWindow} {t : ℝ} :
+    t ∈ W.interval ↔ W.lower ≤ t ∧ t ≤ W.upper := by
+  rfl
+
 /-- The circular cap prescribed by a crossing window. -/
 def cap (W : CircularCapWindow) (s : ℂ) : ℝ → ℂ :=
   circleCap s W.radius W.lower W.upper W.startAngle W.endAngle
@@ -142,8 +148,17 @@ end CircularCapWindow
 the curve produced by earlier ones. For pairwise disjoint windows the order is immaterial
 pointwise, and `exciseCrossings_eqOn_window` gives the simultaneous description. -/
 def exciseCrossings (γ : ℝ → ℂ) (s : ℂ) : List CircularCapWindow → ℝ → ℂ
-  | [] => γ
-  | W :: windows => exciseCrossings (W.excise γ s) s windows
+  := fun windows => windows.foldl (fun δ W => W.excise δ s) γ
+
+/-- Excising an empty list of windows leaves the curve unchanged. -/
+@[simp]
+theorem exciseCrossings_nil (γ : ℝ → ℂ) (s : ℂ) : exciseCrossings γ s [] = γ := (rfl)
+
+/-- Excising a nonempty list first replaces its head window. -/
+@[simp]
+theorem exciseCrossings_cons (γ : ℝ → ℂ) (s : ℂ) (W : CircularCapWindow)
+    (windows : List CircularCapWindow) :
+    exciseCrossings γ s (W :: windows) = exciseCrossings (W.excise γ s) s windows := (rfl)
 
 /-- Away from every window, finite excision agrees with the original curve. -/
 theorem exciseCrossings_eqOn_compl {γ : ℝ → ℂ} {s : ℂ}
@@ -157,7 +172,7 @@ theorem exciseCrossings_eqOn_compl {γ : ℝ → ℂ} {s : ℂ}
       have htail : ∀ V ∈ windows, Disjoint S V.interval :=
         fun V hV => hdisj V (List.mem_cons_of_mem W hV)
       intro t ht
-      rw [exciseCrossings]
+      rw [exciseCrossings_cons]
       calc
         exciseCrossings (W.excise γ s) s windows t = W.excise γ s t := ih htail ht
         _ = γ t := W.excise_of_notMem fun htW => Set.disjoint_left.mp hW ht htW
@@ -180,13 +195,13 @@ theorem exciseCrossings_eqOn_window {γ : ℝ → ℂ} {s : ℂ}
   | cons V windows ih =>
       rw [List.pairwise_cons] at hpw
       rcases List.mem_cons.mp hW with rfl | hW
-      · rw [exciseCrossings]
+      · rw [exciseCrossings_cons]
         refine (exciseCrossings_eqOn_compl
           (γ := CircularCapWindow.excise W γ s) (s := s) ?_).trans ?_
         · intro U hU
           exact hpw.1 U hU
         · exact fun _ ht => W.excise_of_mem ht
-      · rw [exciseCrossings]
+      · rw [exciseCrossings_cons]
         exact ih hpw.2 hW
 
 /-- Pairwise-disjoint finite excision is independent of the ordering of the windows. -/
@@ -218,6 +233,7 @@ theorem IsPiecewiseC1On.exciseCrossings {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
   induction windows generalizing γ with
   | nil => exact hγ
   | cons W windows ih =>
+      rw [exciseCrossings_cons]
       rw [List.pairwise_cons] at hpw
       have hW := hinside W List.mem_cons_self
       have hfirst : IsPiecewiseC1On (W.excise γ s) a b := by
@@ -247,12 +263,12 @@ theorem exciseCrossings_closed {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
     exciseCrossings_apply_of_forall_notMem (fun W hW hmem =>
       (not_le.mpr (hinside W hW).2) hmem.2), hclosed]
 
-/-- If open windows cover every parameter where `γ` meets `s`, replacing all of them by
+/-- If closed windows cover every parameter where `γ` meets `s`, replacing all of them by
 nonzero-radius caps produces a curve avoiding `s`, even when the windows overlap. -/
 theorem exciseCrossings_ne_center {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
     {windows : List CircularCapWindow}
     (hr : ∀ W ∈ windows, W.radius ≠ 0)
-    (hcover : ∀ t ∈ Icc a b, γ t = s → ∃ W ∈ windows, t ∈ Ioo W.lower W.upper) :
+    (hcover : ∀ t ∈ Icc a b, γ t = s → ∃ W ∈ windows, t ∈ W.interval) :
     ∀ t ∈ Icc a b, exciseCrossings γ s windows t ≠ s := by
   induction windows generalizing γ with
   | nil =>
@@ -260,7 +276,7 @@ theorem exciseCrossings_ne_center {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
       obtain ⟨W, hW, -⟩ := hcover t ht hγt
       simp at hW
   | cons W windows ih =>
-      rw [exciseCrossings]
+      rw [exciseCrossings_cons]
       apply ih (fun V hV => hr V (List.mem_cons_of_mem W hV))
       intro t ht hexcise
       by_cases htW : t ∈ W.interval
@@ -269,7 +285,7 @@ theorem exciseCrossings_ne_center {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
       · rw [W.excise_of_notMem htW] at hexcise
         obtain ⟨V, hV, htV⟩ := hcover t ht hexcise
         rcases List.mem_cons.mp hV with rfl | hV
-        · exact absurd (Ioo_subset_Icc_self htV) htW
+        · exact absurd htV htW
         · exact ⟨V, hV, htV⟩
 
 end TauCeti.Contour
