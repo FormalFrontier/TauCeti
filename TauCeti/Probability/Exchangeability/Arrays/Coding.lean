@@ -87,18 +87,12 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- Reading a sequence of paths as an array is measurable: it is the measurable equivalence
-`MeasurableEquiv.curry`, backwards. -/
-private theorem measurable_uncurry_path :
-    Measurable (Function.uncurry : (ℕ → ℕ → α) → ℕ × ℕ → α) := by
-  simpa only [MeasurableEquiv.coe_curry_symm] using (MeasurableEquiv.curry ℕ ℕ α).symm.measurable
-
 /-- **An array law is the uncurried path law of its row process.** A statement about the law of the
 row process therefore transports to one about the law of the array. -/
 theorem map_uncurry_pathLaw_arrayRow {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
     (hX : ∀ p, AEMeasurable (X p) μ) :
     (pathLaw μ (arrayRow X)).map Function.uncurry = μ.map fun ω p => X p ω := by
-  rw [pathLaw_def, AEMeasurable.map_map_of_aemeasurable measurable_uncurry_path.aemeasurable
+  rw [pathLaw_def, AEMeasurable.map_map_of_aemeasurable measurable_uncurry.aemeasurable
     (aemeasurable_pi_lambda _ fun i => aemeasurable_arrayRow hX i)]
   congr 1
   funext ω ⟨i, j⟩
@@ -116,7 +110,7 @@ private theorem map_prod_unitIntervalCoding_array
         fun q p => unitIntervalCoding (ℕ → α) q.1 (q.2 p.1) p.2)
       = (deFinettiBarycenter π).map Function.uncurry := by
   rw [← map_prod_unitIntervalCoding_eq_deFinettiBarycenter (α := ℕ → α) π,
-    Measure.map_map measurable_uncurry_path (measurable_unitIntervalCodingPath (α := ℕ → α))]
+    Measure.map_map measurable_uncurry (measurable_unitIntervalCodingPath (α := ℕ → α))]
   rfl
 
 /-- The same computation after reindexing the two axes: permuting the rows reindexes the sequence
@@ -134,7 +128,7 @@ private theorem map_prod_unitIntervalCoding_array_pairReindex
     measurable_pi_lambda _ fun i => (measurable_reindex τ).comp (measurable_pi_apply i)
   rw [← map_prod_unitIntervalCoding_eq_deFinettiBarycenter (α := ℕ → α) π,
     Measure.map_map hS hR, Measure.map_map hT (hS.comp hR),
-    Measure.map_map measurable_uncurry_path (hT.comp (hS.comp hR))]
+    Measure.map_map measurable_uncurry (hT.comp (hS.comp hR))]
   rfl
 
 /-- **Coding a permutation-invariant mixing law gives a separately exchangeable array.** Draw a
