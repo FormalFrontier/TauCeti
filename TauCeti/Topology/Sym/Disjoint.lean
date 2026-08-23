@@ -36,7 +36,9 @@ distinct points `z₁, …, z_k` of multiplicities `n₁, …, n_k` is a product
 `TauCeti.Sym.isOpenEmbedding_coeffEquiv_comp_map`. Lane F4.1 of the analytic Heegaard Floer
 roadmap needs exactly this to give `Sym^g(Σ)` its complex structure, after Ozsváth--Szabó
 ([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1); the charts themselves are in
-`TauCeti/Analysis/Polynomial/SymmetricPower.lean`.
+`TauCeti/Analysis/Polynomial/SymmetricPower.lean`. The version of the first statement for a whole
+family of disjoint open sets, and the Hausdorff separation producing the family that a given tuple
+needs, are in `TauCeti/Topology/Sym/Family.lean`.
 
 ## Main declarations
 
