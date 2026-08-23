@@ -309,13 +309,12 @@ the statement applies inside an arbitrary additive category carrying an exact st
 noncomputable def splittingOfSection (h : IsKernelCokernelPair S) (s : S.X₃ ⟶ S.X₂)
     (hs : s ≫ S.g = 𝟙 S.X₃) : S.Splitting where
   r := h.lift (𝟙 S.X₂ - S.g ≫ s)
-    (by rw [Preadditive.sub_comp, Category.id_comp, Category.assoc, hs, Category.comp_id,
-      sub_self])
+    (by simp [hs])
   s := s
   f_r := by
     have := h.mono_f
-    rw [← cancel_mono S.f, Category.assoc, h.lift_f, Preadditive.comp_sub, Category.comp_id,
-      ← Category.assoc, S.zero, zero_comp, sub_zero, Category.id_comp]
+    rw [← cancel_mono S.f]
+    simp [h.lift_f]
   s_g := hs
   id := by rw [h.lift_f, sub_add_cancel]
 
