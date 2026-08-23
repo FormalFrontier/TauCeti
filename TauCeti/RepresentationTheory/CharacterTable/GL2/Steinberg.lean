@@ -94,19 +94,12 @@ noncomputable def GL2Steinberg : FDRep ℂ (GL (Fin 2) F) :=
   FDRep.ofShrink (augmentationSubrepresentation ℂ (GL (Fin 2) F)
     (GL (Fin 2) F ⧸ GL2Borel F)).toRepresentation
 
-/-- **The projective line over `𝔽_q` has `q + 1` points.**  This is `TauCeti.GL2Borel.index_eq` at
-the coset-space spelling of `Subgroup.index`, which is the spelling the dimension and character
-computations below rewrite with. It is deliberately not a `simp` lemma: with a `Fintype` structure
-on the coset space in scope, `Nat.card_eq_fintype_card` rewrites its left-hand side to
-`Fintype.card`, so the `Nat.card` spelling is not in simp-normal form. -/
-theorem natCard_quotient_gl2Borel :
-    Nat.card (GL (Fin 2) F ⧸ GL2Borel F) = Fintype.card F + 1 :=
-  GL2Borel.index_eq F
-
-/-- `TauCeti.natCard_quotient_gl2Borel` against a chosen `Fintype` structure on the coset space. -/
+/-- **The projective line over `𝔽_q` has `q + 1` points**, against a chosen `Fintype` structure on
+the coset space. This is `TauCeti.GL2Borel.index_eq` at the `Fintype.card` spelling that the
+dimension and character computations below rewrite with. -/
 private theorem fintypeCard_quotient_gl2Borel [Fintype (GL (Fin 2) F ⧸ GL2Borel F)] :
     Fintype.card (GL (Fin 2) F ⧸ GL2Borel F) = Fintype.card F + 1 := by
-  rw [← Nat.card_eq_fintype_card, natCard_quotient_gl2Borel]
+  rw [← Nat.card_eq_fintype_card, ← Subgroup.index_eq_card, GL2Borel.index_eq]
 
 /-- **The Steinberg representation has dimension `q`**, one less than the `q + 1` points of the
 projective line. -/
