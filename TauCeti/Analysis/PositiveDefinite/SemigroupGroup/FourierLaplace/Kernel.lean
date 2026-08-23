@@ -96,7 +96,7 @@ theorem kernelLaplaceTransform_apply (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : 
   (rfl)
 
 @[fun_prop]
-theorem measurable_kernelLaplaceTransform (κ : Kernel V ℝ≥0) [IsSFiniteKernel κ] (t : ℝ≥0) :
+theorem measurable_kernelLaplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) :
     Measurable (kernelLaplaceTransform κ t) := by
   unfold kernelLaplaceTransform
   fun_prop
