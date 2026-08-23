@@ -113,7 +113,7 @@ theorem hasFiniteSupport_normCoeff_summand (f : IdealArithmeticFunction K) (n : 
       {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n} f).HasFiniteSupport :=
   (finite_normFiber K n).subset Set.support_indicator_subset
 
-/-- There is a unique nonzero integral ideal of absolute norm one, namely the unit ideal. -/
+/-- The norm coefficient at `1` is the value at the unit ideal. -/
 @[simp]
 theorem normCoeff_apply_one (f : IdealArithmeticFunction K) : normCoeff K f 1 = f 1 := by
   rw [normCoeff_eq_sum_normFiber, normFiber_one]
