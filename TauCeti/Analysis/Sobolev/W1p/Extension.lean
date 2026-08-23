@@ -41,8 +41,8 @@ isometry of `Lᵖ` spaces, so the extension operator is an isometry of Sobolev s
 ## Main declarations
 
 * `TauCeti.Sobolev1JetLp.extendByZeroₗᵢ`: extension by zero of an `Lᵖ` value-gradient jet.
-* `TauCeti.extendByZero_mem_w1p0Submodule`: the zero-extension of a `W^{1,p}_0(Ω)` function lies
-  in `W^{1,p}_0(Ω')`, hence in `W^{1,p}(Ω')`.
+* `TauCeti.W1p0.extendByZeroL_mem_w1p0Submodule`: the zero-extension of a `W^{1,p}_0(Ω)`
+  function lies in `W^{1,p}_0(Ω')`, hence in `W^{1,p}(Ω')`.
 * `TauCeti.W1p0.extendByZeroL`: the extension operator `W^{1,p}_0(Ω) →L[ℝ] W^{1,p}(Ω')`, with
   `TauCeti.W1p0.norm_extendByZeroL` and its value and gradient components.
 * `TauCeti.hasWeakFDerivOn_indicator_of_mem_w1p0Submodule`: the analytic content, that the
@@ -75,10 +75,10 @@ variable {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSpa
 omit [mu.IsAddHaarMeasure] in
 /-- **Extension by zero of an `Lᵖ` value-gradient jet** from `Ω` to a larger open set `Ω'`: both
 components are declared zero on `Ω' \ Ω`.  It is an isometry, since the added region contributes
-nothing to either `Lᵖ` norm. -/
+nothing to the `Lᵖ` norm of the jet: both of its components vanish there. -/
 def Sobolev1JetLp.extendByZeroₗᵢ (hsub : Omega ≤ Omega') :
     Sobolev1JetLp mu Omega p →ₗᵢ[ℝ] Sobolev1JetLp mu Omega' p :=
-  extendByZeroLpₗᵢ mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+  extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
 
 omit [FiniteDimensional ℝ E] [mu.IsAddHaarMeasure] in
 /-- The extension of a jet is the indicator of the original jet. -/
@@ -86,41 +86,34 @@ theorem Sobolev1JetLp.coeFn_extendByZeroₗᵢ (hsub : Omega ≤ Omega')
     (J : Sobolev1JetLp mu Omega p) :
     (Sobolev1JetLp.extendByZeroₗᵢ hsub J : E → Sobolev1Jet E) =ᵐ[mu.restrict Omega']
       (Omega : Set E).indicator (J : E → Sobolev1Jet E) :=
-  coeFn_extendByZeroLpₗᵢ _ _ _
+  coeFn_extendByZeroLpₗᵢ _ _ _ _
 
 omit [FiniteDimensional ℝ E] [mu.IsAddHaarMeasure] in
-/-- The value component of an extended jet is the extension of the value component. -/
+/-- The value component of an extended jet is the extension of the value component: taking a
+component is a pointwise postcomposition, and `TauCeti.coeFn_extendByZeroLpₗᵢ_comp` says that
+those commute with extension by zero. -/
+@[simp]
 theorem Sobolev1JetLp.value_extendByZeroₗᵢ (hsub : Omega ≤ Omega')
     (J : Sobolev1JetLp mu Omega p) :
     Sobolev1JetLp.value (Sobolev1JetLp.extendByZeroₗᵢ hsub J) =
-      extendByZeroLpₗᵢ (𝕜 := ℝ) mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
-        (Sobolev1JetLp.value J) := by
-  refine Lp.ext ?_
-  filter_upwards [Sobolev1JetLp.value_apply_ae (Sobolev1JetLp.extendByZeroₗᵢ hsub J),
-    Sobolev1JetLp.coeFn_extendByZeroₗᵢ hsub J,
-    coeFn_extendByZeroLpₗᵢ (𝕜 := ℝ) Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
-      (Sobolev1JetLp.value J),
-    indicator_ae_eq_indicator_of_restrict Omega.isOpen.measurableSet
-      (Sobolev1JetLp.value_apply_ae J) (Omega' : Set E)] with x h1 h2 h3 h4
-  rw [h1, h2, h3, h4]
-  by_cases hx : x ∈ (Omega : Set E) <;> simp [hx]
+      extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+        (Sobolev1JetLp.value J) :=
+  (Lp.ext ((coeFn_extendByZeroLpₗᵢ_comp ℝ Omega.isOpen.measurableSet
+    (SetLike.coe_subset_coe.mpr hsub) WithLp.fst rfl (Sobolev1JetLp.value_apply_ae J)).trans
+      (Filter.EventuallyEq.symm (Sobolev1JetLp.value_apply_ae _)))).symm
 
 omit [FiniteDimensional ℝ E] [mu.IsAddHaarMeasure] in
-/-- The gradient component of an extended jet is the extension of the gradient component. -/
+/-- The gradient component of an extended jet is the extension of the gradient component; as for
+`TauCeti.Sobolev1JetLp.value_extendByZeroₗᵢ`, this is postcomposition commuting with extension. -/
+@[simp]
 theorem Sobolev1JetLp.gradient_extendByZeroₗᵢ (hsub : Omega ≤ Omega')
     (J : Sobolev1JetLp mu Omega p) :
     Sobolev1JetLp.gradient (Sobolev1JetLp.extendByZeroₗᵢ hsub J) =
-      extendByZeroLpₗᵢ (𝕜 := ℝ) mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
-        (Sobolev1JetLp.gradient J) := by
-  refine Lp.ext ?_
-  filter_upwards [Sobolev1JetLp.gradient_apply_ae (Sobolev1JetLp.extendByZeroₗᵢ hsub J),
-    Sobolev1JetLp.coeFn_extendByZeroₗᵢ hsub J,
-    coeFn_extendByZeroLpₗᵢ (𝕜 := ℝ) Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
-      (Sobolev1JetLp.gradient J),
-    indicator_ae_eq_indicator_of_restrict Omega.isOpen.measurableSet
-      (Sobolev1JetLp.gradient_apply_ae J) (Omega' : Set E)] with x h1 h2 h3 h4
-  rw [h1, h2, h3, h4]
-  by_cases hx : x ∈ (Omega : Set E) <;> simp [hx]
+      extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+        (Sobolev1JetLp.gradient J) :=
+  (Lp.ext ((coeFn_extendByZeroLpₗᵢ_comp ℝ Omega.isOpen.measurableSet
+    (SetLike.coe_subset_coe.mpr hsub) WithLp.snd rfl (Sobolev1JetLp.gradient_apply_ae J)).trans
+      (Filter.EventuallyEq.symm (Sobolev1JetLp.gradient_apply_ae _)))).symm
 
 /-! ### Test functions extend to test functions -/
 
@@ -135,45 +128,32 @@ omit [FiniteDimensional ℝ E] in
 /-- Extending a test function's `Lᵖ` class by zero gives the class of the same test function on
 the larger open set: it already vanished outside `Ω`. -/
 private theorem extendByZeroLpₗᵢ_testFunctionLp (hsub : Omega ≤ Omega') (phi : 𝓓(Omega, ℝ)) :
-    extendByZeroLpₗᵢ (𝕜 := ℝ) mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+    extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
         (testFunctionLp p phi) =
-      testFunctionLp (mu := mu) (Omega := Omega') p (TestFunction.monoCLM ℝ phi) := by
-  refine Lp.ext ?_
-  filter_upwards [coeFn_extendByZeroLpₗᵢ (𝕜 := ℝ) Omega.isOpen.measurableSet
-      (SetLike.coe_subset_coe.mpr hsub) (testFunctionLp (mu := mu) p phi),
-    indicator_ae_eq_indicator_of_restrict Omega.isOpen.measurableSet
-      (testFunctionLp_apply_ae (mu := mu) p phi) (Omega' : Set E),
-    testFunctionLp_apply_ae (mu := mu) (Omega := Omega') p (TestFunction.monoCLM ℝ phi)]
-    with x h1 h2 h3
-  rw [h1, h2, h3, coe_monoCLM hsub phi]
-  by_cases hx : x ∈ (Omega : Set E)
-  · rw [indicator_of_mem hx]
-  · rw [indicator_of_notMem hx]
-    exact (image_eq_zero_of_notMem_tsupport fun hc => hx (phi.tsupport_subset hc)).symm
+      testFunctionLp (mu := mu) (Omega := Omega') p (TestFunction.monoCLM ℝ phi) :=
+  extendByZeroLpₗᵢ_eq_of_ae_eq ℝ Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+    ((subset_tsupport _).trans phi.tsupport_subset) (testFunctionLp_apply_ae (mu := mu) p phi) <| by
+      filter_upwards [testFunctionLp_apply_ae (mu := mu) (Omega := Omega') p
+        (TestFunction.monoCLM ℝ phi)] with x hx
+      rw [hx, coe_monoCLM hsub phi]
 
 /-- Extending a test function's gradient by zero gives the gradient of the same test function on
 the larger open set. -/
 private theorem extendByZeroLpₗᵢ_gradientTestFunctionLp (hsub : Omega ≤ Omega')
     (phi : 𝓓(Omega, ℝ)) :
-    extendByZeroLpₗᵢ (𝕜 := ℝ) mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+    extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
         (gradientTestFunctionLp p phi) =
-      gradientTestFunctionLp (mu := mu) (Omega := Omega') p (TestFunction.monoCLM ℝ phi) := by
-  refine Lp.ext ?_
-  filter_upwards [coeFn_extendByZeroLpₗᵢ (𝕜 := ℝ) Omega.isOpen.measurableSet
-      (SetLike.coe_subset_coe.mpr hsub) (gradientTestFunctionLp (mu := mu) p phi),
-    indicator_ae_eq_indicator_of_restrict Omega.isOpen.measurableSet
-      (gradientTestFunctionLp_apply_ae (mu := mu) p phi) (Omega' : Set E),
-    gradientTestFunctionLp_apply_ae (mu := mu) (Omega := Omega') p (TestFunction.monoCLM ℝ phi)]
-    with x h1 h2 h3
-  rw [h1, h2, h3, coe_monoCLM hsub phi]
-  by_cases hx : x ∈ (Omega : Set E)
-  · rw [indicator_of_mem hx]
-  · rw [indicator_of_notMem hx]
-    exact (Function.notMem_support.mp
-      fun hc => hx (support_gradient_testFunction_subset phi hc)).symm
+      gradientTestFunctionLp (mu := mu) (Omega := Omega') p (TestFunction.monoCLM ℝ phi) :=
+  extendByZeroLpₗᵢ_eq_of_ae_eq ℝ Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+    (support_gradient_testFunction_subset phi)
+    (gradientTestFunctionLp_apply_ae (mu := mu) p phi) <| by
+      filter_upwards [gradientTestFunctionLp_apply_ae (mu := mu) (Omega := Omega') p
+        (TestFunction.monoCLM ℝ phi)] with x hx
+      rw [hx, coe_monoCLM hsub phi]
 
 /-- The zero-extension of a test-function jet is the jet of the same test function on the larger
 open set. -/
+@[simp]
 theorem Sobolev1JetLp.extendByZeroₗᵢ_ofTestFunctionₗ (hsub : Omega ≤ Omega')
     (phi : 𝓓(Omega, ℝ)) :
     Sobolev1JetLp.extendByZeroₗᵢ hsub
@@ -192,7 +172,8 @@ theorem Sobolev1JetLp.extendByZeroₗᵢ_ofTestFunctionₗ (hsub : Omega ≤ Ome
 
 /-- The closed-set argument behind the extension theorem.  It runs in the ambient jet space, so
 its conclusion is membership in the *image* of `W^{1,p}_0(Ω')` there; the two usable forms are
-`TauCeti.extendByZero_mem_w1pSubmodule` and `TauCeti.extendByZero_mem_w1p0Submodule`.
+`TauCeti.Sobolev1JetLp.extendByZeroₗᵢ_mem_w1pSubmodule` and
+`TauCeti.W1p0.extendByZeroL_mem_w1p0Submodule`.
 
 Being closed is what the image contributes: `W^{1,p}_0(Ω')` is closed in `W^{1,p}(Ω')`, which is
 closed in the jet space, so the image is closed and its preimage under the (continuous) extension
@@ -216,8 +197,8 @@ private theorem extendByZero_mem_image (hsub : Omega ≤ Omega') {u : W1p mu Ome
 /-- **The zero-extension of a `W^{1,p}_0(Ω)` function is a Sobolev function on `Ω'`.**  No
 regularity of `∂Ω` is needed, and no boundedness of either open set; the boundary condition
 carried by membership in `W^{1,p}_0(Ω)` is what makes the extension weakly differentiable. -/
-theorem extendByZero_mem_w1pSubmodule (hsub : Omega ≤ Omega') {u : W1p mu Omega p}
-    (hu : u ∈ w1p0Submodule mu Omega p) :
+theorem Sobolev1JetLp.extendByZeroₗᵢ_mem_w1pSubmodule (hsub : Omega ≤ Omega')
+    {u : W1p mu Omega p} (hu : u ∈ w1p0Submodule mu Omega p) :
     Sobolev1JetLp.extendByZeroₗᵢ hsub (u : Sobolev1JetLp mu Omega p) ∈
       w1pSubmodule mu Omega' p := by
   obtain ⟨v, -, hv⟩ := extendByZero_mem_image hsub hu
@@ -232,7 +213,7 @@ def W1p0.extendByZeroL (hsub : Omega ≤ Omega') :
       ((w1pSubmodule mu Omega p).toSubmodule.subtypeL.comp
         (w1p0Submodule mu Omega p).toSubmodule.subtypeL))
     (w1pSubmodule mu Omega' p).toSubmodule
-    fun u => extendByZero_mem_w1pSubmodule hsub u.2
+    fun u => Sobolev1JetLp.extendByZeroₗᵢ_mem_w1pSubmodule hsub u.2
 
 @[simp]
 theorem W1p0.coe_extendByZeroL (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
@@ -242,31 +223,34 @@ theorem W1p0.coe_extendByZeroL (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
 
 /-- **The zero-extension of a `W^{1,p}_0(Ω)` function lies in `W^{1,p}_0(Ω')`**, not merely in
 `W^{1,p}(Ω')`: a limit of test functions on `Ω` extends to a limit of test functions on `Ω'`. -/
-theorem extendByZero_mem_w1p0Submodule (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
+theorem W1p0.extendByZeroL_mem_w1p0Submodule (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
     W1p0.extendByZeroL hsub u ∈ w1p0Submodule mu Omega' p := by
   obtain ⟨v, hv, hval⟩ := extendByZero_mem_image hsub u.2
   have : W1p0.extendByZeroL hsub u = v := Subtype.ext hval.symm
   rw [this]
   exact hv
 
-/-- **Extension by zero is an isometry of Sobolev spaces.**  Both the `Lᵖ` norm of the function
-and that of its weak gradient are unchanged. -/
+/-- **Extension by zero is an isometry of Sobolev spaces.**  The `W^{1,p}` norm — the `Lᵖ` norm
+of the value-gradient jet — is unchanged; the extension adds a region on which both components
+vanish. -/
 theorem W1p0.norm_extendByZeroL (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
     ‖W1p0.extendByZeroL hsub u‖ = ‖u‖ :=
   (Sobolev1JetLp.extendByZeroₗᵢ hsub).norm_map _
 
 /-- The value component of the extension is the zero-extension of the value component. -/
+@[simp]
 theorem W1p0.value_extendByZeroL (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
     W1p.value (W1p0.extendByZeroL hsub u) =
-      extendByZeroLpₗᵢ (𝕜 := ℝ) mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+      extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
         (W1p.value (u : W1p mu Omega p)) := by
   rw [W1p.value_coe, W1p.value_coe, W1p0.coe_extendByZeroL,
     Sobolev1JetLp.value_extendByZeroₗᵢ]
 
 /-- The gradient component of the extension is the zero-extension of the gradient component. -/
+@[simp]
 theorem W1p0.gradient_extendByZeroL (hsub : Omega ≤ Omega') (u : W1p0 mu Omega p) :
     W1p.gradient (W1p0.extendByZeroL hsub u) =
-      extendByZeroLpₗᵢ (𝕜 := ℝ) mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
+      extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (SetLike.coe_subset_coe.mpr hsub)
         (W1p.gradient (u : W1p mu Omega p)) := by
   rw [W1p.gradient_coe, W1p.gradient_coe, W1p0.coe_extendByZeroL,
     Sobolev1JetLp.gradient_extendByZeroₗᵢ]
@@ -289,11 +273,11 @@ theorem hasWeakFDerivOn_indicator_of_mem_w1p0Submodule (hsub : Omega ≤ Omega')
   have hvalue : (W1p.value (W1p0.extendByZeroL hsub u) : E → ℝ) =ᵐ[mu.restrict Omega']
       (Omega : Set E).indicator (W1p.value (u : W1p mu Omega p) : E → ℝ) := by
     rw [W1p0.value_extendByZeroL]
-    exact coeFn_extendByZeroLpₗᵢ _ _ _
+    exact coeFn_extendByZeroLpₗᵢ _ _ _ _
   have hgradient : (W1p.gradient (W1p0.extendByZeroL hsub u) : E → E) =ᵐ[mu.restrict Omega']
       (Omega : Set E).indicator (W1p.gradient (u : W1p mu Omega p) : E → E) := by
     rw [W1p0.gradient_extendByZeroL]
-    exact coeFn_extendByZeroLpₗᵢ _ _ _
+    exact coeFn_extendByZeroLpₗᵢ _ _ _ _
   refine (hmem.congr_ae hvalue).congr_ae_deriv ?_
   filter_upwards [hgradient] with x hx
   refine ContinuousLinearMap.ext fun v => ?_

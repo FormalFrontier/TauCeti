@@ -15,26 +15,28 @@ An `Lᵖ` function on a measurable set `s` extends by zero to any larger set `t 
 extension has the *same* `Lᵖ` norm, because the added region contributes nothing.  This file
 bundles that extension as a linear isometry
 
-`TauCeti.extendByZeroLpₗᵢ μ hs hst : Lp F p (μ.restrict s) →ₗᵢ[𝕜] Lp F p (μ.restrict t)`,
+`TauCeti.extendByZeroLpₗᵢ 𝕜 μ hs hst : Lp F p (μ.restrict s) →ₗᵢ[𝕜] Lp F p (μ.restrict t)`,
 
 together with the almost-everywhere description of its values, `TauCeti.coeFn_extendByZeroLpₗᵢ`.
 
 The one point that needs care is that `Lᵖ` elements are equivalence classes: `s.indicator ⇑f`
 depends on the chosen representative `⇑f`, which is only pinned down `μ.restrict s`-almost
-everywhere, whereas the answer must be pinned down `μ.restrict t`-almost everywhere.  The two are
-reconciled by `TauCeti.indicator_ae_eq_indicator_of_restrict`: an identity holding
-`μ.restrict s`-almost everywhere survives multiplication by the indicator of `s` and passes to any
-restriction of `μ`, because the set where it can fail meets `s` in a `μ`-null set.
+everywhere, whereas the answer must be pinned down `μ.restrict t`-almost everywhere.  Mathlib's
+`MeasureTheory.ae_eq_restrict_iff_indicator_ae_eq` reconciles the two: an identity holding
+`μ.restrict s`-almost everywhere survives multiplication by the indicator of `s` as an identity
+against `μ`, hence against every restriction of `μ`.
 
 ## Main declarations
 
-* `TauCeti.indicator_ae_eq_indicator_of_restrict`: transporting an almost-everywhere identity on
-  `s` to the indicators, against any restriction of `μ`.
-* `TauCeti.eLpNorm_indicator_restrict` and `TauCeti.memLp_indicator_restrict`: extension by zero
-  preserves the `Lᵖ` seminorm and hence `Lᵖ` membership.
+* `TauCeti.eLpNorm_indicator_restrict_eq_eLpNorm_restrict` and
+  `TauCeti.memLp_indicator_restrict_of_memLp_restrict`: extension by zero preserves the `Lᵖ`
+  seminorm, and hence `Lᵖ` membership.
 * `TauCeti.extendByZeroLpₗᵢ`: extension by zero as a linear isometry.
-* `TauCeti.coeFn_extendByZeroLpₗᵢ` and `TauCeti.extendByZeroLpₗᵢ_ae_eq_of_restrict`: the values of
+* `TauCeti.coeFn_extendByZeroLpₗᵢ` and `TauCeti.coeFn_extendByZeroLpₗᵢ_restrict`: the values of
   the extension, on `t` and back on `s`.
+* `TauCeti.extendByZeroLpₗᵢ_eq_of_ae_eq` and `TauCeti.coeFn_extendByZeroLpₗᵢ_comp`: the two ways
+  an extension is recognised in practice — from a representative that already vanishes off `s`,
+  and through pointwise postcomposition by a map fixing `0`.
 -/
 
 public section
@@ -47,65 +49,42 @@ open MeasureTheory Set
 
 open scoped ENNReal
 
-variable {α F 𝕜 : Type*} [MeasurableSpace α] [NormedAddCommGroup F] {p : ℝ≥0∞} {μ : Measure α}
-  {s t : Set α}
-
-/-- **Almost-everywhere identities on `s` survive extension by zero.**  If `g` and `h` agree
-`μ.restrict s`-almost everywhere then their zero-extensions agree almost everywhere for *any*
-restriction of `μ`: outside `s` both vanish, and inside `s` they can differ only on a `μ`-null
-set. -/
-theorem indicator_ae_eq_indicator_of_restrict (hs : MeasurableSet s) {g h : α → F}
-    (hgh : g =ᵐ[μ.restrict s] h) (t : Set α) :
-    s.indicator g =ᵐ[μ.restrict t] s.indicator h := by
-  have hmu : μ ({x | ¬ g x = h x} ∩ s) = 0 := by
-    rw [← Measure.restrict_apply' hs]
-    exact ae_iff.mp hgh
-  have hnu : μ.restrict t ({x | ¬ g x = h x} ∩ s) = 0 :=
-    Measure.absolutelyContinuous_of_le Measure.restrict_le_self hmu
-  rw [Filter.EventuallyEq, ae_iff]
-  refine measure_mono_null (fun x hx => ?_) hnu
-  by_cases hxs : x ∈ s
-  · exact ⟨fun hgx => hx (by rw [indicator_of_mem hxs, indicator_of_mem hxs, hgx]), hxs⟩
-  · exact absurd (by rw [indicator_of_notMem hxs, indicator_of_notMem hxs]) hx
+variable {α : Type*} [MeasurableSpace α] {F : Type*} [NormedAddCommGroup F] (𝕜 : Type*)
+  [NormedRing 𝕜] [Module 𝕜 F] [IsBoundedSMul 𝕜 F] {p : ℝ≥0∞} {μ : Measure α} {s t : Set α}
 
 /-- **Extension by zero preserves the `Lᵖ` seminorm.**  Enlarging the domain from `s` to `t ⊇ s`
 adds only a region on which the extended function vanishes. -/
-theorem eLpNorm_indicator_restrict (hs : MeasurableSet s) (hst : s ⊆ t) (g : α → F) :
+theorem eLpNorm_indicator_restrict_eq_eLpNorm_restrict (hs : MeasurableSet s) (hst : s ⊆ t)
+    (g : α → F) :
     eLpNorm (s.indicator g) p (μ.restrict t) = eLpNorm g p (μ.restrict s) := by
   rw [eLpNorm_indicator_eq_eLpNorm_restrict hs, Measure.restrict_restrict_of_subset hst]
 
 /-- **Extension by zero preserves `Lᵖ` membership.** -/
-theorem memLp_indicator_restrict (hs : MeasurableSet s) (hst : s ⊆ t) {g : α → F}
-    (hg : MemLp g p (μ.restrict s)) : MemLp (s.indicator g) p (μ.restrict t) := by
+theorem memLp_indicator_restrict_of_memLp_restrict (hs : MeasurableSet s) (hst : s ⊆ t)
+    {g : α → F} (hg : MemLp g p (μ.restrict s)) : MemLp (s.indicator g) p (μ.restrict t) := by
   rw [memLp_indicator_iff_restrict hs, Measure.restrict_restrict_of_subset hst]
   exact hg
 
+/-- Transporting an almost-everywhere identity on `s` to the indicators, against `μ.restrict t`:
+Mathlib's `MeasureTheory.ae_eq_restrict_iff_indicator_ae_eq` gives the identity against `μ`, and
+`μ.restrict t` is absolutely continuous with respect to `μ`. -/
+private theorem indicator_ae_eq (hs : MeasurableSet s) {g h : α → F}
+    (hgh : g =ᵐ[μ.restrict s] h) : s.indicator g =ᵐ[μ.restrict t] s.indicator h :=
+  ((ae_eq_restrict_iff_indicator_ae_eq hs).mp hgh).filter_mono (ae_mono Measure.restrict_le_self)
+
 variable (μ) in
 /-- Extension by zero as a linear map; `TauCeti.extendByZeroLpₗᵢ` upgrades it to an isometry. -/
-private def extendByZeroLpₗ [NormedField 𝕜] [NormedSpace 𝕜 F]
-    (hs : MeasurableSet s) (hst : s ⊆ t) :
+private def extendByZeroLpₗ (hs : MeasurableSet s) (hst : s ⊆ t) :
     Lp F p (μ.restrict s) →ₗ[𝕜] Lp F p (μ.restrict t) where
-  toFun f := (memLp_indicator_restrict hs hst (Lp.memLp f)).toLp _
+  toFun f := (memLp_indicator_restrict_of_memLp_restrict hs hst (Lp.memLp f)).toLp _
   map_add' f g := by
-    refine Lp.ext ?_
-    filter_upwards [MemLp.coeFn_toLp (memLp_indicator_restrict hs hst (Lp.memLp (f + g))),
-      Lp.coeFn_add ((memLp_indicator_restrict hs hst (Lp.memLp f)).toLp _)
-        ((memLp_indicator_restrict hs hst (Lp.memLp g)).toLp _),
-      MemLp.coeFn_toLp (memLp_indicator_restrict hs hst (Lp.memLp f)),
-      MemLp.coeFn_toLp (memLp_indicator_restrict hs hst (Lp.memLp g)),
-      indicator_ae_eq_indicator_of_restrict hs (Lp.coeFn_add f g) t] with x h1 h2 h3 h4 h5
-    rw [h1, h5, h2]
-    simp only [Pi.add_apply, h3, h4]
-    by_cases hxs : x ∈ s <;> simp [hxs]
+    rw [← MemLp.toLp_add]
+    exact MemLp.toLp_congr _ _
+      ((indicator_ae_eq hs (Lp.coeFn_add f g)).trans (.of_eq (indicator_add' s _ _)))
   map_smul' c f := by
-    refine Lp.ext ?_
-    filter_upwards [MemLp.coeFn_toLp (memLp_indicator_restrict hs hst (Lp.memLp (c • f))),
-      Lp.coeFn_smul c ((memLp_indicator_restrict hs hst (Lp.memLp f)).toLp _),
-      MemLp.coeFn_toLp (memLp_indicator_restrict hs hst (Lp.memLp f)),
-      indicator_ae_eq_indicator_of_restrict hs (Lp.coeFn_smul c f) t] with x h1 h2 h3 h4
-    rw [h1, h4, RingHom.id_apply, h2]
-    simp only [Pi.smul_apply, h3]
-    by_cases hxs : x ∈ s <;> simp [hxs]
+    rw [RingHom.id_apply, ← MemLp.toLp_const_smul]
+    exact MemLp.toLp_congr _ _
+      ((indicator_ae_eq hs (Lp.coeFn_smul c f)).trans (.of_eq (indicator_const_smul s c _)))
 
 variable (μ) in
 /-- **Extension by zero as a linear isometry** `Lᵖ(s) → Lᵖ(t)` for a measurable `s ⊆ t`: a
@@ -114,25 +93,51 @@ function on `s` is regarded as a function on the larger set `t` by declaring it 
 It is an isometry, not merely a bounded map, because the enlarged region contributes nothing to
 the `Lᵖ` norm; in particular the extension is injective, so `Lᵖ(s)` really does sit inside
 `Lᵖ(t)`. -/
-def extendByZeroLpₗᵢ [NormedField 𝕜] [NormedSpace 𝕜 F] [Fact (1 ≤ p)] (hs : MeasurableSet s)
-    (hst : s ⊆ t) : Lp F p (μ.restrict s) →ₗᵢ[𝕜] Lp F p (μ.restrict t) where
-  toLinearMap := extendByZeroLpₗ μ hs hst
+def extendByZeroLpₗᵢ [Fact (1 ≤ p)] (hs : MeasurableSet s) (hst : s ⊆ t) :
+    Lp F p (μ.restrict s) →ₗᵢ[𝕜] Lp F p (μ.restrict t) where
+  toLinearMap := extendByZeroLpₗ 𝕜 μ hs hst
   norm_map' f := by
-    change ‖(memLp_indicator_restrict hs hst (Lp.memLp f)).toLp _‖ = ‖f‖
-    rw [Lp.norm_toLp, eLpNorm_indicator_restrict hs hst, ← Lp.norm_def]
+    -- `Lp.norm_toLp` is stated for the unbundled `MemLp.toLp`; expose that implementation of
+    -- `extendByZeroLpₗ`, which the bundled `toLinearMap` field hides.
+    change ‖(memLp_indicator_restrict_of_memLp_restrict hs hst (Lp.memLp f)).toLp _‖ = ‖f‖
+    rw [Lp.norm_toLp, eLpNorm_indicator_restrict_eq_eLpNorm_restrict hs hst, ← Lp.norm_def]
 
 /-- **The extension by zero is the indicator of the original representative.** -/
-theorem coeFn_extendByZeroLpₗᵢ [NormedField 𝕜] [NormedSpace 𝕜 F] [Fact (1 ≤ p)]
-    (hs : MeasurableSet s) (hst : s ⊆ t) (f : Lp F p (μ.restrict s)) :
-    (extendByZeroLpₗᵢ (𝕜 := 𝕜) μ hs hst f : α → F) =ᵐ[μ.restrict t] s.indicator (f : α → F) :=
-  MemLp.coeFn_toLp (memLp_indicator_restrict hs hst (Lp.memLp f))
+theorem coeFn_extendByZeroLpₗᵢ [Fact (1 ≤ p)] (hs : MeasurableSet s) (hst : s ⊆ t)
+    (f : Lp F p (μ.restrict s)) :
+    (extendByZeroLpₗᵢ 𝕜 μ hs hst f : α → F) =ᵐ[μ.restrict t] s.indicator (f : α → F) :=
+  MemLp.coeFn_toLp (memLp_indicator_restrict_of_memLp_restrict hs hst (Lp.memLp f))
 
 /-- **The extension by zero restricts back to the original function.** -/
-theorem extendByZeroLpₗᵢ_ae_eq_of_restrict [NormedField 𝕜] [NormedSpace 𝕜 F] [Fact (1 ≤ p)]
-    (hs : MeasurableSet s) (hst : s ⊆ t) (f : Lp F p (μ.restrict s)) :
-    (extendByZeroLpₗᵢ (𝕜 := 𝕜) μ hs hst f : α → F) =ᵐ[μ.restrict s] (f : α → F) := by
-  have hle : μ.restrict s ≤ μ.restrict t := Measure.restrict_mono hst le_rfl
-  exact ((coeFn_extendByZeroLpₗᵢ (𝕜 := 𝕜) hs hst f).filter_mono
-    (ae_mono hle)).trans (indicator_ae_eq_restrict hs)
+theorem coeFn_extendByZeroLpₗᵢ_restrict [Fact (1 ≤ p)] (hs : MeasurableSet s) (hst : s ⊆ t)
+    (f : Lp F p (μ.restrict s)) :
+    (extendByZeroLpₗᵢ 𝕜 μ hs hst f : α → F) =ᵐ[μ.restrict s] (f : α → F) :=
+  ((coeFn_extendByZeroLpₗᵢ 𝕜 hs hst f).filter_mono
+    (ae_mono (Measure.restrict_mono hst le_rfl))).trans (indicator_ae_eq_restrict hs)
+
+/-- **Recognising an extension by zero from a common representative.**  A function `h` supported
+in `s` that represents `f` on `s` and `g` on `t` exhibits `g` as the zero-extension of `f`; this
+is how a function already known to vanish off `s` is transported from `Lᵖ(s)` to `Lᵖ(t)`. -/
+theorem extendByZeroLpₗᵢ_eq_of_ae_eq [Fact (1 ≤ p)] (hs : MeasurableSet s) (hst : s ⊆ t)
+    {h : α → F} (hsupp : Function.support h ⊆ s) {f : Lp F p (μ.restrict s)}
+    {g : Lp F p (μ.restrict t)} (hf : ∀ᵐ x ∂μ.restrict s, f x = h x)
+    (hg : ∀ᵐ x ∂μ.restrict t, g x = h x) : extendByZeroLpₗᵢ 𝕜 μ hs hst f = g :=
+  Lp.ext <| ((coeFn_extendByZeroLpₗᵢ 𝕜 hs hst f).trans
+    ((indicator_ae_eq hs hf).trans (.of_eq (indicator_eq_self.2 hsupp)))).trans
+    (Filter.EventuallyEq.symm hg)
+
+/-- **Extension by zero commutes with pointwise postcomposition by a map fixing `0`.**  If `g'` is
+the pointwise image of `f` under `L`, then the extension of `g'` is the pointwise image under `L`
+of the extension of `f`: off `s` both sides are `L 0 = 0`. -/
+theorem coeFn_extendByZeroLpₗᵢ_comp {G : Type*} [NormedAddCommGroup G] [Module 𝕜 G]
+    [IsBoundedSMul 𝕜 G] [Fact (1 ≤ p)] (hs : MeasurableSet s) (hst : s ⊆ t) (L : F → G)
+    (hL : L 0 = 0) {f : Lp F p (μ.restrict s)} {g' : Lp G p (μ.restrict s)}
+    (hg' : ∀ᵐ x ∂μ.restrict s, g' x = L (f x)) :
+    (extendByZeroLpₗᵢ 𝕜 μ hs hst g' : α → G) =ᵐ[μ.restrict t]
+      fun x => L (extendByZeroLpₗᵢ 𝕜 μ hs hst f x) := by
+  filter_upwards [coeFn_extendByZeroLpₗᵢ 𝕜 hs hst g', coeFn_extendByZeroLpₗᵢ 𝕜 hs hst f,
+    indicator_ae_eq (t := t) hs hg'] with x h1 h2 h3
+  rw [h1, h3, h2]
+  by_cases hx : x ∈ s <;> simp [hx, hL]
 
 end TauCeti
