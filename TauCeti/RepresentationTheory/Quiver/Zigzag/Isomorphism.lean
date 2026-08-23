@@ -11,13 +11,17 @@ public import TauCeti.RepresentationTheory.Quiver.Zigzag.Relations
 public section
 
 /-!
-# The zigzag relation quotient is an invariant of the graph
+# The nonisolated zigzag quotient is an invariant of the graph
 
 An isomorphism `e : G ≃g H` of simple graphs relabels the doubled quiver of `G` as the doubled
 quiver of `H`, hence relabels the path basis of `k(DoubledQuiver G)` as the path basis of
 `k(DoubledQuiver H)`. This file carries that relabelling through the zigzag relations: it is an
 isomorphism of path algebras, it matches the two relation families, and it therefore descends to an
-isomorphism of the two zigzag relation quotients.
+isomorphism of the two `TauCeti.nonisolatedZigzagQuotient`s.
+
+That quotient is, as its own docstring records, the intended zigzag algebra only for a graph
+without an isolated vertex; the componentwise public algebra is built from it elsewhere, and its
+invariance is not established here.
 
 Nothing here is specific to the *uniform* relation family beyond the fact that it is described by
 path lengths and by the endpoints of paths, both of which a relabelling preserves. That is exactly
@@ -27,27 +31,31 @@ what the transport lemmas below say, one constructor at a time.
 
 * `TauCeti.DoubledQuiver.pathAlgebraEquiv`: the isomorphism of doubled path algebras induced by a
   graph isomorphism.
-* `TauCeti.zigzagQuotientEquiv`: the induced isomorphism of zigzag relation quotients.
+* `TauCeti.nonisolatedZigzagQuotientEquiv`: the induced isomorphism of nonisolated zigzag
+  quotients.
 
 ## Main results
 
-* `TauCeti.DoubledQuiver.map_obj_bijective`: a graph isomorphism relabels the vertices of the
-  doubled quiver bijectively, which is what `TauCeti.PathAlgebra.mapAlgHom` asks for.
 * `TauCeti.DoubledQuiver.pathAlgebraEquiv_vertexIdempotent`,
   `TauCeti.DoubledQuiver.pathAlgebraEquiv_ofArrow` and
   `TauCeti.DoubledQuiver.pathAlgebraEquiv_backtrackElem`: the relabelling on the three families of
   elements the zigzag relations are written in.
 * `TauCeti.isQuadraticZigzagRelator_pathAlgebraEquiv` and
   `TauCeti.isZigzagRelator_pathAlgebraEquiv`: **the relators are matched**.
-* `TauCeti.zigzagQuotientEquiv_zigzagMk`: the induced isomorphism of quotients sends the class of
-  an element to the class of its relabelling.
-* `TauCeti.zigzagQuotientEquiv_refl` and `TauCeti.zigzagQuotientEquiv_trans`: **functoriality**,
-  the identity relabelling and a composite of relabellings behaving as they should.
+* `TauCeti.nonisolatedZigzagQuotientEquiv_zigzagMk`: the induced isomorphism of quotients sends the
+  class of an element to the class of its relabelling.
+* `TauCeti.nonisolatedZigzagQuotientEquiv_refl` and
+  `TauCeti.nonisolatedZigzagQuotientEquiv_trans`: **functoriality**, the identity relabelling and a
+  composite of relabellings behaving as they should.
 
 ## References
 
-This is the "functoriality under graph/quiver isomorphism" clause of Layer 0, and the "invariance
-under graph isomorphism" clause of Layer 1, of `TauCetiRoadmap/ZigzagPreprojective/README.md`.
+This discharges the "functoriality under graph/quiver isomorphism" clause of Layer 0 of
+`TauCetiRoadmap/ZigzagPreprojective/README.md`. It covers the "invariance under graph isomorphism"
+clause of Layer 1 only in part: the uniform relation quotient is transported, while the
+skew-parameter statements of that clause — extension along a field homomorphism, the resulting
+scalar-extension comparison, and injectivity on units — are untouched. See Huerfano--Khovanov,
+*A category for the adjoint representation*, Section 3.
 -/
 
 namespace TauCeti
@@ -105,47 +113,36 @@ theorem pathAlgebraEquiv_backtrackElem (e : G ≃g H) {i j : V} (h : G.Adj i j) 
 isomorphisms of path algebras. -/
 theorem pathAlgebraEquiv_trans {X : Type*} [Finite X] {K : SimpleGraph X} (e : G ≃g H)
     (f : H ≃g K) :
-    pathAlgebraEquiv k (e.trans f) = (pathAlgebraEquiv k e).trans (pathAlgebraEquiv k f) :=
-  PathAlgebra.algEquiv_ext k fun x ↦ by
-    let he := map_obj_bijective e
-    let hf := map_obj_bijective f
-    let hef := map_obj_bijective (e.trans f)
-    have hcomp : Function.Bijective ((map e.toHom).comp (map f.toHom)).obj := by
-      rw [← map_trans e f]
-      exact hef
-    rw [pathAlgebraEquiv, pathAlgebraEquiv, pathAlgebraEquiv, AlgEquiv.trans_apply,
-      PathAlgebra.mapAlgEquiv_apply, PathAlgebra.mapAlgEquiv_apply,
-      PathAlgebra.mapAlgEquiv_apply]
-    calc
-      _ = PathAlgebra.mapAlgHom k ((map e.toHom).comp (map f.toHom)) hcomp (ofPath x) :=
-        DFunLike.congr_fun (PathAlgebra.mapAlgHom_congr k (map_trans e f) hef hcomp) (ofPath x)
-      _ = _ := DFunLike.congr_fun (PathAlgebra.mapAlgHom_comp k (map e.toHom) (map f.toHom)
-        he hf hcomp) (ofPath x)
+    pathAlgebraEquiv k (e.trans f) = (pathAlgebraEquiv k e).trans (pathAlgebraEquiv k f) := by
+  have hsymm : map (SimpleGraph.Iso.symm (e.trans f)).toHom =
+      map f.symm.toHom ⋙q map e.symm.toHom := map_trans f.symm e.symm
+  rw [pathAlgebraEquiv, pathAlgebraEquiv, pathAlgebraEquiv,
+    PathAlgebra.mapAlgEquiv_congr k (map_trans e f) hsymm _ _
+      (by rw [← map_trans e f, ← hsymm]; exact map_toHom_comp_symm_toHom _)
+      (by rw [← map_trans e f, ← hsymm]; exact map_symm_toHom_comp_toHom _),
+    PathAlgebra.mapAlgEquiv_comp k _ _ _ _ (map_toHom_comp_symm_toHom e)
+      (map_symm_toHom_comp_toHom e) (map_toHom_comp_symm_toHom f)
+      (map_symm_toHom_comp_toHom f)]
 
 /-- **The identity relabelling induces the identity.** -/
 @[simp]
 theorem pathAlgebraEquiv_refl :
-    pathAlgebraEquiv k (SimpleGraph.Iso.refl (G := G)) = AlgEquiv.refl :=
-  PathAlgebra.algEquiv_ext k fun x ↦ by
-    let hrefl := map_obj_bijective (SimpleGraph.Iso.refl (G := G))
-    let hid := (Prefunctor.id (DoubledQuiver G)).obj_bijective_of_comp_eq_id
-      (Prefunctor.id (DoubledQuiver G)) rfl rfl
-    rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_apply]
-    calc
-      _ = PathAlgebra.mapAlgHom k (Prefunctor.id (DoubledQuiver G)) hid (ofPath x) :=
-        DFunLike.congr_fun (PathAlgebra.mapAlgHom_congr k map_refl hrefl hid) (ofPath x)
-      _ = AlgHom.id k (pathAlgebra k (DoubledQuiver G)) (ofPath x) :=
-        DFunLike.congr_fun (PathAlgebra.mapAlgHom_id k hid) (ofPath x)
-      _ = _ := by rfl
+    pathAlgebraEquiv k (SimpleGraph.Iso.refl (G := G)) = AlgEquiv.refl := by
+  have hsymm : map (SimpleGraph.Iso.refl (G := G)).symm.toHom = Prefunctor.id (DoubledQuiver G) :=
+    map_refl
+  have hid := Prefunctor.comp_id (Prefunctor.id (DoubledQuiver G))
+  rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_congr k map_refl hsymm _ _ hid hid,
+    PathAlgebra.mapAlgEquiv_id]
 
 /-- The inverse of the induced isomorphism is the isomorphism induced by the inverse
 relabelling. -/
 @[simp]
 theorem pathAlgebraEquiv_symm (e : G ≃g H) :
     (pathAlgebraEquiv k e).symm = pathAlgebraEquiv k e.symm := by
-  refine AlgEquiv.ext fun y ↦ ?_
-  rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_symm_apply, pathAlgebraEquiv,
-    PathAlgebra.mapAlgEquiv_apply]
+  have hsymm : map e.symm.symm.toHom = map e.toHom := rfl
+  rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_symm, pathAlgebraEquiv,
+    PathAlgebra.mapAlgEquiv_congr k rfl hsymm _ _ (map_toHom_comp_symm_toHom e.symm)
+      (map_symm_toHom_comp_toHom e.symm)]
 
 end DoubledQuiver
 
@@ -162,19 +159,14 @@ theorem isQuadraticZigzagRelator_pathAlgebraEquiv (e : G ≃g H)
   cases hx with
   | nonreturn p hlen hne =>
     rw [pathAlgebraEquiv_ofPath, Prefunctor.mapTotalPath_mk]
-    have hlen' := (map e.toHom).length_mapTotalPath ⟨_, _, p⟩
-    rw [Prefunctor.mapTotalPath_mk] at hlen'
     exact IsQuadraticZigzagRelator.nonreturn _
-      (hlen'.trans hlen)
+      (((map e.toHom).length_mapPath p).trans hlen)
       fun h ↦ hne ((map_obj_bijective e).1 h)
   | equal_backtracks p q hp hq =>
     rw [map_sub, pathAlgebraEquiv_ofPath, pathAlgebraEquiv_ofPath,
       Prefunctor.mapTotalPath_mk, Prefunctor.mapTotalPath_mk]
-    have hp' := (map e.toHom).length_mapTotalPath ⟨_, _, p⟩
-    have hq' := (map e.toHom).length_mapTotalPath ⟨_, _, q⟩
-    rw [Prefunctor.mapTotalPath_mk] at hp' hq'
     exact IsQuadraticZigzagRelator.equal_backtracks _ _
-      (hp'.trans hp) (hq'.trans hq)
+      (((map e.toHom).length_mapPath p).trans hp) (((map e.toHom).length_mapPath q).trans hq)
 
 /-- **A graph isomorphism carries the uniform zigzag relators of `G` to those of `H`.** -/
 theorem isZigzagRelator_pathAlgebraEquiv (e : G ≃g H) {x : pathAlgebra k (DoubledQuiver G)}
@@ -187,8 +179,8 @@ theorem isZigzagRelator_pathAlgebraEquiv (e : G ≃g H) {x : pathAlgebra k (Doub
 
 /-! ### The quotients are isomorphic -/
 
-/-- **The map of zigzag relation quotients induced by a graph isomorphism.** -/
-noncomputable def zigzagQuotientHom (e : G ≃g H) :
+/-- **The map of nonisolated zigzag quotients induced by a graph isomorphism.** -/
+noncomputable def nonisolatedZigzagQuotientHom (e : G ≃g H) :
     nonisolatedZigzagQuotient k G →ₐ[k] nonisolatedZigzagQuotient k H :=
   zigzagLift k G ((zigzagMk k H).comp (pathAlgebraEquiv k e).toAlgHom) fun x hx ↦ by
     rw [AlgHom.comp_apply]
@@ -196,64 +188,71 @@ noncomputable def zigzagQuotientHom (e : G ≃g H) :
 
 /-- The induced map of quotients sends the class of an element to the class of its relabelling. -/
 @[simp]
-theorem zigzagQuotientHom_zigzagMk (e : G ≃g H) (x : pathAlgebra k (DoubledQuiver G)) :
-    zigzagQuotientHom k e (zigzagMk k G x) = zigzagMk k H (pathAlgebraEquiv k e x) :=
+theorem nonisolatedZigzagQuotientHom_zigzagMk (e : G ≃g H) (x : pathAlgebra k (DoubledQuiver G)) :
+    nonisolatedZigzagQuotientHom k e (zigzagMk k G x) = zigzagMk k H (pathAlgebraEquiv k e x) :=
   zigzagLift_zigzagMk k G _ _ x
 
-/-- **The zigzag relation quotient is an invariant of the graph**: an isomorphism of simple graphs
-induces an isomorphism of the relation quotients of their doubled path algebras. -/
-noncomputable def zigzagQuotientEquiv (e : G ≃g H) :
+/-- **The nonisolated zigzag quotient is an invariant of the graph**: an isomorphism of simple
+graphs induces an isomorphism of the uniform relation quotients of their doubled path algebras.
+This is invariance of `TauCeti.nonisolatedZigzagQuotient`, which is the intended zigzag algebra
+only for a graph without an isolated vertex; the componentwise public algebra is not treated
+here. -/
+noncomputable def nonisolatedZigzagQuotientEquiv (e : G ≃g H) :
     nonisolatedZigzagQuotient k G ≃ₐ[k] nonisolatedZigzagQuotient k H :=
-  AlgEquiv.ofAlgHom (zigzagQuotientHom k e) (zigzagQuotientHom k e.symm)
+  AlgEquiv.ofAlgHom (nonisolatedZigzagQuotientHom k e) (nonisolatedZigzagQuotientHom k e.symm)
     (Ideal.Quotient.algHom_ext k (AlgHom.ext fun y ↦ by
       simp only [AlgHom.comp_apply, Ideal.Quotient.mkₐ_eq_mk, ← zigzagMk_apply,
-        zigzagQuotientHom_zigzagMk, ← pathAlgebraEquiv_symm, AlgEquiv.apply_symm_apply,
+        nonisolatedZigzagQuotientHom_zigzagMk, ← pathAlgebraEquiv_symm, AlgEquiv.apply_symm_apply,
         AlgHom.id_apply]))
     (Ideal.Quotient.algHom_ext k (AlgHom.ext fun x ↦ by
       simp only [AlgHom.comp_apply, Ideal.Quotient.mkₐ_eq_mk, ← zigzagMk_apply,
-        zigzagQuotientHom_zigzagMk, ← pathAlgebraEquiv_symm, AlgEquiv.symm_apply_apply,
+        nonisolatedZigzagQuotientHom_zigzagMk, ← pathAlgebraEquiv_symm, AlgEquiv.symm_apply_apply,
         AlgHom.id_apply]))
 
 /-- The induced isomorphism of quotients sends the class of an element to the class of its
 relabelling. -/
 @[simp]
-theorem zigzagQuotientEquiv_zigzagMk (e : G ≃g H) (x : pathAlgebra k (DoubledQuiver G)) :
-    zigzagQuotientEquiv k e (zigzagMk k G x) = zigzagMk k H (pathAlgebraEquiv k e x) := by
-  rw [zigzagQuotientEquiv, AlgEquiv.ofAlgHom_apply, zigzagQuotientHom_zigzagMk]
+theorem nonisolatedZigzagQuotientEquiv_zigzagMk (e : G ≃g H)
+    (x : pathAlgebra k (DoubledQuiver G)) :
+    nonisolatedZigzagQuotientEquiv k e (zigzagMk k G x) =
+      zigzagMk k H (pathAlgebraEquiv k e x) := by
+  rw [nonisolatedZigzagQuotientEquiv, AlgEquiv.ofAlgHom_apply,
+    nonisolatedZigzagQuotientHom_zigzagMk]
 
 /-- The forward homomorphism of the quotient isomorphism is the map used to construct it. -/
 @[simp]
-theorem zigzagQuotientEquiv_toAlgHom (e : G ≃g H) :
-    (zigzagQuotientEquiv k e).toAlgHom = zigzagQuotientHom k e := (rfl)
+theorem nonisolatedZigzagQuotientEquiv_toAlgHom (e : G ≃g H) :
+    (nonisolatedZigzagQuotientEquiv k e).toAlgHom = nonisolatedZigzagQuotientHom k e := (rfl)
 
 /-- The inverse quotient isomorphism is induced by the inverse graph relabelling. -/
 @[simp]
-theorem zigzagQuotientEquiv_symm (e : G ≃g H) :
-    (zigzagQuotientEquiv k e).symm = zigzagQuotientEquiv k e.symm := by
+theorem nonisolatedZigzagQuotientEquiv_symm (e : G ≃g H) :
+    (nonisolatedZigzagQuotientEquiv k e).symm = nonisolatedZigzagQuotientEquiv k e.symm := by
   refine AlgEquiv.ext fun z ↦ ?_
   obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective z
-  apply (zigzagQuotientEquiv k e).injective
-  rw [AlgEquiv.apply_symm_apply, ← zigzagMk_apply, zigzagQuotientEquiv_zigzagMk,
-    zigzagQuotientEquiv_zigzagMk, ← pathAlgebraEquiv_symm, AlgEquiv.apply_symm_apply]
+  apply (nonisolatedZigzagQuotientEquiv k e).injective
+  rw [AlgEquiv.apply_symm_apply, ← zigzagMk_apply, nonisolatedZigzagQuotientEquiv_zigzagMk,
+    nonisolatedZigzagQuotientEquiv_zigzagMk, ← pathAlgebraEquiv_symm, AlgEquiv.apply_symm_apply]
 
 /-- **The identity relabelling induces the identity of quotients.** -/
 @[simp]
-theorem zigzagQuotientEquiv_refl :
-    zigzagQuotientEquiv k (SimpleGraph.Iso.refl (G := G)) = AlgEquiv.refl := by
+theorem nonisolatedZigzagQuotientEquiv_refl :
+    nonisolatedZigzagQuotientEquiv k (SimpleGraph.Iso.refl (G := G)) = AlgEquiv.refl := by
   refine AlgEquiv.ext fun z ↦ ?_
   obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective z
-  rw [← zigzagMk_apply, zigzagQuotientEquiv_zigzagMk, pathAlgebraEquiv_refl]
+  rw [← zigzagMk_apply, nonisolatedZigzagQuotientEquiv_zigzagMk, pathAlgebraEquiv_refl]
   rfl
 
 /-- **The isomorphism of quotients is functorial**: composing two graph isomorphisms composes the
-induced isomorphisms of zigzag relation quotients. -/
-theorem zigzagQuotientEquiv_trans {X : Type*} [Finite X] {K : SimpleGraph X} (e : G ≃g H)
+induced isomorphisms of nonisolated zigzag quotients. -/
+theorem nonisolatedZigzagQuotientEquiv_trans {X : Type*} [Finite X] {K : SimpleGraph X} (e : G ≃g H)
     (f : H ≃g K) :
-    zigzagQuotientEquiv k (e.trans f) =
-      (zigzagQuotientEquiv k e).trans (zigzagQuotientEquiv k f) := by
+    nonisolatedZigzagQuotientEquiv k (e.trans f) =
+      (nonisolatedZigzagQuotientEquiv k e).trans (nonisolatedZigzagQuotientEquiv k f) := by
   refine AlgEquiv.ext fun z ↦ ?_
   obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective z
-  rw [← zigzagMk_apply, zigzagQuotientEquiv_zigzagMk, pathAlgebraEquiv_trans, AlgEquiv.trans_apply,
-    AlgEquiv.trans_apply, zigzagQuotientEquiv_zigzagMk, zigzagQuotientEquiv_zigzagMk]
+  rw [← zigzagMk_apply, nonisolatedZigzagQuotientEquiv_zigzagMk, pathAlgebraEquiv_trans,
+    AlgEquiv.trans_apply, AlgEquiv.trans_apply, nonisolatedZigzagQuotientEquiv_zigzagMk,
+    nonisolatedZigzagQuotientEquiv_zigzagMk]
 
 end TauCeti

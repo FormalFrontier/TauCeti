@@ -41,6 +41,10 @@ arrows still gives an algebra homomorphism, just not an injective one.
   `TauCeti.PathAlgebra.mapAlgHom_ofArrow`: the homomorphism on paths, vertex idempotents and
   arrows.
 * `TauCeti.PathAlgebra.mapAlgHom_id` and `TauCeti.PathAlgebra.mapAlgHom_comp`: **functoriality**.
+* `TauCeti.PathAlgebra.mapAlgEquiv_id`, `TauCeti.PathAlgebra.mapAlgEquiv_comp` and
+  `TauCeti.PathAlgebra.mapAlgEquiv_symm`: the same laws for the induced isomorphism, together
+  with the congruence lemma `TauCeti.PathAlgebra.mapAlgEquiv_congr`.
+
 ## References
 
 This is the "functoriality under graph/quiver isomorphism" clause of Layer 0 of
@@ -94,9 +98,10 @@ theorem mapTotalPath_id (x : TauCeti.Quiver.TotalPath Q) :
   rw [mapTotalPath_mk, Prefunctor.mapPath_id]
   rfl
 
-/-- Pushing along a composite of prefunctors is pushing along each in turn. -/
+/-- Pushing along a composite of prefunctors is pushing along each in turn. The name follows
+`Prefunctor.mapPath_comp_apply`, `Prefunctor.mapPath_comp` being reserved for concatenation. -/
 @[simp]
-theorem mapTotalPath_comp (φ : Q ⥤q R) (ψ : R ⥤q S) (x : TauCeti.Quiver.TotalPath Q) :
+theorem mapTotalPath_comp_apply (φ : Q ⥤q R) (ψ : R ⥤q S) (x : TauCeti.Quiver.TotalPath Q) :
     (φ.comp ψ).mapTotalPath x = ψ.mapTotalPath (φ.mapTotalPath x) := by
   obtain ⟨a, b, p⟩ := x
   rw [mapTotalPath_mk, mapTotalPath_mk, mapTotalPath_mk, Prefunctor.mapPath_comp_apply]
@@ -207,23 +212,26 @@ theorem mapAlgHom_comp (φ : Q ⥤q R) (ψ : R ⥤q S) (hφ : Function.Bijective
     mapAlgHom k (φ.comp ψ) hφψ = (mapAlgHom k ψ hψ).comp (mapAlgHom k φ hφ) :=
   algHom_ext k fun x ↦ by
     rw [mapAlgHom_ofPath, AlgHom.comp_apply, mapAlgHom_ofPath, mapAlgHom_ofPath,
-      mapTotalPath_comp]
+      mapTotalPath_comp_apply]
+
+/-- The composite of the two homomorphisms induced by mutually inverse prefunctors is the
+identity. This is the pair of coherence hypotheses of `AlgEquiv.ofAlgHom` for
+`TauCeti.PathAlgebra.mapAlgEquiv`. -/
+private theorem mapAlgHom_comp_eq_id (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφ : Function.Bijective φ.obj)
+    (hψ : Function.Bijective ψ.obj) (hφψ : φ.comp ψ = Prefunctor.id Q) :
+    (mapAlgHom k ψ hψ).comp (mapAlgHom k φ hφ) = AlgHom.id k (pathAlgebra k Q) :=
+  have hid : Function.Bijective (Prefunctor.id Q).obj := Function.bijective_id
+  have hcomp : Function.Bijective (φ.comp ψ).obj := hφψ ▸ hid
+  (mapAlgHom_comp k φ ψ hφ hψ hcomp).symm.trans
+    ((mapAlgHom_congr k hφψ hcomp hid).trans (mapAlgHom_id k hid))
 
 /-- **The algebra isomorphism of path algebras induced by an isomorphism of quivers**, presented as
 a pair of mutually inverse prefunctors. -/
 noncomputable def mapAlgEquiv (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp ψ = Prefunctor.id Q)
-    (hψφ : ψ.comp φ = Prefunctor.id R) : pathAlgebra k Q ≃ₐ[k] pathAlgebra k R := by
-  let hφ := φ.obj_bijective_of_comp_eq_id ψ hφψ hψφ
-  let hψ := ψ.obj_bijective_of_comp_eq_id φ hψφ hφψ
-  let hidQ := (Prefunctor.id Q).obj_bijective_of_comp_eq_id (Prefunctor.id Q) rfl rfl
-  let hidR := (Prefunctor.id R).obj_bijective_of_comp_eq_id (Prefunctor.id R) rfl rfl
-  have hφψ_bij : Function.Bijective (φ.comp ψ).obj := by rw [hφψ]; exact hidQ
-  have hψφ_bij : Function.Bijective (ψ.comp φ).obj := by rw [hψφ]; exact hidR
-  exact AlgEquiv.ofAlgHom (mapAlgHom k φ hφ) (mapAlgHom k ψ hψ)
-    ((mapAlgHom_comp k ψ φ hψ hφ hψφ_bij).symm.trans
-      ((mapAlgHom_congr k hψφ hψφ_bij hidR).trans (mapAlgHom_id k hidR)))
-    ((mapAlgHom_comp k φ ψ hφ hψ hφψ_bij).symm.trans
-      ((mapAlgHom_congr k hφψ hφψ_bij hidQ).trans (mapAlgHom_id k hidQ)))
+    (hψφ : ψ.comp φ = Prefunctor.id R) : pathAlgebra k Q ≃ₐ[k] pathAlgebra k R :=
+  AlgEquiv.ofAlgHom (mapAlgHom k φ (φ.obj_bijective_of_comp_eq_id ψ hφψ hψφ))
+    (mapAlgHom k ψ (ψ.obj_bijective_of_comp_eq_id φ hψφ hφψ))
+    (mapAlgHom_comp_eq_id k ψ φ _ _ hψφ) (mapAlgHom_comp_eq_id k φ ψ _ _ hφψ)
 
 /-- The induced isomorphism acts as the homomorphism induced by the forward prefunctor. -/
 @[simp]
@@ -233,13 +241,49 @@ theorem mapAlgEquiv_apply (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp ψ = 
   rw [mapAlgEquiv, AlgEquiv.ofAlgHom_apply]
 
 /-- The inverse of the induced isomorphism acts as the homomorphism induced by the inverse
-prefunctor. -/
-@[simp]
+prefunctor. Deliberately not a `simp` lemma: `TauCeti.PathAlgebra.mapAlgEquiv_symm` followed by
+`TauCeti.PathAlgebra.mapAlgEquiv_apply` already rewrites its left-hand side, and `simpNF` rejects
+the pair. -/
 theorem mapAlgEquiv_symm_apply (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp ψ = Prefunctor.id Q)
     (hψφ : ψ.comp φ = Prefunctor.id R) (y : pathAlgebra k R) :
     (mapAlgEquiv k φ ψ hφψ hψφ).symm y =
       mapAlgHom k ψ (ψ.obj_bijective_of_comp_eq_id φ hψφ hφψ) y := by
   rw [mapAlgEquiv, AlgEquiv.ofAlgHom_symm, AlgEquiv.ofAlgHom_apply]
+
+/-- Equal pairs of prefunctors induce equal isomorphisms; the coherence hypotheses are
+propositions, so they need not be compared. -/
+theorem mapAlgEquiv_congr {φ φ' : Q ⥤q R} {ψ ψ' : R ⥤q Q} (hφ : φ = φ') (hψ : ψ = ψ')
+    (hφψ : φ.comp ψ = Prefunctor.id Q) (hψφ : ψ.comp φ = Prefunctor.id R)
+    (hφψ' : φ'.comp ψ' = Prefunctor.id Q) (hψφ' : ψ'.comp φ' = Prefunctor.id R) :
+    mapAlgEquiv k φ ψ hφψ hψφ = mapAlgEquiv k φ' ψ' hφψ' hψφ' := by
+  subst hφ; subst hψ; rfl
+
+/-- **The identity prefunctor induces the identity isomorphism**. -/
+@[simp]
+theorem mapAlgEquiv_id (h h' : (Prefunctor.id Q).comp (Prefunctor.id Q) = Prefunctor.id Q) :
+    mapAlgEquiv k (Prefunctor.id Q) (Prefunctor.id Q) h h' = AlgEquiv.refl :=
+  algEquiv_ext k fun x ↦ by
+    rw [mapAlgEquiv_apply, mapAlgHom_ofPath, mapTotalPath_id]
+    rfl
+
+/-- **The inverse isomorphism is the one induced by the reversed pair**. -/
+@[simp]
+theorem mapAlgEquiv_symm (φ : Q ⥤q R) (ψ : R ⥤q Q) (hφψ : φ.comp ψ = Prefunctor.id Q)
+    (hψφ : ψ.comp φ = Prefunctor.id R) :
+    (mapAlgEquiv k φ ψ hφψ hψφ).symm = mapAlgEquiv k ψ φ hψφ hφψ :=
+  AlgEquiv.ext fun y ↦ by rw [mapAlgEquiv_symm_apply, mapAlgEquiv_apply]
+
+/-- **Composition of prefunctors induces composition of the isomorphisms**. -/
+theorem mapAlgEquiv_comp (φ : Q ⥤q R) (ψ : R ⥤q Q) (φ' : R ⥤q S) (ψ' : S ⥤q R)
+    (hφψ : φ.comp ψ = Prefunctor.id Q) (hψφ : ψ.comp φ = Prefunctor.id R)
+    (hφψ' : φ'.comp ψ' = Prefunctor.id R) (hψφ' : ψ'.comp φ' = Prefunctor.id S)
+    (h : (φ.comp φ').comp (ψ'.comp ψ) = Prefunctor.id Q)
+    (h' : (ψ'.comp ψ).comp (φ.comp φ') = Prefunctor.id S) :
+    mapAlgEquiv k (φ.comp φ') (ψ'.comp ψ) h h' =
+      (mapAlgEquiv k φ ψ hφψ hψφ).trans (mapAlgEquiv k φ' ψ' hφψ' hψφ') :=
+  algEquiv_ext k fun x ↦ by
+    rw [AlgEquiv.trans_apply, mapAlgEquiv_apply, mapAlgEquiv_apply, mapAlgEquiv_apply,
+      mapAlgHom_ofPath, mapAlgHom_ofPath, mapAlgHom_ofPath, mapTotalPath_comp_apply]
 
 end Map
 

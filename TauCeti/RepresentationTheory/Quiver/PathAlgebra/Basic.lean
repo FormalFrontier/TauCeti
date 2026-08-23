@@ -786,6 +786,7 @@ theorem liftAlgHom_unique (G : pathAlgebra k Q →ₐ[k] B) (hG : ∀ x, G (ofPa
   algHom_ext k fun x ↦ (hG x).trans (liftAlgHom_ofPath k F hcomp hzero hone x).symm
 
 /-- **Algebra isomorphisms out of a path algebra are determined by their values on the paths.** -/
+@[ext high]
 theorem algEquiv_ext ⦃f g : pathAlgebra k Q ≃ₐ[k] B⦄
     (h : ∀ x, f (ofPath x) = g (ofPath x)) : f = g :=
   AlgEquiv.ext fun y ↦
