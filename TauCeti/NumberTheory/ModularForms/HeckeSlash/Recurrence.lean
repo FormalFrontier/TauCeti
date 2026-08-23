@@ -99,15 +99,26 @@ private theorem qExpansion_coeff_add_slash_scaleRep [NeZero p]
     simp [CongruenceSubgroup.strictPeriods_Gamma1]
   let _ : Fact (IsCusp OnePoint.infty ((Gamma1 N).map (mapGL ℝ))) :=
     ⟨((Gamma1 N).map (mapGL ℝ)).isCusp_of_mem_strictPeriods one_pos hΓ⟩
-  have hU := analyticAt_cuspFunction_heckeSlashUpperTri k p
-    (SlashInvariantFormClass.periodic_comp_ofComplex f hΓ) (ModularFormClass.holo f)
-      (ModularFormClass.bdd_at_infty f)
+  have hU : AnalyticAt ℂ (cuspFunction 1 (heckeSlashUpperTri k p ⇑f)) 0 :=
+    UpperHalfPlane.analyticAt_cuspFunction_zero one_pos
+      (periodic_heckeSlashUpperTri k p
+        (SlashInvariantFormClass.periodic_comp_ofComplex f hΓ))
+      (mdifferentiable_heckeSlashUpperTri k p (ModularFormClass.holo f))
+      (isBoundedAtImInfty_heckeSlashUpperTri k p (ModularFormClass.bdd_at_infty f))
   have _ : NeZero (p * N) := ⟨Nat.mul_ne_zero (NeZero.ne p) (NeZero.ne N)⟩
   have hD : AnalyticAt ℂ (cuspFunction 1 (⇑g ∣[k] (scaleRep p : GL (Fin 2) ℚ))) 0 := by
     rw [scaleRep_def]
-    exact ModularForm.analyticAt_cuspFunction_slash_natDiagGL_d_one
-      (by simp [CongruenceSubgroup.strictPeriods_Gamma1])
-      (TauCeti.Gamma1_map_le_conjAct_scaleGL N p) (ModularFormClass.modularForm g)
+    change AnalyticAt ℂ (cuspFunction 1
+      (⇑(ModularFormClass.modularForm g) ∣[k]
+        (natDiagGL 2 ![p, 1] : GL (Fin 2) ℚ))) 0
+    let hle := TauCeti.Gamma1_map_le_conjAct_scaleGL N p
+    let g' := TauCeti.ModularForm.levelRaise p hle (ModularFormClass.modularForm g)
+    have hg' : AnalyticAt ℂ (cuspFunction 1 ⇑g') 0 :=
+      ModularFormClass.analyticAt_cuspFunction_zero g' one_pos
+        (by simp [CongruenceSubgroup.strictPeriods_Gamma1])
+    rw [TauCeti.slash_natDiagGL_d_one_eq_smul_levelRaise hle
+      (ModularFormClass.modularForm g), cuspFunction_smul hg'.continuousAt]
+    exact hg'.const_smul
   rw [UpperHalfPlane.qExpansion_add hU hD, map_add]
   congr 1
   · exact qExpansion_coeff_heckeSlashUpperTri' k p hΓ hp f m

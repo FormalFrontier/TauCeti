@@ -54,8 +54,6 @@ indices in `p ℕ` survive.
 * `HeckeRing.GL2.qExpansion_coeff_heckeSlashUpperTri` and `qExpansion_heckeSlashUpperTri`: the
   coefficient formula `aₘ = a_{p m}` and its power-series form, and
   `qExpansion_coeff_heckeSlashUpperTri'`, the same for a bundled modular form.
-* `HeckeRing.GL2.analyticAt_cuspFunction_heckeSlashUpperTri`: analyticity at the cusp is
-  preserved by the upper-triangular sum.
 * `HeckeRing.GL2.periodic_heckeSlashUpperTri`: the periodicity fact used by the coefficient
   uniqueness argument.
 
@@ -189,7 +187,7 @@ theorem periodic_heckeSlashUpperTri {f : ℍ → ℂ} (hfper : Periodic (f ∘ o
 
 /-- The cusp function of the upper-triangular sum is analytic at `q = 0`: the sum inherits
 periodicity, holomorphy and boundedness at `i∞` from `f`. -/
-theorem analyticAt_cuspFunction_heckeSlashUpperTri {f : ℍ → ℂ}
+private theorem analyticAt_cuspFunction_heckeSlashUpperTri {f : ℍ → ℂ}
     (hfper : Periodic (f ∘ ofComplex) 1) (hfhol : MDiff f) (hfbdd : IsBoundedAtImInfty f) :
     AnalyticAt ℂ (cuspFunction 1 (heckeSlashUpperTri k p f)) 0 :=
   UpperHalfPlane.analyticAt_cuspFunction_zero one_pos (periodic_heckeSlashUpperTri k p hfper)
