@@ -88,9 +88,9 @@ variable {N p : ℕ} (k : ℤ)
 variable [NeZero N]
 
 private theorem qExpansion_coeff_add_slash_scaleRep [NeZero p]
-    {F G : Type*} [FunLike F ℍ ℂ] [FunLike G ℍ ℂ]
+    {F : Type*} [FunLike F ℍ ℂ]
     [ModularFormClass F ((Gamma1 N).map (mapGL ℝ)) k]
-    [ModularFormClass G ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (g : G)
+    (f : F) (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hSum : AnalyticAt ℂ (cuspFunction 1
       (heckeSlashUpperTri k p ⇑f + ⇑g ∣[k] (scaleRep p : GL (Fin 2) ℚ))) 0) (m : ℕ) :
     (qExpansion 1 (heckeSlashUpperTri k p ⇑f + ⇑g ∣[k] (scaleRep p : GL (Fin 2) ℚ))).coeff m =
@@ -116,7 +116,7 @@ private theorem qExpansion_coeff_add_slash_scaleRep [NeZero p]
   · exact qExpansion_coeff_heckeSlashUpperTri' k p hΓ hp f m
   · rw [scaleRep_def]
     exact ModularForm.qExpansion_slash_natDiagGL_d_one_coeff_Gamma1 N p
-      (ModularFormClass.modularForm g) m
+      g m
 
 /-- **The Fourier-coefficient recurrence for `Tₚ` on `M_k(Γ₁(N))`, at every prime.**
 
@@ -155,7 +155,8 @@ theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime
     (heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f) one_pos hΓ
   rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f] at hSum
   rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f]
-  exact qExpansion_coeff_add_slash_scaleRep k f (diamondOpCuspNat k p f) hSum m
+  exact qExpansion_coeff_add_slash_scaleRep k f
+    (diamondOpCuspNat k p f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) hSum m
 
 /-- **Diamond–Shurman's recurrence on a nebentypus space `M_k(N, χ)` at a good prime.**
 For `p ∤ N` the diamond acts by the scalar `χ(p)`, so
