@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.DirectSum.LinearMap
+public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RepresentationTheory.Subrepresentation
 public import TauCeti.Algebra.MonoidAlgebra.Basis
 
@@ -42,6 +44,8 @@ the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the 
   or `X` is empty, the two subrepresentations are complementary.
 * `TauCeti.finrank_augmentationSubrepresentation`: the augmentation subrepresentation has
   dimension `|X| - 1`.
+* `TauCeti.character_augmentationSubrepresentation`: its character is the character of `k[X]`
+  less `1`, the invariant line contributing that `1`.
 
 ## Implementation notes
 
@@ -338,6 +342,76 @@ theorem finrank_augmentationSubrepresentation :
   rw [hrange, hcard] at hsum
   rw [toSubmodule_augmentationSubrepresentation]
   omega
+
+/-! ### The characters of the two summands -/
+
+/-- **The invariant line contributes `1` to the character.**  It is a line on which every group
+element acts as the identity.
+
+Not a `simp` lemma: `TauCeti.toRepresentation_invariantLine` already rewrites the left-hand side,
+so this statement is not in simp-normal form. -/
+theorem character_invariantLine [Nonempty X] (g : G) :
+    (invariantLine k G X).toRepresentation.character g = 1 := by
+  rw [toRepresentation_invariantLine, Representation.character]
+  have hone : (Representation.trivial k G (invariantLine k G X).toSubmodule) g = 1 := rfl
+  rw [hone, LinearMap.trace_one, finrank_invariantLine]
+  norm_num
+
+/-- **The character of the augmentation subrepresentation** is the character of `k[X]` less `1`.
+The hypothesis is the one that splits `k[X]`: with `|X|` invertible in `k` the invariant line is a
+complement of the augmentation subrepresentation, and a linear map preserving both summands of a
+direct sum has the sum of their traces as its trace.  The invariant line contributes the `1`
+(`TauCeti.character_invariantLine`), so the augmentation subrepresentation contributes the rest.
+
+For a permutation representation the subtracted `1` is the trivial constituent: the character of
+`k[X]` counts fixed points, so the character here is the number of fixed points less one. -/
+theorem character_augmentationSubrepresentation (h : (Fintype.card X : k) ≠ 0) (g : G) :
+    (augmentationSubrepresentation k G X).toRepresentation.character g
+      = (Representation.ofMulAction k G X).character g - 1 := by
+  have hne : Nonempty X := by
+    rw [← Fintype.card_pos_iff]
+    rcases Nat.eq_zero_or_pos (Fintype.card X) with h0 | h0
+    · exact absurd (by rw [h0]; simp) h
+    · exact h0
+  have hcompl := isCompl_invariantLine_augmentationSubrepresentation (k := k) (G := G) (X := X)
+    (Or.inr h)
+  -- the complementation, read in the lattice of submodules
+  have hd : Disjoint (invariantLine k G X).toSubmodule
+      (augmentationSubrepresentation k G X).toSubmodule := by
+    rw [disjoint_iff, ← Subrepresentation.toSubmodule_inf]
+    exact congrArg _ (disjoint_iff.mp hcompl.disjoint)
+  have hc : Codisjoint (invariantLine k G X).toSubmodule
+      (augmentationSubrepresentation k G X).toSubmodule := by
+    rw [codisjoint_iff, ← Subrepresentation.toSubmodule_sup]
+    exact congrArg _ (codisjoint_iff.mp hcompl.codisjoint)
+  have hint : DirectSum.IsInternal
+      (![(invariantLine k G X).toSubmodule,
+        (augmentationSubrepresentation k G X).toSubmodule]) := by
+    refine (DirectSum.isInternal_submodule_iff_isCompl _ (i := 0) (j := 1) (by decide) ?_).mpr
+      ⟨hd, hc⟩
+    ext i
+    fin_cases i <;> simp
+  have hmaps : ∀ i : Fin 2, Set.MapsTo (Representation.ofMulAction k G X g)
+      (![(invariantLine k G X).toSubmodule,
+        (augmentationSubrepresentation k G X).toSubmodule] i)
+      (![(invariantLine k G X).toSubmodule,
+        (augmentationSubrepresentation k G X).toSubmodule] i) := by
+    intro i
+    fin_cases i
+    · exact fun v hv => (invariantLine k G X).apply_mem_toSubmodule g hv
+    · exact fun v hv => (augmentationSubrepresentation k G X).apply_mem_toSubmodule g hv
+  have htr := LinearMap.trace_eq_sum_trace_restrict hint hmaps
+  rw [Fin.sum_univ_two] at htr
+  -- the two summands are the characters of the two subrepresentations, by definition
+  have h0 : LinearMap.trace k _ ((Representation.ofMulAction k G X g).restrict (hmaps 0))
+      = (invariantLine k G X).toRepresentation.character g := rfl
+  have h1 : LinearMap.trace k _ ((Representation.ofMulAction k G X g).restrict (hmaps 1))
+      = (augmentationSubrepresentation k G X).toRepresentation.character g := rfl
+  rw [h0, h1, character_invariantLine] at htr
+  have hperm : (Representation.ofMulAction k G X).character g
+      = LinearMap.trace k (MonoidAlgebra k X) (Representation.ofMulAction k G X g) := rfl
+  rw [hperm, htr]
+  ring
 
 end Field
 
