@@ -6,12 +6,13 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicTopology.FundamentalGroup.Basic
+public import TauCeti.AlgebraicTopology.UniversalCover.Classification.ActionCover
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Reconstruction
 public import TauCeti.CategoryTheory.Groupoid.ConnectedFunctor
 public import TauCeti.Topology.Covering.Monodromy.Transitive
 
 /-!
-# Connected covers are classified by transitive fundamental-groupoid actions
+# Covers are classified by fundamental-groupoid actions
 
 Let `X` be path connected, locally path connected and semilocally simply connected. This file
 proves that monodromy
@@ -38,6 +39,16 @@ connectedness makes the fundamental groupoid connected, which is what the transp
 is also what makes the fibres of a connected cover nonempty; semilocal simple connectedness is
 what produces the universal cover the reconstruction quotients.
 
+Dropping both restrictions — connectedness of the cover, transitivity of the action — gives the
+classification of *all* covering spaces of `X` by *all* functors from its fundamental groupoid to
+types. Full faithfulness is again the lifting criterion, already packaged in
+`TauCeti.Topology.Covering.Monodromy.Basic` and `…Monodromy.Full`, and essential surjectivity is
+again reconstruction at `x₀` followed by transport, but the cover reconstructed from an arbitrary
+`π₁(X, x₀)`-set is the balanced product of
+`TauCeti.AlgebraicTopology.UniversalCover.Classification.ActionCover` rather than a quotient of
+the universal cover by a stabiliser: the latter is connected, so it can only realise a transitive
+action, while the former realises the disjoint union of one such quotient per orbit in one step.
+
 ## Main declarations
 
 * `TauCeti.FundamentalGroupoidAction.basepointMulAction`: the action of `π₁(X, x₀)` on the value
@@ -46,16 +57,22 @@ what produces the universal cover the reconstruction quotients.
   is the monodromy of a connected cover.
 * `TauCeti.ConnectedCoveringSpace.monodromyEquivalence`: **connected covering spaces of `X` are
   equivalent to transitive fundamental-groupoid actions.**
+* `TauCeti.CoveringSpace.exists_monodromyFunctor_iso`: every fundamental-groupoid action is the
+  monodromy of a covering space.
+* `TauCeti.CoveringSpace.monodromyEquivalence`: **covering spaces of `X` are equivalent to
+  functors from its fundamental groupoid to types.**
 
 ## References
 
 This completes the alternative monodromy-functor lens on Stage 2, item 8 of
 `TauCetiRoadmap/UniversalCovers/README.md`, which asks for the classification of connected covers
-by transitive `π₁(X)`-sets; see Hatcher, *Algebraic Topology*, Section 1.3. It consumes the
-based-path universal cover adapted from Kim Morrison's
-[mathlib4#38292](https://github.com/leanprover-community/mathlib4/pull/38292) and the
+by transitive `π₁(X)`-sets and of covers in general by functors out of the fundamental groupoid;
+see Hatcher, *Algebraic Topology*, Section 1.3. It consumes the based-path universal cover
+adapted from Kim Morrison's
+[mathlib4#38292](https://github.com/leanprover-community/mathlib4/pull/38292), the
 stabiliser-cover reconstruction of
-`TauCeti.AlgebraicTopology.UniversalCover.Classification.Reconstruction`.
+`TauCeti.AlgebraicTopology.UniversalCover.Classification.Reconstruction`, and the balanced-product
+cover of `TauCeti.AlgebraicTopology.UniversalCover.Classification.ActionCover`.
 -/
 
 public section
@@ -149,5 +166,52 @@ theorem monodromyEquivalence_functor (X : TopCat.{u}) [PathConnectedSpace X]
   (rfl)
 
 end ConnectedCoveringSpace
+
+namespace CoveringSpace
+
+variable {X : TopCat.{u}} [PathConnectedSpace X] [LocallyPathConnectedSpace X]
+  [SemilocallySimplyConnectedSpace X]
+
+/-- **Every fundamental-groupoid action is the monodromy of a covering space.** The cover is the
+balanced product of the universal cover with the value of the action at a basepoint. -/
+theorem exists_monodromyFunctor_iso (F : FundamentalGroupoid X ⥤ Type u) :
+    ∃ p : CoveringSpace X, Nonempty ((monodromyFunctor X).obj p ≅ F) := by
+  obtain ⟨x₀⟩ := (inferInstance : Nonempty (X : Type u))
+  let _ := FundamentalGroupoidAction.basepointMulAction F x₀
+  let _ : TopologicalSpace (F.obj (FundamentalGroupoid.mk x₀)) := ⊥
+  have : DiscreteTopology (F.obj (FundamentalGroupoid.mk x₀)) := ⟨rfl⟩
+  refine ⟨UniversalCover.actionCoveringSpace x₀ (F.obj (FundamentalGroupoid.mk x₀)), ⟨?_⟩⟩
+  refine eqToIso (monodromyFunctor_obj _) ≪≫
+    TauCeti.Groupoid.natIsoOfEnd
+      (FundamentalGroupoid.nonempty_hom (FundamentalGroupoid.mk x₀))
+      (UniversalCover.actionCoveringSpaceFiberEquiv x₀
+        (F.obj (FundamentalGroupoid.mk x₀))).toIso (fun g => ?_)
+  refine ConcreteCategory.hom_ext _ _ fun z => ?_
+  simp only [types_comp_apply]
+  exact UniversalCover.actionCoveringSpaceFiberEquiv_apply_monodromy x₀
+    (F.obj (FundamentalGroupoid.mk x₀)) g z
+
+/-- Covering-space monodromy is essentially surjective. -/
+instance monodromyFunctor_essSurj : (monodromyFunctor X).EssSurj where
+  mem_essImage F := exists_monodromyFunctor_iso F
+
+/-- Covering-space monodromy is fully faithful and essentially surjective. -/
+instance monodromyFunctor_isEquivalence : (monodromyFunctor X).IsEquivalence where
+
+/-- **The classification of covering spaces by fundamental-groupoid actions.** Over a
+path-connected, locally path-connected, semilocally simply connected base, monodromy is an
+equivalence from covering spaces to functors from the fundamental groupoid to types. -/
+def monodromyEquivalence (X : TopCat.{u}) [PathConnectedSpace X] [LocallyPathConnectedSpace X]
+    [SemilocallySimplyConnectedSpace X] :
+    CoveringSpace X ≌ (FundamentalGroupoid X ⥤ Type u) :=
+  (monodromyFunctor X).asEquivalence
+
+@[simp]
+theorem monodromyEquivalence_functor (X : TopCat.{u}) [PathConnectedSpace X]
+    [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] :
+    (monodromyEquivalence X).functor = monodromyFunctor X :=
+  (rfl)
+
+end CoveringSpace
 
 end TauCeti

@@ -47,8 +47,8 @@ distributed yet has a Dirac path law, under which every event is trivial.
 * `hewittSavage_trivial_of_iIndep` — the zero-one law, from `iIndepFun` and `IdentDistrib`.
 * `measure_eq_zero_or_one_of_exchangeableSigma` — the abstract form, over an exchangeable path law
   in which cylinders over disjoint index blocks are independent.
-* `exchangeableSigma_trivial_of_infinitePi` and `exchangeableLaw_infinitePi_const` — the zero-one
-  law and the exchangeability of the i.i.d. product law `P^{⊗ℕ}` itself.
+* `exchangeableSigma_trivial_of_infinitePi` — the zero-one law for the i.i.d. product law
+  `P^{⊗ℕ}` itself.
 
 Everything else in this file is `private` proof infrastructure: the block permutation, the
 reindexed-cylinder change of variables, the cylinder approximation, the disjoint-block product
@@ -426,17 +426,6 @@ theorem exchangeableSigma_trivial_of_infinitePi (P : ProbabilityMeasure α) {s :
   have hzeroOne := hewittSavage_trivial_of_iIndep (iIndepFun_coord_infinitePi P)
     (identDistrib_coord_infinitePi P) hs
   rwa [pathLaw_coord_infinitePi] at hzeroOne
-
-/-- **An i.i.d. product law is exchangeable.** Under `P^{⊗ℕ}` the coordinates are independent and
-identically distributed, hence exchangeable, and the path law of the coordinate process is the
-product law back again. -/
-theorem exchangeableLaw_infinitePi_const (P : ProbabilityMeasure α) :
-    ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
-  have hlaw := (exchangeable_iff_exchangeableLaw_pathLaw
-    (X := fun n (x : ℕ → α) => x n) fun n => (measurable_pi_apply n).aemeasurable).mp
-      (Exchangeable.of_iIndepFun_identDistrib (iIndepFun_coord_infinitePi P)
-        (identDistrib_coord_infinitePi P))
-  rwa [pathLaw_coord_infinitePi] at hlaw
 
 end HewittSavage
 

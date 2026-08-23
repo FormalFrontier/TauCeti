@@ -27,6 +27,7 @@ complexification models.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
 * `TauCeti.Hodge.latticeConj_unique`: uniqueness among conjugate-linear maps fixing the integral
   module.
+* `TauCeti.Hodge.Conjugation.restrict`: the conjugation induced on a stable complex subspace.
 * `TauCeti.Hodge.latticeConjugation`: the abstract map bundled as a `Conjugation`.
 * `TauCeti.Hodge.integralMapToComplex`: complexification of an integral linear map between abstract
   complexification models.
@@ -76,6 +77,37 @@ theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
   have h : (U.map ω.toEquiv.toLinearMap).map ω.toEquiv.symm.toLinearMap = U :=
     (Submodule.map_symm_eq_iff ω.toEquiv).2 rfl
   simpa only [ω.toEquiv_symm] using h
+
+/-- A conjugation restricted to a stable complex subspace is involutive. -/
+private theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
+    Function.Involutive (ω.toEquiv.toLinearMap.restrict hU) := fun x ↦ by
+  ext
+  simp
+
+/-- The conjugation induced on a complex subspace stable under a given conjugation. -/
+noncomputable def restrict (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation U where
+  toEquiv := LinearEquiv.ofInvolutive _ (ω.restrict_involutive hU)
+  involutive := ω.restrict_involutive hU
+
+/-- A restricted conjugation acts as the ambient one. -/
+@[simp]
+theorem restrict_toEquiv_apply (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (x : U) :
+    ((ω.restrict hU).toEquiv x : W) = ω.toEquiv x :=
+  (rfl)
+
+/-- Conjugating inside a stable subspace is conjugating in the ambient space: the image of an
+intersection with the subspace under the restricted conjugation is the intersection with the
+conjugate subspace. -/
+@[simp]
+theorem map_restrict_comap_subtype (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (A : Submodule ℂ W) :
+    (A.comap U.subtype).map (ω.restrict hU).toEquiv.toLinearMap =
+      (A.map ω.toEquiv.toLinearMap).comap U.subtype := by
+  ext x
+  simp
 
 end Conjugation
 
@@ -227,6 +259,14 @@ noncomputable def latticeConjugation (hℂ : IsBaseChange ℂ ιℂ) : Conjugati
 theorem latticeConjugation_toEquiv_apply (hℂ : IsBaseChange ℂ ιℂ) (x : Vℂ) :
     (latticeConjugation hℂ).toEquiv x = latticeConj hℂ x :=
   by simp [latticeConjugation]
+
+/-- The linear map underlying bundled lattice conjugation is `latticeConj`, bridging the bundled
+spelling used by `HodgeStructureOn` and the bare spelling used by the base-change API. This is not
+a `simp` lemma: rewriting with it discards the equivalence, and with it `simp`'s ability to see
+that conjugating a subspace preserves `⊤`. -/
+theorem latticeConjugation_toLinearMap (hℂ : IsBaseChange ℂ ιℂ) :
+    (latticeConjugation hℂ).toEquiv.toLinearMap = latticeConj hℂ :=
+  (rfl)
 
 /-- Bundled lattice conjugation fixes the image of the integral module. -/
 theorem latticeConjugation_toEquiv_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
