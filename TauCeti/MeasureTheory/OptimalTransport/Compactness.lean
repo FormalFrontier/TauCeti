@@ -42,8 +42,10 @@ only when Prokhorov's theorem is applied.
 * `TauCeti.isClosed_setOfPred_isCoupling` — the couplings of `μ` and `ν` are a weakly closed set of
   probability measures on the product, with canonical Polish and compact-metrizable
   specialisations;
-* `TauCeti.isTightMeasureSet_setOfPred_isCoupling` — the couplings of two tight measures form a
-  tight family, with no topological hypothesis beyond the two topologies themselves;
+* `TauCeti.isTightMeasureSet_setOfPred_isCoupling_of_mem` and
+  `TauCeti.isTightMeasureSet_setOfPred_isCoupling` — the couplings of two tight families of
+  measures, and of two tight measures, form a tight family, with no topological hypothesis beyond
+  the two topologies themselves;
 * `TauCeti.isCompact_setOfPred_isCoupling_of_prokhorov` — the abstract compactness theorem for a
   product on which tight families of probability measures have compact closure;
 * `TauCeti.isCompact_setOfPred_isCoupling` — the Prokhorov theorem for Hausdorff Borel factors,
@@ -101,19 +103,28 @@ section Tight
 variable {X Y : Type*} [TopologicalSpace X] [MeasurableSpace X] [TopologicalSpace Y]
   [MeasurableSpace Y] {μ : Measure X} {ν : Measure Y}
 
-/-- **The couplings of two tight measures form a tight family.** Every coupling of `μ` and `ν`
-gives the complement of a compact rectangle at most the mass that `μ` and `ν` give the complements
-of its two sides, and those bounds are uniform in the coupling because the marginals are fixed. No
-hypothesis beyond the two topologies is needed: the transport plans are exhausted by their two
-marginals. -/
+/-- **The couplings of two tight families of measures form a tight family.** A coupling gives the
+complement of a compact rectangle at most the mass its two marginals give the complements of the
+two sides, and those bounds are uniform over the two families because a coupling is exhausted by
+its marginals. No hypothesis beyond the two topologies is needed. The marginals are allowed to
+range over sets rather than to be fixed, which is what a stability argument with moving marginals
+consumes. -/
+theorem isTightMeasureSet_setOfPred_isCoupling_of_mem {S : Set (Measure X)} {T : Set (Measure Y)}
+    (hS : IsTightMeasureSet S) (hT : IsTightMeasureSet T) :
+    IsTightMeasureSet {π : Measure (X × Y) | ∃ μ ∈ S, ∃ ν ∈ T, IsCoupling π μ ν} := by
+  refine IsTightMeasureSet.prodMk (hS.subset ?_) (hT.subset ?_)
+  · rintro - ⟨π, ⟨μ, hμ, ν, -, hπ⟩, rfl⟩
+    rwa [hπ.fst_eq]
+  · rintro - ⟨π, ⟨μ, -, ν, hν, hπ⟩, rfl⟩
+    rwa [hπ.snd_eq]
+
+/-- **The couplings of two tight measures form a tight family.** This is the fixed-marginal case of
+`TauCeti.isTightMeasureSet_setOfPred_isCoupling_of_mem`, and it is the tightness that Prokhorov's
+theorem is applied to below. -/
 theorem isTightMeasureSet_setOfPred_isCoupling (hμ : IsTightMeasureSet {μ})
     (hν : IsTightMeasureSet {ν}) :
-    IsTightMeasureSet {π : Measure (X × Y) | IsCoupling π μ ν} := by
-  refine IsTightMeasureSet.prodMk (hμ.subset ?_) (hν.subset ?_)
-  · rintro - ⟨π, hπ, rfl⟩
-    exact hπ.fst_eq
-  · rintro - ⟨π, hπ, rfl⟩
-    exact hπ.snd_eq
+    IsTightMeasureSet {π : Measure (X × Y) | IsCoupling π μ ν} :=
+  (isTightMeasureSet_setOfPred_isCoupling_of_mem hμ hν).subset fun _ hπ ↦ ⟨μ, rfl, ν, rfl, hπ⟩
 
 end Tight
 
