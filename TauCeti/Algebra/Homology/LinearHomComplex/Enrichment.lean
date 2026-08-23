@@ -32,6 +32,22 @@ Keller's operation.
 * `TauCeti.linearHomComplexEnrichedCategory`: the enrichment of cochain complexes in their
   `R`-linear Hom complexes.
 
+## Main results
+
+* `TauCeti.ι_linearHomComplexEnrichedComp` and
+  `TauCeti.ι_linearHomComplexEnrichedComp_tmul`: enriched composition on a bidegree summand and
+  its pure-tensor formula.
+* `TauCeti.linearHomComplexEnrichedCategory_hom`,
+  `TauCeti.linearHomComplexEnrichedCategory_eId`, and
+  `TauCeti.linearHomComplexEnrichedCategory_eComp`: the Hom, identity, and composition fields of
+  the enrichment.
+
+This advances `TauCetiRoadmap/DGAInfinity/README.md`, Layer 0, item "signed graded multilinear and
+tensor-coalgebra infrastructure", specifically "construct the `k`-linear Hom complex, its signed
+differential ..., closed composition map, and the enrichment".  No formalization is vendored:
+the enriched-category interface and totalized monoidal structure are Mathlib's, and the closed
+composition map and Koszul braiding are the preceding Tau Ceti stages of this roadmap item.
+
 ## References
 
 * B. Keller, *Introduction to A-infinity algebras and modules*, Section 3.1.
@@ -41,7 +57,7 @@ Keller's operation.
 
 public section
 
-open CategoryTheory MonoidalCategory
+open CategoryTheory MonoidalCategory CochainComplex.HomComplex
 
 namespace TauCeti
 
@@ -78,8 +94,38 @@ lemma ι_linearHomComplexEnrichedComp (F G K : CochainComplex C ℤ) (p q j : �
           cochainCompTensor R F G K q p j (by dsimp at h ⊢; omega)) := by
   rw [linearHomComplexEnrichedComp_def, HomologicalComplex.comp_f, ← Category.assoc,
     braiding_eq_koszulBraiding, koszulBraiding_hom, ι_koszulBraidingHom,
-    koszulBraidingSummand_eq, Linear.units_smul_comp, Category.assoc,
+    koszulBraidingSummand_def, Linear.units_smul_comp, Category.assoc,
     ι_linearHomComplexComp]
+
+/-- On a pure tensor of homogeneous cochains, enriched composition is Keller composition after
+the Koszul sign converting from Mathlib's factor order. -/
+@[simp]
+lemma ι_linearHomComplexEnrichedComp_tmul (F G K : CochainComplex C ℤ) (p q j : ℤ)
+    (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ)
+      (ComplexShape.up ℤ) (p, q) = j)
+    (z₁ : ModuleCat.of R (Cochain F G p)) (z₂ : ModuleCat.of R (Cochain G K q)) :
+    ModuleCat.Hom.hom
+        (HomologicalComplex.ιMapBifunctor (linearHomComplex R F G)
+            (linearHomComplex R G K) (curriedTensor (ModuleCat.{v} R))
+            (ComplexShape.up ℤ) p q j h ≫ (linearHomComplexEnrichedComp R F G K).f j)
+        (z₁ ⊗ₜ z₂) =
+      ((p * q).negOnePow • z₁.comp z₂ (by dsimp at h; omega) :
+        ModuleCat.of R (Cochain F K j)) := by
+  rw [ι_linearHomComplexEnrichedComp]
+  simp only [ModuleCat.hom_smul, LinearMap.smul_apply, ModuleCat.hom_comp,
+    LinearMap.coe_comp, Function.comp_apply]
+  change (p * q).negOnePow • ModuleCat.Hom.hom (cochainCompTensor R F G K q p j _)
+      (ModuleCat.Hom.hom
+        ((β_ (ModuleCat.of R (Cochain F G p)) (ModuleCat.of R (Cochain G K q))).hom)
+          (z₁ ⊗ₜ z₂)) =
+    ((p * q).negOnePow • z₁.comp z₂ _ : ModuleCat.of R (Cochain F K j))
+  rw [ModuleCat.MonoidalCategory.braiding_hom_apply]
+  change (p * q).negOnePow •
+      (ModuleCat.Hom.hom (cochainCompTensor R F G K q p j _) (z₂ ⊗ₜ z₁) :
+        ModuleCat.of R (Cochain F K j)) =
+    ((p * q).negOnePow • z₁.comp z₂ _ : ModuleCat.of R (Cochain F K j))
+  rw [cochainCompTensor_tmul]
+  rfl
 
 /-- Cochain complexes in an `R`-linear preadditive category are enriched in cochain complexes of
 `R`-modules through their `R`-linear Hom complexes. -/
@@ -89,11 +135,18 @@ noncomputable instance linearHomComplexEnrichedCategory :
   id := linearHomComplexUnit R
   comp := linearHomComplexEnrichedComp R
   id_comp F G := by
-    simp [linearHomComplexEnrichedComp]
+    simp [linearHomComplexEnrichedComp_def]
   comp_id F G := by
-    simp [linearHomComplexEnrichedComp]
+    simp [linearHomComplexEnrichedComp_def]
   assoc F G K L := by
-    simp [linearHomComplexEnrichedComp, linearHomComplexComp_assoc]
+    -- Reassociate the two closed compositions, then identify the remaining braiding
+    -- rearrangement with Yang--Baxter.
+    simp only [linearHomComplexEnrichedComp_def, comp_whiskerRight, Category.assoc,
+      BraidedCategory.braiding_naturality_left_assoc,
+      BraidedCategory.braiding_tensor_left_hom, whiskerLeft_comp,
+      BraidedCategory.braiding_naturality_right_assoc,
+      BraidedCategory.braiding_tensor_right_hom, linearHomComplexComp_assoc,
+      Iso.inv_hom_id_assoc]
     simpa only [Category.assoc] using
       BraidedCategory.yang_baxter_assoc (linearHomComplex R F G) (linearHomComplex R G K)
         (linearHomComplex R K L)
@@ -104,19 +157,19 @@ noncomputable instance linearHomComplexEnrichedCategory :
 @[simp]
 lemma linearHomComplexEnrichedCategory_hom (F G : CochainComplex C ℤ) :
     (F ⟶[CochainComplex (ModuleCat.{v} R) ℤ] G) = linearHomComplex R F G :=
-  rfl
+  (rfl)
 
 /-- The enriched identity is the identity morphism regarded as a degree-zero cocycle. -/
 @[simp]
 lemma linearHomComplexEnrichedCategory_eId (F : CochainComplex C ℤ) :
     eId (CochainComplex (ModuleCat.{v} R) ℤ) F = linearHomComplexUnit R F :=
-  rfl
+  (rfl)
 
 /-- Enriched composition is composition in Mathlib's factor order. -/
 @[simp]
 lemma linearHomComplexEnrichedCategory_eComp (F G K : CochainComplex C ℤ) :
     eComp (CochainComplex (ModuleCat.{v} R) ℤ) F G K =
       linearHomComplexEnrichedComp R F G K :=
-  rfl
+  (rfl)
 
 end TauCeti
