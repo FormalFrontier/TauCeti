@@ -35,16 +35,16 @@ Fields and Codes*, 2nd ed., Definition 1.4.4 through Definition 1.4.10.
 
 ## Main results
 
-* `TauCeti.riemannRochSpace_zero`: `L(0)` is the field of constants `k̃` — over an exact
-  constant field, `L(0) = k` (`TauCeti.riemannRochSpace_zero_of_isIntegrallyClosedIn`,
+* `TauCeti.riemannRochSpace_zero`: `L(0)` is the field of constants `algebraicClosure k F` — over
+  an exact constant field, `L(0) = k` (`TauCeti.riemannRochSpace_zero_of_isIntegrallyClosedIn`,
   Lemma 1.4.7(a)).
 * `TauCeti.riemannRochSpace_eq_bot_of_lt_zero`: `L(D) = 0` for `D < 0` (Lemma 1.4.7(b)).
 * `TauCeti.finrank_riemannRochSpace_add_ofPoint_le`: adding one place to a divisor raises `ℓ`
   by at most the degree of that place (Lemma 1.4.8, the one-place-at-a-time estimate).
 * `TauCeti.finiteDimensional_riemannRochSpace` and
   `TauCeti.Divisor.dim_le_degree_posPart_add_one`: `L(D)` is finite-dimensional, with
-  `ℓ(D) ≤ deg D⁺ + [k̃ : k]` and hence `ℓ(D) ≤ deg D⁺ + 1` over an exact constant field
-  (Proposition 1.4.9).
+  `ℓ(D) ≤ deg D⁺ + [algebraicClosure k F : k]` and hence `ℓ(D) ≤ deg D⁺ + 1` over an exact
+  constant field (Proposition 1.4.9).
 
 Finite-dimensionality and the estimates leading to it are proved with no hypothesis on the
 constant field; only the sharp `+ 1` needs `IsIntegrallyClosedIn k F`.  For a non-exact constant
@@ -118,13 +118,14 @@ theorem monotone_riemannRochSpace :
 /-! ### The two ends of the divisor order -/
 
 /-- **Stichtenoth, Lemma 1.4.7(a)**, without a hypothesis on the constant field: the functions
-with no poles at all are exactly the constants `k̃ = algebraicClosure k F`. -/
+with no poles at all are exactly the constants `algebraicClosure k F`. -/
 theorem mem_riemannRochSpace_zero_iff (hF : IsFunctionField k F) {f : F} :
     f ∈ riemannRochSpace (0 : Divisor k F) ↔ f ∈ algebraicClosure k F := by
   rw [mem_riemannRochSpace_iff, Place.mem_algebraicClosure_iff_forall_mem_integers hF]
   simp [Place.mem_integers_iff]
 
-/-- **Stichtenoth, Lemma 1.4.7(a)**, as an equality of `k`-subspaces of `F`: `L(0) = k̃`. -/
+/-- **Stichtenoth, Lemma 1.4.7(a)**, as an equality of `k`-subspaces of `F`:
+`L(0) = algebraicClosure k F`. -/
 theorem riemannRochSpace_zero (hF : IsFunctionField k F) :
     riemannRochSpace (0 : Divisor k F) =
       Subalgebra.toSubmodule (algebraicClosure k F).toSubalgebra := by
@@ -295,14 +296,14 @@ end OnePlace
 
 /-! ### Finite-dimensionality -/
 
-/-- `ℓ(0) = [k̃ : k]`: the functions without poles are the constants. -/
+/-- `ℓ(0) = [algebraicClosure k F : k]`: the functions without poles are the constants. -/
 theorem Divisor.dim_zero (hF : IsFunctionField k F) :
     Divisor.dim (0 : Divisor k F) = Module.finrank k (algebraicClosure k F) := by
   rw [Divisor.dim, riemannRochSpace_zero hF, Subalgebra.finrank_toSubmodule]
   rfl
 
-/-- `L(0) = k̃` is finite-dimensional: the constants form a finite extension of `k`
-(Stichtenoth, Corollary 1.1.16). -/
+/-- `L(0) = algebraicClosure k F` is finite-dimensional: the constants form a finite extension of
+`k` (Stichtenoth, Corollary 1.1.16). -/
 theorem finiteDimensional_riemannRochSpace_zero (hF : IsFunctionField k F) :
     FiniteDimensional k (riemannRochSpace (0 : Divisor k F)) := by
   have := hF.finiteDimensional_algebraicClosure
@@ -354,8 +355,8 @@ private lemma finiteDimensional_and_finrank_le_of_le (hF : IsFunctionField k F) 
 
 /-- **Stichtenoth, Proposition 1.4.9**: the Riemann–Roch space of any divisor is
 finite-dimensional over the constants.  No hypothesis on the constant field is needed here: the
-constants `k̃` form a finite extension of `k` and `L(0) = k̃`, and the estimate walking up from
-`0` to `D⁺` is hypothesis-free. -/
+constants `algebraicClosure k F` form a finite extension of `k` and
+`L(0) = algebraicClosure k F`, and the estimate walking up from `0` to `D⁺` is hypothesis-free. -/
 theorem finiteDimensional_riemannRochSpace (hF : IsFunctionField k F) (D : Divisor k F) :
     FiniteDimensional k (riemannRochSpace D) := by
   have := (finiteDimensional_and_finrank_le_of_le hF
@@ -380,7 +381,7 @@ theorem Divisor.dim_le_dim_add_degree_sub (hF : IsFunctionField k F) {D E : Divi
     le_rfl (finiteDimensional_riemannRochSpace hF D)).2
 
 /-- **Stichtenoth, Proposition 1.4.9**, with the bound for a general constant field:
-`ℓ(D) ≤ deg D⁺ + [k̃ : k]`. -/
+`ℓ(D) ≤ deg D⁺ + [algebraicClosure k F : k]`. -/
 theorem Divisor.dim_le_degree_posPart_add_finrank (hF : IsFunctionField k F) (D : Divisor k F) :
     (Divisor.dim D : ℤ) ≤
       Divisor.degree D⁺ + Module.finrank k (algebraicClosure k F) := by
