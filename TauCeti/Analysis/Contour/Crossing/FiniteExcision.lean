@@ -19,8 +19,8 @@ this file iterates that construction over a finite list of pairwise disjoint win
 the prescribed cap on each window and the original curve off their union. It remains piecewise
 `C¹` when the windows lie strictly inside the parameter interval and their cap endpoints match
 the original curve, and remains closed when the windows lie strictly inside. Without a
-disjointness assumption, it avoids the crossing centre when nonzero-radius windows cover every
-parameter at which the original curve meets that centre.
+disjointness assumption, it avoids the crossing centre on `Icc a b` when nonzero-radius windows
+cover every parameter there at which the original curve meets that centre.
 
 This is the finite geometric surgery producing the modified curve in Proposition 2.2. The winding
 number accounting is deliberately separate: `Winding.Number.Partition` supplies finite
@@ -38,8 +38,8 @@ additivity, while the local crossing contribution is computed by the crossing-an
 * `TauCeti.Contour.IsPiecewiseC1On.exciseCrossings` — finite excision preserves piecewise
   `C¹` regularity.
 * `TauCeti.Contour.exciseCrossings_closed` — finite excision preserves closedness.
-* `TauCeti.Contour.exciseCrossings_ne_center` — the resulting curve avoids the centre when
-  the windows cover every crossing.
+* `TauCeti.Contour.exciseCrossings_ne_center` — the resulting curve avoids the centre on
+  `Icc a b` when the windows cover every crossing there.
 
 ## References
 
@@ -107,7 +107,7 @@ theorem cap_right (W : CircularCapWindow) (s : ℂ) (hlu : W.lower ≠ W.upper) 
   simpa only [cap] using
     circleCap_right s W.radius hlu W.startAngle W.endAngle
 
-/-- A bundled cap is `C¹` (indeed smooth). -/
+/-- A bundled cap is `C¹`. -/
 theorem contDiff_cap (W : CircularCapWindow) (s : ℂ) : ContDiff ℝ 1 (W.cap s) := by
   simpa only [cap] using
     contDiff_circleCap s W.radius W.lower W.upper W.startAngle W.endAngle
@@ -263,8 +263,9 @@ theorem exciseCrossings_closed {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
     exciseCrossings_apply_of_forall_notMem (fun W hW hmem =>
       (not_le.mpr (hinside W hW).2) hmem.2), hclosed]
 
-/-- If closed windows cover every parameter where `γ` meets `s`, replacing all of them by
-nonzero-radius caps produces a curve avoiding `s`, even when the windows overlap. -/
+/-- If closed windows cover every parameter in `Icc a b` where `γ` meets `s`, replacing all of
+them by nonzero-radius caps produces a curve avoiding `s` on `Icc a b`, even when the windows
+overlap. -/
 theorem exciseCrossings_ne_center {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
     {windows : List CircularCapWindow}
     (hr : ∀ W ∈ windows, W.radius ≠ 0)
