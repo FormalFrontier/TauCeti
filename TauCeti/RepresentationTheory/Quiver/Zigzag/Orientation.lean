@@ -25,6 +25,8 @@ one convenient witness that every graph admits an orientation.
 * `TauCeti.DoubledQuiver.Orientation.ofLinearOrder`: orient every edge from its smaller endpoint
   to its larger endpoint.
 * `TauCeti.DoubledQuiver.OrientedQuiver`: the quiver of the chosen darts.
+* `TauCeti.DoubledQuiver.OrientedQuiver.homEquiv`: its arrows over a pair of graph vertices are
+  exactly the adjacency proofs whose dart the orientation selects.
 * `TauCeti.DoubledQuiver.symmetrifyMap`: the canonical prefunctor from the symmetrification of an
   oriented graph to its doubled quiver.
 * `TauCeti.DoubledQuiver.unsymmetrifyMap`: its inverse prefunctor.
@@ -150,6 +152,35 @@ def arrow {i j : V} (h : G.Adj i j) (ho : (⟨(i, j), h⟩ : G.Dart) ∈ o) :
   ⟨by simpa only [vertexEquiv_symm_vertex] using h,
     by simpa only [vertexEquiv_symm_vertex] using ho⟩
 
+/-- The arrows of the oriented quiver between two graph vertices are exactly the adjacency proofs
+whose dart is selected by the orientation. This is the characteristic description of the quiver
+structure, so consumers never need to unfold the `Quiver` instance. -/
+def homEquiv (i j : V) :
+    (vertex G o i ⟶ vertex G o j) ≃ {h : G.Adj i j // (⟨(i, j), h⟩ : G.Dart) ∈ o} where
+  toFun e := ⟨e.1, e.2⟩
+  invFun p := arrow G o p.1 p.2
+  left_inv _ := Subsingleton.elim _ _
+  right_inv _ := Subtype.ext rfl
+
+/-- The characteristic description of the oriented-quiver arrows reads off the adjacency proof
+underlying the arrow of a selected dart. -/
+@[simp]
+theorem homEquiv_arrow {i j : V} (h : G.Adj i j) (ho : (⟨(i, j), h⟩ : G.Dart) ∈ o) :
+    homEquiv G o i j (arrow G o h ho) = ⟨h, ho⟩ :=
+  Subtype.ext rfl
+
+/-- The characteristic description of the oriented-quiver arrows sends a selected dart back to its
+arrow. -/
+@[simp]
+theorem homEquiv_symm_apply {i j : V} (h : G.Adj i j) (ho : (⟨(i, j), h⟩ : G.Dart) ∈ o) :
+    (homEquiv G o i j).symm ⟨h, ho⟩ = arrow G o h ho :=
+  Subsingleton.elim _ _
+
+/-- Every arrow of the oriented quiver comes from a dart selected by the orientation. -/
+theorem exists_eq_arrow {i j : V} (e : vertex G o i ⟶ vertex G o j) :
+    ∃ (h : G.Adj i j) (ho : (⟨(i, j), h⟩ : G.Dart) ∈ o), e = arrow G o h ho :=
+  ⟨(homEquiv G o i j e).1, (homEquiv G o i j e).2, Subsingleton.elim _ _⟩
+
 /-- Forgetting the choice of orientation includes the oriented quiver into the doubled quiver. -/
 def forget : OrientedQuiver G o ⥤q DoubledQuiver G where
   obj i := DoubledQuiver.vertexEquiv G ((vertexEquiv G o).symm i)
@@ -186,6 +217,8 @@ theorem symmetrifyMap_obj (i : V) :
     (symmetrifyMap G o).obj (OrientedQuiver.vertex G o i) = DoubledQuiver.vertex G i := by
   exact OrientedQuiver.forget_obj G o i
 
+/-- The comparison sends the positive copy of an oriented arrow to the doubled-quiver arrow of
+the selected dart. -/
 @[simp]
 theorem symmetrifyMap_toPos {i j : V} (h : G.Adj i j)
     (ho : (⟨(i, j), h⟩ : G.Dart) ∈ o) :
@@ -194,6 +227,8 @@ theorem symmetrifyMap_toPos {i j : V} (h : G.Adj i j)
         (symmetrifyMap_obj G o i).symm (symmetrifyMap_obj G o j).symm := by
   apply Subsingleton.elim
 
+/-- The comparison sends the negative copy of an oriented arrow to the doubled-quiver arrow of
+the reversed dart. -/
 @[simp]
 theorem symmetrifyMap_toNeg {i j : V} (h : G.Adj i j)
     (ho : (⟨(i, j), h⟩ : G.Dart) ∈ o) :
@@ -301,8 +336,7 @@ theorem symmetrifyMap_comp_unsymmetrifyMap :
   refine Prefunctor.ext (fun i => ?_) ?_
   · simp only [Prefunctor.comp_obj, unsymmetrifyMap, symmetrifyMap, Symmetrify.lift,
       OrientedQuiver.forget, Prefunctor.id_obj, Equiv.symm_apply_apply]
-    exact (OrientedQuiver.vertexEquiv G o).apply_symm_apply
-      (show OrientedQuiver G o from i)
+    exact (OrientedQuiver.vertexEquiv G o).apply_symm_apply i
   intro i j e
   apply Subsingleton.elim
 
