@@ -65,7 +65,7 @@ theorem piSigmaHomeomorph_apply {ι : Type*} {κ : ι → Type*} (Z : ι → Typ
     piSigmaHomeomorph Z e f j = f (e.symm j).1 (e.symm j).2 :=
   (rfl)
 
-/- **Regrouping a tuple in a fixed space.** An explicit bijection from a sigma type to another
+/-- **Regrouping a tuple in a fixed space.** An explicit bijection from a sigma type to another
 index type identifies a family of tuples of points of `Y` with one tuple of points of `Y`. -/
 def piSigmaConstHomeomorph (Y : Type*) [TopologicalSpace Y] {ι : Type*} {κ : ι → Type*}
     {ι' : Type*} (e : (Σ i, κ i) ≃ ι') : (∀ i, κ i → Y) ≃ₜ (ι' → Y) :=
