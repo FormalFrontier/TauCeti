@@ -21,7 +21,7 @@ on the scalar extension of its domain. For a finite projective module, this map 
 * `TauCeti.Module.Dual.baseChangeEvaluation_one_tmul`: evaluation at a scalar-extended
   functional with coefficient one is its base change.
 * `TauCeti.Module.Dual.baseChangeEvaluation_tmul`: its value on two pure tensors.
-* `TauCeti.Module.Dual.baseChangeEvaluation_one_tmul_baseChange`: naturality of evaluation
+* `TauCeti.baseChangeEvaluation_one_tmul_baseChange`: naturality of evaluation
   with respect to a base-changed linear map.
 * `TauCeti.Module.Dual.baseChangeEvaluationEquiv`: scalar extension commutes with the dual of a
   finite projective module.
@@ -76,7 +76,7 @@ theorem baseChangeEvaluation_tmul (a b : A) (φ : Module.Dual R M) (m : M) :
 
 /-- Evaluation against a base-changed functional is natural with respect to the base change of
 a linear map. -/
-theorem baseChangeEvaluation_one_tmul_baseChange
+theorem _root_.TauCeti.baseChangeEvaluation_one_tmul_baseChange
     {N : Type*} [AddCommMonoid N] [Module R N]
     (f : M →ₗ[R] N) (φ : Module.Dual R N) (t : A ⊗[R] M) :
     baseChangeEvaluation (R := R) (M := N) (A := A) (1 ⊗ₜ[R] φ) (f.baseChange A t) =
