@@ -74,7 +74,7 @@ variable {N : Type*} [Fintype N] {X : Type*} [TopologicalSpace X] {x y : X}
 /-- The collar of a continuous family: `TauCeti.collar` at the constant radius `1 / 2`, so that
 each member of the family is transported exactly as in
 `TauCeti.GenLoop.transport_apply_eq`. -/
-@[expose] def transportFamily {P : Type*} [TopologicalSpace P] (F : C(P × (I^N), X))
+def transportFamily {P : Type*} [TopologicalSpace P] (F : C(P × (I^N), X))
     (G : C(P × I, X)) (hFG : ∀ p, ∀ z ∈ Cube.boundary N, F (p, z) = G (p, 0)) :
     C(P × (I^N), X) :=
   collar ⟨fun _ => 1 / 2, continuous_const⟩ F G (fun _ => le_rfl) hFG
@@ -131,10 +131,8 @@ theorem homotopic_transport_of_homotopic (γ : Path x y) {f f' : Ω^ N X x}
   · intro z
     exact transportFamily_apply_eq_transport _ _ hFG (fun w => K.apply_one w) (fun _ => rfl) z
   · intro t z hz
-    change transportFamily K.toContinuousMap (γ.toContinuousMap.comp ContinuousMap.snd) hFG
-      (t, z) = _
-    rw [transportFamily_apply_of_mem_boundary _ _ hFG t hz]
-    exact γ.target.trans ((transport γ f).2 z hz).symm
+    exact (transportFamily_apply_of_mem_boundary _ _ hFG t hz).trans
+      (γ.target.trans ((transport γ f).2 z hz).symm)
 
 /-- Transport along homotopic paths gives homotopic generalized loops. -/
 theorem homotopic_transport_of_path_homotopic {γ δ : Path x y} (h : γ.Homotopic δ)
@@ -152,10 +150,8 @@ theorem homotopic_transport_of_path_homotopic {γ δ : Path x y} (h : γ.Homotop
   · intro w
     exact transportFamily_apply_eq_transport _ _ hFG (fun _ => rfl) (fun u => G.apply_one u) w
   · intro t w hw
-    change transportFamily ((f : C(I^N, X)).comp ContinuousMap.snd) G.toContinuousMap hFG
-      (t, w) = _
-    rw [transportFamily_apply_of_mem_boundary _ _ hFG t hw]
-    exact (G.eq_fst t h1).trans (γ.target.trans ((transport γ f).2 w hw).symm)
+    exact (transportFamily_apply_of_mem_boundary _ _ hFG t hw).trans
+      ((G.eq_fst t h1).trans (γ.target.trans ((transport γ f).2 w hw).symm))
 
 /-! ### Functoriality of transport -/
 
@@ -187,21 +183,22 @@ def HomotopyAlong.trans {w : X} {γ : Path x y} {δ : Path y w} {f : Ω^ N X x} 
           ((continuous_projIcc.comp' (by fun_prop)).prodMk continuous_snd)
       · rintro ⟨t, z⟩ ht
         dsimp only at ht ⊢
-        rw [ht, show (2 : ℝ) * (1 / 2) = 1 by norm_num, show (1 : ℝ) - 1 = 0 by norm_num,
-          Set.projIcc_right, Set.projIcc_left]
+        have h_double : (2 : ℝ) * (1 / 2) = 1 := by norm_num
+        have h_sub : (1 : ℝ) - 1 = 0 := by norm_num
+        rw [ht, h_double, h_sub, Set.projIcc_right, Set.projIcc_left]
         exact (h₁.map_one z).trans (h₂.map_zero z).symm⟩
   map_zero z := by
-    change (if ((0 : I) : ℝ) ≤ 1 / 2 then _ else _) = _
-    rw [ite_eq_left_of_eq_true _ _ (eq_true (by norm_num)),
-      show (2 : ℝ) * ((0 : I) : ℝ) = 0 by norm_num, Set.projIcc_left]
+    have h_zero : (2 : ℝ) * ((0 : I) : ℝ) = 0 := by norm_num
+    simp only [ContinuousMap.coe_mk]
+    rw [ite_eq_left_of_eq_true _ _ (eq_true (by norm_num)), h_zero, Set.projIcc_left]
     exact h₁.map_zero z
   map_one z := by
-    change (if ((1 : I) : ℝ) ≤ 1 / 2 then _ else _) = _
-    rw [ite_eq_right_of_eq_false _ _ (eq_false (by norm_num)),
-      show (2 : ℝ) * ((1 : I) : ℝ) - 1 = 1 by norm_num, Set.projIcc_right]
+    have h_one : (2 : ℝ) * ((1 : I) : ℝ) - 1 = 1 := by norm_num
+    simp only [ContinuousMap.coe_mk]
+    rw [ite_eq_right_of_eq_false _ _ (eq_false (by norm_num)), h_one, Set.projIcc_right]
     exact h₂.map_one z
   map_boundary t z hz := by
-    change (if ((t : I) : ℝ) ≤ 1 / 2 then _ else _) = _
+    simp only [ContinuousMap.coe_mk]
     rw [Path.trans_apply]
     split_ifs with ht
     · rw [h₁.map_boundary _ _ hz]
@@ -250,27 +247,23 @@ def HomotopyAlong.transAt [DecidableEq N] (i : N) {γ : Path x y} {f f' : Ω^ N 
           (continuous_snd.update i (continuous_projIcc.comp' (by fun_prop))))
       · rintro ⟨t, z⟩ ht
         dsimp only at ht ⊢
-        rw [ht, show (2 : ℝ) * (1 / 2) = 1 by norm_num, show (1 : ℝ) - 1 = 0 by norm_num,
-          Set.projIcc_right, Set.projIcc_left]
-        change h₁.map (t, Function.update z i (1 : I)) =
-          h₂.map (t, Function.update z i (0 : I))
-        rw [h₁.map_boundary t _ ⟨i, Or.inr (Function.update_self ..)⟩,
-          h₂.map_boundary t _ ⟨i, Or.inl (Function.update_self ..)⟩]⟩
+        have h_double : (2 : ℝ) * (1 / 2) = 1 := by norm_num
+        have h_sub : (1 : ℝ) - 1 = 0 := by norm_num
+        rw [ht, h_double, h_sub, Set.projIcc_right, Set.projIcc_left]
+        exact (h₁.map_boundary t _ ⟨i, Or.inr (Function.update_self ..)⟩).trans
+          (h₂.map_boundary t _ ⟨i, Or.inl (Function.update_self ..)⟩).symm⟩
   map_zero z := by
-    change (if _ ≤ 1 / 2 then _ else _) = _
-    simp only [_root_.GenLoop.transAt, _root_.GenLoop.coe_copy]
+    simp only [ContinuousMap.coe_mk, _root_.GenLoop.transAt, _root_.GenLoop.coe_copy]
     split_ifs
     · exact h₁.map_zero _
     · exact h₂.map_zero _
   map_one z := by
-    change (if _ ≤ 1 / 2 then _ else _) = _
-    simp only [_root_.GenLoop.transAt, _root_.GenLoop.coe_copy]
+    simp only [ContinuousMap.coe_mk, _root_.GenLoop.transAt, _root_.GenLoop.coe_copy]
     split_ifs
     · exact h₁.map_one _
     · exact h₂.map_one _
   map_boundary t z hz := by
-    change (if _ ≤ 1 / 2 then _ else _) = _
-    dsimp only
+    simp only [ContinuousMap.coe_mk]
     obtain ⟨j, hj⟩ := hz
     by_cases hji : j = i
     · subst hji
@@ -298,15 +291,18 @@ end GenLoop
 /-! ### Base-point change on homotopy groups -/
 
 /-- Transport of homotopy classes along a path. -/
-@[expose] def homotopyGroupTransport (γ : Path x y) :
+def homotopyGroupTransport (γ : Path x y) :
     HomotopyGroup N X x → HomotopyGroup N X y :=
   Quotient.map (GenLoop.transport γ) fun _ _ h =>
     GenLoop.homotopic_transport_of_homotopic γ h
 
 @[simp]
 theorem homotopyGroupTransport_mk (γ : Path x y) (f : Ω^ N X x) :
-    homotopyGroupTransport γ (⟦f⟧ : HomotopyGroup N X x) = ⟦GenLoop.transport γ f⟧ := rfl
+    homotopyGroupTransport γ (⟦f⟧ : HomotopyGroup N X x) = ⟦GenLoop.transport γ f⟧ := by
+  unfold homotopyGroupTransport
+  rfl
 
+/-- Transport along the constant path is the identity on homotopy groups. -/
 @[simp]
 theorem homotopyGroupTransport_refl :
     homotopyGroupTransport (N := N) (Path.refl x) = id := by
@@ -314,6 +310,7 @@ theorem homotopyGroupTransport_refl :
   refine Quotient.inductionOn a fun f => ?_
   exact (Quotient.sound (GenLoop.homotopic_transport_refl f)).symm
 
+/-- Transport along a concatenation of paths is the composite of the two transports. -/
 theorem homotopyGroupTransport_trans {w : X} (γ : Path x y) (δ : Path y w) :
     homotopyGroupTransport (N := N) (γ.trans δ) =
       homotopyGroupTransport δ ∘ homotopyGroupTransport γ := by
@@ -321,6 +318,7 @@ theorem homotopyGroupTransport_trans {w : X} (γ : Path x y) (δ : Path y w) :
   refine Quotient.inductionOn a fun f => ?_
   exact (Quotient.sound (GenLoop.homotopic_transport_trans γ δ f)).symm
 
+/-- Homotopic paths induce the same transport on homotopy groups. -/
 theorem homotopyGroupTransport_congr {γ δ : Path x y} (h : γ.Homotopic δ) :
     homotopyGroupTransport (N := N) γ = homotopyGroupTransport δ := by
   funext a
@@ -329,7 +327,7 @@ theorem homotopyGroupTransport_congr {γ δ : Path x y} (h : γ.Homotopic δ) :
 
 /-- Transport along a path is a bijection on homotopy classes, with inverse the transport
 along the reversed path. -/
-@[expose] def homotopyGroupEquivOfPath (γ : Path x y) :
+def homotopyGroupEquivOfPath (γ : Path x y) :
     HomotopyGroup N X x ≃ HomotopyGroup N X y where
   toFun := homotopyGroupTransport γ
   invFun := homotopyGroupTransport γ.symm
@@ -346,15 +344,27 @@ along the reversed path. -/
 
 @[simp]
 theorem homotopyGroupEquivOfPath_mk (γ : Path x y) (f : Ω^ N X x) :
-    homotopyGroupEquivOfPath γ (⟦f⟧ : HomotopyGroup N X x) = ⟦GenLoop.transport γ f⟧ := rfl
+    homotopyGroupEquivOfPath γ (⟦f⟧ : HomotopyGroup N X x) = ⟦GenLoop.transport γ f⟧ := by
+  unfold homotopyGroupEquivOfPath
+  exact homotopyGroupTransport_mk γ f
+
+@[simp]
+theorem homotopyGroupEquivOfPath_symm_mk (γ : Path x y) (f : Ω^ N X y) :
+    (homotopyGroupEquivOfPath γ).symm (⟦f⟧ : HomotopyGroup N X y) =
+      ⟦GenLoop.transport γ.symm f⟧ := by
+  unfold homotopyGroupEquivOfPath
+  exact homotopyGroupTransport_mk γ.symm f
 
 /-- **Base-point change for higher homotopy groups.** A path from `x` to `y` induces a group
 isomorphism between the homotopy groups based at `x` and at `y`. -/
-@[expose] def homotopyGroupMulEquivOfPath [Nonempty N] [DecidableEq N] (γ : Path x y) :
+def homotopyGroupMulEquivOfPath [Nonempty N] [DecidableEq N] (γ : Path x y) :
     HomotopyGroup N X x ≃* HomotopyGroup N X y where
   toEquiv := homotopyGroupEquivOfPath γ
   map_mul' a b := by
     refine Quotient.inductionOn₂ a b fun p q => ?_
+    -- Mathlib's `HomotopyGroup.mul_spec` itself records a TODO to replace this quotient-wrapper
+    -- definitional equality with a `HomotopyGroup.mk` API. Until that exists, expose the wrapper
+    -- here so that `mul_spec` can rewrite both products with their intended group instances.
     change homotopyGroupTransport γ
         (((· * ·) : _ → _ → HomotopyGroup N X x) ⟦p⟧ ⟦q⟧) =
       ((· * ·) : _ → _ → HomotopyGroup N X y)
@@ -367,11 +377,105 @@ isomorphism between the homotopy groups based at `x` and at `y`. -/
 @[simp]
 theorem homotopyGroupMulEquivOfPath_mk [Nonempty N] [DecidableEq N] (γ : Path x y)
     (f : Ω^ N X x) :
-    homotopyGroupMulEquivOfPath γ (⟦f⟧ : HomotopyGroup N X x) = ⟦GenLoop.transport γ f⟧ := rfl
+    homotopyGroupMulEquivOfPath γ (⟦f⟧ : HomotopyGroup N X x) = ⟦GenLoop.transport γ f⟧ := by
+  unfold homotopyGroupMulEquivOfPath
+  exact homotopyGroupEquivOfPath_mk γ f
+
+/-- The multiplicative base-point-change equivalence acts by transport. -/
+@[simp]
+theorem homotopyGroupMulEquivOfPath_apply [Nonempty N] [DecidableEq N] (γ : Path x y)
+    (a : HomotopyGroup N X x) :
+    homotopyGroupMulEquivOfPath γ a = homotopyGroupTransport γ a := by
+  unfold homotopyGroupMulEquivOfPath homotopyGroupEquivOfPath
+  rfl
+
+/-- The inverse multiplicative base-point-change equivalence acts by transport along the
+reversed path. -/
+@[simp]
+theorem homotopyGroupMulEquivOfPath_symm_apply [Nonempty N] [DecidableEq N] (γ : Path x y)
+    (a : HomotopyGroup N X y) :
+    (homotopyGroupMulEquivOfPath γ).symm a = homotopyGroupTransport γ.symm a := by
+  unfold homotopyGroupMulEquivOfPath homotopyGroupEquivOfPath
+  rfl
+
+/-- The multiplicative equivalence for a constant path is the identity. -/
+@[simp]
+theorem homotopyGroupMulEquivOfPath_refl [Nonempty N] [DecidableEq N] :
+    homotopyGroupMulEquivOfPath (N := N) (Path.refl x) =
+      MulEquiv.refl (HomotopyGroup N X x) := by
+  ext a
+  rw [homotopyGroupMulEquivOfPath_apply, homotopyGroupTransport_refl]
+  rfl
+
+/-- The multiplicative equivalence for a concatenated path is the composite equivalence. -/
+@[simp]
+theorem homotopyGroupMulEquivOfPath_trans [Nonempty N] [DecidableEq N] {w : X}
+    (γ : Path x y) (δ : Path y w) :
+    homotopyGroupMulEquivOfPath (N := N) (γ.trans δ) =
+      (homotopyGroupMulEquivOfPath γ).trans (homotopyGroupMulEquivOfPath δ) := by
+  ext a
+  rw [homotopyGroupMulEquivOfPath_apply, MulEquiv.trans_apply,
+    homotopyGroupMulEquivOfPath_apply, homotopyGroupMulEquivOfPath_apply]
+  exact congrFun (homotopyGroupTransport_trans γ δ) a
+
+/-- Homotopic paths induce the same multiplicative base-point-change equivalence. -/
+theorem homotopyGroupMulEquivOfPath_congr [Nonempty N] [DecidableEq N]
+    {γ δ : Path x y} (h : γ.Homotopic δ) :
+    homotopyGroupMulEquivOfPath (N := N) γ = homotopyGroupMulEquivOfPath δ := by
+  ext a
+  rw [homotopyGroupMulEquivOfPath_apply, homotopyGroupMulEquivOfPath_apply]
+  exact congrFun (homotopyGroupTransport_congr h) a
+
+/-- Reversing the path gives the inverse multiplicative equivalence. -/
+@[simp]
+theorem homotopyGroupMulEquivOfPath_symm [Nonempty N] [DecidableEq N] (γ : Path x y) :
+    (homotopyGroupMulEquivOfPath γ).symm = homotopyGroupMulEquivOfPath (N := N) γ.symm := by
+  ext a
+  rw [homotopyGroupMulEquivOfPath_symm_apply, homotopyGroupMulEquivOfPath_apply]
 
 /-- Base-point change for `π_(n+1)`. -/
 def piMulEquivOfPath {n : ℕ} (γ : Path x y) : π_ (n + 1) X x ≃* π_ (n + 1) X y :=
   homotopyGroupMulEquivOfPath γ
+
+@[simp]
+theorem piMulEquivOfPath_mk {n : ℕ} (γ : Path x y) (f : Ω^ (Fin (n + 1)) X x) :
+    piMulEquivOfPath γ (⟦f⟧ : π_ (n + 1) X x) = ⟦GenLoop.transport γ f⟧ := by
+  unfold piMulEquivOfPath
+  exact homotopyGroupMulEquivOfPath_mk γ f
+
+@[simp]
+theorem piMulEquivOfPath_symm_mk {n : ℕ} (γ : Path x y) (f : Ω^ (Fin (n + 1)) X y) :
+    (piMulEquivOfPath γ).symm (⟦f⟧ : π_ (n + 1) X y) =
+      ⟦GenLoop.transport γ.symm f⟧ := by
+  unfold piMulEquivOfPath
+  exact homotopyGroupEquivOfPath_symm_mk γ f
+
+/-- The base-point-change equivalence on `π_(n+1)` for a constant path is the identity. -/
+@[simp]
+theorem piMulEquivOfPath_refl {n : ℕ} :
+    piMulEquivOfPath (n := n) (Path.refl x) = MulEquiv.refl (π_ (n + 1) X x) := by
+  ext a
+  rw [piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply, homotopyGroupTransport_refl]
+  rfl
+
+/-- Base-point change on `π_(n+1)` sends path concatenation to composition. -/
+@[simp]
+theorem piMulEquivOfPath_trans {n : ℕ} {w : X} (γ : Path x y) (δ : Path y w) :
+    piMulEquivOfPath (n := n) (γ.trans δ) =
+      (piMulEquivOfPath γ).trans (piMulEquivOfPath δ) := by
+  ext a
+  rw [piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply, MulEquiv.trans_apply,
+    piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply,
+    piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply]
+  exact congrFun (homotopyGroupTransport_trans γ δ) a
+
+/-- Homotopic paths induce the same base-point-change equivalence on `π_(n+1)`. -/
+theorem piMulEquivOfPath_congr {n : ℕ} {γ δ : Path x y} (h : γ.Homotopic δ) :
+    piMulEquivOfPath (n := n) γ = piMulEquivOfPath δ := by
+  ext a
+  rw [piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply,
+    piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply]
+  exact congrFun (homotopyGroupTransport_congr h) a
 
 omit [Fintype N] in
 /-- On a path-connected space the homotopy groups in a fixed dimension at any two base points

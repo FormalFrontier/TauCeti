@@ -73,7 +73,7 @@ variable {N : Type*} [Fintype N] {X : Type*} [TopologicalSpace X] {x y : X}
 and a family `G` of paths agreeing with `F` on the cube boundary at time `0`, this sends a cube
 point of radius at most `r` to `F` at the point rescaled by `1 / r`, and a cube point of larger
 radius `u` to `G` at the time `2 - 2 * r / u`. -/
-@[expose] def collar {P : Type*} [TopologicalSpace P] (r : C(P, ℝ))
+def collar {P : Type*} [TopologicalSpace P] (r : C(P, ℝ))
     (F : C(P × (I^N), X)) (G : C(P × I, X)) (hr : ∀ p, 1 / 2 ≤ r p)
     (hFG : ∀ p, ∀ z ∈ Cube.boundary N, F (p, z) = G (p, 0)) :
     C(P × (I^N), X) where
@@ -117,7 +117,9 @@ theorem collar_apply {P : Type*} [TopologicalSpace P] (r : C(P, ℝ))
     collar r F G hr hFG (p, z) =
       if cubeRad z ≤ r p then F (p, cubeScale (1 / r p) z)
       else G (p, Set.projIcc (0 : ℝ) 1 zero_le_one (2 - 2 * r p / max (cubeRad z) (1 / 2))) :=
-  rfl
+  by
+    unfold collar
+    rfl
 
 namespace GenLoop
 
@@ -126,7 +128,7 @@ namespace GenLoop
 /-- The collar homotopy of a generalized loop `f` along a path `γ`: at time `t` it is `f`
 shrunk into the cube of radius `(2 - t) / 2`, with `γ` restricted to `[0, t]` filling the
 collar outside. -/
-@[expose] def collarHomotopy (γ : Path x y) (f : Ω^ N X x) : C(I × (I^N), X) :=
+def collarHomotopy (γ : Path x y) (f : Ω^ N X x) : C(I × (I^N), X) :=
   collar ⟨fun t : I => (2 - (t : ℝ)) / 2, by fun_prop⟩
     ((f : C(I^N, X)).comp ContinuousMap.snd) (γ.toContinuousMap.comp ContinuousMap.snd)
     (fun t => by have := t.2.2; dsimp; linarith)
@@ -137,16 +139,18 @@ theorem collarHomotopy_apply (γ : Path x y) (f : Ω^ N X x) (t : I) (z : I^N) :
       if cubeRad z ≤ (2 - (t : ℝ)) / 2 then f (cubeScale (1 / ((2 - (t : ℝ)) / 2)) z)
       else γ (Set.projIcc (0 : ℝ) 1 zero_le_one
         (2 - 2 * ((2 - (t : ℝ)) / 2) / max (cubeRad z) (1 / 2))) :=
-  rfl
+  by
+    unfold collarHomotopy collar
+    rfl
 
 @[simp]
 theorem collarHomotopy_zero (γ : Path x y) (f : Ω^ N X x) (z : I^N) :
     collarHomotopy γ f (0, z) = f z := by
-  rw [collarHomotopy_apply, ite_eq_left_of_eq_true _ _ (eq_true (by
-    show cubeRad z ≤ (2 - ((0 : I) : ℝ)) / 2
+  have h_radius : cubeRad z ≤ (2 - ((0 : I) : ℝ)) / 2 := by
     have := cubeRad_le_one z
     norm_num
-    linarith))]
+    linarith
+  rw [collarHomotopy_apply, ite_eq_left_of_eq_true _ _ (eq_true h_radius)]
   norm_num
 
 /-- On the cube boundary the collar homotopy traces the path `γ`. -/
@@ -161,28 +165,34 @@ theorem collarHomotopy_boundary (γ : Path x y) (f : Ω^ N X x) (t : I) {z : I^N
     have hc0 : ((0 : I) : ℝ) = 0 := by norm_num
     have ht : t = 0 := Subtype.ext (by rw [hc0]; linarith)
     subst ht
-    rw [show (1 : ℝ) / ((2 - ((0 : I) : ℝ)) / 2) = 1 by rw [hc0]; norm_num, cubeScale_one,
-      γ.source]
+    have h_scale : (1 : ℝ) / ((2 - ((0 : I) : ℝ)) / 2) = 1 := by
+      rw [hc0]
+      norm_num
+    rw [h_scale, cubeScale_one, γ.source]
     exact f.2 z hz
   · rw [ite_eq_right_of_eq_false _ _ (eq_false h), max_eq_left (by norm_num)]
     congr 1
-    rw [show (2 : ℝ) - 2 * ((2 - (t : ℝ)) / 2) / 1 = (t : ℝ) by ring]
+    have h_time : (2 : ℝ) - 2 * ((2 - (t : ℝ)) / 2) / 1 = (t : ℝ) := by ring
+    rw [h_time]
     exact Set.projIcc_val _ _
 
 /-- **The generalized loop `f` transported along the path `γ`**: the value at time `1` of the
 collar homotopy, a generalized loop based at the far endpoint of `γ`. -/
-@[expose] def transport (γ : Path x y) (f : Ω^ N X x) : Ω^ N X y :=
+def transport (γ : Path x y) (f : Ω^ N X x) : Ω^ N X y :=
   ⟨(collarHomotopy γ f).curry 1, fun _z hz =>
     (collarHomotopy_boundary γ f 1 hz).trans γ.target⟩
 
 theorem transport_apply (γ : Path x y) (f : Ω^ N X x) (z : I^N) :
-    transport γ f z = collarHomotopy γ f (1, z) := rfl
+    transport γ f z = collarHomotopy γ f (1, z) := by
+  unfold transport
+  rfl
 
 theorem transport_apply_eq (γ : Path x y) (f : Ω^ N X x) (z : I^N) :
     transport γ f z =
       if cubeRad z ≤ 1 / 2 then f (cubeScale 2 z)
       else γ (Set.projIcc (0 : ℝ) 1 zero_le_one (2 - 1 / max (cubeRad z) (1 / 2))) := by
-  rw [transport_apply, collarHomotopy_apply, show ((1 : I) : ℝ) = 1 by norm_num]
+  have h_one : ((1 : I) : ℝ) = 1 := by norm_num
+  rw [transport_apply, collarHomotopy_apply, h_one]
   norm_num
 
 end GenLoop
@@ -192,7 +202,7 @@ end GenLoop
 /-- The radial retraction of the top face of the cylinder `I × I^N` onto the union of its
 bottom face and its sides, obtained by projecting away from the point sitting at height `2`
 above the centre of the cube. It is the identity on the cube boundary. -/
-@[expose] def cubeRetract : C(I^N, I × (I^N)) where
+def cubeRetract : C(I^N, I × (I^N)) where
   toFun z :=
     if cubeRad z ≤ 1 / 2 then (0, cubeScale 2 z)
     else (Set.projIcc (0 : ℝ) 1 zero_le_one (2 - 1 / max (cubeRad z) (1 / 2)),
@@ -217,7 +227,9 @@ theorem cubeRetract_apply (z : I^N) :
     cubeRetract z =
       if cubeRad z ≤ 1 / 2 then ((0 : I), cubeScale 2 z)
       else (Set.projIcc (0 : ℝ) 1 zero_le_one (2 - 1 / max (cubeRad z) (1 / 2)),
-        cubeScale (1 / max (cubeRad z) (1 / 2)) z) := rfl
+        cubeScale (1 / max (cubeRad z) (1 / 2)) z) := by
+  unfold cubeRetract
+  rfl
 
 theorem cubeRetract_of_mem_boundary {z : I^N} (hz : z ∈ Cube.boundary N) :
     cubeRetract z = (1, z) := by
@@ -280,20 +292,26 @@ theorem HomotopyAlong.homotopic_transport {γ : Path x y} {f : Ω^ N X x} {g : �
         (((continuous_apply i).comp continuous_snd).prodMk
           ((continuous_apply i).comp (continuous_snd.comp
             (cubeRetract.continuous.comp continuous_snd)))))
-  refine ⟨⟨⟨⟨fun sz => h.map (unitIntervalLerp sz.1 1 (cubeRetract sz.2).1,
+  let K : C(I × (I^N), X) :=
+    ⟨fun sz => h.map (unitIntervalLerp sz.1 1 (cubeRetract sz.2).1,
       fun i => unitIntervalLerp sz.1 (sz.2 i) ((cubeRetract sz.2).2 i)),
-      h.map.continuous.comp hcont⟩, ?_, ?_⟩, ?_⟩⟩
+      h.map.continuous.comp hcont⟩
+  have K_apply (t : I) (z : I^N) :
+      K (t, z) = h.map (unitIntervalLerp t 1 (cubeRetract z).1,
+        fun i => unitIntervalLerp t (z i) ((cubeRetract z).2 i)) := rfl
+  refine ⟨⟨⟨K, ?_, ?_⟩, ?_⟩⟩
   · intro z
-    simp only [unitIntervalLerp_zero]
-    exact h.map_one z
+    exact (K_apply 0 z).trans (by
+      simp only [unitIntervalLerp_zero]
+      exact h.map_one z)
   · intro z
-    simp only [unitIntervalLerp_one]
-    exact h.map_cubeRetract z
+    exact (K_apply 1 z).trans (by
+      simp only [unitIntervalLerp_one]
+      exact h.map_cubeRetract z)
   · intro t z hz
-    change h.map (unitIntervalLerp t 1 (cubeRetract z).1,
-      fun i => unitIntervalLerp t (z i) ((cubeRetract z).2 i)) = g z
-    simp only [cubeRetract_of_mem_boundary hz, unitIntervalLerp_self]
-    exact h.map_one z
+    exact (K_apply t z).trans (by
+      simp only [cubeRetract_of_mem_boundary hz, unitIntervalLerp_self]
+      exact h.map_one z)
 
 end GenLoop
 

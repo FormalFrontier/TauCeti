@@ -59,7 +59,7 @@ variable {N : Type*}
 
 /-- The convex combination `(1 - s) * a + s * b` of two points of the unit interval, that is,
 `AffineMap.lineMap` on the underlying reals, restricted to `I`. -/
-@[expose] def unitIntervalLerp (s a b : I) : I :=
+def unitIntervalLerp (s a b : I) : I :=
   ⟨(1 - (s : ℝ)) * a + (s : ℝ) * b, by
     constructor <;> nlinarith [s.2.1, s.2.2, a.2.1, a.2.2, b.2.1, b.2.2]⟩
 
@@ -83,15 +83,17 @@ theorem continuous_unitIntervalLerp :
 /-! ### The centre of the cube and radial rescaling -/
 
 /-- The centre of the cube `I^N`, all of whose coordinates are `1 / 2`. -/
-@[expose] def cubeCenter : I^N := fun _ => ⟨1 / 2, by norm_num, by norm_num⟩
+def cubeCenter : I^N := fun _ => ⟨1 / 2, by norm_num, by norm_num⟩
 
 @[simp]
-theorem cubeCenter_apply (i : N) : ((cubeCenter i : I) : ℝ) = 1 / 2 := rfl
+theorem cubeCenter_apply (i : N) : ((cubeCenter i : I) : ℝ) = 1 / 2 := by
+  unfold cubeCenter
+  rfl
 
 /-- Radial rescaling of a cube point about the centre by a factor `s`, clamped back into the
 cube so that it is total and jointly continuous. It agrees with the honest rescaling whenever
 the rescaled point still lies in the cube; see `TauCeti.cubeScale_apply_coe`. -/
-@[expose] def cubeScale (s : ℝ) (z : I^N) : I^N :=
+def cubeScale (s : ℝ) (z : I^N) : I^N :=
   fun i => Set.projIcc (0 : ℝ) 1 zero_le_one (1 / 2 + ((z i : ℝ) - 1 / 2) * s)
 
 theorem continuous_cubeScale : Continuous fun p : ℝ × (I^N) => cubeScale p.1 p.2 :=
@@ -111,9 +113,11 @@ variable [Fintype N]
 
 /-- The `sup` radius of a cube point around the centre of the cube, normalised so that the
 boundary has radius one. -/
-@[expose] def cubeRad (z : I^N) : ℝ := 2 * dist z (cubeCenter : I^N)
+def cubeRad (z : I^N) : ℝ := 2 * dist z (cubeCenter : I^N)
 
-theorem cubeRad_def (z : I^N) : cubeRad z = 2 * dist z (cubeCenter : I^N) := rfl
+theorem cubeRad_def (z : I^N) : cubeRad z = 2 * dist z (cubeCenter : I^N) := by
+  unfold cubeRad
+  rfl
 
 theorem continuous_cubeRad : Continuous (cubeRad : (I^N) → ℝ) := by
   unfold cubeRad; fun_prop
@@ -132,7 +136,8 @@ theorem abs_sub_half_le_cubeRad (z : I^N) (i : N) : |(z i : ℝ) - 1 / 2| ≤ cu
   linarith
 
 theorem cubeRad_le_one (z : I^N) : cubeRad z ≤ 1 := by
-  rw [cubeRad_def, show (1 : ℝ) = 2 * (1 / 2) by norm_num]
+  have h_one : (1 : ℝ) = 2 * (1 / 2) := by norm_num
+  rw [cubeRad_def, h_one]
   gcongr
   rw [dist_pi_le_iff (by norm_num)]
   intro i
@@ -164,7 +169,8 @@ theorem cubeRad_eq_one_iff (z : I^N) : cubeRad z = 1 ↔ z ∈ Cube.boundary N :
     linarith
   · rintro ⟨i, hi⟩
     refine le_antisymm (cubeRad_le_one z) ?_
-    rw [cubeRad_def, show (1 : ℝ) = 2 * (1 / 2) by norm_num]
+    have h_one : (1 : ℝ) = 2 * (1 / 2) := by norm_num
+    rw [cubeRad_def, h_one]
     gcongr
     refine le_trans ?_ (dist_le_pi_dist z (cubeCenter : I^N) i)
     rw [dist_apply_cubeCenter]
@@ -188,12 +194,13 @@ theorem cubeRad_cubeScale {s : ℝ} (hs : 0 ≤ s) {z : I^N} (h : s * cubeRad z 
     cubeRad (cubeScale s z) = s * cubeRad z := by
   have key : ∀ i : N, |((cubeScale s z i : I) : ℝ) - 1 / 2| = s * |(z i : ℝ) - 1 / 2| := by
     intro i
-    rw [cubeScale_apply_coe hs h i,
-      show (1 : ℝ) / 2 + ((z i : ℝ) - 1 / 2) * s - 1 / 2 = ((z i : ℝ) - 1 / 2) * s by ring,
-      abs_mul, abs_of_nonneg hs, mul_comm]
+    have h_sub : (1 : ℝ) / 2 + ((z i : ℝ) - 1 / 2) * s - 1 / 2 =
+        ((z i : ℝ) - 1 / 2) * s := by ring
+    rw [cubeScale_apply_coe hs h i, h_sub, abs_mul, abs_of_nonneg hs, mul_comm]
   have hr := cubeRad_nonneg z
   refine le_antisymm ?_ ?_
-  · rw [cubeRad_def, show s * cubeRad z = 2 * (s * cubeRad z / 2) by ring]
+  · have h_mul : s * cubeRad z = 2 * (s * cubeRad z / 2) := by ring
+    rw [cubeRad_def, h_mul]
     gcongr
     rw [dist_pi_le_iff (by positivity)]
     intro i
@@ -202,8 +209,9 @@ theorem cubeRad_cubeScale {s : ℝ} (hs : 0 ≤ s) {z : I^N} (h : s * cubeRad z 
     nlinarith
   · rcases eq_or_lt_of_le hs with hs0 | hs0
     · rw [← hs0, zero_mul]; exact cubeRad_nonneg _
-    rw [cubeRad_def, cubeRad_def,
-      show s * (2 * dist z (cubeCenter : I^N)) = 2 * (s * dist z (cubeCenter : I^N)) by ring]
+    have h_mul : s * (2 * dist z (cubeCenter : I^N)) =
+        2 * (s * dist z (cubeCenter : I^N)) := by ring
+    rw [cubeRad_def, cubeRad_def, h_mul]
     gcongr 2 * ?_
     rw [← le_div_iff₀' hs0, dist_pi_le_iff (by positivity)]
     intro i
