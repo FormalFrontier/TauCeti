@@ -238,9 +238,7 @@ semicontinuous. -/
 theorem upperSemicontinuous_cTransform [TopologicalSpace Y]
     (h : ∀ x, UpperSemicontinuous fun y => (c (x, y) : EReal) - φ x) :
     UpperSemicontinuous (cTransform c φ) := by
-  rw [show cTransform c φ = fun y => ⨅ x, ((c (x, y) : EReal) - φ x) by
-    funext y
-    rw [cTransform_apply]]
+  unfold cTransform
   exact upperSemicontinuous_iInf h
 
 /-- If every section `y ↦ c (x, y)` of the cost is continuous, the `c`-transform is upper
