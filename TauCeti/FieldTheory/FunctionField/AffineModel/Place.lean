@@ -32,8 +32,6 @@ integrally closed, then swallows everything integral over `k[x]`.
 
 ## Main results
 
-* `TauCeti.Place.mem_integers_of_isIntegral`: the valuation ring of a place is integrally closed,
-  so it contains everything integral over a subring it contains.
 * `TauCeti.Place.adjoin_le_integers_iff`: `k[x] ⊆ 𝒪_P` exactly when `x ∈ 𝒪_P`.
 * `TauCeti.Place.center`: the height one prime of an affine model below a place finite on it,
   with `TauCeti.Place.valuation_center` identifying the adic valuation of that prime with the
@@ -65,18 +63,6 @@ universe u v w
 variable {k : Type u} {F : Type v} [Field k] [Field F] [Algebra k F] (P : Place k F)
 
 section Integers
-
-/-- The valuation ring of a place is integrally closed in `F`: an element of `F` integral over a
-`k`-algebra whose image lies in `𝒪_P` lies in `𝒪_P`. -/
-theorem mem_integers_of_isIntegral {R : Type w} [CommRing R] [Algebra R F]
-    (hR : ∀ r : R, algebraMap R F r ∈ P.integers) {y : F} (hy : IsIntegral R y) :
-    y ∈ P.integers := by
-  have hR' : ∀ r : R, algebraMap R F r ∈ P.valuation.valuationSubring :=
-    fun r ↦ P.mem_integers_iff.mp (hR r)
-  let : Algebra R P.valuation.valuationSubring := ((algebraMap R F).codRestrict _ hR').toAlgebra
-  have : IsScalarTower R P.valuation.valuationSubring F := .of_algebraMap_eq fun _ ↦ rfl
-  exact P.mem_integers_iff.mpr
-    ((Valuation.valuationSubring.integers P.valuation).isIntegral_iff_v_le_one.mp hy.tower_top)
 
 /-- **`k[x]` lies in the valuation ring of `P` exactly when `x` has no pole at `P`**: the
 criterion selecting the places on the finite chart of `x`. Its additive form is obtained from
