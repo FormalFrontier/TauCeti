@@ -497,22 +497,6 @@ noncomputable local instance generatedGroupSchemeIsoGroup :
       kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
   Aut.instGroup _
 
-/-- The unit of the group structure above is the identity isomorphism. This is
-`CategoryTheory.Iso.refl_hom` for the `Aut` structure, stated for the unfolded type. -/
-private theorem generatedGroupSchemeIso_one_hom :
-    (1 : kostantGeneratedGroupScheme e h ρ M hM hnil b ≅
-        kostantGeneratedGroupScheme e h ρ M hM hnil b).hom =
-      𝟙 (kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
-  Iso.refl_hom _
-
-/-- Multiplication for the group structure above composes in the `Function.comp` order. This is
-`CategoryTheory.Aut.Aut_mul_def` for the `Aut` structure, stated for the unfolded type. -/
-private theorem generatedGroupSchemeIso_mul_hom
-    (f g : kostantGeneratedGroupScheme e h ρ M hM hnil b ≅
-      kostantGeneratedGroupScheme e h ρ M hM hnil b) :
-    (f * g).hom = g.hom ≫ f.hom := by
-  rw [show f * g = g.trans f from Aut.Aut_mul_def _ f g, Iso.trans_hom]
-
 include hθe hσ in
 /-- Iterating the generated group-scheme symmetry carries the `i`th root subgroup to the root
 subgroup numbered by the corresponding iterate of `σ`. -/
@@ -524,10 +508,16 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom (m : ℕ
       kostantRootSubgroupToGenerated e h ρ M hM hnil b ((σ^[m]) i) := by
   induction m generalizing i with
   | zero =>
-      rw [pow_zero, generatedGroupSchemeIso_one_hom, Category.comp_id,
-        Function.iterate_zero_apply]
+      -- the unit of the `Aut` group structure is `Iso.refl`
+      rw [pow_zero, Function.iterate_zero_apply]
+      change _ ≫ (Iso.refl _).hom = _
+      rw [Iso.refl_hom, Category.comp_id]
   | succ m ih =>
-      rw [pow_succ, generatedGroupSchemeIso_mul_hom, ← Category.assoc,
+      -- multiplication in the `Aut` group structure composes in the `Function.comp` order,
+      -- as `CategoryTheory.Aut.Aut_mul_def` records
+      rw [pow_succ]
+      change _ ≫ (Iso.trans _ _).hom = _
+      rw [Iso.trans_hom, ← Category.assoc,
         kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom, ih,
         Function.iterate_succ_apply]
 
@@ -542,7 +532,9 @@ theorem kostantGeneratedNumberedSymmetryIso_pow_eq_one (m : ℕ)
   apply Iso.ext
   apply kostantGeneratedGroupScheme_hom_ext e h ρ M hM hnil b
   intro i
-  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq,
-    generatedGroupSchemeIso_one_hom, Category.comp_id]
+  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq]
+  -- the unit of the `Aut` group structure is `Iso.refl`
+  change _ = _ ≫ (Iso.refl _).hom
+  rw [Iso.refl_hom, Category.comp_id]
 
 end TauCeti.UniversalEnvelopingAlgebra
