@@ -322,8 +322,10 @@ theorem burauMatrix_braid (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j ∨
   · exact (burauMatrix_braid_of_succ t h).symm
 
 /-- The inverse of an elementary Burau matrix is
-`1 - t⁻¹ • vecMulVec (burauCol t i) (burauRow R i)`. -/
-theorem burauMatrix_mul_inv (t : Rˣ) (i : Fin (n - 1)) :
+`1 - t⁻¹ • vecMulVec (burauCol t i) (burauRow R i)`. This is the witness that builds
+`TauCeti.KnotTheory.burauGL`; the public statement of the inverse is
+`TauCeti.KnotTheory.inv_burauMatrix`. -/
+private theorem burauMatrix_mul_inv (t : Rˣ) (i : Fin (n - 1)) :
     burauMatrix (t : R) i *
       (1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i)) = 1 := by
   have hb : vecMulVec (burauCol (t : R) i) (burauRow R i) *
@@ -336,8 +338,8 @@ theorem burauMatrix_mul_inv (t : Rˣ) (i : Fin (n - 1)) :
   rw [smul_smul, hc, add_smul, one_smul]
   abel
 
-/-- The other side of `TauCeti.KnotTheory.burauMatrix_mul_inv`. -/
-theorem burauMatrix_inv_mul (t : Rˣ) (i : Fin (n - 1)) :
+/-- The other side of `burauMatrix_mul_inv`. -/
+private theorem burauMatrix_inv_mul (t : Rˣ) (i : Fin (n - 1)) :
     (1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i)) *
       burauMatrix (t : R) i = 1 :=
   mul_eq_one_comm.mp (burauMatrix_mul_inv t i)
