@@ -52,6 +52,7 @@ variable {V : Type u} (G : SimpleGraph V)
 edge. The displayed condition says that a reversed dart is chosen exactly when the original dart
 is not chosen. -/
 structure Orientation where
+  /-- The set of darts belonging to the orientation. -/
   carrier : Set G.Dart
   symm_mem_iff_not_mem : ∀ d, d.symm ∈ carrier ↔ d ∉ carrier
 
@@ -156,7 +157,6 @@ def forget : OrientedQuiver G o ⥤q DoubledQuiver G where
     (DoubledQuiver.vertexEquiv_apply G _).symm
     (DoubledQuiver.vertexEquiv_apply G _).symm
 
-@[simp]
 private theorem forget_obj_eq (i : OrientedQuiver G o) :
     (forget G o).obj i = DoubledQuiver.vertexEquiv G ((vertexEquiv G o).symm i) :=
   (rfl)
@@ -182,12 +182,6 @@ def symmetrifyMap : Symmetrify (OrientedQuiver G o) ⥤q DoubledQuiver G :=
   Symmetrify.lift (OrientedQuiver.forget G o)
 
 @[simp]
-private theorem symmetrifyMap_obj_eq (i : Symmetrify (OrientedQuiver G o)) :
-    (symmetrifyMap G o).obj i =
-      DoubledQuiver.vertexEquiv G ((OrientedQuiver.vertexEquiv G o).symm i) :=
-  (rfl)
-
-@[simp]
 theorem symmetrifyMap_obj (i : V) :
     (symmetrifyMap G o).obj (OrientedQuiver.vertex G o i) = DoubledQuiver.vertex G i := by
   exact OrientedQuiver.forget_obj G o i
@@ -195,7 +189,7 @@ theorem symmetrifyMap_obj (i : V) :
 @[simp]
 theorem symmetrifyMap_toPos {i j : V} (h : G.Adj i j)
     (ho : (⟨(i, j), h⟩ : G.Dart) ∈ o) :
-    (symmetrifyMap G o).map (Symmetrify.of.map (OrientedQuiver.arrow G o h ho)) =
+    (symmetrifyMap G o).map (Sum.inl (OrientedQuiver.arrow G o h ho)) =
       Quiver.homOfEq (DoubledQuiver.arrow G h)
         (symmetrifyMap_obj G o i).symm (symmetrifyMap_obj G o j).symm := by
   apply Subsingleton.elim
@@ -203,8 +197,7 @@ theorem symmetrifyMap_toPos {i j : V} (h : G.Adj i j)
 @[simp]
 theorem symmetrifyMap_toNeg {i j : V} (h : G.Adj i j)
     (ho : (⟨(i, j), h⟩ : G.Dart) ∈ o) :
-    (symmetrifyMap G o).map
-        (Quiver.reverse (Symmetrify.of.map (OrientedQuiver.arrow G o h ho))) =
+    (symmetrifyMap G o).map (Sum.inr (OrientedQuiver.arrow G o h ho)) =
       Quiver.homOfEq (DoubledQuiver.arrow G h.symm)
         (symmetrifyMap_obj G o j).symm (symmetrifyMap_obj G o i).symm := by
   apply Subsingleton.elim
@@ -229,7 +222,6 @@ noncomputable def unsymmetrifyMap : DoubledQuiver G ⥤q Symmetrify (OrientedQui
         (OrientedQuiver.vertexEquiv_apply G o _).symm
         (OrientedQuiver.vertexEquiv_apply G o _).symm
 
-@[simp]
 private theorem unsymmetrifyMap_obj_eq (i : DoubledQuiver G) :
     (unsymmetrifyMap G o).obj i =
       OrientedQuiver.vertexEquiv G o ((DoubledQuiver.vertexEquiv G).symm i) :=
