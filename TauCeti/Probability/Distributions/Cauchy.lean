@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Fourier.Inversion
+import Mathlib.Analysis.Fourier.Inversion
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 public import Mathlib.Probability.Distributions.Cauchy
 public import Mathlib.Probability.HasLaw
@@ -36,10 +36,11 @@ both cases.
 The characteristic function is obtained from the Fourier inversion theorem applied to
 `TauCeti.fourier_exp_neg_mul_abs`: the Fourier transform of the two-sided exponential of rate
 `2 π γ` is the centred Cauchy density of scale `γ`, so inverting it pairs that density against
-`exp (i t x)` and returns the two-sided exponential again. Because the resulting formula is
-multiplicative in `γ` and linear in `x₀`, it immediately gives the classical stability of the
-Cauchy family under averaging: the sample mean of independent Cauchy variables with a common
-location and scale has exactly the parent law.
+`exp (i t x)` and returns the two-sided exponential again. The exponent in the resulting formula
+is linear in `x₀` and `γ`, so products of characteristic functions add the locations and scales;
+scaling the sum by the reciprocal of the sample size restores the original parameters. Thus the
+sample mean of independent Cauchy variables with a common location and scale has exactly the
+parent law.
 
 ## Main results
 
