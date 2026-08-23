@@ -166,8 +166,8 @@ Which set works depends on `K`. If some unit `u` makes `θu` totally positive up
 particular whenever `K` is imaginary, where the condition is vacuous, and whenever some unit has
 norm `-1` — then `S` is the set of prime factors of `d`, because `(θ) = ∏_{p ∣ d} 𝔭_p`. Otherwise
 `K` is real with every unit of norm one, and
-the private Hilbert-90 construction below builds `S` from a totally positive unit that is not a
-square (`exists_unit_isTotallyPositive_and_notMem_square`).
+the private Hilbert-90 construction `exists_nonempty_relation_of_unit` builds `S` from a totally
+positive unit that is not a square (`exists_unit_isTotallyPositive_and_notMem_square`).
 
 Unlike the ordinary relation `prod_classGroupMk0_eq_one`, which is the single identity
 `∏_{p ∣ d} [𝔭_p] = 1`, no *uniform* choice of `S` is available: for `K = ℚ(√3)` the relation is

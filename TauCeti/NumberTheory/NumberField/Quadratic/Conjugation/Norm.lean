@@ -79,10 +79,7 @@ theorem coe_mul_ringOfIntegersQuadraticConj (hmin : minpoly ℤ θ = X ^ 2 - C d
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : 𝓞 K) :
     ((x * ringOfIntegersQuadraticConj hmin hgen x : 𝓞 K) : K) =
       (x : K) * quadraticConj hmin hgen (x : K) := by
-  change algebraMap (𝓞 K) K (x * ringOfIntegersQuadraticConj hmin hgen x) = _
-  rw [map_mul]
-  congr 1
-  exact coe_ringOfIntegersQuadraticConj hmin hgen x
+  simp only [map_mul, coe_ringOfIntegersQuadraticConj]
 
 /-- **The conjugation norm of a unit is `±1`.** For a unit `u` of `𝓞 K` in a quadratic number
 field, `u σu` is the extension of the integral norm of `u`, which is a unit of `ℤ`. Whether `-1`
