@@ -73,10 +73,6 @@ theorem twoRank_eq_two_of_minpoly_eq_X_sq_add_twenty_one
       Finset.card_singleton]
   rw [twoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf (by norm_num), hncard]
 
-local instance : Fact (Irreducible (X ^ 2 - C (-21 : ℚ))) := ⟨by
-  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
-    (fun q _ => by nlinarith [sq_nonneg q])⟩
-
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 21)`, modelling `ℚ(√-21)`, has
 class-group `2`-rank `2`. Not `@[simp]`: the `@[simp]` lemma `twoRank_def` unfolds the left-hand
 side `twoRank _`, so this closed form is not in simp-normal form (`simpNF` rejects it), unlike the
