@@ -187,7 +187,7 @@ elementary symmetric functions of its points.
 
 This is the local model of the symmetric power of a Riemann surface at a tuple all of whose points
 lie in one coordinate patch; a general tuple is split into such groups by
-`TauCeti.Sym.isOpenEmbedding_appendSubtype`. -/
+`TauCeti.Sym.isOpenEmbedding_sumSubtype`. -/
 theorem isOpenEmbedding_coeffEquiv_comp_map {X : Type*} [TopologicalSpace X] {f : X → K}
     (hf : IsOpenEmbedding f) :
     IsOpenEmbedding fun s : Sym X n => coeffEquiv K n (Sym.map f s) := by

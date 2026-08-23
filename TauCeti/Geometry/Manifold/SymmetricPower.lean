@@ -10,12 +10,13 @@ public import TauCeti.Analysis.Polynomial.SymmetricPower
 public import TauCeti.Topology.Sym.Family
 
 /-!
-# The symmetric power of a surface is a topological manifold
+# A charted-space structure on a symmetric power
 
 If a Hausdorff space `α` is charted by a proper algebraically closed normed field `K` — the case of
 interest being a Riemann surface, charted by `ℂ` — then its `n`-th symmetric power `Sym α n` is
-charted by `Fin n → K`. This is the statement that `Sym^g(Σ)` is a topological `2g`-manifold, the
-first clause of Lane F4.1 of the analytic Heegaard Floer roadmap, after Ozsváth--Szabó
+charted by `Fin n → K`. This supplies the local-coordinate part of the topological-manifold
+statement in the first clause of Lane F4.1 of the analytic Heegaard Floer roadmap, after
+Ozsváth--Szabó
 ([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1).
 
 The chart at an unordered tuple `s` is assembled from three inputs, each already available:
@@ -42,7 +43,9 @@ tori `T_α`, `T_β`.
 
 * `TauCeti.exists_openPartialHomeomorph_sym`: every unordered tuple lies in the source of a partial
   homeomorphism from `Sym α n` to `Fin n → K`.
-* `TauCeti.instChartedSpaceSym`: `Sym α n` is a charted space over `Fin n → K`.
+* `TauCeti.symChartedSpace`: a charted-space structure on `Sym α n` over `Fin n → K`.
+* `TauCeti.symChartedSpace_chartAt` and `TauCeti.symChartedSpace_atlas`: its preferred charts and
+  atlas.
 -/
 
 public section
@@ -58,56 +61,133 @@ omit [IsAlgClosed K] [ProperSpace K] [T2Space α] [ChartedSpace K α] in
 /-- A chart of `α`, restricted to an open subset of its source, is an open embedding of that
 subset into the model space. -/
 private theorem isOpenEmbedding_chartRestrict (e : OpenPartialHomeomorph α K) {V : Set α}
-    (hVo : IsOpen V) (hVs : V ⊆ e.source) : IsOpenEmbedding fun x : ↥V => e (x : α) := by
-  refine .of_continuous_injective_isOpenMap ((e.continuousOn.mono hVs).domRestrict)
-    (fun x y hxy => Subtype.ext (e.injOn (hVs x.2) (hVs y.2) hxy)) fun W hW => ?_
-  have himg : (fun x : ↥V => e (x : α)) '' W = e '' (Subtype.val '' W) :=
-    (Set.image_image _ _ _).symm
-  rw [himg]
-  exact e.isOpen_image_of_subset_source (hVo.isOpenMap_subtype_val W hW)
-    (((Set.image_subset_iff (f := (Subtype.val : ↥V → α))).2 fun x _ => x.2).trans hVs)
+    (hVo : IsOpen V) (hVs : V ⊆ e.source) : IsOpenEmbedding fun x : ↥V => e (x : α) :=
+  e.isOpenEmbedding_restrict.comp
+    ⟨.inclusion hVs, by rw [Set.range_inclusion]; exact isOpen_induced hVo⟩
+
+/-- The elementary-symmetric partial homeomorphism obtained from a disjoint family of coordinate
+patches and an explicit regrouping of their degrees. -/
+noncomputable def symOpenPartialHomeomorph {ι : Type*} [Fintype ι] (c : ι → α) (V : ι → Set α)
+    (m : ι → ℕ) (hm : ∑ i, m i = n) (hVo : ∀ i, IsOpen (V i))
+    (hVsub : ∀ i, V i ⊆ (chartAt K (c i)).source)
+    (hVdisj : Pairwise (Function.onFun Disjoint V)) (e : (Σ i, Fin (m i)) ≃ Fin n)
+    (hp : Nonempty (∀ i, Sym ↥(V i) (m i))) :
+    OpenPartialHomeomorph (Sym α n) (Fin n → K) :=
+  letI := hp
+  let hΦ : IsOpenEmbedding (Sym.sumSubtype V m hm) :=
+    Sym.isOpenEmbedding_sumSubtype hVo hVdisj hm
+  let hφ : ∀ i, IsOpenEmbedding fun x : ↥(V i) => chartAt K (c i) (x : α) :=
+    fun i => isOpenEmbedding_chartRestrict _ (hVo i) (hVsub i)
+  let hΘ : IsOpenEmbedding (Pi.map fun i => fun t : Sym ↥(V i) (m i) =>
+      Sym.coeffEquiv K (m i)
+        (Sym.map (fun x : ↥(V i) => chartAt K (c i) (x : α)) t)) :=
+    IsOpenEmbedding.piMap fun i => Sym.isOpenEmbedding_coeffEquiv_comp_map (hφ i)
+  let hΨ := (piFinSumHomeomorph K e).isOpenEmbedding.comp hΘ
+  (hΦ.toOpenPartialHomeomorph _).symm.trans (hΨ.toOpenPartialHomeomorph _)
+
+omit [T2Space α] in
+/-- The source of an elementary-symmetric chart is exactly the range of the family
+concatenation used to construct it. -/
+@[simp]
+theorem symOpenPartialHomeomorph_source {ι : Type*} [Fintype ι] (c : ι → α) (V : ι → Set α)
+    (m : ι → ℕ) (hm : ∑ i, m i = n) (hVo : ∀ i, IsOpen (V i))
+    (hVsub : ∀ i, V i ⊆ (chartAt K (c i)).source)
+    (hVdisj : Pairwise (Function.onFun Disjoint V)) (e : (Σ i, Fin (m i)) ≃ Fin n)
+    (hp : Nonempty (∀ i, Sym ↥(V i) (m i))) :
+    (symOpenPartialHomeomorph c V m hm hVo hVsub hVdisj e hp).source =
+      Set.range (Sym.sumSubtype V m hm) := by
+  rw [symOpenPartialHomeomorph, OpenPartialHomeomorph.trans_source,
+    OpenPartialHomeomorph.symm_source, IsOpenEmbedding.toOpenPartialHomeomorph_target,
+    IsOpenEmbedding.toOpenPartialHomeomorph_source, Set.preimage_univ, Set.inter_univ]
+
+/-- The distinct points of an unordered tuple, used as the index of its coordinate patches. -/
+noncomputable abbrev symChartSupport (s : Sym α n) : Finset α := by
+  classical
+  exact (s : Multiset α).toFinset
 
 /-- **Every unordered tuple of points of a Hausdorff charted space has a chart around it.** The
 chart is the elementary symmetric coordinates of the points of the tuple, taken in disjoint
 coordinate patches of `α` around its distinct points and regrouped into a single `n`-tuple of
 scalars. -/
 theorem exists_openPartialHomeomorph_sym (s : Sym α n) :
-    ∃ e : OpenPartialHomeomorph (Sym α n) (Fin n → K), s ∈ e.source := by
+    ∃ chart : OpenPartialHomeomorph (Sym α n) (Fin n → K), s ∈ chart.source ∧
+      ∃ (V : ↥(symChartSupport s) → Set α)
+        (m : ↥(symChartSupport s) → ℕ) (hm : ∑ i, m i = n)
+        (hVo : ∀ i, IsOpen (V i))
+        (hVsub : ∀ i, V i ⊆ (chartAt K (i : α)).source)
+        (hVdisj : Pairwise (Function.onFun Disjoint V))
+        (e : (Σ i, Fin (m i)) ≃ Fin n) (hp : Nonempty (∀ i, Sym ↥(V i) (m i))),
+        chart = symOpenPartialHomeomorph
+          (fun i : ↥(symChartSupport s) => (i : α)) V m hm hVo hVsub hVdisj e hp := by
   classical
-  obtain ⟨V, hVo, -, hVsub, hVdisj, hmem⟩ :=
+  unfold symChartSupport
+  obtain ⟨V, hVo, -, hVsub, hVdisj, hm, hmem⟩ :=
     exists_mem_range_sumSubtype_of_t2 s (fun a => (chartAt K a).source)
-      (fun a => (chartAt K a).open_source) fun a => mem_chart_source K a
+      (fun a _ => (chartAt K a).open_source) fun a _ => mem_chart_source K a
   set m : ↥(s : Multiset α).toFinset → ℕ :=
     fun i => Multiset.count (i : α) (s : Multiset α)
-  have hm : ∑ i, m i = n := by
-    rw [Finset.sum_coe_sort (s : Multiset α).toFinset
-      fun a => Multiset.count a (s : Multiset α), Multiset.toFinset_sum_count_eq]
-    exact s.2
-  have hΦ : IsOpenEmbedding (Sym.sumSubtype V m hm) :=
-    Sym.isOpenEmbedding_sumSubtype hVo hVdisj _
-  have hφ : ∀ i, IsOpenEmbedding fun x : ↥(V i) => chartAt K (i : α) (x : α) :=
-    fun i => isOpenEmbedding_chartRestrict _ (hVo i) (hVsub i)
-  have hΘ : IsOpenEmbedding (Pi.map fun i => fun t : Sym ↥(V i) (m i) =>
-      Sym.coeffEquiv K (m i) (Sym.map (fun x : ↥(V i) => chartAt K (i : α) (x : α)) t)) :=
-    IsOpenEmbedding.piMap fun i => Sym.isOpenEmbedding_coeffEquiv_comp_map (hφ i)
-  have hΨ := (piFinSumHomeomorph K hm).isOpenEmbedding.comp hΘ
-  have : Nonempty (∀ i, Sym ↥(V i) (m i)) := ⟨hmem.choose⟩
-  refine ⟨(hΦ.toOpenPartialHomeomorph _).symm.trans (hΨ.toOpenPartialHomeomorph _), ?_⟩
-  rw [OpenPartialHomeomorph.trans_source, OpenPartialHomeomorph.symm_source,
-    IsOpenEmbedding.toOpenPartialHomeomorph_target,
+  let e : (Σ i, Fin (m i)) ≃ Fin n := Fintype.equivFinOfCardEq (by simpa using hm)
+  let hp : Nonempty (∀ i, Sym ↥(V i) (m i)) := ⟨hmem.choose⟩
+  refine ⟨symOpenPartialHomeomorph
+      (fun i : ↥(symChartSupport s) => (i : α)) V m hm hVo hVsub hVdisj e hp,
+    ?_, V, m, hm, hVo, hVsub, hVdisj, e, hp, rfl⟩
+  rw [symOpenPartialHomeomorph, OpenPartialHomeomorph.trans_source,
+    OpenPartialHomeomorph.symm_source, IsOpenEmbedding.toOpenPartialHomeomorph_target,
     IsOpenEmbedding.toOpenPartialHomeomorph_source, Set.preimage_univ, Set.inter_univ]
   exact hmem
 
-/-- **The symmetric power of a Hausdorff space charted by `K` is charted by `Fin n → K`.** For a
-Riemann surface `Σ` and `K = ℂ` this says that `Sym^g(Σ)` is a topological `2g`-manifold. -/
-noncomputable instance instChartedSpaceSym : ChartedSpace (Fin n → K) (Sym α n) where
-  atlas := Set.range fun s : Sym α n => (exists_openPartialHomeomorph_sym (K := K) s).choose
-  chartAt s := (exists_openPartialHomeomorph_sym (K := K) s).choose
-  mem_chart_source s := (exists_openPartialHomeomorph_sym (K := K) s).choose_spec
+/-- A chosen elementary-symmetric chart around an unordered tuple. -/
+noncomputable def symChartAt (s : Sym α n) :
+    OpenPartialHomeomorph (Sym α n) (Fin n → K) :=
+  (exists_openPartialHomeomorph_sym (K := K) s).choose
+
+/-- The tuple lies in the source of its chosen elementary-symmetric chart. -/
+theorem mem_symChartAt_source (s : Sym α n) : s ∈ (symChartAt (K := K) s).source :=
+  (exists_openPartialHomeomorph_sym (K := K) s).choose_spec.1
+
+/-- The chosen chart is one of the explicit elementary-symmetric charts constructed from disjoint
+coordinate patches around the tuple's distinct points. -/
+theorem symChartAt_description (s : Sym α n) :
+    ∃ (V : ↥(symChartSupport s) → Set α)
+      (m : ↥(symChartSupport s) → ℕ) (hm : ∑ i, m i = n)
+      (hVo : ∀ i, IsOpen (V i))
+      (hVsub : ∀ i, V i ⊆ (chartAt K (i : α)).source)
+      (hVdisj : Pairwise (Function.onFun Disjoint V))
+      (e : (Σ i, Fin (m i)) ≃ Fin n) (hp : Nonempty (∀ i, Sym ↥(V i) (m i))),
+      symChartAt (K := K) s =
+        symOpenPartialHomeomorph
+          (fun i : ↥(symChartSupport s) => (i : α)) V m hm hVo hVsub hVdisj e hp :=
+  (exists_openPartialHomeomorph_sym (K := K) s).choose_spec.2
+
+/-- **The symmetric power of a Hausdorff space charted by `K` is charted by `Fin n → K`.** This
+constructs only the `ChartedSpace` structure. Reading it as a topological-manifold result also
+requires the separate Hausdorff instance on the symmetric power and suitable countability
+hypotheses, which are not assumed here.
+
+Deliberately not an instance: when `α := K`, a later canonical single-chart structure built from
+`TauCeti.Sym.coeffHomeomorph` would have the same instance key. -/
+@[instance_reducible]
+noncomputable def symChartedSpace : ChartedSpace (Fin n → K) (Sym α n) where
+  atlas := Set.range (symChartAt (K := K))
+  chartAt := symChartAt (K := K)
+  mem_chart_source := mem_symChartAt_source
   chart_mem_atlas s := ⟨s, rfl⟩
 
-/-- The hypotheses are satisfiable: the model space is charted by itself, so its `n`-th symmetric
-power is charted by affine `n`-space. This is the local model of `Sym^g(Σ)`. -/
-noncomputable example : ChartedSpace (Fin n → K) (Sym K n) := inferInstance
+/-- The preferred chart of `symChartedSpace` is the chosen elementary-symmetric chart. -/
+@[simp]
+theorem symChartedSpace_chartAt (s : Sym α n) :
+    @chartAt (Fin n → K) _ (Sym α n) _ (symChartedSpace (K := K)) s = symChartAt (K := K) s :=
+  (rfl)
+
+/-- The atlas of `symChartedSpace` consists of the chosen elementary-symmetric chart at every
+unordered tuple. -/
+theorem symChartedSpace_atlas :
+    @atlas (Fin n → K) _ (Sym α n) _ (symChartedSpace (K := K)) =
+      Set.range (symChartAt (K := K)) :=
+  (rfl)
+
+/-- Applying the construction with `α := K` charts the symmetric power of the model space by
+affine `n`-space. This is the local model used for `Sym^g(Σ)`. -/
+noncomputable example : ChartedSpace (Fin n → K) (Sym K n) := symChartedSpace
 
 end TauCeti

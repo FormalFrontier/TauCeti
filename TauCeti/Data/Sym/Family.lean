@@ -11,8 +11,8 @@ public import TauCeti.Data.Sym.Disjoint
 /-!
 # Splitting an unordered tuple along a pairwise disjoint family of sets
 
-`TauCeti.Sym.appendSubtype` concatenates unordered tuples drawn from *two* disjoint sets. This file
-does the same along a finite *family* `U : ι → Set α` of pairwise disjoint sets: a family of
+This file concatenates unordered tuples along a finite family `U : ι → Set α` of pairwise disjoint
+sets: a family of
 unordered tuples, the `i`-th of them an `m i`-tuple of points of `U i`, concatenates into an
 unordered `n`-tuple of points of `α` as soon as `∑ i, m i = n`, and the parts are recovered from the
 whole by filtering on membership in `U i`.
@@ -25,8 +25,7 @@ symmetric power of a surface near a tuple with repeated points.
 
 Because the degrees are required to add up to a *given* `n` rather than the target degree being
 literally `∑ i, m i`, the concatenation composes with other maps of symmetric powers without a
-cast; the two-member map `TauCeti.Sym.appendSubtype` instead lands in `Sym α (n + m)`, which is
-enough there because `n + m` is already the sum.
+cast.
 
 ## Main declarations
 
@@ -52,11 +51,10 @@ variable {α ι : Type*} [Fintype ι] {U : ι → Set α} {m : ι → ℕ} {n : 
 
 /-- The multiset underlying an ordered tuple, as a sum of singletons. This is the shape in which
 `TauCeti.Sym.ofFn` meets the sum of multisets defining `TauCeti.Sym.sumSubtype`. -/
-theorem coe_ofFn_eq_sum {β : Type*} {k : ℕ} (g : Fin k → β) :
+private theorem coe_ofFn_eq_sum {β : Type*} {k : ℕ} (g : Fin k → β) :
     (ofFn g : Multiset β) = ∑ j, ({g j} : Multiset β) := by
   have hmap : (ofFn g : Multiset β) = Multiset.map g (Finset.univ : Finset (Fin k)).val := by
-    rw [coe_ofFn, List.ofFn_eq_map]
-    rfl
+    rw [coe_ofFn, Fin.univ_val_map]
   rw [hmap, ← Finset.sum_multiset_singleton (Finset.univ : Finset (Fin k)),
     ← Multiset.coe_mapAddMonoidHom g, map_sum]
   simp
@@ -67,9 +65,8 @@ theorem coe_ofFn_eq_sum {β : Type*} {k : ℕ} (g : Fin k → β) :
 of points of `U i`, read as an unordered `n`-tuple of points of `α`, the degrees being required to
 add up to `n`.
 
-For a two-member family this is `TauCeti.Sym.appendSubtype`. The general family is the one that
-charts a symmetric power near a tuple with repeated points: one member for each distinct point of
-the tuple, with its multiplicity as the degree. -/
+This is the family used to chart a symmetric power near a tuple with repeated points: one member
+for each distinct point of the tuple, with its multiplicity as the degree. -/
 def sumSubtype (U : ι → Set α) (m : ι → ℕ) (hn : ∑ i, m i = n) (p : ∀ i, Sym (U i) (m i)) :
     Sym α n :=
   ⟨∑ i, (p i : Multiset (U i)).map Subtype.val, by
