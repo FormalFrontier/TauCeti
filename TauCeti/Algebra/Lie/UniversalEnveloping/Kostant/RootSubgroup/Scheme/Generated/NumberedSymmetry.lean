@@ -487,8 +487,10 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_inv (i : I) :
     e h ρ M hM hnil b σ θ hθM hθe hσ i]
   simp only [Category.assoc, Iso.hom_inv_id, Category.comp_id]
 
--- `Aut X` is definitionally `X ≅ X`, but instance search does not unfold that alias when a
--- self-isomorphism is raised to a power.
+/-- The group structure on self-isomorphisms of the generated Kostant group scheme.
+
+`Aut X` is definitionally `X ≅ X`, but instance search does not unfold that alias when a
+self-isomorphism is raised to a power, so we supply it locally. -/
 noncomputable local instance generatedGroupSchemeIsoGroup :
     Group (kostantGeneratedGroupScheme e h ρ M hM hnil b ≅
       kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
