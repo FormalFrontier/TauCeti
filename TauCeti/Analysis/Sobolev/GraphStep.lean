@@ -21,8 +21,8 @@ sets. Its intrinsic weak-derivative characterization additionally needs local fi
 finite dimensionality is needed only for extensionality via uniqueness of weak derivatives.
 
 The construction is independent of the order of differentiation. It is instantiated by `W2p`
-with the weak gradient and by `W3p` with the weak Hessian, whose projections, constructor,
-norm bounds and completeness are specializations of the ones proved here.
+with the weak gradient and recursively by `Wkp` at every higher order; their projections,
+constructors, norm bounds, and completeness specialize the results proved here.
 
 The graph carries the Euclidean (`WithLp 2`) product norm
 
