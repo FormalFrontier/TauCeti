@@ -8,16 +8,18 @@ module
 public import Mathlib.LinearAlgebra.TensorPower.Basic
 
 /-!
-# Splitting a tensor power
+# Basic operations on tensor powers
 
 Mathlib's `TensorPower.mulEquiv` identifies `⨂[R]^k M ⊗[R] ⨂[R]^m M` with `⨂[R]^(k + m) M`.  This
 file records the inverse operation: `TensorPower.splitAt` cuts a tensor power of length `n` after
 its first `k` factors, landing in `⨂[R]^k M ⊗[R] ⨂[R]^(n - k) M`, together with its value on pure
-tensors and the fact that it is injective.
+tensors and the fact that it is injective. It also identifies the first tensor power with the
+underlying module.
 
 ## Main definitions
 
 * `TensorPower.splitAt`: split a tensor power at a specified position.
+* `TauCeti.TensorPower.oneEquiv`: identify the first tensor power with the underlying module.
 -/
 
 public section
@@ -27,6 +29,14 @@ open scoped TensorProduct
 universe uR uM
 
 variable (R : Type uR) (M : Type uM) [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+namespace TauCeti.TensorPower
+
+/-- A tensor word of length one is a single letter. -/
+noncomputable def oneEquiv : TensorPower R 1 M ≃ₗ[R] M :=
+  PiTensorProduct.subsingletonEquiv (R := R) (s := fun _ : Fin 1 ↦ M) 0
+
+end TauCeti.TensorPower
 
 namespace TensorPower
 

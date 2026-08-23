@@ -47,22 +47,18 @@ section Semiring
 
 variable (R : Type uR) (M : Type uM) [CommSemiring R] [AddCommMonoid M] [Module R M]
 
-/-- A tensor word of length one is a single letter. -/
-noncomputable def tensorPowerOneEquiv : TensorPower R 1 M ≃ₗ[R] M :=
-  PiTensorProduct.subsingletonEquiv (R := R) (s := fun _ : Fin 1 ↦ M) 0
-
 /-- The letter of a reduced tensor word: its length-one component, read as an element of `M`. -/
 noncomputable def letter : ReducedTensorWords R M →ₗ[R] M :=
-  (tensorPowerOneEquiv R M).toLinearMap ∘ₗ component R M 1
+  (TensorPower.oneEquiv R M).toLinearMap ∘ₗ component R M 1
 
 /-- A single letter, viewed as a reduced tensor word of length one. -/
 noncomputable def ofLetter : M →ₗ[R] ReducedTensorWords R M :=
-  of R M 1 ∘ₗ (tensorPowerOneEquiv R M).symm.toLinearMap
+  of R M 1 ∘ₗ (TensorPower.oneEquiv R M).symm.toLinearMap
 
 /-- The length-one component of a single letter is that letter under the tensor-power
 identification. -/
 theorem component_ofLetter (a : M) :
-    component R M 1 (ofLetter R M a) = (tensorPowerOneEquiv R M).symm a := by
+    component R M 1 (ofLetter R M a) = (TensorPower.oneEquiv R M).symm a := by
   rw [ofLetter, LinearMap.comp_apply, component_of, LinearEquiv.coe_coe]
 
 /-- Every component of a single letter away from length one vanishes. -/
@@ -74,7 +70,7 @@ theorem component_ofLetter_of_ne {n : {n : ℕ // 0 < n}} (hn : n ≠ 1) (a : M)
 /-- The letter of a tensor word is its length-one component, read through the length-one
 identification. -/
 theorem letter_apply (x : ReducedTensorWords R M) :
-    letter R M x = tensorPowerOneEquiv R M (component R M 1 x) :=
+    letter R M x = TensorPower.oneEquiv R M (component R M 1 x) :=
   (rfl)
 
 /-- Reading off the letter of a single letter returns it. -/
@@ -154,7 +150,7 @@ theorem eq_of_deconcatenation_eq_of_letter_eq {x y : ReducedTensorWords R M}
   rw [← DirectSum.apply_eq_component R x n, ← DirectSum.apply_eq_component R y n]
   rw [apply_eq_component R M x n, apply_eq_component R M y n]
   rcases eq_or_ne n 1 with rfl | hn
-  · have h := congrArg (tensorPowerOneEquiv R M).symm hl
+  · have h := congrArg (TensorPower.oneEquiv R M).symm hl
     rwa [letter_apply, letter_apply, LinearEquiv.symm_apply_apply,
       LinearEquiv.symm_apply_apply] at h
   · have h2 : 2 ≤ n.1 := by
