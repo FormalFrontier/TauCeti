@@ -56,7 +56,7 @@ noncomputable def quadraticLift {K : Type u} [Field K]
     (soEquivQuadratic Q hQ).toLieHom.comp θ
 
 /-- The quadratic lift is the quadratic realization of the supplied skew-adjoint action. -/
-@[grind =]
+@[simp, grind =]
 theorem quadraticLift_apply {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
     [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
@@ -66,7 +66,7 @@ theorem quadraticLift_apply {K : Type u} [Field K]
   rfl
 
 /-- The quadratic lift acts on Clifford generators through the supplied skew-adjoint action. -/
-@[simp, grind =]
+@[grind =]
 theorem quadraticLift_lie_ι {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
     [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)

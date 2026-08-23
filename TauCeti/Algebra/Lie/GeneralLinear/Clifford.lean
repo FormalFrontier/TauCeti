@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.TraceForm
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.Lie.Representation
-import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 import Mathlib.Algebra.Lie.Classical
 
 /-!
@@ -168,6 +167,7 @@ theorem glCliffordHom_normalOrdering (i j : n) :
   change traceQuadraticLift (K := K) (n := n) (Matrix.single i j (1 : K)) +
     scalarTrace (K := K) (n := n) (Matrix.single i j (1 : K)) = _
   rw [traceQuadraticLift_single]
+  -- Unfold the private matrix-unit value after rewriting the quadratic lift.
   change (2⁻¹ : K) • ∑ k : n,
       bivector (traceQuadraticForm K n) (Matrix.single i k 1) (Matrix.single k j 1) +
         scalarTrace (K := K) (n := n) (Matrix.single i j (1 : K)) = _
