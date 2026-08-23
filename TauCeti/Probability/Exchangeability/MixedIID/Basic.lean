@@ -163,9 +163,8 @@ theorem MixedIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
   rw [blockLaw_def] at hblock
   have hmass : (μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin 1 => ν ω).toMeasure)
       Set.univ = μ Set.univ := by
-    rw [Measure.bind_apply MeasurableSet.univ
-      (TauCeti.MeasureTheory.aemeasurable_probabilityMeasure_pi_const_toMeasure ν
-        h.measurable_mixingRepresentative.aemeasurable)]
+    rw [TauCeti.MeasureTheory.bind_probabilityMeasure_pi_const_apply ν
+      h.measurable_mixingRepresentative.aemeasurable MeasurableSet.univ]
     simp
   have hne : (μ.map fun ω (_ : Fin 1) => X i ω) ≠ 0 := by
     rw [hblock]
