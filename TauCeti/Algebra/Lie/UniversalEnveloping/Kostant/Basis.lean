@@ -95,7 +95,7 @@ theorem lieSpan_range_rootGenerator_union_range_h_eq_top :
   exact subset_union_left
 
 /-- The simple-generator Kostant form attached to a Lie algebra basis. -/
-@[expose] def kostantForm : Subring U :=
+def kostantForm : Subring U :=
   TauCeti.UniversalEnvelopingAlgebra.kostantForm (rootGenerator b) b.h
 
 /-- The basis Kostant form is the generic form for the combined root generators and Cartan

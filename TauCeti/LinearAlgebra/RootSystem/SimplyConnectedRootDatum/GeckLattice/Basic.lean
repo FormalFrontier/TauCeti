@@ -339,13 +339,14 @@ theorem geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice
 
 /-! ## The Kostant form preserves the coordinate lattice -/
 
-/-- **The pinned simple-generator Kostant form preserves the Geck coordinate lattice.** Every
-integral-form translate of a lattice vector stays in the lattice. Together with
+/-- **The Kostant form presented by the pinned generators preserves the Geck coordinate lattice.**
+Every integral-form translate of a lattice vector stays in the lattice. Together with
 `TauCeti.DynkinType.geckCoordinateLattice_le_geckOrbit` this identifies the integral orbit of the
 standard coordinate vectors with the lattice itself. -/
 theorem geckRepresentation_kostantForm_mem_geckCoordinateLattice
     {u : _root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht)}
-    (hu : u ∈ t.kostantForm ht) {v : t.GeckIndex ht → ℚ}
+    (hu : u ∈ UniversalEnvelopingAlgebra.kostantForm
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h) {v : t.GeckIndex ht → ℚ}
     (hv : v ∈ t.geckCoordinateLattice ht) :
     t.geckRepresentation ht u v ∈ t.geckCoordinateLattice ht :=
   UniversalEnvelopingAlgebra.kostantForm_apply_mem
@@ -355,10 +356,7 @@ theorem geckRepresentation_kostantForm_mem_geckCoordinateLattice
       t.geckRepresentation_dividedPower_rootGenerator_mem_geckCoordinateLattice ht i n hv)
     (fun i n _ hv =>
       t.geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice ht i n hv)
-    (u := u)
-    (hu := by
-      rw [← LieAlgebra.Basis.kostantForm_def]
-      exact t.kostantForm_def ht ▸ hu) hv
+    (u := u) hu hv
 
 /-- The integral orbit of the standard coordinate vectors is contained in the coordinate
 lattice, because the Kostant form preserves the lattice and each coordinate vector lies in it. -/
@@ -366,9 +364,11 @@ theorem geckOrbit_le_geckCoordinateLattice :
     t.geckOrbit ht ≤ t.geckCoordinateLattice ht := by
   rw [t.geckOrbit_le_iff ht]
   intro u hu x
-  refine t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht hu ?_
-  rw [← Pi.basisFun_apply (R := ℚ)]
-  exact Submodule.subset_span (mem_range_self x)
+  refine t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht ?_ ?_
+  · rw [← LieAlgebra.Basis.kostantForm_def, ← t.kostantForm_def ht]
+    exact hu
+  · rw [← Pi.basisFun_apply (R := ℚ)]
+    exact Submodule.subset_span (mem_range_self x)
 
 /-- **The integral orbit of the standard coordinate vectors is the coordinate lattice.** The
 containment `TauCeti.DynkinType.geckCoordinateLattice_le_geckOrbit` holds because the identity of
