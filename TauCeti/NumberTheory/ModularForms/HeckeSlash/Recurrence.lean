@@ -69,6 +69,9 @@ definition of `Tₚ`.
   Proposition 5.2.2 and equations (5.3)--(5.4).
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
   §3.5.
+* T. Miyake, *Modular forms*, §4.5, Lemma 4.5.7: `T(n)` is defined for every `n ≥ 1` with the
+  nebentypus extended by `χ(d) = 0` at `(d, N) > 1`, which is the convention under which the
+  `p ∣ N` case below is `Tₚ` itself rather than a separate operator.
 -/
 
 public section
