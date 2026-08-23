@@ -22,7 +22,7 @@ It is used both by `TauCeti.FieldTheory.FunctionField.Place.Degree`, for Stichte
 
 ## Main results
 
-* `TauCeti.Place.exists_common_X_pow_factor`: a finite family of polynomials, not all zero, is
+* `TauCeti.Polynomial.exists_common_X_pow_factor`: a finite family of polynomials, not all zero, is
   `X ^ m` times a family in which some member has nonzero constant term.
 
 ## References
@@ -41,7 +41,7 @@ universe u
 
 variable {k : Type u} [Field k]
 
-namespace Place
+namespace Polynomial
 
 /-- Dividing a finite family of polynomials, not all zero, by the largest power of `X` that
 divides every member leaves at least one quotient with nonzero constant term. The exponent is
@@ -73,6 +73,6 @@ theorem exists_common_X_pow_factor {ι : Type*} (s : Finset ι) (p : ι → k[X]
   simpa [q, m, coeff_zero_eq_eval_zero] using
     (eval_divByMonic_pow_rootMultiplicity_ne_zero (p := p j) 0 hjne)
 
-end Place
+end Polynomial
 
 end TauCeti

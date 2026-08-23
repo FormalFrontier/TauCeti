@@ -52,7 +52,7 @@ than over `k(x)`: the family is shown to be linearly independent over the `k`-su
 `k[x] = Algebra.adjoin k {x}`, and `LinearIndependent.iff_fractionRing` then upgrades this to
 `k(x) = k⟮x⟯`, which is the fraction field of `k[x]` by Mathlib's
 `IntermediateField.algebraAdjoinAdjoin` instances. Clearing the common power of `x` from a
-relation is `TauCeti.Place.exists_common_X_pow_factor`, which runs on
+relation is `TauCeti.Polynomial.exists_common_X_pow_factor`, which runs on
 `Polynomial.rootMultiplicity 0`, so no denominators ever appear.
 
 ## References
@@ -126,7 +126,7 @@ private theorem linearIndependent_over_adjoin_of_linearIndependent_residue_of_or
   have hpzero : ∀ i, p i = 0 ↔ g i = 0 := by
     intro i
     rw [← hinj.eq_iff, map_zero, hp i, ZeroMemClass.coe_eq_zero]
-  obtain ⟨m, q, hfactor, j, hjs, hqj⟩ := exists_common_X_pow_factor s p
+  obtain ⟨m, q, hfactor, j, hjs, hqj⟩ := Polynomial.exists_common_X_pow_factor s p
     ⟨i₀, hi₀, fun h ↦ hg0 ((hpzero i₀).mp h)⟩
   -- The relation, with the common factor `x ^ m` removed, lives in `𝒪_P`.
   have hsumF : ∑ i ∈ s, aeval x (q i) * (z i : F) = 0 := by

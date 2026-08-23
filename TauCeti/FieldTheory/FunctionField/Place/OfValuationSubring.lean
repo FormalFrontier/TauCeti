@@ -136,7 +136,7 @@ theorem linearIndependent_of_strictMono_valuation (hk : ∀ c : k, algebraMap k 
   have hpzero : ∀ i, p i = 0 ↔ g i = 0 := fun i ↦ by
     rw [← hinj.eq_iff, map_zero, hp i, ZeroMemClass.coe_eq_zero]
   obtain ⟨m, q, hfactor, j₁, hj₁s, hqj₁⟩ :=
-    Place.exists_common_X_pow_factor s p ⟨i₀, hi₀, fun h ↦ hg0 ((hpzero i₀).mp h)⟩
+    Polynomial.exists_common_X_pow_factor s p ⟨i₀, hi₀, fun h ↦ hg0 ((hpzero i₀).mp h)⟩
   -- The relation, with the common factor `x ^ m` removed.
   have hsumF : ∑ i ∈ s, aeval x (q i) * y i = 0 := by
     refine mul_left_cancel₀ (pow_ne_zero m hx0) ?_
