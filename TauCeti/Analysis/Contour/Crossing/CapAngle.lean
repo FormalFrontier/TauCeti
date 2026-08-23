@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Contour.Crossing.Excision
 public import TauCeti.Analysis.Contour.RegularityConditions
-import TauCeti.Analysis.Contour.Argument.Lift
+import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 import TauCeti.Analysis.Contour.Chord.QuotientAsymptotics
 
 /-!
@@ -89,12 +89,20 @@ theorem coe_crossingCapSweep_eq_arg_div (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0)
 /-- The exponential of the cap sweep is the unit endpoint ratio.  Equal endpoint norms turn this
 into the endpoint ratio itself. -/
 theorem exp_crossingCapSweep_mul_I (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0)
-    (hw_L : w_L ≠ 0) (hw_R : w_R ≠ 0) (hnorm : ‖w_L‖ = ‖w_R‖)
+    (hw_L : w_L ≠ 0) (hnorm : ‖w_L‖ = ‖w_R‖)
     (h_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
     (h_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L)) :
     Complex.exp ((crossingCapSweep γ t₀ L_R L_L w_L w_R : ℂ) * Complex.I) = w_R / w_L := by
-  rw [exp_mul_I_congr_angle
-    (coe_crossingCapSweep_eq_arg_div hL_L hL_R hw_L hw_R h_R h_L)]
+  have hw_R : w_R ≠ 0 := by
+    apply norm_ne_zero_iff.mp
+    rw [← hnorm]
+    exact norm_ne_zero_iff.mpr hw_L
+  have hangle := congrArg (fun z : Circle => (z : ℂ))
+    (congrArg Real.Angle.toCircle
+      (coe_crossingCapSweep_eq_arg_div hL_L hL_R hw_L hw_R h_R h_L))
+  rw [show Complex.exp ((crossingCapSweep γ t₀ L_R L_L w_L w_R : ℂ) * Complex.I) =
+      Complex.exp (((w_R / w_L).arg : ℂ) * Complex.I) by
+        simpa only [Real.Angle.toCircle_coe, Circle.coe_exp] using hangle]
   have hratio_norm : ‖w_R / w_L‖ = 1 := by
     rw [norm_div, ← hnorm, div_self (norm_ne_zero_iff.mpr hw_L)]
   calc
@@ -108,7 +116,7 @@ theorem exp_crossingCapSweep_mul_I (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0)
 of that radius about `s`, starting at the principal argument of `w_L` and sweeping through
 `crossingCapSweep`, starts at `s + w_L` and ends at `s + w_R`. -/
 theorem circleMap_crossingCapSweep_endpoints (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0)
-    (hw_L : w_L ≠ 0) (hw_R : w_R ≠ 0) (hnorm : ‖w_L‖ = ‖w_R‖)
+    (hw_L : w_L ≠ 0) (hnorm : ‖w_L‖ = ‖w_R‖)
     (h_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
     (h_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L)) :
     circleMap s ‖w_L‖ w_L.arg = s + w_L ∧
@@ -117,7 +125,7 @@ theorem circleMap_crossingCapSweep_endpoints (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 
   constructor
   · rw [circleMap, Complex.norm_mul_exp_arg_mul_I]
   · rw [circleMap, Complex.ofReal_add, add_mul, Complex.exp_add,
-      exp_crossingCapSweep_mul_I hL_L hL_R hw_L hw_R hnorm h_R h_L]
+      exp_crossingCapSweep_mul_I hL_L hL_R hw_L hnorm h_R h_L]
     have hwL_norm : (‖w_L‖ : ℂ) * Complex.exp ((w_L.arg : ℂ) * Complex.I) = w_L :=
       Complex.norm_mul_exp_arg_mul_I w_L
     calc
@@ -145,9 +153,11 @@ theorem tendsto_arg_neg_tangent_div_chord_nhdsLT (h_at : γ t₀ = s) (hL : L_L 
         push_cast
         ring
     · field_simp
-  simpa using arg_tendsto_of_pos_mul_tendsto (by simp [Complex.mem_slitPlane_iff])
-    ((show ∀ᶠ t in 𝓝[<] t₀, t ∈ Iio t₀ from self_mem_nhdsWithin).mono
-      fun t ht => sub_pos.mpr ht) hscaled
+  have hpos : ∀ᶠ t in 𝓝[<] t₀, 0 < t₀ - t := by
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    exact sub_pos.mpr ht
+  simpa using arg_tendsto_of_pos_mul_tendsto
+    (by simp [Complex.mem_slitPlane_iff]) hpos hscaled
 
 /-- Along the outgoing side of a differentiable crossing, the boundary argument
 `arg ((γ t - s) / L)` tends to `0`.  Dividing by the positive scalar `t - t₀` exposes the
@@ -165,9 +175,11 @@ theorem tendsto_arg_chord_div_tangent_nhdsGT (h_at : γ t₀ = s) (hL : L_R ≠ 
     have hne : t - t₀ ≠ 0 := sub_ne_zero.mpr ht.ne'
     push_cast
     field_simp
-  simpa using arg_tendsto_of_pos_mul_tendsto (by simp [Complex.mem_slitPlane_iff])
-    ((show ∀ᶠ t in 𝓝[>] t₀, t ∈ Ioi t₀ from self_mem_nhdsWithin).mono
-      fun t ht => inv_pos.mpr (sub_pos.mpr ht)) hscaled
+  have hpos : ∀ᶠ t in 𝓝[>] t₀, 0 < (t - t₀)⁻¹ := by
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    exact inv_pos.mpr (sub_pos.mpr ht)
+  simpa using arg_tendsto_of_pos_mul_tendsto
+    (by simp [Complex.mem_slitPlane_iff]) hpos hscaled
 
 /-- **A local cap approaches the reverse model-sector arc.**  As its left and right endpoint
 parameters tend independently to `t₀`, `crossingCapSweep` tends to the negative crossing angle.
@@ -190,7 +202,8 @@ theorem tendsto_crossingCapSweep (h_at : γ t₀ = s) (hL_L : L_L ≠ 0) (hL_R :
 
 /-- **The local crossing loop contributes exactly the crossing angle.**  Suppose the principal
 value on `[l, u]` is the standard pure-imaginary boundary-argument value
-`i · (arg (-L_L / w_L) + arg (w_R / L_R))`, as happens when the endpoint chords have equal norm.
+`i · (arg (-L_L / w_L) + arg (w_R / L_R))`, as supplied by the separate per-window calculation
+under its full hypotheses, including equal endpoint radii.
 The winding number of the crossing window minus that of the circular cap with sweep
 `crossingCapSweep` is then exactly `crossingAngle γ t₀ / 2π`.
 
