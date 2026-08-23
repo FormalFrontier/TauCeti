@@ -85,7 +85,7 @@ open CategoryTheory Matrix WithConv
 
 namespace TauCeti.Symplectic
 
-universe u w
+universe u v w
 
 variable (R : Type u) [CommRing R] (m : ℕ)
 
@@ -617,7 +617,7 @@ theorem quotientPointsHom_pointsMulEquiv_symm (g : GLSymplecticFin m A) :
   apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) (m + m)).injective
   rw [pointsMulEquiv_coe, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
 
-variable {B : Type w} [CommRing B] [Algebra R B]
+variable {B : Type v} [CommRing B] [Algebra R B]
 
 /-- The symplectic point equivalence is natural in the value algebra: postcomposition of Hopf
 points agrees with entrywise mapping of symplectic matrices. -/
@@ -625,16 +625,26 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R m)
       (CommAlgCat.of R A)) :
     pointsMulEquiv (R := R) (A := B) m
-        (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R m)
-          (CommAlgCat.ofHom phi) f) =
+        (AlgHom.mapValue (H := coordinateHopfAlgebra R m) phi f) =
       GLSymplecticFin.map m A phi.toRingHom
         (pointsMulEquiv (R := R) (A := A) m f) := by
   apply Subtype.ext
   have hcoe_lhs := pointsMulEquiv_coe (R := R) (A := B) m
-    (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R m) (CommAlgCat.ofHom phi) f)
+    (AlgHom.mapValue (H := coordinateHopfAlgebra R m) phi f)
   have hcoe_rhs := pointsMulEquiv_coe (R := R) (A := A) m f
-  rw [← hcoe_lhs, ← CommHopfAlgCat.mapPoints_quotientPointsHom,
-    HopfAlgebra.mapPoints_apply, CommAlgCat.hom_ofHom, ← AlgHom.mapValue_apply,
+  have hnatural :
+      CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)
+          (CommAlgCat.of R B) (AlgHom.mapValue phi f) =
+        AlgHom.mapValue phi
+          (CommHopfAlgCat.quotientPointsHom
+            (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)
+            (CommAlgCat.of R A) f) := by
+    apply WithConv.ext
+    ext h
+    -- After extensionality, both sides apply `phi` after `f` and the canonical quotient map.
+    rfl
+  rw [← hcoe_lhs, hnatural,
     GeneralLinear.pointsMulEquiv_mapValue, hcoe_rhs, GLSymplecticFin.coe_map]
 
 /-- The points identification, read in `Fin m ⊕ Fin m` coordinates: the points of the symplectic

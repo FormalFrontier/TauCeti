@@ -56,14 +56,14 @@ open scoped CategoryTheory.MonObj
 
 namespace TauCeti.Symplectic
 
-universe u w
+universe u v w
 
 variable {R : Type u} [CommRing R] {m : ℕ} {i : Fin m}
 
 section Points
 
 variable {A : Type w} [CommRing A] [Algebra R A]
-variable {B : Type w} [CommRing B] [Algebra R B]
+variable {B : Type v} [CommRing B] [Algebra R B]
 
 /-- The positive long-root homomorphism on `A`-points, sending `c` to
 `1 + c E_{i,m+i}` in `Sp₂ₘ(A)`. -/
@@ -135,9 +135,6 @@ theorem mapValue_positiveLongRootSubgroupPoints (phi : A →ₐ[R] B) (i : Fin m
       positiveLongRootSubgroupPoints i
         (AlgHom.mapValue (H := AdditiveGroup.coordinateHopfAlgebra R) phi f) := by
   apply (pointsMulEquiv (R := R) (A := B) m).injective
-  change pointsMulEquiv (R := R) (A := B) m
-      (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R m)
-        (CommAlgCat.ofHom phi) (positiveLongRootSubgroupPoints i f)) = _
   rw [pointsMulEquiv_mapValue, pointsMulEquiv_positiveLongRootSubgroupPoints,
     pointsMulEquiv_positiveLongRootSubgroupPoints,
     GLSymplecticFin.map_positiveLongRootTransvectionUnit,
@@ -152,9 +149,6 @@ theorem mapValue_negativeLongRootSubgroupPoints (phi : A →ₐ[R] B) (i : Fin m
       negativeLongRootSubgroupPoints i
         (AlgHom.mapValue (H := AdditiveGroup.coordinateHopfAlgebra R) phi f) := by
   apply (pointsMulEquiv (R := R) (A := B) m).injective
-  change pointsMulEquiv (R := R) (A := B) m
-      (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R m)
-        (CommAlgCat.ofHom phi) (negativeLongRootSubgroupPoints i f)) = _
   rw [pointsMulEquiv_mapValue, pointsMulEquiv_negativeLongRootSubgroupPoints,
     pointsMulEquiv_negativeLongRootSubgroupPoints,
     GLSymplecticFin.map_negativeLongRootTransvectionUnit,
@@ -166,7 +160,7 @@ end Points
 section Functor
 
 /-- The natural transformation of group-valued points for the positive long root `2eᵢ`. -/
-@[expose] noncomputable def positiveLongRootSubgroupPointsMap (i : Fin m) :
+noncomputable def positiveLongRootSubgroupPointsMap (i : Fin m) :
     HopfAlgebra.pointsFunctor (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) ⟶
       HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R m) where
   app A := GrpCat.ofHom (positiveLongRootSubgroupPoints (A := A) i)
@@ -175,7 +169,7 @@ section Functor
     exact (mapValue_positiveLongRootSubgroupPoints phi.hom i f).symm
 
 /-- The natural transformation of group-valued points for the negative long root `-2eᵢ`. -/
-@[expose] noncomputable def negativeLongRootSubgroupPointsMap (i : Fin m) :
+noncomputable def negativeLongRootSubgroupPointsMap (i : Fin m) :
     HopfAlgebra.pointsFunctor (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) ⟶
       HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R m) where
   app A := GrpCat.ofHom (negativeLongRootSubgroupPoints (A := A) i)
@@ -188,7 +182,8 @@ homomorphism. -/
 @[simp]
 theorem positiveLongRootSubgroupPointsMap_app (i : Fin m) (A : CommAlgCat.{w} R) :
     (positiveLongRootSubgroupPointsMap (R := R) i).app A =
-      GrpCat.ofHom (positiveLongRootSubgroupPoints i) :=
+      GrpCat.ofHom (positiveLongRootSubgroupPoints i) := by
+  unfold positiveLongRootSubgroupPointsMap
   rfl
 
 /-- A component of the negative long-root natural transformation is the corresponding point
@@ -196,7 +191,8 @@ homomorphism. -/
 @[simp]
 theorem negativeLongRootSubgroupPointsMap_app (i : Fin m) (A : CommAlgCat.{w} R) :
     (negativeLongRootSubgroupPointsMap (R := R) i).app A =
-      GrpCat.ofHom (negativeLongRootSubgroupPoints i) :=
+      GrpCat.ofHom (negativeLongRootSubgroupPoints i) := by
+  unfold negativeLongRootSubgroupPointsMap
   rfl
 
 end Functor
@@ -282,6 +278,8 @@ theorem coordinateMap_comp_positiveLongRootSubgroupCoordinateMap (i : Fin m) :
   apply (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R)).map_injective
   rw [op_comp, Functor.map_comp, CommHopfAlgCat.pointsFunctor_map,
     CommHopfAlgCat.pointsFunctor_map, CommHopfAlgCat.pointsFunctor_map]
+  -- Mapping an opposite composite reverses it; `change` only removes the functor and
+  -- opposite-category wrappers left by the preceding public rewrite lemmas.
   change CommHopfAlgCat.mapPointsFunctor
       (positiveLongRootSubgroupCoordinateMap (R := R) i) ≫
         CommHopfAlgCat.mapPointsFunctor (coordinateMap R m) =
@@ -293,6 +291,8 @@ theorem coordinateMap_comp_positiveLongRootSubgroupCoordinateMap (i : Fin m) :
   ext A f
   rw [NatTrans.comp_app, positiveLongRootSubgroupPointsMap_app,
     GeneralLinear.rootSubgroupPointsMap_app]
+  -- The component morphisms are `GrpCat.ofHom` wrappers, whose coercions to functions are
+  -- definitionally the displayed point homomorphisms; no separate coercion lemma is provided.
   change (CommHopfAlgCat.mapPointsFunctor (coordinateMap R m)).app A
       (positiveLongRootSubgroupPoints i f) =
     GeneralLinear.rootSubgroupPoints (GLSymplecticFin.positiveLongRoot_indices_ne i) f
@@ -316,6 +316,8 @@ theorem coordinateMap_comp_negativeLongRootSubgroupCoordinateMap (i : Fin m) :
   apply (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R)).map_injective
   rw [op_comp, Functor.map_comp, CommHopfAlgCat.pointsFunctor_map,
     CommHopfAlgCat.pointsFunctor_map, CommHopfAlgCat.pointsFunctor_map]
+  -- Mapping an opposite composite reverses it; `change` only removes the functor and
+  -- opposite-category wrappers left by the preceding public rewrite lemmas.
   change CommHopfAlgCat.mapPointsFunctor
       (negativeLongRootSubgroupCoordinateMap (R := R) i) ≫
         CommHopfAlgCat.mapPointsFunctor (coordinateMap R m) =
@@ -327,6 +329,8 @@ theorem coordinateMap_comp_negativeLongRootSubgroupCoordinateMap (i : Fin m) :
   ext A f
   rw [NatTrans.comp_app, negativeLongRootSubgroupPointsMap_app,
     GeneralLinear.rootSubgroupPointsMap_app]
+  -- The component morphisms are `GrpCat.ofHom` wrappers, whose coercions to functions are
+  -- definitionally the displayed point homomorphisms; no separate coercion lemma is provided.
   change (CommHopfAlgCat.mapPointsFunctor (coordinateMap R m)).app A
       (negativeLongRootSubgroupPoints i f) =
     GeneralLinear.rootSubgroupPoints (GLSymplecticFin.negativeLongRoot_indices_ne i) f
@@ -348,6 +352,17 @@ noncomputable def positiveLongRootSubgroup (i : Fin m) :
       (positiveLongRootSubgroupCoordinateMap i).op ≫
     eqToHom (groupScheme_def R m).symm
 
+/-- The positive long-root subgroup is the relative spectrum of its coordinate morphism,
+transported to the named source and target schemes. -/
+theorem positiveLongRootSubgroup_def (i : Fin m) :
+    positiveLongRootSubgroup (R := R) i =
+      eqToHom (AdditiveGroup.groupScheme_def R) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (positiveLongRootSubgroupCoordinateMap i).op ≫
+        eqToHom (groupScheme_def R m).symm := by
+  unfold positiveLongRootSubgroup
+  rfl
+
 /-- **The negative long-root subgroup of `Sp₂ₘ` attached to `-2eᵢ`**, as an affine
 group-scheme morphism. -/
 noncomputable def negativeLongRootSubgroup (i : Fin m) :
@@ -357,6 +372,17 @@ noncomputable def negativeLongRootSubgroup (i : Fin m) :
       (negativeLongRootSubgroupCoordinateMap i).op ≫
     eqToHom (groupScheme_def R m).symm
 
+/-- The negative long-root subgroup is the relative spectrum of its coordinate morphism,
+transported to the named source and target schemes. -/
+theorem negativeLongRootSubgroup_def (i : Fin m) :
+    negativeLongRootSubgroup (R := R) i =
+      eqToHom (AdditiveGroup.groupScheme_def R) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (negativeLongRootSubgroupCoordinateMap i).op ≫
+        eqToHom (groupScheme_def R m).symm := by
+  unfold negativeLongRootSubgroup
+  rfl
+
 /-- The positive long-root subgroup followed by the symplectic inclusion is the corresponding
 general-linear root subgroup. -/
 @[simp]
@@ -364,7 +390,7 @@ theorem positiveLongRootSubgroup_comp_inclusion (i : Fin m) :
     positiveLongRootSubgroup (R := R) i ≫ inclusion R m =
       GeneralLinear.rootSubgroup (R := R)
         (GLSymplecticFin.positiveLongRoot_indices_ne i) := by
-  rw [positiveLongRootSubgroup, inclusion_def, GeneralLinear.rootSubgroup_def]
+  rw [positiveLongRootSubgroup_def, inclusion_def, GeneralLinear.rootSubgroup_def]
   simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
   rw [CommHopfAlgCat.quotientSpecι_def]
   rw [← coordinateMap_def]
@@ -383,7 +409,7 @@ theorem negativeLongRootSubgroup_comp_inclusion (i : Fin m) :
     negativeLongRootSubgroup (R := R) i ≫ inclusion R m =
       GeneralLinear.rootSubgroup (R := R)
         (GLSymplecticFin.negativeLongRoot_indices_ne i) := by
-  rw [negativeLongRootSubgroup, inclusion_def, GeneralLinear.rootSubgroup_def]
+  rw [negativeLongRootSubgroup_def, inclusion_def, GeneralLinear.rootSubgroup_def]
   simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
   rw [CommHopfAlgCat.quotientSpecι_def]
   rw [← coordinateMap_def]

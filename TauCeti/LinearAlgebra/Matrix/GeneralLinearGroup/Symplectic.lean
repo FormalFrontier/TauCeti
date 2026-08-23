@@ -329,6 +329,8 @@ def map {S : Type*} [CommRing S] (f : R →+* S) :
   toFun M := ⟨Matrix.GeneralLinearGroup.map f M, by
     have hM := M.2
     rw [mem_iff] at hM ⊢
+    -- Membership stores the same matrix equation through the `GL` and subtype coercions;
+    -- no public lemma exposes all of those wrappers at once.
     change M.1.val.map f * JFin m S * (M.1.val.map f)ᵀ = JFin m S
     simpa only [Matrix.map_mul, Matrix.transpose_map, JFin_map] using
       congrArg (fun X => X.map f) hM⟩
@@ -404,6 +406,8 @@ private theorem lowerLongRoot_mem (i : Fin m) (c : R) :
 def positiveLongRootTransvectionUnit (i : Fin m) (c : R) : GLSymplecticFin m R :=
   ⟨transvectionUnit (positiveLongRoot_indices_ne i) c, by
     rw [GLSymplecticFin, Subgroup.mem_comap]
+    -- Membership in the comap is definitionally membership after `reindexGL`; there is no
+    -- dedicated theorem for this specialized transvection goal.
     change reindexGL m R (transvectionUnit (positiveLongRoot_indices_ne i) c) ∈ _
     rw [reindexGL_transvectionUnit]
     exact upperLongRoot_mem i c⟩
@@ -420,6 +424,8 @@ theorem coe_positiveLongRootTransvectionUnit (i : Fin m) (c : R) :
 def negativeLongRootTransvectionUnit (i : Fin m) (c : R) : GLSymplecticFin m R :=
   ⟨transvectionUnit (negativeLongRoot_indices_ne i) c, by
     rw [GLSymplecticFin, Subgroup.mem_comap]
+    -- Membership in the comap is definitionally membership after `reindexGL`; there is no
+    -- dedicated theorem for this specialized transvection goal.
     change reindexGL m R (transvectionUnit (negativeLongRoot_indices_ne i) c) ∈ _
     rw [reindexGL_transvectionUnit]
     exact lowerLongRoot_mem i c⟩
