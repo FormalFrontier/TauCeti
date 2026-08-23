@@ -23,25 +23,26 @@ fixed submodule is preserved by every ambient point. This is the pointwise algeb
 to the direct proof that `GLₙ` is reductive: the fixed vectors of a normal unipotent subgroup in
 the standard representation form an ambient subrepresentation.
 
-The definition deliberately says `pointFixedSubmodule`: without a point-separation hypothesis,
-base-valued points need not detect scheme-theoretic invariants. The normality and stability
-results require no reducedness, finite-type, or field hypotheses.
+The definition deliberately says `basePointFixedSubmodule`: without a point-separation
+hypothesis, base-valued points need not detect scheme-theoretic invariants. The normality and
+stability results require no reducedness, finite-type, or field hypotheses.
 
-The group-representation step is Mathlib's `Representation.le_comap_invariants`, packaged with
-`Representation.subrepresentation`; this file adds the Hopf-ideal and comodule interface around
-it rather than repeating the normal-subgroup conjugation argument.
+The group-representation step is Mathlib's `Representation.toInvariants`; this file adds the
+Hopf-ideal and comodule interface around it rather than repeating the normal-subgroup conjugation
+argument.
 
 ## Main declarations
 
-* `TauCeti.HopfIdeal.pointFixedSubmodule`: the vectors fixed by the points cut out by a Hopf
-  ideal.
-* `TauCeti.HopfIdeal.mem_pointFixedSubmodule_iff_quotient_coact_eq_tmul_one`: geometric-point
+* `TauCeti.HopfIdeal.basePointFixedSubmodule`: the vectors fixed by the base-valued points cut out
+  by a Hopf ideal.
+* `TauCeti.HopfIdeal.mem_basePointFixedSubmodule_iff_quotient_coact_eq_tmul_one`: geometric-point
   detection identifies the pointwise and scheme-theoretic fixed-vector conditions.
-* `TauCeti.HopfIdeal.IsNormal.pointFixedSubrepresentation`: Mathlib's representation on the
+* `TauCeti.HopfIdeal.IsNormal.basePointFixedSubrepresentation`: Mathlib's representation on the
   invariants of the point subgroup cut out by a normal Hopf ideal.
-* `TauCeti.HopfIdeal.IsNormal.basePointsRepresentation_mem_pointFixedSubmodule`: the ambient
-  base-point action preserves the point-fixed submodule.
-* `TauCeti.HopfIdeal.IsNormal.endOfPoint_one_tmul_mem_pointFixedSubmodule_baseChange`: pointwise
+* `TauCeti.HopfIdeal.IsNormal.basePointsRepresentation_mem_basePointFixedSubmodule`: the ambient
+  base-point action preserves the base-point-fixed submodule.
+* `TauCeti.HopfIdeal.IsNormal.endOfPoint_one_tmul_mem_basePointFixedSubmodule_baseChange`:
+  pointwise
   stability in the scalar-extension form used to detect subcomodules.
 
 ## References
@@ -70,26 +71,27 @@ variable [AddCommGroup M] [Module R M] [Comodule R H M]
 
 variable (M) in
 /-- The submodule fixed by all base-valued points of the closed subgroup cut out by `I`. -/
-def pointFixedSubmodule (I : HopfIdeal R H) : Submodule R M :=
+@[expose] def basePointFixedSubmodule (I : HopfIdeal R H) : Submodule R M :=
   Representation.invariants
     ((Comodule.basePointsRepresentation (R := R) (H := H) M).comp
       (CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) I
         (CommAlgCat.of R R)).subtype)
 
-/-- The point-fixed submodule as Mathlib's invariant submodule for the quotient point subgroup. -/
-theorem pointFixedSubmodule_def (I : HopfIdeal R H) :
-    I.pointFixedSubmodule M =
+/-- The base-point-fixed submodule as Mathlib's invariant submodule for the quotient point
+subgroup. -/
+theorem basePointFixedSubmodule_def (I : HopfIdeal R H) :
+    I.basePointFixedSubmodule M =
       Representation.invariants
         ((Comodule.basePointsRepresentation (R := R) (H := H) M).comp
           (CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) I
             (CommAlgCat.of R R)).subtype) := by
   rfl
 
-/-- Membership in the point-fixed submodule means being fixed by every base-valued point cut out
-by the Hopf ideal. -/
+/-- Membership in the base-point-fixed submodule means being fixed by every base-valued point cut
+out by the Hopf ideal. -/
 @[simp]
-theorem mem_pointFixedSubmodule (I : HopfIdeal R H) (m : M) :
-    m ∈ I.pointFixedSubmodule M ↔
+theorem mem_basePointFixedSubmodule (I : HopfIdeal R H) (m : M) :
+    m ∈ I.basePointFixedSubmodule M ↔
       ∀ n : CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) I
           (CommAlgCat.of R R),
         Comodule.basePointsRepresentation (R := R) (H := H) M
@@ -98,20 +100,20 @@ theorem mem_pointFixedSubmodule (I : HopfIdeal R H) (m : M) :
 
 /-- A vector fixed by the quotient coaction is fixed by every base-valued point of the closed
 subgroup cut out by `I`. This direction requires no point-separation hypotheses. -/
-theorem mem_pointFixedSubmodule_of_quotient_coact_eq_tmul_one
+theorem mem_basePointFixedSubmodule_of_quotient_coact_eq_tmul_one
     (I : HopfIdeal R H) (m : M)
     (hm : TensorProduct.map LinearMap.id
         (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of R H) I).hom.toLinearMap
         (Comodule.coact (R := R) (C := H) m) =
       m ⊗ₜ[R] (1 : CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of R H) I)) :
-    m ∈ I.pointFixedSubmodule M := by
+    m ∈ I.basePointFixedSubmodule M := by
   let A := _root_.CommHopfAlgCat.of R H
   let Q := CommHopfAlgCat.quotient A I
   let q : H →ₐc[R] Q := (CommHopfAlgCat.mkQuotient A I).hom
   let _ : Comodule R Q M := Comodule.Corestrict q.toCoalgHom
   have hm' : Comodule.coact (R := R) (C := Q) m = m ⊗ₜ[R] (1 : Q) := by
     simpa only [Comodule.corestrict_coact_apply] using hm
-  rw [mem_pointFixedSubmodule]
+  rw [mem_basePointFixedSubmodule]
   intro n
   obtain ⟨g, hg⟩ := n.2
   have hfixed := Comodule.basePointsRepresentation_eq_of_coact_eq_tmul_one m hm' g
@@ -130,15 +132,15 @@ variable [Field k] [CommRing A] [HopfAlgebra k A]
 variable [AddCommGroup M] [Module k M] [Comodule k A M] [IsAlgClosed k]
 
 /-- Over an algebraically closed field, if the quotient coordinate ring is reduced and of finite
-type, point-fixed vectors are exactly the vectors fixed by the restricted coaction of the closed
-subgroup scheme. -/
-theorem mem_pointFixedSubmodule_iff_quotient_coact_eq_tmul_one
+type, base-point-fixed vectors are exactly the vectors fixed by the restricted coaction of the
+closed subgroup scheme. -/
+theorem mem_basePointFixedSubmodule_iff_quotient_coact_eq_tmul_one
     (I : HopfIdeal k A)
     [Algebra.FiniteType k
       (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k A) I)]
     [IsReduced (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k A) I)]
     (m : M) :
-    m ∈ I.pointFixedSubmodule M ↔
+    m ∈ I.basePointFixedSubmodule M ↔
       TensorProduct.map LinearMap.id
           (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of k A) I).hom.toLinearMap
           (Comodule.coact (R := k) (C := A) m) =
@@ -158,7 +160,7 @@ theorem mem_pointFixedSubmodule_iff_quotient_coact_eq_tmul_one
         Comodule.basePointsRepresentation (R := k) (H := Q) M g m = m := by
       intro g
       let n := CommHopfAlgCat.quotientPointsHom H I (CommAlgCat.of k k) g
-      have hn := (mem_pointFixedSubmodule I m).mp hm
+      have hn := (mem_basePointFixedSubmodule I m).mp hm
         ⟨n, CommHopfAlgCat.quotientPointsHom_mem_quotientPointsSubgroup H I
           (CommAlgCat.of k k) g⟩
       rw [Comodule.basePointsRepresentation_corestrict q g, hinclude]
@@ -166,7 +168,7 @@ theorem mem_pointFixedSubmodule_iff_quotient_coact_eq_tmul_one
     have hcoact :=
       (Comodule.coact_eq_tmul_one_iff_forall_basePointsRepresentation_eq m).2 hfixed
     simpa only [Comodule.corestrict_coact_apply] using hcoact
-  · exact mem_pointFixedSubmodule_of_quotient_coact_eq_tmul_one I m
+  · exact mem_basePointFixedSubmodule_of_quotient_coact_eq_tmul_one I m
 
 end GeometricDetection
 
@@ -174,66 +176,62 @@ namespace IsNormal
 
 variable {I : HopfIdeal R H}
 
-/-- Every ambient base-valued point sends a point-fixed vector to another point-fixed vector. -/
-theorem basePointsRepresentation_mem_pointFixedSubmodule (hI : I.IsNormal)
+/-- Every ambient base-valued point sends a base-point-fixed vector to another base-point-fixed
+vector. -/
+theorem basePointsRepresentation_mem_basePointFixedSubmodule (hI : I.IsNormal)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    {m : M} (hm : m ∈ I.pointFixedSubmodule M) :
+    {m : M} (hm : m ∈ I.basePointFixedSubmodule M) :
     Comodule.basePointsRepresentation (R := R) (H := H) M g m ∈
-      I.pointFixedSubmodule M := by
+      I.basePointFixedSubmodule M := by
   let N := CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) I
     (CommAlgCat.of R R)
   let _ : N.Normal := CommHopfAlgCat.quotientPointsSubgroup_normal
     (_root_.CommHopfAlgCat.of R H) I hI (CommAlgCat.of R R)
   have hm' : m ∈ Representation.invariants
       ((Comodule.basePointsRepresentation (R := R) (H := H) M).comp N.subtype) := by
-    simpa only [pointFixedSubmodule_def] using hm
+    simpa only [basePointFixedSubmodule_def] using hm
   have hstable := Representation.le_comap_invariants
     (Comodule.basePointsRepresentation (R := R) (H := H) M) N g hm'
-  simpa only [Submodule.mem_comap, pointFixedSubmodule_def] using hstable
+  simpa only [Submodule.mem_comap, basePointFixedSubmodule_def] using hstable
 
 variable (M) in
 /-- The representation of the full group of base-valued points on the vectors fixed by the point
 subgroup cut out by the normal Hopf ideal `I`. Normality makes this submodule ambient-stable. -/
-noncomputable def pointFixedSubrepresentation (hI : I.IsNormal) :
+noncomputable abbrev basePointFixedSubrepresentation (hI : I.IsNormal) :
     Representation R
       (HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-      (I.pointFixedSubmodule M) :=
-  Representation.subrepresentation
+      (I.basePointFixedSubmodule M) := by
+  let N := CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) I
+    (CommAlgCat.of R R)
+  let _ : N.Normal := CommHopfAlgCat.quotientPointsSubgroup_normal
+    (_root_.CommHopfAlgCat.of R H) I hI (CommAlgCat.of R R)
+  exact Representation.toInvariants
     (Comodule.basePointsRepresentation (R := R) (H := H) M)
-    (I.pointFixedSubmodule M) fun g _ hm =>
-        basePointsRepresentation_mem_pointFixedSubmodule hI g hm
+    N
 
-/-- The action on the point-fixed subrepresentation is the ambient base-point action. -/
-@[simp]
-theorem pointFixedSubrepresentation_apply_coe (hI : I.IsNormal)
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    (m : I.pointFixedSubmodule M) :
-    ((hI.pointFixedSubrepresentation M g m : I.pointFixedSubmodule M) : M) =
-      Comodule.basePointsRepresentation (R := R) (H := H) M g m := by
-  rfl
-
-/-- The scalar extension of the point-fixed submodule is stable under every ambient point
+/-- The scalar extension of the base-point-fixed submodule is stable under every ambient point
 endomorphism. -/
-theorem endOfPoint_le_comap_pointFixedSubmodule_baseChange (hI : I.IsNormal)
+theorem endOfPoint_le_comap_basePointFixedSubmodule_baseChange (hI : I.IsNormal)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    (I.pointFixedSubmodule M).baseChange R ≤
-      ((I.pointFixedSubmodule M).baseChange R).comap (Comodule.endOfPoint M g.ofConv) := by
+    (I.basePointFixedSubmodule M).baseChange R ≤
+      ((I.basePointFixedSubmodule M).baseChange R).comap (Comodule.endOfPoint M g.ofConv) := by
   rw [Submodule.baseChange_eq_span]
   refine Submodule.span_le.2 ?_
   rintro _ ⟨m, hm, rfl⟩
   rw [SetLike.mem_coe, Submodule.mem_comap, TensorProduct.mk_apply]
   rw [Comodule.endOfPoint_tmul, one_smul,
     Comodule.endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation]
-  exact Submodule.subset_span ⟨_, basePointsRepresentation_mem_pointFixedSubmodule hI g hm, rfl⟩
+  exact Submodule.subset_span
+    ⟨_, basePointsRepresentation_mem_basePointFixedSubmodule hI g hm, rfl⟩
 
 /-- Scalar-extension form of the stability of normal-subgroup fixed vectors. This is the shape
 needed by geometric point-separation criteria for promoting a submodule to a subcomodule. -/
-theorem endOfPoint_one_tmul_mem_pointFixedSubmodule_baseChange (hI : I.IsNormal)
+theorem endOfPoint_one_tmul_mem_basePointFixedSubmodule_baseChange (hI : I.IsNormal)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    {m : M} (hm : m ∈ I.pointFixedSubmodule M) :
+    {m : M} (hm : m ∈ I.basePointFixedSubmodule M) :
     Comodule.endOfPoint M g.ofConv (1 ⊗ₜ[R] m) ∈
-      (I.pointFixedSubmodule M).baseChange R :=
-  endOfPoint_le_comap_pointFixedSubmodule_baseChange hI g
+      (I.basePointFixedSubmodule M).baseChange R :=
+  endOfPoint_le_comap_basePointFixedSubmodule_baseChange hI g
     (Submodule.tmul_mem_baseChange_of_mem _ hm)
 
 end IsNormal
