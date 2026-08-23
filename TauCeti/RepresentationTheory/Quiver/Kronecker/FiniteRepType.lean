@@ -117,19 +117,10 @@ noncomputable def kroneckerJordanRep (a₁ : A) (n : ℕ) :
 
 variable {a₀ a₁ : A} {n : ℕ}
 
--- Not `@[simp]`: these two rewrite the vertex spaces inside the implicit arguments of
--- `ModuleCat.Hom.hom`, which would take the left-hand sides of the two `_apply` lemmas below out
--- of simp-normal form (`simpNF`). Those are the forms `simp` needs, so these stay plain rewrites.
-theorem kroneckerJordanRep_obj_src :
-    (kroneckerJordanRep k a₁ n).obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) =
-      ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1))) :=
-  rfl
-
-theorem kroneckerJordanRep_obj_tgt :
-    (kroneckerJordanRep k a₁ n).obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) =
-      ModuleCat.of k (AdjoinRoot ((X : k[X]) ^ (n + 1))) :=
-  rfl
-
+-- Not `@[simp]`: this and `TauCeti.kroneckerJordanRep_map_arrowPath_of_ne` rewrite inside the
+-- `ModuleCat.Hom.hom` of the two `_apply` lemmas below, taking those left-hand sides out of
+-- simp-normal form (`simpNF`). The element-level forms are the ones `simp` needs, so the
+-- categorical forms stay plain rewrites, as `TauCeti.oneLoopRep_map_loop` does for the loop quiver.
 /-- The distinguished arrow acts on a Jordan block by multiplication by the class of `X`. -/
 theorem kroneckerJordanRep_map_arrowPath_self :
     (kroneckerJordanRep k a₁ n).map (Quiver.Kronecker.arrowPath a₁) =
@@ -223,7 +214,7 @@ private theorem jordanApp_ext (h : a₀ ≠ a₁)
     (heq : jordanApp e = jordanApp e') : e = e' := by
   have hsrc : e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) =
       e'.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) := ModuleCat.hom_ext heq
-  exact kronecker_hom_ext hsrc
+  exact kroneckerRep_hom_ext hsrc
     (by rw [app_tgt_eq_app_src h e, app_tgt_eq_app_src h e', hsrc])
 
 /-- A Jordan block is finite-dimensional: both of its vertex spaces are `k[X]/(Xⁿ⁺¹)`. -/
