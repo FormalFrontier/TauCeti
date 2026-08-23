@@ -41,8 +41,10 @@ overlattice with this quotient is the lattice-side statement and is not yet form
 * `TauCeti.FiniteBilinearModule.isNondegenerate_orthogonalQuotient_iff`: the orthogonal quotient
   is nondegenerate exactly when `H` contains the radical.
 * `TauCeti.FiniteBilinearModule.card_orthogonalQuotient`: the order of the quotient as an index.
-* `IsNondegenerate.card_orthogonalQuotient_mul_card_addSubgroupOf_mul_card`: the order of the
-  quotient for an arbitrary subgroup, in the `TauCeti.FiniteBilinearModule` namespace.
+* The fully qualified name of the arbitrary-subgroup order theorem is:
+```text
+TauCeti.FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_addSubgroupOf_mul_card
+```
 * `TauCeti.FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq`: the order
   computation `|H^⊥/H| · |H|² = |A|` for isotropic `H`.
 * `TauCeti.FiniteBilinearModule.card_orthogonalQuotient_eq_one_iff`: triviality of the quotient,
@@ -86,9 +88,10 @@ theorem addSubgroupOf_orthogonalComplement_le_radical_restrict (H : AddSubgroup 
 to `H^⊥`, with the vectors of `H` it contains quotiented out.
 
 No hypothesis on `H` is needed for the pairing to descend, so this is the quotient by `H ⊓ H^⊥`.
-The pinned signature in `Suggested.lean` carries `hH : A.IsIsotropic H`; that hypothesis is
-dropped here because the construction does not use it, and for isotropic `H`, where `H ≤ H^⊥`,
-this is the classical `H^⊥/H`.
+The roadmap prototype `OrthogonalQuotient` in `Suggested.lean` abbreviates the quotient type and
+carries `hH : A.IsIsotropic H`; this definition packages that quotient with its induced bilinear
+module structure and drops the unused hypothesis. For isotropic `H`, where `H ≤ H^⊥`, this is the
+classical `H^⊥/H`.
 
 Exposed so that the carrier reduces to the `Submodule` quotient and maps out of it — in
 particular the quadratic refinement — are definable. -/
@@ -120,6 +123,14 @@ theorem orthogonalQuotientMk_surjective (H : AddSubgroup A) :
   (A.restrict (A.orthogonalComplement H)).quotientOfLeRadicalMk_surjective
     (H.addSubgroupOf (A.orthogonalComplement H))
     (A.addSubgroupOf_orthogonalComplement_le_radical_restrict H)
+
+/-- Every element of the orthogonal quotient is the class of an element of `H^⊥`. -/
+@[elab_as_elim]
+theorem orthogonalQuotient_induction_on (H : AddSubgroup A)
+    {motive : A.orthogonalQuotient H → Prop} (q : A.orthogonalQuotient H)
+    (mk : ∀ x : A.orthogonalComplement H, motive (A.orthogonalQuotientMk H x)) : motive q := by
+  obtain ⟨x, rfl⟩ := A.orthogonalQuotientMk_surjective H q
+  exact mk x
 
 /-- The kernel of the quotient map is the part of `H` lying in `H^⊥`. -/
 @[simp]

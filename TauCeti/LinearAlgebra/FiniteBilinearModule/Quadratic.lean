@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Complement
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Quotient
 public import Mathlib.Algebra.Group.Subgroup.Map
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 public import Mathlib.LinearAlgebra.QuadraticForm.Prod
@@ -537,15 +537,7 @@ theorem subgroupInOrthogonalComplement_le_radical {H : AddSubgroup A}
     : A.subgroupInOrthogonalComplement H ≤
       FiniteBilinearModule.radical
         (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H)).toFiniteBilinearModule := by
-  intro x hx
-  apply FiniteBilinearModule.mem_radical_iff
-    (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H)).toFiniteBilinearModule x |>.mpr
-  intro y
-  -- The restricted pairing has the same values on the underlying subtype.
-  change A.toFiniteBilinearModule.pairing x.1 y.1 = 0
-  rw [A.toFiniteBilinearModule.pairing_comm]
-  exact A.toFiniteBilinearModule.mem_orthogonalComplement_iff H y.1 |>.mp y.2 x.1
-    (A.mem_subgroupInOrthogonalComplement_iff H x |>.mp hx)
+  exact A.toFiniteBilinearModule.addSubgroupOf_orthogonalComplement_le_radical_restrict H
 
 /-- The copy of a quadratic-isotropic subgroup in its orthogonal complement lies in the radical of
 the quadratic map restricted to that complement. -/
@@ -644,49 +636,15 @@ theorem orthogonalQuotientMk_eq_iff (H : AddSubgroup A) (hH : A.IsIsotropic H)
 theorem IsNondegenerate.isNondegenerate_orthogonalQuotient (hA : A.IsNondegenerate)
     {H : AddSubgroup A} (hH : A.IsIsotropic H) :
     (A.orthogonalQuotient H hH).IsNondegenerate := by
-  apply (isNondegenerate_quotientOfLeQuadraticRadical_iff
-    (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
-    (A.subgroupInOrthogonalComplement H)
-    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)).mpr
-  intro x hx
-  have hx' : (x.1 : A) ∈ A.toFiniteBilinearModule.orthogonalComplement
-      (A.toFiniteBilinearModule.orthogonalComplement H) := by
-    rw [A.toFiniteBilinearModule.mem_orthogonalComplement_iff]
-    intro y hy
-    exact FiniteBilinearModule.mem_radical_iff
-      (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H)).toFiniteBilinearModule x
-      |>.mp hx ⟨y, hy⟩
-  have hdouble := FiniteBilinearModule.IsNondegenerate.orthogonalComplement_orthogonalComplement
+  exact FiniteBilinearModule.IsNondegenerate.isNondegenerate_orthogonalQuotient
     A.toFiniteBilinearModule hA H
-  rw [hdouble] at hx'
-  exact hx'
 
 /-- For nondegenerate `A`, the order of `H^⊥ / H` multiplied by `|H|²` is `|A|`. -/
 theorem IsNondegenerate.card_orthogonalQuotient_mul_card_sq (hA : A.IsNondegenerate)
     {H : AddSubgroup A} (hH : A.IsIsotropic H) :
     Nat.card (A.orthogonalQuotient H hH) * Nat.card H ^ 2 = Nat.card A := by
-  have hcard : Nat.card (A.subgroupInOrthogonalComplement H) = Nat.card H :=
-    Nat.card_congr (A.subgroupInOrthogonalComplementEquiv hH.le_orthogonalComplement).toEquiv
-  have hindex : Nat.card (A.orthogonalQuotient H hH) =
-      (A.subgroupInOrthogonalComplement H).index := by
-    unfold orthogonalQuotient
-    exact card_quotientOfLeQuadraticRadical
-      (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
-      (A.subgroupInOrthogonalComplement H)
-      (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)
-  have hquot : Nat.card (A.orthogonalQuotient H hH) * Nat.card H =
-      Nat.card (A.toFiniteBilinearModule.orthogonalComplement H) := by
-    calc
-      Nat.card (A.orthogonalQuotient H hH) * Nat.card H =
-          (A.subgroupInOrthogonalComplement H).index * Nat.card H := by
-            rw [hindex]
-      _ = (A.subgroupInOrthogonalComplement H).index *
-          Nat.card (A.subgroupInOrthogonalComplement H) := congrArg _ hcard.symm
-      _ = Nat.card (A.toFiniteBilinearModule.orthogonalComplement H) :=
-        (A.subgroupInOrthogonalComplement H).index_mul_card
-  rw [pow_two, ← mul_assoc, hquot, mul_comm]
-  exact FiniteBilinearModule.IsNondegenerate.card_mul_card_orthogonalComplement
-    A.toFiniteBilinearModule hA H
+  exact FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq
+    A.toFiniteBilinearModule hA hH.toFiniteBilinearModule
 
 end FiniteQuadraticModule
 
