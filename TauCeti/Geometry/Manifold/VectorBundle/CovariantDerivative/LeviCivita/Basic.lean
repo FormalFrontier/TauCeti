@@ -26,7 +26,9 @@ tensorial repackaging is `IsLeviCivita.difference_eq_zero`. The converse directi
 `isLeviCivita_iff` shows nothing is lost in the passage to `koszul`: a connection satisfying the
 Koszul formula is automatically torsion free and metric. Since `koszul I X Y · x` is moreover
 tensorial in its last slot, the Koszul formula is also the shape in which the Levi-Civita
-connection gets constructed; existence is left to a later file.
+connection gets constructed; that construction, together with the tensoriality in the first slot
+and the Leibniz rule in the second which it needs, is carried out in
+`TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.LeviCivita.Existence`.
 
 Two covariant derivatives can only be compared through sections that are differentiable at the
 point under consideration, because `CovariantDerivative` puts no constraint whatsoever on the
@@ -49,8 +51,10 @@ endomorphism-valued one-form `CovariantDerivative.difference ∇ ∇'` vanishes.
 * `TauCeti.Manifold.koszul_sub_koszul_swap_first_two` and
   `TauCeti.Manifold.koszul_add_koszul_swap_last_two`: the two symmetries of the Koszul expression
   from which the converse direction is read off.
-* `TauCeti.Manifold.tensorialAt_koszul`: the Koszul expression is tensorial in its last
-  argument.
+* `TauCeti.Manifold.tensorialAt_koszul_third` and `TauCeti.Manifold.tensorialAt_koszul_first`: the
+  Koszul expression is tensorial in its last argument and in its first.
+* `TauCeti.Manifold.koszul_add_second` and `TauCeti.Manifold.koszul_smul_second`: additivity and
+  the Leibniz rule in the middle argument, the slot which the connection differentiates.
 * `TauCeti.eq_of_forall_inner_section_eq`: a vector in a fibre of a Riemannian bundle is
   determined by its inner products against the differentiable sections.
 
@@ -58,6 +62,8 @@ endomorphism-valued one-form `CovariantDerivative.difference ∇ ∇'` vanishes.
 
 * [Geodesics, the exponential map, and the Hopf–Rinow theorem roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HopfRinow/README.md),
   Layer 1, "The Levi-Civita connection".
+* [mathlib4#36845](https://github.com/leanprover-community/mathlib4/pull/36845): the first-slot
+  tensoriality and second-slot Leibniz identities follow its design.
 * M. P. do Carmo, *Riemannian Geometry*, Birkhäuser, 1992, Ch. 2, Thm. 3.6.
 * J. M. Lee, *Introduction to Riemannian Manifolds*, GTM 176, 2018, Thm. 5.10.
 -/
@@ -80,7 +86,8 @@ variable
 
 section Nondegenerate
 
-variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
+variable {F F' : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
+  [NormedAddCommGroup F'] [NormedSpace ℝ F']
   {V : M → Type*} [TopologicalSpace (TotalSpace F V)]
   [∀ x, NormedAddCommGroup (V x)] [∀ x, InnerProductSpace ℝ (V x)] [FiberBundle F V]
 
@@ -92,6 +99,19 @@ theorem eq_of_forall_inner_section_eq {x : M} {u v : V x}
     (h : ∀ τ : Π y : M, V y, MDiffAt (T% τ) x → inner ℝ u (τ x) = inner ℝ v (τ x)) : u = v := by
   refine ext_inner_right ℝ fun w ↦ ?_
   simpa using h (extend F w) (mdifferentiableAt_extend I F w)
+
+variable {V' : M → Type*} [TopologicalSpace (TotalSpace F' V')]
+  [∀ x, NormedAddCommGroup (V' x)] [∀ x, NormedSpace ℝ (V' x)] [FiberBundle F' V']
+
+variable (F F') in
+/-- Two continuous linear maps between fibres are equal if their values on differentiable sections
+have the same inner products against every differentiable section of the target bundle. -/
+theorem continuousLinearMap_ext_of_forall_inner_section_eq {x : M} {A B : V' x →L[ℝ] V x}
+    (h : ∀ σ : ∀ y : M, V' y, MDiffAt (T% σ) x → ∀ τ : ∀ y : M, V y,
+      MDiffAt (T% τ) x → inner ℝ (A (σ x)) (τ x) = inner ℝ (B (σ x)) (τ x)) : A = B := by
+  refine VectorBundle.injective_eval_mdifferentiableAt_sec I F' V' (V x) x ?_
+  ext σ hσ
+  exact eq_of_forall_inner_section_eq (I := I) (V := V) F fun τ hτ ↦ h σ hσ τ hτ
 
 end Nondegenerate
 
@@ -166,11 +186,93 @@ section Tensorial
 variable [IsManifold I 2 M] [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)]
   [CompleteSpace E]
 
+/-! ### Behaviour in the first two arguments
+
+The Koszul expression is tensorial in its first argument, just as it is in its third, and obeys a
+Leibniz rule in its second. These are the identities which turn
+`CovariantDerivative.isLeviCivita_iff` into a construction of the Levi-Civita connection, carried
+out in `TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.LeviCivita.Existence`.
+-/
+
+variable {X' Y' : Π x : M, TangentSpace I x} {f : M → ℝ}
+
+/-- The Koszul expression is additive in its second argument. -/
+theorem koszul_add_second (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+    (hY' : MDiffAt (T% Y') x) (hZ : MDiffAt (T% Z) x) :
+    koszul I X (Y + Y') Z x = koszul I X Y Z x + koszul I X Y' Z x := by
+  have e₁ : (fun y ↦ inner ℝ ((Y + Y') y) (Z y)) =
+      fun y ↦ inner ℝ (Y y) (Z y) + inner ℝ (Y' y) (Z y) := funext fun _ ↦ inner_add_left ..
+  have e₂ : (fun y ↦ inner ℝ (X y) ((Y + Y') y)) =
+      fun y ↦ inner ℝ (X y) (Y y) + inner ℝ (X y) (Y' y) := funext fun _ ↦ inner_add_right ..
+  have e₃ : (Y + Y') x = Y x + Y' x := rfl
+  rw [koszul, koszul, koszul, e₁, e₂, e₃,
+    mvfderiv_fun_add (mdifferentiableAt_inner hY hZ) (mdifferentiableAt_inner hY' hZ),
+    mvfderiv_fun_add (mdifferentiableAt_inner hX hY) (mdifferentiableAt_inner hX hY'),
+    mlieBracket_add_right hY hY', mlieBracket_add_left hY hY']
+  simp only [add_apply, map_add, inner_add_left, inner_add_right]
+  ring
+
+/-- The Leibniz rule for the Koszul expression in its second argument: replacing `Y` by `f • Y`
+multiplies the expression by `f x` and adds `2 (df X) ⟪Y, Z⟫`. This is the identity behind the
+Leibniz axiom of the connection built from the Koszul formula. -/
+theorem koszul_smul_second (hf : MDiffAt f x) (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+    (hZ : MDiffAt (T% Z) x) :
+    koszul I X (f • Y) Z x =
+      f x * koszul I X Y Z x + 2 * d% f x (X x) * inner ℝ (Y x) (Z x) := by
+  have e₁ : (fun y ↦ inner ℝ ((f • Y) y) (Z y)) = fun y ↦ f y * inner ℝ (Y y) (Z y) :=
+    funext fun _ ↦ real_inner_smul_left ..
+  have e₂ : (fun y ↦ inner ℝ (X y) ((f • Y) y)) = fun y ↦ f y * inner ℝ (X y) (Y y) :=
+    funext fun _ ↦ real_inner_smul_right ..
+  have e₃ : (f • Y) x = f x • Y x := rfl
+  rw [koszul, koszul, e₁, e₂, e₃, mvfderiv_fun_mul hf (mdifferentiableAt_inner hY hZ),
+    mvfderiv_fun_mul hf (mdifferentiableAt_inner hX hY),
+    mlieBracket_smul_right hf hY, mlieBracket_smul_left (W := Z) hf hY]
+  simp only [add_apply, smul_apply, smul_eq_mul, map_smul, inner_add_left, neg_smul,
+    inner_neg_left, real_inner_smul_left, real_inner_smul_right]
+  rw [real_inner_comm (Y x) (X x)]
+  ring
+
+/-- The Koszul expression is additive in its first argument. -/
+theorem koszul_add_first (hX : MDiffAt (T% X) x) (hX' : MDiffAt (T% X') x)
+    (hY : MDiffAt (T% Y) x) (hZ : MDiffAt (T% Z) x) :
+    koszul I (X + X') Y Z x = koszul I X Y Z x + koszul I X' Y Z x := by
+  have hsum := koszul_add_second (I := I) (X := Y) (Y := X) (Y' := X') (Z := Z)
+    hY hX hX' hZ
+  have hswap := koszul_sub_koszul_swap_first_two
+    (I := I) (X := X + X') (Y := Y) (Z := Z) (x := x)
+  have hswapX := koszul_sub_koszul_swap_first_two
+    (I := I) (X := X) (Y := Y) (Z := Z) (x := x)
+  have hswapX' := koszul_sub_koszul_swap_first_two
+    (I := I) (X := X') (Y := Y) (Z := Z) (x := x)
+  rw [mlieBracket_add_left hX hX', inner_add_left] at hswap
+  linarith
+
+/-- The Koszul expression is tensorial in its first argument: replacing `X` by `f • X` multiplies
+it by `f x`. This follows from the second-slot Leibniz rule and the swap identity. -/
+theorem koszul_smul_first (hf : MDiffAt f x) (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x)
+    (hZ : MDiffAt (T% Z) x) : koszul I (f • X) Y Z x = f x * koszul I X Y Z x := by
+  have hsmul := koszul_smul_second (I := I) (X := Y) (Y := X) (Z := Z) hf hY hX hZ
+  have hswap := koszul_sub_koszul_swap_first_two
+    (I := I) (X := f • X) (Y := Y) (Z := Z) (x := x)
+  have hswapX := koszul_sub_koszul_swap_first_two
+    (I := I) (X := X) (Y := Y) (Z := Z) (x := x)
+  rw [mlieBracket_smul_left hf hX] at hswap
+  simp only [inner_add_left, neg_smul, inner_neg_left, real_inner_smul_left] at hswap
+  linear_combination hswap + hsmul - f x * hswapX
+
+/-- The Koszul expression is tensorial in its first argument. Together with
+`TauCeti.Manifold.tensorialAt_koszul_third` this presents it as a continuous bilinear form on the
+tangent fibre, which is the shape in which the Levi-Civita connection gets built. -/
+theorem tensorialAt_koszul_first (hY : MDiffAt (T% Y) x) (hZ : MDiffAt (T% Z) x) :
+    TensorialAt I E (fun X : Π y : M, TangentSpace I y ↦ koszul I X Y Z x) x where
+  smul hf hX := by simpa using koszul_smul_first hf hX hY hZ
+  add hX hX' := koszul_add_first hX hX' hY hZ
+
 /-- The Koszul expression is tensorial in its third argument: replacing `Z` by `f • Z` multiplies
 it by `f x`, and it is additive in `Z`. Together with
 `CovariantDerivative.isLeviCivita_iff` this is what turns the Koszul formula from a
 characterisation of the Levi-Civita connection into a construction of it. -/
-theorem tensorialAt_koszul (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x) :
+theorem tensorialAt_koszul_third (hX : MDiffAt (T% X) x) (hY : MDiffAt (T% Y) x) :
     TensorialAt I E (fun Z : Π y : M, TangentSpace I y ↦ koszul I X Y Z x) x where
   smul {f Z} hf hZ := by
     have e₁ : (fun y ↦ inner ℝ (Y y) ((f • Z) y)) = fun y ↦ f y * inner ℝ (Y y) (Z y) :=
@@ -292,11 +394,8 @@ theorem isLeviCivita_iff :
 section that is differentiable at the point under consideration. -/
 theorem IsLeviCivita.unique (h : IsLeviCivita cov) (h' : IsLeviCivita cov')
     (hY : MDiffAt (T% Y) x) : cov Y x = cov' Y x := by
-  refine VectorBundle.injective_eval_mdifferentiableAt_sec I E (fun x : M ↦ TangentSpace I x)
-    (TangentSpace I x) x ?_
-  ext X hX
-  refine TauCeti.eq_of_forall_inner_section_eq (I := I) (V := fun x : M ↦ TangentSpace I x) E
-    fun Z hZ ↦ ?_
+  refine TauCeti.continuousLinearMap_ext_of_forall_inner_section_eq (I := I)
+    (V := fun x : M ↦ TangentSpace I x) E E fun _ hX _ hZ ↦ ?_
   have h1 := h.two_inner_eq_koszul hX hY hZ
   have h2 := h'.two_inner_eq_koszul hX hY hZ
   linarith
