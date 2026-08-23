@@ -84,6 +84,19 @@ This supplies an abstract prerequisite for milestone `L1` of
 available over a general Kostant datum, so they can be composed without the pinned ambient group
 owned by `L0`.
 
+No carrier is introduced here. The elementary group and both of its endomorphisms are already on
+`main`, and they belong to Layer 9, "pinned Chevalley--Demazure group schemes over `ℤ`", of
+`TauCetiRoadmap/ReductiveGroups/README.md`, as the module documentation of the surrounding Kostant
+files records. That layer asks for the Chevalley--Demazure construction via a Chevalley basis and
+the Kostant `ℤ`-form of the enveloping algebra, for its root subgroup maps, for points functorial
+enough that a field endomorphism induces an endomorphism of the point group, with the `q`-power
+Frobenius named as the first case a consumer asks for, and for the pinned isomorphism theorem that
+turns a diagram automorphism into a named group automorphism. The CFSGStatement README lists
+Layer 9 among the two bodies of work owned by other roadmaps that `L0` rests on, to be claimed in
+the roadmap owning them because `L0` consumes rather than restates them. Layer 9 therefore runs
+ahead of `L0` rather than behind it, and composing two of its endomorphisms uses nothing `L0`
+supplies.
+
 The route to that ambient point group is already explicit in the repository. The same represented
 root subgroups define `kostantGeneratedGroupScheme`, whose point group is an input to `L0`, and
 `map_kostantElementarySubgroup_le_generatedPoints` embeds the elementary subgroup into those
