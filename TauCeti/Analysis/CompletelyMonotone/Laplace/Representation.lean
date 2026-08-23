@@ -29,8 +29,9 @@ on `[0, ∞)`, and its possibly infinite-measure counterpart on `(0, ∞)`.
   API and the bridge `TauCeti.laplaceTransform_eq_mgf` to Mathlib's moment-generating function.
 * `TauCeti.RepresentsLaplace`: the predicate that a finite measure represents a function by its
   Laplace transform on `[0, ∞)`, with `congr`/`add`/`smul`/`unique` API.
-* `TauCeti.representsLaplace_kernel`: each finite fibre of a kernel into `ℝ≥0` is represented by
-  its fibrewise Laplace transform `TauCeti.kernelLaplaceTransform`.
+* `TauCeti.representsLaplace_laplaceTransformENN`: every finite measure on `ℝ≥0` is represented
+  by its extended-real Laplace transform, after taking real values; conversely,
+  `TauCeti.RepresentsLaplace.laplaceTransformENN_eq` recovers that extended-real transform.
 * `TauCeti.RepresentsLaplaceOnIoi`: the corresponding predicate for a possibly infinite measure
   on `(0, ∞)`, with its basic API and the easy direction of the representation theorem.
 * `TauCeti.isContinuousCompletelyMonotoneOnIoi_laplaceTransform`,
@@ -509,32 +510,35 @@ protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
 
 end RepresentsLaplace
 
-/-! ## The fibres of a kernel and their fibrewise Laplace transform -/
+/-! ## The real and extended-real Laplace transforms -/
 
-section Kernel
-
-variable {V : Type*} [MeasurableSpace V]
-
-/-- The real-valued fibrewise Laplace transform of a finite fibre is its Laplace transform, in
-the sense of `TauCeti.laplaceTransform`. -/
-theorem toReal_kernelLaplaceTransform (κ : Kernel V ℝ≥0) (t : ℝ≥0) (q : V)
-    [IsFiniteMeasure (κ q)] :
-    (kernelLaplaceTransform κ t q).toReal = laplaceTransform (κ q) (t : ℝ) := by
-  have h := ofReal_integral_eq_lintegral_ofReal (integrable_exp_neg_mul (κ q) t.coe_nonneg)
+/-- The real value of the extended-real Laplace transform of a finite measure is its usual
+Laplace transform. -/
+theorem toReal_laplaceTransformENN (μ : Measure ℝ≥0) (t : ℝ≥0) [IsFiniteMeasure μ] :
+    (laplaceTransformENN μ t).toReal = laplaceTransform μ (t : ℝ) := by
+  have h := ofReal_integral_eq_lintegral_ofReal (integrable_exp_neg_mul μ t.coe_nonneg)
     (.of_forall fun p => (Real.exp_pos _).le)
-  rw [laplaceTransform_apply, kernelLaplaceTransform_apply]
+  rw [laplaceTransform_apply, laplaceTransformENN_apply]
   simp_rw [neg_mul]
   rw [← h, ENNReal.toReal_ofReal (integral_nonneg fun p => (Real.exp_pos _).le)]
 
-/-- **Each finite fibre of a kernel is Laplace-represented by its fibrewise Laplace transform.**
-This is the shape in which a Bernstein argument delivers a kernel prescribed by its fibrewise
-Laplace transforms. -/
-theorem representsLaplace_kernel (κ : Kernel V ℝ≥0) (q : V) [IsFiniteMeasure (κ q)] :
-    RepresentsLaplace (κ q) fun t : ℝ => (kernelLaplaceTransform κ t.toNNReal q).toReal := by
+/-- **A finite measure is represented by its extended-real Laplace transform.** -/
+theorem representsLaplace_laplaceTransformENN (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
+    RepresentsLaplace μ fun t : ℝ => (laplaceTransformENN μ t.toNNReal).toReal := by
   refine representsLaplace_iff.mpr ⟨inferInstance, fun t ht => ?_⟩
-  rw [toReal_kernelLaplaceTransform, Real.coe_toNNReal t ht]
+  rw [toReal_laplaceTransformENN, Real.coe_toNNReal t ht]
 
-end Kernel
+namespace RepresentsLaplace
+
+/-- A representing measure's extended-real Laplace transform is obtained by applying
+`ENNReal.ofReal` to the represented function on `ℝ≥0`. -/
+theorem laplaceTransformENN_eq (h : RepresentsLaplace μ f) (t : ℝ≥0) :
+    laplaceTransformENN μ t = ENNReal.ofReal (f t) := by
+  have := h.isFiniteMeasure
+  rw [h.eq_laplaceTransform t.coe_nonneg, ← toReal_laplaceTransformENN]
+  exact (ENNReal.ofReal_toReal (laplaceTransformENN_ne_top μ t)).symm
+
+end RepresentsLaplace
 
 /-! ## Open-half-line representation predicate -/
 
