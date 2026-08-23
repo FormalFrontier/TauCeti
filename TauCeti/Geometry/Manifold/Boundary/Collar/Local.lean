@@ -28,13 +28,20 @@ boundary, which is what Hirsch's bump-function argument does and what this file 
 * `TauCeti.EuclideanHalfSpace.normalRay`: the inward normal ray `[0, ∞) → EuclideanHalfSpace 1`,
   the parametrization by which the one-dimensional half-space model is a half-line.
 * `TauCeti.EuclideanHalfSpace.normalIio`: the initial segment `[0, ε)` of the one-dimensional
-  half-space model, cut out by the normal coordinate.
+  half-space model, cut out by the normal coordinate, and
+  `TauCeti.EuclideanHalfSpace.normalIioOpens`: the same segment as an open subspace.
 * `TauCeti.IsProductCollarChart`: a collar chart whose target is a product box `V × [0, ε)`, is
   `C^k` in both directions, and cuts out the boundary as the zero slice of its normal coordinate.
 * `TauCeti.EuclideanHalfSpace.homeomorphNormalIio`: that segment, read by its normal coordinate
   as the real interval `[0, ε)`.
 * `TauCeti.IsProductCollarChart.homeomorphProd`: the local collar itself, a homeomorphism of the
   source of a product collar chart onto (its part of) the boundary times `[0, ε)`.
+* `TauCeti.IsProductCollarChart.sourceOpens` and
+  `TauCeti.IsProductCollarChart.sourceBoundaryOpens`: the source of a product collar chart and its
+  boundary part, as open subspaces of the ambient manifold and of the canonical boundary manifold.
+* `TauCeti.IsProductCollarChart.homeomorphProdOpens`: the local collar with all three of those
+  factors read as open subspaces. This is the packaging the smooth local collar of
+  `Boundary.Collar.Diffeomorph` is built on.
 
 ## Main results
 
@@ -60,7 +67,10 @@ heights anyway.
 target `(U ∩ ∂M) × [0, ε)` is a product of a piece of the boundary manifold of
 `Boundary.Charts` with an interval, and identifying that manifold structure with the one the
 chart transports is a separate step. What is smooth here is the chart itself, through
-`IsProductCollarChart.contMDiffOn` and `IsProductCollarChart.contMDiffOn_symm`.
+`IsProductCollarChart.contMDiffOn` and `IsProductCollarChart.contMDiffOn_symm`. That
+identification is carried out downstream in `Boundary.Collar.Diffeomorph`, where
+`TauCeti.IsProductCollarChart.diffeomorphProd` upgrades `homeomorphProdOpens` to a `C^k`
+diffeomorphism.
 
 ## References
 
@@ -147,16 +157,6 @@ def normalIioOpens (ε : ℝ) : TopologicalSpace.Opens (EuclideanHalfSpace 1) :=
 @[simp]
 theorem mem_normalIioOpens {ε : ℝ} {t : EuclideanHalfSpace 1} :
     t ∈ normalIioOpens ε ↔ t.1 0 < ε := mem_normalIio
-
-/-- The initial-segment subtype is canonically homeomorphic to the same set regarded as an open
-subspace. -/
-def homeomorphNormalIioOpens (ε : ℝ) : ↥(normalIio ε) ≃ₜ normalIioOpens ε where
-  toFun t := ⟨t, mem_normalIioOpens.2 (mem_normalIio.1 t.2)⟩
-  invFun t := ⟨t, mem_normalIio.2 (mem_normalIioOpens.1 t.2)⟩
-  left_inv t := Subtype.ext (rfl)
-  right_inv t := Subtype.ext (rfl)
-  continuous_toFun := by fun_prop
-  continuous_invFun := by fun_prop
 
 /-- An initial segment of positive height contains the origin.
 
@@ -337,15 +337,6 @@ def homeomorphProd (h : IsProductCollarChart k φ V ε) :
       (Homeomorph.Set.prod V (EuclideanHalfSpace.normalIio ε))).trans
     (h.homeomorphBase.symm.prodCongr (Homeomorph.refl _))
 
-private def sourceHomeomorphOpens (h : IsProductCollarChart k φ V ε) :
-    ↥φ.source ≃ₜ h.sourceOpens where
-  toFun x := ⟨x, h.mem_sourceOpens.2 x.2⟩
-  invFun x := ⟨x, h.mem_sourceOpens.1 x.2⟩
-  left_inv x := Subtype.ext (rfl)
-  right_inv x := Subtype.ext (rfl)
-  continuous_toFun := by fun_prop
-  continuous_invFun := by fun_prop
-
 private def sourceInterHomeomorphSourceBoundaryOpens (h : IsProductCollarChart k φ V ε) :
     ↥(φ.source ∩ (𝓡∂ (n + 1)).boundary M) ≃ₜ h.sourceBoundaryOpens where
   toFun x := ⟨⟨x, x.2.2⟩, h.mem_sourceBoundaryOpens.2 x.2.1⟩
@@ -359,10 +350,8 @@ private def sourceInterHomeomorphSourceBoundaryOpens (h : IsProductCollarChart k
 subspaces. Its underlying map is `homeomorphProd`; only the subtype packaging changes. -/
 def homeomorphProdOpens (h : IsProductCollarChart k φ V ε) :
     h.sourceOpens ≃ₜ h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε :=
-  h.sourceHomeomorphOpens.symm.trans <|
-    h.homeomorphProd.trans <|
-      h.sourceInterHomeomorphSourceBoundaryOpens.prodCongr
-        (EuclideanHalfSpace.homeomorphNormalIioOpens ε)
+  h.homeomorphProd.trans <|
+    h.sourceInterHomeomorphSourceBoundaryOpens.prodCongr (Homeomorph.refl _)
 
 /-- The boundary component of the open-subspace local collar agrees with that of
 `homeomorphProd`. -/

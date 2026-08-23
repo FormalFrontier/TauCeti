@@ -11,14 +11,16 @@ public import TauCeti.Geometry.Manifold.Boundary.Collar.Local
 # Smooth local collars of a manifold with boundary
 
 `Boundary.Collar.Local` shrinks collar coordinates around a boundary point to a product box and
-extracts a homeomorphism with a product of the boundary and a half-open interval. This file
-constructs a smooth product decomposition for the canonical manifold structure on the boundary.
+splits the source of the resulting chart as a product, `IsProductCollarChart.homeomorphProdOpens`,
+whose three factors — the source, its part of the boundary, and the normal interval — are read as
+open subspaces. That splitting is only a homeomorphism. This file constructs the corresponding
+smooth product decomposition for the canonical manifold structure on the boundary.
 
 For a product collar chart `φ`, the diffeomorphism
 `TauCeti.IsProductCollarChart.diffeomorphProd` sends a point to its boundary retraction and normal
-coordinate. Its underlying equivalence is obtained from
-`TauCeti.IsProductCollarChart.homeomorphProd`, after identifying the boundary factor with an open
-subspace of the canonical boundary manifold. Its inverse combines a boundary point and a normal
+coordinate. Its underlying equivalence is the one of
+`TauCeti.IsProductCollarChart.homeomorphProdOpens`, so no topological content is reproved here;
+what is new is that both directions are `C^k`. Its inverse combines a boundary point and a normal
 coordinate and reads the resulting pair back through `φ`.
 
 This is the smooth local-product step in the collar-neighbourhood target of Layer 1 of the
@@ -38,9 +40,8 @@ diffeomorphisms along the whole boundary.
 * `TauCeti.IsProductCollarChart.map_diffeomorphProd_symm`: the inverse coordinate formula.
 * `TauCeti.IsProductCollarChart.diffeomorphProd_apply_of_mem_boundary`: the local collar fixes the
   boundary and gives it normal coordinate zero.
-* `TauCeti.IsProductCollarChart.coe_diffeomorphProd_fst_eq_homeomorphProd_fst` and
-  `TauCeti.IsProductCollarChart.coe_diffeomorphProd_snd_eq_homeomorphProd_snd`: the smooth and
-  topological local collars have the same underlying map.
+* `TauCeti.IsProductCollarChart.coe_diffeomorphProd`: the smooth local collar has the same
+  underlying map as the topological one, so all of the latter's coordinate formulas transfer.
 
 ## References
 
@@ -66,60 +67,38 @@ namespace IsProductCollarChart
 variable {φ : OpenPartialHomeomorph M (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1)}
   {V : Set (EuclideanSpace ℝ (Fin n))} {ε : ℝ}
 
-private theorem source_mem (h : IsProductCollarChart k φ V ε) (y : h.sourceOpens) :
-    (y : M) ∈ φ.source :=
-  h.mem_sourceOpens.1 y.2
+private theorem contMDiffAt_chart (h : IsProductCollarChart k φ V ε) {y : M} (hy : y ∈ φ.source) :
+    ContMDiffAt (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k φ y :=
+  (h.contMDiffOn y hy).contMDiffAt (φ.open_source.mem_nhds hy)
 
-private theorem sourceSubtype_mem
-    (h : IsProductCollarChart k φ V ε) (y : h.sourceBoundaryOpens) : (y.1 : M) ∈ φ.source :=
-  h.mem_sourceBoundaryOpens.1 y.2
+private theorem contMDiffAt_chart_symm (h : IsProductCollarChart k φ V ε)
+    {p : EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1} (hp : p ∈ φ.target) :
+    ContMDiffAt ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k φ.symm p :=
+  (h.contMDiffOn_symm p hp).contMDiffAt (φ.open_target.mem_nhds hp)
 
-private theorem normalIio_mem (t : EuclideanHalfSpace.normalIioOpens ε) :
-    (t : EuclideanHalfSpace 1) ∈ EuclideanHalfSpace.normalIio ε :=
-  EuclideanHalfSpace.mem_normalIio.2 (EuclideanHalfSpace.mem_normalIioOpens.1 t.2)
+private theorem contMDiff_coe_chart (h : IsProductCollarChart k φ V ε) :
+    ContMDiff (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k (fun y : h.sourceOpens ↦ φ y) := fun y ↦
+  contMDiffAt_subtype_iff.2 (h.contMDiffAt_chart (h.mem_sourceOpens.1 y.2))
 
-private def prodEquiv (h : IsProductCollarChart k φ V ε) :
-    h.sourceOpens ≃ h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε :=
-  h.homeomorphProdOpens.toEquiv
-
-private theorem coe_prodEquiv_fst (h : IsProductCollarChart k φ V ε)
+/-- The boundary component of the local collar, read in the ambient manifold, is the point
+obtained by setting the normal coordinate to zero. -/
+private theorem coe_homeomorphProdOpens_fst (h : IsProductCollarChart k φ V ε)
     (y : h.sourceOpens) :
-    (((h.prodEquiv y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
+    (((h.homeomorphProdOpens y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
       φ.symm ((φ y).1, (0 : EuclideanHalfSpace 1)) := by
   rw [← h.map_homeomorphProdOpens_fst y]
-  exact (φ.left_inv
-    (h.mem_sourceBoundaryOpens.1 (h.prodEquiv y).1.2)).symm
+  exact (φ.left_inv (h.mem_sourceBoundaryOpens.1 (h.homeomorphProdOpens y).1.2)).symm
 
-private theorem coe_prodEquiv_snd (h : IsProductCollarChart k φ V ε)
-    (y : h.sourceOpens) :
-    ((h.prodEquiv y).2 : EuclideanHalfSpace 1) = (φ y).2 :=
-  h.coe_homeomorphProdOpens_snd y
-
-private theorem map_prodEquiv_fst (h : IsProductCollarChart k φ V ε)
-    (y : h.sourceOpens) :
-    φ (((h.prodEquiv y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
-      ((φ y).1, (0 : EuclideanHalfSpace 1)) := by
-  exact h.map_homeomorphProdOpens_fst y
-
-private theorem coe_prodEquiv_symm (h : IsProductCollarChart k φ V ε)
+/-- The inverse local collar reads a boundary point and a normal coordinate back through the
+collar chart. -/
+private theorem coe_homeomorphProdOpens_symm (h : IsProductCollarChart k φ V ε)
     (p : h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε) :
-    (h.prodEquiv.symm p : M) =
+    (h.homeomorphProdOpens.symm p : M) =
       φ.symm ((φ p.1.1).1, (p.2 : EuclideanHalfSpace 1)) := by
-  let y := h.prodEquiv.symm p
-  have hp : h.prodEquiv y = p := h.prodEquiv.apply_symm_apply p
-  have hfirst :
-      (((h.prodEquiv y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) = (p.1.1 : M) :=
-    congrArg (fun q ↦ (((q.1 : ↥((𝓡∂ (n + 1)).boundary M)) : M))) hp
-  have hfst : (φ p.1.1).1 = (φ y).1 := by
-    have hmap := congrArg Prod.fst (h.map_prodEquiv_fst y)
-    rwa [hfirst] at hmap
-  have hsnd : (φ y).2 = (p.2 : EuclideanHalfSpace 1) :=
-    (h.coe_prodEquiv_snd y).symm.trans
-      (congrArg (fun q ↦ (q.2 : EuclideanHalfSpace 1)) hp)
-  calc
-    (h.prodEquiv.symm p : M) = φ.symm (φ y) := (φ.left_inv (source_mem h y)).symm
-    _ = φ.symm ((φ p.1.1).1, (p.2 : EuclideanHalfSpace 1)) :=
-      congrArg φ.symm (Prod.ext hfst.symm hsnd)
+  obtain ⟨y, rfl⟩ := h.homeomorphProdOpens.surjective p
+  rw [Homeomorph.symm_apply_apply, h.map_homeomorphProdOpens_fst y,
+    h.coe_homeomorphProdOpens_snd y]
+  exact (φ.left_inv (h.mem_sourceOpens.1 y.2)).symm
 
 /-- The boundary retraction of a product collar chart is `C^k`: it sets the normal coordinate to
 zero and reads the result back through the chart. -/
@@ -127,80 +106,53 @@ theorem contMDiff_boundaryRetract (h : IsProductCollarChart k φ V ε) :
     ContMDiff (𝓡∂ (n + 1)) (𝓡∂ (n + 1)) k
       (fun y : h.sourceOpens ↦
         φ.symm ((φ y).1, (0 : EuclideanHalfSpace 1))) := by
-  have hφ : ContMDiff (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k
-      (fun y : h.sourceOpens ↦ φ y) := by
-    intro y
-    rw [contMDiffAt_subtype_iff]
-    exact (h.contMDiffOn y (source_mem h y)).contMDiffAt
-      (φ.open_source.mem_nhds (source_mem h y))
   have hzero : ContMDiff (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k
       (fun y : h.sourceOpens ↦
         ((φ y).1, (0 : EuclideanHalfSpace 1))) :=
-    hφ.fst.prodMk contMDiff_const
-  intro y
-  exact ((h.contMDiffOn_symm _ (h.fst_zero_mem_target (source_mem h y))).contMDiffAt
-    (φ.open_target.mem_nhds (h.fst_zero_mem_target (source_mem h y)))).comp y hzero.contMDiffAt
+    h.contMDiff_coe_chart.fst.prodMk contMDiff_const
+  exact fun y ↦ (h.contMDiffAt_chart_symm
+    (h.fst_zero_mem_target (h.mem_sourceOpens.1 y.2))).comp y hzero.contMDiffAt
 
 variable [IsManifold (𝓡∂ (n + 1)) k M]
 
-private theorem contMDiff_prodEquiv (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0) :
+private theorem contMDiff_homeomorphProdOpens (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0) :
     let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
       IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
-    ContMDiff (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k h.prodEquiv := by
+    ContMDiff (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k h.homeomorphProdOpens := by
   let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
     IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
   let _ : IsManifold 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) k
       ↥((𝓡∂ (n + 1)).boundary M) := isManifold_boundary M hk
+  have hretractVal : ContMDiff (𝓡∂ (n + 1)) (𝓡∂ (n + 1)) k
+      (fun y : h.sourceOpens ↦
+        (((h.homeomorphProdOpens y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M)) := by
+    rw [funext h.coe_homeomorphProdOpens_fst]
+    exact h.contMDiff_boundaryRetract
   have hretractBoundary : ContMDiff (𝓡∂ (n + 1))
       𝓘(ℝ, EuclideanSpace ℝ (Fin n)) k
       (fun y : h.sourceOpens ↦
-        ((h.prodEquiv y).1 : ↥((𝓡∂ (n + 1)).boundary M))) := by
-    apply (ContMDiff.iff_comp_isImmersion
+        ((h.homeomorphProdOpens y).1 : ↥((𝓡∂ (n + 1)).boundary M))) :=
+    (ContMDiff.iff_comp_isImmersion
       (isSmoothEmbedding_subtypeVal_boundary (n := n) (k := k) M hk).isImmersion).2
-    refine ⟨?_, ?_⟩
-    · apply continuous_induced_rng.2
-      convert h.contMDiff_boundaryRetract.continuous using 1
-      funext y
-      exact h.coe_prodEquiv_fst y
-    · convert h.contMDiff_boundaryRetract using 1
-      funext y
-      exact h.coe_prodEquiv_fst y
+      ⟨continuous_induced_rng.2 hretractVal.continuous, hretractVal⟩
+  have hnormalVal : ContMDiff (𝓡∂ (n + 1)) (𝓡∂ 1) k
+      (fun y : h.sourceOpens ↦ ((h.homeomorphProdOpens y).2 : EuclideanHalfSpace 1)) := by
+    rw [funext h.coe_homeomorphProdOpens_snd]
+    exact h.contMDiff_coe_chart.snd
   have hretract : ContMDiff (𝓡∂ (n + 1))
       𝓘(ℝ, EuclideanSpace ℝ (Fin n)) k
-      (fun y : h.sourceOpens ↦ (h.prodEquiv y).1) := by
-    intro y
-    have hcomp : ContMDiffAt (𝓡∂ (n + 1))
-        𝓘(ℝ, EuclideanSpace ℝ (Fin n)) k
-        (Subtype.val ∘ fun y : h.sourceOpens ↦ (h.prodEquiv y).1) y := by
-      change ContMDiffAt (𝓡∂ (n + 1)) 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) k
-        (fun y : h.sourceOpens ↦
-          ((h.prodEquiv y).1 : ↥((𝓡∂ (n + 1)).boundary M))) y
-      exact hretractBoundary y
-    exact (ChartedSpace.liftPropWithinAt_subtypeVal_comp_iff _ _ _).1 hcomp
-  have hφ : ContMDiff (𝓡∂ (n + 1)) ((𝓡 n).prod (𝓡∂ 1)) k
-      (fun y : h.sourceOpens ↦ φ y) := by
-    intro y
-    rw [contMDiffAt_subtype_iff]
-    exact (h.contMDiffOn y (source_mem h y)).contMDiffAt
-      (φ.open_source.mem_nhds (source_mem h y))
+      (fun y : h.sourceOpens ↦ (h.homeomorphProdOpens y).1) := fun y ↦
+    (ChartedSpace.liftPropWithinAt_subtypeVal_comp_iff _ _ _).1 (hretractBoundary y)
   have hnormal : ContMDiff (𝓡∂ (n + 1)) (𝓡∂ 1) k
-      (fun y : h.sourceOpens ↦ (h.prodEquiv y).2) := by
-    intro y
-    have hcomp : ContMDiffAt (𝓡∂ (n + 1)) (𝓡∂ 1) k
-        (Subtype.val ∘ fun y : h.sourceOpens ↦ (h.prodEquiv y).2) y := by
-      change ContMDiffAt (𝓡∂ (n + 1)) (𝓡∂ 1) k
-        (fun y : h.sourceOpens ↦
-          ((h.prodEquiv y).2 : EuclideanHalfSpace 1)) y
-      convert hφ.snd y using 1
-      funext z
-      exact h.coe_prodEquiv_snd z
-    exact (ChartedSpace.liftPropWithinAt_subtypeVal_comp_iff _ _ _).1 hcomp
+      (fun y : h.sourceOpens ↦ (h.homeomorphProdOpens y).2) := fun y ↦
+    (ChartedSpace.liftPropWithinAt_subtypeVal_comp_iff _ _ _).1 (hnormalVal y)
   exact hretract.prodMk hnormal
 
-private theorem contMDiff_prodEquiv_symm (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0) :
+private theorem contMDiff_homeomorphProdOpens_symm (h : IsProductCollarChart k φ V ε)
+    (hk : k ≠ 0) :
     let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
       IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
-    ContMDiff ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k h.prodEquiv.symm := by
+    ContMDiff ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k h.homeomorphProdOpens.symm := by
   let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
     IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
   let _ : IsManifold 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) k
@@ -210,41 +162,25 @@ private theorem contMDiff_prodEquiv_symm (h : IsProductCollarChart k φ V ε) (h
     (isSmoothEmbedding_subtypeVal_boundary (n := n) (k := k) M hk).contMDiff.comp
       (contMDiff_subtype_val.comp contMDiff_fst)
   have hφboundary : ContMDiff ((𝓡 n).prod (𝓡∂ 1)) ((𝓡 n).prod (𝓡∂ 1)) k
-      (fun p : h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε ↦ φ p.1.1) := by
-    intro p
-    exact ((h.contMDiffOn p.1.1 (sourceSubtype_mem h p.1)).contMDiffAt
-      (φ.open_source.mem_nhds (sourceSubtype_mem h p.1))).comp p hboundaryVal.contMDiffAt
-  have hnormalVal : ContMDiff ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ 1) k
-      (fun p : h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε ↦
-        (p.2 : EuclideanHalfSpace 1)) :=
-    contMDiff_subtype_val.comp contMDiff_snd
+      (fun p : h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε ↦ φ p.1.1) := fun p ↦
+    (h.contMDiffAt_chart (h.mem_sourceBoundaryOpens.1 p.1.2)).comp p hboundaryVal.contMDiffAt
   have hpair : ContMDiff ((𝓡 n).prod (𝓡∂ 1)) ((𝓡 n).prod (𝓡∂ 1)) k
       (fun p : h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε ↦
         ((φ p.1.1).1, (p.2 : EuclideanHalfSpace 1))) :=
-    hφboundary.fst.prodMk hnormalVal
-  have hassembleAmbient : ContMDiff ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k
+    hφboundary.fst.prodMk (contMDiff_subtype_val.comp contMDiff_snd)
+  have hassembleVal : ContMDiff ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k
       (fun p : h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε ↦
-        φ.symm ((φ p.1.1).1, (p.2 : EuclideanHalfSpace 1))) := by
-    intro p
-    exact ((h.contMDiffOn_symm _
-      (h.mk_mem_target (sourceSubtype_mem h p.1) (normalIio_mem p.2))).contMDiffAt
-      (φ.open_target.mem_nhds
-        (h.mk_mem_target (sourceSubtype_mem h p.1) (normalIio_mem p.2)))).comp p hpair.contMDiffAt
-  change ContMDiff ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k h.prodEquiv.symm
-  intro p
-  have hcomp : ContMDiffAt ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k
-      (Subtype.val ∘ h.prodEquiv.symm) p := by
-    change ContMDiffAt ((𝓡 n).prod (𝓡∂ 1)) (𝓡∂ (n + 1)) k
-      (fun p ↦ (h.prodEquiv.symm p : M)) p
-    convert hassembleAmbient p using 1
-    funext q
-    exact h.coe_prodEquiv_symm q
-  exact (ChartedSpace.liftPropWithinAt_subtypeVal_comp_iff _ _ _).1 hcomp
+        (h.homeomorphProdOpens.symm p : M)) := by
+    rw [funext h.coe_homeomorphProdOpens_symm]
+    exact fun p ↦ (h.contMDiffAt_chart_symm (h.mk_mem_target
+      (h.mem_sourceBoundaryOpens.1 p.1.2)
+      (EuclideanHalfSpace.mem_normalIio.2
+        (EuclideanHalfSpace.mem_normalIioOpens.1 p.2.2)))).comp p hpair.contMDiffAt
+  exact fun p ↦ (ChartedSpace.liftPropWithinAt_subtypeVal_comp_iff _ _ _).1 (hassembleVal p)
 
 /-- A product collar chart gives a `C^k` diffeomorphism from its open source to the product of its
-open boundary part and open normal interval. Its underlying equivalence is the existing
-`IsProductCollarChart.homeomorphProd`, transported across the canonical identification of the
-boundary factor. -/
+open boundary part and open normal interval. Its underlying equivalence is the one of the
+topological local collar `IsProductCollarChart.homeomorphProdOpens`. -/
 def diffeomorphProd (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0) :
     let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
       IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
@@ -252,29 +188,17 @@ def diffeomorphProd (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0) :
       h.sourceOpens (h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε) k :=
   let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
     IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
-  { toEquiv := h.prodEquiv
-    contMDiff_toFun := h.contMDiff_prodEquiv hk
-    contMDiff_invFun := h.contMDiff_prodEquiv_symm hk }
+  { toEquiv := h.homeomorphProdOpens.toEquiv
+    contMDiff_toFun := h.contMDiff_homeomorphProdOpens hk
+    contMDiff_invFun := h.contMDiff_homeomorphProdOpens_symm hk }
 
 section Characteristic
 
-/-- The boundary component of the smooth local collar agrees with the boundary component of the
-topological local collar. -/
-theorem coe_diffeomorphProd_fst_eq_homeomorphProd_fst
-    (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0)
-    (y : h.sourceOpens) :
-    (((h.diffeomorphProd hk y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
-      ((h.homeomorphProd ⟨y, h.mem_sourceOpens.1 y.2⟩).1 : M) :=
-  h.coe_homeomorphProdOpens_fst_eq_homeomorphProd_fst y
-
-/-- The normal component of the smooth local collar agrees with the normal component of the
-topological local collar. -/
-theorem coe_diffeomorphProd_snd_eq_homeomorphProd_snd
-    (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0)
-    (y : h.sourceOpens) :
-    ((h.diffeomorphProd hk y).2 : EuclideanHalfSpace 1) =
-      ((h.homeomorphProd ⟨y, h.mem_sourceOpens.1 y.2⟩).2 : EuclideanHalfSpace 1) :=
-  h.coe_homeomorphProdOpens_snd_eq_homeomorphProd_snd y
+/-- **The smooth local collar is the topological one.** Its underlying map is that of
+`IsProductCollarChart.homeomorphProdOpens`, so every coordinate formula proved there transfers. -/
+theorem coe_diffeomorphProd (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0) :
+    ⇑(h.diffeomorphProd hk) = ⇑h.homeomorphProdOpens :=
+  funext fun _ ↦ rfl
 
 /-- The boundary component of the smooth local collar is obtained by setting the normal
 coordinate to zero and reading back through the collar chart. -/
@@ -282,14 +206,14 @@ theorem coe_diffeomorphProd_fst (h : IsProductCollarChart k φ V ε) (hk : k ≠
     (y : h.sourceOpens) :
     (((h.diffeomorphProd hk y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
       φ.symm ((φ y).1, (0 : EuclideanHalfSpace 1)) :=
-  h.coe_prodEquiv_fst y
+  h.coe_homeomorphProdOpens_fst y
 
 /-- The normal component of the smooth local collar is the normal component of the collar chart. -/
 @[simp]
 theorem coe_diffeomorphProd_snd (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0)
     (y : h.sourceOpens) :
     ((h.diffeomorphProd hk y).2 : EuclideanHalfSpace 1) = (φ y).2 :=
-  h.coe_prodEquiv_snd y
+  h.coe_homeomorphProdOpens_snd y
 
 /-- The inverse smooth local collar forms a collar-coordinate pair and reads it back through the
 chart. -/
@@ -299,7 +223,7 @@ theorem coe_diffeomorphProd_symm (h : IsProductCollarChart k φ V ε) (hk : k �
       IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
     ((h.diffeomorphProd hk).symm p : M) =
       φ.symm ((φ p.1.1).1, (p.2 : EuclideanHalfSpace 1)) :=
-  h.coe_prodEquiv_symm p
+  h.coe_homeomorphProdOpens_symm p
 
 /-- In collar coordinates, the boundary retraction keeps the tangential coordinate and sets the
 normal coordinate to zero. -/
@@ -308,7 +232,7 @@ theorem map_diffeomorphProd_fst (h : IsProductCollarChart k φ V ε) (hk : k ≠
     (y : h.sourceOpens) :
     φ (((h.diffeomorphProd hk y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
       ((φ y).1, (0 : EuclideanHalfSpace 1)) :=
-  h.map_prodEquiv_fst y
+  h.map_homeomorphProdOpens_fst y
 
 /-- Applying the collar chart after the inverse smooth local collar recovers the supplied
 tangential and normal coordinates. -/
@@ -320,7 +244,8 @@ theorem map_diffeomorphProd_symm (h : IsProductCollarChart k φ V ε) (hk : k �
     φ ((h.diffeomorphProd hk).symm p : M) =
       ((φ p.1.1).1, (p.2 : EuclideanHalfSpace 1)) := by
   rw [coe_diffeomorphProd_symm]
-  exact φ.right_inv (h.mk_mem_target (sourceSubtype_mem h p.1) (normalIio_mem p.2))
+  exact φ.right_inv (h.mk_mem_target (h.mem_sourceBoundaryOpens.1 p.1.2)
+    (EuclideanHalfSpace.mem_normalIio.2 (EuclideanHalfSpace.mem_normalIioOpens.1 p.2.2)))
 
 /-- On the boundary, the smooth local collar is the identity in the boundary factor and has zero
 normal coordinate. -/
@@ -334,28 +259,12 @@ theorem diffeomorphProd_apply_of_mem_boundary (h : IsProductCollarChart k φ V �
           (EuclideanHalfSpace.mem_normalIio.1
             (EuclideanHalfSpace.zero_mem_normalIio h.height_pos))⟩) := by
   have hyzero : (φ y).2 = 0 :=
-    EuclideanHalfSpace.eq_zero_iff.2 ((h.mem_boundary_iff y (source_mem h y)).1 hy)
-  apply Prod.ext
-  · apply Subtype.ext
-    apply Subtype.ext
-    change (((h.diffeomorphProd hk y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) = (y : M)
-    rw [coe_diffeomorphProd_fst]
-    calc
-      φ.symm ((φ y).1, (0 : EuclideanHalfSpace 1)) = φ.symm (φ y) :=
-        congrArg φ.symm (Prod.ext (rfl) hyzero.symm)
-      _ = y := φ.left_inv (source_mem h y)
-  · apply Subtype.ext
-    rw [coe_diffeomorphProd_snd]
-    exact hyzero
-
-/-- The normal component of the smooth local collar vanishes on the boundary. -/
-theorem coe_diffeomorphProd_snd_of_mem_boundary
-    (h : IsProductCollarChart k φ V ε) (hk : k ≠ 0)
-    (y : h.sourceOpens)
-    (hy : (y : M) ∈ (𝓡∂ (n + 1)).boundary M) :
-    ((h.diffeomorphProd hk y).2 : EuclideanHalfSpace 1) = 0 := by
-  rw [coe_diffeomorphProd_snd]
-  exact EuclideanHalfSpace.eq_zero_iff.2 ((h.mem_boundary_iff y (source_mem h y)).1 hy)
+    EuclideanHalfSpace.eq_zero_iff.2 ((h.mem_boundary_iff y (h.mem_sourceOpens.1 y.2)).1 hy)
+  have hfst : (((h.diffeomorphProd hk y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) = (y : M) := by
+    rw [h.coe_diffeomorphProd_fst hk y, ← hyzero]
+    exact φ.left_inv (h.mem_sourceOpens.1 y.2)
+  exact Prod.ext (Subtype.ext (Subtype.ext hfst))
+    (Subtype.ext ((h.coe_diffeomorphProd_snd hk y).trans hyzero))
 
 end Characteristic
 
