@@ -38,6 +38,10 @@ The indexed component `Representation.conjSubrepIsotypicComponent` is defined in
 
 ## Main results
 
+* `Representation.toSkeleton_fdRepOf_conjSubrep`: translating a constituent inside `ρ` and
+  conjugating the abstract `N`-representation it carries agree on isomorphism classes.
+* `Representation.mem_inertia_fdRepOf_toRepresentation_iff`: a group element lies in the inertia
+  group of a constituent exactly when its translate carries an equivalent `k[N]`-submodule.
 * `Representation.isotypicComponentsEquivQuotientInertia_conjSubrepIsotypicComponent`: under the
   equivalence, the component of the translate by `g` corresponds to the coset of `g`.
 * `Representation.isotypicComponentsEquivQuotientInertia_symm_mk`: the inverse computation.
