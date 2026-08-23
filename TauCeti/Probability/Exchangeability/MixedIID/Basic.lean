@@ -150,14 +150,13 @@ theorem MixedIIDWith.blockLaw_eq_mixture {μ : Measure Ω} {X : ι → Ω → α
   h.2 m k hk
 
 /-- **The mixture identity already forces coordinatewise a.e. measurability**, with no hypothesis on
-`μ` and none on the mixing representative beyond the one `MixedIIDWith` carries.
-
-A one-coordinate block law is a mixture of probability measures, so it carries the whole mass of
-`μ`, whereas `Measure.map` along a function that is not a.e. measurable is `0`.  The zero measure is
-handled separately, since there the conclusion is vacuous rather than mass-driven. -/
+`μ` and none on the mixing representative beyond the one `MixedIIDWith` carries. -/
 theorem MixedIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) (i : ι) :
     AEMeasurable (X i) μ := by
+  -- A one-coordinate block law is a mixture of probability measures, so it carries the whole mass
+  -- of `μ`, whereas `Measure.map` along a function that is not a.e. measurable is `0`.  At the zero
+  -- measure the conclusion is vacuous rather than mass-driven, so that case is separate.
   rcases eq_or_ne μ 0 with rfl | hμ
   · exact aemeasurable_zero_measure
   have hblock := h.blockLaw_eq_mixture (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
