@@ -134,27 +134,33 @@ theorem sumSubtype_injective (h : Pairwise (Function.onFun Disjoint U)) (hn : �
   rw [filter_mem_coe_sumSubtype h, filter_mem_coe_sumSubtype h] at hfilter
   exact Sym.coe_injective (Multiset.map_injective Subtype.val_injective hfilter)
 
-/-- A tuple supported in the union of a pairwise disjoint family, with exactly `m i` of its points
+/-- A tuple supported in the union of a family, with exactly `m i` of its points
 in `U i`, is a concatenation. -/
 theorem exists_sumSubtype_eq [∀ i, DecidablePred (· ∈ U i)]
-    (h : Pairwise (Function.onFun Disjoint U)) (hn : ∑ i, m i = n) {w : Sym α n}
+    (hn : ∑ i, m i = n) {w : Sym α n}
     (hw : ∀ a ∈ w, ∃ i, a ∈ U i)
     (hcard : ∀ i, Multiset.card (Multiset.filter (· ∈ U i) (w : Multiset α)) = m i) :
     ∃ p, sumSubtype U m hn p = w := by
   classical
   set A : ι → Multiset α := fun i => Multiset.filter (· ∈ U i) (w : Multiset α) with hA
-  have hsum : ∑ i, A i = (w : Multiset α) := by
-    refine Multiset.ext.2 fun a => ?_
-    rw [Multiset.count_sum']
-    by_cases haw : a ∈ (w : Multiset α)
-    · obtain ⟨i₀, hi₀⟩ := hw a (_root_.Sym.mem_coe.1 haw)
-      rw [Finset.sum_eq_single i₀ (fun j _ hj => ?_) fun hi => absurd (Finset.mem_univ i₀) hi]
-      · simp [hA, hi₀]
-      · simp [hA, Set.disjoint_right.1 (h hj) hi₀]
-    · have hzero : ∀ i, Multiset.count a (A i) = 0 := fun i => by
-        simp [hA, Multiset.count_filter, Multiset.count_eq_zero.2 haw]
-      simp [hzero, Multiset.count_eq_zero.2 haw]
   have hcardA : ∀ i, Multiset.card (A i) = m i := hcard
+  have hsum : ∑ i, A i = (w : Multiset α) := by
+    symm
+    apply Multiset.eq_of_le_of_card_le
+    · rw [Multiset.le_iff_count]
+      intro a
+      by_cases haw : a ∈ (w : Multiset α)
+      · obtain ⟨i, hi⟩ := hw a (_root_.Sym.mem_coe.1 haw)
+        rw [Multiset.count_sum']
+        calc
+          Multiset.count a (w : Multiset α) = Multiset.count a (A i) := by simp [hA, hi]
+          _ ≤ ∑ j, Multiset.count a (A j) := by
+            rw [← Finset.sum_erase_add Finset.univ _ (Finset.mem_univ i)]
+            exact Nat.le_add_left _ _
+      · simp [Multiset.count_eq_zero.2 haw]
+    · simp only [Multiset.card_sum]
+      rw [Finset.sum_congr rfl fun i _ => hcardA i, hn]
+      exact Nat.le_of_eq w.2.symm
   have hrange : ∀ i, (⟨A i, hcardA i⟩ : Sym α (m i)) ∈
       Set.range (Sym.map (Subtype.val : U i → α)) := fun i =>
     (mem_range_map _).2 fun a ha =>
@@ -191,7 +197,7 @@ theorem mem_range_sumSubtype [∀ i, DecidablePred (· ∈ U i)]
     w ∈ Set.range (sumSubtype U m hn) ↔
       (∀ a ∈ w, ∃ i, a ∈ U i) ∧
         ∀ i, Multiset.card (Multiset.filter (· ∈ U i) (w : Multiset α)) = m i := by
-  refine ⟨?_, fun hw => exists_sumSubtype_eq h hn hw.1 hw.2⟩
+  refine ⟨?_, fun hw => exists_sumSubtype_eq hn hw.1 hw.2⟩
   rintro ⟨p, rfl⟩
   exact ⟨fun a ha => exists_mem_of_mem_sumSubtype ha, card_filter_mem_sumSubtype h hn p⟩
 
