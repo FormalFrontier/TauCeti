@@ -16,9 +16,11 @@ this file iterates that construction over a finite list of pairwise disjoint win
 
 `CircularCapWindow` records the five parameters of one replacement. Applying
 `exciseCrossings` to a pairwise disjoint list has the expected simultaneous description: it is
-the prescribed cap on each window and the original curve off their union. Consequently the
-result remains piecewise `C¹` and closed, and it avoids the crossing centre when the windows
-cover every parameter at which the original curve meets that centre.
+the prescribed cap on each window and the original curve off their union. It remains piecewise
+`C¹` when the windows lie strictly inside the parameter interval and their cap endpoints match
+the original curve, and remains closed when the windows lie strictly inside. Without a
+disjointness assumption, it avoids the crossing centre when nonzero-radius windows cover every
+parameter at which the original curve meets that centre.
 
 This is the finite geometric surgery producing the modified curve in Proposition 2.2. The winding
 number accounting is deliberately separate: `Winding.Number.Partition` supplies finite
@@ -77,6 +79,47 @@ def interval (W : CircularCapWindow) : Set ℝ := Icc W.lower W.upper
 def cap (W : CircularCapWindow) (s : ℂ) : ℝ → ℂ :=
   circleCap s W.radius W.lower W.upper W.startAngle W.endAngle
 
+/-- At `t`, the bundled cap is the point at the corresponding affine interpolation of its
+endpoint angles. -/
+theorem cap_apply (W : CircularCapWindow) (s : ℂ) (t : ℝ) :
+    W.cap s t = circleMap s W.radius
+      (W.startAngle + (W.endAngle - W.startAngle) / (W.upper - W.lower) * (t - W.lower)) := by
+  simpa only [cap] using
+    circleCap_apply s W.radius W.lower W.upper W.startAngle W.endAngle t
+
+/-- The bundled cap starts at its prescribed angle at the lower endpoint. -/
+@[simp]
+theorem cap_left (W : CircularCapWindow) (s : ℂ) :
+    W.cap s W.lower = circleMap s W.radius W.startAngle := by
+  simpa only [cap] using
+    circleCap_left s W.radius W.lower W.upper W.startAngle W.endAngle
+
+/-- The bundled cap ends at its prescribed angle at a distinct upper endpoint. -/
+@[simp]
+theorem cap_right (W : CircularCapWindow) (s : ℂ) (hlu : W.lower ≠ W.upper) :
+    W.cap s W.upper = circleMap s W.radius W.endAngle := by
+  simpa only [cap] using
+    circleCap_right s W.radius hlu W.startAngle W.endAngle
+
+/-- A bundled cap is `C¹` (indeed smooth). -/
+theorem contDiff_cap (W : CircularCapWindow) (s : ℂ) : ContDiff ℝ 1 (W.cap s) := by
+  simpa only [cap] using
+    contDiff_circleCap s W.radius W.lower W.upper W.startAngle W.endAngle
+
+/-- A bundled cap with nonzero signed radius misses its centre. -/
+theorem cap_ne_center (W : CircularCapWindow) {s : ℂ} (hr : W.radius ≠ 0) {t : ℝ} :
+    W.cap s t ≠ s := by
+  simpa only [cap] using (circleCap_ne_center (s := s) (r := W.radius) (l := W.lower)
+    (u := W.upper) (θ := W.startAngle) (θ' := W.endAngle) (t := t) hr)
+
+/-- The winding number of a nondegenerate bundled cap is its angular extent over `2π`. -/
+theorem windingNumber_cap (W : CircularCapWindow) (s : ℂ) (hr : W.radius ≠ 0)
+    (hlu : W.lower ≠ W.upper) :
+    windingNumber (W.cap s) W.lower W.upper s =
+      ((W.endAngle - W.startAngle : ℝ) : ℂ) / (2 * (Real.pi : ℂ)) := by
+  simpa only [cap] using (windingNumber_circleCap (s := s) (r := W.radius) (l := W.lower)
+    (u := W.upper) hr hlu W.startAngle W.endAngle)
+
 /-- Replace one crossing window of `γ` by its prescribed circular cap about `s`. -/
 def excise (W : CircularCapWindow) (γ : ℝ → ℂ) (s : ℂ) : ℝ → ℂ :=
   exciseCrossing γ s W.radius W.lower W.upper W.startAngle W.endAngle
@@ -84,14 +127,14 @@ def excise (W : CircularCapWindow) (γ : ℝ → ℂ) (s : ℂ) : ℝ → ℂ :=
 /-- On its window, a one-window excision is the prescribed cap. -/
 @[simp]
 theorem excise_of_mem (W : CircularCapWindow) {γ : ℝ → ℂ} {s : ℂ} {t : ℝ}
-    (ht : t ∈ W.interval) : W.excise γ s t = W.cap s t :=
-  exciseCrossing_of_mem ht
+    (ht : t ∈ W.interval) : W.excise γ s t = W.cap s t := by
+  simpa only [excise, interval, cap] using (exciseCrossing_of_mem ht)
 
 /-- Off its window, a one-window excision is the original curve. -/
 @[simp]
 theorem excise_of_notMem (W : CircularCapWindow) {γ : ℝ → ℂ} {s : ℂ} {t : ℝ}
-    (ht : t ∉ W.interval) : W.excise γ s t = γ t :=
-  exciseCrossing_of_notMem ht
+    (ht : t ∉ W.interval) : W.excise γ s t = γ t := by
+  simpa only [excise, interval] using (exciseCrossing_of_notMem ht)
 
 end CircularCapWindow
 
@@ -177,9 +220,10 @@ theorem IsPiecewiseC1On.exciseCrossings {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
   | cons W windows ih =>
       rw [List.pairwise_cons] at hpw
       have hW := hinside W List.mem_cons_self
-      have hfirst : IsPiecewiseC1On (W.excise γ s) a b :=
-        hγ.exciseCrossing hW.1 hW.2.1 hW.2.2
-          (hstart W List.mem_cons_self) (hend W List.mem_cons_self)
+      have hfirst : IsPiecewiseC1On (W.excise γ s) a b := by
+        simpa only [CircularCapWindow.excise] using
+          hγ.exciseCrossing hW.1 hW.2.1 hW.2.2
+            (hstart W List.mem_cons_self) (hend W List.mem_cons_self)
       refine ih hfirst hpw.2 (fun V hV => hinside V (List.mem_cons_of_mem W hV)) ?_ ?_
       · intro V hV
         rw [W.excise_of_notMem]
@@ -203,24 +247,30 @@ theorem exciseCrossings_closed {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
     exciseCrossings_apply_of_forall_notMem (fun W hW hmem =>
       (not_le.mpr (hinside W hW).2) hmem.2), hclosed]
 
-/-- If pairwise disjoint open windows cover every parameter where `γ` meets `s`, replacing all
-of them by nonzero-radius caps produces a curve avoiding `s`. -/
+/-- If open windows cover every parameter where `γ` meets `s`, replacing all of them by
+nonzero-radius caps produces a curve avoiding `s`, even when the windows overlap. -/
 theorem exciseCrossings_ne_center {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
     {windows : List CircularCapWindow}
-    (hpw : windows.Pairwise fun W V => Disjoint W.interval V.interval)
     (hr : ∀ W ∈ windows, W.radius ≠ 0)
     (hcover : ∀ t ∈ Icc a b, γ t = s → ∃ W ∈ windows, t ∈ Ioo W.lower W.upper) :
     ∀ t ∈ Icc a b, exciseCrossings γ s windows t ≠ s := by
-  intro t ht
-  by_cases hmem : ∃ W ∈ windows, t ∈ W.interval
-  · obtain ⟨W, hW, htW⟩ := hmem
-    rw [exciseCrossings_eqOn_window hpw hW htW, CircularCapWindow.cap]
-    exact circleCap_ne_center (hr W hW)
-  · rw [exciseCrossings_apply_of_forall_notMem
-      (fun W hW htW => hmem ⟨W, hW, htW⟩)]
-    intro hγt
-    obtain ⟨W, hW, htW⟩ := hcover t ht hγt
-    exact hmem ⟨W, hW, Ioo_subset_Icc_self htW⟩
+  induction windows generalizing γ with
+  | nil =>
+      intro t ht hγt
+      obtain ⟨W, hW, -⟩ := hcover t ht hγt
+      simp at hW
+  | cons W windows ih =>
+      rw [exciseCrossings]
+      apply ih (fun V hV => hr V (List.mem_cons_of_mem W hV))
+      intro t ht hexcise
+      by_cases htW : t ∈ W.interval
+      · rw [W.excise_of_mem htW] at hexcise
+        exact absurd hexcise (W.cap_ne_center (hr W List.mem_cons_self))
+      · rw [W.excise_of_notMem htW] at hexcise
+        obtain ⟨V, hV, htV⟩ := hcover t ht hexcise
+        rcases List.mem_cons.mp hV with rfl | hV
+        · exact absurd (Ioo_subset_Icc_self htV) htW
+        · exact ⟨V, hV, htV⟩
 
 end TauCeti.Contour
 
