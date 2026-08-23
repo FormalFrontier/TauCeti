@@ -6,7 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.AdjoinRoot
-public import TauCeti.NumberTheory.NumberField.IntegralSqrt
+public import Mathlib.NumberTheory.NumberField.Basic
+import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import Mathlib.FieldTheory.KummerPolynomial
 
 /-!
