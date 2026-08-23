@@ -135,35 +135,9 @@ theorem pointsMulEquiv_conjugate_dynamicCocharacter
           (IsScalarTower.toAlgHom R A (LaurentPolynomial A)).toRingHom
           (pointsMulEquiv 2 g) *
         (diagGL (dynamicDiagonalUnits (Cocharacter.genericUnit A)))⁻¹ := by
-  rw [Cocharacter.conjugate_apply, map_mul, map_mul, map_inv,
-    Cocharacter.genericPoint_eq_pointsHom,
-    pointsMulEquiv_pointsHom_dynamicCocharacter, Cocharacter.constPoint_apply,
-    ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
-
-private theorem coe_dynamicDiagonalUnits_genericUnit_inv :
-    ((((diagGL (dynamicDiagonalUnits (Cocharacter.genericUnit A)))⁻¹ :
-        GL (Fin 2) (LaurentPolynomial A))) :
-      Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) =
-      Matrix.diagonal fun i =>
-        ((((dynamicDiagonalUnits (Cocharacter.genericUnit A)) i)⁻¹ :
-          (LaurentPolynomial A)ˣ) : LaurentPolynomial A) := by
-  rw [← map_inv diagGL, diagGL_coe]
-  rfl
-
-private theorem genericUnit_inv_val :
-    (((Cocharacter.genericUnit A)⁻¹ : (LaurentPolynomial A)ˣ) : LaurentPolynomial A) =
-      LaurentPolynomial.T (-1) := by
-  apply (mul_right_inj_of_invertible (LaurentPolynomial.T 1)).mp
-  calc
-    LaurentPolynomial.T 1 *
-          (((Cocharacter.genericUnit A)⁻¹ : (LaurentPolynomial A)ˣ) : LaurentPolynomial A) =
-        (Cocharacter.genericUnit A : LaurentPolynomial A) *
-          (((Cocharacter.genericUnit A)⁻¹ : (LaurentPolynomial A)ˣ) :
-            LaurentPolynomial A) := by rw [Cocharacter.genericUnit_val]
-    _ = 1 := Units.val_inv _
-    _ = LaurentPolynomial.T 1 * LaurentPolynomial.T (-1) := by
-      rw [← LaurentPolynomial.T_add]
-      norm_num
+  rw [dynamicCocharacter, pointsMulEquiv_conjugate_weightCocharacter]
+  congr 2 <;> apply congrArg diagGL <;> funext i <;>
+    fin_cases i <;> simp [dynamicWeights, dynamicDiagonalUnits]
 
 /-- Conjugation by `diag(T, 1)` fixes the upper-left matrix entry. -/
 -- Not `@[simp]`: `pointsMulEquiv_apply` already simplifies the left-hand side, so `simpNF`
@@ -173,11 +147,8 @@ theorem pointsMulEquiv_conjugate_dynamicCocharacter_zero_zero
     (pointsMulEquiv 2 (Cocharacter.conjugate A (dynamicCocharacter (R := R)) g) :
       Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 0 0 =
       LaurentPolynomial.C ((pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 0 0) := by
-  rw [pointsMulEquiv_conjugate_dynamicCocharacter]
-  rw [Units.val_mul, Units.val_mul]
-  rw [coe_dynamicDiagonalUnits_genericUnit_inv]
-  simp [Matrix.mul_apply, Fin.sum_univ_two, dynamicDiagonalUnits,
-    Cocharacter.genericUnit_val, genericUnit_inv_val]
+  rw [dynamicCocharacter, pointsMulEquiv_conjugate_weightCocharacter_apply]
+  simp [dynamicWeights]
 
 /-- Conjugation by `diag(T, 1)` multiplies the upper-right entry by `T`. -/
 theorem pointsMulEquiv_conjugate_dynamicCocharacter_zero_one
@@ -186,11 +157,8 @@ theorem pointsMulEquiv_conjugate_dynamicCocharacter_zero_one
       Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 0 1 =
       LaurentPolynomial.C ((pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 0 1) *
         LaurentPolynomial.T 1 := by
-  rw [pointsMulEquiv_conjugate_dynamicCocharacter]
-  rw [Units.val_mul, Units.val_mul]
-  rw [coe_dynamicDiagonalUnits_genericUnit_inv]
-  simp [Matrix.mul_apply, Fin.sum_univ_two, dynamicDiagonalUnits,
-    Cocharacter.genericUnit_val, mul_assoc]
+  rw [dynamicCocharacter, pointsMulEquiv_conjugate_weightCocharacter_apply]
+  simp [dynamicWeights]
 
 /-- Conjugation by `diag(T, 1)` multiplies the lower-left entry by `T⁻¹`. -/
 theorem pointsMulEquiv_conjugate_dynamicCocharacter_one_zero
@@ -199,11 +167,8 @@ theorem pointsMulEquiv_conjugate_dynamicCocharacter_one_zero
       Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 1 0 =
       LaurentPolynomial.C ((pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 1 0) *
         LaurentPolynomial.T (-1) := by
-  rw [pointsMulEquiv_conjugate_dynamicCocharacter]
-  rw [Units.val_mul, Units.val_mul]
-  rw [coe_dynamicDiagonalUnits_genericUnit_inv]
-  simp [Matrix.mul_apply, Fin.sum_univ_two, dynamicDiagonalUnits,
-    genericUnit_inv_val]
+  rw [dynamicCocharacter, pointsMulEquiv_conjugate_weightCocharacter_apply]
+  simp [dynamicWeights]
 
 /-- Conjugation by `diag(T, 1)` fixes the lower-right matrix entry. -/
 theorem pointsMulEquiv_conjugate_dynamicCocharacter_one_one
@@ -211,93 +176,8 @@ theorem pointsMulEquiv_conjugate_dynamicCocharacter_one_one
     (pointsMulEquiv 2 (Cocharacter.conjugate A (dynamicCocharacter (R := R)) g) :
       Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 1 1 =
       LaurentPolynomial.C ((pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 1 1) := by
-  rw [pointsMulEquiv_conjugate_dynamicCocharacter]
-  rw [Units.val_mul, Units.val_mul]
-  rw [coe_dynamicDiagonalUnits_genericUnit_inv]
-  simp [Matrix.mul_apply, Fin.sum_univ_two, dynamicDiagonalUnits]
-
-end Dynamic
-
-end GL2
-
-namespace GL2
-
-section Dynamic
-
-variable {A : Type v} [CommRing A] [Algebra R A]
-
-/-- The polynomial matrix `!![a, bX; 0, d]`, regarded as a polynomial-valued `GL₂` point. -/
-private noncomputable def dynamicPolynomialExtension (a d : Aˣ) (b : A) :
-    WithConv (coordinateHopfAlgebra R 2 →ₐ[R] Polynomial A) :=
-  (pointsMulEquiv (R := R) (A := Polynomial A) 2).symm <|
-    GL2Borel.mk (Units.map Polynomial.C.toMonoidHom a)
-      (Units.map Polynomial.C.toMonoidHom d) (Polynomial.C b * Polynomial.X)
-
-/-- The matrix of `dynamicPolynomialExtension` is `!![a, bX; 0, d]`. -/
--- Not `@[simp]`: `pointsMulEquiv_apply` already supplies the simp-normal left-hand side.
-private theorem pointsMulEquiv_dynamicPolynomialExtension (a d : Aˣ) (b : A) :
-    pointsMulEquiv 2 (dynamicPolynomialExtension (R := R) a d b) =
-      GL2Borel.mk (Units.map Polynomial.C.toMonoidHom a)
-        (Units.map Polynomial.C.toMonoidHom d) (Polynomial.C b * Polynomial.X) := by
-  exact MulEquiv.apply_symm_apply _ _
-
-/-- The polynomial matrix `!![a, bX; 0, d]` extends the conjugate of
-`!![a, b; 0, d]` by `diag(T, 1)`. -/
-private theorem ofPolyPoint_dynamicPolynomialExtension
-    (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) (a d : Aˣ) (b : A)
-    (hmatrix : pointsMulEquiv 2 g = GL2Borel.mk a d b) :
-    Cocharacter.ofPolyPoint A (dynamicPolynomialExtension (R := R) a d b) =
-      Cocharacter.conjugate A (dynamicCocharacter (R := R)) g := by
-  apply (pointsMulEquiv (R := R) (A := LaurentPolynomial A) 2).injective
-  rw [pointsMulEquiv_ofPolyPoint, pointsMulEquiv_dynamicPolynomialExtension]
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  fin_cases i <;> fin_cases j
-  -- The four `change`s remove the entrywise `GL.map` wrapper and normalize the `Fin 2` indices.
-  · change Polynomial.toLaurent
-        (((GL2Borel.mk (Units.map Polynomial.C.toMonoidHom a)
-          (Units.map Polynomial.C.toMonoidHom d) (Polynomial.C b * Polynomial.X) :
-            GL (Fin 2) (Polynomial A)) : Matrix (Fin 2) (Fin 2) (Polynomial A)) 0 0) =
-      (pointsMulEquiv 2 (Cocharacter.conjugate A (dynamicCocharacter (R := R)) g) :
-        Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 0 0
-    rw [pointsMulEquiv_conjugate_dynamicCocharacter_zero_zero, hmatrix]
-    simp [GL2Borel.coe_mk]
-  · change Polynomial.toLaurent
-        (((GL2Borel.mk (Units.map Polynomial.C.toMonoidHom a)
-          (Units.map Polynomial.C.toMonoidHom d) (Polynomial.C b * Polynomial.X) :
-            GL (Fin 2) (Polynomial A)) : Matrix (Fin 2) (Fin 2) (Polynomial A)) 0 1) =
-      (pointsMulEquiv 2 (Cocharacter.conjugate A (dynamicCocharacter (R := R)) g) :
-        Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 0 1
-    rw [pointsMulEquiv_conjugate_dynamicCocharacter_zero_one, hmatrix]
-    simp [GL2Borel.coe_mk]
-  · change Polynomial.toLaurent
-        (((GL2Borel.mk (Units.map Polynomial.C.toMonoidHom a)
-          (Units.map Polynomial.C.toMonoidHom d) (Polynomial.C b * Polynomial.X) :
-            GL (Fin 2) (Polynomial A)) : Matrix (Fin 2) (Fin 2) (Polynomial A)) 1 0) =
-      (pointsMulEquiv 2 (Cocharacter.conjugate A (dynamicCocharacter (R := R)) g) :
-        Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 1 0
-    rw [pointsMulEquiv_conjugate_dynamicCocharacter_one_zero, hmatrix]
-    simp [GL2Borel.coe_mk]
-  · change Polynomial.toLaurent
-        (((GL2Borel.mk (Units.map Polynomial.C.toMonoidHom a)
-          (Units.map Polynomial.C.toMonoidHom d) (Polynomial.C b * Polynomial.X) :
-            GL (Fin 2) (Polynomial A)) : Matrix (Fin 2) (Fin 2) (Polynomial A)) 1 1) =
-      (pointsMulEquiv 2 (Cocharacter.conjugate A (dynamicCocharacter (R := R)) g) :
-        Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 1 1
-    rw [pointsMulEquiv_conjugate_dynamicCocharacter_one_one, hmatrix]
-    simp [GL2Borel.coe_mk]
-
-/-- Evaluating `!![a, bX; 0, d]` at zero gives its diagonal part. -/
-private theorem pointsMulEquiv_evalZero_dynamicPolynomialExtension (a d : Aˣ) (b : A) :
-    pointsMulEquiv 2
-        (Cocharacter.evalZeroPoint A (dynamicPolynomialExtension (R := R) a d b)) =
-      GL2Borel.mk a d 0 := by
-  rw [pointsMulEquiv_evalZeroPoint, pointsMulEquiv_dynamicPolynomialExtension]
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  rw [Matrix.GeneralLinearGroup.map_apply]
-  fin_cases i <;> fin_cases j <;>
-    simp [GL2Borel.coe_mk]
+  rw [dynamicCocharacter, pointsMulEquiv_conjugate_weightCocharacter_apply]
+  simp [dynamicWeights]
 
 /-- Membership in the dynamic parabolic for `t ↦ diag(t, 1)` is exactly upper triangularity. -/
 @[simp]
@@ -305,47 +185,22 @@ theorem mem_dynamicParabolic_iff
     (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) :
     g ∈ Cocharacter.parabolic A (dynamicCocharacter (R := R)) ↔
       pointsMulEquiv 2 g ∈ GL2Borel A := by
+  rw [dynamicCocharacter, mem_parabolic_weightCocharacter_iff]
   constructor
-  · rw [Cocharacter.mem_parabolic_iff]
-    rintro ⟨F, hF⟩
+  · intro h
     apply GL2Borel.mem_iff.mpr
-    have hmat := congrArg (pointsMulEquiv (R := R) (A := LaurentPolynomial A) 2) hF
-    have hentry := congrArg
-      (fun M : GL (Fin 2) (LaurentPolynomial A) =>
-        (M : Matrix (Fin 2) (Fin 2) (LaurentPolynomial A)) 1 0) hmat
-    rw [pointsMulEquiv_ofPolyPoint,
-      pointsMulEquiv_conjugate_dynamicCocharacter_one_zero] at hentry
-    simp only [Matrix.GeneralLinearGroup.map_apply] at hentry
-    -- Expose the underlying polynomial inclusion in the lower-left matrix entry.
-    change Polynomial.toLaurent
-        ((pointsMulEquiv 2 F : Matrix (Fin 2) (Fin 2) (Polynomial A)) 1 0) =
-      LaurentPolynomial.C
-          ((pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 1 0) *
-        LaurentPolynomial.T (-1) at hentry
-    have hcoeff := congrArg
-      (fun q : LaurentPolynomial A => q.coeff (-1)) hentry
-    have hleft :
-        (Polynomial.toLaurent
-          ((pointsMulEquiv 2 F : Matrix (Fin 2) (Fin 2) (Polynomial A)) 1 0)).coeff (-1) = 0 := by
-      rw [LaurentPolynomial.coeff_toLaurent]
-      apply Finsupp.mapDomain_of_notMem_range
-      rintro ⟨n, hn⟩
-      -- The support map is the natural-number inclusion into the integers.
-      change (n : ℤ) = -1 at hn
-      omega
-    have hright :
-        (LaurentPolynomial.C
-              ((pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 1 0) *
-            LaurentPolynomial.T (-1)).coeff (-1) =
-          (pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 1 0 := by
-      rw [← LaurentPolynomial.single_eq_C_mul_T]
-      exact Finsupp.single_eq_same
-    rw [hleft, hright] at hcoeff
-    exact hcoeff.symm
-  · intro hg
-    obtain ⟨a, d, b, hmatrix⟩ := GL2Borel.mem_iff_exists_mk.mp hg
-    exact Cocharacter.mem_parabolic_of_eq
-      (ofPolyPoint_dynamicPolynomialExtension g a d b hmatrix)
+    exact @h 1 0 (by
+      change dynamicWeights 1 < dynamicWeights 0
+      simp [dynamicWeights])
+  · intro h i j hij
+    have hzero : (pointsMulEquiv 2 g : Matrix (Fin 2) (Fin 2) A) 1 0 = 0 := by
+      exact GL2Borel.mem_iff.mp h
+    change dynamicWeights i < dynamicWeights j at hij
+    fin_cases i <;> fin_cases j
+    · simp [dynamicWeights] at hij
+    · simp [dynamicWeights] at hij
+    · exact hzero
+    · simp [dynamicWeights] at hij
 
 /-- The dynamic limit of an upper-triangular matrix is its diagonal part. -/
 theorem pointsMulEquiv_limit_dynamicCocharacter
@@ -357,19 +212,20 @@ theorem pointsMulEquiv_limit_dynamicCocharacter
           (GL2Borel.diag
             (⟨pointsMulEquiv 2 g, (mem_dynamicParabolic_iff g).mp hg⟩ : GL2Borel A)) :
         GL2Borel A) : GL (Fin 2) A) := by
+  unfold dynamicCocharacter at hg ⊢
   have hb : pointsMulEquiv 2 g ∈ GL2Borel A := (mem_dynamicParabolic_iff g).mp hg
   obtain ⟨a, d, b, hmatrix⟩ := GL2Borel.mem_iff_exists_mk.mp hb
-  have hext :
-      Cocharacter.extend A (dynamicCocharacter (R := R)) ⟨g, hg⟩ =
-        dynamicPolynomialExtension (R := R) a d b :=
-    Cocharacter.extend_unique (ofPolyPoint_dynamicPolynomialExtension g a d b hmatrix)
   have hdiag :
       GL2Borel.diag (⟨pointsMulEquiv 2 g, hb⟩ : GL2Borel A) = (a, d) := by
     have hB : (⟨pointsMulEquiv 2 g, hb⟩ : GL2Borel A) =
         ⟨GL2Borel.mk a d b, GL2Borel.mk_mem a d b⟩ := Subtype.ext hmatrix
     rw [hB, GL2Borel.diag_mk]
-  rw [Cocharacter.limit_apply, hext, pointsMulEquiv_evalZero_dynamicPolynomialExtension,
-    GL2Borel.coe_torusHom, hdiag]
+  apply Matrix.GeneralLinearGroup.ext
+  intro i j
+  rw [pointsMulEquiv_limit_weightCocharacter_apply dynamicWeights g hg i j]
+  rw [GL2Borel.coe_torusHom, hdiag]
+  fin_cases i <;> fin_cases j <;>
+    simp [dynamicWeights, hmatrix, GL2Borel.coe_mk]
 
 /-- As subgroups of convolution points, the dynamic parabolic for `t ↦ diag(t, 1)` is the
 preimage of the upper-triangular Borel under the general-linear point equivalence. -/

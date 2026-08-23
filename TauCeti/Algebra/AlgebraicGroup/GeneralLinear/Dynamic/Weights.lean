@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Parabolic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.PointMaps
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
 public import Mathlib.LinearAlgebra.Matrix.Block
 
@@ -32,12 +32,12 @@ the coefficient is read directly, so zero divisors cause no problem.
 ## Main declarations
 
 * `TauCeti.GeneralLinear.Dynamic.weightCocharacter`: the cocharacter attached to integer weights.
-* `TauCeti.GeneralLinear.Dynamic.mem_weightCocharacter_parabolic_iff`: its dynamic parabolic is
+* `TauCeti.GeneralLinear.Dynamic.mem_parabolic_weightCocharacter_iff`: its dynamic parabolic is
   the block-triangular subgroup for the weight filtration.
 * `TauCeti.GeneralLinear.Dynamic.pointsMulEquiv_limit_weightCocharacter_apply`: its limit keeps
   exactly the entries between equal-weight coordinates.
-* `TauCeti.GeneralLinear.Dynamic.mem_weightCocharacter_levi_iff`: its Levi is block diagonal.
-* `TauCeti.GeneralLinear.Dynamic.mem_weightCocharacter_unipotent_iff`: its unipotent subgroup
+* `TauCeti.GeneralLinear.Dynamic.mem_levi_weightCocharacter_iff`: its Levi is block diagonal.
+* `TauCeti.GeneralLinear.Dynamic.mem_unipotent_weightCocharacter_iff`: its unipotent subgroup
   acts trivially on the associated graded.
 
 ## References
@@ -94,24 +94,6 @@ noncomputable def weightCocharacter (w : Fin N → ℤ) :
 section Points
 
 variable {A : Type v} [CommRing A] [Algebra R A]
-
-/-- Applying the inclusion `A[X] → A[T;T⁻¹]` to a general-linear point applies that
-inclusion entrywise to its matrix. -/
-theorem pointsMulEquiv_ofPolyPoint
-    (F : WithConv (coordinateHopfAlgebra R N →ₐ[R] Polynomial A)) :
-    pointsMulEquiv N (Cocharacter.ofPolyPoint A F) =
-      Matrix.GeneralLinearGroup.map
-        (Polynomial.toLaurentAlg.restrictScalars R).toRingHom (pointsMulEquiv N F) := by
-  rw [Cocharacter.ofPolyPoint_apply, ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
-
-/-- Evaluating a polynomial-valued general-linear point at zero evaluates every matrix entry
-at zero. -/
-theorem pointsMulEquiv_evalZeroPoint
-    (F : WithConv (coordinateHopfAlgebra R N →ₐ[R] Polynomial A)) :
-    pointsMulEquiv N (Cocharacter.evalZeroPoint A F) =
-      Matrix.GeneralLinearGroup.map
-        ((Polynomial.aeval (0 : A)).restrictScalars R).toRingHom (pointsMulEquiv N F) := by
-  rw [Cocharacter.evalZeroPoint_apply, ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
 
 /-- The weight cocharacter on algebra-valued points. -/
 noncomputable def weightCocharacterPoints (w : Fin N → ℤ) :
@@ -307,6 +289,8 @@ private theorem det_weightPolynomialMatrix (w : Fin N → ℤ)
     Matrix.GeneralLinearGroup.map
       (IsScalarTower.toAlgHom R A (LaurentPolynomial A)).toRingHom
       (pointsMulEquiv N g)
+  -- Multiplication in `GL_N` coerces definitionally to matrix multiplication; no coercion lemma
+  -- exposes the determinant of this three-factor product.
   change (d * m * d⁻¹ : Matrix (Fin N) (Fin N) (LaurentPolynomial A)).det = _
   calc
     _ = (d : Matrix (Fin N) (Fin N) (LaurentPolynomial A)).det *
@@ -324,6 +308,8 @@ private theorem det_weightPolynomialMatrix (w : Fin N → ℤ)
         rw [← Matrix.GeneralLinearGroup.val_det_apply,
           ← Matrix.GeneralLinearGroup.val_det_apply,
           ← Matrix.GeneralLinearGroup.val_det_apply]
+        -- The determinant homomorphism's inverse law is available only as `map_inv`; this
+        -- typed `show` fixes its inferred homomorphism and argument.
         rw [show Matrix.GeneralLinearGroup.det (d⁻¹) =
           (Matrix.GeneralLinearGroup.det d)⁻¹ by exact map_inv _ d]
         exact congrArg Units.val hdet
@@ -370,7 +356,7 @@ private theorem ofPolyPoint_weightPolynomialExtension (w : Fin N → ℤ)
 triangularity for the decreasing weight filtration. Equivalently, `g_ij = 0` whenever
 `w i < w j`. -/
 @[simp]
-theorem mem_weightCocharacter_parabolic_iff (w : Fin N → ℤ)
+theorem mem_parabolic_weightCocharacter_iff (w : Fin N → ℤ)
     (g : WithConv (coordinateHopfAlgebra R N →ₐ[R] A)) :
     g ∈ Cocharacter.parabolic A (weightCocharacter (R := R) w) ↔
       (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A).BlockTriangular
@@ -378,6 +364,8 @@ theorem mem_weightCocharacter_parabolic_iff (w : Fin N → ℤ)
   constructor
   · rw [Cocharacter.mem_parabolic_iff]
     rintro ⟨F, hF⟩ i j hij
+    -- `OrderDual.toDual ∘ w` reverses the block order definitionally; there is no
+    -- `BlockTriangular` lemma that restates this hypothesis in the original order.
     change w i < w j at hij
     have hmat := congrArg (pointsMulEquiv (R := R) (A := LaurentPolynomial A) N) hF
     have hentry := congrArg
@@ -402,6 +390,8 @@ theorem mem_weightCocharacter_parabolic_iff (w : Fin N → ℤ)
       rw [LaurentPolynomial.coeff_toLaurent]
       apply Finsupp.mapDomain_of_notMem_range
       rintro ⟨n, hn⟩
+      -- Membership in the range of the support map reduces definitionally to the natural-number
+      -- inclusion into the integers; `mapDomain` provides no more explicit witness equation.
       change (n : ℤ) = w i - w j at hn
       omega
     have hright :
@@ -442,7 +432,7 @@ theorem pointsMulEquiv_limit_weightCocharacter_apply (w : Fin N → ℤ)
       if w i = w j then
         (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A) i j
       else 0 := by
-  have hblock := (mem_weightCocharacter_parabolic_iff w g).mp hg
+  have hblock := (mem_parabolic_weightCocharacter_iff w g).mp hg
   have hext :
       Cocharacter.extend A (weightCocharacter (R := R) w) ⟨g, hg⟩ =
         weightPolynomialExtension (R := R) w g hblock :=
@@ -454,7 +444,7 @@ theorem pointsMulEquiv_limit_weightCocharacter_apply (w : Fin N → ℤ)
 /-- Membership in the dynamic Levi subgroup for a weight cocharacter means preserving every
 weight space: matrix entries between distinct weights vanish. -/
 @[simp]
-theorem mem_weightCocharacter_levi_iff (w : Fin N → ℤ)
+theorem mem_levi_weightCocharacter_iff (w : Fin N → ℤ)
     (g : WithConv (coordinateHopfAlgebra R N →ₐ[R] A)) :
     g ∈ Cocharacter.levi A (weightCocharacter (R := R) w) ↔
       ∀ i j, w i ≠ w j →
@@ -491,7 +481,7 @@ theorem mem_weightCocharacter_levi_iff (w : Fin N → ℤ)
 /-- Membership in the dynamic unipotent subgroup for a weight cocharacter means block
 triangularity together with identity action on each associated-graded weight space. -/
 @[simp]
-theorem mem_weightCocharacter_unipotent_iff (w : Fin N → ℤ)
+theorem mem_unipotent_weightCocharacter_iff (w : Fin N → ℤ)
     (g : WithConv (coordinateHopfAlgebra R N →ₐ[R] A)) :
     g ∈ Cocharacter.unipotent A (weightCocharacter (R := R) w) ↔
       (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A).BlockTriangular
@@ -502,7 +492,7 @@ theorem mem_weightCocharacter_unipotent_iff (w : Fin N → ℤ)
   constructor
   · intro hg
     obtain ⟨hgP, hlimit⟩ := Cocharacter.mem_unipotent_iff.mp hg
-    refine ⟨(mem_weightCocharacter_parabolic_iff w g).mp hgP, fun i j hij ↦ ?_⟩
+    refine ⟨(mem_parabolic_weightCocharacter_iff w g).mp hgP, fun i j hij ↦ ?_⟩
     have hmat := congrArg (pointsMulEquiv (R := R) (A := A) N) hlimit
     have hentry := congrArg
       (fun M : GL (Fin N) A ↦ (M : Matrix (Fin N) (Fin N) A) i j) hmat
@@ -512,7 +502,7 @@ theorem mem_weightCocharacter_unipotent_iff (w : Fin N → ℤ)
     exact hentry
   · rintro ⟨hblock, hgraded⟩
     have hgP : g ∈ Cocharacter.parabolic A (weightCocharacter (R := R) w) :=
-      (mem_weightCocharacter_parabolic_iff w g).mpr hblock
+      (mem_parabolic_weightCocharacter_iff w g).mpr hblock
     apply Cocharacter.mem_unipotent_iff.mpr
     refine ⟨hgP, ?_⟩
     apply (pointsMulEquiv (R := R) (A := A) N).injective
