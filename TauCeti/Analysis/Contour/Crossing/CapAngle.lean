@@ -7,8 +7,8 @@ module
 
 public import TauCeti.Analysis.Contour.Crossing.Excision
 public import TauCeti.Analysis.Contour.RegularityConditions
-import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 import TauCeti.Analysis.Contour.Chord.QuotientAsymptotics
+import TauCeti.Analysis.Contour.Winding.CrossingAngleSum
 
 /-!
 # The capping angle at a crossing
@@ -97,20 +97,12 @@ theorem exp_crossingCapSweep_mul_I (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 0)
     apply norm_ne_zero_iff.mp
     rw [← hnorm]
     exact norm_ne_zero_iff.mpr hw_L
-  have hangle := congrArg (fun z : Circle => (z : ℂ))
-    (congrArg Real.Angle.toCircle
-      (coe_crossingCapSweep_eq_arg_div hL_L hL_R hw_L hw_R h_R h_L))
-  rw [show Complex.exp ((crossingCapSweep γ t₀ L_R L_L w_L w_R : ℂ) * Complex.I) =
-      Complex.exp (((w_R / w_L).arg : ℂ) * Complex.I) by
-        simpa only [Real.Angle.toCircle_coe, Circle.coe_exp] using hangle]
-  have hratio_norm : ‖w_R / w_L‖ = 1 := by
-    rw [norm_div, ← hnorm, div_self (norm_ne_zero_iff.mpr hw_L)]
-  calc
-    Complex.exp (((w_R / w_L).arg : ℂ) * Complex.I) =
-        (‖w_R / w_L‖ : ℂ) * Complex.exp (((w_R / w_L).arg : ℂ) * Complex.I) := by
-          rw [hratio_norm]
-          simp
-    _ = w_R / w_L := Complex.norm_mul_exp_arg_mul_I _
+  have hwindow := exp_log_norm_add_arg_eq_mul_exp_crossingAngle
+    hL_L hL_R hw_L hw_R h_R h_L
+  have hlog : Real.log ‖w_R‖ - Real.log ‖w_L‖ = 0 := by rw [← hnorm]; ring
+  simp only [hlog, Complex.ofReal_zero, zero_add] at hwindow
+  rw [crossingCapSweep, Complex.ofReal_sub, sub_mul, Complex.exp_sub, hwindow]
+  exact mul_div_cancel_right₀ (w_R / w_L) (Complex.exp_ne_zero _)
 
 /-- **The cap has the prescribed endpoints.**  If the endpoint chords have equal norm, the circle
 of that radius about `s`, starting at the principal argument of `w_L` and sweeping through
@@ -139,52 +131,6 @@ theorem circleMap_crossingCapSweep_endpoints (hL_L : L_L ≠ 0) (hL_R : L_R ≠ 
           s + ((‖w_L‖ : ℂ) * Complex.exp ((w_L.arg : ℂ) * Complex.I)) *
             (w_R / w_L) := by ring
       _ = s + w_R := by rw [hwL_norm]; field_simp
-
-/-- Along the incoming side of a differentiable crossing, the boundary argument
-`arg (-L / (γ t - s))` tends to `0`.  Multiplication by the positive scalar `t₀ - t` removes the
-blow-up and exposes the limit `1`, without changing the argument. -/
-theorem tendsto_arg_neg_tangent_div_chord_nhdsLT (h_at : γ t₀ = s) (hL : L_L ≠ 0)
-    (h_deriv : HasDerivWithinAt γ L_L (Iio t₀) t₀) :
-    Tendsto (fun t => ((-L_L) / (γ t - s)).arg) (𝓝[<] t₀) (𝓝 0) := by
-  have hq := (chord_quotient_tendsto self_notMem_Iio h_deriv h_at).inv₀ hL
-  have hscaled : Tendsto (fun t => (((t₀ - t : ℝ) : ℂ) * ((-L_L) / (γ t - s))))
-      (𝓝[<] t₀) (𝓝 1) := by
-    convert hq.const_mul L_L using 1
-    · funext t
-      by_cases ht : t = t₀
-      · subst t
-        simp [h_at]
-      · field_simp
-        push_cast
-        ring
-    · field_simp
-  have hpos : ∀ᶠ t in 𝓝[<] t₀, 0 < t₀ - t := by
-    filter_upwards [self_mem_nhdsWithin] with t ht
-    exact sub_pos.mpr ht
-  simpa using arg_tendsto_of_pos_mul_tendsto
-    (by simp [Complex.mem_slitPlane_iff]) hpos hscaled
-
-/-- Along the outgoing side of a differentiable crossing, the boundary argument
-`arg ((γ t - s) / L)` tends to `0`.  Dividing by the positive scalar `t - t₀` exposes the
-nonzero tangent limit and does not change the argument. -/
-theorem tendsto_arg_chord_div_tangent_nhdsGT (h_at : γ t₀ = s) (hL : L_R ≠ 0)
-    (h_deriv : HasDerivWithinAt γ L_R (Ioi t₀) t₀) :
-    Tendsto (fun t => ((γ t - s) / L_R).arg) (𝓝[>] t₀) (𝓝 0) := by
-  have hq := (chord_quotient_tendsto self_notMem_Ioi h_deriv h_at).div_const L_R
-  rw [div_self hL] at hq
-  have hscaled : Tendsto
-      (fun t => ((((t - t₀)⁻¹ : ℝ) : ℂ) * ((γ t - s) / L_R)))
-      (𝓝[>] t₀) (𝓝 1) := by
-    refine hq.congr' ?_
-    filter_upwards [self_mem_nhdsWithin] with t ht
-    have hne : t - t₀ ≠ 0 := sub_ne_zero.mpr ht.ne'
-    push_cast
-    field_simp
-  have hpos : ∀ᶠ t in 𝓝[>] t₀, 0 < (t - t₀)⁻¹ := by
-    filter_upwards [self_mem_nhdsWithin] with t ht
-    exact inv_pos.mpr (sub_pos.mpr ht)
-  simpa using arg_tendsto_of_pos_mul_tendsto
-    (by simp [Complex.mem_slitPlane_iff]) hpos hscaled
 
 /-- **A local cap approaches the reverse model-sector arc.**  As its left and right endpoint
 parameters tend independently to `t₀`, `crossingCapSweep` tends to the negative crossing angle.
