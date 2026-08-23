@@ -357,6 +357,18 @@ theorem isTopologicallyNilpotent_of_mem_idealOfDefinition (P : PairOfDefinition 
   refine (P.mem_idealImage n).mpr ⟨a ^ m, ?_, by push_cast; ring⟩
   exact Ideal.pow_le_pow_right hm (Ideal.pow_mem_pow ha m)
 
+/-- **An element of the image of `Iⁿ` is topologically nilpotent**, for `n ≠ 0`. Unpacking the
+membership gives an element of `Iⁿ ⊆ I`, so `isTopologicallyNilpotent_of_mem_idealOfDefinition`
+applies. This is the form consumers meet, `idealImage` being what
+`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero` is stated with.
+
+`n ≠ 0` is needed, not incidental: `I ^ 0 = ⊤`, so `idealImage 0` is the image of the whole ring
+of definition and its elements are not topologically nilpotent in general. -/
+theorem isTopologicallyNilpotent_of_mem_idealImage (P : PairOfDefinition A) {n : ℕ} (hn : n ≠ 0)
+    {a : A} (ha : a ∈ P.idealImage n) : IsTopologicallyNilpotent a := by
+  obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage n).mp ha
+  exact P.isTopologicallyNilpotent_of_mem_idealOfDefinition (Ideal.pow_le_self hn hy)
+
 /-- A ring admitting a pair of definition is nonarchimedean. -/
 theorem toNonarchimedeanRing [IsTopologicalRing A] (P : PairOfDefinition A) :
     NonarchimedeanRing A where

@@ -43,6 +43,9 @@ pointwise algebra happens before integration; a later layer proves invariance un
   supremum.
 * `cutNorm_zero`, `cutNorm_neg`, `cutNorm_add_le`, and `cutNorm_smul` are the seminorm laws.
 * `cutNorm_le_integral_abs` bounds the cut norm by the `L¹` norm.
+* `abs_testIntegral_le_cutNorm` bounds every `[0,1]`-test integral by the cut norm itself, with no
+  loss of constant — the form the counting lemma consumes, where the weights read off the other
+  edges of a graph are `[0,1]`-valued.
 * `abs_testIntegral_le_cutNormSigned` and `cutNormSigned_le` are the corresponding introduction and
   elimination rules for the signed cut norm.
 * `cutNorm_le_cutNormSigned` and `cutNormSigned_le_four_mul_cutNorm` are the two sides of the
@@ -226,9 +229,8 @@ theorem testIntegral_comm [SFinite μ] (K : SymmKernel Ω μ) (u v : Ω → ℝ)
 /-- The inner integral of a kernel against a single test function, `x ↦ ∫ v(y) K(x,y)`.
 
 This is the partial pairing that the extremal step of the factor sandwich optimises over.  When `μ`
-is finite and `v` is measurable and `[-1,1]`-valued — the hypotheses `exists_pm_one_left` carries —
-the supremum over the remaining test function is attained at the sign of this function.  The
-definition itself asks nothing of `v`. -/
+is finite and `v` is measurable and `[-1,1]`-valued, the partial pairing is measurable and
+integrable. The definition itself asks nothing of `v`. -/
 noncomputable def partialIntegral (K : SymmKernel Ω μ) (v : Ω → ℝ) (x : Ω) : ℝ :=
   ∫ y, v y * K x y ∂μ
 
@@ -252,6 +254,15 @@ theorem integrable_partialIntegral [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {
   have h := (K.integrable_testIntegrand μ measurable_const hv h1 hv1).integral_prod_left
   simp only [one_mul] at h
   exact h
+
+/-- Multiplying a partial pairing by a measurable `[-1,1]`-valued function preserves
+integrability. -/
+private theorem integrable_mul_partialIntegral [IsFiniteMeasure μ] (K : SymmKernel Ω μ)
+    {v w : Ω → ℝ} (hv : Measurable v) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1)
+    (hw : Measurable w) (hw1 : ∀ x, w x ∈ Icc (-1 : ℝ) 1) :
+    Integrable (fun x => w x * K.partialIntegral μ v x) μ :=
+  (K.integrable_partialIntegral μ hv hv1).bdd_mul hw.aestronglyMeasurable
+    (ae_of_all _ fun x => abs_le.2 (hw1 x))
 
 /-- A test integral is the integral of the left test function against the partial pairing.
 
@@ -454,6 +465,108 @@ theorem cutNorm_smul (c : ℝ) (K : SymmKernel Ω μ) :
   simp only [SymmKernel.rectIntegral_smul, abs_mul,
     Real.mul_iSup_of_nonneg (abs_nonneg c)]
 
+omit [MeasurableSpace Ω] in
+/-- An indicator of the constant-one function takes values in `[-1,1]`. -/
+private theorem indicator_one_mem_Icc_neg_one_one (A : Set Ω) (x : Ω) :
+    A.indicator (1 : Ω → ℝ) x ∈ Icc (-1 : ℝ) 1 := by
+  by_cases hx : x ∈ A <;> simp [hx]
+
+/-- The extremal step for `[0,1]`-valued test functions.  The pairing is affine in the left test
+function, so it lies between the pairings against the indicator of the set where the partial
+pairing is nonnegative and the indicator of the complement; one of those two indicators therefore
+does at least as well in absolute value. -/
+private theorem exists_indicator_left_of_mem_Icc (K : SymmKernel Ω μ)
+    {u v : Ω → ℝ} (hu : Measurable u) (hv : Measurable v)
+    (hu1 : ∀ x, u x ∈ Icc (0 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
+    ∃ S : Set Ω, MeasurableSet S ∧
+      |K.testIntegral μ u v| ≤ |K.testIntegral μ (S.indicator 1) v| := by
+  classical
+  have hu1' : ∀ x, u x ∈ Icc (-1 : ℝ) 1 := fun x => ⟨by linarith [(hu1 x).1], (hu1 x).2⟩
+  set g := K.partialIntegral μ v with hgdef
+  have hgm : Measurable g := K.measurable_partialIntegral μ hv
+  set S : Set Ω := {x | 0 ≤ g x} with hSdef
+  have hS : MeasurableSet S := measurableSet_le measurable_const hgm
+  have hind : ∀ A : Set Ω, MeasurableSet A → Measurable (A.indicator (1 : Ω → ℝ)) :=
+    fun _ hA => measurable_one.indicator hA
+  have hrepr : ∀ w : Ω → ℝ, Measurable w → (∀ x, w x ∈ Icc (-1 : ℝ) 1) →
+      K.testIntegral μ w v = ∫ x, w x * g x ∂μ := fun w hw hw1 =>
+    K.testIntegral_eq_integral_partialIntegral μ (K.integrable_testIntegrand μ hw hv hw1 hv1)
+  have hgnonpos : ∀ x ∉ S, g x ≤ 0 := fun x hx =>
+    le_of_lt (lt_of_not_ge (by simpa [hSdef] using hx))
+  have hlow : ∀ x, Sᶜ.indicator (1 : Ω → ℝ) x * g x ≤ u x * g x := by
+    intro x
+    by_cases hx : x ∈ S
+    · rw [Set.indicator_of_notMem (by simpa using hx), zero_mul]
+      exact mul_nonneg (hu1 x).1 hx
+    · have hgx := hgnonpos x hx
+      rw [Set.indicator_of_mem (by simpa using hx), Pi.one_apply]
+      exact mul_le_mul_of_nonpos_right (hu1 x).2 hgx
+  have hhigh : ∀ x, u x * g x ≤ S.indicator (1 : Ω → ℝ) x * g x := by
+    intro x
+    by_cases hx : x ∈ S
+    · rw [Set.indicator_of_mem hx, Pi.one_apply]
+      exact mul_le_mul_of_nonneg_right (hu1 x).2 hx
+    · have hgx := hgnonpos x hx
+      rw [Set.indicator_of_notMem hx, zero_mul]
+      nlinarith [(hu1 x).1, hgx]
+  set IA := ∫ x, S.indicator (1 : Ω → ℝ) x * g x ∂μ with hIA
+  set IB := ∫ x, Sᶜ.indicator (1 : Ω → ℝ) x * g x ∂μ with hIB
+  set IC := ∫ x, u x * g x ∂μ with hIC
+  have hBC : IB ≤ IC :=
+    integral_mono
+      (K.integrable_mul_partialIntegral μ hv hv1 (hind _ hS.compl)
+        (indicator_one_mem_Icc_neg_one_one _))
+      (K.integrable_mul_partialIntegral μ hv hv1 hu hu1') hlow
+  have hCA : IC ≤ IA :=
+    integral_mono (K.integrable_mul_partialIntegral μ hv hv1 hu hu1')
+      (K.integrable_mul_partialIntegral μ hv hv1 (hind _ hS)
+        (indicator_one_mem_Icc_neg_one_one _)) hhigh
+  have hA0 : 0 ≤ IA := by
+    refine integral_nonneg fun x => ?_
+    simp only [Pi.zero_apply]
+    by_cases hx : x ∈ S
+    · rw [Set.indicator_of_mem hx, Pi.one_apply, one_mul]; exact hx
+    · rw [Set.indicator_of_notMem hx, zero_mul]
+  have hB0 : IB ≤ 0 := by
+    refine integral_nonpos fun x => ?_
+    simp only [Pi.zero_apply]
+    by_cases hx : x ∈ S
+    · rw [Set.indicator_of_notMem (by simpa using hx), zero_mul]
+    · have hgx := hgnonpos x hx
+      rw [Set.indicator_of_mem (by simpa using hx), Pi.one_apply, one_mul]
+      exact hgx
+  rcases le_total (-IB) IA with h | h
+  · refine ⟨S, hS, ?_⟩
+    rw [hrepr u hu hu1', hrepr _ (hind _ hS) (indicator_one_mem_Icc_neg_one_one _),
+      ← hIC, ← hIA, abs_of_nonneg hA0]
+    exact abs_le.2 ⟨by linarith, hCA⟩
+  · refine ⟨Sᶜ, hS.compl, ?_⟩
+    rw [hrepr u hu hu1',
+      hrepr _ (hind _ hS.compl) (indicator_one_mem_Icc_neg_one_one _), ← hIC, ← hIB,
+      abs_of_nonpos hB0]
+    exact abs_le.2 ⟨by linarith, by linarith⟩
+
+/-- **Every `[0,1]`-test integral is bounded by the cut norm.**  The pairing is affine in each test
+function, so replacing a `[0,1]`-valued test function by a suitable indicator only increases the
+absolute pairing; doing so on both sides lands on a measurable rectangle.  Unlike the
+`[-1,1]`-valued case (`cutNormSigned_le_four_mul_cutNorm`) there is no factor of `4`, which is what
+makes this the form the counting lemma consumes. -/
+theorem abs_testIntegral_le_cutNorm (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (hu : Measurable u) (hv : Measurable v)
+    (hu1 : ∀ x, u x ∈ Icc (0 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (0 : ℝ) 1) :
+    |K.testIntegral μ u v| ≤ cutNorm μ K := by
+  have hv1' : ∀ y, v y ∈ Icc (-1 : ℝ) 1 := fun y => ⟨by linarith [(hv1 y).1], (hv1 y).2⟩
+  obtain ⟨S, hS, hSle⟩ := exists_indicator_left_of_mem_Icc μ K hu hv hu1 hv1'
+  rw [K.testIntegral_comm μ (S.indicator 1) v] at hSle
+  obtain ⟨T, hT, hTle⟩ :=
+    exists_indicator_left_of_mem_Icc μ K hv (measurable_one.indicator hS) hv1
+      (indicator_one_mem_Icc_neg_one_one _)
+  calc |K.testIntegral μ u v|
+      ≤ |K.testIntegral μ v (S.indicator 1)| := hSle
+    _ ≤ |K.testIntegral μ (T.indicator 1) (S.indicator 1)| := hTle
+    _ = |K.rectIntegral μ T S| := by rw [K.testIntegral_indicator_one μ hT hS]
+    _ ≤ cutNorm μ K := abs_rectIntegral_le_cutNorm μ K hT hS
+
 /-- The signed cut norm is the iterated supremum over measurable `[-1,1]`-valued test functions. -/
 theorem cutNormSigned_def (K : SymmKernel Ω μ) :
     cutNormSigned μ K =
@@ -552,120 +665,72 @@ theorem cutNorm_le_cutNormSigned (K : SymmKernel Ω μ) : cutNorm μ K ≤ cutNo
   refine cutNorm_le μ fun S hS T hT => ?_
   rw [← K.testIntegral_indicator_one μ hS hT]
   refine abs_testIntegral_le_cutNormSigned μ K (measurable_one.indicator hS)
-    (measurable_one.indicator hT) (fun x => ?_) fun y => ?_
-  · by_cases hx : x ∈ S <;> simp [hx]
-  · by_cases hy : y ∈ T <;> simp [hy]
-
-/-- The extremal step: replacing the left test function by the sign of the inner integral can only
-increase the pairing, and the replacement is `±1`-valued. -/
-private theorem exists_pm_one_left (K : SymmKernel Ω μ) {u v : Ω → ℝ}
-    (hu : Measurable u) (hv : Measurable v)
-    (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
-    ∃ w : Ω → ℝ, Measurable w ∧ (∀ x, w x = 1 ∨ w x = -1) ∧
-      |K.testIntegral μ u v| ≤ K.testIntegral μ w v := by
-  set g := K.partialIntegral μ v with hg_def
-  have hg : Measurable g := K.measurable_partialIntegral μ hv
-  have hgint : Integrable g μ := K.integrable_partialIntegral μ hv hv1
-  refine ⟨fun x => if 0 ≤ g x then 1 else -1, ?_, ?_, ?_⟩
-  · exact Measurable.ite (measurableSet_le measurable_const hg) measurable_const measurable_const
-  · intro x; by_cases hx : 0 ≤ g x <;> simp [hx]
-  · have hw1 : ∀ x, (if 0 ≤ g x then (1 : ℝ) else -1) ∈ Icc (-1 : ℝ) 1 := by
-      intro x; by_cases hx : 0 ≤ g x <;> simp [hx]
-    have hwm : Measurable fun x => if 0 ≤ g x then (1 : ℝ) else -1 :=
-      Measurable.ite (measurableSet_le measurable_const hg) measurable_const measurable_const
-    rw [K.testIntegral_eq_integral_partialIntegral μ
-        (K.integrable_testIntegrand μ hu hv hu1 hv1),
-      K.testIntegral_eq_integral_partialIntegral μ
-        (K.integrable_testIntegrand μ hwm hv hw1 hv1), ← hg_def]
-    have hint : Integrable (fun x => u x * g x) μ :=
-      Integrable.mono' hgint.abs (hu.mul hg).aestronglyMeasurable
-        (ae_of_all _ fun x => by
-          rw [Real.norm_eq_abs, abs_mul]
-          calc |u x| * |g x| ≤ 1 * |g x| := by gcongr; exact abs_le.2 (hu1 x)
-            _ = |g x| := one_mul _)
-    calc |∫ x, u x * g x ∂μ|
-        ≤ ∫ x, |u x * g x| ∂μ := abs_integral_le_integral_abs
-      _ ≤ ∫ x, |g x| ∂μ := by
-          refine integral_mono hint.abs hgint.abs fun x => ?_
-          rw [abs_mul]
-          calc |u x| * |g x| ≤ 1 * |g x| := by gcongr; exact abs_le.2 (hu1 x)
-            _ = |g x| := one_mul _
-      _ = ∫ x, (if 0 ≤ g x then (1 : ℝ) else -1) * g x ∂μ := by
-          refine integral_congr_ae (ae_of_all _ fun x => ?_)
-          by_cases hx : 0 ≤ g x
-          · simp [hx, abs_of_nonneg hx]
-          · simp [hx, abs_of_neg (lt_of_not_ge hx)]
-
-omit [MeasurableSpace Ω] in
-private theorem mem_Icc_of_pm {w : Ω → ℝ} (hw : ∀ x, w x = 1 ∨ w x = -1) (x : Ω) :
-    w x ∈ Icc (-1 : ℝ) 1 := by
-  rcases hw x with h | h <;> rw [h] <;> constructor <;> norm_num
-
-/-- A `±1`-valued measurable function is the indicator of a measurable set minus the indicator of
-its complement. -/
-private theorem exists_indicator_sub_of_pm {u : Ω → ℝ} (hu : Measurable u)
-    (hu' : ∀ x, u x = 1 ∨ u x = -1) :
-    ∃ S : Set Ω, MeasurableSet S ∧ u = S.indicator 1 - Sᶜ.indicator 1 := by
-  refine ⟨u ⁻¹' {1}, hu (measurableSet_singleton 1), ?_⟩
-  funext x
-  by_cases hx : u x = 1
-  · simp [Set.mem_preimage, hx]
-  · have hxS : x ∉ u ⁻¹' {1} := by simpa using hx
-    have hx' : u x = -1 := (hu' x).resolve_left hx
-    simp [hxS, hx']
-
-/-- The four-rectangle bound: a pairing of `±1`-valued test functions splits into the four
-rectangles cut out by the two sets, each bounded by the cut norm. -/
-private theorem abs_testIntegral_le_four_mul_cutNorm_of_pm (K : SymmKernel Ω μ) {u v : Ω → ℝ}
-    (hu : Measurable u) (hv : Measurable v)
-    (hu' : ∀ x, u x = 1 ∨ u x = -1) (hv' : ∀ y, v y = 1 ∨ v y = -1) :
-    |K.testIntegral μ u v| ≤ 4 * cutNorm μ K := by
-  obtain ⟨S, hS, hu_eq⟩ := exists_indicator_sub_of_pm hu hu'
-  obtain ⟨T, hT, hv_eq⟩ := exists_indicator_sub_of_pm hv hv'
-  have hind : ∀ A : Set Ω, MeasurableSet A → Measurable (A.indicator (1 : Ω → ℝ)) :=
-    fun _ hA => measurable_one.indicator hA
-  have hmem : ∀ (A : Set Ω) (x : Ω), A.indicator (1 : Ω → ℝ) x ∈ Icc (-1 : ℝ) 1 := by
-    intro A x
-    by_cases hx : x ∈ A <;> simp [hx]
-  rw [hv_eq, K.testIntegral_sub_right μ
-      (K.integrable_testIntegrand μ hu (hind T hT) (mem_Icc_of_pm hu') (hmem T))
-      (K.integrable_testIntegrand μ hu (hind Tᶜ hT.compl) (mem_Icc_of_pm hu') (hmem Tᶜ)),
-    hu_eq,
-    K.testIntegral_sub_left μ
-      (K.integrable_testIntegrand μ (hind S hS) (hind T hT) (hmem S) (hmem T))
-      (K.integrable_testIntegrand μ (hind Sᶜ hS.compl) (hind T hT) (hmem Sᶜ) (hmem T)),
-    K.testIntegral_sub_left μ
-      (K.integrable_testIntegrand μ (hind S hS) (hind Tᶜ hT.compl) (hmem S) (hmem Tᶜ))
-      (K.integrable_testIntegrand μ (hind Sᶜ hS.compl) (hind Tᶜ hT.compl) (hmem Sᶜ) (hmem Tᶜ)),
-    K.testIntegral_indicator_one μ hS hT, K.testIntegral_indicator_one μ hS.compl hT,
-    K.testIntegral_indicator_one μ hS hT.compl,
-    K.testIntegral_indicator_one μ hS.compl hT.compl]
-  obtain ⟨l1, r1⟩ := abs_le.1 (abs_rectIntegral_le_cutNorm μ K hS hT)
-  obtain ⟨l2, r2⟩ := abs_le.1 (abs_rectIntegral_le_cutNorm μ K hS.compl hT)
-  obtain ⟨l3, r3⟩ := abs_le.1 (abs_rectIntegral_le_cutNorm μ K hS hT.compl)
-  obtain ⟨l4, r4⟩ := abs_le.1 (abs_rectIntegral_le_cutNorm μ K hS.compl hT.compl)
-  exact abs_le.2 ⟨by linarith, by linarith⟩
+    (measurable_one.indicator hT) (indicator_one_mem_Icc_neg_one_one _)
+      (indicator_one_mem_Icc_neg_one_one _)
 
 /-- **Upper side of the factor sandwich.** Relaxing indicators to `[-1,1]`-valued test functions
 increases the cut norm by at most a factor of `4`. -/
 theorem cutNormSigned_le_four_mul_cutNorm (K : SymmKernel Ω μ) :
     cutNormSigned μ K ≤ 4 * cutNorm μ K := by
   refine cutNormSigned_le μ fun u v hu hv hu1 hv1 => ?_
-  obtain ⟨w, hw, hw', hle⟩ := exists_pm_one_left μ K hu hv hu1 hv1
-  obtain ⟨z, hz, hz', hle2⟩ :=
-    exists_pm_one_left μ K hv hw hv1 (mem_Icc_of_pm hw')
-  have e1 : K.testIntegral μ w v = K.testIntegral μ v w := K.testIntegral_comm μ w v
-  have e2 : K.testIntegral μ z w = K.testIntegral μ w z := K.testIntegral_comm μ z w
-  have h4 : |K.testIntegral μ w z| ≤ 4 * cutNorm μ K :=
-    abs_testIntegral_le_four_mul_cutNorm_of_pm μ K hw hz hw' hz'
-  calc |K.testIntegral μ u v|
-      ≤ K.testIntegral μ w v := hle
-    _ = K.testIntegral μ v w := e1
-    _ ≤ |K.testIntegral μ v w| := le_abs_self _
-    _ ≤ K.testIntegral μ z w := hle2
-    _ = K.testIntegral μ w z := e2
-    _ ≤ |K.testIntegral μ w z| := le_abs_self _
-    _ ≤ 4 * cutNorm μ K := h4
+  let up := fun x => max (u x) 0
+  let un := fun x => max (-u x) 0
+  let vp := fun x => max (v x) 0
+  let vn := fun x => max (-v x) 0
+  have hupm : Measurable up := hu.max measurable_const
+  have hunm : Measurable un := hu.neg.max measurable_const
+  have hvpm : Measurable vp := hv.max measurable_const
+  have hvnm : Measurable vn := hv.neg.max measurable_const
+  have hup1 : ∀ x, up x ∈ Icc (0 : ℝ) 1 := fun x =>
+    ⟨le_max_right _ _, max_le (hu1 x).2 zero_le_one⟩
+  have hun1 : ∀ x, un x ∈ Icc (0 : ℝ) 1 := fun x =>
+    ⟨le_max_right _ _, max_le (by linarith [(hu1 x).1]) zero_le_one⟩
+  have hvp1 : ∀ x, vp x ∈ Icc (0 : ℝ) 1 := fun x =>
+    ⟨le_max_right _ _, max_le (hv1 x).2 zero_le_one⟩
+  have hvn1 : ∀ x, vn x ∈ Icc (0 : ℝ) 1 := fun x =>
+    ⟨le_max_right _ _, max_le (by linarith [(hv1 x).1]) zero_le_one⟩
+  have hup1' : ∀ x, up x ∈ Icc (-1 : ℝ) 1 := fun x =>
+    ⟨by linarith [(hup1 x).1], (hup1 x).2⟩
+  have hun1' : ∀ x, un x ∈ Icc (-1 : ℝ) 1 := fun x =>
+    ⟨by linarith [(hun1 x).1], (hun1 x).2⟩
+  have hvp1' : ∀ x, vp x ∈ Icc (-1 : ℝ) 1 := fun x =>
+    ⟨by linarith [(hvp1 x).1], (hvp1 x).2⟩
+  have hvn1' : ∀ x, vn x ∈ Icc (-1 : ℝ) 1 := fun x =>
+    ⟨by linarith [(hvn1 x).1], (hvn1 x).2⟩
+  have hu_eq : u = up - un := by
+    funext x
+    exact (max_zero_sub_max_neg_zero_eq_self (u x)).symm
+  have hv_eq : v = vp - vn := by
+    funext x
+    exact (max_zero_sub_max_neg_zero_eq_self (v x)).symm
+  have hu_sub1 : ∀ x, (up - un) x ∈ Icc (-1 : ℝ) 1 := by
+    rw [← hu_eq]
+    exact hu1
+  have hpp := abs_testIntegral_le_cutNorm μ K hupm hvpm hup1 hvp1
+  have hmp := abs_testIntegral_le_cutNorm μ K hunm hvpm hun1 hvp1
+  have hpm := abs_testIntegral_le_cutNorm μ K hupm hvnm hup1 hvn1
+  have hmm := abs_testIntegral_le_cutNorm μ K hunm hvnm hun1 hvn1
+  rw [hu_eq, hv_eq,
+    K.testIntegral_sub_right μ
+      (K.integrable_testIntegrand μ (hupm.sub hunm) hvpm hu_sub1 hvp1')
+      (K.integrable_testIntegrand μ (hupm.sub hunm) hvnm hu_sub1 hvn1'),
+    K.testIntegral_sub_left μ
+      (K.integrable_testIntegrand μ hupm hvpm hup1' hvp1')
+      (K.integrable_testIntegrand μ hunm hvpm hun1' hvp1'),
+    K.testIntegral_sub_left μ
+      (K.integrable_testIntegrand μ hupm hvnm hup1' hvn1')
+      (K.integrable_testIntegrand μ hunm hvnm hun1' hvn1')]
+  calc
+    |K.testIntegral μ up vp - K.testIntegral μ un vp -
+        (K.testIntegral μ up vn - K.testIntegral μ un vn)|
+        ≤ |K.testIntegral μ up vp - K.testIntegral μ un vp| +
+            |K.testIntegral μ up vn - K.testIntegral μ un vn| := abs_sub _ _
+    _ ≤ (|K.testIntegral μ up vp| + |K.testIntegral μ un vp|) +
+          (|K.testIntegral μ up vn| + |K.testIntegral μ un vn|) :=
+      add_le_add (abs_sub _ _) (abs_sub _ _)
+    _ ≤ (cutNorm μ K + cutNorm μ K) + (cutNorm μ K + cutNorm μ K) :=
+      add_le_add (add_le_add hpp hmp) (add_le_add hpm hmm)
+    _ = 4 * cutNorm μ K := by ring
 
 end DenseGraphLimits
 

@@ -42,6 +42,8 @@ structure.
   explicitly in the biproduct decomposition.
 * `TauCeti.ExactStructure.conflation_of_splitting`: a split short complex is a conflation of
   every exact structure, so `ExactStructure.split C` is the smallest one.
+* `TauCeti.ExactStructure.conflation_zero_id`: the trivial conflation `0 ↪ X ↠ X`, split by the
+  identity, is a conflation of every exact structure.
 * `TauCeti.ExactStructure.split_isInflation_iff` and
   `TauCeti.ExactStructure.split_isDeflation_iff`: the characteristic API of
   `TauCeti.ExactStructure.split`.
@@ -377,6 +379,11 @@ theorem conflation_of_splitting (E : ExactStructure C) {S : ShortComplex C} (s :
     E.Conflation S :=
   E.toConflationClass.conflation_of_iso (isoBiprodShortComplex s).symm
     (E.conflation_biprodShortComplex S.X₁ S.X₃)
+
+/-- The trivial conflation `0 ↪ X ↠ X`, split by the identity. -/
+theorem conflation_zero_id (E : ExactStructure C) (X : C) :
+    E.Conflation (ShortComplex.mk (0 : (0 : C) ⟶ X) (𝟙 X) (by simp)) :=
+  E.conflation_of_splitting { r := 0, s := 𝟙 X, f_r := (isZero_zero C).eq_of_src _ _ }
 
 /-- A conflation of the split exact structure is a conflation of every exact structure. -/
 theorem conflation_of_split_conflation (E : ExactStructure C) {S : ShortComplex C}

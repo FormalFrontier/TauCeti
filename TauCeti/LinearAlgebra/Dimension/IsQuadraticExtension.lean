@@ -16,25 +16,27 @@ order to *choose* and *change* a generator:
 
 `Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap`: a generator exists at all, so a
 construction over `L/K` may pick one.
-`Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul`: any two generators of a
-quadratic extension differ by `θ' = b + aθ` with `a ≠ 0`, so a statement proved for one generator
-transfers to every other. This is what makes a construction defined by "pick any `θ ∈ L ∖ K`"
-well posed up to the ambiguity that `b + aθ` describes.
-`linearIndependent_one_of_notMem_range_algebraMap` is the linear-algebra step behind the second.
+`Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul`: every element is `b + aθ`
+for a fixed generator `θ`, the coordinate presentation over the basis `1, θ` (used by the
+quadratic field-norm computation).
+`Algebra.IsQuadraticExtension.exists_ne_zero_eq_algebraMap_add_algebraMap_mul`: for a *second*
+generator the `θ`-coefficient is nonzero, so any two generators differ by `θ' = b + aθ` with
+`a ≠ 0` and a statement proved for one transfers to every other.
+`linearIndependent_one_of_notMem_range_algebraMap` is the linear-algebra step behind them.
 
-Two of the three ask for no field structure on `L`, and each is stated at the weakest level its
-proof supports. `Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap` needs only a
-*semiring*, the level Mathlib states `Algebra.IsQuadraticExtension` itself at, because it sees
-`L` only as a free `K`-module of rank two and derives nontriviality from that rank rather than
-assuming it. `linearIndependent_one_of_notMem_range_algebraMap` carries no rank hypothesis at
-all — its argument is just that `θ` is not a `K`-multiple of `1`, so it does ask for `L`
-nontrivial — but it stops at a *ring*, because the `LinearIndependent.pair_iff'` it applies is
-stated over an `AddCommGroup`. So both cover the split and non-reduced quadratic algebras
-`K × K` and `K[X]/(X²)`. Only `exists_eq_algebraMap_add_algebraMap_mul` asks for a field.
+None asks for a field on `L`, and each is stated at the weakest level its proof supports. The
+generator-existence and both coordinate theorems need only a *semiring* — the level Mathlib states
+`Algebra.IsQuadraticExtension` itself at — the ring structure the spanning needs being borrowed
+locally through `Algebra.semiringToRing`. `linearIndependent_one_of_notMem_range_algebraMap`
+carries no rank hypothesis at all — its argument is just that `θ` is not a `K`-multiple of `1`, so
+it asks for `L` nontrivial — but it stops at a *ring*, because the `LinearIndependent.pair_iff'`
+it applies is stated over an `AddCommGroup`. So all cover the split and non-reduced quadratic
+algebras `K × K` and `K[X]/(X²)`.
 
 These are consumed by the extension quadratic twist in
 `TauCeti/AlgebraicGeometry/EllipticCurve/QuadraticTwist.lean`, which advances
-`TauCetiRoadmap/EllipticCurves/README.md` §Layer 5 (twists).
+`TauCetiRoadmap/EllipticCurves/README.md` §Layer 5 (twists), and by the quadratic field-norm
+computation in `TauCeti/NumberTheory/NumberField/Quadratic/Norm.lean`.
 
 Adapted from the FLT project (`ImperialCollegeLondon/FLT`,
 `FLT/Mathlib/LinearAlgebra/Dimension/IsQuadraticExtension.lean` at the roadmap's pin
@@ -72,27 +74,36 @@ theorem Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap [Semiring L]
     Module.finrank_of_bijective_algebraMap ⟨FaithfulSMul.algebraMap_injective K L, h⟩
   omega
 
-variable [Field L] [Algebra K L] [Algebra.IsQuadraticExtension K L]
-
-namespace Algebra.IsQuadraticExtension
+/-- **Every element of a quadratic extension is `b + aθ`** for a fixed generator `θ`: the basis
+`1, θ` spans `L` over `K`. The `θ`-coefficient may vanish, exactly when the element lies in the
+base field; `exists_ne_zero_eq_algebraMap_add_algebraMap_mul` records that it does not for a second
+generator. The spanning is `K`-linear algebra, so this needs only a *semiring* on `L`. -/
+theorem Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul [Semiring L]
+    [Algebra K L] [Algebra.IsQuadraticExtension K L] {θ : L}
+    (hθ : θ ∉ Set.range (algebraMap K L)) (x : L) :
+    ∃ a b : K, x = algebraMap K L b + algebraMap K L a * θ := by
+  let _ : Ring L := Algebra.semiringToRing K
+  have h2 := Algebra.IsQuadraticExtension.finrank_eq_two K L
+  have : Nontrivial L := Module.nontrivial_of_finrank_pos (R := K) (by rw [h2]; norm_num)
+  have hli := linearIndependent_one_of_notMem_range_algebraMap K L hθ
+  have hmem : x ∈ Submodule.span K (Set.range ![(1 : L), θ]) := by
+    rw [hli.span_eq_top_of_card_eq_finrank (by rw [Fintype.card_fin]; exact h2.symm)]
+    trivial
+  rw [Matrix.range_cons_cons_empty, Submodule.mem_span_pair] at hmem
+  obtain ⟨c, d, hcd⟩ := hmem
+  exact ⟨d, c, by rw [← hcd, Algebra.smul_def, Algebra.smul_def, mul_one]⟩
 
 /-- Any element of a quadratic extension `L/K` is a `K`-linear combination of `1` and a given
 generator `θ`, and the `θ`-coefficient is nonzero if the element also lies outside `K`. So any
 two generators differ by `θ' = b + aθ` with `a ≠ 0`. -/
-theorem exists_eq_algebraMap_add_algebraMap_mul {θ θ' : L}
+theorem Algebra.IsQuadraticExtension.exists_ne_zero_eq_algebraMap_add_algebraMap_mul [Semiring L]
+    [Algebra K L] [Algebra.IsQuadraticExtension K L] {θ θ' : L}
     (hθ : θ ∉ Set.range (algebraMap K L)) (hθ' : θ' ∉ Set.range (algebraMap K L)) :
     ∃ a b : K, a ≠ 0 ∧ θ' = algebraMap K L b + algebraMap K L a * θ := by
-  have hli := linearIndependent_one_of_notMem_range_algebraMap K L hθ
-  have hmem : θ' ∈ Submodule.span K (Set.range ![(1 : L), θ]) := by
-    rw [hli.span_eq_top_of_card_eq_finrank
-      (by rw [Fintype.card_fin]; exact (finrank_eq_two K L).symm)]
-    trivial
-  rw [Matrix.range_cons_cons_empty, Submodule.mem_span_pair] at hmem
-  obtain ⟨c, d, hcd⟩ := hmem
-  refine ⟨d, c, fun hd ↦ hθ' ⟨c, ?_⟩, ?_⟩
-  · rw [← hcd, hd, zero_smul, add_zero, Algebra.algebraMap_eq_smul_one]
-  · rw [← hcd, Algebra.smul_def, Algebra.smul_def, mul_one]
-
-end Algebra.IsQuadraticExtension
+  obtain ⟨a, b, hab⟩ :=
+    Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul K L hθ θ'
+  refine ⟨a, b, ?_, hab⟩
+  rintro rfl
+  exact hθ' ⟨b, by rw [hab, map_zero, zero_mul, add_zero]⟩
 
 end
