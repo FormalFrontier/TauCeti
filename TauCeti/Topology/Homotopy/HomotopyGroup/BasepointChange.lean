@@ -109,7 +109,7 @@ theorem transportFamily_apply_of_mem_boundary {P : Type*} [TopologicalSpace P]
   have hu : cubeRad z = 1 := (cubeRad_eq_one_iff z).2 hz
   rw [transportFamily_apply, hu, ite_eq_right_of_eq_false _ _ (eq_false (by norm_num)),
     max_eq_left (by norm_num)]
-  norm_num [projIcc_one]
+  norm_num [Set.projIcc_right]
 
 namespace GenLoop
 
@@ -188,17 +188,17 @@ def HomotopyAlong.trans {w : X} {γ : Path x y} {δ : Path y w} {f : Ω^ N X x} 
       · rintro ⟨t, z⟩ ht
         dsimp only at ht ⊢
         rw [ht, show (2 : ℝ) * (1 / 2) = 1 by norm_num, show (1 : ℝ) - 1 = 0 by norm_num,
-          projIcc_one, projIcc_zero]
+          Set.projIcc_right, Set.projIcc_left]
         exact (h₁.map_one z).trans (h₂.map_zero z).symm⟩
   map_zero z := by
     change (if ((0 : I) : ℝ) ≤ 1 / 2 then _ else _) = _
     rw [ite_eq_left_of_eq_true _ _ (eq_true (by norm_num)),
-      show (2 : ℝ) * ((0 : I) : ℝ) = 0 by norm_num, projIcc_zero]
+      show (2 : ℝ) * ((0 : I) : ℝ) = 0 by norm_num, Set.projIcc_left]
     exact h₁.map_zero z
   map_one z := by
     change (if ((1 : I) : ℝ) ≤ 1 / 2 then _ else _) = _
     rw [ite_eq_right_of_eq_false _ _ (eq_false (by norm_num)),
-      show (2 : ℝ) * ((1 : I) : ℝ) - 1 = 1 by norm_num, projIcc_one]
+      show (2 : ℝ) * ((1 : I) : ℝ) - 1 = 1 by norm_num, Set.projIcc_right]
     exact h₂.map_one z
   map_boundary t z hz := by
     change (if ((t : I) : ℝ) ≤ 1 / 2 then _ else _) = _
@@ -251,8 +251,10 @@ def HomotopyAlong.transAt [DecidableEq N] (i : N) {γ : Path x y} {f f' : Ω^ N 
       · rintro ⟨t, z⟩ ht
         dsimp only at ht ⊢
         rw [ht, show (2 : ℝ) * (1 / 2) = 1 by norm_num, show (1 : ℝ) - 1 = 0 by norm_num,
-          projIcc_one, projIcc_zero,
-          h₁.map_boundary t _ ⟨i, Or.inr (Function.update_self ..)⟩,
+          Set.projIcc_right, Set.projIcc_left]
+        change h₁.map (t, Function.update z i (1 : I)) =
+          h₂.map (t, Function.update z i (0 : I))
+        rw [h₁.map_boundary t _ ⟨i, Or.inr (Function.update_self ..)⟩,
           h₂.map_boundary t _ ⟨i, Or.inl (Function.update_self ..)⟩]⟩
   map_zero z := by
     change (if _ ≤ 1 / 2 then _ else _) = _
@@ -276,11 +278,11 @@ def HomotopyAlong.transAt [DecidableEq N] (i : N) {γ : Path x y} {f f' : Ω^ N 
       · rw [ite_eq_left_of_eq_true _ _ (eq_true (by rw [hj]; norm_num))]
         refine h₁.map_boundary t _ ⟨j, Or.inl ?_⟩
         rw [Function.update_self, hj]
-        norm_num [projIcc_zero]
+        norm_num [Set.projIcc_left]
       · rw [ite_eq_right_of_eq_false _ _ (eq_false (by rw [hj]; norm_num))]
         refine h₂.map_boundary t _ ⟨j, Or.inr ?_⟩
         rw [Function.update_self, hj]
-        norm_num [projIcc_one]
+        norm_num [Set.projIcc_right]
     · split_ifs
       · exact h₁.map_boundary t _ ⟨j, by rwa [Function.update_of_ne hji]⟩
       · exact h₂.map_boundary t _ ⟨j, by rwa [Function.update_of_ne hji]⟩

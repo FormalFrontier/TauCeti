@@ -108,7 +108,8 @@ radius `u` to `G` at the time `2 - 2 * r / u`. -/
     have hzero : (2 : ℝ) - 2 * r p / r p = 0 := by
       rw [mul_div_assoc, div_self hrp.ne']
       ring
-    rw [hzero, projIcc_zero]
+    rw [hzero, Set.projIcc_left]
+    rfl
 
 theorem collar_apply {P : Type*} [TopologicalSpace P] (r : C(P, ℝ))
     (F : C(P × (I^N), X)) (G : C(P × I, X)) (hr : ∀ p, 1 / 2 ≤ r p)
@@ -210,7 +211,7 @@ above the centre of the cube. It is the identity on the cube boundary. -/
           ((continuous_const.div hc fun z => (hmax z).ne').prodMk continuous_id)
     · intro z hz
       rw [hz, max_eq_left (by norm_num)]
-      norm_num [projIcc_zero]
+      norm_num [Set.projIcc_left]
 
 theorem cubeRetract_apply (z : I^N) :
     cubeRetract z =
@@ -223,7 +224,7 @@ theorem cubeRetract_of_mem_boundary {z : I^N} (hz : z ∈ Cube.boundary N) :
   have hu : cubeRad z = 1 := (cubeRad_eq_one_iff z).2 hz
   rw [cubeRetract_apply, hu, ite_eq_right_of_eq_false _ _ (eq_false (by norm_num)),
     max_eq_left (by norm_num)]
-  norm_num [projIcc_one]
+  norm_num [Set.projIcc_right]
 
 namespace GenLoop
 

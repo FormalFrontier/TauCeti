@@ -28,10 +28,8 @@ it multiplies the radius by `s` as long as the result still fits in the cube
 (`TauCeti.cubeRad_cubeScale`). In particular a point of radius `r > 0` is scaled by `1 / r` onto
 the boundary, which is what makes the collar constructions glue continuously.
 
-Two elementary facts about the unit interval are collected here for the same consumers: the
-values of `Set.projIcc` at the two endpoints, and the straight-line interpolation
-`TauCeti.unitIntervalLerp`, which is the convex combination used to deform a point of the
-cylinder `I × I^N` onto its radial retract.
+The straight-line interpolation `TauCeti.unitIntervalLerp` is the convex combination used to
+deform a point of the cylinder `I × I^N` onto its radial retract.
 
 ## Main declarations
 
@@ -57,15 +55,7 @@ open scoped unitInterval Topology Topology.Homotopy
 
 variable {N : Type*}
 
-/-! ### Elementary facts about the unit interval -/
-
-/-- The projection to the unit interval fixes `0`. -/
-theorem projIcc_zero : Set.projIcc (0 : ℝ) 1 zero_le_one 0 = (0 : I) := by
-  rw [Set.projIcc_left]; rfl
-
-/-- The projection to the unit interval fixes `1`. -/
-theorem projIcc_one : Set.projIcc (0 : ℝ) 1 zero_le_one 1 = (1 : I) := by
-  rw [Set.projIcc_right]; rfl
+/-! ### Straight-line interpolation in the unit interval -/
 
 /-- The convex combination `(1 - s) * a + s * b` of two points of the unit interval, that is,
 `AffineMap.lineMap` on the underlying reals, restricted to `I`. -/
