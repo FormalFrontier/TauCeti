@@ -152,7 +152,7 @@ variable [DecidableEq F]
 
 /-- A pretransitive action on a nonempty type has one orbit. This is Mathlib's
 `MulAction.pretransitive_iff_unique_quotient_of_nonempty` in counting form, named because the
-pairing computation below uses it four times, at four different actions. -/
+pairing computation below uses it three times, at three different actions. -/
 private theorem card_orbitQuotient_eq_one (G α : Type*) [Group G] [MulAction G α] [Nonempty α]
     [IsPretransitive G α] : Nat.card (orbitRel.Quotient G α) = 1 :=
   let _ := ((MulAction.pretransitive_iff_unique_quotient_of_nonempty G α).mp ‹_›).some
