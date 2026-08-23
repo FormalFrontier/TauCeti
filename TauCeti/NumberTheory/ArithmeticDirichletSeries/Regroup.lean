@@ -88,6 +88,7 @@ theorem idealTerm_def (f : IdealArithmeticFunction K) (s : ℂ) (I : (Ideal (�
   (rfl)
 
 /-- The absolute value of an ideal term depends on `s` only through its real part. -/
+@[simp]
 theorem norm_idealTerm (f : IdealArithmeticFunction K) (s : ℂ) (I : (Ideal (𝓞 K))⁰) :
     ‖idealTerm K f s I‖ = ‖f I‖ / (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ^ s.re := by
   rw [idealTerm_def, norm_div,
