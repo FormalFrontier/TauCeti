@@ -87,7 +87,9 @@ theorem pathAlgebraEquiv_vertexIdempotent (e : G ≃g H) (i : V) :
   rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_apply, mapAlgHom_vertexIdempotent, map_obj]
   rfl
 
-@[simp]
+/-- The relabelling carries an arrow along an edge of `G` to the arrow along the image edge of `H`.
+Deliberately not a `simp` lemma, `TauCeti.PathAlgebra.ofArrow_eq_ofPath` already rewriting its
+left-hand side. -/
 theorem pathAlgebraEquiv_ofArrow (e : G ≃g H) {i j : V} (h : G.Adj i j) :
     pathAlgebraEquiv k e (ofArrow (arrow G h)) = ofArrow (arrow H (e.map_adj_iff.mpr h)) := by
   rw [pathAlgebraEquiv, PathAlgebra.mapAlgEquiv_apply, mapAlgHom_ofArrow, map_arrow,

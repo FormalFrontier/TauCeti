@@ -178,7 +178,8 @@ theorem mapAlgHom_vertexIdempotent (φ : Q ⥤q R) (hφ : Function.Bijective φ.
   rw [vertexIdempotent_eq_single, mapAlgHom_single, mapTotalPath_mk, Prefunctor.mapPath_nil,
     vertexIdempotent_eq_single]
 
-@[simp]
+/-- Pushing an arrow along `mapAlgHom` carries it to the image arrow. Deliberately not a `simp`
+lemma, `TauCeti.PathAlgebra.ofArrow_eq_ofPath` already rewriting its left-hand side. -/
 theorem mapAlgHom_ofArrow (φ : Q ⥤q R) (hφ : Function.Bijective φ.obj) {a b : Q} (e : a ⟶ b) :
     mapAlgHom k φ hφ (ofArrow e) = ofArrow (φ.map e) := by
   rw [ofArrow_eq_ofPath, mapAlgHom_ofPath, mapTotalPath_mk, Prefunctor.mapPath_toPath,
