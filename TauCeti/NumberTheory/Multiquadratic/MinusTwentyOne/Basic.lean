@@ -56,12 +56,7 @@ theorem exists_minpoly_eq_X_sq_add_twenty_one_and_adjoin_eq_top :
   refine ⟨integralSqrt hx, minpoly_integralSqrt hx (fun ⟨q, hq⟩ => by
       norm_num at hq
       nlinarith [mul_self_nonneg q]), ?_⟩
-  have hfne : (X ^ 2 - C (-21 : ℚ)) ≠ 0 :=
-    (monic_X_pow_sub_C (-21 : ℚ) (by norm_num)).ne_zero
-  have hpb := (AdjoinRoot.powerBasis (f := X ^ 2 - C (-21 : ℚ)) hfne).adjoin_gen_eq_top
-  rw [AdjoinRoot.powerBasis_gen] at hpb
-  have hθx : ((integralSqrt hx : 𝓞 K) : K) = x := algebraMap_integralSqrt hx
-  rw [hθx]
-  exact hpb
+  rw [algebraMap_integralSqrt hx]
+  exact AdjoinRoot.adjoinRoot_eq_top
 
 end TauCeti.NumberField

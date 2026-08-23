@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.ClassNumber
-public import Mathlib.RingTheory.AdjoinRoot
 public import TauCeti.NumberTheory.Multiquadratic.MinusTwentyOne.Basic
 import Mathlib.Analysis.Real.Pi.Bounds
 import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrime.Independence
