@@ -29,6 +29,9 @@ on `[0, ∞)`, and its possibly infinite-measure counterpart on `(0, ∞)`.
   API and the bridge `TauCeti.laplaceTransform_eq_mgf` to Mathlib's moment-generating function.
 * `TauCeti.RepresentsLaplace`: the predicate that a finite measure represents a function by its
   Laplace transform on `[0, ∞)`, with `congr`/`add`/`smul`/`unique` API.
+* `TauCeti.representsLaplace_laplaceTransformENN`: every finite measure on `ℝ≥0` is represented
+  by its extended-real Laplace transform, after taking real values; conversely,
+  `TauCeti.RepresentsLaplace.laplaceTransformENN_eq` recovers that extended-real transform.
 * `TauCeti.RepresentsLaplaceOnIoi`: the corresponding predicate for a possibly infinite measure
   on `(0, ∞)`, with its basic API and the easy direction of the representation theorem.
 * `TauCeti.isContinuousCompletelyMonotoneOnIoi_laplaceTransform`,
@@ -504,6 +507,36 @@ protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
     exact ENNReal.mul_lt_top ENNReal.coe_lt_top (measure_lt_top μ univ)
   refine ⟨inferInstance, fun t ht => ?_⟩
   rw [laplaceTransform_smul_measure, ENNReal.coe_toReal, ← hf.eq_laplaceTransform ht]
+
+end RepresentsLaplace
+
+/-! ## The real and extended-real Laplace transforms -/
+
+/-- The real value of the extended-real Laplace transform of a finite measure is its usual
+Laplace transform. -/
+theorem toReal_laplaceTransformENN (μ : Measure ℝ≥0) (t : ℝ≥0) [IsFiniteMeasure μ] :
+    (laplaceTransformENN μ t).toReal = laplaceTransform μ (t : ℝ) := by
+  have h := ofReal_integral_eq_lintegral_ofReal (integrable_exp_neg_mul μ t.coe_nonneg)
+    (.of_forall fun p => (Real.exp_pos _).le)
+  rw [laplaceTransform_apply, laplaceTransformENN_apply]
+  simp_rw [neg_mul]
+  rw [← h, ENNReal.toReal_ofReal (integral_nonneg fun p => (Real.exp_pos _).le)]
+
+/-- **A finite measure is represented by its extended-real Laplace transform.** -/
+theorem representsLaplace_laplaceTransformENN (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
+    RepresentsLaplace μ fun t : ℝ => (laplaceTransformENN μ t.toNNReal).toReal := by
+  refine representsLaplace_iff.mpr ⟨inferInstance, fun t ht => ?_⟩
+  rw [toReal_laplaceTransformENN, Real.coe_toNNReal t ht]
+
+namespace RepresentsLaplace
+
+/-- A representing measure's extended-real Laplace transform is obtained by applying
+`ENNReal.ofReal` to the represented function on `ℝ≥0`. -/
+theorem laplaceTransformENN_eq (h : RepresentsLaplace μ f) (t : ℝ≥0) :
+    laplaceTransformENN μ t = ENNReal.ofReal (f t) := by
+  have := h.isFiniteMeasure
+  rw [h.eq_laplaceTransform t.coe_nonneg, ← toReal_laplaceTransformENN]
+  exact (ENNReal.ofReal_toReal (laplaceTransformENN_ne_top μ t)).symm
 
 end RepresentsLaplace
 
