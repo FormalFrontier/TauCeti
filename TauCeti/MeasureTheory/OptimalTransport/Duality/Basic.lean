@@ -160,20 +160,14 @@ the dual value is bounded by the cost of every coupling. -/
 theorem DualFeasible.ofReal_kantorovichDualValue_le_lintegral (h : DualFeasible c φ ψ)
     (hφ : Integrable φ μ) (hψ : Integrable ψ ν) (hπ : IsCoupling π μ ν) :
     ENNReal.ofReal (kantorovichDualValue μ ν φ ψ) ≤ ∫⁻ z, c z ∂π := by
-  have hfst : MeasurePreserving Prod.fst π μ := ⟨measurable_fst, hπ.fst_eq⟩
-  have hsnd : MeasurePreserving Prod.snd π ν := ⟨measurable_snd, hπ.snd_eq⟩
   have hφπ : Integrable (fun z : X × Y ↦ φ z.1) π :=
-    hfst.integrable_comp_of_integrable hφ
+    hπ.measurePreserving_fst.integrable_comp_of_integrable hφ
   have hψπ : Integrable (fun z : X × Y ↦ ψ z.2) π :=
-    hsnd.integrable_comp_of_integrable hψ
-  have hφIntegral : ∫ z, φ z.1 ∂π = ∫ x, φ x ∂μ := by
-    rw [← hfst.map_eq] at hφ ⊢
-    exact (integral_map measurable_fst.aemeasurable hφ.aestronglyMeasurable).symm
-  have hψIntegral : ∫ z, ψ z.2 ∂π = ∫ y, ψ y ∂ν := by
-    rw [← hsnd.map_eq] at hψ ⊢
-    exact (integral_map measurable_snd.aemeasurable hψ.aestronglyMeasurable).symm
+    hπ.measurePreserving_snd.integrable_comp_of_integrable hψ
   have hvalue : kantorovichDualValue μ ν φ ψ = ∫ z, φ z.1 + ψ z.2 ∂π := by
-    rw [kantorovichDualValue, integral_add hφπ hψπ, hφIntegral, hψIntegral]
+    rw [kantorovichDualValue, integral_add hφπ hψπ,
+      hπ.integral_comp_fst hφ.aestronglyMeasurable,
+      hπ.integral_comp_snd hψ.aestronglyMeasurable]
   rw [hvalue]
   exact
     (TauCeti.MeasureTheory.ofReal_integral_le_lintegral_ofReal
