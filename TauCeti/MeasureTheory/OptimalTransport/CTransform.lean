@@ -313,14 +313,14 @@ theorem upperSemicontinuous_cTransformSymm_of_continuous [TopologicalSpace X]
 
 /-- Subtracting a real constant commutes with an infimum in `EReal`; both sides are `⊤` when the
 index type is empty. This is the shift that normalises a `c`-transform. -/
-theorem EReal.iInf_sub_coe {ι : Sort*} (f : ι → EReal) (a : ℝ) :
+theorem _root_.EReal.iInf_sub_coe {ι : Sort*} (f : ι → EReal) (a : ℝ) :
     (⨅ i, (f i - (a : EReal))) = (⨅ i, f i) - (a : EReal) := by
   refine le_antisymm ?_ (le_iInf fun i => EReal.sub_le_sub (iInf_le f i) le_rfl)
   rw [EReal.le_sub_iff_add_le (.inl (EReal.coe_ne_bot a)) (.inl (EReal.coe_ne_top a))]
   exact le_iInf fun i => EReal.add_le_of_le_sub (iInf_le _ i)
 
 /-- Subtracting a sum whose final term is real can be reassociated when the minuend is real. -/
-theorem EReal.coe_sub_add_coe (b : EReal) (d a : ℝ) :
+theorem _root_.EReal.coe_sub_add_coe (b : EReal) (d a : ℝ) :
     (d : EReal) - (b + (a : EReal)) = (d : EReal) - b - (a : EReal) := by
   induction b with
   | bot => simp
