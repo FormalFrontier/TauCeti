@@ -11,7 +11,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.Basic
 
 /-!
-# The Chevalley group scheme of the pinned Geck lattice
+# The Kostant toral-closure group scheme of the pinned Geck lattice
 
 `TauCeti.DynkinType.lieAlgebra` is the split Lie algebra of a valid Dynkin type, realized by Geck's
 construction as explicit matrices acting on the coordinate space `GeckIndex → ℚ`, and
@@ -106,7 +106,7 @@ variable (t : DynkinType) (ht : t.Valid)
 
 /-! ## The group scheme -/
 
-/-- **The defining Hopf ideal of the Chevalley carrier of a valid Dynkin type**: the largest Hopf
+/-- **The defining Hopf ideal of the Geck carrier of a valid Dynkin type**: the largest Hopf
 ideal of the coordinate algebra of `GLₙ` killed by every numbered Kostant root subgroup and by the
 weight torus of the Geck lattice. -/
 def geckDefiningIdeal :
@@ -118,7 +118,7 @@ def geckDefiningIdeal :
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
 
-/-- The defining ideal of the Chevalley carrier is the Kostant toral defining ideal of the pinned
+/-- The defining ideal of the Geck carrier is the Kostant toral defining ideal of the pinned
 Geck data. -/
 theorem geckDefiningIdeal_def :
     t.geckDefiningIdeal ht =
@@ -129,13 +129,14 @@ theorem geckDefiningIdeal_def :
         (t.isNilpotent_geckRepresentation_rootGenerator ht)
         (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) := (rfl)
 
-/-- **The Chevalley group scheme of the pinned Geck lattice**: the smallest closed subgroup scheme
-of `GLₙ` over `ℤ`, with `n = rank + numRoots`, containing every divided-power exponential root
-subgroup of a numbered Chevalley generator and the weight torus of the Geck coordinates.
+/-- **The Kostant toral-closure group scheme of the pinned Geck lattice**: the smallest closed
+subgroup scheme of `GLₙ` over `ℤ`, with `n = rank + numRoots`, containing every divided-power
+exponential root subgroup of a numbered Chevalley generator and the weight torus of the Geck
+coordinates.
 
 Every ingredient is explicit pinned data, so no carrier is chosen from an existence theorem.
 Reductivity, and the identification of its root datum, are not claimed. -/
-abbrev geckGroupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
+def geckGroupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
@@ -143,32 +144,44 @@ abbrev geckGroupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
 
-/-- The Chevalley carrier is a closed subgroup scheme of `GLₙ`. -/
-def geckGroupSchemeι :
-    t.geckGroupScheme ht ⟶ GeneralLinear.groupScheme ℤ (t.geckDim ht) :=
-  TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
-    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
-    (t.geckCoordinateLattice ht).toAddSubgroup
-    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
-    (t.isNilpotent_geckRepresentation_rootGenerator ht)
-    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
-
-/-- The carrier inclusion is the Kostant toral-closure inclusion for the pinned Geck data. -/
-theorem geckGroupSchemeι_def :
-    t.geckGroupSchemeι ht =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
+/-- The Geck carrier is the Kostant toral-closure group scheme of the pinned Geck data. -/
+theorem geckGroupScheme_def :
+    t.geckGroupScheme ht =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme
         (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
         (t.geckCoordinateLattice ht).toAddSubgroup
         (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
         (t.isNilpotent_geckRepresentation_rootGenerator ht)
         (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) := (rfl)
 
-/-- The inclusion of the Chevalley carrier into `GLₙ` is a closed immersion. -/
+/-- The Geck carrier is a closed subgroup scheme of `GLₙ`. -/
+def geckGroupSchemeι :
+    t.geckGroupScheme ht ⟶ GeneralLinear.groupScheme ℤ (t.geckDim ht) :=
+  eqToHom (t.geckGroupScheme_def ht) ≫
+    TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+      (t.geckCoordinateLattice ht).toAddSubgroup
+      (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+      (t.isNilpotent_geckRepresentation_rootGenerator ht)
+      (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
+
+/-- The carrier inclusion is the Kostant toral-closure inclusion for the pinned Geck data. -/
+theorem geckGroupSchemeι_def :
+    t.geckGroupSchemeι ht =
+      eqToHom (t.geckGroupScheme_def ht) ≫
+        TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
+          (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+          (t.geckCoordinateLattice ht).toAddSubgroup
+          (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+          (t.isNilpotent_geckRepresentation_rootGenerator ht)
+          (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) := (rfl)
+
+/-- The inclusion of the Geck carrier into `GLₙ` is a closed immersion. -/
 instance isClosedImmersion_geckGroupSchemeι :
     IsClosedImmersion (t.geckGroupSchemeι ht).hom.hom.left :=
   TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantToralGroupSchemeι _ _ _ _ _ _ _ _
 
-/-- **The `i`-th root subgroup of the Chevalley carrier**, the divided-power exponential of the
+/-- **The `i`-th root subgroup of the Geck carrier**, the divided-power exponential of the
 numbered raising or lowering generator, factored through the carrier. -/
 def geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
     AdditiveGroup.groupScheme ℤ ⟶ t.geckGroupScheme ht :=
@@ -177,7 +190,8 @@ def geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
     (t.geckCoordinateLattice ht).toAddSubgroup
     (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
-    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i ≫
+      eqToHom (t.geckGroupScheme_def ht).symm
 
 /-- A pinned root-subgroup morphism is the corresponding Kostant toral-closure morphism. -/
 theorem geckRootSubgroup_def (i : Fin t.rank ⊕ Fin t.rank) :
@@ -187,9 +201,10 @@ theorem geckRootSubgroup_def (i : Fin t.rank ⊕ Fin t.rank) :
         (t.geckCoordinateLattice ht).toAddSubgroup
         (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
         (t.isNilpotent_geckRepresentation_rootGenerator ht)
-        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i := (rfl)
+        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i ≫
+          eqToHom (t.geckGroupScheme_def ht).symm := (rfl)
 
-/-- Including a root subgroup of the Chevalley carrier into `GLₙ` recovers the represented Kostant
+/-- Including a root subgroup of the Geck carrier into `GLₙ` recovers the represented Kostant
 root subgroup of the corresponding numbered generator. -/
 @[simp]
 theorem geckRootSubgroup_comp_ι (i : Fin t.rank ⊕ Fin t.rank) :
@@ -210,7 +225,8 @@ def geckWeightTorus :
     (t.geckCoordinateLattice ht).toAddSubgroup
     (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
-    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) ≫
+      eqToHom (t.geckGroupScheme_def ht).symm
 
 /-- The pinned weight-torus morphism is the Kostant toral-closure weight-torus morphism. -/
 theorem geckWeightTorus_def :
@@ -220,7 +236,8 @@ theorem geckWeightTorus_def :
         (t.geckCoordinateLattice ht).toAddSubgroup
         (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
         (t.isNilpotent_geckRepresentation_rootGenerator ht)
-        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) := (rfl)
+        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) ≫
+          eqToHom (t.geckGroupScheme_def ht).symm := (rfl)
 
 /-- Including the weight-torus morphism into `GLₙ` recovers the diagonal weight torus of the Geck
 lattice. -/
@@ -251,7 +268,7 @@ theorem geckWeightTorus_conj_geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank)
                 (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
                 (t.rootGeneratorWeight ht i) : A) * u)) ≫
         (t.geckRootSubgroup ht i).hom.hom := by
-  simpa only [geckWeightTorus_def, geckRootSubgroup_def] using
+  have h :=
     UniversalEnvelopingAlgebra.kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
         (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
         (t.geckCoordinateLattice ht).toAddSubgroup
@@ -260,6 +277,10 @@ theorem geckWeightTorus_conj_geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank)
         (t.isCartanWeightVector_geckCoordinateBasisFin ht)
         (t.isNilpotent_geckRepresentation_rootGenerator ht) A
         (fun j => t.lie_lieBasis_h_rootGenerator ht i j) s u
+  have h' := congrArg
+    (fun q => q ≫ (eqToHom (t.geckGroupScheme_def ht).symm).hom.hom) h
+  simpa only [geckWeightTorus_def, geckRootSubgroup_def, Grp.comp', Mon.comp_hom',
+    Category.assoc, MonObj.mul_comp, GrpObj.inv_comp] using h'
 
 /-- **Rigidity of the Geck carrier.** Two homomorphisms out of the carrier are equal if they
 agree on every numbered root subgroup and on the represented weight torus. -/
@@ -269,15 +290,18 @@ theorem geckGroupScheme_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
     (hroot : ∀ i, t.geckRootSubgroup ht i ≫ φ = t.geckRootSubgroup ht i ≫ ψ)
     (htorus : t.geckWeightTorus ht ≫ φ = t.geckWeightTorus ht ≫ ψ) :
     φ = ψ := by
+  apply (cancel_epi (eqToHom (t.geckGroupScheme_def ht).symm)).1
   apply TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme_hom_ext
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
     (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
-    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) φ ψ
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
+    (eqToHom (t.geckGroupScheme_def ht).symm ≫ φ)
+    (eqToHom (t.geckGroupScheme_def ht).symm ≫ ψ)
   · intro i
-    simpa only [geckRootSubgroup_def] using hroot i
-  · simpa only [geckWeightTorus_def] using htorus
+    simpa only [geckRootSubgroup_def, Category.assoc] using hroot i
+  · simpa only [geckWeightTorus_def, Category.assoc] using htorus
 
 /-! ## Pinned pointwise subgroups -/
 
@@ -324,7 +348,7 @@ abbrev geckTorusSubsystemSubgroup (S : Set (Fin t.rank ⊕ Fin t.rank))
 
 /-! ## The pinning equation -/
 
-/-- **The pinning equation for the Chevalley carrier of a valid Dynkin type.** A torus point `s`
+/-- **The pinning equation for the Geck carrier of a valid Dynkin type.** A torus point `s`
 conjugates the root-subgroup element of parameter `u` into the one of parameter `α_i(s) u`, where
 `α_i` is the `i`-th Bourbaki row of the Cartan matrix on a raising generator and its negative on a
 lowering one.
@@ -373,7 +397,7 @@ abbrev geckTorusMatrix {A : Type v} [CommRing A] :
     (t.geckCoordinateLattice ht).toAddSubgroup (t.geckCoordinateBasisFin ht)
     (t.geckWeightFin ht)
 
-/-- **The `A`-valued points of the Chevalley carrier of a valid Dynkin type**, as a subgroup of
+/-- **The `A`-valued points of the Geck carrier of a valid Dynkin type**, as a subgroup of
 `GLₙ(A)` through the Hopf-ideal quotient presentation and the Geck coordinate basis. -/
 def geckPoints (A : Type v) [CommRing A] :
     Subgroup (Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) :=
@@ -384,7 +408,7 @@ def geckPoints (A : Type v) [CommRing A] :
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A
 
-/-- **The points of the Chevalley carrier are cut out by its defining Hopf ideal.** This is the
+/-- **The points of the Geck carrier are cut out by its defining Hopf ideal.** This is the
 form in which the `q`-power Frobenius of
 `TauCeti/Algebra/AlgebraicGroup/Frobenius/GeneralLinear.lean` acts on them. -/
 theorem geckPoints_def (A : Type v) [CommRing A] :
@@ -392,7 +416,7 @@ theorem geckPoints_def (A : Type v) [CommRing A] :
       GeneralLinear.hopfIdealPointsSubgroup (t.geckDim ht) (t.geckDefiningIdeal ht) A :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def _ _ _ _ _ _ _ _ A
 
-/-- A matrix is a point of the Chevalley carrier exactly when the associated convolution point
+/-- A matrix is a point of the Geck carrier exactly when the associated convolution point
 kills its defining Hopf ideal. -/
 @[simp]
 theorem mem_geckPoints_iff (A : Type v) [CommRing A]
