@@ -52,12 +52,6 @@ private noncomputable def scalarTrace :
   (Algebra.linearMap K (CliffordAlgebra (traceQuadraticForm K n))).comp <|
     (Fintype.card n / 2 : K) • Matrix.traceLinearMap n K K
 
-private theorem traceQuadraticLift_lie_ι (X Y : Matrix n n K) :
-    ⁅traceQuadraticLift (K := K) (n := n) X, ι (traceQuadraticForm K n) Y⁆ =
-      ι (traceQuadraticForm K n) ⁅X, Y⁆ := by
-  rw [traceQuadraticLift, CliffordAlgebra.quadraticLift_apply,
-    soEquivQuadratic_lie_ι, coe_traceAdjointSO, _root_.LieAlgebra.ad_apply]
-
 omit [DecidableEq n] [Invertible (2 : K)] in
 private theorem scalarTrace_lie (X : Matrix n n K)
     (c : CliffordAlgebra (traceQuadraticForm K n)) :
@@ -96,7 +90,8 @@ theorem glCliffordHom_lie_ι (X Y : Matrix n n K) :
       ι (traceQuadraticForm K n) ⁅X, Y⁆ := by
   -- Expose the two summands before applying bracket bilinearity.
   change ⁅traceQuadraticLift X + scalarTrace X, ι (traceQuadraticForm K n) Y⁆ = _
-  rw [add_lie, traceQuadraticLift_lie_ι, scalarTrace_lie, add_zero]
+  rw [add_lie, traceQuadraticLift, CliffordAlgebra.quadraticLift_lie_ι,
+    coe_traceAdjointSO, _root_.LieAlgebra.ad_apply, scalarTrace_lie, add_zero]
 
 private theorem matrixUnit_ad_eq_bivector_sum (i j : n) (Y : Matrix n n K) :
     (2⁻¹ : K) • ∑ k : n,
@@ -123,32 +118,19 @@ private theorem matrixUnit_ad_eq_bivector_sum (i j : n) (Y : Matrix n n K) :
       hia, hjb, h2]
   field_simp
 
-private noncomputable def matrixUnitBivectorSum (i j : n) :
-    CliffordAlgebra (traceQuadraticForm K n) :=
-  (2⁻¹ : K) • ∑ k : n,
-    bivector (traceQuadraticForm K n) (Matrix.single i k 1) (Matrix.single k j 1)
-
-private theorem matrixUnitBivectorSum_mem (i j : n) :
-    matrixUnitBivectorSum (K := K) i j ∈ quadraticLieSubalgebra (traceQuadraticForm K n) := by
-  rw [matrixUnitBivectorSum]
-  apply (quadraticLieSubalgebra (traceQuadraticForm K n)).smul_mem
-  exact (quadraticLieSubalgebra (traceQuadraticForm K n)).sum_mem fun k _ =>
-    bivector_mem_quadraticLieSubalgebra (traceQuadraticForm K n) (Matrix.single i k 1)
-      (Matrix.single k j 1)
-
 private noncomputable def matrixUnitQuadratic (i j : n) :
     quadraticLieSubalgebra (traceQuadraticForm K n) :=
-  ⟨matrixUnitBivectorSum (K := K) i j, matrixUnitBivectorSum_mem i j⟩
-
-private theorem coe_matrixUnitQuadratic (i j : n) :
-    (matrixUnitQuadratic (K := K) i j : CliffordAlgebra (traceQuadraticForm K n)) =
-      matrixUnitBivectorSum (K := K) i j := rfl
+  ⟨(2⁻¹ : K) • ∑ k : n,
+      bivector (traceQuadraticForm K n) (Matrix.single i k 1) (Matrix.single k j 1),
+    (quadraticLieSubalgebra (traceQuadraticForm K n)).smul_mem _ <|
+      (quadraticLieSubalgebra (traceQuadraticForm K n)).sum_mem fun k _ =>
+        bivector_mem_quadraticLieSubalgebra (traceQuadraticForm K n) (Matrix.single i k 1)
+          (Matrix.single k j 1)⟩
 
 private theorem matrixUnitQuadratic_lie_ι (i j : n) (Y : Matrix n n K) :
     ⁅(matrixUnitQuadratic (K := K) i j : CliffordAlgebra (traceQuadraticForm K n)),
         ι (traceQuadraticForm K n) Y⁆ =
       ι (traceQuadraticForm K n) ⁅Matrix.single i j (1 : K), Y⁆ := by
-  rw [coe_matrixUnitQuadratic, matrixUnitBivectorSum]
   -- Expose scalar multiplication and the finite sum in the ambient Clifford algebra.
   change ⁅(2⁻¹ : K) • ∑ k : n,
       bivector (traceQuadraticForm K n) (Matrix.single i k 1) (Matrix.single k j 1),
@@ -167,32 +149,11 @@ private theorem traceQuadraticLift_single (i j : n) :
   -- Expose the generic quadratic lift through the local equivalence `e`.
   change (e (traceAdjointSO K n (Matrix.single i j 1)) : CliffordAlgebra Q) = _
   have heq : e (traceAdjointSO K n (Matrix.single i j 1)) = matrixUnitQuadratic i j := by
-    apply e.symm.injective
-    -- Expose the inverse equivalence on both sides so its cancellation lemma applies.
-    change e.symm (e (traceAdjointSO K n (Matrix.single i j 1))) =
-      e.symm (matrixUnitQuadratic i j)
-    rw [e.symm_apply_apply]
-    apply Subtype.ext
-    apply LinearMap.ext
+    apply quadraticLieSubalgebra_ext_lie_ι Q hQ
     intro Y
-    apply ι_injective Q
-    rw [← soEquivQuadratic_lie_ι Q hQ (e.symm (matrixUnitQuadratic i j)) Y,
-      e.apply_symm_apply, matrixUnitQuadratic_lie_ι, coe_traceAdjointSO,
+    rw [soEquivQuadratic_lie_ι, matrixUnitQuadratic_lie_ι, coe_traceAdjointSO,
       _root_.LieAlgebra.ad_apply]
   exact congrArg Subtype.val heq
-
-omit [DecidableEq n] in
-private theorem ι_mul_eq_bivector_add (X Y : Matrix n n K) :
-    ι (traceQuadraticForm K n) X * ι (traceQuadraticForm K n) Y =
-      bivector (traceQuadraticForm K n) X Y +
-        (⅟ (2 : K)) • algebraMap K _
-          (QuadraticMap.polar (traceQuadraticForm K n) X Y) := by
-  have hcar := ι_mul_ι_add_swap (Q := traceQuadraticForm K n) X Y
-  symm
-  rw [bivector_def, invOf_eq_inv, ← smul_add, ← hcar]
-  match_scalars
-  · simpa only [one_add_one_eq_two] using inv_mul_cancel₀ (Invertible.ne_zero (2 : K))
-  · ring
 
 /-- The matrix-unit lift is its antisymmetrized quadratic part plus the central normal-ordering
 constant. -/
@@ -206,7 +167,10 @@ theorem glCliffordHom_normalOrdering (i j : n) :
   -- Expose the sum defining the underlying linear map.
   change traceQuadraticLift (K := K) (n := n) (Matrix.single i j (1 : K)) +
     scalarTrace (K := K) (n := n) (Matrix.single i j (1 : K)) = _
-  rw [traceQuadraticLift_single, coe_matrixUnitQuadratic, matrixUnitBivectorSum]
+  rw [traceQuadraticLift_single]
+  change (2⁻¹ : K) • ∑ k : n,
+      bivector (traceQuadraticForm K n) (Matrix.single i k 1) (Matrix.single k j 1) +
+        scalarTrace (K := K) (n := n) (Matrix.single i j (1 : K)) = _
   by_cases h : i = j
   · subst j
     simp [scalarTrace]
@@ -217,7 +181,7 @@ private theorem matrixUnit_ι_mul_eq_bivector_add (i j k : n) :
         ι (traceQuadraticForm K n) (Matrix.single k j 1) =
       bivector (traceQuadraticForm K n) (Matrix.single i k 1) (Matrix.single k j 1) +
         algebraMap K (CliffordAlgebra (traceQuadraticForm K n)) (if i = j then 1 else 0) := by
-  rw [ι_mul_eq_bivector_add, invOf_eq_inv, ← QuadraticMap.polarBilin_apply_apply,
+  rw [ι_mul_ι_eq_bivector_add, invOf_eq_inv, ← QuadraticMap.polarBilin_apply_apply,
     polarBilin_traceQuadraticForm, ← traceBilinForm_apply, traceBilinForm_single_single]
   by_cases h : i = j
   · subst j
