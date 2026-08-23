@@ -35,7 +35,10 @@ and does not lie in `Place k F →₀ ℤ`.
   `F / k(x)` is finite-dimensional.
 * `TauCeti.Place.finite_setOf_ord_pos`, `TauCeti.Place.finite_setOf_ord_neg` and
   `TauCeti.Place.finite_setOf_ord_ne_zero`: **Stichtenoth, Corollary 1.3.4**. Every element of
-  an algebraic function field has finitely many zeros and finitely many poles.
+  an algebraic function field has finitely many zeros and finitely many poles. Each of the
+  three is a statement about the totalized order function `ord_P`, and so is stated for every
+  `x : F`: for `x ≠ 0` it is Corollary 1.3.4 as Stichtenoth states it, while at `x = 0` the
+  junk value `ord_P 0 = 0` makes all three sets empty and the statement degenerate.
 
 ## Implementation notes
 
@@ -386,7 +389,9 @@ theorem card_le_finrank_of_forall_ord_pos {x : F} [FiniteDimensional k⟮x⟯ F]
 
 /-! ### Corollary 1.3.4: the zeros and the poles are finite in number -/
 
-/-- An element `x` has only finitely many zeros whenever `F / k(x)` is finite-dimensional. -/
+/-- The places at which `x` has positive order are finite in number whenever `F / k(x)` is
+finite-dimensional. For `x ≠ 0` these places are the zeros of `x`; at `x = 0` the set is empty,
+by the junk value `ord_P 0 = 0`. -/
 theorem finite_setOf_ord_pos_of_finiteDimensional {x : F} [FiniteDimensional k⟮x⟯ F] :
     {P : Place k F | 0 < P.ord x}.Finite := by
   rw [← Set.not_infinite]
@@ -396,7 +401,10 @@ theorem finite_setOf_ord_pos_of_finiteDimensional {x : F} [FiniteDimensional k�
   omega
 
 /-- **Stichtenoth, Corollary 1.3.4**: an element of an algebraic function field has only
-finitely many zeros. -/
+finitely many zeros. The set is the support of the totalized order function `ord_P` on the
+positive side, so the statement holds for every `x : F`; it is Corollary 1.3.4 for `x ≠ 0`,
+while at `x = 0` the junk value `ord_P 0 = 0` empties it, the zero function having in truth a
+zero at every place. -/
 theorem finite_setOf_ord_pos (hF : IsFunctionField k F) (x : F) :
     {P : Place k F | 0 < P.ord x}.Finite := by
   by_cases hx : IsAlgebraic k x
@@ -410,7 +418,9 @@ theorem finite_setOf_ord_pos (hF : IsFunctionField k F) (x : F) :
     exact finite_setOf_ord_pos_of_finiteDimensional (x := x)
 
 /-- **Stichtenoth, Corollary 1.3.4**: an element of an algebraic function field has only
-finitely many poles. A pole of `x` is a zero of `x⁻¹`. -/
+finitely many poles. A pole of `x` is a zero of `x⁻¹`. As for the zeros, the set is a side of
+the support of the totalized `ord_P` and the statement is Corollary 1.3.4 for `x ≠ 0`; at
+`x = 0`, where `ord_P 0 = 0`, it is empty, as the zero function indeed has no pole. -/
 theorem finite_setOf_ord_neg (hF : IsFunctionField k F) (x : F) :
     {P : Place k F | P.ord x < 0}.Finite := by
   refine (finite_setOf_ord_pos hF x⁻¹).subset fun P hP ↦ ?_
@@ -419,7 +429,9 @@ theorem finite_setOf_ord_neg (hF : IsFunctionField k F) (x : F) :
 
 /-- **Stichtenoth, Corollary 1.3.4**: the places at which an element of an algebraic function
 field has nonzero order are finite in number. This is the finiteness that makes the principal
-divisor `div x = ∑_P ord_P x · P` a finitely supported formal sum. -/
+divisor `div x = ∑_P ord_P x · P` of a nonzero `x` a finitely supported formal sum; `0` has no
+principal divisor, and the statement at `x = 0` is the degenerate one that the junk value
+`ord_P 0 = 0` has empty support. -/
 theorem finite_setOf_ord_ne_zero (hF : IsFunctionField k F) (x : F) :
     {P : Place k F | P.ord x ≠ 0}.Finite := by
   refine ((finite_setOf_ord_pos hF x).union (finite_setOf_ord_neg hF x)).subset fun P hP ↦ ?_
