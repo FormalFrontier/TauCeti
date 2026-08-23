@@ -79,8 +79,11 @@ theorem intervalIntegrable_rpow_mul_one_sub_rpow (ha : 0 < a) (hb : 0 < b) {u v 
     have hhalf : (1 : ℝ) - 1 / 2 = 1 / 2 := by norm_num
     have hright := (half b a hb).comp_sub_left 1
     simp only [sub_zero, sub_sub_cancel] at hright
-    rw [hhalf, show (fun t : ℝ => (1 - t) ^ (b - 1) * t ^ (a - 1)) =
-      fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1) from funext fun t => mul_comm _ _] at hright
+    have hmul : (fun t : ℝ => (1 - t) ^ (b - 1) * t ^ (a - 1)) =
+        fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1) := by
+      ext t
+      rw [mul_comm]
+    rw [hhalf, hmul] at hright
     exact (half a b ha).trans hright.symm
   refine key.mono_set (uIcc_subset_uIcc ?_ ?_) <;>
     rw [uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
