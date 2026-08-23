@@ -8,9 +8,11 @@ module
 public import Mathlib.Algebra.GroupWithZero.NonZeroDivisors
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Recurrence
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Transfer
+import Mathlib.Algebra.GroupWithZero.Action.Units
 import Mathlib.Data.Fin.Tuple.Sort
 import Mathlib.Data.Int.ModEq
 import Mathlib.Tactic.FinCases
+import Mathlib.Tactic.LinearCombination
 import TauCeti.NumberTheory.EllipticDivisibilitySequence.SignEquivariance
 
 /-!
@@ -161,6 +163,17 @@ private def AtomRelVanishes (a b c d : ℤ) : Prop :=
     atomRel W a b c d = 0
 
 variable {W}
+
+/-- Mathlib states the same-parity condition on a quadruple as a `List.Pairwise`, while the
+descent carries it as the three comparisons against the last index that `AtomRelVanishes` needs.
+This converts the latter into the former, for the one Mathlib lemma that consumes it. -/
+private theorem pairwise_emod_two {a b c d : ℤ}
+    (same : d % 2 = a % 2 ∧ d % 2 = b % 2 ∧ d % 2 = c % 2) :
+    [a, b, c, d].Pairwise (· % 2 = · % 2) := by
+  obtain ⟨ha, hb, hc⟩ := same
+  simp only [List.pairwise_cons, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
+    forall_eq, List.Pairwise.nil, and_true, false_implies, implies_true]
+  omega
 
 /-- The minimal same-parity pair above zero, `(a % 2 + 2, a % 2)`, has its atom a nonzerodivisor
 as soon as `W 1` and `W 2` are: the two parities give `W 1 * W 1` and `W 2 * W 1`. -/
@@ -347,7 +360,7 @@ private theorem atomRelVanishes_of_rel (one : W 1 ∈ R⁰) (two : W 2 ∈ R⁰)
     -- live, and is the only place the induction bottoms out.
     have hgap : b' + 2 < a' ∨ b' + 2 = a' := by omega
     rcases hgap with hb | hb
-    · rw [← atomRel_avg_sub W same, ← atomRel_abs₄]
+    · rw [← atomRel_avg_sub W (pairwise_emod_two same), ← atomRel_abs₄]
       exact ih _ (by omega) _ _ _ (parity_abs_avg_sub same)
         (nonnegStrictAnti₄_abs_avg_sub h1 (by omega) h2 h3)
     · exact atomRel_eq_zero_of_gap_two oddRec evenRec (by omega) hb
