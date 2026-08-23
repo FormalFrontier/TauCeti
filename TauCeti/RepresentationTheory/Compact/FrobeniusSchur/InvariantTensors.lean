@@ -5,10 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.TensorProduct.Symmetric
 public import TauCeti.RepresentationTheory.Compact.FrobeniusSchur.Basic
 public import TauCeti.RepresentationTheory.Compact.Invariants
-public import TauCeti.RepresentationTheory.Continuous.Square.Character
 
 /-!
 # The Frobenius-Schur indicator counts invariant tensors
