@@ -28,14 +28,14 @@ module, the whole action is trivial.
 
 ## Main results
 
-* `TauCeti.genWeightSpace_eq_bot_of_mem_posRoots_of_isHighestWeightVector_zero`: a positive root
-  cannot be a weight of a highest weight module of highest weight zero.
-* `TauCeti.genWeightSpace_eq_bot_of_mem_negRoots_of_isHighestWeightVector_zero`: Weyl invariance
-  gives the corresponding statement for negative roots in finite dimension.
+* `TauCeti.genWeightSpace_eq_bot_of_mem_posRoots_of_isHighestWeightVector_zero_of_lieSpan_eq_top`:
+  a positive root cannot be a weight of a highest weight module of highest weight zero.
+* `TauCeti.genWeightSpace_eq_bot_of_mem_negRoots_of_isHighestWeightVector_zero_of_lieSpan_eq_top`:
+  Weyl invariance gives the corresponding statement for negative roots in finite dimension.
 * `TauCeti.IsHighestWeightVector.lie_eq_zero_of_weight_zero_of_lieSpan_eq_top`: every element of
   `L` annihilates a generating highest weight vector of weight zero in a finite-dimensional module.
-* `TauCeti.isTrivial_of_isHighestWeightVector_zero`: a finite-dimensional highest weight module
-  of highest weight zero is trivial.
+* `TauCeti.isTrivial_of_isHighestWeightVector_zero_of_lieSpan_eq_top`: a finite-dimensional
+  highest weight module of highest weight zero is trivial.
 * `TauCeti.isTrivial_of_isHighestWeightVector_zero_of_isIrreducible`: in particular, a
   finite-dimensional irreducible with a highest weight vector of weight zero is trivial.
 
@@ -60,7 +60,7 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K]
   {b : (IsKilling.rootSystem H).Base} {v : M}
 
 /-- A positive root cannot be a weight of a highest weight module of highest weight zero. -/
-theorem genWeightSpace_eq_bot_of_mem_posRoots_of_isHighestWeightVector_zero
+theorem genWeightSpace_eq_bot_of_mem_posRoots_of_isHighestWeightVector_zero_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b (0 : Dual K H) v)
     (hgen : LieSubmodule.lieSpan K L {v} = ⊤) {alpha : H.root}
     (halpha : alpha ∈ posRoots (IsKilling.rootSystem H) b) :
@@ -77,7 +77,7 @@ variable [IsAlgClosed K] [FiniteDimensional K M]
 
 /-- A negative root cannot be a weight of a finite-dimensional highest weight module of highest
 weight zero. Reflection in that root would otherwise make its opposite positive root a weight. -/
-theorem genWeightSpace_eq_bot_of_mem_negRoots_of_isHighestWeightVector_zero
+theorem genWeightSpace_eq_bot_of_mem_negRoots_of_isHighestWeightVector_zero_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b (0 : Dual K H) v)
     (hgen : LieSubmodule.lieSpan K L {v} = ⊤) {alpha : H.root}
     (halpha : alpha ∈ negRoots (IsKilling.rootSystem H) b) :
@@ -87,7 +87,7 @@ theorem genWeightSpace_eq_bot_of_mem_negRoots_of_isHighestWeightVector_zero
     rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg alpha]
     exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots
       (IsKilling.rootSystem H) b alpha).mpr halpha
-  have hbot := genWeightSpace_eq_bot_of_mem_posRoots_of_isHighestWeightVector_zero
+  have hbot := genWeightSpace_eq_bot_of_mem_posRoots_of_isHighestWeightVector_zero_of_lieSpan_eq_top
     hv hgen hpos
   rw [genWeightSpace_eq_weightSpace] at hbot
   apply (weightSpace_sub_apply_coroot_smul_eq_bot_iff (M := M) alpha
@@ -112,7 +112,8 @@ private theorem IsHighestWeightVector.lie_eq_zero_of_mem_rootSpace_of_mem_negRoo
     ext h
     simp
   rw [hadd] at hmem
-  rw [genWeightSpace_eq_bot_of_mem_negRoots_of_isHighestWeightVector_zero hv hgen halpha] at hmem
+  rw [genWeightSpace_eq_bot_of_mem_negRoots_of_isHighestWeightVector_zero_of_lieSpan_eq_top
+    hv hgen halpha] at hmem
   simpa using hmem
 
 /-- Every element of `L` annihilates a generating highest weight vector of weight zero in a
@@ -140,7 +141,7 @@ theorem IsHighestWeightVector.lie_eq_zero_of_weight_zero_of_lieSpan_eq_top
   rw [add_lie, hneg y hy, hborel z hz, add_zero]
 
 /-- A finite-dimensional highest weight module generated in weight zero is a trivial Lie module. -/
-theorem isTrivial_of_isHighestWeightVector_zero
+theorem isTrivial_of_isHighestWeightVector_zero_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b (0 : Dual K H) v)
     (hgen : LieSubmodule.lieSpan K L {v} = ⊤) : LieModule.IsTrivial L M := by
   refine (LieModule.isTrivial_iff_max_triv_eq_top (R := K) (L := L) (M := M)).mpr ?_
@@ -155,7 +156,7 @@ trivial. -/
 theorem isTrivial_of_isHighestWeightVector_zero_of_isIrreducible
     [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b (0 : Dual K H) v) :
     LieModule.IsTrivial L M :=
-  isTrivial_of_isHighestWeightVector_zero hv
+  isTrivial_of_isHighestWeightVector_zero_of_lieSpan_eq_top hv
     (lieSpan_singleton_eq_top_of_ne_zero hv.ne_zero)
 
 end TauCeti
