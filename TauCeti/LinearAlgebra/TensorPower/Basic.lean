@@ -36,6 +36,19 @@ namespace TauCeti.TensorPower
 noncomputable def oneEquiv : TensorPower R 1 M ≃ₗ[R] M :=
   PiTensorProduct.subsingletonEquiv (R := R) (s := fun _ : Fin 1 ↦ M) 0
 
+/-- The length-one tensor-power equivalence evaluates a pure tensor at its unique index. -/
+@[simp]
+theorem oneEquiv_tprod (f : Fin 1 → M) :
+    oneEquiv R M (PiTensorProduct.tprod R f) = f 0 :=
+  PiTensorProduct.subsingletonEquiv_apply_tprod 0 f
+
+/-- The inverse length-one tensor-power equivalence sends a letter to the corresponding pure
+tensor. -/
+@[simp]
+theorem oneEquiv_symm_apply (a : M) :
+    (oneEquiv R M).symm a = PiTensorProduct.tprod R (fun _ ↦ a) :=
+  PiTensorProduct.subsingletonEquiv_symm_apply' 0 a
+
 end TauCeti.TensorPower
 
 namespace TensorPower
