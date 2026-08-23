@@ -284,6 +284,7 @@ theorem geckWeightTorus_conj_geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank)
 
 /-- **Rigidity of the Geck carrier.** Two homomorphisms out of the carrier are equal if they
 agree on every numbered root subgroup and on the represented weight torus. -/
+@[ext]
 theorem geckGroupScheme_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
     (φ ψ : t.geckGroupScheme ht ⟶
       (hopfSpec (CommRingCat.of ℤ)).obj (Opposite.op Y))
