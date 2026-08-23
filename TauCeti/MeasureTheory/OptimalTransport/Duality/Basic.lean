@@ -33,8 +33,9 @@ be finite or measurable.
 
 ## Main statements
 
-* `TauCeti.DualFeasible.dualValue_le_lintegral` — weak duality against one coupling;
-* `TauCeti.DualFeasible.dualValue_le_transportCost` — weak duality against the primal infimum;
+* `TauCeti.DualFeasible.kantorovichDualValue_le_lintegral` — weak duality against one coupling;
+* `TauCeti.DualFeasible.kantorovichDualValue_le_transportCost` — weak duality against the primal
+  infimum;
 * `TauCeti.DualFeasible.add_const_sub_const` and
   `TauCeti.kantorovichDualValue_add_const_sub_const` — feasibility and value are unchanged by
   the usual opposite additive shifts when the marginals have equal finite mass.
@@ -155,7 +156,7 @@ private theorem real_coe_le_ennreal_coe_of_ofReal_le {x : ℝ} {a : ℝ≥0∞}
 
 /-- **Weak duality against a fixed coupling, in extended-nonnegative form.** The positive part of
 the dual value is bounded by the cost of every coupling. -/
-theorem DualFeasible.ofReal_dualValue_le_lintegral (h : DualFeasible c φ ψ)
+theorem DualFeasible.ofReal_kantorovichDualValue_le_lintegral (h : DualFeasible c φ ψ)
     (hφ : Integrable φ μ) (hψ : Integrable ψ ν) (hπ : IsCoupling π μ ν) :
     ENNReal.ofReal (kantorovichDualValue μ ν φ ψ) ≤ ∫⁻ z, c z ∂π := by
   have hfst : MeasurePreserving Prod.fst π μ := ⟨measurable_fst, hπ.fst_eq⟩
@@ -180,24 +181,24 @@ theorem DualFeasible.ofReal_dualValue_le_lintegral (h : DualFeasible c φ ψ)
 
 /-- **Weak duality against a fixed coupling.** The real dual value is at most the possibly
 infinite coupling cost, with both sides compared in `EReal`. -/
-theorem DualFeasible.dualValue_le_lintegral (h : DualFeasible c φ ψ)
+theorem DualFeasible.kantorovichDualValue_le_lintegral (h : DualFeasible c φ ψ)
     (hφ : Integrable φ μ) (hψ : Integrable ψ ν) (hπ : IsCoupling π μ ν) :
     (kantorovichDualValue μ ν φ ψ : EReal) ≤ ((∫⁻ z, c z ∂π) : ℝ≥0∞) := by
-  exact real_coe_le_ennreal_coe_of_ofReal_le <| h.ofReal_dualValue_le_lintegral hφ hψ hπ
+  exact real_coe_le_ennreal_coe_of_ofReal_le <| h.ofReal_kantorovichDualValue_le_lintegral hφ hψ hπ
 
 /-- **Kantorovich weak duality, in extended-nonnegative form.** The positive part of every
 integrable feasible dual value is at most the primal transport cost. -/
-theorem DualFeasible.ofReal_dualValue_le_transportCost (h : DualFeasible c φ ψ)
+theorem DualFeasible.ofReal_kantorovichDualValue_le_transportCost (h : DualFeasible c φ ψ)
     (hφ : Integrable φ μ) (hψ : Integrable ψ ν) :
   ENNReal.ofReal (kantorovichDualValue μ ν φ ψ) ≤ transportCost c μ ν :=
-  le_transportCost fun _π hπ ↦ h.ofReal_dualValue_le_lintegral hφ hψ hπ
+  le_transportCost fun _π hπ ↦ h.ofReal_kantorovichDualValue_le_lintegral hφ hψ hπ
 
 /-- **Kantorovich weak duality.** Every integrable feasible dual value is at most the primal
 transport cost. The comparison in `EReal` remains meaningful when the primal value is `∞`. -/
-theorem DualFeasible.dualValue_le_transportCost (h : DualFeasible c φ ψ)
+theorem DualFeasible.kantorovichDualValue_le_transportCost (h : DualFeasible c φ ψ)
     (hφ : Integrable φ μ) (hψ : Integrable ψ ν) :
     (kantorovichDualValue μ ν φ ψ : EReal) ≤ (transportCost c μ ν : ℝ≥0∞) := by
-  exact real_coe_le_ennreal_coe_of_ofReal_le <| h.ofReal_dualValue_le_transportCost hφ hψ
+  exact real_coe_le_ennreal_coe_of_ofReal_le <| h.ofReal_kantorovichDualValue_le_transportCost hφ hψ
 
 end WeakDuality
 
