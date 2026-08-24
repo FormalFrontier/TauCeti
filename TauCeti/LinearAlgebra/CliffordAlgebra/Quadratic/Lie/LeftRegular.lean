@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.OfAssociative
-public import TauCeti.LinearAlgebra.CliffordAlgebra.Dimension
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.Lie.Representation
 
 /-!
@@ -50,8 +49,10 @@ every consumer. Write `open scoped CliffordAlgebra` to use them.
   representation of a Killing-semisimple Lie algebra is
   (`CliffordAlgebra.adjointCliffordHom_injective`, proved alongside the lift itself).
 
-The carrier is a finite module over `K` (`CliffordAlgebra.instFinite`), which is what makes the
-statement that its simple submodules are all isomorphic a statement about something.
+The carrier is a finite module over `K`, which is what makes the statement that its simple
+submodules are all isomorphic a statement about something; nothing here needs that, so the
+instance saying so is left to `TauCeti.LinearAlgebra.CliffordAlgebra.Dimension`, to be imported
+by whichever later file uses it.
 
 ## References
 
