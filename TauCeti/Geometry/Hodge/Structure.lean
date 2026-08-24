@@ -81,34 +81,33 @@ variable {ω : Conjugation W} {n : ℤ}
 
 /-- The conjugate of the `p`-th step of the Hodge filtration. -/
 noncomputable def conjF (hs : HodgeStructureOn W ω n) (p : ℤ) : Submodule ℂ W :=
-  (hs.F p).map ω.toEquiv.toLinearMap
+  ω.conjFiltration hs.F p
 
 /-- The conjugate filtration step is the image under the specified conjugation. -/
 theorem conjF_def (hs : HodgeStructureOn W ω n) (p : ℤ) :
     hs.conjF p = (hs.F p).map ω.toEquiv.toLinearMap :=
-  (rfl)
+  ω.conjFiltration_def hs.F p
 
 /-- The conjugate of the Hodge filtration is decreasing. -/
 theorem conjF_antitone (hs : HodgeStructureOn W ω n) : Antitone hs.conjF :=
-  fun p q hpq ↦ by
-    rw [hs.conjF_def, hs.conjF_def]
-    exact Submodule.map_mono (hs.F_antitone hpq)
+  ω.conjFiltration_antitone hs.F_antitone
 
 /-- Membership in a conjugate filtration step is detected by applying the conjugation. -/
 @[simp]
 theorem mem_conjF_iff (hs : HodgeStructureOn W ω n) (p : ℤ) (x : W) :
-    x ∈ hs.conjF p ↔ ω.toEquiv x ∈ hs.F p := by
-  simp [conjF, ω.toEquiv_symm]
+    x ∈ hs.conjF p ↔ ω.toEquiv x ∈ hs.F p :=
+  ω.mem_conjFiltration_iff hs.F p x
 
 /-- Conjugating a filtration step twice recovers that step. -/
 @[simp]
 theorem conjF_conjF (hs : HodgeStructureOn W ω n) (p : ℤ) :
-    (hs.conjF p).map ω.toEquiv.toLinearMap = hs.F p := by
-  exact ω.map_map_eq_self (hs.F p)
+    (hs.conjF p).map ω.toEquiv.toLinearMap = hs.F p :=
+  ω.conjFiltration_conjFiltration hs.F p
 
 /-- Opposedness expressed using `conjF`. -/
 theorem isCompl_F_conjF (hs : HodgeStructureOn W ω n) (p : ℤ) :
     IsCompl (hs.F p) (hs.conjF (n + 1 - p)) := by
+  rw [hs.conjF_def]
   exact hs.opposed p
 
 /-- The Hodge filtration is separated: some step is zero. -/

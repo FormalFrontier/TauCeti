@@ -23,6 +23,7 @@ complexification models.
 ## Main declarations
 
 * `TauCeti.Hodge.Conjugation`: a conjugate-linear involution of a complex vector space.
+* `TauCeti.Hodge.Conjugation.conjFiltration`: the conjugate of a complex filtration.
 * `TauCeti.Hodge.concreteLatticeConj`: conjugation on the tensor model `ℂ ⊗[ℤ] V`.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
 * `TauCeti.Hodge.latticeConj_unique`: uniqueness among conjugate-linear maps fixing the integral
@@ -77,6 +78,45 @@ theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
   have h : (U.map ω.toEquiv.toLinearMap).map ω.toEquiv.symm.toLinearMap = U :=
     (Submodule.map_symm_eq_iff ω.toEquiv).2 rfl
   simpa only [ω.toEquiv_symm] using h
+
+/-- The conjugate filtration obtained by mapping each step through a conjugation. -/
+noncomputable def conjFiltration (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    Submodule ℂ W :=
+  (F p).map ω.toEquiv.toLinearMap
+
+/-- A conjugate filtration step is the image of the original step under conjugation. -/
+theorem conjFiltration_def (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    ω.conjFiltration F p = (F p).map ω.toEquiv.toLinearMap :=
+  (rfl)
+
+/-- Conjugating an antitone filtration produces an antitone filtration. -/
+theorem conjFiltration_antitone (ω : Conjugation W) {F : ℤ → Submodule ℂ W}
+    (hF : Antitone F) : Antitone (ω.conjFiltration F) :=
+  fun _ _ hpq ↦ Submodule.map_mono (hF hpq)
+
+/-- Membership in a conjugate filtration step is detected by applying the conjugation. -/
+@[simp]
+theorem mem_conjFiltration_iff (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) (x : W) :
+    x ∈ ω.conjFiltration F p ↔ ω.toEquiv x ∈ F p := by
+  simp [conjFiltration, ω.toEquiv_symm]
+
+/-- Applying conjugation to a conjugate filtration step recovers the original step. -/
+@[simp]
+theorem conjFiltration_conjFiltration (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    (ω.conjFiltration F p).map ω.toEquiv.toLinearMap = F p :=
+  ω.map_map_eq_self (F p)
+
+variable {W' : Type v} [AddCommGroup W'] [Module ℂ W']
+
+/-- A linear map commuting with two conjugations carries the conjugate of a preserved filtration
+step into the corresponding conjugate filtration step. -/
+theorem map_conjFiltration_le (ω : Conjugation W) (ω' : Conjugation W')
+    (F : ℤ → Submodule ℂ W) (F' : ℤ → Submodule ℂ W') (f : W →ₗ[ℂ] W')
+    (hcomm : ∀ x, f (ω.toEquiv x) = ω'.toEquiv (f x)) {p : ℤ}
+    (hF : (F p).map f ≤ F' p) :
+    (ω.conjFiltration F p).map f ≤ ω'.conjFiltration F' p := by
+  rintro _ ⟨_, ⟨x, hx, rfl⟩, rfl⟩
+  exact ⟨f x, hF ⟨x, hx, rfl⟩, (hcomm x).symm⟩
 
 /-- A conjugation restricted to a stable complex subspace is involutive. -/
 private theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}

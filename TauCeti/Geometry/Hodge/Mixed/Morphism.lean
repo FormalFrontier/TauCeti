@@ -158,9 +158,14 @@ theorem map_mem_WC (f : Hom source target) (k : ℤ) {x : Vℂ} (hx : x ∈ sour
 /-- A morphism of mixed Hodge structures preserves the conjugate Hodge filtration. -/
 theorem map_conjF_le (f : Hom source target) (p : ℤ) :
     (source.conjF p).map f.toLinearMap ≤ target.conjF p := by
-  rintro _ ⟨x, hx, rfl⟩
-  rw [target.mem_conjF_iff, ← f.commutes_conj]
-  exact f.map_mem_F p _ ((source.mem_conjF_iff p x).1 hx)
+  rw [source.conjF_def, target.conjF_def, ← latticeConjugation_toLinearMap hℂ,
+    ← latticeConjugation_toLinearMap h'ℂ,
+    ← (latticeConjugation hℂ).conjFiltration_def source.F p,
+    ← (latticeConjugation h'ℂ).conjFiltration_def target.F p]
+  exact (latticeConjugation hℂ).map_conjFiltration_le (latticeConjugation h'ℂ)
+    source.F target.F f.toLinearMap
+    (fun x ↦ by simpa only [latticeConjugation_toEquiv_apply] using f.commutes_conj x)
+    (f.map_F_le p)
 
 /-- Elementwise form of preservation of the conjugate Hodge filtration. -/
 theorem map_mem_conjF (f : Hom source target) (p : ℤ) {x : Vℂ}

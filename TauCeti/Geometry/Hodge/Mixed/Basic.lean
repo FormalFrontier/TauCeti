@@ -130,28 +130,29 @@ theorem WC_bot : ∃ k, mhs.WC k = ⊥ := by
 /-- The conjugate `conj F^p` of the `p`-th step of the Hodge filtration of a mixed Hodge
 structure, taken for lattice-induced conjugation. -/
 noncomputable def conjF (p : ℤ) : Submodule ℂ Vℂ :=
-  (mhs.F p).map (latticeConj hℂ)
+  (latticeConjugation hℂ).conjFiltration mhs.F p
 
 /-- The conjugate Hodge filtration step is the image of the Hodge filtration step under
 lattice-induced conjugation. -/
-theorem conjF_def (p : ℤ) : mhs.conjF p = (mhs.F p).map (latticeConj hℂ) := (rfl)
+theorem conjF_def (p : ℤ) : mhs.conjF p = (mhs.F p).map (latticeConj hℂ) := by
+  rw [conjF, Conjugation.conjFiltration_def, latticeConjugation_toLinearMap]
 
 /-- The conjugate Hodge filtration is decreasing. -/
-theorem conjF_antitone : Antitone mhs.conjF := fun _ _ h ↦ by
-  rw [conjF_def, conjF_def]
-  exact Submodule.map_mono (mhs.F_antitone h)
+theorem conjF_antitone : Antitone mhs.conjF :=
+  (latticeConjugation hℂ).conjFiltration_antitone mhs.F_antitone
 
 /-- Membership in a conjugate Hodge filtration step is detected by conjugating. -/
 @[simp]
 theorem mem_conjF_iff (p : ℤ) (x : Vℂ) : x ∈ mhs.conjF p ↔ latticeConj hℂ x ∈ mhs.F p := by
-  rw [conjF_def, ← latticeConjugation_toLinearMap]
-  simp [Conjugation.toEquiv_symm]
+  rw [conjF_def, ← latticeConjugation_toLinearMap,
+    ← (latticeConjugation hℂ).conjFiltration_def mhs.F p]
+  exact (latticeConjugation hℂ).mem_conjFiltration_iff mhs.F p x
 
 /-- Conjugating a Hodge filtration step twice recovers it. -/
 @[simp]
 theorem conjF_conjF (p : ℤ) : (mhs.conjF p).map (latticeConj hℂ) = mhs.F p := by
-  rw [conjF_def, ← latticeConjugation_toLinearMap]
-  exact (latticeConjugation hℂ).map_map_eq_self _
+  rw [← latticeConjugation_toLinearMap]
+  exact (latticeConjugation hℂ).conjFiltration_conjFiltration mhs.F p
 
 /-- The conjugate Hodge filtration is exhaustive wherever the Hodge filtration is. -/
 theorem conjF_eq_top_of_F_eq_top {p : ℤ} (hp : mhs.F p = ⊤) : mhs.conjF p = ⊤ :=

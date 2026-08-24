@@ -24,8 +24,8 @@ This file constructs the bigrading and establishes the part of its theory that f
 formula itself:
 
 * the containments `I^{p,q} ≤ F^p`, `I^{p,q} ≤ W_{p+q}` and
-  `I^{p,q} ≤ conj F^q ⊔ W_{p+q-2}` — thus `I^{p,q} ≤ F^p`, while modulo lower weight the
-  bigrading piece lies in `conj F^q`;
+  `I^{p,q} ≤ conj F^q ⊔ W_{p+q-2}` — so `I^{p,q}` lies in the Hodge step and weight step of its
+  bidegree, and modulo `W_{p+q-2}` in `conj F^q`;
 * the vanishing of `I^{p,q}` outside the range fixed by the boundedness of the two filtrations;
 * the conjugate of `I^{p,q}`, which is the same formula with the Hodge filtration and its
   conjugate exchanged;
@@ -54,7 +54,7 @@ conjugation symmetry `I^{p,q} ≡ conj I^{q,p}` modulo lower bidegree — are no
 
 ## References
 
-Deligne, *Théorie de Hodge II*, 1.2.11 and 2.3.5; Peters–Steenbrink, *Mixed Hodge Structures*,
+Deligne, *Théorie de Hodge II*, 1.2.10 and 2.3.5; Peters–Steenbrink, *Mixed Hodge Structures*,
 Lemma-Definition 3.4 and Ch. 3. The formula and the conventions are those fixed for Layer L2 of
 the Hodge structures roadmap.
 -/
@@ -110,7 +110,7 @@ theorem F_inf_conjF_inf_WC_le_deligneSplitting (p q : ℤ) :
   exact (le_inf (inf_le_left.trans inf_le_right) inf_le_right).trans le_sup_left
 
 /-- A Deligne bigrading piece lies in the second factor of its defining intersection. -/
-theorem deligneSplitting_le_conjF_inf_WC_sup_iSup (p q : ℤ) :
+private theorem deligneSplitting_le_conjF_inf_WC_sup_iSup (p q : ℤ) :
     mhs.deligneSplitting p q ≤
       (mhs.conjF q ⊓ mhs.WC (p + q)) ⊔
         ⨆ j : ℕ, mhs.conjF (q - (j : ℤ) - 1) ⊓ mhs.WC (p + q - (j : ℤ) - 2) := by
@@ -140,26 +140,27 @@ theorem deligneSplitting_le_WC (p q : ℤ) : mhs.deligneSplitting p q ≤ mhs.WC
 
 /-- After shifting by `m`, a Deligne bigrading piece lies in `conj F^{q-m}` modulo the weight
 filtration step `W_{p+q-m-2}`. -/
-theorem deligneSplitting_le_conjF_sub_sup_WC (p q : ℤ) (m : ℕ) :
+theorem deligneSplitting_le_conjF_sub_sup_WC (p q m : ℤ) (hm : 0 ≤ m) :
     mhs.deligneSplitting p q ≤
-      mhs.conjF (q - (m : ℤ)) ⊔ mhs.WC (p + q - (m : ℤ) - 2) := by
+      mhs.conjF (q - m) ⊔ mhs.WC (p + q - m - 2) := by
   refine (mhs.deligneSplitting_le_conjF_inf_WC_sup_iSup p q).trans ?_
   refine sup_le ((inf_le_left.trans (mhs.conjF_antitone (by omega))).trans le_sup_left)
     (iSup_le fun j ↦ ?_)
-  by_cases hj : j < m
+  by_cases hj : (j : ℤ) < m
   · exact (inf_le_left.trans (mhs.conjF_antitone (by omega))).trans le_sup_left
   · exact (inf_le_right.trans (mhs.WC_monotone
-      (by omega : p + q - (j : ℤ) - 2 ≤ p + q - (m : ℤ) - 2))).trans le_sup_right
+      (by omega : p + q - (j : ℤ) - 2 ≤ p + q - m - 2))).trans le_sup_right
 
 /-- Modulo the weight filtration two steps below its total degree, a bigrading piece lies in the
 conjugate Hodge filtration step of its second index. -/
 theorem deligneSplitting_le_conjF_sup_WC (p q : ℤ) :
     mhs.deligneSplitting p q ≤ mhs.conjF q ⊔ mhs.WC (p + q - 2) := by
-  simpa using mhs.deligneSplitting_le_conjF_sub_sup_WC p q 0
+  simpa using mhs.deligneSplitting_le_conjF_sub_sup_WC p q 0 le_rfl
 
 /-- If the weight filtration vanishes two steps below the total degree, Deligne's formula
 collapses to the intersection of its three leading filtration steps. -/
-theorem deligneSplitting_eq_of_WC_eq_bot {p q : ℤ} (h : mhs.WC (p + q - 2) = ⊥) :
+theorem deligneSplitting_eq_F_inf_conjF_inf_WC_of_WC_eq_bot {p q : ℤ}
+    (h : mhs.WC (p + q - 2) = ⊥) :
     mhs.deligneSplitting p q = mhs.F p ⊓ mhs.conjF q ⊓ mhs.WC (p + q) := by
   have htail :
       (⨆ j : ℕ, mhs.conjF (q - (j : ℤ) - 1) ⊓
@@ -170,21 +171,17 @@ theorem deligneSplitting_eq_of_WC_eq_bot {p q : ℤ} (h : mhs.WC (p + q - 2) = �
   rw [deligneSplitting_def, htail, sup_bot_eq]
   ac_rfl
 
-/-- If `W_m = 0` below the total degree, a Deligne bigrading piece lies in the intersection of
-`F^p` with the conjugate Hodge step forced by that vanishing. -/
-theorem deligneSplitting_le_conjF_of_WC_eq_bot {m p q : ℤ} (hm : mhs.WC m = ⊥)
+/-- If `W_m = 0` with `m ≤ p + q - 2`, then
+`I^{p,q} ≤ F^p ∩ conj F^{m+2-p}`. -/
+theorem deligneSplitting_le_F_inf_conjF_of_WC_eq_bot {m p q : ℤ} (hm : mhs.WC m = ⊥)
     (h : m + 1 < p + q) :
     mhs.deligneSplitting p q ≤ mhs.F p ⊓ mhs.conjF (m + 2 - p) := by
   refine le_inf (mhs.deligneSplitting_le_F p q) ?_
   have hd : 0 ≤ p + q - m - 2 := by omega
-  have hfirst : q - ((p + q - m - 2).toNat : ℤ) = m + 2 - p := by
-    rw [Int.toNat_of_nonneg hd]
-    omega
-  have hsecond : p + q - ((p + q - m - 2).toNat : ℤ) - 2 = m := by
-    rw [Int.toNat_of_nonneg hd]
-    omega
+  have hfirst : q - (p + q - m - 2) = m + 2 - p := by omega
+  have hsecond : p + q - (p + q - m - 2) - 2 = m := by omega
   simpa only [hfirst, hsecond, hm, sup_bot_eq] using
-    mhs.deligneSplitting_le_conjF_sub_sup_WC p q (p + q - m - 2).toNat
+    mhs.deligneSplitting_le_conjF_sub_sup_WC p q (p + q - m - 2) hd
 
 /-- Above a Hodge filtration index at which the filtration vanishes, the bigrading vanishes. -/
 theorem deligneSplitting_eq_bot_of_F_eq_bot {b : ℤ} (hb : mhs.F b = ⊥) {p q : ℤ} (hbp : b ≤ p) :
@@ -254,7 +251,8 @@ theorem ofPure_deligneSplitting_eq_piece_of_add_eq {p q : ℤ} (hpq : p + q = n)
     (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).deligneSplitting p q = hs.piece p := by
   obtain rfl : q = n - p := by omega
   have hcollapse :=
-    (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).deligneSplitting_eq_of_WC_eq_bot
+    deligneSplitting_eq_F_inf_conjF_inf_WC_of_WC_eq_bot
+      (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs)
       (p := p) (q := n - p) (ofPure_WC_eq_bot_of_lt hℚ hℂ hs (by omega))
   rw [hcollapse,
     ofPure_WC_eq_top_of_le hℚ hℂ hs (by omega), inf_top_eq,
@@ -270,16 +268,16 @@ theorem ofPure_deligneSplitting_eq_bot_of_add_ne {p q : ℤ} (hpq : p + q ≠ n)
   · exact deligneSplitting_eq_bot_of_WC_eq_bot _ (ofPure_WC_eq_bot_of_lt hℚ hℂ hs hlt) le_rfl
   · refine le_bot_iff.1 ?_
     have hle :=
-      (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).deligneSplitting_le_conjF_of_WC_eq_bot
+      deligneSplitting_le_F_inf_conjF_of_WC_eq_bot
+        (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs)
         (ofPure_WC_eq_bot_of_lt hℚ hℂ hs (k := n - 1) (by omega)) (by omega : n - 1 + 1 < p + q)
     rw [MixedHodgeStructure.ofPure_F, ofPure_conjF] at hle
     exact hle.trans (by simpa only [show n - 1 + 2 - p = n + 1 - p by omega] using
       (hs.isCompl_F_conjF p).disjoint.le_bot)
 
 /-- **For a pure Hodge structure the Deligne bigrading is an internal direct sum**, namely the
-Hodge decomposition placed on the antidiagonal `p + q = n`. This exhibits the bigrading as
-nondegenerate, and is the case of Deligne's theorem in which the weight filtration has a single
-jump. -/
+Hodge decomposition placed on the antidiagonal `p + q = n`. This is the case of Deligne's theorem
+in which the weight filtration has a single jump. -/
 theorem isInternal_deligneSplittingFamily_ofPure :
     DirectSum.IsInternal
       (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).deligneSplittingFamily := by
