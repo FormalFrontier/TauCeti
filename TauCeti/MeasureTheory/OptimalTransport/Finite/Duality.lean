@@ -340,22 +340,17 @@ private theorem ciInf_le_of_finite {α : Type*} [Finite α] (g : α → ℝ) (a 
     (⨅ b, g b) ≤ g a :=
   ciInf_le (Set.Finite.bddBelow (Set.finite_range g)) a
 
-private theorem exists_ciInf_eq {α : Type*} [Finite α] [Nonempty α] (g : α → ℝ) :
-    ∃ a, (⨅ b, g b) = g a := by
-  obtain ⟨a, ha⟩ := Finite.exists_min g
-  exact ⟨a, le_antisymm (ciInf_le_of_finite g a) (le_ciInf ha)⟩
-
 /-- On a nonempty finite source space the infimal `c`-transform of a real potential is itself
 real-valued: `TauCeti.cTransform` of the coerced potential is the coercion of the real
 infimum. -/
 theorem cTransform_coe {X : Type*} {Y : Type*} [Finite X] [Nonempty X] (c : X × Y → ℝ)
     (φ : X → ℝ) (j : Y) :
     cTransform c (fun i ↦ (φ i : EReal)) j = ((⨅ i, (c (i, j) - φ i) : ℝ) : EReal) := by
-  obtain ⟨i₀, hi₀⟩ := exists_ciInf_eq fun i ↦ c (i, j) - φ i
-  rw [cTransform_apply, hi₀]
+  obtain ⟨i₀, hi₀⟩ := exists_eq_ciInf_of_finite (f := fun i ↦ c (i, j) - φ i)
+  rw [cTransform_apply, ← hi₀]
   refine le_antisymm ((iInf_le _ i₀).trans (le_of_eq (EReal.coe_sub _ _).symm)) (le_iInf fun i ↦ ?_)
   rw [← EReal.coe_sub]
-  exact EReal.coe_le_coe_iff.2 (hi₀ ▸ ciInf_le_of_finite (fun i ↦ c (i, j) - φ i) i)
+  exact EReal.coe_le_coe_iff.2 (hi₀.symm ▸ ciInf_le_of_finite (fun i ↦ c (i, j) - φ i) i)
 
 /-- Two infimal transforms and a shift turn a dual-feasible pair into one that is confined to a
 box depending only on a bound for the cost, without decreasing the dual value. -/
@@ -396,26 +391,26 @@ private theorem exists_bounded_of_feasible [Nonempty ι] [Nonempty κ] {M : ℝ}
     rw [hψ₃ j]; exact le_ciInf fun i ↦ by linarith [hfeas₂ i j]
   -- Bound the normalized first potential using points where the finite infima are attained.
   have hφ₂lb : ∀ i, -(2 * M) ≤ φ₂ i := fun i ↦ by
-    obtain ⟨j₁, hj₁⟩ := exists_ciInf_eq fun j ↦ c (i, j) - ψ₁ j
-    have hval : φ₂ i = c (i, j₁) - ψ₂ j₁ := by rw [hφ₂, hφ₁, hj₁, hψ₂]; ring
+    obtain ⟨j₁, hj₁⟩ := exists_eq_ciInf_of_finite (f := fun j ↦ c (i, j) - ψ₁ j)
+    have hval : φ₂ i = c (i, j₁) - ψ₂ j₁ := by rw [hφ₂, hφ₁, ← hj₁, hψ₂]; ring
     have := hlb (i, j₁)
     have := hψ₂ub j₁
     rw [hval]; linarith
   have hφ₂ub : ∀ i, φ₂ i ≤ 2 * M := fun i ↦ by
-    obtain ⟨j₂, hj₂⟩ := exists_ciInf_eq fun j ↦ c (i₀, j) - ψ₁ j
+    obtain ⟨j₂, hj₂⟩ := exists_eq_ciInf_of_finite (f := fun j ↦ c (i₀, j) - ψ₁ j)
     have h1 := hub (i, j₂)
     have h2 := hlb (i₀, j₂)
     have h3 := hφ₁le i j₂
-    rw [hφ₂, hφ₁ i₀, hj₂]
+    rw [hφ₂, hφ₁ i₀, ← hj₂]
     linarith
   -- Package feasibility and the two uniform bounds, then compare the dual values.
   refine ⟨φ₂, ψ₃, fun i j ↦ by linarith [hψ₃le i j], fun i ↦ ?_, fun j ↦ ?_, ?_⟩
   · exact abs_le.2 ⟨hφ₂lb i, hφ₂ub i⟩
   · refine abs_le.2 ⟨?_, ?_⟩
-    · obtain ⟨i₁, hi₁⟩ := exists_ciInf_eq fun i ↦ c (i, j) - φ₂ i
+    · obtain ⟨i₁, hi₁⟩ := exists_eq_ciInf_of_finite (f := fun i ↦ c (i, j) - φ₂ i)
       have := hlb (i₁, j)
       have := hφ₂ub i₁
-      rw [hψ₃ j, hi₁]; linarith
+      rw [hψ₃ j, ← hi₁]; linarith
     · have := hψ₃le i₀ j
       rw [hφ₂i₀, sub_zero] at this
       linarith [hub (i₀, j), this]
