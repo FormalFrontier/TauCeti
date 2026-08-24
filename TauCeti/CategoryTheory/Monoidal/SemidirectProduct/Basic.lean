@@ -188,6 +188,11 @@ noncomputable abbrev semidirectProduct : Grp C where
   X := N ⊗ G
   grp := A.semidirectProductGrpObj
 
+/-- The underlying object of an internal semidirect product is the product of its two factors. -/
+@[simp]
+theorem semidirectProduct_X : A.semidirectProduct.X = N ⊗ G :=
+  rfl
+
 /-- The Yoneda group of the internal semidirect product is the pointwise semidirect-product
 presheaf. -/
 private noncomputable def pointIso :
