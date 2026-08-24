@@ -59,6 +59,7 @@ combination of the simple coroots.
   weight of `M`, so the vocabulary is not vacuous.
 * `TauCeti.IsDominantIntegral.exists_nat_apply_coroot`: a dominant integral weight takes natural
   values on *every* positive coroot, not only on the simple ones.
+* `TauCeti.IsDominantIntegral.isIntegralWeight`: every dominant integral weight is integral.
 * `TauCeti.IsHighestWeightVector.isDominantIntegral`: the weight of a highest weight vector in a
   finite-dimensional module is dominant integral.
 
@@ -312,6 +313,35 @@ theorem IsDominantIntegral.exists_nat_apply_coroot {lam : Dual K H}
   rw [hsum, map_sum, Nat.cast_sum]
   refine Finset.sum_congr rfl fun j hj => ?_
   rw [map_nsmul, hg j hj, Nat.cast_mul, nsmul_eq_mul]
+
+/-- **A dominant integral weight is integral**: it takes integer values on every coroot, not just
+natural values on the simple ones. A coroot is the coroot of a positive root or the negative of
+one, and on a positive coroot dominance gives a natural value. -/
+theorem IsDominantIntegral.isIntegralWeight {lam : Dual K H}
+    (hlam : IsDominantIntegral b lam) : IsIntegralWeight lam := by
+  apply isIntegralWeight_of_forall_exists_int_apply_coroot
+  intro α
+  rcases eq_or_ne (α : Dual K H) 0 with h | h
+  · refine ⟨0, ?_⟩
+    have hcoroot : IsKilling.coroot α = 0 :=
+      IsKilling.coroot_eq_zero_iff.mpr (Weight.coe_toLinear_eq_zero_iff.mp h)
+    rw [hcoroot]
+    simp
+  have hα : α.IsNonZero := fun hz ↦ h (Weight.coe_toLinear_eq_zero_iff.mpr hz)
+  obtain ⟨i, rfl⟩ : ∃ i : H.root, (i : Weight K H L) = α :=
+    ⟨⟨α, by simpa [LieSubalgebra.root] using hα⟩, rfl⟩
+  rcases mem_posRoots_or_mem_negRoots (IsKilling.rootSystem H) b i with hi | hi
+  · obtain ⟨n, hn⟩ := hlam.exists_nat_apply_coroot hi
+    exact ⟨n, by simpa using hn⟩
+  · have hi' : -i ∈ posRoots (IsKilling.rootSystem H) b := by
+      rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg]
+      exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots (IsKilling.rootSystem H) b i).mpr hi
+    obtain ⟨n, hn⟩ := hlam.exists_nat_apply_coroot hi'
+    refine ⟨-n, ?_⟩
+    rw [IsKilling.rootSystem_coroot_apply, IsKilling.val_neg_root, IsKilling.coroot_neg,
+      map_neg] at hn
+    push_cast
+    linear_combination -hn
 
 /-! ### The weight of a highest weight vector is dominant integral -/
 

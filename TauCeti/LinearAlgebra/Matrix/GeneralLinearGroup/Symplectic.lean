@@ -14,6 +14,7 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 -- `Matrix.reindexAlgEquiv` is the body of `TauCeti.reindexGL`, and `finSumFinEquiv` occurs in
 -- the statements of the `Fin`-indexed section.
 public import Mathlib.LinearAlgebra.Matrix.Reindex
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
 
 /-!
 # The symplectic group as a subgroup of the general linear group
@@ -321,6 +322,181 @@ theorem coe_mulEquivGLSymplectic (M : GLSymplecticFin m R) :
     ((mulEquivGLSymplectic m R M : GLSymplectic (Fin m) R) : GL (Fin m ⊕ Fin m) R) =
       reindexGL m R (M : GL (Fin (m + m)) R) := by
   simp [mulEquivGLSymplectic]
+
+/-- A ring morphism carries `Fin`-indexed symplectic matrices to symplectic matrices. -/
+def map {S : Type*} [CommRing S] (f : R →+* S) :
+    GLSymplecticFin m R →* GLSymplecticFin m S where
+  toFun M := ⟨Matrix.GeneralLinearGroup.map f M, by
+    have hM := M.2
+    rw [mem_iff] at hM ⊢
+    -- Membership stores the same matrix equation through the `GL` and subtype coercions;
+    -- no public lemma exposes all of those wrappers at once.
+    change M.1.val.map f * JFin m S * (M.1.val.map f)ᵀ = JFin m S
+    simpa only [Matrix.map_mul, Matrix.transpose_map, JFin_map] using
+      congrArg (fun X => X.map f) hM⟩
+  map_one' := Subtype.ext (map_one (Matrix.GeneralLinearGroup.map f))
+  map_mul' M N := Subtype.ext (map_mul (Matrix.GeneralLinearGroup.map f) M.1 N.1)
+
+/-- The underlying general-linear element of a mapped symplectic matrix is its entrywise map. -/
+@[simp]
+theorem coe_map {S : Type*} [CommRing S] (f : R →+* S) (M : GLSymplecticFin m R) :
+    ((GLSymplecticFin.map m R f M : GLSymplecticFin m S) : GL (Fin (m + m)) S) =
+      Matrix.GeneralLinearGroup.map f (M : GL (Fin (m + m)) R) :=
+  (rfl)
+
+end GLSymplecticFin
+
+/-! ### Long-root transvections -/
+
+namespace GLSymplecticFin
+
+variable {m R}
+
+/-- The two indices of the positive long root are distinct. -/
+theorem positiveLongRoot_indices_ne (i : Fin m) :
+    finSumFinEquiv (Sum.inl i) ≠ finSumFinEquiv (Sum.inr i) := by
+  exact finSumFinEquiv.injective.ne Sum.inl_ne_inr
+
+/-- The two indices of the negative long root are distinct. -/
+theorem negativeLongRoot_indices_ne (i : Fin m) :
+    finSumFinEquiv (Sum.inr i) ≠ finSumFinEquiv (Sum.inl i) := by
+  exact finSumFinEquiv.injective.ne Sum.inr_ne_inl
+
+private theorem reindexGL_transvectionUnit (i j : Fin m ⊕ Fin m) (hij : i ≠ j) (c : R) :
+    reindexGL m R
+        (transvectionUnit (finSumFinEquiv.injective.ne hij) c) =
+      transvectionUnit hij c := by
+  apply Matrix.GeneralLinearGroup.ext
+  intro a b
+  simp only [coe_reindexGL, coe_transvectionUnit, Matrix.submatrix_apply]
+  simp [Matrix.transvection, Matrix.single, Matrix.one_apply,
+    finSumFinEquiv.injective.eq_iff]
+
+private theorem upperLongRoot_mem (i : Fin m) (c : R) :
+    transvectionUnit (Sum.inl_ne_inr : (Sum.inl i : Fin m ⊕ Fin m) ≠ Sum.inr i) c ∈
+      GLSymplectic (Fin m) R := by
+  rw [GLSymplectic.mem_iff_mem_symplecticGroup]
+  have hmatrix :
+      (transvectionUnit
+          (Sum.inl_ne_inr : (Sum.inl i : Fin m ⊕ Fin m) ≠ Sum.inr i) c :
+        Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) =
+        Matrix.fromBlocks 1 (Matrix.single i i c) 0 1 := by
+    ext a b
+    cases a <;> cases b <;>
+      simp [Matrix.transvection, Matrix.single, Matrix.fromBlocks, Matrix.one_apply]
+  rw [hmatrix, SymplecticGroup.fromBlocks_mem_iff]
+  simp
+
+private theorem lowerLongRoot_mem (i : Fin m) (c : R) :
+    transvectionUnit (Sum.inr_ne_inl : (Sum.inr i : Fin m ⊕ Fin m) ≠ Sum.inl i) c ∈
+      GLSymplectic (Fin m) R := by
+  rw [GLSymplectic.mem_iff_mem_symplecticGroup]
+  have hmatrix :
+      (transvectionUnit
+          (Sum.inr_ne_inl : (Sum.inr i : Fin m ⊕ Fin m) ≠ Sum.inl i) c :
+        Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) =
+        Matrix.fromBlocks 1 0 (Matrix.single i i c) 1 := by
+    ext a b
+    cases a <;> cases b <;>
+      simp [Matrix.transvection, Matrix.single, Matrix.fromBlocks, Matrix.one_apply]
+  rw [hmatrix, SymplecticGroup.fromBlocks_mem_iff]
+  simp
+
+/-- The symplectic matrix `x_{2eᵢ}(c) = 1 + c E_{i,m+i}`, in `Fin (m + m)` coordinates. -/
+def positiveLongRootTransvectionUnit (i : Fin m) (c : R) : GLSymplecticFin m R :=
+  ⟨transvectionUnit (positiveLongRoot_indices_ne i) c, by
+    rw [GLSymplecticFin, Subgroup.mem_comap]
+    -- Membership in the comap is definitionally membership after `reindexGL`; there is no
+    -- dedicated theorem for this specialized transvection goal.
+    change reindexGL m R (transvectionUnit (positiveLongRoot_indices_ne i) c) ∈ _
+    rw [reindexGL_transvectionUnit]
+    exact upperLongRoot_mem i c⟩
+
+/-- The matrix underlying the positive long-root transvection is the corresponding elementary
+transvection. -/
+@[simp]
+theorem coe_positiveLongRootTransvectionUnit (i : Fin m) (c : R) :
+    ((positiveLongRootTransvectionUnit i c : GLSymplecticFin m R) : GL (Fin (m + m)) R) =
+      transvectionUnit (positiveLongRoot_indices_ne i) c :=
+  by rw [positiveLongRootTransvectionUnit]
+
+/-- The symplectic matrix `x_{-2eᵢ}(c) = 1 + c E_{m+i,i}`, in `Fin (m + m)` coordinates. -/
+def negativeLongRootTransvectionUnit (i : Fin m) (c : R) : GLSymplecticFin m R :=
+  ⟨transvectionUnit (negativeLongRoot_indices_ne i) c, by
+    rw [GLSymplecticFin, Subgroup.mem_comap]
+    -- Membership in the comap is definitionally membership after `reindexGL`; there is no
+    -- dedicated theorem for this specialized transvection goal.
+    change reindexGL m R (transvectionUnit (negativeLongRoot_indices_ne i) c) ∈ _
+    rw [reindexGL_transvectionUnit]
+    exact lowerLongRoot_mem i c⟩
+
+/-- The matrix underlying the negative long-root transvection is the corresponding elementary
+transvection. -/
+@[simp]
+theorem coe_negativeLongRootTransvectionUnit (i : Fin m) (c : R) :
+    ((negativeLongRootTransvectionUnit i c : GLSymplecticFin m R) : GL (Fin (m + m)) R) =
+      transvectionUnit (negativeLongRoot_indices_ne i) c :=
+  by rw [negativeLongRootTransvectionUnit]
+
+/-- The positive long-root transvections form a one-parameter subgroup. -/
+def positiveLongRootTransvectionHom (i : Fin m) :
+    Multiplicative R →* GLSymplecticFin m R where
+  toFun c := positiveLongRootTransvectionUnit i (Multiplicative.toAdd c)
+  map_one' := Subtype.ext (transvectionUnit_zero _)
+  map_mul' c d :=
+    Subtype.ext (transvectionUnit_add _ (Multiplicative.toAdd c) (Multiplicative.toAdd d))
+
+/-- The negative long-root transvections form a one-parameter subgroup. -/
+def negativeLongRootTransvectionHom (i : Fin m) :
+    Multiplicative R →* GLSymplecticFin m R where
+  toFun c := negativeLongRootTransvectionUnit i (Multiplicative.toAdd c)
+  map_one' := Subtype.ext (transvectionUnit_zero _)
+  map_mul' c d :=
+    Subtype.ext (transvectionUnit_add _ (Multiplicative.toAdd c) (Multiplicative.toAdd d))
+
+@[simp]
+theorem positiveLongRootTransvectionHom_apply (i : Fin m) (c : Multiplicative R) :
+    positiveLongRootTransvectionHom i c =
+      positiveLongRootTransvectionUnit i (Multiplicative.toAdd c) :=
+  (rfl)
+
+@[simp]
+theorem negativeLongRootTransvectionHom_apply (i : Fin m) (c : Multiplicative R) :
+    negativeLongRootTransvectionHom i c =
+      negativeLongRootTransvectionUnit i (Multiplicative.toAdd c) :=
+  (rfl)
+
+/-- Positive long-root transvections are natural in the coefficient ring. -/
+@[simp]
+theorem map_positiveLongRootTransvectionUnit {S : Type*} [CommRing S]
+    (f : R →+* S) (i : Fin m) (c : R) :
+    GLSymplecticFin.map m R f (positiveLongRootTransvectionUnit i c) =
+      positiveLongRootTransvectionUnit i (f c) := by
+  apply Subtype.ext
+  rw [GLSymplecticFin.coe_map, coe_positiveLongRootTransvectionUnit,
+    coe_positiveLongRootTransvectionUnit, map_transvectionUnit]
+
+/-- Negative long-root transvections are natural in the coefficient ring. -/
+@[simp]
+theorem map_negativeLongRootTransvectionUnit {S : Type*} [CommRing S]
+    (f : R →+* S) (i : Fin m) (c : R) :
+    GLSymplecticFin.map m R f (negativeLongRootTransvectionUnit i c) =
+      negativeLongRootTransvectionUnit i (f c) := by
+  apply Subtype.ext
+  rw [GLSymplecticFin.coe_map, coe_negativeLongRootTransvectionUnit,
+    coe_negativeLongRootTransvectionUnit, map_transvectionUnit]
+
+/-- Distinct parameters give distinct positive long-root transvections. -/
+theorem positiveLongRootTransvectionUnit_injective (i : Fin m) :
+    Function.Injective (positiveLongRootTransvectionUnit (R := R) i) :=
+  fun _ _ h => transvectionUnit_injective (positiveLongRoot_indices_ne i)
+    (congrArg (fun g : GLSymplecticFin m R => (g : GL (Fin (m + m)) R)) h)
+
+/-- Distinct parameters give distinct negative long-root transvections. -/
+theorem negativeLongRootTransvectionUnit_injective (i : Fin m) :
+    Function.Injective (negativeLongRootTransvectionUnit (R := R) i) :=
+  fun _ _ h => transvectionUnit_injective (negativeLongRoot_indices_ne i)
+    (congrArg (fun g : GLSymplecticFin m R => (g : GL (Fin (m + m)) R)) h)
 
 end GLSymplecticFin
 
