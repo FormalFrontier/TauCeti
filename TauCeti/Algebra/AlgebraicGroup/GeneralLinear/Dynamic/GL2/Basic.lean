@@ -59,18 +59,18 @@ namespace GL2
 section Coordinate
 
 /-- The rank-one weights `(1, 0)` defining the standard dynamic cocharacter of `GL₂`. -/
-def dynamicWeights : Fin 2 → ℤ :=
-  fun i => if i = 0 then 1 else 0
+abbrev dynamicWeights : Fin 2 → ℤ :=
+  Borel.weights
 
 /-- The first weight of the standard dynamic cocharacter is one. -/
 @[simp]
 theorem dynamicWeights_zero : dynamicWeights 0 = 1 := by
-  simp [dynamicWeights]
+  simp [dynamicWeights, Borel.weights]
 
 /-- The second weight of the standard dynamic cocharacter is zero. -/
 @[simp]
 theorem dynamicWeights_one : dynamicWeights 1 = 0 := by
-  simp [dynamicWeights]
+  simp [dynamicWeights, Borel.weights]
 
 /-- The bialgebra morphism representing the standard cocharacter `t ↦ diag(t, 1)`. -/
 noncomputable def dynamicCocharacter :
