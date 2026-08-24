@@ -194,7 +194,8 @@ lemma principalCartierDivisor_regularUnitToFunctionField
     (f : ((X.presheaf.obj (op (⊤ : X.Opens))) : Type u)ˣ) :
     principalCartierDivisor X
       (Units.map (X.germToFunctionField (⊤ : X.Opens)).hom f) = 0 := by
-  change principalCartierDivisor X (regularUnitToFunctionField X f) = 0
+  refine (congrArg (principalCartierDivisor X)
+    (regularUnitToFunctionField_apply X f).symm).trans ?_
   have hmap :
       rationalUnitSectionsEquiv X
           (((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom (Additive.ofMul f)) =
