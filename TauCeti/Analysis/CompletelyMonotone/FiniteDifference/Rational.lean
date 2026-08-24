@@ -70,8 +70,9 @@ theorem tendsto_fwdDiffList_nhdsGT
       have h₁ : Tendsto (fun v : ℝ => fwdDiffList l f (v + h)) (𝓝[>] u)
           (𝓝 (fwdDiffList l f (u + h))) := (ih hrest (by linarith)).comp hshift
       have hrw : fwdDiffList (h :: l) f
-          = fun v : ℝ => fwdDiffList l f (v + h) - fwdDiffList l f v :=
-        funext fun v => fwdDiffList_cons_apply h l f v
+          = fun v : ℝ => fwdDiffList l f (v + h) - fwdDiffList l f v := by
+        funext v
+        simp only [fwdDiffList_cons, fwdDiff]
       simp only [hrw]
       exact h₁.sub (ih hrest hu)
 
@@ -136,6 +137,10 @@ theorem isDifferenceCompletelyMonotone_of_forall_rat
           · exact hmrest k hk
         have hpow : ∀ k : ℕ, ((-1 : ℝ)) ^ (k + 1) = -((-1 : ℝ) ^ k) := by
           intro k; rw [pow_succ]; ring
+        -- The two length normalizations needed to match the exponent produced by the inductive
+        -- hypothesis against the one in the goal.
+        have hlenl : l.length + 1 + m.length = l.length + m.length + 1 := by omega
+        have hlenm : l.length + (m.length + 1) = l.length + m.length + 1 := by omega
         -- Rational increments do not increase the signed difference, by the inductive hypothesis
         -- applied to the list with one further rational step.
         have hanti : ∀ u : ℝ, 0 ≤ u → ∀ q : ℚ, 0 ≤ q →
@@ -148,8 +153,9 @@ theorem isDifferenceCompletelyMonotone_of_forall_rat
             · exact hq
             · exact hl k hk
           have hstep := ih hmrest (q :: l) hcons u hu
-          rw [List.map_cons, List.cons_append, List.length_cons, fwdDiffList_cons_apply, ← hΦ,
-            show l.length + 1 + m.length = l.length + m.length + 1 by ring, hpow] at hstep
+          rw [List.map_cons, List.cons_append, List.length_cons] at hstep
+          simp only [fwdDiffList_cons, fwdDiff] at hstep
+          rw [← hΦ, hlenl, hpow] at hstep
           nlinarith [hstep]
         -- Right-continuity turns rational increments into arbitrary ones.
         have hreal : (-1 : ℝ) ^ (l.length + m.length) * Φ (t + h)
@@ -169,8 +175,9 @@ theorem isDifferenceCompletelyMonotone_of_forall_rat
         -- Peel the new step off the front and read the sign condition off `hreal`.
         have hpermeq : fwdDiffList (l.map (Rat.cast) ++ h :: m) f = fwdDiffList (h :: (l.map
             (Rat.cast) ++ m)) f := fwdDiffList_eq_of_perm List.perm_middle f
-        rw [List.length_cons, hpermeq, fwdDiffList_cons_apply, ← hΦ,
-          show l.length + (m.length + 1) = l.length + m.length + 1 by ring, hpow]
+        rw [List.length_cons, hpermeq]
+        simp only [fwdDiffList_cons, fwdDiff]
+        rw [← hΦ, hlenm, hpow]
         nlinarith [hreal]
   refine isDifferenceCompletelyMonotone_iff.2 fun m hm t ht => ?_
   simpa using step₂ m hm [] (by simp) t ht

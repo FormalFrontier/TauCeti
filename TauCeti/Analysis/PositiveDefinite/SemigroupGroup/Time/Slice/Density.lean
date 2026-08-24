@@ -98,7 +98,7 @@ theorem bochnerMeasure_timeSlice_listTimeDifference_le (hFpd : IsSemigroupGroupP
 /-- **The densities decrease in time**, almost everywhere against the time-`0` Bochner measure:
 the earlier spatial measure is the later one plus the Bochner measure of the time difference
 between them. -/
-theorem rnDeriv_bochnerMeasure_timeSlice_antitone (hFpd : IsSemigroupGroupPD F)
+theorem rnDeriv_bochnerMeasure_timeSlice_ae_le (hFpd : IsSemigroupGroupPD F)
     (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) {t s : ℝ≥0} (hts : t ≤ s) :
     (bochnerMeasure fun a => F (s, a)).rnDeriv (bochnerMeasure fun a => F (0, a))
       ≤ᵐ[bochnerMeasure fun a => F (0, a)]
@@ -147,7 +147,8 @@ theorem toReal_rnDeriv_bochnerMeasure_timeSlice_listTimeDifference (hFpd : IsSem
             + ((bochnerMeasure fun a => listTimeDifference l F (t + h, a)).rnDeriv
               (bochnerMeasure fun a => F (0, a)) q).toReal := by
         rw [hsplit, hadd, Pi.add_apply, ENNReal.toReal_add hfin₁.ne hfin₂.ne]
-      rw [listTimeDifference_cons, List.map_cons, List.length_cons, fwdDiffList_cons_apply]
+      rw [listTimeDifference_cons, List.map_cons, List.length_cons]
+      simp only [fwdDiffList_cons, fwdDiff]
       have hcoe : ((t + h : ℝ≥0) : ℝ) = (t : ℝ) + (h : ℝ) := NNReal.coe_add t h
       rw [hcoe] at hth
       rw [pow_succ]
@@ -196,11 +197,12 @@ private theorem exists_seq_nnrat_tendsto (t : ℝ≥0) :
       ((r : ℝ≥0) : ℝ) < (t : ℝ) + 1 / ((n : ℝ) + 1) := by
     intro n
     have hpos : (0 : ℝ) < 1 / ((n : ℝ) + 1) := by positivity
-    obtain ⟨q, hq₁, hq₂⟩ := exists_rat_btwn (show (t : ℝ) < (t : ℝ) + 1 / ((n : ℝ) + 1) by linarith)
+    have hgap : (t : ℝ) < (t : ℝ) + 1 / ((n : ℝ) + 1) := by linarith
+    obtain ⟨q, hq₁, hq₂⟩ := exists_rat_btwn hgap
     have hq₀ : (0 : ℚ) ≤ q := by exact_mod_cast t.coe_nonneg.trans hq₁.le
     have hcast : ((q.toNNRat : ℝ≥0) : ℝ) = (q : ℝ) := by
-      rw [show ((q.toNNRat : ℝ≥0) : ℝ) = ((q.toNNRat : ℚ) : ℝ) from by norm_cast,
-        Rat.coe_toNNRat _ hq₀]
+      have hstep : ((q.toNNRat : ℝ≥0) : ℝ) = ((q.toNNRat : ℚ) : ℝ) := by norm_cast
+      rw [hstep, Rat.coe_toNNRat _ hq₀]
     exact ⟨q.toNNRat, by rw [← NNReal.coe_lt_coe, hcast]; exact hq₁, by rw [hcast]; exact hq₂⟩
   choose r hr₁ hr₂ using hlt
   refine ⟨r, hr₁, ?_⟩
@@ -217,7 +219,7 @@ theorem timeSliceDensity_le_rnDeriv (hFpd : IsSemigroupGroupPD F) (hFcont : Cont
       ≤ᵐ[bochnerMeasure fun a => F (0, a)]
         (bochnerMeasure fun a => F (t, a)).rnDeriv (bochnerMeasure fun a => F (0, a)) := by
   filter_upwards [ae_all_iff.2 fun r : {r : ℚ≥0 // t < (r : ℝ≥0)} =>
-    rnDeriv_bochnerMeasure_timeSlice_antitone hFpd hFcont hFbdd r.2.le] with q hq
+    rnDeriv_bochnerMeasure_timeSlice_ae_le hFpd hFcont hFbdd r.2.le] with q hq
   exact iSup_le hq
 
 /-- **The right-continuous density is a Radon--Nikodym derivative at every fixed time.** The

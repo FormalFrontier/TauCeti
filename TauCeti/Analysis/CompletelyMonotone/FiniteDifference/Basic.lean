@@ -147,13 +147,6 @@ theorem fwdDiffList_neg (l : List M) (f : M → G) :
     fwdDiffList l (fun t => -f t) = fun t => -fwdDiffList l f t := by
   simpa only [neg_one_zsmul] using fwdDiffList_const_smul (-1 : ℤ) l f
 
-/-- Consing a step, at a point: one more forward difference reads the previous one at `t` and at
-the translate `t + h`. -/
-theorem fwdDiffList_cons_apply (h : M) (l : List M) (f : M → G) (t : M) :
-    fwdDiffList (h :: l) f t = fwdDiffList l f (t + h) - fwdDiffList l f t := by
-  rw [fwdDiffList_cons]
-  rfl
-
 /-- **A mixed forward difference only reads the function on a set closed under its steps.** If `S`
 contains the base point and is closed under adding each step, the difference at that point depends
 on the function only through its values on `S`. Compare `TauCeti.fwdDiffList_congr`, which is the
@@ -165,8 +158,8 @@ theorem fwdDiffList_congr_of_add_mem {S : Set M} {l : List M} {f g : M → G} {t
   | nil => simpa using hfg t ht
   | cons h l ih =>
       have hrest : ∀ k ∈ l, ∀ u ∈ S, u + k ∈ S := fun k hk => hS k (List.mem_cons_of_mem h hk)
-      rw [fwdDiffList_cons_apply, fwdDiffList_cons_apply, ih hrest (hS h (by simp) t ht),
-        ih hrest ht]
+      simp only [fwdDiffList_cons, fwdDiff]
+      rw [ih hrest (hS h (by simp) t ht), ih hrest ht]
 
 variable {f g : ℝ → ℝ}
 
