@@ -148,17 +148,12 @@ theorem span_root_e8SimplyConnectedRootDatum_eq_top :
     refine ⟨x ᵥ* (CartanMatrix.E 8)⁻¹, ?_⟩
     rw [Matrix.vecMulLinear_apply, Matrix.vecMul_vecMul,
       Matrix.nonsing_inv_mul _ hdet, Matrix.vecMul_one]
+  have hrow : Submodule.span ℤ (Set.range (CartanMatrix.E 8).row) = ⊤ := by
+    rw [← range_vecMulLinear, LinearMap.range_eq_top.mpr hsurj]
   apply top_unique
   calc
     (⊤ : Submodule ℤ (Fin 8 → ℤ)) =
-        Submodule.span ℤ (Set.range (CartanMatrix.E 8).row) := by
-          symm
-          apply top_unique
-          intro x _
-          obtain ⟨v, rfl⟩ := hsurj x
-          rw [Matrix.vecMulLinear_apply, Matrix.vecMul_eq_sum]
-          exact Submodule.sum_mem _ fun i _ ↦
-            Submodule.smul_mem _ _ (Submodule.subset_span (Set.mem_range_self i))
+        Submodule.span ℤ (Set.range (CartanMatrix.E 8).row) := hrow.symm
     _ ≤ Submodule.span ℤ (Set.range e8SimplyConnectedRootDatum.root) := by
       apply Submodule.span_mono
       rintro _ ⟨i, rfl⟩
