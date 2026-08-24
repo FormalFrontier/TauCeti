@@ -112,7 +112,7 @@ theorem dedekindZeta_eq_LSeries_normCoeff_one (s : ℂ) :
 
 private theorem absNorm_map_ringEquiv {R S : Type*} [CommRing R] [CommRing S]
     [IsDedekindDomain R] [IsDedekindDomain S] [Module.Free ℤ R] [Module.Free ℤ S]
-    [Module.Finite ℤ R] [Module.Finite ℤ S] (e : R ≃+* S) (I : Ideal R) :
+    (e : R ≃+* S) (I : Ideal R) :
     Ideal.absNorm (I.map e) = Ideal.absNorm I := by
   rw [Ideal.absNorm_apply, Ideal.absNorm_apply, Submodule.cardQuot_apply,
     Submodule.cardQuot_apply]
@@ -151,14 +151,12 @@ theorem dedekindZetaCoeff_rat (n : ℕ) :
   exact Nat.card_unique
 
 /-- Over `ℚ`, the trivial ideal weight has coefficient `1` at every positive integer. -/
-@[simp]
 theorem normCoeff_one_rat_apply {n : ℕ} (hn : 0 < n) :
     normCoeff ℚ (1 : IdealArithmeticFunction ℚ) n = 1 := by
   rw [normCoeff_one_apply, ite_eq_right hn.ne', dedekindZetaCoeff_rat]
   norm_num
 
 /-- Over `ℚ`, the trivial unitary ideal weight has coefficient `1` at every positive integer. -/
-@[simp]
 theorem normCoeff_trivialUnitaryWeight_rat_apply {n : ℕ} (hn : 0 < n) :
     normCoeff ℚ (1 : UnitaryIdealWeight ℚ).toIdealArithmeticFunction n = 1 := by
   rw [normCoeff_trivialUnitaryWeight_apply, ite_eq_right hn.ne', dedekindZetaCoeff_rat]
