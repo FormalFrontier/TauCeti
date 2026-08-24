@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Basic
+import Mathlib.Algebra.Lie.Basis.Base
+import TauCeti.Algebra.Lie.HighestWeight.Integrability
 import TauCeti.Algebra.Lie.Submodule.Atom
 
 public section
@@ -28,17 +30,17 @@ whole action is trivial.
 
 * `TauCeti.IsHighestWeightVector.lie_eq_zero_of_weight_zero`: every element of `L` annihilates a
   highest weight vector of weight zero in a finite-dimensional module.
-* `TauCeti.isTrivial_of_isHighestWeightVector_zero_of_lieSpan_eq_top`: a finite-dimensional
+* `TauCeti.isTrivial_of_isHighestWeightVector_weight_zero_of_lieSpan_eq_top`: a finite-dimensional
   highest weight module of highest weight zero is trivial.
-* `TauCeti.isTrivial_of_isHighestWeightVector_zero_of_isIrreducible`: in particular, a
-  finite-dimensional irreducible with a highest weight vector of weight zero is trivial.
+* `TauCeti.isTrivial_of_isHighestWeightVector_weight_zero_of_isIrreducible`: an irreducible with a
+  highest weight vector of weight zero is trivial.
 
 ## References
 
 This is the zero-weight separation step in Layer 5, "Weyl's complete reducibility theorem", of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`. It supplies the zero-weight
-identification used in the standard Casimir proof of Humphreys, *Introduction to Lie Algebras and
-Representation Theory*, §6; the rank-one highest-weight argument is from §21.
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`. Humphreys, *Introduction to Lie
+Algebras and Representation Theory*, §6 supplies the model for the subsequent Casimir-splitting
+argument; the rank-one zero-highest-weight argument used here is from §§7.2 and 21.1.
 -/
 
 namespace TauCeti
@@ -53,73 +55,82 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K]
   {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
   {b : (IsKilling.rootSystem H).Base} {v : M}
 
+section FiniteDimensional
+
 variable [FiniteDimensional K M]
 
 private theorem IsHighestWeightVector.lie_eq_zero_of_mem_rootSpace_of_mem_negRoots_of_weight_zero
     (hv : IsHighestWeightVector b (0 : Dual K H) v)
     {alpha : H.root} (halpha : alpha ∈ negRoots (IsKilling.rootSystem H) b) {x : L}
     (hx : x ∈ rootSpace H (alpha : H → K)) : ⁅x, v⁆ = 0 := by
-  have hpos : -alpha ∈ posRoots (IsKilling.rootSystem H) b := by
-    rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg alpha]
-    exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots
-      (IsKilling.rootSystem H) b alpha).mpr halpha
-  obtain ⟨h, e, f, ht, he, hf⟩ :=
-    IsKilling.exists_isSl2Triple_of_weight_isNonZero (H.isNonZero_coe_root (-alpha))
-  have P : ht.HasPrimitiveVectorWith v (0 : K) := {
-    ne_zero := hv.ne_zero
-    lie_h := by
-      rw [ht.h_eq_coroot (H.isNonZero_coe_root (-alpha)) he hf]
-      simpa using hv.lie_eq_smul (IsKilling.coroot (-alpha))
-    lie_e := hv.lie_eq_zero_of_mem_rootSpace hpos he }
-  have hfv : ⁅f, v⁆ = 0 := by
-    have := P.pow_toEnd_f_eq_zero_of_eq_nat (n := 0) (by simp)
-    simpa using this
-  have hf' : f ∈ rootSpace H (alpha : H → K) := by
-    convert hf using 1
-    simp
-  have hspan := IsKilling.toSubmodule_rootSpace_eq_span (alpha : Weight K H L)
-    (H.isNonZero_coe_root alpha) f ht.f_ne_zero hf'
-  rw [Weight.coe_coe] at hx
-  rw [← LieSubmodule.mem_toSubmodule] at hx
-  rw [hspan, Submodule.mem_span_singleton] at hx
-  obtain ⟨c, rfl⟩ := hx
-  rw [smul_lie, hfv, smul_zero]
+  refine forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero
+    (H.isNonZero_coe_root (-alpha)) hv.ne_zero ?_ ?_ x ?_
+  · simpa using hv.lie_eq_smul (IsKilling.coroot (-alpha))
+  · exact fun e he => hv.lie_eq_zero_of_mem_rootSpace
+      (neg_mem_posRoots_of_mem_negRoots b halpha) he
+  · simpa only [IsKilling.val_neg_root, neg_neg, Weight.coe_coe] using hx
 
 /-- Every element of `L` annihilates a highest weight vector of weight zero in a finite-dimensional
 module. -/
 theorem IsHighestWeightVector.lie_eq_zero_of_weight_zero
     (hv : IsHighestWeightVector b (0 : Dual K H) v) (x : L) : ⁅x, v⁆ = 0 := by
-  have hneg : negativeNilradical H b ≤ annihilator v :=
-    (negativeNilradical_le_iff H b).mpr fun _ halpha _ hx => mem_annihilator.mpr
-      (hv.lie_eq_zero_of_mem_rootSpace_of_mem_negRoots_of_weight_zero halpha hx)
-  have hcartan : H ≤ annihilator v := fun y hy => mem_annihilator.mpr (by
+  have hneg : negativeNilradical H b ≤ lieAnnihilator K L v :=
+    (negativeNilradical_le_iff H b).mpr fun _ halpha _ hx =>
+      (mem_lieAnnihilator K L).mpr
+        (hv.lie_eq_zero_of_mem_rootSpace_of_mem_negRoots_of_weight_zero halpha hx)
+  have hcartan : H ≤ lieAnnihilator K L v := fun y hy =>
+    (mem_lieAnnihilator K L).mpr (by
     simpa using hv.lie_eq_smul ⟨y, hy⟩)
-  have hpos : positiveNilradical H b ≤ annihilator v := fun _ hx => mem_annihilator.mpr
-    (hv.lie_eq_zero_of_mem_positiveNilradical hx)
-  have hborel : borelSubalgebra H b ≤ annihilator v := by
+  have hpos : positiveNilradical H b ≤ lieAnnihilator K L v := fun _ hx =>
+    (mem_lieAnnihilator K L).mpr (hv.lie_eq_zero_of_mem_positiveNilradical hx)
+  have hborel : borelSubalgebra H b ≤ lieAnnihilator K L v := by
     rw [borelSubalgebra_eq_sup]
     exact sup_le hcartan hpos
   obtain ⟨y, hy, z, hz, rfl⟩ :=
     exists_mem_negativeNilradical_add_mem_borelSubalgebra H b x
-  exact mem_annihilator.mp (add_mem (hneg hy) (hborel hz))
+  exact (mem_lieAnnihilator K L).mp (add_mem (hneg hy) (hborel hz))
 
 /-- A finite-dimensional highest weight module generated in weight zero is a trivial Lie module. -/
-theorem isTrivial_of_isHighestWeightVector_zero_of_lieSpan_eq_top
+theorem isTrivial_of_isHighestWeightVector_weight_zero_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b (0 : Dual K H) v)
-    (hgen : LieSubmodule.lieSpan K L {v} = ⊤) : LieModule.IsTrivial L M := by
-  refine (LieModule.isTrivial_iff_max_triv_eq_top (R := K) (L := L) (M := M)).mpr ?_
-  apply eq_top_iff.mpr
-  rw [← hgen, LieSubmodule.lieSpan_le]
-  refine Set.singleton_subset_iff.mpr ?_
-  exact (LieModule.mem_maxTrivSubmodule K L M v).mpr
-    hv.lie_eq_zero_of_weight_zero
+    (hgen : LieSubmodule.lieSpan K L {v} = ⊤) : LieModule.IsTrivial L M :=
+  isTrivial_of_forall_lie_eq_zero_of_lieSpan_eq_top
+    hv.lie_eq_zero_of_weight_zero hgen
 
-/-- A finite-dimensional irreducible module with a highest weight vector of weight zero is
-trivial. -/
-theorem isTrivial_of_isHighestWeightVector_zero_of_isIrreducible
+end FiniteDimensional
+
+/-- An irreducible module with a highest weight vector of weight zero is trivial. -/
+theorem isTrivial_of_isHighestWeightVector_weight_zero_of_isIrreducible
     [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b (0 : Dual K H) v) :
-    LieModule.IsTrivial L M :=
-  isTrivial_of_isHighestWeightVector_zero_of_lieSpan_eq_top hv
-    (lieSpan_singleton_eq_top_of_ne_zero hv.ne_zero)
+    LieModule.IsTrivial L M := by
+  classical
+  have hnonzero (i : b.support) : ((i : H.root) : Weight K H L).IsNonZero :=
+    H.isNonZero_coe_root i
+  choose h e f ht he hf using fun i =>
+    IsKilling.exists_isSl2Triple_of_weight_isNonZero (hnonzero i)
+  have he_zero (i : b.support) : ⁅e i, v⁆ = 0 :=
+    hv.lie_eq_zero_of_mem_rootSpace
+      (support_subset_posRoots (IsKilling.rootSystem H) b i.2) (he i)
+  have hf_zero (i : b.support) : ⁅f i, v⁆ = 0 := by
+    have hpow := pow_toEnd_eq_zero_of_isHighestWeightVector_of_isIrreducible
+      hv i.2 (n := 0) (by simp) (hf i)
+    simpa using hpow
+  have hspan : LieSubalgebra.lieSpan K L (Set.range e ∪ Set.range f) = ⊤ :=
+    LieAlgebra.lieSpan_range_union_eq_top_of_mem_rootSpace b e f
+      (fun i => by
+        rw [IsKilling.rootSystem_coroot_apply,
+          ← (ht i).h_eq_coroot (hnonzero i) (he i) (hf i)]
+        exact ht i) he hf
+  have hann : lieAnnihilator K L v = ⊤ := by
+    apply eq_top_iff.mpr
+    rw [← hspan, LieSubalgebra.lieSpan_le]
+    rintro x (⟨i, rfl⟩ | ⟨i, rfl⟩)
+    · exact (mem_lieAnnihilator K L).mpr (he_zero i)
+    · exact (mem_lieAnnihilator K L).mpr (hf_zero i)
+  apply isTrivial_of_forall_lie_eq_zero_of_lieSpan_eq_top
+    (R := K) (L := L) (M := M)
+    (hgen := lieSpan_singleton_eq_top_of_ne_zero hv.ne_zero)
+  intro x
+  exact (mem_lieAnnihilator K L).mp (hann ▸ LieSubalgebra.mem_top x)
 
 end TauCeti

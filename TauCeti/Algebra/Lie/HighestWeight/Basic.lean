@@ -72,7 +72,7 @@ structure, and `TauCeti.isHighestWeightVector_iff` together with the three proje
 `TauCeti.IsHighestWeightVector.lie_eq_zero_of_mem_positiveNilradical` is its elimination API; no
 consumer needs to take the conjunction apart by hand.
 
-The canonical public helper `TauCeti.annihilator` in `TauCeti.Algebra.Lie.Basic` packages the
+The canonical public helper `TauCeti.lieAnnihilator` in `TauCeti.Algebra.Lie.Basic` packages the
 elements annihilating a vector as a Lie subalgebra. Here it lets
 `TauCeti.positiveNilradical_le_iff` extend positive-root-space annihilation to the positive
 nilradical; `TauCeti.IsHighestWeightVector.lie_eq_zero_of_weight_zero` uses the same helper with
@@ -188,9 +188,10 @@ theorem isHighestWeightVector_of_forall_rootSpace {lam : Dual K H} {v : M} (hv0 
       ∀ x ∈ rootSpace H (α : H → K), ⁅x, v⁆ = 0) :
     IsHighestWeightVector b lam v := by
   refine isHighestWeightVector_iff.mpr ⟨hv0, hcartan, fun x hx => ?_⟩
-  have hle : positiveNilradical H b ≤ (annihilator v : LieSubalgebra K L) :=
-    (positiveNilradical_le_iff H b).mpr fun α hα y hy => mem_annihilator.mpr (hpos α hα y hy)
-  exact mem_annihilator.mp (hle hx)
+  have hle : positiveNilradical H b ≤ lieAnnihilator K L v :=
+    (positiveNilradical_le_iff H b).mpr fun α hα y hy =>
+      (mem_lieAnnihilator K L).mpr (hpos α hα y hy)
+  exact (mem_lieAnnihilator K L).mp (hle hx)
 
 /-- Being a highest weight vector is exactly being a nonzero `H`-eigenvector annihilated by every
 positive root space. -/
@@ -309,9 +310,7 @@ theorem IsDominantIntegral.isIntegralWeight {lam : Dual K H}
   rcases mem_posRoots_or_mem_negRoots (IsKilling.rootSystem H) b i with hi | hi
   · obtain ⟨n, hn⟩ := hlam.exists_nat_apply_coroot hi
     exact ⟨n, by simpa using hn⟩
-  · have hi' : -i ∈ posRoots (IsKilling.rootSystem H) b := by
-      rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg]
-      exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots (IsKilling.rootSystem H) b i).mpr hi
+  · have hi' := neg_mem_posRoots_of_mem_negRoots b hi
     obtain ⟨n, hn⟩ := hlam.exists_nat_apply_coroot hi'
     refine ⟨-n, ?_⟩
     rw [IsKilling.rootSystem_coroot_apply, IsKilling.val_neg_root, IsKilling.coroot_neg,

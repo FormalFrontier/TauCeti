@@ -49,6 +49,8 @@ function.
 * `TauCeti.mem_positiveNilradical_of_mem_rootSpace` and
   `TauCeti.mem_negativeNilradical_of_mem_rootSpace` say the nilradicals contain the root spaces
   they are built from.
+* `TauCeti.neg_mem_posRoots_of_mem_negRoots` says that negating a negative root gives a positive
+  root.
 * `TauCeti.borelSubalgebra_eq_sup`: the Borel subalgebra is the join `H ⊔ n⁺`.
 * `TauCeti.le_borelSubalgebra` and `TauCeti.positiveNilradical_le_borelSubalgebra` are the two
   inclusions `H ≤ 𝔟` and `n⁺ ≤ 𝔟`.
@@ -194,6 +196,14 @@ theorem rootSpace_add_le_rootSpaceSpan {S : Set H.root} (hS : IsSpecialClosedRoo
   exact rootSpace_le_rootSpaceSpan (S := S) (α := k) (hS.add_mem α hα β hβ k hk)
 
 variable (b : (IsKilling.rootSystem H).Base)
+
+/-- Negating a negative root gives a positive root. -/
+theorem neg_mem_posRoots_of_mem_negRoots {i : H.root}
+    (hi : i ∈ negRoots (IsKilling.rootSystem H) b) :
+    -i ∈ posRoots (IsKilling.rootSystem H) b := by
+  rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg i]
+  exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots
+    (IsKilling.rootSystem H) b i).mpr hi
 
 /-- The positive roots are a special closed set of roots: heights add, and a positive root never
 has a positive negative. -/
