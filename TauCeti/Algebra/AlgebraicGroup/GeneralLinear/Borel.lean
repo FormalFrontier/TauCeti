@@ -93,6 +93,16 @@ theorem lowerLeftCoordinate_def :
 @[expose] def weights : Fin 2 → ℤ :=
   fun i ↦ if i = 0 then 1 else 0
 
+/-- The first standard Borel weight is one. -/
+@[simp]
+theorem weights_zero : weights 0 = 1 := by
+  simp [weights]
+
+/-- The second standard Borel weight is zero. -/
+@[simp]
+theorem weights_one : weights 1 = 0 := by
+  simp [weights]
+
 /-- For the weights `(1, 0)`, the weight-parabolic relation set is the singleton containing the
 lower-left coordinate. -/
 theorem weightParabolicRelationSet_borelWeights :

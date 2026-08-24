@@ -137,7 +137,7 @@ private theorem antipode_X_mem (w : Fin N → ℤ) {i j : Fin N} (hij : w i < w 
   rw [coordinateHopfAlgebra_antipode_X]
   apply (Ideal.Quotient.eq_zero_iff_mem).mp
   have hzero := hXqInv (OrderDual.toDual_lt_toDual.mpr hij)
-  rw [hmapInv, genericMatrix_inv, Matrix.map_apply, genericMatrixInv_apply] at hzero
+  rw [hmapInv, Matrix.map_apply, genericMatrix_inv_apply] at hzero
   exact hzero
 
 /-- The Hopf ideal cutting out matrices block triangular for the decreasing weight filtration. -/

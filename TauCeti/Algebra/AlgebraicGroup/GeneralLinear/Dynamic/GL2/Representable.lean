@@ -63,7 +63,7 @@ noncomputable def borelPointsIsoParabolicFunctor :
     HopfAlgebra.pointsFunctor (R := R) (H := Borel.coordinateHopfAlgebra R) ≅
       Cocharacter.parabolicFunctor (dynamicCocharacter (R := R)) := by
   rw [dynamicCocharacter_eq_weightCocharacter]
-  exact weightParabolicPointsIso R dynamicWeights
+  exact weightParabolicPointsIso R Borel.weights
 
 /-! ## The dynamic Levi -/
 

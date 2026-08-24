@@ -48,7 +48,6 @@ section Points
 variable {A : Type v} [CommRing A] [Algebra R A]
 
 /-- The Hopf-ideal cut-out is exactly the dynamic parabolic of the weight cocharacter. -/
-@[simp]
 theorem mem_weightParabolicDefiningPointsSubgroup_iff (w : Fin N → ℤ)
     (g : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N)
       (CommAlgCat.of R A)) :
