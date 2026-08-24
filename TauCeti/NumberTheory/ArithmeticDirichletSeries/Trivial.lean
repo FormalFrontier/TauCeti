@@ -88,7 +88,6 @@ theorem normCoeff_one_apply (n : ℕ) :
     simp [card_normFiber_eq_dedekindZetaCoeff K hn]
 
 /-- The trivial unitary ideal weight has the Dedekind zeta coefficients away from zero. -/
-@[simp]
 theorem normCoeff_trivialUnitaryWeight_apply (n : ℕ) :
     normCoeff K (1 : UnitaryIdealWeight K).toIdealArithmeticFunction n =
       if n = 0 then 0 else dedekindZetaCoeff K n := by
