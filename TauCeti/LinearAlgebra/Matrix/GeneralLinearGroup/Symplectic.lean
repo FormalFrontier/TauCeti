@@ -573,7 +573,7 @@ private theorem differenceShortRoot_mem {i j : Fin m} (hij : i ≠ j) (c : R) :
   rw [add_zero, add_assoc, ← Matrix.single_add]
   simp
 
-private theorem positiveSumShortRoot_mem {i j : Fin m} (_hij : i ≠ j) (c : R) :
+private theorem positiveSumShortRoot_mem {i j : Fin m} (c : R) :
     transvectionUnit (finSumFinEquiv_inl_ne_inr i j) c *
         transvectionUnit (finSumFinEquiv_inl_ne_inr j i) c ∈
       GLSymplecticFin m R := by
@@ -600,7 +600,7 @@ private theorem positiveSumShortRoot_mem {i j : Fin m} (_hij : i ≠ j) (c : R) 
   exact GLSymplectic.fromBlocks_upper_mem _
     (by simp [Matrix.transpose_add, Matrix.transpose_single, add_comm])
 
-private theorem negativeSumShortRoot_mem {i j : Fin m} (_hij : i ≠ j) (c : R) :
+private theorem negativeSumShortRoot_mem {i j : Fin m} (c : R) :
     transvectionUnit (finSumFinEquiv_inr_ne_inl i j) c *
         transvectionUnit (finSumFinEquiv_inr_ne_inl j i) c ∈
       GLSymplecticFin m R := by
@@ -641,7 +641,7 @@ def differenceShortRootHom {i j : Fin m} (hij : i ≠ j) :
         differenceShortRoot_mem hij c.toAdd)
 
 /-- The one-parameter subgroup attached to the short root `eᵢ+eⱼ`. -/
-def positiveSumShortRootHom {i j : Fin m} (hij : i ≠ j) :
+def positiveSumShortRootHom {i j : Fin m} (_hij : i ≠ j) :
     Multiplicative R →* GLSymplecticFin m R :=
   MonoidHom.codRestrict
     (commutingTransvectionPairHom
@@ -650,10 +650,10 @@ def positiveSumShortRootHom {i j : Fin m} (hij : i ≠ j) :
       (MonoidHom.id _))
     (GLSymplecticFin m R) (fun c ↦ by
       simpa only [commutingTransvectionPairHom_apply, MonoidHom.id_apply] using
-        positiveSumShortRoot_mem hij c.toAdd)
+        positiveSumShortRoot_mem c.toAdd)
 
 /-- The one-parameter subgroup attached to the short root `-eᵢ-eⱼ`. -/
-def negativeSumShortRootHom {i j : Fin m} (hij : i ≠ j) :
+def negativeSumShortRootHom {i j : Fin m} (_hij : i ≠ j) :
     Multiplicative R →* GLSymplecticFin m R :=
   MonoidHom.codRestrict
     (commutingTransvectionPairHom
@@ -662,7 +662,7 @@ def negativeSumShortRootHom {i j : Fin m} (hij : i ≠ j) :
       (MonoidHom.id _))
     (GLSymplecticFin m R) (fun c ↦ by
       simpa only [commutingTransvectionPairHom_apply, MonoidHom.id_apply] using
-        negativeSumShortRoot_mem hij c.toAdd)
+        negativeSumShortRoot_mem c.toAdd)
 
 /-- The symplectic short-root element
 `x_{eᵢ-eⱼ}(c) = (1 + c E_{i,j})(1 - c E_{m+j,m+i})`. -/
@@ -735,6 +735,32 @@ theorem coe_negativeSumShortRootUnit {i j : Fin m} (hij : i ≠ j) (c : R) :
         transvectionUnit (finSumFinEquiv_inr_ne_inl j i) c := by
   simp [negativeSumShortRootUnit, negativeSumShortRootHom,
     commutingTransvectionPairHom_apply]
+
+/-- Swapping the two indices does not change a positive-sum short-root homomorphism. -/
+theorem positiveSumShortRootHom_swap {i j : Fin m} (hij : i ≠ j) :
+    positiveSumShortRootHom (R := R) hij = positiveSumShortRootHom hij.symm := by
+  apply MonoidHom.ext
+  intro c
+  rw [positiveSumShortRootHom_apply, positiveSumShortRootHom_apply]
+  apply Subtype.ext
+  rw [coe_positiveSumShortRootUnit, coe_positiveSumShortRootUnit]
+  exact (commute_transvectionUnit
+    (finSumFinEquiv_inl_ne_inr i j) (finSumFinEquiv_inl_ne_inr j i)
+    (finSumFinEquiv_inr_ne_inl j j) (finSumFinEquiv_inr_ne_inl i i)
+    c.toAdd c.toAdd).eq
+
+/-- Swapping the two indices does not change a negative-sum short-root homomorphism. -/
+theorem negativeSumShortRootHom_swap {i j : Fin m} (hij : i ≠ j) :
+    negativeSumShortRootHom (R := R) hij = negativeSumShortRootHom hij.symm := by
+  apply MonoidHom.ext
+  intro c
+  rw [negativeSumShortRootHom_apply, negativeSumShortRootHom_apply]
+  apply Subtype.ext
+  rw [coe_negativeSumShortRootUnit, coe_negativeSumShortRootUnit]
+  exact (commute_transvectionUnit
+    (finSumFinEquiv_inr_ne_inl i j) (finSumFinEquiv_inr_ne_inl j i)
+    (finSumFinEquiv_inl_ne_inr j j) (finSumFinEquiv_inl_ne_inr i i)
+    c.toAdd c.toAdd).eq
 
 /-- Difference short-root elements commute with change of coefficient ring. -/
 @[simp]
@@ -896,21 +922,54 @@ theorem hom_injective (family : ShortRootFamily) {i j : Fin m} (hij : i ≠ j) :
 
 end ShortRootFamily
 
-/-- An index for the five families of root one-parameter subgroups of the standard symplectic
-group: the two long-root families and the three short-root families. -/
+/-- An extensional index for the root one-parameter subgroups of the standard symplectic group.
+
+Difference roots retain their ordered pair of indices. The symmetric positive- and negative-sum
+roots store their indices in increasing order, so each root has only one index. -/
 inductive RootSubgroupIndex (m : ℕ)
   | positiveLong (i : Fin m)
   | negativeLong (i : Fin m)
-  | short (family : ShortRootFamily) (i j : Fin m) (hij : i ≠ j)
+  | difference (i j : Fin m) (hij : i ≠ j)
+  | positiveSum (i j : Fin m) (hij : i < j)
+  | negativeSum (i j : Fin m) (hij : i < j)
 
 namespace RootSubgroupIndex
+
+/-- The canonical root index for a short-root family and two distinct indices. Sum roots are
+normalized to increasing index order. -/
+def short (family : ShortRootFamily) (i j : Fin m) (hij : i ≠ j) :
+    RootSubgroupIndex m :=
+  match family with
+  | .difference => .difference i j hij
+  | .positiveSum =>
+      if h : i < j then .positiveSum i j h
+      else .positiveSum j i (lt_of_le_of_ne (le_of_not_gt h) hij.symm)
+  | .negativeSum =>
+      if h : i < j then .negativeSum i j h
+      else .negativeSum j i (lt_of_le_of_ne (le_of_not_gt h) hij.symm)
+
+/-- Swapping the inputs gives the same canonical positive-sum root index. -/
+theorem short_positiveSum_swap (i j : Fin m) (hij : i ≠ j) :
+    short .positiveSum i j hij = short .positiveSum j i hij.symm := by
+  rcases lt_or_gt_of_ne hij with h | h
+  · simp [short, h, not_lt_of_ge h.le]
+  · simp [short, h, not_lt_of_ge h.le]
+
+/-- Swapping the inputs gives the same canonical negative-sum root index. -/
+theorem short_negativeSum_swap (i j : Fin m) (hij : i ≠ j) :
+    short .negativeSum i j hij = short .negativeSum j i hij.symm := by
+  rcases lt_or_gt_of_ne hij with h | h
+  · simp [short, h, not_lt_of_ge h.le]
+  · simp [short, h, not_lt_of_ge h.le]
 
 /-- The matrix one-parameter subgroup selected by a symplectic root index. -/
 def hom (root : RootSubgroupIndex m) : Multiplicative R →* GLSymplecticFin m R :=
   match root with
   | positiveLong i => positiveLongRootTransvectionHom i
   | negativeLong i => negativeLongRootTransvectionHom i
-  | short family _ _ hij => family.hom hij
+  | difference _ _ hij => differenceShortRootHom hij
+  | positiveSum _ _ hij => positiveSumShortRootHom hij.ne
+  | negativeSum _ _ hij => negativeSumShortRootHom hij.ne
 
 /-- The positive-long constructor selects the positive long-root homomorphism. -/
 @[simp]
@@ -928,7 +987,20 @@ theorem hom_negativeLong (i : Fin m) :
 @[simp]
 theorem hom_short (family : ShortRootFamily) (i j : Fin m) (hij : i ≠ j) :
     (RootSubgroupIndex.short family i j hij).hom (R := R) = family.hom hij := by
-  rw [hom]
+  cases family with
+  | difference => rfl
+  | positiveSum =>
+      rw [short]
+      split
+      · rfl
+      · rw [hom, ShortRootFamily.hom]
+        exact (positiveSumShortRootHom_swap hij).symm
+  | negativeSum =>
+      rw [short]
+      split
+      · rfl
+      · rw [hom, ShortRootFamily.hom]
+        exact (negativeSumShortRootHom_swap hij).symm
 
 /-- Evaluating any root one-parameter subgroup commutes with change of coefficients. -/
 @[simp]
@@ -939,7 +1011,9 @@ theorem map_hom_apply {S : Type v} [CommRing S] (root : RootSubgroupIndex m)
   cases root with
   | positiveLong i => simp [hom]
   | negativeLong i => simp [hom]
-  | short family i j hij => simp [hom]
+  | difference i j hij => simp [hom]
+  | positiveSum i j hij => simp [hom]
+  | negativeSum i j hij => simp [hom]
 
 /-- Every symplectic root one-parameter subgroup is injective. -/
 theorem hom_injective (root : RootSubgroupIndex m) :
@@ -954,8 +1028,12 @@ theorem hom_injective (root : RootSubgroupIndex m) :
       apply Multiplicative.toAdd.injective
       apply negativeLongRootTransvectionUnit_injective i
       simpa only [hom, negativeLongRootTransvectionHom_apply] using h
-  | short family i j hij =>
-      exact family.hom_injective hij h
+  | difference i j hij =>
+      exact (ShortRootFamily.difference).hom_injective hij h
+  | positiveSum i j hij =>
+      exact (ShortRootFamily.positiveSum).hom_injective hij.ne h
+  | negativeSum i j hij =>
+      exact (ShortRootFamily.negativeSum).hom_injective hij.ne h
 
 end RootSubgroupIndex
 
