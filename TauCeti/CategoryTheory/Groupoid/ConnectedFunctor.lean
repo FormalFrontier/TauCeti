@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.CategoryTheory.Groupoid.SingleObj
+public import Mathlib.CategoryTheory.Groupoid
 
 /-!
 # Functors on a groupoid with a weakly initial object
@@ -16,13 +16,12 @@ functors `F G : C ⥤ D` to `x₀` produces objects of `D` with actions of the v
 actions extends to a natural isomorphism `F ≅ G`, and the extension has the given isomorphism
 as its component at `x₀`.
 
-Nothing has to be transported by hand. Restricting along the vertex-group inclusion
-`TauCeti.Groupoid.singleObjFunctor` is an equivalence of functor categories, because
-`TauCeti.Groupoid.singleObjFunctor` itself is one by
-`TauCeti.Groupoid.isEquivalence_singleObjFunctor`; the datum of an equivariant isomorphism
-`F.obj x₀ ≅ G.obj x₀` is exactly a natural isomorphism between the two restrictions, and the
-extension is its preimage under that equivalence. Being a preimage is also what pins down the
-component at `x₀`, and what makes the extension unique.
+The construction is the usual transport of structure. Choosing a morphism `γ x : x₀ ⟶ x` for
+every object, the component at `x` is `F.map (γ x)⁻¹ ≫ e ≫ G.map (γ x)`; naturality at
+`f : x ⟶ y` holds because the discrepancy `γ x ≫ f ≫ (γ y)⁻¹` between the two chosen morphisms
+is an endomorphism of `x₀`, so equivariance applies to it. Nothing depends on the choice, since
+the resulting natural transformation is determined by its component at `x₀`, and that component
+is `e` whatever `γ x₀` is.
 
 The hypothesis is exactly connectedness of the groupoid when `C` is nonempty, but is stated as
 the family of nonemptiness assertions `∀ x, Nonempty (x₀ ⟶ x)` rather than through
@@ -54,12 +53,11 @@ variable {C : Type u} [CategoryTheory.Groupoid.{v} C] {D : Type w} [Category.{t}
 
 include hconn in
 /-- A natural transformation between functors out of a groupoid is determined by its component at
-a weakly initial object: restricting along `TauCeti.Groupoid.singleObjFunctor` is faithful. -/
+a weakly initial object. -/
 theorem natTrans_ext {α β : F ⟶ G} (h : α.app x₀ = β.app x₀) : α = β := by
-  have := isEquivalence_singleObjFunctor x₀ hconn
-  refine ((Functor.whiskeringLeft _ _ D).obj (singleObjFunctor x₀)).map_injective ?_
-  ext _
-  exact h
+  ext x
+  obtain ⟨f⟩ := hconn x
+  rw [← cancel_epi (F.map f), α.naturality f, β.naturality f, h]
 
 include hconn in
 /-- A natural isomorphism between functors out of a groupoid is determined by its component at
@@ -67,31 +65,48 @@ a weakly initial object. -/
 theorem natIso_ext {α β : F ≅ G} (h : α.app x₀ = β.app x₀) : α = β :=
   Iso.ext (natTrans_ext hconn (by simpa using congrArg Iso.hom h))
 
+/-- A chosen isomorphism from the weakly initial object `x₀` to an arbitrary object. -/
+private def chosenIso (x : C) : x₀ ≅ x :=
+  (CategoryTheory.Groupoid.isoEquivHom x₀ x).symm (hconn x).some
+
 /-- An `End x₀`-equivariant isomorphism between the values of two functors at a
 weakly initial object of a groupoid extends to a natural isomorphism.
 
-It is the preimage of the given isomorphism, read as a natural isomorphism of the restrictions
-along `TauCeti.Groupoid.singleObjFunctor`, under the equivalence given by restriction. Its
-component at `x₀` is the given isomorphism, by `natIsoOfEnd_app_self`. -/
+Its component at `x₀` is the given isomorphism, by `natIsoOfEnd_app_self`. -/
 def natIsoOfEnd (e : F.obj x₀ ≅ G.obj x₀)
     (he : ∀ g : x₀ ⟶ x₀, F.map g ≫ e.hom = e.hom ≫ G.map g) :
     F ≅ G :=
-  haveI := isEquivalence_singleObjFunctor x₀ hconn
-  ((Functor.whiskeringLeft _ _ D).obj (singleObjFunctor x₀)).preimageIso
-    (NatIso.ofComponents (fun _ => e) fun g => he g)
+  NatIso.ofComponents
+    (fun x => (F.mapIso (chosenIso hconn x)).symm ≪≫ e ≪≫ G.mapIso (chosenIso hconn x))
+    (fun {x y} f => by
+      simp only [Iso.trans_hom, Iso.symm_hom, Functor.mapIso_hom, Functor.mapIso_inv,
+        Category.assoc]
+      -- Cancel the chosen transports, then apply equivariance to their discrepancy.
+      rw [← cancel_epi (F.mapIso (chosenIso hconn x)).hom,
+        ← cancel_mono (G.mapIso (chosenIso hconn y)).inv]
+      simp only [Functor.mapIso_hom, Functor.mapIso_inv]
+      rw [← F.map_comp_assoc, ← F.map_comp_assoc]
+      simp only [Category.assoc]
+      rw [reassoc_of% (he ((chosenIso hconn x).hom ≫ f ≫ (chosenIso hconn y).inv))]
+      rw [← F.map_comp_assoc, Iso.hom_inv_id, F.map_id, Category.id_comp]
+      simp only [G.map_comp, Category.assoc]
+      simp)
+
+private theorem natIsoOfEnd_hom_app (e : F.obj x₀ ≅ G.obj x₀)
+    (he : ∀ g : x₀ ⟶ x₀, F.map g ≫ e.hom = e.hom ≫ G.map g) (x : C) :
+    (natIsoOfEnd hconn e he).hom.app x =
+      F.map (chosenIso hconn x).inv ≫ e.hom ≫ G.map (chosenIso hconn x).hom := by
+  simp [natIsoOfEnd]
 
 /-- The extension of an equivariant isomorphism restricts to that isomorphism. -/
 @[simp]
 theorem natIsoOfEnd_app_self (e : F.obj x₀ ≅ G.obj x₀)
     (he : ∀ g : x₀ ⟶ x₀, F.map g ≫ e.hom = e.hom ≫ G.map g) :
     (natIsoOfEnd hconn e he).app x₀ = e := by
-  have := isEquivalence_singleObjFunctor x₀ hconn
-  refine Iso.ext ?_
-  -- The restriction of the extension is the isomorphism it was built from, and restricting a
-  -- natural transformation reads off its component at `x₀`.
-  exact congrArg (fun α => NatTrans.app α (SingleObj.star (End x₀)))
-    (((Functor.whiskeringLeft _ _ D).obj (singleObjFunctor x₀)).map_preimage
-      (NatIso.ofComponents (fun _ => e) fun g => he g).hom)
+  apply Iso.ext
+  -- Compare the hom components using the chosen transport formula.
+  rw [Iso.app_hom, natIsoOfEnd_hom_app, ← he (chosenIso hconn x₀).hom, ← Category.assoc,
+    ← F.map_comp, Iso.inv_hom_id, F.map_id, Category.id_comp]
 
 /-- The extension is the only natural isomorphism restricting to the given one at the weakly
 initial object. -/
