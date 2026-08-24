@@ -251,8 +251,8 @@ noncomputable def explicitMap1 (φ : H →ₜ* G) (f : M →+ N) (hf : Continuou
 @[simp]
 theorem explicitMap1_mk (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (c : Z1 G M) :
-    explicitMap1 G M H N φ f hf hequiv (H1pi G M c) =
-      H1pi H N (cocyclesMap1 G M H N φ f hf hequiv c) :=
+    explicitMap1 G M H N φ f hf hequiv (c : H1 G M) =
+      (cocyclesMap1 G M H N φ f hf hequiv c : H1 H N) :=
   QuotientAddGroup.map_mk _ _ _ _ c
 
 /-- Pullback by the identity compatible pair is the identity on explicit `H¹`. -/
@@ -265,7 +265,7 @@ theorem explicitMap1_id :
   intro x
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-      rw [← QuotientAddGroup.mk'_apply, explicitMap1_mk]
+      rw [explicitMap1_mk]
       rfl
 
 /-- Pullback on explicit `H¹` respects composition of compatible pairs. -/
@@ -285,8 +285,7 @@ theorem explicitMap1_comp
   intro x
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-      rw [← QuotientAddGroup.mk'_apply, explicitMap1_mk, AddMonoidHom.comp_apply,
-        explicitMap1_mk, explicitMap1_mk]
+      rw [explicitMap1_mk, AddMonoidHom.comp_apply, explicitMap1_mk, explicitMap1_mk]
       rfl
 
 end Cohomology
