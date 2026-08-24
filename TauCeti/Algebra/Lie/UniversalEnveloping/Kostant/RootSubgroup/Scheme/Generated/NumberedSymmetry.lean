@@ -454,8 +454,7 @@ private theorem kostantGeneratedCoordinateNumberedSymmetryIso_hom_comp_rootMap
 
 /-- The automorphism of the generated Kostant group scheme induced by a numbered symmetry. -/
 noncomputable def kostantGeneratedNumberedSymmetryIso :
-    kostantGeneratedGroupScheme e h ρ M hM hnil b ≅
-      kostantGeneratedGroupScheme e h ρ M hM hnil b :=
+    Aut (kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).mapIso
     (kostantGeneratedCoordinateNumberedSymmetryIso
       e h ρ M hM hnil b σ θ hθM hθe hσ).op
@@ -486,16 +485,14 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_inv (i : I) :
       kostantRootSubgroupToGenerated e h ρ M hM hnil b i := by
   rw [← kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom
     e h ρ M hM hnil b σ θ hθM hθe hσ i]
-  simp only [Category.assoc, Iso.hom_inv_id, Category.comp_id]
-
-/-- The group structure on self-isomorphisms of the generated Kostant group scheme.
-
-`Aut X` is definitionally `X ≅ X`, but instance search does not unfold that alias when a
-self-isomorphism is raised to a power, so we supply it locally. -/
-noncomputable local instance generatedGroupSchemeIsoGroup :
-    Group (kostantGeneratedGroupScheme e h ρ M hM hnil b ≅
-      kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
-  Aut.instGroup _
+  have hcancel :
+      (kostantGeneratedNumberedSymmetryIso
+          e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
+        (kostantGeneratedNumberedSymmetryIso
+          e h ρ M hM hnil b σ θ hθM hθe hσ).inv = 𝟙 _ :=
+    Iso.hom_inv_id (show _ ≅ _ from kostantGeneratedNumberedSymmetryIso
+      e h ρ M hM hnil b σ θ hθM hθe hσ)
+  rw [Category.assoc, hcancel, Category.comp_id]
 
 include hθe hσ in
 /-- Iterating the generated group-scheme symmetry carries the `i`th root subgroup to the root
@@ -508,16 +505,22 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom (m : ℕ
       kostantRootSubgroupToGenerated e h ρ M hM hnil b ((σ^[m]) i) := by
   induction m generalizing i with
   | zero =>
-      -- the unit of the `Aut` group structure is `Iso.refl`
-      rw [pow_zero, Function.iterate_zero_apply]
-      change _ ≫ (Iso.refl _).hom = _
-      rw [Iso.refl_hom, Category.comp_id]
+      have hone : (1 : Aut (kostantGeneratedGroupScheme e h ρ M hM hnil b)).hom =
+          𝟙 (kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
+        by exact map_one (Aut.toEnd (kostantGeneratedGroupScheme e h ρ M hM hnil b))
+      rw [pow_zero, Function.iterate_zero_apply, hone, Category.comp_id]
   | succ m ih =>
-      -- multiplication in the `Aut` group structure composes in the `Function.comp` order,
-      -- as `CategoryTheory.Aut.Aut_mul_def` records
-      rw [pow_succ]
-      change _ ≫ (Iso.trans _ _).hom = _
-      rw [Iso.trans_hom, ← Category.assoc,
+      have hmul :
+          ((kostantGeneratedNumberedSymmetryIso
+                e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m *
+              kostantGeneratedNumberedSymmetryIso
+                e h ρ M hM hnil b σ θ hθM hθe hσ).hom =
+            (kostantGeneratedNumberedSymmetryIso
+                e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
+              ((kostantGeneratedNumberedSymmetryIso
+                e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m).hom := by
+        exact map_mul (Aut.toEnd (kostantGeneratedGroupScheme e h ρ M hM hnil b)) _ _
+      rw [pow_succ, hmul, ← Category.assoc,
         kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom, ih,
         Function.iterate_succ_apply]
 
@@ -532,9 +535,10 @@ theorem kostantGeneratedNumberedSymmetryIso_pow_eq_one (m : ℕ)
   apply Iso.ext
   apply kostantGeneratedGroupScheme_hom_ext e h ρ M hM hnil b
   intro i
-  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq]
-  -- the unit of the `Aut` group structure is `Iso.refl`
-  change _ = _ ≫ (Iso.refl _).hom
-  rw [Iso.refl_hom, Category.comp_id]
+  have hone : (1 : Aut (kostantGeneratedGroupScheme e h ρ M hM hnil b)).hom =
+      𝟙 (kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
+    by exact map_one (Aut.toEnd (kostantGeneratedGroupScheme e h ρ M hM hnil b))
+  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq,
+    hone, Category.comp_id]
 
 end TauCeti.UniversalEnvelopingAlgebra
