@@ -115,11 +115,23 @@ def rationalFunctions (X : Scheme.{u}) [IrreducibleSpace X] : X.Modules :=
   (Scheme.Modules.pushforward (fromSpecFunctionField X)).obj (SheafOfModules.unit _)
 
 /-- The module sheaf and ring sheaf constructions of `𝒦_X` have canonically identified
-sections. -/
+sections. Their underlying additive presheaves are definitionally equal because both constructions
+use Mathlib's pushforward of the structure sheaf. -/
 def rationalFunctionsSectionsEquiv (X : Scheme.{u}) [IrreducibleSpace X] (U : X.Opens) :
     (Γ(rationalFunctions X, U) : Type u) ≃+
       ((rationalFunctionsRing X).presheaf.obj (.op U) : Type u) :=
   AddEquiv.refl _
+
+/-- The identification between module-sheaf and ring-sheaf sections commutes with restriction
+maps. -/
+@[simp]
+theorem rationalFunctionsSectionsEquiv_map {U V : X.Opens} (i : U ⟶ V)
+    (s : Γ(rationalFunctions X, V)) :
+    rationalFunctionsSectionsEquiv X U ((rationalFunctions X).presheaf.map i.op s) =
+      (rationalFunctionsRing X).presheaf.map i.op (rationalFunctionsSectionsEquiv X V s) :=
+  by
+    unfold rationalFunctionsSectionsEquiv rationalFunctions rationalFunctionsRing
+    rfl
 
 /-- On a nonempty open subset, the morphism `Spec K(X) ⟶ X` acts on sections by the germ map to
 the function field. -/
@@ -216,6 +228,17 @@ def rationalFunctionsEquiv (U : X.Opens) [Nonempty U] :
       rfl
   }
 
+/-- The module-sheaf identification with the function field is the ring-sheaf identification
+transported across `rationalFunctionsSectionsEquiv`. -/
+@[simp]
+theorem rationalFunctionsEquiv_apply (U : X.Opens) [Nonempty U]
+    (s : Γ(rationalFunctions X, U)) :
+    rationalFunctionsEquiv U s =
+      rationalFunctionsRingEquiv U (rationalFunctionsSectionsEquiv X U s) :=
+  by
+    unfold rationalFunctionsEquiv rationalFunctionsSectionsEquiv
+    rfl
+
 /-- The identifications of the sections of `𝒦_X` with the function field are compatible with the
 restriction maps: `𝒦_X` is the constant sheaf. -/
 @[simp]
@@ -223,7 +246,8 @@ theorem rationalFunctionsEquiv_map {U V : X.Opens} [Nonempty U] [Nonempty V] (i 
     (s : Γ(rationalFunctions X, V)) :
     rationalFunctionsEquiv U ((rationalFunctions X).presheaf.map i.op s) =
       rationalFunctionsEquiv V s := by
-  exact rationalFunctionsRingEquiv_map i s
+  rw [rationalFunctionsEquiv_apply, rationalFunctionsSectionsEquiv_map,
+    rationalFunctionsRingEquiv_map, rationalFunctionsEquiv_apply]
 
 /-- The restriction maps of `𝒦_X` between nonempty open subsets are bijective. -/
 theorem rationalFunctions_map_bijective {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V) :
