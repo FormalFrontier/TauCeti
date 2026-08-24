@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.Contour.Winding.Number.Affine
 import TauCeti.Analysis.Contour.LogDerivFTC
-import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 
 /-!
 # The winding number of a straight segment and its one-sided limits
