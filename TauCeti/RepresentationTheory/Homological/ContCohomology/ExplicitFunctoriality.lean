@@ -37,10 +37,10 @@ section Cochains
 
 variable {G : Type uG} {H : Type uH} {M : Type uM} {N : Type uN}
   [Monoid G] [Monoid H] [TopologicalSpace G] [TopologicalSpace H]
-  [AddCommGroup M] [TopologicalSpace M]
-  [AddCommGroup N] [TopologicalSpace N]
+  [AddMonoid M] [TopologicalSpace M]
+  [AddMonoid N] [TopologicalSpace N]
 
-/-- Pullback of degree-one cochains along a group map and a coefficient map. -/
+/-- Pullback of degree-one cochains along a continuous monoid map and a coefficient map. -/
 def cochainsMap1 (φ : H →ₜ* G) (f : M →+ N) : (G → M) →+ (H → N) where
   toFun c h := f (c (φ h))
   map_zero' := by
@@ -50,7 +50,7 @@ def cochainsMap1 (φ : H →ₜ* G) (f : M →+ N) : (G → M) →+ (H → N) wh
     ext h
     simp
 
-/-- Pullback of degree-two cochains along a group map and a coefficient map. -/
+/-- Pullback of degree-two cochains along a continuous monoid map and a coefficient map. -/
 def cochainsMap2 (φ : H →ₜ* G) (f : M →+ N) : (G × G → M) →+ (H × H → N) where
   toFun c p := f (c (φ p.1, φ p.2))
   map_zero' := by
@@ -82,9 +82,57 @@ theorem continuous_cochainsMap2 (φ : H →ₜ* G) (f : M →+ N) (hf : Continuo
     {c : G × G → M} (hc : Continuous c) : Continuous (cochainsMap2 φ f c) :=
   hf.comp (hc.comp (φ.continuous.prodMap φ.continuous))
 
-variable [DistribMulAction G M] [DistribMulAction H N]
+omit [TopologicalSpace M] in
+/-- Pullback of degree-one cochains along the identity compatible pair is the identity. -/
+@[simp]
+theorem cochainsMap1_id :
+    cochainsMap1 (ContinuousMonoidHom.id G) (AddMonoidHom.id M) =
+      AddMonoidHom.id (G → M) := by
+  ext c g
+  rfl
+
+omit [TopologicalSpace M] in
+/-- Pullback of degree-two cochains along the identity compatible pair is the identity. -/
+@[simp]
+theorem cochainsMap2_id :
+    cochainsMap2 (ContinuousMonoidHom.id G) (AddMonoidHom.id M) =
+      AddMonoidHom.id (G × G → M) := by
+  ext c p
+  rfl
 
 omit [TopologicalSpace M] [TopologicalSpace N] in
+/-- Pullback of degree-one cochains along a composite compatible pair is the composite of the
+pullbacks, in the reverse order. -/
+@[simp]
+theorem cochainsMap1_comp {K : Type uK} {P : Type uP} [TopologicalSpace K]
+    [Monoid K] [AddMonoid P]
+    (φ : H →ₜ* G) (ψ : K →ₜ* H) (f : M →+ N) (q : N →+ P) :
+    cochainsMap1 (φ.comp ψ) (q.comp f) = (cochainsMap1 ψ q).comp (cochainsMap1 φ f) := by
+  ext c k
+  rfl
+
+omit [TopologicalSpace M] [TopologicalSpace N] in
+/-- Pullback of degree-two cochains along a composite compatible pair is the composite of the
+pullbacks, in the reverse order. -/
+@[simp]
+theorem cochainsMap2_comp {K : Type uK} {P : Type uP} [TopologicalSpace K]
+    [Monoid K] [AddMonoid P]
+    (φ : H →ₜ* G) (ψ : K →ₜ* H) (f : M →+ N) (q : N →+ P) :
+    cochainsMap2 (φ.comp ψ) (q.comp f) = (cochainsMap2 ψ q).comp (cochainsMap2 φ f) := by
+  ext c p
+  rfl
+
+end Cochains
+
+section Naturality
+
+/-! The naturality squares are where the differentials enter, so this is the first point at which
+the coefficients have to be commutative groups acted on by the two monoids. -/
+
+variable {G : Type uG} {H : Type uH} {M : Type uM} {N : Type uN}
+  [Monoid G] [Monoid H] [TopologicalSpace G] [TopologicalSpace H]
+  [AddCommGroup M] [AddCommGroup N] [DistribMulAction G M] [DistribMulAction H N]
+
 /-- The degree-zero differential is natural in compatible pairs. -/
 theorem cochainsMap1_d0 (φ : H →ₜ* G) (f : M →+ N)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (m : M) :
@@ -92,7 +140,6 @@ theorem cochainsMap1_d0 (φ : H →ₜ* G) (f : M →+ N)
   ext h
   simp only [cochainsMap1_apply, d0_apply, map_sub, hequiv]
 
-omit [TopologicalSpace M] [TopologicalSpace N] in
 /-- The degree-one differential is natural in compatible pairs. -/
 theorem cochainsMap2_d1 (φ : H →ₜ* G) (f : M →+ N)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (c : G → M) :
@@ -102,41 +149,7 @@ theorem cochainsMap2_d1 (φ : H →ₜ* G) (f : M →+ N)
   simp only [cochainsMap2_apply, d1_apply, map_add, map_sub, hequiv, cochainsMap1_apply,
     map_mul]
 
-omit [TopologicalSpace M] [DistribMulAction G M] in
-@[simp]
-theorem cochainsMap1_id :
-    cochainsMap1 (ContinuousMonoidHom.id G) (AddMonoidHom.id M) =
-      AddMonoidHom.id (G → M) := by
-  ext c g
-  rfl
-
-omit [TopologicalSpace M] [DistribMulAction G M] in
-@[simp]
-theorem cochainsMap2_id :
-    cochainsMap2 (ContinuousMonoidHom.id G) (AddMonoidHom.id M) =
-      AddMonoidHom.id (G × G → M) := by
-  ext c p
-  rfl
-
-omit [TopologicalSpace M] [TopologicalSpace N] [DistribMulAction G M]
-  [DistribMulAction H N] in
-theorem cochainsMap1_comp {K : Type uK} {P : Type uP} [TopologicalSpace K]
-    [Monoid K] [AddCommGroup P]
-    (φ : H →ₜ* G) (ψ : K →ₜ* H) (f : M →+ N) (q : N →+ P) :
-    cochainsMap1 (φ.comp ψ) (q.comp f) = (cochainsMap1 ψ q).comp (cochainsMap1 φ f) := by
-  ext c k
-  rfl
-
-omit [TopologicalSpace M] [TopologicalSpace N] [DistribMulAction G M]
-  [DistribMulAction H N] in
-theorem cochainsMap2_comp {K : Type uK} {P : Type uP} [TopologicalSpace K]
-    [Monoid K] [AddCommGroup P]
-    (φ : H →ₜ* G) (ψ : K →ₜ* H) (f : M →+ N) (q : N →+ P) :
-    cochainsMap2 (φ.comp ψ) (q.comp f) = (cochainsMap2 ψ q).comp (cochainsMap2 φ f) := by
-  ext c p
-  rfl
-
-end Cochains
+end Naturality
 
 /-- Compatible coefficient maps remain compatible after composition. -/
 theorem compatiblePair_comp
@@ -144,7 +157,7 @@ theorem compatiblePair_comp
     [Monoid G] [Monoid H] [Monoid K]
     [TopologicalSpace G] [TopologicalSpace H] [TopologicalSpace K]
     {M : Type uM} {N : Type uN} {P : Type uP}
-    [AddCommGroup M] [AddCommGroup N] [AddCommGroup P]
+    [AddMonoid M] [AddMonoid N] [AddMonoid P]
     [DistribMulAction G M] [DistribMulAction H N] [DistribMulAction K P]
     (φ : H →ₜ* G) (ψ : K →ₜ* H) (f : M →+ N) (q : N →+ P)
     (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
@@ -169,14 +182,10 @@ variable (G : Type uG) [Monoid G] [TopologicalSpace G]
 def cocyclesMap1 (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) : Z1 G M →+ Z1 H N :=
   AddMonoidHom.codRestrict ((cochainsMap1 φ f).domRestrict (Z1 G M)) (Z1 H N) fun c => by
-    refine mem_Z1_iff.2 ⟨continuous_cochainsMap1 φ f hf (mem_Z1_iff.1 c.property).1, ?_⟩
-    intro h k
-    calc
-      f ((c : G → M) (φ (h * k))) = f ((c : G → M) (φ h * φ k)) := by rw [map_mul]
-      _ = f (φ h • (c : G → M) (φ k) + (c : G → M) (φ h)) := by
-        rw [(mem_Z1_iff.1 c.property).2]
-      _ = h • f ((c : G → M) (φ k)) + f ((c : G → M) (φ h)) := by
-        rw [map_add, hequiv]
+    refine mem_Z1_iff.2 ⟨continuous_cochainsMap1 φ f hf (mem_Z1_iff.1 c.property).1,
+      d1_apply_eq_zero_iff.1 ?_⟩
+    rw [AddMonoidHom.domRestrict_apply, ← cochainsMap2_d1 φ f hequiv,
+      d1_apply_eq_zero_iff.2 (mem_Z1_iff.1 c.property).2, map_zero]
 
 @[simp]
 theorem cocyclesMap1_apply (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
@@ -192,10 +201,10 @@ theorem cochainsMap1_mem_B1 (φ : H →ₜ* G) (f : M →+ N)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
     {c : G → M} (hc : c ∈ B1 G M) :
     cochainsMap1 φ f c ∈ B1 H N := by
-  rw [mem_B1_iff] at hc ⊢
-  obtain ⟨m, hm⟩ := hc
-  refine ⟨f m, fun h => ?_⟩
-  rw [cochainsMap1_apply, ← hm (φ h), map_sub, hequiv]
+  obtain ⟨m, hm⟩ := mem_B1_iff.1 hc
+  have hd0 : d0 G M m = c := funext fun g => (d0_apply m g).trans (hm g)
+  rw [← hd0, cochainsMap1_d0 φ f hequiv]
+  exact mem_B1_iff.2 ⟨f m, fun h => (d0_apply (f m) h).symm⟩
 
 /-- The map on continuous cocycles sends the quotient subgroup of coboundaries into the target
 quotient subgroup. -/
@@ -206,6 +215,7 @@ private theorem cocyclesMap1_mem_addSubgroupOf (φ : H →ₜ* G) (f : M →+ N)
   rw [AddSubgroup.mem_addSubgroupOf] at hc ⊢
   exact cochainsMap1_mem_B1 G M H N φ f hequiv hc
 
+/-- Pullback of continuous cocycles along the identity compatible pair is the identity. -/
 @[simp]
 theorem cocyclesMap1_id :
     cocyclesMap1 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id
@@ -214,6 +224,8 @@ theorem cocyclesMap1_id :
   ext c g
   rfl
 
+/-- Pullback of continuous cocycles along a composite compatible pair is the composite of the
+pullbacks, in the reverse order. -/
 theorem cocyclesMap1_comp
     (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
