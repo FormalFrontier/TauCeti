@@ -102,17 +102,33 @@ theorem excursionProcess_apply (X : ℕ → Ω → α) (a₀ : α) (k : ℕ) (ω
 
 section Measurability
 
-variable [Countable α] [MeasurableSingletonClass α]
+variable [MeasurableSingletonClass α]
 
+omit [MeasurableSingletonClass α] in
 /-- Reading a fixed finite list of times off a path is measurable. -/
 private theorem measurable_map_of_path (l : List ℕ) :
     Measurable fun x : ℕ → α => l.map x := by
-  induction l with
-  | nil => exact measurable_const
-  | cons i l ih =>
-    have hcons : Measurable fun q : α × List α => q.1 :: q.2 :=
-      measurable_from_prod_countable_left fun _ => Measurable.of_discrete
-    exact hcons.comp ((measurable_pi_apply i).prodMk ih)
+  induction l using List.ofFnRec with | _ n f
+  rw [measurable_comap_iff]
+  have htuple : Measurable fun x : ℕ → α => fun i : Fin n => x (f i) :=
+    measurable_pi_iff.2 fun i => measurable_pi_apply (f i)
+  have hmk : Measurable fun g : Fin n → α =>
+      (⟨n, g⟩ : Σ m, Fin m → α) := by
+    refine Measurable.of_le_map ?_
+    -- The sigma measurable space is the infimum over its fixed-length strata.
+    change (⨅ m : ℕ, MeasurableSpace.map
+      (@Sigma.mk ℕ (fun m => Fin m → α) m) inferInstance) ≤
+        MeasurableSpace.map (@Sigma.mk ℕ (fun m => Fin m → α) n) inferInstance
+    exact iInf_le _ n
+  rw [show (List.equivSigmaTuple ∘ fun x : ℕ → α => (List.ofFn f).map x) =
+      (fun g : Fin n → α => (⟨n, g⟩ : Σ m, Fin m → α)) ∘
+        (fun x => fun i : Fin n => x (f i)) by
+    funext x
+    simp only [Function.comp_apply]
+    rw [List.map_ofFn]
+    simpa only [List.equivSigmaTuple_symm_apply, Function.comp_def] using
+      List.equivSigmaTuple.apply_symm_apply (⟨n, x ∘ f⟩ : Σ m, Fin m → α)]
+  exact hmk.comp htuple
 
 /-- **An excursion is a measurable function of the path.** The two endpoint visit times are
 measurable and range over a countable set, and on each of their fibres the excursion reads a fixed
@@ -188,11 +204,7 @@ theorem MarkovExchangeable.measure_setOf_excursionPrefix_eq_of_perm (h : MarkovE
 
 section Exchangeable
 
--- `Countable α` is carried by `MarkovExchangeable` itself, but it has to be a binder here: without
--- it `List α` has no measurable structure, so the conclusions below do not even elaborate.
-variable [Countable α]
-
-omit [MeasurableSpace Ω] [MeasurableSpace α] [Countable α] in
+omit [MeasurableSpace Ω] [MeasurableSpace α] in
 /-- A finite-dimensional event of the excursion process, read as an event of the excursion
 prefix. -/
 private theorem setOf_forall_excursion_eq {m : ℕ} (v : Fin m → List α) :
@@ -219,6 +231,7 @@ transition counts — the sufficient statistic Markov exchangeability sees. -/
 theorem MarkovExchangeable.exchangeable_excursionProcess (h : MarkovExchangeable μ X)
     (hrec : Recurrent μ X) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) :
     Exchangeable μ (excursionProcess X a₀) := by
+  let _ : Countable α := h.countable
   have : MeasurableSingletonClass α := h.measurableSingletonClass
   have hmeas : ∀ k, AEMeasurable (excursionProcess X a₀ k) μ :=
     aemeasurable_excursionProcess h.aemeasurable a₀
@@ -249,6 +262,7 @@ discrete space, which is standard Borel and nonempty. -/
 theorem MarkovExchangeable.conditionallyIID_excursionProcess [IsFiniteMeasure μ]
     (h : MarkovExchangeable μ X) (hrec : Recurrent μ X) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) :
     ConditionallyIID μ (excursionProcess X a₀) :=
+  let _ : Countable α := h.countable
   have : MeasurableSingletonClass α := h.measurableSingletonClass
   conditionallyIID_of_exchangeable (h.exchangeable_excursionProcess hrec h0)
     (aemeasurable_excursionProcess h.aemeasurable a₀)
