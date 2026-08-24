@@ -95,6 +95,7 @@ theorem localizedGenericMatrix_apply (i j : Fin n) :
       coordinateRingMap R n (MvPolynomial.X (i, j)) := by
   simp [localizedGenericMatrix, Matrix.mvPolynomialX]
 
+/-- The matrix-monoid comultiplication followed by localization in both tensor factors. -/
 private noncomputable def comulBase :
     MatrixMonoid.CoordinateRing R n →ₐ[R]
       CoordinateRing R n ⊗[R] CoordinateRing R n :=
@@ -174,6 +175,7 @@ theorem counit_coordinateRingMap (x : MatrixMonoid.CoordinateRing R n) :
     counit R n (coordinateRingMap R n x) = MatrixMonoid.counit R n x := by
   simp [-coordinateRingMap_apply, counit, coordinateRingMap]
 
+/-- Evaluation of matrix coordinates at the inverse of the localized generic matrix. -/
 private noncomputable def antipodeBase :
     MatrixMonoid.CoordinateRing R n →ₐ[R] CoordinateRing R n :=
   MvPolynomial.aeval fun ij : Fin n × Fin n => ((localizedGenericMatrix R n)⁻¹) ij.1 ij.2
@@ -667,6 +669,14 @@ noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :
 theorem finiteTypeCoordinateHopfAlgebra_obj :
     (finiteTypeCoordinateHopfAlgebra R n).obj = coordinateHopfAlgebra R n :=
   (rfl)
+
+/-- The coordinate Hopf algebra of `GL_n` carries the finite-type instance recorded by its
+bundled finite-type coordinate algebra. -/
+instance instAlgebraFiniteTypeCoordinateHopfAlgebra :
+    Algebra.FiniteType R (coordinateHopfAlgebra R n) := by
+  rw [← finiteTypeCoordinateHopfAlgebra_obj R n]
+  exact (finiteTypeCommHopfAlgProperty_iff _).mp
+    (finiteTypeCoordinateHopfAlgebra R n).property
 
 end GeneralLinear
 
