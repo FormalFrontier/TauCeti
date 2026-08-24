@@ -49,9 +49,11 @@ attribute [local instance] TauCeti.moduleNNRat
 
 variable (t : DynkinType) (ht : t.Valid)
 
+/-- The finite coordinate row corresponding to a numbered simple root. -/
 private abbrev geckRootRow (i : Fin t.rank) : Fin (t.geckDim ht) :=
   Fintype.equivFin (t.GeckIndex ht) (.inl (t.simpleSupportEquiv ht i))
 
+/-- The finite coordinate column that recovers a numbered root-subgroup parameter. -/
 private abbrev geckRootColumn (i : Fin t.rank ⊕ Fin t.rank) : Fin (t.geckDim ht) :=
   match i with
   | .inl i =>
@@ -84,22 +86,15 @@ private theorem geckRootSubgroup_dividedPower_repr
   | inl i =>
       rw [LieAlgebra.Basis.rootGenerator_inl, t.coe_lieBasis_e ht]
       simp only [geckRootRow, geckRootColumn, Equiv.symm_apply_apply, Sum.elim_inl]
-      change TauCeti.Associative.dividedPower n
-        (RootPairing.GeckConstruction.e (t.simpleSupportEquiv ht i))
-          (.inl (t.simpleSupportEquiv ht i))
-          (.inr ((t.rationalRootSystem ht).reflectionPerm
-            (t.simpleSupportEquiv ht i) (t.simpleSupportEquiv ht i))) = _
-      simpa only [Int.cast_ite, Int.cast_one, Int.cast_zero] using
-        RootPairing.GeckConstruction.dividedPower_e_apply_inl_inr_reflectionPerm
+      let _i := (t.rationalRootSystem ht).indexNeg
+      simpa only [id_eq, RootPairing.indexNeg_neg, Int.cast_ite, Int.cast_one,
+        Int.cast_zero] using
+        RootPairing.GeckConstruction.dividedPower_e_apply_inl_inr_neg
           (t.simpleSupportEquiv ht i) n
   | inr i =>
       rw [LieAlgebra.Basis.rootGenerator_inr, t.coe_lieBasis_f ht]
       simp only [geckRootRow, geckRootColumn, Equiv.symm_apply_apply, Sum.elim_inr]
-      change TauCeti.Associative.dividedPower n
-        (RootPairing.GeckConstruction.f (t.simpleSupportEquiv ht i))
-          (.inl (t.simpleSupportEquiv ht i))
-          (.inr (t.simpleSupportEquiv ht i : Fin t.numRoots)) = _
-      simpa only [Int.cast_ite, Int.cast_one, Int.cast_zero] using
+      simpa only [id_eq, Int.cast_ite, Int.cast_one, Int.cast_zero] using
         RootPairing.GeckConstruction.dividedPower_f_apply_inl_inr
           (t.simpleSupportEquiv ht i) n
 
@@ -155,6 +150,7 @@ private theorem geckRootSubgroupMatrix_apply (i : Fin t.rank ⊕ Fin t.rank)
     have htwo := t.two_le_nilpotencyClass_geckRootOperator ht i
     exact (hnot (Finset.mem_range.mpr htwo)).elim
 
+/-- The coordinate map of a numbered root subgroup before passage to the toral closure. -/
 private abbrev geckRepresentedRootCoordinateMap (i : Fin t.rank ⊕ Fin t.rank) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)

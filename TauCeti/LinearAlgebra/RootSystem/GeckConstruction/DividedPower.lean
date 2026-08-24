@@ -342,16 +342,9 @@ theorem dividedPower_e_apply_inl_inr_neg (s : b.support) (n : ℕ) :
   | 2 => simp [v]
   | n + 3 => simp
 
-/-- The distinguished raising coordinate, with root negation written without a local typeclass
-instance. -/
-theorem dividedPower_e_apply_inl_inr_reflectionPerm (s : b.support) (n : ℕ) :
-    TauCeti.Associative.dividedPower n (e s) (Sum.inl s)
-        (Sum.inr (P.reflectionPerm s s)) = if n = 1 then 1 else 0 := by
-  let _i := P.indexNeg
-  exact dividedPower_e_apply_inl_inr_neg s n
-
 /-- The distinguished upper-right coordinate of a divided power of a Geck lowering generator.
 It is `1` in degree one and vanishes in every other degree. -/
+@[simp]
 theorem dividedPower_f_apply_inl_inr (s : b.support) (n : ℕ) :
     TauCeti.Associative.dividedPower n (f s) (Sum.inl s) (Sum.inr (s : ι)) =
       if n = 1 then 1 else 0 := by

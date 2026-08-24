@@ -136,6 +136,9 @@ theorem intCast_geckCoordinateBasisFin_repr
   rw [Module.Basis.repr_reindex_apply]
   let v' : Submodule.span ℤ (Set.range (Pi.basisFun ℚ (t.GeckIndex ht))) :=
     ⟨v, v.property⟩
+  -- Unfolding identifies the coordinate lattice's additive-subgroup carrier with the span
+  -- carrier expected by `Basis.restrictScalars`; this is a definitional subtype equality, so
+  -- there is no propositional equality to rewrite with.
   change ((Module.Basis.restrictScalars ℤ (Pi.basisFun ℚ (t.GeckIndex ht))).repr v'
       ((Fintype.equivFin (t.GeckIndex ht)).symm i) : ℚ) = _
   rw [← eq_intCast (algebraMap ℤ ℚ) _, Module.Basis.restrictScalars_repr_apply]
@@ -324,9 +327,8 @@ theorem geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice
 
 /-! ## Divided powers of the numbered root generators -/
 
-/-- A divided power of a Lie generator acts through the divided power of its underlying matrix.
-Both transport steps are functoriality of `ℚ`-algebra homomorphisms
-(`TauCeti.Associative.map_dividedPower`). -/
+/-- The Geck representation sends the enveloping-algebra divided power of `ι x` to the matrix
+divided power of `x`, acting on `v`. -/
 theorem geckRepresentation_dividedPower_ι_apply (x : t.lieAlgebra ht) (n : ℕ)
     (v : t.GeckIndex ht → ℚ) :
     t.geckRepresentation ht
