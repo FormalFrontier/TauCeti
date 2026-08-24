@@ -136,7 +136,6 @@ theorem Divisor.dim_principal (hF : IsFunctionField k F) (z : Fˣ) :
   rw [Divisor.dim_eq_of_linearlyEquivalent hF hlin, Divisor.dim_zero hF]
 
 /-- Over an exact constant field, the Riemann–Roch dimension of a principal divisor is one. -/
-@[simp]
 theorem Divisor.dim_principal_of_isIntegrallyClosedIn (hF : IsFunctionField k F)
     (hex : IsIntegrallyClosedIn k F) (z : Fˣ) :
     Divisor.dim (Divisor.principal hF z) = 1 := by
