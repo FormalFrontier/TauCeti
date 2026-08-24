@@ -368,13 +368,12 @@ private lemma exists_sl2_mul_mul_eq_atkinLehnerEntries
     _ = atkinLehnerEntries N A c := hB
 
 /-- **The Atkin–Lehner involution fixes a coprime-determinant double coset.** If `x ∈ Δ₀(N)`
-has determinant coprime to `N`, then its bar lies in the `Γ₀(N)`-double coset of `x`.
-
-The Smith normal forms of an integral witness for `x` and its entry-swapped bar agree: their
-first invariant factors agree because the upper-left entry is coprime to `N`, and their second
-invariant factors then agree because the determinants do. Thus they define the same level-one
-double coset. Shimura's Proposition 3.31, `toLevelOneCoset_injOn`, recovers equality of the
-`Γ₀(N)`-double cosets from that equality. -/
+has determinant coprime to `N`, then its bar lies in the `Γ₀(N)`-double coset of `x`. -/
+-- The Smith normal forms of an integral witness for `x` and its entry-swapped bar agree: their
+-- first invariant factors agree because the upper-left entry is coprime to `N`, and their second
+-- invariant factors then agree because the determinants do. Thus they define the same level-one
+-- double coset. Shimura's Proposition 3.31, `toLevelOneCoset_injOn`, recovers equality of the
+-- `Γ₀(N)`-double cosets from that equality.
 theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_coprime_det [NeZero N]
     (x : GL (Fin 2) ℚ) (hx : x ∈ Delta0 N) (hcop : CoprimeDet N ⟨x, hx⟩) :
     (atkinLehnerAntiInvolution N).bar x hx ∈
@@ -409,25 +408,9 @@ theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_coprime_det [NeZero N]
     simp only [toLevelOneCoset_mk]
     symm
     apply HeckeCoset.mk_eq_mk_of_mem
-    rw [DoubleCoset.mem_doubleCoset]
-    refine ⟨mapGL ℚ P, coe_mem_SLnZ 2 P, mapGL ℚ Q, coe_mem_SLnZ 2 Q, Units.ext ?_⟩
-    change ((b : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
-      (((mapGL ℚ P) * (a : GL (Fin 2) ℚ) * (mapGL ℚ Q) : GL (Fin 2) ℚ) :
-        Matrix (Fin 2) (Fin 2) ℚ)
-    rw [hbar]
-    change B.map (Int.cast : ℤ → ℚ) =
-      (mapGL ℚ P).val * x.val * (mapGL ℚ Q).val
-    rw [hA]
-    rw [hB]
-    change (atkinLehnerEntries N A c).map (Int.cast : ℤ → ℚ) =
-      P.val.map (Int.cast : ℤ → ℚ) * A.map (Int.cast : ℤ → ℚ) *
-        Q.val.map (Int.cast : ℤ → ℚ)
-    ext i j
-    have hcast := congr_fun₂
-      (congrArg (fun M ↦ M.map (Int.cast : ℤ → ℚ)) hPQ) i j
-    simp only [Matrix.mul_apply, Matrix.map_apply, Fin.sum_univ_two, Int.cast_add,
-      Int.cast_mul] at hcast ⊢
-    exact hcast.symm
+    rw [Submonoid.coe_inclusion, Submonoid.coe_inclusion]
+    exact mem_doubleCoset_SLnZ_of_intMatrix_eq 2 P Q x (b : GL (Fin 2) ℚ) A B hA hbar
+      (hPQ.trans hB.symm)
   have hcoset := toLevelOneCoset_injOn N
     (show HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) a ∈
       {D | CoprimeDetCoset N D} by simpa [a] using hcop)
