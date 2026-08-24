@@ -254,15 +254,19 @@ private theorem characterPairing_resFDRep_eq_ite [Fintype G] [Fintype N]
     have hzero : Module.finrank k
         (Representation.IntertwiningMap U.ρ (W.ρ.comp N.subtype)) = 0 :=
       Module.finrank_zero_of_subsingleton
-    change (Module.finrank k
-      (Representation.IntertwiningMap U.ρ (W.ρ.comp N.subtype)) : k) = 0
-    simpa only [Nat.cast_zero] using congrArg (fun m : ℕ ↦ (m : k)) hzero
+    calc
+      (Module.finrank k
+          (Representation.IntertwiningMap U.ρ (resFDRep N W).ρ) : k) =
+          (Module.finrank k
+            (Representation.IntertwiningMap U.ρ (W.ρ.comp N.subtype)) : k) := rfl
+      _ = ((0 : ℕ) : k) := congrArg (fun m : ℕ ↦ (m : k)) hzero
+      _ = 0 := Nat.cast_zero
 
 /-- **Clifford's theorem, character form.**  The character of the restriction of an irreducible
-representation to a normal subgroup is a positive common multiple of the sum of one representative
-from each conjugacy orbit of a fixed irreducible constituent.  The finite set `reps` is a genuine
-left transversal for the inertia group: for every `g`, it contains a unique `r` with
-`g⁻¹ * r ∈ inertia V`.
+representation to a normal subgroup is a positive common multiple of the sum of the distinct
+conjugates of a fixed irreducible constituent, indexed by representatives of the left cosets of its
+inertia group.  The finite set `reps` is a genuine left transversal for the inertia group: for every
+`g`, it contains a unique `r` with `g⁻¹ * r ∈ inertia V`.
 
 The hypothesis on `Nat.card G` is Maschke's condition.  Algebraic closure makes `k` a splitting
 field, so irreducible characters form an orthonormal basis and their pairings compute
@@ -305,9 +309,9 @@ theorem clifford_restrict_character [Finite G] [IsAlgClosed k]
       dsimp only [U, FDRep.of_ρ']
       infer_instance
     let _ : Simple U := FDRep.simple_of_isIrreducible U
-    rw [show ClassFunction.ofCharacter (irreducibleRepresentation k i) =
-        ClassFunction.ofFDRep U by
-      exact (ClassFunction.ofFDRep_eq_ofCharacter U).symm]
+    have hU : ClassFunction.ofCharacter (irreducibleRepresentation k i) =
+        ClassFunction.ofFDRep U := (ClassFunction.ofFDRep_eq_ofCharacter U).symm
+    rw [hU]
     have hlhs := characterPairing_resFDRep_eq_ite W sigma hsigma U e hcommon
     have hrhs := characterPairing_smul_sum_conjNormalFDRep V U e
     simpa only [lhs, rhs, reps, V] using hlhs.trans hrhs.symm
@@ -331,17 +335,20 @@ theorem clifford_restrict_character [Finite G] [IsAlgClosed k]
   dsimp only [lhs, rhs] at hn
   simp only [ClassFunction.ofFDRep_apply, character_resFDRep,
     Submodule.coe_smul, Pi.smul_apply, smul_eq_mul] at hn
+  let eval : ClassFunction k N →+ k :=
+    (Pi.evalAddMonoidHom (fun _ : N => k) n).comp
+      (ClassFunction k N).subtype.toAddMonoidHom
   have hsum : (∑ g ∈ reps, ClassFunction.ofFDRep (conjNormalFDRep g V)).1 n =
       ∑ g ∈ reps, (conjNormalFDRep g V).character n := by
-    induction reps using Finset.induction_on with
-    | empty => rfl
-    | @insert a s ha ih =>
-      rw [Finset.sum_insert ha, Finset.sum_insert ha]
-      change (ClassFunction.ofFDRep (conjNormalFDRep a V)).1 n +
-          (∑ g ∈ s, ClassFunction.ofFDRep (conjNormalFDRep g V)).1 n =
-        (conjNormalFDRep a V).character n +
-          ∑ g ∈ s, (conjNormalFDRep g V).character n
-      rw [ClassFunction.ofFDRep_apply, ih]
+    calc
+      (∑ g ∈ reps, ClassFunction.ofFDRep (conjNormalFDRep g V)).1 n =
+          eval (∑ g ∈ reps, ClassFunction.ofFDRep (conjNormalFDRep g V)) := rfl
+      _ = ∑ g ∈ reps, eval (ClassFunction.ofFDRep (conjNormalFDRep g V)) :=
+        map_sum eval (fun g ↦ ClassFunction.ofFDRep (conjNormalFDRep g V)) reps
+      _ = ∑ g ∈ reps, (conjNormalFDRep g V).character n := by
+        apply Finset.sum_congr rfl
+        intro g _
+        exact ClassFunction.ofFDRep_apply (conjNormalFDRep g V) n
   rw [hsum] at hn
   exact hn
 
