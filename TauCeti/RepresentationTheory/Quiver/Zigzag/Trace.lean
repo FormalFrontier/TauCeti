@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Algebra.Bilinear
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
+public import Mathlib.LinearAlgebra.PerfectPairing.Basic
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Multiplication
 
 /-!
@@ -25,14 +26,17 @@ with a volume component are `e_i x_i = x_i = x_i e_i` and `a_d a_{d.symm} = x_{d
 matrix of the pairing in the vertex, arrow and volume basis is the permutation matrix of `ι`.
 Symmetry is then the fact that `ι` is an involution. The dual-basis identity
 `TauCeti.zigzagTracePairing_apply_zigzagBasisFun_zigzagDualIndex` says that pairing an element
-against `ι b` reads off its `b`-th coordinate; equivalently, the pairing is perfect over the
-commutative base ring. It also implies `TauCeti.zigzagTracePairing_nondegenerate`, where Mathlib's
+against `ι b` reads off its `b`-th coordinate. Since `ι` is a bijection, the pairing therefore
+carries the vertex, arrow and volume basis to the dual basis reindexed along `ι`, so it is perfect
+over the commutative base ring: `TauCeti.zigzagTracePairing_isPerfPair`, whence the isomorphism
+`LinearMap.toPerfPair (TauCeti.zigzagTracePairing k G hns) : Z(G) ≃ₗ[k] Module.Dual k Z(G)` onto the
+dual. It also implies `TauCeti.zigzagTracePairing_nondegenerate`, where Mathlib's
 `LinearMap.BilinForm.Nondegenerate` records the weaker separating condition.
 
-Thus the dual-basis identity together with symmetry and associativity gives the symmetric Frobenius
-property over an arbitrary commutative ring; the permutation Gram matrix requires no scalar to be
-inverted. What is *not* proved here is self-injectivity, which needs the induced isomorphism onto
-the dual bimodule and an injectivity criterion for modules over a general base.
+Thus perfectness together with symmetry and associativity gives the symmetric Frobenius property
+over an arbitrary commutative ring; the permutation Gram matrix requires no scalar to be inverted.
+What is *not* proved here is self-injectivity, which needs that isomorphism onto the dual promoted
+to one of bimodules and an injectivity criterion for modules over a general base.
 
 ## Main definitions
 
@@ -49,6 +53,8 @@ the dual bimodule and an injectivity criterion for modules over a general base.
 * `TauCeti.zigzagTracePairing_mul_assoc`: the pairing is associative, `(xy, z) = (x, yz)`.
 * `TauCeti.zigzagTracePairing_apply_zigzagBasisFun_zigzagDualIndex`: the classes indexed by `ι` are
   the dual basis of the pairing.
+* `TauCeti.zigzagTracePairing_isPerfPair`: the pairing is perfect, so `LinearMap.toPerfPair` is an
+  isomorphism of the zigzag algebra onto its `k`-linear dual.
 
 ## References
 
@@ -251,5 +257,30 @@ theorem zigzagTracePairing_nondegenerate : (zigzagTracePairing k G hns).Nondegen
     exact hx _
   exact (LinearMap.IsRefl.nondegenerate_iff_separatingLeft
     (zigzagTracePairing_isSymm k G hns).isRefl).mpr hleft
+
+/-! ### The isomorphism onto the dual -/
+
+/-- **The trace pairing is perfect.** It carries the vertex, arrow and volume basis to the dual
+basis reindexed along the involution `zigzagDualIndex`, so both of its induced maps to the dual are
+bijective; no scalar is inverted, so a commutative base ring suffices. The isomorphism onto the
+dual this gives, the packaging the Frobenius property is used through, is Mathlib's
+`LinearMap.toPerfPair (zigzagTracePairing k G hns) : _ ≃ₗ[k] Module.Dual k _`, evaluated by
+`LinearMap.toPerfPair_apply`. -/
+instance zigzagTracePairing_isPerfPair : (zigzagTracePairing k G hns).IsPerfPair := by
+  classical
+  have : Finite G.Dart := Finite.of_injective _ (SimpleGraph.Dart.toProd_injective (G := G))
+  have key : zigzagTracePairing k G hns
+      = ((zigzagBasis k G hns).equiv (zigzagBasis k G hns).dualBasis
+          (zigzagDualIndex_involutive G).toPerm).toLinearMap := by
+    refine (zigzagBasis k G hns).ext fun b => (zigzagBasis k G hns).ext fun c => ?_
+    rw [LinearEquiv.coe_coe, Module.Basis.equiv_apply, Function.Involutive.coe_toPerm,
+      Module.Basis.dualBasis_apply_self, zigzagBasis_apply, zigzagBasis_apply,
+      zigzagTracePairing_zigzagBasisFun]
+  have hbij : Function.Bijective ⇑(zigzagTracePairing k G hns) := by
+    rw [key]
+    exact LinearEquiv.bijective _
+  have hflip : LinearMap.flip (zigzagTracePairing k G hns) = zigzagTracePairing k G hns :=
+    LinearMap.ext fun x => LinearMap.ext fun y => (zigzagTracePairing_isSymm k G hns).eq y x
+  exact ⟨hbij, by rw [hflip]; exact hbij⟩
 
 end TauCeti
