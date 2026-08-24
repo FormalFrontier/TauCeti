@@ -27,8 +27,8 @@ triangularizability instance therefore makes it a splitting Cartan subalgebra.
 The self-normalizing argument is entrywise. If `X` normalizes every `diag(d, -d)`, then the
 off-diagonal `(a, b)` entry of their bracket is
 `(weight d b - weight d a) * X a b`. Distinct indices in `ι ⊕ ι` have distinct weights when
-`2 ≠ 0`, so every off-diagonal entry of `X` vanishes. Skew-adjointness then forces the two diagonal
-blocks to be negatives of one another.
+multiplication by `2` is injective, so every off-diagonal entry of `X` vanishes. Skew-adjointness
+then forces the two diagonal blocks to be negatives of one another.
 
 ## Main definitions
 
@@ -203,41 +203,36 @@ instance : IsLieAbelian (typeDDiagonalCartan K ι) where
 
 section
 
-variable [Nontrivial K] [NoZeroDivisors K]
-variable [h2 : NeZero (2 : K)]
-
-omit [Nontrivial K] [NoZeroDivisors K] in
-private theorem one_ne_neg_one_of_two_ne_zero : (1 : K) ≠ -1 := by
-  intro h
-  apply h2.out
-  have : (1 : K) - (-1) = 0 := sub_eq_zero.mpr h
-  calc
-    2 = 1 - (-1) := by ring
-    _ = 0 := this
-
-omit [DecidableEq ι] [Fintype ι] [NoZeroDivisors K] in
-private theorem exists_typeDDiagonalValue_ne (a b : ι ⊕ ι) (hab : a ≠ b) :
-    ∃ d : ι → K, typeDDiagonalValue d a ≠ typeDDiagonalValue d b := by
+omit [DecidableEq ι] [Fintype ι] in
+private theorem exists_isRegular_typeDDiagonalValue_sub (h2 : IsRegular (2 : K))
+    (a b : ι ⊕ ι) (hab : a ≠ b) :
+    ∃ d : ι → K, IsRegular (typeDDiagonalValue d b - typeDDiagonalValue d a) := by
   classical
   rcases a with i | i <;> rcases b with j | j
   · have hij : i ≠ j := fun h => hab (congrArg Sum.inl h)
     refine ⟨Pi.single i 1, ?_⟩
-    simp [typeDDiagonalValue, hij]
+    simpa [typeDDiagonalValue, hij] using
+      (isUnit_neg_one.isRegular : IsRegular (-1 : K))
   · refine ⟨Pi.single i 1, ?_⟩
     by_cases hij : i = j
     · subst j
-      simpa [typeDDiagonalValue] using (one_ne_neg_one_of_two_ne_zero (K := K))
-    · simp [typeDDiagonalValue, hij]
+      simp only [typeDDiagonalValue_inr, Pi.single_eq_same, typeDDiagonalValue_inl]
+      rw [show (-1 : K) - 1 = (-1) * 2 by ring]
+      exact isUnit_neg_one.isRegular.mul h2
+    · simpa [typeDDiagonalValue, hij] using
+        (isUnit_neg_one.isRegular : IsRegular (-1 : K))
   · refine ⟨Pi.single i 1, ?_⟩
     by_cases hij : i = j
     · subst j
-      simpa [typeDDiagonalValue] using (one_ne_neg_one_of_two_ne_zero (K := K)).symm
-    · simp [typeDDiagonalValue, hij]
+      simp only [typeDDiagonalValue_inl, Pi.single_eq_same, typeDDiagonalValue_inr,
+        sub_neg_eq_add]
+      rw [show (1 : K) + 1 = 2 by ring]
+      exact h2
+    · simpa [typeDDiagonalValue, hij] using (isRegular_one : IsRegular (1 : K))
   · have hij : i ≠ j := fun h => hab (congrArg Sum.inr h)
     refine ⟨Pi.single i 1, ?_⟩
-    simp [typeDDiagonalValue, hij]
+    simpa [typeDDiagonalValue, hij] using (isRegular_one : IsRegular (1 : K))
 
-omit [Nontrivial K] [NoZeroDivisors K] h2 in
 /-- Bracketing with `diag(d, -d)` scales each matrix entry by the difference of its two coordinate
 weights. -/
 theorem lie_typeDDiagonalEquiv_apply (X : LieAlgebra.Orthogonal.typeD ι K) (d : ι → K)
@@ -268,11 +263,11 @@ variable (K ι)
 
 /-- The diagonal Cartan of type `D` is self-normalizing. -/
 @[simp]
-theorem typeDDiagonalCartan_normalizer_eq_self :
+theorem typeDDiagonalCartan_normalizer_eq_self (h2 : IsRegular (2 : K)) :
     (typeDDiagonalCartan K ι).normalizer = typeDDiagonalCartan K ι := by
   refine le_antisymm (fun X hX => mem_typeDDiagonalCartan_iff_isDiag.mpr fun a b hab => ?_)
     (typeDDiagonalCartan K ι).le_normalizer
-  obtain ⟨d, hd⟩ := exists_typeDDiagonalValue_ne (K := K) a b hab
+  obtain ⟨d, hd⟩ := exists_isRegular_typeDDiagonalValue_sub (K := K) h2 a b hab
   have hbracket := ((typeDDiagonalCartan K ι).mem_normalizer_iff X).mp hX
     (typeDDiagonalEquiv (K := K) (ι := ι) d)
     (typeDDiagonalEquiv (K := K) (ι := ι) d).2
@@ -281,14 +276,21 @@ theorem typeDDiagonalCartan_normalizer_eq_self :
           LieAlgebra.Orthogonal.typeD ι K) : Matrix (ι ⊕ ι) (ι ⊕ ι) K) a b = 0 :=
     (mem_typeDDiagonalCartan_iff_isDiag.mp hbracket) hab
   rw [lie_typeDDiagonalEquiv_apply] at hzero
-  exact (mul_eq_zero.mp hzero).resolve_left (sub_ne_zero.mpr hd.symm)
+  apply hd.left
+  simpa using hzero
 
 /-- The diagonal matrices form a Cartan subalgebra of the split orthogonal Lie algebra of type
 `D`: they are abelian, hence nilpotent, and self-normalizing. -/
-instance instIsCartanSubalgebraTypeDDiagonalCartan :
+instance instIsCartanSubalgebraTypeDDiagonalCartan [h2 : Fact (IsRegular (2 : K))] :
     (typeDDiagonalCartan K ι).IsCartanSubalgebra where
   nilpotent := inferInstance
-  self_normalizing := typeDDiagonalCartan_normalizer_eq_self K ι
+  self_normalizing := typeDDiagonalCartan_normalizer_eq_self K ι h2.out
+
+/-- Over a domain, nonvanishing of `2` supplies the regularity fact used by the type-`D` Cartan
+instance. -/
+instance (priority := low) instFactIsRegularTwo [NoZeroDivisors K] [NeZero (2 : K)] :
+    Fact (IsRegular (2 : K)) :=
+  ⟨IsRegular.of_ne_zero' (NeZero.ne (2 : K))⟩
 
 end
 
@@ -343,9 +345,11 @@ theorem typeDWeightEquiv_symm_apply
     (f : Module.Dual K (typeDDiagonalCartan K ι)) (i : ι) :
     (typeDWeightEquiv (K := K) (ι := ι)).symm f i =
       f (typeDDiagonalCartanBasis (K := K) (ι := ι) i) := by
-  rw [typeDWeightEquiv, LinearEquiv.symm_trans_apply, typeDDiagonalEquiv_symm_apply,
-    ← typeDDiagonalCartanBasis_repr_apply, ← Module.Basis.toDual_apply_left,
-    ← Module.Basis.toDualEquiv_apply, LinearEquiv.apply_symm_apply]
+  let b := typeDDiagonalCartanBasis (K := K) (ι := ι)
+  -- Unfold the composite equivalence to the coordinate statement of its defining basis.
+  change b.repr (b.toDualEquiv.symm f) i = f (b i)
+  simpa only [Module.Basis.toDualEquiv_apply, Module.Basis.toDual_apply_left] using
+    LinearMap.congr_fun (b.toDualEquiv.apply_symm_apply f) (b i)
 
 /-- The coordinate functional `εᵢ` on the type-`D` diagonal Cartan. -/
 noncomputable def typeDEpsilon (i : ι) : Module.Dual K (typeDDiagonalCartan K ι) :=
