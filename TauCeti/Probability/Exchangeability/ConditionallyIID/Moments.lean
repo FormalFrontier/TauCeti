@@ -50,8 +50,10 @@ exactly the stated rate; at a probability measure that reads as uncorrelated wit
 `∫ q - ∫ q²`.
 
 The identities are stated in `ℝ≥0∞` first, where the disintegration lives, and converted to Bochner
-integrals by the private machinery below; the coordinates are only assumed a.e. measurable, as
-elsewhere in the measure-theoretic exchangeability API.
+integrals by the private machinery below.  Coordinatewise a.e. measurability is not assumed: it is
+supplied by the `ConditionallyIIDWith` witness through `ConditionallyIIDWith.aemeasurable`, and
+a.e. measurability is all that is ever needed, as elsewhere in the measure-theoretic
+exchangeability API.
 
 These estimates are consumed by `ConditionallyIID.Unique` for a.e. uniqueness of the directing
 measure.

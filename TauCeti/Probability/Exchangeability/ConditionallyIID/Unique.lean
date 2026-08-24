@@ -55,9 +55,10 @@ The hypothesis `[MeasurableSpace.CountablyGenerated α]` is what the final promo
 all it needs: no measure on `α` is constructed here, so no standard-Borel or non-empty structure
 is required.
 
-The coordinates are only assumed a.e. measurable (`∀ i, AEMeasurable (X i) μ`), as elsewhere in the
-measure-theoretic exchangeability API: every statement here sees `X` through integrals, hence only
-modulo `μ`-a.e. equality.
+Coordinatewise a.e. measurability is not assumed: it comes from the `ConditionallyIIDWith` witness
+through `ConditionallyIIDWith.aemeasurable`.  A.e. measurability is all that is ever needed, as
+elsewhere in the measure-theoretic exchangeability API, since every statement here sees `X` through
+integrals and hence only modulo `μ`-a.e. equality.
 -/
 
 public section
