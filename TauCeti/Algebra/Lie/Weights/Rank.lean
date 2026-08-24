@@ -17,7 +17,7 @@ public section
 Let `L` be a finite-dimensional Lie algebra over an infinite field, and let `H` be a Cartan
 subalgebra whose action on `L` is triangularizable with linear weights. This file chooses an
 element `h : H` on which no root vanishes and proves that its Engel subalgebra is exactly `H`.
-Mathlib's generic-element definition of `LieAlgebra.rank` then gives
+Mathlib's lower bound on the dimension of each Engel subalgebra then gives
 
 `LieAlgebra.rank K L ≤ Module.finrank K H`.
 
@@ -29,10 +29,10 @@ is nonzero by construction. The zero root space is the Cartan subalgebra.
 
 ## Main results
 
-* `TauCeti.exists_cartan_avoiding_roots`: some element of `H` avoids every root hyperplane.
-* `TauCeti.engel_coe_eq_cartan_of_forall_root_apply_ne_zero`: any such element has Engel
+* `TauCeti.exists_forall_root_apply_ne_zero`: some element of `H` is nonzero under every root.
+* `TauCeti.engel_eq_cartan_of_forall_root_apply_ne_zero`: any such element has Engel
   subalgebra `H`.
-* `TauCeti.exists_engel_coe_eq_cartan`: a Cartan subalgebra is the Engel subalgebra of one of its
+* `TauCeti.exists_engel_eq_cartan`: a Cartan subalgebra is the Engel subalgebra of one of its
   elements.
 * `TauCeti.rank_le_finrank_cartan`: the rank of `L` is at most the dimension of `H`.
 
@@ -44,7 +44,7 @@ Cartan-dimension argument and is deliberately not asserted here.
 ## References
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Springer GTM 9
-  (1972), §8.1.
+  (1972), §15.1--15.3.
 -/
 
 namespace TauCeti
@@ -57,7 +57,7 @@ variable {K L : Type*} [Field K] [LieRing L] [LieAlgebra K L] [FiniteDimensional
 /-- **A generic element of a Cartan subalgebra avoids every root hyperplane.** Since the root set
 is finite and each root is a nonzero linear functional, finite hyperplane avoidance over the
 infinite field `K` supplies one `h : H` on which every root is nonzero. -/
-theorem exists_cartan_avoiding_roots [Infinite K] [LieModule.LinearWeights K H L] :
+theorem exists_forall_root_apply_ne_zero [Infinite K] [LieModule.LinearWeights K H L] :
     ∃ h : H, ∀ α ∈ H.root, (α : H → K) h ≠ 0 := by
   let f : H.root → Module.Dual K H := fun α ↦ (α.1 : H →ₗ[K] K)
   obtain ⟨h, hh⟩ := Module.Dual.exists_forall_ne_zero_of_forall_exists f fun α ↦ by
@@ -79,7 +79,7 @@ private theorem engel_toSubmodule_eq_genWeightSpaceOf_zero {h : H} :
 Engel subalgebra is the generalized zero eigenspace of `ad h`. Decomposing that eigenspace into
 Cartan weight spaces leaves only the zero weight: a nonzero weight is a root, and hence does not
 vanish at `h` by hypothesis. -/
-theorem engel_coe_eq_cartan_of_forall_root_apply_ne_zero {h : H}
+theorem engel_eq_cartan_of_forall_root_apply_ne_zero {h : H}
     [LieModule.IsTriangularizable K H L]
     (hh : ∀ α ∈ H.root, (α : H → K) h ≠ 0) :
     LieSubalgebra.engel K (h : L) = H := by
@@ -108,19 +108,19 @@ theorem engel_coe_eq_cartan_of_forall_root_apply_ne_zero {h : H}
 
 /-- **Every Cartan subalgebra is the Engel subalgebra of one of its elements** when its action has
 linear weights and is triangularizable over an infinite field. -/
-theorem exists_engel_coe_eq_cartan [Infinite K] [LieModule.LinearWeights K H L]
+theorem exists_engel_eq_cartan [Infinite K] [LieModule.LinearWeights K H L]
     [LieModule.IsTriangularizable K H L] :
     ∃ h : H, LieSubalgebra.engel K (h : L) = H := by
-  obtain ⟨h, hh⟩ := exists_cartan_avoiding_roots H
-  exact ⟨h, engel_coe_eq_cartan_of_forall_root_apply_ne_zero H hh⟩
+  obtain ⟨h, hh⟩ := exists_forall_root_apply_ne_zero H
+  exact ⟨h, engel_eq_cartan_of_forall_root_apply_ne_zero H hh⟩
 
 /-- **The rank is at most the dimension of a Cartan subalgebra.** Choose a root-regular Cartan
-element whose Engel subalgebra is `H`, then apply Mathlib's generic rank bound
+element whose Engel subalgebra is `H`, then apply Mathlib's Engel-subalgebra dimension bound
 `LieAlgebra.rank_le_finrank_engel`. -/
 theorem rank_le_finrank_cartan [Infinite K] [LieModule.LinearWeights K H L]
     [LieModule.IsTriangularizable K H L] :
     LieAlgebra.rank K L ≤ finrank K H := by
-  obtain ⟨h, hh⟩ := exists_engel_coe_eq_cartan H
+  obtain ⟨h, hh⟩ := exists_engel_eq_cartan H
   rw [← hh]
   exact LieAlgebra.rank_le_finrank_engel K (h : L)
 
