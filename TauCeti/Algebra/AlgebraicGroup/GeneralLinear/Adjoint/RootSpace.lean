@@ -27,8 +27,6 @@ identifying the diagonal tangent directions as torus-fixed vectors.
 ## Main declarations
 
 * `TauCeti.GeneralLinear.matrixUnitWeight`: the weight `e_i - e_j`.
-* `TauCeti.GeneralLinear.cotangentDualMatrixEquiv`: the cotangent-dual Lie algebra of `GL_n`
-  identified with matrices.
 * `TauCeti.GeneralLinear.matrixUnitTangent`: the tangent vector corresponding to `E_ij`.
 * `TauCeti.GeneralLinear.matrixUnitTangent_mem_adjointWeightSpace`: `E_ij` has weight
   `e_i - e_j` under the diagonal torus.
@@ -104,52 +102,6 @@ theorem matrixUnitWeight_ne_one {i j : Fin n} (hij : i ≠ j) :
       (1 : Multiplicative (ULift.{u} (Fin n) →₀ ℤ)) := by
   intro h
   exact hij ((matrixUnitWeight_eq_one_iff i j).mp h)
-
-/-- The cotangent-dual Lie algebra of `GL_n` identified linearly with `n × n` matrices. -/
-def cotangentDualMatrixEquiv :
-    Module.Dual k (Bialgebra.CotangentSpace k (coordinateHopfAlgebra k n)) ≃ₗ[k]
-      Matrix (Fin n) (Fin n) k :=
-  Derivation.cotangentLinearEquiv (R := k) (A := coordinateHopfAlgebra k n) (B := k) ≪≫ₗ
-    tangentLinearEquivMatrix n
-
-/-- Scalar extension of a cotangent-dual tangent vector applies the scalar map entrywise to its
-matrix.  This is the compatibility that lets computations on coefficient-valued derivations be
-read back in the fixed cotangent-dual Lie algebra. -/
-theorem tangentMatrix_tangentScalarExtensionEquiv_one_tmul
-    {A : Type u} [CommRing A] [Algebra k A]
-    (x : Module.Dual k (Bialgebra.CotangentSpace k (coordinateHopfAlgebra k n))) :
-    tangentMatrix n
-        (Derivation.tangentScalarExtensionEquiv
-          (R := k) (A := coordinateHopfAlgebra k n) (B := A) (1 ⊗ₜ[k] x)) =
-      (cotangentDualMatrixEquiv x).map (algebraMap k A) := by
-  ext i j
-  rw [tangentMatrix_apply, Derivation.tangentScalarExtensionEquiv_tmul_apply,
-    Matrix.map_apply]
-  simp only [one_mul, cotangentDualMatrixEquiv, LinearEquiv.trans_apply,
-    tangentLinearEquivMatrix_apply, tangentMatrix_apply,
-    Derivation.cotangentLinearEquiv_apply_apply]
-  let r := x (Bialgebra.cotangentMap k (coordinateHopfAlgebra k n)
-    (coordinateHopfAlgebraAlgEquiv k n
-      (coordinateRingMap k n (MvPolynomial.X (i, j)))))
-  trans algebraMap k A r
-  · exact Bialgebra.CounitAlgebra.algEquivSelf_apply
-      (R := k) (A := coordinateHopfAlgebra k n) (B := A) _
-  · exact congrArg (algebraMap k A)
-      (Bialgebra.CounitAlgebra.algEquivSelf_apply
-        (R := k) (A := coordinateHopfAlgebra k n) (B := k) _).symm
-
-/-- The matrix form of scalar extension on a pure tensor. -/
-theorem tangentMatrix_tangentScalarExtensionEquiv_tmul
-    {A : Type u} [CommRing A] [Algebra k A] (a : A)
-    (x : Module.Dual k (Bialgebra.CotangentSpace k (coordinateHopfAlgebra k n))) :
-    tangentMatrix n
-        (Derivation.tangentScalarExtensionEquiv
-          (R := k) (A := coordinateHopfAlgebra k n) (B := A) (a ⊗ₜ[k] x)) =
-      a • (cotangentDualMatrixEquiv x).map (algebraMap k A) := by
-  have htmul : a ⊗ₜ[k] x = a • (1 ⊗ₜ[k] x) := by
-    rw [TensorProduct.smul_tmul', smul_eq_mul, mul_one]
-  rw [htmul]
-  rw [map_smul, map_smul, tangentMatrix_tangentScalarExtensionEquiv_one_tmul]
 
 private theorem universalPoint_coordinate_mul_inv (i j : Fin n) :
     let M := Multiplicative (ULift.{u} (Fin n) →₀ ℤ)
