@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.AlgebraicTopology.FundamentalGroupoid.Basic
-public import Mathlib.Topology.Connected.PathConnected
 public import TauCeti.Topology.Homotopy.HomotopyGroup.Collar
 
 /-!
