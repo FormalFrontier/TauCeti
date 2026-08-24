@@ -39,6 +39,8 @@ no claim about that later stage is made here.
 
 * `TauCeti.ClassData.isSome_dixonRationalCharacterTable_iff`: the solver succeeds exactly when
   semantically admissible candidate data passes the integer character-table specification.
+* `TauCeti.ClassData.mem_liftedCentralRows_of_dixonRationalCharacterTable_eq_some`: the rows of a
+  successful output are lifted central-character rows.
 * `TauCeti.ClassData.isIntegerCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`: every
   successful output satisfies the exact integer specification.
 * `TauCeti.ClassData.isCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`: every successful
@@ -238,6 +240,15 @@ theorem isSome_dixonRationalCharacterTable_iff (p : ℕ) [Fact p.Prime] :
     refine ⟨output, (mem_dixonRationalCharacterTableCandidates_iff d p).mpr ?_, hspec⟩
     exact ⟨hrows, hspec.omega_injective, hspec.degree_pos, hspec.degree_dvd,
       hspec.sum_degree_sq, hspec.table_eq_integerQuotient⟩
+
+/-- The rows of a successful rational Dixon--Schneider output are lifted central-character rows,
+so the returned data is one of the numberings produced by the modular search. -/
+theorem mem_liftedCentralRows_of_dixonRationalCharacterTable_eq_some
+    {d : ClassData G} (p : ℕ) [Fact p.Prime] {output : d.IntegerCharacterTableData}
+    (h : d.dixonRationalCharacterTable? p = some output) (i : Fin d.numClasses) :
+    output.omega i ∈ d.liftedCentralRows p := by
+  simp only [dixonRationalCharacterTable?] at h
+  exact ((mem_dixonRationalCharacterTableCandidates_iff d p).mp (List.mem_of_find?_eq_some h)).1 i
 
 /-- Every successful rational Dixon--Schneider output passes the exact integer character-table
 specification. -/
