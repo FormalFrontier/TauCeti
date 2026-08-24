@@ -125,6 +125,22 @@ theorem coe_geckCoordinateBasisFin (i : Fin (t.geckDim ht)) :
       Pi.single ((Fintype.equivFin (t.GeckIndex ht)).symm i) 1 := by
   rw [geckCoordinateBasisFin, Module.Basis.reindex_apply, coe_geckCoordinateBasis]
 
+/-- Reading a lattice vector in the finite-ordinal Geck basis recovers its corresponding
+standard coordinate after extending the integral coefficient to `ℚ`. -/
+@[simp]
+theorem intCast_geckCoordinateBasisFin_repr
+    (v : (t.geckCoordinateLattice ht).toAddSubgroup) (i : Fin (t.geckDim ht)) :
+    ((t.geckCoordinateBasisFin ht).repr v i : ℚ) =
+      (v : t.GeckIndex ht → ℚ) ((Fintype.equivFin (t.GeckIndex ht)).symm i) := by
+  unfold geckCoordinateBasisFin geckCoordinateBasis geckCoordinateLattice at *
+  rw [Module.Basis.repr_reindex_apply]
+  let v' : Submodule.span ℤ (Set.range (Pi.basisFun ℚ (t.GeckIndex ht))) :=
+    ⟨v, v.property⟩
+  change ((Module.Basis.restrictScalars ℤ (Pi.basisFun ℚ (t.GeckIndex ht))).repr v'
+      ((Fintype.equivFin (t.GeckIndex ht)).symm i) : ℚ) = _
+  rw [← eq_intCast (algebraMap ℤ ℚ) _, Module.Basis.restrictScalars_repr_apply]
+  rfl
+
 /-- The integral weight of a finite-ordinal Geck coordinate basis vector. The Cartan argument uses
 the Bourbaki numbering, while the coordinate argument uses the `Fintype.equivFin` ordering of
 `GeckIndex`. -/
@@ -311,7 +327,7 @@ theorem geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice
 /-- A divided power of a Lie generator acts through the divided power of its underlying matrix.
 Both transport steps are functoriality of `ℚ`-algebra homomorphisms
 (`TauCeti.Associative.map_dividedPower`). -/
-private theorem geckRepresentation_dividedPower_ι_apply (x : t.lieAlgebra ht) (n : ℕ)
+theorem geckRepresentation_dividedPower_ι_apply (x : t.lieAlgebra ht) (n : ℕ)
     (v : t.GeckIndex ht → ℚ) :
     t.geckRepresentation ht
         (Associative.dividedPower n (_root_.UniversalEnvelopingAlgebra.ι ℚ x)) v =

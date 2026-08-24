@@ -193,6 +193,16 @@ theorem mkQuotient_comp_kostantRootSubgroupToralCoordinateMap (i : I) :
   CommHopfAlgCat.mkQuotient_comp_commonKernelLift
     (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i)
 
+/-- A surjective root-subgroup coordinate map remains surjective after factoring through the
+toral closure. -/
+theorem kostantRootSubgroupToralCoordinateMap_surjective_of_surjective (i : I)
+    (hi : Function.Surjective
+      (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom) :
+    Function.Surjective
+      (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).hom :=
+  CommHopfAlgCat.commonKernelLift_surjective_of_surjective
+    (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i) hi
+
 /-- The coordinate map through which the represented weight torus factors into the toral
 closure. -/
 noncomputable def kostantWeightTorusToralCoordinateMap :
