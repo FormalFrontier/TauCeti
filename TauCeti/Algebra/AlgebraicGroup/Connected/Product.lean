@@ -101,6 +101,17 @@ theorem tensorProduct (H K : CommHopfAlgCat.{u} k)
   exact (morphismProperty_hopfSpec_obj_X_hom_iff
     (P := @GeometricallyConnected) k (CommHopfAlgCat.of k (H ⊗[k] K))).mpr hspectrum
 
+/-- The coordinate algebra underlying a semidirect product is the tensor product of the two
+coordinate algebras; only its Hopf structure depends on the action. -/
+private noncomputable def semidirectProductCarrierAlgEquiv
+    (H K : CommHopfAlgCat.{u} k)
+    (A : GrpObj.Action (CommHopfAlgCat.grpObj K) (CommHopfAlgCat.grpObj H)) :
+    (((commHopfAlgCatEquivCogrpCommAlgCat k).inverse.obj
+      (Opposite.op A.semidirectProduct) : CommHopfAlgCat.{u} k) : Type u) ≃ₐ[k]
+      (H ⊗[k] K) := by
+  let _ := A.semidirectProductGrpObj
+  exact AlgEquiv.refl
+
 /-- An internal semidirect product of geometrically connected affine groups is geometrically
 connected.
 
@@ -116,8 +127,13 @@ theorem semidirectProduct (H K : CommHopfAlgCat.{u} k)
       ((commHopfAlgCatEquivCogrpCommAlgCat k).inverse.obj (Opposite.op A.semidirectProduct)) := by
   let _ := A.semidirectProductGrpObj
   have h := tensorProduct H K hH hK
-  rw [geometricallyConnectedCommHopfAlgProperty_iff] at h ⊢
-  exact h
+  rw [geometricallyConnectedCommHopfAlgProperty_iff] at h
+  rw [geometricallyConnectedCommHopfAlgProperty_iff]
+  intro L _ _
+  let eL := Algebra.TensorProduct.congr
+    (semidirectProductCarrierAlgEquiv H K A) (AlgEquiv.refl : L ≃ₐ[k] L)
+  exact (PrimeSpectrum.homeomorphOfRingEquiv eL.toRingEquiv).connectedSpace_iff.mpr
+    (h L)
 
 end geometricallyConnectedCommHopfAlgProperty
 
