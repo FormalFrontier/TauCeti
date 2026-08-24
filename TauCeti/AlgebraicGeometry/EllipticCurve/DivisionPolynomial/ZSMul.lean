@@ -1083,4 +1083,25 @@ theorem evalEval_ψ_eq_zero_of_zsmul_eq_zero {x y : F}
   rw [heval, hzero] at htors
   exact (Jacobian.Z_eq_zero_of_equiv (Quotient.exact htors)).mpr rfl
 
+/-- **Torsion transports between the affine and Jacobian point groups.** `n • P = 0` affinely,
+with `n : ℕ`, is the same statement as `(n : ℤ) • P = 0` on the Jacobian side.
+
+Stated as an **iff** because both directions are wanted: `addOrderOf` is `ℕ`-valued and affine
+while the theorems above take their torsion hypothesis on `Jacobian.Point.fromAffine`, so a
+vanishing statement travels forwards and a non-vanishing one backwards. The proof is the additive
+equivalence alone, so `P` ranges over every affine point, the point at infinity included.
+
+**Not a `simp` lemma.** Its left-hand side is not in simp normal form: `natCast_zsmul` rewrites
+`(n : ℤ) • Q` to `n • Q`, so tagging it `@[simp]` fails `simpNF`. The `ℤ`-cast orientation is
+nevertheless the useful one, because every consumer's torsion hypothesis is a `ℤ`-scalar
+multiple; stating it in `ℕ`-normal form would only move the cast to each call site. -/
+lemma zsmul_fromAffine_eq_zero_iff [DecidableEq F] {E : WeierstrassCurve F}
+    {P : Affine.Point E.toAffine} {n : ℕ} :
+    (n : ℤ) • Jacobian.Point.fromAffine P = 0 ↔ n • P = 0 := by
+  -- `fromAffine` is the `invFun` field of `toAffineAddEquiv`, so the two agree definitionally —
+  -- but `toAffineAddEquiv` is a plain `noncomputable def`, so `simp` cannot unfold it at
+  -- reducible transparency. Rewrite into equiv form first.
+  rw [natCast_zsmul, ← Jacobian.Point.toAffineAddEquiv_symm_apply,
+    ← map_nsmul (Jacobian.Point.toAffineAddEquiv E).symm, AddEquiv.map_eq_zero_iff]
+
 end WeierstrassCurve

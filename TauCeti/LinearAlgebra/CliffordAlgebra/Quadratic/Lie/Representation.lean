@@ -17,6 +17,8 @@ Clifford action makes the target Clifford module a module for the original Lie a
 
 ## Main results
 
+* `CliffordAlgebra.quadraticLift`: the quadratic realization of a skew-adjoint Lie action.
+* `CliffordAlgebra.quadraticLift_lie_ι`: its defining action on Clifford generators.
 * `CliffordAlgebra.cliffordInducedRep`: the induced Lie representation on a Clifford
   module.
 * `CliffordAlgebra.cliffordInducedRep_apply`: its defining equation.
@@ -43,7 +45,8 @@ namespace CliffordAlgebra
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
-private noncomputable def quadraticLift {K : Type u} [Field K]
+/-- Lift a skew-adjoint Lie action through the quadratic realization in the Clifford algebra. -/
+noncomputable def quadraticLift {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
     [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     {L : Type w} [LieRing L] [LieAlgebra K L]
@@ -51,6 +54,35 @@ private noncomputable def quadraticLift {K : Type u} [Field K]
     L →ₗ⁅K⁆ CliffordAlgebra Q :=
   (quadraticLieSubalgebra Q).incl.comp <|
     (soEquivQuadratic Q hQ).toLieHom.comp θ
+
+/-- The quadratic lift is the quadratic realization of the supplied skew-adjoint action. -/
+@[simp, grind =]
+theorem quadraticLift_apply {K : Type u} [Field K]
+    {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    {L : Type w} [LieRing L] [LieAlgebra K L]
+    (θ : L →ₗ⁅K⁆ skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) (x : L) :
+    quadraticLift Q hQ θ x = (soEquivQuadratic Q hQ (θ x) : CliffordAlgebra Q) := by
+  rfl
+
+/-- Values of the quadratic lift lie in the quadratic Lie subalgebra. -/
+theorem quadraticLift_mem_quadraticLieSubalgebra {K : Type u} [Field K]
+    {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    {L : Type w} [LieRing L] [LieAlgebra K L]
+    (θ : L →ₗ⁅K⁆ skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) (x : L) :
+    quadraticLift Q hQ θ x ∈ quadraticLieSubalgebra Q :=
+  (soEquivQuadratic Q hQ (θ x)).property
+
+/-- The quadratic lift acts on Clifford generators through the supplied skew-adjoint action. -/
+@[grind =]
+theorem quadraticLift_lie_ι {K : Type u} [Field K]
+    {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    {L : Type w} [LieRing L] [LieAlgebra K L]
+    (θ : L →ₗ⁅K⁆ skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) (x : L) (v : V) :
+    ⁅quadraticLift Q hQ θ x, ι Q v⁆ = ι Q ((θ x : Module.End K V) v) := by
+  rw [quadraticLift_apply, soEquivQuadratic_lie_ι]
 
 /-- The Lie representation on a Clifford module induced through the quadratic realization. -/
 noncomputable def cliffordInducedRep {K : Type u} [Field K] {V : Type v} [AddCommGroup V]
@@ -113,8 +145,7 @@ theorem adjointCliffordHom_lie_ι (K : Type u) (L : Type v) [Field K]
     ⁅adjointCliffordHom K L x,
         CliffordAlgebra.ι (_root_.TauCeti.LieAlgebra.killingQuadraticForm K L) y⁆ =
       CliffordAlgebra.ι (_root_.TauCeti.LieAlgebra.killingQuadraticForm K L) ⁅x, y⁆ := by
-  simp only [adjointCliffordHom, quadraticLift, LieHom.comp_apply,
-    LieSubalgebra.coe_incl, LieEquiv.coe_toLieHom, soEquivQuadratic_lie_ι,
+  rw [adjointCliffordHom, quadraticLift_lie_ι,
     _root_.TauCeti.LieAlgebra.coe_killingAdjointSO, _root_.LieAlgebra.ad_apply]
 
 end CliffordAlgebra

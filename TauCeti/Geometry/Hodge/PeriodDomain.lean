@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Geometry.Hodge.Tate
+public import TauCeti.Geometry.Hodge.Tate.Basic
 
 /-!
 # Points of a period domain

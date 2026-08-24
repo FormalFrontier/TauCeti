@@ -628,65 +628,39 @@ private lemma typeCSimpleRoot_dotProduct_coweight (i : Fin n) {c : ℕ} (hc : c 
       weight_dotProduct_coweight h]
     split_ifs <;> omega
 
+/-- The cumulative classical coweight: the sum of `coweight n b` over `b ≤ j`. For `j < n` this is
+the simple-coroot coordinate vector of `e₀ + ⋯ + e_j`; out-of-range coweights vanish, so the value
+is constant once `j` reaches `n - 1`.
+
+This mirrors `TauCeti.DynkinType.typeBDualVec` in `B/Datum.lean`, from which the construction and
+the independence argument below are adapted; the two are distinct because `TypeB.coweight` and
+`TypeC.coweight` are different functions. -/
+private def typeCDualVec (n j : ℕ) : Fin n → ℤ := ∑ b ∈ Finset.range (j + 1), coweight n b
+
+/-- Pairing a simple root of type `Cₙ` with the dual covectors is diagonal, with the value `2` on
+the long root and `1` on the short ones. -/
+private lemma typeCSimpleRoot_dotProduct_typeCDualVec (i j : Fin n) :
+    typeCSimpleRoot i ⬝ᵥ typeCDualVec n (j : ℕ)
+      = if i = j then (if (i : ℕ) + 1 = n then 2 else 1) else 0 := by
+  have hj := j.isLt
+  -- summing the coweight pairings over `b ≤ j` telescopes: the `- 1` at `b = i + 1` cancels the
+  -- diagonal contribution as soon as `i + 1 ≤ j`, leaving only the term at `i = j`
+  rw [typeCDualVec, dotProduct_sum,
+    Finset.sum_congr rfl fun b hb => typeCSimpleRoot_dotProduct_coweight i
+      (by have := Finset.mem_range.1 hb; omega),
+    Finset.sum_sub_distrib,
+    Finset.sum_ite_eq (Finset.range (j + 1)) (i : ℕ)
+      (fun _ => (if (i : ℕ) + 1 = n then (2 : ℤ) else 1)),
+    Finset.sum_ite_eq' (Finset.range (j + 1)) ((i : ℕ) + 1) (fun _ => (1 : ℤ))]
+  simp only [Finset.mem_range, Fin.ext_iff]
+  split_ifs <;> omega
+
 private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
-    LinearIndependent ℤ (typeCSimpleRoot (n := n)) := by
-  rw [Fintype.linearIndependent_iff]
-  intro g hg
-  -- First extract the recurrence for the coefficients by pairing the relation with each
-  -- classical coweight.
-  have hrel : ∀ c : Fin n,
-      (if (c : ℕ) + 1 = n then (2 : ℤ) else 1) * g c
-        = ∑ i : Fin n, (if (c : ℕ) = (i : ℕ) + 1 then g i else 0) := by
-    intro c
-    have h0 : (∑ i : Fin n, g i • typeCSimpleRoot i) ⬝ᵥ coweight n (c : ℕ) = 0 := by
-      rw [hg, zero_dotProduct]
-    rw [sum_dotProduct] at h0
-    have hterm : ∀ i : Fin n, (g i • typeCSimpleRoot i) ⬝ᵥ coweight n (c : ℕ)
-        = (if (i : ℕ) = (c : ℕ) then g i * (if (i : ℕ) + 1 = n then 2 else 1) else 0)
-          - (if (c : ℕ) = (i : ℕ) + 1 then g i else 0) := by
-      intro i
-      rw [smul_dotProduct, smul_eq_mul, typeCSimpleRoot_dotProduct_coweight i c.isLt]
-      split_ifs <;> ring
-    simp only [hterm, Finset.sum_sub_distrib] at h0
-    have hfirst : ∑ i : Fin n,
-        (if (i : ℕ) = (c : ℕ) then g i * (if (i : ℕ) + 1 = n then 2 else 1) else 0)
-          = g c * (if (c : ℕ) + 1 = n then 2 else 1) := by
-      rw [Finset.sum_eq_single c]
-      · simp
-      · intro d _ hd
-        exact ite_eq_right fun hb => hd (Fin.ext hb)
-      · simp
-    rw [hfirst] at h0
-    linarith [h0]
-  -- Then solve that recurrence from left to right, starting with the coefficient at zero.
-  have hzero : ∀ m : ℕ, ∀ hm : m < n, g ⟨m, hm⟩ = 0 := by
-    intro m
-    induction m with
-    | zero =>
-      intro hm
-      have h := hrel ⟨0, hm⟩
-      have hsum : ∑ i : Fin n, (if (0 : ℕ) = (i : ℕ) + 1 then g i else 0) = 0 :=
-        Finset.sum_eq_zero fun i _ => ite_eq_right (by omega)
-      rw [hsum] at h
-      by_cases hn : (0 : ℕ) + 1 = n
-      · rw [ite_eq_left hn] at h; linarith
-      · rw [ite_eq_right hn] at h; linarith
-    | succ m ih =>
-      intro hm
-      have h := hrel ⟨m + 1, hm⟩
-      have hsum : ∑ i : Fin n, (if (m + 1 : ℕ) = (i : ℕ) + 1 then g i else 0)
-          = g ⟨m, by omega⟩ := by
-        rw [Finset.sum_eq_single (⟨m, by omega⟩ : Fin n)]
-        · simp
-        · intro d _ hd
-          exact ite_eq_right fun hb => hd (Fin.ext (by simpa using by omega))
-        · simp
-      rw [hsum, ih (by omega)] at h
-      by_cases hn : (m + 1 : ℕ) + 1 = n
-      · rw [ite_eq_left hn] at h; simpa using by linarith
-      · rw [ite_eq_right hn] at h; simpa using by linarith
-  intro i
-  simpa using hzero (i : ℕ) i.isLt
+    LinearIndependent ℤ (typeCSimpleRoot (n := n)) :=
+  linearIndependent_of_dotProduct_diagonal (c := fun i => if (i : ℕ) + 1 = n then 2 else 1)
+    (w := fun j : Fin n => typeCDualVec n (j : ℕ)) (fun _ => by split_ifs <;> norm_num)
+    (fun i => by simp [typeCSimpleRoot_dotProduct_typeCDualVec])
+    (fun i j hij => by simp [typeCSimpleRoot_dotProduct_typeCDualVec, hij])
 
 private lemma linearIndependent_typeCSimpleCoroot (n : ℕ) :
     LinearIndependent ℤ (typeCSimpleCoroot (n := n)) := by

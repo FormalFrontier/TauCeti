@@ -199,13 +199,20 @@ private lemma atkinLehnerHom_mem_Delta0 [NeZero N] (g : GL (Fin 2) ℚ) (hg : g 
 `w` is the diagonal rescaling that repairs the transpose's failure to preserve `Γ₀(N)`. It is
 **not** the Atkin-Lehner matrix of the operator `𝒲_Q`, which is `!![0, -1; N, 0]`.
 
-Stated at `Gamma0Image N`, the spelling the `IsHeckeTriple (Delta0 N) (Gamma0Image N)
-(Gamma0Image N)` instance is found at, so `onHeckeCoset` and
-`HeckeCosetModule.mul_comm_of_antiInvolution` apply without an unfold. -/
+Stated at the **unfolded** `(Gamma0 N).map (mapGL ℚ)`, which is where
+`Gamma0/Basic.lean` puts the `IsHeckeTriple` instance. That matters and is not cosmetic:
+`HeckeCosetModule.mul_comm_of_antiInvolution` asks for a `HeckeAntiInvolution Δ H` together
+with `[IsHeckeTriple Δ H H]` at the *same* `H`, and instance search does not see through the
+sealed `Gamma0Image` definition. Stated at `Gamma0Image N` the two do not compose at all —
+the Hecke ring `𝕋 (Delta0 N) (Gamma0Image N) ℤ` does not even have a multiplication, since
+that too comes from the instance. Measured both ways. -/
 noncomputable def atkinLehnerAntiInvolution [NeZero N] :
-    HeckeAntiInvolution (Delta0 N) (Gamma0Image N) :=
+    HeckeAntiInvolution (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) :=
   HeckeAntiInvolution.ofAmbient (atkinLehnerHom N) (atkinLehnerHom_involutive N)
-    (atkinLehnerHom_mem_Gamma0Image N) (atkinLehnerHom_mem_Delta0 N)
+    (fun g hg ↦ by
+      rw [← Gamma0Image_def] at hg ⊢
+      exact atkinLehnerHom_mem_Gamma0Image N g hg)
+    (atkinLehnerHom_mem_Delta0 N)
 
 /-- The anti-involution acts by conjugating the transpose by `w`, unfolding the sealed
 definition. -/

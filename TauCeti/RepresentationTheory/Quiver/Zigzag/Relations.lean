@@ -37,7 +37,8 @@ the two-vertex graph `A₂`, whose zigzag algebra is genuinely radical-cube-zero
 
 * `TauCeti.IsQuadraticZigzagRelator`: the two quadratic relation families.
 * `TauCeti.IsZigzagRelator`: the uniform relation family, adding the long paths.
-* `TauCeti.zigzagIdeal` and `TauCeti.quadraticZigzagIdeal`: the two-sided ideals they span.
+* `TauCeti.zigzagIdeal` and `TauCeti.quadraticZigzagIdeal`: the two-sided ideals they span, with
+  named unfolding lemmas for callers that reason about the spans.
 * `TauCeti.nonisolatedZigzagQuotient`: the relation quotient, with quotient map
   `TauCeti.zigzagMk` and universal property `TauCeti.zigzagLift`.
 
@@ -103,6 +104,10 @@ noncomputable def quadraticZigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQu
 /-- The two-sided ideal spanned by the uniform zigzag relators. -/
 noncomputable def zigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQuiver G)) :=
   TwoSidedIdeal.span {x | IsZigzagRelator k G x}
+
+/-- The quadratic relation ideal is the two-sided span of the quadratic relators. -/
+theorem quadraticZigzagIdeal_eq_span :
+    quadraticZigzagIdeal k G = TwoSidedIdeal.span {x | IsQuadraticZigzagRelator k G x} := (rfl)
 
 /-- The uniform relation ideal is the two-sided span of the uniform relators. -/
 theorem zigzagIdeal_eq_span :

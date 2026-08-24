@@ -120,22 +120,6 @@ private lemma dvd_and_gcd_of_Gamma_mul (τ A : Matrix (Fin 2) (Fin 2) ℤ)
     have hshift : (τ * A) 1 1 = A 1 1 + k * (N : ℤ) := by linarith
     exact hshift ▸ (Int.isCoprime_iff_gcd_eq_one.mpr hA11).add_mul_right_left k
 
-/-- The integral matrix of `τ α δ` is the product of the three integral matrices. -/
-private lemma mapGL_mul_coe_eq_intMatrix (τ δ : SpecialLinearGroup (Fin 2) ℤ)
-    (g : GL (Fin 2) ℚ) (A : Matrix (Fin 2) (Fin 2) ℤ)
-    (hA : (↑g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
-    (↑(mapGL ℚ τ * g * mapGL ℚ δ) : Matrix (Fin 2) (Fin 2) ℚ) =
-      ((τ : Matrix (Fin 2) (Fin 2) ℤ) * A * (δ : Matrix (Fin 2) (Fin 2) ℤ)).map
-        (Int.cast : ℤ → ℚ) := by
-  -- multiplicativity of the entrywise cast is `map_mul` for `(Int.castRingHom ℚ).mapMatrix`
-  have h₁ := map_mul (Int.castRingHom ℚ).mapMatrix
-    ((τ : Matrix (Fin 2) (Fin 2) ℤ) * A) (δ : Matrix (Fin 2) (Fin 2) ℤ)
-  have h₂ := map_mul (Int.castRingHom ℚ).mapMatrix (τ : Matrix (Fin 2) (Fin 2) ℤ) A
-  simp only [RingHom.mapMatrix_apply, Int.coe_castRingHom] at h₁ h₂
-  simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, map_apply_coe,
-    RingHom.mapMatrix_apply, algebraMap_int_eq, Int.coe_castRingHom, hA]
-  rw [h₁, h₂]
-
 /-- The hard inclusion of Lemma 3.29(3): an element `σ₁ α σ₂` of the level-one double coset
 that lies in `Δ₀(N)` already lies in the `Γ₀(N)`-double coset. -/
 private lemma mem_doubleCoset_Gamma0Image_of_mem_Delta0
@@ -186,7 +170,7 @@ private lemma mem_doubleCoset_Gamma0Image_of_mem_Delta0
       hτ10 hτ11 hAN hA11
     have hB_eq : B = (τ_N : Matrix (Fin 2) (Fin 2) ℤ) * A * (γ₂' : Matrix (Fin 2) (Fin 2) ℤ) :=
       Matrix.map_injective Int.cast_injective
-        (hB.symm.trans (hx_eq ▸ mapGL_mul_coe_eq_intMatrix τ_N γ₂' α A hA))
+        (hB.symm.trans (hx_eq ▸ mapGL_mul_coe_eq_intMatrix 2 τ_N γ₂' α A hA))
     rw [Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd]
     exact dvd_apply_one_zero_of_dvd_mul N _ (γ₂' : Matrix (Fin 2) (Fin 2) ℤ)
       (hB_eq ▸ hBN) hCN hC11
