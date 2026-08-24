@@ -369,6 +369,18 @@ theorem finiteDimensional_riemannRochSpace (hF : IsFunctionField k F) (D : Divis
     (finiteDimensional_riemannRochSpace_zero hF)).1
   exact Submodule.finiteDimensional_of_le (riemannRochSpace_mono (le_posPart D))
 
+/-- The Riemann–Roch dimension is zero exactly when the Riemann–Roch space is zero. -/
+theorem Divisor.dim_eq_zero_iff_riemannRochSpace_eq_bot (hF : IsFunctionField k F)
+    (D : Divisor k F) : Divisor.dim D = 0 ↔ riemannRochSpace D = ⊥ := by
+  let _ := finiteDimensional_riemannRochSpace hF D
+  rw [Divisor.dim_def, Submodule.finrank_eq_zero]
+
+/-- The Riemann–Roch dimension is positive exactly when the Riemann–Roch space is nonzero. -/
+theorem Divisor.one_le_dim_iff_riemannRochSpace_ne_bot (hF : IsFunctionField k F)
+    (D : Divisor k F) : 1 ≤ Divisor.dim D ↔ riemannRochSpace D ≠ ⊥ := by
+  let _ := finiteDimensional_riemannRochSpace hF D
+  rw [Divisor.dim_def, Submodule.one_le_finrank_iff]
+
 /-- `ℓ` is monotone in the divisor (Stichtenoth, Lemma 1.4.8, first part). -/
 theorem Divisor.dim_mono (hF : IsFunctionField k F) {D E : Divisor k F} (h : D ≤ E) :
     Divisor.dim D ≤ Divisor.dim E := by
@@ -433,6 +445,7 @@ theorem Divisor.dim_zero_of_isIntegrallyClosedIn (hF : IsFunctionField k F)
 /-- `ℓ(D) = 0` for a negative divisor (Stichtenoth, Lemma 1.4.7(b)). -/
 theorem Divisor.dim_eq_zero_of_lt_zero (hF : IsFunctionField k F) {D : Divisor k F} (hD : D < 0) :
     Divisor.dim D = 0 := by
-  rw [Divisor.dim_def, riemannRochSpace_eq_bot_of_lt_zero hF hD, finrank_bot]
+  exact (Divisor.dim_eq_zero_iff_riemannRochSpace_eq_bot hF D).mpr
+    (riemannRochSpace_eq_bot_of_lt_zero hF hD)
 
 end TauCeti
