@@ -39,7 +39,7 @@ becomes the standard basis of `Option V → k`.
 
 ## Main results
 
-* `TauCeti.mem_center_of_forall_zigzagBasisFun`: commuting with the vertex idempotents, the arrows
+* `TauCeti.mem_center_of_commute_zigzagBasisFun`: commuting with the vertex idempotents, the arrows
   and the volume classes is enough to be central.
 * `TauCeti.zigzagVolume_mem_center`: the volume classes are central.
 * `TauCeti.sum_smul_zigzagMk_vertexIdempotent_mem_center` and
@@ -76,7 +76,7 @@ variable (k : Type w) [CommRing k] {V : Type u} (G : SimpleGraph V) [Finite V]
 
 /-- An element commuting with every vertex idempotent, every arrow and every volume class is
 central: those classes span the zigzag relation quotient. -/
-theorem mem_center_of_forall_zigzagBasisFun {z : nonisolatedZigzagQuotient k G}
+theorem mem_center_of_commute_zigzagBasisFun {z : nonisolatedZigzagQuotient k G}
     (h : ∀ b, z * zigzagBasisFun k G b = zigzagBasisFun k G b * z) :
     z ∈ Subalgebra.center k (nonisolatedZigzagQuotient k G) := by
   rw [Subalgebra.mem_center_iff]
@@ -101,9 +101,10 @@ private theorem smul_zigzagBasisFun_eq_zero (hns : ∀ i : V, ∃ j, G.Adj i j)
 /-- **The volume class of a vertex is central.** The idempotent at its base is a two-sided unit for
 it, the other idempotents kill it on both sides, and the arrows and the other volume classes
 annihilate it on both sides. -/
+@[simp]
 theorem zigzagVolume_mem_center (i : V) :
     zigzagVolume k G i ∈ Subalgebra.center k (nonisolatedZigzagQuotient k G) := by
-  refine mem_center_of_forall_zigzagBasisFun k G fun b => ?_
+  refine mem_center_of_commute_zigzagBasisFun k G fun b => ?_
   rcases b with j | d | j
   · rw [zigzagBasisFun_inl]
     rcases eq_or_ne j i with rfl | hji
@@ -201,7 +202,7 @@ theorem sum_smul_zigzagMk_vertexIdempotent_mem_center [Fintype V] (f : V → k)
     (hf : ∀ ⦃i j : V⦄, G.Adj i j → f i = f j) :
     (∑ i, f i • zigzagMk k G (vertexIdempotent k (vertex G i)))
       ∈ Subalgebra.center k (nonisolatedZigzagQuotient k G) := by
-  refine mem_center_of_forall_zigzagBasisFun k G fun b => ?_
+  refine mem_center_of_commute_zigzagBasisFun k G fun b => ?_
   rcases b with j | d | j
   · rw [zigzagBasisFun_inl, sum_smul_vertexIdempotent_mul_vertexIdempotent,
       vertexIdempotent_mul_sum_smul_vertexIdempotent]
@@ -214,6 +215,7 @@ theorem sum_smul_zigzagMk_vertexIdempotent_mem_center [Fintype V] (f : V → k)
 along the edges.** The converse of
 `TauCeti.sum_smul_zigzagMk_vertexIdempotent_mem_center` needs the arrows to be independent, hence
 the hypothesis that no vertex is isolated. -/
+@[simp]
 theorem sum_smul_zigzagMk_vertexIdempotent_mem_center_iff [Fintype V]
     (hns : ∀ i : V, ∃ j, G.Adj i j) (f : V → k) :
     (∑ i, f i • zigzagMk k G (vertexIdempotent k (vertex G i)))
@@ -376,6 +378,7 @@ theorem zigzagCenterFun_none : zigzagCenterFun k G none = 1 := (rfl)
 theorem zigzagCenterFun_some (i : V) : zigzagCenterFun k G (some i) = zigzagVolume k G i := (rfl)
 
 /-- The unit and the volume classes are central. -/
+@[simp]
 theorem zigzagCenterFun_mem_center (o : Option V) :
     zigzagCenterFun k G o ∈ Subalgebra.center k (nonisolatedZigzagQuotient k G) := by
   cases o with
