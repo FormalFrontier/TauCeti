@@ -31,7 +31,7 @@ Along the way we record reusable facts about Mathlib's path length:
 * `TauCeti.Manifold.le_riemannianEDist_of_forall_pathELength_ge`: the Riemannian extended distance
   is bounded below by any bound valid for the lengths of all `C¹` curves between two points;
 * `TauCeti.Manifold.pathELength_lineMap`: the straight segment has length the norm distance;
-* `TauCeti.Manifold.pathELength_comp_subtype_val`: path length is intrinsic, i.e. unchanged under
+* `TauCeti.Manifold.pathELength_subtypeVal_comp`: path length is intrinsic, i.e. unchanged under
   restriction of the metric to an open submanifold.
 
 ## Main results
@@ -45,6 +45,9 @@ Along the way we record reusable facts about Mathlib's path length:
 
 ## References
 
+* The ambient distance computation adapts the proof of the `IsRiemannianManifold 𝓘(ℝ, F) F`
+  instance in [Mathlib, `Mathlib/Geometry/Manifold/Riemannian/Basic.lean`](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Geometry/Manifold/Riemannian/Basic.lean)
+  by S. Gouëzel.
 * [Geodesics, the exponential map, and the Hopf--Rinow theorem roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HopfRinow/README.md),
   Layer 0, "Restriction to open submanifolds".
 * M. P. do Carmo, *Riemannian Geometry*, Birkhäuser, 1992, Ch. 1, §2 (arc length; the length of a
@@ -93,6 +96,7 @@ variable {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F]
 
 /-- The straight segment between two points of an inner product space has length equal to the
 norm distance between them. -/
+@[simp]
 theorem pathELength_lineMap (x y : F) :
     pathELength 𝓘(ℝ, F)
       (⇑(ContinuousAffineMap.lineMap (R := ℝ) x y)) 0 1 = ‖x - y‖ₑ := by
@@ -112,7 +116,7 @@ variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 
 /-- Path length is intrinsic: restricting the metric of `M` to an open submanifold `U` does not
 change the length of a `C¹` curve read in `U`. -/
-theorem pathELength_comp_subtype_val {γ : ℝ → U} {a b : ℝ}
+theorem pathELength_subtypeVal_comp {γ : ℝ → U} {a b : ℝ}
     (hγ : CMDiff[Icc a b] 1 γ) :
     pathELength I γ a b = pathELength I ((Subtype.val : U → M) ∘ γ) a b := by
   rw [pathELength_eq_lintegral_mfderiv_Icc, pathELength_eq_lintegral_mfderiv_Icc,
@@ -170,7 +174,7 @@ private theorem contMDiffOn_convexSegment (hU : Convex ℝ (U : Set F)) (x y : U
 private theorem pathELength_convexSegment (hU : Convex ℝ (U : Set F)) (x y : U) :
     pathELength 𝓘(ℝ, F) (convexSegment U hU x y) 0 1 = ‖((x : F) - (y : F))‖ₑ := by
   have hval := convexSegment_val_eqOn U hU x y
-  rw [pathELength_comp_subtype_val (contMDiffOn_convexSegment U hU x y),
+  rw [pathELength_subtypeVal_comp (contMDiffOn_convexSegment U hU x y),
     pathELength_congr hval]
   exact pathELength_lineMap _ _
 
@@ -183,7 +187,7 @@ theorem enorm_sub_le_riemannianEDist_subtype (x y : U) :
     (IsRiemannianManifold.out (I := 𝓘(ℝ, F)) z w).symm.trans (edist_eq_enorm_sub ..)
   refine le_riemannianEDist_of_forall_pathELength_ge (M := U)
     (I := 𝓘(ℝ, F)) fun γ h0 h1 hγ ↦ ?_
-  rw [pathELength_comp_subtype_val hγ]
+  rw [pathELength_subtypeVal_comp hγ]
   calc ‖((x : F) - (y : F))‖ₑ
       = riemannianEDist 𝓘(ℝ, F)
           (((Subtype.val : U → F) ∘ γ) 0) (((Subtype.val : U → F) ∘ γ) 1) := by

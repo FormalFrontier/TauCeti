@@ -50,6 +50,7 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 
 /-- A map into an open submanifold is `C^n` within a set at a point iff its composition with the
 inclusion is, at every regularity: smoothness is a local invariant property and the charts agree. -/
+@[simp]
 theorem contMDiffWithinAt_subtypeVal_comp_iff (U : Opens M') (f : M → U) (s : Set M)
     (x : M) :
     ContMDiffWithinAt I I' n (Subtype.val ∘ f) s x ↔ ContMDiffWithinAt I I' n f s x :=
@@ -57,12 +58,14 @@ theorem contMDiffWithinAt_subtypeVal_comp_iff (U : Opens M') (f : M → U) (s : 
 
 /-- A map into an open submanifold is `C^n` at a point iff its composition with the inclusion
 is, at every regularity. -/
+@[simp]
 theorem contMDiffAt_subtypeVal_comp_iff (U : Opens M') (f : M → U) (x : M) :
     ContMDiffAt I I' n (Subtype.val ∘ f) x ↔ ContMDiffAt I I' n f x :=
   contMDiffWithinAt_subtypeVal_comp_iff U f Set.univ x
 
 /-- A map into an open submanifold is `C^n` on a set iff its composition with the inclusion is,
 at every regularity. -/
+@[simp]
 theorem contMDiffOn_subtypeVal_comp_iff (U : Opens M') (f : M → U) (s : Set M) :
     ContMDiffOn I I' n (Subtype.val ∘ f) s ↔ ContMDiffOn I I' n f s :=
   ⟨fun h a ha => (contMDiffWithinAt_subtypeVal_comp_iff U f s a).mp (h a ha),
@@ -70,6 +73,7 @@ theorem contMDiffOn_subtypeVal_comp_iff (U : Opens M') (f : M → U) (s : Set M)
 
 /-- A map into an open submanifold is `C^n` iff its composition with the inclusion is, at every
 regularity. -/
+@[simp]
 theorem contMDiff_subtypeVal_comp_iff (U : Opens M') (f : M → U) :
     ContMDiff I I' n (Subtype.val ∘ f) ↔ ContMDiff I I' n f :=
   ⟨fun h _ => (contMDiffWithinAt_subtypeVal_comp_iff U f Set.univ _).mp (h _),
