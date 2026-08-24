@@ -40,10 +40,10 @@ Recurrence is what makes the bridge two-way, and it is a genuine hypothesis: the
 of `TauCeti/Probability/Exchangeability/Recurrence/AbsorbedWalk.lean` is Markov exchangeable and
 leaves its initial state for good.
 
-Lists over the countable state space carry the discrete measurable structure of
-`TauCeti/MeasureTheory/MeasurableSpace/List.lean`, under which they are a countable, hence standard
-Borel, value space — so de Finetti's theorem needs no hypothesis beyond the countability Markov
-exchangeability already carries.
+Lists carry the natural length-indexed measurable structure of
+`TauCeti/MeasureTheory/MeasurableSpace/List.lean`. Over the countable discrete state space here this
+structure is discrete, hence standard Borel, so de Finetti's theorem needs no hypothesis beyond the
+countability Markov exchangeability already carries.
 
 ## Main definitions
 
