@@ -187,7 +187,8 @@ instance instIsCondKernelCountableCondKernel (σ : Measure (Y × Z)) [IsFiniteMe
   disintegrate := compProd_countableCondKernel σ
 
 /-- Any conditional kernel of `σ` agrees with `countableCondKernel σ` at every atom of positive
-mass. The restriction to such atoms is sharp, as shown by the private regression below. -/
+mass. The restriction to such atoms is sharp, as shown by the first private regression below;
+global finiteness is necessary at infinite-mass atoms, as shown by the second. -/
 theorem eq_countableCondKernel_of_ne_zero (σ : Measure (Y × Z)) [IsFiniteMeasure σ]
     (κ : Kernel Y Z) [σ.IsCondKernel κ] {y : Y} (hy : σ.fst {y} ≠ 0) :
     κ y = countableCondKernel σ y :=
