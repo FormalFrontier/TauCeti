@@ -104,21 +104,13 @@ lemma ι_linearHomComplexEnrichedComp_tmul (F G K : CochainComplex C ℤ) (p q j
     (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ)
       (ComplexShape.up ℤ) (p, q) = j)
     (z₁ : ModuleCat.of R (Cochain F G p)) (z₂ : ModuleCat.of R (Cochain G K q)) :
-    ModuleCat.Hom.hom
-        (HomologicalComplex.ιMapBifunctor (linearHomComplex R F G)
-            (linearHomComplex R G K) (curriedTensor (ModuleCat.{v} R))
-            (ComplexShape.up ℤ) p q j h ≫ (linearHomComplexEnrichedComp R F G K).f j)
-        (z₁ ⊗ₜ z₂) =
-      ((p * q).negOnePow • z₁.comp z₂ (by dsimp at h; omega) :
-        ModuleCat.of R (Cochain F K j)) := by
-  rw [ι_linearHomComplexEnrichedComp]
-  simp only [ModuleCat.hom_smul, LinearMap.smul_apply, ModuleCat.hom_comp,
-    LinearMap.coe_comp, Function.comp_apply]
-  change (p * q).negOnePow • ModuleCat.Hom.hom (cochainCompTensor R F G K q p j _)
+    (p * q).negOnePow • ModuleCat.Hom.hom (cochainCompTensor R F G K q p j
+        (by dsimp at h ⊢; omega))
       (ModuleCat.Hom.hom
         ((β_ (ModuleCat.of R (Cochain F G p)) (ModuleCat.of R (Cochain G K q))).hom)
-          (z₁ ⊗ₜ z₂)) =
-    ((p * q).negOnePow • z₁.comp z₂ _ : ModuleCat.of R (Cochain F K j))
+        (z₁ ⊗ₜ z₂)) =
+      ((p * q).negOnePow • z₁.comp z₂ (by dsimp at h; omega) :
+        ModuleCat.of R (Cochain F K j)) := by
   rw [ModuleCat.MonoidalCategory.braiding_hom_apply]
   change (p * q).negOnePow •
       (ModuleCat.Hom.hom (cochainCompTensor R F G K q p j _) (z₂ ⊗ₜ z₁) :
