@@ -140,33 +140,16 @@ private theorem mapPointsFunctor_dynamicCocharacterCoordinateMap_app
     congr 1
     rw [rankOneCharacterBialgEquiv]
     simp only [CommHopfAlgCat.hom_ofHom]
-    -- No application lemma exposes this composite bialgebra equivalence under `ofHom`.
-    change (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm
-        ((MonoidAlgebra.domCongrBialgEquiv R R
-          (AddEquiv.toMultiplicative
-            (Finsupp.uniqueAddEquiv (ULift.up ()))))
+    apply (AlgEquiv.symm_apply_eq
+      (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).toAlgEquiv).mpr
+    -- `simp` does not unfold `domCongrBialgEquiv`, so expose its underlying `domCongr`.
+    change MonoidAlgebra.domCongr R R
+        (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ())))
           (MonoidAlgebra.single
-            (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1)) =
-      LaurentPolynomial.T 1
-    apply (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).symm_apply_eq.mpr
-    apply MonoidAlgebra.coeffEquiv.injective
-    -- `coeffEquiv.injective` leaves its coercions reducible but has no wrapper rewrite lemma.
-    change ((MonoidAlgebra.domCongrBialgEquiv R R
-        (AddEquiv.toMultiplicative (Finsupp.uniqueAddEquiv (ULift.up ()))))
-          (MonoidAlgebra.single
-            (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1)).coeff =
-      ((AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ)
-        (LaurentPolynomial.T 1)).coeff
-    rw [MonoidAlgebra.coeff_domCongrBialgEquiv_apply,
-      AddMonoidAlgebra.coeff_toMultiplicativeBialgEquiv_apply]
-    simp only [MonoidAlgebra.coeff_single, LaurentPolynomial.T,
-      AddMonoidAlgebra.coeff_single, Finsupp.mapDomain_single]
-    apply congrArg (fun x => Finsupp.single x (1 : R))
-    apply congrArg (fun z : ℤ => Multiplicative.ofAdd z)
-    -- No rewrite lemma removes the remaining coercion of the unique-coordinate equivalence.
-    change (Finsupp.uniqueAddEquiv (ULift.up ()))
-      (Finsupp.single (ULift.up ()) 1) = 1
-    rw [Finsupp.uniqueAddEquiv_apply, Finsupp.single_eq_same]
+            (Multiplicative.ofAdd (Finsupp.single (ULift.up ()) 1)) 1) =
+      (AddMonoidAlgebra.toMultiplicativeBialgEquiv R R ℤ).toAlgEquiv (LaurentPolynomial.T 1)
+    simpa using
+      (AddMonoidAlgebra.toMultiplicativeBialgEquiv_single (R := R) (A := R) (M := ℤ) 1 1).symm
   apply (pointsMulEquiv (R := R) (A := A) 2).injective
   rw [pointsMulEquiv_diagonalTorusPoints,
     pointsMulEquiv_dynamicCocharacterPoints]

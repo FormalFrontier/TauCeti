@@ -163,9 +163,7 @@ theorem coe_pathMap_apply {a b : Q} (p : _root_.Quiver.Path a b)
 theorem pathMap_nil (a : Q) :
     pathMap k M (_root_.Quiver.Path.nil : _root_.Quiver.Path a a) = LinearMap.id := by
   ext x
-  -- the trivial path at `a` is the vertex idempotent `eₐ`, both being the basis element `single`
-  -- of that path with coefficient one
-  rw [coe_pathMap_apply, ofPath_eq_single, ← vertexIdempotent_eq_single,
+  rw [coe_pathMap_apply, ← vertexIdempotent_eq_ofPath,
     vertexIdempotent_smul_eq_self_of_mem_vertexComponent x.2]
   simp
 
@@ -200,8 +198,7 @@ about it that matter are that its values sum to the identity
 on the component at any other vertex. -/
 noncomputable def vertexProjection (v : Q) : M →ₗ[k] vertexComponent k M v where
   toFun x := ⟨(vertexIdempotent k v : pathAlgebra k Q) • x, by
-    -- the vertex idempotent is the trivial path at `v`, which lands in the component at `v`
-    rw [vertexIdempotent_eq_single, ← ofPath_eq_single]
+    rw [vertexIdempotent_eq_ofPath]
     exact ofPath_smul_mem_vertexComponent _root_.Quiver.Path.nil x⟩
   map_add' x y := Subtype.ext (smul_add _ x y)
   map_smul' r x := Subtype.ext (smul_comm (vertexIdempotent k v : pathAlgebra k Q) r x)

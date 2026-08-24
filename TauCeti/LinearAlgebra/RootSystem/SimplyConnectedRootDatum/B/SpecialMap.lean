@@ -44,8 +44,8 @@ later lift, together with its action on root subgroups, before the Suzuki--Ree l
 * `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mulVec_root` and
   `TauCeti.DynkinType.b2SpecialIsogenyMatrix_transpose_mulVec_coroot`: the equations on the pinned
   datum.
-* `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mul_self` and its transpose counterpart: applying the
-  lattice map twice is multiplication by `2`.
+* `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mul_self`: the square of the lattice map is
+  multiplication by `2`.
 * `TauCeti.DynkinType.b2SpecialIsogenyExponent_mul_exponent`: the two rescaling exponents on an
   orbit multiply to the defining characteristic.
 
@@ -204,43 +204,6 @@ theorem b2SpecialIsogenyMatrix_mul_self :
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [b2SpecialIsogenyMatrix_def, Matrix.mul_apply, Fin.sum_univ_succ]
-
-/-- The square of the cocharacter-lattice special matrix is twice the identity matrix. -/
-theorem b2SpecialIsogenyMatrix_transpose_mul_self :
-    b2SpecialIsogenyMatrixᵀ * b2SpecialIsogenyMatrixᵀ =
-      (2 : ℤ) • (1 : Matrix (Fin 2) (Fin 2) ℤ) := by
-  rw [← Matrix.transpose_mul, b2SpecialIsogenyMatrix_mul_self, Matrix.transpose_smul,
-    Matrix.transpose_one]
-
-/-- Applying the character-lattice special map twice is multiplication by the characteristic
-`2`. -/
-theorem b2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
-    b2SpecialIsogenyMatrix *ᵥ (b2SpecialIsogenyMatrix *ᵥ x) = (2 : ℤ) • x := by
-  rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_mul_self, Matrix.smul_mulVec,
-    Matrix.one_mulVec]
-
-/-- Applying the cocharacter-lattice special map twice is multiplication by the characteristic
-`2`. -/
-theorem b2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
-    b2SpecialIsogenyMatrixᵀ *ᵥ (b2SpecialIsogenyMatrixᵀ *ᵥ x) = (2 : ℤ) • x := by
-  rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_transpose_mul_self,
-    Matrix.smul_mulVec, Matrix.one_mulVec]
-
-/-- The square relation for the character-lattice map, as an equality of linear maps. -/
-theorem b2SpecialIsogenyMatrix_mulVecLin_comp_self :
-    b2SpecialIsogenyMatrix.mulVecLin ∘ₗ b2SpecialIsogenyMatrix.mulVecLin =
-      (2 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
-  rw [← Matrix.mulVecLin_mul, b2SpecialIsogenyMatrix_mul_self]
-  ext x
-  simp
-
-/-- The square relation for the cocharacter-lattice map, as an equality of linear maps. -/
-theorem b2SpecialIsogenyMatrix_transpose_mulVecLin_comp_self :
-    b2SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ b2SpecialIsogenyMatrixᵀ.mulVecLin =
-      (2 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
-  rw [← Matrix.mulVecLin_mul, b2SpecialIsogenyMatrix_transpose_mul_self]
-  ext x
-  simp
 
 /-! ## Length and exponent conventions -/
 

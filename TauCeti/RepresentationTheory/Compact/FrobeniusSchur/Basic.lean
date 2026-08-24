@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.Compact.Averaging
-public import TauCeti.RepresentationTheory.Continuous.SquareCharacter
+public import TauCeti.RepresentationTheory.Continuous.Square.Character
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 
 /-!
@@ -39,7 +39,7 @@ symmetric and exterior square of a continuous representation carry a continuous 
 is not what is used. The closed formulas `χ_{Sym²}(g) = ½(χ(g)² + χ(g²))` and
 `χ_{Λ²}(g) = ½(χ(g)² - χ(g²))`, valid because `2 ≠ 0`, exhibit both as continuous functions of `g`
 directly, and that is all integration needs; that continuity is
-`TauCeti/RepresentationTheory/Continuous/SquareCharacter.lean`, which needs neither a group nor a
+`TauCeti/RepresentationTheory/Continuous/Square/Character.lean`, which needs neither a group nor a
 measure, and only the integrability it yields is proved here.
 
 For a **unitary** representation the indicator is real

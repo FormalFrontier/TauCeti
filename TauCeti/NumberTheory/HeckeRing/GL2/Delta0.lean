@@ -6,6 +6,8 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.NumberTheory.HeckeRing.GLn.Basic
+-- `Matrix.map_mul_intCast`: the entrywise integer cast is multiplicative on matrices.
+public import Mathlib.LinearAlgebra.Matrix.Integer
 
 /-!
 # The semigroup `Δ₀(N)`
@@ -115,6 +117,68 @@ lemma coprimeDet_iff {g : Delta0 N} {A : Matrix (Fin 2) (Fin 2) ℤ}
   refine ⟨fun h ↦ h A hA, fun h A' hA' ↦ ?_⟩
   have : A' = A := Matrix.map_injective Int.cast_injective (hA'.symm.trans hA)
   exact this ▸ h
+
+/-! ### The upper-left unit character -/
+
+/-- The chosen integral witness of an element of `Δ₀(N)`.
+
+`Δ₀(N)`-membership is an existential over integral matrices, so a value-level map out of it
+must choose. The choice is harmless: `delta0Witness_eq` shows the witness is unique, and
+`Delta0UpperUnit_apply_val` states the resulting API against an arbitrary witness, so this
+definition never escapes into a consumer's proof obligation. -/
+private noncomputable def delta0Witness (g : Delta0 N) : Matrix (Fin 2) (Fin 2) ℤ :=
+  Classical.choose ((mem_Delta0_iff N).mp g.2)
+
+private lemma delta0Witness_spec (g : Delta0 N) :
+    ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
+      (delta0Witness N g).map (Int.cast : ℤ → ℚ) :=
+  (Classical.choose_spec ((mem_Delta0_iff N).mp g.2)).1
+
+private lemma delta0Witness_lowerLeft (g : Delta0 N) : (N : ℤ) ∣ delta0Witness N g 1 0 :=
+  (Classical.choose_spec ((mem_Delta0_iff N).mp g.2)).2.2.1
+
+private lemma isUnit_delta0Witness_upperLeft (g : Delta0 N) :
+    IsUnit ((delta0Witness N g 0 0 : ℤ) : ZMod N) :=
+  (Classical.choose_spec ((mem_Delta0_iff N).mp g.2)).2.2.2
+
+/-- The integral witness of an element of `Δ₀(N)` is unique: the entrywise cast `ℤ → ℚ` is
+injective, so two witnesses for the same matrix agree. This is the same observation that lets
+`CoprimeDet` be decided by a single witness. -/
+private lemma delta0Witness_eq {g : Delta0 N} {A : Matrix (Fin 2) (Fin 2) ℤ}
+    (hA : ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
+    delta0Witness N g = A :=
+  Matrix.map_injective Int.cast_injective ((delta0Witness_spec N g).symm.trans hA)
+
+/-- **The upper-left unit character of `Δ₀(N)`**, reducing the upper-left entry of an integral
+witness modulo `N`. It is multiplicative because the lower-left entry of a `Δ₀(N)` matrix
+vanishes mod `N`, killing the cross term in the product. -/
+noncomputable def Delta0UpperUnit : Delta0 N →* (ZMod N)ˣ where
+  toFun g := (isUnit_delta0Witness_upperLeft N g).unit
+  map_one' := by
+    ext
+    rw [IsUnit.unit_spec, delta0Witness_eq N (A := 1) (by simp)]
+    simp
+  map_mul' g h := by
+    ext
+    rw [Units.val_mul, IsUnit.unit_spec, IsUnit.unit_spec, IsUnit.unit_spec,
+      delta0Witness_eq N (A := delta0Witness N g * delta0Witness N h) (by
+        rw [Submonoid.coe_mul, Units.val_mul, delta0Witness_spec N g,
+          delta0Witness_spec N h, Matrix.map_mul_intCast])]
+    have hzero : ((delta0Witness N g 0 1 * delta0Witness N h 1 0 : ℤ) : ZMod N) = 0 := by
+      rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
+      exact Dvd.dvd.mul_left (delta0Witness_lowerLeft N h) _
+    simp only [Matrix.mul_apply, Fin.sum_univ_two, Int.cast_add, Int.cast_mul, hzero, add_zero]
+
+/-- **The eliminator.** Any integral witness computes the upper-left unit, so a consumer never
+has to reach for the chosen one.
+
+Not `@[simp]`: `A` occurs only in the hypothesis and the right-hand side, so `simp` cannot
+infer it — the same reason `diamondOp_apply_of_mem_modFormCharSpace` is not a simp lemma. -/
+lemma Delta0UpperUnit_apply_val {g : Delta0 N} {A : Matrix (Fin 2) (Fin 2) ℤ}
+    (hA : ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
+    (Delta0UpperUnit N g : ZMod N) = (A 0 0 : ZMod N) := by
+  rw [Delta0UpperUnit, MonoidHom.coe_mk, OneHom.coe_mk, IsUnit.unit_spec,
+    delta0Witness_eq N hA]
 
 /-- `Δ₀(N)` consists of integral matrices with positive determinant. -/
 lemma Delta0_le_posDetInt : Delta0 N ≤ posDetInt 2 := by

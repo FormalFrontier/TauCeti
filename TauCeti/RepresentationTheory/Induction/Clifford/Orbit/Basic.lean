@@ -52,7 +52,8 @@ the packaged form of the theorem, which assumes finite-dimensionality and produc
   translate is produced rather than assumed.
 * `TauCeti.Representation.isotypicComponents_eq_range`: the isotypic components of the restriction
   are exactly the components of the translates of a given minimal `N`-stable subspace, so `G` acts
-  transitively on them; `TauCeti.Representation.finite_isotypicComponents` reads off from the same
+  transitively on them; `Representation.conjSubrepIsotypicComponent` packages each such
+  component, and `TauCeti.Representation.finite_isotypicComponents` reads off from the same
   hypothesis that there are finitely many of them when `G` is finite.
 * `TauCeti.Representation.isIsotypicOfType_asSubmodule_iff`: the restriction is isotypic exactly
   when every translate of one constituent is isomorphic to it — the case in which the inertia group
@@ -191,3 +192,35 @@ end Orbit
 end Representation
 
 end TauCeti
+
+namespace Representation
+
+open TauCeti TauCeti.Representation
+
+section Orbit
+
+variable {k G V : Type*} [Field k] [Group G] [AddCommGroup V] [Module k V]
+  {N : Subgroup G} [N.Normal] (ρ : Representation k G V)
+
+/-- The isotypic component cut out by the translate of a fixed constituent. -/
+noncomputable def conjSubrepIsotypicComponent [ρ.IsIrreducible]
+    (σ : Subrepresentation (ρ.comp N.subtype)) (hσ : IsAtom σ) (g : G) :
+    isotypicComponents k[N] (Representation.asModule (ρ.comp N.subtype)) :=
+  ⟨isotypicComponent k[N] (Representation.asModule (ρ.comp N.subtype))
+      (conjSubrep ρ g σ).asSubmodule,
+    (isotypicComponents_eq_range ρ hσ).symm ▸ Set.mem_range_self g⟩
+
+/-- The underlying submodule of the component indexed by `g` is the isotypic component of the
+translated constituent `conjSubrep ρ g σ`. -/
+@[simp]
+theorem coe_conjSubrepIsotypicComponent [ρ.IsIrreducible]
+    (σ : Subrepresentation (ρ.comp N.subtype)) (hσ : IsAtom σ) (g : G) :
+    (conjSubrepIsotypicComponent ρ σ hσ g :
+      Submodule k[N] (Representation.asModule (ρ.comp N.subtype))) =
+      isotypicComponent k[N] (Representation.asModule (ρ.comp N.subtype))
+        (conjSubrep ρ g σ).asSubmodule :=
+  by simp only [conjSubrepIsotypicComponent]
+
+end Orbit
+
+end Representation

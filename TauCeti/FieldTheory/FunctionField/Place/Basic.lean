@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.AlgebraicClosure
+public import Mathlib.RingTheory.Valuation.Integral
 public import Mathlib.RingTheory.Valuation.IsTrivialOn
 public import TauCeti.RingTheory.Valuation.Discrete.Order
 
@@ -44,7 +45,11 @@ equivalence is needed and equality of places *is* equality of valuations
   `algebraicClosure k F` is contained in `𝒪_P`
   (`TauCeti.Place.mem_integers_of_mem_algebraicClosure`).
 * `TauCeti.Place.integers_injective`: a place is determined by its valuation ring
-  (Stichtenoth, Theorem 1.1.13).
+  (Stichtenoth, Theorem 1.1.13), and `TauCeti.Place.eq_of_integers_le`: the valuation ring of a
+  place is a maximal proper subring of `F`, so a place whose valuation ring contains that of
+  another place is that place (Stichtenoth, Theorem 1.1.13(d)).
+* `TauCeti.Place.mem_integers_of_isIntegral`: the valuation ring of a place is integrally closed
+  in `F`.
 * `TauCeti.Place.degree_eq_one_iff_algebraMap_surjective` and
   `TauCeti.Place.degree_eq_one_iff_forall_exists_valuation_sub_lt_one`: the rational places are
   those whose residue field is exhausted by the constants, equivalently those at which every
@@ -308,6 +313,46 @@ theorem valuation_isEquiv_iff {P Q : Place k F} : P.valuation.IsEquiv Q.valuatio
 /-- A place is determined by its valuation ring (Stichtenoth, Theorem 1.1.13). -/
 theorem integers_injective : Function.Injective (integers : Place k F → ValuationSubring F) :=
   fun _ _ h => eq_of_isEquiv ((Valuation.isEquiv_iff_valuationSubring _ _).mpr h)
+
+/-- **The valuation ring of a place is a maximal proper subring of `F`** (Stichtenoth,
+Theorem 1.1.13(d)), in the form used to recognize a place from a containment of valuation
+rings: a place whose valuation ring contains the valuation ring of another place is that
+place. -/
+theorem eq_of_integers_le {P Q : Place k F} (h : P.integers ≤ Q.integers) : P = Q := by
+  refine integers_injective (le_antisymm h ?_)
+  by_contra hle
+  obtain ⟨f, hfQ, hfP⟩ := SetLike.not_le_iff_exists.mp hle
+  rw [mem_integers_iff_ord_nonneg] at hfQ
+  rw [mem_integers_iff_ord_nonneg, not_le] at hfP
+  have hf0 : f ≠ 0 := by rintro rfl; simp at hfP
+  have hgP : 0 < P.ord f⁻¹ := by rw [ord_inv]; omega
+  have hgQ : 0 ≤ Q.ord f⁻¹ := by
+    rw [← mem_integers_iff_ord_nonneg]
+    exact h (P.mem_integers_iff_ord_nonneg.mpr hgP.le)
+  have hgQ0 : Q.ord f⁻¹ = 0 := by rw [ord_inv] at hgQ ⊢; omega
+  refine Q.integers_ne_top (top_unique fun y _ ↦ ?_)
+  rcases eq_or_ne y 0 with rfl | hy0
+  · exact zero_mem _
+  set n := (max 0 (-P.ord y)).toNat with hn
+  have hmem : y * f⁻¹ ^ n ∈ P.integers := by
+    rw [mem_integers_iff_ord_nonneg, ord_mul _ hy0 (pow_ne_zero _ (inv_ne_zero hf0)), ord_pow]
+    have : (1 : ℤ) ≤ P.ord f⁻¹ := hgP
+    nlinarith [Int.toNat_of_nonneg (le_max_left 0 (-P.ord y)), le_max_right 0 (-P.ord y)]
+  have := Q.mem_integers_iff_ord_nonneg.mp (h hmem)
+  rw [ord_mul _ hy0 (pow_ne_zero _ (inv_ne_zero hf0)), ord_pow, hgQ0] at this
+  exact Q.mem_integers_iff_ord_nonneg.mpr (by omega)
+
+/-- The valuation ring of a place is integrally closed in `F`: an element of `F` integral over a
+`k`-algebra whose image lies in `𝒪_P` lies in `𝒪_P`. -/
+theorem mem_integers_of_isIntegral {R : Type*} [CommRing R] [Algebra R F]
+    (hR : ∀ r : R, algebraMap R F r ∈ P.integers) {y : F} (hy : IsIntegral R y) :
+    y ∈ P.integers := by
+  have hR' : ∀ r : R, algebraMap R F r ∈ P.valuation.valuationSubring :=
+    fun r ↦ P.mem_integers_iff.mp (hR r)
+  let : Algebra R P.valuation.valuationSubring := ((algebraMap R F).codRestrict _ hR').toAlgebra
+  have : IsScalarTower R P.valuation.valuationSubring F := .of_algebraMap_eq fun _ ↦ rfl
+  exact P.mem_integers_iff.mpr
+    ((Valuation.valuationSubring.integers P.valuation).isIntegral_iff_v_le_one.mp hy.tower_top)
 
 end IntegersOrder
 

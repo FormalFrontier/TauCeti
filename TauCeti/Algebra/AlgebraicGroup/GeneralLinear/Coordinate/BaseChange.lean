@@ -35,6 +35,8 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeBialgEquiv`: the bialgebra equivalence.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeIso`: its bundled
   commutative-Hopf-algebra form, when the extension ring's universe contains the base ring's.
+* `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeMap_X`: the value on a generic matrix
+  entry after transporting the base change of any coordinate morphism.
 
 ## References
 
@@ -49,6 +51,7 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 
 public section
 
+open CategoryTheory
 open scoped TensorProduct
 
 namespace TauCeti.GeneralLinear
@@ -336,5 +339,42 @@ theorem coordinateHopfAlgebraBaseChangeIso_inv_apply
   rw [coordinateHopfAlgebraBaseChangeBialgEquiv_symm_coordinateRingMap]
   exact (TensorProduct.tmul_eq_smul_one_tmul (R := R) s
     (coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n p))).symm
+
+/-- The inverse categorical base-change isomorphism sends a generic matrix entry to the
+corresponding scalar pure tensor. -/
+@[simp]
+theorem coordinateHopfAlgebraBaseChangeIso_inv_X
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
+    (n : ℕ) (i j : Fin n) :
+    (coordinateHopfAlgebraBaseChangeIso R K n).inv
+        (coordinateHopfAlgebraAlgEquiv K n
+          (coordinateRingMap K n (MvPolynomial.X (i, j)))) =
+      1 ⊗ₜ[R] coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j))) := by
+  have h := coordinateHopfAlgebraBaseChangeIso_inv_apply R K n
+    (1 : K) (MvPolynomial.X (i, j))
+  have hmap : MvPolynomial.map (algebraMap R K) (MvPolynomial.X (i, j)) =
+      MvPolynomial.X (i, j) := by simp
+  rw [hmap] at h
+  simpa only [one_smul] using h
+
+/-- Transporting the base change of a coordinate morphism sends a generic matrix entry to the
+target base-change isomorphism applied to the pure tensor of its original value. -/
+theorem coordinateHopfAlgebraBaseChangeMap_X
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
+    (n : ℕ) (H : CommHopfAlgCat.{u} R) (L : CommHopfAlgCat.{max u v} K)
+    (f : coordinateHopfAlgebra R n ⟶ H)
+    (e : CommHopfAlgCat.baseChange (K := K) H ≅ L) (i j : Fin n) :
+    ((coordinateHopfAlgebraBaseChangeIso R K n).inv ≫
+          CommHopfAlgCat.baseChangeMap f ≫ e.hom).hom
+        (coordinateHopfAlgebraAlgEquiv K n
+          (coordinateRingMap K n (MvPolynomial.X (i, j)))) =
+      e.hom.hom
+        (1 ⊗ₜ[R] f.hom
+          (coordinateHopfAlgebraAlgEquiv R n
+            (coordinateRingMap R n (MvPolynomial.X (i, j))))) := by
+  rw [_root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp,
+    Function.comp_apply, BialgHom.coe_comp, Function.comp_apply,
+    coordinateHopfAlgebraBaseChangeIso_inv_X, CommHopfAlgCat.baseChangeMap_apply_tmul]
 
 end TauCeti.GeneralLinear

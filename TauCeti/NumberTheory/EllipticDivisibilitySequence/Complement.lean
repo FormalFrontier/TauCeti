@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.NormEDS
+import Mathlib.Tactic.LinearCombination
 
 /-!
 # The complement of a normalised EDS at a general multiple

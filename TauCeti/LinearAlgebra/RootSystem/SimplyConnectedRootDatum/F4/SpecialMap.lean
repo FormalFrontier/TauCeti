@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.LinearAlgebra.Matrix.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.Length
 
@@ -241,27 +242,9 @@ theorem f4Length_mul_pairing_f4SpecialIsogenyIndex (i j : Fin 48) :
         f4SimplyConnectedRootDatum.pairing
           (f4SpecialIsogenyIndexEquiv i) (f4SpecialIsogenyIndexEquiv j) =
       f4Length j * f4SimplyConnectedRootDatum.pairing i j := by
-  calc
-    _ = (f4Length i • f4SimplyConnectedRootDatum.root (f4SpecialIsogenyIndexEquiv i)) ⬝ᵥ
-          f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j) := by
-      rw [f4SimplyConnectedRootDatum_pairing, f4SimplyConnectedRootDatum_root,
-        f4SimplyConnectedRootDatum_coroot, smul_dotProduct, smul_eq_mul]
-    _ = (f4SpecialIsogenyMatrix *ᵥ f4SimplyConnectedRootDatum.root i) ⬝ᵥ
-          f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j) := by
-      rw [f4SpecialIsogenyMatrix_mulVec_root]
-    _ = f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j) ⬝ᵥ
-          (f4SpecialIsogenyMatrix *ᵥ f4SimplyConnectedRootDatum.root i) := dotProduct_comm _ _
-    _ = f4SimplyConnectedRootDatum.root i ⬝ᵥ
-          (f4SpecialIsogenyMatrixᵀ *ᵥ
-            f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j)) :=
-      (Matrix.dotProduct_transpose_mulVec f4SpecialIsogenyMatrix
-        (f4SimplyConnectedRootDatum.root i)
-        (f4SimplyConnectedRootDatum.coroot (f4SpecialIsogenyIndexEquiv j))).symm
-    _ = f4SimplyConnectedRootDatum.root i ⬝ᵥ
-          (f4Length j • f4SimplyConnectedRootDatum.coroot j) := by
-      rw [f4SpecialIsogenyMatrix_transpose_mulVec_coroot]
-    _ = _ := by
-      rw [dotProduct_smul, smul_eq_mul, f4SimplyConnectedRootDatum_pairing,
-        f4SimplyConnectedRootDatum_root, f4SimplyConnectedRootDatum_coroot]
+  simpa only [f4SimplyConnectedRootDatum_pairing, f4SimplyConnectedRootDatum_root,
+    f4SimplyConnectedRootDatum_coroot] using
+    (mul_dotProduct_eq_of_mulVec_eq_smul f4SpecialIsogenyMatrix_mulVec_root
+      f4SpecialIsogenyMatrix_transpose_mulVec_coroot i j)
 
 end TauCeti.DynkinType
