@@ -19,22 +19,24 @@ far a cube point is from the boundary. This file supplies it, for a finite index
 The `sup` distance to the centre is the right measure: on `I^N` with `N` finite, the product
 metric *is* the `sup` metric, so
 
-* `TauCeti.cubeRad z = 2 * dist z TauCeti.cubeCenter`
+* `TauCeti.cubeRadius z = 2 * dist z TauCeti.cubeCenter`
 
 is continuous for free, takes values in `[0, 1]`, vanishes at the centre, and equals `1`
-exactly on the boundary (`TauCeti.cubeRad_eq_one_iff`). Radial rescaling by a factor `s` is
+exactly on the boundary (`TauCeti.cubeRadius_eq_one_iff`). Radial rescaling by a factor `s` is
 `TauCeti.cubeScale`, defined with `Set.projIcc` so that it is total and jointly continuous, and
 it multiplies the radius by `s` as long as the result still fits in the cube
-(`TauCeti.cubeRad_cubeScale`). In particular a point of radius `r > 0` is scaled by `1 / r` onto
-the boundary, which is what makes the collar constructions glue continuously.
+(`TauCeti.cubeRadius_cubeScale`). In particular a point of radius `r > 0` is scaled by `1 / r`
+onto the boundary, which is what makes the collar constructions glue continuously.
 
 ## Main declarations
 
-* `TauCeti.cubeCenter`, `TauCeti.cubeRad`: the centre of `I^N` and the `sup` radius around it.
-* `TauCeti.cubeRad_le_one` and `TauCeti.cubeRad_eq_one_iff`: the radius is at most one, with
-  equality exactly on `Cube.boundary N`.
-* `TauCeti.cubeScale`: radial rescaling of a cube point, and `TauCeti.cubeRad_cubeScale`: it
+* `TauCeti.cubeCenter`, `TauCeti.cubeRadius`: the centre of `I^N` and the `sup` radius around
+  it.
+* `TauCeti.cubeRadius_le_one` and `TauCeti.cubeRadius_eq_one_iff`: the radius is at most one,
+  with equality exactly on `Cube.boundary N`.
+* `TauCeti.cubeScale`: radial rescaling of a cube point, and `TauCeti.cubeRadius_cubeScale`: it
   scales the radius.
+
 ## References
 
 This supplies the cube geometry behind the base-point-change isomorphisms of higher homotopy
@@ -83,31 +85,32 @@ variable [Fintype N]
 
 /-- The `sup` radius of a cube point around the centre of the cube, normalised so that the
 boundary has radius one. -/
-def cubeRad (z : I^N) : ℝ := 2 * dist z (cubeCenter : I^N)
+def cubeRadius (z : I^N) : ℝ := 2 * dist z (cubeCenter : I^N)
 
-theorem cubeRad_def (z : I^N) : cubeRad z = 2 * dist z (cubeCenter : I^N) := by
-  unfold cubeRad
+theorem cubeRadius_def (z : I^N) : cubeRadius z = 2 * dist z (cubeCenter : I^N) := by
+  unfold cubeRadius
   rfl
 
-theorem continuous_cubeRad : Continuous (cubeRad : (I^N) → ℝ) := by
-  unfold cubeRad; fun_prop
+theorem continuous_cubeRadius : Continuous (cubeRadius : (I^N) → ℝ) := by
+  unfold cubeRadius; fun_prop
 
-theorem cubeRad_nonneg (z : I^N) : 0 ≤ cubeRad z := by
-  rw [cubeRad_def]; positivity
+theorem cubeRadius_nonneg (z : I^N) : 0 ≤ cubeRadius z := by
+  rw [cubeRadius_def]; positivity
 
 omit [Fintype N] in
 theorem dist_apply_cubeCenter (z : I^N) (i : N) :
     dist (z i) ((cubeCenter : I^N) i) = |(z i : ℝ) - 1 / 2| := by
   rw [Subtype.dist_eq, Real.dist_eq]; rfl
 
-theorem abs_sub_half_le_cubeRad (z : I^N) (i : N) : |(z i : ℝ) - 1 / 2| ≤ cubeRad z / 2 := by
-  rw [cubeRad_def, ← dist_apply_cubeCenter]
+theorem abs_sub_half_le_cubeRadius (z : I^N) (i : N) :
+    |(z i : ℝ) - 1 / 2| ≤ cubeRadius z / 2 := by
+  rw [cubeRadius_def, ← dist_apply_cubeCenter]
   have := dist_le_pi_dist z (cubeCenter : I^N) i
   linarith
 
-theorem cubeRad_le_one (z : I^N) : cubeRad z ≤ 1 := by
+theorem cubeRadius_le_one (z : I^N) : cubeRadius z ≤ 1 := by
   have h_one : (1 : ℝ) = 2 * (1 / 2) := by norm_num
-  rw [cubeRad_def, h_one]
+  rw [cubeRadius_def, h_one]
   gcongr
   rw [dist_pi_le_iff (by norm_num)]
   intro i
@@ -117,7 +120,7 @@ theorem cubeRad_le_one (z : I^N) : cubeRad z ≤ 1 := by
   constructor <;> linarith
 
 /-- A cube point has radius one exactly when it lies on the boundary of the cube. -/
-theorem cubeRad_eq_one_iff (z : I^N) : cubeRad z = 1 ↔ z ∈ Cube.boundary N := by
+theorem cubeRadius_eq_one_iff (z : I^N) : cubeRadius z = 1 ↔ z ∈ Cube.boundary N := by
   constructor
   · intro h
     by_contra hz
@@ -135,12 +138,12 @@ theorem cubeRad_eq_one_iff (z : I^N) : cubeRad z = 1 ↔ z ∈ Cube.boundary N :
           | linarith
           | exact absurd h.symm e0
           | exact absurd h e1
-    rw [cubeRad_def] at h
+    rw [cubeRadius_def] at h
     linarith
   · rintro ⟨i, hi⟩
-    refine le_antisymm (cubeRad_le_one z) ?_
+    refine le_antisymm (cubeRadius_le_one z) ?_
     have h_one : (1 : ℝ) = 2 * (1 / 2) := by norm_num
-    rw [cubeRad_def, h_one]
+    rw [cubeRadius_def, h_one]
     gcongr
     refine le_trans ?_ (dist_le_pi_dist z (cubeCenter : I^N) i)
     rw [dist_apply_cubeCenter]
@@ -148,9 +151,9 @@ theorem cubeRad_eq_one_iff (z : I^N) : cubeRad z = 1 ↔ z ∈ Cube.boundary N :
 
 /-- Radial rescaling is honest, that is, the clamping in `TauCeti.cubeScale` is inactive, as
 soon as the rescaled radius still fits inside the cube. -/
-theorem cubeScale_apply_coe {s : ℝ} (hs : 0 ≤ s) {z : I^N} (h : s * cubeRad z ≤ 1) (i : N) :
+theorem cubeScale_apply_coe {s : ℝ} (hs : 0 ≤ s) {z : I^N} (h : s * cubeRadius z ≤ 1) (i : N) :
     ((cubeScale s z i : I) : ℝ) = 1 / 2 + ((z i : ℝ) - 1 / 2) * s := by
-  have hb := abs_sub_half_le_cubeRad z i
+  have hb := abs_sub_half_le_cubeRadius z i
   have habs : |((z i : ℝ) - 1 / 2) * s| ≤ 1 / 2 := by
     rw [abs_mul, abs_of_nonneg hs]
     nlinarith [abs_nonneg ((z i : ℝ) - 1 / 2)]
@@ -160,28 +163,28 @@ theorem cubeScale_apply_coe {s : ℝ} (hs : 0 ≤ s) {z : I^N} (h : s * cubeRad 
 
 /-- Rescaling radially by `s` multiplies the radius by `s`, provided the rescaled point still
 fits in the cube. -/
-theorem cubeRad_cubeScale {s : ℝ} (hs : 0 ≤ s) {z : I^N} (h : s * cubeRad z ≤ 1) :
-    cubeRad (cubeScale s z) = s * cubeRad z := by
+theorem cubeRadius_cubeScale {s : ℝ} (hs : 0 ≤ s) {z : I^N} (h : s * cubeRadius z ≤ 1) :
+    cubeRadius (cubeScale s z) = s * cubeRadius z := by
   have key : ∀ i : N, |((cubeScale s z i : I) : ℝ) - 1 / 2| = s * |(z i : ℝ) - 1 / 2| := by
     intro i
     have h_sub : (1 : ℝ) / 2 + ((z i : ℝ) - 1 / 2) * s - 1 / 2 =
         ((z i : ℝ) - 1 / 2) * s := by ring
     rw [cubeScale_apply_coe hs h i, h_sub, abs_mul, abs_of_nonneg hs, mul_comm]
-  have hr := cubeRad_nonneg z
+  have hr := cubeRadius_nonneg z
   refine le_antisymm ?_ ?_
-  · have h_mul : s * cubeRad z = 2 * (s * cubeRad z / 2) := by ring
-    rw [cubeRad_def, h_mul]
+  · have h_mul : s * cubeRadius z = 2 * (s * cubeRadius z / 2) := by ring
+    rw [cubeRadius_def, h_mul]
     gcongr
     rw [dist_pi_le_iff (by positivity)]
     intro i
     rw [dist_apply_cubeCenter, key i]
-    have := abs_sub_half_le_cubeRad z i
+    have := abs_sub_half_le_cubeRadius z i
     nlinarith
   · rcases eq_or_lt_of_le hs with hs0 | hs0
-    · rw [← hs0, zero_mul]; exact cubeRad_nonneg _
+    · rw [← hs0, zero_mul]; exact cubeRadius_nonneg _
     have h_mul : s * (2 * dist z (cubeCenter : I^N)) =
         2 * (s * dist z (cubeCenter : I^N)) := by ring
-    rw [cubeRad_def, cubeRad_def, h_mul]
+    rw [cubeRadius_def, cubeRadius_def, h_mul]
     gcongr 2 * ?_
     rw [← le_div_iff₀' hs0, dist_pi_le_iff (by positivity)]
     intro i

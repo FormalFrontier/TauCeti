@@ -31,9 +31,9 @@ then invoking `TauCeti.GenLoop.HomotopyAlong.homotopic_transport`. The homotopie
 * concatenating two collar homotopies in the `i`-th cube direction, for multiplicativity.
 
 Two statements are instead proved by deforming the *outer* half of the collar directly, using
-`TauCeti.transportFamily`, the collar attached to a continuous family: that transport respects
-homotopy of generalized loops, which is what makes it descend to homotopy groups, and that it
-only depends on the homotopy class of the path.
+the file-local `transportFamily`, the collar attached to a continuous family: that transport
+respects homotopy of generalized loops, which is what makes it descend to homotopy groups, and
+that it only depends on the homotopy class of the path.
 
 The group structure enters only through Mathlib's `HomotopyGroup.mul_spec`, which computes a
 product as the class of a concatenation `GenLoop.transAt i` in any cube direction `i`.
@@ -73,39 +73,39 @@ variable {N : Type*} [Fintype N] {X : Type*} [TopologicalSpace X] {x y : X}
 /-- The collar of a continuous family: `TauCeti.collar` at the constant radius `1 / 2`, so that
 each member of the family is transported exactly as in
 `TauCeti.GenLoop.transport_apply_eq`. -/
-def transportFamily {P : Type*} [TopologicalSpace P] (F : C(P × (I^N), X))
+private def transportFamily {P : Type*} [TopologicalSpace P] (F : C(P × (I^N), X))
     (G : C(P × I, X)) (hFG : ∀ p, ∀ z ∈ Cube.boundary N, F (p, z) = G (p, 0)) :
     C(P × (I^N), X) :=
   collar ⟨fun _ => 1 / 2, continuous_const⟩ F G (fun _ => le_rfl) hFG
 
-theorem transportFamily_apply {P : Type*} [TopologicalSpace P] (F : C(P × (I^N), X))
+private theorem transportFamily_apply {P : Type*} [TopologicalSpace P] (F : C(P × (I^N), X))
     (G : C(P × I, X)) (hFG : ∀ p, ∀ z ∈ Cube.boundary N, F (p, z) = G (p, 0)) (p : P)
     (z : I^N) :
     transportFamily F G hFG (p, z) =
-      if cubeRad z ≤ 1 / 2 then F (p, cubeScale 2 z)
-      else G (p, Set.projIcc (0 : ℝ) 1 zero_le_one (2 - 1 / max (cubeRad z) (1 / 2))) := by
+      if cubeRadius z ≤ 1 / 2 then F (p, cubeScale 2 z)
+      else G (p, Set.projIcc (0 : ℝ) 1 zero_le_one (2 - 1 / max (cubeRadius z) (1 / 2))) := by
   rw [transportFamily, collar_apply]
   norm_num
 
 /-- At a parameter where the family restricts to `f` and the path family restricts to `γ`, the
 collar of the family is the transport of `f` along `γ`. -/
-theorem transportFamily_apply_eq_transport {P : Type*} [TopologicalSpace P]
+private theorem transportFamily_apply_eq_transport {P : Type*} [TopologicalSpace P]
     (F : C(P × (I^N), X)) (G : C(P × I, X))
     (hFG : ∀ p, ∀ z ∈ Cube.boundary N, F (p, z) = G (p, 0)) {p : P} {γ : Path x y}
     {f : Ω^ N X x} (hF : ∀ z, F (p, z) = f z) (hG : ∀ u, G (p, u) = γ u) (z : I^N) :
     transportFamily F G hFG (p, z) = GenLoop.transport γ f z := by
   rw [transportFamily_apply, GenLoop.transport_apply_eq]
-  by_cases hz : cubeRad z ≤ 1 / 2
+  by_cases hz : cubeRadius z ≤ 1 / 2
   · rw [ite_eq_left_of_eq_true _ _ (eq_true hz), ite_eq_left_of_eq_true _ _ (eq_true hz), hF]
   · rw [ite_eq_right_of_eq_false _ _ (eq_false hz),
       ite_eq_right_of_eq_false _ _ (eq_false hz), hG]
 
 /-- On the cube boundary the collar of a family is the endpoint of the path family. -/
-theorem transportFamily_apply_of_mem_boundary {P : Type*} [TopologicalSpace P]
+private theorem transportFamily_apply_of_mem_boundary {P : Type*} [TopologicalSpace P]
     (F : C(P × (I^N), X)) (G : C(P × I, X))
     (hFG : ∀ p, ∀ z ∈ Cube.boundary N, F (p, z) = G (p, 0)) (p : P) {z : I^N}
     (hz : z ∈ Cube.boundary N) : transportFamily F G hFG (p, z) = G (p, 1) := by
-  have hu : cubeRad z = 1 := (cubeRad_eq_one_iff z).2 hz
+  have hu : cubeRadius z = 1 := (cubeRadius_eq_one_iff z).2 hz
   rw [transportFamily_apply, hu, ite_eq_right_of_eq_false _ _ (eq_false (by norm_num)),
     max_eq_left (by norm_num)]
   norm_num [Set.projIcc_right]
@@ -171,7 +171,6 @@ def HomotopyAlong.trans {w : X} {γ : Path x y} {δ : Path y w} {f : Ω^ N X x} 
     HomotopyAlong (γ.trans δ) f k where
   toHomotopy := h₁.toHomotopy.trans h₂.toHomotopy
   map_boundary t z hz := by
-    change (h₁.toHomotopy.trans h₂.toHomotopy) (t, z) = (γ.trans δ) t
     rw [ContinuousMap.Homotopy.trans_apply, Path.trans_apply]
     split_ifs with ht
     · exact h₁.map_boundary _ z hz
@@ -198,61 +197,77 @@ theorem homotopic_transport_transport_symm (γ : Path x y) (f : Ω^ N X y) :
 
 /-! ### Transport and concatenation of generalized loops -/
 
+omit [Fintype N] in
+/-- Evaluating Mathlib's concatenation of two generalized loops in the `i`-th cube direction:
+by definition it is the half-and-half split of the `i`-th coordinate. -/
+private theorem transAt_apply [DecidableEq N] (i : N) (f g : Ω^ N X x) (z : I^N) :
+    _root_.GenLoop.transAt i f g z =
+      if ((z i : I) : ℝ) ≤ 1 / 2
+        then f (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
+        else g (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1))) :=
+  rfl
+
+/-- Concatenating two homotopies along the same path in the `i`-th cube direction, as a homotopy
+between the concatenated generalized loops. This is the underlying homotopy of
+`TauCeti.GenLoop.HomotopyAlong.transAt`, split off so that `transAtHomotopy_apply` can expose
+its values. -/
+private def transAtHomotopy [DecidableEq N] (i : N) {γ : Path x y} {f f' : Ω^ N X x}
+    {g g' : Ω^ N X y} (h₁ : HomotopyAlong γ f g) (h₂ : HomotopyAlong γ f' g') :
+    ContinuousMap.Homotopy (_root_.GenLoop.transAt i f f' : C(I^N, X))
+      (_root_.GenLoop.transAt i g g' : C(I^N, X)) where
+  toContinuousMap := ⟨fun tz => if ((tz.2 i : I) : ℝ) ≤ 1 / 2
+      then h₁.toHomotopy (tz.1,
+        Function.update tz.2 i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * tz.2 i)))
+      else h₂.toHomotopy (tz.1,
+        Function.update tz.2 i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * tz.2 i - 1))), by
+    refine Continuous.if_le ?_ ?_ (by fun_prop) continuous_const ?_
+    · exact h₁.toHomotopy.continuous.comp' (continuous_fst.prodMk
+        (continuous_snd.update i (continuous_projIcc.comp' (by fun_prop))))
+    · exact h₂.toHomotopy.continuous.comp' (continuous_fst.prodMk
+        (continuous_snd.update i (continuous_projIcc.comp' (by fun_prop))))
+    · rintro ⟨t, z⟩ ht
+      dsimp only at ht ⊢
+      have h_double : (2 : ℝ) * (1 / 2) = 1 := by norm_num
+      have h_sub : (1 : ℝ) - 1 = 0 := by norm_num
+      rw [ht, h_double, h_sub, Set.projIcc_right, Set.projIcc_left]
+      exact (h₁.map_boundary t _ ⟨i, Or.inr (Function.update_self ..)⟩).trans
+        (h₂.map_boundary t _ ⟨i, Or.inl (Function.update_self ..)⟩).symm⟩
+  map_zero_left := by
+    intro z
+    dsimp only
+    rw [_root_.GenLoop.coe_coe, transAt_apply]
+    split_ifs
+    · exact h₁.map_zero_left _
+    · exact h₂.map_zero_left _
+  map_one_left := by
+    intro z
+    dsimp only
+    rw [_root_.GenLoop.coe_coe, transAt_apply]
+    split_ifs
+    · exact h₁.map_one_left _
+    · exact h₂.map_one_left _
+
+omit [Fintype N] in
+/-- Evaluating the concatenated homotopy: it is the half-and-half split of the `i`-th
+coordinate. -/
+private theorem transAtHomotopy_apply [DecidableEq N] (i : N) {γ : Path x y} {f f' : Ω^ N X x}
+    {g g' : Ω^ N X y} (h₁ : HomotopyAlong γ f g) (h₂ : HomotopyAlong γ f' g') (t : I) (z : I^N) :
+    transAtHomotopy i h₁ h₂ (t, z) =
+      if ((z i : I) : ℝ) ≤ 1 / 2
+        then h₁.toHomotopy (t,
+          Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
+        else h₂.toHomotopy (t,
+          Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1))) :=
+  rfl
+
 /-- Concatenating two homotopies along the *same* path, in the `i`-th cube direction, gives a
 homotopy along that path between the concatenated generalized loops. -/
 def HomotopyAlong.transAt [DecidableEq N] (i : N) {γ : Path x y} {f f' : Ω^ N X x}
     {g g' : Ω^ N X y} (h₁ : HomotopyAlong γ f g) (h₂ : HomotopyAlong γ f' g') :
     HomotopyAlong γ (_root_.GenLoop.transAt i f f') (_root_.GenLoop.transAt i g g') where
-  toHomotopy :=
-    { toContinuousMap := ⟨fun tz => if ((tz.2 i : I) : ℝ) ≤ 1 / 2
-        then h₁.toHomotopy (tz.1,
-          Function.update tz.2 i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * tz.2 i)))
-        else h₂.toHomotopy (tz.1,
-          Function.update tz.2 i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * tz.2 i - 1))), by
-      refine Continuous.if_le ?_ ?_ (by fun_prop) continuous_const ?_
-      · exact h₁.toHomotopy.continuous.comp' (continuous_fst.prodMk
-          (continuous_snd.update i (continuous_projIcc.comp' (by fun_prop))))
-      · exact h₂.toHomotopy.continuous.comp' (continuous_fst.prodMk
-          (continuous_snd.update i (continuous_projIcc.comp' (by fun_prop))))
-      · rintro ⟨t, z⟩ ht
-        dsimp only at ht ⊢
-        have h_double : (2 : ℝ) * (1 / 2) = 1 := by norm_num
-        have h_sub : (1 : ℝ) - 1 = 0 := by norm_num
-        rw [ht, h_double, h_sub, Set.projIcc_right, Set.projIcc_left]
-        exact (h₁.map_boundary t _ ⟨i, Or.inr (Function.update_self ..)⟩).trans
-          (h₂.map_boundary t _ ⟨i, Or.inl (Function.update_self ..)⟩).symm⟩
-      map_zero_left := by
-        intro z
-        change (if ((z i : I) : ℝ) ≤ 1 / 2 then
-            h₁.toHomotopy (0,
-              Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
-          else h₂.toHomotopy (0,
-            Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1)))) =
-          (if ((z i : I) : ℝ) ≤ 1 / 2 then
-            f (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
-          else f' (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1))))
-        split_ifs
-        · exact h₁.map_zero_left _
-        · exact h₂.map_zero_left _
-      map_one_left := by
-        intro z
-        change (if ((z i : I) : ℝ) ≤ 1 / 2 then
-            h₁.toHomotopy (1,
-              Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
-          else h₂.toHomotopy (1,
-            Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1)))) =
-          (if ((z i : I) : ℝ) ≤ 1 / 2 then
-            g (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
-          else g' (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1))))
-        split_ifs
-        · exact h₁.map_one_left _
-        · exact h₂.map_one_left _ }
+  toHomotopy := transAtHomotopy i h₁ h₂
   map_boundary t z hz := by
-    change (if ((z i : I) : ℝ) ≤ 1 / 2 then
-        h₁.toHomotopy (t,
-          Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
-      else h₂.toHomotopy (t,
-        Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1)))) = γ t
+    rw [transAtHomotopy_apply]
     obtain ⟨j, hj⟩ := hz
     by_cases hji : j = i
     · subst hji
@@ -374,6 +389,7 @@ theorem homotopyGroupMulEquivOfPath_apply [Nonempty N] [DecidableEq N] (γ : Pat
 
 /-- The inverse multiplicative base-point-change equivalence acts by transport along the
 reversed path. -/
+@[simp]
 theorem homotopyGroupMulEquivOfPath_symm_apply [Nonempty N] [DecidableEq N] (γ : Path x y)
     (a : HomotopyGroup N X y) :
     (homotopyGroupMulEquivOfPath γ).symm a = homotopyGroupTransport γ.symm a := by
@@ -409,7 +425,6 @@ theorem homotopyGroupMulEquivOfPath_congr [Nonempty N] [DecidableEq N]
   exact congrFun (homotopyGroupTransport_congr h) a
 
 /-- Reversing the path gives the inverse multiplicative equivalence. -/
-@[simp]
 theorem homotopyGroupMulEquivOfPath_symm [Nonempty N] [DecidableEq N] (γ : Path x y) :
     (homotopyGroupMulEquivOfPath γ).symm = homotopyGroupMulEquivOfPath (N := N) γ.symm := by
   ext a
