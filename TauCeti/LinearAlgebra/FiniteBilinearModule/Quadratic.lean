@@ -104,14 +104,48 @@ theorem adjointEquiv_apply (hA : A.IsNondegenerate) (x : A) :
 /-- A morphism of finite quadratic modules is an additive homomorphism preserving the quadratic
 map.
 
-This is Mathlib's `QuadraticMap.Isometry` applied to the stored quadratic maps. In particular,
-identity morphisms, composition, and extensionality are inherited from Mathlib. -/
+This is Mathlib's `QuadraticMap.Isometry` applied to the stored quadratic maps. -/
 abbrev Hom (A : FiniteQuadraticModule.{u}) (B : FiniteQuadraticModule.{v}) : Type (max u v) :=
   A.quadratic.Isometry B.quadratic
 
 namespace Hom
 
 variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
+  {C : FiniteQuadraticModule}
+
+/-- The identity morphism of a finite quadratic module. -/
+@[expose] def id (A : FiniteQuadraticModule) : Hom A A :=
+  QuadraticMap.Isometry.id A.quadratic
+
+/-- The composite of two finite quadratic module morphisms. -/
+@[expose] def comp (g : Hom B C) (f : Hom A B) : Hom A C :=
+  QuadraticMap.Isometry.comp g f
+
+/-- Two finite quadratic module morphisms are equal when they agree on every element. -/
+@[ext]
+theorem ext {f g : Hom A B} (h : ∀ x, f x = g x) : f = g :=
+  QuadraticMap.Isometry.ext h
+
+@[simp]
+theorem id_apply (A : FiniteQuadraticModule) (x : A) : id A x = x :=
+  rfl
+
+@[simp]
+theorem comp_apply (g : Hom B C) (f : Hom A B) (x : A) : g.comp f x = g (f x) :=
+  rfl
+
+@[simp]
+theorem id_comp (f : Hom A B) : (id B).comp f = f :=
+  QuadraticMap.Isometry.id_comp f
+
+@[simp]
+theorem comp_id (f : Hom A B) : f.comp (id A) = f :=
+  QuadraticMap.Isometry.comp_id f
+
+@[simp]
+theorem comp_assoc {D : FiniteQuadraticModule} (h : Hom C D) (g : Hom B C) (f : Hom A B) :
+    (h.comp g).comp f = h.comp (g.comp f) :=
+  QuadraticMap.Isometry.comp_assoc h g f
 
 /-- A morphism of finite quadratic modules preserves the canonical polar pairing. -/
 @[simp]
@@ -131,6 +165,22 @@ def toFiniteBilinearModule (f : Hom A B) :
 @[simp]
 theorem toFiniteBilinearModule_apply (f : Hom A B) (x : A) :
     f.toFiniteBilinearModule x = f x := (rfl)
+
+/-- Forgetting the identity quadratic morphism gives the identity bilinear morphism. -/
+@[simp]
+theorem toFiniteBilinearModule_id (A : FiniteQuadraticModule) :
+    (id A).toFiniteBilinearModule = FiniteBilinearModule.Hom.id A.toFiniteBilinearModule := by
+  ext x
+  rw [toFiniteBilinearModule_apply, id_apply, FiniteBilinearModule.Hom.id_apply]
+
+/-- Forgetting a composite quadratic morphism gives the composite bilinear morphism. -/
+@[simp]
+theorem toFiniteBilinearModule_comp (g : Hom B C) (f : Hom A B) :
+    (g.comp f).toFiniteBilinearModule =
+      g.toFiniteBilinearModule.comp f.toFiniteBilinearModule := by
+  ext x
+  rw [toFiniteBilinearModule_apply, comp_apply, FiniteBilinearModule.Hom.comp_apply,
+    toFiniteBilinearModule_apply, toFiniteBilinearModule_apply]
 
 /-- A morphism out of a nondegenerate finite quadratic module is injective. -/
 theorem injective (f : Hom A B) (hA : A.IsNondegenerate) : Function.Injective f :=
@@ -159,6 +209,20 @@ def toHom (f : Isometry A B) : Hom A B :=
 
 @[simp]
 theorem toHom_apply (f : Isometry A B) (x : A) : f.toHom x = f x := (rfl)
+
+/-- Forgetting the identity quadratic isometry gives the identity quadratic morphism. -/
+@[simp]
+theorem refl_toHom (A : FiniteQuadraticModule) :
+    toHom (QuadraticMap.IsometryEquiv.refl A.quadratic) = Hom.id A := by
+  ext
+  rfl
+
+/-- Forgetting a composite quadratic isometry gives the composite quadratic morphism. -/
+@[simp]
+theorem trans_toHom {C : FiniteQuadraticModule} (f : Isometry A B) (g : Isometry B C) :
+    toHom (f.trans g) = g.toHom.comp f.toHom := by
+  ext
+  rfl
 
 /-- The underlying morphism of a quadratic isometry is bijective. -/
 theorem toHom_bijective (f : Isometry A B) : Function.Bijective f.toHom := by
