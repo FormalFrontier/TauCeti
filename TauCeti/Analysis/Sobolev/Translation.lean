@@ -73,36 +73,6 @@ variable {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSpa
   [FiniteDimensional ℝ E] [BorelSpace E] {mu : Measure E} [mu.IsAddHaarMeasure]
   {p : ENNReal} [Fact (1 ≤ p)]
 
-omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
-/-- Restricting a measure to the whole space, presented as the open set `⊤`, changes nothing. -/
-private theorem restrict_coe_top (mu : Measure E) :
-    mu.restrict ((⊤ : Opens E) : Set E) = mu := by
-  rw [Opens.coe_top, Measure.restrict_univ]
-
-omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
-/-- The `Lᵖ` seminorm over the whole space, presented as the open set `⊤`, is the ambient one. -/
-private theorem eLpNorm_restrict_coe_top {F : Type*} [NormedAddCommGroup F] (g : E → F)
-    (p : ENNReal) (mu : Measure E) :
-    eLpNorm g p (mu.restrict ((⊤ : Opens E) : Set E)) = eLpNorm g p mu :=
-  congrArg (fun nu : Measure E => eLpNorm g p nu) (restrict_coe_top mu)
-
-omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
-/-- An almost-everywhere statement over the whole space, presented as the open set `⊤`, is one
-over the ambient measure. -/
-private theorem ae_le_ae_restrict_coe_top (mu : Measure E) :
-    ae mu ≤ ae (mu.restrict ((⊤ : Opens E) : Set E)) :=
-  ae_mono (le_of_eq (restrict_coe_top mu).symm)
-
-omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] in
-/-- Translation by `h` preserves a Haar measure restricted to the whole space, the measure
-underlying `W^{1,p}(ℝⁿ)`. -/
-private theorem measurePreserving_add_right_restrict_top (mu : Measure E) [mu.IsAddHaarMeasure]
-    (h : E) :
-    MeasurePreserving (· + h) (mu.restrict ((⊤ : Opens E) : Set E))
-      (mu.restrict ((⊤ : Opens E) : Set E)) := by
-  rw [restrict_coe_top]
-  exact measurePreserving_add_right mu h
-
 /-- Translation of an `Lᵖ` class on the whole space, as a linear isometry.  It is used only to
 see the translation increment as a *continuous* function of the class, which is what makes the
 translation estimate a closed condition. -/
@@ -110,22 +80,31 @@ private def translateLp (mu : Measure E) [mu.IsAddHaarMeasure] (p : ENNReal) [Fa
     (h : E) :
     Lp ℝ p (mu.restrict ((⊤ : Opens E) : Set E)) →ₗᵢ[ℝ]
       Lp ℝ p (mu.restrict ((⊤ : Opens E) : Set E)) :=
-  Lp.compMeasurePreservingₗᵢ ℝ (· + h) (measurePreserving_add_right_restrict_top mu h)
+  Lp.compMeasurePreservingₗᵢ ℝ (· + h) <| by
+    rw [Opens.coe_top, Measure.restrict_univ]
+    exact measurePreserving_add_right mu h
 
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] in
 /-- The `Lᵖ` seminorm of a translation increment, computed on the ambient measure. -/
 private theorem enorm_translateLp_sub (h : E)
     (f : Lp ℝ p (mu.restrict ((⊤ : Opens E) : Set E))) :
     ‖translateLp mu p h f - f‖ₑ = eLpNorm (fun x => f (x + h) - f x) p mu := by
+  have htop : mu.restrict ((⊤ : Opens E) : Set E) = mu := by
+    rw [Opens.coe_top, Measure.restrict_univ]
+  have hmp : MeasurePreserving (· + h) (mu.restrict ((⊤ : Opens E) : Set E))
+      (mu.restrict ((⊤ : Opens E) : Set E)) := by
+    rw [htop]
+    exact measurePreserving_add_right mu h
   have htr : ⇑(translateLp mu p h f) =ᵐ[mu.restrict ((⊤ : Opens E) : Set E)]
       ⇑f ∘ (· + h) :=
-    Lp.coeFn_compMeasurePreserving f (measurePreserving_add_right_restrict_top mu h)
+    Lp.coeFn_compMeasurePreserving f hmp
   have hae : ⇑(translateLp mu p h f - f) =ᵐ[mu.restrict ((⊤ : Opens E) : Set E)]
       fun x => f (x + h) - f x := by
     filter_upwards [Lp.coeFn_sub (translateLp mu p h f) f, htr] with x hx hy
     rw [hx, Pi.sub_apply, hy]
     rfl
-  rw [Lp.enorm_def, eLpNorm_congr_ae hae, eLpNorm_restrict_coe_top]
+  rw [Lp.enorm_def, eLpNorm_congr_ae hae]
+  exact congrArg (fun nu : Measure E => eLpNorm (fun x => f (x + h) - f x) p nu) htop
 
 /-- The translation estimate for a single test function, in the shape the jets of `W^{1,p}(ℝⁿ)`
 present it. -/
@@ -135,7 +114,8 @@ private theorem eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le (hp : p �
         - testFunctionLp (mu := mu) p phi x) p mu
       ≤ ‖h‖ₑ * ‖gradientTestFunctionLp (mu := mu) p phi‖ₑ := by
   have hvalue : ⇑(testFunctionLp (mu := mu) p phi) =ᵐ[mu] (phi : E → ℝ) :=
-    (testFunctionLp_apply_ae p phi).filter_mono (ae_le_ae_restrict_coe_top mu)
+    (testFunctionLp_apply_ae p phi).filter_mono
+      (ae_mono (by rw [Opens.coe_top, Measure.restrict_univ]))
   have htrans := hvalue.comp_tendsto
     (measurePreserving_add_right mu h).quasiMeasurePreserving.tendsto_ae
   have hL : eLpNorm (fun x => testFunctionLp (mu := mu) p phi (x + h)
