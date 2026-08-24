@@ -33,9 +33,10 @@ sum.
   `TauCeti.LSeries_normCoeff` are the summability and value statements it packages.
 * `TauCeti.abscissaOfAbsConv_normCoeff_le`: consequently the grouped abscissa of absolute
   convergence is at most the ideal-indexed one.
-* `TauCeti.summable_idealTerm_of_nonneg` and
-  `TauCeti.idealAbscissaOfAbsConv_eq_abscissaOfAbsConv`: the converse holds, and the two abscissae
-  agree, when every *individual ideal summand* is nonnegative.
+* `TauCeti.summable_idealTerm_of_norm_normCoeff_eq_sum_norm`: the converse holds whenever no
+  cancellation occurs inside a norm fibre. `TauCeti.summable_idealTerm_of_nonneg` and
+  `TauCeti.idealAbscissaOfAbsConv_eq_abscissaOfAbsConv` specialize it to the case where every
+  *individual ideal summand* is nonnegative, where moreover the two abscissae agree.
 
 ## Implementation notes
 
@@ -45,9 +46,11 @@ The regrouping is an instance of Mathlib's `HasSum.tsum_fiberwise` along the abs
 `Summable`, which for a complex-valued family is unconditional convergence and hence absolute
 convergence; no rearrangement hypothesis is therefore needed for the transfer.
 
-The converse is proved through `summable_partition` applied to the norms of the terms. The
-nonnegativity hypothesis is used exactly once, to identify the norm of a fibre sum with the sum of
-the norms over that fibre; this is the step that fails under cancellation, as the rejection test
+The converse is proved through `summable_partition` applied to the norms of the terms. All it
+needs about `f` is that the norm of each grouped coefficient is the sum of the norms over its
+fibre — the absence of cancellation inside the fibre. Nonnegativity of every ideal summand is one
+way to secure that, through `TauCeti.norm_normCoeff_eq_sum_norm_of_nonneg`; it is the step that
+fails under cancellation, as the rejection test
 `TauCeti.exists_forall_normCoeff_nonneg_not_forall_nonneg` records. That test is a statement about
 `TauCeti.normCoeff` alone, so it lives with that definition rather than here.
 
@@ -194,7 +197,7 @@ theorem abscissaOfAbsConv_normCoeff_le (f : IdealArithmeticFunction K) :
     LSeries.abscissaOfAbsConv (normCoeff K f) ≤ idealAbscissaOfAbsConv K f :=
   sInf_le_sInf <| Set.image_mono fun _ hx ↦ LSeriesSummable_normCoeff K hx
 
-/-! ### The converse, under nonnegativity of every ideal summand -/
+/-! ### The converse, in the absence of cancellation inside norm fibres -/
 
 /-- At a real point, an ideal term of a nonnegative ideal arithmetic function is nonnegative. -/
 theorem idealTerm_nonneg {f : IdealArithmeticFunction K} {I : (Ideal (𝓞 K))⁰} (h : 0 ≤ f I)
@@ -203,30 +206,33 @@ theorem idealTerm_nonneg {f : IdealArithmeticFunction K} {I : (Ideal (𝓞 K))�
   exact mul_nonneg h
     (Complex.inv_natCast_cpow_ofReal_pos (Ideal.absNorm_ne_zero_of_nonZeroDivisors I) x).le
 
-/-- For a nonnegative ideal arithmetic function and a real `x`, the sum over an absolute-norm fibre
-of the absolute values of the ideal terms is the absolute value of the corresponding `LSeries`
-term. This is the step of the converse regrouping that cancellation destroys. -/
-private theorem tsum_norm_idealTerm_fiber (f : IdealArithmeticFunction K) (hf : ∀ I, 0 ≤ f I)
-    (x : ℝ) (n : ℕ) :
+/-- In the absence of cancellation inside norm fibres, the sum over an absolute-norm fibre of the
+absolute values of the ideal terms at a real `x` is the absolute value of the corresponding
+`LSeries` term. This is the step of the converse regrouping that cancellation destroys. -/
+private theorem tsum_norm_idealTerm_fiber (f : IdealArithmeticFunction K)
+    (hf : ∀ n, ‖normCoeff K f n‖ = ∑ I ∈ normFiber K n, ‖f I‖) (x : ℝ) (n : ℕ) :
     ∑' I : (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K))) ⁻¹' {n},
         ‖idealTerm K f x I‖ = ‖LSeries.term (normCoeff K f) x n‖ := by
-  rw [← coe_normFiber, Finset.tsum_subtype' (normFiber K n) fun I ↦ ‖idealTerm K f x I‖,
-    term_normCoeff_eq_sum_normFiber]
-  have hsum : ∑ I ∈ normFiber K n, idealTerm K f x I
-      = ((∑ I ∈ normFiber K n, ‖idealTerm K f x I‖ : ℝ) : ℂ) := by
-    push_cast
-    exact Finset.sum_congr rfl fun I _ ↦
-      Complex.eq_coe_norm_of_nonneg (idealTerm_nonneg K (hf I) x)
-  rw [hsum, Complex.norm_real,
-    Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ ↦ norm_nonneg _)]
+  rw [← coe_normFiber, Finset.tsum_subtype' (normFiber K n) fun I ↦ ‖idealTerm K f x I‖]
+  rcases eq_or_ne n 0 with rfl | hn
+  · simp
+  rw [LSeries.term_of_ne_zero hn, norm_div,
+    Complex.norm_natCast_cpow_of_pos (Nat.pos_of_ne_zero hn), hf n, Finset.sum_div]
+  refine Finset.sum_congr rfl fun I hI ↦ ?_
+  rw [norm_idealTerm, (mem_normFiber K).mp hI]
 
-/-- **The converse regrouping, under nonnegativity of every ideal summand.** If every value of `f`
-is a nonnegative real number, then absolute convergence of the regrouped `LSeries` implies absolute
-convergence of the ideal-indexed series.
+/-- **The converse regrouping, in the absence of cancellation inside norm fibres.** If the
+absolute value of every grouped coefficient is the sum of the absolute values of `f` over the
+corresponding fibre — that is, if adding up a fibre loses no absolute value — then absolute
+convergence of the regrouped `LSeries` implies absolute convergence of the ideal-indexed series.
 
-Nonnegativity of the *grouped* coefficients `TauCeti.normCoeff f` does not suffice; see
+This is the hypothesis the proof actually uses: it holds for a nonnegative `f`, by
+`TauCeti.norm_normCoeff_eq_sum_norm_of_nonneg`, but equally for a uniformly negative one or, more
+generally, whenever the values of `f` over each fibre share a common phase. Nonnegativity of the
+*grouped* coefficients `TauCeti.normCoeff f` does not suffice; see
 `TauCeti.exists_forall_normCoeff_nonneg_not_forall_nonneg`. -/
-theorem summable_idealTerm_of_nonneg (f : IdealArithmeticFunction K) (hf : ∀ I, 0 ≤ f I) {s : ℂ}
+theorem summable_idealTerm_of_norm_normCoeff_eq_sum_norm (f : IdealArithmeticFunction K)
+    (hf : ∀ n, ‖normCoeff K f n‖ = ∑ I ∈ normFiber K n, ‖f I‖) {s : ℂ}
     (h : LSeriesSummable (normCoeff K f) s) : Summable (idealTerm K f s) := by
   rw [summable_idealTerm_iff_of_re_eq_re K (s' := (s.re : ℂ)) (by simp)]
   replace h : LSeriesSummable (normCoeff K f) (s.re : ℂ) := h.of_re_le_re (by simp)
@@ -240,6 +246,19 @@ theorem summable_idealTerm_of_nonneg (f : IdealArithmeticFunction K) (hf : ∀ I
     exact Summable.of_finite
   · exact (summable_norm_iff.mpr h).congr fun n ↦
       (tsum_norm_idealTerm_fiber K f hf s.re n).symm
+
+/-- **The converse regrouping, under nonnegativity of every ideal summand.** If every value of `f`
+is a nonnegative real number, then absolute convergence of the regrouped `LSeries` implies absolute
+convergence of the ideal-indexed series.
+
+This is the special case of `TauCeti.summable_idealTerm_of_norm_normCoeff_eq_sum_norm` in which
+nonnegativity rules out cancellation. Nonnegativity of the *grouped* coefficients
+`TauCeti.normCoeff f` does not suffice; see
+`TauCeti.exists_forall_normCoeff_nonneg_not_forall_nonneg`. -/
+theorem summable_idealTerm_of_nonneg (f : IdealArithmeticFunction K) (hf : ∀ I, 0 ≤ f I) {s : ℂ}
+    (h : LSeriesSummable (normCoeff K f) s) : Summable (idealTerm K f s) :=
+  summable_idealTerm_of_norm_normCoeff_eq_sum_norm K f
+    (norm_normCoeff_eq_sum_norm_of_nonneg K f hf) h
 
 /-- For a nonnegative ideal arithmetic function the two abscissae of absolute convergence agree:
 there is no cancellation inside a norm fibre to exploit. -/

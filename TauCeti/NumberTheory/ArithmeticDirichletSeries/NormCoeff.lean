@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Basic
+public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.Complex.Order
 public import Mathlib.NumberTheory.ArithmeticFunction.Defs
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
@@ -20,8 +21,9 @@ function has value zero at `0`, as required by Mathlib's `ArithmeticFunction` ca
 is available from `ArithmeticFunction.map_zero`.
 
 The construction is bundled as a complex-linear map.  The basic API exposes the finite norm fibre
-`TauCeti.normFiber` and its finiteness, records the value at one, and proves compatibility with
-complex conjugation.
+`TauCeti.normFiber` and its finiteness, records the value at one, proves compatibility with
+complex conjugation, and records in `TauCeti.norm_normCoeff_eq_sum_norm_of_nonneg` that no
+cancellation occurs inside a fibre when the values of `f` are nonnegative.
 
 Regrouping loses information as soon as a norm fibre has more than one element:
 `TauCeti.exists_forall_normCoeff_nonneg_not_forall_nonneg` produces a nonzero ideal arithmetic
@@ -139,6 +141,16 @@ theorem normCoeff_star_apply (f : IdealArithmeticFunction K) (n : ℕ) :
     normCoeff K (fun I ↦ (starRingEnd ℂ) (f I)) n = star (normCoeff K f n) := by
   simp only [normCoeff_apply]
   exact ((starAddEquiv : ℂ ≃+ ℂ).map_finsum_mem f (finite_normFiber K n)).symm
+
+/-- **Absence of cancellation inside norm fibres**, for a nonnegative ideal arithmetic function:
+the absolute value of a norm coefficient is the sum of the absolute values over the fibre. -/
+theorem norm_normCoeff_eq_sum_norm_of_nonneg (f : IdealArithmeticFunction K) (hf : ∀ I, 0 ≤ f I)
+    (n : ℕ) : ‖normCoeff K f n‖ = ∑ I ∈ normFiber K n, ‖f I‖ := by
+  have h : normCoeff K f n = ((∑ I ∈ normFiber K n, ‖f I‖ : ℝ) : ℂ) := by
+    rw [normCoeff_eq_sum_normFiber]
+    push_cast
+    exact Finset.sum_congr rfl fun I _ ↦ Complex.eq_coe_norm_of_nonneg (hf I)
+  rw [h, Complex.norm_real, Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ ↦ norm_nonneg _)]
 
 /-! ### The cancellation rejection test -/
 
