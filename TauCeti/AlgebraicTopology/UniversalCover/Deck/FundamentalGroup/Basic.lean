@@ -131,17 +131,14 @@ lemma IsRegular.fundamentalGroupEquiv_eq_one_iff [SimplyConnectedSpace E]
 commutes. This is the form in which the comparison computes fundamental groups from deck
 groups, e.g. `π₁(S¹) ≅ ℤ` (`TauCeti.AddCircle.fundamentalGroupMulEquiv`) and
 `π₁(RPⁿ) ≅ ℤˣ` (`TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv`). -/
--- The public `rfl` characterization lemmas below need this exposed under Lean's module
--- export rules, as in the nearby deck-to-fibre equivalences.
-@[expose]
 noncomputable def IsRegular.fundamentalGroupDeckEquiv [SimplyConnectedSpace E]
     (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
     (hcomm : ∀ a b : Deck p, a * b = b * a) :
     FundamentalGroup X x ≃* Deck p :=
   (hreg.fundamentalGroupEquiv hp e).trans (MulOpposite.unopMulEquivOfComm hcomm)
 
-/-- The loop class attached to a deck transformation, in the commutative-deck-group form of
-the comparison: it is the unopposite of `IsRegular.fundamentalGroupEquiv`. -/
+/-- The deck transformation assigned to a loop class `γ`, in the commutative-deck-group form
+of the comparison: it is the unopposite of `IsRegular.fundamentalGroupEquiv γ`. -/
 @[simp]
 lemma IsRegular.fundamentalGroupDeckEquiv_apply [SimplyConnectedSpace E]
     (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
