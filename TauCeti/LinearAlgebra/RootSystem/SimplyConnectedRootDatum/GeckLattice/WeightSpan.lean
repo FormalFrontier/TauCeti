@@ -28,6 +28,8 @@ types, remain Layer 9 work in the reductive-groups roadmap.
 
 ## Main results
 
+* `TauCeti.DynkinType.geckWeight_inl_eq_zero`: a Cartan coordinate of the Geck module has
+  weight zero.
 * `TauCeti.DynkinType.geckWeight_inr_eq_root`: a root coordinate of the Geck module has exactly
   the corresponding integral root as its weight.
 * `TauCeti.DynkinType.span_range_geckWeight_eq_span_range_root`: the Geck weights generate the
@@ -52,9 +54,17 @@ noncomputable section
 
 variable (t : DynkinType) (ht : t.Valid)
 
+/-- **A Cartan coordinate of the pinned Geck module has weight zero.** -/
+@[simp]
+theorem geckWeight_inl_eq_zero (x : (t.rationalBase ht).support) :
+    t.geckWeight ht (Sum.inl x) = 0 := by
+  ext i
+  exact geckWeight_inl t ht x i
+
 /-- **A root coordinate of the pinned Geck module has the corresponding integral root as its
 weight.** `TauCeti.DynkinType.intCast_geckWeight_inr` already identifies the two after extension
 of scalars to `ℚ`; injectivity of `ℤ → ℚ` brings the equality back to the character lattice. -/
+@[simp]
 theorem geckWeight_inr_eq_root (k : Fin t.numRoots) :
     t.geckWeight ht (Sum.inr k) = (t.simplyConnectedRootDatum ht).root k := by
   ext i
@@ -72,10 +82,7 @@ theorem span_range_geckWeight_eq_span_range_root :
     rintro _ ⟨x, rfl⟩
     cases x with
     | inl x =>
-        have hzero : t.geckWeight ht (Sum.inl x) = 0 := by
-          ext i
-          exact geckWeight_inl t ht x i
-        rw [hzero]
+        rw [geckWeight_inl_eq_zero]
         exact Submodule.zero_mem _
     | inr k =>
         rw [geckWeight_inr_eq_root]
