@@ -70,7 +70,7 @@ theorem deFinetti_mixture [StandardBorelSpace α] {μ : Measure Ω}
         fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
   have : Nonempty α := (nonempty_of_isProbabilityMeasure μ).map (X 0)
   exact (mixedIID_of_conditionallyIID (conditionallyIID_of_exchangeable hX hX_meas))
-    |>.existsUnique_mixingLaw hX_meas
+    |>.existsUnique_mixingLaw
 
 end Probability
 

@@ -173,6 +173,14 @@ theorem MixedIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
     exact Measure.measure_univ_ne_zero.2 hμ hmass.symm
   exact (measurable_pi_apply 0).comp_aemeasurable (AEMeasurable.of_map_ne_zero hne)
 
+/-- **Coordinatewise a.e. measurability from mixed i.i.d.-ness**, without naming a representative.
+The conclusion does not mention the mixing representative, so this is the natural level; the
+witness-level `MixedIIDWith.aemeasurable` is its specialization. -/
+theorem MixedIID.aemeasurable {μ : Measure Ω} {X : ι → Ω → α} (h : MixedIID μ X) (i : ι) :
+    AEMeasurable (X i) μ := by
+  obtain ⟨ν, hν⟩ := h
+  exact hν.aemeasurable i
+
 /-- A `MixedIID` family has a mixing representative. -/
 theorem MixedIID.exists_mixingRepresentative {μ : Measure Ω} {X : ι → Ω → α}
     (h : MixedIID μ X) :
