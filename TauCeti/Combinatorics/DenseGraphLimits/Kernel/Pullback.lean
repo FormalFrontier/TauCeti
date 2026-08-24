@@ -20,7 +20,8 @@ one upstairs with the same integral, so `cutNorm μ K ≤ cutNorm ν (K.comap f)
 elementary: a rectangle `S × T` upstairs need not be the preimage of anything, so its integral must
 be *pushed down* rather than transported. The push is by conditional density: the part of `ν`
 carried by `S` pushes forward to a measure below `μ`, whose Radon–Nikodym derivative
-`pushDensity f ν μ S` is a `[0, 1]`-valued function on `Ω`, and the rectangle integral upstairs
+`mapRestrictDensity f ν μ S` is a `[0, 1]`-valued function on `Ω`, and the rectangle integral
+upstairs
 equals the pairing of `K` against the two densities (`rectIntegral_comap_eq_testIntegral`). Since
 the cut norm already dominates every `[0, 1]`-test integral with no loss of constant
 (`abs_testIntegral_le_cutNorm`), the bound follows.
@@ -73,35 +74,38 @@ above it.
 
 This is the transport that replaces `rectIntegral_comap_preimage` when the rectangle upstairs is
 *not* a preimage: instead of moving the rectangle, it moves the two indicators, which become the
-`[0, 1]`-valued densities `pushDensity f ν μ S` and `pushDensity f ν μ T`.  Neither set needs to be
+`[0, 1]`-valued densities `mapRestrictDensity f ν μ S` and `mapRestrictDensity f ν μ T`. Neither set
+needs to be
 measurable. -/
 theorem rectIntegral_comap_eq_testIntegral [IsFiniteMeasure ν]
     (hf : MeasurePreserving f ν μ) (K : SymmKernel Ω μ) (S T : Set Ω') :
     (K.comap f hf.measurable ν).rectIntegral ν S T =
-      K.testIntegral μ (pushDensity f ν μ S) (pushDensity f ν μ T) := by
-  have hμ : IsFiniteMeasure μ := by
-    rw [← hf.map_eq]; exact Measure.isFiniteMeasure_map _ _
-  have hu : Measurable (pushDensity f ν μ S) := measurable_pushDensity f ν μ S
-  have hv : Measurable (pushDensity f ν μ T) := measurable_pushDensity f ν μ T
-  have hu1 : ∀ x, pushDensity f ν μ S x ∈ Icc (-1 : ℝ) 1 := fun x =>
-    ⟨by linarith [(pushDensity_mem_Icc f ν μ S x).1], (pushDensity_mem_Icc f ν μ S x).2⟩
-  have hv1 : ∀ y, pushDensity f ν μ T y ∈ Icc (-1 : ℝ) 1 := fun y =>
-    ⟨by linarith [(pushDensity_mem_Icc f ν μ T y).1], (pushDensity_mem_Icc f ν μ T y).2⟩
+      K.testIntegral μ (mapRestrictDensity f ν μ S) (mapRestrictDensity f ν μ T) := by
+  let _ := isFiniteMeasure_of_measurePreserving hf
+  have hu : Measurable (mapRestrictDensity f ν μ S) := measurable_mapRestrictDensity f ν μ S
+  have hv : Measurable (mapRestrictDensity f ν μ T) := measurable_mapRestrictDensity f ν μ T
+  have hu1 : ∀ x, mapRestrictDensity f ν μ S x ∈ Icc (-1 : ℝ) 1 := fun x =>
+    ⟨by linarith [(mapRestrictDensity_mem_Icc f ν μ S x).1],
+      (mapRestrictDensity_mem_Icc f ν μ S x).2⟩
+  have hv1 : ∀ y, mapRestrictDensity f ν μ T y ∈ Icc (-1 : ℝ) 1 := fun y =>
+    ⟨by linarith [(mapRestrictDensity_mem_Icc f ν μ T y).1],
+      (mapRestrictDensity_mem_Icc f ν μ T y).2⟩
   have hinner : ∀ x : Ω',
-      ∫ y in T, K (f x) (f y) ∂ν = K.partialIntegral μ (pushDensity f ν μ T) (f x) := by
+      ∫ y in T, K (f x) (f y) ∂ν = K.partialIntegral μ (mapRestrictDensity f ν μ T) (f x) := by
     intro x
     rw [partialIntegral_def]
-    exact (integral_pushDensity_mul hf T (g := fun b => K (f x) b) (K.measurable.comp
-      (measurable_const.prodMk measurable_id))).symm
+    exact (integral_mapRestrictDensity_mul hf T (g := fun b => K (f x) b)
+      (K.measurable.comp (measurable_const.prodMk measurable_id))).symm
   calc (K.comap f hf.measurable ν).rectIntegral ν S T
       = ∫ x in S, ∫ y in T, K (f x) (f y) ∂ν ∂ν := by
         rw [rectIntegral_eq_setIntegral_setIntegral]
         simp only [comap_apply]
-    _ = ∫ x in S, K.partialIntegral μ (pushDensity f ν μ T) (f x) ∂ν := by
+    _ = ∫ x in S, K.partialIntegral μ (mapRestrictDensity f ν μ T) (f x) ∂ν := by
         simp only [hinner]
-    _ = ∫ a, pushDensity f ν μ S a * K.partialIntegral μ (pushDensity f ν μ T) a ∂μ :=
-        (integral_pushDensity_mul hf S (K.measurable_partialIntegral μ hv)).symm
-    _ = K.testIntegral μ (pushDensity f ν μ S) (pushDensity f ν μ T) :=
+    _ = ∫ a, mapRestrictDensity f ν μ S a *
+          K.partialIntegral μ (mapRestrictDensity f ν μ T) a ∂μ :=
+        (integral_mapRestrictDensity_mul hf S (K.measurable_partialIntegral μ hv)).symm
+    _ = K.testIntegral μ (mapRestrictDensity f ν μ S) (mapRestrictDensity f ν μ T) :=
         (K.testIntegral_eq_integral_partialIntegral μ
           (K.integrable_testIntegrand μ hu hv hu1 hv1)).symm
 
@@ -119,9 +123,9 @@ theorem cutNorm_comap_le [IsFiniteMeasure ν] [IsFiniteMeasure μ] (hf : Measure
     cutNorm ν (K.comap f hf.measurable ν) ≤ cutNorm μ K :=
   cutNorm_le ν fun S _ T _ => by
     rw [SymmKernel.rectIntegral_comap_eq_testIntegral hf K S T]
-    exact abs_testIntegral_le_cutNorm μ K (measurable_pushDensity f ν μ S)
-      (measurable_pushDensity f ν μ T) (pushDensity_mem_Icc f ν μ S)
-      (pushDensity_mem_Icc f ν μ T)
+    exact abs_testIntegral_le_cutNorm μ K (measurable_mapRestrictDensity f ν μ S)
+      (measurable_mapRestrictDensity f ν μ T) (mapRestrictDensity_mem_Icc f ν μ S)
+      (mapRestrictDensity_mem_Icc f ν μ T)
 
 /-- **The cut norm is invariant under measure-preserving pullback.**  Pulling a kernel back along a
 map from any carrier that maps measure preservingly *onto* the kernel's own carrier leaves its cut

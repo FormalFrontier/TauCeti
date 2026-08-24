@@ -39,7 +39,7 @@ The declarations live in `TauCeti.MeasureTheory` because none depends on graphon
 * `IsCoupling.swap` swaps the coordinates of a coupling;
 * `isCoupling_map_prodMk` builds the graph coupling of two measure-preserving maps out of a common
   carrier, of which `isCoupling_diagonalCoupling` is the identity case;
-* `measurePreserving_diagonalCoupling` records the diagonal itself as measure preserving.
+* `measurePreserving_diagonal` records the diagonal itself as measure preserving.
 
 ## References
 
@@ -174,7 +174,7 @@ theorem diagonalCoupling_apply (μ : Measure Ω) {s : Set (Ω × Ω)} (hs : Meas
 This is the defining pushforward, packaged for the transport lemmas that ask for a
 `MeasurePreserving` hypothesis. It is stated here because `diagonalCoupling` is not reducible
 outside this module, so a caller cannot supply the pushforward identity by `rfl`. -/
-theorem measurePreserving_diagonalCoupling (μ : Measure Ω) :
+theorem measurePreserving_diagonal (μ : Measure Ω) :
     MeasurePreserving (fun x => (x, x)) μ (diagonalCoupling μ) :=
   (measurable_id'.prodMk measurable_id').measurePreserving μ
 
