@@ -96,8 +96,8 @@ theorem zigzagTrivialCoeff_vertexIdempotent [DecidableEq V] (i j : V) :
   rw [zigzagTrivialCoeff_zigzagMk, PathAlgebra.trivialCoeff_vertexIdempotent, Pi.single_apply]
   simp only [(vertex_injective G).eq_iff, eq_comm]
 
-/-- Every arrow class has zero vertex coefficient. -/
-@[simp]
+/-- Every arrow class has zero vertex coefficient. Deliberately not a `simp` lemma,
+`TauCeti.PathAlgebra.ofArrow_eq_ofPath` already rewriting its left-hand side. -/
 theorem zigzagTrivialCoeff_ofArrow (d : G.Dart) :
     zigzagTrivialCoeff k G (zigzagMk k G (ofArrow (arrow G d.adj))) = 0 := by
   rw [zigzagTrivialCoeff_zigzagMk, PathAlgebra.trivialCoeff_ofArrow]
