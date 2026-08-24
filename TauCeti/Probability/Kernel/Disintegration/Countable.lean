@@ -14,8 +14,8 @@ A measure `σ` on a product `Y × Z` disintegrates over `Y` when it is the compo
 `σ.fst ⊗ₘ κ` of its first marginal with a Markov kernel `κ : Kernel Y Z`. Mathlib supplies such a
 kernel when the *second* factor `Z` is standard Borel
 (`MeasureTheory.Measure.condKernel`). For a finite `σ`, this file supplies one in the complementary
-regime: when the *first* factor `Y` is countable with measurable singletons, and `Z` is an arbitrary
-measurable space.
+regime: when the *first* factor `Y` is countable with measurable singletons, and `Z` is any
+nonempty measurable space.
 
 On a countable `Y` no analytic input is needed — the disintegration is the elementary formula
 `κ y s = (σ.fst {y})⁻¹ * σ ({y} ×ˢ s)`, conditioning on the atom `{y}`. The one point that needs
@@ -111,8 +111,8 @@ finite, this is its conditional kernel over the first coordinate.
 
 At an atom `y` of positive first-marginal mass this is the normalised slice
 `s ↦ (σ.fst {y})⁻¹ * σ ({y} ×ˢ s)`; at a null atom, where `σ` prescribes nothing, it is a Dirac
-measure. Unlike `MeasureTheory.Measure.condKernel`, this needs no hypothesis whatsoever on the
-second factor `Z`. -/
+measure. Unlike `MeasureTheory.Measure.condKernel`, this needs no standard-Borel or other
+regularity hypothesis on the nonempty second factor `Z`. -/
 def countableCondKernel (σ : Measure (Y × Z)) : Kernel Y Z :=
   Kernel.ofFunOfCountable fun y =>
     if σ.fst {y} = 0 then Measure.dirac (Classical.arbitrary Z)
