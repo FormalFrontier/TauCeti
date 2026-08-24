@@ -148,12 +148,6 @@ point-level closed subgroup represented by the quotient coordinate Hopf algebra 
     Subgroup (HopfAlgebra.points (R := R) (H := H) A) :=
   (quotientPointsHom H I A).hom.range
 
-/-- The subgroup cut out by a Hopf ideal is the range of the quotient-points homomorphism. -/
-theorem quotientPointsSubgroup_def (H : _root_.CommHopfAlgCat.{v} R)
-    (I : HopfIdeal R H) (A : CommAlgCat.{w} R) :
-    quotientPointsSubgroup H I A = (quotientPointsHom H I A).hom.range :=
-  rfl
-
 /-- The points cut out by `I` form a commutative group whenever the quotient coordinate Hopf
 algebra is cocommutative. -/
 noncomputable instance instIsMulCommutativeQuotientPointsSubgroup

@@ -48,12 +48,6 @@ variable {R : Type u} [CommRing R]
     (I : HopfIdeal R H) : grpObj (quotient H I) ⟶ grpObj H :=
   grpObjMap (mkQuotient H I)
 
-/-- The quotient group-object inclusion is represented by the coordinate quotient map. -/
-theorem quotientGrpObjInclusion_def (H : _root_.CommHopfAlgCat.{u} R)
-    (I : HopfIdeal R H) :
-    quotientGrpObjInclusion H I = grpObjMap (mkQuotient H I) :=
-  rfl
-
 /-- The categorical quotient inclusion is the opposite of the coordinate quotient map. -/
 @[simp]
 theorem quotientGrpObjInclusion_unop (H : _root_.CommHopfAlgCat.{u} R)

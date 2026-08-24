@@ -65,7 +65,9 @@ private theorem quotientGrpObjInclusion_range_map
     (IsMonHom.monoidHom (quotientGrpObjInclusion H I) X).range.map
         (grpObjPointsMulEquiv H X).toMonoidHom =
       quotientPointsSubgroup H I X.unop := by
-  rw [quotientPointsSubgroup_def, MonoidHom.map_range]
+  -- Expose the range definition locally without adding a duplicate public API theorem.
+  change _ = (quotientPointsHom H I X.unop).hom.range
+  rw [MonoidHom.map_range]
   have hcomp :
       (grpObjPointsMulEquiv H X).toMonoidHom.comp
           (IsMonHom.monoidHom (quotientGrpObjInclusion H I) X) =
