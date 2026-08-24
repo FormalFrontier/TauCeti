@@ -202,15 +202,6 @@ noncomputable def weightParabolicCoordinateMap (w : Fin N → ℤ) :
   CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra R N)
     (weightParabolicDefiningHopfIdeal (R := R) w)
 
-/-- The block-parabolic coordinate morphism is the canonical Hopf-ideal quotient map. -/
-theorem weightParabolicCoordinateMap_def (w : Fin N → ℤ) :
-    weightParabolicCoordinateMap (R := R) w =
-      CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra R N)
-        (weightParabolicDefiningHopfIdeal (R := R) w) :=
-  by
-    unfold weightParabolicCoordinateMap
-    rfl
-
 /-- A forbidden coordinate vanishes in the block-parabolic coordinate algebra. -/
 @[simp]
 theorem weightParabolicCoordinateMap_coordinate (w : Fin N → ℤ) {i j : Fin N}
@@ -218,7 +209,8 @@ theorem weightParabolicCoordinateMap_coordinate (w : Fin N → ℤ) {i j : Fin N
     (weightParabolicCoordinateMap (R := R) w).hom
         (coordinateHopfAlgebraAlgEquiv R N
           (coordinateRingMap R N (MvPolynomial.X (i, j)))) = 0 := by
-  rw [weightParabolicCoordinateMap_def, CommHopfAlgCat.mkQuotient_apply,
+  unfold weightParabolicCoordinateMap
+  rw [CommHopfAlgCat.mkQuotient_apply,
     Ideal.Quotient.mkₐ_eq_mk, Ideal.Quotient.eq_zero_iff_mem,
     weightParabolicDefiningHopfIdeal_toIdeal]
   exact Ideal.subset_span (coordinate_mem_weightParabolicRelationSet w hij)
@@ -234,6 +226,21 @@ noncomputable def weightParabolicInclusion (w : Fin N → ℤ) :
   CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
       (weightParabolicDefiningHopfIdeal (R := R) w) ≫
     (eqToIso (GeneralLinear.groupScheme_def R N).symm).hom
+
+/-- The coordinate morphism recovered from the block-parabolic inclusion is the quotient
+coordinate map. -/
+theorem weightParabolicInclusion_coordinateMap (w : Fin N → ℤ) :
+    ((AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage
+      (weightParabolicInclusion (R := R) w ≫
+        eqToHom (GeneralLinear.groupScheme_def R N))).unop =
+      weightParabolicCoordinateMap (R := R) w := by
+  refine Quiver.Hom.op_inj
+    ((AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_injective ?_)
+  rw [Quiver.Hom.op_unop,
+    (AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage]
+  unfold weightParabolicInclusion weightParabolicCoordinateMap
+  rw [CommHopfAlgCat.quotientSpecι_def]
+  simp
 
 private theorem weightParabolicInclusion_hom_left (w : Fin N → ℤ) :
     (weightParabolicInclusion (R := R) w).hom.hom.left =
@@ -377,5 +384,37 @@ noncomputable def weightParabolicPointsIso (w : Fin N → ℤ) :
   (CommHopfAlgCat.quotientPointsSubgroupNatIso (coordinateHopfAlgebra R N)
       (weightParabolicDefiningHopfIdeal (R := R) w)).trans
     (weightParabolicSubgroupPointsIso (R := R) w)
+
+private theorem weightParabolicPointsIso_hom_app_apply_eq (w : Fin N → ℤ)
+    {A : Type w} [CommRing A] [Algebra R A]
+    (f : HopfAlgebra.points
+      (R := R) (H := weightParabolicCoordinateHopfAlgebra (R := R) w) (CommAlgCat.of R A)) :
+    (weightParabolicPointsIso (R := R) w).hom.app (CommAlgCat.of R A) f =
+      weightParabolicPointsSubgroupMulEquiv (R := R) w
+        ((CommHopfAlgCat.quotientPointsSubgroupNatIso (coordinateHopfAlgebra R N)
+          (weightParabolicDefiningHopfIdeal (R := R) w)).hom.app (CommAlgCat.of R A) f) :=
+  rfl
+
+/-- The ambient point underlying the represented dynamic-parabolic point is induced by the
+quotient coordinate map. -/
+@[simp]
+theorem coe_weightParabolicPointsIso_hom_app_apply (w : Fin N → ℤ)
+    {A : Type w} [CommRing A] [Algebra R A]
+    (f : HopfAlgebra.points
+      (R := R) (H := weightParabolicCoordinateHopfAlgebra (R := R) w) (CommAlgCat.of R A)) :
+    ((show Cocharacter.parabolic (CommAlgCat.of R A) (weightCocharacter (R := R) w) from
+        (weightParabolicPointsIso (R := R) w).hom.app (CommAlgCat.of R A) f) :
+      HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N) (CommAlgCat.of R A)) =
+      CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R N)
+        (weightParabolicDefiningHopfIdeal (R := R) w) (CommAlgCat.of R A) f := by
+  have hcomponent := CommHopfAlgCat.quotientPointsSubgroupNatIso_hom_app_apply
+    (coordinateHopfAlgebra R N) (weightParabolicDefiningHopfIdeal (R := R) w)
+    (CommAlgCat.of R A) f
+  rw [weightParabolicPointsIso_hom_app_apply_eq]
+  exact congrArg
+    (fun g => ((weightParabolicPointsSubgroupMulEquiv (R := R) w g :
+        Cocharacter.parabolic (CommAlgCat.of R A) (weightCocharacter (R := R) w)) :
+      HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N) (CommAlgCat.of R A)))
+    hcomponent
 
 end TauCeti.GeneralLinear.Dynamic
