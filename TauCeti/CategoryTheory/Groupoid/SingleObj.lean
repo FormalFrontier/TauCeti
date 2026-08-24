@@ -105,7 +105,7 @@ theorem isEquivalence_singleObjFunctor (hconn : ∀ x : C, Nonempty (x₀ ⟶ x)
 
 The equivalence is induced by `TauCeti.Groupoid.singleObjFunctor`, so it sends the unique object
 to `x₀` and an endomorphism to itself. -/
-@[expose] noncomputable def singleObjEquivalence (hconn : ∀ x : C, Nonempty (x₀ ⟶ x)) :
+noncomputable def singleObjEquivalence (hconn : ∀ x : C, Nonempty (x₀ ⟶ x)) :
     SingleObj (End x₀) ≌ C :=
   haveI := isEquivalence_singleObjFunctor x₀ hconn
   (singleObjFunctor x₀).asEquivalence

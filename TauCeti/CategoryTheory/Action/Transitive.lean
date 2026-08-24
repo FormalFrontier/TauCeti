@@ -30,6 +30,8 @@ that type then fails to elaborate.
 
 * `TauCeti.isTransitiveAction`: the property of being a transitive `G`-set.
 * `TauCeti.isTransitiveAction_iff`: its two conjuncts.
+* `TauCeti.smul_eq_ρ_apply`: the scalar multiplication both conjuncts refer to is evaluation of
+  the representation.
 * `TauCeti.TransitiveAction`: transitive `G`-sets as a full subcategory of all `G`-sets, with
   `TauCeti.TransitiveAction.mk`, `TauCeti.TransitiveAction.forget`,
   `TauCeti.TransitiveAction.isTransitiveAction` and
@@ -50,13 +52,22 @@ variable (G : Type v) [Monoid G]
 def isTransitiveAction : ObjectProperty (Action (Type u) G) :=
   fun A => MulAction.IsPretransitive G (ToType A) ∧ Nonempty (ToType A)
 
+variable {G}
+
+/-- The scalar multiplication that `Action.instMulAction` puts on the underlying type of a `G`-set
+is evaluation of its representation. -/
+theorem smul_eq_ρ_apply (A : Action (Type u) G) (g : G) (x : ToType A) : g • x = A.ρ g x :=
+  rfl
+
+variable (G)
+
 /-- Transitivity of a `G`-set is preserved by isomorphisms of `G`-sets: an isomorphism is an
 equivariant bijection on underlying types. -/
 instance : (isTransitiveAction G).IsClosedUnderIsomorphisms where
   of_iso {A B} e h :=
     ⟨h.1.of_surjective_map
-        (f := (⟨ConcreteCategory.hom e.hom.hom, fun g x =>
-          ConcreteCategory.congr_hom (e.hom.comm g) x⟩ :
+        (f := (⟨ConcreteCategory.hom e.hom.hom, fun g x => by
+          simp only [id_eq, smul_eq_ρ_apply, ← types_comp_apply, e.hom.comm]⟩ :
             MulActionHom (id : G → G) (ToType A) (ToType B)))
         ((Action.forget _ G).mapIso e).toEquiv.surjective,
       ⟨ConcreteCategory.hom e.hom.hom h.2.some⟩⟩

@@ -226,7 +226,13 @@ theorem exists_fiberAction_iso (A : Action (Type u) (FundamentalGroup X x₀))
   refine ⟨UniversalCover.stabilizerCover x₀ a, ⟨Action.mkIso
     (Equiv.toIso (UniversalCover.transitiveActionFiberEquiv x₀ a)) fun g => ?_⟩⟩
   refine ConcreteCategory.hom_ext _ _ fun e => ?_
-  simp only [types_comp_apply]
+  -- The cover has to be spelled out for the rewrite: the type of `e` mentions it only under the
+  -- unfolding of `fiberActionFunctor`, so unification cannot read it off.
+  rw [types_comp_apply, types_comp_apply, CoveringSpace.fiberActionFunctor_obj_ρ_apply x₀
+    ((forget X).obj (UniversalCover.stabilizerCover x₀ a)) g e, ← smul_eq_ρ_apply A g]
+  -- The one step left is `Equiv.toIso_hom_hom_apply`, which `rw` refuses here: the type of `e`
+  -- is the `.V` projection rather than the fibre itself, so the rewritten target is not
+  -- type-correct at `implicit` transparency.
   exact UniversalCover.transitiveActionFiberEquiv_apply_monodromy x₀ a g e
 
 instance transitiveFiberActionFunctor_essSurj :
