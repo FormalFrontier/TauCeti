@@ -33,6 +33,8 @@ theory feeds Deligne's bigrading and the strictness theorem.
 * `TauCeti.Hodge.MixedHodgeStructure.Hom.id`, `…comp`: identity and composition.
 * `TauCeti.Hodge.MixedHodgeStructure.Hom.map_WC_le`: the complex action preserves the
   complexified weight filtration.
+* `TauCeti.Hodge.MixedHodgeStructure.Hom.map_conjF_le`: the complex action preserves the conjugate
+  Hodge filtration.
 * `TauCeti.Hodge.MixedHodgeStructure.Hom.commutes_conj`: the complex action commutes with lattice
   conjugation.
 * `TauCeti.Hodge.MixedHodgeStructure.Hom.gradedMap`: the induced map on the rational graded piece
@@ -152,6 +154,18 @@ theorem map_WC_le (f : Hom source target) (k : ℤ) :
 theorem map_mem_WC (f : Hom source target) (k : ℤ) {x : Vℂ} (hx : x ∈ source.WC k) :
     f x ∈ target.WC k :=
   f.map_WC_le k ⟨x, hx, rfl⟩
+
+/-- A morphism of mixed Hodge structures preserves the conjugate Hodge filtration. -/
+theorem map_conjF_le (f : Hom source target) (p : ℤ) :
+    (source.conjF p).map f.toLinearMap ≤ target.conjF p := by
+  rintro _ ⟨x, hx, rfl⟩
+  rw [target.mem_conjF_iff, ← f.commutes_conj]
+  exact f.map_mem_F p _ ((source.mem_conjF_iff p x).1 hx)
+
+/-- Elementwise form of preservation of the conjugate Hodge filtration. -/
+theorem map_mem_conjF (f : Hom source target) (p : ℤ) {x : Vℂ}
+    (hx : x ∈ source.conjF p) : f x ∈ target.conjF p :=
+  f.map_conjF_le p ⟨x, hx, rfl⟩
 
 /-- The identity morphism of a mixed Hodge structure. -/
 noncomputable def id (source : MixedHodgeStructure hℚ hℂ) : Hom source source where
