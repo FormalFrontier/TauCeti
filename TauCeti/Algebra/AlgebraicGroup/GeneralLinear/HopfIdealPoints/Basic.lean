@@ -45,7 +45,7 @@ variable {A : Type w} {B : Type w'} [CommRing A] [CommRing B] [Algebra R A] [Alg
 
 /-- The subgroup of `GLₙ(A)` cut out by a Hopf ideal in the general-linear coordinate Hopf
 algebra. -/
-noncomputable def hopfIdealPointsSubgroup
+@[expose] noncomputable def hopfIdealPointsSubgroup
     (I : HopfIdeal R (coordinateHopfAlgebra R n)) (A : Type w)
     [CommRing A] [Algebra R A] : Subgroup (Matrix.GeneralLinearGroup (Fin n) A) :=
   (CommHopfAlgCat.quotientPointsSubgroup
