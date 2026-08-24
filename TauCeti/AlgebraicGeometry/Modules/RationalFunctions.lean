@@ -117,10 +117,9 @@ def rationalFunctions (X : Scheme.{u}) [IrreducibleSpace X] : X.Modules :=
 /-- The module sheaf and ring sheaf constructions of `𝒦_X` have canonically identified
 sections. -/
 def rationalFunctionsSectionsEquiv (X : Scheme.{u}) [IrreducibleSpace X] (U : X.Opens) :
-    (Γ(rationalFunctions X, U) : Type u) ≃
-      ((rationalFunctionsRing X).presheaf.obj (.op U) : Type u) := by
-  change (Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U) : Type u) ≃ _
-  exact Equiv.refl _
+    (Γ(rationalFunctions X, U) : Type u) ≃+
+      ((rationalFunctionsRing X).presheaf.obj (.op U) : Type u) :=
+  AddEquiv.refl _
 
 /-- On a nonempty open subset, the morphism `Spec K(X) ⟶ X` acts on sections by the germ map to
 the function field. -/
@@ -185,6 +184,9 @@ theorem rationalFunctionsRingEquiv_map {U V : X.Opens} [Nonempty U] [Nonempty V]
     rationalFunctionsRingEquiv U ((rationalFunctionsRing X).presheaf.map i.op s) =
       rationalFunctionsRingEquiv V s := by
   unfold rationalFunctionsRing at s ⊢
+  -- The presheaf of a pushforward evaluates on `U` as the source presheaf evaluates on its
+  -- preimage. This normalization exposes that documented pushforward computation so that
+  -- `map_comp_functionFieldSectionsIso` applies.
   change (functionFieldSectionsIso U).hom
     ((Spec X.functionField).presheaf.map
       ((Opens.map (fromSpecFunctionField X).base).map i).op
@@ -202,6 +204,8 @@ def rationalFunctionsEquiv (U : X.Opens) [Nonempty U] :
       -- The action of `Γ(X, U)` on the pushforward is multiplication after applying the map on
       -- sections, so multiplicativity of the identification reduces this to
       -- `app_comp_functionFieldSectionsIso`.
+      -- The module-sheaf section type is definitionally the carrier of the corresponding
+      -- pushforward ring section, which is the form used by that comparison lemma.
       change (functionFieldSectionsIso U).hom (r • s) =
         r • (functionFieldSectionsIso U).hom s
       have h : (functionFieldSectionsIso U).hom (r • s) =
@@ -260,10 +264,6 @@ omit [IsIntegral X] in
 theorem toRationalFunctionsRing_app (U : X.Opens) (r : Γ(X, U)) :
     rationalFunctionsSectionsEquiv X U (Scheme.Modules.Hom.app (toRationalFunctions X) U r) =
       (toRationalFunctionsRing X).hom.app (.op U) r := by
-  change
-    (SheafOfModules.unitToPushforwardObjUnit
-      (fromSpecFunctionField X).toRingCatSheafHom).val.app (.op U) r =
-        (fromSpecFunctionField X).c.app (.op U) r
   exact SheafOfModules.unitToPushforwardObjUnit_val_app_apply
     (fromSpecFunctionField X).toRingCatSheafHom (X := .op U) r
 
@@ -294,6 +294,21 @@ theorem toRationalFunctions_app_injective (U : X.Opens) :
         ← rationalFunctionsEquiv_toRationalFunctions_app]
       exact congrArg _ hab
     exact X.germToFunctionField_injective U key
+
+/-- The morphism `𝒪_X ⟶ 𝒦_X` of ring sheaves is injective on sections over every open
+subset of an integral scheme. -/
+theorem toRationalFunctionsRing_app_injective (U : X.Opens) :
+    Function.Injective ((toRationalFunctionsRing X).hom.app (.op U)) := by
+  intro r s hrs
+  apply toRationalFunctions_app_injective U
+  apply (rationalFunctionsSectionsEquiv X U).injective
+  exact (toRationalFunctionsRing_app U r).trans
+    (hrs.trans (toRationalFunctionsRing_app U s).symm)
+
+instance : Mono (toRationalFunctionsRing X).hom := by
+  have hU : ∀ U : (Opens X)ᵒᵖ, Mono ((toRationalFunctionsRing X).hom.app U) := fun U =>
+    ConcreteCategory.mono_of_injective _ (toRationalFunctionsRing_app_injective U.unop)
+  exact NatTrans.mono_of_mono_app _
 
 instance : Mono (toRationalFunctions X) := by
   have hU : ∀ U : (Opens X)ᵒᵖ,
