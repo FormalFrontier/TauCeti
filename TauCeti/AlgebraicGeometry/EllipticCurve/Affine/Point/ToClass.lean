@@ -134,7 +134,7 @@ local instance coordinateRingIsDedekind [W.IsElliptic] :
 omit [DecidableEq F] in
 /-- Every nonzero ideal of an elliptic coordinate ring has finite codimension over the base
 field. -/
-private theorem finiteDimensional_quotient_of_ne_bot [W.IsElliptic]
+private theorem finiteDimensional_quotient_of_ne_bot
     (I : Ideal W.CoordinateRing) (hI : I ≠ ⊥) :
     FiniteDimensional F (W.CoordinateRing ⧸ I) := by
   classical
@@ -146,7 +146,7 @@ private theorem finiteDimensional_quotient_of_ne_bot [W.IsElliptic]
 
 omit [DecidableEq F] in
 private noncomputable def quotComapEquivCoeIdealQuot
-    [W.IsElliptic] {I J : Ideal W.CoordinateRing}
+    {I J : Ideal W.CoordinateRing}
     (hinj : Function.Injective (Algebra.linearMap W.CoordinateRing W.FunctionField)) :
     ((I : Submodule W.CoordinateRing W.CoordinateRing) ⧸ Submodule.comap
         (I : Submodule W.CoordinateRing W.CoordinateRing).subtype
@@ -191,7 +191,7 @@ private noncomputable def quotComapEquivCoeIdealQuot
       exact hry
 
 omit [DecidableEq F] in
-private noncomputable def quotEquivOneCoeIdealQuot [W.IsElliptic]
+private noncomputable def quotEquivOneCoeIdealQuot
     {J : Ideal W.CoordinateRing}
     (hinj : Function.Injective (Algebra.linearMap W.CoordinateRing W.FunctionField)) :
     (W.CoordinateRing ⧸ J) ≃ₗ[W.CoordinateRing]
@@ -387,7 +387,7 @@ private theorem basisCombMap_ne_zero {a b : ℕ}
 omit [DecidableEq F] in
 /-- Every nonzero ideal contains a nonzero function whose norm degree is at most one more than
 the ideal's codimension. This is the concrete genus-one Riemann--Roch inequality. -/
-private theorem exists_mem_norm_natDegree_le [W.IsElliptic]
+private theorem exists_mem_norm_natDegree_le
     (I : Ideal W.CoordinateRing) (hI : I ≠ ⊥) :
     ∃ a ∈ I, a ≠ 0 ∧
       (Algebra.norm F[X] a).natDegree ≤ Module.finrank F (W.CoordinateRing ⧸ I) + 1 := by
