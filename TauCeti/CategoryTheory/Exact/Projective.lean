@@ -377,8 +377,7 @@ theorem exists_finiteResolution_length_le_of_conflation (hP : P ≤ E.isProjecti
       obtain ⟨t, ht⟩ := h₃
       have hX₁ : P S.X₁ := by simpa using r.prop_syzygy hr
       have hX₃ : P S.X₃ := by simpa using t.prop_syzygy ht
-      refine ⟨.base (P.prop_of_iso (E.splittingOfProjective hS (hP _ hX₃)).isoBinaryBiproduct.symm
-        (P.prop_biprod_of_isClosedUnderBinaryProducts hX₁ hX₃)), by simp⟩
+      refine ⟨.base ((E.isExtensionClosed_of_le_isProjective hP).prop_X₂ hS hX₁ hX₃), by simp⟩
   | succ n ih =>
       obtain ⟨KX, QX, mX, aX, hmX, hQX, hcX, hKX⟩ :=
         E.exists_conflation_of_exists_finiteResolution_length_le_succ h₁
