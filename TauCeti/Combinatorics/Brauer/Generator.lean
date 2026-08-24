@@ -20,9 +20,11 @@ so the pair is arbitrary throughout.
 
 A cap-cup diagram is the identity diagram transported along the transposition that exchanges the
 top point `a` with the bottom point `b`, which bends the two strands ending at `a` and at `b` into
-a cap and a cup. On the degenerate pair `a = a` that transposition bends nothing and `capCup a a`
-is the identity diagram (`TauCeti.capCup_self`), so the lemmas below carry the distinctness
-`a ≠ b` exactly where they need it.
+a cap and a cup. On the degenerate pair `a = a` that transposition is still a nontrivial exchange
+of two boundary points, but those two points are the two ends of one and the same strand of the
+identity diagram, so it carries that strand to itself and leaves the matching unchanged; thus
+`capCup a a` is the identity diagram (`TauCeti.capCup_self`), and the lemmas below carry the
+distinctness `a ≠ b` exactly where they need it.
 
 This file builds these diagrams and proves, on the diagram basis, the relations that the loop-
 weighted multiplication `D₁ * D₂ = δ ^ middleLoopCount D₁ D₂ • composeDiagram D₁ D₂` of the
@@ -88,8 +90,8 @@ adjacent pair `{i, i + 1}`.
 
 It is the identity diagram transported along the transposition exchanging the top point `a` with
 the bottom point `b`, which bends the strands ending at `a` and at `b` into a cap and a cup. On
-the degenerate pair `a = a` that transposition bends nothing and `TauCeti.capCup_self` gives back
-the identity diagram. -/
+the degenerate pair `a = a` that transposition exchanges the two ends of a single identity strand,
+so it carries that strand to itself and `TauCeti.capCup_self` gives back the identity diagram. -/
 def capCup (a b : Fin k) : BrauerDiagram k :=
   PerfectMatching.congr (Equiv.swap (Sum.inr a) (Sum.inl b)) (permToBrauer 1)
 
@@ -105,8 +107,10 @@ private theorem capCup_val_apply (a b : Fin k) (x : Fin k ⊕ Fin k) :
       Equiv.swap (Sum.inr a) (Sum.inl b) (Equiv.swap (Sum.inr a) (Sum.inl b) x).swap := by
   rw [capCup, PerfectMatching.congr_val_apply, Equiv.symm_swap, permToBrauer_one_val]
 
-/-- **A cap-cup diagram on a degenerate pair is the identity diagram**: bending a strand back to
-where it already ends changes nothing. -/
+/-- **A cap-cup diagram on a degenerate pair is the identity diagram**: the transposition that
+transports it exchanges the top point `a` with the bottom point `a`, which are the two ends of a
+single strand of the identity diagram, so it carries that strand to itself and leaves the matching
+unchanged. -/
 @[simp]
 theorem capCup_self (a : Fin k) : capCup a a = permToBrauer 1 := by
   refine Subtype.ext (Equiv.ext fun x => ?_)
@@ -364,14 +368,17 @@ theorem composeDiagram_capCup_capCup (a b : Fin k) :
           (capCup_val_inr_of_ne hia hib), capCup_val_inr_of_ne hia hib]
 
 /-- The middle points that keep both of their arcs in the middle when a cap-cup diagram is
-stacked on itself are exactly the two points of its pair. -/
-theorem isMiddleVertex_capCup_iff (hab : a ≠ b) {x : Fin k} :
+stacked on itself are exactly the two points of its pair.
+
+Private: this and the two middle-graph lemmas below are the bookkeeping behind
+`TauCeti.middleLoopCount_capCup_capCup`, which is the public form of the loop count. -/
+private theorem isMiddleVertex_capCup_iff (hab : a ≠ b) {x : Fin k} :
     IsMiddleVertex (capCup a b) (capCup a b) x ↔ x = a ∨ x = b := by
   rw [isMiddleVertex_def, isCap_capCup_inl_iff hab, isCup_capCup_inr_iff hab, and_self]
 
 /-- The middle graph of a cap-cup diagram stacked on itself joins the two points of its pair and
 nothing else. -/
-theorem middleAdj_capCup_iff (hab : a ≠ b) {x y : Fin k} :
+private theorem middleAdj_capCup_iff (hab : a ≠ b) {x y : Fin k} :
     MiddleAdj (capCup a b) (capCup a b) x y ↔ (x = a ∧ y = b) ∨ (x = b ∧ y = a) := by
   rw [middleAdj_def]
   rcases eq_or_ne x a with rfl | hxa
@@ -398,19 +405,18 @@ theorem middleAdj_capCup_iff (hab : a ≠ b) {x y : Fin k} :
 /-- **The middle loop of `e * e`**: the middle points lying on a closed loop when a cap-cup
 diagram is stacked on itself are exactly the two points of its pair, which the cap of the upper
 copy and the cup of the lower one join into a single loop. -/
-theorem onMiddleLoop_capCup_iff (hab : a ≠ b) {x : Fin k} :
+private theorem onMiddleLoop_capCup_iff (hab : a ≠ b) {x : Fin k} :
     OnMiddleLoop (capCup a b) (capCup a b) x ↔ x = a ∨ x = b := by
   refine ⟨fun h => (isMiddleVertex_capCup_iff hab).mp h.isMiddleVertex, ?_⟩
   rintro (rfl | rfl)
   · exact onMiddleLoop_of_val_eq (capCup_val_inl_left hab) (capCup_val_inr_left hab)
   · exact onMiddleLoop_of_val_eq (capCup_val_inl_right hab) (capCup_val_inr_right hab)
 
-/-- **`e * e = δ • e`, the loop half**: stacking a cap-cup diagram on itself closes up exactly
-one loop in the middle, so the loop-weighted multiplication of the Brauer algebra sends
-`e * e` to `δ • e`. -/
-@[simp]
-theorem middleLoopCount_capCup_capCup (hab : a ≠ b) :
-    middleLoopCount (capCup a b) (capCup a b) = 1 := by
+/-- The middle points that are least on their loop when a cap-cup diagram is stacked on itself:
+the only loop is the pair of the diagram, so its least point is whichever of `a` and `b` is
+smaller. -/
+private theorem isMiddleLoopMin_capCup_iff (hab : a ≠ b) {x : Fin k} :
+    IsMiddleLoopMin (capCup a b) (capCup a b) x ↔ (x = a ∧ a ≤ b) ∨ (x = b ∧ b ≤ a) := by
   have hreach : ∀ {x y : Fin k}, x = a ∨ x = b →
       Relation.ReflTransGen (MiddleAdj (capCup a b) (capCup a b)) x y → y = a ∨ y = b :=
     fun hx hy => (isMiddleVertex_capCup_iff hab).mp
@@ -419,28 +425,32 @@ theorem middleLoopCount_capCup_capCup (hab : a ≠ b) :
     .single ((middleAdj_capCup_iff hab).mpr (Or.inl ⟨rfl, rfl⟩))
   have hba' : Relation.ReflTransGen (MiddleAdj (capCup a b) (capCup a b)) b a :=
     .single ((middleAdj_capCup_iff hab).mpr (Or.inr ⟨rfl, rfl⟩))
-  have hmem : ∀ {x : Fin k}, IsMiddleLoopMin (capCup a b) (capCup a b) x ↔
-      (x = a ∧ a ≤ b) ∨ (x = b ∧ b ≤ a) := by
-    intro x
-    rw [isMiddleLoopMin_def]
-    constructor
-    · rintro ⟨hloop, hmin⟩
-      rcases (onMiddleLoop_capCup_iff hab).mp hloop with rfl | rfl
-      · exact Or.inl ⟨rfl, hmin _ hab'⟩
-      · exact Or.inr ⟨rfl, hmin _ hba'⟩
-    · rintro (⟨rfl, hle⟩ | ⟨rfl, hle⟩)
-      · exact ⟨(onMiddleLoop_capCup_iff hab).mpr (Or.inl rfl), fun y hy => by
-          rcases hreach (Or.inl rfl) hy with rfl | rfl
-          · exact le_rfl
-          · exact hle⟩
-      · exact ⟨(onMiddleLoop_capCup_iff hab).mpr (Or.inr rfl), fun y hy => by
-          rcases hreach (Or.inr rfl) hy with rfl | rfl
-          · exact hle
-          · exact le_rfl⟩
+  rw [isMiddleLoopMin_def]
+  constructor
+  · rintro ⟨hloop, hmin⟩
+    rcases (onMiddleLoop_capCup_iff hab).mp hloop with rfl | rfl
+    · exact Or.inl ⟨rfl, hmin _ hab'⟩
+    · exact Or.inr ⟨rfl, hmin _ hba'⟩
+  · rintro (⟨rfl, hle⟩ | ⟨rfl, hle⟩)
+    · exact ⟨(onMiddleLoop_capCup_iff hab).mpr (Or.inl rfl), fun y hy => by
+        rcases hreach (Or.inl rfl) hy with rfl | rfl
+        · exact le_rfl
+        · exact hle⟩
+    · exact ⟨(onMiddleLoop_capCup_iff hab).mpr (Or.inr rfl), fun y hy => by
+        rcases hreach (Or.inr rfl) hy with rfl | rfl
+        · exact hle
+        · exact le_rfl⟩
+
+/-- **`e * e = δ • e`, the loop half**: stacking a cap-cup diagram on itself closes up exactly
+one loop in the middle, so the loop-weighted multiplication of the Brauer algebra sends
+`e * e` to `δ • e`. -/
+@[simp]
+theorem middleLoopCount_capCup_capCup (hab : a ≠ b) :
+    middleLoopCount (capCup a b) (capCup a b) = 1 := by
   rw [middleLoopCount_def]
   have hset : {x : Fin k | IsMiddleLoopMin (capCup a b) (capCup a b) x} = {min a b} := by
     ext x
-    rw [Set.mem_ofPred_eq, hmem, Set.mem_singleton_iff]
+    rw [Set.mem_ofPred_eq, isMiddleLoopMin_capCup_iff hab, Set.mem_singleton_iff]
     rcases le_total a b with hle | hle
     · rw [min_eq_left hle]
       constructor
@@ -460,14 +470,21 @@ theorem middleLoopCount_capCup_capCup (hab : a ≠ b) :
 
 /-- **`s * e = e` on the diagram basis**: stacking the diagram of the transposition of the pair
 above a cap-cup diagram returns that diagram. No loop closes up in the middle
-(`TauCeti.middleLoopCount_permToBrauer_left`), so this is Brauer's relation `s * e = e`. -/
+(`TauCeti.middleLoopCount_permToBrauer_left`), so this is Brauer's relation `s * e = e`.
+
+This and `TauCeti.composeDiagram_capCup_permToBrauer_swap` are not `simp` lemmas: `simp` already
+reduces their left-hand sides, through `TauCeti.composeDiagram_permToBrauer_left` and
+`TauCeti.composeDiagram_permToBrauer_right` followed by the relabelling lemmas above, so `simp`
+proves them and tagging them would leave them out of simp-normal form. -/
 theorem composeDiagram_permToBrauer_swap_capCup (a b : Fin k) :
     composeDiagram (permToBrauer (Equiv.swap a b)) (capCup a b) = capCup a b := by
   rw [composeDiagram_permToBrauer_left, relabel_one_swap_capCup]
 
 /-- **`e * s = e` on the diagram basis**: stacking a cap-cup diagram above the diagram of the
 transposition of its pair returns that diagram. No loop closes up in the middle
-(`TauCeti.middleLoopCount_permToBrauer_right`), so this is Brauer's relation `e * s = e`. -/
+(`TauCeti.middleLoopCount_permToBrauer_right`), so this is Brauer's relation `e * s = e`.
+
+Not a `simp` lemma, for the reason given for `TauCeti.composeDiagram_permToBrauer_swap_capCup`. -/
 theorem composeDiagram_capCup_permToBrauer_swap (a b : Fin k) :
     composeDiagram (capCup a b) (permToBrauer (Equiv.swap a b)) = capCup a b := by
   rw [composeDiagram_permToBrauer_right, Equiv.Perm.inv_def, Equiv.symm_swap,
