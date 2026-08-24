@@ -18,6 +18,9 @@ spirit it records that rebundling the representation an object carries returns t
 is the identification a construction phrased as `FDRep.of ρ` needs in order to be read as a
 statement about the object it started from.
 
+It also records the character of a trivial representation, the constant `finrank`, in both the
+`Representation` and the `FDRep.of` spellings in which consumers meet it.
+
 An object of `FDRep k G` carries a module in the universe of `k`, so `FDRep.of` accepts a
 representation only when its carrier already lies there. A module-finite carrier is however always
 *equivalent* to one that does, because it is spanned by finitely many vectors over `k`;
@@ -32,6 +35,8 @@ being a commutative ring throughout otherwise.
 
 ## Main statements
 
+* `Representation.char_trivial`: the character of a trivial representation is the dimension of its
+  carrier, whence `FDRep.character_of_trivial` for the trivial representation on `k` itself.
 * `FDRep.moduleFinite_forget₂_obj`: the forgotten carrier is module-finite.
 * `FDRep.finrank_forget₂_obj`: forgetting does not change finrank.
 * `FDRep.character_forget₂_obj`: forgetting does not change the character.
@@ -42,11 +47,35 @@ being a commutative ring throughout otherwise.
 
 public section
 
+universe u v w
+
+namespace Representation
+
+/-- **The character of a trivial representation is the dimension of its carrier**: every group
+element acts as the identity, whose trace is that dimension. -/
+@[simp]
+theorem char_trivial {k : Type u} {G : Type v} {V : Type w} [Field k] [Monoid G] [AddCommGroup V]
+    [Module k V] [FiniteDimensional k V] (g : G) :
+    (trivial k G V).character g = Module.finrank k V := by
+  have hone : trivial k G V g = 1 :=
+    LinearMap.ext fun v => by rw [trivial_apply, Module.End.one_apply]
+  rw [character, hone, LinearMap.trace_one]
+
+end Representation
+
 namespace FDRep
 
 open CategoryTheory
 
-universe u v w
+/-- **The character of the trivial one-dimensional representation is constantly `1`**, that
+dimension being `1`. This is the form in which the trivial character enters a pairing or a
+Frobenius reciprocity computation, both of which are phrased for objects of `FDRep k G`. -/
+@[simp]
+theorem character_of_trivial {k : Type u} {G : Type v} [Field k] [Monoid G] (g : G) :
+    (FDRep.of (Representation.trivial k G k)).character g = 1 := by
+  rw [FDRep.character, FDRep.of_ρ']
+  -- the carrier of `FDRep.of ρ` is the module that `ρ` acts on, here `k` itself
+  exact (Representation.char_trivial g).trans (by simp)
 
 /-- Forgetting finite-dimensionality keeps the finite-generation instance on the carrier. -/
 instance moduleFinite_forget₂_obj {R : Type u} {G : Type v} [CommRing R] [Monoid G]

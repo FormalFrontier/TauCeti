@@ -18,7 +18,7 @@ subgroup order.
 
 ## Main result
 
-* `TauCeti.character_indFDRep_of` identifies the character of `TauCeti.indFDRep` with the
+* `TauCeti.character_indFDRep` identifies the character of `TauCeti.indFDRep` with the
   character of Mathlib's `Representation.ind`, the two differing only by the small carrier model.
 * `TauCeti.character_indFDRep_sum_quotient` expresses an induced character as a sum over left
   cosets.
@@ -147,16 +147,15 @@ end Rep
 /-- **The character of `TauCeti.indFDRep` is Mathlib's induced character.** Passing to the
 finite-dimensional model only replaces the carrier of `Representation.ind` by a small one, which
 `TauCeti.indFDRepForgetEquiv` compares with it. -/
-theorem character_indFDRep_of {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
-    [S.FiniteIndex] {V : Type u} [AddCommGroup V] [Module k V] [FiniteDimensional k V]
-    (ρ : Representation k S V) (g : G) :
-    (indFDRep (k := k) (G := G) (FDRep.of ρ)).character g = (ρ.ind S.subtype).character g := by
-  have hforget : ((forget₂ (FDRep k S) (Rep k S)).obj (FDRep.of ρ)).ρ = ρ := by
-    rw [FDRep.forget₂_ρ, FDRep.of_ρ']
+theorem character_indFDRep {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] (A : FDRep k S) (g : G) :
+    (indFDRep (k := k) (G := G) A).character g =
+      (Representation.ind S.subtype A.ρ).character g := by
   refine Eq.trans ?_ (congrArg
-    (fun τ : Representation k S V => (τ.ind S.subtype).character g) hforget)
-  exact (FDRep.character_forget₂_obj (indFDRep (k := k) (G := G) (FDRep.of ρ)) g).symm.trans
-    (congrFun (Representation.char_iso (indFDRepForgetEquiv (FDRep.of ρ))) g)
+    (fun τ : Representation k S A => (Representation.ind S.subtype τ).character g)
+    (FDRep.forget₂_ρ A))
+  exact (FDRep.character_forget₂_obj (indFDRep (k := k) (G := G) A) g).symm.trans
+    (congrFun (Representation.char_iso (indFDRepForgetEquiv A)) g)
 
 open scoped Classical in
 /-- The induced character at `g` is the sum of the original character over those left coset

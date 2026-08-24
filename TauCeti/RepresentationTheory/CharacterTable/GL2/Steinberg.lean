@@ -43,12 +43,13 @@ representation, are not proved; see the implementation notes.
   the identity is that dimension, by Mathlib's `FDRep.char_one`.
 * `TauCeti.character_GL2Steinberg`: its character at `g` is the number of cosets of `B` fixed by
   `g`, less one.
-* `TauCeti.character_GL2PrincipalSeries_one_one`: the boundary principal series
-  `TauCeti.GL2PrincipalSeries F 1 1` has the character of `ℂ[GL₂ ⧸ B]`, whence
+* `TauCeti.character_GL2PrincipalSeries_one_one_eq_character_ofMulAction`: the boundary principal
+  series `TauCeti.GL2PrincipalSeries F 1 1` has the character of `ℂ[GL₂ ⧸ B]`, whence
   `TauCeti.character_GL2PrincipalSeries_one_one_eq_one_add`: its character is the trivial character
   `1` plus the Steinberg character.
-* `TauCeti.characterPairing_GL2Steinberg_self`: the Steinberg character has norm `1`, computed
-  from the two double cosets of the Bruhat decomposition.
+* `TauCeti.characterPairing_GL2Steinberg_self`: the Steinberg character has norm `1`, by
+  `TauCeti.characterPairing_ofMulAction_quotient_sub_punit_eq_card_doubleCosetQuotient_sub_one`
+  and the two double cosets of the Bruhat decomposition.
 
 ## Implementation notes
 
@@ -147,19 +148,22 @@ theorem character_GL2Steinberg (g : GL (Fin 2) F) :
 
 /-! ### The character of the boundary principal series -/
 
-/-- **The boundary principal series is the permutation representation on the projective line.**
-At `α = β = 1` the character of `Ind_B^{GL₂}(1 ⊗ 1)` is the character of `ℂ[GL₂ ⧸ B]`, because
-inducing the trivial character of `B` is inducing the trivial representation. -/
-theorem character_GL2PrincipalSeries_one_one (g : GL (Fin 2) F) :
+/-- **The boundary principal series has the character of the permutation representation on the
+projective line.** At `α = β = 1` the character of `Ind_B^{GL₂}(1 ⊗ 1)` is the character of
+`ℂ[GL₂ ⧸ B]`, because inducing the trivial character of `B` is inducing the trivial
+representation. The two representations are only shown to have the same character here, not
+identified. -/
+theorem character_GL2PrincipalSeries_one_one_eq_character_ofMulAction (g : GL (Fin 2) F) :
     (GL2PrincipalSeries F 1 1).character g
       = (Representation.ofMulAction ℂ (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F)).character g := by
   have hchar : (GL2BorelRep F 1 1).character
       = (FDRep.of (Representation.trivial ℂ (GL2Borel F) ℂ)).character := by
     funext b
-    rw [character_GL2BorelRep, FDRep.character, FDRep.of_ρ']
+    rw [character_GL2BorelRep, FDRep.character_of_trivial]
     simp
   rw [GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character, hchar,
-    indClassFun_ofFDRep_character, character_indFDRep_of, char_ind_trivial, char_ofMulAction]
+    indClassFun_ofFDRep_character, character_indFDRep, FDRep.of_ρ', char_ind_trivial,
+    char_ofMulAction]
 
 /-- **The character of the boundary principal series is `1` plus the Steinberg character.** The
 `1` is the trivial character, carried by the invariant line of `ℂ[GL₂ ⧸ B]`. This is the
@@ -168,7 +172,8 @@ isomorphism of representations, is not proved here. -/
 @[simp]
 theorem character_GL2PrincipalSeries_one_one_eq_one_add (g : GL (Fin 2) F) :
     (GL2PrincipalSeries F 1 1).character g = 1 + (GL2Steinberg F).character g := by
-  rw [character_GL2PrincipalSeries_one_one, character_GL2Steinberg, char_ofMulAction]
+  rw [character_GL2PrincipalSeries_one_one_eq_character_ofMulAction, character_GL2Steinberg,
+    char_ofMulAction]
   ring
 
 /-! ### The norm of the Steinberg character -/
@@ -177,63 +182,34 @@ section Pairing
 
 variable [DecidableEq F]
 
-/-- A pretransitive action on a nonempty type has one orbit. This is Mathlib's
-`MulAction.pretransitive_iff_unique_quotient_of_nonempty` in counting form, named because the
-pairing computation below uses it twice, at two different actions. -/
-private theorem card_orbitQuotient_eq_one (G α : Type*) [Group G] [MulAction G α] [Nonempty α]
-    [IsPretransitive G α] : Nat.card (orbitRel.Quotient G α) = 1 :=
-  let _ := ((MulAction.pretransitive_iff_unique_quotient_of_nonempty G α).mp ‹_›).some
-  Nat.card_unique
-
-/-- Pairing a pretransitive action with a one-point one leaves it pretransitive. -/
-private theorem isPretransitive_prod_left (G α β : Type*) [Group G] [MulAction G α]
-    [MulAction G β] [IsPretransitive G α] [Subsingleton β] : IsPretransitive G (α × β) :=
-  ⟨fun p q => by
-    obtain ⟨g, hg⟩ := MulAction.exists_smul_eq G p.1 q.1
-    exact ⟨g, Prod.ext hg (Subsingleton.elim _ _)⟩⟩
-
 /-- **The Steinberg character has norm `1`.** This is the character-theoretic form of the
 irreducibility of the Steinberg representation; see the implementation notes for what turning it
 into `CategoryTheory.Simple` would still need. -/
+@[simp]
 theorem characterPairing_GL2Steinberg_self :
     characterPairing (ofFDRep (GL2Steinberg F)) (ofFDRep (GL2Steinberg F)) = 1 := by
-  -- Writing the Steinberg character as the permutation character of the projective line less the
-  -- trivial character, the pairing expands into four Burnside orbit counts: the permutation
-  -- character pairs with itself to the number `2` of double cosets `B \ GL₂ / B`, the Bruhat
-  -- decomposition, and the three remaining terms are `1` each because `GL₂` is transitive on the
-  -- projective line.  So `⟨χ_St, χ_St⟩ = 2 - 1 - 1 + 1 = 1`.
+  -- The Steinberg character is the permutation character of the projective line less the trivial
+  -- character, so the generic pairing computation applies: the norm is the number of double
+  -- cosets `B \ GL₂ / B` less one, and the Bruhat decomposition makes that number `2`.
   have hG : IsUnit (Nat.card (GL (Fin 2) F) : ℂ) :=
     isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
-  set perm := Representation.ofMulAction ℂ (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F) with hperm
-  set pt := Representation.ofMulAction ℂ (GL (Fin 2) F) PUnit.{u + 1} with hpt
-  -- the Steinberg character is the permutation character less the trivial one
-  have hSt : ofFDRep (GL2Steinberg F) = ofCharacter perm - ofCharacter pt := by
+  have hSt : ofFDRep (GL2Steinberg F) =
+      ofCharacter (Representation.ofMulAction ℂ (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F)) -
+        ofCharacter (Representation.ofMulAction ℂ (GL (Fin 2) F) PUnit.{u + 1}) := by
     refine Subtype.ext (funext fun g => ?_)
     rw [ofFDRep_apply, character_GL2Steinberg]
-    have hval : ((ofCharacter perm - ofCharacter pt : ClassFunction ℂ (GL (Fin 2) F)) : _ → ℂ) g
-        = perm.character g - pt.character g := by
+    have hval : ((ofCharacter (Representation.ofMulAction ℂ (GL (Fin 2) F)
+          (GL (Fin 2) F ⧸ GL2Borel F)) -
+        ofCharacter (Representation.ofMulAction ℂ (GL (Fin 2) F) PUnit.{u + 1}) :
+          ClassFunction ℂ (GL (Fin 2) F)) : _ → ℂ) g
+        = (Representation.ofMulAction ℂ (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F)).character g -
+          (Representation.ofMulAction ℂ (GL (Fin 2) F) PUnit.{u + 1}).character g := by
       rw [Submodule.coe_sub, Pi.sub_apply, ofCharacter_apply, ofCharacter_apply]
-    rw [hval, hperm, hpt, char_ofMulAction, char_ofMulAction]
+    rw [hval, char_ofMulAction, char_ofMulAction]
     simp
-  have hpp : characterPairing (ofCharacter perm) (ofCharacter perm) = 2 := by
-    rw [hperm, characterPairing_ofMulAction_quotient_eq_card_doubleCosetQuotient ℂ
-      (GL2Borel F) (GL2Borel F) hG, GL2Borel.card_doubleCosetQuotient_eq_two]
-    norm_num
-  have hpq : characterPairing (ofCharacter perm) (ofCharacter pt) = 1 := by
-    have := isPretransitive_prod_left (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F) PUnit.{u + 1}
-    rw [hperm, hpt, characterPairing_ofMulAction_eq_card_orbits ℂ _ _ hG,
-      card_orbitQuotient_eq_one]
-    norm_num
-  have hqp : characterPairing (ofCharacter pt) (ofCharacter perm) = 1 :=
-    (characterPairing_symm _ _).trans hpq
-  have hqq : characterPairing (ofCharacter pt) (ofCharacter pt) = 1 := by
-    have := isPretransitive_prod_left (GL (Fin 2) F) PUnit.{u + 1} PUnit.{u + 1}
-    rw [hpt, characterPairing_ofMulAction_eq_card_orbits ℂ _ _ hG, card_orbitQuotient_eq_one]
-    norm_num
-  rw [hSt]
-  simp only [map_sub, LinearMap.sub_apply]
-  rw [hpp, hpq, hqp, hqq]
-  ring
+  rw [hSt, characterPairing_ofMulAction_quotient_sub_punit_eq_card_doubleCosetQuotient_sub_one ℂ
+    (GL2Borel F) (GL2Borel F) hG, GL2Borel.card_doubleCosetQuotient_eq_two]
+  norm_num
 
 end Pairing
 

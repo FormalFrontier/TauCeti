@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.PID
 public import Mathlib.RepresentationTheory.Character
 public import TauCeti.Algebra.MonoidAlgebra.Basis
+public import TauCeti.RepresentationTheory.FDRep
 public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
@@ -356,10 +357,7 @@ Not a `simp` lemma: `TauCeti.toRepresentation_invariantLine` already rewrites th
 so this statement is not in simp-normal form. -/
 theorem character_invariantLine [Nonempty X] (g : G) :
     (invariantLine k G X).toRepresentation.character g = 1 := by
-  rw [toRepresentation_invariantLine, Representation.character]
-  have hone : (Representation.trivial k G (invariantLine k G X).toSubmodule) g = 1 :=
-    LinearMap.ext fun w => by rw [Representation.trivial_apply, Module.End.one_apply]
-  rw [hone, LinearMap.trace_one, finrank_invariantLine]
+  rw [toRepresentation_invariantLine, Representation.char_trivial, finrank_invariantLine]
   norm_num
 
 omit [Fintype X] in
