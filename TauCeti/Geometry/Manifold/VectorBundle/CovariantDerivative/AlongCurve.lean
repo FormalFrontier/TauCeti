@@ -28,14 +28,14 @@ fixed chart and compare it with the ambient covariant derivative of a pulled-bac
 
 ## Main definitions and results
 
-* `TauCeti.CovariantDerivative.tangentFieldCoord`: the coordinate reading of a tangent field along
+* `CovariantDerivative.tangentFieldCoord`: the coordinate reading of a tangent field along
   a curve in a specified tangent-bundle trivialization.
-* `TauCeti.CovariantDerivative.alongCurveInChart`: the model-space formula `v' + Γ(v, u')`.
-* `TauCeti.CovariantDerivative.alongCurve`: the resulting tangent field along the curve.
-* `TauCeti.CovariantDerivative.alongCurve_add` and
-  `TauCeti.CovariantDerivative.alongCurve_smul`: additivity and the scalar Leibniz rule.
-* `TauCeti.CovariantDerivative.alongCurve_congr` and
-  `TauCeti.CovariantDerivative.alongCurve_comp`: locality and reparametrization.
+* `CovariantDerivative.alongCurveInChart`: the model-space formula `v' + Γ(v, u')`.
+* `CovariantDerivative.alongCurve`: the resulting tangent field along the curve.
+* `CovariantDerivative.alongCurve_add` and
+  `CovariantDerivative.alongCurve_smul`: additivity and the scalar Leibniz rule.
+* `CovariantDerivative.alongCurve_congr` and
+  `CovariantDerivative.alongCurve_comp`: locality and reparametrization.
 
 ## References
 
@@ -56,7 +56,7 @@ open scoped Manifold Topology
 
 noncomputable section
 
-namespace TauCeti.CovariantDerivative
+namespace CovariantDerivative
 
 variable
   {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
@@ -238,4 +238,4 @@ theorem alongCurve_comp (φ : 𝕜 → 𝕜) {t : 𝕜} (hφ : DifferentiableAt 
   simp only [Function.comp_apply]
   rw [hVcomp, hγcomp, map_smul, ← smul_add, map_smul]
 
-end TauCeti.CovariantDerivative
+end CovariantDerivative

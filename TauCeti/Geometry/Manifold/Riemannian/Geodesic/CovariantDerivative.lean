@@ -55,46 +55,46 @@ variable (γ : ℝ → M) (V : ∀ t, TangentSpace I (γ t))
 
 /-- The Levi-Civita covariant derivative of a tangent field `V` along a curve `γ`. -/
 def covariantDerivativeAlong (t : ℝ) : TangentSpace I (γ t) :=
-  TauCeti.CovariantDerivative.alongCurve
-    (_root_.CovariantDerivative.leviCivita I M) γ V t
+  CovariantDerivative.alongCurve
+    (CovariantDerivative.leviCivita I M) γ V t
 
 /-- The canonical along-curve derivative is the generic construction for the Levi-Civita
 connection. -/
 @[simp]
 theorem covariantDerivativeAlong_apply (t : ℝ) :
     covariantDerivativeAlong γ V t =
-      TauCeti.CovariantDerivative.alongCurve
-        (_root_.CovariantDerivative.leviCivita I M) γ V t :=
+      CovariantDerivative.alongCurve
+        (CovariantDerivative.leviCivita I M) γ V t :=
   (rfl)
 
 /-- The Levi-Civita covariant derivative along a curve is additive in the tangent field. -/
 theorem covariantDerivativeAlong_add (W : ∀ t, TangentSpace I (γ t)) {t : ℝ}
     (hV : DifferentiableAt ℝ
-      (TauCeti.CovariantDerivative.tangentFieldCoord γ V (γ t)) t)
+      (CovariantDerivative.tangentFieldCoord γ V (γ t)) t)
     (hW : DifferentiableAt ℝ
-      (TauCeti.CovariantDerivative.tangentFieldCoord γ W (γ t)) t) :
+      (CovariantDerivative.tangentFieldCoord γ W (γ t)) t) :
     covariantDerivativeAlong γ (fun s ↦ V s + W s) t =
       covariantDerivativeAlong γ V t + covariantDerivativeAlong γ W t := by
   simp only [covariantDerivativeAlong_apply]
-  exact TauCeti.CovariantDerivative.alongCurve_add
-    (_root_.CovariantDerivative.leviCivita I M) γ V W hV hW
+  exact CovariantDerivative.alongCurve_add
+    (CovariantDerivative.leviCivita I M) γ V W hV hW
 
 /-- The Levi-Civita covariant derivative along a curve obeys the scalar Leibniz rule. -/
 theorem covariantDerivativeAlong_smul (f : ℝ → ℝ) {t : ℝ} (hf : DifferentiableAt ℝ f t)
     (hV : DifferentiableAt ℝ
-      (TauCeti.CovariantDerivative.tangentFieldCoord γ V (γ t)) t) :
+      (CovariantDerivative.tangentFieldCoord γ V (γ t)) t) :
     covariantDerivativeAlong γ (fun s ↦ f s • V s) t =
       deriv f t • V t + f t • covariantDerivativeAlong γ V t := by
   simp only [covariantDerivativeAlong_apply]
-  exact TauCeti.CovariantDerivative.alongCurve_smul
-    (_root_.CovariantDerivative.leviCivita I M) γ V f hf hV
+  exact CovariantDerivative.alongCurve_smul
+    (CovariantDerivative.leviCivita I M) γ V f hf hV
 
 /-- The Levi-Civita covariant derivative of the zero field along a curve is zero. -/
 theorem covariantDerivativeAlong_zero (t : ℝ) :
     covariantDerivativeAlong γ (fun s : ℝ ↦ (0 : TangentSpace I (γ s))) t = 0 := by
   simp only [covariantDerivativeAlong_apply]
-  exact TauCeti.CovariantDerivative.alongCurve_zero
-    (_root_.CovariantDerivative.leviCivita I M) γ t
+  exact CovariantDerivative.alongCurve_zero
+    (CovariantDerivative.leviCivita I M) γ t
 
 /-- The Levi-Civita covariant derivative along a curve depends only on the germ of the tangent
 field at the parameter under consideration. -/
@@ -102,20 +102,20 @@ theorem covariantDerivativeAlong_congr {W : ∀ t, TangentSpace I (γ t)} {t : �
     (h : V =ᶠ[𝓝 t] W) :
     covariantDerivativeAlong γ V t = covariantDerivativeAlong γ W t := by
   simp only [covariantDerivativeAlong_apply]
-  exact TauCeti.CovariantDerivative.alongCurve_congr
-    (_root_.CovariantDerivative.leviCivita I M) γ V h
+  exact CovariantDerivative.alongCurve_congr
+    (CovariantDerivative.leviCivita I M) γ V h
 
 /-- The Levi-Civita covariant derivative along a curve is natural under differentiable
 reparametrization. -/
 theorem covariantDerivativeAlong_comp (φ : ℝ → ℝ) {t : ℝ} (hφ : DifferentiableAt ℝ φ t)
     (hγ : DifferentiableAt ℝ
-      (TauCeti.CovariantDerivative.curveCoord (I := I) γ (γ (φ t))) (φ t))
+      (CovariantDerivative.curveCoord (I := I) γ (γ (φ t))) (φ t))
     (hV : DifferentiableAt ℝ
-      (TauCeti.CovariantDerivative.tangentFieldCoord γ V (γ (φ t))) (φ t)) :
+      (CovariantDerivative.tangentFieldCoord γ V (γ (φ t))) (φ t)) :
     covariantDerivativeAlong (γ ∘ φ) (fun s ↦ V (φ s)) t =
       deriv φ t • covariantDerivativeAlong γ V (φ t) := by
   simp only [covariantDerivativeAlong_apply]
-  exact TauCeti.CovariantDerivative.alongCurve_comp
-    (_root_.CovariantDerivative.leviCivita I M) γ V φ hφ hγ hV
+  exact CovariantDerivative.alongCurve_comp
+    (CovariantDerivative.leviCivita I M) γ V φ hφ hγ hV
 
 end TauCeti.Riemannian
