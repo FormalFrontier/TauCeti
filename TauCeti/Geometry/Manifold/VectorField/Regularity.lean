@@ -134,5 +134,4 @@ theorem ContMDiffOn.contMDiffOn_mvfderiv_apply {f : M → F} {s : Set M}
   have hval : ((fun p : TangentBundle I M ↦ (tangentMapWithin I 𝓘(𝕜, F) f s p).2) ∘
       (fun y : M ↦ (TotalSpace.mk' E y (A y) : TangentBundle I M))) y
       = mfderivWithin I 𝓘(𝕜, F) f s y (A y) := rfl
-  rw [hval, mfderivWithin_of_isOpen hs hy]
-  rfl
+  rw [hval, mfderivWithin_of_isOpen hs hy, mvfderiv_apply_eq_mfderiv_apply]
