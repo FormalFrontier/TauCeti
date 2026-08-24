@@ -9,6 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # The upper-triangular Borel subgroup scheme of `GL₂`
@@ -228,23 +229,13 @@ instance isClosedImmersion_inclusion :
   let e₀ := (eqToHom (groupScheme_def R)).hom.hom.left
   let c := (CommHopfAlgCat.quotientSpecι
     (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)).hom.hom.left
-  have he₀ : IsIso e₀ :=
-    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R)))).isIso_hom
   let e₂ := ((eqToIso (GeneralLinear.groupScheme_def R 2).symm).hom).hom.hom.left
-  have he₂ : IsIso e₂ :=
-    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (GeneralLinear.groupScheme_def R 2).symm))).isIso_hom
   have hc : AlgebraicGeometry.IsClosedImmersion c := by
     infer_instance
   have hc₂ : AlgebraicGeometry.IsClosedImmersion (c ≫ e₂) :=
-    (@MorphismProperty.cancel_right_of_respectsIso
-      _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ c e₂ he₂).2 hc
+    (MorphismProperty.cancel_right_of_respectsIso _ c e₂).2 hc
   have he₀c₂ : AlgebraicGeometry.IsClosedImmersion (e₀ ≫ (c ≫ e₂)) :=
-    (@MorphismProperty.cancel_left_of_respectsIso
-      _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ e₀ (c ≫ e₂) he₀).2 hc₂
+    (MorphismProperty.cancel_left_of_respectsIso _ e₀ (c ≫ e₂)).2 hc₂
   rw [inclusion_hom_left]
   exact he₀c₂
 

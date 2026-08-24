@@ -30,11 +30,15 @@ The declarations live in `TauCeti.MeasureTheory` because none depends on graphon
 ## Main results
 
 * `isCoupling_prod` and `isCoupling_diagonalCoupling` construct couplings;
+* `IsCoupling.isProbabilityMeasure` and `IsCoupling.isFiniteMeasure` record that a coupling of
+  probability measures is one;
 * `IsCoupling.measurePreserving_fst` and `IsCoupling.measurePreserving_snd` expose the marginal
   projections as measure-preserving maps;
 * `IsCoupling.integral_comp_fst` and `IsCoupling.integral_comp_snd` transfer integrals depending on
   one coordinate to the corresponding marginal;
-* `IsCoupling.swap` swaps the coordinates of a coupling.
+* `IsCoupling.swap` swaps the coordinates of a coupling;
+* `isCoupling_map_prodMk` builds the graph coupling of two measure-preserving maps out of a common
+  carrier, of which `isCoupling_diagonalCoupling` is the identity case.
 
 ## References
 
@@ -92,6 +96,15 @@ theorem IsCoupling.isProbabilityMeasure [IsProbabilityMeasure μ₁] (hπ : IsCo
     IsProbabilityMeasure π :=
   ⟨by rw [← Measure.fst_univ, hπ.fst_eq, measure_univ]⟩
 
+/-- A coupling whose first marginal is finite is a finite measure.
+
+This weakening is what an existentially quantified coupling has to supply by hand: a consumer such
+as the cut norm asks for `IsFiniteMeasure`, and a witness bound by an existential cannot provide an
+instance by unification, so it passes this term explicitly. -/
+theorem IsCoupling.isFiniteMeasure [IsFiniteMeasure μ₁] (hπ : IsCoupling μ₁ μ₂ π) :
+    IsFiniteMeasure π :=
+  ⟨by rw [← Measure.fst_univ, hπ.fst_eq]; exact measure_lt_top μ₁ Set.univ⟩
+
 /-- The **independent coupling**: the product measure couples its two factors. -/
 theorem isCoupling_prod (μ₁ : Measure Ω₁) (μ₂ : Measure Ω₂) [IsProbabilityMeasure μ₁]
     [IsProbabilityMeasure μ₂] : IsCoupling μ₁ μ₂ (μ₁.prod μ₂) :=
@@ -123,6 +136,24 @@ theorem IsCoupling.integral_comp_snd (hπ : IsCoupling μ₁ μ₂ π) {f : Ω�
 
 end Integral
 
+section Graph
+
+variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+
+/-- The **graph coupling** of two measure-preserving maps out of a common carrier: pushing `μ`
+forward along `x ↦ (f x, g x)` couples `μ₁` and `μ₂`.
+
+This is the coupling a common-carrier comparison of two objects contributes to a coupling
+infimum, and it is where the measure-preserving-map picture enters the coupling-primary one. The
+diagonal coupling below is the case `f = g = id`. -/
+theorem isCoupling_map_prodMk {f : Ω → Ω₁} {g : Ω → Ω₂} (hf : MeasurePreserving f μ μ₁)
+    (hg : MeasurePreserving g μ μ₂) : IsCoupling μ₁ μ₂ (μ.map fun x => (f x, g x)) :=
+  isCoupling_iff.2
+    ⟨by rw [Measure.fst_map_prodMk hg.measurable, hf.map_eq],
+      by rw [Measure.snd_map_prodMk hf.measurable, hg.map_eq]⟩
+
+end Graph
+
 section Diagonal
 
 variable {Ω : Type*} [MeasurableSpace Ω]
@@ -137,11 +168,10 @@ theorem diagonalCoupling_apply (μ : Measure Ω) {s : Set (Ω × Ω)} (hs : Meas
   rw [diagonalCoupling, Measure.map_apply (measurable_id'.prodMk measurable_id') hs]
   rfl
 
-/-- The diagonal coupling is a coupling of `μ` with itself. -/
+/-- The diagonal coupling is a coupling of `μ` with itself: the graph coupling of the identity
+with itself. -/
 theorem isCoupling_diagonalCoupling (μ : Measure Ω) : IsCoupling μ μ (diagonalCoupling μ) :=
-  isCoupling_iff.2
-    ⟨by rw [diagonalCoupling, Measure.fst_map_prodMk measurable_id', Measure.map_id'],
-      by rw [diagonalCoupling, Measure.snd_map_prodMk measurable_id', Measure.map_id']⟩
+  isCoupling_map_prodMk (MeasurePreserving.id μ) (MeasurePreserving.id μ)
 
 /-- The diagonal coupling of a probability measure is a probability measure. -/
 instance instIsProbabilityMeasureDiagonalCoupling (μ : Measure Ω) [IsProbabilityMeasure μ] :
