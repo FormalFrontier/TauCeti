@@ -9,7 +9,6 @@ public import Mathlib.FieldTheory.IsSepClosed
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Pin.Action
 -- Private: `Algebra.adjoin_eq_span` supplies multiplication closure for the Spin-group span.
-import Mathlib.Algebra.Algebra.Subalgebra.Lattice
 
 /-!
 # Lifting reflections to the Pin and Spin groups
