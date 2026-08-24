@@ -39,9 +39,10 @@ pinned Chevalley--Demazure construction consumes as its simply connected conditi
 is stated through that same coroot-side condition as its siblings, which is what the per-type
 dispatcher will collect. The root half is particular to `E₈`, one of the three types — with `F₄`
 and `G₂` — whose Cartan determinant is `1`: its root lattice is already the whole weight lattice
-and the simply connected form is also the adjoint one. In the sibling files the roots span only the
-root lattice, sitting inside the weight lattice at the index recorded by the Cartan determinant, and
-no such instance exists.
+and the simply connected form is also the adjoint one. The `F₄` and `G₂` files carry an instance
+for that same reason. In the files of the remaining types, whose Cartan determinant is greater than
+`1`, the roots span only the root lattice, sitting inside the weight lattice at the index recorded
+by that determinant, and no such instance exists.
 
 ## Main definitions
 
