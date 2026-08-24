@@ -74,7 +74,10 @@ def toRationalUnitSheaf : regularUnitSheaf X ⟶ rationalUnitSheaf X :=
     (toRationalFunctionsRing X)
 
 /-- The Cartier-divisor sheaf `𝒦_X^× / 𝒪_X^×`. This is the cokernel in the category of sheaves
-of abelian groups, and hence is the sheafification of the pointwise quotient presheaf. -/
+of abelian groups, and hence is the sheafification of the pointwise quotient presheaf.
+
+Use Mathlib's generic `cokernel.desc`, `cokernel.π_desc`, and cancellation through
+`cokernel.π` for its universal property. -/
 def cartierDivisorSheaf : TopCat.Sheaf AddCommGrpCat.{u} X :=
   cokernel (toRationalUnitSheaf X)
 
