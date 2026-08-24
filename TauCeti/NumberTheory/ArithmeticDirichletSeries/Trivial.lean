@@ -92,14 +92,7 @@ theorem normCoeff_one_apply (n : ℕ) :
 theorem normCoeff_trivialUnitaryWeight_apply (n : ℕ) :
     normCoeff K (1 : UnitaryIdealWeight K).toIdealArithmeticFunction n =
       if n = 0 then 0 else dedekindZetaCoeff K n := by
-  have h : (1 : UnitaryIdealWeight K).toIdealArithmeticFunction = 1 := by
-    funext I
-    have hI : (I : Ideal (𝓞 K)) ≠ ⊥ := by
-      simpa only [Ideal.zero_eq_bot] using mem_nonZeroDivisors_iff_ne_zero.mp I.property
-    rw [UnitaryIdealWeight.toIdealArithmeticFunction_apply]
-    change (1 : MultiplicativeIdealWeight K) (I : Ideal (𝓞 K)) = 1
-    rw [MultiplicativeIdealWeight.one_apply, ite_eq_right hI]
-  rw [h]
+  rw [UnitaryIdealWeight.toIdealArithmeticFunction_one]
   exact normCoeff_one_apply K n
 
 /-- Regrouping the trivial ideal weight gives Mathlib's Dedekind zeta function. -/
