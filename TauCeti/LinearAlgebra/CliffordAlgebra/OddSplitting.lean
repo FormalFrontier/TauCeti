@@ -7,13 +7,14 @@ module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
 public import TauCeti.LinearAlgebra.CliffordAlgebra.VolumeElement
-public import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 public import TauCeti.RingTheory.Idempotents.SquareRootOne
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
 public import Mathlib.FieldTheory.IsSepClosed
+public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 
--- Private: the grade involution is used only inside proofs.
+-- Private: the grade involution and the anisotropic orthogonal basis are used only inside proofs.
 import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
+import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 
 /-!
 # Splitting a Clifford algebra along a central odd square root of one
