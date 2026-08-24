@@ -442,6 +442,19 @@ theorem apply_symm_apply (f : Isometry A B) (x : B) : f (f.symm x) = x :=
 theorem trans_apply (f : Isometry A B) (g : Isometry B C) (x : A) : (f.trans g) x = g (f x) :=
   f.toAddEquiv.trans_apply g.toAddEquiv x
 
+/-- Forgetting the identity isometry gives the identity morphism. -/
+@[simp]
+theorem refl_toHom (A : FiniteBilinearModule) : (refl A).toHom = Hom.id A := by
+  ext x
+  rw [toHom_apply, refl_apply, Hom.id_apply]
+
+/-- Forgetting a composite isometry gives the composite morphism. -/
+@[simp]
+theorem trans_toHom (f : Isometry A B) (g : Isometry B C) :
+    (f.trans g).toHom = g.toHom.comp f.toHom := by
+  ext x
+  rw [toHom_apply, trans_apply, Hom.comp_apply, toHom_apply, toHom_apply]
+
 /-- Nondegeneracy transfers along an isometry. -/
 theorem isNondegenerate (f : Isometry A B) (hA : A.IsNondegenerate) : B.IsNondegenerate := by
   rw [B.isNondegenerate_iff_injective]
