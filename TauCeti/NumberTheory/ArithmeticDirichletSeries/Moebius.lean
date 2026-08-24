@@ -5,10 +5,13 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.Nat.Choose.Sum
 public import Mathlib.RingTheory.UniqueFactorizationDomain.Moebius
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Convolution
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Weight
+-- Non-public: the alternating sum over a powerset,
+-- `Finset.sum_powerset_neg_one_pow_card_of_nonempty`, is used only inside the proof of the
+-- divisor-sum identity, so downstream importers do not pay for it.
+import Mathlib.Data.Nat.Choose.Sum
 
 /-!
 # The ideal Möbius function and Möbius inversion
@@ -250,7 +253,7 @@ namespace IdealArithmeticFunction
 
 /-! ### Möbius inversion -/
 
-/-- The ideal Möbius function is a right inverse of the everywhere-one function for ideal
+/-- The ideal Möbius function is a left inverse of the everywhere-one function for ideal
 convolution. -/
 @[simp]
 theorem convolution_moebius_one :
@@ -268,7 +271,7 @@ theorem convolution_moebius_one :
     _ = 0 := by
         rw [Ideal.sum_moebius_divisorsAntidiagonal_of_ne_one hA, Int.cast_zero]
 
-/-- The ideal Möbius function is a left inverse of the everywhere-one function for ideal
+/-- The ideal Möbius function is a right inverse of the everywhere-one function for ideal
 convolution. -/
 @[simp]
 theorem convolution_one_moebius :
