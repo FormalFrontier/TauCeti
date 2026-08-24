@@ -8,7 +8,7 @@ module
 public import TauCeti.MeasureTheory.Measure.LowerSemicontinuousLintegral
 public import TauCeti.MeasureTheory.Measure.Prokhorov
 public import TauCeti.MeasureTheory.OptimalTransport.Compactness
-public import TauCeti.MeasureTheory.OptimalTransport.Cost
+public import TauCeti.MeasureTheory.OptimalTransport.Cost.Basic
 -- Proof-only: the order-topology criterion turning a `liminf`/`limsup` sandwich into convergence.
 import Mathlib.Topology.Order.LiminfLimsup
 
