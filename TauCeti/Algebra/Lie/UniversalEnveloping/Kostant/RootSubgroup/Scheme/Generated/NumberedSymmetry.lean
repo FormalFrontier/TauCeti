@@ -485,14 +485,10 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_inv (i : I) :
       kostantRootSubgroupToGenerated e h ρ M hM hnil b i := by
   rw [← kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom
     e h ρ M hM hnil b σ θ hθM hθe hσ i]
-  have hcancel :
-      (kostantGeneratedNumberedSymmetryIso
-          e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
-        (kostantGeneratedNumberedSymmetryIso
-          e h ρ M hM hnil b σ θ hθM hθe hσ).inv = 𝟙 _ :=
+  rw [Category.assoc,
     (kostantGeneratedNumberedSymmetryIso
-      e h ρ M hM hnil b σ θ hθM hθe hσ).hom_inv_id
-  rw [Category.assoc, hcancel, Category.comp_id]
+      e h ρ M hM hnil b σ θ hθM hθe hσ).hom_inv_id,
+    Category.comp_id]
 
 include hθe hσ in
 /-- Iterating the generated group-scheme symmetry carries the `i`th root subgroup to the root
@@ -505,22 +501,19 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom (m : ℕ
       kostantRootSubgroupToGenerated e h ρ M hM hnil b ((σ^[m]) i) := by
   induction m generalizing i with
   | zero =>
-      have hone : (1 : Aut (kostantGeneratedGroupScheme e h ρ M hM hnil b)).hom =
-          𝟙 (kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
-        by exact map_one (Aut.toEnd (kostantGeneratedGroupScheme e h ρ M hM hnil b))
-      rw [pow_zero, Function.iterate_zero_apply, hone, Category.comp_id]
+      rw [pow_zero, Function.iterate_zero_apply]
+      change _ ≫ (Iso.refl _).hom = _
+      rw [Iso.refl_hom, Category.comp_id]
   | succ m ih =>
-      have hmul :
-          ((kostantGeneratedNumberedSymmetryIso
-                e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m *
-              kostantGeneratedNumberedSymmetryIso
-                e h ρ M hM hnil b σ θ hθM hθe hσ).hom =
-            (kostantGeneratedNumberedSymmetryIso
-                e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
-              ((kostantGeneratedNumberedSymmetryIso
-                e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m).hom := by
-        exact map_mul (Aut.toEnd (kostantGeneratedGroupScheme e h ρ M hM hnil b)) _ _
-      rw [pow_succ, hmul, ← Category.assoc,
+      rw [pow_succ]
+      -- `Aut.Aut_mul_def` and `Iso.trans_hom` give this reversed composite; `change`
+      -- exposes it because keyed rewriting does not unfold the plain definition `Aut`.
+      change _ ≫
+        (kostantGeneratedNumberedSymmetryIso
+          e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
+        ((kostantGeneratedNumberedSymmetryIso
+          e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m).hom = _
+      rw [← Category.assoc,
         kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom, ih,
         Function.iterate_succ_apply]
 
@@ -535,10 +528,8 @@ theorem kostantGeneratedNumberedSymmetryIso_pow_eq_one (m : ℕ)
   apply Iso.ext
   apply kostantGeneratedGroupScheme_hom_ext e h ρ M hM hnil b
   intro i
-  have hone : (1 : Aut (kostantGeneratedGroupScheme e h ρ M hM hnil b)).hom =
-      𝟙 (kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
-    by exact map_one (Aut.toEnd (kostantGeneratedGroupScheme e h ρ M hM hnil b))
-  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq,
-    hone, Category.comp_id]
+  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq]
+  change _ = _ ≫ (Iso.refl _).hom
+  rw [Iso.refl_hom, Category.comp_id]
 
 end TauCeti.UniversalEnvelopingAlgebra
