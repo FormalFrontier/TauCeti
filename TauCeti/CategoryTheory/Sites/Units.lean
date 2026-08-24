@@ -69,7 +69,10 @@ lemma additiveUnitsFunctor_obj_obj (F : Sheaf J CommRingCat.{u}) (U : Cᵒᵖ) :
 @[simp]
 lemma additiveUnitsFunctor_map_app_apply {F G : Sheaf J CommRingCat.{u}} (f : F ⟶ G)
     (U : Cᵒᵖ) (x : Additive ((F.obj.obj U : CommRingCat.{u})ˣ)) :
-    ((additiveUnitsFunctor J).map f).hom.app U x =
+    (@AddCommGrpCat.Hom.hom
+      (AddCommGrpCat.of (Additive ((F.obj.obj U : CommRingCat.{u})ˣ)))
+      (AddCommGrpCat.of (Additive ((G.obj.obj U : CommRingCat.{u})ˣ)))
+      (((additiveUnitsFunctor J).map f).hom.app U)) x =
       Additive.ofMul (Units.map (f.hom.app U).hom.toMonoidHom (Additive.toMul x)) :=
   rfl
 
