@@ -277,19 +277,17 @@ theorem tendsto_timeSliceDensity_nhdsGT (F : ℝ≥0 × V → ℂ) (t : ℝ≥0)
     exact (timeSliceDensity_antitone F q (mem_Ioi.1 hs).le).trans_lt hb
 
 /-- The real-valued time profile of a fibre, reparametrized by a real time, is right-continuous
-on `[0, ∞)`. -/
+at every nonnegative time where its value is finite. -/
 theorem tendsto_toReal_timeSliceDensity_nhdsGT (F : ℝ≥0 × V → ℂ) {q : V}
-    (hq : timeSliceDensity F 0 q ≠ ⊤) {u : ℝ} (hu : 0 ≤ u) :
+    {u : ℝ} (hq : timeSliceDensity F u.toNNReal q ≠ ⊤) (hu : 0 ≤ u) :
     Tendsto (fun s : ℝ => (timeSliceDensity F s.toNNReal q).toReal) (𝓝[>] u)
       (𝓝 ((timeSliceDensity F u.toNNReal q).toReal)) := by
-  have hne : timeSliceDensity F u.toNNReal q ≠ ⊤ :=
-    ne_top_of_le_ne_top hq (timeSliceDensity_antitone F q (zero_le : (0 : ℝ≥0) ≤ u.toNNReal))
   have htoNN : Tendsto (fun s : ℝ => s.toNNReal) (𝓝[>] u) (𝓝[>] u.toNNReal) := by
     refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
       ((continuous_real_toNNReal.tendsto u).mono_left nhdsWithin_le_nhds) ?_
     filter_upwards [self_mem_nhdsWithin] with s hs
     exact mem_Ioi.2 ((Real.toNNReal_lt_toNNReal_iff_of_nonneg hu).2 (mem_Ioi.1 hs))
-  exact (ENNReal.tendsto_toReal hne).comp ((tendsto_timeSliceDensity_nhdsGT F _ q).comp htoNN)
+  exact (ENNReal.tendsto_toReal hq).comp ((tendsto_timeSliceDensity_nhdsGT F _ q).comp htoNN)
 
 /-! ## Complete monotonicity of the fibres -/
 
@@ -330,8 +328,12 @@ theorem ae_isDifferenceCompletelyMonotone_timeSliceDensity (hFpd : IsSemigroupGr
     rw [← hq]
     exact ENNReal.toReal_nonneg
   filter_upwards [hfin, hDd, hsign] with q hq₁ hq₂ hq₃
+  have hfin_at (u : ℝ) : timeSliceDensity F u.toNNReal q ≠ ⊤ :=
+    ne_top_of_le_ne_top hq₁
+      (timeSliceDensity_antitone F q (zero_le : (0 : ℝ≥0) ≤ u.toNNReal))
   refine isDifferenceCompletelyMonotone_of_forall_rat
-    (fun u hu => tendsto_toReal_timeSliceDensity_nhdsGT F hq₁ hu) fun l hl s hs => ?_
+    (fun u hu => tendsto_toReal_timeSliceDensity_nhdsGT F (hfin_at u) hu)
+    fun l hl s hs => ?_
   have hcongr : fwdDiffList (l.map (Rat.cast))
         (fun s : ℝ => (timeSliceDensity F s.toNNReal q).toReal) ((s : ℝ))
       = fwdDiffList (l.map (Rat.cast))
@@ -358,7 +360,8 @@ theorem ae_isContinuousCompletelyMonotoneOnIoi_timeSliceDensity (hFpd : IsSemigr
   filter_upwards [ae_isDifferenceCompletelyMonotone_timeSliceDensity hFpd hFcont hFbdd,
     ae_timeSliceDensity_zero_eq_one hFpd hFcont hFbdd] with q hq hone
   refine hq.isContinuousCompletelyMonotoneOnIoi (continuousWithinAt_Ioi_iff_Ici.1 ?_)
-  exact tendsto_toReal_timeSliceDensity_nhdsGT F (by rw [hone]; exact ENNReal.one_ne_top) le_rfl
+  exact tendsto_toReal_timeSliceDensity_nhdsGT F
+    (by simpa only [Real.toNNReal_zero, hone] using ENNReal.one_ne_top) le_rfl
 
 end TauCeti
 
