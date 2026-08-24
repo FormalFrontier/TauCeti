@@ -88,7 +88,7 @@ theorem deconcatenation_ofLetter (a : M) : deconcatenation R M (ofLetter R M a) 
 /-- The `(1, n - 1)` bidegree part of reduced deconcatenation, evaluated on a pure tensor word of
 length `m`: only the cut after the first letter can contribute, and it does so exactly when
 `m = n`. -/
-theorem map_component_deconcatenation_tprod (n m : {n : ℕ // 0 < n}) (hn : 2 ≤ n.1)
+private theorem map_component_deconcatenation_tprod (n m : {n : ℕ // 0 < n}) (hn : 2 ≤ n.1)
     (x : Fin m.1 → M) :
     TensorProduct.map (component R M 1) (component R M ⟨n.1 - 1, by omega⟩)
         (deconcatenation R M (of R M m (PiTensorProduct.tprod R x))) =
