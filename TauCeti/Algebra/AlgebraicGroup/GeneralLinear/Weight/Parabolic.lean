@@ -217,6 +217,7 @@ theorem weightParabolicInclusion_def (w : Fin N → ℤ) :
 
 /-- The coordinate morphism recovered from the weight-parabolic inclusion is the quotient
 coordinate map. -/
+@[simp]
 theorem weightParabolicInclusion_coordinateMap (w : Fin N → ℤ) :
     ((AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage
       (weightParabolicInclusion R w ≫ eqToHom (groupScheme_def R N))).unop =
