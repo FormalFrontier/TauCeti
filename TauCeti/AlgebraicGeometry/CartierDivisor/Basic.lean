@@ -120,8 +120,8 @@ theorem cartierDivisorSheaf_hom_ext {F : TopCat.Sheaf AddCommGrpCat.{u} X}
 abbrev CartierDivisor : Type u :=
   ((cartierDivisorSheaf X).obj.obj (op (⊤ : X.Opens)) : Type u)
 
-/-- The quotient map from global nonzero rational functions to Cartier divisors. Its source is
-the group of units of `Γ(X, 𝒦_X)`, written additively. -/
+/-- The map on global sections induced by the quotient projection from `𝒦_X^×` to the
+Cartier-divisor sheaf. Its source is the group of units of `Γ(X, 𝒦_X)`, written additively. -/
 def toCartierDivisor :
     Additive (((rationalFunctionsRing X).presheaf.obj (op (⊤ : X.Opens)))ˣ) →+
       CartierDivisor X :=
