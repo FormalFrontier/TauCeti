@@ -181,17 +181,6 @@ theorem evalZeroPoint_constPolyPoint (g : WithConv (H →ₐ[R] A)) :
 /-! ### The generic point of a cocharacter and conjugation by it -/
 
 variable (A) in
-/-- The Laurent variable `T`, as a unit of `A[T;T⁻¹]`. It is the tautological `A[T;T⁻¹]`-point of
-the multiplicative group. -/
-noncomputable def genericUnit : (LaurentPolynomial A)ˣ :=
-  unitOfInvertible (LaurentPolynomial.T 1)
-
-/-- The generic unit is the Laurent variable `T`. -/
-@[simp]
-theorem genericUnit_val : (genericUnit A : LaurentPolynomial A) = LaurentPolynomial.T 1 := by
-  simp [genericUnit]
-
-variable (A) in
 /-- **A cocharacter on points**: the group homomorphism `𝔾ₘ(A) = Aˣ → G(A)` obtained from a
 cocharacter `l : 𝔾ₘ → G`, presented contravariantly as a bialgebra homomorphism
 `H →ₐc[R] R[T;T⁻¹]`. -/

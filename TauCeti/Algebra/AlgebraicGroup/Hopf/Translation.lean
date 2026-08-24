@@ -72,6 +72,18 @@ theorem rightTranslationAlgHom_apply (g : WithConv (H →ₐ[k] k)) (x : H) :
   | add z w hz hw => simp [hz, hw]
   | tmul z w => simp [Algebra.smul_def, mul_comm]
 
+/-- Composing a point with right translation is convolution by the translating point. -/
+theorem ofConv_comp_rightTranslationAlgHom (f g : WithConv (H →ₐ[k] k)) :
+    WithConv.toConv (f.ofConv.comp (rightTranslationAlgHom g)) = f * g := by
+  apply WithConv.ofConv_injective
+  ext x
+  change f.ofConv (rightTranslationAlgHom g x) = (f * g).ofConv x
+  rw [rightTranslationAlgHom_apply, AlgHom.convMul_apply]
+  induction Coalgebra.comul (R := k) x using TensorProduct.induction_on with
+  | zero => simp
+  | add y z hy hz => simp [hy, hz]
+  | tmul y z => simp [Algebra.smul_def, mul_comm]
+
 /-- The linear equivalence underlying right translation. -/
 private noncomputable def rightTranslationLinearEquiv (g : WithConv (H →ₐ[k] k)) :
     H ≃ₗ[k] H :=

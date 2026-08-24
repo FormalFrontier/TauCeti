@@ -54,10 +54,6 @@ noncomputable section
 
 variable {k K : Type u} [Field k] [Field K] [Algebra k K]
 
-private noncomputable instance instFiniteTypeCoordinateHopfAlgebra (n : ℕ) :
-    Algebra.FiniteType k (coordinateHopfAlgebra k n) := by
-  exact Algebra.FiniteType.quotient k (definingHopfIdeal k n).toIdeal
-
 /-- Base-changed special-linear points identified with determinant-one matrices. -/
 private def baseChangeSpecialLinearPointsMulEquiv
     (n : ℕ) (A : Type u) [CommRing A] [Algebra k A] [Algebra K A]
@@ -84,19 +80,6 @@ private theorem baseChangeSpecialLinearPointsMulEquiv_mapValue
   exact pointsMulEquiv_mapValue (R := k) (A := A) (B := B) n
     (phi.restrictScalars k) _
 
-private theorem point_comp_rightTranslationAlgHom
-    {H : Type u} [CommRing H] [_root_.HopfAlgebra K H]
-    (f g : WithConv (H →ₐ[K] K)) :
-    toConv (f.ofConv.comp (HopfAlgebra.rightTranslationAlgHom g)) = f * g := by
-  apply WithConv.ofConv_injective
-  ext x
-  change f.ofConv (HopfAlgebra.rightTranslationAlgHom g x) = (f * g).ofConv x
-  rw [HopfAlgebra.rightTranslationAlgHom_apply, AlgHom.convMul_apply]
-  induction Coalgebra.comul (R := K) x using TensorProduct.induction_on with
-  | zero => simp
-  | add y z hy hz => simp [hy, hz]
-  | tmul y z => simp [Algebra.smul_def, mul_comm]
-
 private theorem mapValue_apply_eq_of_isIdempotentElem
     {H A : Type u} [CommRing H] [_root_.HopfAlgebra K H]
     [CommRing A] [Algebra K A] [IsDomain A]
@@ -107,21 +90,45 @@ private theorem mapValue_apply_eq_of_isIdempotentElem
   rcases IsIdempotentElem.iff_eq_zero_or_one.mp (he.map q.ofConv) with h | h <;>
     simp [AlgHom.mapValue_apply, h]
 
+private theorem rightTranslationAlgHom_eq_self_of_path
+    {H D : Type u} [CommRing H] [_root_.HopfAlgebra K H]
+    [Algebra.FiniteType K H] [CommRing D] [Algebra K D] [IsDomain D]
+    [IsAlgClosed K] (e : H) (he : IsIdempotentElem e)
+    (g : WithConv (H →ₐ[K] K)) (x : WithConv (H →ₐ[K] D))
+    (phi psi : D →ₐ[K] K)
+    (hphi : AlgHom.mapValue (H := H) phi x = g)
+    (hpsi : AlgHom.mapValue (H := H) psi x = 1) :
+    HopfAlgebra.rightTranslationAlgHom g e = e := by
+  apply eq_of_isIdempotentElem_of_forall_algHom_apply_eq
+    (k := K) (A := H) (K := K) (he.map _) he
+  intro f
+  let c : WithConv (H →ₐ[K] D) :=
+    AlgHom.mapValue (H := H) (IsScalarTower.toAlgHom K K D) (toConv f)
+  have hc (theta : D →ₐ[K] K) :
+      AlgHom.mapValue (H := H) theta c = toConv f := by
+    have hcomp : theta.comp (IsScalarTower.toAlgHom K K D) = AlgHom.id K K :=
+      AlgHom.ext fun z ↦ theta.commutes z
+    dsimp only [c]
+    rw [← MonoidHom.comp_apply, ← AlgHom.mapValue_comp, hcomp,
+      AlgHom.mapValue_id, MonoidHom.id_apply]
+  have hpath := mapValue_apply_eq_of_isIdempotentElem
+    (K := K) e he (c * x) phi psi
+  rw [map_mul, hc phi, hphi] at hpath
+  rw [map_mul, hc psi, hpsi, mul_one] at hpath
+  calc
+    f (HopfAlgebra.rightTranslationAlgHom g e) = (toConv f * g).ofConv e :=
+      congrArg (fun q : WithConv (H →ₐ[K] K) ↦ q.ofConv e)
+        (HopfAlgebra.ofConv_comp_rightTranslationAlgHom (toConv f) g)
+    _ = f e := hpath
+
 private theorem rightTranslationAlgHom_eq_self_of_transvection
     (n : ℕ) (e : K ⊗[k] coordinateHopfAlgebra k n)
     [IsAlgClosed K] (he : IsIdempotentElem e) {i j : Fin n} (hij : i ≠ j) (a : K) :
     HopfAlgebra.rightTranslationAlgHom
         ((baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm
           (Matrix.SpecialLinearGroup.transvection hij a)) e = e := by
-  apply eq_of_isIdempotentElem_of_forall_algHom_apply_eq
-    (k := K) (A := K ⊗[k] coordinateHopfAlgebra k n) (K := K) (he.map _) he
-  intro f
   let _ : Algebra k (Polynomial K) := Algebra.compHom (Polynomial K) (algebraMap k K)
   let _ : IsScalarTower k K (Polynomial K) := IsScalarTower.of_algebraMap_eq' rfl
-  let fX : WithConv
-      (K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] Polynomial K) :=
-    AlgHom.mapValue (H := K ⊗[k] coordinateHopfAlgebra k n)
-      (IsScalarTower.toAlgHom K K (Polynomial K)) (toConv f)
   let xX : WithConv
       (K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] Polynomial K) :=
     (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n (Polynomial K)).symm
@@ -135,24 +142,11 @@ private theorem rightTranslationAlgHom_eq_self_of_transvection
     apply (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).injective
     rw [baseChangeSpecialLinearPointsMulEquiv_mapValue (k := k) (K := K)]
     simp [xX, eval]
-  have hf (c : K) :
-      AlgHom.mapValue (H := K ⊗[k] coordinateHopfAlgebra k n) (eval c) fX = toConv f := by
-    apply WithConv.ofConv_injective
-    ext z
-    simp [fX, eval, AlgHom.mapValue_apply]
-  have hpath := mapValue_apply_eq_of_isIdempotentElem
-    (K := K) e he (fX * xX) (eval a) (eval 0)
-  rw [map_mul, hf a, hx a] at hpath
-  rw [map_mul, hf 0, hx 0] at hpath
-  rw [Matrix.SpecialLinearGroup.transvection_coeff_zero] at hpath
   let ga := (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm
     (Matrix.SpecialLinearGroup.transvection hij a)
-  calc
-    f (HopfAlgebra.rightTranslationAlgHom ga e) = (toConv f * ga).ofConv e :=
-      congrArg (fun q : WithConv
-        (K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] K) ↦ q.ofConv e)
-        (point_comp_rightTranslationAlgHom (toConv f) ga)
-    _ = f e := by simpa [ga] using hpath
+  apply rightTranslationAlgHom_eq_self_of_path e he ga xX (eval a) (eval 0)
+  · simpa [ga] using hx a
+  · simpa using hx 0
 
 /-- The generic two-coordinate diagonal point over the Laurent-polynomial ring. -/
 private noncomputable def diag2nLaurentPath
@@ -164,7 +158,7 @@ private noncomputable def diag2nLaurentPath
   let _ : IsScalarTower k K (LaurentPolynomial K) := IsScalarTower.of_algebraMap_eq' rfl
   exact (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n
     (LaurentPolynomial K)).symm
-      (diag2nUnit hij (laurentVariableUnit (K := K)))
+      (diag2nUnit hij (Cocharacter.genericUnit K))
 
 private theorem mapValue_diag2nLaurentPath
     (n : ℕ) {i j : Fin n} (hij : i ≠ j) (b : Kˣ) :
@@ -181,44 +175,21 @@ private theorem mapValue_diag2nLaurentPath
   simp only [MulEquiv.apply_symm_apply]
   exact map_diag2nUnit_laurent hij b
 
-/-- A rational point extended to a constant Laurent-polynomial-valued point. -/
-private noncomputable def constantLaurentPath
-    (n : ℕ) (f : K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] K) :
-    WithConv
-      (K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] LaurentPolynomial K) :=
-  AlgHom.mapValue (H := K ⊗[k] coordinateHopfAlgebra k n)
-    (IsScalarTower.toAlgHom K K (LaurentPolynomial K)) (toConv f)
-
-private theorem mapValue_constantLaurentPath
-    (n : ℕ) (f : K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] K) (b : Kˣ) :
-    AlgHom.mapValue (H := K ⊗[k] coordinateHopfAlgebra k n)
-        (MultiplicativeGroup.point b) (constantLaurentPath n f) = toConv f := by
-  apply WithConv.ofConv_injective
-  ext z
-  simp [constantLaurentPath, AlgHom.mapValue_apply]
-
-private theorem algHom_apply_rightTranslationAlgHom_diag2n
+private theorem rightTranslationAlgHom_eq_self_of_diag2n
     (n : ℕ) (e : K ⊗[k] coordinateHopfAlgebra k n)
-    (he : IsIdempotentElem e) {i j : Fin n}
-    (hij : i ≠ j) (a : K) (ha : a ≠ 0)
-    (f : K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] K) :
-    f (HopfAlgebra.rightTranslationAlgHom
+    [IsAlgClosed K] (he : IsIdempotentElem e) {i j : Fin n}
+    (hij : i ≠ j) (a : K) (ha : a ≠ 0) :
+    HopfAlgebra.rightTranslationAlgHom
         ((baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm
-          (Matrix.SpecialLinearGroup.diag2n hij a ha)) e) = f e := by
+          (Matrix.SpecialLinearGroup.diag2n hij a ha)) e = e := by
   let _ : Algebra k (LaurentPolynomial K) :=
     Algebra.compHom (LaurentPolynomial K) (algebraMap k K)
   let _ : IsScalarTower k K (LaurentPolynomial K) := IsScalarTower.of_algebraMap_eq' rfl
-  let fT := constantLaurentPath n f
   let xT := diag2nLaurentPath (k := k) (K := K) n hij
   let eval (b : Kˣ) : LaurentPolynomial K →ₐ[K] K :=
     MultiplicativeGroup.point b
   have hx (b : Kˣ) := mapValue_diag2nLaurentPath (k := k) (K := K) n hij b
-  have hf (b : Kˣ) := mapValue_constantLaurentPath (k := k) n f b
   let au : Kˣ := Units.mk0 a ha
-  have hpath := mapValue_apply_eq_of_isIdempotentElem
-    (K := K) e he (fT * xT) (eval au) (eval 1)
-  rw [map_mul, hf au, hx au] at hpath
-  rw [map_mul, hf 1, hx 1] at hpath
   have hdiagone : Matrix.SpecialLinearGroup.diag2n hij
       ((1 : Kˣ) : K) (Units.ne_zero (1 : Kˣ)) = 1 := by
     ext r s
@@ -227,31 +198,26 @@ private theorem algHom_apply_rightTranslationAlgHom_diag2n
   have hEone :
       (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm 1 = 1 :=
     map_one _
-  rw [hdiagone, hEone] at hpath
   have hdiagau : Matrix.SpecialLinearGroup.diag2n hij
       ((au : Kˣ) : K) (Units.ne_zero au) =
         Matrix.SpecialLinearGroup.diag2n hij a ha := by
     rfl
   let ga := (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm
     (Matrix.SpecialLinearGroup.diag2n hij a ha)
-  calc
-    f (HopfAlgebra.rightTranslationAlgHom ga e) = (toConv f * ga).ofConv e :=
-      congrArg (fun q : WithConv
-        (K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] K) ↦ q.ofConv e)
-        (point_comp_rightTranslationAlgHom (toConv f) ga)
-    _ = f e := by simpa [ga, hdiagau] using hpath
-
-private theorem rightTranslationAlgHom_eq_self_of_diag2n
-    (n : ℕ) (e : K ⊗[k] coordinateHopfAlgebra k n)
-    [IsAlgClosed K] (he : IsIdempotentElem e) {i j : Fin n}
-    (hij : i ≠ j) (a : K) (ha : a ≠ 0) :
-    HopfAlgebra.rightTranslationAlgHom
-        ((baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm
-          (Matrix.SpecialLinearGroup.diag2n hij a ha)) e = e := by
-  apply eq_of_isIdempotentElem_of_forall_algHom_apply_eq
-    (k := K) (A := K ⊗[k] coordinateHopfAlgebra k n) (K := K) (he.map _) he
-  intro f
-  exact algHom_apply_rightTranslationAlgHom_diag2n n e he hij a ha f
+  apply rightTranslationAlgHom_eq_self_of_path e he ga xT (eval au) (eval 1)
+  · simpa [ga, hdiagau] using hx au
+  · change AlgHom.mapValue (H := K ⊗[k] coordinateHopfAlgebra k n)
+        (MultiplicativeGroup.point (1 : Kˣ))
+        (diag2nLaurentPath (k := k) (K := K) n hij) = 1
+    calc
+      AlgHom.mapValue (H := K ⊗[k] coordinateHopfAlgebra k n)
+          (MultiplicativeGroup.point (1 : Kˣ))
+          (diag2nLaurentPath (k := k) (K := K) n hij) =
+          (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm
+            (Matrix.SpecialLinearGroup.diag2n hij (1 : K) (Units.ne_zero (1 : Kˣ))) := hx 1
+      _ = (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm 1 :=
+        congrArg (baseChangeSpecialLinearPointsMulEquiv (k := k) (K := K) n K).symm hdiagone
+      _ = 1 := hEone
 
 private theorem rightTranslationAlgHom_eq_self
     (n : ℕ) [IsAlgClosed K] (e : K ⊗[k] coordinateHopfAlgebra k n)

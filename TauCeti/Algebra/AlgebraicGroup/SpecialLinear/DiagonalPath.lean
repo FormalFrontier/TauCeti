@@ -33,15 +33,6 @@ universe u v
 
 noncomputable section
 
-/-- The Laurent variable regarded as a unit of the Laurent-polynomial ring. -/
-def laurentVariableUnit {K : Type u} [Field K] : (LaurentPolynomial K)ˣ :=
-  unitOfInvertible (LaurentPolynomial.T 1)
-
-@[simp]
-theorem laurentVariableUnit_val {K : Type u} [Field K] :
-    (laurentVariableUnit (K := K) : LaurentPolynomial K) = LaurentPolynomial.T 1 := by
-  simp [laurentVariableUnit]
-
 /-- The determinant-one diagonal matrix with a unit in position `i`, its inverse in position
 `j`, and ones in every other position. -/
 noncomputable def diag2nUnit {R : Type u} [CommRing R]
@@ -53,33 +44,33 @@ noncomputable def diag2nUnit {R : Type u} [CommRing R]
     simp [Finset.prod_ite, hij.symm,
       Finset.card_eq_one (s := {r : m | r = i}).2 ⟨i, by grind⟩]⟩
 
-private theorem point_diag2nUnit_laurent_apply
-    {K : Type u} [Field K] {n : ℕ} {i j : Fin n} (hij : i ≠ j) (b : Kˣ)
-    (r s : Fin n) :
-    MultiplicativeGroup.point (R := K) b
-        ((diag2nUnit hij (laurentVariableUnit (K := K))).1 r s) =
-      (Matrix.SpecialLinearGroup.diag2n hij (b : K) (Units.ne_zero b)).1 r s := by
-  let eval : LaurentPolynomial K →ₐ[K] K := MultiplicativeGroup.point b
-  have hunit : Units.map eval.toMonoidHom (laurentVariableUnit (K := K)) = b := by
-    apply Units.ext
-    simp [eval]
-  have hinv : eval
-      (((laurentVariableUnit (K := K))⁻¹ : (LaurentPolynomial K)ˣ) : LaurentPolynomial K) =
-        ((b⁻¹ : Kˣ) : K) := by
-    change ((Units.map eval.toMonoidHom ((laurentVariableUnit (K := K))⁻¹) : Kˣ) : K) = _
-    rw [map_inv, hunit]
-  rw [Matrix.SpecialLinearGroup.diag2n_coe, Matrix.diagonal_apply]
-  change eval ((diag2nUnit hij (laurentVariableUnit (K := K))).1 r s) = _
-  dsimp only [diag2nUnit]
-  rw [Matrix.diagonal_apply]
-  by_cases hrs : r = s
-  · subst s
-    by_cases hri : r = i
-    · simp [hri, eval]
-    · by_cases hrj : r = j
-      · simpa [hri, hrj, hij.symm] using hinv
-      · simp [hri, hrj]
-  · simp [hrs]
+/-- Mapping the coefficients of a unit diagonal matrix maps its defining unit. -/
+theorem map_diag2nUnit {R S : Type u} [CommRing R] [CommRing S]
+    {m : Type v} [Fintype m] [DecidableEq m] {i j : m} (hij : i ≠ j)
+    (f : R →+* S) (a : Rˣ) :
+    Matrix.SpecialLinearGroup.map f (diag2nUnit hij a) =
+      diag2nUnit hij (Units.map f a) := by
+  apply Subtype.ext
+  change f.mapMatrix (Matrix.diagonal fun r ↦
+      if r = i then (a : R) else if r = j then ((a⁻¹ : Rˣ) : R) else 1) =
+    Matrix.diagonal fun r ↦
+      if r = i then ((Units.map f a : Sˣ) : S) else
+        if r = j then (((Units.map f a)⁻¹ : Sˣ) : S) else 1
+  rw [RingHom.mapMatrix_apply, Matrix.diagonal_map (map_zero f)]
+  congr 1
+  funext r
+  rw [apply_ite (f := f), apply_ite (f := f), map_one]
+  congr 1
+
+/-- Over a field, the unit construction specializes to Mathlib's two-coordinate diagonal
+matrix. -/
+theorem diag2nUnit_mk0 {K : Type u} [Field K]
+    {m : Type v} [Fintype m] [DecidableEq m] {i j : m} (hij : i ≠ j)
+    (b : K) (hb : b ≠ 0) :
+    diag2nUnit hij (Units.mk0 b hb) = Matrix.SpecialLinearGroup.diag2n hij b hb := by
+  apply Subtype.ext
+  rw [Matrix.SpecialLinearGroup.diag2n_coe]
+  rfl
 
 /-- Evaluating the generic Laurent diagonal matrix at a unit `b` gives the ordinary
 two-coordinate diagonal matrix with entries `b` and `b⁻¹`. -/
@@ -87,13 +78,23 @@ theorem map_diag2nUnit_laurent
     {K : Type u} [Field K] {n : ℕ} {i j : Fin n} (hij : i ≠ j) (b : Kˣ) :
     Matrix.SpecialLinearGroup.map
         (MultiplicativeGroup.point (R := K) b).toRingHom
-        (diag2nUnit hij (laurentVariableUnit (K := K))) =
+        (diag2nUnit hij (Cocharacter.genericUnit K)) =
       Matrix.SpecialLinearGroup.diag2n hij (b : K) (Units.ne_zero b) := by
-  ext r s
-  change MultiplicativeGroup.point (R := K) b
-      ((diag2nUnit hij (laurentVariableUnit (K := K))).1 r s) =
-    (Matrix.SpecialLinearGroup.diag2n hij (b : K) (Units.ne_zero b)).1 r s
-  exact point_diag2nUnit_laurent_apply hij b r s
+  rw [map_diag2nUnit]
+  have hunit : Units.map
+      (MultiplicativeGroup.point (R := K) b).toRingHom.toMonoidHom
+      (Cocharacter.genericUnit K) = b := by
+    apply Units.ext
+    simp
+  have hb : Units.mk0 (b : K) (Units.ne_zero b) = b := Units.ext rfl
+  calc
+    diag2nUnit hij
+        (Units.map (MultiplicativeGroup.point (R := K) b).toRingHom.toMonoidHom
+          (Cocharacter.genericUnit K)) = diag2nUnit hij b := congrArg (diag2nUnit hij) hunit
+    _ = diag2nUnit hij (Units.mk0 (b : K) (Units.ne_zero b)) :=
+      congrArg (diag2nUnit hij) hb.symm
+    _ = Matrix.SpecialLinearGroup.diag2n hij (b : K) (Units.ne_zero b) :=
+      diag2nUnit_mk0 hij (b : K) (Units.ne_zero b)
 
 end
 
