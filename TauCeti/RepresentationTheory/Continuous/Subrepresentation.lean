@@ -21,6 +21,8 @@ action operator, the continuous counterpart of Mathlib's `Representation.subrepr
 
 ## Main results
 
+* `TauCeti.ContRepresentation.mem_invariants_subrepresentation`: a vector of the submodule is
+  invariant for the restricted representation exactly when it is invariant for the ambient one.
 * `TauCeti.ContRepresentation.toRepresentation_subrepresentation`: the underlying representation of
   a restricted continuous representation is the restriction of the underlying representation.
 * `TauCeti.ContRepresentation.continuous_subrepresentation`: the restriction of a continuous
@@ -54,6 +56,12 @@ variable {π : ContRepresentation R G V} {W : Submodule R V} {hW : ∀ g, ∀ v 
 theorem coe_subrepresentation_apply (g : G) (v : W) :
     ((subrepresentation π W hW g v : W) : V) = π g (v : V) :=
   (rfl)
+
+/-- A vector of an invariant submodule is invariant for the restricted representation exactly when
+it is invariant for the ambient one: the restricted action is the ambient action. -/
+theorem mem_invariants_subrepresentation {x : W} :
+    x ∈ (subrepresentation π W hW).invariants ↔ (x : V) ∈ π.invariants := by
+  simp [ContRepresentation.mem_invariants, Subtype.ext_iff]
 
 /-- The underlying representation of a restricted continuous representation is the restriction of
 the underlying representation. -/

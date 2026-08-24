@@ -99,7 +99,6 @@ theorem frobeniusSchurIndicator_eq_one_iff (hunitary : IsUnitary π)
     frobeniusSchurIndicator π hπ = 1 ↔
       ∃ B : BilinForm ℂ V, Representation.IsInvariantForm π.toRepresentation B ∧
         B.IsSymm ∧ B.Nondegenerate := by
-  have hirr' : Representation.IsIrreducible π.toRepresentation := hirr
   rw [frobeniusSchurIndicator_eq_one_iff_finrank_invariants_symmetricSquare π hπ hunitary hirr]
   constructor
   · intro h
@@ -125,7 +124,6 @@ theorem frobeniusSchurIndicator_eq_neg_one_iff (hunitary : IsUnitary π)
     frobeniusSchurIndicator π hπ = -1 ↔
       ∃ B : BilinForm ℂ V, Representation.IsInvariantForm π.toRepresentation B ∧
         B.IsAlt ∧ B.Nondegenerate := by
-  have hirr' : Representation.IsIrreducible π.toRepresentation := hirr
   rw [frobeniusSchurIndicator_eq_neg_one_iff_finrank_invariants_exteriorSquare π hπ hunitary hirr]
   constructor
   · intro h
@@ -154,7 +152,6 @@ theorem frobeniusSchurIndicator_eq_zero_iff (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 0 ↔
       Representation.invariantForms π.toRepresentation = ⊥ := by
-  have hirr' : Representation.IsIrreducible π.toRepresentation := hirr
   rw [frobeniusSchurIndicator_eq_zero_iff_finrank_invariants_squares π hπ hunitary hirr]
   constructor
   · rintro ⟨hs, ha⟩
