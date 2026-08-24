@@ -182,22 +182,13 @@ theorem visitCount_succ_of_ne (h : x n ≠ a) : visitCount x a (n + 1) = visitCo
 before `m` together with the visits the sequence shifted by `m` makes before `n`. -/
 theorem visitCount_add (x : ℕ → α) (a : α) (m n : ℕ) :
     visitCount x a (m + n) = visitCount x a m + visitCount (fun i => x (m + i)) a n := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-    rw [← Nat.add_assoc]
-    by_cases hx : x (m + n) = a
-    · rw [visitCount_succ_of_eq hx, ih, visitCount_succ_of_eq (x := fun i => x (m + i)) hx]
-      omega
-    · rw [visitCount_succ_of_ne hx, ih, visitCount_succ_of_ne (x := fun i => x (m + i)) hx]
+  classical
+  simpa only [visitCount_eq_count] using Nat.count_add (p := fun i => x i = a) m n
 
 /-- A stretch of a sequence that avoids `a` contributes nothing to its visit count. -/
 theorem visitCount_eq_zero_of_forall_ne (h : ∀ i < n, x i ≠ a) : visitCount x a n = 0 := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-    rw [visitCount_succ_of_ne (h n (Nat.lt_succ_self n)),
-      ih fun i hi => h i (hi.trans (Nat.lt_succ_self n))]
+  classical
+  simpa only [visitCount_eq_count] using Nat.count_iff_forall_not.2 h
 
 /-- A time at which `x` has value `a` is the visit indexed by the number of earlier visits. -/
 @[simp]

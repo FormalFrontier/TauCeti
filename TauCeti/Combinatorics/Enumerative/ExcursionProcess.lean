@@ -47,8 +47,8 @@ excursions is nothing but a prescribed finite path.
 * `TauCeti.loopSteps_excursionPrefix`: the number of reconstructed transitions is the difference
   of the endpoint visit times.
 * `TauCeti.visitCount_loopPathAt`: a loop visits its base state once per excursion.
-* `TauCeti.eqOn_loopPathAt_iff_excursionPrefix_eq`: for a recurrent path, having prescribed first
-  excursions is the same as spelling out their loop word.
+* `TauCeti.eqOn_loopPathAt_iff_excursionPrefix_eq`: for a path whose relevant return exists, having
+  prescribed first excursions is the same as spelling out their loop word.
 
 ## References
 
@@ -176,7 +176,7 @@ theorem visitCount_loopPathAt (a : α) {bs : List (List α)} (havoid : ∀ e ∈
         refine visitCount_eq_zero_of_forall_ne fun i hi => ?_
         rw [Nat.add_comm 1 i, loopPathAt_cons_of_lt a e bs hi]
         exact fun hget => havoid e List.mem_cons_self (hget ▸ List.getElem_mem hi)
-      rw [show e.length + 1 = 1 + e.length from Nat.add_comm _ _, visitCount_add, h2]
+      rw [Nat.add_comm e.length 1, visitCount_add, h2]
       simp
     have hshift : (fun i => loopPathAt a (e :: bs) (e.length + 1 + i)) = loopPathAt a bs :=
       funext (loopPathAt_cons_add a e bs)
@@ -292,9 +292,9 @@ theorem loopSteps_excursionPrefix_of_infinite_of_zero
 
 /-! ## Excursion prefixes as finite-path events -/
 
-/-- **A recurrent path has prescribed first excursions exactly when it spells out their loop.**
-For a sequence starting at `a` and returning to it infinitely often, and a list `bs` of excursions
-avoiding `a`, the following are the same condition:
+/-- **A returning path has prescribed first excursions exactly when it spells out their loop.**
+For a sequence starting at `a` whose `bs.length`-th return to `a` exists, and a list `bs` of
+excursions avoiding `a`, the following are the same condition:
 
 * over the span `loopSteps bs` of the loop, the sequence agrees with the loop word of `bs`;
 * the first `bs.length` excursions of the sequence are `bs`.
@@ -302,9 +302,9 @@ avoiding `a`, the following are the same condition:
 This is what turns a finite-dimensional event of the excursion process into a finite-path event of
 the sequence itself, which is the form Markov exchangeability constrains. -/
 theorem eqOn_loopPathAt_iff_excursionPrefix_eq {bs : List (List α)} (havoid : ∀ e ∈ bs, a ∉ e)
-    (hinf : {n | x n = a}.Infinite) (h0 : x 0 = a) :
+    (h : ∃ n, x n = a ∧ visitCount x a n = bs.length) (h0 : x 0 = a) :
     (∀ i ≤ loopSteps bs, x i = loopPathAt a bs i) ↔ excursionPrefix x a bs.length = bs := by
-  have hloop := loopPath_excursionPrefix_of_infinite_of_zero hinf h0 bs.length
+  have hloop := loopPath_excursionPrefix_of_zero h h0
   constructor
   · intro hx
     -- The `bs.length`-th return of `x` is the end of the loop, so the two loop words agree.
@@ -316,7 +316,7 @@ theorem eqOn_loopPathAt_iff_excursionPrefix_eq {bs : List (List α)} (havoid : �
       hx i (Nat.lt_succ_iff.1 (List.mem_range.1 hi))
   · intro hpre i hi
     have hvt : visitTime x a bs.length = loopSteps bs := by
-      rw [← loopSteps_excursionPrefix_of_infinite_of_zero hinf h0 bs.length, hpre]
+      rw [← loopSteps_excursionPrefix_of_zero h h0, hpre]
     rw [hpre, hvt] at hloop
     have hmaps : (List.range (loopSteps bs + 1)).map (loopPathAt a bs)
         = (List.range (loopSteps bs + 1)).map x := by

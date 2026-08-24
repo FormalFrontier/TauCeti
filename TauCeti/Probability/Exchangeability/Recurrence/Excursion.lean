@@ -8,7 +8,7 @@ module
 public import TauCeti.MeasureTheory.MeasurableSpace.List
 public import TauCeti.Probability.DeFinetti.Theorem
 public import TauCeti.Probability.Exchangeability.Excursion
-public import TauCeti.Probability.Exchangeability.SuccessorArray
+import TauCeti.Probability.Exchangeability.SuccessorArray
 public import TauCeti.Probability.Recurrent
 
 /-!
@@ -156,7 +156,8 @@ theorem Recurrent.measure_setOf_excursionPrefix_eq (hrec : Recurrent μ X)
   have hinf : {n | X n ω = a₀}.Infinite := by
     have h := hωinf 0
     rwa [hω0] at h
-  exact eqOn_loopPathAt_iff_excursionPrefix_eq havoid hinf hω0
+  exact eqOn_loopPathAt_iff_excursionPrefix_eq havoid
+    (exists_visitCount_of_infinite hinf bs.length) hω0
 
 /-- **Reordering a list of excursions does not change the probability that a recurrent Markov
 exchangeable process traverses it.** No hypothesis on the list is needed: excursions never visit

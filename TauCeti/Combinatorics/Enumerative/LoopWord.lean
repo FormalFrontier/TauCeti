@@ -151,7 +151,6 @@ theorem loopPathAt_def (a₀ : α) (bs : List (List α)) (i : ℕ) :
 theorem loopPathAt_zero (a₀ : α) (bs : List (List α)) : loopPathAt a₀ bs 0 = a₀ := by
   cases bs <;> simp [loopPathAt_def]
 
-@[simp]
 theorem loopPathAt_loopSteps (a₀ : α) (bs : List (List α)) :
     loopPathAt a₀ bs (loopSteps bs) = a₀ := by
   induction bs with
@@ -163,6 +162,7 @@ theorem loopPathAt_loopSteps (a₀ : α) (bs : List (List α)) :
     simpa [loopPathAt_def] using ih
 
 /-- Inside its first excursion, a loop spells that excursion out. -/
+@[simp]
 theorem loopPathAt_cons_of_lt (a₀ : α) (e : List α) (bs : List (List α)) {i : ℕ}
     (hi : i < e.length) : loopPathAt a₀ (e :: bs) (i + 1) = e[i] := by
   rw [loopPathAt_def, loopPath_cons, List.getD_cons_succ,
@@ -181,7 +181,8 @@ theorem loopPathAt_cons_add (a₀ : α) (e : List α) (bs : List (List α)) (i :
 
 /-- A loop sits at its base letter from its final letter onwards: `loopPathAt` pads with the base
 letter past the end of the word. -/
-theorem loopPathAt_of_loopSteps_le (a₀ : α) (bs : List (List α)) {i : ℕ}
+@[simp]
+theorem loopPathAt_eq_of_loopSteps_le (a₀ : α) (bs : List (List α)) {i : ℕ}
     (hi : loopSteps bs ≤ i) : loopPathAt a₀ bs i = a₀ := by
   rcases eq_or_lt_of_le hi with rfl | hlt
   · exact loopPathAt_loopSteps a₀ bs
@@ -191,7 +192,7 @@ theorem loopPathAt_of_loopSteps_le (a₀ : α) (bs : List (List α)) {i : ℕ}
 letter. This is what lets the excursion decomposition of a loop be read with no side condition. -/
 theorem infinite_setOf_loopPathAt_eq (a₀ : α) (bs : List (List α)) :
     {i | loopPathAt a₀ bs i = a₀}.Infinite :=
-  (Set.Ici_infinite (loopSteps bs)).mono fun _ hi => loopPathAt_of_loopSteps_le a₀ bs hi
+  (Set.Ici_infinite (loopSteps bs)).mono fun _ hi => loopPathAt_eq_of_loopSteps_le a₀ bs hi
 
 /-- **A loop read as a function on `ℕ` recovers the loop word.** Reading `loopPathAt` over the
 whole span of the loop spells out `loopPath` again. -/
