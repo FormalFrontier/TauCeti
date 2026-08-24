@@ -185,13 +185,15 @@ theorem separateArray_apply (f : I × I × I × I → α)
       f (u .global, u (.vertex .row p.1), u (.vertex .column p.2), u (.cell p.1 p.2)) :=
   (rfl)
 
-/-- Every entry of a measurable separate Aldous--Hoover coding is measurable in the noise. -/
-theorem measurable_separateArray_apply (f : I × I × I × I → α)
-    (hf : Measurable f) (p : ℕ × ℕ) : Measurable (separateArray f p) := by
-  exact hf.comp ((measurable_pi_apply (NoiseIndex.global : NoiseIndex Axis)).prodMk
-    ((measurable_pi_apply (NoiseIndex.vertex Axis.row p.1)).prodMk
-      ((measurable_pi_apply (NoiseIndex.vertex Axis.column p.2)).prodMk
-        (measurable_pi_apply (NoiseIndex.cell p.1 p.2)))))
+/-- A measurable separate Aldous--Hoover coding is measurable as an array-valued random
+variable. -/
+theorem measurable_separateArray (f : I × I × I × I → α) (hf : Measurable f) :
+    Measurable fun u : NoiseIndex Axis → I => fun p => separateArray f p u :=
+  measurable_pi_lambda _ fun p => hf.comp
+    ((measurable_pi_apply (NoiseIndex.global : NoiseIndex Axis)).prodMk
+      ((measurable_pi_apply (NoiseIndex.vertex Axis.row p.1)).prodMk
+        ((measurable_pi_apply (NoiseIndex.vertex Axis.column p.2)).prodMk
+          (measurable_pi_apply (NoiseIndex.cell p.1 p.2)))))
 
 /-- **Every measurable separate Aldous--Hoover coding is separately exchangeable.** -/
 theorem separatelyExchangeable_separateArray
@@ -203,8 +205,7 @@ theorem separatelyExchangeable_separateArray
     | .row => rowPerm
     | .column => colPerm
   have hcode : Measurable fun u : NoiseIndex Axis → I =>
-      fun p => separateArray f p u :=
-    measurable_pi_lambda _ fun p => measurable_separateArray_apply f hf p
+      fun p => separateArray f p u := measurable_separateArray f hf
   have hfun : (fun u : NoiseIndex Axis → I =>
       fun p => separateArray f (rowPerm p.1, colPerm p.2) u) =
         (fun u => fun p => separateArray f p u) ∘
@@ -229,13 +230,14 @@ theorem jointArray_apply (f : I × I × I × I → α)
       f (u .global, u (.vertex () p.1), u (.vertex () p.2), u (.cell p.1 p.2)) :=
   (rfl)
 
-/-- Every entry of a measurable joint Aldous--Hoover coding is measurable in the noise. -/
-theorem measurable_jointArray_apply (f : I × I × I × I → α)
-    (hf : Measurable f) (p : ℕ × ℕ) : Measurable (jointArray f p) := by
-  exact hf.comp ((measurable_pi_apply (NoiseIndex.global : NoiseIndex Unit)).prodMk
-    ((measurable_pi_apply (NoiseIndex.vertex () p.1)).prodMk
-      ((measurable_pi_apply (NoiseIndex.vertex () p.2)).prodMk
-        (measurable_pi_apply (NoiseIndex.cell p.1 p.2)))))
+/-- A measurable joint Aldous--Hoover coding is measurable as an array-valued random variable. -/
+theorem measurable_jointArray (f : I × I × I × I → α) (hf : Measurable f) :
+    Measurable fun u : NoiseIndex Unit → I => fun p => jointArray f p u :=
+  measurable_pi_lambda _ fun p => hf.comp
+    ((measurable_pi_apply (NoiseIndex.global : NoiseIndex Unit)).prodMk
+      ((measurable_pi_apply (NoiseIndex.vertex () p.1)).prodMk
+        ((measurable_pi_apply (NoiseIndex.vertex () p.2)).prodMk
+          (measurable_pi_apply (NoiseIndex.cell p.1 p.2)))))
 
 /-- **Every measurable joint Aldous--Hoover coding is jointly exchangeable.** -/
 theorem jointlyExchangeable_jointArray
@@ -245,8 +247,7 @@ theorem jointlyExchangeable_jointArray
   intro perm
   let vertexPerm : Unit → Equiv.Perm ℕ := fun _ => perm
   have hcode : Measurable fun u : NoiseIndex Unit → I =>
-      fun p => jointArray f p u :=
-    measurable_pi_lambda _ fun p => measurable_jointArray_apply f hf p
+      fun p => jointArray f p u := measurable_jointArray f hf
   have hfun : (fun u : NoiseIndex Unit → I =>
       fun p => jointArray f (perm p.1, perm p.2) u) =
         (fun u => fun p => jointArray f p u) ∘ noiseReindex vertexPerm perm perm := by
