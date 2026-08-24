@@ -5,30 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Basic
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Degree
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.InfinityPlace
-public import TauCeti.FieldTheory.FunctionField.Place.OfValuationSubring
-import Mathlib.RingTheory.Valuation.LocalSubring
 
 /-!
-# Pointedness at the place at infinity, and the factorisation of an isogeny
+# The factorisation of an isogeny
 
-`TauCeti.Isogeny.isEquiv_comap_infinityPlace` reads the integrality condition `MapsInfinity` of an
-isogeny off as a statement about places: the place at infinity of the source restricts to the
-place at infinity of the target. This file proves the converse, and puts it to work.
-
-The converse is what packages a bare embedding of function fields as an isogeny. Let
-`σ : F(W₂) → F(W₁)` be an `F`-algebra map for which `σ x₂` has a pole at the place at infinity of
-`W₁`. Then the coordinate `x₁` is integral over the pulled-back coordinate ring: if it were not,
-Mathlib's `Subring.exists_le_valuationSubring_of_isIntegrallyClosedIn` would produce a valuation
-subring `V` of `F(W₁)` containing every integral element but not `x₁`, and a proper valuation
-subring of an algebraic function field containing the constants is the valuation ring of a place
-(`TauCeti.Place.ofValuationSubring`). At that place `x₁` has a pole, so it is the place at
-infinity — where `σ x₂` also has a pole, contradicting `σ x₂ ∈ V`. Every element of `F[W₁]` is
-integral over `F[X]`, and `x₁` is integral over the pulled-back ring, so `MapsInfinity` follows.
-
-That criterion discharges the pointedness of a factor. If two isogenies `φ : W₁ → W₂` and
+The pointedness criterion in `Isogeny/InfinityPlace.lean` discharges the pointedness of a factor.
+If two isogenies `φ : W₁ → W₂` and
 `ψ : W₁ → W₃` satisfy `ψ^*F(W₃) ⊆ φ^*F(W₂)` as subfields of `F(W₁)`, then inverting `φ^*` on its
 image gives an embedding `σ : F(W₃) → F(W₂)` with `φ^* ∘ σ = ψ^*`. Restricting the place at
 infinity of `W₁` along `φ^*` and `ψ^*` gives the places at infinity of `W₂` and `W₃`, so
@@ -43,12 +27,10 @@ are correctly excluded here, the subfield containment failing in each case.
 
 ## Main results
 
-* `TauCeti.CoordinatePullback.mapsInfinity_iff_isEquiv_comap_infinityPlace`: **the pointedness
-  criterion**, `MapsInfinity σ ↔ σ_*(O₁) = O₂`, for an embedding `σ` of function fields.
 * `TauCeti.Isogeny.existsUnique_comp_eq_iff_fieldRange_le`: **the factorisation theorem**, that
   `ψ` factors through `φ` by a unique isogeny exactly when `ψ^*F(W₃) ⊆ φ^*F(W₂)`.
-* `TauCeti.Isogeny.exists_comp_eq_id_of_degree_eq_one`: **a degree-one isogeny is an
-  isomorphism**, the first consequence of the factorisation theorem.
+* `TauCeti.Isogeny.exists_comp_eq_id_and_comp_eq_id_of_degree_eq_one`: **a degree-one isogeny is
+  an isomorphism**, the first consequence of the factorisation theorem.
 
 ## Roadmap
 
@@ -82,95 +64,6 @@ open Polynomial WeierstrassCurve.Affine
 namespace TauCeti
 
 variable {F : Type*} [Field F] {W₁ W₂ W₃ : WeierstrassCurve.Affine F}
-
-namespace CoordinatePullback
-
-/-- **An embedding of function fields under which `x` acquires a pole at infinity maps infinity
-to infinity.**
-
-The proof is the valuation-theoretic form of "the poles of `σ x₂` are where `σ` sends the point
-at infinity". If `x₁` were not integral over the pulled-back coordinate ring, some valuation
-subring of `F(W₁)` would contain that ring but not `x₁`; being proper and containing the
-constants, it is the valuation ring of a place, and `x₁` has a pole there, so that place is the
-one at infinity. But `σ x₂` lies in the ring, so it has no pole there — against the hypothesis.
-Integrality of `F[W₁]` over `F[X]` then upgrades `x₁` to the whole coordinate ring. -/
-theorem mapsInfinity_of_one_lt_infinityPlace (σ : W₂.FunctionField →ₐ[F] W₁.FunctionField)
-    (h : 1 < infinityPlace W₁ (σ (algebraMap F[X] W₂.FunctionField X))) :
-    MapsInfinity (σ.comp (IsScalarTower.toAlgHom F W₂.CoordinateRing W₂.FunctionField)) := by
-  rw [mapsInfinity_iff]
-  let _ := (σ.comp
-    (IsScalarTower.toAlgHom F W₂.CoordinateRing W₂.FunctionField)).toRingHom.toAlgebra
-  have hcoord : ∀ c : W₂.CoordinateRing,
-      algebraMap W₂.CoordinateRing W₁.FunctionField c = σ (algebraMap _ _ c) := fun _ ↦ rfl
-  set C := integralClosure W₂.CoordinateRing W₁.FunctionField
-  -- The affine coordinate of `W₁` is integral over the pulled-back coordinate ring.
-  have hx₁ : algebraMap F[X] W₁.FunctionField X ∈ C := by
-    by_contra hmem
-    obtain ⟨V, hCV, hxV⟩ := Subring.exists_le_valuationSubring_of_isIntegrallyClosedIn
-      (R := C.toSubring) (x := algebraMap F[X] W₁.FunctionField X) hmem
-    have hmemV : ∀ c : W₂.CoordinateRing,
-        algebraMap W₂.CoordinateRing W₁.FunctionField c ∈ V :=
-      fun c ↦ hCV (Subalgebra.algebraMap_mem C c)
-    have hFV : ∀ c : F, algebraMap F W₁.FunctionField c ∈ V := fun c ↦ by
-      rw [IsScalarTower.algebraMap_apply F W₂.CoordinateRing W₁.FunctionField]
-      exact hmemV _
-    have hVne : V ≠ ⊤ := fun hV ↦ hxV (hV ▸ trivial)
-    set P := Place.ofValuationSubring W₁.isFunctionField hFV hVne
-    have hPint : P.integers = V := Place.integers_ofValuationSubring _ hFV hVne
-    have hpole : 1 < P.valuation (algebraMap F[X] W₁.FunctionField X) :=
-      not_le.1 fun hle ↦ hxV (hPint ▸ P.mem_integers_iff.2 hle)
-    -- A place at which `x₁` has a pole is the place at infinity.
-    have hequiv := isEquiv_infinityPlace_of_one_lt (W := W₁) (v := P.valuation) hpole
-    have hσx : σ (algebraMap F[X] W₂.FunctionField X) =
-        algebraMap W₂.CoordinateRing W₁.FunctionField (algebraMap F[X] W₂.CoordinateRing X) := by
-      rw [hcoord, ← IsScalarTower.algebraMap_apply F[X] W₂.CoordinateRing W₂.FunctionField]
-    refine absurd ((Valuation.isEquiv_iff_val_le_one.1 hequiv).1 ?_) (not_le.2 h)
-    rw [hσx]
-    exact P.mem_integers_iff.1 (hPint ▸ hmemV _)
-  -- Every polynomial in that coordinate is then integral, so `F[X]` acts on the integral closure.
-  have hmemq : ∀ q : F[X], algebraMap F[X] W₁.FunctionField q ∈ C := by
-    intro q
-    induction q using Polynomial.induction_on with
-    | C a =>
-      rw [← Polynomial.algebraMap_eq, ← IsScalarTower.algebraMap_apply F F[X] W₁.FunctionField,
-        IsScalarTower.algebraMap_apply F W₂.CoordinateRing W₁.FunctionField]
-      exact Subalgebra.algebraMap_mem C _
-    | add p q hp hq => simpa using C.add_mem hp hq
-    | monomial n a hn =>
-      rw [pow_succ, ← mul_assoc, map_mul]
-      exact C.mul_mem hn hx₁
-  let _ := ((algebraMap F[X] W₁.FunctionField).codRestrict C hmemq).toAlgebra
-  have : IsScalarTower F[X] C W₁.FunctionField := IsScalarTower.of_algebraMap_eq fun _ ↦ rfl
-  -- The coordinate ring of `W₁` is integral over `F[X]`, hence over the integral closure.
-  intro z
-  refine isIntegral_trans (A := C) _ (IsIntegral.tower_top (R := F[X]) ?_)
-  exact (Algebra.IsIntegral.isIntegral (R := F[X]) z).map
-    (IsScalarTower.toAlgHom F[X] W₁.CoordinateRing W₁.FunctionField)
-
-/-- **The pointedness criterion.** An embedding `σ : F(W₂) → F(W₁)` of function fields restricts
-to a coordinate pullback which maps infinity to infinity exactly when restricting the place at
-infinity of `W₁` along `σ` gives the place at infinity of `W₂` — that is, exactly when
-`σ_*(O₁) = O₂`.
-
-The forward direction is `TauCeti.Isogeny.isEquiv_comap_infinityPlace`, applied to the isogeny
-that `σ` then is; the converse is `mapsInfinity_of_one_lt_infinityPlace`, since `x₂` has a pole
-at the place at infinity of `W₂`. -/
-theorem mapsInfinity_iff_isEquiv_comap_infinityPlace
-    (σ : W₂.FunctionField →ₐ[F] W₁.FunctionField) :
-    MapsInfinity (σ.comp (IsScalarTower.toAlgHom F W₂.CoordinateRing W₂.FunctionField)) ↔
-      ((infinityPlace W₁).comap σ.toRingHom).IsEquiv (infinityPlace W₂) := by
-  constructor
-  · intro hσ
-    have hfield : ({ pullback := _, mapsInfinity := hσ } :
-        Isogeny W₁ W₂).fieldPullback = σ :=
-      (Isogeny.fieldPullback_unique _ σ fun _ ↦ rfl).symm
-    exact hfield ▸ Isogeny.isEquiv_comap_infinityPlace ⟨_, hσ⟩
-  · intro hσ
-    refine mapsInfinity_of_one_lt_infinityPlace σ (not_le.1 fun hle ↦ ?_)
-    exact absurd ((Valuation.isEquiv_iff_val_le_one.1 hσ).1 hle)
-      (not_le.2 (one_lt_infinityPlace_X W₂))
-
-end CoordinatePullback
 
 namespace Isogeny
 
@@ -221,20 +114,16 @@ theorem existsUnique_comp_eq_iff_fieldRange_le (φ : Isogeny W₁ W₂) (ψ : Is
     exact ⟨χ, hfactor, fun _ h ↦ comp_right_injective φ (h.trans hfactor.symm)⟩
 
 /-- **An isogeny of degree one is an isomorphism** (Silverman, *The Arithmetic of Elliptic
-Curves*, II.2.4.1): it has a two-sided inverse isogeny.
-
-Degree one says the function-field pullback is onto, so every isogeny out of `W₁` — the identity
-in particular — factors through `φ`. The factor of the identity is a right inverse, and it is a
-left inverse because precomposition by `φ` is injective. -/
-theorem exists_comp_eq_id_of_degree_eq_one (φ : Isogeny W₁ W₂) (hφ : φ.degree = 1) :
+Curves*, II.2.4.1): it has an isogeny which is both a left and a right inverse. -/
+theorem exists_comp_eq_id_and_comp_eq_id_of_degree_eq_one
+    (φ : Isogeny W₁ W₂) (hφ : φ.degree = 1) :
     ∃ χ : Isogeny W₂ W₁, χ.comp φ = id W₁ ∧ φ.comp χ = id W₂ := by
   have htop : φ.fieldPullback.fieldRange = ⊤ :=
     AlgHom.fieldRange_eq_top.2 ((degree_eq_one_iff φ).1 hφ)
   obtain ⟨χ, hχ, -⟩ :=
     (existsUnique_comp_eq_iff_fieldRange_le φ (id W₁)).2 (htop ▸ le_top)
   refine ⟨χ, hχ, comp_right_injective φ ?_⟩
-  change (φ.comp χ).comp φ = (id W₂).comp φ
-  rw [comp_assoc, hχ, comp_id, id_comp]
+  simp [comp_assoc, hχ]
 
 end Isogeny
 
