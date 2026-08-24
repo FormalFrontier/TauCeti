@@ -34,9 +34,10 @@ no `σ`-mass to begin with (`measure_prod_singleton_of_fst_eq_zero`).
   atomic slices, the elementary decomposition the construction rests on;
 * `TauCeti.MeasureTheory.measure_prod_singleton_of_fst_eq_zero` — an atom of zero first-marginal
   mass carries no mass at all: the fact that makes the default value at such an atom harmless;
-* `TauCeti.MeasureTheory.countableCondKernel_apply_of_ne_zero` and
-  `TauCeti.MeasureTheory.countableCondKernel_apply_of_eq_zero` — the two branches of the
-  construction, made explicit;
+* `TauCeti.MeasureTheory.countableCondKernel_apply`,
+  `TauCeti.MeasureTheory.countableCondKernel_apply_of_ne_zero` and
+  `TauCeti.MeasureTheory.countableCondKernel_apply_of_eq_zero` — the eliminator and the two
+  branches of the construction, made explicit;
 * `TauCeti.MeasureTheory.compProd_countableCondKernel` — **the disintegration**,
   `σ.fst ⊗ₘ countableCondKernel σ = σ`, registered as a
   `MeasureTheory.Measure.IsCondKernel` instance;
@@ -137,12 +138,12 @@ def countableCondKernel (σ : Measure (Y × Z)) : Kernel Y Z :=
     if σ.fst {y} = 0 then Measure.dirac (Classical.arbitrary Z)
     else ((σ.fst {y})⁻¹ • σ).comap (Prod.mk y)
 
-/-- The two branches of `countableCondKernel`, before either is evaluated. Kept private: the
-public API is the pair of branch lemmas below, neither of which mentions the `if`. -/
-private theorem countableCondKernel_apply (σ : Measure (Y × Z)) (y : Y) :
+/-- The two branches of `countableCondKernel`, before either is evaluated. The pair of branch
+lemmas below is the interface to prefer; neither of those mentions the `if`. -/
+theorem countableCondKernel_apply (σ : Measure (Y × Z)) (y : Y) :
     countableCondKernel σ y =
       if σ.fst {y} = 0 then Measure.dirac (Classical.arbitrary Z)
-      else ((σ.fst {y})⁻¹ • σ).comap (Prod.mk y) := rfl
+      else ((σ.fst {y})⁻¹ • σ).comap (Prod.mk y) := (rfl)
 
 /-- At a null atom the conditional kernel takes its default value. It is a genuine choice, not a
 quantity read off `σ`; see `exists_isCondKernel_pair_ne`. -/
