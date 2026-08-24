@@ -7,7 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Dual
-public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Naturality
 public import TauCeti.LinearAlgebra.IntegralLattice.Unimodular
 
 /-!
