@@ -208,7 +208,6 @@ theorem Wkp.value_ofTestFunctionₗ (k : ℕ) (phi : 𝓓(Omega, ℝ)) :
 
 /-- The highest iterated-gradient component of an embedded test function is its classical
 iterated gradient as an `Lᵖ` class. -/
-@[simp]
 theorem Wkp.iteratedGradient_ofTestFunctionₗ (k : ℕ) (phi : 𝓓(Omega, ℝ)) :
     Wkp.iteratedGradient k (Wkp.ofTestFunctionₗ (mu := mu) (p := p) (k + 1) phi) =
       iteratedGradientTestFunctionLp (mu := mu) (p := p) k phi := by
