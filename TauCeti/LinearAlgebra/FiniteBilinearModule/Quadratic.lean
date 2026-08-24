@@ -114,11 +114,11 @@ variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
   {C : FiniteQuadraticModule}
 
 /-- The identity morphism of a finite quadratic module. -/
-@[expose] def id (A : FiniteQuadraticModule) : Hom A A :=
+def id (A : FiniteQuadraticModule) : Hom A A :=
   QuadraticMap.Isometry.id A.quadratic
 
 /-- The composite of two finite quadratic module morphisms. -/
-@[expose] def comp (g : Hom B C) (f : Hom A B) : Hom A C :=
+def comp (g : Hom B C) (f : Hom A B) : Hom A C :=
   QuadraticMap.Isometry.comp g f
 
 /-- Two finite quadratic module morphisms are equal when they agree on every element. -/
@@ -128,11 +128,11 @@ theorem ext {f g : Hom A B} (h : ∀ x, f x = g x) : f = g :=
 
 @[simp]
 theorem id_apply (A : FiniteQuadraticModule) (x : A) : id A x = x :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem comp_apply (g : Hom B C) (f : Hom A B) (x : A) : g.comp f x = g (f x) :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem id_comp (f : Hom A B) : (id B).comp f = f :=
