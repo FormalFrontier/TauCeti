@@ -90,7 +90,7 @@ theorem lowerLeftCoordinate_def :
     rfl
 
 /-- The weights `(1, 0)` whose weight parabolic is the standard upper-triangular Borel. -/
-@[expose] def weights : Fin 2 → ℤ :=
+def weights : Fin 2 → ℤ :=
   fun i ↦ if i = 0 then 1 else 0
 
 /-- The first standard Borel weight is one. -/

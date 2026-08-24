@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weights
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Functor
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality

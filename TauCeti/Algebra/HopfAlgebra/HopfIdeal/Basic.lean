@@ -8,7 +8,6 @@ module
 public import Mathlib.LinearAlgebra.DFinsupp
 public import Mathlib.LinearAlgebra.TensorProduct.RightExactness
 public import Mathlib.RingTheory.HopfAlgebra.Basic
-public import Mathlib.RingTheory.HopfAlgebra.Convolution
 public import Mathlib.RingTheory.HopfAlgebra.Quotient
 public import Mathlib.RingTheory.Ideal.Maps
 
