@@ -55,8 +55,8 @@ below is named after its counterparts there wherever one exists.
   canonical structure `TauCeti.UniversalEnvelopingAlgebra.asModule`.
 * `TauCeti.UniversalEnvelopingAlgebra.lieModuleHomEquiv`: **the dictionary for homomorphisms**, an
   `R`-linear equivalence between Lie module homomorphisms and `U(L)`-linear maps.
-* `TauCeti.UniversalEnvelopingAlgebra.lieModuleEquivEquiv`: the corresponding dictionary for
-  equivalences of compatible modules.
+* `TauCeti.UniversalEnvelopingAlgebra.lieModuleEquivEquivLinearEquiv`: the corresponding
+  dictionary from Lie-module equivalences to `U(L)`-linear equivalences.
 * `TauCeti.UniversalEnvelopingAlgebra.lieSubmoduleLinearEquivAsModule`: the identity equivalence
   between a Lie submodule and its image under the canonical submodule dictionary.
 
@@ -399,7 +399,7 @@ section Equiv
 /-- **The enveloping-algebra dictionary for equivalences**: Lie module equivalences are exactly
 `U(L)`-linear equivalences when both actions are compatible with the canonical Lie generators.
 The correspondence is the identity on underlying functions. -/
-noncomputable def lieModuleEquivEquiv
+noncomputable def lieModuleEquivEquivLinearEquiv
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     (hN : ∀ (x : L) (n : N), ι R x • n = ⁅x, n⁆) :
     (M ≃ₗ⁅R,L⁆ N) ≃ (M ≃ₗ[U] N) where
@@ -425,26 +425,27 @@ noncomputable def lieModuleEquivEquiv
 
 /-- The forward equivalence dictionary does not change the underlying function. -/
 @[simp]
-theorem coe_lieModuleEquivEquiv
+theorem coe_lieModuleEquivEquivLinearEquiv
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     (hN : ∀ (x : L) (n : N), ι R x • n = ⁅x, n⁆)
     (e : M ≃ₗ⁅R,L⁆ N) :
-    ⇑(lieModuleEquivEquiv (R := R) (L := L) (M := M) (N := N) hM hN e) = ⇑e :=
+    ⇑(lieModuleEquivEquivLinearEquiv (R := R) (L := L) (M := M) (N := N) hM hN e) = ⇑e :=
   by
     ext m
-    simp only [lieModuleEquivEquiv, Equiv.coe_fn_mk, LinearEquiv.ofBijective_apply,
+    simp only [lieModuleEquivEquivLinearEquiv, Equiv.coe_fn_mk, LinearEquiv.ofBijective_apply,
       coe_lieModuleHomEquiv, LieModuleEquiv.coe_toLieModuleHom]
 
 /-- The inverse equivalence dictionary does not change the underlying function. -/
 @[simp]
-theorem coe_lieModuleEquivEquiv_symm
+theorem coe_lieModuleEquivEquivLinearEquiv_symm
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     (hN : ∀ (x : L) (n : N), ι R x • n = ⁅x, n⁆)
     (e : M ≃ₗ[U] N) :
-    ⇑((lieModuleEquivEquiv (R := R) (L := L) (M := M) (N := N) hM hN).symm e) = ⇑e :=
+    ⇑((lieModuleEquivEquivLinearEquiv (R := R) (L := L) (M := M) (N := N) hM hN).symm e) =
+      ⇑e :=
   by
     ext n
-    simp only [lieModuleEquivEquiv, Equiv.coe_fn_symm_mk,
+    simp only [lieModuleEquivEquivLinearEquiv, Equiv.coe_fn_symm_mk,
       LieModuleEquiv.ofBijective_apply, coe_lieModuleHomEquiv_symm,
       LinearEquiv.coe_toLinearMap]
 
