@@ -750,8 +750,10 @@ private theorem coe_orthogonalComplementEquiv_symm_apply (f : Isometry A B)
   simp only [orthogonalComplementEquiv, AddEquiv.symm_trans_apply,
     AddEquiv.addSubgroupCongr_symm_apply,
     FiniteBilinearModule.Isometry.coe_orthogonalComplementEquiv_symm_apply]
-  change f.toFiniteBilinearModule.symm.toAddEquiv (y : B) = f.toAddEquiv.symm (y : B)
-  rw [FiniteBilinearModule.Isometry.symm_toAddEquiv, toFiniteBilinearModule_toAddEquiv]
+  rw [← FiniteBilinearModule.Isometry.coe_toAddEquiv,
+    FiniteBilinearModule.Isometry.symm_toAddEquiv, toFiniteBilinearModule_toAddEquiv]
+  exact congrArg (fun e : B ≃ₗ[ℤ] A => e (y : B))
+    (QuadraticMap.IsometryEquiv.coe_symm_toLinearEquiv f)
 
 /-- The copy of `H` inside `H⊥` is carried onto the copy of the image of `H` inside its orthogonal
 complement. This is the hypothesis which makes the two quotients correspond. -/
