@@ -26,7 +26,7 @@ counts by the classical reading of the three values as the **orthogonal**, **com
 
 The bridge is the inner-product dictionary of
 `TauCeti/RepresentationTheory/Continuous/Square/BilinearForm.lean`: a tensor `t` of `V ⊗[ℂ] V`
-becomes the form `⟪t, v ⊗ₜ w⟫`, and that identification carries the symmetric tensors to the
+becomes the form `⟪t, v ⊗ₜ w⟫`, and that construction carries the symmetric tensors to the
 symmetric forms, the antisymmetric tensors to the alternating forms, and — because the
 representation is unitary — the invariant tensors to the invariant forms. So the two eigenspaces of
 the flip that the trichotomy counts *are* the invariant symmetric and the invariant alternating
@@ -61,6 +61,15 @@ deliberately given the same shape: invariance is the named predicate
   complex case**, that is, exactly when the representation carries no nonzero invariant bilinear
   form.
 
+## Implementation notes
+
+The first two theorems are one argument read twice, so both go through the private
+`ContRepresentation.finrank_eq_one_iff_exists_nondegenerate`: a count of invariants that is at most
+`1` is `1` exactly when a nonzero invariant form of the relevant kind exists, and on an irreducible
+representation "nonzero" and "nondegenerate" agree. The third then needs no count of its own: the
+trichotomy leaves only the values `1` and `-1` to exclude, and those are exactly what the first two
+theorems name.
+
 ## References
 
 This discharges the `frobeniusSchurIndicator_eq_one_iff` and
@@ -87,7 +96,33 @@ variable {G V : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
   [NormedAddCommGroup V] [InnerProductSpace ℂ V] [FiniteDimensional ℂ V]
 
-variable (π : ContRepresentation ℂ G V) (hπ : Continuous π)
+variable (π : ContRepresentation ℂ G V)
+
+omit [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G]
+  [BorelSpace G] [FiniteDimensional ℂ V] in
+/-- A count of invariants that is at most `1` is `1` exactly when there is a nonzero invariant form
+of the kind the count records; on an irreducible representation such a form is the same thing as a
+nondegenerate one. This is the shape both the orthogonal and the symplectic case take. -/
+private theorem finrank_eq_one_iff_exists_nondegenerate {M : Type*} [AddCommGroup M] [Module ℂ M]
+    [FiniteDimensional ℂ M] {S : Submodule ℂ M} {P : BilinForm ℂ V → Prop}
+    (hirr : Representation.IsIrreducible π.toRepresentation) (hle : finrank ℂ S ≤ 1)
+    (hiff : (∃ B : BilinForm ℂ V, Representation.IsInvariantForm π.toRepresentation B ∧ P B ∧
+        B ≠ 0) ↔ S ≠ ⊥) :
+    finrank ℂ S = 1 ↔ ∃ B : BilinForm ℂ V,
+      Representation.IsInvariantForm π.toRepresentation B ∧ P B ∧ B.Nondegenerate := by
+  constructor
+  · intro h
+    have hne : S ≠ ⊥ := fun hbot => by
+      rw [hbot, finrank_bot] at h
+      exact one_ne_zero h.symm
+    obtain ⟨B, hB, hPB, hB0⟩ := hiff.mpr hne
+    exact ⟨B, hB, hPB, hB.nondegenerate hB0⟩
+  · rintro ⟨B, hB, hPB, hnd⟩
+    have hne : S ≠ ⊥ := hiff.mp ⟨B, hB, hPB, hB.nondegenerate_iff_ne_zero.mp hnd⟩
+    have h1 := Submodule.one_le_finrank_iff.mpr hne
+    omega
+
+variable (hπ : Continuous π)
 
 include hπ
 
@@ -100,21 +135,9 @@ theorem frobeniusSchurIndicator_eq_one_iff (hunitary : IsUnitary π)
       ∃ B : BilinForm ℂ V, Representation.IsInvariantForm π.toRepresentation B ∧
         B.IsSymm ∧ B.Nondegenerate := by
   rw [frobeniusSchurIndicator_eq_one_iff_finrank_invariants_symmetricSquare π hπ hunitary hirr]
-  constructor
-  · intro h
-    have hne : (symmetricSquare π).invariants ≠ ⊥ := fun hbot => by
-      rw [hbot, finrank_bot] at h
-      exact one_ne_zero h.symm
-    obtain ⟨B, hB, hB0, hsymm⟩ :=
-      (exists_ne_zero_isSymm_isInvariantForm_iff π hunitary).mpr hne
-    exact ⟨B, hB, hsymm, hB.nondegenerate hB0⟩
-  · rintro ⟨B, hB, hsymm, hnd⟩
-    have hne : (symmetricSquare π).invariants ≠ ⊥ :=
-      (exists_ne_zero_isSymm_isInvariantForm_iff π hunitary).mp
-        ⟨B, hB, hB.nondegenerate_iff_ne_zero.mp hnd, hsymm⟩
-    have hle := finrank_invariants_squares_le_one hunitary hirr
-    have h1 := Submodule.one_le_finrank_iff.mpr hne
-    omega
+  exact finrank_eq_one_iff_exists_nondegenerate π hirr
+    ((Nat.le_add_right _ _).trans (finrank_invariants_squares_le_one hunitary hirr))
+    (exists_isInvariantForm_isSymm_ne_zero_iff π hunitary)
 
 /-- **The indicator is `-1` exactly in the symplectic case**: an irreducible unitary representation
 of a compact group has Frobenius-Schur indicator `-1` exactly when it carries a nondegenerate
@@ -125,21 +148,9 @@ theorem frobeniusSchurIndicator_eq_neg_one_iff (hunitary : IsUnitary π)
       ∃ B : BilinForm ℂ V, Representation.IsInvariantForm π.toRepresentation B ∧
         B.IsAlt ∧ B.Nondegenerate := by
   rw [frobeniusSchurIndicator_eq_neg_one_iff_finrank_invariants_exteriorSquare π hπ hunitary hirr]
-  constructor
-  · intro h
-    have hne : (exteriorSquare π).invariants ≠ ⊥ := fun hbot => by
-      rw [hbot, finrank_bot] at h
-      exact one_ne_zero h.symm
-    obtain ⟨B, hB, hB0, halt⟩ :=
-      (exists_ne_zero_isAlt_isInvariantForm_iff π hunitary).mpr hne
-    exact ⟨B, hB, halt, hB.nondegenerate hB0⟩
-  · rintro ⟨B, hB, halt, hnd⟩
-    have hne : (exteriorSquare π).invariants ≠ ⊥ :=
-      (exists_ne_zero_isAlt_isInvariantForm_iff π hunitary).mp
-        ⟨B, hB, hB.nondegenerate_iff_ne_zero.mp hnd, halt⟩
-    have hle := finrank_invariants_squares_le_one hunitary hirr
-    have h1 := Submodule.one_le_finrank_iff.mpr hne
-    omega
+  exact finrank_eq_one_iff_exists_nondegenerate π hirr
+    ((Nat.le_add_left _ _).trans (finrank_invariants_squares_le_one hunitary hirr))
+    (exists_isInvariantForm_isAlt_ne_zero_iff π hunitary)
 
 /-- **The indicator is `0` exactly in the complex case**: an irreducible unitary representation of a
 compact group has Frobenius-Schur indicator `0` exactly when it carries no nonzero invariant
@@ -147,37 +158,39 @@ bilinear form at all.
 
 Over `ℂ` a nonzero invariant form on an irreducible representation is symmetric or alternating
 (`TauCeti.Representation.IsInvariantForm.isSymm_or_isAlt`), so the two preceding theorems account
-for every invariant form. -/
+for every invariant form, and the trichotomy leaves nothing else for the indicator to be. -/
 theorem frobeniusSchurIndicator_eq_zero_iff (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 0 ↔
       Representation.invariantForms π.toRepresentation = ⊥ := by
-  rw [frobeniusSchurIndicator_eq_zero_iff_finrank_invariants_squares π hπ hunitary hirr]
   constructor
-  · rintro ⟨hs, ha⟩
+  · intro h0
     refine le_antisymm (fun B hB => ?_) bot_le
+    rw [Submodule.mem_bot]
     by_contra hB0
-    rw [Submodule.mem_bot] at hB0
     have hBinv : Representation.IsInvariantForm π.toRepresentation B :=
       Representation.mem_invariantForms.mp hB
+    have hnd : B.Nondegenerate := hBinv.nondegenerate hB0
     rcases hBinv.isSymm_or_isAlt (by norm_num) hB0 with hsymm | halt
-    · have hne := (exists_ne_zero_isSymm_isInvariantForm_iff π hunitary).mp ⟨B, hBinv, hB0, hsymm⟩
-      have h1 := Submodule.one_le_finrank_iff.mpr hne
-      omega
-    · have hne := (exists_ne_zero_isAlt_isInvariantForm_iff π hunitary).mp ⟨B, hBinv, hB0, halt⟩
-      have h1 := Submodule.one_le_finrank_iff.mpr hne
-      omega
+    · have h1 := (frobeniusSchurIndicator_eq_one_iff π hπ hunitary hirr).mpr ⟨B, hBinv, hsymm, hnd⟩
+      rw [h0] at h1
+      norm_num at h1
+    · have h1 :=
+        (frobeniusSchurIndicator_eq_neg_one_iff π hπ hunitary hirr).mpr ⟨B, hBinv, halt, hnd⟩
+      rw [h0] at h1
+      norm_num at h1
   · intro hbot
-    have hsym : (symmetricSquare π).invariants = ⊥ := by
-      by_contra hne
-      obtain ⟨B, hB, hB0, -⟩ := (exists_ne_zero_isSymm_isInvariantForm_iff π hunitary).mpr hne
-      exact hB0 (Submodule.mem_bot ℂ |>.mp (hbot ▸ Representation.mem_invariantForms.mpr hB))
-    have halt : (exteriorSquare π).invariants = ⊥ := by
-      by_contra hne
-      obtain ⟨B, hB, hB0, -⟩ := (exists_ne_zero_isAlt_isInvariantForm_iff π hunitary).mpr hne
-      exact hB0 (Submodule.mem_bot ℂ |>.mp (hbot ▸ Representation.mem_invariantForms.mpr hB))
-    rw [hsym, halt, finrank_bot, finrank_bot]
-    exact ⟨rfl, rfl⟩
+    -- No invariant form is nondegenerate, so neither `1` nor `-1` is left by the trichotomy.
+    have hnone : ∀ B : BilinForm ℂ V, Representation.IsInvariantForm π.toRepresentation B →
+        B.Nondegenerate → False := fun B hB hnd =>
+      hB.nondegenerate_iff_ne_zero.mp hnd
+        (Submodule.mem_bot ℂ |>.mp (hbot ▸ Representation.mem_invariantForms.mpr hB))
+    rcases frobeniusSchurIndicator_trichotomy π hπ hunitary hirr with h | h | h
+    · obtain ⟨B, hB, -, hnd⟩ := (frobeniusSchurIndicator_eq_one_iff π hπ hunitary hirr).mp h
+      exact (hnone B hB hnd).elim
+    · exact h
+    · obtain ⟨B, hB, -, hnd⟩ := (frobeniusSchurIndicator_eq_neg_one_iff π hπ hunitary hirr).mp h
+      exact (hnone B hB hnd).elim
 
 end CompactGroup
 
