@@ -318,7 +318,7 @@ term is the biproduct of the two outer ones.
 
 Together with `TauCeti.ExactStructure.fullSubcategory` this equips the objects satisfying `P`
 with an induced exact structure — necessarily the split one, by
-`TauCeti.ExactStructure.fullSubcategory_conflation_iff_split`. -/
+`TauCeti.ExactStructure.fullSubcategory_eq_split`. -/
 theorem isExtensionClosed_of_le_isProjective [P.IsClosedUnderIsomorphisms]
     [P.IsClosedUnderBinaryProducts] (hP : P ≤ E.isProjective) : E.IsExtensionClosed P where
   prop_X₂ hS h₁ h₃ :=
@@ -350,14 +350,6 @@ theorem fullSubcategory_eq_split (hP : P ≤ E.isProjective) :
     f_r := ObjectProperty.hom_ext _ hs.f_r
     s_g := ObjectProperty.hom_ext _ hs.s_g
     id := ObjectProperty.hom_ext _ hs.id }⟩
-
-/-- A short complex in a full subcategory of projectives is a conflation of the induced exact
-structure exactly when it is a split conflation. -/
-theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
-    (S : ShortComplex P.FullSubcategory) :
-    (E.fullSubcategory P (E.isExtensionClosed_of_le_isProjective hP)).Conflation S ↔
-      (ExactStructure.split P.FullSubcategory).Conflation S := by
-  rw [E.fullSubcategory_eq_split hP]
 
 /-- **Finite resolutions by projectives lift along a conflation.** If `P` consists of
 `E`-projectives, contains a zero object and is closed under binary biproducts, and both outer

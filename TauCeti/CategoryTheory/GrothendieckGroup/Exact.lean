@@ -173,9 +173,11 @@ theorem of_eq_add_of_conflation {X Y Z : C} {i : X ⟶ Y} {p : Y ⟶ Z} (zero : 
     (hS : E.Conflation (ShortComplex.mk i p zero)) : (of Y : ExactK0 E) = of X + of Z :=
   of_conflation hS
 
+omit [EssentiallySmall.{w} C] in
 /-- An ambient conflation whose outer terms satisfy an extension-closed property gives the
 defining relation in the exact `K₀` of the induced full subcategory. -/
-theorem of_conflation_fullSubcategory {P : ObjectProperty C} [P.ContainsZero]
+theorem of_conflation_fullSubcategory {P : ObjectProperty C} [LocallySmall.{w} C]
+    [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
     [P.IsClosedUnderBinaryProducts] (hP : E.IsExtensionClosed P)
     {S : ShortComplex C} (hS : E.Conflation S)
     (h₁ : P S.X₁) (h₃ : P S.X₃) :
@@ -207,11 +209,13 @@ section FullSubcategory
 
 variable {P : ObjectProperty C} [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 
+omit [EssentiallySmall.{w} C] in
 /-- The class of an explicitly presented ambient biproduct in the exact `K₀` of an induced full
 subcategory is the sum of the classes of its summands. The middle object is the one supplied by
 closure under binary products; by proof irrelevance the statement applies to any presentation of
 it. -/
-theorem of_biprod_fullSubcategory (hP : E.IsExtensionClosed P) {X Y : C}
+theorem of_biprod_fullSubcategory [LocallySmall.{w} C]
+    [ObjectProperty.EssentiallySmall.{w} P] (hP : E.IsExtensionClosed P) {X Y : C}
     (hX : P X) (hY : P Y) :
     (of ⟨X ⊞ Y, P.prop_biprod_of_isClosedUnderBinaryProducts hX hY⟩ :
         ExactK0 (E.fullSubcategory P hP)) =

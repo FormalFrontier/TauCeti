@@ -64,9 +64,13 @@ open CategoryTheory CategoryTheory.Limits ZeroObject
 universe w v u
 
 variable {C : Type u} [Category.{v} C] [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
-  [EssentiallySmall.{w} C] {E : ExactStructure C} {P : ObjectProperty C}
+  {E : ExactStructure C} {P : ObjectProperty C}
 
 namespace ExactStructure.FiniteResolution
+
+section Ambient
+
+variable [EssentiallySmall.{w} C]
 
 /-- The Euler class of a finite `P`-resolution: the alternating sum of the classes of its
 resolving terms, ending with the class of its last syzygy. -/
@@ -116,9 +120,12 @@ theorem eulerClass_eq_eulerClass {X : C} (r s : E.FiniteResolution P X) :
     (r.biprod s).eulerClass = r.eulerClass + s.eulerClass := by
   rw [eulerClass_eq_of, eulerClass_eq_of, eulerClass_eq_of, ExactK0.of_biprod]
 
+end Ambient
+
 section FullSubcategory
 
-variable [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
+variable [LocallySmall.{w} C] [ObjectProperty.EssentiallySmall.{w} P]
+  [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 
 /-- A property containing a zero object and closed under binary products is automatically
 replete, by `CategoryTheory.ObjectProperty.isClosedUnderIsomorphisms_of_containsZero`. -/
@@ -217,6 +224,8 @@ end FullSubcategory
 end ExactStructure.FiniteResolution
 
 namespace ExactK0
+
+variable [EssentiallySmall.{w} C]
 
 variable (E P) in
 /-- The classes of the objects satisfying `P`, as a subset of exact `K₀`. -/

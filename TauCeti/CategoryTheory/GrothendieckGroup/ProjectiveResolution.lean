@@ -99,7 +99,8 @@ open CategoryTheory CategoryTheory.Limits ZeroObject
 universe w v u
 
 variable {C : Type u} [Category.{v} C] [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
-  [EssentiallySmall.{w} C] {E : ExactStructure C} {P : ObjectProperty C}
+  [LocallySmall.{w} C] {E : ExactStructure C} {P : ObjectProperty C}
+  [ObjectProperty.EssentiallySmall.{w} P]
 
 namespace ExactStructure
 
@@ -216,6 +217,7 @@ theorem eulerClassOf_eq {X : C} (hX : E.admitsFiniteResolution P X)
 
 include hproj in
 /-- On an object satisfying `P` the Euler class is the class of that object. -/
+@[simp]
 theorem eulerClassOf_of_prop {X : C} (hX : P X) :
     E.eulerClassOf hP (E.le_admitsFiniteResolution P X hX) =
       ExactK0.of (⟨X, hX⟩ : P.FullSubcategory) := by
@@ -314,12 +316,14 @@ theorem eulerClassOf_congr {X Y : C} (e : X ≅ Y) (hX : E.admitsFiniteResolutio
 section ResolutionTheorem
 
 variable (hproj : P ≤ E.isProjective)
+  [ObjectProperty.EssentiallySmall.{w} (E.admitsFiniteResolution P)]
 
 /-- **The class of an object of finite `P`-dimension is the alternating class of any of its
 finite `P`-resolutions**, after pushing the latter forward along the inclusion. This is the
 telescoping computation of `TauCeti.ExactStructure.FiniteResolution.eulerClass_eq_of`, carried
 out in the exact `K₀` of the objects of finite `P`-dimension rather than in that of the whole
 ambient category. -/
+@[simp]
 theorem map_eulerClassFullSubcategory_eq_of {X : C} (r : E.FiniteResolution P X) :
     ExactK0.map _ (E.isConflationExact_ιOfLE hP
       (E.isExtensionClosed_admitsFiniteResolution hproj) (E.le_admitsFiniteResolution P))
