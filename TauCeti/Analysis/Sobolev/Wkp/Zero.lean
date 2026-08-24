@@ -188,27 +188,27 @@ noncomputable def Wkp.ofTestFunctionₗ (k : ℕ) : 𝓓(Omega, ℝ) →ₗ[ℝ]
   toFun := Wkp.ofTestFunction (mu := mu) (p := p) k
   map_add' phi psi := by
     apply Wkp.ext k
-    rw [Wkp.value_ofTestFunction,
-      ← Wkp.valueL_apply k (Wkp.ofTestFunction k phi + Wkp.ofTestFunction k psi), map_add,
-      Wkp.valueL_apply, Wkp.valueL_apply, Wkp.value_ofTestFunction, Wkp.value_ofTestFunction,
-      testFunctionLp_add]
+    simp only [← Wkp.valueL_apply, map_add]
+    simp only [Wkp.valueL_apply, Wkp.value_ofTestFunction, testFunctionLp_add]
   map_smul' c phi := by
     apply Wkp.ext k
-    simp only [RingHom.id_apply]
-    rw [Wkp.value_ofTestFunction,
-      ← Wkp.valueL_apply k (c • Wkp.ofTestFunction k phi), map_smul, Wkp.valueL_apply,
-      Wkp.value_ofTestFunction, testFunctionLp_smul]
+    simp only [RingHom.id_apply, ← Wkp.valueL_apply, map_smul]
+    simp only [Wkp.valueL_apply, Wkp.value_ofTestFunction, testFunctionLp_smul]
 
 private theorem Wkp.ofTestFunctionₗ_apply (k : ℕ) (phi : 𝓓(Omega, ℝ)) :
     Wkp.ofTestFunctionₗ (mu := mu) (p := p) k phi = Wkp.ofTestFunction k phi :=
   rfl
 
+/-- The value component of an embedded test function is its `Lᵖ` class. -/
 @[simp]
 theorem Wkp.value_ofTestFunctionₗ (k : ℕ) (phi : 𝓓(Omega, ℝ)) :
     Wkp.value k (Wkp.ofTestFunctionₗ (mu := mu) (p := p) k phi) = testFunctionLp p phi := by
   rw [Wkp.ofTestFunctionₗ_apply]
   exact Wkp.value_ofTestFunction k phi
 
+/-- The highest iterated-gradient component of an embedded test function is its classical
+iterated gradient as an `Lᵖ` class. -/
+@[simp]
 theorem Wkp.iteratedGradient_ofTestFunctionₗ (k : ℕ) (phi : 𝓓(Omega, ℝ)) :
     Wkp.iteratedGradient k (Wkp.ofTestFunctionₗ (mu := mu) (p := p) (k + 1) phi) =
       iteratedGradientTestFunctionLp (mu := mu) (p := p) k phi := by
@@ -220,20 +220,15 @@ theorem iteratedGradientTestFunctionLp_add (k : ℕ) (phi psi : 𝓓(Omega, ℝ)
     iteratedGradientTestFunctionLp (mu := mu) (p := p) k (phi + psi) =
       iteratedGradientTestFunctionLp (mu := mu) (p := p) k phi +
         iteratedGradientTestFunctionLp (mu := mu) (p := p) k psi := by
-  rw [← Wkp.iteratedGradient_ofTestFunction k,
-    ← Wkp.iteratedGradient_ofTestFunction k, ← Wkp.iteratedGradient_ofTestFunction k,
-    ← Wkp.ofTestFunctionₗ_apply, map_add, Wkp.ofTestFunctionₗ_apply,
-    ← Wkp.iteratedGradientL_apply, map_add, Wkp.iteratedGradientL_apply,
-    Wkp.iteratedGradientL_apply]
-  rfl
+  simp only [← Wkp.iteratedGradient_ofTestFunctionₗ,
+    ← Wkp.iteratedGradientL_apply, map_add]
 
 @[simp]
 theorem iteratedGradientTestFunctionLp_smul (k : ℕ) (c : ℝ) (phi : 𝓓(Omega, ℝ)) :
     iteratedGradientTestFunctionLp (mu := mu) (p := p) k (c • phi) =
       c • iteratedGradientTestFunctionLp (mu := mu) (p := p) k phi := by
-  rw [← Wkp.iteratedGradient_ofTestFunction k, ← Wkp.iteratedGradient_ofTestFunction k,
-    ← Wkp.ofTestFunctionₗ_apply, map_smul, Wkp.ofTestFunctionₗ_apply,
-    ← Wkp.iteratedGradientL_apply, map_smul, Wkp.iteratedGradientL_apply]
+  simp only [← Wkp.iteratedGradient_ofTestFunctionₗ,
+    ← Wkp.iteratedGradientL_apply, map_smul]
 
 /-- The test-function embedding into `W^{k,p}(Ω)` is injective. -/
 theorem Wkp.ofTestFunctionₗ_injective (k : ℕ) :
