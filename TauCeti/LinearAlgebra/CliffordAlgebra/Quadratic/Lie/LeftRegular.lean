@@ -114,10 +114,12 @@ theorem kostant_lie_ι (x y : L) :
 
 /-- **Kostant's action minus right multiplication is the inner derivation action.** This is the
 precise sense in which the left-regular module and the exterior extension of the adjoint
-representation are different modules on the same carrier. -/
+representation are different modules on the same carrier; it is the pointwise form of
+`LieHom.ad_apply_eq_leftRegularRep_sub_mulRight` for the adjoint quadratic lift. -/
 theorem kostant_lie_sub_mul (x : L) (c : CliffordAlgebra (killingQuadraticForm K L)) :
-    ⁅x, c⁆ - c * adjointCliffordHom K L x = ⁅adjointCliffordHom K L x, c⁆ := by
-  rw [kostant_lie_def, LieRing.of_associative_ring_bracket]
+    ⁅x, c⁆ - c * adjointCliffordHom K L x = ⁅adjointCliffordHom K L x, c⁆ :=
+  (congrArg (fun f : Module.End K (CliffordAlgebra (killingQuadraticForm K L)) ↦ f c)
+    (LieHom.ad_apply_eq_leftRegularRep_sub_mulRight (adjointCliffordHom K L) x)).symm
 
 /-- **Right multiplication is an endomorphism of Kostant's module.** Associativity of the Clifford
 algebra says that left and right multiplications commute, so every right multiplication lies in

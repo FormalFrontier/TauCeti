@@ -106,12 +106,6 @@ theorem leftRegularRep_mem_of_mem (q : L →ₗ⁅R⁆ A) (I : Submodule A A) (x
   rw [leftRegularRep_apply, ← smul_eq_mul]
   exact I.smul_mem _ ha
 
-/-- The submodule form of `LieHom.leftRegularRep_mem_of_mem`. -/
-theorem map_leftRegularRep_le (q : L →ₗ⁅R⁆ A) (I : Submodule A A) (x : L) :
-    (I.restrictScalars R).map (leftRegularRep q x) ≤ I.restrictScalars R := by
-  rintro _ ⟨a, ha, rfl⟩
-  exact leftRegularRep_mem_of_mem q I x ha
-
 /-- **The inner derivation action is the left-regular action minus right multiplication.** The two
 `L`-module structures on `A` that `q` produces are therefore genuinely different; only the
 left-regular one is built here. -/
