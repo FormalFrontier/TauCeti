@@ -22,6 +22,7 @@ algebra-valued points.
 
 * `TauCeti.GrpObj.Action.coordinateHopfAlgebra`: the coordinate Hopf algebra of an internal
   semidirect product.
+* `TauCeti.GrpObj.Action.coordinateAlgEquiv`: its underlying tensor-product coordinate algebra.
 * `TauCeti.GrpObj.Action.coordinateInl` and `coordinateInr`: the coordinate morphisms representing
   the two factor inclusions.
 * `TauCeti.GrpObj.Action.pointMulEquiv_mapDomain_coordinateInl` and
@@ -55,12 +56,20 @@ noncomputable abbrev coordinateHopfAlgebra
     _root_.CommHopfAlgCat.{u} k :=
   (commHopfAlgCatEquivCogrpCommAlgCat k).inverse.obj (op A.semidirectProduct)
 
+/-- The underlying coordinate algebra of a semidirect product is the tensor product of the
+coordinate algebras of its factors. -/
+noncomputable def coordinateAlgEquiv
+    (A : GrpObj.Action (CommHopfAlgCat.grpObj K) (CommHopfAlgCat.grpObj H)) :
+    A.coordinateHopfAlgebra ≃ₐ[k] H ⊗[k] K :=
+  AlgEquiv.refl
+
 /-- The coordinate algebra of a semidirect product is finite type when both factors are. -/
 noncomputable instance coordinateHopfAlgebra_finiteType
     (A : GrpObj.Action (CommHopfAlgCat.grpObj K) (CommHopfAlgCat.grpObj H))
     [Algebra.FiniteType k H] [Algebra.FiniteType k K] :
     Algebra.FiniteType k A.coordinateHopfAlgebra :=
-  FiniteTypeCommHopfAlgCat.tensorProduct_finiteType (R := k) H K
+  Algebra.FiniteType.equiv
+    (FiniteTypeCommHopfAlgCat.tensorProduct_finiteType (R := k) H K) A.coordinateAlgEquiv.symm
 
 /-- The coordinate morphism representing inclusion of the normal factor in a semidirect
 product. -/
@@ -100,6 +109,17 @@ theorem grpObjMap_coordinateInr
   rw [CommHopfAlgCat.grpObjMap_unop]
   rfl
 
+private theorem grpObjPointsMulEquiv_symm_mapDomain {B C : _root_.CommHopfAlgCat.{u} k}
+    (f : B ⟶ C) (L : CommAlgCat.{u} k) (g : HopfAlgebra.points (R := k) (H := C) L) :
+    (CommHopfAlgCat.grpObjPointsMulEquiv B (op L)).symm (AlgHom.mapDomain f.hom g) =
+      (CommHopfAlgCat.grpObjPointsMulEquiv C (op L)).symm g ≫
+        CommHopfAlgCat.grpObjMap f := by
+  have hnat := CommHopfAlgCat.grpObjPointsMulEquiv_comp_grpObjMap f
+    (op L) ((CommHopfAlgCat.grpObjPointsMulEquiv C (op L)).symm g)
+  apply (CommHopfAlgCat.grpObjPointsMulEquiv B (op L)).injective
+  simpa only [CommHopfAlgCat.mapPointsFunctor_app_apply, AlgHom.mapDomain_apply,
+    MulEquiv.apply_symm_apply] using hnat.symm
+
 /-- Under the point equivalence for a semidirect product, precomposition with `coordinateInl`
 is the ordinary inclusion of the normal factor. -/
 theorem pointMulEquiv_mapDomain_coordinateInl
@@ -121,19 +141,9 @@ theorem pointMulEquiv_mapDomain_coordinateInl
       (CommHopfAlgCat.grpObjPointsMulEquiv A.coordinateHopfAlgebra (op L)).symm
           (AlgHom.mapDomain A.coordinateInl.hom g) =
         (CommHopfAlgCat.grpObjPointsMulEquiv H (op L)).symm g ≫ A.inl.hom.hom := by
-    have hnat := CommHopfAlgCat.grpObjPointsMulEquiv_comp_grpObjMap A.coordinateInl
-      (op L) ((CommHopfAlgCat.grpObjPointsMulEquiv H (op L)).symm g)
-    apply (CommHopfAlgCat.grpObjPointsMulEquiv A.coordinateHopfAlgebra (op L)).injective
-    calc
-      _ = (CommHopfAlgCat.grpObjPointsMulEquiv A.coordinateHopfAlgebra (op L))
-          ((CommHopfAlgCat.grpObjPointsMulEquiv H (op L)).symm g ≫
-            CommHopfAlgCat.grpObjMap A.coordinateInl) := by
-        simpa only [CommHopfAlgCat.mapPointsFunctor_app_apply, AlgHom.mapDomain_apply,
-          MulEquiv.apply_symm_apply] using hnat.symm
-      _ = _ := by
-        rw [A.grpObjMap_coordinateInl]
-        apply WithConv.ofConv_injective
-        rfl
+    rw [grpObjPointsMulEquiv_symm_mapDomain]
+    rw [A.grpObjMap_coordinateInl]
+    rfl
   rw [hcat, A.pointMulEquiv_comp_inl]
 
 /-- Under the point equivalence for a semidirect product, precomposition with `coordinateInr`
@@ -155,19 +165,9 @@ theorem pointMulEquiv_mapDomain_coordinateInr
       (CommHopfAlgCat.grpObjPointsMulEquiv A.coordinateHopfAlgebra (op L)).symm
           (AlgHom.mapDomain A.coordinateInr.hom g) =
         (CommHopfAlgCat.grpObjPointsMulEquiv K (op L)).symm g ≫ A.inr.hom.hom := by
-    have hnat := CommHopfAlgCat.grpObjPointsMulEquiv_comp_grpObjMap A.coordinateInr
-      (op L) ((CommHopfAlgCat.grpObjPointsMulEquiv K (op L)).symm g)
-    apply (CommHopfAlgCat.grpObjPointsMulEquiv A.coordinateHopfAlgebra (op L)).injective
-    calc
-      _ = (CommHopfAlgCat.grpObjPointsMulEquiv A.coordinateHopfAlgebra (op L))
-          ((CommHopfAlgCat.grpObjPointsMulEquiv K (op L)).symm g ≫
-            CommHopfAlgCat.grpObjMap A.coordinateInr) := by
-        simpa only [CommHopfAlgCat.mapPointsFunctor_app_apply, AlgHom.mapDomain_apply,
-          MulEquiv.apply_symm_apply] using hnat.symm
-      _ = _ := by
-        rw [A.grpObjMap_coordinateInr]
-        apply WithConv.ofConv_injective
-        rfl
+    rw [grpObjPointsMulEquiv_symm_mapDomain]
+    rw [A.grpObjMap_coordinateInr]
+    rfl
   rw [hcat, A.pointMulEquiv_comp_inr]
 
 end

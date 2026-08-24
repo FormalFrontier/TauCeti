@@ -163,7 +163,8 @@ theorem semidirectProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
     (smoothUnipotentCommHopfAlgProperty_iff k
       (FiniteTypeCommHopfAlgCat.tensorProduct H K)).mp hproduct
   rw [smoothUnipotentCommHopfAlgProperty_iff]
-  refine ⟨hproduct'.1, ?_⟩
+  let smoothProduct : Algebra.Smooth k (H.obj ⊗[k] K.obj) := hproduct'.1
+  refine ⟨Algebra.Smooth.of_equiv A.coordinateAlgEquiv.symm, ?_⟩
   rw [← geometricallyUnipotentPointsCommHopfAlgProperty_iff]
   exact geometricallyUnipotentPointsCommHopfAlgProperty.semidirectProduct
     k H.obj K.obj A hHpoints hKpoints
