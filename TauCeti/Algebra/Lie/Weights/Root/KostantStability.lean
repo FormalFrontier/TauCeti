@@ -177,6 +177,39 @@ theorem ad_pow_rootVector_eq_zero_or_exists {α β : Weight K H L} (hα : α.IsN
         push_cast
         module
 
+/-- **The root string through `-α`.** The divided powers of `ad (x α)` send the root vector at
+`-α` into the Chevalley lattice. This is the exceptional string, excluded by the hypothesis
+`(α : H → K) + β ≠ 0` of the general estimate `ad_pow_rootVector_eq_zero_or_exists`. -/
+private theorem inv_factorial_smul_ad_pow_root_neg_mem (α : Weight K H L)
+    (hα : α.IsNonZero) (n : ℕ) :
+    (n.factorial : K)⁻¹ • ((ad K L (x α)) ^ n) (x (-α)) ∈ hx.chevalleyLieLattice := by
+  -- `ad (x α)` walks `x (-α) ↦ α∨ ↦ -2 • x α ↦ 0`, so only `n ≤ 2` contributes.
+  have h1 : (ad K L (x α)) (x (-α)) = (coroot α : L) := hx.toIsSl2System.lie_neg α hα
+  have h2 : (ad K L (x α)) ((coroot α : L)) = (-2 : K) • x α := by
+    rw [ad_apply, ← lie_skew, hx.toIsSl2System.lie_coroot α α, root_apply_coroot hα]
+    module
+  have h3 : (ad K L (x α)) ((-2 : K) • x α) = 0 := by
+    rw [map_smul, ad_apply, lie_self, smul_zero]
+  have h2' : ((ad K L (x α)) ^ 2) (x (-α)) = (-2 : K) • x α := by
+    rw [pow_succ', Module.End.mul_apply, pow_one, h1, h2]
+  have h3' : ((ad K L (x α)) ^ 3) (x (-α)) = 0 := by
+    rw [pow_succ', Module.End.mul_apply, h2', h3]
+  match n with
+  | 0 => simp
+  | 1 =>
+    rw [pow_one, h1]
+    simp
+  | 2 =>
+    -- the only nontrivial denominator: `2 !` cancels the `-2` coming from `ad (x α) α∨`
+    have hcancel : ((Nat.factorial 2 : K))⁻¹ • ((-2 : K) • x α) = -(x α) := by
+      rw [smul_smul]
+      norm_num
+    rw [h2', hcancel]
+    exact neg_mem (hx.rootVector_mem_chevalleyLieLattice α)
+  | (m + 3) =>
+    rw [pow_add, Module.End.mul_apply, h3', map_zero, smul_zero]
+    exact zero_mem _
+
 /-- **Divided powers of the adjoint action of a root vector send root vectors into the Chevalley
 lattice.** The rising factorial produced by the root-string computation is divisible by `n !`,
 and the two exceptional strings — the one through `-α` and the degenerate ones — are handled
@@ -201,31 +234,7 @@ theorem inv_factorial_smul_ad_pow_rootVector_mem (α β : Weight K H L) (n : ℕ
       simp only [Weight.coe_neg, Pi.neg_apply]
       linear_combination this
     subst hβα
-    have h1 : (ad K L (x α)) (x (-α)) = (coroot α : L) := hx.toIsSl2System.lie_neg α hα
-    have h2 : (ad K L (x α)) ((coroot α : L)) = (-2 : K) • x α := by
-      rw [ad_apply, ← lie_skew, hx.toIsSl2System.lie_coroot α α, root_apply_coroot hα]
-      module
-    have h3 : (ad K L (x α)) ((-2 : K) • x α) = 0 := by
-      rw [map_smul, ad_apply, lie_self, smul_zero]
-    have h2' : ((ad K L (x α)) ^ 2) (x (-α)) = (-2 : K) • x α := by
-      rw [pow_succ', Module.End.mul_apply, pow_one, h1, h2]
-    have h3' : ((ad K L (x α)) ^ 3) (x (-α)) = 0 := by
-      rw [pow_succ', Module.End.mul_apply, h2', h3]
-    match n with
-    | 0 => simp
-    | 1 =>
-      rw [pow_one, h1]
-      simp
-    | 2 =>
-      -- the only nontrivial denominator: `2 !` cancels the `-2` coming from `ad (x α) α∨`
-      have hcancel : ((Nat.factorial 2 : K))⁻¹ • ((-2 : K) • x α) = -(x α) := by
-        rw [smul_smul]
-        norm_num
-      rw [h2', hcancel]
-      exact neg_mem (hx.rootVector_mem_chevalleyLieLattice α)
-    | (m + 3) =>
-      rw [pow_add, Module.End.mul_apply, h3', map_zero, smul_zero]
-      exact zero_mem _
+    exact hx.inv_factorial_smul_ad_pow_root_neg_mem α hα n
   -- the generic string, where the rising factorial is divisible by `n !`
   rcases hx.ad_pow_rootVector_eq_zero_or_exists hα hβ hαβ n with h0 | ⟨γ, -, -, z, hznat, hz⟩
   · rw [h0, smul_zero]

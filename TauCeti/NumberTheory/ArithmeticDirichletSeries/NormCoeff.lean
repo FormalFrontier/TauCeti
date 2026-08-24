@@ -18,8 +18,9 @@ This file defines `TauCeti.normCoeff`, the ordinary arithmetic function obtained
 function has value zero at `0`, as required by Mathlib's `ArithmeticFunction` carrier; that value
 is available from `ArithmeticFunction.map_zero`.
 
-The construction is bundled as a complex-linear map.  The basic API records the value at one and
-compatibility with complex conjugation.
+The construction is bundled as a complex-linear map.  The basic API exposes the finite norm fibre
+`TauCeti.normFiber` and its finiteness, records the value at one, and proves compatibility with
+complex conjugation.
 
 ## Roadmap role
 
@@ -41,9 +42,36 @@ open scoped nonZeroDivisors NumberField
 
 variable (K : Type*) [Field K] [NumberField K]
 
-private theorem finite_normFiber (n : ℕ) :
+/-- The fibre of nonzero integral ideals with a fixed absolute norm is finite. -/
+theorem finite_normFiber (n : ℕ) :
     {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}.Finite := by
   exact (Ideal.finite_setOfPred_absNorm_eq n).preimage Subtype.val_injective.injOn
+
+/-- The finite set of nonzero integral ideals with a fixed absolute norm. -/
+noncomputable def normFiber (n : ℕ) : Finset ((Ideal (𝓞 K))⁰) :=
+  (finite_normFiber K n).toFinset
+
+/-- Membership in an absolute-norm fibre. -/
+@[simp]
+theorem mem_normFiber {I : (Ideal (𝓞 K))⁰} {n : ℕ} :
+    I ∈ normFiber K n ↔ Ideal.absNorm (I : Ideal (𝓞 K)) = n := by
+  simp [normFiber]
+
+/-- No nonzero integral ideal has absolute norm zero. -/
+@[simp]
+theorem normFiber_zero : normFiber K 0 = ∅ := by
+  ext I
+  rw [mem_normFiber]
+  constructor
+  · intro hI
+    exact mem_nonZeroDivisors_iff_ne_zero.mp I.property (Ideal.absNorm_eq_zero_iff.mp hI) |>.elim
+  · simp
+
+/-- The unit ideal is the unique nonzero integral ideal of absolute norm one. -/
+@[simp]
+theorem normFiber_one : normFiber K 1 = {1} := by
+  ext I
+  simp [Ideal.absNorm_eq_one_iff, Subtype.ext_iff]
 
 /-- Regroup ideal arithmetic functions by absolute norm as a complex-linear map.
 
@@ -73,21 +101,22 @@ theorem normCoeff_apply (f : IdealArithmeticFunction K) (n : ℕ) :
       ∑ᶠ I ∈ {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n}, f I :=
   (rfl)
 
+/-- The value of `normCoeff f` as a sum over the finite absolute-norm fibre. -/
+theorem normCoeff_eq_sum_normFiber (f : IdealArithmeticFunction K) (n : ℕ) :
+    normCoeff K f n = ∑ I ∈ normFiber K n, f I := by
+  rw [normCoeff_apply, finsum_mem_eq_finite_toFinset_sum _ (finite_normFiber K n)]
+  simp only [normFiber]
+
 /-- The summand defining a norm coefficient has finite support. -/
 theorem hasFiniteSupport_normCoeff_summand (f : IdealArithmeticFunction K) (n : ℕ) :
     (Set.indicator
       {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = n} f).HasFiniteSupport :=
   (finite_normFiber K n).subset Set.support_indicator_subset
 
-/-- There is a unique nonzero integral ideal of absolute norm one, namely the unit ideal. -/
+/-- The norm coefficient at `1` is the value at the unit ideal. -/
 @[simp]
 theorem normCoeff_apply_one (f : IdealArithmeticFunction K) : normCoeff K f 1 = f 1 := by
-  rw [normCoeff_apply]
-  have hfiber :
-      {I : (Ideal (𝓞 K))⁰ | Ideal.absNorm (I : Ideal (𝓞 K)) = 1} = {1} := by
-    ext I
-    simp [Ideal.absNorm_eq_one_iff, Subtype.ext_iff]
-  rw [hfiber]
+  rw [normCoeff_eq_sum_normFiber, normFiber_one]
   simp
 
 /-- Regrouping commutes with coefficientwise complex conjugation. -/
