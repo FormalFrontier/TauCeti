@@ -71,11 +71,14 @@ algebra `L` acts on `A` by left multiplication by the image of `q`, which is a L
 def leftRegularRep (q : L →ₗ⁅R⁆ A) : L →ₗ⁅R⁆ Module.End R A :=
   ((Algebra.lmul R A : A →ₐ[R] Module.End R A) : A →ₗ⁅R⁆ Module.End R A).comp q
 
+/-- **The action formula.** `x` acts on `a` by left multiplication by `q x`. -/
 @[simp]
 theorem leftRegularRep_apply (q : L →ₗ⁅R⁆ A) (x : L) (a : A) :
     leftRegularRep q x a = q x * a :=
   (rfl)
 
+/-- The endomorphism by which `x` acts is `LinearMap.mulLeft R (q x)`, which is how the
+left-multiplication API of an associative algebra reaches the left-regular representation. -/
 theorem leftRegularRep_eq_mulLeft (q : L →ₗ⁅R⁆ A) (x : L) :
     leftRegularRep q x = LinearMap.mulLeft R (q x) :=
   (rfl)
@@ -100,8 +103,8 @@ the image of `leftRegularRep q`. -/
 theorem leftRegularRep_comp_mulRight (q : L →ₗ⁅R⁆ A) (x : L) (b : A) :
     (leftRegularRep q x).comp (LinearMap.mulRight R b) =
       (LinearMap.mulRight R b).comp (leftRegularRep q x) := by
-  ext a
-  simp [mul_assoc]
+  rw [leftRegularRep_eq_mulLeft, ← Module.End.mul_eq_comp, ← Module.End.mul_eq_comp]
+  exact LinearMap.commute_mulLeft_right (R := R) (q x) b
 
 /-- **Left ideals are invariant** under the left-regular representation: the action is by left
 multiplication, which is exactly what a left ideal absorbs. -/
@@ -121,7 +124,6 @@ theorem map_leftRegularRep_le (q : L →ₗ⁅R⁆ A) (I : Submodule A A) (x : L
 left-regular one is built here. -/
 theorem ad_apply_eq_leftRegularRep_sub_mulRight (q : L →ₗ⁅R⁆ A) (x : L) :
     LieAlgebra.ad R A (q x) = leftRegularRep q x - LinearMap.mulRight R (q x) := by
-  ext a
-  simp [LieRing.of_associative_ring_bracket]
+  rw [leftRegularRep_eq_mulLeft, LieAlgebra.ad_eq_lmul_left_sub_lmul_right, Pi.sub_apply]
 
 end LieHom

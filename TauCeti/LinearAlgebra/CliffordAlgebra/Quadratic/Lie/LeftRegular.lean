@@ -22,12 +22,12 @@ isotypy theorem is about: the Clifford algebra acted on by **left multiplication
 The choice of action is not cosmetic. The other `L`-module structure the same lift produces is the
 inner derivation action `⁅x, c⁆ = ⁅adjointCliffordHom K L x, c⁆` of
 `CliffordAlgebra.cliffordDerivationRep`, which under `CliffordAlgebra.equivExterior` is the
-exterior extension of the adjoint representation and is *not* isotypic; the two differ by right
-multiplication (`CliffordAlgebra.kostant_lie_sub_mul`). What distinguishes the left-regular action
-is that its submodules include every left ideal
-(`CliffordAlgebra.kostantLieSubmoduleOfLeftIdeal`) and its endomorphisms include every right
-multiplication (`CliffordAlgebra.kostantRightMul`), which is the commutant the isotypy argument
-runs on.
+exterior extension of the adjoint representation and is in general *not* the isotypic action that
+Kostant's theorem is about; the two differ by right multiplication
+(`CliffordAlgebra.kostant_lie_sub_mul`). What distinguishes the left-regular action is that its
+submodules include every left ideal (`CliffordAlgebra.kostantLieSubmoduleOfLeftIdeal`) and its
+endomorphisms include every right multiplication (`CliffordAlgebra.kostantRightMul`), which is the
+commutant the isotypy argument runs on.
 
 The two instances are `scoped`, as the roadmap asks: the Clifford algebra of the Killing form is
 not otherwise an `L`-module, and a global instance would fix one of the two competing actions for
@@ -93,11 +93,13 @@ variable {K L}
 
 /-- **The defining equation of Kostant's module**: `L` acts by left multiplication by the adjoint
 quadratic lift. -/
+@[simp]
 theorem kostant_lie_def (x : L) (c : CliffordAlgebra (killingQuadraticForm K L)) :
     ⁅x, c⁆ = adjointCliffordHom K L x * c :=
   LieHom.leftRegularRep_apply _ x c
 
-@[simp]
+/-- Acting on `1` recovers the adjoint quadratic lift. Not a `simp` lemma: `simp` already reduces
+the left-hand side through `CliffordAlgebra.kostant_lie_def` and `mul_one`. -/
 theorem kostant_lie_one (x : L) :
     ⁅x, (1 : CliffordAlgebra (killingQuadraticForm K L))⁆ = adjointCliffordHom K L x := by
   rw [kostant_lie_def, mul_one]
@@ -118,7 +120,9 @@ precise sense in which the left-regular module and the exterior extension of the
 representation are different modules on the same carrier. -/
 theorem kostant_lie_sub_mul (x : L) (c : CliffordAlgebra (killingQuadraticForm K L)) :
     ⁅x, c⁆ - c * adjointCliffordHom K L x = ⁅adjointCliffordHom K L x, c⁆ := by
-  rw [kostant_lie_def, LieRing.of_associative_ring_bracket]
+  have h := congrArg (fun f : Module.End K (CliffordAlgebra (killingQuadraticForm K L)) ↦ f c)
+    (LieHom.ad_apply_eq_leftRegularRep_sub_mulRight (adjointCliffordHom K L) x)
+  simpa using h.symm
 
 /-- **Right multiplication is an endomorphism of Kostant's module.** Associativity of the Clifford
 algebra says that left and right multiplications commute, so every right multiplication lies in
@@ -127,10 +131,9 @@ noncomputable def kostantRightMul (d : CliffordAlgebra (killingQuadraticForm K L
     CliffordAlgebra (killingQuadraticForm K L) →ₗ⁅K, L⁆
       CliffordAlgebra (killingQuadraticForm K L) where
   __ := LinearMap.mulRight K d
-  map_lie' {_ _} := by
-    have hmul : ∀ e : CliffordAlgebra (killingQuadraticForm K L),
-        (LinearMap.mulRight K d).toFun e = e * d := fun _ ↦ rfl
-    rw [hmul, hmul, kostant_lie_def, kostant_lie_def, mul_assoc]
+  map_lie' {x c} :=
+    (congrArg (fun f : Module.End K (CliffordAlgebra (killingQuadraticForm K L)) ↦ f c)
+      (LieHom.leftRegularRep_comp_mulRight (adjointCliffordHom K L) x d)).symm
 
 @[simp]
 theorem kostantRightMul_apply (d c : CliffordAlgebra (killingQuadraticForm K L)) :
@@ -145,9 +148,7 @@ noncomputable def kostantLieSubmoduleOfLeftIdeal
       (CliffordAlgebra (killingQuadraticForm K L))) :
     LieSubmodule K L (CliffordAlgebra (killingQuadraticForm K L)) where
   __ := I.restrictScalars K
-  lie_mem {_ _} h := by
-    rw [kostant_lie_def, ← smul_eq_mul]
-    exact I.smul_mem _ h
+  lie_mem {x _} h := LieHom.leftRegularRep_mem_of_mem (adjointCliffordHom K L) I x h
 
 @[simp]
 theorem mem_kostantLieSubmoduleOfLeftIdeal
@@ -163,9 +164,10 @@ variable (K L)
 injective because the centre of a Killing-semisimple Lie algebra vanishes. -/
 scoped instance kostantLieModuleIsFaithful :
     LieModule.IsFaithful K L (CliffordAlgebra (killingQuadraticForm K L)) where
-  injective_toEnd x y hxy := by
-    refine adjointCliffordHom_injective K L ?_
-    have h := congrArg (fun f : Module.End K (CliffordAlgebra (killingQuadraticForm K L)) ↦ f 1) hxy
-    simpa only [LieModule.toEnd_apply_apply, kostant_lie_one] using h
+  injective_toEnd _ _ hxy :=
+    (LieHom.leftRegularRep_injective_iff (adjointCliffordHom K L)).2
+      (adjointCliffordHom_injective K L) <|
+      LinearMap.ext fun c ↦
+        congrArg (fun f : Module.End K (CliffordAlgebra (killingQuadraticForm K L)) ↦ f c) hxy
 
 end CliffordAlgebra
