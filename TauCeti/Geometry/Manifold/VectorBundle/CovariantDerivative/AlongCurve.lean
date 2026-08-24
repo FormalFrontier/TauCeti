@@ -233,6 +233,7 @@ private theorem alongCurveInChartWithin_const_smul (c : 𝕜) (s : Set 𝕜) (x 
 
 /-- The moving-chart candidate within a parameter set commutes with multiplication by a constant
 scalar, without a differentiability hypothesis on the field. -/
+@[simp]
 theorem alongCurveWithin_const_smul (c : 𝕜) (s : Set 𝕜) (t : 𝕜) :
     alongCurveWithin cov γ (fun r ↦ c • V r) s t = c • alongCurveWithin cov γ V s t := by
   rw [alongCurveWithin_apply, alongCurveWithin_apply,
@@ -240,6 +241,7 @@ theorem alongCurveWithin_const_smul (c : 𝕜) (s : Set 𝕜) (t : 𝕜) :
 
 /-- The unrestricted moving-chart candidate commutes with multiplication by a constant scalar,
 without a differentiability hypothesis on the field. -/
+@[simp]
 theorem alongCurve_const_smul (c : 𝕜) (t : 𝕜) :
     alongCurve cov γ (fun r ↦ c • V r) t = c • alongCurve cov γ V t := by
   rw [← alongCurveWithin_univ, ← alongCurveWithin_univ]
