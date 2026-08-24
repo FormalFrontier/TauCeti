@@ -301,8 +301,8 @@ private lemma IsDifferenceCompletelyMonotone.continuousAt_of_pos
   have hq_nonneg : 0 ≤ (1 - c) * x := mul_nonneg (sub_nonneg.mpr hc_lt_one.le) hx.le
   have hy_nonneg : 0 ≤ y := hq_nonneg.trans hy_bounds.1.le
   have hr_nonneg : 0 ≤ (1 + c) * x := by positivity
-  have hq := hdyadic n
-  change f ((1 - c) * x) ≤ c * f 0 + (1 - c) * f x at hq
+  have hq : f ((1 - c) * x) ≤ c * f 0 + (1 - c) * f x := by
+    simpa only [c] using hdyadic n
   have hy_upper : f y < f x + ε := by
     have := hf.antitoneOn (mem_Ici.2 hq_nonneg) (mem_Ici.2 hy_nonneg) hy_bounds.1.le
     nlinarith
