@@ -52,8 +52,9 @@ isometry and not the invalid inference that two even unimodular rank-eight latti
 isometric.
 
 Being an isometry, it transports every invariant: `D₈⁺` inherits the `E₈` root system's
-determinant `1` and trivial discriminant group, which is also what the general overlattice
-comparison `A_{L_H} ≅ H⊥ / H` predicts for the order-two spinor glue subgroup `H`.
+determinant `1` and trivial discriminant group.  The resulting cardinality agrees with what the
+general overlattice comparison `A_{L_H} ≅ H⊥ / H` predicts for the order-two spinor glue subgroup
+`H`.
 
 ## Main declarations
 
@@ -63,14 +64,13 @@ comparison `A_{L_H} ≅ H⊥ / H` predicts for the order-two spinor glue subgrou
 * `TauCeti.IntegralLattice.form_e8GlueRoot_e8GlueRoot`: their Gram matrix is `CartanMatrix.E 8`.
 * `TauCeti.IntegralLattice.e8GlueRoot_mem_d8PlusCarrier`: they lie in `D₈⁺`.
 * `TauCeti.IntegralLattice.span_range_e8GlueRoot`: they span `D₈⁺` over `ℤ`.
-* `TauCeti.IntegralLattice.e8GlueMap` and `TauCeti.IntegralLattice.e8GlueEquiv`: the rational
-  comparison map and the linear equivalence it underlies.
+* `TauCeti.IntegralLattice.e8GlueMap`: the rational comparison map.
 * `TauCeti.IntegralLattice.typeE₈IsometryD8Plus`: **the isometry `E₈ ≃ D₈⁺`**, whose inverse
   `typeE₈IsometryD8Plus.symm` is the isometry `D₈⁺ ≃ E₈`.
 * `TauCeti.IntegralLattice.d8PlusDiscriminantQuadraticIsometry`: the discriminant quadratic form
   of `D₈⁺` is that of `E₈`.
 * `TauCeti.IntegralLattice.natCard_orthogonalQuotient_d8SpinorSubgroup`: the general comparison
-  gives `H⊥ / H = 0`, agreeing with the direct `E₈` computation.
+  gives `H⊥ / H` cardinality one, as predicted by the direct `E₈` computation.
 
 ## References
 
@@ -133,15 +133,16 @@ private def e8GlueShift (i j : Fin 8) : ℤ :=
 
 private theorem two_mul_e8GlueShift (i j : Fin 8) :
     2 * e8GlueShift i j = DynkinType.e8DoubledSimpleRoot i j - if i = 0 then 1 else 0 := by
-  revert i j
-  decide
+  rw [e8GlueShift, mul_comm]
+  exact Int.ediv_mul_cancel (DynkinType.e8DoubledSimpleRoot_two_dvd_sub_ite i j)
 
 /-- Every shifted glue root is an integer vector of even coordinate sum, hence a checkerboard
 vector. -/
 private theorem e8GlueShift_mem_checkerboardLattice (i : Fin 8) :
     (fun j ↦ ((e8GlueShift i j : ℤ) : ℚ)) ∈ (checkerboardLattice 8).carrier := by
   rw [checkerboardLattice_carrier]
-  exact mem_checkerboardCarrier_of (e8GlueShift i) (fun _ ↦ rfl) (by revert i; decide)
+  exact mem_checkerboardCarrier_of (e8GlueShift i) (fun _ ↦ rfl)
+    (DynkinType.e8DoubledSimpleRoot_shift_half_sum_even i)
 
 /-- The first glue root differs from the spinor vector by a checkerboard vector. -/
 private theorem e8GlueRoot_zero_sub_spinor :
@@ -229,12 +230,12 @@ private theorem e8GlueMap_injective : Function.Injective e8GlueMap := by
 
 /-- The comparison map as a rational linear equivalence: an injective endomorphism of a
 finite-dimensional space is bijective. -/
-noncomputable def e8GlueEquiv : (Fin 8 → ℚ) ≃ₗ[ℚ] (Fin 8 → ℚ) :=
+private noncomputable def e8GlueEquiv : (Fin 8 → ℚ) ≃ₗ[ℚ] (Fin 8 → ℚ) :=
   LinearEquiv.ofBijective e8GlueMap
     ⟨e8GlueMap_injective, LinearMap.injective_iff_surjective.mp e8GlueMap_injective⟩
 
 @[simp]
-theorem e8GlueEquiv_apply (x : Fin 8 → ℚ) : e8GlueEquiv x = e8GlueMap x := by
+private theorem e8GlueEquiv_apply (x : Fin 8 → ℚ) : e8GlueEquiv x = e8GlueMap x := by
   rw [e8GlueEquiv]
   exact LinearEquiv.ofBijective_apply _ _
 
@@ -242,7 +243,7 @@ theorem e8GlueEquiv_apply (x : Fin 8 → ℚ) : e8GlueEquiv x = e8GlueMap x := b
 
 /-- The comparison equivalence carries the `E₈` carrier onto the integral span of the glue
 roots. -/
-theorem map_carrier_e8GlueEquiv :
+private theorem map_carrier_e8GlueEquiv :
     typeE₈RootLattice.carrier.map (e8GlueEquiv.restrictScalars ℤ).toLinearMap =
       Submodule.span ℤ (Set.range e8GlueRoot) := by
   have hrange : ⇑(e8GlueEquiv.restrictScalars ℤ).toLinearMap ∘ ⇑(Pi.basisFun ℚ (Fin 8))
@@ -312,7 +313,7 @@ theorem typeE₈IsometryD8Plus_typeE₈SimpleRoot (i : Fin 8) :
     typeE₈IsometryD8Plus (typeE₈SimpleRoot i) = e8GlueRoot i := by
   rw [typeE₈IsometryD8Plus_apply, e8GlueMap_typeE₈SimpleRoot]
 
-/-! ## Agreement with the general overlattice comparison -/
+/-! ## Cardinality from the general overlattice comparison -/
 
 /-- **The discriminant quadratic form of `D₈⁺` is the discriminant quadratic form of `E₈`**, which
 is the trivial form on a trivial group. -/
@@ -321,11 +322,11 @@ noncomputable def d8PlusDiscriminantQuadraticIsometry :
       (typeE₈RootLattice.discriminantQuadraticModule isEven_typeE₈RootLattice) :=
   typeE₈IsometryD8Plus.symm.discriminantQuadraticIsometry isEven_d8PlusLattice
 
-/-- **The general overlattice comparison agrees with the direct `E₈` computation.**
+/-- **The orthogonal quotient has the cardinality predicted by the direct `E₈` computation.**
 
 Nikulin's comparison identifies the discriminant group of the glued lattice `D₈⁺` with
 `H⊥ / H` for the order-two spinor glue subgroup `H`; the isometry above identifies it with the
-discriminant group of `E₈`.  Both are trivial. -/
+discriminant group of `E₈`.  This theorem records the resulting cardinality of `H⊥ / H`. -/
 theorem natCard_orthogonalQuotient_d8SpinorSubgroup :
     Nat.card (((checkerboardLattice 8).discriminantQuadraticModule
       (isEven_checkerboardLattice 8)).orthogonalQuotient d8SpinorSubgroup

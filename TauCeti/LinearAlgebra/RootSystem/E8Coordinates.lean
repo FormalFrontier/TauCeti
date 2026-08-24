@@ -23,9 +23,7 @@ consumers can read what they need off it: the finite-type proof
 completeness of the coroot enumeration in
 `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Lattice` uses it as it stands, the
 doubling being exactly what makes the Euclidean lattice `2 · Γ₈` there integral, and
-`TauCeti.IntegralLattice.e8GlueRoot` halves it back into the Conway--Sloane model of `D₈`. The
-table is `@[expose]`d because that is what lets a consumer in another module settle a property of
-its entries by `decide`.
+`TauCeti.IntegralLattice.e8GlueRoot` halves it back into the Conway--Sloane model of `D₈`.
 
 Three properties of the table are recorded, all checked by `decide`: the Gram matrix of the rows is
 four times the `E₈` Cartan matrix, the factor four coming from the doubling, and the rows satisfy
@@ -52,7 +50,7 @@ namespace DynkinType
 
 /-- The doubled Bourbaki simple roots of type `E₈`: row `i` is twice the `i`-th simple root of
 Plate VII, in the orthonormal coordinates of the model, so that all entries are integers. -/
-@[expose] def e8DoubledSimpleRoot : Matrix (Fin 8) (Fin 8) ℤ :=
+def e8DoubledSimpleRoot : Matrix (Fin 8) (Fin 8) ℤ :=
   !![ 1, -1, -1, -1, -1, -1, -1,  1;
       2,  2,  0,  0,  0,  0,  0,  0;
      -2,  2,  0,  0,  0,  0,  0,  0;
@@ -80,6 +78,14 @@ private lemma e8DoubledSimpleRoot_sub_emod :
 private lemma e8DoubledSimpleRoot_sum_emod :
     ∀ i : Fin 8, (∑ j, e8DoubledSimpleRoot i j) % 4 = 0 := by decide
 
+private lemma e8DoubledSimpleRoot_sub_ite_emod :
+    ∀ i j : Fin 8,
+      (e8DoubledSimpleRoot i j - if i = 0 then 1 else 0) % 2 = 0 := by decide
+
+private lemma e8DoubledSimpleRoot_shift_half_sum_even_aux :
+    ∀ i : Fin 8,
+      Even (∑ j, (e8DoubledSimpleRoot i j - if i = 0 then 1 else 0) / 2) := by decide
+
 /-- Two entries in the same row of the doubled simple roots are congruent modulo two. -/
 theorem e8DoubledSimpleRoot_two_dvd_sub (i j : Fin 8) :
     (2 : ℤ) ∣ e8DoubledSimpleRoot i j - e8DoubledSimpleRoot i 0 :=
@@ -89,6 +95,17 @@ theorem e8DoubledSimpleRoot_two_dvd_sub (i j : Fin 8) :
 theorem e8DoubledSimpleRoot_four_dvd_sum (i : Fin 8) :
     (4 : ℤ) ∣ ∑ j, e8DoubledSimpleRoot i j :=
   Int.dvd_of_emod_eq_zero (e8DoubledSimpleRoot_sum_emod i)
+
+/-- After subtracting one from the first row, every entry of a doubled simple root is even. -/
+theorem e8DoubledSimpleRoot_two_dvd_sub_ite (i j : Fin 8) :
+    (2 : ℤ) ∣ e8DoubledSimpleRoot i j - if i = 0 then 1 else 0 :=
+  Int.dvd_of_emod_eq_zero (e8DoubledSimpleRoot_sub_ite_emod i j)
+
+/-- Halving the doubled roots after subtracting one from the first row gives vectors with even
+coordinate sum. -/
+theorem e8DoubledSimpleRoot_shift_half_sum_even (i : Fin 8) :
+    Even (∑ j, (e8DoubledSimpleRoot i j - if i = 0 then 1 else 0) / 2) :=
+  e8DoubledSimpleRoot_shift_half_sum_even_aux i
 
 end DynkinType
 
