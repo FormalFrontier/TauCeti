@@ -5,12 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Analysis.Calculus.SegmentIncrement
 public import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
+public import TauCeti.Topology.Instances.ENNReal
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-public import Mathlib.Analysis.Calculus.TaylorIntegral
 import Mathlib.MeasureTheory.Group.LIntegral
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.ContDiff
-import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.MeasureTheory.Measure.Prod
 
 /-!
 # The `Lᵖ` translation estimate
@@ -20,17 +20,13 @@ space carrying an additive Haar measure:
 
 `‖u(· + h) - u‖_p ≤ ‖h‖ ‖Du‖_p`.
 
-It is the quantitative form of continuity of translation in `Lᵖ`. The proof applies the
-fundamental theorem of calculus along the segment from `x` to `x + h`, raises the resulting bound
-to the power `p`, and uses translation invariance of Haar measure after exchanging the order of
-integration.
+It is the quantitative form of continuity of translation in `Lᵖ`. The proof integrates the
+segment increment estimate `TauCeti.enorm_sub_le_lintegral_enorm_fderiv_apply`, raises the
+resulting bound to the power `p`, and uses translation invariance of Haar measure after
+exchanging the order of integration.
 
 ## Main declarations
 
-* `TauCeti.enorm_sub_le_lintegral_enorm_fderiv_apply`: the fundamental theorem of calculus along
-  a segment.
-* `TauCeti.tendsto_nhds_zero_of_le_ofReal_norm_mul`: a generic linear bound implies vanishing at
-  zero.
 * `TauCeti.lintegral_enorm_comp_add_sub_rpow_le`: the translation estimate in `∫⁻` form.
 * `TauCeti.eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv`: the `Lᵖ` translation estimate for a `C¹`
   function.
@@ -57,41 +53,6 @@ section Calculus
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] {u : E → F}
-
-/-- **The fundamental theorem of calculus along a segment**: the increment between `x` and
-`x + h` is at most the integral along the segment of the norm of the directional derivative in
-the direction `h`. -/
-theorem enorm_sub_le_lintegral_enorm_fderiv_apply (x h : E)
-    (hd : ∀ t ∈ Icc (0 : ℝ) 1, DifferentiableAt ℝ u (x + t • h))
-    (hc : ContinuousOn (fun t : ℝ => fderiv ℝ u (x + t • h)) (Icc 0 1)) :
-    ‖u (x + h) - u x‖ₑ ≤ ∫⁻ t in Icc (0 : ℝ) 1, ‖fderiv ℝ u (x + t • h) h‖ₑ := by
-  have hdiff : DifferentiableOn ℝ (fun s : ℝ => u (x + s • h)) (Icc 0 1) := by
-    intro t ht
-    exact ((hd t ht).comp t
-      (by fun_prop : DifferentiableAt ℝ (fun s : ℝ => x + s • h) t)).differentiableWithinAt
-  have hderiv : ∀ t ∈ Icc (0 : ℝ) 1,
-      derivWithin (fun s : ℝ => u (x + s • h)) (Icc 0 1) t =
-        fderiv ℝ u (x + t • h) h := by
-    intro t ht
-    have hline : DifferentiableAt ℝ (fun s : ℝ => u (x + s • h)) t := by
-      simpa [Function.comp_def] using (hd t ht).comp t
-        (by fun_prop : DifferentiableAt ℝ (fun s : ℝ => x + s • h) t)
-    rw [hline.derivWithin ((uniqueDiffOn_Icc zero_lt_one).uniqueDiffWithinAt ht),
-      (hd t ht).deriv_comp_add_smul]
-  have hC1 : ContDiffOn ℝ 1 (fun s : ℝ => u (x + s • h)) (Icc 0 1) := by
-    rw [contDiffOn_one_iff_derivWithin (uniqueDiffOn_Icc zero_lt_one)]
-    refine ⟨hdiff, (hc.clm_apply
-      (continuousOn_const : ContinuousOn (fun _ : ℝ => h) (Icc 0 1))).congr ?_⟩
-    intro t ht
-    exact hderiv t ht
-  have h01 := enorm_sub_le_lintegral_deriv_of_contDiffOn_Icc hC1 zero_le_one
-  calc
-    ‖u (x + h) - u x‖ₑ ≤
-        ∫⁻ t in Icc (0 : ℝ) 1, ‖deriv (fun s : ℝ => u (x + s • h)) t‖ₑ := by
-      simpa using h01
-    _ = ∫⁻ t in Icc (0 : ℝ) 1, ‖fderiv ℝ u (x + t • h) h‖ₑ := by
-      refine setLIntegral_congr_fun measurableSet_Icc fun t ht => ?_
-      rw [← (hd t ht).deriv_comp_add_smul]
 
 /-- The `r`-th power of the segment estimate. Raising to the power `r ≥ 1` costs nothing because
 the segment is parametrized by the probability space `Set.Icc 0 1`; the operator norm then splits
@@ -124,22 +85,6 @@ private theorem enorm_sub_rpow_le (hu : ContDiff ℝ 1 u) {r : ℝ} (hr : 1 ≤ 
         rw [lintegral_mul_const' _ _ (by finiteness), mul_comm]
 
 end Calculus
-
-section Vanishing
-
-variable {E : Type*} [NormedAddCommGroup E]
-
-/-- A nonnegative quantity dominated by `‖h‖` times a finite constant vanishes as `h → 0`. -/
-theorem tendsto_nhds_zero_of_le_ofReal_norm_mul {G : E → ℝ≥0∞} {C : ℝ≥0∞} (hC : C ≠ ∞)
-    (hG : ∀ h : E, G h ≤ ENNReal.ofReal ‖h‖ * C) :
-    Filter.Tendsto G (nhds 0) (nhds 0) := by
-  have h0 : Filter.Tendsto (fun h : E => ENNReal.ofReal ‖h‖) (nhds 0) (nhds 0) := by
-    simpa [Function.comp_def] using (ENNReal.continuous_ofReal.tendsto 0).comp
-      (continuous_norm.tendsto' (0 : E) 0 norm_zero)
-  exact tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds
-    (by simpa using ENNReal.Tendsto.mul_const h0 (Or.inr hC)) (fun _ => zero_le) hG
-
-end Vanishing
 
 section Translation
 
@@ -177,12 +122,14 @@ translation, at the rate given by the `Lᵖ` seminorm of its derivative,
 
 `‖u(· + h) - u‖_p ≤ ‖h‖ ‖Du‖_p`, `1 ≤ p < ∞`.
 
-No support, integrability or boundedness hypothesis is needed. If `Du` is not in `Lᵖ`, the
-right-hand side is infinite and the estimate is vacuous. -/
+No support, integrability or boundedness hypothesis is needed. For `h ≠ 0`, if `Du` is not in
+`Lᵖ` the right-hand side is `∞` and the bound carries no information; at `h = 0` both sides are
+`0`. -/
 theorem eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv (hu : ContDiff ℝ 1 u) {p : ℝ≥0∞}
     (hp : 1 ≤ p) (hp' : p ≠ ∞) (h : E) :
-    eLpNorm (fun x => u (x + h) - u x) p mu ≤ ENNReal.ofReal ‖h‖ * eLpNorm (fderiv ℝ u) p mu := by
+    eLpNorm (fun x => u (x + h) - u x) p mu ≤ ‖h‖ₑ * eLpNorm (fderiv ℝ u) p mu := by
   have hr : 1 ≤ p.toReal := by simpa using ENNReal.toReal_mono hp' hp
+  rw [← ofReal_norm h]
   refine eLpNorm_le_eLpNorm_of_lintegral_rpow_le (norm_nonneg h) (zero_lt_one.trans_le hp).ne'
     hp' ?_
   rw [← ENNReal.ofReal_rpow_of_nonneg (norm_nonneg h) (zero_lt_one.trans_le hr).le, ofReal_norm]
@@ -190,11 +137,15 @@ theorem eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv (hu : ContDiff ℝ 1 u) {p : 
 
 /-- **Continuity of translation in `Lᵖ`** for a `C¹` function with `Lᵖ` derivative: the `Lᵖ`
 distance between `u` and its translate tends to `0`. This is the qualitative corollary of
-`TauCeti.eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv`, which gives the linear modulus. -/
+`TauCeti.eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv`, which gives the linear modulus.
+
+For a `u` that is itself in `Lᵖ` this is already Mathlib's
+`Filter.Tendsto.compMeasurePreservingLp`, which needs no derivative; the content here is that a
+`C¹` function with `Lᵖ` derivative translates continuously in `Lᵖ` even when it is not in `Lᵖ`. -/
 theorem tendsto_eLpNorm_comp_add_sub (hu : ContDiff ℝ 1 u) {p : ℝ≥0∞} (hp : 1 ≤ p) (hp' : p ≠ ∞)
     (hfin : eLpNorm (fderiv ℝ u) p mu ≠ ∞) :
     Filter.Tendsto (fun h : E => eLpNorm (fun x => u (x + h) - u x) p mu) (nhds 0) (nhds 0) :=
-  tendsto_nhds_zero_of_le_ofReal_norm_mul hfin fun h =>
+  tendsto_nhds_zero_of_le_enorm_mul hfin fun h =>
     eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv hu hp hp' h
 
 end Translation

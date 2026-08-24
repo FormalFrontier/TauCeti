@@ -9,7 +9,7 @@ public import TauCeti.Analysis.Sobolev.W1p.Zero
 public import TauCeti.MeasureTheory.Function.Lp.Translation
 
 /-!
-# The `Lᵖ` translation estimate
+# The `Lᵖ` translation estimate on `W^{1,p}_0`
 
 This file transports the **translation estimate** to Sobolev functions: for `1 ≤ p < ∞` and a
 vector `h`,
@@ -17,14 +17,17 @@ vector `h`,
 `‖u(· + h) - u‖_p ≤ ‖h‖ ‖∇u‖_p`.
 
 It is the quantitative form of the continuity of translation in `Lᵖ`, with a modulus that is
-linear in `‖h‖` and controlled by one Sobolev seminorm.  Together with the extension of a
-`W^{1,p}_0(Ω)` function by zero, it supplies the *uniform smallness of translations* hypothesis of
-the Fréchet--Kolmogorov compactness criterion, and so is the analytic input for
-Rellich--Kondrachov, Lane A.6 of `TauCetiRoadmap/PDE/README.md`.
+linear in `‖h‖` and controlled by one Sobolev seminorm.  The ambient space is any
+finite-dimensional real inner product space `E` carrying an arbitrary additive Haar measure `mu`,
+not just `ℝⁿ` with Lebesgue measure; `ℝⁿ` is used informally below for the whole-space case
+`Ω = ⊤`.  Together with the extension of a `W^{1,p}_0(Ω)` function by zero, it supplies the
+*uniform smallness of translations* hypothesis of the Fréchet--Kolmogorov compactness criterion,
+and so is the analytic input for Rellich--Kondrachov, Lane A.6 of
+`TauCetiRoadmap/PDE/README.md`.
 
 ## The estimate on `W^{1,p}_0(ℝⁿ)`
 
-`TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient` transports the `C¹` estimate
+`TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient` transports the `C¹` estimate
 from `TauCeti.MeasureTheory.Function.Lp.Translation` to the Sobolev space by density. The set of
 jets satisfying it is closed — the translation increment is a continuous function of the `Lᵖ`
 class, being the difference of the identity and the isometry induced by a measure-preserving map
@@ -44,10 +47,8 @@ boundary.
 
 ## Main declarations
 
-* `TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient`: the translation estimate on
-  `W^{1,p}_0(ℝⁿ)`.
-* `TauCeti.W1p.tendsto_eLpNorm_value_comp_add_sub_value`: continuity of translation in `Lᵖ` on
-  `W^{1,p}_0(ℝⁿ)`.
+* `TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient`: the translation estimate
+  on `W^{1,p}_0(ℝⁿ)`.
 
 ## References
 
@@ -132,7 +133,7 @@ private theorem eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le (hp : p �
     (phi : 𝓓((⊤ : Opens E), ℝ)) :
     eLpNorm (fun x => testFunctionLp (mu := mu) p phi (x + h)
         - testFunctionLp (mu := mu) p phi x) p mu
-      ≤ ENNReal.ofReal ‖h‖ * ‖gradientTestFunctionLp (mu := mu) p phi‖ₑ := by
+      ≤ ‖h‖ₑ * ‖gradientTestFunctionLp (mu := mu) p phi‖ₑ := by
   have hvalue : ⇑(testFunctionLp (mu := mu) p phi) =ᵐ[mu] (phi : E → ℝ) :=
     (testFunctionLp_apply_ae p phi).filter_mono (ae_le_ae_restrict_coe_top mu)
   have htrans := hvalue.comp_tendsto
@@ -144,10 +145,7 @@ private theorem eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le (hp : p �
     filter_upwards [hvalue, htrans] with x h1 h2
     rw [h1]
     exact congrArg (· - phi x) h2
-  have hR : ‖gradientTestFunctionLp (mu := mu) p phi‖ₑ
-      = eLpNorm (fderiv ℝ (phi : E → ℝ)) p mu := by
-    simpa [restrict_coe_top] using enorm_gradientTestFunctionLp (mu := mu) p phi
-  rw [hL, hR]
+  rw [hL, enorm_gradientTestFunctionLp_eq_eLpNorm_fderiv]
   exact eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv
     (phi.contDiff.of_le (by simp)) Fact.out hp h
 
@@ -162,38 +160,27 @@ The estimate for a single test function comes from
 zero-extension operator turns this into the corresponding estimate on `W^{1,p}_0(Ω)` for an
 arbitrary open `Ω`, which is the form the Fréchet--Kolmogorov compactness criterion consumes in
 the proof of Rellich--Kondrachov. -/
-theorem W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient (hp : p ≠ ∞) (h : E)
+theorem W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient (hp : p ≠ ∞) (h : E)
     {u : W1p mu ⊤ p}
     (hu : u ∈ w1p0Submodule mu ⊤ p) :
     eLpNorm (fun x => W1p.value u (x + h) - W1p.value u x) p mu
-      ≤ ENNReal.ofReal ‖h‖ * ‖W1p.gradient u‖ₑ := by
+      ≤ ‖h‖ₑ * ‖W1p.gradient u‖ₑ := by
   have hrw : ∀ v : W1p mu (⊤ : Opens E) p,
       eLpNorm (fun x => W1p.value v (x + h) - W1p.value v x) p mu
         = ‖translateLp mu p h (W1p.valueL v) - W1p.valueL v‖ₑ := fun v => by
     rw [enorm_translateLp_sub, W1p.valueL_apply]
   have hclosed : IsClosed {v : W1p mu ⊤ p |
       eLpNorm (fun x => W1p.value v (x + h) - W1p.value v x) p mu
-        ≤ ENNReal.ofReal ‖h‖ * ‖W1p.gradient v‖ₑ} := by
+        ≤ ‖h‖ₑ * ‖W1p.gradient v‖ₑ} := by
     simp only [hrw, ← W1p.gradientL_apply]
     exact isClosed_le
       ((((translateLp mu p h).toContinuousLinearMap.comp W1p.valueL) -
         W1p.valueL).continuous.enorm)
-      ((ENNReal.continuous_const_mul ENNReal.ofReal_ne_top).comp
+      ((ENNReal.continuous_const_mul (by finiteness)).comp
         W1p.gradientL.continuous.enorm)
   refine w1p0Submodule_subset_of_isClosed hclosed (fun phi => ?_) hu
   simpa only [Set.mem_ofPred_eq, W1p.value_ofTestFunctionₗ, W1p.gradient_ofTestFunctionₗ] using
     eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le hp h phi
-
-/-- **Continuity of translation in `Lᵖ` on `W^{1,p}_0(ℝⁿ)`**: for a fixed Sobolev function, the
-`Lᵖ` distance to its translate tends to zero. This is the qualitative consequence of
-`TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient`, whose bound gives the linear
-modulus uniformly over gradient-bounded families. -/
-theorem W1p.tendsto_eLpNorm_value_comp_add_sub_value (hp : p ≠ ∞) {u : W1p mu ⊤ p}
-    (hu : u ∈ w1p0Submodule mu ⊤ p) :
-    Filter.Tendsto (fun h : E => eLpNorm (fun x => W1p.value u (x + h) - W1p.value u x) p mu)
-      (nhds 0) (nhds 0) :=
-  tendsto_nhds_zero_of_le_ofReal_norm_mul (by finiteness) fun h =>
-    W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient hp h hu
 
 end Sobolev
 
