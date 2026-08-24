@@ -32,14 +32,16 @@ root datum, without a two hundred and forty by two hundred and forty table.
 
 ## The lattices
 
-Only the coroots are asked to span their lattice, in
-`TauCeti.DynkinType.corootSpan_e8SimplyConnectedRootDatum_eq_top`, which is the condition the
-pinned Chevalley--Demazure construction consumes. In the sibling files that condition is the
-asymmetric half of the pinning, the roots spanning the root lattice at the index recorded by the
-Cartan determinant inside the weight lattice. Type `E₈` is one of the three types — with `F₄` and
-`G₂` — whose Cartan determinant is `1`, so here the root and the weight lattice agree and the
-simply connected form is also the adjoint one; the datum is nevertheless stated through the same
-coroot-side condition as its siblings, which is what the per-type dispatcher will collect.
+Both families span their lattice here, so the datum carries a `RootPairing.IsRootSystem` instance:
+the roots by `TauCeti.DynkinType.span_root_e8SimplyConnectedRootDatum_eq_top` and the coroots by
+`TauCeti.DynkinType.corootSpan_e8SimplyConnectedRootDatum_eq_top`. It is the coroot half that the
+pinned Chevalley--Demazure construction consumes as its simply connected condition, and the datum
+is stated through that same coroot-side condition as its siblings, which is what the per-type
+dispatcher will collect. The root half is particular to `E₈`, one of the three types — with `F₄`
+and `G₂` — whose Cartan determinant is `1`: its root lattice is already the whole weight lattice
+and the simply connected form is also the adjoint one. In the sibling files the roots span only the
+root lattice, sitting inside the weight lattice at the index recorded by the Cartan determinant, and
+no such instance exists.
 
 ## Main definitions
 
@@ -140,14 +142,10 @@ over `ℤ`. This is the integral distinction between `E₈` and the other simply
 types: here the root lattice is already the full weight lattice. -/
 theorem span_root_e8SimplyConnectedRootDatum_eq_top :
     Submodule.span ℤ (Set.range e8SimplyConnectedRootDatum.root) = ⊤ := by
-  have hdet : IsUnit (CartanMatrix.E 8).det := by
-    rw [CartanMatrix.E₈_det]
-    exact isUnit_one
   have hsurj : Function.Surjective (CartanMatrix.E 8).vecMulLinear := by
-    intro x
-    refine ⟨x ᵥ* (CartanMatrix.E 8)⁻¹, ?_⟩
-    rw [Matrix.vecMulLinear_apply, Matrix.vecMul_vecMul,
-      Matrix.nonsing_inv_mul _ hdet, Matrix.vecMul_one]
+    rw [Matrix.coe_vecMulLinear, Matrix.vecMul_surjective_iff_isUnit,
+      Matrix.isUnit_iff_isUnit_det, CartanMatrix.E₈_det]
+    exact isUnit_one
   have hrow : Submodule.span ℤ (Set.range (CartanMatrix.E 8).row) = ⊤ := by
     rw [← range_vecMulLinear, LinearMap.range_eq_top.mpr hsurj]
   apply top_unique
