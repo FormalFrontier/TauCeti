@@ -34,8 +34,11 @@ depend only on the coset `g H`, so the elements they cover other than `1` are in
 by the pairs (a coset of `H`, a nonidentity element of `H`). That parametrization is the private
 `frobeniusKernelCompl`, whose range is the complement of the kernel and which is injective exactly
 because `H` has trivial intersections; the count it yields is
-`TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel`, saying — for any `G`, finite or not — that there
-are `|G : H| · (|H| - 1)` elements outside the kernel. For a finite `G` the remaining
+`TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel`, the `Set.ncard` identity
+`((frobeniusKernel H)ᶜ).ncard = |G : H| · (|H| - 1)`. That identity holds for any `G`, finite or
+not, but it counts elements only when `G` is finite: for an infinite `G` both of its sides are the
+junk value `0` that `Set.ncard` and `Subgroup.index` take on infinite arguments. For a finite `G`
+there are indeed `|G : H| · (|H| - 1)` elements outside the kernel, and the remaining
 `|G| - |G : H| · (|H| - 1) = |G : H|` elements are the kernel, and the rest is arithmetic.
 
 Together with normality the count is exactly what makes the kernel a *complement*:
@@ -61,8 +64,10 @@ everything and `⊥` has index `|G|`.
 * `TauCeti.frobeniusKernel_inter_conj_eq_singleton` and
   `TauCeti.frobeniusKernel_inter_eq_singleton`: the kernel meets every conjugate of `H`, and in
   particular `H` itself, exactly in the identity.
-* `TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel`: the elements *outside* the kernel are the
-  `|G : H| · (|H| - 1)` nonidentity elements of the conjugates of `H`, each counted once.
+* `TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel`: the `Set.ncard` identity
+  `((frobeniusKernel H)ᶜ).ncard = |G : H| · (|H| - 1)`, which for a finite `G` counts the elements
+  *outside* the kernel — the nonidentity elements of the conjugates of `H`, each counted once — and
+  for an infinite `G` reads `0 = 0`.
 * `TauCeti.IsTISubgroup.ncard_frobeniusKernel` and
   `TauCeti.IsTISubgroup.natCard_frobeniusKernel`: **for a finite `G` the kernel has `|G : H|`
   elements.**
@@ -149,34 +154,33 @@ theorem inv_mem_frobeniusKernel_iff {y : G} :
   have hinv : x⁻¹ * y⁻¹ * x = (x⁻¹ * y * x)⁻¹ := by group
   rw [hinv, H.inv_mem_iff]
 
-/-- The Frobenius kernel is invariant under conjugation: it is cut out by a condition quantified
-over all conjugates, which conjugating merely reindexes.  This is the half of normality that costs
-nothing; closure under multiplication is Frobenius's theorem. -/
+/-- The Frobenius kernel is invariant under conjugation: it is the identity together with the
+complement of a conjugation-closed set, and `Group.conj_mem_conjugatesOfSet` is that closure.  This
+is the half of normality that costs nothing; closure under multiplication is Frobenius's theorem. -/
 @[simp]
 theorem conj_mem_frobeniusKernel_iff {y g : G} :
     g * y * g⁻¹ ∈ frobeniusKernel H ↔ y ∈ frobeniusKernel H := by
-  simp only [mem_frobeniusKernel, conj_eq_one_iff]
-  refine or_congr Iff.rfl ⟨fun h x => ?_, fun h x => ?_⟩
-  · have hreindex : x⁻¹ * y * x = (g * x)⁻¹ * (g * y * g⁻¹) * (g * x) := by group
-    rw [hreindex]
-    exact h (g * x)
-  · have hreindex : x⁻¹ * (g * y * g⁻¹) * x = (g⁻¹ * x)⁻¹ * y * (g⁻¹ * x) := by group
-    rw [hreindex]
-    exact h (g⁻¹ * x)
+  simp only [frobeniusKernel_def, Set.mem_union, Set.mem_singleton_iff, Set.mem_compl_iff,
+    conj_eq_one_iff]
+  refine or_congr Iff.rfl (not_congr ⟨fun h => ?_, Group.conj_mem_conjugatesOfSet⟩)
+  have hcancel : g⁻¹ * (g * y * g⁻¹) * g⁻¹⁻¹ = y := by group
+  exact hcancel ▸ Group.conj_mem_conjugatesOfSet h
 
 /-- **The Frobenius kernel meets each conjugate of `H` exactly in the identity.**  A nonidentity
 element of `g H g⁻¹` lies in a conjugate of `H`, so it is outside the kernel. -/
+@[simp]
 theorem frobeniusKernel_inter_conj_eq_singleton (g : G) :
-    frobeniusKernel H ∩ ((MulAut.conj g • H : Subgroup G) : Set G) = {1} := by
-  have key : ∀ y : G, y ∈ (MulAut.conj g • H : Subgroup G) ↔ g⁻¹ * y * g ∈ H := fun y => by
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
+    frobeniusKernel H ∩ MulAut.conj g • (H : Set G) = {1} := by
+  have key : ∀ y : G, y ∈ MulAut.conj g • (H : Set G) ↔ g⁻¹ * y * g ∈ H := fun y => by
+    rw [Set.mem_smul_set_iff_inv_smul_mem]
     simp [MulAut.smul_def]
   refine Set.Subset.antisymm (fun y hy => ?_) (fun y hy => ?_)
   · rcases mem_frobeniusKernel.1 hy.1 with h1 | h
     · exact h1
     · exact absurd ((key y).1 hy.2) (h g)
   · rw [Set.mem_singleton_iff] at hy
-    exact ⟨hy ▸ one_mem_frobeniusKernel, hy ▸ (MulAut.conj g • H : Subgroup G).one_mem⟩
+    subst hy
+    exact ⟨one_mem_frobeniusKernel, (key 1).2 (by simp)⟩
 
 /-- **The Frobenius kernel meets `H` exactly in the identity**, the case `g = 1` of
 `TauCeti.frobeniusKernel_inter_conj_eq_singleton`. -/
@@ -259,11 +263,14 @@ private theorem IsTISubgroup.frobeniusKernelCompl_injective (hH : IsTISubgroup H
   subst hhh
   rfl
 
-/-- **The elements outside the Frobenius kernel number `|G : H| · (|H| - 1)`.**  For a
-trivial-intersection subgroup they are exactly the nonidentity elements of the conjugates of `H`,
-and each is hit once by the parametrization: such an element determines the conjugate containing
-it, hence the coset, hence the element of `H` it comes from.  The parametrization argument is
-uniform, so no finiteness is assumed; when `G` is infinite both sides are `0`. -/
+/-- **The complement of the Frobenius kernel has `Set.ncard` equal to `|G : H| · (|H| - 1)`.**  For
+a trivial-intersection subgroup the elements outside the kernel are exactly the nonidentity elements
+of the conjugates of `H`, and each is hit once by the parametrization: such an element determines
+the conjugate containing it, hence the coset, hence the element of `H` it comes from.  The
+parametrization argument is uniform, so no finiteness is assumed — but this is an `ncard` identity,
+not an element count, unless `G` is finite: for an infinite `G` both sides are the junk value `0`
+that `Set.ncard` and `Subgroup.index` take on infinite arguments.  The genuine count is
+`TauCeti.IsTISubgroup.ncard_frobeniusKernel`, stated for a finite `G`. -/
 theorem IsTISubgroup.ncard_compl_frobeniusKernel (hH : IsTISubgroup H) :
     ((frobeniusKernel H)ᶜ).ncard = H.index * (Nat.card H - 1) := by
   have hcoe : (H : Set G).ncard = Nat.card H := (Nat.card_coe_set_eq (H : Set G)).symm
