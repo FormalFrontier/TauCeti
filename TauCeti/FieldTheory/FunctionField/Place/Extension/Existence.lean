@@ -75,8 +75,8 @@ theorem restrict_surjective (hF' : IsFunctionField k' F') :
   have hkA : ∀ c : k, algebraMap k F' c ∈ A := by
     intro c
     have hc := hA ⟨algebraMap k F c, P.algebraMap_mem_integers c⟩
-    change algebraMap F F' (algebraMap k F c) ∈ A at hc
-    simpa only [IsScalarTower.algebraMap_apply k F F'] using hc
+    simpa only [f, RingHom.coe_comp, Function.comp_apply, ValuationSubring.coe_subtype,
+      ValuationSubring.mem_toSubring, IsScalarTower.algebraMap_apply k F F'] using hc
   let _ : Algebra k A.toLocalSubring.toSubring :=
     ((algebraMap k F').codRestrict A.toLocalSubring.toSubring hkA).toAlgebra
   let _ : IsScalarTower k A.toLocalSubring.toSubring F' :=
@@ -88,11 +88,13 @@ theorem restrict_surjective (hF' : IsFunctionField k' F') :
   let P' : Place k' F' := ofValuationSubring hF' hk'A hA_ne_top
   refine ⟨P', (restrict_eq_iff_integers_le k F P' P).mpr ?_⟩
   intro x hx
-  change algebraMap F F' x ∈ (ofValuationSubring hF' hk'A hA_ne_top).integers
-  rw [integers_ofValuationSubring]
+  have hP'_integers : P'.integers = A := by
+    dsimp only [P']
+    exact integers_ofValuationSubring hF' hk'A hA_ne_top
+  rw [hP'_integers]
   have hAx := hA ⟨x, hx⟩
-  change algebraMap F F' x ∈ A at hAx
-  exact hAx
+  simpa only [f, RingHom.coe_comp, Function.comp_apply, ValuationSubring.coe_subtype,
+    ValuationSubring.mem_toSubring] using hAx
 
 end Place
 
