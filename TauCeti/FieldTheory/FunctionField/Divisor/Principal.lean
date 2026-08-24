@@ -1,0 +1,372 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.AlgebraicGeometry.WeilDivisor.Principal.Basic
+public import TauCeti.FieldTheory.FunctionField.Place.Zeros
+public import TauCeti.FieldTheory.FunctionField.RiemannRoch.Basic
+
+/-!
+# Principal divisors of an algebraic function field
+
+The **principal divisor** of a nonzero function `z` of an algebraic function field `F / k` is the
+finite formal sum
+
+`div z = ∑_P ord_P z · P`
+
+of its zeros and poles, weighted by their orders.  It is a finite sum because a function of an
+algebraic function field has only finitely many zeros and poles
+(`TauCeti.Place.finite_setOf_ord_ne_zero`), and it is additive in `z` because `ord_P` is.  This
+file constructs it, splits it into its zero and pole divisors, characterizes the functions with
+trivial divisor as the constants, and proves that multiplication by `z` identifies the
+Riemann–Roch spaces of `A` and `A - div z`.  It is Stichtenoth, *Algebraic Function Fields and
+Codes*, 2nd ed., Definition 1.4.2 and Lemma 1.4.6.
+
+The formal side is not rebuilt: the group `Divisor k F` and its degree are
+`TauCeti.FieldTheory.FunctionField.Divisor.Basic`, and the passage from a family of order
+functions to principal divisors, the subgroup they form, and linear equivalence is the
+existing `TauCeti.AlgebraicGeometry.WeilDivisor.OrderSystem` API.  What is new here is the
+order system of the places of a function field, and the function-field statements that need
+the places themselves.
+
+## Main definitions
+
+* `TauCeti.Place.orderSystem`: the places of `F / k` with their order functions, as an
+  `OrderSystem` on `Additive Fˣ`.  Its finiteness condition is Stichtenoth, Corollary 1.3.4.
+* `TauCeti.Divisor.principal` and `TauCeti.Divisor.principalHom`: `div z` for `z : Fˣ`, and its
+  packaging as a group homomorphism `Additive Fˣ →+ Divisor k F` (Definition 1.4.2).
+* `TauCeti.Divisor.zeros` and `TauCeti.Divisor.poles`: the zero divisor `(z)₀ = (div z)⁺` and
+  the pole divisor `(z)_∞ = (div z)⁻` (Definition 1.4.2).
+
+## Main results
+
+* `TauCeti.Divisor.zeros_sub_poles`: `div z = (z)₀ - (z)_∞`, with both parts effective.
+* `TauCeti.Divisor.principal_eq_zero_iff_mem_algebraicClosure`: `div z = 0` exactly when `z` is
+  a constant, and `TauCeti.Divisor.principal_eq_zero_iff`: over an exact constant field, exactly
+  when `z ∈ kˣ`.
+* `TauCeti.Divisor.linearlyEquivalent_iff`: two divisors are linearly equivalent exactly when
+  their difference is the divisor of a function (Definition 1.4.3).
+* `TauCeti.mem_riemannRochSpace_units_iff`: `z ∈ L(D)` is `div z + D ≥ 0`, the divisor form of
+  the pole bound defining `L(D)`.
+* `TauCeti.riemannRochSpaceEquivSubPrincipal`: **Stichtenoth, Lemma 1.4.6** —
+  multiplication by `z` is a `k`-linear isomorphism `L(A) ≅ L(A - div z)`; hence
+  `TauCeti.Divisor.dim_eq_of_linearlyEquivalent`, `ℓ` is an invariant of the linear equivalence
+  class of a divisor.
+* `TauCeti.riemannRochSpace_ne_bot_iff`: `L(D) ≠ 0` exactly when `D` is linearly equivalent to
+  an effective divisor (Remark 1.4.5(b)).
+
+## Implementation notes
+
+`div` is defined on `Fˣ`, not on `F` with a nonzero hypothesis: the roadmap pins it as a group
+homomorphism, and `Additive Fˣ →+ Divisor k F` is that statement.  For a nonzero `f : F` the
+divisor is `div (Units.mk0 f hf)`, and `TauCeti.Divisor.coeff_principal` reads its coefficients
+back as orders of the underlying function.
+
+The function-field hypothesis `IsFunctionField k F` is an explicit argument rather than a
+typeclass, following the rest of this directory; it is what makes the support finite, so it
+cannot be avoided in the definition.  Since it is a `Prop`, two spellings of it give the same
+divisor.
+
+The degree of a principal divisor is **not** computed here: `deg (div z) = 0` is the product
+formula (Stichtenoth, Theorem 1.4.11), which needs `deg (z)₀ = [F : k(z)]` and is separate work.
+Everything in this file is independent of it.
+
+## References
+
+* H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., GTM 254, Springer, 2009,
+  Section I.4.
+-/
+
+public section
+
+namespace TauCeti
+
+open AlgebraicGeometry
+
+variable {k F : Type*} [Field k] [Field F] [Algebra k F]
+
+namespace Place
+
+/-- The order of vanishing at a place, as a homomorphism out of the additivized group of units
+`Additive Fˣ`.  Restricting to units is what makes it additive: `ord_P` is only additive away
+from the junk value `ord_P 0 = 0`. -/
+@[expose] noncomputable def ordAddMonoidHom (P : Place k F) : Additive Fˣ →+ ℤ :=
+  AddMonoidHom.mk' (fun z => P.ord ((Additive.toMul z : Fˣ) : F)) fun z w => by
+    simpa only [toMul_add, Units.val_mul] using
+      P.ord_mul (Units.ne_zero _) (Units.ne_zero _)
+
+@[simp]
+theorem ordAddMonoidHom_apply (P : Place k F) (z : Fˣ) :
+    P.ordAddMonoidHom (Additive.ofMul z) = P.ord (z : F) :=
+  rfl
+
+/-- **The places of an algebraic function field, as an order system.**  The points are the
+places, the group is `Additive Fˣ`, and the order at a place is `ord_P`.  The finiteness
+condition is Stichtenoth, Corollary 1.3.4: a function has finitely many zeros and poles. -/
+@[expose] noncomputable def orderSystem (hF : IsFunctionField k F) :
+    WeilDivisor.OrderSystem (Place k F) (Additive Fˣ) where
+  ord P := P.ordAddMonoidHom
+  finite_support z := by
+    refine (finite_setOf_ord_ne_zero hF ((Additive.toMul z : Fˣ) : F)).subset fun P hP => ?_
+    exact hP
+
+@[simp]
+theorem orderSystem_ord (hF : IsFunctionField k F) (P : Place k F) (z : Fˣ) :
+    (orderSystem hF).ord P (Additive.ofMul z) = P.ord (z : F) :=
+  rfl
+
+end Place
+
+namespace Divisor
+
+/-! ### The principal divisor -/
+
+/-- **The principal-divisor homomorphism** `div : Fˣ →+ Divisor k F` of an algebraic function
+field, in its additivized form (Stichtenoth, Definition 1.4.2). -/
+@[expose] noncomputable def principalHom (hF : IsFunctionField k F) :
+    Additive Fˣ →+ Divisor k F :=
+  (Place.orderSystem hF).principalHom
+
+/-- **The principal divisor** `div z = ∑_P ord_P z · P` of a nonzero function (Stichtenoth,
+Definition 1.4.2). -/
+@[expose] noncomputable def principal (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
+  principalHom hF (Additive.ofMul z)
+
+@[simp]
+theorem principalHom_ofMul (hF : IsFunctionField k F) (z : Fˣ) :
+    principalHom hF (Additive.ofMul z) = principal hF z :=
+  rfl
+
+theorem principalHom_apply (hF : IsFunctionField k F) (z : Additive Fˣ) :
+    principalHom hF z = principal hF (Additive.toMul z) :=
+  rfl
+
+/-- The coefficient of a place in `div z` is the order of `z` there. -/
+@[simp]
+theorem coeff_principal (hF : IsFunctionField k F) (z : Fˣ) (P : Place k F) :
+    (principal hF z).coeff P = P.ord (z : F) := by
+  rw [principal, principalHom, WeilDivisor.OrderSystem.principalHom_apply,
+    WeilDivisor.OrderSystem.coeff_principalDivisor, Place.orderSystem_ord]
+
+theorem mem_support_principal_iff (hF : IsFunctionField k F) {z : Fˣ} {P : Place k F} :
+    P ∈ (principal hF z).support ↔ P.ord (z : F) ≠ 0 := by
+  rw [WeilDivisor.mem_support_iff, coeff_principal]
+
+@[simp]
+theorem principal_one (hF : IsFunctionField k F) : principal hF (1 : Fˣ) = 0 :=
+  map_zero (principalHom hF)
+
+theorem principal_mul (hF : IsFunctionField k F) (y z : Fˣ) :
+    principal hF (y * z) = principal hF y + principal hF z :=
+  map_add (principalHom hF) (Additive.ofMul y) (Additive.ofMul z)
+
+@[simp]
+theorem principal_inv (hF : IsFunctionField k F) (z : Fˣ) :
+    principal hF z⁻¹ = -principal hF z :=
+  map_neg (principalHom hF) (Additive.ofMul z)
+
+theorem principal_div (hF : IsFunctionField k F) (y z : Fˣ) :
+    principal hF (y / z) = principal hF y - principal hF z :=
+  map_sub (principalHom hF) (Additive.ofMul y) (Additive.ofMul z)
+
+theorem principal_zpow (hF : IsFunctionField k F) (z : Fˣ) (n : ℤ) :
+    principal hF (z ^ n) = n • principal hF z := by
+  rw [principal, ofMul_zpow, map_zsmul, principalHom_ofMul]
+
+/-- The principal divisor of a function is the principal divisor of the order system of the
+places of `F / k`. -/
+theorem principalDivisor_eq (hF : IsFunctionField k F) (z : Additive Fˣ) :
+    (Place.orderSystem hF).principalDivisor z = principal hF (Additive.toMul z) := by
+  rw [principal, principalHom, WeilDivisor.OrderSystem.principalHom_apply, ofMul_toMul]
+
+/-- **Linear equivalence, in terms of functions**: two divisors are linearly equivalent exactly
+when their difference is the divisor of a function.  This is the multiplicative reading of
+`TauCeti.AlgebraicGeometry.WeilDivisor.OrderSystem.LinearlyEquivalent` for the order system of
+places (Stichtenoth, Definition 1.4.3). -/
+theorem linearlyEquivalent_iff (hF : IsFunctionField k F) {A B : Divisor k F} :
+    (Place.orderSystem hF).LinearlyEquivalent A B ↔ ∃ z : Fˣ, principal hF z = A - B := by
+  rw [WeilDivisor.OrderSystem.linearlyEquivalent_iff_exists_principalDivisor]
+  constructor
+  · rintro ⟨g, hg⟩
+    exact ⟨Additive.toMul g, by rwa [← principalDivisor_eq]⟩
+  · rintro ⟨z, hz⟩
+    exact ⟨Additive.ofMul z, by rwa [principalDivisor_eq, toMul_ofMul]⟩
+
+/-- The divisor of a function algebraic over the constants is trivial: such a function has
+neither zeros nor poles. -/
+theorem principal_eq_zero_of_isAlgebraic (hF : IsFunctionField k F) {z : Fˣ}
+    (hz : IsAlgebraic k (z : F)) : principal hF z = 0 :=
+  WeilDivisor.ext fun P => by
+    rw [coeff_principal, P.ord_eq_zero_of_isAlgebraic hz, WeilDivisor.coeff_zero]
+
+/-- **A function has trivial divisor exactly when it is a constant.**  One direction is that
+constants are units at every place; the other is that a function lying in every valuation ring
+is algebraic over `k` (`TauCeti.Place.mem_algebraicClosure_iff_forall_mem_integers`). -/
+theorem principal_eq_zero_iff_mem_algebraicClosure (hF : IsFunctionField k F) (z : Fˣ) :
+    principal hF z = 0 ↔ (z : F) ∈ algebraicClosure k F := by
+  refine ⟨fun h => ?_, fun h => principal_eq_zero_of_isAlgebraic hF (mem_algebraicClosure_iff.mp h)⟩
+  rw [Place.mem_algebraicClosure_iff_forall_mem_integers hF]
+  intro P
+  have hP : (principal hF z).coeff P = 0 := by rw [h, WeilDivisor.coeff_zero]
+  rw [coeff_principal] at hP
+  exact P.mem_integers_iff_ord_nonneg.mpr hP.ge
+
+/-- **Stichtenoth, Definition 1.4.2**, over an exact constant field: `div z = 0` exactly when
+`z ∈ kˣ`.  This is where exactness of the constant field enters — over `ℝ ⊆ ℂ(x)` the function
+`i` has trivial divisor without being a constant of `ℝ`. -/
+theorem principal_eq_zero_iff (hF : IsFunctionField k F) (hex : IsIntegrallyClosedIn k F)
+    (z : Fˣ) : principal hF z = 0 ↔ ∃ c : k, algebraMap k F c = (z : F) := by
+  rw [principal_eq_zero_iff_mem_algebraicClosure hF,
+    algebraicClosure_eq_bot_iff_isIntegrallyClosedIn.mpr hex]
+  simp [IntermediateField.mem_bot]
+
+/-! ### The zero divisor and the pole divisor -/
+
+/-- **The zero divisor** `(z)₀ = (div z)⁺` of a nonzero function (Stichtenoth,
+Definition 1.4.2): its zeros, with multiplicities. -/
+@[expose] noncomputable def zeros (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
+  (principal hF z)⁺
+
+/-- **The pole divisor** `(z)_∞ = (div z)⁻` of a nonzero function (Stichtenoth,
+Definition 1.4.2): its poles, with multiplicities. -/
+@[expose] noncomputable def poles (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
+  (principal hF z)⁻
+
+@[simp]
+theorem coeff_zeros (hF : IsFunctionField k F) (z : Fˣ) (P : Place k F) :
+    (zeros hF z).coeff P = P.ord (z : F) ⊔ 0 := by
+  rw [zeros, WeilDivisor.coeff_posPart, coeff_principal]
+
+@[simp]
+theorem coeff_poles (hF : IsFunctionField k F) (z : Fˣ) (P : Place k F) :
+    (poles hF z).coeff P = -P.ord (z : F) ⊔ 0 := by
+  rw [poles, WeilDivisor.coeff_negPart, coeff_principal]
+
+@[simp]
+theorem isEffective_zeros (hF : IsFunctionField k F) (z : Fˣ) :
+    WeilDivisor.IsEffective (zeros hF z) :=
+  WeilDivisor.isEffective_posPart _
+
+@[simp]
+theorem isEffective_poles (hF : IsFunctionField k F) (z : Fˣ) :
+    WeilDivisor.IsEffective (poles hF z) :=
+  WeilDivisor.isEffective_negPart _
+
+/-- **The divisor of a function splits into its zeros and its poles**: `div z = (z)₀ - (z)_∞`. -/
+theorem zeros_sub_poles (hF : IsFunctionField k F) (z : Fˣ) :
+    zeros hF z - poles hF z = principal hF z :=
+  posPart_sub_negPart (principal hF z)
+
+/-- The poles of a function are the zeros of its inverse. -/
+theorem poles_eq_zeros_inv (hF : IsFunctionField k F) (z : Fˣ) :
+    poles hF z = zeros hF z⁻¹ :=
+  WeilDivisor.ext fun P => by rw [coeff_poles, coeff_zeros, Units.val_inv_eq_inv_val, P.ord_inv]
+
+/-- Zeros and poles never meet: no place is both. -/
+theorem support_zeros_disjoint_poles (hF : IsFunctionField k F) (z : Fˣ) :
+    Disjoint (zeros hF z).support (poles hF z).support :=
+  WeilDivisor.support_posPart_disjoint_negPart _
+
+end Divisor
+
+/-! ### Riemann–Roch spaces and linear equivalence -/
+
+/-- **The divisor form of membership in `L(D)`**: a nonzero function lies in `L(D)` exactly when
+`div f + D` is effective, which is how Stichtenoth states Definition 1.4.4. -/
+theorem mem_riemannRochSpace_units_iff (hF : IsFunctionField k F) {D : Divisor k F} {z : Fˣ} :
+    (z : F) ∈ riemannRochSpace D ↔ 0 ≤ Divisor.principal hF z + D := by
+  rw [mem_riemannRochSpace_iff_neg_le_ord (Units.ne_zero z), WeilDivisor.le_iff]
+  refine forall_congr' fun P => ?_
+  rw [WeilDivisor.coeff_zero, WeilDivisor.coeff_add, Divisor.coeff_principal]
+  omega
+
+/-- Multiplying by `z` moves `L(A)` into `L(A - div z)`: the poles of `z * f` are bounded by
+those of `f` together with the poles `z` contributes. -/
+theorem mul_mem_riemannRochSpace_sub_principal (hF : IsFunctionField k F) (z : Fˣ)
+    {A : Divisor k F} {f : F} (hf : f ∈ riemannRochSpace A) :
+    (z : F) * f ∈ riemannRochSpace (A - Divisor.principal hF z) := by
+  rcases eq_or_ne f 0 with rfl | hf0
+  · simp
+  have hzf : (z : F) * f ≠ 0 := mul_ne_zero (Units.ne_zero z) hf0
+  have hord := (mem_riemannRochSpace_iff_neg_le_ord hf0).mp hf
+  rw [mem_riemannRochSpace_iff_neg_le_ord hzf]
+  intro P
+  rw [P.ord_mul (Units.ne_zero z) hf0, WeilDivisor.coeff_sub, Divisor.coeff_principal]
+  have := hord P
+  omega
+
+/-- The `k`-linear map `f ↦ z * f` from `L(A)` to `L(A - div z)`. -/
+private noncomputable def mulLeftRiemannRoch (z : Fˣ)
+    (A B : Divisor k F) (h : ∀ f ∈ riemannRochSpace A, (z : F) * f ∈ riemannRochSpace B) :
+    riemannRochSpace A →ₗ[k] riemannRochSpace B where
+  toFun f := ⟨(z : F) * (f : F), h f f.2⟩
+  map_add' a b := Subtype.ext (by simp [mul_add])
+  map_smul' c a := Subtype.ext (by simp [Algebra.smul_def, mul_left_comm])
+
+/-- **Stichtenoth, Lemma 1.4.6**: multiplication by a nonzero function `z` is a `k`-linear
+isomorphism `L(A) ≅ L(A - div z)`.
+
+This is the whole content of the invariance of `ℓ` under linear equivalence: any two linearly
+equivalent divisors differ by a principal divisor, and this isomorphism handles that difference.
+It needs no product formula, so it is available before `deg (div z) = 0`. -/
+noncomputable def riemannRochSpaceEquivSubPrincipal (hF : IsFunctionField k F) (z : Fˣ)
+    (A : Divisor k F) :
+    riemannRochSpace A ≃ₗ[k] riemannRochSpace (A - Divisor.principal hF z) := by
+  have hback : ∀ f ∈ riemannRochSpace (A - Divisor.principal hF z),
+      ((z⁻¹ : Fˣ) : F) * f ∈ riemannRochSpace A := by
+    intro f hf
+    have h := mul_mem_riemannRochSpace_sub_principal hF z⁻¹ hf
+    rwa [Divisor.principal_inv, sub_neg_eq_add, sub_add_cancel] at h
+  refine LinearEquiv.ofLinearMap
+    (mulLeftRiemannRoch z A _ fun f hf => mul_mem_riemannRochSpace_sub_principal hF z hf)
+    (mulLeftRiemannRoch z⁻¹ _ A hback) ?_ ?_ <;>
+  · refine LinearMap.ext fun f => Subtype.ext ?_
+    simp only [mulLeftRiemannRoch, LinearMap.coe_comp, Function.comp_apply, LinearMap.coe_mk,
+      AddHom.coe_mk, LinearMap.id_coe, id_eq]
+    rw [← mul_assoc, ← Units.val_mul]
+    simp
+
+/-- `ℓ(A - div z) = ℓ(A)`: the dimension of a Riemann–Roch space is unchanged by subtracting a
+principal divisor. -/
+theorem Divisor.dim_sub_principal (hF : IsFunctionField k F) (z : Fˣ) (A : Divisor k F) :
+    Divisor.dim (A - Divisor.principal hF z) = Divisor.dim A := by
+  rw [Divisor.dim_def, Divisor.dim_def]
+  exact ((riemannRochSpaceEquivSubPrincipal hF z A).finrank_eq).symm
+
+/-- **`ℓ` is an invariant of the divisor class** (Stichtenoth, Lemma 1.4.6): linearly equivalent
+divisors have Riemann–Roch spaces of the same dimension. -/
+theorem Divisor.dim_eq_of_linearlyEquivalent (hF : IsFunctionField k F) {A B : Divisor k F}
+    (h : (Place.orderSystem hF).LinearlyEquivalent A B) :
+    Divisor.dim A = Divisor.dim B := by
+  obtain ⟨z, hz⟩ := (Divisor.linearlyEquivalent_iff hF).mp h
+  have hB : B = A - Divisor.principal hF z := by rw [hz]; abel
+  rw [hB, Divisor.dim_sub_principal]
+
+/-- **A Riemann–Roch space is nonzero exactly when its divisor is linearly equivalent to an
+effective divisor** (Stichtenoth, Remark 1.4.5(b)).  A nonzero `f ∈ L(D)` makes `div f + D`
+effective and equivalent to `D`; conversely, if `D - D'` is the divisor of `z` with `D'`
+effective, then `z⁻¹` is a nonzero element of `L(D)`. -/
+theorem riemannRochSpace_ne_bot_iff (hF : IsFunctionField k F) {D : Divisor k F} :
+    riemannRochSpace D ≠ ⊥ ↔
+      ∃ D' : Divisor k F, 0 ≤ D' ∧ (Place.orderSystem hF).LinearlyEquivalent D D' := by
+  rw [Submodule.ne_bot_iff]
+  constructor
+  · rintro ⟨f, hf, hf0⟩
+    refine ⟨Divisor.principal hF (Units.mk0 f hf0) + D, ?_, ?_⟩
+    · exact (mem_riemannRochSpace_units_iff hF (z := Units.mk0 f hf0)).mp hf
+    · refine (Divisor.linearlyEquivalent_iff hF).mpr ⟨(Units.mk0 f hf0)⁻¹, ?_⟩
+      rw [Divisor.principal_inv]
+      abel
+  · rintro ⟨D', hD', hequiv⟩
+    obtain ⟨z, hz⟩ := (Divisor.linearlyEquivalent_iff hF).mp hequiv
+    refine ⟨((z⁻¹ : Fˣ) : F), ?_, Units.ne_zero _⟩
+    refine (mem_riemannRochSpace_units_iff hF).mpr ?_
+    rw [Divisor.principal_inv, hz]
+    have hcancel : -(D - D') + D = D' := by abel
+    rw [hcancel]
+    exact hD'
+
+end TauCeti
