@@ -83,16 +83,18 @@ theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
     (Submodule.map_symm_eq_iff ω.toEquiv).2 rfl
   simpa only [ω.toEquiv_symm] using h
 
-/-- The conjugation induced on a complex subspace stable under a given conjugation.
+/-- A conjugation restricted to a stable complex subspace is involutive. -/
+private theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
+    Function.Involutive (ω.toEquiv.toLinearMap.restrict hU) := fun x ↦ by
+  ext
+  simp
 
-It is `@[expose]`d so that a conjugation built from it — such as the one induced on a graded
-piece of a filtration — remains definitionally the ambient one on representatives. -/
-@[expose]
+/-- The conjugation induced on a complex subspace stable under a given conjugation. -/
 noncomputable def restrict (ω : Conjugation W) {U : Submodule ℂ W}
     (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation U where
-  toEquiv := LinearEquiv.ofInvolutive (ω.toEquiv.toLinearMap.restrict hU)
-    fun x ↦ Subtype.ext (ω.apply_apply (x : W))
-  involutive x := Subtype.ext (ω.apply_apply (x : W))
+  toEquiv := LinearEquiv.ofInvolutive _ (ω.restrict_involutive hU)
+  involutive := ω.restrict_involutive hU
 
 /-- A restricted conjugation acts as the ambient one. -/
 @[simp]
@@ -129,18 +131,18 @@ theorem map_comap_eq_comap_map {W' : Type v} [AddCommGroup W'] [Module ℂ W']
     rw [he y, ← hzy, ω'.apply_apply]
     exact hz
 
-/-- The conjugation induced on the quotient of a complex vector space by a stable subspace.
+/-- The conjugation induced on a quotient by a stable complex subspace is involutive. -/
+private theorem quotient_involutive (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
+    Function.Involutive (U.mapQ U ω.toEquiv.toLinearMap fun x hx ↦ hU x hx) := fun x ↦
+  Submodule.Quotient.induction_on _ x fun y ↦
+    congrArg Submodule.Quotient.mk (ω.apply_apply y)
 
-It is `@[expose]`d for the same reason as `TauCeti.Hodge.Conjugation.restrict`: a conjugation
-assembled from it must still compute on classes of representatives. -/
-@[expose]
+/-- The conjugation induced on the quotient of a complex vector space by a stable subspace. -/
 noncomputable def quotient (ω : Conjugation W) {U : Submodule ℂ W}
     (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation (W ⧸ U) where
-  toEquiv := LinearEquiv.ofInvolutive (U.mapQ U ω.toEquiv.toLinearMap fun x hx ↦ hU x hx)
-    fun x ↦ Submodule.Quotient.induction_on _ x fun y ↦
-      congrArg Submodule.Quotient.mk (ω.apply_apply y)
-  involutive x := Submodule.Quotient.induction_on _ x fun y ↦
-    congrArg Submodule.Quotient.mk (ω.apply_apply y)
+  toEquiv := LinearEquiv.ofInvolutive _ (ω.quotient_involutive hU)
+  involutive := ω.quotient_involutive hU
 
 /-- The induced conjugation on a quotient acts on classes through the ambient conjugation. -/
 @[simp]

@@ -65,12 +65,6 @@ namespace MixedHodgeStructure
 
 variable (mhs : MixedHodgeStructure hℚ hℂ)
 
-/-- Lattice conjugation preserves every step of the complexified weight filtration, since each
-step is the complexification of a rational subspace. -/
-theorem latticeConj_mem_WC (k : ℤ) {x : Vℂ} (hx : x ∈ mhs.WC k) :
-    latticeConj hℂ x ∈ mhs.WC k :=
-  latticeConj_mem_rationalToComplexSubmodule hℚ hℂ (mhs.WQ k) hx
-
 /-- The conjugation induced by lattice conjugation on the `k`-th graded piece of the complexified
 weight filtration. -/
 noncomputable def gradedConjugation (k : ℤ) : Conjugation (weightGradedComplex mhs.WC k) :=
@@ -80,7 +74,8 @@ noncomputable def gradedConjugation (k : ℤ) : Conjugation (weightGradedComplex
 @[simp]
 theorem gradedConjugation_mk (k : ℤ) (x : mhs.WC k) :
     (mhs.gradedConjugation k).toEquiv (Submodule.Quotient.mk x) =
-      Submodule.Quotient.mk ⟨latticeConj hℂ (x : Vℂ), mhs.latticeConj_mem_WC k x.2⟩ :=
+      Submodule.Quotient.mk ⟨latticeConj hℂ (x : Vℂ),
+        (rationalToComplexSubmodule_conj hℚ hℂ (mhs.WQ k)).le ⟨x, x.2, rfl⟩⟩ :=
   gradedComplexConjugation_mk hℚ hℂ mhs.WQ k x
 
 /-- The comparison of the rational and complex models of the `k`-th graded piece intertwines the
@@ -119,7 +114,8 @@ graded piece, on the nose. -/
 theorem complexGradedHodgeStructure_F (k p : ℤ) :
     (mhs.complexGradedHodgeStructure k).F p = complexGradedF mhs.WC mhs.F k p := by
   rw [complexGradedHodgeStructure, HodgeStructureOn.comap_F, gradedHodgeStructure_F]
-  exact comap_symm_gradedF hℚ hℂ mhs.WQ mhs.WQ_monotone mhs.F k p
+  ext y
+  simp
 
 /-- The conjugate filtration of the graded pure structure is the filtration induced by the
 conjugate of `F`. -/

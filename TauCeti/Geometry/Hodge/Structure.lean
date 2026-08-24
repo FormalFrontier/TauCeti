@@ -272,12 +272,16 @@ theorem comap_F (e : W ≃ₗ[ℂ] W') (he : ∀ x, e (ω.toEquiv x) = ω'.toEqu
     (hs : HodgeStructureOn W' ω' n) (p : ℤ) :
     (hs.comap e he).F p = (hs.F p).comap e.toLinearMap := (rfl)
 
+/-- Transport along an equivalence intertwining the conjugations takes the conjugate filtration
+to the preimage of the conjugate filtration. -/
 @[simp]
 theorem comap_conjF (e : W ≃ₗ[ℂ] W') (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x))
     (hs : HodgeStructureOn W' ω' n) (p : ℤ) :
     (hs.comap e he).conjF p = (hs.conjF p).comap e.toLinearMap := by
   rw [conjF_def, comap_F, Conjugation.map_comap_eq_comap_map ω ω' e he, conjF_def]
 
+/-- Transport along an equivalence intertwining the conjugations takes each Hodge component to
+the preimage of the corresponding Hodge component. -/
 @[simp]
 theorem comap_piece (e : W ≃ₗ[ℂ] W') (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x))
     (hs : HodgeStructureOn W' ω' n) (p : ℤ) :

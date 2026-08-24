@@ -261,14 +261,6 @@ theorem rationalToComplexSubmodule_conj (hℚ : IsBaseChange ℚ ιℚ)
   refine ⟨latticeConj hℂ x, hle ⟨x, hx, rfl⟩, ?_⟩
   simp
 
-/-- Elementwise form of the stability of a complexified rational subspace under lattice-induced
-conjugation. -/
-theorem latticeConj_mem_rationalToComplexSubmodule (hℚ : IsBaseChange ℚ ιℚ)
-    (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) {x : Vℂ}
-    (hx : x ∈ rationalToComplexSubmodule hℚ hℂ W) :
-    latticeConj hℂ x ∈ rationalToComplexSubmodule hℚ hℂ W :=
-  (rationalToComplexSubmodule_conj hℚ hℂ W).le ⟨x, hx, rfl⟩
-
 section Map
 
 variable {V'ℤ : Type u'} {V'ℚ : Type v'} {V'ℂ : Type w'}
