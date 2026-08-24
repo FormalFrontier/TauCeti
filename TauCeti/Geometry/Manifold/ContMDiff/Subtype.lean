@@ -14,16 +14,17 @@ A map into an open submanifold `U ⊆ M` is `C^n` exactly when its composition w
 `U → M` is `C^n`: the charts of `U` are restrictions of the charts of `M`, so smoothness is
 insensitive to whether the codomain is read in the submanifold or in the ambient manifold.
 
-Mathlib records this through `contMDiffAt_subtype_iff` at a point, and through
-`ContMDiffWithinAt.subtypeVal_comp_iff` and siblings for regularity `∞`. Since smoothness into a
+Mathlib records this through `ContMDiffWithinAt.subtypeVal_comp_iff` within a set and through
+`ContMDiffAt.subtypeVal_comp_iff` at a point, both at regularity `∞`. Since smoothness into a
 manifold is a local invariant property at *every* regularity, the same characterizations hold for
 arbitrary `n`; this file supplies them.
 
 ## Main results
 
-* `TauCeti.contMDiffWithinAt_subtypeVal_comp_iff`, `TauCeti.contMDiffOn_subtypeVal_comp_iff`,
-  and `TauCeti.contMDiff_subtypeVal_comp_iff`: a map into an open submanifold is `C^n`
-  (within a set, on a set, globally) iff its composition with the inclusion is.
+* `TauCeti.contMDiffWithinAt_subtypeVal_comp_iff`, `TauCeti.contMDiffAt_subtypeVal_comp_iff`,
+  `TauCeti.contMDiffOn_subtypeVal_comp_iff`, and `TauCeti.contMDiff_subtypeVal_comp_iff`: a map
+  into an open submanifold is `C^n` (within a set, at a point, on a set, globally) iff its
+  composition with the inclusion is.
 
 ## References
 
@@ -53,6 +54,12 @@ theorem contMDiffWithinAt_subtypeVal_comp_iff (U : Opens M') (f : M → U) (s : 
     (x : M) :
     ContMDiffWithinAt I I' n (Subtype.val ∘ f) s x ↔ ContMDiffWithinAt I I' n f s x :=
   liftPropWithinAt_subtypeVal_comp_iff ..
+
+/-- A map into an open submanifold is `C^n` at a point iff its composition with the inclusion
+is, at every regularity. -/
+theorem contMDiffAt_subtypeVal_comp_iff (U : Opens M') (f : M → U) (x : M) :
+    ContMDiffAt I I' n (Subtype.val ∘ f) x ↔ ContMDiffAt I I' n f x :=
+  contMDiffWithinAt_subtypeVal_comp_iff U f Set.univ x
 
 /-- A map into an open submanifold is `C^n` on a set iff its composition with the inclusion is,
 at every regularity. -/
