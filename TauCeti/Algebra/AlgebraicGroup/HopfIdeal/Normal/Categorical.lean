@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Categorical
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Yoneda
 public import Mathlib.CategoryTheory.Monoidal.Cartesian.Normal
 
 /-!
@@ -65,26 +65,20 @@ private theorem quotientGrpObjInclusion_range_map
     (IsMonHom.monoidHom (quotientGrpObjInclusion H I) X).range.map
         (grpObjPointsMulEquiv H X).toMonoidHom =
       quotientPointsSubgroup H I X.unop := by
-  rw [quotientPointsSubgroup_eq_range]
-  ext p
-  constructor
-  · rintro ⟨n, ⟨q, hq⟩, hn⟩
-    refine ⟨grpObjPointsMulEquiv (quotient H I) X q, ?_⟩
-    calc
-      quotientPointsHom H I X.unop (grpObjPointsMulEquiv (quotient H I) X q) =
-          grpObjPointsMulEquiv H X (q ≫ quotientGrpObjInclusion H I) :=
-        (grpObjPointsMulEquiv_comp_quotientGrpObjInclusion H I X q).symm
-      _ = grpObjPointsMulEquiv H X n := congrArg (grpObjPointsMulEquiv H X) hq
-      _ = p := hn
-  · rintro ⟨q, hq⟩
-    refine ⟨(grpObjPointsMulEquiv H X).symm p, ?_,
-      (grpObjPointsMulEquiv H X).apply_symm_apply p⟩
-    refine ⟨(grpObjPointsMulEquiv (quotient H I) X).symm q, ?_⟩
-    apply (grpObjPointsMulEquiv H X).injective
-    simp only [IsMonHom.monoidHom_apply]
-    rw [grpObjPointsMulEquiv_comp_quotientGrpObjInclusion,
-      (grpObjPointsMulEquiv (quotient H I) X).apply_symm_apply,
-      (grpObjPointsMulEquiv H X).apply_symm_apply, hq]
+  rw [quotientPointsSubgroup_def, MonoidHom.map_range]
+  have hcomp :
+      (grpObjPointsMulEquiv H X).toMonoidHom.comp
+          (IsMonHom.monoidHom (quotientGrpObjInclusion H I) X) =
+        (quotientPointsHom H I X.unop).hom.comp
+          (grpObjPointsMulEquiv (quotient H I) X).toMonoidHom := by
+    apply MonoidHom.ext
+    intro q
+    simpa only [MonoidHom.comp_apply, IsMonHom.monoidHom_apply,
+      MulEquiv.coe_toMonoidHom] using
+      grpObjPointsMulEquiv_comp_quotientGrpObjInclusion H I X q
+  rw [hcomp, MonoidHom.range_comp,
+    MonoidHom.range_eq_top_of_surjective _ (grpObjPointsMulEquiv (quotient H I) X).surjective]
+  exact (MonoidHom.range_eq_map _).symm
 
 /-- Pointwise normality of the categorical inclusion is equivalent to normality of the
 corresponding quotient-points subgroup. -/

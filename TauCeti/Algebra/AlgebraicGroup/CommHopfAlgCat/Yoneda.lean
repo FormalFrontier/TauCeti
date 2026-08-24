@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.CategoryTheory.Monoidal.Cartesian.Grp
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 
 /-!
@@ -44,10 +43,6 @@ shrinking part.
   functor of points.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsHomEquiv`: the carrier equivalence from the opaque
   group-Yoneda model to algebra morphisms.
-* `TauCeti.CommHopfAlgCat.grpObj`: the underlying object of the group object represented by a
-  commutative Hopf algebra.
-* `TauCeti.CommHopfAlgCat.grpObjMap`: the morphism of underlying group objects represented by a
-  morphism of commutative Hopf algebras.
 * `TauCeti.CommHopfAlgCat.grpObjPointsMulEquiv`: generalized points of the represented group
   object are its convolution points.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsFunctorIso`: the group-valued Yoneda model is
@@ -310,30 +305,6 @@ theorem groupYonedaPointsHomEquiv_map_app
   unfold groupYonedaPointsHomEquiv groupYonedaPointsFunctor
   rfl
 
-/-- The underlying object `op (CommAlgCat.of R H)` of the group object represented by the
-commutative Hopf algebra `H`, carrying the induced `GrpObj` structure. -/
-noncomputable abbrev grpObj (H : _root_.CommHopfAlgCat.{u} R) :
-    (CommAlgCat.{u} R)ᵒᵖ :=
-  op (CommAlgCat.of R H)
-
-/-- The morphism of underlying group objects represented contravariantly by a morphism of
-commutative Hopf algebras. -/
-noncomputable def grpObjMap {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
-    grpObj K ⟶ grpObj H :=
-  (CommAlgCat.ofHom f.hom).op
-
-/-- Unopping `grpObjMap f` gives the underlying commutative-algebra morphism of `f`. -/
-@[simp]
-theorem grpObjMap_unop {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
-    (grpObjMap f).unop = CommAlgCat.ofHom f.hom := (rfl)
-
-/-- A morphism represented by a commutative Hopf-algebra morphism preserves the group-object
-multiplication. -/
-noncomputable instance grpObjMap_isMonHom {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
-    IsMonHom (grpObjMap f) := by
-  change IsMonHom (((commHopfAlgCatEquivCogrpCommAlgCat R).functor.map f).unop.hom.hom)
-  infer_instance
-
 /-- Generalized points of the group object represented by `H` are the convolution group of
 algebra-valued points of `H`. It sends the categorical multiplication `lift f g ≫ μ` to
 the convolution product of the underlying algebra morphisms. -/
@@ -368,11 +339,14 @@ theorem grpObjPointsMulEquiv_symm_apply (H : _root_.CommHopfAlgCat.{u} R)
     (X : (CommAlgCat.{u} R)ᵒᵖ) (p : HopfAlgebra.points (R := R) (H := H) X.unop) :
     (grpObjPointsMulEquiv H X).symm p =
       (opEquiv X (grpObj H)).symm (CommAlgCat.ofHom p.ofConv) := by
+  -- The inverse of the composite carrier equivalence reduces definitionally to the composite
+  -- of the inverse opposite-hom equivalence and `pointsHomEquiv.symm`.
   change (opEquiv X (grpObj H)).symm ((HopfAlgebra.pointsHomEquiv H X.unop).symm p) = _
   rw [HopfAlgebra.pointsHomEquiv_symm_apply]
 
 /-- Under the group-object point equivalences, composition with the morphism represented by `f`
 is precomposition of algebra-valued points with `f`. -/
+@[simp]
 theorem grpObjPointsMulEquiv_comp_grpObjMap {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K)
     (X : (CommAlgCat.{u} R)ᵒᵖ) (q : X ⟶ grpObj K) :
     grpObjPointsMulEquiv H X (q ≫ grpObjMap f) =
