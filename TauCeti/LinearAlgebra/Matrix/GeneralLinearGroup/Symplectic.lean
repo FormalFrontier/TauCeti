@@ -645,7 +645,7 @@ def differenceShortRootHom {i j : Fin m} (hij : i ≠ j) :
 
 When `i ≠ j`, this is the short-root subgroup for `eᵢ+eⱼ`; on the diagonal it is the
 corresponding doubled long-root parametrization. -/
-def positiveSumPairedHom (i j : Fin m) :
+private def positiveSumPairedHom (i j : Fin m) :
     Multiplicative R →* GLSymplecticFin m R :=
   MonoidHom.codRestrict
     (commutingTransvectionPairHom
@@ -661,7 +661,7 @@ def positiveSumPairedHom (i j : Fin m) :
 
 When `i ≠ j`, this is the short-root subgroup for `-eᵢ-eⱼ`; on the diagonal it is the
 corresponding doubled long-root parametrization. -/
-def negativeSumPairedHom (i j : Fin m) :
+private def negativeSumPairedHom (i j : Fin m) :
     Multiplicative R →* GLSymplecticFin m R :=
   MonoidHom.codRestrict
     (commutingTransvectionPairHom
