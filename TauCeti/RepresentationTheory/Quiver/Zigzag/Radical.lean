@@ -137,6 +137,29 @@ noncomputable def zigzagVolumeSpan : Submodule k (nonisolatedZigzagQuotient k G)
 
 variable {k G}
 
+/-- Every arrow class belongs to the positive-length span. -/
+theorem zigzagMk_ofArrow_mem_zigzagPositiveSpan (d : G.Dart) :
+    zigzagMk k G (ofArrow (arrow G d.adj)) ∈ zigzagPositiveSpan k G := by
+  rw [zigzagPositiveSpan, ← zigzagBasisFun_inr_inl]
+  exact Submodule.subset_span ⟨.inr (.inl d), ⟨.inl d, rfl⟩, rfl⟩
+
+/-- Every volume class belongs to the positive-length span. -/
+theorem zigzagVolume_mem_zigzagPositiveSpan (i : V) :
+    zigzagVolume k G i ∈ zigzagPositiveSpan k G := by
+  rw [zigzagPositiveSpan, ← zigzagBasisFun_inr_inr]
+  exact Submodule.subset_span ⟨.inr (.inr i), ⟨.inr i, rfl⟩, rfl⟩
+
+/-- Every volume class belongs to the volume span. -/
+theorem zigzagVolume_mem_zigzagVolumeSpan (i : V) :
+    zigzagVolume k G i ∈ zigzagVolumeSpan k G :=
+  Submodule.subset_span (Set.mem_range_self i)
+
+/-- The volume span is contained in the positive-length span. -/
+theorem zigzagVolumeSpan_le_zigzagPositiveSpan :
+    zigzagVolumeSpan k G ≤ zigzagPositiveSpan k G := by
+  rw [zigzagVolumeSpan, Submodule.span_le, Set.range_subset_iff]
+  exact zigzagVolume_mem_zigzagPositiveSpan
+
 /-- The positive-length span is characterized by vanishing vertex coordinates. -/
 theorem mem_zigzagPositiveSpan_iff (hns : ∀ i : V, ∃ j, G.Adj i j)
     {x : nonisolatedZigzagQuotient k G} :
@@ -296,18 +319,6 @@ variable (k : Type w) [Field k] (G : SimpleGraph V) [Finite V]
 
 variable {k G}
 
-private theorem jacobson_sq_eq_mul :
-    Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2 =
-      Ring.jacobson (nonisolatedZigzagQuotient k G) *
-        Ring.jacobson (nonisolatedZigzagQuotient k G) := by
-  rw [show 2 = 1 + 1 by omega, Ideal.IsTwoSided.pow_succ, Submodule.pow_one]
-
-private theorem jacobson_cube_eq_sq_mul :
-    Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 3 =
-      Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2 *
-        Ring.jacobson (nonisolatedZigzagQuotient k G) := by
-  rw [show 3 = 2 + 1 by omega, Submodule.pow_succ]
-
 /-- **The Jacobson radical of a zigzag relation quotient is its positive-length part.** -/
 theorem jacobson_nonisolatedZigzagQuotient_eq_ker (hns : ∀ i : V, ∃ j, G.Adj i j) :
     Ring.jacobson (nonisolatedZigzagQuotient k G) =
@@ -346,7 +357,8 @@ theorem zigzagVolume_mem_jacobson_sq (hns : ∀ i : V, ∃ j, G.Adj i j) (i : V)
     zigzagVolume k G i ∈ Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2 := by
   obtain ⟨j, hij⟩ := hns i
   let d : G.Dart := ⟨(i, j), hij⟩
-  rw [jacobson_sq_eq_mul]
+  -- Ideal powers use the submodule successor recursion, so expose `2` as a successor.
+  rw [show 2 = 1 + 1 by omega, Ideal.IsTwoSided.pow_succ, Submodule.pow_one]
   have hd : zigzagMk k G (ofArrow (arrow G d.symm.adj)) ∈
       Ring.jacobson (nonisolatedZigzagQuotient k G) := by
     rw [jacobson_nonisolatedZigzagQuotient_eq_ker hns, RingHom.mem_ker]
@@ -371,7 +383,8 @@ theorem restrictScalars_jacobson_sq_nonisolatedZigzagQuotient_eq_zigzagVolumeSpa
       zigzagVolumeSpan k G := by
   apply le_antisymm
   · intro x hx
-    rw [jacobson_sq_eq_mul] at hx
+    -- Ideal powers use the submodule successor recursion, so expose `2` as a successor.
+    rw [show 2 = 1 + 1 by omega, Ideal.IsTwoSided.pow_succ, Submodule.pow_one] at hx
     refine Submodule.mul_induction_on
       (M := Ring.jacobson (nonisolatedZigzagQuotient k G))
       (N := Ring.jacobson (nonisolatedZigzagQuotient k G))
@@ -394,7 +407,8 @@ theorem jacobson_pow_three_nonisolatedZigzagQuotient_eq_bot
     Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 3 = ⊥ := by
   rw [eq_bot_iff]
   intro x hx
-  rw [jacobson_cube_eq_sq_mul] at hx
+  -- `Submodule.pow_succ` is stated with the exponent syntactically as a successor.
+  rw [show 3 = 2 + 1 by omega, Submodule.pow_succ] at hx
   refine Submodule.mul_induction_on
     (M := Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2)
     (N := Ring.jacobson (nonisolatedZigzagQuotient k G))
