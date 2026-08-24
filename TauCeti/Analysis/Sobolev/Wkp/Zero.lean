@@ -209,7 +209,6 @@ theorem Wkp.value_ofTestFunctionₗ (k : ℕ) (phi : 𝓓(Omega, ℝ)) :
   rw [Wkp.ofTestFunctionₗ_apply]
   exact Wkp.value_ofTestFunction k phi
 
-@[simp]
 theorem Wkp.iteratedGradient_ofTestFunctionₗ (k : ℕ) (phi : 𝓓(Omega, ℝ)) :
     Wkp.iteratedGradient k (Wkp.ofTestFunctionₗ (mu := mu) (p := p) (k + 1) phi) =
       iteratedGradientTestFunctionLp (mu := mu) (p := p) k phi := by
