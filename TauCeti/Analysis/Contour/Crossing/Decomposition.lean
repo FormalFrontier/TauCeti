@@ -13,30 +13,32 @@ public import TauCeti.Analysis.Contour.Winding.Number.Concat
 # Winding-number accounting for finitely many crossing excisions
 
 Hungerbühler--Wasem Proposition 2.2 replaces finitely many pairwise disjoint crossing windows of
-a closed piecewise-`C¹` immersion by circular caps. `Crossing.FiniteExcision` constructs the
-simultaneously excised curve, while `Crossing.CapAngle` computes the winding number of each local
-loop. This file assembles those local computations into the exact global identity
+a closed piecewise-`C¹` immersion by circular caps. `Crossing.FiniteExcision` constructs a
+simultaneously excised curve from a supplied list of windows, while `Crossing.CapAngle` computes
+the winding number of a local loop under explicit geometric hypotheses. This file proves the
+finite accounting identity
 
 `n_s(γ) = n_s(exciseCrossings γ s windows) + ∑ localContribution`.
 
 The proof partitions the curve at the window endpoints and compares the original and excised
 curves piece by piece. Pairwise disjointness ensures that an earlier replacement does not change a
-later window, so every local term in the final sum is computed on the original curve. The angle
-form then substitutes the local conclusion supplied by
-`windingNumber_sub_circleCap_eq_crossingAngle_div_two_pi`.
+later window, so every local term in the final sum is computed on the original curve. The
+conditional angle form merely substitutes caller-supplied local equalities. In particular, this
+file does not construct windows from the actual crossings or discharge those equalities from
+`windingNumber_sub_circleCap_eq_crossingAngle_div_two_pi`; those are still needed to obtain the
+full proposition.
 
-Unlike the earlier modulo-an-integer statement, the integer part can now be geometrically
-identified: when the original curve is closed, the windows cover its crossings, and their cap
-endpoints agree with the original curve, the first term is the winding number of the explicitly
-constructed closed avoiding curve, hence is an integer.
+For windows satisfying the additional geometric hypotheses, the integer part can be identified:
+when the original curve is closed, the windows cover its crossings, and their cap endpoints agree
+with the original curve, the first term is the winding number of the explicitly constructed closed
+avoiding curve, hence is an integer.
 
 ## Main results
 
 * `TauCeti.Contour.windingNumber_eq_exciseCrossings_add_sum`: exact winding accounting for a
   finite list of cap replacements.
-* `TauCeti.Contour.windingNumber_eq_exciseCrossings_add_sum_crossingAngle`: the resulting
-  Hungerbühler--Wasem crossing-angle formula once each local loop is identified by the local
-  cap-angle theorem.
+* `TauCeti.Contour.windingNumber_eq_exciseCrossings_add_sum_crossingAngle_of_localContribution`:
+  the conditional rewrite obtained when each local contribution is supplied as a crossing angle.
 
 ## References
 
@@ -354,17 +356,15 @@ theorem windingNumber_eq_exciseCrossings_add_sum {windows : List CircularCapWind
         W.localContribution_eq_sub_windingNumber_cap γ s hrW hW.2.1.ne]
       ring
 
-/-- **Hungerbühler--Wasem Proposition 2.2, with the avoiding curve exhibited.** If `crossing W`
-marks the crossing in window `W` and the window-minus-cap contribution is the corresponding
-crossing angle over `2π`, then the winding number of the original curve is the winding number of
-the simultaneously excised curve plus the sum of those crossing angles over `2π`.
+/-- **Conditional crossing-angle summation for supplied windows.** If the window-minus-cap
+contribution is supplied as a crossing angle over `2π` for every window, then the finite excision
+identity rewrites as the sum of those angles.
 
-The local hypothesis is exactly the conclusion of
-`windingNumber_sub_circleCap_eq_crossingAngle_div_two_pi`; this theorem performs the finite global
-assembly. When `γ` is closed, the windows cover every crossing, and their cap endpoints match
-`γ`, the curve `exciseCrossings γ s windows` is closed, piecewise-`C¹`, and avoids `s`, so its
-displayed winding number is an integer by `IsPiecewiseC1On.exists_int_windingNumber`. -/
-theorem windingNumber_eq_exciseCrossings_add_sum_crossingAngle
+Here `crossing` is only an indexing function and `hlocal` assumes the essential local geometric
+equality. This lemma neither constructs windows around the actual crossings nor derives `hlocal`
+from `windingNumber_sub_circleCap_eq_crossingAngle_div_two_pi`; consequently it is an assembly
+lemma toward, rather than a formalization of, Hungerbühler--Wasem Proposition 2.2. -/
+theorem windingNumber_eq_exciseCrossings_add_sum_crossingAngle_of_localContribution
     {windows : List CircularCapWindow} (crossing : CircularCapWindow → ℝ)
     (hγ : IsPiecewiseC1On γ a b) (hab : a ≤ b)
     (hordered : windows.Pairwise fun W V => W.upper < V.lower)
