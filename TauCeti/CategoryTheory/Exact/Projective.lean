@@ -312,6 +312,19 @@ section Resolutions
 
 variable {P : ObjectProperty C}
 
+/-- **A property consisting of projectives is extension closed**, as soon as it is replete and
+closed under binary biproducts: a conflation whose third term is projective splits, so its middle
+term is the biproduct of the two outer ones.
+
+Together with `TauCeti.ExactStructure.fullSubcategory` this equips the objects satisfying `P`
+with an induced exact structure — necessarily the split one, by
+`TauCeti.ExactStructure.fullSubcategory_conflation_iff_split`. -/
+theorem isExtensionClosed_of_le_isProjective [P.IsClosedUnderIsomorphisms]
+    [P.IsClosedUnderBinaryProducts] (hP : P ≤ E.isProjective) : E.IsExtensionClosed P where
+  prop_X₂ hS h₁ h₃ :=
+    P.prop_of_iso (E.splittingOfProjective hS (hP _ h₃)).isoBinaryBiproduct.symm
+      (P.prop_biprod_of_isClosedUnderBinaryProducts h₁ h₃)
+
 /-- A property containing a zero object and closed under binary products is automatically
 replete, by `CategoryTheory.ObjectProperty.isClosedUnderIsomorphisms_of_containsZero`; so the
 results below need no separate repleteness hypothesis, even though the resolution API they call
@@ -322,23 +335,10 @@ local instance [P.ContainsZero] [P.IsClosedUnderBinaryProducts] :
 
 variable [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 
-/-- **A property consisting of projectives is extension closed**, as soon as it contains a zero
-object and is closed under binary biproducts: a conflation whose third term is projective
-splits, so its middle term is the biproduct of the two outer ones.
-
-Together with `TauCeti.ExactStructure.fullSubcategory` this equips the objects satisfying `P`
-with an induced exact structure — necessarily the split one, by
-`TauCeti.ExactStructure.fullSubcategory_conflation_iff_split`. -/
-theorem isExtensionClosed_of_le_isProjective (hP : P ≤ E.isProjective) :
-    E.IsExtensionClosed P where
-  prop_X₂ hS h₁ h₃ :=
-    P.prop_of_iso (E.splittingOfProjective hS (hP _ h₃)).isoBinaryBiproduct.symm
-      (P.prop_biprod_of_isClosedUnderBinaryProducts h₁ h₃)
-
 /-- **The exact structure induced on a subcategory of projectives is the split one.** Every
 conflation between projectives splits, and a split short complex is a conflation of every exact
 structure. -/
-theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
+@[simp] theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
     (S : ShortComplex P.FullSubcategory) :
     (E.fullSubcategory P (E.isExtensionClosed_of_le_isProjective hP)).Conflation S ↔
       (ExactStructure.split P.FullSubcategory).Conflation S := by

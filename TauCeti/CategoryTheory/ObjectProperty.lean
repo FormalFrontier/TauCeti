@@ -18,7 +18,7 @@ public import Mathlib.CategoryTheory.Preadditive.AdditiveFunctor
 
 This file contains general lemmas about object properties: transporting them along an
 equivalence, comparing Mathlib's closure type classes with one another in the presence of a
-zero object and of binary biproducts, and two instances for the associated full subcategory.
+zero object and of binary biproducts, and additivity of inclusions between full subcategories.
 
 ## Main declarations
 
@@ -32,15 +32,13 @@ zero object and of binary biproducts, and two instances for the associated full 
 * `CategoryTheory.ObjectProperty.prop_biprod_of_isClosedUnderBinaryProducts`: a property closed
   under binary products holds for binary biproducts, with `X ⊞ Y` as the syntactic form of the
   conclusion.
-* `CategoryTheory.ObjectProperty.essentiallySmall_fullSubcategory` and
-  `CategoryTheory.ObjectProperty.additive_ιOfLE`: a full subcategory of an essentially small
-  category is essentially small, and the inclusion of a smaller property into a larger one is
-  additive.
+* `CategoryTheory.ObjectProperty.additive_ιOfLE`: the inclusion of a smaller property into a
+  larger one is additive.
 -/
 
 public section
 
-universe w u₁ v₁ u₂ v₂
+universe u₁ v₁ u₂ v₂
 
 namespace CategoryTheory
 
@@ -98,15 +96,6 @@ theorem prop_biprod_of_isClosedUnderBinaryProducts {C : Type u₁} [Category.{v�
     [HasZeroMorphisms C] [HasBinaryBiproducts C] (P : ObjectProperty C)
     [P.IsClosedUnderBinaryProducts] {X Y : C} (hX : P X) (hY : P Y) : P (X ⊞ Y) :=
   P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit X Y) hX hY
-
-/-- **A full subcategory of an essentially small category is essentially small.** Mathlib
-derives this from `CategoryTheory.ObjectProperty.EssentiallySmall` of the property itself, which
-here comes from the top property by
-`CategoryTheory.ObjectProperty.EssentiallySmall.of_le`. -/
-instance essentiallySmall_fullSubcategory {C : Type u₁} [Category.{v₁} C]
-    [EssentiallySmall.{w} C] (P : ObjectProperty C) : EssentiallySmall.{w} P.FullSubcategory :=
-  have : ObjectProperty.EssentiallySmall.{w} P := EssentiallySmall.of_le le_top
-  inferInstance
 
 /-- The inclusion of a smaller object property into a larger one is an additive functor: both
 categories carry the addition of the ambient one. -/

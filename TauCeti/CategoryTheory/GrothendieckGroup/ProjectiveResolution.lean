@@ -43,8 +43,8 @@ theorem** in the projective case.
 
 ## Main results
 
-* `TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory_eq`: **the Euler class
-  depends only on the resolved object**, by Schanuel's lemma.
+* `TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory_eq_eulerClassFullSubcategory`:
+  **the Euler class depends only on the resolved object**, by Schanuel's lemma.
 * `TauCeti.ExactStructure.eulerClassOf_conflation` and
   `TauCeti.ExactStructure.eulerClassOf_add_of_conflation`: the Euler class drops by one step
   along a conflation with resolving middle term, and is additive on conflations. The second is
@@ -58,8 +58,10 @@ theorem** in the projective case.
 
 ## Implementation notes
 
-Every statement here carries `P ≤ E.isProjective` as an explicit hypothesis and none of them is
-asserted for a general resolving subcategory. The resolution theorem is true in that generality —
+The well-definedness, conflation-additivity, and resolution-theorem results here carry
+`P ≤ E.isProjective` as an explicit hypothesis; the underlying Euler-class definitions and formal
+computation lemmas need only extension closure. None of the substantive results is asserted for a
+general resolving subcategory. The resolution theorem is true in that generality —
 for a replete, additive, extension-closed `P` closed under kernels of deflations between its own
 objects — but its proof replaces Schanuel's lemma and the horseshoe by Weibel's common-refinement
 argument, and is not carried out here. The projective case is the one that Layer 4's Cartan
@@ -97,6 +99,11 @@ universe w v u
 variable {C : Type u} [Category.{v} C] [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
   [EssentiallySmall.{w} C] {E : ExactStructure C} {P : ObjectProperty C}
 
+/-- Mathlib's smallness instance for a full subcategory consumes smallness of its object
+property. -/
+local instance : ObjectProperty.EssentiallySmall.{w} P :=
+  ObjectProperty.EssentiallySmall.of_le le_top
+
 namespace ExactK0
 
 section
@@ -117,7 +124,7 @@ This is not an instance of `TauCeti.ExactK0.of_biprod`: the biproduct of `⟨X, 
 `⟨Y, hY⟩` in the subcategory is merely *isomorphic* to `⟨X ⊞ Y, hXY⟩`, and it is the latter that
 the recursion of `TauCeti.ExactStructure.FiniteResolution.biprod` produces. The split biproduct
 short complex on `⟨X ⊞ Y, hXY⟩` itself is a conflation, which gives the relation directly. -/
-theorem of_biprod_fullSubcategory {X Y : C} (hX : P X) (hY : P Y) (hXY : P (X ⊞ Y)) :
+@[simp] theorem of_biprod_fullSubcategory {X Y : C} (hX : P X) (hY : P Y) (hXY : P (X ⊞ Y)) :
     (of ⟨X ⊞ Y, hXY⟩ : ExactK0 (E.fullSubcategory P hP)) = of ⟨X, hX⟩ + of ⟨Y, hY⟩ := by
   have hzero : (ObjectProperty.homMk (biprod.inl : X ⟶ X ⊞ Y) :
         (⟨X, hX⟩ : P.FullSubcategory) ⟶ ⟨X ⊞ Y, hXY⟩) ≫
@@ -151,7 +158,7 @@ variable (hP : E.IsExtensionClosed P)
 
 namespace FiniteResolution
 
-/-- **The Euler class of a finite `P`-resolution in the `K₀` of the resolving subcategory**: the
+/-- **The Euler class of a finite `P`-resolution in the `K₀` of the full subcategory on `P`**: the
 alternating sum `[Q₀] - [Q₁] + ⋯ + (-1)ⁿ [Kₙ]` of the classes of its resolving terms and its last
 syzygy, all of which satisfy `P`, formed in the exact `K₀` of the exact structure induced on the
 full subcategory on `P`.
@@ -159,8 +166,8 @@ full subcategory on `P`.
 Unlike `TauCeti.ExactStructure.FiniteResolution.eulerClass`, which lives in the `K₀` of the
 ambient category and telescopes to `[X]`, this class carries genuine information: nothing in the
 subcategory relates it to `X`. That it depends only on `X` is
-`TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory_eq`, and needs `P` to consist
-of projectives. -/
+`TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory_eq_eulerClassFullSubcategory`,
+and needs `P` to consist of projectives. -/
 noncomputable def eulerClassFullSubcategory :
     ∀ {X : C}, E.FiniteResolution P X → ExactK0 (E.fullSubcategory P hP)
   | _, .base hX => ExactK0.of ⟨_, hX⟩
@@ -241,9 +248,9 @@ noncomputable def eulerClassFullSubcategory :
 section Projective
 
 /-- The inductive core of
-`TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory_eq`, on the sum of the two
-lengths. Schanuel's lemma compares the two first steps, and the induction hypothesis then
-compares the two remaining chains, each enlarged by the other's resolving term. -/
+`TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory_eq_eulerClassFullSubcategory`,
+on the sum of the two lengths. Schanuel's lemma compares the two first steps, and the induction
+hypothesis then compares the two remaining chains, each enlarged by the other's resolving term. -/
 private theorem eulerClassFullSubcategory_eq_aux (hproj : P ≤ E.isProjective) (n : ℕ) :
     ∀ {X : C} (r s : E.FiniteResolution P X), r.length + s.length ≤ n →
       r.eulerClassFullSubcategory hP = s.eulerClassFullSubcategory hP := by
@@ -299,7 +306,7 @@ private theorem eulerClassFullSubcategory_eq_aux (hproj : P ≤ E.isProjective) 
                 sub_eq_sub_iff_add_eq_add]
               exact (add_comm _ _).trans (hcmp.symm.trans (add_comm _ _))
 
-/-- **The Euler class in the `K₀` of the resolving subcategory depends only on the resolved
+/-- **The Euler class in the `K₀` of the full subcategory on `P` depends only on the resolved
 object.** Any two finite `P`-resolutions of the same object have the same alternating class in
 `ExactK0 (E.fullSubcategory P hP)`, as soon as every object satisfying `P` is `E`-projective.
 
@@ -307,7 +314,8 @@ The proof is an induction on the sum of the two lengths whose only geometric inp
 lemma `TauCeti.ExactStructure.nonempty_iso_biprod_of_projective`: it turns the two first steps
 `K ↪ Q ↠ X` and `K' ↪ Q' ↠ X` into an isomorphism `K ⊞ Q' ≅ K' ⊞ Q`, and the two remaining
 chains, each enlarged by the other's resolving term, resolve the two sides. -/
-theorem eulerClassFullSubcategory_eq (hproj : P ≤ E.isProjective) {X : C}
+theorem eulerClassFullSubcategory_eq_eulerClassFullSubcategory
+    (hproj : P ≤ E.isProjective) {X : C}
     (r s : E.FiniteResolution P X) :
     r.eulerClassFullSubcategory hP = s.eulerClassFullSubcategory hP :=
   eulerClassFullSubcategory_eq_aux hP hproj _ r s le_rfl
@@ -333,11 +341,11 @@ include hproj in
 theorem eulerClassOf_eq {X : C} (hX : E.admitsFiniteResolution P X)
     (r : E.FiniteResolution P X) :
     E.eulerClassOf hP hX = r.eulerClassFullSubcategory hP :=
-  FiniteResolution.eulerClassFullSubcategory_eq hP hproj _ r
+  FiniteResolution.eulerClassFullSubcategory_eq_eulerClassFullSubcategory hP hproj _ r
 
 include hproj in
 /-- On an object satisfying `P` the Euler class is the class of that object. -/
-theorem eulerClassOf_of_prop {X : C} (hX : P X) :
+@[simp] theorem eulerClassOf_of_prop {X : C} (hX : P X) :
     E.eulerClassOf hP (E.le_admitsFiniteResolution P X hX) =
       ExactK0.of (⟨X, hX⟩ : P.FullSubcategory) := by
   rw [E.eulerClassOf_eq hP hproj _ (.base hX),
@@ -441,7 +449,7 @@ section ResolutionTheorem
 variable (hproj : P ≤ E.isProjective)
 
 omit [EssentiallySmall.{w} C] in
-/-- **The inclusion of the resolving subcategory into the objects of finite `P`-dimension is
+/-- **The inclusion of the full subcategory on `P` into the objects of finite `P`-dimension is
 conflation-exact.** Both induced structures detect their conflations in the ambient category. -/
 theorem isConflationExact_ιOfLE :
     (E.fullSubcategory P hP).IsConflationExact
@@ -490,7 +498,7 @@ theorem map_eulerClassFullSubcategory {X : C} (r : E.FiniteResolution P X) :
       abel
 
 /-- The Euler class of the objects of finite `P`-dimension, as a conflation-additive invariant
-with values in the exact `K₀` of the resolving subcategory. -/
+with values in the exact `K₀` of the full subcategory on `P`. -/
 noncomputable def eulerInvariant :
     ExactK0.AdditiveInvariant
       (E.fullSubcategory (E.admitsFiniteResolution P)
