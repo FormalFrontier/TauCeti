@@ -181,9 +181,8 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ι → Ω �
         rw [TauCeti.MeasureTheory.map_bind hK measurable_snd]
         simp
 
-/-- **Coordinatewise a.e. measurability from conditional i.i.d.-ness.**  The joint disintegration
-identity forces it, through the mixed i.i.d.-ness it implies; no separate hypothesis is needed
-alongside a `ConditionallyIIDWith` witness. -/
+/-- A conditionally i.i.d. family with a named directing measure has a.e.-measurable coordinates,
+so no separate coordinate measurability hypothesis is needed. -/
 theorem ConditionallyIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) (i : ι) :
     AEMeasurable (X i) μ :=
