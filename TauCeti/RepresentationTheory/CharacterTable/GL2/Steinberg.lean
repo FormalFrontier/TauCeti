@@ -8,15 +8,17 @@ module
 public import Mathlib.Data.Complex.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Bruhat
 public import TauCeti.RepresentationTheory.Augmentation
+public import TauCeti.RepresentationTheory.CharacterTable.GL2.PrincipalSeries
 public import TauCeti.RepresentationTheory.FDRep
+public import TauCeti.RepresentationTheory.Induction.Character
 public import TauCeti.RepresentationTheory.Induction.DoubleCosetPairing
 
 /-!
 # The Steinberg representation of `GL₂(𝔽_q)`
 
 The Borel subgroup `B` of `GL₂(𝔽_q)` has index `q + 1`, and `GL₂` permutes the cosets `GL₂ ⧸ B`
-— the points of the projective line. The resulting permutation representation `ℂ[GL₂ ⧸ B]` is the
-principal series `Ind_B^{GL₂}(1 ⊗ 1)` of
+— the points of the projective line. The resulting permutation representation `ℂ[GL₂ ⧸ B]` has the
+same character as the principal series `Ind_B^{GL₂}(1 ⊗ 1)` of
 `TauCeti/RepresentationTheory/CharacterTable/GL2/PrincipalSeries.lean` at the boundary value
 `α = β = 1`, where it is reducible: it contains the line spanned by the sum of the cosets, on
 which `GL₂` acts trivially. The complement of that line is the **Steinberg representation**
@@ -42,7 +44,10 @@ rather than several: its character has norm `1` for the character pairing of
 * `TauCeti.character_GL2Steinberg`: its character at `g` is the number of cosets of `B` fixed by
   `g`, less one.
 * `TauCeti.character_ofMulAction_quotient_gl2Borel`: the character of `ℂ[GL₂ ⧸ B]` is `1` plus the
-  Steinberg character, so the boundary principal series has the trivial representation and
+  Steinberg character.
+* `TauCeti.character_GL2PrincipalSeries_one_one`: the boundary principal series
+  `TauCeti.GL2PrincipalSeries F 1 1` has the character of `ℂ[GL₂ ⧸ B]`, whence
+  `TauCeti.character_GL2PrincipalSeries_one_one_eq_one_add`: it has the trivial representation and
   Steinberg as its two constituents.
 * `TauCeti.characterPairing_GL2Steinberg_self`: the Steinberg character has norm `1`, computed
   from the two double cosets of the Bruhat decomposition.
@@ -64,9 +69,14 @@ averages over a `Fintype` of the group, and a `Fintype (GL (Fin 2) F)` instance 
 equality on the matrix entries.
 
 The irreducibility of the Steinberg representation is *not* proved here. Norm `1` is the
-character-theoretic content of it, but concluding `CategoryTheory.Simple` from it needs the
-converse of `TauCeti.ClassFunction.characterPairing_ofFDRep_self` — that a genuine character of
-norm `1` is irreducible — which the repository does not yet have.
+character-theoretic content of it, and Mathlib's `FDRep.simple_iff_char_is_norm_one` is the
+converse of `TauCeti.ClassFunction.characterPairing_ofFDRep_self` that would turn it into
+`CategoryTheory.Simple`. That lemma is however stated for a coefficient field and a group *in the
+same universe*, so applying it to `FDRep ℂ (GL (Fin 2) F)` would pin `F : Type`, giving up the
+universe polymorphism that `TauCeti.GL2Steinberg` and `TauCeti.GL2PrincipalSeries` both keep; it
+also needs `IsAlgClosed ℂ`, hence the fundamental theorem of algebra, which nothing else in this
+layer imports. Simplicity of the Steinberg constituent is not a roadmap build target either — the
+roadmap names `simple_GL2PrincipalSeries_iff`, not a Steinberg counterpart — so it is left out.
 
 ## References
 
@@ -138,14 +148,32 @@ theorem character_GL2Steinberg (g : GL (Fin 2) F) :
 /-! ### The splitting of the boundary principal series -/
 
 /-- **The permutation representation on the projective line splits off the trivial one.** Its
-character is `1` plus the Steinberg character, the `1` being the invariant line: the boundary
-principal series `Ind_B^{GL₂}(1 ⊗ 1)` has the trivial representation and Steinberg as its two
-constituents. -/
+character is `1` plus the Steinberg character, the `1` being the invariant line. -/
 theorem character_ofMulAction_quotient_gl2Borel (g : GL (Fin 2) F) :
     (Representation.ofMulAction ℂ (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F)).character g
       = 1 + (GL2Steinberg F).character g := by
   rw [character_GL2Steinberg, char_ofMulAction]
   ring
+
+/-- **The boundary principal series is the permutation representation on the projective line.**
+At `α = β = 1` the character of `Ind_B^{GL₂}(1 ⊗ 1)` is the character of `ℂ[GL₂ ⧸ B]`, because
+inducing the trivial character of `B` is inducing the trivial representation. -/
+theorem character_GL2PrincipalSeries_one_one (g : GL (Fin 2) F) :
+    (GL2PrincipalSeries F 1 1).character g
+      = (Representation.ofMulAction ℂ (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F)).character g := by
+  have hchar : (GL2BorelRep F 1 1).character
+      = (FDRep.of (Representation.trivial ℂ (GL2Borel F) ℂ)).character := by
+    funext b
+    rw [character_GL2BorelRep, FDRep.character, FDRep.of_ρ']
+    simp
+  rw [GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character, hchar,
+    indClassFun_ofFDRep_character, character_indFDRep_of, char_ind_trivial, char_ofMulAction]
+
+/-- **The boundary principal series has the trivial representation and Steinberg as its two
+constituents.** Its character is `1` plus the Steinberg character. -/
+theorem character_GL2PrincipalSeries_one_one_eq_one_add (g : GL (Fin 2) F) :
+    (GL2PrincipalSeries F 1 1).character g = 1 + (GL2Steinberg F).character g := by
+  rw [character_GL2PrincipalSeries_one_one, character_ofMulAction_quotient_gl2Borel]
 
 /-! ### The norm of the Steinberg character -/
 
@@ -155,7 +183,7 @@ variable [DecidableEq F]
 
 /-- A pretransitive action on a nonempty type has one orbit. This is Mathlib's
 `MulAction.pretransitive_iff_unique_quotient_of_nonempty` in counting form, named because the
-pairing computation below uses it three times, at three different actions. -/
+pairing computation below uses it twice, at two different actions. -/
 private theorem card_orbitQuotient_eq_one (G α : Type*) [Group G] [MulAction G α] [Nonempty α]
     [IsPretransitive G α] : Nat.card (orbitRel.Quotient G α) = 1 :=
   let _ := ((MulAction.pretransitive_iff_unique_quotient_of_nonempty G α).mp ‹_›).some
@@ -168,23 +196,16 @@ private theorem isPretransitive_prod_left (G α β : Type*) [Group G] [MulAction
     obtain ⟨g, hg⟩ := MulAction.exists_smul_eq G p.1 q.1
     exact ⟨g, Prod.ext hg (Subsingleton.elim _ _)⟩⟩
 
-/-- The mirror of `isPretransitive_prod_left`, with the one-point factor first. -/
-private theorem isPretransitive_prod_right (G α β : Type*) [Group G] [MulAction G α]
-    [MulAction G β] [Subsingleton α] [IsPretransitive G β] : IsPretransitive G (α × β) :=
-  ⟨fun p q => by
-    obtain ⟨g, hg⟩ := MulAction.exists_smul_eq G p.2 q.2
-    exact ⟨g, Prod.ext (Subsingleton.elim _ _) hg⟩⟩
-
-/-- **The Steinberg character has norm `1`.** Writing it as the permutation character of the
-projective line less the trivial character, the pairing expands into four Burnside orbit counts:
-the permutation character pairs with itself to the number `2` of double cosets `B \ GL₂ / B`, the
-Bruhat decomposition, and the three remaining terms are `1` each because `GL₂` is transitive on
-the projective line.  So `⟨χ_St, χ_St⟩ = 2 - 1 - 1 + 1 = 1`.
-
-This is the character-theoretic form of the irreducibility of the Steinberg representation; see the
-implementation notes for what turning it into `CategoryTheory.Simple` would still need. -/
+/-- **The Steinberg character has norm `1`.** This is the character-theoretic form of the
+irreducibility of the Steinberg representation; see the implementation notes for what turning it
+into `CategoryTheory.Simple` would still need. -/
 theorem characterPairing_GL2Steinberg_self :
     characterPairing (ofFDRep (GL2Steinberg F)) (ofFDRep (GL2Steinberg F)) = 1 := by
+  -- Writing the Steinberg character as the permutation character of the projective line less the
+  -- trivial character, the pairing expands into four Burnside orbit counts: the permutation
+  -- character pairs with itself to the number `2` of double cosets `B \ GL₂ / B`, the Bruhat
+  -- decomposition, and the three remaining terms are `1` each because `GL₂` is transitive on the
+  -- projective line.  So `⟨χ_St, χ_St⟩ = 2 - 1 - 1 + 1 = 1`.
   have hG : IsUnit (Nat.card (GL (Fin 2) F) : ℂ) :=
     isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
   set perm := Representation.ofMulAction ℂ (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F) with hperm
@@ -207,11 +228,8 @@ theorem characterPairing_GL2Steinberg_self :
     rw [hperm, hpt, characterPairing_ofMulAction_eq_card_orbits ℂ _ _ hG,
       card_orbitQuotient_eq_one]
     norm_num
-  have hqp : characterPairing (ofCharacter pt) (ofCharacter perm) = 1 := by
-    have := isPretransitive_prod_right (GL (Fin 2) F) PUnit.{u + 1} (GL (Fin 2) F ⧸ GL2Borel F)
-    rw [hperm, hpt, characterPairing_ofMulAction_eq_card_orbits ℂ _ _ hG,
-      card_orbitQuotient_eq_one]
-    norm_num
+  have hqp : characterPairing (ofCharacter pt) (ofCharacter perm) = 1 :=
+    (characterPairing_symm _ _).trans hpq
   have hqq : characterPairing (ofCharacter pt) (ofCharacter pt) = 1 := by
     have := isPretransitive_prod_left (GL (Fin 2) F) PUnit.{u + 1} PUnit.{u + 1}
     rw [hpt, characterPairing_ofMulAction_eq_card_orbits ℂ _ _ hG, card_orbitQuotient_eq_one]

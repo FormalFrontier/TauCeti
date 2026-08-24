@@ -358,7 +358,8 @@ so this statement is not in simp-normal form. -/
 theorem character_invariantLine [Nonempty X] (g : G) :
     (invariantLine k G X).toRepresentation.character g = 1 := by
   rw [toRepresentation_invariantLine, Representation.character]
-  have hone : (Representation.trivial k G (invariantLine k G X).toSubmodule) g = 1 := rfl
+  have hone : (Representation.trivial k G (invariantLine k G X).toSubmodule) g = 1 :=
+    LinearMap.ext fun w => by rw [Representation.trivial_apply, Module.End.one_apply]
   rw [hone, LinearMap.trace_one, finrank_invariantLine]
   norm_num
 
@@ -368,11 +369,6 @@ The subtracted `1` is the trivial quotient `k[X] / ker(augmentation) ≃ k`, so 
 in `k` is needed: the identity holds in every characteristic, including the one dividing `|X|`,
 where the invariant line is *not* a complement.
 
-The proof takes the rank-one projection `σ : v ↦ (augmentation v) • single x₀ 1` onto a line
-transverse to the augmentation subrepresentation.  The augmentation is invariant, so `ρ g - σ`
-lands in the augmentation subrepresentation, where it restricts to the action of `g`; its trace is
-therefore the character on the left, and it is `trace (ρ g) - trace σ` with `trace σ = 1`.
-
 For a permutation representation the subtracted `1` is the trivial constituent: the character of
 `k[X]` counts fixed points, so the character here is the number of fixed points less one. -/
 @[simp]
@@ -380,6 +376,10 @@ theorem character_augmentationSubrepresentation [Finite X] [Nonempty X] (g : G) 
     (augmentationSubrepresentation k G X).toRepresentation.character g
       = (Representation.ofMulAction k G X).character g - 1 := by
   classical
+  -- Take the rank-one map `σ : v ↦ (augmentation v) • single x₀ 1`, a projection onto a line
+  -- transverse to the augmentation subrepresentation.  The augmentation is invariant, so `ρ g - σ`
+  -- lands in the augmentation subrepresentation, where it restricts to the action of `g`; its
+  -- trace is therefore the character on the left, and it is `trace (ρ g) - trace σ`.
   have hfin : Module.Finite k (MonoidAlgebra k X) :=
     Module.Finite.of_basis (MonoidAlgebra.basis X k)
   set e₀ : MonoidAlgebra k X := MonoidAlgebra.single (Classical.arbitrary X) 1 with he₀
@@ -389,36 +389,24 @@ theorem character_augmentationSubrepresentation [Finite X] [Nonempty X] (g : G) 
     intro v; rw [hσ]; simp
   have he₀_sum : (MonoidAlgebra.basis X k).sumCoords e₀ = 1 := by
     rw [he₀]; simp
-  have he₀_ne : e₀ ≠ 0 := by
-    intro h
-    rw [h, map_zero] at he₀_sum
-    exact one_ne_zero he₀_sum.symm
-  -- `σ` is a projection onto a line, so its trace is `1`
-  have hproj : LinearMap.IsProj (Submodule.span k {e₀}) σ :=
-    { map_mem := fun v => by
-        rw [hσ_apply]
-        exact Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self _)
-      map_id := fun v hv => by
-        obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.mp hv
-        rw [hσ_apply, map_smul, he₀_sum, smul_eq_mul, mul_one] }
   have htraceσ : LinearMap.trace k _ σ = 1 := by
-    rw [hproj.trace, finrank_span_singleton he₀_ne, Nat.cast_one]
+    rw [hσ, LinearMap.trace_smulRight, he₀_sum]
+  -- `σ` leaves the augmentation unchanged, because it rescales the augmentation-`1` vector `e₀`
+  have hσ_sum : ∀ v, (MonoidAlgebra.basis X k).sumCoords (σ v)
+      = (MonoidAlgebra.basis X k).sumCoords v := by
+    intro v
+    rw [hσ_apply, map_smul, he₀_sum, smul_eq_mul, mul_one]
   -- `ρ g - σ` lands in the augmentation subrepresentation, and restricts there to `ρ g`
   have hmem : ∀ v, (Representation.ofMulAction k G X g - σ) v ∈
-      (augmentationSubrepresentation k G X).toSubmodule := by
-    intro v
-    rw [toSubmodule_augmentationSubrepresentation, LinearMap.mem_ker, LinearMap.sub_apply,
-      map_sub, hσ_apply, map_smul, he₀_sum, smul_eq_mul, mul_one, sumCoords_basis_ofMulAction,
-      sub_self]
+      (augmentationSubrepresentation k G X).toSubmodule := fun v => by
+    simp only [toSubmodule_augmentationSubrepresentation, LinearMap.mem_ker, LinearMap.sub_apply,
+      map_sub, hσ_sum, sumCoords_basis_ofMulAction, sub_self]
   have hrestrict : (Representation.ofMulAction k G X g - σ).restrict (fun v _ => hmem v)
       = (augmentationSubrepresentation k G X).toRepresentation g := by
     refine LinearMap.ext fun v => Subtype.ext ?_
-    have hv : (MonoidAlgebra.basis X k).sumCoords (v : MonoidAlgebra k X) = 0 :=
-      mem_augmentationSubrepresentation_iff.mp v.2
-    -- Both sides are restrictions of a map on `k[X]`, so `Subrepresentation.toRepresentation_apply`
-    -- and `LinearMap.coe_restrict_apply` take the goal down to `k[X]`, where `σ` kills `v`.
-    rw [Subrepresentation.toRepresentation_apply, LinearMap.coe_restrict_apply,
-      LinearMap.coe_restrict_apply, LinearMap.sub_apply, hσ_apply, hv, zero_smul, sub_zero]
+    have hv : σ (v : MonoidAlgebra k X) = 0 := by
+      rw [hσ_apply, mem_augmentationSubrepresentation_iff.mp v.2, zero_smul]
+    simp [Subrepresentation.toRepresentation_apply, hv]
   have key : LinearMap.trace k _ ((Representation.ofMulAction k G X g - σ).restrict
       (fun v _ => hmem v))
       = LinearMap.trace k _ (Representation.ofMulAction k G X g - σ) :=
