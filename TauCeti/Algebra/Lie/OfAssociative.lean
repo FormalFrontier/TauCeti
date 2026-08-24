@@ -36,8 +36,8 @@ instance: a consumer installs the associated `LieRingModule` where it wants it, 
 ## Main results
 
 * `LieHom.leftRegularRep_apply`: it acts by left multiplication.
-* `LieHom.leftRegularRep_injective_iff`: it is faithful exactly when `q` is injective, which is
-  read off its value at `1`.
+* `LieHom.leftRegularRep_injective_iff`: it is faithful exactly when `q` is injective, because
+  left multiplication determines the multiplier.
 * `LieHom.leftRegularRep_comp_mulRight`: right multiplications are intertwiners of the
   left-regular representation; this is the commutant that makes the isotypy arguments run.
 * `LieHom.leftRegularRep_mem_of_mem`: every left ideal of `A` is invariant.
@@ -72,7 +72,7 @@ def leftRegularRep (q : L →ₗ⁅R⁆ A) : L →ₗ⁅R⁆ Module.End R A :=
   ((Algebra.lmul R A : A →ₐ[R] Module.End R A) : A →ₗ⁅R⁆ Module.End R A).comp q
 
 /-- **The action formula.** `x` acts on `a` by left multiplication by `q x`. -/
-@[simp]
+@[simp, grind =]
 theorem leftRegularRep_apply (q : L →ₗ⁅R⁆ A) (x : L) (a : A) :
     leftRegularRep q x a = q x * a :=
   (rfl)
@@ -83,19 +83,12 @@ theorem leftRegularRep_eq_mulLeft (q : L →ₗ⁅R⁆ A) (x : L) :
     leftRegularRep q x = LinearMap.mulLeft R (q x) :=
   (rfl)
 
-/-- The left-regular action recovers `q` at `1 : A`. Not a `simp` lemma: `simp` already reduces
-the left-hand side through `LieHom.leftRegularRep_apply` and `mul_one`. -/
-theorem leftRegularRep_one (q : L →ₗ⁅R⁆ A) (x : L) : leftRegularRep q x 1 = q x := by
-  rw [leftRegularRep_apply, mul_one]
-
-/-- **The left-regular representation is faithful exactly when `q` is injective.** Its value at
-`1 : A` recovers `q`, so no information is lost in passing to left multiplications. -/
+/-- **The left-regular representation is faithful exactly when `q` is injective.** It is the
+composite of `q` with `Algebra.lmul`, and left multiplication determines the multiplier
+(`Algebra.lmul_injective`), so no information is lost in passing to left multiplications. -/
 theorem leftRegularRep_injective_iff (q : L →ₗ⁅R⁆ A) :
-    Function.Injective (leftRegularRep q) ↔ Function.Injective q := by
-  refine ⟨fun h x y hxy ↦ h ?_, fun h x y hxy ↦ h ?_⟩
-  · ext a
-    rw [leftRegularRep_apply, leftRegularRep_apply, hxy]
-  · simpa only [leftRegularRep_one] using congrArg (fun f : Module.End R A ↦ f 1) hxy
+    Function.Injective (leftRegularRep q) ↔ Function.Injective q :=
+  Algebra.lmul_injective.of_comp_iff q
 
 /-- **Right multiplication intertwines the left-regular representation with itself.** This is
 associativity of `A`, read as the statement that the right multiplications lie in the commutant of

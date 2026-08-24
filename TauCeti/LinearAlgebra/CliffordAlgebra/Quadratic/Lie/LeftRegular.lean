@@ -93,20 +93,16 @@ variable {K L}
 
 /-- **The defining equation of Kostant's module**: `L` acts by left multiplication by the adjoint
 quadratic lift. -/
-@[simp]
+@[simp, grind =]
 theorem kostant_lie_def (x : L) (c : CliffordAlgebra (killingQuadraticForm K L)) :
     ⁅x, c⁆ = adjointCliffordHom K L x * c :=
   LieHom.leftRegularRep_apply _ x c
 
-/-- Acting on `1` recovers the adjoint quadratic lift. Not a `simp` lemma: `simp` already reduces
-the left-hand side through `CliffordAlgebra.kostant_lie_def` and `mul_one`. -/
-theorem kostant_lie_one (x : L) :
-    ⁅x, (1 : CliffordAlgebra (killingQuadraticForm K L))⁆ = adjointCliffordHom K L x := by
-  rw [kostant_lie_def, mul_one]
-
 /-- **The action on a Clifford generator.** The adjoint action of `L` on itself is visible in
 Kostant's module, but only up to a right-multiplication term: left multiplication is not the
-derivation action. -/
+derivation action. Not a `simp` lemma: `CliffordAlgebra.kostant_lie_def` already rewrites its
+left-hand side, so `simp` would never see this one in simp-normal form. -/
+@[grind =]
 theorem kostant_lie_ι (x y : L) :
     ⁅x, ι (killingQuadraticForm K L) y⁆ =
       ι (killingQuadraticForm K L) ⁅x, y⁆ +
@@ -120,9 +116,7 @@ precise sense in which the left-regular module and the exterior extension of the
 representation are different modules on the same carrier. -/
 theorem kostant_lie_sub_mul (x : L) (c : CliffordAlgebra (killingQuadraticForm K L)) :
     ⁅x, c⁆ - c * adjointCliffordHom K L x = ⁅adjointCliffordHom K L x, c⁆ := by
-  have h := congrArg (fun f : Module.End K (CliffordAlgebra (killingQuadraticForm K L)) ↦ f c)
-    (LieHom.ad_apply_eq_leftRegularRep_sub_mulRight (adjointCliffordHom K L) x)
-  simpa using h.symm
+  rw [kostant_lie_def, LieRing.of_associative_ring_bracket]
 
 /-- **Right multiplication is an endomorphism of Kostant's module.** Associativity of the Clifford
 algebra says that left and right multiplications commute, so every right multiplication lies in
@@ -135,14 +129,15 @@ noncomputable def kostantRightMul (d : CliffordAlgebra (killingQuadraticForm K L
     (congrArg (fun f : Module.End K (CliffordAlgebra (killingQuadraticForm K L)) ↦ f c)
       (LieHom.leftRegularRep_comp_mulRight (adjointCliffordHom K L) x d)).symm
 
-@[simp]
+@[simp, grind =]
 theorem kostantRightMul_apply (d c : CliffordAlgebra (killingQuadraticForm K L)) :
     kostantRightMul d c = c * d :=
   (rfl)
 
 /-- **A left ideal of the Clifford algebra is a Lie submodule of Kostant's module.** The action is
-by left multiplication, which a left ideal absorbs; this is the correspondence that turns minimal
-left ideals into simple submodules. -/
+by left multiplication, which a left ideal absorbs, so every left ideal is an invariant subspace;
+what such a submodule decomposes into is the business of the later Kostant theorems, not of this
+construction. -/
 noncomputable def kostantLieSubmoduleOfLeftIdeal
     (I : Submodule (CliffordAlgebra (killingQuadraticForm K L))
       (CliffordAlgebra (killingQuadraticForm K L))) :
@@ -150,7 +145,7 @@ noncomputable def kostantLieSubmoduleOfLeftIdeal
   __ := I.restrictScalars K
   lie_mem {x _} h := LieHom.leftRegularRep_mem_of_mem (adjointCliffordHom K L) I x h
 
-@[simp]
+@[simp, grind =]
 theorem mem_kostantLieSubmoduleOfLeftIdeal
     {I : Submodule (CliffordAlgebra (killingQuadraticForm K L))
       (CliffordAlgebra (killingQuadraticForm K L))}
