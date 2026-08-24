@@ -54,7 +54,9 @@ elementary matrices against the diagonal torus.
 ## Main results
 
 * `TauCeti.commute_transvectionUnit`: transvections at index pairs that do not chain commute.
-* `TauCeti.commutatorElement_transvectionUnit`: the commutator of two chaining transvections.
+* `TauCeti.commutatorElement_transvectionUnit` and
+  `TauCeti.commutatorElement_transvectionUnit_reverse`: the commutators of two chaining
+  transvections in either orientation.
 * `TauCeti.det_transvectionUnit` and `TauCeti.transvectionUnit_injective`: a transvection has
   determinant `1`, and distinct parameters give distinct transvections.
 * `TauCeti.diagGL_mul_transvectionUnit_mul_inv`: conjugation by an invertible diagonal matrix.
@@ -209,6 +211,19 @@ theorem commutatorElement_transvectionUnit (hij : i ≠ j) (hjl : j ≠ l) (hil 
   simp only [transvectionUnit, ← map_commutatorElement]
   exact congrArg SpecialLinearGroup.toGL
     (Matrix.SpecialLinearGroup.commutatorElement_transvection hij hjl hil c d)
+
+/-- The reverse-orientation form of the type-`A` Chevalley commutator relation:
+`[xᵢⱼ(c), xₖᵢ(d)] = xₖⱼ(-(dc))`. -/
+theorem commutatorElement_transvectionUnit_reverse
+    (hij : i ≠ j) (hki : k ≠ i) (hkj : k ≠ j) (c d : A) :
+    ⁅transvectionUnit hij c, transvectionUnit hki d⁆ = transvectionUnit hkj (-(d * c)) := by
+  calc
+    ⁅transvectionUnit hij c, transvectionUnit hki d⁆ =
+        ⁅transvectionUnit hki d, transvectionUnit hij c⁆⁻¹ :=
+      (commutatorElement_inv _ _).symm
+    _ = (transvectionUnit hkj (d * c))⁻¹ := by
+      rw [commutatorElement_transvectionUnit hki hij hkj]
+    _ = transvectionUnit hkj (-(d * c)) := transvectionUnit_inv hkj (d * c)
 
 end Unit
 

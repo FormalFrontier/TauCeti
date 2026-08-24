@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Basic
 
 /-!
 # Chevalley commutator relations in the symplectic group
@@ -77,16 +77,9 @@ theorem commutatorElement_differenceShortRootUnit_positiveLongRootTransvectionUn
   have hBC :
       ⁅transvectionUnit hJ'I' (-a), transvectionUnit hJJ' b⁆ =
         transvectionUnit hJI' (a * b) := by
-    calc
-      ⁅transvectionUnit hJ'I' (-a), transvectionUnit hJJ' b⁆ =
-          ⁅transvectionUnit hJJ' b, transvectionUnit hJ'I' (-a)⁆⁻¹ :=
-        (commutatorElement_inv _ _).symm
-      _ = (transvectionUnit hJI' (b * -a))⁻¹ := by
-        rw [commutatorElement_transvectionUnit hJJ' hJ'I' hJI']
-      _ = transvectionUnit hJI' (a * b) := by
-        rw [transvectionUnit_inv]
-        congr 1
-        ring
+    rw [commutatorElement_transvectionUnit_reverse hJ'I' hJJ' hJI']
+    congr 1
+    ring
   have hAC :
       ⁅transvectionUnit hIJ a, transvectionUnit hJJ' b⁆ =
         transvectionUnit hIJ' (a * b) :=
@@ -143,16 +136,9 @@ theorem commutatorElement_differenceShortRootUnit_positiveSumShortRootUnit
   have hBD :
       ⁅transvectionUnit hJ'I' (-a), transvectionUnit hIJ' b⁆ =
         transvectionUnit hII' (a * b) := by
-    calc
-      ⁅transvectionUnit hJ'I' (-a), transvectionUnit hIJ' b⁆ =
-          ⁅transvectionUnit hIJ' b, transvectionUnit hJ'I' (-a)⁆⁻¹ :=
-        (commutatorElement_inv _ _).symm
-      _ = (transvectionUnit hII' (b * -a))⁻¹ := by
-        rw [commutatorElement_transvectionUnit hIJ' hJ'I' hII']
-      _ = transvectionUnit hII' (a * b) := by
-        rw [transvectionUnit_inv]
-        congr 1
-        ring
+    rw [commutatorElement_transvectionUnit_reverse hJ'I' hIJ' hII']
+    congr 1
+    ring
   have hAE :
       ⁅transvectionUnit hIJ a, transvectionUnit hJI' b⁆ =
         transvectionUnit hII' (a * b) :=
