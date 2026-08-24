@@ -131,13 +131,8 @@ theorem map_component_deconcatenation (n : {n : ℕ // 0 < n}) (hn : 2 ≤ n.1) 
         deconcatenation R M =
       TensorPower.splitAt R M n.1 1 (by omega) ∘ₗ component R M n := by
   refine linearMap_ext R M fun m x ↦ ?_
-  induction x using PiTensorProduct.induction_on with
-  | smul_tprod r y =>
-      simp only [LinearMap.comp_apply, map_smul]
-      exact congrArg (r • ·) (map_component_deconcatenation_tprod R M n m hn y)
-  | add a b ha hb =>
-      simp only [LinearMap.comp_apply, map_add] at ha hb ⊢
-      rw [ha, hb]
+  simp only [LinearMap.comp_apply]
+  exact map_component_deconcatenation_tprod R M n m hn x
 
 /-- A reduced tensor word is determined by its deconcatenation together with its letter: the
 components of length at least two are read off from the cut after the first letter, and the

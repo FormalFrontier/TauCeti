@@ -95,12 +95,6 @@ theorem component_of_of_ne {m n : {n : ℕ // 0 < n}} (h : m ≠ n) (x : TensorP
     component R M n (of R M m x) = 0 := by
   simp [component, of, DirectSum.component.of, h]
 
-/-- Two linear maps out of reduced tensor words are equal if they agree on every homogeneous
-tensor word. -/
-theorem linearMap_ext {N : Type*} [AddCommMonoid N] [Module R N]
-    {f g : ReducedTensorWords R M →ₗ[R] N}
-    (h : ∀ n x, f (of R M n x) = g (of R M n x)) : f = g :=
-  DirectSum.linearMap_ext R fun n ↦ LinearMap.ext fun x ↦ h n x
 
 /-- Deconcatenation on words of one fixed length, summed over all nontrivial cuts. -/
 noncomputable def deconcatenationComponent (n : {n : ℕ // 0 < n}) :
