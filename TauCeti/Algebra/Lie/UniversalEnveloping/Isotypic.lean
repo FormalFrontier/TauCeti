@@ -72,7 +72,6 @@ theorem IsIsotypicOfType.isIsotypic {S : Type*} [AddCommGroup S] [Module R S]
     IsIsotypic R L M :=
   fun P _ Q _ => ⟨(h Q).some.trans (h P).some.symm⟩
 
-set_option linter.style.haveILetI false in
 /-- Lie-module isotypy of a fixed type is exactly Mathlib's module isotypy for the canonical
 `U(L)`-actions. -/
 theorem isIsotypicOfType_iff_isIsotypicOfType_asModule
@@ -82,25 +81,24 @@ theorem isIsotypicOfType_iff_isIsotypicOfType_asModule
   · intro h Q hQ
     let P := (lieSubmoduleOrderIsoAsModule R L M).symm Q
     rw [← (lieSubmoduleOrderIsoAsModule R L M).apply_symm_apply Q] at hQ ⊢
-    letI : IsSimpleModule U P :=
+    let : IsSimpleModule U P :=
       IsSimpleModule.congr (lieSubmoduleLinearEquivAsModule R L M P)
-    letI : IsIrreducible R L P :=
+    let : IsIrreducible R L P :=
       (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L P)).mpr inferInstance
     exact (h P).map fun e => (lieSubmoduleLinearEquivAsModule R L M P).symm.trans
       (lieModuleEquivEquiv (R := R) (L := L) (M := P) (N := S)
         (asModule_ι_smul R L P) (asModule_ι_smul R L S) e)
   · intro h P hP
     let Q := lieSubmoduleOrderIsoAsModule R L M P
-    letI : IsSimpleModule U P :=
+    let : IsSimpleModule U P :=
       (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L P)).mp hP
-    letI : IsSimpleModule U Q :=
+    let : IsSimpleModule U Q :=
       IsSimpleModule.congr (lieSubmoduleLinearEquivAsModule R L M P).symm
     exact (h Q).map fun e =>
       (lieModuleEquivEquiv (R := R) (L := L) (M := P) (N := S)
         (asModule_ι_smul R L P) (asModule_ι_smul R L S)).symm
         ((lieSubmoduleLinearEquivAsModule R L M P).trans e)
 
-set_option linter.style.haveILetI false in
 /-- Lie-module isotypy is exactly Mathlib's module isotypy for the canonical `U(L)`-action. -/
 theorem isIsotypic_iff_isIsotypic_asModule :
     IsIsotypic R L M ↔ _root_.IsIsotypic U M := by
@@ -109,17 +107,17 @@ theorem isIsotypic_iff_isIsotypic_asModule :
   · intro h Q hQ
     let P := (lieSubmoduleOrderIsoAsModule R L M).symm Q
     rw [← (lieSubmoduleOrderIsoAsModule R L M).apply_symm_apply Q] at hQ ⊢
-    letI : IsSimpleModule U P :=
+    let : IsSimpleModule U P :=
       IsSimpleModule.congr (lieSubmoduleLinearEquivAsModule R L M P)
-    letI : IsIrreducible R L P :=
+    let : IsIrreducible R L P :=
       (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L P)).mpr inferInstance
     exact (isIsotypicOfType_iff_isIsotypicOfType_asModule P |>.mp (h P)).of_linearEquiv_type
       (lieSubmoduleLinearEquivAsModule R L M P)
   · intro h P hP
     let Q := lieSubmoduleOrderIsoAsModule R L M P
-    letI : IsSimpleModule U P :=
+    let : IsSimpleModule U P :=
       (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L P)).mp hP
-    letI : IsSimpleModule U Q :=
+    let : IsSimpleModule U Q :=
       IsSimpleModule.congr (lieSubmoduleLinearEquivAsModule R L M P).symm
     exact isIsotypicOfType_iff_isIsotypicOfType_asModule P |>.mpr
       ((h Q).of_linearEquiv_type (lieSubmoduleLinearEquivAsModule R L M P).symm)
@@ -151,7 +149,6 @@ theorem mem_isotypicComponent_iff
     m ∈ isotypicComponent R L M S ↔ m ∈ _root_.isotypicComponent U M S := by
   rw [isotypicComponent, mem_lieSubmoduleOrderIsoAsModule_symm]
 
-set_option linter.style.haveILetI false in
 /-- In a completely reducible Lie module, the isotypic component of type `S` is the whole module
 exactly when the Lie module is isotypic of type `S`. -/
 theorem isotypicComponent_eq_top_iff
@@ -159,9 +156,9 @@ theorem isotypicComponent_eq_top_iff
     [IsIrreducible R L S]
     [ComplementedLattice (LieSubmodule R L M)] :
     isotypicComponent R L M S = ⊤ ↔ IsIsotypicOfType R L M S := by
-  letI : IsSimpleModule U S :=
+  let : IsSimpleModule U S :=
     (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L S)).mp inferInstance
-  letI : IsSemisimpleModule U M :=
+  let : IsSemisimpleModule U M :=
     (complementedLattice_lieSubmodule_iff_isSemisimpleModule
       (asModule_ι_smul R L M)).mp inferInstance
   rw [← map_eq_top_iff (lieSubmoduleOrderIsoAsModule R L M),
