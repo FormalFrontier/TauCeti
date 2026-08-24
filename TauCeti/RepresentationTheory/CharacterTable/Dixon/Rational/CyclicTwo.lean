@@ -316,7 +316,6 @@ theorem isSome_dixonRationalCharacterTable_cyclicGroupTwo :
   rw [(cyclicClassData 2).isSome_dixonRationalCharacterTable_iff]
   refine ⟨⟨cyclicGroupTwoCentralCharacterTable, cyclicGroupTwoCharacterTable,
     cyclicGroupTwoCharacterDegrees⟩, ?_, isIntegerCharacterTableSpec_cyclicGroupTwo⟩
-  rw [ClassData.mem_dixonRationalCharacterTableCandidates_iff]
   refine ⟨mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable,
     injective_cyclicGroupTwoCentralCharacterTable, fun i => ?_, fun i => ?_, ?_, fun i j => ?_⟩
   · exact (cyclicGroupTwo_characterDegrees_pos_and_dvd i).1

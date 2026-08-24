@@ -33,15 +33,12 @@ no claim about that later stage is made here.
 ## Main definitions
 
 * `TauCeti.ClassData.IntegerCharacterTableData`: candidate numbered exact output data.
-* `TauCeti.ClassData.liftedCentralRowsList`: an executable enumeration of the existing lifted-row
-  finset.
 * `TauCeti.ClassData.dixonRationalCharacterTable?`: the executable rational-stage solver.
 
 ## Main results
 
-* `TauCeti.ClassData.mem_dixonRationalCharacterTableCandidates_iff`: the candidates inspected by
-  the solver are exactly the injectively numbered lifted rows paired with the admissible degree
-  vectors.
+* `TauCeti.ClassData.isSome_dixonRationalCharacterTable_iff`: the solver succeeds exactly when
+  semantically admissible candidate data passes the integer character-table specification.
 * `TauCeti.ClassData.isIntegerCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`: every
   successful output satisfies the exact integer specification.
 * `TauCeti.ClassData.isCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`: every successful
@@ -81,21 +78,21 @@ structure IntegerCharacterTableData where
 variable [Fintype G] [DecidableEq G]
 
 /-- An executable list of the signed integral lifts of the modular central-character search. -/
-def liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)] :
+private def liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)] :
     List (Fin d.numClasses → ℤ) :=
   ((FinEnum.toList (Fin d.numClasses → ZMod p)).filter fun row =>
     row ∈ d.centralCharacterSearch (F := ZMod p)).map fun row j => (row j).valMinAbs
 
 /-- The executable lifted-row list enumerates exactly `liftedCentralRows`. -/
 @[simp]
-theorem liftedCentralRowsList_toFinset (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)] :
+private theorem liftedCentralRowsList_toFinset (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)] :
     (d.liftedCentralRowsList p).toFinset = d.liftedCentralRows p := by
   ext row
   simp [liftedCentralRowsList, liftedCentralRows]
 
 /-- A row is enumerated by `liftedCentralRowsList` exactly when it is a lifted central row. -/
 @[simp]
-theorem mem_liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)]
+private theorem mem_liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)]
     {row : Fin d.numClasses → ℤ} :
     row ∈ d.liftedCentralRowsList p ↔ row ∈ d.liftedCentralRows p := by
   rw [← List.mem_toFinset, liftedCentralRowsList_toFinset]
@@ -103,7 +100,7 @@ theorem mem_liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)]
 /-- Enumerate the candidate data inspected by the rational Dixon--Schneider solver: every
 injective numbering of the lifted central rows, paired with every degree vector whose positive
 entries divide `|G|` and whose squares sum to `|G|`. -/
-def dixonRationalCharacterTableCandidates (p : ℕ) [Fact p.Prime] :
+private def dixonRationalCharacterTableCandidates (p : ℕ) [Fact p.Prime] :
     List d.IntegerCharacterTableData :=
   letI : FinEnum (ZMod p) :=
     FinEnum.ofEquiv (Fin p) (ZMod.finEquiv p).symm.toEquiv
@@ -128,7 +125,7 @@ def dixonRationalCharacterTableCandidates (p : ℕ) [Fact p.Prime] :
 enumerated exactly when its rows are an injective numbering of the lifted central rows, its degrees
 are positive divisors of `|G|` whose squares sum to `|G|`, and its table is the exact integer
 quotient reconstructed from the central-character table. -/
-theorem mem_dixonRationalCharacterTableCandidates_iff (p : ℕ) [Fact p.Prime]
+private theorem mem_dixonRationalCharacterTableCandidates_iff (p : ℕ) [Fact p.Prime]
     {output : d.IntegerCharacterTableData} :
     output ∈ d.dixonRationalCharacterTableCandidates p ↔
       (∀ i, output.omega i ∈ d.liftedCentralRows p) ∧ Function.Injective output.omega ∧
@@ -178,10 +175,16 @@ def dixonRationalCharacterTable? (p : ℕ) [Fact p.Prime] :
 integer character-table specification. -/
 theorem isSome_dixonRationalCharacterTable_iff (p : ℕ) [Fact p.Prime] :
     (d.dixonRationalCharacterTable? p).isSome ↔
-      ∃ output ∈ d.dixonRationalCharacterTableCandidates p,
+      ∃ output : d.IntegerCharacterTableData,
+        ((∀ i, output.omega i ∈ d.liftedCentralRows p) ∧ Function.Injective output.omega ∧
+          (∀ i, 0 < output.degree i) ∧ (∀ i, output.degree i ∣ Fintype.card G) ∧
+          ∑ i, output.degree i ^ 2 = Fintype.card G ∧
+          ∀ i j, output.table i j =
+            (output.degree i : ℤ) * output.omega i j / ((d.classFinset j).card : ℤ)) ∧
         d.IsIntegerCharacterTableSpec output.omega output.table output.degree := by
   rw [dixonRationalCharacterTable?, List.find?_isSome]
-  simp only [d.integerCharacterTableChecker_eq_true_iff]
+  simp only [d.integerCharacterTableChecker_eq_true_iff,
+    mem_dixonRationalCharacterTableCandidates_iff]
 
 /-- Every successful rational Dixon--Schneider output passes the exact integer character-table
 specification. -/
