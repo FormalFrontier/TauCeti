@@ -52,6 +52,8 @@ coroot-side condition as its siblings, which is what the per-type dispatcher wil
   symmetric, type `E₈` being simply laced.
 * `TauCeti.DynkinType.hasCartanType_e8SimplyConnectedRootDatum`: the pinned base has Cartan type
   `E8`.
+* `TauCeti.DynkinType.span_root_e8SimplyConnectedRootDatum_eq_top`: the roots span the character
+  lattice, as the type `E₈` Cartan matrix is unimodular.
 * `TauCeti.DynkinType.corootSpan_e8SimplyConnectedRootDatum_eq_top`: the coroots span the
   cocharacter lattice, the simply connected condition.
 
@@ -132,6 +134,38 @@ fundamental-weight and simple-coroot bases being dual to one another. -/
 @[simp] lemma e8SimplyConnectedRootDatum_pairing (i j : Fin 240) :
     e8SimplyConnectedRootDatum.pairing i j = e8Root i ⬝ᵥ e8Coroot j := (rfl)
 
+/-- **The roots of the pinned type `E₈` datum span the character lattice.** The simple roots are
+the rows of the type `E₈` Cartan matrix, whose determinant is `1`, so its row map is surjective
+over `ℤ`. This is the integral distinction between `E₈` and the other simply laced exceptional
+types: here the root lattice is already the full weight lattice. -/
+theorem span_root_e8SimplyConnectedRootDatum_eq_top :
+    Submodule.span ℤ (Set.range e8SimplyConnectedRootDatum.root) = ⊤ := by
+  have hdet : IsUnit (CartanMatrix.E 8).det := by
+    rw [CartanMatrix.E₈_det]
+    exact isUnit_one
+  have hsurj : Function.Surjective (CartanMatrix.E 8).vecMulLinear := by
+    intro x
+    refine ⟨x ᵥ* (CartanMatrix.E 8)⁻¹, ?_⟩
+    rw [Matrix.vecMulLinear_apply, Matrix.vecMul_vecMul,
+      Matrix.nonsing_inv_mul _ hdet, Matrix.vecMul_one]
+  apply top_unique
+  calc
+    (⊤ : Submodule ℤ (Fin 8 → ℤ)) =
+        Submodule.span ℤ (Set.range (CartanMatrix.E 8).row) := by
+          symm
+          apply top_unique
+          intro x _
+          obtain ⟨v, rfl⟩ := hsurj x
+          rw [Matrix.vecMulLinear_apply, Matrix.vecMul_eq_sum]
+          exact Submodule.sum_mem _ fun i _ ↦
+            Submodule.smul_mem _ _ (Submodule.subset_span (Set.mem_range_self i))
+    _ ≤ Submodule.span ℤ (Set.range e8SimplyConnectedRootDatum.root) := by
+      apply Submodule.span_mono
+      rintro _ ⟨i, rfl⟩
+      refine ⟨e8SimpleIndex i, ?_⟩
+      rw [e8SimplyConnectedRootDatum_root, root_e8SimpleIndex]
+      rfl
+
 /-! ## The pinned base -/
 
 /-- **The coroots of the pinned type `E₈` datum span the cocharacter lattice.** This is the simply
@@ -139,6 +173,12 @@ connected lattice condition required by the pinned Chevalley--Demazure construct
 theorem corootSpan_e8SimplyConnectedRootDatum_eq_top :
     e8SimplyConnectedRootDatum.corootSpan ℤ = ⊤ :=
   corootSpan_eq_top_of_coroot_eq_single coroot_e8SimpleIndex
+
+/-- The pinned type `E₈` datum is a root system over `ℤ`: both its root and coroot families span
+their respective lattices. -/
+instance : e8SimplyConnectedRootDatum.IsRootSystem where
+  span_root_eq_top := span_root_e8SimplyConnectedRootDatum_eq_top
+  span_coroot_eq_top := corootSpan_e8SimplyConnectedRootDatum_eq_top
 
 /-- The support of the pinned base of type `E₈`: the first eight root indices. -/
 private abbrev e8SimpleSupport : Finset (Fin 240) := simpleSupport e8SimpleIndex_injective

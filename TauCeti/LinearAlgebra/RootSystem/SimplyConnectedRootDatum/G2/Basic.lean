@@ -250,7 +250,10 @@ instance instIsReducedG2SimplyConnectedRootDatum : g2SimplyConnectedRootDatum.Is
     simpa only [g2SimplyConnectedRootDatum_pairing] using hproduct
   simpa only [g2SimplyConnectedRootDatum_root] using htable i j hproduct'
 
-private lemma span_g2Root_eq_top : span ℤ (range g2Root) = ⊤ := by
+/-- **The roots of the pinned type `G₂` datum span the character lattice.** -/
+theorem span_root_g2SimplyConnectedRootDatum_eq_top :
+    span ℤ (range g2SimplyConnectedRootDatum.root) = ⊤ := by
+  rw [g2SimplyConnectedRootDatum_root]
   apply top_unique
   rw [← (Pi.basisFun ℤ (Fin 2)).span_eq]
   apply span_mono
@@ -274,7 +277,7 @@ private lemma span_g2Coroot_eq_top : span ℤ (range g2Coroot) = ⊤ := by
 spanning is the simply connected lattice condition required by the pinned Chevalley--Demazure
 construction. -/
 instance : g2SimplyConnectedRootDatum.IsRootSystem where
-  span_root_eq_top := span_g2Root_eq_top
+  span_root_eq_top := span_root_g2SimplyConnectedRootDatum_eq_top
   span_coroot_eq_top := span_g2Coroot_eq_top
 
 /-- A family indexed by `Fin 12` whose members are, up to sign, prescribed `ℕ`-combinations of its
