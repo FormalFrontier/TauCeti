@@ -80,7 +80,7 @@ private theorem IsHighestWeightVector.lie_eq_zero_of_mem_rootSpace_of_mem_negRoo
   have hspan := IsKilling.toSubmodule_rootSpace_eq_span (alpha : Weight K H L)
     (H.isNonZero_coe_root alpha) f ht.f_ne_zero hf'
   rw [Weight.coe_coe] at hx
-  change x ∈ (rootSpace H ((alpha : Weight K H L) : H → K)).toSubmodule at hx
+  rw [← LieSubmodule.mem_toSubmodule] at hx
   rw [hspan, Submodule.mem_span_singleton] at hx
   obtain ⟨c, rfl⟩ := hx
   rw [smul_lie, hfv, smul_zero]
