@@ -8,7 +8,6 @@ module
 public import TauCeti.Analysis.Contour.Crossing.CapAngle
 public import TauCeti.Analysis.Contour.Crossing.FiniteExcision
 public import TauCeti.Analysis.Contour.ExitTime
-import TauCeti.Analysis.Contour.Crossing.Windows
 
 /-!
 # Equal-radius cap windows at crossings
@@ -22,8 +21,8 @@ from the left and right first-exit times at a common spatial radius.
 `Crossing.CapAngle` as a `CircularCapWindow`.  Its characteristic API proves that the crossing is
 strictly inside the window, both endpoint chords have the prescribed norm, and the cap really
 joins the original curve.  `exitCapWindows` applies the construction to the sorted members of a
-finite crossing set; common symmetric time windows that are separated by more than twice their
-half-width produce strictly ordered, hence pairwise disjoint, cap windows.
+finite crossing set; crossings separated by more than twice the ambient half-width
+(`2 * δ < |t - t'|`) produce nonoverlapping, hence pairwise disjoint, cap windows.
 
 This is the geometric window construction in Proposition 2.2.  The principal-value calculation on
 the generally asymmetric exit-time interval is separate: once that value is supplied,
@@ -37,17 +36,11 @@ its crossing angle.
 
 ## Main results
 
-* `TauCeti.Contour.exitCapWindow_lower_lt` and `TauCeti.Contour.lt_exitCapWindow_upper` -- the
-  crossing lies strictly inside its own window.
-* `TauCeti.Contour.norm_sub_exitCapWindow_lower_eq` and
-  `TauCeti.Contour.norm_sub_exitCapWindow_upper_eq` -- both endpoint chords have norm `ε`.
 * `TauCeti.Contour.cap_exitCapWindow_lower_eq` and
   `TauCeti.Contour.cap_exitCapWindow_upper_eq` -- the cap joins the original curve at both
   endpoints.
 * `TauCeti.Contour.pairwise_disjoint_interval_exitCapWindows` -- the finite windows are pairwise
   disjoint, in the shape `Crossing.FiniteExcision` consumes.
-* `TauCeti.Contour.exists_common_exitCapWindows_radius` -- one spatial radius bounded by every
-  ambient endpoint distance, together with the geometry of the resulting finite family.
 * `TauCeti.Contour.windingNumber_sub_cap_exitCapWindow_eq_crossingAngle_div_two_pi` -- the exact
   local angle contribution, once the principal value on the asymmetric exit-time window is
   supplied alongside the standing continuity, tangent, and radius hypotheses.
@@ -71,12 +64,14 @@ open Filter Set Topology
 
 /-- The circular-cap window whose endpoints are the first exits from the radius-`ε` circle on
 the two sides of a crossing `t₀`.  Those exits are searched in the ambient window
-`[t₀ - δ, t₀ + δ]`, so `δ` is the ambient half-width, and `L_R`, `L_L` are the right- and
-left-hand tangent limits of `γ` at `t₀`, passed right before left as in `crossingCapSweep`;
-exchanging them selects a different cap.  The cap starts in the direction of the left endpoint
-chord and sweeps by `crossingCapSweep`, the tangent-selected representative of the endpoint
-angle, which tends to `-crossingAngle γ t₀` as the endpoints approach `t₀`
-(`tendsto_crossingCapSweep`). -/
+`[t₀ - δ, t₀ + δ]`, so `δ` is the ambient half-width.  The endpoint bounds
+`ε ≤ ‖γ (t₀ - δ) - s‖` and `ε ≤ ‖γ (t₀ + δ) - s‖` certify that the defining sets are nonempty;
+without such witnesses, an empty defining set gives the corresponding junk value `0`.  The
+parameters `L_R`, `L_L` are the right- and left-hand tangent limits of `γ` at `t₀`, passed right
+before left as in `crossingCapSweep`; exchanging them selects a different cap.  The cap starts in
+the direction of the left endpoint chord and sweeps by `crossingCapSweep`, the tangent-selected
+representative of the endpoint angle, which tends to `-crossingAngle γ t₀` as the endpoints
+approach `t₀` (`tendsto_crossingCapSweep`). -/
 def exitCapWindow (γ : ℝ → ℂ) (s : ℂ) (t₀ δ ε : ℝ) (L_R L_L : ℂ) : CircularCapWindow where
   radius := ε
   lower := firstExitTimeLeft γ t₀ δ s ε
@@ -125,62 +120,18 @@ theorem cap_exitCapWindow_eq_circleCap {γ : ℝ → ℂ} {s : ℂ} {t₀ δ ε 
   rw [CircularCapWindow.cap_apply, circleCap_apply, exitCapWindow_radius, hnorm,
     exitCapWindow_startAngle, exitCapWindow_endAngle, exitCapWindow_lower, exitCapWindow_upper]
 
-/-- **The left exit time is strictly left of the crossing.**  If `γ` is continuous on the left
-half of the ambient window, passes through `s` at `t₀`, and the ambient left endpoint lies at
-distance at least `ε > 0` from `s`, the window's lower endpoint is strictly below `t₀`. -/
-theorem exitCapWindow_lower_lt {γ : ℝ → ℂ} {s : ℂ} {t₀ δ ε : ℝ} {L_R L_L : ℂ}
-    (hδ : 0 < δ) (hε : 0 < ε) (h_at : γ t₀ = s)
-    (hγ : ContinuousOn γ (Icc (t₀ - δ) t₀)) (hεL : ε ≤ ‖γ (t₀ - δ) - s‖) :
-    (exitCapWindow γ s t₀ δ ε L_R L_L).lower < t₀ := by
-  rw [exitCapWindow_lower]
-  exact firstExitTimeLeft_lt hδ hγ h_at hε hεL
-
-/-- **The right exit time is strictly right of the crossing.**  The mirror image of
-`exitCapWindow_lower_lt` on the right half of the ambient window. -/
-theorem lt_exitCapWindow_upper {γ : ℝ → ℂ} {s : ℂ} {t₀ δ ε : ℝ} {L_R L_L : ℂ}
-    (hδ : 0 < δ) (hε : 0 < ε) (h_at : γ t₀ = s)
-    (hγ : ContinuousOn γ (Icc t₀ (t₀ + δ))) (hεR : ε ≤ ‖γ (t₀ + δ) - s‖) :
-    t₀ < (exitCapWindow γ s t₀ δ ε L_R L_L).upper := by
-  rw [exitCapWindow_upper]
-  exact lt_firstExitTimeRight hδ hγ h_at hε hεR
-
-/-- **The left endpoint chord has the prescribed norm.**  At the left first-exit time the curve
-sits exactly on the circle of radius `ε` about `s`. -/
-theorem norm_sub_exitCapWindow_lower_eq {γ : ℝ → ℂ} {s : ℂ} {t₀ δ ε : ℝ} {L_R L_L : ℂ}
-    (hδ : 0 < δ) (hε : 0 < ε) (h_at : γ t₀ = s)
-    (hγ : ContinuousOn γ (Icc (t₀ - δ) t₀)) (hεL : ε ≤ ‖γ (t₀ - δ) - s‖) :
-    ‖γ (exitCapWindow γ s t₀ δ ε L_R L_L).lower - s‖ = ε := by
-  rw [exitCapWindow_lower]
-  exact norm_at_firstExitTimeLeft_eq hδ hγ h_at hε hεL
-
-/-- **The right endpoint chord has the prescribed norm.**  The mirror image of
-`norm_sub_exitCapWindow_lower_eq`; together they put both endpoints on one circle about `s`. -/
-theorem norm_sub_exitCapWindow_upper_eq {γ : ℝ → ℂ} {s : ℂ} {t₀ δ ε : ℝ} {L_R L_L : ℂ}
-    (hδ : 0 < δ) (hε : 0 < ε) (h_at : γ t₀ = s)
-    (hγ : ContinuousOn γ (Icc t₀ (t₀ + δ))) (hεR : ε ≤ ‖γ (t₀ + δ) - s‖) :
-    ‖γ (exitCapWindow γ s t₀ δ ε L_R L_L).upper - s‖ = ε := by
-  rw [exitCapWindow_upper]
-  exact norm_at_firstExitTimeRight_eq hδ hγ h_at hε hεR
-
-/-- **The cap meets the curve at the left endpoint.**  With both endpoint chords of norm `ε` and
-nonzero one-sided tangent limits, the cap selected by `crossingCapSweep` starts at `γ` of the
-left first-exit time. -/
+/-- **The cap meets the curve at the left endpoint.**  The cap starts in the direction of the
+left first-exit chord, so its initial value is `γ` at that exit time. -/
 theorem cap_exitCapWindow_lower_eq {γ : ℝ → ℂ} {s : ℂ} {t₀ δ ε : ℝ} {L_R L_L : ℂ}
     (hδ : 0 < δ) (hε : 0 < ε) (h_at : γ t₀ = s)
-    (hγ : ContinuousOn γ (Icc (t₀ - δ) (t₀ + δ)))
-    (hεL : ε ≤ ‖γ (t₀ - δ) - s‖) (hεR : ε ≤ ‖γ (t₀ + δ) - s‖)
-    (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
-    (h_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
-    (h_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L)) :
+    (hγ : ContinuousOn γ (Icc (t₀ - δ) t₀)) (hεL : ε ≤ ‖γ (t₀ - δ) - s‖) :
     (exitCapWindow γ s t₀ δ ε L_R L_L).cap s (exitCapWindow γ s t₀ δ ε L_R L_L).lower =
       γ (exitCapWindow γ s t₀ δ ε L_R L_L).lower := by
-  have hnormL := norm_sub_exitCapWindow_lower_eq (L_R := L_R) (L_L := L_L) hδ hε h_at
-    (hγ.mono (Icc_subset_Icc le_rfl (by linarith))) hεL
-  have hnormR := norm_sub_exitCapWindow_upper_eq (L_R := L_R) (L_L := L_L) hδ hε h_at
-    (hγ.mono (Icc_subset_Icc (by linarith) le_rfl)) hεR
-  have hends := circleMap_crossingCapSweep_endpoints
-    (γ := γ) (s := s) (t₀ := t₀) hL_L hL_R (hnormL.trans hnormR.symm) h_R h_L
-  rw [cap_exitCapWindow_eq_circleCap hnormL, circleCap_left, hends.1]
+  have hnormL : ‖γ (exitCapWindow γ s t₀ δ ε L_R L_L).lower - s‖ = ε := by
+    rw [exitCapWindow_lower]
+    exact norm_at_firstExitTimeLeft_eq hδ hγ h_at hε hεL
+  rw [cap_exitCapWindow_eq_circleCap hnormL, circleCap_left, circleMap,
+    Complex.norm_mul_exp_arg_mul_I]
   ring
 
 /-- **The cap meets the curve at the right endpoint.**  The companion of
@@ -197,33 +148,34 @@ theorem cap_exitCapWindow_upper_eq {γ : ℝ → ℂ} {s : ℂ} {t₀ δ ε : �
       γ (exitCapWindow γ s t₀ δ ε L_R L_L).upper := by
   have hγL : ContinuousOn γ (Icc (t₀ - δ) t₀) := hγ.mono (Icc_subset_Icc le_rfl (by linarith))
   have hγR : ContinuousOn γ (Icc t₀ (t₀ + δ)) := hγ.mono (Icc_subset_Icc (by linarith) le_rfl)
-  have hnormL := norm_sub_exitCapWindow_lower_eq (L_R := L_R) (L_L := L_L) hδ hε h_at hγL hεL
-  have hnormR := norm_sub_exitCapWindow_upper_eq (L_R := L_R) (L_L := L_L) hδ hε h_at hγR hεR
+  have hnormL : ‖γ (exitCapWindow γ s t₀ δ ε L_R L_L).lower - s‖ = ε := by
+    rw [exitCapWindow_lower]
+    exact norm_at_firstExitTimeLeft_eq hδ hγL h_at hε hεL
+  have hnormR : ‖γ (exitCapWindow γ s t₀ δ ε L_R L_L).upper - s‖ = ε := by
+    rw [exitCapWindow_upper]
+    exact norm_at_firstExitTimeRight_eq hδ hγR h_at hε hεR
   have hne : (exitCapWindow γ s t₀ δ ε L_R L_L).lower ≠
       (exitCapWindow γ s t₀ δ ε L_R L_L).upper :=
-    ((exitCapWindow_lower_lt hδ hε h_at hγL hεL).trans
-      (lt_exitCapWindow_upper hδ hε h_at hγR hεR)).ne
+    ((firstExitTimeLeft_lt hδ hγL h_at hε hεL).trans
+      (lt_firstExitTimeRight hδ hγR h_at hε hεR)).ne
   have hends := circleMap_crossingCapSweep_endpoints
     (γ := γ) (s := s) (t₀ := t₀) hL_L hL_R (hnormL.trans hnormR.symm) h_R h_L
   rw [cap_exitCapWindow_eq_circleCap hnormL, circleCap_right _ _ hne, hends.2]
   ring
-
-/-- The exit-time window lies inside its ambient symmetric window. -/
-theorem exitCapWindow_interval_subset_Icc {γ : ℝ → ℂ} {s : ℂ} {t₀ δ ε : ℝ} {L_R L_L : ℂ}
-    (hδ : 0 ≤ δ) (hεL : ε ≤ ‖γ (t₀ - δ) - s‖) (hεR : ε ≤ ‖γ (t₀ + δ) - s‖) :
-    (exitCapWindow γ s t₀ δ ε L_R L_L).interval ⊆ Icc (t₀ - δ) (t₀ + δ) := by
-  intro t ht
-  rw [CircularCapWindow.mem_interval_iff] at ht
-  exact ⟨(firstExitTimeLeft_mem_Icc hδ hεL).1.trans ht.1,
-    ht.2.trans (firstExitTimeRight_mem_Icc hδ hεR).2⟩
 
 /-- The finite list of equal-radius exit-time cap windows, ordered by their crossing parameters. -/
 def exitCapWindows (γ : ℝ → ℂ) (s : ℂ) (T : Finset ℝ) (δ ε : ℝ)
     (L_R L_L : ℝ → ℂ) : List CircularCapWindow :=
   (T.sort (· ≤ ·)).map fun t ↦ exitCapWindow γ s t δ ε (L_R t) (L_L t)
 
+/-- The list of exit-time cap windows is the sorted crossing set mapped through
+`exitCapWindow`. -/
+theorem exitCapWindows_eq_map :
+    exitCapWindows γ s T δ ε L_R L_L =
+      (T.sort (· ≤ ·)).map (fun t ↦ exitCapWindow γ s t δ ε (L_R t) (L_L t)) := (rfl)
+
 /-- Membership in `exitCapWindows` means being the exit-time window of a listed crossing. -/
-theorem mem_exitCapWindows_iff {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
+@[simp] theorem mem_exitCapWindows_iff {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} :
     W ∈ exitCapWindows γ s T δ ε L_R L_L ↔
       ∃ t ∈ T, W = exitCapWindow γ s t δ ε (L_R t) (L_L t) := by
@@ -234,8 +186,9 @@ theorem mem_exitCapWindows_iff {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ
   · rintro ⟨t, ht, rfl⟩
     exact ⟨t, ht, rfl⟩
 
-/-- Every listed window carries the common spatial radius: this is the equal-radius property the
-simultaneous excision needs. -/
+/-- Every listed window carries the common spatial radius.  Thus one result depending on `ε` can
+be applied uniformly across the family; simultaneous excision itself only requires each radius
+to be nonzero. -/
 theorem radius_eq_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     W.radius = ε := by
@@ -261,67 +214,61 @@ theorem upper_lt_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset 
   exact (firstExitTimeRight_mem_Icc hδ (hεR t ht)).2.trans_lt (hb t ht)
 
 /-- Between the crossing's own two exit times a listed window is nondegenerate. -/
-theorem lower_lt_upper_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {a b δ ε : ℝ}
+theorem lower_lt_upper_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
-    (hγ : ContinuousOn γ (Icc a b)) (hinside : ∀ t ∈ T, a < t - δ ∧ t + δ < b)
-    (h_at : ∀ t ∈ T, γ t = s)
+    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) (t + δ))) (h_at : ∀ t ∈ T, γ t = s)
     (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖) (hεR : ∀ t ∈ T, ε ≤ ‖γ (t + δ) - s‖)
     (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     W.lower < W.upper := by
   obtain ⟨t, ht, rfl⟩ := mem_exitCapWindows_iff.mp hW
-  exact (exitCapWindow_lower_lt hδ hε (h_at t ht)
-      (hγ.mono (Icc_subset_Icc (hinside t ht).1.le (by linarith [(hinside t ht).2])))
-      (hεL t ht)).trans
-    (lt_exitCapWindow_upper hδ hε (h_at t ht)
-      (hγ.mono (Icc_subset_Icc (by linarith [(hinside t ht).1]) (hinside t ht).2.le))
-      (hεR t ht))
+  rw [exitCapWindow_lower, exitCapWindow_upper]
+  exact (firstExitTimeLeft_lt hδ
+      ((hγ t ht).mono (Icc_subset_Icc le_rfl (by linarith))) (h_at t ht) hε (hεL t ht)).trans
+    (lt_firstExitTimeRight hδ
+      ((hγ t ht).mono (Icc_subset_Icc (by linarith) le_rfl)) (h_at t ht) hε (hεR t ht))
 
 /-- Every listed window's left endpoint chord has the common radius `ε`. -/
-theorem norm_sub_lower_eq_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {a b δ ε : ℝ}
+theorem norm_sub_lower_eq_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
-    (hγ : ContinuousOn γ (Icc a b)) (hinside : ∀ t ∈ T, a < t - δ ∧ t + δ < b)
+    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) (t + δ)))
     (h_at : ∀ t ∈ T, γ t = s) (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖)
     (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     ‖γ W.lower - s‖ = ε := by
   obtain ⟨t, ht, rfl⟩ := mem_exitCapWindows_iff.mp hW
-  exact norm_sub_exitCapWindow_lower_eq hδ hε (h_at t ht)
-    (hγ.mono (Icc_subset_Icc (hinside t ht).1.le (by linarith [(hinside t ht).2]))) (hεL t ht)
+  rw [exitCapWindow_lower]
+  exact norm_at_firstExitTimeLeft_eq hδ
+    ((hγ t ht).mono (Icc_subset_Icc le_rfl (by linarith))) (h_at t ht) hε (hεL t ht)
 
 /-- Every listed window's right endpoint chord has the common radius `ε`. -/
-theorem norm_sub_upper_eq_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {a b δ ε : ℝ}
+theorem norm_sub_upper_eq_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
-    (hγ : ContinuousOn γ (Icc a b)) (hinside : ∀ t ∈ T, a < t - δ ∧ t + δ < b)
+    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) (t + δ)))
     (h_at : ∀ t ∈ T, γ t = s) (hεR : ∀ t ∈ T, ε ≤ ‖γ (t + δ) - s‖)
     (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     ‖γ W.upper - s‖ = ε := by
   obtain ⟨t, ht, rfl⟩ := mem_exitCapWindows_iff.mp hW
-  exact norm_sub_exitCapWindow_upper_eq hδ hε (h_at t ht)
-    (hγ.mono (Icc_subset_Icc (by linarith [(hinside t ht).1]) (hinside t ht).2.le)) (hεR t ht)
+  rw [exitCapWindow_upper]
+  exact norm_at_firstExitTimeRight_eq hδ
+    ((hγ t ht).mono (Icc_subset_Icc (by linarith) le_rfl)) (h_at t ht) hε (hεR t ht)
 
 /-- The curve meets the cap's initial point at a listed window's lower endpoint, in the shape
 `IsPiecewiseC1On.exciseCrossings` consumes. -/
 theorem eq_circleMap_startAngle_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ}
-    {a b δ ε : ℝ} {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
-    (hγ : ContinuousOn γ (Icc a b)) (hinside : ∀ t ∈ T, a < t - δ ∧ t + δ < b)
-    (h_at : ∀ t ∈ T, γ t = s)
-    (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖) (hεR : ∀ t ∈ T, ε ≤ ‖γ (t + δ) - s‖)
-    (hL_R : ∀ t ∈ T, L_R t ≠ 0) (hL_L : ∀ t ∈ T, L_L t ≠ 0)
-    (h_R : ∀ t ∈ T, Tendsto (deriv γ) (𝓝[>] t) (𝓝 (L_R t)))
-    (h_L : ∀ t ∈ T, Tendsto (deriv γ) (𝓝[<] t) (𝓝 (L_L t)))
+    {δ ε : ℝ} {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
+    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) (t + δ)))
+    (h_at : ∀ t ∈ T, γ t = s) (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖)
     (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     γ W.lower = circleMap s W.radius W.startAngle := by
   obtain ⟨t, ht, rfl⟩ := mem_exitCapWindows_iff.mp hW
   rw [← CircularCapWindow.cap_left]
   exact (cap_exitCapWindow_lower_eq hδ hε (h_at t ht)
-    (hγ.mono (Icc_subset_Icc (hinside t ht).1.le (hinside t ht).2.le)) (hεL t ht) (hεR t ht)
-    (hL_R t ht) (hL_L t ht) (h_R t ht) (h_L t ht)).symm
+    ((hγ t ht).mono (Icc_subset_Icc le_rfl (by linarith))) (hεL t ht)).symm
 
 /-- The curve meets the cap's terminal point at a listed window's upper endpoint, in the shape
 `IsPiecewiseC1On.exciseCrossings` consumes. -/
 theorem eq_circleMap_endAngle_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ}
-    {a b δ ε : ℝ} {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
-    (hγ : ContinuousOn γ (Icc a b)) (hinside : ∀ t ∈ T, a < t - δ ∧ t + δ < b)
-    (h_at : ∀ t ∈ T, γ t = s)
+    {δ ε : ℝ} {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
+    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) (t + δ))) (h_at : ∀ t ∈ T, γ t = s)
     (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖) (hεR : ∀ t ∈ T, ε ≤ ‖γ (t + δ) - s‖)
     (hL_R : ∀ t ∈ T, L_R t ≠ 0) (hL_L : ∀ t ∈ T, L_L t ≠ 0)
     (h_R : ∀ t ∈ T, Tendsto (deriv γ) (𝓝[>] t) (𝓝 (L_R t)))
@@ -329,11 +276,11 @@ theorem eq_circleMap_endAngle_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ}
     (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     γ W.upper = circleMap s W.radius W.endAngle := by
   have hne : W.lower ≠ W.upper :=
-    (lower_lt_upper_of_mem_exitCapWindows hδ hε hγ hinside h_at hεL hεR hW).ne
+    (lower_lt_upper_of_mem_exitCapWindows hδ hε hγ h_at hεL hεR hW).ne
   obtain ⟨t, ht, rfl⟩ := mem_exitCapWindows_iff.mp hW
   rw [← CircularCapWindow.cap_right _ _ hne]
   exact (cap_exitCapWindow_upper_eq hδ hε (h_at t ht)
-    (hγ.mono (Icc_subset_Icc (hinside t ht).1.le (hinside t ht).2.le)) (hεL t ht) (hεR t ht)
+    (hγ t ht) (hεL t ht) (hεR t ht)
     (hL_R t ht) (hL_L t ht) (h_R t ht) (h_L t ht)).symm
 
 /-- Exit-time cap windows inherit strict left-to-right ordering from separated symmetric
@@ -343,7 +290,7 @@ theorem pairwise_upper_lt_lower_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T :
     (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖) (hεR : ∀ t ∈ T, ε ≤ ‖γ (t + δ) - s‖)
     (hsep : ∀ t ∈ T, ∀ t' ∈ T, t ≠ t' → 2 * δ < |t - t'|) :
     (exitCapWindows γ s T δ ε L_R L_L).Pairwise fun W V ↦ W.upper < V.lower := by
-  rw [exitCapWindows, List.pairwise_map]
+  rw [exitCapWindows_eq_map, List.pairwise_map]
   refine (Finset.sortedLT_sort T).pairwise.imp_of_mem ?_
   intro t t' hmem hmem' htt'
   rw [Finset.mem_sort] at hmem hmem'
@@ -354,6 +301,17 @@ theorem pairwise_upper_lt_lower_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T :
   rw [exitCapWindow_upper, exitCapWindow_lower]
   linarith
 
+/-- A strictly left-to-right list of circular-cap windows has pairwise disjoint intervals. -/
+theorem pairwise_disjoint_interval_of_pairwise_upper_lt_lower {windows : List CircularCapWindow}
+    (h : windows.Pairwise fun W V ↦ W.upper < V.lower) :
+    windows.Pairwise fun W V ↦ Disjoint W.interval V.interval := by
+  refine h.imp ?_
+  intro W V hWV
+  rw [Set.disjoint_left]
+  intro t htW htV
+  rw [CircularCapWindow.mem_interval_iff] at htW htV
+  linarith [htW.2, htV.1]
+
 /-- Strictly ordered exit-time cap windows are pairwise disjoint, the hypothesis shape of the
 simultaneous excision in `Crossing.FiniteExcision`. -/
 theorem pairwise_disjoint_interval_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
@@ -361,70 +319,8 @@ theorem pairwise_disjoint_interval_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {
     (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖) (hεR : ∀ t ∈ T, ε ≤ ‖γ (t + δ) - s‖)
     (hsep : ∀ t ∈ T, ∀ t' ∈ T, t ≠ t' → 2 * δ < |t - t'|) :
     (exitCapWindows γ s T δ ε L_R L_L).Pairwise fun W V ↦ Disjoint W.interval V.interval := by
-  refine (pairwise_upper_lt_lower_exitCapWindows hδ hεL hεR hsep).imp ?_
-  intro W V h
-  rw [Set.disjoint_left]
-  intro t htW htV
-  rw [CircularCapWindow.mem_interval_iff] at htW htV
-  linarith [htW.2, htV.1]
-
-/-- **Existence of the finite equal-radius cap-window family.**  Suppose common symmetric time
-windows of half-width `δ > 0` about the listed crossings lie inside `[a, b]`, distinct crossings
-are more than `2δ` apart, and no ambient window endpoint is itself a crossing.  There is then one
-spatial radius `ε > 0` bounded by every ambient endpoint distance, and the resulting exit-time
-cap windows are pairwise disjoint, carry the common radius `ε` with endpoint chords of that
-norm, lie strictly inside `[a, b]`, have cap endpoints on the curve, and each contains its own
-crossing in its interior.
-
-The tangent data selects each cap's branch-sensitive sweep.  The theorem does not evaluate the
-principal value on the resulting asymmetric windows; that is the remaining analytic input to
-`windingNumber_sub_cap_exitCapWindow_eq_crossingAngle_div_two_pi`. -/
-theorem exists_common_exitCapWindows_radius {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {a b δ : ℝ}
-    {L_R L_L : ℝ → ℂ} (hδ : 0 < δ) (hγ : ContinuousOn γ (Icc a b))
-    (hinside : ∀ t ∈ T, a < t - δ ∧ t + δ < b)
-    (h_at : ∀ t ∈ T, γ t = s)
-    (hendpoint : ∀ t ∈ T, γ (t - δ) ≠ s ∧ γ (t + δ) ≠ s)
-    (hsep : ∀ t ∈ T, ∀ t' ∈ T, t ≠ t' → 2 * δ < |t - t'|)
-    (hL_R : ∀ t ∈ T, L_R t ≠ 0) (hL_L : ∀ t ∈ T, L_L t ≠ 0)
-    (h_R : ∀ t ∈ T, Tendsto (deriv γ) (𝓝[>] t) (𝓝 (L_R t)))
-    (h_L : ∀ t ∈ T, Tendsto (deriv γ) (𝓝[<] t) (𝓝 (L_L t))) :
-    ∃ ε > 0,
-      (∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖ ∧ ε ≤ ‖γ (t + δ) - s‖) ∧
-      ((exitCapWindows γ s T δ ε L_R L_L).Pairwise fun W V ↦ Disjoint W.interval V.interval) ∧
-      (∀ W ∈ exitCapWindows γ s T δ ε L_R L_L,
-        W.radius = ε ∧ ‖γ W.lower - s‖ = ε ∧ ‖γ W.upper - s‖ = ε) ∧
-      (∀ W ∈ exitCapWindows γ s T δ ε L_R L_L,
-        a < W.lower ∧ W.lower < W.upper ∧ W.upper < b) ∧
-      (∀ W ∈ exitCapWindows γ s T δ ε L_R L_L,
-        γ W.lower = circleMap s W.radius W.startAngle ∧
-          γ W.upper = circleMap s W.radius W.endAngle) ∧
-      ∀ t ∈ T, t ∈ Ioo (exitCapWindow γ s t δ ε (L_R t) (L_L t)).lower
-        (exitCapWindow γ s t δ ε (L_R t) (L_L t)).upper := by
-  obtain ⟨ε, hε, -, -, hεmin⟩ := exists_common_window_radius_le (a := a) (b := b) (crossings := T)
-    (fun t ht ↦ ⟨by linarith [(hinside t ht).1], by linarith [(hinside t ht).2]⟩)
-    (fun t ↦ min ‖γ (t - δ) - s‖ ‖γ (t + δ) - s‖)
-    (fun t ht ↦ lt_min (norm_pos_iff.mpr (sub_ne_zero.mpr (hendpoint t ht).1))
-      (norm_pos_iff.mpr (sub_ne_zero.mpr (hendpoint t ht).2)))
-  have hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖ := fun t ht ↦ (hεmin t ht).trans (min_le_left _ _)
-  have hεR : ∀ t ∈ T, ε ≤ ‖γ (t + δ) - s‖ := fun t ht ↦ (hεmin t ht).trans (min_le_right _ _)
-  refine ⟨ε, hε, fun t ht ↦ ⟨hεL t ht, hεR t ht⟩,
-    pairwise_disjoint_interval_exitCapWindows hδ.le hεL hεR hsep,
-    fun W hW ↦ ⟨radius_eq_of_mem_exitCapWindows hW,
-      norm_sub_lower_eq_of_mem_exitCapWindows hδ hε hγ hinside h_at hεL hW,
-      norm_sub_upper_eq_of_mem_exitCapWindows hδ hε hγ hinside h_at hεR hW⟩,
-    fun W hW ↦ ⟨lt_lower_of_mem_exitCapWindows hδ.le (fun t ht ↦ (hinside t ht).1) hεL hW,
-      lower_lt_upper_of_mem_exitCapWindows hδ hε hγ hinside h_at hεL hεR hW,
-      upper_lt_of_mem_exitCapWindows hδ.le (fun t ht ↦ (hinside t ht).2) hεR hW⟩,
-    fun W hW ↦ ⟨eq_circleMap_startAngle_of_mem_exitCapWindows hδ hε hγ hinside h_at hεL hεR
-        hL_R hL_L h_R h_L hW,
-      eq_circleMap_endAngle_of_mem_exitCapWindows hδ hε hγ hinside h_at hεL hεR
-        hL_R hL_L h_R h_L hW⟩,
-    fun t ht ↦ ⟨exitCapWindow_lower_lt hδ hε (h_at t ht)
-      (hγ.mono (Icc_subset_Icc (hinside t ht).1.le (by linarith [(hinside t ht).2])))
-      (hεL t ht),
-      lt_exitCapWindow_upper hδ hε (h_at t ht)
-        (hγ.mono (Icc_subset_Icc (by linarith [(hinside t ht).1]) (hinside t ht).2.le))
-        (hεR t ht)⟩⟩
+  exact pairwise_disjoint_interval_of_pairwise_upper_lt_lower
+    (pairwise_upper_lt_lower_exitCapWindows hδ hεL hεR hsep)
 
 /-- **The exact local angle contribution of one exit-time cap window.**  The winding number of
 the curve over the window minus that of its cap is `crossingAngle γ t₀ / 2π`.  Beyond the
@@ -450,12 +346,16 @@ theorem windingNumber_sub_cap_exitCapWindow_eq_crossingAngle_div_two_pi {γ : �
       (crossingAngle γ t₀ : ℂ) / (2 * (Real.pi : ℂ)) := by
   have hγL : ContinuousOn γ (Icc (t₀ - δ) t₀) := hγ.mono (Icc_subset_Icc le_rfl (by linarith))
   have hγR : ContinuousOn γ (Icc t₀ (t₀ + δ)) := hγ.mono (Icc_subset_Icc (by linarith) le_rfl)
-  have hnormL := norm_sub_exitCapWindow_lower_eq (L_R := L_R) (L_L := L_L) hδ hε h_at hγL hεL
-  have hnormR := norm_sub_exitCapWindow_upper_eq (L_R := L_R) (L_L := L_L) hδ hε h_at hγR hεR
+  have hnormL : ‖γ (exitCapWindow γ s t₀ δ ε L_R L_L).lower - s‖ = ε := by
+    rw [exitCapWindow_lower]
+    exact norm_at_firstExitTimeLeft_eq hδ hγL h_at hε hεL
+  have hnormR : ‖γ (exitCapWindow γ s t₀ δ ε L_R L_L).upper - s‖ = ε := by
+    rw [exitCapWindow_upper]
+    exact norm_at_firstExitTimeRight_eq hδ hγR h_at hε hεR
   have hne : (exitCapWindow γ s t₀ δ ε L_R L_L).lower ≠
       (exitCapWindow γ s t₀ δ ε L_R L_L).upper :=
-    ((exitCapWindow_lower_lt hδ hε h_at hγL hεL).trans
-      (lt_exitCapWindow_upper hδ hε h_at hγR hεR)).ne
+    ((firstExitTimeLeft_lt hδ hγL h_at hε hεL).trans
+      (lt_firstExitTimeRight hδ hγR h_at hε hεR)).ne
   have hwL : γ (exitCapWindow γ s t₀ δ ε L_R L_L).lower - s ≠ 0 := by
     rw [← norm_pos_iff, hnormL]
     exact hε
