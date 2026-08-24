@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.LinearAlgebra.Basis.VectorSpace
+public import TauCeti.Algebra.Coalgebra.Comodule.Fixed
 public import TauCeti.Algebra.Coalgebra.Comodule.MonoidAlgebra.Basic
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Transport
@@ -25,6 +26,12 @@ subcomodule equivariant: decompose a vector into its weights, apply the projecti
 each weight, and project the result back to that weight. The resulting idempotent comodule
 endomorphism has the original subcomodule as its range, so its kernel is an invariant complement.
 
+Complete reducibility also turns a supply of fixed vectors into fixedness of the whole comodule:
+if every nonzero subcomodule of `V` contains a nonzero fixed vector, then a subcomodule
+complement of `TauCeti.Comodule.fixedSubcomodule` can contain no nonzero fixed vector, hence is
+zero, hence every vector of `V` is fixed. Kolchin's theorem supplies such vectors for a unipotent
+group, so this is the step that makes a linearly reductive unipotent group act trivially.
+
 For an abelian group `G`, `k[G]` is the coordinate Hopf algebra of the diagonalizable group
 `D(G)`. Thus every diagonalizable group, and in particular every split torus, is linearly
 reductive over an arbitrary field. This is the diagonalizable direction of the linear-reductivity
@@ -33,6 +40,10 @@ milestone in Layer 6 of the ReductiveGroups roadmap.
 ## Main declarations
 
 * `TauCeti.Comodule.IsCompletelyReducible`: every subcomodule has a subcomodule complement.
+* `TauCeti.Comodule.fixedSubcomodule_eq_top_of_isCompletelyReducible_of_forall_exists_fixed` and
+  `TauCeti.Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_exists_fixed`: a
+  completely reducible comodule all of whose nonzero subcomodules contain nonzero fixed vectors
+  is fixed.
 * `TauCeti.Comodule.isCompletelyReducible_of_orderIso`: transfer complete reducibility across
   compatible order isomorphisms of subcomodules and underlying submodules.
 * `TauCeti.Comodule.isCompletelyReducible_transport_iff`: complete reducibility is invariant
@@ -77,6 +88,40 @@ comodule. -/
 def IsCompletelyReducible : Prop :=
   ∀ W : Subcomodule k C V, ∃ Q : Subcomodule k C V,
     IsCompl W.toSubmodule Q.toSubmodule
+
+variable {k C V}
+
+/-- If `V` is completely reducible and every nonzero subcomodule of `V` contains a nonzero fixed
+vector, then the fixed subcomodule is everything.
+
+A subcomodule complement of the fixed subcomodule meets it trivially, so it contains no nonzero
+fixed vector and is therefore zero. -/
+theorem fixedSubcomodule_eq_top_of_isCompletelyReducible_of_forall_exists_fixed [One C]
+    (hcr : IsCompletelyReducible k C V)
+    (hfix : ∀ N : Subcomodule k C V, N ≠ ⊥ →
+      ∃ v ∈ N, v ≠ 0 ∧ coact (R := k) (C := C) (M := V) v = v ⊗ₜ[k] (1 : C)) :
+    fixedSubcomodule k C V = ⊤ := by
+  obtain ⟨Q, hQ⟩ := hcr (fixedSubcomodule k C V)
+  have hQbot : Q = ⊥ := by
+    by_contra hne
+    obtain ⟨v, hvQ, hv0, hvc⟩ := hfix Q hne
+    have hmem : v ∈ (fixedSubcomodule k C V).toSubmodule ⊓ Q.toSubmodule :=
+      ⟨mem_fixedSubcomodule.mpr hvc, hvQ⟩
+    rw [hQ.inf_eq_bot, Submodule.mem_bot] at hmem
+    exact hv0 hmem
+  have hsup := hQ.sup_eq_top
+  rw [hQbot, Subcomodule.bot_toSubmodule, sup_bot_eq] at hsup
+  exact Subcomodule.toSubmodule_eq_top.mp hsup
+
+/-- The vectorwise form of
+`TauCeti.Comodule.fixedSubcomodule_eq_top_of_isCompletelyReducible_of_forall_exists_fixed`. -/
+theorem coact_eq_tmul_one_of_isCompletelyReducible_of_forall_exists_fixed [One C]
+    (hcr : IsCompletelyReducible k C V)
+    (hfix : ∀ N : Subcomodule k C V, N ≠ ⊥ →
+      ∃ v ∈ N, v ≠ 0 ∧ coact (R := k) (C := C) (M := V) v = v ⊗ₜ[k] (1 : C))
+    (v : V) : coact (R := k) (C := C) (M := V) v = v ⊗ₜ[k] (1 : C) :=
+  fixedSubcomodule_eq_top_iff.mp
+    (fixedSubcomodule_eq_top_of_isCompletelyReducible_of_forall_exists_fixed hcr hfix) v
 
 end Comodule
 

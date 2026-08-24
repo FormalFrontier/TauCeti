@@ -20,9 +20,9 @@ construction works on any real normed domain with measurable opens and a measure
 sets. Its intrinsic weak-derivative characterization additionally needs local finiteness, while
 finite dimensionality is needed only for extensionality via uniqueness of weak derivatives.
 
-The construction is independent of the order of differentiation. It is instantiated by `W2p`
-with the weak gradient and by `W3p` with the weak Hessian, whose projections, constructor,
-norm bounds and completeness are specializations of the ones proved here.
+The construction is independent of the order of differentiation. It is iterated by `Wkp`,
+which starts from the weak gradient and adjoins one weak derivative per order; the projections,
+constructors, norm bounds, and completeness there specialize the results proved here.
 
 The graph carries the Euclidean (`WithLp 2`) product norm
 

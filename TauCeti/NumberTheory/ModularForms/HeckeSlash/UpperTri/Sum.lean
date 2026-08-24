@@ -79,6 +79,12 @@ lemma heckeSlashUpperTri_apply (f : ℍ → ℂ) (τ : ℍ) :
     heckeSlashUpperTri k p f τ = ∑ b : Fin p, (f ∣[k] upperTriRep p b) τ := by
   rw [heckeSlashUpperTri_def, Finset.sum_apply]
 
+/-- At index one the upper-triangular sum is the identity: its unique representative is the
+identity matrix. -/
+@[simp] lemma heckeSlashUpperTri_one (f : ℍ → ℂ) : heckeSlashUpperTri k 1 f = f := by
+  rw [heckeSlashUpperTri_def]
+  simp
+
 /-- The sum sends the zero function to zero. -/
 @[simp] lemma heckeSlashUpperTri_zero : heckeSlashUpperTri k p 0 = 0 := by
   rw [heckeSlashUpperTri]

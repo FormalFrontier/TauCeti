@@ -37,9 +37,9 @@ Ported from the AINTLIB `LeanModularForms` project
 
 ## Main results
 
-* `HeckeRing.GL2.Gamma0Image_le_SLnZ`: `Γ₀(N) ≤ SL₂(ℤ)` inside `GL₂(ℚ)`.
-* `HeckeRing.GL2.doubleCoset_Gamma0Image_le_doubleCoset_SLnZ`: `Γ₀(N) α Γ₀(N) ⊆ Γ α Γ`.
-* `HeckeRing.GL2.doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0Image`: the equality above.
+* `HeckeRing.GL2.Gamma0_map_le_SLnZ`: `Γ₀(N) ≤ SL₂(ℤ)` inside `GL₂(ℚ)`.
+* `HeckeRing.GL2.doubleCoset_Gamma0_map_le_doubleCoset_SLnZ`: `Γ₀(N) α Γ₀(N) ⊆ Γ α Γ`.
+* `HeckeRing.GL2.doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0_map`: the equality above.
 
 ## References
 
@@ -58,19 +58,24 @@ namespace HeckeRing.GL2
 variable (N : ℕ)
 
 /-- `Γ₀(N) ≤ SL₂(ℤ)` as subgroups of `GL₂(ℚ)`: the image of any integral matrix of determinant
-one lies in the range of `mapGL`. -/
-lemma Gamma0Image_le_SLnZ : Gamma0Image N ≤ SLnZ 2 := by
+one lies in the range of `mapGL`.
+
+Stated at the unfolded `(Gamma0 N).map (mapGL ℚ)` so the coset layer can use it directly: the
+`HeckeCoset` types of `CosetMap.lean` are spelled that way, and transporting a folded
+containment along `Gamma0Image_def` at each use site would hide the canonical form. -/
+lemma Gamma0_map_le_SLnZ : (Gamma0 N).map (mapGL ℚ) ≤ SLnZ 2 := by
+  rw [← Gamma0Image_def N]
   intro g hg
   obtain ⟨σ, -, rfl⟩ := (mem_Gamma0Image_iff N).mp hg
   exact (mem_SLnZ_iff 2).mpr ⟨σ, rfl⟩
 
 /-- `Γ₀(N) α Γ₀(N) ⊆ Γ α Γ`: immediate from `Γ₀(N) ≤ SL₂(ℤ)`. -/
-lemma doubleCoset_Gamma0Image_le_doubleCoset_SLnZ (α : GL (Fin 2) ℚ) :
-    DoubleCoset.doubleCoset α (Gamma0Image N) (Gamma0Image N) ⊆
+lemma doubleCoset_Gamma0_map_le_doubleCoset_SLnZ (α : GL (Fin 2) ℚ) :
+    DoubleCoset.doubleCoset α ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) ⊆
       DoubleCoset.doubleCoset α (SLnZ 2) (SLnZ 2) := fun _ hx ↦ by
   rw [DoubleCoset.mem_doubleCoset] at hx ⊢
   obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hx_eq⟩ := hx
-  exact ⟨γ₁, Gamma0Image_le_SLnZ N hγ₁, γ₂, Gamma0Image_le_SLnZ N hγ₂, hx_eq⟩
+  exact ⟨γ₁, Gamma0_map_le_SLnZ N hγ₁, γ₂, Gamma0_map_le_SLnZ N hγ₂, hx_eq⟩
 
 /-- If `N ∣ c` and `det` is coprime to `N`, then so is the lower-right entry: modulo `N` the
 determinant is `a * d`, so `d` divides a unit. -/
@@ -114,22 +119,6 @@ private lemma dvd_and_gcd_of_Gamma_mul (τ A : Matrix (Fin 2) (Fin 2) ℤ)
     obtain ⟨k, hk⟩ := hmod
     have hshift : (τ * A) 1 1 = A 1 1 + k * (N : ℤ) := by linarith
     exact hshift ▸ (Int.isCoprime_iff_gcd_eq_one.mpr hA11).add_mul_right_left k
-
-/-- The integral matrix of `τ α δ` is the product of the three integral matrices. -/
-private lemma mapGL_mul_coe_eq_intMatrix (τ δ : SpecialLinearGroup (Fin 2) ℤ)
-    (g : GL (Fin 2) ℚ) (A : Matrix (Fin 2) (Fin 2) ℤ)
-    (hA : (↑g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
-    (↑(mapGL ℚ τ * g * mapGL ℚ δ) : Matrix (Fin 2) (Fin 2) ℚ) =
-      ((τ : Matrix (Fin 2) (Fin 2) ℤ) * A * (δ : Matrix (Fin 2) (Fin 2) ℤ)).map
-        (Int.cast : ℤ → ℚ) := by
-  -- multiplicativity of the entrywise cast is `map_mul` for `(Int.castRingHom ℚ).mapMatrix`
-  have h₁ := map_mul (Int.castRingHom ℚ).mapMatrix
-    ((τ : Matrix (Fin 2) (Fin 2) ℤ) * A) (δ : Matrix (Fin 2) (Fin 2) ℤ)
-  have h₂ := map_mul (Int.castRingHom ℚ).mapMatrix (τ : Matrix (Fin 2) (Fin 2) ℤ) A
-  simp only [RingHom.mapMatrix_apply, Int.coe_castRingHom] at h₁ h₂
-  simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, map_apply_coe,
-    RingHom.mapMatrix_apply, algebraMap_int_eq, Int.coe_castRingHom, hA]
-  rw [h₁, h₂]
 
 /-- The hard inclusion of Lemma 3.29(3): an element `σ₁ α σ₂` of the level-one double coset
 that lies in `Δ₀(N)` already lies in the `Γ₀(N)`-double coset. -/
@@ -181,7 +170,7 @@ private lemma mem_doubleCoset_Gamma0Image_of_mem_Delta0
       hτ10 hτ11 hAN hA11
     have hB_eq : B = (τ_N : Matrix (Fin 2) (Fin 2) ℤ) * A * (γ₂' : Matrix (Fin 2) (Fin 2) ℤ) :=
       Matrix.map_injective Int.cast_injective
-        (hB.symm.trans (hx_eq ▸ mapGL_mul_coe_eq_intMatrix τ_N γ₂' α A hA))
+        (hB.symm.trans (hx_eq ▸ mapGL_mul_coe_eq_intMatrix 2 τ_N γ₂' α A hA))
     rw [Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd]
     exact dvd_apply_one_zero_of_dvd_mul N _ (γ₂' : Matrix (Fin 2) (Fin 2) ℤ)
       (hB_eq ▸ hBN) hCN hC11
@@ -196,12 +185,15 @@ double coset down to `Δ₀(N)` leaves exactly the `Γ₀(N)`-double coset:
 This is the prerequisite for comparing the level-one and `Γ₀(N)` Hecke operators at an index
 coprime to the level, and so for the later multiplicativity of `T_n` on `M_k(Γ₀(N))`; neither
 comparison nor multiplicativity is proved here — this identifies the two double cosets. -/
-theorem doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0Image
+theorem doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0_map
     (α : GL (Fin 2) ℚ) (hα : α ∈ Delta0 N) (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : (↑α : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
     (hdet : Int.gcd A.det N = 1) :
     DoubleCoset.doubleCoset α (SLnZ 2) (SLnZ 2) ∩ (Delta0 N : Set (GL (Fin 2) ℚ)) =
-      DoubleCoset.doubleCoset α (Gamma0Image N) (Gamma0Image N) := by
+      DoubleCoset.doubleCoset α ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) := by
+  -- the conclusion is an equation of *sets*, so the two spellings of `Γ₀(N)` may be exchanged
+  -- by rewriting; the coset *types* of `CosetMap.lean` cannot (see `Gamma0Image_def`)
+  rw [← Gamma0Image_def N]
   obtain ⟨B, hB, -, hBN, -⟩ := (mem_Delta0_iff N).mp hα
   -- `Δ₀(N)` already supplies an integral representative with `N ∣ c`, and `hA` identifies it
   -- with `A`, so the divisibility need not be assumed
@@ -217,7 +209,13 @@ theorem doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0Image
     obtain ⟨σ₂, rfl⟩ := (mem_SLnZ_iff 2).mp hγ₂
     exact mem_doubleCoset_Gamma0Image_of_mem_Delta0 N α A hA hAN hA11 hdet σ₁ σ₂ hx_delta
   · intro hx
-    refine ⟨doubleCoset_Gamma0Image_le_doubleCoset_SLnZ N α hx, ?_⟩
+    -- the goal was folded above to reuse the private folded lemmas, so the unfolded
+    -- containment is folded back once here
+    have hsub : DoubleCoset.doubleCoset α (Gamma0Image N) (Gamma0Image N) ⊆
+        DoubleCoset.doubleCoset α (SLnZ 2) (SLnZ 2) := by
+      rw [Gamma0Image_def N]
+      exact doubleCoset_Gamma0_map_le_doubleCoset_SLnZ N α
+    refine ⟨hsub hx, ?_⟩
     rw [DoubleCoset.mem_doubleCoset] at hx
     obtain ⟨δ₁, hδ₁, δ₂, hδ₂, rfl⟩ := hx
     exact (Delta0 N).mul_mem ((Delta0 N).mul_mem (Gamma0Image_le_Delta0 N hδ₁) hα)

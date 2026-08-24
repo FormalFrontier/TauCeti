@@ -39,6 +39,7 @@ repository has no lemma `H.map weylAut = H`, so that statement is not currently 
 * `TauCeti.map_mem_rootSpace` and `TauCeti.map_rootSpace_eq`: a normalising automorphism carries
   the root space of `χ` onto the root space of `χ ∘ (σ|H)⁻¹`.
 * `TauCeti.weightPerm_neg`: the induced permutation commutes with negation of weights.
+* `TauCeti.weightPerm_eq_neg`: an automorphism acting by `-1` on `H` inverts every weight.
 * `TauCeti.map_coroot_weightPerm`: a normalising automorphism sends the coroot of a root to the
   coroot of the permuted root.
 * `TauCeti.IsSl2System.map`: the family obtained by transporting a normalised system of root
@@ -232,6 +233,37 @@ theorem weightPerm_symm_isNonZero {χ : Weight R H L} (hχ : χ.IsNonZero) :
   fun h => hχ ((weightPerm_symm_isZero_iff σ hσ).mp h)
 
 end WeightPerm
+
+section WeightInversion
+
+variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
+  [LieAlgebra.IsKilling K L] [FiniteDimensional K L]
+  {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [LieModule.IsTriangularizable K H L]
+
+variable (ω : L ≃ₗ⁅K⁆ L) (hω : ∀ y ∈ H, ω y = -y)
+
+omit [CharZero K] in
+include hω in
+/-- **An automorphism acting by `-1` on the Cartan subalgebra inverts every weight.** The induced
+permutation of the weights is negation, so the automorphism carries the root space of `α` onto the
+root space of `-α`. -/
+theorem weightPerm_eq_neg (α : Weight K H L) :
+    weightPerm ω (LieSubalgebra.map_eq_self_of_forall_mem_apply_eq_neg ω hω) α = -α := by
+  have hsymm : ∀ y : H, ω.symm (y : L) = -(y : L) := by
+    intro y
+    have h₁ : ω (-(y : L)) = (y : L) := by rw [hω _ (neg_mem y.2), neg_neg]
+    calc ω.symm (y : L) = ω.symm (ω (-(y : L))) := by rw [h₁]
+      _ = -(y : L) := ω.symm_apply_apply _
+  ext y
+  have hy :
+      (ω.ofSubalgebras H H (LieSubalgebra.map_eq_self_of_forall_mem_apply_eq_neg ω hω)).symm y =
+        -y := by
+    refine Subtype.ext ?_
+    rw [LieEquiv.ofSubalgebras_symm_apply, hsymm y]
+    simp
+  rw [weightPerm_apply_apply, hy, map_neg, Weight.coe_neg, Pi.neg_apply]
+
+end WeightInversion
 
 section Killing
 

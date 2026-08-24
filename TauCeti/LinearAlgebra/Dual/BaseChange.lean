@@ -21,6 +21,8 @@ on the scalar extension of its domain. For a finite projective module, this map 
 * `TauCeti.Module.Dual.baseChangeEvaluation_one_tmul`: evaluation at a scalar-extended
   functional with coefficient one is its base change.
 * `TauCeti.Module.Dual.baseChangeEvaluation_tmul`: its value on two pure tensors.
+* `Module.Dual.baseChangeEvaluation_one_tmul_baseChange`: naturality of evaluation
+  with respect to a base-changed linear map.
 * `TauCeti.Module.Dual.baseChangeEvaluationEquiv`: scalar extension commutes with the dual of a
   finite projective module.
 * `TauCeti.Module.Dual.baseChange_coord`: base-changed dual basis elements recover the
@@ -71,6 +73,19 @@ theorem baseChangeEvaluation_tmul (a b : A) (φ : Module.Dual R M) (m : M) :
     Module.Dual.baseChange_apply_tmul, Algebra.smul_def]
   rw [Algebra.algebraMap_self_apply]
   ac_rfl
+
+/-- Evaluation against a base-changed functional is natural with respect to the base change of
+a linear map. -/
+@[simp]
+theorem _root_.Module.Dual.baseChangeEvaluation_one_tmul_baseChange
+    {N : Type*} [AddCommMonoid N] [Module R N]
+    (f : M →ₗ[R] N) (φ : Module.Dual R N) (t : A ⊗[R] M) :
+    baseChangeEvaluation (R := R) (M := N) (A := A) (1 ⊗ₜ[R] φ) (f.baseChange A t) =
+      baseChangeEvaluation (R := R) (M := M) (A := A) (1 ⊗ₜ[R] (φ.comp f)) t := by
+  induction t using TensorProduct.induction_on with
+  | zero => simp
+  | add s t hs ht => simpa only [map_add] using congrArg₂ (· + ·) hs ht
+  | tmul a m => simp [baseChangeEvaluation_tmul]
 
 section FiniteProjective
 

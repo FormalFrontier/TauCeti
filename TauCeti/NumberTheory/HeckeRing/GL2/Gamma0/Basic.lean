@@ -44,6 +44,9 @@ The Γ₀ pair corresponds to the AINTLIB
 * `HeckeRing.GL2.Gamma0Image_le_Delta0`: `Γ₀(N) ≤ Δ₀(N)`.
 * `HeckeRing.GL2.Delta0_le_commensurator_Gamma0Image`: `Δ₀(N)` lies in the commensurator of
   `Γ₀(N)`.
+* `HeckeRing.GL2.out_mem_glpos_of_delta0`: the chosen representative of a double coset of
+  `Δ₀(N)` has positive determinant, for *any* pair of flanking subgroups — the positivity
+  hypothesis every level's Hecke operators carry.
 * the `IsHeckeTriple (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))`
   instance, stated in the unfolded spelling that the modular-form side uses.
 
@@ -73,6 +76,12 @@ noncomputable def Gamma0Image : Subgroup (GL (Fin 2) ℚ) :=
     g ∈ Gamma0Image N ↔ ∃ σ ∈ Gamma0 N, mapGL ℚ σ = g := by
   rw [Gamma0Image, Subgroup.mem_map]
 
+/-- `Gamma0Image N` unfolded. Stated here, in the file where the definition lives, because
+downstream modules cannot see through the `def`: without this lemma a containment proved for
+`Gamma0Image N` cannot be reused where `(Gamma0 N).map (mapGL ℚ)` is expected. -/
+lemma Gamma0Image_def : Gamma0Image N = (Gamma0 N).map (mapGL ℚ) := by
+  rw [Gamma0Image]
+
 /-- `Γ₀(N) ≤ Δ₀(N)`: an element of `Γ₀(N)` has `ad ≡ 1` modulo `N`, since `c ≡ 0` and the
 determinant is one, so its upper-left entry is a unit — which is exactly what `Δ₀(N)` asks.
 This containment is also what puts the diamond operators into the Hecke ring of `Γ₁(N)`. -/
@@ -85,6 +94,27 @@ lemma Gamma0Image_le_Delta0 : (Gamma0Image N).toSubmonoid ≤ Delta0 N := by
   · rw [mapGL_coe_matrix, (SpecialLinearGroup.map (algebraMap ℤ ℚ) σ).prop]
     exact one_pos
   · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hσ)
+
+/-- `Γ₀(N)` lands in `Δ₀(N)`: its elements are integral of determinant one, with lower-left
+entry divisible by `N` and upper-left entry a unit because `ad ≡ 1`. -/
+lemma mapGL_mem_Delta0 (γ : Gamma0 N) :
+    (mapGL ℚ (γ : SL(2, ℤ)) : GL (Fin 2) ℚ) ∈ Delta0 N :=
+  Gamma0Image_le_Delta0 N ((mem_Gamma0Image_iff N).mpr ⟨(γ : SL(2, ℤ)), γ.2, rfl⟩)
+
+/-- The chosen representative of a double coset of `Δ₀(N)` has positive determinant, whatever the
+two flanking subgroups: `Δ₀(N)` consists of integral matrices of positive determinant. This is the
+positivity hypothesis the Hecke operators on modular forms of level `N` carry, discharged once for
+this semigroup.
+
+Nothing here mentions `Γ₀(N)`: the lemma is about `Δ₀(N)` and is generic in both flanks. It sits
+in this file because this is the earliest point where `Δ₀(N)` and the double-coset API are both in
+scope, so every level — `Γ₀(N)`, `Γ₁(N)`, and any other flank — reaches it without importing a
+sibling level's file. It is stated above the `[NeZero N]` variable deliberately: the proof never
+needs `N` to be nonzero. -/
+lemma out_mem_glpos_of_delta0 {Γ₁ Γ₂ : Subgroup (GL (Fin 2) ℚ)}
+    (D : HeckeCoset (Delta0 N) Γ₁ Γ₂) :
+    (D.out : GL (Fin 2) ℚ) ∈ Matrix.GLPos (Fin 2) ℚ :=
+  posDetInt_le_glpos 2 (Delta0_le_posDetInt N D.out.2)
 
 variable [NeZero N]
 

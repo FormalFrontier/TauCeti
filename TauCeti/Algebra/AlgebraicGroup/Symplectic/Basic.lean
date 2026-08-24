@@ -10,6 +10,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # The symplectic subgroup scheme of `GL₂ₘ`
@@ -85,7 +86,7 @@ open CategoryTheory Matrix WithConv
 
 namespace TauCeti.Symplectic
 
-universe u w
+universe u v w
 
 variable (R : Type u) [CommRing R] (m : ℕ)
 
@@ -342,6 +343,15 @@ noncomputable def coordinateMap :
   CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R (m + m))
     (definingHopfIdeal R m)
 
+/-- The symplectic coordinate map is the canonical quotient morphism by the defining Hopf
+ideal. -/
+theorem coordinateMap_def :
+    coordinateMap R m =
+      CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R (m + m))
+        (definingHopfIdeal R m) := by
+  unfold coordinateMap
+  rfl
+
 /-- The symplectic coordinate morphism sends an ambient coordinate to its quotient class. -/
 theorem coordinateMap_apply (h : GeneralLinear.coordinateHopfAlgebra R (m + m)) :
     (coordinateMap R m).hom h =
@@ -364,6 +374,15 @@ noncomputable def groupScheme :=
   CommHopfAlgCat.quotientSpec (GeneralLinear.coordinateHopfAlgebra R (m + m))
     (definingHopfIdeal R m)
 
+/-- The symplectic group scheme is the quotient spectrum of its coordinate Hopf algebra. -/
+theorem groupScheme_def :
+    groupScheme R m =
+      CommHopfAlgCat.quotientSpec (GeneralLinear.coordinateHopfAlgebra R (m + m))
+        (definingHopfIdeal R m) := by
+  unfold groupScheme
+  rfl
+
+/-- The quotient-spectrum inclusion into the Hopf spectrum of the ambient coordinate algebra. -/
 private noncomputable def groupSchemeι :=
   CommHopfAlgCat.quotientSpecι (GeneralLinear.coordinateHopfAlgebra R (m + m))
     (definingHopfIdeal R m)
@@ -371,7 +390,19 @@ private noncomputable def groupSchemeι :=
 /-- The closed-subgroup inclusion from the symplectic subgroup scheme into the named general
 linear group scheme. -/
 noncomputable def inclusion : groupScheme R m ⟶ GeneralLinear.groupScheme R (m + m) :=
-  groupSchemeι R m ≫ (eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom
+  eqToHom (groupScheme_def R m) ≫ groupSchemeι R m ≫
+    (eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom
+
+/-- The symplectic inclusion is the relative spectrum of the quotient coordinate map, followed
+by transport to the named general-linear presentation. -/
+theorem inclusion_def :
+    inclusion R m =
+      eqToHom (groupScheme_def R m) ≫
+        CommHopfAlgCat.quotientSpecι
+          (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m) ≫
+        (eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom := by
+  unfold inclusion groupSchemeι
+  rfl
 
 private theorem inclusion_hom_left :
     (inclusion R m).hom.hom.left =
@@ -390,15 +421,10 @@ instance isClosedImmersion_inclusion :
   let c := (CommHopfAlgCat.quotientSpecι
     (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)).hom.hom.left
   let e₂ := ((eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm).hom).hom.hom.left
-  have he₂ : IsIso e₂ :=
-    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (GeneralLinear.groupScheme_def R (m + m)).symm))).isIso_hom
   have hc : AlgebraicGeometry.IsClosedImmersion c := by
     infer_instance
   have hc₂ : AlgebraicGeometry.IsClosedImmersion (c ≫ e₂) :=
-    (@MorphismProperty.cancel_right_of_respectsIso
-      _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ c e₂ he₂).2 hc
+    (MorphismProperty.cancel_right_of_respectsIso _ c e₂).2 hc
   rw [inclusion_hom_left]
   exact hc₂
 
@@ -564,6 +590,18 @@ theorem pointsMulEquiv_coe
     (fun g => (pointsSubgroupToGLSymplecticFin R m g : GLSymplecticFin m A).1)
     hcomponent.symm
 
+/-- Mapping a symplectic point along the quotient coordinate morphism gives its ambient
+general-linear point. -/
+theorem mapPointsFunctor_coordinateMap_app
+    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R m)
+      (CommAlgCat.of R A)) :
+    (CommHopfAlgCat.mapPointsFunctor (coordinateMap R m)).app (CommAlgCat.of R A) f =
+      CommHopfAlgCat.quotientPointsHom
+        (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)
+        (CommAlgCat.of R A) f := by
+  apply WithConv.ext
+  rfl
+
 /-- The ambient point attached to a symplectic matrix is the general-linear point attached to
 its ordinary inclusion. -/
 @[simp]
@@ -574,6 +612,36 @@ theorem quotientPointsHom_pointsMulEquiv_symm (g : GLSymplecticFin m A) :
       (GeneralLinear.pointsMulEquiv (R := R) (A := A) (m + m)).symm g.1 := by
   apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) (m + m)).injective
   rw [pointsMulEquiv_coe, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
+
+variable {B : Type v} [CommRing B] [Algebra R B]
+
+/-- The symplectic point equivalence is natural in the value algebra: postcomposition of Hopf
+points agrees with entrywise mapping of symplectic matrices. -/
+theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
+    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R m)
+      (CommAlgCat.of R A)) :
+    pointsMulEquiv (R := R) (A := B) m
+        (AlgHom.mapValue (H := coordinateHopfAlgebra R m) phi f) =
+      GLSymplecticFin.map m A phi.toRingHom
+        (pointsMulEquiv (R := R) (A := A) m f) := by
+  apply Subtype.ext
+  have hcoe_lhs := pointsMulEquiv_coe (R := R) (A := B) m
+    (AlgHom.mapValue (H := coordinateHopfAlgebra R m) phi f)
+  have hcoe_rhs := pointsMulEquiv_coe (R := R) (A := A) m f
+  have hnatural :
+      CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)
+          (CommAlgCat.of R B) (AlgHom.mapValue phi f) =
+        AlgHom.mapValue phi
+          (CommHopfAlgCat.quotientPointsHom
+            (GeneralLinear.coordinateHopfAlgebra R (m + m)) (definingHopfIdeal R m)
+            (CommAlgCat.of R A) f) := by
+    apply WithConv.ext
+    ext h
+    -- After extensionality, both sides apply `phi` after `f` and the canonical quotient map.
+    rfl
+  rw [← hcoe_lhs, hnatural,
+    GeneralLinear.pointsMulEquiv_mapValue, hcoe_rhs, GLSymplecticFin.coe_map]
 
 /-- The points identification, read in `Fin m ⊕ Fin m` coordinates: the points of the symplectic
 coordinate Hopf algebra are `TauCeti.GLSymplectic (Fin m) A`. -/
