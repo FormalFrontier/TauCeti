@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.Algebraic.Integral
 public import TauCeti.AlgebraicGeometry.WeilDivisor.LinearSystem.Basic
 public import TauCeti.FieldTheory.IntermediateField.Adjoin.Inv
+public import TauCeti.FieldTheory.IntermediateField.Adjoin.Transcendental
 public import TauCeti.FieldTheory.FunctionField.AffineModel.Place
 public import TauCeti.FieldTheory.FunctionField.Divisor.Principal
 public import TauCeti.FieldTheory.FunctionField.RiemannRoch.Principal
@@ -50,22 +51,6 @@ open AlgebraicGeometry
 open scoped IntermediateField.algebraAdjoinAdjoin
 
 variable {k F : Type*} [Field k] [Field F] [Algebra k F]
-
-/-- The powers of a transcendental element are linearly independent over the base field. -/
-private theorem linearIndependent_powers (hx : Transcendental k (x : F)) :
-    LinearIndependent k fun n : ℕ ↦ x ^ n := by
-  have hpow (n : ℕ) : ((Algebra.lmul k F x) ^ n) 1 = x ^ n := by
-    rw [← map_pow]
-    simp [Algebra.coe_lmul_eq_mul]
-  have h := (Polynomial.linearIndependent_powers_iff_aeval (Algebra.lmul k F x) 1).mpr
-    (fun p hp ↦ (transcendental_iff.mp hx) p (by
-      have happly : (Polynomial.aeval (Algebra.lmul k F x) p) 1 =
-          (Algebra.lmul k F (Polynomial.aeval x p)) 1 :=
-        congrArg (fun f : Module.End k F ↦ f 1)
-          (Polynomial.aeval_algHom_apply (Algebra.lmul k F) x p)
-      rw [hp] at happly
-      simpa [Algebra.coe_lmul_eq_mul] using happly.symm))
-  simpa only [hpow] using h
 
 /-- A coefficient of an effective function-field divisor is at most its degree. -/
 private theorem coeff_le_degree_of_effective (hF : IsFunctionField k F) {D : Divisor k F}
@@ -134,22 +119,13 @@ private theorem card_mul_succ_le_dim_smul_poles (hF : IsFunctionField k F) {x : 
       Divisor.dim (((C + n : ℕ) : ℤ) • Divisor.poles hF (Units.mk0 x hx0)) := by
   classical
   let B : Divisor k F := Divisor.poles hF (Units.mk0 x hx0)
-  let a : Fin (n + 1) → k⟮x⟯ := fun j ↦ ⟨x ^ (j : ℕ), by
-    simpa using IntermediateField.pow_mem k⟮x⟯
-      (IntermediateField.mem_adjoin_simple_self k x) (j : ℕ)⟩
-  have haF : LinearIndependent k fun j : Fin (n + 1) ↦ x ^ (j : ℕ) :=
-    (linearIndependent_powers hx).comp _ Fin.val_injective
-  have ha : LinearIndependent k a := by
-    rw [Fintype.linearIndependent_iff] at haF ⊢
-    intro d hd j
-    apply haF d _ j
-    have hdF := congrArg (fun z : k⟮x⟯ ↦ (z : F)) hd
-    simpa [a] using hdF
   have hfamily : LinearIndependent k fun p : ι × Fin (n + 1) ↦ c p.1 * x ^ (p.2 : ℕ) := by
-    simpa only [a, Algebra.smul_def, IntermediateField.algebraMap_apply, mul_comm] using
-      (linearIndependent_equiv' (Equiv.prodComm ι (Fin (n + 1)))
-        (g := fun p : ι × Fin (n + 1) ↦ a p.2 • c p.1) rfl).mpr
-        (linearIndependent_smul ha hcLI)
+    have h := (linearIndependent_mul_pow_of_transcendental hx hcLI).comp
+      (fun p : ι × Fin (n + 1) ↦ (p.1, (p.2 : ℕ)))
+      (fun p q hpq ↦ by
+        simp only [Prod.mk.injEq, Fin.val_inj] at hpq
+        exact Prod.ext hpq.1 hpq.2)
+    simpa [Function.comp_def] using h
   let E : Divisor k F := (((C + n : ℕ) : ℤ) • B)
   have hmem (p : ι × Fin (n + 1)) : c p.1 * x ^ (p.2 : ℕ) ∈ riemannRochSpace E := by
     have hc0 := hcLI.ne_zero p.1
