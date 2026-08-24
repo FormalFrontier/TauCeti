@@ -66,25 +66,6 @@ private theorem linearIndependent_powers (hx : Transcendental k (x : F)) :
       simpa [Algebra.coe_lmul_eq_mul] using happly.symm))
   simpa only [hpow] using h
 
-/-- Multiplying independent families in the two stages of a scalar tower preserves linear
-independence over the bottom field. -/
-private theorem linearIndependent_smul_tower {K : Type*} [Field K] [Algebra k K] [Algebra K F]
-    [IsScalarTower k K F] {I J : Type*} [Finite I] [Finite J] {a : I → K} {b : J → F}
-    (ha : LinearIndependent k a) (hb : LinearIndependent K b) :
-    LinearIndependent k fun p : J × I ↦ a p.2 • b p.1 := by
-  let _ := Fintype.ofFinite I
-  let _ := Fintype.ofFinite J
-  rw [Fintype.linearIndependent_iff]
-  intro c hc p
-  have hgroup : ∑ i : J, (∑ j : I, algebraMap k K (c (i, j)) * a j) • b i = 0 := by
-    rw [Fintype.sum_prod_type] at hc
-    simpa only [Finset.sum_smul, Algebra.smul_def, map_sum, map_mul,
-      IsScalarTower.algebraMap_apply k K F, Finset.sum_mul, mul_assoc] using hc
-  have hi : ∑ j : I, algebraMap k K (c (p.1, j)) * a j = 0 :=
-    Fintype.linearIndependent_iff.mp hb _ hgroup p.1
-  exact Fintype.linearIndependent_iff.mp ha (fun j ↦ c (p.1, j)) (by
-    simpa only [Algebra.smul_def] using hi) p.2
-
 /-- A coefficient of an effective function-field divisor is at most its degree. -/
 private theorem coeff_le_degree_of_effective (hF : IsFunctionField k F) {D : Divisor k F}
     (hD : 0 ≤ D) (P : Place k F) : D.coeff P ≤ Divisor.degree D := by
@@ -165,7 +146,9 @@ private theorem card_mul_succ_le_dim_smul_poles (hF : IsFunctionField k F) {x : 
     simpa [a] using hdF
   have hfamily : LinearIndependent k fun p : ι × Fin (n + 1) ↦ c p.1 * x ^ (p.2 : ℕ) := by
     simpa only [a, Algebra.smul_def, IntermediateField.algebraMap_apply, mul_comm] using
-      linearIndependent_smul_tower ha hcLI
+      (linearIndependent_equiv' (Equiv.prodComm ι (Fin (n + 1)))
+        (g := fun p : ι × Fin (n + 1) ↦ a p.2 • c p.1) rfl).mpr
+        (linearIndependent_smul ha hcLI)
   let E : Divisor k F := (((C + n : ℕ) : ℤ) • B)
   have hmem (p : ι × Fin (n + 1)) : c p.1 * x ^ (p.2 : ℕ) ∈ riemannRochSpace E := by
     have hc0 := hcLI.ne_zero p.1
