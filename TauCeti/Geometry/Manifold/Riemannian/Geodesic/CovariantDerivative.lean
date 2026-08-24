@@ -16,15 +16,16 @@ connection of the supplied Riemannian bundle instance.  The connection is delibe
 explicit argument: this is the metric convention the geodesic and exponential-map API will use.
 
 For a curve `γ : ℝ → M` and a tangent field `V : ∀ t, TangentSpace I (γ t)`,
-`covariantDerivativeAlong γ V t` is the tangent vector `D V / dt` at `γ t`.  Its defining formula
-and all of its laws are those of `CovariantDerivative.alongCurve`, reached through
-`TauCeti.Manifold.covariantDerivativeAlong_def`.
+`covariantDerivativeAlongWithin γ V s t` is the tangent vector `D V / dt` within `s` at `γ t`.
+The unrestricted `covariantDerivativeAlong γ V t` is its `s = Set.univ` specialization.  Their
+defining formulas and laws are those of `CovariantDerivative.alongCurveWithin` and
+`CovariantDerivative.alongCurve`.
 
 ## Main definitions and results
 
-* `TauCeti.Manifold.covariantDerivativeAlong`: covariant differentiation along a curve for the
-  canonical Levi-Civita connection, with
-  `TauCeti.Manifold.covariantDerivativeAlong_def` identifying it with the generic construction.
+* `TauCeti.Manifold.covariantDerivativeAlongWithin`: covariant differentiation within a parameter
+  set for the canonical Levi-Civita connection.
+* `TauCeti.Manifold.covariantDerivativeAlong`: its unrestricted specialization.
 
 ## References
 
@@ -51,12 +52,32 @@ variable
 
 variable (γ : ℝ → M) (V : ∀ t, TangentSpace I (γ t))
 
+/-- The Levi-Civita covariant derivative of a tangent field `V` along a curve `γ` within a
+parameter set `s`: the generic restricted derivative for the canonical Levi-Civita connection. -/
+def covariantDerivativeAlongWithin (s : Set ℝ) (t : ℝ) : TangentSpace I (γ t) :=
+  CovariantDerivative.alongCurveWithin
+    (CovariantDerivative.leviCivita I M) γ V s t
+
+/-- The canonical along-curve derivative within a set is the generic restricted construction for
+the Levi-Civita connection. -/
+theorem covariantDerivativeAlongWithin_def (s : Set ℝ) (t : ℝ) :
+    covariantDerivativeAlongWithin γ V s t =
+      CovariantDerivative.alongCurveWithin
+        (CovariantDerivative.leviCivita I M) γ V s t :=
+  (rfl)
+
 /-- The Levi-Civita covariant derivative of a tangent field `V` along a curve `γ`: the generic
 along-curve derivative `CovariantDerivative.alongCurve` for the canonical Levi-Civita connection,
 and so with the same junk values and the same fixed local frame. -/
 def covariantDerivativeAlong (t : ℝ) : TangentSpace I (γ t) :=
-  CovariantDerivative.alongCurve
-    (CovariantDerivative.leviCivita I M) γ V t
+  covariantDerivativeAlongWithin γ V Set.univ t
+
+/-- Restricting the canonical along-curve derivative to the whole parameter space gives the
+unrestricted derivative. -/
+@[simp]
+theorem covariantDerivativeAlongWithin_univ (t : ℝ) :
+    covariantDerivativeAlongWithin γ V Set.univ t = covariantDerivativeAlong γ V t :=
+  (rfl)
 
 /-- The canonical along-curve derivative is the generic construction for the Levi-Civita
 connection. -/
@@ -64,6 +85,7 @@ theorem covariantDerivativeAlong_def (t : ℝ) :
     covariantDerivativeAlong γ V t =
       CovariantDerivative.alongCurve
         (CovariantDerivative.leviCivita I M) γ V t :=
-  (rfl)
+  CovariantDerivative.alongCurveWithin_univ
+    (CovariantDerivative.leviCivita I M) γ V t
 
 end TauCeti.Manifold
