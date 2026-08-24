@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.BilinearForm.Squares
+public import TauCeti.LinearAlgebra.Dimension.Sup
 public import TauCeti.RepresentationTheory.CharacterTable.FrobeniusSchur.Basic
 public import TauCeti.RepresentationTheory.Dual
 public import TauCeti.RepresentationTheory.InvariantForm
@@ -125,31 +126,6 @@ namespace TauCeti
 namespace Representation
 
 open LinearMap (BilinForm)
-
-/-! ### Dimension helpers on a space of bilinear forms -/
-
-section Helpers
-
-/-
-The lemma below is stated for an abstract module `W` and applied with `W` given explicitly.
-Leaving `W` to unification at that application makes the elaborator look for an `AddCommGroup`
-structure on a space of linear maps whose `AddCommMonoid` structure is already fixed, which it
-does not find quickly.  The same holds of the Mathlib lemmas `Submodule.eq_of_le_of_finrank_le`,
-`finrank_span_singleton` and `Submodule.one_le_finrank_iff` where they are used below.
--/
-
-/-- Two submodules meeting only in `0` have dimensions adding to at most that of any submodule
-containing them both. -/
-private theorem finrank_add_finrank_le_of_inf_eq_bot {K W : Type*} [Field K] [AddCommGroup W]
-    [Module K W] [FiniteDimensional K W]
-    {S T U : Submodule K W} (hS : S ≤ U) (hT : T ≤ U) (h : S ⊓ T = ⊥) :
-    finrank K S + finrank K T ≤ finrank K U := by
-  have hsup := Submodule.finrank_sup_add_finrank_inf_eq S T
-  rw [h, finrank_bot, add_zero] at hsup
-  rw [← hsup]
-  exact Submodule.finrank_mono (sup_le hS hT)
-
-end Helpers
 
 /-! ### Invariant forms from invariant functionals on the two squares -/
 
