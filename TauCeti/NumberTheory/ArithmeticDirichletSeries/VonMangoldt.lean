@@ -173,14 +173,18 @@ theorem vonMangoldtTransform_apply (χ : MultiplicativeIdealWeight K)
     χ.vonMangoldtTransform A = χ A * IdealArithmeticFunction.vonMangoldt A := by
   rw [vonMangoldtTransform, Pi.mul_apply, toIdealArithmeticFunction_apply]
 
-/-- The weighted von Mangoldt transform vanishes at the unit ideal. -/
-@[simp]
+/-- The weighted von Mangoldt transform vanishes at the unit ideal.
+
+This is a named convenience lemma rather than a simp lemma: the general evaluation rule already
+simplifies this case. -/
 theorem vonMangoldtTransform_one (χ : MultiplicativeIdealWeight K) :
     χ.vonMangoldtTransform 1 = 0 := by
   rw [vonMangoldtTransform_apply, IdealArithmeticFunction.vonMangoldt_one, mul_zero]
 
-/-- The weighted von Mangoldt transform on a positive power of a prime ideal. -/
-@[simp]
+/-- The weighted von Mangoldt transform on a positive power of a prime ideal.
+
+This is a named convenience lemma rather than a simp lemma: the general evaluation rule already
+simplifies this case. -/
 theorem vonMangoldtTransform_apply_prime_pow (χ : MultiplicativeIdealWeight K)
     {P : (Ideal (𝓞 K))⁰} (hP : Prime (P : Ideal (𝓞 K))) {n : ℕ} (hn : 0 < n) :
     χ.vonMangoldtTransform (P ^ n) =
@@ -199,8 +203,10 @@ theorem vonMangoldtTransform_ne_zero_iff (χ : MultiplicativeIdealWeight K)
   rw [vonMangoldtTransform_apply, mul_ne_zero_iff,
     IdealArithmeticFunction.vonMangoldt_ne_zero_iff, χ.apply_ne_zero_iff_isGood, and_comm]
 
-/-- The weighted von Mangoldt transform vanishes exactly away from the good prime powers. -/
-@[simp]
+/-- The weighted von Mangoldt transform vanishes exactly away from the good prime powers.
+
+This is not a simp lemma because the general evaluation rule normalizes its left-hand side to a
+condition on `χ A` and prime-power support. -/
 theorem vonMangoldtTransform_eq_zero_iff (χ : MultiplicativeIdealWeight K)
     {A : (Ideal (𝓞 K))⁰} :
     χ.vonMangoldtTransform A = 0 ↔
