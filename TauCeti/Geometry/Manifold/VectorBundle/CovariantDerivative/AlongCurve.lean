@@ -97,6 +97,7 @@ theorem tangentFieldCoord_apply (x : M) (t : 𝕜) :
   (rfl)
 
 /-- Coordinate reading commutes with pointwise addition of fields along a curve. -/
+@[simp]
 theorem tangentFieldCoord_add (W : ∀ t, TangentSpace I (γ t)) (x : M) :
     tangentFieldCoord γ (fun t ↦ V t + W t) x =
       tangentFieldCoord γ V x + tangentFieldCoord γ W x := by
@@ -104,6 +105,7 @@ theorem tangentFieldCoord_add (W : ∀ t, TangentSpace I (γ t)) (x : M) :
   exact map_add _ _ _
 
 /-- Coordinate reading commutes with pointwise scalar multiplication of a field along a curve. -/
+@[simp]
 theorem tangentFieldCoord_smul (f : 𝕜 → 𝕜) (x : M) :
     tangentFieldCoord γ (fun t ↦ f t • V t) x = f • tangentFieldCoord γ V x := by
   funext t
@@ -118,6 +120,7 @@ theorem tangentFieldCoord_zero (x : M) :
 
 /-- The coordinate reading of a reparametrized tangent field is the composition of its reading
 with the reparametrizing function. -/
+@[simp]
 theorem tangentFieldCoord_comp (φ : 𝕜 → 𝕜) (x : M) :
     tangentFieldCoord (γ ∘ φ) (fun t ↦ V (φ t)) x = tangentFieldCoord γ V x ∘ φ := by
   ext t
