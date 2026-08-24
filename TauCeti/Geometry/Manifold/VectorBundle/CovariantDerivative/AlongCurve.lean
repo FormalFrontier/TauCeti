@@ -5,20 +5,21 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Geometry.Manifold.ContMDiff.Chart
 public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.LocalFrame
 public import Mathlib.Analysis.Calculus.Deriv.Add
 public import Mathlib.Analysis.Calculus.Deriv.Comp
 public import Mathlib.Analysis.Calculus.Deriv.Mul
-public import Mathlib.Geometry.Manifold.MFDeriv.Atlas
 public import Mathlib.Geometry.Manifold.VectorBundle.MDifferentiable
 
 /-!
-# Covariant differentiation along a curve
+# A moving-chart formula for covariant differentiation along a curve
 
-This file constructs the covariant derivative of a tangent field along a curve.  At a parameter
-`t`, both the curve and the field are read in the tangent-bundle trivialization coming from the
-chart centred at the current point `γ t`.  If `u` and `v` are those coordinate readings and `Γ`
-is the Christoffel map of the connection in that frame, the defining formula is
+This file constructs a moving-chart candidate for the covariant derivative of a tangent field
+along a curve.  At a parameter `t`, both the curve and the field are read in the tangent-bundle
+trivialization coming from the chart centred at the current point `γ t`.  If `u` and `v` are those
+coordinate readings and `Γ` is the Christoffel map of the connection in that frame, the defining
+formula is
 
 `D V / dt = v' + Γ(v, u')`.
 
@@ -126,23 +127,7 @@ theorem tangentFieldCoord_comp (φ : 𝕜 → 𝕜) (x : M) :
   ext t
   simp only [tangentFieldCoord_apply, Function.comp_apply]
 
-/-! ### Differentiability of the coordinate readings -/
-
-/-- A curve differentiable within `s` at `t` in the manifold sense reads as a differentiable
-model-space curve in any extended chart whose source contains `γ t`. -/
-theorem differentiableWithinAt_extChartAt_comp {s : Set 𝕜} {x : M} {t : 𝕜}
-    (hγ : MDifferentiableWithinAt 𝓘(𝕜, 𝕜) I γ s t)
-    (hx : γ t ∈ (chartAt H x).source) :
-    DifferentiableWithinAt 𝕜 (extChartAt I x ∘ γ) s t :=
-  ((mdifferentiableAt_extChartAt hx).comp_mdifferentiableWithinAt t hγ).differentiableWithinAt
-
-/-- A curve differentiable at `t` in the manifold sense reads as a differentiable model-space
-curve in any extended chart whose source contains `γ t`. -/
-theorem differentiableAt_extChartAt_comp {x : M} {t : 𝕜}
-    (hγ : MDifferentiableAt 𝓘(𝕜, 𝕜) I γ t) (hx : γ t ∈ (chartAt H x).source) :
-    DifferentiableAt 𝕜 (extChartAt I x ∘ γ) t := by
-  rw [← differentiableWithinAt_univ]
-  exact differentiableWithinAt_extChartAt_comp γ hγ.mdifferentiableWithinAt hx
+/-! ### Differentiability of the field coordinate reading -/
 
 /-- A tangent field along a curve which is differentiable within `s` at `t` as a map into the
 tangent bundle has a differentiable coordinate reading in any trivialization containing `γ t`. -/
@@ -192,15 +177,15 @@ variable
 variable (cov : _root_.CovariantDerivative I E (fun x : M ↦ TangentSpace I x))
   (γ : 𝕜 → M) (V : ∀ t, TangentSpace I (γ t))
 
-/-- The coordinate covariant derivative of `V` along `γ` in the chart centred at `x`, taken
+/-- The moving-chart coordinate formula for `V` along `γ` in the chart centred at `x`, taken
 within the parameter set `s`: `v' + Γ(v, u')`, where `u = extChartAt I x ∘ γ` and
 `v = tangentFieldCoord γ V x` are the coordinate readings of the curve and the field, their
 derivatives are taken within `s`, and `Γ` is the Christoffel map of `cov` in the local frame of
-the fixed basis `Module.finBasis 𝕜 E`.  The formula represents the covariant derivative when the
-coordinate readings are differentiable within `s` at `t`, `UniqueDiffWithinAt 𝕜 s t` holds, and
-`γ` stays in `(trivializationAt E (TangentSpace I) x).baseSet` near `t` within `s`.  Without these
-conditions, the within derivatives, field reading, or Christoffel map may carry their junk value
-`0`. -/
+the fixed basis `Module.finBasis 𝕜 E`.  This is only a candidate for the covariant derivative until
+its chart independence and agreement with an ambient derivative are established.  When the
+coordinate readings are not differentiable within `s` at `t`, `UniqueDiffWithinAt 𝕜 s t` fails,
+or `γ` does not stay in `(trivializationAt E (TangentSpace I) x).baseSet` near `t` within `s`, its
+components may carry their junk value `0`. -/
 def alongCurveInChartWithin (s : Set 𝕜) (x : M) (t : 𝕜) : E :=
   derivWithin (tangentFieldCoord γ V x) s t +
     christoffelMap (Module.finBasis 𝕜 E)
@@ -216,10 +201,9 @@ theorem alongCurveInChartWithin_apply (s : Set 𝕜) (x : M) (t : 𝕜) :
             (γ t) (tangentFieldCoord γ V x t) (derivWithin (extChartAt I x ∘ γ) s t) :=
   (rfl)
 
-/-- The covariant derivative of `V` along `γ` within the parameter set `s`, computed in the chart
-centred at the current point and transported back from the model space to `TangentSpace I (γ t)`.
-It agrees with the covariant derivative when both coordinate readings are differentiable within
-`s` at `t` and `UniqueDiffWithinAt 𝕜 s t` holds; otherwise it inherits the junk values of
+/-- The moving-chart candidate for the covariant derivative of `V` along `γ` within the parameter
+set `s`, transported from the model space to `TangentSpace I (γ t)`.  Its identification with a
+chart-independent covariant derivative is deferred; it inherits the junk values of
 `alongCurveInChartWithin`.  The Christoffel map is read in the local frame of the fixed basis
 `Module.finBasis 𝕜 E`. -/
 def alongCurveWithin (s : Set 𝕜) (t : 𝕜) : TangentSpace I (γ t) :=
@@ -235,12 +219,9 @@ theorem alongCurveWithin_apply (s : Set 𝕜) (t : 𝕜) :
         (alongCurveInChartWithin cov γ V s (γ t) t) :=
   (rfl)
 
-/-- The coordinate covariant derivative of `V` along `γ` in the chart centred at `x`, with
+/-- The moving-chart coordinate formula for `V` along `γ` in the chart centred at `x`, with
 unrestricted derivatives.  This is the `s = Set.univ` case of `alongCurveInChartWithin`, and
-carries the same fixed local frame.  It represents the covariant derivative when the coordinate
-readings are differentiable at `t` and `γ` stays in
-`(trivializationAt E (TangentSpace I) x).baseSet` near `t`; otherwise the derivatives, field
-reading, or Christoffel map may carry their junk value `0`. -/
+carries the same fixed local frame and possible junk values. -/
 def alongCurveInChart (x : M) (t : 𝕜) : E :=
   alongCurveInChartWithin cov γ V Set.univ x t
 
@@ -261,9 +242,9 @@ theorem alongCurveInChart_apply (x : M) (t : 𝕜) :
   rw [← alongCurveInChartWithin_univ, alongCurveInChartWithin_apply, derivWithin_univ,
     derivWithin_univ]
 
-/-- The covariant derivative of `V` along `γ`, with unrestricted derivatives.  This is the
-`s = Set.univ` case of `alongCurveWithin`, and carries the same junk values and the same fixed
-local frame. -/
+/-- The moving-chart candidate for the covariant derivative of `V` along `γ`, with unrestricted
+derivatives.  This is the `s = Set.univ` case of `alongCurveWithin`, and carries the same junk
+values and the same fixed local frame. -/
 def alongCurve (t : 𝕜) : TangentSpace I (γ t) :=
   alongCurveWithin cov γ V Set.univ t
 

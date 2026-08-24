@@ -9,21 +9,22 @@ public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.AlongCu
 public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.LeviCivita.Existence
 
 /-!
-# The Levi-Civita covariant derivative along a curve
+# The Levi-Civita moving-chart formula along a curve
 
-This file specializes the generic along-curve construction to the canonical Levi-Civita
-connection of the supplied Riemannian bundle instance.  The connection is deliberately not an
-explicit argument: this is the metric convention the geodesic and exponential-map API will use.
+This file specializes the generic moving-chart candidate to the canonical Levi-Civita connection
+of the supplied Riemannian bundle instance.  The connection is deliberately not an explicit
+argument: this is the metric convention the geodesic and exponential-map API will use once the
+candidate is identified with a chart-independent covariant derivative.
 
 For a curve `γ : ℝ → M` and a tangent field `V : ∀ t, TangentSpace I (γ t)`,
-`covariantDerivativeAlongWithin γ V s t` is the tangent vector `D V / dt` within `s` at `γ t`.
-The unrestricted `covariantDerivativeAlong γ V t` is its `s = Set.univ` specialization.  Their
-defining formulas and laws are those of `CovariantDerivative.alongCurveWithin` and
-`CovariantDerivative.alongCurve`.
+`covariantDerivativeAlongWithin γ V s t` is the tangent-space value of the moving-chart formula
+within `s` at `γ t`.  The unrestricted `covariantDerivativeAlong γ V t` is its `s = Set.univ`
+specialization.  Their defining formulas and laws are those of
+`CovariantDerivative.alongCurveWithin` and `CovariantDerivative.alongCurve`.
 
 ## Main definitions and results
 
-* `TauCeti.Manifold.covariantDerivativeAlongWithin`: covariant differentiation within a parameter
+* `TauCeti.Manifold.covariantDerivativeAlongWithin`: the moving-chart candidate within a parameter
   set for the canonical Levi-Civita connection.
 * `TauCeti.Manifold.covariantDerivativeAlong`: its unrestricted specialization.
 
@@ -52,8 +53,8 @@ variable
 
 variable (γ : ℝ → M) (V : ∀ t, TangentSpace I (γ t))
 
-/-- The Levi-Civita covariant derivative of a tangent field `V` along a curve `γ` within a
-parameter set `s`: the generic restricted derivative for the canonical Levi-Civita connection. -/
+/-- The Levi-Civita moving-chart candidate for a tangent field `V` along a curve `γ` within a
+parameter set `s`: the generic restricted formula for the canonical Levi-Civita connection. -/
 def covariantDerivativeAlongWithin (s : Set ℝ) (t : ℝ) : TangentSpace I (γ t) :=
   CovariantDerivative.alongCurveWithin
     (CovariantDerivative.leviCivita I M) γ V s t
@@ -66,9 +67,9 @@ theorem covariantDerivativeAlongWithin_def (s : Set ℝ) (t : ℝ) :
         (CovariantDerivative.leviCivita I M) γ V s t :=
   (rfl)
 
-/-- The Levi-Civita covariant derivative of a tangent field `V` along a curve `γ`: the generic
-along-curve derivative `CovariantDerivative.alongCurve` for the canonical Levi-Civita connection,
-and so with the same junk values and the same fixed local frame. -/
+/-- The Levi-Civita moving-chart candidate for a tangent field `V` along a curve `γ`: the generic
+formula `CovariantDerivative.alongCurve` for the canonical Levi-Civita connection, and so with the
+same junk values and the same fixed local frame. -/
 def covariantDerivativeAlong (t : ℝ) : TangentSpace I (γ t) :=
   covariantDerivativeAlongWithin γ V Set.univ t
 
