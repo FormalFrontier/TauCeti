@@ -72,12 +72,18 @@ attribute [local instance] GeneralLinear.standardComodule standardComodule
 the coordinate factor. -/
 @[simp]
 theorem standardComodule_coact :
-    (standardComodule R n).coact =
-      TensorProduct.map LinearMap.id (coordinateMap R n).hom.toLinearMap ∘ₗ
+    Comodule.corestrictCoact
+        (R := R) (C := GeneralLinear.coordinateHopfAlgebra R n)
+        (D := coordinateHopfAlgebra R n) (M := Fin n → R)
+        (Bialgebra.Quotient.mkBialgHom (R := R)
+          (definingHopfIdeal R n).toIdeal).toCoalgHom =
+      TensorProduct.map LinearMap.id
+          (Bialgebra.Quotient.mkBialgHom (R := R)
+            (definingHopfIdeal R n).toIdeal).toLinearMap ∘ₗ
         GeneralLinear.standardCoact R n := by
   apply LinearMap.ext
   intro v
-  rw [LinearMap.comp_apply, Comodule.corestrict_coact_apply,
+  rw [LinearMap.comp_apply, Comodule.corestrictCoact_apply,
     GeneralLinear.standardComodule_coact]
 
 /-- **The standard comodule of `SL_n` is faithful.** -/
@@ -141,11 +147,17 @@ theorem mulVec_mem (N : Subcomodule R (coordinateHopfAlgebra R n) (Fin n → R))
     (g : Matrix (Fin n) (Fin n) R) *ᵥ w ∈ N := by
   let q := (pointsMulEquiv (R := R) (A := R) n).symm g
   have h := N.rid_lTensor_coact_mem q.ofConv.toLinearMap hw
-  rw [standardComodule_coact R n, LinearMap.comp_apply] at h
-  have hcoordinate : (coordinateMap R n).hom.toCoalgHom.toLinearMap =
-      ((coordinateMap R n).hom :
-        GeneralLinear.coordinateHopfAlgebra R n →ₐ[R] coordinateHopfAlgebra R n).toLinearMap :=
-    (_root_.BialgHom.toAlgHom_toLinearMap (coordinateMap R n).hom).symm
+  rw [Comodule.corestrict_coact,
+    CommHopfAlgCat.hom_mkQuotient (GeneralLinear.coordinateHopfAlgebra R n)
+      (definingHopfIdeal R n),
+    standardComodule_coact R n, LinearMap.comp_apply] at h
+  have hcoordinate :
+      (Bialgebra.Quotient.mkBialgHom
+          (R := R) (definingHopfIdeal R n).toIdeal).toCoalgHom.toLinearMap =
+        (Bialgebra.Quotient.mkBialgHom
+          (R := R) (definingHopfIdeal R n).toIdeal).toAlgHom.toLinearMap :=
+    (_root_.BialgHom.toAlgHom_toLinearMap
+      (Bialgebra.Quotient.mkBialgHom (R := R) (definingHopfIdeal R n).toIdeal)).symm
   rw [hcoordinate] at h
   have h' :
       TensorProduct.piScalarRight R R R (Fin n)
