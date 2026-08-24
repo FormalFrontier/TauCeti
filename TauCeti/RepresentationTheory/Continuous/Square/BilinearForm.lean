@@ -61,10 +61,12 @@ tensor square, so moving it across `⟪t, v ⊗ₜ w⟫` costs nothing.
 
 ## Implementation notes
 
-`TauCeti.bilinFormOfTensor` is conjugate-linear, not linear, so it is packaged as a bare function
-rather than as a `LinearMap`; its additivity and its behaviour on the zero tensor, on negation and
-on subtraction are recorded one by one, and injectivity and surjectivity are proved directly rather
-than through a bundled semilinear equivalence.
+`TauCeti.bilinFormOfTensor` is conjugate-linear, not linear, so it is bundled as a semilinear map
+`V ⊗[𝕜] V →ₛₗ[starRingEnd 𝕜] BilinForm 𝕜 V`; its behaviour on `0`, on sums, on negation and on
+differences is then the generic `map_zero`, `map_add`, `map_neg` and `map_sub`. Injectivity comes
+from `TensorProduct.ext_iff_inner_right`, and surjectivity in finite dimensions from the Riesz
+representation `InnerProductSpace.toDual` applied to the functional `TensorProduct.lift B`; the
+bijection is not packaged as a semilinear equivalence because only the two directions are used.
 
 ## References
 
@@ -91,76 +93,37 @@ variable {𝕜 V : Type*} [RCLike 𝕜] [NormedAddCommGroup V] [InnerProductSpac
 /-- **The bilinear form of a tensor**: `B_t (v, w) = ⟪t, v ⊗ₜ w⟫`. The inner product is
 conjugate-linear in its first argument and linear in its second, so this is bilinear in `(v, w)`
 and conjugate-linear in `t`. -/
-noncomputable def bilinFormOfTensor (t : V ⊗[𝕜] V) : BilinForm 𝕜 V :=
-  TensorProduct.curry (innerSL 𝕜 t).toLinearMap
+noncomputable def bilinFormOfTensor : V ⊗[𝕜] V →ₛₗ[starRingEnd 𝕜] BilinForm 𝕜 V where
+  toFun t := TensorProduct.curry (innerSL 𝕜 t).toLinearMap
+  map_add' t s := by
+    refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
+    simp
+  map_smul' c t := by
+    refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
+    simp
 
 @[simp]
 theorem bilinFormOfTensor_apply (t : V ⊗[𝕜] V) (v w : V) :
     bilinFormOfTensor t v w = ⟪t, v ⊗ₜ[𝕜] w⟫_𝕜 :=
   (rfl)
 
-@[simp]
-theorem bilinFormOfTensor_zero : bilinFormOfTensor (0 : V ⊗[𝕜] V) = 0 := by
-  refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
-  simp
-
-theorem bilinFormOfTensor_add (t s : V ⊗[𝕜] V) :
-    bilinFormOfTensor (t + s) = bilinFormOfTensor t + bilinFormOfTensor s := by
-  refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
-  simp [inner_add_left]
-
-theorem bilinFormOfTensor_neg (t : V ⊗[𝕜] V) :
-    bilinFormOfTensor (-t) = -bilinFormOfTensor t := by
-  refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
-  simp
-
-theorem bilinFormOfTensor_sub (t s : V ⊗[𝕜] V) :
-    bilinFormOfTensor (t - s) = bilinFormOfTensor t - bilinFormOfTensor s := by
-  refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
-  simp [inner_sub_left]
-
-/-- A tensor whose form vanishes is orthogonal to the whole tensor square: the pure tensors span
-it. -/
-theorem inner_eq_zero_of_bilinFormOfTensor_eq_zero {t : V ⊗[𝕜] V}
-    (h : bilinFormOfTensor t = 0) (x : V ⊗[𝕜] V) : ⟪t, x⟫_𝕜 = 0 := by
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | tmul v w => simpa using DFunLike.congr_fun (DFunLike.congr_fun h v) w
-  | add x y hx hy => simp [inner_add_right, hx, hy]
-
-/-- **The form of a tensor vanishes only for the zero tensor.** -/
-@[simp]
-theorem bilinFormOfTensor_eq_zero_iff {t : V ⊗[𝕜] V} : bilinFormOfTensor t = 0 ↔ t = 0 := by
-  refine ⟨fun h => ?_, fun h => by rw [h, bilinFormOfTensor_zero]⟩
-  exact inner_self_eq_zero.mp (inner_eq_zero_of_bilinFormOfTensor_eq_zero h t)
-
 /-- **A tensor is determined by its form.** -/
 theorem bilinFormOfTensor_injective :
     Function.Injective (bilinFormOfTensor : V ⊗[𝕜] V → BilinForm 𝕜 V) := by
   intro s t h
-  rw [← sub_eq_zero, ← bilinFormOfTensor_eq_zero_iff, bilinFormOfTensor_sub, h]
-  exact sub_self (bilinFormOfTensor t)
+  refine TensorProduct.ext_iff_inner_right.mpr fun a b => ?_
+  simpa using DFunLike.congr_fun (DFunLike.congr_fun h a) b
 
-/-- The flip of the tensor square is self-adjoint against a pure tensor. -/
-private theorem inner_tmul_tensorComm_left (a b : V) (y : V ⊗[𝕜] V) :
-    ⟪b ⊗ₜ[𝕜] a, y⟫_𝕜 = ⟪a ⊗ₜ[𝕜] b, TensorProduct.comm 𝕜 V V y⟫_𝕜 := by
-  induction y using TensorProduct.induction_on with
-  | zero => simp
-  | tmul c d => simp [mul_comm]
-  | add p q hp hq => simp [inner_add_right, hp, hq]
-
-/-- The flip of the tensor square is self-adjoint for the inner product. -/
-theorem inner_tensorComm_left (x y : V ⊗[𝕜] V) :
-    ⟪TensorProduct.comm 𝕜 V V x, y⟫_𝕜 = ⟪x, TensorProduct.comm 𝕜 V V y⟫_𝕜 := by
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | tmul a b => simpa using inner_tmul_tensorComm_left a b y
-  | add p q hp hq => simp [inner_add_left, hp, hq]
+/-- **The form of a tensor vanishes only for the zero tensor.** -/
+@[simp]
+theorem bilinFormOfTensor_eq_zero_iff {t : V ⊗[𝕜] V} : bilinFormOfTensor t = 0 ↔ t = 0 :=
+  map_eq_zero_iff _ bilinFormOfTensor_injective
 
 /-- **The flip of the tensor square exchanges the two arguments of the form.** -/
 theorem bilinFormOfTensor_tensorComm_apply (t : V ⊗[𝕜] V) (v w : V) :
     bilinFormOfTensor (TensorProduct.comm 𝕜 V V t) v w = bilinFormOfTensor t w v := by
-  rw [bilinFormOfTensor_apply, bilinFormOfTensor_apply, inner_tensorComm_left]
+  rw [bilinFormOfTensor_apply, bilinFormOfTensor_apply, ← TensorProduct.commIsometry_apply,
+    (TensorProduct.commIsometry 𝕜 V V).inner_map_eq_flip, TensorProduct.commIsometry_symm]
   simp
 
 /-- **The form of a tensor is symmetric exactly when the tensor is symmetric.** -/
@@ -180,42 +143,30 @@ theorem isAlt_bilinFormOfTensor_iff {t : V ⊗[𝕜] V} :
     (bilinFormOfTensor t).IsAlt ↔ t ∈ antisymmetricTensors 𝕜 V := by
   rw [mem_antisymmetricTensors]
   refine ⟨fun h => bilinFormOfTensor_injective ?_, fun h v => ?_⟩
-  · rw [bilinFormOfTensor_neg]
+  · rw [map_neg]
     refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
     rw [bilinFormOfTensor_tensorComm_apply, LinearMap.neg_apply, LinearMap.neg_apply]
     exact (h.neg_eq v w).symm
   · have hvv : bilinFormOfTensor t v v = -bilinFormOfTensor t v v := by
       calc bilinFormOfTensor t v v = bilinFormOfTensor (TensorProduct.comm 𝕜 V V t) v v :=
             (bilinFormOfTensor_tensorComm_apply t v v).symm
-        _ = -bilinFormOfTensor t v v := by rw [h, bilinFormOfTensor_neg]; simp
+        _ = -bilinFormOfTensor t v v := by rw [h, map_neg]; simp
     have h2 : (2 : 𝕜) * bilinFormOfTensor t v v = 0 := by linear_combination hvv
     exact (mul_eq_zero.mp h2).resolve_left (by norm_num)
 
-/-- The coordinate expansion of a bilinear form in an orthonormal basis. -/
-private theorem bilinForm_eq_sum {ι : Type*} [Fintype ι] (e : OrthonormalBasis ι 𝕜 V)
-    (B : BilinForm 𝕜 V) (v w : V) :
-    B v w = ∑ i, ∑ j, ⟪e i, v⟫_𝕜 * (⟪e j, w⟫_𝕜 * B (e i) (e j)) := by
-  conv_lhs => rw [← e.sum_repr' v, ← e.sum_repr' w]
-  simp only [map_sum, LinearMap.sum_apply, map_smul, LinearMap.smul_apply, smul_eq_mul,
-    Finset.mul_sum]
-  rw [Finset.sum_comm]
-  exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by ring
-
 /-- **Every bilinear form on a finite-dimensional inner product space is the form of a tensor.**
-The preimage is read off an orthonormal basis: the conjugated matrix of the form, seen as a tensor
-in the corresponding basis of the tensor square. -/
+The preimage is the Riesz representative of the linear functional `TensorProduct.lift B` on the
+tensor square. -/
 theorem bilinFormOfTensor_surjective [FiniteDimensional 𝕜 V] :
     Function.Surjective (bilinFormOfTensor : V ⊗[𝕜] V → BilinForm 𝕜 V) := by
   intro B
-  classical
-  set e := stdOrthonormalBasis 𝕜 V
-  refine ⟨∑ i, ∑ j, (starRingEnd 𝕜) (B (e i) (e j)) • (e i ⊗ₜ[𝕜] e j), ?_⟩
+  have hfd : FiniteDimensional 𝕜 (V ⊗[𝕜] V) := Module.Finite.tensorProduct 𝕜 V V
+  have hcomplete : CompleteSpace (V ⊗[𝕜] V) := FiniteDimensional.complete 𝕜 _
+  refine ⟨(InnerProductSpace.toDual 𝕜 (V ⊗[𝕜] V)).symm
+    (LinearMap.toContinuousLinearMap (TensorProduct.lift B)), ?_⟩
   refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
-  rw [bilinFormOfTensor_apply, bilinForm_eq_sum e B v w]
-  simp only [sum_inner, inner_smul_left, TensorProduct.inner_tmul,
-    RingHomCompTriple.comp_apply, RingHom.id_apply]
-  exact Finset.sum_congr rfl fun i _ =>
-    Finset.sum_congr rfl fun j _ => by ring
+  rw [bilinFormOfTensor_apply, InnerProductSpace.toDual_symm_apply]
+  simp
 
 end Tensor
 
@@ -231,12 +182,6 @@ variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
   [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] (π : ContRepresentation 𝕜 G V)
 
 omit [TopologicalSpace G] in
-/-- The tensor square of a unitary representation preserves the inner product of `V ⊗[𝕜] V`. -/
-theorem inner_tprod_self_map (hπ : IsUnitary π) (g : G) (x y : V ⊗[𝕜] V) :
-    ⟪tprod π π g x, tprod π π g y⟫_𝕜 = ⟪x, y⟫_𝕜 :=
-  (hπ.tprod hπ).inner_map_map g x y
-
-omit [TopologicalSpace G] in
 /-- **The form of an invariant tensor is invariant.** Moving `π g ⊗ π g` across the inner product
 costs nothing because the representation is unitary. -/
 theorem isInvariantForm_bilinFormOfTensor (hπ : IsUnitary π) {t : V ⊗[𝕜] V}
@@ -247,7 +192,7 @@ theorem isInvariantForm_bilinFormOfTensor (hπ : IsUnitary π) {t : V ⊗[𝕜] 
   calc bilinFormOfTensor t (π g v) (π g w)
       = ⟪(tprod π π) g t, (tprod π π) g (v ⊗ₜ[𝕜] w)⟫_𝕜 := by
         rw [(mem_invariants t).mp ht g, hg, bilinFormOfTensor_apply]
-    _ = ⟪t, v ⊗ₜ[𝕜] w⟫_𝕜 := inner_tprod_self_map π hπ g t (v ⊗ₜ[𝕜] w)
+    _ = ⟪t, v ⊗ₜ[𝕜] w⟫_𝕜 := (hπ.tprod hπ).inner_map_map g t (v ⊗ₜ[𝕜] w)
     _ = bilinFormOfTensor t v w := (bilinFormOfTensor_apply t v w).symm
 
 omit [TopologicalSpace G] in
@@ -270,7 +215,7 @@ theorem mem_invariants_of_isInvariantForm_bilinFormOfTensor [FiniteDimensional �
     have hg : (tprod π π) g (v ⊗ₜ[𝕜] w) = π g v ⊗ₜ[𝕜] π g w := by simp
     calc ⟪(tprod π π) g t, π g v ⊗ₜ[𝕜] π g w⟫_𝕜
         = ⟪(tprod π π) g t, (tprod π π) g (v ⊗ₜ[𝕜] w)⟫_𝕜 := by rw [hg]
-      _ = ⟪t, v ⊗ₜ[𝕜] w⟫_𝕜 := inner_tprod_self_map π hπ g t (v ⊗ₜ[𝕜] w)
+      _ = ⟪t, v ⊗ₜ[𝕜] w⟫_𝕜 := (hπ.tprod hπ).inner_map_map g t (v ⊗ₜ[𝕜] w)
       _ = bilinFormOfTensor t v w := (bilinFormOfTensor_apply t v w).symm
       _ = bilinFormOfTensor t (π g v) (π g w) :=
           (Representation.isInvariantForm_iff.mp hB g v w).symm
@@ -319,7 +264,7 @@ theorem exists_ne_zero_isSymm_isInvariantForm_iff [FiniteDimensional 𝕜 V] (h�
     refine (Submodule.ne_bot_iff _).mpr ⟨⟨t, ht⟩, ?_, ?_⟩
     · exact (mem_invariants_symmetricSquare_iff π).mpr
         ((isInvariantForm_bilinFormOfTensor_iff π hπ).mp hB)
-    · simpa [Subtype.ext_iff] using fun h => hB0 (by rw [h, bilinFormOfTensor_zero])
+    · simpa [Subtype.ext_iff] using fun h => hB0 (by rw [h, map_zero])
   · intro h
     obtain ⟨x, hx, hx0⟩ := (Submodule.ne_bot_iff _).mp h
     refine ⟨bilinFormOfTensor (x : V ⊗[𝕜] V), ?_, ?_, ?_⟩
@@ -342,7 +287,7 @@ theorem exists_ne_zero_isAlt_isInvariantForm_iff [FiniteDimensional 𝕜 V] (hπ
     refine (Submodule.ne_bot_iff _).mpr ⟨⟨t, ht⟩, ?_, ?_⟩
     · exact (mem_invariants_exteriorSquare_iff π).mpr
         ((isInvariantForm_bilinFormOfTensor_iff π hπ).mp hB)
-    · simpa [Subtype.ext_iff] using fun h => hB0 (by rw [h, bilinFormOfTensor_zero])
+    · simpa [Subtype.ext_iff] using fun h => hB0 (by rw [h, map_zero])
   · intro h
     obtain ⟨x, hx, hx0⟩ := (Submodule.ne_bot_iff _).mp h
     refine ⟨bilinFormOfTensor (x : V ⊗[𝕜] V), ?_, ?_, ?_⟩
