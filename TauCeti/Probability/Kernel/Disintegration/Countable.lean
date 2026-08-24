@@ -127,12 +127,12 @@ theorem countableCondKernel_apply (σ : Measure (Y × Z)) (y : Y) :
 
 /-- At a null atom the conditional kernel takes its default value. It is a genuine choice, not a
 quantity read off `σ`; see the private uniqueness regression below. -/
-theorem countableCondKernel_apply_of_eq_zero {σ : Measure (Y × Z)} {y : Y}
+@[simp] theorem countableCondKernel_apply_of_eq_zero {σ : Measure (Y × Z)} {y : Y}
     (hy : σ.fst {y} = 0) : countableCondKernel σ y = Measure.dirac (Classical.arbitrary Z) := by
   simp [countableCondKernel_apply, hy]
 
 /-- At an atom of positive mass the conditional kernel is the normalised slice. -/
-theorem countableCondKernel_apply_of_ne_zero {σ : Measure (Y × Z)} {y : Y}
+@[simp] theorem countableCondKernel_apply_of_ne_zero {σ : Measure (Y × Z)} {y : Y}
     (hy : σ.fst {y} ≠ 0) (s : Set Z) :
     countableCondKernel σ y s = (σ.fst {y})⁻¹ * σ ({y} ×ˢ s) := by
   rw [countableCondKernel_apply, ite_eq_right_of_eq_false _ _ (eq_false hy),
@@ -151,7 +151,7 @@ instance instIsMarkovKernelCountableCondKernel (σ : Measure (Y × Z)) [IsFinite
       ENNReal.inv_mul_cancel hy (measure_ne_top _ _)]
 
 /-- **The disintegration of a measure over a countable coordinate.** -/
-theorem compProd_countableCondKernel (σ : Measure (Y × Z)) [IsFiniteMeasure σ] :
+@[simp] theorem compProd_countableCondKernel (σ : Measure (Y × Z)) [IsFiniteMeasure σ] :
     σ.fst ⊗ₘ countableCondKernel σ = σ := by
   ext s hs
   -- The atomic decomposition `σ s = ∑' y, σ ({y} ×ˢ (Prod.mk y ⁻¹' s))` is the fibre sum of
@@ -211,9 +211,9 @@ target.) -/
 
 /-- **Uniqueness genuinely fails at a null atom.** The Dirac measure at `(true, true)` on
 `Bool × Bool` gives the atom `false` no mass, and the two kernels below both disintegrate it while
-differing there. So `eq_countableCondKernel_of_ne_zero` is sharp: a conditional kernel is pinned
-down exactly on the atoms of positive mass, and the default value `countableCondKernel` uses
-elsewhere is a choice, not a derived quantity. -/
+differing there. Thus a conditional kernel is always pinned down on atoms of positive mass, while
+uniqueness can fail at null atoms; the default value `countableCondKernel` uses there is a choice,
+not a derived quantity. -/
 private theorem exists_isCondKernel_pair_ne :
     ∃ κ₁ κ₂ : Kernel Bool Bool,
       (Measure.dirac ((true, true) : Bool × Bool)).IsCondKernel κ₁ ∧
