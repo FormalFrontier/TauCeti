@@ -28,6 +28,8 @@ the base is disconnected.
   morphisms at each object act pretransitively on that object's value.
 * `TauCeti.PretransitiveFundamentalGroupoidAction`: the full subcategory of functors satisfying
   that property.
+* `TauCeti.ConnectedCoveringSpace.isPretransitive_fiberAction`: the evaluation of that condition
+  at a basepoint, as transitivity of Mathlib's `IsCoveringMap.fundamentalGroupMulAction`.
 * `TauCeti.ConnectedCoveringSpace.monodromyFunctor`: monodromy of connected covers, valued in
   fibrewise pretransitive fundamental-groupoid actions.
 * `TauCeti.ConnectedCoveringSpace.monodromyFunctor_faithful` and
@@ -162,6 +164,24 @@ theorem monodromy_isFiberwisePretransitive [LocallyPathConnectedSpace X]
     locallyPathConnectedSpace_of_isLocalHomeomorph p.isCoveringMap_proj.isLocalHomeomorph
   let _ : PathConnectedSpace (p : TopCat) := PathConnectedSpace.of_locallyPathConnectedSpace
   exact IsCoveringMap.exists_monodromy_eq p.isCoveringMap_proj e e'
+
+/-- The fundamental group at `x₀` acts transitively on the fibre of a connected covering space
+over `x₀`.
+
+This is `monodromy_isFiberwisePretransitive` evaluated at one basepoint and read through Mathlib's
+`IsCoveringMap.fundamentalGroupMulAction`. -/
+theorem isPretransitive_fiberAction [LocallyPathConnectedSpace X] (p : ConnectedCoveringSpace X)
+    (x₀ : X) :
+    letI := p.isCoveringMap_proj.fundamentalGroupMulAction x₀
+    MulAction.IsPretransitive (FundamentalGroup X x₀) (⇑p.proj ⁻¹' {x₀}) := by
+  let := p.isCoveringMap_proj.fundamentalGroupMulAction x₀
+  have h := monodromy_isFiberwisePretransitive p
+  rw [FundamentalGroupoidAction.isFiberwisePretransitive_iff,
+    CoveringSpace.monodromyFunctor_obj] at h
+  simp only [IsCoveringMap.monodromyFunctor_map] at h
+  -- `IsCoveringMap.fundamentalGroupMulAction` is reducible, with `g • e` the monodromy of `e`
+  -- along `g`, so the loops at `x₀` are exactly the group elements.
+  exact ⟨fun e e' => h (FundamentalGroupoid.mk x₀) e e'⟩
 
 /-- Monodromy as a functor from connected covering spaces over `X` to fibrewise pretransitive
 fundamental-groupoid actions.

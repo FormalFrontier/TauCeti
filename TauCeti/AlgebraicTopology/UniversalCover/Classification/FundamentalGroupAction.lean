@@ -8,8 +8,8 @@ module
 public import Mathlib.CategoryTheory.Action.Concrete
 public import Mathlib.CategoryTheory.Whiskering
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.MonodromyEquivalence
+public import TauCeti.CategoryTheory.Action.Transitive
 public import TauCeti.CategoryTheory.Groupoid.SingleObj
-public import TauCeti.Topology.Homotopy.Monodromy.Basic
 
 /-!
 # Covering spaces are classified by fundamental-group sets
@@ -56,11 +56,18 @@ categorical action on the fibre is `IsCoveringMap.fundamentalGroupMulAction`, an
 * `TauCeti.CoveringSpace.fiberActionFunctor_obj_V`,
   `TauCeti.CoveringSpace.fiberActionFunctor_obj_ρ_apply`,
   `TauCeti.CoveringSpace.fiberActionFunctor_obj_mulAction` and
-  `TauCeti.CoveringSpace.fiberActionFunctor_map_hom_apply_coe`: its values.
+  `TauCeti.CoveringSpace.fiberActionFunctor_map_hom`: its values.
 * `TauCeti.CoveringSpace.fiberActionEquivalence`: **covering spaces of `X` are equivalent to
   `π₁(X, x₀)`-sets.**
-* `TauCeti.CoveringSpace.isPretransitive_fiberAction`: the action attached to a connected cover
-  is transitive.
+* `TauCeti.ConnectedCoveringSpace.isTransitiveAction_fiberAction`: the `π₁(X, x₀)`-set attached to a
+  connected cover is transitive, so the fibre-action functor restricts to a functor
+  `TauCeti.ConnectedCoveringSpace.transitiveFiberActionFunctor` into
+  `TauCeti.TransitiveAction (FundamentalGroup X x₀)`, with values given by
+  `transitiveFiberActionFunctor_obj_obj` and `transitiveFiberActionFunctor_map_hom`.
+* `TauCeti.ConnectedCoveringSpace.exists_fiberAction_iso`: every transitive `π₁(X, x₀)`-set is
+  the fibre action of a connected cover.
+* `TauCeti.ConnectedCoveringSpace.transitiveFiberActionEquivalence`: **connected covering spaces
+  of `X` are equivalent to transitive `π₁(X, x₀)`-sets.**
 
 ## References
 
@@ -71,7 +78,9 @@ as functors out of the fundamental groupoid"; see Hatcher, *Algebraic Topology*,
 consumes the fundamental-groupoid classification of
 `TauCeti.AlgebraicTopology.UniversalCover.Classification.MonodromyEquivalence`, the
 stabiliser-cover reconstruction of
-`TauCeti.AlgebraicTopology.UniversalCover.Classification.Reconstruction`, and Mathlib's
+`TauCeti.AlgebraicTopology.UniversalCover.Classification.Reconstruction`, which rests on the
+based-path universal cover adapted from Kim Morrison's
+[mathlib4#38292](https://github.com/leanprover-community/mathlib4/pull/38292), and Mathlib's
 `CategoryTheory.Action.functorCategoryEquivalence`; no Mathlib proof is vendored.
 -/
 
@@ -100,6 +109,7 @@ action. It is `@[expose]`d so that its values hold by `rfl` in downstream module
 
 /-- The underlying set of the fundamental-group set attached to a cover is the fibre over the
 basepoint. -/
+@[simp]
 theorem fiberActionFunctor_obj_V (p : CoveringSpace X) :
     ((fiberActionFunctor x₀).obj p).V = ↥(⇑p.proj ⁻¹' {x₀}) :=
   (rfl)
@@ -125,22 +135,6 @@ theorem fiberActionFunctor_map_hom {p q : CoveringSpace X} (f : p ⟶ q) :
       ↾(IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) x₀) :=
   IsCoveringMap.monodromyNatTrans_app p.isCoveringMap_proj q.isCoveringMap_proj
     f.hom.left.hom (proj_hom_comp_hom_left_hom f) x₀
-
-section LocallyPathConnected
-
-variable [LocallyPathConnectedSpace X]
-
-/-- The monodromy action attached to a connected covering space is transitive on the fibre over
-the basepoint. -/
-theorem isPretransitive_fiberAction (p : ConnectedCoveringSpace X) :
-    letI := p.isCoveringMap_proj.fundamentalGroupMulAction x₀
-    MulAction.IsPretransitive (FundamentalGroup X x₀) (⇑p.proj ⁻¹' {x₀}) := by
-  let := p.isCoveringMap_proj.fundamentalGroupMulAction x₀
-  have h := ConnectedCoveringSpace.monodromy_isFiberwisePretransitive p
-  rw [FundamentalGroupoidAction.isFiberwisePretransitive_iff] at h
-  exact ⟨fun e e' => h (FundamentalGroupoid.mk x₀) e e'⟩
-
-end LocallyPathConnected
 
 section Classification
 
@@ -172,38 +166,7 @@ end Classification
 
 end TauCeti.CoveringSpace
 
-namespace TauCeti
-
-variable (G : Type u) [Monoid G]
-
-/-- A `G`-set is *transitive* when it is nonempty and `G` acts transitively on it.
-
-The action used is the one `CategoryTheory.Action.instMulAction` puts on the underlying type
-`ToType A`, so the two conjuncts are read through that instance rather than through `A.ρ`. -/
-def isTransitiveAction : ObjectProperty (Action (Type u) G) :=
-  fun A => MulAction.IsPretransitive G (ToType A) ∧ Nonempty (ToType A)
-
-instance : (isTransitiveAction G).IsClosedUnderIsomorphisms where
-  of_iso {A B} e h := by
-    obtain ⟨htrans, ⟨a⟩⟩ := h
-    refine ⟨⟨fun x y => ?_⟩, ⟨e.hom.hom a⟩⟩
-    -- Transport the two points back along `e`, move them there, and push the result forward.
-    obtain ⟨g, hg⟩ := htrans.exists_smul_eq (e.inv.hom x) (e.inv.hom y)
-    refine ⟨g, ?_⟩
-    have hcomm := ConcreteCategory.congr_hom (e.hom.comm g) (ConcreteCategory.hom e.inv.hom x)
-    have hx (z : ToType B) :
-        ConcreteCategory.hom e.hom.hom (ConcreteCategory.hom e.inv.hom z) = z :=
-      Iso.inv_hom_id_apply ((Action.forget (Type u) G).mapIso e) z
-    simp only [ConcreteCategory.comp_apply] at hcomm
-    have key := congrArg (ConcreteCategory.hom e.hom.hom) hg
-    simp only [show ∀ z : ToType A, g • z = ConcreteCategory.hom (A.ρ g) z from fun _ => rfl,
-      hcomm, hx] at key
-    exact key
-
-/-- Transitive `G`-sets, as a full subcategory of all `G`-sets. -/
-abbrev TransitiveAction : Type _ := (isTransitiveAction G).FullSubcategory
-
-namespace ConnectedCoveringSpace
+namespace TauCeti.ConnectedCoveringSpace
 
 variable {X : TopCat.{u}} (x₀ : X) [PathConnectedSpace X] [LocallyPathConnectedSpace X]
   [SemilocallySimplyConnectedSpace X]
@@ -213,7 +176,7 @@ omit [SemilocallySimplyConnectedSpace X] in
 theorem isTransitiveAction_fiberAction (p : ConnectedCoveringSpace X) :
     isTransitiveAction (FundamentalGroup X x₀)
       ((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj p)) :=
-  ⟨CoveringSpace.isPretransitive_fiberAction x₀ p, nonempty_fiber p x₀⟩
+  (isTransitiveAction_iff _).mpr ⟨isPretransitive_fiberAction p x₀, nonempty_fiber p x₀⟩
 
 /-- The fibre-action functor restricted to connected covering spaces and transitive
 fundamental-group sets. -/
@@ -225,10 +188,26 @@ def transitiveFiberActionFunctor :
 omit [SemilocallySimplyConnectedSpace X] in
 /-- The underlying fundamental-group set of a connected cover is the one attached to it as a
 cover. -/
+@[simp]
 theorem transitiveFiberActionFunctor_obj_obj (p : ConnectedCoveringSpace X) :
     ((transitiveFiberActionFunctor x₀).obj p).obj =
       (CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj p) :=
   (rfl)
+
+omit [SemilocallySimplyConnectedSpace X] in
+/-- The underlying map of fundamental-group sets assigned to a map of connected covers is the one
+assigned to it as a map of covers, hence restriction to the fibres over `x₀`. -/
+@[simp]
+theorem transitiveFiberActionFunctor_map_hom {p q : ConnectedCoveringSpace X} (f : p ⟶ q) :
+    ((transitiveFiberActionFunctor x₀).map f).hom =
+      eqToHom (transitiveFiberActionFunctor_obj_obj x₀ p) ≫
+        (CoveringSpace.fiberActionFunctor x₀).map ((forget X).map f) ≫
+        eqToHom (transitiveFiberActionFunctor_obj_obj x₀ q).symm :=
+  by
+    convert ObjectProperty.ι_obj_lift_map (isTransitiveAction (FundamentalGroup X x₀))
+        (forget X ⋙ CoveringSpace.fiberActionFunctor x₀) (isTransitiveAction_fiberAction x₀) f
+      using 1 <;>
+      rfl
 
 instance transitiveFiberActionFunctor_faithful :
     (transitiveFiberActionFunctor x₀).Faithful :=
@@ -243,7 +222,7 @@ theorem exists_fiberAction_iso (A : Action (Type u) (FundamentalGroup X x₀))
     (hA : isTransitiveAction (FundamentalGroup X x₀) A) :
     ∃ p : ConnectedCoveringSpace X,
       Nonempty ((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj p) ≅ A) := by
-  obtain ⟨htrans, ⟨a⟩⟩ := hA
+  obtain ⟨htrans, ⟨a⟩⟩ := (isTransitiveAction_iff A).mp hA
   refine ⟨UniversalCover.stabilizerCover x₀ a, ⟨Action.mkIso
     (Equiv.toIso (UniversalCover.transitiveActionFiberEquiv x₀ a)) fun g => ?_⟩⟩
   refine ConcreteCategory.hom_ext _ _ fun e => ?_
@@ -253,7 +232,7 @@ theorem exists_fiberAction_iso (A : Action (Type u) (FundamentalGroup X x₀))
 instance transitiveFiberActionFunctor_essSurj :
     (transitiveFiberActionFunctor x₀).EssSurj where
   mem_essImage A := by
-    obtain ⟨p, ⟨e⟩⟩ := exists_fiberAction_iso x₀ A.obj A.property
+    obtain ⟨p, ⟨e⟩⟩ := exists_fiberAction_iso x₀ A.obj (TransitiveAction.isTransitiveAction A)
     exact ⟨p, ⟨ObjectProperty.isoMk _ e⟩⟩
 
 instance transitiveFiberActionFunctor_isEquivalence :
@@ -269,6 +248,4 @@ theorem transitiveFiberActionEquivalence_functor :
     (transitiveFiberActionEquivalence x₀).functor = transitiveFiberActionFunctor x₀ :=
   (rfl)
 
-end ConnectedCoveringSpace
-
-end TauCeti
+end TauCeti.ConnectedCoveringSpace

@@ -11,22 +11,23 @@ public import Mathlib.CategoryTheory.SingleObj
 /-!
 # A connected groupoid is equivalent to its vertex group
 
-Let `C` be a groupoid and `x₀ : C` an object which receives a morphism from every object. This
-file proves that the one-object category `SingleObj (End x₀)` of the vertex group at `x₀` is
-equivalent to `C`, through the functor sending the unique object to `x₀` and an endomorphism to
-itself.
+Let `C` be a groupoid and `x₀ : C` a *weakly initial* object, that is, one which admits a morphism
+to every object. This file proves that the one-object category `SingleObj (End x₀)` of the vertex
+group at `x₀` is equivalent to `C`, through the functor sending the unique object to `x₀` and an
+endomorphism to itself.
 
-Both halves are immediate once the functor is written down. It is fully faithful because its
-action on the single hom-set is the identity of `End x₀`, and essentially surjective because in
-a groupoid a morphism `x₀ ⟶ x` is already an isomorphism. What the equivalence buys is a
-dictionary: functors out of `C` become functors out of `SingleObj (End x₀)`, that is, objects
-with an action of the vertex group, and the dictionary is natural in the target category.
+Both halves are immediate once the functor is written down. It is fully faithful in any category,
+because its action on the single hom-set is the identity of `End x₀`, and it is essentially
+surjective because in a groupoid a morphism `x₀ ⟶ x` is already an isomorphism. What the
+equivalence buys is a dictionary: functors out of `C` become functors out of `SingleObj (End x₀)`,
+that is, objects with an action of the vertex group, and the dictionary is natural in the target
+category; `TauCeti.Groupoid.natIsoOfEnd` in `TauCeti.CategoryTheory.Groupoid.ConnectedFunctor` is
+that dictionary applied to isomorphisms.
 
-The connectedness hypothesis is stated as the family of nonemptiness assertions
-`∀ x, Nonempty (x₀ ⟶ x)` rather than through `CategoryTheory.IsConnected`, matching
-`TauCeti.Groupoid.natIsoOfEnd` in `TauCeti.CategoryTheory.Groupoid.ConnectedFunctor`: the
-intended source of that data is a path-connected topological space, whose fundamental groupoid
-comes with paths out of a chosen basepoint.
+The weak initiality hypothesis is stated as the family of nonemptiness assertions
+`∀ x, Nonempty (x₀ ⟶ x)` rather than through `CategoryTheory.IsConnected`: the intended source of
+that data is a path-connected topological space, whose fundamental groupoid comes with paths out
+of a chosen basepoint.
 
 ## Main declarations
 
@@ -34,7 +35,7 @@ comes with paths out of a chosen basepoint.
 * `TauCeti.Groupoid.fullyFaithfulSingleObjFunctor`: it is fully faithful, without hypotheses.
 * `TauCeti.Groupoid.essSurj_singleObjFunctor` and
   `TauCeti.Groupoid.isEquivalence_singleObjFunctor`: it is essentially surjective, hence an
-  equivalence, when every object receives a morphism from `x₀`.
+  equivalence, when `x₀` admits a morphism to every object.
 * `TauCeti.Groupoid.singleObjEquivalence`: **a connected groupoid is equivalent to the
   one-object category of its vertex group.**
 -/
@@ -47,7 +48,9 @@ open CategoryTheory
 
 namespace TauCeti.Groupoid
 
-variable {C : Type u} [CategoryTheory.Groupoid.{v} C] (x₀ : C)
+section Category
+
+variable {C : Type u} [Category.{v} C] (x₀ : C)
 
 /-- The functor from the one-object category of the vertex group at `x₀` that sends the unique
 object to `x₀` and an endomorphism to itself.
@@ -77,16 +80,22 @@ instance singleObjFunctor_full : (singleObjFunctor x₀).Full :=
 instance singleObjFunctor_faithful : (singleObjFunctor x₀).Faithful :=
   (fullyFaithfulSingleObjFunctor x₀).faithful
 
-/-- If every object of the groupoid receives a morphism from `x₀`, then every object is
-isomorphic to `x₀`, so the functor out of the one-object category is essentially surjective. -/
+end Category
+
+section Groupoid
+
+variable {C : Type u} [CategoryTheory.Groupoid.{v} C] (x₀ : C)
+
+/-- If `x₀` admits a morphism to every object of the groupoid, then every object is isomorphic to
+`x₀`, so the functor out of the one-object category is essentially surjective. -/
 theorem essSurj_singleObjFunctor (hconn : ∀ x : C, Nonempty (x₀ ⟶ x)) :
     (singleObjFunctor x₀).EssSurj where
   mem_essImage x :=
     ⟨SingleObj.star (End x₀),
       ⟨(CategoryTheory.Groupoid.isoEquivHom x₀ x).symm (hconn x).some⟩⟩
 
-/-- If every object of the groupoid receives a morphism from `x₀`, the functor out of the
-one-object category of the vertex group is an equivalence. -/
+/-- If `x₀` admits a morphism to every object of the groupoid, the functor out of the one-object
+category of the vertex group is an equivalence. -/
 theorem isEquivalence_singleObjFunctor (hconn : ∀ x : C, Nonempty (x₀ ⟶ x)) :
     (singleObjFunctor x₀).IsEquivalence :=
   haveI := essSurj_singleObjFunctor x₀ hconn
@@ -105,5 +114,7 @@ to `x₀` and an endomorphism to itself. -/
 theorem singleObjEquivalence_functor (hconn : ∀ x : C, Nonempty (x₀ ⟶ x)) :
     (singleObjEquivalence x₀ hconn).functor = singleObjFunctor x₀ :=
   (rfl)
+
+end Groupoid
 
 end TauCeti.Groupoid
