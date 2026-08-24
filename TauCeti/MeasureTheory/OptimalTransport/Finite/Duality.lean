@@ -31,7 +31,9 @@ measured by `TauCeti.TransportMatrix.cost` rather than by `TauCeti.transportCost
 likewise packaged as `TauCeti.finiteDualValue`, which asks for no measurable structure on the
 two finite spaces; `TauCeti.finiteDualValue_eq_kantorovichDualValue` and
 `TauCeti.TransportMatrix.cost_eq_integral` identify both with the measure-level definitions as
-soon as one is available.
+soon as one is available. The feasibility constraint used here is likewise the real form of the
+canonical `TauCeti.DualFeasible`, by `TauCeti.dualFeasible_ofReal_iff` whenever the cost is
+nonnegative.
 
 The hard half of the duality is the minimax theorem: the Lagrangian
 `∑ q, (c q - φ q.1 - ψ q.2) * f q + (∑ i, μ i * φ i + ∑ j, ν j * ψ j)`
@@ -42,9 +44,9 @@ codomain: the inner supremum is `⊤` at a plan whose marginals are wrong.
 
 ## Main definitions
 
-* `TauCeti.TransportMatrix.cost` — the total cost of a finite transportation matrix;
 * `TauCeti.finiteDualValue` — the value of a pair of potentials against two probability mass
-  functions.
+  functions. The primal value is `TauCeti.TransportMatrix.cost`, which belongs to the
+  transportation-matrix file.
 
 ## Main statements
 
@@ -57,9 +59,13 @@ codomain: the inner supremum is `⊤` at a plan whose marginals are wrong.
 * `TauCeti.TransportMatrix.cost_eq_finiteDualValue_iff` — complementary slackness;
 * `TauCeti.TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff` — the optimality
   certificate: a plan and a feasible pair are optimal for their problems exactly when the plan
-  lives on the contact set of the pair;
-* `TauCeti.cTransform_coe` — over a nonempty finite source the extended-real `c`-transform of
-  `TauCeti.cTransform` is the coercion of a real infimum.
+  lives on the contact set of the pair, and
+  `TauCeti.TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff_mem_contactSet` —
+  the same certificate read through `TauCeti.contactSet`;
+* `TauCeti.finiteDualValue_eq_kantorovichDualValue`,
+  `TauCeti.TransportMatrix.cost_eq_integral` and
+  `TauCeti.TransportMatrix.isCoupling_toPMF_toMeasure` — the bridges to the measure-level dual
+  value, primal value and couplings.
 
 ## References
 
@@ -86,52 +92,9 @@ variable {ι : Type u} {κ : Type v} [Fintype ι] [Fintype κ] {μ : PMF ι} {ν
   {c : ι × κ → ℝ} {φ : ι → ℝ} {ψ : κ → ℝ} {f : ι × κ → ℝ}
 
 /-- The masses of a probability mass function on a finite type sum to one. -/
-theorem sum_toReal_pmf (μ : PMF ι) : ∑ i, (μ i).toReal = 1 := by
+private theorem sum_toReal_pmf (μ : PMF ι) : ∑ i, (μ i).toReal = 1 := by
   have h : ∑ i, μ i = 1 := (tsum_fintype fun i ↦ μ i).symm.trans μ.tsum_coe
   rw [← ENNReal.toReal_sum fun i _ ↦ μ.apply_ne_top i, h, ENNReal.toReal_one]
-
-namespace TransportMatrix
-
-/-- Every entry of a transportation matrix is finite: it is bounded by a marginal mass. -/
-theorem apply_ne_top (A : TransportMatrix μ ν) (i : ι) (j : κ) : A i j ≠ ⊤ := by
-  refine ne_top_of_le_ne_top (μ.apply_ne_top i) ?_
-  rw [← A.row_sum i]
-  exact Finset.single_le_sum (f := fun j ↦ A i j) (fun _ _ ↦ zero_le) (Finset.mem_univ j)
-
-/-- The entries of a transportation matrix, read as a real-valued function on the product. -/
-def toRealFun (A : TransportMatrix μ ν) (q : ι × κ) : ℝ := (A q.1 q.2).toReal
-
-/-- The defining formula for the real-valued entries. -/
-@[simp]
-theorem toRealFun_apply (A : TransportMatrix μ ν) (q : ι × κ) :
-    A.toRealFun q = (A q.1 q.2).toReal := (rfl)
-
-/-- The real-valued entries of a transportation matrix are nonnegative. -/
-theorem toRealFun_nonneg (A : TransportMatrix μ ν) (q : ι × κ) : 0 ≤ A.toRealFun q :=
-  ENNReal.toReal_nonneg
-
-/-- The real-valued row sums are the masses of the source distribution. -/
-theorem sum_toRealFun_row (A : TransportMatrix μ ν) (i : ι) :
-    ∑ j, A.toRealFun (i, j) = (μ i).toReal := by
-  simp only [toRealFun_apply]
-  rw [← ENNReal.toReal_sum fun j _ ↦ A.apply_ne_top i j, A.row_sum]
-
-/-- The real-valued column sums are the masses of the target distribution. -/
-theorem sum_toRealFun_col (A : TransportMatrix μ ν) (j : κ) :
-    ∑ i, A.toRealFun (i, j) = (ν j).toReal := by
-  simp only [toRealFun_apply]
-  rw [← ENNReal.toReal_sum fun i _ ↦ A.apply_ne_top i j, A.col_sum]
-
-/-- The total cost of a finite transportation matrix. The cost function is real-valued, so
-negative costs are allowed. -/
-def cost (c : ι × κ → ℝ) (A : TransportMatrix μ ν) : ℝ := ∑ q, c q * A.toRealFun q
-
-/-- The defining formula for the cost. The body of the definition is not exposed, so this is
-the lemma downstream modules should rewrite with. -/
-theorem cost_def (c : ι × κ → ℝ) (A : TransportMatrix μ ν) :
-    A.cost c = ∑ q, c q * A.toRealFun q := (rfl)
-
-end TransportMatrix
 
 /-- The value of a pair of Kantorovich potentials against two probability mass functions on
 finite types: the sum of the two marginal expectations. -/
@@ -143,22 +106,28 @@ is the lemma downstream modules should rewrite with. -/
 theorem finiteDualValue_def (μ : PMF ι) (ν : PMF κ) (φ : ι → ℝ) (ψ : κ → ℝ) :
     finiteDualValue μ ν φ ψ = ∑ i, (μ i).toReal * φ i + ∑ j, (ν j).toReal * ψ j := (rfl)
 
+/-- Shifting the two potentials by two constants shifts the dual value by their sum: both
+marginals have total mass one. -/
+theorem finiteDualValue_add_const_add_const (μ : PMF ι) (ν : PMF κ) (φ : ι → ℝ) (ψ : κ → ℝ)
+    (a b : ℝ) :
+    finiteDualValue μ ν (fun i ↦ φ i + a) (fun j ↦ ψ j + b)
+      = finiteDualValue μ ν φ ψ + a + b := by
+  simp only [finiteDualValue_def, mul_add, Finset.sum_add_distrib, ← Finset.sum_mul,
+    sum_toReal_pmf, one_mul]
+  ring
+
 /-- Adding a constant to the first potential adds it to the dual value: the first marginal has
 total mass one. -/
 theorem finiteDualValue_add_const (μ : PMF ι) (ν : PMF κ) (φ : ι → ℝ) (ψ : κ → ℝ) (a : ℝ) :
     finiteDualValue μ ν (fun i ↦ φ i + a) ψ = finiteDualValue μ ν φ ψ + a := by
-  simp only [finiteDualValue_def, mul_add, Finset.sum_add_distrib, ← Finset.sum_mul,
-    sum_toReal_pmf, one_mul]
-  ring
+  simpa using finiteDualValue_add_const_add_const μ ν φ ψ a 0
 
 /-- The dual value is unchanged by the opposite additive shifts of the two potentials, which
 is the normalisation freedom of the dual problem: both marginals have total mass one. -/
 theorem finiteDualValue_add_const_sub_const (μ : PMF ι) (ν : PMF κ) (φ : ι → ℝ) (ψ : κ → ℝ)
     (a : ℝ) :
     finiteDualValue μ ν (fun i ↦ φ i + a) (fun j ↦ ψ j - a) = finiteDualValue μ ν φ ψ := by
-  simp only [finiteDualValue_def, mul_add, mul_sub, Finset.sum_add_distrib,
-    Finset.sum_sub_distrib, ← Finset.sum_mul, sum_toReal_pmf, one_mul]
-  ring
+  simpa [sub_eq_add_neg] using finiteDualValue_add_const_add_const μ ν φ ψ a (-a)
 
 /-- The dual value is monotone in both potentials. -/
 theorem finiteDualValue_mono {φ φ' : ι → ℝ} {ψ ψ' : κ → ℝ} (hφ : ∀ i, φ i ≤ φ' i)
@@ -185,7 +154,7 @@ private def costFun (c : ι × κ → ℝ) (f : ι × κ → ℝ) : ℝ := ∑ q
 namespace TransportMatrix
 
 private theorem cost_eq_costFun (c : ι × κ → ℝ) (A : TransportMatrix μ ν) :
-    A.cost c = costFun c A.toRealFun := rfl
+    A.cost c = costFun c A.toRealFun := A.cost_def c
 
 private theorem toRealFun_mem_realPlans (A : TransportMatrix μ ν) :
     A.toRealFun ∈ RealPlans μ ν :=
@@ -205,6 +174,7 @@ private def ofRealFun (hf : f ∈ RealPlans μ ν) : TransportMatrix μ ν where
 private theorem toRealFun_ofRealFun (hf : f ∈ RealPlans μ ν) :
     (ofRealFun hf).toRealFun = f := by
   funext q
+  rw [toRealFun_apply]
   exact ENNReal.toReal_ofReal (hf.1 q)
 
 private theorem cost_ofRealFun (c : ι × κ → ℝ) (hf : f ∈ RealPlans μ ν) :
@@ -268,7 +238,8 @@ theorem cost_eq_finiteDualValue_iff (A : TransportMatrix μ ν)
     rcases mul_eq_zero.1 (hq (i, j) (Finset.mem_univ _)) with hg | hz
     · have : (c (i, j) - φ i - ψ j) = 0 := hg
       linarith
-    · rcases ENNReal.toReal_eq_zero_iff _ |>.1 hz with h0 | htop
+    · rw [toRealFun_apply] at hz
+      rcases ENNReal.toReal_eq_zero_iff _ |>.1 hz with h0 | htop
       · exact absurd h0 hij
       · exact absurd htop (A.apply_ne_top i j)
   · intro hq q _
@@ -336,22 +307,6 @@ private theorem nonempty_of_pmf {α : Type*} (μ : PMF α) : Nonempty α := by
   · exact absurd μ.tsum_coe (by simp)
   · exact h
 
-private theorem ciInf_le_of_finite {α : Type*} [Finite α] (g : α → ℝ) (a : α) :
-    (⨅ b, g b) ≤ g a :=
-  ciInf_le (Set.Finite.bddBelow (Set.finite_range g)) a
-
-/-- On a nonempty finite source space the infimal `c`-transform of a real potential is itself
-real-valued: `TauCeti.cTransform` of the coerced potential is the coercion of the real
-infimum. -/
-theorem cTransform_coe {X : Type*} {Y : Type*} [Finite X] [Nonempty X] (c : X × Y → ℝ)
-    (φ : X → ℝ) (j : Y) :
-    cTransform c (fun i ↦ (φ i : EReal)) j = ((⨅ i, (c (i, j) - φ i) : ℝ) : EReal) := by
-  obtain ⟨i₀, hi₀⟩ := exists_eq_ciInf_of_finite (f := fun i ↦ c (i, j) - φ i)
-  rw [cTransform_apply, ← hi₀]
-  refine le_antisymm ((iInf_le _ i₀).trans (le_of_eq (EReal.coe_sub _ _).symm)) (le_iInf fun i ↦ ?_)
-  rw [← EReal.coe_sub]
-  exact EReal.coe_le_coe_iff.2 (hi₀.symm ▸ ciInf_le_of_finite (fun i ↦ c (i, j) - φ i) i)
-
 /-- Two infimal transforms and a shift turn a dual-feasible pair into one that is confined to a
 box depending only on a bound for the cost, without decreasing the dual value. -/
 private theorem exists_bounded_of_feasible [Nonempty ι] [Nonempty κ] {M : ℝ}
@@ -366,9 +321,9 @@ private theorem exists_bounded_of_feasible [Nonempty ι] [Nonempty κ] {M : ℝ}
   obtain ⟨ψ₁, hψ₁⟩ : ∃ g : κ → ℝ, ∀ j, g j = ⨅ i, (c (i, j) - φ i) := ⟨_, fun _ ↦ rfl⟩
   obtain ⟨φ₁, hφ₁⟩ : ∃ g : ι → ℝ, ∀ i, g i = ⨅ j, (c (i, j) - ψ₁ j) := ⟨_, fun _ ↦ rfl⟩
   have hψ₁le : ∀ i j, ψ₁ j ≤ c (i, j) - φ i := fun i j ↦
-    (hψ₁ j).le.trans (ciInf_le_of_finite (fun i ↦ c (i, j) - φ i) i)
+    (hψ₁ j).le.trans (ciInf_le (Finite.bddBelow_range fun i ↦ c (i, j) - φ i) i)
   have hφ₁le : ∀ i j, φ₁ i ≤ c (i, j) - ψ₁ j := fun i j ↦
-    (hφ₁ i).le.trans (ciInf_le_of_finite (fun j ↦ c (i, j) - ψ₁ j) j)
+    (hφ₁ i).le.trans (ciInf_le (Finite.bddBelow_range fun j ↦ c (i, j) - ψ₁ j) j)
   have hmonoψ : ∀ j, ψ j ≤ ψ₁ j := fun j ↦ by
     rw [hψ₁ j]; exact le_ciInf fun i ↦ by linarith [h i j]
   have hmonoφ : ∀ i, φ i ≤ φ₁ i := fun i ↦ by
@@ -386,7 +341,7 @@ private theorem exists_bounded_of_feasible [Nonempty ι] [Nonempty κ] {M : ℝ}
   -- Transform the normalized second potential once more, preserving feasibility and value.
   obtain ⟨ψ₃, hψ₃⟩ : ∃ g : κ → ℝ, ∀ j, g j = ⨅ i, (c (i, j) - φ₂ i) := ⟨_, fun _ ↦ rfl⟩
   have hψ₃le : ∀ i j, ψ₃ j ≤ c (i, j) - φ₂ i := fun i j ↦
-    (hψ₃ j).le.trans (ciInf_le_of_finite (fun i ↦ c (i, j) - φ₂ i) i)
+    (hψ₃ j).le.trans (ciInf_le (Finite.bddBelow_range fun i ↦ c (i, j) - φ₂ i) i)
   have hmonoψ₃ : ∀ j, ψ₂ j ≤ ψ₃ j := fun j ↦ by
     rw [hψ₃ j]; exact le_ciInf fun i ↦ by linarith [hfeas₂ i j]
   -- Bound the normalized first potential using points where the finite infima are attained.
@@ -610,8 +565,7 @@ private theorem iSup_lagrangian_of_notMem (c : ι × κ → ℝ) (hf : f ∈ std
     obtain ⟨p, hp⟩ := h
     exact lt_of_lt_of_le (EReal.coe_lt_coe_iff.2 hp)
       (le_iSup (fun p ↦ ((lagrangian c μ ν f p : ℝ) : EReal)) p)
-  change ¬ ((∀ q, 0 ≤ f q) ∧ (∀ i, ∑ j, f (i, j) = (μ i).toReal) ∧
-    ∀ j, ∑ i, f (i, j) = (ν j).toReal) at hnot
+  rw [RealPlans, Set.mem_ofPred_eq] at hnot
   by_cases hrow : ∀ i, ∑ j, f (i, j) = (μ i).toReal
   · obtain ⟨j₀, hj₀⟩ := not_forall.1 fun hcol ↦ hnot ⟨hf.1, hrow, hcol⟩
     have hd : (ν j₀).toReal - ∑ i, f (i, j₀) ≠ 0 := sub_ne_zero.2 (Ne.symm hj₀)
@@ -748,6 +702,20 @@ theorem TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff (A : Tr
     · rw [← heq]
       exact A.finiteDualValue_le_cost hfeas'
 
+/-- **The optimality certificate, through the contact set.** The pointwise equality of
+`TauCeti.TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff` says exactly that
+every pair carrying mass lies in `TauCeti.contactSet` of the coerced potentials. -/
+theorem TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff_mem_contactSet
+    (A : TransportMatrix μ ν) (hfeas : ∀ i j, φ i + ψ j ≤ c (i, j)) :
+    ((∀ B : TransportMatrix μ ν, A.cost c ≤ B.cost c) ∧
+        ∀ φ' ψ', (∀ i j, φ' i + ψ' j ≤ c (i, j)) →
+          finiteDualValue μ ν φ' ψ' ≤ finiteDualValue μ ν φ ψ)
+      ↔ ∀ i j, A i j ≠ 0 →
+          (i, j) ∈ contactSet c (fun i ↦ (φ i : EReal)) (fun j ↦ (ψ j : EReal)) := by
+  rw [A.forall_cost_le_and_forall_finiteDualValue_le_iff hfeas]
+  refine forall_congr' fun i ↦ forall_congr' fun j ↦ imp_congr_right fun _ ↦ ?_
+  rw [mk_mem_contactSet_iff, ← EReal.coe_add, EReal.coe_eq_coe_iff]
+
 /-! ### The measure-level reading
 
 Neither the primal nor the dual value needs a measurable structure on the two finite spaces.
@@ -776,7 +744,7 @@ theorem TransportMatrix.cost_eq_integral (c : ι × κ → ℝ) (A : TransportMa
 
 omit [MeasurableSingletonClass ι] [MeasurableSingletonClass κ] in
 /-- The measure a finite transportation matrix defines is a coupling of the two marginals. -/
-theorem TransportMatrix.isCoupling_toPMF (A : TransportMatrix μ ν) :
+theorem TransportMatrix.isCoupling_toPMF_toMeasure (A : TransportMatrix μ ν) :
     IsCoupling A.toPMF.toMeasure μ.toMeasure ν.toMeasure where
   fst_eq := by
     rw [MeasureTheory.Measure.fst,
