@@ -9,9 +9,9 @@ public import Mathlib.Algebra.Lie.Quotient
 public import Mathlib.Algebra.Lie.Semisimple.Defs
 public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 public import Mathlib.LinearAlgebra.Projection
--- Non-public: `TauCeti.isIrreducible_iff_isAtom` appears only inside a proof, never in the type of
--- an exported declaration.
+-- Non-public: these lemmas appear only inside proofs, never in the type of an exported declaration.
 import TauCeti.Algebra.Lie.Submodule.Atom
+import TauCeti.Algebra.Lie.Submodule.Finrank
 
 public section
 
@@ -205,23 +205,12 @@ surjective and hence, in finite dimension, fails to be injective; any nonzero ke
 invariant and outside `N`.
 
 `TauCeti.HasInvariantOutsideIrreducible.exists_isCompl` turns this into complete reducibility. -/
+@[expose]
 def HasInvariantOutsideIrreducible : Prop :=
   ∀ {M : Type v} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M],
     ∀ [FiniteDimensional K M] (N : LieSubmodule K L M), N ≠ ⊤ →
       (∀ (x : L) (m : M), ⁅x, m⁆ ∈ N) → (∃ (x : L) (m : M), ⁅x, m⁆ ≠ 0) →
       LieModule.IsIrreducible K L N → ∃ w : M, w ∉ N ∧ ∀ x : L, ⁅x, w⁆ = 0
-
-variable (K L) in
-/-- `TauCeti.HasInvariantOutsideIrreducible` unfolded, so that it can be established and, where the
-irreducible case is wanted directly rather than through
-`TauCeti.HasInvariantOutsideIrreducible.exists_invariant_notMem`, applied. -/
-theorem hasInvariantOutsideIrreducible_iff :
-    HasInvariantOutsideIrreducible.{v} K L ↔
-      ∀ {M : Type v} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M],
-        ∀ [FiniteDimensional K M] (N : LieSubmodule K L M), N ≠ ⊤ →
-          (∀ (x : L) (m : M), ⁅x, m⁆ ∈ N) → (∃ (x : L) (m : M), ⁅x, m⁆ ≠ 0) →
-          LieModule.IsIrreducible K L N → ∃ w : M, w ∉ N ∧ ∀ x : L, ⁅x, w⁆ = 0 :=
-  (Iff.rfl)
 
 /-- The inductive hypothesis of `TauCeti.HasInvariantOutsideIrreducible.exists_invariant_notMem`:
 the conclusion for every module of dimension at most `d`. The induction changes the module, so the
@@ -309,8 +298,10 @@ private theorem exists_invariant_notMem_of_forall_lie_mem {d : ℕ} (ih : Invari
       (W : Submodule K M) (Submodule.span K {v₀})
     rw [finrank_span_singleton hne] at hle
     have hP : finrank K (((W : Submodule K M) ⊔ Submodule.span K {v₀} :
-        Submodule K M) : Type _) = finrank K P := rfl
-    have hw : finrank K ((W : Submodule K M) : Type _) = finrank K W := rfl
+        Submodule K M) : Type _) = finrank K P := by
+      simpa only [P] using finrank_toSubmodule P
+    have hw : finrank K ((W : Submodule K M) : Type _) = finrank K W :=
+      finrank_toSubmodule W
     omega
   have : FiniteDimensional K P :=
     Submodule.finiteDimensional_sup (W : Submodule K M) (Submodule.span K {v₀})
@@ -321,9 +312,8 @@ private theorem exists_invariant_notMem_of_forall_lie_mem {d : ℕ} (ih : Invari
     (fun x q ↦ lie_mem_of_mem_sup_span_singleton hv₀W x ((hPmem _).1 q.2))
   refine ⟨(p : M), notMem_of_mem_sup_span_singleton hWle hv₀N ((hPmem _).1 p.2) hpmem,
     fun x ↦ ?_⟩
-  have hp := hpinv x
-  rw [← LieSubmodule.coe_bracket, hp]
-  rfl
+  simpa only [LieSubmodule.coe_bracket, ZeroMemClass.coe_zero] using
+    congrArg Subtype.val (hpinv x)
 
 /-- **The reducible step.** If the proper submodule `N` admits a Lie submodule `W` that is neither
 `⊥` nor `N`, then `M` has an invariant vector outside `N`.
@@ -447,8 +437,8 @@ theorem HasInvariantOutsideIrreducible.exists_equivariant_projection
   refine ⟨c⁻¹ • (φ : M →ₗ[K] M), fun m ↦ N.smul_mem _ (hφN m), fun n hn ↦ ?_, fun x m ↦ ?_⟩
   · simp [hc n hn, smul_smul, inv_mul_cancel₀ hc0]
   · have hzero : ⁅x, (φ : M →ₗ[K] M)⁆ = 0 := by
-      rw [← LieSubmodule.coe_bracket, hφinv x]
-      rfl
+      simpa only [LieSubmodule.coe_bracket, ZeroMemClass.coe_zero] using
+        congrArg Subtype.val (hφinv x)
     have happ := congrArg (fun g : M →ₗ[K] M ↦ g m) hzero
     simp only [LieHom.lie_apply, LinearMap.zero_apply, sub_eq_zero] at happ
     simp [← happ]
