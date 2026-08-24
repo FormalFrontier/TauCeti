@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.OddSplitting
-public import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 public import TauCeti.RepresentationTheory.Spin.Structure
 -- Non-public: the coordinate surjection out of a product, the simplicity of a matrix algebra, and
 -- the finite-dimensional injectivity criterion are all used only inside proofs.
@@ -25,7 +24,7 @@ quadratic form on a space of dimension `2 * l + 1` is a **product of two matrix 
 Two results already in place bracket this statement, and the file supplies what joins them. The
 volume element of an orthogonal basis of odd length is central, odd, and squares to a nonzero
 scalar, so after rescaling it splits the algebra as two copies of its even subalgebra
-(`CliffordAlgebra.nonempty_algEquiv_even_prod_of_isSepClosed`); and the Fock action of a
+(`CliffordAlgebra.nonempty_algEquiv_even_prod_of_odd_finrank`); and the Fock action of a
 polarization is onto the endomorphism algebra of the spinor module `S = ⋀·W`
 (`TauCeti.spinAction_surjective`), which in dimension `2 * l + 1` has dimension `2 ^ l`. What was
 missing was the identification of the even subalgebra itself with `M_{2^l}(F)`, and that is the
@@ -41,8 +40,8 @@ half the dimension of the whole (`CliffordAlgebra.finrank_even`), so
 `dim A = 2 ^ (2 * l + 1 - 1) = 2 ^ l · 2 ^ l` is the dimension of the target and the surjection is
 injective as well.
 
-The nondegenerate anisotropic orthogonal basis that the splitting consumes comes from
-`QuadraticMap.Nondegenerate.exists_list_pairwise_isOrtho`.
+The splitting itself is general Clifford-algebra theory and lives with the rest of it, in
+`TauCeti/LinearAlgebra/CliffordAlgebra/OddSplitting.lean`.
 
 The isomorphisms are not canonical — they depend on a choice of orthogonal basis, of polarization,
 and of a basis of the spinor module — so the statements are `Nonempty`, as the even-dimensional
@@ -50,9 +49,6 @@ and of a basis of the spinor module — so the statements are `Nonempty`, as the
 
 ## Main results
 
-* `CliffordAlgebra.nonempty_algEquiv_even_prod_of_odd_finrank`: over a separably closed field, a
-  nondegenerate form of odd dimension splits its Clifford algebra as two copies of the even
-  subalgebra.
 * `CliffordAlgebra.nonempty_algEquiv_even_matrix_of_finrank_eq_two_mul_add_one`: **the even
   subalgebra is a matrix algebra** `M_{2^l}(F)` in dimension `2 * l + 1`.
 * `CliffordAlgebra.nonempty_algEquiv_matrix_prod_of_finrank_eq_two_mul_add_one`: **the structure
@@ -80,20 +76,6 @@ open TauCeti
 
 variable {F : Type u} [Field F] [NeZero (2 : F)]
   {V : Type v} [AddCommGroup V] [Module F V] [FiniteDimensional F V] {Q : QuadraticForm F V}
-
-/-! ### The two-block splitting in odd dimension -/
-
-/-- **A nondegenerate odd-dimensional Clifford algebra splits into two copies of its even
-subalgebra**, over a separably closed field of characteristic not two. An orthogonal basis has no
-isotropic member (`QuadraticMap.Nondegenerate.exists_list_pairwise_isOrtho`), so its volume element
-is a central odd element with invertible square, which is what
-`CliffordAlgebra.nonempty_algEquiv_even_prod_of_isSepClosed` asks for. -/
-theorem nonempty_algEquiv_even_prod_of_odd_finrank [IsSepClosed F] (hQ : Q.Nondegenerate)
-    (hV : Odd (finrank F V)) :
-    Nonempty (CliffordAlgebra Q ≃ₐ[F] (↥(even Q) × ↥(even Q))) := by
-  have _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
-  obtain ⟨l, hl, hlen, hspan, hQl⟩ := hQ.exists_list_pairwise_isOrtho
-  exact nonempty_algEquiv_even_prod_of_isSepClosed hl (hlen ▸ hV) hspan hQl
 
 /-! ### The structure theorem in odd dimension -/
 
