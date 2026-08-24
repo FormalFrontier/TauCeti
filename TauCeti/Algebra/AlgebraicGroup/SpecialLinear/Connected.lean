@@ -199,7 +199,7 @@ private theorem mapValue_constantLaurentPath
 
 private theorem algHom_apply_rightTranslationAlgHom_diag2n
     (n : ℕ) (e : K ⊗[k] coordinateHopfAlgebra k n)
-    [IsAlgClosed K] (he : IsIdempotentElem e) {i j : Fin n}
+    (he : IsIdempotentElem e) {i j : Fin n}
     (hij : i ≠ j) (a : K) (ha : a ≠ 0)
     (f : K ⊗[k] coordinateHopfAlgebra k n →ₐ[K] K) :
     f (HopfAlgebra.rightTranslationAlgHom
