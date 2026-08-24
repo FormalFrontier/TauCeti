@@ -83,13 +83,14 @@ central summands, for which the results here are the even-dimensional half.
   way intertwining the two actions, and hence
   `TauCeti.not_exists_equiv_intertwines_spinPlusAction_spinMinusAction`: **the half-spin summands
   are inequivalent.**
-* `TauCeti.isIrreducible_spinPlusSubrep_of_isSquare` and
-  `TauCeti.isIrreducible_spinMinusSubrep_of_isSquare`: **the two half-spin group representations
-  are irreducible** under the square-normalization hypothesis, with `P.W ≠ ⊥` required for the
-  odd half. The versions without the suffix specialize to separably closed fields.
-* `TauCeti.isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_isSquare`: **the two half-spin group
-  representations are inequivalent** under the same hypothesis; the version without the suffix
-  is the separably closed specialization.
+* `TauCeti.isIrreducible_spinPlusSubrep_of_span` and
+  `TauCeti.isIrreducible_spinMinusSubrep_of_span`: **the two half-spin group representations are
+  irreducible** when the Spin group spans the even Clifford algebra, with `P.W ≠ ⊥` required for
+  the odd half. The `_of_isSquare` and suffix-free versions give progressively stronger sufficient
+  hypotheses.
+* `TauCeti.isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_span`: **the two half-spin group
+  representations are inequivalent** under the same spanning hypothesis, with analogous
+  corollaries.
 
 ## References
 
@@ -142,13 +143,14 @@ private noncomputable def spinGroupAlgebraHom {K : Type u} [Field K]
 
 private theorem spinGroupAlgebraHom_surjective {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V]
-    {Q : QuadraticForm K V} [Invertible (2 : K)] (hQ : Q.Nondegenerate)
-    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹)) :
+    {Q : QuadraticForm K V}
+    (hspan : Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) =
+      (CliffordAlgebra.even Q).toSubmodule) :
     Function.Surjective (spinGroupAlgebraHom (K := K) (Q := Q)) := by
   intro x
   have hx : (x : CliffordAlgebra Q) ∈
       Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) := by
-    rw [CliffordAlgebra.span_spinGroup_eq_even_of_isSquare Q hQ hsq]
+    rw [hspan]
     exact x.2
   obtain ⟨a, ha⟩ := (Finsupp.mem_span_iff_linearCombination K
     (spinGroup Q : Set (CliffordAlgebra Q)) x).1 hx
@@ -184,26 +186,28 @@ private theorem asAlgebraHom_spinGroupRepresentation {K : Type u} [Field K]
 
 private theorem isIrreducible_spinGroupRepresentation {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V]
-    {Q : QuadraticForm K V} [Invertible (2 : K)] (hQ : Q.Nondegenerate)
-    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+    {Q : QuadraticForm K V}
+    (hspan : Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) =
+      (CliffordAlgebra.even Q).toSubmodule)
     {M : Type*} [AddCommGroup M] [Module K M] [Nontrivial M]
     (F : CliffordAlgebra.even Q →ₐ[K] Module.End K M)
     (hF : Function.Surjective F) : (spinGroupRepresentation F).IsIrreducible := by
   apply Representation.isIrreducible_of_asAlgebraHom_surjective
   rw [asAlgebraHom_spinGroupRepresentation]
-  exact hF.comp (spinGroupAlgebraHom_surjective hQ hsq)
+  exact hF.comp (spinGroupAlgebraHom_surjective hspan)
 
 private theorem intertwines_even_of_intertwines_spinGroup {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V]
-    {Q : QuadraticForm K V} [Invertible (2 : K)] (hQ : Q.Nondegenerate)
-    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+    {Q : QuadraticForm K V}
+    (hspan : Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) =
+      (CliffordAlgebra.even Q).toSubmodule)
     {M N : Type*} [AddCommGroup M] [Module K M] [AddCommGroup N] [Module K N]
     (F : CliffordAlgebra.even Q →ₐ[K] Module.End K M)
     (G : CliffordAlgebra.even Q →ₐ[K] Module.End K N) (φ : M →ₗ[K] N)
     (hφ : ∀ (g : spinGroup Q) (m : M),
       φ (F ⟨g, spinGroup.mem_even g.2⟩ m) = G ⟨g, spinGroup.mem_even g.2⟩ (φ m))
     (x : CliffordAlgebra.even Q) (m : M) : φ (F x m) = G x (φ m) := by
-  obtain ⟨a, rfl⟩ := spinGroupAlgebraHom_surjective hQ hsq x
+  obtain ⟨a, rfl⟩ := spinGroupAlgebraHom_surjective hspan x
   let φ' : (spinGroupRepresentation F).IntertwiningMap (spinGroupRepresentation G) :=
     ⟨φ, fun g => LinearMap.ext fun m => hφ g m⟩
   have h := (Representation.IntertwiningMap.equivLinearMapAsModule
@@ -328,16 +332,16 @@ variable {K : Type u} [Field K]
   {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
   [Invertible (2 : K)] [FiniteDimensional K V] (P : SpinPolarizationData Q)
 
-/-- **The even half-spin representation of the Spin group is irreducible** when anisotropic pairs
-admit the square normalization needed to span the even Clifford algebra. -/
-theorem isIrreducible_spinPlusSubrep_of_isSquare
-    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+/-- **The even half-spin representation of the Spin group is irreducible** when the Spin group
+linearly spans the even Clifford algebra. -/
+theorem isIrreducible_spinPlusSubrep_of_span
+    (hspan : Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) =
+      (CliffordAlgebra.even Q).toSubmodule)
     (hline : P.line = ⊥) :
     (spinPlusSubrep P hline).toRepresentation.IsIrreducible := by
-  have hQ := P.nondegenerate_of_line_eq_bot hline
   let _ : Nontrivial (spinPlus Q P) := nontrivial_spinPlus P
   have hρ : (spinGroupRepresentation (spinPlusAction Q P hline)).IsIrreducible :=
-    isIrreducible_spinGroupRepresentation hQ hsq (spinPlusAction Q P hline)
+    isIrreducible_spinGroupRepresentation hspan (spinPlusAction Q P hline)
       (spinPlusAction_surjective P hline)
   let e : spinPlus Q P ≃ₗ[K] (spinPlusSubrep P hline).toSubmodule :=
     LinearEquiv.ofEq _ _ (toSubmodule_spinPlusSubrep P hline).symm
@@ -347,15 +351,15 @@ theorem isIrreducible_spinPlusSubrep_of_isSquare
   exact coe_spinPlusAction_spinGroup_apply P hline g s
 
 /-- **The odd half-spin representation of the Spin group is irreducible** when the odd summand is
-nonzero and anisotropic pairs admit the required square normalization. -/
-theorem isIrreducible_spinMinusSubrep_of_isSquare
-    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+nonzero and the Spin group linearly spans the even Clifford algebra. -/
+theorem isIrreducible_spinMinusSubrep_of_span
+    (hspan : Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) =
+      (CliffordAlgebra.even Q).toSubmodule)
     (hline : P.line = ⊥)
     (hW : P.W ≠ ⊥) : (spinMinusSubrep P hline).toRepresentation.IsIrreducible := by
-  have hQ := P.nondegenerate_of_line_eq_bot hline
   let _ : Nontrivial (spinMinus Q P) := nontrivial_spinMinus P hW
   have hρ : (spinGroupRepresentation (spinMinusAction Q P hline)).IsIrreducible :=
-    isIrreducible_spinGroupRepresentation hQ hsq (spinMinusAction Q P hline)
+    isIrreducible_spinGroupRepresentation hspan (spinMinusAction Q P hline)
       (spinMinusAction_surjective P hline)
   let e : spinMinus Q P ≃ₗ[K] (spinMinusSubrep P hline).toSubmodule :=
     LinearEquiv.ofEq _ _ (toSubmodule_spinMinusSubrep P hline).symm
@@ -364,14 +368,14 @@ theorem isIrreducible_spinMinusSubrep_of_isSquare
   apply Subtype.ext
   exact coe_spinMinusAction_spinGroup_apply P hline g s
 
-/-- **The two half-spin representations of the Spin group are inequivalent** when anisotropic
-pairs admit the square normalization needed to span the even Clifford algebra. -/
-theorem isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_isSquare
-    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+/-- **The two half-spin representations of the Spin group are inequivalent** when the Spin group
+linearly spans the even Clifford algebra. -/
+theorem isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_span
+    (hspan : Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) =
+      (CliffordAlgebra.even Q).toSubmodule)
     (hline : P.line = ⊥) :
     IsEmpty ((spinPlusSubrep P hline).toRepresentation.Equiv
       (spinMinusSubrep P hline).toRepresentation) := by
-  have hQ := P.nondegenerate_of_line_eq_bot hline
   refine ⟨fun e => ?_⟩
   let ePlus : spinPlus Q P ≃ₗ[K] (spinPlusSubrep P hline).toSubmodule :=
     LinearEquiv.ofEq _ _ (toSubmodule_spinPlusSubrep P hline).symm
@@ -380,7 +384,7 @@ theorem isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_isSquare
   let f : spinPlus Q P ≃ₗ[K] spinMinus Q P :=
     ePlus.trans (e.toLinearEquiv.trans eMinus.symm)
   apply not_exists_equiv_intertwines_spinPlusAction_spinMinusAction P hline
-  refine ⟨f, fun x s => intertwines_even_of_intertwines_spinGroup hQ hsq
+  refine ⟨f, fun x s => intertwines_even_of_intertwines_spinGroup hspan
     (spinPlusAction Q P hline) (spinMinusAction Q P hline) f.toLinearMap ?_ x s⟩
   intro g s
   have hPlus : ePlus ((spinGroupRepresentation (spinPlusAction Q P hline)) g s) =
@@ -413,6 +417,37 @@ theorem isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_isSquare
       congrArg ((spinMinusSubrep P hline).toRepresentation g) (hef s)
     _ = eMinus ((spinGroupRepresentation (spinMinusAction Q P hline)) g (f s)) :=
       (hMinus (f s)).symm
+
+/-- **The even half-spin representation of the Spin group is irreducible** when anisotropic pairs
+admit the square normalization needed to span the even Clifford algebra. -/
+theorem isIrreducible_spinPlusSubrep_of_isSquare
+    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+    (hline : P.line = ⊥) :
+    (spinPlusSubrep P hline).toRepresentation.IsIrreducible :=
+  isIrreducible_spinPlusSubrep_of_span P
+    (CliffordAlgebra.span_spinGroup_eq_even_of_isSquare Q
+      (P.nondegenerate_of_line_eq_bot hline) hsq) hline
+
+/-- **The odd half-spin representation of the Spin group is irreducible** when the odd summand is
+nonzero and anisotropic pairs admit the required square normalization. -/
+theorem isIrreducible_spinMinusSubrep_of_isSquare
+    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+    (hline : P.line = ⊥)
+    (hW : P.W ≠ ⊥) : (spinMinusSubrep P hline).toRepresentation.IsIrreducible :=
+  isIrreducible_spinMinusSubrep_of_span P
+    (CliffordAlgebra.span_spinGroup_eq_even_of_isSquare Q
+      (P.nondegenerate_of_line_eq_bot hline) hsq) hline hW
+
+/-- **The two half-spin representations of the Spin group are inequivalent** when anisotropic
+pairs admit the square normalization needed to span the even Clifford algebra. -/
+theorem isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_isSquare
+    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+    (hline : P.line = ⊥) :
+    IsEmpty ((spinPlusSubrep P hline).toRepresentation.Equiv
+      (spinMinusSubrep P hline).toRepresentation) :=
+  isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_span P
+    (CliffordAlgebra.span_spinGroup_eq_even_of_isSquare Q
+      (P.nondegenerate_of_line_eq_bot hline) hsq) hline
 
 /-- **The even half-spin representation of the Spin group is irreducible** over a separably
 closed field for polarization data without a line remainder. -/

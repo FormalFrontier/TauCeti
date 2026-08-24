@@ -28,8 +28,11 @@ linearly spans the even Clifford algebra, provided `2` is nonzero.
 * `CliffordAlgebra.reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare`: a
   product of two reflections lifts through the Spin action when the product of its normalization
   scalars is a square. The version without the suffix is a separably closed-field corollary.
-* `CliffordAlgebra.span_spinGroup_eq_even_of_isSquare`: the Spin group spans the even Clifford
-  algebra when anisotropic pairs admit the required square normalization.
+* `CliffordAlgebra.span_spinGroup_eq_even_of_span_anisotropic`: the Spin group spans the even
+  Clifford algebra when anisotropic vectors span and pairs admit the required square
+  normalization.
+* `CliffordAlgebra.span_spinGroup_eq_even_of_isSquare`: the nondegenerate,
+  characteristic-not-two corollary.
 * `CliffordAlgebra.span_spinGroup_eq_even`: the separably closed-field corollary, for a
   nondegenerate form in characteristic different from two.
 
@@ -318,12 +321,13 @@ private theorem ι_mul_ι_mem_span_spinGroup_of_ne_zero
   exact this
 
 omit [IsSepClosed K] [Invertible (2 : K)] in
-private theorem ι_mul_ι_mem_span_spinGroup [NeZero (2 : K)]
+private theorem ι_mul_ι_mem_span_spinGroup_of_span_anisotropic
+    (hspan : Submodule.span K {v | Q v ≠ 0} = ⊤)
     (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
-    (hQ : Q.Nondegenerate) (v w : V) :
+    (v w : V) :
     ι Q v * ι Q w ∈ Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) := by
-  have hv := mem_span_anisotropic Q hQ v
-  have hw := mem_span_anisotropic Q hQ w
+  have hv : v ∈ Submodule.span K {x | Q x ≠ 0} := hspan.symm ▸ Submodule.mem_top
+  have hw : w ∈ Submodule.span K {x | Q x ≠ 0} := hspan.symm ▸ Submodule.mem_top
   induction hv, hw using Submodule.span_induction₂ with
   | mem_mem v w hv hw => exact ι_mul_ι_mem_span_spinGroup_of_ne_zero Q hsq v w hv hw
   | zero_left => simp
@@ -338,9 +342,10 @@ private theorem ι_mul_ι_mem_span_spinGroup [NeZero (2 : K)]
       simpa only [map_smul, mul_smul_comm] using Submodule.smul_mem _ r h
 
 omit [IsSepClosed K] [Invertible (2 : K)] in
-/-- **The Spin group linearly spans the even Clifford algebra** when every pair of anisotropic
-vectors admits the square normalization needed to lift it to the Spin group. -/
-theorem span_spinGroup_eq_even_of_isSquare [NeZero (2 : K)] (hQ : Q.Nondegenerate)
+/-- **The Spin group linearly spans the even Clifford algebra** when anisotropic vectors span and
+every pair of them admits the square normalization needed to lift it to the Spin group. -/
+theorem span_spinGroup_eq_even_of_span_anisotropic
+    (hspan : Submodule.span K {v | Q v ≠ 0} = ⊤)
     (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹)) :
     Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) = (even Q).toSubmodule := by
   apply le_antisymm
@@ -360,7 +365,16 @@ theorem span_spinGroup_eq_even_of_isSquare [NeZero (2 : K)] (hQ : Q.Nondegenerat
       exact Submodule.add_mem _ ihx ihy
     · intro v w x hx ih
       exact mul_mem_span_spinGroup (Q := Q)
-        (ι_mul_ι_mem_span_spinGroup Q hsq hQ v w) ih
+        (ι_mul_ι_mem_span_spinGroup_of_span_anisotropic Q hspan hsq v w) ih
+
+omit [IsSepClosed K] [Invertible (2 : K)] in
+/-- **The Spin group linearly spans the even Clifford algebra** when every pair of anisotropic
+vectors admits the square normalization, the form is nondegenerate, and `2` is nonzero. -/
+theorem span_spinGroup_eq_even_of_isSquare [NeZero (2 : K)] (hQ : Q.Nondegenerate)
+    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹)) :
+    Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) = (even Q).toSubmodule := by
+  apply span_spinGroup_eq_even_of_span_anisotropic Q _ hsq
+  exact eq_top_iff.2 fun x _ => mem_span_anisotropic Q hQ x
 
 omit [Invertible (2 : K)] in
 /-- **The Spin group linearly spans the even Clifford algebra** for a nondegenerate quadratic
