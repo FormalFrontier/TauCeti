@@ -55,8 +55,9 @@ theorem finrank_iSup_eq_sum_finrank_of_iSupIndep {K M ι : Type*} [DivisionRing 
   have hV : ∀ i, V i ≤ S := fun i ↦ le_iSup V i
   let e : Submodule K S ≃o Set.Iic S := S.mapIic
   have he : (e ∘ fun i ↦ (V i).comap S.subtype) = fun i ↦ ⟨V i, hV i⟩ := by
-    ext i m
-    change m ∈ ((V i).comap S.subtype).map S.subtype ↔ _
+    funext i
+    apply Subtype.ext
+    simp only [Function.comp_apply, e, Submodule.coe_mapIic_apply]
     rw [Submodule.map_comap_subtype, inf_of_le_right (hV i)]
   have hindep : iSupIndep fun i ↦ (V i).comap S.subtype := by
     rw [← iSupIndep_map_orderIso_iff e, he]

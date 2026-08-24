@@ -339,10 +339,9 @@ theorem finrank_genWeightSpace_tensorProduct (χ : Dual K L) :
     · refine iSup_le fun p ↦ ?_
       have hp : (p.1.1 : L → K) + (p.1.2 : L → K) = (χ : L → K) := by
         exact congrArg (fun f : Dual K L ↦ (f : L → K)) p.property
-      change A p ≤ (genWeightSpace (M ⊗[K] N) (χ : L → K)).toSubmodule
       rw [← hp]
-      exact map₂_mk_genWeightSpace_le M N p.1.1 p.1.2
-  change finrank K (genWeightSpace (M ⊗[K] N) (χ : L → K)).toSubmodule = _
+      simpa only [A] using map₂_mk_genWeightSpace_le M N p.1.1 p.1.2
+  rw [← finrank_toSubmodule]
   rw [hspace, finrank_iSup_eq_sum_finrank_of_iSupIndep hindep]
   rw [← Finset.sum_subtype
     (s := (Finset.univ : Finset (Weight K L M × Weight K L N)).filter fun p ↦
@@ -351,6 +350,8 @@ theorem finrank_genWeightSpace_tensorProduct (χ : Dual K L) :
   refine Finset.sum_congr rfl fun p _ ↦ ?_
   by_cases hp : (p.1 : Dual K L) + (p.2 : Dual K L) = χ
   · simp only [hp, ite_true]
+    -- Unfolding `A` in the carrier does not update the dependent module instances inferred by
+    -- `finrank`; restating the goal makes those instances use the displayed `map₂` submodule.
     change finrank K (Submodule.map₂ (TensorProduct.mk K M N)
       (genWeightSpace M p.1).toSubmodule (genWeightSpace N p.2).toSubmodule) = _
     rw [← TensorProduct.range_mapIncl,
@@ -375,21 +376,7 @@ theorem formalCharacter_tensor :
   push_cast
   rw [Fintype.sum_prod_type]
   simp_rw [Finset.sum_apply]
-  change (∑ μ : Weight K L M, ∑ ν : Weight K L N,
-      if (μ : Dual K L) + (ν : Dual K L) = χ then
-        (finrank K (genWeightSpace M (μ : L → K)) : ℤ) *
-          (finrank K (genWeightSpace N (ν : L → K)) : ℤ) else 0) =
-    ∑ μ : Weight K L M, ∑ ν : Weight K L N,
-      (Finsupp.single ((μ : Dual K L) + (ν : Dual K L))
-        ((finrank K (genWeightSpace M (μ : L → K)) : ℤ) *
-          (finrank K (genWeightSpace N (ν : L → K)) : ℤ))) χ
-  refine @Finset.sum_congr (Weight K L M) ℤ Finset.univ Finset.univ inferInstance _ _ rfl
-    fun μ _ ↦ ?_
-  refine @Finset.sum_congr (Weight K L N) ℤ Finset.univ Finset.univ inferInstance _ _ rfl
-    fun ν _ ↦ ?_
-  by_cases hμν : (μ : Dual K L) + (ν : Dual K L) = χ
-  · rw [ite_eq_left hμν, hμν, Finsupp.single_eq_same]
-  · rw [ite_eq_right hμν, Finsupp.single_eq_of_ne (Ne.symm hμν)]
+  simp only [Finsupp.single_apply, eq_comm]
 
 end TensorProduct
 

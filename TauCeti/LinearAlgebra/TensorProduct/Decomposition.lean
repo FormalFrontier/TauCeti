@@ -89,7 +89,12 @@ theorem tensorProduct (hA : DirectSum.IsInternal A) (hB : DirectSum.IsInternal B
     rw [coe_summandEquiv]
     induction x using TensorProduct.induction_on with
     | zero => simp
-    | tmul a b => simp [E, summandEquiv, DirectSum.coe_congrLinearEquiv]
+    | tmul a b =>
+      simp only [TensorProduct.map_tmul, Submodule.coe_subtype, E, LinearEquiv.trans_apply,
+        TensorProduct.congr_tmul, DirectSum.decomposeLinearEquiv_apply_coe,
+        TensorProduct.directSum_lof_tmul_lof]
+      rw [DirectSum.coe_congrLinearEquiv, DirectSum.lmap_lof]
+      rfl
     | add a b ha hb => simp [ha, hb]
   have hcoe :
       DirectSum.coeLinearMap
@@ -104,6 +109,8 @@ theorem tensorProduct (hA : DirectSum.IsInternal A) (hB : DirectSum.IsInternal B
     rw [DirectSum.coeLinearMap_lof]
     apply E.injective
     simpa using hE i j x
+  -- `DirectSum.IsInternal` is defined using `coeAddMonoidHom`; its underlying function is
+  -- definitionally the same as this linear map, whose inverse is the linear equivalence `E.symm`.
   change Function.Bijective
     (DirectSum.coeLinearMap
       (fun p : ι × κ ↦ Submodule.map₂ (TensorProduct.mk K M N) (A p.1) (B p.2)))
