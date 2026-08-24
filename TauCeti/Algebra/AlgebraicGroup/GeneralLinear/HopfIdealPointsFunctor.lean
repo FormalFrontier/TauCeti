@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints
 
 /-!
 # Functorial matrix points cut out by a Hopf ideal
