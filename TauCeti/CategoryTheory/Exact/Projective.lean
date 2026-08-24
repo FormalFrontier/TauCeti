@@ -69,8 +69,8 @@ by the projectives themselves.
 * `TauCeti.ExactStructure.isExtensionClosed_admitsFiniteResolution`: under those same hypotheses
   on `P`, admitting a finite `P`-resolution is closed under extensions.
 * `TauCeti.ExactStructure.isExtensionClosed_of_le_isProjective` and
-  `TauCeti.ExactStructure.fullSubcategory_conflation_iff_split`: a property consisting of
-  projectives is itself extension closed, and the exact structure it inherits is the split one.
+  `TauCeti.ExactStructure.fullSubcategory_eq_split`: a property consisting of projectives is
+  itself extension closed, and the exact structure it inherits is the split one.
 
 ## Implementation notes
 
@@ -335,13 +335,12 @@ local instance [P.ContainsZero] [P.IsClosedUnderBinaryProducts] :
 
 variable [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 
-/-- **The exact structure induced on a subcategory of projectives is the split one.** Every
-conflation between projectives splits, and a split short complex is a conflation of every exact
-structure. -/
-theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
-    (S : ShortComplex P.FullSubcategory) :
-    (E.fullSubcategory P (E.isExtensionClosed_of_le_isProjective hP)).Conflation S ↔
-      (ExactStructure.split P.FullSubcategory).Conflation S := by
+/-- **The exact structure induced on a subcategory of projectives is the split one.** -/
+theorem fullSubcategory_eq_split (hP : P ≤ E.isProjective) :
+    E.fullSubcategory P (E.isExtensionClosed_of_le_isProjective hP) =
+      ExactStructure.split P.FullSubcategory := by
+  apply ExactStructure.ext
+  intro S
   refine ⟨fun hS => ?_, fun hS => ExactStructure.conflation_of_split_conflation _ hS⟩
   rw [fullSubcategory_conflation_iff] at hS
   have hs := E.splittingOfProjective hS (hP _ S.X₃.property)
@@ -351,6 +350,14 @@ theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
     f_r := ObjectProperty.hom_ext _ hs.f_r
     s_g := ObjectProperty.hom_ext _ hs.s_g
     id := ObjectProperty.hom_ext _ hs.id }⟩
+
+/-- A short complex in a full subcategory of projectives is a conflation of the induced exact
+structure exactly when it is a split conflation. -/
+theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
+    (S : ShortComplex P.FullSubcategory) :
+    (E.fullSubcategory P (E.isExtensionClosed_of_le_isProjective hP)).Conflation S ↔
+      (ExactStructure.split P.FullSubcategory).Conflation S := by
+  rw [E.fullSubcategory_eq_split hP]
 
 /-- **Finite resolutions by projectives lift along a conflation.** If `P` consists of
 `E`-projectives, contains a zero object and is closed under binary biproducts, and both outer

@@ -18,7 +18,8 @@ public import Mathlib.CategoryTheory.Preadditive.AdditiveFunctor
 
 This file contains general lemmas about object properties: transporting them along an
 equivalence, comparing Mathlib's closure type classes with one another in the presence of a
-zero object and of binary biproducts, and additivity of inclusions between full subcategories.
+zero object and of binary biproducts, smallness of full subcategories, and additivity of inclusions
+between full subcategories.
 
 ## Main declarations
 
@@ -32,13 +33,15 @@ zero object and of binary biproducts, and additivity of inclusions between full 
 * `CategoryTheory.ObjectProperty.prop_biprod_of_isClosedUnderBinaryProducts`: a property closed
   under binary products holds for binary biproducts, with `X ⊞ Y` as the syntactic form of the
   conclusion.
-* `CategoryTheory.ObjectProperty.additive_ιOfLE`: the inclusion of a smaller property into a
-  larger one is additive.
+* `CategoryTheory.ObjectProperty.essentiallySmall_of_ambient`: every property in an essentially
+  small category is essentially small.
+* `CategoryTheory.ObjectProperty.ιOfLE_additive`: the inclusion of a smaller property into a larger
+  one is additive.
 -/
 
 public section
 
-universe u₁ v₁ u₂ v₂
+universe w u₁ v₁ u₂ v₂
 
 namespace CategoryTheory
 
@@ -93,13 +96,20 @@ binary biproducts the biproduct is a binary product, so this is
 syntactically `X ⊞ Y`, which matters when the conclusion is the type index of a dependent
 family. -/
 theorem prop_biprod_of_isClosedUnderBinaryProducts {C : Type u₁} [Category.{v₁} C]
-    [HasZeroMorphisms C] [HasBinaryBiproducts C] (P : ObjectProperty C)
-    [P.IsClosedUnderBinaryProducts] {X Y : C} (hX : P X) (hY : P Y) : P (X ⊞ Y) :=
+    [HasZeroMorphisms C] (P : ObjectProperty C) [P.IsClosedUnderBinaryProducts]
+    {X Y : C} [HasBinaryBiproduct X Y] (hX : P X) (hY : P Y) : P (X ⊞ Y) :=
   P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit X Y) hX hY
+
+/-- Every object property in an essentially small category is essentially small. This supplies
+the smallness instance for its full subcategory through Mathlib's object-property API. -/
+instance essentiallySmall_of_ambient {C : Type u₁} [Category.{v₁} C]
+    [CategoryTheory.EssentiallySmall.{w} C] (P : ObjectProperty C) :
+    ObjectProperty.EssentiallySmall.{w} P :=
+  ObjectProperty.EssentiallySmall.of_le.{w} (Q := (⊤ : ObjectProperty C)) le_top
 
 /-- The inclusion of a smaller object property into a larger one is an additive functor: both
 categories carry the addition of the ambient one. -/
-instance additive_ιOfLE {C : Type u₁} [Category.{v₁} C] [Preadditive C]
+instance ιOfLE_additive {C : Type u₁} [Category.{v₁} C] [Preadditive C]
     {P P' : ObjectProperty C} (h : P ≤ P') : (ObjectProperty.ιOfLE h).Additive where
   map_add := rfl
 

@@ -25,9 +25,11 @@ zero padding, and of every other choice -- and it is the first half of Weibel's 
 theorem: it exhibits `[X]` as an integral combination of classes of objects satisfying `P`, so
 those classes generate exact `K₀` as soon as every object admits a finite `P`-resolution.
 
-The second half, that the comparison map from the exact `K₀` of the full subcategory on `P` is
-also injective, needs the resolving hypotheses on `P` and Weibel's common-refinement argument,
-and is not proved here.
+For a property consisting of projectives, the second half — injectivity of the comparison map from
+the exact `K₀` of the full subcategory on `P` — is proved by Schanuel's and the horseshoe lemmas
+in `TauCeti/CategoryTheory/GrothendieckGroup/ProjectiveResolution.lean`; see
+`TauCeti.ExactStructure.resolutionEquiv`. The general resolving-subcategory case needs the packaged
+resolving hypotheses and Weibel's common-refinement argument, and is not proved here.
 
 ## Main definitions
 

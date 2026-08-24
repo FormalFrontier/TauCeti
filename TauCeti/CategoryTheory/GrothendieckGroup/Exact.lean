@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.CategoryTheory.Exact.Equivalence
+public import TauCeti.CategoryTheory.Exact.ExtensionClosed
 public import TauCeti.CategoryTheory.Exact.Split
 public import TauCeti.CategoryTheory.GrothendieckGroup.Presentation
 public import TauCeti.CategoryTheory.GrothendieckGroup.Split
@@ -183,6 +184,27 @@ biproduct conflations. -/
 @[simp]
 theorem of_biprod (X Z : C) : (of (X ⊞ Z) : ExactK0 E) = of X + of Z :=
   of_conflation (E.conflation_biprodShortComplex X Z)
+
+section FullSubcategory
+
+variable {P : ObjectProperty C} [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
+
+/-- The class of an explicitly presented ambient biproduct in the exact `K₀` of an induced full
+subcategory is the sum of the classes of its summands. -/
+theorem of_biprod_fullSubcategory (hP : E.IsExtensionClosed P) {X Y : C}
+    (hX : P X) (hY : P Y) (hXY : P (X ⊞ Y)) :
+    (of ⟨X ⊞ Y, hXY⟩ : ExactK0 (E.fullSubcategory P hP)) =
+      of ⟨X, hX⟩ + of ⟨Y, hY⟩ := by
+  have hzero : (ObjectProperty.homMk (biprod.inl : X ⟶ X ⊞ Y) :
+        (⟨X, hX⟩ : P.FullSubcategory) ⟶ ⟨X ⊞ Y, hXY⟩) ≫
+      (ObjectProperty.homMk (biprod.snd : X ⊞ Y ⟶ Y) :
+        (⟨X ⊞ Y, hXY⟩ : P.FullSubcategory) ⟶ ⟨Y, hY⟩) = 0 :=
+    ObjectProperty.hom_ext _ (by simp)
+  refine of_eq_add_of_conflation hzero ?_
+  rw [ExactStructure.fullSubcategory_conflation_iff]
+  exact E.conflation_biprodShortComplex X Y
+
+end FullSubcategory
 
 /-- The class of an object which is zero vanishes. -/
 @[simp]
