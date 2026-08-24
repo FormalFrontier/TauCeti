@@ -6,8 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.WeilDivisor.Principal.Basic
+public import TauCeti.FieldTheory.FunctionField.ConstantField
+public import TauCeti.FieldTheory.FunctionField.Divisor.Basic
+public import TauCeti.FieldTheory.FunctionField.Place.Existence
 public import TauCeti.FieldTheory.FunctionField.Place.Zeros
-public import TauCeti.FieldTheory.FunctionField.RiemannRoch.Basic
 
 /-!
 # Principal divisors of an algebraic function field
@@ -20,10 +22,10 @@ finite formal sum
 of its zeros and poles, weighted by their orders.  It is a finite sum because a function of an
 algebraic function field has only finitely many zeros and poles
 (`TauCeti.Place.finite_setOf_ord_ne_zero`), and it is additive in `z` because `ord_P` is.  This
-file constructs it, splits it into its zero and pole divisors, characterizes the functions with
-trivial divisor as the constants, and proves that multiplication by `z` identifies the
-Riemann–Roch spaces of `A` and `A - div z`.  It is Stichtenoth, *Algebraic Function Fields and
-Codes*, 2nd ed., Definition 1.4.2 and Lemma 1.4.6.
+file constructs it, splits it into its zero and pole divisors, and characterizes the functions
+with trivial divisor as the constants.  It is Stichtenoth, *Algebraic Function Fields and
+Codes*, 2nd ed., Definition 1.4.2.  Its consequences for Riemann–Roch spaces are
+`TauCeti.FieldTheory.FunctionField.RiemannRoch.Principal`.
 
 The formal side is not rebuilt: the group `Divisor k F` and its degree are
 `TauCeti.FieldTheory.FunctionField.Divisor.Basic`, and the passage from a family of order
@@ -49,14 +51,6 @@ the places themselves.
   when `z ∈ kˣ`.
 * `TauCeti.Divisor.linearlyEquivalent_iff`: two divisors are linearly equivalent exactly when
   their difference is the divisor of a function (Definition 1.4.3).
-* `TauCeti.mem_riemannRochSpace_units_iff`: `z ∈ L(D)` is `div z + D ≥ 0`, the divisor form of
-  the pole bound defining `L(D)`.
-* `TauCeti.riemannRochSpaceEquivSubPrincipal`: **Stichtenoth, Lemma 1.4.6** —
-  multiplication by `z` is a `k`-linear isomorphism `L(A) ≅ L(A - div z)`; hence
-  `TauCeti.Divisor.dim_eq_of_linearlyEquivalent`, `ℓ` is an invariant of the linear equivalence
-  class of a divisor.
-* `TauCeti.riemannRochSpace_ne_bot_iff`: `L(D) ≠ 0` exactly when `D` is linearly equivalent to
-  an effective divisor (Remark 1.4.5(b)).
 
 ## Implementation notes
 
@@ -283,109 +277,5 @@ theorem support_zeros_disjoint_poles (hF : IsFunctionField k F) (z : Fˣ) :
   WeilDivisor.support_posPart_disjoint_negPart _
 
 end Divisor
-
-/-! ### Riemann–Roch spaces and linear equivalence -/
-
-/-- **The divisor form of membership in `L(D)`**: a nonzero function lies in `L(D)` exactly when
-`div f + D` is effective, which is how Stichtenoth states Definition 1.4.4. -/
-theorem mem_riemannRochSpace_units_iff (hF : IsFunctionField k F) {D : Divisor k F} {z : Fˣ} :
-    (z : F) ∈ riemannRochSpace D ↔ 0 ≤ Divisor.principal hF z + D := by
-  rw [mem_riemannRochSpace_iff_neg_le_ord (Units.ne_zero z), WeilDivisor.le_iff]
-  refine forall_congr' fun P => ?_
-  rw [WeilDivisor.coeff_zero, WeilDivisor.coeff_add, Divisor.coeff_principal]
-  omega
-
-/-- Multiplying by `z` moves `L(A)` into `L(A - div z)`: the poles of `z * f` are bounded by
-those of `f` together with the poles `z` contributes. -/
-theorem mul_mem_riemannRochSpace_sub_principal (hF : IsFunctionField k F) (z : Fˣ)
-    {A : Divisor k F} {f : F} (hf : f ∈ riemannRochSpace A) :
-    (z : F) * f ∈ riemannRochSpace (A - Divisor.principal hF z) := by
-  rcases eq_or_ne f 0 with rfl | hf0
-  · simp
-  let u : Fˣ := Units.mk0 f hf0
-  change ((z * u : Fˣ) : F) ∈ riemannRochSpace (A - Divisor.principal hF z)
-  rw [mem_riemannRochSpace_units_iff hF, Divisor.principal_mul]
-  have hu : 0 ≤ Divisor.principal hF u + A :=
-    (mem_riemannRochSpace_units_iff hF).mp (by simpa only [u, Units.val_mk0] using hf)
-  rwa [show Divisor.principal hF z + Divisor.principal hF u +
-      (A - Divisor.principal hF z) = Divisor.principal hF u + A by abel]
-
-/-- **Stichtenoth, Lemma 1.4.6**: multiplication by a nonzero function `z` is a `k`-linear
-isomorphism `L(A) ≅ L(A - div z)`.
-
-This is the whole content of the invariance of `ℓ` under linear equivalence: any two linearly
-equivalent divisors differ by a principal divisor, and this isomorphism handles that difference.
-It needs no product formula, so it is available before `deg (div z) = 0`. -/
-noncomputable def riemannRochSpaceEquivSubPrincipal (hF : IsFunctionField k F) (z : Fˣ)
-    (A : Divisor k F) :
-    riemannRochSpace A ≃ₗ[k] riemannRochSpace (A - Divisor.principal hF z) := by
-  have hback : ∀ f ∈ riemannRochSpace (A - Divisor.principal hF z),
-      ((z⁻¹ : Fˣ) : F) * f ∈ riemannRochSpace A := by
-    intro f hf
-    have h := mul_mem_riemannRochSpace_sub_principal hF z⁻¹ hf
-    rwa [Divisor.principal_inv, sub_neg_eq_add, sub_add_cancel] at h
-  refine (z.mulLeftLinearEquiv k F).ofSubmodules _ _ (le_antisymm ?_ ?_)
-  · rintro f ⟨g, hg, rfl⟩
-    exact mul_mem_riemannRochSpace_sub_principal hF z hg
-  · intro f hf
-    refine ⟨(z.mulLeftLinearEquiv k F).symm f, ?_, ?_⟩
-    · exact hback f hf
-    · exact (z.mulLeftLinearEquiv k F).apply_symm_apply f
-
-/-- The Riemann–Roch-space equivalence acts by multiplication by `z`. -/
-@[simp]
-theorem riemannRochSpaceEquivSubPrincipal_apply (hF : IsFunctionField k F) (z : Fˣ)
-    (A : Divisor k F) (f : riemannRochSpace A) :
-    (riemannRochSpaceEquivSubPrincipal hF z A f : F) = (z : F) * (f : F) := by
-  rw [riemannRochSpaceEquivSubPrincipal, LinearEquiv.ofSubmodules_apply,
-    Units.mulLeftLinearEquiv_apply]
-
-/-- The inverse Riemann–Roch-space equivalence acts by multiplication by `z⁻¹`. -/
-@[simp]
-theorem riemannRochSpaceEquivSubPrincipal_symm_apply (hF : IsFunctionField k F) (z : Fˣ)
-    (A : Divisor k F) (f : riemannRochSpace (A - Divisor.principal hF z)) :
-    ((riemannRochSpaceEquivSubPrincipal hF z A).symm f : F) = (z⁻¹ : Fˣ) * (f : F) := by
-  rw [riemannRochSpaceEquivSubPrincipal, LinearEquiv.ofSubmodules_symm_apply,
-    Units.symm_mulLeftLinearEquiv_apply]
-
-/-- `ℓ(A - div z) = ℓ(A)`: the dimension of a Riemann–Roch space is unchanged by subtracting a
-principal divisor. -/
-theorem Divisor.dim_sub_principal (hF : IsFunctionField k F) (z : Fˣ) (A : Divisor k F) :
-    Divisor.dim (A - Divisor.principal hF z) = Divisor.dim A := by
-  rw [Divisor.dim_def, Divisor.dim_def]
-  exact ((riemannRochSpaceEquivSubPrincipal hF z A).finrank_eq).symm
-
-/-- **`ℓ` is an invariant of the divisor class** (Stichtenoth, Lemma 1.4.6): linearly equivalent
-divisors have Riemann–Roch spaces of the same dimension. -/
-theorem Divisor.dim_eq_of_linearlyEquivalent (hF : IsFunctionField k F) {A B : Divisor k F}
-    (h : (Place.orderSystem hF).LinearlyEquivalent A B) :
-    Divisor.dim A = Divisor.dim B := by
-  obtain ⟨z, hz⟩ := (Divisor.linearlyEquivalent_iff hF).mp h
-  have hB : B = A - Divisor.principal hF z := by rw [hz]; abel
-  rw [hB, Divisor.dim_sub_principal]
-
-/-- **A Riemann–Roch space is nonzero exactly when its divisor is linearly equivalent to an
-effective divisor** (Stichtenoth, Remark 1.4.5(b)).  A nonzero `f ∈ L(D)` makes `div f + D`
-effective and equivalent to `D`; conversely, if `D - D'` is the divisor of `z` with `D'`
-effective, then `z⁻¹` is a nonzero element of `L(D)`. -/
-theorem riemannRochSpace_ne_bot_iff (hF : IsFunctionField k F) {D : Divisor k F} :
-    riemannRochSpace D ≠ ⊥ ↔
-      ∃ D' : Divisor k F, 0 ≤ D' ∧ (Place.orderSystem hF).LinearlyEquivalent D D' := by
-  rw [Submodule.ne_bot_iff]
-  constructor
-  · rintro ⟨f, hf, hf0⟩
-    refine ⟨Divisor.principal hF (Units.mk0 f hf0) + D, ?_, ?_⟩
-    · exact (mem_riemannRochSpace_units_iff hF (z := Units.mk0 f hf0)).mp hf
-    · refine (Divisor.linearlyEquivalent_iff hF).mpr ⟨(Units.mk0 f hf0)⁻¹, ?_⟩
-      rw [Divisor.principal_inv]
-      abel
-  · rintro ⟨D', hD', hequiv⟩
-    obtain ⟨z, hz⟩ := (Divisor.linearlyEquivalent_iff hF).mp hequiv
-    refine ⟨((z⁻¹ : Fˣ) : F), ?_, Units.ne_zero _⟩
-    refine (mem_riemannRochSpace_units_iff hF).mpr ?_
-    rw [Divisor.principal_inv, hz]
-    have hcancel : -(D - D') + D = D' := by abel
-    rw [hcancel]
-    exact hD'
 
 end TauCeti
