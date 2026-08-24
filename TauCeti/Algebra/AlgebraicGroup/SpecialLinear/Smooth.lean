@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.CommHopfAlgCat
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.SmoothConnected
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Lift
 
@@ -16,9 +17,9 @@ The coordinate algebra of `SLₙ` is smooth over every commutative ring. The pro
 infinitesimal lifting criterion for formal smoothness. Under the algebra-valued-points
 equivalence, lifting a coordinate-algebra map through a square-zero quotient is exactly lifting a
 special-linear matrix;
-`Matrix.SpecialLinearGroup.map_quotient_mk_surjective` supplies that lift. Finite presentation is
-inherited from the determinant localization presenting `GLₙ` and the principal determinant-one
-quotient presenting `SLₙ`.
+`Matrix.SpecialLinearGroup.map_quotient_mk_surjective_of_isNilpotent` supplies that lift. Finite
+presentation is inherited from the determinant localization presenting `GLₙ` and the principal
+determinant-one quotient presenting `SLₙ`.
 
 The result is valid in every natural rank, including rank zero, over bases with zero divisors and
 in every characteristic.
@@ -33,7 +34,8 @@ in every characteristic.
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), Chapter 2.
-* The Stacks Project, Tags 00TH and 00T2 (formal smoothness and smooth algebras).
+* The Stacks Project, Tag 00TI (formal smoothness), and Tags 00T2 and 00TN (equivalent notions of
+  smooth algebras).
 -/
 
 public section
@@ -56,8 +58,9 @@ private instance instFormallySmoothCoordinateHopfAlgebra :
     Algebra.FormallySmooth R (coordinateHopfAlgebra R n) := by
   apply Algebra.FormallySmooth.of_comp_surjective
   intro B _ _ I hI f
-  obtain ⟨t, ht⟩ := Matrix.SpecialLinearGroup.map_quotient_mk_surjective I ⟨2, hI⟩
-    ((pointsMulEquiv (R := R) (A := B ⧸ I) n) (toConv f))
+  obtain ⟨t, ht⟩ :=
+    Matrix.SpecialLinearGroup.map_quotient_mk_surjective_of_isNilpotent I ⟨2, hI⟩
+      ((pointsMulEquiv (R := R) (A := B ⧸ I) n) (toConv f))
   let g : WithConv (coordinateHopfAlgebra R n →ₐ[R] B) :=
     (pointsMulEquiv (R := R) (A := B) n).symm t
   refine ⟨g.ofConv, ?_⟩
@@ -75,15 +78,6 @@ private instance instFormallySmoothCoordinateHopfAlgebra :
 /-- The coordinate algebra of `SLₙ` is smooth over every commutative ring. -/
 instance instSmoothCoordinateHopfAlgebra :
     Algebra.Smooth R (coordinateHopfAlgebra R n) := by
-  let _ : Algebra.FinitePresentation
-      (MatrixMonoid.CoordinateRing R n) (GeneralLinear.CoordinateRing R n) :=
-    IsLocalization.Away.finitePresentation
-      (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R))
-  let _ : Algebra.FinitePresentation R (GeneralLinear.CoordinateRing R n) :=
-    Algebra.FinitePresentation.trans R (MatrixMonoid.CoordinateRing R n)
-      (GeneralLinear.CoordinateRing R n)
-  let _ : Algebra.FinitePresentation R (GeneralLinear.coordinateHopfAlgebra R n) :=
-    Algebra.FinitePresentation.equiv (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n)
   have hfg : (definingHopfIdeal R n).toIdeal.FG := by
     rw [definingHopfIdeal_toIdeal]
     exact Submodule.fg_span_singleton _
