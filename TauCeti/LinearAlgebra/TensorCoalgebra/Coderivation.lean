@@ -85,7 +85,7 @@ produces from them.
 
 It is zero unless the collapsed block is nonempty and fits, that is unless `0 < d` and
 `p + d ≤ n`. -/
-noncomputable def coderivSummand (F : ReducedTensorWords R M →ₗ[R] M) (n p d : ℕ) :
+private noncomputable def coderivSummand (F : ReducedTensorWords R M →ₗ[R] M) (n p d : ℕ) :
     TensorPower R n M →ₗ[R] ReducedTensorWords R M :=
   if h : 0 < d ∧ p + d ≤ n then
     of R M ⟨n + 1 - d, by omega⟩ ∘ₗ
@@ -100,13 +100,13 @@ noncomputable def coderivSummand (F : ReducedTensorWords R M →ₗ[R] M) (n p d
   else 0
 
 /-- Outside its range a Taylor summand vanishes. -/
-theorem coderivSummand_eq_zero (F : ReducedTensorWords R M →ₗ[R] M) {n p d : ℕ}
+private theorem coderivSummand_eq_zero (F : ReducedTensorWords R M →ₗ[R] M) {n p d : ℕ}
     (h : ¬(0 < d ∧ p + d ≤ n)) : coderivSummand R F n p d = 0 := by
   rw [coderivSummand, dite_eq_right h]
 
 /-- On a pure tensor word, a Taylor summand is the splice of the value of `F` on the collapsed
 block. -/
-theorem coderivSummand_tprod (F : ReducedTensorWords R M →ₗ[R] M) {n p d : ℕ} (hd : 0 < d)
+private theorem coderivSummand_tprod (F : ReducedTensorWords R M →ₗ[R] M) {n p d : ℕ} (hd : 0 < d)
     (hpd : p + d ≤ n) (x : Fin n → M) :
     coderivSummand R F n p d (PiTensorProduct.tprod R x) =
       splice R x 0 n p d (F (subword R x p d)) := by
@@ -139,7 +139,12 @@ noncomputable def coderiv (F : ReducedTensorWords R M →ₗ[R] M) :
   DirectSum.toModule R {n : ℕ // 0 < n} _ fun n ↦
     ∑ p ∈ Finset.range n.1, ∑ d ∈ Finset.range (n.1 + 1), coderivSummand R F n.1 p d
 
-theorem coderiv_of (F : ReducedTensorWords R M →ₗ[R] M) (n : {n : ℕ // 0 < n})
+/-- Evaluation of `coderiv F` on a homogeneous tensor word `of R M n z`: the sum, over a position
+`p` and a block length `d`, of the Taylor summands collapsing the `d` letters at position `p`.
+
+The public form of this evaluation rule is `TauCeti.ReducedTensorWords.coderiv_subword`, which
+states the same sum in terms of `TauCeti.ReducedTensorWords.splice`. -/
+private theorem coderiv_of (F : ReducedTensorWords R M →ₗ[R] M) (n : {n : ℕ // 0 < n})
     (z : TensorPower R n.1 M) :
     coderiv R F (of R M n z) =
       ∑ p ∈ Finset.range n.1, ∑ d ∈ Finset.range (n.1 + 1), coderivSummand R F n.1 p d z := by
@@ -151,7 +156,7 @@ private theorem splice_eq_zero_of_not_fits {n : ℕ} (x : Fin n → M) {a b p d 
     (h : ¬(0 < d ∧ p + d ≤ b)) : splice R x a b p d e = 0 := by
   rcases Nat.eq_zero_or_pos d with rfl | hd
   · exact splice_zero_length R x a b p e
-  · exact splice_eq_zero_of_lt_add R x e (by omega)
+  · exact splice_eq_zero_of_block_lt_add R x e (by omega)
 
 /-- A Taylor summand on a tensor word that is a block of a longer tuple, read back in that
 tuple. -/
@@ -406,7 +411,7 @@ theorem letter_comp_coderiv (F : ReducedTensorWords R M →ₗ[R] M) :
     refine Finset.sum_eq_zero fun d _ ↦ ?_
     by_cases hd : d = n.1
     · subst hd
-      rw [splice_eq_zero_of_lt_add R x _ (by omega), map_zero]
+      rw [splice_eq_zero_of_block_lt_add R x _ (by omega), map_zero]
     · exact letter_splice_eq_zero R x _ hd
   · intro hp
     exact absurd (Finset.mem_range.2 hn) hp
@@ -418,11 +423,8 @@ theorem letter_comp_coderiv (F : ReducedTensorWords R M →ₗ[R] M) :
 
 variable (M)
 
-/-- The submodule of coderivations of the reduced tensor coalgebra.
-
-It is `@[expose]`d so that membership in it reduces to `TauCeti.ReducedTensorWords.IsCoderivation`
-outside this module. -/
-@[expose]
+/-- The submodule of coderivations of the reduced tensor coalgebra.  Membership in it is
+`TauCeti.ReducedTensorWords.mem_coderivations`. -/
 def coderivations : Submodule R (ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) where
   carrier := {b | IsCoderivation R b}
   zero_mem' := by
@@ -446,16 +448,21 @@ theorem mem_coderivations {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWor
 
 /-- Coderivations of the reduced tensor coalgebra are exactly their Taylor components: taking the
 letter of the value is a linear isomorphism onto the maps to single letters, with inverse the
-Taylor expansion `coderiv`. -/
+Taylor expansion `coderiv`.
+
+Its body is `@[expose]`d because the characteristic lemmas
+`TauCeti.ReducedTensorWords.coderivEquivTaylor_apply` and
+`TauCeti.ReducedTensorWords.coderivEquivTaylor_symm_apply` are proved by `rfl`, which an importing
+module cannot check for a sealed definition. -/
 @[expose]
 noncomputable def coderivEquivTaylor :
     coderivations R M ≃ₗ[R] (ReducedTensorWords R M →ₗ[R] M) where
   toFun b := letter R M ∘ₗ b.1
   map_add' _ _ := LinearMap.comp_add _ _ _
   map_smul' _ _ := LinearMap.comp_smul _ _ _
-  invFun F := ⟨coderiv R F, isCoderivation_coderiv R F⟩
-  left_inv b := Subtype.ext <| (isCoderivation_coderiv R _).eq_of_letter_comp_eq b.2
-    (letter_comp_coderiv R _)
+  invFun F := ⟨coderiv R F, (mem_coderivations R M).2 (isCoderivation_coderiv R F)⟩
+  left_inv b := Subtype.ext <| (isCoderivation_coderiv R _).eq_of_letter_comp_eq
+    ((mem_coderivations R M).1 b.2) (letter_comp_coderiv R _)
   right_inv F := letter_comp_coderiv R F
 
 @[simp]
@@ -464,7 +471,8 @@ theorem coderivEquivTaylor_apply (b : coderivations R M) :
 
 @[simp]
 theorem coderivEquivTaylor_symm_apply (F : ReducedTensorWords R M →ₗ[R] M) :
-    (coderivEquivTaylor R M).symm F = ⟨coderiv R F, isCoderivation_coderiv R F⟩ := rfl
+    (coderivEquivTaylor R M).symm F =
+      ⟨coderiv R F, (mem_coderivations R M).2 (isCoderivation_coderiv R F)⟩ := rfl
 
 end ReducedTensorWords
 

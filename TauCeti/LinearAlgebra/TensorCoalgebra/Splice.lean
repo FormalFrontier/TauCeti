@@ -85,15 +85,19 @@ theorem splice_zero_length {n : ℕ} (x : Fin n → M) (a b p : ℕ) (e : M) :
     splice R x a b p 0 e = 0 := by
   rw [splice, dite_eq_right (by omega)]
 
-/-- A collapsed subblock running past the end of the spliced block is zero. -/
+/-- A collapsed subblock running past the end of the spliced block is zero: the length `b` of that
+block is smaller than the end `p + d` of the subblock. -/
 @[simp]
-theorem splice_eq_zero_of_lt_add {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M) (hpd : b < p + d) :
+theorem splice_eq_zero_of_block_lt_add {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M)
+    (hpd : b < p + d) :
     splice R x a b p d e = 0 := by
   rw [splice, dite_eq_right (by omega)]
 
-/-- A spliced block running past the end of the tuple is zero. -/
+/-- A spliced block running past the end of the tuple is zero: the length `n` of the tuple is
+smaller than the end `a + b` of the block. -/
 @[simp]
-theorem splice_eq_zero_of_lt_add' {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M) (hab : n < a + b) :
+theorem splice_eq_zero_of_length_lt_add {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M)
+    (hab : n < a + b) :
     splice R x a b p d e = 0 := by
   rw [splice, dite_eq_right (by omega)]
 
@@ -244,7 +248,7 @@ private theorem deconcatenation_splice_of_le {n : ℕ} (x : Fin n → M) {a b p 
       have hlt : c < p + d := by
         by_contra hge
         exact hc' (Finset.mem_Ico.2 ⟨by omega, (Finset.mem_Ico.1 hc).2⟩)
-      rw [splice_eq_zero_of_lt_add R x e hlt, TensorProduct.zero_tmul]
+      rw [splice_eq_zero_of_block_lt_add R x e hlt, TensorProduct.zero_tmul]
     rw [Finset.range_eq_Ico,
       ← Finset.sum_subset (Finset.Ico_subset_Ico (Nat.zero_le (p + d)) (le_refl b)) hzero,
       show Finset.Ico (p + d) b = Finset.Ico (p + 1 + (d - 1)) (b + 1 - d + (d - 1)) by
@@ -272,11 +276,11 @@ theorem deconcatenation_splice {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : 
     · simp only [Finset.mem_range] at hc
       rcases Nat.eq_zero_or_pos d with rfl | hd
       · rw [splice_zero_length, TensorProduct.zero_tmul]
-      · rw [splice_eq_zero_of_lt_add R x e (by omega), TensorProduct.zero_tmul]
+      · rw [splice_eq_zero_of_block_lt_add R x e (by omega), TensorProduct.zero_tmul]
     · simp only [Finset.mem_range] at hc
       rcases Nat.eq_zero_or_pos d with rfl | hd
       · rw [splice_zero_length, TensorProduct.tmul_zero]
-      · rw [splice_eq_zero_of_lt_add R x e (by omega), TensorProduct.tmul_zero]
+      · rw [splice_eq_zero_of_block_lt_add R x e (by omega), TensorProduct.tmul_zero]
 
 end ReducedTensorWords
 
