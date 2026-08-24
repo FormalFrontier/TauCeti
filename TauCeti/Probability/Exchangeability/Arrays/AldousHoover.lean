@@ -7,8 +7,8 @@ module
 
 public import TauCeti.Probability.Exchangeability.Arrays.Basic
 public import Mathlib.Data.Sym.Sym2
-import Mathlib.MeasureTheory.Constructions.UnitInterval
-import Mathlib.Probability.Independence.InfinitePi
+public import Mathlib.MeasureTheory.Constructions.UnitInterval
+public import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # Aldous--Hoover array codings are exchangeable
@@ -66,7 +66,7 @@ public section
 
 noncomputable section
 
-open MeasureTheory unitInterval
+open MeasureTheory ProbabilityTheory unitInterval
 
 namespace TauCeti
 
@@ -130,38 +130,37 @@ instance instIsProbabilityMeasureNoiseMeasure (κ ι : Type*) :
   inferInstanceAs (IsProbabilityMeasure
     (Measure.infinitePi fun _ : NoiseIndex κ ι => (volume : Measure I)))
 
-/-- Reindex a realization of the Aldous--Hoover noise. -/
-def noiseReindex {κ ι : Type*} (vertexPerm : κ → Equiv.Perm ℕ) (cellPerm : ι ≃ ι)
-    (u : NoiseIndex κ ι → I) : NoiseIndex κ ι → I :=
-  fun q => u (indexEquiv vertexPerm cellPerm q)
+/-- Each coordinate of the canonical Aldous--Hoover noise law is uniform on the unit interval. -/
+@[simp]
+theorem map_eval_noiseMeasure {κ ι : Type*} (q : NoiseIndex κ ι) :
+    (noiseMeasure κ ι).map (fun u => u q) = (volume : Measure I) :=
+  Measure.infinitePi_map_eval _ q
+
+/-- The coordinates of the canonical Aldous--Hoover noise law are independent. -/
+theorem iIndepFun_eval_noiseMeasure (κ ι : Type*) :
+    iIndepFun (fun (q : NoiseIndex κ ι) u => u q) (noiseMeasure κ ι) :=
+  iIndepFun_infinitePi (X := fun _ u => u) fun _ => measurable_id
+
+/-- Reindexing a realization of the Aldous--Hoover noise by a permutation of each vertex family
+and of the cell indices, as a measurable equivalence. -/
+abbrev noiseCongr {κ ι : Type*} (vertexPerm : κ → Equiv.Perm ℕ) (cellPerm : ι ≃ ι) :
+    (NoiseIndex κ ι → I) ≃ᵐ (NoiseIndex κ ι → I) :=
+  MeasurableEquiv.piCongrLeft (fun _ => I) (indexEquiv vertexPerm cellPerm).symm
 
 @[simp]
-theorem noiseReindex_apply {κ ι : Type*} (vertexPerm : κ → Equiv.Perm ℕ) (cellPerm : ι ≃ ι)
+theorem noiseCongr_apply {κ ι : Type*} (vertexPerm : κ → Equiv.Perm ℕ) (cellPerm : ι ≃ ι)
     (u : NoiseIndex κ ι → I) (q : NoiseIndex κ ι) :
-    noiseReindex vertexPerm cellPerm u q = u (indexEquiv vertexPerm cellPerm q) :=
-  (rfl)
-
-/-- Reindexing the noise is measurable. -/
-@[fun_prop]
-theorem measurable_noiseReindex {κ ι : Type*} (vertexPerm : κ → Equiv.Perm ℕ)
-    (cellPerm : ι ≃ ι) :
-    Measurable (noiseReindex vertexPerm cellPerm) :=
-  measurable_pi_lambda _ fun q =>
-    measurable_pi_apply (indexEquiv vertexPerm cellPerm q)
+    noiseCongr vertexPerm cellPerm u q = u (indexEquiv vertexPerm cellPerm q) := by
+  simp [noiseCongr, MeasurableEquiv.piCongrLeft, Equiv.piCongrLeft_apply_eq_cast]
 
 /-- The independent uniform noise law is invariant under reindexing its vertex and cell
 coordinates. -/
 @[simp]
-theorem map_noiseReindex_noiseMeasure {κ : Type*} (vertexPerm : κ → Equiv.Perm ℕ)
+theorem map_noiseCongr_noiseMeasure {κ : Type*} (vertexPerm : κ → Equiv.Perm ℕ)
     {ι : Type*} (cellPerm : ι ≃ ι) :
-    (noiseMeasure κ ι).map (noiseReindex vertexPerm cellPerm) = noiseMeasure κ ι := by
-  -- Expose the two wrappers so the generic infinite-product reindexing theorem sees its expected
-  -- coordinate projection literally.
-  change (Measure.infinitePi fun _ : NoiseIndex κ ι => (volume : Measure I)).map
-      (fun u q => u (indexEquiv vertexPerm cellPerm q)) =
-    Measure.infinitePi fun _ : NoiseIndex κ ι => (volume : Measure I)
-  rw [Measure.map_infinitePi_infinitePi_of_inj
-    (indexEquiv vertexPerm cellPerm).injective]
+    (noiseMeasure κ ι).map (noiseCongr vertexPerm cellPerm) = noiseMeasure κ ι :=
+  Measure.infinitePi_map_piCongrLeft (fun _ => (volume : Measure I))
+    (indexEquiv vertexPerm cellPerm).symm
 
 section Codings
 
@@ -205,12 +204,11 @@ theorem separatelyExchangeable_separateArray
   have hfun : (fun u : NoiseIndex Axis (ℕ × ℕ) → I =>
       fun p => separateArray f (rowPerm p.1, colPerm p.2) u) =
         (fun u => fun p => separateArray f p u) ∘
-          noiseReindex vertexPerm cellPerm := by
+          noiseCongr vertexPerm cellPerm := by
     funext u ⟨i, j⟩
     simp [separateArray_apply, Function.comp_apply, vertexPerm, cellPerm]
-  rw [hfun, ← Measure.map_map hcode
-      (measurable_noiseReindex vertexPerm cellPerm),
-    map_noiseReindex_noiseMeasure]
+  rw [hfun, ← Measure.map_map hcode (noiseCongr vertexPerm cellPerm).measurable,
+    map_noiseCongr_noiseMeasure]
 
 /-- The jointly exchangeable Aldous--Hoover coding, using one common family of vertex variables
 for the two axes. -/
@@ -252,11 +250,11 @@ theorem jointlyExchangeable_jointArray
       fun p => jointArray f p u := measurable_jointArray f hf
   have hfun : (fun u : NoiseIndex Unit (Sym2 ℕ) → I =>
       fun p => jointArray f (perm p.1, perm p.2) u) =
-        (fun u => fun p => jointArray f p u) ∘ noiseReindex vertexPerm cellPerm := by
+        (fun u => fun p => jointArray f p u) ∘ noiseCongr vertexPerm cellPerm := by
     funext u p
     simp [jointArray_apply, Function.comp_apply, vertexPerm, cellPerm]
-  rw [hfun, ← Measure.map_map hcode (measurable_noiseReindex vertexPerm cellPerm),
-    map_noiseReindex_noiseMeasure]
+  rw [hfun, ← Measure.map_map hcode (noiseCongr vertexPerm cellPerm).measurable,
+    map_noiseCongr_noiseMeasure]
 
 end Codings
 
