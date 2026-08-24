@@ -145,7 +145,7 @@ omit [IsAlgClosed 𝕜] in
 /-- A nonzero invariant tensor contracts to a **bijection**: its contraction is a nonzero
 intertwiner into the irreducible `π`, hence surjective, and in finite dimensions surjective is
 bijective. -/
-theorem bijective_tensorSquareEquivEnd_of_mem_invariants (hπ : IsUnitary π)
+theorem tensorSquareEquivEnd_bijective_of_mem_invariants (hπ : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) {t : V ⊗[𝕜] V}
     (ht : t ∈ (tprod π π).invariants) (ht0 : t ≠ 0) :
     Function.Bijective (tensorSquareEquivEnd e t) := by
@@ -174,7 +174,7 @@ theorem exists_smul_eq_of_mem_invariants_tprod (hπ : IsUnitary π)
     ∃ c : 𝕜, t' = c • t := by
   let _ : Representation.IsIrreducible π.toRepresentation := hirr
   set b := stdOrthonormalBasis 𝕜 V
-  have hbij := bijective_tensorSquareEquivEnd_of_mem_invariants b π hπ hirr ht ht0
+  have hbij := tensorSquareEquivEnd_bijective_of_mem_invariants b π hπ hirr ht ht0
   set E : V ≃ₗ[𝕜] V := LinearEquiv.ofBijective (tensorSquareEquivEnd b t) hbij
   have hEapply : ∀ x : V, E x = tensorSquareEquivEnd b t x := fun _ ↦ (rfl)
   -- `E` transports the action of `π` back to the action of the conjugate representation.

@@ -22,7 +22,8 @@ inner product space, the Frobenius-Schur indicator takes only the three values
 the **real**, **complex** and **quaternionic** types. This is the compact-group form of the
 finite-group `TauCeti.Representation.frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one`.
 
-Everything analytic is already done. `ContRepresentation.frobeniusSchurIndicator_eq_intCast`, in
+Everything analytic is already done.
+`ContRepresentation.frobeniusSchurIndicator_eq_sub_finrank_invariants`, in
 `TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantTensors.lean`, integrates the
 character identity and reads the indicator as the signed count of invariant tensors,
 
