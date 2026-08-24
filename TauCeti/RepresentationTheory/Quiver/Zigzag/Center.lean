@@ -81,16 +81,10 @@ theorem mem_center_of_forall_zigzagBasisFun {z : nonisolatedZigzagQuotient k G}
     z ∈ Subalgebra.center k (nonisolatedZigzagQuotient k G) := by
   rw [Subalgebra.mem_center_iff]
   intro y
-  have hy : y ∈ Submodule.span k (Set.range (zigzagBasisFun k G)) := by
+  exact (Commute.span_right (s := Set.range (zigzagBasisFun k G))
+    (fun _ ⟨b, hb⟩ => by rw [← hb]; exact h b) y (by
     rw [span_range_zigzagBasisFun_eq_top]
-    exact Submodule.mem_top
-  induction hy using Submodule.span_induction with
-  | mem x hx =>
-    obtain ⟨b, rfl⟩ := hx
-    exact (h b).symm
-  | zero => rw [zero_mul, mul_zero]
-  | add x y _ _ hx hy => rw [add_mul, mul_add, hx, hy]
-  | smul c x _ hx => rw [smul_mul_assoc, mul_smul_comm, hx]
+    exact Submodule.mem_top)).eq.symm
 
 /-- A scalar annihilating a member of the vertex, arrow and volume family is zero: that family is
 a basis when no vertex is isolated. -/
@@ -437,10 +431,11 @@ theorem linearIndependent_zigzagCenterFun [Nonempty V] (hns : ∀ i : V, ∃ j, 
     rw [hone, map_sum, Finset.sum_apply']
     exact Finset.sum_eq_zero fun i _ => by
       rw [Module.Basis.repr_self, Finsupp.single_eq_of_ne (by simp)]
+  have hvol_eq (i : V) : zigzagVolume k G i = B (Sum.inr (Sum.inr i)) := by
+    rw [hB, zigzagBasisFun_inr_inr]
   have hvol : ∀ (i : V) (b : ZigzagBasisIndex G), B.repr (zigzagVolume k G i) b
       = if (Sum.inr (Sum.inr i) : ZigzagBasisIndex G) = b then (1 : k) else 0 := fun i b => by
-    rw [show zigzagVolume k G i = B (Sum.inr (Sum.inr i)) by rw [hB, zigzagBasisFun_inr_inr],
-      Module.Basis.repr_self, Finsupp.single_apply]
+    rw [hvol_eq, Module.Basis.repr_self, Finsupp.single_apply]
   refine LinearIndependent.of_comp (LinearMap.pi fun o : Option V =>
     B.coord (Option.elim o (Sum.inl i₀) fun i => Sum.inr (Sum.inr i))) ?_
   have hfun : ⇑(LinearMap.pi fun o : Option V =>
