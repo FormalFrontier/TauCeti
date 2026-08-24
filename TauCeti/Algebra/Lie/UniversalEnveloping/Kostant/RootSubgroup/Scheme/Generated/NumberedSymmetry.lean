@@ -490,8 +490,8 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_inv (i : I) :
           e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
         (kostantGeneratedNumberedSymmetryIso
           e h ρ M hM hnil b σ θ hθM hθe hσ).inv = 𝟙 _ :=
-    Iso.hom_inv_id (show _ ≅ _ from kostantGeneratedNumberedSymmetryIso
-      e h ρ M hM hnil b σ θ hθM hθe hσ)
+    (kostantGeneratedNumberedSymmetryIso
+      e h ρ M hM hnil b σ θ hθM hθe hσ).hom_inv_id
   rw [Category.assoc, hcancel, Category.comp_id]
 
 include hθe hσ in
