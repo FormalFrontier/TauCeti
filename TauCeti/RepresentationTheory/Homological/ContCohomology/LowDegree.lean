@@ -135,6 +135,11 @@ theorem mem_C1_iff {f : G → M} : f ∈ C1 G M ↔ Continuous f := (Iff.rfl)
 @[simp]
 theorem mem_C2_iff {f : G × G → M} : f ∈ C2 G M ↔ Continuous f := mem_C1_iff
 
+/-- The degree-`2` cochains are the degree-`1` cochains of `G × G`. This is how `C²` is defined,
+but the definition is not exposed outside this file, so the identity is recorded as a theorem for
+consumers that have to move between the two spellings. -/
+theorem C2_eq_C1 : C2 G M = C1 (G × G) M := (rfl)
+
 end Cochains
 
 section Differentials
