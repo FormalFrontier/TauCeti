@@ -27,6 +27,9 @@ abstract Lie-group exponential map.
 * `TauCeti.hasDerivAt_expUnitHom_val_zero`: its initial velocity is `x`.
 * `TauCeti.continuousMonoidHom_eq_expUnitHom_of_hasDerivAt`: it is the unique continuous
   one-parameter subgroup with that initial velocity.
+* `TauCeti.expUnitHom_injective`: distinct velocities generate distinct one-parameter subgroups.
+* `TauCeti.existsUnique_eq_expUnitHom`: a continuous one-parameter subgroup of `Rˣ` whose
+  underlying curve is differentiable at `0` is `expUnitHom x` for a unique `x : R`.
 
 ## References
 
@@ -118,5 +121,28 @@ theorem continuousMonoidHom_eq_expUnitHom_of_hasDerivAt
   apply Units.ext
   rw [expUnit_coe]
   exact congrFun hfg (Multiplicative.toAdd t)
+
+/-- Distinct velocities generate distinct one-parameter subgroups: the generator is recovered from
+`expUnitHom x` as the initial velocity of its underlying curve. -/
+theorem expUnitHom_injective :
+    Function.Injective (expUnitHom : R → ContinuousMonoidHom (Multiplicative ℝ) Rˣ) := by
+  intro x y hxy
+  have hx := hasDerivAt_expUnitHom_val_zero x
+  rw [hxy] at hx
+  exact hx.unique (hasDerivAt_expUnitHom_val_zero y)
+
+/-- **The one-parameter subgroups of `Rˣ` are exactly the exponentials.** A continuous
+one-parameter subgroup whose underlying curve is differentiable at `0` is `expUnitHom x` for a
+unique `x : R`; this is the bijection `Hom(ℝ, Rˣ) ≃ R` identifying `R` with the Lie algebra of
+`Rˣ`. The differentiability hypothesis is on the `R`-valued curve, since that is where the
+Banach-space derivative lives; upgrading it to mere continuity is a separate
+automatic-smoothness theorem. -/
+theorem existsUnique_eq_expUnitHom (φ : ContinuousMonoidHom (Multiplicative ℝ) Rˣ)
+    (hφ : DifferentiableAt ℝ (fun t : ℝ => (φ (Multiplicative.ofAdd t) : R)) 0) :
+    ∃! x : R, φ = expUnitHom x := by
+  refine ⟨deriv (fun t : ℝ => (φ (Multiplicative.ofAdd t) : R)) 0,
+    continuousMonoidHom_eq_expUnitHom_of_hasDerivAt φ _ hφ.hasDerivAt, fun y hy => ?_⟩
+  exact expUnitHom_injective (hy.symm.trans
+    (continuousMonoidHom_eq_expUnitHom_of_hasDerivAt φ _ hφ.hasDerivAt))
 
 end TauCeti
