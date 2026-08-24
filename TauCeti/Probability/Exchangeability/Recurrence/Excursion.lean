@@ -120,14 +120,19 @@ private theorem measurable_map_of_path (l : List ℕ) :
       (@Sigma.mk ℕ (fun m => Fin m → α) m) inferInstance) ≤
         MeasurableSpace.map (@Sigma.mk ℕ (fun m => Fin m → α) n) inferInstance
     exact iInf_le _ n
-  rw [show (List.equivSigmaTuple ∘ fun x : ℕ → α => (List.ofFn f).map x) =
+  -- The list measurable structure is transported along `List.equivSigmaTuple`, so after
+  -- `measurable_comap_iff` the goal is about the composite into `Σ m, Fin m → α`. That composite
+  -- is not definitionally the stratum inclusion applied to the tuple of coordinates — the equiv
+  -- computes the length from the list — so the two are identified by an explicit equality.
+  have hcomp : (List.equivSigmaTuple ∘ fun x : ℕ → α => (List.ofFn f).map x) =
       (fun g : Fin n → α => (⟨n, g⟩ : Σ m, Fin m → α)) ∘
-        (fun x => fun i : Fin n => x (f i)) by
+        (fun x => fun i : Fin n => x (f i)) := by
     funext x
     simp only [Function.comp_apply]
     rw [List.map_ofFn]
     simpa only [List.equivSigmaTuple_symm_apply, Function.comp_def] using
-      List.equivSigmaTuple.apply_symm_apply (⟨n, x ∘ f⟩ : Σ m, Fin m → α)]
+      List.equivSigmaTuple.apply_symm_apply (⟨n, x ∘ f⟩ : Σ m, Fin m → α)
+  rw [hcomp]
   exact hmk.comp htuple
 
 /-- **An excursion is a measurable function of the path.** The two endpoint visit times are
