@@ -72,8 +72,7 @@ private theorem engel_toSubmodule_eq_genWeightSpaceOf_zero {h : H} :
   ext x
   rw [LieSubalgebra.mem_toSubmodule, LieSubmodule.mem_toSubmodule,
     LieSubalgebra.mem_engel_iff, LieModule.mem_genWeightSpaceOf]
-  simp only [zero_smul, sub_zero, LieSubalgebra.toEnd_eq]
-  rfl
+  simp only [zero_smul, sub_zero, LieAlgebra.ad, LieSubalgebra.toEnd_eq]
 
 /-- **A root-regular Cartan element has Engel subalgebra equal to the Cartan subalgebra.** The
 Engel subalgebra is the generalized zero eigenspace of `ad h`. Decomposing that eigenspace into
