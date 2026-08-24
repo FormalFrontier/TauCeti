@@ -6,10 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Algebraic.Integral
+public import TauCeti.AlgebraicGeometry.WeilDivisor.LinearSystem.Basic
 public import TauCeti.FieldTheory.IntermediateField.Adjoin.Inv
 public import TauCeti.FieldTheory.FunctionField.AffineModel.Place
 public import TauCeti.FieldTheory.FunctionField.Divisor.Principal
-public import TauCeti.FieldTheory.FunctionField.RiemannRoch.Basic
+public import TauCeti.FieldTheory.FunctionField.RiemannRoch.Principal
 
 /-!
 # The product formula for algebraic function fields
@@ -306,6 +307,7 @@ namespace Divisor
 /-- **Stichtenoth, Theorem 1.4.11**: the pole divisor of a function `z` transcendental over `k`
 has degree `[F : k(z)]`.  No exact-constant-field hypothesis is needed; correspondingly the
 hypothesis is transcendence over `k`, not mere nonconstancy. -/
+@[simp]
 theorem degree_poles (hF : IsFunctionField k F) (z : Fˣ)
     (hz : ¬ IsAlgebraic k (z : F)) :
     degree (poles hF z) = (Module.finrank k⟮(z : F)⟯ F : ℤ) := by
@@ -315,6 +317,7 @@ theorem degree_poles (hF : IsFunctionField k F) (z : Fˣ)
 /-- **Stichtenoth, Theorem 1.4.11**: the zero divisor of a function `z` transcendental over `k`
 has degree `[F : k(z)]`.  No exact-constant-field hypothesis is needed; correspondingly the
 hypothesis is transcendence over `k`, not mere nonconstancy. -/
+@[simp]
 theorem degree_zeros (hF : IsFunctionField k F) (z : Fˣ)
     (hz : ¬ IsAlgebraic k (z : F)) :
     degree (zeros hF z) = (Module.finrank k⟮(z : F)⟯ F : ℤ) := by
@@ -373,10 +376,9 @@ theorem degreeClass_divisorClass (hF : IsFunctionField k F) (D : Divisor k F) :
 /-- Linearly equivalent divisors have the same degree (Stichtenoth, Corollary 1.4.12(a)). -/
 theorem degree_eq_of_linearlyEquivalent (hF : IsFunctionField k F) {A B : Divisor k F}
     (h : (Place.orderSystem hF).LinearlyEquivalent A B) : degree A = degree B := by
-  obtain ⟨z, hz⟩ := (linearlyEquivalent_iff hF).mp h
-  have hdegree := degree_principal hF z
-  rw [hz, degree_sub] at hdegree
-  omega
+  simpa only [weightedDegree_placeDegree_eq_degree] using
+    (Place.orderSystem hF).weightedDegree_eq_of_linearlyEquivalent
+      (fun P ↦ (P.degree : ℤ)) (Place.isWeightedDegreeZero_orderSystem hF) h
 
 end Divisor
 
@@ -384,19 +386,17 @@ end Divisor
 (Stichtenoth, Corollary 1.4.12(b)). -/
 theorem riemannRochSpace_eq_bot_of_degree_neg (hF : IsFunctionField k F) {D : Divisor k F}
     (hD : Divisor.degree D < 0) : riemannRochSpace D = ⊥ := by
-  refine (Submodule.eq_bot_iff _).mpr fun f hf ↦ ?_
-  by_contra hf0
-  have horders := (mem_riemannRochSpace_iff_neg_le_ord hf0).mp hf
-  have heffective : 0 ≤ Divisor.principal hF (Units.mk0 f hf0) + D := by
-    rw [WeilDivisor.le_iff]
-    intro P
-    rw [WeilDivisor.coeff_zero, WeilDivisor.coeff_add, Divisor.coeff_principal,
-      Units.val_mk0]
-    have := horders P
-    omega
-  have hdegree := Divisor.degree_nonneg heffective
-  rw [Divisor.degree_add, Divisor.degree_principal] at hdegree
-  omega
+  apply not_ne_iff.mp
+  rw [riemannRochSpace_ne_bot_iff hF]
+  rintro ⟨D', hD', hlin⟩
+  have hmem : D' ∈ (Place.orderSystem hF).completeLinearSystem D :=
+    (Place.orderSystem hF).mem_completeLinearSystem.mpr
+      ⟨WeilDivisor.isEffective_iff_zero_le.mpr hD', hlin⟩
+  have hempty := (Place.orderSystem hF).completeLinearSystem_eq_empty_of_weightedDegree_neg
+    (fun P ↦ by positivity) (Place.isWeightedDegreeZero_orderSystem hF)
+    (by simpa only [Divisor.weightedDegree_placeDegree_eq_degree] using hD)
+  rw [hempty] at hmem
+  exact hmem
 
 /-- A divisor of negative degree has Riemann–Roch dimension zero. -/
 theorem Divisor.dim_eq_zero_of_degree_neg (hF : IsFunctionField k F) {D : Divisor k F}
