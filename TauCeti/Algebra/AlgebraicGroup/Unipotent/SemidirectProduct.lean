@@ -119,18 +119,19 @@ theorem semidirectProduct (H K : _root_.CommHopfAlgCat.{u} k)
     let qU := ePoint.symm (SemidirectProduct.inl (ePoint g).left)
     let qW := ePoint.symm (SemidirectProduct.inr (ePoint g).right)
     have hqU : qU ∈ U := by
-      change SemidirectProduct.rightHom (ePoint qU) = 1
-      simp only [qU, MulEquiv.apply_symm_apply, SemidirectProduct.rightHom_inl]
+      simp only [U, Subgroup.mem_comap, MonoidHom.mem_ker]
+      simp only [qU, MulEquiv.coe_toMonoidHom, MulEquiv.apply_symm_apply,
+        SemidirectProduct.rightHom_inl]
     have hqW : qW ∈ W := by
-      change ePoint qW ∈ SemidirectProduct.inr.range
-      exact ⟨(ePoint g).right, by simp only [qW, MulEquiv.apply_symm_apply]⟩
+      simp only [W, Subgroup.mem_comap, MonoidHom.mem_range]
+      exact ⟨(ePoint g).right, by
+        simp only [qW, MulEquiv.coe_toMonoidHom, MulEquiv.apply_symm_apply]⟩
     have hfactor : g = qU * qW := by
       apply ePoint.injective
       simp only [map_mul, qU, qW, MulEquiv.apply_symm_apply,
         SemidirectProduct.inl_left_mul_inr_right]
     rw [hfactor]
-    exact (U ⊔ W).mul_mem ((show U ≤ U ⊔ W from le_sup_left) hqU)
-      ((show W ≤ U ⊔ W from le_sup_right) hqW)
+    exact Subgroup.mul_mem_sup hqU hqW
   have hgnilpotent := rho.isNilpotent_sub_one_of_mem_sup_of_le_normalizer_isUnipotent
     U W Subgroup.le_normalizer_of_normal hU hW hg
   simpa only [rho, Comodule.pointsRepresentation_apply] using hgnilpotent
