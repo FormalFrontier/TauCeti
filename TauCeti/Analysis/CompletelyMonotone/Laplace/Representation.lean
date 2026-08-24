@@ -29,7 +29,7 @@ on `[0, ∞)`, and its possibly infinite-measure counterpart on `(0, ∞)`.
 
 * `TauCeti.laplaceTransform`: the Laplace transform of a measure on `ℝ≥0`, with its algebraic
   API and the bridge `TauCeti.laplaceTransform_eq_mgf` to Mathlib's moment-generating function.
-* `TauCeti.measure_compl_closedBall_le_of_laplaceTransform`: a Markov tail bound, controlling
+* `TauCeti.measure_compl_closedBall_le_sub_laplaceTransform_div`: a Markov tail bound, controlling
   the mass a finite measure puts far from the origin by the gap between its total mass and its
   Laplace transform at a positive parameter.
 * `TauCeti.RepresentsLaplace`: the predicate that a finite measure represents a function by its
@@ -166,7 +166,8 @@ This is Markov's inequality applied to the bounded coordinate `p ↦ 1 - e^{-xp}
 least `1 - e^{-xR}` outside the ball. It is a tightness input rather than a decay rate in `R`:
 the denominator only tends to `1` as `R → ∞`, and it is the numerator, made small by taking `x`
 small, that does the work. -/
-theorem measure_compl_closedBall_le_of_laplaceTransform (μ : Measure ℝ≥0) [IsFiniteMeasure μ]
+theorem measure_compl_closedBall_le_sub_laplaceTransform_div
+    (μ : Measure ℝ≥0) [IsFiniteMeasure μ]
     {x R : ℝ} (hx : 0 < x) (hR : 0 < R) :
     μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ
       ≤ ENNReal.ofReal ((μ.real univ - laplaceTransform μ x) / (1 - Real.exp (-(x * R)))) := by

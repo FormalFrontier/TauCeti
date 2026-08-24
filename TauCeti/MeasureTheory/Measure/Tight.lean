@@ -20,7 +20,7 @@ the finitely many exceptional members of a family for which a uniform tail bound
 ## Main declarations
 
 * `TauCeti.isTightMeasureSet_of_finite`: a finite set of finite measures is tight.
-* `TauCeti.isTightMeasureSet_range_finite`: a family of finite measures indexed by a finite type
+* `TauCeti.isTightMeasureSet_range_of_finite`: a family of finite measures indexed by a finite type
   has tight range.
 
 ## References
@@ -52,7 +52,7 @@ theorem isTightMeasureSet_of_finite {S : Set (Measure α)} (hS : S.Finite)
       exact isTightMeasureSet_singleton.union (ih fun ρ hρ => hfin ρ (mem_insert_of_mem _ hρ))
 
 /-- **A family of finite measures indexed by a finite type has tight range.** -/
-theorem isTightMeasureSet_range_finite {ι : Type*} [Finite ι] (μ : ι → Measure α)
+theorem isTightMeasureSet_range_of_finite {ι : Type*} [Finite ι] (μ : ι → Measure α)
     (hfin : ∀ i, IsFiniteMeasure (μ i)) : IsTightMeasureSet (range μ) :=
   isTightMeasureSet_of_finite (finite_range μ) (by rintro ν ⟨i, rfl⟩; exact hfin i)
 
