@@ -9,6 +9,8 @@ module
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 -- `TauCeti.diagGL` occurs in the conjugation statement below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+-- `MonoidHom.noncommCoprod` packages products of commuting one-parameter subgroups.
+public import Mathlib.GroupTheory.NoncommCoprod
 -- Non-public: the diagonal-matrix-unit product law is used only in a proof below.
 import TauCeti.LinearAlgebra.Matrix.Diagonal
 
@@ -46,6 +48,8 @@ elementary matrices against the diagonal torus.
   `GL n A`, namely `Matrix.SpecialLinearGroup.transvection` along
   `Matrix.SpecialLinearGroup.toGL`.
 * `TauCeti.transvectionHom`: the resulting homomorphism from the additive group of `A`.
+* `TauCeti.commutingTransvectionPairHom`: the product of two commuting transvection
+  homomorphisms, with a shared parameter.
 
 ## Main results
 
@@ -168,6 +172,24 @@ theorem commute_transvectionUnit (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k)
     (c d : A) : Commute (transvectionUnit hij c) (transvectionUnit hkl d) :=
   (Matrix.SpecialLinearGroup.commute_transvection hij hkl hjk hli c d).map
     Matrix.SpecialLinearGroup.toGL
+
+/-- Two pointwise commuting transvection homomorphisms, evaluated at a shared parameter after a
+chosen endomorphism in the second component. This packages the standard construction of a
+one-parameter subgroup as a product of two commuting elementary one-parameter subgroups. -/
+def commutingTransvectionPairHom (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i)
+    (second : Multiplicative A →* Multiplicative A) : Multiplicative A →* GL n A :=
+  ((transvectionHom hij).noncommCoprod (transvectionHom hkl)
+      (fun c d ↦ by simpa only [transvectionHom_apply] using
+        commute_transvectionUnit hij hkl hjk hli c.toAdd d.toAdd)).comp
+    ((MonoidHom.id _).prod second)
+
+/-- The commuting-pair homomorphism evaluates to the product of its two transvections. -/
+@[simp]
+theorem commutingTransvectionPairHom_apply (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k)
+    (hli : l ≠ i) (second : Multiplicative A →* Multiplicative A) (c : Multiplicative A) :
+    commutingTransvectionPairHom hij hkl hjk hli second c =
+      transvectionUnit hij c.toAdd * transvectionUnit hkl (second c).toAdd := by
+  simp [commutingTransvectionPairHom]
 
 /-- The product of two chaining transvections in `GL n A`, in the two orders. -/
 theorem transvectionUnit_mul_transvectionUnit_eq_mul_mul

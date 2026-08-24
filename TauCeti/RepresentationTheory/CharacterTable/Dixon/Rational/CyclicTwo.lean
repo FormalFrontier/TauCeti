@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Cyclic
+public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Rational.Solver
 
 /-!
 # The rational Dixon computation for the cyclic group of order two
@@ -22,8 +22,8 @@ required primitive square root of unity modulo `3`.
 The simultaneous eigenvector search over the certified Dixon prime `3` returns exactly the
 reductions of the two displayed central-character rows.  Signed least representatives lift those
 rows back to the integers.  Since every class is a singleton and both displayed degrees are one,
-the ordinary table is set equal entrywise to the central-character table.  Identifying its rows
-with the group's irreducible characters is not formalized here.
+the ordinary table is set equal entrywise to the central-character table. The assembled rational
+solver recovers an exact certified table from this data.
 
 Completeness does not rely on evaluating the entire search.  Each displayed row is checked against
 the class-algebra equations, and the good-prime structure theorem proves that the search has exactly
@@ -44,12 +44,18 @@ two outputs.
   integral rows.
 * `TauCeti.cyclicGroupTwo_degree_mul_centralCharacterTable`: the division-free conversion to the
   ordinary character table.
+* `TauCeti.isIntegerCharacterTableSpec_cyclicGroupTwo`: the exact table passes the checker used by
+  the assembled solver.
+* `TauCeti.isSome_dixonRationalCharacterTable_cyclicGroupTwo`: the assembled solver succeeds on
+  the `C₂` data.
+* `TauCeti.isCharacterTableSpec_cyclicGroupTwo`: the cast table is the complex character table up
+  to a row permutation.
 
 ## References
 
 This implements cyclic `C₂` in “Rational tables (first executable milestone)” in Layer 6 of the
-[character theory roadmap][roadmap].  Connecting this exact output to the general table checker
-remains part of the assembled solver target.
+[character theory roadmap][roadmap] and supplies the executable acceptance test for the assembled
+rational solver.
 
 The worked computation follows
 `TauCeti.RepresentationTheory.CharacterTable.Dixon.Rational.DihedralFour`; the prime certificate
@@ -265,5 +271,49 @@ theorem cyclicGroupTwo_characterTable_orthogonal (i j : CyclicGroupTwoClassIndex
       if i = j then Nat.card (Multiplicative (ZMod 2)) else 0 := by
   simp only [Nat.card_eq_fintype_card, Fintype.card_multiplicative, ZMod.card]
   fin_cases i <;> fin_cases j <;> decide
+
+/-- The displayed `C₂` tables pass the exact integer character-table specification. -/
+theorem isIntegerCharacterTableSpec_cyclicGroupTwo :
+    (cyclicClassData 2).IsIntegerCharacterTableSpec
+      cyclicGroupTwoCentralCharacterTable cyclicGroupTwoCharacterTable
+      cyclicGroupTwoCharacterDegrees where
+  central_one i := by fin_cases i <;> decide
+  central_eigen := isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int
+  degree_pos i := (cyclicGroupTwo_characterDegrees_pos_and_dvd i).1
+  degree_dvd i := by
+    simpa only [Nat.card_eq_fintype_card] using
+      (cyclicGroupTwo_characterDegrees_pos_and_dvd i).2
+  sum_degree_sq := by
+    simpa only [Nat.card_eq_fintype_card] using cyclicGroupTwo_sum_characterDegrees_sq
+  degree_mul_central := cyclicGroupTwo_degree_mul_centralCharacterTable
+  row_orthogonal i j := by
+    simpa only [Nat.card_eq_fintype_card, Nat.cast_ite, Nat.cast_zero] using
+      cyclicGroupTwo_characterTable_orthogonal i j
+
+/-- Every displayed integral row occurs among the signed lifts of the modular search at `3`. -/
+theorem mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable
+    (i : CyclicGroupTwoClassIndex) :
+    cyclicGroupTwoCentralCharacterTable i ∈ (cyclicClassData 2).liftedCentralRows 3 := by
+  rw [ClassData.mem_liftedCentralRows_iff, cyclicGroupTwo_centralCharacterSearch]
+  refine ⟨fun j => (cyclicGroupTwoCentralCharacterTable i j : ZMod 3),
+    mem_cyclicGroupTwoModularCentralRows_iff.mpr ⟨i, rfl⟩, funext fun j => ?_⟩
+  exact cyclicGroupTwo_valMinAbs_centralCharacterTable i j
+
+/-- The assembled rational Dixon--Schneider solver succeeds on the certified `C₂` prime. -/
+theorem isSome_dixonRationalCharacterTable_cyclicGroupTwo :
+    ((cyclicClassData 2).dixonRationalCharacterTable?
+      cyclicGroupTwoDixonPrimeData.p).isSome = true := by
+  simp only [cyclicGroupTwoDixonPrimeData_p]
+  rw [(cyclicClassData 2).isSome_dixonRationalCharacterTable_iff]
+  refine ⟨⟨cyclicGroupTwoCentralCharacterTable, cyclicGroupTwoCharacterTable,
+    cyclicGroupTwoCharacterDegrees⟩, mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable,
+    isIntegerCharacterTableSpec_cyclicGroupTwo⟩
+
+/-- The exact `C₂` output, cast to `ℂ`, satisfies the character-table specification and hence is
+the complex character table up to a permutation of rows. -/
+theorem isCharacterTableSpec_cyclicGroupTwo :
+    IsCharacterTableSpec (Multiplicative (ZMod 2))
+      ((cyclicClassData 2).complexTableOfInteger cyclicGroupTwoCharacterTable) :=
+  isIntegerCharacterTableSpec_cyclicGroupTwo.isCharacterTableSpec
 
 end TauCeti
