@@ -68,12 +68,16 @@ noncomputable def standardComodule :
 
 attribute [local instance] GeneralLinear.standardComodule standardComodule
 
-private theorem standardComodule_corestrictCoact :
+/-- The standard `SL_n` coaction is the standard `GL_n` coaction followed by the quotient map on
+the coordinate factor. -/
+@[simp]
+theorem standardComodule_coact :
     let _ := GeneralLinear.standardComodule R n
     Comodule.corestrictCoact
         (R := R) (C := GeneralLinear.coordinateHopfAlgebra R n)
         (D := coordinateHopfAlgebra R n) (M := Fin n → R)
-        (coordinateMap R n).hom.toCoalgHom =
+        (Bialgebra.Quotient.mkBialgHom (R := R)
+          (definingHopfIdeal R n).toIdeal).toCoalgHom =
       TensorProduct.map LinearMap.id
           (Bialgebra.Quotient.mkBialgHom (R := R)
             (definingHopfIdeal R n).toIdeal).toLinearMap ∘ₗ
@@ -81,18 +85,7 @@ private theorem standardComodule_corestrictCoact :
   apply LinearMap.ext
   intro v
   rw [Comodule.corestrictCoact_apply, LinearMap.comp_apply,
-    GeneralLinear.standardComodule_coact, CommHopfAlgCat.hom_mkQuotient]
-
-/-- The standard `SL_n` coaction is the standard `GL_n` coaction followed by the quotient map on
-the coordinate factor. -/
-@[simp]
-theorem standardComodule_coact :
-    (standardComodule R n).coact =
-      TensorProduct.map LinearMap.id
-          (Bialgebra.Quotient.mkBialgHom (R := R)
-            (definingHopfIdeal R n).toIdeal).toLinearMap ∘ₗ
-        GeneralLinear.standardCoact R n :=
-  standardComodule_corestrictCoact R n
+    GeneralLinear.standardComodule_coact]
 
 /-- **The standard comodule of `SL_n` is faithful.** -/
 theorem isFaithful_standardComodule :
@@ -159,6 +152,11 @@ theorem mulVec_mem (N : Subcomodule R (coordinateHopfAlgebra R n) (Fin n → R))
           (LinearMap.lTensor (Fin n → R) q.ofConv.toLinearMap
             ((standardComodule R n).coact w)) ∈ N :=
     N.rid_lTensor_coact_mem q.ofConv.toLinearMap hw
+  change
+    TensorProduct.rid R (Fin n → R)
+        (LinearMap.lTensor (Fin n → R) q.ofConv.toLinearMap
+          (Comodule.corestrictCoact (coordinateMap R n).hom.toCoalgHom w)) ∈ N at h
+  rw [CommHopfAlgCat.hom_mkQuotient] at h
   rw [standardComodule_coact R n, LinearMap.comp_apply] at h
   have hcoordinate :
       (Bialgebra.Quotient.mkBialgHom
