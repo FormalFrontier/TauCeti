@@ -203,7 +203,7 @@ end IsSimpleRing
 
 section ProdSurjection
 
-variable {F A B : Type*} [CommRing F] [Ring A] [Algebra F A] [Ring B] [Algebra F B]
+variable {F A B : Type*} [CommSemiring F] [Ring A] [Algebra F A] [Ring B] [Algebra F B]
 
 /-- The images of the two coordinate units of `A × A` add up to the unit of `B`. -/
 private theorem map_one_zero_add_map_zero_one (φ : (A × A) →ₐ[F] B) :

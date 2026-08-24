@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
-public import Mathlib.LinearAlgebra.QuadraticForm.Basic
 -- Non-public: the list reformulation only uses `List.ofFn` inside its proof, and the passage
 -- between the vanishing of the associated bilinear form and orthogonality for the quadratic form
 -- is likewise a proof step.
@@ -45,23 +44,19 @@ variable {F V : Type*} [Field F] [AddCommGroup V] [Module F V]
   [Invertible (2 : F)] [FiniteDimensional F V] {Q : QuadraticForm F V}
 
 /-- **A nondegenerate quadratic form has an anisotropic orthogonal basis.** Mathlib's
-`LinearMap.BilinForm.exists_orthogonal_basis` supplies the orthogonality; nondegeneracy rules out
-an isotropic member, since such a member would be orthogonal to the whole space. -/
+`LinearMap.BilinForm.exists_orthogonal_basis` supplies the orthogonality, and
+`LinearMap.IsOrthoᵢ.not_isOrtho_basis_self_of_separatingLeft` rules out an isotropic member: such a
+member would be orthogonal to the whole space. -/
 theorem Nondegenerate.exists_orthogonal_basis (hQ : Q.Nondegenerate) :
     ∃ b : Basis (Fin (finrank F V)) F V,
       (∀ i j, i ≠ j → Q.IsOrtho (b i) (b j)) ∧ ∀ i, Q (b i) ≠ 0 := by
   obtain ⟨b, hb⟩ := LinearMap.BilinForm.exists_orthogonal_basis
     (B := QuadraticMap.associated Q) (QuadraticForm.associated_isSymm F Q)
-  refine ⟨b, fun i j hij => associated_isOrtho.mp (hb hij), fun i hi => ?_⟩
-  -- An isotropic member of an orthogonal basis is orthogonal to every basis vector, hence to
-  -- everything, hence zero.
-  have hzero : (QuadraticMap.associated Q) (b i) = 0 := by
-    refine b.ext fun j => ?_
-    rcases eq_or_ne i j with rfl | hij
-    · simpa using (associated_eq_self_apply F Q (b i)).trans hi
-    · simpa using hb hij
-  exact b.ne_zero i
-    ((nondegenerate_associated_iff.mpr hQ).1 (b i) fun y => by rw [hzero]; rfl)
+  refine ⟨b, fun i j hij => associated_isOrtho.mp (hb hij), fun i => ?_⟩
+  -- Read the statement through the associated bilinear form, which is nondegenerate too.
+  have hb' := hb.not_isOrtho_basis_self_of_separatingLeft
+    (nondegenerate_associated_iff.mpr hQ).1 i
+  rwa [associated_eq_self_apply F Q] at hb'
 
 /-- **A nondegenerate quadratic form has an anisotropic orthogonal spanning list.** This is
 `QuadraticMap.Nondegenerate.exists_orthogonal_basis` read as a list, the shape in which the Clifford

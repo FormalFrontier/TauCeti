@@ -8,10 +8,8 @@ module
 public import TauCeti.LinearAlgebra.CliffordAlgebra.OddSplitting
 public import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 public import TauCeti.RepresentationTheory.Spin.Structure
--- Non-public: the coordinate surjection out of a product, the dimension of the even subalgebra,
--- the simplicity of a matrix algebra, and the finite-dimensional injectivity criterion are all
--- used only inside proofs.
-import TauCeti.LinearAlgebra.CliffordAlgebra.Dimension
+-- Non-public: the coordinate surjection out of a product, the simplicity of a matrix algebra, and
+-- the finite-dimensional injectivity criterion are all used only inside proofs.
 import TauCeti.RingTheory.CentralIdempotent
 import Mathlib.RingTheory.SimpleRing.Matrix
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
@@ -140,8 +138,9 @@ the product of two copies of the matrix algebra `M_{2^l}(F)`.
 
 This is the odd-dimensional companion of
 `CliffordAlgebra.nonempty_algEquiv_matrix_of_finrank_eq_two_mul`, and the two blocks are not an
-artefact of the proof: the volume element is central here, so the algebra is not simple, whereas in
-even dimension it is (`TauCeti.SpinPolarizationData.isSimpleRing_cliffordAlgebra`). -/
+artefact of the proof: the product displayed here has `(1, 0)` as a central idempotent other than
+`0` and `1`, so the algebra is not simple, whereas in even dimension it is
+(`TauCeti.SpinPolarizationData.isSimpleRing_cliffordAlgebra`). -/
 theorem nonempty_algEquiv_matrix_prod_of_finrank_eq_two_mul_add_one {l : ℕ}
     (hQ : Q.Nondegenerate) (hV : finrank F V = 2 * l + 1) :
     Nonempty (CliffordAlgebra Q ≃ₐ[F]
