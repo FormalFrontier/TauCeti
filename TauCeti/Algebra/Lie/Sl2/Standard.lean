@@ -50,6 +50,8 @@ classification for an arbitrary `sl₂`.
   arbitrary `sl₂` triple, sending the triple to the ladder operators. It is built from the basis
   `TauCeti.basisOfIsSl2Triple` of that algebra.
 * `TauCeti.Sl2Std.basis`: the coordinate basis `v₀, …, vₙ`.
+* `TauCeti.Sl2Std.coordVector`: the coordinate vectors indexed by `ℕ` and extended by zero past
+  the end of the string, for uniformly stated ladder identities.
 * `TauCeti.Sl2Std.lieModuleEquiv`: the classification, obtained by feeding this module to
   `TauCeti.lieModuleEquivOfHasPrimitiveVectorWith`.
 
@@ -388,6 +390,64 @@ theorem basis_eq (i : Fin (n + 1)) : basis K n i = (Pi.single i 1 : Fin (n + 1) 
 /-- The coordinates of a coordinate basis vector. -/
 @[simp] theorem basis_apply (i j : Fin (n + 1)) : basis K n i j = if j = i then 1 else 0 :=
   (congrFun (basis_eq i) j).trans (Pi.single_apply i 1 j)
+
+/-! ### Coordinate vectors indexed by the naturals -/
+
+section CoordVector
+
+variable {i : ℕ}
+
+variable (K n i) in
+/-- The `i`-th coordinate vector of `V(n)`, extended by zero for `i` past the end of the weight
+string. Indexing by `ℕ` rather than by `Fin (n + 1)` lets finite sums use natural indices without
+carrying bounds through every rewrite. -/
+noncomputable def coordVector : Sl2Std K n := if h : i < n + 1 then basis K n ⟨i, h⟩ else 0
+
+@[simp]
+theorem coordVector_apply (j : Fin (n + 1)) :
+    coordVector K n i j = if (j : ℕ) = i then 1 else 0 := by
+  rw [coordVector]
+  split
+  · rw [basis_apply]
+    exact if_congr (by simp [Fin.ext_iff]) rfl rfl
+  · next hi =>
+    have hj := j.isLt
+    rw [zero_apply, eq_comm, ite_eq_right (by omega)]
+
+theorem coordVector_eq_basis (h : i < n + 1) : coordVector K n i = basis K n ⟨i, h⟩ :=
+  dite_eq_left h
+
+/-- The Cartan operator scales the `i`-th coordinate vector by `n - 2i`, uniformly in `i`: past the
+end of the string both sides vanish. -/
+theorem diag_coordVector :
+    diag K n (coordVector K n i) = ((n : K) - 2 * i) • coordVector K n i := by
+  funext j
+  by_cases h : (j : ℕ) = i
+  · rw [diag_apply, smul_apply, coordVector_apply, ite_eq_left h, h]
+  · rw [diag_apply, smul_apply, coordVector_apply, ite_eq_right h, mul_zero, mul_zero]
+
+/-- The raising operator sends the `i`-th coordinate vector to `i` times the `(i-1)`-st, for `i`
+inside the weight string. -/
+theorem raise_coordVector (hi : i ≤ n) :
+    raise K n (coordVector K n i) = (i : K) • coordVector K n (i - 1) := by
+  funext j
+  rw [smul_apply, coordVector_apply, raise_apply]
+  by_cases hjn : (j : ℕ) < n
+  · rw [dite_eq_left hjn, coordVector_apply]
+    by_cases hji : (j : ℕ) + 1 = i
+    · rw [ite_eq_left hji, ite_eq_left (show (j : ℕ) = i - 1 by omega), mul_one, mul_one, ← hji]
+      push_cast
+      ring
+    · rw [ite_eq_right hji, mul_zero]
+      rcases Nat.eq_zero_or_pos i with rfl | hipos
+      · rw [Nat.cast_zero, zero_mul]
+      · rw [ite_eq_right (show ¬ (j : ℕ) = i - 1 by omega), mul_zero]
+  · rw [dite_eq_right hjn]
+    rcases Nat.eq_zero_or_pos i with rfl | hipos
+    · rw [Nat.cast_zero, zero_mul]
+    · rw [ite_eq_right (show ¬ (j : ℕ) = i - 1 by have := j.isLt; omega), mul_zero]
+
+end CoordVector
 
 /-- The action of `sl (Fin 2) K` on `V(n)` is the one given by `TauCeti.Sl2Std.rep`. This is the
 elimination lemma for `TauCeti.Sl2Std.instLieRingModule`, which is that action transported along
