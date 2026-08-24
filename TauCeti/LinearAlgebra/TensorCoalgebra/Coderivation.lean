@@ -122,7 +122,7 @@ private theorem coderivSummand_tprod (F : ReducedTensorWords R M →ₗ[R] M) {n
     TensorPower.tprod_mul_tprod, TensorPower.cast_tprod, Fin.val_castLE]
   rw [← subword_eq_of_tprod R x (a := p) (b := d) hd (by omega),
     splice_eq_of_tprod R x _ hd (by omega) (by omega)]
-  refine of_tprod_congr R M _ _ rfl fun i ↦ ?_
+  refine of_tprod_congr R M _ rfl fun i ↦ ?_
   have hi := i.isLt
   rw [Function.comp_apply, append_eq_dite]
   simp only [Fin.val_cast]
@@ -187,34 +187,39 @@ as large as convenient, since a summand whose collapsed block does not fit insid
 vanishes; that is what lets the expansions of a word and of its two halves be summed over one
 common range. -/
 theorem coderiv_subword (F : ReducedTensorWords R M →ₗ[R] M) {n : ℕ} (x : Fin n → M) {a b K : ℕ}
-    (hab : a + b ≤ n) (hK : b ≤ K) :
+    (hK : b ≤ K) :
     coderiv R F (subword R x a b) =
       ∑ p ∈ Finset.range K, ∑ d ∈ Finset.range (K + 1),
         splice R x a b p d (F (subword R x (a + p) d)) := by
-  have hvanish : ∀ p d : ℕ, b ≤ p ∨ b < d →
-      splice R x a b p d (F (subword R x (a + p) d)) = 0 := fun p d h ↦
-    splice_eq_zero_of_not_fits R x _ (by omega)
-  rcases Nat.eq_zero_or_pos b with rfl | hb
-  · rw [subword_length_zero, map_zero]
-    exact (Finset.sum_eq_zero fun p _ ↦ Finset.sum_eq_zero fun d _ ↦
-      hvanish p d (Or.inl (Nat.zero_le p))).symm
-  have inner : ∀ p : ℕ, ∑ d ∈ Finset.range (b + 1),
-      splice R x a b p d (F (subword R x (a + p) d)) =
-      ∑ d ∈ Finset.range (K + 1), splice R x a b p d (F (subword R x (a + p) d)) :=
-    fun p ↦ Finset.sum_subset (Finset.range_subset_range.mpr (by omega)) fun d _ hd ↦ by
-      simp only [Finset.mem_range, not_lt] at hd
-      exact hvanish p d (Or.inr (by omega))
-  have outer : ∑ p ∈ Finset.range b, ∑ d ∈ Finset.range (K + 1),
-      splice R x a b p d (F (subword R x (a + p) d)) =
-      ∑ p ∈ Finset.range K, ∑ d ∈ Finset.range (K + 1),
-        splice R x a b p d (F (subword R x (a + p) d)) :=
-    Finset.sum_subset (Finset.range_subset_range.mpr hK) fun p _ hp ↦ by
-      simp only [Finset.mem_range, not_lt] at hp
-      exact Finset.sum_eq_zero fun d _ ↦ hvanish p d (Or.inl hp)
-  rw [subword_eq_of_tprod R x hb hab, coderiv_of, ← outer,
-    ← Finset.sum_congr rfl (fun p (_ : p ∈ Finset.range b) ↦ inner p)]
-  exact Finset.sum_congr rfl fun p _ ↦ Finset.sum_congr rfl fun d _ ↦
-    coderivSummand_tprod_of_eq R F x _ hab (fun j hj ↦ rfl) p d
+  by_cases hab : a + b ≤ n
+  · have hvanish : ∀ p d : ℕ, b ≤ p ∨ b < d →
+        splice R x a b p d (F (subword R x (a + p) d)) = 0 := fun p d h ↦
+      splice_eq_zero_of_not_fits R x _ (by omega)
+    rcases Nat.eq_zero_or_pos b with rfl | hb
+    · rw [subword_length_zero, map_zero]
+      exact (Finset.sum_eq_zero fun p _ ↦ Finset.sum_eq_zero fun d _ ↦
+        hvanish p d (Or.inl (Nat.zero_le p))).symm
+    have inner : ∀ p : ℕ, ∑ d ∈ Finset.range (b + 1),
+        splice R x a b p d (F (subword R x (a + p) d)) =
+        ∑ d ∈ Finset.range (K + 1), splice R x a b p d (F (subword R x (a + p) d)) :=
+      fun p ↦ Finset.sum_subset (Finset.range_subset_range.mpr (by omega)) fun d _ hd ↦ by
+        simp only [Finset.mem_range, not_lt] at hd
+        exact hvanish p d (Or.inr (by omega))
+    have outer : ∑ p ∈ Finset.range b, ∑ d ∈ Finset.range (K + 1),
+        splice R x a b p d (F (subword R x (a + p) d)) =
+        ∑ p ∈ Finset.range K, ∑ d ∈ Finset.range (K + 1),
+          splice R x a b p d (F (subword R x (a + p) d)) :=
+      Finset.sum_subset (Finset.range_subset_range.mpr hK) fun p _ hp ↦ by
+        simp only [Finset.mem_range, not_lt] at hp
+        exact Finset.sum_eq_zero fun d _ ↦ hvanish p d (Or.inl hp)
+    rw [subword_eq_of_tprod R x hb hab, coderiv_of, ← outer,
+      ← Finset.sum_congr rfl (fun p (_ : p ∈ Finset.range b) ↦ inner p)]
+    exact Finset.sum_congr rfl fun p _ ↦ Finset.sum_congr rfl fun d _ ↦
+      coderivSummand_tprod_of_eq R F x _ hab (fun j hj ↦ rfl) p d
+  · rw [subword_eq_zero_of_lt_add R x (by omega), map_zero]
+    symm
+    exact Finset.sum_eq_zero fun p _ ↦ Finset.sum_eq_zero fun d _ ↦
+      splice_eq_zero_of_length_lt_add R x _ (by omega)
 
 
 /-- A linear endomorphism of the reduced tensor coalgebra is a *coderivation* when it satisfies
@@ -322,6 +327,7 @@ private theorem sum_range_triangle {N : Type*} [AddCommMonoid N] (K : ℕ) (g : 
 position and a collapsed block, of the tensor of the two halves with the block collapsed in
 whichever half contains it; a block is never split by a cut, and a cut never splits the new
 letter. -/
+@[simp]
 theorem isCoderivation_coderiv (F : ReducedTensorWords R M →ₗ[R] M) :
     IsCoderivation R (coderiv R F) := by
   refine linearMap_ext R M fun n x ↦ ?_
@@ -334,12 +340,12 @@ theorem isCoderivation_coderiv (F : ReducedTensorWords R M →ₗ[R] M) :
             splice R x c (n.1 - c) (p - c) d (F (subword R x p d))) +
         ∑ p ∈ Finset.range n.1, ∑ d ∈ Finset.range (n.1 + 1), ∑ c ∈ Finset.range n.1,
           splice R x 0 c p d (F (subword R x p d)) ⊗ₜ[R] subword R x c (n.1 - c) := by
-    rw [coderiv_subword R F x (a := 0) (b := n.1) (K := n.1) (by omega) (le_refl n.1), map_sum,
+    rw [coderiv_subword R F x (a := 0) (b := n.1) (K := n.1) (le_refl n.1), map_sum,
       ← Finset.sum_add_distrib]
     refine Finset.sum_congr rfl fun p _ ↦ ?_
     rw [map_sum, ← Finset.sum_add_distrib]
     refine Finset.sum_congr rfl fun d _ ↦ ?_
-    rw [deconcatenation_splice R x _ (by omega)]
+    rw [deconcatenation_splice R x _]
     simp only [Nat.zero_add]
   have hdelta : deconcatenation R M (subword R x 0 n.1) =
       ∑ c ∈ Finset.range n.1, subword R x 0 c ⊗ₜ[R] subword R x c (n.1 - c) := by
@@ -359,13 +365,13 @@ theorem isCoderivation_coderiv (F : ReducedTensorWords R M →ₗ[R] M) :
     congr 1 <;> refine Finset.sum_congr rfl fun c hc ↦ ?_ <;>
       simp only [Finset.mem_range] at hc
     · rw [LinearMap.rTensor_tmul,
-        coderiv_subword R F x (a := 0) (b := c) (K := n.1) (by omega) (by omega),
+        coderiv_subword R F x (a := 0) (b := c) (K := n.1) (by omega),
         TensorProduct.sum_tmul]
       exact Finset.sum_congr rfl fun p _ ↦ by
         rw [TensorProduct.sum_tmul]
         simp only [Nat.zero_add]
     · rw [LinearMap.lTensor_tmul,
-        coderiv_subword R F x (a := c) (b := n.1 - c) (K := n.1) (by omega) (by omega),
+        coderiv_subword R F x (a := c) (b := n.1 - c) (K := n.1) (by omega),
         TensorProduct.tmul_sum]
       exact Finset.sum_congr rfl fun p _ ↦ by rw [TensorProduct.tmul_sum]
   rw [hLHS, hRHS, add_comm]
@@ -414,7 +420,7 @@ theorem letter_comp_coderiv (F : ReducedTensorWords R M →ₗ[R] M) :
   have hn : 0 < n.1 := n.2
   simp only [LinearMap.coe_comp, Function.comp_apply]
   rw [of_tprod_eq_subword R hn x,
-    coderiv_subword R F x (a := 0) (b := n.1) (K := n.1) (by omega) (le_refl n.1), map_sum]
+    coderiv_subword R F x (a := 0) (b := n.1) (K := n.1) (le_refl n.1), map_sum]
   refine (Finset.sum_eq_single 0 ?_ ?_).trans ?_
   · intro p _ hp
     rw [map_sum]

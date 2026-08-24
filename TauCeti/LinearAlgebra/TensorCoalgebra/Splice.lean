@@ -114,7 +114,7 @@ theorem splice_congr {n m : ℕ} (x : Fin n → M) (y : Fin m → M) {a a' b p d
     splice R x a b p d e = splice R y a' b p d e := by
   by_cases hd : 0 < d ∧ p + d ≤ b
   · rw [splice_eq_of_tprod R x e hd.1 hd.2 hab, splice_eq_of_tprod R y e hd.1 hd.2 hab']
-    refine of_tprod_congr R M _ _ rfl fun j ↦ ?_
+    refine of_tprod_congr R M _ rfl fun j ↦ ?_
     have hj := j.isLt
     simp only [Fin.val_cast]
     split_ifs with h₁ h₂
@@ -152,7 +152,7 @@ private theorem deconcatenation_splice_left {n : ℕ} (x : Fin n → M) {a b p d
         else if _ : j.1 = p then e
         else x ⟨a + (j.1 + d - 1), by omega⟩) 0 c = subword R x a c := by
     rw [subword_eq_of_tprod R _ hc (by omega), subword_eq_of_tprod R x hc (by omega)]
-    refine of_tprod_congr R M _ _ rfl fun j ↦ ?_
+    refine of_tprod_congr R M _ rfl fun j ↦ ?_
     have hj := j.isLt
     simp only [Fin.val_cast]
     have hjp : 0 + j.1 < p := by omega
@@ -166,7 +166,7 @@ private theorem deconcatenation_splice_left {n : ℕ} (x : Fin n → M) {a b p d
       splice R x (a + c) (b - c) (p - c) d e := by
     rw [subword_eq_of_tprod R _ (by omega) (by omega),
       splice_eq_of_tprod R x e hd (by omega) (by omega)]
-    refine of_tprod_congr R M _ _ (by omega) fun j ↦ ?_
+    refine of_tprod_congr R M _ (by omega) fun j ↦ ?_
     have hj := j.isLt
     simp only [Fin.val_cast]
     split_ifs <;> first | rfl | exact congrArg x (by simp only [Fin.mk.injEq]; omega) | omega
@@ -195,7 +195,7 @@ private theorem deconcatenation_splice_right {n : ℕ} (x : Fin n → M) {a b p 
         else x ⟨a + (j.1 + d - 1), by omega⟩) 0 c = splice R x a (c + (d - 1)) p d e := by
     rw [subword_eq_of_tprod R _ (by omega) (by omega),
       splice_eq_of_tprod R x e hd (by omega) (by omega)]
-    refine of_tprod_congr R M _ _ (by omega) fun j ↦ ?_
+    refine of_tprod_congr R M _ (by omega) fun j ↦ ?_
     have hj := j.isLt
     simp only [Fin.val_cast]
     split_ifs <;> first | rfl | exact congrArg x (by simp only [Fin.mk.injEq]; omega) | omega
@@ -207,7 +207,7 @@ private theorem deconcatenation_splice_right {n : ℕ} (x : Fin n → M) {a b p 
       subword R x (a + (c + (d - 1))) (b - (c + (d - 1))) := by
     rw [subword_eq_of_tprod R _ (by omega) (by omega),
       subword_eq_of_tprod R x (by omega) (by omega)]
-    refine of_tprod_congr R M _ _ (by omega) fun j ↦ ?_
+    refine of_tprod_congr R M _ (by omega) fun j ↦ ?_
     have hj := j.isLt
     simp only [Fin.val_cast]
     have hjp : ¬(c + j.1) < p := by omega
@@ -269,22 +269,38 @@ either weakly to its left, leaving a plain block and a spliced word, or strictly
 leaving a spliced word and a plain block.  Both sums range over the cut position measured in the
 original block, and their summands vanish outside the positions that really occur; that is what
 makes the identity hold for a degenerate collapsed block too, both sides then being zero. -/
-theorem deconcatenation_splice {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M) (hab : a + b ≤ n) :
+theorem deconcatenation_splice {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M) :
     deconcatenation R M (splice R x a b p d e) =
       (∑ c ∈ Finset.range (p + 1), subword R x a c ⊗ₜ[R] splice R x (a + c) (b - c) (p - c) d e) +
         ∑ c ∈ Finset.range b, splice R x a c p d e ⊗ₜ[R] subword R x (a + c) (b - c) := by
-  by_cases h : 0 < d ∧ p + d ≤ b
-  · exact deconcatenation_splice_of_le R x e h.1 h.2 hab
-  · rw [splice, dite_eq_right (by tauto), map_zero]
-    rw [Finset.sum_eq_zero fun c hc ↦ ?_, Finset.sum_eq_zero fun c hc ↦ ?_, add_zero]
-    · simp only [Finset.mem_range] at hc
-      rcases Nat.eq_zero_or_pos d with rfl | hd
-      · rw [splice_zero_length, TensorProduct.zero_tmul]
-      · rw [splice_eq_zero_of_block_lt_add R x e (by omega), TensorProduct.zero_tmul]
-    · simp only [Finset.mem_range] at hc
-      rcases Nat.eq_zero_or_pos d with rfl | hd
-      · rw [splice_zero_length, TensorProduct.tmul_zero]
-      · rw [splice_eq_zero_of_block_lt_add R x e (by omega), TensorProduct.tmul_zero]
+  by_cases hab : a + b ≤ n
+  · by_cases h : 0 < d ∧ p + d ≤ b
+    · exact deconcatenation_splice_of_le R x e h.1 h.2 hab
+    · rw [splice, dite_eq_right (by tauto), map_zero]
+      rw [Finset.sum_eq_zero fun c hc ↦ ?_, Finset.sum_eq_zero fun c hc ↦ ?_, add_zero]
+      · simp only [Finset.mem_range] at hc
+        rcases Nat.eq_zero_or_pos d with rfl | hd
+        · rw [splice_zero_length, TensorProduct.zero_tmul]
+        · rw [splice_eq_zero_of_block_lt_add R x e (by omega), TensorProduct.zero_tmul]
+      · simp only [Finset.mem_range] at hc
+        rcases Nat.eq_zero_or_pos d with rfl | hd
+        · rw [splice_zero_length, TensorProduct.tmul_zero]
+        · rw [splice_eq_zero_of_block_lt_add R x e (by omega), TensorProduct.tmul_zero]
+  · rw [splice_eq_zero_of_length_lt_add R x e (by omega), map_zero]
+    have hleft :
+        ∑ c ∈ Finset.range (p + 1),
+          subword R x a c ⊗ₜ[R] splice R x (a + c) (b - c) (p - c) d e = 0 :=
+      Finset.sum_eq_zero fun c hc ↦ by
+        simp only [Finset.mem_range] at hc
+        by_cases hcb : c ≤ b
+        · rw [splice_eq_zero_of_length_lt_add R x e (by omega), TensorProduct.tmul_zero]
+        · rw [subword_eq_zero_of_lt_add R x (by omega), TensorProduct.zero_tmul]
+    have hright : ∑ c ∈ Finset.range b,
+        splice R x a c p d e ⊗ₜ[R] subword R x (a + c) (b - c) = 0 :=
+      Finset.sum_eq_zero fun c hc ↦ by
+        simp only [Finset.mem_range] at hc
+        rw [subword_eq_zero_of_lt_add R x (by omega), TensorProduct.tmul_zero]
+    rw [hleft, hright, add_zero]
 
 end ReducedTensorWords
 

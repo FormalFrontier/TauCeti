@@ -31,9 +31,10 @@ the `DGAInfinity` roadmap.
 
 ## Main results
 
-* `TauCeti.ReducedTensorWords.of_tprod_congr` and `TauCeti.ReducedTensorWords.subword_congr`:
-  a pure tensor word, respectively a block of one, depends only on its letters, even when the two
-  sides present its length by different arithmetic expressions.
+* `TauCeti.ReducedTensorWords.of_tprod_congr`: a pure tensor word depends only on its letters,
+  even when the two sides present its length by different arithmetic expressions.
+* `TauCeti.ReducedTensorWords.subword_congr`: equal-length blocks in different ambient tuples or
+  at different offsets agree when their letters agree.
 * `TauCeti.ReducedTensorWords.deconcatenation_subword`: deconcatenation of a block.
 
 ## References
@@ -83,9 +84,10 @@ theorem linearMap_ext {N : Type uN} [AddCommMonoid N] [Module R N]
 /-- Two pure tensor words of the same length with the same letters are equal.  The two lengths
 are separate arguments, so that this closes goals whose two sides were assembled from different
 arithmetic expressions for one length. -/
-theorem of_tprod_congr {k l : ℕ} (hk : 0 < k) (hl : 0 < l) (hkl : k = l) {u : Fin k → M}
+theorem of_tprod_congr {k l : ℕ} (hk : 0 < k) (hkl : k = l) {u : Fin k → M}
     {v : Fin l → M} (h : ∀ i : Fin k, u i = v (Fin.cast hkl i)) :
-    of R M ⟨k, hk⟩ (PiTensorProduct.tprod R u) = of R M ⟨l, hl⟩ (PiTensorProduct.tprod R v) := by
+    of R M ⟨k, hk⟩ (PiTensorProduct.tprod R u) =
+      of R M ⟨l, hkl ▸ hk⟩ (PiTensorProduct.tprod R v) := by
   subst hkl
   exact congrArg _ (congrArg _ (funext h))
 
@@ -220,7 +222,7 @@ theorem subword_congr {n m : ℕ} (x : Fin n → M) (y : Fin m → M) {a a' b : 
   rcases Nat.eq_zero_or_pos b with rfl | hb
   · rw [subword_length_zero, subword_length_zero]
   · rw [subword_eq_of_tprod R x hb hab, subword_eq_of_tprod R y hb hab']
-    exact of_tprod_congr R M _ _ rfl fun j ↦ h j.1 j.isLt
+    exact of_tprod_congr R M _ rfl fun j ↦ h j.1 j.isLt
 
 /-- Deconcatenating a block cuts it at each of its nontrivial internal positions. -/
 theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} :
