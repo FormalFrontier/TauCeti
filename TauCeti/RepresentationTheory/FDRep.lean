@@ -86,11 +86,14 @@ noncomputable def ofShrinkEquiv : Representation.Equiv (ofShrink ρ).ρ ρ := by
   ext x
   simp [ofShrink]
 
+/-- Shrinking the carrier does not change the dimension. -/
 @[simp]
 theorem finrank_ofShrink : Module.finrank k (ofShrink ρ) = Module.finrank k V := by
   have : Small.{u} V := Module.Finite.small k V
   exact LinearEquiv.finrank_eq (Shrink.linearEquiv k V)
 
+/-- Shrinking the carrier does not change the character: the shrunk representation is equivalent
+to the original one, by `FDRep.ofShrinkEquiv`. -/
 @[simp]
 theorem character_ofShrink (g : G) : (ofShrink ρ).character g = ρ.character g :=
   congrFun (Representation.char_iso (ofShrinkEquiv ρ)) g

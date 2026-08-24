@@ -32,6 +32,8 @@ rather than several: its character has norm `1` for the character pairing of
 ## Main definitions
 
 * `TauCeti.GL2Steinberg`: the Steinberg representation of `GL₂(𝔽_q)`.
+* `TauCeti.GL2SteinbergEquiv`: it carries the augmentation subrepresentation of `ℂ[GL₂ ⧸ B]`,
+  which is what the dimension and the character below are computed from.
 
 ## Main statements
 
@@ -50,9 +52,10 @@ rather than several: its character has norm `1` for the character pairing of
 An object of `FDRep ℂ G` carries a `ℂ`-module in `Type`, while the coset space `GL₂(F) ⧸ B` lies
 in the universe of `F`; `TauCeti.GL2Steinberg` therefore transports the carrier down with
 `FDRep.ofShrink`, exactly as `TauCeti.indFDRep` does for induced representations, so that the
-construction stays universe-polymorphic in `F`. Nothing below unfolds that transport: the
-dimension and the character pass through it by `FDRep.finrank_ofShrink` and
-`FDRep.character_ofShrink`.
+construction stays universe-polymorphic in `F`. Nothing below unfolds that transport:
+`TauCeti.GL2SteinbergEquiv`, the comparison equivalence that `FDRep.ofShrinkEquiv` supplies, is
+what the dimension and the character pass through, and it is public so that consumers can do the
+same.
 
 `TauCeti.characterPairing_GL2Steinberg_self` carries a `[DecidableEq F]` hypothesis, which the
 other statements do not. It is used, not decorative: `TauCeti.ClassFunction.characterPairing`
@@ -94,9 +97,18 @@ noncomputable def GL2Steinberg : FDRep ℂ (GL (Fin 2) F) :=
   FDRep.ofShrink (augmentationSubrepresentation ℂ (GL (Fin 2) F)
     (GL (Fin 2) F ⧸ GL2Borel F)).toRepresentation
 
+/-- **The Steinberg representation carries the augmentation subrepresentation of `ℂ[GL₂ ⧸ B]`.**
+Shrinking the carrier to `Type` is a change of model, not of representation, so everything about
+`TauCeti.GL2Steinberg` may be read off the augmentation subrepresentation through this
+equivalence; the dimension and the character below are. -/
+noncomputable def GL2SteinbergEquiv : Representation.Equiv (GL2Steinberg F).ρ
+    (augmentationSubrepresentation ℂ (GL (Fin 2) F)
+      (GL (Fin 2) F ⧸ GL2Borel F)).toRepresentation :=
+  FDRep.ofShrinkEquiv _
+
 /-- **The projective line over `𝔽_q` has `q + 1` points**, against a chosen `Fintype` structure on
 the coset space. This is `TauCeti.GL2Borel.index_eq` at the `Fintype.card` spelling that the
-dimension and character computations below rewrite with. -/
+dimension computation below rewrites with. -/
 private theorem fintypeCard_quotient_gl2Borel [Fintype (GL (Fin 2) F ⧸ GL2Borel F)] :
     Fintype.card (GL (Fin 2) F ⧸ GL2Borel F) = Fintype.card F + 1 := by
   rw [← Nat.card_eq_fintype_card, ← Subgroup.index_eq_card, GL2Borel.index_eq]
@@ -106,7 +118,7 @@ projective line. -/
 @[simp]
 theorem finrank_GL2Steinberg : Module.finrank ℂ (GL2Steinberg F) = Fintype.card F := by
   let _ : Fintype (GL (Fin 2) F ⧸ GL2Borel F) := Fintype.ofFinite _
-  rw [GL2Steinberg, FDRep.finrank_ofShrink, finrank_augmentationSubrepresentation,
+  rw [(GL2SteinbergEquiv F).toLinearEquiv.finrank_eq, finrank_augmentationSubrepresentation,
     fintypeCard_quotient_gl2Borel]
   omega
 
@@ -115,15 +127,15 @@ theorem finrank_GL2Steinberg : Module.finrank ℂ (GL2Steinberg F) = Fintype.car
 /-- **The Steinberg character counts fixed points on the projective line, less one.** The
 permutation character of `ℂ[GL₂ ⧸ B]` is the number of cosets fixed by `g`, and the invariant line
 accounts for exactly `1` of it. -/
+@[simp]
 theorem character_GL2Steinberg (g : GL (Fin 2) F) :
     (GL2Steinberg F).character g
       = (Nat.card {q : GL (Fin 2) F ⧸ GL2Borel F // g • q = q} : ℂ) - 1 := by
-  let _ : Fintype (GL (Fin 2) F ⧸ GL2Borel F) := Fintype.ofFinite _
-  have hne : ((Fintype.card (GL (Fin 2) F ⧸ GL2Borel F) : ℂ)) ≠ 0 := by
-    rw [fintypeCard_quotient_gl2Borel]
-    exact Nat.cast_ne_zero.mpr (Nat.succ_ne_zero _)
-  rw [GL2Steinberg, FDRep.character_ofShrink, character_augmentationSubrepresentation hne,
-    char_ofMulAction]
+  have hequiv : (GL2Steinberg F).character g
+      = (augmentationSubrepresentation ℂ (GL (Fin 2) F)
+          (GL (Fin 2) F ⧸ GL2Borel F)).toRepresentation.character g :=
+    congrFun (Representation.char_iso (GL2SteinbergEquiv F)) g
+  rw [hequiv, character_augmentationSubrepresentation, char_ofMulAction]
 
 /-! ### The splitting of the boundary principal series -/
 
