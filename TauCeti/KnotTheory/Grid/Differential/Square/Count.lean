@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
+import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 public import TauCeti.KnotTheory.Grid.Differential.Square.Coefficient
 public import TauCeti.KnotTheory.Grid.Differential.Square.Decomposition
 
@@ -96,28 +96,28 @@ theorem mem_fullyBlockedDecompositions (D : GridRectangleDecomposition x z) :
   simp [fullyBlockedDecompositions, decompositionSigmaEquiv]
 
 /-- The first rectangle in a fully blocked decomposition is empty. -/
-theorem first_isEmpty_of_mem_fullyBlockedDecompositions
+theorem isEmpty_first_of_mem_fullyBlockedDecompositions
     {D : GridRectangleDecomposition x z} (hD : D ∈ G.fullyBlockedDecompositions x z) :
     D.first.IsEmpty :=
   G.isEmpty_of_mem_fullyBlockedRectangles x D.middle
     ((G.mem_fullyBlockedDecompositions x z D).mp hD).1
 
 /-- The second rectangle in a fully blocked decomposition is empty. -/
-theorem second_isEmpty_of_mem_fullyBlockedDecompositions
+theorem isEmpty_second_of_mem_fullyBlockedDecompositions
     {D : GridRectangleDecomposition x z} (hD : D ∈ G.fullyBlockedDecompositions x z) :
     D.second.IsEmpty :=
   G.isEmpty_of_mem_fullyBlockedRectangles D.middle z
     ((G.mem_fullyBlockedDecompositions x z D).mp hD).2
 
 /-- The first rectangle in a fully blocked decomposition avoids every marking. -/
-theorem first_avoidsMarkings_of_mem_fullyBlockedDecompositions
+theorem avoidsMarkings_first_of_mem_fullyBlockedDecompositions
     {D : GridRectangleDecomposition x z} (hD : D ∈ G.fullyBlockedDecompositions x z) :
     D.first.AvoidsMarkings G :=
   G.avoidsMarkings_of_mem_fullyBlockedRectangles x D.middle
     ((G.mem_fullyBlockedDecompositions x z D).mp hD).1
 
 /-- The second rectangle in a fully blocked decomposition avoids every marking. -/
-theorem second_avoidsMarkings_of_mem_fullyBlockedDecompositions
+theorem avoidsMarkings_second_of_mem_fullyBlockedDecompositions
     {D : GridRectangleDecomposition x z} (hD : D ∈ G.fullyBlockedDecompositions x z) :
     D.second.AvoidsMarkings G :=
   G.avoidsMarkings_of_mem_fullyBlockedRectangles D.middle z
@@ -135,19 +135,9 @@ theorem card_fullyBlockedDecompositions :
 /-- There are no fully blocked decompositions from `x` to a state outside the two-step
 column-swap support of `x`. -/
 theorem fullyBlockedDecompositions_eq_empty_of_notMem_twoStep
-    (hz : z ∉ x.twoStepColumnSwapNeighbors) : G.fullyBlockedDecompositions x z = ∅ := by
-  classical
-  rw [Finset.eq_empty_iff_forall_notMem]
-  intro D _hD
-  apply hz
-  rw [GridState.mem_twoStepColumnSwapNeighbors]
-  exact ⟨D.middle,
-    GridState.mem_columnSwapNeighbors.mpr
-      ⟨D.first.left, D.first.right, D.first.left_ne_right,
-        D.first.target_eq_swapColumns⟩,
-    GridState.mem_columnSwapNeighbors.mpr
-      ⟨D.second.left, D.second.right, D.second.left_ne_right,
-        D.second.target_eq_swapColumns⟩⟩
+    (hz : z ∉ x.twoStepColumnSwapNeighbors) : G.fullyBlockedDecompositions x z = ∅ :=
+  Finset.eq_empty_iff_forall_notMem.mpr fun D _ =>
+    hz D.target_mem_twoStepColumnSwapNeighbors
 
 /-- The number modulo two of fully blocked two-rectangle decompositions from `x` to `z`. -/
 noncomputable def fullyBlockedDecompositionCount : ZMod 2 :=
