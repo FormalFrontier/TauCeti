@@ -29,10 +29,12 @@ integration.
 
 * `TauCeti.enorm_sub_le_lintegral_enorm_fderiv_apply`: the fundamental theorem of calculus along
   a segment.
-* `TauCeti.lintegral_enorm_sub_comp_add_rpow_le`: the translation estimate in `∫⁻` form.
-* `TauCeti.eLpNorm_sub_comp_add_le_mul_eLpNorm_fderiv`: the `Lᵖ` translation estimate for a `C¹`
+* `TauCeti.tendsto_nhds_zero_of_le_ofReal_norm_mul`: a generic linear bound implies vanishing at
+  zero.
+* `TauCeti.lintegral_enorm_comp_add_sub_rpow_le`: the translation estimate in `∫⁻` form.
+* `TauCeti.eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv`: the `Lᵖ` translation estimate for a `C¹`
   function.
-* `TauCeti.tendsto_eLpNorm_sub_comp_add`: continuity of translation in `Lᵖ` for a `C¹` function
+* `TauCeti.tendsto_eLpNorm_comp_add_sub`: continuity of translation in `Lᵖ` for a `C¹` function
   with `Lᵖ` derivative.
 
 ## References
@@ -128,7 +130,7 @@ section Vanishing
 variable {E : Type*} [NormedAddCommGroup E]
 
 /-- A nonnegative quantity dominated by `‖h‖` times a finite constant vanishes as `h → 0`. -/
-private theorem tendsto_nhds_zero_of_le_ofReal_norm_mul {G : E → ℝ≥0∞} {C : ℝ≥0∞} (hC : C ≠ ∞)
+theorem tendsto_nhds_zero_of_le_ofReal_norm_mul {G : E → ℝ≥0∞} {C : ℝ≥0∞} (hC : C ≠ ∞)
     (hG : ∀ h : E, G h ≤ ENNReal.ofReal ‖h‖ * C) :
     Filter.Tendsto G (nhds 0) (nhds 0) := by
   have h0 : Filter.Tendsto (fun h : E => ENNReal.ofReal ‖h‖) (nhds 0) (nhds 0) := by
@@ -151,7 +153,7 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpa
 The segment estimate is integrated in `x`, the order of integration in `x` and in the segment
 parameter is exchanged, and the inner integral is then independent of the parameter because the
 measure is translation invariant. -/
-theorem lintegral_enorm_sub_comp_add_rpow_le (hu : ContDiff ℝ 1 u) {r : ℝ} (hr : 1 ≤ r) (h : E) :
+theorem lintegral_enorm_comp_add_sub_rpow_le (hu : ContDiff ℝ 1 u) {r : ℝ} (hr : 1 ≤ r) (h : E) :
     ∫⁻ x, ‖u (x + h) - u x‖ₑ ^ r ∂mu ≤ ‖h‖ₑ ^ r * ∫⁻ x, ‖fderiv ℝ u x‖ₑ ^ r ∂mu := by
   have hjoint : Measurable fun z : E × ℝ => ‖fderiv ℝ u (z.1 + z.2 • h)‖ₑ ^ r :=
     (ENNReal.continuous_rpow_const.comp
@@ -177,23 +179,23 @@ translation, at the rate given by the `Lᵖ` seminorm of its derivative,
 
 No support, integrability or boundedness hypothesis is needed. If `Du` is not in `Lᵖ`, the
 right-hand side is infinite and the estimate is vacuous. -/
-theorem eLpNorm_sub_comp_add_le_mul_eLpNorm_fderiv (hu : ContDiff ℝ 1 u) {p : ℝ≥0∞}
+theorem eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv (hu : ContDiff ℝ 1 u) {p : ℝ≥0∞}
     (hp : 1 ≤ p) (hp' : p ≠ ∞) (h : E) :
     eLpNorm (fun x => u (x + h) - u x) p mu ≤ ENNReal.ofReal ‖h‖ * eLpNorm (fderiv ℝ u) p mu := by
   have hr : 1 ≤ p.toReal := by simpa using ENNReal.toReal_mono hp' hp
   refine eLpNorm_le_eLpNorm_of_lintegral_rpow_le (norm_nonneg h) (zero_lt_one.trans_le hp).ne'
     hp' ?_
   rw [← ENNReal.ofReal_rpow_of_nonneg (norm_nonneg h) (zero_lt_one.trans_le hr).le, ofReal_norm]
-  exact lintegral_enorm_sub_comp_add_rpow_le hu hr h
+  exact lintegral_enorm_comp_add_sub_rpow_le hu hr h
 
 /-- **Continuity of translation in `Lᵖ`** for a `C¹` function with `Lᵖ` derivative: the `Lᵖ`
 distance between `u` and its translate tends to `0`. This is the qualitative corollary of
-`TauCeti.eLpNorm_sub_comp_add_le_mul_eLpNorm_fderiv`, which gives the linear modulus. -/
-theorem tendsto_eLpNorm_sub_comp_add (hu : ContDiff ℝ 1 u) {p : ℝ≥0∞} (hp : 1 ≤ p) (hp' : p ≠ ∞)
+`TauCeti.eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv`, which gives the linear modulus. -/
+theorem tendsto_eLpNorm_comp_add_sub (hu : ContDiff ℝ 1 u) {p : ℝ≥0∞} (hp : 1 ≤ p) (hp' : p ≠ ∞)
     (hfin : eLpNorm (fderiv ℝ u) p mu ≠ ∞) :
     Filter.Tendsto (fun h : E => eLpNorm (fun x => u (x + h) - u x) p mu) (nhds 0) (nhds 0) :=
   tendsto_nhds_zero_of_le_ofReal_norm_mul hfin fun h =>
-    eLpNorm_sub_comp_add_le_mul_eLpNorm_fderiv hu hp hp' h
+    eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv hu hp hp' h
 
 end Translation
 

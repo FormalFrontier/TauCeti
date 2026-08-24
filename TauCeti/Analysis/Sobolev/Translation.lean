@@ -24,26 +24,29 @@ Rellich--Kondrachov, Lane A.6 of `TauCetiRoadmap/PDE/README.md`.
 
 ## The estimate on `W^{1,p}_0(ℝⁿ)`
 
-`TauCeti.W1p.eLpNorm_value_sub_comp_add_le_mul_norm_gradient` transports the `C¹` estimate from
-`TauCeti.MeasureTheory.Function.Lp.Translation` to the Sobolev space by density. The set of jets
-satisfying it is closed — the translation increment is a continuous function of the `Lᵖ` class,
-being the difference of the identity and the isometry induced by a measure-preserving map — and
-it contains every test-function jet, so
+`TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient` transports the `C¹` estimate
+from `TauCeti.MeasureTheory.Function.Lp.Translation` to the Sobolev space by density. The set of
+jets satisfying it is closed — the translation increment is a continuous function of the `Lᵖ`
+class, being the difference of the identity and the isometry induced by a measure-preserving map
+— and it contains every test-function jet, so
 `TauCeti.w1p0Submodule_subset_of_isClosed` gives it on all of `W^{1,p}_0(ℝⁿ)`.  Note that the
 whole space is where a translation estimate can be stated without further data: translating a
 function defined on a proper open `Ω` moves it off `Ω`, so the general case is this statement
 composed with an extension of `W^{1,p}_0(Ω)` by zero.
 
-The whole-space form stated here needs the `W^{1,p}_0` boundary condition: the zero-extension of a
-general Sobolev function on a proper `Ω` need not be weakly differentiable across `∂Ω`. On
-`W^{1,p}(Ω)`, a local form survives on compactly contained subsets for translations smaller than
-their distance to the boundary.
+The theorem assumes membership in `W^{1,p}_0(ℝⁿ)`, the closure of the test functions, because
+test-function density is the available route to the whole-space estimate. Since `Ω = ⊤` has no
+boundary, this is not an additional boundary condition. For a proper `Ω`, however, transferring
+the estimate by zero extension does require `W^{1,p}_0(Ω)`: the zero-extension of a general
+Sobolev function need not be weakly differentiable across `∂Ω`. A local form on `W^{1,p}(Ω)`
+survives on compactly contained subsets for translations smaller than their distance to the
+boundary.
 
 ## Main declarations
 
-* `TauCeti.W1p.eLpNorm_value_sub_comp_add_le_mul_norm_gradient`: the translation estimate on
+* `TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient`: the translation estimate on
   `W^{1,p}_0(ℝⁿ)`.
-* `TauCeti.W1p.tendsto_eLpNorm_value_sub_comp_add`: continuity of translation in `Lᵖ` on
+* `TauCeti.W1p.tendsto_eLpNorm_value_comp_add_sub_value`: continuity of translation in `Lᵖ` on
   `W^{1,p}_0(ℝⁿ)`.
 
 ## References
@@ -125,7 +128,7 @@ private theorem enorm_translateLp_sub (h : E)
 
 /-- The translation estimate for a single test function, in the shape the jets of `W^{1,p}(ℝⁿ)`
 present it. -/
-private theorem eLpNorm_testFunctionLp_sub_comp_add_le (hp : p ≠ ∞) (h : E)
+private theorem eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le (hp : p ≠ ∞) (h : E)
     (phi : 𝓓((⊤ : Opens E), ℝ)) :
     eLpNorm (fun x => testFunctionLp (mu := mu) p phi (x + h)
         - testFunctionLp (mu := mu) p phi x) p mu
@@ -145,7 +148,7 @@ private theorem eLpNorm_testFunctionLp_sub_comp_add_le (hp : p ≠ ∞) (h : E)
       = eLpNorm (fderiv ℝ (phi : E → ℝ)) p mu := by
     simpa [restrict_coe_top] using enorm_gradientTestFunctionLp (mu := mu) p phi
   rw [hL, hR]
-  exact eLpNorm_sub_comp_add_le_mul_eLpNorm_fderiv
+  exact eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv
     (phi.contDiff.of_le (by simp)) Fact.out hp h
 
 /-- **The translation estimate on `W^{1,p}_0(ℝⁿ)`**: for `1 ≤ p < ∞`, every `u` in the closure of
@@ -154,12 +157,12 @@ the test functions satisfies
 `‖u(· + h) - u‖_p ≤ ‖h‖ ‖∇u‖_p`.
 
 The estimate for a single test function comes from
-`TauCeti.eLpNorm_sub_comp_add_le_mul_eLpNorm_fderiv`; the set of jets obeying it is closed, so
+`TauCeti.eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv`; the set of jets obeying it is closed, so
 `TauCeti.w1p0Submodule_subset_of_isClosed` passes it to the closure. Composing with a
 zero-extension operator turns this into the corresponding estimate on `W^{1,p}_0(Ω)` for an
 arbitrary open `Ω`, which is the form the Fréchet--Kolmogorov compactness criterion consumes in
 the proof of Rellich--Kondrachov. -/
-theorem W1p.eLpNorm_value_sub_comp_add_le_mul_norm_gradient (hp : p ≠ ∞) (h : E)
+theorem W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient (hp : p ≠ ∞) (h : E)
     {u : W1p mu ⊤ p}
     (hu : u ∈ w1p0Submodule mu ⊤ p) :
     eLpNorm (fun x => W1p.value u (x + h) - W1p.value u x) p mu
@@ -179,22 +182,18 @@ theorem W1p.eLpNorm_value_sub_comp_add_le_mul_norm_gradient (hp : p ≠ ∞) (h 
         W1p.gradientL.continuous.enorm)
   refine w1p0Submodule_subset_of_isClosed hclosed (fun phi => ?_) hu
   simpa only [Set.mem_ofPred_eq, W1p.value_ofTestFunctionₗ, W1p.gradient_ofTestFunctionₗ] using
-    eLpNorm_testFunctionLp_sub_comp_add_le hp h phi
+    eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le hp h phi
 
 /-- **Continuity of translation in `Lᵖ` on `W^{1,p}_0(ℝⁿ)`**: for a fixed Sobolev function, the
 `Lᵖ` distance to its translate tends to zero. This is the qualitative consequence of
-`TauCeti.W1p.eLpNorm_value_sub_comp_add_le_mul_norm_gradient`, whose bound gives the linear modulus
-uniformly over gradient-bounded families. -/
-theorem W1p.tendsto_eLpNorm_value_sub_comp_add (hp : p ≠ ∞) {u : W1p mu ⊤ p}
+`TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient`, whose bound gives the linear
+modulus uniformly over gradient-bounded families. -/
+theorem W1p.tendsto_eLpNorm_value_comp_add_sub_value (hp : p ≠ ∞) {u : W1p mu ⊤ p}
     (hu : u ∈ w1p0Submodule mu ⊤ p) :
     Filter.Tendsto (fun h : E => eLpNorm (fun x => W1p.value u (x + h) - W1p.value u x) p mu)
-      (nhds 0) (nhds 0) := by
-  have h0 : Filter.Tendsto (fun h : E => ENNReal.ofReal ‖h‖) (nhds 0) (nhds 0) := by
-    simpa [Function.comp_def] using (ENNReal.continuous_ofReal.tendsto 0).comp
-      (continuous_norm.tendsto' (0 : E) 0 norm_zero)
-  exact tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds
-    (by simpa using ENNReal.Tendsto.mul_const h0 (Or.inr (by finiteness))) (fun _ => zero_le)
-    fun h => W1p.eLpNorm_value_sub_comp_add_le_mul_norm_gradient hp h hu
+      (nhds 0) (nhds 0) :=
+  tendsto_nhds_zero_of_le_ofReal_norm_mul (by finiteness) fun h =>
+    W1p.eLpNorm_value_comp_add_sub_value_le_mul_norm_gradient hp h hu
 
 end Sobolev
 
