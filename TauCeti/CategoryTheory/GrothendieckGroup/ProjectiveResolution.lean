@@ -113,17 +113,19 @@ replete, by `CategoryTheory.ObjectProperty.isClosedUnderIsomorphisms_of_contains
 local instance : P.IsClosedUnderIsomorphisms :=
   ObjectProperty.isClosedUnderIsomorphisms_of_containsZero P
 
-variable (hP : E.IsExtensionClosed P)
-
 namespace FiniteResolution
 
 section Projective
+
+variable (hproj : P ≤ E.isProjective)
+
+local notation "hP" => E.isExtensionClosed_of_le_isProjective hproj
 
 /-- The inductive core of
 `TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory_eq_eulerClassFullSubcategory`,
 on the sum of the two lengths. Schanuel's lemma compares the two first steps, and the induction
 hypothesis then compares the two remaining chains, each enlarged by the other's resolving term. -/
-private theorem eulerClassFullSubcategory_eq_aux (hproj : P ≤ E.isProjective) (n : ℕ) :
+private theorem eulerClassFullSubcategory_eq_aux (n : ℕ) :
     ∀ {X : C} (r s : E.FiniteResolution P X), r.length + s.length ≤ n →
       r.eulerClassFullSubcategory hP = s.eulerClassFullSubcategory hP := by
   induction n with
@@ -179,18 +181,18 @@ private theorem eulerClassFullSubcategory_eq_aux (hproj : P ≤ E.isProjective) 
               exact (add_comm _ _).trans (hcmp.symm.trans (add_comm _ _))
 
 /-- **The Euler class in the `K₀` of the full subcategory on `P` depends only on the resolved
-object.** Any two finite `P`-resolutions of the same object have the same alternating class in
-`ExactK0 (E.fullSubcategory P hP)`, as soon as every object satisfying `P` is `E`-projective.
+object.** Any two finite `P`-resolutions of the same object have the same alternating class in the
+exact `K₀` of the canonically induced structure on `P`, as soon as every object satisfying `P` is
+`E`-projective.
 
 The proof is an induction on the sum of the two lengths whose only geometric input is Schanuel's
 lemma `TauCeti.ExactStructure.nonempty_iso_biprod_of_projective`: it turns the two first steps
 `K ↪ Q ↠ X` and `K' ↪ Q' ↠ X` into an isomorphism `K ⊞ Q' ≅ K' ⊞ Q`, and the two remaining
 chains, each enlarged by the other's resolving term, resolve the two sides. -/
 theorem eulerClassFullSubcategory_eq_eulerClassFullSubcategory
-    (hproj : P ≤ E.isProjective) {X : C}
-    (r s : E.FiniteResolution P X) :
+    {X : C} (r s : E.FiniteResolution P X) :
     r.eulerClassFullSubcategory hP = s.eulerClassFullSubcategory hP :=
-  eulerClassFullSubcategory_eq_aux hP hproj _ r s le_rfl
+  eulerClassFullSubcategory_eq_aux hproj _ r s le_rfl
 
 end Projective
 
@@ -199,6 +201,10 @@ end FiniteResolution
 
 section EulerClassOf
 
+section General
+
+variable (hP : E.IsExtensionClosed P)
+
 /-- **The Euler class of an object of finite `P`-dimension**, in the exact `K₀` of the structure
 induced on the full subcategory on `P`: the alternating class of some, hence when `P` consists of
 `E`-projectives, by `TauCeti.ExactStructure.eulerClassOf_eq` of any, finite `P`-resolution of it. -/
@@ -206,14 +212,18 @@ noncomputable def eulerClassOf {X : C} (hX : E.admitsFiniteResolution P X) :
     ExactK0 (E.fullSubcategory P hP) :=
   ((E.admitsFiniteResolution_iff P).mp hX).some.eulerClassFullSubcategory hP
 
+end General
+
 variable (hproj : P ≤ E.isProjective)
+
+local notation "hP" => E.isExtensionClosed_of_le_isProjective hproj
 
 include hproj in
 /-- Every finite `P`-resolution of `X` computes `TauCeti.ExactStructure.eulerClassOf`. -/
 theorem eulerClassOf_eq {X : C} (hX : E.admitsFiniteResolution P X)
     (r : E.FiniteResolution P X) :
     E.eulerClassOf hP hX = r.eulerClassFullSubcategory hP :=
-  FiniteResolution.eulerClassFullSubcategory_eq_eulerClassFullSubcategory hP hproj _ r
+  FiniteResolution.eulerClassFullSubcategory_eq_eulerClassFullSubcategory hproj _ r
 
 include hproj in
 /-- On an object satisfying `P` the Euler class is the class of that object. -/
@@ -221,7 +231,7 @@ include hproj in
 theorem eulerClassOf_of_prop {X : C} (hX : P X) :
     E.eulerClassOf hP (E.le_admitsFiniteResolution P X hX) =
       ExactK0.of (⟨X, hX⟩ : P.FullSubcategory) := by
-  rw [E.eulerClassOf_eq hP hproj _ (.base hX),
+  rw [E.eulerClassOf_eq hproj _ (.base hX),
     FiniteResolution.eulerClassFullSubcategory_base]
 
 include hproj in
@@ -232,10 +242,10 @@ theorem eulerClassOf_eq_sub_of_conflation {K Q X : C} (hQ : P Q) {i : K ⟶ Q} {
     (hK : E.admitsFiniteResolution P K) :
     E.eulerClassOf hP (E.admitsFiniteResolution_of_conflation P hQ hp hK) =
       ExactK0.of (⟨Q, hQ⟩ : P.FullSubcategory) - E.eulerClassOf hP hK := by
-  rw [E.eulerClassOf_eq hP hproj _ (.step hQ i p zero hp
+  rw [E.eulerClassOf_eq hproj _ (.step hQ i p zero hp
       ((E.admitsFiniteResolution_iff P).mp hK).some),
     FiniteResolution.eulerClassFullSubcategory_step,
-    E.eulerClassOf_eq hP hproj hK ((E.admitsFiniteResolution_iff P).mp hK).some]
+    E.eulerClassOf_eq hproj hK ((E.admitsFiniteResolution_iff P).mp hK).some]
 
 include hproj in
 /-- The inductive core of `TauCeti.ExactStructure.eulerClassOf_eq_add_of_conflation`, on a common
@@ -255,9 +265,10 @@ private theorem eulerClassOf_add_aux (n : ℕ) :
       obtain ⟨t, htl⟩ := ht
       have hX₁ : P S.X₁ := by simpa using r.prop_syzygy hrl
       have hX₃ : P S.X₃ := by simpa using t.prop_syzygy htl
-      rw [E.eulerClassOf_eq hP hproj h₂ (.base (hP.prop_X₂ hS hX₁ hX₃)),
-        E.eulerClassOf_eq hP hproj h₁ (.base hX₁),
-        E.eulerClassOf_eq hP hproj h₃ (.base hX₃),
+      rw [E.eulerClassOf_eq hproj h₂
+          (.base ((E.isExtensionClosed_of_le_isProjective hproj).prop_X₂ hS hX₁ hX₃)),
+        E.eulerClassOf_eq hproj h₁ (.base hX₁),
+        E.eulerClassOf_eq hproj h₃ (.base hX₃),
         FiniteResolution.eulerClassFullSubcategory_base,
         FiniteResolution.eulerClassFullSubcategory_base,
         FiniteResolution.eulerClassFullSubcategory_base]
@@ -277,15 +288,17 @@ private theorem eulerClassOf_add_aux (n : ℕ) :
       have haK : E.admitsFiniteResolution P K :=
         (E.isExtensionClosed_admitsFiniteResolution hproj).prop_X₂ hKv haX haZ
       have e₂ : E.eulerClassOf hP h₂ =
-          ExactK0.of (⟨QX ⊞ QZ, hP.prop_biprod hQX hQZ⟩ : P.FullSubcategory) -
-            E.eulerClassOf hP haK :=
-        E.eulerClassOf_eq_sub_of_conflation hP hproj (hP.prop_biprod hQX hQZ) hKu haK
+          ExactK0.of (⟨QX ⊞ QZ,
+            (E.isExtensionClosed_of_le_isProjective hproj).prop_biprod hQX hQZ⟩ :
+              P.FullSubcategory) - E.eulerClassOf hP haK :=
+        E.eulerClassOf_eq_sub_of_conflation hproj
+          ((E.isExtensionClosed_of_le_isProjective hproj).prop_biprod hQX hQZ) hKu haK
       have e₁ : E.eulerClassOf hP h₁ =
           ExactK0.of (⟨QX, hQX⟩ : P.FullSubcategory) - E.eulerClassOf hP haX :=
-        E.eulerClassOf_eq_sub_of_conflation hP hproj hQX hcX haX
+        E.eulerClassOf_eq_sub_of_conflation hproj hQX hcX haX
       have e₃ : E.eulerClassOf hP h₃ =
           ExactK0.of (⟨QZ, hQZ⟩ : P.FullSubcategory) - E.eulerClassOf hP haZ :=
-        E.eulerClassOf_eq_sub_of_conflation hP hproj hQZ hcZ haZ
+        E.eulerClassOf_eq_sub_of_conflation hproj hQZ hcZ haZ
       have eK : E.eulerClassOf hP haK =
           E.eulerClassOf hP haX + E.eulerClassOf hP haZ := ih hKv haX haZ haK hKX hKZ
       rw [e₁, e₂, e₃, eK, ExactK0.of_biprod_fullSubcategory hP hQX hQZ]
@@ -299,7 +312,7 @@ theorem eulerClassOf_eq_add_of_conflation {S : ShortComplex C} (hS : E.Conflatio
     (h₁ : E.admitsFiniteResolution P S.X₁) (h₃ : E.admitsFiniteResolution P S.X₃) :
     E.eulerClassOf hP ((E.isExtensionClosed_admitsFiniteResolution hproj).prop_X₂ hS h₁ h₃) =
       E.eulerClassOf hP h₁ + E.eulerClassOf hP h₃ :=
-  E.eulerClassOf_add_aux hP hproj
+  E.eulerClassOf_add_aux hproj
     (max ((E.admitsFiniteResolution_iff P).mp h₁).some.length
       ((E.admitsFiniteResolution_iff P).mp h₃).some.length) hS h₁ h₃ _
     ⟨_, le_max_left _ _⟩ ⟨_, le_max_right _ _⟩
@@ -308,15 +321,14 @@ include hproj in
 /-- The Euler class is invariant under isomorphism of the resolved object. -/
 theorem eulerClassOf_congr {X Y : C} (e : X ≅ Y) (hX : E.admitsFiniteResolution P X)
     (hY : E.admitsFiniteResolution P Y) : E.eulerClassOf hP hX = E.eulerClassOf hP hY := by
-  rw [E.eulerClassOf_eq hP hproj hY
+  rw [E.eulerClassOf_eq hproj hY
       (((E.admitsFiniteResolution_iff P).mp hX).some.ofIso e),
     FiniteResolution.eulerClassFullSubcategory_ofIso]
-  exact E.eulerClassOf_eq hP hproj hX _
+  exact E.eulerClassOf_eq hproj hX _
 
 section ResolutionTheorem
 
-variable (hproj : P ≤ E.isProjective)
-  [ObjectProperty.EssentiallySmall.{w} (E.admitsFiniteResolution P)]
+variable [ObjectProperty.EssentiallySmall.{w} (E.admitsFiniteResolution P)]
 
 /-- **The class of an object of finite `P`-dimension is the alternating class of any of its
 finite `P`-resolutions**, after pushing the latter forward along the inclusion. This is the
@@ -355,10 +367,10 @@ private noncomputable def eulerInvariant :
         (E.isExtensionClosed_admitsFiniteResolution hproj))
       (ExactK0 (E.fullSubcategory P hP)) where
   obj X := E.eulerClassOf hP X.property
-  map_iso _ _ e := E.eulerClassOf_congr hP hproj ((E.admitsFiniteResolution P).ι.mapIso e) _ _
+  map_iso _ _ e := E.eulerClassOf_congr hproj ((E.admitsFiniteResolution P).ι.mapIso e) _ _
   map_conflation S hS := by
     rw [fullSubcategory_conflation_iff] at hS
-    exact E.eulerClassOf_eq_add_of_conflation hP hproj hS _ _
+    exact E.eulerClassOf_eq_add_of_conflation hproj hS _ _
 
 /-- **The inverse of the comparison map of the resolution theorem**: the homomorphism sending the
 class of an object of finite `P`-dimension to the alternating class of any of its finite
@@ -367,10 +379,10 @@ noncomputable def eulerHom :
     ExactK0 (E.fullSubcategory (E.admitsFiniteResolution P)
         (E.isExtensionClosed_admitsFiniteResolution hproj)) →+
       ExactK0 (E.fullSubcategory P hP) :=
-  ExactK0.lift (E.eulerInvariant hP hproj)
+  ExactK0.lift (E.eulerInvariant hproj)
 
 @[simp] theorem eulerHom_of {X : C} (hX : E.admitsFiniteResolution P X) :
-    E.eulerHom hP hproj (ExactK0.of ⟨X, hX⟩) = E.eulerClassOf hP hX :=
+    E.eulerHom hproj (ExactK0.of ⟨X, hX⟩) = E.eulerClassOf hP hX :=
   ExactK0.lift_of _ _
 
 /-- **The resolution theorem for finite projective resolutions.** When every object satisfying
@@ -384,37 +396,37 @@ noncomputable def resolutionEquiv :
         (E.isExtensionClosed_admitsFiniteResolution hproj)) where
   toFun := ExactK0.map _ (E.isConflationExact_ιOfLE hP
     (E.isExtensionClosed_admitsFiniteResolution hproj) (E.le_admitsFiniteResolution P))
-  invFun := E.eulerHom hP hproj
+  invFun := E.eulerHom hproj
   map_add' _ _ := map_add _ _ _
   left_inv x := by
-    refine DFunLike.congr_fun (ExactK0.hom_ext (f := (E.eulerHom hP hproj).comp
+    refine DFunLike.congr_fun (ExactK0.hom_ext (f := (E.eulerHom hproj).comp
       (ExactK0.map _ (E.isConflationExact_ιOfLE hP
         (E.isExtensionClosed_admitsFiniteResolution hproj) (E.le_admitsFiniteResolution P))))
       (g := AddMonoidHom.id _)
       fun Y => ?_) x
     rw [AddMonoidHom.coe_comp, Function.comp_apply, ExactK0.map_of, E.eulerHom_of,
-      E.eulerClassOf_of_prop hP hproj Y.property, AddMonoidHom.id_apply]
+      E.eulerClassOf_of_prop hproj Y.property, AddMonoidHom.id_apply]
   right_inv x := by
     refine DFunLike.congr_fun (ExactK0.hom_ext
       (f := (ExactK0.map _ (E.isConflationExact_ιOfLE hP
         (E.isExtensionClosed_admitsFiniteResolution hproj) (E.le_admitsFiniteResolution P))).comp
-          (E.eulerHom hP hproj))
+          (E.eulerHom hproj))
       (g := AddMonoidHom.id _) fun Y => ?_) x
     rw [AddMonoidHom.coe_comp, Function.comp_apply, E.eulerHom_of, AddMonoidHom.id_apply,
-      E.eulerClassOf_eq hP hproj Y.property ((E.admitsFiniteResolution_iff P).mp Y.property).some,
-      E.map_eulerClassFullSubcategory_eq_of hP hproj]
+      E.eulerClassOf_eq hproj Y.property ((E.admitsFiniteResolution_iff P).mp Y.property).some,
+      E.map_eulerClassFullSubcategory_eq_of hproj]
 
 /-- The forward map of the resolution equivalence sends a `P`-object to its class in the full
 subcategory of objects admitting a finite `P`-resolution. -/
 @[simp] theorem resolutionEquiv_of (X : P.FullSubcategory) :
-    E.resolutionEquiv hP hproj (ExactK0.of X) =
+    E.resolutionEquiv hproj (ExactK0.of X) =
       ExactK0.of ⟨X.obj, E.le_admitsFiniteResolution P X.obj X.property⟩ :=
   ExactK0.map_of _ _ _
 
 /-- The inverse map of the resolution equivalence sends an object class to its Euler class. -/
 @[simp] theorem resolutionEquiv_symm_of {X : C} (hX : E.admitsFiniteResolution P X) :
-    (E.resolutionEquiv hP hproj).symm (ExactK0.of ⟨X, hX⟩) = E.eulerClassOf hP hX :=
-  E.eulerHom_of hP hproj hX
+    (E.resolutionEquiv hproj).symm (ExactK0.of ⟨X, hX⟩) = E.eulerClassOf hP hX :=
+  E.eulerHom_of hproj hX
 
 end ResolutionTheorem
 
