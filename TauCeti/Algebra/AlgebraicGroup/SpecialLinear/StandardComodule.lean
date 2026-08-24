@@ -68,16 +68,6 @@ noncomputable def standardComodule :
 
 attribute [local instance] GeneralLinear.standardComodule standardComodule
 
-/-- The standard `SL_n` coaction is the standard `GL_n` coaction followed by the quotient map on
-the coordinate factor. -/
-@[simp]
-theorem standardComodule_coact_apply (v : Fin n → R) :
-    Comodule.coact (R := R) (C := coordinateHopfAlgebra R n) v =
-      TensorProduct.map LinearMap.id (coordinateMap R n).hom.toLinearMap
-        (GeneralLinear.standardCoact R n v) :=
-  by
-    rw [Comodule.corestrict_coact_apply, GeneralLinear.standardComodule_coact]
-
 /-- **The standard comodule of `SL_n` is faithful.** -/
 theorem isFaithful_standardComodule :
     Comodule.IsFaithful (k := R) (H := coordinateHopfAlgebra R n) (V := Fin n → R) := by
@@ -139,7 +129,7 @@ theorem mulVec_mem (N : Subcomodule R (coordinateHopfAlgebra R n) (Fin n → R))
     (g : Matrix (Fin n) (Fin n) R) *ᵥ w ∈ N := by
   let q := (pointsMulEquiv (R := R) (A := R) n).symm g
   have h := N.rid_lTensor_coact_mem q.ofConv.toLinearMap hw
-  rw [standardComodule_coact_apply R n] at h
+  rw [Comodule.corestrict_coact_apply, GeneralLinear.standardComodule_coact] at h
   have hcoordinate : (coordinateMap R n).hom.toCoalgHom.toLinearMap =
       ((coordinateMap R n).hom :
         GeneralLinear.coordinateHopfAlgebra R n →ₐ[R] coordinateHopfAlgebra R n).toLinearMap :=
