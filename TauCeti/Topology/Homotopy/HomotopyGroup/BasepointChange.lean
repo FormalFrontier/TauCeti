@@ -47,7 +47,6 @@ product as the class of a concatenation `GenLoop.transAt i` in any cube directio
   along the reversed path.
 * `TauCeti.homotopyGroupMulEquivOfPath`: **a path from `x` to `y` induces a group isomorphism
   `HomotopyGroup N X x ≃* HomotopyGroup N X y`.**
-* `TauCeti.piMulEquivOfPath`: the statement for `π_(n+1)`.
 * `TauCeti.nonempty_homotopyGroupMulEquiv`: on a path-connected space, all the homotopy groups
   in a fixed dimension are isomorphic.
 
@@ -157,9 +156,7 @@ theorem homotopic_transport_of_path_homotopic {γ δ : Path x y} (h : γ.Homotop
 
 /-- The constant homotopy is a homotopy along the constant path. -/
 def HomotopyAlong.refl (f : Ω^ N X x) : HomotopyAlong (Path.refl x) f f where
-  map := (f : C(I^N, X)).comp ContinuousMap.snd
-  map_zero _ := rfl
-  map_one _ := rfl
+  toHomotopy := ContinuousMap.Homotopy.refl (f : C(I^N, X))
   map_boundary _ z hz := f.2 z hz
 
 /-- Transport along a constant path does nothing, up to homotopy. -/
@@ -172,41 +169,13 @@ concatenated path. -/
 def HomotopyAlong.trans {w : X} {γ : Path x y} {δ : Path y w} {f : Ω^ N X x} {g : Ω^ N X y}
     {k : Ω^ N X w} (h₁ : HomotopyAlong γ f g) (h₂ : HomotopyAlong δ g k) :
     HomotopyAlong (γ.trans δ) f k where
-  map :=
-    ⟨fun tz => if (tz.1 : ℝ) ≤ 1 / 2
-        then h₁.map (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * tz.1), tz.2)
-        else h₂.map (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * tz.1 - 1), tz.2), by
-      refine Continuous.if_le ?_ ?_ (by fun_prop) continuous_const ?_
-      · exact h₁.map.continuous.comp'
-          ((continuous_projIcc.comp' (by fun_prop)).prodMk continuous_snd)
-      · exact h₂.map.continuous.comp'
-          ((continuous_projIcc.comp' (by fun_prop)).prodMk continuous_snd)
-      · rintro ⟨t, z⟩ ht
-        dsimp only at ht ⊢
-        have h_double : (2 : ℝ) * (1 / 2) = 1 := by norm_num
-        have h_sub : (1 : ℝ) - 1 = 0 := by norm_num
-        rw [ht, h_double, h_sub, Set.projIcc_right, Set.projIcc_left]
-        exact (h₁.map_one z).trans (h₂.map_zero z).symm⟩
-  map_zero z := by
-    have h_zero : (2 : ℝ) * ((0 : I) : ℝ) = 0 := by norm_num
-    simp only [ContinuousMap.coe_mk]
-    rw [ite_eq_left_of_eq_true _ _ (eq_true (by norm_num)), h_zero, Set.projIcc_left]
-    exact h₁.map_zero z
-  map_one z := by
-    have h_one : (2 : ℝ) * ((1 : I) : ℝ) - 1 = 1 := by norm_num
-    simp only [ContinuousMap.coe_mk]
-    rw [ite_eq_right_of_eq_false _ _ (eq_false (by norm_num)), h_one, Set.projIcc_right]
-    exact h₂.map_one z
+  toHomotopy := h₁.toHomotopy.trans h₂.toHomotopy
   map_boundary t z hz := by
-    simp only [ContinuousMap.coe_mk]
-    rw [Path.trans_apply]
+    change (h₁.toHomotopy.trans h₂.toHomotopy) (t, z) = (γ.trans δ) t
+    rw [ContinuousMap.Homotopy.trans_apply, Path.trans_apply]
     split_ifs with ht
-    · rw [h₁.map_boundary _ _ hz]
-      congr 1
-      exact Set.projIcc_of_mem _ _
-    · rw [h₂.map_boundary _ _ hz]
-      congr 1
-      exact Set.projIcc_of_mem _ _
+    · exact h₁.map_boundary _ z hz
+    · exact h₂.map_boundary _ z hz
 
 /-- Transport along a concatenation is the composite of the transports. -/
 theorem homotopic_transport_trans {w : X} (γ : Path x y) (δ : Path y w) (f : Ω^ N X x) :
@@ -234,16 +203,16 @@ homotopy along that path between the concatenated generalized loops. -/
 def HomotopyAlong.transAt [DecidableEq N] (i : N) {γ : Path x y} {f f' : Ω^ N X x}
     {g g' : Ω^ N X y} (h₁ : HomotopyAlong γ f g) (h₂ : HomotopyAlong γ f' g') :
     HomotopyAlong γ (_root_.GenLoop.transAt i f f') (_root_.GenLoop.transAt i g g') where
-  map :=
-    ⟨fun tz => if ((tz.2 i : I) : ℝ) ≤ 1 / 2
-        then h₁.map (tz.1,
+  toHomotopy :=
+    { toContinuousMap := ⟨fun tz => if ((tz.2 i : I) : ℝ) ≤ 1 / 2
+        then h₁.toHomotopy (tz.1,
           Function.update tz.2 i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * tz.2 i)))
-        else h₂.map (tz.1,
+        else h₂.toHomotopy (tz.1,
           Function.update tz.2 i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * tz.2 i - 1))), by
       refine Continuous.if_le ?_ ?_ (by fun_prop) continuous_const ?_
-      · exact h₁.map.continuous.comp' (continuous_fst.prodMk
+      · exact h₁.toHomotopy.continuous.comp' (continuous_fst.prodMk
           (continuous_snd.update i (continuous_projIcc.comp' (by fun_prop))))
-      · exact h₂.map.continuous.comp' (continuous_fst.prodMk
+      · exact h₂.toHomotopy.continuous.comp' (continuous_fst.prodMk
           (continuous_snd.update i (continuous_projIcc.comp' (by fun_prop))))
       · rintro ⟨t, z⟩ ht
         dsimp only at ht ⊢
@@ -252,18 +221,38 @@ def HomotopyAlong.transAt [DecidableEq N] (i : N) {γ : Path x y} {f f' : Ω^ N 
         rw [ht, h_double, h_sub, Set.projIcc_right, Set.projIcc_left]
         exact (h₁.map_boundary t _ ⟨i, Or.inr (Function.update_self ..)⟩).trans
           (h₂.map_boundary t _ ⟨i, Or.inl (Function.update_self ..)⟩).symm⟩
-  map_zero z := by
-    simp only [ContinuousMap.coe_mk, _root_.GenLoop.transAt, _root_.GenLoop.coe_copy]
-    split_ifs
-    · exact h₁.map_zero _
-    · exact h₂.map_zero _
-  map_one z := by
-    simp only [ContinuousMap.coe_mk, _root_.GenLoop.transAt, _root_.GenLoop.coe_copy]
-    split_ifs
-    · exact h₁.map_one _
-    · exact h₂.map_one _
+      map_zero_left := by
+        intro z
+        change (if ((z i : I) : ℝ) ≤ 1 / 2 then
+            h₁.toHomotopy (0,
+              Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
+          else h₂.toHomotopy (0,
+            Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1)))) =
+          (if ((z i : I) : ℝ) ≤ 1 / 2 then
+            f (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
+          else f' (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1))))
+        split_ifs
+        · exact h₁.map_zero_left _
+        · exact h₂.map_zero_left _
+      map_one_left := by
+        intro z
+        change (if ((z i : I) : ℝ) ≤ 1 / 2 then
+            h₁.toHomotopy (1,
+              Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
+          else h₂.toHomotopy (1,
+            Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1)))) =
+          (if ((z i : I) : ℝ) ≤ 1 / 2 then
+            g (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
+          else g' (Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1))))
+        split_ifs
+        · exact h₁.map_one_left _
+        · exact h₂.map_one_left _ }
   map_boundary t z hz := by
-    simp only [ContinuousMap.coe_mk]
+    change (if ((z i : I) : ℝ) ≤ 1 / 2 then
+        h₁.toHomotopy (t,
+          Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i)))
+      else h₂.toHomotopy (t,
+        Function.update z i (Set.projIcc (0 : ℝ) 1 zero_le_one (2 * z i - 1)))) = γ t
     obtain ⟨j, hj⟩ := hz
     by_cases hji : j = i
     · subst hji
@@ -311,6 +300,7 @@ theorem homotopyGroupTransport_refl :
   exact (Quotient.sound (GenLoop.homotopic_transport_refl f)).symm
 
 /-- Transport along a concatenation of paths is the composite of the two transports. -/
+@[simp]
 theorem homotopyGroupTransport_trans {w : X} (γ : Path x y) (δ : Path y w) :
     homotopyGroupTransport (N := N) (γ.trans δ) =
       homotopyGroupTransport δ ∘ homotopyGroupTransport γ := by
@@ -374,13 +364,6 @@ def homotopyGroupMulEquivOfPath [Nonempty N] [DecidableEq N] (γ : Path x y) :
       _root_.HomotopyGroup.mul_spec (i := Classical.arbitrary N)]
     exact (Quotient.sound (GenLoop.homotopic_transAt_transport _ γ q p)).symm
 
-@[simp]
-theorem homotopyGroupMulEquivOfPath_mk [Nonempty N] [DecidableEq N] (γ : Path x y)
-    (f : Ω^ N X x) :
-    homotopyGroupMulEquivOfPath γ (⟦f⟧ : HomotopyGroup N X x) = ⟦GenLoop.transport γ f⟧ := by
-  unfold homotopyGroupMulEquivOfPath
-  exact homotopyGroupEquivOfPath_mk γ f
-
 /-- The multiplicative base-point-change equivalence acts by transport. -/
 @[simp]
 theorem homotopyGroupMulEquivOfPath_apply [Nonempty N] [DecidableEq N] (γ : Path x y)
@@ -431,50 +414,6 @@ theorem homotopyGroupMulEquivOfPath_symm [Nonempty N] [DecidableEq N] (γ : Path
     (homotopyGroupMulEquivOfPath γ).symm = homotopyGroupMulEquivOfPath (N := N) γ.symm := by
   ext a
   rw [homotopyGroupMulEquivOfPath_symm_apply, homotopyGroupMulEquivOfPath_apply]
-
-/-- Base-point change for `π_(n+1)`. -/
-def piMulEquivOfPath {n : ℕ} (γ : Path x y) : π_ (n + 1) X x ≃* π_ (n + 1) X y :=
-  homotopyGroupMulEquivOfPath γ
-
-@[simp]
-theorem piMulEquivOfPath_mk {n : ℕ} (γ : Path x y) (f : Ω^ (Fin (n + 1)) X x) :
-    piMulEquivOfPath γ (⟦f⟧ : π_ (n + 1) X x) = ⟦GenLoop.transport γ f⟧ := by
-  unfold piMulEquivOfPath
-  exact homotopyGroupMulEquivOfPath_mk γ f
-
-@[simp]
-theorem piMulEquivOfPath_symm_mk {n : ℕ} (γ : Path x y) (f : Ω^ (Fin (n + 1)) X y) :
-    (piMulEquivOfPath γ).symm (⟦f⟧ : π_ (n + 1) X y) =
-      ⟦GenLoop.transport γ.symm f⟧ := by
-  unfold piMulEquivOfPath
-  exact homotopyGroupEquivOfPath_symm_mk γ f
-
-/-- The base-point-change equivalence on `π_(n+1)` for a constant path is the identity. -/
-@[simp]
-theorem piMulEquivOfPath_refl {n : ℕ} :
-    piMulEquivOfPath (n := n) (Path.refl x) = MulEquiv.refl (π_ (n + 1) X x) := by
-  ext a
-  rw [piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply, homotopyGroupTransport_refl]
-  rfl
-
-/-- Base-point change on `π_(n+1)` sends path concatenation to composition. -/
-@[simp]
-theorem piMulEquivOfPath_trans {n : ℕ} {w : X} (γ : Path x y) (δ : Path y w) :
-    piMulEquivOfPath (n := n) (γ.trans δ) =
-      (piMulEquivOfPath γ).trans (piMulEquivOfPath δ) := by
-  ext a
-  rw [piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply, MulEquiv.trans_apply,
-    piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply,
-    piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply]
-  exact congrFun (homotopyGroupTransport_trans γ δ) a
-
-/-- Homotopic paths induce the same base-point-change equivalence on `π_(n+1)`. -/
-theorem piMulEquivOfPath_congr {n : ℕ} {γ δ : Path x y} (h : γ.Homotopic δ) :
-    piMulEquivOfPath (n := n) γ = piMulEquivOfPath δ := by
-  ext a
-  rw [piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply,
-    piMulEquivOfPath, homotopyGroupMulEquivOfPath_apply]
-  exact congrFun (homotopyGroupTransport_congr h) a
 
 omit [Fintype N] in
 /-- On a path-connected space the homotopy groups in a fixed dimension at any two base points

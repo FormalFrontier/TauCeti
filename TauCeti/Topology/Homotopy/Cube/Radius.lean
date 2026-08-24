@@ -28,9 +28,6 @@ it multiplies the radius by `s` as long as the result still fits in the cube
 (`TauCeti.cubeRad_cubeScale`). In particular a point of radius `r > 0` is scaled by `1 / r` onto
 the boundary, which is what makes the collar constructions glue continuously.
 
-The straight-line interpolation `TauCeti.unitIntervalLerp` is the convex combination used to
-deform a point of the cylinder `I × I^N` onto its radial retract.
-
 ## Main declarations
 
 * `TauCeti.cubeCenter`, `TauCeti.cubeRad`: the centre of `I^N` and the `sup` radius around it.
@@ -38,8 +35,6 @@ deform a point of the cylinder `I × I^N` onto its radial retract.
   equality exactly on `Cube.boundary N`.
 * `TauCeti.cubeScale`: radial rescaling of a cube point, and `TauCeti.cubeRad_cubeScale`: it
   scales the radius.
-* `TauCeti.unitIntervalLerp`: convex combination in `I`.
-
 ## References
 
 This supplies the cube geometry behind the base-point-change isomorphisms of higher homotopy
@@ -54,31 +49,6 @@ namespace TauCeti
 open scoped unitInterval Topology Topology.Homotopy
 
 variable {N : Type*}
-
-/-! ### Straight-line interpolation in the unit interval -/
-
-/-- The convex combination `(1 - s) * a + s * b` of two points of the unit interval, that is,
-`AffineMap.lineMap` on the underlying reals, restricted to `I`. -/
-def unitIntervalLerp (s a b : I) : I :=
-  ⟨(1 - (s : ℝ)) * a + (s : ℝ) * b, by
-    constructor <;> nlinarith [s.2.1, s.2.2, a.2.1, a.2.2, b.2.1, b.2.2]⟩
-
-@[simp]
-theorem unitIntervalLerp_zero (a b : I) : unitIntervalLerp 0 a b = a := by
-  apply Subtype.ext; simp [unitIntervalLerp]
-
-@[simp]
-theorem unitIntervalLerp_one (a b : I) : unitIntervalLerp 1 a b = b := by
-  apply Subtype.ext; simp [unitIntervalLerp]
-
-@[simp]
-theorem unitIntervalLerp_self (s a : I) : unitIntervalLerp s a a = a := by
-  apply Subtype.ext; simp [unitIntervalLerp]; ring
-
-theorem continuous_unitIntervalLerp :
-    Continuous fun p : I × I × I => unitIntervalLerp p.1 p.2.1 p.2.2 := by
-  apply Continuous.subtype_mk
-  fun_prop
 
 /-! ### The centre of the cube and radial rescaling -/
 

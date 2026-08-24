@@ -244,32 +244,48 @@ namespace GenLoop
 
 /-- A homotopy from a generalized loop `f` based at `x` to a generalized loop `g` based at `y`
 whose restriction to the cube boundary traces the path `γ` from `x` to `y`. -/
-structure HomotopyAlong (γ : Path x y) (f : Ω^ N X x) (g : Ω^ N X y) where
-  /-- the underlying continuous map on the cylinder -/
-  map : C(I × (I^N), X)
-  /-- the homotopy starts at `f` -/
-  map_zero : ∀ z, map (0, z) = f z
-  /-- the homotopy ends at `g` -/
-  map_one : ∀ z, map (1, z) = g z
+structure HomotopyAlong (γ : Path x y) (f : Ω^ N X x) (g : Ω^ N X y)
+    extends ContinuousMap.Homotopy (f : C(I^N, X)) (g : C(I^N, X)) where
   /-- on the cube boundary the homotopy traces `γ` -/
-  map_boundary : ∀ t : I, ∀ z ∈ Cube.boundary N, map (t, z) = γ t
+  map_boundary : ∀ t : I, ∀ z ∈ Cube.boundary N, toFun (t, z) = γ t
+
+namespace HomotopyAlong
+
+instance instFunLike {γ : Path x y} {f : Ω^ N X x} {g : Ω^ N X y} :
+    FunLike (HomotopyAlong γ f g) (I × (I^N)) X where
+  coe h := h.toHomotopy
+  coe_injective h k hhk := by
+    cases h
+    cases k
+    congr
+    exact ContinuousMap.Homotopy.ext fun p => congrFun hhk p
+
+instance {γ : Path x y} {f : Ω^ N X x} {g : Ω^ N X y} :
+    ContinuousMap.HomotopyLike (HomotopyAlong γ f g)
+      (f : C(I^N, X)) (g : C(I^N, X)) where
+  map_continuous h := h.toHomotopy.continuous
+  map_zero_left h := h.map_zero_left
+  map_one_left h := h.map_one_left
+
+end HomotopyAlong
 
 /-- The collar homotopy is a homotopy along `γ` from `f` to the transported loop. -/
 def collarHomotopyAlong (γ : Path x y) (f : Ω^ N X x) :
     HomotopyAlong γ f (transport γ f) where
-  map := collarHomotopy γ f
-  map_zero := collarHomotopy_zero γ f
-  map_one z := (transport_apply γ f z).symm
+  toContinuousMap := collarHomotopy γ f
+  map_zero_left := collarHomotopy_zero γ f
+  map_one_left z := (transport_apply γ f z).symm
   map_boundary t _ hz := collarHomotopy_boundary γ f t hz
 
 /-- Composing a homotopy along `γ` with the radial retraction of the cylinder reproduces the
 transported loop exactly. -/
 theorem HomotopyAlong.map_cubeRetract {γ : Path x y} {f : Ω^ N X x} {g : Ω^ N X y}
-    (h : HomotopyAlong γ f g) (z : I^N) : h.map (cubeRetract z) = transport γ f z := by
+    (h : HomotopyAlong γ f g) (z : I^N) :
+    h.toHomotopy (cubeRetract z) = transport γ f z := by
   rw [cubeRetract_apply, transport_apply_eq]
   by_cases hz : cubeRad z ≤ 1 / 2
   · rw [ite_eq_left_of_eq_true _ _ (eq_true hz), ite_eq_left_of_eq_true _ _ (eq_true hz)]
-    exact h.map_zero _
+    exact h.map_zero_left _
   · rw [ite_eq_right_of_eq_false _ _ (eq_false hz), ite_eq_right_of_eq_false _ _ (eq_false hz)]
     have hmax : max (cubeRad z) (1 / 2 : ℝ) = cubeRad z := max_eq_left (le_of_not_ge hz)
     have hpos : (0 : ℝ) < cubeRad z := lt_of_lt_of_le (by norm_num) (le_of_not_ge hz)
@@ -283,35 +299,31 @@ generalized loop homotopic, relative to the cube boundary, to `transport γ f`. 
 theorem HomotopyAlong.homotopic_transport {γ : Path x y} {f : Ω^ N X x} {g : Ω^ N X y}
     (h : HomotopyAlong γ f g) : GenLoop.Homotopic g (transport γ f) := by
   have hcont : Continuous fun sz : I × (I^N) =>
-      ((unitIntervalLerp sz.1 1 (cubeRetract sz.2).1 : I),
-        (fun i => unitIntervalLerp sz.1 (sz.2 i) ((cubeRetract sz.2).2 i) : I^N)) := by
+      ((Set.Icc.convexComb 1 (cubeRetract sz.2).1 sz.1 : I),
+        (fun i => Set.Icc.convexComb (sz.2 i) ((cubeRetract sz.2).2 i) sz.1 : I^N)) := by
     refine Continuous.prodMk ?_ (continuous_pi fun i => ?_)
-    · exact continuous_unitIntervalLerp.comp' (continuous_fst.prodMk (continuous_const.prodMk
-        (continuous_fst.comp (cubeRetract.continuous.comp continuous_snd))))
-    · exact continuous_unitIntervalLerp.comp' (continuous_fst.prodMk
-        (((continuous_apply i).comp continuous_snd).prodMk
-          ((continuous_apply i).comp (continuous_snd.comp
-            (cubeRetract.continuous.comp continuous_snd)))))
+    · fun_prop
+    · fun_prop
   let K : C(I × (I^N), X) :=
-    ⟨fun sz => h.map (unitIntervalLerp sz.1 1 (cubeRetract sz.2).1,
-      fun i => unitIntervalLerp sz.1 (sz.2 i) ((cubeRetract sz.2).2 i)),
-      h.map.continuous.comp hcont⟩
+    ⟨fun sz => h.toHomotopy (Set.Icc.convexComb 1 (cubeRetract sz.2).1 sz.1,
+      fun i => Set.Icc.convexComb (sz.2 i) ((cubeRetract sz.2).2 i) sz.1),
+      h.toHomotopy.continuous.comp hcont⟩
   have K_apply (t : I) (z : I^N) :
-      K (t, z) = h.map (unitIntervalLerp t 1 (cubeRetract z).1,
-        fun i => unitIntervalLerp t (z i) ((cubeRetract z).2 i)) := rfl
+      K (t, z) = h.toHomotopy (Set.Icc.convexComb 1 (cubeRetract z).1 t,
+        fun i => Set.Icc.convexComb (z i) ((cubeRetract z).2 i) t) := rfl
   refine ⟨⟨⟨K, ?_, ?_⟩, ?_⟩⟩
   · intro z
     exact (K_apply 0 z).trans (by
-      simp only [unitIntervalLerp_zero]
-      exact h.map_one z)
+      simp only [Set.Icc.convexComb_zero]
+      exact h.map_one_left z)
   · intro z
     exact (K_apply 1 z).trans (by
-      simp only [unitIntervalLerp_one]
+      simp only [Set.Icc.convexComb_one]
       exact h.map_cubeRetract z)
   · intro t z hz
     exact (K_apply t z).trans (by
-      simp only [cubeRetract_of_mem_boundary hz, unitIntervalLerp_self]
-      exact h.map_one z)
+      simp only [cubeRetract_of_mem_boundary hz, Set.Icc.convexComb_eq]
+      exact h.map_one_left z)
 
 end GenLoop
 
