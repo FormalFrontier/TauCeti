@@ -185,14 +185,10 @@ theorem formalCharacter_eq_sum_single :
               (finrank K (genWeightSpace M c) : ℤ)).coeff (w : Dual K L) := by
       simp
     rw [hcoeff, Finset.sum_eq_single w]
-    · change (finrank K (genWeightSpace M ((w : Dual K L) : L → K)) : ℤ) =
-          (Finsupp.single (w : Dual K L) (finrank K (genWeightSpace M w) : ℤ))
-            (w : Dual K L)
-      rw [Finsupp.single_eq_same]
+    · rw [AddMonoidAlgebra.coeff_single, Finsupp.single_eq_same]
       exact_mod_cast congrArg (fun ψ : L → K ↦ finrank K (genWeightSpace M ψ)) Weight.coe_coe
     · intro c _ hcw
-      change (Finsupp.single (c : Dual K L) (finrank K (genWeightSpace M c) : ℤ))
-          (w : Dual K L) = 0
+      rw [AddMonoidAlgebra.coeff_single]
       simp only [Finsupp.single_apply]
       split
       · rename_i h
@@ -243,6 +239,7 @@ theorem sum_formalCharacter_coeff_eq_finrank :
   exact Finset.sum_congr rfl fun _ _ ↦ rfl
 
 /-- **The formal character vanishes only for the zero module.** -/
+@[simp]
 theorem formalCharacter_eq_zero_iff : formalCharacter K L M = 0 ↔ finrank K M = 0 := by
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
   · have := sum_formalCharacter_coeff_eq_finrank K L M
@@ -271,6 +268,7 @@ variable {K L M N}
 
 /-- **Additivity of the formal character.** The character of a product of two finite-dimensional
 modules is the sum of their characters. -/
+@[simp]
 theorem formalCharacter_prod :
     formalCharacter K L (M × N) = formalCharacter K L M + formalCharacter K L N := by
   refine AddMonoidAlgebra.ext (Finsupp.ext fun χ ↦ ?_)
