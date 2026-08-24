@@ -200,8 +200,9 @@ theorem contMDiffOn_leviCivita {u : Set M} (hu : IsOpen u) (hm : n + 2 ≤ m) (h
       LinearIsometryEquiv.apply_symm_apply _ _
     have hval (y : M) (w : TangentSpace I y) :
         ((rieszDual (I := I) y).symm (leviCivita I M σ y (chartLocalFrame (I := I) x j y))) w =
-          inner ℝ (leviCivita I M σ y (chartLocalFrame (I := I) x j y)) w :=
-      (eq_rieszDual_iff_inner_eq.1 (hrepr y).symm w).symm
+          inner ℝ (leviCivita I M σ y (chartLocalFrame (I := I) x j y)) w := by
+      conv_rhs => rw [← hrepr y]
+      exact (inner_rieszDual _ w).symm
     have heval (l : Fin (finrank ℝ E)) : ContMDiffOn I 𝓘(ℝ) n
         (fun y ↦ ((rieszDual (I := I) y).symm
           (leviCivita I M σ y (chartLocalFrame (I := I) x j y)))
