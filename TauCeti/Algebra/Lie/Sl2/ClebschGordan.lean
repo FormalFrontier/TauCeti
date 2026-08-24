@@ -110,11 +110,6 @@ theorem coordVector_apply (j : Fin (n + 1)) :
 theorem coordVector_eq_basis (h : i < n + 1) : coordVector K n i = basis K n ⟨i, h⟩ :=
   dite_eq_left h
 
-@[simp]
-theorem basis_repr_coordVector (j : Fin (n + 1)) :
-    (basis K n).repr (coordVector K n i) j = if (j : ℕ) = i then 1 else 0 := by
-  rw [basis_repr_apply, coordVector_apply]
-
 /-- The Cartan operator scales the `i`-th coordinate vector by `n - 2i`, uniformly in `i`: past the
 end of the string both sides vanish. -/
 theorem diag_coordVector :
@@ -231,7 +226,8 @@ theorem cgVector_ne_zero (hkm : k ≤ m) : cgVector K m n k ≠ 0 := by
       (⟨k, by omega⟩, ⟨0, by omega⟩) = 1 := by
     rw [cgVector]
     simp only [map_sum, Finsupp.coe_finsetSum, Finset.sum_apply, map_smul, Finsupp.coe_smul,
-      Pi.smul_apply, smul_eq_mul, Basis.tensorProduct_repr_tmul_apply, basis_repr_coordVector]
+      Pi.smul_apply, smul_eq_mul, Basis.tensorProduct_repr_tmul_apply, basis_repr_apply,
+      coordVector_apply]
     rw [Finset.sum_eq_single 0]
     · simp
     · intro j _ hj0
