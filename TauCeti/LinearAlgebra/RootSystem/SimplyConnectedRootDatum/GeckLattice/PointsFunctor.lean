@@ -119,7 +119,7 @@ theorem mapGeckPoints_injective {A B : CommRingCat.{v}} {f : A ⟶ B}
 
 /-- The group-valued functor sending a commutative ring to the explicit matrix group of
 points of the Geck carrier. -/
-@[expose] noncomputable def geckPointsFunctor :
+noncomputable def geckPointsFunctor :
     CategoryTheory.Functor CommRingCat.{v} GrpCat.{v} where
   obj A := GrpCat.of (t.geckPoints ht A)
   map f := GrpCat.ofHom (t.mapGeckPoints ht f)
@@ -130,13 +130,16 @@ points of the Geck carrier. -/
 @[simp]
 theorem geckPointsFunctor_obj (A : CommRingCat.{v}) :
     (t.geckPointsFunctor ht).obj A = GrpCat.of (t.geckPoints ht A) :=
-  rfl
+  (rfl)
 
 /-- The morphism part of the Geck points functor is the restricted entrywise matrix map. -/
 @[simp]
 theorem geckPointsFunctor_map {A B : CommRingCat.{v}} (f : A ⟶ B) :
-    (t.geckPointsFunctor ht).map f = GrpCat.ofHom (t.mapGeckPoints ht f) :=
-  rfl
+    (t.geckPointsFunctor ht).map f =
+      eqToHom (t.geckPointsFunctor_obj ht A) ≫
+        GrpCat.ofHom (t.mapGeckPoints ht f) ≫
+      eqToHom (t.geckPointsFunctor_obj ht B).symm :=
+  (rfl)
 
 /-! ## Frobenius on the explicit carrier -/
 
