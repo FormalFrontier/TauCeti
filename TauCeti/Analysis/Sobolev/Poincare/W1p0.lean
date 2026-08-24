@@ -65,10 +65,9 @@ measure and expressed through the Fréchet derivative. -/
 private theorem norm_gradientTestFunctionLp_eq (phi : 𝓓(Omega, ℝ)) :
     ‖gradientTestFunctionLp (mu := volume) p phi‖ =
       (eLpNorm (fderiv ℝ (phi : _ → ℝ)) p volume).toReal := by
-  rw [norm_gradientTestFunctionLp,
-    eLpNorm_restrict_eq_of_support_subset (support_gradient_testFunction_subset phi),
-    eLpNorm_congr_norm_ae
-      (ae_of_all _ fun x => norm_gradient_eq_norm_fderiv (𝕜 := ℝ) (phi : _ → ℝ) x)]
+  have h := enorm_gradientTestFunctionLp (mu := volume) p phi
+  rw [Lp.enorm_def] at h
+  exact congrArg ENNReal.toReal h
 
 /-- The Poincaré inequality for a single test function whose domain lies in a slab. -/
 private theorem norm_testFunctionLp_le_of_subset_slab (hp : p ≠ ∞) {i : Fin (n + 1)} {a b : ℝ}
