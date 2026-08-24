@@ -17,9 +17,11 @@ relative notion Bühler uses: it depends on the exact structure, not just on the
 the split exact structure every object is projective, and for the canonical exact structure of
 an abelian category it is Mathlib's `CategoryTheory.Projective`.
 
-Two theorems make relative projectives usable for resolutions, and both come from the same
-pullback square. **Schanuel's lemma** says that two conflations `K ↪ Q ↠ X` and `K' ↪ Q' ↠ X`
-with projective middle terms have stably isomorphic kernels, `K ⊞ Q' ≅ K' ⊞ Q`.
+Two theorems make relative projectives usable for resolutions, and both are proved by the same
+method — pull a conflation back along a deflation, then split the resulting conflation because
+its third term is projective — although each builds its own pullback square. **Schanuel's
+lemma** says that two conflations `K ↪ Q ↠ X` and `K' ↪ Q' ↠ X` with projective middle terms
+have stably isomorphic kernels, `K ⊞ Q' ≅ K' ⊞ Q`.
 
 The main theorem is the **horseshoe lemma**. Given a conflation `X ↪ Y ↠ Z` and first steps
 `K_X ↪ Q_X ↠ X` and `K_Z ↪ Q_Z ↠ Z` of resolutions of the two outer terms, with `Q_Z`
