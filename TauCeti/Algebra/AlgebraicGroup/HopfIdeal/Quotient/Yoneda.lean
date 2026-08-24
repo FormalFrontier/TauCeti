@@ -45,8 +45,7 @@ theorem grpObjPointsMulEquiv_comp_quotientGrpObjInclusion
     (X : (CommAlgCat.{u} R)ᵒᵖ) (q : X ⟶ grpObj (quotient H I)) :
     grpObjPointsMulEquiv H X (q ≫ quotientGrpObjInclusion H I) =
       quotientPointsHom H I X.unop (grpObjPointsMulEquiv (quotient H I) X q) := by
-  -- Expose the represented inclusion locally without adding a duplicate public API theorem.
-  change grpObjPointsMulEquiv H X (q ≫ grpObjMap (mkQuotient H I)) = _
+  rw [quotientGrpObjInclusion_def]
   exact grpObjPointsMulEquiv_comp_grpObjMap (mkQuotient H I) X q
 
 end TauCeti.CommHopfAlgCat
