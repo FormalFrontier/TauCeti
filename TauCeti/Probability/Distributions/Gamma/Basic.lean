@@ -47,6 +47,9 @@ shifted rate is still positive.
   there, the real logarithm of the previous formula;
 * `TauCeti.gammaMeasure_map_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`.
 
+The cumulative distribution function is computed in
+`TauCeti/Probability/Distributions/Gamma/Cdf.lean`.
+
 ## References
 
 * Tau Ceti roadmap, `StandardDistributions`, Layer 1, "Gamma".
