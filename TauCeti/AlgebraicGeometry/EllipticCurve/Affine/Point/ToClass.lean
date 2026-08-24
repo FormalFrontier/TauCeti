@@ -7,10 +7,12 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.CoordinateRing
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.XYIdealMaximal
-public import Mathlib.LinearAlgebra.DirectSum.Finite
-public import Mathlib.LinearAlgebra.FreeModule.Norm
-public import Mathlib.RingTheory.DedekindDomain.Factorization
-public import Mathlib.RingTheory.Polynomial.DegreeLT
+import Mathlib.LinearAlgebra.DirectSum.Finite
+import Mathlib.LinearAlgebra.FreeModule.Norm
+import Mathlib.RingTheory.Artinian.Module
+import Mathlib.RingTheory.Ideal.Cotangent
+import Mathlib.RingTheory.PicardGroup
+import Mathlib.RingTheory.Polynomial.DegreeLT
 
 /-!
 # Surjectivity of `Point.toClass`
@@ -18,7 +20,7 @@ public import Mathlib.RingTheory.Polynomial.DegreeLT
 Mathlib builds `WeierstrassCurve.Affine.Point.toClass : W.Point →+ Additive (ClassGroup
 W.CoordinateRing)` and proves it **injective**, realising the points of an affine Weierstrass
 curve as a subgroup of the affine ideal class group. It does not prove surjectivity; this file
-proves it for elliptic curves by an explicit genus-one Riemann--Roch argument in the affine
+proves it by an explicit genus-one Riemann--Roch argument in the affine
 coordinate ring.
 
 It first records what surjectivity amounts to: every ideal class is trivial or the class of an
@@ -29,8 +31,7 @@ It first records what surjectivity amounts to: every ideal class is trivial or t
 * `WeierstrassCurve.Affine.Point.toClass_surjective_iff`: `toClass` is surjective exactly when
   every element of `ClassGroup W.CoordinateRing` is trivial or the class of `XYIdeal' h` for a
   nonsingular affine point.
-* `WeierstrassCurve.Affine.Point.toClass_surjective`: `toClass` is surjective for an elliptic
-  curve.
+* `WeierstrassCurve.Affine.Point.toClass_surjective`: `toClass` is surjective.
 * `WeierstrassCurve.Affine.Point.toClassEquiv`: the resulting additive equivalence between the
   point group and the ideal class group.
 
@@ -45,9 +46,9 @@ class is `(P) - (O)` for a rational point `P`. That is the reading which motivat
 equivalence, since it turns "prove `toClass` is surjective" into the form the geometric proof
 takes; but it is an interpretation under extra hypotheses, not the content of the statement.
 
-The formal equivalence carries no ellipticity hypothesis. The proof of either side does: it uses
-ellipticity both to make the coordinate ring Dedekind and to identify equation solutions with
-nonsingular points. No named representability predicate is introduced because
+The formal equivalence and its proof carry no ellipticity hypothesis. In particular, the
+subsequent proof shows that the required invertible ideals cannot occur at singular equation
+solutions. No named representability predicate is introduced because
 `Function.Surjective` already names the property consumers need.
 
 ## Provenance
@@ -63,6 +64,9 @@ spelled out, so no name is carried over.
 The proof ports the source's concrete Riemann--Roch argument while reusing Tau Ceti's existing
 `CoordinateRing.finrank_quotient_eq_one_iff` in place of the source's duplicate codimension-one
 classification.
+
+The mathematical argument is the affine ideal-class construction of Silverman,
+*The Arithmetic of Elliptic Curves*, III.3.4--5.
 
 `Point.toClass_surjective` and `toClassEquiv` are **also** components of D. Angdinata's in-flight
 upstream `CoordinateRing` split-out, which `TauCetiRoadmap/EllipticCurves/README.md:1095` lists at
@@ -127,13 +131,9 @@ theorem toClass_surjective_iff :
 
 /-! ## The genus-one codimension argument -/
 
-local instance coordinateRingIsDedekind [W.IsElliptic] :
-    IsDedekindDomain W.CoordinateRing :=
-  TauCeti.WeierstrassCurve.Affine.isDedekindDomain_coordinateRing W
-
 omit [DecidableEq F] in
-/-- Every nonzero ideal of an elliptic coordinate ring has finite codimension over the base
-field. -/
+/-- Every nonzero ideal of an affine Weierstrass coordinate ring has finite codimension over the
+base field. -/
 private theorem finiteDimensional_quotient_of_ne_bot
     (I : Ideal W.CoordinateRing) (hI : I ≠ ⊥) :
     FiniteDimensional F (W.CoordinateRing ⧸ I) := by
@@ -145,127 +145,101 @@ private theorem finiteDimensional_quotient_of_ne_bot
     (Ideal.quotientEquivDirectSum F (CoordinateRing.basis W) hI).symm
 
 omit [DecidableEq F] in
-private noncomputable def quotComapEquivCoeIdealQuot
-    {I J : Ideal W.CoordinateRing}
-    (hinj : Function.Injective (Algebra.linearMap W.CoordinateRing W.FunctionField)) :
-    ((I : Submodule W.CoordinateRing W.CoordinateRing) ⧸ Submodule.comap
-        (I : Submodule W.CoordinateRing W.CoordinateRing).subtype
-          ((I * J : Ideal W.CoordinateRing) : Submodule W.CoordinateRing W.CoordinateRing))
-      ≃ₗ[W.CoordinateRing]
-        ((↑I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField).coeToSubmodule ⧸
-          Submodule.comap
-            (↑I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField).coeToSubmodule.subtype
-            ((↑(I * J) : FractionalIdeal W.CoordinateRing⁰ W.FunctionField).coeToSubmodule)) := by
-  set R := W.CoordinateRing
-  set K := W.FunctionField
-  have hcoeI : Submodule.map (Algebra.linearMap R K) (I : Submodule R R) =
-      (↑I : FractionalIdeal R⁰ K).coeToSubmodule := by
-    rw [FractionalIdeal.coe_coeIdeal]
-    rfl
-  let μ : (I : Submodule R R) ≃ₗ[R] (↑I : FractionalIdeal R⁰ K).coeToSubmodule :=
-    (Submodule.equivMapOfInjective (Algebra.linearMap R K) hinj
-      (I : Submodule R R)).trans (LinearEquiv.ofEq _ _ hcoeI)
-  refine Submodule.Quotient.equiv _ _ μ ?_
-  apply le_antisymm
-  · rintro _ ⟨⟨x, hxI⟩, hxIJ, rfl⟩
-    rw [SetLike.mem_coe, Submodule.mem_comap] at hxIJ
-    rw [Submodule.mem_comap]
-    change (μ ⟨x, hxI⟩ : K) ∈ (↑(I * J) : FractionalIdeal R⁰ K).coeToSubmodule
-    have hμ : (μ ⟨x, hxI⟩ : K) = algebraMap R K x := by
-      simp only [μ, LinearEquiv.trans_apply, LinearEquiv.coe_ofEq_apply,
-        Submodule.coe_equivMapOfInjective_apply, Algebra.linearMap_apply]
-    rw [hμ, FractionalIdeal.mem_coe]
-    exact FractionalIdeal.mem_coeIdeal_of_mem _ hxIJ
-  · rintro ⟨y, hyI⟩ hy
-    rw [Submodule.mem_comap] at hy
-    rw [FractionalIdeal.mem_coe, FractionalIdeal.mem_coeIdeal] at hy
-    obtain ⟨r, hrIJ, hry⟩ := hy
-    have hrI : r ∈ I := Ideal.mul_le_left hrIJ
-    refine ⟨⟨r, hrI⟩, ?_, ?_⟩
-    · rw [SetLike.mem_coe, Submodule.mem_comap]
-      exact hrIJ
-    · apply Subtype.ext
-      change (μ ⟨r, hrI⟩ : K) = y
-      simp only [μ, LinearEquiv.trans_apply, LinearEquiv.coe_ofEq_apply,
-        Submodule.coe_equivMapOfInjective_apply, Algebra.linearMap_apply]
-      exact hry
+/-- The integral numerator of an invertible fractional ideal is invertible. -/
+private theorem isUnit_num
+    {I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField} :
+    IsUnit (I.num : FractionalIdeal W.CoordinateRing⁰ W.FunctionField) ↔ IsUnit I := by
+  let R := W.CoordinateRing
+  let K := W.FunctionField
+  have hden0 : algebraMap R K I.den ≠ 0 :=
+    IsFractionRing.to_map_ne_zero_of_mem_nonZeroDivisors I.den.prop
+  let u : Kˣ := Units.mk0 (algebraMap R K I.den) hden0
+  have hdenUnit : IsUnit (FractionalIdeal.spanSingleton R⁰ (algebraMap R K I.den)) :=
+    ⟨toPrincipalIdeal R K u, by simp [u]⟩
+  obtain ⟨c, hc⟩ := hdenUnit
+  rw [← FractionalIdeal.den_mul_self_eq_num', ← hc, Units.isUnit_units_mul]
 
 omit [DecidableEq F] in
-private noncomputable def quotEquivOneCoeIdealQuot
-    {J : Ideal W.CoordinateRing}
-    (hinj : Function.Injective (Algebra.linearMap W.CoordinateRing W.FunctionField)) :
-    (W.CoordinateRing ⧸ J) ≃ₗ[W.CoordinateRing]
-      ((1 : FractionalIdeal W.CoordinateRing⁰ W.FunctionField).coeToSubmodule ⧸
-        Submodule.comap
-          (1 : FractionalIdeal W.CoordinateRing⁰ W.FunctionField).coeToSubmodule.subtype
-          ((↑J : FractionalIdeal W.CoordinateRing⁰ W.FunctionField).coeToSubmodule)) := by
-  set R := W.CoordinateRing
-  set K := W.FunctionField
-  have hone : LinearMap.range (Algebra.linearMap R K) =
-      (1 : FractionalIdeal R⁰ K).coeToSubmodule := by
-    rw [FractionalIdeal.coe_one]
-    exact (Submodule.one_eq_range).symm
-  let ν : R ≃ₗ[R] (1 : FractionalIdeal R⁰ K).coeToSubmodule :=
-    (LinearEquiv.ofInjective (Algebra.linearMap R K) hinj).trans
-      (LinearEquiv.ofEq _ _ hone)
-  refine Submodule.Quotient.equiv (J : Submodule R R) _ ν ?_
-  apply le_antisymm
-  · rintro _ ⟨r, hr, rfl⟩
-    rw [Submodule.mem_comap]
-    change (ν r : K) ∈ (↑J : FractionalIdeal R⁰ K).coeToSubmodule
-    have hν : (ν r : K) = algebraMap R K r := by
-      rw [show ν r = (LinearEquiv.ofEq _ _ hone)
-          (LinearEquiv.ofInjective (Algebra.linearMap R K) hinj r) from rfl,
-        LinearEquiv.coe_ofEq_apply, LinearEquiv.ofInjective_apply, Algebra.linearMap_apply]
-    rw [hν, FractionalIdeal.mem_coe]
-    exact FractionalIdeal.mem_coeIdeal_of_mem _ hr
-  · rintro ⟨y, hy1⟩ hy2
-    rw [Submodule.mem_comap] at hy2
-    rw [FractionalIdeal.mem_coe, FractionalIdeal.mem_coeIdeal] at hy2
-    obtain ⟨r, hr, hry⟩ := hy2
-    refine ⟨r, hr, ?_⟩
-    apply Subtype.ext
-    change (ν r : K) = y
-    rw [show ν r = (LinearEquiv.ofEq _ _ hone)
-        (LinearEquiv.ofInjective (Algebra.linearMap R K) hinj r) from rfl,
-      LinearEquiv.coe_ofEq_apply, LinearEquiv.ofInjective_apply, Algebra.linearMap_apply]
-    exact hry
+/-- Replacing an invertible fractional ideal by its integral numerator does not change its ideal
+class. -/
+private theorem mk_num (I : (FractionalIdeal W.CoordinateRing⁰ W.FunctionField)ˣ) :
+    let hnum : IsUnit (I.1.num : FractionalIdeal W.CoordinateRing⁰ W.FunctionField) :=
+      isUnit_num.mpr I.isUnit
+    ClassGroup.mk W.FunctionField hnum.unit = ClassGroup.mk W.FunctionField I := by
+  dsimp only
+  let R := W.CoordinateRing
+  let K := W.FunctionField
+  let hnum : IsUnit (I.1.num : FractionalIdeal R⁰ K) := isUnit_num.mpr I.isUnit
+  have hden0 : algebraMap R K I.1.den ≠ 0 :=
+    IsFractionRing.to_map_ne_zero_of_mem_nonZeroDivisors I.1.den.prop
+  let u : Kˣ := Units.mk0 (algebraMap R K I.1.den) hden0
+  let D : (FractionalIdeal R⁰ K)ˣ := toPrincipalIdeal R K u
+  have hmul : D * I = hnum.unit := by
+    apply Units.ext
+    dsimp [D]
+    rw [coe_toPrincipalIdeal]
+    simpa [u] using FractionalIdeal.den_mul_self_eq_num' R⁰ K I.1
+  rw [← hmul, map_mul]
+  have hD : ClassGroup.mk K D = 1 := by
+    dsimp [D]
+    rw [ClassGroup.mk_eq_one_iff, coe_toPrincipalIdeal]
+    refine ⟨⟨algebraMap R K I.1.den, ?_⟩⟩
+    rw [FractionalIdeal.coe_spanSingleton]
+    simp [u]
+  rw [hD, one_mul]
 
 omit [DecidableEq F] in
-/-- For nonzero ideals `I` and `J`, multiplication by the invertible ideal `I` identifies
-`I / I J` with `R / J`. -/
-private noncomputable def quotIdealMulEquiv [W.IsElliptic]
-    {I J : Ideal W.CoordinateRing} (hI : I ≠ ⊥) (hJ : J ≠ ⊥) :
+/-- For an invertible integral ideal `I`, base change to `R / J` identifies `I / I J` with
+`R / J`. -/
+private noncomputable def quotIdealMulEquiv
+    {I J : Ideal W.CoordinateRing} [FiniteDimensional F (W.CoordinateRing ⧸ J)]
+    (hIunit : IsUnit (I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField)) :
     ((I : Submodule W.CoordinateRing W.CoordinateRing) ⧸
         Submodule.comap (I : Submodule W.CoordinateRing W.CoordinateRing).subtype
           ((I * J : Ideal W.CoordinateRing) : Submodule W.CoordinateRing W.CoordinateRing))
       ≃ₗ[W.CoordinateRing] (W.CoordinateRing ⧸ J) := by
-  set R := W.CoordinateRing
-  set K := W.FunctionField
+  let R := W.CoordinateRing
+  let K := W.FunctionField
   have hinj : Function.Injective (Algebra.linearMap R K) :=
     FaithfulSMul.algebraMap_injective R K
-  have hH : (↑I : FractionalIdeal R⁰ K) * (↑J : FractionalIdeal R⁰ K) =
-      (1 : FractionalIdeal R⁰ K) * (↑(I * J) : FractionalIdeal R⁰ K) := by
-    rw [one_mul, ← FractionalIdeal.coeIdeal_mul]
-  have hle1 : (↑(I * J) : FractionalIdeal R⁰ K) ≤ (↑I : FractionalIdeal R⁰ K) := by
-    rw [FractionalIdeal.coeIdeal_le_coeIdeal]
-    exact Ideal.mul_le_left
-  have hle2 : (↑J : FractionalIdeal R⁰ K) ≤ (1 : FractionalIdeal R⁰ K) :=
-    FractionalIdeal.coeIdeal_le_one
-  have hJne : (↑J : FractionalIdeal R⁰ K) ≠ 0 := by
-    rwa [Ne, FractionalIdeal.coeIdeal_eq_zero]
-  have hIne : (↑I : FractionalIdeal R⁰ K) ≠ 0 := by
-    rwa [Ne, FractionalIdeal.coeIdeal_eq_zero]
-  have eqe := FractionalIdeal.quotientEquiv (R := R) (K := K)
-    (↑I) (↑(I * J)) 1 (↑J) hH hle1 hle2 hJne hIne
-  exact (quotComapEquivCoeIdealQuot hinj).trans
-    (eqe.trans (quotEquivOneCoeIdealQuot hinj).symm)
+  let U : (FractionalIdeal R⁰ K)ˣ := hIunit.unit
+  let IU : (Submodule R K)ˣ := FractionalIdeal.unitsMulEquivSubmodule U
+  have hIU : (IU : Submodule R K) =
+      (I : FractionalIdeal R⁰ K).coeToSubmodule :=
+    congrArg FractionalIdeal.coeToSubmodule hIunit.unit_spec
+  have hcoeI : Submodule.map (Algebra.linearMap R K) (I : Submodule R R) =
+      (I : FractionalIdeal R⁰ K).coeToSubmodule := by
+    rw [FractionalIdeal.coe_coeIdeal]
+    rfl
+  let eI : (I : Submodule R R) ≃ₗ[R] IU :=
+    (Submodule.equivMapOfInjective (Algebra.linearMap R K) hinj
+      (I : Submodule R R)).trans
+        ((LinearEquiv.ofEq _ _ hcoeI).trans (LinearEquiv.ofEq _ _ hIU.symm))
+  letI : Module.Invertible R (I : Submodule R R) := Module.Invertible.congr eI.symm
+  let A := R ⧸ J
+  letI : Module.Invertible A (TensorProduct R A (I : Submodule R R)) := inferInstance
+  letI : IsArtinianRing A := IsArtinianRing.of_finite F A
+  letI : Finite (MaximalSpectrum A) := inferInstance
+  letI : Module.Free A (TensorProduct R A (I : Submodule R R)) := inferInstance
+  let eFree : TensorProduct R A (I : Submodule R R) ≃ₗ[A] A :=
+    (Module.Invertible.free_iff_linearEquiv.mp inferInstance).some
+  have hsub : J • (⊤ : Submodule R (I : Submodule R R)) =
+      Submodule.comap (I : Submodule R R).subtype
+        ((I * J : Ideal R) : Submodule R R) := by
+    apply Submodule.map_injective_of_injective (I : Submodule R R).subtype_injective
+    rw [Submodule.map_smul'', Submodule.map_top, Submodule.range_subtype,
+      Submodule.map_comap_subtype]
+    change J * I = I ⊓ (I * J)
+    rw [mul_comm J I, inf_eq_right.mpr Ideal.mul_le_left]
+  exact (Submodule.quotEquivOfEq _ _ hsub.symm).trans
+    ((TensorProduct.quotTensorEquivQuotSMul (I : Submodule R R) J).symm.trans
+      (eFree.restrictScalars R))
 
 omit [DecidableEq F] in
-/-- Codimension is additive under multiplication of nonzero ideals of an elliptic coordinate
-ring. -/
-private theorem finrank_quotient_mul [W.IsElliptic] {I J : Ideal W.CoordinateRing}
-    (hI : I ≠ ⊥) (hJ : J ≠ ⊥) :
+/-- Codimension is additive when the left ideal is nonzero and invertible. -/
+private theorem finrank_quotient_mul {I J : Ideal W.CoordinateRing}
+    (hI : I ≠ ⊥) (hJ : J ≠ ⊥)
+    (hIunit : IsUnit (I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField)) :
     Module.finrank F (W.CoordinateRing ⧸ (I * J)) =
       Module.finrank F (W.CoordinateRing ⧸ I) +
         Module.finrank F (W.CoordinateRing ⧸ J) := by
@@ -300,7 +274,7 @@ private theorem finrank_quotient_mul [W.IsElliptic] {I J : Ideal W.CoordinateRin
     have e3 : LinearMap.range g ≃ₗ[R] M := LinearEquiv.ofEq _ _ hrange
     exact ((Submodule.quotEquivOfEq _ _ hker.symm).trans (g.quotKerEquivRange.trans e3)).symm
   have eM : M ≃ₗ[W.CoordinateRing] (W.CoordinateRing ⧸ J) :=
-    e2a.trans (quotIdealMulEquiv hI hJ)
+    e2a.trans (quotIdealMulEquiv hIunit)
   have : FiniteDimensional F M := (eM.restrictScalars F).symm.finiteDimensional
   have key : Module.finrank F ((W.CoordinateRing ⧸ (I * J)) ⧸ M.restrictScalars F) +
       Module.finrank F (M.restrictScalars F) =
@@ -314,6 +288,175 @@ private theorem finrank_quotient_mul [W.IsElliptic] {I J : Ideal W.CoordinateRin
   omega
 
 omit [DecidableEq F] in
+/-- An equation solution whose point ideal is invertible is nonsingular. At a singular solution,
+the two coordinate derivations make the cotangent space at least two-dimensional, whereas an
+invertible point ideal has one-dimensional cotangent space. -/
+private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
+    (hunit : IsUnit (CoordinateRing.XYIdeal W x (C y) :
+      FractionalIdeal W.CoordinateRing⁰ W.FunctionField)) :
+    W.Nonsingular x y := by
+  rw [Nonsingular, and_iff_right heq]
+  by_contra hs
+  push Not at hs
+  let P := F[X][Y]
+  let H : Ideal P := Ideal.span {W.polynomial}
+  let evalY : P →ₗ[F] F[X] := (Polynomial.leval (C y)).restrictScalars F
+  let evalX : F[X] →ₗ[F] F := Polynomial.leval x
+  let dX : P →ₗ[F] F := evalX.comp (Polynomial.derivative.comp evalY)
+  let dY : P →ₗ[F] F := evalX.comp
+    (evalY.comp (Polynomial.derivative.restrictScalars F))
+  have hdX_apply (p : P) : dX p = (p.eval (C y)).derivative.eval x := rfl
+  have hdY_apply (p : P) : dY p = (p.derivative.eval (C y)).eval x := rfl
+  have hWX : dX W.polynomial = 0 := by
+    simp only [dX, evalX, evalY, LinearMap.comp_apply, LinearMap.restrictScalars_apply,
+      Polynomial.leval_apply]
+    change (W.polynomial.eval (C y)).derivative.eval x = 0
+    rw [show (W.polynomial.eval (C y)).derivative.eval x =
+        W.polynomialX.evalEval x y by
+      simp only [polynomial, polynomialX, evalEval]
+      simp [Polynomial.derivative_pow]
+      ring]
+    exact hs.1
+  have hWY : dY W.polynomial = 0 := by
+    simp only [dY, evalX, evalY, LinearMap.comp_apply, LinearMap.restrictScalars_apply,
+      Polynomial.leval_apply]
+    change (W.polynomial.derivative.eval (C y)).eval x = 0
+    rw [show (W.polynomial.derivative.eval (C y)).eval x =
+        W.polynomialY.evalEval x y by
+      simp only [polynomial, polynomialY, evalEval]
+      simp [Polynomial.derivative_pow]]
+    exact hs.2
+  have hdX_mul (p q : P) : dX (p * q) =
+      p.evalEval x y * dX q + q.evalEval x y * dX p := by
+    rw [hdX_apply, hdX_apply, hdX_apply]
+    simp only [evalEval]
+    rw [Polynomial.eval_mul, Polynomial.derivative_mul, Polynomial.eval_add,
+      Polynomial.eval_mul, Polynomial.eval_mul]
+    ring
+  have hdY_mul (p q : P) : dY (p * q) =
+      p.evalEval x y * dY q + q.evalEval x y * dY p := by
+    rw [hdY_apply, hdY_apply, hdY_apply]
+    simp only [evalEval]
+    rw [Polynomial.derivative_mul, Polynomial.eval_add, Polynomial.eval_mul,
+      Polynomial.eval_mul, Polynomial.eval_add, Polynomial.eval_mul, Polynomial.eval_mul]
+    ring
+  have hHX : H.restrictScalars F ≤ LinearMap.ker dX := by
+    intro z hz
+    obtain ⟨p, rfl⟩ := Ideal.mem_span_singleton'.mp hz
+    rw [LinearMap.mem_ker, hdX_mul, hWX, show W.polynomial.evalEval x y = 0 by
+      simpa only [Equation] using heq, mul_zero, zero_mul, add_zero]
+  have hHY : H.restrictScalars F ≤ LinearMap.ker dY := by
+    intro z hz
+    obtain ⟨p, rfl⟩ := Ideal.mem_span_singleton'.mp hz
+    rw [LinearMap.mem_ker, hdY_mul, hWY, show W.polynomial.evalEval x y = 0 by
+      simpa only [Equation] using heq, mul_zero, zero_mul, add_zero]
+  let qX : (P ⧸ H.restrictScalars F) →ₗ[F] F :=
+    Submodule.liftQ (H.restrictScalars F) dX hHX
+  let qY : (P ⧸ H.restrictScalars F) →ₗ[F] F :=
+    Submodule.liftQ (H.restrictScalars F) dY hHY
+  let eQ : (P ⧸ H.restrictScalars F) ≃ₗ[F] W.CoordinateRing :=
+    Submodule.Quotient.restrictScalarsEquiv F H
+  let DX : W.CoordinateRing →ₗ[F] F := qX.comp eQ.symm.toLinearMap
+  let DY : W.CoordinateRing →ₗ[F] F := qY.comp eQ.symm.toLinearMap
+  have DX_mk (p : P) : DX (CoordinateRing.mk W p) = dX p := by rfl
+  have DY_mk (p : P) : DY (CoordinateRing.mk W p) = dY p := by rfl
+  let I := CoordinateRing.XYIdeal W x (C y)
+  let ρ : W.CoordinateRing →+* F := AdjoinRoot.evalEval (by
+    simpa only [Equation] using heq)
+  have hρ_mk (p : P) : ρ (CoordinateRing.mk W p) = p.evalEval x y :=
+    AdjoinRoot.evalEval_mk _ p
+  have hρmem {a : W.CoordinateRing} (ha : a ∈ I) : ρ a = 0 := by
+    rw [← RingHom.mem_ker]
+    apply (show I ≤ RingHom.ker ρ by
+      change CoordinateRing.XYIdeal W x (C y) ≤ RingHom.ker ρ
+      rw [CoordinateRing.XYIdeal, Ideal.span_le, Set.pair_subset_iff]
+      constructor
+      · change ρ (CoordinateRing.XClass W x) = 0
+        rw [CoordinateRing.XClass, hρ_mk]
+        simp [evalEval_C]
+      · change ρ (CoordinateRing.YClass W (C y)) = 0
+        rw [CoordinateRing.YClass, hρ_mk]
+        simp) ha
+  have hDX_mul (a b : W.CoordinateRing) :
+      DX (a * b) = ρ a * DX b + ρ b * DX a := by
+    obtain ⟨p, rfl⟩ := AdjoinRoot.mk_surjective a
+    obtain ⟨q, rfl⟩ := AdjoinRoot.mk_surjective b
+    rw [← map_mul]
+    simp only [DX_mk, hρ_mk, hdX_mul]
+  have hDY_mul (a b : W.CoordinateRing) :
+      DY (a * b) = ρ a * DY b + ρ b * DY a := by
+    obtain ⟨p, rfl⟩ := AdjoinRoot.mk_surjective a
+    obtain ⟨q, rfl⟩ := AdjoinRoot.mk_surjective b
+    rw [← map_mul]
+    simp only [DY_mk, hρ_mk, hdY_mul]
+  let fX : I →ₗ[F] F := DX.comp (I.subtype.restrictScalars F)
+  let fY : I →ₗ[F] F := DY.comp (I.subtype.restrictScalars F)
+  have hfX (a b : I) : fX (a * b) = 0 := by
+    change DX ((a : W.CoordinateRing) * b) = 0
+    rw [hDX_mul, hρmem a.2, hρmem b.2, zero_mul, zero_mul, zero_add]
+  have hfY (a b : I) : fY (a * b) = 0 := by
+    change DY ((a : W.CoordinateRing) * b) = 0
+    rw [hDY_mul, hρmem a.2, hρmem b.2, zero_mul, zero_mul, zero_add]
+  let δX : I.Cotangent →ₗ[F] F := Ideal.Cotangent.lift fX hfX
+  let δY : I.Cotangent →ₗ[F] F := Ideal.Cotangent.lift fY hfY
+  let δ : I.Cotangent →ₗ[F] F × F := δX.prod δY
+  have hXmem : CoordinateRing.XClass W x ∈ I :=
+    Ideal.subset_span (Set.mem_insert _ _)
+  have hYmem : CoordinateRing.YClass W (C y) ∈ I :=
+    Ideal.subset_span (Set.mem_insert_of_mem _ rfl)
+  have hDX_X : DX (CoordinateRing.XClass W x) = 1 := by
+    rw [CoordinateRing.XClass, DX_mk, hdX_apply]
+    simp
+  have hDX_Y : DX (CoordinateRing.YClass W (C y)) = 0 := by
+    rw [CoordinateRing.YClass, DX_mk, hdX_apply]
+    simp
+  have hDY_X : DY (CoordinateRing.XClass W x) = 0 := by
+    rw [CoordinateRing.XClass, DY_mk, hdY_apply]
+    simp
+  have hDY_Y : DY (CoordinateRing.YClass W (C y)) = 1 := by
+    rw [CoordinateRing.YClass, DY_mk, hdY_apply]
+    simp
+  have hδsurj : Function.Surjective δ := by
+    rintro ⟨a, b⟩
+    refine ⟨a • I.toCotangent ⟨CoordinateRing.XClass W x, hXmem⟩ +
+      b • I.toCotangent ⟨CoordinateRing.YClass W (C y), hYmem⟩, ?_⟩
+    ext <;> simp [δ, δX, δY, fX, fY, hDX_X, hDX_Y, hDY_X, hDY_Y]
+  let hquot : Module.Finite F (W.CoordinateRing ⧸ I) := by
+    change Module.Finite F
+      (W.CoordinateRing ⧸ CoordinateRing.XYIdeal W x (C y))
+    exact (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv.symm.finiteDimensional
+  let eI := quotIdealMulEquiv (F := F) (I := I) (J := I) hunit
+  have hsquare : I • (⊤ : Submodule W.CoordinateRing I) =
+      Submodule.comap I.subtype ((I * I : Ideal W.CoordinateRing) :
+        Submodule W.CoordinateRing W.CoordinateRing) := by
+    apply Submodule.map_injective_of_injective I.subtype_injective
+    rw [Submodule.map_smul'', Submodule.map_top, Submodule.range_subtype,
+      Submodule.map_comap_subtype]
+    change I * I = I ⊓ (I * I)
+    rw [inf_eq_right.mpr Ideal.mul_le_left]
+  let eCot : I.Cotangent ≃ₗ[F] (W.CoordinateRing ⧸ I) :=
+    ((Submodule.quotEquivOfEq _ _ hsquare).trans eI).restrictScalars F
+  let hcot : Module.Finite F I.Cotangent := eCot.symm.finiteDimensional
+  have hfin : Module.finrank F I.Cotangent = 1 := by
+    rw [eCot.finrank_eq]
+    change Module.finrank F
+      (W.CoordinateRing ⧸ CoordinateRing.XYIdeal W x (C y)) = 1
+    exact (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv.finrank_eq.trans
+      (Module.finrank_self F)
+  have hprod : Module.finrank F (F × F) = 2 := by
+    rw [Module.finrank_prod, Module.finrank_self]
+  have hle := LinearMap.finrank_le_finrank_of_surjective hδsurj
+  rw [hprod, hfin] at hle
+  omega
+
+omit [DecidableEq F] in
+private theorem two_nsmul_coe (n : ℕ) :
+    (2 : ℕ) • (n : WithBot ℕ) = ((2 * n : ℕ) : WithBot ℕ) := by
+  rw [nsmul_eq_mul]
+  push_cast
+  ring
+
+omit [DecidableEq F] in
 private theorem two_nsmul_degree_le {p : F[X]} {n : ℕ} (hp : p.degree < (n : ℕ)) :
     2 • p.degree ≤ ((2 * (n - 1) : ℕ) : WithBot ℕ) := by
   classical
@@ -322,11 +465,7 @@ private theorem two_nsmul_degree_le {p : F[X]} {n : ℕ} (hp : p.degree < (n : �
   · have hnd : p.natDegree ≤ n - 1 := by
       have := (Polynomial.natDegree_lt_iff_degree_lt h0).mpr hp
       omega
-    rw [Polynomial.degree_eq_natDegree h0,
-      show (2 : ℕ) • (p.natDegree : WithBot ℕ) = ((2 * p.natDegree : ℕ) : WithBot ℕ) by
-        rw [nsmul_eq_mul]
-        push_cast
-        ring, Nat.cast_le]
+    rw [Polynomial.degree_eq_natDegree h0, two_nsmul_coe, Nat.cast_le]
     omega
 
 /-- The bounded-degree basis combinations `(p, q) ↦ p + qY` used in the explicit genus-one
@@ -350,8 +489,9 @@ private theorem natDegree_norm_basisComb_le {p q : F[X]} {da db : ℕ}
         max (2 * (da - 1)) (2 * db + 1) := by
   rw [CoordinateRing.basis_one, Polynomial.natDegree_le_iff_degree_le,
     CoordinateRing.degree_norm_smul_basis]
-  rw [show ((max (2 * (da - 1)) (2 * db + 1) : ℕ) : WithBot ℕ) =
-      max ((2 * (da - 1) : ℕ) : WithBot ℕ) ((2 * db + 1 : ℕ) : WithBot ℕ) by rfl]
+  have hmax : ((max (2 * (da - 1)) (2 * db + 1) : ℕ) : WithBot ℕ) =
+      max ((2 * (da - 1) : ℕ) : WithBot ℕ) ((2 * db + 1 : ℕ) : WithBot ℕ) := rfl
+  rw [hmax]
   apply max_le_max
   · exact two_nsmul_degree_le hp
   · by_cases h0 : q = 0
@@ -363,11 +503,7 @@ private theorem natDegree_norm_basisComb_le {p q : F[X]} {da db : ℕ}
         by_contra hc
         rw [Nat.lt_one_iff.mp (Nat.not_le.mp hc), Nat.cast_zero] at hq
         exact absurd ((Polynomial.zero_le_degree_iff.mpr h0).trans_lt hq) (by simp)
-      rw [Polynomial.degree_eq_natDegree h0,
-        show (2 : ℕ) • (q.natDegree : WithBot ℕ) = ((2 * q.natDegree : ℕ) : WithBot ℕ) by
-          rw [nsmul_eq_mul]
-          push_cast
-          ring]
+      rw [Polynomial.degree_eq_natDegree h0, two_nsmul_coe]
       have h3 : (3 : WithBot ℕ) = ((3 : ℕ) : WithBot ℕ) := by norm_cast
       rw [h3, ← Nat.cast_add, Nat.cast_le]
       omega
@@ -434,101 +570,172 @@ private theorem exists_mem_norm_natDegree_le
     omega
 
 omit [DecidableEq F] in
-/-- Every nonzero integral ideal has an inverse-class representative of codimension at most one.
--/
-private theorem exists_codimLEOne_inv [W.IsElliptic]
-    (I : (Ideal W.CoordinateRing)⁰) :
-    ∃ (J : Ideal W.CoordinateRing) (hJ : J ∈ (Ideal W.CoordinateRing)⁰),
+/-- Every invertible integral ideal has an inverse-class representative of codimension at most
+one. -/
+private theorem exists_codimLEOne_inv_integral
+    (I : Ideal W.CoordinateRing)
+    (hIunit : IsUnit (I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField)) :
+    ∃ (J : Ideal W.CoordinateRing)
+      (hJunit : IsUnit (J : FractionalIdeal W.CoordinateRing⁰ W.FunctionField)),
       Module.finrank F (W.CoordinateRing ⧸ J) ≤ 1 ∧
-        ClassGroup.mk0 ⟨J, hJ⟩ = (ClassGroup.mk0 I)⁻¹ := by
-  have hIne : (I : Ideal W.CoordinateRing) ≠ ⊥ :=
-    mem_nonZeroDivisors_iff_ne_zero.mp I.2
+        ClassGroup.mk W.FunctionField hJunit.unit =
+          (ClassGroup.mk W.FunctionField hIunit.unit)⁻¹ := by
+  let R := W.CoordinateRing
+  let K := W.FunctionField
+  have hIne : I ≠ ⊥ := by
+    intro h
+    apply hIunit.ne_zero
+    simp [h]
   obtain ⟨a, ha_mem, ha, hbound⟩ :=
-    exists_mem_norm_natDegree_le (F := F) (I : Ideal W.CoordinateRing) hIne
-  have hle : Ideal.span {a} ≤ (I : Ideal W.CoordinateRing) := by
+    exists_mem_norm_natDegree_le (F := F) I hIne
+  have hle : Ideal.span {a} ≤ I := by
     rw [Ideal.span_le, Set.singleton_subset_iff]
     exact ha_mem
-  obtain ⟨J, hJ⟩ := Ideal.dvd_iff_le.mpr hle
+  let Q : FractionalIdeal R⁰ K :=
+    (Ideal.span ({a} : Set R) : FractionalIdeal R⁰ K) * ↑hIunit.unit⁻¹
+  have hQ_le : Q ≤ 1 := by
+    dsimp [Q]
+    calc
+      (Ideal.span ({a} : Set R) : FractionalIdeal R⁰ K) * ↑hIunit.unit⁻¹ ≤
+          (I : FractionalIdeal R⁰ K) * ↑hIunit.unit⁻¹ := by
+            gcongr
+      _ = 1 := hIunit.mul_val_inv
+  obtain ⟨J, hJQ⟩ := FractionalIdeal.le_one_iff_exists_coeIdeal.mp hQ_le
+  have hJ : Ideal.span {a} = I * J := by
+    apply FractionalIdeal.coeIdeal_injective (R := R) (K := K)
+    change (Ideal.span ({a} : Set R) : FractionalIdeal R⁰ K) =
+      (I * J : Ideal R)
+    rw [FractionalIdeal.coeIdeal_mul, hJQ]
+    dsimp [Q]
+    rw [mul_left_comm, hIunit.mul_val_inv, mul_one]
   have hspan_ne : Ideal.span ({a} : Set W.CoordinateRing) ≠ ⊥ := by
     rwa [Ne, Ideal.span_singleton_eq_bot]
   have hJne : J ≠ ⊥ := by
     intro h
     rw [h, Ideal.mul_bot] at hJ
     exact hspan_ne hJ
-  have hJmem : J ∈ (Ideal W.CoordinateRing)⁰ := mem_nonZeroDivisors_iff_ne_zero.mpr hJne
-  refine ⟨J, hJmem, ?_, ?_⟩
+  have haK : algebraMap R K a ≠ 0 := by
+    simpa using (FaithfulSMul.algebraMap_injective R K).ne ha
+  let au : Kˣ := Units.mk0 (algebraMap R K a) haK
+  have hspanUnit : IsUnit (Ideal.span ({a} : Set R) : FractionalIdeal R⁰ K) := by
+    refine ⟨toPrincipalIdeal R K au, ?_⟩
+    rw [coe_toPrincipalIdeal, FractionalIdeal.coeIdeal_span_singleton]
+    rfl
+  have hJunit : IsUnit (J : FractionalIdeal R⁰ K) := by
+    have hIJunit : IsUnit
+        ((I : FractionalIdeal R⁰ K) * (J : FractionalIdeal R⁰ K)) := by
+      rw [← FractionalIdeal.coeIdeal_mul, ← hJ]
+      exact hspanUnit
+    exact (IsUnit.mul_iff.mp hIJunit).2
+  refine ⟨J, hJunit, ?_, ?_⟩
   · have hdim : Module.finrank F (W.CoordinateRing ⧸ Ideal.span {a}) =
-        Module.finrank F (W.CoordinateRing ⧸ (I : Ideal W.CoordinateRing)) +
+        Module.finrank F (W.CoordinateRing ⧸ I) +
           Module.finrank F (W.CoordinateRing ⧸ J) := by
       rw [hJ]
-      exact finrank_quotient_mul hIne hJne
+      exact finrank_quotient_mul hIne hJne hIunit
     have hnorm : Module.finrank F (W.CoordinateRing ⧸ Ideal.span {a}) =
         (Algebra.norm F[X] a).natDegree :=
       finrank_quotient_span_eq_natDegree_norm (CoordinateRing.basis W) ha
     omega
-  · rw [eq_inv_iff_mul_eq_one, mul_comm, ← MonoidHom.map_mul ClassGroup.mk0,
-      ClassGroup.mk0_eq_one_iff, Submonoid.coe_mul, ← hJ]
-    exact ⟨a, rfl⟩
+  · rw [eq_inv_iff_mul_eq_one, ← map_mul, ClassGroup.mk_eq_one_iff]
+    refine ⟨au, ?_⟩
+    rw [Units.val_mul, hJunit.unit_spec, hIunit.unit_spec,
+      ← FractionalIdeal.coeIdeal_mul, mul_comm J I, ← hJ,
+      FractionalIdeal.coeIdeal_span_singleton, FractionalIdeal.coe_spanSingleton]
+    simp [au]
 
 omit [DecidableEq F] in
-private theorem mk0_eq_one_of_finrank_quotient_eq_zero [W.IsElliptic]
-    (I : Ideal W.CoordinateRing) (hI : I ∈ (Ideal W.CoordinateRing)⁰)
+/-- Every fractional ideal class has an inverse-class integral representative of codimension at
+most one. -/
+private theorem exists_codimLEOne_inv
+    (U : (FractionalIdeal W.CoordinateRing⁰ W.FunctionField)ˣ) :
+    ∃ (J : Ideal W.CoordinateRing)
+      (hJunit : IsUnit (J : FractionalIdeal W.CoordinateRing⁰ W.FunctionField)),
+      Module.finrank F (W.CoordinateRing ⧸ J) ≤ 1 ∧
+        ClassGroup.mk W.FunctionField hJunit.unit =
+          (ClassGroup.mk W.FunctionField U)⁻¹ := by
+  let hIunit : IsUnit (U.1.num :
+      FractionalIdeal W.CoordinateRing⁰ W.FunctionField) := isUnit_num.mpr U.isUnit
+  obtain ⟨J, hJunit, hfin, hclass⟩ :=
+    exists_codimLEOne_inv_integral (F := F) U.1.num hIunit
+  refine ⟨J, hJunit, hfin, ?_⟩
+  rwa [mk_num U] at hclass
+
+omit [DecidableEq F] in
+private theorem mk_eq_one_of_finrank_quotient_eq_zero
+    (I : Ideal W.CoordinateRing)
+    (hIunit : IsUnit (I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField))
     (hfin : Module.finrank F (W.CoordinateRing ⧸ I) = 0) :
-    ClassGroup.mk0 ⟨I, hI⟩ = 1 := by
+    ClassGroup.mk W.FunctionField hIunit.unit = 1 := by
   have : FiniteDimensional F (W.CoordinateRing ⧸ I) :=
-    finiteDimensional_quotient_of_ne_bot _ (mem_nonZeroDivisors_iff_ne_zero.mp hI)
+    finiteDimensional_quotient_of_ne_bot _ (by
+      intro h
+      apply hIunit.ne_zero
+      simp [h])
   have hsub : Subsingleton (W.CoordinateRing ⧸ I) := Module.finrank_zero_iff.mp hfin
   have htop : I = ⊤ := by
     rw [Ideal.Quotient.subsingleton_iff] at hsub
     exact hsub
-  rw [ClassGroup.mk0_eq_one_iff, htop]
-  exact top_isPrincipal
+  rw [ClassGroup.mk_eq_one_iff]
+  refine ⟨1, ?_⟩
+  rw [hIunit.unit_spec, htop]
+  change ((⊤ : Ideal W.CoordinateRing) :
+      FractionalIdeal W.CoordinateRing⁰ W.FunctionField).coeToSubmodule = _
+  rw [FractionalIdeal.coeIdeal_top, FractionalIdeal.coe_one, Submodule.one_eq_span]
 
 omit [DecidableEq F] in
-private theorem mk0_eq_mk_XYIdeal'_of_finrank_quotient_eq_one [W.IsElliptic]
-    (I : Ideal W.CoordinateRing) (hI : I ∈ (Ideal W.CoordinateRing)⁰)
+private theorem mk_eq_mk_XYIdeal'_of_finrank_quotient_eq_one
+    (I : Ideal W.CoordinateRing)
+    (hIunit : IsUnit (I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField))
     (hfin : Module.finrank F (W.CoordinateRing ⧸ I) = 1) :
     ∃ (x y : F) (h : W.Nonsingular x y),
-      ClassGroup.mk0 ⟨I, hI⟩ = ClassGroup.mk W.FunctionField (CoordinateRing.XYIdeal' h) := by
+      ClassGroup.mk W.FunctionField hIunit.unit =
+        ClassGroup.mk W.FunctionField (CoordinateRing.XYIdeal' h) := by
   obtain ⟨x, y, heq, hxy⟩ :=
     TauCeti.WeierstrassCurve.Affine.CoordinateRing.finrank_quotient_eq_one_iff.mp hfin
-  have hns : W.Nonsingular x y := equation_iff_nonsingular.mp heq
-  have hI' : CoordinateRing.XYIdeal W x (C y) ∈ (Ideal W.CoordinateRing)⁰ := hxy ▸ hI
+  have hXYunit : IsUnit (CoordinateRing.XYIdeal W x (C y) :
+      FractionalIdeal W.CoordinateRing⁰ W.FunctionField) := hxy ▸ hIunit
+  have hns : W.Nonsingular x y := nonsingular_of_isUnit_XYIdeal heq hXYunit
   refine ⟨x, y, hns, ?_⟩
-  rw [show (⟨I, hI⟩ : (Ideal W.CoordinateRing)⁰) =
-      ⟨CoordinateRing.XYIdeal W x (C y), hI'⟩ from Subtype.ext hxy]
-  rw [← ClassGroup.mk_mk0 W.FunctionField]
   congr 1
   apply Units.ext
-  rw [FractionalIdeal.coe_mk0, CoordinateRing.XYIdeal'_eq hns]
+  rw [hIunit.unit_spec, CoordinateRing.XYIdeal'_eq hns, hxy]
 
-/-- **The point-to-class map of an elliptic curve is surjective.** Equivalently, every ideal
+/-- **The point-to-class map is surjective.** Equivalently, every ideal
 class of its affine coordinate ring is represented by a rational point. -/
-theorem toClass_surjective [W.IsElliptic] : Function.Surjective (toClass (W := W)) := by
+theorem toClass_surjective : Function.Surjective (toClass (W := W)) := by
   rw [toClass_surjective_iff]
   intro g
-  obtain ⟨I, hI⟩ := ClassGroup.mk0_surjective g⁻¹
-  obtain ⟨J, hJ, hfin, hclass⟩ := exists_codimLEOne_inv (F := F) I
-  rw [hI, inv_inv] at hclass
+  refine ClassGroup.induction W.FunctionField (x := g) ?_
+  intro U
+  obtain ⟨J, hJunit, hfin, hclass⟩ := exists_codimLEOne_inv (F := F) U⁻¹
+  rw [map_inv, inv_inv] at hclass
   rcases Nat.le_one_iff_eq_zero_or_eq_one.mp hfin with hzero | hone
   · left
-    have htrivial := mk0_eq_one_of_finrank_quotient_eq_zero J hJ hzero
+    have htrivial := mk_eq_one_of_finrank_quotient_eq_zero J hJunit hzero
     exact hclass.symm.trans htrivial
   · right
     obtain ⟨x, y, hns, hpoint⟩ :=
-      mk0_eq_mk_XYIdeal'_of_finrank_quotient_eq_one J hJ hone
+      mk_eq_mk_XYIdeal'_of_finrank_quotient_eq_one J hJunit hone
     exact ⟨x, y, hns, hclass.symm.trans hpoint⟩
 
-/-- **The points of an elliptic curve are its affine ideal class group.** -/
-noncomputable def toClassEquiv [W.IsElliptic] :
+/-- **The points are their affine ideal class group.** -/
+noncomputable def toClassEquiv :
     W.Point ≃+ Additive (ClassGroup W.CoordinateRing) :=
   AddEquiv.ofBijective toClass ⟨toClass_injective, toClass_surjective⟩
 
 /-- The point-to-class equivalence has underlying map `Point.toClass`. -/
 @[simp]
-theorem toClassEquiv_apply [W.IsElliptic] (P : W.Point) : toClassEquiv P = toClass P :=
+theorem toClassEquiv_apply (P : W.Point) : toClassEquiv P = toClass P :=
   by
     unfold toClassEquiv
     exact AddEquiv.ofBijective_apply toClass _ P
+
+/-- Applying `toClass` to the point corresponding to an ideal class recovers that class. -/
+@[simp]
+theorem toClass_toClassEquiv_symm (c : Additive (ClassGroup W.CoordinateRing)) :
+    toClass (toClassEquiv.symm c) = c := by
+  rw [← toClassEquiv_apply]
+  exact toClassEquiv.apply_symm_apply c
 
 end WeierstrassCurve.Affine.Point
