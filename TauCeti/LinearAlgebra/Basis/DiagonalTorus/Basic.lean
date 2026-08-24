@@ -330,21 +330,21 @@ noncomputable def basisDiagonal (b : Basis ι R M) (w : ι → Rˣ) : M ≃ₗ[R
     basisDiagonal b w (b i) = (w i : R) • b i := by
   rw [basisDiagonal, Basis.equiv_apply, Equiv.refl_apply, Basis.unitsSMul_apply, Units.smul_def]
 
-/-- A monomial basis automorphism intertwines diagonal automorphisms whose diagonal entries
-correspond under the induced basis-index map. The unit factors in the monomial action cancel from
-the intertwining equation. -/
-theorem basisDiagonal_intertwine_of_map_basis (b : Basis ι R M) (v w c : ι → Rˣ)
-    (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = (c i : R) • b (τ i))
+/-- A basis automorphism acting by scalar multiples intertwines diagonal automorphisms whose
+diagonal entries correspond under the induced basis-index map. The scalar factors cancel from the
+intertwining equation. -/
+theorem basisDiagonal_intertwine_of_map_basis (b : Basis ι R M) (v w : ι → Rˣ) (c : ι → R)
+    (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = c i • b (τ i))
     (hvw : ∀ i, w (τ i) = v i) :
     θ * basisDiagonal b v = basisDiagonal b w * θ := by
   refine LinearEquiv.toLinearMap_injective (b.ext fun i => ?_)
   simp only [LinearEquiv.coe_coe, LinearEquiv.mul_apply, basisDiagonal_basis, map_smul, hθ, hvw]
   rw [smul_smul, smul_smul, mul_comm]
 
-/-- Conjugating a diagonal automorphism by a compatible monomial basis automorphism reindexes its
-diagonal entries. -/
-theorem conj_basisDiagonal_of_map_basis (b : Basis ι R M) (v w c : ι → Rˣ)
-    (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = (c i : R) • b (τ i))
+/-- Conjugating a diagonal automorphism by a compatible basis automorphism acting by scalar
+multiples reindexes its diagonal entries. -/
+theorem conj_basisDiagonal_of_map_basis (b : Basis ι R M) (v w : ι → Rˣ) (c : ι → R)
+    (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = c i • b (τ i))
     (hvw : ∀ i, w (τ i) = v i) :
     θ * basisDiagonal b v * θ⁻¹ = basisDiagonal b w := by
   rw [mul_inv_eq_iff_eq_mul]
@@ -439,12 +439,12 @@ theorem basisWeightTorus_apply (b : Basis ι R M) (wt : ι → κ → ℤ) (s : 
     basisWeightTorus b wt s (b i) = (torusCharacter s (wt i) : R) • b i :=
   basisDiagonal_basis b _ i
 
-/-- A monomial basis automorphism whose basis-index map is compatible with a coordinate
-permutation intertwines each represented torus point with its reindexing. The basis-index map is
-only a function because the proof does not need its bijectivity. -/
+/-- A basis automorphism acting by scalar multiples whose basis-index map is compatible with a
+coordinate permutation intertwines each represented torus point with its reindexing. The
+basis-index map is only a function because the proof does not need its bijectivity. -/
 theorem basisWeightTorus_intertwine_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
-    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → Rˣ)
-    (hθ : ∀ i, θ (b i) = (c i : R) • b (τ i))
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
     (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Rˣ) :
     θ * basisWeightTorus b wt s =
       basisWeightTorus b wt (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) * θ := by
@@ -456,23 +456,23 @@ theorem basisWeightTorus_intertwine_of_map_basis (b : Basis ι R M) (wt : ι →
   funext j
   exact hwt i j
 
-/-- Conjugating a represented weight-torus point by a compatible monomial basis automorphism
+/-- Conjugating a represented weight-torus point by a compatible basis automorphism
 reindexes that point. This is the normalizer form of
 `basisWeightTorus_intertwine_of_map_basis`. -/
 theorem conj_basisWeightTorus_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
-    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → Rˣ)
-    (hθ : ∀ i, θ (b i) = (c i : R) • b (τ i))
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
     (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Rˣ) :
     θ * basisWeightTorus b wt s * θ⁻¹ =
       basisWeightTorus b wt (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) := by
   rw [mul_inv_eq_iff_eq_mul]
   exact basisWeightTorus_intertwine_of_map_basis b wt τ σ θ c hθ hwt s
 
-/-- **A compatible monomial basis symmetry normalizes the represented weight torus.** Conjugation
-by `θ` maps its range onto itself by reindexing torus points through `σ`. -/
+/-- **A compatible basis symmetry acting by scalar multiples normalizes the represented weight
+torus.** Conjugation by `θ` maps its range onto itself by reindexing torus points through `σ`. -/
 theorem map_basisWeightTorus_range_conj_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
-    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → Rˣ)
-    (hθ : ∀ i, θ (b i) = (c i : R) • b (τ i))
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
     (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) :
     Subgroup.map (MulAut.conj θ).toMonoidHom (basisWeightTorus b wt).range =
       (basisWeightTorus b wt).range := by

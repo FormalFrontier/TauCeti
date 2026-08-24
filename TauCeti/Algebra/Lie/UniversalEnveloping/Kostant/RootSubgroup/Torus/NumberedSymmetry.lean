@@ -86,8 +86,8 @@ theorem baseChangeInvariantRestrictUnit_mul_kostantTorusPoints
     kostantTorusPoints_apply]
   let Θ : (A ⊗[ℤ] M) ≃ₗ[A] (A ⊗[ℤ] M) :=
     (AddEquiv.invariantRestrict θ M hθM).baseChange ℤ A M M
-  let cA : η → Aˣ := fun i => Units.map (algebraMap ℤ A) (c i)
-  have hbase : ∀ i, Θ ((b.baseChange A) i) = (cA i : A) • (b.baseChange A) (τ i) :=
+  let cA : η → A := fun i => ((Units.map (algebraMap ℤ A) (c i) : Aˣ) : A)
+  have hbase : ∀ i, Θ ((b.baseChange A) i) = cA i • (b.baseChange A) (τ i) :=
     AddEquiv.baseChange_invariantRestrict_map_baseChange_basis M b θ hθM τ c hθb
   have hintertwine :
       Θ * basisWeightTorus (b.baseChange A) wt s =
@@ -133,7 +133,7 @@ theorem map_kostantTorusSubgroup_conj_baseChangeInvariantRestrictUnit
       kostantTorusSubgroup M b wt A := by
   set Φ := LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M) with hΦ
   set U := AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM with hU
-  let cA : η → Aˣ := fun i => Units.map (algebraMap ℤ A) (c i)
+  let cA : η → A := fun i => ((Units.map (algebraMap ℤ A) (c i) : Aˣ) : A)
   -- The torus points are the generic weight-torus automorphisms read in the general linear group.
   have hpoints : Φ.symm.toMonoidHom.comp (basisWeightTorus (b.baseChange A) wt) =
       kostantTorusPoints M b wt A :=
@@ -145,7 +145,7 @@ theorem map_kostantTorusSubgroup_conj_baseChangeInvariantRestrictUnit
     MonoidHom.ext fun f => by simp [MulAut.conj_apply]
   -- That underlying automorphism permutes the base-changed basis, as the generic result needs.
   have hbasis : ∀ i, Φ U ((b.baseChange A) i) =
-      (cA i : A) • (b.baseChange A) (τ i) := fun i => by
+      cA i • (b.baseChange A) (τ i) := fun i => by
     rw [hΦ, LinearMap.GeneralLinearGroup.coeFn_generalLinearEquiv, hU,
       AddEquiv.val_baseChangeInvariantRestrictUnit_apply]
     exact AddEquiv.baseChange_invariantRestrict_map_baseChange_basis M b θ hθM τ c hθb i
