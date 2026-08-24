@@ -25,9 +25,10 @@ is never auto-closed. By design these jobs do NOT spare human-touched PRs — an
 adds `keep`. A failed close makes the job exit nonzero.
 
 A scoreboard is trusted only if it carries the `tauceti-scoreboard` marker AND its author is
-repo-associated (OWNER/MEMBER/COLLABORATOR) — the same trust the worker applies. The reviewer and the
-PR author are frequently the same account (the worker reviews its own roadmap PRs), so trust is by
-association, not by "not the author": an external author cannot forge a repo-associated comment.
+repo-associated (OWNER/MEMBER/COLLABORATOR). This destructive close policy is deliberately stricter
+than the worker and auto-merge scoreboard readers. The reviewer and the PR author are frequently the
+same account, so trust is by association, not by "not the author": an external author cannot forge a
+repo-associated comment that makes housekeeping close a PR.
 
 Env: GH_TOKEN (a token that can close PRs), REPO (owner/name), optional DRY_RUN=1, REVIEW_BUDGET,
 BUDGET_LABEL, STALE_DAYS, EMPTY_QUIET_MINUTES.
