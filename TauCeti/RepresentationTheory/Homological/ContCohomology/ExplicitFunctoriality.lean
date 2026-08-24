@@ -127,7 +127,9 @@ end Cochains
 section Naturality
 
 /-! The naturality squares are where the differentials enter, so this is the first point at which
-the coefficients have to be commutative groups acted on by the two monoids. -/
+the coefficients have to be commutative groups acted on by the two monoids. Commutativity is
+necessary because `d0` and `d1` are additive homomorphisms; their formulas are not additive for a
+general noncommutative additive group. -/
 
 variable {G : Type uG} {H : Type uH} {M : Type uM} {N : Type uN}
   [Monoid G] [Monoid H] [TopologicalSpace G] [TopologicalSpace H]
