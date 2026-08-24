@@ -94,6 +94,7 @@ theorem deligneSplitting_def (p q : ℤ) :
   (rfl)
 
 /-- Membership in Deligne's bigrading, expanded into its three defining conditions. -/
+@[simp]
 theorem mem_deligneSplitting_iff (p q : ℤ) (x : Vℂ) :
     x ∈ mhs.deligneSplitting p q ↔
       x ∈ mhs.F p ∧ x ∈ mhs.WC (p + q) ∧

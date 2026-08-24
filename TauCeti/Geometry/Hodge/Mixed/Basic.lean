@@ -162,6 +162,16 @@ theorem conjF_eq_top_of_F_eq_top {p : ℤ} (hp : mhs.F p = ⊤) : mhs.conjF p = 
 theorem conjF_eq_bot_of_F_eq_bot {p : ℤ} (hp : mhs.F p = ⊥) : mhs.conjF p = ⊥ := by
   rw [conjF_def, hp, Submodule.map_bot]
 
+/-- The conjugate Hodge filtration is exhaustive. -/
+theorem conjF_top : ∃ p, mhs.conjF p = ⊤ := by
+  obtain ⟨p, hp⟩ := mhs.F_top
+  exact ⟨p, mhs.conjF_eq_top_of_F_eq_top hp⟩
+
+/-- The conjugate Hodge filtration is separated. -/
+theorem conjF_bot : ∃ p, mhs.conjF p = ⊥ := by
+  obtain ⟨p, hp⟩ := mhs.F_bot
+  exact ⟨p, mhs.conjF_eq_bot_of_F_eq_bot hp⟩
+
 /-- The pure Hodge structure of weight `k` carried by the complexification of the `k`-th rational
 graded piece. Its filtration is the induced one on the nose, so the whole pure theory applies to
 the graded pieces of a mixed Hodge structure. -/
