@@ -36,6 +36,8 @@ does not need a change of coordinates.
 * `TauCeti.IntegralLattice.mem_d8PlusCarrier_iff`: the formula
   `D₈⁺ = D₈ ∪ (s + D₈)`.
 * `TauCeti.IntegralLattice.d8PlusLattice`: the resulting even integral lattice.
+* `TauCeti.IntegralLattice.toIntegralLattice_eq_d8PlusLattice`: the general glued-overlattice
+  construction along the spinor subgroup is `d8PlusLattice`.
 * `TauCeti.IntegralLattice.isUnimodular_d8PlusLattice`: `D₈⁺` is unimodular.
 
 ## References
@@ -160,6 +162,14 @@ theorem isEven_d8PlusCarrier : IntermediateCarrier.IsEven d8PlusCarrier := by
 dot product as the checkerboard lattice. -/
 noncomputable def d8PlusLattice : IntegralLattice (Fin 8 → ℚ) :=
   isEven_d8PlusCarrier.isIntegral.toIntegralLattice
+
+/-- The even overlattice glued along the spinor subgroup is the `D₈⁺` lattice.  This exposes
+`d8PlusLattice` to the general overlattice theorems, which name the glued lattice through a proof
+of evenness of the inverse image. -/
+theorem toIntegralLattice_eq_d8PlusLattice
+    (h : IntermediateCarrier.IsEven
+      ((checkerboardLattice 8).intermediateCarrierOfDiscriminantSubgroup d8SpinorSubgroup)) :
+    h.isIntegral.toIntegralLattice = d8PlusLattice := (rfl)
 
 /-- The carrier of the `D₈⁺` lattice is the spinor glue carrier. -/
 @[simp]
