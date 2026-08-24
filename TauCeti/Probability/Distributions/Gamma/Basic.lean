@@ -290,6 +290,8 @@ private lemma mgf_id_conv {μ ν : Measure ℝ}
     mgf id (μ ∗ ν) = mgf id μ * mgf id ν := by
   ext t
   rw [Measure.conv, mgf_id_map (by fun_prop)]
+  -- `mgf_id_map` leaves addition under a lambda, while `IndepFun.mgf_add'` expects the
+  -- definitionally equal pointwise sum of the two projection functions.
   change mgf ((fun p : ℝ × ℝ ↦ p.1) + fun p ↦ p.2) (μ.prod ν) t =
     mgf id μ t * mgf id ν t
   rw [(indepFun_prod measurable_id measurable_id).mgf_add'
@@ -330,11 +332,11 @@ theorem gammaMeasure_conv_gammaMeasure {b : ℝ} (ha : 0 < a) (hb : 0 < b) (hr :
   symm
   apply Measure.ext_of_charFun
   ext t
-  have h := eqOn_complexMGF_of_mgf hmgf (show
-    ((t : ℂ) * Complex.I).re ∈ interior
-      (integrableExpSet id (gammaMeasure (a + b) r)) by
-      rw [integrableExpSet_id_gammaMeasure hab hr]
-      simpa using hr)
+  have ht : ((t : ℂ) * Complex.I).re ∈ interior
+      (integrableExpSet id (gammaMeasure (a + b) r)) := by
+    rw [integrableExpSet_id_gammaMeasure hab hr]
+    simpa using hr
+  have h := eqOn_complexMGF_of_mgf hmgf ht
   rwa [complexMGF_id_mul_I, complexMGF_id_mul_I] at h
 
 /-! ### Scaling -/
