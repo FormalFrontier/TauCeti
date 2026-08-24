@@ -460,11 +460,9 @@ theorem mem_coderivations {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWor
 letter of the value is a linear isomorphism onto the maps to single letters, with inverse the
 Taylor expansion `coderiv`.
 
-Its body is `@[expose]`d because the characteristic lemmas
+Its body is sealed; reason about it through
 `TauCeti.ReducedTensorWords.coderivEquivTaylor_apply` and
-`TauCeti.ReducedTensorWords.coderivEquivTaylor_symm_apply` are proved by `rfl`, which an importing
-module cannot check for a sealed definition. -/
-@[expose]
+`TauCeti.ReducedTensorWords.coderivEquivTaylor_symm_apply`. -/
 noncomputable def coderivEquivTaylor :
     coderivations R M ≃ₗ[R] (ReducedTensorWords R M →ₗ[R] M) where
   toFun b := letter R M ∘ₗ b.1
@@ -477,12 +475,12 @@ noncomputable def coderivEquivTaylor :
 
 @[simp]
 theorem coderivEquivTaylor_apply (b : coderivations R M) :
-    coderivEquivTaylor R M b = letter R M ∘ₗ b.1 := rfl
+    coderivEquivTaylor R M b = letter R M ∘ₗ b.1 := (rfl)
 
 @[simp]
 theorem coderivEquivTaylor_symm_apply (F : ReducedTensorWords R M →ₗ[R] M) :
     (coderivEquivTaylor R M).symm F =
-      ⟨coderiv R F, (mem_coderivations R M).2 (isCoderivation_coderiv R F)⟩ := rfl
+      ⟨coderiv R F, (mem_coderivations R M).2 (isCoderivation_coderiv R F)⟩ := (rfl)
 
 end ReducedTensorWords
 
