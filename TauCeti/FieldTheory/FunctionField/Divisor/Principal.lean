@@ -328,6 +328,14 @@ theorem riemannRochSpaceEquivSubPrincipal_apply (hF : IsFunctionField k F) (z : 
   rw [riemannRochSpaceEquivSubPrincipal, LinearEquiv.ofSubmodules_apply,
     Units.mulLeftLinearEquiv_apply]
 
+/-- The inverse Riemann–Roch-space equivalence acts by multiplication by `z⁻¹`. -/
+@[simp]
+theorem riemannRochSpaceEquivSubPrincipal_symm_apply (hF : IsFunctionField k F) (z : Fˣ)
+    (A : Divisor k F) (f : riemannRochSpace (A - Divisor.principal hF z)) :
+    ((riemannRochSpaceEquivSubPrincipal hF z A).symm f : F) = (z⁻¹ : Fˣ) * (f : F) := by
+  rw [riemannRochSpaceEquivSubPrincipal, LinearEquiv.ofSubmodules_symm_apply,
+    Units.symm_mulLeftLinearEquiv_apply]
+
 /-- `ℓ(A - div z) = ℓ(A)`: the dimension of a Riemann–Roch space is unchanged by subtracting a
 principal divisor. -/
 theorem Divisor.dim_sub_principal (hF : IsFunctionField k F) (z : Fˣ) (A : Divisor k F) :
