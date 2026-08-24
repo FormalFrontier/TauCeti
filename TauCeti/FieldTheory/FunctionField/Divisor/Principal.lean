@@ -93,20 +93,20 @@ namespace Place
 /-- The order of vanishing at a place, as a homomorphism out of the additivized group of units
 `Additive Fˣ`.  Restricting to units is what makes it additive: `ord_P` is only additive away
 from the junk value `ord_P 0 = 0`. -/
-@[expose] noncomputable def ordAddMonoidHom (P : Place k F) : Additive Fˣ →+ ℤ :=
+noncomputable def ordAddMonoidHom (P : Place k F) : Additive Fˣ →+ ℤ :=
   AddMonoidHom.mk' (fun z => P.ord ((Additive.toMul z : Fˣ) : F)) fun z w => by
     simpa only [toMul_add, Units.val_mul] using
       P.ord_mul (Units.ne_zero _) (Units.ne_zero _)
 
 @[simp]
 theorem ordAddMonoidHom_apply (P : Place k F) (z : Fˣ) :
-    P.ordAddMonoidHom (Additive.ofMul z) = P.ord (z : F) :=
-  rfl
+    P.ordAddMonoidHom (Additive.ofMul z) = P.ord (z : F) := by
+  simp [ordAddMonoidHom]
 
 /-- **The places of an algebraic function field, as an order system.**  The points are the
 places, the group is `Additive Fˣ`, and the order at a place is `ord_P`.  The finiteness
 condition is Stichtenoth, Corollary 1.3.4: a function has finitely many zeros and poles. -/
-@[expose] noncomputable def orderSystem (hF : IsFunctionField k F) :
+noncomputable def orderSystem (hF : IsFunctionField k F) :
     WeilDivisor.OrderSystem (Place k F) (Additive Fˣ) where
   ord P := P.ordAddMonoidHom
   finite_support z := by
@@ -115,8 +115,8 @@ condition is Stichtenoth, Corollary 1.3.4: a function has finitely many zeros an
 
 @[simp]
 theorem orderSystem_ord (hF : IsFunctionField k F) (P : Place k F) (z : Fˣ) :
-    (orderSystem hF).ord P (Additive.ofMul z) = P.ord (z : F) :=
-  rfl
+    (orderSystem hF).ord P (Additive.ofMul z) = P.ord (z : F) := by
+  rw [orderSystem, ordAddMonoidHom_apply]
 
 end Place
 
@@ -126,23 +126,23 @@ namespace Divisor
 
 /-- **The principal-divisor homomorphism** `div : Fˣ →+ Divisor k F` of an algebraic function
 field, in its additivized form (Stichtenoth, Definition 1.4.2). -/
-@[expose] noncomputable def principalHom (hF : IsFunctionField k F) :
+noncomputable def principalHom (hF : IsFunctionField k F) :
     Additive Fˣ →+ Divisor k F :=
   (Place.orderSystem hF).principalHom
 
 /-- **The principal divisor** `div z = ∑_P ord_P z · P` of a nonzero function (Stichtenoth,
 Definition 1.4.2). -/
-@[expose] noncomputable def principal (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
+noncomputable def principal (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
   principalHom hF (Additive.ofMul z)
 
 @[simp]
 theorem principalHom_ofMul (hF : IsFunctionField k F) (z : Fˣ) :
-    principalHom hF (Additive.ofMul z) = principal hF z :=
-  rfl
+    principalHom hF (Additive.ofMul z) = principal hF z := by
+  rw [principal]
 
 theorem principalHom_apply (hF : IsFunctionField k F) (z : Additive Fˣ) :
-    principalHom hF z = principal hF (Additive.toMul z) :=
-  rfl
+    principalHom hF z = principal hF (Additive.toMul z) := by
+  rw [← principalHom_ofMul, ofMul_toMul]
 
 /-- The coefficient of a place in `div z` is the order of `z` there. -/
 @[simp]
@@ -227,12 +227,12 @@ theorem principal_eq_zero_iff (hF : IsFunctionField k F) (hex : IsIntegrallyClos
 
 /-- **The zero divisor** `(z)₀ = (div z)⁺` of a nonzero function (Stichtenoth,
 Definition 1.4.2): its zeros, with multiplicities. -/
-@[expose] noncomputable def zeros (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
+noncomputable def zeros (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
   (principal hF z)⁺
 
 /-- **The pole divisor** `(z)_∞ = (div z)⁻` of a nonzero function (Stichtenoth,
 Definition 1.4.2): its poles, with multiplicities. -/
-@[expose] noncomputable def poles (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
+noncomputable def poles (hF : IsFunctionField k F) (z : Fˣ) : Divisor k F :=
   (principal hF z)⁻
 
 @[simp]
@@ -298,14 +298,6 @@ theorem mul_mem_riemannRochSpace_sub_principal (hF : IsFunctionField k F) (z : F
   have := hord P
   omega
 
-/-- The `k`-linear map `f ↦ z * f` from `L(A)` to `L(A - div z)`. -/
-private noncomputable def mulLeftRiemannRoch (z : Fˣ)
-    (A B : Divisor k F) (h : ∀ f ∈ riemannRochSpace A, (z : F) * f ∈ riemannRochSpace B) :
-    riemannRochSpace A →ₗ[k] riemannRochSpace B where
-  toFun f := ⟨(z : F) * (f : F), h f f.2⟩
-  map_add' a b := Subtype.ext (by simp [mul_add])
-  map_smul' c a := Subtype.ext (by simp [Algebra.smul_def, mul_left_comm])
-
 /-- **Stichtenoth, Lemma 1.4.6**: multiplication by a nonzero function `z` is a `k`-linear
 isomorphism `L(A) ≅ L(A - div z)`.
 
@@ -320,14 +312,21 @@ noncomputable def riemannRochSpaceEquivSubPrincipal (hF : IsFunctionField k F) (
     intro f hf
     have h := mul_mem_riemannRochSpace_sub_principal hF z⁻¹ hf
     rwa [Divisor.principal_inv, sub_neg_eq_add, sub_add_cancel] at h
-  refine LinearEquiv.ofLinearMap
-    (mulLeftRiemannRoch z A _ fun f hf => mul_mem_riemannRochSpace_sub_principal hF z hf)
-    (mulLeftRiemannRoch z⁻¹ _ A hback) ?_ ?_ <;>
-  · refine LinearMap.ext fun f => Subtype.ext ?_
-    simp only [mulLeftRiemannRoch, LinearMap.coe_comp, Function.comp_apply, LinearMap.coe_mk,
-      AddHom.coe_mk, LinearMap.id_coe, id_eq]
-    rw [← mul_assoc, ← Units.val_mul]
-    simp
+  refine (z.mulLeftLinearEquiv k F).ofSubmodules _ _ (le_antisymm ?_ ?_)
+  · rintro f ⟨g, hg, rfl⟩
+    exact mul_mem_riemannRochSpace_sub_principal hF z hg
+  · intro f hf
+    refine ⟨(z.mulLeftLinearEquiv k F).symm f, ?_, ?_⟩
+    · exact hback f hf
+    · exact (z.mulLeftLinearEquiv k F).apply_symm_apply f
+
+/-- The Riemann–Roch-space equivalence acts by multiplication by `z`. -/
+@[simp]
+theorem riemannRochSpaceEquivSubPrincipal_apply (hF : IsFunctionField k F) (z : Fˣ)
+    (A : Divisor k F) (f : riemannRochSpace A) :
+    (riemannRochSpaceEquivSubPrincipal hF z A f : F) = (z : F) * (f : F) := by
+  rw [riemannRochSpaceEquivSubPrincipal, LinearEquiv.ofSubmodules_apply,
+    Units.mulLeftLinearEquiv_apply]
 
 /-- `ℓ(A - div z) = ℓ(A)`: the dimension of a Riemann–Roch space is unchanged by subtracting a
 principal divisor. -/
