@@ -87,6 +87,13 @@ theorem standardComodule_coact :
   rw [Comodule.corestrictCoact_apply, LinearMap.comp_apply,
     GeneralLinear.standardComodule_coact]
 
+/-- The coaction bundled by `standardComodule` is its defining corestriction. This explicit bridge
+keeps proofs from depending directly on reducibility of the comodule wrapper. -/
+private theorem standardComodule_coact_eq_corestrictCoact :
+    (standardComodule R n).coact =
+      Comodule.corestrictCoact (coordinateMap R n).hom.toCoalgHom :=
+  rfl
+
 /-- **The standard comodule of `SL_n` is faithful.** -/
 theorem isFaithful_standardComodule :
     Comodule.IsFaithful (k := R) (H := coordinateHopfAlgebra R n) (V := Fin n → R) := by
@@ -152,10 +159,7 @@ theorem mulVec_mem (N : Subcomodule R (coordinateHopfAlgebra R n) (Fin n → R))
           (LinearMap.lTensor (Fin n → R) q.ofConv.toLinearMap
             ((standardComodule R n).coact w)) ∈ N :=
     N.rid_lTensor_coact_mem q.ofConv.toLinearMap hw
-  change
-    TensorProduct.rid R (Fin n → R)
-        (LinearMap.lTensor (Fin n → R) q.ofConv.toLinearMap
-          (Comodule.corestrictCoact (coordinateMap R n).hom.toCoalgHom w)) ∈ N at h
+  rw [standardComodule_coact_eq_corestrictCoact R n] at h
   rw [CommHopfAlgCat.hom_mkQuotient] at h
   rw [standardComodule_coact R n, LinearMap.comp_apply] at h
   have hcoordinate :
