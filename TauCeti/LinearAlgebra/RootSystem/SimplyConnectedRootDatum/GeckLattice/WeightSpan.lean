@@ -55,7 +55,6 @@ noncomputable section
 variable (t : DynkinType) (ht : t.Valid)
 
 /-- **A Cartan coordinate of the pinned Geck module has weight zero.** -/
-@[simp]
 theorem geckWeight_inl_eq_zero (x : (t.rationalBase ht).support) :
     t.geckWeight ht (Sum.inl x) = 0 := by
   ext i
@@ -64,7 +63,6 @@ theorem geckWeight_inl_eq_zero (x : (t.rationalBase ht).support) :
 /-- **A root coordinate of the pinned Geck module has the corresponding integral root as its
 weight.** `TauCeti.DynkinType.intCast_geckWeight_inr` already identifies the two after extension
 of scalars to `ℚ`; injectivity of `ℤ → ℚ` brings the equality back to the character lattice. -/
-@[simp]
 theorem geckWeight_inr_eq_root (k : Fin t.numRoots) :
     t.geckWeight ht (Sum.inr k) = (t.simplyConnectedRootDatum ht).root k := by
   ext i
