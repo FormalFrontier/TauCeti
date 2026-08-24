@@ -30,11 +30,11 @@ coordinate algebras over `ℤ`. The `Presentation` in the names records exactly 
 live in the coordinate algebras built directly over `A`, whereas the `kostantToralBaseChange*`
 family of `ToralClosure/BaseChange.lean` lives in the scalar extensions of the integral ones.
 
-Everything here is a transport of the integral data, not a fresh construction over `A`. In
-particular the transported root-subgroup and split-torus maps are not identified with maps
-constructed directly over `A`: for the torus such an identification would need base-change
-compatibility of `GeneralLinear.diagonalTorusCoordinateMap`, which is a separate step, and on the
-root-subgroup side no over-`A` construction exists yet.
+Everything here is a transport of the integral data, not a fresh construction over `A`. The
+underlying bialgebra morphism of the transported split-torus map is identified with
+`GeneralLinear.weightTorusCoordinateBialgHom`, constructed directly over `A`; this formulation
+also covers value rings in a larger universe than the integral torus index. On the root-subgroup
+side no over-`A` construction exists yet.
 
 The transported ideal need not be the largest Hopf ideal killed by the root subgroups and torus
 after base change: new equations may appear over a non-flat base. The proved comparison therefore
@@ -50,8 +50,8 @@ torus maps lies in the base change of the integral toral carrier; equality is no
 * `kostantRootSubgroupBaseChangePresentationCoordinateMap` and
   `kostantRootSubgroupToralBaseChangePresentationCoordinateMap`: the transported base change of a
   root subgroup and its factorization through the transported toral carrier.
-* `kostantWeightTorusToralBaseChangePresentationCoordinateMap`: the factorization of
-  `GeneralLinear.weightTorusBaseChangeCoordinateMap` through the transported carrier.
+* `kostantWeightTorusToralBaseChangePresentationCoordinateMap`: the factorization of the
+  transported weight-torus coordinate map through the transported carrier.
 * `kostantToralBaseChangePresentationIdeal_le_commonKernelHopfIdeal`: the generated-over-`A`
   carrier is a closed subgroup of the transported integral carrier.
 

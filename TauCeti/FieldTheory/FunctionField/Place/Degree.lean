@@ -33,7 +33,8 @@ a genuine positive natural number.
 * `TauCeti.Place.linearIndependent_over_adjoin_of_linearIndependent_residue`: the heart of the
   matter. If `x` has nonzero order at `P`, then elements of `𝒪_P` whose residues are linearly
   independent over `k` are themselves linearly independent over `k(x)`.
-* `TauCeti.Place.finiteDimensional_residueField`: the residue field of a place of an algebraic
+* `TauCeti.Place.finiteDimensional_residueField_of_ord_ne_zero` and
+  `TauCeti.Place.finiteDimensional_residueField`: the residue field of a place of an algebraic
   function field is a finite extension of the constants.
 * `TauCeti.Place.degree_le_finrank_over_adjoin`: `deg P ≤ [F : k(x)]` for every `x` with
   `ord_P x ≠ 0`.
@@ -41,6 +42,11 @@ a genuine positive natural number.
 * `TauCeti.Place.degree_eq_one_of_isAlgClosed_of_isFunctionField`: over an algebraically closed
   field of constants every place of an algebraic function field is rational (Stichtenoth,
   Remark 1.1.17).
+
+The auxiliary `TauCeti.Place.residue_aeval_of_residue_eq_zero`, that a polynomial expression in
+an element of the maximal ideal reduces to the constant term of the polynomial, is the residue
+computation Stichtenoth's argument turns on; it is reused by the bound on the zeros of a
+function in `TauCeti.FieldTheory.FunctionField.Place.Zeros`.
 
 The rational places themselves are characterised in
 `TauCeti.FieldTheory.FunctionField.Place.Basic`, where no function-field hypothesis is needed.
@@ -83,7 +89,7 @@ variable {P : Place k F}
 
 /-- If `t` lies in the maximal ideal of `𝒪_P`, then the value of a polynomial `p` at `t` reduces
 to the constant term of `p`. -/
-private theorem residue_aeval_of_residue_eq_zero {t : P.integers}
+@[simp] theorem residue_aeval_of_residue_eq_zero {t : P.integers}
     (ht : IsLocalRing.residue P.integers t = 0) (p : k[X]) :
     IsLocalRing.residue P.integers (aeval t p) =
       algebraMap k P.ResidueField (p.coeff 0) := by
@@ -183,6 +189,14 @@ theorem rank_residueField_le_finrank_over_adjoin {x : F} (hx : P.ord x ≠ 0)
     (linearIndependent_over_adjoin_of_linearIndependent_residue hx hz').fintype_card_le_finrank
 
 variable (P) in
+/-- The residue field of a place is a finite extension of the constants as soon as `F` is finite
+over `k(x)` for a single `x` of nonzero order at `P` (Stichtenoth, Proposition 1.1.15). -/
+theorem finiteDimensional_residueField_of_ord_ne_zero {x : F} (hx : P.ord x ≠ 0)
+    [FiniteDimensional k⟮x⟯ F] : FiniteDimensional k P.ResidueField :=
+  Module.rank_lt_aleph0_iff.mp
+    ((rank_residueField_le_finrank_over_adjoin P hx).trans_lt Cardinal.natCast_lt_aleph0)
+
+variable (P) in
 /-- The residue field of a place of an algebraic function field is a finite extension of the
 constants (Stichtenoth, Proposition 1.1.15). This is what makes `TauCeti.Place.degree` a
 genuine invariant rather than a junk value. -/
@@ -190,12 +204,9 @@ theorem finiteDimensional_residueField (hF : IsFunctionField k F) :
     FiniteDimensional k P.ResidueField := by
   obtain ⟨t, ht⟩ := P.exists_isUniformizer
   rw [P.isUniformizer_iff_ord_eq_one] at ht
-  have hpos : 0 < P.ord t := by omega
   have : FiniteDimensional k⟮t⟯ F :=
-    hF.finiteDimensional_adjoin (P.transcendental_of_ord_ne_zero hpos.ne')
-  exact Module.rank_lt_aleph0_iff.mp
-    ((rank_residueField_le_finrank_over_adjoin P hpos.ne').trans_lt
-      Cardinal.natCast_lt_aleph0)
+    hF.finiteDimensional_adjoin (P.transcendental_of_ord_ne_zero (by omega))
+  exact P.finiteDimensional_residueField_of_ord_ne_zero (x := t) (by omega)
 
 variable (P) in
 /-- **Stichtenoth, Proposition 1.1.15**: the degree of a place is bounded by `[F : k(x)]` for

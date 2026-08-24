@@ -9,6 +9,7 @@ public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+import TauCeti.Analysis.SpecialFunctions.Beta
 
 /-!
 # Elementary theory of the beta distribution
@@ -26,8 +27,9 @@ moment exists.
   `α * β / ((α + β) ^ 2 * (α + β + 1))`;
 * `TauCeti.integrableExpSet_id_betaMeasure` — every exponential moment exists.
 
-The integral calculation follows the normalization argument for `ProbabilityTheory.betaMeasure`
-in Mathlib: rewrite the density integral as Euler's beta integral, then use the Gamma quotient.
+The moment calculation rewrites the density integral as Euler's beta integral — the real-valued
+`TauCeti.integral_rpow_mul_one_sub_rpow`, proved in
+`TauCeti/Analysis/SpecialFunctions/Beta.lean` — and then uses the Gamma quotient.
 
 ## References
 
@@ -55,21 +57,6 @@ private lemma betaPDFReal_nonneg {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) (x 
 private lemma toReal_betaPDF {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) (x : ℝ) :
     (ENNReal.ofReal (betaPDFReal α β x)).toReal = betaPDFReal α β x :=
   ENNReal.toReal_ofReal (betaPDFReal_nonneg hα hβ x)
-
-/-- Euler's beta integral in real-valued form. This is the calculation used internally by the
-moment formula. -/
-private lemma integral_rpow_mul_one_sub_rpow {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) :
-    ∫ x in Set.Ioo 0 1, x ^ (α - 1) * (1 - x) ^ (β - 1) = beta α β := by
-  rw [beta_eq_betaIntegralReal α β hα hβ, Complex.betaIntegral,
-    intervalIntegral.integral_of_le (by norm_num), ← integral_Ioc_eq_integral_Ioo,
-    ← RCLike.re_to_complex, ← integral_re]
-  · refine setIntegral_congr_fun measurableSet_Ioc fun x ⟨hx0, hx1⟩ ↦ ?_
-    norm_cast
-    rw [← Complex.ofReal_cpow, ← Complex.ofReal_cpow, RCLike.re_to_complex,
-      Complex.re_mul_ofReal, Complex.ofReal_re]
-    all_goals linarith
-  · convert! Complex.betaIntegral_convergent (u := α) (v := β) (by simpa) (by simpa)
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num), IntegrableOn]
 
 /-- The beta distribution is carried by the unit interval. -/
 theorem ae_mem_Icc_betaMeasure (α β : ℝ) :
@@ -113,7 +100,9 @@ theorem integral_pow_betaMeasure {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) (n 
             congr 3
             ring_nf
       _ = (1 / beta α β) * beta (α + n) β := by
-        rw [integral_const_mul, integral_rpow_mul_one_sub_rpow hαn hβ]
+        rw [integral_const_mul, ← integral_Ioc_eq_integral_Ioo,
+          ← intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1),
+          integral_rpow_mul_one_sub_rpow hαn hβ]
       _ = Real.Gamma (α + n) * Real.Gamma (α + β) /
             (Real.Gamma α * Real.Gamma (α + β + n)) := by
         rw [beta, beta]
