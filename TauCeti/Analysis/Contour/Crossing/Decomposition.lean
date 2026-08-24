@@ -60,7 +60,9 @@ open Set
 variable {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
 
 /-- The contribution of one circular-cap window: the winding number of the original curve across
-the window minus the winding number of its cap. -/
+the window minus the cap's angular term. Under the nondegeneracy hypotheses of
+`localContribution_eq_sub_windingNumber_cap`, this is the window winding number minus the cap
+winding number. -/
 def CircularCapWindow.localContribution (W : CircularCapWindow) (γ : ℝ → ℂ) (s : ℂ) : ℂ :=
   windingNumber γ W.lower W.upper s -
     ((W.endAngle - W.startAngle : ℝ) : ℂ) / (2 * (Real.pi : ℂ))
@@ -364,12 +366,12 @@ theorem windingNumber_eq_exciseCrossings_add_sum {windows : List CircularCapWind
 contribution is supplied as a crossing angle over `2π` for every window, then the finite excision
 identity rewrites as the sum of those angles.
 
-Here `crossing` is only an indexing function and `hlocal` assumes the essential local geometric
-equality. This lemma neither constructs windows around the actual crossings nor derives `hlocal`
-from `windingNumber_sub_circleCap_eq_crossingAngle_div_two_pi`; consequently it is an assembly
-lemma toward, rather than a formalization of, Hungerbühler--Wasem Proposition 2.2. -/
+Here `crossingParameter` is only an indexing function and `hlocal` assumes the essential local
+geometric equality. This lemma neither constructs windows around the actual crossings nor derives
+`hlocal` from `windingNumber_sub_circleCap_eq_crossingAngle_div_two_pi`; consequently it is an
+assembly lemma toward, rather than a formalization of, Hungerbühler--Wasem Proposition 2.2. -/
 theorem windingNumber_eq_exciseCrossings_add_sum_crossingAngle_of_localContribution
-    {windows : List CircularCapWindow} (crossing : CircularCapWindow → ℝ)
+    {windows : List CircularCapWindow} (crossingParameter : CircularCapWindow → ℝ)
     (hγ : IsPiecewiseC1On γ a b)
     (hordered : windows.Pairwise fun W V => W.upper < V.lower)
     (hinside : ∀ W ∈ windows, a < W.lower ∧ W.lower < W.upper ∧ W.upper < b)
@@ -379,19 +381,19 @@ theorem windingNumber_eq_exciseCrossings_add_sum_crossingAngle_of_localContribut
     (hpv : ∀ W ∈ windows,
       CauchyPVExistsAt γ W.lower W.upper (fun z => (z - s)⁻¹) s)
     (hlocal : ∀ W ∈ windows, W.localContribution γ s =
-      (crossingAngle γ (crossing W) : ℂ) / (2 * (Real.pi : ℂ))) :
+      (crossingAngle γ (crossingParameter W) : ℂ) / (2 * (Real.pi : ℂ))) :
     windingNumber γ a b s = windingNumber (exciseCrossings γ s windows) a b s +
-      (((windows.map fun W => crossingAngle γ (crossing W)).sum : ℝ) : ℂ) /
+      (((windows.map fun W => crossingAngle γ (crossingParameter W)).sum : ℝ) : ℂ) /
         (2 * (Real.pi : ℂ)) := by
   have hdecomp := windingNumber_eq_exciseCrossings_add_sum hγ hordered hinside hr havoid hpv
   have hsum : (windows.map fun W => W.localContribution γ s).sum =
-      (((windows.map fun W => crossingAngle γ (crossing W)).sum : ℝ) : ℂ) /
+      (((windows.map fun W => crossingAngle γ (crossingParameter W)).sum : ℝ) : ℂ) /
         (2 * (Real.pi : ℂ)) := by
     have hsumAux : ∀ ws : List CircularCapWindow,
         (∀ W ∈ ws, W.localContribution γ s =
-          (crossingAngle γ (crossing W) : ℂ) / (2 * (Real.pi : ℂ))) →
+          (crossingAngle γ (crossingParameter W) : ℂ) / (2 * (Real.pi : ℂ))) →
         (ws.map fun W => W.localContribution γ s).sum =
-          (((ws.map fun W => crossingAngle γ (crossing W)).sum : ℝ) : ℂ) /
+          (((ws.map fun W => crossingAngle γ (crossingParameter W)).sum : ℝ) : ℂ) /
             (2 * (Real.pi : ℂ)) := by
       intro ws hws
       induction ws with
