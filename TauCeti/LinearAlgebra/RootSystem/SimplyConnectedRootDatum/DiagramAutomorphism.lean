@@ -55,8 +55,6 @@ The group of node permutations that the construction consumes is
 
 * `TauCeti.DynkinType.diagramRootPerm_simpleIndex`: the induced permutation extends `σ` along the
   Bourbaki numbering of the simple roots.
-* `TauCeti.DynkinType.image_diagramRootPerm_simplyConnectedBase_support`: the induced permutation
-  preserves the support of the pinned base.
 * `TauCeti.DynkinType.root_diagramRootPerm` and `TauCeti.DynkinType.coroot_diagramRootPerm`: every
   root and coroot has its coordinates permuted by `σ`.
 * `TauCeti.DynkinType.eq_diagramAut`: an automorphism of the pinned datum whose weight map is the
@@ -130,32 +128,6 @@ numbering of the simple roots. -/
     (t.simpleSupportEquiv ht i)
   rw [diagramRootPerm, rationalDiagramAut, ← coe_simpleSupportEquiv, h]
   simp
-
-/-- The induced root permutation preserves the support of the pinned simply connected base. -/
-@[simp] theorem image_diagramRootPerm_simplyConnectedBase_support
-    (hσ : σ ∈ t.diagramSymmetry) :
-    (t.simplyConnectedBase ht).support.image (diagramRootPerm ht hσ) =
-      (t.simplyConnectedBase ht).support := by
-  ext i
-  simp only [Finset.mem_image]
-  constructor
-  · rintro ⟨j, hj, rfl⟩
-    rw [mem_support_simplyConnectedBase] at hj ⊢
-    let a : Fin t.rank := ⟨j, hj⟩
-    have hja : j = t.simpleIndex ht a := by
-      apply Fin.ext
-      rw [simpleIndex_val]
-    rw [hja, diagramRootPerm_simpleIndex, simpleIndex_val]
-    exact (σ a).isLt
-  · intro hi
-    rw [mem_support_simplyConnectedBase] at hi
-    let a : Fin t.rank := ⟨i, hi⟩
-    refine ⟨t.simpleIndex ht (σ.symm a), ?_, ?_⟩
-    · rw [mem_support_simplyConnectedBase, simpleIndex_val]
-      exact (σ.symm a).isLt
-    · rw [diagramRootPerm_simpleIndex, Equiv.apply_symm_apply]
-      apply Fin.ext
-      rw [simpleIndex_val]
 
 /-! ## The coordinates are permuted by the node permutation -/
 
