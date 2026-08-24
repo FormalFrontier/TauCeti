@@ -34,9 +34,9 @@ Keller's operation.
 
 ## Main results
 
-* `TauCeti.ι_linearHomComplexEnrichedComp` and
-  `TauCeti.ι_linearHomComplexEnrichedComp_tmul`: enriched composition on a bidegree summand and
-  its pure-tensor formula.
+* `TauCeti.ι_linearHomComplexEnrichedComp`: enriched composition on a bidegree summand.
+* `TauCeti.cochainCompTensor_braiding_tmul`: the signed braided closed-composition expression on
+  pure tensors.
 * `TauCeti.linearHomComplexEnrichedCategory_hom`,
   `TauCeti.linearHomComplexEnrichedCategory_eId`, and
   `TauCeti.linearHomComplexEnrichedCategory_eComp`: the Hom, identity, and composition fields of
@@ -97,10 +97,10 @@ lemma ι_linearHomComplexEnrichedComp (F G K : CochainComplex C ℤ) (p q j : �
     koszulBraidingSummand_def, Linear.units_smul_comp, Category.assoc,
     ι_linearHomComplexComp]
 
-/-- On a pure tensor of homogeneous cochains, enriched composition is Keller composition after
-the Koszul sign converting from Mathlib's factor order. -/
+/-- On a pure tensor, the signed closed-composition expression after the module braiding is
+Keller composition with the Koszul sign converting from Mathlib's factor order. -/
 @[simp]
-lemma ι_linearHomComplexEnrichedComp_tmul (F G K : CochainComplex C ℤ) (p q j : ℤ)
+lemma cochainCompTensor_braiding_tmul (F G K : CochainComplex C ℤ) (p q j : ℤ)
     (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ)
       (ComplexShape.up ℤ) (p, q) = j)
     (z₁ : ModuleCat.of R (Cochain F G p)) (z₂ : ModuleCat.of R (Cochain G K q)) :
@@ -112,6 +112,8 @@ lemma ι_linearHomComplexEnrichedComp_tmul (F G K : CochainComplex C ℤ) (p q j
       ((p * q).negOnePow • z₁.comp z₂ (by dsimp at h; omega) :
         ModuleCat.of R (Cochain F K j)) := by
   rw [ModuleCat.MonoidalCategory.braiding_hom_apply]
+  -- `cochainCompTensor` is indexed by `.X`, while its element-level API is normalized to the
+  -- advertised `ModuleCat.of` cochain modules; this aligns those definitionally equal wrappers.
   change (p * q).negOnePow •
       (ModuleCat.Hom.hom (cochainCompTensor R F G K q p j _) (z₂ ⊗ₜ z₁) :
         ModuleCat.of R (Cochain F K j)) =
