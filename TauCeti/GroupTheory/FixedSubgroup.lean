@@ -9,7 +9,7 @@ public import TauCeti.Algebra.Group.Subgroup.Map
 public import Mathlib.Algebra.Group.End
 public import Mathlib.Algebra.Group.Equiv.Basic
 public import Mathlib.Algebra.Group.Subgroup.Ker
-public import Mathlib.Dynamics.PeriodicPts.Defs
+public import Mathlib.Dynamics.FixedPoints.Defs
 
 /-!
 # The fixed points of an endomorphism
@@ -40,9 +40,6 @@ endomorphism of it, so it is available before any ambient group has been constru
   its powers.
 * `TauCeti.fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp`: a point fixed by each of two
   endomorphisms is fixed by their composite.
-* `TauCeti.fixedSubgroup_comp_le_fixedSubgroup_pow_of_commute_of_pow_eq_one`: fixed points of a
-  composite of commuting endomorphisms lie in the fixed points of a power of one factor when the
-  other factor has finite order.
 * `TauCeti.map_fixedSubgroup_le`: a homomorphism intertwining two endomorphisms carries the points
   fixed by the one to the points fixed by the other.
 * `TauCeti.map_fixedSubgroup_eq`: an isomorphism intertwining them carries the one *onto* the other.
@@ -111,26 +108,6 @@ theorem fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_comp (F F' : G →* G) 
   rw [mem_fixedSubgroup] at hF hF'
   rw [mem_fixedSubgroup, MonoidHom.coe_comp]
   exact Function.inter_subset_fixedPoints_comp ⟨hF', hF⟩
-
-/-- Suppose that two endomorphisms commute and that `F' ^ d = 1`. Every point fixed by
-`F'.comp F` is then fixed by `F ^ d`.
-
-This is the fixed-subgroup consequence of `Function.Commute.comp_iterate`. -/
-theorem fixedSubgroup_comp_le_fixedSubgroup_pow_of_commute_of_pow_eq_one
-    (F F' : Monoid.End G) (hcomm : Function.Commute F' F) {d : ℕ} (hpow : F' ^ d = 1) :
-    fixedSubgroup (F'.comp F : G →* G) ≤
-      fixedSubgroup ((F ^ d : Monoid.End G) : G →* G) := by
-  intro x hx
-  rw [mem_fixedSubgroup] at hx
-  rw [mem_fixedSubgroup_end_pow_iff]
-  have hcomp : Function.IsFixedPt ((⇑F) ∘ (⇑F')) x := by
-    simpa only [Function.IsFixedPt, Function.comp_apply, MonoidHom.comp_apply] using
-      (hcomm x).symm.trans hx
-  have hF' : Function.IsPeriodicPt (⇑F') d x := by
-    rw [Function.IsPeriodicPt, Function.IsFixedPt,
-      ← congrFun (Monoid.End.coe_pow _ F' d) x, hpow]
-    simp only [Monoid.End.coe_one, id_eq]
-  exact Function.IsPeriodicPt.left_of_comp hcomm.symm (hcomp.isPeriodicPt d) hF'
 
 variable {G' : Type*} [Group G']
 
