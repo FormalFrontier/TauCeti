@@ -45,11 +45,10 @@ Markov bound on the coordinate `p ↦ 1 - e^{-xp}` against the Laplace gap
 `f 0 - f x`, which continuity at `0` makes uniformly small), so Prokhorov produces a weak cluster
 point, and the squeeze identifies its Laplace transform as `f`.
 
-Continuity is assumed on all of `[0, ∞)`, although right-continuity at `0` is the only part of it
-that is not automatic: taking two equal steps in the sign condition makes `f` midpoint convex on
-`[0, ∞)`, and it is bounded there by `f 0`, so Bernstein--Doetsch would give continuity on
-`(0, ∞)` for free. Mathlib has no midpoint-convexity regularity theory, so that strengthening is
-left out rather than assumed; every application here supplies continuity anyway.
+Right-continuity at `0` is the only continuity assumption needed: taking two equal steps in the
+sign condition makes `f` midpoint convex on `[0, ∞)`, while the one-step condition makes it
+antitone there. Iterating the midpoint inequality at dyadic points approaching any `t > 0`
+therefore squeezes `f` to continuity at `t`.
 
 The converse is a direct computation: for a finite measure `μ` the mixed difference
 `Δ_{h₁} ⋯ Δ_{hₙ} (laplaceTransform μ)` at `t` is
@@ -69,12 +68,13 @@ form in which applications use it, since the derivative predicate is what
 * `TauCeti.isDifferenceCompletelyMonotone_laplaceTransform` and
   `TauCeti.RepresentsLaplace.isDifferenceCompletelyMonotone`: the easy direction, that a Laplace
   transform of a finite measure has alternating mixed differences.
-* `TauCeti.exists_representsLaplace_of_isDifferenceCompletelyMonotone`: **the representation
-  theorem**, that a continuous function with alternating mixed differences is the Laplace
-  transform of a finite measure.
+* `TauCeti.exists_representsLaplace_of_isDifferenceCompletelyMonotone_of_continuousWithinAt`:
+  **the representation theorem**, that a function right-continuous at zero with alternating mixed
+  differences is the Laplace transform of a finite measure.
 * `TauCeti.hausdorff_bernstein_widder_difference`: the resulting characterization of the
   Laplace transforms of finite measures on `ℝ≥0`.
-* `TauCeti.isContinuousCompletelyMonotoneOnIoi_iff_isDifferenceCompletelyMonotone` and
+* `TauCeti.isContinuousCompletelyMonotoneOnIoi_iff_isDifferenceCompletelyMonotone_and_continuousOn`
+  and
   `TauCeti.IsDifferenceCompletelyMonotone.isContinuousCompletelyMonotoneOnIoi`: the two notions
   of complete monotonicity agree on functions continuous on `[0, ∞)`.
 
@@ -105,7 +105,8 @@ finite-difference sense is squeezed, for every `ε > 0`, between
 A Bernstein representation of `f` itself does not follow from these measures by compactness
 alone: the hypothesis leaves the value at the endpoint free, so it needs right-continuity of `f`
 at `0`, which is what
-`TauCeti.exists_representsLaplace_of_isDifferenceCompletelyMonotone` adds. -/
+`TauCeti.exists_representsLaplace_of_isDifferenceCompletelyMonotone_of_continuousWithinAt`
+adds. -/
 theorem IsDifferenceCompletelyMonotone.exists_isFiniteMeasure_laplaceTransform_between_shift
     (hf : IsDifferenceCompletelyMonotone f) {ε : ℝ} (hε : 0 < ε) :
     ∃ μ : Measure ℝ≥0, IsFiniteMeasure μ ∧ ∀ t : ℝ, 0 ≤ t →
@@ -138,7 +139,8 @@ private lemma laplaceDiffIntegrand_add (l : List ℝ) (t a : ℝ) (p : ℝ≥0) 
     laplaceDiffIntegrand l (t + a) p
       = Real.exp (-(a * (p : ℝ))) * laplaceDiffIntegrand l t p := by
   simp only [laplaceDiffIntegrand]
-  rw [show -((t + a) * (p : ℝ)) = -(a * (p : ℝ)) + -(t * (p : ℝ)) by ring, Real.exp_add]
+  have hsplit : -((t + a) * (p : ℝ)) = -(a * (p : ℝ)) + -(t * (p : ℝ)) := by ring
+  rw [hsplit, Real.exp_add]
   ring
 
 /-- Each factor of the integrand lies in `[0, 1]`, hence so does the integrand. -/
@@ -235,6 +237,85 @@ theorem RepresentsLaplace.isDifferenceCompletelyMonotone {μ : Measure ℝ≥0}
   exact (isDifferenceCompletelyMonotone_laplaceTransform μ).congr fun t ht =>
     h.eq_laplaceTransform ht
 
+/-- A finite-difference completely monotone function is automatically continuous away from the
+endpoint. The equal-step second-difference inequality gives the midpoint bound used below, while
+antitonicity turns its dyadic estimates into a two-sided squeeze. -/
+private lemma IsDifferenceCompletelyMonotone.continuousAt_of_pos
+    (hf : IsDifferenceCompletelyMonotone f) {x : ℝ} (hx : 0 < x) : ContinuousAt f x := by
+  have hmidpoint : ∀ {a h : ℝ}, 0 ≤ a → 0 ≤ h →
+      2 * f (a + h) ≤ f a + f (a + 2 * h) := by
+    intro a h ha hh
+    have hdiff := isDifferenceCompletelyMonotone_iff.mp hf [h, h] (by simpa using hh) a ha
+    simp only [List.length_cons, List.length_nil, fwdDiffList_cons, fwdDiffList_nil, fwdDiff,
+      zero_add, pow_succ, pow_zero] at hdiff
+    have hadd : a + h + h = a + 2 * h := by ring
+    rw [hadd] at hdiff
+    norm_num at hdiff
+    linarith
+  have hdyadic : ∀ n : ℕ,
+      f ((1 - (1 / 2 : ℝ) ^ n) * x) ≤
+        (1 / 2 : ℝ) ^ n * f 0 + (1 - (1 / 2 : ℝ) ^ n) * f x := by
+    intro n
+    induction n with
+    | zero => simp
+    | succ n ih =>
+        have hc_nonneg : 0 ≤ (1 / 2 : ℝ) ^ n := by positivity
+        have hc_le_one : (1 / 2 : ℝ) ^ n ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
+        have hstep := hmidpoint (a := (1 - (1 / 2 : ℝ) ^ n) * x)
+          (h := (1 / 2 : ℝ) ^ n * x / 2) (by positivity) (by positivity)
+        have hhalf : (1 - (1 / 2 : ℝ) ^ n) * x + (1 / 2 : ℝ) ^ n * x / 2 =
+            (1 - (1 / 2 : ℝ) ^ n / 2) * x := by ring
+        have hend : (1 - (1 / 2 : ℝ) ^ n) * x +
+            2 * ((1 / 2 : ℝ) ^ n * x / 2) = x := by ring
+        rw [hhalf, hend] at hstep
+        have hpoint : (1 - (1 / 2 : ℝ) ^ n / 2) * x =
+            (1 - (1 / 2 : ℝ) ^ n * (1 / 2)) * x := by ring
+        rw [hpoint] at hstep
+        rw [pow_succ]
+        calc
+          f ((1 - (1 / 2 : ℝ) ^ n * (1 / 2)) * x)
+              ≤ (f ((1 - (1 / 2 : ℝ) ^ n) * x) + f x) / 2 := by
+                nlinarith
+          _ ≤ ((1 / 2 : ℝ) ^ n * f 0 + (1 - (1 / 2 : ℝ) ^ n) * f x + f x) / 2 :=
+            by linarith
+          _ = (1 / 2 : ℝ) ^ n * (1 / 2) * f 0 +
+              (1 - (1 / 2 : ℝ) ^ n * (1 / 2)) * f x := by ring
+  rw [Metric.continuousAt_iff]
+  intro ε hε
+  have hpow : Tendsto (fun n : ℕ => (1 / 2 : ℝ) ^ n * (f 0 - f x)) atTop (𝓝 0) := by
+    have hbase := tendsto_pow_atTop_nhds_zero_of_lt_one
+      (by norm_num : (0 : ℝ) ≤ 1 / 2) (by norm_num)
+    simpa using hbase.mul_const (f 0 - f x)
+  obtain ⟨n, hn, hsmall⟩ :=
+    ((eventually_ge_atTop 1).and (hpow.eventually (eventually_lt_nhds hε))).exists
+  let c : ℝ := (1 / 2 : ℝ) ^ n
+  have hc_pos : 0 < c := by positivity
+  have hc_lt_one : c < 1 := by
+    dsimp [c]
+    exact pow_lt_one₀ (by norm_num) (by norm_num) (Nat.ne_of_gt hn)
+  refine ⟨c * x, mul_pos hc_pos hx, ?_⟩
+  intro y hy
+  rw [Real.dist_eq] at hy ⊢
+  have hy_bounds : (1 - c) * x < y ∧ y < (1 + c) * x := by
+    constructor <;> nlinarith [abs_lt.mp hy]
+  have hq_nonneg : 0 ≤ (1 - c) * x := mul_nonneg (sub_nonneg.mpr hc_lt_one.le) hx.le
+  have hy_nonneg : 0 ≤ y := hq_nonneg.trans hy_bounds.1.le
+  have hr_nonneg : 0 ≤ (1 + c) * x := by positivity
+  have hq := hdyadic n
+  change f ((1 - c) * x) ≤ c * f 0 + (1 - c) * f x at hq
+  have hy_upper : f y < f x + ε := by
+    have := hf.antitoneOn (mem_Ici.2 hq_nonneg) (mem_Ici.2 hy_nonneg) hy_bounds.1.le
+    nlinarith
+  have hcenter := hmidpoint (a := (1 - c) * x) (h := c * x)
+    hq_nonneg (mul_nonneg hc_pos.le hx.le)
+  have hcenter_left : (1 - c) * x + c * x = x := by ring
+  have hcenter_right : (1 - c) * x + 2 * (c * x) = (1 + c) * x := by ring
+  rw [hcenter_left, hcenter_right] at hcenter
+  have hy_lower : f x - ε < f y := by
+    have := hf.antitoneOn (mem_Ici.2 hy_nonneg) (mem_Ici.2 hr_nonneg) hy_bounds.2.le
+    nlinarith
+  exact abs_lt.2 ⟨by linarith, by linarith⟩
+
 /-! ## Tightness of the approximating measures -/
 
 /-- **The approximating measures of a continuous finite-difference completely monotone function
@@ -245,7 +326,7 @@ Choosing `x` so small that `f` has barely dropped by `2x` makes the estimate uni
 shifts `aₙ ≤ x`; the finitely many larger shifts are handled by
 `TauCeti.isTightMeasureSet_range_finite`. -/
 private lemma isTightMeasureSet_range_of_laplaceTransform_between_shift
-    (hf : IsDifferenceCompletelyMonotone f) (hcont : ContinuousOn f (Ici 0))
+    (hf : IsDifferenceCompletelyMonotone f) (hcont : ContinuousWithinAt f (Ici 0) 0)
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n) (ha : Tendsto a atTop (𝓝 0))
     {μ : ℕ → Measure ℝ≥0} (hfin : ∀ n, IsFiniteMeasure (μ n))
     (hlow : ∀ n, ∀ t : ℝ, 0 ≤ t → f (t + a n) ≤ laplaceTransform (μ n) t)
@@ -261,12 +342,10 @@ private lemma isTightMeasureSet_range_of_laplaceTransform_between_shift
     linarith
   -- A point `y > 0` at which `f` has dropped from `f 0` by less than `ε.toReal * (1 - e⁻¹)`.
   have hcw : Tendsto f (𝓝[>] (0 : ℝ)) (𝓝 (f 0)) :=
-    (hcont.continuousWithinAt (mem_Ici.2 le_rfl)).tendsto.mono_left
-      (nhdsWithin_mono _ Ioi_subset_Ici_self)
+    hcont.tendsto.mono_left (nhdsWithin_mono _ Ioi_subset_Ici_self)
+  have hdrop : f 0 - ε.toReal * (1 - Real.exp (-1 : ℝ)) < f 0 := by nlinarith
   obtain ⟨y, hy, hy_pos⟩ :=
-    ((hcw.eventually (eventually_gt_nhds
-      (show f 0 - ε.toReal * (1 - Real.exp (-1 : ℝ)) < f 0 by nlinarith))).and
-        self_mem_nhdsWithin).exists
+    ((hcw.eventually (eventually_gt_nhds hdrop)).and self_mem_nhdsWithin).exists
   -- The Markov parameter is `y / 2` and the radius its inverse, so that their product is `1`.
   have hx_pos : 0 < y / 2 := by linarith
   have hR_pos : 0 < (y / 2)⁻¹ := inv_pos.mpr hx_pos
@@ -310,17 +389,22 @@ private lemma isTightMeasureSet_range_of_laplaceTransform_between_shift
 /-! ## The representation theorem -/
 
 /-- **The existence half of the Hausdorff--Bernstein--Widder theorem in finite-difference form.**
-A function continuous on `[0, ∞)` all of whose mixed forward differences with nonnegative steps
+A function right-continuous at zero all of whose mixed forward differences with nonnegative steps
 have the sign `(-1)ⁿ` is the Laplace transform of a finite positive measure on `ℝ≥0`.
 
 The smoothings of `f` at the shifts `aₙ = 1/(n+1)` have representing measures squeezing `f`
 between `f (· + aₙ)` and `f`; they are uniformly bounded in mass by `f 0` and uniformly tight, so
 Prokhorov supplies a weak cluster point `μ₀`. Continuity of `f` closes the squeeze: the Laplace
 transform of `μ₀` at `t` is at most `f t`, and at least `f s` for every `s > t`. -/
-theorem exists_representsLaplace_of_isDifferenceCompletelyMonotone
-    (hf : IsDifferenceCompletelyMonotone f) (hcont : ContinuousOn f (Ici 0)) :
+theorem exists_representsLaplace_of_isDifferenceCompletelyMonotone_of_continuousWithinAt
+    (hf : IsDifferenceCompletelyMonotone f) (hcont : ContinuousWithinAt f (Ici 0) 0) :
     ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   classical
+  have hcontOn : ContinuousOn f (Ici 0) := by
+    intro t ht
+    rcases (mem_Ici.mp ht).eq_or_lt with rfl | ht
+    · exact hcont
+    · exact (hf.continuousAt_of_pos ht).continuousWithinAt
   -- Stage 1: the positive null sequence of shifts and the approximating measures.
   have ha_pos : ∀ n : ℕ, 0 < 1 / ((n : ℝ) + 1) := fun n => by positivity
   have ha : Tendsto (fun n : ℕ => 1 / ((n : ℝ) + 1)) atTop (𝓝 0) :=
@@ -361,41 +445,58 @@ theorem exists_representsLaplace_of_isDifferenceCompletelyMonotone
     refine le_trans (hf.antitoneOn (mem_Ici.2 (by positivity)) (mem_Ici.2 (by linarith))
       (by linarith)) (hlow n t ht)
   have hcw : Tendsto f (𝓝[>] t) (𝓝 (f t)) :=
-    (hcont.continuousWithinAt (mem_Ici.2 ht)).tendsto.mono_left
+    (hcontOn.continuousWithinAt (mem_Ici.2 ht)).tendsto.mono_left
       (nhdsWithin_mono t fun s hs => mem_Ici.2 (ht.trans (le_of_lt hs)))
   have hft : f t ≤ laplaceTransform μ₀ t :=
     le_of_tendsto hcw (eventually_mem_nhdsWithin.mono fun s hs => hlower s hs)
   exact le_antisymm hft hupper
 
-/-- **The Hausdorff--Bernstein--Widder theorem in finite-difference form.** A function is
-continuous on `[0, ∞)` with alternating mixed forward differences if and only if it is the
+/-- A continuous finite-difference completely monotone function is the Laplace transform of a
+finite positive measure. This is the continuous-on corollary of the endpoint-continuity theorem. -/
+theorem exists_representsLaplace_of_isDifferenceCompletelyMonotone_of_continuousOn
+    (hf : IsDifferenceCompletelyMonotone f) (hcont : ContinuousOn f (Ici 0)) :
+    ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f :=
+  exists_representsLaplace_of_isDifferenceCompletelyMonotone_of_continuousWithinAt hf
+    (hcont.continuousWithinAt (mem_Ici.2 le_rfl))
+
+/-- **The Hausdorff--Bernstein--Widder theorem in finite-difference form.** A function has
+alternating mixed forward differences and is right-continuous at zero if and only if it is the
 Laplace transform of a finite positive measure on `ℝ≥0`. -/
 theorem hausdorff_bernstein_widder_difference (f : ℝ → ℝ) :
-    (IsDifferenceCompletelyMonotone f ∧ ContinuousOn f (Ici 0))
+    (IsDifferenceCompletelyMonotone f ∧ ContinuousWithinAt f (Ici 0) 0)
       ↔ ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
-  refine ⟨fun ⟨hf, hcont⟩ => exists_representsLaplace_of_isDifferenceCompletelyMonotone hf hcont,
+  refine ⟨fun ⟨hf, hcont⟩ =>
+      exists_representsLaplace_of_isDifferenceCompletelyMonotone_of_continuousWithinAt hf hcont,
     fun ⟨μ, hμ⟩ =>
-      ⟨hμ.isDifferenceCompletelyMonotone, hμ.isContinuousCompletelyMonotoneOnIoi.continuousOn⟩⟩
+      ⟨hμ.isDifferenceCompletelyMonotone,
+        hμ.isContinuousCompletelyMonotoneOnIoi.continuousOn.continuousWithinAt
+          (mem_Ici.2 le_rfl)⟩⟩
 
 /-- **The two notions of complete monotonicity agree on continuous functions.** For a function
 continuous on `[0, ∞)`, complete monotonicity in the derivative sense on `(0, ∞)` is equivalent
 to the sign condition on all mixed forward differences, which mentions no derivatives at all.
 Compare `TauCeti.isCompletelyMonotone_iff_isDifferenceCompletelyMonotone`, which assumes
 smoothness; here smoothness is a conclusion. -/
-theorem isContinuousCompletelyMonotoneOnIoi_iff_isDifferenceCompletelyMonotone (f : ℝ → ℝ) :
+theorem isContinuousCompletelyMonotoneOnIoi_iff_isDifferenceCompletelyMonotone_and_continuousOn
+    (f : ℝ → ℝ) :
     IsContinuousCompletelyMonotoneOnIoi f
       ↔ IsDifferenceCompletelyMonotone f ∧ ContinuousOn f (Ici 0) := by
   rw [hausdorff_bernstein_widder f]
-  exact (hausdorff_bernstein_widder_difference f).symm
+  refine ⟨fun ⟨μ, hμ⟩ =>
+      ⟨hμ.isDifferenceCompletelyMonotone, hμ.isContinuousCompletelyMonotoneOnIoi.continuousOn⟩,
+    fun ⟨hf, hcont⟩ =>
+      exists_representsLaplace_of_isDifferenceCompletelyMonotone_of_continuousOn hf hcont⟩
 
 /-- **From finite differences to derivatives.** This is the form in which applications use the
 equivalence: the Bernstein measure and the Bernstein kernel take
 `TauCeti.IsContinuousCompletelyMonotoneOnIoi` as their hypothesis, while what is checkable in
 practice is the finite-difference condition. -/
 theorem IsDifferenceCompletelyMonotone.isContinuousCompletelyMonotoneOnIoi
-    (hf : IsDifferenceCompletelyMonotone f) (hcont : ContinuousOn f (Ici 0)) :
-    IsContinuousCompletelyMonotoneOnIoi f :=
-  (isContinuousCompletelyMonotoneOnIoi_iff_isDifferenceCompletelyMonotone f).2 ⟨hf, hcont⟩
+    (hf : IsDifferenceCompletelyMonotone f) (hcont : ContinuousWithinAt f (Ici 0) 0) :
+    IsContinuousCompletelyMonotoneOnIoi f := by
+  obtain ⟨μ, hμ⟩ :=
+    exists_representsLaplace_of_isDifferenceCompletelyMonotone_of_continuousWithinAt hf hcont
+  exact hμ.isContinuousCompletelyMonotoneOnIoi
 
 end TauCeti
 
