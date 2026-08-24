@@ -9,6 +9,7 @@ public import Mathlib.LinearAlgebra.PID
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RepresentationTheory.Subrepresentation
 public import TauCeti.Algebra.MonoidAlgebra.Basis
+public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
 # The augmentation subrepresentation of a permutation representation
@@ -414,9 +415,10 @@ theorem character_augmentationSubrepresentation [Finite X] [Nonempty X] (g : G) 
     refine LinearMap.ext fun v => Subtype.ext ?_
     have hv : (MonoidAlgebra.basis X k).sumCoords (v : MonoidAlgebra k X) = 0 :=
       mem_augmentationSubrepresentation_iff.mp v.2
-    change (Representation.ofMulAction k G X g - σ) (v : MonoidAlgebra k X) = _
-    rw [LinearMap.sub_apply, hσ_apply, hv, zero_smul, sub_zero]
-    rfl
+    -- Both sides are restrictions of a map on `k[X]`, so `Subrepresentation.toRepresentation_apply`
+    -- and `LinearMap.coe_restrict_apply` take the goal down to `k[X]`, where `σ` kills `v`.
+    rw [Subrepresentation.toRepresentation_apply, LinearMap.coe_restrict_apply,
+      LinearMap.coe_restrict_apply, LinearMap.sub_apply, hσ_apply, hv, zero_smul, sub_zero]
   have key : LinearMap.trace k _ ((Representation.ofMulAction k G X g - σ).restrict
       (fun v _ => hmem v))
       = LinearMap.trace k _ (Representation.ofMulAction k G X g - σ) :=
