@@ -83,6 +83,7 @@ theorem sum_card_fixedBy_mul_card_fixedBy_eq_card_orbits_mul_card_group
 /-- **A pretransitive action on a nonempty type has one orbit.** This is Mathlib's
 `MulAction.pretransitive_iff_unique_quotient_of_nonempty` in the counting form in which the orbit
 side of Burnside's lemma is read. -/
+@[simp]
 theorem card_orbitQuotient_eq_one [Nonempty X] [IsPretransitive G X] :
     Nat.card (orbitRel.Quotient G X) = 1 :=
   let _ := ((MulAction.pretransitive_iff_unique_quotient_of_nonempty G X).mp ‹_›).some

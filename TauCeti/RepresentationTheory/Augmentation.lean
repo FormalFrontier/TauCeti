@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.PID
-public import Mathlib.RepresentationTheory.Character
 public import TauCeti.Algebra.MonoidAlgebra.Basis
 public import TauCeti.RepresentationTheory.FDRep
 public import TauCeti.RepresentationTheory.Subrepresentation
@@ -38,8 +37,7 @@ the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the 
 * `TauCeti.ofMulAction_permutationSum`: the sum of the standard basis is fixed, which is what makes
   the invariant line one.
 * `TauCeti.toRepresentation_invariantLine`: the invariant line carries the trivial representation,
-  and `TauCeti.finrank_invariantLine` says it is a line, so its character is constantly `1`
-  (`TauCeti.character_invariantLine`).
+  and `TauCeti.finrank_invariantLine` says it is a line.
 * `TauCeti.ker_sumCoords_basis_eq_span`: the augmentation subrepresentation is spanned by the
   differences of the standard basis vectors from a fixed one.
 * `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`: when `|X|` is invertible in `k`,
@@ -348,17 +346,7 @@ theorem finrank_augmentationSubrepresentation :
   rw [toSubmodule_augmentationSubrepresentation]
   omega
 
-/-! ### The characters of the two subrepresentations -/
-
-/-- **The invariant line contributes `1` to the character.**  It is a line on which every group
-element acts as the identity.
-
-Not a `simp` lemma: `TauCeti.toRepresentation_invariantLine` already rewrites the left-hand side,
-so this statement is not in simp-normal form. -/
-theorem character_invariantLine [Nonempty X] (g : G) :
-    (invariantLine k G X).toRepresentation.character g = 1 := by
-  rw [toRepresentation_invariantLine, Representation.char_trivial, finrank_invariantLine]
-  norm_num
+/-! ### The character of the augmentation subrepresentation -/
 
 omit [Fintype X] in
 /-- **The character of the augmentation subrepresentation** is the character of `k[X]` less `1`.
