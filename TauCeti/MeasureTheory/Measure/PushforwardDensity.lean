@@ -41,10 +41,14 @@ on a `μ`-null set (`pushDensity_ae_eq_rnDeriv`).
 * `TauCeti.MeasureTheory.pushDensity_ae_eq_rnDeriv` — the truncation is a.e. invisible.
 * `TauCeti.MeasureTheory.integral_pushDensity` — the density integrates to the measure of the set,
   the case `g = 1`.
+* `TauCeti.MeasureTheory.pushDensity_congr` — the density depends on the set upstairs only through
+  its `ν`-a.e. class; this equality is exact, not almost everywhere.
 * `TauCeti.MeasureTheory.pushDensity_preimage` and `TauCeti.MeasureTheory.pushDensity_univ` — on a
-  preimage the density collapses to an indicator, so the construction extends the trivial case.
-* `TauCeti.MeasureTheory.pushDensity_prod_fst` — on a product carrier the density of a rectangle
-  is a genuinely fractional multiple of an indicator, so no such collapse holds in general.
+  preimage the density collapses `μ`-almost everywhere to an indicator, so the construction extends
+  the trivial case.
+* `TauCeti.MeasureTheory.pushDensity_prod_fst` — on a product carrier the density of a rectangle is
+  `μ`-almost everywhere a genuinely fractional multiple of an indicator, so no such collapse holds
+  in general.
 
 ## References
 
@@ -88,21 +92,19 @@ theorem measurable_pushDensity (f : Ω' → Ω) (ν : Measure Ω') (μ : Measure
     Measurable (pushDensity f ν μ s) :=
   measurable_const.min (Measure.measurable_rnDeriv _ _).ennreal_toReal
 
-/-- The density is nonnegative everywhere. -/
-theorem pushDensity_nonneg (f : Ω' → Ω) (ν : Measure Ω') (μ : Measure Ω) (s : Set Ω') (a : Ω) :
-    0 ≤ pushDensity f ν μ s a :=
-  le_min zero_le_one ENNReal.toReal_nonneg
-
-/-- The density is at most `1` everywhere: this is what the truncation buys. -/
-theorem pushDensity_le_one (f : Ω' → Ω) (ν : Measure Ω') (μ : Measure Ω) (s : Set Ω') (a : Ω) :
-    pushDensity f ν μ s a ≤ 1 :=
-  min_le_left _ _
-
-/-- The density is `[0, 1]`-valued everywhere, in the packaged form the extremal arguments of the
-cut-norm theory consume. -/
+/-- **The density is `[0, 1]`-valued everywhere.**  The upper bound is what the truncation in the
+definition buys; both bounds are packaged together, in the form the extremal arguments of the
+cut-norm theory consume, and the two halves are `.1` and `.2`. -/
 theorem pushDensity_mem_Icc (f : Ω' → Ω) (ν : Measure Ω') (μ : Measure Ω) (s : Set Ω') (a : Ω) :
     pushDensity f ν μ s a ∈ Icc (0 : ℝ) 1 :=
-  ⟨pushDensity_nonneg f ν μ s a, pushDensity_le_one f ν μ s a⟩
+  ⟨le_min zero_le_one ENNReal.toReal_nonneg, min_le_left _ _⟩
+
+/-- **The density depends on the set upstairs only through its `ν`-a.e. class.**  Replacing `s` by
+an a.e. equal set does not change the function at all, since it does not change `ν.restrict s`. -/
+theorem pushDensity_congr (f : Ω' → Ω) (μ : Measure Ω) {s t : Set Ω'} (h : s =ᵐ[ν] t) :
+    pushDensity f ν μ s = pushDensity f ν μ t := by
+  funext a
+  rw [pushDensity_def, pushDensity_def, Measure.restrict_congr_set h]
 
 /-- Pushing forward the part of `ν` carried by `s` gives a measure below `μ`.  This is the whole
 reason the density is `[0, 1]`-valued, and it needs no hypothesis on `s`. -/
@@ -156,9 +158,12 @@ theorem integral_pushDensity [IsFiniteMeasure ν] (hf : MeasurePreserving f ν �
   have h := integral_pushDensity_mul hf s (g := fun _ => (1 : ℝ)) measurable_const
   simpa [Measure.restrict_apply_univ] using h
 
-/-- **On a preimage the density is an indicator.**  Nothing is lost when the set upstairs is
-already cut out by a set on the base, so `pushDensity` extends the trivial case rather than
-replacing it. -/
+/-- **On a preimage the density is `μ`-almost everywhere an indicator.**  Nothing is lost when the
+set upstairs is already cut out by a set on the base, so `pushDensity` extends the trivial case
+rather than replacing it.
+
+The conclusion is only `μ`-a.e., as it must be: the Radon–Nikodym derivative is itself defined only
+up to a `μ`-null set. -/
 theorem pushDensity_preimage [IsFiniteMeasure ν] (hf : MeasurePreserving f ν μ) {t : Set Ω}
     (ht : MeasurableSet t) :
     pushDensity f ν μ (f ⁻¹' t) =ᵐ[μ] t.indicator 1 := by
@@ -172,16 +177,17 @@ theorem pushDensity_preimage [IsFiniteMeasure ν] (hf : MeasurePreserving f ν �
   rw [ha, hb]
   by_cases hat : a ∈ t <;> simp [hat]
 
-/-- The whole carrier upstairs has density `1`. -/
+/-- The whole carrier upstairs has density `1` `μ`-almost everywhere. -/
 theorem pushDensity_univ [IsFiniteMeasure ν] (hf : MeasurePreserving f ν μ) :
     pushDensity f ν μ univ =ᵐ[μ] 1 := by
   have h := pushDensity_preimage hf (t := univ) MeasurableSet.univ
   simpa using h
 
 /-- **The density genuinely takes fractional values.**  On a product carrier projected to its first
-factor, a rectangle `s ×ˢ t` has density `ν.real t · 1_s`: the second factor contributes its mass,
-not an indicator.  Together with `pushDensity_preimage` this pins the construction down — an
-indicator of a set on the base would be wrong whenever `0 < ν.real t < 1`. -/
+factor, a rectangle `s ×ˢ t` has density `ν.real t · 1_s` `μ`-almost everywhere: the second factor
+contributes its mass, not an indicator.  Together with `pushDensity_preimage` this pins the
+construction down — an indicator of a set on the base would be wrong whenever
+`0 < ν.real t < 1`. -/
 theorem pushDensity_prod_fst [IsFiniteMeasure μ] [IsProbabilityMeasure ν] {s : Set Ω}
     (hs : MeasurableSet s) (t : Set Ω') :
     pushDensity Prod.fst (μ.prod ν) μ (s ×ˢ t) =ᵐ[μ] fun a => ν.real t * s.indicator 1 a := by

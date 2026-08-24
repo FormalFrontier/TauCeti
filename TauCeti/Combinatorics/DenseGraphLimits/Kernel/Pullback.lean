@@ -42,8 +42,6 @@ exactly the direction proved here. The triangle inequality itself is not proved 
 * `TauCeti.DenseGraphLimits.cutNorm_comap_le` — the cut norm does not increase under
   measure-preserving pullback.
 * `TauCeti.DenseGraphLimits.cutNorm_comap` — hence it is invariant.
-* `TauCeti.DenseGraphLimits.cutNorm_comap_eq_cutNorm_comap` — two measure-preserving maps onto the
-  same carrier give the same cut norm, so the quantity depends only on the pushforward.
 
 ## References
 
@@ -77,16 +75,18 @@ This is the transport that replaces `rectIntegral_comap_preimage` when the recta
 *not* a preimage: instead of moving the rectangle, it moves the two indicators, which become the
 `[0, 1]`-valued densities `pushDensity f ν μ S` and `pushDensity f ν μ T`.  Neither set needs to be
 measurable. -/
-theorem rectIntegral_comap_eq_testIntegral [IsFiniteMeasure ν] [IsFiniteMeasure μ]
+theorem rectIntegral_comap_eq_testIntegral [IsFiniteMeasure ν]
     (hf : MeasurePreserving f ν μ) (K : SymmKernel Ω μ) (S T : Set Ω') :
     (K.comap f hf.measurable ν).rectIntegral ν S T =
       K.testIntegral μ (pushDensity f ν μ S) (pushDensity f ν μ T) := by
+  have hμ : IsFiniteMeasure μ := by
+    rw [← hf.map_eq]; exact Measure.isFiniteMeasure_map _ _
   have hu : Measurable (pushDensity f ν μ S) := measurable_pushDensity f ν μ S
   have hv : Measurable (pushDensity f ν μ T) := measurable_pushDensity f ν μ T
   have hu1 : ∀ x, pushDensity f ν μ S x ∈ Icc (-1 : ℝ) 1 := fun x =>
-    ⟨by linarith [pushDensity_nonneg f ν μ S x], pushDensity_le_one f ν μ S x⟩
+    ⟨by linarith [(pushDensity_mem_Icc f ν μ S x).1], (pushDensity_mem_Icc f ν μ S x).2⟩
   have hv1 : ∀ y, pushDensity f ν μ T y ∈ Icc (-1 : ℝ) 1 := fun y =>
-    ⟨by linarith [pushDensity_nonneg f ν μ T y], pushDensity_le_one f ν μ T y⟩
+    ⟨by linarith [(pushDensity_mem_Icc f ν μ T y).1], (pushDensity_mem_Icc f ν μ T y).2⟩
   have hinner : ∀ x : Ω',
       ∫ y in T, K (f x) (f y) ∂ν = K.partialIntegral μ (pushDensity f ν μ T) (f x) := by
     intro x
@@ -123,8 +123,9 @@ theorem cutNorm_comap_le [IsFiniteMeasure ν] [IsFiniteMeasure μ] (hf : Measure
       (measurable_pushDensity f ν μ T) (pushDensity_mem_Icc f ν μ S)
       (pushDensity_mem_Icc f ν μ T)
 
-/-- **The cut norm is invariant under measure-preserving pullback.**  Reading a kernel on a carrier
-that maps onto its own, measure preservingly, changes nothing.
+/-- **The cut norm is invariant under measure-preserving pullback.**  Pulling a kernel back along a
+map from any carrier that maps measure preservingly *onto* the kernel's own carrier leaves its cut
+norm unchanged.
 
 The two inequalities have different characters: `cutNorm_le_cutNorm_comap` transports rectangles
 along the map, while `cutNorm_comap_le` pushes them down by conditional density. -/
@@ -132,14 +133,6 @@ theorem cutNorm_comap [IsFiniteMeasure ν] [IsFiniteMeasure μ] (hf : MeasurePre
     (K : SymmKernel Ω μ) :
     cutNorm ν (K.comap f hf.measurable ν) = cutNorm μ K :=
   le_antisymm (cutNorm_comap_le hf K) (cutNorm_le_cutNorm_comap μ hf K)
-
-/-- **The cut norm of a pullback depends only on the pushforward measure.**  Two carriers mapping
-measure preservingly onto the same one see the same cut norm, however different they are. -/
-theorem cutNorm_comap_eq_cutNorm_comap {Ω'' : Type*} [MeasurableSpace Ω''] {ν' : Measure Ω''}
-    [IsFiniteMeasure ν] [IsFiniteMeasure ν'] [IsFiniteMeasure μ] {g : Ω'' → Ω}
-    (hf : MeasurePreserving f ν μ) (hg : MeasurePreserving g ν' μ) (K : SymmKernel Ω μ) :
-    cutNorm ν (K.comap f hf.measurable ν) = cutNorm ν' (K.comap g hg.measurable ν') :=
-  (cutNorm_comap hf K).trans (cutNorm_comap hg K).symm
 
 end DenseGraphLimits
 

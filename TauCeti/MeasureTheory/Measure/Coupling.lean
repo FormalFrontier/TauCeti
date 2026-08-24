@@ -176,7 +176,7 @@ This is the defining pushforward, packaged for the transport lemmas that ask for
 outside this module, so a caller cannot supply the pushforward identity by `rfl`. -/
 theorem measurePreserving_diagonalCoupling (μ : Measure Ω) :
     MeasurePreserving (fun x => (x, x)) μ (diagonalCoupling μ) :=
-  ⟨measurable_id'.prodMk measurable_id', (rfl)⟩
+  (measurable_id'.prodMk measurable_id').measurePreserving μ
 
 /-- The diagonal coupling is a coupling of `μ` with itself: the graph coupling of the identity
 with itself. -/
