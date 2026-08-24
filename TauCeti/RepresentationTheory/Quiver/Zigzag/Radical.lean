@@ -32,10 +32,11 @@ second radical layer is exactly the volume span.
 
 ## Main results
 
-* `TauCeti.jacobson_nonisolatedZigzagQuotient`: the Jacobson radical is the kernel of
+* `TauCeti.jacobson_nonisolatedZigzagQuotient_eq_ker`: the Jacobson radical is the kernel of
   `TauCeti.zigzagTrivialCoeff`, equivalently the positive-length span.
-* `TauCeti.restrictScalars_jacobson_sq_nonisolatedZigzagQuotient`: its square is the volume span.
-* `TauCeti.jacobson_pow_three_nonisolatedZigzagQuotient`: its third power is zero.
+* `TauCeti.restrictScalars_jacobson_sq_nonisolatedZigzagQuotient_eq_zigzagVolumeSpan`: its square
+  is the volume span.
+* `TauCeti.jacobson_pow_three_nonisolatedZigzagQuotient_eq_bot`: its third power is zero.
 
 ## References
 
@@ -53,7 +54,11 @@ open PathAlgebra DoubledQuiver
 
 universe u w
 
-variable (k : Type w) [Field k] {V : Type u} (G : SimpleGraph V) [Finite V]
+variable {V : Type u}
+
+section CommRing
+
+variable (k : Type w) [CommRing k] (G : SimpleGraph V) [Finite V]
 
 /-! ### The vertex-coefficient homomorphism -/
 
@@ -148,6 +153,33 @@ theorem mem_zigzagPositiveSpan_iff (hns : ∀ i : V, ∃ j, G.Adj i j)
     · exact h i
     · exact False.elim (hb ⟨c, rfl⟩)
 
+/-- The volume span is characterized by vanishing vertex and arrow coordinates. -/
+theorem mem_zigzagVolumeSpan_iff (hns : ∀ i : V, ∃ j, G.Adj i j)
+    {x : nonisolatedZigzagQuotient k G} :
+    x ∈ zigzagVolumeSpan k G ↔
+      (∀ i : V, (zigzagBasis k G hns).repr x (.inl i) = 0) ∧
+      ∀ d : G.Dart, (zigzagBasis k G hns).repr x (.inr (.inl d)) = 0 := by
+  rw [zigzagVolumeSpan]
+  have hrange : Set.range (zigzagVolume k G) =
+      zigzagBasisFun k G '' Set.range (fun i => Sum.inr (Sum.inr i)) := by
+    ext y
+    constructor
+    · rintro ⟨i, rfl⟩
+      exact ⟨.inr (.inr i), ⟨i, rfl⟩, zigzagBasisFun_inr_inr k G i⟩
+    · rintro ⟨_, ⟨i, rfl⟩, rfl⟩
+      exact ⟨i, (zigzagBasisFun_inr_inr k G i).symm⟩
+  rw [hrange]
+  simp_rw [← zigzagBasis_apply k G hns]
+  rw [(zigzagBasis k G hns).mem_span_image, Finsupp.support_subset_iff]
+  constructor
+  · intro h
+    exact ⟨fun i => h (.inl i) (by simp), fun d => h (.inr (.inl d)) (by simp)⟩
+  · rintro ⟨hv, ha⟩ b hb
+    rcases b with i | d | i
+    · exact hv i
+    · exact ha d
+    · exact False.elim (hb ⟨i, rfl⟩)
+
 /-- Evaluating the vertex-coefficient homomorphism at `i` reads the `i`-th vertex coordinate in
 the vertex-arrow-volume basis. -/
 theorem zigzagTrivialCoeff_apply_eq_repr (hns : ∀ i : V, ∃ j, G.Adj i j)
@@ -155,30 +187,23 @@ theorem zigzagTrivialCoeff_apply_eq_repr (hns : ∀ i : V, ∃ j, G.Adj i j)
     zigzagTrivialCoeff k G x (vertex G i) =
       (zigzagBasis k G hns).repr x (.inl i) := by
   classical
+  have repr_basisFun (b : ZigzagBasisIndex G) :
+      (zigzagBasis k G hns).repr (zigzagBasisFun k G b) = Finsupp.single b 1 := by
+    rw [← zigzagBasis_apply k G hns, Module.Basis.repr_self]
+  have coord_basisFun (b b' : ZigzagBasisIndex G) :
+      (zigzagBasis k G hns).coord b (zigzagBasisFun k G b') = if b' = b then 1 else 0 := by
+    rw [Module.Basis.coord_apply, repr_basisFun, Finsupp.single_apply]
   have key : (LinearMap.proj (vertex G i)).comp (zigzagTrivialCoeff k G).toLinearMap =
       (zigzagBasis k G hns).coord (.inl i) := by
     refine (zigzagBasis k G hns).ext fun b => ?_
+    rw [LinearMap.comp_apply, LinearMap.proj_apply, zigzagBasis_apply, coord_basisFun]
     rcases b with j | d | j
-    · rw [LinearMap.comp_apply, LinearMap.proj_apply, Module.Basis.coord_apply,
-        zigzagBasis_apply, zigzagBasisFun_inl, AlgHom.toLinearMap_apply,
-        zigzagTrivialCoeff_vertexIdempotent,
-        ← zigzagBasisFun_inl k G j, ← zigzagBasis_apply k G hns (.inl j),
-        Module.Basis.repr_self, Finsupp.single_apply]
-      simp only [Sum.inl.injEq, eq_comm]
-    · rw [LinearMap.comp_apply, LinearMap.proj_apply, Module.Basis.coord_apply,
-        zigzagBasis_apply, zigzagBasisFun_inr_inl, AlgHom.toLinearMap_apply,
-        zigzagTrivialCoeff_ofArrow, Pi.zero_apply,
-        ← zigzagBasisFun_inr_inl k G d,
-        ← zigzagBasis_apply k G hns (.inr (.inl d)), Module.Basis.repr_self,
-        Finsupp.single_apply]
-      simp
-    · rw [LinearMap.comp_apply, LinearMap.proj_apply, Module.Basis.coord_apply,
-        zigzagBasis_apply, zigzagBasisFun_inr_inr, AlgHom.toLinearMap_apply,
-        zigzagTrivialCoeff_zigzagVolume, Pi.zero_apply,
-        ← zigzagBasisFun_inr_inr k G j,
-        ← zigzagBasis_apply k G hns (.inr (.inr j)), Module.Basis.repr_self,
-        Finsupp.single_apply]
-      simp
+    · simp only [zigzagBasisFun_inl, AlgHom.toLinearMap_apply,
+        zigzagTrivialCoeff_vertexIdempotent, Sum.inl.injEq, eq_comm]
+    · simp only [zigzagBasisFun_inr_inl, AlgHom.toLinearMap_apply,
+        zigzagTrivialCoeff_ofArrow, Pi.zero_apply, Sum.inr_ne_inl, ↓reduceIte]
+    · simp only [zigzagBasisFun_inr_inr, AlgHom.toLinearMap_apply,
+        zigzagTrivialCoeff_zigzagVolume, Pi.zero_apply, Sum.inr_ne_inl, ↓reduceIte]
   exact LinearMap.congr_fun key x
 
 /-- The kernel of the vertex-coefficient map is exactly the positive-length span. -/
@@ -263,10 +288,28 @@ theorem mul_mul_eq_zero_of_mem_zigzagPositiveSpan {x y z : nonisolatedZigzagQuot
   mul_eq_zero_of_mem_zigzagVolumeSpan_of_mem_zigzagPositiveSpan
     (mul_mem_zigzagVolumeSpan hx hy) hz
 
+end CommRing
+
 /-! ### Identification with the Jacobson radical -/
 
+variable (k : Type w) [Field k] (G : SimpleGraph V) [Finite V]
+
+variable {k G}
+
+private theorem jacobson_sq_eq_mul :
+    Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2 =
+      Ring.jacobson (nonisolatedZigzagQuotient k G) *
+        Ring.jacobson (nonisolatedZigzagQuotient k G) := by
+  rw [show 2 = 1 + 1 by omega, Ideal.IsTwoSided.pow_succ, Submodule.pow_one]
+
+private theorem jacobson_cube_eq_sq_mul :
+    Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 3 =
+      Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2 *
+        Ring.jacobson (nonisolatedZigzagQuotient k G) := by
+  rw [show 3 = 2 + 1 by omega, Submodule.pow_succ]
+
 /-- **The Jacobson radical of a zigzag relation quotient is its positive-length part.** -/
-theorem jacobson_nonisolatedZigzagQuotient (hns : ∀ i : V, ∃ j, G.Adj i j) :
+theorem jacobson_nonisolatedZigzagQuotient_eq_ker (hns : ∀ i : V, ∃ j, G.Adj i j) :
     Ring.jacobson (nonisolatedZigzagQuotient k G) =
       RingHom.ker (zigzagTrivialCoeff k G).toRingHom := by
   let _ : RingHomSurjective (zigzagTrivialCoeff k G).toRingHom :=
@@ -290,11 +333,11 @@ theorem jacobson_nonisolatedZigzagQuotient (hns : ∀ i : V, ∃ j, G.Adj i j) :
 
 /-- The Jacobson radical, viewed as a `k`-submodule, is the span of the arrow and volume basis
 classes. -/
-theorem restrictScalars_jacobson_nonisolatedZigzagQuotient
+theorem restrictScalars_jacobson_nonisolatedZigzagQuotient_eq_zigzagPositiveSpan
     (hns : ∀ i : V, ∃ j, G.Adj i j) :
     (Ring.jacobson (nonisolatedZigzagQuotient k G)).restrictScalars k =
       zigzagPositiveSpan k G := by
-  rw [jacobson_nonisolatedZigzagQuotient hns,
+  rw [jacobson_nonisolatedZigzagQuotient_eq_ker hns,
     ker_zigzagTrivialCoeff_eq_zigzagPositiveSpan hns]
 
 /-- Every volume class belongs to the square of the Jacobson radical: it is the product of an
@@ -303,15 +346,15 @@ theorem zigzagVolume_mem_jacobson_sq (hns : ∀ i : V, ∃ j, G.Adj i j) (i : V)
     zigzagVolume k G i ∈ Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2 := by
   obtain ⟨j, hij⟩ := hns i
   let d : G.Dart := ⟨(i, j), hij⟩
-  rw [show 2 = 1 + 1 by omega, Ideal.IsTwoSided.pow_succ, Submodule.pow_one]
+  rw [jacobson_sq_eq_mul]
   have hd : zigzagMk k G (ofArrow (arrow G d.symm.adj)) ∈
       Ring.jacobson (nonisolatedZigzagQuotient k G) := by
-    rw [jacobson_nonisolatedZigzagQuotient hns, RingHom.mem_ker]
+    rw [jacobson_nonisolatedZigzagQuotient_eq_ker hns, RingHom.mem_ker]
     simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using
       zigzagTrivialCoeff_ofArrow k G d.symm
   have hdr : zigzagMk k G (ofArrow (arrow G d.adj)) ∈
       Ring.jacobson (nonisolatedZigzagQuotient k G) := by
-    rw [jacobson_nonisolatedZigzagQuotient hns, RingHom.mem_ker]
+    rw [jacobson_nonisolatedZigzagQuotient_eq_ker hns, RingHom.mem_ker]
     simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using
       zigzagTrivialCoeff_ofArrow k G d
   have hprod := Ideal.mul_mem_mul hd hdr
@@ -322,23 +365,23 @@ theorem zigzagVolume_mem_jacobson_sq (hns : ∀ i : V, ∃ j, G.Adj i j) (i : V)
   simpa [d] using hprod'
 
 /-- **The square of the Jacobson radical is the volume span.** -/
-theorem restrictScalars_jacobson_sq_nonisolatedZigzagQuotient
+theorem restrictScalars_jacobson_sq_nonisolatedZigzagQuotient_eq_zigzagVolumeSpan
     (hns : ∀ i : V, ∃ j, G.Adj i j) :
     (Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2).restrictScalars k =
       zigzagVolumeSpan k G := by
   apply le_antisymm
   · intro x hx
-    rw [show 2 = 1 + 1 by omega, Ideal.IsTwoSided.pow_succ, Submodule.pow_one] at hx
+    rw [jacobson_sq_eq_mul] at hx
     refine Submodule.mul_induction_on
       (M := Ring.jacobson (nonisolatedZigzagQuotient k G))
       (N := Ring.jacobson (nonisolatedZigzagQuotient k G))
       (C := fun z => z ∈ zigzagVolumeSpan k G) hx
       (fun x hx y hy => ?_) (fun x y hx hy => ?_)
     · have hx' : x ∈ zigzagPositiveSpan k G := by
-        rw [← restrictScalars_jacobson_nonisolatedZigzagQuotient hns]
+        rw [← restrictScalars_jacobson_nonisolatedZigzagQuotient_eq_zigzagPositiveSpan hns]
         exact hx
       have hy' : y ∈ zigzagPositiveSpan k G := by
-        rw [← restrictScalars_jacobson_nonisolatedZigzagQuotient hns]
+        rw [← restrictScalars_jacobson_nonisolatedZigzagQuotient_eq_zigzagPositiveSpan hns]
         exact hy
       exact mul_mem_zigzagVolumeSpan hx' hy'
     · exact Submodule.add_mem _ hx hy
@@ -346,22 +389,22 @@ theorem restrictScalars_jacobson_sq_nonisolatedZigzagQuotient
     exact zigzagVolume_mem_jacobson_sq hns
 
 /-- **The third power of the Jacobson radical of a zigzag algebra vanishes.** -/
-theorem jacobson_pow_three_nonisolatedZigzagQuotient
+theorem jacobson_pow_three_nonisolatedZigzagQuotient_eq_bot
     (hns : ∀ i : V, ∃ j, G.Adj i j) :
     Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 3 = ⊥ := by
   rw [eq_bot_iff]
   intro x hx
-  rw [show 3 = 2 + 1 by omega, Submodule.pow_succ] at hx
+  rw [jacobson_cube_eq_sq_mul] at hx
   refine Submodule.mul_induction_on
     (M := Ring.jacobson (nonisolatedZigzagQuotient k G) ^ 2)
     (N := Ring.jacobson (nonisolatedZigzagQuotient k G))
     (C := fun z => z ∈ (⊥ : Ideal (nonisolatedZigzagQuotient k G))) hx
     (fun y hy z hz => ?_) (fun x y hx hy => ?_)
   · have hyv : y ∈ zigzagVolumeSpan k G := by
-      rw [← restrictScalars_jacobson_sq_nonisolatedZigzagQuotient hns]
+      rw [← restrictScalars_jacobson_sq_nonisolatedZigzagQuotient_eq_zigzagVolumeSpan hns]
       exact hy
     have hzp : z ∈ zigzagPositiveSpan k G := by
-      rw [← restrictScalars_jacobson_nonisolatedZigzagQuotient hns]
+      rw [← restrictScalars_jacobson_nonisolatedZigzagQuotient_eq_zigzagPositiveSpan hns]
       exact hz
     exact mul_eq_zero_of_mem_zigzagVolumeSpan_of_mem_zigzagPositiveSpan hyv hzp
   · exact Submodule.add_mem _ hx hy
