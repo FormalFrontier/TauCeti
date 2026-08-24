@@ -68,6 +68,18 @@ noncomputable def standardComodule :
 
 attribute [local instance] GeneralLinear.standardComodule standardComodule
 
+/-- The standard `SL_n` coaction is the standard `GL_n` coaction followed by the quotient map on
+the coordinate factor. -/
+@[simp]
+theorem standardComodule_coact :
+    (standardComodule R n).coact =
+      TensorProduct.map LinearMap.id (coordinateMap R n).hom.toLinearMap ∘ₗ
+        GeneralLinear.standardCoact R n := by
+  apply LinearMap.ext
+  intro v
+  rw [LinearMap.comp_apply, Comodule.corestrict_coact_apply,
+    GeneralLinear.standardComodule_coact]
+
 /-- **The standard comodule of `SL_n` is faithful.** -/
 theorem isFaithful_standardComodule :
     Comodule.IsFaithful (k := R) (H := coordinateHopfAlgebra R n) (V := Fin n → R) := by
@@ -129,7 +141,7 @@ theorem mulVec_mem (N : Subcomodule R (coordinateHopfAlgebra R n) (Fin n → R))
     (g : Matrix (Fin n) (Fin n) R) *ᵥ w ∈ N := by
   let q := (pointsMulEquiv (R := R) (A := R) n).symm g
   have h := N.rid_lTensor_coact_mem q.ofConv.toLinearMap hw
-  rw [Comodule.corestrict_coact_apply, GeneralLinear.standardComodule_coact] at h
+  rw [standardComodule_coact R n, LinearMap.comp_apply] at h
   have hcoordinate : (coordinateMap R n).hom.toCoalgHom.toLinearMap =
       ((coordinateMap R n).hom :
         GeneralLinear.coordinateHopfAlgebra R n →ₐ[R] coordinateHopfAlgebra R n).toLinearMap :=
@@ -212,8 +224,7 @@ private theorem exists_specialLinearGroup_mulVec {v w : Fin m → k} (hm : 2 ≤
   have hψdet : LinearEquiv.det ψ = d⁻¹ := by
     apply Units.ext
     rw [LinearEquiv.coe_det]
-    change LinearMap.det (LinearMap.transvection f' z') = _
-    rw [LinearMap.transvection.det, hf'z']
+    rw [LinearEquiv.dilatransvection.coe_toLinearMap, LinearMap.transvection.det, hf'z']
     simp
   let θ := ψ * φ
   have hθdet : LinearEquiv.det θ = 1 := by
@@ -247,12 +258,14 @@ instance instIsSimpleOrderSubcomodule :
       rcases hsimple.eq_bot_or_eq_top N.toSubmodule with hN | hN
       · left
         exact Subcomodule.ext fun x ↦ by
-          change x ∈ N.toSubmodule ↔ x ∈ (⊥ : Submodule k (Fin m → k))
-          rw [hN]
+          have hx : x ∈ N.toSubmodule ↔ x ∈ (⊥ : Submodule k (Fin m → k)) :=
+            SetLike.ext_iff.mp hN x
+          exact hx
       · right
         exact Subcomodule.ext fun x ↦ by
-          change x ∈ N.toSubmodule ↔ x ∈ (⊤ : Submodule k (Fin m → k))
-          rw [hN]
+          have hx : x ∈ N.toSubmodule ↔ x ∈ (⊤ : Submodule k (Fin m → k)) :=
+            SetLike.ext_iff.mp hN x
+          exact hx
     · have hm2 : 2 ≤ m := by
         have hm0 : m ≠ 0 := NeZero.ne m
         omega
