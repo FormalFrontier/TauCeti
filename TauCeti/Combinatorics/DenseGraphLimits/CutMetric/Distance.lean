@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Coupling
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
+import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Pullback
 
 /-!
 # The cut distance of two graphons
@@ -48,7 +49,9 @@ overlaid difference, and the cut norm is even and drops along a pushforward
 * `cutDist_comm` is symmetry;
 * `cutDist_le_cutNorm_sub_of_measurePreserving` bounds the cut distance by the same-carrier cut
   norm of the difference of two pullbacks, `cutDist_le_cutNorm_sub` is its identity case, and
-  `cutDist_self` follows.
+  `cutDist_self` follows;
+* `cutNorm_overlayDiff_diagonalCoupling` computes the value the diagonal coupling contributes to
+  that infimum: it is exactly the same-carrier cut norm of the difference.
 
 ## Implementation
 
@@ -237,6 +240,20 @@ theorem cutDist_le_cutNorm_sub (U W : Graphon Ω μ) :
   have := cutDist_le_cutNorm_sub_of_measurePreserving U W (MeasurePreserving.id μ)
     (MeasurePreserving.id μ)
   rwa [SymmKernel.comap_id, SymmKernel.comap_id] at this
+
+/-- **The diagonal coupling realises the same-carrier cut norm.**  Of all the couplings the cut
+distance takes an infimum over, the diagonal one contributes exactly `‖U - W‖□`.
+
+`comap_overlayDiff_diagonalCoupling` identifies the pullback of the overlaid difference along the
+diagonal with the plain kernel difference; the invariance of the cut norm under measure-preserving
+pullback (`cutNorm_comap`) turns that kernel identity into an identity of cut norms, which is the
+step that file left open. -/
+theorem cutNorm_overlayDiff_diagonalCoupling (U W : Graphon Ω μ) :
+    cutNorm (TauCeti.MeasureTheory.diagonalCoupling μ)
+        (overlayDiff U W (TauCeti.MeasureTheory.diagonalCoupling μ)) =
+      cutNorm μ (U.toSymmKernel - W.toSymmKernel) := by
+  rw [← comap_overlayDiff_diagonalCoupling U W,
+    cutNorm_comap (TauCeti.MeasureTheory.measurePreserving_diagonalCoupling μ)]
 
 /-- The cut distance of a graphon to itself is zero. -/
 @[simp]

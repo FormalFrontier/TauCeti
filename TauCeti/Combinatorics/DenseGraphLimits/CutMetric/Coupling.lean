@@ -126,8 +126,9 @@ back along the diagonal `x ↦ (x, x)` to their plain difference as kernels.
 `TauCeti.MeasureTheory.diagonalCoupling μ` is the pushforward of `μ` along that same diagonal, and
 by `TauCeti.MeasureTheory.isCoupling_diagonalCoupling` it is one of the couplings the cross-carrier
 cut distance takes an infimum over. This identity computes the kernel it contributes; recognizing
-the resulting value as the same-carrier cut norm `‖U - W‖□` additionally needs the cut norm's
-change of variables along a pushforward, which is not part of this file. -/
+the resulting value as the same-carrier cut norm `‖U - W‖□` additionally needs the invariance of
+the cut norm under measure-preserving pullback, and is `cutNorm_overlayDiff_diagonalCoupling` in
+`TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Distance`. -/
 theorem comap_overlayDiff_diagonalCoupling {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     [IsProbabilityMeasure μ] (U W : Graphon Ω μ) :
     (overlayDiff U W (TauCeti.MeasureTheory.diagonalCoupling μ)).comap (fun x => (x, x))
