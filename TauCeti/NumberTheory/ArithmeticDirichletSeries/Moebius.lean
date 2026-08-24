@@ -37,8 +37,8 @@ the ideal Möbius inversion formula, stated here as an equivalence between the t
   two-sided inverse of the everywhere-one function for ideal convolution.
 * `TauCeti.IdealArithmeticFunction.convolution_one_eq_iff`: **ideal Möbius inversion**, the
   equivalence between `convolution f 1 = g` and `f = convolution g moebius`.
-* `TauCeti.IdealArithmeticFunction.moebius_of_prime`,
-  `TauCeti.IdealArithmeticFunction.moebius_pow_of_prime`, and
+* `TauCeti.IdealArithmeticFunction.moebius_apply_prime`,
+  `TauCeti.IdealArithmeticFunction.moebius_apply_prime_pow`, and
   `TauCeti.IdealArithmeticFunction.moebius_mul_of_isRelPrime`: the prime-power values and
   multiplicativity on coprime ideals.
 * `TauCeti.IdealArithmeticFunction.not_exists_multiplicativeIdealWeight_eq_moebius` and
@@ -119,7 +119,7 @@ theorem moebius_of_not_squarefree {A : (Ideal (𝓞 K))⁰} (hA : ¬ Squarefree 
   simp [moebius_apply, UniqueFactorizationMonoid.moebius_of_not_squarefree hA]
 
 /-- At a squarefree ideal the Möbius function is `(-1)` to the number of prime factors. -/
-theorem moebius_of_squarefree {A : (Ideal (𝓞 K))⁰} (hA : Squarefree (A : Ideal (𝓞 K))) :
+theorem moebius_apply_of_squarefree {A : (Ideal (𝓞 K))⁰} (hA : Squarefree (A : Ideal (𝓞 K))) :
     (moebius : IdealArithmeticFunction K) A =
       (-1) ^ Multiset.card (normalizedFactors (A : Ideal (𝓞 K))) := by
   rw [moebius_apply, hA.moebius_eq, factors_eq_normalizedFactors]
@@ -127,21 +127,27 @@ theorem moebius_of_squarefree {A : (Ideal (𝓞 K))⁰} (hA : Squarefree (A : Id
   ring
 
 /-- The Möbius function of a prime ideal is `-1`. -/
-theorem moebius_of_prime {A : (Ideal (𝓞 K))⁰} (hA : Prime (A : Ideal (𝓞 K))) :
+theorem moebius_apply_prime {A : (Ideal (𝓞 K))⁰} (hA : Prime (A : Ideal (𝓞 K))) :
     (moebius : IdealArithmeticFunction K) A = -1 := by
   rw [moebius_apply, hA.irreducible.moebius_eq]
   norm_num
 
-/-- The Möbius function vanishes at a prime power with exponent at least two. -/
-theorem moebius_pow_of_prime {A : (Ideal (𝓞 K))⁰} (hA : Prime (A : Ideal (𝓞 K))) {n : ℕ}
-    (hn : 2 ≤ n) : (moebius : IdealArithmeticFunction K) (A ^ n) = 0 := by
-  refine moebius_of_not_squarefree fun hsq ↦ hA.not_isUnit ?_
+/-- The Möbius function vanishes at a power with exponent at least two of any ideal that is not the
+unit ideal, since that power is then divisible by a square. -/
+theorem moebius_apply_pow_of_not_isUnit {A : (Ideal (𝓞 K))⁰} (hA : ¬ IsUnit (A : Ideal (𝓞 K)))
+    {n : ℕ} (hn : 2 ≤ n) : (moebius : IdealArithmeticFunction K) (A ^ n) = 0 := by
+  refine moebius_of_not_squarefree fun hsq ↦ hA ?_
   refine hsq (A : Ideal (𝓞 K)) ?_
   rw [SubmonoidClass.coe_pow, ← sq]
   exact pow_dvd_pow _ hn
 
+/-- The Möbius function vanishes at a prime power with exponent at least two. -/
+theorem moebius_apply_prime_pow {A : (Ideal (𝓞 K))⁰} (hA : Prime (A : Ideal (𝓞 K))) {n : ℕ}
+    (hn : 2 ≤ n) : (moebius : IdealArithmeticFunction K) (A ^ n) = 0 :=
+  moebius_apply_pow_of_not_isUnit hA.not_isUnit hn
+
 /-- The Möbius function is multiplicative on coprime ideals. Together with
-`TauCeti.IdealArithmeticFunction.moebius_pow_of_prime` this is the precise sense in which it is
+`TauCeti.IdealArithmeticFunction.moebius_apply_prime_pow` this is the precise sense in which it is
 multiplicative: it is *not* completely multiplicative. -/
 theorem moebius_mul_of_isRelPrime {A B : (Ideal (𝓞 K))⁰}
     (h : IsRelPrime (A : Ideal (𝓞 K)) (B : Ideal (𝓞 K))) :
@@ -310,11 +316,12 @@ theorem not_exists_multiplicativeIdealWeight_eq_moebius :
     _root_.Ideal.prime_of_isPrime hPbot hPmax.isPrime
   have h1 : χ P = -1 := by
     have := congrFun hχ 𝔭
-    rwa [MultiplicativeIdealWeight.toIdealArithmeticFunction_apply, moebius_of_prime hprime] at this
+    rwa [MultiplicativeIdealWeight.toIdealArithmeticFunction_apply, moebius_apply_prime hprime]
+      at this
   have h2 : χ (P ^ 2) = 0 := by
     have := congrFun hχ (𝔭 ^ 2)
     rwa [MultiplicativeIdealWeight.toIdealArithmeticFunction_apply,
-      moebius_pow_of_prime hprime le_rfl, SubmonoidClass.coe_pow] at this
+      moebius_apply_prime_pow hprime le_rfl, SubmonoidClass.coe_pow] at this
   rw [map_pow, h1] at h2
   norm_num at h2
 
