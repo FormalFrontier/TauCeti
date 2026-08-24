@@ -314,17 +314,6 @@ section Naturality
 
 variable {W : Type*} [AddCommGroup W] [Module ℚ W] {L' : IntegralLattice W} [L'.IsNondegenerate]
 
-/-- Orthogonality to the subgroup of an intermediate carrier, read in the discriminant group.
-
-The carrier of `L.discriminantBilinearModule` is `L.DiscriminantGroup` by definition only, and
-`discriminantBilinearModule` is a plain definition, so no rewrite can move a membership statement
-between the two spellings; this restatement performs the identification once, by `exact`. -/
-private theorem mem_orthogonalComplement_discriminantSubgroup_iff (L : IntegralLattice V)
-    [L.IsNondegenerate] (P : L.IntermediateCarrier) (x : L.DiscriminantGroup) :
-    x ∈ L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup P) ↔
-      ∀ y ∈ L.discriminantSubgroup P, L.discriminantPairing x y = 0 :=
-  L.discriminantBilinearModule.mem_orthogonalComplement_iff _ x
-
 namespace Isometry
 
 /-- **The discriminant-subgroup correspondence is natural.** A discriminant class of `L` lies in
@@ -348,18 +337,17 @@ theorem discriminantGroupEquiv_mem_orthogonalComplement_iff
     e.discriminantGroupEquiv x ∈ L'.discriminantBilinearModule.orthogonalComplement
         (L'.discriminantSubgroup (e.intermediateCarrierEquiv P)) ↔
       x ∈ L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup P) := by
-  rw [mem_orthogonalComplement_discriminantSubgroup_iff,
-    mem_orthogonalComplement_discriminantSubgroup_iff]
-  constructor
-  · intro h y hy
-    rw [← e.map_discriminantPairing x y]
-    refine h _ ?_
-    rw [mem_discriminantSubgroup_intermediateCarrierEquiv_iff, LinearEquiv.symm_apply_apply]
-    exact hy
-  · intro h y hy
-    rw [mem_discriminantSubgroup_intermediateCarrierEquiv_iff] at hy
-    rw [← e.discriminantGroupEquiv.apply_symm_apply y, e.map_discriminantPairing]
-    exact h _ hy
+  -- The carrier of `discriminantBilinearModule` is `DiscriminantGroup` by definition only, so the
+  -- transporting map is ascribed and the two spellings are bridged by `exact`.
+  have hmap : (L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup P)).map
+        (e.discriminantGroupEquiv.toAddEquiv : L.DiscriminantGroup →+ L'.DiscriminantGroup) =
+      L'.discriminantBilinearModule.orthogonalComplement
+        (L'.discriminantSubgroup (e.intermediateCarrierEquiv P)) := by
+    rw [discriminantSubgroup_intermediateCarrierEquiv,
+      ← discriminantBilinearIsometry_toAddEquiv]
+    exact e.discriminantBilinearIsometry.map_orthogonalComplement (H := L.discriminantSubgroup P)
+  rw [← hmap]
+  exact AddSubgroup.mem_map_iff_mem e.discriminantGroupEquiv.injective
 
 /-- **Naturality of the comparison isometry `A_M ≅ H⊥ / H`, on a discriminant class.** -/
 theorem discriminantOrthogonalQuotientIsometry_naturality_apply (e : Isometry L L')
