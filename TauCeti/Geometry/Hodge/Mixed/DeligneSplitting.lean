@@ -273,7 +273,8 @@ theorem ofPure_deligneSplitting_eq_bot_of_add_ne {p q : ℤ} (hpq : p + q ≠ n)
         (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs)
         (ofPure_WC_eq_bot_of_lt hℚ hℂ hs (k := n - 1) (by omega)) (by omega : n - 1 + 1 < p + q)
     rw [MixedHodgeStructure.ofPure_F, ofPure_conjF] at hle
-    exact hle.trans (by simpa only [show n - 1 + 2 - p = n + 1 - p by omega] using
+    have hindex : n - 1 + 2 - p = n + 1 - p := by omega
+    exact hle.trans (by simpa only [hindex] using
       (hs.isCompl_F_conjF p).disjoint.le_bot)
 
 /-- **For a pure Hodge structure the Deligne bigrading is an internal direct sum**, namely the
