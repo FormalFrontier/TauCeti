@@ -5,8 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Geometry.Hodge.Dimension
 public import TauCeti.Geometry.Hodge.Morphism
-public import TauCeti.Geometry.Hodge.Tate.Basic
+public import TauCeti.Geometry.Hodge.Polarization
 
 /-!
 # Tate twists of pure Hodge structures
@@ -64,6 +65,39 @@ def tateTwist (hs : HodgeStructureOn W ω n) (m : ℤ) :
     have hindex : n - 2 * m + 1 - p + m = n + 1 - (p + m) := by ring
     simpa only [hindex] using hs.opposed (p + m)
 
+private theorem cast_F {a b : ℤ} (h : a = b) (hs : HodgeStructureOn W ω a) :
+    (cast (congrArg (HodgeStructureOn W ω) h) hs).F = hs.F := by
+  subst b
+  rfl
+
+/-- Twisting by zero leaves a Hodge structure unchanged. -/
+@[simp]
+theorem tateTwist_zero (hs : HodgeStructureOn W ω n)
+    {h : HodgeStructureOn W ω (n - 2 * 0) = HodgeStructureOn W ω n} :
+    cast h (hs.tateTwist 0) = hs := by
+  let hi : n - 2 * 0 = n := by ring
+  rw [show h = congrArg (HodgeStructureOn W ω) hi from Subsingleton.elim _ _]
+  apply HodgeStructureOn.ext
+  funext p
+  rw [cast_F]
+  · simp only [tateTwist, add_zero]
+  · exact hi
+
+/-- Two successive Tate twists combine by adding their indices. -/
+theorem tateTwist_add (hs : HodgeStructureOn W ω n) (m k : ℤ)
+    {h : HodgeStructureOn W ω (n - 2 * m - 2 * k) =
+      HodgeStructureOn W ω (n - 2 * (m + k))} :
+    cast h ((hs.tateTwist m).tateTwist k) = hs.tateTwist (m + k) := by
+  let hi : n - 2 * m - 2 * k = n - 2 * (m + k) := by ring
+  rw [show h = congrArg (HodgeStructureOn W ω) hi from Subsingleton.elim _ _]
+  apply HodgeStructureOn.ext
+  funext p
+  rw [cast_F]
+  · simp only [tateTwist]
+    congr 1
+    ring
+  · exact hi
+
 /-- The Hodge filtration of a Tate twist is the translated original filtration. -/
 @[simp]
 theorem tateTwist_F (hs : HodgeStructureOn W ω n) (m p : ℤ) :
@@ -92,13 +126,14 @@ theorem tateTwist_hodgeNumber (hs : HodgeStructureOn W ω n) (m p : ℤ) :
 
 /-- A Tate twist is effective exactly when its translated zeroth filtration step is the whole
 space. -/
-theorem tateTwist_isEffective_iff (hs : HodgeStructureOn W ω n) (m : ℤ) :
+@[simp]
+theorem isEffective_tateTwist_iff (hs : HodgeStructureOn W ω n) (m : ℤ) :
     (hs.tateTwist m).IsEffective ↔ hs.F m = ⊤ := by
   rw [isEffective_iff, tateTwist_F, zero_add]
 
 /-- Equivalently, a Tate twist is effective exactly when the translated filtration vanishes one
 step above its new weight. -/
-theorem tateTwist_isEffective_iff_F_eq_bot (hs : HodgeStructureOn W ω n) (m : ℤ) :
+theorem isEffective_tateTwist_iff_F_eq_bot (hs : HodgeStructureOn W ω n) (m : ℤ) :
     (hs.tateTwist m).IsEffective ↔ hs.F (n + 1 - m) = ⊥ := by
   rw [isEffective_iff_F_eq_bot, tateTwist_F]
   have hindex : n - 2 * m + 1 + m = n + 1 - m := by ring
