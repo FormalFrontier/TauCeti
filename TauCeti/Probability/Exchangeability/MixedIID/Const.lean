@@ -17,8 +17,9 @@ plain independence with common marginal law.
 
 * `MixedIIDWith.blockLaw_eq_pi_of_const`,
   `MixedIIDWith.map_eq_of_const` — what a constant mixing representative says: every injective
-  block law is the `m`-fold product of `p`, every coordinate is a.e. measurable, and every
-  coordinate has law `p`.
+  block law is the `m`-fold product of `p`, and every coordinate has law `p`.  Coordinate a.e.
+  measurability is not special to a constant representative; it comes from the general
+  `MixedIIDWith.aemeasurable` in `MixedIID/Basic.lean`.
 * `mixedIIDWith_const_iff_iIndepFun_and_map_eq` — a constant `p` is a mixing representative exactly
   when the coordinates are independent with common law `p`.
 -/
