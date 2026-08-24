@@ -279,13 +279,13 @@ namespace Hom
 variable {A : FiniteBilinearModule.{u}} {B : FiniteBilinearModule.{v}}
   {C : FiniteBilinearModule.{w}}
 
-theorem toAddMonoidHom_injective :
-    Function.Injective (toAddMonoidHom : Hom A B → A →+ B)
-  | ⟨_, _⟩, ⟨_, _⟩, rfl => rfl
-
 instance : FunLike (Hom A B) A B where
   coe f := f.toAddMonoidHom
-  coe_injective _ _ h := toAddMonoidHom_injective (DFunLike.coe_injective h)
+  coe_injective f g h := by
+    cases f
+    cases g
+    congr
+    exact DFunLike.coe_injective h
 
 instance : AddMonoidHomClass (Hom A B) A B where
   map_add f := f.toAddMonoidHom.map_add
@@ -330,6 +330,7 @@ theorem comp_id (f : Hom A B) : f.comp (id A) = f := by
   ext
   rfl
 
+@[simp]
 theorem comp_assoc {D : FiniteBilinearModule} (h : Hom C D) (g : Hom B C) (f : Hom A B) :
     (h.comp g).comp f = h.comp (g.comp f) := by
   ext
@@ -390,13 +391,8 @@ theorem toHom_apply (f : Isometry A B) (x : A) : f.toHom x = f x := (rfl)
 
 /-- The underlying morphism of an isometry is bijective. -/
 theorem toHom_bijective (f : Isometry A B) : Function.Bijective f.toHom := by
-  constructor
-  · intro x y hxy
-    apply f.toAddEquiv.injective
-    simpa only [toHom_apply, coe_toAddEquiv] using hxy
-  · intro y
-    obtain ⟨x, hx⟩ := f.toAddEquiv.surjective y
-    exact ⟨x, by simpa only [toHom_apply, coe_toAddEquiv] using hx⟩
+  simpa only [Function.Bijective, Function.Injective, Function.Surjective, toHom_apply,
+    coe_toAddEquiv] using f.toAddEquiv.bijective
 
 /-- Two isometries are equal when they agree on all elements. -/
 @[ext]

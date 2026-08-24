@@ -162,14 +162,8 @@ theorem toHom_apply (f : Isometry A B) (x : A) : f.toHom x = f x := (rfl)
 
 /-- The underlying morphism of a quadratic isometry is bijective. -/
 theorem toHom_bijective (f : Isometry A B) : Function.Bijective f.toHom := by
-  constructor
-  · intro x y hxy
-    apply f.toLinearEquiv.injective
-    simpa only [toHom_apply, QuadraticMap.IsometryEquiv.coe_toLinearEquiv] using hxy
-  · intro y
-    obtain ⟨x, hx⟩ := f.toLinearEquiv.surjective y
-    exact ⟨x, by
-      simpa only [toHom_apply, QuadraticMap.IsometryEquiv.coe_toLinearEquiv] using hx⟩
+  simpa only [Function.Bijective, Function.Injective, Function.Surjective, toHom_apply,
+    QuadraticMap.IsometryEquiv.coe_toLinearEquiv] using f.toLinearEquiv.bijective
 
 /-- A quadratic isometry induces an isometry of the canonical polar bilinear modules. -/
 def toFiniteBilinearModule (f : Isometry A B) :
@@ -267,6 +261,7 @@ theorem restrictHom_apply (H : AddSubgroup A) (x : H) : A.restrictHom H x = x :=
 
 /-- Forgetting the quadratic structure of a restriction inclusion gives the bilinear restriction
 inclusion. -/
+@[simp]
 theorem restrictHom_toFiniteBilinearModule (H : AddSubgroup A) :
     (A.restrictHom H).toFiniteBilinearModule = A.toFiniteBilinearModule.restrictHom H := by
   ext x
