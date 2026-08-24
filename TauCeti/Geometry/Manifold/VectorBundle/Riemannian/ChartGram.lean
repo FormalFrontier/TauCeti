@@ -72,7 +72,7 @@ def chartLocalFrame (α : M) :
   (trivializationAt E (TangentSpace I) α).localFrame (Module.finBasis ℝ E)
 
 /-- The chart-local frame is the local frame of the tangent trivialization at `α` for the
-`Module.finBasis` basis. This unfolds `TauCeti.Manifold.chartLocalFrame` outside the module where
+`Module.finBasis` basis. This unfolds `Riemannian.Tensor.chartLocalFrame` outside the module where
 it is defined. -/
 theorem chartLocalFrame_def (α : M) :
     chartLocalFrame (I := I) α =
