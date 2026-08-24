@@ -302,13 +302,13 @@ theorem mul_mem_riemannRochSpace_sub_principal (hF : IsFunctionField k F) (z : F
     (z : F) * f ∈ riemannRochSpace (A - Divisor.principal hF z) := by
   rcases eq_or_ne f 0 with rfl | hf0
   · simp
-  have hzf : (z : F) * f ≠ 0 := mul_ne_zero (Units.ne_zero z) hf0
-  have hord := (mem_riemannRochSpace_iff_neg_le_ord hf0).mp hf
-  rw [mem_riemannRochSpace_iff_neg_le_ord hzf]
-  intro P
-  rw [P.ord_mul (Units.ne_zero z) hf0, WeilDivisor.coeff_sub, Divisor.coeff_principal]
-  have := hord P
-  omega
+  let u : Fˣ := Units.mk0 f hf0
+  change ((z * u : Fˣ) : F) ∈ riemannRochSpace (A - Divisor.principal hF z)
+  rw [mem_riemannRochSpace_units_iff hF, Divisor.principal_mul]
+  have hu : 0 ≤ Divisor.principal hF u + A :=
+    (mem_riemannRochSpace_units_iff hF).mp (by simpa only [u, Units.val_mk0] using hf)
+  rwa [show Divisor.principal hF z + Divisor.principal hF u +
+      (A - Divisor.principal hF z) = Divisor.principal hF u + A by abel]
 
 /-- **Stichtenoth, Lemma 1.4.6**: multiplication by a nonzero function `z` is a `k`-linear
 isomorphism `L(A) ≅ L(A - div z)`.
