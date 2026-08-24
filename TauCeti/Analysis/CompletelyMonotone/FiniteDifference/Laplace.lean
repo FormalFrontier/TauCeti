@@ -148,8 +148,9 @@ theorem RepresentsLaplace.isDifferenceCompletelyMonotone {μ : Measure ℝ≥0}
 
 /-! ## Tightness of the approximating measures -/
 
-/-- **The approximating measures of a continuous finite-difference completely monotone function
-are uniformly tight.** The mass a member of the family puts outside a large ball is bounded, by
+/-- **The approximating measures of a finite-difference completely monotone function that is
+right-continuous at zero are uniformly tight.** The mass a member of the family puts outside a
+large ball is bounded, by
 `TauCeti.measure_compl_closedBall_le_sub_laplaceTransform_div`, by its Laplace gap
 `μ.real univ - laplaceTransform μ x`, and the squeeze bounds that gap by `f 0 - f (x + aₙ)`.
 Choosing `x` so small that `f` has barely dropped by `2x` makes the estimate uniform over all
