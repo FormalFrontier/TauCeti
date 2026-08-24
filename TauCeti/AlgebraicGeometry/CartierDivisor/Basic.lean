@@ -37,7 +37,7 @@ dictionaries `Cartier ≃ line bundles` and (smooth curve) `Weil ≃ Cartier`". 
 sheaf was constructed in `TauCeti/AlgebraicGeometry/Modules/RationalFunctions.lean`; the next step
 is to construct `𝒪_X(D)` from a Cartier divisor and prove the Cartier--line-bundle dictionary.
 
-The definition follows the Stacks Project, *Divisors* (Tag 01WP). No formalization is vendored.
+The definition follows the Stacks Project, *Divisors* (Tag 02AR). No formalization is vendored.
 The sheaf quotient is Mathlib's categorical cokernel in the abelian category of sheaves of
 abelian groups.
 -/
@@ -83,9 +83,8 @@ def toCartierDivisorSheaf : rationalUnitSheaf X ⟶ cartierDivisorSheaf X :=
   cokernel.π (toRationalUnitSheaf X)
 
 instance : Epi (toCartierDivisorSheaf X) := by
-  change Epi (cokernel.π (toRationalUnitSheaf X))
-  let _ := Cofork.IsColimit.epi (cokernelIsCokernel (toRationalUnitSheaf X))
-  infer_instance
+  dsimp only [toCartierDivisorSheaf]
+  exact Cofork.IsColimit.epi (colimit.isColimit _)
 
 /-- A regular unit has zero class in the Cartier-divisor sheaf. -/
 @[reassoc (attr := simp)]
@@ -127,6 +126,21 @@ def toCartierDivisor :
     Additive (((rationalFunctionsRing X).presheaf.obj (op (⊤ : X.Opens)))ˣ) →+
       CartierDivisor X :=
   ((toCartierDivisorSheaf X).hom.app (op (⊤ : X.Opens))).hom
+
+/-- A global regular unit maps to zero under the quotient map to Cartier divisors. -/
+@[simp]
+lemma toRationalUnitSheaf_app_comp_toCartierDivisor :
+    (toCartierDivisor X).comp
+        ((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom = 0 := by
+  have h :
+      (toRationalUnitSheaf X).hom ≫ (toCartierDivisorSheaf X).hom = 0 :=
+    congrArg (fun f => f.hom) (toRationalUnitSheaf_comp_toCartierDivisorSheaf X)
+  have h :
+      (toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens)) ≫
+          (toCartierDivisorSheaf X).hom.app (op (⊤ : X.Opens)) = 0 :=
+    congrArg (fun f => f.app (op (⊤ : X.Opens))) h
+  have h := congrArg (fun f => f.hom) h
+  exact h
 
 /-- On the whole space, the units of the rational-function sheaf are the units of the function
 field. -/
