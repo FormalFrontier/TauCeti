@@ -302,7 +302,7 @@ theorem mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable
 
 /-- The two displayed central-character rows are distinct, so they number the lifted rows
 injectively. -/
-theorem injective_cyclicGroupTwoCentralCharacterTable :
+theorem cyclicGroupTwoCentralCharacterTable_injective :
     Function.Injective cyclicGroupTwoCentralCharacterTable := by
   intro i j hij
   have h := congrFun hij ⟨1, by simp⟩
@@ -317,7 +317,7 @@ theorem isSome_dixonRationalCharacterTable_cyclicGroupTwo :
   refine ⟨⟨cyclicGroupTwoCentralCharacterTable, cyclicGroupTwoCharacterTable,
     cyclicGroupTwoCharacterDegrees⟩, ?_, isIntegerCharacterTableSpec_cyclicGroupTwo⟩
   refine ⟨mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable,
-    injective_cyclicGroupTwoCentralCharacterTable, fun i => ?_, fun i => ?_, ?_, fun i j => ?_⟩
+    cyclicGroupTwoCentralCharacterTable_injective, fun i => ?_, fun i => ?_, ?_, fun i j => ?_⟩
   · exact (cyclicGroupTwo_characterDegrees_pos_and_dvd i).1
   · simpa only [Nat.card_eq_fintype_card] using (cyclicGroupTwo_characterDegrees_pos_and_dvd i).2
   · simpa only [Nat.card_eq_fintype_card] using cyclicGroupTwo_sum_characterDegrees_sq
