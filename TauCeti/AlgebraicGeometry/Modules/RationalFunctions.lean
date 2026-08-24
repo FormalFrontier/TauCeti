@@ -36,7 +36,10 @@ condition and the `𝒪_X`-module structure automatic.
   `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions`, the canonical morphisms from `𝒪_X`
   as ring and module sheaves, respectively;
 * `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsRingEquiv`, the identification of the
-  ring of sections over a nonempty open subset with `K(X)`, compatible with restriction maps;
+  ring of sections over a nonempty open subset with `K(X)`, compatible with restriction maps,
+  together with the constant-sheaf statements it gives for the ring sheaf,
+  `TauCeti.AlgebraicGeometry.Scheme.isIso_rationalFunctionsRing_map` and
+  `TauCeti.AlgebraicGeometry.Scheme.subsingleton_rationalFunctionsRing`;
 * `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv`, the identification
   `Γ(𝒦_X, U) ≃ₗ[Γ(X, U)] K(X)` of its sections over a nonempty open subset with the function
   field, `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv_map`, the compatibility of
@@ -48,7 +51,7 @@ condition and the `𝒪_X`-module structure automatic.
 * the module morphism `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions` is
   `X.germToFunctionField` on sections
   (`TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv_toRationalFunctions_app`), is
-  injective on sections over every open subset
+  injective on sections over every open subset of an integral scheme
   (`TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions_app_injective`), and is therefore a
   monomorphism.
 
@@ -60,8 +63,8 @@ inclusion `𝒪_X ⟶ 𝒦_X` built here. On an integral scheme the sheaf of tot
 with this constant sheaf, so no generality is lost at that stage.
 
 No formalization is vendored. The construction reuses Mathlib's `Scheme.functionField`,
-`Scheme.germToFunctionField`, `Scheme.fromSpecStalk` with its computation of the closed point and
-of the maps on sections, `Scheme.ΓSpecIso`, `Scheme.Modules.pushforward` and
+`Scheme.germToFunctionField`, `Scheme.fromSpecStalk` with its computation of the closed point, of
+the range and of the maps on sections, `Scheme.ΓSpecIso`, `Scheme.Modules.pushforward` and
 `SheafOfModules.unitToPushforwardObjUnit`.
 -/
 
@@ -92,9 +95,23 @@ variable {X}
 theorem genericPoint_mem (U : X.Opens) [Nonempty U] : genericPoint X ∈ U :=
   ((genericPoint_spec X).mem_open_set_iff U.isOpen).mpr (by simpa using ‹Nonempty U›)
 
-instance instUniqueSpecFunctionField (X : Scheme.{u}) [IsIntegral X] :
-    Unique (Spec X.functionField) :=
-  inferInstanceAs (Unique (PrimeSpectrum X.functionField))
+instance instUniqueSpecFunctionField (X : Scheme.{u}) [IrreducibleSpace X] :
+    Unique (Spec X.functionField) where
+  default := IsLocalRing.closedPoint X.functionField
+  uniq p := by
+    -- The morphism `Spec 𝒪_{X, x} ⟶ X` is a preimmersion, hence injective on points, and its
+    -- range consists of the points specializing to `x`. Only the generic point of an irreducible
+    -- space specializes to the generic point, so the source has a single point.
+    refine (X.fromSpecStalk (genericPoint X)).isEmbedding.injective ?_
+    refine Eq.trans ?_ Scheme.fromSpecStalk_closedPoint.symm
+    have hmem : X.fromSpecStalk (genericPoint X) p ∈
+        Set.range (X.fromSpecStalk (genericPoint X)) := ⟨p, rfl⟩
+    rw [Scheme.range_fromSpecStalk] at hmem
+    have hclosure : closure ({genericPoint X} : Set X) ⊆
+        closure ({X.fromSpecStalk (genericPoint X) p} : Set X) :=
+      specializes_iff_closure_subset.mp hmem
+    rw [genericPoint_closure] at hclosure
+    exact ((genericPoint_spec X).eq (Set.univ_subset_iff.mp hclosure)).symm
 
 /-- The sheaf of commutative rings underlying the rational-function sheaf: the pushforward of
 the structure sheaf of `Spec K(X)` along `fromSpecFunctionField`. -/
@@ -140,8 +157,6 @@ theorem fromSpecFunctionField_app (U : X.Opens) [Nonempty U] :
       X.germToFunctionField U ≫ (Scheme.ΓSpecIso X.functionField).inv ≫
         (Spec X.functionField).presheaf.map (homOfLE le_top).op :=
   Scheme.fromSpecStalk_app (genericPoint_mem U)
-
-variable [IsIntegral X]
 
 /-- The morphism `Spec K(X) ⟶ X` pulls every nonempty open subset back to the whole of
 `Spec K(X)`, its source having a single point, which maps to the generic point. -/
@@ -265,7 +280,26 @@ instance isIso_rationalFunctions_map {U V : X.Opens} [Nonempty U] [Nonempty V] (
     IsIso ((rationalFunctions X).presheaf.map i.op) :=
   (ConcreteCategory.isIso_iff_bijective _).mpr (rationalFunctions_map_bijective i)
 
-omit [IsIntegral X] in
+/-- The restriction maps of the ring sheaf `𝒦_X` between nonempty open subsets are bijective. -/
+theorem rationalFunctionsRing_map_bijective {U V : X.Opens} [Nonempty U] [Nonempty V]
+    (i : U ⟶ V) :
+    Function.Bijective ((rationalFunctionsRing X).presheaf.map i.op) := by
+  have h : ⇑((rationalFunctionsRing X).presheaf.map i.op) =
+      rationalFunctionsSectionsEquiv X U ∘ (rationalFunctions X).presheaf.map i.op ∘
+        (rationalFunctionsSectionsEquiv X V).symm := by
+    funext s
+    rw [Function.comp_apply, Function.comp_apply, rationalFunctionsSectionsEquiv_map,
+      AddEquiv.apply_symm_apply]
+  rw [h]
+  exact (rationalFunctionsSectionsEquiv X U).bijective.comp
+    ((rationalFunctions_map_bijective i).comp (rationalFunctionsSectionsEquiv X V).symm.bijective)
+
+/-- The restriction maps of the ring sheaf `𝒦_X` between nonempty open subsets are
+isomorphisms. -/
+instance isIso_rationalFunctionsRing_map {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V) :
+    IsIso ((rationalFunctionsRing X).presheaf.map i.op) :=
+  (ConcreteCategory.isIso_iff_bijective _).mpr (rationalFunctionsRing_map_bijective i)
+
 /-- The sheaf `𝒦_X` has no nonzero sections over an empty open subset. -/
 theorem subsingleton_rationalFunctions (U : X.Opens) (hU : U = ⊥) :
     Subsingleton Γ(rationalFunctions X, U) := by
@@ -275,13 +309,18 @@ theorem subsingleton_rationalFunctions (U : X.Opens) (hU : U = ⊥) :
       (fromSpecFunctionField X) ⁻¹ᵁ (⊥ : X.Opens)) := by rw [h]; infer_instance
   exact this
 
+/-- The ring sheaf `𝒦_X` has no nonzero sections over an empty open subset. -/
+theorem subsingleton_rationalFunctionsRing (U : X.Opens) (hU : U = ⊥) :
+    Subsingleton ((rationalFunctionsRing X).presheaf.obj (.op U)) :=
+  haveI := subsingleton_rationalFunctions U hU
+  (rationalFunctionsSectionsEquiv X U).symm.injective.subsingleton
+
 /-- The canonical morphism `𝒪_X ⟶ 𝒦_X`; it is an inclusion when `X` is integral, by
 `toRationalFunctions_app_injective`. -/
 def toRationalFunctions (X : Scheme.{u}) [IrreducibleSpace X] :
     @Quiver.Hom X.Modules _ (SheafOfModules.unit X.ringCatSheaf) (rationalFunctions X) :=
   SheafOfModules.unitToPushforwardObjUnit (fromSpecFunctionField X).toRingCatSheafHom
 
-omit [IsIntegral X] in
 /-- The morphisms of ring sheaves and module sheaves `𝒪_X ⟶ 𝒦_X` agree on sections. -/
 @[simp]
 theorem toRationalFunctionsRing_app (U : X.Opens) (r : Γ(X, U)) :
@@ -298,6 +337,8 @@ theorem rationalFunctionsEquiv_toRationalFunctions_app (U : X.Opens) [Nonempty U
     rationalFunctionsEquiv U (Scheme.Modules.Hom.app (toRationalFunctions X) U r) =
       X.germToFunctionField U r := by
   exact ConcreteCategory.congr_hom (app_comp_functionFieldSectionsIso U) r
+
+variable [IsIntegral X]
 
 /-- The inclusion `𝒪_X ⟶ 𝒦_X` is injective on sections over every open subset: over a nonempty
 one because the germ map to the function field of an integral scheme is injective, and over an
