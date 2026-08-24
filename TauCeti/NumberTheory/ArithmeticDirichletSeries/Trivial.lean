@@ -88,7 +88,7 @@ theorem normCoeff_one_apply (n : ℕ) :
     simp [card_normFiber_eq_dedekindZetaCoeff K hn]
 
 /-- The trivial unitary ideal weight has the Dedekind zeta coefficients away from zero. -/
-theorem normCoeff_trivialUnitaryWeight_apply (n : ℕ) :
+theorem normCoeff_toIdealArithmeticFunction_one_apply (n : ℕ) :
     normCoeff K (1 : UnitaryIdealWeight K).toIdealArithmeticFunction n =
       if n = 0 then 0 else dedekindZetaCoeff K n := by
   rw [UnitaryIdealWeight.toIdealArithmeticFunction_one]
@@ -149,9 +149,9 @@ theorem normCoeff_one_rat_apply {n : ℕ} (hn : 0 < n) :
   norm_num
 
 /-- Over `ℚ`, the trivial unitary ideal weight has coefficient `1` at every positive integer. -/
-theorem normCoeff_trivialUnitaryWeight_rat_apply {n : ℕ} (hn : 0 < n) :
+theorem normCoeff_toIdealArithmeticFunction_one_rat_apply {n : ℕ} (hn : 0 < n) :
     normCoeff ℚ (1 : UnitaryIdealWeight ℚ).toIdealArithmeticFunction n = 1 := by
-  rw [normCoeff_trivialUnitaryWeight_apply, ite_eq_right hn.ne', dedekindZetaCoeff_rat]
+  rw [normCoeff_toIdealArithmeticFunction_one_apply, ite_eq_right hn.ne', dedekindZetaCoeff_rat]
   norm_num
 
 end TauCeti
