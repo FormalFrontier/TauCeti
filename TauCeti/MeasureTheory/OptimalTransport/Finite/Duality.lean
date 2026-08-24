@@ -66,6 +66,7 @@ codomain: the inner supremum is `⊤` at a plan whose marginals are wrong.
 * C. Villani, *Topics in Optimal Transportation*, Graduate Studies in Mathematics 58, 2003,
   §1.1.2, for the finite duality and complementary slackness.
 * M. Sion, *On general minimax theorems*, Pacific J. Math. 8 (1958), 171--176.
+* `Mathlib.Topology.Sion`, formalized by Antoine Chambert-Loir and Anatole Dedecker.
 
 This is Layer 2, item 3 of the optimal-transport roadmap.
 -/
@@ -181,10 +182,6 @@ private def RealPlans (μ : PMF ι) (ν : PMF κ) : Set (ι × κ → ℝ) :=
 /-- The cost of a real transport plan. -/
 private def costFun (c : ι × κ → ℝ) (f : ι × κ → ℝ) : ℝ := ∑ q, c q * f q
 
-private theorem mem_realPlans_iff :
-    f ∈ RealPlans μ ν ↔ (∀ q, 0 ≤ f q) ∧ (∀ i, ∑ j, f (i, j) = (μ i).toReal) ∧
-      ∀ j, ∑ i, f (i, j) = (ν j).toReal := Iff.rfl
-
 namespace TransportMatrix
 
 private theorem cost_eq_costFun (c : ι × κ → ℝ) (A : TransportMatrix μ ν) :
@@ -277,9 +274,9 @@ theorem cost_eq_finiteDualValue_iff (A : TransportMatrix μ ν)
   · intro hq q _
     by_cases hz : A q.1 q.2 = 0
     · simp [toRealFun_apply, hz]
-    · have := hq q.1 q.2 hz
+    · have hcontact : φ q.1 + ψ q.2 = c q := by
+        simpa only [Prod.eta] using hq q.1 q.2 hz
       have hg : c q - φ q.1 - ψ q.2 = 0 := by
-        rw [show c q = c (q.1, q.2) from rfl]
         linarith
       rw [hg, zero_mul]
 
@@ -370,6 +367,7 @@ private theorem exists_bounded_of_feasible [Nonempty ι] [Nonempty κ] {M : ℝ}
   have hub : ∀ q, c q ≤ M := fun q ↦ (le_abs_self _).trans (hM q)
   have hlb : ∀ q, -M ≤ c q := fun q ↦ neg_le_of_abs_le (hM q)
   have hM0 : 0 ≤ M := (abs_nonneg _).trans (hM (i₀, Classical.arbitrary κ))
+  -- Improve the original feasible pair by applying the infimal transform in each variable.
   obtain ⟨ψ₁, hψ₁⟩ : ∃ g : κ → ℝ, ∀ j, g j = ⨅ i, (c (i, j) - φ i) := ⟨_, fun _ ↦ rfl⟩
   obtain ⟨φ₁, hφ₁⟩ : ∃ g : ι → ℝ, ∀ i, g i = ⨅ j, (c (i, j) - ψ₁ j) := ⟨_, fun _ ↦ rfl⟩
   have hψ₁le : ∀ i j, ψ₁ j ≤ c (i, j) - φ i := fun i j ↦
@@ -380,6 +378,7 @@ private theorem exists_bounded_of_feasible [Nonempty ι] [Nonempty κ] {M : ℝ}
     rw [hψ₁ j]; exact le_ciInf fun i ↦ by linarith [h i j]
   have hmonoφ : ∀ i, φ i ≤ φ₁ i := fun i ↦ by
     rw [hφ₁ i]; exact le_ciInf fun j ↦ by linarith [hψ₁le i j]
+  -- Use the additive freedom of the dual problem to normalize the first potential at `i₀`.
   obtain ⟨φ₂, hφ₂⟩ : ∃ g : ι → ℝ, ∀ i, g i = φ₁ i + -φ₁ i₀ := ⟨_, fun _ ↦ rfl⟩
   obtain ⟨ψ₂, hψ₂⟩ : ∃ g : κ → ℝ, ∀ j, g j = ψ₁ j - -φ₁ i₀ := ⟨_, fun _ ↦ rfl⟩
   have hφ₂i₀ : φ₂ i₀ = 0 := by rw [hφ₂]; ring
@@ -389,11 +388,13 @@ private theorem exists_bounded_of_feasible [Nonempty ι] [Nonempty κ] {M : ℝ}
     have := hfeas₂ i₀ j
     rw [hφ₂i₀, zero_add] at this
     exact this.trans (hub (i₀, j))
+  -- Transform the normalized second potential once more, preserving feasibility and value.
   obtain ⟨ψ₃, hψ₃⟩ : ∃ g : κ → ℝ, ∀ j, g j = ⨅ i, (c (i, j) - φ₂ i) := ⟨_, fun _ ↦ rfl⟩
   have hψ₃le : ∀ i j, ψ₃ j ≤ c (i, j) - φ₂ i := fun i j ↦
     (hψ₃ j).le.trans (ciInf_le_of_finite (fun i ↦ c (i, j) - φ₂ i) i)
   have hmonoψ₃ : ∀ j, ψ₂ j ≤ ψ₃ j := fun j ↦ by
     rw [hψ₃ j]; exact le_ciInf fun i ↦ by linarith [hfeas₂ i j]
+  -- Bound the normalized first potential using points where the finite infima are attained.
   have hφ₂lb : ∀ i, -(2 * M) ≤ φ₂ i := fun i ↦ by
     obtain ⟨j₁, hj₁⟩ := exists_ciInf_eq fun j ↦ c (i, j) - ψ₁ j
     have hval : φ₂ i = c (i, j₁) - ψ₂ j₁ := by rw [hφ₂, hφ₁, hj₁, hψ₂]; ring
@@ -407,6 +408,7 @@ private theorem exists_bounded_of_feasible [Nonempty ι] [Nonempty κ] {M : ℝ}
     have h3 := hφ₁le i j₂
     rw [hφ₂, hφ₁ i₀, hj₂]
     linarith
+  -- Package feasibility and the two uniform bounds, then compare the dual values.
   refine ⟨φ₂, ψ₃, fun i j ↦ by linarith [hψ₃le i j], fun i ↦ ?_, fun j ↦ ?_, ?_⟩
   · exact abs_le.2 ⟨hφ₂lb i, hφ₂ub i⟩
   · refine abs_le.2 ⟨?_, ?_⟩
@@ -504,10 +506,14 @@ private theorem lagrangian_affine_left (c : ι × κ → ℝ) (μ : PMF ι) (ν 
     lagrangian c μ ν (a • f + b • f') p
       = a * lagrangian c μ ν f p + b * lagrangian c μ ν f' p := by
   simp only [lagrangian]
-  rw [Finset.sum_congr rfl fun q _ ↦
-      (show (c q - p.1 q.1 - p.2 q.2) * ((a • f + b • f') q)
-          = a * ((c q - p.1 q.1 - p.2 q.2) * f q) + b * ((c q - p.1 q.1 - p.2 q.2) * f' q) by
-        simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]; ring),
+  have hterm : ∀ q,
+      (c q - p.1 q.1 - p.2 q.2) * ((a • f + b • f') q)
+        = a * ((c q - p.1 q.1 - p.2 q.2) * f q)
+          + b * ((c q - p.1 q.1 - p.2 q.2) * f' q) := by
+    intro q
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    ring
+  rw [Finset.sum_congr rfl fun q _ ↦ hterm q,
     Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum]
   obtain rfl : a = 1 - b := by linarith
   ring
@@ -519,14 +525,20 @@ private theorem lagrangian_affine_right (c : ι × κ → ℝ) (μ : PMF ι) (ν
   rw [lagrangian_eq, lagrangian_eq, lagrangian_eq]
   simp only [Prod.fst_add, Prod.snd_add, Prod.smul_fst, Prod.smul_snd, Pi.add_apply,
     Pi.smul_apply, smul_eq_mul]
-  rw [Finset.sum_congr rfl fun i _ ↦
-      (show (a * p.1 i + b * p'.1 i) * ((μ i).toReal - ∑ j, f (i, j))
-          = a * (p.1 i * ((μ i).toReal - ∑ j, f (i, j)))
-            + b * (p'.1 i * ((μ i).toReal - ∑ j, f (i, j))) by ring),
-    Finset.sum_congr rfl fun j _ ↦
-      (show (a * p.2 j + b * p'.2 j) * ((ν j).toReal - ∑ i, f (i, j))
-          = a * (p.2 j * ((ν j).toReal - ∑ i, f (i, j)))
-            + b * (p'.2 j * ((ν j).toReal - ∑ i, f (i, j))) by ring),
+  have hfst : ∀ i,
+      (a * p.1 i + b * p'.1 i) * ((μ i).toReal - ∑ j, f (i, j))
+        = a * (p.1 i * ((μ i).toReal - ∑ j, f (i, j)))
+          + b * (p'.1 i * ((μ i).toReal - ∑ j, f (i, j))) := by
+    intro i
+    ring
+  have hsnd : ∀ j,
+      (a * p.2 j + b * p'.2 j) * ((ν j).toReal - ∑ i, f (i, j))
+        = a * (p.2 j * ((ν j).toReal - ∑ i, f (i, j)))
+          + b * (p'.2 j * ((ν j).toReal - ∑ i, f (i, j))) := by
+    intro j
+    ring
+  rw [Finset.sum_congr rfl fun i _ ↦ hfst i,
+    Finset.sum_congr rfl fun j _ ↦ hsnd j,
     Finset.sum_add_distrib, Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum,
     ← Finset.mul_sum, ← Finset.mul_sum]
   obtain rfl : a = 1 - b := by linarith
@@ -603,7 +615,8 @@ private theorem iSup_lagrangian_of_notMem (c : ι × κ → ℝ) (hf : f ∈ std
     obtain ⟨p, hp⟩ := h
     exact lt_of_lt_of_le (EReal.coe_lt_coe_iff.2 hp)
       (le_iSup (fun p ↦ ((lagrangian c μ ν f p : ℝ) : EReal)) p)
-  rw [mem_realPlans_iff] at hnot
+  change ¬ ((∀ q, 0 ≤ f q) ∧ (∀ i, ∑ j, f (i, j) = (μ i).toReal) ∧
+    ∀ j, ∑ i, f (i, j) = (ν j).toReal) at hnot
   by_cases hrow : ∀ i, ∑ j, f (i, j) = (μ i).toReal
   · obtain ⟨j₀, hj₀⟩ := not_forall.1 fun hcol ↦ hnot ⟨hf.1, hrow, hcol⟩
     have hd : (ν j₀).toReal - ∑ i, f (i, j₀) ≠ 0 := sub_ne_zero.2 (Ne.symm hj₀)
