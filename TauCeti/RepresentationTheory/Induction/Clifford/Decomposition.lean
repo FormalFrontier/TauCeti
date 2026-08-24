@@ -119,7 +119,7 @@ private theorem finrank_intertwiningMap_eq_common_of_iso
     {Y : Type u} [AddCommGroup Y] [Module k Y]
     (rho : Representation k G Y) [FiniteDimensional k Y]
     (sigma : Subrepresentation (rho.comp N.subtype)) (hsigma : IsAtom sigma)
-    (U : FDRep k N) [Simple U] (g : G) (e : Nat)
+    (U : FDRep k N) (g : G) (e : Nat)
     (hcommon : ∀ tau : Subrepresentation (rho.comp N.subtype), IsAtom tau →
       Module.finrank k
         (tau.asSubmodule →ₗ[k[N]] _root_.Representation.asModule (rho.comp N.subtype)) = e)
