@@ -7,6 +7,8 @@ module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.Realization
 public import TauCeti.Algebra.Lie.SkewAdjoint
+-- Private: `CliffordAlgebra.ι_injective` is used only inside a proof.
+import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 
 /-!
 # Lie representations induced from Clifford modules
@@ -29,6 +31,8 @@ Clifford action makes the target Clifford module a module for the original Lie a
   for a Killing-semisimple Lie algebra.
 * `CliffordAlgebra.adjointCliffordHom_lie_ι`: the lift acts on Clifford generators by the
   original adjoint action.
+* `CliffordAlgebra.adjointCliffordHom_injective`: the lift is injective, since the adjoint action
+  it encodes is faithful.
 
 ## References
 
@@ -147,5 +151,23 @@ theorem adjointCliffordHom_lie_ι (K : Type u) (L : Type v) [Field K]
       CliffordAlgebra.ι (_root_.TauCeti.LieAlgebra.killingQuadraticForm K L) ⁅x, y⁆ := by
   rw [adjointCliffordHom, quadraticLift_lie_ι,
     _root_.TauCeti.LieAlgebra.coe_killingAdjointSO, _root_.LieAlgebra.ad_apply]
+
+/-- **The adjoint quadratic lift of a Killing-semisimple Lie algebra is injective.** Bracketing
+with a Clifford generator recovers the adjoint action, and the adjoint representation is faithful
+because the centre of a Killing-semisimple Lie algebra vanishes. -/
+theorem adjointCliffordHom_injective (K : Type u) (L : Type v) [Field K]
+    [LieRing L] [LieAlgebra K L] [FiniteDimensional K L] [Invertible (2 : K)]
+    [_root_.LieAlgebra.IsKilling K L] :
+    Function.Injective (adjointCliffordHom K L) := by
+  intro x y hxy
+  have hz : ∀ z : L, ⁅x, z⁆ = ⁅y, z⁆ := fun z ↦ by
+    refine ι_injective (_root_.TauCeti.LieAlgebra.killingQuadraticForm K L) ?_
+    rw [← adjointCliffordHom_lie_ι K L x z, ← adjointCliffordHom_lie_ι K L y z, hxy]
+  refine (_root_.TauCeti.LieAlgebra.killingAdjointSO_injective_iff K L).mpr
+    (_root_.LieAlgebra.center_eq_bot K L) (Subtype.ext (LinearMap.ext fun z ↦ ?_))
+  rw [_root_.TauCeti.LieAlgebra.coe_killingAdjointSO,
+    _root_.TauCeti.LieAlgebra.coe_killingAdjointSO, _root_.LieAlgebra.ad_apply,
+    _root_.LieAlgebra.ad_apply]
+  exact hz z
 
 end CliffordAlgebra
