@@ -141,7 +141,6 @@ theorem genWeightSpace_weylGroup_smul_ne_bot_iff [LieModule.IsIrreducible K L M]
 
 /-- A linear form is not a weight of an irreducible highest weight module of dominant integral
 weight exactly when any Weyl translate is not a weight. -/
-@[simp]
 theorem genWeightSpace_weylGroup_smul_eq_bot_iff [LieModule.IsIrreducible K L M]
     (hv : IsHighestWeightVector b lam v) (hlam : IsDominantIntegral b lam)
     (w : (IsKilling.rootSystem H).weylGroup) (χ : Dual K H) :
