@@ -65,38 +65,39 @@ def tateTwist (hs : HodgeStructureOn W ω n) (m : ℤ) :
     have hindex : n - 2 * m + 1 - p + m = n + 1 - (p + m) := by ring
     simpa only [hindex] using hs.opposed (p + m)
 
-private theorem cast_F {a b : ℤ} (h : a = b) (hs : HodgeStructureOn W ω a) :
-    (cast (congrArg (HodgeStructureOn W ω) h) hs).F = hs.F := by
-  subst b
-  rfl
+/-- Weight normalization: a cast between Hodge structures whose weights are propositionally equal
+is determined by the filtrations.
+
+Weights that are equal only propositionally give *different* types `HodgeStructureOn W ω a` and
+`HodgeStructureOn W ω b`, so a normalization law such as `tateTwist_zero` or `tateTwist_add` can
+only be stated after transporting one side along the type equality `h`. Once the weights are
+identified by `hab`, definitional proof irrelevance makes `h` interchangeable with `rfl`, so no
+hypothesis relating `h` to `hab` is needed and the cast disappears. -/
+private theorem cast_eq_of_F {a b : ℤ} (hab : a = b)
+    (h : HodgeStructureOn W ω a = HodgeStructureOn W ω b)
+    (hs : HodgeStructureOn W ω a) (hs' : HodgeStructureOn W ω b)
+    (hF : ∀ p, hs.F p = hs'.F p) : cast h hs = hs' := by
+  subst hab
+  exact HodgeStructureOn.ext (funext hF)
 
 /-- Twisting by zero leaves a Hodge structure unchanged. -/
 @[simp]
 theorem tateTwist_zero (hs : HodgeStructureOn W ω n)
     {h : HodgeStructureOn W ω (n - 2 * 0) = HodgeStructureOn W ω n} :
-    cast h (hs.tateTwist 0) = hs := by
-  let hi : n - 2 * 0 = n := by ring
-  rw [show h = congrArg (HodgeStructureOn W ω) hi from Subsingleton.elim _ _]
-  apply HodgeStructureOn.ext
-  funext p
-  rw [cast_F]
-  · simp only [tateTwist, add_zero]
-  · exact hi
+    cast h (hs.tateTwist 0) = hs :=
+  cast_eq_of_F (by ring) h _ _ fun p => by
+    simp only [tateTwist, add_zero]
 
 /-- Two successive Tate twists combine by adding their indices. -/
+@[simp]
 theorem tateTwist_add (hs : HodgeStructureOn W ω n) (m k : ℤ)
     {h : HodgeStructureOn W ω (n - 2 * m - 2 * k) =
       HodgeStructureOn W ω (n - 2 * (m + k))} :
-    cast h ((hs.tateTwist m).tateTwist k) = hs.tateTwist (m + k) := by
-  let hi : n - 2 * m - 2 * k = n - 2 * (m + k) := by ring
-  rw [show h = congrArg (HodgeStructureOn W ω) hi from Subsingleton.elim _ _]
-  apply HodgeStructureOn.ext
-  funext p
-  rw [cast_F]
-  · simp only [tateTwist]
+    cast h ((hs.tateTwist m).tateTwist k) = hs.tateTwist (m + k) :=
+  cast_eq_of_F (by ring) h _ _ fun p => by
+    simp only [tateTwist]
     congr 1
     ring
-  · exact hi
 
 /-- The Hodge filtration of a Tate twist is the translated original filtration. -/
 @[simp]
