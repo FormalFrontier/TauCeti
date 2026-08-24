@@ -61,9 +61,6 @@ not yet have.
   `H⊥ / H` is the discriminant of `M`.
 * `TauCeti.IntegralLattice.IntermediateCarrier.subsingleton_orthogonalQuotient_iff_isUnimodular`:
   `M` is unimodular exactly when `H⊥ / H` is trivial.
-* `TauCeti.IntegralLattice.Isometry.discriminantGroupEquiv_mem_orthogonalComplement_iff`:
-  an isometry carries the orthogonal complements of corresponding discriminant subgroups to one
-  another.
 * `TauCeti.IntegralLattice.Isometry.discriminantOrthogonalQuotientIsometry_naturality`: the
   comparison isometry is natural under a lattice isometry.
 * `TauCeti.IntegralLattice.discriminantOrthogonalQuotientIsometryOfSubgroup`: the same isometry
@@ -303,98 +300,9 @@ theorem subsingleton_orthogonalQuotient_iff_isUnimodular :
 
 end IntermediateCarrier
 
-/-! ## The comparison isometry read on subgroups -/
-
 open IntermediateCarrier
 
-/-! ## Naturality under a lattice isometry -/
-
-section Naturality
-
-variable {W : Type*} [AddCommGroup W] [Module ℚ W] {L' : IntegralLattice W} [L'.IsNondegenerate]
-
-namespace Isometry
-
-/-- **The discriminant-subgroup correspondence is natural.** A discriminant class of `L` lies in
-the subgroup attached to an intermediate carrier exactly when its image under the induced
-discriminant isometry lies in the subgroup attached to the transported carrier. -/
-theorem discriminantQuadraticIsometry_mem_discriminantSubgroup_iff (e : Isometry L L')
-    (hL : L.IsEven) (P : L.IntermediateCarrier) (x : L.DiscriminantGroup) :
-    e.discriminantQuadraticIsometry hL x ∈
-        L'.discriminantSubgroup (e.intermediateCarrierEquiv P) ↔
-      x ∈ L.discriminantSubgroup P := by
-  have h := mem_discriminantSubgroup_intermediateCarrierEquiv_iff e P (e.discriminantGroupEquiv x)
-  rw [LinearEquiv.symm_apply_apply] at h
-  rw [discriminantQuadraticIsometry_apply]
-  exact h
-
-/-- **An isometry carries the orthogonal complements of corresponding discriminant subgroups to
-one another.** A discriminant class of `L` is orthogonal to the subgroup of an intermediate
-carrier exactly when its image is orthogonal to the subgroup of the transported carrier. -/
-theorem discriminantGroupEquiv_mem_orthogonalComplement_iff
-    (e : Isometry L L') (P : L.IntermediateCarrier) (x : L.DiscriminantGroup) :
-    e.discriminantGroupEquiv x ∈ L'.discriminantBilinearModule.orthogonalComplement
-        (L'.discriminantSubgroup (e.intermediateCarrierEquiv P)) ↔
-      x ∈ L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup P) := by
-  -- The carrier of `discriminantBilinearModule` is `DiscriminantGroup` by definition only, so the
-  -- transporting map is ascribed and the two spellings are bridged by `exact`.
-  have hmap : (L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup P)).map
-        (e.discriminantGroupEquiv.toAddEquiv : L.DiscriminantGroup →+ L'.DiscriminantGroup) =
-      L'.discriminantBilinearModule.orthogonalComplement
-        (L'.discriminantSubgroup (e.intermediateCarrierEquiv P)) := by
-    rw [discriminantSubgroup_intermediateCarrierEquiv,
-      ← discriminantBilinearIsometry_toAddEquiv]
-    exact e.discriminantBilinearIsometry.map_orthogonalComplement (H := L.discriminantSubgroup P)
-  rw [← hmap]
-  exact AddSubgroup.mem_map_iff_mem e.discriminantGroupEquiv.injective
-
-/-- **Naturality of the comparison isometry `A_M ≅ H⊥ / H`, on a discriminant class.** -/
-theorem discriminantOrthogonalQuotientIsometry_naturality_apply (e : Isometry L L')
-    (hL : L.IsEven) {P : L.IntermediateCarrier} (hP : IntermediateCarrier.IsEven P)
-    (q : hP.isIntegral.toIntegralLattice.DiscriminantGroup) :
-    (e.discriminantQuadraticIsometry hL).orthogonalQuotient
-        ((isEven_iff_isIsotropic_discriminantSubgroup hL P).mp hP)
-        (e.discriminantQuadraticIsometry_mem_discriminantSubgroup_iff hL P)
-        (discriminantOrthogonalQuotientIsometry hL hP q) =
-      discriminantOrthogonalQuotientIsometry (e.isEven_iff.mp hL)
-        ((e.isEven_intermediateCarrierEquiv_iff P).mpr hP)
-        ((e.intermediateCarrierIsometry hP.isIntegral).discriminantQuadraticIsometry
-          hP.isEven_toIntegralLattice q) := by
-  induction q using Submodule.Quotient.induction_on with
-  | _ y =>
-    rw [discriminantOrthogonalQuotientIsometry_mk, discriminantQuadraticIsometry_mk,
-      discriminantOrthogonalQuotientIsometry_mk]
-    refine Eq.trans (FiniteQuadraticModule.Isometry.orthogonalQuotient_orthogonalQuotientMk
-      _ _ _ _) ?_
-    have hclass : (e.discriminantQuadraticIsometry hL) (hP.isIntegral.dualClassHom y) =
-          ((e.isEven_intermediateCarrierEquiv_iff P).mpr hP).isIntegral.dualClassHom
-            ((e.intermediateCarrierIsometry hP.isIntegral).dualCarrierEquiv y) := by
-      rw [discriminantQuadraticIsometry_apply,
-        IntermediateCarrier.IsIntegral.dualClassHom_apply, discriminantGroupEquiv_mk,
-        IntermediateCarrier.IsIntegral.dualClassHom_apply]
-      exact congrArg _ (Subtype.ext (by simp))
-    exact congrArg _ (Subtype.ext hclass)
-
-/-- **Naturality of the comparison isometry `A_M ≅ H⊥ / H`.** An isometry `e : L ≅ L'` of even
-nondegenerate lattices transports an even intermediate carrier `P` of `L` to one of `L'`, and the
-square built from the two comparison isometries, the induced isometry of the discriminant
-quadratic modules of the two overlattices, and the transported orthogonal quotient commutes. -/
-theorem discriminantOrthogonalQuotientIsometry_naturality (e : Isometry L L') (hL : L.IsEven)
-    {P : L.IntermediateCarrier} (hP : IntermediateCarrier.IsEven P) :
-    ((e.intermediateCarrierIsometry hP.isIntegral).discriminantQuadraticIsometry
-          hP.isEven_toIntegralLattice).trans
-        (discriminantOrthogonalQuotientIsometry (e.isEven_iff.mp hL)
-          ((e.isEven_intermediateCarrierEquiv_iff P).mpr hP)) =
-        (discriminantOrthogonalQuotientIsometry hL hP).trans
-        ((e.discriminantQuadraticIsometry hL).orthogonalQuotient
-          ((isEven_iff_isIsotropic_discriminantSubgroup hL P).mp hP)
-          (e.discriminantQuadraticIsometry_mem_discriminantSubgroup_iff hL P)) :=
-  DFunLike.ext _ _ fun q ↦
-    (e.discriminantOrthogonalQuotientIsometry_naturality_apply hL hP q).symm
-
-end Isometry
-
-end Naturality
+/-! ## The comparison isometry read on subgroups -/
 
 variable (L)
 
@@ -454,6 +362,70 @@ theorem natCard_orthogonalQuotient_of_subgroup (hL : L.IsEven)
   exact (Nat.card_congr (L.discriminantOrthogonalQuotientIsometryOfSubgroup hL
       hH).toLinearEquiv.toEquiv).symm.trans
     hM.isIntegral.toIntegralLattice.natCard_discriminantGroup
+
+variable {L}
+
+/-! ## Naturality under a lattice isometry -/
+
+section Naturality
+
+variable {W : Type*} [AddCommGroup W] [Module ℚ W] {L' : IntegralLattice W} [L'.IsNondegenerate]
+
+namespace Isometry
+
+/-- **Naturality of the comparison isometry `A_M ≅ H⊥ / H`, on a discriminant class.** The
+equation identifies comparison after transport on `A_M` with transport after comparison. -/
+theorem discriminantOrthogonalQuotientIsometry_naturality_apply (e : Isometry L L')
+    (hL : L.IsEven) {P : L.IntermediateCarrier} (hP : IntermediateCarrier.IsEven P)
+    (q : hP.isIntegral.toIntegralLattice.DiscriminantGroup) :
+    discriminantOrthogonalQuotientIsometry (e.isEven_iff.mp hL)
+        ((e.isEven_intermediateCarrierEquiv_iff P).mpr hP)
+        ((e.toIntegralLatticeIsometry hP.isIntegral).discriminantQuadraticIsometry
+          hP.isEven_toIntegralLattice q) =
+      (e.discriminantQuadraticIsometry hL).orthogonalQuotientEquiv
+        ((isEven_iff_isIsotropic_discriminantSubgroup hL P).mp hP)
+        (by
+          rw [discriminantQuadraticIsometry_toAddEquiv]
+          exact (e.discriminantSubgroup_intermediateCarrierEquiv P).symm)
+        (discriminantOrthogonalQuotientIsometry hL hP q) := by
+  symm
+  induction q using Submodule.Quotient.induction_on with
+  | _ y =>
+    rw [discriminantOrthogonalQuotientIsometry_mk, discriminantQuadraticIsometry_mk,
+      discriminantOrthogonalQuotientIsometry_mk]
+    refine Eq.trans (FiniteQuadraticModule.Isometry.orthogonalQuotientEquiv_orthogonalQuotientMk
+      _ _ _ _) ?_
+    have hclass : (e.discriminantQuadraticIsometry hL) (hP.isIntegral.dualClassHom y) =
+          ((e.isEven_intermediateCarrierEquiv_iff P).mpr hP).isIntegral.dualClassHom
+            ((e.toIntegralLatticeIsometry hP.isIntegral).dualCarrierEquiv y) := by
+      rw [discriminantQuadraticIsometry_apply,
+        IntermediateCarrier.IsIntegral.dualClassHom_apply, discriminantGroupEquiv_mk,
+        IntermediateCarrier.IsIntegral.dualClassHom_apply]
+      exact congrArg _ (Subtype.ext (by simp))
+    exact congrArg _ (Subtype.ext hclass)
+
+/-- **Naturality of the comparison isometry `A_M ≅ H⊥ / H`.** An isometry `e : L ≅ L'` of even
+nondegenerate lattices transports an even intermediate carrier `P` of `L` to one of `L'`, and the
+square built from the two comparison isometries, the induced isometry of the discriminant
+quadratic modules of the two overlattices, and the transported orthogonal quotient commutes. -/
+theorem discriminantOrthogonalQuotientIsometry_naturality (e : Isometry L L') (hL : L.IsEven)
+    {P : L.IntermediateCarrier} (hP : IntermediateCarrier.IsEven P) :
+    ((e.toIntegralLatticeIsometry hP.isIntegral).discriminantQuadraticIsometry
+          hP.isEven_toIntegralLattice).trans
+        (discriminantOrthogonalQuotientIsometry (e.isEven_iff.mp hL)
+          ((e.isEven_intermediateCarrierEquiv_iff P).mpr hP)) =
+        (discriminantOrthogonalQuotientIsometry hL hP).trans
+        ((e.discriminantQuadraticIsometry hL).orthogonalQuotientEquiv
+          ((isEven_iff_isIsotropic_discriminantSubgroup hL P).mp hP)
+          (by
+            rw [discriminantQuadraticIsometry_toAddEquiv]
+            exact (e.discriminantSubgroup_intermediateCarrierEquiv P).symm)) :=
+  DFunLike.ext _ _ fun q ↦
+    e.discriminantOrthogonalQuotientIsometry_naturality_apply hL hP q
+
+end Isometry
+
+end Naturality
 
 end IntegralLattice
 

@@ -43,13 +43,16 @@ even, exactly when both components are.
   `IntegralLattice.Isometry.intermediateCarrierEquiv_intermediateCarrierOfDiscriminantSubgroup`:
   the transport commutes with the discriminant-subgroup correspondence and with its inverse-image
   construction.
+* `Isometry.orthogonalComplement_discriminantSubgroup_intermediateCarrierEquiv`:
+  transport carries the orthogonal complements of corresponding discriminant subgroups to one
+  another.
 * `TauCeti.IntegralLattice.Isometry.isIntegral_intermediateCarrierEquiv_iff` and
   `TauCeti.IntegralLattice.Isometry.isEven_intermediateCarrierEquiv_iff`: integrality and evenness
   of an intermediate carrier are isometry invariants.
 * `TauCeti.IntegralLattice.Isometry.integralIntermediateCarrierEquiv` and
   `TauCeti.IntegralLattice.Isometry.evenIntermediateCarrierEquiv`: the corresponding transports
   restricted to integral and even intermediate carriers.
-* `TauCeti.IntegralLattice.Isometry.intermediateCarrierIsometry`: the induced isometry between
+* `TauCeti.IntegralLattice.Isometry.toIntegralLatticeIsometry`: the induced isometry between
   the integral lattices carried by an integral intermediate carrier and by its transport.
 * `TauCeti.IntegralLattice.orthogonalSumIntermediateCarrier`: the intermediate carrier of an
   orthogonal sum assembled from a pair of intermediate carriers.
@@ -170,6 +173,16 @@ theorem mem_discriminantSubgroup_intermediateCarrierEquiv_iff (e : Isometry L M)
       discriminantGroupEquiv_symm_mk, L.mk_mem_discriminantSubgroup_iff,
       coe_dualCarrierEquiv_apply]
 
+/-- A discriminant class lies in the subgroup of a transported carrier exactly when its image
+under the induced discriminant equivalence lies in that subgroup. -/
+theorem discriminantGroupEquiv_mem_discriminantSubgroup_iff (e : Isometry L M)
+    (P : L.IntermediateCarrier) (x : L.DiscriminantGroup) :
+    e.discriminantGroupEquiv x ∈ M.discriminantSubgroup (e.intermediateCarrierEquiv P) ↔
+      x ∈ L.discriminantSubgroup P := by
+  have h := mem_discriminantSubgroup_intermediateCarrierEquiv_iff e P
+    (e.discriminantGroupEquiv x)
+  rwa [LinearEquiv.symm_apply_apply] at h
+
 /-- **The transport commutes with the discriminant-subgroup correspondence.** The subgroup of
 `A_M` attached to a transported intermediate carrier is the image, under the induced equivalence
 of discriminant groups, of the subgroup of `A_L` attached to the original carrier. -/
@@ -186,6 +199,37 @@ theorem discriminantSubgroup_intermediateCarrierEquiv (e : Isometry L M)
     simp
   · rintro ⟨z, hz, rfl⟩
     simpa using hz
+
+section Nondegenerate
+
+variable [L.IsNondegenerate] [M.IsNondegenerate]
+
+/-- **An isometry carries the orthogonal complements of corresponding discriminant subgroups to
+one another.** -/
+@[simp]
+theorem orthogonalComplement_discriminantSubgroup_intermediateCarrierEquiv
+    (e : Isometry L M) (P : L.IntermediateCarrier) :
+    (L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup P)).map
+        (e.discriminantGroupEquiv.toAddEquiv :
+          L.DiscriminantGroup →+ M.DiscriminantGroup) =
+      M.discriminantBilinearModule.orthogonalComplement
+        (M.discriminantSubgroup (e.intermediateCarrierEquiv P)) := by
+  rw [discriminantSubgroup_intermediateCarrierEquiv,
+    ← discriminantBilinearIsometry_toAddEquiv]
+  exact e.discriminantBilinearIsometry.map_orthogonalComplement
+    (H := L.discriminantSubgroup P)
+
+/-- A discriminant class is orthogonal to the subgroup of an intermediate carrier exactly when
+its image is orthogonal to the subgroup of the transported carrier. -/
+theorem discriminantGroupEquiv_mem_orthogonalComplement_iff
+    (e : Isometry L M) (P : L.IntermediateCarrier) (x : L.DiscriminantGroup) :
+    e.discriminantGroupEquiv x ∈ M.discriminantBilinearModule.orthogonalComplement
+        (M.discriminantSubgroup (e.intermediateCarrierEquiv P)) ↔
+      x ∈ L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup P) := by
+  rw [← e.orthogonalComplement_discriminantSubgroup_intermediateCarrierEquiv P]
+  exact AddSubgroup.mem_map_iff_mem e.discriminantGroupEquiv.injective
+
+end Nondegenerate
 
 /-- **The transport commutes with the inverse-image construction.** Transporting the carrier
 `L_H` attached to a subgroup `H ≤ A_L` gives the carrier attached to the image of `H` in
@@ -361,7 +405,7 @@ variable [L.IsNondegenerate] [M.IsNondegenerate]
 /-- **An isometry restricts to an isometry of integral overlattices.** The lattice carried by an
 integral intermediate carrier and the lattice carried by its transport are isometric through the
 same ambient rational equivalence. -/
-def intermediateCarrierIsometry (e : Isometry L M) {P : L.IntermediateCarrier}
+def toIntegralLatticeIsometry (e : Isometry L M) {P : L.IntermediateCarrier}
     (hP : IntermediateCarrier.IsIntegral P) :
     Isometry hP.toIntegralLattice
       ((e.isIntegral_intermediateCarrierEquiv_iff P).mpr hP).toIntegralLattice where
@@ -377,9 +421,9 @@ def intermediateCarrierIsometry (e : Isometry L M) {P : L.IntermediateCarrier}
 
 /-- The restricted isometry of integral overlattices acts by the ambient equivalence. -/
 @[simp]
-theorem intermediateCarrierIsometry_apply (e : Isometry L M) {P : L.IntermediateCarrier}
+theorem toIntegralLatticeIsometry_apply (e : Isometry L M) {P : L.IntermediateCarrier}
     (hP : IntermediateCarrier.IsIntegral P) (x : V) :
-    e.intermediateCarrierIsometry hP x = e x := (rfl)
+    e.toIntegralLatticeIsometry hP x = e x := (rfl)
 
 end Nondegenerate
 
