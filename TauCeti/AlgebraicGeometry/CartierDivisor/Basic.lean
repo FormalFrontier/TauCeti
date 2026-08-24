@@ -92,29 +92,6 @@ lemma toRationalUnitSheaf_comp_toCartierDivisorSheaf :
     toRationalUnitSheaf X ≫ toCartierDivisorSheaf X = 0 :=
   cokernel.condition (toRationalUnitSheaf X)
 
-/-- A morphism out of the Cartier-divisor sheaf is determined by a morphism out of
-`𝒦_X^×` which kills `𝒪_X^×`. -/
-def cartierDivisorSheafDesc {F : TopCat.Sheaf AddCommGrpCat.{u} X}
-    (f : rationalUnitSheaf X ⟶ F) (h : toRationalUnitSheaf X ≫ f = 0) :
-    cartierDivisorSheaf X ⟶ F :=
-  cokernel.desc (toRationalUnitSheaf X) f h
-
-/-- The morphism induced from `𝒦_X^× / 𝒪_X^×` agrees with the original morphism after the
-quotient projection. -/
-@[reassoc (attr := simp)]
-lemma toCartierDivisorSheaf_comp_desc {F : TopCat.Sheaf AddCommGrpCat.{u} X}
-    (f : rationalUnitSheaf X ⟶ F) (h : toRationalUnitSheaf X ≫ f = 0) :
-    toCartierDivisorSheaf X ≫ cartierDivisorSheafDesc X f h = f :=
-  cokernel.π_desc (toRationalUnitSheaf X) f h
-
-/-- Morphisms out of the Cartier-divisor sheaf are equal when they agree after the quotient
-projection. -/
-theorem cartierDivisorSheaf_hom_ext {F : TopCat.Sheaf AddCommGrpCat.{u} X}
-    {f g : cartierDivisorSheaf X ⟶ F}
-    (h : toCartierDivisorSheaf X ≫ f = toCartierDivisorSheaf X ≫ g) : f = g := by
-  apply (cancel_epi (toCartierDivisorSheaf X)).mp
-  exact h
-
 /-- The group of Cartier divisors on `X`, defined as the global sections of
 `𝒦_X^× / 𝒪_X^×`. -/
 abbrev CartierDivisor : Type u :=
