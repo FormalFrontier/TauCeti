@@ -36,6 +36,9 @@ reduce a projection of the opaque constructor. Every other fact about `shortCurv
 * `WeierstrassCurve.map_shortCurve`: short form is preserved by a ring hom, and the
   coefficients transport. Mathlib has no `IsShortNF`-under-`map` instance, so this is what lets a
   curve over `ℤ` be base changed to `ℚ` and stay recognisably short.
+* `WeierstrassCurve.baseChange_shortCurve`: the same for a base change, which is the spelling
+  consumers actually hold. It follows definitionally from `map_shortCurve`, but `simp` does not
+  automatically unfold `baseChange`, so that lemma never fires on this spelling by itself.
 * `WeierstrassCurve.shortCurve_equation_iff`: a point lies on it exactly when
   `y² = x³ + Ax + B`.
 
@@ -106,6 +109,18 @@ no instance propagating `IsShortNF` along `map`, so this is what keeps a base ch
 the classical Nagell–Lutz statement — recognisably in short form. -/
 @[simp] lemma map_shortCurve (f : R →+* S) : (shortCurve A B).map f = shortCurve (f A) (f B) := by
   ext <;> simp [shortCurve, WeierstrassCurve.map]
+
+/-- The same statement for a base change, which is the spelling consumers actually meet.
+`baseChange` *is* `map (algebraMap R S)` by definition, which is why the proof below is just
+`map_shortCurve` at that hom.
+
+It is nonetheless worth stating and tagging `@[simp]`: `simp` does not automatically unfold
+`baseChange`, which carries no simp lemma of its own, so `map_shortCurve` never fires on a
+`baseChange` spelling. This lemma is that missing normalisation step, not a wrapper to name by
+hand. -/
+@[simp] lemma baseChange_shortCurve [Algebra R S] :
+    (shortCurve A B).baseChange S = shortCurve (algebraMap R S A) (algebraMap R S B) :=
+  map_shortCurve A B _
 
 /-- A point lies on `y² = x³ + Ax + B` exactly when it satisfies that equation. -/
 @[simp] lemma shortCurve_equation_iff (x y : R) :
