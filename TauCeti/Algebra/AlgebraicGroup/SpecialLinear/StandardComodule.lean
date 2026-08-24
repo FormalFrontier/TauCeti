@@ -68,23 +68,31 @@ noncomputable def standardComodule :
 
 attribute [local instance] GeneralLinear.standardComodule standardComodule
 
-/-- The standard `SL_n` coaction is the standard `GL_n` coaction followed by the quotient map on
-the coordinate factor. -/
-@[simp]
-theorem standardComodule_coact :
+private theorem standardComodule_corestrictCoact :
+    let _ := GeneralLinear.standardComodule R n
     Comodule.corestrictCoact
         (R := R) (C := GeneralLinear.coordinateHopfAlgebra R n)
         (D := coordinateHopfAlgebra R n) (M := Fin n → R)
-        (Bialgebra.Quotient.mkBialgHom (R := R)
-          (definingHopfIdeal R n).toIdeal).toCoalgHom =
+        (coordinateMap R n).hom.toCoalgHom =
       TensorProduct.map LinearMap.id
           (Bialgebra.Quotient.mkBialgHom (R := R)
             (definingHopfIdeal R n).toIdeal).toLinearMap ∘ₗ
         GeneralLinear.standardCoact R n := by
   apply LinearMap.ext
   intro v
-  rw [LinearMap.comp_apply, Comodule.corestrictCoact_apply,
-    GeneralLinear.standardComodule_coact]
+  rw [Comodule.corestrictCoact_apply, LinearMap.comp_apply,
+    GeneralLinear.standardComodule_coact, CommHopfAlgCat.hom_mkQuotient]
+
+/-- The standard `SL_n` coaction is the standard `GL_n` coaction followed by the quotient map on
+the coordinate factor. -/
+@[simp]
+theorem standardComodule_coact :
+    (standardComodule R n).coact =
+      TensorProduct.map LinearMap.id
+          (Bialgebra.Quotient.mkBialgHom (R := R)
+            (definingHopfIdeal R n).toIdeal).toLinearMap ∘ₗ
+        GeneralLinear.standardCoact R n :=
+  standardComodule_corestrictCoact R n
 
 /-- **The standard comodule of `SL_n` is faithful.** -/
 theorem isFaithful_standardComodule :
@@ -146,11 +154,12 @@ theorem mulVec_mem (N : Subcomodule R (coordinateHopfAlgebra R n) (Fin n → R))
     (g : Matrix.SpecialLinearGroup (Fin n) R) {w : Fin n → R} (hw : w ∈ N) :
     (g : Matrix (Fin n) (Fin n) R) *ᵥ w ∈ N := by
   let q := (pointsMulEquiv (R := R) (A := R) n).symm g
-  have h := N.rid_lTensor_coact_mem q.ofConv.toLinearMap hw
-  rw [Comodule.corestrict_coact,
-    CommHopfAlgCat.hom_mkQuotient (GeneralLinear.coordinateHopfAlgebra R n)
-      (definingHopfIdeal R n),
-    standardComodule_coact R n, LinearMap.comp_apply] at h
+  have h :
+      TensorProduct.rid R (Fin n → R)
+          (LinearMap.lTensor (Fin n → R) q.ofConv.toLinearMap
+            ((standardComodule R n).coact w)) ∈ N :=
+    N.rid_lTensor_coact_mem q.ofConv.toLinearMap hw
+  rw [standardComodule_coact R n, LinearMap.comp_apply] at h
   have hcoordinate :
       (Bialgebra.Quotient.mkBialgHom
           (R := R) (definingHopfIdeal R n).toIdeal).toCoalgHom.toLinearMap =
@@ -253,20 +262,20 @@ private theorem exists_specialLinearGroup_mulVec {v w : Fin m → k} (hm : 2 ≤
 /-- **The standard comodule of `SL_m` over a field is simple** for `m ≠ 0`: its only
 subcomodules are the zero comodule and the whole column space. -/
 instance instIsSimpleOrderSubcomodule :
-    IsSimpleOrder (Subcomodule k (coordinateHopfAlgebra k m) (Fin m → k)) where
-  exists_pair_ne := by
-    refine ⟨⊥, ⊤, fun h ↦ ?_⟩
-    have hone : (Pi.single (0 : Fin m) (1 : k) : Fin m → k) ∈
-        (⊥ : Subcomodule k (coordinateHopfAlgebra k m) (Fin m → k)) :=
-      h ▸ Subcomodule.mem_top _
-    rw [Subcomodule.mem_bot] at hone
-    simpa using congrFun hone (0 : Fin m)
-  eq_bot_or_eq_top N := by
-    by_cases hm : m = 1
-    · have hfin : Module.finrank k (Fin m → k) = 1 := by
-        rw [Module.finrank_pi k, Fintype.card_fin, hm]
-      let hsimple : IsSimpleOrder (Submodule k (Fin m → k)) :=
-        is_simple_module_of_finrank_eq_one hfin
+    IsSimpleOrder (Subcomodule k (coordinateHopfAlgebra k m) (Fin m → k)) := by
+  by_cases hm : m = 1
+  · have hfin : Module.finrank k (Fin m → k) = 1 := by
+      rw [Module.finrank_pi k, Fintype.card_fin, hm]
+    let hsimple : IsSimpleOrder (Submodule k (Fin m → k)) :=
+      is_simple_module_of_finrank_eq_one hfin
+    refine { exists_pair_ne := ?_, eq_bot_or_eq_top := ?_ }
+    · refine ⟨⊥, ⊤, fun h ↦ ?_⟩
+      have hone : (Pi.single (0 : Fin m) (1 : k) : Fin m → k) ∈
+          (⊥ : Subcomodule k (coordinateHopfAlgebra k m) (Fin m → k)) :=
+        h ▸ Subcomodule.mem_top _
+      rw [Subcomodule.mem_bot] at hone
+      simpa using congrFun hone (0 : Fin m)
+    · intro N
       rcases hsimple.eq_bot_or_eq_top N.toSubmodule with hN | hN
       · left
         exact Subcomodule.ext fun x ↦ by
@@ -278,22 +287,17 @@ instance instIsSimpleOrderSubcomodule :
           have hx : x ∈ N.toSubmodule ↔ x ∈ (⊤ : Submodule k (Fin m → k)) :=
             SetLike.ext_iff.mp hN x
           exact hx
-    · have hm2 : 2 ≤ m := by
-        have hm0 : m ≠ 0 := NeZero.ne m
-        omega
-      by_cases hN : ∀ w ∈ N, w = 0
-      · left
-        exact Subcomodule.ext fun w ↦
-          ⟨fun hw ↦ Subcomodule.mem_bot.mpr (hN w hw),
-            fun hw ↦ Subcomodule.mem_bot.mp hw ▸ zero_mem N⟩
-      · right
-        simp only [not_forall] at hN
-        obtain ⟨w, hwN, hw⟩ := hN
-        refine Subcomodule.ext fun v ↦ ⟨fun _ ↦ Subcomodule.mem_top v, fun _ ↦ ?_⟩
-        by_cases hv : v = 0
-        · exact hv ▸ zero_mem N
-        · obtain ⟨g, hg⟩ := exists_specialLinearGroup_mulVec k m hm2 hv hw
-          exact hg ▸ mulVec_mem k m N g hwN
+  · have hm2 : 2 ≤ m := by
+      have hm0 : m ≠ 0 := NeZero.ne m
+      omega
+    refine Subcomodule.isSimpleOrder_of_transitive
+      (Pi.single (0 : Fin m) (1 : k) : Fin m → k) ?_
+      (fun (g : Matrix.SpecialLinearGroup (Fin m) k) w ↦
+        (g : Matrix (Fin m) (Fin m) k) *ᵥ w) ?_ ?_
+    · intro h
+      simpa using congrFun h (0 : Fin m)
+    · exact fun hv hw ↦ exists_specialLinearGroup_mulVec k m hm2 hv hw
+    · exact fun N g _ hw ↦ mulVec_mem k m N g hw
 
 end Simple
 
