@@ -17,14 +17,14 @@ randomness.  A separately exchangeable array is coded from a global variable, on
 each row, one for each column, and one for each cell:
 
 ```text
-X i j = f(U, Uᵣ i, U꜀ j, Uᵢⱼ).
+X i j = f(U, U_row i, U_col j, U_cell i j).
 ```
 
 For a jointly exchangeable array, the row and column variables are replaced by one family of
 vertex variables:
 
 ```text
-X i j = f(U, Uᵥ i, Uᵥ j, Uᵢⱼ).
+X i j = f(U, U_vert i, U_vert j, U_cell i j).
 ```
 
 This file defines canonical product probability spaces carrying those sources and proves the easy
