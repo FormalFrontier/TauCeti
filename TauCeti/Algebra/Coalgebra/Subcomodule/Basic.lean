@@ -280,24 +280,6 @@ theorem isSimpleOrder_of_transitive {G : Type x} (v₀ : M) (hv₀ : v₀ ≠ 0)
 
 variable {N : Type x} [AddCommMonoid N] [Module R N] [Comodule R C N]
 
-/-- The restriction of a comodule morphism from a subcomodule to its image submodule. -/
-private def mapSubtype (f : Comodule.Hom R C M N) (A : Subcomodule R C M) :
-    A.carrier →ₗ[R] A.carrier.map f.toLinearMap where
-  toFun a := ⟨f a, Submodule.mem_map_of_mem a.2⟩
-  map_add' a b := Subtype.ext (map_add f.toLinearMap (a : M) (b : M))
-  map_smul' r a := Subtype.ext (map_smul f.toLinearMap r (a : M))
-
-private theorem image_tensor_apply (f : Comodule.Hom R C M N) (A : Subcomodule R C M)
-    (t : A.carrier ⊗[R] C) :
-    TensorProduct.map (A.carrier.map f.toLinearMap).subtype (LinearMap.id : C →ₗ[R] C)
-        (TensorProduct.map (mapSubtype f A) (LinearMap.id : C →ₗ[R] C) t) =
-      TensorProduct.map f.toLinearMap (LinearMap.id : C →ₗ[R] C)
-        (TensorProduct.map A.carrier.subtype (LinearMap.id : C →ₗ[R] C) t) := by
-  induction t with
-  | zero => simp only [map_zero]
-  | tmul a c => rfl
-  | add x y hx hy => simp only [map_add, hx, hy]
-
 /-- The image of a subcomodule under a comodule morphism. -/
 @[expose] def map (A : Subcomodule R C M) (f : Comodule.Hom R C M N) : Subcomodule R C N where
   carrier := A.carrier.map f.toLinearMap
@@ -305,8 +287,22 @@ private theorem image_tensor_apply (f : Comodule.Hom R C M N) (A : Subcomodule R
     intro n hn
     rcases Submodule.mem_map.mp hn with ⟨m, hm, rfl⟩
     rcases A.coact_mem hm with ⟨t, ht⟩
-    refine ⟨TensorProduct.map (mapSubtype f A) (LinearMap.id : C →ₗ[R] C) t, ?_⟩
-    rw [image_tensor_apply, ht]
+    let g : A.carrier →ₗ[R] A.carrier.map f.toLinearMap :=
+      { toFun := fun a ↦ ⟨f a, Submodule.mem_map_of_mem a.2⟩
+        map_add' := fun a b ↦ Subtype.ext (map_add f.toLinearMap (a : M) (b : M))
+        map_smul' := fun r a ↦ Subtype.ext (map_smul f.toLinearMap r (a : M)) }
+    refine ⟨TensorProduct.map g (LinearMap.id : C →ₗ[R] C) t, ?_⟩
+    have hmap :
+        TensorProduct.map (A.carrier.map f.toLinearMap).subtype (LinearMap.id : C →ₗ[R] C)
+            (TensorProduct.map g (LinearMap.id : C →ₗ[R] C) t) =
+          TensorProduct.map f.toLinearMap (LinearMap.id : C →ₗ[R] C)
+            (TensorProduct.map A.carrier.subtype (LinearMap.id : C →ₗ[R] C) t) := by
+      clear ht
+      induction t with
+      | zero => simp only [map_zero]
+      | tmul a c => rfl
+      | add x y hx hy => simp only [map_add, hx, hy]
+    rw [hmap, ht]
     exact Comodule.Hom.map_coact_apply f m
 
 /-- The underlying submodule of the image subcomodule is the image of the underlying
