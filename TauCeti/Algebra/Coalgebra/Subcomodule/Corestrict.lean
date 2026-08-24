@@ -214,6 +214,8 @@ theorem map_id_coact_coe_eq_tmul_one (f : C →ₗc[R] D) (W : Subcomodule R C M
   rw [TensorProduct.map_tmul, SMulMemClass.subtype_apply, LinearMap.id_coe, id_eq] at h
   rw [← LinearMap.comp_apply, ← TensorProduct.map_comp, LinearMap.id_comp,
     LinearMap.comp_id] at h
+  -- The explicit factorization aligns the subtype coaction with the ambient tensor map;
+  -- elaboration cannot infer the intermediate tensor factors from the surrounding rewrite.
   rw [show TensorProduct.map (SMulMemClass.subtype W) f.toLinearMap =
       (TensorProduct.map (LinearMap.id : M →ₗ[R] M) f.toLinearMap).comp
         (TensorProduct.map (SMulMemClass.subtype W) (LinearMap.id : C →ₗ[R] C)) by

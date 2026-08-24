@@ -6,21 +6,20 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Reductive.Basic
-public import TauCeti.Algebra.AlgebraicGroup.Representation.NormalInvariants
-public import TauCeti.Algebra.AlgebraicGroup.Unipotent.LinearlyReductive
-public import TauCeti.Algebra.Coalgebra.Subcoalgebra.RegularSubcomodule
-public import TauCeti.Algebra.Coalgebra.Subcomodule.Corestrict
-public import TauCeti.Algebra.Coalgebra.Subcomodule.PointSeparation
+public import TauCeti.Algebra.AlgebraicGroup.LinearlyReductive
+import TauCeti.Algebra.AlgebraicGroup.Representation.NormalInvariants
+import TauCeti.Algebra.AlgebraicGroup.Unipotent.LinearlyReductive
+import TauCeti.Algebra.Coalgebra.Subcomodule.PointSeparation
 import TauCeti.Algebra.Coalgebra.Subcoalgebra.Finite
 import TauCeti.RingTheory.Smooth.GeometricallyReduced
 
 /-!
-# A linearly reductive affine group has no nontrivial normal unipotent subgroup
+# Normal unipotent subgroups of linearly reductive affine groups
 
-Let `H` be the coordinate Hopf algebra of an affine group over an algebraically closed field `k`,
-and let `I` be a normal Hopf ideal cutting out a closed subgroup `N` whose coordinate ring is
-reduced, of finite type, and has only unipotent points. If `H` is linearly reductive then `N` is
-the identity subgroup, that is, `I` is the augmentation ideal.
+Let `H` be a reduced, finite-type coordinate Hopf algebra of an affine group over an
+algebraically closed field `k`, and let `I` be a normal Hopf ideal cutting out a closed subgroup
+`N` whose coordinate ring is reduced, of finite type, and has only unipotent points. If `H` is
+linearly reductive then `N` is the identity subgroup, that is, `I` is the augmentation ideal.
 
 The argument is the standard one. Fix a finite-dimensional representation `V` of the ambient
 group. Its `N`-invariants are stable under the ambient group because `I` is normal, and geometric
@@ -43,17 +42,20 @@ converse implication in characteristic zero is a separate development.
 
 ## Main declarations
 
-* `TauCeti.HopfIdeal.mkQuotient_coact_eq_tmul_one_of_isCompletelyReducible`: a normal unipotent
-  closed subgroup acts trivially on every completely reducible finite-dimensional representation
-  of the ambient group.
-* `TauCeti.HopfIdeal.mkQuotient_eq_counit_smul_one_of_isLinearlyReductive`: the quotient morphism
-  of a linearly reductive group by such a subgroup is `h ↦ ε h • 1`.
-* `TauCeti.HopfIdeal.eq_augmentation_of_isNormal_of_isLinearlyReductive`: **a linearly reductive
-  affine group has no nontrivial normal unipotent closed subgroup.**
-* `TauCeti.HopfIdeal.quotientCounitBialgEquivOfIsLinearlyReductive`: the same conclusion as a
-  bialgebra equivalence between the subgroup's coordinate ring and the ground field.
-* `TauCeti.reductiveCommHopfAlgProperty.of_baseChange_linearlyReductive`: a smooth, geometrically
-  connected finite-type affine group with linearly reductive geometric fibre is reductive.
+* `mkQuotient_coact_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isCompletelyReducible`:
+  over an algebraically closed field, a normal unipotent closed subgroup of a reduced finite-type
+  affine group acts trivially on every completely reducible finite-dimensional representation.
+* `mkQuotient_eq_counit_smul_one_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive`:
+  under the same hypotheses, the quotient morphism of a linearly reductive group is
+  `h ↦ ε h • 1`.
+* `eq_augmentation_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive`:
+  **such a normal unipotent closed subgroup is trivial.**
+* `quotientCounitBialgEquivOfIsNormalOfForallIsUnipotentPointOfIsLinearlyReductive`:
+  the same conclusion as a bialgebra equivalence between the subgroup's coordinate ring and the
+  ground field.
+* `of_smooth_of_geometricallyConnected_of_baseChange_linearlyReductive`:
+  a smooth, geometrically connected finite-type affine group with linearly reductive geometric
+  fibre is reductive.
 
 ## References
 
@@ -86,25 +88,6 @@ variable [Field k] [CommRing H] [HopfAlgebra k H]
 
 attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free
 
-/-- Contracting `(id ⊗ f) ∘ comul` against the counit in the first factor returns `f`. -/
-private theorem lid_rTensor_counit_map_id {Q : Type w} [AddCommGroup Q] [Module k Q]
-    (f : H →ₗ[k] Q) (h : H) :
-    TensorProduct.lid k Q
-        (LinearMap.rTensor Q (Coalgebra.counit (R := k) (A := H))
-          (TensorProduct.map LinearMap.id f (Coalgebra.comul (R := k) h))) = f h := by
-  have hstep : ∀ x : H ⊗[k] H,
-      TensorProduct.lid k Q (LinearMap.rTensor Q (Coalgebra.counit (R := k) (A := H))
-          (TensorProduct.map LinearMap.id f x)) =
-        f (TensorProduct.lid k H
-          (LinearMap.rTensor H (Coalgebra.counit (R := k) (A := H)) x)) := by
-    intro x
-    induction x using TensorProduct.induction_on with
-    | zero => simp
-    | add s t hs ht => simp only [map_add, hs, ht]
-    | tmul a b => simp
-  rw [hstep, Coalgebra.rTensor_counit_comul]
-  simp
-
 section NormalUnipotent
 
 variable [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
@@ -121,14 +104,15 @@ section Comodule
 variable {M : Type w} [AddCommGroup M] [Module k M] [Comodule k H M] [FiniteDimensional k M]
 
 include hI hu in
-/-- A normal closed subgroup whose coordinate ring is reduced, of finite type and has only
-unipotent points acts trivially on every completely reducible finite-dimensional representation
-of the ambient group.
+/-- Over an algebraically closed field, a normal closed subgroup whose coordinate ring is
+reduced, of finite type and has only unipotent points acts trivially on every completely reducible
+finite-dimensional representation of an ambient affine group with reduced, finite-type
+coordinate ring.
 
 Normality makes the subgroup's fixed subspace an ambient subcomodule, complete reducibility
 supplies an ambient complement, and Kolchin's theorem finds a nonzero fixed vector inside a
 nonzero complement. -/
-theorem mkQuotient_coact_eq_tmul_one_of_isCompletelyReducible
+theorem mkQuotient_coact_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isCompletelyReducible
     (hcr : Comodule.IsCompletelyReducible k H M) (m : M) :
     TensorProduct.map LinearMap.id
         (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of k H) I).hom.toLinearMap
@@ -178,13 +162,14 @@ end Comodule
 variable (hlr : Coalgebra.IsLinearlyReductive.{u, v, u} k H)
 
 include hI hu hlr in
-/-- The regular representation of a linearly reductive group is fixed by a normal unipotent
-closed subgroup: comultiplication followed by the quotient morphism in the second factor sends
-`h` to `h ⊗ 1`.
+/-- Over an algebraically closed field, the regular representation of a linearly reductive,
+reduced finite-type affine group is fixed by a normal unipotent closed subgroup: comultiplication
+followed by the quotient morphism in the second factor sends `h` to `h ⊗ 1`.
 
 Every element lies in a finite-dimensional subcoalgebra, hence in a finite-dimensional
 subcomodule of the regular comodule, where the previous theorem applies. -/
-theorem mkQuotient_comul_eq_tmul_one_of_isLinearlyReductive (h : H) :
+theorem mkQuotient_comul_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive
+    (h : H) :
     TensorProduct.map LinearMap.id
         (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of k H) I).hom.toLinearMap
         (Coalgebra.comul (R := k) h) =
@@ -198,50 +183,101 @@ theorem mkQuotient_comul_eq_tmul_one_of_isLinearlyReductive (h : H) :
   -- `↥N` and `↥N.toSubmodule` subtype the same carrier, so finite-dimensionality transfers.
   have _ : FiniteDimensional k N := hNfin
   have hmem : h ∈ N := Subcoalgebra.mem_toRegularSubcomodule.mpr hD
-  have hfix := mkQuotient_coact_eq_tmul_one_of_isCompletelyReducible (M := N) hI hu
-    hlr.isCompletelyReducible ⟨h, hmem⟩
+  have hfix :=
+    mkQuotient_coact_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isCompletelyReducible
+      (M := N) hI hu hlr.isCompletelyReducible ⟨h, hmem⟩
   have hpush := Subcomodule.map_id_coact_coe_eq_tmul_one
     (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of k H) I).hom.toCoalgHom N hfix
   rwa [Comodule.instSelf_coact] at hpush
 
 include hI hu hlr in
-/-- The quotient morphism of a linearly reductive group by a normal unipotent closed subgroup is
-`h ↦ ε h • 1`.
+/-- Over an algebraically closed field, the quotient morphism of a linearly reductive, reduced
+finite-type affine group by a normal unipotent closed subgroup is `h ↦ ε h • 1`.
 
 Contracting the previous identity against the counit in the first factor removes
 comultiplication. -/
-theorem mkQuotient_eq_counit_smul_one_of_isLinearlyReductive (h : H) :
+theorem mkQuotient_eq_counit_smul_one_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive
+    (h : H) :
     (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of k H) I).hom h =
       Coalgebra.counit (R := k) h •
         (1 : CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I) := by
-  have hcomul := mkQuotient_comul_eq_tmul_one_of_isLinearlyReductive hI hu hlr h
-  have hcongr := congrArg
-    (fun t : H ⊗[k] CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I ↦
-      TensorProduct.lid k (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I)
-        (LinearMap.rTensor _ (Coalgebra.counit (R := k) (A := H)) t)) hcomul
-  simp only at hcongr
-  rw [lid_rTensor_counit_map_id, LinearMap.rTensor_tmul, TensorProduct.lid_tmul] at hcongr
-  exact hcongr
+  have hcomul :=
+    mkQuotient_comul_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive
+      hI hu hlr h
+  have hcounit :
+      ((TensorProduct.lid k
+          (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I)).toLinearMap ∘ₗ
+        TensorProduct.map (Coalgebra.counit (R := k) (A := H))
+          (CommHopfAlgCat.mkQuotient
+            (_root_.CommHopfAlgCat.of k H) I).hom.toLinearMap) ∘ₗ
+        Coalgebra.comul (R := k) (A := H) =
+      (CommHopfAlgCat.mkQuotient
+        (_root_.CommHopfAlgCat.of k H) I).hom.toLinearMap := by
+    rw [LinearMap.comp_assoc, CoassocSimps.map_counit_comp_comul_left,
+      ← LinearMap.comp_assoc, CoassocSimps.lid_comp_map]
+    ext x
+    simp
+  have hcounit_h := LinearMap.congr_fun hcounit h
+  simp only [LinearMap.comp_apply] at hcounit_h
+  have hfactor :
+      LinearMap.rTensor (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I)
+          (Coalgebra.counit (R := k) (A := H))
+          (TensorProduct.map LinearMap.id
+            (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of k H) I).hom.toLinearMap
+            (Coalgebra.comul (R := k) h)) =
+        TensorProduct.map (Coalgebra.counit (R := k) (A := H))
+          (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of k H) I).hom.toLinearMap
+          (Coalgebra.comul (R := k) h) := by
+    rw [LinearMap.rTensor_def, ← LinearMap.comp_apply, ← TensorProduct.map_comp,
+      LinearMap.id_comp, LinearMap.comp_id]
+  calc
+    _ = TensorProduct.lid k
+        (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I)
+        (TensorProduct.map (Coalgebra.counit (R := k) (A := H))
+          (CommHopfAlgCat.mkQuotient
+            (_root_.CommHopfAlgCat.of k H) I).hom.toLinearMap
+          (Coalgebra.comul (R := k) h)) := hcounit_h.symm
+    _ = TensorProduct.lid k
+        (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I)
+        (LinearMap.rTensor _ (Coalgebra.counit (R := k) (A := H))
+          (TensorProduct.map LinearMap.id
+            (CommHopfAlgCat.mkQuotient
+              (_root_.CommHopfAlgCat.of k H) I).hom.toLinearMap
+            (Coalgebra.comul (R := k) h))) := congrArg _ hfactor.symm
+    _ = TensorProduct.lid k
+        (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I)
+        (LinearMap.rTensor _ (Coalgebra.counit (R := k) (A := H)) (h ⊗ₜ[k] 1)) :=
+      congrArg (fun t : H ⊗[k]
+        CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I ↦
+          TensorProduct.lid k
+            (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I)
+            (LinearMap.rTensor _ (Coalgebra.counit (R := k) (A := H)) t)) hcomul
+    _ = _ := by simp
 
 include hI hu hlr in
-/-- **A linearly reductive affine group has no nontrivial normal unipotent closed subgroup.**
+/-- **Over an algebraically closed field, a linearly reductive affine group with reduced,
+finite-type coordinate ring has no nontrivial normal unipotent closed subgroup.**
 
 A normal Hopf ideal whose quotient coordinate ring is reduced, of finite type and has only
 unipotent points is the augmentation ideal; contravariantly, the closed subgroup it cuts out is
 the identity subgroup. Connectedness of the subgroup is not needed. -/
-theorem eq_augmentation_of_isNormal_of_isLinearlyReductive : I = augmentation k H := by
+theorem eq_augmentation_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive :
+    I = augmentation k H := by
   refine HopfIdeal.ext fun x ↦ ?_
   rw [mem_augmentation]
   refine ⟨fun hx ↦ I.counit_eq_zero hx, fun hx ↦ ?_⟩
-  have hq := mkQuotient_eq_counit_smul_one_of_isLinearlyReductive hI hu hlr x
+  have hq :=
+    mkQuotient_eq_counit_smul_one_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive
+      hI hu hlr x
   rw [hx, zero_smul] at hq
   exact mem_toIdeal.mp
     ((CommHopfAlgCat.mkQuotient_eq_zero_iff (_root_.CommHopfAlgCat.of k H) I x).mp hq)
 
 include hI hu hlr in
-/-- The coordinate Hopf algebra of a normal unipotent closed subgroup of a linearly reductive
-affine group has zero augmentation ideal. -/
-theorem quotient_augmentation_eq_bot_of_isNormal_of_isLinearlyReductive :
+/-- Over an algebraically closed field, the coordinate Hopf algebra of a normal unipotent closed
+subgroup of a linearly reductive affine group with reduced, finite-type coordinate ring has zero
+augmentation ideal. -/
+theorem quotient_augmentation_eq_bot_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive :
     augmentation k (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I) = ⊥ := by
   refine HopfIdeal.ext fun y ↦ ?_
   rw [mem_augmentation, mem_bot]
@@ -249,34 +285,39 @@ theorem quotient_augmentation_eq_bot_of_isNormal_of_isLinearlyReductive :
   obtain ⟨x, rfl⟩ :=
     CommHopfAlgCat.mkQuotient_surjective (_root_.CommHopfAlgCat.of k H) I y
   rw [CoalgHomClass.counit_comp_apply] at hy
-  rw [mkQuotient_eq_counit_smul_one_of_isLinearlyReductive hI hu hlr x, hy, zero_smul]
+  rw [mkQuotient_eq_counit_smul_one_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive
+    hI hu hlr x, hy, zero_smul]
 
 include hI hu hlr in
-/-- **A normal unipotent closed subgroup of a linearly reductive affine group is trivial**: its
-coordinate Hopf algebra is bialgebra-equivalent to the ground field via the counit. -/
-def quotientCounitBialgEquivOfIsLinearlyReductive :
+/-- **Over an algebraically closed field, a normal unipotent closed subgroup of a linearly
+reductive affine group with reduced, finite-type coordinate ring is trivial**: its coordinate
+Hopf algebra is bialgebra-equivalent to the ground field via the counit. -/
+def quotientCounitBialgEquivOfIsNormalOfForallIsUnipotentPointOfIsLinearlyReductive :
     CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I ≃ₐc[k] k :=
   counitBialgEquivOfAugmentationEqBot
-    (quotient_augmentation_eq_bot_of_isNormal_of_isLinearlyReductive hI hu hlr)
+    (quotient_augmentation_eq_bot_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive
+      hI hu hlr)
 
 include hI hu hlr in
 /-- The triviality equivalence of a normal unipotent closed subgroup is its counit. -/
 @[simp]
-theorem quotientCounitBialgEquivOfIsLinearlyReductive_apply
+theorem quotientCounitBialgEquivOfIsNormalOfForallIsUnipotentPointOfIsLinearlyReductive_apply
     (y : CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I) :
-    quotientCounitBialgEquivOfIsLinearlyReductive hI hu hlr y =
+    quotientCounitBialgEquivOfIsNormalOfForallIsUnipotentPointOfIsLinearlyReductive hI hu hlr y =
       Bialgebra.counitBialgHom k
         (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I) y := by
-  rw [quotientCounitBialgEquivOfIsLinearlyReductive]
+  rw [quotientCounitBialgEquivOfIsNormalOfForallIsUnipotentPointOfIsLinearlyReductive]
   exact counitBialgEquivOfAugmentationEqBot_apply _ _
 
 include hI hu hlr in
 /-- The inverse of the triviality equivalence is the structure map. -/
 @[simp]
-theorem quotientCounitBialgEquivOfIsLinearlyReductive_symm_apply (r : k) :
-    (quotientCounitBialgEquivOfIsLinearlyReductive hI hu hlr).symm r =
+theorem quotientCounitBialgEquivOfIsNormalOfForallIsUnipotentPointOfIsLinearlyReductive_symm_apply
+    (r : k) :
+    (quotientCounitBialgEquivOfIsNormalOfForallIsUnipotentPointOfIsLinearlyReductive hI hu hlr).symm
+        r =
       algebraMap k (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H) I) r := by
-  rw [quotientCounitBialgEquivOfIsLinearlyReductive]
+  rw [quotientCounitBialgEquivOfIsNormalOfForallIsUnipotentPointOfIsLinearlyReductive]
   exact counitBialgEquivOfAugmentationEqBot_symm_apply _ _
 
 end NormalUnipotent
@@ -293,7 +334,8 @@ linearly reductive is reductive.**
 This is the implication from linear reductivity to reductivity in Layer 6 of the ReductiveGroups
 roadmap. Linear reductivity is asked of the geometric fibre because reductivity is defined after
 extension to an algebraic closure. -/
-theorem of_baseChange_linearlyReductive (hsm : Algebra.Smooth k H)
+theorem of_smooth_of_geometricallyConnected_of_baseChange_linearlyReductive
+    (hsm : Algebra.Smooth k H)
     (hconn : geometricallyConnectedCommHopfAlgProperty k H.obj)
     (hlr : linearlyReductiveCommHopfAlgProperty (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj) :
@@ -311,7 +353,8 @@ theorem of_baseChange_linearlyReductive (hsm : Algebra.Smooth k H)
   let _ : IsReduced (FiniteTypeCommHopfAlgCat.quotient
       (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I) :=
     isReduced_of_smooth_of_field (AlgebraicClosure k) _
-  exact HopfIdeal.eq_augmentation_of_isNormal_of_isLinearlyReductive hnormal
+  exact HopfIdeal.eq_augmentation_of_isNormal_of_forall_isUnipotentPoint_of_isLinearlyReductive
+    hnormal
     (geometricallyUnipotentPointsCommHopfAlgProperty.forall_isUnipotentPoint
       ((geometricallyUnipotentPointsCommHopfAlgProperty_iff _ _).mpr hunipotent.2))
     ((linearlyReductiveCommHopfAlgProperty_iff _ _).mp hlr)
