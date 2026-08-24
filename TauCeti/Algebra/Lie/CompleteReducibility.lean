@@ -44,17 +44,17 @@ From that input alone this file derives, over an arbitrary field:
 ## The two endomorphism submodules
 
 The reduction to the irreducible input runs inside `M →ₗ[K] M` and turns on the pair of Lie
-submodules `TauCeti.homVanishOn N ≤ TauCeti.homScalarOn N`: endomorphisms carrying `M` into `N` and
-acting on `N` by a scalar, respectively by the scalar `0`. Bracketing an element of `L` with an
-element of `homScalarOn N` lands in `homVanishOn N`
-(`TauCeti.lie_mem_comap_homVanishOn`), so `L` carries `homScalarOn N` into `homVanishOn N`, which is
-proper as soon as `N ≠ ⊥` because a linear projection onto `N` acts there by the scalar `1`. An
-invariant vector outside it is, after rescaling, an equivariant projection, and its kernel is the
-complement.
+submodules `TauCeti.homVanishingOn N ≤ TauCeti.homScalarOn N`: endomorphisms carrying `M` into `N`
+and acting on `N` by a scalar, respectively by the scalar `0`. Bracketing an element of `L` with an
+element of `homScalarOn N` lands in `homVanishingOn N`
+(`TauCeti.lie_mem_comap_homVanishingOn`), so `L` carries `homScalarOn N` into
+`homVanishingOn N`, which is proper as soon as `N ≠ ⊥` because a linear projection onto `N` acts
+there by the scalar `1`. An invariant vector outside it is, after rescaling, an equivariant
+projection, and its kernel is the complement.
 
 ## Main definitions
 
-* `TauCeti.homScalarOn` and `TauCeti.homVanishOn`: the two Lie submodules of `M →ₗ[K] M` above.
+* `TauCeti.homScalarOn` and `TauCeti.homVanishingOn`: the two Lie submodules of `M →ₗ[K] M` above.
 * `TauCeti.HasInvariantOutsideIrreducible`: the irreducible input described above.
 
 ## Main results
@@ -69,11 +69,11 @@ complement.
 
 ## Roadmap
 
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md` uses this argument twice: Layer 0
-proves complete reducibility for `sl₂` by the elementary weight-string route, and Layer 5 proves
-Weyl's theorem for a semisimple Lie algebra through the Casimir element of `U(L)`. The Layer 0
-instance is `TauCeti/Algebra/Lie/Sl2/CompleteReducibility.lean`, which supplies
-`TauCeti.HasInvariantOutsideIrreducible` from the concrete Casimir operator of an `sl₂` triple.
+Layer 5 of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md` proves Weyl's theorem
+for a semisimple Lie algebra through the Casimir element of `U(L)`, using the formal reduction
+isolated here. The current `TauCeti/Algebra/Lie/Sl2/CompleteReducibility.lean` also instantiates
+this reduction using the concrete Casimir operator of an `sl₂` triple; this differs from the
+independent weight-string / primitive-vector route prescribed for Layer 0 of the roadmap.
 
 ## References
 
@@ -116,7 +116,7 @@ def homScalarOn (N : LieSubmodule K L M) : LieSubmodule K L (M →ₗ[K] M) wher
 
 /-- The endomorphisms of `M` carrying `M` into `N` and killing `N`, a Lie submodule of
 `TauCeti.homScalarOn` that misses every projection onto a nonzero `N`. -/
-def homVanishOn (N : LieSubmodule K L M) : LieSubmodule K L (M →ₗ[K] M) where
+def homVanishingOn (N : LieSubmodule K L M) : LieSubmodule K L (M →ₗ[K] M) where
   carrier := {φ | (∀ m, φ m ∈ N) ∧ ∀ n ∈ N, φ n = 0}
   zero_mem' := ⟨fun m ↦ by simp, fun n _ ↦ by simp⟩
   add_mem' := by
@@ -133,28 +133,30 @@ def homVanishOn (N : LieSubmodule K L M) : LieSubmodule K L (M →ₗ[K] M) wher
     · rw [LieHom.lie_apply, hc n hn, hc _ (N.lie_mem hn), lie_zero, sub_zero]
 
 /-- Membership in `TauCeti.homScalarOn`: land in `N`, and act on `N` by one scalar. -/
+@[simp]
 theorem mem_homScalarOn {N : LieSubmodule K L M} {φ : M →ₗ[K] M} :
     φ ∈ homScalarOn N ↔ (∀ m, φ m ∈ N) ∧ ∃ c : K, ∀ n ∈ N, φ n = c • n := (Iff.rfl)
 
-/-- Membership in `TauCeti.homVanishOn`: land in `N`, and vanish on `N`. -/
-theorem mem_homVanishOn {N : LieSubmodule K L M} {φ : M →ₗ[K] M} :
-    φ ∈ homVanishOn N ↔ (∀ m, φ m ∈ N) ∧ ∀ n ∈ N, φ n = 0 := (Iff.rfl)
+/-- Membership in `TauCeti.homVanishingOn`: land in `N`, and vanish on `N`. -/
+@[simp]
+theorem mem_homVanishingOn {N : LieSubmodule K L M} {φ : M →ₗ[K] M} :
+    φ ∈ homVanishingOn N ↔ (∀ m, φ m ∈ N) ∧ ∀ n ∈ N, φ n = 0 := (Iff.rfl)
 
 /-- Vanishing on `N` is acting on `N` by the scalar `0`. -/
-theorem homVanishOn_le_homScalarOn (N : LieSubmodule K L M) :
-    homVanishOn (L := L) N ≤ homScalarOn N := by
+theorem homVanishingOn_le_homScalarOn (N : LieSubmodule K L M) :
+    homVanishingOn (L := L) N ≤ homScalarOn N := by
   rintro φ ⟨hφ, hc⟩
   exact mem_homScalarOn.2 ⟨hφ, 0, fun n hn ↦ by rw [hc n hn, zero_smul]⟩
 
 /-- **Endomorphisms vanishing on `N` are a Lie submodule of those acting on `N` by a scalar.** The
 bracket of an element of `L` with an endomorphism landing in `N` and acting there by a scalar again
 lands in `N` and vanishes there. -/
-theorem lie_mem_comap_homVanishOn (N : LieSubmodule K L M) (x : L)
+theorem lie_mem_comap_homVanishingOn (N : LieSubmodule K L M) (x : L)
     (ψ : homScalarOn (L := L) N) :
-    ⁅x, ψ⁆ ∈ (homVanishOn N).comap (homScalarOn N).incl := by
+    ⁅x, ψ⁆ ∈ (homVanishingOn N).comap (homScalarOn N).incl := by
   obtain ⟨hψ, c, hc⟩ := mem_homScalarOn.1 ψ.2
   simp only [LieSubmodule.mem_comap, LieSubmodule.incl_apply, LieSubmodule.coe_bracket]
-  refine mem_homVanishOn.2 ⟨fun m ↦ ?_, fun n hn ↦ ?_⟩
+  refine mem_homVanishingOn.2 ⟨fun m ↦ ?_, fun n hn ↦ ?_⟩
   · rw [LieHom.lie_apply]
     exact N.sub_mem (N.lie_mem (hψ m)) (hψ _)
   · rw [LieHom.lie_apply, hc n hn, hc _ (N.lie_mem hn), lie_smul, sub_self]
@@ -416,7 +418,7 @@ theorem HasInvariantOutsideIrreducible.exists_equivariant_projection
     ∃ ψ : M →ₗ[K] M, (∀ m, ψ m ∈ N) ∧ (∀ n ∈ N, ψ n = n) ∧
       ∀ (x : L) (m : M), ψ ⁅x, m⁆ = ⁅x, ψ m⁆ := by
   -- Run the previous step inside `M →ₗ[K] M`: a linear projection onto `N` acts on `N` by the
-  -- scalar `1` but does not vanish on `N`, so `homVanishOn N` is proper inside `homScalarOn N`.
+  -- scalar `1` but does not vanish on `N`, so `homVanishingOn N` is proper inside `homScalarOn N`.
   -- The invariant element returned outside it is equivariant and acts on `N` by a nonzero scalar,
   -- so rescaling turns it into a projection.
   obtain ⟨n₀, hn₀, hn₀0⟩ : ∃ n : M, n ∈ N ∧ n ≠ 0 := by
@@ -430,18 +432,18 @@ theorem HasInvariantOutsideIrreducible.exists_equivariant_projection
       fun n hn ↦ Submodule.projection_apply_of_mem_left hQ hn⟩
   have hπscal : π ∈ homScalarOn (L := L) N :=
     mem_homScalarOn.2 ⟨hπmem, 1, fun n hn ↦ by rw [hπid n hn, one_smul]⟩
-  have hproper : (homVanishOn N).comap (homScalarOn (L := L) N).incl ≠ ⊤ := by
+  have hproper : (homVanishingOn N).comap (homScalarOn (L := L) N).incl ≠ ⊤ := by
     rw [Ne, LieSubmodule.comap_incl_eq_top]
     intro hcon
-    exact hn₀0 ((hπid n₀ hn₀).symm.trans ((mem_homVanishOn.1 (hcon hπscal)).2 n₀ hn₀))
+    exact hn₀0 ((hπid n₀ hn₀).symm.trans ((mem_homVanishingOn.1 (hcon hπscal)).2 n₀ hn₀))
   obtain ⟨φ, hφmem, hφinv⟩ :=
-    h.exists_invariant_notMem ((homVanishOn N).comap (homScalarOn (L := L) N).incl) hproper
-      (lie_mem_comap_homVanishOn N)
+    h.exists_invariant_notMem ((homVanishingOn N).comap (homScalarOn (L := L) N).incl) hproper
+      (lie_mem_comap_homVanishingOn N)
   rw [LieSubmodule.mem_comap, LieSubmodule.incl_apply] at hφmem
   obtain ⟨hφN, c, hc⟩ := mem_homScalarOn.1 φ.2
   have hc0 : c ≠ 0 := by
     rintro rfl
-    exact hφmem (mem_homVanishOn.2 ⟨hφN, fun n hn ↦ by rw [hc n hn, zero_smul]⟩)
+    exact hφmem (mem_homVanishingOn.2 ⟨hφN, fun n hn ↦ by rw [hc n hn, zero_smul]⟩)
   refine ⟨c⁻¹ • (φ : M →ₗ[K] M), fun m ↦ N.smul_mem _ (hφN m), fun n hn ↦ ?_, fun x m ↦ ?_⟩
   · simp [hc n hn, smul_smul, inv_mul_cancel₀ hc0]
   · have hzero : ⁅x, (φ : M →ₗ[K] M)⁆ = 0 := by
