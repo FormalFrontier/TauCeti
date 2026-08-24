@@ -44,6 +44,9 @@ shrinking part.
   functor of points.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsHomEquiv`: the carrier equivalence from the opaque
   group-Yoneda model to algebra morphisms.
+* `TauCeti.CommHopfAlgCat.cogrpObj`: the represented cogroup's underlying group object.
+* `TauCeti.CommHopfAlgCat.cogrpPointsMulEquiv`: generalized points of the cogroup represented by
+  a commutative Hopf algebra are its convolution points.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsFunctorIso`: the group-valued Yoneda model is
   naturally isomorphic to the existing points functor.
 * `TauCeti.CommHopfAlgCat.pointsFunctor_faithful` and
@@ -322,6 +325,41 @@ theorem groupYonedaPointsHomEquiv_map_app
   unfold groupYonedaPointsHomEquiv groupYonedaPointsFunctor
   rfl
 
+/-- The group object in the opposite category of commutative `R`-algebras represented by a
+commutative Hopf algebra. -/
+noncomputable abbrev cogrpObj (H : _root_.CommHopfAlgCat.{u} R) :
+    (CommAlgCat.{u} R)ᵒᵖ :=
+  ((commHopfAlgCatEquivCogrpCommAlgCat R).functor.obj H).unop.X
+
+/-- Generalized points of the cogroup represented by `H` are the convolution group of
+algebra-valued points of `H`. This is the raw-hom multiplication bridge underlying
+`groupYonedaPointsMulEquiv`, independent of the opaque `groupYonedaPointsFunctor`. -/
+noncomputable def cogrpPointsMulEquiv (H : _root_.CommHopfAlgCat.{u} R)
+    (A : CommAlgCat.{u} R) :
+    (op A ⟶ cogrpObj H) ≃* HopfAlgebra.points (R := R) (H := H) A where
+  toFun g := toConv g.unop.hom
+  invFun p := op (CommAlgCat.ofHom p.ofConv)
+  left_inv g := by
+    apply Quiver.Hom.unop_inj
+    exact CommAlgCat.hom_ext rfl
+  right_inv p := WithConv.toConv_ofConv p
+  map_mul' f g := by
+    apply WithConv.ofConv_injective
+    change (CartesianMonoidalCategory.lift f g ≫ μ).unop.hom =
+      (toConv f.unop.hom * toConv g.unop.hom).ofConv
+    apply AlgHom.ext
+    intro h
+    simp only [unop_comp, CommAlgCat.hom_comp, CommAlgCat.lift_unop_hom,
+      AlgHom.comp_apply, AlgHom.convMul_apply]
+    exact congrArg _ (Bialgebra.comulAlgHom_apply R H h)
+
+/-- The generalized-point equivalence regards a categorical point as the convolution wrapper
+of its underlying algebra morphism. -/
+@[simp]
+theorem cogrpPointsMulEquiv_apply (H : _root_.CommHopfAlgCat.{u} R)
+    (A : CommAlgCat.{u} R) (g : op A ⟶ cogrpObj H) :
+    cogrpPointsMulEquiv H A g = toConv g.unop.hom := (rfl)
+
 /-- The tautological carrier equivalence respects group-Yoneda multiplication: unopping
 `lift f g ≫ μ` gives comultiplication followed by `f` and `g`, which is convolution. -/
 private noncomputable def groupYonedaPointsMulEquiv
@@ -331,19 +369,8 @@ private noncomputable def groupYonedaPointsMulEquiv
         (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).obj H).obj A where
   toEquiv := groupYonedaPointsEquiv H A
   map_mul' f g := by
-    -- Exposing the hom type also exposes the canonical cogroup structure on `op H`, whose
-    -- multiplication is the opposite of the Hopf comultiplication.
-    change (op A ⟶ op (CommAlgCat.of R H.unop)) at f g
-    change toConv (f * g).unop.hom =
-      toConv f.unop.hom * toConv g.unop.hom
-    apply WithConv.ofConv_injective
-    change (CartesianMonoidalCategory.lift f g ≫ μ).unop.hom =
-      (toConv f.unop.hom * toConv g.unop.hom).ofConv
-    apply AlgHom.ext
-    intro (h : H.unop)
-    simp only [unop_comp, CommAlgCat.hom_comp, CommAlgCat.lift_unop_hom,
-      CommAlgCat.mul_op_of_unop_hom, AlgHom.comp_apply, AlgHom.convMul_apply]
-    exact congrArg _ (Bialgebra.comulAlgHom_apply R H.unop h)
+    change (op A ⟶ cogrpObj H.unop) at f g
+    exact (cogrpPointsMulEquiv H.unop A).map_mul f g
 
 /-- The forward homomorphism of the pointwise group equivalence is computed by the carrier
 equivalence followed by the convolution wrapper. -/

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
 public import TauCeti.CategoryTheory.Monoidal.Normal
 import Mathlib.Algebra.Category.CommAlgCat.Monoidal
 
@@ -24,6 +25,10 @@ algebra-valued points.
 The result is the bridge needed to apply the internal semidirect-product construction to two
 normal closed affine subgroup schemes. Its multiplication map and scheme-theoretic image are the
 binary product used in the maximal-dimension construction of the unipotent radical.
+
+The formal source for the generalized-point multiplication bridge is
+`TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda.groupYonedaPointsMulEquiv`; this file uses
+the public raw-hom factor `TauCeti.CommHopfAlgCat.cogrpPointsMulEquiv` extracted from it.
 
 ## Main declarations
 
@@ -56,40 +61,6 @@ namespace TauCeti.CommHopfAlgCat
 universe u
 
 variable {R : Type u} [CommRing R]
-
-/-- The group object in the opposite category of commutative `R`-algebras represented by a
-commutative Hopf algebra. -/
-noncomputable abbrev cogrpObj (H : _root_.CommHopfAlgCat.{u} R) :
-    (CommAlgCat.{u} R)ᵒᵖ :=
-  ((commHopfAlgCatEquivCogrpCommAlgCat R).functor.obj H).unop.X
-
-/-- Generalized points of the group object represented by `H` are the convolution group of
-algebra-valued points of `H`. -/
-noncomputable def cogrpPointsMulEquiv (H : _root_.CommHopfAlgCat.{u} R)
-    (A : CommAlgCat.{u} R) :
-    (op A ⟶ cogrpObj H) ≃* HopfAlgebra.points (R := R) (H := H) A where
-  toFun g := toConv g.unop.hom
-  invFun p := op (CommAlgCat.ofHom p.ofConv)
-  left_inv g := by
-    apply Quiver.Hom.unop_inj
-    exact CommAlgCat.hom_ext rfl
-  right_inv p := WithConv.toConv_ofConv p
-  map_mul' f g := by
-    apply WithConv.ofConv_injective
-    change (CartesianMonoidalCategory.lift f g ≫ μ).unop.hom =
-      (toConv f.unop.hom * toConv g.unop.hom).ofConv
-    apply AlgHom.ext
-    intro h
-    simp only [unop_comp, CommAlgCat.hom_comp, CommAlgCat.lift_unop_hom,
-      AlgHom.comp_apply, AlgHom.convMul_apply]
-    exact congrArg _ (Bialgebra.comulAlgHom_apply R H h)
-
-/-- The generalized-point equivalence regards a categorical point as the convolution wrapper
-of its underlying algebra morphism. -/
-@[simp]
-theorem cogrpPointsMulEquiv_apply (H : _root_.CommHopfAlgCat.{u} R)
-    (A : CommAlgCat.{u} R) (g : op A ⟶ cogrpObj H) :
-    cogrpPointsMulEquiv H A g = toConv g.unop.hom := (rfl)
 
 /-- The categorical closed-subgroup inclusion represented contravariantly by the quotient map
 `H ⟶ H/I`. -/
@@ -168,8 +139,10 @@ theorem quotientCogrpInclusion_normal (H : _root_.CommHopfAlgCat.{u} R)
   have hqCatPoint : cogrpPointsMulEquiv (quotient H I) A.unop qCat = q' := by
     dsimp only [qCat]
     exact (cogrpPointsMulEquiv (quotient H I) A.unop).apply_symm_apply q'
-  have hqPoint' : cogrpPointsMulEquiv (quotient H I) A.unop q = qPoint := (rfl)
-  have hgPoint : cogrpPointsMulEquiv H A.unop g = gPoint := (rfl)
+  have hqPoint' : cogrpPointsMulEquiv (quotient H I) A.unop q = qPoint := by
+    exact cogrpPointsMulEquiv_apply (quotient H I) A.unop q
+  have hgPoint : cogrpPointsMulEquiv H A.unop g = gPoint := by
+    exact cogrpPointsMulEquiv_apply H A.unop g
   rw [hqCatPoint, hqPoint', hgPoint]
   exact hq'
 
