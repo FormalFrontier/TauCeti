@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Cyclic
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Rational.Solver
 
@@ -300,14 +299,6 @@ theorem mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable
     mem_cyclicGroupTwoModularCentralRows_iff.mpr ⟨i, rfl⟩, funext fun j => ?_⟩
   exact cyclicGroupTwo_valMinAbs_centralCharacterTable i j
 
-/-- The two displayed central-character rows are distinct, so they number the lifted rows
-injectively. -/
-theorem cyclicGroupTwoCentralCharacterTable_injective :
-    Function.Injective cyclicGroupTwoCentralCharacterTable := by
-  intro i j hij
-  have h := congrFun hij ⟨1, by simp⟩
-  fin_cases i <;> fin_cases j <;> revert h <;> decide
-
 /-- The assembled rational Dixon--Schneider solver succeeds on the certified `C₂` prime. -/
 theorem isSome_dixonRationalCharacterTable_cyclicGroupTwo :
     ((cyclicClassData 2).dixonRationalCharacterTable?
@@ -315,14 +306,8 @@ theorem isSome_dixonRationalCharacterTable_cyclicGroupTwo :
   simp only [cyclicGroupTwoDixonPrimeData_p]
   rw [(cyclicClassData 2).isSome_dixonRationalCharacterTable_iff]
   refine ⟨⟨cyclicGroupTwoCentralCharacterTable, cyclicGroupTwoCharacterTable,
-    cyclicGroupTwoCharacterDegrees⟩, ?_, isIntegerCharacterTableSpec_cyclicGroupTwo⟩
-  refine ⟨mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable,
-    cyclicGroupTwoCentralCharacterTable_injective, fun i => ?_, fun i => ?_, ?_, fun i j => ?_⟩
-  · exact (cyclicGroupTwo_characterDegrees_pos_and_dvd i).1
-  · simpa only [Nat.card_eq_fintype_card] using (cyclicGroupTwo_characterDegrees_pos_and_dvd i).2
-  · simpa only [Nat.card_eq_fintype_card] using cyclicGroupTwo_sum_characterDegrees_sq
-  · fin_cases i <;> fin_cases j <;>
-      simp [classFinset_cyclicClassData, cyclicGroupTwoCharacterTable]
+    cyclicGroupTwoCharacterDegrees⟩, mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable,
+    isIntegerCharacterTableSpec_cyclicGroupTwo⟩
 
 /-- The exact `C₂` output, cast to `ℂ`, satisfies the character-table specification and hence is
 the complex character table up to a permutation of rows. -/

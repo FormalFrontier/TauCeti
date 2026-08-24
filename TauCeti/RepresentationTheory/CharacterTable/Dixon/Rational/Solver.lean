@@ -15,9 +15,9 @@ public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Rational.Basic
 This file assembles the integer-valued stage of the Burnside--Dixon--Schneider character-table
 algorithm. Given executable conjugacy-class data and a prime, it performs the
 modular common-eigenrow search, lifts the rows by signed least representatives, searches the
-possible positive character degrees dividing the group order, and reconstructs the ordinary table
-from the central-character table. It returns the first candidate accepted by the exact integer
-checker.
+possible positive character degrees dividing the group order, and computes candidate integer
+quotients for the ordinary table from the central-character table. The exact integer checker then
+verifies the corresponding division-free equality, so the conversion is exact for accepted outputs.
 
 The result is an `Option`: `none` honestly records that the character table is not integer-valued,
 that the chosen residue window was too small, or that no ordering of the lifted rows passed the
@@ -99,7 +99,8 @@ private theorem mem_liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMo
 
 /-- Enumerate the candidate data inspected by the rational Dixon--Schneider solver: every
 injective numbering of the lifted central rows, paired with every degree vector whose positive
-entries divide `|G|` and whose squares sum to `|G|`. -/
+entries divide `|G|` and whose squares sum to `|G|`. Ordinary-table entries are candidate integer
+quotients; the checker later verifies that no truncation occurred. -/
 private def dixonRationalCharacterTableCandidates (p : ℕ) [Fact p.Prime] :
     List d.IntegerCharacterTableData :=
   letI : FinEnum (ZMod p) :=
@@ -123,8 +124,8 @@ private def dixonRationalCharacterTableCandidates (p : ℕ) [Fact p.Prime] :
 
 /-- **Characterization of the candidates inspected by the rational solver.** Candidate data is
 enumerated exactly when its rows are an injective numbering of the lifted central rows, its degrees
-are positive divisors of `|G|` whose squares sum to `|G|`, and its table is the exact integer
-quotient reconstructed from the central-character table. -/
+are positive divisors of `|G|` whose squares sum to `|G|`, and its table is the integer quotient
+computed from the central-character table. -/
 private theorem mem_dixonRationalCharacterTableCandidates_iff (p : ℕ) [Fact p.Prime]
     {output : d.IntegerCharacterTableData} :
     output ∈ d.dixonRationalCharacterTableCandidates p ↔
@@ -157,12 +158,62 @@ private theorem mem_dixonRationalCharacterTableCandidates_iff (p : ℕ) [Fact p.
     · exact (htable _ _).symm
     · rfl
 
+private theorem IsIntegerCharacterTableSpec.omega_injective
+    {omega table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ}
+    {degree : Fin d.numClasses → ℕ}
+    (h : d.IsIntegerCharacterTableSpec omega table degree) : Function.Injective omega := by
+  intro i j hij
+  by_contra hne
+  have hproportional (k : Fin d.numClasses) :
+      (degree j : ℤ) * table i k = (degree i : ℤ) * table j k := by
+    have hi := h.degree_mul_central i k
+    have hj := h.degree_mul_central j k
+    rw [hij] at hi
+    have hcard : ((d.classFinset k).card : ℤ) ≠ 0 := by
+      exact_mod_cast (Finset.card_pos.mpr ⟨d.rep k, d.rep_mem_classFinset k⟩).ne'
+    apply mul_left_cancel₀ hcard
+    calc
+      ((d.classFinset k).card : ℤ) * ((degree j : ℤ) * table i k) =
+          (degree j : ℤ) * ((degree i : ℤ) * omega j k) := by rw [hi]; ring
+      _ = (degree i : ℤ) * ((degree j : ℤ) * omega j k) := by ring
+      _ = ((d.classFinset k).card : ℤ) * ((degree i : ℤ) * table j k) := by
+        rw [hj]
+        ring
+  have hscaled :
+      (degree j : ℤ) *
+          ∑ k, (d.classFinset k).card * table i k * table i k =
+        (degree i : ℤ) *
+          ∑ k, (d.classFinset k).card * table i k * table j k := by
+    simp only [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro k _
+    calc
+      (degree j : ℤ) * ((d.classFinset k).card * table i k * table i k) =
+          (d.classFinset k).card * table i k * ((degree j : ℤ) * table i k) := by ring
+      _ = (d.classFinset k).card * table i k * ((degree i : ℤ) * table j k) := by
+        rw [hproportional k]
+      _ = (degree i : ℤ) * ((d.classFinset k).card * table i k * table j k) := by ring
+  rw [h.row_orthogonal i i, ite_eq_left rfl, h.row_orthogonal i j, ite_eq_right hne,
+    mul_zero] at hscaled
+  exact (mul_ne_zero (by exact_mod_cast (h.degree_pos j).ne')
+    (by exact_mod_cast Fintype.card_pos.ne')) hscaled
+
+private theorem IsIntegerCharacterTableSpec.table_eq_integerQuotient
+    {omega table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ}
+    {degree : Fin d.numClasses → ℕ}
+    (h : d.IsIntegerCharacterTableSpec omega table degree) (i j : Fin d.numClasses) :
+    table i j = (degree i : ℤ) * omega i j / ((d.classFinset j).card : ℤ) := by
+  rw [h.degree_mul_central]
+  exact (Int.mul_ediv_cancel_left (table i j) (by
+    exact_mod_cast (Finset.card_pos.mpr ⟨d.rep j, d.rep_mem_classFinset j⟩).ne')).symm
+
 /-- Run the integer-valued stage of the Dixon--Schneider character-table algorithm.
 
 The modular search and signed lift determine an unordered finite set of candidate central-character
 rows. The solver enumerates its injective row numberings and the degree vectors whose positive
 entries divide `|G|` and whose squares sum to `|G|`; for each pair, the ordinary table is obtained
-by exact integer division and checked by `TauCeti.ClassData.integerCharacterTableChecker`.
+by integer quotient computation. `TauCeti.ClassData.integerCharacterTableChecker` verifies the
+division-free conversion equality, making the quotient exact for every accepted output.
 
 Soundness requires only that `p` is prime. A good-prime certificate is needed for completeness, not
 for checking a candidate returned by this function. -/
@@ -171,20 +222,22 @@ def dixonRationalCharacterTable? (p : ℕ) [Fact p.Prime] :
   (d.dixonRationalCharacterTableCandidates p).find? fun output =>
     d.integerCharacterTableChecker output.omega output.table output.degree
 
-/-- The rational solver succeeds exactly when its candidate list contains data satisfying the
-integer character-table specification. -/
+/-- The rational solver succeeds exactly when lifted central rows can be assembled into data
+satisfying the integer character-table specification. -/
 theorem isSome_dixonRationalCharacterTable_iff (p : ℕ) [Fact p.Prime] :
     (d.dixonRationalCharacterTable? p).isSome ↔
       ∃ output : d.IntegerCharacterTableData,
-        ((∀ i, output.omega i ∈ d.liftedCentralRows p) ∧ Function.Injective output.omega ∧
-          (∀ i, 0 < output.degree i) ∧ (∀ i, output.degree i ∣ Fintype.card G) ∧
-          ∑ i, output.degree i ^ 2 = Fintype.card G ∧
-          ∀ i j, output.table i j =
-            (output.degree i : ℤ) * output.omega i j / ((d.classFinset j).card : ℤ)) ∧
+        (∀ i, output.omega i ∈ d.liftedCentralRows p) ∧
         d.IsIntegerCharacterTableSpec output.omega output.table output.degree := by
   rw [dixonRationalCharacterTable?, List.find?_isSome]
-  simp only [d.integerCharacterTableChecker_eq_true_iff,
-    mem_dixonRationalCharacterTableCandidates_iff]
+  simp only [d.integerCharacterTableChecker_eq_true_iff]
+  constructor
+  · rintro ⟨output, hcandidates, hspec⟩
+    exact ⟨output, (mem_dixonRationalCharacterTableCandidates_iff d p).mp hcandidates |>.1, hspec⟩
+  · rintro ⟨output, hrows, hspec⟩
+    refine ⟨output, (mem_dixonRationalCharacterTableCandidates_iff d p).mpr ?_, hspec⟩
+    exact ⟨hrows, hspec.omega_injective, hspec.degree_pos, hspec.degree_dvd,
+      hspec.sum_degree_sq, hspec.table_eq_integerQuotient⟩
 
 /-- Every successful rational Dixon--Schneider output passes the exact integer character-table
 specification. -/
