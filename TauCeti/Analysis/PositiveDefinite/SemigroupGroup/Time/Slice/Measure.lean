@@ -253,30 +253,6 @@ theorem bochnerMeasure_timeSlice_real_listTimeDifference (hFpd : IsSemigroupGrou
       simp only [fwdDiffList_cons, fwdDiff, List.length_cons, pow_succ]
       ring
 
-/-- **The iterated forward differences of a slab mass are slab masses.** This is the equal-step
-specialization of `bochnerMeasure_timeSlice_real_listTimeDifference`. -/
-theorem bochnerMeasure_timeSlice_real_iteratedTimeDifference (hFpd : IsSemigroupGroupPD F)
-    (hFcont : Continuous F) (hFbdd : Bornology.IsBounded (range F)) (B : Set V) (h : ℝ≥0)
-    (n : ℕ) (t : ℝ≥0) :
-    (bochnerMeasure fun a => iteratedTimeDifference n h F (t, a)).real B
-      = (-1) ^ n * (fwdDiff h)^[n]
-          (fun s : ℝ≥0 => (bochnerMeasure fun a => F (s, a)).real B) t := by
-  rw [iteratedTimeDifference_eq_listTimeDifference,
-    bochnerMeasure_timeSlice_real_listTimeDifference hFpd hFcont hFbdd,
-    List.length_replicate, fwdDiffList_replicate]
-
-/-- **The slab masses have alternating forward differences.** Every iterated forward difference
-of `t ↦ (bochnerMeasure (F (t, ·))).real B` has the sign `(-1)ⁿ`: this is the complete
-monotonicity, in the finite-difference sense, that a Bernstein-type representation of the slab
-masses needs. -/
-theorem neg_one_pow_mul_fwdDiff_bochnerMeasure_timeSlice_real_nonneg
-    (hFpd : IsSemigroupGroupPD F) (hFcont : Continuous F)
-    (hFbdd : Bornology.IsBounded (range F)) (B : Set V) (h : ℝ≥0) (n : ℕ) (t : ℝ≥0) :
-    0 ≤ (-1) ^ n * (fwdDiff h)^[n]
-        (fun s : ℝ≥0 => (bochnerMeasure fun a => F (s, a)).real B) t := by
-  rw [← bochnerMeasure_timeSlice_real_iteratedTimeDifference hFpd hFcont hFbdd B h n t]
-  exact measureReal_nonneg
-
 /-- **Spatial Bochner slice masses are completely monotone in the finite-difference sense.**
 After extending the time parameter from `ℝ≥0` to `ℝ` by `Real.toNNReal`, every slab
 mass has nonnegative alternating mixed forward differences on `[0, ∞)`. -/
