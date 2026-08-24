@@ -147,31 +147,24 @@ private theorem spinGroupAlgebraHom_surjective {K : Type u} [Field K]
     (hspan : Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) =
       (CliffordAlgebra.even Q).toSubmodule) :
     Function.Surjective (spinGroupAlgebraHom (K := K) (Q := Q)) := by
-  intro x
-  have hx : (x : CliffordAlgebra Q) ∈
-      Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) := by
-    rw [hspan]
-    exact x.2
-  obtain ⟨a, ha⟩ := (Finsupp.mem_span_iff_linearCombination K
-    (spinGroup Q : Set (CliffordAlgebra Q)) x).1 hx
-  refine ⟨(MonoidAlgebra.coeffLinearEquiv K).symm a, Subtype.ext ?_⟩
-  rw [spinGroupAlgebraHom, MonoidAlgebra.lift_apply]
-  have hcoeff : ((MonoidAlgebra.coeffLinearEquiv K).symm a).coeff = a :=
-    (MonoidAlgebra.coeffLinearEquiv K).apply_symm_apply a
-  rw [hcoeff]
-  -- `lift_apply` leaves the finite sum in the even subtype. Expose the subtype map so
-  -- `map_sum` can compare it with the ambient Clifford-algebra linear combination.
-  change (CliffordAlgebra.even Q).subtype (a.sum fun g r => r • spinGroupToEven g) =
-    (x : CliffordAlgebra Q)
-  rw [Finsupp.sum, map_sum]
-  rw [Finsupp.linearCombination_apply, Finsupp.sum] at ha
-  calc
-    ∑ g ∈ a.support, (CliffordAlgebra.even Q).subtype (a g • spinGroupToEven g) =
-        ∑ g ∈ a.support, a g • (g : CliffordAlgebra Q) := by
-      apply Finset.sum_congr rfl
-      intro g _
-      rfl
-    _ = (x : CliffordAlgebra Q) := ha
+  -- Expose the algebra homomorphism's underlying linear map so its range can be calculated.
+  change Function.Surjective (spinGroupAlgebraHom (K := K) (Q := Q)).toLinearMap
+  rw [← LinearMap.range_eq_top]
+  rw [show (spinGroupAlgebraHom (K := K) (Q := Q)).toLinearMap =
+      (Finsupp.linearCombination K spinGroupToEven).comp
+        (MonoidAlgebra.coeffLinearEquiv K).toLinearMap by
+    ext g
+    simp [spinGroupAlgebraHom, spinGroupToEven]]
+  rw [LinearMap.range_comp_of_range_eq_top _ (LinearEquiv.range _),
+    Finsupp.range_linearCombination]
+  apply (Submodule.span_range_subtype_eq_top_iff
+    (CliffordAlgebra.even Q).toSubmodule
+      (fun g : spinGroup Q ↦ spinGroup.mem_even g.2)).2
+  -- Return to the ambient Clifford algebra, where `hspan` states the spanning result.
+  change Submodule.span K
+    (Set.range (Subtype.val : spinGroup Q → CliffordAlgebra Q)) = _
+  rw [Subtype.range_val]
+  exact hspan
 
 private theorem asAlgebraHom_spinGroupRepresentation {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
