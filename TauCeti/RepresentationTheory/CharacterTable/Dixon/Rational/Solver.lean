@@ -53,8 +53,7 @@ namespace ClassData
 
 universe u
 
-variable {G : Type u} [Group G] [Fintype G] [DecidableEq G]
-variable (d : ClassData G)
+variable {G : Type u} [Group G] (d : ClassData G)
 
 /-- The three exact numbered arrays produced by the integer-valued Dixon--Schneider solver: the
 central-character table, the ordinary character table, and the character degrees. -/
@@ -66,8 +65,19 @@ structure IntegerCharacterTable where
   table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ
   /-- The positive character degrees. -/
   degree : Fin d.numClasses → ℕ
-deriving DecidableEq
 
+/-- Decidability of equality between integer character tables. -/
+instance : DecidableEq d.IntegerCharacterTable := by
+  intro ⟨o1, t1, deg1⟩ ⟨o2, t2, deg2⟩
+  by_cases ho : o1 = o2
+  · by_cases ht : t1 = t2
+    · by_cases hd : deg1 = deg2
+      · exact isTrue (by rw [ho, ht, hd])
+      · exact isFalse (by intro h; cases h; exact hd rfl)
+    · exact isFalse (by intro h; cases h; exact ht rfl)
+  · exact isFalse (by intro h; cases h; exact ho rfl)
+
+variable [Fintype G] [DecidableEq G]
 variable {d}
 
 /-- Run the integer-valued stage of the Dixon--Schneider character-table algorithm.
