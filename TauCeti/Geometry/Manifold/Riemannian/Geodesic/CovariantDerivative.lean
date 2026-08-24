@@ -90,7 +90,6 @@ theorem covariantDerivativeAlong_smul (f : ℝ → ℝ) {t : ℝ} (hf : Differen
     (_root_.CovariantDerivative.leviCivita I M) γ V f hf hV
 
 /-- The Levi-Civita covariant derivative of the zero field along a curve is zero. -/
-@[simp]
 theorem covariantDerivativeAlong_zero (t : ℝ) :
     covariantDerivativeAlong γ (fun s : ℝ ↦ (0 : TangentSpace I (γ s))) t = 0 := by
   simp only [covariantDerivativeAlong_apply]
