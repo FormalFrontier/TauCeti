@@ -91,6 +91,7 @@ theorem vonMangoldt_apply_of_eq_prime_pow {A : (Ideal (𝓞 K))⁰} {P : Ideal (
   rw [hchosen]
 
 /-- The ideal von Mangoldt function at a positive power of a prime nonzero ideal. -/
+@[simp]
 theorem vonMangoldt_apply_prime_pow {P : (Ideal (𝓞 K))⁰}
     (hP : Prime (P : Ideal (𝓞 K))) {n : ℕ} (hn : 0 < n) :
     (vonMangoldt : IdealArithmeticFunction K) (P ^ n) =
@@ -99,6 +100,7 @@ theorem vonMangoldt_apply_prime_pow {P : (Ideal (𝓞 K))⁰}
   simp
 
 /-- The ideal von Mangoldt function at a prime ideal. -/
+@[simp]
 theorem vonMangoldt_apply_prime {P : (Ideal (𝓞 K))⁰}
     (hP : Prime (P : Ideal (𝓞 K))) :
     (vonMangoldt : IdealArithmeticFunction K) P =
@@ -107,7 +109,7 @@ theorem vonMangoldt_apply_prime {P : (Ideal (𝓞 K))⁰}
 
 /-- The ideal von Mangoldt function vanishes away from prime powers. -/
 @[simp]
-theorem vonMangoldt_of_not_isPrimePow {A : (Ideal (𝓞 K))⁰}
+theorem vonMangoldt_eq_zero_of_not_isPrimePow {A : (Ideal (𝓞 K))⁰}
     (hA : ¬ IsPrimePow (A : Ideal (𝓞 K))) :
     (vonMangoldt : IdealArithmeticFunction K) A = 0 := by
   simp [vonMangoldt, hA]
@@ -118,7 +120,7 @@ theorem vonMangoldt_ne_zero_iff {A : (Ideal (𝓞 K))⁰} :
   constructor
   · intro hne
     by_contra hnot
-    exact hne (vonMangoldt_of_not_isPrimePow hnot)
+    exact hne (vonMangoldt_eq_zero_of_not_isPrimePow hnot)
   · rintro ⟨P, n, hP, hn, hpow⟩
     rw [vonMangoldt_apply_of_eq_prime_pow hP hn hpow]
     apply Complex.ofReal_ne_zero.mpr
@@ -141,7 +143,7 @@ theorem vonMangoldt_im {A : (Ideal (𝓞 K))⁰} :
   by_cases hA : IsPrimePow (A : Ideal (𝓞 K))
   · obtain ⟨P, n, hP, hn, hpow⟩ := hA
     rw [vonMangoldt_apply_of_eq_prime_pow hP hn hpow, Complex.ofReal_im]
-  · rw [vonMangoldt_of_not_isPrimePow hA, Complex.zero_im]
+  · rw [vonMangoldt_eq_zero_of_not_isPrimePow hA, Complex.zero_im]
 
 /-- The (real) values of the ideal von Mangoldt function are nonnegative. -/
 theorem vonMangoldt_re_nonneg {A : (Ideal (𝓞 K))⁰} :
@@ -152,7 +154,7 @@ theorem vonMangoldt_re_nonneg {A : (Ideal (𝓞 K))⁰} :
     exact Real.log_nonneg (by exact_mod_cast
       (NumberField.HeightOneSpectrum.one_lt_absNorm
         (IsDedekindDomain.HeightOneSpectrum.ofPrime hP)).le)
-  · rw [vonMangoldt_of_not_isPrimePow hA, Complex.zero_re]
+  · rw [vonMangoldt_eq_zero_of_not_isPrimePow hA, Complex.zero_re]
 
 end IdealArithmeticFunction
 
@@ -165,6 +167,7 @@ noncomputable def vonMangoldtTransform (χ : MultiplicativeIdealWeight K) :
   χ.toIdealArithmeticFunction * IdealArithmeticFunction.vonMangoldt
 
 /-- Evaluation of the weighted von Mangoldt transform. -/
+@[simp]
 theorem vonMangoldtTransform_apply (χ : MultiplicativeIdealWeight K)
     (A : (Ideal (𝓞 K))⁰) :
     χ.vonMangoldtTransform A = χ A * IdealArithmeticFunction.vonMangoldt A := by
@@ -177,6 +180,7 @@ theorem vonMangoldtTransform_one (χ : MultiplicativeIdealWeight K) :
   rw [vonMangoldtTransform_apply, IdealArithmeticFunction.vonMangoldt_one, mul_zero]
 
 /-- The weighted von Mangoldt transform on a positive power of a prime ideal. -/
+@[simp]
 theorem vonMangoldtTransform_apply_prime_pow (χ : MultiplicativeIdealWeight K)
     {P : (Ideal (𝓞 K))⁰} (hP : Prime (P : Ideal (𝓞 K))) {n : ℕ} (hn : 0 < n) :
     χ.vonMangoldtTransform (P ^ n) =
@@ -195,12 +199,20 @@ theorem vonMangoldtTransform_ne_zero_iff (χ : MultiplicativeIdealWeight K)
   rw [vonMangoldtTransform_apply, mul_ne_zero_iff,
     IdealArithmeticFunction.vonMangoldt_ne_zero_iff, χ.apply_ne_zero_iff_isGood, and_comm]
 
+/-- The weighted von Mangoldt transform vanishes exactly away from the good prime powers. -/
+@[simp]
+theorem vonMangoldtTransform_eq_zero_iff (χ : MultiplicativeIdealWeight K)
+    {A : (Ideal (𝓞 K))⁰} :
+    χ.vonMangoldtTransform A = 0 ↔
+      ¬ (IsPrimePow (A : Ideal (𝓞 K)) ∧ χ.IsGood (A : Ideal (𝓞 K))) := by
+  simpa only [not_ne_iff] using not_congr (χ.vonMangoldtTransform_ne_zero_iff (A := A))
+
 /-- In particular, the weighted von Mangoldt transform is supported on prime powers. -/
 theorem vonMangoldtTransform_eq_zero_of_not_isPrimePow (χ : MultiplicativeIdealWeight K)
     {A : (Ideal (𝓞 K))⁰} (hA : ¬ IsPrimePow (A : Ideal (𝓞 K))) :
     χ.vonMangoldtTransform A = 0 := by
-  rw [vonMangoldtTransform_apply, IdealArithmeticFunction.vonMangoldt_of_not_isPrimePow hA,
-    mul_zero]
+  rw [vonMangoldtTransform_apply,
+    IdealArithmeticFunction.vonMangoldt_eq_zero_of_not_isPrimePow hA, mul_zero]
 
 /-- The transform of the trivial ideal weight is the ideal von Mangoldt function. -/
 @[simp]
