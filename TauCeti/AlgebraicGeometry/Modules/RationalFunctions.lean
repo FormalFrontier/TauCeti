@@ -230,7 +230,6 @@ def rationalFunctionsEquiv (U : X.Opens) [Nonempty U] :
 
 /-- The module-sheaf identification with the function field is the ring-sheaf identification
 transported across `rationalFunctionsSectionsEquiv`. -/
-@[simp]
 theorem rationalFunctionsEquiv_apply (U : X.Opens) [Nonempty U]
     (s : Γ(rationalFunctions X, U)) :
     rationalFunctionsEquiv U s =
