@@ -131,6 +131,14 @@ def rationalUnitSectionsEquiv :
     ⟨⟨Classical.choice (inferInstanceAs (Nonempty X)), by simp⟩⟩
   exact (Units.mapEquiv (rationalFunctionsRingEquiv (⊤ : X.Opens)).toMulEquiv).toAdditive
 
+/-- The homomorphism from global regular units to units of the function field induced by the
+germ map. -/
+noncomputable def regularUnitToFunctionField :
+    ((X.presheaf.obj (op (⊤ : X.Opens))) : Type u)ˣ →* X.functionFieldˣ := by
+  letI : Nonempty (⊤ : X.Opens) :=
+    ⟨⟨Classical.choice (inferInstanceAs (Nonempty X)), by simp⟩⟩
+  exact Units.map (X.germToFunctionField (⊤ : X.Opens)).hom.toMonoidHom
+
 /-- A nonzero rational function determines its principal Cartier divisor. The multiplicative
 group of the function field is written additively in the domain. -/
 def principalCartierDivisorAddHom : Additive X.functionFieldˣ →+ CartierDivisor X :=
@@ -140,26 +148,59 @@ def principalCartierDivisorAddHom : Additive X.functionFieldˣ →+ CartierDivis
 def principalCartierDivisor (f : X.functionFieldˣ) : CartierDivisor X :=
   principalCartierDivisorAddHom X (Additive.ofMul f)
 
+/-- The principal Cartier divisor of one is zero. -/
 @[simp]
 lemma principalCartierDivisor_one : principalCartierDivisor X 1 = 0 :=
   map_zero (principalCartierDivisorAddHom X)
 
+/-- The principal Cartier divisor of a product is the sum of the principal Cartier divisors. -/
 @[simp]
 lemma principalCartierDivisor_mul (f g : X.functionFieldˣ) :
     principalCartierDivisor X (f * g) =
       principalCartierDivisor X f + principalCartierDivisor X g :=
   map_add (principalCartierDivisorAddHom X) (Additive.ofMul f) (Additive.ofMul g)
 
+/-- The principal Cartier divisor of an inverse is the negation of the principal Cartier
+divisor. -/
 @[simp]
 lemma principalCartierDivisor_inv (f : X.functionFieldˣ) :
     principalCartierDivisor X f⁻¹ = -principalCartierDivisor X f :=
   map_neg (principalCartierDivisorAddHom X) (Additive.ofMul f)
 
+/-- A global regular unit has zero principal Cartier divisor. -/
 @[simp]
-lemma principalCartierDivisor_div (f g : X.functionFieldˣ) :
-    principalCartierDivisor X (f / g) =
-      principalCartierDivisor X f - principalCartierDivisor X g := by
-  rw [div_eq_mul_inv, principalCartierDivisor_mul, principalCartierDivisor_inv, sub_eq_add_neg]
+lemma principalCartierDivisor_regularUnitToFunctionField
+    (f : ((X.presheaf.obj (op (⊤ : X.Opens))) : Type u)ˣ) :
+    principalCartierDivisor X (regularUnitToFunctionField X f) = 0 := by
+  let _ : Nonempty (⊤ : X.Opens) :=
+    ⟨⟨Classical.choice (inferInstanceAs (Nonempty X)), by simp⟩⟩
+  change (toCartierDivisor X) ((rationalUnitSectionsEquiv X).symm
+    (Additive.ofMul (Units.map (X.germToFunctionField (⊤ : X.Opens)).hom.toMonoidHom f))) = 0
+  have hmap :
+      (rationalUnitSectionsEquiv X).symm
+          (Additive.ofMul (Units.map
+            (X.germToFunctionField (⊤ : X.Opens)).hom.toMonoidHom f)) =
+        ((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom (Additive.ofMul f) := by
+    apply (rationalUnitSectionsEquiv X).injective
+    rw [AddEquiv.apply_symm_apply]
+    symm
+    change Additive.ofMul (Units.map (rationalFunctionsRingEquiv (⊤ : X.Opens)).toMonoidHom
+      (Units.map ((toRationalFunctionsRing X).hom.app (op (⊤ : X.Opens))).hom.toMonoidHom f)) =
+        Additive.ofMul (Units.map
+          (X.germToFunctionField (⊤ : X.Opens)).hom.toMonoidHom f)
+    apply congrArg Additive.ofMul
+    apply Units.ext
+    change rationalFunctionsRingEquiv (⊤ : X.Opens)
+        ((toRationalFunctionsRing X).hom.app (op (⊤ : X.Opens)) (f : Γ(X, ⊤))) =
+      X.germToFunctionField (⊤ : X.Opens) f
+    rw [← toRationalFunctionsRing_app, ← rationalFunctionsEquiv_apply,
+      rationalFunctionsEquiv_toRationalFunctions_app]
+  rw [hmap]
+  have hzero := DFunLike.congr_fun
+    (toRationalUnitSheaf_app_comp_toCartierDivisor X) (Additive.ofMul f)
+  change (toCartierDivisor X)
+    (((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom (Additive.ofMul f)) = 0 at hzero
+  exact hzero
 
 end Scheme
 

@@ -33,19 +33,11 @@ open CategoryTheory
 
 universe u v
 
-namespace CommGrpCat
-
-/-- The functor which writes a commutative group additively is an equivalence. -/
-noncomputable instance toAddCommGrp_isEquivalence : toAddCommGrp.IsEquivalence :=
-  commGroupAddCommGroupEquivalence.isEquivalence_functor
-
-end CommGrpCat
-
 namespace CommRingCat
 
 /-- The functor from commutative rings to their groups of units, written additively. -/
 abbrev additiveUnits : CommRingCat.{u} ⥤ AddCommGrpCat.{u} :=
-  forget₂ CommRingCat CommMonCat ⋙ CommMonCat.units ⋙ CommGrpCat.toAddCommGrp
+  forget₂ CommRingCat CommMonCat ⋙ CommMonCat.units ⋙ commGroupAddCommGroupEquivalence.functor
 
 end CommRingCat
 
