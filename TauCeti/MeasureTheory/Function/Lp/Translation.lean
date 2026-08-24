@@ -71,7 +71,8 @@ private theorem enorm_sub_rpow_le (hu : ContDiff ℝ 1 u) {r : ℝ} (hr : 1 ≤ 
     simp
   have hsegment := enorm_sub_le_lintegral_enorm_fderiv_apply x h
     (fun t _ => (hu.differentiable one_ne_zero) (x + t • h))
-    ((hu.continuous_fderiv one_ne_zero).comp_continuousOn (by fun_prop))
+    (((hu.continuous_fderiv one_ne_zero).comp_continuousOn (by fun_prop)).clm_apply
+      continuousOn_const)
   calc ‖u (x + h) - u x‖ₑ ^ r
       ≤ (∫⁻ t in Icc (0 : ℝ) 1, ‖fderiv ℝ u (x + t • h) h‖ₑ) ^ r :=
         ENNReal.rpow_le_rpow hsegment hr0.le
