@@ -118,8 +118,8 @@ in the finite-difference sense. Positive shifts are smooth completely monotone f
 finite-difference predicate passes to their pointwise limit. -/
 theorem IsContinuousCompletelyMonotoneOnIoi.isDifferenceCompletelyMonotone
     (hf : IsContinuousCompletelyMonotoneOnIoi f) : IsDifferenceCompletelyMonotone f := by
-  let F : ℕ → ℝ → ℝ := fun n t => f (t + 1 / ((n : ℝ) + 1))
-  refine isDifferenceCompletelyMonotone_of_tendsto (L := atTop) (F := F) (fun n => ?_) ?_
+  refine isDifferenceCompletelyMonotone_of_tendsto (L := atTop)
+    (F := fun (n : ℕ) t => f (t + 1 / ((n : ℝ) + 1))) (fun n => ?_) ?_
   · have hshift : 0 < 1 / ((n : ℝ) + 1) := by positivity
     exact IsCompletelyMonotone.isDifferenceCompletelyMonotone
       (hf.isCompletelyMonotoneOnIoi.isCompletelyMonotone_comp_add_const hshift)
@@ -130,8 +130,8 @@ theorem IsContinuousCompletelyMonotoneOnIoi.isDifferenceCompletelyMonotone
       tendsto_nhdsWithin_iff.mpr
         ⟨by simpa using tendsto_const_nhds.add hzero,
           .of_forall fun n => mem_Ici.mpr (add_nonneg hu (by positivity))⟩
-    change Tendsto (f ∘ fun n : ℕ => u + 1 / ((n : ℝ) + 1)) atTop (𝓝 (f u))
-    exact (hf.continuousOn.continuousWithinAt (mem_Ici.mpr hu)).tendsto.comp ha
+    simpa only [Function.comp_def] using
+      (hf.continuousOn.continuousWithinAt (mem_Ici.mpr hu)).tendsto.comp ha
 
 /-- **The Laplace transform of a finite measure is completely monotone in the finite-difference
 sense.** Every mixed forward difference with nonnegative steps has the sign `(-1)ⁿ`, because it
