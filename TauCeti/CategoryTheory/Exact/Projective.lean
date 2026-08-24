@@ -338,7 +338,7 @@ variable [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 /-- **The exact structure induced on a subcategory of projectives is the split one.** Every
 conflation between projectives splits, and a split short complex is a conflation of every exact
 structure. -/
-@[simp] theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
+theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
     (S : ShortComplex P.FullSubcategory) :
     (E.fullSubcategory P (E.isExtensionClosed_of_le_isProjective hP)).Conflation S ↔
       (ExactStructure.split P.FullSubcategory).Conflation S := by
