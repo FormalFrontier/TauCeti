@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Analysis.Sobolev.Translation.Basic
 public import TauCeti.Analysis.Sobolev.W1p.Zero
-public import TauCeti.MeasureTheory.Function.Lp.Translation
 
 /-!
 # The `Lᵖ` translation estimate on `W^{1,p}_0`
@@ -28,7 +28,7 @@ and so is the analytic input for Rellich--Kondrachov, Lane A.6 of
 ## The estimate on `W^{1,p}_0(ℝⁿ)`
 
 `TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient` transports the `C¹` estimate
-from `TauCeti.MeasureTheory.Function.Lp.Translation` to the Sobolev space by density. The set of
+from `TauCeti.Analysis.Sobolev.Translation.Basic` to the Sobolev space by density. The set of
 jets satisfying it is closed — the translation increment is a continuous function of the `Lᵖ`
 class, being the difference of the identity and the isometry induced by a measure-preserving map
 — and it contains every test-function jet, so

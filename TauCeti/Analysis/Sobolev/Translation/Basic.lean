@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Calculus.SegmentIncrement
+public import TauCeti.Analysis.Normed.Group.Enorm
 public import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
-public import TauCeti.Topology.Instances.ENNReal
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Group.LIntegral
 import Mathlib.MeasureTheory.Measure.Prod
@@ -27,11 +27,11 @@ exchanging the order of integration.
 
 ## Main declarations
 
-* `TauCeti.lintegral_enorm_comp_add_sub_rpow_le`: the translation estimate in `∫⁻` form.
+* `TauCeti.lintegral_enorm_rpow_comp_add_sub_le`: the translation estimate in `∫⁻` form.
 * `TauCeti.eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv`: the `Lᵖ` translation estimate for a `C¹`
   function.
-* `TauCeti.tendsto_eLpNorm_comp_add_sub`: continuity of translation in `Lᵖ` for a `C¹` function
-  with `Lᵖ` derivative.
+* `TauCeti.tendsto_eLpNorm_comp_add_sub_nhds_zero`: continuity of translation in `Lᵖ` for a `C¹`
+  function with `Lᵖ` derivative.
 
 ## References
 
@@ -57,7 +57,7 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 /-- The `r`-th power of the segment estimate. Raising to the power `r ≥ 1` costs nothing because
 the segment is parametrized by the probability space `Set.Icc 0 1`; the operator norm then splits
 off `‖h‖ ^ r`. -/
-private theorem enorm_sub_rpow_le (hu : ContDiff ℝ 1 u) {r : ℝ} (hr : 1 ≤ r) (x h : E) :
+private theorem enorm_rpow_comp_add_sub_le (hu : ContDiff ℝ 1 u) {r : ℝ} (hr : 1 ≤ r) (x h : E) :
     ‖u (x + h) - u x‖ₑ ^ r
       ≤ ‖h‖ₑ ^ r * ∫⁻ t in Icc (0 : ℝ) 1, ‖fderiv ℝ u (x + t • h)‖ₑ ^ r := by
   have hr0 : (0 : ℝ) < r := one_pos.trans_le hr
@@ -99,14 +99,14 @@ variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpa
 The segment estimate is integrated in `x`, the order of integration in `x` and in the segment
 parameter is exchanged, and the inner integral is then independent of the parameter because the
 measure is translation invariant. -/
-theorem lintegral_enorm_comp_add_sub_rpow_le (hu : ContDiff ℝ 1 u) {r : ℝ} (hr : 1 ≤ r) (h : E) :
+theorem lintegral_enorm_rpow_comp_add_sub_le (hu : ContDiff ℝ 1 u) {r : ℝ} (hr : 1 ≤ r) (h : E) :
     ∫⁻ x, ‖u (x + h) - u x‖ₑ ^ r ∂mu ≤ ‖h‖ₑ ^ r * ∫⁻ x, ‖fderiv ℝ u x‖ₑ ^ r ∂mu := by
   have hjoint : Measurable fun z : E × ℝ => ‖fderiv ℝ u (z.1 + z.2 • h)‖ₑ ^ r :=
     (ENNReal.continuous_rpow_const.comp
       (((hu.continuous_fderiv one_ne_zero).comp (by fun_prop)).enorm)).measurable
   calc ∫⁻ x, ‖u (x + h) - u x‖ₑ ^ r ∂mu
       ≤ ∫⁻ x, (‖h‖ₑ ^ r * ∫⁻ t in Icc (0 : ℝ) 1, ‖fderiv ℝ u (x + t • h)‖ₑ ^ r) ∂mu :=
-        lintegral_mono fun x => enorm_sub_rpow_le hu hr x h
+        lintegral_mono fun x => enorm_rpow_comp_add_sub_le hu hr x h
     _ = ‖h‖ₑ ^ r * ∫⁻ x, (∫⁻ t in Icc (0 : ℝ) 1, ‖fderiv ℝ u (x + t • h)‖ₑ ^ r) ∂mu :=
         lintegral_const_mul' _ _ (by finiteness)
     _ = ‖h‖ₑ ^ r * ∫⁻ t in Icc (0 : ℝ) 1, (∫⁻ x, ‖fderiv ℝ u (x + t • h)‖ₑ ^ r ∂mu) := by
@@ -134,7 +134,7 @@ theorem eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv (hu : ContDiff ℝ 1 u) {p : 
   refine eLpNorm_le_eLpNorm_of_lintegral_rpow_le (norm_nonneg h) (zero_lt_one.trans_le hp).ne'
     hp' ?_
   rw [← ENNReal.ofReal_rpow_of_nonneg (norm_nonneg h) (zero_lt_one.trans_le hr).le, ofReal_norm]
-  exact lintegral_enorm_comp_add_sub_rpow_le hu hr h
+  exact lintegral_enorm_rpow_comp_add_sub_le hu hr h
 
 /-- **Continuity of translation in `Lᵖ`** for a `C¹` function with `Lᵖ` derivative: the `Lᵖ`
 distance between `u` and its translate tends to `0`. This is the qualitative corollary of
@@ -143,10 +143,10 @@ distance between `u` and its translate tends to `0`. This is the qualitative cor
 For a `u` that is itself in `Lᵖ` this is already Mathlib's
 `Filter.Tendsto.compMeasurePreservingLp`, which needs no derivative; the content here is that a
 `C¹` function with `Lᵖ` derivative translates continuously in `Lᵖ` even when it is not in `Lᵖ`. -/
-theorem tendsto_eLpNorm_comp_add_sub (hu : ContDiff ℝ 1 u) {p : ℝ≥0∞} (hp : 1 ≤ p) (hp' : p ≠ ∞)
-    (hfin : eLpNorm (fderiv ℝ u) p mu ≠ ∞) :
+theorem tendsto_eLpNorm_comp_add_sub_nhds_zero (hu : ContDiff ℝ 1 u) {p : ℝ≥0∞} (hp : 1 ≤ p)
+    (hp' : p ≠ ∞) (hfin : eLpNorm (fderiv ℝ u) p mu ≠ ∞) :
     Filter.Tendsto (fun h : E => eLpNorm (fun x => u (x + h) - u x) p mu) (nhds 0) (nhds 0) :=
-  tendsto_nhds_zero_of_le_enorm_mul hfin fun h =>
+  tendsto_nhds_zero_of_le_enorm_mul hfin <| Filter.Eventually.of_forall fun h =>
     eLpNorm_comp_add_sub_le_mul_eLpNorm_fderiv hu hp hp' h
 
 end Translation

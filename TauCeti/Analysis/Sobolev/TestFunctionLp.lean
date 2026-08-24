@@ -48,12 +48,6 @@ theorem testFunctionLp_apply_ae (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
     ∀ᵐ x ∂mu.restrict Omega, testFunctionLp (mu := mu) q phi x = phi x :=
   (memLp_testFunction (mu := mu) q phi).coeFn_toLp
 
-/-- The norm of a test function's `Lᵖ` class is its `eLpNorm`, converted to `ℝ`. -/
-theorem norm_testFunctionLp (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
-    ‖testFunctionLp (mu := mu) q phi‖ =
-      (eLpNorm (phi : E → ℝ) q (mu.restrict Omega)).toReal :=
-  Lp.norm_toLp _ _
-
 /-- The extended norm of a test function's `Lᵖ` class is its `eLpNorm` for the *ambient* measure:
 the function vanishes outside `Omega`, so the restriction may be dropped. -/
 theorem enorm_testFunctionLp_eq_eLpNorm (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
@@ -119,12 +113,6 @@ def gradientTestFunctionLp (q : ENNReal) (phi : 𝓓(Omega, ℝ)) : Lp E q (mu.r
 theorem gradientTestFunctionLp_apply_ae (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
     ∀ᵐ x ∂mu.restrict Omega, gradientTestFunctionLp (mu := mu) q phi x = ∇ (phi : E → ℝ) x :=
   (memLp_gradient_testFunction (mu := mu) q phi).coeFn_toLp
-
-/-- The norm of a test function gradient's `Lᵖ` class is its `eLpNorm`, converted to `ℝ`. -/
-theorem norm_gradientTestFunctionLp (q : ENNReal) (phi : 𝓓(Omega, ℝ)) :
-    ‖gradientTestFunctionLp (mu := mu) q phi‖ =
-      (eLpNorm (fun x => ∇ (phi : E → ℝ) x) q (mu.restrict Omega)).toReal :=
-  Lp.norm_toLp _ _
 
 /-- The extended norm of a test function gradient's `Lᵖ` class is the `eLpNorm` of its Fréchet
 derivative for the *ambient* measure: the gradient vanishes outside `Omega`, so the restriction
