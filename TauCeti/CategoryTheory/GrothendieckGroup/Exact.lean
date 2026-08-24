@@ -190,15 +190,20 @@ section FullSubcategory
 variable {P : ObjectProperty C} [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 
 /-- The class of an explicitly presented ambient biproduct in the exact `K₀` of an induced full
-subcategory is the sum of the classes of its summands. -/
+subcategory is the sum of the classes of its summands. The middle object is the one supplied by
+closure under binary products; by proof irrelevance the statement applies to any presentation of
+it. -/
 theorem of_biprod_fullSubcategory (hP : E.IsExtensionClosed P) {X Y : C}
-    (hX : P X) (hY : P Y) (hXY : P (X ⊞ Y)) :
-    (of ⟨X ⊞ Y, hXY⟩ : ExactK0 (E.fullSubcategory P hP)) =
+    (hX : P X) (hY : P Y) :
+    (of ⟨X ⊞ Y, P.prop_biprod_of_isClosedUnderBinaryProducts hX hY⟩ :
+        ExactK0 (E.fullSubcategory P hP)) =
       of ⟨X, hX⟩ + of ⟨Y, hY⟩ := by
   have hzero : (ObjectProperty.homMk (biprod.inl : X ⟶ X ⊞ Y) :
-        (⟨X, hX⟩ : P.FullSubcategory) ⟶ ⟨X ⊞ Y, hXY⟩) ≫
+        (⟨X, hX⟩ : P.FullSubcategory) ⟶
+          ⟨X ⊞ Y, P.prop_biprod_of_isClosedUnderBinaryProducts hX hY⟩) ≫
       (ObjectProperty.homMk (biprod.snd : X ⊞ Y ⟶ Y) :
-        (⟨X ⊞ Y, hXY⟩ : P.FullSubcategory) ⟶ ⟨Y, hY⟩) = 0 :=
+        (⟨X ⊞ Y, P.prop_biprod_of_isClosedUnderBinaryProducts hX hY⟩ : P.FullSubcategory) ⟶
+          ⟨Y, hY⟩) = 0 :=
     ObjectProperty.hom_ext _ (by simp)
   refine of_eq_add_of_conflation hzero ?_
   rw [ExactStructure.fullSubcategory_conflation_iff]

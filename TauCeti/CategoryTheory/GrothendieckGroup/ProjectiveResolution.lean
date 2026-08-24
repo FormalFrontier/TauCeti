@@ -181,7 +181,7 @@ class. -/
       | @base Y hY =>
           rw [biprod_base_base, eulerClassFullSubcategory_base, eulerClassFullSubcategory_base,
             eulerClassFullSubcategory_base]
-          exact ExactK0.of_biprod_fullSubcategory hP hX hY _
+          exact ExactK0.of_biprod_fullSubcategory hP hX hY
       | @step K Q Y hQ i p zero hp s =>
           simp only [biprod_base_step, eulerClassFullSubcategory]
           rw [eulerClassFullSubcategory_ofIso,
