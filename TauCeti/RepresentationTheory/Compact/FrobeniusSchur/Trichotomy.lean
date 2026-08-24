@@ -19,8 +19,9 @@ inner product space, the Frobenius-Schur indicator takes only the three values
 
 `ν₂(π) = 1`, `ν₂(π) = 0`, `ν₂(π) = -1`,
 
-the **real**, **complex** and **quaternionic** types. This is the compact-group form of the
-finite-group `TauCeti.Representation.frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one`.
+and which value occurs is read off the invariants of the symmetric and of the exterior square. This
+is the compact-group form of the finite-group
+`TauCeti.Representation.frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one`.
 
 Everything analytic is already done.
 `ContRepresentation.frobeniusSchurIndicator_eq_sub_finrank_invariants`, in
@@ -36,11 +37,13 @@ at most `1`, because the invariants of the tensor square of an irreducible are a
 the two squares meet in `0`. A difference of two non-negative integers whose sum is at most `1` is
 `1`, `0` or `-1`, and each value is pinned by which of the two squares carries the invariant.
 
-The trichotomy is stated here for the indicator only. Its refinement into the invariant-form
-dictionary -- that `ν₂ = 1` is the existence of a nonzero invariant *symmetric* bilinear form and
-`ν₂ = -1` that of an invariant *alternating* one, and the structure-map reformulation over `ℝ` --
-needs the identification of the invariants of the two squares with invariant forms, which for
-compact groups is not proved here; the finite-group version of that dictionary is
+The trichotomy is stated here for the indicator and the two invariant counts only. The classical
+reading of the three values as the **real**, **complex** and **quaternionic** types is *not*
+established here: it is the refinement of the trichotomy into the invariant-form dictionary -- that
+`ν₂ = 1` is the existence of a nonzero invariant *symmetric* bilinear form and `ν₂ = -1` that of an
+invariant *alternating* one, together with the structure-map reformulation over `ℝ` -- which needs
+the identification of the invariants of the two squares with invariant forms, a separate step for
+compact groups. The finite-group version of that dictionary is
 `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Trichotomy.lean`.
 
 ## Main statements
@@ -96,7 +99,7 @@ private theorem finrank_invariants_squares_cases (hunitary : IsUnitary π)
 
 /-- **The Frobenius-Schur reality trichotomy for compact groups.** The indicator of an irreducible
 unitary representation of a compact group on a finite-dimensional complex inner product space is
-`1` (real type), `0` (complex type) or `-1` (quaternionic type).
+`1`, `0` or `-1`.
 
 The indicator is the difference `dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`
 (`ContRepresentation.frobeniusSchurIndicator_eq_sub_finrank_invariants`) and those two dimensions
@@ -110,8 +113,7 @@ theorem frobeniusSchurIndicator_trichotomy (hunitary : IsUnitary π)
   rcases finrank_invariants_squares_cases π hunitary hirr with
     ⟨hs, ha⟩ | ⟨hs, ha⟩ | ⟨hs, ha⟩ <;> rw [hs, ha] <;> norm_num
 
-/-- **The indicator is `1` exactly in the real case**: exactly when the symmetric square carries a
-line of invariants. -/
+/-- **The indicator is `1` exactly when the symmetric square carries a line of invariants.** -/
 theorem frobeniusSchurIndicator_eq_one_iff_finrank_invariants_symmetricSquare
     (hunitary : IsUnitary π) (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 1 ↔ finrank ℂ (symmetricSquare π).invariants = 1 := by
@@ -119,8 +121,7 @@ theorem frobeniusSchurIndicator_eq_one_iff_finrank_invariants_symmetricSquare
   rcases finrank_invariants_squares_cases π hunitary hirr with
     ⟨hs, ha⟩ | ⟨hs, ha⟩ | ⟨hs, ha⟩ <;> rw [hs, ha] <;> norm_num
 
-/-- **The indicator is `-1` exactly in the quaternionic case**: exactly when the exterior square
-carries a line of invariants. -/
+/-- **The indicator is `-1` exactly when the exterior square carries a line of invariants.** -/
 theorem frobeniusSchurIndicator_eq_neg_one_iff_finrank_invariants_exteriorSquare
     (hunitary : IsUnitary π) (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = -1 ↔ finrank ℂ (exteriorSquare π).invariants = 1 := by
@@ -128,8 +129,7 @@ theorem frobeniusSchurIndicator_eq_neg_one_iff_finrank_invariants_exteriorSquare
   rcases finrank_invariants_squares_cases π hunitary hirr with
     ⟨hs, ha⟩ | ⟨hs, ha⟩ | ⟨hs, ha⟩ <;> rw [hs, ha] <;> norm_num
 
-/-- **The indicator is `0` exactly in the complex case**: exactly when neither square carries an
-invariant tensor. -/
+/-- **The indicator is `0` exactly when neither square carries an invariant tensor.** -/
 theorem frobeniusSchurIndicator_eq_zero_iff_finrank_invariants_squares (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 0 ↔

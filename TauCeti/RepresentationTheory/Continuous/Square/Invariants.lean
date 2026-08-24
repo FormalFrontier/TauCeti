@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.InnerProductSpace.OrthonormalContraction
+public import TauCeti.LinearAlgebra.Dimension.Sup
 public import TauCeti.RepresentationTheory.Continuous.Conjugate
 public import TauCeti.RepresentationTheory.Continuous.Schur
 public import TauCeti.RepresentationTheory.Continuous.Square.Basic
@@ -283,14 +284,11 @@ theorem finrank_invariants_squares_le_one (hπ : IsUnitary π)
     have hbot := (isCompl_symmetricTensors_antisymmetricTensors 𝕜 V).inf_eq_bot
     rw [Submodule.eq_bot_iff] at hbot
     exact hbot x (Submodule.mem_inf.mpr ⟨hxS, hxA⟩)
-  have hsup : S ⊔ A ≤ (tprod π π).invariants :=
-    sup_le map_invariants_symmetricSquare_le map_invariants_exteriorSquare_le
-  have hadd : finrank 𝕜 S + finrank 𝕜 A = finrank 𝕜 (S ⊔ A : Submodule 𝕜 (V ⊗[𝕜] V)) := by
-    have hsum := Submodule.finrank_sup_add_finrank_inf_eq S A
-    rw [hinf, finrank_bot, add_zero] at hsum
-    exact hsum.symm
-  rw [← hSfr, ← hAfr, hadd]
-  exact le_trans (Submodule.finrank_mono hsup) (finrank_invariants_tprod_self_le_one hπ hirr)
+  rw [← hSfr, ← hAfr]
+  exact le_trans
+    (finrank_add_finrank_le_of_inf_eq_bot (K := 𝕜) (W := V ⊗[𝕜] V)
+      map_invariants_symmetricSquare_le map_invariants_exteriorSquare_le hinf)
+    (finrank_invariants_tprod_self_le_one hπ hirr)
 
 end Squares
 
