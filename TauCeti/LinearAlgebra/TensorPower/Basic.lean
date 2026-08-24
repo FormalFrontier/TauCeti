@@ -13,13 +13,17 @@ public import Mathlib.LinearAlgebra.TensorPower.Basic
 Mathlib's `TensorPower.mulEquiv` identifies `⨂[R]^k M ⊗[R] ⨂[R]^m M` with `⨂[R]^(k + m) M`.  This
 file records the inverse operation: `TensorPower.splitAt` cuts a tensor power of length `n` after
 its first `k` factors, landing in `⨂[R]^k M ⊗[R] ⨂[R]^(n - k) M`, together with its value on pure
-tensors and the fact that it is injective. It also identifies the first tensor power with the
-underlying module.
+tensors and the fact that it is injective. It also records the value of `TensorPower.mulEquiv`
+itself on a pair of pure tensors, and identifies the first tensor power with the underlying module.
 
 ## Main definitions
 
 * `TensorPower.splitAt`: split a tensor power at a specified position.
 * `TauCeti.TensorPower.oneEquiv`: identify the first tensor power with the underlying module.
+
+## Main results
+
+* `TensorPower.mulEquiv_tprod_tmul_tprod`: multiplying pure tensors concatenates their entries.
 -/
 
 public section
@@ -52,6 +56,15 @@ theorem oneEquiv_symm_apply (a : M) :
 end TauCeti.TensorPower
 
 namespace TensorPower
+
+/-- Multiplying two pure tensors concatenates their entries. -/
+@[simp]
+theorem mulEquiv_tprod_tmul_tprod {k l : ℕ} (u : Fin k → M) (v : Fin l → M) :
+    TensorPower.mulEquiv (R := R) (M := M) (n := k) (m := l)
+        (PiTensorProduct.tprod R u ⊗ₜ[R] PiTensorProduct.tprod R v) =
+      PiTensorProduct.tprod R (Fin.append u v) := by
+  rw [← TensorPower.gMul_def]
+  exact TensorPower.tprod_mul_tprod R u v
 
 /-- Split a tensor power after its first `k` factors. -/
 noncomputable def splitAt (n k : ℕ) (hk : k ≤ n) :
