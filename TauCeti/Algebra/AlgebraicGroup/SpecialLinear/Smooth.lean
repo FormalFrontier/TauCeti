@@ -52,7 +52,7 @@ variable (R : Type u) [CommRing R] (n : ℕ)
 
 Via the functor-of-points description, this is the assertion that determinant-one matrices lift
 through square-zero quotients. -/
-instance instFormallySmoothCoordinateHopfAlgebra :
+private instance instFormallySmoothCoordinateHopfAlgebra :
     Algebra.FormallySmooth R (coordinateHopfAlgebra R n) := by
   apply Algebra.FormallySmooth.of_comp_surjective
   intro B _ _ I hI f
