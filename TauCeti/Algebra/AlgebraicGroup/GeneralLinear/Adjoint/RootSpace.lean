@@ -83,15 +83,27 @@ theorem matrixUnitWeight_self (i : Fin n) : matrixUnitWeight i i = 1 := by
   apply Multiplicative.toAdd.injective
   simp [matrixUnitWeight]
 
+/-- The matrix-unit weight `e_i - e_j` is trivial exactly on the diagonal. -/
+@[simp]
+theorem matrixUnitWeight_eq_one_iff (i j : Fin n) :
+    matrixUnitWeight i j =
+      (1 : Multiplicative (ULift.{u} (Fin n) →₀ ℤ)) ↔ i = j := by
+  constructor
+  · intro h
+    by_contra hij
+    have hvalue := congrArg
+      (fun alpha : Multiplicative (ULift.{u} (Fin n) →₀ ℤ) ↦
+        Multiplicative.toAdd alpha (ULift.up i)) h
+    simp [toAdd_matrixUnitWeight_apply, hij] at hvalue
+  · rintro rfl
+    exact matrixUnitWeight_self i
+
 /-- An off-diagonal root character `e_i - e_j` is nontrivial. -/
 theorem matrixUnitWeight_ne_one {i j : Fin n} (hij : i ≠ j) :
     matrixUnitWeight i j ≠
       (1 : Multiplicative (ULift.{u} (Fin n) →₀ ℤ)) := by
   intro h
-  have hvalue := congrArg
-    (fun alpha : Multiplicative (ULift.{u} (Fin n) →₀ ℤ) ↦
-      Multiplicative.toAdd alpha (ULift.up i)) h
-  simp [toAdd_matrixUnitWeight_apply, hij] at hvalue
+  exact hij ((matrixUnitWeight_eq_one_iff i j).mp h)
 
 /-- The cotangent-dual Lie algebra of `GL_n` identified linearly with `n × n` matrices. -/
 def cotangentDualMatrixEquiv :
