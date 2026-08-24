@@ -20,6 +20,7 @@ generic simp theorem
 ## Main declarations
 
 * `TauCeti.DynkinType.e6GraphAut`: the graph automorphism of the pinned type-`E₆` root datum.
+* `TauCeti.DynkinType.e6GraphAut_sq`: this automorphism is an involution.
 * `TauCeti.DynkinType.e6GraphAut_ne_one`: this automorphism is nontrivial.
 
 ## References
@@ -44,6 +45,11 @@ noncomputable section
 the nontrivial symmetry of the Bourbaki-numbered Dynkin diagram. -/
 def e6GraphAut : (E6.simplyConnectedRootDatum valid_E6).Aut :=
   diagramAut valid_E6 (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6)
+
+/-- Applying the type-`E₆` graph automorphism twice is the identity. -/
+@[simp] theorem e6GraphAut_sq : e6GraphAut ^ 2 = 1 :=
+  diagramAut_pow_eq_one valid_E6
+    (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6) graphPermE6_sq
 
 /-- The root-index action bundled in the type-`E₆` graph automorphism is the permutation induced
 by the nontrivial symmetry of its Dynkin diagram. -/
