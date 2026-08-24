@@ -123,21 +123,25 @@ theorem map_kostantTorusSubgroup_conj_baseChangeInvariantRestrictUnit
         (MulAut.conj (AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM)).toMonoidHom
         (kostantTorusSubgroup M b wt A) =
       kostantTorusSubgroup M b wt A := by
-  rw [kostantTorusSubgroup_eq_range]
-  ext g
-  constructor
-  · rintro ⟨_, ⟨s, rfl⟩, rfl⟩
-    refine ⟨MulEquiv.arrowCongr σ (MulEquiv.refl Aˣ) s, ?_⟩
-    simpa only [MulEquiv.coe_toMonoidHom, MulAut.conj_apply] using
-      (baseChangeInvariantRestrictUnit_conj_kostantTorusPoints M b wt θ hθM τ σ hθb hwt s).symm
-  · rintro ⟨s, rfl⟩
-    let e := MulEquiv.arrowCongr σ (MulEquiv.refl Aˣ)
-    let t := e.symm s
-    refine ⟨kostantTorusPoints M b wt A t, ⟨t, rfl⟩, ?_⟩
-    rw [MulEquiv.coe_toMonoidHom, MulAut.conj_apply,
-      baseChangeInvariantRestrictUnit_conj_kostantTorusPoints M b wt θ hθM τ σ hθb hwt t]
-    exact congrArg (kostantTorusPoints M b wt A)
-      (e.apply_symm_apply s)
+  set Φ := LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M) with hΦ
+  set U := AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM with hU
+  -- The torus points are the generic weight-torus automorphisms read in the general linear group.
+  have hpoints : Φ.symm.toMonoidHom.comp (basisWeightTorus (b.baseChange A) wt) =
+      kostantTorusPoints M b wt A :=
+    MonoidHom.ext fun s =>
+      Φ.symm_apply_eq.mpr (kostantTorusPoints_toLinearEquiv M b wt s).symm
+  -- Conjugation by `U` is conjugation by the underlying automorphism, read through `Φ`.
+  have hconj : (MulAut.conj U).toMonoidHom.comp Φ.symm.toMonoidHom =
+      Φ.symm.toMonoidHom.comp (MulAut.conj (Φ U)).toMonoidHom :=
+    MonoidHom.ext fun f => by simp [MulAut.conj_apply]
+  -- That underlying automorphism permutes the base-changed basis, as the generic result needs.
+  have hbasis : ∀ i, Φ U ((b.baseChange A) i) = (b.baseChange A) (τ i) := fun i => by
+    rw [hΦ, LinearMap.GeneralLinearGroup.coeFn_generalLinearEquiv, hU,
+      AddEquiv.val_baseChangeInvariantRestrictUnit_apply]
+    exact baseChange_invariantRestrict_map_baseChange_basis M b θ hθM τ hθb i
+  rw [kostantTorusSubgroup_eq_range, ← hpoints, ← MonoidHom.map_range, Subgroup.map_map, hconj,
+    ← Subgroup.map_map,
+    map_basisWeightTorus_range_conj_of_map_basis (b.baseChange A) wt τ σ (Φ U) hbasis hwt]
 
 end Subgroup
 

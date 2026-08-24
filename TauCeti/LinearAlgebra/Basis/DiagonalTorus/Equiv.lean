@@ -16,8 +16,10 @@ coordinate permutation, then it intertwines the original torus action with the r
 Equivalently, it normalizes the represented split torus.
 
 This is the representation-theoretic toral half of a pinned diagram symmetry: the same symmetry
-must also permute the root subgroups, while the theorem here handles its action on the maximal
-torus.
+must also permute the root subgroups, while the theorems here describe its action on the
+represented weight torus. Nothing constrains the weight function, so that torus need not act
+faithfully and need not be maximal; in the intended Chevalley-group application the weights are
+those of a pinned lattice basis, and it is.
 
 ## Main declarations
 
@@ -25,6 +27,8 @@ torus.
 * `TauCeti.basisWeightTorus_intertwine_of_map_basis`: a weighted-basis symmetry intertwines the
   represented torus actions.
 * `TauCeti.basisWeightTorus_conj_of_map_basis`: the corresponding conjugation formula.
+* `TauCeti.map_basisWeightTorus_range_conj_of_map_basis`: such a symmetry normalizes the
+  represented torus.
 -/
 
 public section
@@ -63,14 +67,10 @@ theorem basisWeightTorus_intertwine_of_map_basis (b : Module.Basis ι R M) (wt :
     (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Rˣ) :
     (basisWeightTorus b wt s).trans θ =
       θ.trans (basisWeightTorus b wt (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s)) := by
-  apply LinearEquiv.toLinearMap_injective
-  apply Module.Basis.ext b
-  intro i
-  change θ (basisWeightTorus b wt s (b i)) =
-    basisWeightTorus b wt (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) (θ (b i))
-  rw [basisWeightTorus_basis, map_smul, hθ, basisWeightTorus_basis]
-  rw [torusCharacter_arrowCongr]
-  rw [show wt (τ i) ∘ σ = wt i by funext j; exact hwt i j]
+  refine LinearEquiv.toLinearMap_injective (Module.Basis.ext b fun i => ?_)
+  have hcomp : wt (τ i) ∘ σ = wt i := funext fun j => hwt i j
+  simp only [LinearEquiv.coe_coe, LinearEquiv.trans_apply, basisWeightTorus_basis, map_smul, hθ,
+    torusCharacter_arrowCongr, hcomp]
 
 /-- Conjugating a weighted-basis torus point by a compatible basis symmetry reindexes that torus
 point. This is the normalizer form of `basisWeightTorus_intertwine_of_map_basis`. -/
@@ -86,5 +86,21 @@ theorem basisWeightTorus_conj_of_map_basis (b : Module.Basis ι R M) (wt : ι �
   simpa only [LinearEquiv.mul_apply, LinearEquiv.trans_apply, LinearEquiv.coe_inv,
     LinearEquiv.apply_symm_apply]
     using congrArg (fun f : M ≃ₗ[R] M => f (θ.symm x)) hintertwine
+
+/-- **A compatible basis symmetry normalizes the represented weight torus.** Conjugation by `θ`
+carries each torus point to the point reindexed through `σ`, so it maps the range of the
+torus homomorphism onto itself. -/
+theorem map_basisWeightTorus_range_conj_of_map_basis (b : Module.Basis ι R M) (wt : ι → κ → ℤ)
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M)
+    (hθ : ∀ i, θ (b i) = b (τ i))
+    (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) :
+    Subgroup.map (MulAut.conj θ).toMonoidHom (basisWeightTorus b wt).range =
+      (basisWeightTorus b wt).range := by
+  have hcomp : (MulAut.conj θ).toMonoidHom.comp (basisWeightTorus b wt) =
+      (basisWeightTorus b wt).comp
+        (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ)).toMonoidHom :=
+    MonoidHom.ext fun s => basisWeightTorus_conj_of_map_basis b wt τ σ θ hθ hwt s
+  rw [MonoidHom.map_range, hcomp, MonoidHom.range_comp,
+    MonoidHom.range_eq_top_of_surjective _ (MulEquiv.surjective _), ← MonoidHom.range_eq_map]
 
 end TauCeti
