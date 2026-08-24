@@ -113,8 +113,8 @@ theorem coderivSummand_tprod (F : ReducedTensorWords R M →ₗ[R] M) {n p d : �
   rw [coderivSummand, dite_eq_left ⟨hd, hpd⟩]
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
     TensorPower.splitAt_tprod, LinearMap.lTensor_tmul, LinearMap.rTensor_tmul,
-    TauCeti.TensorPower.oneEquiv_symm_apply, TensorPower.mulEquiv_tprod_tmul_tprod,
-    TensorPower.cast_tprod, Fin.val_castLE]
+    TauCeti.TensorPower.oneEquiv_symm_apply, ← TensorPower.gMul_def,
+    TensorPower.tprod_mul_tprod, TensorPower.cast_tprod, Fin.val_castLE]
   rw [← subword_eq_of_tprod R x (a := p) (b := d) hd (by omega),
     splice_eq_of_tprod R x _ hd (by omega) (by omega)]
   refine of_tprod_congr R M _ _ rfl fun i ↦ ?_
