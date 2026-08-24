@@ -54,11 +54,21 @@ re-founded slash action with built-in character) and their names. The Hecke pair
   suitable `Γ₀(N)` representative is the corresponding natural-indexed diamond operator;
   `slash_mapGL_gamma0Twist_eq_diamondOpNat` and its cusp counterpart specialize to the explicit
   Bézout representative.
+* `diamondOp_coe_cuspForm`, `coe_mem_modFormCharSpace_iff`: the diamond operators, and hence the
+  character spaces, commute with the coercion `S_k(Γ₁(N)) → M_k(Γ₁(N))`; a cusp form is a
+  `χ`-form exactly when the modular form underlying it is.
 
 ## References
 
 * Miyake, *Modular forms*, §4.5
 * Diamond–Shurman, *A first course in modular forms*, §5.1 and §5.3
+* `diamondOp_coe_cuspForm` and `coe_mem_modFormCharSpace_iff` adapt
+  [AINTLIB](https://github.com/CBirkbeck/AINTLIB) commit
+  `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck,
+  `LeanModularForms/HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean`, declarations
+  `cuspFormCharSpace_toModularForm'_mem` and `cuspFormCharSpace_of_toModularForm'_mem`. Those
+  are two one-way statements about AINTLIB's own `CuspForm.toModularForm'`; here they are one
+  `iff` through mathlib's coercion, which this repository uses instead.
 -/
 
 public section
@@ -425,3 +435,35 @@ theorem slash_mapGL_gamma0Twist_eq_diamondOpCuspNat {p : ℕ} (k : ℤ) (h : Nat
     ⇑f ∣[k] (mapGL ℚ (gamma0Twist N p h) : GL (Fin 2) ℚ) = ⇑(diamondOpCuspNat k p f) :=
   slash_mapGL_eq_diamondOpCuspNat k h ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩
     (Gamma0Map_toHomUnits_gamma0Twist h) f
+
+/-! ### The character spaces under the cusp-form coercion -/
+
+/-- The diamond operator commutes with the coercion `S_k(Γ) → M_k(Γ)`: `⟨d⟩` slashes by a
+representative of `d`, which does not see whether a form vanishes at the cusps. -/
+@[simp]
+theorem diamondOp_coe_cuspForm (k : ℤ) (d : (ZMod N)ˣ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    diamondOp k d (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
+      (diamondOpCusp k d f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
+  obtain ⟨g, hg⟩ := Gamma0Map_toHomUnits_surjective (N := N) d
+  refine DFunLike.coe_injective ?_
+  rw [coe_diamondOp k d g hg, ModularFormClass.coe_modularForm,
+    ModularFormClass.coe_modularForm, coe_diamondOpCusp k d g hg]
+
+/-- **A cusp form is a `χ`-form exactly when the modular form underlying it is.** Membership in
+either character space is the same family of diamond eigenvalue equations, and the coercion is
+pointwise, so the two conditions transport across it.
+
+Not `@[simp]`: the left-hand side is itself simp-reducible — `mem_modFormCharSpace_iff` is
+`@[simp]` and rewrites it to the diamond eigenvalue equations — so this lemma could never fire
+as a rewrite rule, and tagging it makes the `simpNF` linter fail. Use it explicitly, as
+`Parity.lean` does. -/
+theorem coe_mem_modFormCharSpace_iff (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) ∈ modFormCharSpace k χ ↔
+      f ∈ cuspFormCharSpace k χ := by
+  simp only [mem_modFormCharSpace_iff, mem_cuspFormCharSpace_iff, diamondOpHom_apply,
+    diamondOpCuspHom_apply, diamondOp_coe_cuspForm]
+  exact forall_congr' fun d ↦
+    ⟨fun h ↦ DFunLike.ext _ _ fun τ ↦ DFunLike.congr_fun h τ,
+      fun h ↦ DFunLike.ext _ _ fun τ ↦ DFunLike.congr_fun h τ⟩

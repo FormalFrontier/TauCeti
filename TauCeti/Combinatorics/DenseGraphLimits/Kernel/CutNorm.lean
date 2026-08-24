@@ -43,6 +43,9 @@ pointwise algebra happens before integration; a later layer proves invariance un
   supremum.
 * `cutNorm_zero`, `cutNorm_neg`, `cutNorm_add_le`, and `cutNorm_smul` are the seminorm laws.
 * `cutNorm_le_integral_abs` bounds the cut norm by the `L¹` norm.
+* `rectIntegral_comap_preimage` and `cutNorm_le_cutNorm_comap` are the change of variables along a
+  pushforward: a rectangle downstairs pulls back to one upstairs with the same integral, so the cut
+  norm does not increase when a carrier is replaced by one it is a pushforward of.
 * `abs_testIntegral_le_cutNorm` bounds every `[0,1]`-test integral by the cut norm itself, with no
   loss of constant — the form the counting lemma consumes, where the weights read off the other
   edges of a graph are `[0,1]`-valued.
@@ -158,6 +161,25 @@ theorem abs_rectIntegral_le_integral_abs [IsFiniteMeasure μ]
         ≤ ∫ p in S ×ˢ T, |K p.1 p.2| ∂(μ.prod μ) := abs_integral_le_integral_abs
     _ ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
       setIntegral_le_integral K.integrable_uncurry.abs (ae_of_all _ fun _ => abs_nonneg _)
+
+/-- **Change of variables for a rectangle integral.** If `f` pushes `ν` forward to `μ`, then the
+rectangle integral of `K` over `S × T` equals the rectangle integral of the pullback kernel over
+the preimage rectangle `f ⁻¹' S × f ⁻¹' T`.
+
+The two rectangles carry the two measures of the type ascriptions, so this is the statement that
+lets a cut-norm estimate move between a carrier and a pushforward of it. -/
+theorem rectIntegral_comap_preimage {α : Type*} [MeasurableSpace α] {ν : Measure α} [SFinite ν]
+    {f : α → Ω} (hf : MeasurePreserving f ν μ) (K : SymmKernel Ω μ) {S T : Set Ω}
+    (hS : MeasurableSet S) (hT : MeasurableSet T) :
+    (K.comap f hf.measurable ν).rectIntegral ν (f ⁻¹' S) (f ⁻¹' T) = K.rectIntegral μ S T := by
+  have hmap : (ν.prod ν).map (Prod.map f f) = μ.prod μ := (hf.prod hf).map_eq
+  have key : ∫ p in S ×ˢ T, K p.1 p.2 ∂((ν.prod ν).map (Prod.map f f)) =
+      ∫ p in Prod.map f f ⁻¹' (S ×ˢ T), K (f p.1) (f p.2) ∂(ν.prod ν) :=
+    setIntegral_map (hS.prod hT) K.measurable.aestronglyMeasurable
+      (hf.measurable.prodMap hf.measurable).aemeasurable
+  rw [rectIntegral_def, rectIntegral_def, ← hmap, key]
+  simp only [comap_apply]
+  rfl
 
 /-- The integral of a symmetric kernel against a pair of test functions:
 `∫∫ u(x) v(y) K(x,y)`.
@@ -464,6 +486,20 @@ theorem cutNorm_smul (c : ℝ) (K : SymmKernel Ω μ) :
   rw [cutNorm_eq_cutNormSet, cutNormSet_def, cutNorm_eq_cutNormSet, cutNormSet_def]
   simp only [SymmKernel.rectIntegral_smul, abs_mul,
     Real.mul_iSup_of_nonneg (abs_nonneg c)]
+
+/-- **The cut norm does not increase along a pushforward.** If `f` pushes `ν` forward to `μ`, then
+the cut norm of `K` over `μ` is at most the cut norm of its pullback over `ν`.
+
+Every measurable rectangle downstairs pulls back to a measurable rectangle upstairs with the same
+integral (`rectIntegral_comap_preimage`), so the upstairs supremum ranges over at least as much.
+The swap application obtains equality by applying this bound in both directions. The common-carrier
+application only needs the stated inequality and identifies the pulled-back kernel outright. -/
+theorem cutNorm_le_cutNorm_comap {α : Type*} [MeasurableSpace α] {ν : Measure α} [IsFiniteMeasure ν]
+    {f : α → Ω} (hf : MeasurePreserving f ν μ) (K : SymmKernel Ω μ) :
+    cutNorm μ K ≤ cutNorm ν (K.comap f hf.measurable ν) :=
+  cutNorm_le μ fun S hS T hT => by
+    rw [← SymmKernel.rectIntegral_comap_preimage μ hf K hS hT]
+    exact abs_rectIntegral_le_cutNorm ν _ (hf.measurable hS) (hf.measurable hT)
 
 omit [MeasurableSpace Ω] in
 /-- An indicator of the constant-one function takes values in `[-1,1]`. -/
