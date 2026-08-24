@@ -119,6 +119,12 @@ theorem cap_ne_center (W : CircularCapWindow) {s : ℂ} (hr : W.radius ≠ 0) {t
   simpa only [cap] using (circleCap_ne_center (s := s) (r := W.radius) (l := W.lower)
     (u := W.upper) (θ := W.startAngle) (θ' := W.endAngle) (t := t) hr)
 
+/-- The index principal value exists along a bundled circular cap. -/
+theorem cauchyPVExistsAt_cap (W : CircularCapWindow) (s : ℂ) (a b : ℝ) :
+    CauchyPVExistsAt (W.cap s) a b (fun z => (z - s)⁻¹) s := by
+  simpa only [cap] using cauchyPVExistsAt_circleCap s W.radius W.lower W.upper
+    W.startAngle W.endAngle a b
+
 /-- The winding number of a nondegenerate bundled cap is its angular extent over `2π`. -/
 theorem windingNumber_cap (W : CircularCapWindow) (s : ℂ) (hr : W.radius ≠ 0)
     (hlu : W.lower ≠ W.upper) :
