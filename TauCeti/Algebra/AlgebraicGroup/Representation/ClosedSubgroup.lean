@@ -116,9 +116,15 @@ theorem eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one
   have haugmentationQ : HopfIdeal.augmentation R Q = ⊥ :=
     augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one hfaithfulQ htrivialQ
   have hcomapBot : (⊥ : HopfIdeal R Q).comap q hq = I := by
-    ext x
-    rw [HopfIdeal.mem_comap, HopfIdeal.mem_bot,
-      CommHopfAlgCat.mkQuotient_eq_zero_iff, HopfIdeal.mem_toIdeal]
+    rw [HopfIdeal.comap_bot]
+    apply HopfIdeal.ext
+    intro x
+    change x ∈ (HopfIdeal.kerOfSurjective q hq).toIdeal ↔ x ∈ I.toIdeal
+    rw [HopfIdeal.kerOfSurjective_toIdeal]
+    change x ∈ RingHom.ker q.toAlgHom.toRingHom ↔ x ∈ I.toIdeal
+    rw [show RingHom.ker q.toAlgHom.toRingHom = I.toIdeal by
+      simpa only [q] using
+        CommHopfAlgCat.mkQuotient_ker (_root_.CommHopfAlgCat.of R H) I]
   calc
     I = (⊥ : HopfIdeal R Q).comap q hq := hcomapBot.symm
     _ = (HopfIdeal.augmentation R Q).comap q hq := by rw [haugmentationQ]
