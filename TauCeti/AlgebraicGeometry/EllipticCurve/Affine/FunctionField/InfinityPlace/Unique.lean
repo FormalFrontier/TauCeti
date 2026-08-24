@@ -66,15 +66,14 @@ Weierstrass equation is the only geometry used, and it holds for singular cubics
 
 ## What is deliberately not here
 
-**The affine places.** The complementary case `v x ≤ 1` — every such valuation is the adic
-valuation of a height-one prime of `W.CoordinateRing`, so that together the two cases classify the
-places of `F(W)` — is separate work: it needs the localisation of the coordinate ring at the centre
-of `v`, where this file needs no ring theory at all. `Affine/Point/Place.lean` already builds the
-affine places and identifies the degree-one ones with the points of the curve.
+**The affine-place classification.** The complementary case `v x ≤ 1` requires the coordinate
+ring, whereas this file uses only the Weierstrass equation. The downstream file
+`Affine/FunctionField/PointPlace.lean` proves that case with the generic affine-model place API,
+packages the infinity valuation as `TauCeti.Place.infinity`, and combines both cases into the
+point--place dictionary.
 
-**No divisor group and no degree of a place.** The place at infinity of a Weierstrass curve is a
-`Valuation` on the function field, while the affine places are height-one primes of the coordinate
-ring, and the two are not yet terms of one type; a divisor group has to wait for that unification.
+**No divisor group.** The downstream point--place file supplies a unified normalized place type
+and its degree. Building divisors as finite formal sums of all such places remains separate work.
 
 ## Roadmap
 

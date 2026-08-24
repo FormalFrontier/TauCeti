@@ -45,6 +45,18 @@ lemma mapPoints_quotientPointsHom (H : _root_.CommHopfAlgCat.{v} R)
       quotientPointsHom H I B (HopfAlgebra.mapPoints (H := quotient H I) χ f) := by
   exact mapPointsFunctor_naturality_apply (R := R) (mkQuotient H I) χ f
 
+/-- The quotient-points inclusion commutes with post-composition, including when the source and
+target value algebras lie in different universes. -/
+lemma mapValue_quotientPointsHom (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) {A : Type w} {B : Type w'}
+    [CommRing A] [CommRing B] [Algebra R A] [Algebra R B]
+    (χ : A →ₐ[R] B)
+    (f : HopfAlgebra.points (R := R) (H := quotient H I) (CommAlgCat.of R A)) :
+    AlgHom.mapValue χ (quotientPointsHom H I (CommAlgCat.of R A) f) =
+      quotientPointsHom H I (CommAlgCat.of R B) (AlgHom.mapValue χ f) := by
+  rw [quotientPointsHom_apply, quotientPointsHom_apply, AlgHom.mapValue_apply,
+    AlgHom.mapValue_apply, AlgHom.comp_assoc]
+
 /-- Post-composition by an algebra homomorphism preserves the ambient-point subgroup cut out by a
 Hopf ideal, including when the source and target value algebras lie in different universes. -/
 lemma mapValue_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)

@@ -284,12 +284,8 @@ private theorem RowExchangeable.measure_setOf_two_blocks_eq (h : RowExchangeable
   have hsplit : ∀ c d : ι → ℕ,
       {ω | ∀ a ∈ F ∪ G, Y (a, c a) ω ∈ B a ∧ Y (a, d a) ω ∈ B a} =
         {ω | (∀ a ∈ F, Y (a, c a) ω ∈ B a ∧ Y (a, d a) ω ∈ B a) ∧
-          ∀ a ∈ G, Y (a, c a) ω ∈ B a ∧ Y (a, d a) ω ∈ B a} := by
-    intro c d
-    ext ω
-    simp only [Set.mem_ofPred_eq, Finset.mem_union]
-    exact ⟨fun hall => ⟨fun a ha => hall a (Or.inl ha), fun a ha => hall a (Or.inr ha)⟩,
-      fun hall a ha => ha.elim (hall.1 a) (hall.2 a)⟩
+          ∀ a ∈ G, Y (a, c a) ω ∈ B a ∧ Y (a, d a) ω ∈ B a} :=
+    fun _ _ => Set.ext fun _ => Finset.forall_mem_union
   -- The two time patterns, glued from the two blocks.
   set c : ι → ℕ := fun a => if a ∈ F then m else m' with hc
   set d : ι → ℕ := fun a => if a ∈ F then n else n' with hd
@@ -301,20 +297,7 @@ private theorem RowExchangeable.measure_setOf_two_blocks_eq (h : RowExchangeable
         {ω | (∀ a ∈ F, Y (a, m) ω ∈ B a ∧ Y (a, n) ω ∈ B a) ∧
           ∀ a ∈ G, Y (a, m') ω ∈ B a ∧ Y (a, n') ω ∈ B a} := by
     ext ω
-    have hFval : ∀ a ∈ F, c a = m ∧ d a = n := fun a ha => by simp [hc, hd, ha]
-    have hGval : ∀ a ∈ G, c a = m' ∧ d a = n' := fun a ha => by
-      have : a ∉ F := Finset.disjoint_right.mp hFG ha
-      simp [hc, hd, this]
-    simp only [Set.mem_ofPred_eq]
-    constructor
-    · rintro ⟨h1, h2⟩
-      refine ⟨fun a ha => ?_, fun a ha => ?_⟩
-      · rw [← (hFval a ha).1, ← (hFval a ha).2]; exact h1 a ha
-      · rw [← (hGval a ha).1, ← (hGval a ha).2]; exact h2 a ha
-    · rintro ⟨h1, h2⟩
-      refine ⟨fun a ha => ?_, fun a ha => ?_⟩
-      · rw [(hFval a ha).1, (hFval a ha).2]; exact h1 a ha
-      · rw [(hGval a ha).1, (hGval a ha).2]; exact h2 a ha
+    simp +contextual [hc, hd, Finset.disjoint_right.mp hFG]
   rw [← hglue, ← hsplit c d, ← hsplit (fun _ => 0) (fun _ => 1),
     h.measure_setOf_forall_pair_eq hY (F ∪ G)
       (fun a ha => hB a (Finset.mem_union.mp ha))

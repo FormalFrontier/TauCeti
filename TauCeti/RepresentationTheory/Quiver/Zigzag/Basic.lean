@@ -9,6 +9,7 @@ public import Mathlib.Combinatorics.Quiver.Covering
 public import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 public import Mathlib.Combinatorics.SimpleGraph.DegreeSum
 public import Mathlib.Combinatorics.SimpleGraph.Maps
+public import TauCeti.Combinatorics.Quiver.Prefunctor
 
 /-!
 # Doubled quivers of simple graphs
@@ -35,6 +36,8 @@ prefunctors.
 * `TauCeti.DoubledQuiver.card_totalArrow_eq_twice_card_edges`: every edge gives two arrows.
 * `TauCeti.DoubledQuiver.map_toHom_comp_symm_toHom` and
   `TauCeti.DoubledQuiver.map_symm_toHom_comp_toHom`: graph isomorphisms induce inverse prefunctors.
+* `TauCeti.DoubledQuiver.map_obj_bijective`: a graph isomorphism relabels the doubled-quiver
+  vertices bijectively.
 
 ## References
 
@@ -308,6 +311,24 @@ theorem map_comp {W : Type v} {X : Type*} {H : SimpleGraph W} {K : SimpleGraph X
   intro i j e
   apply Subsingleton.elim
 
+/-- Mapping the identity graph isomorphism gives the identity doubled-quiver prefunctor. -/
+@[simp]
+theorem map_refl : map (SimpleGraph.Iso.refl (G := G)).toHom = Prefunctor.id (DoubledQuiver G) := by
+  -- `SimpleGraph.Iso.toHom` passes through two reducible projections, and Mathlib has no theorem
+  -- identifying the resulting homomorphism for `Iso.refl`; expose that equality extensionally.
+  rw [show (SimpleGraph.Iso.refl (G := G)).toHom = SimpleGraph.Hom.id by
+    ext i
+    rfl, map_id]
+
+/-- Mapping a composite graph isomorphism composes the doubled-quiver prefunctors. -/
+theorem map_trans {W : Type v} {X : Type*} {H : SimpleGraph W} {K : SimpleGraph X}
+    (e : G ≃g H) (f : H ≃g K) :
+    map (SimpleGraph.Iso.toHom (e.trans f : G ≃g K)) = map e.toHom ⋙q map f.toHom := by
+  -- Likewise, no Mathlib lemma exposes the homomorphism underlying `Iso.trans` as a composite.
+  rw [show SimpleGraph.Iso.toHom (e.trans f : G ≃g K) = f.toHom.comp e.toHom by
+    ext i
+    rfl, map_comp]
+
 /-- Relabelling a graph and then undoing the relabelling is the identity doubled-quiver map. -/
 @[simp]
 theorem map_toHom_comp_symm_toHom {W : Type v} {H : SimpleGraph W} (f : G ≃g H) :
@@ -319,6 +340,12 @@ theorem map_toHom_comp_symm_toHom {W : Type v} {H : SimpleGraph W} (f : G ≃g H
 theorem map_symm_toHom_comp_toHom {W : Type v} {H : SimpleGraph W} (f : G ≃g H) :
     map f.symm.toHom ⋙q map f.toHom = Prefunctor.id (DoubledQuiver H) := by
   rw [← map_comp, SimpleGraph.Iso.toHom_comp_symm_toHom, map_id]
+
+/-- **A graph isomorphism relabels the vertices of the doubled quiver bijectively.** -/
+theorem map_obj_bijective {W : Type v} {H : SimpleGraph W} (e : G ≃g H) :
+    Function.Bijective (map e.toHom).obj :=
+  (map e.toHom).obj_bijective_of_comp_eq_id _ (map_toHom_comp_symm_toHom e)
+    (map_symm_toHom_comp_toHom e)
 
 end DoubledQuiver
 end TauCeti

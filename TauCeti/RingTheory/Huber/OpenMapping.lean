@@ -7,6 +7,10 @@ module
 
 public import TauCeti.RingTheory.Huber.ZeroSequenceOfUnits
 public import TauCeti.Topology.Algebra.OpenMapping.Henkel
+public import Mathlib.Topology.Maps.Strict.Module
+import TauCeti.Topology.Algebra.IsUniformGroup.Submodule
+import TauCeti.Topology.Algebra.Module.Submodule
+import TauCeti.Topology.Algebra.Nonarchimedean.Pi
 import Mathlib.Topology.Baire.CompleteMetrizable
 
 /-!
@@ -69,7 +73,8 @@ equivalent to continuity everywhere (`continuous_of_continuousAt_zero`), so this
 hypothesis spelled at its weakest, and a consumer holding `Continuous f` supplies
 `‹Continuous f›.continuousAt`.
 
-Both halves of the roadmap's derived form are here. `TauCeti.Huber.IsTateRing.isOpenMap` is the
+Both halves of the roadmap's derived form are here, together with a strict-map form for a map
+that need not be surjective. `TauCeti.Huber.IsTateRing.isOpenMap` is the
 open-map half; `TauCeti.Huber.IsTateRing.isQuotientMap` is the other — that such a map induces the
 quotient topology — and it delegates to `TauCeti.HasZeroSequenceOfUnits.isQuotientMap` exactly as
 the open-map form delegates to `TauCeti.HasZeroSequenceOfUnits.isOpenMap`. It is the quotient form
@@ -82,10 +87,20 @@ open but that the target's topology is determined by the source's.
   complete pseudometrisable module onto a complete metrisable one over a Tate ring is open.
 * `TauCeti.Huber.IsTateRing.isQuotientMap`: the same map induces the quotient topology on its
   target. This is the form the strict-morphism material will consume.
+* `TauCeti.Huber.IsTateRing.isStrictMap_of_isClosed_range`: a linear map continuous at zero with
+  closed range is strict, i.e. open onto its image. An ingredient for Wedhorn 6.18(2), not that
+  proposition — see its docstring.
+* `TauCeti.Huber.IsTateRing.isOpenMap_linearCombination`: a finite spanning family presents the
+  module as an **open** quotient of `ι → A`, which is the strict-presentation form the
+  Banach-theorem arguments consume.
+* `TauCeti.Huber.IsTateRing.isQuotientMap_linearCombination`: the same presentation induces the
+  quotient topology, pairing with the above as `isQuotientMap` pairs with `isOpenMap`.
 
 ## References
 
-* [Wedhorn, *Adic Spaces*][wedhorn_adic], Theorem 6.16.
+* [Wedhorn, *Adic Spaces*][wedhorn_adic], Theorem 6.16. Proposition 6.18(2) is *not* proved
+  here: it assumes `A` noetherian and the modules finitely generated with the topology of
+  6.18(1), and concludes continuity as well as openness onto the image.
 * L. Henkel, *An Open Mapping Theorem for rings which have a zero sequence of units*,
   [arXiv:1407.5647](https://arxiv.org/abs/1407.5647).
 -/
@@ -121,6 +136,33 @@ theorem IsTateRing.isOpenMap (f : M →ₗ[A] N) (hf : Function.Surjective f)
   HasZeroSequenceOfUnits.isOpenMap f hf hfc
     fun _ ↦ (continuous_id.smul continuous_const).continuousAt
 
+/-- **Strictness from a closed range over a Tate ring.** An `A`-linear map that is continuous at
+zero and has closed range is a strict map: `Topology.IsStrictMap`, Bourbaki's "open onto its
+image". Surjectivity is not assumed.
+
+This is **not** Wedhorn Proposition 6.18(2), which assumes `A` noetherian and `M`, `N` finitely
+generated with the canonical topology of 6.18(1), and *concludes* both continuity and openness onto
+the image. Here continuity is a hypothesis and the closed-range hypothesis stands in for what the
+noetherian finitely generated setting would supply. It is the openness conjunct of 6.18(2) as a
+free-standing lemma, and an ingredient for it rather than the proposition.
+
+Closedness of the range is the weaker of the two natural hypotheses: an open submodule is closed,
+so a map with *open* range satisfies it too. Consumers recover the openness of `f.rangeRestrict`
+from `LinearMap.isStrictMap_iff_isOpenQuotientMap_rangeRestrict` and `IsOpenQuotientMap.isOpenMap`,
+and the first-isomorphism homeomorphism from
+`LinearMap.isStrictMap_iff_isHomeomorph_quotKerEquivRange`. Note `LinearMap.quotKerEquivRange`
+on its own is only a linear equivalence, carrying no topology. -/
+theorem IsTateRing.isStrictMap_of_isClosed_range (f : M →ₗ[A] N)
+    (hfc : ContinuousAt (f : M → N) 0)
+    (hr : IsClosed ((LinearMap.range f : Submodule A N) : Set N)) :
+    Topology.IsStrictMap (f : M → N) := by
+  have _ : CompleteSpace (LinearMap.range f) := hr.completeSpace_coe
+  have hcont : Continuous (f.rangeRestrict : M → LinearMap.range f) :=
+    (continuous_of_continuousAt_zero f hfc).subtype_mk _
+  exact LinearMap.isStrictMap_iff_isOpenQuotientMap_rangeRestrict.mpr
+    ⟨f.surjective_rangeRestrict, hcont,
+      IsTateRing.isOpenMap f.rangeRestrict f.surjective_rangeRestrict hcont.continuousAt⟩
+
 /-- **The quotient form over a Tate ring.** Under exactly the hypotheses of
 `TauCeti.Huber.IsTateRing.isOpenMap`, the map does not merely carry open sets to open sets: the
 topology of `N` is the one coinduced from `M`.
@@ -133,6 +175,59 @@ theorem IsTateRing.isQuotientMap (f : M →ₗ[A] N) (hf : Function.Surjective f
     (hfc : ContinuousAt (f : M → N) 0) : IsQuotientMap (f : M → N) :=
   HasZeroSequenceOfUnits.isQuotientMap f hf hfc
     fun _ ↦ (continuous_id.smul continuous_const).continuousAt
+
+section LinearCombination
+
+variable {A : Type*} [CommRing A] [UniformSpace A] [IsUniformAddGroup A] [CompleteSpace A]
+  [(𝓤 A).IsCountablyGenerated] [NonarchimedeanRing A] [IsTateRing A]
+  {N : Type*} [AddCommGroup N] [UniformSpace N] [IsUniformAddGroup N] [CompleteSpace N]
+  [(𝓤 N).IsCountablyGenerated] [T0Space N] [Module A N] [ContinuousSMul A N]
+  {ι : Type*} [Fintype ι]
+
+-- `Continuous ⇑(Fintype.linearCombination A g)` does not expose an application of the map, so
+-- `simp only [Fintype.linearCombination_apply]` has nothing to rewrite; the coercion has to be
+-- turned into the pointwise sum by `funext` before `continuous_finsetSum` applies.
+omit [IsUniformAddGroup A] [CompleteSpace A] [(𝓤 A).IsCountablyGenerated] [NonarchimedeanRing A]
+  [IsTateRing A] [CompleteSpace N] [(𝓤 N).IsCountablyGenerated] [T0Space N] in
+private theorem continuous_linearCombination (g : ι → N) :
+    Continuous (Fintype.linearCombination A g : (ι → A) → N) := by
+  rw [show (Fintype.linearCombination A g : (ι → A) → N) = fun a ↦ ∑ i, a i • g i from
+    funext (Fintype.linearCombination_apply A g)]
+  exact continuous_finsetSum _ fun i _ ↦ (continuous_apply i).smul continuous_const
+
+/-- **A finite spanning family presents `N` as an open quotient of `Aᶥ`.** The
+linear-combination map `a ↦ ∑ aᵢ • gᵢ` is surjective because `g` spans and continuous because
+the action is, hence open by `TauCeti.Huber.IsTateRing.isOpenMap`.
+
+Openness is the content. It is what turns "every element of `N` is a combination of the `gᵢ`" into
+"every *small* element is a combination with *small* coefficients", and that quantitative form is
+what the Banach-theorem arguments over a Tate ring consume. This is an ingredient for the
+BGR §3.7.2/1 density argument on the route to Wedhorn 6.17/6.18, not that argument itself.
+
+Nothing is asked of `g` beyond spanning; the hypotheses are `TauCeti.Huber.IsTateRing.isOpenMap`'s,
+with the source instantiated at `ι → A` — which is where `A`'s own completeness, countably
+generated uniformity and nonarchimedean structure are spent, since the `Pi` instances carry each
+of them to `ι → A`. -/
+theorem IsTateRing.isOpenMap_linearCombination (g : ι → N)
+    (hspan : Submodule.span A (Set.range g) = ⊤) :
+    IsOpenMap (Fintype.linearCombination A g : (ι → A) → N) :=
+  IsTateRing.isOpenMap _ (span_range_eq_top_iff_surjective_fintypeLinearCombination A g |>.mp hspan)
+    (continuous_linearCombination g).continuousAt
+
+/-- **The quotient form of `TauCeti.Huber.IsTateRing.isOpenMap_linearCombination`.** A finite
+spanning family does not merely present `N` as an open image of `ι → A`: the topology of `N` is
+the one coinduced along the linear-combination map.
+
+This is the pairing that `TauCeti.Huber.IsTateRing.isQuotientMap` makes with
+`TauCeti.Huber.IsTateRing.isOpenMap`, at the named finite-presentation API. -/
+theorem IsTateRing.isQuotientMap_linearCombination (g : ι → N)
+    (hspan : Submodule.span A (Set.range g) = ⊤) :
+    IsQuotientMap (Fintype.linearCombination A g : (ι → A) → N) :=
+  IsTateRing.isQuotientMap _
+    (span_range_eq_top_iff_surjective_fintypeLinearCombination A g |>.mp hspan)
+    (continuous_linearCombination g).continuousAt
+
+end LinearCombination
 
 end TauCeti.Huber
 

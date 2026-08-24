@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Localization.Module
+public import TauCeti.Algebra.Polynomial.CommonXPower
 public import TauCeti.FieldTheory.FunctionField.Basic
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
 public import TauCeti.FieldTheory.IntermediateField.Adjoin.Inv
@@ -51,7 +52,8 @@ than over `k(x)`: the family is shown to be linearly independent over the `k`-su
 `k[x] = Algebra.adjoin k {x}`, and `LinearIndependent.iff_fractionRing` then upgrades this to
 `k(x) = k⟮x⟯`, which is the fraction field of `k[x]` by Mathlib's
 `IntermediateField.algebraAdjoinAdjoin` instances. Clearing the common power of `x` from a
-relation is done with `Polynomial.rootMultiplicity 0`, so no denominators ever appear.
+relation is `TauCeti.Polynomial.exists_common_X_pow_factor`, which runs on
+the least exponent with a nonzero coefficient across the family, so no denominators ever appear.
 
 ## References
 
@@ -89,36 +91,6 @@ private theorem residue_aeval_of_residue_eq_zero {t : P.integers}
   rw [RingHom.comp_apply, IsScalarTower.algebraMap_apply k P.integers P.ResidueField,
     IsLocalRing.ResidueField.algebraMap_eq]
 
-/-- Dividing a finite family of polynomials, not all zero, by the largest power of `X` that
-divides every member leaves at least one quotient with nonzero constant term. The exponent is
-the least `Polynomial.rootMultiplicity 0` over the nonzero members. -/
-private theorem exists_common_X_pow_factor {ι : Type*} (s : Finset ι) (p : ι → k[X])
-    (hne : ∃ i ∈ s, p i ≠ 0) :
-    ∃ m, ∃ q : ι → k[X], (∀ i ∈ s, p i = X ^ m * q i) ∧
-      ∃ j ∈ s, (q j).coeff 0 ≠ 0 := by
-  classical
-  have hfilter : (s.filter fun i ↦ p i ≠ 0).Nonempty := by
-    obtain ⟨i, hi, hpi⟩ := hne
-    exact ⟨i, Finset.mem_filter.mpr ⟨hi, hpi⟩⟩
-  obtain ⟨j, hj, hjmin⟩ :=
-    (s.filter fun i ↦ p i ≠ 0).exists_min_image (fun i ↦ rootMultiplicity 0 (p i)) hfilter
-  obtain ⟨hjs, hjne⟩ := Finset.mem_filter.mp hj
-  let m := rootMultiplicity (0 : k) (p j)
-  let q : ι → k[X] := fun i ↦ p i /ₘ (X : k[X]) ^ m
-  have hdvd : ∀ i ∈ s, (X : k[X]) ^ m ∣ p i := by
-    intro i hi
-    rcases eq_or_ne (p i) 0 with h | h
-    · simp [h]
-    · refine dvd_trans (pow_dvd_pow _ (hjmin i (Finset.mem_filter.mpr ⟨hi, h⟩))) ?_
-      simpa [m] using pow_rootMultiplicity_dvd (p i) 0
-  have hfactor : ∀ i ∈ s, p i = (X : k[X]) ^ m * q i := by
-    intro i hi
-    conv_lhs => rw [← modByMonic_add_div (p i) ((X : k[X]) ^ m)]
-    rw [(modByMonic_eq_zero_iff_dvd (monic_X.pow m)).mpr (hdvd i hi), zero_add]
-  refine ⟨m, q, hfactor, j, hjs, ?_⟩
-  simpa [q, m, coeff_zero_eq_eval_zero] using
-    (eval_divByMonic_pow_rootMultiplicity_ne_zero (p := p j) 0 hjne)
-
 /-! ### Linear independence over `k(x)` of a lift of a `k`-independent family of residues -/
 
 private theorem linearIndependent_over_adjoin_of_linearIndependent_residue_of_ord_pos
@@ -154,7 +126,7 @@ private theorem linearIndependent_over_adjoin_of_linearIndependent_residue_of_or
   have hpzero : ∀ i, p i = 0 ↔ g i = 0 := by
     intro i
     rw [← hinj.eq_iff, map_zero, hp i, ZeroMemClass.coe_eq_zero]
-  obtain ⟨m, q, hfactor, j, hjs, hqj⟩ := exists_common_X_pow_factor s p
+  obtain ⟨m, q, hfactor, j, hjs, hqj⟩ := Polynomial.exists_common_X_pow_factor s p
     ⟨i₀, hi₀, fun h ↦ hg0 ((hpzero i₀).mp h)⟩
   -- The relation, with the common factor `x ^ m` removed, lives in `𝒪_P`.
   have hsumF : ∑ i ∈ s, aeval x (q i) * (z i : F) = 0 := by
