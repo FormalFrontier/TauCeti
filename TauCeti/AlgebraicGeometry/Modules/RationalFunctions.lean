@@ -8,6 +8,7 @@ module
 public import Mathlib.AlgebraicGeometry.FunctionField
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 public import Mathlib.AlgebraicGeometry.Stalk
+public import Mathlib.Algebra.Category.ModuleCat.Sheaf.PullbackFree
 
 /-!
 # The sheaf of rational functions on an integral scheme
@@ -61,7 +62,7 @@ with this constant sheaf, so no generality is lost at that stage.
 No formalization is vendored. The construction reuses Mathlib's `Scheme.functionField`,
 `Scheme.germToFunctionField`, `Scheme.fromSpecStalk` with its computation of the closed point and
 of the maps on sections, `Scheme.ΓSpecIso`, `Scheme.Modules.pushforward` and
-`SheafOfModules.unit` with its universal property `SheafOfModules.unitHomEquiv`.
+`SheafOfModules.unitToPushforwardObjUnit`.
 -/
 
 public section
@@ -195,22 +196,21 @@ theorem rationalFunctionsRingEquiv_map {U V : X.Opens} [Nonempty U] [Nonempty V]
 /-- The sections of `𝒦_X` over a nonempty open subset `U` are the function field, as a module
 over the functions on `U`. -/
 def rationalFunctionsEquiv (U : X.Opens) [Nonempty U] :
-    Γ(rationalFunctions X, U) ≃ₗ[Γ(X, U)] X.functionField where
-  toFun s := (functionFieldSectionsIso U).hom s
-  map_add' s t := map_add _ s t
-  map_smul' r s := by
-    -- The action of `Γ(X, U)` on the pushforward is multiplication after applying the map on
-    -- sections, so multiplicativity of the identification reduces this to
-    -- `app_comp_functionFieldSectionsIso`.
-    have h : (functionFieldSectionsIso U).hom (r • s) =
-        (functionFieldSectionsIso U).hom ((fromSpecFunctionField X).app U r *
-          (id s : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U))) := rfl
-    rw [h, map_mul, ← CategoryTheory.ConcreteCategory.comp_apply,
-      app_comp_functionFieldSectionsIso, RingHom.id_apply, Algebra.smul_def]
-    rfl
-  invFun k := (functionFieldSectionsIso U).inv k
-  left_inv s := (functionFieldSectionsIso U).hom_inv_id_apply s
-  right_inv k := (functionFieldSectionsIso U).inv_hom_id_apply k
+    Γ(rationalFunctions X, U) ≃ₗ[Γ(X, U)] X.functionField :=
+  { rationalFunctionsRingEquiv U with
+    map_smul' r s := by
+      -- The action of `Γ(X, U)` on the pushforward is multiplication after applying the map on
+      -- sections, so multiplicativity of the identification reduces this to
+      -- `app_comp_functionFieldSectionsIso`.
+      change (functionFieldSectionsIso U).hom (r • s) =
+        r • (functionFieldSectionsIso U).hom s
+      have h : (functionFieldSectionsIso U).hom (r • s) =
+          (functionFieldSectionsIso U).hom ((fromSpecFunctionField X).app U r *
+            (id s : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U))) := rfl
+      rw [h, map_mul, ← CategoryTheory.ConcreteCategory.comp_apply,
+        app_comp_functionFieldSectionsIso, Algebra.smul_def]
+      rfl
+  }
 
 /-- The identifications of the sections of `𝒦_X` with the function field are compatible with the
 restriction maps: `𝒦_X` is the constant sheaf. -/
@@ -219,17 +219,7 @@ theorem rationalFunctionsEquiv_map {U V : X.Opens} [Nonempty U] [Nonempty V] (i 
     (s : Γ(rationalFunctions X, V)) :
     rationalFunctionsEquiv U ((rationalFunctions X).presheaf.map i.op s) =
       rationalFunctionsEquiv V s := by
-  unfold rationalFunctionsEquiv rationalFunctions
-  -- This normalization is exactly `Scheme.Modules.pushforward_obj_presheaf_map`. Rewriting by
-  -- that lemma cannot transport `s` across the opaque `Scheme.Modules` wrapper, so unfold the
-  -- local wrapper above and state the documented pushforward computation explicitly.
-  change (functionFieldSectionsIso U).hom
-    ((Spec X.functionField).presheaf.map
-      ((Opens.map (fromSpecFunctionField X).base).map i).op
-        (id s : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ V))) =
-      (functionFieldSectionsIso V).hom s
-  rw [← CategoryTheory.ConcreteCategory.comp_apply, map_comp_functionFieldSectionsIso]
-  rfl
+  exact rationalFunctionsRingEquiv_map i s
 
 /-- The restriction maps of `𝒦_X` between nonempty open subsets are bijective. -/
 theorem rationalFunctions_map_bijective {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V) :
@@ -258,26 +248,11 @@ theorem subsingleton_rationalFunctions (U : X.Opens) (hU : U = ⊥) :
       (fromSpecFunctionField X) ⁻¹ᵁ (⊥ : X.Opens)) := by rw [h]; infer_instance
   exact this
 
-/-- The inclusion of the structure sheaf into the sheaf of rational functions, given by the
-global section `1` of `𝒦_X`. -/
--- The source is spelled through `Quiver.Hom` because `SheafOfModules.unit X.ringCatSheaf` is not
--- syntactically of type `X.Modules`; without this the `Scheme.Modules` API for morphisms of
--- `𝒪_X`-modules does not apply to the result.
+/-- The canonical morphism `𝒪_X ⟶ 𝒦_X`; it is an inclusion when `X` is integral, by
+`toRationalFunctions_app_injective`. -/
 def toRationalFunctions (X : Scheme.{u}) [IrreducibleSpace X] :
     @Quiver.Hom X.Modules _ (SheafOfModules.unit X.ringCatSheaf) (rationalFunctions X) :=
-  (rationalFunctions X).unitHomEquiv.symm
-    (PresheafOfModules.sectionsMk
-      (fun V => (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ V.unop)))
-      (fun _ _ _ => PresheafOfModules.unit_map_one _ _))
-
-omit [IsIntegral X] in
-/-- Application of `toRationalFunctions` is scalar multiplication by its defining global
-section. This is definitional because `SheafOfModules.unitHomEquiv.symm` constructs the unique
-module morphism from the unit object with that value at `1`. -/
-private theorem toRationalFunctions_app (U : X.Opens) (r : Γ(X, U)) :
-    Scheme.Modules.Hom.app (toRationalFunctions X) U r =
-      r • (id (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U)) :
-        Γ(rationalFunctions X, U)) := rfl
+  SheafOfModules.unitToPushforwardObjUnit (fromSpecFunctionField X).toRingCatSheafHom
 
 omit [IsIntegral X] in
 /-- The morphisms of ring sheaves and module sheaves `𝒪_X ⟶ 𝒦_X` agree on sections. -/
@@ -285,15 +260,12 @@ omit [IsIntegral X] in
 theorem toRationalFunctionsRing_app (U : X.Opens) (r : Γ(X, U)) :
     rationalFunctionsSectionsEquiv X U (Scheme.Modules.Hom.app (toRationalFunctions X) U r) =
       (toRationalFunctionsRing X).hom.app (.op U) r := by
-  rw [toRationalFunctions_app]
-  change (fromSpecFunctionField X).app U r * 1 = (fromSpecFunctionField X).app U r
-  rw [mul_one]
-
-private theorem rationalFunctionsEquiv_one (U : X.Opens) [Nonempty U] :
-    rationalFunctionsEquiv U
-      (id (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U)) :
-        Γ(rationalFunctions X, U)) = 1 := by
-  exact map_one (ConcreteCategory.hom (functionFieldSectionsIso U).hom)
+  change
+    (SheafOfModules.unitToPushforwardObjUnit
+      (fromSpecFunctionField X).toRingCatSheafHom).val.app (.op U) r =
+        (fromSpecFunctionField X).c.app (.op U) r
+  exact SheafOfModules.unitToPushforwardObjUnit_val_app_apply
+    (fromSpecFunctionField X).toRingCatSheafHom (X := .op U) r
 
 /-- On a nonempty open subset, the inclusion `𝒪_X ⟶ 𝒦_X` is the germ map to the function
 field. -/
@@ -302,8 +274,7 @@ theorem rationalFunctionsEquiv_toRationalFunctions_app (U : X.Opens) [Nonempty U
     (r : Γ(X, U)) :
     rationalFunctionsEquiv U (Scheme.Modules.Hom.app (toRationalFunctions X) U r) =
       X.germToFunctionField U r := by
-  rw [toRationalFunctions_app, map_smul, rationalFunctionsEquiv_one, Algebra.smul_def, mul_one]
-  rfl
+  exact ConcreteCategory.congr_hom (app_comp_functionFieldSectionsIso U) r
 
 /-- The inclusion `𝒪_X ⟶ 𝒦_X` is injective on sections over every open subset: over a nonempty
 one because the germ map to the function field of an integral scheme is injective, and over an
