@@ -32,10 +32,6 @@ and the result here then identifies the subgroup with the identity.
 
 ## Main declarations
 
-* `TauCeti.Comodule.coordinateBialgHom_corestrict`: the coordinate morphism of a corestricted
-  comodule is the expected composite.
-* `TauCeti.Comodule.isFaithful_corestrict_of_surjective`: restriction to a closed subgroup
-  preserves faithfulness.
 * `TauCeti.Comodule.augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one`: a Hopf algebra with
   a faithful trivial representation is trivial.
 * `TauCeti.Comodule.eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one`: a closed
@@ -62,116 +58,25 @@ universe u v w x
 
 noncomputable section
 
-section CoordinateCorestrict
-
-variable {R : Type u} {H : Type v} {K : Type w} {M : Type x} {n : ℕ}
-variable [CommRing R] [CommRing H] [CommRing K]
-variable [HopfAlgebra R H] [HopfAlgebra R K]
-variable [AddCommMonoid M] [Module R M] [Comodule R H M]
-
-/-- The coordinate morphism of a comodule corestricted along a bialgebra morphism is the
-composite of the original coordinate morphism with that bialgebra morphism. -/
-@[simp]
-theorem coordinateBialgHom_corestrict (f : H →ₐc[R] K) (b : Basis (Fin n) R M) :
-    letI : Comodule R K M := Corestrict f.toCoalgHom
-    coordinateBialgHom (H := K) b = f.comp (coordinateBialgHom (H := H) b) := by
-  let _ : Comodule R K M := Corestrict f.toCoalgHom
-  apply BialgHom.ext
-  intro z
-  have hAlg : (coordinateBialgHom (H := K) b).toAlgHom =
-      (f.comp (coordinateBialgHom (H := H) b)).toAlgHom := by
-    apply GeneralLinear.coordinateHopfAlgebra_algHom_ext R n
-    intro i j
-    rw [BialgHom.comp_toAlgHom, AlgHom.comp_apply]
-    erw [coordinateBialgHom_X (H := K), coordinateBialgHom_X (H := H)]
-    rw [coefficientMatrix_apply, coefficientMatrix_apply,
-      matrixCoefficient_def, matrixCoefficient_def, corestrict_coact_apply]
-    have h := LinearMap.congr_fun
-      (CoassocSimps.lid_comp_map (b.coord i) f.toLinearMap)
-      (coact (R := R) (C := H) (M := M) (b j))
-    rw [TensorProduct.map_map, LinearMap.id_comp, LinearMap.comp_id]
-    -- `lid_comp_map` states naturality for the underlying linear map; expose that coercion on
-    -- the right-hand side after tensor-map composition has been normalized.
-    change _ = f.toLinearMap _
-    exact h
-  exact DFunLike.congr_fun hAlg z
-
-end CoordinateCorestrict
-
-section FaithfulCorestrict
-
-variable {R H K M : Type u} {n : ℕ}
-variable [CommRing R] [CommRing H] [CommRing K]
-variable [HopfAlgebra R H] [HopfAlgebra R K]
-variable [AddCommMonoid M] [Module R M] [Comodule R H M]
-
-/-- Corestricting a faithful finite free comodule along a surjective bialgebra morphism gives a
-faithful comodule over the codomain. Geometrically, restricting a faithful representation to a
-closed subgroup remains faithful. -/
-theorem isFaithful_corestrict_of_surjective (f : H →ₐc[R] K) (hf : Function.Surjective f)
-    (b : Basis (Fin n) R M) (hM : IsFaithful (k := R) (H := H) (V := M)) :
-    letI : Comodule R K M := Corestrict f.toCoalgHom
-    IsFaithful (k := R) (H := K) (V := M) := by
-  let _ : Comodule R K M := Corestrict f.toCoalgHom
-  have hsurj : Function.Surjective (coordinateBialgHom (H := H) b) := by
-    rw [← isClosedImmersion_coordinateGroupSchemeHom_iff,
-      ← isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b)]
-    exact hM
-  rw [isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b),
-    isClosedImmersion_coordinateGroupSchemeHom_iff, coordinateBialgHom_corestrict f b]
-  exact hf.comp hsurj
-
-end FaithfulCorestrict
-
-section TrivialCoordinate
-
-variable {R : Type u} {H : Type v} {M : Type w} {n : ℕ}
-variable [CommRing R] [CommRing H] [HopfAlgebra R H]
-variable [AddCommMonoid M] [Module R M] [Comodule R H M]
-
-/-- If every vector has trivial coaction, the coordinate morphism of the representation factors
-through the counit of `O(GLₙ)` and the unit of the coefficient Hopf algebra. -/
-@[simp]
-theorem coordinateBialgHom_eq_unit_comp_counit_of_coact_eq_tmul_one
-    (b : Basis (Fin n) R M)
-    (htrivial : ∀ m : M, coact (R := R) (C := H) m = m ⊗ₜ[R] (1 : H)) :
-    coordinateBialgHom (H := H) b =
-      (Bialgebra.unitBialgHom R H).comp
-        (Bialgebra.counitBialgHom R (GeneralLinear.coordinateHopfAlgebra R n)) := by
-  apply BialgHom.ext
-  intro z
-  have hAlg : (coordinateBialgHom (H := H) b).toAlgHom =
-      ((Bialgebra.unitBialgHom R H).comp
-        (Bialgebra.counitBialgHom R
-          (GeneralLinear.coordinateHopfAlgebra R n))).toAlgHom := by
-    apply GeneralLinear.coordinateHopfAlgebra_algHom_ext R n
-    intro i j
-    rw [BialgHom.comp_toAlgHom, AlgHom.comp_apply]
-    erw [coordinateBialgHom_X]
-    rw [coefficientMatrix_apply, matrixCoefficient_def, htrivial]
-    by_cases hij : i = j <;> simp [hij]
-  exact DFunLike.congr_fun hAlg z
-
-end TrivialCoordinate
-
 section TrivialFaithful
 
-variable {R H M : Type u} {n : ℕ}
+variable {R H M : Type u}
 variable [CommRing R] [CommRing H] [HopfAlgebra R H]
 variable [AddCommMonoid M] [Module R M] [Comodule R H M]
 
 /-- A commutative Hopf algebra admitting a faithful finite free comodule with trivial coaction
 has zero augmentation ideal. Equivalently, the represented affine group is the identity group. -/
 theorem augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one
-    (b : Basis (Fin n) R M) (hM : IsFaithful (k := R) (H := H) (V := M))
+    (hM : IsFaithful (k := R) (H := H) (V := M))
     (htrivial : ∀ m : M, coact (R := R) (C := H) m = m ⊗ₜ[R] (1 : H)) :
     HopfIdeal.augmentation R H = ⊥ := by
+  simp only [TauCeti.Comodule.IsFaithful] at hM
+  rcases hM with ⟨n, b, hb⟩
   apply le_bot_iff.mp
   intro x hx
   have hsurj : Function.Surjective (coordinateBialgHom (H := H) b) := by
-    rw [← isClosedImmersion_coordinateGroupSchemeHom_iff,
-      ← isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b)]
-    exact hM
+    rw [← isClosedImmersion_coordinateGroupSchemeHom_iff]
+    exact hb
   obtain ⟨z, rfl⟩ := hsurj x
   have hcoordinate := DFunLike.congr_fun
     (coordinateBialgHom_eq_unit_comp_counit_of_coact_eq_tmul_one b htrivial) z
@@ -191,8 +96,7 @@ theorem augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one
 /-- A closed subgroup acting trivially through a faithful finite free representation is the
 identity subgroup: its defining Hopf ideal is the augmentation ideal of the ambient group. -/
 theorem eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one
-    (I : HopfIdeal R H) (b : Basis (Fin n) R M)
-    (hM : IsFaithful (k := R) (H := H) (V := M))
+    (I : HopfIdeal R H) (hM : IsFaithful (k := R) (H := H) (V := M))
     (htrivial : ∀ m : M,
       TensorProduct.map LinearMap.id
           (CommHopfAlgCat.mkQuotient (_root_.CommHopfAlgCat.of R H) I).hom.toLinearMap
@@ -206,12 +110,12 @@ theorem eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one
   have hq : Function.Surjective q :=
     CommHopfAlgCat.mkQuotient_surjective (_root_.CommHopfAlgCat.of R H) I
   have hfaithfulQ : IsFaithful (k := R) (H := Q) (V := M) :=
-    isFaithful_corestrict_of_surjective q hq b hM
+    isFaithful_corestrict_of_surjective q hq hM
   have htrivialQ : ∀ m : M, coact (R := R) (C := Q) m = m ⊗ₜ[R] (1 : Q) := by
     intro m
     simpa only [corestrict_coact_apply] using htrivial m
   have haugmentationQ : HopfIdeal.augmentation R Q = ⊥ :=
-    augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one b hfaithfulQ htrivialQ
+    augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one hfaithfulQ htrivialQ
   have hcomapBot : (⊥ : HopfIdeal R Q).comap q hq = I := by
     ext x
     rw [HopfIdeal.mem_comap, HopfIdeal.mem_bot,
