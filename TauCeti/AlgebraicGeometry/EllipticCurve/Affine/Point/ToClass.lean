@@ -734,7 +734,10 @@ theorem toClassEquiv_apply (P : W.Point) : toClassEquiv P = toClass P :=
 /-- Applying `toClass` to the point corresponding to an ideal class recovers that class. -/
 @[simp]
 theorem toClass_toClassEquiv_symm (c : Additive (ClassGroup W.CoordinateRing)) :
-    toClass (toClassEquiv.symm c) = c := by
+    (match toClassEquiv.symm c with
+      | .zero => 0
+      | .some _ _ h => ClassGroup.mk W.FunctionField (CoordinateRing.XYIdeal' h)) = c := by
+  change toClass (toClassEquiv.symm c) = c
   rw [← toClassEquiv_apply]
   exact toClassEquiv.apply_symm_apply c
 
