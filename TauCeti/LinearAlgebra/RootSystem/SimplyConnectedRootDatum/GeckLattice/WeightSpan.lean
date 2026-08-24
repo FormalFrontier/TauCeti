@@ -55,7 +55,7 @@ variable (t : DynkinType) (ht : t.Valid)
 /-- **A root coordinate of the pinned Geck module has the corresponding integral root as its
 weight.** `TauCeti.DynkinType.intCast_geckWeight_inr` already identifies the two after extension
 of scalars to `ℚ`; injectivity of `ℤ → ℚ` brings the equality back to the character lattice. -/
-@[simp] theorem geckWeight_inr_eq_root (k : Fin t.numRoots) :
+theorem geckWeight_inr_eq_root (k : Fin t.numRoots) :
     t.geckWeight ht (Sum.inr k) = (t.simplyConnectedRootDatum ht).root k := by
   ext i
   have h := congrFun (intCast_geckWeight_inr t ht k) i
