@@ -87,8 +87,8 @@ variable {F : Type*} [Field F] {W : _root_.WeierstrassCurve.Affine F} [Decidable
 /-- **Surjectivity of `toClass` is exactly representability of every ideal class by a point.**
 
 `toClass` is surjective precisely when each element of `ClassGroup W.CoordinateRing` is either
-trivial or the class of `XYIdeal' h` for a nonsingular affine point `(x, y)`. This records what
-remains to be proved for full surjectivity.
+trivial or the class of `XYIdeal' h` for a nonsingular affine point `(x, y)`. The right-hand side
+is proved below in `toClass_surjective`.
 
 Stated for an arbitrary affine Weierstrass curve: neither smoothness nor ellipticity is assumed,
 and no divisor group appears. Under the hypotheses that make `W` a smooth genus-1 curve, and the
@@ -145,48 +145,35 @@ private theorem finiteDimensional_quotient_of_ne_bot
     (Ideal.quotientEquivDirectSum F (CoordinateRing.basis W) hI).symm
 
 omit [DecidableEq F] in
-/-- The integral numerator of an invertible fractional ideal is invertible. -/
-private theorem isUnit_num
-    {I : FractionalIdeal W.CoordinateRing⁰ W.FunctionField} :
-    IsUnit (I.num : FractionalIdeal W.CoordinateRing⁰ W.FunctionField) ↔ IsUnit I := by
-  let R := W.CoordinateRing
-  let K := W.FunctionField
-  have hden0 : algebraMap R K I.den ≠ 0 :=
-    IsFractionRing.to_map_ne_zero_of_mem_nonZeroDivisors I.den.prop
-  let u : Kˣ := Units.mk0 (algebraMap R K I.den) hden0
-  have hdenUnit : IsUnit (FractionalIdeal.spanSingleton R⁰ (algebraMap R K I.den)) :=
-    ⟨toPrincipalIdeal R K u, by simp [u]⟩
-  obtain ⟨c, hc⟩ := hdenUnit
-  rw [← FractionalIdeal.den_mul_self_eq_num', ← hc, Units.isUnit_units_mul]
-
-omit [DecidableEq F] in
 /-- Replacing an invertible fractional ideal by its integral numerator does not change its ideal
 class. -/
 private theorem mk_num (I : (FractionalIdeal W.CoordinateRing⁰ W.FunctionField)ˣ) :
     let hnum : IsUnit (I.1.num : FractionalIdeal W.CoordinateRing⁰ W.FunctionField) :=
-      isUnit_num.mpr I.isUnit
+      FractionalIdeal.isUnit_num.mpr I.isUnit
     ClassGroup.mk W.FunctionField hnum.unit = ClassGroup.mk W.FunctionField I := by
   dsimp only
   let R := W.CoordinateRing
   let K := W.FunctionField
-  let hnum : IsUnit (I.1.num : FractionalIdeal R⁰ K) := isUnit_num.mpr I.isUnit
+  let hnum : IsUnit (I.1.num : FractionalIdeal R⁰ K) :=
+    FractionalIdeal.isUnit_num.mpr I.isUnit
   have hden0 : algebraMap R K I.1.den ≠ 0 :=
     IsFractionRing.to_map_ne_zero_of_mem_nonZeroDivisors I.1.den.prop
-  let u : Kˣ := Units.mk0 (algebraMap R K I.1.den) hden0
-  let D : (FractionalIdeal R⁰ K)ˣ := toPrincipalIdeal R K u
-  have hmul : D * I = hnum.unit := by
-    apply Units.ext
-    dsimp [D]
-    rw [coe_toPrincipalIdeal]
-    simpa [u] using FractionalIdeal.den_mul_self_eq_num' R⁰ K I.1
-  rw [← hmul, map_mul]
-  have hD : ClassGroup.mk K D = 1 := by
-    dsimp [D]
-    rw [ClassGroup.mk_eq_one_iff, coe_toPrincipalIdeal]
-    refine ⟨⟨algebraMap R K I.1.den, ?_⟩⟩
-    rw [FractionalIdeal.coe_spanSingleton]
-    simp [u]
-  rw [hD, one_mul]
+  rw [eq_comm, ClassGroup.mk_eq_mk]
+  refine ⟨Units.mk0 (algebraMap R K I.1.den) hden0, ?_⟩
+  apply Units.ext
+  rw [Units.val_mul, coe_toPrincipalIdeal, Units.val_mk0, hnum.unit_spec]
+  simpa [mul_comm] using FractionalIdeal.den_mul_self_eq_num' R⁰ K I.1
+
+omit [DecidableEq F] in
+private theorem smul_top_eq_comap_mul (I J : Ideal W.CoordinateRing) :
+    J • (⊤ : Submodule W.CoordinateRing I) =
+      Submodule.comap I.subtype ((I * J : Ideal W.CoordinateRing) :
+        Submodule W.CoordinateRing W.CoordinateRing) := by
+  apply Submodule.map_injective_of_injective I.subtype_injective
+  rw [Submodule.map_smul'', Submodule.map_top, Submodule.range_subtype,
+    Submodule.map_comap_subtype]
+  change J * I = I ⊓ (I * J)
+  rw [mul_comm J I, inf_eq_right.mpr Ideal.mul_le_left]
 
 omit [DecidableEq F] in
 /-- For an invertible integral ideal `I`, base change to `R / J` identifies `I / I J` with
@@ -223,14 +210,7 @@ private noncomputable def quotIdealMulEquiv
   letI : Module.Free A (TensorProduct R A (I : Submodule R R)) := inferInstance
   let eFree : TensorProduct R A (I : Submodule R R) ≃ₗ[A] A :=
     (Module.Invertible.free_iff_linearEquiv.mp inferInstance).some
-  have hsub : J • (⊤ : Submodule R (I : Submodule R R)) =
-      Submodule.comap (I : Submodule R R).subtype
-        ((I * J : Ideal R) : Submodule R R) := by
-    apply Submodule.map_injective_of_injective (I : Submodule R R).subtype_injective
-    rw [Submodule.map_smul'', Submodule.map_top, Submodule.range_subtype,
-      Submodule.map_comap_subtype]
-    change J * I = I ⊓ (I * J)
-    rw [mul_comm J I, inf_eq_right.mpr Ideal.mul_le_left]
+  have hsub := smul_top_eq_comap_mul I J
   exact (Submodule.quotEquivOfEq _ _ hsub.symm).trans
     ((TensorProduct.quotTensorEquivQuotSMul (I : Submodule R R) J).symm.trans
       (eFree.restrictScalars R))
@@ -426,14 +406,7 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
       (W.CoordinateRing ⧸ CoordinateRing.XYIdeal W x (C y))
     exact (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv.symm.finiteDimensional
   let eI := quotIdealMulEquiv (F := F) (I := I) (J := I) hunit
-  have hsquare : I • (⊤ : Submodule W.CoordinateRing I) =
-      Submodule.comap I.subtype ((I * I : Ideal W.CoordinateRing) :
-        Submodule W.CoordinateRing W.CoordinateRing) := by
-    apply Submodule.map_injective_of_injective I.subtype_injective
-    rw [Submodule.map_smul'', Submodule.map_top, Submodule.range_subtype,
-      Submodule.map_comap_subtype]
-    change I * I = I ⊓ (I * I)
-    rw [inf_eq_right.mpr Ideal.mul_le_left]
+  have hsquare := smul_top_eq_comap_mul I I
   let eCot : I.Cotangent ≃ₗ[F] (W.CoordinateRing ⧸ I) :=
     ((Submodule.quotEquivOfEq _ _ hsquare).trans eI).restrictScalars F
   let hcot : Module.Finite F I.Cotangent := eCot.symm.finiteDimensional
@@ -471,15 +444,12 @@ private theorem two_nsmul_degree_le {p : F[X]} {n : ℕ} (hp : p.degree < (n : �
 /-- The bounded-degree basis combinations `(p, q) ↦ p + qY` used in the explicit genus-one
 Riemann--Roch dimension count. -/
 private noncomputable def basisCombMap (W : WeierstrassCurve.Affine F) (a b : ℕ) :
-    (Polynomial.degreeLT F a × Polynomial.degreeLT F b) →ₗ[F] W.CoordinateRing where
-  toFun pq := (pq.1 : F[X]) • (1 : W.CoordinateRing) +
-    (pq.2 : F[X]) • CoordinateRing.basis W 1
-  map_add' x y := by
-    simp only [Submodule.coe_add, Prod.fst_add, Prod.snd_add, add_smul]
-    abel
-  map_smul' c x := by
-    simp only [Prod.smul_fst, Prod.smul_snd, SetLike.val_smul, RingHom.id_apply, smul_add]
-    rw [smul_assoc, smul_assoc]
+    (Polynomial.degreeLT F a × Polynomial.degreeLT F b) →ₗ[F] W.CoordinateRing :=
+  LinearMap.coprod
+    (((LinearMap.toSpanSingleton F[X] W.CoordinateRing 1).restrictScalars F).comp
+      (Polynomial.degreeLT F a).subtype)
+    (((LinearMap.toSpanSingleton F[X] W.CoordinateRing (CoordinateRing.basis W 1)).restrictScalars
+      F).comp (Polynomial.degreeLT F b).subtype)
 
 omit [DecidableEq F] in
 private theorem natDegree_norm_basisComb_le {p q : F[X]} {da db : ℕ}
@@ -496,17 +466,14 @@ private theorem natDegree_norm_basisComb_le {p q : F[X]} {da db : ℕ}
   · exact two_nsmul_degree_le hp
   · by_cases h0 : q = 0
     · simp [h0]
-    · have hqd : q.natDegree ≤ db - 1 := by
-        have := (Polynomial.natDegree_lt_iff_degree_lt h0).mpr hq
-        omega
-      have hdb1 : 1 ≤ db := by
+    · have hdb1 : 1 ≤ db := by
         by_contra hc
         rw [Nat.lt_one_iff.mp (Nat.not_le.mp hc), Nat.cast_zero] at hq
         exact absurd ((Polynomial.zero_le_degree_iff.mpr h0).trans_lt hq) (by simp)
-      rw [Polynomial.degree_eq_natDegree h0, two_nsmul_coe]
-      have h3 : (3 : WithBot ℕ) = ((3 : ℕ) : WithBot ℕ) := by norm_cast
-      rw [h3, ← Nat.cast_add, Nat.cast_le]
-      omega
+      calc
+        2 • q.degree + 3 ≤ ((2 * (db - 1) : ℕ) : WithBot ℕ) + 3 :=
+          by simpa [add_comm] using add_le_add_right (two_nsmul_degree_le hq) 3
+        _ ≤ ((2 * db + 1 : ℕ) : WithBot ℕ) := by norm_cast; omega
 
 omit [DecidableEq F] in
 private theorem basisCombMap_ne_zero {a b : ℕ}
@@ -515,7 +482,6 @@ private theorem basisCombMap_ne_zero {a b : ℕ}
   intro hz
   apply h
   rw [basisCombMap] at hz
-  simp only [LinearMap.coe_mk, AddHom.coe_mk] at hz
   rw [CoordinateRing.basis_one] at hz
   obtain ⟨hp, hq⟩ := CoordinateRing.smul_basis_eq_zero hz
   exact Prod.ext (Subtype.ext hp) (Subtype.ext hq)
@@ -564,7 +530,6 @@ private theorem exists_mem_norm_natDegree_le
     rw [Polynomial.mem_degreeLT] at hp hq
     have hbound := natDegree_norm_basisComb_le (W := W) hp hq
     rw [basisCombMap]
-    simp only [LinearMap.coe_mk, AddHom.coe_mk]
     refine le_trans hbound ?_
     dsimp [da, db]
     omega
@@ -655,7 +620,8 @@ private theorem exists_codimLEOne_inv
         ClassGroup.mk W.FunctionField hJunit.unit =
           (ClassGroup.mk W.FunctionField U)⁻¹ := by
   let hIunit : IsUnit (U.1.num :
-      FractionalIdeal W.CoordinateRing⁰ W.FunctionField) := isUnit_num.mpr U.isUnit
+      FractionalIdeal W.CoordinateRing⁰ W.FunctionField) :=
+    FractionalIdeal.isUnit_num.mpr U.isUnit
   obtain ⟨J, hJunit, hfin, hclass⟩ :=
     exists_codimLEOne_inv_integral (F := F) U.1.num hIunit
   refine ⟨J, hJunit, hfin, ?_⟩
@@ -730,15 +696,5 @@ theorem toClassEquiv_apply (P : W.Point) : toClassEquiv P = toClass P :=
   by
     unfold toClassEquiv
     exact AddEquiv.ofBijective_apply toClass _ P
-
-/-- Applying `toClass` to the point corresponding to an ideal class recovers that class. -/
-@[simp]
-theorem toClass_toClassEquiv_symm (c : Additive (ClassGroup W.CoordinateRing)) :
-    (match toClassEquiv.symm c with
-      | .zero => 0
-      | .some _ _ h => ClassGroup.mk W.FunctionField (CoordinateRing.XYIdeal' h)) = c := by
-  change toClass (toClassEquiv.symm c) = c
-  rw [← toClassEquiv_apply]
-  exact toClassEquiv.apply_symm_apply c
 
 end WeierstrassCurve.Affine.Point
