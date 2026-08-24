@@ -29,7 +29,8 @@ group" and the listed example `𝔾_m`.
   equivalence from the convolution group to `Aˣ`.
 * `TauCeti.MultiplicativeGroup.pointsMulEquiv_mapValue`: the points equivalence is natural
   in the value algebra.
-* `TauCeti.Cocharacter.genericUnit`: the tautological unit `T` of a Laurent polynomial ring.
+* `TauCeti.MultiplicativeGroup.genericUnit`: the tautological unit `T` of a Laurent polynomial
+  ring.
 
 ## References
 
@@ -235,15 +236,11 @@ theorem mapValue_pointsMulEquiv_symm_apply (φ : A →ₐ[R] B) (u : Aˣ) :
 
 end Naturality
 
-end MultiplicativeGroup
-
-namespace Cocharacter
-
 variable (A : Type v) [CommSemiring A]
 
 /-- The Laurent variable `T`, as a unit of `A[T;T⁻¹]`. It is the tautological
 `A[T;T⁻¹]`-point of the multiplicative group. -/
-@[expose] noncomputable def genericUnit : (LaurentPolynomial A)ˣ :=
+noncomputable def genericUnit : (LaurentPolynomial A)ˣ :=
   unitOfInvertible (LaurentPolynomial.T 1)
 
 /-- The generic unit is the Laurent variable `T`. -/
@@ -251,6 +248,21 @@ variable (A : Type v) [CommSemiring A]
 theorem genericUnit_val : (genericUnit A : LaurentPolynomial A) = LaurentPolynomial.T 1 := by
   simp [genericUnit]
 
-end Cocharacter
+/-- The inverse of the generic unit is the inverse Laurent variable. -/
+@[simp]
+theorem genericUnit_inv : (((genericUnit A)⁻¹ : (LaurentPolynomial A)ˣ) :
+    LaurentPolynomial A) = LaurentPolynomial.T (-1) := by
+  simp [genericUnit]
+
+/-- Mapping the generic unit along a Laurent-polynomial point gives the unit represented by
+that point. -/
+@[simp]
+theorem map_genericUnit {B : Type w} [CommSemiring B] [Algebra A B]
+    (φ : A[T;T⁻¹] →ₐ[A] B) :
+    Units.map φ (genericUnit A) = unitOfPoint φ := by
+  apply Units.ext
+  simp
+
+end MultiplicativeGroup
 
 end TauCeti

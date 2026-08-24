@@ -230,11 +230,11 @@ theorem finiteTypeCoordinateHopfAlgebra_obj :
     (finiteTypeCoordinateHopfAlgebra R n).obj = coordinateHopfAlgebra R n :=
   by rw [finiteTypeCoordinateHopfAlgebra]
 
-/-- The special-linear coordinate Hopf algebra carries the finite-type instance recorded by its
-bundled finite-type coordinate algebra. -/
+/-- The special-linear coordinate Hopf algebra is a finite-type `R`-algebra, being a quotient of
+the finite-type general-linear coordinate Hopf algebra. -/
 instance instAlgebraFiniteTypeCoordinateHopfAlgebra :
-    Algebra.FiniteType R (coordinateHopfAlgebra R n) := by
-  exact Algebra.FiniteType.quotient R (definingHopfIdeal R n).toIdeal
+    Algebra.FiniteType R (coordinateHopfAlgebra R n) :=
+  Algebra.FiniteType.quotient R (definingHopfIdeal R n).toIdeal
 
 /-! ### Algebra-valued points -/
 
