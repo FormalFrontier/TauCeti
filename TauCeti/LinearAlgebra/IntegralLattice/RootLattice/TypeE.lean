@@ -774,6 +774,14 @@ theorem form_typeE₈SimpleRoot_typeE₈SimpleRoot (i j : Fin 8) :
   rw [typeE₈SimpleRoot, typeE₈SimpleRoot, typeE₈RootLattice]
   exact form_ofGramMatrix_basisFun_basisFun _ _ i j
 
+/-- The carrier of the type `E₈` root lattice is the integral span of the simple roots. -/
+-- This is not a `simp` lemma because `ofGramMatrix_carrier` first unfolds its left-hand side to a
+-- bare `Submodule.span`; `mem_typeE₈RootLattice_carrier_iff` is the `simp` form.
+theorem typeE₈RootLattice_carrier :
+    typeE₈RootLattice.carrier = Submodule.span ℤ (Set.range (Pi.basisFun ℚ (Fin 8))) := by
+  rw [typeE₈RootLattice]
+  exact ofGramMatrix_carrier _ _ _
+
 /-- A vector belongs to the type `E₈` root lattice exactly when all of its simple-root coordinates
 are integers. -/
 @[simp]

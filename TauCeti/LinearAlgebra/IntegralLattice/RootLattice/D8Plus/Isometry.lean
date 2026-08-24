@@ -8,6 +8,7 @@ module
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient
 public import TauCeti.LinearAlgebra.IntegralLattice.RootLattice.D8Plus.Basic
 public import TauCeti.LinearAlgebra.IntegralLattice.RootLattice.TypeE
+public import TauCeti.LinearAlgebra.RootSystem.E8Coordinates
 
 /-!
 # The spinor glue lattice `D₈⁺` is the `E₈` root lattice
@@ -57,14 +58,15 @@ comparison `A_{L_H} ≅ H⊥ / H` predicts for the order-two spinor glue subgrou
 ## Main declarations
 
 * `TauCeti.IntegralLattice.e8GlueRoot`: the eight Bourbaki simple roots of `E₈`, in the
-  coordinates of the Conway--Sloane model of `D₈`.
+  coordinates of the Conway--Sloane model of `D₈`, read off the library's shared integral table
+  `TauCeti.DynkinType.e8DoubledSimpleRoot`.
 * `TauCeti.IntegralLattice.form_e8GlueRoot_e8GlueRoot`: their Gram matrix is `CartanMatrix.E 8`.
 * `TauCeti.IntegralLattice.e8GlueRoot_mem_d8PlusCarrier`: they lie in `D₈⁺`.
 * `TauCeti.IntegralLattice.span_range_e8GlueRoot`: they span `D₈⁺` over `ℤ`.
 * `TauCeti.IntegralLattice.e8GlueMap` and `TauCeti.IntegralLattice.e8GlueEquiv`: the rational
   comparison map and the linear equivalence it underlies.
-* `TauCeti.IntegralLattice.typeE₈IsometryD8Plus` and
-  `TauCeti.IntegralLattice.d8PlusIsometryTypeE₈`: **the isometry `E₈ ≃ D₈⁺` and its inverse.**
+* `TauCeti.IntegralLattice.typeE₈IsometryD8Plus`: **the isometry `E₈ ≃ D₈⁺`**, whose inverse
+  `typeE₈IsometryD8Plus.symm` is the isometry `D₈⁺ ≃ E₈`.
 * `TauCeti.IntegralLattice.d8PlusDiscriminantQuadraticIsometry`: the discriminant quadratic form
   of `D₈⁺` is that of `E₈`.
 * `TauCeti.IntegralLattice.natCard_orthogonalQuotient_d8SpinorSubgroup`: the general comparison
@@ -88,50 +90,35 @@ open Module
 
 /-! ## The Bourbaki simple roots in Conway--Sloane coordinates -/
 
-/-- The doubled standard coordinates of the eight simple roots of `E₈`: row `i` of this integer
-matrix is `2αᵢ₊₁` in the Conway--Sloane coordinates of `D₈`, following Bourbaki's plate VII.
-
-Doubling clears the halves in `α₁`, so that every check on these vectors reduces to a decidable
-statement about integers. -/
-def e8GlueCoeff : Fin 8 → Fin 8 → ℤ :=
-  ![![ 1, -1, -1, -1, -1, -1, -1,  1],
-    ![ 2,  2,  0,  0,  0,  0,  0,  0],
-    ![-2,  2,  0,  0,  0,  0,  0,  0],
-    ![ 0, -2,  2,  0,  0,  0,  0,  0],
-    ![ 0,  0, -2,  2,  0,  0,  0,  0],
-    ![ 0,  0,  0, -2,  2,  0,  0,  0],
-    ![ 0,  0,  0,  0, -2,  2,  0,  0],
-    ![ 0,  0,  0,  0,  0, -2,  2,  0]]
-
 /-- The `i`-th simple root of `E₈` in Bourbaki's numbering, written in the standard coordinates of
-the Conway--Sloane model of `D₈`. -/
-def e8GlueRoot (i : Fin 8) : Fin 8 → ℚ := fun j ↦ (e8GlueCoeff i j : ℚ) / 2
+the Conway--Sloane model of `D₈`.
+
+The coordinates are read off the library's shared integral table
+`TauCeti.DynkinType.e8DoubledSimpleRoot`, whose row `i` is `2αᵢ₊₁` in exactly these coordinates.
+The doubling there clears the halves in `α₁`, so that every check on these vectors reduces to a
+decidable statement about integers. -/
+def e8GlueRoot (i : Fin 8) : Fin 8 → ℚ :=
+  fun j ↦ (DynkinType.e8DoubledSimpleRoot i j : ℚ) / 2
 
 /-- The coordinates of a glue root are half the corresponding doubled integer coordinates. -/
 @[simp]
 theorem e8GlueRoot_apply (i j : Fin 8) :
-    e8GlueRoot i j = (e8GlueCoeff i j : ℚ) / 2 := by
+    e8GlueRoot i j = (DynkinType.e8DoubledSimpleRoot i j : ℚ) / 2 := by
   rw [e8GlueRoot]
 
 /-! ## The Gram matrix -/
-
-/-- The doubled Gram matrix of the glue roots is four times `CartanMatrix.E 8`. -/
-private theorem sum_e8GlueCoeff_mul_e8GlueCoeff (i j : Fin 8) :
-    ∑ k, e8GlueCoeff i k * e8GlueCoeff j k = 4 * (CartanMatrix.E 8) i j := by
-  revert i j
-  decide
 
 /-- **The Gram matrix of the eight glue roots is the Cartan matrix of type `E₈`.** -/
 theorem form_e8GlueRoot_e8GlueRoot (i j : Fin 8) :
     (checkerboardLattice 8).form (e8GlueRoot i) (e8GlueRoot j) =
       (((CartanMatrix.E 8) i j : ℤ) : ℚ) := by
-  have hcast : ((∑ k, e8GlueCoeff i k * e8GlueCoeff j k : ℤ) : ℚ)
-      = ((4 * (CartanMatrix.E 8) i j : ℤ) : ℚ) := by
-    rw [sum_e8GlueCoeff_mul_e8GlueCoeff]
-  push_cast at hcast
+  have hcast : ∑ k, (DynkinType.e8DoubledSimpleRoot i k : ℚ) *
+      (DynkinType.e8DoubledSimpleRoot j k : ℚ) = 4 * (((CartanMatrix.E 8) i j : ℤ) : ℚ) := by
+    exact_mod_cast DynkinType.sum_e8DoubledSimpleRoot_mul_e8DoubledSimpleRoot i j
   rw [checkerboardLattice_form_apply]
   have hsplit : ∑ k, e8GlueRoot i k * e8GlueRoot j k
-      = (∑ k, ((e8GlueCoeff i k : ℚ) * (e8GlueCoeff j k : ℚ))) / 4 := by
+      = (∑ k, ((DynkinType.e8DoubledSimpleRoot i k : ℚ) *
+        (DynkinType.e8DoubledSimpleRoot j k : ℚ))) / 4 := by
     rw [Finset.sum_div]
     exact Finset.sum_congr rfl fun k _ ↦ by rw [e8GlueRoot_apply, e8GlueRoot_apply]; ring
   rw [hsplit, hcast]
@@ -142,37 +129,26 @@ theorem form_e8GlueRoot_e8GlueRoot (i j : Fin 8) :
 /-- The integer coordinates of the glue root `αᵢ₊₁`, after subtracting the spinor vector in the
 one case `i = 0` where the root is not already a checkerboard vector. -/
 private def e8GlueShift (i j : Fin 8) : ℤ :=
-  (e8GlueCoeff i j - if i = 0 then 1 else 0) / 2
+  (DynkinType.e8DoubledSimpleRoot i j - if i = 0 then 1 else 0) / 2
 
 private theorem two_mul_e8GlueShift (i j : Fin 8) :
-    2 * e8GlueShift i j = e8GlueCoeff i j - if i = 0 then 1 else 0 := by
+    2 * e8GlueShift i j = DynkinType.e8DoubledSimpleRoot i j - if i = 0 then 1 else 0 := by
   revert i j
-  decide
-
-/-- Half the coordinate sum of the shifted glue root `αᵢ₊₁`. -/
-private def e8GlueShiftHalf (i : Fin 8) : ℤ := (∑ j, e8GlueShift i j) / 2
-
-private theorem sum_e8GlueShift (i : Fin 8) :
-    ∑ j, e8GlueShift i j = 2 * e8GlueShiftHalf i := by
-  revert i
   decide
 
 /-- Every shifted glue root is an integer vector of even coordinate sum, hence a checkerboard
 vector. -/
 private theorem e8GlueShift_mem_checkerboardLattice (i : Fin 8) :
     (fun j ↦ ((e8GlueShift i j : ℤ) : ℚ)) ∈ (checkerboardLattice 8).carrier := by
-  refine (mem_checkerboardLattice_carrier_iff _).mpr
-    ⟨fun j ↦ ⟨e8GlueShift i j, rfl⟩, e8GlueShiftHalf i, ?_⟩
-  have hcast : ((∑ j, e8GlueShift i j : ℤ) : ℚ) = ((2 * e8GlueShiftHalf i : ℤ) : ℚ) := by
-    rw [sum_e8GlueShift]
-  push_cast at hcast
-  exact hcast
+  rw [checkerboardLattice_carrier]
+  exact mem_checkerboardCarrier_of (e8GlueShift i) (fun _ ↦ rfl) (by revert i; decide)
 
 /-- The first glue root differs from the spinor vector by a checkerboard vector. -/
 private theorem e8GlueRoot_zero_sub_spinor :
     e8GlueRoot 0 - checkerboardSpinor 8 = fun j ↦ ((e8GlueShift 0 j : ℤ) : ℚ) := by
   funext j
-  have h : ((2 * e8GlueShift 0 j : ℤ) : ℚ) = ((e8GlueCoeff 0 j - 1 : ℤ) : ℚ) := by
+  have h : ((2 * e8GlueShift 0 j : ℤ) : ℚ)
+      = ((DynkinType.e8DoubledSimpleRoot 0 j - 1 : ℤ) : ℚ) := by
     rw [two_mul_e8GlueShift]
     simp
   push_cast at h
@@ -183,7 +159,8 @@ private theorem e8GlueRoot_zero_sub_spinor :
 private theorem e8GlueRoot_of_ne_zero (i : Fin 8) (hi : i ≠ 0) :
     e8GlueRoot i = fun j ↦ ((e8GlueShift i j : ℤ) : ℚ) := by
   funext j
-  have h : ((2 * e8GlueShift i j : ℤ) : ℚ) = ((e8GlueCoeff i j : ℤ) : ℚ) := by
+  have h : ((2 * e8GlueShift i j : ℤ) : ℚ)
+      = ((DynkinType.e8DoubledSimpleRoot i j : ℤ) : ℚ) := by
     rw [two_mul_e8GlueShift]
     simp [hi]
   push_cast at h
@@ -206,22 +183,16 @@ private theorem typeE₈SimpleRoot_eq_basisFun (i : Fin 8) :
   funext j
   rw [typeE₈SimpleRoot_apply, Pi.basisFun_apply, Pi.single_apply]
 
-/-- The carrier of the `E₈` root lattice is the standard integral lattice `ℤ⁸`. -/
-private theorem carrier_typeE₈RootLattice :
-    typeE₈RootLattice.carrier = Submodule.span ℤ (Set.range (Pi.basisFun ℚ (Fin 8))) := by
-  ext x
-  rw [mem_typeE₈RootLattice_carrier_iff, Module.Basis.mem_span_iff_repr_mem]
-  simp [Pi.basisFun_repr]
-
 /-- The rational linear map sending the `i`-th simple root of the `E₈` root lattice to the `i`-th
 glue root of `D₈⁺`. -/
 noncomputable def e8GlueMap : (Fin 8 → ℚ) →ₗ[ℚ] (Fin 8 → ℚ) :=
   (Pi.basisFun ℚ (Fin 8)).constr ℚ e8GlueRoot
 
-/-- The comparison map sends the `i`-th standard coordinate vector to the `i`-th glue root. -/
--- This is not a `simp` lemma because `Pi.basisFun_apply` rewrites beneath its left-hand side;
--- the sealed simple-root form `e8GlueMap_typeE₈SimpleRoot` is the `simp` version.
-theorem e8GlueMap_basisFun (i : Fin 8) :
+/-- The comparison map sends the `i`-th standard coordinate vector to the `i`-th glue root.
+
+This is the internal spelling: `Pi.basisFun_apply` rewrites beneath its left-hand side, so the
+exported form is the sealed simple-root one `e8GlueMap_typeE₈SimpleRoot`. -/
+private theorem e8GlueMap_basisFun (i : Fin 8) :
     e8GlueMap (Pi.basisFun ℚ (Fin 8) i) = e8GlueRoot i := by
   rw [e8GlueMap]
   exact (Pi.basisFun ℚ (Fin 8)).constr_basis ℚ e8GlueRoot i
@@ -278,7 +249,7 @@ theorem map_carrier_e8GlueEquiv :
       = e8GlueRoot := by
     funext i
     exact (e8GlueEquiv_apply _).trans (e8GlueMap_basisFun i)
-  rw [carrier_typeE₈RootLattice, Submodule.map_span, ← Set.range_comp, hrange]
+  rw [typeE₈RootLattice_carrier, Submodule.map_span, ← Set.range_comp, hrange]
 
 private theorem span_range_e8GlueRoot_le :
     Submodule.span ℤ (Set.range e8GlueRoot) ≤ d8PlusCarrier.1 := by
@@ -341,10 +312,6 @@ theorem typeE₈IsometryD8Plus_typeE₈SimpleRoot (i : Fin 8) :
     typeE₈IsometryD8Plus (typeE₈SimpleRoot i) = e8GlueRoot i := by
   rw [typeE₈IsometryD8Plus_apply, e8GlueMap_typeE₈SimpleRoot]
 
-/-- **The spinor glue lattice `D₈⁺` is isometric to the `E₈` root lattice.** -/
-noncomputable def d8PlusIsometryTypeE₈ : Isometry d8PlusLattice typeE₈RootLattice :=
-  typeE₈IsometryD8Plus.symm
-
 /-! ## Agreement with the general overlattice comparison -/
 
 /-- **The discriminant quadratic form of `D₈⁺` is the discriminant quadratic form of `E₈`**, which
@@ -352,7 +319,7 @@ is the trivial form on a trivial group. -/
 noncomputable def d8PlusDiscriminantQuadraticIsometry :
     FiniteQuadraticModule.Isometry (d8PlusLattice.discriminantQuadraticModule isEven_d8PlusLattice)
       (typeE₈RootLattice.discriminantQuadraticModule isEven_typeE₈RootLattice) :=
-  d8PlusIsometryTypeE₈.discriminantQuadraticIsometry isEven_d8PlusLattice
+  typeE₈IsometryD8Plus.symm.discriminantQuadraticIsometry isEven_d8PlusLattice
 
 /-- **The general overlattice comparison agrees with the direct `E₈` computation.**
 
