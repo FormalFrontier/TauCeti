@@ -101,6 +101,7 @@ regularized lower incomplete gamma function evaluated at the rate-scaled point,
 
 No sign hypothesis on `x` is needed: below the support both sides are `0`, which is exactly the
 clamping convention built into `TauCeti.regularizedGamma`. -/
+@[simp]
 theorem cdf_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
     cdf (gammaMeasure a r) x = regularizedGamma a (r * x) := by
   have hr0 : r ≠ 0 := hr.ne'
@@ -127,6 +128,7 @@ theorem cdf_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
 /-! ### Consequences -/
 
 /-- The mass a gamma law assigns to a lower half-line, in measure form. -/
+@[simp]
 theorem measureReal_Iic_gammaMeasure (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
     (gammaMeasure a r).real (Iic x) = regularizedGamma a (r * x) := by
   have hp : IsProbabilityMeasure (gammaMeasure a r) := isProbabilityMeasure_gammaMeasure ha hr
@@ -134,6 +136,7 @@ theorem measureReal_Iic_gammaMeasure (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
   exact cdf_gammaMeasure_eq ha hr x
 
 /-- The mass a gamma law assigns to a bounded interval is the increment of `P(a, r * ·)`. -/
+@[simp]
 theorem measureReal_Ioc_gammaMeasure (ha : 0 < a) (hr : 0 < r) {y : ℝ} (hyx : y ≤ x) :
     (gammaMeasure a r).real (Ioc y x) =
       regularizedGamma a (r * x) - regularizedGamma a (r * y) := by
@@ -145,6 +148,7 @@ theorem measureReal_Ioc_gammaMeasure (ha : 0 < a) (hr : 0 < r) {y : ℝ} (hyx : 
   linarith
 
 /-- The upper tail of a gamma law is `1 - P(a, r * x)`. -/
+@[simp]
 theorem measureReal_Ioi_gammaMeasure (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
     (gammaMeasure a r).real (Ioi x) = 1 - regularizedGamma a (r * x) := by
   have hp : IsProbabilityMeasure (gammaMeasure a r) := isProbabilityMeasure_gammaMeasure ha hr
