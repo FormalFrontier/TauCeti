@@ -367,8 +367,11 @@ variable (π : Measure (X × Y)) (σ : Measure (Y × Z))
 /-- Gluing `π` against the conditional kernel of `σ` over a countable middle space recovers `σ` as
 the `(Y, Z)`-marginal, as soon as the two plans share their middle marginal. -/
 theorem snd_glue_countableCondKernel [Countable Y] [MeasurableSingletonClass Y] [Nonempty Z]
-    [SFinite π] [IsFiniteMeasure σ] (hπσ : π.snd = σ.fst) :
+    [IsFiniteMeasure σ] (hπσ : π.snd = σ.fst) :
     (Measure.glue π (countableCondKernel σ)).snd = σ := by
+  let _ : IsFiniteMeasure π := ⟨by
+    rw [← _root_.MeasureTheory.Measure.snd_univ, hπσ]
+    exact measure_lt_top _ _⟩
   rw [Measure.snd_glue, hπσ, _root_.MeasureTheory.Measure.disintegrate]
 
 /-- **The gluing lemma over a countable middle space.**

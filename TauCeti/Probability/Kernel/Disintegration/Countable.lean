@@ -13,15 +13,15 @@ public import Mathlib.Probability.Kernel.Disintegration.Basic
 A measure `σ` on a product `Y × Z` disintegrates over `Y` when it is the composition-product
 `σ.fst ⊗ₘ κ` of its first marginal with a Markov kernel `κ : Kernel Y Z`. Mathlib supplies such a
 kernel when the *second* factor `Z` is standard Borel
-(`MeasureTheory.Measure.condKernel`). This file supplies one in the complementary regime: when the
-*first* factor `Y` is countable with measurable singletons, and `Z` is an arbitrary measurable
-space.
+(`MeasureTheory.Measure.condKernel`). For a finite `σ`, this file supplies one in the complementary
+regime: when the *first* factor `Y` is countable with measurable singletons, and `Z` is an arbitrary
+measurable space.
 
 On a countable `Y` no analytic input is needed — the disintegration is the elementary formula
 `κ y s = (σ.fst {y})⁻¹ * σ ({y} ×ˢ s)`, conditioning on the atom `{y}`. The one point that needs
 care is the atoms of zero mass, where that formula reads `∞ * 0` and carries no information: they
 are given a default value, and the disintegration still holds there because such an atom carries
-no `σ`-mass to begin with (`measure_prod_singleton_of_fst_eq_zero`).
+no `σ`-mass to begin with (`measure_singleton_prod_eq_zero_of_fst_eq_zero`).
 
 ## Main definitions
 
@@ -30,7 +30,8 @@ no `σ`-mass to begin with (`measure_prod_singleton_of_fst_eq_zero`).
 
 ## Main results
 
-* `TauCeti.MeasureTheory.measure_prod_singleton_of_fst_eq_zero` — an atom of zero first-marginal
+* `TauCeti.MeasureTheory.measure_singleton_prod_eq_zero_of_fst_eq_zero` — an atom of zero
+  first-marginal
   mass carries no mass at all: the fact that makes the default value at such an atom harmless;
 * `TauCeti.MeasureTheory.countableCondKernel_apply`,
   `TauCeti.MeasureTheory.countableCondKernel_apply_of_ne_zero` and
@@ -41,10 +42,9 @@ no `σ`-mass to begin with (`measure_prod_singleton_of_fst_eq_zero`).
   `MeasureTheory.Measure.IsCondKernel` instance;
 * `TauCeti.MeasureTheory.eq_countableCondKernel_of_ne_zero` — every conditional kernel of `σ`
   agrees with this one at every atom of positive mass;
-* `TauCeti.MeasureTheory.exists_isCondKernel_pair_ne` and
-  `TauCeti.MeasureTheory.exists_compProd_countableCondKernel_ne` — two regressions
-  showing that the contract cannot be strengthened and that its finiteness hypothesis cannot be
-  dropped.
+
+The file also contains two private regression examples showing that the contract cannot be
+strengthened and that its finiteness hypothesis cannot be dropped.
 
 ## Implementation notes
 
@@ -57,9 +57,9 @@ The value at an atom of zero mass is a Dirac measure at `Classical.arbitrary Z`,
 measure at every point of `Y`, `σ` prescribes none at a null atom, and on an empty `Z` no Markov
 kernel exists at all, by `ProbabilityTheory.Kernel.eq_zero_of_isEmpty_right` together with
 `ProbabilityTheory.Kernel.not_isMarkovKernel_zero`. The choice is deliberately *not* hidden —
-`countableCondKernel_apply_of_eq_zero` names it, and
-`exists_isCondKernel_pair_ne` exhibits two conditional kernels of one measure that differ at a
-null atom, so no strengthening of `eq_countableCondKernel_of_ne_zero` to all atoms is available.
+`countableCondKernel_apply_of_eq_zero` names it. A private regression below exhibits two
+conditional kernels of one measure that differ at a null atom, so no strengthening of
+`eq_countableCondKernel_of_ne_zero` to all atoms is available.
 
 ## References
 
@@ -93,7 +93,7 @@ variable [MeasurableSingletonClass Y]
 
 This is the fact that makes the default value of `countableCondKernel` at a null atom harmless:
 such an atom contributes nothing to the disintegration, whatever the kernel does there. -/
-theorem measure_prod_singleton_of_fst_eq_zero (σ : Measure (Y × Z)) {y : Y}
+theorem measure_singleton_prod_eq_zero_of_fst_eq_zero (σ : Measure (Y × Z)) {y : Y}
     (hy : σ.fst {y} = 0) (s : Set Z) : σ ({y} ×ˢ s) = 0 := by
   have huniv : σ (({y} : Set Y) ×ˢ (Set.univ : Set Z)) = 0 := by
     rw [Set.prod_univ, ← Measure.fst_apply (measurableSet_singleton y)]
@@ -106,8 +106,8 @@ section CondKernel
 
 variable [Countable Y] [MeasurableSingletonClass Y] [Nonempty Z]
 
-/-- The **conditional kernel over a countable coordinate**: the measure `σ` on `Y × Z`
-conditioned on each atom of `Y`.
+/-- The **countable-coordinate kernel construction** for a measure `σ` on `Y × Z`. When `σ` is
+finite, this is its conditional kernel over the first coordinate.
 
 At an atom `y` of positive first-marginal mass this is the normalised slice
 `s ↦ (σ.fst {y})⁻¹ * σ ({y} ×ˢ s)`; at a null atom, where `σ` prescribes nothing, it is a Dirac
@@ -126,7 +126,7 @@ theorem countableCondKernel_apply (σ : Measure (Y × Z)) (y : Y) :
       else ((σ.fst {y})⁻¹ • σ).comap (Prod.mk y) := (rfl)
 
 /-- At a null atom the conditional kernel takes its default value. It is a genuine choice, not a
-quantity read off `σ`; see `exists_isCondKernel_pair_ne`. -/
+quantity read off `σ`; see the private uniqueness regression below. -/
 theorem countableCondKernel_apply_of_eq_zero {σ : Measure (Y × Z)} {y : Y}
     (hy : σ.fst {y} = 0) : countableCondKernel σ y = Measure.dirac (Classical.arbitrary Z) := by
   simp [countableCondKernel_apply, hy]
@@ -178,7 +178,7 @@ theorem compProd_countableCondKernel (σ : Measure (Y × Z)) [IsFiniteMeasure σ
   rw [Measure.compProd_apply hs, lintegral_countable', hdecomp]
   refine tsum_congr fun y => ?_
   by_cases hy : σ.fst {y} = 0
-  · rw [hy, mul_zero, measure_prod_singleton_of_fst_eq_zero σ hy]
+  · rw [hy, mul_zero, measure_singleton_prod_eq_zero_of_fst_eq_zero σ hy]
   · rw [countableCondKernel_apply_of_ne_zero hy, mul_comm, ← mul_assoc,
       ENNReal.mul_inv_cancel hy (measure_ne_top _ _), one_mul]
 
@@ -187,7 +187,7 @@ instance instIsCondKernelCountableCondKernel (σ : Measure (Y × Z)) [IsFiniteMe
   disintegrate := compProd_countableCondKernel σ
 
 /-- Any conditional kernel of `σ` agrees with `countableCondKernel σ` at every atom of positive
-mass. The restriction to such atoms is sharp: see `exists_isCondKernel_pair_ne`. -/
+mass. The restriction to such atoms is sharp, as shown by the private regression below. -/
 theorem eq_countableCondKernel_of_ne_zero (σ : Measure (Y × Z)) [IsFiniteMeasure σ]
     (κ : Kernel Y Z) [σ.IsCondKernel κ] {y : Y} (hy : σ.fst {y} ≠ 0) :
     κ y = countableCondKernel σ y :=
@@ -213,7 +213,7 @@ target.) -/
 differing there. So `eq_countableCondKernel_of_ne_zero` is sharp: a conditional kernel is pinned
 down exactly on the atoms of positive mass, and the default value `countableCondKernel` uses
 elsewhere is a choice, not a derived quantity. -/
-theorem exists_isCondKernel_pair_ne :
+private theorem exists_isCondKernel_pair_ne :
     ∃ κ₁ κ₂ : Kernel Bool Bool,
       (Measure.dirac ((true, true) : Bool × Bool)).IsCondKernel κ₁ ∧
       (Measure.dirac ((true, true) : Bool × Bool)).IsCondKernel κ₂ ∧ κ₁ ≠ κ₂ := by
@@ -226,7 +226,7 @@ theorem exists_isCondKernel_pair_ne :
         = Measure.dirac ((true, true) : Bool × Bool) := by
     intro κ _ hκ
     ext s hs
-    rw [hfst, Measure.compProd_apply hs, lintegral_dirac, hκ,
+    rw [hfst, Measure.dirac_compProd_apply hs, hκ,
       Measure.dirac_apply' _ (hs.preimage measurable_prodMk_left),
       Measure.dirac_apply' _ hs]
     rfl
@@ -241,7 +241,7 @@ theorem exists_isCondKernel_pair_ne :
 /-- **`IsFiniteMeasure σ` cannot be dropped.** At an atom of infinite mass the normalising factor
 `(σ.fst {y})⁻¹` is `0`, so the conditional kernel collapses to the zero measure and the
 composition-product loses all the mass it was meant to recover. -/
-theorem exists_compProd_countableCondKernel_ne :
+private theorem exists_compProd_countableCondKernel_ne :
     ∃ σ : Measure (Unit × Unit), σ.fst ⊗ₘ countableCondKernel σ ≠ σ := by
   refine ⟨(⊤ : ℝ≥0∞) • Measure.dirac ((), ()), ?_⟩
   set σ : Measure (Unit × Unit) := (⊤ : ℝ≥0∞) • Measure.dirac ((), ()) with hσ
