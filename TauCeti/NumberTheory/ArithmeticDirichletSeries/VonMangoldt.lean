@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.IsPrimePow
+public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Weight
 
 /-!
@@ -61,13 +62,6 @@ variable {K : Type*} [Field K] [NumberField K]
 
 namespace IdealArithmeticFunction
 
-/-- Two prime ideals with equal positive powers are equal. -/
-private theorem prime_eq_of_pow_eq_pow {P Q : Ideal (𝓞 K)} (hP : Prime P) (hQ : Prime Q)
-    {m n : ℕ} (hm : 0 < m) (hn : 0 < n) (hpow : P ^ m = Q ^ n) : P = Q := by
-  apply dvd_antisymm
-  · exact hP.dvd_of_dvd_pow (by rw [← hpow]; exact dvd_pow_self P hm.ne')
-  · exact hQ.dvd_of_dvd_pow (by rw [hpow]; exact dvd_pow_self Q hn.ne')
-
 /-- The **ideal von Mangoldt function**.  It takes the value `log N(P)` on every positive power of
 a prime ideal `P`, and vanishes on ideals which are not prime powers.
 
@@ -92,9 +86,8 @@ theorem vonMangoldt_apply_of_eq_prime_pow {A : (Ideal (𝓞 K))⁰} {P : Ideal (
   let hA : IsPrimePow (A : Ideal (𝓞 K)) := ⟨P, n, hP, hn, hpow⟩
   simp only [vonMangoldt, hA, dite_true]
   have hchosen : hA.choose = P := by
-    apply prime_eq_of_pow_eq_pow hA.choose_spec.choose_spec.1 hP
-      hA.choose_spec.choose_spec.2.1 hn
-    exact hA.choose_spec.choose_spec.2.2.trans hpow.symm
+    exact eq_of_prime_pow_eq hA.choose_spec.choose_spec.1 hP
+      hA.choose_spec.choose_spec.2.1 (hA.choose_spec.choose_spec.2.2.trans hpow.symm)
   rw [hchosen]
 
 /-- The ideal von Mangoldt function at a positive power of a prime nonzero ideal. -/
@@ -119,17 +112,6 @@ theorem vonMangoldt_of_not_isPrimePow {A : (Ideal (𝓞 K))⁰}
     (vonMangoldt : IdealArithmeticFunction K) A = 0 := by
   simp [vonMangoldt, hA]
 
-/-- The norm of a prime ideal is strictly greater than one. -/
-private theorem one_lt_absNorm_of_prime {P : Ideal (𝓞 K)} (hP : Prime P) :
-    1 < Ideal.absNorm P := by
-  have hP0 : P ≠ ⊥ := hP.ne_zero
-  have hpos : 0 < Ideal.absNorm P :=
-    Ideal.absNorm_pos_of_nonZeroDivisors ⟨P, mem_nonZeroDivisors_of_ne_zero hP0⟩
-  have hne : Ideal.absNorm P ≠ 1 := by
-    intro h
-    exact hP.not_isUnit (_root_.Ideal.isUnit_iff.mpr (Ideal.absNorm_eq_one_iff.mp h))
-  omega
-
 /-- The support of the ideal von Mangoldt function is exactly the set of prime-power ideals. -/
 theorem vonMangoldt_ne_zero_iff {A : (Ideal (𝓞 K))⁰} :
     (vonMangoldt : IdealArithmeticFunction K) A ≠ 0 ↔ IsPrimePow (A : Ideal (𝓞 K)) := by
@@ -141,8 +123,11 @@ theorem vonMangoldt_ne_zero_iff {A : (Ideal (𝓞 K))⁰} :
     rw [vonMangoldt_apply_of_eq_prime_pow hP hn hpow]
     apply Complex.ofReal_ne_zero.mpr
     apply Real.log_ne_zero_of_pos_of_ne_one
-    · exact_mod_cast (Nat.zero_lt_one.trans (one_lt_absNorm_of_prime hP))
-    · exact_mod_cast (one_lt_absNorm_of_prime hP).ne'
+    · exact_mod_cast (Nat.zero_lt_one.trans
+        (NumberField.HeightOneSpectrum.one_lt_absNorm
+          (IsDedekindDomain.HeightOneSpectrum.ofPrime hP)))
+    · exact_mod_cast (NumberField.HeightOneSpectrum.one_lt_absNorm
+        (IsDedekindDomain.HeightOneSpectrum.ofPrime hP)).ne'
 
 /-- The ideal von Mangoldt function vanishes exactly away from prime powers. -/
 @[simp]
@@ -164,7 +149,9 @@ theorem vonMangoldt_re_nonneg {A : (Ideal (𝓞 K))⁰} :
   by_cases hA : IsPrimePow (A : Ideal (𝓞 K))
   · obtain ⟨P, n, hP, hn, hpow⟩ := hA
     rw [vonMangoldt_apply_of_eq_prime_pow hP hn hpow, Complex.ofReal_re]
-    exact Real.log_nonneg (by exact_mod_cast (one_lt_absNorm_of_prime hP).le)
+    exact Real.log_nonneg (by exact_mod_cast
+      (NumberField.HeightOneSpectrum.one_lt_absNorm
+        (IsDedekindDomain.HeightOneSpectrum.ofPrime hP)).le)
   · rw [vonMangoldt_of_not_isPrimePow hA, Complex.zero_re]
 
 end IdealArithmeticFunction
@@ -223,26 +210,5 @@ theorem one_vonMangoldtTransform :
   rw [vonMangoldtTransform, toIdealArithmeticFunction_one, one_mul]
 
 end MultiplicativeIdealWeight
-
-namespace UnitaryIdealWeight
-
-/-- The von Mangoldt transform of a unitary ideal weight, obtained from its underlying completely
-multiplicative weight. -/
-noncomputable def vonMangoldtTransform (χ : UnitaryIdealWeight K) : IdealArithmeticFunction K :=
-  χ.1.vonMangoldtTransform
-
-/-- Evaluation of the von Mangoldt transform of a unitary ideal weight. -/
-theorem vonMangoldtTransform_apply (χ : UnitaryIdealWeight K) (A : (Ideal (𝓞 K))⁰) :
-    χ.vonMangoldtTransform A = χ.1 A * IdealArithmeticFunction.vonMangoldt A :=
-  χ.1.vonMangoldtTransform_apply A
-
-/-- The support of the unitary weighted transform consists exactly of its good prime powers. -/
-theorem vonMangoldtTransform_ne_zero_iff (χ : UnitaryIdealWeight K)
-    {A : (Ideal (𝓞 K))⁰} :
-    χ.vonMangoldtTransform A ≠ 0 ↔
-      IsPrimePow (A : Ideal (𝓞 K)) ∧ χ.1.IsGood (A : Ideal (𝓞 K)) :=
-  χ.1.vonMangoldtTransform_ne_zero_iff
-
-end UnitaryIdealWeight
 
 end TauCeti
