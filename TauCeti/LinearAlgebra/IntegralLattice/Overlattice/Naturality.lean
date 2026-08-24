@@ -425,6 +425,21 @@ theorem toIntegralLatticeIsometry_apply (e : Isometry L M) {P : L.IntermediateCa
     (hP : IntermediateCarrier.IsIntegral P) (x : V) :
     e.toIntegralLatticeIsometry hP x = e x := (rfl)
 
+/-- The inverse restricted isometry of integral overlattices acts by the inverse ambient
+equivalence. -/
+@[simp]
+theorem toIntegralLatticeIsometry_symm_apply (e : Isometry L M) {P : L.IntermediateCarrier}
+    (hP : IntermediateCarrier.IsIntegral P) (y : W) :
+    (e.toIntegralLatticeIsometry hP).symm y = e.symm y := by
+  calc
+    (e.toIntegralLatticeIsometry hP).symm y =
+        e.symm (e ((e.toIntegralLatticeIsometry hP).symm y)) :=
+      (e.symm_apply_apply _).symm
+    _ = e.symm (e.toIntegralLatticeIsometry hP
+        ((e.toIntegralLatticeIsometry hP).symm y)) := by
+      rw [toIntegralLatticeIsometry_apply]
+    _ = e.symm y := by rw [Isometry.apply_symm_apply]
+
 end Nondegenerate
 
 end Isometry
