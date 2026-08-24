@@ -27,8 +27,15 @@ condition and the `𝒪_X`-module structure automatic.
   `Spec K(X) ⟶ X` from the spectrum of the function field, and
   `TauCeti.AlgebraicGeometry.Scheme.fromSpecFunctionField_preimage`: it pulls a nonempty open
   subset back to everything;
-* `TauCeti.AlgebraicGeometry.Scheme.rationalFunctions X : X.Modules`, the sheaf `𝒦_X` of
-  rational functions;
+* `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsRing`, the sheaf `𝒦_X` as a sheaf of
+  commutative rings, `TauCeti.AlgebraicGeometry.Scheme.rationalFunctions`, its underlying
+  `𝒪_X`-module sheaf, and `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsSectionsEquiv`,
+  the canonical identification of their sections;
+* `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctionsRing` and
+  `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions`, the canonical morphisms from `𝒪_X`
+  as ring and module sheaves, respectively;
+* `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsRingEquiv`, the identification of the
+  ring of sections over a nonempty open subset with `K(X)`, compatible with restriction maps;
 * `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv`, the identification
   `Γ(𝒦_X, U) ≃ₗ[Γ(X, U)] K(X)` of its sections over a nonempty open subset with the function
   field, `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv_map`, the compatibility of
@@ -37,8 +44,8 @@ condition and the `𝒪_X`-module structure automatic.
   the restriction maps between nonempty open subsets are isomorphisms, and
   `TauCeti.AlgebraicGeometry.Scheme.subsingleton_rationalFunctions`, the sections over an empty
   open subset vanish;
-* `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions`, the canonical morphism
-  `𝒪_X ⟶ 𝒦_X`, which is `X.germToFunctionField` on sections
+* the module morphism `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions` is
+  `X.germToFunctionField` on sections
   (`TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv_toRationalFunctions_app`), is
   injective on sections over every open subset
   (`TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions_app_injective`), and is therefore a
@@ -88,11 +95,31 @@ instance instUniqueSpecFunctionField (X : Scheme.{u}) [IsIntegral X] :
     Unique (Spec X.functionField) :=
   inferInstanceAs (Unique (PrimeSpectrum X.functionField))
 
+/-- The sheaf of commutative rings underlying the rational-function sheaf: the pushforward of
+the structure sheaf of `Spec K(X)` along `fromSpecFunctionField`. -/
+def rationalFunctionsRing (X : Scheme.{u}) [IrreducibleSpace X] :
+    TopCat.Sheaf CommRingCat X :=
+  (TopCat.Sheaf.pushforward CommRingCat (fromSpecFunctionField X).base).obj
+    (Spec X.functionField).sheaf
+
+/-- The canonical morphism of sheaves of rings `𝒪_X ⟶ 𝒦_X`. -/
+def toRationalFunctionsRing (X : Scheme.{u}) [IrreducibleSpace X] :
+    X.sheaf ⟶ rationalFunctionsRing X where
+  hom := (fromSpecFunctionField X).c
+
 /-- The sheaf `𝒦_X` of rational functions on an integral scheme `X`: the constant sheaf with
 value the function field, realized as the pushforward of the structure sheaf of `Spec K(X)`
 along `TauCeti.AlgebraicGeometry.Scheme.fromSpecFunctionField`. -/
 def rationalFunctions (X : Scheme.{u}) [IrreducibleSpace X] : X.Modules :=
   (Scheme.Modules.pushforward (fromSpecFunctionField X)).obj (SheafOfModules.unit _)
+
+/-- The module sheaf and ring sheaf constructions of `𝒦_X` have canonically identified
+sections. -/
+def rationalFunctionsSectionsEquiv (X : Scheme.{u}) [IrreducibleSpace X] (U : X.Opens) :
+    (Γ(rationalFunctions X, U) : Type u) ≃
+      ((rationalFunctionsRing X).presheaf.obj (.op U) : Type u) := by
+  change (Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U) : Type u) ≃ _
+  exact Equiv.refl _
 
 /-- On a nonempty open subset, the morphism `Spec K(X) ⟶ X` acts on sections by the germ map to
 the function field. -/
@@ -121,6 +148,12 @@ private def functionFieldSectionsIso (U : X.Opens) [Nonempty U] :
   ((Spec X.functionField).presheaf.mapIso
     (eqToIso (fromSpecFunctionField_preimage U)).op).symm ≪≫ Scheme.ΓSpecIso X.functionField
 
+/-- The sections of the ring sheaf `𝒦_X` over a nonempty open subset are the function field,
+as commutative rings. -/
+def rationalFunctionsRingEquiv (U : X.Opens) [Nonempty U] :
+    ((rationalFunctionsRing X).presheaf.obj (.op U) : Type u) ≃+* X.functionField :=
+  (functionFieldSectionsIso U).commRingCatIsoToRingEquiv
+
 private theorem app_comp_functionFieldSectionsIso (U : X.Opens) [Nonempty U] :
     (fromSpecFunctionField X).app U ≫ (functionFieldSectionsIso U).hom =
       X.germToFunctionField U := by
@@ -142,6 +175,22 @@ private theorem map_comp_functionFieldSectionsIso {U V : X.Opens} [Nonempty U] [
     Subsingleton.elim (((Opens.map (fromSpecFunctionField X).base).map i).op ≫
       (eqToIso (fromSpecFunctionField_preimage U)).op.inv)
       (eqToIso (fromSpecFunctionField_preimage V)).op.inv]
+
+/-- The ring equivalences identifying sections of `𝒦_X` with the function field commute with
+restriction maps. -/
+@[simp]
+theorem rationalFunctionsRingEquiv_map {U V : X.Opens} [Nonempty U] [Nonempty V] (i : U ⟶ V)
+    (s : (rationalFunctionsRing X).presheaf.obj (.op V)) :
+    rationalFunctionsRingEquiv U ((rationalFunctionsRing X).presheaf.map i.op s) =
+      rationalFunctionsRingEquiv V s := by
+  unfold rationalFunctionsRing at s ⊢
+  change (functionFieldSectionsIso U).hom
+    ((Spec X.functionField).presheaf.map
+      ((Opens.map (fromSpecFunctionField X).base).map i).op
+        (id s : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ V))) =
+          (functionFieldSectionsIso V).hom s
+  rw [← CategoryTheory.ConcreteCategory.comp_apply, map_comp_functionFieldSectionsIso]
+  rfl
 
 /-- The sections of `𝒦_X` over a nonempty open subset `U` are the function field, as a module
 over the functions on `U`. -/
@@ -229,6 +278,16 @@ private theorem toRationalFunctions_app (U : X.Opens) (r : Γ(X, U)) :
     Scheme.Modules.Hom.app (toRationalFunctions X) U r =
       r • (id (1 : Γ(Spec X.functionField, (fromSpecFunctionField X) ⁻¹ᵁ U)) :
         Γ(rationalFunctions X, U)) := rfl
+
+omit [IsIntegral X] in
+/-- The morphisms of ring sheaves and module sheaves `𝒪_X ⟶ 𝒦_X` agree on sections. -/
+@[simp]
+theorem toRationalFunctionsRing_app (U : X.Opens) (r : Γ(X, U)) :
+    rationalFunctionsSectionsEquiv X U (Scheme.Modules.Hom.app (toRationalFunctions X) U r) =
+      (toRationalFunctionsRing X).hom.app (.op U) r := by
+  rw [toRationalFunctions_app]
+  change (fromSpecFunctionField X).app U r * 1 = (fromSpecFunctionField X).app U r
+  rw [mul_one]
 
 private theorem rationalFunctionsEquiv_one (U : X.Opens) [Nonempty U] :
     rationalFunctionsEquiv U
