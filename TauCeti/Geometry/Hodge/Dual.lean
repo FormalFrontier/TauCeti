@@ -12,12 +12,12 @@ public import TauCeti.Geometry.Hodge.Structure
 # The dual of a pure Hodge structure
 
 The dual `V^*` of a pure Hodge structure of weight `n` is a pure Hodge structure of weight `-n`
-on the complex dual space: its filtration step at index `p` is the annihilator of the conjugate
-filtration step of index `1 - p` of the original structure, and its conjugation is the twisted
-transpose of the original conjugation, sending a functional `φ` to `v ↦ conj (φ (ω v))`.
+on the complex dual space: its filtration step at index `p` is the annihilator of the filtration
+step of index `1 - p` of the original structure, and its conjugation is the twisted transpose of
+the original conjugation, sending a functional `φ` to `v ↦ conj (φ (ω v))`.
 The dual pairing then respects Hodge components of complementary indices: the `p`-th component
-of the dual pairs nontrivially only against components of index at most `n + p`, and has the
-same dimension as the `(n + p)`-th component, so dualizing reflects the table of Hodge numbers.
+of the dual pairs nontrivially only against components of index at least `-p`, and has the
+same dimension as the `(-p)`-th component, so dualizing reflects the table of Hodge numbers.
 
 This is one of the companion constructions of Layer L0 of `TauCetiRoadmap/HodgeStructures/README.md`
 (the `⊗`/`Hom`/dual companions), following Peters–Steenbrink, *Mixed Hodge Structures*, §2; it is
@@ -33,14 +33,15 @@ the base on which the internal hom of Hodge structures is to be built.
 * `TauCeti.Hodge.HodgeStructureOn.dual`: the dual pure Hodge structure, of weight `-n`;
   the opposedness of its filtration holds since dual annihilators carry complements to
   complements.
-* `TauCeti.Hodge.HodgeStructureOn.dual_F`, `…dual_conjF`: the steps of the dual filtration are
-  dual annihilators of conjugate steps.
+* `TauCeti.Hodge.HodgeStructureOn.dual_F`, `…dual_conjF`: the step of the dual filtration at
+  index `p` is the annihilator of the original step `1 - p`, and the conjugate step is the
+  annihilator of the original conjugate step `1 - p`.
 * `TauCeti.Hodge.HodgeStructureOn.dual_piece` and `…mem_dual_piece_iff`: the components of the
   dual structure are annihilators of unions of complementary filtration steps.
 * `TauCeti.Hodge.HodgeStructureOn.finrank_dual_piece`: the dimension of the `p`-th component of
-  the dual equals that of the `(n + p)`-th component.
+  the dual equals that of the `(-p)`-th component.
 * `TauCeti.Hodge.HodgeStructureOn.apply_eq_zero_of_mem_piece_of_lt`: the dual pairing vanishes
-  between components whose indices fail `index ≤ n + p`.
+  between components whose indices fail `index ≥ -p`.
 -/
 
 public section
@@ -154,63 +155,56 @@ variable {ω : Conjugation W} {n : ℤ}
 /-- Opposedness of the dual filtration: the annihilators of a complementary pair are
 complementary. -/
 private theorem isCompl_dual_annihilator (hs : HodgeStructureOn W ω n) (p : ℤ) :
-    IsCompl (hs.conjF (1 - p)).dualAnnihilator
-      ((hs.conjF (1 - (-n + 1 - p))).dualAnnihilator.map
+    IsCompl (hs.F (1 - p)).dualAnnihilator
+      ((hs.F (1 - (-n + 1 - p))).dualAnnihilator.map
         ω.dual.toEquiv.toLinearMap) := by
-  have hstep : (hs.conjF (1 - (-n + 1 - p))).dualAnnihilator.map
-      ω.dual.toEquiv.toLinearMap = (hs.F (n + p)).dualAnnihilator := by
-    have hidx : 1 - (-n + 1 - p) = n + p := by ring
-    rw [Conjugation.map_dualAnnihilator, hs.conjF_def, ω.map_map_eq_self, hidx]
-  have key := hs.isCompl_F_conjF (n + p)
-  rw [show n + 1 - (n + p) = 1 - p from by ring] at key
-  rw [hstep]
-  exact (Subspace.isCompl_dualAnnihilator key).symm
+  have hidx : 1 - (-n + 1 - p) = n + p := by ring
+  have key := hs.isCompl_F_conjF (1 - p)
+  rw [show n + 1 - (1 - p) = n + p from by ring] at key
+  rw [hidx, Conjugation.map_dualAnnihilator, ← hs.conjF_def]
+  exact Subspace.isCompl_dualAnnihilator key
 
 variable (hs : HodgeStructureOn W ω n)
 
 /-- **The dual pure Hodge structure**, of weight `-n`.
 
-Its filtration step at index `p` is the annihilator of the conjugate filtration step of index
+Its filtration step at index `p` is the annihilator of the original filtration step of index
 `1 - p`; its conjugation is the twisted transpose `TauCeti.Hodge.Conjugation.dual`. Opposedness
 of the dual filtration rests on the fact that dual annihilators carry complements to
 complements (`Subspace.isCompl_dualAnnihilator`). -/
 noncomputable def dual :
     HodgeStructureOn (Module.Dual ℂ W) ω.dual (-n) where
-  F p := (hs.conjF (1 - p)).dualAnnihilator
+  F p := (hs.F (1 - p)).dualAnnihilator
   F_antitone := fun p q hpq =>
-    Submodule.dualAnnihilator_anti (hs.conjF_antitone (by omega))
+    Submodule.dualAnnihilator_anti (hs.F_antitone (by omega))
   F_top := by
     obtain ⟨q, hq⟩ := hs.F_bot
-    have hc : hs.conjF (1 - (1 - q)) = ⊥ := by
-      have hq' : 1 - (1 - q) = q := by ring
-      rw [hq', hs.conjF_def, hq, Submodule.map_bot]
     refine ⟨1 - q, ?_⟩
-    rw [hc, Submodule.dualAnnihilator_bot]
+    rw [show 1 - (1 - q) = q from by ring, hq, Submodule.dualAnnihilator_bot]
   opposed := hs.isCompl_dual_annihilator
 
-/-- The filtration of the dual Hodge structure is made of dual annihilators of conjugate steps. -/
+/-- The filtration of the dual Hodge structure is made of dual annihilators of steps. -/
 @[simp]
 theorem dual_F (p : ℤ) :
-    (hs.dual).F p = (hs.conjF (1 - p)).dualAnnihilator :=
+    (hs.dual).F p = (hs.F (1 - p)).dualAnnihilator :=
   (rfl)
 
-/-- Membership in a step of the dual filtration: vanishing on the conjugate step of
+/-- Membership in a step of the dual filtration: vanishing on the step of
 complementary index. -/
 theorem mem_dual_F_iff (p : ℤ) (φ : Module.Dual ℂ W) :
-    φ ∈ (hs.dual).F p ↔ ∀ v ∈ hs.conjF (1 - p), φ v = 0 := by
+    φ ∈ (hs.dual).F p ↔ ∀ v ∈ hs.F (1 - p), φ v = 0 := by
   rw [hs.dual_F, Submodule.mem_dualAnnihilator]
 
-/-- The conjugate of a step of the dual filtration is the annihilator of a step. -/
+/-- The conjugate of a step of the dual filtration is the annihilator of a conjugate step. -/
 theorem dual_conjF (p : ℤ) :
-    (hs.dual).conjF p = (hs.F (1 - p)).dualAnnihilator := by
-  rw [(hs.dual).conjF_def, hs.dual_F, Conjugation.map_dualAnnihilator, hs.conjF_def,
-    ω.map_map_eq_self]
+    (hs.dual).conjF p = (hs.conjF (1 - p)).dualAnnihilator := by
+  rw [(hs.dual).conjF_def, hs.dual_F, Conjugation.map_dualAnnihilator, ← hs.conjF_def]
 
 /-- A component of the dual Hodge structure is the annihilator of the union of the two
 filtration steps flanking the component of complementary index. -/
 theorem dual_piece (p : ℤ) :
     (hs.dual).piece p =
-      ((hs.conjF (1 - p)) ⊔ (hs.F (n + 1 + p))).dualAnnihilator := by
+      ((hs.F (1 - p)) ⊔ (hs.conjF (n + 1 + p))).dualAnnihilator := by
   rw [piece_def, hs.dual_F, dual_conjF, ← Submodule.dualAnnihilator_sup_eq]
   have hidx : 1 - (-n - p) = n + 1 + p := by omega
   rw [hidx]
@@ -219,7 +213,7 @@ theorem dual_piece (p : ℤ) :
 of complementary index. -/
 theorem mem_dual_piece_iff (p : ℤ) (φ : Module.Dual ℂ W) :
     φ ∈ (hs.dual).piece p ↔
-      (∀ v ∈ hs.conjF (1 - p), φ v = 0) ∧ (∀ v ∈ hs.F (n + 1 + p), φ v = 0) := by
+      (∀ v ∈ hs.F (1 - p), φ v = 0) ∧ (∀ v ∈ hs.conjF (n + 1 + p), φ v = 0) := by
   rw [piece_def, hs.dual_F, dual_conjF,
     show 1 - (-n - p) = n + 1 + p from by omega, Submodule.mem_inf,
     Submodule.mem_dualAnnihilator, Submodule.mem_dualAnnihilator]
@@ -258,43 +252,39 @@ private theorem finrank_add_finrank_of_isCompl {B C : Submodule ℂ W}
   exact key.symm
 
 /-- The dimension of the `p`-th component of the dual Hodge structure equals the dimension of
-the `(n + p)`-th component: dualizing reflects the table of Hodge numbers. -/
+the `(-p)`-th component: dualizing reflects the table of Hodge numbers. -/
 theorem finrank_dual_piece [Module.Finite ℂ W] (p : ℤ) :
-    Module.finrank ℂ ((hs.dual).piece p) = Module.finrank ℂ (hs.piece (n + p)) := by
-  have hcomp := hs.isCompl_F_conjF (n + p)
-  rw [show n + 1 - (n + p) = 1 - p from by ring] at hcomp
-  have hd : Disjoint (hs.conjF (1 - p)) (hs.F (n + 1 + p)) :=
-    hcomp.disjoint.symm.mono_right
-      (hs.F_antitone (show n + p ≤ n + 1 + p from by omega))
+    Module.finrank ℂ ((hs.dual).piece p) = Module.finrank ℂ (hs.piece (-p)) := by
+  rw [dual_piece, piece_def, show n - -p = n + p from by ring, inf_comm]
+  have hcomp1 := hs.isCompl_F_conjF (1 - p)
+  rw [show n + 1 - (1 - p) = n + p from by ring] at hcomp1
+  have hcomp2 := hs.isCompl_F_conjF (-p)
+  rw [show n + 1 - -p = n + 1 + p from by ring] at hcomp2
+  have hd : Disjoint (hs.F (1 - p)) (hs.conjF (n + 1 + p)) :=
+    hcomp1.disjoint.mono_right
+      (hs.conjF_antitone (show n + p ≤ n + 1 + p from by omega))
   have hL1 := Subspace.finrank_add_finrank_dualAnnihilator_eq
-    ((hs.conjF (1 - p)) ⊔ (hs.F (n + 1 + p)))
-  have hL2 := Submodule.finrank_sup_add_finrank_inf_eq (hs.conjF (1 - p)) (hs.F (n + 1 + p))
-  rw [hd.eq_bot, finrank_bot, add_zero] at hL2
-  have hL3 := finrank_add_finrank_of_isCompl hcomp
-  have hcomp2 := hs.isCompl_F_conjF (n + 1 + p)
-  rw [show n + 1 - (n + 1 + p) = -p from by ring] at hcomp2
-  have hrhs := finrank_inf_add_finrank_eq_finrank hcomp2
-    (hs.F_antitone (show n + p ≤ n + 1 + p from by omega))
-  rw [dual_piece, piece_def]
-  have hidx : n - (n + p) = -p := by ring
-  rw [hidx]
+    ((hs.F (1 - p)) ⊔ (hs.conjF (n + 1 + p)))
+  have hsup := Submodule.finrank_sup_add_finrank_inf_eq (hs.F (1 - p)) (hs.conjF (n + 1 + p))
+  rw [hd.eq_bot, finrank_bot, add_zero] at hsup
+  have hsum := finrank_add_finrank_of_isCompl hcomp1
+  have hrhs := finrank_inf_add_finrank_eq_finrank hcomp2.symm
+    (hs.conjF_antitone (show n + p ≤ n + 1 + p from by omega))
   omega
 
 end Dimension
 
-/-- A functional in the `p`-th component of the dual vanishes on every component of index above
-`n + p`: the dual pairing pairs the `p`-th component of the dual against components of index at
-most `n + p`. -/
+/-- A functional in the `p`-th component of the dual vanishes on every component of index below
+`-p`: the dual pairing pairs the `p`-th component of the dual against components of index at
+least `-p`. -/
 theorem apply_eq_zero_of_mem_piece_of_lt {a p : ℤ}
     {u : W} {φ : Module.Dual ℂ W} (hu : u ∈ hs.piece a) (hφ : φ ∈ (hs.dual).piece p)
-    (hlt : n + p < a) :
+    (hlt : a < -p) :
     φ u = 0 := by
   rw [mem_dual_piece_iff] at hφ
   have hpair := (mem_piece_iff hs a u).mp hu
-  have hlt' : n + 1 + p ≤ a := by omega
-  have hu'' : u ∈ hs.F (n + 1 + p) :=
-    hs.F_antitone hlt' (by exact hpair.1)
-  exact hφ.2 u hu''
+  have hlt' : n + 1 + p ≤ n - a := by omega
+  exact hφ.2 u (hs.conjF_antitone hlt' hpair.2)
 
 end HodgeStructureOn
 
