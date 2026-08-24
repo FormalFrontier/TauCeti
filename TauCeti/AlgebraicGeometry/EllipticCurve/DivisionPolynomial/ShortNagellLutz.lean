@@ -144,14 +144,14 @@ theorem isInteger_of_torsion {x y : ℚ}
       simpa [add_assoc] using monic_X_pow_add (n := 3) (by compute_degree!)
     have heq := hns.left
     rw [Affine.equation_iff] at heq
-    simp only [a₁_of_isCharNeTwoNF, a₃_of_isCharNeTwoNF, WeierstrassCurve.baseChange, map_a₂,
-      map_a₄, map_a₆, algebraMap_int_eq, eq_intCast, zero_mul, add_zero] at heq
+    simp only [a₃_of_isCharNeTwoNF, WeierstrassCurve.baseChange, map_a₂, map_a₄, map_a₆,
+      eq_intCast, zero_mul] at heq
     rw [hy] at heq
     refine isInteger_of_is_root_of_monic hmonic ?_
     -- `aeval_C` must fire before the casts are normalised: `eq_intCast` would otherwise rewrite
     -- `C W.a₂` to an `ℤ[X]` cast, which `aeval_C` no longer matches.
     simp only [map_add, map_mul, map_pow, aeval_X, aeval_C]
-    simp only [algebraMap_int_eq, eq_intCast]
+    simp only [eq_intCast]
     linarith
 
 variable (A B : ℤ)

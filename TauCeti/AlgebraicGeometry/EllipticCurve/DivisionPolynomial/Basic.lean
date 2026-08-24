@@ -127,6 +127,6 @@ sites are unchanged. Over any commutative ring, because both `ℤ` (for the inte
 `ℚ` (for the point) need it. -/
 @[simp] lemma evalEval_ψ₂_of_isCharNeTwoNF {R : Type*} [CommRing R] (W : WeierstrassCurve R)
     [W.IsCharNeTwoNF] (x y : R) : W.ψ₂.evalEval x y = 2 * y := by
-  simp [WeierstrassCurve.ψ₂, Affine.polynomialY, evalEval]
+  simp [WeierstrassCurve.ψ₂, Affine.polynomialY]
 
 end WeierstrassCurve

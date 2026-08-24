@@ -108,7 +108,7 @@ instance : (shortCurve A B).IsShortNF := ⟨(rfl), (rfl), (rfl)⟩
 no instance propagating `IsShortNF` along `map`, so this is what keeps a base change — `ℤ → ℚ` in
 the classical Nagell–Lutz statement — recognisably in short form. -/
 @[simp] lemma map_shortCurve (f : R →+* S) : (shortCurve A B).map f = shortCurve (f A) (f B) := by
-  ext <;> simp [shortCurve, WeierstrassCurve.map]
+  ext <;> simp [WeierstrassCurve.map]
 
 /-- The same statement for a base change, which is the spelling consumers actually meet.
 `baseChange` *is* `map (algebraMap R S)` by definition, which is why the proof below is just

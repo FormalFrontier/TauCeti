@@ -327,10 +327,35 @@ private lemma norm_slope_neg_pow_mul_exp_neg_mul_le (n : ℕ) {y : ℝ} (hy : 0 
           simpa [hpow_abs] using mul_le_mul_of_nonneg_left hquot hpow_nonneg
     _ = (x : ℝ) ^ (n + 1) := by rw [pow_succ]
 
+/-- As `y` tends to `0` from the right, the integrals of the slopes at `0` of
+`z ↦ (-x) ^ n * exp (-(z * x))` tend to the `(n+1)`-st signed moment. -/
+private lemma tendsto_integral_slope_neg_pow_mul_exp_neg_mul_at_zero (μ : Measure ℝ≥0) (n : ℕ)
+    (hbound : Integrable (fun x : ℝ≥0 => (x : ℝ) ^ (n + 1)) μ) :
+    Tendsto (fun y : ℝ => ∫ x : ℝ≥0,
+        slope (fun z : ℝ => (-(x : ℝ)) ^ n * Real.exp (-(z * (x : ℝ)))) 0 y ∂μ)
+      (𝓝[Ici (0 : ℝ) \ {0}] 0) (𝓝 (∫ x : ℝ≥0, (-(x : ℝ)) ^ (n + 1) ∂μ)) := by
+  let K : ℝ → ℝ≥0 → ℝ := fun y x => (-(x : ℝ)) ^ n * Real.exp (-(y * (x : ℝ)))
+  refine tendsto_integral_filter_of_dominated_convergence
+    (μ := μ) (bound := fun x : ℝ≥0 => (x : ℝ) ^ (n + 1))
+    ?_ ?_ hbound ?_
+  · refine Filter.Eventually.of_forall fun y => ?_
+    simp only [slope_def_field]
+    fun_prop
+  · filter_upwards [eventually_mem_nhdsWithin] with y hy
+    refine Filter.Eventually.of_forall fun x => ?_
+    exact norm_slope_neg_pow_mul_exp_neg_mul_le n hy.1 x
+  · refine Filter.Eventually.of_forall fun x => ?_
+    have hderiv :
+        HasDerivWithinAt (fun y : ℝ => K y x) ((-(x : ℝ)) ^ (n + 1)) (Ici 0) 0 := by
+      have hlin : HasDerivAt (fun y : ℝ => -(y * (x : ℝ))) (-(x : ℝ)) 0 :=
+        (hasDerivAt_mul_const (x : ℝ)).neg
+      have hder := hlin.exp.const_mul ((-(x : ℝ)) ^ n)
+      simpa [K, pow_succ, mul_assoc, mul_comm, mul_left_comm] using hder.hasDerivWithinAt
+    exact (hasDerivWithinAt_iff_tendsto_slope.mp hderiv)
+
 /-- One-sided differentiation under the integral at the endpoint `t = 0`: within `[0, ∞)` the
 `n`-th signed moment kernel integral has the `(n+1)`-st as derivative, provided all moments are
-finite. Dominated convergence over the pointwise slopes supplies the limit; the slope of the
-integral is first exchanged with the integral of the slopes. -/
+finite. -/
 private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0)
     (hmom : ∀ n : ℕ, Integrable (fun x : ℝ≥0 => (x : ℝ) ^ n) μ) (n : ℕ) :
     HasDerivWithinAt (laplaceMomentTransform μ n) (laplaceMomentTransform μ (n + 1) 0)
@@ -341,25 +366,8 @@ private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0
     (-(x : ℝ)) ^ n * Real.exp (-(y * (x : ℝ)))
   have hlim :
       Tendsto (fun y : ℝ => ∫ x : ℝ≥0, slope (fun z : ℝ => K z x) 0 y ∂μ) l
-        (𝓝 (∫ x : ℝ≥0, (-(x : ℝ)) ^ (n + 1) ∂μ)) := by
-    refine tendsto_integral_filter_of_dominated_convergence
-      (μ := μ) (l := l) (bound := fun x : ℝ≥0 => (x : ℝ) ^ (n + 1))
-      ?_ ?_ (hmom (n + 1)) ?_
-    · exact Filter.Eventually.of_forall fun y => by
-        simpa [slope_def_field] using
-          (by fun_prop : AEStronglyMeasurable
-            (fun x : ℝ≥0 => (K y x - K 0 x) / (y - 0)) μ)
-    · filter_upwards [eventually_mem_nhdsWithin] with y hy
-      refine Filter.Eventually.of_forall fun x => ?_
-      exact norm_slope_neg_pow_mul_exp_neg_mul_le n hy.1 x
-    · refine Filter.Eventually.of_forall fun x => ?_
-      have hderiv :
-          HasDerivWithinAt (fun y : ℝ => K y x) ((-(x : ℝ)) ^ (n + 1)) (Ici 0) 0 := by
-        have hlin : HasDerivAt (fun y : ℝ => -(y * (x : ℝ))) (-(x : ℝ)) 0 := by
-          exact (hasDerivAt_mul_const (x : ℝ)).neg
-        have hder := hlin.exp.const_mul ((-(x : ℝ)) ^ n)
-        simpa [K, pow_succ, mul_assoc, mul_comm, mul_left_comm] using hder.hasDerivWithinAt
-      exact (hasDerivWithinAt_iff_tendsto_slope.mp hderiv)
+        (𝓝 (∫ x : ℝ≥0, (-(x : ℝ)) ^ (n + 1) ∂μ)) :=
+    tendsto_integral_slope_neg_pow_mul_exp_neg_mul_at_zero μ n (hmom (n + 1))
   -- Stage 2: the slope of the integral is the integral of the pointwise slopes.
   have hslope :
       (fun y : ℝ => slope (laplaceMomentTransform μ n) 0 y)
