@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.MeasureTheory.Integral.Bochner.Basic
-public import TauCeti.MeasureTheory.OptimalTransport.Cost
+public import TauCeti.MeasureTheory.OptimalTransport.Cost.Basic
 
 /-!
 # Kantorovich dual feasibility and weak duality
