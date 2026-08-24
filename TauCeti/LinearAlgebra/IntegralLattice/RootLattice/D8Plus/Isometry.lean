@@ -315,8 +315,12 @@ theorem typeE₈IsometryD8Plus_typeE₈SimpleRoot (i : Fin 8) :
 
 /-! ## Cardinality from the general overlattice comparison -/
 
-/-- **The discriminant quadratic form of `D₈⁺` is the discriminant quadratic form of `E₈`**, which
-is the trivial form on a trivial group. -/
+/-- **The discriminant quadratic form of `D₈⁺` is the discriminant quadratic form of `E₈`.**
+
+The isometry is all that this declaration states.  That the target is in turn the trivial form
+on a trivial group is recorded separately, by
+`instSubsingletonDiscriminantGroupTypeE₈RootLattice` and
+`discriminantQuadraticMap_typeE₈RootLattice`. -/
 noncomputable def d8PlusDiscriminantQuadraticIsometry :
     FiniteQuadraticModule.Isometry (d8PlusLattice.discriminantQuadraticModule isEven_d8PlusLattice)
       (typeE₈RootLattice.discriminantQuadraticModule isEven_typeE₈RootLattice) :=
