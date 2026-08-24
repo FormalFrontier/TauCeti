@@ -190,10 +190,11 @@ lemma principalCartierDivisor_inv (f : X.functionFieldˣ) :
 /-- A global regular unit has zero principal Cartier divisor. -/
 @[simp]
 lemma principalCartierDivisor_regularUnitToFunctionField
+    [Nonempty (⊤ : X.Opens)]
     (f : ((X.presheaf.obj (op (⊤ : X.Opens))) : Type u)ˣ) :
-    principalCartierDivisor X (regularUnitToFunctionField X f) = 0 := by
-  let _ : Nonempty (⊤ : X.Opens) :=
-    ⟨⟨Classical.choice (inferInstanceAs (Nonempty X)), by simp⟩⟩
+    principalCartierDivisor X
+      (Units.map (X.germToFunctionField (⊤ : X.Opens)).hom f) = 0 := by
+  change principalCartierDivisor X (regularUnitToFunctionField X f) = 0
   have hmap :
       rationalUnitSectionsEquiv X
           (((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom (Additive.ofMul f)) =

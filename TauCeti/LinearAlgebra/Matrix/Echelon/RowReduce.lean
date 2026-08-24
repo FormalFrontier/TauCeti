@@ -168,17 +168,72 @@ private theorem isRowReduceState_nil (L : List (Fin n → F)) :
   eq_zero_of_ne := by simp
   todo_eq_zero w _ d hd := absurd (List.mem_finRange d) hd
 
+omit [DecidableEq F] in
+/-- Recording a pivot row for a column preserves the invariant, and strikes that column off the
+ones still to visit: if `p` has a `1` in column `j` and vanishes in every column already visited,
+then appending `(j, p)` to the recorded rows and subtracting the appropriate multiple of `p` from
+every other row, recorded or not, again satisfies the invariant.
+
+This is the pivoting branch of `TauCeti.rowReduceStep`, stated for an arbitrary normalised row
+rather than for the `(v j)⁻¹ • v` that the sweep builds: no part of the argument uses how the row
+was normalised, only that it is. -/
+private theorem isRowReduceState_append_pivot {cs : List (Fin n)} {j : Fin n}
+    {s : RowReduceState F n} {p : Fin n → F} (hs : IsRowReduceState (j :: cs) s)
+    (hgt : ∀ c ∈ cs, j < c) (hpj : p j = 1) (hp0 : ∀ d, d ∉ j :: cs → p d = 0) :
+    IsRowReduceState cs
+      (s.1.map (fun q => (q.1, q.2 - q.2 j • p)) ++ [(j, p)], s.2.map fun w => w - w j • p) := by
+  have hplow : ∀ d : Fin n, d < j → p d = 0 := fun d hd => hp0 d fun hmem => by
+    rcases List.mem_cons.mp hmem with rfl | hmem
+    · exact absurd hd (lt_irrefl d)
+    · exact absurd (hgt d hmem) (not_lt.mpr hd.le)
+  have hppivot : ∀ q ∈ s.1, p q.1 = 0 := fun q hq =>
+    hplow q.1 (hs.pivot_lt q hq j List.mem_cons_self)
+  constructor
+  · rintro q hq c hc
+    simp only [List.mem_append, List.mem_map, List.mem_singleton] at hq
+    rcases hq with ⟨q', hq', rfl⟩ | rfl
+    · exact hs.pivot_lt q' hq' c (List.mem_cons_of_mem _ hc)
+    · exact hgt c hc
+  · rw [List.map_append, List.map_map]
+    refine List.pairwise_append.mpr ⟨?_, by simp, ?_⟩
+    · exact hs.pivot_pairwise
+    · simp only [List.mem_map, List.map_cons, List.map_nil, List.mem_singleton,
+        Function.comp_apply]
+      rintro a ⟨q', hq', rfl⟩ b hb
+      exact hb ▸ hs.pivot_lt q' hq' j List.mem_cons_self
+  · rintro q hq
+    simp only [List.mem_append, List.mem_map, List.mem_singleton] at hq
+    rcases hq with ⟨q', hq', rfl⟩ | rfl
+    · simp [hs.self q' hq', hppivot q' hq']
+    · exact hpj
+  · rintro q hq d hd
+    simp only [List.mem_append, List.mem_map, List.mem_singleton] at hq
+    rcases hq with ⟨q', hq', rfl⟩ | rfl
+    · have : d < j := hd.trans (hs.pivot_lt q' hq' j List.mem_cons_self)
+      simp [hs.eq_zero_of_lt q' hq' d hd, hplow d this]
+    · exact hplow d hd
+  · rintro q hq q' hq' hne
+    simp only [List.mem_append, List.mem_map, List.mem_singleton] at hq hq'
+    rcases hq with ⟨a, ha, rfl⟩ | rfl <;> rcases hq' with ⟨b, hb, rfl⟩ | rfl
+    · simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
+      rw [hs.eq_zero_of_ne a ha b hb (by simpa using hne), hppivot b hb]
+      simp
+    · simp [hpj]
+    · exact hppivot b hb
+    · exact absurd rfl hne
+  · rintro w hw d hd
+    simp only [List.mem_map] at hw
+    obtain ⟨w', hw', rfl⟩ := hw
+    rcases eq_or_ne d j with rfl | hne
+    · simp [hpj]
+    · have hdmem : d ∉ j :: cs := by simp [hne, hd]
+      simp [hs.todo_eq_zero w' hw' d hdmem, hp0 d hdmem]
+
 /-- One column of the sweep preserves the invariant. -/
 private theorem isRowReduceState_rowReduceStep {cs : List (Fin n)} {j : Fin n}
     {s : RowReduceState F n} (hs : IsRowReduceState (j :: cs) s)
     (hcs : (j :: cs).Pairwise (· < ·)) :
     IsRowReduceState cs (rowReduceStep j s) := by
-  have hgt : ∀ c ∈ cs, j < c := (List.pairwise_cons.mp hcs).1
-  have hnotmem : ∀ d : Fin n, d < j → d ∉ j :: cs := by
-    intro d hd hmem
-    rcases List.mem_cons.mp hmem with rfl | hmem
-    · exact absurd hd (lt_irrefl d)
-    · exact absurd (hgt d hmem) (not_lt.mpr hd.le)
   rcases hfind : s.2.find? (fun w => decide (w j ≠ 0)) with _ | v
   · have hzero : ∀ w ∈ s.2, w j = 0 := by
       intro w hw
@@ -196,57 +251,9 @@ private theorem isRowReduceState_rowReduceStep {cs : List (Fin n)} {j : Fin n}
           · exact hs.todo_eq_zero w hw d (by simp [hne, hd]) }
   · have hv : v ∈ s.2 := List.mem_of_find?_eq_some hfind
     have hvj : v j ≠ 0 := by simpa using List.find?_some hfind
-    set p : Fin n → F := (v j)⁻¹ • v with hpdef
-    have hpj : p j = 1 := by simp [hpdef, inv_mul_cancel₀ hvj]
-    have hp0 : ∀ d, d ∉ j :: cs → p d = 0 := fun d hd => by
-      simp [hpdef, hs.todo_eq_zero v hv d hd]
-    have hplow : ∀ d : Fin n, d < j → p d = 0 := fun d hd => hp0 d (hnotmem d hd)
-    have hppivot : ∀ q ∈ s.1, p q.1 = 0 := fun q hq =>
-      hplow q.1 (hs.pivot_lt q hq j List.mem_cons_self)
-    have hstep : rowReduceStep j s =
-        (s.1.map (fun q => (q.1, q.2 - q.2 j • p)) ++ [(j, p)], s.2.map fun w => w - w j • p) := by
-      rw [rowReduceStep_of_find?_eq_some hfind, hpdef]
-    rw [hstep]
-    constructor
-    · rintro q hq c hc
-      simp only [List.mem_append, List.mem_map, List.mem_singleton] at hq
-      rcases hq with ⟨q', hq', rfl⟩ | rfl
-      · exact hs.pivot_lt q' hq' c (List.mem_cons_of_mem _ hc)
-      · exact hgt c hc
-    · rw [List.map_append, List.map_map]
-      refine List.pairwise_append.mpr ⟨?_, by simp, ?_⟩
-      · exact hs.pivot_pairwise
-      · simp only [List.mem_map, List.map_cons, List.map_nil, List.mem_singleton,
-          Function.comp_apply]
-        rintro a ⟨q', hq', rfl⟩ b hb
-        exact hb ▸ hs.pivot_lt q' hq' j List.mem_cons_self
-    · rintro q hq
-      simp only [List.mem_append, List.mem_map, List.mem_singleton] at hq
-      rcases hq with ⟨q', hq', rfl⟩ | rfl
-      · simp [hs.self q' hq', hppivot q' hq']
-      · exact hpj
-    · rintro q hq d hd
-      simp only [List.mem_append, List.mem_map, List.mem_singleton] at hq
-      rcases hq with ⟨q', hq', rfl⟩ | rfl
-      · have : d < j := hd.trans (hs.pivot_lt q' hq' j List.mem_cons_self)
-        simp [hs.eq_zero_of_lt q' hq' d hd, hplow d this]
-      · exact hplow d hd
-    · rintro q hq q' hq' hne
-      simp only [List.mem_append, List.mem_map, List.mem_singleton] at hq hq'
-      rcases hq with ⟨a, ha, rfl⟩ | rfl <;> rcases hq' with ⟨b, hb, rfl⟩ | rfl
-      · simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
-        rw [hs.eq_zero_of_ne a ha b hb (by simpa using hne), hppivot b hb]
-        simp
-      · simp [hpj]
-      · exact hppivot b hb
-      · exact absurd rfl hne
-    · rintro w hw d hd
-      simp only [List.mem_map] at hw
-      obtain ⟨w', hw', rfl⟩ := hw
-      rcases eq_or_ne d j with rfl | hne
-      · simp [hpj]
-      · have hdmem : d ∉ j :: cs := by simp [hne, hd]
-        simp [hs.todo_eq_zero w' hw' d hdmem, hp0 d hdmem]
+    rw [rowReduceStep_of_find?_eq_some hfind]
+    exact isRowReduceState_append_pivot hs (List.pairwise_cons.mp hcs).1
+      (by simp [inv_mul_cancel₀ hvj]) fun d hd => by simp [hs.todo_eq_zero v hv d hd]
 
 /-- A whole sweep preserves the invariant, and leaves no column unvisited. -/
 private theorem isRowReduceState_rowReduceAux {cs : List (Fin n)} {s : RowReduceState F n}

@@ -20,6 +20,7 @@ underlying module.
 
 * `TensorPower.splitAt`: split a tensor power at a specified position.
 * `TauCeti.TensorPower.oneEquiv`: identify the first tensor power with the underlying module.
+
 -/
 
 public section
