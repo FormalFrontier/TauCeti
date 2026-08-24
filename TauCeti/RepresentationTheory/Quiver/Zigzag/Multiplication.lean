@@ -155,7 +155,7 @@ theorem zigzagMk_ofArrow_mul_ofArrow_symm (d : G.Dart) :
     ofArrow_symm_mul_ofArrow G k d.symm.adj
   rw [← map_mul, key, zigzagMk_backtrackElem_eq_zigzagVolume]
   -- the backtrack is based at the tail of the reverse dart, which is the head of `d`
-  rfl
+  simp
 
 /-- **Two arrows that are not reverse to one another multiply to zero.** Either they do not meet, in
 which case the product already vanishes in the path algebra, or they meet and the composite is a
@@ -165,7 +165,7 @@ theorem zigzagMk_ofArrow_mul_ofArrow_of_ne {d e : G.Dart} (h : e ≠ d.symm) :
   obtain ⟨⟨i, j⟩, hd⟩ := d
   obtain ⟨⟨a, b⟩, he⟩ := e
   rcases eq_or_ne b i with rfl | hbi
-  · have hne : a ≠ j := fun hab => h (by subst hab; rfl)
+  · have hne : a ≠ j := fun hab => h (SimpleGraph.Dart.ext _ _ (by simp [hab]))
     rw [← map_mul]
     exact (zigzagMk_eq_zero_iff k G).2 (quadraticZigzagIdeal_le_zigzagIdeal k G
       (ofArrow_mul_ofArrow_mem_quadraticZigzagIdeal k G he hd hne))
@@ -173,17 +173,27 @@ theorem zigzagMk_ofArrow_mul_ofArrow_of_ne {d e : G.Dart} (h : e ≠ d.symm) :
 
 /-! ### Products reaching path length three -/
 
+/-- A product of two path classes vanishes when their total path length is at least three. -/
+theorem zigzagMk_ofPath_mul_ofPath_eq_zero_of_three_le
+    (x y : Quiver.TotalPath (DoubledQuiver G))
+    (h : 3 ≤ x.2.2.length + y.2.2.length) :
+    zigzagMk k G (ofPath x * ofPath y) = 0 := by
+  obtain ⟨a, b, p⟩ := x
+  obtain ⟨c, d, q⟩ := y
+  rcases eq_or_ne d a with rfl | hda
+  · rw [ofPath_mul_ofPath_of_comp]
+    exact zigzagMk_ofPath_eq_zero_of_three_le k G _
+      (by simpa only [_root_.Quiver.Path.length_comp, Nat.add_comm] using h)
+  · rw [ofPath_mul_ofPath_of_not_composable hda, map_zero]
+
 /-- An arrow times a volume class vanishes: the composite has path length three. -/
 theorem zigzagMk_ofArrow_mul_zigzagVolume (d : G.Dart) (i : V) :
     zigzagMk k G (ofArrow (arrow G d.adj)) * zigzagVolume k G i = 0 := by
   rcases em (∃ j, G.Adj i j) with ⟨j, hj⟩ | hn
   · rw [zigzagVolume_eq_zigzagMk_backtrackElem k G hj, ← map_mul, backtrackElem_eq_ofPath,
       ofArrow_eq_ofPath_arrowPath]
-    rcases eq_or_ne i d.fst with rfl | hne
-    · rw [ofPath_mul_ofPath_of_comp]
-      exact zigzagMk_ofPath_eq_zero_of_three_le k G _
-        (by simp [_root_.Quiver.Path.length_comp, length_backtrackPath, length_arrowPath])
-    · rw [ofPath_mul_ofPath_of_not_composable ((vertex_injective G).ne hne), map_zero]
+    exact zigzagMk_ofPath_mul_ofPath_eq_zero_of_three_le k G _ _
+      (by simp [length_backtrackPath, length_arrowPath])
   · rw [zigzagVolume_eq_zero_of_not_exists_adj k G hn, mul_zero]
 
 /-- A volume class times an arrow vanishes: the composite has path length three. -/
@@ -192,11 +202,8 @@ theorem zigzagVolume_mul_zigzagMk_ofArrow (i : V) (d : G.Dart) :
   rcases em (∃ j, G.Adj i j) with ⟨j, hj⟩ | hn
   · rw [zigzagVolume_eq_zigzagMk_backtrackElem k G hj, ← map_mul, backtrackElem_eq_ofPath,
       ofArrow_eq_ofPath_arrowPath]
-    rcases eq_or_ne d.snd i with rfl | hne
-    · rw [ofPath_mul_ofPath_of_comp]
-      exact zigzagMk_ofPath_eq_zero_of_three_le k G _
-        (by simp [_root_.Quiver.Path.length_comp, length_backtrackPath, length_arrowPath])
-    · rw [ofPath_mul_ofPath_of_not_composable ((vertex_injective G).ne hne), map_zero]
+    exact zigzagMk_ofPath_mul_ofPath_eq_zero_of_three_le k G _ _
+      (by simp [length_backtrackPath, length_arrowPath])
   · rw [zigzagVolume_eq_zero_of_not_exists_adj k G hn, zero_mul]
 
 /-- Two volume classes multiply to zero: they either do not meet or compose to path length four. -/
@@ -208,11 +215,8 @@ theorem zigzagVolume_mul_zigzagVolume (i j : V) :
     · rw [zigzagVolume_eq_zigzagMk_backtrackElem k G hl,
         zigzagVolume_eq_zigzagMk_backtrackElem k G hm, ← map_mul, backtrackElem_eq_ofPath,
         backtrackElem_eq_ofPath]
-      rcases eq_or_ne j i with rfl | hne
-      · rw [ofPath_mul_ofPath_of_comp]
-        exact zigzagMk_ofPath_eq_zero_of_three_le k G _
-          (by simp [_root_.Quiver.Path.length_comp, length_backtrackPath])
-      · rw [ofPath_mul_ofPath_of_not_composable ((vertex_injective G).ne hne), map_zero]
+      exact zigzagMk_ofPath_mul_ofPath_eq_zero_of_three_le k G _ _
+        (by simp [length_backtrackPath])
     · rw [zigzagVolume_eq_zero_of_not_exists_adj k G hn', mul_zero]
   · rw [zigzagVolume_eq_zero_of_not_exists_adj k G hn, zero_mul]
 

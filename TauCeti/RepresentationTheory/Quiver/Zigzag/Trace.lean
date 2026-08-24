@@ -15,7 +15,7 @@ public import TauCeti.RepresentationTheory.Quiver.Zigzag.Multiplication
 The zigzag algebra of a simple graph with no isolated vertex is a symmetric Frobenius algebra. This
 file constructs the trace that witnesses it: the linear functional `TauCeti.zigzagTrace` which is
 `1` on every volume class and `0` on the vertex idempotents and on the arrows, and proves that the
-pairing `(x, y) ↦ tr (x * y)` is symmetric, associative and nondegenerate.
+pairing `(x, y) ↦ tr (x * y)` is symmetric, associative and perfect.
 
 Both the symmetry and the nondegeneracy come from one computation. Write `ι` for the involution
 `TauCeti.zigzagDualIndex` of the basis indices, which exchanges the idempotent and the volume class
@@ -23,15 +23,16 @@ at a vertex and reverses a dart. The multiplication table shows that the trace o
 basis classes is `1` when the second index is `ι` of the first and `0` otherwise: the only products
 with a volume component are `e_i x_i = x_i = x_i e_i` and `a_d a_{d.symm} = x_{d.snd}`. So the Gram
 matrix of the pairing in the vertex, arrow and volume basis is the permutation matrix of `ι`.
-Symmetry is then the fact that `ι` is an involution, and nondegeneracy is the fact that `ι` is a
-bijection: pairing an element against `ι b` reads off its `b`-th coordinate, so an element
-orthogonal to everything has all coordinates zero.
+Symmetry is then the fact that `ι` is an involution. The dual-basis identity
+`TauCeti.zigzagTracePairing_apply_zigzagBasisFun_zigzagDualIndex` says that pairing an element
+against `ι b` reads off its `b`-th coordinate; equivalently, the pairing is perfect over the
+commutative base ring. It also implies `TauCeti.zigzagTracePairing_nondegenerate`, where Mathlib's
+`LinearMap.BilinForm.Nondegenerate` records the weaker separating condition.
 
-That the pairing is symmetric, associative and nondegenerate is exactly the statement that the
-zigzag algebra is a symmetric Frobenius algebra; no `k` is assumed beyond a commutative ring, since
-the Gram matrix argument never inverts a scalar. What is *not* proved here is self-injectivity,
-which needs the induced isomorphism onto the dual bimodule and an injectivity criterion for modules
-over a general base.
+Thus the dual-basis identity together with symmetry and associativity gives the symmetric Frobenius
+property over an arbitrary commutative ring; the permutation Gram matrix requires no scalar to be
+inverted. What is *not* proved here is self-injectivity, which needs the induced isomorphism onto
+the dual bimodule and an injectivity criterion for modules over a general base.
 
 ## Main definitions
 
@@ -45,7 +46,7 @@ over a general base.
 * `TauCeti.zigzagTrace_mul_comm`: the trace is a trace, `tr (x * y) = tr (y * x)`.
 * `TauCeti.zigzagTracePairing_isSymm` and `TauCeti.zigzagTracePairing_nondegenerate`: the pairing is
   symmetric and nondegenerate.
-* `TauCeti.zigzagTracePairing_mul_left`: the pairing is associative, `(xy, z) = (x, yz)`.
+* `TauCeti.zigzagTracePairing_mul_assoc`: the pairing is associative, `(xy, z) = (x, yz)`.
 * `TauCeti.zigzagTracePairing_apply_zigzagBasisFun_zigzagDualIndex`: the classes indexed by `ι` are
   the dual basis of the pairing.
 
@@ -104,11 +105,6 @@ theorem zigzagDualIndex_involutive : Function.Involutive (zigzagDualIndex G) :=
 theorem zigzagDualIndex_injective : Function.Injective (zigzagDualIndex G) :=
   (zigzagDualIndex_involutive G).injective
 
-/-- Naming the dual index is a symmetric relation, because it is an involution. -/
-theorem eq_zigzagDualIndex_comm {b c : ZigzagBasisIndex G} :
-    c = zigzagDualIndex G b ↔ b = zigzagDualIndex G c := by
-  constructor <;> · rintro rfl; rw [zigzagDualIndex_zigzagDualIndex]
-
 /-! ### The trace -/
 
 variable [Finite V] (hns : ∀ i : V, ∃ j, G.Adj i j)
@@ -147,18 +143,15 @@ theorem zigzagTrace_zigzagVolume (i : V) : zigzagTrace k G hns (zigzagVolume k G
 
 /-- **The Frobenius pairing of a zigzag algebra**, `(x, y) ↦ tr (x * y)`. -/
 noncomputable def zigzagTracePairing : LinearMap.BilinForm k (nonisolatedZigzagQuotient k G) :=
-  LinearMap.mk₂ k (fun x y => zigzagTrace k G hns (x * y))
-    (fun _ _ _ => by rw [add_mul, map_add]) (fun _ _ _ => by rw [smul_mul_assoc, map_smul])
-    (fun _ _ _ => by rw [mul_add, map_add]) (fun _ _ _ => by rw [mul_smul_comm, map_smul])
+  (LinearMap.mul k (nonisolatedZigzagQuotient k G)).compr₂ (zigzagTrace k G hns)
 
 @[simp]
 theorem zigzagTracePairing_apply (x y : nonisolatedZigzagQuotient k G) :
     zigzagTracePairing k G hns x y = zigzagTrace k G hns (x * y) := (rfl)
 
 /-- **The trace pairing is associative**: it is computed from the product of all three factors, so
-the bracketing is immaterial. Together with symmetry and nondegeneracy this is what makes the
-zigzag algebra a symmetric Frobenius algebra. -/
-theorem zigzagTracePairing_mul_left (x y z : nonisolatedZigzagQuotient k G) :
+the bracketing is immaterial. -/
+theorem zigzagTracePairing_mul_assoc (x y z : nonisolatedZigzagQuotient k G) :
     zigzagTracePairing k G hns (x * y) z = zigzagTracePairing k G hns x (y * z) := by
   rw [zigzagTracePairing_apply, zigzagTracePairing_apply, mul_assoc]
 
@@ -214,24 +207,20 @@ theorem zigzagTracePairing_zigzagBasisFun (b c : ZigzagBasisIndex G) :
 
 /-! ### Symmetry, the dual basis, and nondegeneracy -/
 
+/-- **The trace pairing is symmetric.** Its Gram matrix is the permutation matrix of an
+involution. -/
+theorem zigzagTracePairing_isSymm : (zigzagTracePairing k G hns).IsSymm :=
+  (LinearMap.BilinForm.isSymm_iff_basis (zigzagBasis k G hns)).2 fun b c => by
+    classical
+    rw [zigzagBasis_apply, zigzagBasis_apply, zigzagTracePairing_zigzagBasisFun,
+      zigzagTracePairing_zigzagBasisFun]
+    exact if_congr (eq_comm.trans (zigzagDualIndex_involutive G).eq_iff) rfl rfl
+
 /-- **The trace is a trace**: `tr (x * y) = tr (y * x)`. The Gram matrix of the pairing is the
 permutation matrix of an involution, hence symmetric. -/
 theorem zigzagTrace_mul_comm (x y : nonisolatedZigzagQuotient k G) :
     zigzagTrace k G hns (x * y) = zigzagTrace k G hns (y * x) := by
-  classical
-  have key : zigzagTracePairing k G hns = (zigzagTracePairing k G hns).flip := by
-    refine (zigzagBasis k G hns).ext fun b => (zigzagBasis k G hns).ext fun c => ?_
-    have hflip : (zigzagTracePairing k G hns).flip (zigzagBasis k G hns b)
-          (zigzagBasis k G hns c)
-        = zigzagTracePairing k G hns (zigzagBasis k G hns c) (zigzagBasis k G hns b) := rfl
-    rw [hflip, zigzagBasis_apply, zigzagBasis_apply, zigzagTracePairing_zigzagBasisFun,
-      zigzagTracePairing_zigzagBasisFun]
-    exact if_congr (eq_zigzagDualIndex_comm G) rfl rfl
-  exact LinearMap.congr_fun₂ key x y
-
-/-- **The trace pairing is symmetric.** -/
-theorem zigzagTracePairing_isSymm : (zigzagTracePairing k G hns).IsSymm :=
-  ⟨fun x y => zigzagTrace_mul_comm k G hns x y⟩
+  exact (zigzagTracePairing_isSymm k G hns).eq x y
 
 /-- **The dual basis of the trace pairing.** Pairing an element against the basis class of the dual
 index of `b` reads off its `b`-th coordinate. -/
@@ -240,15 +229,11 @@ theorem zigzagTracePairing_apply_zigzagBasisFun_zigzagDualIndex
     zigzagTracePairing k G hns x (zigzagBasisFun k G (zigzagDualIndex G b))
       = (zigzagBasis k G hns).repr x b := by
   classical
-  have key : (zigzagTracePairing k G hns).flip (zigzagBasisFun k G (zigzagDualIndex G b))
-      = (zigzagBasis k G hns).coord b := by
+  have key : LinearMap.BilinForm.flipHom (zigzagTracePairing k G hns)
+      (zigzagBasisFun k G (zigzagDualIndex G b)) = (zigzagBasis k G hns).coord b := by
     refine (zigzagBasis k G hns).ext fun c => ?_
-    have hflip : (zigzagTracePairing k G hns).flip
-          (zigzagBasisFun k G (zigzagDualIndex G b)) (zigzagBasis k G hns c)
-        = zigzagTracePairing k G hns (zigzagBasis k G hns c)
-            (zigzagBasisFun k G (zigzagDualIndex G b)) := rfl
-    rw [hflip, Module.Basis.coord_apply, Module.Basis.repr_self, Finsupp.single_apply,
-      zigzagBasis_apply, zigzagTracePairing_zigzagBasisFun]
+    rw [LinearMap.BilinForm.flip_apply, Module.Basis.coord_apply, Module.Basis.repr_self,
+      Finsupp.single_apply, zigzagBasis_apply, zigzagTracePairing_zigzagBasisFun]
     refine if_congr ?_ rfl rfl
     rw [(zigzagDualIndex_injective G).eq_iff]
     exact eq_comm
@@ -264,8 +249,7 @@ theorem zigzagTracePairing_nondegenerate : (zigzagTracePairing k G hns).Nondegen
     refine (zigzagBasis k G hns).forall_coord_eq_zero_iff.mp fun b => ?_
     rw [Module.Basis.coord_apply, ← zigzagTracePairing_apply_zigzagBasisFun_zigzagDualIndex]
     exact hx _
-  refine ⟨hleft, fun y hy => hleft y fun x => ?_⟩
-  rw [zigzagTracePairing_apply, zigzagTrace_mul_comm, ← zigzagTracePairing_apply]
-  exact hy x
+  exact (LinearMap.IsRefl.nondegenerate_iff_separatingLeft
+    (zigzagTracePairing_isSymm k G hns).isRefl).mpr hleft
 
 end TauCeti
