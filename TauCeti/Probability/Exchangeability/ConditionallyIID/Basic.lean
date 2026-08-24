@@ -181,6 +181,14 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ι → Ω �
         rw [TauCeti.MeasureTheory.map_bind hK measurable_snd]
         simp
 
+/-- **Coordinatewise a.e. measurability from conditional i.i.d.-ness.**  The joint disintegration
+identity forces it, through the mixed i.i.d.-ness it implies; no separate hypothesis is needed
+alongside a `ConditionallyIIDWith` witness. -/
+theorem ConditionallyIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) (i : ι) :
+    AEMeasurable (X i) μ :=
+  (mixedIIDWith_of_conditionallyIIDWith h).aemeasurable i
+
 /-- The existential form of the easy arrow. -/
 theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ι → Ω → α}
     (h : ConditionallyIID μ X) : MixedIID μ X := by

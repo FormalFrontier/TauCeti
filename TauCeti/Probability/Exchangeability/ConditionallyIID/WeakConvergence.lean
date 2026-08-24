@@ -73,7 +73,7 @@ quantifiers there, since no null set serves every measurable set at once; second
 what makes countably many instances suffice, through
 `ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall`. -/
 theorem ConditionallyIIDWith.tendsto_empiricalMeasure_ae [IsFiniteMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ n, AEMeasurable (X n) μ) :
+    (h : ConditionallyIIDWith μ X ν) :
     ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => empiricalMeasure (fun i => X i ω) n) atTop (𝓝 (ν ω)) := by
   obtain ⟨B, hB⟩ := exists_seq_basis α
   set T : Finset ℕ → Set α := fun s => ⋂ i ∈ s, B i with hT
@@ -86,7 +86,7 @@ theorem ConditionallyIIDWith.tendsto_empiricalMeasure_ae [IsFiniteMeasure μ]
     rintro _ ⟨s, rfl⟩ _ ⟨t, rfl⟩ -
     exact ⟨s ∪ t, by
       simp only [hT, ← Finset.set_biInter_coe, Finset.coe_union, Set.biInter_union]⟩
-  filter_upwards [h.tendsto_empiricalMeasure_apply_ae_forall (B := T) hX hTmeas] with ω hω
+  filter_upwards [h.tendsto_empiricalMeasure_apply_ae_forall (B := T) hTmeas] with ω hω
   refine hpi.tendsto_probabilityMeasure_of_tendsto_of_mem ?_ (fun u hu x hxu => ?_) ?_
   · rintro _ ⟨s, rfl⟩
     exact hTmeas s
