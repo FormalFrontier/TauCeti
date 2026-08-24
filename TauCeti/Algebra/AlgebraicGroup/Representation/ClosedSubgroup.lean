@@ -70,8 +70,7 @@ theorem augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one
     (hM : IsFaithful (k := R) (H := H) (V := M))
     (htrivial : ∀ m : M, coact (R := R) (C := H) m = m ⊗ₜ[R] (1 : H)) :
     HopfIdeal.augmentation R H = ⊥ := by
-  simp only [TauCeti.Comodule.IsFaithful] at hM
-  rcases hM with ⟨n, b, hb⟩
+  rcases isFaithful_def.mp hM with ⟨n, b, hb⟩
   apply le_bot_iff.mp
   intro x hx
   have hsurj : Function.Surjective (coordinateBialgHom (H := H) b) := by

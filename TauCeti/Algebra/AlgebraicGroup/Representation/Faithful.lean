@@ -218,10 +218,17 @@ variable [AddCommMonoid V] [Module k V] [Comodule k H V]
 
 /-- A comodule is faithful if its representation morphism into a general linear group is a
 closed immersion for some finite basis. This property is independent of the witnessing basis. -/
-@[expose]
 def IsFaithful : Prop :=
   ∃ (d : ℕ) (b : Basis (Fin d) k V),
     IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left
+
+/-- Faithfulness restated as the existence of a finite basis whose representation morphism is a
+closed immersion. -/
+theorem isFaithful_def :
+    IsFaithful (k := k) (H := H) (V := V) ↔
+      ∃ (d : ℕ) (b : Basis (Fin d) k V),
+        IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left :=
+  Iff.rfl
 
 /-- **Faithfulness is generation by matrix coefficients.** The affine group-scheme morphism
 associated to a finite free comodule is a closed immersion if and only if the coefficients of
@@ -268,7 +275,7 @@ theorem isFaithful_corestrict_of_surjective
     (hV : IsFaithful (k := k) (H := H) (V := V)) :
     letI : Comodule k K V := Corestrict f.toCoalgHom
     IsFaithful (k := k) (H := K) (V := V) := by
-  rcases hV with ⟨d, b, hb⟩
+  rcases isFaithful_def.mp hV with ⟨d, b, hb⟩
   let _ : Comodule k K V := Corestrict f.toCoalgHom
   have hsurj : Function.Surjective (coordinateBialgHom (H := H) b) := by
     rw [← isClosedImmersion_coordinateGroupSchemeHom_iff]
