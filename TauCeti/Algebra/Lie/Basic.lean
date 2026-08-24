@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Lie.Basic
+public import Mathlib.Algebra.Lie.Subalgebra
 
 public section
 
@@ -17,6 +17,12 @@ This file supplies general constructions for Lie modules that are missing from M
 ## Main definitions
 
 * `TauCeti.LieModuleEquiv.ofBijective`: a bijective morphism of Lie modules is an equivalence.
+* `TauCeti.annihilator`: the Lie subalgebra of elements annihilating a vector in a Lie module.
+
+## Main results
+
+* `TauCeti.mem_annihilator`: membership in `annihilator v` is equivalent to vanishing of the Lie
+  action on `v`.
 -/
 
 namespace TauCeti
@@ -45,5 +51,34 @@ theorem ofBijective_apply (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective f) 
   exact LinearEquiv.ofBijective_apply _ _
 
 end LieModuleEquiv
+
+section Annihilator
+
+variable [LieAlgebra R L] [LieModule R L M]
+
+/-- The elements of `L` annihilating a fixed vector `v` form a Lie subalgebra: the bracket is
+linear in its left argument, and the Leibniz rule `lie_lie` closes the set under brackets. -/
+def annihilator (v : M) : LieSubalgebra R L where
+  carrier := {x : L | ⁅x, v⁆ = 0}
+  add_mem' {x y} hx hy := by
+    simp only [Set.mem_ofPred_eq] at hx hy ⊢
+    rw [add_lie, hx, hy, add_zero]
+  zero_mem' := by
+    simp only [Set.mem_ofPred_eq]
+    rw [zero_lie]
+  smul_mem' c x hx := by
+    simp only [Set.mem_ofPred_eq] at hx ⊢
+    rw [smul_lie, hx, smul_zero]
+  lie_mem' {x y} hx hy := by
+    simp only [Set.mem_ofPred_eq] at hx hy ⊢
+    rw [lie_lie, hx, hy, lie_zero, lie_zero, sub_zero]
+
+/-- Membership in the annihilator of a vector is exactly vanishing of the Lie action. -/
+@[simp]
+theorem mem_annihilator {v : M} {x : L} :
+    x ∈ (annihilator v : LieSubalgebra R L) ↔ ⁅x, v⁆ = 0 :=
+  Iff.rfl
+
+end Annihilator
 
 end TauCeti

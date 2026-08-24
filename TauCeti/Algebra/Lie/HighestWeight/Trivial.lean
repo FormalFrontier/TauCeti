@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.HighestWeight.Module
+public import TauCeti.Algebra.Lie.HighestWeight.Basic
 import TauCeti.Algebra.Lie.Submodule.Atom
 
 public section

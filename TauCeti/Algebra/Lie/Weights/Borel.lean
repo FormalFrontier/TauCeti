@@ -56,6 +56,8 @@ function.
   ideal of `𝔟`.
 * `TauCeti.negativeNilradical_sup_borelSubalgebra_eq_top`: the triangular decomposition
   `L = n⁻ + (H + n⁺)`, as an equality of submodules.
+* `TauCeti.exists_mem_negativeNilradical_add_mem_borelSubalgebra`: the corresponding elementwise
+  decomposition.
 
 ## Implementation notes
 
@@ -385,5 +387,13 @@ theorem negativeNilradical_sup_borelSubalgebra_eq_top :
       exact (congrArg LieSubmodule.toSubmodule (LieAlgebra.rootSpace_zero_eq K L H)).trans
         H.coe_toLieSubmodule
   simpa using htop
+
+/-- **The triangular decomposition, as a splitting of an element of `L`**: every `x : L` is the sum
+of an element of the negative nilradical and an element of the Borel subalgebra. -/
+theorem exists_mem_negativeNilradical_add_mem_borelSubalgebra (x : L) :
+    ∃ g ∈ negativeNilradical H b, ∃ y ∈ borelSubalgebra H b, g + y = x := by
+  refine Submodule.mem_sup.mp ?_
+  rw [negativeNilradical_sup_borelSubalgebra_eq_top]
+  trivial
 
 end TauCeti
