@@ -39,12 +39,16 @@ Brauer algebra turns into Brauer's relations:
   (`TauCeti.composeDiagram_permToBrauer_swap_capCup` and
   `TauCeti.composeDiagram_capCup_permToBrauer_swap`), with no loop closing up because a
   permutation diagram has neither a cap nor a cup.
-* the far-commutation relation `s e = e s` for a permutation `s` fixing both points of the pair
-  (`TauCeti.composeDiagram_permToBrauer_capCup_comm`): a permutation diagram that moves neither
-  `a` nor `b` slides past a cap-cup diagram on `{a, b}`.
+* the far-commutation relation `s e = e s` for a permutation `s` preserving the pair
+  (`TauCeti.composeDiagram_permToBrauer_capCup_comm`): a permutation diagram that does not move
+  `{a, b}` slides past a cap-cup diagram on `{a, b}`. It is the case of the unconditional slide
+  `TauCeti.composeDiagram_permToBrauer_capCup` in which the renamed pair is the pair again.
 * the mixed permutation/generator relation `σ e_{a,b} σ⁻¹ = e_{σ a, σ b}`
   (`TauCeti.composeDiagram_permToBrauer_conj_capCup`): conjugating a cap-cup diagram by a
   permutation diagram moves it to the renamed pair.
+* the adjacent mixed relation `e s e = e` for the transposition `s` of a point of the pair with a
+  point outside it (`TauCeti.composeDiagram_capCup_permToBrauer_swap_capCup` and
+  `TauCeti.middleLoopCount_capCup_permToBrauer_swap_capCup`), again with no loop closing up.
 
 The Brauer relation `s * s = 1` is `TauCeti.composeDiagram_permToBrauer` together with
 `Equiv.swap_mul_self`, and the braid relations are the same lemma applied to the braid relation
@@ -70,10 +74,14 @@ restated here.
   `e * e = δ • e`.
 * `TauCeti.composeDiagram_permToBrauer_swap_capCup`,
   `TauCeti.composeDiagram_capCup_permToBrauer_swap`: the relation `s * e = e = e * s`.
-* `TauCeti.composeDiagram_permToBrauer_capCup_comm`: a permutation diagram fixing both points of
-  the pair commutes with the generator.
+* `TauCeti.composeDiagram_permToBrauer_capCup`: a permutation diagram slides past a generator at
+  the cost of renaming its pair, and `TauCeti.composeDiagram_permToBrauer_capCup_comm`: a
+  permutation diagram preserving the pair commutes with the generator.
 * `TauCeti.composeDiagram_permToBrauer_conj_capCup`: conjugating a generator by a permutation
   diagram renames its pair.
+* `TauCeti.composeDiagram_capCup_permToBrauer_swap_capCup`,
+  `TauCeti.middleLoopCount_capCup_permToBrauer_swap_capCup`: the adjacent mixed relation
+  `e s e = e`.
 
 ## References
 
@@ -256,6 +264,7 @@ end BrauerDiagram
 
 /-- **A cap-cup diagram on a pair of distinct indices is not a permutation diagram**: it has a
 cap, and every arc of a permutation diagram goes through. -/
+@[simp]
 theorem capCup_ne_permToBrauer (hab : a ≠ b) (σ : Equiv.Perm (Fin k)) :
     capCup a b ≠ permToBrauer σ := by
   intro h
@@ -276,6 +285,7 @@ theorem capCup_comm (a b : Fin k) : capCup b a = capCup a b := by
 
 /-- **Two cap-cup diagrams agree exactly when they cap the same unordered pair**, once one of
 them is built on a pair of distinct indices. -/
+@[simp]
 theorem capCup_eq_capCup_iff (hab : a ≠ b) :
     capCup a b = capCup c d ↔ (a = c ∧ b = d) ∨ (a = d ∧ b = c) := by
   refine ⟨fun h => ?_, ?_⟩
@@ -311,8 +321,10 @@ theorem relabel_capCup (a b : Fin k) (σ : Equiv.Perm (Fin k)) :
   rw [capCup, capCup, hswap, relabel_def, Equiv.Perm.mul_def, Equiv.Perm.mul_def,
     ← PerfectMatching.congr_trans, hone, ← PerfectMatching.congr_trans]
 
-/-- **Renaming the top boundary by the transposition of the pair fixes a cap-cup diagram**: the
-cap and the cup of `capCup a b` are both the pair `{a, b}`, which the transposition preserves. -/
+/-- **Renaming the top boundary by the transposition of the pair fixes a cap-cup diagram**: for
+`a ≠ b` the cap and the cup of `capCup a b` are both the pair `{a, b}`, which the transposition
+preserves. On the degenerate pair the transposition is trivial (`Equiv.swap_self`) and the diagram
+is the identity diagram (`TauCeti.capCup_self`), so it is fixed for that reason instead. -/
 @[simp]
 theorem relabel_one_swap_capCup (a b : Fin k) :
     (capCup a b).relabel 1 (Equiv.swap a b) = capCup a b := by
@@ -450,25 +462,37 @@ theorem composeDiagram_capCup_permToBrauer_swap (a b : Fin k) :
   rw [composeDiagram_permToBrauer_right, Equiv.Perm.inv_def, Equiv.symm_swap,
     BrauerDiagram.relabel_swap_one_capCup]
 
-/-- **Far commutation**: a permutation diagram whose permutation fixes both points of the pair
-commutes with the cap-cup diagram on that pair, since it renames neither the cap nor the cup.
-This is the relation that makes a Brauer generator commute with a distant transposition: for
-`σ` a transposition disjoint from `{a, b}` it is `s e_{a,b} = e_{a,b} s`.
+/-- **Sliding a permutation diagram past a generator**: a permutation diagram moves through a
+cap-cup diagram from either side at the cost of renaming its pair, with no hypothesis on the
+permutation. This is the two-factor form of the mixed permutation/generator relation, of which
+`TauCeti.composeDiagram_permToBrauer_capCup_comm` is the case where the renaming gives the pair
+back.
 
 Not a `simp` lemma: `simp` reduces both sides, through
 `TauCeti.composeDiagram_permToBrauer_left` and `TauCeti.composeDiagram_permToBrauer_right`, to
-the two relabellings `(capCup a b).relabel 1 σ` and `(capCup a b).relabel σ⁻¹ 1`, so neither
-side is a simp-normal form of the other. -/
+the two relabellings `(capCup a b).relabel 1 σ` and `(capCup (σ a) (σ b)).relabel σ⁻¹ 1`, so
+neither side is a simp-normal form of the other. -/
+theorem composeDiagram_permToBrauer_capCup (a b : Fin k) (σ : Equiv.Perm (Fin k)) :
+    composeDiagram (permToBrauer σ) (capCup a b) =
+      composeDiagram (capCup (σ a) (σ b)) (permToBrauer σ) := by
+  rw [composeDiagram_permToBrauer_left, composeDiagram_permToBrauer_right,
+    ← BrauerDiagram.relabel_capCup a b σ, BrauerDiagram.relabel_relabel, inv_mul_cancel, one_mul]
+
+/-- **Far commutation**: a permutation diagram whose permutation preserves the pair commutes with
+the cap-cup diagram on that pair, since it renames neither the cap nor the cup. This is the
+relation that makes a Brauer generator commute with a distant transposition: for `σ` a
+transposition disjoint from `{a, b}` it is `s e_{a,b} = e_{a,b} s`. Only the unordered pair has to
+be preserved, so the transposition of the pair itself is covered as well.
+
+Not a `simp` lemma, for the reason given for `TauCeti.composeDiagram_permToBrauer_capCup`. -/
 theorem composeDiagram_permToBrauer_capCup_comm (a b : Fin k) {σ : Equiv.Perm (Fin k)}
-    (ha : σ a = a) (hb : σ b = b) :
+    (h : ({σ a, σ b} : Set (Fin k)) = {a, b}) :
     composeDiagram (permToBrauer σ) (capCup a b) =
       composeDiagram (capCup a b) (permToBrauer σ) := by
-  have ha' : σ⁻¹ a = a := by rw [Equiv.Perm.inv_def, Equiv.symm_apply_eq, ha]
-  have hb' : σ⁻¹ b = b := by rw [Equiv.Perm.inv_def, Equiv.symm_apply_eq, hb]
-  have h : ((capCup a b).relabel σ⁻¹ σ⁻¹).relabel 1 σ = (capCup a b).relabel σ⁻¹ 1 := by
-    rw [BrauerDiagram.relabel_relabel, one_mul, mul_inv_cancel]
-  rw [composeDiagram_permToBrauer_left, composeDiagram_permToBrauer_right, ← h,
-    BrauerDiagram.relabel_capCup, ha', hb']
+  rw [composeDiagram_permToBrauer_capCup]
+  rcases Set.pair_eq_pair_iff.mp h with ⟨ha, hb⟩ | ⟨ha, hb⟩
+  · rw [ha, hb]
+  · rw [ha, hb, capCup_comm]
 
 /-- **The mixed permutation/generator relation**: conjugating a cap-cup diagram by a permutation
 diagram moves it to the cap-cup diagram on the renamed pair. Taking `σ` to fix `a` and `b`
@@ -482,5 +506,71 @@ theorem composeDiagram_permToBrauer_conj_capCup (a b : Fin k) (σ : Equiv.Perm (
       capCup (σ a) (σ b) := by
   rw [composeDiagram_permToBrauer_right, composeDiagram_permToBrauer_left, inv_inv,
     BrauerDiagram.relabel_relabel, one_mul, mul_one, BrauerDiagram.relabel_capCup]
+
+/-- **The adjacent mixed relation `e s e = e` on the diagram basis**: a cap-cup diagram absorbs
+the diagram of a transposition that exchanges one point of its pair with a point outside the pair,
+when that transposition diagram is stacked between two copies of it. For an adjacent pair this is
+Brauer's relation `eᵢ sᵢ₊₁ eᵢ = eᵢ`; nothing needs the pair to be adjacent, so the third point `c`
+is an arbitrary point off `{a, b}`.
+
+The strand carrying the relation is the one starting at the bottom point `c`: it runs up the
+lower composite to the middle point `b`, back along the cap of the upper copy to `a`, along the
+cup of the lower composite to `c`, and out at the top point `c`, crossing the middle boundary
+three times. Together with `TauCeti.middleLoopCount_capCup_permToBrauer_swap_capCup` and
+`TauCeti.middleLoopCount_permToBrauer_left`, which say that no loop closes up in either middle,
+this is the relation `e * (s * e) = e` for the loop-weighted multiplication of the diagram basis.
+
+Not a `simp` lemma: `simp` rewrites the inner composite into a relabelling, through
+`TauCeti.composeDiagram_permToBrauer_left`, so the left-hand side is not in simp-normal form. -/
+theorem composeDiagram_capCup_permToBrauer_swap_capCup (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) :
+    composeDiagram (capCup a b) (composeDiagram (permToBrauer (Equiv.swap b c)) (capCup a b)) =
+      capCup a b := by
+  rw [composeDiagram_permToBrauer_left]
+  set M := (capCup a b).relabel 1 (Equiv.swap b c) with hM
+  have hMcap : M.val (Sum.inl a) = Sum.inl b := by
+    rw [hM]
+    simp [capCup_val_inl_left hab, Equiv.Perm.one_def]
+  have hMthrough : M.val (Sum.inl c) = Sum.inr b := by
+    rw [hM]
+    simp [capCup_val_inl_of_ne hac.symm hbc.symm, Equiv.Perm.one_def]
+  have hMcup : M.val (Sum.inr a) = Sum.inr c := by
+    rw [hM]
+    simp [Equiv.swap_apply_of_ne_of_ne hab hac, capCup_val_inr_left hab, Equiv.Perm.one_def]
+  refine (eq_capCup_iff hab).mpr ⟨composeDiagram_val_inl_eq_inl_of_cap_lower _ _ hMcap,
+    composeDiagram_val_inr_eq_inr_of_cup_upper _ _ (capCup_val_inr_left hab), fun i hia hib => ?_⟩
+  rcases eq_or_ne i c with rfl | hic
+  · exact (composeDiagram_val_eq_iff _ _).mpr (Or.inr ⟨Sum.inl b, Sum.inl i,
+      by rw [stackStart_inl, hMthrough, Sum.elim_inr],
+      (Relation.ReflTransGen.single
+          (by rw [stackStep_inl, capCup_val_inl_right hab, Sum.elim_inl])).tail
+        (by rw [stackStep_inr, hMcup, Sum.elim_inr]),
+      by rw [stackStep_inl, capCup_val_inl_of_ne hia hib, Sum.elim_inr]⟩)
+  · refine composeDiagram_val_inl_eq_inr_of_through _ _ ?_ (capCup_val_inl_of_ne hia hib)
+    rw [hM]
+    simp [capCup_val_inl_of_ne hia hib, Equiv.swap_apply_of_ne_of_ne hib hic, Equiv.Perm.one_def]
+
+/-- **The adjacent mixed relation closes no loop**: stacking a cap-cup diagram above the composite
+of the transposition diagram with that same cap-cup diagram closes up no loop in the middle. The
+only middle point keeping both of its arcs in the middle is `a`, since the lower composite cups
+`{a, c}` while the upper copy caps `{a, b}`; the cap of the upper copy runs from `a` to `b`, where
+the arc of the lower composite leaves for the boundary, so `a` lies on no loop.
+
+Not a `simp` lemma, for the reason given for
+`TauCeti.composeDiagram_capCup_permToBrauer_swap_capCup`. -/
+theorem middleLoopCount_capCup_permToBrauer_swap_capCup (hab : a ≠ b) (hac : a ≠ c)
+    (hbc : b ≠ c) :
+    middleLoopCount (capCup a b)
+      (composeDiagram (permToBrauer (Equiv.swap b c)) (capCup a b)) = 0 := by
+  rw [composeDiagram_permToBrauer_left]
+  set M := (capCup a b).relabel 1 (Equiv.swap b c) with hM
+  have hMthrough : M.IsThrough (Sum.inr b) := by
+    rw [BrauerDiagram.isThrough_def, hM]
+    simp [capCup_val_inr_of_ne hac.symm hbc.symm, Equiv.Perm.one_def]
+  refine middleLoopCount_eq_zero_iff.mpr fun x hx =>
+    not_onMiddleLoop_of_isThrough_right (D₁ := capCup a b) hMthrough ?_
+  have hcap := ((isMiddleVertex_def _ _ _).mp hx.isMiddleVertex).1
+  rcases (BrauerDiagram.isCap_capCup_inl_iff hab).mp hcap with rfl | rfl
+  · exact hx.reflTransGen (.single ((middleAdj_def _ _ _ _).mpr (Or.inl (capCup_val_inl_left hab))))
+  · exact hx
 
 end TauCeti
