@@ -65,6 +65,16 @@ theorem exists_cartan_avoiding_roots [Infinite K] [LieModule.LinearWeights K H L
       (Weight.coe_toLinear_ne_zero_iff.mpr (H.isNonZero_coe_root α))
   exact ⟨h, fun α hα ↦ hh ⟨α, hα⟩⟩
 
+omit [FiniteDimensional K L] in
+private theorem engel_toSubmodule_eq_genWeightSpaceOf_zero {h : H} :
+    (LieSubalgebra.engel K (h : L)).toSubmodule =
+      (genWeightSpaceOf L 0 h).toSubmodule := by
+  ext x
+  rw [LieSubalgebra.mem_toSubmodule, LieSubmodule.mem_toSubmodule,
+    LieSubalgebra.mem_engel_iff, LieModule.mem_genWeightSpaceOf]
+  simp only [zero_smul, sub_zero, LieSubalgebra.toEnd_eq]
+  rfl
+
 /-- **A root-regular Cartan element has Engel subalgebra equal to the Cartan subalgebra.** The
 Engel subalgebra is the generalized zero eigenspace of `ad h`. Decomposing that eigenspace into
 Cartan weight spaces leaves only the zero weight: a nonzero weight is a root, and hence does not
@@ -91,7 +101,8 @@ theorem engel_coe_eq_cartan_of_forall_root_apply_ne_zero {h : H}
     le_antisymm hN_le (genWeightSpace_le_genWeightSpaceOf L h 0)
   apply LieSubalgebra.toSubmodule_injective
   calc
-    (LieSubalgebra.engel K (h : L)).toSubmodule = N.toSubmodule := rfl
+    (LieSubalgebra.engel K (h : L)).toSubmodule = N.toSubmodule :=
+      engel_toSubmodule_eq_genWeightSpaceOf_zero H
     _ = (rootSpace H 0).toSubmodule := congrArg LieSubmodule.toSubmodule hN
     _ = H.toSubmodule := congrArg LieSubmodule.toSubmodule (rootSpace_zero_eq K L H)
 
