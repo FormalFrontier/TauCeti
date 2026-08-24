@@ -45,6 +45,8 @@ are used through their characteristic equations `TauCeti.Wkp.lowerOrder_zero`,
 ## Main declarations
 
 * `TauCeti.IteratedGradient`: the basis-free target of an iterated weak derivative.
+* `TauCeti.iteratedGradientChain`: the corresponding classical derivative fields of a smooth
+  scalar function.
 * `TauCeti.Wkp`: `W^{k,p}(Ω)`, with `Wkp 0 = Lᵖ(Ω)` and `Wkp 1 = W1p`.
 * `TauCeti.Wkp.lowerOrder`: the continuous projection `W^{k+1,p} → W^{k,p}`.
 * `TauCeti.Wkp.iteratedGradient`: the highest weak derivative of a positive-order Sobolev function.
@@ -116,6 +118,52 @@ noncomputable instance [CompleteSpace E] (j : ℕ) : CompleteSpace (IteratedGrad
       exact inferInstance
 
 end IteratedGradient
+
+section IteratedGradientChain
+
+variable {F : Type u} [NormedAddCommGroup F] [InnerProductSpace ℝ F] [CompleteSpace F]
+
+/-- The classical derivative fields of a smooth scalar function, in the basis-free
+nested-linear-map types used by `TauCeti.Wkp`. Index zero is the gradient and each successor is
+the Fréchet derivative of the preceding field. -/
+noncomputable def iteratedGradientChain (f : F → ℝ) :
+    (j : ℕ) → F → IteratedGradient F j
+  | 0 => fun x => gradient f x
+  | j + 1 => fderiv ℝ (iteratedGradientChain f j)
+
+@[simp]
+theorem iteratedGradientChain_zero (f : F → ℝ) :
+    iteratedGradientChain f 0 = fun x => gradient f x :=
+  by rw [iteratedGradientChain]
+
+@[simp]
+theorem iteratedGradientChain_succ (f : F → ℝ) (j : ℕ) :
+    iteratedGradientChain f (j + 1) = fderiv ℝ (iteratedGradientChain f j) :=
+  by rw [iteratedGradientChain]
+
+/-- Every field in the iterated-gradient chain of a smooth function is smooth. -/
+theorem contDiff_iteratedGradientChain {f : F → ℝ} (hf : ContDiff ℝ ∞ f) :
+    ∀ j, ContDiff ℝ ∞ (iteratedGradientChain f j)
+  | 0 => by
+      rw [iteratedGradientChain_zero]
+      exact (InnerProductSpace.toDual ℝ F).symm.contDiff.comp
+        (contDiff_infty_iff_fderiv.mp hf).2
+  | j + 1 => by
+      rw [iteratedGradientChain_succ]
+      exact (contDiff_infty_iff_fderiv.mp (contDiff_iteratedGradientChain hf j)).2
+
+/-- Every field in the iterated-gradient chain of a compactly supported function has compact
+support. -/
+theorem hasCompactSupport_iteratedGradientChain {f : F → ℝ} (hf : HasCompactSupport f) :
+    ∀ j, HasCompactSupport (iteratedGradientChain f j)
+  | 0 => by
+      rw [iteratedGradientChain_zero]
+      exact (hf.fderiv ℝ).comp_left (map_zero _)
+  | j + 1 => by
+      rw [iteratedGradientChain_succ]
+      exact (hasCompactSupport_iteratedGradientChain hf j).fderiv ℝ
+
+end IteratedGradientChain
 
 /-- The bundled data used to iterate weak-derivative graph spaces.  Its `j`th stage carries the
 space of order `j + 1` and its highest derivative projection. -/
@@ -266,6 +314,10 @@ theorem lowerOrder_zero (u : Wkp mu Omega p 1) : lowerOrder 0 u = W1p.value u :=
     simpa only [lowerOrder, lowerOrderL, sobolevStage, firstSobolevStage] using
       W1p.valueL_apply u
 
+/-- At first order, the generic value projection is the `W1p` value projection. -/
+theorem value_one (u : Wkp mu Omega p 1) : value 1 u = W1p.value u := by
+  simp only [value_succ, value_zero, lowerOrder_zero]
+
 /-- At first order, the generic highest derivative is the `W1p` weak gradient. -/
 @[simp]
 theorem iteratedGradient_zero (u : Wkp mu Omega p 1) :
@@ -303,7 +355,7 @@ through the real inner product. -/
 theorem hasWeakFDerivOn_value (u : Wkp mu Omega p 1) :
     HasWeakFDerivOn mu Omega (value 1 u)
       (fun x => innerSL ℝ (iteratedGradient 0 u x)) := by
-  simpa only [value_succ, value_zero, lowerOrder_zero, iteratedGradient_zero] using
+  simpa only [value_one, iteratedGradient_zero] using
     W1p.hasWeakFDerivOn u
 
 /-- Construct an order-`k+2` Sobolev function from an order-`k+1` function and a weak
@@ -357,8 +409,7 @@ Successive uniqueness of weak derivatives determines every higher component. -/
 @[ext]
 theorem ext : ∀ (k : ℕ) {u v : Wkp mu Omega p k}, value k u = value k v → u = v
   | 0, _, _, h => by simpa only [value_zero] using h
-  | 1, _, _, h => W1p.ext_value (by
-      simpa only [value_succ, value_zero, lowerOrder_zero] using h)
+  | 1, _, _, h => W1p.ext_value (by simpa only [value_one] using h)
   | k + 2, _, _, h => ext_lowerOrder (k + 1) (ext (k + 1) (by
       simpa only [value_succ] using h))
 

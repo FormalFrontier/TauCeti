@@ -69,6 +69,33 @@ theorem testFunctionLp_smul (q : ENNReal) (c : ℝ) (phi : 𝓓(Omega, ℝ)) :
   apply MemLp.toLp_congr
   exact ae_of_all _ fun x => congrFun (FunLike.coe_smul c phi) x
 
+section Injectivity
+
+variable {F : Type*} [MeasurableSpace F] [NormedAddCommGroup F] [NormedSpace ℝ F]
+  [BorelSpace F] {nu : Measure F} [nu.IsAddHaarMeasure] {U : Opens F}
+
+/-- Passing from a test function to its `Lᵠ` class is injective for an additive Haar measure. -/
+theorem testFunctionLp_injective (q : ENNReal) :
+    Function.Injective (testFunctionLp (mu := nu) (Omega := U) q) := by
+  intro phi psi hLp
+  have hae : (phi : F → ℝ) =ᵐ[nu.restrict U] (psi : F → ℝ) := by
+    filter_upwards [testFunctionLp_apply_ae (mu := nu) q phi,
+      testFunctionLp_apply_ae (mu := nu) q psi] with x hx hy
+    rw [← hx, ← hy, hLp]
+  have hsubset : {x | (phi : F → ℝ) x ≠ psi x} ⊆ (U : Set F) := by
+    intro x hx
+    by_contra hxO
+    exact hx (by rw [image_eq_zero_of_notMem_tsupport fun hc => hxO (phi.tsupport_subset hc),
+      image_eq_zero_of_notMem_tsupport fun hc => hxO (psi.tsupport_subset hc)])
+  have hzero : nu {x | (phi : F → ℝ) x ≠ psi x} = 0 := by
+    have := ae_iff.1 hae
+    rwa [Measure.restrict_apply' U.isOpen.measurableSet,
+      Set.inter_eq_self_of_subset_left hsubset] at this
+  have hempty := (isOpen_ne_fun phi.continuous psi.continuous).measure_eq_zero_iff nu |>.1 hzero
+  exact TestFunction.ext fun x => not_not.1 fun hx => Set.eq_empty_iff_forall_notMem.1 hempty x hx
+
+end Injectivity
+
 section Gradient
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
@@ -76,12 +103,18 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteS
 
 /-! ### The gradient of a test function -/
 
+/-- The gradient of a test function is smooth. Here `gradient` unfolds as the composition of
+`fderiv` with the inverse Riesz isomorphism. -/
+theorem contDiff_gradient_testFunction (phi : 𝓓(Omega, ℝ)) :
+    ContDiff ℝ ∞ fun x => ∇ (phi : E → ℝ) x :=
+  (InnerProductSpace.toDual ℝ E).symm.contDiff.comp
+    (contDiff_infty_iff_fderiv.mp phi.contDiff).2
+
 /-- The gradient of a test function is continuous. -/
 @[fun_prop]
 theorem continuous_gradient_testFunction (phi : 𝓓(Omega, ℝ)) :
     Continuous fun x => ∇ (phi : E → ℝ) x :=
-  (InnerProductSpace.toDual ℝ E).symm.continuous.comp
-    (phi.contDiff.continuous_fderiv (by simp))
+  (contDiff_gradient_testFunction phi).continuous
 
 /-- The gradient of a test function has compact support. -/
 theorem hasCompactSupport_gradient_testFunction (phi : 𝓓(Omega, ℝ)) :
