@@ -72,12 +72,16 @@ private theorem append_eq_dite {α : Type*} {k l : ℕ} (u : Fin k → α) (v : 
     Fin.append u v i = if hi : i.1 < k then u ⟨i.1, hi⟩ else v ⟨i.1 - k, by omega⟩ := by
   induction i using Fin.addCases with
   | left j =>
-      rw [Fin.append_left, dite_eq_left (show (Fin.castAdd l j).1 < k from j.isLt)]
+      have hj : (Fin.castAdd l j).1 < k := j.isLt
+      rw [Fin.append_left, dite_eq_left hj]
       rfl
   | right j =>
-      rw [Fin.append_right,
-        dite_eq_right (show ¬(Fin.natAdd k j).1 < k by simp only [Fin.val_natAdd]; omega)]
-      exact congrArg v (Fin.ext (show (j : ℕ) = k + (j : ℕ) - k by omega))
+      have hj : ¬(Fin.natAdd k j).1 < k := by
+        simp only [Fin.val_natAdd]
+        omega
+      have hj_sub : (j : ℕ) = k + (j : ℕ) - k := by omega
+      rw [Fin.append_right, dite_eq_right hj]
+      exact congrArg v (Fin.ext hj_sub)
 
 /-- The `(p, d)` summand of the Taylor expansion of a coderivation with components `F`, on tensor
 words of length `n`: collapse the `d` letters at position `p` to the single letter that `F`
@@ -88,8 +92,9 @@ It is zero unless the collapsed block is nonempty and fits, that is unless `0 < 
 private noncomputable def coderivSummand (F : ReducedTensorWords R M →ₗ[R] M) (n p d : ℕ) :
     TensorPower R n M →ₗ[R] ReducedTensorWords R M :=
   if h : 0 < d ∧ p + d ≤ n then
+    let hlength : p + (1 + (n - p - d)) = n + 1 - d := by omega
     of R M ⟨n + 1 - d, by omega⟩ ∘ₗ
-      (TensorPower.cast R M (show p + (1 + (n - p - d)) = n + 1 - d by omega)).toLinearMap ∘ₗ
+      (TensorPower.cast R M hlength).toLinearMap ∘ₗ
       (TensorPower.mulEquiv (R := R) (M := M)).toLinearMap ∘ₗ
       LinearMap.lTensor (TensorPower R p M)
         ((TensorPower.mulEquiv (R := R) (M := M)).toLinearMap ∘ₗ
@@ -126,8 +131,10 @@ private theorem coderivSummand_tprod (F : ReducedTensorWords R M →ₗ[R] M) {n
     exact congrArg x (Fin.ext (by simp only [Fin.val_castLE]; omega))
   · rw [dite_eq_right h₁, dite_eq_right h₁, append_eq_dite]
     by_cases h₂ : i.1 = p
-    · rw [dite_eq_left (show i.1 - p < 1 by omega), dite_eq_left h₂]
-    · rw [dite_eq_right (show ¬i.1 - p < 1 by omega), dite_eq_right h₂]
+    · have hi_sub : i.1 - p < 1 := by omega
+      rw [dite_eq_left hi_sub, dite_eq_left h₂]
+    · have hi_sub : ¬i.1 - p < 1 := by omega
+      rw [dite_eq_right hi_sub, dite_eq_right h₂]
       exact congrArg x (by simp only [Fin.mk.injEq]; omega)
 
 
@@ -300,7 +307,9 @@ private theorem sum_range_triangle {N : Type*} [AddCommMonoid N] (K : ℕ) (g : 
   rw [← Finset.sum_Ico_Ico_comm 0 K fun i j ↦ g i (j - i)]
   refine Finset.sum_congr rfl fun i hi ↦ ?_
   simp only [Finset.mem_Ico] at hi
-  rw [show Finset.Ico i K = Finset.Ico (0 + i) (K - i + i) by congr 1 <;> omega,
+  have hIco : Finset.Ico i K = Finset.Ico (0 + i) (K - i + i) := by
+    congr 1 <;> omega
+  rw [hIco,
     ← Finset.sum_Ico_add' (fun j ↦ g i (j - i)) 0 (K - i) i]
   simp only [Nat.add_sub_cancel]
   refine Finset.sum_subset (Finset.Ico_subset_Ico (le_refl 0) (by omega)) fun q _ hq ↦ ?_
@@ -372,7 +381,8 @@ theorem isCoderivation_coderiv (F : ReducedTensorWords R M →ₗ[R] M) :
     rw [Finset.sum_comm]
     refine Finset.sum_congr rfl fun c hc ↦ Finset.sum_congr rfl fun d _ ↦ ?_
     simp only [Finset.mem_range] at hc
-    rw [show c + (p - c) = p by omega]
+    have hcp : c + (p - c) = p := by omega
+    rw [hcp]
 
 
 /-- The letter of a spliced word vanishes unless the whole block was collapsed, since otherwise

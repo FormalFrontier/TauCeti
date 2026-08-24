@@ -155,7 +155,8 @@ private theorem deconcatenation_splice_left {n : ℕ} (x : Fin n → M) {a b p d
     refine of_tprod_congr R M _ _ rfl fun j ↦ ?_
     have hj := j.isLt
     simp only [Fin.val_cast]
-    rw [dite_eq_left (show (0 + j.1) < p by omega)]
+    have hjp : 0 + j.1 < p := by omega
+    rw [dite_eq_left hjp]
     exact congrArg x (by simp only [Fin.mk.injEq]; omega)
   have hsnd : subword R
       (fun j : Fin (b + 1 - d) ↦
@@ -209,8 +210,9 @@ private theorem deconcatenation_splice_right {n : ℕ} (x : Fin n → M) {a b p 
     refine of_tprod_congr R M _ _ (by omega) fun j ↦ ?_
     have hj := j.isLt
     simp only [Fin.val_cast]
-    rw [dite_eq_right (show ¬(c + j.1) < p by omega),
-      dite_eq_right (show ¬(c + j.1) = p by omega)]
+    have hjp : ¬(c + j.1) < p := by omega
+    have hjp_ne : ¬(c + j.1) = p := by omega
+    rw [dite_eq_right hjp, dite_eq_right hjp_ne]
     exact congrArg x (by simp only [Fin.mk.injEq]; omega)
   rw [hfst, hsnd]
 
@@ -249,10 +251,12 @@ private theorem deconcatenation_splice_of_le {n : ℕ} (x : Fin n → M) {a b p 
         by_contra hge
         exact hc' (Finset.mem_Ico.2 ⟨by omega, (Finset.mem_Ico.1 hc).2⟩)
       rw [splice_eq_zero_of_block_lt_add R x e hlt, TensorProduct.zero_tmul]
+    have hIco :
+        Finset.Ico (p + d) b = Finset.Ico (p + 1 + (d - 1)) (b + 1 - d + (d - 1)) := by
+      congr 1 <;> omega
     rw [Finset.range_eq_Ico,
       ← Finset.sum_subset (Finset.Ico_subset_Ico (Nat.zero_le (p + d)) (le_refl b)) hzero,
-      show Finset.Ico (p + d) b = Finset.Ico (p + 1 + (d - 1)) (b + 1 - d + (d - 1)) by
-        congr 1 <;> omega,
+      hIco,
       ← Finset.sum_Ico_add'
         (fun c ↦ splice R x a c p d e ⊗ₜ[R] subword R x (a + c) (b - c)) (p + 1) (b + 1 - d)
         (d - 1)]
