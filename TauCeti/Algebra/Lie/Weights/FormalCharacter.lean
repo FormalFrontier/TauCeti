@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.MonoidAlgebra.Defs
-public import TauCeti.Algebra.Lie.Prod
 public import TauCeti.Algebra.Lie.Weights.Integrality
+public import TauCeti.Algebra.Lie.Weights.Prod
 public import TauCeti.Algebra.Lie.Weights.WeylInvariance
 public import TauCeti.LinearAlgebra.Dimension.DirectSum
 
@@ -22,11 +22,11 @@ as an element of the integral group algebra `ℤ[Module.Dual K L]` of the dual o
 generating function of the weight-space dimensions, and the object in which the Weyl character
 formula is an identity.
 
-The multiplicities are Mathlib's *generalized* weight spaces `LieModule.genWeightSpace`. For the
-Cartan subalgebra of a Killing-semisimple Lie algebra these are honest simultaneous eigenspaces
-(`TauCeti.genWeightSpace_eq_weightSpace`), so the coefficients really are the honest weight
-multiplicities; that identification is recorded below rather than built into the definition, which
-needs no semisimplicity.
+The multiplicities are Mathlib's *generalized* weight spaces `LieModule.genWeightSpace`. Over an
+algebraically closed field of characteristic zero, for the Cartan subalgebra of a Killing-semisimple
+Lie algebra, these are honest simultaneous eigenspaces (`TauCeti.genWeightSpace_eq_weightSpace`), so
+the coefficients really are the honest weight multiplicities; that identification is recorded
+below rather than built into the definition, which needs no semisimplicity.
 
 ## The group algebra as the carrier
 
@@ -45,17 +45,20 @@ multiplicativity on tensor products expressible.
 
 * `TauCeti.formalCharacter_coeff`: its coefficients are the weight-space dimensions.
 * `TauCeti.formalCharacter_congr`: isomorphic modules have the same formal character.
-* `TauCeti.sum_formalCharacter_coeff_eq_finrank`: the coefficients sum to `dim M`, and
+* `TauCeti.sum_formalCharacter_coeff_eq_finrank`: when `M` is triangularizable, the coefficients
+  sum to `dim M`, and
   `TauCeti.formalCharacter_eq_zero_iff` reads off that the character vanishes only for the zero
   module.
 * `TauCeti.formalCharacter_prod`: **additivity.** The character of a product of modules is the sum
   of their characters. Its weight-theoretic input is
-  `TauCeti.mem_genWeightSpace_prod_iff`, that a vector of a product is a weight vector exactly when
-  both of its components are, with `TauCeti.genWeightSpace_prod_eq_bot_iff` and
+  `TauCeti.mem_genWeightSpace_prod_iff`, that a vector lies in a generalized weight space of a
+  product exactly when both components lie in the corresponding generalized weight spaces, with
+  `TauCeti.genWeightSpace_prod_eq_bot_iff` and
   `TauCeti.instLinearWeightsProd` the consequences a product of modules needs to have a character
   at all.
-* `TauCeti.formalCharacter_coeff_eq_finrank_weightSpace`: over a Cartan subalgebra of a
-  Killing-semisimple Lie algebra the coefficients are the *honest* weight multiplicities.
+* `TauCeti.formalCharacter_coeff_eq_finrank_weightSpace`: over an algebraically closed field of
+  characteristic zero, for a Cartan subalgebra of a Killing-semisimple Lie algebra, the coefficients
+  are the *honest* weight multiplicities.
 * `TauCeti.isIntegralWeight_of_formalCharacter_coeff_ne_zero`: the character is supported on
   integral weights.
 * `TauCeti.formalCharacter_coeff_weylGroup_smul`: **Weyl invariance** of the character.
@@ -96,17 +99,38 @@ variable (K : Type u) (L : Type v) (M : Type w) [Field K] [LieRing L] [LieAlgebr
   [LieRing.IsNilpotent L] [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
   [LinearWeights K L M] [FiniteDimensional K M]
 
+omit [LinearWeights K L M] in
+/-- A generalized weight space is trivial exactly when its dimension is zero. -/
+private theorem genWeightSpace_eq_bot_iff_finrank_eq_zero (χ : L → K) :
+    genWeightSpace M χ = ⊥ ↔ finrank K (genWeightSpace M χ) = 0 := by
+  rw [← LieSubmodule.toSubmodule_eq_bot, ← Submodule.finrank_eq_zero, finrank_toSubmodule]
+
+omit [FiniteDimensional K M] in
+/-- A nonzero generalized weight space determines a bundled weight whose underlying linear form is
+the given one. -/
+theorem exists_weight_coe_eq {χ : Dual K L} (h : genWeightSpace M (χ : L → K) ≠ ⊥) :
+    ∃ w : Weight K L M, (w : Dual K L) = χ :=
+  ⟨⟨(χ : L → K), h⟩, by ext x; simp⟩
+
+omit [FiniteDimensional K M] in
+/-- Coercion of bundled linear weights to the dual is injective. -/
+private theorem weight_coe_injective :
+    Function.Injective fun w : Weight K L M ↦ (w : Dual K L) := fun w w' h ↦ by
+  ext x
+  exact LinearMap.congr_fun h x
+
 /-- The dimensions of the generalized weight spaces of a finite-dimensional module vanish off the
 image of the finite type of its weights, hence for all but finitely many linear forms. -/
-theorem finite_support_finrank_genWeightSpace :
+private theorem finite_support_finrank_genWeightSpace :
     (Function.support
       fun χ : Dual K L ↦ (finrank K (genWeightSpace M (χ : L → K)) : ℤ)).Finite := by
   refine Set.Finite.subset (Set.finite_range fun w : Weight K L M ↦ (w : Dual K L)) fun χ hχ ↦ ?_
   rw [Function.mem_support] at hχ
-  have hne : genWeightSpace M (χ : L → K) ≠ ⊥ := fun h ↦ hχ (by
-    rw [h, ← finrank_toSubmodule, LieSubmodule.bot_toSubmodule]
-    simp)
-  exact ⟨⟨(χ : L → K), hne⟩, by ext x; rfl⟩
+  have hne : genWeightSpace M (χ : L → K) ≠ ⊥ := by
+    intro h
+    apply hχ
+    exact_mod_cast (genWeightSpace_eq_bot_iff_finrank_eq_zero K L M χ).mp h
+  exact exists_weight_coe_eq K L M hne
 
 /-- **The formal character** of a finite-dimensional Lie module: the element of the integral group
 algebra of `Module.Dual K L` whose coefficient at `χ` is the dimension of the `χ`-weight space of
@@ -130,8 +154,51 @@ theorem formalCharacter_coeff_nonneg (χ : Dual K L) : 0 ≤ (formalCharacter K 
 /-- A coefficient of the formal character vanishes exactly at a linear form that is not a weight. -/
 theorem formalCharacter_coeff_eq_zero_iff {χ : Dual K L} :
     (formalCharacter K L M).coeff χ = 0 ↔ genWeightSpace M (χ : L → K) = ⊥ := by
-  rw [formalCharacter_coeff, Int.natCast_eq_zero, ← finrank_toSubmodule,
-    Submodule.finrank_eq_zero, LieSubmodule.toSubmodule_eq_bot]
+  rw [formalCharacter_coeff, Int.natCast_eq_zero,
+    genWeightSpace_eq_bot_iff_finrank_eq_zero]
+
+/-- **The formal character as a sum of basis elements.** Each bundled weight contributes its
+generalized weight-space dimension at the corresponding element of the dual. -/
+theorem formalCharacter_eq_sum_single :
+    formalCharacter K L M =
+      ∑ w : Weight K L M,
+        AddMonoidAlgebra.single (w : Dual K L) (finrank K (genWeightSpace M w) : ℤ) := by
+  classical
+  refine AddMonoidAlgebra.ext (Finsupp.ext fun χ ↦ ?_)
+  rw [formalCharacter_coeff]
+  by_cases hχ : genWeightSpace M (χ : L → K) = ⊥
+  · have hnone : ∀ w : Weight K L M, (w : Dual K L) ≠ χ := fun w hw ↦ by
+      apply w.genWeightSpace_ne_bot
+      have hfun : (w : L → K) = (χ : L → K) :=
+        congrArg (fun f : Dual K L ↦ (f : L → K)) hw
+      simpa only [hfun] using hχ
+    rw [(genWeightSpace_eq_bot_iff_finrank_eq_zero K L M _).mp hχ]
+    simp [hnone]
+  · obtain ⟨w, rfl⟩ := exists_weight_coe_eq K L M hχ
+    have hinj := weight_coe_injective K L M
+    have hcoeff :
+        (∑ c : Weight K L M,
+          AddMonoidAlgebra.single (c : Dual K L)
+            (finrank K (genWeightSpace M c) : ℤ)).coeff (w : Dual K L) =
+          ∑ c : Weight K L M,
+            (AddMonoidAlgebra.single (c : Dual K L)
+              (finrank K (genWeightSpace M c) : ℤ)).coeff (w : Dual K L) := by
+      simp
+    rw [hcoeff, Finset.sum_eq_single w]
+    · change (finrank K (genWeightSpace M ((w : Dual K L) : L → K)) : ℤ) =
+          (Finsupp.single (w : Dual K L) (finrank K (genWeightSpace M w) : ℤ))
+            (w : Dual K L)
+      rw [Finsupp.single_eq_same]
+      exact_mod_cast congrArg (fun ψ : L → K ↦ finrank K (genWeightSpace M ψ)) Weight.coe_coe
+    · intro c _ hcw
+      change (Finsupp.single (c : Dual K L) (finrank K (genWeightSpace M c) : ℤ))
+          (w : Dual K L) = 0
+      simp only [Finsupp.single_apply]
+      split
+      · rename_i h
+        exact (hcw (hinj h)).elim
+      · rfl
+    · simp
 
 /-- **The formal character is an isomorphism invariant.** An equivalence of Lie modules carries the
 `χ`-weight space of one onto the `χ`-weight space of the other. -/
@@ -162,20 +229,18 @@ spaces are the summands of an internal direct sum decomposition
 theorem sum_formalCharacter_coeff_eq_finrank :
     ((formalCharacter K L M).coeff.sum fun _ n ↦ n) = (finrank K M : ℤ) := by
   classical
-  have hinj : Function.Injective fun w : Weight K L M ↦ (w : Dual K L) := fun w w' h ↦ by
-    ext x
-    exact congrFun (congrArg (fun f : Dual K L ↦ (f : L → K)) h) x
+  have hinj := weight_coe_injective K L M
   have hsub : (formalCharacter K L M).coeff.support ⊆
       Finset.univ.image fun w : Weight K L M ↦ (w : Dual K L) := fun χ hχ ↦ by
     rw [Finsupp.mem_support_iff] at hχ
-    have hne : genWeightSpace M (χ : L → K) ≠ ⊥ := fun h ↦
-      hχ (formalCharacter_coeff_eq_zero_iff.mpr h)
-    exact Finset.mem_image.mpr ⟨⟨(χ : L → K), hne⟩, Finset.mem_univ _, by ext x; rfl⟩
+    have hne := (not_congr formalCharacter_coeff_eq_zero_iff).mp hχ
+    obtain ⟨w, rfl⟩ := exists_weight_coe_eq K L M hne
+    exact Finset.mem_image.mpr ⟨w, Finset.mem_univ _, rfl⟩
   rw [Finsupp.sum_of_support_subset _ hsub _ fun _ _ ↦ rfl,
     Finset.sum_image fun a _ b _ h ↦ hinj h,
     finrank_eq_sum_finrank_of_isInternal (isInternal_genWeightSpace K L M)]
   push_cast
-  exact Finset.sum_congr rfl fun w _ ↦ rfl
+  exact Finset.sum_congr rfl fun _ _ ↦ rfl
 
 /-- **The formal character vanishes only for the zero module.** -/
 theorem formalCharacter_eq_zero_iff : formalCharacter K L M = 0 ↔ finrank K M = 0 := by
@@ -184,9 +249,10 @@ theorem formalCharacter_eq_zero_iff : formalCharacter K L M = 0 ↔ finrank K M 
     rw [h] at this
     simpa using this.symm
   · refine AddMonoidAlgebra.ext (Finsupp.ext fun χ ↦ ?_)
-    have hle := Submodule.finrank_le (genWeightSpace M (χ : L → K)).toSubmodule
-    rw [h, Nat.le_zero] at hle
-    simp [← finrank_toSubmodule, hle]
+    simp only [AddMonoidAlgebra.coeff_zero, Finsupp.zero_apply]
+    rw [formalCharacter_coeff_eq_zero_iff, genWeightSpace_eq_bot_iff_finrank_eq_zero]
+    exact Nat.le_zero.mp (by
+      simpa [h] using Submodule.finrank_le (genWeightSpace M (χ : L → K)).toSubmodule)
 
 end Total
 
@@ -203,96 +269,17 @@ variable (K : Type u) (L : Type v) (M : Type w) (N : Type w₁) [Field K] [LieRi
 
 variable {K L M N}
 
-omit [LinearWeights K L M] [LinearWeights K L N] [FiniteDimensional K M]
-  [FiniteDimensional K N] in
-/-- **A vector of a product of Lie modules is a weight vector exactly when both of its components
-are.** The projections carry the weight space into each factor, and the inclusions carry each
-factor back. -/
-@[simp]
-theorem mem_genWeightSpace_prod_iff {χ : L → K} {p : M × N} :
-    p ∈ genWeightSpace (M × N) χ ↔ p.1 ∈ genWeightSpace M χ ∧ p.2 ∈ genWeightSpace N χ := by
-  refine ⟨fun hp ↦ ⟨map_genWeightSpace_le (LieModuleHom.fst K L M N) ⟨p, hp, by simp⟩,
-    map_genWeightSpace_le (LieModuleHom.snd K L M N) ⟨p, hp, by simp⟩⟩, fun ⟨h₁, h₂⟩ ↦ ?_⟩
-  have hl : (p.1, (0 : N)) ∈ genWeightSpace (M × N) χ :=
-    map_genWeightSpace_le (LieModuleHom.inl K L M N) ⟨p.1, h₁, by simp⟩
-  have hr : ((0 : M), p.2) ∈ genWeightSpace (M × N) χ :=
-    map_genWeightSpace_le (LieModuleHom.inr K L M N) ⟨p.2, h₂, by simp⟩
-  simpa using add_mem hl hr
-
-omit [LinearWeights K L M] [LinearWeights K L N] [FiniteDimensional K M]
-  [FiniteDimensional K N] in
-/-- **A linear form is a weight of a product of Lie modules exactly when it is a weight of one of
-the two factors.** -/
-theorem genWeightSpace_prod_eq_bot_iff {χ : L → K} :
-    genWeightSpace (M × N) χ = ⊥ ↔ genWeightSpace M χ = ⊥ ∧ genWeightSpace N χ = ⊥ := by
-  constructor
-  · refine fun h ↦ ⟨eq_bot_iff.mpr fun m hm ↦ ?_, eq_bot_iff.mpr fun n hn ↦ ?_⟩
-    · have hmem : ((m, 0) : M × N) ∈ genWeightSpace (M × N) χ :=
-        mem_genWeightSpace_prod_iff.mpr ⟨hm, zero_mem _⟩
-      rw [h, LieSubmodule.mem_bot] at hmem
-      exact (LieSubmodule.mem_bot _).mpr (Prod.mk_eq_zero.mp hmem).1
-    · have hmem : ((0, n) : M × N) ∈ genWeightSpace (M × N) χ :=
-        mem_genWeightSpace_prod_iff.mpr ⟨zero_mem _, hn⟩
-      rw [h, LieSubmodule.mem_bot] at hmem
-      exact (LieSubmodule.mem_bot _).mpr (Prod.mk_eq_zero.mp hmem).2
-  · rintro ⟨h₁, h₂⟩
-    refine eq_bot_iff.mpr fun p hp ↦ ?_
-    obtain ⟨hp₁, hp₂⟩ := mem_genWeightSpace_prod_iff.mp hp
-    rw [h₁, LieSubmodule.mem_bot] at hp₁
-    rw [h₂, LieSubmodule.mem_bot] at hp₂
-    exact (LieSubmodule.mem_bot _).mpr (Prod.ext hp₁ hp₂)
-
-omit [LinearWeights K L M] [LinearWeights K L N] [FiniteDimensional K M]
-  [FiniteDimensional K N] in
-/-- A weight of a product of Lie modules is a weight of one of the two factors. -/
-private theorem genWeightSpace_ne_bot_or {χ : L → K} (h : genWeightSpace (M × N) χ ≠ ⊥) :
-    genWeightSpace M χ ≠ ⊥ ∨ genWeightSpace N χ ≠ ⊥ :=
-  not_and_or.mp ((not_congr genWeightSpace_prod_eq_bot_iff).mp h)
-
-omit [FiniteDimensional K M] [FiniteDimensional K N] in
-/-- **The weights of a product of Lie modules are linear** as soon as those of both factors are,
-since a weight of the product is a weight of one of the factors. -/
-instance instLinearWeightsProd : LinearWeights K L (M × N) where
-  map_add χ hχ := by
-    rcases genWeightSpace_ne_bot_or hχ with h | h
-    exacts [LinearWeights.map_add χ h, LinearWeights.map_add χ h]
-  map_smul χ hχ := by
-    rcases genWeightSpace_ne_bot_or hχ with h | h
-    exacts [LinearWeights.map_smul χ h, LinearWeights.map_smul χ h]
-  map_lie χ hχ := by
-    rcases genWeightSpace_ne_bot_or hχ with h | h
-    exacts [LinearWeights.map_lie χ h, LinearWeights.map_lie χ h]
-
-omit [LinearWeights K L M] [LinearWeights K L N] in
-/-- The weight spaces of a product of Lie modules, as a linear equivalence with the product of the
-weight spaces. -/
-private noncomputable def genWeightSpaceProdEquiv (χ : L → K) :
-    genWeightSpace (M × N) χ ≃ₗ[K] genWeightSpace M χ × genWeightSpace N χ where
-  toFun p := (⟨(p : M × N).1, (mem_genWeightSpace_prod_iff.mp p.2).1⟩,
-    ⟨(p : M × N).2, (mem_genWeightSpace_prod_iff.mp p.2).2⟩)
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-  invFun q := ⟨((q.1 : M), (q.2 : N)), mem_genWeightSpace_prod_iff.mpr ⟨q.1.2, q.2.2⟩⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-
-omit [LinearWeights K L M] [LinearWeights K L N] in
-/-- **The weight spaces of a product of Lie modules add up.** -/
-theorem finrank_genWeightSpace_prod (χ : L → K) :
-    finrank K (genWeightSpace (M × N) χ)
-      = finrank K (genWeightSpace M χ) + finrank K (genWeightSpace N χ) := by
-  rw [(genWeightSpaceProdEquiv χ).finrank_eq, Module.finrank_prod]
-
 /-- **Additivity of the formal character.** The character of a product of two finite-dimensional
 modules is the sum of their characters. -/
 theorem formalCharacter_prod :
     formalCharacter K L (M × N) = formalCharacter K L M + formalCharacter K L N := by
   refine AddMonoidAlgebra.ext (Finsupp.ext fun χ ↦ ?_)
-  simp [finrank_genWeightSpace_prod]
+  simp
 
 end Prod
 
-/-! ### The Cartan subalgebra of a Killing-semisimple Lie algebra -/
+/-! ### The Cartan subalgebra of a Killing-semisimple Lie algebra over an algebraically closed field
+of characteristic zero -/
 
 section Killing
 
@@ -309,15 +296,15 @@ theorem formalCharacter_coeff_eq_finrank_weightSpace (χ : Dual K H) :
     (formalCharacter K H M).coeff χ = (finrank K (weightSpace M (χ : H → K)) : ℤ) := by
   rw [formalCharacter_coeff, genWeightSpace_eq_weightSpace]
 
+omit [IsAlgClosed K] in
 /-- **The formal character is supported on integral weights.** A linear form carrying a nonzero
 coefficient is a weight of `M`, and the weights of a finite-dimensional module are integral
 (`TauCeti.isIntegralWeight_of_weight`). -/
-theorem isIntegralWeight_of_formalCharacter_coeff_ne_zero {χ : Dual K H}
+theorem isIntegralWeight_of_formalCharacter_coeff_ne_zero [IsTriangularizable K H L] {χ : Dual K H}
     (hχ : (formalCharacter K H M).coeff χ ≠ 0) : IsIntegralWeight χ := by
-  have hne : genWeightSpace M (χ : H → K) ≠ ⊥ := fun h ↦
-    hχ (formalCharacter_coeff_eq_zero_iff.mpr h)
-  have heq : ((⟨(χ : H → K), hne⟩ : Weight K H M) : Dual K H) = χ := by ext x; rfl
-  exact heq ▸ isIntegralWeight_of_weight (⟨(χ : H → K), hne⟩ : Weight K H M)
+  have hne := (not_congr formalCharacter_coeff_eq_zero_iff).mp hχ
+  obtain ⟨w, rfl⟩ := exists_weight_coe_eq K H M hne
+  exact isIntegralWeight_of_weight w
 
 /-- **Weyl invariance of the formal character.** The multiplicity of a weight is unchanged by the
 action of the Weyl group of the root system of `H`; this is
