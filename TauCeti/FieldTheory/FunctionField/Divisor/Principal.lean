@@ -245,6 +245,18 @@ theorem coeff_poles (hF : IsFunctionField k F) (z : Fˣ) (P : Place k F) :
     (poles hF z).coeff P = -P.ord (z : F) ⊔ 0 := by
   rw [poles, WeilDivisor.coeff_negPart, coeff_principal]
 
+/-- A place lies in the support of the zero divisor exactly when it is a zero of `z`. -/
+theorem mem_support_zeros_iff (hF : IsFunctionField k F) {z : Fˣ} {P : Place k F} :
+    P ∈ (zeros hF z).support ↔ 0 < P.ord (z : F) := by
+  rw [WeilDivisor.mem_support_iff, coeff_zeros]
+  omega
+
+/-- A place lies in the support of the pole divisor exactly when it is a pole of `z`. -/
+theorem mem_support_poles_iff (hF : IsFunctionField k F) {z : Fˣ} {P : Place k F} :
+    P ∈ (poles hF z).support ↔ P.ord (z : F) < 0 := by
+  rw [WeilDivisor.mem_support_iff, coeff_poles]
+  omega
+
 @[simp]
 theorem isEffective_zeros (hF : IsFunctionField k F) (z : Fˣ) :
     WeilDivisor.IsEffective (zeros hF z) :=
