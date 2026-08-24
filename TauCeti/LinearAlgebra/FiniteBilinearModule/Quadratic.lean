@@ -113,11 +113,6 @@ namespace Hom
 
 variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
 
-/-- A morphism of finite quadratic modules preserves the stored quadratic map. -/
-@[simp]
-theorem map_quadratic (f : Hom A B) (x : A) : B.quadratic (f x) = A.quadratic x :=
-  f.map_app x
-
 /-- A morphism of finite quadratic modules preserves the canonical polar pairing. -/
 @[simp]
 theorem map_pairing (f : Hom A B) (x y : A) :
@@ -125,7 +120,7 @@ theorem map_pairing (f : Hom A B) (x y : A) :
       A.toFiniteBilinearModule.pairing x y := by
   rw [← B.polar_eq_pairing, ← A.polar_eq_pairing]
   simp only [QuadraticMap.polar]
-  rw [← map_add f, f.map_quadratic, f.map_quadratic, f.map_quadratic]
+  rw [← map_add f, f.map_app, f.map_app, f.map_app]
 
 /-- A quadratic-module morphism induces a morphism of the canonical polar bilinear modules. -/
 def toFiniteBilinearModule (f : Hom A B) :
@@ -211,7 +206,7 @@ variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
 /-- A bijective morphism of finite quadratic modules is an isometry. -/
 noncomputable def toIsometry (f : Hom A B) (hf : Function.Bijective f) : Isometry A B where
   toLinearEquiv := (AddEquiv.ofBijective f.toLinearMap.toAddMonoidHom hf).toIntLinearEquiv
-  map_app' := f.map_quadratic
+  map_app' := f.map_app
 
 @[simp]
 theorem toIsometry_apply (f : Hom A B) (hf : Function.Bijective f) (x : A) :
