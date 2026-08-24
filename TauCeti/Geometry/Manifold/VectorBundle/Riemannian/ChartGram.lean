@@ -31,7 +31,7 @@ API replace them.
 
 ## Main definitions and results
 
-* `Riemannian.Tensor.chartLocalFrame` and `Riemannian.Tensor.chartLocalFrame_eq`: the frame
+* `Riemannian.Tensor.chartLocalFrame` and `Riemannian.Tensor.chartLocalFrame_def`: the frame
   induced by the tangent trivialization at a chart centre and `Module.finBasis`, and its
   identification with that trivialization's local frame.
 * `Riemannian.Tensor.chartGramMatrix`: the metric Gram matrix in this frame.
@@ -74,7 +74,7 @@ def chartLocalFrame (α : M) :
 /-- The chart-local frame is the local frame of the tangent trivialization at `α` for the
 `Module.finBasis` basis. This unfolds `TauCeti.Manifold.chartLocalFrame` outside the module where
 it is defined. -/
-theorem chartLocalFrame_eq (α : M) :
+theorem chartLocalFrame_def (α : M) :
     chartLocalFrame (I := I) α =
       (trivializationAt E (TangentSpace I) α).localFrame (Module.finBasis ℝ E) := (rfl)
 

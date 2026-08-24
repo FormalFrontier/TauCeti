@@ -233,7 +233,7 @@ theorem contMDiffOn_leviCivita {u : Set M} (hu : IsOpen u) (hm : n + 2 ≤ m) (h
     (finBasis ℝ E) hsopen
     (by rw [TangentBundle.trivializationAt_baseSet, inter_self]; exact hsub)
     (A := fun y ↦ leviCivita I M σ y)
-    (fun j ↦ by simpa only [← chartLocalFrame_eq] using hdir j)
+    (fun j ↦ by simpa only [← chartLocalFrame_def] using hdir j)
   exact (hhom.contMDiffAt (hsopen.mem_nhds hxs)).contMDiffWithinAt
 
 /-- **The Levi-Civita connection is of class `C^n`**, in the set-local form used to read it in a
@@ -289,4 +289,3 @@ instance instContMDiffCovariantDerivativeLeviCivita [IsManifold I ∞ M]
     isOpen_univ le_rfl le_rfl
 
 end CovariantDerivative
-
