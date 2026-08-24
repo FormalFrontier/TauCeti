@@ -171,9 +171,8 @@ private theorem smul_top_eq_comap_mul (I J : Ideal W.CoordinateRing) :
         Submodule W.CoordinateRing W.CoordinateRing) := by
   apply Submodule.map_injective_of_injective I.subtype_injective
   rw [Submodule.map_smul'', Submodule.map_top, Submodule.range_subtype,
-    Submodule.map_comap_subtype]
-  change J * I = I ⊓ (I * J)
-  rw [mul_comm J I, inf_eq_right.mpr Ideal.mul_le_left]
+    Submodule.map_comap_subtype, Ideal.smul_eq_mul, mul_comm J I,
+    inf_eq_right.mpr Ideal.mul_le_left]
 
 omit [DecidableEq F] in
 /-- For an invertible integral ideal `I`, base change to `R / J` identifies `I / I J` with
@@ -276,6 +275,9 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
       FractionalIdeal W.CoordinateRing⁰ W.FunctionField)) :
     W.Nonsingular x y := by
   rw [Nonsingular, and_iff_right heq]
+  -- `W.Equation x y` *is* this evaluation identity, so unfold it once here and use `heval`
+  -- everywhere below instead of re-unfolding `Equation` at each use.
+  have heval : W.polynomial.evalEval x y = 0 := by simpa only [Equation] using heq
   by_contra hs
   push Not at hs
   let P := F[X][Y]
@@ -288,20 +290,14 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
   have hdX_apply (p : P) : dX p = (p.eval (C y)).derivative.eval x := rfl
   have hdY_apply (p : P) : dY p = (p.derivative.eval (C y)).eval x := rfl
   have hWX : dX W.polynomial = 0 := by
-    simp only [dX, evalX, evalY, LinearMap.comp_apply, LinearMap.restrictScalars_apply,
-      Polynomial.leval_apply]
-    change (W.polynomial.eval (C y)).derivative.eval x = 0
-    rw [show (W.polynomial.eval (C y)).derivative.eval x =
+    rw [hdX_apply, show (W.polynomial.eval (C y)).derivative.eval x =
         W.polynomialX.evalEval x y by
       simp only [polynomial, polynomialX, evalEval]
       simp [Polynomial.derivative_pow]
       ring]
     exact hs.1
   have hWY : dY W.polynomial = 0 := by
-    simp only [dY, evalX, evalY, LinearMap.comp_apply, LinearMap.restrictScalars_apply,
-      Polynomial.leval_apply]
-    change (W.polynomial.derivative.eval (C y)).eval x = 0
-    rw [show (W.polynomial.derivative.eval (C y)).eval x =
+    rw [hdY_apply, show (W.polynomial.derivative.eval (C y)).eval x =
         W.polynomialY.evalEval x y by
       simp only [polynomial, polynomialY, evalEval]
       simp [Polynomial.derivative_pow]]
@@ -323,13 +319,11 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
   have hHX : H.restrictScalars F ≤ LinearMap.ker dX := by
     intro z hz
     obtain ⟨p, rfl⟩ := Ideal.mem_span_singleton'.mp hz
-    rw [LinearMap.mem_ker, hdX_mul, hWX, show W.polynomial.evalEval x y = 0 by
-      simpa only [Equation] using heq, mul_zero, zero_mul, add_zero]
+    rw [LinearMap.mem_ker, hdX_mul, hWX, heval, mul_zero, zero_mul, add_zero]
   have hHY : H.restrictScalars F ≤ LinearMap.ker dY := by
     intro z hz
     obtain ⟨p, rfl⟩ := Ideal.mem_span_singleton'.mp hz
-    rw [LinearMap.mem_ker, hdY_mul, hWY, show W.polynomial.evalEval x y = 0 by
-      simpa only [Equation] using heq, mul_zero, zero_mul, add_zero]
+    rw [LinearMap.mem_ker, hdY_mul, hWY, heval, mul_zero, zero_mul, add_zero]
   let qX : (P ⧸ H.restrictScalars F) →ₗ[F] F :=
     Submodule.liftQ (H.restrictScalars F) dX hHX
   let qY : (P ⧸ H.restrictScalars F) →ₗ[F] F :=
@@ -341,22 +335,23 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
   have DX_mk (p : P) : DX (CoordinateRing.mk W p) = dX p := by rfl
   have DY_mk (p : P) : DY (CoordinateRing.mk W p) = dY p := by rfl
   let I := CoordinateRing.XYIdeal W x (C y)
-  let ρ : W.CoordinateRing →+* F := AdjoinRoot.evalEval (by
-    simpa only [Equation] using heq)
+  -- The defining equation of the local abbreviation `I`; every step below rewrites with `hI`
+  -- rather than relying on the `let` unfolding silently.
+  have hI : I = CoordinateRing.XYIdeal W x (C y) := rfl
+  let ρ : W.CoordinateRing →+* F := AdjoinRoot.evalEval heval
   have hρ_mk (p : P) : ρ (CoordinateRing.mk W p) = p.evalEval x y :=
     AdjoinRoot.evalEval_mk _ p
-  have hρmem {a : W.CoordinateRing} (ha : a ∈ I) : ρ a = 0 := by
-    rw [← RingHom.mem_ker]
-    apply (show I ≤ RingHom.ker ρ by
-      change CoordinateRing.XYIdeal W x (C y) ≤ RingHom.ker ρ
-      rw [CoordinateRing.XYIdeal, Ideal.span_le, Set.pair_subset_iff]
-      constructor
-      · change ρ (CoordinateRing.XClass W x) = 0
-        rw [CoordinateRing.XClass, hρ_mk]
-        simp [evalEval_C]
-      · change ρ (CoordinateRing.YClass W (C y)) = 0
-        rw [CoordinateRing.YClass, hρ_mk]
-        simp) ha
+  have hIker : I ≤ RingHom.ker ρ := by
+    rw [hI, CoordinateRing.XYIdeal, Ideal.span_le, Set.pair_subset_iff]
+    refine ⟨?_, ?_⟩
+    · simp only [SetLike.mem_coe, RingHom.mem_ker]
+      rw [CoordinateRing.XClass, hρ_mk]
+      simp [evalEval_C]
+    · simp only [SetLike.mem_coe, RingHom.mem_ker]
+      rw [CoordinateRing.YClass, hρ_mk]
+      simp
+  have hρmem {a : W.CoordinateRing} (ha : a ∈ I) : ρ a = 0 :=
+    RingHom.mem_ker.mp (hIker ha)
   have hDX_mul (a b : W.CoordinateRing) :
       DX (a * b) = ρ a * DX b + ρ b * DX a := by
     obtain ⟨p, rfl⟩ := AdjoinRoot.mk_surjective a
@@ -371,12 +366,16 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
     simp only [DY_mk, hρ_mk, hdY_mul]
   let fX : I →ₗ[F] F := DX.comp (I.subtype.restrictScalars F)
   let fY : I →ₗ[F] F := DY.comp (I.subtype.restrictScalars F)
+  -- Application lemmas for the two restrictions, in the style of `hdX_apply` above, so that the
+  -- products below are rewritten rather than unfolded.
+  have hfX_apply (a : I) : fX a = DX a := rfl
+  have hfY_apply (a : I) : fY a = DY a := rfl
   have hfX (a b : I) : fX (a * b) = 0 := by
-    change DX ((a : W.CoordinateRing) * b) = 0
-    rw [hDX_mul, hρmem a.2, hρmem b.2, zero_mul, zero_mul, zero_add]
+    rw [hfX_apply, MulMemClass.coe_mul, hDX_mul, hρmem a.2, hρmem b.2, zero_mul, zero_mul,
+      zero_add]
   have hfY (a b : I) : fY (a * b) = 0 := by
-    change DY ((a : W.CoordinateRing) * b) = 0
-    rw [hDY_mul, hρmem a.2, hρmem b.2, zero_mul, zero_mul, zero_add]
+    rw [hfY_apply, MulMemClass.coe_mul, hDY_mul, hρmem a.2, hρmem b.2, zero_mul, zero_mul,
+      zero_add]
   let δX : I.Cotangent →ₗ[F] F := Ideal.Cotangent.lift fX hfX
   let δY : I.Cotangent →ₗ[F] F := Ideal.Cotangent.lift fY hfY
   let δ : I.Cotangent →ₗ[F] F × F := δX.prod δY
@@ -402,8 +401,7 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
       b • I.toCotangent ⟨CoordinateRing.YClass W (C y), hYmem⟩, ?_⟩
     ext <;> simp [δ, δX, δY, fX, fY, hDX_X, hDX_Y, hDY_X, hDY_Y]
   let hquot : Module.Finite F (W.CoordinateRing ⧸ I) := by
-    change Module.Finite F
-      (W.CoordinateRing ⧸ CoordinateRing.XYIdeal W x (C y))
+    rw [hI]
     exact (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv.symm.finiteDimensional
   let eI := quotIdealMulEquiv (F := F) (I := I) (J := I) hunit
   have hsquare := smul_top_eq_comap_mul I I
@@ -411,9 +409,7 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
     ((Submodule.quotEquivOfEq _ _ hsquare).trans eI).restrictScalars F
   let hcot : Module.Finite F I.Cotangent := eCot.symm.finiteDimensional
   have hfin : Module.finrank F I.Cotangent = 1 := by
-    rw [eCot.finrank_eq]
-    change Module.finrank F
-      (W.CoordinateRing ⧸ CoordinateRing.XYIdeal W x (C y)) = 1
+    rw [eCot.finrank_eq, hI]
     exact (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv.finrank_eq.trans
       (Module.finrank_self F)
   have hprod : Module.finrank F (F × F) = 2 := by
@@ -568,9 +564,7 @@ private theorem exists_codimLEOne_inv_integral
   obtain ⟨J, hJQ⟩ := FractionalIdeal.le_one_iff_exists_coeIdeal.mp hQ_le
   have hJ : Ideal.span {a} = I * J := by
     apply FractionalIdeal.coeIdeal_injective (R := R) (K := K)
-    change (Ideal.span ({a} : Set R) : FractionalIdeal R⁰ K) =
-      (I * J : Ideal R)
-    rw [FractionalIdeal.coeIdeal_mul, hJQ]
+    simp only [FractionalIdeal.coeIdeal_mul, hJQ]
     dsimp [Q]
     rw [mul_left_comm, hIunit.mul_val_inv, mul_one]
   have hspan_ne : Ideal.span ({a} : Set W.CoordinateRing) ≠ ⊥ := by
@@ -644,10 +638,8 @@ private theorem mk_eq_one_of_finrank_quotient_eq_zero
     exact hsub
   rw [ClassGroup.mk_eq_one_iff]
   refine ⟨1, ?_⟩
-  rw [hIunit.unit_spec, htop]
-  change ((⊤ : Ideal W.CoordinateRing) :
-      FractionalIdeal W.CoordinateRing⁰ W.FunctionField).coeToSubmodule = _
-  rw [FractionalIdeal.coeIdeal_top, FractionalIdeal.coe_one, Submodule.one_eq_span]
+  rw [hIunit.unit_spec, htop, FractionalIdeal.coeIdeal_top, FractionalIdeal.coe_one,
+    Submodule.one_eq_span]
 
 omit [DecidableEq F] in
 private theorem mk_eq_mk_XYIdeal'_of_finrank_quotient_eq_one
