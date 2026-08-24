@@ -39,6 +39,9 @@ no claim about that later stage is made here.
 
 ## Main results
 
+* `TauCeti.ClassData.mem_dixonRationalCharacterTableCandidates_iff`: the candidates inspected by
+  the solver are exactly the injectively numbered lifted rows paired with the admissible degree
+  vectors.
 * `TauCeti.ClassData.isIntegerCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`: every
   successful output satisfies the exact integer specification.
 * `TauCeti.ClassData.isCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`: every successful
@@ -77,9 +80,8 @@ structure IntegerCharacterTableData where
 
 variable [Fintype G] [DecidableEq G]
 
-/-- An executable list of the signed integral lifts of the modular central-character search. Its
-body is exposed so downstream acceptance examples can check the concrete enumeration. -/
-@[expose] def liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)] :
+/-- An executable list of the signed integral lifts of the modular central-character search. -/
+def liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)] :
     List (Fin d.numClasses → ℤ) :=
   ((FinEnum.toList (Fin d.numClasses → ZMod p)).filter fun row =>
     row ∈ d.centralCharacterSearch (F := ZMod p)).map fun row j => (row j).valMinAbs
@@ -91,9 +93,17 @@ theorem liftedCentralRowsList_toFinset (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p
   ext row
   simp [liftedCentralRowsList, liftedCentralRows]
 
-/-- Enumerate the candidate data inspected by the rational Dixon--Schneider solver. Its body is
-exposed so downstream acceptance examples can exhibit a successful candidate. -/
-@[expose] def dixonRationalCharacterTableCandidates (p : ℕ) [Fact p.Prime] :
+/-- A row is enumerated by `liftedCentralRowsList` exactly when it is a lifted central row. -/
+@[simp]
+theorem mem_liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)]
+    {row : Fin d.numClasses → ℤ} :
+    row ∈ d.liftedCentralRowsList p ↔ row ∈ d.liftedCentralRows p := by
+  rw [← List.mem_toFinset, liftedCentralRowsList_toFinset]
+
+/-- Enumerate the candidate data inspected by the rational Dixon--Schneider solver: every
+injective numbering of the lifted central rows, paired with every degree vector whose positive
+entries divide `|G|` and whose squares sum to `|G|`. -/
+def dixonRationalCharacterTableCandidates (p : ℕ) [Fact p.Prime] :
     List d.IntegerCharacterTableData :=
   letI : FinEnum (ZMod p) :=
     FinEnum.ofEquiv (Fin p) (ZMod.finEquiv p).symm.toEquiv
@@ -113,6 +123,42 @@ exposed so downstream acceptance examples can exhibit a successful candidate. -/
       degree := degree
       table := fun i j =>
         (degree i : ℤ) * omega i j / (d.classFinset j).card }
+
+/-- **Characterization of the candidates inspected by the rational solver.** Candidate data is
+enumerated exactly when its rows are an injective numbering of the lifted central rows, its degrees
+are positive divisors of `|G|` whose squares sum to `|G|`, and its table is the exact integer
+quotient reconstructed from the central-character table. -/
+theorem mem_dixonRationalCharacterTableCandidates_iff (p : ℕ) [Fact p.Prime]
+    {output : d.IntegerCharacterTableData} :
+    output ∈ d.dixonRationalCharacterTableCandidates p ↔
+      (∀ i, output.omega i ∈ d.liftedCentralRows p) ∧ Function.Injective output.omega ∧
+        (∀ i, 0 < output.degree i) ∧ (∀ i, output.degree i ∣ Fintype.card G) ∧
+        ∑ i, output.degree i ^ 2 = Fintype.card G ∧
+        ∀ i j, output.table i j =
+          (output.degree i : ℤ) * output.omega i j / ((d.classFinset j).card : ℤ) := by
+  -- the enumeration instance must be the one the definition installs, not a synthesized one
+  let _ : FinEnum (ZMod p) := FinEnum.ofEquiv (Fin p) (ZMod.finEquiv p).symm.toEquiv
+  simp only [dixonRationalCharacterTableCandidates, List.mem_flatMap, List.mem_map,
+    List.mem_filter, FinEnum.mem_toList, true_and, decide_eq_true_eq]
+  constructor
+  · rintro ⟨rows, hrows, degrees, hdegrees, rfl⟩
+    refine ⟨fun i => (mem_liftedCentralRowsList d p).mp (rows i).2, ?_, ?_, ?_, ?_, ?_⟩
+    · exact fun i j hij => hrows (Subtype.ext hij)
+    · exact fun i => Nat.pos_of_ne_zero fun h => (degrees i).2.1 (Fin.val_eq_zero_iff.mp h)
+    · exact fun i => (degrees i).2.2
+    · exact hdegrees
+    · exact fun i j => rfl
+  · rintro ⟨hrow, hinj, hpos, hdvd, hsum, htable⟩
+    have hlt : ∀ i, output.degree i < Fintype.card G + 1 := fun i =>
+      Nat.lt_succ_of_le (Nat.le_of_dvd Fintype.card_pos (hdvd i))
+    refine ⟨fun i => ⟨output.omega i, (mem_liftedCentralRowsList d p).mpr (hrow i)⟩,
+      fun i j hij => hinj (congrArg Subtype.val hij),
+      fun i => ⟨⟨output.degree i, hlt i⟩, Fin.val_ne_zero_iff.mp (hpos i).ne', hdvd i⟩,
+      hsum, ?_⟩
+    ext
+    · rfl
+    · exact (htable _ _).symm
+    · rfl
 
 /-- Run the integer-valued stage of the Dixon--Schneider character-table algorithm.
 

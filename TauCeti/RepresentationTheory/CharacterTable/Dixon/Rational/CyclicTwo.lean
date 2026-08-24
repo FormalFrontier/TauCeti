@@ -291,71 +291,39 @@ theorem isIntegerCharacterTableSpec_cyclicGroupTwo :
     simpa only [Nat.card_eq_fintype_card, Nat.cast_ite, Nat.cast_zero] using
       cyclicGroupTwo_characterTable_orthogonal i j
 
+/-- Every displayed integral row occurs among the signed lifts of the modular search at `3`. -/
+theorem mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable
+    (i : CyclicGroupTwoClassIndex) :
+    cyclicGroupTwoCentralCharacterTable i ∈ (cyclicClassData 2).liftedCentralRows 3 := by
+  rw [ClassData.mem_liftedCentralRows_iff, cyclicGroupTwo_centralCharacterSearch]
+  refine ⟨fun j => (cyclicGroupTwoCentralCharacterTable i j : ZMod 3),
+    mem_cyclicGroupTwoModularCentralRows_iff.mpr ⟨i, rfl⟩, funext fun j => ?_⟩
+  exact cyclicGroupTwo_valMinAbs_centralCharacterTable i j
+
+/-- The two displayed central-character rows are distinct, so they number the lifted rows
+injectively. -/
+theorem injective_cyclicGroupTwoCentralCharacterTable :
+    Function.Injective cyclicGroupTwoCentralCharacterTable := by
+  intro i j hij
+  have h := congrFun hij ⟨1, by simp⟩
+  fin_cases i <;> fin_cases j <;> revert h <;> decide
+
 /-- The assembled rational Dixon--Schneider solver succeeds on the certified `C₂` prime. -/
 theorem isSome_dixonRationalCharacterTable_cyclicGroupTwo :
     ((cyclicClassData 2).dixonRationalCharacterTable?
       cyclicGroupTwoDixonPrimeData.p).isSome = true := by
   simp only [cyclicGroupTwoDixonPrimeData_p]
-  change ((cyclicClassData 2).dixonRationalCharacterTable?
-    3).isSome
   rw [(cyclicClassData 2).isSome_dixonRationalCharacterTable_iff]
-  let this : FinEnum (ZMod 3) :=
-    FinEnum.ofEquiv (Fin 3) (ZMod.finEquiv 3).symm.toEquiv
-  let i0 : CyclicGroupTwoClassIndex := ⟨0, by simp⟩
-  let i1 : CyclicGroupTwoClassIndex := ⟨1, by simp⟩
-  have hlifted :
-      (cyclicClassData 2).liftedCentralRowsList 3 =
-        [fun j => cyclicGroupTwoCentralCharacterTable i0 j,
-          fun j => cyclicGroupTwoCentralCharacterTable i1 j] := by
-    rw [ClassData.liftedCentralRowsList, cyclicGroupTwo_centralCharacterSearch]
-    with_reducible_and_instances decide
-  let row0 := fun j => cyclicGroupTwoCentralCharacterTable i0 j
-  let row1 := fun j => cyclicGroupTwoCentralCharacterTable i1 j
-  let rows : CyclicGroupTwoClassIndex → {row // row ∈ [row0, row1]} := fun i =>
-    ⟨fun j => cyclicGroupTwoCentralCharacterTable i j, by
-      fin_cases i <;> simp [row0, row1, i0, i1]⟩
-  have hrow_ne : row0 ≠ row1 := by
-    intro h
-    have hij := congrFun h i1
-    change (1 : ℤ) = -1 at hij
-    omega
-  have hrows : Function.Injective rows := by
-    intro i j hij
-    have hij' : (rows i).val = (rows j).val := congrArg Subtype.val hij
-    fin_cases i <;> fin_cases j
-    · rfl
-    · exact (hrow_ne hij').elim
-    · exact (hrow_ne hij'.symm).elim
-    · rfl
-  let Degree :=
-    {n : Fin (Fintype.card (Multiplicative (ZMod 2)) + 1) //
-      n ≠ 0 ∧ (n : ℕ) ∣ Fintype.card (Multiplicative (ZMod 2))}
-  let degreeOne : Degree := ⟨1, by simp⟩
-  let degrees : CyclicGroupTwoClassIndex → Degree := fun _ => degreeOne
-  have hdegrees :
-      ∑ i, (degrees i : ℕ) ^ 2 = Fintype.card (Multiplicative (ZMod 2)) := by
-    simp [degrees, degreeOne]
   refine ⟨⟨cyclicGroupTwoCentralCharacterTable, cyclicGroupTwoCharacterTable,
     cyclicGroupTwoCharacterDegrees⟩, ?_, isIntegerCharacterTableSpec_cyclicGroupTwo⟩
-  simp only [ClassData.dixonRationalCharacterTableCandidates]
-  rw [hlifted]
-  apply List.mem_flatMap.mpr
-  refine ⟨rows, ?_, ?_⟩
-  · simp only [List.mem_filter, FinEnum.mem_toList, true_and, decide_eq_true_eq]
-    exact hrows
-  · apply List.mem_map.mpr
-    refine ⟨degrees, ?_, ?_⟩
-    · simp only [List.mem_filter, FinEnum.mem_toList, true_and, decide_eq_true_eq]
-      exact hdegrees
-    · apply ClassData.IntegerCharacterTableData.ext
-      · funext i j
-        fin_cases i <;> fin_cases j <;> simp [rows]
-      · funext i j
-        fin_cases i <;> fin_cases j <;>
-          simp [rows, degrees, degreeOne,
-            classFinset_cyclicClassData, cyclicGroupTwoCharacterTable]
-      · funext i
-        fin_cases i <;> simp [degrees, degreeOne, cyclicGroupTwoCharacterDegrees]
+  rw [ClassData.mem_dixonRationalCharacterTableCandidates_iff]
+  refine ⟨mem_liftedCentralRows_cyclicGroupTwoCentralCharacterTable,
+    injective_cyclicGroupTwoCentralCharacterTable, fun i => ?_, fun i => ?_, ?_, fun i j => ?_⟩
+  · exact (cyclicGroupTwo_characterDegrees_pos_and_dvd i).1
+  · simpa only [Nat.card_eq_fintype_card] using (cyclicGroupTwo_characterDegrees_pos_and_dvd i).2
+  · simpa only [Nat.card_eq_fintype_card] using cyclicGroupTwo_sum_characterDegrees_sq
+  · fin_cases i <;> fin_cases j <;>
+      simp [classFinset_cyclicClassData, cyclicGroupTwoCharacterTable]
 
 /-- The exact `C₂` output, cast to `ℂ`, satisfies the character-table specification and hence is
 the complex character table up to a permutation of rows. -/
