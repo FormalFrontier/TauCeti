@@ -35,6 +35,8 @@ The pairing `b_L` is `B(x, y) mod ℤ`; the even-lattice refinement
 * `TauCeti.IntegralLattice.discriminantBilinearModule`: the packaged finite bilinear module.
 * `TauCeti.IntegralLattice.isNondegenerate_discriminantBilinearModule`: nondegeneracy of the
   discriminant pairing.
+* `TauCeti.IntegralLattice.Isometry.map_discriminantPairing`: a lattice isometry preserves the
+  discriminant pairing.
 * `TauCeti.IntegralLattice.Isometry.discriminantBilinearIsometry`: functoriality under lattice
   isometry.
 
@@ -177,8 +179,8 @@ variable [AddCommGroup W] [Module ℚ W]
 variable [AddCommGroup U] [Module ℚ U]
 variable {L : IntegralLattice V} {M : IntegralLattice W} {N : IntegralLattice U}
 
-/-- An integral-lattice isometry preserves the discriminant pairing. -/
-private theorem map_discriminantPairing (e : Isometry L M) (x y : L.DiscriminantGroup) :
+/-- **An integral-lattice isometry preserves the discriminant pairing.** -/
+theorem map_discriminantPairing (e : Isometry L M) (x y : L.DiscriminantGroup) :
     M.discriminantPairing (e.discriminantGroupEquiv x) (e.discriminantGroupEquiv y) =
       L.discriminantPairing x y := by
   induction x using Submodule.Quotient.induction_on with

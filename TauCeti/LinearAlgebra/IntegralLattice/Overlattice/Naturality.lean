@@ -26,6 +26,10 @@ invariants of the transport, so the two refined correspondences are natural as w
 nondegenerate lattices, orthogonal complements and isotropy transport directly through the
 generic finite-bilinear-module API applied to the induced discriminant bilinear isometry.
 
+The ambient equivalence also restricts to an isometry between the lattice carried by an integral
+intermediate carrier and the lattice carried by its transport, which is what lets the discriminant
+constructions of the overlattices themselves be compared.
+
 For an orthogonal direct sum, a pair of intermediate carriers assembles into the intermediate
 carrier `P₁ ⊕ P₂` of `L ⊥ M`, order-embedding the pairs into the carriers of the sum. Its
 subgroup of `A_(L ⊥ M) ≃ A_L × A_M` is the product subgroup, and it is integral, respectively
@@ -45,6 +49,8 @@ even, exactly when both components are.
 * `TauCeti.IntegralLattice.Isometry.integralIntermediateCarrierEquiv` and
   `TauCeti.IntegralLattice.Isometry.evenIntermediateCarrierEquiv`: the corresponding transports
   restricted to integral and even intermediate carriers.
+* `TauCeti.IntegralLattice.Isometry.intermediateCarrierIsometry`: the induced isometry between
+  the integral lattices carried by an integral intermediate carrier and by its transport.
 * `TauCeti.IntegralLattice.orthogonalSumIntermediateCarrier`: the intermediate carrier of an
   orthogonal sum assembled from a pair of intermediate carriers.
 * `TauCeti.IntegralLattice.map_discriminantSubgroup_orthogonalSumIntermediateCarrier` and
@@ -345,6 +351,37 @@ theorem evenIntermediateCarrierEquiv_trans (e : Isometry L M) (f : Isometry M N)
     (e.trans f).evenIntermediateCarrierEquiv =
       e.evenIntermediateCarrierEquiv.trans f.evenIntermediateCarrierEquiv :=
   RelIso.ext fun P ↦ Subtype.ext (by simp)
+
+/-! ## Transport of the attached overlattice -/
+
+section Nondegenerate
+
+variable [L.IsNondegenerate] [M.IsNondegenerate]
+
+/-- **An isometry restricts to an isometry of integral overlattices.** The lattice carried by an
+integral intermediate carrier and the lattice carried by its transport are isometric through the
+same ambient rational equivalence. -/
+def intermediateCarrierIsometry (e : Isometry L M) {P : L.IntermediateCarrier}
+    (hP : IntermediateCarrier.IsIntegral P) :
+    Isometry hP.toIntegralLattice
+      ((e.isIntegral_intermediateCarrierEquiv_iff P).mpr hP).toIntegralLattice where
+  toLinearEquiv := (e : V ≃ₗ[ℚ] W)
+  map_app' x y := by
+    simp only [IntermediateCarrier.IsIntegral.toIntegralLattice_form]
+    exact e.map_app x y
+  map_carrier := by
+    simp only [IntermediateCarrier.IsIntegral.toIntegralLattice_carrier,
+      intermediateCarrierEquiv_apply_coe]
+    refine congrArg (fun f ↦ Submodule.map f (P : Submodule ℤ V)) (LinearMap.ext fun x ↦ ?_)
+    simp
+
+/-- The restricted isometry of integral overlattices acts by the ambient equivalence. -/
+@[simp]
+theorem intermediateCarrierIsometry_apply (e : Isometry L M) {P : L.IntermediateCarrier}
+    (hP : IntermediateCarrier.IsIntegral P) (x : V) :
+    e.intermediateCarrierIsometry hP x = e x := (rfl)
+
+end Nondegenerate
 
 end Isometry
 
