@@ -140,6 +140,7 @@ theorem inner_conjugation_conjugation (x y : V) :
 /-- **Pairing a conjugate against a basis vector swaps the arguments.** Conjugation fixes `e j`, so
 the reversal of the inner product turns `⟪J x, e j⟫` into `⟪e j, x⟫`. This is the form in which the
 conjugation is contracted against a coordinate. -/
+@[simp]
 theorem inner_conjugation_left_basis (x : V) (j : ι) :
     ⟪conjugation e x, e j⟫_𝕜 = ⟪e j, x⟫_𝕜 := by
   conv_lhs => rw [← conjugation_basis e j]

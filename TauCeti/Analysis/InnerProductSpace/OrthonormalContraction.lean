@@ -16,7 +16,7 @@ An orthonormal basis `e` of an inner product space `V` identifies `V` with its d
 coordinates of `e`. That pairing is the **bilinear** form `⟪J v, u⟫`, for `J` the coordinatewise
 conjugation of `TauCeti/Analysis/InnerProductSpace/Conjugation.lean`, because the
 conjugate-linearity of `J` cancels the conjugate-linearity of the first argument of the inner
-product (`TauCeti.toDual_toBasis_apply`).
+product (`TauCeti.toBasis_toDual_apply`).
 
 Feeding that identification into Mathlib's contraction `dualTensorHomEquivOfBasis`, which turns
 `Module.Dual 𝕜 V ⊗[𝕜] V` into the endomorphisms of `V`, contracts the tensor square:
@@ -39,7 +39,7 @@ be.
 
 ## Main statements
 
-* `TauCeti.toDual_toBasis_apply`: the dual vector that an orthonormal basis attaches to `v` pairs
+* `TauCeti.toBasis_toDual_apply`: the dual vector that an orthonormal basis attaches to `v` pairs
   against `u` as `⟪J v, u⟫`. This is the bridge between Mathlib's contraction and the conjugation.
 * `TauCeti.tensorSquareEquivEnd_tmul_apply` and `TauCeti.tensorSquareEquivEnd_symm_apply`: the two
   directions on generators. Everything downstream goes through these rather than through the
@@ -59,7 +59,8 @@ variable {𝕜 ι V : Type*} [RCLike 𝕜] [Fintype ι] [DecidableEq ι]
 coordinates of `e` the dual vector `Module.Basis.toDual` attaches to `v` is `u ↦ ∑ vᵢ uᵢ`, which is
 `⟪J v, u⟫`: the inner product is conjugate-linear in its first argument and `J` is
 conjugate-linear, so the two conjugations cancel and the pairing is `𝕜`-bilinear. -/
-theorem toDual_toBasis_apply (v u : V) : e.toBasis.toDual v u = ⟪conjugation e v, u⟫_𝕜 := by
+@[simp]
+theorem toBasis_toDual_apply (v u : V) : e.toBasis.toDual v u = ⟪conjugation e v, u⟫_𝕜 := by
   have hb : ∀ i : ι, e.toBasis.toDual v (e i) = ⟪conjugation e v, e i⟫_𝕜 := fun i ↦ by
     have h := Module.Basis.toDual_apply_left e.toBasis v i
     rw [OrthonormalBasis.coe_toBasis] at h
@@ -79,13 +80,18 @@ noncomputable def tensorSquareEquivEnd : V ⊗[𝕜] V ≃ₗ[𝕜] (V →ₗ[�
   (TensorProduct.congr e.toBasis.toDualEquiv (LinearEquiv.refl 𝕜 V)).trans
     (dualTensorHomEquivOfBasis e.toBasis)
 
+/-- **The contraction of a pure tensor.** `v ⊗ w` becomes the rank-one endomorphism that pairs its
+argument against `v` through the bilinear form `⟪J v, -⟫` of the basis and scales `w` by the
+result. -/
 @[simp]
 theorem tensorSquareEquivEnd_tmul_apply (v w u : V) :
     tensorSquareEquivEnd e (v ⊗ₜ[𝕜] w) u = ⟪conjugation e v, u⟫_𝕜 • w := by
   rw [tensorSquareEquivEnd, LinearEquiv.trans_apply, TensorProduct.congr_tmul,
     LinearEquiv.refl_apply, dualTensorHomEquivOfBasis_apply, dualTensorHom_apply,
-    Module.Basis.toDualEquiv_apply, toDual_toBasis_apply]
+    Module.Basis.toDualEquiv_apply, toBasis_toDual_apply]
 
+/-- **The inverse of the contraction spreads an endomorphism over the basis**, as the sum
+`∑ i, e i ⊗ₜ A (e i)` of the pure tensors recording where `A` sends each basis vector. -/
 @[simp]
 theorem tensorSquareEquivEnd_symm_apply (A : V →ₗ[𝕜] V) :
     (tensorSquareEquivEnd e).symm A = ∑ i, e i ⊗ₜ[𝕜] A (e i) := by

@@ -5,9 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import TauCeti.RepresentationTheory.Compact.FrobeniusSchur.InvariantTensors
 public import TauCeti.RepresentationTheory.Continuous.Square.Invariants
+-- the fundamental theorem of algebra, for the `IsAlgClosed ℂ` instance that
+-- `ContRepresentation.finrank_invariants_squares_le_one` needs; used in proofs only
+import Mathlib.Analysis.Complex.Polynomial.Basic
 
 /-!
 # The Frobenius-Schur reality trichotomy for compact groups
@@ -46,8 +48,8 @@ compact groups is not proved here; the finite-group version of that dictionary i
   unitary representation of a compact group is `1`, `0` or `-1`.**
 * `ContRepresentation.frobeniusSchurIndicator_eq_one_iff_finrank_invariants_symmetricSquare`,
   `ContRepresentation.frobeniusSchurIndicator_eq_neg_one_iff_finrank_invariants_exteriorSquare`
-  and `ContRepresentation.frobeniusSchurIndicator_eq_zero_iff_finrank_invariants`: which of the
-  three values occurs, read off the invariants of the two squares.
+  and `ContRepresentation.frobeniusSchurIndicator_eq_zero_iff_finrank_invariants_squares`: which
+  of the three values occurs, read off the invariants of the two squares.
 
 ## References
 
@@ -127,7 +129,7 @@ theorem frobeniusSchurIndicator_eq_neg_one_iff_finrank_invariants_exteriorSquare
 
 /-- **The indicator is `0` exactly in the complex case**: exactly when neither square carries an
 invariant tensor. -/
-theorem frobeniusSchurIndicator_eq_zero_iff_finrank_invariants (hunitary : IsUnitary π)
+theorem frobeniusSchurIndicator_eq_zero_iff_finrank_invariants_squares (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 0 ↔
       finrank ℂ (symmetricSquare π).invariants = 0 ∧
