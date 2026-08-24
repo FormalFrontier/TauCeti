@@ -125,8 +125,8 @@ theorem tateTwist_hodgeNumber (hs : HodgeStructureOn W ω n) (m p : ℤ) :
   rw [hodgeNumber_def, hodgeNumber_def, tateTwist_piece]
 
 /-- A Tate twist is effective exactly when its translated zeroth filtration step is the whole
-space. -/
-@[simp]
+space. This is not a `simp` lemma: with `HodgeStructureOn.isEffective_iff` and
+`HodgeStructureOn.tateTwist_F` tagged, `simp` already normalizes the left-hand side. -/
 theorem isEffective_tateTwist_iff (hs : HodgeStructureOn W ω n) (m : ℤ) :
     (hs.tateTwist m).IsEffective ↔ hs.F m = ⊤ := by
   rw [isEffective_iff, tateTwist_F, zero_add]
