@@ -11,7 +11,7 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Chevall
 /-!
 # Chevalley relations for symplectic root subgroups
 
-This file lifts the two positive, multiply-laced rank-two commutator relations from the standard
+This file lifts the two multiply-laced rank-two commutator relations from the standard
 symplectic matrices to the functor of points of `Sp₂ₘ`. For distinct `i` and `j`, they are
 
 ```text
@@ -26,7 +26,7 @@ The parameters on the right are expressed using the algebra structure of the val
 additive group has parameter `2ab`. These are not statements about convolution multiplication
 being the multiplication of the value ring.
 
-The relations supply the positive-root `C₂` check for the root-subgroup part of the pinned
+The relations supply the rank-two `C₂` check for the root-subgroup part of the pinned
 Chevalley--Demazure interface. In characteristic two, the second relation becomes commutation,
 while the first retains the quadratic term used by the `B₂/C₂` special isogeny.
 

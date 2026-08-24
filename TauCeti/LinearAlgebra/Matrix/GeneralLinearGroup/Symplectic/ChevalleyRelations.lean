@@ -26,8 +26,8 @@ The second relation records the non-unit structure constant in the same rank-two
 ⁅x_{eᵢ-eⱼ}(a), x_{eᵢ+eⱼ}(b)⁆ = x_{2eᵢ}(2ab).
 ```
 
-These are the two positive-root relations needed to compare the standard symplectic realization
-with the characteristic-two special isogeny of type `B₂/C₂`.
+These are the two rank-two relations needed to compare the standard symplectic realization with
+the characteristic-two special isogeny of type `B₂/C₂`.
 
 ## References
 
@@ -47,8 +47,8 @@ universe u
 variable {R : Type u} [CommRing R] {m : ℕ} {i j : Fin m}
 
 /-- **The multiply-laced Chevalley relation in the standard symplectic group.** The commutator
-of `x_{eᵢ-eⱼ}(a)` and `x_{2eⱼ}(b)` is the product of the two remaining positive root
-subgroups in their root string, with parameters `ab` and `a²b`. -/
+of `x_{eᵢ-eⱼ}(a)` and `x_{2eⱼ}(b)` is the product of the two remaining root subgroups in
+their root string, with parameters `ab` and `a²b`. -/
 theorem commutatorElement_differenceShortRootUnit_positiveLongRootTransvectionUnit
     (hij : i ≠ j) (a b : R) :
     ⁅differenceShortRootUnit hij a, positiveLongRootTransvectionUnit j b⁆ =
