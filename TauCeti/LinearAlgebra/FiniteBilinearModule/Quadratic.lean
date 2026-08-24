@@ -775,18 +775,12 @@ elementwise maps `H` onto `K`. -/
 private theorem map_eq_of_forall_mem_iff (f : Isometry A B) {H : AddSubgroup A}
     {K : AddSubgroup B} (h : ∀ x : A, f x ∈ K ↔ x ∈ H) : H.map f.toAddEquiv = K := by
   ext z
-  rw [AddSubgroup.mem_map]
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    exact (h x).mpr hx
-  · intro hz
-    refine ⟨f.symm z, (h (f.symm z)).mp ?_, f.toAddEquiv.apply_symm_apply z⟩
-    rw [f.apply_symm_apply]
-    exact hz
+  refine (AddSubgroup.mem_map_equiv (f := f.toAddEquiv) (K := H) (x := z)).trans ?_
+  simpa using (h (f.symm z)).symm
 
 /-- An isometry carries the orthogonal complement of `H` into that of `K` whenever the preimage
 of `K` is contained in `H`. -/
-theorem mem_orthogonalComplement_of_forall_mem_iff (f : Isometry A B) {H : AddSubgroup A}
+theorem mem_orthogonalComplement_of_forall_mem_imp (f : Isometry A B) {H : AddSubgroup A}
     {K : AddSubgroup B} (h : ∀ x : A, f x ∈ K → x ∈ H) {x : A}
     (hx : x ∈ A.toFiniteBilinearModule.orthogonalComplement H) :
     f x ∈ B.toFiniteBilinearModule.orthogonalComplement K := by
@@ -797,9 +791,7 @@ theorem mem_orthogonalComplement_of_forall_mem_iff (f : Isometry A B) {H : AddSu
     exact (AddSubgroup.mem_map_equiv (f := f.toAddEquiv) (K := H) (x := y)).mpr hpre
   apply B.toFiniteBilinearModule.orthogonalComplement_anti hle
   rw [← f.map_orthogonalComplement H]
-  change f.toAddEquiv x ∈ (A.toFiniteBilinearModule.orthogonalComplement H).map f.toAddEquiv
-  exact (AddSubgroup.mem_map_iff_mem (f := f.toAddEquiv.toAddMonoidHom)
-    f.toAddEquiv.injective).mpr hx
+  exact AddSubgroup.mem_map_of_mem _ hx
 
 /-- **Transport of an orthogonal quotient along an isometry.** An isometry `f : A ≅ B` of finite
 quadratic modules which carries a quadratic-isotropic subgroup `H` of `A` onto a subgroup `K` of
@@ -845,7 +837,7 @@ theorem orthogonalQuotient_orthogonalQuotientMk (f : Isometry A B) {H : AddSubgr
       B.orthogonalQuotientMk K (by
         rw [← f.map_eq_of_forall_mem_iff h, f.isIsotropic_map_iff]
         exact hH)
-        ⟨f (x : A), f.mem_orthogonalComplement_of_forall_mem_iff (fun y ↦ (h y).mp) x.2⟩ := by
+        ⟨f (x : A), f.mem_orthogonalComplement_of_forall_mem_imp (fun y ↦ (h y).mp) x.2⟩ := by
   have hmap := f.map_eq_of_forall_mem_iff h
   subst hmap
   -- Expose the quotient equivalence so its public representative lemmas apply.
