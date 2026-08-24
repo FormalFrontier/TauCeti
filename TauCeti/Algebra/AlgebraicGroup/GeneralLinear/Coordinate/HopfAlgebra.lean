@@ -690,7 +690,7 @@ theorem adjoin_coordinateHopfAlgebra_X_union_antipode_X :
   exact (AlgHom.range_eq_top _).mpr (coordinateHopfAlgebraAlgEquiv R n).surjective
 
 /-- The general linear coordinate Hopf algebra bundled with its finite-type algebra property. -/
-@[expose] noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=
+noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=
   ⟨coordinateHopfAlgebra R n,
     Algebra.FiniteType.equiv (inferInstance : Algebra.FiniteType R (CoordinateRing R n))
       (coordinateHopfAlgebraAlgEquiv R n)⟩

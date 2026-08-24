@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import Mathlib.LinearAlgebra.Matrix.Block
@@ -61,6 +60,7 @@ def weightParabolicRelationSet (w : Fin N → ℤ) :
       (coordinateRingMap R N (MvPolynomial.X (i, j)))}
 
 /-- Membership in the weight-parabolic relation set means being a forbidden matrix coordinate. -/
+@[simp]
 theorem mem_weightParabolicRelationSet_iff (w : Fin N → ℤ)
     (x : coordinateHopfAlgebra R N) :
     x ∈ weightParabolicRelationSet R w ↔
@@ -141,7 +141,7 @@ private theorem antipode_X_mem (w : Fin N → ℤ) {i j : Fin N} (hij : w i < w 
   exact hzero
 
 /-- The Hopf ideal cutting out matrices block triangular for the decreasing weight filtration. -/
-@[expose] noncomputable def weightParabolicDefiningHopfIdeal (w : Fin N → ℤ) :
+noncomputable def weightParabolicDefiningHopfIdeal (w : Fin N → ℤ) :
     HopfIdeal R (coordinateHopfAlgebra R N) :=
   HopfIdeal.ofSpan (weightParabolicRelationSet R w)
     (fun x hx => by
@@ -168,10 +168,20 @@ noncomputable abbrev weightParabolicCoordinateHopfAlgebra (w : Fin N → ℤ) :
     (weightParabolicDefiningHopfIdeal R w)
 
 /-- The quotient coordinate morphism from `O(GL_N)` to the weight-parabolic coordinate algebra. -/
-@[expose] noncomputable def weightParabolicCoordinateMap (w : Fin N → ℤ) :
+noncomputable def weightParabolicCoordinateMap (w : Fin N → ℤ) :
     coordinateHopfAlgebra R N ⟶ weightParabolicCoordinateHopfAlgebra R w :=
   CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra R N)
     (weightParabolicDefiningHopfIdeal R w)
+
+/-- The weight-parabolic coordinate morphism sends an ambient coordinate to its quotient
+class. -/
+theorem weightParabolicCoordinateMap_apply (w : Fin N → ℤ)
+    (h : coordinateHopfAlgebra R N) :
+    (weightParabolicCoordinateMap R w).hom h =
+      Ideal.Quotient.mkₐ R (weightParabolicDefiningHopfIdeal R w).toIdeal h := by
+  rw [weightParabolicCoordinateMap]
+  exact CommHopfAlgCat.mkQuotient_apply
+    (coordinateHopfAlgebra R N) (weightParabolicDefiningHopfIdeal R w) h
 
 /-- A forbidden coordinate vanishes in the weight-parabolic coordinate algebra. -/
 @[simp]
@@ -180,8 +190,7 @@ theorem weightParabolicCoordinateMap_X (w : Fin N → ℤ) {i j : Fin N}
     (weightParabolicCoordinateMap R w).hom
         (coordinateHopfAlgebraAlgEquiv R N
           (coordinateRingMap R N (MvPolynomial.X (i, j)))) = 0 := by
-  unfold weightParabolicCoordinateMap
-  rw [CommHopfAlgCat.mkQuotient_apply, Ideal.Quotient.mkₐ_eq_mk,
+  rw [weightParabolicCoordinateMap_apply, Ideal.Quotient.mkₐ_eq_mk,
     Ideal.Quotient.eq_zero_iff_mem, weightParabolicDefiningHopfIdeal_toIdeal]
   exact Ideal.subset_span (X_mem_weightParabolicRelationSet R w hij)
 
@@ -191,11 +200,20 @@ noncomputable abbrev weightParabolicGroupScheme (w : Fin N → ℤ) :=
     (weightParabolicDefiningHopfIdeal R w)
 
 /-- The closed immersion from the weight parabolic into the named general linear group scheme. -/
-@[expose] noncomputable def weightParabolicInclusion (w : Fin N → ℤ) :
+noncomputable def weightParabolicInclusion (w : Fin N → ℤ) :
     weightParabolicGroupScheme R w ⟶ groupScheme R N :=
   CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
       (weightParabolicDefiningHopfIdeal R w) ≫
     (eqToIso (groupScheme_def R N).symm).hom
+
+/-- The weight-parabolic inclusion is the quotient-spectrum inclusion followed by the named
+identification with `GL_N`. -/
+theorem weightParabolicInclusion_def (w : Fin N → ℤ) :
+    weightParabolicInclusion R w =
+      CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
+          (weightParabolicDefiningHopfIdeal R w) ≫
+        (eqToIso (groupScheme_def R N).symm).hom := by
+  rw [weightParabolicInclusion]
 
 /-- The coordinate morphism recovered from the weight-parabolic inclusion is the quotient
 coordinate map. -/
@@ -207,8 +225,9 @@ theorem weightParabolicInclusion_coordinateMap (w : Fin N → ℤ) :
     ((AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_injective ?_)
   rw [Quiver.Hom.op_unop,
     (AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage]
-  unfold weightParabolicInclusion weightParabolicCoordinateMap
+  rw [weightParabolicInclusion_def]
   rw [CommHopfAlgCat.quotientSpecι_def]
+  rw [weightParabolicCoordinateMap]
   simp
 
 private theorem weightParabolicInclusion_hom_left (w : Fin N → ℤ) :
@@ -216,7 +235,7 @@ private theorem weightParabolicInclusion_hom_left (w : Fin N → ℤ) :
       (CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
           (weightParabolicDefiningHopfIdeal R w)).hom.hom.left ≫
         ((eqToIso (groupScheme_def R N).symm).hom).hom.hom.left := by
-  rw [weightParabolicInclusion]
+  rw [weightParabolicInclusion_def]
   rfl
 
 /-- The weight-parabolic inclusion into `GL_N` is a closed immersion. -/
@@ -234,22 +253,24 @@ instance isClosedImmersion_weightParabolicInclusion (w : Fin N → ℤ) :
 /-- The weight-parabolic coordinate Hopf algebra with its finite-type property. -/
 noncomputable def weightParabolicFiniteTypeCoordinateHopfAlgebra (w : Fin N → ℤ) :
     FiniteTypeCommHopfAlgCat R :=
-  FiniteTypeCommHopfAlgCat.quotient (finiteTypeCoordinateHopfAlgebra R N)
-    (weightParabolicDefiningHopfIdeal R w)
+  ⟨weightParabolicCoordinateHopfAlgebra R w,
+    inferInstanceAs (Algebra.FiniteType R (weightParabolicCoordinateHopfAlgebra R w))⟩
 
 /-- The finite-type package has the weight-parabolic coordinate Hopf algebra as its object. -/
 @[simp]
 theorem weightParabolicFiniteTypeCoordinateHopfAlgebra_obj (w : Fin N → ℤ) :
     (weightParabolicFiniteTypeCoordinateHopfAlgebra R w).obj =
       weightParabolicCoordinateHopfAlgebra R w := by
-  unfold weightParabolicFiniteTypeCoordinateHopfAlgebra finiteTypeCoordinateHopfAlgebra
   rfl
 
 /-- The weight-parabolic group scheme is locally of finite type over the base. -/
 instance locallyOfFiniteType_weightParabolicGroupScheme (w : Fin N → ℤ) :
     LocallyOfFiniteType (weightParabolicGroupScheme R w).X.hom :=
   FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
-    (finiteTypeCoordinateHopfAlgebra R N) (weightParabolicDefiningHopfIdeal R w)
+    (⟨coordinateHopfAlgebra R N,
+      inferInstanceAs (Algebra.FiniteType R (coordinateHopfAlgebra R N))⟩ :
+      FiniteTypeCommHopfAlgCat R)
+    (weightParabolicDefiningHopfIdeal R w)
 
 /-- The subgroup cut out by the weight-parabolic ideal consists exactly of block-triangular
 ambient points. -/

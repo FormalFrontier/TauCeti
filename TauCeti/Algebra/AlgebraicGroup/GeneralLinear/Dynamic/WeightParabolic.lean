@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weights
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightParabolic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Functor
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 
@@ -125,8 +125,10 @@ theorem coe_weightParabolicPointsIso_hom_app_apply (w : Fin N → ℤ)
     {A : Type v} [CommRing A] [Algebra R A]
     (f : HopfAlgebra.points
       (R := R) (H := weightParabolicCoordinateHopfAlgebra R w) (CommAlgCat.of R A)) :
-    ((show Cocharacter.parabolic (CommAlgCat.of R A) (weightCocharacter (R := R) w) from
-        (weightParabolicPointsIso R w).hom.app (CommAlgCat.of R A) f) :
+    (((eqToHom (Cocharacter.parabolicFunctor_obj
+        (weightCocharacter (R := R) w) (CommAlgCat.of R A)))
+      ((weightParabolicPointsIso R w).hom.app (CommAlgCat.of R A) f) :
+        Cocharacter.parabolic (CommAlgCat.of R A) (weightCocharacter (R := R) w)) :
       HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N) (CommAlgCat.of R A)) =
       CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R N)
         (weightParabolicDefiningHopfIdeal R w) (CommAlgCat.of R A) f := by
@@ -153,9 +155,10 @@ theorem quotientPointsHom_weightParabolicPointsIso_inv_app_apply (w : Fin N → 
   calc
     CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R N)
         (weightParabolicDefiningHopfIdeal R w) (CommAlgCat.of R A) f =
-      ((show Cocharacter.parabolic (CommAlgCat.of R A)
-          (weightCocharacter (R := R) w) from
-        (weightParabolicPointsIso R w).hom.app (CommAlgCat.of R A) f) :
+      (((eqToHom (Cocharacter.parabolicFunctor_obj
+          (weightCocharacter (R := R) w) (CommAlgCat.of R A)))
+        ((weightParabolicPointsIso R w).hom.app (CommAlgCat.of R A) f) :
+          Cocharacter.parabolic (CommAlgCat.of R A) (weightCocharacter (R := R) w)) :
           HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N)
             (CommAlgCat.of R A)) :=
       (coe_weightParabolicPointsIso_hom_app_apply R w f).symm

@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightParabolic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
@@ -144,17 +144,14 @@ theorem coordinateMap_def :
     coordinateMap R =
       CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
         (definingHopfIdeal R) := by
-  unfold coordinateMap GeneralLinear.weightParabolicCoordinateMap definingHopfIdeal
-  rfl
+  ext h
+  exact GeneralLinear.weightParabolicCoordinateMap_apply R weights h
 
 /-- The Borel coordinate morphism sends an ambient coordinate to its quotient class. -/
 theorem coordinateMap_apply (h : GeneralLinear.coordinateHopfAlgebra R 2) :
     (coordinateMap R).hom h =
       Ideal.Quotient.mkₐ R (definingHopfIdeal R).toIdeal h :=
-  by
-    rw [coordinateMap_def]
-    exact CommHopfAlgCat.mkQuotient_apply
-      (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R) h
+  GeneralLinear.weightParabolicCoordinateMap_apply R weights h
 
 /-- The lower-left coordinate vanishes in the Borel coordinate Hopf algebra. -/
 @[simp↓]
@@ -500,8 +497,9 @@ yields the ambient general-linear diagonal-torus coordinate morphism. -/
 @[simp]
 theorem coordinateMap_comp_diagonalTorusCoordinateMap :
     coordinateMap R ≫ diagonalTorusCoordinateMap R =
-      GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2) :=
-  CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
+      GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2) := by
+  rw [coordinateMap_def]
+  exact CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
 
 /-- **The diagonal split torus of `GL₂` inside its Borel subgroup scheme**. -/
 noncomputable def diagonalTorus :
@@ -533,7 +531,7 @@ theorem diagonalTorus_comp_inclusion :
     diagonalTorus R ≫ inclusion R =
       GeneralLinear.diagonalTorus (R := R) (N := 2) := by
   rw [diagonalTorus_def, inclusion, GeneralLinear.diagonalTorus_def]
-  unfold GeneralLinear.weightParabolicInclusion definingHopfIdeal
+  rw [GeneralLinear.weightParabolicInclusion_def]
   simp only [Category.assoc, eqToHom_refl, Category.id_comp]
   rw [CommHopfAlgCat.quotientSpecι_def]
   have hmap :
@@ -614,8 +612,9 @@ yields the ambient general-linear root-subgroup coordinate morphism. -/
 @[simp]
 theorem coordinateMap_comp_rootSubgroupCoordinateMap :
     coordinateMap R ≫ rootSubgroupCoordinateMap R =
-      GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1) :=
-  CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
+      GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1) := by
+  rw [coordinateMap_def]
+  exact CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
 
 /-- **The positive simple-root subgroup of `GL₂` inside the Borel subgroup scheme**: the affine
 group-scheme morphism `x₀₁ : 𝔾ₐ → B` whose value on points is `c ↦ x₀₁(c)`. -/
@@ -644,7 +643,7 @@ theorem rootSubgroup_comp_inclusion :
     rootSubgroup R ≫ inclusion R =
       GeneralLinear.rootSubgroup (by decide : (0 : Fin 2) ≠ 1) := by
   rw [rootSubgroup_def, inclusion, GeneralLinear.rootSubgroup_def]
-  unfold GeneralLinear.weightParabolicInclusion definingHopfIdeal
+  rw [GeneralLinear.weightParabolicInclusion_def]
   simp only [Category.assoc, eqToHom_refl, Category.id_comp]
   rw [CommHopfAlgCat.quotientSpecι_def]
   have hmap :
