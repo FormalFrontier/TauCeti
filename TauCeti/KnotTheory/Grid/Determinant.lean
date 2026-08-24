@@ -181,8 +181,8 @@ The two `J`-self-pairings of the state cancel in `2 A = M_O - M_X - (n - 1)`, an
 pairing against the markings fibres over the columns. -/
 theorem alexanderTwoℤ_eq_sum (x : GridState n) :
     G.alexanderTwoℤ x = (∑ c : Fin n, G.alexanderTwoWeight c (x c)) + G.alexanderTwoShift := by
-  simp only [alexanderTwoℤ_def, maslovOℤ_def, maslovXℤ_def, alexanderTwoShift,
-    alexanderTwoWeight, OSet, XSet, GridState.JNumCenter_pointSet_eq_sum,
+  simp only [alexanderTwoℤ_def, maslovOℤ_def, maslovXℤ_def, alexanderTwoShift_def,
+    alexanderTwoWeight_def, OSet, XSet, GridState.JNumCenter_pointSet_eq_sum,
     Finset.sum_sub_distrib]
   push_cast
   ring
