@@ -13,7 +13,7 @@ public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Rational.Basic
 # The assembled rational Dixon--Schneider solver
 
 This file assembles the integer-valued stage of the Burnside--Dixon--Schneider character-table
-algorithm. Given executable conjugacy-class data and a certified Dixon prime, it performs the
+algorithm. Given executable conjugacy-class data and a prime, it performs the
 modular common-eigenrow search, lifts the rows by signed least representatives, searches the
 possible positive character degrees dividing the group order, and reconstructs the ordinary table
 from the central-character table. It returns the first candidate accepted by the exact integer
@@ -22,9 +22,9 @@ checker.
 The result is an `Option`: `none` honestly records that the character table is not integer-valued,
 that the chosen residue window was too small, or that no ordering of the lifted rows passed the
 checker. A successful result is certified by
-`TauCeti.ClassData.isIntegerCharacterTableSpec_of_rationalCharacterTableDixon_eq_some` and hence,
+`TauCeti.ClassData.isIntegerCharacterTableSpec_of_dixonRationalCharacterTable_eq_some` and hence,
 after embedding in `ℂ`, by
-`TauCeti.ClassData.isCharacterTableSpec_of_rationalCharacterTableDixon_eq_some`.
+`TauCeti.ClassData.isCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`.
 
 This is the first assembled solver promised by the rational-table stage of the character-theory
 roadmap. The later general solver replaces signed integer lifting by the structured cyclotomic lift;
@@ -32,8 +32,17 @@ no claim about that later stage is made here.
 
 ## Main definitions
 
-* `TauCeti.ClassData.IntegerCharacterTable`: the numbered exact output data.
-* `TauCeti.ClassData.rationalCharacterTableDixon`: the executable rational-stage solver.
+* `TauCeti.ClassData.IntegerCharacterTableData`: candidate numbered exact output data.
+* `TauCeti.ClassData.liftedCentralRowsList`: an executable enumeration of the existing lifted-row
+  finset.
+* `TauCeti.ClassData.dixonRationalCharacterTable?`: the executable rational-stage solver.
+
+## Main results
+
+* `TauCeti.ClassData.isIntegerCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`: every
+  successful output satisfies the exact integer specification.
+* `TauCeti.ClassData.isCharacterTableSpec_of_dixonRationalCharacterTable_eq_some`: every successful
+  output gives a complex character table up to row permutation.
 
 ## References
 
@@ -55,50 +64,40 @@ universe u
 
 variable {G : Type u} [Group G] (d : ClassData G)
 
-/-- The three exact numbered arrays produced by the integer-valued Dixon--Schneider solver: the
-central-character table, the ordinary character table, and the character degrees. -/
+/-- Candidate numbered data for the integer-valued Dixon--Schneider solver. Normalization,
+positivity, and correctness hold only after the candidate passes `integerCharacterTableChecker`. -/
 @[ext]
-structure IntegerCharacterTable where
-  /-- The normalized central-character table. -/
+structure IntegerCharacterTableData where
+  /-- A candidate central-character table. -/
   omega : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ
-  /-- The ordinary character table. -/
+  /-- A candidate ordinary character table. -/
   table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ
-  /-- The positive character degrees. -/
+  /-- Candidate character degrees. -/
   degree : Fin d.numClasses → ℕ
 
-/-- Decidability of equality between integer character tables. -/
-instance : DecidableEq d.IntegerCharacterTable := by
-  intro ⟨o1, t1, deg1⟩ ⟨o2, t2, deg2⟩
-  by_cases ho : o1 = o2
-  · by_cases ht : t1 = t2
-    · by_cases hd : deg1 = deg2
-      · exact isTrue (by rw [ho, ht, hd])
-      · exact isFalse (by intro h; cases h; exact hd rfl)
-    · exact isFalse (by intro h; cases h; exact ht rfl)
-  · exact isFalse (by intro h; cases h; exact ho rfl)
-
 variable [Fintype G] [DecidableEq G]
-variable {d}
 
-/-- Run the integer-valued stage of the Dixon--Schneider character-table algorithm.
+/-- An executable list of the signed integral lifts of the modular central-character search. Its
+body is exposed so downstream acceptance examples can check the concrete enumeration. -/
+@[expose] def liftedCentralRowsList (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)] :
+    List (Fin d.numClasses → ℤ) :=
+  ((FinEnum.toList (Fin d.numClasses → ZMod p)).filter fun row =>
+    row ∈ d.centralCharacterSearch (F := ZMod p)).map fun row j => (row j).valMinAbs
 
-The modular search and signed lift determine an unordered finite set of candidate central-character
-rows. The solver enumerates its injective row numberings and the degree vectors whose positive
-entries divide `|G|` and whose squares sum to `|G|`; for each pair, the ordinary table is obtained
-by exact integer division and checked by `TauCeti.ClassData.integerCharacterTableChecker`. -/
-@[expose] def rationalCharacterTableDixon (q : DixonPrimeData G) :
-    Option d.IntegerCharacterTable :=
-  letI : Fact q.p.Prime := q.fact_prime
-  letI : FinEnum (ZMod q.p) :=
-    FinEnum.ofEquiv (Fin q.p) (ZMod.finEquiv q.p).symm.toEquiv
-  let searchedRows := d.centralCharacterSearch (F := ZMod q.p)
-  -- `Finset.toList` is noncomputable. Enumerating the finite row type and retaining exactly the
-  -- members of the already-computed search gives its rows a deterministic executable order.
-  let modularRows : List (Fin d.numClasses → ZMod q.p) :=
-    (FinEnum.toList (Fin d.numClasses → ZMod q.p)).filter fun row =>
-      row ∈ searchedRows
-  let liftedRows : List (Fin d.numClasses → ℤ) :=
-    modularRows.map fun row j => (row j).valMinAbs
+/-- The executable lifted-row list enumerates exactly `liftedCentralRows`. -/
+@[simp]
+theorem liftedCentralRowsList_toFinset (p : ℕ) [Fact p.Prime] [FinEnum (ZMod p)] :
+    (d.liftedCentralRowsList p).toFinset = d.liftedCentralRows p := by
+  ext row
+  simp [liftedCentralRowsList, liftedCentralRows]
+
+/-- Enumerate the candidate data inspected by the rational Dixon--Schneider solver. Its body is
+exposed so downstream acceptance examples can exhibit a successful candidate. -/
+@[expose] def dixonRationalCharacterTableCandidates (p : ℕ) [Fact p.Prime] :
+    List d.IntegerCharacterTableData :=
+  letI : FinEnum (ZMod p) :=
+    FinEnum.ofEquiv (Fin p) (ZMod.finEquiv p).symm.toEquiv
+  let liftedRows := d.liftedCentralRowsList p
   let rowAssignments :=
     (FinEnum.toList (Fin d.numClasses → {row // row ∈ liftedRows})).filter fun rows =>
       decide (Function.Injective rows)
@@ -106,35 +105,55 @@ by exact integer division and checked by `TauCeti.ClassData.integerCharacterTabl
   let degreeAssignments :=
     (FinEnum.toList (Fin d.numClasses → Degree)).filter fun degree =>
       decide (∑ i, (degree i : ℕ) ^ 2 = Fintype.card G)
-  let candidates : List d.IntegerCharacterTable :=
-    rowAssignments.flatMap fun rows => degreeAssignments.map fun degrees =>
-      let omega : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ :=
-        fun i => rows i
-      let degree : Fin d.numClasses → ℕ := fun i => degrees i
-      { omega := omega
-        degree := degree
-        table := fun i j =>
-          (degree i : ℤ) * omega i j / (d.classFinset j).card }
-  candidates.find? fun output =>
+  rowAssignments.flatMap fun rows => degreeAssignments.map fun degrees =>
+    let omega : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ :=
+      fun i => rows i
+    let degree : Fin d.numClasses → ℕ := fun i => degrees i
+    { omega := omega
+      degree := degree
+      table := fun i j =>
+        (degree i : ℤ) * omega i j / (d.classFinset j).card }
+
+/-- Run the integer-valued stage of the Dixon--Schneider character-table algorithm.
+
+The modular search and signed lift determine an unordered finite set of candidate central-character
+rows. The solver enumerates its injective row numberings and the degree vectors whose positive
+entries divide `|G|` and whose squares sum to `|G|`; for each pair, the ordinary table is obtained
+by exact integer division and checked by `TauCeti.ClassData.integerCharacterTableChecker`.
+
+Soundness requires only that `p` is prime. A good-prime certificate is needed for completeness, not
+for checking a candidate returned by this function. -/
+def dixonRationalCharacterTable? (p : ℕ) [Fact p.Prime] :
+    Option d.IntegerCharacterTableData :=
+  (d.dixonRationalCharacterTableCandidates p).find? fun output =>
     d.integerCharacterTableChecker output.omega output.table output.degree
+
+/-- The rational solver succeeds exactly when its candidate list contains data satisfying the
+integer character-table specification. -/
+theorem isSome_dixonRationalCharacterTable_iff (p : ℕ) [Fact p.Prime] :
+    (d.dixonRationalCharacterTable? p).isSome ↔
+      ∃ output ∈ d.dixonRationalCharacterTableCandidates p,
+        d.IsIntegerCharacterTableSpec output.omega output.table output.degree := by
+  rw [dixonRationalCharacterTable?, List.find?_isSome]
+  simp only [d.integerCharacterTableChecker_eq_true_iff]
 
 /-- Every successful rational Dixon--Schneider output passes the exact integer character-table
 specification. -/
-theorem isIntegerCharacterTableSpec_of_rationalCharacterTableDixon_eq_some
-    (q : DixonPrimeData G) {output : d.IntegerCharacterTable}
-    (h : d.rationalCharacterTableDixon q = some output) :
+theorem isIntegerCharacterTableSpec_of_dixonRationalCharacterTable_eq_some
+    {d : ClassData G} (p : ℕ) [Fact p.Prime] {output : d.IntegerCharacterTableData}
+    (h : d.dixonRationalCharacterTable? p = some output) :
     d.IsIntegerCharacterTableSpec output.omega output.table output.degree := by
-  simp only [rationalCharacterTableDixon] at h
+  simp only [dixonRationalCharacterTable?] at h
   have hcheck := List.find?_some h
   exact (d.integerCharacterTableChecker_eq_true_iff _ _ _).mp hcheck
 
 /-- Every successful rational Dixon--Schneider output, cast to `ℂ` and reindexed by conjugacy
 classes, satisfies the complex character-table specification. -/
-theorem isCharacterTableSpec_of_rationalCharacterTableDixon_eq_some
-    (q : DixonPrimeData G) {output : d.IntegerCharacterTable}
-    (h : d.rationalCharacterTableDixon q = some output) :
+theorem isCharacterTableSpec_of_dixonRationalCharacterTable_eq_some
+    {d : ClassData G} (p : ℕ) [Fact p.Prime] {output : d.IntegerCharacterTableData}
+    (h : d.dixonRationalCharacterTable? p = some output) :
     IsCharacterTableSpec G (d.complexTableOfInteger output.table) :=
-  (d.isIntegerCharacterTableSpec_of_rationalCharacterTableDixon_eq_some q h).isCharacterTableSpec
+  (d.isIntegerCharacterTableSpec_of_dixonRationalCharacterTable_eq_some p h).isCharacterTableSpec
 
 end ClassData
 
