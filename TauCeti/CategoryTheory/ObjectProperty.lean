@@ -10,13 +10,15 @@ public import Mathlib.CategoryTheory.Limits.Shapes.BinaryBiproducts
 public import Mathlib.CategoryTheory.ObjectProperty.ClosedUnderIsomorphisms
 public import Mathlib.CategoryTheory.ObjectProperty.ContainsZero
 public import Mathlib.CategoryTheory.ObjectProperty.FiniteProducts
+public import Mathlib.CategoryTheory.ObjectProperty.Small
+public import Mathlib.CategoryTheory.Preadditive.AdditiveFunctor
 
 /-!
 # Object properties: transport along equivalences, and closure properties
 
 This file contains general lemmas about object properties: transporting them along an
-equivalence, and comparing Mathlib's closure type classes with one another in the presence of a
-zero object and of binary biproducts.
+equivalence, comparing Mathlib's closure type classes with one another in the presence of a
+zero object and of binary biproducts, and two instances for the associated full subcategory.
 
 ## Main declarations
 
@@ -27,11 +29,18 @@ zero object and of binary biproducts.
 * `CategoryTheory.ObjectProperty.isClosedUnderBinaryProducts_of_prop_biprod`: for a replete
   property in a category with binary biproducts, closure under binary products only has to be
   checked on biproducts.
+* `CategoryTheory.ObjectProperty.prop_biprod_of_isClosedUnderBinaryProducts`: a property closed
+  under binary products holds for binary biproducts, with `X ⊞ Y` as the syntactic form of the
+  conclusion.
+* `CategoryTheory.ObjectProperty.essentiallySmall_fullSubcategory` and
+  `CategoryTheory.ObjectProperty.additive_ιOfLE`: a full subcategory of an essentially small
+  category is essentially small, and the inclusion of a smaller property into a larger one is
+  additive.
 -/
 
 public section
 
-universe u₁ v₁ u₂ v₂
+universe w u₁ v₁ u₂ v₂
 
 namespace CategoryTheory
 
@@ -78,6 +87,32 @@ theorem isClosedUnderBinaryProducts_of_prop_biprod {C : Type u₁} [Category.{v�
   rintro _ ⟨F, hF⟩
   refine P.prop_of_iso ?_ (h _ _ (hF ⟨WalkingPair.left⟩) (hF ⟨WalkingPair.right⟩))
   exact (biprod.isoProd _ _).trans (HasLimit.isoOfNatIso (diagramIsoPair F)).symm
+
+/-- **A property closed under binary products holds for binary biproducts.** In a category with
+binary biproducts the biproduct is a binary product, so this is
+`CategoryTheory.ObjectProperty.prop_of_isLimit_binaryFan` applied to
+`CategoryTheory.Limits.BinaryBiproduct.isLimit`; naming it keeps the index of the conclusion
+syntactically `X ⊞ Y`, which matters when the conclusion is the type index of a dependent
+family. -/
+theorem prop_biprod_of_isClosedUnderBinaryProducts {C : Type u₁} [Category.{v₁} C]
+    [HasZeroMorphisms C] [HasBinaryBiproducts C] (P : ObjectProperty C)
+    [P.IsClosedUnderBinaryProducts] {X Y : C} (hX : P X) (hY : P Y) : P (X ⊞ Y) :=
+  P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit X Y) hX hY
+
+/-- **A full subcategory of an essentially small category is essentially small.** Mathlib
+derives this from `CategoryTheory.ObjectProperty.EssentiallySmall` of the property itself, which
+here comes from the top property by
+`CategoryTheory.ObjectProperty.EssentiallySmall.of_le`. -/
+instance essentiallySmall_fullSubcategory {C : Type u₁} [Category.{v₁} C]
+    [EssentiallySmall.{w} C] (P : ObjectProperty C) : EssentiallySmall.{w} P.FullSubcategory :=
+  have : ObjectProperty.EssentiallySmall.{w} P := EssentiallySmall.of_le le_top
+  inferInstance
+
+/-- The inclusion of a smaller object property into a larger one is an additive functor: both
+categories carry the addition of the ambient one. -/
+instance additive_ιOfLE {C : Type u₁} [Category.{v₁} C] [Preadditive C]
+    {P P' : ObjectProperty C} (h : P ≤ P') : (ObjectProperty.ιOfLE h).Additive where
+  map_add := rfl
 
 end ObjectProperty
 

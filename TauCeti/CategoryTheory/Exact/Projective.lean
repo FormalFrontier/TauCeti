@@ -68,6 +68,9 @@ by the projectives themselves.
   and is closed under binary biproducts.
 * `TauCeti.ExactStructure.isExtensionClosed_admitsFiniteResolution`: under those same hypotheses
   on `P`, admitting a finite `P`-resolution is closed under extensions.
+* `TauCeti.ExactStructure.isExtensionClosed_of_le_isProjective` and
+  `TauCeti.ExactStructure.fullSubcategory_conflation_iff_split`: a property consisting of
+  projectives is itself extension closed, and the exact structure it inherits is the split one.
 
 ## Implementation notes
 
@@ -319,6 +322,36 @@ local instance [P.ContainsZero] [P.IsClosedUnderBinaryProducts] :
 
 variable [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 
+/-- **A property consisting of projectives is extension closed**, as soon as it contains a zero
+object and is closed under binary biproducts: a conflation whose third term is projective
+splits, so its middle term is the biproduct of the two outer ones.
+
+Together with `TauCeti.ExactStructure.fullSubcategory` this equips the objects satisfying `P`
+with an induced exact structure — necessarily the split one, by
+`TauCeti.ExactStructure.fullSubcategory_conflation_iff_split`. -/
+theorem isExtensionClosed_of_le_isProjective (hP : P ≤ E.isProjective) :
+    E.IsExtensionClosed P where
+  prop_X₂ hS h₁ h₃ :=
+    P.prop_of_iso (E.splittingOfProjective hS (hP _ h₃)).isoBinaryBiproduct.symm
+      (P.prop_biprod_of_isClosedUnderBinaryProducts h₁ h₃)
+
+/-- **The exact structure induced on a subcategory of projectives is the split one.** Every
+conflation between projectives splits, and a split short complex is a conflation of every exact
+structure. -/
+theorem fullSubcategory_conflation_iff_split (hP : P ≤ E.isProjective)
+    (S : ShortComplex P.FullSubcategory) :
+    (E.fullSubcategory P (E.isExtensionClosed_of_le_isProjective hP)).Conflation S ↔
+      (ExactStructure.split P.FullSubcategory).Conflation S := by
+  refine ⟨fun hS => ?_, fun hS => ExactStructure.conflation_of_split_conflation _ hS⟩
+  rw [fullSubcategory_conflation_iff] at hS
+  have hs := E.splittingOfProjective hS (hP _ S.X₃.property)
+  exact (ExactStructure.split_conflation S).mpr ⟨{
+    r := ObjectProperty.homMk hs.r
+    s := ObjectProperty.homMk hs.s
+    f_r := ObjectProperty.hom_ext _ hs.f_r
+    s_g := ObjectProperty.hom_ext _ hs.s_g
+    id := ObjectProperty.hom_ext _ hs.id }⟩
+
 /-- **Finite resolutions by projectives lift along a conflation.** If `P` consists of
 `E`-projectives, contains a zero object and is closed under binary biproducts, and both outer
 terms of a conflation admit a finite `P`-resolution of length at most `n`, then so does its
@@ -338,7 +371,7 @@ theorem exists_finiteResolution_length_le_of_conflation (hP : P ≤ E.isProjecti
       have hX₁ : P S.X₁ := by simpa using r.prop_syzygy hr
       have hX₃ : P S.X₃ := by simpa using t.prop_syzygy ht
       refine ⟨.base (P.prop_of_iso (E.splittingOfProjective hS (hP _ hX₃)).isoBinaryBiproduct.symm
-        (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX₁ hX₃)), by simp⟩
+        (P.prop_biprod_of_isClosedUnderBinaryProducts hX₁ hX₃)), by simp⟩
   | succ n ih =>
       obtain ⟨KX, QX, mX, aX, hmX, hQX, hcX, hKX⟩ :=
         E.exists_conflation_of_exists_finiteResolution_length_le_succ h₁
@@ -348,7 +381,7 @@ theorem exists_finiteResolution_length_le_of_conflation (hP : P ≤ E.isProjecti
         E.exists_conflation_biprod_of_conflation_of_projective hS hcX hcZ (hP _ hQZ)
       obtain ⟨s, hs⟩ := ih (S := ShortComplex.mk v w hv) hKv hKX hKZ
       have hQ : P (QX ⊞ QZ) :=
-        P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQX hQZ
+        P.prop_biprod_of_isClosedUnderBinaryProducts hQX hQZ
       exact ⟨.step hQ u a hu hKu s,
         by rw [FiniteResolution.length_step]; exact Nat.succ_le_succ hs⟩
 
