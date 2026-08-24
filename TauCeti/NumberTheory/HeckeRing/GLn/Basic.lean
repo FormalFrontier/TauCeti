@@ -90,6 +90,27 @@ lemma det_eq_one_of_mem_SLnZ {g : GL (Fin n) ℚ} (hg : g ∈ SLnZ n) :
   obtain ⟨σ, rfl⟩ := (mem_SLnZ_iff n).mp hg
   exact congrArg Units.val (SpecialLinearGroup.det_mapGL (S := ℚ) σ)
 
+/-- **Integral representatives survive two-sided integral translation.** If `A` represents
+`g ∈ GL_n(ℚ)` entrywise over `ℤ`, then `τ * A * δ` represents `mapGL τ * g * mapGL δ` for any
+`τ δ : SL_n(ℤ)`.
+
+Nothing here is specific to a level or a dimension: it is the statement that the entrywise
+`ℤ → ℚ` cast is multiplicative, packaged for the two-sided translations that every
+change-of-representative argument performs. -/
+lemma mapGL_mul_coe_eq_intMatrix (τ δ : SpecialLinearGroup (Fin n) ℤ)
+    (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
+    (hA : (↑g : Matrix (Fin n) (Fin n) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
+    (↑(mapGL ℚ τ * g * mapGL ℚ δ) : Matrix (Fin n) (Fin n) ℚ) =
+      ((τ : Matrix (Fin n) (Fin n) ℤ) * A * (δ : Matrix (Fin n) (Fin n) ℤ)).map
+        (Int.cast : ℤ → ℚ) := by
+  have h₁ := map_mul (Int.castRingHom ℚ).mapMatrix
+    ((τ : Matrix (Fin n) (Fin n) ℤ) * A) (δ : Matrix (Fin n) (Fin n) ℤ)
+  have h₂ := map_mul (Int.castRingHom ℚ).mapMatrix (τ : Matrix (Fin n) (Fin n) ℤ) A
+  simp only [RingHom.mapMatrix_apply, Int.coe_castRingHom] at h₁ h₂
+  simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, map_apply_coe,
+    RingHom.mapMatrix_apply, algebraMap_int_eq, Int.coe_castRingHom, hA]
+  rw [h₁, h₂]
+
 /-- The case of coefficient subgroups inside `SL_n(ℤ)`, which is how the congruence subgroups
 get it. -/
 lemma det_eq_of_mem_doubleCoset_of_le_SLnZ {H₁ H₂ : Subgroup (GL (Fin n) ℚ)}

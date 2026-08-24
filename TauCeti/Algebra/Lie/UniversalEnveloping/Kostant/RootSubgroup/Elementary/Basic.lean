@@ -44,8 +44,10 @@ is built from; it is injective as soon as the value ring is reduced.
   morphism of value rings.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFunctor`: the resulting group-valued functor.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantElementaryFrobenius`: the `p ^ n`-power Frobenius
-  endomorphism, with `kostantElementaryFrobenius_injective` on a reduced value ring and
-  `kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change.
+  endomorphism, with `kostantElementaryFrobenius_injective` on a reduced value ring,
+  `kostantElementaryFrobenius_eq_kostantElementaryMap` exhibiting it as a base change,
+  `kostantElementaryFrobenius_mul` computing its powers, and
+  `kostantElementaryMap_kostantElementaryFrobenius` its naturality in the value ring.
 
 ## References
 
@@ -391,6 +393,36 @@ theorem kostantElementaryFrobenius_add (m : ℕ) :
         Nat.add_comm n m]
   rw [kostantElementaryFrobenius, kostantElementaryFrobenius, kostantElementaryFrobenius, hadd,
     kostantElementaryMap_comp]
+
+/-- Iterating the `p ^ n`-power Frobenius `k` times gives the `p ^ (n * k)`-power Frobenius. -/
+-- `Monoid.End` is definitionally a bundled `MonoidHom`; the `show` fixes its composition-monoid
+-- instance before elaborating the power.
+theorem kostantElementaryFrobenius_mul (k : ℕ) :
+    (show Monoid.End _ from kostantElementaryFrobenius e h ρ M hM hnil p n A) ^ k =
+      kostantElementaryFrobenius e h ρ M hM hnil p (n * k) A := by
+  apply MonoidHom.ext
+  intro g
+  -- Applying the bundled equality hides the `Monoid.End` coercion under its definition as a
+  -- `MonoidHom`; this exposes the pointwise iterate equality `Monoid.End.coe_pow`, which is `rfl`.
+  change (⇑(kostantElementaryFrobenius e h ρ M hM hnil p n A))^[k] g = _
+  induction k generalizing g with
+  | zero => simp
+  | succ k ih =>
+      rw [Function.iterate_succ_apply, ih, Nat.mul_succ, kostantElementaryFrobenius_add,
+        MonoidHom.comp_apply]
+
+/-- The Frobenius endomorphism of the elementary group commutes with base change of the value ring,
+because a ring homomorphism preserves `p ^ n`-th powers. -/
+theorem kostantElementaryMap_kostantElementaryFrobenius {B : CommAlgCat.{w} ℤ} [ExpChar B p]
+    (φ : A ⟶ B) (g : kostantElementarySubgroup e h ρ M hM hnil A) :
+    kostantElementaryMap e h ρ M hM hnil φ
+        (kostantElementaryFrobenius e h ρ M hM hnil p n A g) =
+      kostantElementaryFrobenius e h ρ M hM hnil p n B
+        (kostantElementaryMap e h ρ M hM hnil φ g) := by
+  have hcomm : iterateFrobeniusValueHom p n A ≫ φ = φ ≫ iterateFrobeniusValueHom p n B :=
+    CommAlgCat.hom_ext <| AlgHom.ext fun x => by simp
+  simp only [kostantElementaryFrobenius_eq_kostantElementaryMap, ← MonoidHom.comp_apply,
+    ← kostantElementaryMap_comp, hcomm]
 
 /-- The Frobenius endomorphism of the elementary group is injective over a reduced value ring.
 

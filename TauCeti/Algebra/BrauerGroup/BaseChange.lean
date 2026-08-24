@@ -17,8 +17,10 @@ public import TauCeti.Algebra.BrauerGroup.Group
 -- below typechecks, and it re-exports the two compatibilities of scalar extension used in the
 -- proofs, `TauCeti.Algebra.TensorProduct.baseChangeTensorAlgEquiv` and `baseChangeTowerAlgEquiv`.
 public import TauCeti.Algebra.CentralSimple.BaseChange
--- Non-public: `TauCeti.Algebra.matrixCoeffBaseChangeAlgEquiv` does not occur in the type of any
--- exported declaration, only inside the proof that base change respects Brauer equivalence.
+-- Non-public: `TauCeti.isBrauerTrivial_iff_isSplittingField` is used only to identify the kernel,
+-- and `TauCeti.Algebra.matrixCoeffBaseChangeAlgEquiv` only in the proof that base change respects
+-- Brauer equivalence; neither occurs in the type of an exported declaration.
+import TauCeti.Algebra.BrauerGroup.Splitting
 import TauCeti.Algebra.Matrix.BaseChange
 
 /-!
@@ -50,13 +52,11 @@ fields, and no homomorphism induced by an arbitrary map of fields, is constructe
 ## The kernel
 
 A class dies under `baseChange K L` exactly when its algebras become Brauer trivial over `L`
-(`TauCeti.BrauerGroup.mk_mem_ker_baseChange_iff`), and an algebra **split** by `L` -- one with
-`L ⊗[K] A` a full matrix algebra over `L`, `TauCeti.Algebra.IsSplittingField` -- does die
-(`TauCeti.BrauerGroup.mk_mem_ker_baseChange_of_isSplittingField`). The converse, that a class in
-the kernel is split rather than merely Brauer trivial over `L`, is the same gap as in
-`TauCeti/Algebra/BrauerGroup/Trivial.lean`: it needs the *uniqueness* half of Artin-Wedderburn, so
-that a central division algebra Brauer equivalent to its base field is that base field. That is
-Layer 2 of the roadmap below and is not yet available in the repository, so it is not claimed here.
+(`TauCeti.BrauerGroup.mk_mem_ker_baseChange_iff`). The Wedderburn-uniqueness consequence
+`TauCeti.isBrauerTrivial_iff_isSplittingField` upgrades this to the promised description: a class
+lies in the kernel exactly when `L` **splits** any algebra representing it, meaning that
+`L ⊗[K] A` is a full matrix algebra over `L`. This is
+`TauCeti.BrauerGroup.mk_mem_ker_baseChange_iff_isSplittingField`.
 
 What is available unconditionally is the extreme case: over an algebraically closed `L` the whole
 of `BrauerGroup L` is trivial, so `baseChange K L` is the trivial homomorphism
@@ -185,20 +185,16 @@ theorem mk_mem_ker_baseChange_iff (A : CSA.{u, u} K) :
 variable {A : Type u} [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
   [FiniteDimensional K A]
 
-/-- **An algebra split by `L` has trivial class over `L`.**
+/-- **The kernel of Brauer-group base change consists exactly of the classes split by the
+extension field.**
 
-This is the half of "the kernel is the classes split by `L`" that the available theory gives: `L`
-splitting `A` says `L ⊗[K] A` is a full matrix algebra over `L`, and a full matrix algebra is
-Brauer trivial. The converse needs the uniqueness half of Artin-Wedderburn; see the module
-docstring. -/
-theorem baseChange_mk_eq_one_of_isSplittingField (h : Algebra.IsSplittingField K A L) :
-    baseChange K L (mk (CSA.of K A)) = 1 :=
-  mk_eq_one_of_isSplittingField ((Algebra.isSplittingField_baseChange_self_iff K A L).2 h)
-
-/-- **An algebra split by `L` has its class in the kernel of base change to `L`.** -/
-theorem mk_mem_ker_baseChange_of_isSplittingField (h : Algebra.IsSplittingField K A L) :
-    mk (CSA.of K A) ∈ (baseChange K L).ker :=
-  MonoidHom.mem_ker.2 (baseChange_mk_eq_one_of_isSplittingField K L h)
+The forward implication is the substantive one: membership says that the scalar extension
+`L ⊗[K] A` is Brauer trivial, and Wedderburn uniqueness identifies Brauer triviality with being a
+matrix algebra over `L`. -/
+theorem mk_mem_ker_baseChange_iff_isSplittingField :
+    mk (CSA.of K A) ∈ (baseChange K L).ker ↔ Algebra.IsSplittingField K A L := by
+  rw [mk_mem_ker_baseChange_iff, isBrauerTrivial_iff_isSplittingField,
+    Algebra.isSplittingField_baseChange_self_iff]
 
 /-- **Every Brauer class dies over an algebraically closed extension**, so base change to one is
 the trivial homomorphism: an algebraically closed field has trivial Brauer group

@@ -37,7 +37,8 @@ the two-vertex graph `A₂`, whose zigzag algebra is genuinely radical-cube-zero
 
 * `TauCeti.IsQuadraticZigzagRelator`: the two quadratic relation families.
 * `TauCeti.IsZigzagRelator`: the uniform relation family, adding the long paths.
-* `TauCeti.zigzagIdeal` and `TauCeti.quadraticZigzagIdeal`: the two-sided ideals they span.
+* `TauCeti.zigzagIdeal` and `TauCeti.quadraticZigzagIdeal`: the two-sided ideals they span, with
+  named unfolding lemmas for callers that reason about the spans.
 * `TauCeti.nonisolatedZigzagQuotient`: the relation quotient, with quotient map
   `TauCeti.zigzagMk` and universal property `TauCeti.zigzagLift`.
 
@@ -103,6 +104,14 @@ noncomputable def quadraticZigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQu
 /-- The two-sided ideal spanned by the uniform zigzag relators. -/
 noncomputable def zigzagIdeal : TwoSidedIdeal (pathAlgebra k (DoubledQuiver G)) :=
   TwoSidedIdeal.span {x | IsZigzagRelator k G x}
+
+/-- The quadratic relation ideal is the two-sided span of the quadratic relators. -/
+theorem quadraticZigzagIdeal_eq_span :
+    quadraticZigzagIdeal k G = TwoSidedIdeal.span {x | IsQuadraticZigzagRelator k G x} := (rfl)
+
+/-- The uniform relation ideal is the two-sided span of the uniform relators. -/
+theorem zigzagIdeal_eq_span :
+    zigzagIdeal k G = TwoSidedIdeal.span {x | IsZigzagRelator k G x} := (rfl)
 
 /-- Every quadratic relator lies in the ideal it spans. -/
 theorem mem_quadraticZigzagIdeal_of_isQuadraticZigzagRelator
@@ -361,10 +370,9 @@ theorem zigzagLift_zigzagMk (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
 theorem zigzagLift_unique (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
     (hf : ∀ x, IsZigzagRelator k G x → f x = 0)
     (g : nonisolatedZigzagQuotient k G →ₐ[k] B)
-    (hg : ∀ x, g (zigzagMk k G x) = f x) : g = zigzagLift k G f hf := by
-  apply Ideal.Quotient.algHom_ext k
-  ext x
-  exact (hg x).trans (zigzagLift_zigzagMk k G f hf x).symm
+    (hg : ∀ x, g (zigzagMk k G x) = f x) : g = zigzagLift k G f hf :=
+  Ideal.Quotient.algHom_ext k <| PathAlgebra.algHom_ext k fun x ↦
+    (hg (ofPath x)).trans (zigzagLift_zigzagMk k G f hf (ofPath x)).symm
 
 /-- On a connected graph with at least three vertices an algebra map killing the quadratic
 relators already kills the whole relation ideal. -/
@@ -401,10 +409,10 @@ theorem zigzagLiftOfQuadratic_unique (hconn : G.Connected)
     (hf : ∀ x, IsQuadraticZigzagRelator k G x → f x = 0)
     (g : nonisolatedZigzagQuotient k G →ₐ[k] B)
     (hg : ∀ x, g (zigzagMk k G x) = f x) :
-    g = zigzagLiftOfQuadratic k G hconn hcard f hf := by
-  apply Ideal.Quotient.algHom_ext k
-  ext x
-  exact (hg x).trans (zigzagLiftOfQuadratic_zigzagMk k G hconn hcard f hf x).symm
+    g = zigzagLiftOfQuadratic k G hconn hcard f hf :=
+  Ideal.Quotient.algHom_ext k <| PathAlgebra.algHom_ext k fun x ↦
+    (hg (ofPath x)).trans
+      (zigzagLiftOfQuadratic_zigzagMk k G hconn hcard f hf (ofPath x)).symm
 
 end Lift
 

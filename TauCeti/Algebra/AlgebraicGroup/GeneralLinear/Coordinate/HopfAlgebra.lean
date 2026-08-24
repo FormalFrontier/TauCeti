@@ -610,6 +610,19 @@ theorem coordinateHopfAlgebra_algHom_ext {T : Type*} [Semiring T] [Algebra R T]
   obtain ⟨y, rfl⟩ := (coordinateHopfAlgebraAlgEquiv R n).surjective x
   exact DFunLike.congr_fun hcomp y
 
+/-- Two bialgebra homomorphisms out of the bundled coordinate Hopf algebra of `GLₙ` are equal
+if they agree on the localized generic entries. -/
+theorem coordinateHopfAlgebra_bialgHom_ext {T : Type*} [Semiring T] [Bialgebra R T]
+    {f g : coordinateHopfAlgebra R n →ₐc[R] T}
+    (h : ∀ i j, f (coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j)))) =
+      g (coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j))))) :
+    f = g := by
+  apply BialgHom.coe_toAlgHom_injective
+  apply coordinateHopfAlgebra_algHom_ext R n
+  exact h
+
 /-- The localized generic entries and their images under the stored antipode generate the carrier
 of the bundled general linear coordinate Hopf algebra. -/
 theorem adjoin_coordinateHopfAlgebra_X_union_antipode_X :
