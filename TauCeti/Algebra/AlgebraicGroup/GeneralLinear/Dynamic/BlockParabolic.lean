@@ -242,14 +242,6 @@ theorem weightParabolicInclusion_coordinateMap (w : Fin N → ℤ) :
   rw [CommHopfAlgCat.quotientSpecι_def]
   simp
 
-private theorem weightParabolicInclusion_hom_left (w : Fin N → ℤ) :
-    (weightParabolicInclusion (R := R) w).hom.hom.left =
-      (CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
-          (weightParabolicDefiningHopfIdeal (R := R) w)).hom.hom.left ≫
-        ((eqToIso (GeneralLinear.groupScheme_def R N).symm).hom).hom.hom.left := by
-  unfold weightParabolicInclusion
-  rfl
-
 /-- The block-parabolic inclusion into `GL_N` is a closed immersion. -/
 instance isClosedImmersion_weightParabolicInclusion (w : Fin N → ℤ) :
     IsClosedImmersion (weightParabolicInclusion (R := R) w).hom.hom.left := by
@@ -259,7 +251,7 @@ instance isClosedImmersion_weightParabolicInclusion (w : Fin N → ℤ) :
   have hc : IsClosedImmersion c := by infer_instance
   have hce : IsClosedImmersion (c ≫ e) :=
     (MorphismProperty.cancel_right_of_respectsIso _ c e).2 hc
-  rw [weightParabolicInclusion_hom_left]
+  unfold weightParabolicInclusion
   exact hce
 
 /-- The block-parabolic coordinate Hopf algebra with its finite-type property. -/
@@ -385,16 +377,6 @@ noncomputable def weightParabolicPointsIso (w : Fin N → ℤ) :
       (weightParabolicDefiningHopfIdeal (R := R) w)).trans
     (weightParabolicSubgroupPointsIso (R := R) w)
 
-private theorem weightParabolicPointsIso_hom_app_apply_eq (w : Fin N → ℤ)
-    {A : Type w} [CommRing A] [Algebra R A]
-    (f : HopfAlgebra.points
-      (R := R) (H := weightParabolicCoordinateHopfAlgebra (R := R) w) (CommAlgCat.of R A)) :
-    (weightParabolicPointsIso (R := R) w).hom.app (CommAlgCat.of R A) f =
-      weightParabolicPointsSubgroupMulEquiv (R := R) w
-        ((CommHopfAlgCat.quotientPointsSubgroupNatIso (coordinateHopfAlgebra R N)
-          (weightParabolicDefiningHopfIdeal (R := R) w)).hom.app (CommAlgCat.of R A) f) :=
-  rfl
-
 /-- The ambient point underlying the represented dynamic-parabolic point is induced by the
 quotient coordinate map. -/
 @[simp]
@@ -410,7 +392,7 @@ theorem coe_weightParabolicPointsIso_hom_app_apply (w : Fin N → ℤ)
   have hcomponent := CommHopfAlgCat.quotientPointsSubgroupNatIso_hom_app_apply
     (coordinateHopfAlgebra R N) (weightParabolicDefiningHopfIdeal (R := R) w)
     (CommAlgCat.of R A) f
-  rw [weightParabolicPointsIso_hom_app_apply_eq]
+  unfold weightParabolicPointsIso
   exact congrArg
     (fun g => ((weightParabolicPointsSubgroupMulEquiv (R := R) w g :
         Cocharacter.parabolic (CommAlgCat.of R A) (weightCocharacter (R := R) w)) :
