@@ -1,0 +1,275 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.GeneralLinearBaseChange
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.GroupScheme
+
+/-!
+# Base change of the pinned Geck carrier
+
+For a valid Dynkin type `t`, `DynkinType.geckGroupScheme` is the explicit integral affine group
+scheme obtained by closing the numbered Geck root subgroups and the Geck weight torus inside a
+general linear group. This file specializes the base-change construction for a general Kostant
+toral closure to that pinned carrier.
+
+For every commutative ring `A`, `geckBaseChangeDefiningIdeal` is an ideal in `O(GLₙ/A)` whose
+quotient is canonically the scalar extension of the integral coordinate Hopf algebra. The
+transported numbered root-subgroup maps and weight-torus map factor through that quotient. Thus
+the explicit integral carrier and its pinned generators base-change together; none of the data is
+chosen anew over `A`.
+
+The defining ideal transported from `ℤ` is contained in the common kernel of the transported
+generators. Equality is not asserted over an arbitrary, possibly non-flat, base: additional
+equations can appear after specialization. Nor does this file assert that the carrier is
+reductive or that the represented weight torus is maximal.
+
+## Main declarations
+
+* `TauCeti.DynkinType.geckBaseChangeDefiningIdeal`: the transported defining ideal in
+  `O(GLₙ/A)`.
+* `TauCeti.DynkinType.geckBaseChangeCoordinateIso`: its quotient is the scalar extension of the
+  integral Geck coordinate Hopf algebra.
+* `TauCeti.DynkinType.geckRootSubgroupToBaseChangeCoordinateMap`: the transported numbered root
+  subgroup factored through the specialized carrier.
+* `TauCeti.DynkinType.geckWeightTorusToBaseChangeCoordinateMap`: the transported weight torus
+  factored through the specialized carrier.
+* `TauCeti.DynkinType.geckBaseChangeDefiningIdeal_le_commonKernel`: the transported carrier
+  contains the subgroup generated after base change by those maps.
+
+## References
+
+* M. Geck, *On the construction of semisimple Lie algebras and Chevalley groups*,
+  Proc. Amer. Math. Soc. **145** (2017), 3233--3247.
+* R. W. Carter, *Simple Groups of Lie Type*, §4.4.
+* B. Conrad, *Reductive Group Schemes*, §1.
+
+This advances the base-change target in Layer 9 of the ReductiveGroups roadmap. The resulting
+specialized pinned carrier is an input to milestone L0, "pinned ambient groups", of the
+CFSGStatement roadmap.
+-/
+
+public section
+
+open CategoryTheory
+open TauCeti.UniversalEnvelopingAlgebra
+
+namespace TauCeti.DynkinType
+
+universe v
+
+noncomputable section
+
+-- Match tensor products to the `ℤ`-algebra structure used by scalar extension.
+attribute [local instance high] Algebra.toModule
+
+variable (t : DynkinType) (ht : t.Valid)
+variable (A : Type v) [CommRing A]
+
+/-- The Hopf ideal in `O(GLₙ/A)` obtained by transporting the defining ideal of the integral Geck
+carrier along `ℤ → A`. -/
+noncomputable abbrev geckBaseChangeDefiningIdeal :
+    HopfIdeal A (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht)) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralBaseChangePresentationIdeal
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A
+
+/-- The base-changed Geck defining ideal is the generic transported Kostant toral ideal at the
+pinned Geck data. -/
+theorem geckBaseChangeDefiningIdeal_def :
+    t.geckBaseChangeDefiningIdeal ht A =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralBaseChangePresentationIdeal
+        (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+        (t.geckCoordinateLattice ht).toAddSubgroup
+        (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+        (t.isNilpotent_geckRepresentation_rootGenerator ht)
+        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A := by
+  rfl
+
+/-- Base-changing quotient maps commutes with transporting the defining ideal along an equality.
+This isolates the dependent equality transport used by `geckBaseChangeCoordinateIso`. -/
+private theorem baseChangeMap_mkQuotient_comp_eqToIso
+    {I J : HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))}
+    (hIJ : I = J) :
+    CommHopfAlgCat.baseChangeMap (K := A)
+          (CommHopfAlgCat.mkQuotient
+            (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht)) I) ≫
+        (eqToIso (congrArg
+          (fun K => CommHopfAlgCat.baseChange (K := A)
+            (CommHopfAlgCat.quotient
+              (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht)) K)) hIJ)).hom =
+      CommHopfAlgCat.baseChangeMap
+        (CommHopfAlgCat.mkQuotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht)) J) := by
+  subst J
+  simp
+
+/-- The equality identifying the named Geck defining ideal with its generic Kostant spelling,
+transported through quotient formation and scalar extension. -/
+private noncomputable def geckIntegralCoordinateTransportIso :
+    CommHopfAlgCat.baseChange (K := A)
+        (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+          (kostantToralDefiningIdeal
+            (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+            (t.geckCoordinateLattice ht).toAddSubgroup
+            (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+            (t.isNilpotent_geckRepresentation_rootGenerator ht)
+            (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht))) ≅
+      CommHopfAlgCat.baseChange (K := A)
+        (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+          (t.geckDefiningIdeal ht)) :=
+  eqToIso (congrArg
+    (fun K => CommHopfAlgCat.baseChange (K := A)
+      (CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht)) K))
+    (t.geckDefiningIdeal_def ht).symm)
+
+/-- The coordinate Hopf algebra cut out over `A` by the transported Geck defining ideal is
+canonically the scalar extension of the integral coordinate Hopf algebra. -/
+noncomputable def geckBaseChangeCoordinateIso :
+    CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+        (t.geckBaseChangeDefiningIdeal ht A) ≅
+      CommHopfAlgCat.baseChange (K := A)
+        (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+          (t.geckDefiningIdeal ht)) :=
+  kostantToralBaseChangePresentationIso
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+      (t.geckCoordinateLattice ht).toAddSubgroup
+      (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+      (t.isNilpotent_geckRepresentation_rootGenerator ht)
+      (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A ≪≫
+    t.geckIntegralCoordinateTransportIso ht A
+
+/-- The base-change coordinate isomorphism is compatible with the quotient presentation inside
+`GLₙ`. -/
+@[simp]
+theorem mkQuotient_comp_geckBaseChangeCoordinateIso_hom :
+    CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+          (t.geckBaseChangeDefiningIdeal ht A) ≫
+        (t.geckBaseChangeCoordinateIso ht A).hom =
+      (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A (t.geckDim ht)).inv ≫
+        CommHopfAlgCat.baseChangeMap
+          (CommHopfAlgCat.mkQuotient
+            (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+            (t.geckDefiningIdeal ht)) := by
+  rw [geckBaseChangeCoordinateIso, Iso.trans_hom, ← Category.assoc,
+    mkQuotient_comp_kostantToralBaseChangePresentationIso_hom, Category.assoc,
+    geckIntegralCoordinateTransportIso,
+    t.baseChangeMap_mkQuotient_comp_eqToIso ht A (t.geckDefiningIdeal_def ht).symm]
+
+/-- The base change to `A` of a numbered integral Geck root-subgroup coordinate map, transported
+to the coordinate Hopf algebras constructed directly over `A`. -/
+noncomputable abbrev geckRootSubgroupBaseChangeCoordinateMap
+    (i : Fin t.rank ⊕ Fin t.rank) :
+    GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht) ⟶
+      AdditiveGroup.coordinateHopfAlgebra A :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupBaseChangePresentationCoordinateMap
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) A i
+
+/-- A transported numbered Geck root-subgroup coordinate map is the corresponding generic
+Kostant base-change map. -/
+theorem geckRootSubgroupBaseChangeCoordinateMap_def (i : Fin t.rank ⊕ Fin t.rank) :
+    t.geckRootSubgroupBaseChangeCoordinateMap ht A i =
+      UniversalEnvelopingAlgebra.kostantRootSubgroupBaseChangePresentationCoordinateMap
+          (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+          (t.geckCoordinateLattice ht).toAddSubgroup
+          (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+          (t.isNilpotent_geckRepresentation_rootGenerator ht)
+          (t.geckCoordinateBasisFin ht) A i := by
+  rfl
+
+/-- The base-changed `i`th Geck root-subgroup coordinate map factored through the transported
+Geck carrier. -/
+noncomputable abbrev geckRootSubgroupToBaseChangeCoordinateMap
+    (i : Fin t.rank ⊕ Fin t.rank) :
+    CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+        (t.geckBaseChangeDefiningIdeal ht A) ⟶
+      AdditiveGroup.coordinateHopfAlgebra A :=
+  kostantRootSubgroupToralBaseChangePresentationCoordinateMap
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+      (t.geckCoordinateLattice ht).toAddSubgroup
+      (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+      (t.isNilpotent_geckRepresentation_rootGenerator ht)
+      (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A i
+
+/-- The base change to `A` of the integral Geck weight-torus coordinate map, transported to the
+coordinate Hopf algebras constructed directly over `A`. -/
+noncomputable abbrev geckWeightTorusBaseChangeCoordinateMap :
+    GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht) ⟶
+      (DiagonalizableGroup.coordinateRing A
+        (SplitTorus.characterGroup (Fin t.rank))).obj :=
+  GeneralLinear.weightTorusBaseChangeCoordinateMap ℤ A (t.geckWeightFin ht)
+
+/-- The base-changed Geck weight-torus coordinate map factored through the transported Geck
+carrier. -/
+noncomputable abbrev geckWeightTorusToBaseChangeCoordinateMap :
+    CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+        (t.geckBaseChangeDefiningIdeal ht A) ⟶
+      (DiagonalizableGroup.coordinateRing A
+        (SplitTorus.characterGroup (Fin t.rank))).obj :=
+  kostantWeightTorusToralBaseChangePresentationCoordinateMap
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+      (t.geckCoordinateLattice ht).toAddSubgroup
+      (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+      (t.isNilpotent_geckRepresentation_rootGenerator ht)
+      (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A
+
+/-- Every transported numbered Geck root-subgroup map kills the base-changed defining ideal. -/
+theorem geckBaseChangeDefiningIdeal_toIdeal_le_root_ker
+    (i : Fin t.rank ⊕ Fin t.rank) :
+    (t.geckBaseChangeDefiningIdeal ht A).toIdeal ≤
+      RingHom.ker
+        (t.geckRootSubgroupBaseChangeCoordinateMap ht A i).hom.toAlgHom.toRingHom :=
+  kostantToralBaseChangePresentationIdeal_toIdeal_le_root_ker
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A i
+
+/-- The transported Geck weight-torus map kills the base-changed defining ideal. -/
+theorem geckBaseChangeDefiningIdeal_toIdeal_le_torus_ker :
+    (t.geckBaseChangeDefiningIdeal ht A).toIdeal ≤
+      RingHom.ker
+        (t.geckWeightTorusBaseChangeCoordinateMap ht A).hom.toAlgHom.toRingHom :=
+  kostantToralBaseChangePresentationIdeal_toIdeal_le_torus_ker
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A
+
+/-- The closed subgroup of `GLₙ/A` generated by the transported numbered Geck root subgroups and
+the transported weight torus lies in the base change of the integral Geck carrier.
+
+The reverse inclusion is not asserted over an arbitrary base ring. -/
+theorem geckBaseChangeDefiningIdeal_le_commonKernel :
+    let K : Sum (Fin t.rank ⊕ Fin t.rank) Unit → CommHopfAlgCat A
+      | .inl _ => AdditiveGroup.coordinateHopfAlgebra A
+      | .inr _ =>
+          (DiagonalizableGroup.coordinateRing A
+            (SplitTorus.characterGroup (Fin t.rank))).obj
+    t.geckBaseChangeDefiningIdeal ht A ≤
+      CommHopfAlgCat.commonKernelHopfIdeal (K := K)
+        (fun j => match j with
+          | .inl i => t.geckRootSubgroupBaseChangeCoordinateMap ht A i
+          | .inr _ => t.geckWeightTorusBaseChangeCoordinateMap ht A) := by
+  dsimp only
+  rw [CommHopfAlgCat.le_commonKernelHopfIdeal_iff]
+  rintro (i | _)
+  · exact t.geckBaseChangeDefiningIdeal_toIdeal_le_root_ker ht A i
+  · exact t.geckBaseChangeDefiningIdeal_toIdeal_le_torus_ker ht A
+
+end
+
+end TauCeti.DynkinType
