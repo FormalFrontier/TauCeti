@@ -5,11 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.Complex.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Bruhat
 public import TauCeti.RepresentationTheory.Augmentation
 public import TauCeti.RepresentationTheory.CharacterTable.GL2.PrincipalSeries
-public import TauCeti.RepresentationTheory.FDRep
 public import TauCeti.RepresentationTheory.Induction.Character
 public import TauCeti.RepresentationTheory.Induction.DoubleCosetPairing
 
@@ -27,9 +25,11 @@ which `GL₂` acts trivially. The complement of that line is the **Steinberg rep
 This file builds it as the augmentation subrepresentation of `ℂ[GL₂ ⧸ B]` — the elements whose
 coefficients sum to zero, of `TauCeti/RepresentationTheory/Augmentation.lean` — and computes its
 dimension and its character. The character values are the fixed-coset counts less one, and the
-Bruhat decomposition then gives the identity that makes Steinberg a single irreducible constituent
-rather than several: its character has norm `1` for the character pairing of
-`TauCeti/RepresentationTheory/CharacterTable/Pairing.lean`.
+Bruhat decomposition then gives the character-theoretic form of irreducibility: the Steinberg
+character has norm `1` for the character pairing of
+`TauCeti/RepresentationTheory/CharacterTable/Pairing.lean`. Everything proved here is an identity
+between characters — irreducibility itself, and the splitting of the boundary principal series as a
+representation, are not proved; see the implementation notes.
 
 ## Main definitions
 
@@ -43,12 +43,10 @@ rather than several: its character has norm `1` for the character pairing of
   the identity is that dimension, by Mathlib's `FDRep.char_one`.
 * `TauCeti.character_GL2Steinberg`: its character at `g` is the number of cosets of `B` fixed by
   `g`, less one.
-* `TauCeti.character_ofMulAction_quotient_gl2Borel`: the character of `ℂ[GL₂ ⧸ B]` is `1` plus the
-  Steinberg character.
 * `TauCeti.character_GL2PrincipalSeries_one_one`: the boundary principal series
   `TauCeti.GL2PrincipalSeries F 1 1` has the character of `ℂ[GL₂ ⧸ B]`, whence
-  `TauCeti.character_GL2PrincipalSeries_one_one_eq_one_add`: it has the trivial representation and
-  Steinberg as its two constituents.
+  `TauCeti.character_GL2PrincipalSeries_one_one_eq_one_add`: its character is the trivial character
+  `1` plus the Steinberg character.
 * `TauCeti.characterPairing_GL2Steinberg_self`: the Steinberg character has norm `1`, computed
   from the two double cosets of the Bruhat decomposition.
 
@@ -61,7 +59,9 @@ construction stays universe-polymorphic in `F`. The transport itself is never re
 the dimension and the character below go through the generic transfer lemmas
 `FDRep.finrank_ofShrink` and `FDRep.character_ofShrink`, and `TauCeti.GL2SteinbergEquiv` — the
 comparison equivalence that `FDRep.ofShrinkEquiv` supplies — is public so that consumers can read
-off anything else the same way.
+off anything else the same way. It is not a restatement they could do without: the body of
+`TauCeti.GL2Steinberg` is not exposed, so `FDRep.ofShrinkEquiv` does not elaborate at that type
+outside this file.
 
 `TauCeti.characterPairing_GL2Steinberg_self` carries a `[DecidableEq F]` hypothesis, which the
 other statements do not. It is used, not decorative: `TauCeti.ClassFunction.characterPairing`
@@ -102,8 +102,8 @@ variable (F : Type u) [Field F] [Fintype F]
 
 /-- **The Steinberg representation of `GL₂(𝔽_q)`**: the augmentation subrepresentation of the
 permutation representation `ℂ[GL₂ ⧸ B]` on the cosets of the Borel subgroup, that is, the
-complement of the trivial constituent in the boundary principal series `Ind_B^{GL₂}(1 ⊗ 1)`. It
-has dimension `q`. -/
+complement of its invariant line. It has dimension `q`, and `ℂ[GL₂ ⧸ B]` has the character of the
+boundary principal series `Ind_B^{GL₂}(1 ⊗ 1)`. -/
 noncomputable def GL2Steinberg : FDRep ℂ (GL (Fin 2) F) :=
   FDRep.ofShrink (augmentationSubrepresentation ℂ (GL (Fin 2) F)
     (GL (Fin 2) F ⧸ GL2Borel F)).toRepresentation
@@ -145,15 +145,7 @@ theorem character_GL2Steinberg (g : GL (Fin 2) F) :
   rw [GL2Steinberg, FDRep.character_ofShrink, character_augmentationSubrepresentation,
     char_ofMulAction]
 
-/-! ### The splitting of the boundary principal series -/
-
-/-- **The permutation representation on the projective line splits off the trivial one.** Its
-character is `1` plus the Steinberg character, the `1` being the invariant line. -/
-theorem character_ofMulAction_quotient_gl2Borel (g : GL (Fin 2) F) :
-    (Representation.ofMulAction ℂ (GL (Fin 2) F) (GL (Fin 2) F ⧸ GL2Borel F)).character g
-      = 1 + (GL2Steinberg F).character g := by
-  rw [character_GL2Steinberg, char_ofMulAction]
-  ring
+/-! ### The character of the boundary principal series -/
 
 /-- **The boundary principal series is the permutation representation on the projective line.**
 At `α = β = 1` the character of `Ind_B^{GL₂}(1 ⊗ 1)` is the character of `ℂ[GL₂ ⧸ B]`, because
@@ -169,11 +161,15 @@ theorem character_GL2PrincipalSeries_one_one (g : GL (Fin 2) F) :
   rw [GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character, hchar,
     indClassFun_ofFDRep_character, character_indFDRep_of, char_ind_trivial, char_ofMulAction]
 
-/-- **The boundary principal series has the trivial representation and Steinberg as its two
-constituents.** Its character is `1` plus the Steinberg character. -/
+/-- **The character of the boundary principal series is `1` plus the Steinberg character.** The
+`1` is the trivial character, carried by the invariant line of `ℂ[GL₂ ⧸ B]`. This is the
+character-theoretic form of the two-constituent splitting; the splitting itself, as an
+isomorphism of representations, is not proved here. -/
+@[simp]
 theorem character_GL2PrincipalSeries_one_one_eq_one_add (g : GL (Fin 2) F) :
     (GL2PrincipalSeries F 1 1).character g = 1 + (GL2Steinberg F).character g := by
-  rw [character_GL2PrincipalSeries_one_one, character_ofMulAction_quotient_gl2Borel]
+  rw [character_GL2PrincipalSeries_one_one, character_GL2Steinberg, char_ofMulAction]
+  ring
 
 /-! ### The norm of the Steinberg character -/
 

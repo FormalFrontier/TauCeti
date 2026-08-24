@@ -7,7 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.PID
 public import Mathlib.RepresentationTheory.Character
-public import Mathlib.RepresentationTheory.Subrepresentation
 public import TauCeti.Algebra.MonoidAlgebra.Basis
 public import TauCeti.RepresentationTheory.Subrepresentation
 

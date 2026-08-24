@@ -7,7 +7,6 @@ module
 
 public import Mathlib.RingTheory.Finiteness.Small
 public import Mathlib.RepresentationTheory.Character
-public import Mathlib.RepresentationTheory.FDRep
 
 /-!
 # Finite-dimensional representations
