@@ -31,8 +31,9 @@ API replace them.
 
 ## Main definitions and results
 
-* `Riemannian.Tensor.chartLocalFrame`: the frame induced by the tangent trivialization at a chart
-  centre and `Module.finBasis`.
+* `Riemannian.Tensor.chartLocalFrame` and `Riemannian.Tensor.chartLocalFrame_def`: the frame
+  induced by the tangent trivialization at a chart centre and `Module.finBasis`, and its
+  identification with that trivialization's local frame.
 * `Riemannian.Tensor.chartGramMatrix`: the metric Gram matrix in this frame.
 * `Riemannian.Tensor.posDef_chartGramMatrix`: positive-definiteness on the base set.
 * `Riemannian.Tensor.chartGramMatrix_det_pos`: strict positivity of its determinant there.
@@ -69,6 +70,13 @@ Mathlib's standard junk value `0`. -/
 def chartLocalFrame (α : M) :
     Fin (Module.finrank ℝ E) → (x : M) → TangentSpace I x :=
   (trivializationAt E (TangentSpace I) α).localFrame (Module.finBasis ℝ E)
+
+/-- The chart-local frame is the local frame of the tangent trivialization at `α` for the
+`Module.finBasis` basis. This unfolds `Riemannian.Tensor.chartLocalFrame` outside the module where
+it is defined. -/
+theorem chartLocalFrame_def (α : M) :
+    chartLocalFrame (I := I) α =
+      (trivializationAt E (TangentSpace I) α).localFrame (Module.finBasis ℝ E) := (rfl)
 
 /-- On the chart source, the local frame agrees with the basis supplied by the tangent
 trivialization. The source membership is the simplified form of the trivialization base set. -/

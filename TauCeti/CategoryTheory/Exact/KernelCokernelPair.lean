@@ -34,6 +34,8 @@ category with homology the notion coincides with Mathlib's
   produce the two universal properties.
 * `TauCeti.IsKernelCokernelPair.lift` and `TauCeti.IsKernelCokernelPair.desc`: the two
   factorizations, with their defining equations and their uniqueness.
+* `TauCeti.IsKernelCokernelPair.splittingOfSection`: the splitting of a kernel–cokernel pair
+  determined by a section of its deflation.
 
 ## Main results
 
@@ -297,6 +299,31 @@ theorem of_splitting (s : S.Splitting) : IsKernelCokernelPair S where
     (fun k hk => by simp only [s.g_s_assoc, Preadditive.sub_comp, Category.id_comp, sub_eq_self,
       Category.assoc, hk, comp_zero])
     (fun k _ l hl => by simp only [← hl, s.s_g_assoc])⟩
+
+/-- **A kernel–cokernel pair whose deflation admits a section is split.** The retraction is the
+factorization of `𝟙 - S.g ≫ s` through the kernel `S.f`.
+
+Mathlib's `CategoryTheory.ShortComplex.Splitting.ofExactOfSection` proves this for an exact short
+complex in a *balanced* category; here the kernel–cokernel hypothesis replaces balancedness, so
+the statement applies inside an arbitrary additive category carrying an exact structure. -/
+noncomputable def splittingOfSection (h : IsKernelCokernelPair S) (s : S.X₃ ⟶ S.X₂)
+    (hs : s ≫ S.g = 𝟙 S.X₃) : S.Splitting where
+  r := h.lift (𝟙 S.X₂ - S.g ≫ s)
+    (by simp [hs])
+  s := s
+  f_r := by
+    have := h.mono_f
+    rw [← cancel_mono S.f]
+    simp [h.lift_f]
+  s_g := hs
+  id := by rw [h.lift_f, sub_add_cancel]
+
+@[simp] theorem splittingOfSection_s (h : IsKernelCokernelPair S) (s : S.X₃ ⟶ S.X₂)
+    (hs : s ≫ S.g = 𝟙 S.X₃) : (h.splittingOfSection s hs).s = s := (rfl)
+
+@[simp] theorem splittingOfSection_r (h : IsKernelCokernelPair S) (s : S.X₃ ⟶ S.X₂)
+    (hs : s ≫ S.g = 𝟙 S.X₃) :
+    (h.splittingOfSection s hs).r = h.lift (𝟙 S.X₂ - S.g ≫ s) (by simp [hs]) := (rfl)
 
 /-- A kernel–cokernel pair with homology is a short exact short complex. -/
 theorem shortExact [S.HasHomology] (h : IsKernelCokernelPair S) : S.ShortExact where

@@ -16,14 +16,15 @@ public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.DoubleCoset
 
 ```lean
 noncomputable def toLevelOneCoset :
-    HeckeCoset (Delta0 N) (Gamma0Image N) (Gamma0Image N) →
+    HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ))
+      ((Gamma0 N).map (mapGL ℚ)) →
       HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2)
 ```
 
 and it is **injective on the cosets whose determinant is coprime to the level**
 (`toLevelOneCoset_injOn`). Injectivity is the content: two `Γ₀(N)`-double cosets
 with the same level-one double coset are recovered from it by intersecting with `Δ₀(N)`, which
-is exactly `doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0Image`.
+is exactly `doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0_map`.
 
 This is the injectivity step towards a later good-prime comparison of `R(Γ₀(N), Δ₀(N))` with
 the level-one Hecke ring. Neither surjectivity nor compatibility with the Hecke-ring operations
@@ -69,34 +70,37 @@ variable (N : ℕ)
 coset of the same element, as the `HeckeCoset.map` of the three inclusions `Δ₀(N) ≤ Δ`,
 `Γ₀(N) ≤ SL₂(ℤ)` (twice). -/
 noncomputable def toLevelOneCoset :
-    HeckeCoset (Delta0 N) (Gamma0Image N) (Gamma0Image N) →
+    HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ))
+      ((Gamma0 N).map (mapGL ℚ)) →
       HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2) :=
-  HeckeCoset.map (Delta0_le_posDetInt N) (Gamma0Image_le_SLnZ N) (Gamma0Image_le_SLnZ N)
+  HeckeCoset.map (Delta0_le_posDetInt N) (Gamma0_map_le_SLnZ N)
+    (Gamma0_map_le_SLnZ N)
 
 /-- The computation rule for `toLevelOneCoset`: it keeps the representative and forgets the
 level. -/
 @[simp] lemma toLevelOneCoset_mk (g : Delta0 N) :
-    toLevelOneCoset N (HeckeCoset.mk (Gamma0Image N) (Gamma0Image N) g) =
+    toLevelOneCoset N (HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) g) =
       HeckeCoset.mk (SLnZ 2) (SLnZ 2) (Submonoid.inclusion (Delta0_le_posDetInt N) g) :=
   HeckeCoset.map_mk _ _ _ g
 
 /-- The integral matrices of two elements of one `Γ₀(N)`-double coset have equal determinant:
 `Γ₀(N) ≤ SL₂(ℤ)`, and the determinant is constant on an `SL₂(ℤ)`-double coset. -/
 private lemma intMatrix_det_eq_of_mem_doubleCoset {a b : GL (Fin 2) ℚ}
-    (hb : b ∈ DoubleCoset.doubleCoset a (Gamma0Image N) (Gamma0Image N))
+    (hb : b ∈ DoubleCoset.doubleCoset a ((Gamma0 N).map (mapGL ℚ))
+      ((Gamma0 N).map (mapGL ℚ)))
     {A B : Matrix (Fin 2) (Fin 2) ℤ}
     (hA : (↑a : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
     (hB : (↑b : Matrix (Fin 2) (Fin 2) ℚ) = B.map (Int.cast : ℤ → ℚ)) : B.det = A.det := by
-  have hdet := det_eq_of_mem_doubleCoset_of_le_SLnZ 2 (Gamma0Image_le_SLnZ N)
-    (Gamma0Image_le_SLnZ N) hb
+  have hdet := det_eq_of_mem_doubleCoset_of_le_SLnZ 2 (Gamma0_map_le_SLnZ N)
+    (Gamma0_map_le_SLnZ N) hb
   have hcast : ((B.det : ℤ) : ℚ) = ((A.det : ℤ) : ℚ) := by
     rw [Int.cast_det B, Int.cast_det A, ← hB, ← hA]; exact hdet
   exact_mod_cast hcast
 
 /-- Coprimality of the determinant to the level depends only on the double coset. -/
 private lemma coprimeDet_congr {a b : Delta0 N}
-    (h : HeckeCoset.mk (Gamma0Image N) (Gamma0Image N) a =
-      HeckeCoset.mk (Gamma0Image N) (Gamma0Image N) b) :
+    (h : HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) a =
+      HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) b) :
     CoprimeDet N a ↔ CoprimeDet N b := by
   obtain ⟨Aa, hAa, -, -, -⟩ := (mem_Delta0_iff N).mp a.2
   obtain ⟨Ab, hAb, -, -, -⟩ := (mem_Delta0_iff N).mp b.2
@@ -105,13 +109,16 @@ private lemma coprimeDet_congr {a b : Delta0 N}
   rw [coprimeDet_iff N hAa, coprimeDet_iff N hAb, hba]
 
 /-- Coprimality of the determinant to the level, as a predicate on `Γ₀(N)`-double cosets. -/
-def CoprimeDetCoset : HeckeCoset (Delta0 N) (Gamma0Image N) (Gamma0Image N) → Prop :=
+def CoprimeDetCoset : HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ))
+      ((Gamma0 N).map (mapGL ℚ)) → Prop :=
   Quotient.lift (CoprimeDet N)
     (fun _ _ hab ↦ propext (coprimeDet_congr N (Quotient.sound hab)))
 
 /-- `CoprimeDetCoset` is `CoprimeDet` on any representative. -/
 @[simp] lemma coprimeDetCoset_mk (g : Delta0 N) :
-    CoprimeDetCoset N (HeckeCoset.mk (Gamma0Image N) (Gamma0Image N) g) ↔ CoprimeDet N g :=
+    CoprimeDetCoset N
+        (HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) g) ↔
+      CoprimeDet N g :=
   Iff.rfl
 
 /-- **Shimura, Proposition 3.31.** `toLevelOneCoset` is injective on the double cosets whose
@@ -132,9 +139,9 @@ theorem toLevelOneCoset_injOn :
   obtain ⟨Ab, hAb, -, -, -⟩ := (mem_Delta0_iff N).mp D₂.rep.2
   refine HeckeCoset.eq_iff.mpr ?_
   -- each `Γ₀(N)`-double coset is its level-one one cut down to `Δ₀(N)`, and those agree
-  rw [← doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0Image N _ D₁.rep.2 Aa hAa
+  rw [← doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0_map N _ D₁.rep.2 Aa hAa
       ((coprimeDet_iff N hAa).mp hD₁'),
-    ← doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0Image N _ D₂.rep.2 Ab hAb
+    ← doubleCoset_SLnZ_inter_Delta0_eq_doubleCoset_Gamma0_map N _ D₂.rep.2 Ab hAb
       ((coprimeDet_iff N hAb).mp hD₂'), h]
 
 end HeckeRing.GL2

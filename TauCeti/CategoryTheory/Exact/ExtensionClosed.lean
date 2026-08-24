@@ -8,6 +8,7 @@ module
 public import TauCeti.CategoryTheory.Exact.Abelian
 public import TauCeti.CategoryTheory.Exact.BaseChange
 public import TauCeti.CategoryTheory.Exact.Functor
+public import TauCeti.CategoryTheory.ObjectProperty
 public import Mathlib.CategoryTheory.ObjectProperty.Extensions
 public import Mathlib.CategoryTheory.ObjectProperty.FiniteProducts
 
@@ -95,11 +96,8 @@ theorem prop_biprod (hP : E.IsExtensionClosed P) {X Y : C} (hX : P X) (hY : P Y)
 `CategoryTheory.ObjectProperty.ContainsZero` this is exactly the additivity of the full
 subcategory, so no separate closure hypothesis on biproducts is needed. -/
 theorem isClosedUnderBinaryProducts (hP : E.IsExtensionClosed P) [P.IsClosedUnderIsomorphisms] :
-    P.IsClosedUnderBinaryProducts := by
-  refine IsClosedUnderLimitsOfShape.mk' ?_
-  rintro _ ⟨F, hF⟩
-  refine P.prop_of_iso ?_ (hP.prop_biprod (hF ⟨WalkingPair.left⟩) (hF ⟨WalkingPair.right⟩))
-  exact (biprod.isoProd _ _).trans (HasLimit.isoOfNatIso (diagramIsoPair F)).symm
+    P.IsClosedUnderBinaryProducts :=
+  P.isClosedUnderBinaryProducts_of_prop_biprod fun _ _ hX hY => hP.prop_biprod hX hY
 
 end IsExtensionClosed
 
