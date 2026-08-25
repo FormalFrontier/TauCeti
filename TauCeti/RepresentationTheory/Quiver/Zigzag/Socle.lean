@@ -114,15 +114,6 @@ theorem restrictScalars_span_singleton_zigzagVolume (i : V) :
 
 variable {k G}
 
-private theorem coord_zigzagBasis_self (hns : ∀ i : V, ∃ j, G.Adj i j) (b : ZigzagBasisIndex G) :
-    (zigzagBasis k G hns).coord b (zigzagBasis k G hns b) = 1 := by
-  rw [Module.Basis.coord_apply, Module.Basis.repr_self, Finsupp.single_eq_same]
-
-private theorem coord_zigzagBasis_of_ne (hns : ∀ i : V, ∃ j, G.Adj i j)
-    {b b' : ZigzagBasisIndex G} (h : b' ≠ b) :
-    (zigzagBasis k G hns).coord b (zigzagBasis k G hns b') = 0 := by
-  rw [Module.Basis.coord_apply, Module.Basis.repr_self, Finsupp.single_eq_of_ne (Ne.symm h)]
-
 /-- **Left multiplication by an arrow reads off two coordinates.**  Multiplying by the arrow of a
 dart `d` keeps only the idempotent at the tail of `d`, which returns the arrow itself, and the
 reverse arrow, which returns the volume class at the head of `d`. -/
@@ -132,6 +123,7 @@ theorem zigzagMk_ofArrow_mul (hns : ∀ i : V, ∃ j, G.Adj i j) (d : G.Dart)
       (zigzagBasis k G hns).coord (.inl d.fst) x • zigzagBasis k G hns (.inr (.inl d)) +
         (zigzagBasis k G hns).coord (.inr (.inl d.symm)) x •
           zigzagBasis k G hns (.inr (.inr d.snd)) := by
+  classical
   have key : LinearMap.mulLeft k (zigzagMk k G (ofArrow (arrow G d.adj))) =
       LinearMap.smulRight ((zigzagBasis k G hns).coord (.inl d.fst))
           (zigzagBasis k G hns (.inr (.inl d))) +
@@ -143,26 +135,31 @@ theorem zigzagMk_ofArrow_mul (hns : ∀ i : V, ∃ j, G.Adj i j) (d : G.Dart)
     -- normalized away by a bare `simp`; every step below is a `simp only` or an `exact`.
     rcases b with j | e | j
     · rcases eq_or_ne j d.fst with rfl | hj
-      · rw [coord_zigzagBasis_self, coord_zigzagBasis_of_ne hns (by simp)]
+      · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_left rfl,
+          Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp)]
         simp only [zigzagBasis_apply, zigzagBasisFun_inl, zigzagBasisFun_inr_inl,
           zigzagBasisFun_inr_inr, one_smul, zero_smul, add_zero]
         exact zigzagMk_ofArrow_mul_vertexIdempotent k G d
-      · rw [coord_zigzagBasis_of_ne hns (by simpa using hj),
-          coord_zigzagBasis_of_ne hns (by simp)]
+      · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply,
+          ite_eq_right (by simpa using hj), Module.Basis.coord_apply,
+          Module.Basis.repr_self_apply, ite_eq_right (by simp)]
         simp only [zigzagBasis_apply, zigzagBasisFun_inl, zigzagBasisFun_inr_inl,
           zigzagBasisFun_inr_inr, zero_smul, add_zero]
         exact zigzagMk_ofArrow_mul_vertexIdempotent_of_ne k G d hj
     · rcases eq_or_ne e d.symm with rfl | he
-      · rw [coord_zigzagBasis_of_ne hns (by simp), coord_zigzagBasis_self]
+      · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp),
+          Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_left rfl]
         simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
           one_smul, zero_smul, zero_add]
         exact zigzagMk_ofArrow_mul_ofArrow_symm k G d
-      · rw [coord_zigzagBasis_of_ne hns (by simp),
-          coord_zigzagBasis_of_ne hns (by simpa using he)]
+      · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp),
+          Module.Basis.coord_apply, Module.Basis.repr_self_apply,
+          ite_eq_right (by simpa using he)]
         simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
           zero_smul, add_zero]
         exact zigzagMk_ofArrow_mul_ofArrow_of_ne k G he
-    · rw [coord_zigzagBasis_of_ne hns (by simp), coord_zigzagBasis_of_ne hns (by simp)]
+    · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp),
+        Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp)]
       simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
         zero_smul, add_zero]
       exact zigzagMk_ofArrow_mul_zigzagVolume k G d j
@@ -174,6 +171,7 @@ theorem mem_zigzagVolumeSpan_of_forall_zigzagMk_ofArrow_mul_eq_zero
     (hns : ∀ i : V, ∃ j, G.Adj i j) {x : nonisolatedZigzagQuotient k G}
     (hx : ∀ d : G.Dart, zigzagMk k G (ofArrow (arrow G d.adj)) * x = 0) :
     x ∈ zigzagVolumeSpan k G := by
+  classical
   have hcoef : ∀ d : G.Dart,
       (zigzagBasis k G hns).repr x (.inl d.fst) = 0 ∧
         (zigzagBasis k G hns).repr x (.inr (.inl d.symm)) = 0 := by
@@ -181,12 +179,24 @@ theorem mem_zigzagVolumeSpan_of_forall_zigzagMk_ofArrow_mul_eq_zero
     have h0 := (zigzagMk_ofArrow_mul hns d x).symm.trans (hx d)
     have h1 := congrArg (fun z => (zigzagBasis k G hns).coord (.inr (.inl d)) z) h0
     have h2 := congrArg (fun z => (zigzagBasis k G hns).coord (.inr (.inr d.snd)) z) h0
-    simp only [map_add, map_smul, map_zero, smul_eq_mul, coord_zigzagBasis_self,
-      coord_zigzagBasis_of_ne hns (show (Sum.inr (Sum.inr d.snd) : ZigzagBasisIndex G) ≠
-        Sum.inr (Sum.inl d) by simp),
-      coord_zigzagBasis_of_ne hns (show (Sum.inr (Sum.inl d) : ZigzagBasisIndex G) ≠
-        Sum.inr (Sum.inr d.snd) by simp),
-      mul_one, mul_zero, add_zero, zero_add] at h1 h2
+    have hVolumeArrow : (Sum.inr (Sum.inr d.snd) : ZigzagBasisIndex G) ≠
+        Sum.inr (Sum.inl d) := by simp
+    have hArrowVolume : (Sum.inr (Sum.inl d) : ZigzagBasisIndex G) ≠
+        Sum.inr (Sum.inr d.snd) := by simp
+    simp only [map_add, map_smul, map_zero, smul_eq_mul] at h1 h2
+    rw [Module.Basis.coord_apply (b := zigzagBasis k G hns) (.inr (.inl d))
+        (zigzagBasis k G hns (.inr (.inl d))),
+      Module.Basis.repr_self_apply, ite_eq_left rfl,
+      Module.Basis.coord_apply (b := zigzagBasis k G hns) (.inr (.inl d))
+        (zigzagBasis k G hns (.inr (.inr d.snd))),
+      Module.Basis.repr_self_apply, ite_eq_right hVolumeArrow,
+      mul_one, mul_zero, add_zero] at h1
+    rw [Module.Basis.coord_apply (b := zigzagBasis k G hns) (.inr (.inr d.snd))
+        (zigzagBasis k G hns (.inr (.inl d))),
+      Module.Basis.repr_self_apply, ite_eq_right hArrowVolume,
+      Module.Basis.coord_apply (b := zigzagBasis k G hns) (.inr (.inr d.snd))
+        (zigzagBasis k G hns (.inr (.inr d.snd))),
+      Module.Basis.repr_self_apply, ite_eq_left rfl, mul_zero, mul_one, zero_add] at h2
     exact ⟨by simpa only [Module.Basis.coord_apply] using h1,
       by simpa only [Module.Basis.coord_apply] using h2⟩
   rw [mem_zigzagVolumeSpan_iff hns]
@@ -336,7 +346,15 @@ noncomputable def zigzagTopEquiv (hns : ∀ i : V, ∃ j, G.Adj i j) :
 @[simp]
 theorem zigzagTopEquiv_mk (hns : ∀ i : V, ∃ j, G.Adj i j)
     (x : nonisolatedZigzagQuotient k G) :
-    zigzagTopEquiv k hns (Ideal.Quotient.mk _ x) = zigzagTrivialCoeff k G x := (rfl)
+    zigzagTopEquiv k hns (Ideal.Quotient.mk _ x) = zigzagTrivialCoeff k G x := by
+  let f := zigzagTrivialCoeff k G
+  have hf : Function.Surjective f := zigzagTrivialCoeff_surjective k G
+  have hker : Ring.jacobson (nonisolatedZigzagQuotient k G) =
+      RingHom.ker f := jacobson_nonisolatedZigzagQuotient_eq_ker hns
+  change ((Ideal.quotientEquivAlgOfEq k hker).trans
+    (Ideal.quotientKerAlgEquivOfSurjective hf)) (Ideal.Quotient.mk _ x) = f x
+  rw [AlgEquiv.trans_apply, Ideal.quotientEquivAlgOfEq_mk,
+    Ideal.quotientKerAlgEquivOfSurjective_mk (f := f) hf x]
 
 /-- **The top of a zigzag algebra is semisimple.** -/
 theorem isSemisimpleRing_quotient_jacobson_nonisolatedZigzagQuotient
