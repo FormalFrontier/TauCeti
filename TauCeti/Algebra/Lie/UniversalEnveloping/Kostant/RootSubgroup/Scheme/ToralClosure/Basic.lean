@@ -76,14 +76,14 @@ variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
 
 /-- The coordinate Hopf algebra receiving a root-subgroup or weight-torus generator map. -/
-private noncomputable def kostantToralGeneratorCodomain (j : Sum I Unit) :
+@[expose] noncomputable def kostantToralGeneratorCodomain (j : Sum I Unit) :
     _root_.CommHopfAlgCat ℤ :=
   match j with
   | .inl _ => AdditiveGroup.coordinateHopfAlgebra ℤ
   | .inr _ => (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj
 
 /-- The family consisting of every root-subgroup coordinate map and the weight-torus map. -/
-private noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
+@[expose] noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
     GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
       kostantToralGeneratorCodomain (I := I) (κ := κ) j :=
   match j with
@@ -97,6 +97,16 @@ noncomputable def kostantToralDefiningIdeal :
     HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ n) :=
   CommHopfAlgCat.commonKernelHopfIdeal
     (kostantToralGeneratorMap e h ρ M hM hnil b wt)
+
+/-- The toral defining ideal is the common-kernel ideal of its root-subgroup and weight-torus
+generator family. -/
+theorem kostantToralDefiningIdeal_def :
+    kostantToralDefiningIdeal e h ρ M hM hnil b wt =
+      CommHopfAlgCat.commonKernelHopfIdeal
+        (kostantToralGeneratorMap e h ρ M hM hnil b wt) :=
+  by
+    unfold kostantToralDefiningIdeal
+    rfl
 
 /-- A Hopf ideal lies in the toral defining ideal exactly when every root-subgroup coordinate map
 and the weight-torus coordinate map kill it. -/

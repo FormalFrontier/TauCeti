@@ -95,16 +95,7 @@ private theorem kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIs
     refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq _ c.inv _ σ fun i => ?_
     rw [← kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
       e h ρ M hM hnil b σ θ hθM hθe i, Iso.inv_hom_id_assoc]
-  apply le_antisymm hhom
-  intro x hx
-  rw [HopfIdeal.mem_comap]
-  apply hinv
-  rw [HopfIdeal.mem_comap]
-  have hcancel := congrArg
-    (fun f : GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
-      GeneralLinear.coordinateHopfAlgebra ℤ n => f.hom x) c.hom_inv_id
-  rw [_root_.CommHopfAlgCat.comp_apply] at hcancel
-  simpa only [_root_.CommHopfAlgCat.id_apply] using hcancel.symm ▸ hx
+  exact HopfIdeal.comap_eq_of_comap_hom_le_of_comap_inv_le c J hhom hinv
 
 /-- The coordinate automorphism induced on the common-kernel quotient. -/
 private noncomputable def kostantGeneratedCoordinateNumberedSymmetryIso :

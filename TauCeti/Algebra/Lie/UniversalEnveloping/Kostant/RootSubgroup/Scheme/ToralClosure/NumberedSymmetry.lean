@@ -120,49 +120,6 @@ private theorem kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorus :
     weight_comp_basisPerm_symm wt basisPerm torusPerm hwt,
     GeneralLinear.weightTorusCoordinateMap_reindex]
 
-/-- The codomains of the combined root-subgroup and weight-torus defining family. -/
-private noncomputable def kostantToralDefiningFamilyCodomain (j : I ⊕ Unit) :
-    _root_.CommHopfAlgCat ℤ := match j with
-    | .inl _ => AdditiveGroup.coordinateHopfAlgebra ℤ
-    | .inr _ => (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj
-
-/-- The root-subgroup maps together with the weight-torus map, as one dependent family. -/
-private noncomputable def kostantToralDefiningFamily
-    (j : I ⊕ Unit) :
-    GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
-      kostantToralDefiningFamilyCodomain (I := I) (κ := κ) j := match j with
-    | .inl i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b
-    | .inr _ => GeneralLinear.weightTorusCoordinateMap wt
-
-/-- The toral defining ideal is the common-kernel Hopf ideal of the root and torus maps. -/
-private theorem kostantToralDefiningIdeal_eq_commonKernelHopfIdeal :
-    kostantToralDefiningIdeal e h ρ M hM hnil b wt =
-      CommHopfAlgCat.commonKernelHopfIdeal
-        (kostantToralDefiningFamily e h ρ M hM hnil b wt) := by
-  apply le_antisymm
-  · rw [CommHopfAlgCat.le_commonKernelHopfIdeal_iff]
-    intro j
-    cases j with
-    | inl i =>
-        -- The dependent family reduces to the root map only after splitting its sum index.
-        change (kostantToralDefiningIdeal e h ρ M hM hnil b wt).toIdeal ≤ RingHom.ker
-          (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom.toAlgHom.toRingHom
-        exact kostantToralDefiningIdeal_toIdeal_le_root_ker e h ρ M hM hnil b wt i
-    | inr u =>
-        -- The other branch of the dependent family is definitionally the weight-torus map.
-        change (kostantToralDefiningIdeal e h ρ M hM hnil b wt).toIdeal ≤ RingHom.ker
-          (GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt).hom.toAlgHom.toRingHom
-        exact kostantToralDefiningIdeal_toIdeal_le_torus_ker e h ρ M hM hnil b wt
-  · -- The named universal properties have definitionally equal family presentations.
-    change CommHopfAlgCat.commonKernelHopfIdeal
-        (kostantToralDefiningFamily e h ρ M hM hnil b wt) ≤
-      kostantToralDefiningIdeal e h ρ M hM hnil b wt
-    rw [le_kostantToralDefiningIdeal_iff]
-    exact ⟨fun i => CommHopfAlgCat.commonKernelHopfIdeal_toIdeal_le_ker
-      (kostantToralDefiningFamily e h ρ M hM hnil b wt) (.inl i),
-      CommHopfAlgCat.commonKernelHopfIdeal_toIdeal_le_ker
-        (kostantToralDefiningFamily e h ρ M hM hnil b wt) (.inr ())⟩
-
 include hθe hσ hbasis hwt in
 /-- The forward ambient symmetry pulls the toral defining ideal into itself. -/
 private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_hom_le :
@@ -171,16 +128,16 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_ho
         (ConcreteCategory.bijective_of_isIso
           (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).2 ≤
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
-  rw [kostantToralDefiningIdeal_eq_commonKernelHopfIdeal]
+  rw [kostantToralDefiningIdeal_def]
   let s : I ⊕ Unit → I ⊕ Unit := fun j => match j with
     | .inl i => .inl (Function.surjInv hσ i)
     | .inr _ => .inr ()
-  let m : ∀ j, kostantToralDefiningFamilyCodomain (I := I) (κ := κ) j ⟶
-      kostantToralDefiningFamilyCodomain (I := I) (κ := κ) (s j) := fun j => match j with
+  let m : ∀ j, kostantToralGeneratorCodomain (I := I) (κ := κ) j ⟶
+      kostantToralGeneratorCodomain (I := I) (κ := κ) (s j) := fun j => match j with
     | .inl _ => 𝟙 _
     | .inr _ => SplitTorus.relabelCoordinateMap ℤ torusPerm⁻¹
   refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq_comp
-    (kostantToralDefiningFamily e h ρ M hM hnil b wt)
+    (kostantToralGeneratorMap e h ρ M hM hnil b wt)
     (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom _ s m ?_ ?_
   · intro j
     cases j with
@@ -189,13 +146,13 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_ho
   · intro j
     cases j with
     | inl i =>
-        dsimp [kostantToralDefiningFamily, kostantToralDefiningFamilyCodomain, s, m]
+        dsimp [kostantToralGeneratorMap, kostantToralGeneratorCodomain, s, m]
         rw [Category.comp_id,
           kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
             e h ρ M hM hnil b σ θ hθM hθe (Function.surjInv hσ i),
           Function.surjInv_eq hσ]
     | inr u =>
-        simpa [kostantToralDefiningFamily, kostantToralDefiningFamilyCodomain, s, m] using
+        simpa [kostantToralGeneratorMap, kostantToralGeneratorCodomain, s, m] using
           kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorus
             M b wt θ hθM basisPerm hbasis torusPerm hwt
 
@@ -207,7 +164,7 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_in
         (ConcreteCategory.bijective_of_isIso
           (kostantNumberedSymmetryCoordinateIso M b θ hθM).inv).2 ≤
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
-  rw [kostantToralDefiningIdeal_eq_commonKernelHopfIdeal]
+  rw [kostantToralDefiningIdeal_def]
   let c := kostantNumberedSymmetryCoordinateIso M b θ hθM
   have htorusInv : c.inv ≫ GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt =
       GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt ≫
@@ -221,12 +178,12 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_in
   let s : I ⊕ Unit → I ⊕ Unit := fun j => match j with
     | .inl i => .inl (σ i)
     | .inr _ => .inr ()
-  let m : ∀ j, kostantToralDefiningFamilyCodomain (I := I) (κ := κ) j ⟶
-      kostantToralDefiningFamilyCodomain (I := I) (κ := κ) (s j) := fun j => match j with
+  let m : ∀ j, kostantToralGeneratorCodomain (I := I) (κ := κ) j ⟶
+      kostantToralGeneratorCodomain (I := I) (κ := κ) (s j) := fun j => match j with
     | .inl _ => 𝟙 _
     | .inr _ => SplitTorus.relabelCoordinateMap ℤ torusPerm
   refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq_comp
-    (kostantToralDefiningFamily e h ρ M hM hnil b wt) c.inv _ s m ?_ ?_
+    (kostantToralGeneratorMap e h ρ M hM hnil b wt) c.inv _ s m ?_ ?_
   · intro j
     cases j with
     | inl i => exact fun _ _ hxy => hxy
@@ -234,13 +191,13 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_in
   · intro j
     cases j with
     | inl i =>
-        dsimp [kostantToralDefiningFamily, kostantToralDefiningFamilyCodomain, s, m]
+        dsimp [kostantToralGeneratorMap, kostantToralGeneratorCodomain, s, m]
         rw [Category.comp_id,
           ← kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
             e h ρ M hM hnil b σ θ hθM hθe i,
           Iso.inv_hom_id_assoc]
     | inr u =>
-        simpa [kostantToralDefiningFamily, kostantToralDefiningFamilyCodomain, s, m] using htorusInv
+        simpa [kostantToralGeneratorMap, kostantToralGeneratorCodomain, s, m] using htorusInv
 
 include hθe hσ hbasis hwt in
 /-- **The numbered-symmetry coordinate automorphism preserves the toral defining ideal.** The root
@@ -260,16 +217,7 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso :
   have hinv : J.comap c.inv.hom (ConcreteCategory.bijective_of_isIso c.inv).2 ≤ J :=
     kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_inv_le
       e h ρ M hM hnil b wt σ θ hθM hθe basisPerm hbasis torusPerm hwt
-  refine le_antisymm hhom fun x hx => ?_
-  rw [HopfIdeal.mem_comap]
-  apply hinv
-  rw [HopfIdeal.mem_comap]
-  have hcancel2 := congrArg (fun f : GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
-    GeneralLinear.coordinateHopfAlgebra ℤ n =>
-      _root_.CommHopfAlgCat.Hom.hom f x) c.hom_inv_id
-  simp only [_root_.CommHopfAlgCat.hom_comp, BialgHom.comp_apply] at hcancel2
-  rw [hcancel2]
-  exact hx
+  exact HopfIdeal.comap_eq_of_comap_hom_le_of_comap_inv_le c J hhom hinv
 
 include hθe hσ hbasis hwt in
 /-- The coordinate automorphism induced on the toral-closure quotient. -/

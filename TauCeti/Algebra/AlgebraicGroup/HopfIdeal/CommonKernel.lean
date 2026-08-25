@@ -75,26 +75,6 @@ theorem le_commonKernelHopfIdeal_iff (f : ∀ i, H ⟶ K i) (I : HopfIdeal R H) 
   · intro h
     exact le_sSup h
 
-/-- **An endomorphism that intertwines the family along a reindexing pulls the common-kernel ideal
-back into itself.** If every `f i` factors as `φ` followed by some other member `f (s i)` of the
-family, then the inverse image of the common-kernel ideal along `φ` is again contained in it.
-
-The conclusion is one containment, not invariance: an automorphism fixing the ideal needs this
-lemma once for itself and once for its inverse.
-
-The reindexing `s` is an arbitrary function `ι → ι`; at `s = id` the hypothesis reads `φ ≫ f i =
-f i`, so the statement specialises to an endomorphism fixing the family pointwise. -/
-theorem comap_commonKernelHopfIdeal_le_of_comp_eq {L : _root_.CommHopfAlgCat.{v} R}
-    (f : ι → (H ⟶ L)) (φ : H ⟶ H) (hφ : Function.Surjective φ.hom) (s : ι → ι)
-    (hs : ∀ i, φ ≫ f (s i) = f i) :
-    (commonKernelHopfIdeal f).comap φ.hom hφ ≤ commonKernelHopfIdeal f := by
-  -- `x` in the inverse image means `φ x` lies in the ideal, hence is killed by `f (s i)`;
-  -- the intertwining square turns that into `f i x = 0`
-  rw [le_commonKernelHopfIdeal_iff]
-  intro i x hx
-  simpa [← hs i] using
-    RingHom.mem_ker.mp (commonKernelHopfIdeal_toIdeal_le_ker f (s i) (HopfIdeal.mem_comap.mp hx))
-
 /-- **An endomorphism which intertwines a family up to injective maps of the codomains pulls the
 common-kernel ideal back into itself.** This is the version of
 `comap_commonKernelHopfIdeal_le_of_comp_eq` for a dependent family of codomains and commuting
@@ -118,6 +98,23 @@ theorem comap_commonKernelHopfIdeal_le_of_comp_eq_comp
   exact
     RingHom.mem_ker.mp
       (commonKernelHopfIdeal_toIdeal_le_ker f (s i) (HopfIdeal.mem_comap.mp hx))
+
+/-- **An endomorphism that intertwines the family along a reindexing pulls the common-kernel ideal
+back into itself.** If every `f i` factors as `φ` followed by some other member `f (s i)` of the
+family, then the inverse image of the common-kernel ideal along `φ` is again contained in it.
+
+The conclusion is one containment, not invariance: an automorphism fixing the ideal needs this
+lemma once for itself and once for its inverse.
+
+The reindexing `s` is an arbitrary function `ι → ι`; at `s = id` the hypothesis reads `φ ≫ f i =
+f i`, so the statement specialises to an endomorphism fixing the family pointwise. -/
+theorem comap_commonKernelHopfIdeal_le_of_comp_eq {L : _root_.CommHopfAlgCat.{v} R}
+    (f : ι → (H ⟶ L)) (φ : H ⟶ H) (hφ : Function.Surjective φ.hom) (s : ι → ι)
+    (hs : ∀ i, φ ≫ f (s i) = f i) :
+    (commonKernelHopfIdeal f).comap φ.hom hφ ≤ commonKernelHopfIdeal f := by
+  apply comap_commonKernelHopfIdeal_le_of_comp_eq_comp
+    (K := fun _ => L) f φ hφ s (fun _ => 𝟙 L) (fun _ _ _ hxy => hxy)
+  simpa using hs
 
 /-- The morphism from the common-kernel quotient induced by the `i`th member of the family. -/
 noncomputable def commonKernelLift (f : ∀ i, H ⟶ K i) (i : ι) :
