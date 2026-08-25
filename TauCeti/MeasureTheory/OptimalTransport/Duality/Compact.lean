@@ -351,8 +351,7 @@ private theorem integrable_of_continuous [IsFiniteMeasure μ] {f : X → ℝ} (h
 
 omit [CompactSpace X] [OpensMeasurableSpace X] [CompactSpace Y] [OpensMeasurableSpace Y] in
 /-- The zero pair belongs to the continuous dual class for a nonnegative cost. -/
-private theorem zero_mem_continuousDualValues [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
-    (hc0 : ∀ z, 0 ≤ c z) :
+private theorem zero_mem_continuousDualValues (hc0 : ∀ z, 0 ≤ c z) :
     (0 : ℝ) ∈ {r : ℝ | ∃ φ ψ, Continuous φ ∧ Continuous ψ ∧
       (∀ x y, φ x + ψ y ≤ c (x, y)) ∧ kantorovichDualValue μ ν φ ψ = r} :=
   ⟨fun _ ↦ 0, fun _ ↦ 0, continuous_const, continuous_const,
