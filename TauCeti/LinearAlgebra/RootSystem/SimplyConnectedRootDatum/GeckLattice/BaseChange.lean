@@ -80,18 +80,6 @@ noncomputable def geckBaseChangeDefiningIdeal :
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A
 
-/-- The base-changed Geck defining ideal is the generic transported Kostant toral ideal at the
-pinned Geck data. -/
-theorem geckBaseChangeDefiningIdeal_def :
-    t.geckBaseChangeDefiningIdeal ht A =
-      kostantToralBaseChangePresentationIdeal
-        (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
-        (t.geckCoordinateLattice ht).toAddSubgroup
-        (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
-        (t.isNilpotent_geckRepresentation_rootGenerator ht)
-        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A := by
-  rfl
-
 /-- Base-changing quotient maps commutes with transporting the defining ideal along an equality.
 This isolates the dependent equality transport used by `geckBaseChangeCoordinateIso`. -/
 private theorem baseChangeMap_mkQuotient_comp_eqToIso
@@ -152,7 +140,13 @@ noncomputable def geckBaseChangeCoordinateIso :
           (t.geckDefiningIdeal ht)) :=
   eqToIso (congrArg
       (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht)))
-      (t.geckBaseChangeDefiningIdeal_def ht A)) ≪≫
+      (by rfl : t.geckBaseChangeDefiningIdeal ht A =
+        kostantToralBaseChangePresentationIdeal
+          (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+          (t.geckCoordinateLattice ht).toAddSubgroup
+          (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+          (t.isNilpotent_geckRepresentation_rootGenerator ht)
+          (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A)) ≪≫
     kostantToralBaseChangePresentationIso
       (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
       (t.geckCoordinateLattice ht).toAddSubgroup
@@ -175,7 +169,13 @@ theorem mkQuotient_comp_geckBaseChangeCoordinateIso_hom :
             (t.geckDefiningIdeal ht)) := by
   rw [geckBaseChangeCoordinateIso, Iso.trans_hom, Iso.trans_hom,
     ← Category.assoc, t.mkQuotient_comp_eqToIso ht A
-      (t.geckBaseChangeDefiningIdeal_def ht A), ← Category.assoc,
+      (by rfl : t.geckBaseChangeDefiningIdeal ht A =
+        kostantToralBaseChangePresentationIdeal
+          (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+          (t.geckCoordinateLattice ht).toAddSubgroup
+          (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+          (t.isNilpotent_geckRepresentation_rootGenerator ht)
+          (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A), ← Category.assoc,
     mkQuotient_comp_kostantToralBaseChangePresentationIso_hom, Category.assoc,
     geckIntegralCoordinateTransportIso,
     t.baseChangeMap_mkQuotient_comp_eqToIso ht A (t.geckDefiningIdeal_def ht).symm]
@@ -208,18 +208,6 @@ noncomputable def geckRootSubgroupBaseChangeCoordinateMap
     (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) A i
-
-/-- A transported numbered Geck root-subgroup coordinate map is the corresponding generic
-Kostant base-change map. -/
-theorem geckRootSubgroupBaseChangeCoordinateMap_def (i : Fin t.rank ⊕ Fin t.rank) :
-    t.geckRootSubgroupBaseChangeCoordinateMap ht A i =
-      kostantRootSubgroupBaseChangePresentationCoordinateMap
-        (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
-        (t.geckCoordinateLattice ht).toAddSubgroup
-        (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
-        (t.isNilpotent_geckRepresentation_rootGenerator ht)
-        (t.geckCoordinateBasisFin ht) A i := by
-  rfl
 
 /-- The base-changed `i`th Geck root-subgroup coordinate map factored through the transported
 Geck carrier. -/
@@ -281,7 +269,7 @@ theorem geckBaseChangeCoordinateIso_hom_comp_rootSubgroupBaseChangeMap
     t.mkQuotient_comp_eqToIso ht ℤ (t.geckDefiningIdeal_def ht),
     mkQuotient_comp_kostantRootSubgroupToralCoordinateMap,
     mkQuotient_comp_geckRootSubgroupToBaseChangeCoordinateMap,
-    geckRootSubgroupBaseChangeCoordinateMap_def]
+    geckRootSubgroupBaseChangeCoordinateMap]
   simpa only [_root_.CommHopfAlgCat.isoMk_hom] using
     (kostantRootSubgroupBaseChangePresentationCoordinateMap_def
       (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
@@ -297,12 +285,6 @@ noncomputable def geckWeightTorusBaseChangeCoordinateMap :
       (DiagonalizableGroup.coordinateRing A
         (SplitTorus.characterGroup (Fin t.rank))).obj :=
   GeneralLinear.weightTorusBaseChangeCoordinateMap ℤ A (t.geckWeightFin ht)
-
-/-- The transported Geck weight-torus map is the generic base change of the integral map. -/
-theorem geckWeightTorusBaseChangeCoordinateMap_def :
-    t.geckWeightTorusBaseChangeCoordinateMap ht A =
-      GeneralLinear.weightTorusBaseChangeCoordinateMap ℤ A (t.geckWeightFin ht) := by
-  rfl
 
 /-- The integral weight-torus coordinate map, with source expressed using the named Geck defining
 ideal. -/
@@ -380,7 +362,7 @@ theorem geckBaseChangeCoordinateIso_hom_comp_weightTorusBaseChangeMap :
     t.mkQuotient_comp_eqToIso ht ℤ (t.geckDefiningIdeal_def ht),
     mkQuotient_comp_kostantWeightTorusToralCoordinateMap,
     mkQuotient_comp_geckWeightTorusToBaseChangeCoordinateMap,
-    geckWeightTorusBaseChangeCoordinateMap_def]
+    geckWeightTorusBaseChangeCoordinateMap]
   simpa only [CategoryTheory.Functor.mapIso_hom, CategoryTheory.ObjectProperty.isoMk_hom,
     _root_.CommHopfAlgCat.isoMk_hom, CategoryTheory.ObjectProperty.ι_map,
     CategoryTheory.ObjectProperty.homMk_hom] using
