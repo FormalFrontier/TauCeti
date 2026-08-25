@@ -165,8 +165,9 @@ theorem commutatorElement_differenceShortRootSubgroupPoints_negativeLongRootSubg
 
 /-- **The negative structure-constant-two Chevalley relation on algebra-valued points of
 `Sp₂ₘ`.** For distinct `i` and `j`, the commutator of the roots `eᵢ-eⱼ` and `-eᵢ-eⱼ` is
-the long-root point `x_{-2eⱼ}(-2ab)`. The inverse and square on the right are convolution
-operations in `𝔾ₐ(A)`, so they negate and double its parameter. -/
+the long-root point `x_{-2eⱼ}(-2ab)`. The inverse and square on the right are the inverse
+and multiplication of `Sp₂ₘ(A)`; since `negativeLongRootSubgroupPoints j` is a group
+homomorphism out of `𝔾ₐ(A)`, they correspond to negating and doubling the parameter. -/
 theorem commutatorElement_differenceShortRootSubgroupPoints_negativeSumShortRootSubgroupPoints
     (hij : i ≠ j)
     (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
@@ -203,14 +204,10 @@ theorem commutatorElement_differenceShortRootSubgroupPoints_negativeSumShortRoot
   calc
     (GLSymplecticFin.negativeLongRootTransvectionUnit j (c + c))⁻¹ =
         GLSymplecticFin.negativeLongRootTransvectionUnit j (-(c + c)) := by
-      apply Subtype.ext
-      change
-        ((GLSymplecticFin.negativeLongRootTransvectionUnit j (c + c) :
-          GLSymplecticFin m A) : GL (Fin (m + m)) A)⁻¹ =
-          (GLSymplecticFin.negativeLongRootTransvectionUnit j (-(c + c)) :
-            GL (Fin (m + m)) A)
-      rw [GLSymplecticFin.coe_negativeLongRootTransvectionUnit,
-        GLSymplecticFin.coe_negativeLongRootTransvectionUnit, transvectionUnit_inv]
+      simpa only [GLSymplecticFin.negativeLongRootTransvectionHom_apply,
+        toAdd_ofAdd, toAdd_inv] using
+        (map_inv (GLSymplecticFin.negativeLongRootTransvectionHom (R := A) j)
+          (Multiplicative.ofAdd (c + c))).symm
     _ = GLSymplecticFin.negativeLongRootTransvectionUnit j
           (-(2 * f.ofConv (SymmetricAlgebra.ι R R 1) *
             g.ofConv (SymmetricAlgebra.ι R R 1))) := by

@@ -184,13 +184,9 @@ theorem commutatorElement_differenceShortRootUnit_negativeLongRootTransvectionUn
     ⁅differenceShortRootUnit hij a, negativeLongRootTransvectionUnit i b⁆ =
       negativeSumShortRootUnit hij (-(a * b)) *
         negativeLongRootTransvectionUnit j (a ^ 2 * b) := by
-  apply Subtype.ext
-  change
-    ⁅(differenceShortRootUnit hij a : GL (Fin (m + m)) R),
-        (negativeLongRootTransvectionUnit i b : GL (Fin (m + m)) R)⁆ =
-      (negativeSumShortRootUnit hij (-(a * b)) : GL (Fin (m + m)) R) *
-        negativeLongRootTransvectionUnit j (a ^ 2 * b)
-  rw [coe_differenceShortRootUnit, coe_negativeLongRootTransvectionUnit,
+  apply (GLSymplecticFin m R).subtype_injective
+  rw [map_commutatorElement, map_mul, Subgroup.coe_subtype,
+    coe_differenceShortRootUnit, coe_negativeLongRootTransvectionUnit,
     coe_negativeSumShortRootUnit, coe_negativeLongRootTransvectionUnit]
   let I := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl i)
   let J := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl j)
@@ -243,13 +239,9 @@ theorem commutatorElement_differenceShortRootUnit_negativeSumShortRootUnit
     (hij : i ≠ j) (a b : R) :
     ⁅differenceShortRootUnit hij a, negativeSumShortRootUnit hij b⁆ =
       negativeLongRootTransvectionUnit j (-(2 * a * b)) := by
-  apply Subtype.ext
-  change
-    ⁅(differenceShortRootUnit hij a : GL (Fin (m + m)) R),
-        (negativeSumShortRootUnit hij b : GL (Fin (m + m)) R)⁆ =
-      (negativeLongRootTransvectionUnit j (-(2 * a * b)) : GL (Fin (m + m)) R)
-  rw [coe_differenceShortRootUnit, coe_negativeSumShortRootUnit,
-    coe_negativeLongRootTransvectionUnit]
+  apply (GLSymplecticFin m R).subtype_injective
+  rw [map_commutatorElement, Subgroup.coe_subtype, coe_differenceShortRootUnit,
+    coe_negativeSumShortRootUnit, coe_negativeLongRootTransvectionUnit]
   let I := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl i)
   let J := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl j)
   let I' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr i)
