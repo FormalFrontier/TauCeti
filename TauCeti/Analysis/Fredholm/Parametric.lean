@@ -21,8 +21,9 @@ solution turns that geometric picture into a purely linear one: the total deriva
 continuous linear map `E × Λ →L[𝕜] F`, its restriction `D₁` to `E × 0` is the linearization of the
 single equation at the fixed parameter, its restriction `D₂` to `0 × Λ` records how the equation
 moves with the parameter, the kernel of the total derivative is the tangent space to the universal
-zero set, and the projection to `Λ` of that kernel is the linearization of "forget the solution,
-remember the parameter".
+zero set when the nonlinear hypotheses make that zero set a manifold (and is its candidate tangent
+space in general), and the projection to `Λ` of that kernel is the linearization of "forget the
+solution, remember the parameter".
 
 This file analyses that projection. Writing the total derivative as a coproduct
 `D₁.coprod D₂ : E × Λ →L[𝕜] F`, which by `ContinuousLinearMap.coprod_comp_inl_inr` is no loss of
@@ -36,12 +37,12 @@ generality, `TauCeti.parameterProj D₁ D₂` is the restriction of `Prod.snd` t
   the same expected dimension count as the unparametrized one.
 
 Together these are the linear engine of the parametric transversality theorem (McDuff--Salamon,
-*J-holomorphic Curves and Symplectic Topology*, 2nd ed., Appendix A.3): feeding the projection to
-the Sard--Smale theorem of `TauCeti.Analysis.Fredholm.SardSmale` then says that for a residual set
-of parameters the equation that parameter indexes is regular, and its solution set is a manifold
-of dimension the index of `D₁` by `TauCeti.Analysis.Fredholm.LevelSet`. This file supplies the
-linear half of that chain; the nonlinear half additionally needs a smooth chart on the universal
-zero set, which is not proved here.
+*J-holomorphic Curves and Symplectic Topology*, 2nd ed., Appendix A.3). Once a smooth chart on the
+universal zero set is supplied, feeding the projection to the Sard--Smale theorem of
+`TauCeti.Analysis.Fredholm.SardSmale` says that for a residual set of parameters the equation that
+parameter indexes is regular, and its solution set is a manifold of dimension the index of `D₁`
+by `TauCeti.Analysis.Fredholm.LevelSet`. This file supplies only the linear half of that chain; the
+required chart is not proved here.
 
 ## The exact sequence
 
@@ -113,32 +114,24 @@ variable (D₁ : E →L[𝕜] F) (D₂ : Λ →L[𝕜] F)
 /-- The **parameter projection** of the total linearization `D₁.coprod D₂ : E × Λ →L[𝕜] F`: the
 restriction to its kernel of the projection `E × Λ →L[𝕜] Λ`.
 
-The kernel of the total linearization is the tangent space to the universal zero set of a
-parametrized equation, and this map is the linearization of the projection of that zero set to the
-space of parameters. Every continuous linear map out of `E × Λ` is of the form `D₁.coprod D₂`, by
-`ContinuousLinearMap.coprod_comp_inl_inr`, so writing the source as a coproduct is no restriction.
-
-The definition is `@[expose]`d so that `TauCeti.parameterProj_apply` holds by `rfl`. -/
-@[expose] def parameterProj : (D₁.coprod D₂).ker →L[𝕜] Λ :=
+The kernel of the total linearization is the candidate tangent space to the universal zero set of
+a parametrized equation; under the nonlinear hypotheses making that zero set a manifold, it is
+its tangent space. This map is then the linearization of the projection of that zero set to the
+space of parameters. Every continuous linear map out of `E × Λ` is of the form `D₁.coprod D₂`,
+by `ContinuousLinearMap.coprod_comp_inl_inr`, so the coproduct source is no restriction. -/
+def parameterProj : (D₁.coprod D₂).ker →L[𝕜] Λ :=
   (ContinuousLinearMap.snd 𝕜 E Λ).comp (D₁.coprod D₂).ker.subtypeL
 
-/-- The parameter projection reads off the parameter component of a tangent vector. -/
+/-- The parameter projection reads off the parameter component of a candidate tangent vector. -/
 @[simp]
 theorem parameterProj_apply (v : (D₁.coprod D₂).ker) : parameterProj D₁ D₂ v = (v : E × Λ).2 :=
-  rfl
+  (rfl)
 
-/-- A pair lies in the kernel of the total linearization exactly when it solves the linearized
-equation `D₁ x + D₂ l = 0`. -/
-theorem mem_ker_coprod_iff {x : E} {l : Λ} : (x, l) ∈ (D₁.coprod D₂).ker ↔ D₁ x + D₂ l = 0 := by
-  simp
+/-! ### Exactness at the candidate tangent space: the kernel of the projection -/
 
-/-! ### Exactness at the tangent space: the kernel of the projection -/
-
-/-- The embedding `x ↦ (x, 0)` of `ker D₁` into the kernel of the total linearization: the tangent
-directions to the universal zero set along which the parameter does not move.
-
-Exposed so that `TauCeti.kerCoprodHom_apply` holds by `rfl`. -/
-@[expose] def kerCoprodHom : D₁.ker →ₗ[𝕜] (D₁.coprod D₂).ker where
+/-- The embedding `x ↦ (x, 0)` of `ker D₁` into the kernel of the total linearization: the formal
+tangent directions to the universal zero set along which the parameter does not move. -/
+def kerCoprodHom : D₁.ker →ₗ[𝕜] (D₁.coprod D₂).ker where
   toFun x := ⟨((x : E), 0), by simp⟩
   map_add' x y := by ext <;> simp
   map_smul' c x := by ext <;> simp
@@ -146,17 +139,17 @@ Exposed so that `TauCeti.kerCoprodHom_apply` holds by `rfl`. -/
 /-- The embedding sends `x` to the pair `(x, 0)`. -/
 @[simp]
 theorem kerCoprodHom_apply (x : D₁.ker) : (kerCoprodHom D₁ D₂ x : E × Λ) = ((x : E), 0) :=
-  rfl
+  (rfl)
 
 /-- The embedding `x ↦ (x, 0)` is injective, which is exactness of the sequence at `ker D₁`. -/
-theorem injective_kerCoprodHom : Function.Injective (kerCoprodHom D₁ D₂) := by
+theorem kerCoprodHom_injective : Function.Injective (kerCoprodHom D₁ D₂) := by
   intro x y hxy
   have h : ((x : E), (0 : Λ)) = ((y : E), (0 : Λ)) := by
     simpa using congrArg (fun v : (D₁.coprod D₂).ker => (v : E × Λ)) hxy
   exact Subtype.ext (congrArg Prod.fst h)
 
-/-- The tangent directions along which the parameter does not move are exactly the solutions of
-the linearized equation at the fixed parameter. -/
+/-- The formal tangent directions along which the parameter does not move are exactly the
+solutions of the linearized equation at the fixed parameter. -/
 theorem range_kerCoprodHom :
     LinearMap.range (kerCoprodHom D₁ D₂) = (parameterProj D₁ D₂).ker := by
   ext v
@@ -168,7 +161,7 @@ theorem range_kerCoprodHom :
     obtain ⟨⟨x, l⟩, hk⟩ := v
     have hl : l = 0 := by simpa using hv
     subst hl
-    have hx : x ∈ D₁.ker := by simpa using (mem_ker_coprod_iff D₁ D₂).mp hk
+    have hx : x ∈ D₁.ker := by simpa [LinearMap.mem_ker] using hk
     exact ⟨⟨x, hx⟩, rfl⟩
 
 /-- Exactness of `0 → ker D₁ → ker (D₁.coprod D₂) → Λ` at the middle term. -/
@@ -176,19 +169,17 @@ theorem exact_kerCoprodHom_parameterProj :
     Function.Exact (kerCoprodHom D₁ D₂) (parameterProj D₁ D₂) :=
   LinearMap.exact_iff.mpr (range_kerCoprodHom D₁ D₂).symm
 
-/-- **The kernel of the parameter projection is the kernel of `D₁`**, embedded by `x ↦ (x, 0)`.
-
-Exposed so that `TauCeti.kerParameterProjEquiv_apply` holds by `rfl`. -/
-@[expose] noncomputable def kerParameterProjEquiv :
+/-- **The kernel of the parameter projection is the kernel of `D₁`**, embedded by `x ↦ (x, 0)`. -/
+noncomputable def kerParameterProjEquiv :
     D₁.ker ≃ₗ[𝕜] (parameterProj D₁ D₂).ker :=
-  (LinearEquiv.ofInjective _ (injective_kerCoprodHom D₁ D₂)).trans
+  (LinearEquiv.ofInjective _ (kerCoprodHom_injective D₁ D₂)).trans
     (LinearEquiv.ofEq _ _ (range_kerCoprodHom D₁ D₂))
 
 /-- The identification of `ker D₁` with the kernel of the projection is `x ↦ (x, 0)`. -/
 @[simp]
 theorem kerParameterProjEquiv_apply (x : D₁.ker) :
     ((kerParameterProjEquiv D₁ D₂ x : (D₁.coprod D₂).ker) : E × Λ) = ((x : E), 0) :=
-  rfl
+  (rfl)
 
 /-- The kernel of the parameter projection has the same dimension as the kernel of `D₁`. -/
 theorem finrank_ker_parameterProj :
@@ -224,16 +215,14 @@ theorem mem_range_parameterProj_iff {l : Λ} :
   rw [range_parameterProj]; rfl
 
 /-- The map `Λ → F ⧸ range D₁` induced by `D₂`: it measures how far the infinitesimal effect of a
-parameter direction is from being achievable by moving the solution.
-
-Exposed so that `TauCeti.cokerParameterMap_apply` holds by `rfl`. -/
-@[expose] noncomputable def cokerParameterMap : Λ →ₗ[𝕜] F ⧸ D₁.range :=
+parameter direction is from being achievable by moving the solution. -/
+noncomputable def cokerParameterMap : Λ →ₗ[𝕜] F ⧸ D₁.range :=
   D₁.range.mkQ ∘ₗ (D₂ : Λ →ₗ[𝕜] F)
 
 /-- The induced map sends a parameter direction to the class of its infinitesimal effect. -/
 @[simp]
 theorem cokerParameterMap_apply (l : Λ) : cokerParameterMap D₁ D₂ l = D₁.range.mkQ (D₂ l) :=
-  rfl
+  (rfl)
 
 /-- The kernel of the map induced by `D₂` is the range of the parameter projection: this is
 `TauCeti.range_parameterProj` read in the quotient. -/
@@ -283,6 +272,13 @@ noncomputable def quotientRangeParameterProjEquiv (hD : Function.Surjective (D�
   (Submodule.quotEquivOfEq _ _ (ker_cokerParameterMap D₁ D₂).symm).trans
     (LinearMap.quotKerEquivOfSurjective _ ((surjective_cokerParameterMap_iff D₁ D₂).mpr hD))
 
+/-- The cokernel equivalence sends the class of `l` to the class of `D₂ l`. -/
+@[simp]
+theorem quotientRangeParameterProjEquiv_mk (hD : Function.Surjective (D₁.coprod D₂)) (l : Λ) :
+    quotientRangeParameterProjEquiv D₁ D₂ hD (Submodule.Quotient.mk l) =
+      Submodule.Quotient.mk (D₂ l) :=
+  (rfl)
+
 /-- For a surjective total linearization, the cokernel of the parameter projection has the same
 dimension as the cokernel of `D₁`. -/
 theorem finrank_quotient_range_parameterProj (hD : Function.Surjective (D₁.coprod D₂)) :
@@ -297,8 +293,8 @@ theorem finiteDimensional_quotient_range_parameterProj (hD : Function.Surjective
   (quotientRangeParameterProjEquiv D₁ D₂ hD).symm.finiteDimensional
 
 /-- Assuming the total linearization is surjective, the parameter projection is onto exactly when
-`D₁` is: a parameter is a regular value of the projection from the universal zero set precisely
-when the equation it indexes is regular. -/
+`D₁` is. In the nonlinear application, this says that a parameter is a regular value of the
+projection from the universal zero set precisely when the equation it indexes is regular. -/
 theorem range_parameterProj_eq_top_iff (hD : (D₁.coprod D₂).range = ⊤) :
     (parameterProj D₁ D₂).range = ⊤ ↔ D₁.range = ⊤ := by
   rw [ContinuousLinearMap.range_coprod] at hD
@@ -320,10 +316,9 @@ theorem surjective_parameterProj_iff (hD : Function.Surjective (D₁.coprod D₂
 
 /-- **The parameter projection of a surjective total linearization has the same index as `D₁`.**
 
-So the parametrized problem and the problem at a fixed parameter carry the same expected
-dimension: a regular fibre of the projection is a manifold of dimension `index D₁`, which is the
-dimension count `TauCeti.Analysis.Fredholm.LevelSet` gives for the equation at a fixed regular
-parameter.
+Consequently, once the nonlinear hypotheses of `TauCeti.Analysis.Fredholm.LevelSet` and a smooth
+manifold chart on the universal zero set are supplied, the corresponding regular fibre has
+dimension `index D₁`.
 
 Neither operator is assumed Fredholm: both sides are differences of `Module.finrank`s, and the
 exact sequence matches the four dimensions in pairs, junk values included. -/
@@ -339,9 +334,9 @@ variable [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] [CompleteSpace E] [Comp
 /-- **The parameter projection of a surjective total linearization is Fredholm** as soon as `D₁`
 is, over Banach spaces; by `TauCeti.index_parameterProj` its index is that of `D₁`.
 
-This is the hypothesis under which the Sard--Smale theorem applies to the projection from a
-universal zero set to its space of parameters, which is the step the parametric transversality
-theorem turns on. -/
+After supplying a smooth manifold chart on the universal zero set, this is the hypothesis under
+which the Sard--Smale theorem applies to its projection to the parameter space, which is the step
+the parametric transversality theorem turns on. -/
 theorem isFredholm_parameterProj (hD₁ : ContinuousLinearMap.IsFredholm D₁)
     (hD : Function.Surjective (D₁.coprod D₂)) :
     ContinuousLinearMap.IsFredholm (parameterProj D₁ D₂) := by
