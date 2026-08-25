@@ -140,6 +140,7 @@ theorem stepGraphonAvg_apply_of_measure_eq_zero_right
 
 /-- Block averaging preserves the integral over each rectangle of the partition.  This includes
 null rectangles: both sides are then zero under Mathlib's set-average convention. -/
+@[simp]
 theorem stepGraphonAvg_rectIntegral (P : Finpartition (Set.univ : Set Ω))
     (hP : ∀ p ∈ P.parts, MeasurableSet p) (W : Graphon Ω μ) (p q : P.parts) :
     (stepGraphonAvg (μ := μ) P hP W).toSymmKernel.rectIntegral μ (p : Set Ω) (q : Set Ω) =
