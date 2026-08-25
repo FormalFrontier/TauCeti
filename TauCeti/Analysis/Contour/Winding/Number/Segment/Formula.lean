@@ -45,16 +45,12 @@ namespace TauCeti.Contour
 
 variable {v z₀ q : ℂ} {a b s : ℝ}
 
-/-- **The winding number of a straight segment about a point beside it** is the increment of the
-principal logarithm, valid whenever `(t : ℂ) - q` lies in the slit plane throughout `[a, b]`.
-This covers both the nonreal case (`q.im ≠ 0`) and real points below the segment
-(`q.re < min a b`). -/
-theorem windingNumber_segment (hv : v ≠ 0)
-    (hslit : ∀ t ∈ uIcc a b, (t : ℂ) - q ∈ slitPlane) :
+private theorem windingNumber_eq_integral_inv_sub (hv : v ≠ 0)
+    (hne : ∀ t ∈ uIcc a b, (t : ℂ) - q ≠ 0) :
     windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * q + z₀)
-      = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * (log ((b : ℂ) - q) - log ((a : ℂ) - q)) := by
+      = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
+        ∫ t in a..b, ((t : ℂ) - q)⁻¹ := by
   rw [windingNumber_affine (γ := fun t : ℝ => (t : ℂ)) (c := v) (d := z₀) (z₀ := q) hv]
-  have hne : ∀ t ∈ uIcc a b, (t : ℂ) - q ≠ 0 := fun t ht => slitPlane_ne_zero (hslit t ht)
   have h_cont : ContinuousOn (fun t : ℝ => (t : ℂ)) (uIcc a b) :=
     (by fun_prop : Continuous fun t : ℝ => (t : ℂ)).continuousOn
   have h_avoid : ∀ t ∈ uIcc a b, (t : ℂ) ≠ q := fun t ht => by
@@ -73,7 +69,22 @@ theorem windingNumber_segment (hv : v ≠ 0)
     h_intble.congr fun t _ => (h_integrand t).symm
   rw [windingNumber_eq_integral_of_avoidance h_cont h_avoid h_int]
   congr 1
-  rw [intervalIntegral.integral_congr (fun t _ => h_integrand t)]
+  exact intervalIntegral.integral_congr (fun t _ => h_integrand t)
+
+/-- **The winding number of a straight segment about a point beside it** is the increment of the
+principal logarithm, valid whenever `(t : ℂ) - q` lies in the slit plane throughout `[a, b]`.
+This covers both the nonreal case (`q.im ≠ 0`) and real points below the segment
+(`q.re < min a b`). -/
+theorem windingNumber_segment (hv : v ≠ 0)
+    (hslit : ∀ t ∈ uIcc a b, (t : ℂ) - q ∈ slitPlane) :
+    windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * q + z₀)
+      = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * (log ((b : ℂ) - q) - log ((a : ℂ) - q)) := by
+  have hne : ∀ t ∈ uIcc a b, (t : ℂ) - q ≠ 0 := fun t ht => slitPlane_ne_zero (hslit t ht)
+  rw [windingNumber_eq_integral_inv_sub hv hne]
+  congr 1
+  have h_intble : IntervalIntegrable (fun t : ℝ => ((t : ℂ) - q)⁻¹) volume a b := by
+    refine ContinuousOn.intervalIntegrable ?_
+    exact ContinuousOn.inv₀ (by fun_prop) fun t ht => hne t ht
   have h_div : (fun t : ℝ => ((t : ℂ) - q)⁻¹) = fun t : ℝ => 1 / ((t : ℂ) - q) := by
     ext t; rw [one_div]
   rw [h_div]
@@ -130,38 +141,17 @@ theorem windingNumber_segment_of_ne (hv : v ≠ 0)
       rcases le_or_gt q.re (max a b) with h | h
       · exact absurd (hne_real q.re ⟨hab, h⟩) (not_not.mpr rfl)
       · exact h
-    rw [windingNumber_affine (γ := fun t : ℝ => (t : ℂ)) (c := v) (d := z₀)
-        (z₀ := (q.re : ℂ)) hv]
     have hne_sub : ∀ t ∈ uIcc a b, (t : ℂ) - (q.re : ℂ) ≠ 0 := by
       intro t ht
       simp only [ne_eq, sub_eq_zero]
       exact_mod_cast hne_real t ht
-    have h_cont : ContinuousOn (fun t : ℝ => (t : ℂ)) (uIcc a b) :=
-      (by fun_prop : Continuous fun t : ℝ => (t : ℂ)).continuousOn
-    have h_avoid : ∀ t ∈ uIcc a b, (t : ℂ) ≠ (q.re : ℂ) := fun t ht => by
-      intro h; exact hne_sub t ht (by rw [h, sub_self])
-    have h_integrand : ∀ t : ℝ,
-        ((t : ℂ) - (q.re : ℂ))⁻¹ * deriv (fun t : ℝ => (t : ℂ)) t
-          = ((t : ℂ) - (q.re : ℂ))⁻¹ := by
-      intro t
-      have : deriv (fun t : ℝ => (t : ℂ)) t = 1 := ofRealCLM.hasDerivAt.deriv
-      rw [this, mul_one]
-    have h_intble : IntervalIntegrable
-        (fun t : ℝ => ((t : ℂ) - (q.re : ℂ))⁻¹) volume a b := by
-      refine ContinuousOn.intervalIntegrable ?_
-      exact ContinuousOn.inv₀ (by fun_prop) fun t ht => hne_sub t ht
-    have h_int : IntervalIntegrable
-        (fun t : ℝ => ((t : ℂ) - (q.re : ℂ))⁻¹ * deriv (fun t : ℝ => (t : ℂ)) t)
-        volume a b :=
-      h_intble.congr fun t _ => (h_integrand t).symm
-    rw [windingNumber_eq_integral_of_avoidance h_cont h_avoid h_int]
+    rw [windingNumber_eq_integral_inv_sub hv hne_sub]
     congr 1
-    rw [intervalIntegral.integral_congr (fun t _ => h_integrand t)]
     have h_neg_b : (b : ℝ) - q.re < 0 := by linarith only [hgt, le_max_right a b]
     have h_neg_a : (a : ℝ) - q.re < 0 := by linarith only [hgt, le_max_left a b]
-    rw [show (b : ℂ) - (q.re : ℂ) = ((b - q.re : ℝ) : ℂ) from by push_cast; ring,
-        show (a : ℂ) - (q.re : ℂ) = ((a - q.re : ℝ) : ℂ) from by push_cast; ring,
-        log_sub_log_ofReal_of_neg h_neg_b h_neg_a]
+    have hb_cast : (b : ℂ) - (q.re : ℂ) = ((b - q.re : ℝ) : ℂ) := by push_cast; ring
+    have ha_cast : (a : ℂ) - (q.re : ℂ) = ((a - q.re : ℝ) : ℂ) := by push_cast; ring
+    rw [hb_cast, ha_cast, log_sub_log_ofReal_of_neg h_neg_b h_neg_a]
     have h_real_eq : ∀ t ∈ Set.uIcc a b,
         ((t : ℂ) - (q.re : ℂ))⁻¹ = ((((t - q.re)⁻¹ : ℝ) : ℂ)) := by
       intro t _
