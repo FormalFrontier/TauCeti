@@ -21,6 +21,13 @@ make the construction genuinely functorial, while `explicitMap1_mk` fixes its va
 class. The cochain maps in degrees one and two are exposed because degree-two functoriality uses
 the same naturality square for `d¹`.
 
+This is functoriality of the *explicit* model: the carrier is the quotient `Z¹/B¹` of plain
+continuous cochains. Mathlib's `ContinuousCohomology.map` is the compatible-pair pullback on the
+canonical bundled carrier, and it is what the sibling file
+`TauCeti/RepresentationTheory/Homological/ContCohomology/Functoriality.lean` specialises to
+restriction, inflation and coefficient maps; the two pullbacks are compared in Layer 3 of the
+roadmap, once the explicit complex is identified with the canonical one.
+
 This implements the degree-one part of the "compatible-pair functoriality" milestone in Layer 2
 of `TauCetiRoadmap/ProfiniteCohomology/README.md`. The formulas follow Mathlib's
 `groupCohomology.cochainsMap₁`, `cochainsMap₂`, and `mapCocycles₁`, but are stated for the
@@ -48,21 +55,18 @@ def cochainsMap1 (φ : H →* G) (f : M →+ N) : (G → M) →+ (H → N) where
     ext h
     simp
 
-/-- Pullback of degree-two cochains along a monoid map and a coefficient map. -/
-def cochainsMap2 (φ : H →* G) (f : M →+ N) : (G × G → M) →+ (H × H → N) where
-  toFun c p := f (c (φ p.1, φ p.2))
-  map_zero' := by
-    ext p
-    simp
-  map_add' c d := by
-    ext p
-    simp
+/-- Pullback of degree-two cochains along a monoid map and a coefficient map: the degree-one
+pullback along the pair `φ × φ` of the domain. -/
+def cochainsMap2 (φ : H →* G) (f : M →+ N) : (G × G → M) →+ (H × H → N) :=
+  cochainsMap1 (φ.prodMap φ) f
 
+/-- The defining formula for the degree-one cochain pullback. -/
 @[simp]
 theorem cochainsMap1_apply (φ : H →* G) (f : M →+ N) (c : G → M) (h : H) :
     cochainsMap1 φ f c h = f (c (φ h)) :=
   by rfl
 
+/-- The defining formula for the degree-two cochain pullback. -/
 @[simp]
 theorem cochainsMap2_apply (φ : H →* G) (f : M →+ N) (c : G × G → M) (h k : H) :
     cochainsMap2 φ f c (h, k) = f (c (φ h, φ k)) :=
@@ -78,7 +82,7 @@ theorem continuous_cochainsMap1 [TopologicalSpace G] [TopologicalSpace H]
 theorem continuous_cochainsMap2 [TopologicalSpace G] [TopologicalSpace H]
     [TopologicalSpace M] [TopologicalSpace N] (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
     {c : G × G → M} (hc : Continuous c) : Continuous (cochainsMap2 (φ : H →* G) f c) :=
-  hf.comp (hc.comp (φ.continuous.prodMap φ.continuous))
+  continuous_cochainsMap1 (φ.prodMap φ) f hf hc
 
 /-- Pullback of degree-one cochains along the identity compatible pair is the identity. -/
 @[simp]
@@ -92,12 +96,11 @@ theorem cochainsMap1_id :
 @[simp]
 theorem cochainsMap2_id :
     cochainsMap2 (MonoidHom.id G) (AddMonoidHom.id M) =
-      AddMonoidHom.id (G × G → M) := by
-  ext c p
-  rfl
+      AddMonoidHom.id (G × G → M) :=
+  cochainsMap1_id
 
 /-- Pullback of degree-one cochains along a composite compatible pair is the composite of the
-pullbacks, in the reverse order. -/
+pullbacks: it is contravariant in the group homomorphism and covariant in the coefficient map. -/
 @[simp]
 theorem cochainsMap1_comp {K : Type uK} {P : Type uP} [Monoid K] [AddMonoid P]
     (φ : H →* G) (ψ : K →* H) (f : M →+ N) (q : N →+ P) :
@@ -106,26 +109,25 @@ theorem cochainsMap1_comp {K : Type uK} {P : Type uP} [Monoid K] [AddMonoid P]
   rfl
 
 /-- Pullback of degree-two cochains along a composite compatible pair is the composite of the
-pullbacks, in the reverse order. -/
+pullbacks: it is contravariant in the group homomorphism and covariant in the coefficient map. -/
 @[simp]
 theorem cochainsMap2_comp {K : Type uK} {P : Type uP} [Monoid K] [AddMonoid P]
     (φ : H →* G) (ψ : K →* H) (f : M →+ N) (q : N →+ P) :
-    cochainsMap2 (φ.comp ψ) (q.comp f) = (cochainsMap2 ψ q).comp (cochainsMap2 φ f) := by
-  ext c p
-  rfl
+    cochainsMap2 (φ.comp ψ) (q.comp f) = (cochainsMap2 ψ q).comp (cochainsMap2 φ f) :=
+  cochainsMap1_comp (φ.prodMap φ) (ψ.prodMap ψ) f q
 
 end Cochains
 
 section Naturality
 
 /-! The naturality squares are where the differentials enter, so this is the first point at which
-the coefficients have to be commutative groups acted on by the two monoids. Commutativity is
-necessary because `d0` and `d1` are additive homomorphisms; their formulas are not additive for a
-general noncommutative additive group. -/
+the coefficients have to be commutative groups carrying a distributive scalar action. Commutativity
+is necessary because `d0` and `d1` are additive homomorphisms; their formulas are not additive for
+a general noncommutative additive group. -/
 
 variable {G : Type uG} {H : Type uH} {M : Type uM} {N : Type uN}
   [Monoid G] [Monoid H] [AddCommGroup M] [AddCommGroup N]
-  [DistribMulAction G M] [DistribMulAction H N]
+  [DistribSMul G M] [DistribSMul H N]
 
 /-- The degree-zero differential is natural in compatible pairs. -/
 theorem cochainsMap1_d0 (φ : H →* G) (f : M →+ N)
@@ -143,10 +145,20 @@ theorem cochainsMap2_d1 (φ : H →* G) (f : M →+ N)
   simp only [cochainsMap2_apply, d1_apply, map_add, map_sub, hequiv, cochainsMap1_apply,
     map_mul]
 
+/-- A compatible pair sends degree-one coboundaries to degree-one coboundaries. -/
+theorem cochainsMap1_mem_B1 (φ : H →* G) (f : M →+ N)
+    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
+    {c : G → M} (hc : c ∈ B1 G M) :
+    cochainsMap1 φ f c ∈ B1 H N := by
+  obtain ⟨m, hm⟩ := mem_B1_iff.1 hc
+  refine mem_B1_iff.2 ⟨f m, fun h => ?_⟩
+  rw [cochainsMap1_apply, ← hm (φ h), map_sub, hequiv]
+
 end Naturality
 
-/-- Compatible coefficient maps remain compatible after composition. -/
-theorem compatiblePair_comp
+/-- Compatible coefficient maps remain compatible after composition: this is the compatibility
+hypothesis of the composite pair `(φ.comp ψ, q.comp f)`. -/
+theorem comp_apply_smul
     {G : Type uG} {H : Type uH} {K : Type uK}
     [Monoid G] [Monoid H] [Monoid K]
     {M : Type uM} {N : Type uN} {P : Type uP}
@@ -155,12 +167,8 @@ theorem compatiblePair_comp
     (φ : H →* G) (ψ : K →* H) (f : M →+ N) (q : N →+ P)
     (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
     (hq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) (k : K) (m : M) :
-    (q.comp f) (φ (ψ k) • m) = k • (q.comp f) m := by
-  calc
-    (q.comp f) (φ (ψ k) • m) = q (f (φ (ψ k) • m)) := rfl
-    _ = q (ψ k • f m) := by rw [hf]
-    _ = k • q (f m) := hq k (f m)
-    _ = k • (q.comp f) m := rfl
+    (q.comp f) ((φ.comp ψ) k • m) = k • (q.comp f) m := by
+  simp only [MonoidHom.comp_apply, AddMonoidHom.comp_apply, hf, hq]
 
 section Cocycles
 
@@ -172,57 +180,49 @@ variable (G : Type uG) [Monoid G] [TopologicalSpace G]
   [DistribMulAction H N]
 
 /-- A compatible pair sends continuous degree-one cocycles to continuous degree-one cocycles. -/
+theorem cochainsMap1_mem_Z1 (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
+    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) {c : G → M} (hc : c ∈ Z1 G M) :
+    cochainsMap1 (φ : H →* G) f c ∈ Z1 H N := by
+  refine mem_Z1_iff.2 ⟨continuous_cochainsMap1 φ f hf (mem_Z1_iff.1 hc).1,
+    d1_apply_eq_zero_iff.1 ?_⟩
+  rw [← cochainsMap2_d1 (φ : H →* G) f hequiv, d1_apply_eq_zero_iff.2 (mem_Z1_iff.1 hc).2,
+    map_zero]
+
+/-- The pullback of continuous degree-one cocycles along a compatible pair, sending a cocycle `c`
+to `h ↦ f (c (φ h))`. -/
 def cocyclesMap1 (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) : Z1 G M →+ Z1 H N :=
   AddMonoidHom.codRestrict ((cochainsMap1 (φ : H →* G) f).domRestrict (Z1 G M))
-      (Z1 H N) fun c => by
-    refine mem_Z1_iff.2 ⟨continuous_cochainsMap1 φ f hf (mem_Z1_iff.1 c.property).1,
-      d1_apply_eq_zero_iff.1 ?_⟩
-    rw [AddMonoidHom.domRestrict_apply, ← cochainsMap2_d1 (φ : H →* G) f hequiv,
-      d1_apply_eq_zero_iff.2 (mem_Z1_iff.1 c.property).2, map_zero]
+    (Z1 H N) fun c => cochainsMap1_mem_Z1 G M H N φ f hf hequiv c.property
 
+/-- The underlying cochain of `cocyclesMap1` is the degree-one cochain pullback. -/
 @[simp]
+theorem cocyclesMap1_coe (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
+    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (c : Z1 G M) :
+    (cocyclesMap1 G M H N φ f hf hequiv c : H → N) = cochainsMap1 (φ : H →* G) f c := by
+  ext h
+  rfl
+
+/-- The defining formula for the degree-one cocycle pullback, the pointwise form of
+`cocyclesMap1_coe`. -/
 theorem cocyclesMap1_apply (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (c : Z1 G M) (h : H) :
     (cocyclesMap1 G M H N φ f hf hequiv c : H → N) h =
       f ((c : G → M) (φ h)) :=
   by rfl
 
-omit [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [TopologicalSpace N] [IsTopologicalAddGroup N] in
-/-- A compatible pair sends degree-one coboundaries to degree-one coboundaries. -/
-theorem cochainsMap1_mem_B1 (φ : H →ₜ* G) (f : M →+ N)
-    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
-    {c : G → M} (hc : c ∈ B1 G M) :
-    cochainsMap1 (φ : H →* G) f c ∈ B1 H N := by
-  obtain ⟨m, hm⟩ := mem_B1_iff.1 hc
-  have hd0 : d0 G M m = c := funext fun g => (d0_apply m g).trans (hm g)
-  rw [← hd0, cochainsMap1_d0 (φ : H →* G) f hequiv]
-  exact mem_B1_iff.2 ⟨f m, fun h => (d0_apply (f m) h).symm⟩
-
-/-- The map on continuous cocycles sends the quotient subgroup of coboundaries into the target
-quotient subgroup. -/
-private theorem cocyclesMap1_mem_addSubgroupOf (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
-    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) {c : Z1 G M}
-    (hc : c ∈ (B1 G M).addSubgroupOf (Z1 G M)) :
-    cocyclesMap1 G M H N φ f hf hequiv c ∈ (B1 H N).addSubgroupOf (Z1 H N) := by
-  rw [AddSubgroup.mem_addSubgroupOf] at hc ⊢
-  exact cochainsMap1_mem_B1 G M H N φ f hequiv hc
-
 /-- Pullback of continuous cocycles along the identity compatible pair is the identity. -/
 @[simp]
-theorem cocyclesMap1_id :
-    cocyclesMap1 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id
-        (fun g m => by simp) =
+theorem cocyclesMap1_id (hid : ∀ (g : G) (m : M),
+    (AddMonoidHom.id M) ((ContinuousMonoidHom.id G) g • m) = g • (AddMonoidHom.id M) m) :
+    cocyclesMap1 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id hid =
       AddMonoidHom.id _ := by
   ext c g
-  have h := congr_fun
-    (DFunLike.congr_fun (cochainsMap1_id (G := G) (M := M)) (c : G → M)) g
-  simp only [cocyclesMap1_apply, cochainsMap1_apply, ContinuousMonoidHom.coe_id, id_eq,
-    AddMonoidHom.id_apply] at h ⊢
+  simp only [cocyclesMap1_apply, ContinuousMonoidHom.coe_id, id_eq, AddMonoidHom.id_apply]
 
 /-- Pullback of continuous cocycles along a composite compatible pair is the composite of the
-pullbacks, in the reverse order. -/
+pullbacks: it is contravariant in the group homomorphism and covariant in the coefficient map.
+The compatibility hypothesis `hcomp` of the composite pair is supplied by `comp_apply_smul`. -/
 theorem cocyclesMap1_comp
     (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
@@ -230,21 +230,14 @@ theorem cocyclesMap1_comp
     (P : Type uP) [AddCommGroup P] [TopologicalSpace P] [IsTopologicalAddGroup P]
     [DistribMulAction K P]
     (ψ : K →ₜ* H) (q : N →+ P) (hq : Continuous q)
-    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) :
-    cocyclesMap1 G M K P (φ.comp ψ) (q.comp f) (hq.comp hf)
-        (show ∀ (k : K) (m : M), (q.comp f) ((φ.comp ψ) k • m) = k • (q.comp f) m from
-          fun k m => by
-            -- Expose the underlying monoid homomorphisms for the algebraic compatibility lemma.
-            change (q.comp f) ((φ : H →* G) ((ψ : K →* H) k) • m) = _
-            exact compatiblePair_comp (φ : H →* G) (ψ : K →* H) f q hequiv hequivq k m) =
+    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n)
+    (hcomp : ∀ (k : K) (m : M), (q.comp f) ((φ.comp ψ) k • m) = k • (q.comp f) m) :
+    cocyclesMap1 G M K P (φ.comp ψ) (q.comp f) (hq.comp hf) hcomp =
       (cocyclesMap1 H N K P ψ q hq hequivq).comp
         (cocyclesMap1 G M H N φ f hf hequiv) := by
   ext c k
-  have h := congr_fun
-    (DFunLike.congr_fun
-      (cochainsMap1_comp (φ : H →* G) (ψ : K →* H) f q) (c : G → M)) k
-  simp only [cocyclesMap1_apply, cochainsMap1_apply, AddMonoidHom.comp_apply,
-    ContinuousMonoidHom.coe_comp, MonoidHom.coe_comp, Function.comp_apply] at h ⊢
+  simp only [cocyclesMap1_apply, AddMonoidHom.comp_apply, ContinuousMonoidHom.coe_comp,
+    Function.comp_apply]
 
 end Cocycles
 
@@ -262,7 +255,7 @@ noncomputable def explicitMap1 (φ : H →ₜ* G) (f : M →+ N) (hf : Continuou
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) : H1 G M →+ H1 H N :=
   QuotientAddGroup.map ((B1 G M).addSubgroupOf (Z1 G M))
     ((B1 H N).addSubgroupOf (Z1 H N)) (cocyclesMap1 G M H N φ f hf hequiv)
-    fun _ hc => cocyclesMap1_mem_addSubgroupOf G M H N φ f hf hequiv hc
+    fun _ hc => cochainsMap1_mem_B1 (φ : H →* G) f hequiv hc
 
 /-- `explicitMap1` sends the class of a cocycle to the class of its pullback. -/
 @[simp]
@@ -274,9 +267,9 @@ theorem explicitMap1_mk (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
 
 /-- Pullback by the identity compatible pair is the identity on explicit `H¹`. -/
 @[simp]
-theorem explicitMap1_id :
-    explicitMap1 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id
-        (fun g m => by simp) =
+theorem explicitMap1_id (hid : ∀ (g : G) (m : M),
+    (AddMonoidHom.id M) ((ContinuousMonoidHom.id G) g • m) = g • (AddMonoidHom.id M) m) :
+    explicitMap1 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id hid =
       AddMonoidHom.id _ := by
   apply AddMonoidHom.ext
   intro x
@@ -284,9 +277,11 @@ theorem explicitMap1_id :
   | _ c =>
       rw [explicitMap1_mk, AddMonoidHom.id_apply]
       exact congrArg (fun z : Z1 G M => (z : H1 G M))
-        (DFunLike.congr_fun (cocyclesMap1_id G M) c)
+        (DFunLike.congr_fun (cocyclesMap1_id G M hid) c)
 
-/-- Pullback on explicit `H¹` respects composition of compatible pairs. -/
+/-- Pullback on explicit `H¹` respects composition of compatible pairs: it is contravariant in the
+group homomorphism and covariant in the coefficient map. The compatibility hypothesis `hcomp` of
+the composite pair is supplied by `comp_apply_smul`. -/
 theorem explicitMap1_comp
     (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
     (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
@@ -294,13 +289,9 @@ theorem explicitMap1_comp
     (P : Type uP) [AddCommGroup P] [TopologicalSpace P] [IsTopologicalAddGroup P]
     [DistribMulAction K P] [ContinuousSMul K P]
     (ψ : K →ₜ* H) (q : N →+ P) (hq : Continuous q)
-    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) :
-    explicitMap1 G M K P (φ.comp ψ) (q.comp f) (hq.comp hf)
-        (show ∀ (k : K) (m : M), (q.comp f) ((φ.comp ψ) k • m) = k • (q.comp f) m from
-          fun k m => by
-            -- Expose the underlying monoid homomorphisms for the algebraic compatibility lemma.
-            change (q.comp f) ((φ : H →* G) ((ψ : K →* H) k) • m) = _
-            exact compatiblePair_comp (φ : H →* G) (ψ : K →* H) f q hequiv hequivq k m) =
+    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n)
+    (hcomp : ∀ (k : K) (m : M), (q.comp f) ((φ.comp ψ) k • m) = k • (q.comp f) m) :
+    explicitMap1 G M K P (φ.comp ψ) (q.comp f) (hq.comp hf) hcomp =
       (explicitMap1 H N K P ψ q hq hequivq).comp
         (explicitMap1 G M H N φ f hf hequiv) := by
   apply AddMonoidHom.ext
@@ -310,7 +301,7 @@ theorem explicitMap1_comp
       rw [explicitMap1_mk, AddMonoidHom.comp_apply, explicitMap1_mk, explicitMap1_mk]
       exact congrArg (fun z : Z1 K P => (z : H1 K P))
         (DFunLike.congr_fun
-          (cocyclesMap1_comp G M H N φ f hf hequiv K P ψ q hq hequivq) c)
+          (cocyclesMap1_comp G M H N φ f hf hequiv K P ψ q hq hequivq hcomp) c)
 
 end Cohomology
 
