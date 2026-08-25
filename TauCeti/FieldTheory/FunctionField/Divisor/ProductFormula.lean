@@ -114,7 +114,7 @@ theorem Divisor.card_mul_succ_le_dim_nsmul_poles_add (hF : IsFunctionField k F) 
       rw [Units.val_mul, Units.val_pow_eq_pow_val, hxu]
     rw [← hval]
     exact (mem_riemannRochSpace_units_iff hF).mpr hnonneg
-  have hfam := TauCeti.Transcendental.linearIndependent_mul_pow_fin hx hc (l + 1)
+  have hfam := Transcendental.linearIndependent_mul_pow_fin hx hc (l + 1)
   have hv : LinearIndependent k fun p : ι × Fin (l + 1) ↦
       (⟨(c p.1 : F) * x ^ (p.2 : ℕ), hmem p⟩ :
         riemannRochSpace (l • Divisor.poles hF xu + C)) := by

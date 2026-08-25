@@ -15,7 +15,7 @@ The powers of a transcendental element of an algebra are linearly independent ov
 
 ## Main results
 
-* `TauCeti.Transcendental.linearIndependent_pow`: the powers of a transcendental element are
+* `Transcendental.linearIndependent_pow`: the powers of a transcendental element are
   linearly independent over the base ring.
 -/
 
@@ -27,7 +27,7 @@ variable {R A : Type*} [CommRing R] [Ring A] [Algebra R A]
 
 /-- **The powers of a transcendental element are linearly independent** over the base ring: they
 are the images of the monomial basis of `R[X]` under the injective evaluation map at `x`. -/
-theorem Transcendental.linearIndependent_pow {x : A} (hx : Transcendental R x) :
+theorem _root_.Transcendental.linearIndependent_pow {x : A} (hx : Transcendental R x) :
     LinearIndependent R fun n : ℕ ↦ x ^ n := by
   have h := (Polynomial.basisMonomials R).linearIndependent.map'
     (Polynomial.aeval x).toLinearMap

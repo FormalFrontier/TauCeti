@@ -23,9 +23,9 @@ functions that are independent over `k` and whose poles are controlled by those 
 
 ## Main results
 
-* `TauCeti.Transcendental.linearIndependent_mul_pow`: a `k⟮x⟯`-linearly independent family in
+* `Transcendental.linearIndependent_mul_pow`: a `k⟮x⟯`-linearly independent family in
   `F`, multiplied by the powers of a transcendental `x`, is `k`-linearly independent.
-* `TauCeti.Transcendental.linearIndependent_mul_pow_fin`: the finite-power restriction used in
+* `Transcendental.linearIndependent_mul_pow_fin`: the finite-power restriction used in
   dimension estimates.
 -/
 
@@ -40,7 +40,7 @@ variable {k F : Type*} [Field k] [Field F] [Algebra k F] {x : F}
 /-- **The growth family**: multiplying a `k⟮x⟯`-linearly independent family by the powers of a
 transcendental element `x` yields a `k`-linearly independent family.  This is Mathlib's tower rule
 `linearIndependent_smul`, applied to the powers of `x` inside `k⟮x⟯`. -/
-theorem Transcendental.linearIndependent_mul_pow (hx : _root_.Transcendental k x) {ι : Type*}
+theorem _root_.Transcendental.linearIndependent_mul_pow (hx : _root_.Transcendental k x) {ι : Type*}
     {c : ι → F} (hc : LinearIndependent k⟮x⟯ c) :
     LinearIndependent k fun p : ι × ℕ ↦ c p.1 * x ^ p.2 := by
   have hgen : _root_.Transcendental k (IntermediateField.AdjoinSimple.gen k x) :=
@@ -50,14 +50,14 @@ theorem Transcendental.linearIndependent_mul_pow (hx : _root_.Transcendental k x
     mul_comm] using
     (linearIndependent_equiv' (Equiv.prodComm ι ℕ)
       (g := fun p : ι × ℕ ↦ IntermediateField.AdjoinSimple.gen k x ^ p.2 • c p.1) rfl).mpr
-      (linearIndependent_smul (TauCeti.Transcendental.linearIndependent_pow hgen) hc)
+      (linearIndependent_smul (Transcendental.linearIndependent_pow hgen) hc)
 
 /-- Restrict the growth family to the first `n` powers of `x`. -/
-theorem Transcendental.linearIndependent_mul_pow_fin (hx : _root_.Transcendental k x)
+theorem _root_.Transcendental.linearIndependent_mul_pow_fin (hx : _root_.Transcendental k x)
     {ι : Type*} {c : ι → F}
     (hc : LinearIndependent k⟮x⟯ c) (n : ℕ) :
     LinearIndependent k fun p : ι × Fin n ↦ c p.1 * x ^ (p.2 : ℕ) := by
-  have h := (TauCeti.Transcendental.linearIndependent_mul_pow hx hc).comp
+  have h := (Transcendental.linearIndependent_mul_pow hx hc).comp
     (fun p : ι × Fin n ↦ (p.1, (p.2 : ℕ)))
     (fun p q hpq ↦ by
       simp only [Prod.mk.injEq, Fin.val_inj] at hpq
