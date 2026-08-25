@@ -83,8 +83,9 @@ private theorem exists_one_sided_tangents {γ : ℝ → ℂ} {a b t₀ : ℝ}
 there is a radius `R > 0` and the crossing's nonzero one-sided tangent limits `L_R`, `L_L` of
 `deriv γ` (from the right and left respectively — `hL_tend_R`, `hL_tend_L` pin them down, so a
 caller can compute with the value below rather than treat `L_R`, `L_L` as opaque), such that at
-every window radius `ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the
-truncated window integral of the Cauchy kernel converges to that explicit log-norm-plus-argument
+every window `[l, u] ⊆ [t₀ - R, t₀ + R]` that lies inside `[a, b]` and contains no other crossing,
+the truncated window integral of the Cauchy kernel converges to that explicit
+log-norm-plus-argument
 value (the value `perWindow_truncated_integral_tendsto` supplies), rather than to a merely
 existentially-bound limit. A consumer that only needs existence of the limit (not its value) can
 take the displayed value itself as the existential witness, so no separate existence-only wrapper
@@ -94,12 +95,12 @@ theorem exists_radius_perWindow_tendsto_log_norm_add_arg
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
     ∃ R > 0, ∃ L_R L_L : ℂ, L_R ≠ 0 ∧ L_L ≠ 0 ∧
       Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R) ∧ Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L) ∧
-      ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
-      (∀ t ∈ Icc (t₀ - ρ) (t₀ + ρ), γ t = s → t = t₀) →
-      Tendsto (fun ε : ℝ => ∫ u in (t₀ - ρ)..(t₀ + ρ),
-        if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) (𝓝[>] (0 : ℝ))
-        (𝓝 (((Real.log ‖γ (t₀ + ρ) - s‖ - Real.log ‖γ (t₀ - ρ) - s‖ : ℝ) : ℂ) +
-          ((((-L_L) / (γ (t₀ - ρ) - s)).arg + ((γ (t₀ + ρ) - s) / L_R).arg : ℝ) : ℂ) *
+      ∀ l u : ℝ, t₀ - R ≤ l → l < t₀ → t₀ < u → u ≤ t₀ + R → a < l → u ≤ b →
+      (∀ t ∈ Icc l u, γ t = s → t = t₀) →
+      Tendsto (fun ε : ℝ => ∫ v in l..u,
+        if ‖γ v - s‖ > ε then (γ v - s)⁻¹ * deriv γ v else 0) (𝓝[>] (0 : ℝ))
+        (𝓝 (((Real.log ‖γ u - s‖ - Real.log ‖γ l - s‖ : ℝ) : ℂ) +
+          ((((-L_L) / (γ l - s)).arg + ((γ u - s) / L_R).arg : ℝ) : ℂ) *
             Complex.I)) := by
   obtain ⟨L_R, L_L, hL_R, hL_L, h_tend_R, h_tend_L, h_dR, h_dL⟩ :=
     exists_one_sided_tangents h_imm hab ht₀
@@ -109,8 +110,10 @@ theorem exists_radius_perWindow_tendsto_log_norm_add_arg
   have ht₀' : t₀ ∈ Ioo (min a b) (max a b) := by
     rwa [min_eq_left hab.le, max_eq_right hab.le]
   refine ⟨R, hR_pos, L_R, L_L, hL_R, hL_L, h_tend_R, h_tend_L,
-    fun ρ hρ_pos hρ_le h_lo h_hi h_unique =>
-    perWindow_truncated_integral_tendsto hρ_pos h_at
+    fun l u hRl hlt htu huR h_lo h_hi h_unique => ?_⟩
+  have h_endpoint_R : t₀ + (u - t₀) = u := by ring
+  have h_endpoint_L : t₀ - (t₀ - l) = l := by ring
+  exact perWindow_truncated_integral_tendsto hlt htu h_at
       (h_imm.continuousOn.mono (by
         rw [uIcc_of_le hab.le]
         exact Icc_subset_Icc (by linarith) h_hi))
@@ -122,12 +125,15 @@ theorem exists_radius_perWindow_tendsto_log_norm_add_arg
         rw [min_eq_left hab.le, max_eq_right hab.le]
         exact ⟨by linarith [ht.1.1], by linarith [ht.1.2]⟩, ht.2⟩)
       (h_imm.isPiecewiseC1On.intervalIntegrable_deriv.mono_set (by
-        rw [uIcc_of_le (by linarith : t₀ - ρ ≤ t₀ + ρ), uIcc_of_le hab.le]
+        rw [uIcc_of_le (hlt.le.trans htu.le), uIcc_of_le hab.le]
         exact Icc_subset_Icc (by linarith) h_hi))
       h_unique
-      (fun a' b' h1 h2 h3 => hc_R a' b' h1 h2 (h3.trans (by linarith)))
-      (fun b' h1 h2 => hc_L (t₀ - ρ) b' (by linarith) h1 h2)
-      (hc_plus ρ hρ_pos hρ_le) (hc_minus ρ hρ_pos hρ_le)⟩
+      (fun a' b' h1 h2 h3 => hc_R a' b' h1 h2 (h3.trans huR))
+      (fun b' h1 h2 => hc_L l b' hRl h1 h2)
+      (by simpa only [h_endpoint_R] using
+        hc_plus (u - t₀) (sub_pos.mpr htu) (by linarith))
+      (by simpa only [h_endpoint_L] using
+        hc_minus (t₀ - l) (sub_pos.mpr hlt) (by linarith))
 
 /-- **Existence of the Cauchy-kernel principal value along a piecewise-`C¹` immersion**: if
 every parameter of `[a, b]` where `γ` meets `s` is interior, the single-point Cauchy principal
@@ -165,8 +171,10 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
     (fun t ht => by linarith [(h_endpts t ht).2])
     (fun t ht t' ht' hne => (h_pair t ht t' ht' hne).le)
     h_int_tr
-    (fun t₀ ht₀ => ⟨_, h_spec t₀ ht₀ ρ hρ_pos (hρ_le_R t₀ ht₀)
-      (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
+    (fun t₀ ht₀ => ⟨_, h_spec t₀ ht₀ (t₀ - ρ) (t₀ + ρ)
+      (by linarith [hρ_le_R t₀ ht₀]) (by linarith [hρ_pos]) (by linarith [hρ_pos])
+      (by linarith [hρ_le_R t₀ ht₀]) (by linarith [(h_endpts t₀ ht₀).1])
+      (by linarith [(h_endpts t₀ ht₀).2])
       fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
         (h_pair t₀ ht₀) h_complete ht h_eq⟩)
     (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
