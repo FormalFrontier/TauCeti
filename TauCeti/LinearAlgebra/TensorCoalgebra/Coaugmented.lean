@@ -184,8 +184,9 @@ theorem counit_comp_algebraMap :
 /-- The counit retracts the coaugmentation on every scalar. -/
 @[simp]
 theorem counit_algebraMap (r : R) :
-    counit R M (Algebra.linearMap R (TensorWords R M) r) = r := by
-  rw [← LinearMap.comp_apply, counit_comp_algebraMap, LinearMap.id_apply]
+    counit R M (algebraMap R (TensorWords R M) r) = r := by
+  rw [← Algebra.linearMap_apply, ← LinearMap.comp_apply, counit_comp_algebraMap,
+    LinearMap.id_apply]
 
 /-- The empty word has counit one. -/
 @[simp]
@@ -555,10 +556,11 @@ theorem reducedInclusion_comp_reducedProjection_add_algebraMap_comp_counit :
 @[simp]
 theorem reducedInclusion_reducedProjection_add_algebraMap_counit (w : TensorWords R M) :
     reducedInclusion R M (reducedProjection R M w) +
-        Algebra.linearMap R (TensorWords R M) (counit R M w) = w := by
+        algebraMap R (TensorWords R M) (counit R M w) = w := by
   have h := LinearMap.congr_fun
     (reducedInclusion_comp_reducedProjection_add_algebraMap_comp_counit R M) w
-  simpa only [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.id_apply] using h
+  simpa only [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.id_apply,
+    Algebra.linearMap_apply] using h
 
 /-- The kernel of the counit is exactly the image of the positive-length words under
 `TauCeti.TensorWords.reducedInclusion`. -/
