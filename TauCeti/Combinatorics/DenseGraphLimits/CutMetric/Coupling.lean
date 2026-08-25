@@ -42,6 +42,8 @@ hypotheses at all.
 * `overlayDiff_apply`, `abs_overlayDiff_apply_le_one` — the eliminator and the `[-1, 1]` bound;
 * `overlayDiff_swap` — swapping the two graphons negates the overlaid difference, up to the pullback
   along `Prod.swap`, for *any* two measures on the two products;
+* `comap_overlayDiff_prodMk` — pulling back along a pair of maps gives the difference of the two
+  kernel pullbacks;
 * `comap_overlayDiff_diagonalCoupling` — on a common carrier the overlaid difference along the
   diagonal coupling pulls back along the diagonal to the plain difference `U - W`.
 
@@ -120,18 +122,31 @@ theorem overlayDiff_swap (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (π
   ext p q
   simp
 
+/-- Pulling an overlaid difference back along `x ↦ (f x, g x)` gives the difference of the two
+pulled-back kernels. -/
+theorem comap_overlayDiff_prodMk {Ω : Type*} [MeasurableSpace Ω] (U : Graphon Ω₁ μ₁)
+    (W : Graphon Ω₂ μ₂) (π : Measure (Ω₁ × Ω₂)) {f : Ω → Ω₁} {g : Ω → Ω₂}
+    (hf : Measurable f) (hg : Measurable g) (ν : Measure Ω) :
+    (overlayDiff U W π).comap (fun x => (f x, g x)) (hf.prodMk hg) ν =
+      U.toSymmKernel.comap f hf ν - W.toSymmKernel.comap g hg ν := by
+  ext x y
+  simp
+
 /-- On a common carrier, the overlaid difference of `U` and `W` along the diagonal coupling pulls
 back along the diagonal `x ↦ (x, x)` to their plain difference as kernels.
 
 `TauCeti.MeasureTheory.diagonalCoupling μ` is the pushforward of `μ` along that same diagonal, and
 by `TauCeti.MeasureTheory.isCoupling_diagonalCoupling` it is one of the couplings the cross-carrier
 cut distance takes an infimum over. This identity computes the kernel it contributes; recognizing
-the resulting value as the same-carrier cut norm `‖U - W‖□` additionally needs the cut norm's
-change of variables along a pushforward, which is not part of this file. -/
+the resulting value as the same-carrier cut norm `‖U - W‖□` additionally needs the invariance of
+the cut norm under measure-preserving pullback, and is `cutNorm_overlayDiff_diagonalCoupling` in
+`TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Distance`. -/
 theorem comap_overlayDiff_diagonalCoupling {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     [IsProbabilityMeasure μ] (U W : Graphon Ω μ) :
     (overlayDiff U W (TauCeti.MeasureTheory.diagonalCoupling μ)).comap (fun x => (x, x))
         (measurable_id'.prodMk measurable_id') μ = U.toSymmKernel - W.toSymmKernel := by
+  rw [comap_overlayDiff_prodMk U W (TauCeti.MeasureTheory.diagonalCoupling μ)
+    measurable_id' measurable_id' μ]
   ext x y
   simp
 

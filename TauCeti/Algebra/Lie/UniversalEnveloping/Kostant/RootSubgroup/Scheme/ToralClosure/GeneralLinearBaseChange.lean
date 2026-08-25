@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.CoordinateBaseChange
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Torus
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.BaseChange
 
 /-!
