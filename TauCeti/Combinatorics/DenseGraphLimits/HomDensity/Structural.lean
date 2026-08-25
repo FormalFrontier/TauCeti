@@ -38,8 +38,7 @@ components.
 * `TauCeti.DenseGraphLimits.homDensity_sum` — `t(F₁ ⊕g F₂, W) = t(F₁, W) · t(F₂, W)`;
 * `TauCeti.DenseGraphLimits.homDensity_eq_mul_of_iso_sum` — the same for any graph *isomorphic* to a
   disjoint sum, which is the form a graph parameter indexed by `Fin`-representatives asks for;
-* `TauCeti.DenseGraphLimits.homDensity_sum_bot` — adjoining isolated vertices changes nothing;
-* `TauCeti.DenseGraphLimits.homDensity_const_sum` — the Erdős–Rényi cross-check on multiplicativity.
+* `TauCeti.DenseGraphLimits.homDensity_sum_bot` — adjoining isolated vertices changes nothing.
 
 ## References
 
@@ -95,7 +94,12 @@ theorem homDensity_congr_iso (φ : F₁ ≃g F₂) (W : Graphon Ω μ) :
   rw [homDensity_def, homDensity_def,
     ← hmp.integral_comp' fun y : V₂ → Ω => ∏ d ∈ F₂.edgeFinset, edgeFactor W y d]
   refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
-  change ∏ d ∈ F₂.edgeFinset, edgeFactor W (x ∘ ⇑φ.toEquiv.symm) d = _
+  have harrow :
+      (MeasurableEquiv.arrowCongr' φ.toEquiv (MeasurableEquiv.refl Ω)) x
+        = x ∘ ⇑φ.toEquiv.symm := by
+    funext v
+    exact Equiv.arrowCongr'_apply φ.toEquiv (Equiv.refl Ω) x v
+  simp only [harrow]
   rw [prod_edgeFinset_iso φ]
   have hcomp : (x ∘ ⇑φ.toEquiv.symm) ∘ ⇑φ = x := by
     funext v
@@ -108,6 +112,7 @@ An assignment of vertices of the disjoint sum is a *pair* of assignments, one fo
 the product measure on the sum of the index types is the product of the two product measures; the
 edges of the sum likewise split, so the integrand is a product of a function of the first
 assignment and a function of the second, and Fubini separates the two integrals. -/
+@[simp]
 theorem homDensity_sum (W : Graphon Ω μ) :
     homDensity (F₁ ⊕g F₂) W = homDensity F₁ W * homDensity F₂ W := by
   have hmp : MeasurePreserving (MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm
@@ -120,8 +125,20 @@ theorem homDensity_sum (W : Graphon Ω μ) :
         = (∏ c ∈ F₁.edgeFinset, edgeFactor W p.1 c)
           * ∏ c ∈ F₂.edgeFinset, edgeFactor W p.2 c := by
     intro p
+    have hleft :
+        ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p) ∘ Sum.inl = p.1 := by
+      funext v
+      rw [Function.comp_apply, MeasurableEquiv.coe_sumPiEquivProdPi_symm,
+        Equiv.sumPiEquivProdPi_symm_apply]
+    have hright :
+        ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p) ∘ Sum.inr = p.2 := by
+      funext v
+      rw [Function.comp_apply, MeasurableEquiv.coe_sumPiEquivProdPi_symm,
+        Equiv.sumPiEquivProdPi_symm_apply]
     rw [prod_edgeFinset_sum]
-    congr 1 <;> exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map]; rfl
+    congr 1
+    · exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hleft]
+    · exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hright]
   rw [homDensity_def, ← hmp.integral_comp' fun z : (V₁ ⊕ V₂) → Ω =>
       ∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d]
   simp_rw [hsplit]
@@ -136,15 +153,6 @@ theorem homDensity_eq_mul_of_iso_sum {V : Type*} [Fintype V] {F : SimpleGraph V}
     [DecidableRel F.Adj] (φ : F ≃g F₁ ⊕g F₂) (W : Graphon Ω μ) :
     homDensity F W = homDensity F₁ W * homDensity F₂ W := by
   rw [← homDensity_congr_iso φ, homDensity_sum]
-
-/-- The Erdős–Rényi density of a disjoint sum, computed from the edge count alone rather than from
-multiplicativity.  Comparing it with `TauCeti.DenseGraphLimits.homDensity_sum` is a check on both:
-for `0 < p < 1` the identity `p ^ e(F₁ ⊕g F₂) = p ^ e(F₁) * p ^ e(F₂)` holds exactly because a
-disjoint sum has as many edges as its two summands together. -/
-theorem homDensity_const_sum (p : I) :
-    homDensity (F₁ ⊕g F₂) (Graphon.const μ p)
-      = (p : ℝ) ^ F₁.edgeFinset.card * (p : ℝ) ^ F₂.edgeFinset.card := by
-  rw [homDensity_const, card_edgeFinset_sum, pow_add]
 
 /-- **The added-vertex telescope.** Adjoining isolated vertices leaves a density unchanged — the
 combination of multiplicativity with normalization that a level-by-level count of labelled graphs

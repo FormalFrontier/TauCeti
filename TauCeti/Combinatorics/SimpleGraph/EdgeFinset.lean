@@ -12,8 +12,8 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 /-!
 # Edges of a graph under an isomorphism and under a disjoint sum
 
-Two ways of moving a finite product indexed by the edges of a graph, both stated so that the
-statement itself carries no decidability side conditions:
+Two ways of moving a finite product indexed by the edges of a graph, with the required decidability
+conditions supplied as implicit typeclass parameters:
 
 * along a graph isomorphism `φ : G ≃g H`, where `Sym2.map φ` matches the edges of `G` with those
   of `H`;
@@ -86,10 +86,13 @@ theorem disjoint_edgeFinset_sum :
       simp at h₁
 
 /-- The `Finset` form of `TauCeti.edgeSet_sum`. -/
-theorem edgeFinset_sum [DecidableEq V] [DecidableEq W] (G : SimpleGraph V) (H : SimpleGraph W)
-    [DecidableRel G.Adj] [DecidableRel H.Adj] :
-    (G ⊕g H).edgeFinset = G.edgeFinset.map (Function.Embedding.inl).sym2Map
-      ∪ H.edgeFinset.map (Function.Embedding.inr).sym2Map := by
+theorem edgeFinset_sum (G : SimpleGraph V) (H : SimpleGraph W) [DecidableRel G.Adj]
+    [DecidableRel H.Adj] :
+    (G ⊕g H).edgeFinset = by
+      classical
+      exact G.edgeFinset.map (Function.Embedding.inl).sym2Map
+        ∪ H.edgeFinset.map (Function.Embedding.inr).sym2Map := by
+  classical
   rw [← Finset.coe_inj]
   push_cast
   exact edgeSet_sum G H

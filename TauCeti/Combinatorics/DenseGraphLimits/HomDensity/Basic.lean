@@ -116,6 +116,7 @@ theorem edgeFactor_congr (W : Graphon Ω μ) {x y : V → Ω} {e : Sym2 V}
 omit [Fintype V] in
 /-- Reading an edge after pushing it forward along a map of vertex sets is reading the original
 edge in the pulled-back assignment. -/
+@[simp]
 theorem edgeFactor_map {V' : Type*} (W : Graphon Ω μ) (f : V → V') (x : V' → Ω) (e : Sym2 V) :
     edgeFactor W x (Sym2.map f e) = edgeFactor W (x ∘ f) e := by
   induction e using Sym2.ind with | _ a b => simp
