@@ -6,12 +6,13 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Constructions.BorelSpace.Metric
+public import Mathlib.Topology.UniformSpace.Cauchy
 
 /-!
 # Measurable discretization of compact pseudometric spaces
 
-This file provides a finite measurable approximation of a compact pseudometric space equipped with
-its Borel measurable structure.
+This file provides a finite measurable approximation of a compact pseudometric space whose open
+sets are measurable.
 
 ## Main statements
 
@@ -32,17 +33,20 @@ universe u
 /-- A compact pseudometric space admits, up to any positive error, an indexed finite family of
 approximation points and a measurable map assigning every point to a nearby one. -/
 theorem exists_measurable_dist_lt (X : Type u) [PseudoMetricSpace X] [CompactSpace X]
-    [MeasurableSpace X] [BorelSpace X] {δ : ℝ} (hδ : 0 < δ) :
+    [MeasurableSpace X] [OpensMeasurableSpace X] {δ : ℝ} (hδ : 0 < δ) :
     ∃ (n : ℕ) (v : Fin n → X) (q : X → Fin n), Measurable q ∧ ∀ x, dist x (v (q x)) < δ := by
   classical
-  obtain ⟨t, ht⟩ := isCompact_univ.elim_finite_subcover (fun z : X ↦ Metric.ball z δ)
-    (fun _ ↦ Metric.isOpen_ball) fun x _ ↦ Set.mem_iUnion.2 ⟨x, Metric.mem_ball_self hδ⟩
+  obtain ⟨s, -, hs, hcover⟩ :=
+    Metric.finite_approx_of_totallyBounded (s := (Set.univ : Set X))
+      isCompact_univ.totallyBounded δ hδ
+  let t := hs.toFinset
   set n := t.card
   set v : Fin n → X := fun i ↦ (t.equivFin.symm i : X) with hv
   have hcover : ∀ x : X, ∃ i : Fin n, dist x (v i) < δ := by
     intro x
-    obtain ⟨z, hz, hxz⟩ := Set.mem_iUnion₂.1 (ht (Set.mem_univ x))
-    exact ⟨t.equivFin ⟨z, hz⟩, by simpa [hv] using hxz⟩
+    obtain ⟨z, hz, hxz⟩ := Set.mem_iUnion₂.1 (hcover (Set.mem_univ x))
+    have hzt : z ∈ t := by simpa [t] using hz
+    exact ⟨t.equivFin ⟨z, hzt⟩, by simpa [hv] using hxz⟩
   set S : X → Finset (Fin n) := fun x ↦ {i | dist x (v i) < δ} with hS
   have hSne : ∀ x, (S x).Nonempty := fun x ↦ by
     obtain ⟨i, hi⟩ := hcover x

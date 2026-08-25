@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Probability.ConditionalProbability
-public import Mathlib.Topology.UniformSpace.HeineCantor
 public import TauCeti.MeasureTheory.MeasurableSpace.Metric
 public import TauCeti.MeasureTheory.OptimalTransport.CTransform
 public import TauCeti.MeasureTheory.OptimalTransport.Finite.Duality
@@ -36,11 +35,12 @@ from below. Both estimates lose only a multiple of the modulus of continuity, so
 refine closes the duality gap.
 
 Two auxiliary results are of independent interest.
-`TauCeti.exists_continuous_forall_add_le` replaces a feasible pair whose first potential is
-*bounded* by a *continuous* one that dominates it pointwise: applying the infimal `c`-transform
-twice inherits the modulus of continuity of the cost. This is what upgrades the step-function
-potentials produced by the finite problem to the continuous potentials the theorem advertises,
-and it is also why the bounded-continuous and the integrable dual classes have the same supremum.
+`TauCeti.exists_continuous_forall_add_le_and_le_and_le` replaces a feasible pair whose first
+potential is *bounded* by a *continuous* one that dominates it pointwise: applying the infimal
+`c`-transform twice inherits the modulus of continuity of the cost. This is what upgrades the
+step-function potentials produced by the finite problem to the continuous potentials the theorem
+advertises, and it is also why the bounded-continuous and the integrable dual classes have the same
+supremum.
 `TauCeti.exists_measurable_dist_lt` records the discretisation of a compact pseudometric space by a
 measurable map to `Fin n`.
 
@@ -58,8 +58,8 @@ additive normalisation of the cost and of the potentials.
 
 ## Main statements
 
-* `TauCeti.exists_continuous_forall_add_le` — a feasible pair whose first potential is bounded is
-  dominated by a continuous feasible pair;
+* `TauCeti.exists_continuous_forall_add_le_and_le_and_le` — a feasible pair whose first potential
+  is bounded is dominated by a continuous feasible pair;
 * `TauCeti.exists_continuous_forall_add_le_transportCost_le` — the approximate duality: for every
   `ε > 0` there is a continuous feasible pair whose value is within `ε` of the primal value;
 * `TauCeti.isLUB_kantorovichDualValue_continuous` — **strong Kantorovich duality**: the primal
@@ -105,7 +105,7 @@ variable [CompactSpace X] [CompactSpace Y] [Nonempty X] [Nonempty Y]
 feasible pair is bounded, then the pair is dominated pointwise by *continuous* potentials
 satisfying the same Kantorovich constraint. The improved pair is obtained by applying the infimal
 `c`-transform twice, so it inherits the modulus of continuity of the cost. -/
-theorem exists_continuous_forall_add_le (hc : Continuous c) {M : ℝ}
+theorem exists_continuous_forall_add_le_and_le_and_le (hc : Continuous c) {M : ℝ}
     (hφM : ∀ x, |φ x| ≤ M) (hfeas : ∀ x y, φ x + ψ y ≤ c (x, y)) :
     ∃ φ' ψ', Continuous φ' ∧ Continuous ψ' ∧ (∀ x y, φ' x + ψ' y ≤ c (x, y)) ∧
       (∀ x, φ x ≤ φ' x) ∧ ∀ y, ψ y ≤ ψ' y := by
@@ -318,15 +318,9 @@ end Finiteness
 
 section Duality
 
-variable [PseudoMetricSpace X] [CompactSpace X] [MeasurableSpace X] [BorelSpace X]
-  [PseudoMetricSpace Y] [CompactSpace Y] [MeasurableSpace Y] [BorelSpace Y]
+variable [PseudoMetricSpace X] [CompactSpace X] [MeasurableSpace X] [OpensMeasurableSpace X]
+  [PseudoMetricSpace Y] [CompactSpace Y] [MeasurableSpace Y] [OpensMeasurableSpace Y]
   {μ : Measure X} {ν : Measure Y} {c : X × Y → ℝ}
-
-/-- A continuous function on a compact space is integrable against a finite measure: the
-compact-support hypothesis of `Continuous.integrable_of_hasCompactSupport` is automatic here. -/
-private theorem integrable_of_continuous [IsFiniteMeasure μ] {f : X → ℝ} (hf : Continuous f) :
-    Integrable f μ :=
-  hf.integrable_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
 
 /-- **Approximate Kantorovich duality on compact spaces.** For a continuous nonnegative cost on a
 product of compact pseudometric spaces and every `ε > 0` there is a pair of *continuous* potentials
@@ -393,8 +387,8 @@ theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure �
   have hFinX : Nonempty (Fin n) := ⟨qX (Classical.arbitrary X)⟩
   obtain ⟨i₀, hi₀⟩ := Finite.exists_max (fun i : Fin n ↦ |a i|)
   obtain ⟨φ, ψ, hφc, hψc, hfeas', hφle, hψle⟩ :=
-    exists_continuous_forall_add_le (c := c) (φ := fun x ↦ a (qX x)) (ψ := fun y ↦ b (qY y))
-      hc (M := |a i₀|) (fun x ↦ hi₀ (qX x)) hstepfeas
+    exists_continuous_forall_add_le_and_le_and_le (c := c) (φ := fun x ↦ a (qX x))
+      (ψ := fun y ↦ b (qY y)) hc (M := |a i₀|) (fun x ↦ hi₀ (qX x)) hstepfeas
   refine ⟨φ, ψ, hφc, hψc, hfeas', hlift.trans (ENNReal.ofReal_le_ofReal ?_)⟩
   have hint : kantorovichDualValue μ ν (fun x ↦ a (qX x)) (fun y ↦ b (qY y))
       = finiteDualValue pμ pν a b := by
@@ -404,15 +398,18 @@ theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure �
   have hmono : kantorovichDualValue μ ν (fun x ↦ a (qX x)) (fun y ↦ b (qY y))
       ≤ kantorovichDualValue μ ν φ ψ := by
     rw [kantorovichDualValue_def, kantorovichDualValue_def]
-    refine add_le_add (integral_mono ?_ (integrable_of_continuous hφc) hφle)
-      (integral_mono ?_ (integrable_of_continuous hψc) hψle)
+    refine add_le_add
+      (integral_mono ?_ (by simpa only [integrableOn_univ] using
+        hφc.continuousOn.integrableOn_compact' (μ := μ) isCompact_univ MeasurableSet.univ) hφle)
+      (integral_mono ?_ (by simpa only [integrableOn_univ] using
+        hψc.continuousOn.integrableOn_compact' (μ := ν) isCompact_univ MeasurableSet.univ) hψle)
     · exact (Integrable.of_finite (μ := μ.map qX)).comp_measurable hqX
     · exact (Integrable.of_finite (μ := ν.map qY)).comp_measurable hqY
   rw [hTcost, ← hint]
   linarith
 
-omit [PseudoMetricSpace X] [CompactSpace X] [BorelSpace X] [PseudoMetricSpace Y] [CompactSpace Y]
-  [BorelSpace Y] in
+omit [PseudoMetricSpace X] [CompactSpace X] [OpensMeasurableSpace X] [PseudoMetricSpace Y]
+  [CompactSpace Y] [OpensMeasurableSpace Y] in
 /-- **Weak duality in real form.** The value of an integrable feasible pair is at most the real
 number represented by the transport cost, provided the latter is finite. -/
 theorem kantorovichDualValue_le_toReal_transportCost {φ : X → ℝ} {ψ : Y → ℝ}
@@ -436,8 +433,11 @@ theorem isLUB_kantorovichDualValue_continuous [IsProbabilityMeasure μ] [IsProba
   have hne := transportCost_ne_top_of_continuous (μ := μ) (ν := ν) hc
   constructor
   · rintro r ⟨φ, ψ, hφc, hψc, hfeas, rfl⟩
-    exact kantorovichDualValue_le_toReal_transportCost hc0 hne (integrable_of_continuous hφc)
-      (integrable_of_continuous hψc) hfeas
+    exact kantorovichDualValue_le_toReal_transportCost hc0 hne
+      (by simpa only [integrableOn_univ] using
+        hφc.continuousOn.integrableOn_compact' (μ := μ) isCompact_univ MeasurableSet.univ)
+      (by simpa only [integrableOn_univ] using
+        hψc.continuousOn.integrableOn_compact' (μ := ν) isCompact_univ MeasurableSet.univ) hfeas
   · intro b hb
     have hb0 : (0 : ℝ) ≤ b :=
       hb ⟨fun _ ↦ 0, fun _ ↦ 0, continuous_const, continuous_const,
@@ -462,7 +462,12 @@ theorem isLUB_kantorovichDualValue_integrable [IsProbabilityMeasure μ] [IsProba
   · rintro r ⟨φ, ψ, hφ, hψ, hfeas, rfl⟩
     exact kantorovichDualValue_le_toReal_transportCost hc0 hne hφ hψ hfeas
   · obtain ⟨φ, ψ, hφc, hψc, hfeas, rfl⟩ := hr
-    exact hb ⟨φ, ψ, integrable_of_continuous hφc, integrable_of_continuous hψc, hfeas, rfl⟩
+    exact hb ⟨φ, ψ,
+      by simpa only [integrableOn_univ] using
+        hφc.continuousOn.integrableOn_compact' (μ := μ) isCompact_univ MeasurableSet.univ,
+      by simpa only [integrableOn_univ] using
+        hψc.continuousOn.integrableOn_compact' (μ := ν) isCompact_univ MeasurableSet.univ,
+      hfeas, rfl⟩
 
 /-- **Strong Kantorovich duality**, read as an equality between the primal value and the supremum
 of the dual values over the continuous potentials. -/

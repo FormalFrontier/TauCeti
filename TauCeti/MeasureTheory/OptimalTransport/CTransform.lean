@@ -68,8 +68,8 @@ conditions that make the two marginal integrals of a dual pair meaningful.
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
   negative, which is the normalisation freedom of the dual problem;
 * `TauCeti.cTransform_coe` — over a nonempty finite source the transform of a coerced real
-  potential is the coercion of a real infimum, and `TauCeti.cTransform_coe_eq_coe_iInf` gives the
-  same conclusion for any nonempty source when the real infimum is bounded below;
+  potential is the coercion of a real infimum, while `TauCeti.cTransform_coe_eq_coe_iInf` and its
+  symmetric counterpart give the same conclusion whenever the real infimum is bounded below;
 * `TauCeti.contactSet_subset_contactSet_cTransformSymm_cTransform` — sequentially transforming a
   feasible pair gives a dominating feasible pair with a larger contact set, and
   `TauCeti.cTransformSymm_cTransform_eq_of_mem_cSuperdifferential` — a potential agrees with its
@@ -292,6 +292,15 @@ theorem cTransform_coe_eq_coe_iInf [Nonempty X] (c : X × Y → ℝ) (φ : X →
       rw [← hbr]
       simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 hx.le
   · simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 (ciInf_le hbdd x)
+
+/-- The `EReal`-valued symmetric infimal transform `TauCeti.cTransformSymm` of a real potential is
+a real-valued infimum whenever that infimum is bounded below. -/
+theorem cTransformSymm_coe_eq_coe_iInf [Nonempty Y] (c : X × Y → ℝ) (ψ : Y → ℝ) (x : X)
+    (hbdd : BddBelow (Set.range fun y ↦ c (x, y) - ψ y)) :
+    cTransformSymm c (fun y ↦ (ψ y : EReal)) x =
+      ((⨅ y, (c (x, y) - ψ y) : ℝ) : EReal) := by
+  simpa only [cTransformSymm_eq_cTransform] using
+    cTransform_coe_eq_coe_iInf (fun p : Y × X ↦ c (p.2, p.1)) ψ x hbdd
 
 /-- The infimal `c`-transform of a real potential inherits the modulus of continuity of the cost:
 if `c` is uniformly continuous and the differences `c (x, y) - φ x` are bounded below for each
