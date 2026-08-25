@@ -7,11 +7,12 @@ module
 
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.On
 public import TauCeti.Analysis.Contour.Residue.Basic
-public import TauCeti.Analysis.Contour.WorkedExamples.HalfDisc.Winding
+public import TauCeti.Analysis.Contour.WorkedExamples.HalfDisc.Basic
 import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Concat
 import TauCeti.Analysis.Contour.Crossing.Finiteness
 import TauCeti.Analysis.Contour.HungerbuhlerWasem
 import TauCeti.Analysis.Contour.NullHomologous
+import TauCeti.Analysis.Contour.WorkedExamples.HalfDisc.Winding
 
 /-!
 # The half-disc residue theorem
