@@ -238,6 +238,8 @@ theorem alongCurveWithin_pullback_mfderivWithin {s : Set 𝕜} {t : 𝕜}
       cov X (γ t) (mfderivWithin 𝓘(𝕜, 𝕜) I γ s t (1 : 𝕜)) := by
   refine alongCurveWithin_pullback cov γ X hu (hγ.hasMFDerivWithinAt.congr_mfderiv ?_) hX
   ext
+  -- The tangent space of the scalar model is definitionally `𝕜`, but its topology instance blocks
+  -- rewriting by `ContinuousLinearMap.smulRight_apply` until that identification is exposed.
   change (mfderivWithin 𝓘(𝕜, 𝕜) I γ s t) (1 : 𝕜) =
     (1 : 𝕜) • (mfderivWithin 𝓘(𝕜, 𝕜) I γ s t) (1 : 𝕜)
   rw [one_smul]
