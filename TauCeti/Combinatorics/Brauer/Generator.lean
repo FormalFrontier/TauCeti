@@ -112,17 +112,15 @@ so it carries that strand to itself and `TauCeti.capCup_self` gives back the ide
 def capCup (a b : Fin k) : BrauerDiagram k :=
   PerfectMatching.congr (Equiv.swap (Sum.inr a) (Sum.inl b)) (permToBrauer 1)
 
-/-- The identity diagram matches each boundary point with the point of the opposite boundary
-carrying the same index. -/
-private theorem permToBrauer_one_val (x : Fin k ⊕ Fin k) :
-    (permToBrauer (1 : Equiv.Perm (Fin k))).val x = x.swap := by
-  rcases x with i | i <;> simp [Equiv.Perm.one_def]
-
 /-- The arcs of a cap-cup diagram, read off the transported identity diagram. -/
 private theorem capCup_val_apply (a b : Fin k) (x : Fin k ⊕ Fin k) :
     (capCup a b).val x =
       Equiv.swap (Sum.inr a) (Sum.inl b) (Equiv.swap (Sum.inr a) (Sum.inl b) x).swap := by
-  rw [capCup, PerfectMatching.congr_val_apply, Equiv.symm_swap, permToBrauer_one_val]
+  rw [capCup, PerfectMatching.congr_val_apply, Equiv.symm_swap]
+  generalize Equiv.swap (Sum.inr a) (Sum.inl b) x = y
+  rcases y with i | i
+  · simp
+  · simp [Equiv.Perm.one_def]
 
 /-- **A cap-cup diagram on a degenerate pair is the identity diagram**: the transposition that
 transports it exchanges the top point `a` with the bottom point `a`, which are the two ends of a
@@ -131,12 +129,12 @@ unchanged. -/
 @[simp]
 theorem capCup_self (a : Fin k) : capCup a a = permToBrauer 1 := by
   refine Subtype.ext (Equiv.ext fun x => ?_)
-  rw [capCup_val_apply, permToBrauer_one_val]
+  rw [capCup_val_apply]
   rcases x with i | i <;> rcases eq_or_ne i a with rfl | hia
   · simp
   · simp [Equiv.swap_apply_of_ne_of_ne, hia]
-  · simp
-  · simp [Equiv.swap_apply_of_ne_of_ne, hia]
+  · simp [Equiv.Perm.one_def]
+  · simp [Equiv.Perm.one_def, Equiv.swap_apply_of_ne_of_ne, hia]
 
 /-! ### The arcs of a cap-cup diagram -/
 
