@@ -147,7 +147,8 @@ theorem comap_overlayDiff_diagonalCoupling {Ω : Type*} [MeasurableSpace Ω] {μ
         (measurable_id'.prodMk measurable_id') μ = U.toSymmKernel - W.toSymmKernel := by
   rw [comap_overlayDiff_prodMk U W (TauCeti.MeasureTheory.diagonalCoupling μ)
     measurable_id' measurable_id' μ]
-  simp only [show (fun x : Ω => x) = id from rfl, SymmKernel.comap_id]
+  ext x y
+  simp
 
 end OverlayDiff
 
