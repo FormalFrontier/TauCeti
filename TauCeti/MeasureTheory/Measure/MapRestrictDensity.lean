@@ -19,7 +19,8 @@ it is characterised by
 
 `∫ a, mapRestrictDensity f ν μ s a * g a ∂μ = ∫ x in s, g (f x) ∂ν`
 
-for every measurable `g : Ω → ℝ` (`integral_mapRestrictDensity_mul`). In probabilistic language
+for every `μ`-a.e. strongly measurable `g : Ω → ℝ` (`integral_mapRestrictDensity_mul`). In
+probabilistic language
 it is the conditional probability of `s` given `f`, read as a function on the base: composing it
 with `f` gives a version of `ν[s.indicator 1 | comap f]`. Nothing here needs that reading, so the
 conditional-expectation machinery is not used; the elementary Radon–Nikodym route is enough.
@@ -41,10 +42,11 @@ on a `μ`-null set (`mapRestrictDensity_ae_eq_rnDeriv`).
   against the density downstairs computes the integral over the set upstairs. No measurability of
   the set is needed.
 * `TauCeti.MeasureTheory.mapRestrictDensity_ae_eq_rnDeriv` — the truncation is a.e. invisible.
+* `TauCeti.MeasureTheory.mapRestrictDensity_mem_Icc` — the density lies in `[0, 1]` everywhere.
 * `TauCeti.MeasureTheory.integral_mapRestrictDensity` — the density integrates to the measure of
   the set, the case `g = 1`.
-* `TauCeti.MeasureTheory.mapRestrictDensity_congr` — the density depends on the set upstairs only
-  through its `ν`-a.e. class; this equality is exact, not almost everywhere.
+* `TauCeti.MeasureTheory.mapRestrictDensity_congr_set` — the density depends on the set upstairs
+  only through its `ν`-a.e. class; this equality is exact, not almost everywhere.
 * `TauCeti.MeasureTheory.mapRestrictDensity_preimage` and
   `TauCeti.MeasureTheory.mapRestrictDensity_univ` — on a
   preimage the density collapses `μ`-almost everywhere to an indicator, so the construction extends
@@ -52,6 +54,8 @@ on a `μ`-null set (`mapRestrictDensity_ae_eq_rnDeriv`).
 * `TauCeti.MeasureTheory.mapRestrictDensity_fst_prod` — on a product carrier the density of a
   rectangle is `μ`-almost everywhere a genuinely fractional multiple of an indicator, so no such
   collapse holds in general.
+* `TauCeti.MeasureTheory.isFiniteMeasure_of_measurePreserving` — an auxiliary fact transferring
+  finiteness from the source to the target of a measure-preserving map.
 
 ## References
 
@@ -105,14 +109,14 @@ theorem mapRestrictDensity_mem_Icc (f : Ω' → Ω) (ν : Measure Ω') (μ : Mea
 
 /-- **The density depends on the set upstairs only through its `ν`-a.e. class.**  Replacing `s` by
 an a.e. equal set does not change the function at all, since it does not change `ν.restrict s`. -/
-theorem mapRestrictDensity_congr (f : Ω' → Ω) (μ : Measure Ω) {s t : Set Ω'}
+theorem mapRestrictDensity_congr_set (f : Ω' → Ω) (μ : Measure Ω) {s t : Set Ω'}
     (h : s =ᵐ[ν] t) : mapRestrictDensity f ν μ s = mapRestrictDensity f ν μ t := by
   funext a
   rw [mapRestrictDensity_def, mapRestrictDensity_def, Measure.restrict_congr_set h]
 
 /-- Pushing forward the part of `ν` carried by `s` gives a measure below `μ`.  This is the whole
 reason the density is `[0, 1]`-valued, and it needs no hypothesis on `s`. -/
-theorem map_restrict_le (hf : MeasurePreserving f ν μ) (s : Set Ω') :
+private theorem map_restrict_le_of_measurePreserving (hf : MeasurePreserving f ν μ) (s : Set Ω') :
     (ν.restrict s).map f ≤ μ := by
   rw [← hf.map_eq]
   exact Measure.map_mono Measure.restrict_le_self hf.measurable
@@ -129,7 +133,7 @@ below `μ`. -/
 theorem mapRestrictDensity_ae_eq_rnDeriv [SigmaFinite μ] (hf : MeasurePreserving f ν μ)
     (s : Set Ω') :
     mapRestrictDensity f ν μ s =ᵐ[μ] fun a => (((ν.restrict s).map f).rnDeriv μ a).toReal := by
-  filter_upwards [Measure.rnDeriv_le_one_of_le (map_restrict_le hf s)]
+  filter_upwards [Measure.rnDeriv_le_one_of_le (map_restrict_le_of_measurePreserving hf s)]
     with a ha
   have h1 : (((ν.restrict s).map f).rnDeriv μ a).toReal ≤ 1 := by
     simpa using ENNReal.toReal_mono ENNReal.one_ne_top ha
@@ -141,10 +145,10 @@ against the density computes its integral, composed with `f`, over the set upsta
 The set is arbitrary: `Measure.restrict` and every step of the computation are insensitive to its
 measurability. -/
 theorem integral_mapRestrictDensity_mul [SigmaFinite μ] (hf : MeasurePreserving f ν μ) (s : Set Ω')
-    {g : Ω → ℝ} (hg : Measurable g) :
+    {g : Ω → ℝ} (hg : AEStronglyMeasurable g μ) :
     ∫ a, mapRestrictDensity f ν μ s a * g a ∂μ = ∫ x in s, g (f x) ∂ν := by
   let _ : SigmaFinite ((ν.restrict s).map f) :=
-    Measure.sigmaFinite_of_le μ (map_restrict_le hf s)
+    Measure.sigmaFinite_of_le μ (map_restrict_le_of_measurePreserving hf s)
   calc ∫ a, mapRestrictDensity f ν μ s a * g a ∂μ
       = ∫ a, (((ν.restrict s).map f).rnDeriv μ a).toReal * g a ∂μ :=
         integral_congr_ae (by
@@ -152,15 +156,17 @@ theorem integral_mapRestrictDensity_mul [SigmaFinite μ] (hf : MeasurePreserving
           rw [ha])
     _ = ∫ a, g a ∂((ν.restrict s).map f) :=
         integral_toReal_rnDeriv_mul
-          (Measure.absolutelyContinuous_of_le (map_restrict_le hf s))
+          (Measure.absolutelyContinuous_of_le (map_restrict_le_of_measurePreserving hf s))
     _ = ∫ x in s, g (f x) ∂ν :=
-        integral_map hf.measurable.aemeasurable hg.aestronglyMeasurable
+        integral_map hf.measurable.aemeasurable
+          (hg.mono_measure (map_restrict_le_of_measurePreserving hf s))
 
 /-- The density integrates to the measure of the set it came from: the case `g = 1` of
 `integral_mapRestrictDensity_mul`. -/
 theorem integral_mapRestrictDensity [SigmaFinite μ] (hf : MeasurePreserving f ν μ) (s : Set Ω') :
     ∫ a, mapRestrictDensity f ν μ s a ∂μ = ν.real s := by
-  have h := integral_mapRestrictDensity_mul hf s (g := fun _ => (1 : ℝ)) measurable_const
+  have h := integral_mapRestrictDensity_mul hf s (g := fun _ => (1 : ℝ))
+    measurable_const.aestronglyMeasurable
   simpa [Measure.restrict_apply_univ] using h
 
 /-- **On a preimage the density is `μ`-almost everywhere an indicator.**  Nothing is lost when the
@@ -204,8 +210,7 @@ theorem mapRestrictDensity_fst_prod [SigmaFinite μ] [IsProbabilityMeasure ν] {
     filter_upwards [Measure.rnDeriv_smul_left_of_ne_top' (μ.restrict s) μ
       (measure_ne_top ν t), Measure.rnDeriv_restrict_self μ hs] with a ha hb
     rw [ha]
-    change ν t * (μ.restrict s).rnDeriv μ a = ν t * s.indicator 1 a
-    rw [hb]
+    rw [Pi.smul_apply, smul_eq_mul, hb]
   filter_upwards [mapRestrictDensity_ae_eq_rnDeriv hf (s ×ˢ t), hrn] with a ha hb
   rw [ha, hb]
   by_cases has : a ∈ s

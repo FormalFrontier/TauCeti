@@ -203,23 +203,18 @@ section CommonCarrier
 
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
 
-/-- **A graph coupling has the cut norm of the difference of the two pullbacks.** If `f` and `g`
-are measure preserving from a common finite-measure space, pulling the overlaid difference back
-along `x ↦ (f x, g x)` gives the difference of the pullbacks. Invariance under this
-measure-preserving map then identifies the two cut norms. -/
+/-- **A graph coupling has the cut norm of the difference of the two pullbacks.** Pulling the
+overlaid difference back along `x ↦ (f x, g x)` gives the difference of the pullbacks. Invariance
+under this measure-preserving map then identifies the two cut norms. -/
 theorem cutNorm_overlayDiff_map_prodMk [IsFiniteMeasure μ]
     (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
-    {f : Ω → Ω₁} {g : Ω → Ω₂} (hf : MeasurePreserving f μ μ₁)
-    (hg : MeasurePreserving g μ μ₂) {π : Measure (Ω₁ × Ω₂)} [IsFiniteMeasure π]
+    {f : Ω → Ω₁} {g : Ω → Ω₂} (hf : Measurable f)
+    (hg : Measurable g) {π : Measure (Ω₁ × Ω₂)} [IsFiniteMeasure π]
     (hπ : MeasurePreserving (fun x => (f x, g x)) μ π) :
     cutNorm π (overlayDiff U W π) =
       cutNorm μ
-        (U.toSymmKernel.comap f hf.measurable μ -
-          W.toSymmKernel.comap g hg.measurable μ) := by
-  rw [← cutNorm_comap hπ]
-  congr 1
-  ext x y
-  simp
+        (U.toSymmKernel.comap f hf μ - W.toSymmKernel.comap g hg μ) := by
+  rw [← cutNorm_comap hπ, comap_overlayDiff_prodMk]
 
 /-- **A common carrier bounds the cut distance.** If `f` and `g` are measure preserving from a
 common finite-measure space onto the two carriers, then the cut distance is at most the ordinary cut
@@ -238,7 +233,7 @@ theorem cutDist_le_cutNorm_sub_of_measurePreserving [IsFiniteMeasure μ]
         (U.toSymmKernel.comap f hf.measurable μ - W.toSymmKernel.comap g hg.measurable μ) := by
   let _ := (isCoupling_map_prodMk hf hg).isProbabilityMeasure
   exact (cutDist_le U W (isCoupling_map_prodMk hf hg)).trans_eq
-    (cutNorm_overlayDiff_map_prodMk U W hf hg
+    (cutNorm_overlayDiff_map_prodMk U W hf.measurable hg.measurable
       ⟨hf.measurable.prodMk hg.measurable, rfl⟩)
 
 variable [IsProbabilityMeasure μ]
@@ -256,20 +251,15 @@ theorem cutDist_le_cutNorm_sub (U W : Graphon Ω μ) :
     (MeasurePreserving.id μ)
   rwa [SymmKernel.comap_id, SymmKernel.comap_id] at this
 
-/-- **The diagonal coupling realises the same-carrier cut norm.**  Of all the couplings the cut
-distance takes an infimum over, the diagonal one contributes exactly `‖U - W‖□`.
-
-`comap_overlayDiff_diagonalCoupling` identifies the pullback of the overlaid difference along the
-diagonal with the plain kernel difference; the invariance of the cut norm under measure-preserving
-pullback (`cutNorm_comap`) turns that kernel identity into an identity of cut norms, which is the
-step that file left open. -/
+/-- **The diagonal coupling realises the same-carrier cut norm.** Of all the couplings the cut
+distance takes an infimum over, the diagonal one contributes exactly `‖U - W‖□`. -/
+@[simp]
 theorem cutNorm_overlayDiff_diagonalCoupling (U W : Graphon Ω μ) :
     cutNorm (TauCeti.MeasureTheory.diagonalCoupling μ)
         (overlayDiff U W (TauCeti.MeasureTheory.diagonalCoupling μ)) =
       cutNorm μ (U.toSymmKernel - W.toSymmKernel) := by
-  simpa only [SymmKernel.comap_id] using cutNorm_overlayDiff_map_prodMk U W
-    (MeasurePreserving.id μ) (MeasurePreserving.id μ)
-    (TauCeti.MeasureTheory.measurePreserving_diagonal μ)
+  rw [← cutNorm_comap (TauCeti.MeasureTheory.measurePreserving_diagonal μ),
+    comap_overlayDiff_diagonalCoupling]
 
 /-- The cut distance of a graphon to itself is zero. -/
 @[simp]
