@@ -115,7 +115,6 @@ theorem finiteFiberActionFunctor_obj_obj (p : FiniteCoveringSpace X) :
 omit [PathConnectedSpace X] [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
 /-- The underlying type of the finite action attached to a finite cover is its fibre over the
 basepoint. -/
-@[simp]
 theorem finiteFiberActionFunctor_obj_obj_V (p : FiniteCoveringSpace X) :
     ((finiteFiberActionFunctor x₀).obj p).obj.V =
       ((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj p)).V :=
@@ -248,7 +247,6 @@ theorem fiberActionFintypeCatEquivalence_functor :
 def fiberFunctor : FiniteCoveringSpace X ⥤ FintypeCat.{u} :=
   (fiberActionFintypeCatEquivalence x₀).functor ⋙ Action.forget FintypeCat _
 
-@[simp]
 theorem fiberFunctor_eq :
     fiberFunctor x₀ =
       (finiteFiberActionFunctor x₀ ⋙
@@ -267,10 +265,10 @@ theorem fiberFunctor_obj (p : FiniteCoveringSpace X) :
       (finiteFiberActionFunctor_obj_obj_V x₀ p)
 
 private theorem fiberFunctor_map_hom_heq {p q : FiniteCoveringSpace X} (f : p ⟶ q) :
-    HEq (fun x => ((fiberFunctor x₀).map f).hom x)
+    HEq (fun x => ((fiberFunctor x₀).map f) x)
       (fun x => ConcreteCategory.hom (↾(IsCoveringMap.fiberMap f.hom.left.hom
         (CoveringSpace.proj_hom_comp_hom_left_hom ((forget X).map f)) x₀)) x) := by
-  have h₁ : HEq (fun x => ((fiberFunctor x₀).map f).hom x)
+  have h₁ : HEq (fun x => ((fiberFunctor x₀).map f) x)
       (fun x => ConcreteCategory.hom
         ((FiniteAction.toActionFintypeCat (FundamentalGroup X x₀)).map
           ((finiteFiberActionFunctor x₀).map f)).hom x) := by
@@ -306,7 +304,7 @@ private theorem fiberFunctor_map_hom_heq {p q : FiniteCoveringSpace X} (f : p �
 theorem fiberFunctor_map_hom {p q : FiniteCoveringSpace X} (f : p ⟶ q)
     (e : ⇑p.proj ⁻¹' {x₀}) :
     cast (fiberFunctor_obj x₀ q)
-        (((fiberFunctor x₀).map f).hom (cast (fiberFunctor_obj x₀ p).symm e)) =
+        (((fiberFunctor x₀).map f) (cast (fiberFunctor_obj x₀ p).symm e)) =
       (↾(IsCoveringMap.fiberMap f.hom.left.hom
         (CoveringSpace.proj_hom_comp_hom_left_hom ((forget X).map f)) x₀)) e := by
   exact cast_apply_of_heq (fiberFunctor_obj x₀ p) (fiberFunctor_obj x₀ q)
