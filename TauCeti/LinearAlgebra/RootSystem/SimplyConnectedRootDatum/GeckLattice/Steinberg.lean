@@ -66,9 +66,8 @@ data and are not repeated.
   equations on the represented root subgroups.
 * `TauCeti.DynkinType.geckElementaryGraphAut_pow_eq_one`: a node permutation of finite order induces
   a graph automorphism with the same order relation.
-* `TauCeti.DynkinType.geckElementaryGraphAut_one` and
-  `TauCeti.DynkinType.geckElementarySteinberg_one`: the identity node permutation gives the identity
-  automorphism and the plain Frobenius.
+* `TauCeti.DynkinType.geckElementaryGraphAut_one`: the identity node permutation gives the identity
+  automorphism.
 * `TauCeti.DynkinType.geckElementarySteinberg_exponent_zero`: at exponent zero the Steinberg
   endomorphism is the graph automorphism.
 * `TauCeti.DynkinType.geckElementarySteinberg_pow_eq_geckElementaryFrobenius`: if `sigma ^ d = 1`
@@ -206,22 +205,6 @@ abbrev geckElementarySteinberg (hsigma : sigma ∈ t.diagramSymmetry) (p n : ℕ
     (t.geckDiagramModuleEquiv_geckRepresentation_rootGenerator ht hsigma)
     (diagramRootGeneratorPerm sigma).surjective p n A
 
-/-- **The Steinberg endomorphism applies the Frobenius first and the graph automorphism second.**
-The composite is the pinned instance of `kostantElementarySteinberg`, so this records its two
-factors in the pinned names. -/
-theorem geckElementarySteinberg_apply (hsigma : sigma ∈ t.diagramSymmetry) (p n : ℕ)
-    (A : CommAlgCat.{v} ℤ) [ExpChar A p] (g : t.geckElementarySubgroup ht A) :
-    t.geckElementarySteinberg ht hsigma p n A g =
-      t.geckElementaryGraphAut ht hsigma A (t.geckElementaryFrobenius ht p n A g) :=
-  kostantElementarySteinberg_apply _ _ _ _ _ _ _ _ _ _ _ p n A g
-
-/-- **An untwisted Steinberg endomorphism is the Frobenius.** -/
-theorem geckElementarySteinberg_one (p n : ℕ) (A : CommAlgCat.{v} ℤ) [ExpChar A p] :
-    t.geckElementarySteinberg ht t.diagramSymmetry.one_mem p n A =
-      t.geckElementaryFrobenius ht p n A :=
-  kostantElementarySteinberg_eq_kostantElementaryFrobenius_of_numberedSymmetryAut_eq_one
-    _ _ _ _ _ _ _ _ _ _ _ p n A (t.geckElementaryGraphAut_one ht A)
-
 /-- **The defining equation of the Steinberg endomorphism on the pinned root subgroups**: it moves
 the root subgroup numbered `i` to the one numbered `diagramRootGeneratorPerm sigma i` and raises
 its parameter to the `q`-th power, `q = p ^ n`. Together with
@@ -249,8 +232,10 @@ theorem geckElementarySteinberg_exponent_zero (hsigma : sigma ∈ t.diagramSymme
   have hF : t.geckElementaryFrobenius ht p 0 A g = g :=
     congrArg (fun f : t.geckElementarySubgroup ht A →* t.geckElementarySubgroup ht A => f g)
       (kostantElementaryFrobenius_zero _ _ _ _ _ _ p A)
-  rw [geckElementarySteinberg_apply, hF]
-  rfl
+  calc
+    _ = t.geckElementaryGraphAut ht hsigma A (t.geckElementaryFrobenius ht p 0 A g) :=
+      kostantElementarySteinberg_apply _ _ _ _ _ _ _ _ _ _ _ p 0 A g
+    _ = _ := by rw [hF]; rfl
 
 /-- **The `d`-th iterate of a Steinberg endomorphism of a node permutation of order dividing `d` is
 the Frobenius `Frob_{q ^ d}`.** For the graph-twisted families this is `d = 2` on `²A`, `²D` and
