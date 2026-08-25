@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.GroupTheory.GroupAction.FixedPoints
 public import TauCeti.RepresentationTheory.Homological.ContCohomology.LowDegree
 
 import Mathlib.Algebra.BigOperators.GroupWithZero.Action
@@ -35,7 +36,6 @@ is stated against `TauCeti.ContCohomology.H0` and reuses the fixed-point functor
 
 ## Main declarations
 
-* `TauCeti.ContCohomology.explicitRes0`: restriction in degree zero.
 * `TauCeti.ContCohomology.explicitCor0Transversal`: the norm for a variable transversal.
 * `TauCeti.ContCohomology.explicitCor0_changeTransversal`: independence of that transversal.
 * `TauCeti.ContCohomology.explicitCor0`: the canonical degree-zero corestriction.
@@ -60,21 +60,6 @@ universe u v w
 variable (G : Type u) [Group G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
   (U : Subgroup G)
 
-/-- An element fixed by `G` remains fixed after restricting the action to `U`. -/
-private theorem mem_H0_subgroup {m : M} (hm : m ∈ H0 G M) : m ∈ H0 U M :=
-  (FixedPoints.mem_addSubgroup U M m).2 fun u =>
-    (FixedPoints.mem_addSubgroup G M m).1 hm u
-
-/-- **Restriction in degree zero**, the inclusion `H⁰(G, M) → H⁰(U, M)`. -/
-def explicitRes0 : H0 G M →+ H0 U M where
-  toFun m := ⟨m, mem_H0_subgroup G M U m.2⟩
-  map_zero' := rfl
-  map_add' _ _ := rfl
-
-/-- Restriction in degree zero does not change the underlying coefficient. -/
-@[simp]
-theorem coe_explicitRes0 (m : H0 G M) : (explicitRes0 G M U m : M) = m := (rfl)
-
 /-- A `U`-fixed element is fixed by any element whose underlying value belongs to `U`. -/
 private theorem smul_eq_self_of_mem {m : M} (hm : m ∈ H0 U M) {x : G} (hx : x ∈ U) :
     x • m = m :=
@@ -82,15 +67,14 @@ private theorem smul_eq_self_of_mem {m : M} (hm : m ∈ H0 U M) {x : G} (hx : x 
 
 section Transversal
 
-variable [Fintype (G ⧸ U)] (t : G ⧸ U → G)
+variable [U.FiniteIndex] (t : G ⧸ U → G)
   (ht : ∀ u : G ⧸ U, (QuotientGroup.mk (t u) : G ⧸ U) = u)
+
+attribute [local instance] Subgroup.fintypeQuotientOfFiniteIndex
 
 include ht
 
-/-- The transversal norm of a `U`-invariant element is `G`-invariant.
-
-The proof rewrites `γ * t u` as `t (γ • u)` times a word in `U`, then reindexes the sum by the
-permutation `u ↦ γ • u`. -/
+/-- The transversal norm of a `U`-invariant element is `G`-invariant. -/
 theorem sum_transversal_smul_mem_H0 {m : M} (hm : m ∈ H0 U M) :
     ∑ u : G ⧸ U, t u • m ∈ H0 G M := by
   refine (FixedPoints.mem_addSubgroup G M _).2 fun γ => ?_
@@ -105,7 +89,7 @@ theorem sum_transversal_smul_mem_H0 {m : M} (hm : m ∈ H0 U M) :
 
 /-- **Corestriction in degree zero for a variable transversal**, the norm
 `m ↦ ∑ u, t u • m : H⁰(U, M) → H⁰(G, M)`. -/
-def explicitCor0Transversal : H0 U M →+ H0 G M where
+noncomputable def explicitCor0Transversal : H0 U M →+ H0 G M where
   toFun m := ⟨∑ u : G ⧸ U, t u • (m : M), sum_transversal_smul_mem_H0 G M U t ht m.2⟩
   map_zero' := by ext; simp
   map_add' a b := by ext; simp [smul_add, Finset.sum_add_distrib]
@@ -124,8 +108,24 @@ theorem coe_explicitCor0Transversal_of_smul_eq_self
 /-- Naturality of the transversal norm in an equivariant coefficient homomorphism. -/
 theorem map_explicitCor0Transversal {N : Type w} [AddCommGroup N]
     [DistribMulAction G N] (f : M →+[G] N) (m : H0 U M) :
-    f (explicitCor0Transversal G M U t ht m : M) =
-      ∑ u : G ⧸ U, t u • f (m : M) := by
+    (⟨f (explicitCor0Transversal G M U t ht m : M),
+        (FixedPoints.mem_addSubgroup G N _).2 fun g => by
+          calc
+            g • f (explicitCor0Transversal G M U t ht m : M) =
+                f (g • (explicitCor0Transversal G M U t ht m : M)) :=
+              (f.map_smul g _).symm
+            _ = f (explicitCor0Transversal G M U t ht m : M) :=
+              congrArg f ((FixedPoints.mem_addSubgroup G M _).1
+                (explicitCor0Transversal G M U t ht m).2 g)⟩ : H0 G N) =
+      explicitCor0Transversal G N U t ht (fixedPointsMap f U m) := by
+  apply Subtype.ext
+  change f (explicitCor0Transversal G M U t ht m : M) =
+    (explicitCor0Transversal G N U t ht (fixedPointsMap f U m) : N)
+  rw [coe_explicitCor0Transversal]
+  change f (∑ u : G ⧸ U, t u • (m : M)) =
+    ∑ u : G ⧸ U, t u • (fixedPointsMap f U m : N)
+  have hfm : (fixedPointsMap f U m : N) = f (m : M) := coe_fixedPointsMap f U m
+  rw [hfm]
   simp [map_sum]
 
 /-- **`cor⁰_t ∘ res⁰ = (G : U) • id`** for a variable transversal. -/
@@ -138,7 +138,9 @@ theorem explicitCor0Transversal_comp_res0 (m : H0 G M) :
 
 end Transversal
 
-variable [Fintype (G ⧸ U)]
+variable [U.FiniteIndex]
+
+attribute [local instance] Subgroup.fintypeQuotientOfFiniteIndex
 
 /-- **Independence of the transversal in degree zero.** Two transversals differ by a `U`-valued
 factor, which acts trivially on `H⁰(U, M)`, so their norms agree on the nose. -/
@@ -167,7 +169,8 @@ the subgroup index. -/
 theorem coe_explicitCor0_of_smul_eq_self (htriv : ∀ (g : G) (m : M), g • m = m)
     (m : H0 U M) :
     (explicitCor0 G M U m : M) = U.index • (m : M) := by
-  simp [htriv, U.index_eq_card, Nat.card_eq_fintype_card]
+  simpa [explicitCor0] using
+    coe_explicitCor0Transversal_of_smul_eq_self G M U Quotient.out Quotient.out_eq htriv m
 
 /-- The canonical degree-zero corestriction can be computed using any transversal. -/
 theorem explicitCor0_eq_transversal (t : G ⧸ U → G)
@@ -178,8 +181,15 @@ theorem explicitCor0_eq_transversal (t : G ⧸ U → G)
 /-- Naturality of canonical degree-zero corestriction in an equivariant coefficient homomorphism. -/
 theorem map_explicitCor0 {N : Type w} [AddCommGroup N] [DistribMulAction G N]
     (f : M →+[G] N) (m : H0 U M) :
-    f (explicitCor0 G M U m : M) =
-      ∑ u : G ⧸ U, Quotient.out u • f (m : M) :=
+    (⟨f (explicitCor0 G M U m : M),
+        (FixedPoints.mem_addSubgroup G N _).2 fun g => by
+          calc
+            g • f (explicitCor0 G M U m : M) = f (g • (explicitCor0 G M U m : M)) :=
+              (f.map_smul g _).symm
+            _ = f (explicitCor0 G M U m : M) :=
+              congrArg f ((FixedPoints.mem_addSubgroup G M _).1
+                (explicitCor0 G M U m).2 g)⟩ : H0 G N) =
+      explicitCor0 G N U (fixedPointsMap f U m) :=
   map_explicitCor0Transversal G M U Quotient.out Quotient.out_eq f m
 
 /-- **`cor⁰ ∘ res⁰ = (G : U) • id`** on `H⁰(G, M)`. -/

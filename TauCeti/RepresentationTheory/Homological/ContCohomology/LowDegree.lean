@@ -38,6 +38,7 @@ H⁰(G, M) = M^G,   H¹(G, M) = Z¹/B¹,   H²(G, M) = Z²/B².
 * `TauCeti.ContCohomology.H0`, `H1`, `H2`, their class maps `H1pi`, `H2pi`, and the discrete
   carriers `DiscreteH1`, `DiscreteH2` used by the comparison with canonical cohomology, together
   with their identifications `discreteH1Equiv`, `discreteH2Equiv` with `H1` and `H2`.
+* `TauCeti.ContCohomology.explicitRes0`: restriction on the explicit degree-zero carrier.
 
 ## Main statements
 
@@ -306,6 +307,28 @@ theorem H0_eq_top_of_smul_eq_self (htriv : ∀ (g : G) (m : M), g • m = m) : H
   eq_top_iff.2 fun m _ => (FixedPoints.mem_addSubgroup G M m).2 fun g => htriv g m
 
 end Complex
+
+section RestrictionDegreeZero
+
+variable (G : Type u) [Group G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
+  (U : Subgroup G)
+
+/-- An element fixed by `G` remains fixed after restricting the action to `U`. -/
+private theorem mem_H0_subgroup {m : M} (hm : m ∈ H0 G M) : m ∈ H0 U M :=
+  (FixedPoints.mem_addSubgroup U M m).2 fun u =>
+    (FixedPoints.mem_addSubgroup G M m).1 hm u
+
+/-- **Restriction in degree zero**, the inclusion `H⁰(G, M) → H⁰(U, M)`. -/
+def explicitRes0 : H0 G M →+ H0 U M where
+  toFun m := ⟨m, mem_H0_subgroup G M U m.2⟩
+  map_zero' := rfl
+  map_add' _ _ := rfl
+
+/-- Restriction in degree zero does not change the underlying coefficient. -/
+@[simp]
+theorem coe_explicitRes0 (m : H0 G M) : (explicitRes0 G M U m : M) = m := (rfl)
+
+end RestrictionDegreeZero
 
 end Differentials
 
