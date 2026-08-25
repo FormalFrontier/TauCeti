@@ -28,6 +28,8 @@ identifying the diagonal tangent directions as torus-fixed vectors.
 
 * `TauCeti.GeneralLinear.matrixUnitWeight`: the weight `e_i - e_j`.
 * `TauCeti.GeneralLinear.matrixUnitTangent`: the tangent vector corresponding to `E_ij`.
+* `tangentMatrix_tangentScalarExtensionEquiv_adjointAction_diagonalTorus_apply`:
+  the universal diagonal adjoint action on an arbitrary matrix entry.
 * `TauCeti.GeneralLinear.matrixUnitTangent_mem_adjointWeightSpace`: `E_ij` has weight
   `e_i - e_j` under the diagonal torus.
 * `TauCeti.GeneralLinear.matrixUnitWeight_mem_nontrivialAdjointWeights`: every off-diagonal
@@ -103,49 +105,68 @@ theorem matrixUnitWeight_ne_one {i j : Fin n} (hij : i ≠ j) :
   intro h
   exact hij ((matrixUnitWeight_eq_one_iff i j).mp h)
 
+/-- Off the diagonal, the character `e_i - e_j` determines the ordered pair `(i, j)`.  This
+follows in the torsion-free character lattice `ULift (Fin n) →₀ ℤ`, independently of the base
+field. -/
+@[simp]
+theorem matrixUnitWeight_eq_matrixUnitWeight_iff {i j : Fin n} (hij : i ≠ j) (a b : Fin n) :
+    (matrixUnitWeight a b : Multiplicative (ULift.{u} (Fin n) →₀ ℤ)) =
+      matrixUnitWeight i j ↔ a = i ∧ b = j := by
+  constructor
+  · intro h
+    have hi := congrArg
+      (fun alpha : Multiplicative (ULift.{u} (Fin n) →₀ ℤ) ↦
+        Multiplicative.toAdd alpha (ULift.up i)) h
+    have hai : a = i := by
+      by_contra hai
+      by_cases hbi : b = i
+      · subst b
+        simp [toAdd_matrixUnitWeight_apply, Ne.symm hai, hij] at hi
+      · simp [toAdd_matrixUnitWeight_apply, Ne.symm hai, Ne.symm hbi, hij] at hi
+    subst a
+    have hj := congrArg
+      (fun alpha : Multiplicative (ULift.{u} (Fin n) →₀ ℤ) ↦
+        Multiplicative.toAdd alpha (ULift.up j)) h
+    have hbj : b = j := by
+      by_contra hbj
+      simp [Ne.symm hij, Ne.symm hbj] at hj
+    exact ⟨rfl, hbj⟩
+  · rintro ⟨rfl, rfl⟩
+    rfl
+
 private theorem universalPoint_coordinate_mul_inv (i j : Fin n) :
-    let M := Multiplicative (ULift.{u} (Fin n) →₀ ℤ)
-    let K := MonoidAlgebra k M
-    let p : WithConv (K →ₐ[k] K) := toConv (AlgHom.id k K)
-    (SplitTorus.pointsMulEquiv p (ULift.up i) : K) *
-        (((SplitTorus.pointsMulEquiv p (ULift.up j))⁻¹ : Kˣ) : K) =
+    (SplitTorus.pointsMulEquiv
+        (toConv (AlgHom.id k
+          (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))))
+        (ULift.up i) :
+      MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))) *
+        (((SplitTorus.pointsMulEquiv
+          (toConv (AlgHom.id k
+            (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))))
+          (ULift.up j))⁻¹ :
+            (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))ˣ) :
+          MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))) =
       MonoidAlgebra.single (matrixUnitWeight i j) 1 := by
-  dsimp only
-  let p := toConv (AlgHom.id k
-    (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))))
-  have hi : (SplitTorus.pointsMulEquiv p (ULift.up i) :
+  have hi : (SplitTorus.pointsMulEquiv
+      (toConv (AlgHom.id k
+        (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))))
+      (ULift.up i) :
       MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))) =
       MonoidAlgebra.single
         (Multiplicative.ofAdd (Finsupp.single (ULift.up i) 1)) 1 := by
     rw [SplitTorus.pointsMulEquiv_apply_coe]
     rfl
-  have hj : (((SplitTorus.pointsMulEquiv p (ULift.up j))⁻¹ :
+  have hj : (((SplitTorus.pointsMulEquiv
+      (toConv (AlgHom.id k
+        (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))))
+      (ULift.up j))⁻¹ :
       (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))ˣ) :
       MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))) =
       MonoidAlgebra.single
         (Multiplicative.ofAdd (Finsupp.single (ULift.up j) 1))⁻¹ 1 := by
-    -- The character API returns a unit. Expose the coercion of its inverse to the group algebra
-    -- because `charOfPoint_apply_inv_coe` is stated at that underlying value.
-    change (↑((SplitTorus.pointsMulEquiv
-      (toConv (AlgHom.id k
-        (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))))
-      (ULift.up j))⁻¹ :
-        (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))ˣ) :
-          MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))) =
-      (MonoidAlgebra.single
-        (Multiplicative.ofAdd (Finsupp.single (ULift.up j) (1 : ℤ)))⁻¹ (1 : k) :
-          MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))
     rw [SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv,
       freeAbelianCharEquiv_apply]
     exact DiagonalizableGroup.charOfPoint_apply_inv_coe _ _
-  -- Unfold the local abbreviation `p` and the coercion from the inverse unit so that the two
-  -- previously computed coordinate identities rewrite the product.
-  change
-    (SplitTorus.pointsMulEquiv p (ULift.up i) :
-        MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))) *
-      (↑((SplitTorus.pointsMulEquiv p (ULift.up j))⁻¹ :
-        (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))ˣ) :
-          MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))) = _
   rw [hi, hj, MonoidAlgebra.single_mul_single, one_mul]
   congr 1
   apply Multiplicative.toAdd.injective
@@ -211,6 +232,41 @@ theorem cotangentDualMatrixEquiv_matrixUnitTangent (i j : Fin n) :
     cotangentDualMatrixEquiv (matrixUnitTangent (k := k) i j) = Matrix.single i j 1 := by
   exact LinearEquiv.apply_symm_apply _ _
 
+/-- The universal diagonal-torus adjoint action multiplies the `(i, j)` matrix entry by the
+character `e_i - e_j`.  Unlike the matrix-unit specialization below, this formula applies to an
+arbitrary tangent vector and is the coefficient calculation used to classify all nontrivial
+adjoint weight spaces of `GL_n`. -/
+theorem tangentMatrix_tangentScalarExtensionEquiv_adjointAction_diagonalTorus_apply
+    (x : Module.Dual k (Bialgebra.CotangentSpace k (coordinateHopfAlgebra k n)))
+    (i j : Fin n) :
+    tangentMatrix n
+        (Derivation.tangentScalarExtensionEquiv
+          (R := k) (A := coordinateHopfAlgebra k n)
+          (B := MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)))
+          ((Derivation.adjointAction
+            (CommAlgCat.of k
+              (MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))))
+            (toConv ((diagonalTorusCoordinateMap (R := k) (N := n)).hom :
+              coordinateHopfAlgebra k n →ₐ[k]
+                MonoidAlgebra k (Multiplicative (ULift.{u} (Fin n) →₀ ℤ))))).val
+              (1 ⊗ₜ[k] x))) i j =
+      MonoidAlgebra.single (matrixUnitWeight i j)
+        ((cotangentDualMatrixEquiv (k := k) (n := n) x) i j) := by
+  let M := Multiplicative (ULift.{u} (Fin n) →₀ ℤ)
+  let K := MonoidAlgebra k M
+  rw [Derivation.tangentScalarExtensionEquiv_adjointAction
+    (CommAlgCat.of k K)
+    (toConv ((diagonalTorusCoordinateMap (R := k) (N := n)).hom :
+      coordinateHopfAlgebra k n →ₐ[k] K))]
+  rw [pointInCounitAlgebra_universalPoint_diagonalTorus]
+  rw [tangentMatrix_adDerivation_apply_diagonalTorusPoints,
+    tangentMatrix_tangentScalarExtensionEquiv_one_tmul, Matrix.map_apply]
+  rw [mul_assoc, mul_comm
+    (algebraMap k K ((cotangentDualMatrixEquiv (k := k) (n := n) x) i j)), ← mul_assoc]
+  rw [universalPoint_coordinate_mul_inv]
+  rw [mul_comm (MonoidAlgebra.single (matrixUnitWeight i j) (1 : k)),
+    ← MonoidAlgebra.of_apply, ← MonoidAlgebra.single_eq_algebraMap_mul_of]
+
 /-- The matrix unit `E_ij` belongs to the adjoint weight space of the diagonal-torus character
 `e_i - e_j`.  This is the formal root-space version of diagonal conjugation scaling the
 `(i, j)` matrix entry by `t_i t_j⁻¹`. -/
@@ -222,20 +278,13 @@ theorem matrixUnitTangent_mem_adjointWeightSpace (i j : Fin n) :
   rw [Derivation.mem_adjointWeightSpace_iff_universalPointAction]
   let M := Multiplicative (ULift.{u} (Fin n) →₀ ℤ)
   let K := MonoidAlgebra k M
-  let p : WithConv (K →ₐ[k] K) := toConv (AlgHom.id k K)
   apply (Derivation.tangentScalarExtensionEquiv
     (R := k) (A := coordinateHopfAlgebra k n) (B := K)).injective
-  rw [Derivation.tangentScalarExtensionEquiv_adjointAction
-    (CommAlgCat.of k K)
-    (toConv ((diagonalTorusCoordinateMap (R := k) (N := n)).hom :
-      coordinateHopfAlgebra k n →ₐ[k] K))]
-  rw [pointInCounitAlgebra_universalPoint_diagonalTorus]
   apply (tangentLinearEquivMatrix n).injective
-  rw [tangentLinearEquivMatrix_apply, tangentLinearEquivMatrix_apply]
   apply Matrix.ext
   intro a b
-  rw [tangentMatrix_adDerivation_apply_diagonalTorusPoints,
-    tangentMatrix_tangentScalarExtensionEquiv_one_tmul,
+  rw [tangentLinearEquivMatrix_apply, tangentLinearEquivMatrix_apply,
+    tangentMatrix_tangentScalarExtensionEquiv_adjointAction_diagonalTorus_apply,
     tangentMatrix_tangentScalarExtensionEquiv_tmul,
     cotangentDualMatrixEquiv_matrixUnitTangent]
   simp only [Matrix.map_apply, Matrix.smul_apply, smul_eq_mul]
@@ -243,9 +292,7 @@ theorem matrixUnitTangent_mem_adjointWeightSpace (i j : Fin n) :
   · subst a
     by_cases hbj : b = j
     · subst b
-      rw [Matrix.single_apply_same, map_one, mul_one, mul_one]
-      simpa only [p] using
-        universalPoint_coordinate_mul_inv (k := k) i j
+      simp
     · simp [Ne.symm hbj]
   · simp [Ne.symm hai]
 

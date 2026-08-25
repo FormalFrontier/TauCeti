@@ -8,6 +8,9 @@ module
 public import TauCeti.Analysis.Contour.Crossing.CapAngle
 public import TauCeti.Analysis.Contour.Crossing.FiniteExcision
 public import TauCeti.Analysis.Contour.ExitTime
+public import TauCeti.Analysis.Contour.PwC1ImmersionOn
+import TauCeti.Analysis.Contour.InvSubCPVExistence
+import TauCeti.Analysis.Contour.PerWindow.CPV
 
 /-!
 # Equal-radius cap windows at crossings
@@ -24,10 +27,11 @@ joins the original curve.  `exitCapWindows` applies the construction to the sort
 finite crossing set; crossings separated by more than twice the ambient half-width
 (`2 * δ < |t - t'|`) produce nonoverlapping, hence pairwise disjoint, cap windows.
 
-This is the geometric window construction in Proposition 2.2.  The principal-value calculation on
-the generally asymmetric exit-time interval is separate: once that value is supplied,
-`windingNumber_sub_cap_exitCapWindow_eq_crossingAngle_div_two_pi` identifies the local loop with
-its crossing angle.
+This is the window construction and local analytic calculation in Proposition 2.2.
+`exists_radius_hasCauchyPVAt_exitCapWindow` evaluates the principal value on each generally
+asymmetric exit-time interval, and
+`windingNumber_sub_cap_exitCapWindow_eq_crossingAngle_div_two_pi` then identifies the local loop
+with its crossing angle.
 
 ## Main definitions
 
@@ -41,6 +45,8 @@ its crossing angle.
   endpoints.
 * `TauCeti.Contour.pairwise_disjoint_interval_exitCapWindows` -- the finite windows are pairwise
   disjoint, in the shape `Crossing.FiniteExcision` consumes.
+* `TauCeti.Contour.exists_radius_hasCauchyPVAt_exitCapWindow` -- sufficiently small exit-time
+  windows have the boundary-argument principal value.
 * `TauCeti.Contour.windingNumber_sub_cap_exitCapWindow_eq_crossingAngle_div_two_pi` -- the exact
   local angle contribution, once the principal value on the asymmetric exit-time window is
   supplied alongside the standing continuity, tangent, and radius hypotheses.
@@ -372,6 +378,76 @@ theorem exists_common_exitCapWindows_radius {γ : ℝ → ℂ} {s : ℂ} {T : Fi
       exact (hT ⟨t, ht⟩).elim
     · intro t ht
       exact (hT ⟨t, ht⟩).elim
+
+/-- **The Cauchy principal value on an exit-time window.**  Around an interior crossing of a
+piecewise-`C¹` immersion, there is an ambient radius `R` and nonzero one-sided tangent limits such
+that every smaller ambient window containing no other crossing has the following property.  For
+each positive spatial exit radius reached on both sides, the Cauchy-kernel principal value on the
+generally asymmetric interval between the two first exits is
+
+`i * (arg (-L_L / (γ(lower) - s)) + arg ((γ(upper) - s) / L_R))`.
+
+The real logarithmic term vanishes because both exit chords have the same norm.  This is the
+analytic input that `windingNumber_sub_cap_exitCapWindow_eq_crossingAngle_div_two_pi` consumes in
+Hungerbühler--Wasem Proposition 2.2. -/
+theorem exists_radius_hasCauchyPVAt_exitCapWindow {γ : ℝ → ℂ} {s : ℂ} {a b t₀ : ℝ}
+    (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b)
+    (h_at : γ t₀ = s) :
+    ∃ R > 0, ∃ L_R L_L : ℂ, L_R ≠ 0 ∧ L_L ≠ 0 ∧
+      Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R) ∧ Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L) ∧
+      ∀ δ : ℝ, 0 < δ → δ ≤ R → a < t₀ - δ → t₀ + δ ≤ b →
+      (∀ t ∈ Icc (t₀ - δ) (t₀ + δ), γ t = s → t = t₀) →
+      ∀ ε : ℝ, 0 < ε → ε ≤ ‖γ (t₀ - δ) - s‖ → ε ≤ ‖γ (t₀ + δ) - s‖ →
+      HasCauchyPVAt γ (exitCapWindow γ s t₀ δ ε L_R L_L).lower
+        (exitCapWindow γ s t₀ δ ε L_R L_L).upper (fun z ↦ (z - s)⁻¹) s
+        (((((-L_L) / (γ (exitCapWindow γ s t₀ δ ε L_R L_L).lower - s)).arg +
+          ((γ (exitCapWindow γ s t₀ δ ε L_R L_L).upper - s) / L_R).arg : ℝ) : ℂ) *
+            Complex.I) := by
+  obtain ⟨R, hR, L_R, L_L, hL_R, hL_L, h_R, h_L, hspec⟩ :=
+    exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab ht₀ h_at
+  refine ⟨R, hR, L_R, L_L, hL_R, hL_L, h_R, h_L, ?_⟩
+  intro δ hδ hδR ha hb h_unique ε hε hεL hεR
+  let W := exitCapWindow γ s t₀ δ ε L_R L_L
+  have hγ : ContinuousOn γ (Icc (t₀ - δ) (t₀ + δ)) :=
+    h_imm.continuousOn.mono (by
+      rw [uIcc_of_le hab.le]
+      exact Icc_subset_Icc ha.le hb)
+  have hγL : ContinuousOn γ (Icc (t₀ - δ) t₀) :=
+    hγ.mono (Icc_subset_Icc le_rfl (by linarith))
+  have hγR : ContinuousOn γ (Icc t₀ (t₀ + δ)) :=
+    hγ.mono (Icc_subset_Icc (by linarith) le_rfl)
+  have hlt : W.lower < t₀ := exitCapWindow_lower_lt hδ hε h_at hγL hεL
+  have htu : t₀ < W.upper := lt_exitCapWindow_upper hδ hε h_at hγR hεR
+  have hlower_mem := firstExitTimeLeft_mem_Icc hδ.le hεL
+  have hupper_mem := firstExitTimeRight_mem_Icc hδ.le hεR
+  have hnormL : ‖γ W.lower - s‖ = ε :=
+    norm_sub_exitCapWindow_lower_eq hδ hε h_at hγL hεL
+  have hnormR : ‖γ W.upper - s‖ = ε :=
+    norm_sub_exitCapWindow_upper_eq hδ hε h_at hγR hεR
+  have hW_lower : t₀ - δ ≤ W.lower := by
+    dsimp [W]
+    rw [exitCapWindow_lower]
+    exact hlower_mem.1
+  have hW_upper : W.upper ≤ t₀ + δ := by
+    dsimp [W]
+    rw [exitCapWindow_upper]
+    exact hupper_mem.2
+  have htend := hspec W.lower W.upper
+    (by linarith) hlt htu (by linarith) (ha.trans_le hW_lower) (hW_upper.trans hb)
+    (fun t ht heq => h_unique t
+      ⟨hW_lower.trans ht.1, ht.2.trans hW_upper⟩ heq)
+  refine HasCauchyPVAt.intro ?_ ?_
+  · filter_upwards [self_mem_nhdsWithin] with η hη
+    exact intervalIntegrable_inv_sub_truncated
+      (h_imm.continuousOn.mono (by
+        rw [uIcc_of_le hab.le, uIcc_of_le (hlt.le.trans htu.le)]
+        exact Icc_subset_Icc (by linarith [ha, hlower_mem.1])
+          (hupper_mem.2.trans hb)))
+      (h_imm.isPiecewiseC1On.intervalIntegrable_deriv.mono_set (by
+        rw [uIcc_of_le (hlt.le.trans htu.le), uIcc_of_le hab.le]
+        exact Icc_subset_Icc (by linarith [ha, hlower_mem.1]) (hupper_mem.2.trans hb))) hη
+  · rw [hnormR, hnormL] at htend
+    simpa only [W, sub_self, Complex.ofReal_zero, zero_add] using htend
 
 /-- **The exact local angle contribution of one exit-time cap window.**  The winding number of
 the curve over the window minus that of its cap is `crossingAngle γ t₀ / 2π`.  Beyond the

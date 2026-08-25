@@ -42,6 +42,8 @@ is automatic, which is the form the roadmap's dimension count takes.
 
 * `TauCeti.linearIndependent_zigzagBasisFun` and `TauCeti.span_range_zigzagBasisFun_eq_top`: the
   family is independent and spans.
+* `TauCeti.linearIndependent_zigzagVolume`: the volume classes are linearly independent.
+* `TauCeti.zigzagBasis_coord_apply`: the basis coordinates of basis vectors are Kronecker deltas.
 * `TauCeti.finrank_nonisolatedZigzagQuotient`: the dimension is `2|V| + 2|E|`.
 * `TauCeti.finrank_nonisolatedZigzagQuotient_of_preconnected`: the same count for a preconnected
   graph with at least two vertices.
@@ -391,6 +393,21 @@ theorem linearIndependent_zigzagBasisFun (hns : ∀ i : V, ∃ j, G.Adj i j) :
   exact congrArg (fun f => Finsupp.linearCombination k f l)
     (funext fun b => (shortProj_ofPath_zigzagBasisPath k G b).symm)
 
+section
+
+variable {k G}
+
+/-- The volume classes are linearly independent. -/
+theorem linearIndependent_zigzagVolume (hns : ∀ i : V, ∃ j, G.Adj i j) :
+    LinearIndependent k (zigzagVolume k G) := by
+  have heq : (zigzagBasisFun k G ∘ fun i : V => Sum.inr (Sum.inr i)) = zigzagVolume k G :=
+    funext fun i => zigzagBasisFun_inr_inr k G i
+  rw [← heq]
+  exact (linearIndependent_zigzagBasisFun k G hns).comp (fun i : V => Sum.inr (Sum.inr i))
+    fun _ _ h => by simpa using h
+
+end
+
 /-- **The vertex, arrow and volume classes span.** -/
 theorem span_range_zigzagBasisFun_eq_top :
     Submodule.span k (Set.range (zigzagBasisFun k G)) = ⊤ := by
@@ -447,6 +464,13 @@ noncomputable def zigzagBasis (hns : ∀ i : V, ∃ j, G.Adj i j) :
 theorem zigzagBasis_apply (hns : ∀ i : V, ∃ j, G.Adj i j) (b : ZigzagBasisIndex G) :
     zigzagBasis k G hns b = zigzagBasisFun k G b :=
   Module.Basis.mk_apply _ _ _
+
+open scoped Classical in
+/-- A coordinate of a zigzag basis vector is the corresponding Kronecker delta. -/
+theorem zigzagBasis_coord_apply (hns : ∀ i : V, ∃ j, G.Adj i j)
+    (b b' : ZigzagBasisIndex G) :
+    (zigzagBasis k G hns).coord b (zigzagBasis k G hns b') = if b' = b then 1 else 0 := by
+  rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply]
 
 /-- The volume class of a vertex with a neighbour is nonzero, whatever the rest of the graph does:
 its chosen backtrack survives the coordinate map. -/

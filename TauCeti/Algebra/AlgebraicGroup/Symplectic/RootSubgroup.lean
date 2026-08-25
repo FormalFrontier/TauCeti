@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 -- The ambient root subgroups supply the coordinate maps through which the symplectic maps factor.
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup
 -- The symplectic scheme and its point equivalence identify the target of the root maps.
 public import TauCeti.Algebra.AlgebraicGroup.Symplectic.Basic
 

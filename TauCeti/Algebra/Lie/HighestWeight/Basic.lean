@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Lie.Basic
 public import TauCeti.Algebra.Lie.Weights.Borel
 import TauCeti.Algebra.Lie.Weights.Eigenvector
 public import TauCeti.Algebra.Lie.Weights.Integrality
@@ -71,10 +72,11 @@ structure, and `TauCeti.isHighestWeightVector_iff` together with the three proje
 `TauCeti.IsHighestWeightVector.lie_eq_zero_of_mem_positiveNilradical` is its elimination API; no
 consumer needs to take the conjunction apart by hand.
 
-The annihilator of a vector is a Lie subalgebra, by the Leibniz rule, and that is the only reason
-`TauCeti.isHighestWeightVector_of_forall_rootSpace` holds: the universal property
-`TauCeti.positiveNilradical_le_iff` of the positive nilradical is stated against Lie subalgebras.
-The annihilator is kept private, being a device of that one proof.
+The canonical public helper `TauCeti.lieAnnihilator` in `TauCeti.Algebra.Lie.Basic` packages the
+elements annihilating a vector as a Lie subalgebra. Here it lets
+`TauCeti.positiveNilradical_le_iff` extend positive-root-space annihilation to the positive
+nilradical; `TauCeti.IsHighestWeightVector.lie_eq_zero_of_weight_zero` uses the same helper with
+`TauCeti.negativeNilradical_le_iff` for the negative nilradical.
 
 Finite-dimensionality of `M` is a hypothesis of the dominance theorem alone: the definitions and
 the elimination API are stated for an arbitrary `L`-module, since the Verma modules that Layer 3 of
@@ -176,32 +178,6 @@ end IsHighestWeightVector
 
 /-! ### Recognising a highest weight vector on the root spaces -/
 
-/-- The elements of `L` annihilating a fixed vector `v` form a Lie subalgebra: the bracket is
-linear in its left argument, and the Leibniz rule `lie_lie` closes the set under brackets.
-
-This is the Lie subalgebra that the universal property `TauCeti.positiveNilradical_le_iff`, whose
-target is a Lie subalgebra rather than a submodule, is applied to in
-`TauCeti.isHighestWeightVector_of_forall_rootSpace`. -/
-private def annihilator (v : M) : LieSubalgebra K L where
-  carrier := {x : L | ⁅x, v⁆ = 0}
-  add_mem' {x y} hx hy := by
-    simp only [Set.mem_ofPred_eq] at hx hy ⊢
-    rw [add_lie, hx, hy, add_zero]
-  zero_mem' := by
-    simp only [Set.mem_ofPred_eq]
-    rw [zero_lie]
-  smul_mem' c x hx := by
-    simp only [Set.mem_ofPred_eq] at hx ⊢
-    rw [smul_lie, hx, smul_zero]
-  lie_mem' {x y} hx hy := by
-    simp only [Set.mem_ofPred_eq] at hx hy ⊢
-    rw [lie_lie, hx, hy, lie_zero, lie_zero, sub_zero]
-
-omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] in
-private theorem mem_annihilator {v : M} {x : L} :
-    x ∈ (annihilator v : LieSubalgebra K L) ↔ ⁅x, v⁆ = 0 :=
-  Iff.rfl
-
 /-- **Positive root spaces suffice.** A nonzero `H`-eigenvector annihilated by the root space of
 every positive root is a highest weight vector: the positive nilradical is spanned by those root
 spaces, and the annihilator of a vector is a Lie subalgebra, so the universal property
@@ -212,9 +188,10 @@ theorem isHighestWeightVector_of_forall_rootSpace {lam : Dual K H} {v : M} (hv0 
       ∀ x ∈ rootSpace H (α : H → K), ⁅x, v⁆ = 0) :
     IsHighestWeightVector b lam v := by
   refine isHighestWeightVector_iff.mpr ⟨hv0, hcartan, fun x hx => ?_⟩
-  have hle : positiveNilradical H b ≤ (annihilator v : LieSubalgebra K L) :=
-    (positiveNilradical_le_iff H b).mpr fun α hα y hy => mem_annihilator.mpr (hpos α hα y hy)
-  exact mem_annihilator.mp (hle hx)
+  have hle : positiveNilradical H b ≤ lieAnnihilator K L v :=
+    (positiveNilradical_le_iff H b).mpr fun α hα y hy =>
+      (mem_lieAnnihilator K L).mpr (hpos α hα y hy)
+  exact (mem_lieAnnihilator K L).mp (hle hx)
 
 /-- Being a highest weight vector is exactly being a nonzero `H`-eigenvector annihilated by every
 positive root space. -/
@@ -333,9 +310,7 @@ theorem IsDominantIntegral.isIntegralWeight {lam : Dual K H}
   rcases mem_posRoots_or_mem_negRoots (IsKilling.rootSystem H) b i with hi | hi
   · obtain ⟨n, hn⟩ := hlam.exists_nat_apply_coroot hi
     exact ⟨n, by simpa using hn⟩
-  · have hi' : -i ∈ posRoots (IsKilling.rootSystem H) b := by
-      rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg]
-      exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots (IsKilling.rootSystem H) b i).mpr hi
+  · have hi' := neg_mem_posRoots_of_mem_negRoots b hi
     obtain ⟨n, hn⟩ := hlam.exists_nat_apply_coroot hi'
     refine ⟨-n, ?_⟩
     rw [IsKilling.rootSystem_coroot_apply, IsKilling.val_neg_root, IsKilling.coroot_neg,

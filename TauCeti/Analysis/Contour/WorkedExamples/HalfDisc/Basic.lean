@@ -47,6 +47,12 @@ residue theorem does not apply because the pole lies *on* the contour.
   origin is `½`.
 * `TauCeti.Contour.halfDiscBoundary_eq_zero_iff` — the contour meets the origin exactly once,
   at `t = 0`.
+* `TauCeti.Contour.halfDiscBoundary_im_eq_zero_or_norm_eq`,
+  `TauCeti.Contour.im_halfDiscBoundary_nonneg`, and `TauCeti.Contour.norm_halfDiscBoundary_le` —
+  the contour lies in the closed upper half-disc on its parameter interval, with
+  `TauCeti.Contour.norm_halfDiscBoundary_eq` pinning the arc to the circle itself.
+* `TauCeti.Contour.halfDiscBoundary_ne_of_im_pos_of_norm_lt` — the contour avoids the open upper
+  half-disc.
 * `TauCeti.Contour.deriv_halfDiscBoundary_of_lt_radius` and
   `TauCeti.Contour.deriv_halfDiscBoundary_of_lt` — before the junction the derivative is the real
   inclusion's, beyond it the circle map's at the shifted parameter.
@@ -87,6 +93,55 @@ theorem halfDiscBoundary_of_le {t : ℝ} (h : t ≤ R) : halfDiscBoundary R t = 
 theorem halfDiscBoundary_of_lt {t : ℝ} (h : R < t) :
     halfDiscBoundary R t = circleMap 0 R (t - R) :=
   ite_eq_right (not_le.mpr h)
+
+/-! ### Where the contour lives -/
+
+/-- **Each point of the half-disc contour is either real or on the circle.** Up to the junction the
+contour runs along the real diameter, beyond it along the circle of radius `R`; there is no third
+possibility. This dichotomy is what keeps the contour out of the open upper half-disc. -/
+theorem halfDiscBoundary_im_eq_zero_or_norm_eq (hR : 0 ≤ R) (t : ℝ) :
+    (halfDiscBoundary R t).im = 0 ∨ ‖halfDiscBoundary R t‖ = R := by
+  rcases le_or_gt t R with ht | ht
+  · exact Or.inl (by rw [halfDiscBoundary_of_le ht]; simp)
+  · exact Or.inr (by rw [halfDiscBoundary_of_lt ht, norm_circleMap_zero, abs_of_nonneg hR])
+
+/-- **The half-disc contour stays in the closed upper half-plane** on its parameter interval: the
+diameter is real and the arc is the *upper* semicircle. -/
+theorem im_halfDiscBoundary_nonneg (hR : 0 ≤ R) {t : ℝ} (ht : t ≤ R + Real.pi) :
+    0 ≤ (halfDiscBoundary R t).im := by
+  rcases le_or_gt t R with h | h
+  · rw [halfDiscBoundary_of_le h]; simp
+  · rw [halfDiscBoundary_of_lt h, circleMap_zero_im]
+    exact mul_nonneg hR
+      (Real.sin_nonneg_of_nonneg_of_le_pi (by linarith) (by linarith))
+
+/-- **The half-disc contour stays in the closed disc of radius `R`** on its parameter interval: the
+diameter has `|t| ≤ R` and the arc has norm exactly `R`. -/
+theorem norm_halfDiscBoundary_le (hR : 0 ≤ R) {t : ℝ} (ht : -R ≤ t) :
+    ‖halfDiscBoundary R t‖ ≤ R := by
+  rcases le_or_gt t R with h | h
+  · rw [halfDiscBoundary_of_le h, Complex.norm_real, Real.norm_eq_abs]
+    exact abs_le.mpr ⟨ht, h⟩
+  · rw [halfDiscBoundary_of_lt h, norm_circleMap_zero, abs_of_nonneg hR]
+
+/-- **Beyond the junction the half-disc contour has norm exactly `R`.** At the junction itself the
+contour is the real point `R`; past it, it is the circle of radius `R`. -/
+theorem norm_halfDiscBoundary_eq (hR : 0 ≤ R) {t : ℝ} (ht : R ≤ t) :
+    ‖halfDiscBoundary R t‖ = R := by
+  rcases eq_or_lt_of_le ht with h | h
+  · rw [← h, halfDiscBoundary_of_le le_rfl, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_nonneg hR]
+  · rw [halfDiscBoundary_of_lt h, norm_circleMap_zero, abs_of_nonneg hR]
+
+/-- **The half-disc contour avoids the open upper half-disc.** A point strictly above the real axis
+and strictly inside the disc is neither real nor at distance `R` from the origin. -/
+theorem halfDiscBoundary_ne_of_im_pos_of_norm_lt {s : ℂ} (him : 0 < s.im) (hs : ‖s‖ < R)
+    (t : ℝ) : halfDiscBoundary R t ≠ s := by
+  have hR : 0 ≤ R := (norm_nonneg s).trans hs.le
+  intro h
+  rcases halfDiscBoundary_im_eq_zero_or_norm_eq hR t with hz | hn
+  · exact him.ne' (h ▸ hz)
+  · exact hs.ne (h ▸ hn)
 
 /-- The contour starts at `-R`. -/
 -- Not `@[simp]`: with `halfDiscBoundary_of_le` in the simp set, `simp` already proves this
