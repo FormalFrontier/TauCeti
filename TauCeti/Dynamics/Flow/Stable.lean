@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Dynamics.Flow
-public import Mathlib.Order.Filter.AtTopBot.Archimedean
 public import Mathlib.Topology.Instances.Real.Lemmas
 
 /-!
@@ -128,6 +127,11 @@ theorem self_mem_unstableSet_iff [T2Space α] {φ : _root_.Flow ℝ α} {x : α}
   rw [mem_unstableSet]
   simpa only [hx] using (tendsto_const_nhds : Tendsto (fun _ : ℝ ↦ x) atBot (𝓝 x))
 
+/-- Time reversal is an involution. -/
+@[simp]
+theorem reverse_reverse (φ : _root_.Flow ℝ α) : φ.reverse.reverse = φ :=
+  _root_.Flow.ext fun t _ ↦ by simp only [_root_.Flow.reverse_apply, neg_neg]
+
 /-- Time reversal exchanges stable and unstable sets. -/
 @[simp]
 theorem stableSet_reverse (φ : _root_.Flow ℝ α) (x : α) :
@@ -144,13 +148,7 @@ theorem stableSet_reverse (φ : _root_.Flow ℝ α) (x : α) :
 @[simp]
 theorem unstableSet_reverse (φ : _root_.Flow ℝ α) (x : α) :
     unstableSet φ.reverse x = stableSet φ x := by
-  ext y
-  simp only [mem_stableSet, mem_unstableSet, _root_.Flow.reverse_apply]
-  constructor
-  · intro h
-    simpa only [Function.comp_def, neg_neg] using h.comp tendsto_neg_atTop_atBot
-  · intro h
-    simpa only [Function.comp_def, neg_neg] using h.comp tendsto_neg_atBot_atTop
+  rw [← stableSet_reverse φ.reverse x, reverse_reverse]
 
 /-- Under the identity flow, the stable set of `x` is the singleton `{x}`. -/
 @[simp]

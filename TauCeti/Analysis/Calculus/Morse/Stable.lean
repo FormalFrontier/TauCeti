@@ -106,58 +106,54 @@ theorem IsNegativeGradient.value_le_of_mem_unstableSet_inter_stableSet
   (hφ.value_le_of_mem_stableSet hx.2 hf hfq).trans
     (hφ.value_ge_of_mem_unstableSet hx.1 hf hfp)
 
-private theorem IsNegativeGradient.orbit_eq_of_comp_eq (hφ : IsNegativeGradient φ f)
+/-- An orbit on which `f` is constant is constant: any two of its points coincide. -/
+private theorem IsNegativeGradient.orbit_eq_of_const_value (hφ : IsNegativeGradient φ f)
     (hf : ∀ t, DifferentiableAt ℝ f (φ t x)) (hc : ∀ t, f (φ t x) = f x) (t u : ℝ) :
     φ t x = φ u x := by
   let γ : ℝ → E := fun v ↦ φ v x
   have hγ : IsIntegralCurve γ (fun _ y ↦ -∇ f y) := hφ x
   apply is_const_of_deriv_eq_zero (fun v ↦ (hγ v).differentiableAt) _ t u
   intro v
-  have hzero : deriv (f ∘ γ) v = 0 := by
-    have heq : (f ∘ γ) =ᶠ[𝓝 v] fun _ ↦ f x :=
-      Eventually.of_forall fun w ↦ hc w
-    rw [heq.deriv_eq, deriv_const]
-  rw [(TauCeti.IsIntegralCurve.hasDerivAt_comp_neg_gradient hγ (hf v)).deriv] at hzero
-  have hgrad : ∇ f (γ v) = 0 := by
-    simpa only [neg_eq_zero, sq_eq_zero_iff, norm_eq_zero] using hzero
+  have hgrad : ∇ f (γ v) = 0 :=
+    TauCeti.IsIntegralCurve.gradient_eq_zero_of_eventually_const_value hγ (hf v)
+      (Eventually.of_forall hc)
   rw [(hγ v).deriv]
   simp only [hgrad, neg_zero]
 
-private theorem eq_zero_of_antitone_of_tendsto_atBot_atTop {g : ℝ → ℝ} {a : ℝ}
-    (hg : Antitone g) (hbot : Tendsto g atBot (𝓝 a)) (htop : Tendsto g atTop (𝓝 a))
-    (t : ℝ) :
-    g t = g 0 := by
-  apply le_antisymm
-  · exact (hg.ge_of_tendsto hbot t).trans (hg.le_of_tendsto htop 0)
-  · exact (hg.ge_of_tendsto hbot 0).trans (hg.le_of_tendsto htop t)
+/-- If an orbit's values converge to the same constant in both forward and backward time, then the
+orbit is constant: every time map fixes its initial point. -/
+private theorem IsNegativeGradient.orbit_eq_self_of_tendsto_const_value
+    (hφ : IsNegativeGradient φ f) (hf : ∀ t, DifferentiableAt ℝ f (φ t x))
+    {c : ℝ} (hbot : Tendsto (fun t ↦ f (φ t x)) atBot (𝓝 c))
+    (htop : Tendsto (fun t ↦ f (φ t x)) atTop (𝓝 c)) :
+    ∀ t, φ t x = x := by
+  have hanti := hφ.antitone_orbit x hf
+  have hvalue : ∀ t, f (φ t x) = f x := fun t ↦ by
+    simpa only [_root_.Flow.map_zero_apply] using le_antisymm
+      ((hanti.ge_of_tendsto hbot t).trans (hanti.le_of_tendsto htop 0))
+      ((hanti.ge_of_tendsto hbot 0).trans (hanti.le_of_tendsto htop t))
+  intro t
+  simpa only [_root_.Flow.map_zero_apply] using
+    hφ.orbit_eq_of_const_value hf hvalue t 0
 
-/-- A connecting orbit whose two endpoint values agree has equal endpoints. -/
+/-- A connecting orbit whose two endpoint values agree lies on the constant orbit through the
+shared endpoint: `x = p` and `p = q`. -/
 theorem IsNegativeGradient.eq_of_mem_unstableSet_inter_stableSet_of_value_eq
     (hφ : IsNegativeGradient φ f) (hf : ∀ t, DifferentiableAt ℝ f (φ t x))
     (hfp : ContinuousAt f p) (hfq : ContinuousAt f q)
     (hx : x ∈ unstableSet φ p ∩ stableSet φ q) (hpq : f p = f q) :
-    p = q := by
-  have hanti := hφ.antitone_orbit x hf
-  have hp : Tendsto (fun t ↦ f (φ t x)) atBot (𝓝 (f p)) :=
-    hfp.tendsto.comp (mem_unstableSet.mp hx.1)
-  have hq : Tendsto (fun t ↦ f (φ t x)) atTop (𝓝 (f q)) :=
-    hfq.tendsto.comp (mem_stableSet.mp hx.2)
-  have hq' : Tendsto (fun t ↦ f (φ t x)) atTop (𝓝 (f p)) := by
-    simpa only [hpq] using hq
-  have hvalue : ∀ t, f (φ t x) = f x := fun t ↦ by
-    simpa only [_root_.Flow.map_zero_apply] using
-      eq_zero_of_antitone_of_tendsto_atBot_atTop hanti hp hq' t
-  have horbit : ∀ t, φ t x = x := by
-    intro t
-    simpa only [_root_.Flow.map_zero_apply] using
-      hφ.orbit_eq_of_comp_eq hf hvalue t 0
-  have hpt : Tendsto (fun _ : ℝ ↦ x) atBot (𝓝 p) := by
+    x = p ∧ p = q := by
+  have horbit := hφ.orbit_eq_self_of_tendsto_const_value hf
+    (hfp.tendsto.comp (mem_unstableSet.mp hx.1))
+    (by simpa only [hpq, Function.comp_def] using
+      hfq.tendsto.comp (mem_stableSet.mp hx.2))
+  have hxbot : Tendsto (fun _ : ℝ ↦ x) atBot (𝓝 p) := by
     simpa only [horbit] using mem_unstableSet.mp hx.1
-  have hqt : Tendsto (fun _ : ℝ ↦ x) atTop (𝓝 q) := by
+  have hxtop : Tendsto (fun _ : ℝ ↦ x) atTop (𝓝 q) := by
     simpa only [horbit] using mem_stableSet.mp hx.2
-  have hpx : p = x := tendsto_nhds_unique hpt tendsto_const_nhds
-  have hxq : x = q := tendsto_nhds_unique tendsto_const_nhds hqt
-  exact hpx.trans hxq
+  have hpx : x = p := tendsto_nhds_unique tendsto_const_nhds hxbot
+  have hxq : x = q := tendsto_nhds_unique tendsto_const_nhds hxtop
+  exact ⟨hpx, hpx ▸ hxq⟩
 
 /-- A negative gradient connecting orbit between distinct endpoints strictly lowers the defining
 function. -/
@@ -170,7 +166,8 @@ theorem IsNegativeGradient.value_lt_of_mem_unstableSet_inter_stableSet
     (hφ.value_le_of_mem_unstableSet_inter_stableSet hf hfp hfq hx) ?_
   intro hvalue
   exact hpq
-    (hφ.eq_of_mem_unstableSet_inter_stableSet_of_value_eq hf hfp hfq hx hvalue.symm)
+    (hφ.eq_of_mem_unstableSet_inter_stableSet_of_value_eq hf hfp hfq hx
+      hvalue.symm).2
 
 /-- A point lying in both the stable and unstable set of the same endpoint lies on the constant
 orbit of that endpoint.  Thus a negative gradient flow has no nonconstant homoclinic orbit. -/
@@ -178,21 +175,7 @@ theorem IsNegativeGradient.eq_of_mem_unstableSet_inter_stableSet
     (hφ : IsNegativeGradient φ f) (hf : ∀ t, DifferentiableAt ℝ f (φ t x))
     (hfp : ContinuousAt f p)
     (hx : x ∈ unstableSet φ p ∩ stableSet φ p) :
-    x = p := by
-  have hanti := hφ.antitone_orbit x hf
-  have hpbot : Tendsto (fun t ↦ f (φ t x)) atBot (𝓝 (f p)) :=
-    hfp.tendsto.comp (mem_unstableSet.mp hx.1)
-  have hptop : Tendsto (fun t ↦ f (φ t x)) atTop (𝓝 (f p)) :=
-    hfp.tendsto.comp (mem_stableSet.mp hx.2)
-  have hvalue : ∀ t, f (φ t x) = f x := fun t ↦ by
-    simpa only [_root_.Flow.map_zero_apply] using
-      eq_zero_of_antitone_of_tendsto_atBot_atTop hanti hpbot hptop t
-  have horbit : ∀ t, φ t x = x := by
-    intro t
-    simpa only [_root_.Flow.map_zero_apply] using
-      hφ.orbit_eq_of_comp_eq hf hvalue t 0
-  have hlim : Tendsto (fun _ : ℝ ↦ x) atTop (𝓝 p) := by
-    simpa only [horbit] using mem_stableSet.mp hx.2
-  exact tendsto_nhds_unique tendsto_const_nhds hlim
+    x = p :=
+  (hφ.eq_of_mem_unstableSet_inter_stableSet_of_value_eq hf hfp hfp hx rfl).1
 
 end Flow
