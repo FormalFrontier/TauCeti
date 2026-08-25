@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Basic
 import TauCeti.Algebra.AlgebraicGroup.Connected.Product
-import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Smooth
+import TauCeti.Algebra.AlgebraicGroup.Smooth.Product
 
 /-!
 # Geometric properties of products of unipotent-radical candidates
@@ -20,8 +20,8 @@ is the closed subgroup represented by `CommHopfAlgCat.productOfNormal`.
 
 This file proves two of the geometric properties needed to show that this image is again a
 unipotent-radical candidate. The semidirect-product source is geometrically connected, because
-its underlying scheme is the direct product of the two connected factors, and it is smooth
-unipotent. Geometric connectedness and smoothness then descend to the scheme-theoretic image.
+its underlying scheme is the direct product of the two connected factors, and it is smooth.
+Geometric connectedness and smoothness then descend to the scheme-theoretic image.
 
 Normality and containment of the factors are separate coordinate calculations. Geometric
 unipotence of the image additionally needs faithful flatness of a homomorphism of affine groups
@@ -71,17 +71,12 @@ theorem geometricallyConnected_productOfNormal
     (hJ : IsUnipotentRadicalCandidate H J) :
     geometricallyConnectedCommHopfAlgProperty k
       (CommHopfAlgCat.productOfNormal H.obj I J hI.isNormal) := by
-  let A := CommHopfAlgCat.quotientNormalConjugation H.obj I J hI.isNormal
-  apply geometricallyConnectedCommHopfAlgProperty.image
-    (CommHopfAlgCat.productMapOfNormal H.obj I J hI.isNormal)
-  exact geometricallyConnectedCommHopfAlgProperty.semidirectProduct
-    (FiniteTypeCommHopfAlgCat.quotient H I).obj
-    (FiniteTypeCommHopfAlgCat.quotient H J).obj A
+  exact geometricallyConnectedCommHopfAlgProperty.productOfNormal H.obj I J hI.isNormal
     hI.geometricallyConnected hJ.geometricallyConnected
 
 /-- The scheme-theoretic multiplication image of two unipotent-radical candidates is smooth.
 
-The conjugation semidirect product is smooth unipotent because both factors are. Its smoothness
+The conjugation semidirect product is smooth because both factors are. Its smoothness
 descends to the scheme-theoretic image inside the finite-type ambient group. This result does not
 assert unipotence of the image. -/
 theorem smooth_productOfNormal
@@ -91,23 +86,15 @@ theorem smooth_productOfNormal
       (CommHopfAlgCat.productOfNormal H.obj I J hI.isNormal) := by
   let QI := FiniteTypeCommHopfAlgCat.quotient H I
   let QJ := FiniteTypeCommHopfAlgCat.quotient H J
-  let A := CommHopfAlgCat.quotientNormalConjugation H.obj I J hI.isNormal
-  have hsmoothI :=
-    (smoothUnipotentCommHopfAlgProperty_iff k QI).mp hI.smoothUnipotent |>.1
-  have hsmoothJ :=
-    (smoothUnipotentCommHopfAlgProperty_iff k QJ).mp hJ.smoothUnipotent |>.1
-  let smoothI : Algebra.Smooth k QI := hsmoothI
-  let smoothJ : Algebra.Smooth k QJ := hsmoothJ
-  let smoothOverI : Algebra.Smooth QI ((QI : Type u) ⊗[k] (QJ : Type u)) :=
-    @Algebra.Smooth.baseChange k _ QJ QI _ _ _ _ smoothJ
-  let smoothProduct : Algebra.Smooth k ((QI : Type u) ⊗[k] (QJ : Type u)) :=
-    @Algebra.Smooth.comp k _ QI ((QI : Type u) ⊗[k] (QJ : Type u))
-      _ _ _ _ _ _ smoothI smoothOverI
-  have hsourceSmooth : smoothCommHopfAlgProperty k A.coordinateHopfAlgebra :=
-    (smoothCommHopfAlgProperty_iff A.coordinateHopfAlgebra).mpr
-      (Algebra.Smooth.of_equiv A.coordinateAlgEquiv.symm)
-  exact smoothCommHopfAlgProperty.image
-    (CommHopfAlgCat.productMapOfNormal H.obj I J hI.isNormal) hsourceSmooth
+  -- Each finite-type quotient wrapper has `.obj` definitionally equal to the corresponding
+  -- `CommHopfAlgCat.quotient` used by `smoothCommHopfAlgProperty.productOfNormal`.
+  have hIs : smoothCommHopfAlgProperty k QI.obj :=
+    (smoothCommHopfAlgProperty_iff QI.obj).mpr
+      ((smoothUnipotentCommHopfAlgProperty_iff k QI).mp hI.smoothUnipotent |>.1)
+  have hJs : smoothCommHopfAlgProperty k QJ.obj :=
+    (smoothCommHopfAlgProperty_iff QJ.obj).mpr
+      ((smoothUnipotentCommHopfAlgProperty_iff k QJ).mp hJ.smoothUnipotent |>.1)
+  exact smoothCommHopfAlgProperty.productOfNormal H.obj I J hI.isNormal hIs hJs
 
 end HopfIdeal.IsUnipotentRadicalCandidate
 
