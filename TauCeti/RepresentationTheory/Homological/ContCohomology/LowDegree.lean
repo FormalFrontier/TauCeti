@@ -11,6 +11,7 @@ public import Mathlib.RepresentationTheory.Homological.GroupCohomology.LowDegree
 public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import Mathlib.Topology.Algebra.MulAction
 public import Mathlib.Topology.ContinuousMap.Algebra
+public import TauCeti.GroupTheory.GroupAction.FixedPoints
 
 import Mathlib.Tactic.Abel
 
@@ -313,20 +314,22 @@ section RestrictionDegreeZero
 variable (G : Type u) [Group G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
   (U : Subgroup G)
 
-/-- An element fixed by `G` remains fixed after restricting the action to `U`. -/
-private theorem mem_H0_subgroup {m : M} (hm : m ∈ H0 G M) : m ∈ H0 U M :=
-  (FixedPoints.mem_addSubgroup U M m).2 fun u =>
-    (FixedPoints.mem_addSubgroup G M m).1 hm u
-
 /-- **Restriction in degree zero**, the inclusion `H⁰(G, M) → H⁰(U, M)`. -/
-def explicitRes0 : H0 G M →+ H0 U M where
-  toFun m := ⟨m, mem_H0_subgroup G M U m.2⟩
-  map_zero' := rfl
-  map_add' _ _ := rfl
+def explicitRes0 : H0 G M →+ H0 U M := by
+  let toTop : H0 G M →+ FixedPoints.addSubmonoid (⊤ : Subgroup G) M :=
+    { toFun := fun m => ⟨m, by
+        change (m : M) ∈ FixedPoints.addSubgroup (⊤ : Subgroup G) M
+        rw [fixedPoints_addSubgroup_top G M]
+        exact m.2⟩
+      map_zero' := rfl
+      map_add' := fun _ _ => rfl }
+  exact (fixedPointsInclusion (M := M) (show U ≤ (⊤ : Subgroup G) from le_top)).comp toTop
 
 /-- Restriction in degree zero does not change the underlying coefficient. -/
 @[simp]
-theorem coe_explicitRes0 (m : H0 G M) : (explicitRes0 G M U m : M) = m := (rfl)
+theorem coe_explicitRes0 (m : H0 G M) : (explicitRes0 G M U m : M) = m := by
+  unfold explicitRes0
+  exact coe_fixedPointsInclusion (M := M) (show U ≤ (⊤ : Subgroup G) from le_top) _
 
 end RestrictionDegreeZero
 
