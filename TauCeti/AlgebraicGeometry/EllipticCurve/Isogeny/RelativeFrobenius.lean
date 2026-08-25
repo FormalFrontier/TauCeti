@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.PowerTower
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.MapAlong
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.RelativeFrobenius
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Separability
 
@@ -47,6 +48,10 @@ that factorisation.
   `W.FunctionField`, a `TauCeti.CoordinatePullback`.
 * `TauCeti.Isogeny.relativeFrobeniusIsogeny`: the relative Frobenius isogeny
   `W → W.map (frobenius F p)`.
+* `TauCeti.Isogeny.iterateRelativeFrobeniusIsogeny`: the `n`-fold relative Frobenius
+  `W → W.map (iterateFrobenius F p n)`.
+* `TauCeti.Isogeny.iterateRelativeFrobeniusPointHom`: its point map, given by
+  `(x, y) ↦ (x ^ (p ^ n), y ^ (p ^ n))`.
 
 ## Main results
 
@@ -56,6 +61,8 @@ that factorisation.
 * `TauCeti.Isogeny.degree_relativeFrobeniusIsogeny`: its degree is `p` (Silverman II.2.11(c)),
   with `TauCeti.Isogeny.separableDegree_relativeFrobeniusIsogeny` and
   `TauCeti.Isogeny.inseparableDegree_relativeFrobeniusIsogeny` splitting that as `1 · p`.
+* `TauCeti.Isogeny.degree_iterateRelativeFrobeniusIsogeny`: the `n`-fold iterate has degree
+  `p ^ n` and is purely inseparable.
 
 The degree is the shared tower comparison
 `WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow`, applied to the pullback: over the
@@ -108,7 +115,7 @@ open Polynomial WeierstrassCurve
 
 namespace TauCeti
 
-open WeierstrassCurve.Affine
+open _root_.WeierstrassCurve.Affine
 
 namespace Isogeny
 
@@ -234,6 +241,155 @@ so tagging it fails `simpNF`; it is stated for the same reason as
 theorem inseparableDegree_relativeFrobeniusIsogeny :
     (relativeFrobeniusIsogeny p W).inseparableDegree = p := by
   rw [inseparableDegree_eq_degree_of_isPurelyInseparable, degree_relativeFrobeniusIsogeny]
+
+/-! ### Iterated relative Frobenius -/
+
+/-- **The iterated relative Frobenius pullback.** It reads the coordinate-ring map
+`CoordinateRing.iterateRelativeFrobenius` into `W.FunctionField`. -/
+noncomputable def iterateRelativeFrobeniusPullback (n : ℕ) :
+    CoordinatePullback W (W.map (iterateFrobenius F p n)) :=
+  (IsScalarTower.toAlgHom F W.CoordinateRing W.FunctionField).comp
+    (CoordinateRing.iterateRelativeFrobenius p W n)
+
+/-- The iterated relative Frobenius pullback is the coordinate-ring map followed by the
+canonical embedding into the function field. -/
+@[simp]
+theorem iterateRelativeFrobeniusPullback_apply (n : ℕ)
+    (z : (W.map (iterateFrobenius F p n)).CoordinateRing) :
+    iterateRelativeFrobeniusPullback p W n z =
+      algebraMap W.CoordinateRing W.FunctionField
+        (CoordinateRing.iterateRelativeFrobenius p W n z) := by
+  rw [iterateRelativeFrobeniusPullback, AlgHom.comp_apply,
+    IsScalarTower.toAlgHom_apply]
+
+/-- **The iterated relative Frobenius maps infinity to infinity.** Each coordinate function is
+integral over its `p ^ n`-th power in the pulled-back coordinate ring. -/
+theorem mapsInfinity_iterateRelativeFrobeniusPullback (n : ℕ) :
+    (iterateRelativeFrobeniusPullback p W n).MapsInfinity := by
+  refine CoordinatePullback.mapsInfinity_of_pow (iterateRelativeFrobeniusPullback p W n)
+    (expChar_pow_pos F p n) fun z ↦ ?_
+  exact ⟨_root_.WeierstrassCurve.Affine.CoordinateRing.map W
+    (iterateFrobenius F p n) z, by
+      rw [iterateRelativeFrobeniusPullback_apply,
+        CoordinateRing.iterateRelativeFrobenius_map, map_pow]⟩
+
+/-- **The `n`-fold relative Frobenius isogeny**
+`W → W.map (iterateFrobenius F p n)`. -/
+noncomputable def iterateRelativeFrobeniusIsogeny (n : ℕ) :
+    Isogeny W (W.map (iterateFrobenius F p n)) where
+  pullback := iterateRelativeFrobeniusPullback p W n
+  mapsInfinity := mapsInfinity_iterateRelativeFrobeniusPullback p W n
+
+/-- The iterated relative Frobenius isogeny's pullback is
+`iterateRelativeFrobeniusPullback`. -/
+@[simp]
+theorem iterateRelativeFrobeniusIsogeny_pullback (n : ℕ) :
+    (iterateRelativeFrobeniusIsogeny p W n).pullback =
+      iterateRelativeFrobeniusPullback p W n := (rfl)
+
+/-- The function-field pullback of a base-changed coordinate function is its
+`p ^ n`-th power. -/
+theorem fieldPullback_iterateRelativeFrobeniusIsogeny_coordinateRingMap (n : ℕ)
+    (z : W.CoordinateRing) :
+    (iterateRelativeFrobeniusIsogeny p W n).fieldPullback
+        (algebraMap (W.map (iterateFrobenius F p n)).CoordinateRing
+          (W.map (iterateFrobenius F p n)).FunctionField
+          (_root_.WeierstrassCurve.Affine.CoordinateRing.map W
+            (iterateFrobenius F p n) z)) =
+      algebraMap W.CoordinateRing W.FunctionField z ^ p ^ n := by
+  rw [Isogeny.fieldPullback_algebraMap, iterateRelativeFrobeniusIsogeny_pullback,
+    iterateRelativeFrobeniusPullback_apply,
+    CoordinateRing.iterateRelativeFrobenius_map, map_pow]
+
+/-- **Every `p ^ n`-th power in `F(W)` lies in the pulled-back function field of the `n`-th
+Frobenius twist.** -/
+theorem pow_mem_fieldRange_iterateRelativeFrobeniusIsogeny (n : ℕ)
+    (z : W.FunctionField) :
+    z ^ p ^ n ∈ (iterateRelativeFrobeniusIsogeny p W n).fieldPullback.fieldRange := by
+  obtain ⟨a, b, -, rfl⟩ := IsFractionRing.div_surjective (A := W.CoordinateRing) z
+  rw [div_pow]
+  exact div_mem
+    ⟨_, fieldPullback_iterateRelativeFrobeniusIsogeny_coordinateRingMap p W n a⟩
+    ⟨_, fieldPullback_iterateRelativeFrobeniusIsogeny_coordinateRingMap p W n b⟩
+
+/-- **Every iterated relative Frobenius is purely inseparable.** -/
+instance isPurelyInseparable_iterateRelativeFrobeniusIsogeny (n : ℕ) :
+    IsPurelyInseparable
+      (iterateRelativeFrobeniusIsogeny p W n).fieldPullback.fieldRange W.FunctionField := by
+  rw [isPurelyInseparable_iff_pow_mem _ p]
+  exact fun z ↦ ⟨n, by
+    simpa using pow_mem_fieldRange_iterateRelativeFrobeniusIsogeny p W n z⟩
+
+/-- The iterated relative Frobenius pullback sends the affine coordinate of the twist to
+`x ^ (p ^ n)`. -/
+@[simp]
+theorem fieldPullback_iterateRelativeFrobeniusIsogeny_X (n : ℕ) :
+    (iterateRelativeFrobeniusIsogeny p W n).fieldPullback
+        (algebraMap F[X] (W.map (iterateFrobenius F p n)).FunctionField X) =
+      algebraMap F[X] W.FunctionField X ^ p ^ n := by
+  rw [IsScalarTower.algebraMap_apply F[X]
+      (W.map (iterateFrobenius F p n)).CoordinateRing
+      (W.map (iterateFrobenius F p n)).FunctionField,
+    Isogeny.fieldPullback_algebraMap]
+  simp [IsScalarTower.algebraMap_apply F[X] W.CoordinateRing]
+
+/-- **The `n`-fold relative Frobenius has degree `p ^ n`.** -/
+@[simp]
+theorem degree_iterateRelativeFrobeniusIsogeny (n : ℕ) :
+    (iterateRelativeFrobeniusIsogeny p W n).degree = p ^ n := by
+  rw [Isogeny.degree_def]
+  exact _root_.WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow W _
+    (fieldPullback_iterateRelativeFrobeniusIsogeny_X p W n)
+
+/-- The `n`-fold relative Frobenius has separable degree one. -/
+theorem separableDegree_iterateRelativeFrobeniusIsogeny (n : ℕ) :
+    (iterateRelativeFrobeniusIsogeny p W n).separableDegree = 1 :=
+  separableDegree_eq_one_of_isPurelyInseparable
+    (iterateRelativeFrobeniusIsogeny p W n)
+
+/-- The `n`-fold relative Frobenius has inseparable degree `p ^ n`. -/
+theorem inseparableDegree_iterateRelativeFrobeniusIsogeny (n : ℕ) :
+    (iterateRelativeFrobeniusIsogeny p W n).inseparableDegree = p ^ n := by
+  rw [inseparableDegree_eq_degree_of_isPurelyInseparable,
+    degree_iterateRelativeFrobeniusIsogeny]
+
+section Point
+
+variable [DecidableEq F]
+
+/-- **The point map of the `n`-fold relative Frobenius.** It carries the point at infinity to
+itself and raises both coordinates of an affine point to their `p ^ n`-th powers. -/
+noncomputable def iterateRelativeFrobeniusPointHom (n : ℕ) :
+    W.Point →+ (W.map (iterateFrobenius F p n)).Point where
+  toFun := WeierstrassCurve.Affine.Point.mapAlong (iterateFrobenius F p n)
+    (iterateFrobenius F p n).injective
+  map_zero' := WeierstrassCurve.Affine.Point.mapAlong_zero _ _
+  map_add' P Q := by
+    let _ := (iterateFrobenius F p n).toAlgebra
+    -- Under this algebra structure, `algebraMap F F` is the iterated Frobenius. This exposes
+    -- Mathlib's additive `Affine.Point.map` behind `Point.mapAlong_eq_map`.
+    change WeierstrassCurve.Affine.Point.mapAlong (algebraMap F F)
+        (algebraMap F F).injective (P + Q) =
+      WeierstrassCurve.Affine.Point.mapAlong (algebraMap F F)
+          (algebraMap F F).injective P +
+        WeierstrassCurve.Affine.Point.mapAlong (algebraMap F F)
+          (algebraMap F F).injective Q
+    rw [WeierstrassCurve.Affine.Point.mapAlong_eq_map,
+      WeierstrassCurve.Affine.Point.mapAlong_eq_map,
+      WeierstrassCurve.Affine.Point.mapAlong_eq_map]
+    exact map_add _ P Q
+
+/-- The iterated relative Frobenius sends an affine point `(x, y)` to
+`(x ^ (p ^ n), y ^ (p ^ n))`. -/
+@[simp]
+theorem iterateRelativeFrobeniusPointHom_some (n : ℕ) {x y : F}
+    (h : W.Nonsingular x y) :
+    iterateRelativeFrobeniusPointHom p W n (.some x y h) =
+      .some (x ^ p ^ n) (y ^ p ^ n)
+        ((W.map_nonsingular (iterateFrobenius F p n).injective x y).mpr h) := by
+  simp [iterateRelativeFrobeniusPointHom, iterateFrobenius_def]
+
+end Point
 
 end Isogeny
 
