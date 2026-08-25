@@ -24,8 +24,8 @@ Mathlib already supplies: relabelling the vertices is `MeasureTheory.measurePres
 and splitting the assignments on a disjoint sum of vertex sets into a pair is
 `MeasureTheory.measurePreserving_sumPiEquivProdPi_symm`, after which the two halves separate by
 Fubini (`MeasureTheory.integral_prod_mul`). What each change of variables has to be matched with is
-the corresponding reindexing of the edges, which
-`TauCeti/Combinatorics/SimpleGraph/EdgeFinset.lean` supplies.
+the corresponding reindexing of the edges, supplied by Mathlib's
+`SimpleGraph.Iso.mapEdgeSet` and `SimpleGraph.edgeSetSumEquiv`.
 
 Multiplicativity is the sharpest of the three: it says the vertices of the two summands are
 integrated independently, which is exactly the statement that a graphon has no memory across
@@ -33,7 +33,7 @@ components.
 
 ## Main results
 
-* `TauCeti.DenseGraphLimits.homDensity_congr_iso` — `t(·, W)` is a graph isomorphism invariant;
+* `TauCeti.DenseGraphLimits.homDensity_eq_of_iso` — `t(·, W)` is a graph isomorphism invariant;
 * `TauCeti.DenseGraphLimits.homDensity_bot` — `t(⊥, W) = 1`;
 * `TauCeti.DenseGraphLimits.homDensity_sum` — `t(F₁ ⊕g F₂, W) = t(F₁, W) · t(F₂, W)`;
 * `TauCeti.DenseGraphLimits.homDensity_eq_mul_of_iso_sum` — the same for any graph *isomorphic* to a
@@ -79,7 +79,7 @@ theorem homDensity_bot (W : Graphon Ω μ) : homDensity (⊥ : SimpleGraph V₁)
 /-- **Isomorphism invariance.** A homomorphism density depends on its graph only up to isomorphism:
 relabelling the vertices along `φ` permutes the coordinates of the product measure, which preserves
 it, and carries the edges of `F₁` onto those of `F₂`. -/
-theorem homDensity_congr_iso (φ : F₁ ≃g F₂) (W : Graphon Ω μ) :
+theorem homDensity_eq_of_iso (φ : F₁ ≃g F₂) (W : Graphon Ω μ) :
     homDensity F₂ W = homDensity F₁ W := by
   have hmp : MeasurePreserving (MeasurableEquiv.arrowCongr' φ.toEquiv (MeasurableEquiv.refl Ω))
       (Measure.pi fun _ : V₁ => μ) (Measure.pi fun _ : V₂ => μ) :=
@@ -94,7 +94,14 @@ theorem homDensity_congr_iso (φ : F₁ ≃g F₂) (W : Graphon Ω μ) :
     funext v
     exact Equiv.arrowCongr'_apply φ.toEquiv (Equiv.refl Ω) x v
   simp only [harrow]
-  rw [SimpleGraph.prod_edgeFinset_iso φ]
+  have hedge :
+      (∏ d ∈ F₂.edgeFinset, edgeFactor W (x ∘ ⇑φ.toEquiv.symm) d) =
+        ∏ c ∈ F₁.edgeFinset, edgeFactor W (x ∘ ⇑φ.toEquiv.symm) (Sym2.map φ c) := by
+    rw [Finset.prod_subtype F₂.edgeFinset (fun _ ↦ SimpleGraph.mem_edgeFinset),
+      Finset.prod_subtype F₁.edgeFinset (fun _ ↦ SimpleGraph.mem_edgeFinset)]
+    · symm
+      exact Fintype.prod_equiv φ.mapEdgeSet _ _ fun _ ↦ rfl
+  rw [hedge]
   have hcomp : (x ∘ ⇑φ.toEquiv.symm) ∘ ⇑φ = x := by
     funext v
     exact congrArg x (φ.toEquiv.symm_apply_apply v)
@@ -129,7 +136,44 @@ theorem homDensity_sum (W : Graphon Ω μ) :
       funext v
       rw [Function.comp_apply, MeasurableEquiv.coe_sumPiEquivProdPi_symm,
         Equiv.sumPiEquivProdPi_symm_apply]
-    rw [SimpleGraph.prod_edgeFinset_sum]
+    have hedge :
+        (∏ d ∈ (F₁ ⊕g F₂).edgeFinset,
+            edgeFactor W
+              ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p) d) =
+          (∏ c ∈ F₁.edgeFinset,
+              edgeFactor W
+                ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p)
+                (Sym2.map Sum.inl c))
+            * ∏ c ∈ F₂.edgeFinset,
+              edgeFactor W
+                ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p)
+                (Sym2.map Sum.inr c) := by
+      rw [Finset.prod_subtype (F₁ ⊕g F₂).edgeFinset
+          (fun _ ↦ SimpleGraph.mem_edgeFinset),
+        Fintype.prod_equiv (SimpleGraph.edgeSetSumEquiv (G := F₁) (H := F₂))
+          (fun d ↦ edgeFactor W
+            ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p) d)
+          (fun d ↦ edgeFactor W
+            ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p)
+            ((SimpleGraph.edgeSetSumEquiv (G := F₁) (H := F₂)).symm d))
+          (fun d ↦ congrArg
+            (edgeFactor W
+              ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p))
+            (congrArg Subtype.val
+              ((SimpleGraph.edgeSetSumEquiv (G := F₁) (H := F₂)).symm_apply_apply d).symm)),
+        Fintype.prod_sum_type]
+      congr 1
+      · rw [Finset.prod_subtype F₁.edgeFinset (fun _ ↦ SimpleGraph.mem_edgeFinset)]
+        apply Fintype.prod_congr
+        rintro ⟨c, hc⟩
+        induction c using Sym2.ind with
+        | _ a b => rfl
+      · rw [Finset.prod_subtype F₂.edgeFinset (fun _ ↦ SimpleGraph.mem_edgeFinset)]
+        apply Fintype.prod_congr
+        rintro ⟨c, hc⟩
+        induction c using Sym2.ind with
+        | _ a b => rfl
+    rw [hedge]
     congr 1
     · exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hleft]
     · exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hright]
@@ -146,11 +190,12 @@ vertex type to be a literal `⊕`. -/
 theorem homDensity_eq_mul_of_iso_sum {V : Type*} [Fintype V] {F : SimpleGraph V}
     [DecidableRel F.Adj] (φ : F ≃g F₁ ⊕g F₂) (W : Graphon Ω μ) :
     homDensity F W = homDensity F₁ W * homDensity F₂ W := by
-  rw [← homDensity_congr_iso φ, homDensity_sum]
+  rw [← homDensity_eq_of_iso φ, homDensity_sum]
 
 /-- **The added-vertex telescope.** Adjoining isolated vertices leaves a density unchanged — the
 combination of multiplicativity with normalization that a level-by-level count of labelled graphs
 runs on. -/
+@[simp]
 theorem homDensity_sum_bot (W : Graphon Ω μ) :
     homDensity (F₁ ⊕g (⊥ : SimpleGraph V₂)) W = homDensity F₁ W := by
   rw [homDensity_sum, homDensity_bot, mul_one]
