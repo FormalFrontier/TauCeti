@@ -240,8 +240,9 @@ theorem IsPwC1ImmersionOn.exp_two_pi_I_mul_windingNumber_eq_exp_sum_crossingAngl
       refine ⟨((Real.log ‖γ (t₀ + ρ) - s‖ - Real.log ‖γ (t₀ - ρ) - s‖ : ℝ) : ℂ) +
         ((((-L_L t₀) / (γ (t₀ - ρ) - s)).arg + ((γ (t₀ + ρ) - s) / L_R t₀).arg : ℝ) : ℂ) *
           Complex.I, ?_, ?_⟩
-      · refine hasCauchyPVAt_iff.mpr ⟨?_, h_spec t₀ ht₀ ρ hρ_pos (hρ_le_R t₀ ht₀) hlo hhi
-          (h_unique t₀ ht₀)⟩
+      · refine hasCauchyPVAt_iff.mpr ⟨?_, h_spec t₀ ht₀ (t₀ - ρ) (t₀ + ρ)
+          (by linarith [hρ_le_R t₀ ht₀]) (by linarith [hρ_pos]) (by linarith [hρ_pos])
+          (by linarith [hρ_le_R t₀ ht₀]) hlo hhi (h_unique t₀ ht₀)⟩
         exact Filter.eventually_iff_exists_mem.mpr ⟨Ioi 0, self_mem_nhdsWithin,
           fun ε hε => intervalIntegrable_inv_sub_truncated hpc.continuousOn
             hpc.intervalIntegrable_deriv hε⟩
