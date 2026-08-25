@@ -91,26 +91,6 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : _root_.RootPairing ι R M N) [Finite ι] [CharZero R] (b : P.Base)
 
-/-! ### A product of basis elements -/
-
-/-- A product of basis elements of an integral group algebra is the basis element at the sum of
-the exponents, with the product of the coefficients. -/
-private theorem prod_single {α : Type*} (s : Finset α) (f : α → M) (c : α → ℤ) :
-    ∏ i ∈ s, AddMonoidAlgebra.single (f i) (c i)
-      = AddMonoidAlgebra.single (∑ i ∈ s, f i) (∏ i ∈ s, c i) := by
-  classical
-  induction s using Finset.induction with
-  | empty => rw [Finset.prod_empty, Finset.prod_empty, Finset.sum_empty, AddMonoidAlgebra.one_def]
-  | insert i s hi ih =>
-    rw [Finset.prod_insert hi, ih, AddMonoidAlgebra.single_mul_single, Finset.sum_insert hi,
-      Finset.prod_insert hi]
-
-omit [AddCommGroup M] in
-/-- The negative of a basis element is the basis element with coefficient `-1`. -/
-private theorem neg_single_one (m : M) :
-    -AddMonoidAlgebra.single m (1 : ℤ) = AddMonoidAlgebra.single m (-1) := by
-  rw [← neg_one_smul ℤ (AddMonoidAlgebra.single m (1 : ℤ)), AddMonoidAlgebra.smul_single', mul_one]
-
 /-! ### The Weyl denominator -/
 
 /-- **The Weyl denominator** `Δ = ∏_{α > 0} (1 - e^{-α})` of a base, an element of the integral
@@ -137,12 +117,13 @@ theorem weylDenominator_eq_sum_powerset :
       ∑ T ∈ (posRootsFinset P b).powerset,
         AddMonoidAlgebra.single (-∑ i ∈ T, P.root i) ((-1) ^ T.card) := by
   classical
-  have hrw : ∀ i : ι, (1 : AddMonoidAlgebra ℤ M) - AddMonoidAlgebra.single (-P.root i) 1
-      = AddMonoidAlgebra.single (-P.root i) (-1) + 1 := fun i ↦ by
-    rw [← neg_single_one, neg_add_eq_sub]
-  rw [weylDenominator_def, Finset.prod_congr rfl fun i _ ↦ hrw i, Finset.prod_add]
+  have hneg : (-1 : AddMonoidAlgebra ℤ M) = AddMonoidAlgebra.single 0 (-1) := by
+    rw [AddMonoidAlgebra.single_neg, ← AddMonoidAlgebra.one_def]
+  rw [weylDenominator_def, Finset.prod_sub]
   refine Finset.sum_congr rfl fun T _ ↦ ?_
-  rw [Finset.prod_const_one, mul_one, prod_single, Finset.prod_const, Finset.sum_neg_distrib]
+  rw [Finset.prod_const_one, mul_one, AddMonoidAlgebra.prod_single, Finset.prod_const_one,
+    Finset.sum_neg_distrib, hneg, AddMonoidAlgebra.single_pow, smul_zero,
+    AddMonoidAlgebra.single_mul_single, zero_add, mul_one]
 
 /-- **The Weyl denominator is supported on the negative cone**: a coefficient of `Δ` at a weight
 that is not minus the sum of a set of positive roots vanishes. -/
@@ -217,9 +198,7 @@ theorem weylNumerator_eq_zero_of_dotAction_eq_self {v : P.weylGroup} {lam : M}
   refine AddMonoidAlgebra.ext (Finsupp.ext fun y ↦ ?_)
   have hy : (weylNumerator P b lam).coeff y + (weylNumerator P b lam).coeff y = 0 := by
     simpa using congrArg (fun z : AddMonoidAlgebra ℤ M ↦ z.coeff y) hadd
-  have hzero : (0 : AddMonoidAlgebra ℤ M).coeff y = 0 := by simp
-  rw [hzero]
-  omega
+  simpa using add_self_eq_zero.mp hy
 
 /-- **A weight on a wall of the dot action has vanishing numerator.** The wall of the simple
 reflection `sᵢ` for the dot action is `⟨λ, αᵢ^∨⟩ = -1` (`TauCeti.dotAction_ofIdx_eq_self_iff`), and
