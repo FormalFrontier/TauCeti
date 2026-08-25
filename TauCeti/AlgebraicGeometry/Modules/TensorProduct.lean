@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
 module
 
 public import Mathlib.Algebra.Category.ModuleCat.Presheaf.Monoidal
@@ -18,6 +23,8 @@ underlying presheaf of rings of `X` and combined with sheafification.
 
 * `TauCeti.AlgebraicGeometry.Scheme.Modules.tensorProduct M N` is the sheafified tensor
   product;
+* `TauCeti.AlgebraicGeometry.Scheme.Modules.tensorProductIso M N` is its defining
+  identification with the sheafification of the sectionwise tensor product;
 * `TauCeti.AlgebraicGeometry.Scheme.Modules.sheafificationIso M` identifies the
   sheafification of the underlying presheaf of modules of `M` with `M`;
 * `TauCeti.AlgebraicGeometry.Scheme.Modules.tensorProductCongrLeft/right` transport an
@@ -28,7 +35,7 @@ underlying presheaf of rings of `X` and combined with sheafification.
 * `TauCeti.AlgebraicGeometry.Scheme.Modules.tensorProductSheafAssoc` provides the
   associativity isomorphism at the level of sheafifications of sectionwise tensor
   products, the form from which associativity of iterated tensor products of modules is
-  obtained by composing with `sheafificationIso`.
+  obtained by composing with `tensorProductIso` and `sheafificationIso`.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, item "Invertible
 sheaves on a scheme; the Picard group `Pic X` under `⊗`": the tensor product is the
@@ -45,21 +52,15 @@ namespace TauCeti
 
 universe u
 
-open AlgebraicGeometry Scheme
+open AlgebraicGeometry
 
 noncomputable section
+
+namespace AlgebraicGeometry
 
 namespace Scheme
 
 variable (X : Scheme.{u})
-
-/-- The identity morphism of the underlying presheaf of rings of `X` is locally injective. -/
-instance : Presheaf.IsLocallyInjective (Opens.grothendieckTopology X.toTopCat)
-    (𝟙 X.ringCatSheaf.obj) := inferInstance
-
-/-- The identity morphism of the underlying presheaf of rings of `X` is locally surjective. -/
-instance : Presheaf.IsLocallySurjective (Opens.grothendieckTopology X.toTopCat)
-    (𝟙 X.ringCatSheaf.obj) := inferInstance
 
 /-- The monoidal category structure on presheaves of modules over the underlying presheaf
 of rings of `X`, obtained from Mathlib's monoidal structure on presheaves of modules over
@@ -106,9 +107,15 @@ lemma tensorProduct_obj_val {X : Scheme.{u}} (M N : X.Modules) :
     rw [tensorProduct]
     rfl
 
+/-- The defining identification of the tensor product with the sheafification of the
+sectionwise tensor product of the underlying presheaves of modules. -/
+def tensorProductIso {X : Scheme.{u}} (M N : X.Modules) :
+    tensorProduct M N ≅
+      (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj (M.val ⊗ N.val) :=
+  Iso.refl _
+
 /-- The sheafification of the underlying presheaf of modules of an `𝒪ₓ`-module is
-isomorphic to the module. This is the counit of the sheafification adjunction, which is an
-isomorphism because its right adjoint is fully faithful. -/
+isomorphic to the module; this is the counit of the sheafification adjunction. -/
 def sheafificationIso {X : Scheme.{u}} (M : X.Modules) :
     (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj M.val ≅ M := by
   have h := PresheafOfModules.instIsIsoFunctorSheafOfModulesCounitSheafificationAdjunction
@@ -118,6 +125,23 @@ def sheafificationIso {X : Scheme.{u}} (M : X.Modules) :
   exact @asIso _ _ _ _
     ((PresheafOfModules.sheafificationAdjunction
       (𝟙 X.ringCatSheaf.obj)).counit.app M) h2
+
+/-- The forward map of `sheafificationIso` is the counit of the sheafification
+adjunction. -/
+@[simp]
+theorem sheafificationIso_hom {X : Scheme.{u}} (M : X.Modules) :
+    (sheafificationIso M).hom =
+      (PresheafOfModules.sheafificationAdjunction
+        (𝟙 X.ringCatSheaf.obj)).counit.app M := by
+  have h := PresheafOfModules.instIsIsoFunctorSheafOfModulesCounitSheafificationAdjunction
+    (𝟙 X.ringCatSheaf.obj)
+  have h2 := ((NatTrans.isIso_iff_isIso_app
+    (PresheafOfModules.sheafificationAdjunction (𝟙 X.ringCatSheaf.obj)).counit).mp h) M
+  change (asIso ((PresheafOfModules.sheafificationAdjunction
+      (𝟙 X.ringCatSheaf.obj)).counit.app M)).hom =
+    (PresheafOfModules.sheafificationAdjunction
+      (𝟙 X.ringCatSheaf.obj)).counit.app M
+  exact asIso_hom _
 
 /-- An isomorphism of the first argument transports through the tensor product. -/
 def tensorProductCongrLeft {X : Scheme.{u}} {M M' N : X.Modules} (e : M ≅ M') :
@@ -129,32 +153,51 @@ def tensorProductCongrRight {X : Scheme.{u}} {M N N' : X.Modules} (e : N ≅ N')
     tensorProduct M N ≅ tensorProduct M N' :=
   (tensorProductLeftFunctor M).mapIso e
 
-/-- Tensoring with the structure sheaf (on the left) does nothing. -/
+/-- Congruence in the first argument sends identity morphisms to identity isomorphisms. -/
+@[simp]
+theorem tensorProductCongrLeft_refl {X : Scheme.{u}} (M N : X.Modules) :
+    tensorProductCongrLeft (Iso.refl M) = Iso.refl (tensorProduct M N) :=
+  Functor.mapIso_refl (tensorProductRightFunctor N) M
+
+/-- Congruence in the second argument sends identity morphisms to identity isomorphisms. -/
+@[simp]
+theorem tensorProductCongrRight_refl {X : Scheme.{u}} (M N : X.Modules) :
+    tensorProductCongrRight (Iso.refl N) = Iso.refl (tensorProduct M N) :=
+  Functor.mapIso_refl (tensorProductLeftFunctor M) N
+
+/-- Congruence in the first argument respects composition. -/
+@[simp]
+theorem tensorProductCongrLeft_trans {X : Scheme.{u}} {M₁ M₂ M₃ : X.Modules}
+    (N : X.Modules) (e₁ : M₁ ≅ M₂) (e₂ : M₂ ≅ M₃) :
+    (tensorProductCongrLeft (X := X) (M := M₁) (M' := M₃) (N := N) (e₁ ≪≫ e₂)) =
+      tensorProductCongrLeft (X := X) (N := N) e₁ ≪≫
+        tensorProductCongrLeft (X := X) (N := N) e₂ :=
+  Functor.mapIso_trans _ e₁ e₂
+
 def tensorProductUnitIsoLeft {X : Scheme.{u}} (M : X.Modules) :
     tensorProduct (.unit X.ringCatSheaf) M ≅ M :=
-  show (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj
-    ((SheafOfModules.unit X.ringCatSheaf).val ⊗ M.val) ≅ M from
+  (tensorProductIso (.unit X.ringCatSheaf) M).symm ≪≫
     (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).mapIso (λ_ M.val) ≪≫
       sheafificationIso M
 
 /-- Tensoring with the structure sheaf (on the right) does nothing. -/
 def tensorProductUnitIsoRight {X : Scheme.{u}} (M : X.Modules) :
     tensorProduct M (.unit X.ringCatSheaf) ≅ M :=
-  show (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj
-    (M.val ⊗ (SheafOfModules.unit X.ringCatSheaf).val) ≅ M from
+  (tensorProductIso M (.unit X.ringCatSheaf)).symm ≪≫
     (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).mapIso (ρ_ M.val) ≪≫
       sheafificationIso M
 
 /-- Symmetry of the tensor product of `𝒪ₓ`-modules. -/
 def tensorProductComm {X : Scheme.{u}} (M N : X.Modules) :
     tensorProduct M N ≅ tensorProduct N M :=
-  show (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj (M.val ⊗ N.val) ≅
-    (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj (N.val ⊗ M.val) from
-    (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).mapIso (β_ M.val N.val)
+  (tensorProductIso M N).symm ≪≫
+    (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).mapIso (β_ M.val N.val) ≪≫
+      tensorProductIso N M
 
 /-- Associativity of the sectionwise tensor product after sheafification: this is the form
 in which associativity of the tensor product of `𝒪ₓ`-modules is available; combined with
-`sheafificationIso` it yields an associativity isomorphism for iterated tensor products. -/
+`tensorProductIso` and `sheafificationIso` it yields an associativity isomorphism for
+iterated tensor products. -/
 def tensorProductSheafAssoc {X : Scheme.{u}} (M N P : X.Modules) :
     (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj
       ((M.val ⊗ N.val) ⊗ P.val) ≅
@@ -165,6 +208,8 @@ def tensorProductSheafAssoc {X : Scheme.{u}} (M N P : X.Modules) :
 end Modules
 
 end Scheme
+
+end AlgebraicGeometry
 
 end
 
