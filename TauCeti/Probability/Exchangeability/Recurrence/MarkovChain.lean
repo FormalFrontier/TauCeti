@@ -7,8 +7,10 @@ module
 
 public import Mathlib.Probability.Independence.InfinitePi
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Const
-public import TauCeti.Probability.Exchangeability.Recurrence.Representation
+public import TauCeti.Probability.Exchangeability.Recurrence.Excursion
 public import TauCeti.Probability.Process.MarkovChain
+-- Non-public: the reconstruction of a path from its excursions is used only inside a proof.
+import TauCeti.Probability.Exchangeability.Recurrence.Representation
 
 /-!
 # The excursions of a recurrent Markov chain are i.i.d.
@@ -35,8 +37,8 @@ consecutive pairs of a loop word are the consecutive pairs of its excursion loop
 excursion by excursion (`TauCeti.consecutivePairs_loopPath`). So the mass of a loop factors as the
 product of the masses of its individual excursion loops
 (`TauCeti.Probability.markovChainLaw_apply_setOf_loopPathAt`), a product of
-`TauCeti.Probability.excursionWeight`s. Under recurrence, prescribing the first excursions of a
-path is exactly prescribing the loop word it spells out
+`TauCeti.Probability.excursionWeight`s. Once the chain has made the return closing the last of
+them, prescribing the first excursions of a path is exactly prescribing the loop word it spells out
 (`TauCeti.Probability.measure_setOf_excursionPrefix_eq`), so the finite-dimensional laws of the
 excursion process are products and the excursions are independent with a common law.
 
@@ -63,8 +65,8 @@ returns to its initial state, and its excursion process is junk.
 
 * `TauCeti.Probability.markovChainLaw_apply_setOf_loopPathAt`: the mass of a loop is the
   product of the weights of its excursions.
-* `TauCeti.Probability.excursionLaw_apply_singleton`: at a recurrent base state the law of an
-  excursion is given by the excursion weights.
+* `TauCeti.Probability.excursionLaw_apply_singleton`: once the chain returns to the base state,
+  the law of an excursion is given by the excursion weights.
 * `TauCeti.Probability.prefixLaw_excursionProcess_eq_pi`: the finite-dimensional laws of the
   excursion process are products.
 * `TauCeti.Probability.conditionallyIIDWith_excursionProcess`: **the excursions of a recurrent
@@ -126,10 +128,10 @@ section LoopMass
 
 variable [MeasurableSingletonClass α] {κ : Kernel α α} [IsMarkovKernel κ] {a₀ : α}
 
-/-- **The mass of a loop word factors over its excursions.** For the chain started at `a₀`, the
-probability of following the loop spelled out by `bs` is the product of the excursion weights of
-the entries of `bs`. -/
-theorem markovChainLaw_map_prefix_apply_singleton_loopPathAt (bs : List (List α)) :
+/-- **The mass of a loop word factors over its excursions**, in the finite-prefix encoding. This
+is the working form behind `TauCeti.Probability.markovChainLaw_apply_setOf_loopPathAt`, which is
+the public loop-mass interface. -/
+private theorem markovChainLaw_map_prefix_apply_singleton_loopPathAt (bs : List (List α)) :
     ((markovChainLaw (Measure.dirac a₀) κ).map
         fun x (i : Fin (loopSteps bs + 1)) => x i.1) {fun i => loopPathAt a₀ bs i.val}
       = (bs.map (excursionWeight κ a₀)).prod := by
@@ -191,15 +193,16 @@ section ExcursionLaw
 variable [Countable α] [MeasurableSingletonClass α] {κ : Kernel α α} [IsMarkovKernel κ] {a₀ : α}
 
 omit [Countable α] in
-/-- **The excursions of a chain started at `a₀` have prescribed masses.** Under recurrence,
-prescribing the first excursions of the chain is prescribing the loop word they spell out, whose
-mass factors over the excursions. -/
-theorem markovChainLaw_apply_setOf_excursionPrefix_eq
-    (hret : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ), {n | x n = a₀}.Infinite)
-    {bs : List (List α)} (havoid : ∀ e ∈ bs, a₀ ∉ e) :
+/-- **The excursions of a chain started at `a₀` have prescribed masses.** Once the chain almost
+surely makes the visit closing the last prescribed excursion, prescribing the first excursions is
+prescribing the loop word they spell out, whose mass factors over the excursions. -/
+theorem markovChainLaw_apply_setOf_excursionPrefix_eq {bs : List (List α)}
+    (hvisit : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ),
+      ∃ n, x n = a₀ ∧ visitCount x a₀ n = bs.length)
+    (havoid : ∀ e ∈ bs, a₀ ∉ e) :
     markovChainLaw (Measure.dirac a₀) κ {x | excursionPrefix x a₀ bs.length = bs}
       = (bs.map (excursionWeight κ a₀)).prod := by
-  rw [measure_setOf_excursionPrefix_eq (X := fun n (x : ℕ → α) => x n) hret
+  rw [measure_setOf_excursionPrefix_eq (X := fun n (x : ℕ → α) => x n) hvisit
       (markovChainLaw_dirac_ae_apply_zero κ a₀) havoid,
     markovChainLaw_apply_setOf_loopPathAt]
 
@@ -234,12 +237,13 @@ theorem excursionLaw_apply_singleton_of_mem {e : List α} (he : a₀ ∈ e) :
     exact not_mem_excursion x a₀ 0 (hx ▸ he)
   rw [hempty, measure_empty]
 
-/-- **The excursion law is given by the excursion weights.** -/
+/-- **The excursion law is given by the excursion weights.** One return to `a₀` is enough: it is
+what makes the first excursion the word between the first two visits. -/
 theorem excursionLaw_apply_singleton
-    (hret : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ), {n | x n = a₀}.Infinite)
+    (hvisit : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ), ∃ n, x n = a₀ ∧ visitCount x a₀ n = 1)
     {e : List α} (he : a₀ ∉ e) :
     excursionLaw κ a₀ {e} = excursionWeight κ a₀ e := by
-  have hmass := markovChainLaw_apply_setOf_excursionPrefix_eq hret (bs := [e])
+  have hmass := markovChainLaw_apply_setOf_excursionPrefix_eq (bs := [e]) hvisit
     (by simpa using he)
   rw [excursionLaw_apply]
   have hset : {x : ℕ → α | excursion x a₀ 0 ∈ ({e} : Set (List α))}
@@ -294,16 +298,20 @@ theorem prefixLaw_excursionProcess_eq_pi
     ext x
     simp [funext_iff]
   rw [hset]
+  -- Infinitely many returns realise every visit count, in particular the ones prescribed here.
+  have hvisit : ∀ j : ℕ, ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ),
+      ∃ n, x n = a₀ ∧ visitCount x a₀ n = j :=
+    fun j => hret.mono fun x hx => exists_visitCount_of_infinite hx j
   by_cases havoid : ∀ i : Fin m, a₀ ∉ w i
   · have hpref : {x : ℕ → α | ∀ i : Fin m, excursion x a₀ i.val = w i}
         = {x : ℕ → α | excursionPrefix x a₀ (List.ofFn w).length = List.ofFn w} := by
       ext x
       simp only [Set.mem_ofPred_eq, List.length_ofFn]
       exact (excursionPrefix_eq_ofFn_iff x a₀ w).symm
-    rw [hpref, markovChainLaw_apply_setOf_excursionPrefix_eq hret
+    rw [hpref, markovChainLaw_apply_setOf_excursionPrefix_eq (hvisit _)
       (by simpa using fun i => havoid i), List.map_ofFn, List.prod_ofFn]
     exact Finset.prod_congr rfl fun i _ =>
-      (excursionLaw_apply_singleton hret (havoid i)).symm
+      (excursionLaw_apply_singleton (hvisit 1) (havoid i)).symm
   · obtain ⟨i₀, hi₀⟩ := not_forall.1 havoid
     have hi₀ : a₀ ∈ w i₀ := not_not.1 hi₀
     have hempty : {x : ℕ → α | ∀ i : Fin m, excursion x a₀ i.val = w i} = ∅ := by
@@ -368,8 +376,13 @@ theorem map_excursionProcess_eq_excursionLaw
   rw [hset, pathLaw_def, Measure.map_apply_of_aemeasurable
       (aemeasurable_excursionProcess_pi (markovChainLaw (Measure.dirac a₀) κ) a₀)
       (measurable_pi_apply k hA)] at hbox
-  rw [Measure.map_apply_of_aemeasurable (aemeasurable_excursionProcess_eval _ a₀ k) hA, ← hbox]
-  rfl
+  -- Reading off the `k`-th coordinate of the whole excursion sequence is taking the `k`-th
+  -- excursion, so the two events of the chain are the same event.
+  have hcoord : ((fun y : ℕ → List α => y k) ∘
+      fun (x : ℕ → α) (j : ℕ) => excursionProcess (fun n (y : ℕ → α) => y n) a₀ j x)
+      = excursionProcess (fun n (x : ℕ → α) => x n) a₀ k := rfl
+  rw [Measure.map_apply_of_aemeasurable (aemeasurable_excursionProcess_eval _ a₀ k) hA, ← hbox,
+    ← Set.preimage_comp, hcoord]
 
 /-- **The excursions of the chain are independent.** -/
 theorem iIndepFun_excursionProcess
@@ -456,7 +469,8 @@ theorem excursionLaw_const (a₀ : α) :
       exact List.not_mem_nil hmem
     rw [excursionLaw_apply_singleton_of_mem hmem, Measure.dirac_apply]
     simp [hne]
-  · rw [excursionLaw_apply_singleton (ae_infinite_setOf_eq_markovChainLaw_const a₀) hmem,
+  · rw [excursionLaw_apply_singleton ((ae_infinite_setOf_eq_markovChainLaw_const a₀).mono
+        fun x hx => exists_visitCount_of_infinite hx 1) hmem,
       Measure.dirac_apply]
     match e with
     | [] => simp
