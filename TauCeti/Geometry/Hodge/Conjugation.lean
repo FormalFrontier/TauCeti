@@ -262,6 +262,7 @@ theorem dual_toEquiv_apply (ω : Conjugation W) (φ : Module.Dual ℂ W) (v : W)
   (rfl)
 
 /-- A conjugation carries dual annihilators to dual annihilators of conjugated subspaces. -/
+@[simp]
 theorem map_dualAnnihilator (ω : Conjugation W) (U : Submodule ℂ W) :
     U.dualAnnihilator.map ω.dual.toEquiv.toLinearMap =
       (U.map ω.toEquiv.toLinearMap).dualAnnihilator := by
@@ -271,10 +272,10 @@ theorem map_dualAnnihilator (ω : Conjugation W) (U : Submodule ℂ W) :
   · rintro ⟨ψ, hψ, rfl⟩ u hu
     obtain ⟨v, hv, rfl⟩ := Submodule.mem_map.1 hu
     have hψ' : ∀ w ∈ U, ψ w = 0 := (Submodule.mem_dualAnnihilator ψ).mp hψ
-    -- view the goal through the pointwise description of the dual conjugation
-    -- (`LinearEquiv.toLinearMap` is definitionally the underlying function)
-    change ω.dual.toEquiv ψ (ω.toEquiv v) = 0
-    rw [dual_toEquiv_apply, ω.apply_apply, hψ' v hv]
+    -- `LinearEquiv.coe_toLinearMap` exposes the underlying functions (one rewrite per
+    -- occurrence), so that the pointwise description `dual_toEquiv_apply` applies to the goal.
+    rw [LinearEquiv.coe_toLinearMap, LinearEquiv.coe_toLinearMap, dual_toEquiv_apply,
+      ω.apply_apply, hψ' v hv]
     exact star_zero _
   · intro h
     refine ⟨ω.dual.toEquiv φ,
