@@ -263,7 +263,6 @@ noncomputable def Divisor.indexOfSpecialty (D : Divisor k F) : ℤ :=
   Divisor.dim D - Divisor.degree D - 1 + genus k F
 
 /-- Unfolding formula for the index of specialty. -/
-@[simp]
 theorem Divisor.indexOfSpecialty_def (D : Divisor k F) :
     Divisor.indexOfSpecialty D = Divisor.dim D - Divisor.degree D - 1 + genus k F := (rfl)
 
