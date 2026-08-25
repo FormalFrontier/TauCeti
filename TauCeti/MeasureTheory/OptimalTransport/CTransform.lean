@@ -8,7 +8,6 @@ module
 public import Mathlib.Data.Fintype.Order
 public import Mathlib.Order.GaloisConnection.Basic
 public import Mathlib.Topology.Instances.EReal.Lemmas
-public import Mathlib.Topology.UniformSpace.HeineCantor
 public import TauCeti.Data.EReal.Operations
 
 /-!
@@ -22,7 +21,8 @@ that transform, the two closure operations it generates, the `c`-concave potenti
 and the contact set on which the dual constraint is an equality. It is the finite-real slice of
 the roadmap's broader transform interface; the extended-cost, analytic-sublevel, and compact
 attainment/lower-semicontinuity interfaces are separate follow-up slices. The elementary
-upper-semicontinuity result for infimal transforms is included here.
+upper-semicontinuity results and a metric continuity result for real-valued transforms are
+included here.
 
 Even for a finite real cost and a finite real potential the infimum defining the transform can
 be `-∞`, so the transform must have an extended-real codomain; and once the codomain is
@@ -36,10 +36,12 @@ is *not* the right one: with `c ≡ ⊤` and `φ ≡ 0`, `EReal` subtraction giv
 double transform of `φ` is `⊥` on nonempty factors and the inequality `φ ≤ φᶜᶜ` fails. The
 extended-cost interface needs its own conventions and is not built here.
 
-Nothing in this file is measure-theoretic: apart from the upper-semicontinuity results, the two
-factors are bare types and the results are order-theoretic identities about the transform. They
-are the algebraic half of the Kantorovich dual problem, to be combined with the integrability
-conditions that make the two marginal integrals of a dual pair meaningful.
+Nothing in this file is measure-theoretic. Most results are order-theoretic identities on bare
+types; the final analytic results give upper semicontinuity under topological hypotheses and
+uniform continuity of a real-valued transform when the cost is uniformly continuous on
+pseudometric spaces. These are the algebraic and topological halves of the Kantorovich dual
+problem, to be combined with the integrability conditions that make the two marginal integrals
+of a dual pair meaningful.
 
 ## Main definitions
 
@@ -63,13 +65,14 @@ conditions that make the two marginal integrals of a dual pair meaningful.
   transform;
 * `TauCeti.isCConcave_iff` — `c`-concavity is exactly being fixed by the double transform;
 * `TauCeti.upperSemicontinuous_cTransform` — an infimal transform of upper-semicontinuous
-  sections is upper semicontinuous, while `TauCeti.continuous_iInf_sub` shows that a real-valued
-  infimal transform is continuous when the cost is uniformly continuous and its infima are finite;
+  sections is upper semicontinuous, while `TauCeti.uniformContinuous_iInf_sub` shows that a
+  real-valued infimal transform is uniformly continuous when the cost is uniformly continuous and
+  its infima are finite;
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
   negative, which is the normalisation freedom of the dual problem;
-* `TauCeti.cTransform_coe` — over a nonempty finite source the transform of a coerced real
-  potential is the coercion of a real infimum, while `TauCeti.cTransform_coe_eq_coe_iInf` and its
-  symmetric counterpart give the same conclusion whenever the real infimum is bounded below;
+* `TauCeti.cTransform_coe` and `TauCeti.cTransformSymm_coe` — the extended-real transforms of
+  coerced real potentials agree with the corresponding real infima whenever those infima are
+  bounded below;
 * `TauCeti.contactSet_subset_contactSet_cTransformSymm_cTransform` — sequentially transforming a
   feasible pair gives a dominating feasible pair with a larger contact set, and
   `TauCeti.cTransformSymm_cTransform_eq_of_mem_cSuperdifferential` — a potential agrees with its
@@ -261,21 +264,9 @@ theorem cTransformSymm_of_isEmpty [IsEmpty Y] (c : X × Y → ℝ) (ψ : Y → E
   simpa only [cTransformSymm_eq_cTransform] using
     cTransform_of_isEmpty (fun p : Y × X => c (p.2, p.1)) ψ x
 
-/-- On a nonempty finite source space the infimal `c`-transform of a real potential is itself
-real-valued: the `c`-transform of the coerced potential is the coercion of the real infimum. -/
-theorem cTransform_coe [Finite X] [Nonempty X] (c : X × Y → ℝ) (φ : X → ℝ) (y : Y) :
-    cTransform c (fun x ↦ (φ x : EReal)) y = ((⨅ x, (c (x, y) - φ x) : ℝ) : EReal) := by
-  obtain ⟨x₀, hx₀⟩ := exists_eq_ciInf_of_finite (f := fun x ↦ c (x, y) - φ x)
-  rw [cTransform_apply, ← hx₀]
-  refine le_antisymm ((iInf_le _ x₀).trans (le_of_eq (EReal.coe_sub _ _).symm))
-    (le_iInf fun x ↦ ?_)
-  rw [← EReal.coe_sub]
-  exact EReal.coe_le_coe_iff.2
-    (hx₀.symm ▸ ciInf_le (Finite.bddBelow_range fun x ↦ c (x, y) - φ x) x)
-
 /-- The `EReal`-valued infimal transform `TauCeti.cTransform` of a real potential is a
 real-valued infimum whenever that infimum is bounded below. -/
-theorem cTransform_coe_eq_coe_iInf [Nonempty X] (c : X × Y → ℝ) (φ : X → ℝ) (y : Y)
+theorem cTransform_coe [Nonempty X] (c : X × Y → ℝ) (φ : X → ℝ) (y : Y)
     (hbdd : BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
     cTransform c (fun x ↦ (φ x : EReal)) y = ((⨅ x, (c (x, y) - φ x) : ℝ) : EReal) := by
   rw [cTransform_apply]
@@ -295,21 +286,21 @@ theorem cTransform_coe_eq_coe_iInf [Nonempty X] (c : X × Y → ℝ) (φ : X →
 
 /-- The `EReal`-valued symmetric infimal transform `TauCeti.cTransformSymm` of a real potential is
 a real-valued infimum whenever that infimum is bounded below. -/
-theorem cTransformSymm_coe_eq_coe_iInf [Nonempty Y] (c : X × Y → ℝ) (ψ : Y → ℝ) (x : X)
+theorem cTransformSymm_coe [Nonempty Y] (c : X × Y → ℝ) (ψ : Y → ℝ) (x : X)
     (hbdd : BddBelow (Set.range fun y ↦ c (x, y) - ψ y)) :
     cTransformSymm c (fun y ↦ (ψ y : EReal)) x =
       ((⨅ y, (c (x, y) - ψ y) : ℝ) : EReal) := by
   simpa only [cTransformSymm_eq_cTransform] using
-    cTransform_coe_eq_coe_iInf (fun p : Y × X ↦ c (p.2, p.1)) ψ x hbdd
+    cTransform_coe (fun p : Y × X ↦ c (p.2, p.1)) ψ x hbdd
 
 /-- The infimal `c`-transform of a real potential inherits the modulus of continuity of the cost:
 if `c` is uniformly continuous and the differences `c (x, y) - φ x` are bounded below for each
-`y`, then `y ↦ ⨅ x, (c (x, y) - φ x)` is continuous. -/
-theorem continuous_iInf_sub [PseudoMetricSpace X] [PseudoMetricSpace Y] [Nonempty X]
+`y`, then `y ↦ ⨅ x, (c (x, y) - φ x)` is uniformly continuous. -/
+theorem uniformContinuous_iInf_sub [PseudoMetricSpace X] [PseudoMetricSpace Y] [Nonempty X]
     {c : X × Y → ℝ} {φ : X → ℝ} (hc : UniformContinuous c)
     (hbdd : ∀ y, BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
-    Continuous fun y ↦ ⨅ x, (c (x, y) - φ x) := by
-  refine Metric.continuous_iff.2 fun y ε hε ↦ ?_
+    UniformContinuous fun y ↦ ⨅ x, (c (x, y) - φ x) := by
+  refine Metric.uniformContinuous_iff.2 fun ε hε ↦ ?_
   obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hc (ε / 2) (by positivity)
   have key : ∀ y₁ y₂ : Y, dist y₁ y₂ < δ →
       (⨅ x, (c (x, y₁) - φ x)) - ε / 2 ≤ ⨅ x, (c (x, y₂) - φ x) := by
@@ -320,9 +311,9 @@ theorem continuous_iInf_sub [PseudoMetricSpace X] [PseudoMetricSpace Y] [Nonempt
       hcδ (by simpa [Prod.dist_eq, max_eq_right dist_nonneg] using h)
     rw [Real.dist_eq, abs_lt] at h2
     linarith [h2.1, h2.2]
-  refine ⟨δ, hδ, fun y' hy' ↦ ?_⟩
-  have h1 := key y' y hy'
-  have h2 := key y y' (by rwa [dist_comm])
+  refine ⟨δ, hδ, fun y y' hy' ↦ ?_⟩
+  have h1 := key y' y (by rwa [dist_comm])
+  have h2 := key y y' hy'
   rw [Real.dist_eq, abs_lt]
   constructor <;> linarith
 

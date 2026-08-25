@@ -91,11 +91,6 @@ universe u v
 variable {ι : Type u} {κ : Type v} [Fintype ι] [Fintype κ] {μ : PMF ι} {ν : PMF κ}
   {c : ι × κ → ℝ} {φ : ι → ℝ} {ψ : κ → ℝ} {f : ι × κ → ℝ}
 
-/-- The masses of a probability mass function on a finite type sum to one. -/
-private theorem sum_toReal_pmf (μ : PMF ι) : ∑ i, (μ i).toReal = 1 := by
-  have h : ∑ i, μ i = 1 := (tsum_fintype fun i ↦ μ i).symm.trans μ.tsum_coe
-  rw [← ENNReal.toReal_sum fun i _ ↦ μ.apply_ne_top i, h, ENNReal.toReal_one]
-
 /-- The value of a pair of Kantorovich potentials against two probability mass functions on
 finite types: the sum of the two marginal expectations. -/
 def finiteDualValue (μ : PMF ι) (ν : PMF κ) (φ : ι → ℝ) (ψ : κ → ℝ) : ℝ :=
