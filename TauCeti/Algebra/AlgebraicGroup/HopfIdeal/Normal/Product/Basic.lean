@@ -101,6 +101,70 @@ theorem productMapOfNormal_def
           (op (GrpObj.Action.normalSemidirectMul i j)) :=
   (rfl)
 
+/-- The underlying coordinate algebra map of `productMapOfNormal` is the opposite of normal
+semidirect multiplication. -/
+@[simp]
+theorem productMapOfNormal_hom
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) :
+    let i := quotientGrpObjInclusion H I
+    let j := quotientGrpObjInclusion H J
+    let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
+    (productMapOfNormal H I J hI).hom.toAlgHom =
+      (GrpObj.Action.normalSemidirectMul i j).hom.hom.unop.hom := by
+  rw [productMapOfNormal_def]
+  rfl
+
+/-- The represented group-object map of `productMapOfNormal` is normal semidirect
+multiplication. -/
+@[simp]
+theorem grpObjMap_productMapOfNormal
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) :
+    let i := quotientGrpObjInclusion H I
+    let j := quotientGrpObjInclusion H J
+    let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
+    grpObjMap (productMapOfNormal H I J hI) =
+      (GrpObj.Action.normalSemidirectMul i j).hom.hom := by
+  apply Quiver.Hom.unop_inj
+  apply CommAlgCat.hom_ext
+  rw [show (grpObjMap (productMapOfNormal H I J hI)).unop.hom =
+      (productMapOfNormal H I J hI).hom.toAlgHom by
+    exact congrArg CommAlgCat.Hom.hom (grpObjMap_unop _)]
+  exact productMapOfNormal_hom H I J hI
+
+/-- Normal semidirect multiplication restricts to the first quotient-subgroup inclusion. -/
+theorem quotientNormalConjugation_inl_comp_normalSemidirectMul
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) :
+    let i := quotientGrpObjInclusion H I
+    let j := quotientGrpObjInclusion H J
+    let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
+    (quotientNormalConjugation H I J hI).inl.hom.hom ≫
+        (GrpObj.Action.normalSemidirectMul i j).hom.hom = i := by
+  have _ : IsMonHom.Normal (quotientGrpObjInclusion H I) :=
+    (quotientGrpObjInclusion_normal_iff H I).2 hI
+  simpa only [quotientNormalConjugation, Grp.comp_hom_hom, Grp.ofHom_hom_hom] using
+    congrArg (fun f ↦ f.hom.hom)
+      (GrpObj.Action.inl_comp_normalSemidirectMul
+        (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J))
+
+/-- Normal semidirect multiplication restricts to the second quotient-subgroup inclusion. -/
+theorem quotientNormalConjugation_inr_comp_normalSemidirectMul
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) :
+    let i := quotientGrpObjInclusion H I
+    let j := quotientGrpObjInclusion H J
+    let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
+    (quotientNormalConjugation H I J hI).inr.hom.hom ≫
+        (GrpObj.Action.normalSemidirectMul i j).hom.hom = j := by
+  have _ : IsMonHom.Normal (quotientGrpObjInclusion H I) :=
+    (quotientGrpObjInclusion_normal_iff H I).2 hI
+  simpa only [quotientNormalConjugation, Grp.comp_hom_hom, Grp.ofHom_hom_hom] using
+    congrArg (fun f ↦ f.hom.hom)
+      (GrpObj.Action.inr_comp_normalSemidirectMul
+        (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J))
+
 variable {k : Type u} [Field k]
 
 /-- The coordinate Hopf algebra of the scheme-theoretic multiplication image. -/
