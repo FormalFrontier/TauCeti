@@ -65,22 +65,16 @@ variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasu
   {V₁ V₂ : Type*} [Fintype V₁] [Fintype V₂]
   {F₁ : SimpleGraph V₁} [DecidableRel F₁.Adj] {F₂ : SimpleGraph V₂} [DecidableRel F₂.Adj]
 
-/-- A graph with no edges has density `1`: the integrand is the empty product. -/
-theorem homDensity_eq_one_of_edgeSet_eq_empty (F : SimpleGraph V₁) [DecidableRel F.Adj]
-    (W : Graphon Ω μ) (hF : F.edgeSet = ∅) : homDensity F W = 1 := by
-  have h : ∀ x : V₁ → Ω, ∏ e ∈ F.edgeFinset, edgeFactor W x e = 1 := fun x =>
-    Finset.prod_eq_one fun e he => by
-      rw [SimpleGraph.mem_edgeFinset, hF] at he
-      exact absurd he (Set.notMem_empty e)
-  rw [homDensity_def]
-  simp_rw [h]
-  simp
-
 /-- **Normalization.** `t(⊥, W) = 1`; in particular `t(K₁, W) = 1` for the one-vertex graph
 `⊥ : SimpleGraph (Fin 1)`. -/
 @[simp]
-theorem homDensity_bot (W : Graphon Ω μ) : homDensity (⊥ : SimpleGraph V₁) W = 1 :=
-  homDensity_eq_one_of_edgeSet_eq_empty _ W SimpleGraph.edgeSet_bot
+theorem homDensity_bot (W : Graphon Ω μ) : homDensity (⊥ : SimpleGraph V₁) W = 1 := by
+  rw [homDensity_def]
+  calc
+    _ = ∫ _ : V₁ → Ω, (1 : ℝ) ∂Measure.pi fun _ : V₁ => μ := by
+      refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
+      exact Finset.prod_eq_one fun _ he => by simp at he
+    _ = 1 := by simp
 
 /-- **Isomorphism invariance.** A homomorphism density depends on its graph only up to isomorphism:
 relabelling the vertices along `φ` permutes the coordinates of the product measure, which preserves
@@ -100,7 +94,7 @@ theorem homDensity_congr_iso (φ : F₁ ≃g F₂) (W : Graphon Ω μ) :
     funext v
     exact Equiv.arrowCongr'_apply φ.toEquiv (Equiv.refl Ω) x v
   simp only [harrow]
-  rw [prod_edgeFinset_iso φ]
+  rw [SimpleGraph.prod_edgeFinset_iso φ]
   have hcomp : (x ∘ ⇑φ.toEquiv.symm) ∘ ⇑φ = x := by
     funext v
     exact congrArg x (φ.toEquiv.symm_apply_apply v)
@@ -135,7 +129,7 @@ theorem homDensity_sum (W : Graphon Ω μ) :
       funext v
       rw [Function.comp_apply, MeasurableEquiv.coe_sumPiEquivProdPi_symm,
         Equiv.sumPiEquivProdPi_symm_apply]
-    rw [prod_edgeFinset_sum]
+    rw [SimpleGraph.prod_edgeFinset_sum]
     congr 1
     · exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hleft]
     · exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hright]
