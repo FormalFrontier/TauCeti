@@ -72,6 +72,9 @@ representation, is what makes `G` a group.
   flip of such a form is the form itself or its negative.
 * `TauCeti.Representation.IsInvariantForm.isSymm_or_isAlt`: away from characteristic two -- the
   hypothesis `(2 : k) ≠ 0` -- such a form is symmetric or alternating.
+* `TauCeti.Representation.exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot`: the case split
+  that dichotomy gives, that an irreducible representation carries a nonzero invariant symmetric
+  form, or a nonzero invariant alternating one, or no nonzero invariant form at all.
 
 ## Implementation notes
 
@@ -451,6 +454,24 @@ theorem IsInvariantForm.isSymm_or_isAlt (h2 : (2 : k) ≠ 0) (hB : IsInvariantFo
       simpa using this
     have : (2 : k) * B x x = 0 := by linear_combination hx
     exact (mul_eq_zero.mp this).resolve_left h2
+
+variable (ρ) in
+/-- **An irreducible representation carries a symmetric, an alternating, or no invariant form.**
+Away from characteristic two, over an algebraically closed field it carries a nonzero invariant
+symmetric form, or a nonzero invariant alternating form, or no nonzero invariant form at all.  This
+is the case split the three values of the Frobenius-Schur indicator are read off from, for a finite
+group in `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Trichotomy.lean` and for a
+compact group in `TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantForm.lean`. -/
+theorem exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot (h2 : (2 : k) ≠ 0) :
+    (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm) ∨
+      (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt) ∨ invariantForms ρ = ⊥ := by
+  by_cases hbot : invariantForms ρ = ⊥
+  · exact Or.inr (Or.inr hbot)
+  · obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
+    have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
+    rcases hC.isSymm_or_isAlt h2 hC0 with hsymm | halt
+    · exact Or.inl ⟨C, hC, hC0, hsymm⟩
+    · exact Or.inr (Or.inl ⟨C, hC, hC0, halt⟩)
 
 end Irreducible
 
