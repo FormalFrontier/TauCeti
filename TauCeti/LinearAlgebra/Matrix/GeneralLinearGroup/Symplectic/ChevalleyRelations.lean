@@ -298,6 +298,45 @@ theorem commutatorElement_differenceShortRootUnit_negativeSumShortRootUnit
   congr 1
   ring
 
+private theorem commutatorElement_transvectionUnit_pair_chain
+    {n : Type*} [Fintype n] [DecidableEq n] {p q r t : n}
+    (hpr : p ≠ r) (hqt : q ≠ t) (hrq : r ≠ q) (hrt : r ≠ t) (hpq : p ≠ q)
+    (hpt : p ≠ t) (a b : R) :
+    ⁅transvectionUnit hpr a * transvectionUnit hqt a, transvectionUnit hrq b⁆ =
+      transvectionUnit hpq (a * b) * transvectionUnit hrt (-(a * b)) *
+        transvectionUnit hpt (-(a ^ 2 * b)) := by
+  have hBC :
+      ⁅transvectionUnit hqt a, transvectionUnit hrq b⁆ =
+        transvectionUnit hrt (-(a * b)) := by
+    rw [commutatorElement_transvectionUnit_reverse hqt hrq hrt]
+    congr 1
+    ring
+  have hAC :
+      ⁅transvectionUnit hpr a, transvectionUnit hrq b⁆ =
+        transvectionUnit hpq (a * b) :=
+    commutatorElement_transvectionUnit hpr hrq hpq a b
+  have hAE :
+      ⁅transvectionUnit hpr a, transvectionUnit hrt (-(a * b))⁆ =
+        transvectionUnit hpt (-(a ^ 2 * b)) := by
+    rw [commutatorElement_transvectionUnit hpr hrt hpt]
+    congr 1
+    ring
+  rw [commutatorElement_mul_left_eq_conj_mul, hBC, hAC]
+  calc
+    transvectionUnit hpr a * transvectionUnit hrt (-(a * b)) *
+          (transvectionUnit hpr a)⁻¹ * transvectionUnit hpq (a * b) =
+        ⁅transvectionUnit hpr a, transvectionUnit hrt (-(a * b))⁆ *
+          transvectionUnit hrt (-(a * b)) * transvectionUnit hpq (a * b) := by
+      rw [← MulAut.conj_apply, conj_eq_commutatorElement_mul]
+    _ = transvectionUnit hpt (-(a ^ 2 * b)) * transvectionUnit hrt (-(a * b)) *
+          transvectionUnit hpq (a * b) := by
+      rw [hAE]
+    _ = transvectionUnit hpq (a * b) * transvectionUnit hrt (-(a * b)) *
+          transvectionUnit hpt (-(a ^ 2 * b)) := by
+      rw [(commute_transvectionUnit hpt hrt hrt.symm hpt.symm _ _).eq, mul_assoc,
+        (commute_transvectionUnit hpt hpq hpt.symm hpq.symm _ _).eq, ← mul_assoc,
+        (commute_transvectionUnit hrt hpq hpt.symm hrq.symm _ _).eq]
+
 /-- **The complementary positive-sum multiply-laced Chevalley relation.** The commutator of
 `x_{eᵢ+eⱼ}(a)` and `x_{-2eⱼ}(b)` is the product of the root subgroups for `eᵢ-eⱼ`
 and `2eᵢ`, with parameters `ab` and `-a²b`. -/
@@ -320,39 +359,7 @@ theorem commutatorElement_positiveSumShortRootUnit_negativeLongRootTransvectionU
   have hJI' : J ≠ I' := finSumFinEquiv_inl_ne_inr j i
   have hJ'J : J' ≠ J := finSumFinEquiv_inr_ne_inl j j
   have hII' : I ≠ I' := finSumFinEquiv_inl_ne_inr i i
-  have hBC :
-      ⁅transvectionUnit hJI' a, transvectionUnit hJ'J b⁆ =
-        transvectionUnit hJ'I' (-(a * b)) := by
-    rw [commutatorElement_transvectionUnit_reverse hJI' hJ'J hJ'I']
-    congr 1
-    ring
-  have hAC :
-      ⁅transvectionUnit hIJ' a, transvectionUnit hJ'J b⁆ =
-        transvectionUnit hIJ (a * b) :=
-    commutatorElement_transvectionUnit hIJ' hJ'J hIJ a b
-  have hAE :
-      ⁅transvectionUnit hIJ' a, transvectionUnit hJ'I' (-(a * b))⁆ =
-        transvectionUnit hII' (-(a ^ 2 * b)) := by
-    rw [commutatorElement_transvectionUnit hIJ' hJ'I' hII']
-    congr 1
-    ring
-  rw [commutatorElement_mul_left_eq_conj_mul, hBC, hAC]
-  calc
-    transvectionUnit hIJ' a * transvectionUnit hJ'I' (-(a * b)) *
-          (transvectionUnit hIJ' a)⁻¹ * transvectionUnit hIJ (a * b) =
-        ⁅transvectionUnit hIJ' a, transvectionUnit hJ'I' (-(a * b))⁆ *
-          transvectionUnit hJ'I' (-(a * b)) * transvectionUnit hIJ (a * b) := by
-      rw [← MulAut.conj_apply, conj_eq_commutatorElement_mul]
-    _ = transvectionUnit hII' (-(a ^ 2 * b)) *
-          transvectionUnit hJ'I' (-(a * b)) * transvectionUnit hIJ (a * b) := by
-      rw [hAE]
-    _ = transvectionUnit hIJ (a * b) * transvectionUnit hJ'I' (-(a * b)) *
-          transvectionUnit hII' (-(a ^ 2 * b)) := by
-      rw [(commute_transvectionUnit hII' hJ'I' hJ'I'.symm hII'.symm _ _).eq,
-        mul_assoc,
-        (commute_transvectionUnit hII' hIJ hII'.symm hIJ.symm _ _).eq,
-        ← mul_assoc,
-        (commute_transvectionUnit hJ'I' hIJ hII'.symm hJ'J.symm _ _).eq]
+  exact commutatorElement_transvectionUnit_pair_chain hIJ' hJI' hJ'J hJ'I' hIJ hII' a b
 
 /-- **The complementary negative-sum multiply-laced Chevalley relation.** The commutator of
 `x_{-eᵢ-eⱼ}(a)` and `x_{2eⱼ}(b)` is the product of the root subgroups for `eⱼ-eᵢ`
@@ -377,38 +384,7 @@ theorem commutatorElement_negativeSumShortRootUnit_positiveLongRootTransvectionU
   have hJ'I : J' ≠ I := finSumFinEquiv_inr_ne_inl j i
   have hJJ' : J ≠ J' := finSumFinEquiv_inl_ne_inr j j
   have hI'I : I' ≠ I := finSumFinEquiv_inr_ne_inl i i
-  have hBC :
-      ⁅transvectionUnit hJ'I a, transvectionUnit hJJ' b⁆ =
-        transvectionUnit hJI (-(a * b)) := by
-    rw [commutatorElement_transvectionUnit_reverse hJ'I hJJ' hJI]
-    congr 1
-    ring
-  have hAC :
-      ⁅transvectionUnit hI'J a, transvectionUnit hJJ' b⁆ =
-        transvectionUnit hI'J' (a * b) :=
-    commutatorElement_transvectionUnit hI'J hJJ' hI'J' a b
-  have hAE :
-      ⁅transvectionUnit hI'J a, transvectionUnit hJI (-(a * b))⁆ =
-        transvectionUnit hI'I (-(a ^ 2 * b)) := by
-    rw [commutatorElement_transvectionUnit hI'J hJI hI'I]
-    congr 1
-    ring
-  rw [commutatorElement_mul_left_eq_conj_mul, hBC, hAC]
-  calc
-    transvectionUnit hI'J a * transvectionUnit hJI (-(a * b)) *
-          (transvectionUnit hI'J a)⁻¹ * transvectionUnit hI'J' (a * b) =
-        ⁅transvectionUnit hI'J a, transvectionUnit hJI (-(a * b))⁆ *
-          transvectionUnit hJI (-(a * b)) * transvectionUnit hI'J' (a * b) := by
-      rw [← MulAut.conj_apply, conj_eq_commutatorElement_mul]
-    _ = transvectionUnit hI'I (-(a ^ 2 * b)) *
-          transvectionUnit hJI (-(a * b)) * transvectionUnit hI'J' (a * b) := by
-      rw [hAE]
-    _ = transvectionUnit hJI (-(a * b)) * transvectionUnit hI'J' (a * b) *
-          transvectionUnit hI'I (-(a ^ 2 * b)) := by
-      rw [(commute_transvectionUnit hI'I hJI hJI.symm hI'I.symm _ _).eq,
-        mul_assoc,
-        (commute_transvectionUnit hI'I hI'J' hI'I.symm hI'J'.symm _ _).eq,
-        ← mul_assoc,
-        (commute_transvectionUnit hJI hI'J' hI'I.symm hJJ'.symm _ _).eq]
+  rw [commutatorElement_transvectionUnit_pair_chain hI'J hJ'I hJJ' hJI hI'J' hI'I]
+  rw [(commute_transvectionUnit hJI hI'J' hI'I.symm hJJ'.symm (-(a * b)) (a * b)).eq]
 
 end TauCeti.GLSymplecticFin
