@@ -24,15 +24,15 @@ for an arbitrary semiring `A` and is the unique algebra map with the prescribed 
 Consequently `TauCeti.laurentEvalEquiv` identifies the units of `A` with the `R`-algebra maps out of
 `R[T;T⁻¹]`: the Laurent polynomial ring is the free `R`-algebra on one invertible generator.
 
-The module-theoretic use is `TauCeti.laurentTAut`: on any `ℤ[T;T⁻¹]`-module, multiplication by `T`
+The module-theoretic use is `TauCeti.laurentTAut`: on any `R[T;T⁻¹]`-module, multiplication by `T`
 -- written `q` in the graded `K`-theory literature -- is an automorphism of the underlying additive
-group, and that automorphism is what a shift-compatible invariant is compared against.
+monoid, and that automorphism is what a shift-compatible invariant is compared against.
 
 ## Main definitions
 
 * `TauCeti.laurentEval`: evaluation of a Laurent polynomial at a unit of an `R`-algebra.
 * `TauCeti.laurentEvalEquiv`: the units of `A` are the `R`-algebra maps `R[T;T⁻¹] →ₐ[R] A`.
-* `TauCeti.laurentTAut`: multiplication by `T` on a `ℤ[T;T⁻¹]`-module, as an additive
+* `TauCeti.laurentTAut`: multiplication by `T` on an `R[T;T⁻¹]`-module, as an additive
   automorphism.
 
 ## Main results
@@ -136,31 +136,28 @@ end Eval
 
 section TAut
 
-variable (N : Type*) [AddCommGroup N] [Module (LaurentPolynomial ℤ) N]
+variable (R : Type*) [Semiring R] (N : Type*) [AddCommMonoid N]
+  [Module (LaurentPolynomial R) N]
 
-/-- **Multiplication by the variable on a `ℤ[T;T⁻¹]`-module**, as an automorphism of the
-underlying additive group.  In the graded `K`-theory notation the variable is `q`, so this is the
+/-- **Multiplication by the variable on an `R[T;T⁻¹]`-module**, as an automorphism of the
+underlying additive monoid.  In the graded `K`-theory notation the variable is `q`, so this is the
 operator `x ↦ q • x` against which a shift-compatible invariant is compared. -/
 noncomputable def laurentTAut : AddAut N where
-  toFun x := (T 1 : LaurentPolynomial ℤ) • x
-  invFun x := (T (-1) : LaurentPolynomial ℤ) • x
+  toFun x := (T 1 : LaurentPolynomial R) • x
+  invFun x := (T (-1) : LaurentPolynomial R) • x
   left_inv x := by
-    change (T (-1) : LaurentPolynomial ℤ) • (T 1 : LaurentPolynomial ℤ) • x = x
-    rw [smul_smul, ← T_add]
-    simp
+    simp only [smul_smul, ← T_add, neg_add_cancel, T_zero, one_smul]
   right_inv x := by
-    change (T 1 : LaurentPolynomial ℤ) • (T (-1) : LaurentPolynomial ℤ) • x = x
-    rw [smul_smul, ← T_add]
-    simp
+    simp only [smul_smul, ← T_add, add_neg_cancel, T_zero, one_smul]
   map_add' _ _ := smul_add _ _ _
 
 @[simp]
-lemma laurentTAut_apply (x : N) : laurentTAut N x = (T 1 : LaurentPolynomial ℤ) • x :=
+lemma laurentTAut_apply (x : N) : laurentTAut R N x = (T 1 : LaurentPolynomial R) • x :=
   (rfl)
 
 @[simp]
 lemma laurentTAut_symm_apply (x : N) :
-    (laurentTAut N).symm x = (T (-1) : LaurentPolynomial ℤ) • x :=
+    (laurentTAut R N).symm x = (T (-1) : LaurentPolynomial R) • x :=
   (rfl)
 
 end TAut
@@ -170,14 +167,13 @@ section Constants
 variable {N : Type*} [AddCommGroup N] [Module (LaurentPolynomial ℤ) N]
 
 /-- **A constant Laurent polynomial acts by the integer scalar multiplication** of the underlying
-abelian group of a `ℤ[T;T⁻¹]`-module. -/
+abelian group of a `ℤ[T;T⁻¹]`-module.
+
+Not `@[simp]`: `LaurentPolynomial.C a` is not in simp-normal form, because `eq_intCast` rewrites
+the ring homomorphism `C : ℤ →+* ℤ[T;T⁻¹]` to the integer cast; the normal form of the statement
+is Mathlib's own `Int.cast_smul_eq_zsmul`. -/
 lemma laurentC_smul (a : ℤ) (x : N) : (C a : LaurentPolynomial ℤ) • x = a • x := by
   rw [C_eq_algebraMap, ← Int.cast_smul_eq_zsmul (LaurentPolynomial ℤ) a x]
-  congr 1
-
-/-- Integer scalar multiplication on `ℤ[T;T⁻¹]` is multiplication by a constant. -/
-lemma laurent_zsmul_eq_C_mul (a : ℤ) (p : LaurentPolynomial ℤ) : a • p = C a * p := by
-  rw [zsmul_eq_mul]
   congr 1
 
 end Constants
