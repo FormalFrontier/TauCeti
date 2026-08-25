@@ -117,34 +117,18 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
 theorem reductiveCommHopfAlgProperty_finiteTypeCoordinateHopfAlgebra
     (k : Type u) [Field k] (n : Nat) :
     reductiveCommHopfAlgProperty k (finiteTypeCoordinateHopfAlgebra k n) := by
-  rw [reductiveCommHopfAlgProperty_iff]
   let e := coordinateHopfAlgebraFiniteTypeObjIso k n
-  refine ⟨(smoothCommHopfAlgProperty_iff _).mp <|
+  apply reductiveCommHopfAlgProperty_of_geometricFiber_iso k _
+    (finiteTypeCoordinateHopfAlgebra (AlgebraicClosure k) n)
+    ((smoothCommHopfAlgProperty_iff _).mp <|
       (smoothCommHopfAlgProperty k).prop_of_iso e
-        ((smoothCommHopfAlgProperty_iff _).mpr inferInstance),
-    (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e
-      (geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra k n), ?_⟩
-  intro I hI _ hU
-  let K := AlgebraicClosure k
-  let Hbar := FiniteTypeCommHopfAlgCat.baseChange (K := K)
-    (finiteTypeCoordinateHopfAlgebra k n)
-  let Gbar := finiteTypeCoordinateHopfAlgebra K n
-  let e : Hbar ≅ Gbar := finiteTypeCoordinateHopfAlgebraBaseChangeIso k K n
-  let f : Gbar →ₐc[K] Hbar := FiniteTypeCommHopfAlgCat.toBialgHom e.inv
-  have hf : Function.Bijective f := ConcreteCategory.bijective_of_isIso e.inv
-  let J : HopfIdeal K Gbar := I.comap f hf.2
-  have hJnormal : J.IsNormal := hI.comap_of_bijective f hf.1 hf.2
-  let qIso : FiniteTypeCommHopfAlgCat.quotient Gbar J ≅
-      FiniteTypeCommHopfAlgCat.quotient Hbar I :=
-    FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm I
-  have hJU : smoothUnipotentCommHopfAlgProperty K
-      (FiniteTypeCommHopfAlgCat.quotient Gbar J) :=
-    (smoothUnipotentCommHopfAlgProperty K).prop_of_iso qIso.symm hU
-  have hJ : J = HopfIdeal.augmentation K Gbar :=
-    eq_augmentation_of_isNormal_of_smoothUnipotent K n J hJnormal hJU
-  rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hf.2,
-    HopfIdeal.comap_augmentation]
-  exact hJ
+        ((smoothCommHopfAlgProperty_iff _).mpr inferInstance))
+    ((geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e
+      (geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra k n))
+    (finiteTypeCoordinateHopfAlgebraBaseChangeIso k (AlgebraicClosure k) n)
+  intro I hI hU
+  exact eq_augmentation_of_isNormal_of_smoothUnipotent
+    (AlgebraicClosure k) n I hI hU
 
 end
 
