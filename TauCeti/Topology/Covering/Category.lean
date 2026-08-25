@@ -63,7 +63,11 @@ open CategoryTheory
 
 namespace Over
 
-/-- The property of an object of `TopCat / X` that its structure morphism is a covering map. -/
+/-- The property of an object of `TopCat / X` that its structure morphism is a covering map.
+
+It is `@[expose]`d so that downstream modules can build objects of the full subcategories it cuts
+out directly from a proof of `IsCoveringMap`. -/
+@[expose]
 def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
   fun p ↦ _root_.IsCoveringMap p.hom
 
