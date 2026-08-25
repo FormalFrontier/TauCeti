@@ -49,9 +49,9 @@ vector is fixed (`TauCeti.KnotTheory.burau_mulVec_one`), and the row vector
 `(1, t, …, t ^ (n - 1))` is fixed (`TauCeti.KnotTheory.vecMul_burau_geom`). The kernel of the
 latter covector is therefore an invariant submodule, and for `2 ≤ n` over a nontrivial ring it is
 a proper nonzero one, which is the reducibility that the *reduced* Burau representation — the
-restriction to that kernel — is carved out of. Neither that restriction nor its comparison with
-the Seifert-matrix Alexander polynomial of `TauCeti/KnotTheory/Alexander.lean` is built here; both
-need a basis of that kernel and the closure of a braid to a link, and are the next steps.
+restriction to that kernel — is carved out of in `TauCeti/KnotTheory/Burau/Reduced.lean`. The
+comparison with the Seifert-matrix Alexander polynomial of `TauCeti/KnotTheory/Alexander.lean` needs
+the closure of a braid to a link and is not built here.
 
 This is the Burau route of the "knot polynomials, each a project in itself, with several algorithms
 apiece" bullet of Layer 4 ("knot theory, done properly") of the GeometricTopology roadmap.
@@ -162,13 +162,13 @@ theorem dotProduct_burauCol (t : R) (i : Fin (n - 1)) (w : Fin n → R) :
   simp [burauCol, dotProduct_sub, dotProduct_single]
 
 /-- The row and column vectors of one and the same elementary braid pair to `t + 1`. -/
-private theorem burauRow_dotProduct_burauCol_self (t : R) (i : Fin (n - 1)) :
+theorem burauRow_dotProduct_burauCol_self (t : R) (i : Fin (n - 1)) :
     burauRow R i ⬝ᵥ burauCol t i = t + 1 := by
   rw [burauRow_dotProduct, burauCol_strand, burauCol_strandSucc, sub_neg_eq_add]
 
 /-- For two consecutive elementary braids the row of the first pairs with the column of the second
 to `-t`. -/
-private theorem burauRow_dotProduct_burauCol_of_succ (t : R) {i j : Fin (n - 1)}
+theorem burauRow_dotProduct_burauCol_of_succ (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 1 = j) :
     burauRow R i ⬝ᵥ burauCol t j = -t := by
   have h₁ : BraidGroup.strand i ≠ BraidGroup.strand j := by
@@ -180,7 +180,7 @@ private theorem burauRow_dotProduct_burauCol_of_succ (t : R) {i j : Fin (n - 1)}
 
 /-- For two consecutive elementary braids the row of the second pairs with the column of the first
 to `-1`. -/
-private theorem burauRow_dotProduct_burauCol_of_succ_rev (t : R) {i j : Fin (n - 1)}
+theorem burauRow_dotProduct_burauCol_of_succ_rev (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 1 = j) :
     burauRow R j ⬝ᵥ burauCol t i = -1 := by
   have hij : i ≠ j := by
@@ -193,7 +193,7 @@ private theorem burauRow_dotProduct_burauCol_of_succ_rev (t : R) {i j : Fin (n -
     burauCol_apply_of_ne t i h₁ h₂, sub_zero]
 
 /-- Two elementary braids that share no strand have orthogonal rows and columns. -/
-private theorem burauRow_dotProduct_burauCol_of_not_adjacent (t : R) {i j : Fin (n - 1)}
+theorem burauRow_dotProduct_burauCol_of_not_adjacent (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : burauRow R i ⬝ᵥ burauCol t j = 0 := by
   have h₁ : BraidGroup.strand i ≠ BraidGroup.strand j := by
     simp only [ne_eq, Fin.ext_iff, BraidGroup.val_strand]
