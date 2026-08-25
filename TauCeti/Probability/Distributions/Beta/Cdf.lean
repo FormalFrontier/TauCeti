@@ -44,6 +44,7 @@ integral divided by itself, namely `1`.
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 2, the "Closed-form cdfs and
   tails" target.
+* Formal template: `TauCeti/Probability/Distributions/Gamma/Cdf.lean`.
 * *NIST Digital Library of Mathematical Functions*, [§8.17](https://dlmf.nist.gov/8.17).
 -/
 
