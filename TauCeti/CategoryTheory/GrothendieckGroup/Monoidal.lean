@@ -216,9 +216,8 @@ private theorem mulLeft₃_eq_mulRight₃ :
 end Associativity
 
 /-- The tensor product makes the split Grothendieck group of a monoidal additive category a ring,
-with `[X] * [Y] = [X ⊗ Y]` and unit the class of the tensor unit. Associativity is the associator
-of `C` and the unit laws are its unitors: each is an equality of bundled additive maps, so
-`TauCeti.SplitK0.hom_ext` reduces it to the classes of objects. -/
+with `[X] * [Y] = [X ⊗ Y]` and unit the class of the tensor unit: associativity is the associator
+of `C`, and the unit laws are its unitors. -/
 noncomputable instance instRing : Ring (SplitK0 C) where
   __ := (inferInstance : AddCommGroup (SplitK0 C))
   left_distrib a b c := map_add (mulHom C a) b c
@@ -297,8 +296,7 @@ variable {C : Type u} [Category.{v} C] [Preadditive C] [MonoidalCategory C]
   [MonoidalPreadditive C] [BraidedCategory C] [HasBinaryBiproducts C] [EssentiallySmall.{w} C]
 
 /-- For a braided monoidal additive category the ring structure on split `K₀` is commutative:
-commutativity is the equality of `AddMonoidHom.mul` with its flip, which `TauCeti.SplitK0.hom_ext`
-reduces to the braiding of `C`. -/
+`[X] * [Y] = [X ⊗ Y] = [Y ⊗ X] = [Y] * [X]` by the braiding of `C`. -/
 noncomputable instance instCommRing : CommRing (SplitK0 C) where
   __ := instRing
   mul_comm a b := by
@@ -319,39 +317,31 @@ variable {C : Type u} [Category.{v} C] [Preadditive C] [MonoidalCategory C]
   {D : Type u'} [Category.{v'} D] [Preadditive D] [MonoidalCategory D]
   [MonoidalPreadditive D] [HasBinaryBiproducts D] [EssentiallySmall.{w'} D]
 
-/-- An additive functorial map is multiplicative; this is the comparison isomorphism
-`CategoryTheory.Functor.Monoidal.μIso`, transported along `hom_ext`. -/
-private theorem map_mul' (F : C ⥤ D) [F.Additive] [F.Monoidal] (a b : SplitK0 C) :
-    map F (a * b) = map F a * map F b := by
-  revert a b
-  rw [AddMonoidHom.map_mul_iff]
-  refine hom_ext fun X => hom_ext fun Y => ?_
-  simp only [AddMonoidHom.compr₂_apply, AddMonoidHom.mul_apply, AddMonoidHom.compl₂_apply,
-    AddMonoidHom.comp_apply, of_mul_of, map_of]
-  exact of_congr (Functor.Monoidal.μIso F X Y).symm
-
-/-- The ring homomorphism of split Grothendieck groups induced by a monoidal additive functor. -/
+/-- The ring homomorphism of split Grothendieck groups induced by a monoidal additive functor:
+the functorial map `TauCeti.SplitK0.map`, read through the universal property as the invariant
+`X ↦ [F.obj X]`, which the comparison isomorphisms of `F` make unit-preserving and multiplicative
+on tensor products. -/
 noncomputable def mapRingHom (F : C ⥤ D) [F.Additive] [F.Monoidal] :
-    SplitK0 C →+* SplitK0 D where
-  toFun := map F
-  map_zero' := map_zero (map F)
-  map_add' := map_add (map F)
-  map_one' := by
-    rw [one_def, map_of, one_def]
-    exact of_congr (Functor.Monoidal.εIso F).symm
-  map_mul' := map_mul' F
-
-/-- The induced ring homomorphism takes the class of an object to the class of its image. -/
-@[simp]
-lemma mapRingHom_of (F : C ⥤ D) [F.Additive] [F.Monoidal] (X : C) :
-    mapRingHom F (of X : SplitK0 C) = of (F.obj X) :=
-  map_of F X
+    SplitK0 C →+* SplitK0 D :=
+  liftRingHom ((liftEquiv (C := C) (G := SplitK0 D)).symm (map F))
+    (by
+      simp only [liftEquiv_symm_apply_obj, one_def, map_of]
+      exact of_congr (Functor.Monoidal.εIso F).symm)
+    fun X Y => by
+      simp only [liftEquiv_symm_apply_obj, map_of, of_mul_of]
+      exact of_congr (Functor.Monoidal.μIso F X Y).symm
 
 /-- The additive homomorphism underlying `TauCeti.SplitK0.mapRingHom` is the functorial map. -/
 @[simp]
 lemma mapRingHom_toAddMonoidHom (F : C ⥤ D) [F.Additive] [F.Monoidal] :
-    ((mapRingHom F : SplitK0 C →+* SplitK0 D) : SplitK0 C →+ SplitK0 D) = map F :=
-  hom_ext fun X => by rw [AddMonoidHom.coe_coe, mapRingHom_of, map_of]
+    ((mapRingHom F : SplitK0 C →+* SplitK0 D) : SplitK0 C →+ SplitK0 D) = map F := by
+  rw [mapRingHom, liftRingHom_toAddMonoidHom, ← liftEquiv_apply, Equiv.apply_symm_apply]
+
+/-- The induced ring homomorphism takes the class of an object to the class of its image. -/
+@[simp]
+lemma mapRingHom_of (F : C ⥤ D) [F.Additive] [F.Monoidal] (X : C) :
+    mapRingHom F (of X : SplitK0 C) = of (F.obj X) := by
+  rw [← AddMonoidHom.coe_coe, mapRingHom_toAddMonoidHom, map_of]
 
 /-- `TauCeti.SplitK0.mapRingHom` sends the identity functor to the identity ring homomorphism. -/
 @[simp]
