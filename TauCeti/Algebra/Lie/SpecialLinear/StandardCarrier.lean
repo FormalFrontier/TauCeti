@@ -179,19 +179,25 @@ theorem rep_rootGenerator_single_source (k : Fin r ⊕ Fin r) :
         (Pi.single (rootSource r k) 1) = Pi.single (rootTarget r k) 1 := by
   rw [rep_rootGenerator_apply, Pi.single_eq_same, one_smul]
 
-/-- Every numbered root generator squares to zero in the standard representation. -/
+/-- Applying a numbered root generator twice to a vector gives zero: it writes into a coordinate
+it does not read from. -/
 theorem rep_rootGenerator_rep_rootGenerator_eq_zero (k : Fin r ⊕ Fin r) (v : Fin (r + 1) → ℚ) :
     rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k))
         (rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k)) v) = 0 := by
   rw [rep_rootGenerator_apply r k v, map_smul, rep_rootGenerator_apply,
     Pi.single_eq_of_ne (rootTarget_ne_rootSource r k).symm 1, zero_smul, smul_zero]
 
-/-- Every numbered root generator acts nilpotently. -/
-theorem isNilpotent_rep_rootGenerator (k : Fin r ⊕ Fin r) :
-    IsNilpotent (rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k))) := by
-  refine ⟨2, LinearMap.ext fun v => ?_⟩
+/-- **Every numbered root generator squares to zero in the standard representation.** -/
+theorem pow_two_rep_rootGenerator_eq_zero (k : Fin r ⊕ Fin r) :
+    rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k)) ^ 2 = 0 := by
+  refine LinearMap.ext fun v => ?_
   rw [pow_two, Module.End.mul_apply, rep_rootGenerator_rep_rootGenerator_eq_zero,
     LinearMap.zero_apply]
+
+/-- Every numbered root generator acts nilpotently. -/
+theorem isNilpotent_rep_rootGenerator (k : Fin r ⊕ Fin r) :
+    IsNilpotent (rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k))) :=
+  ⟨2, pow_two_rep_rootGenerator_eq_zero r k⟩
 
 /-! ## Weights and roots -/
 
@@ -224,21 +230,19 @@ private theorem diagSingle_mulVec (a k : Fin (r + 1)) :
   · subst h; simp
   · simp [h, Ne.symm h]
 
-/-- Multiplying a matrix unit on the left by a diagonal one. -/
-private theorem diagSingle_mul_single (a c d : Fin (r + 1)) :
-    Matrix.single a a (1 : ℚ) * Matrix.single c d 1 =
-      (if a = c then (1 : ℚ) else 0) • Matrix.single c d 1 := by
-  by_cases h : a = c
-  · subst h; simp
-  · simp [h]
-
-/-- Multiplying a matrix unit on the right by a diagonal one. -/
-private theorem single_mul_diagSingle (c d b : Fin (r + 1)) :
-    Matrix.single c d (1 : ℚ) * Matrix.single b b 1 =
-      (if d = b then (1 : ℚ) else 0) • Matrix.single c d 1 := by
-  by_cases h : d = b
-  · subst h; simp
-  · simp [h]
+/-- The commutator of a difference of two diagonal matrix units with a matrix unit is the
+corresponding Kronecker multiple of that matrix unit. -/
+private theorem commutator_diagSingleSub_single (a b c d : Fin (r + 1)) :
+    (Matrix.single a a (1 : ℚ) - Matrix.single b b 1) * Matrix.single c d 1 -
+        Matrix.single c d 1 * (Matrix.single a a (1 : ℚ) - Matrix.single b b 1) =
+      (((if a = c then (1 : ℚ) else 0) - (if b = c then 1 else 0)) -
+          ((if d = a then (1 : ℚ) else 0) - (if d = b then 1 else 0))) •
+        Matrix.single c d 1 := by
+  ext x y
+  simp only [Matrix.sub_apply, Matrix.mul_apply, Matrix.single_apply, Matrix.smul_apply,
+    smul_eq_mul, ite_and, sub_mul, mul_sub, mul_ite, mul_zero, mul_one, Finset.sum_ite_eq,
+    Finset.mem_univ, ite_true]
+  split_ifs <;> simp_all
 
 /-- Every standard coordinate vector is a Cartan weight vector, of the weight recorded by
 `TauCeti.SlStd.weight`. -/
@@ -276,16 +280,14 @@ theorem lie_cartanGenerator_rootGenerator (k : Fin r ⊕ Fin r) (j : Fin r) :
     ⁅cartanGenerator r j, rootGenerator r k⁆ =
       ((rootWeight r k j : ℤ) : ℚ) • rootGenerator r k := by
   refine Subtype.ext ?_
-  rw [sl_bracket]
   have hcoe : (((((rootWeight r k j : ℤ) : ℚ) • rootGenerator r k) :
       sl (Fin (r + 1)) ℚ) : Matrix (Fin (r + 1)) (Fin (r + 1)) ℚ) =
       ((rootWeight r k j : ℤ) : ℚ) •
         Matrix.single (rootTarget r k) (rootSource r k) (1 : ℚ) := by
     rw [← val_rootGenerator]
     rfl
-  rw [hcoe, val_cartanGenerator, val_rootGenerator, Matrix.sub_mul, Matrix.mul_sub,
-    diagSingle_mul_single, diagSingle_mul_single, single_mul_diagSingle, single_mul_diagSingle,
-    ← sub_smul, ← sub_smul, ← sub_smul, ← cartanCoeff r k j]
+  rw [sl_bracket, hcoe, val_cartanGenerator, val_rootGenerator,
+    commutator_diagSingleSub_single, ← cartanCoeff r k j]
   simp only [Int.cast_sub, apply_ite (fun z : ℤ => (z : ℚ)), Int.cast_one, Int.cast_zero]
 
 /-! ## The standard admissible lattice -/
@@ -320,13 +322,6 @@ theorem coe_latticeBasis (i : Fin (r + 1)) :
   rw [Module.Basis.restrictScalars_apply, Pi.basisFun_apply]
 
 /-! ## Stability of the lattice under the Kostant form -/
-
-/-- Every numbered root generator squares to zero in the standard representation. -/
-theorem pow_two_rep_rootGenerator_eq_zero (k : Fin r ⊕ Fin r) :
-    rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k)) ^ 2 = 0 := by
-  refine LinearMap.ext fun v => ?_
-  rw [pow_two, Module.End.mul_apply, rep_rootGenerator_rep_rootGenerator_eq_zero,
-    LinearMap.zero_apply]
 
 /-- A numbered root generator carries the standard lattice into itself. -/
 theorem rep_rootGenerator_mem_lattice (k : Fin r ⊕ Fin r) {v : Fin (r + 1) → ℚ}
@@ -476,7 +471,8 @@ noncomputable abbrev rootSubgroup (k : Fin r ⊕ Fin r) :
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k
 
-/-- The split maximal torus `T → G` of the type `A_r` carrier. -/
+/-- The rank-`r` split weight torus `T → G` of the type `A_r` carrier. Maximality is not
+asserted here; see the scope disclaimer in the module documentation. -/
 noncomputable abbrev weightTorus : SplitTorus.groupScheme ℤ (Fin r) ⟶ groupScheme r :=
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
