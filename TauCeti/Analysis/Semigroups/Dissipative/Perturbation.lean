@@ -27,8 +27,8 @@ consequence of Lumer--Phillips.
 
 ## Main results
 
-* `TauCeti.Semigroups.IsDissipative.vadd_subScalar`: `B + A - ‖B‖ I` is dissipative.
-* `TauCeti.Semigroups.IsMDissipative.vadd_subScalar`: `B + A - ‖B‖ I` is m-dissipative.
+* `TauCeti.Semigroups.IsDissipative.subScalar_vadd`: `B + A - ‖B‖ I` is dissipative.
+* `TauCeti.Semigroups.IsMDissipative.subScalar_vadd`: `B + A - ‖B‖ I` is m-dissipative.
 
 ## References
 
@@ -44,11 +44,8 @@ namespace TauCeti.Semigroups
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] {A : X →ₗ.[ℝ] X}
 
 /-- **Dissipativity survives a bounded perturbation**, at the cost of shifting by `‖B‖`: if `A`
-is dissipative and `B` is bounded, then `B + A - ‖B‖ I` is dissipative.
-
-At spectral parameter `mu > 0` the shift turns the estimate for `A` into one at `mu + ‖B‖`,
-and the triangle inequality then pays for `B x` out of the gained `‖B‖ ‖x‖`. -/
-theorem IsDissipative.vadd_subScalar (hA : IsDissipative A) (B : X →L[ℝ] X) :
+is dissipative and `B` is bounded, then `B + A - ‖B‖ I` is dissipative. -/
+theorem IsDissipative.subScalar_vadd (hA : IsDissipative A) (B : X →L[ℝ] X) :
     IsDissipative (LinearPMap.subScalar ((B : X →ₗ[ℝ] X) +ᵥ A) ‖B‖) := by
   rw [LinearPMap.subScalar_vadd]
   intro mu hmu x
@@ -69,14 +66,10 @@ theorem IsDissipative.vadd_subScalar (hA : IsDissipative A) (B : X →L[ℝ] X) 
 variable [CompleteSpace X]
 
 /-- **Maximal dissipativity survives a bounded perturbation.** If `A` is m-dissipative and `B` is
-bounded, then `B + A - ‖B‖ I` is m-dissipative.
-
-The range condition is checked at `lambda = ‖B‖ + 1`, which for the unshifted operator `B + A`
-means the spectral parameter `2 ‖B‖ + 1`; there `‖B‖ ‖R(lambda, A)‖ ≤ ‖B‖ / (2 ‖B‖ + 1) < 1`, so
-the Neumann perturbation of a resolvent point applies. -/
-theorem IsMDissipative.vadd_subScalar (hA : IsMDissipative A) (B : X →L[ℝ] X) :
+bounded, then `B + A - ‖B‖ I` is m-dissipative. -/
+theorem IsMDissipative.subScalar_vadd (hA : IsMDissipative A) (B : X →L[ℝ] X) :
     IsMDissipative (LinearPMap.subScalar ((B : X →ₗ[ℝ] X) +ᵥ A) ‖B‖) := by
-  have hdis := hA.isDissipative.vadd_subScalar B
+  have hdis := hA.isDissipative.subScalar_vadd B
   rw [LinearPMap.subScalar_vadd] at hdis ⊢
   refine hdis.isMDissipative (lambda := ‖B‖ + 1) (by positivity) fun y => ?_
   have hmupos : (0 : ℝ) < 2 * ‖B‖ + 1 := by positivity

@@ -17,18 +17,21 @@ factorisation
 `lambda • I - (B + A) = (I - B R(lambda, A)) (lambda • I - A)`,
 
 whose first factor is invertible by the geometric series as soon as `‖B‖ ‖R(lambda, A)‖ < 1`.
-This file turns that observation into the two facts a perturbation theorem needs: the resolvent
-point survives, and the perturbed resolvent obeys the bound `r / (1 - ‖B‖ r)`.
+This file turns that observation into the three facts a perturbation theorem needs: the resolvent
+point survives, the perturbed resolvent is `R(lambda, A) (I - B R(lambda, A))⁻¹`, and it obeys
+the bound `r / (1 - ‖B‖ r)`.
 
-Both statements take an upper bound `r` for `‖R(lambda, A)‖` rather than that norm itself,
+All the statements take an upper bound `r` for `‖R(lambda, A)‖` rather than that norm itself,
 because that is the form in which callers have their information: a semigroup growth bound
 `(omega, M)` supplies `r = M / (lambda - omega)`, and the conclusion then reads
 `M / (lambda - omega - M ‖B‖)`.
 
 ## Main results
 
+* `TauCeti.LinearPMap.isResolventAt_vadd`: the perturbed inverse, as an `IsResolventAt` witness.
 * `TauCeti.LinearPMap.mem_resolventSet_vadd`: a resolvent point survives a bounded perturbation
   small against the resolvent.
+* `TauCeti.LinearPMap.resolvent_vadd`: the perturbed resolvent in closed form.
 * `TauCeti.LinearPMap.norm_resolvent_vadd_le`: the norm bound for the perturbed resolvent.
 
 ## References
@@ -47,20 +50,21 @@ namespace TauCeti.LinearPMap
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
   {A : X →ₗ.[ℝ] X} {lambda r : ℝ}
 
-/-- **A resolvent point survives a small bounded perturbation.** If `lambda` lies in the
-resolvent set of `A` and the bounded operator `B` satisfies `‖B‖ * r < 1` for some bound `r` on
-`‖R(lambda, A)‖`, then `lambda` lies in the resolvent set of `B +ᵥ A`.
-
-The inverse exhibited is `R(lambda, A) (I - B R(lambda, A))⁻¹`, the second factor being the
-geometric series. -/
-theorem mem_resolventSet_vadd (B : X →L[ℝ] X) (h : lambda ∈ resolventSet A)
+/-- **The inverse of a small bounded perturbation.** If `lambda` lies in the resolvent set of `A`
+and the bounded operator `B` satisfies `‖B‖ * r < 1` for some bound `r` on `‖R(lambda, A)‖`, then
+`R(lambda, A) (I - B R(lambda, A))⁻¹` inverts `lambda • I - (B + A)`. -/
+theorem isResolventAt_vadd (B : X →L[ℝ] X) (h : lambda ∈ resolventSet A)
     (hr : ‖resolvent A lambda‖ ≤ r) (hB : ‖B‖ * r < 1) :
-    lambda ∈ resolventSet ((B : X →ₗ[ℝ] X) +ᵥ A) := by
+    IsResolventAt ((B : X →ₗ[ℝ] X) +ᵥ A) lambda
+      (resolvent A lambda * Ring.inverse (1 - B * resolvent A lambda)) := by
   set R := resolvent A lambda with hRdef
   have hnorm : ‖B * R‖ < 1 :=
     lt_of_le_of_lt ((norm_mul_le B R).trans
       (mul_le_mul_of_nonneg_left hr (norm_nonneg B))) hB
   obtain ⟨u, hu⟩ := isUnit_one_sub_of_norm_lt_one hnorm
+  have hinv : Ring.inverse (1 - B * R) = ((u⁻¹ : (X →L[ℝ] X)ˣ) : X →L[ℝ] X) := by
+    rw [← hu, Ring.inverse_unit]
+  rw [hinv, ContinuousLinearMap.mul_def]
   set U : X →L[ℝ] X := ((u⁻¹ : (X →L[ℝ] X)ˣ) : X →L[ℝ] X) with hUdef
   have hcancel : ∀ y : X, U y - B (R (U y)) = y := by
     intro y
@@ -72,8 +76,7 @@ theorem mem_resolventSet_vadd (B : X →L[ℝ] X) (h : lambda ∈ resolventSet A
     have h1 : U * (u : X →L[ℝ] X) = 1 := u.inv_mul
     rw [hu] at h1
     simpa using congrArg (fun S : X →L[ℝ] X => S y) h1
-  refine mem_resolventSet_iff.mpr
-    ⟨R ∘L U, fun y => resolvent_mem_domain h (U y), fun y => ?_, fun x => ?_⟩
+  refine ⟨fun y => resolvent_mem_domain h (U y), fun y => ?_, fun x => ?_⟩
   · have hstep : lambda • (R ∘L U) y -
         ((B : X →ₗ[ℝ] X) +ᵥ A) ⟨(R ∘L U) y, resolvent_mem_domain h (U y)⟩
         = (lambda • R (U y) - A ⟨R (U y), resolvent_mem_domain h (U y)⟩) - B (R (U y)) := by
@@ -90,12 +93,26 @@ theorem mem_resolventSet_vadd (B : X →L[ℝ] X) (h : lambda ∈ resolventSet A
       abel
     rw [ContinuousLinearMap.comp_apply, hstep, hsolve, hx]
 
+/-- **A resolvent point survives a small bounded perturbation.** If `lambda` lies in the
+resolvent set of `A` and the bounded operator `B` satisfies `‖B‖ * r < 1` for some bound `r` on
+`‖R(lambda, A)‖`, then `lambda` lies in the resolvent set of `B +ᵥ A`. -/
+theorem mem_resolventSet_vadd (B : X →L[ℝ] X) (h : lambda ∈ resolventSet A)
+    (hr : ‖resolvent A lambda‖ ≤ r) (hB : ‖B‖ * r < 1) :
+    lambda ∈ resolventSet ((B : X →ₗ[ℝ] X) +ᵥ A) :=
+  (isResolventAt_vadd B h hr hB).mem_resolventSet
+
+/-- **The perturbed resolvent in closed form.** Under the hypotheses of
+`TauCeti.LinearPMap.mem_resolventSet_vadd`, the resolvent of `B +ᵥ A` is
+`R(lambda, A) (I - B R(lambda, A))⁻¹`. -/
+theorem resolvent_vadd (B : X →L[ℝ] X) (h : lambda ∈ resolventSet A)
+    (hr : ‖resolvent A lambda‖ ≤ r) (hB : ‖B‖ * r < 1) :
+    resolvent ((B : X →ₗ[ℝ] X) +ᵥ A) lambda =
+      resolvent A lambda * Ring.inverse (1 - B * resolvent A lambda) :=
+  resolvent_eq_of_isResolventAt (isResolventAt_vadd B h hr hB)
+
 /-- **The perturbed resolvent bound.** Under the hypotheses of
 `TauCeti.LinearPMap.mem_resolventSet_vadd`, the resolvent of `B +ᵥ A` is bounded by
-`r / (1 - ‖B‖ r)`.
-
-The estimate is the a priori one: `x = R(lambda, A) (y + B x)` for `x = R(lambda, B + A) y`,
-so `‖x‖ ≤ r (‖y‖ + ‖B‖ ‖x‖)`. -/
+`r / (1 - ‖B‖ r)`. -/
 theorem norm_resolvent_vadd_le (B : X →L[ℝ] X) (h : lambda ∈ resolventSet A)
     (hr : ‖resolvent A lambda‖ ≤ r) (hB : ‖B‖ * r < 1) :
     ‖resolvent ((B : X →ₗ[ℝ] X) +ᵥ A) lambda‖ ≤ r / (1 - ‖B‖ * r) := by
