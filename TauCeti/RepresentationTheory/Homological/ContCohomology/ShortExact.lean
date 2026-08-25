@@ -671,6 +671,13 @@ noncomputable def explicitDelta1 : H1 G C →+ H2 G A :=
   QuotientAddGroup.lift ((B1 G C).addSubgroupOf (Z1 G C)) S.delta1Hom fun f hf =>
     S.delta1Hom_eq_zero_of_mem_B1 f (AddSubgroup.mem_addSubgroupOf.1 hf)
 
+/-- The quotient lift defining `explicitDelta1` computes to `delta1Hom` on a representative. -/
+@[simp]
+theorem explicitDelta1_H1pi (f : Z1 G C) :
+    S.explicitDelta1 (f : H1 G C) = S.delta1Hom f := by
+  change (QuotientAddGroup.lift _ S.delta1Hom _) (f : H1 G C) = S.delta1Hom f
+  exact QuotientAddGroup.lift_mk' _ _ f
+
 /-- **`δ¹` on representatives.** For *any* continuous lift `e` of a continuous `1`-cocycle `f` on
 `C` and any continuous `2`-cocycle `a` with `incl ∘ a = d¹ e`, the class of `a` is `δ¹` of the
 class of `f`. This mirrors the shape of Mathlib's discrete `groupCohomology.δ₁_apply`. -/
@@ -682,8 +689,7 @@ theorem explicitDelta1_apply (f : Z1 G C) {e : G → B} (hc : Continuous e)
     obtain ⟨g, h⟩ := p
     exact S.incl_injective (((hae g h).trans (d1_apply e g h).symm).trans
       (incl_delta1Cochain he (isCocycle_coe f) (g, h)).symm)
-  have hlift : S.explicitDelta1 (H1pi G C f) = S.delta1Hom f := rfl
-  rw [hlift, delta1Hom, AddMonoidHom.mk'_apply,
+  rw [QuotientAddGroup.mk'_apply, explicitDelta1_H1pi, delta1Hom, AddMonoidHom.mk'_apply,
     delta1Class_congr _ hc _ he _ (isCocycle_coe f) rfl, delta1Class]
   exact congrArg (H2pi G A) (Subtype.ext hcochain.symm)
 
