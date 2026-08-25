@@ -220,22 +220,16 @@ theorem zigzagTrivialCoeff_apply_eq_repr (hns : ∀ i : V, ∃ j, G.Adj i j)
     zigzagTrivialCoeff k G x (vertex G i) =
       (zigzagBasis k G hns).repr x (.inl i) := by
   classical
-  have repr_basisFun (b : ZigzagBasisIndex G) :
-      (zigzagBasis k G hns).repr (zigzagBasisFun k G b) = Finsupp.single b 1 := by
-    rw [← zigzagBasis_apply k G hns, Module.Basis.repr_self]
-  have coord_basisFun (b b' : ZigzagBasisIndex G) :
-      (zigzagBasis k G hns).coord b (zigzagBasisFun k G b') = if b' = b then 1 else 0 := by
-    rw [Module.Basis.coord_apply, repr_basisFun, Finsupp.single_apply]
   have key : (LinearMap.proj (vertex G i)).comp (zigzagTrivialCoeff k G).toLinearMap =
       (zigzagBasis k G hns).coord (.inl i) := by
     refine (zigzagBasis k G hns).ext fun b => ?_
-    rw [LinearMap.comp_apply, LinearMap.proj_apply, zigzagBasis_apply, coord_basisFun]
+    rw [LinearMap.comp_apply, LinearMap.proj_apply, zigzagBasis_coord_apply]
     rcases b with j | d | j
-    · simp only [zigzagBasisFun_inl, AlgHom.toLinearMap_apply,
+    · simp only [zigzagBasis_apply, zigzagBasisFun_inl, AlgHom.toLinearMap_apply,
         zigzagTrivialCoeff_vertexIdempotent, Sum.inl.injEq, eq_comm]
-    · simp only [zigzagBasisFun_inr_inl, AlgHom.toLinearMap_apply,
+    · simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, AlgHom.toLinearMap_apply,
         zigzagTrivialCoeff_ofArrow, Pi.zero_apply, Sum.inr_ne_inl, ↓reduceIte]
-    · simp only [zigzagBasisFun_inr_inr, AlgHom.toLinearMap_apply,
+    · simp only [zigzagBasis_apply, zigzagBasisFun_inr_inr, AlgHom.toLinearMap_apply,
         zigzagTrivialCoeff_zigzagVolume, Pi.zero_apply, Sum.inr_ne_inl, ↓reduceIte]
   exact LinearMap.congr_fun key x
 

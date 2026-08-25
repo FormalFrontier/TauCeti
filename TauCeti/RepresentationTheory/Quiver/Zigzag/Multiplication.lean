@@ -35,6 +35,8 @@ and each identity below degenerates to a true statement about `0` there.
 * `TauCeti.zigzagMk_ofArrow_mul_ofArrow_symm` and `TauCeti.zigzagMk_ofArrow_mul_ofArrow_of_ne`: two
   arrows multiply to a volume class when the second is the reverse of the first, and to zero
   otherwise.
+* `TauCeti.zigzagMk_ofArrow_mul`: left multiplication by an arrow reads off two coordinates in the
+  vertex-arrow-volume basis.
 * `TauCeti.zigzagMk_vertexIdempotent_mul_zigzagVolume` and its three companions: the idempotent at
   the base of a volume class is a two-sided unit for it, and the other idempotents kill it.
 * `TauCeti.zigzagMk_ofArrow_mul_zigzagVolume`, `TauCeti.zigzagVolume_mul_zigzagMk_ofArrow` and
@@ -219,5 +221,57 @@ theorem zigzagVolume_mul_zigzagVolume (i j : V) :
         (by simp [length_backtrackPath])
     · rw [zigzagVolume_eq_zero_of_not_exists_adj k G hn', mul_zero]
   · rw [zigzagVolume_eq_zero_of_not_exists_adj k G hn, zero_mul]
+
+/-! ### Left multiplication by an arrow -/
+
+section
+
+variable {k G}
+
+/-- **Left multiplication by an arrow reads off two coordinates.**  Multiplying by the arrow of a
+dart `d` keeps only the idempotent at the tail of `d`, which returns the arrow itself, and the
+reverse arrow, which returns the volume class at the head of `d`. -/
+theorem zigzagMk_ofArrow_mul (hns : ∀ i : V, ∃ j, G.Adj i j) (d : G.Dart)
+    (x : nonisolatedZigzagQuotient k G) :
+    zigzagMk k G (ofArrow (arrow G d.adj)) * x =
+      (zigzagBasis k G hns).coord (.inl d.fst) x • zigzagBasis k G hns (.inr (.inl d)) +
+        (zigzagBasis k G hns).coord (.inr (.inl d.symm)) x •
+          zigzagBasis k G hns (.inr (.inr d.snd)) := by
+  classical
+  have key : LinearMap.mulLeft k (zigzagMk k G (ofArrow (arrow G d.adj))) =
+      LinearMap.smulRight ((zigzagBasis k G hns).coord (.inl d.fst))
+          (zigzagBasis k G hns (.inr (.inl d))) +
+        LinearMap.smulRight ((zigzagBasis k G hns).coord (.inr (.inl d.symm)))
+          (zigzagBasis k G hns (.inr (.inr d.snd))) := by
+    refine (zigzagBasis k G hns).ext fun b => ?_
+    simp only [LinearMap.add_apply, LinearMap.smulRight_apply, LinearMap.mulLeft_apply,
+      zigzagBasis_coord_apply]
+    rcases b with j | e | j
+    · rcases eq_or_ne j d.fst with rfl | hj
+      · rw [ite_eq_left rfl, ite_eq_right (by simp)]
+        simp only [zigzagBasis_apply, zigzagBasisFun_inl, zigzagBasisFun_inr_inl,
+          zigzagBasisFun_inr_inr, one_smul, zero_smul, add_zero]
+        exact zigzagMk_ofArrow_mul_vertexIdempotent k G d
+      · rw [ite_eq_right (by simpa using hj), ite_eq_right (by simp)]
+        simp only [zigzagBasis_apply, zigzagBasisFun_inl, zigzagBasisFun_inr_inl,
+          zigzagBasisFun_inr_inr, zero_smul, add_zero]
+        exact zigzagMk_ofArrow_mul_vertexIdempotent_of_ne k G d hj
+    · rcases eq_or_ne e d.symm with rfl | he
+      · rw [ite_eq_right (by simp), ite_eq_left rfl]
+        simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
+          one_smul, zero_smul, zero_add]
+        exact zigzagMk_ofArrow_mul_ofArrow_symm k G d
+      · rw [ite_eq_right (by simp), ite_eq_right (by simpa using he)]
+        simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
+          zero_smul, add_zero]
+        exact zigzagMk_ofArrow_mul_ofArrow_of_ne k G he
+    · rw [ite_eq_right (by simp), ite_eq_right (by simp)]
+      simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
+        zero_smul, add_zero]
+      exact zigzagMk_ofArrow_mul_zigzagVolume k G d j
+  simpa only [LinearMap.add_apply, LinearMap.smulRight_apply, LinearMap.mulLeft_apply]
+    using congrArg (fun f => f x) key
+
+end
 
 end TauCeti

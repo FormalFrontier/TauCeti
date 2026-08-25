@@ -46,9 +46,6 @@ reading a single vertex coordinate.
 * `TauCeti.finrank_restrictScalars_socle_nonisolatedZigzagQuotient` and
   `TauCeti.finrank_quotient_jacobson_nonisolatedZigzagQuotient`: socle and top both have dimension
   the number of vertices.
-* `TauCeti.zigzagMk_ofArrow_mul`: left multiplication by an arrow reads off two coordinates in the
-  vertex-arrow-volume basis, the auxiliary computation behind the socle.
-
 ## References
 
 This proves the socle and top part of the first clause of Layer 2 of
@@ -110,61 +107,7 @@ theorem restrictScalars_span_singleton_zigzagVolume (i : V) :
       Submodule.restrictScalars_mem]
     exact Submodule.mem_span_singleton_self _
 
-/-! ### Left multiplication by an arrow reads two coordinates -/
-
 variable {k G}
-
-/-- **Left multiplication by an arrow reads off two coordinates.**  Multiplying by the arrow of a
-dart `d` keeps only the idempotent at the tail of `d`, which returns the arrow itself, and the
-reverse arrow, which returns the volume class at the head of `d`. -/
-theorem zigzagMk_ofArrow_mul (hns : ∀ i : V, ∃ j, G.Adj i j) (d : G.Dart)
-    (x : nonisolatedZigzagQuotient k G) :
-    zigzagMk k G (ofArrow (arrow G d.adj)) * x =
-      (zigzagBasis k G hns).coord (.inl d.fst) x • zigzagBasis k G hns (.inr (.inl d)) +
-        (zigzagBasis k G hns).coord (.inr (.inl d.symm)) x •
-          zigzagBasis k G hns (.inr (.inr d.snd)) := by
-  classical
-  have key : LinearMap.mulLeft k (zigzagMk k G (ofArrow (arrow G d.adj))) =
-      LinearMap.smulRight ((zigzagBasis k G hns).coord (.inl d.fst))
-          (zigzagBasis k G hns (.inr (.inl d))) +
-        LinearMap.smulRight ((zigzagBasis k G hns).coord (.inr (.inl d.symm)))
-          (zigzagBasis k G hns (.inr (.inr d.snd))) := by
-    refine (zigzagBasis k G hns).ext fun b => ?_
-    simp only [LinearMap.add_apply, LinearMap.smulRight_apply, LinearMap.mulLeft_apply]
-    -- `TauCeti.PathAlgebra.ofArrow_eq_ofPath` is a `simp` lemma, so the arrow classes are
-    -- normalized away by a bare `simp`; every step below is a `simp only` or an `exact`.
-    rcases b with j | e | j
-    · rcases eq_or_ne j d.fst with rfl | hj
-      · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_left rfl,
-          Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp)]
-        simp only [zigzagBasis_apply, zigzagBasisFun_inl, zigzagBasisFun_inr_inl,
-          zigzagBasisFun_inr_inr, one_smul, zero_smul, add_zero]
-        exact zigzagMk_ofArrow_mul_vertexIdempotent k G d
-      · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply,
-          ite_eq_right (by simpa using hj), Module.Basis.coord_apply,
-          Module.Basis.repr_self_apply, ite_eq_right (by simp)]
-        simp only [zigzagBasis_apply, zigzagBasisFun_inl, zigzagBasisFun_inr_inl,
-          zigzagBasisFun_inr_inr, zero_smul, add_zero]
-        exact zigzagMk_ofArrow_mul_vertexIdempotent_of_ne k G d hj
-    · rcases eq_or_ne e d.symm with rfl | he
-      · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp),
-          Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_left rfl]
-        simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
-          one_smul, zero_smul, zero_add]
-        exact zigzagMk_ofArrow_mul_ofArrow_symm k G d
-      · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp),
-          Module.Basis.coord_apply, Module.Basis.repr_self_apply,
-          ite_eq_right (by simpa using he)]
-        simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
-          zero_smul, add_zero]
-        exact zigzagMk_ofArrow_mul_ofArrow_of_ne k G he
-    · rw [Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp),
-        Module.Basis.coord_apply, Module.Basis.repr_self_apply, ite_eq_right (by simp)]
-      simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, zigzagBasisFun_inr_inr,
-        zero_smul, add_zero]
-      exact zigzagMk_ofArrow_mul_zigzagVolume k G d j
-  simpa only [LinearMap.add_apply, LinearMap.smulRight_apply, LinearMap.mulLeft_apply]
-    using congrArg (fun f => f x) key
 
 /-- An element killed on the left by every arrow is a combination of volume classes. -/
 theorem mem_zigzagVolumeSpan_of_forall_zigzagMk_ofArrow_mul_eq_zero
@@ -184,19 +127,11 @@ theorem mem_zigzagVolumeSpan_of_forall_zigzagMk_ofArrow_mul_eq_zero
     have hArrowVolume : (Sum.inr (Sum.inl d) : ZigzagBasisIndex G) ≠
         Sum.inr (Sum.inr d.snd) := by simp
     simp only [map_add, map_smul, map_zero, smul_eq_mul] at h1 h2
-    rw [Module.Basis.coord_apply (b := zigzagBasis k G hns) (.inr (.inl d))
-        (zigzagBasis k G hns (.inr (.inl d))),
-      Module.Basis.repr_self_apply, ite_eq_left rfl,
-      Module.Basis.coord_apply (b := zigzagBasis k G hns) (.inr (.inl d))
-        (zigzagBasis k G hns (.inr (.inr d.snd))),
-      Module.Basis.repr_self_apply, ite_eq_right hVolumeArrow,
+    rw [zigzagBasis_coord_apply, ite_eq_left rfl, zigzagBasis_coord_apply,
+      ite_eq_right hVolumeArrow,
       mul_one, mul_zero, add_zero] at h1
-    rw [Module.Basis.coord_apply (b := zigzagBasis k G hns) (.inr (.inr d.snd))
-        (zigzagBasis k G hns (.inr (.inl d))),
-      Module.Basis.repr_self_apply, ite_eq_right hArrowVolume,
-      Module.Basis.coord_apply (b := zigzagBasis k G hns) (.inr (.inr d.snd))
-        (zigzagBasis k G hns (.inr (.inr d.snd))),
-      Module.Basis.repr_self_apply, ite_eq_left rfl, mul_zero, mul_one, zero_add] at h2
+    rw [zigzagBasis_coord_apply, ite_eq_right hArrowVolume, zigzagBasis_coord_apply,
+      ite_eq_left rfl, mul_zero, mul_one, zero_add] at h2
     exact ⟨by simpa only [Module.Basis.coord_apply] using h1,
       by simpa only [Module.Basis.coord_apply] using h2⟩
   rw [mem_zigzagVolumeSpan_iff hns]
@@ -204,15 +139,6 @@ theorem mem_zigzagVolumeSpan_of_forall_zigzagMk_ofArrow_mul_eq_zero
   · obtain ⟨j, hij⟩ := hns i
     exact (hcoef ⟨(i, j), hij⟩).1
   · simpa using (hcoef e.symm).2
-
-/-- The volume classes are linearly independent. -/
-theorem linearIndependent_zigzagVolume (hns : ∀ i : V, ∃ j, G.Adj i j) :
-    LinearIndependent k (zigzagVolume k G) := by
-  have heq : (zigzagBasisFun k G ∘ fun i : V => Sum.inr (Sum.inr i)) = zigzagVolume k G :=
-    funext fun i => zigzagBasisFun_inr_inr k G i
-  rw [← heq]
-  exact (linearIndependent_zigzagBasisFun k G hns).comp (fun i : V => Sum.inr (Sum.inr i))
-    fun _ _ h => by simpa using h
 
 end CommRing
 
@@ -227,10 +153,10 @@ variable {k G}
 /-- **The line spanned by a volume class is a simple left module.**  It is a one-dimensional
 `k`-subspace by `TauCeti.restrictScalars_span_singleton_zigzagVolume`, and a left ideal by
 construction, so it has no proper nonzero submodule. -/
-theorem isSimpleModule_span_singleton_zigzagVolume (hns : ∀ i : V, ∃ j, G.Adj i j) (i : V) :
+theorem isSimpleModule_span_singleton_zigzagVolume (i : V) (hi : ∃ j, G.Adj i j) :
     IsSimpleModule (nonisolatedZigzagQuotient k G)
       (Submodule.span (nonisolatedZigzagQuotient k G) {zigzagVolume k G i}) := by
-  obtain ⟨j, hij⟩ := hns i
+  obtain ⟨j, hij⟩ := hi
   rw [isSimpleModule_iff_isAtom]
   refine ⟨fun hbot => zigzagVolume_ne_zero k G hij (Submodule.span_singleton_eq_bot.1 hbot), ?_⟩
   intro q hq
@@ -251,10 +177,10 @@ theorem isSimpleModule_span_singleton_zigzagVolume (hns : ∀ i : V, ∃ j, G.Ad
   exact hq.ne (le_antisymm hq.le (by rwa [Submodule.span_le, Set.singleton_subset_iff]))
 
 /-- Every volume class lies in the socle. -/
-theorem zigzagVolume_mem_socle (hns : ∀ i : V, ∃ j, G.Adj i j) (i : V) :
+theorem zigzagVolume_mem_socle (i : V) (hi : ∃ j, G.Adj i j) :
     zigzagVolume k G i ∈
       socle (nonisolatedZigzagQuotient k G) (nonisolatedZigzagQuotient k G) :=
-  le_socle (isSimpleModule_span_singleton_zigzagVolume hns i)
+  le_socle (isSimpleModule_span_singleton_zigzagVolume i hi)
     (Submodule.mem_span_singleton_self _)
 
 /-- **The socle of a zigzag algebra is the square of its Jacobson radical.**  Equivalently, by
@@ -310,7 +236,7 @@ theorem socle_nonisolatedZigzagQuotient_eq_jacobson_sq (hns : ∀ i : V, ∃ j, 
       exact hx
     refine zigzagVolumeSpan_le (N := (socle (nonisolatedZigzagQuotient k G)
       (nonisolatedZigzagQuotient k G)).restrictScalars k) (fun i => ?_) hx'
-    exact zigzagVolume_mem_socle hns i
+    exact zigzagVolume_mem_socle i (hns i)
 
 /-- **The socle of a zigzag algebra is the span of its volume classes.** -/
 theorem restrictScalars_socle_nonisolatedZigzagQuotient_eq_zigzagVolumeSpan
