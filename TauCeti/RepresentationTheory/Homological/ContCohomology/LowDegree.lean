@@ -140,6 +140,15 @@ but the definition is not exposed outside this file, so the identity is recorded
 consumers that have to move between the two spellings. -/
 theorem C2_eq_C1 : C2 G M = C1 (G × G) M := (rfl)
 
+/-- Over a discrete group every `1`-cochain is continuous. -/
+@[simp]
+theorem C1_eq_top [DiscreteTopology G] : C1 G M = ⊤ :=
+  (AddSubgroup.eq_top_iff' _).2 fun _ => mem_C1_iff.2 continuous_of_discreteTopology
+
+/-- Over a discrete group every `2`-cochain is continuous: `G × G` is discrete too. -/
+@[simp]
+theorem C2_eq_top [DiscreteTopology G] : C2 G M = ⊤ := C1_eq_top (G := G × G) (M := M)
+
 end Cochains
 
 section Differentials
