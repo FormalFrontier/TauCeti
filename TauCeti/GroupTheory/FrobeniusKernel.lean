@@ -38,8 +38,10 @@ kernel is the set of conjugates of the nonidentity elements of `H`, which for a
 trivial-intersection subgroup is such a set (`TauCeti.IsTISubgroup.isTISet_diff_one`), and the
 count specializes to `TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel`, the `Set.ncard` identity
 `((frobeniusKernel H)ᶜ).ncard = |G : H| · (|H| - 1)`. That identity holds for any `G`, finite or
-not, but it counts elements only when `G` is finite: for an infinite `G` both of its sides are the
-junk value `0` that `Set.ncard` and `Subgroup.index` take on infinite arguments. For a finite `G`
+not, but for an infinite `G` it does not in general represent a count of elements: an infinite side
+reads as the junk value `0` that `Set.ncard` and `Subgroup.index` take on infinite arguments. A
+degenerate case can of course still be a genuine count — for `H = ⊥` the kernel is everything and
+its complement is honestly empty — but nothing outside the finite case says so. For a finite `G`
 there are indeed `|G : H| · (|H| - 1)` elements outside the kernel, and the remaining
 `|G| - |G : H| · (|H| - 1) = |G : H|` elements are the kernel, and the rest is arithmetic.
 
@@ -225,9 +227,11 @@ private theorem compl_frobeniusKernel (H : Subgroup G) :
 a trivial-intersection subgroup the elements outside the kernel are exactly the conjugates of the
 nonidentity elements of `H`, which `TauCeti.IsTISet.ncard_conjugatesOfSet` counts as `|G : H|`
 times the `|H| - 1` elements of `H` that are conjugated.  No finiteness is assumed — but this is an
-`ncard` identity, not an element count, unless `G` is finite: for an infinite `G` both sides are
-the junk value `0` that `Set.ncard` and `Subgroup.index` take on infinite arguments.  The genuine
-count is `TauCeti.IsTISubgroup.ncard_frobeniusKernel`, stated for a finite `G`. -/
+`ncard` identity, which for an infinite `G` need not be an element count: an infinite side reads as
+the junk value `0` that `Set.ncard` and `Subgroup.index` take on infinite arguments, even though a
+degenerate case may still be a genuine count (for `H = ⊥` the complement of the kernel is honestly
+empty).  The count that is guaranteed to be one is
+`TauCeti.IsTISubgroup.ncard_frobeniusKernel`, stated for a finite `G`. -/
 theorem IsTISubgroup.ncard_compl_frobeniusKernel (hH : IsTISubgroup H) :
     ((frobeniusKernel H)ᶜ).ncard = H.index * (Nat.card H - 1) := by
   have hcoe : (H : Set G).ncard = Nat.card H := (Nat.card_coe_set_eq (H : Set G)).symm
@@ -242,10 +246,13 @@ theorem IsTISubgroup.ncard_frobeniusKernel [Finite G] (hH : IsTISubgroup H) :
   obtain ⟨m, hm⟩ : ∃ m, Nat.card H = m + 1 := ⟨Nat.card H - 1, by
     have := Nat.card_pos (α := H)
     omega⟩
-  have htotal := Set.ncard_add_ncard_compl (frobeniusKernel H)
   have hcard := H.index_mul_card
-  rw [hH.ncard_compl_frobeniusKernel, hm, Nat.add_sub_cancel] at htotal
   rw [hm, Nat.mul_add, Nat.mul_one] at hcard
+  -- `Set.ncard_compl_of_ncard_eq_add` reads the count of the kernel off the count of its
+  -- complement, once `compl_compl` presents the kernel as that complement.
+  rw [← compl_compl (frobeniusKernel H)]
+  refine Set.ncard_compl_of_ncard_eq_add _ ?_
+  rw [hH.ncard_compl_frobeniusKernel, hm, Nat.add_sub_cancel]
   omega
 
 /-- The Frobenius kernel of a trivial-intersection subgroup of a finite group has `|G : H|`

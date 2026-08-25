@@ -26,9 +26,12 @@ a subset `S ⊆ H` normalized by `H` whose distinct `G`-conjugates are pairwise 
 example that matters is the nonidentity part `H# = (H : Set G) \ {1}` of a Frobenius complement
 (`TauCeti.IsFrobeniusComplement.isTISet_diff_one`).  Because the conjugates of such an `S` depend
 only on the coset of the conjugator and distinct cosets give disjoint conjugates, the elements they
-cover between them are indexed bijectively by the pairs (a coset of `H`, an element of `S`) and so
-number `|G : H| · |S|` (`TauCeti.IsTISet.ncard_conjugatesOfSet`); that count is what makes the
-Frobenius kernel of `TauCeti/GroupTheory/FrobeniusKernel.lean` come out with `|G : H|` elements.
+cover between them are indexed bijectively by the pairs (a coset of `H`, an element of `S`).  That
+bijection is the `Set.ncard` identity `(Group.conjugatesOfSet S).ncard = |G : H| · |S|`
+(`TauCeti.IsTISet.ncard_conjugatesOfSet`), which counts the covered elements when the parametrizing
+sets are finite — `H` of finite index and `S` finite — and reads `0` on an infinite side otherwise;
+that count is what makes the Frobenius kernel of `TauCeti/GroupTheory/FrobeniusKernel.lean` come
+out with `|G : H|` elements.
 
 A class function on `H` supported on such an `S` induces to `G` without changing its norm, as long
 as the order of `G` is invertible in the coefficient field `k` (`IsUnit (Nat.card G : k)`, as
@@ -52,8 +55,9 @@ exceptional-character argument for Frobenius's theorem.  That induction statemen
   trivial-intersection set, and in particular so is the nonidentity part of `H`.
 * `TauCeti.IsTISet.one_notMem`: conversely, a trivial-intersection set for a proper subgroup
   avoids the identity.
-* `TauCeti.IsTISet.ncard_conjugatesOfSet`: the conjugates of a trivial-intersection set cover
-  `|G : H| · |S|` elements.
+* `TauCeti.IsTISet.ncard_conjugatesOfSet`: the `Set.ncard` identity
+  `(Group.conjugatesOfSet S).ncard = |G : H| · |S|`, an actual count of the elements the conjugates
+  of a trivial-intersection set cover when `H` has finite index and `S` is finite.
 
 ## Implementation notes
 
@@ -259,9 +263,9 @@ private theorem IsTISet.conjugatesOfSetParam_injective (hS : IsTISet S H) :
 conjugate `g S g⁻¹` depends only on the coset `g H`, because `S` is normalized by `H`, and distinct
 cosets give disjoint conjugates, so the elements covered are indexed bijectively by the pairs (a
 coset of `H`, an element of `S`).  The parametrization argument is uniform, so no finiteness is
-assumed — but this is an `ncard` identity, not an element count, unless the sets involved are
-finite: otherwise both sides are the junk value `0` that `Set.ncard` and `Subgroup.index` take on
-infinite arguments.  The Frobenius kernel count
+assumed — but this is an `ncard` identity, and it counts elements only when the parametrizing sets
+are finite, `H` of finite index and `S` finite: an infinite side otherwise reads as the junk value
+`0` that `Set.ncard` and `Subgroup.index` take on infinite arguments.  The Frobenius kernel count
 `TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel` is the case `S = H \ {1}`. -/
 theorem IsTISet.ncard_conjugatesOfSet (hS : IsTISet S H) :
     (Group.conjugatesOfSet S).ncard = H.index * S.ncard := by
