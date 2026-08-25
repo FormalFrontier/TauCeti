@@ -17,7 +17,7 @@ empty word.  Together with the counit that reads off the length-zero coefficient
 tensor words a genuine `Coalgebra` in Mathlib's sense, coaugmented by `r ↦ r · 1`, where the empty
 word `1` is group-like.
 
-This is the counital completion of the reduced tensor coalgebra
+This is the counital (coaugmented) extension of the reduced tensor coalgebra
 `TauCeti.ReducedTensorWords`, which only admits the nontrivial cuts and is therefore not
 counital.  The comparison is
 `TauCeti.TensorWords.deconcatenation_comp_reducedInclusion`: the coproduct of a word `x` of
@@ -38,15 +38,14 @@ coassociativity to `Finset.sum_comm` all the same.
 * `TauCeti.TensorWords`: the direct sum of all tensor powers, the empty one included.
 * `TauCeti.TensorWords.deconcatenation`: the sum over every cut of a tensor word.
 * `TauCeti.TensorWords.counit`: the length-zero coefficient.
-* `TauCeti.TensorWords.emptyWord` and `TauCeti.TensorWords.coaugmentation`: the empty word and the
-  coaugmentation it spans.
+* The algebra unit and algebra map are the empty word and the coaugmentation it spans.
 * `TauCeti.TensorWords.reducedInclusion` and `TauCeti.TensorWords.reducedProjection`: the
   positive-length words as a direct summand.
 
 ## Main results
 
 * `TauCeti.TensorWords.instCoalgebra`: tensor words are a coalgebra.
-* `TauCeti.TensorWords.isGroupLikeElem_emptyWord`: the empty word is group-like.
+* `TauCeti.TensorWords.isGroupLikeElem_one`: the empty word is group-like.
 * `TauCeti.TensorWords.deconcatenation_comp_reducedInclusion`: on a word of positive length the
   coproduct is the reduced coproduct together with its two degenerate cuts.
 * `TauCeti.TensorWords.ker_counit`: the augmentation coideal is the reduced tensor coalgebra.
@@ -112,7 +111,7 @@ theorem toModule_of {N : Type uN} [AddCommMonoid N] [Module R N]
     DirectSum.toModule R ℕ N φ (of R M n z) = φ n z := by
   simp [of]
 
-/-! ## The counit and the coaugmentation -/
+/-! ## The counit -/
 
 /-- The counit of the tensor coalgebra reads off the coefficient of the empty word. -/
 noncomputable def counit : TensorWords R M →ₗ[R] R :=
@@ -130,36 +129,22 @@ theorem counit_of_of_ne_zero {n : ℕ} (hn : n ≠ 0) (z : TensorPower R n M) :
     counit R M (of R M n z) = 0 := by
   simp [counit, component_of_of_ne R M hn]
 
-/-- The coaugmentation of the tensor coalgebra spans the empty word. -/
-noncomputable def coaugmentation : R →ₗ[R] TensorWords R M :=
-  of R M 0 ∘ₗ (TensorPower.algebraMap₀ (R := R) (M := M)).toLinearMap
-
-/-- The empty tensor word. -/
-noncomputable def emptyWord : TensorWords R M := coaugmentation R M 1
-
-/-- The coaugmentation is the length-zero inclusion of the ground ring. -/
+/-- The counit is a retraction of the coaugmentation given by the algebra map. -/
 @[simp]
-theorem coaugmentation_apply (r : R) :
-    coaugmentation R M r = of R M 0 (TensorPower.algebraMap₀ (R := R) (M := M) r) := by
-  simp [coaugmentation]
-
-/-- The counit is a retraction of the coaugmentation. -/
-@[simp]
-theorem counit_comp_coaugmentation : counit R M ∘ₗ coaugmentation R M = LinearMap.id := by
+theorem counit_comp_algebraMap :
+    counit R M ∘ₗ Algebra.linearMap R (TensorWords R M) = LinearMap.id := by
   refine LinearMap.ext_ring ?_
-  simp
+  rw [LinearMap.comp_apply, Algebra.linearMap_apply, DirectSum.algebraMap_apply,
+    TensorPower.galgebra_toFun_def,
+    ← DirectSum.lof_eq_of R ℕ (fun n ↦ TensorPower R n M)]
+  change counit R M (of R M 0 (TensorPower.algebraMap₀ (R := R) (M := M) 1)) = _
+  rw [counit_of_zero, LinearEquiv.symm_apply_apply, LinearMap.id_apply]
 
 /-- The empty word has counit one. -/
 @[simp]
-theorem counit_emptyWord : counit R M (emptyWord R M) = 1 := by
-  rw [emptyWord, ← LinearMap.comp_apply, counit_comp_coaugmentation, LinearMap.id_apply]
-
-/-- The empty word is the length-zero tensor word of the empty tuple. -/
-theorem emptyWord_eq_of_tprod (x : Fin 0 → M) :
-    emptyWord R M = of R M 0 (PiTensorProduct.tprod R x) := by
-  rw [emptyWord, coaugmentation, LinearMap.comp_apply, LinearEquiv.coe_coe,
-    TensorPower.algebraMap₀_one, TensorPower.gOne_def]
-  exact congrArg _ (congrArg _ (funext fun j ↦ j.elim0))
+theorem counit_one : counit R M (1 : TensorWords R M) = 1 := by
+  have h := LinearMap.congr_fun (counit_comp_algebraMap R M) (1 : R)
+  simpa only [LinearMap.comp_apply, Algebra.linearMap_apply, map_one, LinearMap.id_apply] using h
 
 /-! ## Deconcatenation -/
 
@@ -202,7 +187,7 @@ variable {M : Type uM} [AddCommMonoid M] [Module R M]
 
 /-- The tensor word `x a ⊗ ⋯ ⊗ x (a + b - 1)`, of length `b` and starting at position `a`.
 
-It is zero when the requested block runs past the end of `x`, and is the empty word when the
+It is zero when the requested block runs past the end of `x`, and is `1` when the
 block is empty; the intended range of the definition is `a + b ≤ n`. -/
 noncomputable def subword {n : ℕ} (x : Fin n → M) (a b : ℕ) : TensorWords R M :=
   if h : a + b ≤ n then
@@ -225,23 +210,17 @@ theorem subword_eq_zero_of_lt_add {n : ℕ} (x : Fin n → M) {a b : ℕ} (hab :
 /-- An empty block inside a tuple is the empty word. -/
 @[simp]
 theorem subword_length_zero {n : ℕ} (x : Fin n → M) {a : ℕ} (ha : a ≤ n) :
-    subword R x a 0 = emptyWord R M := by
-  rw [subword_eq_of_tprod R x (by omega), emptyWord_eq_of_tprod R M]
+    subword R x a 0 = (1 : TensorWords R M) := by
+  rw [subword_eq_of_tprod R x (by omega)]
+  symm
+  rw [DirectSum.one_def, TensorPower.gOne_def, of, DirectSum.lof_eq_of]
+  exact congrArg _ (congrArg _ (funext fun j ↦ j.elim0))
 
 /-- A whole tuple is the subword of full length starting at its beginning. -/
 theorem of_tprod_eq_subword {n : ℕ} (x : Fin n → M) :
     of R M n (PiTensorProduct.tprod R x) = subword R x 0 n := by
   rw [subword_eq_of_tprod R x (by omega)]
   exact congrArg _ (congrArg _ (funext fun j ↦ (congrArg x (Fin.ext (Nat.zero_add j.1))).symm))
-
-/-- A block of a tensor word depends only on its letters, not on the tuple carrying them nor on
-where the block sits inside it. -/
-theorem subword_congr {n m : ℕ} (x : Fin n → M) (y : Fin m → M) {a a' b : ℕ} (hab : a + b ≤ n)
-    (hab' : a' + b ≤ m)
-    (h : ∀ (j : ℕ) (hj : j < b), x ⟨a + j, by omega⟩ = y ⟨a' + j, by omega⟩) :
-    subword R x a b = subword R y a' b := by
-  rw [subword_eq_of_tprod R x hab, subword_eq_of_tprod R y hab']
-  exact congrArg _ (congrArg _ (funext fun j ↦ h j.1 j.isLt))
 
 /-- A nonempty block is annihilated by the counit. -/
 @[simp]
@@ -377,7 +356,7 @@ theorem rTensor_counit_comp_deconcatenation :
   rw [of_tprod_eq_subword R y, deconcatenation_subword R y, map_sum]
   simp only [LinearMap.rTensor_tmul, Nat.zero_add]
   rw [Finset.sum_eq_single 0]
-  · rw [subword_length_zero R y (by omega), counit_emptyWord, Nat.sub_zero]
+  · rw [subword_length_zero R y (by omega), counit_one, Nat.sub_zero]
     rfl
   · intro c _ hc
     rw [counit_subword_of_pos R y (Nat.pos_of_ne_zero hc), TensorProduct.zero_tmul]
@@ -394,7 +373,7 @@ theorem lTensor_counit_comp_deconcatenation :
   rw [of_tprod_eq_subword R y, deconcatenation_subword R y, map_sum]
   simp only [LinearMap.lTensor_tmul, Nat.zero_add]
   rw [Finset.sum_eq_single k]
-  · rw [Nat.sub_self, subword_length_zero R y le_rfl, counit_emptyWord]
+  · rw [Nat.sub_self, subword_length_zero R y le_rfl, counit_one]
     rfl
   · intro c hc hck
     simp only [Finset.mem_range] at hc
@@ -430,15 +409,16 @@ end Coassoc
 
 /-- Deconcatenating the empty word cuts it in the only way available. -/
 @[simp]
-theorem deconcatenation_emptyWord :
-    deconcatenation R M (emptyWord R M) = emptyWord R M ⊗ₜ[R] emptyWord R M := by
-  have h0 : emptyWord R M = subword R (fun j : Fin 0 ↦ (j.elim0 : M)) 0 0 :=
+theorem deconcatenation_one :
+    deconcatenation R M (1 : TensorWords R M) =
+      (1 : TensorWords R M) ⊗ₜ[R] (1 : TensorWords R M) := by
+  have h0 : (1 : TensorWords R M) = subword R (fun j : Fin 0 ↦ (j.elim0 : M)) 0 0 :=
     (subword_length_zero R _ le_rfl).symm
   rw [h0, deconcatenation_subword]
   simp
 
 /-- The empty word is a group-like element of the tensor coalgebra. -/
-theorem isGroupLikeElem_emptyWord : IsGroupLikeElem R (emptyWord R M) where
+theorem isGroupLikeElem_one : IsGroupLikeElem R (1 : TensorWords R M) where
   counit_eq_one := by simp
   comul_eq_tmul_self := by simp
 
@@ -493,15 +473,17 @@ theorem counit_comp_reducedInclusion : counit R M ∘ₗ reducedInclusion R M = 
     LinearMap.zero_apply]
 
 /-- Tensor words are the empty word together with the words of positive length. -/
-theorem reducedInclusion_comp_reducedProjection_add_coaugmentation_comp_counit :
-    reducedInclusion R M ∘ₗ reducedProjection R M + coaugmentation R M ∘ₗ counit R M =
-      LinearMap.id := by
+theorem reducedInclusion_comp_reducedProjection_add_algebraMap_comp_counit :
+    reducedInclusion R M ∘ₗ reducedProjection R M +
+        Algebra.linearMap R (TensorWords R M) ∘ₗ counit R M = LinearMap.id := by
   apply linearMap_ext R M
   intro n x
   rcases Nat.eq_zero_or_pos n with rfl | hn
-  · simp only [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.id_apply,
-      reducedProjection_of_zero, map_zero, zero_add, counit_of_zero, coaugmentation_apply,
-      LinearEquiv.apply_symm_apply]
+  · rw [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.comp_apply, LinearMap.id_apply,
+      reducedProjection_of_zero, map_zero, zero_add, counit_of_zero, Algebra.linearMap_apply,
+      DirectSum.algebraMap_apply, TensorPower.galgebra_toFun_def,
+      ← DirectSum.lof_eq_of R ℕ (fun n ↦ TensorPower R n M), LinearEquiv.apply_symm_apply]
+    rfl
   · rw [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.comp_apply,
       reducedProjection_of_of_pos R M hn, counit_of_of_ne_zero R M hn.ne', map_zero, add_zero,
       reducedInclusion_of, LinearMap.id_apply]
@@ -513,7 +495,7 @@ theorem ker_counit :
   · intro w hw
     refine ⟨reducedProjection R M w, ?_⟩
     have h := LinearMap.congr_fun
-      (reducedInclusion_comp_reducedProjection_add_coaugmentation_comp_counit R M) w
+      (reducedInclusion_comp_reducedProjection_add_algebraMap_comp_counit R M) w
     simp only [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.id_apply] at h
     rw [LinearMap.mem_ker] at hw
     rw [hw, map_zero, add_zero] at h
@@ -542,9 +524,9 @@ end Reduced
 degenerate cuts. -/
 theorem deconcatenation_comp_reducedInclusion :
     deconcatenation R M ∘ₗ reducedInclusion R M =
-      TensorProduct.mk R (TensorWords R M) (TensorWords R M) (emptyWord R M) ∘ₗ
+      TensorProduct.mk R (TensorWords R M) (TensorWords R M) (1 : TensorWords R M) ∘ₗ
           reducedInclusion R M +
-        (TensorProduct.mk R (TensorWords R M) (TensorWords R M)).flip (emptyWord R M) ∘ₗ
+        (TensorProduct.mk R (TensorWords R M) (TensorWords R M)).flip (1 : TensorWords R M) ∘ₗ
           reducedInclusion R M +
         TensorProduct.map (reducedInclusion R M) (reducedInclusion R M) ∘ₗ
           ReducedTensorWords.deconcatenation R M := by
@@ -577,8 +559,8 @@ theorem deconcatenation_comp_reducedInclusion :
 /-- The value of `TauCeti.TensorWords.deconcatenation_comp_reducedInclusion` on a word. -/
 theorem deconcatenation_reducedInclusion (w : ReducedTensorWords R M) :
     deconcatenation R M (reducedInclusion R M w) =
-      emptyWord R M ⊗ₜ[R] reducedInclusion R M w
-        + reducedInclusion R M w ⊗ₜ[R] emptyWord R M
+      (1 : TensorWords R M) ⊗ₜ[R] reducedInclusion R M w
+        + reducedInclusion R M w ⊗ₜ[R] (1 : TensorWords R M)
         + TensorProduct.map (reducedInclusion R M) (reducedInclusion R M)
             (ReducedTensorWords.deconcatenation R M w) := by
   have h := LinearMap.congr_fun (deconcatenation_comp_reducedInclusion R M) w
@@ -590,7 +572,8 @@ theorem deconcatenation_reducedInclusion (w : ReducedTensorWords R M) :
 /-- The letters of a tensor word are primitive. -/
 theorem deconcatenation_of_length_one (z : TensorPower R 1 M) :
     deconcatenation R M (of R M 1 z) =
-      emptyWord R M ⊗ₜ[R] of R M 1 z + of R M 1 z ⊗ₜ[R] emptyWord R M := by
+      (1 : TensorWords R M) ⊗ₜ[R] of R M 1 z +
+        of R M 1 z ⊗ₜ[R] (1 : TensorWords R M) := by
   have h := deconcatenation_reducedInclusion R M (ReducedTensorWords.of R M ⟨1, Nat.one_pos⟩ z)
   rw [reducedInclusion_of, ReducedTensorWords.deconcatenation_of_length_one R M z,
     map_zero, add_zero] at h
