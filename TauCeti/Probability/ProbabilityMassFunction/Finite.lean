@@ -19,8 +19,6 @@ noncomputable section
 
 open scoped BigOperators ENNReal
 
-namespace TauCeti
-
 universe u
 
 namespace PMF
@@ -28,10 +26,8 @@ namespace PMF
 variable {ι : Type u}
 
 /-- The real values of a probability mass function on a finite type sum to one. -/
-theorem sum_toReal_apply [Fintype ι] (μ : _root_.PMF ι) : ∑ i, (μ i).toReal = 1 := by
+theorem sum_toReal_apply [Fintype ι] (μ : PMF ι) : ∑ i, (μ i).toReal = 1 := by
   have h : ∑ i, μ i = 1 := (tsum_fintype fun i ↦ μ i).symm.trans μ.tsum_coe
   rw [← ENNReal.toReal_sum fun i _ ↦ μ.apply_ne_top i, h, ENNReal.toReal_one]
 
 end PMF
-
-end TauCeti

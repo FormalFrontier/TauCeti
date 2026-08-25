@@ -147,7 +147,6 @@ theorem sum_toRealFun_col (A : TransportMatrix μ ν) (j : κ) :
   rw [← ENNReal.toReal_sum fun i _ ↦ A.apply_ne_top i j, A.col_sum]
 
 /-- The real-valued entries of a transportation matrix have total mass one. -/
-@[simp]
 theorem sum_toRealFun (A : TransportMatrix μ ν) : ∑ p, A.toRealFun p = 1 := by
   simpa only [toRealFun_apply, toPMF_apply] using PMF.sum_toReal_apply A.toPMF
 
