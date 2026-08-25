@@ -11,14 +11,32 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Chevall
 /-!
 # Chevalley relations for symplectic root subgroups
 
-This file lifts the two multiply-laced rank-two commutator relations from the standard
-symplectic matrices to the functor of points of `Sp₂ₘ`. For distinct `i` and `j`, they are
+This file lifts the six multiply-laced rank-two commutator relations from the standard
+symplectic matrices to the functor of points of `Sp₂ₘ`. For distinct `i` and `j`, they include
 
 ```text
 ⁅x_{eᵢ-eⱼ}(a), x_{2eⱼ}(b)⁆
   = x_{eᵢ+eⱼ}(ab) x_{2eᵢ}(a²b),
 ⁅x_{eᵢ-eⱼ}(a), x_{eᵢ+eⱼ}(b)⁆
   = x_{2eᵢ}(2ab).
+```
+
+The opposite root string gives
+
+```text
+⁅x_{eᵢ-eⱼ}(a), x_{-2eᵢ}(b)⁆
+  = x_{-eᵢ-eⱼ}(-ab) x_{-2eⱼ}(a²b),
+⁅x_{eᵢ-eⱼ}(a), x_{-eᵢ-eⱼ}(b)⁆
+  = x_{-2eⱼ}(-2ab).
+```
+
+The two complementary strings starting from the sum-root families are
+
+```text
+⁅x_{eᵢ+eⱼ}(a), x_{-2eⱼ}(b)⁆
+  = x_{eᵢ-eⱼ}(ab) x_{2eᵢ}(-a²b),
+⁅x_{-eᵢ-eⱼ}(a), x_{2eⱼ}(b)⁆
+  = x_{eⱼ-eᵢ}(-ab) x_{-2eᵢ}(-a²b).
 ```
 
 The parameters on the right are expressed using the algebra structure of the value ring. Thus
@@ -122,5 +140,151 @@ theorem commutatorElement_differenceShortRootSubgroupPoints_positiveSumShortRoot
   congr 1
   dsimp only [c]
   ring
+
+/-- **The negative multiply-laced Chevalley relation on algebra-valued points of `Sp₂ₘ`.**
+For distinct `i` and `j`, the commutator of the roots `eᵢ-eⱼ` and `-2eᵢ` is the product
+of the root subgroups for `-eᵢ-eⱼ` and `-2eⱼ`, with parameters `-ab` and `a²b`. -/
+theorem commutatorElement_differenceShortRootSubgroupPoints_negativeLongRootSubgroupPoints
+    (hij : i ≠ j)
+    (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
+    ⁅shortRootSubgroupPoints .difference hij f, negativeLongRootSubgroupPoints i g⁆ =
+      shortRootSubgroupPoints .negativeSum hij
+          (AdditiveGroup.gaPointParamMul f g)⁻¹ *
+        negativeLongRootSubgroupPoints j
+          (AdditiveGroup.gaPointParamMul f (AdditiveGroup.gaPointParamMul f g)) := by
+  apply (pointsMulEquiv (R := R) (A := A) m).injective
+  rw [map_commutatorElement, map_mul, pointsMulEquiv_shortRootSubgroupPoints,
+    pointsMulEquiv_negativeLongRootSubgroupPoints,
+    pointsMulEquiv_shortRootSubgroupPoints,
+    pointsMulEquiv_negativeLongRootSubgroupPoints]
+  rw [GLSymplecticFin.ShortRootFamily.hom_difference,
+    GLSymplecticFin.differenceShortRootHom_apply,
+    GLSymplecticFin.ShortRootFamily.hom_negativeSum,
+    GLSymplecticFin.negativeSumShortRootHom_apply]
+  rw [AdditiveGroup.toAdd_gaPointsMulEquiv_inv,
+    AdditiveGroup.toAdd_gaPointsMulEquiv]
+  simp only [AdditiveGroup.toAdd_gaPointsMulEquiv,
+    AdditiveGroup.gaPointParamMul_apply_ι]
+  ring_nf
+  exact
+    GLSymplecticFin.commutatorElement_differenceShortRootUnit_negativeLongRootTransvectionUnit
+      hij
+      (f.ofConv (SymmetricAlgebra.ι R R 1))
+      (g.ofConv (SymmetricAlgebra.ι R R 1))
+
+/-- **The negative structure-constant-two Chevalley relation on algebra-valued points of
+`Sp₂ₘ`.** For distinct `i` and `j`, the commutator of the roots `eᵢ-eⱼ` and `-eᵢ-eⱼ` is
+the long-root point `x_{-2eⱼ}(-2ab)`. The inverse and square on the right are the inverse
+and multiplication of `Sp₂ₘ(A)`; since `negativeLongRootSubgroupPoints j` is a group
+homomorphism out of `𝔾ₐ(A)`, they correspond to negating and doubling the parameter. -/
+theorem commutatorElement_differenceShortRootSubgroupPoints_negativeSumShortRootSubgroupPoints
+    (hij : i ≠ j)
+    (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
+    ⁅shortRootSubgroupPoints .difference hij f,
+        shortRootSubgroupPoints .negativeSum hij g⁆ =
+      (negativeLongRootSubgroupPoints j (AdditiveGroup.gaPointParamMul f g) ^ 2)⁻¹ := by
+  apply (pointsMulEquiv (R := R) (A := A) m).injective
+  rw [map_commutatorElement, map_inv, map_pow, pointsMulEquiv_shortRootSubgroupPoints,
+    pointsMulEquiv_shortRootSubgroupPoints,
+    pointsMulEquiv_negativeLongRootSubgroupPoints]
+  rw [GLSymplecticFin.ShortRootFamily.hom_difference,
+    GLSymplecticFin.differenceShortRootHom_apply,
+    GLSymplecticFin.ShortRootFamily.hom_negativeSum,
+    GLSymplecticFin.negativeSumShortRootHom_apply]
+  simp only [AdditiveGroup.toAdd_gaPointsMulEquiv,
+    AdditiveGroup.gaPointParamMul_apply_ι]
+  convert
+    GLSymplecticFin.commutatorElement_differenceShortRootUnit_negativeSumShortRootUnit
+        hij
+        (f.ofConv (SymmetricAlgebra.ι R R 1))
+        (g.ofConv (SymmetricAlgebra.ι R R 1)) using 1
+  rw [pow_two]
+  let c := f.ofConv (SymmetricAlgebra.ι R R 1) *
+    g.ofConv (SymmetricAlgebra.ι R R 1)
+  have hadd :
+      GLSymplecticFin.negativeLongRootTransvectionUnit j c *
+          GLSymplecticFin.negativeLongRootTransvectionUnit j c =
+        GLSymplecticFin.negativeLongRootTransvectionUnit j (c + c) := by
+    simpa only [GLSymplecticFin.negativeLongRootTransvectionHom_apply,
+      toAdd_ofAdd, toAdd_mul] using
+      ((GLSymplecticFin.negativeLongRootTransvectionHom (R := A) j).map_mul
+        (Multiplicative.ofAdd c) (Multiplicative.ofAdd c)).symm
+  rw [hadd]
+  calc
+    (GLSymplecticFin.negativeLongRootTransvectionUnit j (c + c))⁻¹ =
+        GLSymplecticFin.negativeLongRootTransvectionUnit j (-(c + c)) := by
+      simpa only [GLSymplecticFin.negativeLongRootTransvectionHom_apply,
+        toAdd_ofAdd, toAdd_inv] using
+        (map_inv (GLSymplecticFin.negativeLongRootTransvectionHom (R := A) j)
+          (Multiplicative.ofAdd (c + c))).symm
+    _ = GLSymplecticFin.negativeLongRootTransvectionUnit j
+          (-(2 * f.ofConv (SymmetricAlgebra.ι R R 1) *
+            g.ofConv (SymmetricAlgebra.ι R R 1))) := by
+      congr 1
+      dsimp only [c]
+      ring
+
+/-- **The complementary positive-sum multiply-laced relation on algebra-valued points of
+`Sp₂ₘ`.** The inverse long-root point on the right represents the parameter `-a²b`. -/
+theorem commutatorElement_positiveSumShortRootSubgroupPoints_negativeLongRootSubgroupPoints
+    (hij : i ≠ j)
+    (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
+    ⁅shortRootSubgroupPoints .positiveSum hij f, negativeLongRootSubgroupPoints j g⁆ =
+      shortRootSubgroupPoints .difference hij (AdditiveGroup.gaPointParamMul f g) *
+        positiveLongRootSubgroupPoints i
+          (AdditiveGroup.gaPointParamMul f (AdditiveGroup.gaPointParamMul f g))⁻¹ := by
+  apply (pointsMulEquiv (R := R) (A := A) m).injective
+  rw [map_commutatorElement, map_mul,
+    pointsMulEquiv_shortRootSubgroupPoints,
+    pointsMulEquiv_negativeLongRootSubgroupPoints,
+    pointsMulEquiv_shortRootSubgroupPoints,
+    pointsMulEquiv_positiveLongRootSubgroupPoints]
+  rw [GLSymplecticFin.ShortRootFamily.hom_positiveSum,
+    GLSymplecticFin.positiveSumShortRootHom_apply,
+    GLSymplecticFin.ShortRootFamily.hom_difference,
+    GLSymplecticFin.differenceShortRootHom_apply]
+  rw [AdditiveGroup.toAdd_gaPointsMulEquiv_inv,
+    AdditiveGroup.toAdd_gaPointsMulEquiv]
+  simp only [AdditiveGroup.toAdd_gaPointsMulEquiv,
+    AdditiveGroup.gaPointParamMul_apply_ι]
+  ring_nf
+  exact
+    GLSymplecticFin.commutatorElement_positiveSumShortRootUnit_negativeLongRootTransvectionUnit
+      hij
+      (f.ofConv (SymmetricAlgebra.ι R R 1))
+      (g.ofConv (SymmetricAlgebra.ι R R 1))
+
+/-- **The complementary negative-sum multiply-laced relation on algebra-valued points of
+`Sp₂ₘ`.** Both inverses on the right encode the negative parameters in the additive source
+group. -/
+theorem commutatorElement_negativeSumShortRootSubgroupPoints_positiveLongRootSubgroupPoints
+    (hij : i ≠ j)
+    (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
+    ⁅shortRootSubgroupPoints .negativeSum hij f, positiveLongRootSubgroupPoints j g⁆ =
+      shortRootSubgroupPoints .difference hij.symm
+          (AdditiveGroup.gaPointParamMul f g)⁻¹ *
+        negativeLongRootSubgroupPoints i
+          (AdditiveGroup.gaPointParamMul f (AdditiveGroup.gaPointParamMul f g))⁻¹ := by
+  apply (pointsMulEquiv (R := R) (A := A) m).injective
+  rw [map_commutatorElement, map_mul,
+    pointsMulEquiv_shortRootSubgroupPoints,
+    pointsMulEquiv_positiveLongRootSubgroupPoints,
+    pointsMulEquiv_shortRootSubgroupPoints,
+    pointsMulEquiv_negativeLongRootSubgroupPoints]
+  rw [GLSymplecticFin.ShortRootFamily.hom_negativeSum,
+    GLSymplecticFin.negativeSumShortRootHom_apply,
+    GLSymplecticFin.ShortRootFamily.hom_difference,
+    GLSymplecticFin.differenceShortRootHom_apply]
+  rw [AdditiveGroup.toAdd_gaPointsMulEquiv_inv,
+    AdditiveGroup.toAdd_gaPointsMulEquiv_inv,
+    AdditiveGroup.toAdd_gaPointsMulEquiv]
+  simp only [AdditiveGroup.toAdd_gaPointsMulEquiv,
+    AdditiveGroup.gaPointParamMul_apply_ι]
+  ring_nf
+  exact
+    GLSymplecticFin.commutatorElement_negativeSumShortRootUnit_positiveLongRootTransvectionUnit
+      hij
+      (f.ofConv (SymmetricAlgebra.ι R R 1))
+      (g.ofConv (SymmetricAlgebra.ι R R 1))
 
 end TauCeti.Symplectic

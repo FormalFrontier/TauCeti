@@ -30,6 +30,8 @@ additivity, while the local crossing contribution is computed by the crossing-an
 ## Main definitions
 
 * `TauCeti.Contour.CircularCapWindow` — the parameters of one circular-cap replacement.
+* `TauCeti.Contour.CircularCapWindow.localContribution` — the window winding number minus the
+  cap's angular contribution.
 * `TauCeti.Contour.exciseCrossings` — iteration of `exciseCrossing` over a finite list.
 
 ## Main results
@@ -82,6 +84,13 @@ theorem mem_interval_iff {W : CircularCapWindow} {t : ℝ} :
     t ∈ W.interval ↔ W.lower ≤ t ∧ t ≤ W.upper := by
   rfl
 
+/-- Two windows listed strictly from left to right have disjoint closed intervals. -/
+theorem disjoint_interval_of_upper_lt_lower {W V : CircularCapWindow}
+    (h : W.upper < V.lower) : Disjoint W.interval V.interval := by
+  refine Set.disjoint_left.mpr fun _ htW htV => ?_
+  rw [mem_interval_iff] at htW htV
+  linarith
+
 /-- The circular cap prescribed by a crossing window. -/
 def cap (W : CircularCapWindow) (s : ℂ) : ℝ → ℂ :=
   circleCap s W.radius W.lower W.upper W.startAngle W.endAngle
@@ -119,6 +128,12 @@ theorem cap_ne_center (W : CircularCapWindow) {s : ℂ} (hr : W.radius ≠ 0) {t
   simpa only [cap] using (circleCap_ne_center (s := s) (r := W.radius) (l := W.lower)
     (u := W.upper) (θ := W.startAngle) (θ' := W.endAngle) (t := t) hr)
 
+/-- The index principal value exists along a bundled circular cap. -/
+theorem cauchyPVExistsAt_cap (W : CircularCapWindow) (s : ℂ) (a b : ℝ) :
+    CauchyPVExistsAt (W.cap s) a b (fun z => (z - s)⁻¹) s := by
+  simpa only [cap] using cauchyPVExistsAt_circleCap s W.radius W.lower W.upper
+    W.startAngle W.endAngle a b
+
 /-- The winding number of a nondegenerate bundled cap is its angular extent over `2π`. -/
 theorem windingNumber_cap (W : CircularCapWindow) (s : ℂ) (hr : W.radius ≠ 0)
     (hlu : W.lower ≠ W.upper) :
@@ -127,9 +142,38 @@ theorem windingNumber_cap (W : CircularCapWindow) (s : ℂ) (hr : W.radius ≠ 0
   simpa only [cap] using (windingNumber_circleCap (s := s) (r := W.radius) (l := W.lower)
     (u := W.upper) hr hlu W.startAngle W.endAngle)
 
+/-- The contribution of one circular-cap window: the winding number of the original curve across
+the window minus the cap's angular term. Under the nondegeneracy hypotheses of
+`localContribution_eq_sub_windingNumber_cap`, this is the window winding number minus the cap
+winding number. -/
+def localContribution (W : CircularCapWindow) (γ : ℝ → ℂ) (s : ℂ) : ℂ :=
+  windingNumber γ W.lower W.upper s -
+    ((W.endAngle - W.startAngle : ℝ) : ℂ) / (2 * (Real.pi : ℂ))
+
+/-- The defining window-minus-angular-term formula for a local contribution. -/
+theorem localContribution_def (W : CircularCapWindow) (γ : ℝ → ℂ) (s : ℂ) :
+    W.localContribution γ s = windingNumber γ W.lower W.upper s -
+      ((W.endAngle - W.startAngle : ℝ) : ℂ) / (2 * (Real.pi : ℂ)) := by
+  rfl
+
+/-- The local contribution is the difference between the window winding number and the winding
+number of the prescribed cap. -/
+theorem localContribution_eq_sub_windingNumber_cap
+    (W : CircularCapWindow) (γ : ℝ → ℂ) (s : ℂ) (hr : W.radius ≠ 0)
+    (hlu : W.lower ≠ W.upper) :
+    W.localContribution γ s =
+      windingNumber γ W.lower W.upper s - windingNumber (W.cap s) W.lower W.upper s := by
+  rw [localContribution, W.windingNumber_cap s hr hlu]
+
 /-- Replace one crossing window of `γ` by its prescribed circular cap about `s`. -/
 def excise (W : CircularCapWindow) (γ : ℝ → ℂ) (s : ℂ) : ℝ → ℂ :=
   exciseCrossing γ s W.radius W.lower W.upper W.startAngle W.endAngle
+
+/-- A bundled one-window excision is the corresponding unbundled circular-cap excision. -/
+theorem excise_def (W : CircularCapWindow) (γ : ℝ → ℂ) (s : ℂ) :
+    W.excise γ s =
+      exciseCrossing γ s W.radius W.lower W.upper W.startAngle W.endAngle := by
+  rfl
 
 /-- On its window, a one-window excision is the prescribed cap. -/
 @[simp]
@@ -144,6 +188,13 @@ theorem excise_of_notMem (W : CircularCapWindow) {γ : ℝ → ℂ} {s : ℂ} {t
   simpa only [excise, interval] using (exciseCrossing_of_notMem ht)
 
 end CircularCapWindow
+
+/-- Windows listed strictly from left to right have pairwise disjoint closed intervals. -/
+theorem pairwise_disjoint_interval_of_pairwise_upper_lt_lower
+    {windows : List CircularCapWindow}
+    (hordered : windows.Pairwise fun W V => W.upper < V.lower) :
+    windows.Pairwise fun W V => Disjoint W.interval V.interval :=
+  hordered.imp fun h => CircularCapWindow.disjoint_interval_of_upper_lt_lower h
 
 /-- Replace each window in `windows` by its circular cap about `s`. Later replacements act on
 the curve produced by earlier ones. For pairwise disjoint windows the order is immaterial

@@ -153,13 +153,8 @@ theorem finrank_smul_integratedOperator_star_character_self (hunitary : IsUnitar
     (Module.finrank 𝕜 V : 𝕜) • integratedOperator π hπ (star (character π hπ))
       = ContinuousLinearMap.id 𝕜 V := by
   let : Representation.IsIrreducible π.toRepresentation := hirr
-  have : Nontrivial π.toRepresentation.asModule :=
-    IsSimpleModule.nontrivial (MonoidAlgebra 𝕜 G) π.toRepresentation.asModule
-  -- Nontriviality lives on the `Representation.asModule` type synonym; transport it along
-  -- `Representation.asModuleEquiv` rather than through the synonym's definitional unfolding.
-  have : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
-  have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 := by
-    exact_mod_cast (Module.finrank_pos (R := 𝕜) (M := V)).ne'
+  have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 :=
+    Representation.IsIrreducible.natCast_finrank_ne_zero hirr
   rw [integratedOperator_star_character_self π hπ hunitary hirr, smul_smul,
     mul_inv_cancel₀ hdim, one_smul]
 

@@ -23,6 +23,9 @@ multiplication by the root.
   this only in the specialised form `WeierstrassCurve.Affine.CoordinateRing.map_mk`. Marked
   `@[simp]`, like its neighbours `AdjoinRoot.map_of` and `AdjoinRoot.map_root`.
 * `AdjoinRoot.map_surjective`: the map is surjective when `f` is.
+* `AdjoinRoot.exists_degree_lt_mk_eq`: for a monic relator, every class is represented by a
+  polynomial of degree less than that of the relator. Mathlib has division with remainder by a
+  monic polynomial but does not record what it says about `AdjoinRoot`.
 * `AdjoinRoot.eq_mulRight_of_root_mul`: an `R`-linear endomorphism of `AdjoinRoot g`, for `g`
   monic, that commutes with multiplication by the root is multiplication by its value at `1`. Its
   consumers are the truncated polynomial algebras of
@@ -45,6 +48,12 @@ that roadmap at `dev/hasse-weil @ 513e83879e2f`),
 There it is carried out for the coordinate ring of a Weierstrass curve and only for a base ring
 *equivalence*; here it is stated for `AdjoinRoot.map` along any surjective base homomorphism, with
 `map_mk` — which the source does not isolate — extracted as the step that makes it routine.
+`AdjoinRoot.exists_degree_lt_mk_eq` is adapted from Michael Stoll's `EllipticCurves` project
+(`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0, pinned by
+`TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`), `EllipticCurves/Mathlib/Basic.lean`,
+where the reduction step it uses is a separate lemma; here that step is Mathlib's
+`AdjoinRoot.mk_leftInverse`. It is harvested here rather than in the file that consumes it because
+nothing about elliptic curves enters the statement.
 -/
 
 public section
@@ -69,6 +78,13 @@ lemma map_surjective {f : R →+* S} (hf : Function.Surjective f) {p : R[X]} {q 
   obtain ⟨t, rfl⟩ := mk_surjective y
   obtain ⟨u, rfl⟩ := Polynomial.map_surjective f hf t
   exact ⟨mk p u, map_mk h u⟩
+
+/-- **Every class in `AdjoinRoot g`, for `g` monic, is represented by a polynomial of degree
+less than `deg g`.** Division with remainder by a monic polynomial supplies the representative. -/
+lemma exists_degree_lt_mk_eq [Nontrivial R] {g : R[X]} (hg : g.Monic) (a : AdjoinRoot g) :
+    ∃ p, p.degree < g.degree ∧ a = mk g p := by
+  obtain ⟨q, rfl⟩ := mk_surjective a
+  exact ⟨q %ₘ g, degree_modByMonic_lt q hg, by simpa using (mk_leftInverse hg (mk g q)).symm⟩
 
 /-- **An `R`-linear endomorphism of `AdjoinRoot g` commuting with multiplication by the root is
 multiplication by its value at `1`.** It commutes with multiplication by every power of the root,

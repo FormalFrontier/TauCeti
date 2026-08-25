@@ -3,7 +3,9 @@ name: pr-build
 # Builds untrusted PR code in a TRUSTED, base-branch-defined workflow. A PR cannot change what
 # runs here (pull_request_target uses the base definition). The build/audit configuration
 # (lakefile, scripts/, manifest, toolchain) is the TRUSTED base's: we overlay only the PR's
-# `TauCeti/` sources and validated Lake pins onto a base checkout. Lakefiles remain entirely
+# `TauCeti/` sources and validated Lake pins onto a base checkout. What is overlaid is the PR
+# MERGED INTO the base, not the PR head on its own, so the sources built are ones git would
+# produce rather than new pins spliced over old sources -- a combination no commit ever had. Lakefiles remain entirely
 # base-trusted; dependency repair PRs carry exact first-known-bad commits only in the manifest.
 # Any PR touching anything outside the allowed paths is routed to a human. PR `TauCeti/` code
 # compiles only under landrun (offline; writes confined to base/.lake; no secrets or token in
@@ -96,16 +98,35 @@ jobs:
             STATUS_SHA="$SHA"
             AUTHOR=$(gh api "repos/${{ github.repository }}/pulls/$NUM" --jq .user.login)
           fi
+          # Resolve the target branch to a commit ONCE. Everything below -- the trusted config,
+          # the merge the PR is built as, the scope compare -- then refers to the same base,
+          # instead of each step separately racing a branch that moves every few minutes. For
+          # merge_group BASE_REF is already the immutable base_sha the queue synthesized on.
+          if [ "${{ github.event_name }}" != "merge_group" ]; then
+            BASE_SHA=$(gh api "repos/${{ github.repository }}/commits/$BASE_REF" --jq .sha 2>/dev/null) || BASE_SHA=""
+            if [ -z "$BASE_SHA" ]; then
+              echo "INFRA=1" >> "$GITHUB_ENV"
+              echo "::warning::could not resolve $BASE_REF to a commit — re-run pr-build"
+            fi
+          else
+            BASE_SHA="$BASE_REF"
+          fi
+
           # Merge-base with the target branch, for the Lake-pin bump validation below:
           # check-bump.sh uses it to scope the PR's own pin delta. owner:sha for forks;
-          # `|| true` so a failed substitution does not trip set -e before the fallback;
-          # on any miss fall back to the tip (BASE_REF) — at worst the pre-fix behaviour.
+          # `|| true` so a failed substitution does not trip set -e before the fallback.
+          #
+          # Against BASE_SHA, not the branch name: check-bump.sh reads mergebase/ to decide
+          # whether the pins were touched at all, so if the branch moved between here and the
+          # checkouts, base/, pr/ and mergebase/ would be describing three different bases and
+          # that decision would be made against a snapshot nothing else in the job shares.
           OWNER="${REPO%%/*}"
-          MB=$(gh api "repos/${{ github.repository }}/compare/${BASE_REF}...${OWNER}:${SHA}" \
+          MB=$(gh api "repos/${{ github.repository }}/compare/${BASE_SHA}...${OWNER}:${SHA}" \
                  --jq '.merge_base_commit.sha' 2>/dev/null || true)
-          [ -n "$MB" ] || { MB="$BASE_REF"; echo "::warning::merge-base unresolved; falling back to $BASE_REF tip"; }
+          [ -n "$MB" ] || { MB="$BASE_SHA"; echo "::warning::merge-base unresolved; falling back to the base commit $BASE_SHA"; }
           {
             echo "num=$NUM"
+            echo "base_sha=$BASE_SHA"
             echo "sha=$SHA"
             echo "repo=$REPO"
             echo "base_ref=$BASE_REF"
@@ -211,7 +232,9 @@ jobs:
         # untrusted combined commit, so this is what keeps the build config (lakefile, scripts,
         # manifest, toolchain) base-trusted; only TauCeti/ is overlaid from the merge-group commit.
         with:
-          ref: "${{ steps.pr.outputs.base_ref }}"
+          # The resolved commit rather than the branch name: the config built against is then
+          # the same base the sources below are merged onto, even if main moves mid-run.
+          ref: "${{ steps.pr.outputs.base_sha }}"
           path: base
           persist-credentials: false
           # Enough base history for `lake cache get` to backtrack to a recently-built
@@ -253,21 +276,108 @@ jobs:
           path: mergebase
           persist-credentials: false
 
-      - name: Checkout PR head (untrusted, no credentials)
-        if: ${{ env.INFRA != '1' }}
+      # A merge_group commit is ALREADY the batch merged onto its base by the queue, so it is
+      # taken as-is; only its TauCeti/ is overlaid, exactly as before.
+      - name: Checkout the merge-group commit (untrusted contents, no credentials)
+        if: ${{ env.INFRA != '1' && github.event_name == 'merge_group' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ steps.pr.outputs.repo }}
           ref: ${{ steps.pr.outputs.sha }}
           path: pr
           persist-credentials: false
-          # actions/checkout now refuses to fetch fork PR code under
-          # pull_request_target unless this opt-in is set. Fetching the fork's
-          # sources is exactly this workflow's job; it is safe here because the
-          # checkout carries no credentials (persist-credentials: false) and the
-          # fork's code is only ever executed under landrun below (offline, no
-          # token in reach), never in the trusted context this guard warns about.
           allow-unsafe-pr-checkout: true
+
+      # For a pull request there is no such commit, so make one. Start from the same trusted
+      # base commit and merge the PR into it, rather than building the PR head on its own.
+      #
+      # The head alone is the bug this replaces: its TauCeti/ was overlaid onto a base carrying
+      # the target branch's Lake pins, so a branch cut before a Mathlib bump compiled pre-bump
+      # sources against post-bump Mathlib and failed on code it had never touched. On
+      # 2026-08-25 that reddened 39 of the 40 then-failing pull requests at once, all on one
+      # unchanged line of Analysis/Contour/Argument/Principle.lean, and every one needed main
+      # merged into it by hand before it would build again.
+      #
+      # Merging here rather than reading refs/pull/N/merge is deliberate. That ref is mutable
+      # and, when a pull request conflicts, is left pointing at the last clean merge instead of
+      # disappearing -- a stale candidate still names the current head as its second parent, so
+      # it passes the obvious check while carrying a base hundreds of commits old. Using it
+      # safely takes a mergeability poll, a parent check, an ancestry check and a retarget
+      # check, all to re-establish facts that are simply known when the merge is made here from
+      # a base commit resolved above and an immutable head from the event.
+      - name: Check out the base to merge into (deep enough to find a merge base)
+        if: ${{ env.INFRA != '1' && github.event_name != 'merge_group' }}
+        uses: actions/checkout@v4
+        with:
+          ref: "${{ steps.pr.outputs.base_sha }}"
+          path: pr
+          persist-credentials: false
+          # Full history: a merge needs a common ancestor, and old pull requests are further
+          # back than any bounded depth would reach. Measured at 32MB/5s against a build of
+          # roughly twelve minutes.
+          fetch-depth: 0
+
+      - name: Merge the pull request into it (no PR code runs; git only)
+        if: ${{ env.INFRA != '1' && github.event_name != 'merge_group' }}
+        env:
+          NUM: "${{ steps.pr.outputs.num }}"
+          HEAD_SHA: "${{ steps.pr.outputs.sha }}"
+          BASE_SHA: "${{ steps.pr.outputs.base_sha }}"
+        run: |
+          set -uo pipefail
+          cd pr
+
+          # Run git with NO configuration but this repository's own. Content cannot define a
+          # merge driver or a filter, but it can SELECT one that the runner already has
+          # configured (an installed Git LFS filter being the realistic example), and a
+          # .lfsconfig could then point that at an endpoint of the contributor's choosing.
+          # Neutralising system and global config removes anything for content to select, and
+          # hooksPath is belt and braces: a fetch does not transfer hooks in the first place.
+          export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+          git config core.hooksPath /dev/null
+          git config core.fsmonitor false
+          # An identity is required even by `merge --no-commit`, which prepares a commit it
+          # then does not write. Set one explicitly rather than inheriting: neutralising the
+          # global and system config above leaves a runner with none at all, and git will not
+          # invent one, so without this every merge fails with "empty ident name".
+          git config user.name "pr-build"
+          git config user.email "pr-build@taucetiproject.invalid"
+
+          # From the canonical repository: refs/pull/N/head is maintained here for forks too,
+          # so no fork is contacted at build time, and the SHA is checked below regardless.
+          if ! git fetch --quiet origin "refs/pull/$NUM/head"; then
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            echo "::warning::could not fetch the head of PR #$NUM — re-run pr-build"
+            exit 0
+          fi
+          got=$(git rev-parse FETCH_HEAD)
+          # The event's head is what gets statused, so it is what must be built.
+          if [ "$got" != "$HEAD_SHA" ]; then
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            echo "::warning::PR #$NUM is at $got, not the $HEAD_SHA this run is for — the run for the new head will build it"
+            exit 0
+          fi
+          # --no-commit: the merged tree is all that is wanted, and not committing means no
+          # identity to configure and nothing to push anywhere.
+          if ! git merge --no-commit --no-ff "$HEAD_SHA" >/tmp/merge.log 2>&1; then
+            # Distinguish a real conflict from a merge that failed for some other reason.
+            # Unmerged index entries are what a content conflict leaves behind; anything else
+            # (a repository error, a disk failure) is infrastructure, and telling an author to
+            # update a branch that merges perfectly well would send a worker off to do a round
+            # of work that cannot help. Read before aborting, which clears the index.
+            unmerged=$(git ls-files --unmerged | wc -l | tr -d " ")
+            sed -n "1,40p" /tmp/merge.log
+            git merge --abort 2>/dev/null || true
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            if [ "$unmerged" != "0" ]; then
+              echo "NEEDS_REBASE=1" >> "$GITHUB_ENV"
+              echo "::warning::PR #$NUM conflicts with the base; update the branch and this builds again"
+            else
+              echo "::warning::could not merge PR #$NUM into the base, and it is not a content conflict — re-run pr-build"
+            fi
+            exit 0
+          fi
+          echo "built as $HEAD_SHA merged into $BASE_SHA"
 
       # For a Lake-pin PR, validate it is a safe forward bump BEFORE overlaying its
       # pins or building. The validator and the BASE config it judges against are the
@@ -534,6 +644,22 @@ jobs:
           #
           # So: retry each POST, always attempt all three whatever the others did, and surface a
           # persistent failure loudly at the end rather than silently dropping a status.
+          # The scope, size and new-file guards above read the pull request's CURRENT state
+          # from the API rather than from the immutable head, so it can move underneath a run.
+          # Fail closed: an unreadable answer is not a passing one. A status is keyed only by
+          # commit, so a green posted while the pull request has moved on can outlive the state
+          # it was about -- the same SHA can become the head again, two pull requests can share
+          # a head, and retargeting does not change the head at all.
+          head_moved=0
+          if [ "${{ github.event_name }}" != "merge_group" ]; then
+            now=$(gh api "repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.num }}" \
+                    --jq '[.head.sha, .base.ref] | join(" ")' 2>/dev/null) || now=""
+            if [ "$now" != "${{ steps.pr.outputs.sha }} ${{ steps.pr.outputs.base_ref }}" ]; then
+              head_moved=1
+              echo "::warning::PR is now '${now:-unreadable}', not '${{ steps.pr.outputs.sha }} ${{ steps.pr.outputs.base_ref }}'"
+            fi
+          fi
+
           post_fail=0
           post_status() {
             local ctx="$1" st="$2" dsc="$3" attempt
@@ -576,7 +702,11 @@ jobs:
           # list (INFRA), an unvalidated pin bump (BUMP_BAD — the overlay would need the PR's pins), or a
           # diff guard that failed closed (TOO_LARGE / DIFF_UNKNOWN both exit before the build). Those
           # post a failure so this required check still blocks merge; the reason lives in `scope` below.
-          if [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
+          if [ "${{ env.NEEDS_REBASE }}" = "1" ]; then
+            state=failure; desc="conflicts with the base — update the branch, then this builds again"
+          elif [ "$head_moved" = 1 ]; then
+            state=failure; desc="the pull request changed during this build — the run for its current state statuses it"
+          elif [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
             state=failure; desc="build not run — see the scope check"
           elif [ "${{ steps.build.outcome }}" = "success" ]; then
@@ -598,6 +728,8 @@ jobs:
             sc_state=failure; sc_desc="changes outside TauCeti/ — human review + merge required"
           elif [ "${{ env.BUMP_BAD }}" = "1" ]; then
             sc_state=failure; sc_desc="Lake pin change failed the trusted bump validator"
+          elif [ "${{ env.NEEDS_REBASE }}" = "1" ]; then
+            sc_state=failure; sc_desc="conflicts with the base — update the branch (no human merge needed)"
           elif [ "${{ env.INFRA }}" = "1" ]; then
             sc_state=failure; sc_desc="could not determine the changed files — human review + merge required"
           elif [ "${{ env.TOO_LARGE }}" = "1" ]; then

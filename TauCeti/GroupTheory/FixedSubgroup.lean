@@ -42,6 +42,8 @@ endomorphism of it, so it is available before any ambient group has been constru
   endomorphisms is fixed by their composite.
 * `TauCeti.map_fixedSubgroup_le`: a homomorphism intertwining two endomorphisms carries the points
   fixed by the one to the points fixed by the other.
+* `TauCeti.map_subtype_fixedSubgroup_of_coe_eq`: the fixed points of an endomorphism of a subgroup,
+  read in the ambient group.
 * `TauCeti.map_fixedSubgroup_eq`: an isomorphism intertwining them carries the one *onto* the other.
 * `TauCeti.fixedSubgroupCongr`: the resulting isomorphism of fixed subgroups.
 * `TauCeti.symm_comp_eq_comp_symm_of_comp_eq_comp` and
@@ -118,6 +120,21 @@ theorem map_fixedSubgroup_le {F : G →* G} {F' : G' →* G'} (ψ : G →* G')
   rintro _ ⟨x, hx, rfl⟩
   rw [mem_fixedSubgroup, ← MonoidHom.comp_apply, ← hψ, MonoidHom.comp_apply,
     mem_fixedSubgroup.mp hx]
+
+/-- **Fixed points of an endomorphism of a subgroup, read in the ambient group.** If an
+endomorphism `F` of `S ≤ G` is the restriction of an endomorphism `f` of `G`, then the image of
+its fixed subgroup in `G` is `S ⊓ fixedSubgroup f`. -/
+theorem map_subtype_fixedSubgroup_of_coe_eq {S : Subgroup G} (F : S →* S) (f : G →* G)
+    (hF : ∀ g : S, (F g : G) = f g) :
+    (fixedSubgroup F).map S.subtype = S ⊓ fixedSubgroup f := by
+  refine le_antisymm ?_ ?_
+  · rintro _ ⟨g, hfix, rfl⟩
+    exact Subgroup.mem_inf.mpr ⟨g.2, mem_fixedSubgroup.mpr
+      ((hF g).symm.trans (congrArg Subtype.val (mem_fixedSubgroup.mp hfix)))⟩
+  · intro g hg
+    obtain ⟨hgS, hgf⟩ := Subgroup.mem_inf.mp hg
+    exact ⟨⟨g, hgS⟩, mem_fixedSubgroup.mpr
+      (Subtype.ext ((hF ⟨g, hgS⟩).trans (mem_fixedSubgroup.mp hgf))), rfl⟩
 
 /-! ### Transport along an isomorphism of the ambient group -/
 

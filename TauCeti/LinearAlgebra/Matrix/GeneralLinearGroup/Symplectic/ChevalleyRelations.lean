@@ -20,14 +20,35 @@ matrix parametrizations satisfy
   = x_{eᵢ+eⱼ}(ab) x_{2eᵢ}(a²b).
 ```
 
-The second relation records the non-unit structure constant in the same rank-two system:
+The opposite-root-string analogues are
+
+```text
+⁅x_{eᵢ-eⱼ}(a), x_{-2eᵢ}(b)⁆
+  = x_{-eᵢ-eⱼ}(-ab) x_{-2eⱼ}(a²b),
+⁅x_{eᵢ-eⱼ}(a), x_{-eᵢ-eⱼ}(b)⁆ = x_{-2eⱼ}(-2ab).
+```
+
+The second relation in each root string records its non-unit structure constant; for the
+positive string it is
 
 ```text
 ⁅x_{eᵢ-eⱼ}(a), x_{eᵢ+eⱼ}(b)⁆ = x_{2eᵢ}(2ab).
 ```
 
-These are the two rank-two relations needed to compare the standard symplectic realization with
-the characteristic-two special isogeny of type `B₂/C₂`.
+Together these four identities are the rank-two relations needed to compare the standard
+symplectic realization with the characteristic-two special isogeny of type `B₂/C₂`.
+
+The complementary long-root strings, starting from the sum roots, are
+
+```text
+⁅x_{eᵢ+eⱼ}(a), x_{-2eⱼ}(b)⁆
+  = x_{eᵢ-eⱼ}(ab) x_{2eᵢ}(-a²b),
+⁅x_{-eᵢ-eⱼ}(a), x_{2eⱼ}(b)⁆
+  = x_{eⱼ-eᵢ}(-ab) x_{-2eᵢ}(-a²b).
+```
+
+Thus every interaction between a long root and a nonopposite short root in the rank-two
+subsystem is available without changing coordinates.
 
 ## References
 
@@ -166,5 +187,204 @@ theorem commutatorElement_differenceShortRootUnit_positiveSumShortRootUnit
   rw [← transvectionUnit_add]
   congr 1
   ring
+
+/-- **The negative multiply-laced Chevalley relation in the standard symplectic group.** The
+commutator of `x_{eᵢ-eⱼ}(a)` and `x_{-2eᵢ}(b)` is the product of the two remaining root
+subgroups in their root string, with parameters `-ab` and `a²b`. -/
+theorem commutatorElement_differenceShortRootUnit_negativeLongRootTransvectionUnit
+    (hij : i ≠ j) (a b : R) :
+    ⁅differenceShortRootUnit hij a, negativeLongRootTransvectionUnit i b⁆ =
+      negativeSumShortRootUnit hij (-(a * b)) *
+        negativeLongRootTransvectionUnit j (a ^ 2 * b) := by
+  apply (GLSymplecticFin m R).subtype_injective
+  rw [map_commutatorElement, map_mul, Subgroup.coe_subtype,
+    coe_differenceShortRootUnit, coe_negativeLongRootTransvectionUnit,
+    coe_negativeSumShortRootUnit, coe_negativeLongRootTransvectionUnit]
+  let I := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl i)
+  let J := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl j)
+  let I' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr i)
+  let J' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr j)
+  have hIJ : I ≠ J := differenceShortRoot_first_indices_ne hij
+  have hJ'I' : J' ≠ I' := differenceShortRoot_second_indices_ne hij
+  have hI'I : I' ≠ I := finSumFinEquiv_inr_ne_inl i i
+  have hI'J : I' ≠ J := finSumFinEquiv_inr_ne_inl i j
+  have hJ'I : J' ≠ I := finSumFinEquiv_inr_ne_inl j i
+  have hJ'J : J' ≠ J := finSumFinEquiv_inr_ne_inl j j
+  have hBC :
+      ⁅transvectionUnit hJ'I' (-a), transvectionUnit hI'I b⁆ =
+        transvectionUnit hJ'I (-(a * b)) := by
+    rw [commutatorElement_transvectionUnit hJ'I' hI'I hJ'I]
+    congr 1
+    ring
+  have hAC :
+      ⁅transvectionUnit hIJ a, transvectionUnit hI'I b⁆ =
+        transvectionUnit hI'J (-(a * b)) := by
+    rw [commutatorElement_transvectionUnit_reverse hIJ hI'I hI'J]
+    congr 1
+    ring
+  have hAE :
+      ⁅transvectionUnit hIJ a, transvectionUnit hJ'I (-(a * b))⁆ =
+        transvectionUnit hJ'J (a ^ 2 * b) := by
+    rw [commutatorElement_transvectionUnit_reverse hIJ hJ'I hJ'J]
+    congr 1
+    ring
+  rw [commutatorElement_mul_left_eq_conj_mul, hBC, hAC]
+  calc
+    transvectionUnit hIJ a * transvectionUnit hJ'I (-(a * b)) *
+          (transvectionUnit hIJ a)⁻¹ * transvectionUnit hI'J (-(a * b)) =
+        ⁅transvectionUnit hIJ a, transvectionUnit hJ'I (-(a * b))⁆ *
+          transvectionUnit hJ'I (-(a * b)) * transvectionUnit hI'J (-(a * b)) := by
+      rw [← MulAut.conj_apply, conj_eq_commutatorElement_mul]
+    _ = transvectionUnit hJ'J (a ^ 2 * b) * transvectionUnit hJ'I (-(a * b)) *
+          transvectionUnit hI'J (-(a * b)) := by rw [hAE]
+    _ = transvectionUnit hI'J (-(a * b)) * transvectionUnit hJ'I (-(a * b)) *
+          transvectionUnit hJ'J (a ^ 2 * b) := by
+      rw [(commute_transvectionUnit hJ'J hJ'I hJ'J.symm hJ'I.symm _ _).eq,
+        mul_assoc,
+        (commute_transvectionUnit hJ'J hI'J hI'J.symm hJ'J.symm _ _).eq,
+        ← mul_assoc,
+        (commute_transvectionUnit hJ'I hI'J hI'I.symm hJ'J.symm _ _).eq]
+
+/-- **The negative structure-constant-two Chevalley relation in the standard symplectic
+group.** The commutator of `x_{eᵢ-eⱼ}(a)` and `x_{-eᵢ-eⱼ}(b)` is `x_{-2eⱼ}(-2ab)`. -/
+theorem commutatorElement_differenceShortRootUnit_negativeSumShortRootUnit
+    (hij : i ≠ j) (a b : R) :
+    ⁅differenceShortRootUnit hij a, negativeSumShortRootUnit hij b⁆ =
+      negativeLongRootTransvectionUnit j (-(2 * a * b)) := by
+  apply (GLSymplecticFin m R).subtype_injective
+  rw [map_commutatorElement, Subgroup.coe_subtype, coe_differenceShortRootUnit,
+    coe_negativeSumShortRootUnit, coe_negativeLongRootTransvectionUnit]
+  let I := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl i)
+  let J := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl j)
+  let I' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr i)
+  let J' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr j)
+  have hIJ : I ≠ J := differenceShortRoot_first_indices_ne hij
+  have hJ'I' : J' ≠ I' := differenceShortRoot_second_indices_ne hij
+  have hI'J : I' ≠ J := finSumFinEquiv_inr_ne_inl i j
+  have hJ'I : J' ≠ I := finSumFinEquiv_inr_ne_inl j i
+  have hJ'J : J' ≠ J := finSumFinEquiv_inr_ne_inl j j
+  have hBC :
+      ⁅transvectionUnit hJ'I' (-a), transvectionUnit hI'J b⁆ =
+        transvectionUnit hJ'J (-(a * b)) := by
+    rw [commutatorElement_transvectionUnit hJ'I' hI'J hJ'J]
+    congr 1
+    ring
+  have hAD :
+      ⁅transvectionUnit hIJ a, transvectionUnit hJ'I b⁆ =
+        transvectionUnit hJ'J (-(a * b)) := by
+    rw [commutatorElement_transvectionUnit_reverse hIJ hJ'I hJ'J]
+    congr 1
+    ring
+  have hBCD :
+      ⁅transvectionUnit hJ'I' (-a),
+          transvectionUnit hI'J b * transvectionUnit hJ'I b⁆ =
+        transvectionUnit hJ'J (-(a * b)) := by
+    rw [commutatorElement_mul_right_eq_mul_conj, hBC,
+      (commute_transvectionUnit hJ'I' hJ'I hJ'I'.symm hJ'I.symm _ _).commutator_eq]
+    simp only [mul_one, mul_assoc, mul_inv_cancel, mul_one]
+  have hACD :
+      ⁅transvectionUnit hIJ a,
+          transvectionUnit hI'J b * transvectionUnit hJ'I b⁆ =
+        transvectionUnit hJ'J (-(a * b)) := by
+    rw [commutatorElement_mul_right_eq_mul_conj,
+      (commute_transvectionUnit hIJ hI'J hI'J.symm hIJ.symm _ _).commutator_eq,
+      one_mul, hAD]
+    rw [(commute_transvectionUnit hI'J hJ'J hJ'J.symm hI'J.symm _ _).eq,
+      mul_inv_cancel_right]
+  rw [commutatorElement_mul_left_eq_conj_mul, hBCD, hACD]
+  rw [(commute_transvectionUnit hIJ hJ'J hJ'J.symm hIJ.symm _ _).eq]
+  simp only [mul_assoc, mul_inv_cancel, mul_one]
+  rw [← transvectionUnit_add]
+  congr 1
+  ring
+
+private theorem commutatorElement_transvectionUnit_pair_chain
+    {n : Type*} [Fintype n] [DecidableEq n] {p q r t : n}
+    (hpr : p ≠ r) (hqt : q ≠ t) (hrq : r ≠ q) (hrt : r ≠ t) (hpq : p ≠ q)
+    (hpt : p ≠ t) (a b : R) :
+    ⁅transvectionUnit hpr a * transvectionUnit hqt a, transvectionUnit hrq b⁆ =
+      transvectionUnit hpq (a * b) * transvectionUnit hrt (-(a * b)) *
+        transvectionUnit hpt (-(a ^ 2 * b)) := by
+  have hBC :
+      ⁅transvectionUnit hqt a, transvectionUnit hrq b⁆ =
+        transvectionUnit hrt (-(a * b)) := by
+    rw [commutatorElement_transvectionUnit_reverse hqt hrq hrt]
+    congr 1
+    ring
+  have hAC :
+      ⁅transvectionUnit hpr a, transvectionUnit hrq b⁆ =
+        transvectionUnit hpq (a * b) :=
+    commutatorElement_transvectionUnit hpr hrq hpq a b
+  have hAE :
+      ⁅transvectionUnit hpr a, transvectionUnit hrt (-(a * b))⁆ =
+        transvectionUnit hpt (-(a ^ 2 * b)) := by
+    rw [commutatorElement_transvectionUnit hpr hrt hpt]
+    congr 1
+    ring
+  rw [commutatorElement_mul_left_eq_conj_mul, hBC, hAC]
+  calc
+    transvectionUnit hpr a * transvectionUnit hrt (-(a * b)) *
+          (transvectionUnit hpr a)⁻¹ * transvectionUnit hpq (a * b) =
+        ⁅transvectionUnit hpr a, transvectionUnit hrt (-(a * b))⁆ *
+          transvectionUnit hrt (-(a * b)) * transvectionUnit hpq (a * b) := by
+      rw [← MulAut.conj_apply, conj_eq_commutatorElement_mul]
+    _ = transvectionUnit hpt (-(a ^ 2 * b)) * transvectionUnit hrt (-(a * b)) *
+          transvectionUnit hpq (a * b) := by
+      rw [hAE]
+    _ = transvectionUnit hpq (a * b) * transvectionUnit hrt (-(a * b)) *
+          transvectionUnit hpt (-(a ^ 2 * b)) := by
+      rw [(commute_transvectionUnit hpt hrt hrt.symm hpt.symm _ _).eq, mul_assoc,
+        (commute_transvectionUnit hpt hpq hpt.symm hpq.symm _ _).eq, ← mul_assoc,
+        (commute_transvectionUnit hrt hpq hpt.symm hrq.symm _ _).eq]
+
+/-- **The complementary positive-sum multiply-laced Chevalley relation.** The commutator of
+`x_{eᵢ+eⱼ}(a)` and `x_{-2eⱼ}(b)` is the product of the root subgroups for `eᵢ-eⱼ`
+and `2eᵢ`, with parameters `ab` and `-a²b`. -/
+theorem commutatorElement_positiveSumShortRootUnit_negativeLongRootTransvectionUnit
+    (hij : i ≠ j) (a b : R) :
+    ⁅positiveSumShortRootUnit hij a, negativeLongRootTransvectionUnit j b⁆ =
+      differenceShortRootUnit hij (a * b) *
+        positiveLongRootTransvectionUnit i (-(a ^ 2 * b)) := by
+  apply (GLSymplecticFin m R).subtype_injective
+  rw [map_commutatorElement, map_mul, Subgroup.coe_subtype,
+    coe_positiveSumShortRootUnit, coe_negativeLongRootTransvectionUnit,
+    coe_differenceShortRootUnit, coe_positiveLongRootTransvectionUnit]
+  let I := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl i)
+  let J := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl j)
+  let I' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr i)
+  let J' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr j)
+  have hIJ : I ≠ J := differenceShortRoot_first_indices_ne hij
+  have hJ'I' : J' ≠ I' := differenceShortRoot_second_indices_ne hij
+  have hIJ' : I ≠ J' := finSumFinEquiv_inl_ne_inr i j
+  have hJI' : J ≠ I' := finSumFinEquiv_inl_ne_inr j i
+  have hJ'J : J' ≠ J := finSumFinEquiv_inr_ne_inl j j
+  have hII' : I ≠ I' := finSumFinEquiv_inl_ne_inr i i
+  exact commutatorElement_transvectionUnit_pair_chain hIJ' hJI' hJ'J hJ'I' hIJ hII' a b
+
+/-- **The complementary negative-sum multiply-laced Chevalley relation.** The commutator of
+`x_{-eᵢ-eⱼ}(a)` and `x_{2eⱼ}(b)` is the product of the root subgroups for `eⱼ-eᵢ`
+and `-2eᵢ`, both with the signs forced by the chosen parametrizations. -/
+theorem commutatorElement_negativeSumShortRootUnit_positiveLongRootTransvectionUnit
+    (hij : i ≠ j) (a b : R) :
+    ⁅negativeSumShortRootUnit hij a, positiveLongRootTransvectionUnit j b⁆ =
+      differenceShortRootUnit hij.symm (-(a * b)) *
+        negativeLongRootTransvectionUnit i (-(a ^ 2 * b)) := by
+  apply (GLSymplecticFin m R).subtype_injective
+  rw [map_commutatorElement, map_mul, Subgroup.coe_subtype,
+    coe_negativeSumShortRootUnit, coe_positiveLongRootTransvectionUnit,
+    coe_differenceShortRootUnit, coe_negativeLongRootTransvectionUnit]
+  simp only [neg_neg]
+  let I := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl i)
+  let J := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl j)
+  let I' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr i)
+  let J' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr j)
+  have hJI : J ≠ I := differenceShortRoot_first_indices_ne hij.symm
+  have hI'J' : I' ≠ J' := differenceShortRoot_second_indices_ne hij.symm
+  have hI'J : I' ≠ J := finSumFinEquiv_inr_ne_inl i j
+  have hJ'I : J' ≠ I := finSumFinEquiv_inr_ne_inl j i
+  have hJJ' : J ≠ J' := finSumFinEquiv_inl_ne_inr j j
+  have hI'I : I' ≠ I := finSumFinEquiv_inr_ne_inl i i
+  rw [commutatorElement_transvectionUnit_pair_chain hI'J hJ'I hJJ' hJI hI'J' hI'I]
+  rw [(commute_transvectionUnit hJI hI'J' hI'I.symm hJJ'.symm (-(a * b)) (a * b)).eq]
 
 end TauCeti.GLSymplecticFin
