@@ -125,6 +125,7 @@ section DictionaryDegree0
 variable {G : Type u} [Group G] {M : Type v} [AddCommGroup M] [DistribMulAction G M]
 
 /-- Degree `0`: the invariants of the induced representation are the explicit `H⁰ = M^G`. -/
+@[simp]
 theorem mem_invariants_iff_mem_H0 (m : M) :
     m ∈ (Rep.ofDistribMulAction ℤ G M).ρ.invariants ↔ m ∈ H0 G M :=
   ⟨fun h => (FixedPoints.mem_addSubgroup G M m).2 fun g => h g,
@@ -140,6 +141,7 @@ variable {G : Type} [Group G] [TopologicalSpace G] [DiscreteTopology G]
 
 /-- Degree `1`, cocycles: over a discrete group the continuity half of `Z¹` is free, so the
 continuous `1`-cocycles are Mathlib's `1`-cocycles. -/
+@[simp]
 theorem mem_cocycles₁_iff_mem_Z1 (f : G → M) :
     f ∈ cocycles₁ (Rep.ofDistribMulAction ℤ G M) ↔ f ∈ Z1 G M :=
   ⟨fun h => mem_Z1_iff.2 ⟨continuous_of_discreteTopology,
@@ -150,6 +152,7 @@ theorem mem_cocycles₁_iff_mem_Z1 (f : G → M) :
 omit [TopologicalSpace G] [DiscreteTopology G] [TopologicalSpace M] [IsTopologicalAddGroup M] in
 /-- Degree `1`, coboundaries: `B¹` carries no continuity condition on its primitive, so the two
 definitions agree over any topological group; discreteness is not used. -/
+@[simp]
 theorem mem_coboundaries₁_iff_mem_B1 (f : G → M) :
     f ∈ coboundaries₁ (Rep.ofDistribMulAction ℤ G M) ↔ f ∈ B1 G M :=
   ⟨fun ⟨m, hm⟩ => mem_B1_iff.2 ⟨m, fun g => congrFun hm g⟩,
@@ -157,6 +160,7 @@ theorem mem_coboundaries₁_iff_mem_B1 (f : G → M) :
 
 /-- Degree `2`, cocycles: as in degree `1`, over a discrete group the continuity half of `Z²` is
 free, `G × G` being discrete as well. -/
+@[simp]
 theorem mem_cocycles₂_iff_mem_Z2 (f : G × G → M) :
     f ∈ cocycles₂ (Rep.ofDistribMulAction ℤ G M) ↔ f ∈ Z2 G M :=
   ⟨fun h => mem_Z2_iff.2 ⟨continuous_of_discreteTopology,
@@ -166,6 +170,7 @@ theorem mem_cocycles₂_iff_mem_Z2 (f : G × G → M) :
 
 /-- Degree `2`, coboundaries. Here discreteness *is* used: `B²` is by definition the image of the
 **continuous** `1`-cochains, and over a discrete group those are all of them. -/
+@[simp]
 theorem mem_coboundaries₂_iff_mem_B2 (f : G × G → M) :
     f ∈ coboundaries₂ (Rep.ofDistribMulAction ℤ G M) ↔ f ∈ B2 G M :=
   ⟨fun ⟨c, hc⟩ => mem_B2_iff'.2 ⟨c, continuous_of_discreteTopology,
