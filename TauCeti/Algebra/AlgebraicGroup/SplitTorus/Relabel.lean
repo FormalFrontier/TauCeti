@@ -60,7 +60,6 @@ theorem characterRelabel_apply (τ : Equiv.Perm sigma) (x : Multiplicative (sigm
       Multiplicative.ofAdd (Finsupp.equivMapDomain τ (Multiplicative.toAdd x)) := (rfl)
 
 /-- Relabelling an additively written character. -/
-@[simp]
 theorem characterRelabel_ofAdd (τ : Equiv.Perm sigma) (f : sigma →₀ ℤ) :
     characterRelabel τ (Multiplicative.ofAdd f) =
       Multiplicative.ofAdd (Finsupp.equivMapDomain τ f) := (rfl)
