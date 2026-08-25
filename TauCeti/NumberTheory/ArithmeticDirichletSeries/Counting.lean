@@ -102,19 +102,6 @@ instance instNorthcottAbsNormIdealPrimePower :
 noncomputable abbrev primePowersLE (x : ℝ) : Finset (IdealPrimePower K) :=
   normLE (fun A : IdealPrimePower K ↦ Ideal.absNorm (A : Ideal (𝓞 K))) x
 
-/-- Membership in the prime-power cutoff carrier is the inclusive absolute-norm inequality. -/
-@[simp]
-theorem mem_primePowersLE {A : IdealPrimePower K} {x : ℝ} :
-    A ∈ primePowersLE K x ↔ (Ideal.absNorm (A : Ideal (𝓞 K)) : ℝ) ≤ x :=
-  mem_normLE _
-
-/-- The prime-power cutoff carrier coerces to the corresponding inclusive set. -/
-@[simp]
-theorem coe_primePowersLE (x : ℝ) :
-    (primePowersLE K x : Set (IdealPrimePower K)) =
-      {A : IdealPrimePower K | (Ideal.absNorm (A.1 : Ideal (𝓞 K)) : ℝ) ≤ x} :=
-  coe_normLE _ x
-
 /-- Prime-power cutoff carriers grow monotonically with the cutoff. -/
 theorem primePowersLE_mono : Monotone (primePowersLE K) :=
   normLE_mono _
