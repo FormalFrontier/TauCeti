@@ -11,11 +11,17 @@ public import Mathlib.CategoryTheory.Preadditive.Projective.Basic
 # Essential epimorphisms and the uniqueness of a projective cover
 
 A *projective cover* of an object `M` is an epimorphism `π : P ⟶ M` from a projective object which
-is as small as possible: no proper subobject of `P` already maps onto `M`. The subobject-free way
-to say "as small as possible" is that `π` is an **essential epimorphism** — a morphism `g` into
-`P` is an epimorphism as soon as `g ≫ π` is one. That is the condition `TauCeti.IsEssentialEpi`
-records, and it is what makes "the" projective cover well defined: two projective covers of the
-same object are isomorphic over it.
+is minimal, in the sense of being an **essential epimorphism**: a morphism `g` into `P` is an
+epimorphism as soon as `g ≫ π` is one. That epimorphism condition is the definition used here —
+`TauCeti.IsEssentialEpi` — and nothing beyond `[Category C]` is assumed for it. It is what makes
+"the" projective cover well defined: two projective covers of the same object are isomorphic
+over it.
+
+The familiar reading of minimality, that no proper subobject of `P` already maps onto `M`, is
+intuition rather than a restatement: it matches the definition in a *balanced* category, where a
+morphism that is both a monomorphism and an epimorphism is an isomorphism — a module or
+representation category, say. In an arbitrary category the two conditions need not agree, and it
+is the epimorphism condition, not the subobject one, that the results below use.
 
 Mathlib has projective objects (`CategoryTheory.Projective`) and projective *presentations*
 (`CategoryTheory.ProjectivePresentation`, an epimorphism from a projective with no minimality
@@ -90,8 +96,9 @@ open CategoryTheory
 
 variable {C : Type u} [Category.{v} C]
 
-/-- An **essential epimorphism** is an epimorphism `π : P ⟶ M` through which nothing smaller than
-`P` already covers `M`: a morphism `g` into `P` is an epimorphism as soon as `g ≫ π` is one.
+/-- An **essential epimorphism** is an epimorphism `π : P ⟶ M` such that a morphism `g` into `P` is
+an epimorphism as soon as `g ≫ π` is one. In a balanced category this is the statement that
+nothing smaller than `P` already covers `M`, but no subobject theory is assumed here.
 
 An essential epimorphism from a projective object is a **projective cover**. Over a module
 category this is exactly `TauCeti.IsProjectiveCover`, by
@@ -99,7 +106,7 @@ category this is exactly `TauCeti.IsProjectiveCover`, by
 structure IsEssentialEpi {P M : C} (π : P ⟶ M) : Prop where
   /-- An essential epimorphism is in particular an epimorphism. -/
   epi : Epi π
-  /-- Nothing smaller than the source already covers the target. -/
+  /-- A morphism into the source is an epimorphism as soon as its composite with `π` is one. -/
   epi_of_epi_comp {X : C} (g : X ⟶ P) : Epi (g ≫ π) → Epi g
 
 /-- An isomorphism is an essential epimorphism: composing with it changes nothing. -/
