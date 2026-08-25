@@ -39,9 +39,7 @@ namespace AbstractSimplicialComplex
 
 variable {ι : Type*}
 
-local instance : DecidableEq ι := Classical.decEq ι
-local instance {K : AbstractSimplicialComplex ι} : DecidableEq (Face K) :=
-  Subtype.instDecidableEq
+attribute [local instance] Classical.decEq
 
 @[instance_reducible]
 private noncomputable def carrierLinearOrder {K : AbstractSimplicialComplex ι}
