@@ -59,6 +59,8 @@ that sequel is stated is `TauCeti.finite_iff_finiteDimensional`.
   projectives.
 * `TauCeti.fromFiniteProjectiveDimension` and `TauCeti.toFiniteProjectiveDimension`: the two
   comparison maps between that group and `G₀(mod R)`.
+* `TauCeti.moduleEulerClassOf`: the alternating class in `K₀(proj R)` of a finite resolution by
+  finitely generated projectives.
 * `TauCeti.cartanInverse` and `TauCeti.cartanEquiv`: the inverse of the Cartan map and the
   resulting isomorphism, under the hypothesis that every finitely generated module has a finite
   resolution by finitely generated projectives.
@@ -111,10 +113,10 @@ def finiteProjectiveModules : ObjectProperty (ModuleCat.{u} R) :=
 
 variable {R}
 
-theorem finiteModules_iff {M : ModuleCat.{u} R} :
+@[simp] theorem finiteModules_iff {M : ModuleCat.{u} R} :
     finiteModules R M ↔ Module.Finite R M := Iff.rfl
 
-theorem finiteProjectiveModules_iff {M : ModuleCat.{u} R} :
+@[simp] theorem finiteProjectiveModules_iff {M : ModuleCat.{u} R} :
     finiteProjectiveModules R M ↔ Module.Finite R M ∧ Module.Projective R M := Iff.rfl
 
 variable (R)
@@ -209,7 +211,7 @@ noncomputable def finiteModulesExactStructure :
 /-- **The exact structure of the finitely generated projective modules**, induced from the
 canonical exact structure of `ModuleCat R`. It is the split one, by
 `TauCeti.finiteProjectiveModulesExactStructure_eq_split`. -/
-@[expose] noncomputable def finiteProjectiveModulesExactStructure :
+noncomputable def finiteProjectiveModulesExactStructure :
     ExactStructure (finiteProjectiveModules R).FullSubcategory :=
   (ExactStructure.abelian (ModuleCat.{u} R)).fullSubcategory _
     (ExactStructure.isExtensionClosed_of_le_isProjective
@@ -323,11 +325,30 @@ noncomputable def moduleResolutionEquiv :
       ExactK0.of ⟨M, ExactStructure.le_admitsFiniteResolution _ _ M hM⟩ :=
   ExactStructure.resolutionEquiv_of.{u, u, u + 1} _ _
 
+/-- **The alternating class of a finite projective resolution**, as an element of `K₀(proj R)`:
+`TauCeti.ExactStructure.eulerClassOf` for the finitely generated projective modules. Any finite
+resolution of `M` by finitely generated projectives computes it, by
+`TauCeti.ExactStructure.eulerClassOf_eq`. -/
+noncomputable def moduleEulerClassOf {M : ModuleCat.{u} R}
+    (hM : (ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
+      (finiteProjectiveModules R) M) :
+    ExactK0.{u} (finiteProjectiveModulesExactStructure R) :=
+  ExactStructure.eulerClassOf.{u, u, u + 1}
+    (ExactStructure.isExtensionClosed_of_le_isProjective
+      (finiteProjectiveModules_le_isProjective R)) hM
+
+/-- A finitely generated projective module is its own resolution, so its alternating class is its
+own class. -/
+theorem moduleEulerClassOf_of_prop {M : ModuleCat.{u} R}
+    (hM : finiteProjectiveModules R M) :
+    moduleEulerClassOf R (ExactStructure.le_admitsFiniteResolution _ _ M hM) =
+      ExactK0.of ⟨M, hM⟩ :=
+  ExactStructure.eulerClassOf_of_prop.{u, u, u + 1} (finiteProjectiveModules_le_isProjective R) hM
+
 @[simp] theorem moduleResolutionEquiv_symm_of {M : ModuleCat.{u} R}
     (hM : (ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
       (finiteProjectiveModules R) M) :
-    (moduleResolutionEquiv R).symm (ExactK0.of ⟨M, hM⟩) =
-      ExactStructure.eulerClassOf.{u, u, u + 1} _ hM :=
+    (moduleResolutionEquiv R).symm (ExactK0.of ⟨M, hM⟩) = moduleEulerClassOf R hM :=
   ExactStructure.resolutionEquiv_symm_of.{u, u, u + 1} _ _
 
 /-- The comparison map from the Grothendieck group of the modules admitting finite resolutions by
@@ -379,7 +400,7 @@ noncomputable def toFiniteProjectiveDimension :
 /-- The two comparison maps with the modules admitting finite resolutions by finitely generated
 projectives are inverse to one another, since under the hypothesis the two object properties
 agree. -/
-theorem fromFiniteProjectiveDimension_toFiniteProjectiveDimension
+@[simp] theorem fromFiniteProjectiveDimension_toFiniteProjectiveDimension
     (y : ExactK0.{u} (finiteModulesExactStructure R)) :
     fromFiniteProjectiveDimension R (toFiniteProjectiveDimension R h y) = y := by
   refine DFunLike.congr_fun (ExactK0.hom_ext
@@ -388,7 +409,7 @@ theorem fromFiniteProjectiveDimension_toFiniteProjectiveDimension
   rw [AddMonoidHom.coe_comp, Function.comp_apply, toFiniteProjectiveDimension_of,
     fromFiniteProjectiveDimension_of, AddMonoidHom.id_apply]
 
-theorem toFiniteProjectiveDimension_fromFiniteProjectiveDimension
+@[simp] theorem toFiniteProjectiveDimension_fromFiniteProjectiveDimension
     (y : ExactK0.{u} (finiteProjectiveDimensionExactStructure R)) :
     toFiniteProjectiveDimension R h (fromFiniteProjectiveDimension R y) = y := by
   refine DFunLike.congr_fun (ExactK0.hom_ext
@@ -406,8 +427,7 @@ noncomputable def cartanInverse :
   (moduleResolutionEquiv R).symm.toAddMonoidHom.comp (toFiniteProjectiveDimension R h)
 
 @[simp] theorem cartanInverse_of {M : ModuleCat.{u} R} (hM : finiteModules R M) :
-    cartanInverse R h (ExactK0.of ⟨M, hM⟩) =
-      ExactStructure.eulerClassOf.{u, u, u + 1} _ (h M hM) := by
+    cartanInverse R h (ExactK0.of ⟨M, hM⟩) = moduleEulerClassOf R (h M hM) := by
   rw [cartanInverse, AddMonoidHom.coe_comp, Function.comp_apply, AddEquiv.coe_toAddMonoidHom,
     toFiniteProjectiveDimension_of, moduleResolutionEquiv_symm_of]
 
@@ -438,6 +458,9 @@ noncomputable def cartanEquiv :
     (cartanEquiv R h).symm x = cartanInverse R h x := (rfl)
 
 include h in
+/-- **The Cartan map is an isomorphism** whenever every finitely generated `R`-module admits a
+finite resolution by finitely generated projective modules; this is the bijectivity statement of
+`TauCeti.cartanEquiv`. -/
 theorem cartanMap_bijective : Function.Bijective (cartanMap R) :=
   (cartanEquiv R h).bijective
 
@@ -473,6 +496,8 @@ noncomputable def cartanEquivOfDivisionRing :
       ExactK0.{u} (finiteModulesExactStructure K) :=
   cartanEquiv K (finiteModules_le_admitsFiniteResolution K)
 
+/-- **The Cartan map of a division ring is bijective**, with no hypothesis: over a division ring
+every finitely generated module is projective, hence its own finite projective resolution. -/
 theorem cartanMap_bijective_of_divisionRing : Function.Bijective (cartanMap K) :=
   cartanMap_bijective K (finiteModules_le_admitsFiniteResolution K)
 
