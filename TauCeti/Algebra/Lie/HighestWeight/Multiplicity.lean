@@ -82,14 +82,6 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
 
 /-! ### What the lowering operators produce at a weight -/
 
-omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] in
-/-- `Submodule.map₂` takes a bilinear map, so the bracket has to be presented as the linear map
-underlying the Lie homomorphism `LieModule.toEnd`; this records that the presentation does not
-change what it computes. -/
-private theorem toEnd_toLinearMap_apply_apply (x : L) (m : M) :
-    (toEnd K L M : L →ₗ[K] Module.End K M) x m = ⁅x, m⁆ :=
-  (rfl)
-
 variable (M b) in
 /-- **What the negative root vectors produce at the weight `chi`**: the sum, over the negative
 roots `γ` of the base `b`, of the images of the weight space at `chi - γ` under the root vectors of
@@ -118,7 +110,7 @@ theorem lie_mem_loweredWeightSpace {chi : H → K} {gamma : H.root}
     (hm : m ∈ genWeightSpace M (chi - (gamma : H → K))) :
     ⁅x, m⁆ ∈ loweredWeightSpace M b chi := by
   rw [← LieSubmodule.mem_toSubmodule] at hx hm
-  rw [loweredWeightSpace_eq_iSup, ← toEnd_toLinearMap_apply_apply (K := K) x m]
+  rw [loweredWeightSpace_eq_iSup, ← LieModule.toEnd_apply_apply K L M]
   exact Submodule.mem_iSup_of_mem gamma (Submodule.mem_iSup_of_mem hgamma
     (Submodule.apply_mem_map₂ (toEnd K L M : L →ₗ[K] Module.End K M) hx hm))
 
@@ -133,7 +125,8 @@ theorem loweredWeightSpace_le_iff {chi : H → K} {N : Submodule K M} :
   rw [loweredWeightSpace_eq_iSup]
   refine iSup₂_le fun gamma hgamma => Submodule.map₂_le.mpr fun x hx m hm => ?_
   rw [LieSubmodule.mem_toSubmodule] at hx hm
-  rw [toEnd_toLinearMap_apply_apply]
+  change (toEnd K L M) x m ∈ N
+  rw [LieModule.toEnd_apply_apply K L M]
   exact h gamma hgamma x hx m hm
 
 /-- **What the lowering operators produce at `chi` lies in the weight space at `chi`**: a root
