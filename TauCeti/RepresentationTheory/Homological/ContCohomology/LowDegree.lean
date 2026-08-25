@@ -39,7 +39,8 @@ H⁰(G, M) = M^G,   H¹(G, M) = Z¹/B¹,   H²(G, M) = Z²/B².
 * `TauCeti.ContCohomology.H0`, `H1`, `H2`, their class maps `H1pi`, `H2pi`, and the discrete
   carriers `DiscreteH1`, `DiscreteH2` used by the comparison with canonical cohomology, together
   with their identifications `discreteH1Equiv`, `discreteH2Equiv` with `H1` and `H2`.
-* `TauCeti.ContCohomology.explicitRes0`: restriction on the explicit degree-zero carrier.
+* `TauCeti.ContCohomology.explicitRes0`, `explicitCoeff0`: restriction and coefficient maps on
+  the explicit degree-zero carrier.
 
 ## Main statements
 
@@ -314,22 +315,55 @@ section RestrictionDegreeZero
 variable (G : Type u) [Group G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
   (U : Subgroup G)
 
+private def H0.toFixedPointsTop : H0 G M →+ FixedPoints.addSubmonoid (⊤ : Subgroup G) M where
+  toFun m := ⟨m, (FixedPoints.mem_addSubmonoid (⊤ : Subgroup G) M m).2 fun g =>
+    (FixedPoints.mem_addSubgroup G M m).1 m.2 (g : G)⟩
+  map_zero' := rfl
+  map_add' _ _ := rfl
+
+private def H0.ofFixedPointsTop : FixedPoints.addSubmonoid (⊤ : Subgroup G) M →+ H0 G M where
+  toFun m := ⟨m, (FixedPoints.mem_addSubgroup G M m).2 fun g =>
+    (FixedPoints.mem_addSubmonoid (⊤ : Subgroup G) M m).1 m.2 ⟨g, Subgroup.mem_top g⟩⟩
+  map_zero' := rfl
+  map_add' _ _ := rfl
+
+/-- A coefficient homomorphism induces an additive map on degree-zero cohomology. -/
+def explicitCoeff0 {N : Type*} [AddCommGroup N] [DistribMulAction G N] (f : M →+[G] N) :
+    H0 G M →+ H0 G N :=
+  (H0.ofFixedPointsTop G N).comp
+    ((fixedPointsMap f (⊤ : Subgroup G)).comp (H0.toFixedPointsTop G M))
+
+/-- The degree-zero coefficient map applies the underlying coefficient homomorphism. -/
+@[simp]
+theorem coe_explicitCoeff0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+    (f : M →+[G] N) (m : H0 G M) : (explicitCoeff0 G M f m : N) = f (m : M) := by
+  unfold explicitCoeff0 H0.ofFixedPointsTop H0.toFixedPointsTop
+  exact coe_fixedPointsMap f ⊤ _
+
 /-- **Restriction in degree zero**, the inclusion `H⁰(G, M) → H⁰(U, M)`. -/
-def explicitRes0 : H0 G M →+ H0 U M := by
-  let toTop : H0 G M →+ FixedPoints.addSubmonoid (⊤ : Subgroup G) M :=
-    { toFun := fun m => ⟨m, by
-        change (m : M) ∈ FixedPoints.addSubgroup (⊤ : Subgroup G) M
-        rw [fixedPoints_addSubgroup_top G M]
-        exact m.2⟩
-      map_zero' := rfl
-      map_add' := fun _ _ => rfl }
-  exact (fixedPointsInclusion (M := M) (show U ≤ (⊤ : Subgroup G) from le_top)).comp toTop
+def explicitRes0 : H0 G M →+ H0 U M :=
+  (fixedPointsInclusion (M := M) (show U ≤ (⊤ : Subgroup G) from le_top)).comp
+    (H0.toFixedPointsTop G M)
 
 /-- Restriction in degree zero does not change the underlying coefficient. -/
 @[simp]
 theorem coe_explicitRes0 (m : H0 G M) : (explicitRes0 G M U m : M) = m := by
-  unfold explicitRes0
+  unfold explicitRes0 H0.toFixedPointsTop
   exact coe_fixedPointsInclusion (M := M) (show U ≤ (⊤ : Subgroup G) from le_top) _
+
+/-- Restriction in degree zero is natural in equivariant coefficient homomorphisms. -/
+theorem map_explicitRes0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+    (f : M →+[G] N) (m : H0 G M) :
+    fixedPointsMap f U (explicitRes0 G M U m) =
+      explicitRes0 G N U (explicitCoeff0 G M f m) := by
+  apply Subtype.ext
+  calc
+    (fixedPointsMap f U (explicitRes0 G M U m) : N) =
+        f (explicitRes0 G M U m : M) := coe_fixedPointsMap f U _
+    _ = f (m : M) := congrArg f (coe_explicitRes0 G M U m)
+    _ = (explicitCoeff0 G M f m : N) := (coe_explicitCoeff0 G M f m).symm
+    _ = (explicitRes0 G N U (explicitCoeff0 G M f m) : N) :=
+      (coe_explicitRes0 G N U _).symm
 
 end RestrictionDegreeZero
 
