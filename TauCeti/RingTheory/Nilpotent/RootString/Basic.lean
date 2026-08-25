@@ -264,14 +264,10 @@ theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq_two_nsmul
     simp only [map_mul, map_sum] at h
     exact h
   · -- Outside the truncation the reordered quadruple has a vanishing factor.
-    have hvx : ∀ q, kx ≤ q → (integralDividedPower x M q (hMx q)).baseChange R = 0 :=
-      fun q hq => baseChange_integralDividedPower_eq_zero_of_le x M (hMx q) hkx hq
-    have hvy : ∀ a, ky ≤ a → (integralDividedPower y M a (hMy a)).baseChange R = 0 :=
-      fun a ha => baseChange_integralDividedPower_eq_zero_of_le y M (hMy a) hky ha
-    have hvz : ∀ b, kz ≤ b → (integralDividedPower z M b (hMz b)).baseChange R = 0 :=
-      fun b hb => baseChange_integralDividedPower_eq_zero_of_le z M (hMz b) hkz hb
-    have hvw : ∀ c, kw ≤ c → (integralDividedPower w M c (hMw c)).baseChange R = 0 :=
-      fun c hc => baseChange_integralDividedPower_eq_zero_of_le w M (hMw c) hkw hc
+    have hvx := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) x M hMx hkx
+    have hvy := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) y M hMy hky
+    have hvz := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) z M hMz hkz
+    have hvw := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) w M hMw hkw
     rintro a b c q (habc | hqbc)
     · rcases le_or_gt ky a with ha | ha
       · rw [hvy a ha, zero_mul, zero_mul, zero_mul]

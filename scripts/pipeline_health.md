@@ -28,6 +28,11 @@ adding review capacity does nothing about a week when nobody opened anything. So
 arrival rates are compared against baseline too, and a fall in them is reported
 as the cause. When both are true, both are said.
 
+**A building queue is reported before throughput falls.** A stage taking in more
+than it lets out is what a fall in throughput looks like before it arrives, so
+`anomalies` is populated whether or not merges have dropped yet. `cause` is
+separate, and answers only "why is throughput down" when it is.
+
 **It will admit to not knowing.** If arrivals are steady and no stage is backing
 up, the fall is reported as unexplained rather than pinned on whichever stage
 happened to be deepest. A baseline with too few merges reports insufficient data

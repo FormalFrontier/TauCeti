@@ -315,18 +315,12 @@ theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq_three_nsmul
     simp only [map_mul, map_sum] at h
     exact h
   · -- Outside the truncation the reordered sextuple has a vanishing factor.
-    have hvx : ∀ q, kx ≤ q → (integralDividedPower x M q (hMx q)).baseChange R = 0 :=
-      fun q hq => baseChange_integralDividedPower_eq_zero_of_le x M (hMx q) hkx hq
-    have hvy : ∀ a, ky ≤ a → (integralDividedPower y M a (hMy a)).baseChange R = 0 :=
-      fun a ha => baseChange_integralDividedPower_eq_zero_of_le y M (hMy a) hky ha
-    have hvz : ∀ b, kz ≤ b → (integralDividedPower z M b (hMz b)).baseChange R = 0 :=
-      fun b hb => baseChange_integralDividedPower_eq_zero_of_le z M (hMz b) hkz hb
-    have hvw : ∀ c, kw ≤ c → (integralDividedPower w M c (hMw c)).baseChange R = 0 :=
-      fun c hc => baseChange_integralDividedPower_eq_zero_of_le w M (hMw c) hkw hc
-    have hvv : ∀ d, kv ≤ d → (integralDividedPower v M d (hMv d)).baseChange R = 0 :=
-      fun d hd => baseChange_integralDividedPower_eq_zero_of_le v M (hMv d) hkv hd
-    have hvs' : ∀ e, ks ≤ e → (integralDividedPower s M e (hMs e)).baseChange R = 0 :=
-      fun e he => baseChange_integralDividedPower_eq_zero_of_le s M (hMs e) hks he
+    have hvx := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) x M hMx hkx
+    have hvy := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) y M hMy hky
+    have hvz := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) z M hMz hkz
+    have hvw := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) w M hMw hkw
+    have hvv := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) v M hMv hkv
+    have hvs' := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) s M hMs hks
     rintro a b c d e q (habc | hqbc)
     · rcases le_or_gt ky a with ha | ha
       · simp [hvy a ha]

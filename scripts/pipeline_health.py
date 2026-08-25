@@ -353,14 +353,27 @@ def report(result: dict) -> str:
         )
 
     cause = result["cause"]
-    if cause is None:
-        lines.append("  throughput is normal; no stage is backing up")
-    elif cause["kind"] == "stage":
+    found = result.get("anomalies") or []
+
+    if cause is not None and cause["kind"] == "stage":
         lines.append(f"  cause: {cause['stage']} — {cause['why']}")
-        for other in (result.get("anomalies") or [])[1:]:
+        for other in found[1:]:
             lines.append(f"  also:  {other['stage']} — {other['why']}")
-    else:
+    elif cause is not None:
         lines.append(f"  cause: {cause['why']}")
+        for other in found:
+            lines.append(f"  also:  {other['stage']} — {other['why']}")
+    elif found:
+        # Throughput has not fallen yet. That is not a reason to stay quiet: a
+        # stage taking in more than it lets out is what a fall in throughput
+        # looks like before it arrives, and by the time merges drop the queue
+        # has already built.
+        share = f"{merged / baseline:.0%} of baseline" if baseline else "unmeasured"
+        lines.append(f"  throughput is holding at {share}, but the queue is building:")
+        for other in found:
+            lines.append(f"  building:  {other['stage']} — {other['why']}")
+    else:
+        lines.append("  throughput is normal; no stage is backing up")
     return "\n".join(lines)
 
 

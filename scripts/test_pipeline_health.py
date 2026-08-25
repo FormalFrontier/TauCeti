@@ -331,5 +331,49 @@ class AgreementTests(unittest.TestCase):
         self.assertAlmostEqual(max(s["oldest_waiting_hours"] for s in stages), 3.0, places=3)
 
 
+class BuildingQueueTests(unittest.TestCase):
+    """A stage filling faster than it drains is worth reporting before merges
+    fall. Gating it on throughput meant the report said "no stage is backing up"
+    while awaiting-review grew from 45 to 70 and took in 23.5/h against 20.9/h
+    out, because throughput was still at 83% of baseline."""
+
+    def result_with_a_building_stage(self, merged, baseline):
+        return {
+            "merged_per_hour": merged, "baseline_merged_per_hour": baseline,
+            "baseline_merged_count": 100, "opened_per_hour": 5.0,
+            "baseline_opened_per_hour": 5.0, "baseline_opened_count": 100,
+            "window_hours": 24.0, "baseline_hours": 336.0, "open_prs": 100,
+            "opened_count": 120, "merged_count": 90,
+            "open_prs_without_a_lifecycle_label": 0,
+            "repo": "x", "generated_at": "2026-08-25T00:00:00Z",
+            "stages": [{
+                "stage": "awaiting-review", "owned_by_project": True, "depth": 70,
+                "oldest_waiting_hours": 342.0, "entered_per_hour": 23.5,
+                "left_per_hour": 20.9, "baseline_entered_per_hour": 20.0,
+                "baseline_left_per_hour": 20.0, "left_count": 500,
+                "baseline_left_count": 5000, "median_dwell_hours": 2.0,
+                "baseline_median_dwell_hours": 1.0,
+            }],
+        }
+
+    def test_a_building_stage_is_reported_while_throughput_still_holds(self):
+        r = self.result_with_a_building_stage(3.92, 4.75)      # 83% of baseline
+        r["anomalies"] = health.anomalies(r)
+        r["cause"] = health.find_cause(r)
+        self.assertIsNone(r["cause"])
+        self.assertEqual([a["stage"] for a in r["anomalies"]], ["awaiting-review"])
+        text = health.report(health.rounded(r))
+        self.assertIn("the queue is building", text)
+        self.assertNotIn("no stage is backing up", text)
+
+    def test_a_genuinely_quiet_queue_still_reports_normal(self):
+        r = self.result_with_a_building_stage(4.75, 4.75)
+        r["stages"][0].update(entered_per_hour=20.0, left_per_hour=20.0,
+                              oldest_waiting_hours=1.0)
+        r["anomalies"] = health.anomalies(r)
+        r["cause"] = health.find_cause(r)
+        self.assertIn("no stage is backing up", health.report(health.rounded(r)))
+
+
 if __name__ == "__main__":
     unittest.main()
