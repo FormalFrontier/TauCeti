@@ -260,7 +260,6 @@ noncomputable def cyclicGroupThreeComplexCharacterTable :
     cyclicGroupThreeExactCharacterTable
 
 /-- The embedded table evaluated at a numbered row and numbered conjugacy class. -/
-@[simp]
 theorem cyclicGroupThreeComplexCharacterTable_apply_classOf
     (i j : CyclicGroupThreeClassIndex) :
     cyclicGroupThreeComplexCharacterTable

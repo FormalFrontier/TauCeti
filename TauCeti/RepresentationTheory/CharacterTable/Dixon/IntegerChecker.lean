@@ -144,7 +144,6 @@ theorem complexTableOfHom_apply {R : Type*} [Semiring R]
   (rfl)
 
 /-- The mapped and reindexed table evaluated at a numbered row and numbered class. -/
-@[simp]
 theorem complexTableOfHom_apply_classOf {R : Type*} [Semiring R]
     (f : R →+* ℂ) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
     (i j : Fin d.numClasses) :
