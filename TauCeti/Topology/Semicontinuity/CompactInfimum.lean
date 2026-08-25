@@ -23,8 +23,9 @@ metrizability or countability hypothesis appears, and the order `β` carries no 
 Mathlib has `LowerSemicontinuousOn.exists_isMinOn`, the extreme value theorem for lower
 semicontinuous functions, but nothing about infima over a compact factor of a product: its
 semicontinuity operations combine functions on a fixed domain, and the corresponding
-`lowerSemicontinuous_iInf` is false without compactness, an infimum of lower semicontinuous
-functions being upper rather than lower semicontinuous in general.
+`lowerSemicontinuous_iInf` is false without compactness: arbitrary infima do not preserve lower
+semicontinuity. What an infimum does preserve is upper semicontinuity, of upper semicontinuous
+and in particular of continuous functions, which is `upperSemicontinuous_iInf`.
 
 ## Main results
 
@@ -58,8 +59,8 @@ private theorem lowerSemicontinuous_slice {f : X × Y → β} (hf : LowerSemicon
 /-- The infimum of a jointly lower semicontinuous function over a compact first factor is a lower
 semicontinuous function of the second variable.
 
-Compactness is what makes this true: an infimum of lower semicontinuous functions is in general
-only upper semicontinuous. -/
+Compactness is what makes this true: an arbitrary infimum of lower semicontinuous functions need
+not be lower semicontinuous. -/
 theorem lowerSemicontinuous_iInf_of_compactSpace [CompactSpace X] {f : X × Y → β}
     (hf : LowerSemicontinuous f) : LowerSemicontinuous fun y => ⨅ x, f (x, y) := by
   rcases isEmpty_or_nonempty X with hX | hX
