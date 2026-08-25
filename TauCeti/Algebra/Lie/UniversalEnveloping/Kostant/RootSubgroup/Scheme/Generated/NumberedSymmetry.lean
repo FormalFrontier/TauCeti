@@ -9,6 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.NumberedSymmetry
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Rigidity
 
 /-!
 # Numbered symmetries of the generated Kostant group scheme
@@ -32,6 +33,8 @@ that it preserves their common-kernel Hopf ideal, so it descends to the quotient
   the pinning equation `γ ∘ xᵢ = x_{σ i}`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_inv`:
   the corresponding inverse pinning equation.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedNumberedSymmetryIso_pow_eq_one`:
+  a finite-order relation for the numbered symmetry, inherited from its permutation of the roots.
 
 ## References
 
@@ -451,8 +454,7 @@ private theorem kostantGeneratedCoordinateNumberedSymmetryIso_hom_comp_rootMap
 
 /-- The automorphism of the generated Kostant group scheme induced by a numbered symmetry. -/
 noncomputable def kostantGeneratedNumberedSymmetryIso :
-    kostantGeneratedGroupScheme e h ρ M hM hnil b ≅
-      kostantGeneratedGroupScheme e h ρ M hM hnil b :=
+    Aut (kostantGeneratedGroupScheme e h ρ M hM hnil b) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).mapIso
     (kostantGeneratedCoordinateNumberedSymmetryIso
       e h ρ M hM hnil b σ θ hθM hθe hσ).op
@@ -483,6 +485,55 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_inv (i : I) :
       kostantRootSubgroupToGenerated e h ρ M hM hnil b i := by
   rw [← kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom
     e h ρ M hM hnil b σ θ hθM hθe hσ i]
-  simp only [Category.assoc, Iso.hom_inv_id, Category.comp_id]
+  rw [Category.assoc,
+    (kostantGeneratedNumberedSymmetryIso
+      e h ρ M hM hnil b σ θ hθM hθe hσ).hom_inv_id,
+    Category.comp_id]
+
+include hθe hσ in
+/-- Iterating the generated group-scheme symmetry carries the `i`th root subgroup to the root
+subgroup numbered by the corresponding iterate of `σ`. -/
+@[simp]
+theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom (m : ℕ) (i : I) :
+    kostantRootSubgroupToGenerated e h ρ M hM hnil b i ≫
+        ((kostantGeneratedNumberedSymmetryIso
+          e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m).hom =
+      kostantRootSubgroupToGenerated e h ρ M hM hnil b ((σ^[m]) i) := by
+  induction m generalizing i with
+  | zero =>
+      rw [pow_zero, Function.iterate_zero_apply]
+      -- The hom of the `Aut` identity is definitionally the hom of `Iso.refl`; `change`
+      -- exposes it because keyed rewriting does not unfold the plain definition `Aut`.
+      change _ ≫ (Iso.refl _).hom = _
+      rw [Iso.refl_hom, Category.comp_id]
+  | succ m ih =>
+      rw [pow_succ]
+      -- `Aut.Aut_mul_def` and `Iso.trans_hom` give this reversed composite; `change`
+      -- exposes it because keyed rewriting does not unfold the plain definition `Aut`.
+      change _ ≫
+        (kostantGeneratedNumberedSymmetryIso
+          e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
+        ((kostantGeneratedNumberedSymmetryIso
+          e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m).hom = _
+      rw [← Category.assoc,
+        kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom, ih,
+        Function.iterate_succ_apply]
+
+include hθe hσ in
+/-- If the numbering permutation has order dividing `m`, then so does its automorphism of the
+generated Kostant group scheme. -/
+@[simp]
+theorem kostantGeneratedNumberedSymmetryIso_pow_eq_one (m : ℕ)
+    (hσm : σ^[m] = id) :
+    (kostantGeneratedNumberedSymmetryIso
+      e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m = 1 := by
+  apply Iso.ext
+  apply kostantGeneratedGroupScheme_hom_ext e h ρ M hM hnil b
+  intro i
+  rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq]
+  -- The right-hand identity is an `Aut`, whose hom is definitionally that of `Iso.refl`;
+  -- `change` exposes it because keyed rewriting does not unfold the plain definition `Aut`.
+  change _ = _ ≫ (Iso.refl _).hom
+  rw [Iso.refl_hom, Category.comp_id]
 
 end TauCeti.UniversalEnvelopingAlgebra
