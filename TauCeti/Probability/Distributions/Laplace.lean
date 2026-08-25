@@ -18,13 +18,15 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
 The Laplace law with location `μ` and scale `b` is the two-sided exponential law: its density is
 `(2 * b)⁻¹ * exp (-|x - μ| / b)`. This file defines it, proves it is a probability measure for
-`0 < b`, identifies it as a `MeasureTheory.HasPDF` law with that density, computes every absolute
-central moment, and from those the cdf, the mean and the variance.
+`0 < b`, identifies it as a `MeasureTheory.HasPDF` law with that density, and computes the cdf,
+every absolute central moment, the mean, and the variance. The variance is derived from the second
+absolute central moment.
 
-**Boundary.** The scale must be positive for the density to be integrable, so both
+**Boundary.** The scale must be positive for the two-sided exponential formula to normalize to a
+probability density, so both
 `laplacePDFReal` and `laplaceMeasure` are *defined* to vanish for `b ≤ 0`
-(`laplaceMeasure_of_nonpos`); no quantitative statement below is silently assuming a positive
-scale, each carries `0 < b` as a hypothesis.
+(`laplaceMeasure_of_nonpos`); formulas that describe the probability law carry `0 < b` as a
+hypothesis.
 
 ## Main definitions
 
@@ -66,6 +68,7 @@ invariance of Lebesgue measure, and the variance is the second absolute central 
   `2 * b ^ 2` and the cdf — together with the Laplace case of the items 1–4 required of every
   family in "What every distribution must provide". The exponential-integrability domain, the mgf,
   the cgf and the characteristic function of that same target are not proved here.
+* Formal declaration scaffold: `TauCetiRoadmap/StandardDistributions/Suggested.lean`, Layer 3.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 24.
 -/
@@ -107,9 +110,21 @@ theorem laplacePDFReal_of_nonpos (hb : b ≤ 0) (μ x : ℝ) : laplacePDFReal μ
   rw [laplacePDFReal, ite_eq_right (not_lt.mpr hb)]
 
 /-- For a positive scale the density is the two-sided exponential formula. -/
+@[simp]
 theorem laplacePDFReal_of_pos (hb : 0 < b) (μ x : ℝ) :
     laplacePDFReal μ b x = (2 * b)⁻¹ * Real.exp (-|x - μ| / b) := by
   rw [laplacePDFReal, ite_eq_left hb]
+
+/-- Outside the valid parameter range the `ℝ≥0∞`-valued density vanishes. -/
+@[simp]
+theorem laplacePDF_of_nonpos (hb : b ≤ 0) (μ x : ℝ) : laplacePDF μ b x = 0 := by
+  rw [laplacePDF_eq_ofReal, laplacePDFReal_of_nonpos hb, ENNReal.ofReal_zero]
+
+/-- For a positive scale the `ℝ≥0∞`-valued density is the two-sided exponential formula. -/
+@[simp]
+theorem laplacePDF_of_pos (hb : 0 < b) (μ x : ℝ) :
+    laplacePDF μ b x = ENNReal.ofReal ((2 * b)⁻¹ * Real.exp (-|x - μ| / b)) := by
+  rw [laplacePDF_eq_ofReal, laplacePDFReal_of_pos hb]
 
 /-- The Laplace density is nonnegative at every parameter, valid or not. -/
 theorem laplacePDFReal_nonneg (μ b x : ℝ) : 0 ≤ laplacePDFReal μ b x := by
@@ -190,23 +205,34 @@ theorem laplaceMeasure_of_nonpos (hb : b ≤ 0) (μ : ℝ) : laplaceMeasure μ b
     rfl
   rw [laplaceMeasure_eq_withDensity, h, withDensity_zero]
 
-/-- The Laplace density is integrable on a lower half-line ending at or below the location. -/
-theorem integrableOn_laplacePDFReal_Iic (hb : 0 < b) (hx : x ≤ μ) :
-    IntegrableOn (laplacePDFReal μ b) (Iic x) := by
-  have h : IntegrableOn
-      (fun y : ℝ => (2 * b)⁻¹ * Real.exp (-(μ / b)) * Real.exp (b⁻¹ * y)) (Iic x) :=
-    (integrableOn_exp_mul_Iic (inv_pos.mpr hb) x).const_mul _
-  exact h.congr_fun (fun y hy => (laplacePDFReal_eq_left hb (le_trans hy hx)).symm)
-    measurableSet_Iic
+/-- The Laplace density is integrable on the whole line for every scale. -/
+theorem integrable_laplacePDFReal (μ : ℝ) : Integrable (laplacePDFReal μ b) := by
+  by_cases hb : 0 < b
+  · rw [← integrableOn_univ, ← Iic_union_Ioi (a := μ)]
+    have hIic : IntegrableOn (laplacePDFReal μ b) (Iic μ) := by
+      have h : IntegrableOn
+          (fun y : ℝ => (2 * b)⁻¹ * Real.exp (-(μ / b)) * Real.exp (b⁻¹ * y)) (Iic μ) :=
+        (integrableOn_exp_mul_Iic (inv_pos.mpr hb) μ).const_mul _
+      exact h.congr_fun (fun y hy => (laplacePDFReal_eq_left hb hy).symm) measurableSet_Iic
+    have hIoi : IntegrableOn (laplacePDFReal μ b) (Ioi μ) := by
+      have h : IntegrableOn
+          (fun y : ℝ => (2 * b)⁻¹ * Real.exp (μ / b) * Real.exp (-b⁻¹ * y)) (Ioi μ) :=
+        (integrableOn_exp_mul_Ioi (neg_lt_zero.mpr (inv_pos.mpr hb)) μ).const_mul _
+      exact h.congr_fun (fun y (hy : μ < y) => (laplacePDFReal_eq_right hb hy.le).symm)
+        measurableSet_Ioi
+    exact hIic.union hIoi
+  · have hzero : laplacePDFReal μ b = 0 :=
+      funext fun y => laplacePDFReal_of_nonpos (not_lt.mp hb) μ y
+    rw [hzero]
+    exact integrable_zero ℝ ℝ volume
 
-/-- The Laplace density is integrable on an upper half-line starting at or above the location. -/
-theorem integrableOn_laplacePDFReal_Ioi (hb : 0 < b) (hx : μ ≤ x) :
-    IntegrableOn (laplacePDFReal μ b) (Ioi x) := by
-  have h : IntegrableOn
-      (fun y : ℝ => (2 * b)⁻¹ * Real.exp (μ / b) * Real.exp (-b⁻¹ * y)) (Ioi x) :=
-    (integrableOn_exp_mul_Ioi (neg_lt_zero.mpr (inv_pos.mpr hb)) x).const_mul _
-  exact h.congr_fun (fun y (hy : x < y) => (laplacePDFReal_eq_right hb (le_trans hx hy.le)).symm)
-    measurableSet_Ioi
+/-- The Laplace density is integrable on every lower half-line. -/
+theorem integrableOn_laplacePDFReal_Iic : IntegrableOn (laplacePDFReal μ b) (Iic x) :=
+  (integrable_laplacePDFReal (b := b) μ).integrableOn
+
+/-- The Laplace density is integrable on every upper half-line. -/
+theorem integrableOn_laplacePDFReal_Ioi : IntegrableOn (laplacePDFReal μ b) (Ioi x) :=
+  (integrable_laplacePDFReal (b := b) μ).integrableOn
 
 /-- The mass of a Laplace density below a point at or under its location. -/
 theorem integral_laplacePDFReal_Iic (hb : 0 < b) (hx : x ≤ μ) :
@@ -233,16 +259,11 @@ theorem integral_laplacePDFReal_Ioi (hb : 0 < b) (hx : μ ≤ x) :
     Real.exp_add]
   field_simp
 
-/-- The Laplace density is integrable on the whole line. -/
-theorem integrable_laplacePDFReal (hb : 0 < b) (μ : ℝ) : Integrable (laplacePDFReal μ b) := by
-  rw [← integrableOn_univ, ← Iic_union_Ioi (a := μ)]
-  exact (integrableOn_laplacePDFReal_Iic hb le_rfl).union
-    (integrableOn_laplacePDFReal_Ioi hb le_rfl)
-
 /-- The Laplace density integrates to `1`: the two halves each carry mass `1 / 2`. -/
 @[simp]
 theorem integral_laplacePDFReal (hb : 0 < b) (μ : ℝ) : ∫ y, laplacePDFReal μ b y = 1 := by
-  rw [← integral_add_compl (s := Iic μ) measurableSet_Iic (integrable_laplacePDFReal hb μ),
+  rw [← integral_add_compl (s := Iic μ) measurableSet_Iic
+      (integrable_laplacePDFReal (b := b) μ),
     compl_Iic, integral_laplacePDFReal_Iic hb le_rfl, integral_laplacePDFReal_Ioi hb le_rfl]
   norm_num
 
@@ -250,7 +271,7 @@ theorem integral_laplacePDFReal (hb : 0 < b) (μ : ℝ) : ∫ y, laplacePDFReal 
 @[simp]
 theorem lintegral_laplacePDF_eq_one (hb : 0 < b) (μ : ℝ) : ∫⁻ y, laplacePDF μ b y = 1 := by
   simp_rw [laplacePDF_eq_ofReal]
-  rw [← ofReal_integral_eq_lintegral_ofReal (integrable_laplacePDFReal hb μ)
+  rw [← ofReal_integral_eq_lintegral_ofReal (integrable_laplacePDFReal (b := b) μ)
       (ae_of_all _ fun y => laplacePDFReal_nonneg μ b y),
     integral_laplacePDFReal hb μ, ENNReal.ofReal_one]
 
@@ -295,13 +316,13 @@ private lemma measureReal_laplaceMeasure {s : Set ℝ} (hs : MeasurableSet s)
 /-- The upper tail of a Laplace law above its location. -/
 theorem measureReal_Ioi_laplaceMeasure (hb : 0 < b) (hx : μ ≤ x) :
     (laplaceMeasure μ b).real (Ioi x) = Real.exp (-(x - μ) / b) / 2 := by
-  rw [measureReal_laplaceMeasure measurableSet_Ioi (integrableOn_laplacePDFReal_Ioi hb hx),
+  rw [measureReal_laplaceMeasure measurableSet_Ioi integrableOn_laplacePDFReal_Ioi,
     integral_laplacePDFReal_Ioi hb hx]
 
 /-- The lower tail of a Laplace law below its location. -/
 theorem measureReal_Iic_laplaceMeasure_of_le (hb : 0 < b) (hx : x ≤ μ) :
     (laplaceMeasure μ b).real (Iic x) = Real.exp ((x - μ) / b) / 2 := by
-  rw [measureReal_laplaceMeasure measurableSet_Iic (integrableOn_laplacePDFReal_Iic hb hx),
+  rw [measureReal_laplaceMeasure measurableSet_Iic integrableOn_laplacePDFReal_Iic,
     integral_laplacePDFReal_Iic hb hx]
 
 /-- **The cumulative distribution function of the Laplace law.** -/
@@ -327,7 +348,7 @@ private lemma integral_pow_mul_exp_neg_inv_mul_Ioi (hb : 0 < b) (n : ℕ) :
   have h := integral_rpow_mul_exp_neg_mul_rpow (p := 1) (q := (n : ℝ)) (b := b⁻¹) one_pos hq hb'
   simp only [Real.rpow_one, Real.rpow_natCast, div_one, mul_one] at h
   rw [h, Real.Gamma_nat_eq_factorial, Real.rpow_neg hb'.le, Real.inv_rpow hb.le, inv_inv,
-    show ((n : ℝ) + 1) = ((n + 1 : ℕ) : ℝ) by push_cast; ring, Real.rpow_natCast]
+    ← Nat.cast_one, ← Nat.cast_add, Real.rpow_natCast]
   ring
 
 /-- The integrand of `integral_pow_mul_exp_neg_inv_mul_Ioi` is integrable. -/
@@ -352,6 +373,10 @@ private lemma integrable_comp_abs {f : ℝ → ℝ} (hf : IntegrableOn f (Ioi 0)
   rw [← integrableOn_univ, ← Iic_union_Ioi (a := (0 : ℝ))]
   exact hIic.union hIoi
 
+/-- Algebraic normalization shared by the absolute-moment value and integrability proofs. -/
+private lemma neg_div_eq_neg_inv_mul (t b : ℝ) : -t / b = -b⁻¹ * t := by
+  ring
+
 /-- **The absolute central moments of a Laplace law** are `n ! * b ^ n`. -/
 theorem integral_pow_abs_sub_laplaceMeasure (hb : 0 < b) (μ : ℝ) (n : ℕ) :
     ∫ y, |y - μ| ^ n ∂laplaceMeasure μ b = n ! * b ^ n := by
@@ -371,7 +396,7 @@ theorem integral_pow_abs_sub_laplaceMeasure (hb : 0 < b) (μ : ℝ) (n : ℕ) :
     _ = 2 * ∫ t in Ioi (0 : ℝ), (2 * b)⁻¹ * (t ^ n * Real.exp (-b⁻¹ * t)) := by
         congr 1
         refine setIntegral_congr_fun measurableSet_Ioi fun t _ => ?_
-        rw [show -t / b = -b⁻¹ * t by field_simp]
+        rw [neg_div_eq_neg_inv_mul]
         ring
     _ = 2 * ((2 * b)⁻¹ * ∫ t in Ioi (0 : ℝ), t ^ n * Real.exp (-b⁻¹ * t)) := by
         rw [integral_const_mul]
@@ -380,48 +405,53 @@ theorem integral_pow_abs_sub_laplaceMeasure (hb : 0 < b) (μ : ℝ) (n : ℕ) :
         field_simp
         ring
 
-/-- The absolute central moments of a Laplace law are finite. -/
-theorem integrable_pow_abs_sub_laplaceMeasure (hb : 0 < b) (μ : ℝ) (n : ℕ) :
+/-- The absolute central moments of a Laplace law are finite for every scale. -/
+theorem integrable_pow_abs_sub_laplaceMeasure (μ : ℝ) (n : ℕ) :
     Integrable (fun y => |y - μ| ^ n) (laplaceMeasure μ b) := by
-  have hb0 : b ≠ 0 := hb.ne'
-  rw [laplaceMeasure_eq_withDensity, integrable_withDensity_iff (measurable_laplacePDF μ b)
-    (ae_of_all _ fun y => ENNReal.ofReal_lt_top)]
-  simp_rw [toReal_laplacePDF]
-  have hIoi : IntegrableOn (fun t : ℝ => (2 * b)⁻¹ * Real.exp (-t / b) * t ^ n) (Ioi 0) := by
-    refine IntegrableOn.congr_fun
-      ((integrableOn_pow_mul_exp_neg_inv_mul_Ioi hb n).const_mul ((2 * b)⁻¹))
-      (fun t _ => ?_) measurableSet_Ioi
-    rw [show -t / b = -b⁻¹ * t by field_simp]
+  by_cases hb : 0 < b
+  · have hb0 : b ≠ 0 := hb.ne'
+    rw [laplaceMeasure_eq_withDensity, integrable_withDensity_iff (measurable_laplacePDF μ b)
+      (ae_of_all _ fun y => ENNReal.ofReal_lt_top)]
+    simp_rw [toReal_laplacePDF]
+    have hIoi : IntegrableOn
+        (fun t : ℝ => (2 * b)⁻¹ * Real.exp (-t / b) * t ^ n) (Ioi 0) := by
+      refine IntegrableOn.congr_fun
+        ((integrableOn_pow_mul_exp_neg_inv_mul_Ioi hb n).const_mul ((2 * b)⁻¹))
+        (fun t _ => ?_) measurableSet_Ioi
+      rw [neg_div_eq_neg_inv_mul]
+      ring
+    have habs := integrable_comp_abs hIoi
+    refine (habs.comp_sub_right μ).congr (ae_of_all _ fun y => ?_)
+    simp only [laplacePDFReal_of_pos hb]
     ring
-  have habs := integrable_comp_abs hIoi
-  refine (habs.comp_sub_right μ).congr (ae_of_all _ fun y => ?_)
-  simp only [laplacePDFReal_of_pos hb]
-  ring
+  · simp [laplaceMeasure_of_nonpos (not_lt.mp hb)]
 
-/-- Deviations from the location are integrable against a Laplace law. -/
-theorem integrable_sub_const_laplaceMeasure (hb : 0 < b) (μ : ℝ) :
+/-- Deviations from the location are integrable against a Laplace law for every scale. -/
+theorem integrable_sub_const_laplaceMeasure (μ : ℝ) :
     Integrable (fun y : ℝ => y - μ) (laplaceMeasure μ b) := by
-  have h := integrable_pow_abs_sub_laplaceMeasure hb μ 1
+  have h := integrable_pow_abs_sub_laplaceMeasure (b := b) μ 1
   simp only [pow_one] at h
   refine (integrable_norm_iff (by fun_prop)).mp ?_
   simpa [Real.norm_eq_abs] using h
 
-/-- The identity is integrable against a Laplace law. -/
-theorem integrable_id_laplaceMeasure (hb : 0 < b) (μ : ℝ) : Integrable id (laplaceMeasure μ b) := by
-  have hp : IsProbabilityMeasure (laplaceMeasure μ b) := isProbabilityMeasure_laplaceMeasure hb μ
-  have h := (integrable_sub_const_laplaceMeasure hb μ).add (integrable_const μ)
-  refine h.congr (ae_of_all _ fun y => ?_)
-  simp
+/-- The identity is integrable against a Laplace law for every scale. -/
+theorem integrable_id_laplaceMeasure (μ : ℝ) : Integrable id (laplaceMeasure μ b) := by
+  by_cases hb : 0 < b
+  · have hp : IsProbabilityMeasure (laplaceMeasure μ b) :=
+      isProbabilityMeasure_laplaceMeasure hb μ
+    have h := (integrable_sub_const_laplaceMeasure (b := b) μ).add (integrable_const μ)
+    refine h.congr (ae_of_all _ fun y => ?_)
+    simp
+  · simp [laplaceMeasure_of_nonpos (not_lt.mp hb)]
 
-/-- **The mean of a Laplace law is its location.**
-
-The proof does not evaluate a first moment: after translating by `μ` the integrand is odd, so it
-integrates to zero by the reflection invariance of Lebesgue measure. -/
+/-- **The mean of a Laplace law is its location.** -/
 theorem integral_id_laplaceMeasure (hb : 0 < b) (μ : ℝ) :
     ∫ y, y ∂laplaceMeasure μ b = μ := by
+  -- After translating by `μ`, the integrand is odd, so reflection invariance makes its integral
+  -- zero.
   have hp : IsProbabilityMeasure (laplaceMeasure μ b) := isProbabilityMeasure_laplaceMeasure hb μ
   have hsub : Integrable (fun y : ℝ => y - μ) (laplaceMeasure μ b) :=
-    integrable_sub_const_laplaceMeasure hb μ
+    integrable_sub_const_laplaceMeasure (b := b) μ
   have hodd : ∫ y, (y - μ) ∂laplaceMeasure μ b = 0 := by
     rw [laplaceMeasure_eq_withDensity, integral_withDensity_eq_integral_toReal_smul
       (measurable_laplacePDF μ b) (ae_of_all _ fun y => ENNReal.ofReal_lt_top)]
