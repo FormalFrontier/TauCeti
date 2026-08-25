@@ -226,6 +226,14 @@ lemma quotientIsoOfSurjective_hom_mk (f : H ⟶ K) (hf : Function.Surjective f.h
   rw [quotientIsoOfSurjective]
   exact quotientIsoOfSurjectiveAux_hom_mk f hf I _ _ x
 
+/-- Transporting the quotient object along an equality of Hopf ideals transports its quotient
+morphism. This is the identity that lets an automorphism preserving a Hopf ideal be compared with
+the isomorphism it induces on the quotient. -/
+theorem mkQuotient_comp_eqToHom {I J : HopfIdeal R H} (hIJ : I = J) :
+    mkQuotient H J ≫ eqToHom (congrArg (quotient H) hIJ.symm) = mkQuotient H I := by
+  subst J
+  rfl
+
 /-- An isomorphism of commutative Hopf algebras induces an isomorphism from the quotient by
 the inverse-image Hopf ideal to the corresponding quotient of the target. -/
 noncomputable def quotientIsoOfIso (e : H ≅ K) (I : HopfIdeal R K) :
