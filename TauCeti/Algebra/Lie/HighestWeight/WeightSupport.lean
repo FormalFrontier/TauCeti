@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Reflection
 import TauCeti.Algebra.Lie.Submodule.Atom
-public import TauCeti.LinearAlgebra.RootSystem.DominantCone
+import TauCeti.LinearAlgebra.RootSystem.DominantCone
 
 public section
 
@@ -72,16 +72,21 @@ Then only finitely many functions on the Cartan subalgebra have a nonzero weight
 
 `M` is not assumed finite-dimensional. The three inputs — the weight cone `lam - Q⁺`, integrality
 on the simple coroots, and stability under the simple reflections — are exactly the hypotheses of
-`TauCeti.finite_of_forall_reflection_mem_of_sub_mem_posRootCone`, and each of them is available
-for an integrable module. -/
+`TauCeti.finite_of_forall_reflection_mem_of_sub_mem_posRootCone`, and each of them follows from
+`hv`, from dominance integrality of `lam`, and from irreducibility of `M` (used only through the
+resulting fact that `v` generates `M`). -/
 theorem finite_setOf_genWeightSpace_ne_bot_of_isHighestWeightVector
     [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b lam v)
     (hlam : IsDominantIntegral b lam) :
     {chi : H → K | genWeightSpace M chi ≠ ⊥}.Finite := by
   have hgen : LieSubmodule.lieSpan K L {v} = ⊤ := lieSpan_singleton_eq_top_of_ne_zero hv.ne_zero
+  -- The root system of `H` pairs a weight with a coroot by evaluation, so its `coroot'` is
+  -- evaluation at `IsKilling.coroot`; this is the boundary between the two coroot interfaces.
   have hcoroot' : ∀ (i : H.root) (chi : Dual K H),
-      (IsKilling.rootSystem H).coroot' i chi = chi (IsKilling.coroot (i : Weight K H L)) :=
-    fun _ _ ↦ rfl
+      (IsKilling.rootSystem H).coroot' i chi = chi (IsKilling.coroot (i : Weight K H L)) := by
+    intro i chi
+    rw [LinearMap.flip_apply, IsKilling.rootSystem_toLinearMap_apply,
+      IsKilling.rootSystem_coroot_apply]
   have hS : {chi : Dual K H | genWeightSpace M ((chi : Dual K H) : H → K) ≠ ⊥}.Finite := by
     refine finite_of_forall_reflection_mem_of_sub_mem_posRootCone (lam := lam) b
       (fun chi hchi ↦ ?_) (fun chi hchi i hi ↦ ?_) fun chi hchi i hi ↦ ?_

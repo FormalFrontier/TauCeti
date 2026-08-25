@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Bounded
+import TauCeti.LinearAlgebra.RootSystem.FiniteType.Bounded
 public import TauCeti.LinearAlgebra.RootSystem.Positive
-public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
+import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
 public section
 
