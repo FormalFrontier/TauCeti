@@ -25,6 +25,11 @@ Mathlib's module-theoretic interface lives in
 
 This is the generic Lie-isotypy interface used by Layer 6 of the Lie highest-weight roadmap and
 its universal-enveloping-algebra dictionary.
+
+## References
+
+* `Mathlib/RingTheory/SimpleModule/Isotypic.lean` (Junyan Xu): the module-theoretic definitions
+  and proof pattern ported here to Lie submodules and Lie-module equivalences.
 -/
 
 public section
@@ -116,7 +121,7 @@ theorem isotypicComponent_le_iff (S : Type*) [AddCommGroup S] [Module R S]
     isotypicComponent R L M S ≤ N ↔
       ∀ P : LieSubmodule R L M, Nonempty (P ≃ₗ⁅R,L⁆ S) → P ≤ N := by
   rw [isotypicComponent_def, sSup_le_iff]
-  rfl
+  simp only [Set.mem_ofPred_eq]
 
 end LieModule
 
