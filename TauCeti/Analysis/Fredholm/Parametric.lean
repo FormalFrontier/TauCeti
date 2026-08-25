@@ -33,7 +33,8 @@ generality, `TauCeti.parameterProj D₁ D₂` is the restriction of `Prod.snd` t
 * the projection is **surjective exactly when `D₁` is**, provided the total linearization is
   surjective -- so a parameter is a regular value of the projection exactly when the equation it
   indexes is regular;
-* the projection is **Fredholm of the same index as `D₁`** -- so the parametrized problem carries
+* provided the total linearization is surjective, the projection has the **same index as `D₁`**;
+  over Banach spaces it is Fredholm when `D₁` is Fredholm -- so the parametrized problem carries
   the same expected dimension count as the unparametrized one.
 
 Together these are the linear engine of the parametric transversality theorem (McDuff--Salamon,
@@ -61,17 +62,17 @@ indexes. Exactness at `Λ` says that the range of the projection consists of the
 directions whose infinitesimal effect `D₂ l` on the equation is already achievable by moving the
 solution.
 
-The one hypothesis that ever enters is surjectivity of the total linearization, which says exactly
-that `range D₁ ⊔ range D₂ = ⊤`, that is, that the last map above is onto
-(`TauCeti.surjective_cokerParameterMap_iff`). Extending the sequence by `→ 0` on the right then
-identifies the cokernel of the projection with the cokernel of `D₁`
-(`TauCeti.quotientRangeParameterProjEquiv`), and the surjectivity criterion is the degenerate case
-of that identification.
+Surjectivity of the total linearization says exactly that `range D₁ ⊔ range D₂ = ⊤`, that is, that
+the last map above is onto (`TauCeti.cokerParameterMap_surjective_iff_coprod_surjective`). Extending
+the sequence by `→ 0` on the right then identifies the cokernel of the projection with the
+cokernel of `D₁` (`TauCeti.quotientRangeParameterProjEquiv`), and the surjectivity criterion is
+the degenerate case of that identification.
 
 The index statement needs neither completeness nor the Fredholm property, because
 `TauCeti.ContinuousLinearMap.index` is a difference of two `Module.finrank`s and the sequence
-matches both of them; only the Fredholm statement itself, which certifies those two dimensions
-finite through `ContinuousLinearMap.IsFredholm.of_finite_ker_coker`, asks for Banach spaces.
+matches both of them. The Fredholm statement additionally assumes that `D₁` is Fredholm and asks
+for Banach spaces, then certifies the two dimensions finite through
+`ContinuousLinearMap.IsFredholm.of_finite_ker_coker`.
 
 ## Main declarations
 
@@ -81,11 +82,11 @@ finite through `ContinuousLinearMap.IsFredholm.of_finite_ker_coker`, asks for Ba
   the exact sequence above.
 * `TauCeti.kerParameterProjEquiv`: the kernel of the projection is `ker D₁`.
 * `TauCeti.range_parameterProj`: its range is the preimage of `range D₁` under `D₂`.
-* `TauCeti.surjective_cokerParameterMap_iff`: the total linearization is onto exactly when the
-  parameter directions span the cokernel of `D₁`.
+* `TauCeti.cokerParameterMap_surjective_iff_coprod_surjective`: the total linearization is onto
+  exactly when the parameter directions span the cokernel of `D₁`.
 * `TauCeti.quotientRangeParameterProjEquiv`: for a surjective total linearization, the cokernel of
   the projection is the cokernel of `D₁`.
-* `TauCeti.surjective_parameterProj_iff`: for a surjective total linearization, the projection is
+* `TauCeti.parameterProj_surjective_iff`: for a surjective total linearization, the projection is
   surjective exactly when `D₁` is.
 * `TauCeti.index_parameterProj`: for a surjective total linearization, the projection has the same
   index as `D₁`.
@@ -179,7 +180,7 @@ noncomputable def kerParameterProjEquiv :
 @[simp]
 theorem kerParameterProjEquiv_apply (x : D₁.ker) :
     ((kerParameterProjEquiv D₁ D₂ x : (D₁.coprod D₂).ker) : E × Λ) = ((x : E), 0) :=
-  (rfl)
+  by simp [kerParameterProjEquiv]
 
 /-- The kernel of the parameter projection has the same dimension as the kernel of `D₁`. -/
 theorem finrank_ker_parameterProj :
@@ -210,6 +211,7 @@ theorem range_parameterProj :
 
 /-- A parameter direction lies in the range of the parameter projection exactly when its
 infinitesimal effect on the equation is achievable by moving the solution. -/
+@[simp]
 theorem mem_range_parameterProj_iff {l : Λ} :
     l ∈ (parameterProj D₁ D₂).range ↔ D₂ l ∈ D₁.range := by
   rw [range_parameterProj]; rfl
@@ -240,7 +242,7 @@ cokernel of `D₁`.**
 
 This is the criterion transversality arguments verify in practice: one exhibits enough
 perturbations of the equation to cover every obstruction to solving the linearized equation. -/
-theorem surjective_cokerParameterMap_iff :
+theorem cokerParameterMap_surjective_iff_coprod_surjective :
     Function.Surjective (cokerParameterMap D₁ D₂) ↔ Function.Surjective (D₁.coprod D₂) := by
   constructor
   · intro h y
@@ -270,14 +272,15 @@ surjectivity of the total linearization is what makes it onto. -/
 noncomputable def quotientRangeParameterProjEquiv (hD : Function.Surjective (D₁.coprod D₂)) :
     (Λ ⧸ (parameterProj D₁ D₂).range) ≃ₗ[𝕜] F ⧸ D₁.range :=
   (Submodule.quotEquivOfEq _ _ (ker_cokerParameterMap D₁ D₂).symm).trans
-    (LinearMap.quotKerEquivOfSurjective _ ((surjective_cokerParameterMap_iff D₁ D₂).mpr hD))
+    (LinearMap.quotKerEquivOfSurjective _
+      ((cokerParameterMap_surjective_iff_coprod_surjective D₁ D₂).mpr hD))
 
 /-- The cokernel equivalence sends the class of `l` to the class of `D₂ l`. -/
 @[simp]
 theorem quotientRangeParameterProjEquiv_mk (hD : Function.Surjective (D₁.coprod D₂)) (l : Λ) :
     quotientRangeParameterProjEquiv D₁ D₂ hD (Submodule.Quotient.mk l) =
       Submodule.Quotient.mk (D₂ l) :=
-  (rfl)
+  by simp [quotientRangeParameterProjEquiv]
 
 /-- For a surjective total linearization, the cokernel of the parameter projection has the same
 dimension as the cokernel of `D₁`. -/
@@ -306,7 +309,7 @@ theorem range_parameterProj_eq_top_iff (hD : (D₁.coprod D₂).range = ⊤) :
   exact (mem_range_parameterProj_iff D₁ D₂).mp (h ▸ Submodule.mem_top)
 
 /-- The `Function.Surjective` form of `TauCeti.range_parameterProj_eq_top_iff`. -/
-theorem surjective_parameterProj_iff (hD : Function.Surjective (D₁.coprod D₂)) :
+theorem parameterProj_surjective_iff (hD : Function.Surjective (D₁.coprod D₂)) :
     Function.Surjective (parameterProj D₁ D₂) ↔ Function.Surjective D₁ := by
   have h := range_parameterProj_eq_top_iff D₁ D₂ (LinearMap.range_eq_top.mpr hD)
   rw [LinearMap.range_eq_top, LinearMap.range_eq_top] at h
