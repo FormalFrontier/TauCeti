@@ -53,11 +53,7 @@ universe u
 variable {k : Type u} [Field k] {N : ℕ}
 
 /-- Every point of the weight-unipotent coordinate Hopf algebra over a perfect extension field is
-unipotent in every finite-dimensional representation.
-
-The representing isomorphism identifies its image in `GL_N` with a point of the dynamic
-unipotent subgroup. Unipotence is then reflected from that ambient point because the defining
-coordinate morphism is surjective. -/
+unipotent in every finite-dimensional representation. -/
 theorem isUnipotentPoint_weightUnipotentCoordinateHopfAlgebra
     (w : Fin N → ℤ) (L : Type u) [Field L] [Algebra k L] [PerfectField L]
     (g : HopfAlgebra.points (R := k)
