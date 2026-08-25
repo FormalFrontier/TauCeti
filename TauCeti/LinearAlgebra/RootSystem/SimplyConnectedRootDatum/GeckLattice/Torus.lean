@@ -57,8 +57,8 @@ noncomputable section
 variable (t : DynkinType) (ht : t.Valid)
 
 /-- Reindexing the Geck coordinates by a finite ordinal does not change the integral span of their
-weights. This is the bridge between the intrinsic `GeckIndex`-indexed weight calculation and the
-finite basis used to represent the group scheme in `GL`. -/
+weights. This relates the intrinsic `GeckIndex`-indexed weight calculation to the finite basis
+used to represent the group scheme in `GL`. -/
 private theorem span_range_geckWeightFin_eq_span_range_geckWeight :
     Submodule.span ℤ (Set.range (t.geckWeightFin ht)) =
       Submodule.span ℤ (Set.range (t.geckWeight ht)) := by
@@ -73,11 +73,7 @@ private theorem span_range_geckWeightFin_eq_span_range_geckWeight :
 
 /-- **Full character span makes the represented Geck torus a closed subgroup of the Geck
 carrier.** The hypothesis is exact: it says that the characters occurring in the Geck lattice
-generate the character lattice of the source split torus.
-
-The underlying Kostant toral-closure theorem proves closedness before transport along the defining
-identification of `geckGroupScheme`; composing with that identification preserves a closed
-immersion. -/
+generate the character lattice of the source split torus. -/
 theorem isClosedImmersion_geckWeightTorus_of_span_eq_top
     (hwt : Submodule.span ℤ (Set.range (t.geckWeight ht)) = ⊤) :
     IsClosedImmersion (t.geckWeightTorus ht).hom.hom.left := by
