@@ -101,6 +101,19 @@ theorem tensorProduct (H K : CommHopfAlgCat.{u} k)
   exact (morphismProperty_hopfSpec_obj_X_hom_iff
     (P := @GeometricallyConnected) k (CommHopfAlgCat.of k (H ⊗[k] K))).mpr hspectrum
 
+/-- The coordinate algebra underlying a semidirect product is explicitly equivalent to the
+tensor product of the two coordinate algebras. -/
+private noncomputable def semidirectProductCarrierAlgEquiv
+    (H K : CommHopfAlgCat.{u} k)
+    (A : GrpObj.Action (CommHopfAlgCat.grpObj K) (CommHopfAlgCat.grpObj H)) :
+    (((commHopfAlgCatEquivCogrpCommAlgCat k).inverse.obj
+      (Opposite.op A.semidirectProduct) : CommHopfAlgCat.{u} k) : Type u) ≃ₐ[k]
+      (H ⊗[k] K) := by
+  let _ := A.semidirectProductGrpObj
+  exact CommAlgCat.algEquivOfIso
+    (A := A.semidirectProduct.X.unop) (B := CommAlgCat.of k (H ⊗[k] K))
+    (eqToIso (congrArg Opposite.unop A.semidirectProduct_X))
+
 /-- An internal semidirect product of geometrically connected affine groups is geometrically
 connected.
 
@@ -119,11 +132,9 @@ theorem semidirectProduct (H K : CommHopfAlgCat.{u} k)
   rw [geometricallyConnectedCommHopfAlgProperty_iff] at h
   rw [geometricallyConnectedCommHopfAlgProperty_iff]
   intro L _ _
-  -- Mathlib's `commHopfAlgCatEquivCogrpCommAlgCat_inverse_obj` exposes the carrier as
-  -- `A.semidirectProduct.X.unop`; the structural lemma then identifies that object.
-  change ConnectedSpace (PrimeSpectrum ((A.semidirectProduct.X.unop : Type u) ⊗[k] L))
-  rw [A.semidirectProduct_X, unop_tensorObj]
-  exact h L
+  let eL := Algebra.TensorProduct.congr
+    (semidirectProductCarrierAlgEquiv H K A) (AlgEquiv.refl : L ≃ₐ[k] L)
+  exact (PrimeSpectrum.homeomorphOfRingEquiv eL.toRingEquiv).connectedSpace_iff.mpr (h L)
 
 end geometricallyConnectedCommHopfAlgProperty
 
