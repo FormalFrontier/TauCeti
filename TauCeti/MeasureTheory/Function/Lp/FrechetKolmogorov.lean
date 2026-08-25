@@ -7,7 +7,6 @@ module
 
 public import TauCeti.MeasureTheory.Function.Lp.BallAverage
 public import TauCeti.Topology.MetricSpace.Equicontinuity
-public import Mathlib.MeasureTheory.Function.LpSeminorm.Indicator
 public import Mathlib.MeasureTheory.Function.LpSpace.Basic
 
 /-!
@@ -48,7 +47,7 @@ the family are uniformly bounded (`TauCeti.enorm_ballAverage_le`), uniformly equ
 `TauCeti.uniformEquicontinuous_ballAverage`) and, once `r` is smaller than the translation modulus
 of the family at `ε`, uniformly within `ε` of the family itself
 (`TauCeti.eLpNorm_ballAverage_sub_le`). Compactness of that smoothed family is
-Arzelà--Ascoli in the finite-net form `TauCeti.exists_finite_approx_of_uniformEquicontinuous`,
+Arzelà--Ascoli in the finite-net form `TauCeti.exists_finite_approx_of_uniformEquicontinuousOn`,
 which returns finitely many *indices* whose ball averages approximate all the others uniformly on
 a large closed ball `K`.
 
@@ -61,7 +60,9 @@ is uniformly at most `η` there, and `μ K ^ (1/p) η` is made small by the choi
 
 * `TauCeti.uniformEquicontinuous_ballAverage`: the ball averages, at a fixed positive scale, of a
   family with uniformly small `Lᵖ` translation increments are uniformly equicontinuous.
-* `TauCeti.totallyBounded_of_translation_of_tight`: the Fréchet--Kolmogorov criterion.
+* `TauCeti.totallyBounded_of_translation_of_tight`,
+  `TauCeti.isCompact_closure_of_translation_of_tight`: the Fréchet--Kolmogorov criterion, in
+  totally bounded and in relatively compact form.
 * `TauCeti.totallyBounded_of_translation_of_support`,
   `TauCeti.isCompact_closure_of_translation_of_support`: the criterion for a family supported in
   a fixed bounded set, in totally bounded and in relatively compact form.
@@ -113,7 +114,7 @@ theorem uniformEquicontinuous_ballAverage {iota : Type*} {u : iota → E → F} 
   have hyx : ‖y - x‖ < δ := by rwa [← dist_eq_norm, dist_comm]
   have hbound := enorm_ballAverage_add_sub_ballAverage_le (mu := mu) (r := r) hp hp' (hu i) hr
     (y - x) x
-  rw [show x + (y - x) = y by abel] at hbound
+  rw [add_sub_cancel] at hbound
   have hb2 := hbound.trans (mul_le_mul' (le_refl (V ^ (-(p.toReal)⁻¹))) (hδS i _ hyx))
   rw [hcancel] at hb2
   have hb3 : ‖ballAverage mu r (u i) y - ballAverage mu r (u i) x‖ ≤ c / 2 := by
@@ -182,9 +183,11 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
           rw [ENNReal.ofReal_mul hWnn, ENNReal.ofReal_toReal hWt, mul_comm]
       _ ≤ ENNReal.ofReal (ε / 4) := ENNReal.ofReal_le_ofReal hkey
   -- Arzelà--Ascoli: finitely many members of the family approximate all of it uniformly on `K`.
-  obtain ⟨t, htfin, ht⟩ := exists_finite_approx_of_uniformEquicontinuous
-    (isCompact_closedBall (0 : E) R) (isCompact_closedBall (0 : F) Bₑ.toReal)
-    (fun i x _ => hgB i x) hequi hη
+  obtain ⟨t, htfin, ht⟩ := exists_finite_approx_of_uniformEquicontinuousOn
+    (isCompact_closedBall (0 : E) R).totallyBounded
+    (fun x _ => TotallyBounded.subset (Set.range_subset_iff.2 fun i => hgB i x)
+      (isCompact_closedBall (0 : F) Bₑ.toReal).totallyBounded)
+    (hequi.uniformEquicontinuousOn K) hη
   refine ⟨Subtype.val '' t, htfin.image _, fun f hf => ?_⟩
   obtain ⟨j, hjt, hj⟩ := ht ⟨f, hf⟩
   refine mem_iUnion₂.2 ⟨(j : Lp F p mu), ⟨j, hjt, rfl⟩, ?_⟩
@@ -247,6 +250,20 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
   have := ENNReal.toReal_mono ENNReal.ofReal_ne_top hmain
   rw [ENNReal.toReal_ofReal (by linarith)] at this
   linarith
+
+/-- **Relative compactness in `Lᵖ` under the Fréchet--Kolmogorov hypotheses**: the closure of an
+`Lᵖ`-bounded, uniformly tight family whose translation increments are uniformly small in `Lᵖ` is
+compact. This is the relative-compactness form of
+`TauCeti.totallyBounded_of_translation_of_tight`. -/
+theorem isCompact_closure_of_translation_of_tight (hp' : p ≠ ∞)
+    {S : Set (Lp F p mu)} {M : ℝ≥0∞} (hM : M ≠ ∞) (hbdd : ∀ f ∈ S, eLpNorm f p mu ≤ M)
+    (htrans : ∀ ε : ℝ≥0∞, 0 < ε → ∃ δ > 0, ∀ f ∈ S, ∀ h : E, ‖h‖ < δ →
+      eLpNorm (fun x => f (x + h) - f x) p mu ≤ ε)
+    (htight : ∀ ε : ℝ≥0∞, 0 < ε → ∃ R : ℝ, ∀ f ∈ S,
+      eLpNorm ((closedBall (0 : E) R)ᶜ.indicator ⇑f) p mu ≤ ε) :
+    IsCompact (closure S) :=
+  ((totallyBounded_of_translation_of_tight hp' hM hbdd htrans
+    htight).closure).isCompact_of_isClosed isClosed_closure
 
 /-- **The Fréchet--Kolmogorov criterion for a family supported in a fixed bounded set**, the form
 the Rellich--Kondrachov theorem consumes: for functions vanishing off a bounded set the tightness
