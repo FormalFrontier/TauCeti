@@ -389,8 +389,10 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
     (fun t ht => ⟨((Real.log ‖γ (t + ρ) - s‖ - Real.log ‖γ (t - ρ) - s‖ : ℝ) : ℂ) +
         ((((-L_L t) / (γ (t - ρ) - s)).arg + ((γ (t + ρ) - s) / L_R t).arg : ℝ) : ℂ) * Complex.I,
       by simp,
-      h_spec t ht ρ hρ_pos (hρ_le_R t ht) (by linarith [(h_endpts t ht).1])
-        (by linarith [(h_endpts t ht).2]) (h_unique t ht)⟩)
+      h_spec t ht (t - ρ) (t + ρ) (by linarith [hρ_le_R t ht])
+        (by linarith [hρ_pos]) (by linarith [hρ_pos]) (by linarith [hρ_le_R t ht])
+        (by linarith [(h_endpts t ht).1]) (by linarith [(h_endpts t ht).2])
+        (h_unique t ht)⟩)
     ⟨hm_pos, hm⟩
   -- The integral identity: the imaginary part is the ordinary integral of the real integrand.
   -- Reuses the upstream principal-value/real-integrand bridge directly, rather than re-deriving

@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Contour.Crossing.Excision
+public import TauCeti.Analysis.Contour.Crossing.Decomposition
 public import TauCeti.Analysis.Contour.ModelSector.Closed
 
 /-!

@@ -230,7 +230,7 @@ theorem perWindow_higherOrder_truncated_integral_tendsto {γ : ℝ → ℂ} {s :
   have h_deriv_L : HasDerivWithinAt γ L_L (Iio t_i) t_i :=
     TauCeti.hasDerivWithinAt_Iio_of_tendsto_deriv hγ_at h_diff_L h_tendsto_L
   obtain ⟨τL, τR, h_toL, h_toR, h_radL, h_radR, h_memL, h_memR, h_split⟩ :=
-    exists_exit_times_truncated_integral_split hr_pos h_at hγ_cont hL_R hL_L
+    exists_exit_times_truncated_integral_split (by linarith) (by linarith) h_at hγ_cont hL_R hL_L
       h_tendsto_R h_tendsto_L h_diff_R h_diff_L h_unique (fun z => c / (z - s) ^ k)
       (fun ε hε a b ha hab hb => intervalIntegrable_pow_inv_mul_deriv_truncated c k
         (hγ_cont.mono (by rw [uIcc_of_le hab]; exact Icc_subset_Icc ha hb))
