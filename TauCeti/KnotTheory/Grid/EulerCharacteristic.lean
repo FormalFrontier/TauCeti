@@ -8,7 +8,6 @@ module
 public import Mathlib.Algebra.Homology.EulerCharacteristic
 public import TauCeti.KnotTheory.Grid.Determinant
 public import TauCeti.KnotTheory.Grid.Grading.Chain
-public import TauCeti.KnotTheory.Grid.SmallGrid.Gradings
 
 /-!
 # The graded Euler characteristic of the grid chain module
@@ -60,10 +59,9 @@ here has finite rank. That is why Mathlib's graded-object Euler characteristic, 
   characteristic is a sign times a monomial times the grid determinant.
 * `TauCeti.OddComponentGridDiagram.sum_alexanderEulerChar_eq_zero`: the ungraded Euler
   characteristic of a grid chain module of size at least two vanishes.
-* `TauCeti.OddComponentGridDiagram.alexanderEulerChar_eq_coeff_det`: the Euler characteristic of
-  an Alexander degree is the corresponding coefficient of the grid determinant.
-* `TauCeti.OddComponentGridDiagram.gradedEulerChar_twoByTwo`: the graded Euler characteristic of
-  the standard `2 × 2` unknot grid is `1 - T⁻²`.
+* `TauCeti.OddComponentGridDiagram.alexanderEulerChar_eq_coeff_smul_T_mul_det_weightMatrix`: the
+  Euler characteristic of an Alexander degree is the corresponding coefficient of the normalized
+  grid determinant expression.
 
 ## References
 
@@ -117,14 +115,12 @@ theorem mem_maslovSupport_iff (a m : ℤ) :
   · rintro ⟨x, hx⟩
     exact ⟨(m, a), ⟨⟨x, hx⟩, rfl⟩, rfl⟩
 
-/-- A grid state of Alexander degree `a` occupies a Maslov degree of that Alexander degree. -/
-theorem maslovOℤ_mem_maslovSupport {a : ℤ} {x : GridState n} (hx : G.alexanderℤ x = a) :
+private theorem maslovOℤ_mem_maslovSupport {a : ℤ} {x : GridState n}
+    (hx : G.alexanderℤ x = a) :
     G.1.maslovOℤ x ∈ G.maslovSupport a :=
   (G.mem_maslovSupport_iff a _).2 ⟨x, Prod.ext (G.bidegree_fst x) (hx ▸ G.bidegree_snd x)⟩
 
-/-- The grid states of bidegree `(m, a)` are the states of Alexander degree `a` whose Maslov
-degree is `m`. -/
-theorem filter_bidegree_eq (a m : ℤ) :
+private theorem filter_bidegree_eq (a m : ℤ) :
     (Finset.univ.filter fun x : GridState n => G.bidegree x = (m, a)) =
       (Finset.univ.filter fun x : GridState n => G.alexanderℤ x = a).filter
         fun x => G.1.maslovOℤ x = m := by
@@ -140,6 +136,12 @@ noncomputable def alexanderGradedObject (R : Type*) [Ring R] (a : ℤ) :
     GradedObject ℤ (ModuleCat R) :=
   fun m => ModuleCat.of R (G.BigradedChainPiece R (m, a))
 
+/-- The degree-`m` component of the Maslov-graded object in Alexander degree `a`. -/
+@[simp]
+theorem alexanderGradedObject_apply (R : Type*) [Ring R] (a m : ℤ) :
+    G.alexanderGradedObject R a m = ModuleCat.of R (G.BigradedChainPiece R (m, a)) := by
+  rw [alexanderGradedObject]
+
 /-- The rank of the Maslov-graded object in degree `m` is the number of grid states of bidegree
 `(m, a)`. -/
 theorem finrank_alexanderGradedObject (R : Type*) [Ring R] [StrongRankCondition R] (a m : ℤ) :
@@ -147,9 +149,8 @@ theorem finrank_alexanderGradedObject (R : Type*) [Ring R] [StrongRankCondition 
       (Finset.univ.filter fun x : GridState n => G.bidegree x = (m, a)).card :=
   G.finrank_bigradedChainPiece R (m, a)
 
-/-- The Maslov-graded object of an Alexander degree has rank zero outside the occupied Maslov
-degrees. -/
-theorem finrankSupport_alexanderGradedObject_subset (R : Type*) [Ring R] [StrongRankCondition R]
+private theorem finrankSupport_alexanderGradedObject_subset (R : Type*) [Ring R]
+    [StrongRankCondition R]
     (a : ℤ) :
     GradedObject.finrankSupport (G.alexanderGradedObject R a) ⊆ (G.maslovSupport a : Set ℤ) := by
   rw [GradedObject.finrankSupport_subset_iff]
@@ -299,43 +300,12 @@ theorem coeff_gradedEulerChar_two_mul (R : Type*) [Ring R] [StrongRankCondition 
 determinant.** The alternating count of grid states of Alexander degree `a`, weighted by the parity
 of their Maslov grading, is the coefficient of `T^{2a}` in the determinant expression of
 `GridDiagram.stateSum_eq_smul_T_mul_det_weightMatrix`. -/
-theorem alexanderEulerChar_eq_coeff_det (R : Type*) [Ring R] [StrongRankCondition R] (a : ℤ) :
+theorem alexanderEulerChar_eq_coeff_smul_T_mul_det_weightMatrix (R : Type*) [Ring R]
+    [StrongRankCondition R] (a : ℤ) :
     G.alexanderEulerChar R a =
       ((Equiv.Perm.sign G.1.O.toPerm * ((n : ℤ) + 1).negOnePow) •
         (T G.1.alexanderTwoShift * G.1.weightMatrix.det) : ℤ[T;T⁻¹]).coeff (2 * a) := by
   rw [← G.gradedEulerChar_eq_smul_T_mul_det_weightMatrix R, G.coeff_gradedEulerChar_two_mul R a]
-
-/-! ### The smallest unknot grid -/
-
-/-- The standard `2 × 2` unknot grid diagram, as an odd-component grid diagram: it presents a
-knot, so its component count is one. -/
-abbrev twoByTwo : OddComponentGridDiagram 2 :=
-  ⟨GridDiagram.twoByTwo, by
-    have h : GridDiagram.twoByTwo.componentCount = 1 :=
-      GridDiagram.unknot_zero ▸ (GridDiagram.isKnot_def _).1 (GridDiagram.isKnot_unknot 0)
-    rw [h]
-    exact odd_one⟩
-
-/-- The graded Euler characteristic of the standard `2 × 2` unknot grid is `1 - T⁻²`.
-
-Its two grid states sit in bidegrees `(-1, -1)` and `(0, 0)`, so each of the two occupied
-Alexander degrees contributes a single generator, and the two Maslov parities are opposite. In the
-Alexander variable `t = T²` the answer reads `1 - t⁻¹`, which is the Euler characteristic of one
-copy of the stabilization factor `W = 𝔽 ⊕ 𝔽` in bidegrees `(0, 0)` and `(-1, -1)`: the grid-size
-dependence of the fully blocked theory is already visible in its Euler characteristic. -/
-theorem gradedEulerChar_twoByTwo (R : Type*) [Ring R] [StrongRankCondition R] :
-    twoByTwo.gradedEulerChar R = 1 - T (-2) := by
-  have huniv : (Finset.univ : Finset (GridState 2)) =
-      {GridState.twoByTwoId, GridState.twoByTwoSwap} := by
-    ext x
-    simpa using GridState.eq_twoByTwoId_or_eq_twoByTwoSwap x
-  rw [gradedEulerChar_eq_stateSum, GridDiagram.stateSum_def, huniv,
-    Finset.sum_insert (by
-      simp only [Finset.mem_singleton]
-      exact GridState.twoByTwoId_ne_twoByTwoSwap), Finset.sum_singleton,
-    GridDiagram.maslovOℤ_twoByTwo_twoByTwoId, GridDiagram.alexanderTwoℤ_twoByTwo_twoByTwoId,
-    GridDiagram.maslovOℤ_twoByTwo_twoByTwoSwap, GridDiagram.alexanderTwoℤ_twoByTwo_twoByTwoSwap]
-  simp [Int.negOnePow_neg, Units.smul_def, sub_eq_add_neg, add_comm]
 
 end OddComponentGridDiagram
 
