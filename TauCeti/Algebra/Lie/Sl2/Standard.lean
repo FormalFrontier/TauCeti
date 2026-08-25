@@ -50,8 +50,8 @@ classification for an arbitrary `sl₂`.
   arbitrary `sl₂` triple, sending the triple to the ladder operators. It is built from the basis
   `TauCeti.basisOfIsSl2Triple` of that algebra.
 * `TauCeti.Sl2Std.basis`: the coordinate basis `v₀, …, vₙ`.
-* `TauCeti.Sl2Std.coordVector`: the coordinate vectors indexed by `ℕ` and extended by zero past
-  the end of the string, for uniformly stated ladder identities.
+* `TauCeti.Sl2Std.basisVector`: the coordinate basis vectors indexed by `ℕ` and extended by zero
+  past the end of the string, for uniformly stated ladder identities.
 * `TauCeti.Sl2Std.lieModuleEquiv`: the classification, obtained by feeding this module to
   `TauCeti.lieModuleEquivOfHasPrimitiveVectorWith`.
 
@@ -391,81 +391,6 @@ theorem basis_eq (i : Fin (n + 1)) : basis K n i = (Pi.single i 1 : Fin (n + 1) 
 @[simp] theorem basis_apply (i j : Fin (n + 1)) : basis K n i j = if j = i then 1 else 0 :=
   (congrFun (basis_eq i) j).trans (Pi.single_apply i 1 j)
 
-/-! ### Coordinate vectors indexed by the naturals -/
-
-section CoordVector
-
-variable {i : ℕ}
-
-variable (K n i) in
-/-- The `i`-th coordinate vector of `V(n)`, extended by zero for `i` past the end of the weight
-string. Indexing by `ℕ` rather than by `Fin (n + 1)` lets finite sums use natural indices without
-carrying bounds through every rewrite. -/
-noncomputable def coordVector : Sl2Std K n := if h : i < n + 1 then basis K n ⟨i, h⟩ else 0
-
-@[simp]
-theorem coordVector_apply (j : Fin (n + 1)) :
-    coordVector K n i j = if (j : ℕ) = i then 1 else 0 := by
-  rw [coordVector]
-  split
-  · rw [basis_apply]
-    exact if_congr (by simp [Fin.ext_iff]) rfl rfl
-  · next hi =>
-    have hj := j.isLt
-    rw [zero_apply, eq_comm, ite_eq_right (by omega)]
-
-theorem coordVector_eq_basis (h : i < n + 1) : coordVector K n i = basis K n ⟨i, h⟩ :=
-  dite_eq_left h
-
-/-- The Cartan operator scales the `i`-th coordinate vector by `n - 2i`, uniformly in `i`: past the
-end of the string both sides vanish. -/
-theorem diag_coordVector :
-    diag K n (coordVector K n i) = ((n : K) - 2 * i) • coordVector K n i := by
-  funext j
-  by_cases h : (j : ℕ) = i
-  · rw [diag_apply, smul_apply, coordVector_apply, ite_eq_left h, h]
-  · rw [diag_apply, smul_apply, coordVector_apply, ite_eq_right h, mul_zero, mul_zero]
-
-/-- The raising operator sends the `i`-th coordinate vector to `i` times the `(i-1)`-st, for `i`
-inside the weight string. -/
-theorem raise_coordVector (hi : i ≤ n) :
-    raise K n (coordVector K n i) = (i : K) • coordVector K n (i - 1) := by
-  funext j
-  rw [smul_apply, coordVector_apply, raise_apply]
-  by_cases hjn : (j : ℕ) < n
-  · rw [dite_eq_left hjn, coordVector_apply]
-    by_cases hji : (j : ℕ) + 1 = i
-    · rw [ite_eq_left hji, ite_eq_left (show (j : ℕ) = i - 1 by omega), mul_one, mul_one, ← hji]
-      push_cast
-      ring
-    · rw [ite_eq_right hji, mul_zero]
-      rcases Nat.eq_zero_or_pos i with rfl | hipos
-      · rw [Nat.cast_zero, zero_mul]
-      · rw [ite_eq_right (show ¬ (j : ℕ) = i - 1 by omega), mul_zero]
-  · rw [dite_eq_right hjn]
-    rcases Nat.eq_zero_or_pos i with rfl | hipos
-    · rw [Nat.cast_zero, zero_mul]
-    · rw [ite_eq_right (show ¬ (j : ℕ) = i - 1 by have := j.isLt; omega), mul_zero]
-
-/-- The lowering operator sends the `i`-th coordinate vector to `(n - i)` times the `(i+1)`-st,
-uniformly in `i`: past the end of the weight string both sides vanish. -/
-theorem lower_coordVector :
-    lower K n (coordVector K n i) = ((n : K) - i) • coordVector K n (i + 1) := by
-  funext j
-  rw [smul_apply, coordVector_apply, lower_apply]
-  by_cases hji : (j : ℕ) = i + 1
-  · rw [dite_eq_left (show 0 < (j : ℕ) by omega), coordVector_apply,
-      ite_eq_left (show (j : ℕ) - 1 = i by omega), ite_eq_left hji, hji]
-    push_cast
-    ring
-  · rw [ite_eq_right hji, mul_zero]
-    by_cases hj0 : 0 < (j : ℕ)
-    · rw [dite_eq_left hj0, coordVector_apply,
-        ite_eq_right (show ¬(j : ℕ) - 1 = i by omega), mul_zero]
-    · rw [dite_eq_right hj0]
-
-end CoordVector
-
 /-- The action of `sl (Fin 2) K` on `V(n)` is the one given by `TauCeti.Sl2Std.rep`. This is the
 elimination lemma for `TauCeti.Sl2Std.instLieRingModule`, which is that action transported along
 `TauCeti.Sl2Std.rep`. -/
@@ -612,6 +537,65 @@ theorem lower_pow_basis_zero (i : Fin (n + 1)) :
       ext; simp
     rw [hval, pow_succ', Module.End.mul_apply, ih, map_smul, lower_basis _ hlt, hidx, smul_smul,
       Finset.prod_range_succ, mul_comm]
+
+/-! ### The coordinate basis indexed by the naturals -/
+
+section BasisVector
+
+variable {i : ℕ}
+
+variable (K n i) in
+/-- The `i`-th vector of the coordinate basis of `V(n)`, extended by zero for `i` past the end of
+the weight string. Indexing by `ℕ` rather than by `Fin (n + 1)` lets finite sums use natural
+indices without carrying bounds through every rewrite. -/
+noncomputable def basisVector : Sl2Std K n := if h : i < n + 1 then basis K n ⟨i, h⟩ else 0
+
+@[simp]
+theorem basisVector_apply (j : Fin (n + 1)) :
+    basisVector K n i j = if (j : ℕ) = i then 1 else 0 := by
+  rw [basisVector]
+  split
+  · rw [basis_apply]
+    exact if_congr (by simp [Fin.ext_iff]) rfl rfl
+  · next hi =>
+    have hj := j.isLt
+    rw [zero_apply, eq_comm, ite_eq_right (by omega)]
+
+/-- Inside the weight string the extension by zero is the coordinate basis vector itself. -/
+theorem basisVector_eq_basis (h : i < n + 1) : basisVector K n i = basis K n ⟨i, h⟩ :=
+  dite_eq_left h
+
+/-- Past the end of the weight string the extension by zero vanishes. -/
+theorem basisVector_eq_zero (h : n < i) : basisVector K n i = 0 :=
+  dite_eq_right (by omega)
+
+/-- The Cartan operator scales the `i`-th coordinate basis vector by `n - 2i`, uniformly in `i`:
+past the end of the string both sides vanish. -/
+theorem diag_basisVector :
+    diag K n (basisVector K n i) = ((n : K) - 2 * i) • basisVector K n i := by
+  rcases lt_or_ge i (n + 1) with hi | hi
+  · rw [basisVector_eq_basis hi, diag_basis ⟨i, hi⟩]
+  · rw [basisVector_eq_zero (show n < i by omega), map_zero, smul_zero]
+
+/-- The raising operator sends the `i`-th coordinate basis vector to `i` times the `(i-1)`-st, for
+`i` inside the weight string. -/
+theorem raise_basisVector (hi : i ≤ n) :
+    raise K n (basisVector K n i) = (i : K) • basisVector K n (i - 1) := by
+  rw [basisVector_eq_basis (show i < n + 1 by omega), raise_basis ⟨i, by omega⟩,
+    basisVector_eq_basis (show i - 1 < n + 1 by omega)]
+
+/-- The lowering operator sends the `i`-th coordinate basis vector to `(n - i)` times the
+`(i+1)`-st, uniformly in `i`: past the end of the weight string both sides vanish. -/
+theorem lower_basisVector :
+    lower K n (basisVector K n i) = ((n : K) - i) • basisVector K n (i + 1) := by
+  rcases lt_trichotomy i n with hi | hi | hi
+  · rw [basisVector_eq_basis (show i < n + 1 by omega), lower_basis ⟨i, by omega⟩ hi,
+      basisVector_eq_basis (show i + 1 < n + 1 by omega)]
+  · rw [hi, sub_self, zero_smul, basisVector_eq_basis (show n < n + 1 by omega)]
+    exact lower_basis_last
+  · rw [basisVector_eq_zero hi, basisVector_eq_zero (show n < i + 1 by omega), map_zero, smul_zero]
+
+end BasisVector
 
 variable (K n)
 
