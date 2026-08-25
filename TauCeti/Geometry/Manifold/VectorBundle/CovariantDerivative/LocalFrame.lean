@@ -369,14 +369,12 @@ theorem christoffelMap_apply_basis [Fintype ι]
     christoffelMap b hcov x (b j) (b i) =
       ∑ k, christoffelSymbol I b e cov i j k x • b k := by
   classical
-  have hframe (l : ι) : e.symmL 𝕜 x (b l) = e.localFrame b l x := by
-    rw [e.symmL_apply hx]
-    simp [Bundle.Trivialization.localFrame_apply_of_mem_baseSet,
-      Bundle.Trivialization.basisAt, hx]
-  rw [christoffelMap_apply b hcov hx, hframe j, hframe i,
+  rw [christoffelMap_apply b hcov hx, symmL_basis_eq_localFrame b hx j,
+    symmL_basis_eq_localFrame b hx i,
     christoffelForm_localFrame_apply b hcov hx i j]
-  simp [Bundle.Trivialization.continuousLinearMapAt_apply_of_mem, hx,
-    Bundle.Trivialization.localFrame_apply_of_mem_baseSet, Bundle.Trivialization.basisAt]
+  rw [map_sum]
+  exact Finset.sum_congr rfl fun k _ ↦ by
+    rw [map_smul, continuousLinearMapAt_localFrame b hx k]
 
 /-- The scalar basis coefficients of the model-space Christoffel map are precisely the
 Christoffel symbols. -/
