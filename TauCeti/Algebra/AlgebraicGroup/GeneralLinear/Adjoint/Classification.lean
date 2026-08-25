@@ -106,17 +106,9 @@ theorem mem_nontrivialAdjointWeights_diagonalTorus_iff
   · rintro ⟨i, j, hij, rfl⟩
     exact matrixUnitWeight_mem_nontrivialAdjointWeights (k := k) hij
 
-/-- The set of nontrivial adjoint weights of `GL_n` is the set of off-diagonal matrix-unit
-characters. -/
-theorem nontrivialAdjointWeights_diagonalTorus_eq_setOf_matrixUnitWeight :
-    Derivation.nontrivialAdjointWeights
-        (diagonalTorusCoordinateMap (R := k) (N := n)).hom =
-      {alpha | ∃ i j, i ≠ j ∧ alpha = matrixUnitWeight i j} := by
-  ext alpha
-  exact mem_nontrivialAdjointWeights_diagonalTorus_iff alpha
-
 /-- The adjoint weight space for an off-diagonal character `e_i - e_j` is exactly the line
 spanned by the matrix-unit tangent vector `E_ij`. -/
+@[simp]
 theorem adjointWeightSpace_matrixUnitWeight_eq_span_singleton {i j : Fin n} (hij : i ≠ j) :
     Derivation.adjointWeightSpace
         (diagonalTorusCoordinateMap (R := k) (N := n)).hom (matrixUnitWeight i j) =
@@ -143,6 +135,7 @@ theorem adjointWeightSpace_matrixUnitWeight_eq_span_singleton {i j : Fin n} (hij
     exact matrixUnitTangent_mem_adjointWeightSpace (k := k) i j
 
 /-- Every nontrivial matrix-unit adjoint weight space of `GL_n` is one-dimensional. -/
+@[simp]
 theorem finrank_adjointWeightSpace_matrixUnitWeight_eq_one {i j : Fin n} (hij : i ≠ j) :
     Module.finrank k
       (Derivation.adjointWeightSpace
