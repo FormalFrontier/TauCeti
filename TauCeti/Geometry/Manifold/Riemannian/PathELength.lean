@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Geometry.Manifold.Riemannian.PathELength
+public import Mathlib.Geometry.Manifold.Riemannian.Basic
 
 /-!
 # Smooth paths with prescribed Riemannian path length
@@ -30,6 +30,8 @@ The construction uses Mathlib's `Real.smoothTransition` and
   arbitrary compact interval onto `[0, 1]`, preserving its endpoints and length.
 * `TauCeti.exists_contMDiff_pathELength_eq_add`: obtain a globally `C¹` path between the outer
   endpoints of two compatible `C¹` paths, with length equal to the sum of their lengths.
+* `TauCeti.Manifold.pathELength_lineMap`: the straight segment between two points of an inner
+  product space has length equal to the norm distance between them.
 
 ## References
 
@@ -41,7 +43,7 @@ The construction uses Mathlib's `Real.smoothTransition` and
 public section
 
 open Filter Set
-open scoped ContDiff Manifold Topology
+open scoped Bundle ContDiff Manifold Topology
 
 namespace TauCeti
 
@@ -250,5 +252,21 @@ theorem exists_contMDiff_pathELength_eq_add {γ₁ γ₂ : ℝ → M}
       exact (Iic (1 / 2 : ℝ)).piecewise_eq_of_notMem f g (not_le_of_gt ht')]
     simpa only [g, Function.comp_apply] using htβ
   exact ⟨η, hη, hη₀, hη₁, hηlen, hηconst₀, hηconst₁⟩
+
+namespace Manifold
+
+variable {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F]
+
+/-- The straight segment between two points of an inner product space has length equal to the
+norm distance between them. -/
+@[simp]
+theorem pathELength_lineMap (x y : F) :
+    Manifold.pathELength 𝓘(ℝ, F)
+      (⇑(ContinuousAffineMap.lineMap (R := ℝ) x y)) 0 1 = ‖x - y‖ₑ := by
+  rw [Manifold.pathELength_eq_lintegral_mfderivWithin_Icc]
+  simp only [mfderivWithin_eq_fderivWithin, enorm_tangentSpace_vectorSpace]
+  exact lintegral_fderiv_lineMap_eq_edist .. |>.trans (edist_eq_enorm_sub ..)
+
+end Manifold
 
 end TauCeti

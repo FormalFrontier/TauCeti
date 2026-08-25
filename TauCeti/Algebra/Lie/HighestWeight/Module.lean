@@ -95,14 +95,6 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
 variable (H)
 variable (b : (IsKilling.rootSystem H).Base)
 
-/-- **The triangular decomposition, as a splitting of an element of `L`**: every `x : L` is the sum
-of an element of the negative nilradical and an element of the Borel subalgebra. -/
-private theorem exists_mem_negativeNilradical_add_mem_borelSubalgebra (x : L) :
-    ∃ g ∈ negativeNilradical H b, ∃ y ∈ borelSubalgebra H b, g + y = x := by
-  refine Submodule.mem_sup.mp ?_
-  rw [negativeNilradical_sup_borelSubalgebra_eq_top]
-  trivial
-
 omit [LieModule K L M] in
 /-- **A submodule stable under `n⁻` and under `𝔟` is stable under `L`**, by the triangular
 decomposition `L = n⁻ + (H + n⁺)`. -/

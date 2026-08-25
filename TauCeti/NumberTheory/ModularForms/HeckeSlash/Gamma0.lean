@@ -46,6 +46,10 @@ not proved here.
 
 ## Main results
 
+* `HeckeRing.GL2.rightCosetRep_mem_Delta0`: the representatives of the right cosets a double
+  coset decomposes into lie in `Δ₀(N)`.
+* `HeckeRing.GL2.det_rightCosetRep_pos_of_delta0`: they therefore have positive determinant, with
+  no hypothesis on the coset or on the flanking group.
 * `HeckeRing.GL2.coe_heckeSlashGamma0ModularFormEnd`,
   `HeckeRing.GL2.coe_heckeSlashGamma0CuspFormEnd`: both operators are `heckeSlashSum` on
   underlying functions.
@@ -65,6 +69,44 @@ open Matrix Matrix.SpecialLinearGroup UpperHalfPlane CongruenceSubgroup DoubleCo
 open scoped MatrixGroups ModularForm
 
 namespace HeckeRing.GL2
+
+-- These two facts about a single representative are about `Δ₀(N)` alone: they ask nothing of `k`
+-- and, unlike everything below, they do not need `N` to be nonzero. They are kept in their own
+-- section so that `[NeZero N]` is introduced only for the declarations that genuinely need it,
+-- the same split `HeckeRing/GL2/Gamma0/Basic.lean` makes in its own file.
+section Representatives
+
+variable {N : ℕ}
+
+/-- **The representatives lie in `Δ₀(N)`.** `rightCosetRep D v` is `δ τᵥ⁻¹` with `δ ∈ Δ₀(N)` and
+`τᵥ` in the flanking copy of `Γ₀(N)`, which is a subgroup of `Δ₀(N)` — `Gamma0Image_le_Delta0` —
+so the inverse stays inside it.
+
+Both flanks being `Γ₀(N)` is what makes this hypothesis-free. The same statement holds for any
+flanking `Γ₂ ≤ Δ₀(N)`, but only at the cost of an explicit containment hypothesis every caller
+would have to discharge, and no such caller exists; contrast `out_mem_glpos_of_delta0`, which is
+generic in both flanks because there it costs nothing. -/
+lemma rightCosetRep_mem_Delta0
+    (D : HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)))
+    (v : DecompQuotient ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))
+      (D.out : GL (Fin 2) ℚ)⁻¹) :
+    rightCosetRep D v ∈ Delta0 N := by
+  rw [rightCosetRep_def]
+  refine mul_mem D.out.2 (Gamma0Image_le_Delta0 N ?_)
+  rw [Subgroup.mem_toSubmonoid, Gamma0Image_def]
+  exact inv_mem v.out.2
+
+/-- The representatives have positive determinant. They lie in `Δ₀(N)`, and every element of
+`Δ₀(N)` is an integral matrix of positive determinant, so — unlike for the unweighted
+`heckeSlashSum_smul` — no caller has to supply this. -/
+lemma det_rightCosetRep_pos_of_delta0
+    (D : HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)))
+    (v : DecompQuotient ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))
+      (D.out : GL (Fin 2) ℚ)⁻¹) :
+    0 < (rightCosetRep D v : Matrix (Fin 2) (Fin 2) ℚ).det :=
+  posDetInt_le_glpos 2 (Delta0_le_posDetInt N (rightCosetRep_mem_Delta0 D v))
+
+end Representatives
 
 variable {N : ℕ} [NeZero N] (k : ℤ)
   (D : HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)))

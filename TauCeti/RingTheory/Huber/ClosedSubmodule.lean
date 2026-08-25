@@ -27,6 +27,7 @@ the closure, that is `N.topologicalClosure = N`, and `N` is closed because its c
 
 * `TauCeti.Huber.isClosed_of_module_finite_topologicalClosure`: a submodule whose topological
   closure is module-finite is closed.
+* `TauCeti.Huber.isClosed_of_isNoetherian`: in a noetherian module, *every* submodule is closed.
 
 ## References
 
@@ -48,6 +49,19 @@ instance on a submodule — so only completeness is supplied. The engine is this
 `T2Space`-based `eq_top_of_dense_of_finite`. And the passage from `N' = ⊤` back to
 `N.topologicalClosure ≤ N` is `Submodule.comap_subtype_eq_top` rather than AINTLIB's element-level
 unfolding.
+
+`TauCeti.Huber.isClosed_of_isNoetherian` follows the same development's
+`_sub_lemma_L3_1b_fg_submodule_closed` (same file, line 778 at the commit above), which is where
+the plan of discharging closedness from noetherianity is taken from. Only the plan is shared: that
+proof concludes closedness from *completeness* of the finitely generated submodule, via its
+`_sub_lemma_L3_1a_completion_fg_complete` and `completeSpace_coe_iff_isComplete`, whereas the proof
+here routes through this file's own `isClosed_of_module_finite_topologicalClosure` and so never
+mentions completeness of `N`. The hypotheses differ too: that statement asks for `[IsNoetherianRing
+A]` together with an explicit `(hN_fg : N.FG)`, while `[IsNoetherian A V]` here covers every
+submodule at once and needs no finite-generation argument at the call site. Sharing only the plan
+is not a stylistic choice: that proof reaches completeness through
+`_sub_lemma_L3_1a_completion_fg_complete`, whose body in that development is `sorry` (same file,
+line 611), so its route is not available to import even in principle.
 -/
 
 open Filter Topology
@@ -84,5 +98,24 @@ theorem isClosed_of_module_finite_topologicalClosure (N : Submodule A V)
   have hle : N.topologicalClosure ≤ N :=
     Submodule.comap_subtype_eq_top.mp (eq_top_of_dense_of_module_finite N' hdense)
   exact le_antisymm hle N.le_topologicalClosure ▸ hclosed
+
+/-- **In a noetherian module, every submodule is closed.**
+
+Every submodule of a noetherian module is finitely generated — the topological closure of `N`
+included. That closure is therefore module-finite, which is exactly what
+`TauCeti.Huber.isClosed_of_module_finite_topologicalClosure` asks of it.
+
+The hypothesis is on the module and not on the ring, because that is all the argument uses: the
+noetherian-base, module-finite case is recovered from Mathlib's instance
+`isNoetherian_of_isNoetherianRing_of_finite`, so no separate statement of it is needed.
+
+This is the closedness statement of [Wedhorn, *Adic Spaces*][wedhorn_adic], Proposition 6.17, for a
+module whose complete metrisable topology is *given*. It is not that proposition: 6.17 is about the
+canonical topology of 6.18(1), and the construction of that topology, together with its uniqueness,
+is not available here. -/
+theorem isClosed_of_isNoetherian [IsNoetherian A V] (N : Submodule A V) :
+    IsClosed (N : Set V) :=
+  isClosed_of_module_finite_topologicalClosure N <|
+    Module.Finite.iff_fg.mpr (IsNoetherian.noetherian _)
 
 end TauCeti.Huber
