@@ -111,7 +111,8 @@ theorem coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime (hp : p.Prim
   · rw [heckeSlashSum_diagCosetGamma1_of_coprime k hp h f, SlashAction.slash_mul,
       slash_mapGL_gamma0Twist_eq_diamondOpNat k h f]
   · have hpN : p ∣ N := hp.dvd_iff_not_coprime.mpr h
-    rw [heckeSlashSum_diagCosetGamma1 k hpN f, diamondOpNat_of_not_coprime k h]
+    rw [heckeSlashSum_diagCosetGamma1 k hp.pos (Nat.primeFactors_mono hpN (NeZero.ne N)) f,
+      diamondOpNat_of_not_coprime k h]
     simp
 
 /-- **The classical `Tₚ` on `S_k(Γ₁(N))`, at every prime** — the same formula, with the
@@ -125,7 +126,8 @@ theorem coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime (hp : p.Prime)
   · rw [heckeSlashSum_diagCosetGamma1_of_coprime k hp h f, SlashAction.slash_mul,
       slash_mapGL_gamma0Twist_eq_diamondOpCuspNat k h f]
   · have hpN : p ∣ N := hp.dvd_iff_not_coprime.mpr h
-    rw [heckeSlashSum_diagCosetGamma1 k hpN f, diamondOpCuspNat_of_not_coprime k h]
+    rw [heckeSlashSum_diagCosetGamma1 k hp.pos (Nat.primeFactors_mono hpN (NeZero.ne N)) f,
+      diamondOpCuspNat_of_not_coprime k h]
     simp
 
 /-- **`Tₚ` on a nebentypus space `M_k(N, χ)`, at a prime `p ∤ N`.** The diamond acts by the
