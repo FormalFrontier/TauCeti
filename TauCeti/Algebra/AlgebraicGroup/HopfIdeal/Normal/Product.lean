@@ -28,9 +28,9 @@ connectedness, smoothness, and unipotence are subsequent steps.
   a normal quotient subgroup.
 * `TauCeti.CommHopfAlgCat.normalSemidirectProduct`: the coordinate Hopf algebra of the
   resulting semidirect product.
-* `TauCeti.CommHopfAlgCat.normalProductMap`: the coordinate morphism dual to multiplication.
-* `TauCeti.CommHopfAlgCat.normalProduct`: the coordinate Hopf algebra of the product image.
-* `TauCeti.CommHopfAlgCat.normalProductGrpObjInclusion`: its categorical closed-subgroup
+* `TauCeti.CommHopfAlgCat.productMapOfNormal`: the coordinate morphism dual to multiplication.
+* `TauCeti.CommHopfAlgCat.productOfNormal`: the coordinate Hopf algebra of the product image.
+* `TauCeti.CommHopfAlgCat.productOfNormalGrpObjInclusion`: its categorical closed-subgroup
   inclusion.
 
 ## References
@@ -98,7 +98,7 @@ theorem normalSemidirectProduct_def
 
 /-- The coordinate Hopf-algebra morphism dual to multiplication from the semidirect product of
 a normal closed subgroup and another closed subgroup into the ambient affine group. -/
-noncomputable def normalProductMap
+noncomputable def productMapOfNormal
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) : H ⟶ normalSemidirectProduct H I J hI := by
   let i := quotientGrpObjInclusion H I
@@ -110,13 +110,13 @@ noncomputable def normalProductMap
 
 /-- The product coordinate morphism is the transport of categorical normal semidirect
 multiplication. -/
-theorem normalProductMap_def
+theorem productMapOfNormal_def
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     let i := quotientGrpObjInclusion H I
     let j := quotientGrpObjInclusion H J
     letI : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
-    normalProductMap H I J hI =
+    productMapOfNormal H I J hI =
       (commHopfAlgCatEquivCogrpCommAlgCat R).unitIso.hom.app H ≫
         (commHopfAlgCatEquivCogrpCommAlgCat R).inverse.map
           (op (GrpObj.Action.normalSemidirectMul i j)) :=
@@ -125,26 +125,17 @@ theorem normalProductMap_def
 variable {k : Type u} [Field k]
 
 /-- The coordinate Hopf algebra of the scheme-theoretic multiplication image. -/
-noncomputable abbrev normalProduct
+noncomputable abbrev productOfNormal
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
     (hI : I.IsNormal) : _root_.CommHopfAlgCat.{u} k :=
-  image (normalProductMap H I J hI)
+  image (productMapOfNormal H I J hI)
 
 /-- The categorical closed-subgroup inclusion of the multiplication image into the ambient
 affine group. -/
-noncomputable abbrev normalProductGrpObjInclusion
+noncomputable abbrev productOfNormalGrpObjInclusion
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
     (hI : I.IsNormal) :
-    grpObj (normalProduct H I J hI) ⟶ grpObj H :=
-  quotientGrpObjInclusion H (HopfIdeal.ker (normalProductMap H I J hI).hom)
-
-/-- The product subgroup inclusion is the quotient inclusion for the kernel of the product
-coordinate morphism. -/
-theorem normalProductGrpObjInclusion_def
-    (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
-    (hI : I.IsNormal) :
-    normalProductGrpObjInclusion H I J hI =
-      quotientGrpObjInclusion H (HopfIdeal.ker (normalProductMap H I J hI).hom) :=
-  rfl
+    grpObj (productOfNormal H I J hI) ⟶ grpObj H :=
+  quotientGrpObjInclusion H (HopfIdeal.ker (productMapOfNormal H I J hI).hom)
 
 end TauCeti.CommHopfAlgCat
