@@ -34,6 +34,8 @@ inclusive: an index with `N i = x` belongs to `normLE N x`. -/
 public noncomputable def normLE (x : ℝ) : Finset ι :=
   (finite_setOf_natCast_le N x).toFinset
 
+/-- An index belongs to `normLE N x` exactly when its `N`-value is at most the inclusive
+real cutoff `x`. -/
 @[simp, grind =]
 theorem mem_normLE {i : ι} {x : ℝ} : i ∈ normLE N x ↔ (N i : ℝ) ≤ x := by
   simp [normLE]
@@ -81,6 +83,7 @@ public noncomputable def summatory {M : Type*} [AddCommMonoid M]
     (w : ι → M) (x : ℝ) : M :=
   ∑ i ∈ normLE N x, w i
 
+/-- Evaluating `summatory N w` at `x` gives the finite sum of `w` over `normLE N x`. -/
 theorem summatory_apply {M : Type*} [AddCommMonoid M] (w : ι → M) (x : ℝ) :
     summatory N w x = ∑ i ∈ normLE N x, w i := by
   rw [summatory]
