@@ -38,6 +38,9 @@ the names record; the identification itself is not formalized here.
   continuous.
 * `ContRepresentation.symmetricSquare_apply` and `ContRepresentation.exteriorSquare_apply`: each
   square acts by the restriction of `π g ⊗ π g`, which is how their characters are computed.
+* `ContRepresentation.mem_invariants_symmetricSquare_iff` and
+  `ContRepresentation.mem_invariants_exteriorSquare_iff`: a tensor of either eigenspace is invariant
+  for that square exactly when it is invariant for the tensor square.
 
 ## Implementation notes
 
@@ -122,5 +125,24 @@ theorem exteriorSquare_apply (g : G) :
       = antisymmetricTensorsRestrict (π g : V →ₗ[𝕜] V) := by
   refine LinearMap.ext fun x ↦ Subtype.ext ?_
   simp [exteriorSquare, ContRepresentation.tprod_apply]
+
+-- Both squares are `subrepresentation`s of the tensor square, so these are the general
+-- `TauCeti.ContRepresentation.mem_invariants_subrepresentation`; they are stated here because the
+-- bodies of `symmetricSquare` and `exteriorSquare` are not visible outside this file. Neither is
+-- `@[simp]`, for the same reason that lemma is not: Mathlib's `@[simp]
+-- ContRepresentation.mem_invariants` already rewrites the left-hand side to
+-- `∀ g, symmetricSquare π g x = x`, so the attribute is a `simpNF` violation.
+
+omit [TopologicalSpace G] in
+/-- Membership in the invariants of the symmetric square, read in the tensor square. -/
+theorem mem_invariants_symmetricSquare_iff {x : symmetricTensors 𝕜 V} :
+    x ∈ (symmetricSquare π).invariants ↔ (x : V ⊗[𝕜] V) ∈ (tprod π π).invariants :=
+  mem_invariants_subrepresentation
+
+omit [TopologicalSpace G] in
+/-- Membership in the invariants of the exterior square, read in the tensor square. -/
+theorem mem_invariants_exteriorSquare_iff {x : antisymmetricTensors 𝕜 V} :
+    x ∈ (exteriorSquare π).invariants ↔ (x : V ⊗[𝕜] V) ∈ (tprod π π).invariants :=
+  mem_invariants_subrepresentation
 
 end ContRepresentation

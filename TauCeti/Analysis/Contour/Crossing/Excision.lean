@@ -8,9 +8,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import TauCeti.Analysis.Contour.PiecewiseC1On
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
-import TauCeti.Analysis.Contour.Winding.Integer
 import TauCeti.Analysis.Contour.Winding.Number.Circle
-import TauCeti.Analysis.Contour.Winding.Number.Concat
 import TauCeti.Analysis.Contour.Winding.Number.Reparam
 
 /-!
@@ -41,19 +39,8 @@ hypotheses:
 
 Under all of these together its winding number about `s` is an integer.
 
-What the surgery buys is an exact accounting of the crossing
-(`windingNumber_eq_exciseCrossing_add`):
-
-`n_s(γ) = n_s(\tilde{γ}) + (n_s(γ|[l,u]) - (θ' - θ) / 2π)`,
-
-under the endpoint conditions, the bracket is the winding number of the local loop `Γ` that runs
-along `γ` across the window and returns along the cap reversed. Since `n_s(\tilde{γ}) ∈ ℤ`, this
-says the generalized winding number of `γ` is an integer plus the crossing's own local contribution
-— HW Proposition 2.2 with the integer exhibited concretely, as the winding number of a curve that is
-actually built, rather than produced abstractly.
-`exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi` is the purely existential
-reading of that identity; it asserts only that some integer works, the identification staying with
-the displayed decomposition above.
+`Crossing.Decomposition` builds on this surgery to prove the exact finite-window winding-number
+accounting identity and its one-window specialization.
 
 What remains of HW Proposition 2.2 is the identification of the local contribution with the crossing
 angle `α_ℓ / 2π` for a general immersion. It is congruent to `α_ℓ / 2π` modulo `1` — that is exactly
@@ -74,10 +61,6 @@ once.
 * `TauCeti.Contour.IsPiecewiseC1On.exciseCrossing` — the excised curve is piecewise `C¹`,
   `TauCeti.Contour.exciseCrossing_closed` — it is closed if `γ` is, and
   `TauCeti.Contour.exciseCrossing_ne_center` — it avoids `s`.
-* `TauCeti.Contour.windingNumber_eq_exciseCrossing_add` — the winding number of `γ` is that of the
-  excised curve plus the local contribution of the window.
-* `TauCeti.Contour.exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi` — hence it is
-  an integer plus that local contribution.
 
 ## Provenance
 
@@ -91,9 +74,8 @@ at revision `340875a` it is the per-pole principal-value composition (`HasCauchy
 angle-compatibility lemmas, and the surgered curve `\tilde{Λ}` is never built there either. The
 one place AINTLIB names this excision, `ForMathlib/ExitTime.lean`, constructs only the exit-time
 parameters bounding the window (`firstExitTimeLeft`, `firstExitTimeRight`), not the spliced curve.
-So the definitions and proofs below are new, assembled from Tau Ceti's existing winding number API
-(concatenation, reparametrisation, the circle) and its integrality theorem for closed avoiding
-curves.
+So the definitions and proofs below are new, assembled from Tau Ceti's existing winding-number API
+for reparametrisation and circles.
 
 ## References
 
@@ -323,120 +305,6 @@ theorem IsPiecewiseC1On.exciseCrossing (hγ : IsPiecewiseC1On γ a b) (hal : a <
           fun x hx => hmid ⟨hlc.trans hx.1, hx.2.trans hdu⟩
     · -- the subinterval lies to the left of the window
       exact (hC1 c d hcd hdisp).congr fun x hx => hleft (mem_Iic.mpr (hx.2.trans hdl))
-
-/-! ### The winding number across an excised crossing -/
-
-/-- **Excising a crossing decomposes the winding number.** Let `γ` be piecewise `C¹` on `[a, b]`,
-let `[l, u]` be a window strictly inside it, choose a circle with signed radial scale `r ≠ 0` about
-`s` with angles `θ` and `θ'`, and suppose `γ` meets `s` only strictly inside that window. Then
-
-`n_s(γ) = n_s(\tilde{γ}) + (n_s(γ|[l,u]) - (θ' - θ) / 2π)`,
-
-where `\tilde{γ}` is the excised curve. The bracket is the difference of the two window winding
-numbers. Under the endpoint conditions `γ l = circleMap s r θ` and
-`γ u = circleMap s r θ'`, it is the winding number of the local loop that runs along `γ` across the
-window and returns along the cap reversed — the `Γ_ℓ` of Hungerbühler–Wasem Proposition 2.2. The
-identity itself is exact, and no smallness of the window is used.
-
-No endpoint conditions relating `γ` to the cap are needed here because winding numbers are
-insensitive to endpoint values. Such conditions are required by `IsPiecewiseC1On.exciseCrossing`
-when the replacement must be a continuous surgery.
-
-Only the index principal value on the window is assumed; off the window the curve avoids `s`, so
-there the principal values are ordinary integrals. -/
-theorem windingNumber_eq_exciseCrossing_add (hγ : IsPiecewiseC1On γ a b) (hal : a < l)
-    (hlu : l < u) (hub : u < b) (hr : r ≠ 0)
-    (havoid : ∀ t ∈ Icc a b, t ∉ Ioo l u → γ t ≠ s)
-    (hpv : CauchyPVExistsAt γ l u (fun z => (z - s)⁻¹) s) :
-    windingNumber γ a b s
-      = windingNumber (exciseCrossing γ s r l u θ θ') a b s
-        + (windingNumber γ l u s - ((θ' - θ : ℝ) : ℂ) / (2 * (Real.pi : ℂ))) := by
-  have hab : a ≤ b := by linarith
-  have hmid := exciseCrossing_eqOn_Icc γ s r l u θ θ'
-  -- the principal values on the two point-avoiding flanks are ordinary integrals
-  have hflank : ∀ c d : ℝ, uIcc c d ⊆ uIcc a b → (∀ t ∈ uIcc c d, γ t ≠ s) →
-      CauchyPVExistsAt γ c d (fun z => (z - s)⁻¹) s := by
-    intro c d hsub havd
-    have hcd : IsPiecewiseC1On γ c d := hγ.mono hsub
-    exact cauchyPVExistsAt_of_avoidance hcd.continuousOn havd
-      (intervalIntegrable_inv_sub_mul_deriv hcd.continuousOn havd hcd.intervalIntegrable_deriv)
-  have hIab : uIcc a b = Icc a b := uIcc_of_le hab
-  have hpv_al : CauchyPVExistsAt γ a l (fun z => (z - s)⁻¹) s := by
-    refine hflank a l ?_ ?_
-    · rw [hIab, uIcc_of_le (by linarith : a ≤ l)]
-      exact Icc_subset_Icc_right (by linarith)
-    · rw [uIcc_of_le (by linarith : a ≤ l)]
-      intro t ht
-      exact havoid t ⟨ht.1, by linarith [ht.2]⟩ fun h => absurd ht.2 (not_le.mpr h.1)
-  have hpv_ub : CauchyPVExistsAt γ u b (fun z => (z - s)⁻¹) s := by
-    refine hflank u b ?_ ?_
-    · rw [hIab, uIcc_of_le (by linarith : u ≤ b)]
-      exact Icc_subset_Icc_left (by linarith)
-    · rw [uIcc_of_le (by linarith : u ≤ b)]
-      intro t ht
-      exact havoid t ⟨by linarith [ht.1], ht.2⟩ fun h => absurd ht.1 (not_le.mpr h.2)
-  -- the same three principal values along the excised curve
-  have heq_al : EqOn γ (exciseCrossing γ s r l u θ θ') (uIoo a l) := by
-    intro t ht
-    rw [uIoo_of_le (by linarith : a ≤ l)] at ht
-    exact (exciseCrossing_of_notMem fun h => absurd h.1 (not_le.mpr ht.2)).symm
-  have heq_ub : EqOn γ (exciseCrossing γ s r l u θ θ') (uIoo u b) := by
-    intro t ht
-    rw [uIoo_of_le (by linarith : u ≤ b)] at ht
-    exact (exciseCrossing_of_notMem fun h => absurd h.2 (not_le.mpr ht.1)).symm
-  have heq_lu : EqOn (circleCap s r l u θ θ') (exciseCrossing γ s r l u θ θ') (uIoo l u) := by
-    intro t ht
-    rw [uIoo_of_le hlu.le] at ht
-    exact (hmid ⟨ht.1.le, ht.2.le⟩).symm
-  have hpvE_al := hpv_al.congr_curve heq_al
-  have hpvE_ub := hpv_ub.congr_curve heq_ub
-  have hpvE_lu := (cauchyPVExistsAt_circleCap s r l u θ θ' l u).congr_curve heq_lu
-  -- `γ` is additive over the three pieces `[a, l]`, `[l, u]`, `[u, b]`
-  have hsplit : windingNumber γ a b s
-      = windingNumber γ a l s + windingNumber γ l u s + windingNumber γ u b s := by
-    rw [windingNumber_concat hpv_al (hpv.concat hpv_ub), windingNumber_concat hpv hpv_ub]
-    ring
-  -- the excised curve is additive over the same three pieces, and on each of them it agrees with
-  -- the curve computing that piece: `γ` on the two flanks, the cap on the window
-  have hsplitE : windingNumber (exciseCrossing γ s r l u θ θ') a b s
-      = windingNumber γ a l s + windingNumber (circleCap s r l u θ θ') l u s
-        + windingNumber γ u b s := by
-    rw [windingNumber_concat hpvE_al (hpvE_lu.concat hpvE_ub),
-      windingNumber_concat hpvE_lu hpvE_ub, ← windingNumber_congr_curve heq_al,
-      ← windingNumber_congr_curve heq_ub, ← windingNumber_congr_curve heq_lu]
-    ring
-  -- the cap contributes exactly its angular extent
-  have hcap : windingNumber (circleCap s r l u θ θ') l u s
-      = ((θ' - θ : ℝ) : ℂ) / (2 * (Real.pi : ℂ)) := windingNumber_circleCap hr hlu.ne θ θ'
-  -- the two flanks cancel, leaving the window's contribution minus the cap's
-  rw [hsplit, hsplitE, hcap]
-  ring
-
-/-- **Hungerbühler–Wasem Proposition 2.2 for one crossing window, in existential form.**
-Under the hypotheses of `windingNumber_eq_exciseCrossing_add` on a *closed* curve, the winding
-number of `γ` about `s` is *some* integer plus the local contribution of the window. Only that
-existence is asserted here: the integer is not exposed by the statement. The witness the proof
-supplies is the winding number of the excised curve, which is an integer precisely because the
-surgery has pushed the curve off `s`; a consumer that needs the identification should use
-`windingNumber_eq_exciseCrossing_add` together with `IsPiecewiseC1On.exists_int_windingNumber`,
-exactly as this proof does.
-
-What is still missing for HW Proposition 2.2 is the evaluation of the local contribution as
-`crossingAngle γ t₀ / 2π`; combined with
-`TauCeti.Contour.IsPwC1ImmersionOn.exists_int_windingNumber_eq_add_sum_crossingAngle` this statement
-already gives that the two agree modulo `1`. -/
-theorem exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi
-    (hγ : IsPiecewiseC1On γ a b) (hal : a < l)
-    (hlu : l < u) (hub : u < b) (hr : r ≠ 0) (hclosed : γ a = γ b) (hθ : γ l = circleMap s r θ)
-    (hθ' : γ u = circleMap s r θ') (havoid : ∀ t ∈ Icc a b, t ∉ Ioo l u → γ t ≠ s)
-    (hpv : CauchyPVExistsAt γ l u (fun z => (z - s)⁻¹) s) :
-    ∃ k : ℤ, windingNumber γ a b s
-      = k + (windingNumber γ l u s - ((θ' - θ : ℝ) : ℂ) / (2 * (Real.pi : ℂ))) := by
-  have hab : a ≤ b := by linarith
-  have hE := hγ.exciseCrossing hal hlu hub hθ hθ'
-  obtain ⟨k, hk⟩ := hE.exists_int_windingNumber (exciseCrossing_closed hal hub hclosed θ θ')
-    (fun t ht => exciseCrossing_ne_center hr θ θ' havoid t ((uIcc_of_le hab) ▸ ht))
-  exact ⟨k, by rw [windingNumber_eq_exciseCrossing_add hγ hal hlu hub hr havoid hpv, hk]⟩
 
 end TauCeti.Contour
 
