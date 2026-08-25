@@ -268,8 +268,8 @@ jobs:
           cp gate/scripts/source-modules.sh base/scripts/source-modules.sh
           cp gate/scripts/HeaderStyle.lean base/scripts/HeaderStyle.lean
 
-      - name: Checkout merge-base config (trusted ancestor — only to scope the PR's pin delta)
-        if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
+      - name: Checkout merge-base config (trusted ancestor — the pins this PR is built against)
+        if: ${{ env.INFRA != '1' && github.event_name != 'merge_group' }}
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.mergebase }}
@@ -288,96 +288,65 @@ jobs:
           persist-credentials: false
           allow-unsafe-pr-checkout: true
 
-      # For a pull request there is no such commit, so make one. Start from the same trusted
-      # base commit and merge the PR into it, rather than building the PR head on its own.
-      #
-      # The head alone is the bug this replaces: its TauCeti/ was overlaid onto a base carrying
-      # the target branch's Lake pins, so a branch cut before a Mathlib bump compiled pre-bump
-      # sources against post-bump Mathlib and failed on code it had never touched. On
-      # 2026-08-25 that reddened 39 of the 40 then-failing pull requests at once, all on one
-      # unchanged line of Analysis/Contour/Argument/Principle.lean, and every one needed main
-      # merged into it by hand before it would build again.
-      #
-      # Merging here rather than reading refs/pull/N/merge is deliberate. That ref is mutable
-      # and, when a pull request conflicts, is left pointing at the last clean merge instead of
-      # disappearing -- a stale candidate still names the current head as its second parent, so
-      # it passes the obvious check while carrying a base hundreds of commits old. Using it
-      # safely takes a mergeability poll, a parent check, an ancestry check and a retarget
-      # check, all to re-establish facts that are simply known when the merge is made here from
-      # a base commit resolved above and an immutable head from the event.
-      - name: Check out the base to merge into (deep enough to find a merge base)
+      - name: Checkout PR head (untrusted, no credentials)
         if: ${{ env.INFRA != '1' && github.event_name != 'merge_group' }}
         uses: actions/checkout@v4
         with:
-          ref: "${{ steps.pr.outputs.base_sha }}"
+          repository: ${{ steps.pr.outputs.repo }}
+          ref: ${{ steps.pr.outputs.sha }}
           path: pr
           persist-credentials: false
-          # Full history: a merge needs a common ancestor, and old pull requests are further
-          # back than any bounded depth would reach. Measured at 32MB/5s against a build of
-          # roughly twelve minutes.
-          fetch-depth: 0
+          # actions/checkout refuses to fetch fork PR code under pull_request_target unless this
+          # opt-in is set. It is safe here because the checkout carries no credentials and the
+          # fork's code is only ever executed under landrun below (offline, no token in reach),
+          # never in the trusted context this guard warns about.
+          allow-unsafe-pr-checkout: true
 
-      - name: Merge the pull request into it (no PR code runs; git only)
-        if: ${{ env.INFRA != '1' && github.event_name != 'merge_group' }}
-        env:
-          NUM: "${{ steps.pr.outputs.num }}"
-          HEAD_SHA: "${{ steps.pr.outputs.sha }}"
-          BASE_SHA: "${{ steps.pr.outputs.base_sha }}"
+      # Build the PR against the pins it was written against, not against whatever main carries
+      # right now.
+      #
+      # The sources compiled here are the PR's own TauCeti/ tree, unmerged. Taking the Lake pins
+      # from the branch tip instead would compile those sources against a Mathlib they have never
+      # seen: not a state any commit is in, and not one any merge would produce. On 2026-08-25 the
+      # bump to Mathlib 618f225 needed one line of Analysis/Contour/Argument/Principle.lean changed
+      # along with it, and every branch cut before that bump then failed on that line -- 39 pull
+      # requests at once, none of which had touched it.
+      #
+      # It is also what makes the artifact cache work. Lake artifacts are content-addressed over
+      # their whole transitive input, so moving Mathlib gives every module a new hash and nothing
+      # already built is reusable. Those artifacts are published only by main's CI, once, after the
+      # bump lands, and that build is a cold one: 2h35m on 2026-08-25 against a usual 15-25 minutes.
+      # Pinning every open pull request to the tip means every pull request built in that window
+      # builds cold too -- about forty that day, roughly 75 minutes each against a usual twelve,
+      # which saturated all twenty runner slots and left Auto-merge runs queued two hours deep.
+      # That, rather than the bump, is what took merges down to 1.8/h. Built at its own merge base,
+      # a pull request keeps hitting the cache that is already warm for it and the cold rebuild
+      # belongs to main alone. It is what Mathlib gets for free by building a PR's own tree as-is.
+      #
+      # The pins come from the merge base rather than from the PR itself: for a PR that does not
+      # touch them the two are identical, and the merge base is an ancestor of the target branch,
+      # so these are pins that were trusted on it rather than pins the PR supplied. Everything else
+      # -- lakefile, scripts/, the build tooling staged from gate/ -- still comes from the tip.
+      #
+      # A PR that DOES touch the pins is a bump and is deliberately excluded: it keeps the tip's
+      # config and overlays its own validated pins below. A bump has to be judged against what main
+      # carries now, or it could move Mathlib "forward" from a stale base and land something older
+      # than main already has. That also keeps check-bump.sh running from the tip.
+      #
+      # What this gives up: green here no longer predicts green in the merge queue. The queue
+      # builds each batch against real main, so a PR sitting at an old merge base can fail there
+      # having passed here. That is the right place for it to fail, since it is the build that
+      # decides what lands, but finding out costs a queue slot.
+      - name: Pin the build to the merge base's Lake pins (trusted ancestor of the target branch)
+        if: ${{ env.INFRA != '1' && env.BUMP != '1' && github.event_name != 'merge_group' }}
         run: |
-          set -uo pipefail
-          cd pr
-
-          # Run git with NO configuration but this repository's own. Content cannot define a
-          # merge driver or a filter, but it can SELECT one that the runner already has
-          # configured (an installed Git LFS filter being the realistic example), and a
-          # .lfsconfig could then point that at an endpoint of the contributor's choosing.
-          # Neutralising system and global config removes anything for content to select, and
-          # hooksPath is belt and braces: a fetch does not transfer hooks in the first place.
-          export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
-          git config core.hooksPath /dev/null
-          git config core.fsmonitor false
-          # An identity is required even by `merge --no-commit`, which prepares a commit it
-          # then does not write. Set one explicitly rather than inheriting: neutralising the
-          # global and system config above leaves a runner with none at all, and git will not
-          # invent one, so without this every merge fails with "empty ident name".
-          git config user.name "pr-build"
-          git config user.email "pr-build@taucetiproject.invalid"
-
-          # From the canonical repository: refs/pull/N/head is maintained here for forks too,
-          # so no fork is contacted at build time, and the SHA is checked below regardless.
-          if ! git fetch --quiet origin "refs/pull/$NUM/head"; then
-            echo "INFRA=1" >> "$GITHUB_ENV"
-            echo "::warning::could not fetch the head of PR #$NUM — re-run pr-build"
-            exit 0
-          fi
-          got=$(git rev-parse FETCH_HEAD)
-          # The event's head is what gets statused, so it is what must be built.
-          if [ "$got" != "$HEAD_SHA" ]; then
-            echo "INFRA=1" >> "$GITHUB_ENV"
-            echo "::warning::PR #$NUM is at $got, not the $HEAD_SHA this run is for — the run for the new head will build it"
-            exit 0
-          fi
-          # --no-commit: the merged tree is all that is wanted, and not committing means no
-          # identity to configure and nothing to push anywhere.
-          if ! git merge --no-commit --no-ff "$HEAD_SHA" >/tmp/merge.log 2>&1; then
-            # Distinguish a real conflict from a merge that failed for some other reason.
-            # Unmerged index entries are what a content conflict leaves behind; anything else
-            # (a repository error, a disk failure) is infrastructure, and telling an author to
-            # update a branch that merges perfectly well would send a worker off to do a round
-            # of work that cannot help. Read before aborting, which clears the index.
-            unmerged=$(git ls-files --unmerged | wc -l | tr -d " ")
-            sed -n "1,40p" /tmp/merge.log
-            git merge --abort 2>/dev/null || true
-            echo "INFRA=1" >> "$GITHUB_ENV"
-            if [ "$unmerged" != "0" ]; then
-              echo "NEEDS_REBASE=1" >> "$GITHUB_ENV"
-              echo "::warning::PR #$NUM conflicts with the base; update the branch and this builds again"
-            else
-              echo "::warning::could not merge PR #$NUM into the base, and it is not a content conflict — re-run pr-build"
-            fi
-            exit 0
-          fi
-          echo "built as $HEAD_SHA merged into $BASE_SHA"
+          set -euo pipefail
+          for f in lake-manifest.json lean-toolchain; do
+            test -f "mergebase/$f"
+            cp "mergebase/$f" "base/$f"
+          done
+          echo "pins taken from merge base ${{ steps.pr.outputs.mergebase }}"
+          echo "  lean-toolchain: $(cat base/lean-toolchain)"
 
       # For a Lake-pin PR, validate it is a safe forward bump BEFORE overlaying its
       # pins or building. The validator and the BASE config it judges against are the
@@ -702,9 +671,7 @@ jobs:
           # list (INFRA), an unvalidated pin bump (BUMP_BAD — the overlay would need the PR's pins), or a
           # diff guard that failed closed (TOO_LARGE / DIFF_UNKNOWN both exit before the build). Those
           # post a failure so this required check still blocks merge; the reason lives in `scope` below.
-          if [ "${{ env.NEEDS_REBASE }}" = "1" ]; then
-            state=failure; desc="conflicts with the base — update the branch, then this builds again"
-          elif [ "$head_moved" = 1 ]; then
+          if [ "$head_moved" = 1 ]; then
             state=failure; desc="the pull request changed during this build — the run for its current state statuses it"
           elif [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
@@ -728,8 +695,6 @@ jobs:
             sc_state=failure; sc_desc="changes outside TauCeti/ — human review + merge required"
           elif [ "${{ env.BUMP_BAD }}" = "1" ]; then
             sc_state=failure; sc_desc="Lake pin change failed the trusted bump validator"
-          elif [ "${{ env.NEEDS_REBASE }}" = "1" ]; then
-            sc_state=failure; sc_desc="conflicts with the base — update the branch (no human merge needed)"
           elif [ "${{ env.INFRA }}" = "1" ]; then
             sc_state=failure; sc_desc="could not determine the changed files — human review + merge required"
           elif [ "${{ env.TOO_LARGE }}" = "1" ]; then
