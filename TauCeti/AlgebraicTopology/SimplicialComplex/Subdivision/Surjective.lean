@@ -25,7 +25,7 @@ The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear To
 
 ## Main result
 
-* `AbstractSimplicialComplex.surjective_barycentricSubdivisionRealizationMap`: every point in the
+* `AbstractSimplicialComplex.barycentricSubdivisionRealizationMap_surjective`: every point in the
   realization of a complex is the image of a point in its barycentric subdivision.
 -/
 
@@ -109,16 +109,6 @@ private theorem card_prefixVertices {K : AbstractSimplicialComplex ι} (x : Real
 private theorem card_prefixFace {K : AbstractSimplicialComplex ι} (x : Realization K)
     (i : Fin (carrier K x).1.card) : (prefixFace x i).1.card = i.1 + 1 :=
   card_prefixVertices x i
-
-private theorem prefixFace_injective {K : AbstractSimplicialComplex ι} (x : Realization K) :
-    Function.Injective (prefixFace x) := by
-  intro i j h
-  have hc := congrArg (fun s : Face K => s.1.card) h
-  -- `prefixFace` stores exactly `prefixVertices`; exposing that carrier lets the cardinality
-  -- formula distinguish the indices.
-  change (prefixVertices x i).card = (prefixVertices x j).card at hc
-  rw [card_prefixVertices, card_prefixVertices] at hc
-  exact Fin.ext (Nat.add_right_cancel hc)
 
 private theorem sum_orderedVertex {K : AbstractSimplicialComplex ι} (x : Realization K)
     (g : ι → ℝ) :
@@ -302,19 +292,7 @@ private noncomputable def subdivisionFace {K : AbstractSimplicialComplex ι} (x 
 
 private noncomputable def subdivisionStandardSimplex {K : AbstractSimplicialComplex ι}
     (x : Realization K) : StandardSimplex (subdivisionFaces x) :=
-  ⟨subdivisionCoordinates x, by
-    have heq :
-        (∑ σ ∈ (subdivisionCoordinates x).support,
-          subdivisionCoordinates x σ • Finsupp.single σ (1 : ℝ)) =
-            subdivisionCoordinates x := by
-      simpa [Finsupp.sum] using (subdivisionCoordinates x).sum_single
-    rw [← heq]
-    let _ : DecidableEq (Face K) := Classical.decEq _
-    exact (convex_convexHull ℝ _).sum_mem
-      (fun σ _ => subdivisionCoordinates_nonneg x σ)
-      (by exact subdivisionCoordinates_sum x)
-      (fun σ hσ => subset_convexHull ℝ _ (Finset.mem_coe.2 <|
-        Finset.mem_image_of_mem _ (subdivisionCoordinates_support x hσ)))⟩
+  ⟨subdivisionCoordinates x, by simpa using subdivisionCoordinates_mem x⟩
 
 /-- The point of the barycentric subdivision obtained by sorting the barycentric coordinates of
 `x` and taking the corresponding nested initial faces. -/
@@ -438,7 +416,7 @@ The preimage is the standard barycentric decomposition: list the nonzero coordin
 as `x₀ ≥ ⋯ ≥ xₘ₋₁ > 0`, let `σᵢ` be the face on the first `i + 1` vertices, and give its barycenter
 weight `(i + 1) * (xᵢ - xᵢ₊₁)`, with `xₘ = 0`. These weights are nonnegative, sum to one, and their
 weighted barycenters telescope coordinatewise to the original point. -/
-theorem surjective_barycentricSubdivisionRealizationMap (K : AbstractSimplicialComplex ι) :
+theorem barycentricSubdivisionRealizationMap_surjective (K : AbstractSimplicialComplex ι) :
     Function.Surjective (barycentricSubdivisionRealizationMap K) := by
   intro x
   exact ⟨subdivisionPreimage x, barycentricSubdivisionRealizationMap_subdivisionPreimage x⟩
