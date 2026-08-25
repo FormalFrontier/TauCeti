@@ -52,7 +52,7 @@ power of it. These are the good-prime and bad-prime extremes of the hypothesis
   itself is opaque, so this is the elimination rule a consumer works with.
 * `HeckeRing.GL2.atkinLehnerAntiInvolution_bar_val`: its entrywise action on a `Δ₀(N)` witness.
 * `HeckeRing.GL2.atkinLehnerAntiInvolution_bar_det`: it preserves the determinant.
-* `HeckeRing.GL2.atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_coprime_det`: it fixes the
+* `HeckeRing.GL2.atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_coprimeDet`: it fixes the
   double coset when the determinant is coprime to the level.
 * `HeckeRing.GL2.atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_dvd_pow`: it fixes the double
   coset when the determinant divides a power of the level.
@@ -362,9 +362,7 @@ private lemma exists_sl2_mul_mul_eq_atkinLehnerEntries
     _ = (LB⁻¹).val * (LB.val * B * RB.val) * (RB⁻¹).val := by rw [hB_snf]
     _ = B := by
       simp only [Matrix.mul_assoc]
-      rw [show (LB⁻¹).val * (LB.val * (B * (RB.val * (RB⁻¹).val))) =
-          (LB⁻¹).val * (LB.val * (B * 1)) by rw [hRB]]
-      rw [Matrix.mul_one, ← Matrix.mul_assoc (LB⁻¹).val, hLB, Matrix.one_mul]
+      rw [hRB, Matrix.mul_one, ← Matrix.mul_assoc (LB⁻¹).val, hLB, Matrix.one_mul]
     _ = atkinLehnerEntries N A c := hB
 
 /-- **The Atkin–Lehner involution fixes a coprime-determinant double coset.** If `x ∈ Δ₀(N)`
@@ -374,7 +372,7 @@ has determinant coprime to `N`, then its bar lies in the `Γ₀(N)`-double coset
 -- invariant factors then agree because the determinants do. Thus they define the same level-one
 -- double coset. Shimura's Proposition 3.31, `toLevelOneCoset_injOn`, recovers equality of the
 -- `Γ₀(N)`-double cosets from that equality.
-theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_coprime_det [NeZero N]
+theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_coprimeDet [NeZero N]
     (x : GL (Fin 2) ℚ) (hx : x ∈ Delta0 N) (hcop : CoprimeDet N ⟨x, hx⟩) :
     (atkinLehnerAntiInvolution N).bar x hx ∈
       DoubleCoset.doubleCoset x ((Gamma0 N).map (mapGL ℚ))
@@ -411,16 +409,18 @@ theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_coprime_det [NeZero N]
     rw [Submonoid.coe_inclusion, Submonoid.coe_inclusion]
     exact mem_doubleCoset_SLnZ_of_intMatrix_eq 2 P Q x (b : GL (Fin 2) ℚ) A B hA hbar
       (hPQ.trans hB.symm)
-  have hcoset := toLevelOneCoset_injOn N
-    (show HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) a ∈
-      {D | CoprimeDetCoset N D} by simpa [a] using hcop)
-    (show HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) b ∈
-      {D | CoprimeDetCoset N D} by simpa using hb_cop) hlevel
-  have hdc := HeckeCoset.eq_iff.mp hcoset
-  rw [show DoubleCoset.doubleCoset x ((Gamma0 N).map (mapGL ℚ))
+  have ha_cop : HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) a ∈
+      {D | CoprimeDetCoset N D} := by simpa [a] using hcop
+  have hb_coset_cop :
+      HeckeCoset.mk ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) b ∈
+        {D | CoprimeDetCoset N D} := by simpa using hb_cop
+  have hcoset := toLevelOneCoset_injOn N ha_cop hb_coset_cop hlevel
+  have hdc : DoubleCoset.doubleCoset x ((Gamma0 N).map (mapGL ℚ))
       ((Gamma0 N).map (mapGL ℚ)) =
-      DoubleCoset.doubleCoset ((b : Delta0 N) : GL (Fin 2) ℚ)
-        ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) from hdc]
+      DoubleCoset.doubleCoset (b : GL (Fin 2) ℚ) ((Gamma0 N).map (mapGL ℚ))
+        ((Gamma0 N).map (mapGL ℚ)) := by
+    simpa only [a] using HeckeCoset.eq_iff.mp hcoset
+  rw [hdc]
   exact DoubleCoset.mem_doubleCoset_self _ _ _
 
 /-- **The Atkin–Lehner involution fixes a bad-prime double coset.** If `x ∈ Δ₀(N)` has
