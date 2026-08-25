@@ -113,18 +113,16 @@ theorem finite_setOf_forall_sum_mul_le (h : IsFiniteType A) (y : B → ℤ) :
   -- Summing the inequalities against the nonnegative vector `c` gives `F x x ≤ F x z`.
   have hrow : ∀ i, (S *ᵥ fun j ↦ (c j : ℚ)) i = d i * ((∑ j, A i j * (c j : ℤ) : ℤ) : ℚ) := by
     intro i
-    have hexp : (S *ᵥ fun j ↦ (c j : ℚ)) i = ∑ j, d i * (A i j : ℚ) * (c j : ℚ) := rfl
-    rw [hexp]
+    rw [Matrix.mulVec_apply_eq_sum, hSdef]
+    simp only [Matrix.of_apply]
     push_cast
     rw [Finset.mul_sum]
     exact Finset.sum_congr rfl fun j _ ↦ by ring
   have hxz : F (fun j ↦ (c j : ℚ)) z = ∑ i, (c i : ℚ) * (d i * (y i : ℚ)) := by
-    rw [hFapply, hz]
-    rfl
+    rw [hFapply, hz, dotProduct]
   have hxx : F (fun j ↦ (c j : ℚ)) (fun j ↦ (c j : ℚ))
       = ∑ i, (c i : ℚ) * (S *ᵥ fun j ↦ (c j : ℚ)) i := by
-    rw [hFapply]
-    rfl
+    rw [hFapply, dotProduct]
   have hle : F (fun j ↦ (c j : ℚ)) (fun j ↦ (c j : ℚ)) ≤ F (fun j ↦ (c j : ℚ)) z := by
     rw [hxx, hxz]
     refine Finset.sum_le_sum fun i _ ↦ mul_le_mul_of_nonneg_left ?_ (by positivity)
