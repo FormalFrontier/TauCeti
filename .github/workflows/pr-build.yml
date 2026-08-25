@@ -114,12 +114,16 @@ jobs:
 
           # Merge-base with the target branch, for the Lake-pin bump validation below:
           # check-bump.sh uses it to scope the PR's own pin delta. owner:sha for forks;
-          # `|| true` so a failed substitution does not trip set -e before the fallback;
-          # on any miss fall back to the tip (BASE_REF) — at worst the pre-fix behaviour.
+          # `|| true` so a failed substitution does not trip set -e before the fallback.
+          #
+          # Against BASE_SHA, not the branch name: check-bump.sh reads mergebase/ to decide
+          # whether the pins were touched at all, so if the branch moved between here and the
+          # checkouts, base/, pr/ and mergebase/ would be describing three different bases and
+          # that decision would be made against a snapshot nothing else in the job shares.
           OWNER="${REPO%%/*}"
-          MB=$(gh api "repos/${{ github.repository }}/compare/${BASE_REF}...${OWNER}:${SHA}" \
+          MB=$(gh api "repos/${{ github.repository }}/compare/${BASE_SHA}...${OWNER}:${SHA}" \
                  --jq '.merge_base_commit.sha' 2>/dev/null || true)
-          [ -n "$MB" ] || { MB="$BASE_REF"; echo "::warning::merge-base unresolved; falling back to $BASE_REF tip"; }
+          [ -n "$MB" ] || { MB="$BASE_SHA"; echo "::warning::merge-base unresolved; falling back to the base commit $BASE_SHA"; }
           {
             echo "num=$NUM"
             echo "base_sha=$BASE_SHA"
@@ -322,6 +326,17 @@ jobs:
         run: |
           set -uo pipefail
           cd pr
+
+          # Run git with NO configuration but this repository's own. Content cannot define a
+          # merge driver or a filter, but it can SELECT one that the runner already has
+          # configured (an installed Git LFS filter being the realistic example), and a
+          # .lfsconfig could then point that at an endpoint of the contributor's choosing.
+          # Neutralising system and global config removes anything for content to select, and
+          # hooksPath is belt and braces: a fetch does not transfer hooks in the first place.
+          export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+          git config core.hooksPath /dev/null
+          git config core.fsmonitor false
+
           # From the canonical repository: refs/pull/N/head is maintained here for forks too,
           # so no fork is contacted at build time, and the SHA is checked below regardless.
           if ! git fetch --quiet origin "refs/pull/$NUM/head"; then
@@ -339,11 +354,21 @@ jobs:
           # --no-commit: the merged tree is all that is wanted, and not committing means no
           # identity to configure and nothing to push anywhere.
           if ! git merge --no-commit --no-ff "$HEAD_SHA" >/tmp/merge.log 2>&1; then
-            git merge --abort 2>/dev/null || true
-            echo "NEEDS_REBASE=1" >> "$GITHUB_ENV"
-            echo "INFRA=1" >> "$GITHUB_ENV"
-            echo "::warning::PR #$NUM conflicts with the base; update the branch and this builds again"
+            # Distinguish a real conflict from a merge that failed for some other reason.
+            # Unmerged index entries are what a content conflict leaves behind; anything else
+            # (a repository error, a disk failure) is infrastructure, and telling an author to
+            # update a branch that merges perfectly well would send a worker off to do a round
+            # of work that cannot help. Read before aborting, which clears the index.
+            unmerged=$(git ls-files --unmerged | wc -l | tr -d " ")
             sed -n "1,40p" /tmp/merge.log
+            git merge --abort 2>/dev/null || true
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            if [ "$unmerged" != "0" ]; then
+              echo "NEEDS_REBASE=1" >> "$GITHUB_ENV"
+              echo "::warning::PR #$NUM conflicts with the base; update the branch and this builds again"
+            else
+              echo "::warning::could not merge PR #$NUM into the base, and it is not a content conflict — re-run pr-build"
+            fi
             exit 0
           fi
           echo "built as $HEAD_SHA merged into $BASE_SHA"
