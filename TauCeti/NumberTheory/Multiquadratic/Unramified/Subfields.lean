@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.FieldTheory.Galois.Basic
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.Discriminant
 public import TauCeti.NumberTheory.NumberField.Inertia
 
@@ -111,12 +110,7 @@ omit [IsGalois ℚ M] in
 private theorem apply_eq_or_eq_neg {σ : M ≃ₐ[ℚ] M} {z : M} {c : ℚ}
     (hz : z ^ 2 = algebraMap ℚ M c) : σ z = z ∨ σ z = -z := by
   have hsq : σ z ^ 2 = z ^ 2 := by rw [← map_pow, hz, AlgEquiv.commutes]
-  -- `σ z` and `z` are roots of the same quadratic `X ^ 2 - c`, so their difference and their sum
-  -- multiply to `σ z ^ 2 - z ^ 2 = 0`.
-  have hfac : (σ z - z) * (σ z + z) = 0 := by linear_combination hsq
-  rcases mul_eq_zero.mp hfac with h | h
-  · exact Or.inl (sub_eq_zero.mp h)
-  · exact Or.inr (eq_neg_of_add_eq_zero_left h)
+  exact sq_eq_sq_iff_eq_or_eq_neg.mp hsq
 
 omit [IsGalois ℚ M] in
 /-- **Fixing a square root of a rational number is a conjugation-invariant condition.** If the
