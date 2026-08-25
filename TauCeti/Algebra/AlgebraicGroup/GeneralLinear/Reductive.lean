@@ -98,30 +98,11 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
   have hu :=
     geometricallyUnipotentPointsCommHopfAlgProperty.forall_isUnipotentPoint hJunipotent
   have hcr : Comodule.IsCompletelyReducible k (coordinateHopfAlgebra k n) (Fin n → k) := by
-    apply Comodule.IsCompletelyReducible.of_exists_isCompl
-    intro W
     cases n with
-    | zero =>
-        have hW : W = ⊥ := by
-          ext m
-          constructor
-          · intro _
-            rw [Subcomodule.mem_bot]
-            exact Subsingleton.elim _ _
-          · intro hm
-            exact (Subcomodule.mem_bot.mp hm) ▸ zero_mem W
-        refine ⟨⊤, ?_⟩
-        simpa [hW] using
-          (isCompl_bot_top : IsCompl (⊥ : Submodule k (Fin 0 → k)) ⊤)
+    | zero => exact Comodule.isCompletelyReducible_of_subsingleton
     | succ n =>
         let _ : NeZero n.succ := ⟨Nat.succ_ne_zero n⟩
-        exact (eq_bot_or_eq_top W).elim
-          (fun h ↦ ⟨⊤, by
-            simpa [h] using
-              (isCompl_bot_top : IsCompl (⊥ : Submodule k (Fin n.succ → k)) ⊤)⟩)
-          (fun h ↦ ⟨⊥, by
-            simpa [h] using
-              (isCompl_top_bot : IsCompl (⊤ : Submodule k (Fin n.succ → k)) ⊥)⟩)
+        exact Comodule.isCompletelyReducible_of_isSimpleOrder
   have htrivial :=
     mkQuotient_coact_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isCompletelyReducible
       hJnormal hu hcr

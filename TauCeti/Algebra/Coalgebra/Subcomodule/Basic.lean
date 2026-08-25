@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.LinearAlgebra.TensorProduct.RightExactness
 public import Mathlib.RingTheory.Finiteness.Basic
 public import Mathlib.RingTheory.Noetherian.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.Basic
@@ -34,6 +35,8 @@ subcomodules and the fundamental theorem of comodules. Later work can use
   underlying submodule detects the extreme subcomodules.
 * `TauCeti.Subcomodule.ne_bot_iff`: a subcomodule is nonzero exactly when it contains a nonzero
   vector.
+* `TauCeti.Subcomodule.isSimpleOrder_of_transitive`: a family of maps that preserves every
+  subcomodule and acts transitively on nonzero vectors makes the subcomodule lattice simple.
 * `TauCeti.Subcomodule.map`: the image of a subcomodule under a comodule morphism.
 * `TauCeti.Subcomodule.map_finite`: images preserve finite generation of the underlying
   submodule.
@@ -173,26 +176,21 @@ theorem mem_ofSubmodule {N : Submodule R M} {hN} {m : M} :
     m ∈ ofSubmodule (R := R) (C := C) (M := M) N hN ↔ m ∈ N :=
   Iff.rfl
 
-omit [Coalgebra R C] [Comodule R C M] in
-private theorem tensor_mem_range_top (t : M ⊗[R] C) :
-    t ∈ LinearMap.range
-      (TensorProduct.map (⊤ : Submodule R M).subtype (LinearMap.id : C →ₗ[R] C)) := by
-  induction t using TensorProduct.induction_on with
-  | zero => exact ⟨0, by simp⟩
-  | tmul m c => exact ⟨⟨m, Submodule.mem_top⟩ ⊗ₜ[R] c, by simp⟩
-  | add x y hx hy =>
-      rcases hx with ⟨x', rfl⟩
-      rcases hy with ⟨y', rfl⟩
-      exact ⟨x' + y', by simp⟩
+/-- The coaction of any element lies in the tensor product of the top submodule with `C`,
+because the inclusion of `⊤` is surjective. -/
+theorem coact_mem_tensor_top (m : M) :
+    Comodule.coact (R := R) (C := C) (M := M) m ∈
+      LinearMap.range (TensorProduct.map (⊤ : Submodule R M).subtype
+        (LinearMap.id : C →ₗ[R] C)) :=
+  LinearMap.mem_range.mpr
+    (TensorProduct.map_surjective (fun m ↦ ⟨⟨m, Submodule.mem_top⟩, rfl⟩)
+      Function.surjective_id _)
 
 /-- The full module as a subcomodule. -/
 instance instTop : Top (Subcomodule R C M) where
   top :=
     { carrier := ⊤
-      coact_mem' := by
-        intro m hm
-        exact tensor_mem_range_top (R := R) (C := C) (M := M)
-          (Comodule.coact (R := R) (C := C) (M := M) m) }
+      coact_mem' := fun m _ ↦ coact_mem_tensor_top m }
 
 @[simp]
 theorem top_toSubmodule : (⊤ : Subcomodule R C M).toSubmodule = (⊤ : Submodule R M) :=
@@ -253,24 +251,40 @@ theorem toSubmodule_eq_bot {N : Subcomodule R C M} : N.toSubmodule = ⊥ ↔ N =
 theorem ne_bot_iff {N : Subcomodule R C M} : N ≠ ⊥ ↔ ∃ m ∈ N, m ≠ 0 :=
   (not_congr toSubmodule_eq_bot).symm.trans (Submodule.ne_bot_iff N.toSubmodule)
 
-variable {N : Type x} [AddCommMonoid N] [Module R N] [Comodule R C N]
+/-- If a family of maps preserves every subcomodule and acts transitively on nonzero vectors,
+then the subcomodule lattice is simple. -/
+theorem isSimpleOrder_of_transitive {G : Type x} (v₀ : M) (hv₀ : v₀ ≠ 0)
+    (act : G → M → M)
+    (htrans : ∀ {v w : M}, v ≠ 0 → w ≠ 0 → ∃ g, act g w = v)
+    (hmem : ∀ (N : Subcomodule R C M) (g : G) {w : M}, w ∈ N → act g w ∈ N) :
+    IsSimpleOrder (Subcomodule R C M) where
+  exists_pair_ne := by
+    refine ⟨⊥, ⊤, fun h ↦ hv₀ ?_⟩
+    exact mem_bot.mp (h ▸ mem_top v₀)
+  eq_bot_or_eq_top N := by
+    by_cases hN : N = ⊥
+    · exact Or.inl hN
+    · right
+      obtain ⟨w, hwN, hw⟩ := ne_bot_iff.mp hN
+      apply Subcomodule.ext
+      intro v
+      refine ⟨fun _ ↦ mem_top v, fun _ ↦ ?_⟩
+      by_cases hv : v = 0
+      · exact hv ▸ zero_mem N
+      · obtain ⟨g, hg⟩ := htrans hv hw
+        exact hg ▸ hmem N g hwN
 
-private def mapSubtype (f : Comodule.Hom R C M N) (A : Subcomodule R C M) :
-    A.carrier →ₗ[R] A.carrier.map f.toLinearMap where
-  toFun a := ⟨f a, Submodule.mem_map_of_mem a.2⟩
-  map_add' a b := Subtype.ext (map_add f.toLinearMap (a : M) (b : M))
-  map_smul' r a := Subtype.ext (map_smul f.toLinearMap r (a : M))
+variable {N : Type x} [AddCommMonoid N] [Module R N] [Comodule R C N]
 
 private theorem image_tensor_apply (f : Comodule.Hom R C M N) (A : Subcomodule R C M)
     (t : A.carrier ⊗[R] C) :
     TensorProduct.map (A.carrier.map f.toLinearMap).subtype (LinearMap.id : C →ₗ[R] C)
-        (TensorProduct.map (mapSubtype f A) (LinearMap.id : C →ₗ[R] C) t) =
+        (TensorProduct.map (f.toLinearMap.submoduleMap A.carrier) (LinearMap.id : C →ₗ[R] C) t) =
       TensorProduct.map f.toLinearMap (LinearMap.id : C →ₗ[R] C)
         (TensorProduct.map A.carrier.subtype (LinearMap.id : C →ₗ[R] C) t) := by
-  induction t with
-  | zero => simp only [map_zero]
-  | tmul a c => rfl
-  | add x y hx hy => simp only [map_add, hx, hy]
+  have h : (A.carrier.map f.toLinearMap).subtype ∘ₗ f.toLinearMap.submoduleMap A.carrier =
+      f.toLinearMap ∘ₗ A.carrier.subtype := by ext a; simp
+  rw [TensorProduct.map_map, TensorProduct.map_map, h]
 
 /-- The image of a subcomodule under a comodule morphism. -/
 @[expose] def map (A : Subcomodule R C M) (f : Comodule.Hom R C M N) : Subcomodule R C N where
@@ -279,7 +293,8 @@ private theorem image_tensor_apply (f : Comodule.Hom R C M N) (A : Subcomodule R
     intro n hn
     rcases Submodule.mem_map.mp hn with ⟨m, hm, rfl⟩
     rcases A.coact_mem hm with ⟨t, ht⟩
-    refine ⟨TensorProduct.map (mapSubtype f A) (LinearMap.id : C →ₗ[R] C) t, ?_⟩
+    refine ⟨TensorProduct.map (f.toLinearMap.submoduleMap A.carrier)
+      (LinearMap.id : C →ₗ[R] C) t, ?_⟩
     rw [image_tensor_apply, ht]
     exact Comodule.Hom.map_coact_apply f m
 

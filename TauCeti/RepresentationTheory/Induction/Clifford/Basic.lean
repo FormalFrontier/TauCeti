@@ -340,8 +340,7 @@ theorem isSemisimpleRepresentation_comp_subtype_of_isAtom [ρ.IsIrreducible]
 subgroup of a finite-dimensional irreducible representation is semisimple. -/
 theorem isSemisimpleRepresentation_comp_subtype [ρ.IsIrreducible] [FiniteDimensional k V] :
     _root_.Representation.IsSemisimpleRepresentation (ρ.comp N.subtype) := by
-  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] _
-  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
   obtain ⟨σ, hσ⟩ := exists_isAtom (ρ.comp N.subtype)
   exact isSemisimpleRepresentation_comp_subtype_of_isAtom ρ hσ
 

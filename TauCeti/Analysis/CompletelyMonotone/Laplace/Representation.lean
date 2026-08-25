@@ -646,6 +646,21 @@ lemma integrable (h : RepresentsLaplaceOnIoi μ f) {t : ℝ} (ht : 0 < t) :
 lemma eq_laplaceTransform (h : RepresentsLaplaceOnIoi μ f) {t : ℝ} (ht : 0 < t) :
     f t = laplaceTransform μ t := h.2 t ht
 
+/-- A measure representing a function by its Laplace transform on `(0, ∞)` is sigma-finite. -/
+lemma sigmaFinite (h : RepresentsLaplaceOnIoi μ f) : SigmaFinite μ := by
+  have hint : Integrable (fun x : ℝ≥0 => Real.exp (-(x : ℝ))) μ := by
+    simpa using h.integrable one_pos
+  refine ⟨⟨⟨fun n : ℕ => Iic (n : ℝ≥0), fun _ => trivial, fun n => ?_, ?_⟩⟩⟩
+  · have hsubset : Iic (n : ℝ≥0) ⊆
+        {x | Real.exp (-(n : ℝ)) ≤ Real.exp (-(x : ℝ))} := by
+      intro x hx
+      exact Real.exp_le_exp.mpr (neg_le_neg (by exact_mod_cast hx))
+    exact (measure_mono hsubset).trans_lt
+      (hint.measure_ge_lt_top (Real.exp_pos (-(n : ℝ))))
+  · ext x
+    simp only [mem_iUnion, mem_Iic, mem_univ, iff_true]
+    exact exists_nat_ge x
+
 /-- A representation transports along agreement on the positive half-line: the predicate
 constrains `f` only there. -/
 protected lemma congr {g : ℝ → ℝ} (hf : RepresentsLaplaceOnIoi μ f) (h : EqOn g f (Ioi 0)) :
