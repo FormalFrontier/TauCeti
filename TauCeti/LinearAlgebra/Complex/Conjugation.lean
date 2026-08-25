@@ -28,7 +28,8 @@ Everything is stated for an arbitrary `V`; no finite-dimensionality is used anyw
 ## Main definitions
 
 * `TauCeti.realPoints`: the real points of a conjugate-linear map, as a `Submodule ℝ V`.
-* `TauCeti.conjRealPart` and `TauCeti.conjImagPart`: the two real points a vector decomposes into.
+* `TauCeti.conjRealPart` and `TauCeti.conjImagPart`: the two real points a vector decomposes into;
+  `TauCeti.conjRealPart_def` and `TauCeti.conjImagPart_def` are their defining formulas.
 * `TauCeti.realPointsLift`: the canonical `ℂ`-linear map `ℂ ⊗[ℝ] realPoints K →ₗ[ℂ] V`.
 * `TauCeti.realPointsEquiv`: that map as a `ℂ`-linear isomorphism, for involutive `K`.
 * `TauCeti.tmulConj`: the conjugation `c ⊗ₜ w ↦ conj c ⊗ₜ w` of a complexification `ℂ ⊗[ℝ] W`.
@@ -37,8 +38,9 @@ Everything is stated for an arbitrary `V`; no finite-dimensionality is used anyw
 
 * `TauCeti.conjRealPart_add_I_smul_conjImagPart`: the decomposition
   `v = conjRealPart K v + I • conjImagPart K v`, which makes `TauCeti.realPointsLift` surjective.
-* `TauCeti.realPointsLift_bijective` and `TauCeti.realPointsEquiv`: **a complex vector space is the
-  complexification of the real points of any conjugation on it.**
+* `TauCeti.realPointsLift_injective`, `TauCeti.realPointsLift_surjective` and
+  `TauCeti.realPointsEquiv`: **a complex vector space is the complexification of the real points of
+  any conjugation on it.**
 * `TauCeti.exists_one_tmul_add_I_tmul`: every element of `ℂ ⊗[ℝ] W` is `1 ⊗ₜ w₁ + I ⊗ₜ w₂`; this
   is what makes the lift injective.
 * `TauCeti.tmulConj_involutive`, `TauCeti.tmulConj_tmul` and
@@ -55,6 +57,10 @@ would either duplicate it or invert the dependency between `TauCeti.LinearAlgebr
 fields.  For the same reason `TauCeti.realPoints` asks only for the semilinear map: the subspace
 makes sense without involutivity, and only the complexification theorem needs it.
 
+No definition here exposes its body: `TauCeti.mem_realPoints`, `TauCeti.conjRealPart_def`,
+`TauCeti.conjImagPart_def`, `TauCeti.realPointsLift_tmul`, `TauCeti.realPointsEquiv_tmul` and
+`TauCeti.tmulConj_tmul` are the characterizations a consumer works from.
+
 The real scalar structure on `V` is Mathlib's `Module.complexToReal`, the one `Module ℂ V` induces,
 so `r • v` and `(r : ℂ) • v` are definitionally equal and no scalar tower hypothesis is carried.
 
@@ -64,7 +70,7 @@ so `r • v` and `(r : ℂ) • v` are definitionally equal and no scalar tower 
   conjugation attached to an invariant form realizes a representation over `ℝ`.
 -/
 
-@[expose] public section
+public section
 
 open scoped TensorProduct
 
@@ -78,21 +84,18 @@ variable {V : Type*} [AddCommGroup V] [Module ℂ V]
 subspace over `ℝ` but not over `ℂ`, since `K (c • v) = conj c • K v`. -/
 def realPoints (K : V →ₛₗ[starRingEnd ℂ] V) : Submodule ℝ V where
   carrier := {v | K v = v}
-  add_mem' {v w} hv hw := by
-    change K v = v at hv
-    change K w = w at hw
-    change K (v + w) = v + w
-    rw [map_add, hv, hw]
+  add_mem' {v w} (hv : K v = v) (hw : K w = w) := by
+    rw [Set.mem_ofPred_eq, map_add, hv, hw]
   zero_mem' := map_zero K
-  smul_mem' r v hv := by
-    change K v = v at hv
-    change K ((r : ℂ) • v) = (r : ℂ) • v
-    rw [map_smulₛₗ, Complex.conj_ofReal, hv]
+  smul_mem' r v (hv : K v = v) := by
+    -- `Complex.coe_smul` turns the `ℝ`-action of `Module.complexToReal` into the `ℂ`-action, the
+    -- one the semilinearity of `K` speaks about.
+    rw [Set.mem_ofPred_eq, ← Complex.coe_smul r, map_smulₛₗ, Complex.conj_ofReal, hv]
 
 @[simp]
 theorem mem_realPoints {K : V →ₛₗ[starRingEnd ℂ] V} {v : V} :
     v ∈ realPoints K ↔ K v = v :=
-  Iff.rfl
+  (Iff.rfl)
 
 variable {K : V →ₛₗ[starRingEnd ℂ] V}
 
@@ -114,6 +117,14 @@ variable (K) in
 `½ I • (K v - v)`, the coefficient of `I` in `TauCeti.conjRealPart_add_I_smul_conjImagPart`. -/
 noncomputable def conjImagPart (v : V) : V := (2⁻¹ : ℝ) • (Complex.I • (K v - v))
 
+/-- The defining formula for the real part, the body of `TauCeti.conjRealPart` not being exposed. -/
+theorem conjRealPart_def (v : V) : conjRealPart K v = (2⁻¹ : ℝ) • (v + K v) := (rfl)
+
+/-- The defining formula for the imaginary part, the body of `TauCeti.conjImagPart` not being
+exposed. -/
+theorem conjImagPart_def (v : V) :
+    conjImagPart K v = (2⁻¹ : ℝ) • (Complex.I • (K v - v)) := (rfl)
+
 theorem conjRealPart_mem (hK : Function.Involutive K) (v : V) : conjRealPart K v ∈ realPoints K :=
   Submodule.smul_mem _ _ (add_conj_mem_realPoints hK v)
 
@@ -130,7 +141,8 @@ theorem conjRealPart_add_I_smul_conjImagPart (v : V) :
   have hsum : (v + K v) + (v - K v) = (2 : ℝ) • v := by
     rw [two_smul]
     abel
-  rw [conjRealPart, conjImagPart, smul_comm Complex.I ((2⁻¹ : ℝ)), hI, ← smul_add, hsum, smul_smul]
+  rw [conjRealPart_def, conjImagPart_def, smul_comm Complex.I ((2⁻¹ : ℝ)), hI, ← smul_add, hsum,
+    smul_smul]
   norm_num
 
 /-! ### A complexification splits along `1` and `I` -/
@@ -174,8 +186,8 @@ theorem realPointsLift_surjective (hK : Function.Involutive K) :
     rw [map_add, realPointsLift_tmul, realPointsLift_tmul, one_smul]
     exact conjRealPart_add_I_smul_conjImagPart v⟩
 
-/-- The lift is injective for **any** conjugate-linear `K`: only the surjectivity below uses that
-`K` is involutive. -/
+/-- The lift is injective for **any** conjugate-linear `K`: only its surjectivity uses that `K` is
+involutive. -/
 theorem realPointsLift_injective : Function.Injective (realPointsLift K) := by
   rw [injective_iff_map_eq_zero]
   intro u hu
@@ -202,17 +214,14 @@ theorem realPointsLift_injective : Function.Injective (realPointsLift K) := by
   rw [h₁, h₂]
   simp
 
-theorem realPointsLift_bijective (hK : Function.Involutive K) :
-    Function.Bijective (realPointsLift K) :=
-  ⟨realPointsLift_injective, realPointsLift_surjective hK⟩
-
 /-- **A complex vector space is the complexification of the real points of any conjugation on
 it.**  The isomorphism is `c ⊗ₜ w ↦ c • w`; surjectivity is the decomposition
 `TauCeti.conjRealPart_add_I_smul_conjImagPart`, and injectivity is that a relation `w₁ + I • w₂ = 0`
 between real points is killed by adding and subtracting its conjugate. -/
 noncomputable def realPointsEquiv (hK : Function.Involutive K) :
     ℂ ⊗[ℝ] realPoints K ≃ₗ[ℂ] V :=
-  LinearEquiv.ofBijective (realPointsLift K) (realPointsLift_bijective hK)
+  LinearEquiv.ofBijective (realPointsLift K)
+    ⟨realPointsLift_injective, realPointsLift_surjective hK⟩
 
 @[simp]
 theorem realPointsEquiv_tmul (hK : Function.Involutive K) (c : ℂ) (w : realPoints K) :
@@ -243,7 +252,7 @@ noncomputable def tmulConj : (ℂ ⊗[ℝ] W) →ₛₗ[starRingEnd ℂ] (ℂ �
 @[simp]
 theorem tmulConj_tmul (c : ℂ) (w : W) :
     tmulConj W (c ⊗ₜ[ℝ] w) = (starRingEnd ℂ) c ⊗ₜ[ℝ] w :=
-  rfl
+  (rfl)
 
 theorem tmulConj_involutive : Function.Involutive (tmulConj W) := by
   intro u

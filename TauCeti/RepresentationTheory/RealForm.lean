@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Complex.Module
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RingTheory.Finiteness.Descent
 public import TauCeti.LinearAlgebra.Complex.Conjugation
@@ -297,26 +296,30 @@ variable {K : V →ₛₗ[starRingEnd ℂ] V} (h : IsRealStructure ρ K)
 include h
 
 /-- The action preserves the real points of a real structure: that is exactly the commutation
-`K (ρ g v) = ρ g (K v)` read on a fixed vector. -/
-theorem apply_mem_realPoints (g : G) ⦃v : V⦄ (hv : v ∈ realPoints K) :
-    ρ g v ∈ realPoints K := by
-  rw [mem_realPoints] at hv ⊢
-  rw [h.intertwines, hv]
+`K (ρ g v) = ρ g (K v)` read on a fixed vector.  It is stated for the `ℝ`-linear restriction
+`(ρ g).restrictScalars ℝ` of the action, which is the shape `LinearMap.restrict` consumes in
+`Representation.IsRealStructure.rep`. -/
+theorem apply_mem_realPoints (g : G) :
+    ∀ v ∈ realPoints K, ((ρ g).restrictScalars ℝ) v ∈ realPoints K := by
+  intro v hv
+  rw [mem_realPoints] at hv
+  rw [LinearMap.coe_restrictScalars, mem_realPoints, h.intertwines, hv]
 
 /-- **The real representation carried by the real points** of a real structure: each `ρ g`
 restricts to the real points, where only its `ℝ`-linearity survives. -/
-@[expose]
 def rep : Representation ℝ G (realPoints K) where
   toFun g := LinearMap.restrict ((ρ g).restrictScalars ℝ) (h.apply_mem_realPoints g)
   map_one' := LinearMap.ext fun w => Subtype.ext <| by
-    change ρ 1 (w : V) = (w : V)
-    rw [map_one, Module.End.one_apply]
+    simp only [LinearMap.coe_restrict_apply, LinearMap.coe_restrictScalars, map_one,
+      Module.End.one_apply]
   map_mul' g g' := LinearMap.ext fun w => Subtype.ext <| by
-    change ρ (g * g') (w : V) = ρ g (ρ g' (w : V))
-    rw [map_mul, Module.End.mul_apply]
+    simp only [LinearMap.coe_restrict_apply, LinearMap.coe_restrictScalars, map_mul,
+      Module.End.mul_apply]
 
+-- `(rfl)`, not `rfl`: the body of `rep` is not `@[expose]`d, so a bare `rfl` proof would be
+-- rechecked against the exported environment, where the restriction is opaque.
 @[simp]
-theorem coe_rep_apply (g : G) (w : realPoints K) : (h.rep g w : V) = ρ g (w : V) := rfl
+theorem coe_rep_apply (g : G) (w : realPoints K) : (h.rep g w : V) = ρ g (w : V) := (rfl)
 
 /-- **The real points of a real structure are a real form.**  The `ℂ`-linear isomorphism is
 `TauCeti.realPointsEquiv`, which says that `V` is the complexification of the real points, and it
@@ -361,7 +364,7 @@ theorem IsRealForm.exists_isRealStructure (h : IsRealForm ρ σ) :
       exact tmulConj_baseChange (σ g) (e.symm v)
     have hsymm : e.symm (ρ g v) = baseChange ℂ σ g (e.symm v) := by
       rw [e.symm_apply_eq, hφ, e.apply_symm_apply]
-    change e (tmulConj W (e.symm (ρ g v))) = ρ g (e (tmulConj W (e.symm v)))
+    simp only [LinearMap.coe_mk, AddHom.coe_mk]
     rw [hsymm, hu, hφ]
 
 /-- **Realizability over `ℝ` is the existence of a real structure.**  This is the working form of
