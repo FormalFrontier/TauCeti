@@ -39,10 +39,13 @@ is the composite of that generation lemma with the line lemma.
 
 Two consequences package the cover: the comparison morphism admits no endomorphism of `Pᵢ` over
 `Sᵢ` other than the identity (rigidity), and every projective representation mapping onto `Sᵢ`
-has `Pᵢ` as a direct summand (minimality). Both are sharpenings, for `Pᵢ ↠ Sᵢ`, of what an
-arbitrary projective cover gives: rigidity up to isomorphism rather than up to equality, and a
-split factorization. Uniqueness — that any two projective covers of `Sᵢ` are isomorphic over `Sᵢ`,
-so `Pᵢ` is *the* projective cover of `Sᵢ` — is the general categorical statement
+has `Pᵢ` as a direct summand (minimality). They stand in different relations to the general
+theory. Rigidity *sharpens* it: `TauCeti.IsEssentialEpi.isIso_of_comp_eq` concludes only that such
+an endomorphism is an isomorphism, while here it is the identity. Minimality is an instantiation
+rather than a sharpening — the general split-factorization statement
+`TauCeti.IsEssentialEpi.exists_comp_eq_and_isSplitEpi` read at `Pᵢ ↠ Sᵢ`. Uniqueness — that any
+two projective covers of `Sᵢ` are isomorphic over `Sᵢ`, so `Pᵢ` is *the* projective cover of
+`Sᵢ` — is the general categorical statement
 `TauCeti.IsEssentialEpi.exists_iso`, instantiated here at `Pᵢ ↠ Sᵢ`.
 
 The cover is stated in the category of representations, not through the module-level

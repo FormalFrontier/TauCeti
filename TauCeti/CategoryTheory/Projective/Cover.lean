@@ -18,10 +18,14 @@ epimorphism as soon as `g ≫ π` is one. That epimorphism condition is the defi
 over it.
 
 The familiar reading of minimality, that no proper subobject of `P` already maps onto `M`, is
-intuition rather than a restatement: it matches the definition in a *balanced* category, where a
-morphism that is both a monomorphism and an epimorphism is an isomorphism — a module or
-representation category, say. In an arbitrary category the two conditions need not agree, and it
-is the epimorphism condition, not the subobject one, that the results below use.
+intuition rather than a restatement, and the two are not interchangeable. In a *balanced*
+category, where a morphism that is both a monomorphism and an epimorphism is an isomorphism,
+essentiality *implies* subobject-minimality: a subobject `m : P' ⟶ P` with `m ≫ π` an epimorphism
+is an epimorphism by essentiality, hence an isomorphism. The converse needs more than
+balancedness — an epimorphism–monomorphism factorization, to reduce an arbitrary `g : X ⟶ P` to
+its image before applying minimality to that subobject — which module and representation
+categories do have, so there the two conditions agree. In an arbitrary category they need not,
+and it is the epimorphism condition, not the subobject one, that the results below use.
 
 Mathlib has projective objects (`CategoryTheory.Projective`) and projective *presentations*
 (`CategoryTheory.ProjectivePresentation`, an epimorphism from a projective with no minimality
@@ -97,8 +101,9 @@ open CategoryTheory
 variable {C : Type u} [Category.{v} C]
 
 /-- An **essential epimorphism** is an epimorphism `π : P ⟶ M` such that a morphism `g` into `P` is
-an epimorphism as soon as `g ≫ π` is one. In a balanced category this is the statement that
-nothing smaller than `P` already covers `M`, but no subobject theory is assumed here.
+an epimorphism as soon as `g ≫ π` is one. In a balanced category it implies that nothing smaller
+than `P` already covers `M`; the converse implication needs in addition an epimorphism–monomorphism
+factorization, as a module or representation category has. No subobject theory is assumed here.
 
 An essential epimorphism from a projective object is a **projective cover**. Over a module
 category this is exactly `TauCeti.IsProjectiveCover`, by
