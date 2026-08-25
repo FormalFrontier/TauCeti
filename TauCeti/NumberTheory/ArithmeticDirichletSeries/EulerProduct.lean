@@ -88,18 +88,9 @@ theorem constantCoeff_localPowerSeries (f : IdealArithmeticFunction K)
 
 /-- The canonical local arithmetic factor at `P`, obtained by substituting `N(P)⁻ˢ` into the
 formal prime-power series through Mathlib's `ArithmeticFunction.ofPowerSeries`. -/
-@[expose]
 noncomputable def localArithmeticFactor (f : IdealArithmeticFunction K)
     (P : HeightOneSpectrum (𝓞 K)) : ArithmeticFunction ℂ :=
   ArithmeticFunction.ofPowerSeries (Ideal.absNorm P.asIdeal) (localPowerSeries f P)
-
-/-- The canonical local arithmetic factor is Mathlib's arithmetic function associated to the
-canonical local power series. -/
-theorem localArithmeticFactor_def (f : IdealArithmeticFunction K)
-    (P : HeightOneSpectrum (𝓞 K)) :
-    localArithmeticFactor f P =
-      ArithmeticFunction.ofPowerSeries (Ideal.absNorm P.asIdeal) (localPowerSeries f P) :=
-  rfl
 
 /-- At a power of `N(P)`, the local arithmetic factor is the corresponding value at `P ^ n`. -/
 @[simp]
@@ -154,8 +145,7 @@ theorem tendsTo_eulerProduct_localArithmeticFactor (f : IdealArithmeticFunction 
         ArithmeticFunction.eulerProduct f.localArithmeticFactor n := by
   have hlocal : f.localArithmeticFactor = fun P ↦
       ArithmeticFunction.ofPowerSeries (Ideal.absNorm P.asIdeal) (localPowerSeries f P) := by
-    funext P
-    exact localArithmeticFactor_def f P
+    rfl
   rw [hlocal]
   exact
     ArithmeticFunction.tendsTo_eulerProduct_ofPowerSeries

@@ -80,18 +80,6 @@ namespace TauCeti
 
 open scoped nonZeroDivisors NumberField
 
-namespace Ideal
-
-variable {K : Type*} [Field K]
-
-/-- If two nonzero ideals multiply to the unit ideal, then the first ideal is the unit ideal. -/
-theorem eq_one_of_mul_eq_one {I J : (Ideal (𝓞 K))⁰} (h : I * J = 1) : I = 1 := by
-  have hunit : IsUnit (I : Ideal (𝓞 K)) :=
-    isUnit_iff_exists_inv.mpr ⟨(J : Ideal (𝓞 K)), by simpa using congrArg Subtype.val h⟩
-  exact Subtype.ext ((Ideal.isUnit_iff.mp hunit).trans Ideal.one_eq_top.symm)
-
-end Ideal
-
 namespace IdealArithmeticFunction
 
 variable {K : Type*} [Field K]
