@@ -48,14 +48,13 @@ degree `2` where discreteness enters the denominator, `B²` being the image of t
 
 ## Implementation notes
 
-The universes are pinned by the pin and not by the mathematics. Mathlib states its low-degree
-group cohomology for `{k G : Type u}`, so taking `k = ℤ` forces `G` into `Type 0` in every
-statement below that mentions a `Rep ℤ G`; and it states `groupCohomology` for `A : Rep.{u} k G`,
-which forces the coefficient module into that universe too. So the three comparison isomorphisms
-carry `G M : Type`, while the differentials, membership dictionaries, and numerator equivalences
-keep every universe not constrained by Mathlib's representation API arbitrary. `C1_eq_top` and
-`C2_eq_top` mention nothing of Mathlib's theory and are fully polymorphic. When the pin drops these
-restrictions the binders here can simply be widened.
+The universes are pinned by the pin and not by the mathematics. Mathlib's low-degree
+`groupCohomology` comparison API forces the group and coefficient module into `Type 0` when the
+coefficient ring is `ℤ`. Thus the three final comparison isomorphisms carry `G M : Type`, while the
+differentials, membership dictionaries, and numerator equivalences keep every universe not
+constrained by Mathlib's representation API arbitrary. `C1_eq_top` and `C2_eq_top` mention nothing
+of Mathlib's theory and are fully polymorphic. When the pin drops these restrictions the binders
+here can simply be widened.
 
 The isomorphisms are built as `AddEquiv`s and not as isomorphisms in `ModuleCat ℤ`. The explicit
 `H¹` and `H²` are bare additive groups by construction, their inherited quotient topology being the
