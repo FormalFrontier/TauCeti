@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Geometry.Diffeomorphism.Diffeotopy
+public import TauCeti.Geometry.Manifold.SmoothAmbientIsotopic.Basic
 public import TauCeti.Geometry.Manifold.SmoothEmbedding.ContinuousAmbientIsotopy.Basic
 
 /-!
