@@ -5,10 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.LocallyConvex.Separation
 public import TauCeti.Analysis.Contour.Cycle.Winding
 public import TauCeti.Analysis.Contour.NullHomologous
 public import TauCeti.Analysis.Contour.Winding.UnboundedComponent
+import TauCeti.Analysis.Contour.Winding.Proximity
 
 /-!
 # Curves confined to a half-plane, and cycles in a convex domain
@@ -18,10 +18,9 @@ line through `w`: the closed half-plane on `w`'s side of that line is convex, he
 misses the curve, and is unbounded, so `w` lies in an unbounded component of the curve complement
 and `TauCeti.Contour.windingNumber_eq_zero_of_unbounded_component` applies.
 
-That is exactly the geometry produced by separating a point from a convex open set. Consequently
-**every closed curve in a convex open set `Ω` is null-homologous in `Ω`**: a point outside `Ω` is
-strictly separated from `Ω` by a real hyperplane (`geometric_hahn_banach_open_point`), which
-confines the curve to one open half-plane and leaves the point on the closed complementary one.
+Consequently **every closed curve in a convex set `Ω` is null-homologous in `Ω`**: the
+straight-line contraction to any point of the curve stays in `Ω`, and hence avoids every point
+outside `Ω`.
 
 This discharges the `TauCeti.Contour.IsNullHomologous` hypothesis carried by the Layer 3 homology
 Cauchy theorem and by everything above it, on the domains that ordinary applications supply — a
@@ -33,9 +32,9 @@ produce a contracting homotopy; convexity of the ambient domain asks for nothing
 
 * `TauCeti.Contour.windingNumber_eq_zero_of_re_mul_lt` — a closed curve strictly on one side
   of a line through `w` has winding number `0` about `w`.
-* `TauCeti.Contour.windingNumber_eq_zero_of_convex` — a closed curve in a convex open set has
+* `TauCeti.Contour.windingNumber_eq_zero_of_convex` — a closed curve in a convex set has
   winding number `0` about every point outside that set.
-* `TauCeti.Contour.isNullHomologous_of_convex` — a closed piecewise-`C¹` curve in a convex open
+* `TauCeti.Contour.isNullHomologous_of_convex` — a closed piecewise-`C¹` curve in a convex
   set is null-homologous there, and `TauCeti.Contour.Cycle.isNullHomologous_of_convex` for a
   cycle.
 
@@ -126,52 +125,28 @@ theorem windingNumber_eq_zero_of_re_mul_lt {P : Set ℝ} {c : ℂ} (hc : c ≠ 0
       (mem_farHalfPlane.mpr le_rfl) hsub
   exact fun hbdd ↦ not_isBounded_farHalfPlane hc w (hbdd.subset hcomp)
 
-/-- **The winding number vanishes at every point outside a convex open set containing the curve.**
-If the closed curve `γ` stays in a convex open `Ω` and `w ∉ Ω`, then `n_w(γ) = 0`.
-
-Geometric Hahn–Banach separates `w` from `Ω` by a real hyperplane; writing that functional as
-`z ↦ (c * z).re` confines `γ` to one side of the line through `w` and
-`TauCeti.Contour.windingNumber_eq_zero_of_re_mul_lt` concludes. -/
-theorem windingNumber_eq_zero_of_convex {Ω : Set ℂ} {P : Set ℝ} (hconv : Convex ℝ Ω)
-    (hopen : IsOpen Ω) (hclosed : γ a = γ b) (hP : P.Countable)
-    (hγ_cont : ContinuousOn γ (uIcc a b))
-    (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
-    (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) MeasureTheory.volume a b)
+/-- **The winding number vanishes at every point outside a convex set containing the curve.**
+If the closed piecewise-`C¹` curve `γ` stays in a convex `Ω` and `w ∉ Ω`, then `n_w(γ) = 0`.
+Indeed, the straight-line contraction of `γ` to its basepoint stays in `Ω`, so it avoids `w`. -/
+theorem windingNumber_eq_zero_of_convex {Ω : Set ℂ} (hconv : Convex ℝ Ω)
+    (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
     (hγΩ : ∀ t ∈ uIcc a b, γ t ∈ Ω) (hw : w ∉ Ω) :
     windingNumber γ a b w = 0 := by
-  obtain ⟨L, hL⟩ := geometric_hahn_banach_open_point hconv hopen hw
-  -- Represent the separating functional as `z ↦ (c * z).re` for a complex number `c`.
-  obtain ⟨c, hrepr⟩ : ∃ c : ℂ, ∀ z : ℂ, (c * z).re = L z := by
-    refine ⟨(L 1 : ℂ) - (L Complex.I : ℂ) * Complex.I, fun z ↦ ?_⟩
-    have hz : L z = z.re * L 1 + z.im * L Complex.I := by
-      conv_lhs =>
-        rw [show z = (z.re : ℝ) • (1 : ℂ) + (z.im : ℝ) • Complex.I from by
-          simp [Complex.real_smul]]
-      rw [map_add, map_smul, map_smul]
-      simp
-    rw [hz]
-    simp only [Complex.mul_re, Complex.sub_re, Complex.sub_im, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.mul_im, Complex.I_re, Complex.I_im]
-    ring
-  have hside : ∀ t ∈ uIcc a b, (c * γ t).re < (c * w).re := by
-    intro t ht
-    rw [hrepr, hrepr]
-    exact hL _ (hγΩ t ht)
-  have hc : c ≠ 0 := by
-    rintro rfl
-    have := hside a left_mem_uIcc
-    simp at this
-  exact windingNumber_eq_zero_of_re_mul_lt hc hclosed hP hγ_cont hγ_diff hderiv_int hside
+  let γ₀ : ℝ → ℂ := Function.const ℝ (γ a)
+  have hγ₀ : IsPiecewiseC1On γ₀ a b :=
+    IsPiecewiseC1On.of_contDiffOn contDiff_const.contDiffOn
+  have hseg : ∀ t ∈ uIcc a b, w ∉ segment ℝ (γ t) (γ₀ t) := by
+    intro t ht hwt
+    exact hw (hconv.segment_subset (hγΩ t ht) (hγΩ a left_mem_uIcc) hwt)
+  rw [← hγ.windingNumber_eq_of_notMem_segment hγ₀ hclosed rfl hseg]
+  exact windingNumber_const (γ a) a b w
 
-/-- **A closed piecewise-`C¹` curve in a convex open set is null-homologous there.** The
-piecewise-`C¹` regularity supplies the raw hypotheses of
-`TauCeti.Contour.windingNumber_eq_zero_of_convex` from its finite breakpoint set. -/
-theorem isNullHomologous_of_convex {Ω : Set ℂ} (hconv : Convex ℝ Ω) (hopen : IsOpen Ω)
+/-- **A closed piecewise-`C¹` curve in a convex set is null-homologous there.** -/
+theorem isNullHomologous_of_convex {Ω : Set ℂ} (hconv : Convex ℝ Ω)
     (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b) (hγΩ : ∀ t ∈ uIcc a b, γ t ∈ Ω) :
     IsNullHomologous γ a b Ω := by
-  obtain ⟨P, hP, hγ_diff⟩ := hγ.exists_countable_differentiableAt
-  exact isNullHomologous_iff.mpr fun w hw ↦ windingNumber_eq_zero_of_convex hconv hopen hclosed
-    hP hγ.continuousOn hγ_diff hγ.intervalIntegrable_deriv hγΩ hw
+  exact isNullHomologous_iff.mpr fun w hw ↦
+    windingNumber_eq_zero_of_convex hconv hγ hclosed hγΩ hw
 
 /-- **A closed piecewise-`C¹` curve in a ball is null-homologous there** — the disc case of
 `TauCeti.Contour.isNullHomologous_of_convex`, and the shape in which Mathlib's disc Cauchy theory
@@ -179,23 +154,23 @@ is usually met. -/
 theorem isNullHomologous_of_mapsTo_ball {c : ℂ} {r : ℝ} (hγ : IsPiecewiseC1On γ a b)
     (hclosed : γ a = γ b) (hγr : ∀ t ∈ uIcc a b, γ t ∈ Metric.ball c r) :
     IsNullHomologous γ a b (Metric.ball c r) :=
-  isNullHomologous_of_convex (convex_ball c r) Metric.isOpen_ball hγ hclosed hγr
+  isNullHomologous_of_convex (convex_ball c r) hγ hclosed hγr
 
 namespace Cycle
 
-/-- **A cycle in a convex open set is null-homologous there.** Every generator of the cycle is a
+/-- **A cycle in a convex set is null-homologous there.** Every generator of the cycle is a
 closed piecewise-`C¹` curve confined to `Ω`, so each has vanishing winding number outside `Ω` by
 `TauCeti.Contour.isNullHomologous_of_convex`, and the cycle winding number is their
 `ℤ`-combination. -/
 theorem isNullHomologous_of_convex {C : Cycle} {Ω : Set ℂ} (hconv : Convex ℝ Ω)
-    (hopen : IsOpen Ω) (hC : IsIn C Ω) : IsNullHomologous C Ω := by
+    (hC : IsIn C Ω) : IsNullHomologous C Ω := by
   refine isNullHomologous_iff.mpr fun w hw ↦ ?_
   rw [windingNumber_eq_sum_support]
   refine Finset.sum_eq_zero fun δ hδ ↦ ?_
   have hδΩ : ∀ t ∈ uIcc δ.a δ.b, δ t ∈ Ω := fun t ht ↦
     isIn_iff.mp hC (mem_trace_iff.mpr ⟨δ, hδ, t, ht, rfl⟩)
   rw [TauCeti.Contour.isNullHomologous_iff.mp
-    (TauCeti.Contour.isNullHomologous_of_convex hconv hopen δ.isPiecewiseC1On
+    (TauCeti.Contour.isNullHomologous_of_convex hconv δ.isPiecewiseC1On
       δ.source_eq_target hδΩ) w hw, mul_zero]
 
 end Cycle

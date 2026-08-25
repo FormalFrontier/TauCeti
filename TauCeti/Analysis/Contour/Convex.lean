@@ -18,8 +18,9 @@ public import TauCeti.Analysis.Contour.Winding.HalfPlane
 Layer 3 of the contour integration roadmap proves the homology Cauchy theorem, and Layers 2 and 4
 state the residue theorems, for a cycle that is **null-homologous** in the domain of holomorphy.
 That hypothesis is the right one — it is exactly what the proofs need — but it is not the one an
-application arrives with. An application arrives with a disc, a half-plane, a strip, a rectangle,
-or a triangle, and a contour drawn inside it.
+application arrives with. An application arrives with an open disc, half-plane, strip, or
+rectangle, or with a convex open neighborhood of a rectangle or triangle, and a contour drawn
+inside it.
 
 `TauCeti.Contour.isNullHomologous_of_convex` closes that gap: a closed curve in a **convex open**
 set is null-homologous there. This file records the resulting hypothesis-free statements, one per
@@ -86,13 +87,13 @@ every closed piecewise-`C¹` curve contained in a convex open set.
 
 This is the homology Cauchy theorem `TauCeti.Contour.homologyCauchyTheorem` with its
 null-homology hypothesis discharged by convexity, and it is the form in which Cauchy's theorem
-is usually applied: on a disc, a half-plane, a strip, or a rectangle. -/
+is usually applied: on an open disc, half-plane, strip, or rectangle. -/
 theorem cauchyTheorem_convex (hconv : Convex ℝ Ω) (hopen : IsOpen Ω)
     (hf : DifferentiableOn ℂ f Ω) (hγ : IsPiecewiseC1On γ a b)
     (hγΩ : ∀ t ∈ uIcc a b, γ t ∈ Ω) (hclosed : γ a = γ b) :
     ∫ t in a..b, deriv γ t • f (γ t) = 0 :=
   homologyCauchyTheorem hopen γ a b hγ hγΩ hclosed hf
-    (isNullHomologous_of_convex hconv hopen hγ hclosed hγΩ)
+    (isNullHomologous_of_convex hconv hγ hclosed hγΩ)
 
 /-- **Cauchy's theorem on a disc** — the specialisation of
 `TauCeti.Contour.cauchyTheorem_convex` to `Metric.ball`, reconciling the raw-curve development
@@ -117,7 +118,7 @@ theorem cauchyIntegralFormula_iteratedDeriv_convex {z : ℂ} (hconv : Convex ℝ
       = 2 * (Real.pi : ℂ) * Complex.I * windingNumber γ a b z *
           (iteratedDeriv k f z / (k.factorial : ℂ)) :=
   cauchyIntegralFormula_iteratedDeriv_nullHomologous hopen hf hγ hγΩ hclosed
-    (isNullHomologous_of_convex hconv hopen hγ hclosed hγΩ) hz hoff k
+    (isNullHomologous_of_convex hconv hγ hclosed hγΩ) hz hoff k
 
 /-- **Cauchy's integral formula on a convex open set.** For `f` holomorphic on a convex open `Ω`,
 a closed piecewise-`C¹` curve `γ` in `Ω`, and `z ∈ Ω` off the curve,
@@ -130,7 +131,7 @@ theorem cauchyIntegralFormula_convex {z : ℂ} (hconv : Convex ℝ Ω) (hopen : 
     ∫ t in a..b, deriv γ t • (f (γ t) / (γ t - z))
       = 2 * (Real.pi : ℂ) * Complex.I * windingNumber γ a b z * f z :=
   cauchyIntegralFormula_nullHomologous hopen hf hγ hγΩ hclosed
-    (isNullHomologous_of_convex hconv hopen hγ hclosed hγΩ) hz hoff
+    (isNullHomologous_of_convex hconv hγ hclosed hγΩ) hz hoff
 
 /-- **Cauchy's integral formula on a disc** — the `Metric.ball` case of
 `TauCeti.Contour.cauchyIntegralFormula_convex`. -/
@@ -158,7 +159,7 @@ theorem classicalResidueTheorem_convex {S : Finset ℂ} (hconv : Convex ℝ Ω) 
     ∫ t in a..b, deriv γ t • f (γ t)
       = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber γ a b s * residue f s :=
   classicalResidueTheorem_nullHomologous hopen hf hmero hγ hγΩ hclosed hoff
-    (isNullHomologous_of_convex hconv hopen hγ hclosed hγΩ)
+    (isNullHomologous_of_convex hconv hγ hclosed hγΩ)
 
 /-- **The argument principle on a convex open set.** For `f` analytic and non-vanishing on a
 convex open `Ω` off a finite `S`, meromorphic of order `ord` at each point of `S` lying in `Ω`,
@@ -176,7 +177,7 @@ theorem argumentPrinciple_convex {S : Finset ℂ} {ord : ℂ → ℤ} (hconv : C
     ∫ t in a..b, deriv γ t • logDeriv f (γ t)
       = 2 * (Real.pi : ℂ) * Complex.I * ∑ z ∈ S, windingNumber γ a b z * (ord z : ℂ) :=
   argumentPrinciple_nullHomologous hopen hoffS hmero hord hγ hγΩ hclosed hγoff
-    (isNullHomologous_of_convex hconv hopen hγ hclosed hγΩ)
+    (isNullHomologous_of_convex hconv hγ hclosed hγΩ)
 
 /-- **The generalized residue theorem on a convex open set, simple-pole regime.** Let `Ω` be
 convex and open, `S ⊆ Ω` finite, `f` holomorphic on `Ω ∖ S` with at worst a simple pole at each
@@ -187,8 +188,8 @@ principal value of the contour integral is
 
 with the generalized, possibly non-integer, winding numbers as weights. The curve is free to pass
 **through** the singularities; conditions (A′) and (B) of Hungerbühler–Wasem are automatic in this
-regime, and null-homology is automatic by convexity, so no hypothesis beyond the immersion
-survives. -/
+regime, while null-homology is automatic by convexity. Thus null-homology and conditions (A′) and
+(B) require no additional hypotheses in this regime. -/
 theorem hungerbuhlerWasem_residueTheorem_of_simple_poles_convex (S : Finset ℂ)
     (hconv : Convex ℝ Ω) (hopen : IsOpen Ω) (hγ_imm : IsPwC1ImmersionOn γ a b)
     (hSΩ : (S : Set ℂ) ⊆ Ω) (hclosed : γ a = γ b) (hγa : γ a ∉ (S : Set ℂ))
@@ -198,7 +199,7 @@ theorem hungerbuhlerWasem_residueTheorem_of_simple_poles_convex (S : Finset ℂ)
     HasCauchyPV γ a b f
       (2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, windingNumber γ a b s * residue f s)) :=
   hungerbuhlerWasem_residueTheorem_of_simple_poles hopen S γ a b hγ_imm hSΩ hclosed hγa hγΩ hf
-    hmero (isNullHomologous_of_convex hconv hopen hγ_imm.isPiecewiseC1On hclosed hγΩ) h_simple
+    hmero (isNullHomologous_of_convex hconv hγ_imm.isPiecewiseC1On hclosed hγΩ) h_simple
 
 /-- **The half-residue on a convex open set.** An on-curve simple pole about which the immersion
 has generalized winding number `½` contributes `πi · Res_s f` to the principal value — the
@@ -211,7 +212,7 @@ theorem hasCauchyPV_half_residue_of_simple_pole_convex {s : ℂ} (hconv : Convex
     (hwind : windingNumber γ a b s = 1 / 2) :
     HasCauchyPV γ a b f ((Real.pi : ℂ) * Complex.I * residue f s) :=
   hasCauchyPV_half_residue_of_simple_pole hopen γ a b s hγ_imm hsΩ hclosed hγa hγΩ hf hmero
-    (isNullHomologous_of_convex hconv hopen hγ_imm.isPiecewiseC1On hclosed hγΩ) h_simple hwind
+    (isNullHomologous_of_convex hconv hγ_imm.isPiecewiseC1On hclosed hγΩ) h_simple hwind
 
 /-- **The argument principle on a convex open set, for a curve running through the zeros.** With
 `f` analytic and non-vanishing on a convex open `Ω` off a finite `S`, meromorphic of order `ord` at
@@ -231,7 +232,7 @@ theorem hasCauchyPV_logDeriv_convex {S : Finset ℂ} {ord : ℂ → ℤ} (hconv 
     HasCauchyPV γ a b (logDeriv f)
       (2 * (Real.pi : ℂ) * Complex.I * ∑ z ∈ S, windingNumber γ a b z * (ord z : ℂ)) :=
   hasCauchyPV_logDeriv_nullHomologous hopen hoffS hmero hord hγ_imm hγΩ hclosed hγa
-    (isNullHomologous_of_convex hconv hopen hγ_imm.isPiecewiseC1On hclosed hγΩ)
+    (isNullHomologous_of_convex hconv hγ_imm.isPiecewiseC1On hclosed hγΩ)
 
 namespace Cycle
 
@@ -242,7 +243,7 @@ zero along every contour cycle contained in a convex open set. -/
 theorem cauchyTheorem_convex (hconv : Convex ℝ Ω) (hopen : IsOpen Ω) (hCΩ : IsIn C Ω)
     (hf : DifferentiableOn ℂ f Ω) :
     integral f C = 0 :=
-  homologyCauchyTheorem hopen hCΩ hf (isNullHomologous_of_convex hconv hopen hCΩ)
+  homologyCauchyTheorem hopen hCΩ hf (isNullHomologous_of_convex hconv hCΩ)
 
 /-- **The classical residue theorem for a cycle in a convex open set.** For `f` holomorphic on
 `Ω ∖ S` and meromorphic at each point of `S` lying in the convex open `Ω`, and a contour cycle `C`
@@ -254,7 +255,7 @@ theorem classicalResidueTheorem_convex {S : Finset ℂ} (hconv : Convex ℝ Ω) 
     (hCΩ : IsIn C Ω) (hoff : ∀ s ∈ S, s ∉ trace C) :
     integral f C = 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber s C * residue f s :=
   TauCeti.Contour.Cycle.classicalResidueTheorem_nullHomologous hopen hf hmero hCΩ hoff
-    (isNullHomologous_of_convex hconv hopen hCΩ)
+    (isNullHomologous_of_convex hconv hCΩ)
 
 /-- **The generalized residue theorem for a cycle in a convex open set, simple-pole regime.** Each
 curve of the cycle may run through the singularities, which are at worst simple poles; the Cauchy
@@ -270,7 +271,7 @@ theorem hungerbuhlerWasem_residueTheorem_of_simple_poles_convex {S : Finset ℂ}
     HasCauchyPV C f
       (2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber s C * residue f s) :=
   hungerbuhlerWasem_residueTheorem_of_simple_poles hopen S hSΩ hf hmero hCΩ h_imm hbase
-    (isNullHomologous_of_convex hconv hopen hCΩ) h_simple
+    (isNullHomologous_of_convex hconv hCΩ) h_simple
 
 end Cycle
 
