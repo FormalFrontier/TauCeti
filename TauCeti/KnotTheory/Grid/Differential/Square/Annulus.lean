@@ -30,9 +30,11 @@ The argument never inspects the `O`-markings, so it is insensitive to the weight
 runs over an arbitrary commutative coefficient ring, characteristic two included. This is the
 first case of the square-zero argument to be settled for the unblocked complex; the disjoint and
 overlapping cases, where two distinct decompositions must be paired against each other, remain.
-On a grid of size at most two there is no room for the other two cases, because both endpoints of
-a two-step term already exhaust the grid states, so the annular case alone gives `∂⁻ ∘ ∂⁻ = 0`
-there.
+On a grid of size at most two there are at most two grid states, which leaves no room for the
+other two cases: if the two endpoints of a two-step term are distinct they exhaust the grid
+states, so every intermediate state is one of them and its term carries a diagonal matrix
+coefficient, while if the two endpoints coincide the term is annular. So the annular case alone
+gives `∂⁻ ∘ ∂⁻ = 0` there.
 
 ## Main results
 
@@ -85,11 +87,12 @@ theorem unblockedCoefficient_eq_zero_of_ne_zero {x y : GridState n}
 
 /-- The two matrix coefficients of the unblocked differential between a pair of grid states have
 zero product: the unblocked differential admits no two-step return. -/
+@[simp]
 theorem unblockedCoefficient_mul_unblockedCoefficient_eq_zero (x y : GridState n) :
     G.unblockedCoefficient R x y * G.unblockedCoefficient R y x = 0 := by
-  rcases G.unblockedRectangles_eq_empty_or_unblockedRectangles_eq_empty x y with he | he
-  · rw [G.unblockedCoefficient_def R x y, he, Finset.sum_empty, zero_mul]
-  · rw [G.unblockedCoefficient_def R y x, he, Finset.sum_empty, mul_zero]
+  by_cases h : G.unblockedCoefficient R x y = 0
+  · rw [h, zero_mul]
+  · rw [G.unblockedCoefficient_eq_zero_of_ne_zero R h, mul_zero]
 
 /-- The matrix of the square of the unblocked differential: its `(x, z)` entry is the sum over
 intermediate grid states of the products of the two matrix coefficients. -/
@@ -102,7 +105,7 @@ theorem unblockedDifferential_sq_single_apply (x z : GridState n) :
     rw [unblockedDifferentialOnGenerator_apply]
 
 /-- The diagonal entries of the matrix of `∂⁻ ∘ ∂⁻` vanish: every annular term of the square of
-the unblocked grid differential cancels, for every coefficient ring. -/
+the unblocked grid differential is individually zero, for every coefficient ring. -/
 theorem unblockedDifferential_sq_single_apply_self (x : GridState n) :
     G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1)) x = 0 := by
   rw [G.unblockedDifferential_sq_single_apply R x x]
@@ -126,11 +129,12 @@ theorem notMem_support_unblockedDifferentialOnGenerator {x y : GridState n}
 
 /-- On a grid of size at most two the unblocked differential squares to zero.
 
-Only two grid states are available, so every intermediate state of a two-step term coincides with
-the source or with the target. A term through the source or the target is killed by the vanishing
-of the diagonal matrix coefficient, and the remaining term returns to its source, where the
-annular argument applies. This is the first instance of the roadmap's square-zero milestone for
-`GC⁻`; the general case still needs the disjoint and overlapping juxtaposition cases. -/
+At most two grid states are available. If the source and the target of a two-step term are
+distinct they exhaust those states, so every intermediate state coincides with the source or with
+the target and its term is killed by the vanishing of the diagonal matrix coefficient. If instead
+the source and the target coincide, the term returns to its source and the annular argument
+applies. This is the first instance of the roadmap's square-zero milestone for `GC⁻`; the general
+case still needs the disjoint and overlapping juxtaposition cases. -/
 theorem unblockedDifferential_comp_self_eq_zero_of_le_two (hn : n ≤ 2) :
     G.unblockedDifferential R ∘ₗ G.unblockedDifferential R =
       (0 : GridChainMinus R n →ₗ[MvPolynomial (Fin n) R] GridChainMinus R n) := by
