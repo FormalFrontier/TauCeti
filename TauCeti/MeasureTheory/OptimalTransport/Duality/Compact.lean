@@ -1,0 +1,564 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.Probability.ConditionalProbability
+public import Mathlib.Topology.UniformSpace.HeineCantor
+public import TauCeti.MeasureTheory.OptimalTransport.Finite.Duality
+
+/-!
+# Strong Kantorovich duality for continuous costs on compact spaces
+
+For a continuous nonnegative cost `c` on a product of two compact metric spaces, the transport
+problem and its dual have the same value:
+
+`transportCost (ENNReal.ofReal ∘ c) μ ν = sSup {kantorovichDualValue μ ν φ ψ}`,
+
+the supremum running over the pairs of *continuous* potentials with `φ x + ψ y ≤ c (x, y)`. Weak
+duality, proved for the general interface in `TauCeti.MeasureTheory.OptimalTransport.Duality.Basic`,
+gives one inequality; this file supplies the other one and hence closes the gap.
+
+The proof is the finite approximation argument. Uniform continuity of `c` turns a `δ`-net of each
+factor into a pair of measurable maps `qX : X → Fin n` and `qY : Y → Fin m` moving no point by
+more than `δ`; pushing the two marginals forward along them produces a finite transport problem
+whose cost matrix is the cost read at the marked points. Kantorovich duality on finite spaces,
+already available as `TauCeti.exists_cost_eq_finiteDualValue`, solves that problem exactly. Its
+optimal transportation matrix is lifted back to a genuine coupling by gluing the conditional
+measures on the fibres, which bounds the continuous primal value from above; its optimal
+potentials are read back as step functions on the fibres, which bounds the continuous dual value
+from below. Both estimates lose only a multiple of the modulus of continuity, so letting the net
+refine closes the duality gap.
+
+Two auxiliary results are of independent interest.
+`TauCeti.exists_continuous_forall_add_le` replaces a *bounded* feasible pair by a *continuous*
+one that dominates it pointwise: applying the infimal `c`-transform twice inherits the modulus of
+continuity of the cost. This is what upgrades the step-function potentials produced by the finite
+problem to the continuous potentials the theorem advertises, and it is also why the
+bounded-continuous and the integrable dual classes have the same supremum.
+`TauCeti.exists_measurable_dist_lt` records the discretisation of a compact metric space by a
+measurable map to `Fin n`.
+
+## Implementation notes
+
+The transform is spelled here as the real infimum `⨅ x, (c (x, y) - φ x)` rather than through the
+`EReal`-valued `TauCeti.cTransform`, because every potential occurring in the argument is bounded
+and the whole computation stays inside `ℝ`. The two agree:
+`TauCeti.cTransform_coe_eq_coe_iInf` is the bridge, and the order-theoretic facts about the
+transform are the ones already proved for `TauCeti.cTransform`.
+
+The cost is taken nonnegative because `TauCeti.transportCost` measures an `ℝ≥0∞`-valued cost. A
+continuous cost on a compact space is bounded below, so this costs no generality beyond an
+additive normalisation of the cost and of the potentials.
+
+## Main statements
+
+* `TauCeti.exists_continuous_forall_add_le` — a bounded feasible pair is dominated by a
+  continuous feasible pair;
+* `TauCeti.exists_continuous_forall_add_le_transportCost_le` — the approximate duality: for every
+  `ε > 0` there is a continuous feasible pair whose value is within `ε` of the primal value;
+* `TauCeti.isLUB_kantorovichDualValue_continuous` — **strong Kantorovich duality**: the primal
+  value is the least upper bound of the values of the continuous feasible pairs;
+* `TauCeti.isLUB_kantorovichDualValue_integrable` — the same value is also the least upper bound
+  over the larger integrable dual class, so the two classes agree;
+* `TauCeti.toReal_transportCost_eq_sSup` and `TauCeti.transportCost_eq_ofReal_sSup` — the same
+  statement read as an equality of a supremum, in `ℝ` and in `ℝ≥0∞`;
+* `TauCeti.transportCost_ne_top_of_continuous` — the primal value is finite, and
+  `TauCeti.kantorovichDualValue_le_toReal_transportCost` — weak duality in the resulting real
+  form.
+
+## References
+
+* C. Villani, *Topics in Optimal Transportation*, Graduate Studies in Mathematics 58, 2003,
+  Theorem 1.3 and §1.1.
+* C. Villani, *Optimal Transport: Old and New*, Grundlehren 338, 2009, Theorem 5.10.
+
+This is Layer 2, item 4 of the optimal-transport roadmap, in its compact continuous case.
+-/
+
+public section
+
+noncomputable section
+
+open MeasureTheory Metric Set
+open scoped BigOperators ENNReal ProbabilityTheory
+
+namespace TauCeti
+
+universe u v
+
+variable {X : Type u} {Y : Type v}
+
+/-! ### The infimal transform as a real-valued function -/
+
+/-- The `EReal`-valued infimal transform `TauCeti.cTransform` of a real potential is the real
+infimum used in this file, whenever the latter is well behaved. -/
+theorem cTransform_coe_eq_coe_iInf [Nonempty X] (c : X × Y → ℝ) (φ : X → ℝ) (y : Y)
+    (hbdd : BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
+    cTransform c (fun x ↦ (φ x : EReal)) y = ((⨅ x, (c (x, y) - φ x) : ℝ) : EReal) := by
+  rw [cTransform_apply]
+  refine le_antisymm (le_of_forall_gt_imp_ge_of_dense fun b hb ↦ ?_) (le_iInf fun x ↦ ?_)
+  · rcases eq_top_or_lt_top b with rfl | hbt
+    · exact le_top
+    · have hbot : b ≠ ⊥ := ((EReal.bot_lt_coe _).trans hb).ne'
+      have hbr : ((b.toReal : ℝ) : EReal) = b := EReal.coe_toReal hbt.ne hbot
+      have hlt : (⨅ x, (c (x, y) - φ x)) < b.toReal := by
+        rw [← EReal.coe_lt_coe_iff, hbr]; exact hb
+      obtain ⟨x, hx⟩ := exists_lt_of_ciInf_lt hlt
+      refine (iInf_le _ x).trans ?_
+      rw [← hbr]
+      simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 hx.le
+  · simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 (ciInf_le hbdd x)
+
+section Transform
+
+variable [MetricSpace X] [MetricSpace Y] {c : X × Y → ℝ} {φ : X → ℝ} {ψ : Y → ℝ}
+
+/-- The infimal `c`-transform of a real potential inherits the modulus of continuity of the cost:
+if `c` is uniformly continuous and the differences `c (x, y) - φ x` are bounded below for each
+`y`, then `y ↦ ⨅ x, (c (x, y) - φ x)` is continuous. -/
+theorem continuous_iInf_sub [Nonempty X] (hc : UniformContinuous c)
+    (hbdd : ∀ y, BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
+    Continuous fun y ↦ ⨅ x, (c (x, y) - φ x) := by
+  refine Metric.continuous_iff.2 fun y ε hε ↦ ?_
+  obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hc (ε / 2) (by positivity)
+  have key : ∀ y₁ y₂ : Y, dist y₁ y₂ < δ →
+      (⨅ x, (c (x, y₁) - φ x)) - ε / 2 ≤ ⨅ x, (c (x, y₂) - φ x) := by
+    intro y₁ y₂ h
+    refine le_ciInf fun x ↦ ?_
+    have h1 : (⨅ x, (c (x, y₁) - φ x)) ≤ c (x, y₁) - φ x := ciInf_le (hbdd y₁) x
+    have h2 : dist (c (x, y₁)) (c (x, y₂)) < ε / 2 :=
+      hcδ (by simpa [Prod.dist_eq, max_eq_right dist_nonneg] using h)
+    rw [Real.dist_eq, abs_lt] at h2
+    linarith [h2.1, h2.2]
+  refine ⟨δ, hδ, fun y' hy' ↦ ?_⟩
+  have h1 := key y' y hy'
+  have h2 := key y y' (by rwa [dist_comm])
+  rw [Real.dist_eq, abs_lt]
+  constructor <;> linarith
+
+variable [CompactSpace X] [CompactSpace Y] [Nonempty X] [Nonempty Y]
+
+/-- **Smoothing a dual pair.** On compact metric spaces every *bounded* pair of potentials
+satisfying the Kantorovich constraint `φ x + ψ y ≤ c (x, y)` is dominated pointwise by a pair of
+*continuous* potentials satisfying the same constraint. The improved pair is obtained by applying
+the infimal `c`-transform twice, so it inherits the modulus of continuity of the cost. -/
+theorem exists_continuous_forall_add_le (hc : Continuous c) {M : ℝ}
+    (hφM : ∀ x, |φ x| ≤ M) (hfeas : ∀ x y, φ x + ψ y ≤ c (x, y)) :
+    ∃ φ' ψ', Continuous φ' ∧ Continuous ψ' ∧ (∀ x y, φ' x + ψ' y ≤ c (x, y)) ∧
+      (∀ x, φ x ≤ φ' x) ∧ ∀ y, ψ y ≤ ψ' y := by
+  obtain ⟨K, hK⟩ := (isCompact_univ (X := X × Y)).exists_bound_of_continuousOn hc.continuousOn
+  have hK' : ∀ z, |c z| ≤ K := fun z ↦ by simpa using hK z (Set.mem_univ z)
+  set ψ' : Y → ℝ := fun y ↦ ⨅ x, (c (x, y) - φ x) with hψ'
+  have hbddψ : ∀ y, BddBelow (Set.range fun x ↦ c (x, y) - φ x) := by
+    refine fun y ↦ ⟨-K - M, ?_⟩
+    rintro _ ⟨x, rfl⟩
+    have h1 := neg_abs_le (c (x, y))
+    have h2 := le_abs_self (φ x)
+    have := hK' (x, y)
+    have := hφM x
+    linarith
+  have hψ'bdd : ∀ y, |ψ' y| ≤ K + M := by
+    intro y
+    have hle : ψ' y ≤ c (Classical.arbitrary X, y) - φ (Classical.arbitrary X) :=
+      ciInf_le (hbddψ y) _
+    have hge : -K - M ≤ ψ' y := le_ciInf fun x ↦ by
+      have h1 := neg_abs_le (c (x, y))
+      have h2 := le_abs_self (φ x)
+      have := hK' (x, y)
+      have := hφM x
+      linarith
+    have h1 := le_abs_self (c (Classical.arbitrary X, y))
+    have h2 := neg_abs_le (φ (Classical.arbitrary X))
+    have := hK' (Classical.arbitrary X, y)
+    have := hφM (Classical.arbitrary X)
+    rw [abs_le]
+    constructor <;> linarith
+  set φ' : X → ℝ := fun x ↦ ⨅ y, (c (x, y) - ψ' y) with hφ'
+  have hbddφ : ∀ x, BddBelow (Set.range fun y ↦ c (x, y) - ψ' y) := by
+    refine fun x ↦ ⟨-K - (K + M), ?_⟩
+    rintro _ ⟨y, rfl⟩
+    have h1 := neg_abs_le (c (x, y))
+    have h2 := le_abs_self (ψ' y)
+    have := hK' (x, y)
+    have := hψ'bdd y
+    linarith
+  have hψle : ∀ y, ψ y ≤ ψ' y := fun y ↦ le_ciInf fun x ↦ by linarith [hfeas x y]
+  have hφle : ∀ x, φ x ≤ φ' x := fun x ↦ le_ciInf fun y ↦ by
+    have := ciInf_le (hbddψ y) (f := fun x ↦ c (x, y) - φ x) x
+    simp only [hψ'] at this ⊢
+    linarith
+  have hcu : UniformContinuous c := CompactSpace.uniformContinuous_of_continuous hc
+  refine ⟨φ', ψ', ?_, continuous_iInf_sub hcu hbddψ, fun x y ↦ ?_, hφle, hψle⟩
+  · have hswap : UniformContinuous fun q : Y × X ↦ c (q.2, q.1) :=
+      hcu.comp (uniformContinuous_snd.prodMk uniformContinuous_fst)
+    exact continuous_iInf_sub (c := fun q : Y × X ↦ c (q.2, q.1)) (φ := ψ') hswap hbddφ
+  · have := ciInf_le (hbddφ x) (f := fun y ↦ c (x, y) - ψ' y) y
+    simp only [hφ'] at this ⊢
+    linarith
+
+end Transform
+
+/-! ### Discretising a compact metric space -/
+
+/-- A compact metric space is discretised, up to any positive error, by a measurable map to a
+finite type together with a choice of marked point in each fibre. -/
+theorem exists_measurable_dist_lt (X : Type u) [MetricSpace X] [CompactSpace X]
+    [MeasurableSpace X] [BorelSpace X] {δ : ℝ} (hδ : 0 < δ) :
+    ∃ (n : ℕ) (v : Fin n → X) (q : X → Fin n), Measurable q ∧ ∀ x, dist x (v (q x)) < δ := by
+  classical
+  obtain ⟨t, ht⟩ := isCompact_univ.elim_finite_subcover (fun z : X ↦ Metric.ball z δ)
+    (fun _ ↦ Metric.isOpen_ball) fun x _ ↦ Set.mem_iUnion.2 ⟨x, Metric.mem_ball_self hδ⟩
+  set n := t.card
+  set v : Fin n → X := fun i ↦ (t.equivFin.symm i : X) with hv
+  have hcover : ∀ x : X, ∃ i : Fin n, dist x (v i) < δ := by
+    intro x
+    obtain ⟨z, hz, hxz⟩ := Set.mem_iUnion₂.1 (ht (Set.mem_univ x))
+    exact ⟨t.equivFin ⟨z, hz⟩, by simpa [hv] using hxz⟩
+  set S : X → Finset (Fin n) := fun x ↦ {i | dist x (v i) < δ} with hS
+  have hSne : ∀ x, (S x).Nonempty := fun x ↦ by
+    obtain ⟨i, hi⟩ := hcover x
+    exact ⟨i, by simpa [hS] using hi⟩
+  set q : X → Fin n := fun x ↦ (S x).min' (hSne x)
+  have hmemq : ∀ x, dist x (v (q x)) < δ := fun x ↦ by
+    simpa [hS] using (S x).min'_mem (hSne x)
+  refine ⟨n, v, q, ?_, hmemq⟩
+  refine measurable_to_countable' fun i ↦ ?_
+  have hfib : q ⁻¹' {i} =
+      Metric.ball (v i) δ \ ⋃ k ∈ Set.Iio i, Metric.ball (v k) δ := by
+    ext x
+    simp only [Set.mem_preimage, Set.mem_singleton_iff, Set.mem_sdiff, Metric.mem_ball]
+    constructor
+    · rintro rfl
+      refine ⟨hmemq x, fun hmem ↦ ?_⟩
+      obtain ⟨k, hk, hxk⟩ := Set.mem_iUnion₂.1 hmem
+      have hle : q x ≤ k := (S x).min'_le k (by simpa [hS] using Metric.mem_ball.1 hxk)
+      exact absurd (Set.mem_Iio.1 hk) hle.not_gt
+    · rintro ⟨hi, hlt⟩
+      have hmem : i ∈ S x := by simpa [hS] using hi
+      refine le_antisymm ((S x).min'_le i hmem) (not_lt.1 fun hcon ↦ hlt ?_)
+      exact Set.mem_iUnion₂.2 ⟨q x, Set.mem_Iio.2 hcon, Metric.mem_ball.2 (hmemq x)⟩
+  rw [hfib]
+  exact measurableSet_ball.diff
+    (MeasurableSet.biUnion (Set.to_countable _) fun _ _ ↦ measurableSet_ball)
+
+/-! ### Lifting a finite transport plan to a coupling -/
+
+section Lift
+
+variable [MeasurableSpace X] [MeasurableSpace Y]
+
+/-- The expectation of a function of a finitely valued measurable map is the finite sum of its
+values weighted by the masses of the fibres. -/
+private theorem integral_comp_measurable (μ : Measure X) [IsProbabilityMeasure μ] {n : ℕ}
+    {q : X → Fin n} (hq : Measurable q) (a : Fin n → ℝ) :
+    ∫ x, a (q x) ∂μ = ∑ i, (μ (q ⁻¹' {i})).toReal * a i := by
+  have : IsProbabilityMeasure (μ.map q) := Measure.isProbabilityMeasure_map hq.aemeasurable
+  rw [← integral_map hq.aemeasurable (Measurable.of_discrete (f := a)).aestronglyMeasurable,
+    integral_fintype Integrable.of_finite]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  rw [measureReal_def, Measure.map_apply hq (MeasurableSet.singleton i), smul_eq_mul]
+
+/-- **Lifting a finite transportation matrix to a coupling.** Let two measurable maps `qX` and
+`qY` with finite ranges discretise the two marginals, and let `T` be a transportation matrix for
+the discretised masses. Gluing the conditional measures on the fibres of `qX` and `qY` along `T`
+produces a genuine coupling of `μ` and `ν`, so if the cost is dominated fibrewise by the entries
+of `C` then the primal transport cost is at most the finite cost of `T`. -/
+private theorem transportCost_le_ofReal_cost {n m : ℕ} {qX : X → Fin n} {qY : Y → Fin m}
+    (hqX : Measurable qX) (hqY : Measurable qY) {μ : Measure X} [IsProbabilityMeasure μ]
+    {ν : Measure Y} [IsProbabilityMeasure ν] {pμ : PMF (Fin n)} {pν : PMF (Fin m)}
+    (hpμ : ∀ i, pμ i = μ (qX ⁻¹' {i})) (hpν : ∀ j, pν j = ν (qY ⁻¹' {j}))
+    (T : TransportMatrix pμ pν) {c : X × Y → ℝ} {C : Fin n × Fin m → ℝ} (hC0 : ∀ p, 0 ≤ C p)
+    (hC : ∀ x y, c (x, y) ≤ C (qX x, qY y)) :
+    transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≤ ENNReal.ofReal (T.cost C) := by
+  have hAm : ∀ i, MeasurableSet (qX ⁻¹' {i}) := fun i ↦ hqX (MeasurableSet.singleton i)
+  have hBm : ∀ j, MeasurableSet (qY ⁻¹' {j}) := fun j ↦ hqY (MeasurableSet.singleton j)
+  have hrow : ∀ i j, T i j ≠ 0 → μ (qX ⁻¹' {i}) ≠ 0 := by
+    intro i j h hcon
+    refine h (le_antisymm ?_ (by positivity))
+    calc T i j ≤ ∑ j', T i j' :=
+        Finset.single_le_sum (f := fun j' ↦ T i j') (fun _ _ ↦ by positivity) (Finset.mem_univ j)
+      _ = pμ i := T.row_sum i
+      _ = 0 := by rw [hpμ i, hcon]
+  have hcol : ∀ i j, T i j ≠ 0 → ν (qY ⁻¹' {j}) ≠ 0 := by
+    intro i j h hcon
+    refine h (le_antisymm ?_ (by positivity))
+    calc T i j ≤ ∑ i', T i' j :=
+        Finset.single_le_sum (f := fun i' ↦ T i' j) (fun _ _ ↦ by positivity) (Finset.mem_univ i)
+      _ = pν j := T.col_sum j
+      _ = 0 := by rw [hpν j, hcon]
+  set π : Measure (X × Y) :=
+    ∑ i, ∑ j, T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}]) with hπ
+  -- the first marginal of the glued measure
+  have hmapfst : ∀ i j, Measure.map Prod.fst (T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}]))
+      = T i j • μ[|qX ⁻¹' {i}] := by
+    intro i j
+    rcases eq_or_ne (T i j) 0 with h | h
+    · simp [h]
+    · have := ProbabilityTheory.cond_isProbabilityMeasure (hcol i j h)
+      rw [Measure.map_smul, Measure.map_fst_prod, measure_univ, one_smul]
+  have hmapsnd : ∀ i j, Measure.map Prod.snd (T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}]))
+      = T i j • ν[|qY ⁻¹' {j}] := by
+    intro i j
+    rcases eq_or_ne (T i j) 0 with h | h
+    · simp [h]
+    · have := ProbabilityTheory.cond_isProbabilityMeasure (hrow i j h)
+      rw [Measure.map_smul, Measure.map_snd_prod, measure_univ, one_smul]
+  have hfst : Measure.map Prod.fst π = μ := by
+    have hstep : Measure.map Prod.fst π = ∑ i, μ (qX ⁻¹' {i}) • μ[|qX ⁻¹' {i}] := by
+      rw [hπ, Measure.map_finset_sum' measurable_fst.aemeasurable]
+      refine Finset.sum_congr rfl fun i _ ↦ ?_
+      rw [Measure.map_finset_sum' measurable_fst.aemeasurable,
+        Finset.sum_congr rfl fun j _ ↦ hmapfst i j, ← Finset.sum_smul, T.row_sum i, hpμ i]
+    rw [hstep]
+    exact ProbabilityTheory.sum_meas_smul_cond_fiber hqX μ
+  have hsnd : Measure.map Prod.snd π = ν := by
+    have hstep : Measure.map Prod.snd π = ∑ j, ν (qY ⁻¹' {j}) • ν[|qY ⁻¹' {j}] := by
+      rw [hπ, Measure.map_finset_sum' measurable_snd.aemeasurable]
+      rw [Finset.sum_congr rfl fun i (_ : i ∈ Finset.univ) ↦
+        (Measure.map_finset_sum' (m := fun j ↦ T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}]))
+          measurable_snd.aemeasurable).trans (Finset.sum_congr rfl fun j _ ↦ hmapsnd i j),
+        Finset.sum_comm]
+      exact Finset.sum_congr rfl fun j _ ↦ by rw [← Finset.sum_smul, T.col_sum j, hpν j]
+    rw [hstep]
+    exact ProbabilityTheory.sum_meas_smul_cond_fiber hqY ν
+  have hcoup : IsCoupling π μ ν := ⟨hfst, hsnd⟩
+  -- the cost of the glued measure
+  have hblock : ∀ i j, T i j * ∫⁻ z, ENNReal.ofReal (c z) ∂((μ[|qX ⁻¹' {i}]).prod
+      (ν[|qY ⁻¹' {j}])) ≤ T i j * ENNReal.ofReal (C (i, j)) := by
+    intro i j
+    rcases eq_or_ne (T i j) 0 with h | h
+    · simp [h]
+    · have := ProbabilityTheory.cond_isProbabilityMeasure (hrow i j h)
+      have := ProbabilityTheory.cond_isProbabilityMeasure (hcol i j h)
+      refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+      have hfib1 : ∀ᵐ z ∂((μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])), qX z.1 = i := by
+        rw [ae_iff]
+        have hset : {z : X × Y | ¬ qX z.1 = i} = (qX ⁻¹' {i})ᶜ ×ˢ (Set.univ : Set Y) := by
+          ext z; simp
+        have hzero : (μ[|qX ⁻¹' {i}]) ((qX ⁻¹' {i})ᶜ) = 0 := by
+          rw [ProbabilityTheory.cond_apply (hAm i), Set.inter_compl_self, measure_empty, mul_zero]
+        rw [hset, Measure.prod_prod, hzero, zero_mul]
+      have hfib2 : ∀ᵐ z ∂((μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])), qY z.2 = j := by
+        rw [ae_iff]
+        have hset : {z : X × Y | ¬ qY z.2 = j} = (Set.univ : Set X) ×ˢ (qY ⁻¹' {j})ᶜ := by
+          ext z; simp
+        have hzero : (ν[|qY ⁻¹' {j}]) ((qY ⁻¹' {j})ᶜ) = 0 := by
+          rw [ProbabilityTheory.cond_apply (hBm j), Set.inter_compl_self, measure_empty, mul_zero]
+        rw [hset, Measure.prod_prod, hzero, mul_zero]
+      refine le_trans (lintegral_mono_ae ?_) (by rw [lintegral_const, measure_univ, mul_one])
+      filter_upwards [hfib1, hfib2] with z h1 h2
+      refine ENNReal.ofReal_le_ofReal ?_
+      have hz := hC z.1 z.2
+      rw [h1, h2] at hz
+      simpa using hz
+  have hentry : ∀ i j, T i j * ENNReal.ofReal (C (i, j))
+      = ENNReal.ofReal (C (i, j) * T.toRealFun (i, j)) := by
+    intro i j
+    rw [mul_comm (C (i, j)), ENNReal.ofReal_mul (T.toRealFun_nonneg _),
+      TransportMatrix.toRealFun_apply, ENNReal.ofReal_toReal (T.apply_ne_top i j)]
+  refine (transportCost_le_lintegral hcoup _).trans ?_
+  calc ∫⁻ z, ENNReal.ofReal (c z) ∂π
+      = ∑ i, ∑ j, T i j * ∫⁻ z, ENNReal.ofReal (c z) ∂((μ[|qX ⁻¹' {i}]).prod
+          (ν[|qY ⁻¹' {j}])) := by
+        simp only [hπ, lintegral_finsetSum_measure, lintegral_smul_measure, smul_eq_mul]
+    _ ≤ ∑ i, ∑ j, T i j * ENNReal.ofReal (C (i, j)) :=
+        Finset.sum_le_sum fun i _ ↦ Finset.sum_le_sum fun j _ ↦ hblock i j
+    _ = ENNReal.ofReal (T.cost C) := by
+        rw [TransportMatrix.cost_def, Fintype.sum_prod_type,
+          ENNReal.ofReal_sum_of_nonneg fun i _ ↦ Finset.sum_nonneg fun j _ ↦
+            mul_nonneg (hC0 _) (T.toRealFun_nonneg _)]
+        refine Finset.sum_congr rfl fun i _ ↦ ?_
+        rw [ENNReal.ofReal_sum_of_nonneg fun j _ ↦ mul_nonneg (hC0 _) (T.toRealFun_nonneg _)]
+        exact Finset.sum_congr rfl fun j _ ↦ hentry i j
+
+end Lift
+
+/-! ### Strong duality -/
+
+section Duality
+
+variable [MetricSpace X] [CompactSpace X] [MeasurableSpace X] [BorelSpace X]
+  [MetricSpace Y] [CompactSpace Y] [MeasurableSpace Y] [BorelSpace Y]
+  {μ : Measure X} {ν : Measure Y} {c : X × Y → ℝ}
+
+/-- A continuous function on a compact space is integrable against a finite measure: the
+compact-support hypothesis of `Continuous.integrable_of_hasCompactSupport` is automatic here. -/
+private theorem integrable_of_continuous [IsFiniteMeasure μ] {f : X → ℝ} (hf : Continuous f) :
+    Integrable f μ :=
+  hf.integrable_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
+
+/-- **Approximate Kantorovich duality on compact spaces.** For a continuous nonnegative cost on a
+product of compact metric spaces and every `ε > 0` there is a pair of *continuous* potentials
+satisfying the Kantorovich constraint whose value is within `ε` of the primal transport cost.
+Together with weak duality this closes the duality gap. -/
+theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure μ]
+    [IsProbabilityMeasure ν] (hc : Continuous c) (hc0 : ∀ z, 0 ≤ c z) {ε : ℝ} (hε : 0 < ε) :
+    ∃ φ ψ, Continuous φ ∧ Continuous ψ ∧ (∀ x y, φ x + ψ y ≤ c (x, y)) ∧
+      transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν
+        ≤ ENNReal.ofReal (kantorovichDualValue μ ν φ ψ + ε) := by
+  have hXne : Nonempty X := ⟨(μ.nonempty_of_neZero).some⟩
+  have hYne : Nonempty Y := ⟨(ν.nonempty_of_neZero).some⟩
+  -- discretise both factors finely enough that the cost varies by less than `ε / 2`
+  have hcu : UniformContinuous c := CompactSpace.uniformContinuous_of_continuous hc
+  obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hcu (ε / 2) (by positivity)
+  obtain ⟨n, v, qX, hqX, hvX⟩ := exists_measurable_dist_lt X hδ
+  obtain ⟨m, w, qY, hqY, hwY⟩ := exists_measurable_dist_lt Y hδ
+  have hosc : ∀ x y, |c (x, y) - c (v (qX x), w (qY y))| < ε / 2 := fun x y ↦ by
+    have hd : dist ((x, y) : X × Y) (v (qX x), w (qY y)) < δ := by
+      rw [Prod.dist_eq]
+      exact max_lt (hvX x) (hwY y)
+    simpa [Real.dist_eq] using hcδ hd
+  -- the two discretised marginals
+  have hsumX : ∑ i, μ (qX ⁻¹' {i}) = 1 := by
+    rw [MeasureTheory.sum_measure_preimage_singleton _
+      fun i _ ↦ hqX (MeasurableSet.singleton i)]
+    simp
+  have hsumY : ∑ j, ν (qY ⁻¹' {j}) = 1 := by
+    rw [MeasureTheory.sum_measure_preimage_singleton _
+      fun j _ ↦ hqY (MeasurableSet.singleton j)]
+    simp
+  set pμ : PMF (Fin n) := PMF.ofFintype _ hsumX
+  set pν : PMF (Fin m) := PMF.ofFintype _ hsumY
+  have hpμ : ∀ i, pμ i = μ (qX ⁻¹' {i}) := fun i ↦ rfl
+  have hpν : ∀ j, pν j = ν (qY ⁻¹' {j}) := fun j ↦ rfl
+  -- solve the finite problem for the cost read at the marked points
+  set C : Fin n × Fin m → ℝ := fun p ↦ max 0 (c (v p.1, w p.2) - ε / 2)
+  have hC0 : ∀ p, 0 ≤ C p := fun p ↦ le_max_left _ _
+  obtain ⟨T, a, b, -, hfeas, hTcost⟩ := exists_cost_eq_finiteDualValue C pμ pν
+  -- the step potentials are feasible for the continuous cost
+  have hstepfeas : ∀ x y, a (qX x) + b (qY y) ≤ c (x, y) := by
+    intro x y
+    refine (hfeas (qX x) (qY y)).trans (max_le (hc0 _) ?_)
+    have := abs_lt.1 (hosc x y)
+    linarith [this.1, this.2]
+  -- and the primal cost is at most the finite cost, up to `ε`
+  have hlift : transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν
+      ≤ ENNReal.ofReal (T.cost C + ε) := by
+    have hmass : ∑ p, T.toRealFun p = 1 := by
+      rw [Fintype.sum_prod_type]
+      rw [Finset.sum_congr rfl fun i (_ : i ∈ Finset.univ) ↦ T.sum_toRealFun_row i]
+      exact sum_toReal_pmf pμ
+    have hcost : T.cost (fun p ↦ C p + ε) = T.cost C + ε := by
+      simp only [TransportMatrix.cost_def, add_mul, Finset.sum_add_distrib, ← Finset.mul_sum,
+        hmass, mul_one]
+    rw [← hcost]
+    refine transportCost_le_ofReal_cost hqX hqY hpμ hpν T
+      (fun p ↦ by have := hC0 p; linarith) fun x y ↦ ?_
+    have h1 : c (v (qX x), w (qY y)) - ε / 2 ≤ C (qX x, qY y) := le_max_right _ _
+    have := abs_lt.1 (hosc x y)
+    linarith [this.1, this.2]
+  -- upgrade the step potentials to continuous ones
+  have hFinX : Nonempty (Fin n) := ⟨qX (Classical.arbitrary X)⟩
+  obtain ⟨i₀, hi₀⟩ := Finite.exists_max (fun i : Fin n ↦ |a i|)
+  obtain ⟨φ, ψ, hφc, hψc, hfeas', hφle, hψle⟩ :=
+    exists_continuous_forall_add_le (c := c) (φ := fun x ↦ a (qX x)) (ψ := fun y ↦ b (qY y))
+      hc (M := |a i₀|) (fun x ↦ hi₀ (qX x)) hstepfeas
+  refine ⟨φ, ψ, hφc, hψc, hfeas', hlift.trans (ENNReal.ofReal_le_ofReal ?_)⟩
+  have hint : kantorovichDualValue μ ν (fun x ↦ a (qX x)) (fun y ↦ b (qY y))
+      = finiteDualValue pμ pν a b := by
+    rw [kantorovichDualValue_def, finiteDualValue_def, integral_comp_measurable μ hqX a,
+      integral_comp_measurable ν hqY b]
+    simp only [hpμ, hpν]
+  have hmono : kantorovichDualValue μ ν (fun x ↦ a (qX x)) (fun y ↦ b (qY y))
+      ≤ kantorovichDualValue μ ν φ ψ := by
+    rw [kantorovichDualValue_def, kantorovichDualValue_def]
+    refine add_le_add (integral_mono ?_ (integrable_of_continuous hφc) hφle)
+      (integral_mono ?_ (integrable_of_continuous hψc) hψle)
+    · exact (Integrable.of_finite (μ := μ.map qX)).comp_measurable hqX
+    · exact (Integrable.of_finite (μ := ν.map qY)).comp_measurable hqY
+  rw [hTcost, ← hint]
+  linarith
+
+omit [BorelSpace X] [BorelSpace Y] in
+/-- A continuous cost on a product of compact spaces is bounded, so the transport problem has a
+finite value. -/
+theorem transportCost_ne_top_of_continuous [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+    (hc : Continuous c) : transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≠ ⊤ := by
+  obtain ⟨K, hK⟩ := isCompact_univ.exists_bound_of_continuousOn hc.continuousOn
+  refine ne_top_of_le_ne_top (b := ENNReal.ofReal K) ENNReal.ofReal_ne_top ?_
+  refine (transportCost_le_lintegral (isCoupling_prod μ ν) _).trans ?_
+  calc ∫⁻ z, ENNReal.ofReal (c z) ∂(μ.prod ν)
+      ≤ ∫⁻ _ : X × Y, ENNReal.ofReal K ∂(μ.prod ν) :=
+        lintegral_mono fun z ↦ ENNReal.ofReal_le_ofReal
+          ((le_abs_self _).trans (by simpa using hK z (Set.mem_univ z)))
+    _ = ENNReal.ofReal K := by rw [lintegral_const, measure_univ, mul_one]
+
+omit [MetricSpace X] [CompactSpace X] [BorelSpace X] [MetricSpace Y] [CompactSpace Y]
+  [BorelSpace Y] in
+/-- **Weak duality in real form.** The value of an integrable feasible pair is at most the real
+number represented by the transport cost, provided the latter is finite. -/
+theorem kantorovichDualValue_le_toReal_transportCost {φ : X → ℝ} {ψ : Y → ℝ}
+    (hc0 : ∀ z, 0 ≤ c z)
+    (hne : transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≠ ⊤) (hφ : Integrable φ μ)
+    (hψ : Integrable ψ ν) (hfeas : ∀ x y, φ x + ψ y ≤ c (x, y)) :
+    kantorovichDualValue μ ν φ ψ
+      ≤ (transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν).toReal :=
+  (ENNReal.ofReal_le_iff_le_toReal hne).1
+    (((dualFeasible_ofReal_iff hc0 φ ψ).2 hfeas).ofReal_kantorovichDualValue_le_transportCost hφ hψ)
+
+/-- **Strong Kantorovich duality on compact metrizable spaces.** For a continuous nonnegative cost
+on a product of compact metric spaces the primal transport cost is the least upper bound of the
+values of the pairs of continuous potentials satisfying the Kantorovich constraint. -/
+theorem isLUB_kantorovichDualValue_continuous [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+    (hc : Continuous c) (hc0 : ∀ z, 0 ≤ c z) :
+    IsLUB {r : ℝ | ∃ φ ψ, Continuous φ ∧ Continuous ψ ∧ (∀ x y, φ x + ψ y ≤ c (x, y)) ∧
+        kantorovichDualValue μ ν φ ψ = r}
+      (transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν).toReal := by
+  have hne := transportCost_ne_top_of_continuous (μ := μ) (ν := ν) hc
+  constructor
+  · rintro r ⟨φ, ψ, hφc, hψc, hfeas, rfl⟩
+    exact kantorovichDualValue_le_toReal_transportCost hc0 hne (integrable_of_continuous hφc)
+      (integrable_of_continuous hψc) hfeas
+  · intro b hb
+    have hb0 : (0 : ℝ) ≤ b :=
+      hb ⟨fun _ ↦ 0, fun _ ↦ 0, continuous_const, continuous_const,
+        fun x y ↦ by simpa using hc0 (x, y), by simp⟩
+    refine _root_.le_of_forall_pos_le_add fun ε hε ↦ ?_
+    obtain ⟨φ, ψ, hφc, hψc, hfeas, hle⟩ :=
+      exists_continuous_forall_add_le_transportCost_le (μ := μ) (ν := ν) hc hc0 hε
+    have hvb : kantorovichDualValue μ ν φ ψ ≤ b := hb ⟨φ, ψ, hφc, hψc, hfeas, rfl⟩
+    exact ENNReal.toReal_le_of_le_ofReal (by linarith)
+      (hle.trans (ENNReal.ofReal_le_ofReal (by linarith)))
+
+/-- **Strong Kantorovich duality against the integrable dual class.** Enlarging the dual class
+from the continuous to the merely integrable potentials does not change the value of the dual
+problem: it is still the primal transport cost. -/
+theorem isLUB_kantorovichDualValue_integrable [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+    (hc : Continuous c) (hc0 : ∀ z, 0 ≤ c z) :
+    IsLUB {r : ℝ | ∃ φ ψ, Integrable φ μ ∧ Integrable ψ ν ∧ (∀ x y, φ x + ψ y ≤ c (x, y)) ∧
+        kantorovichDualValue μ ν φ ψ = r}
+      (transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν).toReal := by
+  have hne := transportCost_ne_top_of_continuous (μ := μ) (ν := ν) hc
+  refine ⟨?_, fun b hb ↦ (isLUB_kantorovichDualValue_continuous hc hc0).2 fun r hr ↦ ?_⟩
+  · rintro r ⟨φ, ψ, hφ, hψ, hfeas, rfl⟩
+    exact kantorovichDualValue_le_toReal_transportCost hc0 hne hφ hψ hfeas
+  · obtain ⟨φ, ψ, hφc, hψc, hfeas, rfl⟩ := hr
+    exact hb ⟨φ, ψ, integrable_of_continuous hφc, integrable_of_continuous hψc, hfeas, rfl⟩
+
+/-- **Strong Kantorovich duality**, read as an equality between the primal value and the supremum
+of the dual values over the continuous potentials. -/
+theorem toReal_transportCost_eq_sSup [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+    (hc : Continuous c) (hc0 : ∀ z, 0 ≤ c z) :
+    (transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν).toReal
+      = sSup {r : ℝ | ∃ φ ψ, Continuous φ ∧ Continuous ψ ∧ (∀ x y, φ x + ψ y ≤ c (x, y)) ∧
+        kantorovichDualValue μ ν φ ψ = r} :=
+  ((isLUB_kantorovichDualValue_continuous hc hc0).csSup_eq
+    ⟨0, ⟨fun _ ↦ 0, fun _ ↦ 0, continuous_const, continuous_const,
+      fun x y ↦ by simpa using hc0 (x, y), by simp⟩⟩).symm
+
+/-- **Strong Kantorovich duality**, read in `ℝ≥0∞`: the primal transport cost is the supremum of
+the dual values of the continuous feasible pairs. -/
+theorem transportCost_eq_ofReal_sSup [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+    (hc : Continuous c) (hc0 : ∀ z, 0 ≤ c z) :
+    transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν
+      = ENNReal.ofReal (sSup {r : ℝ | ∃ φ ψ, Continuous φ ∧ Continuous ψ ∧
+        (∀ x y, φ x + ψ y ≤ c (x, y)) ∧ kantorovichDualValue μ ν φ ψ = r}) := by
+  rw [← toReal_transportCost_eq_sSup hc hc0,
+    ENNReal.ofReal_toReal (transportCost_ne_top_of_continuous hc)]
+
+end Duality
+
+end TauCeti
