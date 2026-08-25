@@ -297,12 +297,12 @@ variable {K : Type u} {L : Type v} {M : Type w} {N : Type w₁} [Field K] [LieRi
 
 open scoped Classical in
 /-- **Weight multiplicities in a tensor product are the convolution of the multiplicities in its
-factors.** The dimension of the `χ`-weight space is the sum of
+factors.** The dimension of the generalized `χ`-weight space is the sum of
 `dim Mμ * dim Nν` over the pairs of weights satisfying `μ + ν = χ`.
 
-The products of the weight spaces form an independent family because the weight-space
-decompositions of both factors are internal; their tensor products therefore decompose the
-ambient tensor product internally. -/
+The tensor products of the generalized weight spaces form an independent family because the
+generalized weight-space decompositions of both factors are internal; their tensor products
+therefore decompose the ambient tensor product internally. -/
 theorem finrank_genWeightSpace_tensorProduct (χ : Dual K L) :
     finrank K (genWeightSpace (M ⊗[K] N) (χ : L → K)) =
       ∑ p : Weight K L M × Weight K L N,

@@ -33,7 +33,7 @@ universe u v w x y
 variable {K : Type u} [Field K]
 variable {M : Type v} {N : Type w} [AddCommGroup M] [Module K M]
   [AddCommGroup N] [Module K N]
-variable {ι : Type x} {κ : Type y} [DecidableEq ι] [DecidableEq κ]
+variable {ι : Type x} {κ : Type y}
 variable (A : ι → Submodule K M) (B : κ → Submodule K N)
 
 attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free
@@ -57,12 +57,12 @@ private noncomputable def summandEquiv (i : ι) (j : κ) :
       apply Subtype.ext
       exact hx⟩
 
-omit [DecidableEq ι] [DecidableEq κ] in
 @[simp] private theorem coe_summandEquiv (i : ι) (j : κ) (x : A i ⊗[K] B j) :
     ((summandEquiv A B i j x :
       Submodule.map₂ (TensorProduct.mk K M N) (A i) (B j)) : M ⊗[K] N) =
       TensorProduct.mapIncl (A i) (B j) x := rfl
 
+open scoped Classical in
 /-- **Tensor products of internal decompositions are internal.** If `A` and `B` internally
 decompose `M` and `N`, the images of `A i ⊗ B j` under the canonical map internally decompose
 `M ⊗ N`.
@@ -72,7 +72,6 @@ ambient tensor product spanned by pure tensors from the two factors. -/
 theorem tensorProduct (hA : DirectSum.IsInternal A) (hB : DirectSum.IsInternal B) :
     DirectSum.IsInternal fun p : ι × κ ↦
       Submodule.map₂ (TensorProduct.mk K M N) (A p.1) (B p.2) := by
-  classical
   let _ := hA.chooseDecomposition
   let _ := hB.chooseDecomposition
   let E : M ⊗[K] N ≃ₗ[K]
