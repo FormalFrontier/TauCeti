@@ -85,8 +85,9 @@ only typecheck when its body is exposed.
 The closure hypotheses on `P` are Mathlib's object-property type classes, and are assumed only
 where they are used: repleteness for `ofIso`, `CategoryTheory.ObjectProperty.ContainsZero` for
 padding, and closure under binary products for direct sums, the last of these reaching
-biproducts through `CategoryTheory.ObjectProperty.prop_of_isLimit_binaryFan` applied to
-`CategoryTheory.Limits.BinaryBiproduct.isLimit`. The resolving-subcategory package,
+biproducts through
+`CategoryTheory.ObjectProperty.prop_biprod_of_isClosedUnderBinaryProducts`. The
+resolving-subcategory package,
 which bundles these with extension closure and closure under kernels of deflations, is
 downstream.
 
@@ -367,35 +368,35 @@ noncomputable def biprod :
     ∀ {X Y : C}, FiniteResolution E P X → FiniteResolution E P Y →
       FiniteResolution E P (X ⊞ Y)
   | _, _, .base hX, .base hY =>
-      .base (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hY)
+      .base (P.prop_biprod_of_isClosedUnderBinaryProducts hX hY)
   | X, _, .base hX, .step hQ i p zero hp s =>
-      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hQ)
+      .step (P.prop_biprod_of_isClosedUnderBinaryProducts hX hQ)
         (Limits.biprod.map (0 : (0 : C) ⟶ X) i) (Limits.biprod.map (𝟙 X) p)
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod (E.conflation_zero_id X) hp)
         (s.ofIso (isoZeroBiprod (isZero_zero C)))
   | _, Y, .step hQ i p zero hp r, .base hY =>
-      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hY)
+      .step (P.prop_biprod_of_isClosedUnderBinaryProducts hQ hY)
         (Limits.biprod.map i (0 : (0 : C) ⟶ Y)) (Limits.biprod.map p (𝟙 Y))
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod hp (E.conflation_zero_id Y))
         (r.ofIso (isoBiprodZero (isZero_zero C)))
   | _, _, .step hQ i p zero hp r, .step hQ' i' p' zero' hp' s =>
-      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hQ')
+      .step (P.prop_biprod_of_isClosedUnderBinaryProducts hQ hQ')
         (Limits.biprod.map i i') (Limits.biprod.map p p')
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero, reassoc_of% zero'])
         (E.conflation_biprod hp hp') (r.biprod s)
 
 @[simp] theorem biprod_base_base {X Y : C} (hX : P X) (hY : P Y) :
     (base (E := E) hX).biprod (base hY) =
-      base (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hY) := by
+      base (P.prop_biprod_of_isClosedUnderBinaryProducts hX hY) := by
   simp [biprod]
 
 @[simp] theorem biprod_base_step {X K Q Y : C} (hX : P X) (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ Y)
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (s : FiniteResolution E P K) :
     (base (E := E) hX).biprod (step hQ i p zero hp s) =
-      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hQ)
+      step (P.prop_biprod_of_isClosedUnderBinaryProducts hX hQ)
         (Limits.biprod.map (0 : (0 : C) ⟶ X) i) (Limits.biprod.map (𝟙 X) p)
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod (E.conflation_zero_id X) hp)
@@ -406,7 +407,7 @@ noncomputable def biprod :
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (r : FiniteResolution E P K) (hY : P Y) :
     (step hQ i p zero hp r).biprod (base hY) =
-      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hY)
+      step (P.prop_biprod_of_isClosedUnderBinaryProducts hQ hY)
         (Limits.biprod.map i (0 : (0 : C) ⟶ Y)) (Limits.biprod.map p (𝟙 Y))
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod hp (E.conflation_zero_id Y))
@@ -419,7 +420,7 @@ noncomputable def biprod :
     (zero' : i' ≫ p' = 0) (hp' : E.Conflation (ShortComplex.mk i' p' zero'))
     (s : FiniteResolution E P K') :
     (step hQ i p zero hp r).biprod (step hQ' i' p' zero' hp' s) =
-      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hQ')
+      step (P.prop_biprod_of_isClosedUnderBinaryProducts hQ hQ')
         (Limits.biprod.map i i') (Limits.biprod.map p p')
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero, reassoc_of% zero'])
         (E.conflation_biprod hp hp') (r.biprod s) := by
