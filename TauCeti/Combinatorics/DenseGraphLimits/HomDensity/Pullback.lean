@@ -16,12 +16,12 @@ its pullback `W.comap f` on `(Ω', ν)` have the *same* homomorphism densities:
 `t(F, W.comap f) = t(F, W)` for every finite graph `F`.
 
 Unlike the corresponding statement for the cut norm
-(`TauCeti.DenseGraphLimits.SymmKernel.cutNorm_comap`), this needs no analytic input at all. A homomorphism
-density is an integral over vertex assignments `V → Ω`, and postcomposition with `f` sends
-assignments upstairs to assignments downstairs; `MeasureTheory.measurePreserving_pi` says that this
-coordinatewise map is itself measure preserving for the product measures, and the integrand
-transforms along it on the nose, because each edge factor only ever evaluates `W` at images of the
-assignment.
+(`TauCeti.DenseGraphLimits.SymmKernel.cutNorm_comap`), this needs no analytic input at all.
+A homomorphism density is an integral over vertex assignments `V → Ω`, and postcomposition with
+`f` sends assignments upstairs to assignments downstairs; `MeasureTheory.measurePreserving_pi`
+says that this coordinatewise map is itself measure preserving for the product measures, and the
+integrand transforms along it on the nose, because each edge factor only ever evaluates `W` at
+images of the assignment.
 
 This is what makes homomorphism densities a *cross-carrier* observable. Two graphons on different
 carriers are compared through a coupling `π`, which reads both as graphons on `(Ω₁ × Ω₂, π)` by
