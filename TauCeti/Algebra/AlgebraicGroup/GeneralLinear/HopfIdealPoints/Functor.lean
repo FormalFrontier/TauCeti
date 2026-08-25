@@ -52,17 +52,39 @@ noncomputable section
 variable {R : Type u} [CommRing R] (n : ℕ)
 variable (I : HopfIdeal R (coordinateHopfAlgebra R n))
 
+private theorem map_pointsMulEquiv_quotientPointsSubgroup_eq (A : CommAlgCat.{w} R) :
+    (CommHopfAlgCat.quotientPointsSubgroup
+        (coordinateHopfAlgebra R n) I A).map
+      (pointsMulEquiv (R := R) (A := A) n :
+        WithConv (coordinateHopfAlgebra R n →ₐ[R] A) →*
+          Matrix.GeneralLinearGroup (Fin n) A) =
+      hopfIdealPointsSubgroup n I A := by
+  ext g
+  constructor
+  · rintro ⟨q, hq, rfl⟩
+    rw [mem_hopfIdealPointsSubgroup_iff]
+    rw [← (pointsMulEquiv n).toMonoidHom_eq_coe, MulEquiv.coe_toMonoidHom,
+      (pointsMulEquiv n).symm_apply_apply q]
+    exact (CommHopfAlgCat.mem_quotientPointsSubgroup_iff
+      (coordinateHopfAlgebra R n) I A q).mp hq
+  · intro hg
+    refine ⟨(pointsMulEquiv n).symm g, ?_, (pointsMulEquiv n).apply_symm_apply g⟩
+    apply (CommHopfAlgCat.mem_quotientPointsSubgroup_iff
+      (coordinateHopfAlgebra R n) I A ((pointsMulEquiv n).symm g)).mpr
+    exact (mem_hopfIdealPointsSubgroup_iff n I A g).mp hg
+
 /-- Quotient Hopf-algebra points are multiplicatively equivalent to the matrix subgroup cut out by
 the Hopf ideal. The equivalence first includes a quotient point among the ambient Hopf-algebra
 points, then reads that point as an invertible matrix. -/
-@[expose] noncomputable def quotientPointsMulEquiv (A : CommAlgCat.{w} R) :
+noncomputable def quotientPointsMulEquiv (A : CommAlgCat.{w} R) :
     HopfAlgebra.points
         (R := R) (H := CommHopfAlgCat.quotient (coordinateHopfAlgebra R n) I) A ≃*
       hopfIdealPointsSubgroup n I A :=
   (CommHopfAlgCat.quotientPointsSubgroupIso
       (coordinateHopfAlgebra R n) I A).groupIsoToMulEquiv.trans
-    ((pointsMulEquiv n).subgroupMap
-      (CommHopfAlgCat.quotientPointsSubgroup (coordinateHopfAlgebra R n) I A))
+    (((pointsMulEquiv n).subgroupMap
+      (CommHopfAlgCat.quotientPointsSubgroup (coordinateHopfAlgebra R n) I A)).trans
+        (MulEquiv.subgroupCongr (map_pointsMulEquiv_quotientPointsSubgroup_eq n I A)))
 
 /-- A quotient point, viewed through `quotientPointsMulEquiv`, is its included ambient point read as
 an invertible matrix. -/
@@ -73,7 +95,15 @@ theorem coe_quotientPointsMulEquiv_apply (A : CommAlgCat.{w} R)
     (quotientPointsMulEquiv n I A f : Matrix.GeneralLinearGroup (Fin n) A) =
       pointsMulEquiv n
         (CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R n) I A f) :=
-  rfl
+  by
+    change (((((pointsMulEquiv n).subgroupMap
+      (CommHopfAlgCat.quotientPointsSubgroup (coordinateHopfAlgebra R n) I A)).trans
+        (MulEquiv.subgroupCongr (map_pointsMulEquiv_quotientPointsSubgroup_eq n I A)))
+          ((CommHopfAlgCat.quotientPointsSubgroupIso
+            (coordinateHopfAlgebra R n) I A).hom f) :
+              hopfIdealPointsSubgroup n I A) : Matrix.GeneralLinearGroup (Fin n) A) = _
+    rw [MulEquiv.trans_apply, MulEquiv.subgroupCongr_apply,
+      MulEquiv.coe_subgroupMap_apply, CommHopfAlgCat.quotientPointsSubgroupIso_hom_apply]
 
 /-- The group-valued functor sending a commutative `R`-algebra to the matrix point group cut out by
 a fixed Hopf ideal, before the universe lift used by `hopfIdealPointsSubgroupFunctor`. -/
@@ -93,6 +123,7 @@ noncomputable def hopfIdealPointsSubgroupFunctor :
 
 /-- The object part of the Hopf-ideal matrix-points functor is the universe lift of the subgroup cut
 out by the fixed Hopf ideal. -/
+@[simp]
 theorem hopfIdealPointsSubgroupFunctor_obj (A : CommAlgCat.{w} R) :
     (hopfIdealPointsSubgroupFunctor n I).obj A =
       GrpCat.of (ULift.{u, w} (hopfIdealPointsSubgroup n I A)) :=
@@ -100,6 +131,7 @@ theorem hopfIdealPointsSubgroupFunctor_obj (A : CommAlgCat.{w} R) :
 
 /-- The morphism part of the Hopf-ideal matrix-points functor is the universe lift of the restricted
 entrywise matrix map. -/
+@[simp]
 theorem hopfIdealPointsSubgroupFunctor_map {A B : CommAlgCat.{w} R} (f : A ⟶ B) :
     (hopfIdealPointsSubgroupFunctor n I).map f =
       eqToHom (hopfIdealPointsSubgroupFunctor_obj n I A) ≫
@@ -127,7 +159,7 @@ theorem quotientPointsMulEquiv_mapValue {A B : CommAlgCat.{w} R} (f : A ⟶ B)
 
 /-- The component isomorphism from quotient Hopf-algebra points to the universe-lifted matrix point
 subgroup. -/
-@[expose] noncomputable def hopfIdealPointsSubgroupIso (A : CommAlgCat.{w} R) :
+noncomputable def hopfIdealPointsSubgroupIso (A : CommAlgCat.{w} R) :
     GrpCat.of (HopfAlgebra.points
         (R := R) (H := CommHopfAlgCat.quotient (coordinateHopfAlgebra R n) I) A) ≅
       GrpCat.of (ULift.{u, w} (hopfIdealPointsSubgroup n I A)) :=
@@ -141,7 +173,11 @@ theorem hopfIdealPointsSubgroupIso_hom_apply (A : CommAlgCat.{w} R)
       (R := R) (H := CommHopfAlgCat.quotient (coordinateHopfAlgebra R n) I) A) :
     CategoryTheory.ConcreteCategory.hom (hopfIdealPointsSubgroupIso n I A).hom q =
       ULift.up (quotientPointsMulEquiv n I A q) :=
-  rfl
+  by
+    change ((quotientPointsMulEquiv n I A).trans
+      (MulEquiv.ulift.symm : _ ≃* ULift.{u, w} (hopfIdealPointsSubgroup n I A))) q = _
+    rw [MulEquiv.trans_apply]
+    rfl
 
 /-- The inverse component removes the universe lift and applies the inverse pointwise
 matrix-subgroup equivalence. -/
@@ -150,7 +186,13 @@ theorem hopfIdealPointsSubgroupIso_inv_apply (A : CommAlgCat.{w} R)
     (g : ULift.{u, w} (hopfIdealPointsSubgroup n I A)) :
     CategoryTheory.ConcreteCategory.hom (hopfIdealPointsSubgroupIso n I A).inv g =
       (quotientPointsMulEquiv n I A).symm g.down :=
-  rfl
+  by
+    apply (quotientPointsMulEquiv n I A).injective
+    rw [MulEquiv.apply_symm_apply]
+    have h := congrArg ULift.down (hopfIdealPointsSubgroupIso_hom_apply n I A
+      ((hopfIdealPointsSubgroupIso n I A).inv g))
+    rw [Iso.inv_hom_id_apply] at h
+    exact h.symm
 
 /-- The quotient coordinate Hopf algebra represents the matrix point subgroup functor cut out by
 the Hopf ideal. -/
