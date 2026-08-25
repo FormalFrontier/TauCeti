@@ -260,7 +260,6 @@ theorem integral_laplacePDFReal_Ioi (hb : 0 < b) (hx : μ ≤ x) :
   field_simp
 
 /-- The Laplace density integrates to `1`: the two halves each carry mass `1 / 2`. -/
-@[simp]
 theorem integral_laplacePDFReal (hb : 0 < b) (μ : ℝ) : ∫ y, laplacePDFReal μ b y = 1 := by
   rw [← integral_add_compl (s := Iic μ) measurableSet_Iic
       (integrable_laplacePDFReal (b := b) μ),
@@ -268,7 +267,6 @@ theorem integral_laplacePDFReal (hb : 0 < b) (μ : ℝ) : ∫ y, laplacePDFReal 
   norm_num
 
 /-- The `ℝ≥0∞`-valued Laplace density has total mass `1`. -/
-@[simp]
 theorem lintegral_laplacePDF_eq_one (hb : 0 < b) (μ : ℝ) : ∫⁻ y, laplacePDF μ b y = 1 := by
   simp_rw [laplacePDF_eq_ofReal]
   rw [← ofReal_integral_eq_lintegral_ofReal (integrable_laplacePDFReal (b := b) μ)
