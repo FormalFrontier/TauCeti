@@ -58,9 +58,6 @@ apiece" bullet of Layer 4 ("knot theory, done properly") of the GeometricTopolog
 
 ## Main definitions
 
-* `TauCeti.KnotTheory.RankOneMatrix.family`, `TauCeti.KnotTheory.RankOneMatrix.unit`, and
-  `TauCeti.KnotTheory.RankOneMatrix.representation`: the shared rank-one construction underlying
-  both the unreduced and reduced Burau representations.
 * `TauCeti.KnotTheory.burauCol` and `TauCeti.KnotTheory.burauRow`: the column and row vector whose
   outer product is the rank-one part of an elementary Burau matrix.
 * `TauCeti.KnotTheory.burauMatrix`: the unreduced Burau matrix of an elementary braid.
@@ -96,159 +93,6 @@ open Matrix
 namespace TauCeti.KnotTheory
 
 variable {R : Type*} {n : ℕ}
-
-/-! ### Rank-one matrix families -/
-
-namespace RankOneMatrix
-
-variable {ι α : Type*}
-
-section Ring
-
-variable [Ring R] [DecidableEq α]
-
-/-- The family of matrices `1 - u i ⊗ v i` associated to two families of vectors. -/
-def family (u v : ι → α → R) (i : ι) : Matrix α α R :=
-  1 - vecMulVec (u i) (v i)
-
-/-- The defining formula for a rank-one matrix family. -/
-lemma family_def (u v : ι → α → R) (i : ι) :
-    family u v i = 1 - vecMulVec (u i) (v i) :=
-  (rfl)
-
-end Ring
-
-section CommRing
-
-variable [CommRing R] [Fintype α] [DecidableEq α]
-
-/-- The product of two members of a rank-one matrix family. -/
-theorem family_mul_family (u v : ι → α → R) (i j : ι) :
-    family u v i * family u v j =
-      1 - vecMulVec (u i) (v i) - vecMulVec (u j) (v j) +
-        (v i ⬝ᵥ u j) • vecMulVec (u i) (v j) := by
-  simp only [family, sub_mul, mul_sub, one_mul, mul_one, vecMulVec_mul_vecMulVec,
-    vecMulVec_smul]
-  abel
-
-/-- Two members of a rank-one matrix family commute when their cross-pairings vanish. -/
-theorem family_mul_comm (u v : ι → α → R) {i j : ι} (hij : v i ⬝ᵥ u j = 0)
-    (hji : v j ⬝ᵥ u i = 0) : family u v i * family u v j = family u v j * family u v i := by
-  rw [family_mul_family, family_mul_family, hij, hji]
-  simp only [zero_smul, add_zero]
-  abel
-
-/-- Two members of a rank-one matrix family obey the braid relation when their four pairings have
-the values occurring in the Burau representation. -/
-theorem family_braid (t : R) (u v : ι → α → R) {i j : ι} (hii : v i ⬝ᵥ u i = t + 1)
-    (hjj : v j ⬝ᵥ u j = t + 1) (hij : v i ⬝ᵥ u j = -t) (hji : v j ⬝ᵥ u i = -1) :
-    family u v i * family u v j * family u v i =
-      family u v j * family u v i * family u v j := by
-  simp only [family, sub_mul, mul_sub, one_mul, mul_one, vecMulVec_mul_vecMulVec,
-    vecMulVec_smul, smul_mul_assoc, smul_smul, hii, hjj, hij, hji]
-  module
-
-/-- The quadratic relation for a member of a rank-one matrix family whose self-pairing is
-`t + 1`. -/
-theorem family_mul_self (t : R) (u v : ι → α → R) (i : ι) (hii : v i ⬝ᵥ u i = t + 1) :
-    family u v i * family u v i = (1 - t) • family u v i + t • 1 := by
-  rw [family_mul_family, hii, family]
-  module
-
-/-- A right inverse for a member of a rank-one matrix family whose self-pairing is `t + 1`. -/
-theorem family_mul_inv (t : Rˣ) (u v : ι → α → R) (i : ι)
-    (hii : v i ⬝ᵥ u i = (t : R) + 1) :
-    family u v i * (1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (u i) (v i)) = 1 := by
-  have hb : vecMulVec (u i) (v i) * vecMulVec (u i) (v i) =
-      ((t : R) + 1) • vecMulVec (u i) (v i) := by
-    rw [vecMulVec_mul_vecMulVec, hii, vecMulVec_smul]
-  have hc : ((t⁻¹ : Rˣ) : R) * ((t : R) + 1) = 1 + ((t⁻¹ : Rˣ) : R) := by
-    rw [mul_add, mul_one, Units.inv_mul]
-  simp only [family, sub_mul, mul_sub, one_mul, mul_one, mul_smul_comm, hb, smul_sub]
-  rw [smul_smul, hc, add_smul, one_smul]
-  abel
-
-/-- A left inverse for a member of a rank-one matrix family whose self-pairing is `t + 1`. -/
-theorem family_inv_mul (t : Rˣ) (u v : ι → α → R) (i : ι)
-    (hii : v i ⬝ᵥ u i = (t : R) + 1) :
-    (1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (u i) (v i)) * family u v i = 1 :=
-  mul_eq_one_comm.mp (family_mul_inv t u v i hii)
-
-/-- The determinant of a member of a rank-one matrix family in terms of its self-pairing. -/
-theorem det_family (u v : ι → α → R) (i : ι) :
-    (family u v i).det = 1 - v i ⬝ᵥ u i := by
-  rw [family, sub_eq_add_neg, ← neg_vecMulVec, vecMulVec_eq Unit,
-    det_one_add_replicateCol_mul_replicateRow, dotProduct_neg]
-  ring
-
-/-- A member of a rank-one matrix family as an element of the general linear group, when its
-self-pairing is `t + 1`. -/
-def unit (t : Rˣ) (u v : ι → α → R) (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1) (i : ι) :
-    GL α R where
-  val := family u v i
-  inv := 1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (u i) (v i)
-  val_inv := family_mul_inv t u v i (hself i)
-  inv_val := family_inv_mul t u v i (hself i)
-
-/-- The matrix underlying `TauCeti.KnotTheory.RankOneMatrix.unit`. -/
-@[simp]
-theorem coe_unit (t : Rˣ) (u v : ι → α → R) (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
-    (i : ι) : (unit t u v hself i : Matrix α α R) = family u v i :=
-  (rfl)
-
-/-- The inverse of a member of a rank-one matrix family whose self-pairing is `t + 1`. -/
-theorem inv_family (t : Rˣ) (u v : ι → α → R) (i : ι)
-    (hii : v i ⬝ᵥ u i = (t : R) + 1) :
-    (family u v i)⁻¹ = 1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (u i) (v i) :=
-  Matrix.inv_eq_right_inv (family_mul_inv t u v i hii)
-
-/-- The braid-group representation associated to a rank-one matrix family with the Burau
-pairings. -/
-def representation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
-    (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
-    (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
-      v i ⬝ᵥ u j = 0 ∧ v j ⬝ᵥ u i = 0)
-    (hbraid : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j →
-      v i ⬝ᵥ u j = -(t : R) ∧ v j ⬝ᵥ u i = -1) : BraidGroup n →* GL α R :=
-  BraidGroup.lift (unit t u v hself)
-    (fun h => Units.ext (family_mul_comm u v (hcomm h).1 (hcomm h).2))
-    (fun h => Units.ext (by
-      rcases h with h | h
-      · exact family_braid (t : R) u v (hself _) (hself _) (hbraid h).1 (hbraid h).2
-      · exact (family_braid (t : R) u v (hself _) (hself _) (hbraid h).1 (hbraid h).2).symm))
-
-/-- A rank-one braid-group representation takes an elementary braid to its corresponding unit. -/
-@[simp]
-theorem representation_sigma (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
-    (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
-    (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
-      v i ⬝ᵥ u j = 0 ∧ v j ⬝ᵥ u i = 0)
-    (hbraid : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j →
-      v i ⬝ᵥ u j = -(t : R) ∧ v j ⬝ᵥ u i = -1) (i : Fin (n - 1)) :
-    representation n t u v hself hcomm hbraid (BraidGroup.sigma i) = unit t u v hself i :=
-  BraidGroup.lift_sigma _ _ _ i
-
-/-- The determinant character of a rank-one braid-group representation with the Burau
-pairings. -/
-theorem det_representation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
-    (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
-    (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
-      v i ⬝ᵥ u j = 0 ∧ v j ⬝ᵥ u i = 0)
-    (hbraid : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j →
-      v i ⬝ᵥ u j = -(t : R) ∧ v j ⬝ᵥ u i = -1) (b : BraidGroup n) :
-    Matrix.GeneralLinearGroup.det (representation n t u v hself hcomm hbraid b) =
-      (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) := by
-  have key : (Matrix.GeneralLinearGroup.det (n := α) (R := R)).comp
-      (representation n t u v hself hcomm hbraid) =
-      (zpowersHom Rˣ (-t)).comp (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1))) := by
-    refine BraidGroup.hom_ext fun i => ?_
-    apply Units.ext
-    simp [det_family, hself]
-  exact congrArg (fun f : BraidGroup n →* Rˣ => f b) key
-
-end CommRing
-
-end RankOneMatrix
 
 section Ring
 
@@ -372,13 +216,13 @@ theorem burauRow_dotProduct_burauCol_of_not_adjacent (t : R) {i j : Fin (n - 1)}
 parameter `t`: the identity outside the two strands crossed by `sigma i`, and `!![1 - t, t; 1, 0]`
 on them. -/
 def burauMatrix (t : R) (i : Fin (n - 1)) : Matrix (Fin n) (Fin n) R :=
-  RankOneMatrix.family (burauCol t) (burauRow R) i
+  1 - vecMulVec (burauCol t i) (burauRow R i)
 
 /-- The defining formula for an elementary Burau matrix: it differs from the identity by the
 rank-one matrix `vecMulVec (burauCol t i) (burauRow R i)`. -/
 theorem burauMatrix_def (t : R) (i : Fin (n - 1)) :
     burauMatrix t i = 1 - vecMulVec (burauCol t i) (burauRow R i) := by
-  rw [burauMatrix, RankOneMatrix.family]
+  rw [burauMatrix]
 
 /-- The entries of an elementary Burau matrix. -/
 theorem burauMatrix_apply (t : R) (i : Fin (n - 1)) (a b : Fin n) :
@@ -477,13 +321,16 @@ theorem burauMatrix_mulVec_one (t : R) (i : Fin (n - 1)) :
   simp only [Pi.one_apply, sub_self]
   simp
 
+/-- The geometric row vector `(1, t, …, t ^ (n - 1))` annihilates every Burau column. -/
+theorem geom_dotProduct_burauCol (t : R) (i : Fin (n - 1)) :
+    (fun k : Fin n => t ^ (k : ℕ)) ⬝ᵥ burauCol t i = 0 := by
+  rw [dotProduct_burauCol, BraidGroup.val_strand, BraidGroup.val_strandSucc, pow_succ, sub_self]
+
 /-- The geometric row vector `(1, t, …, t ^ (n - 1))` is fixed by every elementary Burau matrix. -/
 @[simp]
 theorem vecMul_burauMatrix_geom (t : R) (i : Fin (n - 1)) :
     (fun k : Fin n => t ^ (k : ℕ)) ᵥ* burauMatrix t i = fun k : Fin n => t ^ (k : ℕ) := by
-  have h : (fun k : Fin n => t ^ (k : ℕ)) ⬝ᵥ burauCol t i = 0 := by
-    rw [dotProduct_burauCol, BraidGroup.val_strand, BraidGroup.val_strandSucc, pow_succ, sub_self]
-  rw [vecMul_burauMatrix, h, zero_smul, sub_zero]
+  rw [vecMul_burauMatrix, geom_dotProduct_burauCol, zero_smul, sub_zero]
 
 end Ring
 
@@ -491,43 +338,76 @@ section CommRing
 
 variable [CommRing R]
 
-private theorem burauSelfPairing (t : R) (i : Fin (n - 1)) :
-    burauRow R i ⬝ᵥ burauCol t i = t + 1 :=
-  burauRow_dotProduct_burauCol_self t i
-
-private theorem burauDistantPairings (t : R) {i j : Fin (n - 1)}
-    (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
-    burauRow R i ⬝ᵥ burauCol t j = 0 ∧ burauRow R j ⬝ᵥ burauCol t i = 0 :=
-  ⟨burauRow_dotProduct_burauCol_of_not_adjacent t h,
-    burauRow_dotProduct_burauCol_of_not_adjacent t h.symm⟩
-
-private theorem burauAdjacentPairings (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
-    burauRow R i ⬝ᵥ burauCol t j = -t ∧ burauRow R j ⬝ᵥ burauCol t i = -1 :=
-  ⟨burauRow_dotProduct_burauCol_of_succ t h, burauRow_dotProduct_burauCol_of_succ_rev t h⟩
+/-- Multiplying two elementary Burau matrices: the two rank-one parts survive, and their product
+contributes a single further rank-one matrix. -/
+private theorem burauMatrix_mul_burauMatrix (t : R) (i j : Fin (n - 1)) :
+    burauMatrix t i * burauMatrix t j =
+      1 - vecMulVec (burauCol t i) (burauRow R i) - vecMulVec (burauCol t j) (burauRow R j) +
+        (burauRow R i ⬝ᵥ burauCol t j) • vecMulVec (burauCol t i) (burauRow R j) := by
+  simp only [burauMatrix_def, sub_mul, mul_sub, one_mul, mul_one, vecMulVec_mul_vecMulVec,
+    vecMulVec_smul]
+  abel
 
 /-- **The distant commutation relation** for the elementary Burau matrices. -/
 theorem burauMatrix_mul_comm (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
-    burauMatrix t i * burauMatrix t j = burauMatrix t j * burauMatrix t i :=
-  RankOneMatrix.family_mul_comm (burauCol t) (burauRow R)
-    (burauDistantPairings t h).1 (burauDistantPairings t h).2
+    burauMatrix t i * burauMatrix t j = burauMatrix t j * burauMatrix t i := by
+  rw [burauMatrix_mul_burauMatrix, burauMatrix_mul_burauMatrix,
+    burauRow_dotProduct_burauCol_of_not_adjacent t h,
+    burauRow_dotProduct_burauCol_of_not_adjacent t h.symm]
+  simp only [zero_smul, add_zero]
+  abel
+
+/-- The braid relation for two consecutive elementary Burau matrices, in the asymmetric form from
+which the symmetric statement `TauCeti.KnotTheory.burauMatrix_braid` follows. -/
+private theorem burauMatrix_braid_of_succ (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
+    burauMatrix t i * burauMatrix t j * burauMatrix t i =
+      burauMatrix t j * burauMatrix t i * burauMatrix t j := by
+  have hii := burauRow_dotProduct_burauCol_self (R := R) t i
+  have hjj := burauRow_dotProduct_burauCol_self (R := R) t j
+  have hij := burauRow_dotProduct_burauCol_of_succ (R := R) t h
+  have hji := burauRow_dotProduct_burauCol_of_succ_rev (R := R) t h
+  simp only [burauMatrix_def, sub_mul, mul_sub, one_mul, mul_one, vecMulVec_mul_vecMulVec,
+    vecMulVec_smul, smul_mul_assoc, smul_smul, hii, hjj, hij, hji]
+  module
 
 /-- **The braid relation** for the elementary Burau matrices. -/
 theorem burauMatrix_braid (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
     burauMatrix t i * burauMatrix t j * burauMatrix t i =
       burauMatrix t j * burauMatrix t i * burauMatrix t j := by
   rcases h with h | h
-  · exact RankOneMatrix.family_braid t (burauCol t) (burauRow R)
-      (burauSelfPairing t i) (burauSelfPairing t j) (burauAdjacentPairings t h).1
-      (burauAdjacentPairings t h).2
-  · exact (RankOneMatrix.family_braid t (burauCol t) (burauRow R)
-      (burauSelfPairing t j) (burauSelfPairing t i) (burauAdjacentPairings t h).1
-      (burauAdjacentPairings t h).2).symm
+  · exact burauMatrix_braid_of_succ t h
+  · exact (burauMatrix_braid_of_succ t h).symm
+
+/-- The inverse of an elementary Burau matrix is
+`1 - t⁻¹ • vecMulVec (burauCol t i) (burauRow R i)`. This is the witness that builds
+`TauCeti.KnotTheory.burauGL`; the public statement of the inverse is
+`TauCeti.KnotTheory.inv_burauMatrix`. -/
+private theorem burauMatrix_mul_inv (t : Rˣ) (i : Fin (n - 1)) :
+    burauMatrix (t : R) i *
+      (1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i)) = 1 := by
+  have hb : vecMulVec (burauCol (t : R) i) (burauRow R i) *
+      vecMulVec (burauCol (t : R) i) (burauRow R i) =
+      ((t : R) + 1) • vecMulVec (burauCol (t : R) i) (burauRow R i) := by
+    rw [vecMulVec_mul_vecMulVec, burauRow_dotProduct_burauCol_self, vecMulVec_smul]
+  have hc : ((t⁻¹ : Rˣ) : R) * ((t : R) + 1) = 1 + ((t⁻¹ : Rˣ) : R) := by
+    rw [mul_add, mul_one, Units.inv_mul]
+  simp only [burauMatrix_def, sub_mul, mul_sub, one_mul, mul_one, mul_smul_comm, hb, smul_sub]
+  rw [smul_smul, hc, add_smul, one_smul]
+  abel
+
+/-- The other side of `burauMatrix_mul_inv`. -/
+private theorem burauMatrix_inv_mul (t : Rˣ) (i : Fin (n - 1)) :
+    (1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i)) *
+      burauMatrix (t : R) i = 1 :=
+  mul_eq_one_comm.mp (burauMatrix_mul_inv t i)
 
 /-- The determinant of an elementary Burau matrix is `-t`. -/
 @[simp]
 theorem det_burauMatrix (t : R) (i : Fin (n - 1)) : (burauMatrix t i).det = -t := by
-  rw [burauMatrix, RankOneMatrix.det_family, burauSelfPairing]
+  rw [burauMatrix_def, sub_eq_add_neg, ← neg_vecMulVec, vecMulVec_eq Unit,
+    det_one_add_replicateCol_mul_replicateRow, dotProduct_neg,
+    burauRow_dotProduct_burauCol_self]
   ring
 
 /-! ### The Burau representation -/
@@ -535,8 +415,11 @@ theorem det_burauMatrix (t : R) (i : Fin (n - 1)) : (burauMatrix t i).det = -t :
 /-- An elementary Burau matrix as an element of the general linear group: its underlying matrix is
 `TauCeti.KnotTheory.burauMatrix t i`, with inverse
 `1 - t⁻¹ • vecMulVec (burauCol t i) (burauRow R i)`. -/
-def burauGL (t : Rˣ) (i : Fin (n - 1)) : GL (Fin n) R :=
-  RankOneMatrix.unit t (burauCol (t : R)) (burauRow R) (burauSelfPairing (t : R)) i
+def burauGL (t : Rˣ) (i : Fin (n - 1)) : GL (Fin n) R where
+  val := burauMatrix (t : R) i
+  inv := 1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i)
+  val_inv := burauMatrix_mul_inv t i
+  inv_val := burauMatrix_inv_mul t i
 
 /-- The matrix underlying `TauCeti.KnotTheory.burauGL`. -/
 @[simp]
@@ -549,29 +432,30 @@ theorem coe_burauGL (t : Rˣ) (i : Fin (n - 1)) :
 theorem inv_burauMatrix (t : Rˣ) (i : Fin (n - 1)) :
     (burauMatrix (t : R) i)⁻¹ =
       1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (burauCol (t : R) i) (burauRow R i) :=
-  RankOneMatrix.inv_family t (burauCol (t : R)) (burauRow R) i (burauSelfPairing (t : R) i)
+  Matrix.inv_eq_right_inv (burauMatrix_mul_inv t i)
 
 /-- **The unreduced Burau representation** of the braid group on `n` strands at a unit `t`, sending
 the elementary braid `sigma i` to `TauCeti.KnotTheory.burauGL t i`. -/
 def burau (n : ℕ) (t : Rˣ) : BraidGroup n →* GL (Fin n) R :=
-  RankOneMatrix.representation n t (burauCol (t : R)) (burauRow R) (burauSelfPairing (t : R))
-    (burauDistantPairings (t : R)) (burauAdjacentPairings (t : R))
+  BraidGroup.lift (burauGL t) (fun h => Units.ext (burauMatrix_mul_comm _ h))
+    (fun h => Units.ext (burauMatrix_braid _ h))
 
 /-- The Burau representation takes an elementary braid to the elementary Burau matrix. -/
 @[simp]
 theorem burau_sigma (t : Rˣ) (i : Fin (n - 1)) :
     burau n t (BraidGroup.sigma i) = (burauGL t i : GL (Fin n) R) :=
-  RankOneMatrix.representation_sigma n t (burauCol (t : R)) (burauRow R)
-    (burauSelfPairing (t : R)) (burauDistantPairings (t : R))
-    (burauAdjacentPairings (t : R)) i
+  BraidGroup.lift_sigma _ _ _ i
 
 /-- The determinant of the Burau matrix of a braid is `-t` raised to its exponent sum. -/
 theorem det_burau (t : Rˣ) (b : BraidGroup n) :
     Matrix.GeneralLinearGroup.det (burau n t b : GL (Fin n) R) =
-      (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) :=
-  RankOneMatrix.det_representation n t (burauCol (t : R)) (burauRow R)
-    (burauSelfPairing (t : R)) (burauDistantPairings (t : R))
-    (burauAdjacentPairings (t : R)) b
+      (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) := by
+  have key : (Matrix.GeneralLinearGroup.det (n := Fin n) (R := R)).comp (burau n t) =
+      (zpowersHom Rˣ (-t)).comp (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1))) := by
+    refine BraidGroup.hom_ext fun i => ?_
+    apply Units.ext
+    simp [det_burauMatrix]
+  exact congrArg (fun f : BraidGroup n →* Rˣ => f b) key
 
 /-! ### The permutation representation as the specialisation at `t = 1` -/
 
