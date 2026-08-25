@@ -6,8 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Killing
-public import Mathlib.LinearAlgebra.BilinearForm.Properties
-public import Mathlib.LinearAlgebra.Dual.Lemmas
+-- Non-public: these appear only inside proofs, never in the type of an exported declaration.
+import Mathlib.LinearAlgebra.BilinearForm.Properties
+import Mathlib.LinearAlgebra.Dual.Lemmas
 
 public section
 
@@ -21,17 +22,17 @@ vanishes for all `z`, so `x` is central; a central element of a Killing algebra 
 form is zero and the derived ideal was already everything.
 
 The statement is recorded here in the form its consumers use: an action of `L` that composes to
-zero is itself zero (`TauCeti.isTrivial_of_derivedSeries_one_eq_top`), which is what turns a
-two-step filtration of a module into a trivial action. This is the step that rules out the
-degenerate case in the Casimir proof of Weyl's complete reducibility theorem, where a module `M`
-with `⁅L, M⁆ ⊆ N` and `N` acted on trivially would otherwise escape the argument.
+zero is itself zero (`TauCeti.isTrivial_of_derivedSeries_one_eq_top_of_lie_lie_eq_zero`), which is
+what turns a two-step filtration of a module into a trivial action. This is the step that rules
+out the degenerate case in the Casimir proof of Weyl's complete reducibility theorem, where a
+module `M` with `⁅L, M⁆ ⊆ N` and `N` acted on trivially would otherwise escape the argument.
 
 ## Main results
 
 * `TauCeti.derivedSeries_one_eq_top_of_isKilling`: **a Lie algebra with nondegenerate Killing form
   is perfect.**
-* `TauCeti.isTrivial_of_derivedSeries_one_eq_top`: over a perfect Lie algebra, a module on which
-  the action composes to zero is a trivial module.
+* `TauCeti.isTrivial_of_derivedSeries_one_eq_top_of_lie_lie_eq_zero`: over a perfect Lie algebra,
+  a module on which the action composes to zero is a trivial module.
 
 ## References
 
@@ -64,8 +65,9 @@ theorem derivedSeries_one_eq_top_of_isKilling : derivedSeries K L 1 = ⊤ := by
       (by rw [hcon, LieSubmodule.top_toSubmodule])
   obtain ⟨φ, hφ, hmap⟩ := Submodule.exists_dual_map_eq_bot_of_lt_top hlt inferInstance
   have hvanish (y z : L) : φ ⁅y, z⁆ = 0 := by
-    have hmem : ⁅y, z⁆ ∈ (derivedSeries K L 1).toSubmodule :=
-      LieSubmodule.lie_mem_lie (LieSubmodule.mem_top y) (LieSubmodule.mem_top z)
+    have hmem : ⁅y, z⁆ ∈ (derivedSeries K L 1).toSubmodule := by
+      rw [← LieIdeal.toLieSubalgebra_toSubmodule, LieAlgebra.coe_derivedSeries_one_eq]
+      exact Submodule.subset_span ⟨y, z, rfl⟩
     have := Submodule.mem_map_of_mem (f := φ) hmem
     rw [hmap] at this
     simpa using this
@@ -93,7 +95,7 @@ variable {M : Type*} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModul
 /-- **Over a perfect Lie algebra an action that composes to zero is zero.** Each bracket `⁅y, z⁆`
 acts as a composite of two actions by the Leibniz rule, hence by zero, and the brackets span a
 perfect Lie algebra. -/
-theorem isTrivial_of_derivedSeries_one_eq_top (hL : derivedSeries K L 1 = ⊤)
+theorem isTrivial_of_derivedSeries_one_eq_top_of_lie_lie_eq_zero (hL : derivedSeries K L 1 = ⊤)
     (h : ∀ (x y : L) (m : M), ⁅x, ⁅y, m⁆⁆ = 0) : LieModule.IsTrivial L M := by
   refine ⟨fun {x m} ↦ ?_⟩
   have hbracket (y z : L) : ⁅⁅y, z⁆, m⁆ = 0 := by rw [lie_lie, h, h, sub_zero]

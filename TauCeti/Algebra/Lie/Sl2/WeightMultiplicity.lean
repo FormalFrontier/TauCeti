@@ -10,6 +10,7 @@ import Mathlib.Algebra.Lie.BaseChange
 import Mathlib.Data.Fin.Rev
 import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 import Mathlib.RingTheory.Flat.Equalizer
+import TauCeti.Algebra.Lie.Submodule.Decomposition
 
 /-!
 # Symmetry of the weight multiplicities of an `sl₂`-module

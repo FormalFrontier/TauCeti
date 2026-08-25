@@ -7,9 +7,10 @@ module
 
 public import TauCeti.Algebra.Lie.Sl2.Classification
 public import TauCeti.Algebra.Lie.Sl2.CompleteReducibility
-public import TauCeti.Algebra.Lie.Submodule.Decomposition
--- Non-public: `TauCeti.finrank_eq_sum_finrank_of_isInternal` appears only inside a proof, never in
--- the type of an exported declaration.
+-- Non-public: `TauCeti.exists_isInternal_isIrreducible` and
+-- `TauCeti.finrank_eq_sum_finrank_of_isInternal` appear only inside proofs, never in the type of
+-- an exported declaration.
+import TauCeti.Algebra.Lie.Submodule.Decomposition
 import TauCeti.LinearAlgebra.Dimension.DirectSum
 
 /-!
