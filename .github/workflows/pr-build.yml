@@ -2,12 +2,20 @@ name: pr-build
 
 # Builds untrusted PR code in a TRUSTED, base-branch-defined workflow. A PR cannot change what
 # runs here (pull_request_target uses the base definition). The build/audit configuration
-# (lakefile, scripts/, manifest, toolchain) is the TRUSTED base's: we overlay only the PR's
+# (lakefile, scripts/, manifest, toolchain) is the TRUSTED base's: we overlay only the
 # `TauCeti/` sources and validated Lake pins onto a base checkout. Lakefiles remain entirely
 # base-trusted; dependency repair PRs carry exact first-known-bad commits only in the manifest.
-# Any PR touching anything outside the allowed paths is routed to a human. PR `TauCeti/` code
+# Any PR touching anything outside the allowed paths is routed to a human. That `TauCeti/` code
 # compiles only under landrun (offline; writes confined to base/.lake; no secrets or token in
 # reach). The `build` commit status on the PR head SHA is the required merge check.
+#
+# What is overlaid is GitHub's MERGE CANDIDATE for the PR, not the PR head, and the base it is
+# checked out onto is that candidate's own first parent rather than the moving branch tip. So
+# the tree built is one git would produce, instead of a splice of new pins over old sources
+# that exists in no commit. See "Resolve the merge candidate" below for why it is checked on
+# both sides before use. A green here therefore means "this head builds against THAT base and
+# may enter the queue", not "this works against main right now": only the merge_group build
+# establishes the latter, and it is the one that decides what lands.
 #
 # The job below is deliberately NOT named `build`: GitHub Actions auto-creates a check-run named
 # after the job, and a check-run named `build` would collide with the required `build` STATUS this
@@ -115,6 +123,115 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Building PR #$NUM @ $SHA from $REPO (author=${AUTHOR:-merge-group}, status -> $STATUS_SHA, bump delta vs merge-base $MB)"
 
+      # The tree this builds has to be a tree that exists. Overlaying the PR head's TauCeti/
+      # onto a base carrying the target branch's Lake pins produces a mixture no commit ever
+      # had and no merge would ever produce: a branch cut before a Mathlib bump compiles
+      # pre-bump sources against post-bump Mathlib and fails on code it never touched. On
+      # 2026-08-25 that reddened 39 of the 40 failing PRs at once, every one of them on a
+      # single unchanged line of Analysis/Contour/Argument/Principle.lean, and each needed
+      # main merged into it by hand before it would build again. So build GitHub's merge
+      # candidate instead: the target branch and the PR, merged by git, in THIS repository.
+      #
+      # Trust is unchanged. The candidate is synthesised by GitHub in the canonical repo, not
+      # pushed by the contributor; only its TauCeti/ is overlaid; lakefile, scripts, manifest
+      # and toolchain still come from the trusted base below; and its code still executes only
+      # under landrun. What changes is that the base is now an exact commit rather than
+      # whatever `main` happened to be when the checkout ran.
+      #
+      # The candidate is resolved once to an immutable SHA and then checked on both sides,
+      # because the ref moves and, worse, PERSISTS: when a PR goes conflicted the ref is left
+      # pointing at the last clean merge rather than disappearing. Such a stale candidate still
+      # names the PR's current head as its second parent, so a head-only check passes it and
+      # quietly builds against a base hundreds of commits old — reintroducing the exact bug
+      # this replaces. Measured on 2026-08-25: conflicted #3135 and #1556 had stale candidates
+      # whose base parents were 230 and 1376 commits behind main, both with a matching head.
+      # `mergeable` is what excludes them; the ancestry check is the backstop.
+      - name: Resolve the merge candidate (trusted; the tree that is actually built)
+        id: cand
+        if: ${{ github.event_name != 'merge_group' }}
+        env:
+          GH_TOKEN: "${{ github.token }}"
+          NUM: "${{ steps.pr.outputs.num }}"
+          HEAD_SHA: "${{ steps.pr.outputs.sha }}"
+          BASE_REF: "${{ steps.pr.outputs.base_ref }}"
+        run: |
+          set -uo pipefail
+          repo='${{ github.repository }}'
+
+          # `mergeable` is computed asynchronously: null means "ask again", not "conflicted".
+          # `tostring` rather than `// "unknown"` on purpose — false is falsy to jq's `//`, so
+          # the alternative form would report every genuine conflict as "not computed yet".
+          mergeable=null
+          for _ in 1 2 3 4 5 6; do
+            mergeable=$(gh api "repos/$repo/pulls/$NUM" --jq '.mergeable | tostring') || mergeable=null
+            [ "$mergeable" != "null" ] && break
+            sleep 5
+          done
+          if [ "$mergeable" != "true" ]; then
+            echo "NEEDS_REBASE=1" >> "$GITHUB_ENV"
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            echo "::warning::PR #$NUM does not merge cleanly into $BASE_REF (mergeable=$mergeable); there is no candidate tree to build until it is updated"
+            exit 0
+          fi
+
+          # Every lookup below is `|| x=""` rather than bare: the step runs under `bash -e`,
+          # so an unguarded command substitution would abort it on a transient API blip and
+          # the report step would then describe an infrastructure hiccup as a failed build.
+          # Each failure instead lands on an explicit, named outcome.
+          cand=$(gh api "repos/$repo/git/ref/pull/$NUM/merge" --jq '.object.sha' 2>/dev/null) || cand=""
+          if [ -z "$cand" ]; then
+            echo "NEEDS_REBASE=1" >> "$GITHUB_ENV"
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            echo "::warning::PR #$NUM reports mergeable but has no merge ref yet; a later run will build it"
+            exit 0
+          fi
+
+          parents=$(gh api "repos/$repo/commits/$cand" --jq '[.parents[].sha] | join(" ")') || parents=""
+          cand_base=$(echo "$parents" | cut -d" " -f1)
+          cand_head=$(echo "$parents" | cut -d" " -f2)
+          if [ -z "$cand_base" ] || [ -z "$cand_head" ] || [ "$cand_base" = "$cand_head" ]; then
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            echo "::warning::could not read two parents for merge candidate $cand — routing to human"
+            exit 0
+          fi
+
+          # Bind the code side. If the second parent is not the head this run will status, the
+          # branch moved while we were resolving, and a status posted to HEAD_SHA would be
+          # describing a tree that head never had.
+          if [ "$cand_head" != "$HEAD_SHA" ]; then
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            echo "::warning::merge candidate $cand is for head $cand_head, not $HEAD_SHA — the branch moved; the run for the new head will build it"
+            exit 0
+          fi
+
+          # Bind the config side. The first parent is what the trusted base is checked out at,
+          # so it must genuinely be an ancestor of the target branch and not some other commit.
+          cmp=""; ahead=""; behind=""
+          rel=$(gh api "repos/$repo/compare/$BASE_REF...$cand_base" \
+                  --jq '[.status, (.ahead_by|tostring), (.behind_by|tostring)] | join(" ")') || rel=""
+          read -r cmp ahead behind <<<"$rel"
+          # ahead_by counts commits reachable from the candidate's base but not from the target
+          # branch. Anything but zero means it is not on that branch's history at all, so the
+          # trusted config would be checked out at a commit the branch never had.
+          if [ "$ahead" != "0" ]; then
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            echo "::warning::merge candidate base $cand_base is not an ancestor of $BASE_REF (status=${cmp:-unknown} ahead_by=${ahead:-unknown}) — routing to human"
+            exit 0
+          fi
+
+          # `behind` is recorded, never enforced. A candidate a few commits behind the tip is
+          # still a CONSISTENT tree, which is the entire point; it just answers a slightly
+          # older question. Nothing lands on that answer: the merge queue rebuilds the batch
+          # against real main before merging, so a stale entry result costs queue work at
+          # worst, never a broken main. A threshold here would only invent flakiness during
+          # a burst.
+          echo "candidate $cand = base $cand_base + head $HEAD_SHA (base is ${behind:-?} commit(s) behind $BASE_REF)"
+          {
+            echo "merge_sha=$cand"
+            echo "build_base=$cand_base"
+            echo "base_behind=${behind:-}"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Scope guard — allow TauCeti sources and validated pins
         env:
           GH_TOKEN: "${{ github.token }}"
@@ -211,7 +328,11 @@ jobs:
         # untrusted combined commit, so this is what keeps the build config (lakefile, scripts,
         # manifest, toolchain) base-trusted; only TauCeti/ is overlaid from the merge-group commit.
         with:
-          ref: "${{ steps.pr.outputs.base_ref }}"
+          # The candidate's first parent for a PR, so the config built against is the exact
+          # commit the candidate was merged onto rather than whatever the branch has become
+          # since. Empty for merge_group, which already resolves base_ref to an immutable
+          # base_sha above; the fallback keeps that path byte-for-byte as it was.
+          ref: "${{ steps.cand.outputs.build_base || steps.pr.outputs.base_ref }}"
           path: base
           persist-credentials: false
           # Enough base history for `lake cache get` to backtrack to a recently-built
@@ -253,20 +374,23 @@ jobs:
           path: mergebase
           persist-credentials: false
 
-      - name: Checkout PR head (untrusted, no credentials)
+      - name: Checkout the merge candidate (untrusted contents, no credentials)
         if: ${{ env.INFRA != '1' }}
         uses: actions/checkout@v4
         with:
-          repository: ${{ steps.pr.outputs.repo }}
-          ref: ${{ steps.pr.outputs.sha }}
+          # The candidate SHA resolved and parent-checked above, fetched from the canonical
+          # repository — so a fork is no longer contacted at build time at all. Falls back to
+          # the resolved head for merge_group, whose commit is already a real merge of the
+          # batch onto its base and lives in this repo.
+          ref: ${{ steps.cand.outputs.merge_sha || steps.pr.outputs.sha }}
           path: pr
           persist-credentials: false
-          # actions/checkout now refuses to fetch fork PR code under
-          # pull_request_target unless this opt-in is set. Fetching the fork's
-          # sources is exactly this workflow's job; it is safe here because the
-          # checkout carries no credentials (persist-credentials: false) and the
-          # fork's code is only ever executed under landrun below (offline, no
-          # token in reach), never in the trusted context this guard warns about.
+          # Kept although the ref now comes from the canonical repository: the candidate's
+          # contents are still contributor-authored, which is what this opt-in is about, and
+          # actions/checkout applies the guard by context rather than by which repository the
+          # objects came from. Safe for the same reasons as before — no credentials are
+          # persisted, and the contents only ever execute under landrun below (offline, no
+          # token in reach), never in the trusted context the guard warns about.
           allow-unsafe-pr-checkout: true
 
       # For a Lake-pin PR, validate it is a safe forward bump BEFORE overlaying its
@@ -534,6 +658,22 @@ jobs:
           #
           # So: retry each POST, always attempt all three whatever the others did, and surface a
           # persistent failure loudly at the end rather than silently dropping a status.
+          # The scope, size and new-file guards above read the PR's CURRENT state from the
+          # API rather than from the immutable head, so the branch can move underneath a run.
+          # A status posted to a head that is no longer the head is harmless — merge policy
+          # reads the current head, which carries its own statuses — so this is belt and
+          # braces rather than a live hole. It is here because the alternative is leaving the
+          # invariant implicit, and it costs one request.
+          head_moved=0
+          if [ "${{ github.event_name }}" != "merge_group" ]; then
+            cur=$(gh api "repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.num }}" \
+                    --jq .head.sha 2>/dev/null) || cur=""
+            if [ -n "$cur" ] && [ "$cur" != "${{ steps.pr.outputs.sha }}" ]; then
+              head_moved=1
+              echo "::warning::head moved from ${{ steps.pr.outputs.sha }} to $cur during this run"
+            fi
+          fi
+
           post_fail=0
           post_status() {
             local ctx="$1" st="$2" dsc="$3" attempt
@@ -576,7 +716,11 @@ jobs:
           # list (INFRA), an unvalidated pin bump (BUMP_BAD — the overlay would need the PR's pins), or a
           # diff guard that failed closed (TOO_LARGE / DIFF_UNKNOWN both exit before the build). Those
           # post a failure so this required check still blocks merge; the reason lives in `scope` below.
-          if [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
+          if [ "${{ env.NEEDS_REBASE }}" = "1" ]; then
+            state=failure; desc="does not merge cleanly into the target branch — update the branch, then this rebuilds"
+          elif [ "$head_moved" = 1 ]; then
+            state=failure; desc="the branch moved during this build — the run for the new head statuses it"
+          elif [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
             state=failure; desc="build not run — see the scope check"
           elif [ "${{ steps.build.outcome }}" = "success" ]; then
@@ -598,6 +742,8 @@ jobs:
             sc_state=failure; sc_desc="changes outside TauCeti/ — human review + merge required"
           elif [ "${{ env.BUMP_BAD }}" = "1" ]; then
             sc_state=failure; sc_desc="Lake pin change failed the trusted bump validator"
+          elif [ "${{ env.NEEDS_REBASE }}" = "1" ]; then
+            sc_state=failure; sc_desc="conflicts with the target branch — update the branch (no human merge needed)"
           elif [ "${{ env.INFRA }}" = "1" ]; then
             sc_state=failure; sc_desc="could not determine the changed files — human review + merge required"
           elif [ "${{ env.TOO_LARGE }}" = "1" ]; then
