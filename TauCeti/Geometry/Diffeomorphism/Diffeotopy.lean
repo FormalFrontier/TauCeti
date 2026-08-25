@@ -358,6 +358,52 @@ theorem ext {Φ Ψ : Diffeotopy J n M} (h : ∀ p, Φ p = Ψ p) : Φ = Ψ := by
       intro p
       exact Prod.ext ((hφ p).trans (hψ p).symm) (h p)
 
+/-- The constant diffeotopy is a left identity for composition. -/
+@[simp]
+theorem refl_trans : (refl J n M).trans Φ = Φ := by
+  apply ext
+  intro p
+  simp
+
+/-- The constant diffeotopy is a right identity for composition. -/
+@[simp]
+theorem trans_refl : Φ.trans (refl J n M) = Φ := by
+  apply ext
+  intro p
+  simp
+
+/-- Composition of diffeotopies is associative. -/
+theorem trans_assoc (Ψ Θ : Diffeotopy J n M) :
+    (Φ.trans Ψ).trans Θ = Φ.trans (Ψ.trans Θ) := by
+  apply ext
+  intro p
+  simp
+
+/-- Inverting a diffeotopy twice recovers the original diffeotopy. -/
+@[simp]
+theorem symm_symm : Φ.symm.symm = Φ := by
+  have htotal : Φ.symm.toDiffeomorph.symm = Φ.toDiffeomorph := by
+    apply _root_.Diffeomorph.ext
+    intro p
+    rfl
+  apply ext
+  intro p
+  rw [symm_apply, htotal, coe_apply]
+
+/-- A diffeotopy followed by its inverse is the constant diffeotopy. -/
+@[simp]
+theorem self_trans_symm : Φ.trans Φ.symm = refl J n M := by
+  apply ext
+  intro p
+  simp
+
+/-- A diffeotopy inverse followed by the original is the constant diffeotopy. -/
+@[simp]
+theorem symm_trans_self : Φ.symm.trans Φ = refl J n M := by
+  apply ext
+  intro p
+  simp
+
 end Diffeotopy
 
 section SmoothAmbientIsotopic
