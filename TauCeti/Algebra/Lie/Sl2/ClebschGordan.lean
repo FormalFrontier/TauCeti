@@ -112,7 +112,10 @@ theorem lie_slFinTwoBasis_two_cgVector :
   rw [lie_smul, TensorProduct.LieModule.lie_tmul_right, lie_slFinTwoBasis_two,
     lie_slFinTwoBasis_two, diag_basisVector, diag_basisVector, ← TensorProduct.smul_tmul',
     TensorProduct.tmul_smul, ← add_smul, Nat.cast_sub hjk]
-  rw [show (m : K) - 2 * ((k : K) - j) + ((n : K) - 2 * j) = (m : K) + n - 2 * k by ring]
+  have hweight :
+      (m : K) - 2 * ((k : K) - j) + ((n : K) - 2 * j) = (m : K) + n - 2 * k := by
+    ring
+  rw [hweight]
   exact smul_comm _ _ _
 
 /-- The raising element kills the `k`-th Clebsch-Gordan vector. Raising moves the antidiagonal
@@ -130,8 +133,10 @@ theorem lie_slFinTwoBasis_zero_cgVector (hkm : k ≤ m) (hkn : k ≤ n) :
           + (c j * (j : K)) • (basisVector K m (k - j) ⊗ₜ[K] basisVector K n (j - 1)) := by
     intro j hj
     have hjk : j ≤ k := by simpa [Nat.lt_succ_iff] using hj
+    have hkmj : k - j ≤ m := by omega
+    have hjn : j ≤ n := by omega
     rw [lie_smul, TensorProduct.LieModule.lie_tmul_right, lie_slFinTwoBasis_zero,
-      lie_slFinTwoBasis_zero, raise_basisVector (by omega), raise_basisVector (by omega),
+      lie_slFinTwoBasis_zero, raise_basisVector hkmj, raise_basisVector hjn,
       ← TensorProduct.smul_tmul', TensorProduct.tmul_smul, smul_add, smul_smul, smul_smul,
       Nat.cast_sub hjk]
   rw [cgVector, lie_sum, Finset.sum_congr rfl hterm, Finset.sum_add_distrib]
@@ -140,13 +145,16 @@ theorem lie_slFinTwoBasis_zero_cgVector (hkm : k ≤ m) (hkn : k ≤ n) :
         (c j * ((k : K) - j)) • (basisVector K m (k - j - 1) ⊗ₜ[K] basisVector K n j)
       = ∑ i ∈ Finset.range k, (c i * ((k : K) - i)) • A i := by
     rw [Finset.sum_range_succ, sub_self, mul_zero, zero_smul, add_zero]
-    exact Finset.sum_congr rfl fun i hi ↦ by rw [hA, show k - i - 1 = k - 1 - i by omega]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    have hindex : k - i - 1 = k - 1 - i := by omega
+    rw [hA, hindex]
   have h2 : ∑ j ∈ Finset.range (k + 1),
         (c j * (j : K)) • (basisVector K m (k - j) ⊗ₜ[K] basisVector K n (j - 1))
       = ∑ i ∈ Finset.range k, (c (i + 1) * ((i : K) + 1)) • A i := by
     rw [Finset.sum_range_succ', Nat.cast_zero, mul_zero, zero_smul, add_zero]
     refine Finset.sum_congr rfl fun i _ ↦ ?_
-    rw [hA, show k - (i + 1) = k - 1 - i by omega, Nat.add_sub_cancel, Nat.cast_add, Nat.cast_one]
+    have hindex : k - (i + 1) = k - 1 - i := by omega
+    rw [hA, hindex, Nat.add_sub_cancel, Nat.cast_add, Nat.cast_one]
   rw [h1, h2, ← Finset.sum_add_distrib, Finset.sum_eq_zero]
   intro i hi
   have hik : i < k := Finset.mem_range.1 hi
@@ -156,9 +164,10 @@ theorem lie_slFinTwoBasis_zero_cgVector (hkm : k ≤ m) (hkn : k ≤ n) :
     linear_combination h
   rw [← add_smul, hc]
   simp only [pow_succ]
-  rw [show (-1 : K) ^ i * (k.choose i : K) * ((k : K) - i)
-      + (-1 : K) ^ i * (-1 : K) * (k.choose (i + 1) : K) * ((i : K) + 1) = 0 by
-    linear_combination (-(-1 : K) ^ i) * hchoose, zero_smul]
+  have hcancel : (-1 : K) ^ i * (k.choose i : K) * ((k : K) - i)
+      + (-1 : K) ^ i * (-1 : K) * (k.choose (i + 1) : K) * ((i : K) + 1) = 0 := by
+    linear_combination (-(-1 : K) ^ i) * hchoose
+  rw [hcancel, zero_smul]
 
 variable [Nontrivial K]
 
@@ -191,7 +200,8 @@ theorem hasPrimitiveVectorWith_cgVector (hkm : k ≤ m) (hkn : k ≤ n) :
   lie_h := by
     rw [← slFinTwoBasis_two, lie_slFinTwoBasis_two_cgVector]
     congr 1
-    push_cast [Nat.cast_sub (show 2 * k ≤ m + n by omega)]
+    have hweight_nonneg : 2 * k ≤ m + n := by omega
+    push_cast [Nat.cast_sub hweight_nonneg]
     ring
   lie_e := by rw [← slFinTwoBasis_zero]; exact lie_slFinTwoBasis_zero_cgVector hkm hkn
 

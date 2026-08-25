@@ -575,25 +575,32 @@ theorem diag_basisVector :
     diag K n (basisVector K n i) = ((n : K) - 2 * i) • basisVector K n i := by
   rcases lt_or_ge i (n + 1) with hi | hi
   · rw [basisVector_eq_basis hi, diag_basis ⟨i, hi⟩]
-  · rw [basisVector_eq_zero (show n < i by omega), map_zero, smul_zero]
+  · have hin : n < i := by omega
+    rw [basisVector_eq_zero hin, map_zero, smul_zero]
 
 /-- The raising operator sends the `i`-th coordinate basis vector to `i` times the `(i-1)`-st, for
 `i` inside the weight string. -/
 theorem raise_basisVector (hi : i ≤ n) :
     raise K n (basisVector K n i) = (i : K) • basisVector K n (i - 1) := by
-  rw [basisVector_eq_basis (show i < n + 1 by omega), raise_basis ⟨i, by omega⟩,
-    basisVector_eq_basis (show i - 1 < n + 1 by omega)]
+  have hi_lt : i < n + 1 := by omega
+  have hi_pred_lt : i - 1 < n + 1 := by omega
+  rw [basisVector_eq_basis hi_lt, raise_basis ⟨i, hi_lt⟩,
+    basisVector_eq_basis hi_pred_lt]
 
 /-- The lowering operator sends the `i`-th coordinate basis vector to `(n - i)` times the
 `(i+1)`-st, uniformly in `i`: past the end of the weight string both sides vanish. -/
 theorem lower_basisVector :
     lower K n (basisVector K n i) = ((n : K) - i) • basisVector K n (i + 1) := by
   rcases lt_trichotomy i n with hi | hi | hi
-  · rw [basisVector_eq_basis (show i < n + 1 by omega), lower_basis ⟨i, by omega⟩ hi,
-      basisVector_eq_basis (show i + 1 < n + 1 by omega)]
-  · rw [hi, sub_self, zero_smul, basisVector_eq_basis (show n < n + 1 by omega)]
+  · have hi_lt : i < n + 1 := by omega
+    have hi_succ_lt : i + 1 < n + 1 := by omega
+    rw [basisVector_eq_basis hi_lt, lower_basis ⟨i, hi_lt⟩ hi,
+      basisVector_eq_basis hi_succ_lt]
+  · have hn_lt : n < n + 1 := Nat.lt_succ_self n
+    rw [hi, sub_self, zero_smul, basisVector_eq_basis hn_lt]
     exact lower_basis_last
-  · rw [basisVector_eq_zero hi, basisVector_eq_zero (show n < i + 1 by omega), map_zero, smul_zero]
+  · have hi_succ : n < i + 1 := by omega
+    rw [basisVector_eq_zero hi, basisVector_eq_zero hi_succ, map_zero, smul_zero]
 
 end BasisVector
 
