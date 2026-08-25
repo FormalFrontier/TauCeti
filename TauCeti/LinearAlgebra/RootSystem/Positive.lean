@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Group.Submonoid.Support
 public import Mathlib.LinearAlgebra.RootSystem.Base
+public import TauCeti.LinearAlgebra.RootSystem.Height
 
 public section
 
@@ -59,7 +60,10 @@ positive root is a nonnegative integer combination of the simple coroots.
   sum of positive roots is nonzero.
 * `TauCeti.eq_of_nsmul_root_sub_root_mem_posRootCone` says that the only positive root lying below
   a natural multiple of a simple root, in the order defined by `Q⁺`, is that simple root itself.
-* `TauCeti.one_le_height_of_mem_posRoots` says every positive root has height at least one.
+* `TauCeti.one_le_height_of_mem_posRoots` says every positive root has height at least one, and
+  `TauCeti.height_neg_of_mem_negRoots` says every negative root has negative height.
+* `TauCeti.exists_natCast_eq_heightLinearMap_of_mem_posRootCone` says the height functional takes
+  natural-number values on `Q⁺`.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
   nonnegative integer combination of the simple coroots.
 
@@ -118,6 +122,10 @@ theorem one_le_height_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) : 1 ≤
 /-- Membership in the set of negative roots. -/
 @[simp]
 lemma mem_negRoots (i : ι) : i ∈ negRoots P b ↔ ¬ b.IsPos i := Iff.rfl
+
+/-- A negative root has negative height. -/
+theorem height_neg_of_mem_negRoots {i : ι} (hi : i ∈ negRoots P b) : b.height i < 0 :=
+  lt_of_not_ge fun h => (mem_negRoots P b i).mp hi (b.isPos_iff'.mpr h)
 
 /-- The negative roots are the complement of the positive roots. -/
 lemma compl_posRoots : (posRoots P b)ᶜ = negRoots P b := by
@@ -277,6 +285,19 @@ theorem root_mem_posRootCone_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) 
     P.root i ∈ posRootCone P b :=
   let ⟨f, _, hf⟩ := exists_root_eq_sum_nat_of_mem_posRoots P b hi
   (mem_posRootCone P b).mpr ⟨f, hf⟩
+
+omit [CharZero R] in
+/-- **The height functional takes natural-number values on the positive root cone**: the height of
+a nonnegative integer combination of simple roots is the total number of simple roots in it, every
+simple root having height one. This is what makes the height of a cone member a legitimate
+induction parameter. -/
+theorem exists_natCast_eq_heightLinearMap_of_mem_posRootCone [P.IsRootSystem] {u : M}
+    (hu : u ∈ posRootCone P b) : ∃ n : ℕ, heightLinearMap P b u = (n : R) := by
+  obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
+  refine ⟨∑ j ∈ b.support, f j, ?_⟩
+  rw [map_sum, Nat.cast_sum]
+  exact Finset.sum_congr rfl fun j hj => by
+    rw [map_nsmul, heightLinearMap_simpleRoot P b ⟨j, hj⟩, nsmul_eq_mul, mul_one]
 
 /-- **The positive root cone is pointed**: the only member whose negative is again a member is
 zero. Expanding a member and its negative in the simple roots, the total coefficient vector is

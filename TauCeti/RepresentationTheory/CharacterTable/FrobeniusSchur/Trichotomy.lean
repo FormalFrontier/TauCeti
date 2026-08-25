@@ -395,22 +395,6 @@ theorem frobeniusSchurIndicator_eq_neg_one_of_isAlt (hB : IsInvariantForm ρ B) 
   rw [frobeniusSchurIndicator_eq_sub_finrank_invariantForms, hs, ha]
   simp
 
-omit [CharZero k] [Fintype G] in
-/-- **An irreducible representation is orthogonal, symplectic or complex.** Away from
-characteristic two, over an algebraically closed field it carries a nonzero invariant symmetric
-form, or a nonzero invariant alternating form, or no nonzero invariant form at all.  This is the
-case split the three values of the indicator are read off from. -/
-theorem exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot (h2 : (2 : k) ≠ 0) :
-    (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm) ∨
-      (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt) ∨ invariantForms ρ = ⊥ := by
-  by_cases hbot : invariantForms ρ = ⊥
-  · exact Or.inr (Or.inr hbot)
-  · obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
-    have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
-    rcases hC.isSymm_or_isAlt h2 hC0 with hsymm | halt
-    · exact Or.inl ⟨C, hC, hC0, hsymm⟩
-    · exact Or.inr (Or.inl ⟨C, hC, hC0, halt⟩)
-
 /-- **The Frobenius-Schur trichotomy.** The indicator of an irreducible representation over an
 algebraically closed field of characteristic zero takes only the values `1`, `0` and `-1`. -/
 theorem frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one :

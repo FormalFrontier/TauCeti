@@ -8,6 +8,7 @@ module
 public import TauCeti.Data.Fin.Basic
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
+import TauCeti.LinearAlgebra.RootSystem.Swap
 
 public section
 
@@ -207,21 +208,6 @@ private lemma typeAPairCoroot_injective : Injective (typeAPairCoroot (n := n)) :
   have hp := p.2
   have hq := q.2
   refine Subtype.ext (Prod.ext ?_ ?_) <;> (split_ifs at h2 <;> simp_all)
-
-/-- Transposing a family along `Equiv.swap a b` subtracts a multiple of `f a - f b`. This is the
-formal identity behind both reflection axioms: reflecting in the root `e_a - e_b` is exactly the
-transposition of `a` and `b`. -/
-private lemma apply_swap_eq {ι M : Type*} [DecidableEq ι] [AddCommGroup M] (f : ι → M)
-    (a b c : ι) :
-    f (Equiv.swap a b c) =
-      f c - ((if c = a then 1 else 0) - (if c = b then (1 : ℤ) else 0)) • (f a - f b) := by
-  rcases eq_or_ne c a with rfl | hca
-  · rcases eq_or_ne c b with rfl | hcb
-    · simp
-    · simp [Equiv.swap_apply_left, hcb]
-  · rcases eq_or_ne c b with rfl | hcb
-    · simp [Equiv.swap_apply_right, hca]
-    · simp [Equiv.swap_apply_of_ne_of_ne hca hcb, hca, hcb]
 
 /-- Reflection in the root indexed by `p`, as the transposition of the two entries of `p` acting on
 ordered pairs. -/

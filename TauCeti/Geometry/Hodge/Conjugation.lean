@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Module.Submodule.Map
 public import Mathlib.Data.Complex.Basic
+public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import Mathlib.LinearAlgebra.Quotient.Basic
 public import Mathlib.LinearAlgebra.TensorProduct.Map
 public import Mathlib.RingTheory.IsTensorProduct
@@ -34,6 +35,11 @@ complexification models.
   complex subspace.
 * `TauCeti.Hodge.Conjugation.map_comap_eq_comap_map`: an equivalence intertwining two conjugations
   exchanges conjugation with taking preimages of subspaces.
+* `TauCeti.Hodge.Conjugation.dual`: the twisted transpose of a conjugation, again a conjugation,
+  on the complex dual space, with its pointwise description
+  `TauCeti.Hodge.Conjugation.dual_toEquiv_apply`.
+* `TauCeti.Hodge.Conjugation.map_dualAnnihilator`: a conjugation carries dual annihilators to
+  dual annihilators of conjugated subspaces.
 * `TauCeti.Hodge.latticeConjugation`: the abstract map bundled as a `Conjugation`.
 * `TauCeti.Hodge.integralMapToComplex`: complexification of an integral linear map between abstract
   complexification models.
@@ -191,6 +197,95 @@ theorem quotient_toEquiv_mk (ω : Conjugation W) {U : Submodule ℂ W}
     (ω.quotient hU).toEquiv (Submodule.Quotient.mk x) =
       Submodule.Quotient.mk (ω.toEquiv x) :=
   (rfl)
+
+/-- The twisted transpose of a conjugation: a functional `φ` is sent to the functional
+conjugating the values of `φ` along `ω`. -/
+private def dualMap (ω : Conjugation W) :
+    Module.Dual ℂ W →ₛₗ[starRingEnd ℂ] Module.Dual ℂ W :=
+  { toFun := fun φ =>
+      { toFun := fun v => star (φ (ω.toEquiv v))
+        map_add' := by
+          intro x y
+          simp [map_add, star_add]
+        map_smul' := by
+          intro c v
+          have h1 : ω.toEquiv (c • v) = (starRingEnd ℂ) c • ω.toEquiv v :=
+            LinearMap.map_smulₛₗ ω.toEquiv.toLinearMap c v
+          have h2 : φ ((starRingEnd ℂ) c • ω.toEquiv v) =
+              (starRingEnd ℂ) c * φ (ω.toEquiv v) := by simp
+          rw [h1, h2]
+          simp [star_mul, mul_comm] }
+    map_add' := by
+      intro φ ψ
+      ext v
+      simp
+    map_smul' := by
+      intro c φ
+      ext v
+      simp }
+
+/-- Pointwise description of the twisted transpose. -/
+private theorem dualMap_apply (ω : Conjugation W) (φ : Module.Dual ℂ W) (v : W) :
+    dualMap ω φ v = star (φ (ω.toEquiv v)) :=
+  (rfl)
+
+/-- The twisted transpose is an involution. -/
+private theorem dualMap_involutive (ω : Conjugation W) :
+    Function.Involutive (dualMap ω) := by
+  intro φ
+  ext v
+  simp [dualMap_apply, ω.apply_apply]
+
+/-- The twisted transpose of a conjugation `ω`: a functional `φ` acts by conjugating the values
+of `φ` along `ω`. It is again an involution, so it packages as a conjugation on the dual space;
+see `TauCeti.Hodge.Conjugation.dual_toEquiv_apply` for its pointwise description. -/
+def dual (ω : Conjugation W) : Conjugation (Module.Dual ℂ W) where
+  toEquiv :=
+    { toFun := dualMap ω
+      invFun := dualMap ω
+      left_inv := dualMap_involutive ω
+      right_inv := dualMap_involutive ω
+      map_add' := by
+        intro φ ψ
+        ext v
+        simp [map_add]
+      map_smul' := by
+        intro c φ
+        ext v
+        simp [dualMap_apply] }
+  involutive := dualMap_involutive ω
+
+/-- Pointwise description of the dual conjugation. -/
+@[simp]
+theorem dual_toEquiv_apply (ω : Conjugation W) (φ : Module.Dual ℂ W) (v : W) :
+    ω.dual.toEquiv φ v = star (φ (ω.toEquiv v)) :=
+  (rfl)
+
+/-- A conjugation carries dual annihilators to dual annihilators of conjugated subspaces. -/
+@[simp]
+theorem map_dualAnnihilator (ω : Conjugation W) (U : Submodule ℂ W) :
+    U.dualAnnihilator.map ω.dual.toEquiv.toLinearMap =
+      (U.map ω.toEquiv.toLinearMap).dualAnnihilator := by
+  ext φ
+  rw [Submodule.mem_dualAnnihilator, Submodule.mem_map]
+  constructor
+  · rintro ⟨ψ, hψ, rfl⟩ u hu
+    obtain ⟨v, hv, rfl⟩ := Submodule.mem_map.1 hu
+    have hψ' : ∀ w ∈ U, ψ w = 0 := (Submodule.mem_dualAnnihilator ψ).mp hψ
+    -- `LinearEquiv.coe_toLinearMap` exposes the underlying functions (one rewrite per
+    -- occurrence), so that the pointwise description `dual_toEquiv_apply` applies to the goal.
+    rw [LinearEquiv.coe_toLinearMap, LinearEquiv.coe_toLinearMap, dual_toEquiv_apply,
+      ω.apply_apply, hψ' v hv]
+    exact star_zero _
+  · intro h
+    refine ⟨ω.dual.toEquiv φ,
+      (Submodule.mem_dualAnnihilator (ω.dual.toEquiv φ)).mpr fun u hu => ?_, ?_⟩
+    · have h0 : φ (ω.toEquiv u) = 0 :=
+        h (ω.toEquiv u) (Submodule.mem_map.2 ⟨u, hu, rfl⟩)
+      rw [dual_toEquiv_apply, h0]
+      exact star_zero _
+    · ext v
+      exact congrArg (fun f => f v) (ω.dual.apply_apply φ)
 
 end Conjugation
 

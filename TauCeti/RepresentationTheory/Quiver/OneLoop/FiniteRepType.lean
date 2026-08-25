@@ -10,7 +10,6 @@ public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
 public import TauCeti.RepresentationTheory.Quiver.OneLoop.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
 public import TauCeti.RingTheory.AdjoinRoot
-public import TauCeti.RingTheory.LocalRing.Basic
 public import TauCeti.RingTheory.Polynomial.Truncated
 public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 
@@ -62,13 +61,15 @@ the scalars `s` with `s * c = d * s`: `TauCeti.oneLoopRepHom` builds the morphis
 scalar, `TauCeti.oneLoopRepScalar_oneLoopRepHom` and `TauCeti.oneLoopRep_hom_ext` make the two
 constructions inverse to each other.
 
-Indecomposability is proved throughout from `TauCeti.indecomposable_of_idempotent_eq_zero_or_id`
-rather than from the brick criterion: for the Jordan blocks the endomorphism algebra is
-`k[X]/(Xⁿ⁺¹)`, which is not a field, so the brick criterion does not apply, and an endomorphism is
-pinned down instead by its value at `1` (`AdjoinRoot.eq_mulRight_of_root_mul`, from
-`TauCeti.RingTheory.AdjoinRoot`). That the value is then `0` or `1` is locality of the truncated
-polynomial algebra, `TauCeti.isLocalRing_adjoinRoot_X_pow` from
-`TauCeti.RingTheory.Polynomial.Truncated`.
+Indecomposability is proved throughout from
+`TauCeti.indecomposable_of_injective_of_isLocalRing` rather than from the brick criterion: for the
+Jordan blocks the endomorphism algebra is `k[X]/(Xⁿ⁺¹)`, which is not a field, so the brick
+criterion does not apply, and an endomorphism is pinned down instead by its value at `1`
+(`AdjoinRoot.eq_mulRight_of_root_mul`, from `TauCeti.RingTheory.AdjoinRoot`). That value records
+the endomorphism faithfully in the truncated polynomial algebra, sending `0` to `0`, the identity
+to `1` and squares to squares, and that algebra is local by
+`TauCeti.isLocalRing_adjoinRoot_X_pow` from `TauCeti.RingTheory.Polynomial.Truncated`; a scalar
+representation is the same criterion read in the base field.
 
 The quiver `•↺` itself -- `TauCeti.Quiver.OneLoop`, with its `Quiver` instance and its loop
 `TauCeti.Quiver.OneLoop.loop` -- is defined in
@@ -247,16 +248,13 @@ theorem not_isZero_oneLoopRep (c : k) : ¬ IsZero (oneLoopRep.{u, w} k c) := by
     ModuleCat.subsingleton_of_isZero (h.obj (Quiver.OneLoop.vertex : Paths Quiver.OneLoop))
   exact one_ne_zero (α := k) (Subsingleton.elim _ _)
 
-/-- **`TauCeti.oneLoopRep k c` is indecomposable.** Its only vertex carries a line, so an idempotent
-endomorphism has an idempotent scalar, hence is `0` or the identity. -/
-theorem indecomposable_oneLoopRep (c : k) : Indecomposable (oneLoopRep.{u, w} k c) := by
-  refine indecomposable_of_idempotent_eq_zero_or_id (not_isZero_oneLoopRep c) fun e he ↦ ?_
-  have hidem : IsIdempotentElem (oneLoopRepScalar e) := by
-    have h := congrArg oneLoopRepScalar he
-    rwa [oneLoopRepScalar_comp] at h
-  rcases IsIdempotentElem.iff_eq_zero_or_one.mp hidem with h0 | h1
-  · exact Or.inl (oneLoopRep_hom_ext (by rw [h0, oneLoopRepScalar_zero]))
-  · exact Or.inr (oneLoopRep_hom_ext (by rw [h1, oneLoopRepScalar_id]))
+/-- **`TauCeti.oneLoopRep k c` is indecomposable.** Its only vertex carries a line, so its scalar
+records an endomorphism faithfully in the field `k`, a local ring, sending `0` to `0`, the
+identity to `1` and squares to squares. -/
+theorem indecomposable_oneLoopRep (c : k) : Indecomposable (oneLoopRep.{u, w} k c) :=
+  indecomposable_of_injective_of_isLocalRing (not_isZero_oneLoopRep c) oneLoopRepScalar
+    (fun _ _ h ↦ oneLoopRep_hom_ext h) (oneLoopRepScalar_zero c c) (oneLoopRepScalar_id c)
+    fun f ↦ oneLoopRepScalar_comp f f
 
 /-- **Two scalar representations of `•↺` are isomorphic only if their scalars agree.** The scalar of
 an isomorphism is invertible, because the scalars of the two composites multiply to `1`, and
@@ -384,31 +382,26 @@ private theorem oneLoopNilpotentRepApp_root_mul {n : ℕ}
 
 /-- **`TauCeti.oneLoopNilpotentRep k n` is indecomposable.** An endomorphism commutes with
 multiplication by the root, hence is multiplication by its value at `1`
-(`TauCeti.AdjoinRoot.eq_mulRight_of_root_mul`); if it is idempotent so is that value, and
-`k[X]/(Xⁿ⁺¹)` is a
-local ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), so its only idempotents are `0` and `1`. -/
+(`TauCeti.AdjoinRoot.eq_mulRight_of_root_mul`), so that value records it faithfully in
+`k[X]/(Xⁿ⁺¹)`, a local ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), sending `0` to `0`, the
+identity to `1` and squares to squares. -/
 theorem indecomposable_oneLoopNilpotentRep (n : ℕ) :
     Indecomposable (oneLoopNilpotentRep.{u, w} k n) := by
-  refine indecomposable_of_idempotent_eq_zero_or_id (not_isZero_oneLoopNilpotentRep n) fun e he ↦ ?_
-  have hmul : oneLoopNilpotentRepApp e = LinearMap.mulRight k (oneLoopNilpotentRepApp e 1) :=
+  have hmul : ∀ e : oneLoopNilpotentRep.{u, w} k n ⟶ oneLoopNilpotentRep.{u, w} k n,
+      oneLoopNilpotentRepApp e = LinearMap.mulRight k (oneLoopNilpotentRepApp e 1) := fun e ↦
     AdjoinRoot.eq_mulRight_of_root_mul (monic_X_pow (R := k) (n + 1))
       (oneLoopNilpotentRepApp_root_mul e)
-  have hmul_apply : ∀ x, oneLoopNilpotentRepApp e x = x * oneLoopNilpotentRepApp e 1 := by
-    intro x
-    rw [hmul]
+  refine indecomposable_of_injective_of_isLocalRing (not_isZero_oneLoopNilpotentRep n)
+    (fun e ↦ oneLoopNilpotentRepApp e 1) (fun e e' h ↦ ?_) ?_ ?_ fun e ↦ ?_
+  · refine oneLoopNilpotentRep_hom_ext ?_
+    rw [hmul e, hmul e']
+    exact congrArg (LinearMap.mulRight k) h
+  · rw [oneLoopNilpotentRepApp_zero]
     simp
-  have hidem : IsIdempotentElem (oneLoopNilpotentRepApp e 1) := by
-    have h := congrArg (fun t ↦ oneLoopNilpotentRepApp t 1) he
-    simp only [oneLoopNilpotentRepApp_comp, LinearMap.comp_apply] at h
-    rw [hmul_apply (oneLoopNilpotentRepApp e 1)] at h
-    exact h
-  rcases IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem hidem with h0 | h1
-  · refine Or.inl (oneLoopNilpotentRep_hom_ext ?_)
-    rw [hmul, h0, oneLoopNilpotentRepApp_zero]
-    exact LinearMap.ext fun x ↦ by simp
-  · refine Or.inr (oneLoopNilpotentRep_hom_ext ?_)
-    rw [hmul, h1, oneLoopNilpotentRepApp_id]
-    exact LinearMap.ext fun x ↦ by simp
+  · rw [oneLoopNilpotentRepApp_id]
+    simp
+  · rw [oneLoopNilpotentRepApp_comp, LinearMap.comp_apply, hmul e]
+    simp
 
 /-- **Nilpotent Jordan blocks of different sizes are non-isomorphic**: their dimension vectors
 differ. -/
