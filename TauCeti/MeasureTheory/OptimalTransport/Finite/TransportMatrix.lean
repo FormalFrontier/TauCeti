@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Data.Matrix.Basic
-public import Mathlib.Probability.ProbabilityMassFunction.Constructions
+public import TauCeti.Probability.ProbabilityMassFunction.Finite
 
 /-!
 # Finite transport plans as matrices
@@ -42,11 +42,6 @@ namespace TauCeti
 universe u v
 
 variable {ι : Type u} {κ : Type v}
-
-/-- The masses of a probability mass function on a finite type sum to one. -/
-theorem sum_toReal_pmf [Fintype ι] (μ : PMF ι) : ∑ i, (μ i).toReal = 1 := by
-  have h : ∑ i, μ i = 1 := (tsum_fintype fun i ↦ μ i).symm.trans μ.tsum_coe
-  rw [← ENNReal.toReal_sum fun i _ ↦ μ.apply_ne_top i, h, ENNReal.toReal_one]
 
 section Matrix
 
@@ -152,8 +147,9 @@ theorem sum_toRealFun_col (A : TransportMatrix μ ν) (j : κ) :
   rw [← ENNReal.toReal_sum fun i _ ↦ A.apply_ne_top i j, A.col_sum]
 
 /-- The real-valued entries of a transportation matrix have total mass one. -/
+@[simp]
 theorem sum_toRealFun (A : TransportMatrix μ ν) : ∑ p, A.toRealFun p = 1 := by
-  simpa only [toRealFun_apply, toPMF_apply] using sum_toReal_pmf A.toPMF
+  simpa only [toRealFun_apply, toPMF_apply] using PMF.sum_toReal_apply A.toPMF
 
 /-- The total cost of a finite transportation matrix. The cost function is real-valued, so
 negative costs are allowed. -/
@@ -165,6 +161,7 @@ theorem cost_def (c : ι × κ → ℝ) (A : TransportMatrix μ ν) :
     A.cost c = ∑ q, c q * A.toRealFun q := (rfl)
 
 /-- Adding a constant to every entry of a cost adds that constant to the matrix cost. -/
+@[simp]
 theorem cost_add_const (c : ι × κ → ℝ) (A : TransportMatrix μ ν) (a : ℝ) :
     A.cost (fun p ↦ c p + a) = A.cost c + a := by
   simp only [cost_def, add_mul, Finset.sum_add_distrib, ← Finset.mul_sum, A.sum_toRealFun,

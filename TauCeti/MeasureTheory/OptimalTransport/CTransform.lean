@@ -68,8 +68,8 @@ marginal integrals of a dual pair meaningful.
 * `TauCeti.upperSemicontinuous_cTransform` — an infimal transform of upper-semicontinuous
   sections is upper semicontinuous, and `TauCeti.measurable_cTransform_of_upperSemicontinuous` —
   it is then Borel measurable, while `TauCeti.uniformContinuous_iInf_sub` shows that a
-  real-valued infimal transform is uniformly continuous when the cost is uniformly continuous and
-  its infima are finite;
+  real-valued infimal transform is uniformly continuous when the target-variable sections of the
+  cost share a uniform modulus and its infima are finite;
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
   negative, which is the normalisation freedom of the dual problem;
 * `TauCeti.cTransform_coe` and `TauCeti.cTransformSymm_coe` — the extended-real transforms of
@@ -295,22 +295,21 @@ theorem cTransformSymm_coe [Nonempty Y] (c : X × Y → ℝ) (ψ : Y → ℝ) (x
   simpa only [cTransformSymm_eq_cTransform] using
     cTransform_coe (fun p : Y × X ↦ c (p.2, p.1)) ψ x hbdd
 
-/-- The infimal `c`-transform of a real potential inherits the modulus of continuity of the cost:
-if `c` is uniformly continuous and the differences `c (x, y) - φ x` are bounded below for each
-`y`, then `y ↦ ⨅ x, (c (x, y) - φ x)` is uniformly continuous. -/
-theorem uniformContinuous_iInf_sub [PseudoMetricSpace X] [PseudoMetricSpace Y] [Nonempty X]
-    {c : X × Y → ℝ} {φ : X → ℝ} (hc : UniformContinuous c)
+/-- The infimal `c`-transform of a real potential inherits a uniform modulus of continuity from
+the target-variable sections of the cost. -/
+theorem uniformContinuous_iInf_sub [PseudoMetricSpace Y] [Nonempty X]
+    {c : X × Y → ℝ} {φ : X → ℝ}
+    (hc : ∀ ε > 0, ∃ δ > 0, ∀ x y y', dist y y' < δ → dist (c (x, y)) (c (x, y')) < ε)
     (hbdd : ∀ y, BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
     UniformContinuous fun y ↦ ⨅ x, (c (x, y) - φ x) := by
   refine Metric.uniformContinuous_iff.2 fun ε hε ↦ ?_
-  obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hc (ε / 2) (by positivity)
+  obtain ⟨δ, hδ, hcδ⟩ := hc (ε / 2) (by positivity)
   have key : ∀ y₁ y₂ : Y, dist y₁ y₂ < δ →
       (⨅ x, (c (x, y₁) - φ x)) - ε / 2 ≤ ⨅ x, (c (x, y₂) - φ x) := by
     intro y₁ y₂ h
     refine le_ciInf fun x ↦ ?_
     have h1 : (⨅ x, (c (x, y₁) - φ x)) ≤ c (x, y₁) - φ x := ciInf_le (hbdd y₁) x
-    have h2 : dist (c (x, y₁)) (c (x, y₂)) < ε / 2 :=
-      hcδ (by simpa [Prod.dist_eq, max_eq_right dist_nonneg] using h)
+    have h2 : dist (c (x, y₁)) (c (x, y₂)) < ε / 2 := hcδ x y₁ y₂ h
     rw [Real.dist_eq, abs_lt] at h2
     linarith [h2.1, h2.2]
   refine ⟨δ, hδ, fun y y' hy' ↦ ?_⟩

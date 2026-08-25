@@ -155,11 +155,20 @@ theorem exists_continuous_forall_add_le_and_le (hc : Continuous c)
     rw [hψcoe, hφcoe] at h
     exact h
   have hcu : UniformContinuous c := CompactSpace.uniformContinuous_of_continuous hc
-  refine ⟨φ', ψ', ?_, (uniformContinuous_iInf_sub hcu hbddψ).continuous, ?_, hφle, hψle⟩
-  · have hswap : UniformContinuous fun q : Y × X ↦ c (q.2, q.1) :=
-      hcu.comp (uniformContinuous_snd.prodMk uniformContinuous_fst)
+  have hcuY : ∀ ε > 0, ∃ δ > 0, ∀ x y y', dist y y' < δ →
+      dist (c (x, y)) (c (x, y')) < ε := fun ε hε ↦ by
+    obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hcu ε hε
+    exact ⟨δ, hδ, fun x y y' hyy' ↦
+      hcδ (by simpa [Prod.dist_eq, max_eq_right dist_nonneg] using hyy')⟩
+  refine ⟨φ', ψ', ?_, (uniformContinuous_iInf_sub hcuY hbddψ).continuous, ?_, hφle, hψle⟩
+  · have hcuX : ∀ ε > 0, ∃ δ > 0, ∀ y x x', dist x x' < δ →
+        dist (c (x, y)) (c (x', y)) < ε := fun ε hε ↦ by
+      obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hcu ε hε
+      refine ⟨δ, hδ, fun y x x' hxx' ↦ ?_⟩
+      exact hcδ (show dist ((x, y) : X × Y) (x', y) < δ by
+        simpa [Prod.dist_eq] using hxx')
     exact (uniformContinuous_iInf_sub (c := fun q : Y × X ↦ c (q.2, q.1))
-      (φ := ψ') hswap hbddφ).continuous
+      (φ := ψ') hcuX hbddφ).continuous
   · intro x y
     have h := cTransformSymm_add_le c (fun y ↦ (ψ' y : EReal)) x y
     rw [hφcoe] at h
@@ -193,6 +202,22 @@ private theorem ae_cond_eq {n : ℕ} {q : X → Fin n} (hq : Measurable q) (μ :
   rw [hfib, ProbabilityTheory.cond_apply (hq (MeasurableSet.singleton i)),
     Set.inter_compl_self, measure_empty, mul_zero]
 
+/-- A nonzero matrix entry has a nonzero source fibre. -/
+private theorem row_fiber_ne_zero {n m : ℕ} {q : X → Fin n} {μ : Measure X}
+    {pμ : PMF (Fin n)} {pν : PMF (Fin m)} (hpμ : ∀ i, pμ i = μ (q ⁻¹' {i}))
+    (T : TransportMatrix pμ pν) {i : Fin n} {j : Fin m} (h : T i j ≠ 0) :
+    μ (q ⁻¹' {i}) ≠ 0 := by
+  intro hzero
+  exact h <| le_antisymm ((T.apply_le_row i j).trans_eq (by rw [hpμ i, hzero])) zero_le
+
+/-- A nonzero matrix entry has a nonzero target fibre. -/
+private theorem col_fiber_ne_zero {n m : ℕ} {q : Y → Fin m} {ν : Measure Y}
+    {pμ : PMF (Fin n)} {pν : PMF (Fin m)} (hpν : ∀ j, pν j = ν (q ⁻¹' {j}))
+    (T : TransportMatrix pμ pν) {i : Fin n} {j : Fin m} (h : T i j ≠ 0) :
+    ν (q ⁻¹' {j}) ≠ 0 := by
+  intro hzero
+  exact h <| le_antisymm ((T.apply_le_col i j).trans_eq (by rw [hpν j, hzero])) zero_le
+
 /-- Gluing conditional laws along a finite transportation matrix gives a coupling of the original
 marginals. -/
 private theorem isCoupling_glue {n m : ℕ} {qX : X → Fin n} {qY : Y → Fin m}
@@ -201,29 +226,22 @@ private theorem isCoupling_glue {n m : ℕ} {qX : X → Fin n} {qY : Y → Fin m
     {pμ : PMF (Fin n)} {pν : PMF (Fin m)} (hpμ : ∀ i, pμ i = μ (qX ⁻¹' {i}))
     (hpν : ∀ j, pν j = ν (qY ⁻¹' {j})) (T : TransportMatrix pμ pν) :
     IsCoupling (∑ i, ∑ j, T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])) μ ν := by
-  have hrow : ∀ i j, T i j ≠ 0 → μ (qX ⁻¹' {i}) ≠ 0 := by
-    intro i j h hzero
-    exact h <| le_antisymm ((T.apply_le_row i j).trans_eq (by rw [hpμ i, hzero])) zero_le
-  have hcol : ∀ i j, T i j ≠ 0 → ν (qY ⁻¹' {j}) ≠ 0 := by
-    intro i j h hzero
-    exact h <| le_antisymm ((T.apply_le_col i j).trans_eq (by rw [hpν j, hzero])) zero_le
   have hmapfst : ∀ i j, Measure.map Prod.fst
       (T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])) = T i j • μ[|qX ⁻¹' {i}] := by
     intro i j
     rcases eq_or_ne (T i j) 0 with h | h
     · simp [h]
-    · have := ProbabilityTheory.cond_isProbabilityMeasure (hcol i j h)
+    · have := ProbabilityTheory.cond_isProbabilityMeasure (col_fiber_ne_zero hpν T h)
       rw [Measure.map_smul, Measure.map_fst_prod, measure_univ, one_smul]
   have hmapsnd : ∀ i j, Measure.map Prod.snd
       (T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])) = T i j • ν[|qY ⁻¹' {j}] := by
     intro i j
     rcases eq_or_ne (T i j) 0 with h | h
     · simp [h]
-    · have := ProbabilityTheory.cond_isProbabilityMeasure (hrow i j h)
+    · have := ProbabilityTheory.cond_isProbabilityMeasure (row_fiber_ne_zero hpμ T h)
       rw [Measure.map_smul, Measure.map_snd_prod, measure_univ, one_smul]
-  constructor
-  · change Measure.map Prod.fst
-      (∑ i, ∑ j, T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])) = μ
+  refine { fst_eq := ?_, snd_eq := ?_ }
+  · rw [Measure.fst]
     have hstep : Measure.map Prod.fst
         (∑ i, ∑ j, T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])) =
         ∑ i, μ (qX ⁻¹' {i}) • μ[|qX ⁻¹' {i}] := by
@@ -233,8 +251,7 @@ private theorem isCoupling_glue {n m : ℕ} {qX : X → Fin n} {qY : Y → Fin m
         Finset.sum_congr rfl fun j _ ↦ hmapfst i j, ← Finset.sum_smul, T.row_sum i, hpμ i]
     rw [hstep]
     exact ProbabilityTheory.sum_meas_smul_cond_fiber hqX μ
-  · change Measure.map Prod.snd
-      (∑ i, ∑ j, T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])) = ν
+  · rw [Measure.snd]
     have hstep : Measure.map Prod.snd
         (∑ i, ∑ j, T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])) =
         ∑ j, ν (qY ⁻¹' {j}) • ν[|qY ⁻¹' {j}] := by
@@ -259,12 +276,6 @@ private theorem transportCost_le_ofReal_cost {n m : ℕ} {qX : X → Fin n} {qY 
     (T : TransportMatrix pμ pν) {c : X × Y → ℝ} {C : Fin n × Fin m → ℝ} (hC0 : ∀ p, 0 ≤ C p)
     (hC : ∀ x y, c (x, y) ≤ C (qX x, qY y)) :
     transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≤ ENNReal.ofReal (T.cost C) := by
-  have hrow : ∀ i j, T i j ≠ 0 → μ (qX ⁻¹' {i}) ≠ 0 := by
-    intro i j h hzero
-    exact h <| le_antisymm ((T.apply_le_row i j).trans_eq (by rw [hpμ i, hzero])) zero_le
-  have hcol : ∀ i j, T i j ≠ 0 → ν (qY ⁻¹' {j}) ≠ 0 := by
-    intro i j h hzero
-    exact h <| le_antisymm ((T.apply_le_col i j).trans_eq (by rw [hpν j, hzero])) zero_le
   set π : Measure (X × Y) :=
     ∑ i, ∑ j, T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}]) with hπ
   have hcoup : IsCoupling π μ ν := by
@@ -276,8 +287,8 @@ private theorem transportCost_le_ofReal_cost {n m : ℕ} {qX : X → Fin n} {qY 
     intro i j
     rcases eq_or_ne (T i j) 0 with h | h
     · simp [h]
-    · have := ProbabilityTheory.cond_isProbabilityMeasure (hrow i j h)
-      have := ProbabilityTheory.cond_isProbabilityMeasure (hcol i j h)
+    · have := ProbabilityTheory.cond_isProbabilityMeasure (row_fiber_ne_zero hpμ T h)
+      have := ProbabilityTheory.cond_isProbabilityMeasure (col_fiber_ne_zero hpν T h)
       refine mul_le_mul_of_nonneg_left ?_ (by positivity)
       have hfib1 : ∀ᵐ z ∂((μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])), qX z.1 = i := by
         refine (Measure.ae_prod_iff_ae_ae ?_).2 ?_
@@ -324,13 +335,15 @@ variable [TopologicalSpace X] [CompactSpace X] [MeasurableSpace X]
 
 /-- A continuous cost on a product of compact spaces is bounded, so the transport problem has a
 finite value. -/
-theorem transportCost_ne_top_of_continuous [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
-    (hc : Continuous c) : transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≠ ⊤ := by
+theorem transportCost_ne_top_of_continuous [IsFiniteMeasure μ]
+    (hπ : ∃ π, IsCoupling π μ ν) (hc : Continuous c) :
+    transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≠ ⊤ := by
   obtain ⟨K, hK⟩ := isCompact_univ.exists_bound_of_continuousOn hc.continuousOn
-  refine ne_top_of_le_ne_top (b := ENNReal.ofReal K) ENNReal.ofReal_ne_top ?_
+  refine ne_top_of_le_ne_top (b := ENNReal.ofReal K * μ univ)
+    (ENNReal.mul_ne_top ENNReal.ofReal_ne_top (measure_ne_top μ univ)) ?_
   refine (transportCost_mono fun z ↦ ENNReal.ofReal_le_ofReal
     ((le_abs_self _).trans (by simpa using hK z (Set.mem_univ z)))).trans_eq ?_
-  rw [transportCost_const ⟨_, isCoupling_prod μ ν⟩, measure_univ, mul_one]
+  exact transportCost_const hπ _
 
 end Finiteness
 
@@ -442,7 +455,8 @@ theorem isLUB_kantorovichDualValue_continuous [IsProbabilityMeasure μ] [IsProba
     IsLUB {r : ℝ | ∃ φ ψ, Continuous φ ∧ Continuous ψ ∧ (∀ x y, φ x + ψ y ≤ c (x, y)) ∧
         kantorovichDualValue μ ν φ ψ = r}
       (transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν).toReal := by
-  have hne := transportCost_ne_top_of_continuous (μ := μ) (ν := ν) hc
+  have hne := transportCost_ne_top_of_continuous (μ := μ) (ν := ν)
+    ⟨_, isCoupling_prod μ ν⟩ hc
   constructor
   · rintro r ⟨φ, ψ, hφc, hψc, hfeas, rfl⟩
     have hdual := (dualFeasible_ofReal_iff hc0 φ ψ).2 hfeas
@@ -465,7 +479,8 @@ theorem isLUB_kantorovichDualValue_integrable [IsProbabilityMeasure μ] [IsProba
     IsLUB {r : ℝ | ∃ φ ψ, Integrable φ μ ∧ Integrable ψ ν ∧ (∀ x y, φ x + ψ y ≤ c (x, y)) ∧
         kantorovichDualValue μ ν φ ψ = r}
       (transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν).toReal := by
-  have hne := transportCost_ne_top_of_continuous (μ := μ) (ν := ν) hc
+  have hne := transportCost_ne_top_of_continuous (μ := μ) (ν := ν)
+    ⟨_, isCoupling_prod μ ν⟩ hc
   refine ⟨?_, fun b hb ↦ (isLUB_kantorovichDualValue_continuous hc hc0).2 fun r hr ↦ ?_⟩
   · rintro r ⟨φ, ψ, hφ, hψ, hfeas, rfl⟩
     exact ((dualFeasible_ofReal_iff hc0 φ ψ).2 hfeas).kantorovichDualValue_le_toReal_transportCost
@@ -491,7 +506,8 @@ theorem transportCost_eq_ofReal_sSup [IsProbabilityMeasure μ] [IsProbabilityMea
       = ENNReal.ofReal (sSup {r : ℝ | ∃ φ ψ, Continuous φ ∧ Continuous ψ ∧
         (∀ x y, φ x + ψ y ≤ c (x, y)) ∧ kantorovichDualValue μ ν φ ψ = r}) := by
   rw [← toReal_transportCost_eq_sSup hc hc0,
-    ENNReal.ofReal_toReal (transportCost_ne_top_of_continuous hc)]
+    ENNReal.ofReal_toReal
+      (transportCost_ne_top_of_continuous ⟨_, isCoupling_prod μ ν⟩ hc)]
 
 end Duality
 
