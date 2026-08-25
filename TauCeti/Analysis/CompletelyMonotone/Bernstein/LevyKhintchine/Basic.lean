@@ -36,8 +36,9 @@ terms, is a Bernstein function.
 * `TauCeti.isBernsteinFunction_bernsteinLevyKhintchineExponent`: adding
   nonnegative killing and drift terms preserves the Bernstein property.
 
-The converse direction is developed in
-`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation`.
+Existence of the converse triplet is proved in
+`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation`; uniqueness remains
+separate.
 
 ## References
 
