@@ -162,6 +162,7 @@ omit [IsTopologicalAddGroup E] [ContinuousSMul 𝕜 E] [IsTopologicalAddGroup Λ
   [ContinuousSMul 𝕜 Λ] [ContinuousSMul 𝕜 F] in
 /-- The formal tangent directions along which the parameter does not move are exactly the
 solutions of the linearized equation at the fixed parameter. -/
+@[simp]
 theorem range_kerCoprodHom :
     LinearMap.range (kerCoprodHom D₁ D₂ : D₁.ker →ₗ[𝕜] (D₁.coprod D₂).ker) =
       (parameterProj D₁ D₂).ker := by
@@ -250,15 +251,6 @@ theorem range_parameterProj :
   · rintro ⟨x, hx⟩
     exact ⟨⟨(-x, l), by simp [hx]⟩, rfl⟩
 
-omit [IsTopologicalAddGroup E] [ContinuousSMul 𝕜 E] [IsTopologicalAddGroup Λ]
-  [ContinuousSMul 𝕜 Λ] [ContinuousSMul 𝕜 F] in
-/-- A parameter direction lies in the range of the parameter projection exactly when its
-infinitesimal effect on the equation is achievable by moving the solution. -/
-theorem mem_range_parameterProj_iff {l : Λ} :
-    l ∈ (parameterProj D₁ D₂).range ↔ D₂ l ∈ D₁.range := by
-  rw [range_parameterProj]
-  exact Submodule.mem_comap
-
 /-- The map `Λ → F ⧸ range D₁` induced by `D₂`: it measures how far the infinitesimal effect of a
 parameter direction is from being achievable by moving the solution. -/
 noncomputable def parameterToCoker : Λ →ₗ[𝕜] F ⧸ D₁.range :=
@@ -275,6 +267,7 @@ omit [IsTopologicalAddGroup E] [ContinuousSMul 𝕜 E] [IsTopologicalAddGroup Λ
   [ContinuousSMul 𝕜 Λ] [ContinuousSMul 𝕜 F] in
 /-- The kernel of the map induced by `D₂` is the range of the parameter projection: this is
 `TauCeti.range_parameterProj` read in the quotient. -/
+@[simp]
 theorem ker_parameterToCoker :
     LinearMap.ker (parameterToCoker D₁ D₂) = (parameterProj D₁ D₂).range := by
   rw [parameterToCoker, LinearMap.ker_comp, Submodule.ker_mkQ, range_parameterProj]
@@ -295,10 +288,13 @@ This is the criterion transversality arguments verify in practice: one exhibits 
 perturbations of the equation to cover every obstruction to solving the linearized equation. -/
 theorem parameterToCoker_surjective_iff_coprod_surjective :
     Function.Surjective (parameterToCoker D₁ D₂) ↔ Function.Surjective (D₁.coprod D₂) := by
-  change Function.Surjective (parameterToCoker D₁ D₂) ↔
-    Function.Surjective (D₁.coprod D₂ : E × Λ →ₗ[𝕜] F)
-  rw [← LinearMap.range_eq_top, ← LinearMap.range_eq_top, parameterToCoker,
-    LinearMap.range_comp, Submodule.map_mkQ_eq_top, ContinuousLinearMap.range_coprod]
+  -- `LinearMap.range_eq_top` is stated for the coercion of `D₁.coprod D₂` to a plain linear map,
+  -- whose `DFunLike` coercion is only definitionally the one in the goal, so `rw` cannot reach it
+  -- on the right-hand side; a typed `have` bridges the two coercions once and for all.
+  have hcoprod : Function.Surjective (D₁.coprod D₂) ↔ (D₁.coprod D₂).range = ⊤ :=
+    (LinearMap.range_eq_top (f := (D₁.coprod D₂ : E × Λ →ₗ[𝕜] F))).symm
+  rw [hcoprod, ← LinearMap.range_eq_top, parameterToCoker, LinearMap.range_comp,
+    Submodule.map_mkQ_eq_top, ContinuousLinearMap.range_coprod]
 
 /-! ### The cokernel of the projection -/
 
@@ -371,7 +367,8 @@ theorem range_parameterProj_eq_top_iff (hD : (D₁.coprod D₂).range = ⊤) :
   rw [← hD]
   refine sup_le le_rfl ?_
   rintro _ ⟨l, rfl⟩
-  exact (mem_range_parameterProj_iff D₁ D₂).mp (h.ge Submodule.mem_top)
+  have hl : l ∈ (parameterProj D₁ D₂).range := h.ge Submodule.mem_top
+  rwa [range_parameterProj] at hl
 
 omit [IsTopologicalAddGroup E] [ContinuousSMul 𝕜 E] [IsTopologicalAddGroup Λ]
   [ContinuousSMul 𝕜 Λ] [ContinuousSMul 𝕜 F] in
