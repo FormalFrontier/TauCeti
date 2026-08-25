@@ -147,15 +147,15 @@ theorem torusCharacter_singleton {A : Type*} [CommRing A]
   rw [torusCharacter_def]
   simp
 
-/-- The positive-root character evaluates to the square of the torus parameter. -/
-@[simp]
+/-- The positive-root character evaluates to the square of the torus parameter.  This is the
+`n = 2` case of `torusCharacter_singleton`, which already carries the `simp` attribute. -/
 theorem torusCharacter_rankOneRootWeight_zero {A : Type*} [CommRing A]
     (s : Fin 1 → Aˣ) :
     torusCharacter s ![2] = (s 0) ^ 2 := by
   simpa only [zpow_ofNat] using torusCharacter_singleton s (2 : ℤ)
 
-/-- The negative-root character evaluates to the inverse square of the torus parameter. -/
-@[simp]
+/-- The negative-root character evaluates to the inverse square of the torus parameter.  This is
+the `n = -2` case of `torusCharacter_singleton`, which already carries the `simp` attribute. -/
 theorem torusCharacter_rankOneRootWeight_one {A : Type*} [CommRing A]
     (s : Fin 1 → Aˣ) :
     torusCharacter s ![-2] = (s 0)⁻¹ ^ 2 := by
@@ -195,8 +195,9 @@ noncomputable abbrev rankOneWeightTorus :
     SplitTorus.groupScheme ℤ (Fin 1) ⟶ rankOneGroupScheme :=
   kostantWeightTorusToToral e h ρ M hM hnil b rankOneWeight
 
-/-- Including a root subgroup into `GL₂` recovers its represented Kostant root subgroup. -/
-@[simp]
+/-- Including a root subgroup into `GL₂` recovers its represented Kostant root subgroup.  This
+specializes the `simp` lemma `kostantRootSubgroupToToral_comp_ι`, which already fires on the
+unfolded left-hand side. -/
 theorem rankOneRootSubgroup_comp_ι (i : Fin 2) :
     rankOneRootSubgroup i ≫ rankOneGroupSchemeι =
       kostantRootSubgroup e h ρ M hM i (hnil i) b :=
@@ -232,8 +233,9 @@ noncomputable abbrev rankOneTorusMatrix {A : Type*} [CommRing A] :
     ((Fin 1 → Aˣ) →* Matrix.GeneralLinearGroup (Fin 2) A) :=
   kostantTorusMatrix M b rankOneWeight
 
-/-- A rank-one torus point is the diagonal matrix `diag(s, s⁻¹)`. -/
-@[simp]
+/-- A rank-one torus point is the diagonal matrix `diag(s, s⁻¹)`.  Not a `simp` lemma: the
+left-hand side is reducibly `kostantTorusMatrix M b rankOneWeight s`, so the `simp` lemma
+`kostantTorusMatrix_apply` rewrites it first. -/
 theorem rankOneTorusMatrix_apply {A : Type*} [CommRing A] (s : Fin 1 → Aˣ) :
     rankOneTorusMatrix s = diagGL ![s 0, (s 0)⁻¹] := by
   rw [kostantTorusMatrix_apply]
