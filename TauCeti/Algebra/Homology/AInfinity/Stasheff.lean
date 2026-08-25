@@ -59,7 +59,7 @@ propositionally equal arities.
 
 ## Main definitions
 
-* `TauCeti.MultilinearMap.evalNat`: evaluate a finite-arity operation on a natural-indexed input
+* `MultilinearMap.evalNat`: evaluate a finite-arity operation on a natural-indexed input
   family.
 * `TauCeti.replaceBlock`, `TauCeti.AInfinity.blockDeg` and `TauCeti.AInfinity.replaceDeg`: collapse
   an input block and record its resulting degree.
@@ -111,10 +111,6 @@ open _root_.MultilinearMap
 open TauCeti.MultilinearMap
 
 universe uR uA uN
-
-namespace TauCeti
-
-/-! ### Operations on inputs indexed by the naturals -/
 
 namespace MultilinearMap
 
@@ -177,6 +173,8 @@ end Inputs
 
 end MultilinearMap
 
+namespace TauCeti
+
 /-- Replace the block of `s` entries at position `p` of a family indexed by the naturals by the
 single entry `v`.  This is the input tuple of the outer operation of a Stasheff term. -/
 def replaceBlock {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) : ℕ → α := fun i ↦
@@ -223,7 +221,7 @@ private theorem evalNat_replaceBlock_smul {u : ℕ} {N : Type uN}
 
 end TauCeti
 
-namespace TauCeti.Fin
+namespace Fin
 
 /-- Identify a prefix, inserted block, and suffix with their total finite arity. -/
 def blockEquiv (p s t : ℕ) : Fin p ⊕ (Fin s ⊕ Fin t) ≃ Fin (p + s + t) :=
@@ -268,9 +266,9 @@ theorem oneSlotEquiv_suffix_val (p t : ℕ) (j : Fin t) :
     (oneSlotEquiv p t (.inr (.inr j)) : ℕ) = p + 1 + j := by
   simp [oneSlotEquiv]
 
-end TauCeti.Fin
+end Fin
 
-namespace TauCeti.Finset
+namespace Finset
 
 private theorem Icc_one_two : (Finset.Icc 1 2 : Finset ℕ) = {1, 2} := by decide
 
@@ -278,7 +276,7 @@ private theorem Icc_one_three : (Finset.Icc 1 3 : Finset ℕ) = {1, 2, 3} := by 
 
 private theorem Icc_one_four : (Finset.Icc 1 4 : Finset ℕ) = {1, 2, 3, 4} := by decide
 
-end TauCeti.Finset
+end Finset
 
 namespace TauCeti
 
@@ -407,9 +405,9 @@ one-slot substitution evaluated after the canonical reindexing of its three inpu
 theorem stasheffTerm_eq_smul_signedOneSlot (p s t : ℕ) :
     stasheffTerm m d x p s t =
       negOnePowCast R ((p : ℤ) + s * t) •
-        (((m (p + 1 + t)).domDomCongr (TauCeti.Fin.oneSlotEquiv p t).symm).signedOneSlot
+        (((m (p + 1 + t)).domDomCongr (Fin.oneSlotEquiv p t).symm).signedOneSlot
           (2 - (s : ℤ)) (fun i : Fin p ↦ d i) (m s))
-            (fun i ↦ x (TauCeti.Fin.blockEquiv p s t i)) := by
+            (fun i ↦ x (Fin.blockEquiv p s t i)) := by
   rw [stasheffTerm_def, MultilinearMap.signedOneSlot_apply,
     MultilinearMap.koszulSign_eq_negOnePowCast, Fin.sum_univ_eq_sum_range, smul_smul,
     ← negOnePowCast_add]
@@ -417,17 +415,17 @@ theorem stasheffTerm_eq_smul_signedOneSlot (p s t : ℕ) :
   rw [evalNat_def, MultilinearMap.domDomCongr_apply]
   congr 1
   funext i
-  obtain ⟨j, rfl⟩ := (TauCeti.Fin.oneSlotEquiv p t).surjective i
+  obtain ⟨j, rfl⟩ := (Fin.oneSlotEquiv p t).surjective i
   rcases j with j | (j | j)
-  · rw [TauCeti.Fin.oneSlotEquiv_inl_val, replaceBlock_of_lt _ _ _ _ j.isLt]
-    simp only [Equiv.symm_apply_apply, Sum.elim_inl, TauCeti.Fin.blockEquiv_inl_val]
+  · rw [Fin.oneSlotEquiv_inl_val, replaceBlock_of_lt _ _ _ _ j.isLt]
+    simp only [Equiv.symm_apply_apply, Sum.elim_inl, Fin.blockEquiv_inl_val]
   · rcases j with ⟨⟩
-    rw [TauCeti.Fin.oneSlotEquiv_middle_val, replaceBlock_self]
+    rw [Fin.oneSlotEquiv_middle_val, replaceBlock_self]
     simp only [Equiv.symm_apply_apply, Sum.elim_inr, Sum.elim_inl,
-      TauCeti.Fin.blockEquiv_middle_val, evalNat_def]
-  · rw [TauCeti.Fin.oneSlotEquiv_suffix_val,
+      Fin.blockEquiv_middle_val, evalNat_def]
+  · rw [Fin.oneSlotEquiv_suffix_val,
       replaceBlock_of_gt _ _ _ _ (show p < p + 1 + (j : ℕ) by omega)]
-    simp only [Equiv.symm_apply_apply, Sum.elim_inr, TauCeti.Fin.blockEquiv_suffix_val]
+    simp only [Equiv.symm_apply_apply, Sum.elim_inr, Fin.blockEquiv_suffix_val]
     congr 1
     omega
 
