@@ -10,7 +10,8 @@ public import Mathlib.Geometry.Manifold.Algebra.Monoid
 /-!
 # Smooth monoid morphisms
 
-Identity and composition for bundled smooth monoid morphisms.
+Identity, composition, and their laws for bundled smooth multiplicative and additive monoid
+morphisms.
 -/
 
 public section
@@ -29,14 +30,16 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] {n : ℕ∞ω}
   {G' : Type*} [TopologicalSpace G'] [ChartedSpace H' G'] [Monoid G']
 
 /-- The identity smooth monoid morphism. -/
+@[to_additive /-- The identity smooth additive monoid morphism. -/]
 def id : ContMDiffMonoidMorphism I I n G G where
   toMonoidHom := MonoidHom.id G
   contMDiff_toFun := contMDiff_id
 
-@[simp]
+@[to_additive (attr := simp)]
 theorem coe_id : ⇑(id (n := n) (I := I) (G := G)) = _root_.id := (rfl)
 
 /-- Composition of smooth monoid morphisms. -/
+@[to_additive /-- Composition of smooth additive monoid morphisms. -/]
 def comp
     {E'' : Type*} [NormedAddCommGroup E''] [NormedSpace 𝕜 E'']
     {H'' : Type*} [TopologicalSpace H''] {I'' : ModelWithCorners 𝕜 E'' H''}
@@ -47,7 +50,7 @@ def comp
   toMonoidHom := ψ.toMonoidHom.comp φ.toMonoidHom
   contMDiff_toFun := ψ.contMDiff_toFun.comp φ.contMDiff_toFun
 
-@[simp]
+@[to_additive (attr := simp)]
 theorem coe_comp
     {E'' : Type*} [NormedAddCommGroup E''] [NormedSpace 𝕜 E'']
     {H'' : Type*} [TopologicalSpace H''] {I'' : ModelWithCorners 𝕜 E'' H''}
@@ -55,5 +58,37 @@ theorem coe_comp
     (ψ : ContMDiffMonoidMorphism I' I'' n G' G'')
     (φ : ContMDiffMonoidMorphism I I' n G G') :
     ⇑(ψ.comp φ) = ⇑ψ ∘ ⇑φ := (rfl)
+
+/-- The identity smooth monoid morphism is a left unit for composition. -/
+@[to_additive (attr := simp)
+  /-- The identity smooth additive monoid morphism is a left unit for composition. -/]
+theorem id_comp (φ : ContMDiffMonoidMorphism I I' n G G') :
+    (id (I := I') (G := G')).comp φ = φ := by
+  apply DFunLike.coe_injective
+  rfl
+
+/-- The identity smooth monoid morphism is a right unit for composition. -/
+@[to_additive (attr := simp)
+  /-- The identity smooth additive monoid morphism is a right unit for composition. -/]
+theorem comp_id (φ : ContMDiffMonoidMorphism I I' n G G') :
+    φ.comp (id (I := I) (G := G)) = φ := by
+  apply DFunLike.coe_injective
+  rfl
+
+/-- Composition of smooth monoid morphisms is associative. -/
+@[to_additive (attr := simp) /-- Composition of smooth additive monoid morphisms is associative. -/]
+theorem comp_assoc
+    {E'' : Type*} [NormedAddCommGroup E''] [NormedSpace 𝕜 E'']
+    {H'' : Type*} [TopologicalSpace H''] {I'' : ModelWithCorners 𝕜 E'' H''}
+    {G'' : Type*} [TopologicalSpace G''] [ChartedSpace H'' G''] [Monoid G'']
+    {E''' : Type*} [NormedAddCommGroup E'''] [NormedSpace 𝕜 E''']
+    {H''' : Type*} [TopologicalSpace H'''] {I''' : ModelWithCorners 𝕜 E''' H'''}
+    {G''' : Type*} [TopologicalSpace G'''] [ChartedSpace H''' G'''] [Monoid G''']
+    (χ : ContMDiffMonoidMorphism I'' I''' n G'' G''')
+    (ψ : ContMDiffMonoidMorphism I' I'' n G' G'')
+    (φ : ContMDiffMonoidMorphism I I' n G G') :
+    (χ.comp ψ).comp φ = χ.comp (ψ.comp φ) := by
+  apply DFunLike.coe_injective
+  rfl
 
 end ContMDiffMonoidMorphism

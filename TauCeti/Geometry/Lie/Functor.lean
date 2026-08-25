@@ -24,12 +24,14 @@ This advances Layer 3 of the Lie-groups roadmap.
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
   Deliverable A, Layer 3, "The functor on morphisms".
+* The exponential-naturality proof generalizes the integral-curve argument in
+  `TauCeti.Lie.conj_mulInvariantIntegralCurve` and `TauCeti.Lie.conj_mulInvariantExp`.
 
 ## Main results
 
 * `lieMap`: the Lie-algebra homomorphism induced by a smooth monoid morphism.
 * `lieMap_id`, `lieMap_comp`: the identity and composition laws.
-* `lieMap_lieExp`: naturality with respect to the Lie-group exponential.
+* `map_lieExp`: naturality with respect to the Lie-group exponential.
 -/
 
 public section
@@ -302,7 +304,7 @@ private theorem monoidHom_mulInvariantExp
 
 /-- A smooth group homomorphism intertwines the Lie-group exponentials through its Lie map. -/
 @[simp]
-theorem lieMap_lieExp [FiniteDimensional ℝ E] [FiniteDimensional ℝ E']
+theorem map_lieExp [FiniteDimensional ℝ E] [FiniteDimensional ℝ E']
     (φ : ContMDiffMonoidMorphism I I' ∞ G G')
     (X : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
