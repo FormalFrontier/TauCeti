@@ -74,12 +74,9 @@ the simple reflections of the Weyl group. -/
 @[simp]
 theorem weylCoxeterHom_wordProd (l : List b.support) :
     weylCoxeterHom P b ((coxeterMatrixOfBase P b).toCoxeterSystem.wordProd l) = wordProd P b l := by
-  rw [CoxeterSystem.wordProd, map_list_prod, List.map_map]
-  change _ = (l.map fun i : b.support => RootPairing.weylGroup.ofIdx P (i : ι)).prod
-  apply congrArg List.prod
-  apply List.map_congr_left
-  intro i _
-  rw [Function.comp_apply, CoxeterMatrix.toCoxeterSystem_simple, weylCoxeterHom_apply_simple]
+  rw [CoxeterSystem.wordProd, map_list_prod, List.map_map, wordProd]
+  exact congrArg List.prod (List.map_congr_left fun i _ ↦ by
+    rw [Function.comp_apply, CoxeterMatrix.toCoxeterSystem_simple, weylCoxeterHom_apply_simple])
 
 variable [P.IsReduced]
 
@@ -88,10 +85,5 @@ theorem weylCoxeterHom_surjective : Function.Surjective (weylCoxeterHom P b) := 
   intro w
   obtain ⟨l, hl⟩ := exists_wordProd_eq P b w
   exact ⟨(coxeterMatrixOfBase P b).toCoxeterSystem.wordProd l, by simpa using hl⟩
-
-/-- The canonical homomorphism has the whole Weyl group as its range. -/
-@[simp]
-theorem weylCoxeterHom_range : (weylCoxeterHom P b).range = ⊤ :=
-  MonoidHom.range_eq_top.mpr (weylCoxeterHom_surjective P b)
 
 end TauCeti
