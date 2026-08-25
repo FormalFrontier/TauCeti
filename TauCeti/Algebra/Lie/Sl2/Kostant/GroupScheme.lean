@@ -95,9 +95,13 @@ theorem isCartanWeightVector_integralLatticeAddSubgroupBasis (i : Fin 2) :
   rw [isCartanWeightVector_iff]
   intro j
   fin_cases j
+  -- After specializing to the unique Cartan generator, expose the enveloping-algebra action
+  -- and the integral-basis coercion that the representation lemmas describe.
   change ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (slFinTwoBasis ℚ 2))
       ((b i : M) : Sl2Std ℚ 1) = ((rankOneWeight i 0 : ℤ) : ℚ) • (b i : Sl2Std ℚ 1)
   rw [repEnveloping_ι_slFinTwoBasis, coe_integralLatticeAddSubgroupBasis_apply]
+  -- The preceding rewrites identify the action with `diag`; unfold only the remaining
+  -- basis-vector coercion so that `diag_basis` applies.
   change diag ℚ 1 (basis ℚ 1 i) = _
   rw [diag_basis]
   fin_cases i <;> norm_num [rankOneWeight]
@@ -134,20 +138,28 @@ theorem rankOneRootWeight_one : rankOneRootWeight 1 = ![-2] := by
   fin_cases j
   simp [rankOneRootWeight]
 
+/-- A character of a rank-one split torus evaluates to the corresponding integral power of its
+unique parameter. -/
+@[simp]
+theorem torusCharacter_singleton {A : Type*} [CommRing A]
+    (s : Fin 1 → Aˣ) (n : ℤ) :
+    torusCharacter s ![n] = (s 0) ^ n := by
+  rw [torusCharacter_def]
+  simp
+
 /-- The positive-root character evaluates to the square of the torus parameter. -/
 @[simp]
 theorem torusCharacter_rankOneRootWeight_zero {A : Type*} [CommRing A]
     (s : Fin 1 → Aˣ) :
     torusCharacter s ![2] = (s 0) ^ 2 := by
-  rw [torusCharacter_def]
-  simp
+  simpa only [zpow_ofNat] using torusCharacter_singleton s (2 : ℤ)
 
 /-- The negative-root character evaluates to the inverse square of the torus parameter. -/
 @[simp]
 theorem torusCharacter_rankOneRootWeight_one {A : Type*} [CommRing A]
     (s : Fin 1 → Aˣ) :
     torusCharacter s ![-2] = (s 0)⁻¹ ^ 2 := by
-  rw [torusCharacter_def]
+  rw [torusCharacter_singleton]
   simp [zpow_neg]
 
 /-- The two distinguished root vectors have weights `2` and `-2` for the rank-one Cartan
@@ -183,6 +195,13 @@ noncomputable abbrev rankOneWeightTorus :
     SplitTorus.groupScheme ℤ (Fin 1) ⟶ rankOneGroupScheme :=
   kostantWeightTorusToToral e h ρ M hM hnil b rankOneWeight
 
+/-- Including a root subgroup into `GL₂` recovers its represented Kostant root subgroup. -/
+@[simp]
+theorem rankOneRootSubgroup_comp_ι (i : Fin 2) :
+    rankOneRootSubgroup i ≫ rankOneGroupSchemeι =
+      kostantRootSubgroup e h ρ M hM i (hnil i) b :=
+  kostantRootSubgroupToToral_comp_ι e h ρ M hM hnil b rankOneWeight i
+
 /-- The rank-one weight torus is a closed immersion into the carrier because its two weights
 generate the full character lattice. -/
 instance isClosedImmersion_rankOneWeightTorus :
@@ -216,21 +235,28 @@ noncomputable abbrev rankOneTorusMatrix {A : Type*} [CommRing A] :
 /-- A rank-one torus point is the diagonal matrix `diag(s, s⁻¹)`. -/
 @[simp]
 theorem rankOneTorusMatrix_apply {A : Type*} [CommRing A] (s : Fin 1 → Aˣ) :
-    diagGL (fun i => torusCharacter s (rankOneWeight i)) =
-      diagGL ![s 0, (s 0)⁻¹] := by
+    rankOneTorusMatrix s = diagGL ![s 0, (s 0)⁻¹] := by
+  rw [kostantTorusMatrix_apply]
   apply Units.ext
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [rankOneWeight, torusCharacter_def]
 
+/-- The represented rank-one weight torus on points of a value algebra. -/
+noncomputable abbrev rankOneTorusPoints (A : CommAlgCat.{u} ℤ) :=
+  kostantTorusPoints M b rankOneWeight A
+
+/-- The parametrized root subgroup for one of the two rank-one root generators. -/
+noncomputable abbrev rankOneRootSubgroupParam (i : Fin 2) (A : CommAlgCat.{u} ℤ) :=
+  kostantRootSubgroupParam e h ρ M hM i (hnil i) A
+
 /-- **The rank-one pinning equation on points.** Conjugation by the full-weight torus sends the
 root element `xᵢ(t)` to `xᵢ(αᵢ(s)t)`, where `α₀ = 2` and `α₁ = -2`. -/
 theorem rankOneTorusPoints_conj_rootSubgroupParam
     (A : CommAlgCat.{u} ℤ) (s : Fin 1 → Aˣ) (i : Fin 2) (t : Multiplicative A) :
-    kostantTorusPoints M b rankOneWeight A s *
-          kostantRootSubgroupParam e h ρ M hM i (hnil i) A t *
-        (kostantTorusPoints M b rankOneWeight A s)⁻¹ =
-      kostantRootSubgroupParam e h ρ M hM i (hnil i) A
+    rankOneTorusPoints A s * rankOneRootSubgroupParam i A t *
+        (rankOneTorusPoints A s)⁻¹ =
+      rankOneRootSubgroupParam i A
         (Multiplicative.ofAdd
           ((torusCharacter s (rankOneRootWeight i) : A) * Multiplicative.toAdd t)) :=
   kostantTorusPoints_conj_kostantRootSubgroupParam e h ρ M hM b rankOneWeight
