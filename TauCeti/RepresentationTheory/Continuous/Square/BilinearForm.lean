@@ -32,14 +32,13 @@ finite groups through the dual of the symmetric and exterior powers rather than 
 product.
 
 Nothing here needs a topology on `G`, a measure, compactness, or even inverses: the acting object
-is a monoid. Unitarity is what makes the dictionary equivariant: `π g ⊗ π g` preserves the inner
-product of the tensor square, so moving it across `⟪t, v ⊗ₜ w⟫` costs nothing. That an invariant
-*form* comes from an invariant *tensor* needs in addition that the pure tensors `π g v ⊗ₜ π g w`
-still span, which is why the converse asks that every action operator be surjective. That
-hypothesis is free in the two situations it is used in: a group representation satisfies it in
-every dimension (`Representation.apply_bijective`), and a unitary one satisfies it whenever `V` is
-finite-dimensional (`TauCeti.ContRepresentation.IsUnitary.surjective`), which is how the results
-below that need `TauCeti.BilinForm.ofTensor_surjective` anyway discharge it.
+is a monoid, and unitarity is the only hypothesis on `π`. It is what makes the dictionary
+equivariant: `π g ⊗ π g` preserves the inner product of the tensor square, so moving it across
+`⟪t, v ⊗ₜ w⟫` costs nothing. It is also all the converse needs -- invariance of the form of `t`
+says that `⟪t, (π ⊗ π) g s⟫ = ⟪t, s⟫` on the pure tensors, hence on all of the tensor square, and
+an operator preserving the inner product and fixing `⟪t, -⟫` fixes `t` itself. Only the statements
+identifying **every** form as the form of a tensor ask for finite dimensions, and they ask for it
+through `TauCeti.BilinForm.ofTensor_surjective`.
 
 ## Main definitions
 
@@ -53,8 +52,7 @@ below that need `TauCeti.BilinForm.ofTensor_surjective` anyway discharge it.
 
 * `ContRepresentation.isInvariantForm_ofTensor` and
   `ContRepresentation.isInvariantForm_ofTensor_iff`: the form of a tensor is invariant for a unitary
-  representation as soon as the tensor is invariant for the tensor square, and exactly then once
-  the action operators are surjective.
+  representation exactly when the tensor is invariant for the tensor square.
 * `ContRepresentation.map_ofTensor_invariants`: the same statement for the two spaces, rather than
   vector by vector.
 * `ContRepresentation.exists_isInvariantForm_isSymm_ne_zero_iff` and
@@ -106,42 +104,37 @@ theorem isInvariantForm_ofTensor (hπ : IsUnitary π) {t : V ⊗[𝕜] V}
     _ = ⟪t, v ⊗ₜ[𝕜] w⟫_𝕜 := (hπ.tprod hπ).inner_map_map g t (v ⊗ₜ[𝕜] w)
     _ = BilinForm.ofTensor t v w := (BilinForm.ofTensor_apply t v w).symm
 
-/-- **A tensor whose form is invariant is invariant**, as soon as every action operator is
-surjective, so that the pure tensors `π g v ⊗ₜ π g w` still span the tensor square. -/
-private theorem mem_invariants_of_isInvariantForm_ofTensor (hπ : IsUnitary π)
-    (hsurj : ∀ g : G, Function.Surjective (π g)) {t : V ⊗[𝕜] V}
+/-- **A tensor whose form is invariant is invariant.** Invariance of the form says exactly that
+`⟪t, (π ⊗ π) g s⟫ = ⟪t, s⟫` for a pure tensor `s`, hence -- both sides being linear in `s` -- for
+every `s`. Taking `s = t` and expanding the inner square of `(π ⊗ π) g t - t` then makes that
+difference vanish, because `(π ⊗ π) g` also preserves the inner product. -/
+private theorem mem_invariants_of_isInvariantForm_ofTensor (hπ : IsUnitary π) {t : V ⊗[𝕜] V}
     (hB : Representation.IsInvariantForm π.toRepresentation (BilinForm.ofTensor t)) :
     t ∈ (tprod π π).invariants := by
   refine (mem_invariants t).mpr fun g => ?_
-  have key : ∀ a b : V, ⟪(tprod π π) g t, a ⊗ₜ[𝕜] b⟫_𝕜 = ⟪t, a ⊗ₜ[𝕜] b⟫_𝕜 := by
-    intro a b
-    obtain ⟨v, rfl⟩ := hsurj g a
-    obtain ⟨w, rfl⟩ := hsurj g b
-    have hg : (tprod π π) g (v ⊗ₜ[𝕜] w) = π g v ⊗ₜ[𝕜] π g w := by simp
-    calc ⟪(tprod π π) g t, π g v ⊗ₜ[𝕜] π g w⟫_𝕜
-        = ⟪(tprod π π) g t, (tprod π π) g (v ⊗ₜ[𝕜] w)⟫_𝕜 := by rw [hg]
-      _ = ⟪t, v ⊗ₜ[𝕜] w⟫_𝕜 := (hπ.tprod hπ).inner_map_map g t (v ⊗ₜ[𝕜] w)
-      _ = BilinForm.ofTensor t v w := (BilinForm.ofTensor_apply t v w).symm
-      _ = BilinForm.ofTensor t (π g v) (π g w) :=
-          (Representation.isInvariantForm_iff.mp hB g v w).symm
-      _ = ⟪t, π g v ⊗ₜ[𝕜] π g w⟫_𝕜 := BilinForm.ofTensor_apply t _ _
-  rw [← sub_eq_zero, ← BilinForm.ofTensor_eq_zero_iff]
-  refine LinearMap.ext fun a => LinearMap.ext fun b => ?_
-  rw [LinearMap.zero_apply, LinearMap.zero_apply, BilinForm.ofTensor_apply, inner_sub_left, key]
-  exact sub_self _
+  have key : ∀ s : V ⊗[𝕜] V, ⟪t, (tprod π π) g s⟫_𝕜 = ⟪t, s⟫_𝕜 := by
+    intro s
+    induction s using TensorProduct.induction_on with
+    | zero => simp
+    | tmul v w =>
+      have hg : (tprod π π) g (v ⊗ₜ[𝕜] w) = π g v ⊗ₜ[𝕜] π g w := by simp
+      rw [hg, ← BilinForm.ofTensor_apply, ← BilinForm.ofTensor_apply]
+      exact Representation.isInvariantForm_iff.mp hB g v w
+    | add s s' hs hs' => rw [map_add, inner_add_right, inner_add_right, hs, hs']
+  have hleft : ⟪(tprod π π) g t, t⟫_𝕜 = ⟪t, t⟫_𝕜 := by
+    rw [← inner_conj_symm, key t, inner_self_conj]
+  rw [← sub_eq_zero, ← inner_self_eq_zero (𝕜 := 𝕜), inner_sub_sub_self,
+    (hπ.tprod hπ).inner_map_map g t t, hleft, key t]
+  ring
 
 /-- **The form of a tensor is invariant exactly when the tensor is invariant.** This is a statement
 about one tensor at a time; that *every* invariant form is the form of an invariant tensor is
-`TauCeti.ContRepresentation.map_ofTensor_invariants`, which needs finite dimensions. The
-surjectivity hypothesis holds for a group representation in every dimension, and for a unitary
-representation of any monoid in finite dimensions
-(`TauCeti.ContRepresentation.IsUnitary.surjective`). -/
+`TauCeti.ContRepresentation.map_ofTensor_invariants`, which needs finite dimensions. -/
 @[simp, grind =]
-theorem isInvariantForm_ofTensor_iff (hπ : IsUnitary π)
-    (hsurj : ∀ g : G, Function.Surjective (π g)) {t : V ⊗[𝕜] V} :
+theorem isInvariantForm_ofTensor_iff (hπ : IsUnitary π) {t : V ⊗[𝕜] V} :
     Representation.IsInvariantForm π.toRepresentation (BilinForm.ofTensor t) ↔
       t ∈ (tprod π π).invariants :=
-  ⟨mem_invariants_of_isInvariantForm_ofTensor π hπ hsurj, isInvariantForm_ofTensor π hπ⟩
+  ⟨mem_invariants_of_isInvariantForm_ofTensor π hπ, isInvariantForm_ofTensor π hπ⟩
 
 /-- **The invariant tensors of the tensor square are exactly the invariant forms**, as submodules:
 the image of the invariants under `TauCeti.BilinForm.ofTensor` is
@@ -153,7 +146,7 @@ theorem map_ofTensor_invariants [FiniteDimensional 𝕜 V] (hπ : IsUnitary π) 
   · rintro ⟨t, ht, rfl⟩
     exact Representation.mem_invariantForms.mpr (isInvariantForm_ofTensor π hπ ht)
   · obtain ⟨t, rfl⟩ := BilinForm.ofTensor_surjective B
-    exact ⟨t, (isInvariantForm_ofTensor_iff π hπ hπ.surjective).mp
+    exact ⟨t, (isInvariantForm_ofTensor_iff π hπ).mp
       (Representation.mem_invariantForms.mp hB), rfl⟩
 
 /-- **The invariants of the tensor square are the invariant forms**, conjugate-linearly: the
@@ -189,7 +182,7 @@ private theorem map_ofTensor_map_subtype_invariants [FiniteDimensional 𝕜 V] (
   · obtain ⟨hBinv, hPB⟩ := (hS B).mp hB
     obtain ⟨t, rfl⟩ := BilinForm.ofTensor_surjective B
     exact ⟨t, ⟨⟨t, (hP t).mp hPB⟩,
-      (hσ _).mpr ((isInvariantForm_ofTensor_iff π hπ hπ.surjective).mp hBinv), rfl⟩, rfl⟩
+      (hσ _).mpr ((isInvariantForm_ofTensor_iff π hπ).mp hBinv), rfl⟩, rfl⟩
 
 /-- The invariants of such a subrepresentation, conjugate-linearly, as the invariant forms with the
 property `P` that cuts it out. -/
