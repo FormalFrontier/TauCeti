@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,6 +30,8 @@ file will prove that the descended map is a covering map.
   quotient covering map, and hence a covering map.
 * `TauCeti.UniversalCover.subgroupQuotientProj`: the endpoint projection descended to the
   subgroup quotient.
+* `TauCeti.UniversalCover.SubgroupQuotient.basepointFiber`: the distinguished point, bundled in
+  the fibre over the basepoint.
 
 ## References
 
@@ -49,7 +52,7 @@ variable {X : Type*} [TopologicalSpace X] (x₀ : X)
 namespace TauCeti.UniversalCover
 
 /-- The orbit quotient of the universal cover by a subgroup of the fundamental group. -/
-abbrev SubgroupQuotient (H : Subgroup (FundamentalGroup X x₀)) :=
+abbrev SubgroupQuotient (H : Subgroup (FundamentalGroup X x₀)) : Type _ :=
   MulAction.orbitRel.Quotient H (UniversalCover x₀)
 
 namespace SubgroupQuotient
@@ -146,6 +149,24 @@ theorem subgroupQuotientProj_comp_subgroupQuotientMap (H : Subgroup (Fundamental
 theorem subgroupQuotientProj_basepoint (H : Subgroup (FundamentalGroup X x₀)) :
     subgroupQuotientProj x₀ H (SubgroupQuotient.basepoint x₀ H) = x₀ :=
   subgroupQuotientProj_mk x₀ H _
+
+namespace SubgroupQuotient
+
+/-- The distinguished point of the subgroup quotient, regarded as a point of the fibre over the
+basepoint. -/
+def basepointFiber (H : Subgroup (FundamentalGroup X x₀)) :
+    subgroupQuotientProj x₀ H ⁻¹' {x₀} :=
+  ⟨basepoint x₀ H, by
+    simpa only [Set.mem_preimage, Set.mem_singleton_iff] using
+      subgroupQuotientProj_basepoint x₀ H⟩
+
+/-- The underlying quotient point of `basepointFiber` is the distinguished point. -/
+@[simp]
+theorem basepointFiber_coe (H : Subgroup (FundamentalGroup X x₀)) :
+    (basepointFiber x₀ H : SubgroupQuotient x₀ H) = basepoint x₀ H :=
+  (rfl)
+
+end SubgroupQuotient
 
 /-- The descended endpoint projection is continuous. -/
 theorem continuous_subgroupQuotientProj (H : Subgroup (FundamentalGroup X x₀)) :

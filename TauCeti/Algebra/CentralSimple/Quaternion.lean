@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -34,16 +35,13 @@ central simple `ℝ`-algebra of degree `2`. This file runs the opposite isomorph
 The second follows from the first because quaternion conjugation is an `ℝ`-algebra isomorphism
 `ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ]ᵐᵒᵖ` (Mathlib's `Quaternion.starAe`): the quaternions are their own opposite.
 
-`BrauerGroup ℝ` is not yet a group in this library, so nothing below is a statement about it: the
-two main results are isomorphisms of `ℝ`-algebras, and the two examples closing the file are a
-degree computation and a nonexistence statement. Informally, the isomorphisms exhibit the Brauer
-class of `ℍ[ℝ]` as **self-inverse**. One further step, not taken here, would turn that into the
-order of the class: the passage from nonsplitting to Brauer nontriviality, applied to
-`TauCeti.Quaternion.isEmpty_algEquiv_matrix` -- which says `ℍ[ℝ]` is isomorphic to no matrix algebra
-of size at least two, the only candidate in dimension `4` being `Matrix (Fin 2) (Fin 2) ℝ` -- makes
-the class nontrivial, and a self-inverse class that is not the identity has order exactly `2`.
-Saying that `BrauerGroup ℝ ≃ ℤ/2` is a further and independent matter: it needs the classification
-of real division algebras, to know the class generates. Both are separate long-term targets.
+Nothing below is a statement about `BrauerGroup ℝ`: the two main results are isomorphisms of
+`ℝ`-algebras, and the two examples closing the file are a degree computation and a nonexistence
+statement. Informally, the isomorphisms exhibit the Brauer class of `ℍ[ℝ]` as **self-inverse**; that
+the class is moreover not the identity, so that its order is exactly `2`, is
+`TauCeti.Quaternion.orderOf_mk_eq_two` in `TauCeti/Algebra/BrauerGroup/Quaternion.lean`. Saying that
+`BrauerGroup ℝ ≃ ℤ/2` is a further and independent matter: it needs the classification of real
+division algebras, to know the class generates, and remains a long-term target.
 
 The matrix size is `4` and not `2`: it is the **dimension** `Module.finrank ℝ ℍ[ℝ] = 4` of the
 algebra, not its degree `TauCeti.Algebra.deg ℝ ℍ[ℝ] = 2`. Squaring the degree is exactly what taking
@@ -109,8 +107,8 @@ example : Algebra.deg ℝ (ℍ[ℝ] ⊗[ℝ] ℍ[ℝ]) = 4 := by
 
 /-- The tensor square is split, but `ℍ[ℝ]` itself is not: the only matrix algebra over `ℝ` of
 dimension `4` is `Matrix (Fin 2) (Fin 2) ℝ`, and `ℍ[ℝ]` is a division algebra, so no isomorphism
-exists. This is what a passage from nonsplitting to Brauer nontriviality would consume, to say that
-the self-inverse class of `ℍ[ℝ]` is not the identity. -/
+exists. It is this nonsplitting that makes the self-inverse class of `ℍ[ℝ]` different from the
+identity, and so of order exactly `2` (`TauCeti.Quaternion.orderOf_mk_eq_two`). -/
 example : IsEmpty (ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 2) (Fin 2) ℝ) :=
   isEmpty_algEquiv_matrix ℝ (Fin 2)
 

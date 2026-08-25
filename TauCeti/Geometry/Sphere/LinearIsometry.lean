@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Analysis.Normed.Operator.LinearIsometry
 public import Mathlib.Analysis.Normed.Module.Basic
+public import Mathlib.Topology.MetricSpace.Isometry
 
 /-!
 # Linear isometries of the unit sphere
@@ -17,6 +19,8 @@ This file develops that restriction independently of the manifold structure on s
 
 * `TauCeti.LinearIsometryEquiv.unitSphereEquiv`: the equivalence of unit spheres obtained by
   restricting a linear isometry equivalence.
+* `TauCeti.LinearIsometryEquiv.unitSphereIsometryEquiv`: the isometry equivalence of unit spheres
+  obtained by restricting a linear isometry equivalence.
 
 ## Main results
 
@@ -73,6 +77,33 @@ distance the sphere inherits from `E`: the action of `O(n + 1)` on `Sⁿ` is by 
 round sphere. -/
 theorem isometry_unitSphereEquiv (e : E ≃ₗᵢ[R] F) : Isometry (unitSphereEquiv e) :=
   Isometry.of_dist_eq fun x y => by simp [Subtype.dist_eq]
+
+/-- A linear isometry equivalence restricts to an isometry equivalence of the corresponding unit
+spheres. -/
+def unitSphereIsometryEquiv (e : E ≃ₗᵢ[R] F) : sphere (0 : E) 1 ≃ᵢ sphere (0 : F) 1 :=
+  ⟨unitSphereEquiv e, isometry_unitSphereEquiv e⟩
+
+@[simp]
+theorem coe_unitSphereIsometryEquiv_apply (e : E ≃ₗᵢ[R] F) (x : sphere (0 : E) 1) :
+    (unitSphereIsometryEquiv e x : F) = e x :=
+  coe_unitSphereEquiv_apply e x
+
+@[simp]
+theorem unitSphereIsometryEquiv_symm (e : E ≃ₗᵢ[R] F) :
+    (unitSphereIsometryEquiv e).symm = unitSphereIsometryEquiv e.symm :=
+  IsometryEquiv.ext fun _ => rfl
+
+@[simp]
+theorem unitSphereIsometryEquiv_refl :
+    unitSphereIsometryEquiv (_root_.LinearIsometryEquiv.refl R E) =
+      IsometryEquiv.refl (sphere (0 : E) 1) :=
+  IsometryEquiv.ext fun _ => rfl
+
+@[simp]
+theorem unitSphereIsometryEquiv_trans (e : E ≃ₗᵢ[R] F) (e' : F ≃ₗᵢ[R] G) :
+    unitSphereIsometryEquiv (e.trans e') =
+      (unitSphereIsometryEquiv e).trans (unitSphereIsometryEquiv e') :=
+  IsometryEquiv.ext fun _ => rfl
 
 end Seminormed
 

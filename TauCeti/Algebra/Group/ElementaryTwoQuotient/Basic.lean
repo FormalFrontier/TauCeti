@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -57,6 +58,9 @@ names around it. The cardinality identity is still expressed through the squarin
 * `TauCeti.card_elementaryTwoQuotient_eq_index_square`: the quotient cardinality as the index of
   the subgroup of squares.
 * `TauCeti.card_elementaryTwoQuotient_eq_card_twoTorsion`: `|G/G²| = |{g | g² = 1}|`.
+* `TauCeti.card_le_card_elementaryTwoQuotient_of_forall_sq_eq_one` and
+  `TauCeti.le_twoRank_of_card_eq_two_pow`: a subgroup of exponent dividing two bounds the
+  elementary-2 quotient, hence the 2-rank, from below.
 * `TauCeti.twoRank` and `TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank`: the 2-rank, with
   `|G/G²| = 2 ^ twoRank`, and `TauCeti.twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow` its
   inversion (`|G/G²| = 2 ^ n → twoRank G = n`).
@@ -64,6 +68,8 @@ names around it. The cardinality identity is still expressed through the squarin
   odd order has a single square class.
 * `TauCeti.card_elementaryTwoQuotient_dvd_card` and
   `TauCeti.two_pow_twoRank_dvd_card`: the quotient cardinality and its rank form divide `|G|`.
+* `TauCeti.twoRank_eq_of_mulEquiv` and `TauCeti.twoRank_le_twoRank_of_surjective`: the 2-rank is
+  invariant under isomorphisms and monotonic under surjections.
 -/
 
 public section
@@ -211,6 +217,15 @@ noncomputable def elementaryTwoQuotientMap (f : G →* H) :
     elementaryTwoQuotientMap f (elementaryTwoQuotientMk g) =
       elementaryTwoQuotientMk (f g) := by
   rfl
+
+/-- A surjective homomorphism of commutative groups induces a surjective map on their maximal
+elementary-2 quotients. -/
+theorem elementaryTwoQuotientMap_surjective (f : G →* H) (hf : Function.Surjective f) :
+    Function.Surjective (elementaryTwoQuotientMap f) := by
+  intro y
+  obtain ⟨h, rfl⟩ := elementaryTwoQuotientMk_surjective (G := H) y
+  obtain ⟨g, rfl⟩ := hf h
+  exact ⟨elementaryTwoQuotientMk g, elementaryTwoQuotientMap_mk f g⟩
 
 /-- The map induced by the identity homomorphism fixes each class in the elementary-2 quotient. -/
 @[simp] theorem elementaryTwoQuotientMap_id_apply (x : ElementaryTwoQuotient G) :
@@ -406,7 +421,27 @@ theorem two_pow_twoRank_le_card :
   rw [← card_elementaryTwoQuotient_eq_two_pow_twoRank]
   exact card_elementaryTwoQuotient_le_card G
 
+/-- **A subgroup of exponent dividing two is no larger than the maximal elementary-2 quotient.**
+Such a subgroup sits inside the 2-torsion `{g | g² = 1}`, which is equinumerous with `G / G²`
+(`card_elementaryTwoQuotient_eq_card_twoTorsion`). This is how an explicit family of independent
+2-torsion elements bounds the 2-rank from below. -/
+theorem card_le_card_elementaryTwoQuotient_of_forall_sq_eq_one {H : Subgroup G}
+    (hH : ∀ x ∈ H, x ^ 2 = 1) : Nat.card H ≤ Nat.card (ElementaryTwoQuotient G) := by
+  rw [card_elementaryTwoQuotient_eq_card_twoTorsion]
+  exact Nat.card_le_card_of_injective (fun x => ⟨(x : G), hH x x.2⟩)
+    fun _ _ hxy => Subtype.ext (by simpa using hxy)
+
+/-- **A subgroup of exponent dividing two and order `2 ^ r` forces the 2-rank to be at least `r`.**
+The rank form of `card_le_card_elementaryTwoQuotient_of_forall_sq_eq_one`. -/
+theorem le_twoRank_of_card_eq_two_pow {H : Subgroup G} {r : ℕ} (hH : ∀ x ∈ H, x ^ 2 = 1)
+    (hcard : Nat.card H = 2 ^ r) : r ≤ twoRank G := by
+  have h := card_le_card_elementaryTwoQuotient_of_forall_sq_eq_one G hH
+  rw [hcard, card_elementaryTwoQuotient_eq_two_pow_twoRank] at h
+  exact (Nat.pow_le_pow_iff_right one_lt_two).mp h
+
 end FiniteCardinality
+
+variable {G}
 
 /-- Multiplicatively equivalent commutative groups have elementary-2 quotients with the same
 `ZMod 2` finrank. -/
@@ -417,6 +452,11 @@ theorem finrank_elementaryTwoQuotient_eq_of_mulEquiv (e : G ≃* H) :
 
 /-- Multiplicatively equivalent commutative groups have the same elementary-2 rank. -/
 theorem twoRank_eq_of_mulEquiv (e : G ≃* H) : twoRank G = twoRank H :=
-  finrank_elementaryTwoQuotient_eq_of_mulEquiv (G := G) (H := H) e
+  finrank_elementaryTwoQuotient_eq_of_mulEquiv e
+
+/-- A surjective homomorphism of commutative groups does not increase the 2-rank. -/
+theorem twoRank_le_twoRank_of_surjective [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)]
+    (f : G →* H) (hf : Function.Surjective f) : twoRank H ≤ twoRank G :=
+  LinearMap.finrank_le_finrank_of_surjective (elementaryTwoQuotientMap_surjective f hf)
 
 end TauCeti

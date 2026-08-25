@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -27,26 +28,28 @@ Layer 9 CAR worked instance.
 
 ## Main definitions
 
-* `TauCeti.CliffordAlgebra.bivector`: the half-normalized commutator of two Clifford
+* `CliffordAlgebra.bivector`: the half-normalized commutator of two Clifford
   generators.
-* `TauCeti.CliffordAlgebra.bivectorAlternating`: the corresponding alternating map.
-* `TauCeti.CliffordAlgebra.bivectorExterior`: the induced linear map from the second
+* `CliffordAlgebra.bivectorAlternating`: the corresponding alternating map.
+* `CliffordAlgebra.bivectorExterior`: the induced linear map from the second
   exterior power.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.bivector_lie_ι`: its commutator action on a generator is the
+* `CliffordAlgebra.bivector_lie_ι`: its commutator action on a generator is the
   infinitesimal rotation determined by `QuadraticMap.polar`.
-* `TauCeti.CliffordAlgebra.bivectorExterior_apply_ιMulti`: the exterior-square map on a
+* `CliffordAlgebra.ι_mul_ι_eq_bivector_add`: the product of two generators is
+  its Clifford bivector plus its scalar symmetric part.
+* `CliffordAlgebra.bivectorExterior_apply_ιMulti`: the exterior-square map on a
   decomposable bivector.
-* `TauCeti.CliffordAlgebra.equivExterior_bivector`,
-  `TauCeti.CliffordAlgebra.equivExterior_bivectorExterior`, and
-  `TauCeti.CliffordAlgebra.bivectorExterior_injective`: the exterior model sends
+* `CliffordAlgebra.equivExterior_bivector`,
+  `CliffordAlgebra.equivExterior_bivectorExterior`, and
+  `CliffordAlgebra.bivectorExterior_injective`: the exterior model sends
   bivectors to exterior products, so the exterior-square map is injective.
-* `TauCeti.CliffordAlgebra.bivector_mem_evenOdd_zero` and
-  `TauCeti.CliffordAlgebra.bivector_mem_filtration_two`: it is even and has filtration
+* `CliffordAlgebra.bivector_mem_evenOdd_zero` and
+  `CliffordAlgebra.bivector_mem_filtration_two`: it is even and has filtration
   degree at most two.
-* `TauCeti.CliffordAlgebra.bivectorExterior_range_le_of_bivector_mem`: the
+* `CliffordAlgebra.bivectorExterior_range_le_of_bivector_mem`: the
   exterior-square map lands in any submodule containing the Clifford bivectors.
 
 ## References
@@ -57,11 +60,8 @@ Layer 9 CAR worked instance.
 
 public section
 
-open CliffordAlgebra
 
 universe u v
-
-namespace TauCeti
 
 namespace CliffordAlgebra
 
@@ -80,6 +80,18 @@ noncomputable def bivector (a b : M) : CliffordAlgebra Q :=
 theorem bivector_def (a b : M) :
     bivector Q a b = (⅟ (2 : R)) • (ι Q a * ι Q b - ι Q b * ι Q a) := by
   rw [bivector]
+
+/-- The product of two Clifford generators is its bivector plus its scalar symmetric part. -/
+theorem ι_mul_ι_eq_bivector_add (a b : M) :
+    ι Q a * ι Q b =
+      bivector Q a b +
+        (⅟ (2 : R)) • algebraMap R (CliffordAlgebra Q) (QuadraticMap.polar Q a b) := by
+  have hcar := ι_mul_ι_add_swap (Q := Q) a b
+  symm
+  rw [bivector_def, ← smul_add, ← hcar]
+  match_scalars
+  · simpa only [one_add_one_eq_two] using invOf_mul_self (2 : R)
+  · ring
 
 /-- The alternating map whose value on two vectors is their half-normalized Clifford bivector. -/
 noncomputable def bivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordAlgebra Q :=
@@ -250,5 +262,3 @@ theorem bivector_lie_ι (a b x : M) :
 end CommRing
 
 end CliffordAlgebra
-
-end TauCeti

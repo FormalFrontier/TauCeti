@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -26,12 +27,10 @@ piecewise-linear topology, that a finite cone collapses to its apex
 
 ## Main definitions
 
-* `TauCeti.PreAbstractSimplicialComplex.IsCone`: a complex is a cone with a given apex.
+* `PreAbstractSimplicialComplex.IsCone`: a complex is a cone with a given apex.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace PreAbstractSimplicialComplex
 
@@ -55,4 +54,3 @@ theorem IsCone.ne_bot {K : PreAbstractSimplicialComplex ι} (h : IsCone K v) : K
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

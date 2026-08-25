@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -31,8 +32,6 @@ Chapter 2.
 
 public section
 
-namespace TauCeti
-
 open Finset
 
 namespace PreAbstractSimplicialComplex
@@ -45,10 +44,10 @@ variable {V σ : Finset ι}
 theorem closedStar_simplex (hσ : σ ⊆ V) : closedStar (simplex V) σ = simplex V := by
   apply SetLike.ext
   intro ρ
-  rw [mem_closedStar, mem_simplex, mem_simplex]
+  simp only [mem_closedStar, mem_simplex]
   constructor
-  · exact fun h => ⟨h.1, subset_union_left.trans h.2.2⟩
-  · exact fun h => ⟨h.1, h.1.mono subset_union_left, union_subset h.2 hσ⟩
+  · exact And.left
+  · exact fun h => ⟨h, h.1.mono subset_union_left, union_subset h.2 hσ⟩
 
 /-- The link of any subset `σ ⊆ V` in the simplex on `V` is the simplex on the vertices of `V`
 not in `σ`. -/
@@ -56,15 +55,15 @@ not in `σ`. -/
 theorem link_simplex (hσ : σ ⊆ V) : link (simplex V) σ = simplex (V \ σ) := by
   apply SetLike.ext
   intro ρ
-  rw [mem_link, mem_simplex, mem_simplex]
+  simp only [mem_link, mem_simplex]
   constructor
-  · rintro ⟨hρ, hdis, -, hρσ⟩
+  · rintro ⟨⟨hρ, -⟩, hdis, -, hρσ⟩
     refine ⟨hρ, subset_sdiff.mpr ⟨subset_union_left.trans hρσ, ?_⟩⟩
     exact hdis
   · rintro ⟨hρ, hρV⟩
     have hρV' : ρ ⊆ V := hρV.trans sdiff_subset
     have hdis : Disjoint ρ σ := disjoint_sdiff_self_left.mono_left hρV
-    exact ⟨hρ, hdis, (hρ.mono subset_union_left), union_subset hρV' hσ⟩
+    exact ⟨⟨hρ, hρV'⟩, hdis, hρ.mono subset_union_left, union_subset hρV' hσ⟩
 
 omit [DecidableEq ι] in
 /-- Deleting the full vertex set from a simplex leaves exactly its boundary. -/
@@ -83,10 +82,11 @@ theorem deletion_simplex_self : deletion (simplex V) V = simplexBoundary V := by
 `ρ` is nonempty and `ρ ∪ σ` is a proper subset of `V`. -/
 theorem mem_closedStar_simplexBoundary {ρ : Finset ι} :
     ρ ∈ closedStar (simplexBoundary V) σ ↔ ρ.Nonempty ∧ ρ ∪ σ ⊂ V := by
-  rw [mem_closedStar, mem_simplexBoundary]
+  simp only [mem_closedStar, mem_simplexBoundary]
   constructor
-  · exact fun h => ⟨h.1, h.2.2⟩
-  · exact fun h => ⟨h.1, h.1.mono subset_union_left, h.2⟩
+  · exact fun h => ⟨h.1.1, h.2.2⟩
+  · exact fun h => ⟨⟨h.1, subset_union_left.trans_ssubset h.2⟩,
+      h.1.mono subset_union_left, h.2⟩
 
 /-- The link of any subset `σ ⊆ V` in the boundary of the simplex on `V` is the boundary of the
 simplex on the complementary vertices. -/
@@ -95,9 +95,9 @@ theorem link_simplexBoundary (hσ : σ ⊆ V) :
     link (simplexBoundary V) σ = simplexBoundary (V \ σ) := by
   apply SetLike.ext
   intro ρ
-  rw [mem_link, mem_simplexBoundary, mem_simplexBoundary]
+  simp only [mem_link, mem_simplexBoundary]
   constructor
-  · rintro ⟨hρ, hdis, -, hρσ⟩
+  · rintro ⟨⟨hρ, -⟩, hdis, -, hρσ⟩
     refine ⟨hρ, Finset.ssubset_iff_subset_ne.mpr ⟨subset_sdiff.mpr
       ⟨subset_union_left.trans hρσ.subset, hdis⟩, ?_⟩⟩
     intro hρeq
@@ -106,7 +106,7 @@ theorem link_simplexBoundary (hσ : σ ⊆ V) :
   · rintro ⟨hρ, hρdiff⟩
     have hρV : ρ ⊆ V := hρdiff.subset.trans sdiff_subset
     have hdis : Disjoint ρ σ := disjoint_sdiff_self_left.mono_left hρdiff.subset
-    refine ⟨hρ, hdis, hρ.mono subset_union_left, ?_⟩
+    refine ⟨⟨hρ, hρdiff.trans_subset sdiff_subset⟩, hdis, hρ.mono subset_union_left, ?_⟩
     refine Finset.ssubset_iff_subset_ne.mpr ⟨union_subset hρV hσ, ?_⟩
     intro hρσeq
     apply hρdiff.ne
@@ -127,4 +127,3 @@ theorem link_simplexBoundary_self : link (simplexBoundary V) V = ⊥ := by
 
 end PreAbstractSimplicialComplex
 
-end TauCeti

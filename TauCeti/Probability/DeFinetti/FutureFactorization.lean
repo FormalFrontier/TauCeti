@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,7 +30,7 @@ is phrased through Mathlib's `ProbabilityTheory.CondIndep`.
   conditional expectations, with every coordinate replaced by `X 0`.
 
 The induction is organised through three private helpers: `condIndep_prefix_coord_future`
-(prefix/coordinate conditional independence given the future, from the merged
+(prefix/coordinate conditional independence given the future, from
 `Contractable.condIndep_coord_prefix_tail`, Kallenberg's Lemma 1.3),
 `condExp_blockCylinder_inter_preimage_ae_eq_mul` (the resulting conditional-expectation product
 split), and `condExp_blockIndicatorProd_future_succ` (the inductive step).

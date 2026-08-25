@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,7 +12,7 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 
 This file provides the first shared de Finetti common-ending adapter.  If a measurable random
 probability measure `ν : Ω → ProbabilityMeasure α` has the expected rectangle factorization for
-every finite injective block of a process, then the process is `MixedIID`.
+every finite injective block of a family, then the family is `MixedIID`.
 
 The work is done by the `MixedIIDWith` rectangle characterization
 (`mixedIIDWith_of_forall_rectangles`, next to its definition): rectangles generate the
@@ -41,10 +42,10 @@ namespace Probability
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- **Common de Finetti ending.** Rectangle-wise product-kernel factorization against a named
-mixing representative supplies a `MixedIID` witness for the process. -/
-theorem mixedIID_of_mixingRepresentative {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
-    (h_rect : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+mixing representative supplies a `MixedIID` witness for the family. -/
+theorem mixedIID_of_mixingRepresentative {ι : Type*} {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
+    (h_rect : ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
         blockLaw μ X k (Set.univ.pi B) =
           ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ) :

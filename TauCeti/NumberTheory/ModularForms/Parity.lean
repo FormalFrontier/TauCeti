@@ -1,10 +1,11 @@
 /-
-Copyright (c) 2026 TauCeti contributors. All rights reserved.
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.NumberTheory.ModularForms.CuspFormSubmodule
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
 
 /-!
@@ -59,7 +60,7 @@ open scoped MatrixGroups ModularForm
 
 namespace TauCeti
 
-variable {N : ℕ} [NeZero N] {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
+variable {N : ℕ} {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 
 /-! ### The diamond operator at `-1` -/
 
@@ -107,13 +108,10 @@ theorem char_neg_one_of_mem_modFormCharSpace {f : ModularForm ((Gamma1 N).map (m
 /-- **The parity lemma for cusp forms.** If `S_k(Γ₁(N), χ)` contains a nonzero form then
 `χ(-1) = (-1)^k`. -/
 theorem char_neg_one_of_mem_cuspFormCharSpace {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ cuspFormCharSpace k χ) (hf0 : f ≠ 0) : (χ (-1) : ℂ) = (-1 : ℂ) ^ k := by
-  have hne : (⇑f : ℍ → ℂ) ≠ 0 := fun h ↦ hf0 (DFunLike.coe_injective (by simpa using h))
-  have h : ((-1 : ℂ) ^ k) • (⇑f : ℍ → ℂ) = (χ (-1) : ℂ) • (⇑f : ℍ → ℂ) := by
-    rw [← coe_diamondOpCusp_neg_one k f,
-      diamondOpCusp_apply_of_mem_cuspFormCharSpace k χ (-1) hf]
-    simp
-  exact ((smul_left_inj hne).mp h).symm
+    (hf : f ∈ cuspFormCharSpace k χ) (hf0 : f ≠ 0) : (χ (-1) : ℂ) = (-1 : ℂ) ^ k :=
+  char_neg_one_of_mem_modFormCharSpace ((coe_mem_modFormCharSpace_iff k χ f).mpr hf)
+    fun h ↦ hf0 (CuspForm.toModularFormₗ_injective
+      (by rw [map_zero, CuspForm.toModularFormₗ_eq_coe]; exact h))
 
 /-! ### The emptiness criterion -/
 
@@ -164,7 +162,6 @@ theorem cuspFormCharSpace_one_eq_bot_of_odd (hk : Odd k) :
 
 /-! ### The degenerate levels `N ∣ 2` -/
 
-omit [NeZero N] in
 /-- At the levels `N ∣ 2`, exactly those with `-I ∈ Γ₁(N)`, every odd-weight modular form for
 `Γ₁(N)` vanishes. -/
 theorem ModularForm.eq_zero_of_odd_of_dvd_two (hN : N ∣ 2) (hk : Odd k)

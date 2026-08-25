@@ -75,7 +75,7 @@ def IsCofinalElement (H : Subgroup Γ) (γ : Γ) : Prop :=
 
 Deliberately not `@[simp]`: the right-hand side is the unfolded bounded quantifier, so tagging
 it rewrites uses of the named predicate into raw `∀ … ∃ …` form. This mirrors
-`TauCeti.Valuation.cofinalValueFor_def`, which is not `@[simp]` for the same reason. -/
+`Valuation.cofinalValueFor_def`, which is not `@[simp]` for the same reason. -/
 theorem isCofinalElement_def {H : Subgroup Γ} {γ : Γ} :
     IsCofinalElement H γ ↔ ∀ h ∈ H, ∃ n : ℕ, γ ^ n < h :=
   Iff.rfl

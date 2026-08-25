@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -214,9 +214,8 @@ theorem card_inv_mul_sum_character_indFDRep [Fintype G]
     (hG : IsUnit (Nat.card G : k)) (A : FDRep k S) :
     (Nat.card G : k)⁻¹ * ∑ g : G, (indFDRep A).character g =
       (Nat.card S : k)⁻¹ * ∑ s : S, A.character s := by
-  have htriv (g : G) : (FDRep.of (Representation.trivial k G k)).character g = 1 := by
-    simp [FDRep.character, Representation.trivial]
-  simpa [htriv] using frobenius_reciprocity hG A (FDRep.of (Representation.trivial k G k))
+  simpa [FDRep.character_of_trivial] using
+    frobenius_reciprocity hG A (FDRep.of (Representation.trivial k G k))
 
 end Characters
 

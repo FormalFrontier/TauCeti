@@ -1,9 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.MeasureTheory.Group.Conjugation
 public import TauCeti.RepresentationTheory.Compact.Haar
 public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
 public import Mathlib.MeasureTheory.Function.L2Space
@@ -38,6 +40,8 @@ the Haar integral the orthogonality argument evaluates.
   at most `‖v‖ * ‖w‖`, because normalized Haar measure has total mass one.
 * `TauCeti.ContRepresentation.matrixCoeffLp_eq_zero_iff`: passing to `L²` loses no information,
   since Haar measure is positive on nonempty open sets.
+* `TauCeti.ContRepresentation.matrixCoeffLp_map_map`: moving both defining vectors by `π h`
+  reparametrizes the matrix coefficient by a conjugation.
 
 This is the second half of the Layer 3 milestone of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap), whose first half is the
@@ -223,6 +227,36 @@ theorem matrixCoeffLp_subrepresentation {U : Submodule 𝕜 V} (hU : ∀ g, ∀ 
     matrixCoeffLp (subrepresentation π U hU) (continuous_subrepresentation hπ) v w
       = matrixCoeffLp π hπ (v : V) (w : V) := by
   rw [matrixCoeffLp_def, matrixCoeffLp_def, matrixCoeff_subrepresentation]
+
+/-! ### Moving both defining vectors -/
+
+/-- **Simultaneously moving the two vectors conjugates the argument of a matrix coefficient.** -/
+theorem matrixCoeffLp_map_map (hunitary : IsUnitary π) (h : G) (v w : V) :
+    matrixCoeffLp π hπ (π h v) (π h w) = conjLpₗᵢ 𝕜 h⁻¹ (matrixCoeffLp π hπ v w) := by
+  have hcoeff : matrixCoeff π hπ (π h v) (π h w) =
+      (matrixCoeff π hπ v w).comp
+        ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹, (continuous_const.mul continuous_id).mul continuous_const⟩ := by
+    ext g
+    calc
+      matrixCoeff π hπ (π h v) (π h w) g =
+          matrixCoeff π hπ (π h v) w (h⁻¹ * g) := by
+        simpa using (matrixCoeff_apply_mul_left hπ hunitary (π h v) w h⁻¹ g).symm
+      _ = matrixCoeff π hπ v w ((h⁻¹ * g) * h) :=
+        (matrixCoeff_apply_mul_right π hπ v w (h⁻¹ * g) h).symm
+      _ = matrixCoeff π hπ v w (h⁻¹ * g * (h⁻¹)⁻¹) := by simp
+  rw [matrixCoeffLp_def, matrixCoeffLp_def, conjLpₗᵢ_apply]
+  calc
+    ContinuousMap.toLp 2 (haarProb G) 𝕜 (matrixCoeff π hπ (π h v) (π h w)) =
+        ContinuousMap.toLp 2 (haarProb G) 𝕜 ((matrixCoeff π hπ v w).comp
+          ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹,
+            (continuous_const.mul continuous_id).mul continuous_const⟩) := congrArg _ hcoeff
+    _ = Lp.compMeasurePreserving (fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹)
+          (measurePreserving_conj (haarProb G) h⁻¹)
+          (ContinuousMap.toLp 2 (haarProb G) 𝕜 (matrixCoeff π hπ v w)) :=
+      (Lp.compMeasurePreserving_toLp 𝕜 (matrixCoeff π hπ v w)
+        ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹,
+          (continuous_const.mul continuous_id).mul continuous_const⟩
+        (measurePreserving_conj (haarProb G) h⁻¹)).symm
 
 end CompactGroup
 

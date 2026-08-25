@@ -10,6 +10,7 @@ public import Mathlib.Data.Finset.Max
 public import Mathlib.Order.Interval.Set.Defs
 import TauCeti.Analysis.Contour.Curve.Distance
 import Mathlib.Algebra.Order.Field.Pi
+import Mathlib.Data.List.Sort
 import Mathlib.Order.Interval.Set.UnorderedInterval
 import Mathlib.Topology.MetricSpace.Infsep
 
@@ -38,6 +39,10 @@ scaffolding that localizes the principal-value analysis to one crossing per wind
   closed half-windows excluding the crossing.
 * `Contour.exists_complement_windows_dist_lower_bound` — a positive lower bound for
   `‖γ t - s‖` on the complement of the open crossing windows in `[a, b]`.
+* `Contour.sorted_crossing_gluing_induction` — a generic invariant closed under piece
+  concatenation and holding on every plain piece and crossing window holds on `[a, b]`, by
+  induction on the sorted crossing list; every consumer of `Crossing.PVAggregation`'s per-window
+  aggregation instantiates this one induction.
 
 ## Provenance
 
@@ -298,6 +303,61 @@ theorem exists_complement_windows_dist_lower_bound {γ : ℝ → ℂ} {s : ℂ} 
     have h_cross : t_min ∈ crossings := h_complete t_min (hC_subset ht_min_mem) h_eq
     exact ht_min_mem.2 t_min h_cross
       ⟨by linarith [hr_pos t_min h_cross], by linarith [hr_pos t_min h_cross]⟩
+
+/-- **Generic sorted-crossing-window gluing induction.** An invariant `Q : ℝ → ℝ → Prop` that
+holds on every plain piece where the curve keeps distance `≥ m` from `s` (`h_piece`) and on every
+crossing window (`h_win`), and is closed under concatenation at a shared endpoint (`hglue`),
+holds on `[a, b]`, by induction on the sorted crossing list. Every consumer instantiates this one
+induction — whether its own invariant is a bare `Prop` (interval-integrability) or carries an
+aggregated value (`∃ v, HasCauchyPVAt ... v`, or `HasCauchyPVAt ... (Φ (γ u) - Φ (γ l))` for a
+known closed form) — so none needs its own copy of the list recursion. Crossing-window-independent
+of the principal-value machinery it primarily feeds, so it lives here alongside the geometric
+window scaffolding above rather than in `Crossing.PVAggregation`. -/
+theorem sorted_crossing_gluing_induction {E : Type*} [NormedAddCommGroup E] {γ : ℝ → E} {s : E}
+    {Q : ℝ → ℝ → Prop} {A b r m : ℝ}
+    (h_piece : ∀ l u : ℝ, A ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) → Q l u)
+    (hglue : ∀ l u₀ u : ℝ, l ≤ u₀ → u₀ ≤ u → Q l u₀ → Q u₀ u → Q l u) :
+    ∀ (sorted : List ℝ), sorted.SortedLT → (sorted ≠ [] → 0 ≤ r) →
+    ∀ a : ℝ, A ≤ a → a ≤ b → (∀ t ∈ sorted, a ≤ t - r) → (∀ t ∈ sorted, t + r ≤ b) →
+      (∀ t ∈ sorted, ∀ t' ∈ sorted, t' ≠ t → 2 * r ≤ |t - t'|) →
+      (∀ t ∈ sorted, Q (t - r) (t + r)) →
+      (∀ u ∈ Icc a b, (∀ t ∈ sorted, u ∉ Ioo (t - r) (t + r)) → m ≤ ‖γ u - s‖) →
+      Q a b := by
+  intro sorted
+  induction sorted with
+  | nil =>
+    intro _ _ a hA hab _ _ _ _ h_far
+    exact h_piece a b hA hab le_rfl
+      fun u hu => h_far u hu fun t ht => absurd ht (List.not_mem_nil)
+  | cons t rest IH =>
+    intro h_sorted hr a hA hab h_lo h_hi h_pair h_win h_far
+    have hr_nonneg : 0 ≤ r := hr (List.cons_ne_nil t rest)
+    have h_head_lo : a ≤ t - r := h_lo t List.mem_cons_self
+    have h_head_hi : t + r ≤ b := h_hi t List.mem_cons_self
+    have h_rest_above : ∀ t' ∈ rest, t + r ≤ t' - r := fun t' ht' => by
+      have h_lt : t < t' := (List.pairwise_cons.mp h_sorted.pairwise).1 t' ht'
+      have h_sep := h_pair t List.mem_cons_self t' (List.mem_cons_of_mem t ht') (ne_of_gt h_lt)
+      rw [abs_sub_comm, abs_of_pos (by linarith)] at h_sep
+      linarith
+    have h_left : Q a (t - r) := by
+      refine h_piece a (t - r) hA h_head_lo (by linarith) fun u hu => ?_
+      refine h_far u ⟨hu.1, by linarith [hu.2]⟩ fun t' ht' h_in => ?_
+      rcases List.mem_cons.mp ht' with rfl | h_rest
+      · linarith [hu.2, h_in.1]
+      · linarith [hu.2, h_in.1, h_rest_above t' h_rest]
+    have h_rest : Q (t + r) b := IH
+      ((List.pairwise_cons.mp h_sorted.pairwise).2).sortedLT (fun _ => hr_nonneg) (t + r)
+      (by linarith) h_head_hi (fun t' ht' => h_rest_above t' ht')
+      (fun t' ht' => h_hi t' (List.mem_cons_of_mem t ht'))
+      (fun t' ht' t'' ht'' hne => h_pair t' (List.mem_cons_of_mem t ht')
+        t'' (List.mem_cons_of_mem t ht'') hne)
+      (fun t' ht' => h_win t' (List.mem_cons_of_mem t ht'))
+      (fun u hu h_avoid => h_far u ⟨by linarith [hu.1], hu.2⟩ fun t' ht' => by
+        rcases List.mem_cons.mp ht' with rfl | h_rest
+        · exact fun h_in => absurd hu.1 (not_le.mpr h_in.2)
+        · exact h_avoid t' h_rest)
+    exact hglue a (t + r) b (h_head_lo.trans (by linarith)) h_head_hi
+      (hglue a (t - r) (t + r) h_head_lo (by linarith) h_left (h_win t List.mem_cons_self)) h_rest
 
 end TauCeti.Contour
 

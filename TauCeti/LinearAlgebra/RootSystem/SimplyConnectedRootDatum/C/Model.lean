@@ -1,9 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Data.Fin.Basic
 public import Mathlib.LinearAlgebra.Matrix.Dual
 public import Mathlib.LinearAlgebra.Reflection
 
@@ -115,32 +117,6 @@ lemma coweight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : coweight n a = 0 := by
   have := k.isLt
   exact ite_eq_right (by omega)
 
-private lemma sum_ite_val (f : Fin n → ℤ) (b : ℕ) :
-    ∑ k : Fin n, (if b = (k : ℕ) then f k else 0) = if h : b < n then f ⟨b, h⟩ else 0 := by
-  by_cases h : b < n
-  · have hb : ∀ k : Fin n, (b = (k : ℕ)) = (k = (⟨b, h⟩ : Fin n)) := by
-      intro k; simp [Fin.ext_iff, eq_comm]
-    simp only [hb, dite_eq_left h, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
-  · rw [dite_eq_right h, Finset.sum_eq_zero]
-    intro k _
-    have := k.isLt
-    exact ite_eq_right (by omega)
-
-private lemma sum_ite_val_succ (f : Fin n → ℤ) (b : ℕ) :
-    ∑ k : Fin n, (if b = (k : ℕ) + 1 then f k else 0)
-      = if h : b - 1 < n ∧ 1 ≤ b then f ⟨b - 1, h.1⟩ else 0 := by
-  by_cases h : b - 1 < n ∧ 1 ≤ b
-  · have hb : ∀ k : Fin n, (b = (k : ℕ) + 1) = (k = (⟨b - 1, h.1⟩ : Fin n)) := by
-      intro k
-      have := h.2
-      simp only [Fin.ext_iff, eq_iff_iff]
-      omega
-    simp only [hb, dite_eq_left h, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
-  · rw [dite_eq_right h, Finset.sum_eq_zero]
-    intro k _
-    have := k.isLt
-    exact ite_eq_right (by omega)
-
 /-- The fundamental pairing identity of type `Cₙ`: the two pinned lattices see the classical
 pairing `⟨e_a, e_c⟩ = [a = c]` exactly, with no correction term, because the simple coroots of `Cₙ`
 are a basis of the classical lattice. -/
@@ -150,13 +126,14 @@ lemma weight_dotProduct_coweight {a c : ℕ} (ha : a < n) :
       (if c ≤ (k : ℕ) then 1 else 0) = if h : b < n then (if c ≤ b then (1 : ℤ) else 0) else 0 := by
     intro b
     simp only [ite_mul, one_mul, zero_mul]
-    exact sum_ite_val (fun k => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b
+    simpa only [Nat.add_zero, Nat.sub_zero, Nat.zero_le, and_true] using
+      sum_ite_val_add (fun k : Fin n => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b 0
   have key' : ∀ b : ℕ, ∑ k : Fin n, (if b = (k : ℕ) + 1 then (1 : ℤ) else 0) *
       (if c ≤ (k : ℕ) then 1 else 0)
         = if h : b - 1 < n ∧ 1 ≤ b then (if c ≤ b - 1 then (1 : ℤ) else 0) else 0 := by
     intro b
     simp only [ite_mul, one_mul, zero_mul]
-    exact sum_ite_val_succ (fun k => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b
+    exact sum_ite_val_add (fun k : Fin n => if c ≤ (k : ℕ) then (1 : ℤ) else 0) b 1
   simp only [dotProduct, weight, coweight, sub_mul, Finset.sum_sub_distrib,
     key a, key' a]
   split_ifs <;> omega
@@ -308,6 +285,32 @@ lemma pairRoot_dotProduct_pairCoroot_self {p q : Signed n} (h : q ≠ signedNeg 
       signedWeight_dotProduct_eq_zero hpq (ne_signedNeg_of_ne_signedNeg h),
       signedWeight_dotProduct_eq_zero hpq.symm h]
     ring
+
+/-- Cartan integers between roots in the classical type `C` model have absolute value at most
+two. -/
+lemma abs_pairRoot_dotProduct_pairCoroot_le_two {x y p q : Signed n}
+    (hpq : q ≠ signedNeg p) :
+    |pairRoot x y ⬝ᵥ pairCoroot p q| ≤ 2 := by
+  have atom_le_one (z : Signed n) : |signedWeight z ⬝ᵥ pairCoroot p q| ≤ 1 := by
+    rcases eq_or_ne p q with rfl | hpq_ne
+    · rw [pairCoroot_self, signedWeight_dotProduct_signedCoweight, abs_le]
+      constructor <;> split_ifs <;> omega
+    · rw [pairCoroot_of_ne hpq_ne, dotProduct_add,
+        signedWeight_dotProduct_signedCoweight,
+        signedWeight_dotProduct_signedCoweight, abs_le]
+      have hp_ne_neg_q : p ≠ signedNeg q := ne_signedNeg_of_ne_signedNeg hpq
+      have hnegp_ne_negq : signedNeg p ≠ signedNeg q := by
+        intro h
+        exact hpq_ne (by simpa using congrArg signedNeg h)
+      constructor <;> split_ifs <;> simp_all
+  rw [pairRoot, add_dotProduct]
+  have hx := atom_le_one x
+  have hy := atom_le_one y
+  calc
+    |signedWeight x ⬝ᵥ pairCoroot p q + signedWeight y ⬝ᵥ pairCoroot p q| ≤
+        |signedWeight x ⬝ᵥ pairCoroot p q| + |signedWeight y ⬝ᵥ pairCoroot p q| :=
+      abs_add_le _ _
+    _ ≤ 2 := by omega
 
 /-- A signed basis vector pairs to at least `1` with the coroot of `p + q` exactly when it is `p` or
 `q`. This is the recognition principle behind injectivity of the roots and coroots. -/

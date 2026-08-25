@@ -1,13 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
 public import TauCeti.Probability.DeFinetti.BlockFactorization
 public import TauCeti.Probability.Exchangeability.MixedIID.Mixture
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.ToContractable
 
 /-!
@@ -88,7 +89,7 @@ theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α]
   refine ⟨P, ?_⟩
   calc ρ = pathLaw ρ (fun n (x : ℕ → α) => x n) := hpath.symm
     _ = (ρ.map ν).bind fun Q => Measure.infinitePi fun _ : ℕ => (Q : Measure α) :=
-        pathLaw_eq_bind_infinitePi_of_mixedIIDWith (fun n => (hcoord n).aemeasurable) hmix
+        pathLaw_eq_bind_infinitePi_of_mixedIIDWith hmix
     _ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
         rw [hP, Measure.dirac_bind TauCeti.MeasureTheory.measurable_infinitePi_const]
 

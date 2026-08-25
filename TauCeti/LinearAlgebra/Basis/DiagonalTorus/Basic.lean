@@ -1,0 +1,494 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+-- The finiteness of the roots of `X ^ n - 1`, used only in the proof of `weightChar_injective`.
+import Mathlib.Algebra.Polynomial.Roots
+-- `CharZero.infinite`, which specialises `weightChar_injective` to characteristic zero.
+public import Mathlib.Algebra.CharZero.Infinite
+public import Mathlib.Algebra.Module.Equiv.Basic
+public import Mathlib.LinearAlgebra.Basis.SMul
+public import Mathlib.LinearAlgebra.Matrix.Basis
+public import TauCeti.LinearAlgebra.Eigenspace.DiagonalBasis
+
+/-!
+# The diagonal torus attached to a weighted basis
+
+A basis `b : Basis ι R M` and a family of units `w : ι → Rˣ` determine the automorphism of `M`
+scaling the `i`-th basis vector by `w i`. Letting `w` range over all such families realizes the
+group `ι → Rˣ` — the `R`-points of the split torus `𝔾ₘ^ι` — inside the automorphism group of `M`.
+
+Weights cut this down to a torus of smaller rank. A weight function `wt : ι → κ → ℤ` assigns to
+each basis vector a character of `𝔾ₘ^κ`, and evaluating those characters at a point
+`s : κ → Rˣ` gives the family of units the diagonal automorphism is built from. The resulting
+homomorphism `TauCeti.basisWeightTorus` is the split maximal torus of a Chevalley group written
+in a weight basis of an admissible lattice, and `TauCeti.basisDiagonal_apply_of_repr_eq_zero` is
+the statement that it acts on a weight vector by the corresponding character — which is what makes
+the conjugation formula against a root subgroup come out.
+
+Fixing the weight instead of the point turns a character into a homomorphism
+`TauCeti.weightChar` on the points of the torus, which is the form in which a weight indexes a
+joint eigenspace. Whether that indexing is faithful depends on the coefficients: over `𝔽₂` the
+torus has a single point, so every weight gives the trivial character, while over an infinite
+field distinct weights stay distinct (`TauCeti.weightChar_injective`).
+
+## Main definitions
+
+* `TauCeti.torusCharacter`: the value at `s : κ → Rˣ` of the character `μ : κ → ℤ` of `𝔾ₘ^κ`.
+* `TauCeti.weightChar`: that character with the weight fixed, as a homomorphism on the points of
+  the torus.
+* `TauCeti.weylReflectTorusPoint`: the multiplicative reflection of split-torus points dual to a
+  reflection of their character lattice.
+* `TauCeti.basisDiagonal`: the automorphism scaling each basis vector by a prescribed unit.
+* `TauCeti.basisDiagonalHom`: the resulting homomorphism from `ι → Rˣ`.
+* `TauCeti.basisWeightTorus`: the homomorphism from `κ → Rˣ` determined by a weight function.
+
+## Main results
+
+* `TauCeti.basisDiagonal_apply_of_repr_eq_zero`: a diagonal automorphism acts by a single scalar
+  on any vector whose coordinates are supported where that scalar is attained.
+* `TauCeti.basisWeightTorus_apply_of_repr_eq_zero`: the special case for a weight vector.
+* `TauCeti.conj_basisWeightTorus_of_map_basis`: a compatible monomial basis automorphism
+  conjugates represented torus points by coordinate reindexing.
+* `TauCeti.map_basisWeightTorus_range_conj_of_map_basis`: such an automorphism normalizes the
+  represented weight torus.
+* `TauCeti.torusCharacter_weylReflectTorusPoint`: evaluation at a reflected point agrees with
+  evaluation of the reflected character.
+* `TauCeti.weightChar_injective`: over an infinite field, distinct weights give distinct
+  characters of the torus.
+
+## References
+
+* J. C. Jantzen, *Representations of Algebraic Groups*, II.1.
+* R. W. Carter, *Simple Groups of Lie Type*, §4.4, §7.1, and §12.2.
+-/
+
+public section
+
+namespace TauCeti
+
+open Finset Module
+
+universe u v w
+
+variable {ι : Type u} {κ : Type v} {R : Type w} {M : Type*}
+variable [CommRing R] [AddCommGroup M] [Module R M]
+
+/-! ## Characters of a split torus -/
+
+section TorusCharacter
+
+variable [Fintype κ]
+
+/-- The value at the point `s` of the character `μ` of the split torus `𝔾ₘ^κ`, namely
+`∏ j, s j ^ μ j`. Weights of a representation are exactly such characters, so this is the scalar
+by which a torus point acts on a weight vector. -/
+def torusCharacter (s : κ → Rˣ) (μ : κ → ℤ) : Rˣ := ∏ j, s j ^ μ j
+
+/-- A split-torus character evaluates as the product of its coordinate powers. -/
+theorem torusCharacter_def (s : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter s μ = ∏ j, s j ^ μ j :=
+  (rfl)
+
+/-- Evaluating a character at a point reindexed by `σ` is the same as precomposing the
+character with `σ`. -/
+@[simp]
+theorem torusCharacter_mulEquivArrowCongr (σ : Equiv.Perm κ) (s : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) μ =
+      torusCharacter s (μ ∘ σ) := by
+  rw [torusCharacter_def, torusCharacter_def]
+  simp only [MulEquiv.arrowCongr_apply, MulEquiv.refl_apply]
+  exact (Fintype.prod_equiv σ (fun j => s j ^ μ (σ j))
+    (fun j => s (σ.symm j) ^ μ j) fun j => by simp).symm
+
+/-- Writing a finite-support exponent vector as a function identifies its character value with
+the corresponding finitely supported product. -/
+@[simp] theorem torusCharacter_equivFunOnFinite (s : κ → Rˣ) (m : κ →₀ ℤ) :
+    torusCharacter s (Finsupp.equivFunOnFinite m) = m.prod fun i z ↦ s i ^ z := by
+  rw [torusCharacter, Finsupp.prod_zpow]
+  rfl
+
+/-- The trivial character takes the value one at every point. -/
+@[simp] theorem torusCharacter_zero (s : κ → Rˣ) : torusCharacter s (0 : κ → ℤ) = 1 := by
+  simp [torusCharacter]
+
+/-- Characters multiply when weights are added. -/
+theorem torusCharacter_add (s : κ → Rˣ) (μ ν : κ → ℤ) :
+    torusCharacter s (μ + ν) = torusCharacter s μ * torusCharacter s ν := by
+  simp [torusCharacter, zpow_add, prod_mul_distrib]
+
+/-- Scaling a weight by a natural number raises its value to that power. -/
+theorem torusCharacter_nsmul (s : κ → Rˣ) (μ : κ → ℤ) (n : ℕ) :
+    torusCharacter s (n • μ) = torusCharacter s μ ^ n := by
+  simp only [torusCharacter, Pi.smul_apply, nsmul_eq_mul, ← prod_pow]
+  refine prod_congr rfl fun j _ => ?_
+  rw [mul_comm, zpow_mul, zpow_natCast]
+
+/-- Negating a weight inverts the value of its character. -/
+theorem torusCharacter_neg (s : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter s (-μ) = (torusCharacter s μ)⁻¹ := by
+  simp [torusCharacter, ← prod_inv_distrib]
+
+/-- Subtracting weights divides the values of their characters. -/
+theorem torusCharacter_sub (s : κ → Rˣ) (μ ν : κ → ℤ) :
+    torusCharacter s (μ - ν) = torusCharacter s μ / torusCharacter s ν := by
+  rw [sub_eq_add_neg, torusCharacter_add, torusCharacter_neg, div_eq_mul_inv]
+
+/-- Scaling a weight by an integer raises its value to that integer power. -/
+theorem torusCharacter_zsmul (s : κ → Rˣ) (μ : κ → ℤ) (z : ℤ) :
+    torusCharacter s (z • μ) = torusCharacter s μ ^ z := by
+  simp only [torusCharacter, Pi.smul_apply, smul_eq_mul, ← prod_zpow]
+  refine prod_congr rfl fun j _ => ?_
+  rw [mul_comm, zpow_mul]
+
+/-- Every character takes the value one at the identity point. -/
+@[simp] theorem torusCharacter_one (μ : κ → ℤ) : torusCharacter (1 : κ → Rˣ) μ = 1 := by
+  simp [torusCharacter]
+
+/-- A character is a homomorphism on the points of the torus. -/
+theorem torusCharacter_mul (s t : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter (s * t) μ = torusCharacter s μ * torusCharacter t μ := by
+  simp [torusCharacter, mul_zpow, prod_mul_distrib]
+
+/-- At a point supported on the single coordinate `c`, a character is the `μ c`-th power of the
+value there: the other coordinates contribute the factor `1`. -/
+@[simp] theorem torusCharacter_mulSingle [DecidableEq κ] (c : κ) (z : Rˣ) (μ : κ → ℤ) :
+    torusCharacter (Pi.mulSingle c z) μ = z ^ μ c := by
+  rw [torusCharacter, prod_eq_single c (fun j _ hj => by rw [Pi.mulSingle_eq_of_ne hj, one_zpow])
+    fun hc => absurd (mem_univ c) hc, Pi.mulSingle_eq_same]
+
+/-! ## Reflections of split-torus points -/
+
+section Reflect
+
+variable [DecidableEq κ]
+
+/-- The multiplicative reflection `s_α` on points of the split torus `𝔾ₘ^κ`. Here `c` is the
+Cartan index of the coroot `α^∨`; the reflection divides the `c`-th coordinate of a point `s` by
+the value `α(s)` and leaves the others unchanged. -/
+def weylReflectTorusPoint (α : κ → ℤ) (c : κ) : (κ → Rˣ) →* (κ → Rˣ) where
+  toFun s := s * Pi.mulSingle c (torusCharacter s α)⁻¹
+  map_one' := by simp
+  map_mul' s t := by
+    simp only [torusCharacter_mul, mul_inv_rev, Pi.mulSingle_mul]
+    ac_rfl
+
+/-- The reflected torus point as a coordinatewise product. -/
+theorem weylReflectTorusPoint_apply (α : κ → ℤ) (c : κ) (s : κ → Rˣ) :
+    weylReflectTorusPoint α c s = s * Pi.mulSingle c (torusCharacter s α)⁻¹ :=
+  (rfl)
+
+/-- At the coroot coordinate, the reflected point is divided by the root character. -/
+@[simp]
+theorem weylReflectTorusPoint_apply_same (α : κ → ℤ) (c : κ) (s : κ → Rˣ) :
+    weylReflectTorusPoint α c s c = s c * (torusCharacter s α)⁻¹ := by
+  rw [weylReflectTorusPoint_apply]
+  simp
+
+/-- Away from the coroot coordinate, the reflected point is unchanged. -/
+@[simp]
+theorem weylReflectTorusPoint_apply_of_ne (α : κ → ℤ) {c j : κ} (hcj : j ≠ c)
+    (s : κ → Rˣ) : weylReflectTorusPoint α c s j = s j := by
+  rw [weylReflectTorusPoint_apply]
+  simp [hcj]
+
+/-- **The reflected point computes the reflected character.** The character `μ` takes at the
+reflected point the value that `μ - μ(c) α`, the reflection `s_α μ`, takes at the original one. -/
+@[simp]
+theorem torusCharacter_weylReflectTorusPoint (α : κ → ℤ) (c : κ) (s : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter (weylReflectTorusPoint α c s) μ = torusCharacter s (μ - μ c • α) := by
+  rw [weylReflectTorusPoint_apply, torusCharacter_mul, torusCharacter_mulSingle,
+    torusCharacter_sub, torusCharacter_zsmul, inv_zpow, div_eq_mul_inv]
+
+/-- **The reflection of points is an involution**, as soon as the root takes the value two at its
+own coroot. -/
+theorem weylReflectTorusPoint_weylReflectTorusPoint (α : κ → ℤ) {c : κ} (hαc : α c = 2)
+    (s : κ → Rˣ) : weylReflectTorusPoint α c (weylReflectTorusPoint α c s) = s := by
+  have hneg : α - α c • α = -α := by rw [hαc]; module
+  have hchar : torusCharacter (weylReflectTorusPoint α c s) α = (torusCharacter s α)⁻¹ := by
+    rw [torusCharacter_weylReflectTorusPoint, hneg, torusCharacter_neg]
+  rw [weylReflectTorusPoint_apply, hchar, inv_inv, weylReflectTorusPoint_apply, mul_assoc,
+    ← Pi.mulSingle_mul, inv_mul_cancel, Pi.mulSingle_one, mul_one]
+
+end Reflect
+
+/-- The family of characters attached to a weight function, as a homomorphism from the points of
+the split torus `𝔾ₘ^κ` to families of units indexed by the basis. -/
+def torusCharacterHom (wt : ι → κ → ℤ) : (κ → Rˣ) →* (ι → Rˣ) where
+  toFun s i := torusCharacter s (wt i)
+  map_one' := funext fun i => torusCharacter_one (R := R) (wt i)
+  map_mul' s t := funext fun i => torusCharacter_mul s t (wt i)
+
+/-- The value of the weight-character homomorphism at a point and a basis index. -/
+@[simp] theorem torusCharacterHom_apply (wt : ι → κ → ℤ) (s : κ → Rˣ) (i : ι) :
+    torusCharacterHom (R := R) wt s i = torusCharacter s (wt i) := (rfl)
+
+/-- Torus characters are natural in the ring of values. -/
+theorem map_torusCharacter {S : Type*} [CommRing S] (φ : R →+* S) (s : κ → Rˣ) (μ : κ → ℤ) :
+    Units.map (φ : R →* S) (torusCharacter s μ) =
+      torusCharacter (fun j => Units.map (φ : R →* S) (s j)) μ := by
+  simp [torusCharacter, map_prod, map_zpow]
+
+/-! ## A character as a homomorphism of torus points -/
+
+section WeightChar
+
+variable (R)
+
+/-- The character `μ` of the split torus `𝔾ₘ^κ` read as a homomorphism `(κ → Rˣ) →* Rˣ`: the
+value `TauCeti.torusCharacter s μ` with the weight `μ` fixed and the point `s` varying. This is the
+form in which a weight indexes a joint eigenspace of the torus. -/
+def weightChar (μ : κ → ℤ) : (κ → Rˣ) →* Rˣ where
+  toFun s := torusCharacter s μ
+  map_one' := torusCharacter_one μ
+  map_mul' s t := torusCharacter_mul s t μ
+
+/-- A weight character evaluates as the split-torus character of its weight, with the arguments in
+the order the weight-space API uses. Every arithmetic property of `TauCeti.weightChar` reduces
+through this to the `TauCeti.torusCharacter` lemmas. -/
+theorem weightChar_apply (μ : κ → ℤ) (s : κ → Rˣ) : weightChar R μ s = torusCharacter s μ :=
+  (rfl)
+
+/-- The trivial weight gives the trivial character. -/
+@[simp]
+theorem weightChar_zero : weightChar R (0 : κ → ℤ) = 1 :=
+  MonoidHom.ext fun s ↦ torusCharacter_zero s
+
+/-- Weights add as characters multiply. -/
+theorem weightChar_add (μ ν : κ → ℤ) :
+    weightChar R (μ + ν) = weightChar R μ * weightChar R ν :=
+  MonoidHom.ext fun s ↦ torusCharacter_add s μ ν
+
+/-- The character of `Pi.single c 1` is the `c`-th coordinate: this is the weight carried by the
+`c`-th basis vector of a weight basis. -/
+@[simp]
+theorem weightChar_single [DecidableEq κ] (c : κ) (s : κ → Rˣ) :
+    weightChar R (Pi.single c 1) s = s c := by
+  rw [weightChar_apply, torusCharacter_def,
+    prod_eq_single c (fun j _ hj ↦ by simp [Pi.single_eq_of_ne hj])
+      (fun h ↦ absurd (mem_univ c) h),
+    Pi.single_eq_same, zpow_one]
+
+/-- The character of a constant weight is a power of the product of the coordinates. -/
+theorem weightChar_const (z : ℤ) (s : κ → Rˣ) :
+    weightChar R (fun _ ↦ z) s = (∏ j, s j) ^ z := by
+  rw [weightChar_apply, torusCharacter_def, prod_zpow]
+
+end WeightChar
+
+/-! ## Separating weights -/
+
+/-- In an infinite field no nonzero exponent kills every unit: the units killed by `d` are roots
+of `X ^ |d| - 1`, hence finitely many, while the nonzero elements are infinite in number. This is
+the one arithmetic input to `TauCeti.weightChar_injective`. No single unit need have infinite
+order — over the algebraic closure of `𝔽ₚ` none does — so the exponent has to be beaten by a unit
+depending on it. -/
+private theorem exists_zpow_ne_one (K : Type*) [Field K] [Infinite K] {d : ℤ} (hd : d ≠ 0) :
+    ∃ u : Kˣ, u ^ d ≠ 1 := by
+  by_contra hcon
+  push Not at hcon
+  have hpos : 0 < d.natAbs := Int.natAbs_pos.mpr hd
+  have hsub : (Set.univ : Set K) ⊆ insert 0 ↑(Polynomial.nthRootsFinset d.natAbs (1 : K)) := by
+    intro x _
+    rcases eq_or_ne x 0 with rfl | hx
+    · exact Set.mem_insert _ _
+    · have hu : Units.mk0 x hx ^ d.natAbs = 1 := pow_natAbs_eq_one.mpr (hcon _)
+      exact Set.mem_insert_of_mem _ (by
+        simpa [Polynomial.mem_nthRootsFinset hpos] using congrArg Units.val hu)
+  exact Set.infinite_univ
+    (((Polynomial.nthRootsFinset d.natAbs (1 : K)).finite_toSet.insert 0).subset hsub)
+
+/-- **Distinct weights give distinct characters of the split torus**, over an infinite field. Some
+hypothesis on the coefficients is needed: over `𝔽₂` the torus `𝔾ₘ^κ` has a single point and every
+weight gives the trivial character. A field of characteristic zero is infinite
+(`CharZero.infinite`), so that case is a specialisation. -/
+theorem weightChar_injective {K : Type*} [Field K] [Infinite K] :
+    Function.Injective (weightChar K (κ := κ)) := by
+  classical
+  intro μ ν h
+  funext c
+  by_contra hne
+  obtain ⟨u, hu⟩ := exists_zpow_ne_one K (sub_ne_zero.mpr hne)
+  refine hu ?_
+  have hval := congrArg (fun χ : (κ → Kˣ) →* Kˣ ↦ χ (Pi.mulSingle c u)) h
+  simp only [weightChar_apply, torusCharacter_mulSingle] at hval
+  rw [zpow_sub, hval, mul_inv_cancel]
+
+end TorusCharacter
+
+/-! ## Diagonal automorphisms -/
+
+/-- The automorphism of `M` scaling the `i`-th vector of the basis `b` by the unit `w i`. -/
+noncomputable def basisDiagonal (b : Basis ι R M) (w : ι → Rˣ) : M ≃ₗ[R] M :=
+  b.equiv (b.unitsSMul w) (Equiv.refl ι)
+
+/-- The defining action of a diagonal automorphism on a basis vector. -/
+@[simp] theorem basisDiagonal_basis (b : Basis ι R M) (w : ι → Rˣ) (i : ι) :
+    basisDiagonal b w (b i) = (w i : R) • b i := by
+  rw [basisDiagonal, Basis.equiv_apply, Equiv.refl_apply, Basis.unitsSMul_apply, Units.smul_def]
+
+/-- A basis automorphism acting by scalar multiples intertwines diagonal automorphisms whose
+diagonal entries correspond under the induced basis-index map. -/
+theorem basisDiagonal_intertwine_of_map_basis (b : Basis ι R M) (v w : ι → Rˣ) (c : ι → R)
+    (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hvw : ∀ i, w (τ i) = v i) :
+    θ * basisDiagonal b v = basisDiagonal b w * θ := by
+  refine LinearEquiv.toLinearMap_injective (b.ext fun i => ?_)
+  simp only [LinearEquiv.coe_coe, LinearEquiv.mul_apply, basisDiagonal_basis, map_smul, hθ, hvw]
+  rw [smul_smul, smul_smul, mul_comm]
+
+/-- Conjugating a diagonal automorphism by a compatible basis automorphism acting by scalar
+multiples reindexes its diagonal entries. -/
+theorem conj_basisDiagonal_of_map_basis (b : Basis ι R M) (v w : ι → Rˣ) (c : ι → R)
+    (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hvw : ∀ i, w (τ i) = v i) :
+    θ * basisDiagonal b v * θ⁻¹ = basisDiagonal b w := by
+  rw [mul_inv_eq_iff_eq_mul]
+  exact basisDiagonal_intertwine_of_map_basis b v w c τ θ hθ hvw
+
+/-- The diagonal automorphism attached to the constant family `1` is the identity. -/
+@[simp] theorem basisDiagonal_one (b : Basis ι R M) : basisDiagonal b 1 = 1 := by
+  refine LinearEquiv.toLinearMap_injective (b.ext fun i => ?_)
+  simp
+
+/-- Diagonal automorphisms multiply pointwise in the family of scaling units. -/
+theorem basisDiagonal_mul (b : Basis ι R M) (w v : ι → Rˣ) :
+    basisDiagonal b (w * v) = basisDiagonal b w * basisDiagonal b v := by
+  refine LinearEquiv.toLinearMap_injective (b.ext fun i => ?_)
+  simp only [LinearEquiv.coe_coe, basisDiagonal_basis, LinearEquiv.mul_eq_trans,
+    LinearEquiv.trans_apply, Pi.mul_apply, Units.val_mul, map_smul]
+  rw [smul_smul, mul_comm]
+
+/-- The diagonal automorphisms as a homomorphism from the group of families of units. -/
+noncomputable def basisDiagonalHom (b : Basis ι R M) : (ι → Rˣ) →* (M ≃ₗ[R] M) where
+  toFun := basisDiagonal b
+  map_one' := basisDiagonal_one b
+  map_mul' := basisDiagonal_mul b
+
+/-- The homomorphism of diagonal automorphisms evaluates to `TauCeti.basisDiagonal`. -/
+@[simp] theorem basisDiagonalHom_apply (b : Basis ι R M) (w : ι → Rˣ) :
+    basisDiagonalHom b w = basisDiagonal b w := (rfl)
+
+/-- A diagonal automorphism scales each coordinate by its corresponding unit. -/
+theorem repr_basisDiagonal (b : Basis ι R M) (w : ι → Rˣ) (m : M) (i : ι) :
+    b.repr (basisDiagonal b w m) i = (w i : R) * b.repr m i :=
+  b.repr_apply_of_apply_basis (basisDiagonal_basis b w) m i
+
+/-- Inverting a diagonal automorphism inverts each of its diagonal entries. -/
+theorem basisDiagonal_inv (b : Basis ι R M) (w : ι → Rˣ) :
+    (basisDiagonal b w)⁻¹ = basisDiagonal b w⁻¹ := by
+  simpa only [basisDiagonalHom_apply] using (map_inv (basisDiagonalHom b) w).symm
+
+/-- The matrix of a diagonal basis automorphism in that basis is the diagonal matrix of its
+scaling units. -/
+theorem toMatrix_basisDiagonal [Fintype ι] [DecidableEq ι]
+    (b : Basis ι R M) (w : ι → Rˣ) :
+    LinearMap.toMatrix b b (basisDiagonal b w).toLinearMap =
+      Matrix.diagonal fun i => (w i : R) := by
+  calc
+    _ = b.toMatrix (b.unitsSMul w) := by
+      ext i j
+      rw [LinearMap.toMatrix_apply, Basis.toMatrix_apply]
+      have hbasis : (basisDiagonal b w).toLinearMap (b j) = (b.unitsSMul w) j := by
+        rw [LinearEquiv.coe_toLinearMap, basisDiagonal_basis, Basis.unitsSMul_apply,
+          Units.smul_def]
+      rw [hbasis]
+    _ = _ := b.toMatrix_unitsSMul w
+
+/-- A diagonal automorphism scales by a single unit any vector whose coordinates vanish outside
+the basis vectors carrying that unit. Applied to a weight basis, this says that a torus point acts
+on a weight vector by the value of the corresponding character. -/
+theorem basisDiagonal_apply_of_repr_eq_zero (b : Basis ι R M) (w : ι → Rˣ) {c : Rˣ} {m : M}
+    (hm : ∀ i, w i ≠ c → b.repr m i = 0) :
+    basisDiagonal b w m = (c : R) • m := by
+  have key : ∀ i ∈ (b.repr m).support, (w i : R) = (c : R) := by
+    intro i hi
+    by_contra hne
+    exact Finsupp.mem_support_iff.1 hi (hm i fun hwc => hne (congrArg Units.val hwc))
+  conv_lhs => rw [← b.linearCombination_repr m]
+  conv_rhs => rw [← b.linearCombination_repr m]
+  rw [Finsupp.linearCombination_apply, Finsupp.sum, map_sum, smul_sum]
+  refine sum_congr rfl fun i hi => ?_
+  rw [map_smul, basisDiagonal_basis, smul_smul, smul_smul, key i hi, mul_comm]
+
+/-! ## The torus of a weighted basis -/
+
+section WeightTorus
+
+variable [Fintype κ]
+
+/-- The split torus of rank `κ` acting on `M` through a weight function on a basis: the point
+`s` acts on the `i`-th basis vector by the value at `s` of the character `wt i`.
+
+This is how the split maximal torus of a Chevalley group acts on an admissible lattice written in
+a weight basis. -/
+noncomputable def basisWeightTorus (b : Basis ι R M) (wt : ι → κ → ℤ) :
+    (κ → Rˣ) →* (M ≃ₗ[R] M) :=
+  (basisDiagonalHom b).comp (torusCharacterHom (R := R) wt)
+
+/-- The weight torus at a point is the diagonal automorphism scaling by the weight characters. -/
+theorem basisWeightTorus_apply (b : Basis ι R M) (wt : ι → κ → ℤ) (s : κ → Rˣ) :
+    basisWeightTorus b wt s = basisDiagonal b fun i => torusCharacter s (wt i) := (rfl)
+
+/-- A torus point scales the `i`-th basis vector by the value at it of the character `wt i`. -/
+@[simp] theorem basisWeightTorus_basis (b : Basis ι R M) (wt : ι → κ → ℤ) (s : κ → Rˣ) (i : ι) :
+    basisWeightTorus b wt s (b i) = (torusCharacter s (wt i) : R) • b i :=
+  basisDiagonal_basis b _ i
+
+/-- A basis automorphism acting by scalar multiples whose basis-index map is compatible with a
+coordinate permutation intertwines each represented torus point with its reindexing. The
+basis-index map is only a function because the proof does not need its bijectivity. -/
+theorem basisWeightTorus_intertwine_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Rˣ) :
+    θ * basisWeightTorus b wt s =
+      basisWeightTorus b wt (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) * θ := by
+  rw [basisWeightTorus_apply, basisWeightTorus_apply]
+  apply basisDiagonal_intertwine_of_map_basis b _ _ c τ θ hθ
+  intro i
+  rw [torusCharacter_mulEquivArrowCongr]
+  congr 1
+  funext j
+  exact hwt i j
+
+/-- Conjugating a represented weight-torus point by a compatible basis automorphism
+reindexes that point. This is the normalizer form of
+`basisWeightTorus_intertwine_of_map_basis`. -/
+theorem conj_basisWeightTorus_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Rˣ) :
+    θ * basisWeightTorus b wt s * θ⁻¹ =
+      basisWeightTorus b wt (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) := by
+  rw [mul_inv_eq_iff_eq_mul]
+  exact basisWeightTorus_intertwine_of_map_basis b wt τ σ θ c hθ hwt s
+
+/-- **A compatible basis symmetry acting by scalar multiples normalizes the represented weight
+torus.** Conjugation by `θ` maps its range onto itself by reindexing torus points through `σ`. -/
+theorem map_basisWeightTorus_range_conj_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) :
+    Subgroup.map (MulAut.conj θ).toMonoidHom (basisWeightTorus b wt).range =
+      (basisWeightTorus b wt).range := by
+  have hcomp : (MulAut.conj θ).toMonoidHom.comp (basisWeightTorus b wt) =
+      (basisWeightTorus b wt).comp
+        (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ)).toMonoidHom :=
+    MonoidHom.ext fun s => conj_basisWeightTorus_of_map_basis b wt τ σ θ c hθ hwt s
+  rw [MonoidHom.map_range, hcomp, MonoidHom.range_comp,
+    MonoidHom.range_eq_top_of_surjective _ (MulEquiv.surjective _), ← MonoidHom.range_eq_map]
+
+/-- A torus point acts on a weight vector by the value of the corresponding character. -/
+theorem basisWeightTorus_apply_of_repr_eq_zero (b : Basis ι R M) (wt : ι → κ → ℤ) (s : κ → Rˣ)
+    {μ : κ → ℤ} {m : M} (hm : ∀ i, wt i ≠ μ → b.repr m i = 0) :
+    basisWeightTorus b wt s m = (torusCharacter s μ : R) • m := by
+  rw [basisWeightTorus_apply]
+  exact basisDiagonal_apply_of_repr_eq_zero b _ fun i hi => hm i fun hwt => hi (by rw [hwt])
+
+end WeightTorus
+
+end TauCeti

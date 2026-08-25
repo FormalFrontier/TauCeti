@@ -1,12 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.GroupTheory.GroupExtension.Basic
-public import TauCeti.GroupTheory.GroupExtension.OfFactorSet
+public import TauCeti.GroupTheory.GroupExtension.Of.FactorSet
 
 /-!
 # The factor set of a group extension with abelian kernel

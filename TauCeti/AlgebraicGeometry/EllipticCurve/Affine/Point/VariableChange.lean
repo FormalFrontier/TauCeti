@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -40,8 +41,8 @@ nothing here restates it — the split follows Mathlib's own, which puts the for
 points, and `variableChange_slope`, `variableChange_addX` and `variableChange_addY` are what make
 it additive.
 
-`mapVariableChangeFun`, its equation lemmas and injectivity, `variableChange_negY_ne`,
-`mapVariableChange` and the `AddEquiv.cast` computation lemma are all `private`: they are how the
+`mapVariableChangeFun`, its equation lemmas and injectivity, `variableChange_negY_ne` and
+`mapVariableChange` are all `private`: they are how the
 isomorphism is built, not part of what it offers. The public surface is `equivVariableChange` with
 its two coordinate lemmas `equivVariableChange_some` and `equivVariableChange_symm_some`, both
 `@[simp]`, so a consumer never needs to unfold anything. Anyone wanting the bare homomorphism
@@ -129,11 +130,12 @@ arbitrary Weierstrass curve over a commutative ring. -/
 /-- What Mathlib's `AddEquiv.cast` — transport of the point group along an equality of Weierstrass
 curves — does to a point given by coordinates. The equiv itself is `AddEquiv.cast` and is not
 restated here; only its value needs a name, since Mathlib states `cast` through `Equiv.cast` and
-so gives no equation for it. -/
+so gives no equation for it. Public because the quadratic-twist point isomorphism rewrites with
+it as well; within this file it is used only by `equivVariableChange_symm_some`. -/
 -- not `@[simp]`: Mathlib's `AddEquiv.cast_apply` is itself a simp lemma and rewrites this
 -- left-hand side to the raw `cast` first, so `simpNF` reports the statement is not in
--- simp-normal form and the lemma could never fire. It is used by `rw` below, which is syntactic.
-private lemma cast_some {V V' : WeierstrassCurve F} (h : V = V') {x y : F}
+-- simp-normal form and the lemma could never fire. It is used by `rw`, which is syntactic.
+lemma cast_some {V V' : WeierstrassCurve F} (h : V = V') {x y : F}
     (hns : V.toAffine.Nonsingular x y) :
     AddEquiv.cast (M := fun V : WeierstrassCurve F ↦ V.toAffine.Point) h (some x y hns)
       = some x y (h ▸ hns) := by

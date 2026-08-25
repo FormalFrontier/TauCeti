@@ -28,7 +28,13 @@ globs = ["TauCeti.*"]
 # `.github/workflows/pr-build.yml`; only files that already exist may grow up to 1500. Both
 # `longFile` and `longFileDefValue` must be set to the same value, or the linter nags to
 # remove a `set_option` on every short file (fatal under `warningAsError`).
-leanOptions = { weak.linter.mathlibStandardSet = true, weak.linter.style.longFile = 1500, weak.linter.style.longFileDefValue = 1500, weak.linter.style.header = false, warningAsError = true }
+#
+# `style.header = true` is inert during ordinary builds at the current Mathlib pin: that command
+# linter skips modules absent from the library root, and TauCeti.lean is intentionally empty. The
+# copyright/Authors contract is enforced directly by scripts/HeaderStyle.lean through
+# scripts/lint-style.sh. Keep the option enabled for forward compatibility if Mathlib changes how
+# the command linter discovers library files.
+leanOptions = { weak.linter.mathlibStandardSet = true, weak.linter.style.longFile = 1500, weak.linter.style.longFileDefValue = 1500, weak.linter.style.header = true, warningAsError = true }
 
 
 # Human-owned governance: the axiom-allowlist audit (`lake exe axioms`). Inspects the

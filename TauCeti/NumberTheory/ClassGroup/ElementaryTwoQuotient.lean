@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -195,14 +196,13 @@ theorem finrank_elementaryTwoQuotient_eq_of_mulEquiv {S : Type*} [CommRing S] [I
     (e : ClassGroup R ≃* ClassGroup S) :
     Module.finrank (ZMod 2) (ElementaryTwoQuotient R) =
       Module.finrank (ZMod 2) (ElementaryTwoQuotient S) :=
-  TauCeti.finrank_elementaryTwoQuotient_eq_of_mulEquiv
-    (G := ClassGroup R) (H := ClassGroup S) e
+  TauCeti.finrank_elementaryTwoQuotient_eq_of_mulEquiv e
 
 /-- Multiplicatively equivalent class groups have the same elementary-2 rank. -/
 theorem twoRank_eq_of_mulEquiv {S : Type*} [CommRing S] [IsDomain S]
     (e : ClassGroup R ≃* ClassGroup S) :
     twoRank R = twoRank S :=
-  TauCeti.twoRank_eq_of_mulEquiv (G := ClassGroup R) (H := ClassGroup S) e
+  TauCeti.twoRank_eq_of_mulEquiv e
 
 /-- The cardinality of `Cl(R)/Cl(R)²` divides the cardinality of `Cl(R)` when the class group is
 finite, and more generally in Mathlib's cardinal arithmetic. -/

@@ -1,13 +1,18 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Data.Fin.Tuple.Basic
 public import Mathlib.Data.Sym.Basic
+import Mathlib.Algebra.BigOperators.Fin
+import Mathlib.Data.Finset.NatAntidiagonal
+import Mathlib.Data.Finsupp.Multiset
 import Mathlib.Data.Fintype.EquivFin
 import Mathlib.Data.List.FinRange
+import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
 # Basic lemmas for symmetric powers
@@ -17,15 +22,20 @@ This file records small API extensions for Mathlib's symmetric powers, and the m
 
 `ofFn` presents `Sym α n` as a quotient of `Fin n → α`: it is surjective, and its fibres are the
 orbits of the permutation action, by `TauCeti.Sym.ofFn_eq_ofFn_iff`. Nothing here is topological;
-`TauCeti/Topology/Sym.lean` uses this to give `Sym α n` the quotient topology coinduced along
+`TauCeti/Topology/Sym/Basic.lean` uses this to give `Sym α n` the quotient topology coinduced along
 `ofFn`.
 
 ## Main declarations
 
 * `TauCeti.Sym.ofFn`: the ordered tuple `f : Fin n → α` read as a point of `Sym α n`, and
   `TauCeti.Sym.ofFn_surjective`, that every unordered tuple arises this way.
+* `TauCeti.Sym.map_ofFn`, `TauCeti.Sym.map_comp_ofFn` and `TauCeti.Sym.ofFn_fin_append`: `ofFn`
+  intertwines postcomposition with `Sym.map`, and concatenation of ordered tuples with
+  `Sym.append`.
 * `TauCeti.Sym.ofFn_eq_ofFn_iff`: two ordered tuples have the same underlying unordered tuple
   exactly when one is a reindexing of the other by a permutation.
+* `TauCeti.symFinTwoEquiv`: an unordered `d`-tuple over `Fin 2` is determined by how many of its
+  entries are `0`, so there are `d + 1` of them.
 -/
 
 public section
@@ -47,7 +57,7 @@ namespace TauCeti
 
 namespace Sym
 
-variable {α : Type*} {n : ℕ}
+variable {α β : Type*} {m n : ℕ}
 
 /-! ### Ordered tuples as unordered ones -/
 
@@ -55,7 +65,7 @@ variable {α : Type*} {n : ℕ}
 
 This is Mathlib's quotient map `Sym.ofVector` precomposed with `List.Vector.ofFn`; the `Fin n → α`
 form is the one that carries a product topology, so it is the map that `Sym α n` carries the
-quotient topology along in `TauCeti/Topology/Sym.lean`. -/
+quotient topology along in `TauCeti/Topology/Sym/Basic.lean`. -/
 def ofFn (f : Fin n → α) : Sym α n :=
   Sym.ofVector (List.Vector.ofFn f)
 
@@ -83,6 +93,42 @@ theorem ofFn_surjective : Function.Surjective (ofFn : (Fin n → α) → Sym α 
 @[simp]
 theorem ofFn_cons (a : α) (f : Fin n → α) : ofFn (Fin.cons a f) = a ::ₛ ofFn f :=
   Subtype.ext <| by simp [Sym.coe_cons, List.ofFn_succ]
+
+/-- Applying a function to every entry of an ordered tuple applies it to every point of the
+unordered one. -/
+@[simp]
+theorem map_ofFn (f : α → β) (g : Fin n → α) : Sym.map f (ofFn g) = ofFn (f ∘ g) :=
+  Sym.coe_injective <| by simp [Sym.coe_map]
+
+/-- The compatibility of `Sym.map` with `ofFn`, as an equality of maps out of ordered tuples. -/
+theorem map_comp_ofFn (f : α → β) :
+    (Sym.map f : Sym α n → Sym β n) ∘ ofFn = ofFn ∘ Pi.map fun _ : Fin n => f := by
+  funext g
+  simp only [Function.comp_apply, map_ofFn]
+  exact congrArg ofFn (funext fun _ => rfl)
+
+/-- The range of the map on symmetric powers consists of the unordered tuples whose every point
+lies in the range of the original map. -/
+theorem mem_range_map (f : α → β) {w : Sym β n} :
+    w ∈ Set.range (Sym.map f) ↔ ∀ b ∈ w, b ∈ Set.range f := by
+  constructor
+  · rintro ⟨s, rfl⟩ b hb
+    rw [← _root_.Sym.mem_coe, Sym.coe_map] at hb
+    obtain ⟨a, -, rfl⟩ := Multiset.mem_map.1 hb
+    exact Set.mem_range_self a
+  · intro hw
+    let g : {b // b ∈ w} → α := fun b => (hw b b.2).choose
+    have hg : ∀ b : {b // b ∈ w}, f (g b) = b := fun b => (hw b b.2).choose_spec
+    refine ⟨Sym.map g w.attach, ?_⟩
+    rw [Sym.map_map]
+    convert w.attach_map_coe using 1
+    exact congrArg (fun h => Sym.map h w.attach) (funext hg)
+
+/-- Concatenating two ordered tuples adjoins the two unordered ones. -/
+@[simp]
+theorem ofFn_fin_append (f : Fin m → α) (g : Fin n → α) :
+    ofFn (Fin.append f g) = (ofFn f).append (ofFn g) :=
+  Sym.coe_injective <| by simp [Sym.coe_append, List.ofFn_fin_append]
 
 /-! ### The fibres of the quotient map -/
 
@@ -112,5 +158,29 @@ theorem ofFn_eq_ofFn_iff {f g : Fin n → α} :
     exact (ofFn_comp_perm σ f).symm
 
 end Sym
+
+/-! ### Unordered tuples over a two-element type -/
+
+/-- **A multiset of size `d` over `Fin 2` is determined by how many of its entries are `0`**, and
+that count can be anything from `0` to `d`: the two counts sum to `d`, so the pair of them runs
+over the antidiagonal of `d`.  This is the rank-two instance of the count
+`#(Sym α d) = (#α + d - 1).choose d`. -/
+noncomputable def symFinTwoEquiv (d : ℕ) : Sym (Fin 2) d ≃ Fin (d + 1) :=
+  (Sym.equivNatSumOfFintype (Fin 2) d).trans <|
+    ((finTwoArrowEquiv ℕ).subtypeEquiv fun _ => by
+      simp [Fin.sum_univ_two, Finset.mem_antidiagonal]).trans
+        (Finset.Nat.antidiagonalEquivFin d)
+
+/-- `TauCeti.symFinTwoEquiv` is the number of entries equal to `0`. -/
+@[simp]
+theorem coe_symFinTwoEquiv_apply (d : ℕ) (s : Sym (Fin 2) d) :
+    (symFinTwoEquiv d s : ℕ) = Multiset.count 0 (s : Multiset (Fin 2)) := (rfl)
+
+/-- The inverse of `TauCeti.symFinTwoEquiv` spelled out: `i` many `0`s and `d - i` many `1`s. -/
+@[simp]
+theorem coe_symFinTwoEquiv_symm_apply (d : ℕ) (i : Fin (d + 1)) :
+    (((symFinTwoEquiv d).symm i : Sym (Fin 2) d) : Multiset (Fin 2))
+      = Multiset.replicate (i : ℕ) 0 + Multiset.replicate (d - (i : ℕ)) 1 := by
+  simp [symFinTwoEquiv, Fin.sum_univ_two, Multiset.nsmul_singleton]
 
 end TauCeti

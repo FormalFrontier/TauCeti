@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Model
 
 public section
@@ -37,7 +38,7 @@ records. The `b` of the `a`-th simple root is the Bourbaki successor `min (a + 1
 moves that successor to the first slot of the enumeration.
 
 Only the coroots are asked to span their lattice, and only that half is recorded, in
-`typeCSimplyConnectedRootDatum_corootSpan_eq_top`. The roots span the root lattice, which sits
+`corootSpan_typeCSimplyConnectedRootDatum_eq_top`. The roots span the root lattice, which sits
 inside the weight lattice with index `2` whenever `0 < n` (Bourbaki, Plate III; at `n = 0` both
 lattices are trivial and the index is `1`), so the datum is a `RootDatum` carrying no
 `RootPairing.IsRootSystem` instance. That asymmetry is what "simply connected" means here.
@@ -62,7 +63,7 @@ lattices are trivial and the index is `1`), so the datum is a `RootDatum` carryi
   set of the first `n` root indices.
 * `TauCeti.DynkinType.hasCartanType_typeCSimplyConnectedRootDatum`: the pinned base has Cartan type
   `C n`.
-* `TauCeti.DynkinType.typeCSimplyConnectedRootDatum_corootSpan_eq_top`: the coroots span the
+* `TauCeti.DynkinType.corootSpan_typeCSimplyConnectedRootDatum_eq_top`: the coroots span the
   cocharacter lattice, the simply connected condition.
 
 ## References
@@ -327,12 +328,6 @@ def typeCIndexEquiv (n : ℕ) : TypeCIndex n ≃ Fin (2 * n ^ 2) :=
       (((finTwoEquiv.symm.prodCongr (Equiv.refl (Fin n))).trans finProdFinEquiv).prodCongr
         (Equiv.refl (Fin n)))).trans (finProdFinEquiv.trans (finCongr (by ring)))
 
-private instance : (dotProductBilin ℤ ℤ :
-    (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ) →ₗ[ℤ] ℤ).IsPerfPair := by
-  -- These maps have definitionally identical linear-map fields; Mathlib provides no named bridge.
-  change (dotProductEquiv ℤ (Fin n)).toLinearMap.IsPerfPair
-  infer_instance
-
 /-- The pinned simply connected root datum of type `Cₙ`.
 
 Both lattices are `Fin n → ℤ`: the character lattice in the fundamental-weight basis and the
@@ -356,6 +351,10 @@ def typeCSimplyConnectedRootDatum (n : ℕ) :
     simpa using
       typeCCoroot_typeCReflectionIdx ((typeCIndexEquiv n).symm k) ((typeCIndexEquiv n).symm l)
 
+/-- The pinned pairing of type `Cₙ` is the dot product of the two lattices. -/
+@[simp] theorem toLinearMap_typeCSimplyConnectedRootDatum (x y : Fin n → ℤ) :
+    (typeCSimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
+
 private lemma root_typeCSimplyConnectedRootDatum (k : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).root k = typeCRoot ((typeCIndexEquiv n).symm k) :=
   rfl
@@ -368,6 +367,14 @@ private lemma pairing_typeCSimplyConnectedRootDatum (k l : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).pairing k l =
       (typeCSimplyConnectedRootDatum n).root k ⬝ᵥ (typeCSimplyConnectedRootDatum n).coroot l :=
   rfl
+
+/-- Every Cartan integer between roots of the pinned type `C` datum has absolute value at most
+two. -/
+theorem abs_pairing_typeCSimplyConnectedRootDatum_le_two (k l : Fin (2 * n ^ 2)) :
+    |(typeCSimplyConnectedRootDatum n).pairing k l| ≤ 2 := by
+  rw [pairing_typeCSimplyConnectedRootDatum, root_typeCSimplyConnectedRootDatum,
+    coroot_typeCSimplyConnectedRootDatum]
+  exact abs_pairRoot_dotProduct_pairCoroot_le_two (typeCSnd_ne_signedNeg_typeCFst _)
 
 /-! ## The root and the coroot at an arbitrary index
 
@@ -522,20 +529,10 @@ coroot lattice, so that the datum is the simply connected one. -/
 
 /-! ## The pinned base -/
 
-/-- The telescoping identity behind `root_mem_or_neg_mem`: a difference `f a - f b` with `a ≤ b` is
-the sum of the consecutive differences between them. -/
-private lemma sub_mem_of_forall {M : Type*} [AddCommGroup M] (S : AddSubmonoid M) (f : ℕ → M)
-    {a b : ℕ} (hab : a ≤ b) (h : ∀ k, a ≤ k → k < b → f k - f (k + 1) ∈ S) : f a - f b ∈ S := by
-  -- `Finset.sum_Ico_sub` at `-f` is the telescoping identity in the direction needed here.
-  have key := Finset.sum_Ico_sub (fun k => -f k) hab
-  simp only [neg_sub_neg] at key
-  rw [← key]
-  exact sum_mem fun k hk => h k (Finset.mem_Ico.mp hk).1 (Finset.mem_Ico.mp hk).2
-
 private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
     weight n a - weight n b ∈
       AddSubmonoid.closure (range (typeCSimpleRoot (n := n))) := by
-  refine sub_mem_of_forall _ _ hab fun k hk hkb => ?_
+  refine TauCeti.sub_mem_of_consecutive_sub_mem _ _ hab fun k hk hkb => ?_
   have hk' : k + 1 < n := by omega
   refine AddSubmonoid.subset_closure ⟨⟨k, by omega⟩, ?_⟩
   rw [typeCSimpleRoot_of_lt (i := ⟨k, by omega⟩) (by simpa using hk')]
@@ -543,7 +540,7 @@ private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
 private lemma coweight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b ≤ n) :
     coweight n a - coweight n b ∈
       AddSubmonoid.closure (range (typeCSimpleCoroot (n := n))) := by
-  refine sub_mem_of_forall _ _ hab fun k hk hkb => ?_
+  refine TauCeti.sub_mem_of_consecutive_sub_mem _ _ hab fun k hk hkb => ?_
   refine AddSubmonoid.subset_closure ⟨⟨k, by omega⟩, ?_⟩
   rw [typeCSimpleCoroot_eq (i := ⟨k, by omega⟩)]
 
@@ -625,65 +622,39 @@ private lemma typeCSimpleRoot_dotProduct_coweight (i : Fin n) {c : ℕ} (hc : c 
       weight_dotProduct_coweight h]
     split_ifs <;> omega
 
+/-- The cumulative classical coweight: the sum of `coweight n b` over `b ≤ j`. For `j < n` this is
+the simple-coroot coordinate vector of `e₀ + ⋯ + e_j`; out-of-range coweights vanish, so the value
+is constant once `j` reaches `n - 1`.
+
+This mirrors `TauCeti.DynkinType.typeBDualVec` in `B/Datum.lean`, from which the construction and
+the independence argument below are adapted; the two are distinct because `TypeB.coweight` and
+`TypeC.coweight` are different functions. -/
+private def typeCDualVec (n j : ℕ) : Fin n → ℤ := ∑ b ∈ Finset.range (j + 1), coweight n b
+
+/-- Pairing a simple root of type `Cₙ` with the dual covectors is diagonal, with the value `2` on
+the long root and `1` on the short ones. -/
+private lemma typeCSimpleRoot_dotProduct_typeCDualVec (i j : Fin n) :
+    typeCSimpleRoot i ⬝ᵥ typeCDualVec n (j : ℕ)
+      = if i = j then (if (i : ℕ) + 1 = n then 2 else 1) else 0 := by
+  have hj := j.isLt
+  -- summing the coweight pairings over `b ≤ j` telescopes: the `- 1` at `b = i + 1` cancels the
+  -- diagonal contribution as soon as `i + 1 ≤ j`, leaving only the term at `i = j`
+  rw [typeCDualVec, dotProduct_sum,
+    Finset.sum_congr rfl fun b hb => typeCSimpleRoot_dotProduct_coweight i
+      (by have := Finset.mem_range.1 hb; omega),
+    Finset.sum_sub_distrib,
+    Finset.sum_ite_eq (Finset.range (j + 1)) (i : ℕ)
+      (fun _ => (if (i : ℕ) + 1 = n then (2 : ℤ) else 1)),
+    Finset.sum_ite_eq' (Finset.range (j + 1)) ((i : ℕ) + 1) (fun _ => (1 : ℤ))]
+  simp only [Finset.mem_range, Fin.ext_iff]
+  split_ifs <;> omega
+
 private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
-    LinearIndependent ℤ (typeCSimpleRoot (n := n)) := by
-  rw [Fintype.linearIndependent_iff]
-  intro g hg
-  -- First extract the recurrence for the coefficients by pairing the relation with each
-  -- classical coweight.
-  have hrel : ∀ c : Fin n,
-      (if (c : ℕ) + 1 = n then (2 : ℤ) else 1) * g c
-        = ∑ i : Fin n, (if (c : ℕ) = (i : ℕ) + 1 then g i else 0) := by
-    intro c
-    have h0 : (∑ i : Fin n, g i • typeCSimpleRoot i) ⬝ᵥ coweight n (c : ℕ) = 0 := by
-      rw [hg, zero_dotProduct]
-    rw [sum_dotProduct] at h0
-    have hterm : ∀ i : Fin n, (g i • typeCSimpleRoot i) ⬝ᵥ coweight n (c : ℕ)
-        = (if (i : ℕ) = (c : ℕ) then g i * (if (i : ℕ) + 1 = n then 2 else 1) else 0)
-          - (if (c : ℕ) = (i : ℕ) + 1 then g i else 0) := by
-      intro i
-      rw [smul_dotProduct, smul_eq_mul, typeCSimpleRoot_dotProduct_coweight i c.isLt]
-      split_ifs <;> ring
-    simp only [hterm, Finset.sum_sub_distrib] at h0
-    have hfirst : ∑ i : Fin n,
-        (if (i : ℕ) = (c : ℕ) then g i * (if (i : ℕ) + 1 = n then 2 else 1) else 0)
-          = g c * (if (c : ℕ) + 1 = n then 2 else 1) := by
-      rw [Finset.sum_eq_single c]
-      · simp
-      · intro d _ hd
-        exact ite_eq_right fun hb => hd (Fin.ext hb)
-      · simp
-    rw [hfirst] at h0
-    linarith [h0]
-  -- Then solve that recurrence from left to right, starting with the coefficient at zero.
-  have hzero : ∀ m : ℕ, ∀ hm : m < n, g ⟨m, hm⟩ = 0 := by
-    intro m
-    induction m with
-    | zero =>
-      intro hm
-      have h := hrel ⟨0, hm⟩
-      have hsum : ∑ i : Fin n, (if (0 : ℕ) = (i : ℕ) + 1 then g i else 0) = 0 :=
-        Finset.sum_eq_zero fun i _ => ite_eq_right (by omega)
-      rw [hsum] at h
-      by_cases hn : (0 : ℕ) + 1 = n
-      · rw [ite_eq_left hn] at h; linarith
-      · rw [ite_eq_right hn] at h; linarith
-    | succ m ih =>
-      intro hm
-      have h := hrel ⟨m + 1, hm⟩
-      have hsum : ∑ i : Fin n, (if (m + 1 : ℕ) = (i : ℕ) + 1 then g i else 0)
-          = g ⟨m, by omega⟩ := by
-        rw [Finset.sum_eq_single (⟨m, by omega⟩ : Fin n)]
-        · simp
-        · intro d _ hd
-          exact ite_eq_right fun hb => hd (Fin.ext (by simpa using by omega))
-        · simp
-      rw [hsum, ih (by omega)] at h
-      by_cases hn : (m + 1 : ℕ) + 1 = n
-      · rw [ite_eq_left hn] at h; simpa using by linarith
-      · rw [ite_eq_right hn] at h; simpa using by linarith
-  intro i
-  simpa using hzero (i : ℕ) i.isLt
+    LinearIndependent ℤ (typeCSimpleRoot (n := n)) :=
+  linearIndependent_of_dotProduct_diagonal (c := fun i => if (i : ℕ) + 1 = n then 2 else 1)
+    (w := fun j : Fin n => typeCDualVec n (j : ℕ)) (fun _ => by split_ifs <;> norm_num)
+    (fun i => by simp [typeCSimpleRoot_dotProduct_typeCDualVec])
+    (fun i j hij => by simp [typeCSimpleRoot_dotProduct_typeCDualVec, hij])
 
 private lemma linearIndependent_typeCSimpleCoroot (n : ℕ) :
     LinearIndependent ℤ (typeCSimpleCoroot (n := n)) := by
@@ -696,11 +667,11 @@ private lemma linearIndependent_typeCSimpleCoroot (n : ℕ) :
 
 /-- The support of the pinned base of type `Cₙ`: the first `n` root indices. -/
 private def typeCSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
-  Finset.univ.map ⟨typeCSimpleIndex n, typeCSimpleIndex_injective⟩
+  simpleSupport (typeCSimpleIndex_injective (n := n))
 
 private lemma coe_typeCSimpleSupport :
-    (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) := by
-  simp [typeCSimpleSupport]
+    (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) :=
+  coe_simpleSupport _
 
 private lemma image_root_typeCSimpleSupport :
     (typeCSimplyConnectedRootDatum n).root '' (typeCSimpleSupport n : Set (Fin (2 * n ^ 2)))
@@ -754,16 +725,8 @@ def typeCSimplyConnectedBase (n : ℕ) : (typeCSimplyConnectedRootDatum n).Base 
 /-- **The support of the pinned base of type `Cₙ` is the set of the first `n` root indices**, which
 by `TauCeti.DynkinType.root_typeCSimpleIndex` carry the simple roots in Bourbaki order. -/
 @[simp] theorem mem_support_typeCSimplyConnectedBase {k : Fin (2 * n ^ 2)} :
-    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n := by
-  -- The support of the base is `typeCSimpleSupport n` by definition.
-  change k ∈ typeCSimpleSupport n ↔ (k : ℕ) < n
-  constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    simp only [Function.Embedding.coeFn_mk, typeCSimpleIndex_val]
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
+    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n :=
+  mem_simpleSupport_iff_lt (typeCSimpleIndex_injective (n := n)) (fun _ ↦ typeCSimpleIndex_val _)
 
 /-- The support of the pinned base is the Bourbaki numbering of the simple roots. -/
 private def typeCBaseEquiv (n : ℕ) : (typeCSimplyConnectedBase n).support ≃ Fin n where
@@ -803,7 +766,7 @@ connected lattice condition required by the pinned Chevalley--Demazure construct
 counterpart for the roots is deliberately absent: they span the root lattice, which sits inside the
 weight lattice with index `2` whenever `0 < n` (Bourbaki, Plate III; at `n = 0` both lattices are
 trivial). -/
-theorem typeCSimplyConnectedRootDatum_corootSpan_eq_top (n : ℕ) :
+theorem corootSpan_typeCSimplyConnectedRootDatum_eq_top (n : ℕ) :
     (typeCSimplyConnectedRootDatum n).corootSpan ℤ = ⊤ := by
   refine top_unique ?_
   rw [← (Pi.basisFun ℤ (Fin n)).span_eq]

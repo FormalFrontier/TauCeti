@@ -1,18 +1,20 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.LinearAlgebra.JordanChevalley.Prod
+public import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Functoriality of the multiplicative Jordan decomposition
 
 The multiplicative Jordan--Chevalley decomposition of a linear automorphism does not depend on
 the coordinates used to describe it.  A linear equivalence `e : V ≃ₗ[K] W` transports an
-automorphism by conjugation.  This file proves that semisimplicity and unipotence are invariant
-under this transport and that both canonical Jordan factors commute with it.  More generally,
+automorphism by conjugation.  This file proves that semisimplicity is invariant under this
+transport and that both canonical Jordan factors commute with it.  More generally,
 every linear map between finite-dimensional modules over a perfect field that intertwines two
 automorphisms also intertwines their canonical semisimple and unipotent factors; no injectivity or
 surjectivity assumption is needed.
@@ -24,17 +26,17 @@ representation of an affine algebraic group.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.isSemisimple_congrLinearEquiv_iff`: semisimplicity is invariant
+* `LinearMap.GeneralLinearGroup.isSemisimple_congrLinearEquiv_iff`: semisimplicity is invariant
   under linear conjugation.
-* `TauCeti.GeneralLinearGroup.isUnipotent_congrLinearEquiv_iff`: unipotence is invariant under
-  linear conjugation.
-* `TauCeti.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
+* `LinearMap.GeneralLinearGroup.isSemisimple_conj_iff`: semisimplicity is invariant under
+  conjugation within the general linear group.
+* `LinearMap.GeneralLinearGroup.jordanDecomposition_congrLinearEquiv`: the canonical pair is
   equivariant under linear conjugation.
-* `TauCeti.GeneralLinearGroup.semisimplePart_congrLinearEquiv` and
-  `TauCeti.GeneralLinearGroup.unipotentPart_congrLinearEquiv`: the two factor formulas.
-* `TauCeti.GeneralLinearGroup.comp_semisimplePart_eq_of_comp_eq`: intertwiners commute with
+* `LinearMap.GeneralLinearGroup.semisimplePart_congrLinearEquiv` and
+  `LinearMap.GeneralLinearGroup.unipotentPart_congrLinearEquiv`: the two factor formulas.
+* `LinearMap.GeneralLinearGroup.comp_semisimplePart_eq_of_comp_eq`: intertwiners commute with
   semisimple factors.
-* `TauCeti.GeneralLinearGroup.comp_unipotentPart_eq_of_comp_eq`: intertwiners commute with
+* `LinearMap.GeneralLinearGroup.comp_unipotentPart_eq_of_comp_eq`: intertwiners commute with
   unipotent factors.
 
 ## References
@@ -44,11 +46,9 @@ representation of an affine algebraic group.
 
 public section
 
-namespace TauCeti
+open Polynomial
 
-open LinearMap Polynomial
-
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 open _root_.Module
 
@@ -73,22 +73,28 @@ theorem isSemisimple_congrLinearEquiv_iff
   ext x
   simp
 
-/-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
+/-- Semisimplicity is invariant under conjugation by a linear automorphism. -/
 @[simp]
-theorem isUnipotent_congrLinearEquiv_iff
-    (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv
-      (e.symm.trans (g.toLinearEquiv.trans e))) ↔ IsUnipotent g := by
-  rw [isUnipotent_def, isUnipotent_def]
-  rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply e g]
-  have hmap :
-      LinearEquiv.conjRingEquiv e ((g : End K V) - 1) =
-        ((LinearMap.GeneralLinearGroup.congrLinearEquiv e g :
-          GeneralLinearGroup K W) : End K W) - 1 := by
-    ext x
-    simp
-  rw [← hmap]
-  exact IsNilpotent.map_iff (LinearEquiv.conjRingEquiv e).injective
+theorem isSemisimple_conj_iff (g h : GeneralLinearGroup K V) :
+    IsSemisimple (h * g * h⁻¹) ↔ IsSemisimple g := by
+  have heq : h * g * h⁻¹ =
+      LinearMap.GeneralLinearGroup.congrLinearEquiv h.toLinearEquiv g := by
+    have hinv : ((h⁻¹ : GeneralLinearGroup K V) : End K V) =
+        h.toLinearEquiv.symm.toLinearMap := by
+      calc
+        _ = (h⁻¹).toLinearEquiv.toLinearMap :=
+          (LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap _).symm
+        _ = h.toLinearEquiv.symm.toLinearMap := congrArg LinearEquiv.toLinearMap
+          (LinearMap.GeneralLinearGroup.toLinearEquiv_inv h)
+    ext v
+    simp only [Units.val_mul, End.mul_apply,
+      LinearMap.GeneralLinearGroup.congrLinearEquiv_apply,
+      LinearMap.GeneralLinearGroup.coe_ofLinearEquiv, LinearEquiv.trans_apply,
+      LinearMap.GeneralLinearGroup.coe_toLinearEquiv]
+    rw [LinearMap.congr_fun hinv v]
+    simp only [LinearEquiv.coe_toLinearMap]
+  rw [heq, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
+  exact isSemisimple_congrLinearEquiv_iff h.toLinearEquiv g
 
 end Predicates
 
@@ -185,35 +191,9 @@ theorem comp_unipotentPart_eq_of_comp_eq
     f.comp (unipotentPart g : Module.End K V) =
       (unipotentPart h : Module.End K W).comp f := by
   have hs := comp_semisimplePart_eq_of_comp_eq f g h hfg
-  have hs_inv :
-      f.comp (↑((semisimplePart g)⁻¹) : Module.End K V) =
-        (↑((semisimplePart h)⁻¹) : Module.End K W).comp f := by
-    apply LinearMap.ext
-    intro x
-    calc
-      f ((↑((semisimplePart g)⁻¹) : Module.End K V) x) =
-          (↑((semisimplePart h)⁻¹) : Module.End K W)
-            ((semisimplePart h : Module.End K W)
-              (f ((↑((semisimplePart g)⁻¹) : Module.End K V) x))) := by
-        exact ((semisimplePart h).toLinearEquiv.symm_apply_apply _).symm
-      _ = (↑((semisimplePart h)⁻¹) : Module.End K W)
-          (f ((semisimplePart g : Module.End K V)
-            ((↑((semisimplePart g)⁻¹) : Module.End K V) x))) := by
-        exact congrArg (↑((semisimplePart h)⁻¹) : Module.End K W)
-          (LinearMap.congr_fun hs
-            ((↑((semisimplePart g)⁻¹) : Module.End K V) x)).symm
-      _ = (↑((semisimplePart h)⁻¹) : Module.End K W) (f x) := by
-        have hxg : (semisimplePart g : Module.End K V)
-            ((↑((semisimplePart g)⁻¹) : Module.End K V) x) = x :=
-          LinearMap.congr_fun (semisimplePart g).val_inv x
-        rw [hxg]
-  have hug : unipotentPart g = (semisimplePart g)⁻¹ * g := by
-    apply mul_left_cancel (a := semisimplePart g)
-    simp
-  have huh : unipotentPart h = (semisimplePart h)⁻¹ * h := by
-    apply mul_left_cancel (a := semisimplePart h)
-    simp
-  rw [hug, huh]
+  have hs_inv := comp_inv_eq_of_comp_eq f (semisimplePart g) (semisimplePart h) hs
+  rw [unipotentPart_eq_semisimplePart_inv_mul,
+    unipotentPart_eq_semisimplePart_inv_mul]
   apply LinearMap.ext
   intro x
   -- Expose multiplication of automorphisms as composition of their underlying endomorphisms.
@@ -230,6 +210,4 @@ end Intertwining
 
 end PerfectField
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

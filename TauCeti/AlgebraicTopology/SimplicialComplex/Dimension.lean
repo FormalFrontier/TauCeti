@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -30,25 +31,30 @@ roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 11) asks for on top
 
 ## Main definitions
 
-* `TauCeti.PreAbstractSimplicialComplex.dimension`: the dimension of a precomplex.
-* `TauCeti.AbstractSimplicialComplex.dimension`: the dimension of an abstract complex.
+* `PreAbstractSimplicialComplex.dimension`: the dimension of a precomplex.
+* `AbstractSimplicialComplex.dimension`: the dimension of an abstract complex.
 
 ## Main results
 
-* `TauCeti.PreAbstractSimplicialComplex.le_dimension`: every face's dimension bounds the complex's.
-* `TauCeti.PreAbstractSimplicialComplex.dimension_le_iff`: the dimension is bounded exactly when
+* `PreAbstractSimplicialComplex.le_dimension`: every face's dimension bounds the complex's.
+* `PreAbstractSimplicialComplex.dimension_le_iff`: the dimension is bounded exactly when
   every face's dimension is.
-* `TauCeti.PreAbstractSimplicialComplex.dimension_mono`: dimension is monotone in the complex.
-* `TauCeti.PreAbstractSimplicialComplex.dimension_eq_bot_iff`: only the void complex has dimension
+* `PreAbstractSimplicialComplex.dimension_mono`: dimension is monotone in the complex.
+* `PreAbstractSimplicialComplex.dimension_eq_bot_iff`: only the void complex has dimension
   `⊥`.
-* `TauCeti.PreAbstractSimplicialComplex.dimension_simplex` /
-  `TauCeti.PreAbstractSimplicialComplex.dimension_simplexBoundary`: the dimensions of the standard
+* `PreAbstractSimplicialComplex.dimension_eq_top_iff` /
+  `dimension_lt_top_iff`: infinite dimension means that face cardinalities are unbounded, while
+  finite dimension means that they have a uniform natural-number bound.
+* `PreAbstractSimplicialComplex.dimension_le_card_sub_one`: a finite set containing every
+  face gives an explicit dimension bound.
+* `PreAbstractSimplicialComplex.dimension_top_eq_top_of_infinite`: the full complex on an
+  infinite vertex type has infinite dimension.
+* `PreAbstractSimplicialComplex.dimension_simplex` /
+  `PreAbstractSimplicialComplex.dimension_simplexBoundary`: the dimensions of the standard
   simplex on `V` (namely `V.card - 1`) and of its boundary (namely `V.card - 2`).
 -/
 
 public section
-
-namespace TauCeti
 
 open Finset
 
@@ -90,6 +96,71 @@ theorem dimension_eq_bot_iff : dimension K = ⊥ ↔ K = ⊥ := by
   have hle := le_dimension hσ
   rw [h] at hle
   exact absurd (le_bot_iff.mp hle) (WithBot.natCast_ne_bot _)
+
+/-- A complex has infinite dimension exactly when its face cardinalities are unbounded. -/
+@[simp]
+theorem dimension_eq_top_iff :
+    dimension K = ⊤ ↔ ∀ n : ℕ, ∃ σ ∈ K, n ≤ σ.card := by
+  constructor
+  · intro h n
+    rw [dimension] at h
+    obtain ⟨σ, hσ⟩ := (iSup_eq_top.mp h) (n : WithBot ℕ∞)
+      (WithBot.coe_lt_coe.mpr (ENat.natCast_lt_top n))
+    obtain ⟨hσK, hnσ⟩ := lt_iSup_iff.mp hσ
+    refine ⟨σ, hσK, ?_⟩
+    have : n < σ.card - 1 := by exact_mod_cast hnσ
+    omega
+  · intro h
+    rw [ENat.WithBot.eq_top_iff_forall_ge]
+    intro n
+    obtain ⟨σ, hσK, hcard⟩ := h (n + 1)
+    apply le_trans (b := ((σ.card - 1 : ℕ) : WithBot ℕ∞))
+    · exact_mod_cast (by omega : n ≤ σ.card - 1)
+    · exact le_dimension hσK
+
+/-- A complex has dimension below `⊤` exactly when its face cardinalities have a uniform natural
+number bound. -/
+@[simp]
+theorem dimension_lt_top_iff :
+    dimension K < ⊤ ↔ ∃ n : ℕ, ∀ σ ∈ K, σ.card ≤ n := by
+  rw [lt_top_iff_ne_top, Ne, dimension_eq_top_iff]
+  constructor
+  · intro h
+    push Not at h
+    obtain ⟨n, hn⟩ := h
+    exact ⟨n, fun σ hσ => Nat.le_of_lt (hn σ hσ)⟩
+  · rintro ⟨n, hn⟩ h
+    obtain ⟨σ, hσK, hcard⟩ := h (n + 1)
+    exact (Nat.not_succ_le_self n) (hcard.trans (hn σ hσK))
+
+/-- If every face of a complex is contained in a finite set `V`, then its dimension is at most
+`V.card - 1`. -/
+theorem dimension_le_card_sub_one {V : Finset ι} (hV : ∀ σ ∈ K, σ ⊆ V) :
+    dimension K ≤ ((V.card - 1 : ℕ) : WithBot ℕ∞) := by
+  rw [dimension_le_iff]
+  intro σ hσ
+  exact_mod_cast Nat.sub_le_sub_right (Finset.card_le_card (hV σ hσ)) 1
+
+/-- A complex carried by a finite set of vertices has dimension below `⊤`. -/
+theorem dimension_lt_top_of_finite_vertices {V : Finset ι} (hV : ∀ σ ∈ K, σ ⊆ V) :
+    dimension K < ⊤ :=
+  (dimension_le_card_sub_one hV).trans_lt
+    (WithBot.coe_lt_coe.mpr (ENat.natCast_lt_top (V.card - 1)))
+
+/-- A complex on a finite vertex type has dimension below `⊤`. -/
+theorem dimension_lt_top_of_finite [Finite ι] : dimension K < ⊤ := by
+  let _ := Fintype.ofFinite ι
+  exact dimension_lt_top_of_finite_vertices (V := Finset.univ) fun _ _ => Finset.subset_univ _
+
+/-- The full complex on an infinite vertex type has infinite dimension. -/
+@[simp]
+theorem dimension_top_eq_top_of_infinite [Infinite ι] :
+    dimension (⊤ : PreAbstractSimplicialComplex ι) = ⊤ := by
+  rw [dimension_eq_top_iff]
+  intro n
+  obtain ⟨σ, hcard⟩ := Infinite.exists_subset_card_eq ι (n + 1)
+  refine ⟨σ, Finset.card_pos.mp (by omega), ?_⟩
+  omega
 
 /-- The dimension of the standard simplex on a nonempty vertex set `V` is `V.card - 1`. -/
 @[simp]
@@ -152,6 +223,61 @@ theorem dimension_mono (h : K ≤ L) : dimension K ≤ dimension L :=
     ((_root_.AbstractSimplicialComplex.toPreAbstractSimplicialComplex_le_iff
       (K := K) (L := L)).mpr h)
 
-end AbstractSimplicialComplex
+/-- An abstract simplicial complex has infinite dimension exactly when its face cardinalities are
+unbounded. -/
+@[simp]
+theorem dimension_eq_top_iff :
+    dimension K = ⊤ ↔ ∀ n : ℕ, ∃ σ ∈ K, n ≤ σ.card := by
+  rw [← dimension_toPreAbstractSimplicialComplex,
+    PreAbstractSimplicialComplex.dimension_eq_top_iff]
+  constructor
+  · intro h n
+    obtain ⟨σ, hσ, hn⟩ := h n
+    exact ⟨σ, mem_toPreAbstractSimplicialComplex.mp hσ, hn⟩
+  · intro h n
+    obtain ⟨σ, hσ, hn⟩ := h n
+    exact ⟨σ, mem_toPreAbstractSimplicialComplex.mpr hσ, hn⟩
 
-end TauCeti
+/-- An abstract simplicial complex has dimension below `⊤` exactly when its face cardinalities have
+a uniform natural-number bound. -/
+@[simp]
+theorem dimension_lt_top_iff :
+    dimension K < ⊤ ↔ ∃ n : ℕ, ∀ σ ∈ K, σ.card ≤ n := by
+  rw [← dimension_toPreAbstractSimplicialComplex,
+    PreAbstractSimplicialComplex.dimension_lt_top_iff]
+  constructor
+  · rintro ⟨n, hn⟩
+    exact ⟨n, fun σ hσ => hn σ (mem_toPreAbstractSimplicialComplex.mpr hσ)⟩
+  · rintro ⟨n, hn⟩
+    exact ⟨n, fun σ hσ => hn σ (mem_toPreAbstractSimplicialComplex.mp hσ)⟩
+
+/-- If every face of an abstract simplicial complex is contained in a finite set `V`, then its
+dimension is at most `V.card - 1`. -/
+theorem dimension_le_card_sub_one {V : Finset ι} (hV : ∀ σ ∈ K, σ ⊆ V) :
+    dimension K ≤ ((V.card - 1 : ℕ) : WithBot ℕ∞) := by
+  rw [← dimension_toPreAbstractSimplicialComplex]
+  apply PreAbstractSimplicialComplex.dimension_le_card_sub_one
+  intro σ hσ
+  exact hV σ (mem_toPreAbstractSimplicialComplex.mp hσ)
+
+/-- An abstract simplicial complex carried by a finite set of vertices has dimension below `⊤`. -/
+theorem dimension_lt_top_of_finite_vertices {V : Finset ι} (hV : ∀ σ ∈ K, σ ⊆ V) :
+    dimension K < ⊤ := by
+  rw [← dimension_toPreAbstractSimplicialComplex]
+  exact PreAbstractSimplicialComplex.dimension_lt_top_of_finite_vertices (V := V)
+    fun σ hσ => hV σ (mem_toPreAbstractSimplicialComplex.mp hσ)
+
+/-- An abstract simplicial complex on a finite vertex type has dimension below `⊤`. -/
+theorem dimension_lt_top_of_finite [Finite ι] : dimension K < ⊤ := by
+  rw [← dimension_toPreAbstractSimplicialComplex]
+  exact PreAbstractSimplicialComplex.dimension_lt_top_of_finite
+
+/-- The full abstract simplicial complex on an infinite vertex type has infinite dimension. -/
+@[simp]
+theorem dimension_top_eq_top_of_infinite [Infinite ι] :
+    dimension (⊤ : AbstractSimplicialComplex ι) = ⊤ := by
+  rw [← dimension_toPreAbstractSimplicialComplex,
+    _root_.AbstractSimplicialComplex.top_toPreAbstractSimplicialComplex]
+  exact PreAbstractSimplicialComplex.dimension_top_eq_top_of_infinite
+
+end AbstractSimplicialComplex

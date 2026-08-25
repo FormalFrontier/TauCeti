@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -35,6 +36,8 @@ instances of pre-composition with the bialgebra morphisms from
 * `TauCeti.AffineGroup.Product.pointsMulEquiv`: the convolution monoid isomorphism between
   `(H₁ ⊗[R] H₂) →ₐ[R] A` and the product `(H₁ →ₐ[R] A) × (H₂ →ₐ[R] A)`. When `H₁` and `H₂` are
   Hopf algebras these are convolution groups, so this is automatically a group isomorphism.
+* `TauCeti.AffineGroup.Product.mapDomain_projectLeft` and `mapDomain_projectRight`: precomposition
+  with a tensor-product projection inserts a point into the corresponding product factor.
 * `TauCeti.AffineGroup.Product.pointsMulEquiv_mapValue`: the product-points equivalence is
   natural in the value algebra.
 
@@ -140,6 +143,42 @@ theorem pointsMulEquiv_symm_apply
     (p : WithConv (H₁ →ₐ[R] A) × WithConv (H₂ →ₐ[R] A)) :
     pointsMulEquiv.symm p = toConv (Algebra.TensorProduct.productMap p.1.ofConv p.2.ofConv) :=
   rfl
+
+/-- Precomposition with the left tensor-product projection inserts a point as the left factor of
+the product, with the identity in the right factor. -/
+@[simp]
+theorem mapDomain_projectLeft (g : WithConv (H₁ →ₐ[R] A)) :
+    toConv (g.ofConv.comp (Bialgebra.TensorProduct.projectLeft
+      (R := R) (H₁ := H₁) (H₂ := H₂)).toAlgHom) =
+      pointsMulEquiv.symm (g, 1) := by
+  apply WithConv.ofConv_injective
+  apply Algebra.TensorProduct.ext'
+  intro x y
+  -- Extensionality retains the coercions from `WithConv` and `BialgHom`; expose pointwise
+  -- evaluation so the pure-tensor formula for the projection can rewrite the goal.
+  change g.ofConv (Bialgebra.TensorProduct.projectLeft
+      (R := R) (H₁ := H₁) (H₂ := H₂) (x ⊗ₜ[R] y)) =
+    g.ofConv x * (1 : WithConv (H₂ →ₐ[R] A)) y
+  rw [Bialgebra.TensorProduct.projectLeft_tmul, map_smul, AlgHom.convOne_apply]
+  simp only [Algebra.smul_def]
+  exact mul_comm _ _
+
+/-- Precomposition with the right tensor-product projection inserts a point as the right factor of
+the product, with the identity in the left factor. -/
+@[simp]
+theorem mapDomain_projectRight (g : WithConv (H₂ →ₐ[R] A)) :
+    toConv (g.ofConv.comp (Bialgebra.TensorProduct.projectRight
+      (R := R) (H₁ := H₁) (H₂ := H₂)).toAlgHom) =
+      pointsMulEquiv.symm ((1 : WithConv (H₁ →ₐ[R] A)), g) := by
+  apply WithConv.ofConv_injective
+  apply Algebra.TensorProduct.ext'
+  intro x y
+  -- As above, expose pointwise evaluation across the two bundled coercions.
+  change g.ofConv (Bialgebra.TensorProduct.projectRight
+      (R := R) (H₁ := H₁) (H₂ := H₂) (x ⊗ₜ[R] y)) =
+    (1 : WithConv (H₁ →ₐ[R] A)) x * g.ofConv y
+  rw [Bialgebra.TensorProduct.projectRight_tmul, map_smul, AlgHom.convOne_apply]
+  rw [Algebra.smul_def]
 
 variable {B : Type*} [CommSemiring B] [Algebra R B]
 

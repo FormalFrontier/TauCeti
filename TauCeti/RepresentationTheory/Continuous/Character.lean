@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -35,6 +36,8 @@ it to the matrix coefficients of `TauCeti/RepresentationTheory/Continuous/Matrix
   inverse is the conjugate of its value.
 * `TauCeti.ContRepresentation.norm_character_apply_le`: a unitary character is bounded by the
   dimension.
+* `ContRepresentation.continuous_character_mul_self`: the character read along the squaring map
+  `g ↦ g * g` is continuous.
 
 ## Implementation notes
 
@@ -48,7 +51,7 @@ Continuity of the trace is not automatic from continuity of `π` alone: it is co
 functional `T ↦ trace T` on `V →L[𝕜] V`, which holds because that space is finite-dimensional over
 the complete field `𝕜`. That functional is `TauCeti.traceCLM` of
 `TauCeti/Analysis/Normed/Module/Trace.lean`, shared with
-`TauCeti/RepresentationTheory/Compact/Intertwiner.lean`, which uses it to average a trace.
+`TauCeti/RepresentationTheory/Compact/Intertwiner/Basic.lean`, which uses it to average a trace.
 
 Only the trace is at stake in the sections without an inner product, so they ask no more of the
 scalars than that functional does: `𝕜` is a complete nontrivially normed field there, and becomes
@@ -57,9 +60,9 @@ scalars than that functional does: `𝕜` is a complete nontrivially normed fiel
 This is the character definition of Layer 6 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md);
 the `L²` theory and the orthogonality relations are in
-`TauCeti/RepresentationTheory/Compact/Character.lean`. Nothing here needs a group, a measure, or
-compactness, so it is stated over a topological monoid. The mathematical development follows Daniel
-Bump, *Lie Groups*, second edition, Chapter 2.
+`TauCeti/RepresentationTheory/Compact/Character/Basic.lean`. Nothing here needs a group, a measure,
+or compactness, so it is stated over a topological monoid. The mathematical development follows
+Daniel Bump, *Lie Groups*, second edition, Chapter 2.
 -/
 
 public section
@@ -213,3 +216,25 @@ end GroupInner
 end ContRepresentation
 
 end TauCeti
+
+open TauCeti.ContRepresentation
+
+namespace ContRepresentation
+
+/-! ### The character along the squaring map
+
+The lemma below is declared in the **root** `ContRepresentation` namespace, unlike the rest of this
+file, so that `π.continuous_character_mul_self hπ` elaborates: `ContRepresentation` is Mathlib's
+type, and `scripts/lint-dot-notation.py` asks that new declarations about it not recreate its
+namespace inside `TauCeti`. -/
+
+variable {𝕜 G V : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜] [Monoid G]
+  [TopologicalSpace G] [ContinuousMul G] [NormedAddCommGroup V] [NormedSpace 𝕜 V]
+  [FiniteDimensional 𝕜 V]
+
+/-- The character read along the squaring map `g ↦ g * g` is continuous. -/
+theorem continuous_character_mul_self (π : ContRepresentation 𝕜 G V) (hπ : Continuous π) :
+    Continuous fun g : G ↦ character π hπ (g * g) :=
+  (character π hπ).continuous.comp (continuous_id.mul continuous_id)
+
+end ContRepresentation

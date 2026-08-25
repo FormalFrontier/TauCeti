@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -31,6 +31,28 @@ open Module Polynomial
 
 variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V] {f : End K V}
 
+/-- **The `lsmul` restriction is the restriction of the endomorphism.** `Algebra.lsmul K K V f`
+acts as `f`, and membership in its `invtSubmodule` is the invariance condition
+`LinearMap.restrict` asks for, so the two restrictions are the same map. -/
+private theorem restrict_lsmul_eq_restrict {p : Submodule K V} (f : End K V)
+    (hinv : p ∈ (Algebra.lsmul K K V f).invtSubmodule) :
+    LinearMap.restrict (Algebra.lsmul K K V f) hinv = f.restrict hinv := rfl
+
+/-- **An eigenspace is semisimple as a `K[X]`-module.** Carried through `AEval` along a proof
+`hinv` that it is invariant, the `μ`-eigenspace of `f` is a semisimple `K[X]`-module. -/
+private theorem isSemisimpleModule_mapSubmodule_eigenspace (f : End K V) (μ : K)
+    (hinv : f.eigenspace μ ∈ (Algebra.lsmul K K V f).invtSubmodule) :
+    IsSemisimpleModule K[X] (AEval.mapSubmodule K V f ⟨f.eigenspace μ, hinv⟩) := by
+  -- `AEval.restrict_equiv_mapSubmodule` restricts `Algebra.lsmul K K V f` rather than `f`;
+  -- `restrict_lsmul_eq_restrict` is that identification, stated once
+  have hres : LinearMap.restrict (p := f.eigenspace μ) (q := f.eigenspace μ)
+      (Algebra.lsmul K K V f) hinv = μ • LinearMap.id :=
+    (restrict_lsmul_eq_restrict f hinv).trans (Module.End.restrict_eigenspace f μ)
+  refine (AEval.restrict_equiv_mapSubmodule f _ hinv).isSemisimpleModule_iff.mp ?_
+  refine End.isSemisimple_of_squarefree_aeval_eq_zero (p := X - C μ)
+    (irreducible_X_sub_C μ).squarefree ?_
+  rw [hres, map_sub, aeval_X, aeval_C, Module.algebraMap_end_eq_smul_id, sub_self]
+
 /-- **A diagonalizable endomorphism is semisimple.** If the eigenspaces of `f` span the space then
 `f` is semisimple.
 
@@ -47,29 +69,8 @@ theorem isSemisimple_of_iSup_eigenspace_eq_top (hf : ⨆ μ : K, f.eigenspace μ
     rw [End.mem_eigenspace_iff] at hv
     simp [hv]
   have hss : ∀ μ : K,
-      IsSemisimpleModule K[X] (AEval.mapSubmodule K V f ⟨f.eigenspace μ, hinv μ⟩) := fun μ ↦ by
-    -- `AEval.restrict_equiv_mapSubmodule` restricts `Algebra.lsmul K K V f`, not `f`, to the
-    -- `μ`-eigenspace, and it hands `LinearMap.restrict` an invariance proof of type
-    -- `p ∈ (Algebra.lsmul K K V f).invtSubmodule`, where `LinearMap.restrict` asks for
-    -- `∀ x ∈ p, g x ∈ p`. Those two types are definitionally equal only at default transparency,
-    -- so `LinearMap.coe_restrict_apply` cannot be instantiated against the goal below directly.
-    -- Recording the composite coercion here once, with the submodules supplied explicitly, keeps
-    -- the step below lemma-driven.
-    have hrestrict (w : f.eigenspace μ) :
-        (LinearMap.restrict (p := f.eigenspace μ) (q := f.eigenspace μ)
-          (Algebra.lsmul K K V f) (hinv μ) w : V) = f w :=
-      (LinearMap.coe_restrict_apply _ _).trans
-        ((Algebra.lsmul_apply (R := K) (B := K) V f w).trans (Module.End.smul_def f w))
-    refine (AEval.restrict_equiv_mapSubmodule f _ (hinv μ)).isSemisimpleModule_iff.mp ?_
-    refine End.isSemisimple_of_squarefree_aeval_eq_zero (p := X - C μ)
-      (irreducible_X_sub_C μ).squarefree ?_
-    ext v
-    have hv := v.2
-    rw [End.mem_eigenspace_iff] at hv
-    simp only [map_sub, aeval_X, aeval_C, LinearMap.sub_apply, LinearMap.zero_apply,
-      Module.algebraMap_end_apply, Submodule.coe_sub, Submodule.coe_smul, ZeroMemClass.coe_zero]
-    -- the restriction of `f` to the `μ`-eigenspace is multiplication by `μ`
-    rw [hrestrict, hv, sub_self]
+      IsSemisimpleModule K[X] (AEval.mapSubmodule K V f ⟨f.eigenspace μ, hinv μ⟩) :=
+    fun μ ↦ isSemisimpleModule_mapSubmodule_eigenspace f μ (hinv μ)
   have htop : ⨆ μ : K, AEval.mapSubmodule K V f ⟨f.eigenspace μ, hinv μ⟩ = ⊤ := by
     set Q := ⨆ μ : K, AEval.mapSubmodule K V f ⟨f.eigenspace μ, hinv μ⟩
     have hle : (⊤ : Submodule K V) ≤ (Q.restrictScalars K).comap (AEval'.of f).toLinearMap := by

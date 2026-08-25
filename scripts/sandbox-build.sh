@@ -19,6 +19,16 @@ set -euxo pipefail
 
 export TMPDIR="$PWD/.lake/tmp"
 
+# Lake normally invokes Lean directly. Route every compiler process through a
+# trusted wall-clock watchdog instead. This script and the wrapper are the
+# trusted base copies; the PR can overlay only TauCeti/, and landrun does not
+# pass timeout-control variables, so PR code cannot raise or disable the 300s
+# deadline. The wrapper and Lean both remain inside the same landrun sandbox.
+test -n "${WATCHDOG_TOOLCHAIN:-}"
+test -x "$WATCHDOG_TOOLCHAIN/bin/lean"
+export LAKE_OVERRIDE_LEAN=true
+export LEAN="$WATCHDOG_TOOLCHAIN/bin/lean"
+
 # Build the overlaid TauCeti/ against the trusted base config. landrun keeps this
 # offline and confines writes to base/.lake.
 #
@@ -44,3 +54,8 @@ lake exe module-system
 # is fail-closed (see the SECURITY MODEL in the script). Fails on new violations or
 # unaccounted nolints; fixed baseline entries print a ratchet reminder only.
 bash scripts/lint-env.sh
+
+# Source style lint. The trusted wrapper uses the shared validated TauCeti/ module list, applies
+# Mathlib's copyright/Authors checks (excluding the deliberately empty root), and generates the
+# text-linter import root under .lake/ without relying on TauCeti.lean's imports.
+bash scripts/lint-style.sh

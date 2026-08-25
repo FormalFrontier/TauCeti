@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -352,26 +353,6 @@ theorem isManifold_boundary (hk : k ≠ 0) :
     contDiffOn_boundaryChart_symm_trans p q (chart_mem_atlas _ p.1)
       (chart_mem_atlas _ q.1)
 
-/-- Identify `EuclideanSpace ℝ (Fin n) × ℝ` with `EuclideanSpace ℝ (Fin (n + 1))` by placing the
-`ℝ` factor in the zeroth coordinate. This is the complement used by
-`isImmersion_subtypeVal_boundary`. -/
-private noncomputable def boundaryValComplementEquiv (n : ℕ) :
-    (EuclideanSpace ℝ (Fin n) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 1)) :=
-  (ContinuousLinearEquiv.prodComm ℝ (EuclideanSpace ℝ (Fin n)) ℝ).trans <|
-    ((ContinuousLinearEquiv.refl ℝ ℝ).prodCongr (EuclideanSpace.equiv (Fin n) ℝ)).trans <|
-      (Fin.consEquivL ℝ (fun _ : Fin (n + 1) ↦ ℝ)).trans
-        (EuclideanSpace.equiv (Fin (n + 1)) ℝ).symm
-
-@[simp]
-private theorem boundaryValComplementEquiv_apply_zero (x : EuclideanSpace ℝ (Fin n)) (r : ℝ) :
-    boundaryValComplementEquiv n (x, r) 0 = r := by
-  simp [boundaryValComplementEquiv]
-
-@[simp]
-private theorem boundaryValComplementEquiv_apply_succ (x : EuclideanSpace ℝ (Fin n)) (r : ℝ)
-    (i : Fin n) : boundaryValComplementEquiv n (x, r) i.succ = x i := by
-  simp [boundaryValComplementEquiv]
-
 variable (M) in
 /-- The inclusion of the boundary into the manifold is a `C^k` immersion. In the preferred
 boundary and ambient charts it is the coordinate inclusion with one-dimensional complement. -/
@@ -386,7 +367,7 @@ theorem isImmersion_subtypeVal_boundary (hk : k ≠ 0) :
   apply Manifold.IsImmersionOfComplement.isImmersion (F := ℝ)
   intro p
   apply Manifold.IsImmersionAtOfComplement.mk_of_continuousAt
-    continuous_subtype_val.continuousAt (boundaryValComplementEquiv n)
+    continuous_subtype_val.continuousAt (euclideanHalfSpaceBoundaryNormalEquiv n)
     (chartAt (EuclideanSpace ℝ (Fin n)) p)
     (chartAt (EuclideanHalfSpace (n + 1)) (p : M))
     (mem_chart_source _ p) (mem_chart_source _ (p : M))

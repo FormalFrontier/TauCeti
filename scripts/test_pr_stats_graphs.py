@@ -197,6 +197,31 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(len(metrics["in_review_hours"]), 1)
         self.assertEqual(metrics["other_open_prs"], 2)
 
+    def test_author_clock_survives_the_awaiting_author_to_ci_failed_split(self):
+        # The migration that introduced ci-failed relabels PRs that were already waiting on their
+        # author. That is the same wait continuing, not a new one, so the clock must still run from
+        # the original awaiting-author and not reset to the relabelling instant.
+        item = pr(1, 1, state="OPEN", labels=("ci-failed",))
+        item["labeled_events"] = [
+            {"created_at": timestamp(1, 0), "label": "awaiting-author"},
+            {"created_at": timestamp(4, 0), "label": "ci-failed"},
+        ]
+        metrics = stats.queue_age_metrics([item], datetime(2026, 1, 5, tzinfo=UTC))
+        self.assertEqual(metrics["awaiting_author_hours"], [96.0])
+        self.assertEqual(metrics["missing_transition_fallbacks"], 0)
+
+    def test_author_clock_restarts_when_the_pr_goes_back_through_ci(self):
+        # A push is a real fresh wait: the author acted, CI judged it, and it failed again.
+        item = pr(1, 1, state="OPEN", labels=("ci-failed",))
+        item["labeled_events"] = [
+            {"created_at": timestamp(1, 0), "label": "awaiting-author"},
+            {"created_at": timestamp(2, 0), "label": "awaiting-CI"},
+            {"created_at": timestamp(4, 0), "label": "ci-failed"},
+        ]
+        metrics = stats.queue_age_metrics([item], datetime(2026, 1, 5, tzinfo=UTC))
+        self.assertEqual(metrics["awaiting_author_hours"], [24.0])
+        self.assertEqual(metrics["missing_transition_fallbacks"], 0)
+
     def test_current_state_clock_rejects_stale_historical_transition(self):
         item = pr(1, 1, state="OPEN", labels=("awaiting-review",), cycles=1)
         item["labeled_events"].append({

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -10,7 +11,7 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
 /-!
 # The adjoint action respects the Lie bracket
 
-`TauCeti.Derivation.adDerivation` conjugates a tangent vector by a point of the Hopf algebra.
+`Derivation.adDerivation` conjugates a tangent vector by a point of the Hopf algebra.
 `Tangent.Adjoint` shows that this is an action by linear automorphisms; this file adds the
 one statement that needs the Lie structure of `Tangent.Lie.Basic`, namely that each `Ad g` is
 an automorphism of the Lie bracket rather than merely of the module.
@@ -20,16 +21,14 @@ the Lie-algebra structure.
 
 ## Main results
 
-* `TauCeti.Derivation.adDerivation_lie`: `Ad g ⁅d₁, d₂⁆ = ⁅Ad g d₁, Ad g d₂⁆`.
+* `Derivation.adDerivation_lie`: `Ad g ⁅d₁, d₂⁆ = ⁅Ad g d₁, Ad g d₂⁆`.
 -/
 
 public section
 
-namespace TauCeti
-
 namespace Derivation
 
-open _root_.Coalgebra WithConv TensorProduct
+open TauCeti _root_.Coalgebra WithConv TensorProduct
 
 -- Only the coefficient algebra `B` need be a ring: the bracket is a commutator, so the
 -- convolution algebra `A →ₗ[R] CounitAlgebra R A B` must admit subtraction, and it inherits that
@@ -67,5 +66,3 @@ theorem adDerivation_lie (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A 
   exact DFunLike.congr_fun (congrArg ofConv key) a
 
 end Derivation
-
-end TauCeti

@@ -1,10 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+import Mathlib.LinearAlgebra.Matrix.Dual
+import TauCeti.LinearAlgebra.Matrix.Gram
 
 public section
 
@@ -485,6 +488,32 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
   else if (k : ℕ) + 1 < n then typeDHalfTotal x - x.1 ⟨n - 1, by omega⟩
   else typeDHalfTotal x
 
+/-- The half-total of the `i`-th type `Dₙ` simple root. The chain roots `e_i - e_{i+1}` have
+coordinate sum `0`, so half-total `0`; the fork root `e_{n-2} + e_{n-1}` has coordinate sum `2`,
+so half-total `1`. -/
+private lemma typeDHalfTotal_typeDRootEquiv_apply_typeDSimpleIndex (hn : 4 ≤ n) (i : Fin n) :
+    typeDHalfTotal (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) =
+      if (i : ℕ) + 1 < n then 0 else 1 := by
+  by_cases hi : (i : ℕ) + 1 < n
+  · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 0 := by
+      rw [typeDSimpleRoot_of_add_one_lt hn hi]
+      simp_rw [Pi.sub_apply]
+      rw [Finset.sum_sub_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
+      omega
+    rw [ite_eq_left hi]
+    have h2 := two_mul_typeDHalfTotal (typeDRootEquiv n hn (typeDSimpleIndex n hn i))
+    rw [typeDRootEquiv_apply_typeDSimpleIndex, htotal] at h2
+    omega
+  · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 2 := by
+      rw [typeDSimpleRoot_of_not_add_one_lt hn hi]
+      simp_rw [Pi.add_apply]
+      rw [Finset.sum_add_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
+      norm_num
+    rw [ite_eq_right hi]
+    have h2 := two_mul_typeDHalfTotal (typeDRootEquiv n hn (typeDSimpleIndex n hn i))
+    rw [typeDRootEquiv_apply_typeDSimpleIndex, htotal] at h2
+    omega
+
 /-- The coordinates of the `i`-th simple root are the `i`-th standard basis vector. -/
 @[simp] theorem typeDSimpleRootCoordinates_typeDRootEquiv_apply_typeDSimpleIndex
     (hn : 4 ≤ n) (i : Fin n) :
@@ -493,16 +522,9 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
   funext k
   rw [typeDSimpleRootCoordinates]
   simp only [typeDRootEquiv_apply_typeDSimpleIndex]
+  have hhalf := typeDHalfTotal_typeDRootEquiv_apply_typeDSimpleIndex hn i
   by_cases hi : (i : ℕ) + 1 < n
-  · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 0 := by
-      rw [typeDSimpleRoot, dite_eq_left hi]
-      simp_rw [Pi.sub_apply]
-      rw [Finset.sum_sub_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
-      omega
-    have hhalf : typeDHalfTotal
-        (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) = 0 := by
-      simp only [typeDHalfTotal, typeDRootEquiv_apply_typeDSimpleIndex, htotal]
-      norm_num
+  · rw [ite_eq_left hi] at hhalf
     by_cases hk₂ : (k : ℕ) + 2 < n
     · rw [ite_eq_left hk₂]
       rw [typeDSimpleRoot, dite_eq_left hi]
@@ -520,15 +542,7 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
         simp only [Pi.single_apply]
         omega
   · have hiv : (i : ℕ) = n - 1 := by omega
-    have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 2 := by
-      rw [typeDSimpleRoot, dite_eq_right hi]
-      simp_rw [Pi.add_apply]
-      rw [Finset.sum_add_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
-      norm_num
-    have hhalf : typeDHalfTotal
-        (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) = 1 := by
-      simp only [typeDHalfTotal, typeDRootEquiv_apply_typeDSimpleIndex, htotal]
-      norm_num
+    rw [ite_eq_right hi] at hhalf
     by_cases hk₂ : (k : ℕ) + 2 < n
     · rw [ite_eq_left hk₂]
       rw [typeDSimpleRoot, dite_eq_right hi]
@@ -653,11 +667,8 @@ private lemma typeDAmbientReflection_apply (u : TypeDRoot n) (v : Fin n → ℤ)
 
 private lemma typeDAmbientReflection_dotProduct_self (u : TypeDRoot n) {v : Fin n → ℤ}
     (hv : v ⬝ᵥ v = 2) : typeDAmbientReflection u v ⬝ᵥ typeDAmbientReflection u v = 2 := by
-  have hsymm : u.1 ⬝ᵥ v = v ⬝ᵥ u.1 := dotProduct_comm _ _
-  rw [typeDAmbientReflection_apply]
-  simp only [sub_dotProduct, dotProduct_sub, smul_dotProduct, dotProduct_smul, smul_eq_mul]
-  rw [u.2, hv, hsymm]
-  ring
+  have h := reflect_vecMul_dotProduct_self Matrix.isSymm_one (u := u.1) (by simpa using u.2) v
+  simpa [typeDAmbientReflection_apply, Matrix.one_vecMul, hv] using h
 
 /-- Reflection of a type `Dₙ` root `v` in the root `u`. -/
 def typeDRootReflection (u v : TypeDRoot n) : TypeDRoot n :=
@@ -857,9 +868,7 @@ private lemma typeDSimpleRootCoordinates_nonneg_of_pairVector (hn : 4 ≤ n) (x 
     have htot : ∑ i : Fin n, x.1 i = 0 := by
       simp [hv, Finset.sum_sub_distrib]
     have hhalf : typeDHalfTotal x = 0 := by
-      have h2 := two_mul_typeDHalfTotal x
-      rw [htot] at h2
-      linarith
+      linarith [two_mul_typeDHalfTotal x, htot]
     simp only [typeDSimpleRootCoordinates]
     split_ifs
     · rw [hv]
@@ -875,9 +884,7 @@ private lemma typeDSimpleRootCoordinates_nonneg_of_pairVector (hn : 4 ≤ n) (x 
     have htot : ∑ i : Fin n, x.1 i = 2 := by
       simp [hv, Finset.sum_add_distrib]
     have hhalf : typeDHalfTotal x = 1 := by
-      have h2 := two_mul_typeDHalfTotal x
-      rw [htot] at h2
-      linarith
+      linarith [two_mul_typeDHalfTotal x, htot]
     simp only [typeDSimpleRootCoordinates]
     split_ifs
     · rw [hv]
