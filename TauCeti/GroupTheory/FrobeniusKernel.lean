@@ -32,7 +32,8 @@ The count is the inclusion-exclusion that gives Frobenius's theorem its shape, a
 statement about a trivial-intersection *set* `S` for `H` (`TauCeti.IsTISet`): the conjugates
 `g S g⁻¹` are pairwise disjoint for distinct cosets `g H` and depend only on the coset, so the
 elements they cover are indexed bijectively by the pairs (a coset of `H`, an element of `S`) and
-number `|G : H| · |S|`. That is `TauCeti.IsTISet.ncard_conjugatesOfSet`. The complement of the
+number `|G : H| · |S|`. That is `TauCeti.IsTISet.ncard_conjugatesOfSet`, proved alongside
+`TauCeti.IsTISet` itself in `TauCeti/GroupTheory/TrivialIntersection.lean`. The complement of the
 kernel is the set of conjugates of the nonidentity elements of `H`, which for a
 trivial-intersection subgroup is such a set (`TauCeti.IsTISubgroup.isTISet_diff_one`), and the
 count specializes to `TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel`, the `Set.ncard` identity
@@ -65,8 +66,6 @@ everything and `⊥` has index `|G|`.
 * `TauCeti.frobeniusKernel_inter_conj_eq_singleton` and
   `TauCeti.frobeniusKernel_inter_eq_singleton`: the kernel meets every conjugate of `H`, and in
   particular `H` itself, exactly in the identity.
-* `TauCeti.IsTISet.ncard_conjugatesOfSet`: the conjugates of a trivial-intersection set `S` for `H`
-  cover `|G : H| · |S|` elements, the count the kernel count specializes.
 * `TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel`: the `Set.ncard` identity
   `((frobeniusKernel H)ᶜ).ncard = |G : H| · (|H| - 1)`, which for a finite `G` counts the elements
   *outside* the kernel — the nonidentity elements of the conjugates of `H`, each counted once — and
@@ -76,19 +75,6 @@ everything and `⊥` has index `|G|`.
   elements.**
 * `TauCeti.IsTISubgroup.isComplement'_of_coe_eq_frobeniusKernel`: for a finite `G`, a subgroup
   whose carrier is the kernel is a complement to `H`.
-
-## Implementation notes
-
-The bijection is set up as a map *into* `G` out of `(G ⧸ H) × S`, rather than as an `Equiv` onto
-`Group.conjugatesOfSet S`, because the two facts it is used through are cleaner apart than bundled:
-that its range is the set of conjugates uses only that `S` is normalized by `H`, while its
-injectivity is exactly the disjointness of the distinct conjugates. The coset representatives are
-`Quotient.out`, so the map is noncomputable and needs no well-definedness argument; the price is
-that hitting a conjugate has to move a witness `x` to `(x H).out` by `QuotientGroup.mk_out_eq_mul`,
-conjugating the element of `S` along the way. The general count lives here rather than beside
-`TauCeti.IsTISet` because it is the counting half of this file's subject and needs the coset,
-index and cardinality machinery that `TauCeti/GroupTheory/TrivialIntersection.lean` does not
-import.
 
 ## References
 
@@ -210,72 +196,6 @@ theorem frobeniusKernel_bot : frobeniusKernel (⊥ : Subgroup G) = Set.univ := b
   -- `conj_eq_one_iff` is stated for `a * y * a⁻¹`, so the conjugator is exhibited as `x⁻¹`.
   have hconj : x⁻¹ * y * x = x⁻¹ * y * (x⁻¹)⁻¹ := by group
   exact conj_eq_one_iff.1 (hconj ▸ hx)
-
-/-! ### Counting the conjugates of a trivial-intersection set -/
-
-variable {S : Set G}
-
-/-- The parametrization of the conjugates of a subset `S` of `H` by a coset of `H` together with an
-element of `S`: the coset picks a conjugator through the representative `Quotient.out`, and the
-element of `S` is transported along it.  For a trivial-intersection set its range is
-`Group.conjugatesOfSet S` (`TauCeti.IsTISet.range_conjugatesOfSetParam`, which uses only that `S`
-is normalized by `H`) and it is injective
-(`TauCeti.IsTISet.conjugatesOfSetParam_injective`, which is exactly the disjointness of the
-distinct conjugates); together those give the count
-`TauCeti.IsTISet.ncard_conjugatesOfSet`. -/
-private noncomputable def conjugatesOfSetParam (H : Subgroup G) (S : Set G) :
-    (G ⧸ H) × S → G :=
-  fun p => p.1.out * (p.2 : G) * p.1.out⁻¹
-
-private theorem IsTISet.range_conjugatesOfSetParam (hS : IsTISet S H) :
-    Set.range (conjugatesOfSetParam H S) = Group.conjugatesOfSet S := by
-  refine Set.Subset.antisymm ?_ fun y hy => ?_
-  · rintro _ ⟨⟨C, s, hs⟩, rfl⟩
-    exact Group.mem_conjugatesOfSet_iff.2 ⟨s, hs, isConj_iff.2 ⟨C.out, rfl⟩⟩
-  · obtain ⟨s, hs, hconj⟩ := Group.mem_conjugatesOfSet_iff.1 hy
-    obtain ⟨x, rfl⟩ := isConj_iff.1 hconj
-    obtain ⟨h, hout⟩ := QuotientGroup.mk_out_eq_mul H x
-    refine ⟨⟨QuotientGroup.mk x, ⟨(h : G)⁻¹ * s * h, ?_⟩⟩, ?_⟩
-    · simpa using hS.conj_mem (h : G)⁻¹ (H.inv_mem h.2) s hs
-    · simp only [conjugatesOfSetParam, hout]
-      group
-
-private theorem IsTISet.conjugatesOfSetParam_injective (hS : IsTISet S H) :
-    Function.Injective (conjugatesOfSetParam H S) := by
-  rintro ⟨C, s, hs⟩ ⟨D, s', hs'⟩ hEq
-  simp only [conjugatesOfSetParam] at hEq
-  -- The two coset representatives differ by an element conjugating `s` back into `S`, so the
-  -- trivial-intersection condition puts that difference inside `H`: the cosets agree.
-  have hconj : D.out⁻¹ * C.out * s * (D.out⁻¹ * C.out)⁻¹ = s' := by
-    have hshift : D.out⁻¹ * C.out * s * (D.out⁻¹ * C.out)⁻¹
-        = D.out⁻¹ * (C.out * s * C.out⁻¹) * D.out := by group
-    rw [hshift, hEq]
-    group
-  have hmem : D.out⁻¹ * C.out ∈ H := by
-    by_contra hx
-    exact hS.disjoint_conj _ hx s hs (hconj ▸ hs')
-  have hCD : C = D := by
-    have h1 : (QuotientGroup.mk C.out : G ⧸ H) = QuotientGroup.mk D.out :=
-      (QuotientGroup.eq.2 hmem).symm
-    rwa [QuotientGroup.out_eq', QuotientGroup.out_eq'] at h1
-  subst hCD
-  have hss : s = s' := mul_left_cancel (mul_right_cancel hEq)
-  subst hss
-  rfl
-
-/-- **The conjugates of a trivial-intersection set have `Set.ncard` equal to `|G : H| · |S|`.**  The
-conjugate `g S g⁻¹` depends only on the coset `g H`, because `S` is normalized by `H`, and distinct
-cosets give disjoint conjugates, so the elements covered are indexed bijectively by the pairs (a
-coset of `H`, an element of `S`).  The parametrization argument is uniform, so no finiteness is
-assumed — but this is an `ncard` identity, not an element count, unless the sets involved are
-finite: otherwise both sides are the junk value `0` that `Set.ncard` and `Subgroup.index` take on
-infinite arguments.  The Frobenius kernel count
-`TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel` is the case `S = H \ {1}`. -/
-theorem IsTISet.ncard_conjugatesOfSet (hS : IsTISet S H) :
-    (Group.conjugatesOfSet S).ncard = H.index * S.ncard := by
-  rw [← hS.range_conjugatesOfSetParam,
-    Set.ncard_range_of_injective hS.conjugatesOfSetParam_injective, Nat.card_prod,
-    ← Subgroup.index_eq_card, Nat.card_coe_set_eq]
 
 /-! ### Counting the kernel -/
 
