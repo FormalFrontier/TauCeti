@@ -21,10 +21,10 @@ component.  This file makes that distinction in the public definition: `TauCeti.
 is the product of the appropriate algebra over the connected components of the graph.
 
 The component algebra is packaged in `AlgCat` because its carrier changes between the singleton
-and non-singleton cases.  The public algebra is the ordinary dependent function algebra on those
-carriers, so its projections and extensionality are the standard product ones.  For a connected
-nontrivial graph, the product has one factor and is canonically isomorphic to the landed relation
-quotient.  For the one-vertex graph it is canonically the dual numbers from Mathlib.
+and non-singleton cases.  The public algebra is the product of those carriers, exposed through
+component projections and extensionality.  For a connected nontrivial graph, the product has one
+factor and is canonically isomorphic to the landed relation quotient.  For the one-vertex graph it
+is canonically the dual numbers from Mathlib.
 
 ## Main definitions
 
@@ -64,6 +64,7 @@ noncomputable def zigzagComponentAlgebra (C : G.ConnectedComponent) : AlgCat k :
       AlgCat.of k (ULift.{u} (DualNumber k))
 
 /-- On a nontrivial connected component, the component algebra is the uniform relation quotient. -/
+@[simp]
 theorem zigzagComponentAlgebra_eq_nonisolated (C : G.ConnectedComponent) [Nontrivial C] :
     zigzagComponentAlgebra k G C =
       AlgCat.of k (nonisolatedZigzagQuotient k C.toSimpleGraph) := by
@@ -75,6 +76,7 @@ theorem zigzagComponentAlgebra_eq_nonisolated (C : G.ConnectedComponent) [Nontri
 
 /-- On a singleton connected component, the component algebra is a universe lift of the dual
 numbers. -/
+@[simp]
 theorem zigzagComponentAlgebra_eq_uliftDualNumber (C : G.ConnectedComponent) [Subsingleton C] :
     zigzagComponentAlgebra k G C = AlgCat.of k (ULift.{u} (DualNumber k)) := by
   rw [zigzagComponentAlgebra]
@@ -99,23 +101,21 @@ noncomputable def zigzagComponentAlgebraEquivULiftDualNumber (C : G.ConnectedCom
 
 /-- The public zigzag algebra of a finite simple graph: the product of its component algebras,
 using dual numbers precisely on singleton components. -/
-noncomputable abbrev zigzagAlgebra : AlgCat k :=
+noncomputable def zigzagAlgebra : AlgCat k :=
   AlgCat.of k (∀ C : G.ConnectedComponent, zigzagComponentAlgebra k G C)
 
 /-- Projection from the public zigzag algebra to the factor indexed by a connected component. -/
 noncomputable def zigzagComponentProjection (C : G.ConnectedComponent) :
-    zigzagAlgebra k G →ₐ[k] zigzagComponentAlgebra k G C :=
-  Pi.evalAlgHom k (fun C : G.ConnectedComponent ↦ zigzagComponentAlgebra k G C) C
-
-@[simp]
-theorem zigzagComponentProjection_apply (C : G.ConnectedComponent) (x : zigzagAlgebra k G) :
-    zigzagComponentProjection k G C x = x C := (rfl)
+    zigzagAlgebra k G →ₐ[k] zigzagComponentAlgebra k G C := by
+  unfold zigzagAlgebra
+  exact Pi.evalAlgHom k (fun C : G.ConnectedComponent ↦ zigzagComponentAlgebra k G C) C
 
 /-- Elements of the public zigzag algebra are equal when all their component projections agree. -/
 @[ext]
 theorem zigzagAlgebra_ext {x y : zigzagAlgebra k G}
-    (h : ∀ C, zigzagComponentProjection k G C x = zigzagComponentProjection k G C y) : x = y :=
-  funext h
+    (h : ∀ C, zigzagComponentProjection k G C x = zigzagComponentProjection k G C y) : x = y := by
+  unfold zigzagAlgebra at x y
+  exact funext h
 
 /-- Evaluation identifies a dependent product of algebras over a one-point index type with its
 unique factor. -/
@@ -188,8 +188,9 @@ noncomputable def zigzagComponentAlgebraEquiv {W : Type v} [Finite W]
 the connected-component factors and applies the corresponding component-algebra isomorphism in
 each factor. -/
 noncomputable def zigzagAlgebraEquiv {W : Type v} [Finite W] {H : SimpleGraph W} (e : G ≃g H) :
-    zigzagAlgebra k G ≃ₐ[k] zigzagAlgebra k H :=
-  (AlgEquiv.piCongrRight fun C ↦ zigzagComponentAlgebraEquiv k G e C).trans <|
+    zigzagAlgebra k G ≃ₐ[k] zigzagAlgebra k H := by
+  unfold zigzagAlgebra
+  exact (AlgEquiv.piCongrRight fun C ↦ zigzagComponentAlgebraEquiv k G e C).trans <|
     AlgEquiv.piCongrLeft k (fun D : H.ConnectedComponent ↦ zigzagComponentAlgebra k H D)
       e.connectedComponentEquiv
 
@@ -198,14 +199,17 @@ algebra isomorphism. -/
 @[simp]
 theorem zigzagAlgebraEquiv_apply_component {W : Type v} [Finite W] {H : SimpleGraph W}
     (e : G ≃g H) (x : zigzagAlgebra k G) (C : G.ConnectedComponent) :
-    zigzagAlgebraEquiv k G e x (e.connectedComponentEquiv C) =
-      zigzagComponentAlgebraEquiv k G e C (x C) := by
-  simp [zigzagAlgebraEquiv]
+    zigzagComponentProjection k H (e.connectedComponentEquiv C) (zigzagAlgebraEquiv k G e x) =
+      zigzagComponentAlgebraEquiv k G e C (zigzagComponentProjection k G C x) := by
+  unfold zigzagAlgebra at x
+  unfold zigzagComponentProjection zigzagAlgebraEquiv zigzagAlgebra
+  simp
 
 /-- On a connected graph with at least two vertices, the public componentwise zigzag algebra is
 canonically isomorphic to the uniform relation quotient. -/
 noncomputable def zigzagAlgebraEquivNonisolated (hconn : G.Connected) [Nontrivial V] :
     zigzagAlgebra k G ≃ₐ[k] nonisolatedZigzagQuotient k G := by
+  unfold zigzagAlgebra
   letI := connectedComponentUnique G hconn
   letI : Nontrivial (default : G.ConnectedComponent) :=
     connectedComponent_nontrivial G hconn default
@@ -222,10 +226,12 @@ theorem zigzagAlgebraEquivNonisolated_apply (hconn : G.Connected) [Nontrivial V]
     zigzagAlgebraEquivNonisolated k G hconn x =
       let _ := connectedComponent_nontrivial G hconn C
       nonisolatedZigzagQuotientEquiv k (connectedComponentGraphIso G hconn C)
-        (zigzagComponentAlgebraEquivNonisolated k G C (x C)) := by
+        (zigzagComponentAlgebraEquivNonisolated k G C
+          (zigzagComponentProjection k G C x)) := by
   let _ := connectedComponentUnique G hconn
   have hC : C = default := Subsingleton.elim _ _
   subst C
+  unfold zigzagAlgebra at x
   rfl
 
 /-- The inverse connected nonisolated comparison is computed componentwise by the inverse graph
@@ -239,7 +245,6 @@ theorem zigzagAlgebraEquivNonisolated_symm_apply_component (hconn : G.Connected)
         ((nonisolatedZigzagQuotientEquiv k
           (connectedComponentGraphIso G hconn C)).symm x) := by
   let _ := connectedComponent_nontrivial G hconn C
-  rw [zigzagComponentProjection_apply]
   apply (zigzagComponentAlgebraEquivNonisolated k G C).injective
   rw [AlgEquiv.apply_symm_apply]
   apply (nonisolatedZigzagQuotientEquiv k
@@ -250,6 +255,7 @@ theorem zigzagAlgebraEquivNonisolated_symm_apply_component (hconn : G.Connected)
 /-- The public zigzag algebra of the one-vertex graph is the algebra of dual numbers. -/
 noncomputable def zigzagAlgebraEquivA1 :
     zigzagAlgebra k (⊥ : SimpleGraph (Fin 1)) ≃ₐ[k] DualNumber k := by
+  unfold zigzagAlgebra
   let A := fun C : (⊥ : SimpleGraph (Fin 1)).ConnectedComponent ↦
     zigzagComponentAlgebra k (⊥ : SimpleGraph (Fin 1)) C
   refine (algEquivPiUnique k A).trans <|
@@ -261,7 +267,9 @@ noncomputable def zigzagAlgebraEquivA1 :
 theorem zigzagAlgebraEquivA1_apply (x : zigzagAlgebra k (⊥ : SimpleGraph (Fin 1))) :
     zigzagAlgebraEquivA1 k x =
       ULift.down (zigzagComponentAlgebraEquivULiftDualNumber k
-        (⊥ : SimpleGraph (Fin 1)) default (x default)) := by
+        (⊥ : SimpleGraph (Fin 1)) default
+          (zigzagComponentProjection k (⊥ : SimpleGraph (Fin 1)) default x)) := by
+  unfold zigzagAlgebra at x
   rfl
 
 /-- The inverse rank-one comparison inserts a dual number into the unique lifted component. -/
@@ -274,7 +282,6 @@ theorem zigzagAlgebraEquivA1_symm_apply_component (x : DualNumber k)
         (⊥ : SimpleGraph (Fin 1)) C).symm (ULift.up x) := by
   have hC : C = default := Subsingleton.elim _ _
   subst C
-  rw [zigzagComponentProjection_apply]
   apply (zigzagComponentAlgebraEquivULiftDualNumber k
     (⊥ : SimpleGraph (Fin 1)) default).injective
   rw [AlgEquiv.apply_symm_apply]
