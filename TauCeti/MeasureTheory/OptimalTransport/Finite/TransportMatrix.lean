@@ -21,6 +21,12 @@ This file packages that correspondence. `TauCeti.TransportMatrix μ ν` is the t
 pushforwards are `μ` and `ν`. The codomain `ℝ≥0∞` makes nonnegativity intrinsic, rather than
 a separate side condition.
 
+The entries are also read as a real-valued function `TauCeti.TransportMatrix.toRealFun` on the
+product, whose row and column sums are the real marginal masses, and the total
+`TauCeti.TransportMatrix.cost` of a matrix against a real cost function is recorded here. Both
+are basic transportation-matrix API rather than duality results, and the cost is allowed to be
+negative because the finite transport problem is a linear program.
+
 This is the finite transportation-matrix acceptance case of Layer 0 of the optimal-transport
 roadmap. It is also the representation used by later finite primal and dual problems.
 -/
@@ -99,6 +105,45 @@ def toPMF (A : TransportMatrix μ ν) : PMF (ι × κ) :=
 @[simp]
 theorem toPMF_apply (A : TransportMatrix μ ν) (p : ι × κ) : A.toPMF p = A p.1 p.2 :=
   by rfl
+
+/-- Every entry of a transportation matrix is finite: it is bounded by a marginal mass. -/
+theorem apply_ne_top (A : TransportMatrix μ ν) (i : ι) (j : κ) : A i j ≠ ⊤ := by
+  refine ne_top_of_le_ne_top (μ.apply_ne_top i) ?_
+  rw [← A.row_sum i]
+  exact Finset.single_le_sum (f := fun j ↦ A i j) (fun _ _ ↦ zero_le) (Finset.mem_univ j)
+
+/-- The entries of a transportation matrix, read as a real-valued function on the product. -/
+def toRealFun (A : TransportMatrix μ ν) (q : ι × κ) : ℝ := (A q.1 q.2).toReal
+
+/-- The defining formula for the real-valued entries. -/
+@[simp]
+theorem toRealFun_apply (A : TransportMatrix μ ν) (q : ι × κ) :
+    A.toRealFun q = (A q.1 q.2).toReal := (rfl)
+
+/-- The real-valued entries of a transportation matrix are nonnegative. -/
+theorem toRealFun_nonneg (A : TransportMatrix μ ν) (q : ι × κ) : 0 ≤ A.toRealFun q :=
+  ENNReal.toReal_nonneg
+
+/-- The real-valued row sums are the masses of the source distribution. -/
+theorem sum_toRealFun_row (A : TransportMatrix μ ν) (i : ι) :
+    ∑ j, A.toRealFun (i, j) = (μ i).toReal := by
+  simp only [toRealFun_apply]
+  rw [← ENNReal.toReal_sum fun j _ ↦ A.apply_ne_top i j, A.row_sum]
+
+/-- The real-valued column sums are the masses of the target distribution. -/
+theorem sum_toRealFun_col (A : TransportMatrix μ ν) (j : κ) :
+    ∑ i, A.toRealFun (i, j) = (ν j).toReal := by
+  simp only [toRealFun_apply]
+  rw [← ENNReal.toReal_sum fun i _ ↦ A.apply_ne_top i j, A.col_sum]
+
+/-- The total cost of a finite transportation matrix. The cost function is real-valued, so
+negative costs are allowed. -/
+def cost (c : ι × κ → ℝ) (A : TransportMatrix μ ν) : ℝ := ∑ q, c q * A.toRealFun q
+
+/-- The defining formula for the cost. The body of the definition is not exposed, so this is
+the lemma downstream modules should rewrite with. -/
+theorem cost_def (c : ι × κ → ℝ) (A : TransportMatrix μ ν) :
+    A.cost c = ∑ q, c q * A.toRealFun q := (rfl)
 
 end TransportMatrix
 

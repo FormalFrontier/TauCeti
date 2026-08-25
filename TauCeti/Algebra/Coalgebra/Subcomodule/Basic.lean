@@ -34,6 +34,8 @@ subcomodules and the fundamental theorem of comodules. Later work can use
   underlying submodule detects the extreme subcomodules.
 * `TauCeti.Subcomodule.ne_bot_iff`: a subcomodule is nonzero exactly when it contains a nonzero
   vector.
+* `TauCeti.Subcomodule.isSimpleOrder_of_transitive`: a family of maps that preserves every
+  subcomodule and acts transitively on nonzero vectors makes the subcomodule lattice simple.
 * `TauCeti.Subcomodule.map`: the image of a subcomodule under a comodule morphism.
 * `TauCeti.Subcomodule.map_finite`: images preserve finite generation of the underlying
   submodule.
@@ -253,8 +255,32 @@ theorem toSubmodule_eq_bot {N : Subcomodule R C M} : N.toSubmodule = ⊥ ↔ N =
 theorem ne_bot_iff {N : Subcomodule R C M} : N ≠ ⊥ ↔ ∃ m ∈ N, m ≠ 0 :=
   (not_congr toSubmodule_eq_bot).symm.trans (Submodule.ne_bot_iff N.toSubmodule)
 
+/-- If a family of maps preserves every subcomodule and acts transitively on nonzero vectors,
+then the subcomodule lattice is simple. -/
+theorem isSimpleOrder_of_transitive {G : Type x} (v₀ : M) (hv₀ : v₀ ≠ 0)
+    (act : G → M → M)
+    (htrans : ∀ {v w : M}, v ≠ 0 → w ≠ 0 → ∃ g, act g w = v)
+    (hmem : ∀ (N : Subcomodule R C M) (g : G) {w : M}, w ∈ N → act g w ∈ N) :
+    IsSimpleOrder (Subcomodule R C M) where
+  exists_pair_ne := by
+    refine ⟨⊥, ⊤, fun h ↦ hv₀ ?_⟩
+    exact mem_bot.mp (h ▸ mem_top v₀)
+  eq_bot_or_eq_top N := by
+    by_cases hN : N = ⊥
+    · exact Or.inl hN
+    · right
+      obtain ⟨w, hwN, hw⟩ := ne_bot_iff.mp hN
+      apply Subcomodule.ext
+      intro v
+      refine ⟨fun _ ↦ mem_top v, fun _ ↦ ?_⟩
+      by_cases hv : v = 0
+      · exact hv ▸ zero_mem N
+      · obtain ⟨g, hg⟩ := htrans hv hw
+        exact hg ▸ hmem N g hwN
+
 variable {N : Type x} [AddCommMonoid N] [Module R N] [Comodule R C N]
 
+/-- The linear map between subtype modules induced by a comodule morphism. -/
 private def mapSubtype (f : Comodule.Hom R C M N) (A : Subcomodule R C M) :
     A.carrier →ₗ[R] A.carrier.map f.toLinearMap where
   toFun a := ⟨f a, Submodule.mem_map_of_mem a.2⟩
