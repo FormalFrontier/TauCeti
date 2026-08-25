@@ -19,9 +19,9 @@ it is characterised by
 
 `∫ a, mapRestrictDensity f ν μ s a * g a ∂μ = ∫ x in s, g (f x) ∂ν`
 
-for every `μ`-a.e. strongly measurable `g : Ω → ℝ` (`integral_mapRestrictDensity_mul`). In
-probabilistic language
-it is the conditional probability of `s` given `f`, read as a function on the base: composing it
+for every `μ`-a.e. strongly measurable `g : Ω → ℝ` (`integral_mapRestrictDensity_mul`). This
+Radon–Nikodym identity holds for arbitrary `s`. When `s` is measurable, the density has the
+additional probabilistic reading of the conditional probability of `s` given `f`: composing it
 with `f` gives a version of `ν[s.indicator 1 | comap f]`. Nothing here needs that reading, so the
 conditional-expectation machinery is not used; the elementary Radon–Nikodym route is enough.
 

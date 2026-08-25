@@ -203,9 +203,9 @@ section CommonCarrier
 
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
 
-/-- **A graph coupling has the cut norm of the difference of the two pullbacks.** Pulling the
-overlaid difference back along `x ↦ (f x, g x)` gives the difference of the pullbacks. Invariance
-under this measure-preserving map then identifies the two cut norms. -/
+/-- **A measure induced by two maps gives the cut norm of the difference of the two pullbacks.**
+Pulling the overlaid difference back along `x ↦ (f x, g x)` gives the difference of the pullbacks.
+Invariance under this measure-preserving map then identifies the two cut norms. -/
 theorem cutNorm_overlayDiff_map_prodMk [IsFiniteMeasure μ]
     (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
     {f : Ω → Ω₁} {g : Ω → Ω₂} (hf : Measurable f)
