@@ -30,8 +30,9 @@ monodromy an equivalence onto the actions, which is proved in
 * `TauCeti.FundamentalGroupoidAction.isFiberwiseTransitive`: fibrewise pretransitive with
   nonempty fibres.
 * `TauCeti.TransitiveFundamentalGroupoidAction`: the corresponding full subcategory.
-* `TauCeti.ConnectedCoveringSpace.nonempty_fiber`: over a path-connected base every fibre of a
-  connected cover is nonempty.
+* `TauCeti.CoveringSpace.nonempty_fiber`: over a path-connected base every fibre of a cover with
+  nonempty total space is nonempty, and `TauCeti.ConnectedCoveringSpace.nonempty_fiber`: in
+  particular every fibre of a connected cover is nonempty.
 * `TauCeti.ConnectedCoveringSpace.transitiveMonodromyFunctor`: monodromy of connected covers,
   valued in fibrewise transitive actions.
 
@@ -137,17 +138,29 @@ def fullyFaithfulForget (X : TopCat.{u}) : (forget X).FullyFaithful :=
 
 end TransitiveFundamentalGroupoidAction
 
+namespace CoveringSpace
+
+variable {X : TopCat.{u}}
+
+/-- Over a path-connected base, a covering space with nonempty total space has every fibre
+nonempty: a chosen point of the total space is carried into the fibre by monodromy along any
+path. -/
+theorem nonempty_fiber [PathConnectedSpace X] (p : CoveringSpace X)
+    (hp : Nonempty (p : TopCat)) (x : X) : Nonempty (⇑p.proj ⁻¹' {x}) := by
+  obtain ⟨e⟩ := hp
+  exact ⟨p.isCoveringMap_proj.monodromy
+    (Path.Homotopic.Quotient.mk (PathConnectedSpace.somePath (p.proj e) x)) ⟨e, rfl⟩⟩
+
+end CoveringSpace
+
 namespace ConnectedCoveringSpace
 
 variable {X : TopCat.{u}}
 
-/-- Over a path-connected base, every fibre of a connected covering space is nonempty: a chosen
-point of the total space is carried into the fibre by monodromy along any path. -/
+/-- Over a path-connected base, every fibre of a connected covering space is nonempty. -/
 theorem nonempty_fiber [PathConnectedSpace X] (p : ConnectedCoveringSpace X) (x : X) :
-    Nonempty (⇑p.proj ⁻¹' {x}) := by
-  obtain ⟨e⟩ := (inferInstance : Nonempty (p : TopCat))
-  exact ⟨p.isCoveringMap_proj.monodromy
-    (Path.Homotopic.Quotient.mk (PathConnectedSpace.somePath (p.proj e) x)) ⟨e, rfl⟩⟩
+    Nonempty (⇑p.proj ⁻¹' {x}) :=
+  CoveringSpace.nonempty_fiber ((forget X).obj p) (inferInstance : Nonempty (p : TopCat)) x
 
 /-- The ordinary monodromy functor of a connected cover over a path-connected base is transitive
 on every fibre. -/
