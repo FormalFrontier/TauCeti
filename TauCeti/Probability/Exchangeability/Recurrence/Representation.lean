@@ -43,9 +43,10 @@ remaining input of the Diaconis–Freedman representation
 
 * `TauCeti.Probability.measurable_pathOfExcursions`: concatenating excursions is measurable over a
   countable discrete state space.
-* `TauCeti.Probability.Recurrent.pathLaw_eq_map_pathOfExcursions`: the path law of a recurrent
-  process started at `a₀` is the image of its excursion law under concatenation.
-* `TauCeti.Probability.ConditionallyIIDWith.ae_measure_setOf_mem_eq_zero_excursionProcess`: a
+* `TauCeti.Probability.pathLaw_eq_map_pathOfExcursions`: the path law of a process that almost
+  surely starts at and returns infinitely often to `a₀` is the image of its excursion law under
+  concatenation.
+* `TauCeti.Probability.ConditionallyIIDWith.ae_measure_setOf_mem_eq_zero_of_excursionProcess`: a
   directing measure of an excursion process almost surely charges no word through the base state.
 * `TauCeti.Probability.MarkovExchangeable.exists_pathLaw_eq_map_deFinettiBarycenter`: **a recurrent
   Markov exchangeable process is a mixture of processes with i.i.d. excursions.**
@@ -84,7 +85,11 @@ theorem measurable_pathOfExcursions [Countable α] [MeasurableSingletonClass α]
       (fun v : Fin (i + 1) → List α => loopPathAt a₀ (List.ofFn v) i) ∘
         fun (b : ℕ → List α) (j : Fin (i + 1)) => b j.val := by
     funext b
-    rw [Function.comp_apply, pathOfExcursions_def]
+    have hi : i ≤ loopSteps ((List.range (i + 1)).map b) := by
+      have hle := length_le_loopSteps ((List.range (i + 1)).map b)
+      simp only [List.length_map, List.length_range] at hle
+      omega
+    rw [Function.comp_apply, pathOfExcursions_eq_loopPathAt a₀ b hi]
     congr 1
     refine List.ext_getElem (by simp) fun j hj hj' => ?_
     rw [List.getElem_map, List.getElem_range, List.getElem_ofFn]
@@ -95,31 +100,38 @@ theorem measurable_pathOfExcursions [Countable α] [MeasurableSingletonClass α]
 
 variable {μ : Measure Ω} {X : ℕ → Ω → α} {a₀ : α}
 
-/-- **The path law of a recurrent process started at `a₀` is the image of its excursion law.**
-Almost every sample path returns to `a₀` infinitely often, so concatenating its excursions
-recovers it. -/
-theorem Recurrent.pathLaw_eq_map_pathOfExcursions [Countable α] [MeasurableSingletonClass α]
-    (hrec : Recurrent μ X) (hX : ∀ i, AEMeasurable (X i) μ) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) :
+/-- **The path law of a process returning infinitely often to `a₀` is the image of its excursion
+law.** Almost every sample path starts at and returns infinitely often to `a₀`, so concatenating
+its excursions recovers it. -/
+theorem pathLaw_eq_map_pathOfExcursions [Countable α] [MeasurableSingletonClass α]
+    (hX : ∀ i, AEMeasurable (X i) μ) (hreturns : ∀ᵐ ω ∂μ, {n | X n ω = a₀}.Infinite)
+    (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) :
     pathLaw μ X = (pathLaw μ (excursionProcess X a₀)).map (pathOfExcursions a₀) := by
   have hΦ : AEMeasurable (fun ω k => excursionProcess X a₀ k ω) μ :=
     aemeasurable_pi_lambda _ fun k => aemeasurable_excursionProcess hX a₀ k
   have hae : (pathOfExcursions a₀ ∘ fun ω k => excursionProcess X a₀ k ω) =ᵐ[μ]
       fun ω i => X i ω := by
-    filter_upwards [h0, hrec.ae_infinite_setOf_eq] with ω hω0 hωinf
-    have hinf : {n | X n ω = a₀}.Infinite := by
-      have h := hωinf 0
-      rwa [hω0] at h
-    simpa [Function.comp_def] using pathOfExcursions_excursion hinf hω0
+    filter_upwards [h0, hreturns] with ω hω0 hωinf
+    simpa [Function.comp_def] using pathOfExcursions_excursion hωinf hω0
   rw [pathLaw_def, pathLaw_def,
     AEMeasurable.map_map_of_aemeasurable (measurable_pathOfExcursions a₀).aemeasurable hΦ,
     Measure.map_congr hae]
+
+/-- **The path law of a recurrent process started at `a₀` is the image of its excursion law.** -/
+theorem Recurrent.pathLaw_eq_map_pathOfExcursions [Countable α] [MeasurableSingletonClass α]
+    (hrec : Recurrent μ X) (hX : ∀ i, AEMeasurable (X i) μ) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) :
+    pathLaw μ X = (pathLaw μ (excursionProcess X a₀)).map (pathOfExcursions a₀) := by
+  apply TauCeti.Probability.pathLaw_eq_map_pathOfExcursions hX _ h0
+  filter_upwards [h0, hrec.ae_infinite_setOf_eq] with ω hω0 hωinf
+  have h := hωinf 0
+  rwa [hω0] at h
 
 /-! ## Excursion laws avoid the base state -/
 
 /-- **A directing measure of an excursion process charges no word through the base state.** An
 excursion never visits the state it is an excursion from, so almost every mixing representative of
 the excursion process gives the words through `a₀` mass zero. -/
-theorem ConditionallyIIDWith.ae_measure_setOf_mem_eq_zero_excursionProcess
+theorem ConditionallyIIDWith.ae_measure_setOf_mem_eq_zero_of_excursionProcess
     [Countable α] [MeasurableSingletonClass α]
     (hX : ∀ i, AEMeasurable (X i) μ) {ν : Ω → ProbabilityMeasure (List α)}
     (h : ConditionallyIIDWith μ (excursionProcess X a₀) ν) :
@@ -177,7 +189,7 @@ theorem MarkovExchangeable.exists_pathLaw_eq_map_deFinettiBarycenter [IsProbabil
   have hSmeas : MeasurableSet {l : List α | a₀ ∈ l} := MeasurableSet.of_discrete
   refine ⟨μ.map ν, Measure.isProbabilityMeasure_map hν_meas.aemeasurable, ?_, ?_⟩
   · refine (ae_map_iff hν_meas.aemeasurable ?_).2
-      (hν.ae_measure_setOf_mem_eq_zero_excursionProcess h.aemeasurable)
+      (hν.ae_measure_setOf_mem_eq_zero_of_excursionProcess h.aemeasurable)
     exact ((Measure.measurable_coe hSmeas).comp measurable_subtype_coe)
       (measurableSet_singleton (0 : ENNReal))
   · rw [hrec.pathLaw_eq_map_pathOfExcursions h.aemeasurable h0,

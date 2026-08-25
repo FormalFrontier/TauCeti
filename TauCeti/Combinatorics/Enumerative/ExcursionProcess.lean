@@ -346,23 +346,13 @@ least `i + 1` steps, so the reading never falls off its end. -/
 def pathOfExcursions (a : α) (b : ℕ → List α) (i : ℕ) : α :=
   loopPathAt a ((List.range (i + 1)).map b) i
 
-/-- The defining equation of `TauCeti.pathOfExcursions`. -/
-theorem pathOfExcursions_def (a : α) (b : ℕ → List α) (i : ℕ) :
-    pathOfExcursions a b i = loopPathAt a ((List.range (i + 1)).map b) i :=
-  (rfl)
-
 /-- A longer list of excursions extends a shorter one. -/
 private theorem exists_map_range_append (b : ℕ → List α) {m m' : ℕ} (h : m ≤ m') :
     ∃ cs, (List.range m').map b = ((List.range m).map b) ++ cs := by
-  induction m' with
-  | zero => exact ⟨[], by rw [Nat.le_zero.1 h]; simp⟩
-  | succ n ih =>
-    rcases Nat.eq_or_lt_of_le h with heq | hlt
-    · exact ⟨[], by rw [← heq]; simp⟩
-    · obtain ⟨cs, hcs⟩ := ih (Nat.lt_succ_iff.1 hlt)
-      exact ⟨cs ++ [b n], by
-        rw [List.range_succ, List.map_append, hcs, List.append_assoc]
-        simp⟩
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le h
+  refine ⟨(List.range k).map (fun i => b (m + i)), ?_⟩
+  rw [List.range_add, List.map_append, List.map_map]
+  rfl
 
 /-- Below the span of a shorter list of excursions, a longer one spells out the same loop. -/
 private theorem loopPathAt_map_range_eq (a : α) (b : ℕ → List α) {i m m' : ℕ} (hm : m ≤ m')
@@ -380,12 +370,12 @@ theorem pathOfExcursions_eq_loopPathAt (a : α) (b : ℕ → List α) {i n : ℕ
     have hle := length_le_loopSteps ((List.range (i + 1)).map b)
     simp only [List.length_map, List.length_range] at hle
     omega
-  rw [pathOfExcursions_def, ← loopPathAt_map_range_eq a b (le_max_left (i + 1) n) hi1,
+  rw [pathOfExcursions, ← loopPathAt_map_range_eq a b (le_max_left (i + 1) n) hi1,
     loopPathAt_map_range_eq a b (le_max_right (i + 1) n) hi]
 
 @[simp]
 theorem pathOfExcursions_zero (a : α) (b : ℕ → List α) : pathOfExcursions a b 0 = a := by
-  rw [pathOfExcursions_def, loopPathAt_zero]
+  rw [pathOfExcursions, loopPathAt_zero]
 
 /-- Appending one more excursion lengthens the loop by that excursion and the step back to the
 base state. -/
@@ -397,6 +387,7 @@ theorem loopSteps_map_range_succ (b : ℕ → List α) (n : ℕ) :
 
 /-- A sequence spelled out by excursions is back at its base state at the end of every
 excursion. -/
+@[simp]
 theorem pathOfExcursions_loopSteps (a : α) (b : ℕ → List α) (n : ℕ) :
     pathOfExcursions a b (loopSteps ((List.range n).map b)) = a := by
   rw [pathOfExcursions_eq_loopPathAt a b le_rfl, loopPathAt_loopSteps]
@@ -440,16 +431,16 @@ theorem pathOfExcursions_excursion (h : {n | x n = a}.Infinite) (h0 : x 0 = a) :
   rw [hsteps]
   exact le_trans (Nat.le_succ i) (hvisit (i + 1))
 
-/-- **A sequence spelled out by excursions has exactly those excursions**, provided none of them
-visits the base state. This is the converse of `TauCeti.pathOfExcursions_excursion`, and makes the
-excursion decomposition a bijection between sequences returning to `a` infinitely often and
-sequences of finite words avoiding `a`. -/
-theorem excursionPrefix_pathOfExcursions {b : ℕ → List α} (havoid : ∀ j, a ∉ b j) (n : ℕ) :
+/-- **A sequence spelled out by excursions has the prescribed excursion prefix**, provided the
+excursions in that prefix avoid the base state. -/
+@[simp]
+theorem excursionPrefix_pathOfExcursions {b : ℕ → List α} (n : ℕ)
+    (havoid : ∀ j < n, a ∉ b j) :
     excursionPrefix (pathOfExcursions a b) a n = (List.range n).map b := by
   have havoid' : ∀ e ∈ (List.range n).map b, a ∉ e := by
     intro e he
-    obtain ⟨j, -, rfl⟩ := List.mem_map.1 he
-    exact havoid j
+    obtain ⟨j, hj, rfl⟩ := List.mem_map.1 he
+    exact havoid j (List.mem_range.1 hj)
   have hlen : ((List.range n).map b).length = n := by simp
   have heq : ∀ i ≤ loopSteps ((List.range n).map b),
       pathOfExcursions a b i = loopPathAt a ((List.range n).map b) i := fun i hi =>
@@ -462,11 +453,14 @@ theorem excursionPrefix_pathOfExcursions {b : ℕ → List α} (havoid : ∀ j, 
     (pathOfExcursions_zero a b)).mp heq
   rwa [hlen] at hmain
 
-/-- **Each excursion of a sequence spelled out by excursions is the corresponding one.** -/
-theorem excursion_pathOfExcursions {b : ℕ → List α} (havoid : ∀ j, a ∉ b j) (j : ℕ) :
+/-- **Each excursion of a sequence spelled out by excursions is the corresponding one**, provided
+that excursion and its predecessors avoid the base state. -/
+@[simp]
+theorem excursion_pathOfExcursions {b : ℕ → List α} (j : ℕ) (havoid : ∀ k ≤ j, a ∉ b k) :
     excursion (pathOfExcursions a b) a j = b j := by
   have hidx : j < (excursionPrefix (pathOfExcursions a b) a (j + 1)).length := by simp
-  have h := List.getElem_of_eq (excursionPrefix_pathOfExcursions havoid (j + 1)) hidx
+  have h := List.getElem_of_eq
+    (excursionPrefix_pathOfExcursions (j + 1) fun k hk => havoid k (Nat.lt_succ_iff.1 hk)) hidx
   simpa [getElem_excursionPrefix (Nat.lt_succ_self j)] using h
 
 end TauCeti
