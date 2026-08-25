@@ -147,21 +147,6 @@ theorem torusCharacter_singleton {A : Type*} [CommRing A]
   rw [torusCharacter_def]
   simp
 
-/-- The positive-root character evaluates to the square of the torus parameter.  This is the
-`n = 2` case of `torusCharacter_singleton`, which already carries the `simp` attribute. -/
-theorem torusCharacter_rankOneRootWeight_zero {A : Type*} [CommRing A]
-    (s : Fin 1 → Aˣ) :
-    torusCharacter s ![2] = (s 0) ^ 2 := by
-  simpa only [zpow_ofNat] using torusCharacter_singleton s (2 : ℤ)
-
-/-- The negative-root character evaluates to the inverse square of the torus parameter.  This is
-the `n = -2` case of `torusCharacter_singleton`, which already carries the `simp` attribute. -/
-theorem torusCharacter_rankOneRootWeight_one {A : Type*} [CommRing A]
-    (s : Fin 1 → Aˣ) :
-    torusCharacter s ![-2] = (s 0)⁻¹ ^ 2 := by
-  rw [torusCharacter_singleton]
-  simp [zpow_neg]
-
 /-- The two distinguished root vectors have weights `2` and `-2` for the rank-one Cartan
 generator. -/
 theorem lie_cartan_root_eq_smul (i : Fin 2) (j : Fin 1) :
