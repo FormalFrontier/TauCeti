@@ -219,14 +219,14 @@ theorem b2SpecialIsogenyMatrix_transpose_mul_self :
 
 /-- Applying the character-lattice special map twice is multiplication by the characteristic
 `2`. -/
-theorem b2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
+@[simp] theorem b2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
     b2SpecialIsogenyMatrix *ᵥ (b2SpecialIsogenyMatrix *ᵥ x) = (2 : ℤ) • x := by
   rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_mul_self, Matrix.smul_mulVec,
     Matrix.one_mulVec]
 
 /-- Applying the cocharacter-lattice special map twice is multiplication by the characteristic
 `2`. -/
-theorem b2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
+@[simp] theorem b2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
     b2SpecialIsogenyMatrixᵀ *ᵥ (b2SpecialIsogenyMatrixᵀ *ᵥ x) = (2 : ℤ) • x := by
   rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_transpose_mul_self, Matrix.smul_mulVec,
     Matrix.one_mulVec]
