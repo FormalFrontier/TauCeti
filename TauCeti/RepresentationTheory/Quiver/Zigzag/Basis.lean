@@ -467,7 +467,6 @@ theorem zigzagBasis_apply (hns : ∀ i : V, ∃ j, G.Adj i j) (b : ZigzagBasisIn
 
 open scoped Classical in
 /-- A coordinate of a zigzag basis vector is the corresponding Kronecker delta. -/
-@[simp]
 theorem zigzagBasis_coord_apply (hns : ∀ i : V, ∃ j, G.Adj i j)
     (b b' : ZigzagBasisIndex G) :
     (zigzagBasis k G hns).coord b (zigzagBasis k G hns b') = if b' = b then 1 else 0 := by
