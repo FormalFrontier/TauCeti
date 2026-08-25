@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Homology.EulerCharacteristic
+public import TauCeti.Algebra.Bigraded.Basic
 public import TauCeti.KnotTheory.Grid.Determinant
 public import TauCeti.KnotTheory.Grid.Grading.Chain
 
@@ -16,14 +17,15 @@ public import TauCeti.KnotTheory.Grid.Grading.Chain
 components into its homogeneous pieces, one for each pair (`O`-Maslov grading, Alexander grading),
 and `Determinant.lean` evaluates the alternating Alexander state sum of a grid diagram as a
 determinant. This file joins the two: the graded Euler characteristic of the bigraded grid chain
-module *is* the state sum, hence is the grid determinant.
+module *is* the state sum, hence is a normalized grid-determinant expression.
 
 Freezing one Alexander degree `a` leaves a module graded by the `O`-Maslov degree alone, and its
 Euler characteristic is Mathlib's `GradedObject.eulerChar` for the complex shape
 `ComplexShape.down ℤ`, the shape of a differential dropping the Maslov grading by one. That
 integer, `OddComponentGridDiagram.alexanderEulerChar`, is the alternating count of grid states in
-Alexander degree `a` weighted by the parity of their Maslov grading. Assembling those integers
-into a Laurent polynomial gives `OddComponentGridDiagram.gradedEulerChar`.
+Alexander degree `a` weighted by the parity of their Maslov grading. Applying the generic
+`Bigraded.euler` map to the rank Poincaré series gives
+`OddComponentGridDiagram.gradedEulerChar`.
 
 Two conventions are inherited rather than reinvented. The grading variable `T` is a square root of
 the usual Alexander variable, exactly as in `Determinant.lean`: the summand in bidegree `(m, a)`
@@ -46,6 +48,8 @@ here has finite rank. That is why Mathlib's graded-object Euler characteristic, 
 * `TauCeti.OddComponentGridDiagram.alexanderGradedObject`: the Maslov-graded object of a fixed
   Alexander degree.
 * `TauCeti.OddComponentGridDiagram.alexanderEulerChar`: its Euler characteristic.
+* `TauCeti.OddComponentGridDiagram.bigradedPoincareSeries`: the Poincaré series of the grid chain
+  module, with doubled Alexander grading.
 * `TauCeti.OddComponentGridDiagram.gradedEulerChar`: the graded Euler characteristic of the
   bigraded grid chain module, as a Laurent polynomial in the square root of the Alexander variable.
 
@@ -206,50 +210,71 @@ theorem alexanderEulerChar_eq_zero_of_notMem (R : Type*) [Ring R] [StrongRankCon
   rw [G.alexanderEulerChar_eq_sum_states R a, Finset.filter_eq_empty_iff.2, Finset.sum_empty]
   exact fun x _ hx => ha ((G.mem_alexanderSupport_iff a).2 ⟨x, hx⟩)
 
-/-- The Euler characteristic of an Alexander degree does not depend on the coefficient ring. -/
-theorem alexanderEulerChar_ring_independent (R S : Type*) [Ring R] [StrongRankCondition R]
+/-- The Euler characteristics computed over two coefficient rings agree. -/
+theorem alexanderEulerChar_eq (R S : Type*) [Ring R] [StrongRankCondition R]
     [Ring S] [StrongRankCondition S] (a : ℤ) : G.alexanderEulerChar R a =
       G.alexanderEulerChar S a := by
   rw [G.alexanderEulerChar_eq_sum_states R a, G.alexanderEulerChar_eq_sum_states S a]
 
 /-! ### The graded Euler characteristic -/
 
-/-- The graded Euler characteristic of the bigraded grid chain module: the Euler characteristic of
-each Alexander degree, weighted by the corresponding monomial.
+/-- The Poincaré series of the bigraded grid chain module, with Alexander degree doubled to match
+the square-root convention for the variable `T`. -/
+noncomputable def bigradedPoincareSeries (R : Type*) [Semiring R] : Bigraded.Series :=
+  ∑ g ∈ G.bidegreeSupport, AddMonoidAlgebra.single (g.1, 2 * g.2)
+    (Module.finrank R (G.BigradedChainPiece R g))
+
+/-- The graded Euler characteristic obtained by applying `Bigraded.euler` to the rank Poincaré
+series of the bigraded grid chain module.
 
 The grading variable `T` is a square root of the Alexander variable, as in `Determinant.lean`, so
 Alexander degree `a` contributes the monomial `T^{2a}`. -/
-noncomputable def gradedEulerChar (R : Type*) [Ring R] : ℤ[T;T⁻¹] :=
-  ∑ a ∈ G.alexanderSupport, G.alexanderEulerChar R a • T (2 * a)
+noncomputable def gradedEulerChar (R : Type*) [Semiring R] : ℤ[T;T⁻¹] :=
+  Bigraded.euler (G.bigradedPoincareSeries R)
 
 /-- **The graded Euler characteristic is the alternating Alexander state sum.** Regrouping the
 states of the diagram by their bidegree turns the rank-weighted sum over occupied degrees into the
 sum over states. -/
-theorem gradedEulerChar_eq_stateSum (R : Type*) [Ring R] [StrongRankCondition R] :
+theorem gradedEulerChar_eq_stateSum (R : Type*) [Semiring R] [StrongRankCondition R] :
     G.gradedEulerChar R = G.1.stateSum := by
-  rw [gradedEulerChar, GridDiagram.stateSum_def,
-    ← Finset.sum_fiberwise_of_maps_to (g := fun x : GridState n => G.alexanderℤ x)
-      (t := G.alexanderSupport)
-      (fun x _ => (G.mem_alexanderSupport_iff _).2 ⟨x, rfl⟩)]
-  refine Finset.sum_congr rfl fun a _ => ?_
-  rw [G.alexanderEulerChar_eq_sum_states R a, Finset.sum_smul]
-  refine Finset.sum_congr rfl fun x hx => ?_
-  rw [← (Finset.mem_filter.1 hx).2, G.two_mul_alexanderℤ x, Units.smul_def, zsmul_eq_mul]
+  rw [gradedEulerChar, bigradedPoincareSeries, map_sum]
+  simp_rw [Bigraded.euler_single, G.finrank_bigradedChainPiece R]
+  rw [GridDiagram.stateSum_def,
+    ← Finset.sum_fiberwise_of_maps_to (g := fun x : GridState n => G.bidegree x)
+      (t := G.bidegreeSupport) (fun x _ => (G.mem_bidegreeSupport_iff _).2 ⟨x, rfl⟩)]
+  refine Finset.sum_congr rfl fun g _ => ?_
+  have hconst : ∑ x ∈ Finset.univ.filter (fun x : GridState n => G.bidegree x = g),
+        ((G.1.maslovOℤ x).negOnePow : ℤˣ) • (T (G.1.alexanderTwoℤ x) : ℤ[T;T⁻¹]) =
+      ∑ _x ∈ Finset.univ.filter (fun x : GridState n => G.bidegree x = g),
+        (g.1.negOnePow : ℤˣ) • (T (2 * g.2) : ℤ[T;T⁻¹]) :=
+    Finset.sum_congr rfl fun x hx => by
+      have hg := (Finset.mem_filter.1 hx).2
+      have hm : G.1.maslovOℤ x = g.1 := by
+        rw [← G.bidegree_fst x, hg]
+      have ha : G.1.alexanderTwoℤ x = 2 * g.2 := by
+        rw [← G.two_mul_alexanderℤ x, ← G.bidegree_snd x, hg]
+      rw [hm, ha]
+  rw [hconst, Finset.sum_const, nsmul_eq_mul]
+  rw [Units.smul_def, T, zsmul_eq_mul]
+  change (_ : ℤ[T;T⁻¹]) * AddMonoidAlgebra.single (2 * g.2) (g.1.negOnePow : ℤ) =
+    _ * (AddMonoidAlgebra.single 0 (g.1.negOnePow : ℤ) *
+      AddMonoidAlgebra.single (2 * g.2) 1)
+  rw [AddMonoidAlgebra.single_mul_single, zero_add, mul_one]
 
-/-- **The graded Euler characteristic is the grid determinant.** Combining
+/-- **The graded Euler characteristic is a normalized grid-determinant expression.** Combining
 `OddComponentGridDiagram.gradedEulerChar_eq_stateSum` with the grid determinant formula, the
 graded Euler characteristic of the bigraded grid chain module is a sign times a monomial times the
 determinant of the weight matrix of the diagram. -/
-theorem gradedEulerChar_eq_smul_T_mul_det_weightMatrix (R : Type*) [Ring R]
+theorem gradedEulerChar_eq_smul_T_mul_det_weightMatrix (R : Type*) [Semiring R]
     [StrongRankCondition R] :
     G.gradedEulerChar R =
       (Equiv.Perm.sign G.1.O.toPerm * ((n : ℤ) + 1).negOnePow) •
         (T G.1.alexanderTwoShift * G.1.weightMatrix.det) := by
   rw [G.gradedEulerChar_eq_stateSum R, G.1.stateSum_eq_smul_T_mul_det_weightMatrix]
 
-/-- The graded Euler characteristic does not depend on the coefficient ring. -/
-theorem gradedEulerChar_ring_independent (R S : Type*) [Ring R] [StrongRankCondition R]
-    [Ring S] [StrongRankCondition S] : G.gradedEulerChar R = G.gradedEulerChar S := by
+/-- The graded Euler characteristics computed over two coefficient rings agree. -/
+theorem gradedEulerChar_eq (R S : Type*) [Semiring R] [StrongRankCondition R]
+    [Semiring S] [StrongRankCondition S] : G.gradedEulerChar R = G.gradedEulerChar S := by
   rw [G.gradedEulerChar_eq_stateSum R, G.gradedEulerChar_eq_stateSum S]
 
 /-- The ungraded Euler characteristic of the grid chain module vanishes on every grid of size at
@@ -267,17 +292,32 @@ theorem sum_alexanderEulerChar_eq_zero (R : Type*) [Ring R] [StrongRankCondition
 
 /-! ### Reading the Alexander degrees off the coefficients -/
 
+private theorem gradedEulerChar_eq_sum_alexanderSupport (R : Type*) [Ring R]
+    [StrongRankCondition R] :
+    G.gradedEulerChar R = ∑ a ∈ G.alexanderSupport, G.alexanderEulerChar R a • T (2 * a) := by
+  rw [G.gradedEulerChar_eq_stateSum R]
+  symm
+  rw [GridDiagram.stateSum_def,
+    ← Finset.sum_fiberwise_of_maps_to (g := fun x : GridState n => G.alexanderℤ x)
+      (t := G.alexanderSupport)
+      (fun x _ => (G.mem_alexanderSupport_iff _).2 ⟨x, rfl⟩)]
+  refine Finset.sum_congr rfl fun a _ => ?_
+  rw [G.alexanderEulerChar_eq_sum_states R a, Finset.sum_smul]
+  refine Finset.sum_congr rfl fun x hx => ?_
+  rw [← (Finset.mem_filter.1 hx).2, G.two_mul_alexanderℤ x, Units.smul_def, zsmul_eq_mul]
+
 /-- The coefficients of the graded Euler characteristic, degree by degree. -/
-theorem coeff_gradedEulerChar (R : Type*) [Ring R] (k : ℤ) :
+theorem coeff_gradedEulerChar (R : Type*) [Ring R] [StrongRankCondition R] (k : ℤ) :
     (G.gradedEulerChar R).coeff k =
       ∑ a ∈ G.alexanderSupport, if 2 * a = k then G.alexanderEulerChar R a else 0 := by
-  simp only [gradedEulerChar, AddMonoidAlgebra.coeff_sum, Finset.sum_apply',
+  rw [G.gradedEulerChar_eq_sum_alexanderSupport R]
+  simp only [AddMonoidAlgebra.coeff_sum, Finset.sum_apply',
     AddMonoidAlgebra.coeff_smul_apply, T_apply, smul_eq_mul, mul_ite, mul_one, mul_zero]
 
 /-- Only even exponents occur in the graded Euler characteristic: the grading variable is a square
 root of the Alexander variable, and the Alexander gradings of an odd-component diagram are
 integers. -/
-theorem coeff_gradedEulerChar_of_not_even (R : Type*) [Ring R] {k : ℤ}
+theorem coeff_gradedEulerChar_of_not_even (R : Type*) [Ring R] [StrongRankCondition R] {k : ℤ}
     (hk : ¬ Even k) : (G.gradedEulerChar R).coeff k = 0 := by
   rw [G.coeff_gradedEulerChar R k]
   refine Finset.sum_eq_zero fun a _ => ?_
@@ -303,9 +343,9 @@ theorem coeff_gradedEulerChar_two_mul (R : Type*) [Ring R] [StrongRankCondition 
     subst b
     exact (ha hb).elim
 
-/-- **The Euler characteristics of the Alexander degrees are the coefficients of the grid
-determinant.** The alternating count of grid states of Alexander degree `a`, weighted by the parity
-of their Maslov grading, is the coefficient of `T^{2a}` in the determinant expression of
+/-- **The Euler characteristics of the Alexander degrees are the coefficients of the normalized
+grid-determinant expression.** The alternating count of grid states of Alexander degree `a`,
+weighted by the parity of their Maslov grading, is the coefficient of `T^{2a}` in the expression of
 `GridDiagram.stateSum_eq_smul_T_mul_det_weightMatrix`. -/
 theorem alexanderEulerChar_eq_coeff_smul_T_mul_det_weightMatrix (R : Type*) [Ring R]
     [StrongRankCondition R] (a : ℤ) :

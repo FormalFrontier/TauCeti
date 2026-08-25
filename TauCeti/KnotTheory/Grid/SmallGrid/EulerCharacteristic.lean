@@ -50,7 +50,7 @@ Alexander degrees contributes a single generator, and the two Maslov parities ar
 Alexander variable `t = T²` the answer reads `1 - t⁻¹`, which is the Euler characteristic of one
 copy of the stabilization factor `W = 𝔽 ⊕ 𝔽` in bidegrees `(0, 0)` and `(-1, -1)`: the grid-size
 dependence of the fully blocked theory is already visible in its Euler characteristic. -/
-theorem gradedEulerChar_twoByTwo (R : Type*) [Ring R] [StrongRankCondition R] :
+theorem gradedEulerChar_twoByTwo (R : Type*) [Semiring R] [StrongRankCondition R] :
     twoByTwo.gradedEulerChar R = 1 - T (-2) := by
   have huniv : (Finset.univ : Finset (GridState 2)) =
       {GridState.twoByTwoId, GridState.twoByTwoSwap} := by
