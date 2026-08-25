@@ -58,6 +58,23 @@ namespace TauCeti
 
 namespace DenseGraphLimits
 
+-- Mathlib's `edgeSetSumEquiv` has no application lemmas. Isolate the unavoidable reduction of its
+-- `Sym2.fromRelNdrec` implementation here; the density proof below uses only these
+-- characterizations.
+private theorem edgeSetSumEquiv_symm_inl {V W : Type*} {G : SimpleGraph V} {H : SimpleGraph W}
+    (c : G.edgeSet) :
+    (((edgeSetSumEquiv (G := G) (H := H)).symm (Sum.inl c) : (G ⊕g H).edgeSet) :
+        Sym2 (V ⊕ W)) = Sym2.map Sum.inl (c : Sym2 V) := by
+  rcases c with ⟨c, hc⟩
+  induction c using Sym2.ind with | _ a b => rfl
+
+private theorem edgeSetSumEquiv_symm_inr {V W : Type*} {G : SimpleGraph V} {H : SimpleGraph W}
+    (c : H.edgeSet) :
+    (((edgeSetSumEquiv (G := G) (H := H)).symm (Sum.inr c) : (G ⊕g H).edgeSet) :
+        Sym2 (V ⊕ W)) = Sym2.map Sum.inr (c : Sym2 W) := by
+  rcases c with ⟨c, hc⟩
+  induction c using Sym2.ind with | _ a b => rfl
+
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
   {V₁ V₂ : Type*} [Fintype V₁] [Fintype V₂]
   {F₁ : SimpleGraph V₁} [DecidableRel F₁.Adj] {F₂ : SimpleGraph V₂} [DecidableRel F₂.Adj]
@@ -129,17 +146,11 @@ theorem homDensity_sum (W : Graphon Ω μ) :
         Sum.elim (fun c : F₁.edgeSet => edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
             (fun c : F₂.edgeSet => edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂)) s
           = edgeFactor W z ((edgeSetSumEquiv.symm s : (F₁ ⊕g F₂).edgeSet) : Sym2 (V₁ ⊕ V₂)) := by
-      rintro (⟨c, hc⟩ | ⟨c, hc⟩)
-      · induction c using Sym2.ind with
-        | _ a b =>
-          have hmap : ((edgeSetSumEquiv.symm (Sum.inl ⟨s(a, b), hc⟩) : (F₁ ⊕g F₂).edgeSet) :
-              Sym2 (V₁ ⊕ V₂)) = Sym2.map Sum.inl s(a, b) := rfl
-          simp [hmap]
-      · induction c using Sym2.ind with
-        | _ a b =>
-          have hmap : ((edgeSetSumEquiv.symm (Sum.inr ⟨s(a, b), hc⟩) : (F₁ ⊕g F₂).edgeSet) :
-              Sym2 (V₁ ⊕ V₂)) = Sym2.map Sum.inr s(a, b) := rfl
-          simp [hmap]
+      rintro (c | c)
+      · rw [edgeSetSumEquiv_symm_inl, edgeFactor_map]
+        rfl
+      · rw [edgeSetSumEquiv_symm_inr, edgeFactor_map]
+        rfl
     calc ∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d
         = ∏ d : (F₁ ⊕g F₂).edgeSet, edgeFactor W z (d : Sym2 (V₁ ⊕ V₂)) :=
           Finset.prod_subtype _ (fun _ ↦ SimpleGraph.mem_edgeFinset) _
