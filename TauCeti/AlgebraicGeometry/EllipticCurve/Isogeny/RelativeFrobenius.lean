@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.PowerTower
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.MapAlong
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.RelativeFrobenius
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Separability
 
@@ -61,8 +60,6 @@ that factorisation.
   `TauCeti.Isogeny.inseparableDegree_relativeFrobeniusIsogeny` splitting that as `1 · p`.
 * `TauCeti.Isogeny.degree_iterateRelativeFrobeniusIsogeny`: the `n`-fold iterate has degree
   `p ^ n` and is purely inseparable.
-* `TauCeti.Isogeny.mapAlong_iterateFrobenius_some`: its point-level formula is
-  `(x, y) ↦ (x ^ (p ^ n), y ^ (p ^ n))` for the existing generic point map.
 
 The degree is the shared tower comparison
 `WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow`, applied to the pullback: over the
@@ -339,20 +336,6 @@ theorem degree_iterateRelativeFrobeniusIsogeny (n : ℕ) :
   rw [Isogeny.degree_def]
   exact _root_.WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow W _
     (fieldPullback_iterateRelativeFrobeniusIsogeny_X p W n)
-
-/-- The iterated relative Frobenius sends an affine point `(x, y)` to
-`(x ^ (p ^ n), y ^ (p ^ n))`.
-
-Not a `simp` lemma: the generic `WeierstrassCurve.Affine.Point.mapAlong_some` already rewrites the
-left-hand side to `.some (iterateFrobenius F p n x) (iterateFrobenius F p n y) _`, so this only
-records the `p ^ n`-power form of the coordinates, which `iterateFrobenius_def` supplies. -/
-theorem mapAlong_iterateFrobenius_some (n : ℕ) {x y : F}
-    (h : W.Nonsingular x y) :
-    WeierstrassCurve.Affine.Point.mapAlong (iterateFrobenius F p n)
-        (iterateFrobenius F p n).injective (.some x y h) =
-      .some (x ^ p ^ n) (y ^ p ^ n)
-        ((W.map_nonsingular (iterateFrobenius F p n).injective x y).mpr h) := by
-  simp [iterateFrobenius_def]
 
 end Isogeny
 
