@@ -224,7 +224,7 @@ theorem gradient_eq_zero_of_mapClusterPt
     filter_upwards [eventually_ge_atTop (0 : ℝ),
       NormedAddGroup.tendsto_nhds_zero.mp hzero ε hε] with t ht hlt
     exact ⟨hmaps (mem_Ici.mpr ht), mem_closedBall_zero_iff.mpr hlt.le⟩
-  have hmemx := hcl.closure_subset (hx.clusterPt.mem_closure_of_mem _ hmem)
+  have hmemx := hcl.mem_of_mapClusterPt hx hmem
   rw [Set.mem_inter_iff, Set.mem_preimage, mem_closedBall_zero_iff] at hmemx
   linarith [hmemx.2]
 
@@ -246,10 +246,12 @@ theorem exists_tendsto_atTop
     (hmaps : MapsTo γ (Ici 0) K) (hdiff : ∀ y ∈ K, DifferentiableAt ℝ f y)
     (hgrad : ContinuousOn (∇ f) K) (hfin : {y ∈ K | ∇ f y = 0}.Finite) :
     ∃ p ∈ K, ∇ f p = 0 ∧ Tendsto γ atTop (𝓝 p) := by
-  obtain ⟨p, hpK, hp⟩ := exists_mem_mapClusterPt_atTop hK hmaps
+  obtain ⟨p, hpK, hp⟩ := hK.exists_mapClusterPt
+    (le_principal_iff.mpr (mem_map.mpr (mem_of_superset (Ici_mem_atTop 0) hmaps)))
   -- The ω-limit set consists of critical points, so it is finite; and it is preconnected.
   have hsub : {y | MapClusterPt y atTop γ} ⊆ {y ∈ K | ∇ f y = 0} := fun y hy ↦
-    ⟨mem_of_mapClusterPt_atTop hK.isClosed hmaps hy,
+    ⟨hK.isClosed.mem_of_mapClusterPt hy
+        (mem_map.mpr (mem_of_superset (Ici_mem_atTop 0) hmaps)),
       gradient_eq_zero_of_mapClusterPt hγ hK hmaps hdiff hgrad hy⟩
   have hconn : IsPreconnected {y | MapClusterPt y atTop γ} :=
     isPreconnected_setOf_mapClusterPt_atTop hK hγ.continuousOn hmaps

@@ -15,9 +15,9 @@ public import TauCeti.Topology.Continuum
 
 The **ω-limit set** of a curve `u : ℝ → X` is the set of points that `u t` approaches as
 `t → ∞`: the set of cluster points of `u` along `atTop`, written `{x | MapClusterPt x atTop u}`.
-This file proves the three facts that a confined curve gives about it — it is the nested
-intersection `⋂ T, closure (u '' Ici T)` of the closures of its tails, it is nonempty, and it is
-preconnected — and the accompanying statement that it lies in any closed set the tails lie in.
+This file proves that it is the nested intersection `⋂ T, closure (u '' Ici T)` of the closures of
+its tails and that it is preconnected. Its nonemptiness for a curve confined to a compact set is
+the existing `IsCompact.exists_mapClusterPt`.
 
 Mathlib's `omegaLimit` is the ω-limit set of a *flow* `ϕ : τ → α → α` applied to a set of initial
 conditions; specialising it to a single curve would force a dummy one-point space of initial
@@ -30,9 +30,9 @@ Both hypotheses on the curve are needed for the two substantive statements. `u t
 empty ω-limit set, so confinement to a compact set is what makes it nonempty. Preconnectedness is
 where continuity enters: `u t = ⌊t⌋ % 2` is confined to `{0, 1}` and has ω-limit set `{0, 1}`.
 
-The three statements are proved by writing the ω-limit set as the intersection of the closed tails
-`closure (u '' Ici T)`, `T ≥ a`, which is a downward directed family of compact preconnected sets,
-and applying `TauCeti.isPreconnected_iInter_of_directed`.
+The substantive statements are proved by writing the ω-limit set as the intersection of the closed
+tails `closure (u '' Ici T)`, `T ≥ a`, which is a downward directed family of compact preconnected
+sets, and applying `TauCeti.isPreconnected_iInter_of_directed`.
 
 This file is written for the Morse-theoretic
 `TauCeti/Analysis/Calculus/Morse/Convergence.lean`, where the ω-limit set of a negative gradient
@@ -43,9 +43,6 @@ locus, to be a single point.
 
 * `TauCeti.setOf_mapClusterPt_atTop_eq_iInter` — the ω-limit set of a curve is the intersection of
   the closures of its tails.
-* `TauCeti.mem_of_mapClusterPt_atTop` — the ω-limit set lies in any closed set containing a tail.
-* `TauCeti.exists_mem_mapClusterPt_atTop` — a curve with a tail inside a compact set has a nonempty
-  ω-limit set, contained in that set.
 * `TauCeti.isPreconnected_setOf_mapClusterPt_atTop` — the ω-limit set of such a curve, continuous
   on the half-line carrying that tail, is preconnected.
 
@@ -62,7 +59,7 @@ namespace TauCeti
 
 open Filter Set Topology
 
-variable {X : Type*} [TopologicalSpace X] {u : ℝ → X} {K : Set X} {a : ℝ} {x : X}
+variable {X : Type*} [TopologicalSpace X] {u : ℝ → X} {K : Set X} {a : ℝ}
 
 /-- **The ω-limit set of a curve is the intersection of the closures of its tails.** The
 intersection may be taken over the tails starting at any time `T ≥ a`, since those still form a
@@ -78,23 +75,10 @@ theorem setOf_mapClusterPt_atTop_eq_iInter (u : ℝ → X) (a : ℝ) :
   rintro _ ⟨t, ht, rfl⟩
   exact hT t ((le_max_left _ _).trans ht)
 
-/-- The ω-limit set of a curve is contained in every closed set containing a tail of it. -/
-theorem mem_of_mapClusterPt_atTop {s : Set X} (hs : IsClosed s) (hmaps : MapsTo u (Ici a) s)
-    (hx : MapClusterPt x atTop u) : x ∈ s :=
-  hs.closure_subset (hx.clusterPt.mem_closure_of_mem _
-    (mem_map.mpr (mem_of_superset (Ici_mem_atTop a) hmaps)))
-
-/-- **The ω-limit set of a curve with a tail in a compact set is nonempty**, and lies in that
-set. -/
-theorem exists_mem_mapClusterPt_atTop (hK : IsCompact K) (hmaps : MapsTo u (Ici a) K) :
-    ∃ x ∈ K, MapClusterPt x atTop u :=
-  hK.exists_mapClusterPt
-    (le_principal_iff.mpr (mem_map.mpr (mem_of_superset (Ici_mem_atTop a) hmaps)))
-
 /-- **The ω-limit set of a curve with a tail in a compact set is preconnected**, provided the curve
 is continuous on the half-line carrying that tail. Together with
-`TauCeti.exists_mem_mapClusterPt_atTop` this makes the ω-limit set connected in the sense of
-`IsConnected`. -/
+`IsCompact.exists_mapClusterPt` this makes the ω-limit set connected in the sense of `IsConnected`.
+-/
 theorem isPreconnected_setOf_mapClusterPt_atTop [T2Space X] (hK : IsCompact K)
     (hu : ContinuousOn u (Ici a)) (hmaps : MapsTo u (Ici a) K) :
     IsPreconnected {x | MapClusterPt x atTop u} := by
