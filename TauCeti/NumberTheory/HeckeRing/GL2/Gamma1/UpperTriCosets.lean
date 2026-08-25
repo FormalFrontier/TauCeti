@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.BadPrimeCoset
 public import TauCeti.NumberTheory.HeckeRing.GL2.CosetDecomposition
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Diagonal.Coset
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.Basic
@@ -33,7 +34,7 @@ of the `p` right cosets. Writing `γ₂ = !![a, b; c, d]`, the candidate is
 
 `diag(1, p) · γ₂ = !![a, m; p c, d - c j] · !![1, j; 0, p]`,
 
-which asks for `p ∣ b - a j` — solvable for `j` exactly when `a` is invertible modulo `p`. That
+which asks for `p ∣ b - a j` — solvable for `j` because `a` is invertible modulo `p`. That
 is where the level enters: `γ₂ ∈ Γ₁(N)` gives `a ≡ 1 (mod N)`, so `a` is coprime to `N`, and the
 hypothesis `p.primeFactors ⊆ N.primeFactors` promotes that to coprimality with `p`. The new left
 factor lands back in `Γ₁(N)` because `N ∣ c` makes both `p c ≡ 0` and `d - c j ≡ d ≡ 1` modulo
@@ -44,8 +45,8 @@ The hypothesis is `p.primeFactors ⊆ N.primeFactors` rather than `p ∣ N` beca
 and they need not divide `N`. Divisibility is the special case, by
 `Nat.primeFactors_mono`.
 
-⚠ When some prime factor of `p` is coprime to `N` the statement is false: for `p` prime and
-`p ∤ N` the double coset has `p + 1` right cosets, the extra one represented by
+Failure is known when `p` is prime and `p ∤ N`: the double coset then has `p + 1` right cosets,
+the extra one represented by
 `!![m, n; N, p] · diag(p, 1)` for any `m p − n N = 1` (Diamond–Shurman, Proposition 5.2.1). That
 case is proved in `Gamma1/CoprimeCosets.lean` by
 `doubleCoset_natDiagGL_eq_iUnion_rightCosets_of_prime`.
@@ -211,17 +212,18 @@ a common prime factor `q` of `a` and `p` would divide `N`, hence `a - 1`, hence 
 private lemma isCoprime_of_primeFactors_subset (hp : 0 < p)
     (hpN : p.primeFactors ⊆ N.primeFactors) {a : ℤ} (ha : (N : ℤ) ∣ a - 1) :
     IsCoprime a (p : ℤ) := by
-  have hgcd : Int.gcd a (p : ℤ) = Nat.gcd a.natAbs p := by simp [Int.gcd]
-  rw [Int.isCoprime_iff_gcd_eq_one, hgcd]
-  by_contra hne
-  obtain ⟨q, hq, hqa, hqp⟩ := Nat.Prime.not_coprime_iff_dvd.mp hne
-  obtain ⟨-, hqN, -⟩ := Nat.mem_primeFactors.mp (hpN (Nat.mem_primeFactors.mpr ⟨hq, hqp, hp.ne'⟩))
-  have hqa' : (q : ℤ) ∣ a := Int.dvd_natAbs.mp (Int.natCast_dvd_natCast.mpr hqa)
-  have hq1 : (q : ℕ) ∣ 1 := by
-    have : (q : ℤ) ∣ 1 := by
-      simpa using dvd_sub hqa' ((Int.natCast_dvd_natCast.mpr hqN).trans ha)
-    exact_mod_cast this
-  exact hq.one_lt.ne' (Nat.dvd_one.mp hq1)
+  obtain ⟨c, hc⟩ := ha
+  have haN : IsCoprime a (N : ℤ) := by
+    have ha_eq : a = 1 + (N : ℤ) * c := by linarith
+    rw [ha_eq]
+    exact isCoprime_one_left.add_mul_left_left c
+  rcases eq_or_ne N 0 with rfl | hN
+  · have hp_empty : p.primeFactors = ∅ := Finset.subset_empty.mp (by simpa using hpN)
+    have hp_one : p = 1 := (Nat.primeFactors_eq_empty.mp hp_empty).resolve_left hp.ne'
+    subst p
+    exact isCoprime_one_right
+  · have hp_dvd : p ∣ N ^ p := (Nat.dvd_pow_self_iff hp.ne' hN).mpr hpN
+    exact (haN.pow_right (n := p)).of_isCoprime_of_dvd_right (by exact_mod_cast hp_dvd)
 
 /-- **The offset exists whenever the level controls the index.** For `p` with every prime factor
 dividing `N` and for `a ≡ 1 (mod N)`, the congruence `a · j ≡ b (mod p)` has a solution `j < p`,
@@ -233,13 +235,21 @@ private lemma exists_offset_of_primeFactors_subset (hp : 0 < p)
     (hpN : p.primeFactors ⊆ N.primeFactors) {a b : ℤ} (ha : (N : ℤ) ∣ a - 1) :
     ∃ j : ℕ, j < p ∧ (p : ℤ) ∣ b - a * j := by
   have hp' : (0 : ℤ) < p := by exact_mod_cast hp
-  obtain ⟨u, v, huv⟩ := isCoprime_of_primeFactors_subset hp hpN ha
-  have hj0 : (0 : ℤ) ≤ u * b % p := Int.emod_nonneg _ hp'.ne'
-  refine ⟨(u * b % p).toNat, ?_, ⟨b * v + a * (u * b / p), ?_⟩⟩
-  · have := Int.emod_lt_of_pos (u * b) hp'
+  have hgcd : Int.gcd a p = 1 :=
+    Int.isCoprime_iff_gcd_eq_one.mp (isCoprime_of_primeFactors_subset hp hpN ha)
+  obtain ⟨u, hu⟩ := exists_mod_clearing a (-b) p hgcd
+  have hj0 : (0 : ℤ) ≤ u % p := Int.emod_nonneg _ hp'.ne'
+  refine ⟨(u % p).toNat, ?_, ?_⟩
+  · have := Int.emod_lt_of_pos u hp'
     omega
-  · rw [Int.toNat_of_nonneg hj0, Int.emod_def]
-    linear_combination (-b) * huv
+  · rw [Int.toNat_of_nonneg hj0]
+    have hquot : u - u % (p : ℤ) = (p : ℤ) * (u / (p : ℤ)) := by
+      linarith [Int.mul_ediv_add_emod u (p : ℤ)]
+    have hp_ur : (p : ℤ) ∣ u - u % (p : ℤ) := hquot ▸ dvd_mul_right _ _
+    have hclear := dvd_sub hu (dvd_mul_of_dvd_left hp_ur a)
+    have hcollapse : u * a + -b - (u - u % (p : ℤ)) * a = a * (u % p) - b := by ring
+    rw [hcollapse] at hclear
+    simpa only [neg_sub] using dvd_neg.mpr hclear
 
 /-- **The forward factorisation at an index supported on the level.** If every prime factor of
 `p` divides `N`, then for `γ ∈ Γ₁(N)` the product `diag(1, p) · γ` lies in one of the `p` right

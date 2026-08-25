@@ -184,7 +184,8 @@ lemma upperTriRep_mul_upperTriRep {n m : ℕ} (b' : Fin n) (b : Fin m) :
     upperTriRep n b' * upperTriRep m b = upperTriRep (n * m) (finProdFinEquiv (b', b)) := by
   refine Units.ext ?_
   rw [Units.val_mul, coe_upperTriRep, coe_upperTriRep, coe_upperTriRep, Matrix.mul_fin_two]
-  have hval : ((finProdFinEquiv (b', b) : Fin (n * m)) : ℕ) = (b : ℕ) + m * (b' : ℕ) := rfl
+  have hval : ((finProdFinEquiv (b', b) : Fin (n * m)) : ℕ) = (b : ℕ) + m * (b' : ℕ) :=
+    finProdFinEquiv_apply_val (b', b)
   rw [hval]
   congrm !![?_, ?_; ?_, ?_] <;> push_cast <;> ring1
 

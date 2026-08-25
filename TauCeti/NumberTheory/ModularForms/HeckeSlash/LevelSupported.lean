@@ -5,14 +5,15 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.ModularForms.HeckeSlash.BadPrime
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Operators
 
 /-!
 # The Hecke operators at an index supported on the level
 
 Call a positive integer `n` *supported on the level* `N` when every prime factor of `n` divides
-`N`, that is `n.primeFactors ⊆ N.primeFactors`. These are exactly the indices at which the
-double coset `Γ₁(N) · diag(1, n) · Γ₁(N)` decomposes into the `n` upper-triangular right cosets
+`N`, that is `n.primeFactors ⊆ N.primeFactors`. These are the indices at which the decomposition
+proved here writes the double coset `Γ₁(N) · diag(1, n) · Γ₁(N)` as `n` upper-triangular right
+cosets
 `Γ₁(N) · !![1, b; 0, n]` — no further coset appears, as it does at a prime `p ∤ N`. The prime
 powers `p ^ r` with `p ∣ N` are supported on the level whether or not they divide it, and they
 are the reason this regime is worth naming: `p ∣ N` alone does not reach `T_{p²}`.
@@ -45,17 +46,14 @@ recurrence of `UpperTri/ModularForm.lean` at every level-supported index.
   `HeckeRing.GL2.coe_heckeTCuspNat_of_primeFactors_subset`: at an index supported on the level,
   `T_n` is the upper-triangular sum.
 * `HeckeRing.GL2.heckeTNat_mul_of_primeFactors_subset` and its cusp-form counterpart:
-  `T_{n m} = T_m ∘ T_n` for two indices supported on the level, with
+  `T_{n m} = T_n ∘ T_m` for two indices supported on the level, with
   `HeckeRing.GL2.commute_heckeTNat_of_primeFactors_subset` recording that such operators
   commute.
-* `HeckeRing.GL2.heckeTNat_congr` and its cusp-form counterpart: transport along an equality of
-  indices, the rewrite the `NeZero` index argument would otherwise block.
-* `HeckeRing.GL2.heckeTNat_pow_of_primeFactors_subset` and
-  `HeckeRing.GL2.heckeTNat_prime_pow`: **`T_{p^r} = T_p ^ r` at `p ∣ N`**, on modular and on
-  cusp forms.
-* `HeckeRing.GL2.heckeSlashUpperTri_slash_mapGL_of_nebentypus_of_primeFactors_subset`: the
-  function-level nebentypus transport, proved by peeling off the least prime factor of the
-  index, and `HeckeRing.GL2.heckeTNat_mem_modFormCharSpace_of_primeFactors_subset` with its
+* `HeckeRing.GL2.heckeTNat_pow_of_primeFactors_subset`: `T_{n^r} = T_n ^ r` at every
+  level-supported index, with its cusp-form counterpart.
+* `HeckeRing.GL2.heckeTNat_pow_of_prime_dvd`: **`T_{p^r} = T_p ^ r` at `p ∣ N`**, with its
+  cusp-form counterpart.
+* `HeckeRing.GL2.heckeTNat_mem_modFormCharSpace_of_primeFactors_subset` with its
   cusp-form counterpart: the operator preserves `M_k(N, χ)` and `S_k(N, χ)`.
 * `HeckeRing.GL2.qExpansion_coeff_heckeTNat_of_primeFactors_subset` and its cusp-form
   counterpart: `aₘ(T_n f) = a_{n m}(f)`.
@@ -106,20 +104,6 @@ theorem coe_heckeTCuspNat_of_primeFactors_subset (n : ℕ) [NeZero n]
   rw [coe_heckeTCuspNat]
   exact heckeSlashSum_diagCosetGamma1 k (Nat.pos_of_ne_zero (NeZero.ne n)) hn f
 
-/-- **Transport `T_n` along an equality of indices.** The `NeZero` side condition is a `Prop`, so
-the two operators are the same object; the lemma exists because rewriting the index *inside*
-`heckeTNat` would leave the instance argument stranded at the old index. -/
-lemma heckeTNat_congr {n m : ℕ} [NeZero n] [NeZero m] (h : n = m) :
-    heckeTNat (N := N) k n = heckeTNat (N := N) k m := by
-  subst h
-  rfl
-
-/-- **Transport the cusp-form `T_n` along an equality of indices.** -/
-lemma heckeTCuspNat_congr {n m : ℕ} [NeZero n] [NeZero m] (h : n = m) :
-    heckeTCuspNat (N := N) k n = heckeTCuspNat (N := N) k m := by
-  subst h
-  rfl
-
 omit [NeZero N] in
 /-- A product of two indices supported on the level is supported on the level. -/
 private lemma primeFactors_mul_subset {n m : ℕ} [NeZero n] [NeZero m]
@@ -128,7 +112,7 @@ private lemma primeFactors_mul_subset {n m : ℕ} [NeZero n] [NeZero m]
   rw [Nat.primeFactors_mul (NeZero.ne n) (NeZero.ne m)]
   exact Finset.union_subset hn hm
 
-/-- **The Hecke operators at indices supported on the level multiply**: `T_{n m} = T_m ∘ T_n`
+/-- **The Hecke operators at indices supported on the level multiply**: `T_{n m} = T_n ∘ T_m`
 on `M_k(Γ₁(N))`.
 
 Both sides are upper-triangular sums, and `upperTriRep_mul_upperTriRep` matches the pairs of
@@ -137,21 +121,23 @@ coprimality statement: `n` and `m` share the level's primes by hypothesis, and t
 holds for `n = m` in particular. -/
 theorem heckeTNat_mul_of_primeFactors_subset {n m : ℕ} [NeZero n] [NeZero m]
     (hn : n.primeFactors ⊆ N.primeFactors) (hm : m.primeFactors ⊆ N.primeFactors) :
-    heckeTNat (N := N) k (n * m) = heckeTNat (N := N) k m * heckeTNat (N := N) k n :=
+    heckeTNat (N := N) k (n * m) = heckeTNat (N := N) k n * heckeTNat (N := N) k m :=
   LinearMap.ext fun f ↦ DFunLike.ext' <| by
     rw [coe_heckeTNat_of_primeFactors_subset k _ (primeFactors_mul_subset hn hm),
-      Module.End.mul_apply, coe_heckeTNat_of_primeFactors_subset k m hm,
-      coe_heckeTNat_of_primeFactors_subset k n hn, heckeSlashUpperTri_heckeSlashUpperTri]
+      Module.End.mul_apply, coe_heckeTNat_of_primeFactors_subset k n hn,
+      coe_heckeTNat_of_primeFactors_subset k m hm, heckeSlashUpperTri_heckeSlashUpperTri,
+      mul_comm m n]
 
 /-- **The cusp-form Hecke operators at indices supported on the level multiply**:
-`T_{n m} = T_m ∘ T_n` on `S_k(Γ₁(N))`. -/
+`T_{n m} = T_n ∘ T_m` on `S_k(Γ₁(N))`. -/
 theorem heckeTCuspNat_mul_of_primeFactors_subset {n m : ℕ} [NeZero n] [NeZero m]
     (hn : n.primeFactors ⊆ N.primeFactors) (hm : m.primeFactors ⊆ N.primeFactors) :
-    heckeTCuspNat (N := N) k (n * m) = heckeTCuspNat (N := N) k m * heckeTCuspNat (N := N) k n :=
+    heckeTCuspNat (N := N) k (n * m) = heckeTCuspNat (N := N) k n * heckeTCuspNat (N := N) k m :=
   LinearMap.ext fun f ↦ DFunLike.ext' <| by
     rw [coe_heckeTCuspNat_of_primeFactors_subset k _ (primeFactors_mul_subset hn hm),
-      Module.End.mul_apply, coe_heckeTCuspNat_of_primeFactors_subset k m hm,
-      coe_heckeTCuspNat_of_primeFactors_subset k n hn, heckeSlashUpperTri_heckeSlashUpperTri]
+      Module.End.mul_apply, coe_heckeTCuspNat_of_primeFactors_subset k n hn,
+      coe_heckeTCuspNat_of_primeFactors_subset k m hm, heckeSlashUpperTri_heckeSlashUpperTri,
+      mul_comm m n]
 
 /-- **The Hecke operators at indices supported on the level commute.** Both orders compute the
 operator at the product index, and the product of indices is commutative. This is the
@@ -159,17 +145,17 @@ commuting family the simultaneous-diagonalisation arguments consume at the bad p
 theorem commute_heckeTNat_of_primeFactors_subset {n m : ℕ} [NeZero n] [NeZero m]
     (hn : n.primeFactors ⊆ N.primeFactors) (hm : m.primeFactors ⊆ N.primeFactors) :
     Commute (heckeTNat (N := N) k n) (heckeTNat (N := N) k m) := by
-  rw [Commute, SemiconjBy, ← heckeTNat_mul_of_primeFactors_subset k hm hn,
-    ← heckeTNat_mul_of_primeFactors_subset k hn hm]
-  exact heckeTNat_congr k (mul_comm m n)
+  rw [Commute, SemiconjBy, ← heckeTNat_mul_of_primeFactors_subset k hn hm,
+    ← heckeTNat_mul_of_primeFactors_subset k hm hn]
+  exact heckeTNat_congr k (mul_comm n m)
 
 /-- **The cusp-form Hecke operators at indices supported on the level commute.** -/
 theorem commute_heckeTCuspNat_of_primeFactors_subset {n m : ℕ} [NeZero n] [NeZero m]
     (hn : n.primeFactors ⊆ N.primeFactors) (hm : m.primeFactors ⊆ N.primeFactors) :
     Commute (heckeTCuspNat (N := N) k n) (heckeTCuspNat (N := N) k m) := by
-  rw [Commute, SemiconjBy, ← heckeTCuspNat_mul_of_primeFactors_subset k hm hn,
-    ← heckeTCuspNat_mul_of_primeFactors_subset k hn hm]
-  exact heckeTCuspNat_congr k (mul_comm m n)
+  rw [Commute, SemiconjBy, ← heckeTCuspNat_mul_of_primeFactors_subset k hn hm,
+    ← heckeTCuspNat_mul_of_primeFactors_subset k hm hn]
+  exact heckeTCuspNat_congr k (mul_comm n m)
 
 omit [NeZero N] in
 /-- A power of an index supported on the level is supported on the level. -/
@@ -188,7 +174,7 @@ theorem heckeTNat_pow_of_primeFactors_subset {n : ℕ} [NeZero n]
   | zero => rw [heckeTNat_congr k (pow_zero n), heckeTNat_one, pow_zero]
   | succ r ih =>
       rw [heckeTNat_congr k (pow_succ n r),
-        heckeTNat_mul_of_primeFactors_subset k (primeFactors_pow_subset hn r) hn, ih, pow_succ']
+        heckeTNat_mul_of_primeFactors_subset k (primeFactors_pow_subset hn r) hn, ih, pow_succ]
 
 /-- **`T_{n^r} = T_n ^ r` on cusp forms, at an index supported on the level.** -/
 theorem heckeTCuspNat_pow_of_primeFactors_subset {n : ℕ} [NeZero n]
@@ -199,7 +185,7 @@ theorem heckeTCuspNat_pow_of_primeFactors_subset {n : ℕ} [NeZero n]
   | succ r ih =>
       rw [heckeTCuspNat_congr k (pow_succ n r),
         heckeTCuspNat_mul_of_primeFactors_subset k (primeFactors_pow_subset hn r) hn, ih,
-        pow_succ']
+        pow_succ]
 
 /-- **`T_{p^r} = T_p ^ r` at a prime `p ∣ N`**, on `M_k(Γ₁(N))`.
 
@@ -207,14 +193,14 @@ This is the degenerate case of the prime-power recurrence
 `T_{p^{r+2}} = T_p T_{p^{r+1}} − p^{k−1} ⟨p⟩ T_{p^r}`: the zero-extended diamond `⟨p⟩` vanishes
 at `p ∣ N`, leaving `T_{p^{r+1}} = T_p T_{p^r}`. Read through `heckeUNat_eq_heckeTNat` the
 statement is `T_{p^r} = U_p ^ r`; there is no second operator. -/
-theorem heckeTNat_prime_pow (hp : p.Prime) (hpN : p ∣ N) (r : ℕ) :
+theorem heckeTNat_pow_of_prime_dvd (hp : p.Prime) (hpN : p ∣ N) (r : ℕ) :
     heckeTNat (N := N) k (p ^ r) (_hn := ⟨pow_ne_zero r hp.ne_zero⟩)
       = heckeTNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) ^ r :=
   let _ : NeZero p := ⟨hp.ne_zero⟩
   heckeTNat_pow_of_primeFactors_subset k (Nat.primeFactors_mono hpN (NeZero.ne N)) r
 
 /-- **`T_{p^r} = T_p ^ r` at a prime `p ∣ N`**, on `S_k(Γ₁(N))`. -/
-theorem heckeTCuspNat_prime_pow (hp : p.Prime) (hpN : p ∣ N) (r : ℕ) :
+theorem heckeTCuspNat_pow_of_prime_dvd (hp : p.Prime) (hpN : p ∣ N) (r : ℕ) :
     heckeTCuspNat (N := N) k (p ^ r) (_hn := ⟨pow_ne_zero r hp.ne_zero⟩)
       = heckeTCuspNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) ^ r :=
   let _ : NeZero p := ⟨hp.ne_zero⟩
@@ -223,45 +209,6 @@ theorem heckeTCuspNat_prime_pow (hp : p.Prime) (hpN : p ∣ N) (r : ℕ) :
 section Nebentypus
 
 variable (χ : (ZMod N)ˣ →* ℂˣ)
-
-omit [NeZero N] in
-/-- **The upper-triangular sum preserves the nebentypus at every index supported on the level.**
-If `f` transforms under `Γ₀(N)` by the character `χ`, so does `heckeSlashUpperTri k n f`.
-
-`UpperTri/Invariance.lean` proves this at a divisor `q ∣ N`, where the `Γ₀(N)`-action permutes
-the `q` representatives. That argument does **not** run at `n = q ^ 2`, since `Γ₀(N)` need not lie
-in `Γ₀(q ^ 2)`. Instead the index is peeled apart one prime at a time: `n = (n / q) · q` for `q`
-the least prime factor of `n`, which divides `N` because it divides `n`, and the composition law
-`heckeSlashUpperTri_heckeSlashUpperTri` turns the `n`-term sum into the `q`-term sum of the
-`(n / q)`-term sum. -/
-theorem heckeSlashUpperTri_slash_mapGL_of_nebentypus_of_primeFactors_subset (n : ℕ)
-    (hn0 : n ≠ 0) (hn : n.primeFactors ⊆ N.primeFactors) (γ : ↥(Gamma0 N)) {f : ℍ → ℂ}
-    (hf : ∀ δ : ↥(Gamma0 N), f ∣[k] (mapGL ℚ (δ : SL(2, ℤ)) : GL (Fin 2) ℚ)
-      = (↑(χ ((Gamma0Map N).toHomUnits δ)) : ℂ) • f) :
-    heckeSlashUpperTri k n f ∣[k] (mapGL ℚ (γ : SL(2, ℤ)) : GL (Fin 2) ℚ)
-      = (↑(χ ((Gamma0Map N).toHomUnits γ)) : ℂ) • heckeSlashUpperTri k n f := by
-  induction n using Nat.strong_induction_on generalizing γ with
-  | _ n ih =>
-    rcases eq_or_ne n 1 with rfl | hn1
-    · rw [heckeSlashUpperTri_one]
-      exact hf γ
-    · have hq : n.minFac.Prime := Nat.minFac_prime hn1
-      have hqn : n.minFac ∣ n := Nat.minFac_dvd n
-      have hqN : n.minFac ∣ N :=
-        (Nat.mem_primeFactors.mp (hn (Nat.mem_primeFactors.mpr ⟨hq, hqn, hn0⟩))).2.1
-      have hm0 : n / n.minFac ≠ 0 :=
-        (Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero hn0) hqn) hq.pos).ne'
-      have hmlt : n / n.minFac < n := Nat.div_lt_self (Nat.pos_of_ne_zero hn0) hq.one_lt
-      have hmn : (n / n.minFac).primeFactors ⊆ N.primeFactors :=
-        (Nat.primeFactors_mono (Nat.div_dvd_of_dvd hqn) hn0).trans hn
-      have _ : NeZero n.minFac := ⟨hq.ne_zero⟩
-      have key : heckeSlashUpperTri k n f
-          = heckeSlashUpperTri k n.minFac (heckeSlashUpperTri k (n / n.minFac) f) := by
-        rw [heckeSlashUpperTri_heckeSlashUpperTri k n.minFac (n / n.minFac) f,
-          Nat.div_mul_cancel hqn]
-      rw [key]
-      exact heckeSlashUpperTri_slash_mapGL_of_nebentypus k hqN χ γ
-        fun δ ↦ ih _ hmlt hm0 hmn δ
 
 /-- **`T_n` preserves the nebentypus at every index supported on the level**: it maps
 `M_k(N, χ)` into itself. Not an assumption but a theorem, as the ModularForms roadmap asks of

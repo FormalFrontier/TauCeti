@@ -118,7 +118,7 @@ family; that map is a bijection, so each composite representative occurs exactly
 
 No divisibility, primality or level hypothesis enters: this is an identity of finite sums of
 slashes, valid for every `f : ℍ → ℂ`. -/
-lemma heckeSlashUpperTri_heckeSlashUpperTri (n : ℕ) (f : ℍ → ℂ) :
+@[simp] lemma heckeSlashUpperTri_heckeSlashUpperTri (n : ℕ) (f : ℍ → ℂ) :
     heckeSlashUpperTri k p (heckeSlashUpperTri k n f) = heckeSlashUpperTri k (n * p) f := by
   have hstep : ∀ b : Fin p, heckeSlashUpperTri k n f ∣[k] upperTriRep p b =
       ∑ b' : Fin n, f ∣[k] upperTriRep (n * p) (finProdFinEquiv (b', b)) := fun b ↦ by

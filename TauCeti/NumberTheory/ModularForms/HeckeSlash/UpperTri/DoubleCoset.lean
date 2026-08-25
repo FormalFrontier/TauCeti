@@ -37,16 +37,17 @@ is `HeckeRing/GL2/Gamma1/UpperTriCosets.lean`: at `p ∣ N` the `p` cosets
 those in turns the abstract sum into `heckeSlashUpperTri`, and the two bundled endomorphisms
 then agree because both are that function on the underlying `ℍ → ℂ`.
 
-## Why `p ∣ N` and no primality
+## Why level-supportedness, and the bundled `p ∣ N` case
 
-`p ∣ N` is what makes the `p` upper-triangular representatives exhaust the coset; for `p ∤ N` and
-`p` prime there is one further coset and the identification below is false as stated. No
-primality is needed anywhere: at `p ∣ N` the count is `p` for every `p`, prime or not.
+The condition `p.primeFactors ⊆ N.primeFactors` makes the `p` upper-triangular representatives
+exhaust the coset; for `p ∤ N` and `p` prime there is one further coset and the identification
+below is false as stated. No primality is needed anywhere.
 
 The function-level statement `heckeSlashSum_diagCosetGamma1` is proved under the weaker
 hypothesis the coset decomposition actually uses — every prime factor of `p` divides `N` — since
 the prime powers `q ^ r` with `q ∣ N` satisfy it without dividing `N`. The two bundled operators
-stay at `p ∣ N`, because `heckeSlashUpperTriModularFormEnd` is only constructed there.
+stay at the special case `p ∣ N`, because `heckeSlashUpperTriModularFormEnd` is only constructed
+there.
 
 Following Miyake, Diamond–Shurman and Shimura, no separate `Uₚ` is introduced — this *is* `Tₚ` at
 `p ∣ N`, and the identification proved here is what lets literature stated in either vocabulary be
