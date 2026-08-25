@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Adjoint.RootSpace
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Cocharacter
 public import TauCeti.LinearAlgebra.RootSystem.Reduced
-public import Mathlib.LinearAlgebra.RootSystem.Basic
+import Mathlib.LinearAlgebra.RootSystem.Basic
 
 /-!
 # The root datum of the diagonal torus in the general linear group
@@ -113,45 +113,20 @@ private theorem diagonalRoot_injective {n : ℕ} :
 
 private theorem diagonalCoroot_injective {n : ℕ} :
     Injective (diagonalCoroot : DiagonalRootIndex n → ULift.{u} (Fin n) → ℤ) := by
-  rintro ⟨⟨i, j⟩, hij⟩ ⟨⟨a, b⟩, hab⟩ h
-  have hi := congrArg (fun x : ULift.{u} (Fin n) → ℤ ↦ x (ULift.up i)) h
-  have hj := congrArg (fun x : ULift.{u} (Fin n) → ℤ ↦ x (ULift.up j)) h
-  have hia : i = a := by
-    by_contra hne
-    by_cases hib : i = b
-    · subst b
-      simp [diagonalCoroot_apply, hij, hne] at hi
-    · simp [diagonalCoroot_apply, hij, hne, hib] at hi
-  subst a
-  have hjb : j = b := by
-    by_contra hne
-    simp [diagonalCoroot_apply, hne] at hj
-  subst b
-  rfl
+  intro p q h
+  apply diagonalRoot_injective
+  ext a
+  simpa only [diagonalRoot_apply, diagonalCoroot_apply] using congrFun h a
 
-/-- The roots `e_i - e_j`, as an embedding of the off-diagonal index set into the character
-lattice of the diagonal torus. -/
-def diagonalRootEmbedding (n : ℕ) :
+/-- The private root embedding used to construct `diagonalRootDatum`. -/
+private def diagonalRootEmbedding (n : ℕ) :
     DiagonalRootIndex n ↪ ULift.{u} (Fin n) →₀ ℤ :=
   ⟨diagonalRoot, diagonalRoot_injective⟩
 
-/-- The coroots `e_i - e_j`, as an embedding of the off-diagonal index set into the cocharacter
-lattice of the diagonal torus. -/
-def diagonalCorootEmbedding (n : ℕ) :
+/-- The private coroot embedding used to construct `diagonalRootDatum`. -/
+private def diagonalCorootEmbedding (n : ℕ) :
     DiagonalRootIndex n ↪ ULift.{u} (Fin n) → ℤ :=
   ⟨diagonalCoroot, diagonalCoroot_injective⟩
-
-@[simp]
-theorem diagonalRootEmbedding_apply {n : ℕ} (p : DiagonalRootIndex n) :
-    (diagonalRootEmbedding n : DiagonalRootIndex n ↪ ULift.{u} (Fin n) →₀ ℤ) p =
-      diagonalRoot p :=
-  (rfl)
-
-@[simp]
-theorem diagonalCorootEmbedding_apply {n : ℕ} (p : DiagonalRootIndex n) :
-    (diagonalCorootEmbedding n : DiagonalRootIndex n ↪ ULift.{u} (Fin n) → ℤ) p =
-      diagonalCoroot p :=
-  (rfl)
 
 /-- Simultaneously transposing the two entries of a root index by the reflection associated to
 `p`. Distinctness is preserved because a transposition is injective. -/
@@ -215,11 +190,11 @@ noncomputable def diagonalRootDatum (n : ℕ) :
   RootPairing.mk' SplitTorus.dotPairing (diagonalRootEmbedding n)
     (diagonalCorootEmbedding n) diagonalRoot_coroot_two
     (fun p x ⟨q, hq⟩ ↦ ⟨diagonalReflectionIndex p q, by
-      simp only [diagonalRootEmbedding_apply] at hq ⊢
+      simp only [diagonalRootEmbedding] at hq ⊢
       rw [← hq]
       exact (diagonalRoot_reflection p q).symm⟩)
     (fun p x ⟨q, hq⟩ ↦ ⟨diagonalReflectionIndex p q, by
-      simp only [diagonalCorootEmbedding_apply] at hq ⊢
+      simp only [diagonalCorootEmbedding] at hq ⊢
       rw [← hq]
       exact (diagonalCoroot_reflection p q).symm⟩)
 
