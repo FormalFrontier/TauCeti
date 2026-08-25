@@ -45,6 +45,9 @@ below that need `TauCeti.BilinForm.ofTensor_surjective` anyway discharge it.
 
 * `ContRepresentation.invariantsEquivInvariantForms`: in finite dimensions, the invariants of the
   tensor square **are** the invariant forms, conjugate-linearly.
+* `ContRepresentation.symmetricSquareInvariantsEquivSymmetricInvariantForms` and
+  `ContRepresentation.exteriorSquareInvariantsEquivAlternatingInvariantForms`: the same for the two
+  squares, whose invariants are the invariant **symmetric**, respectively **alternating**, forms.
 
 ## Main statements
 
@@ -63,7 +66,9 @@ below that need `TauCeti.BilinForm.ofTensor_surjective` anyway discharge it.
 
 The last two statements are two readings of one argument, which is why they are both deduced from
 the private `ContRepresentation.exists_isInvariantForm_ne_zero_iff`, stated for an arbitrary
-subrepresentation of the tensor square cut out by a property of the corresponding forms.
+subrepresentation of the tensor square cut out by a property of the corresponding forms. The two
+equivalences for the squares are read off the same shape, from the private
+`ContRepresentation.invariantsEquivOfMemIff`.
 
 ## References
 
@@ -125,9 +130,12 @@ private theorem mem_invariants_of_isInvariantForm_ofTensor (hπ : IsUnitary π)
   rw [LinearMap.zero_apply, LinearMap.zero_apply, BilinForm.ofTensor_apply, inner_sub_left, key]
   exact sub_self _
 
-/-- **The invariant tensors of the tensor square are the invariant forms.** The surjectivity
-hypothesis holds for a group representation in every dimension, and for a unitary representation of
-any monoid in finite dimensions (`TauCeti.ContRepresentation.IsUnitary.surjective`). -/
+/-- **The form of a tensor is invariant exactly when the tensor is invariant.** This is a statement
+about one tensor at a time; that *every* invariant form is the form of an invariant tensor is
+`TauCeti.ContRepresentation.map_ofTensor_invariants`, which needs finite dimensions. The
+surjectivity hypothesis holds for a group representation in every dimension, and for a unitary
+representation of any monoid in finite dimensions
+(`TauCeti.ContRepresentation.IsUnitary.surjective`). -/
 @[simp, grind =]
 theorem isInvariantForm_ofTensor_iff (hπ : IsUnitary π)
     (hsurj : ∀ g : G, Function.Surjective (π g)) {t : V ⊗[𝕜] V} :
@@ -162,6 +170,88 @@ theorem coe_invariantsEquivInvariantForms_apply [FiniteDimensional 𝕜 V] (hπ 
     (invariantsEquivInvariantForms π hπ t : BilinForm 𝕜 V) =
       BilinForm.ofTensor (t : V ⊗[𝕜] V) := by
   simp [invariantsEquivInvariantForms]
+
+/-- The invariant forms with a property `P` are the image of the invariants of the subrepresentation
+of the tensor square that `P` cuts out. Both squares are such a subrepresentation, for `P = IsSymm`
+and for `P = IsAlt`. -/
+private theorem map_ofTensor_map_subtype_invariants [FiniteDimensional 𝕜 V] (hπ : IsUnitary π)
+    {W : Submodule 𝕜 (V ⊗[𝕜] V)} {σ : ContRepresentation 𝕜 G W}
+    (hσ : ∀ x : W, x ∈ σ.invariants ↔ (x : V ⊗[𝕜] V) ∈ (tprod π π).invariants)
+    {P : BilinForm 𝕜 V → Prop} (hP : ∀ t : V ⊗[𝕜] V, P (BilinForm.ofTensor t) ↔ t ∈ W)
+    {S : Submodule 𝕜 (BilinForm 𝕜 V)}
+    (hS : ∀ B : BilinForm 𝕜 V,
+      B ∈ S ↔ Representation.IsInvariantForm π.toRepresentation B ∧ P B) :
+    Submodule.map (BilinForm.ofTensor : V ⊗[𝕜] V →ₛₗ[starRingEnd 𝕜] BilinForm 𝕜 V)
+        (Submodule.map W.subtype σ.invariants) = S := by
+  refine Submodule.ext fun B => ⟨?_, fun hB => ?_⟩
+  · rintro ⟨_, ⟨x, hx, rfl⟩, rfl⟩
+    exact (hS _).mpr ⟨isInvariantForm_ofTensor π hπ ((hσ x).mp hx), (hP _).mpr x.2⟩
+  · obtain ⟨hBinv, hPB⟩ := (hS B).mp hB
+    obtain ⟨t, rfl⟩ := BilinForm.ofTensor_surjective B
+    exact ⟨t, ⟨⟨t, (hP t).mp hPB⟩,
+      (hσ _).mpr ((isInvariantForm_ofTensor_iff π hπ hπ.surjective).mp hBinv), rfl⟩, rfl⟩
+
+/-- The invariants of such a subrepresentation, conjugate-linearly, as the invariant forms with the
+property `P` that cuts it out. -/
+private noncomputable def invariantsEquivOfMemIff [FiniteDimensional 𝕜 V] (hπ : IsUnitary π)
+    {W : Submodule 𝕜 (V ⊗[𝕜] V)} {σ : ContRepresentation 𝕜 G W}
+    (hσ : ∀ x : W, x ∈ σ.invariants ↔ (x : V ⊗[𝕜] V) ∈ (tprod π π).invariants)
+    {P : BilinForm 𝕜 V → Prop} (hP : ∀ t : V ⊗[𝕜] V, P (BilinForm.ofTensor t) ↔ t ∈ W)
+    {S : Submodule 𝕜 (BilinForm 𝕜 V)}
+    (hS : ∀ B : BilinForm 𝕜 V,
+      B ∈ S ↔ Representation.IsInvariantForm π.toRepresentation B ∧ P B) :
+    σ.invariants ≃ₛₗ[starRingEnd 𝕜] S :=
+  ((Submodule.equivMapOfInjective W.subtype (Submodule.injective_subtype W)
+    σ.invariants).trans (BilinForm.ofTensorEquiv.submoduleMap _)).trans
+      (LinearEquiv.ofEq _ _ (by
+        rw [BilinForm.coe_ofTensorEquiv]
+        exact map_ofTensor_map_subtype_invariants π hπ hσ hP hS))
+
+/-- The form underlying an invariant tensor of such a subrepresentation, which is what the two
+`@[simp]` lemmas below record for the two squares. -/
+private theorem coe_invariantsEquivOfMemIff_apply [FiniteDimensional 𝕜 V] (hπ : IsUnitary π)
+    {W : Submodule 𝕜 (V ⊗[𝕜] V)} {σ : ContRepresentation 𝕜 G W}
+    (hσ : ∀ x : W, x ∈ σ.invariants ↔ (x : V ⊗[𝕜] V) ∈ (tprod π π).invariants)
+    {P : BilinForm 𝕜 V → Prop} (hP : ∀ t : V ⊗[𝕜] V, P (BilinForm.ofTensor t) ↔ t ∈ W)
+    {S : Submodule 𝕜 (BilinForm 𝕜 V)}
+    (hS : ∀ B : BilinForm 𝕜 V,
+      B ∈ S ↔ Representation.IsInvariantForm π.toRepresentation B ∧ P B)
+    (x : σ.invariants) :
+    (invariantsEquivOfMemIff π hπ hσ hP hS x : BilinForm 𝕜 V) =
+      BilinForm.ofTensor ((x : W) : V ⊗[𝕜] V) := by
+  simp [invariantsEquivOfMemIff]
+
+/-- **The invariants of the symmetric square are the invariant symmetric forms**,
+conjugate-linearly: the equivalence `TauCeti.BilinForm.ofTensorEquiv` restricted to them. -/
+noncomputable def symmetricSquareInvariantsEquivSymmetricInvariantForms [FiniteDimensional 𝕜 V]
+    (hπ : IsUnitary π) :
+    (symmetricSquare π).invariants ≃ₛₗ[starRingEnd 𝕜]
+      Representation.symmetricInvariantForms π.toRepresentation :=
+  invariantsEquivOfMemIff π hπ (fun _ => mem_invariants_symmetricSquare_iff π)
+    (fun _ => BilinForm.isSymm_ofTensor_iff) fun _ => Representation.mem_symmetricInvariantForms
+
+@[simp]
+theorem coe_symmetricSquareInvariantsEquivSymmetricInvariantForms_apply [FiniteDimensional 𝕜 V]
+    (hπ : IsUnitary π) (x : (symmetricSquare π).invariants) :
+    (symmetricSquareInvariantsEquivSymmetricInvariantForms π hπ x : BilinForm 𝕜 V) =
+      BilinForm.ofTensor ((x : symmetricTensors 𝕜 V) : V ⊗[𝕜] V) :=
+  coe_invariantsEquivOfMemIff_apply π hπ _ _ _ x
+
+/-- **The invariants of the exterior square are the invariant alternating forms**,
+conjugate-linearly: the equivalence `TauCeti.BilinForm.ofTensorEquiv` restricted to them. -/
+noncomputable def exteriorSquareInvariantsEquivAlternatingInvariantForms [FiniteDimensional 𝕜 V]
+    (hπ : IsUnitary π) :
+    (exteriorSquare π).invariants ≃ₛₗ[starRingEnd 𝕜]
+      Representation.alternatingInvariantForms π.toRepresentation :=
+  invariantsEquivOfMemIff π hπ (fun _ => mem_invariants_exteriorSquare_iff π)
+    (fun _ => BilinForm.isAlt_ofTensor_iff) fun _ => Representation.mem_alternatingInvariantForms
+
+@[simp]
+theorem coe_exteriorSquareInvariantsEquivAlternatingInvariantForms_apply [FiniteDimensional 𝕜 V]
+    (hπ : IsUnitary π) (x : (exteriorSquare π).invariants) :
+    (exteriorSquareInvariantsEquivAlternatingInvariantForms π hπ x : BilinForm 𝕜 V) =
+      BilinForm.ofTensor ((x : antisymmetricTensors 𝕜 V) : V ⊗[𝕜] V) :=
+  coe_invariantsEquivOfMemIff_apply π hπ _ _ _ x
 
 /-- A nonzero invariant form with a property `P` is the same thing as a nonzero invariant tensor of
 the subrepresentation of the tensor square that `P` cuts out. Both squares are such a

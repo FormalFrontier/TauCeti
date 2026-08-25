@@ -105,6 +105,7 @@ theorem ofTensor_eq_zero_iff {t : V ⊗[𝕜] V} : ofTensor t = 0 ↔ t = 0 :=
   map_eq_zero_iff _ ofTensor_injective
 
 /-- **The flip of the tensor square is the flip of the form.** -/
+@[simp]
 theorem ofTensor_comm (t : V ⊗[𝕜] V) :
     ofTensor (TensorProduct.comm 𝕜 V V t) = BilinForm.flipHom (ofTensor t) := by
   refine LinearMap.ext fun v => LinearMap.ext fun w => ?_

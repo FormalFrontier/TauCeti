@@ -42,9 +42,10 @@ Two facts about an irreducible representation supply the rest, and both are cons
 representation is automatically nondegenerate
 (`TauCeti.Representation.IsInvariantForm.nondegenerate`), which is why the statements below ask for
 nondegeneracy rather than for nonvanishing; and over an algebraically closed field away from
-characteristic two a nonzero invariant form is symmetric or alternating
-(`TauCeti.Representation.IsInvariantForm.isSymm_or_isAlt`), which is what makes the vanishing case
-`ν₂ = 0` say that there is no invariant form at all.
+characteristic two it carries a nonzero invariant symmetric form, a nonzero invariant alternating
+one, or no nonzero invariant form at all
+(`TauCeti.Representation.exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot`), which is what
+makes the vanishing case `ν₂ = 0` say that there is no invariant form at all.
 
 This is the compact-group mirror of the finite-group
 `TauCeti.Representation.frobeniusSchurIndicator_eq_one_iff` and its companions in
@@ -158,29 +159,29 @@ theorem frobeniusSchurIndicator_eq_neg_one_iff (hunitary : IsUnitary π)
 representation of a compact group has Frobenius-Schur indicator `0` exactly when it carries no
 nonzero invariant bilinear form at all.
 
-Over `ℂ` a nonzero invariant form on an irreducible representation is symmetric or alternating
-(`TauCeti.Representation.IsInvariantForm.isSymm_or_isAlt`), so the two preceding theorems account
-for every invariant form, and the trichotomy leaves nothing else for the indicator to be. -/
+Over `ℂ` an irreducible representation carries a nonzero invariant symmetric form, a nonzero
+invariant alternating one, or no nonzero invariant form at all
+(`TauCeti.Representation.exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot`), so the two
+preceding theorems account for every invariant form, and the trichotomy leaves nothing else for the
+indicator to be. -/
 theorem frobeniusSchurIndicator_eq_zero_iff (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 0 ↔
       Representation.invariantForms π.toRepresentation = ⊥ := by
   constructor
   · intro h0
-    refine le_antisymm (fun B hB => ?_) bot_le
-    rw [Submodule.mem_bot]
-    by_contra hB0
-    have hBinv : Representation.IsInvariantForm π.toRepresentation B :=
-      Representation.mem_invariantForms.mp hB
-    have hnd : B.Nondegenerate := hBinv.nondegenerate hB0
-    rcases hBinv.isSymm_or_isAlt (by norm_num) hB0 with hsymm | halt
-    · have h1 := (frobeniusSchurIndicator_eq_one_iff π hπ hunitary hirr).mpr ⟨B, hBinv, hsymm, hnd⟩
+    rcases Representation.exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot
+      π.toRepresentation (by norm_num) with
+      ⟨B, hB, hB0, hsymm⟩ | ⟨B, hB, hB0, halt⟩ | hbot
+    · have h1 := (frobeniusSchurIndicator_eq_one_iff π hπ hunitary hirr).mpr
+        ⟨B, hB, hsymm, hB.nondegenerate hB0⟩
       rw [h0] at h1
       norm_num at h1
-    · have h1 :=
-        (frobeniusSchurIndicator_eq_neg_one_iff π hπ hunitary hirr).mpr ⟨B, hBinv, halt, hnd⟩
+    · have h1 := (frobeniusSchurIndicator_eq_neg_one_iff π hπ hunitary hirr).mpr
+        ⟨B, hB, halt, hB.nondegenerate hB0⟩
       rw [h0] at h1
       norm_num at h1
+    · exact hbot
   · intro hbot
     -- No invariant form is nondegenerate, so neither `1` nor `-1` is left by the trichotomy.
     have hnone : ∀ B : BilinForm ℂ V, Representation.IsInvariantForm π.toRepresentation B →
