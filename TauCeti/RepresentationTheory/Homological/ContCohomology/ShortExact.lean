@@ -22,12 +22,13 @@ and hence connecting homomorphisms `δ⁰ : H⁰(G, C) → H¹(G, A)` and `δ¹ 
 the explicit low-degree complex of
 `TauCeti/RepresentationTheory/Homological/ContCohomology/LowDegree.lean`. This file builds both.
 
-Surjectivity on cochains is where discreteness of the coefficients is used and cannot be
-relaxed: a continuous cochain into a discrete `C` is locally constant, so composing it with *any*
-set-theoretic section of `B → C` is still continuous
+Surjectivity on cochains is where this file uses discreteness of the coefficients: a continuous
+cochain into a discrete `C` is locally constant, so composing it with *any* set-theoretic section
+of `B → C` is still continuous
 (`TauCeti.ContCohomology.DiscreteShortExact.exists_continuous_lift`). For general topological
-coefficients a set-theoretic section need not be continuous, `Cⁿ(G, B) → Cⁿ(G, C)` need not be
-surjective, and nothing below is asserted.
+coefficients this argument does not apply because a set-theoretic section need not be continuous;
+the cochain map can still be surjective when suitable continuous lifts exist. Nothing below is
+asserted in that more general setting.
 
 The sequence is carried by a structure rather than by loose hypotheses because every statement
 here — and, later, the compatibility of corestriction with the connecting maps — is about the same
@@ -104,18 +105,20 @@ public section
 
 namespace TauCeti.ContCohomology
 
-universe u v
+universe u vA vB vC w
 
 /-- A short exact sequence `0 → A → B → C → 0` of discrete `G`-modules.
 
-Discreteness of the three modules is part of the type because it is what makes the sequences of
-*continuous* cochains exact; the roadmap records that this hypothesis cannot be relaxed.
-Continuity of the two maps is a consequence of it, not data: see
+Discreteness of the three modules is the sufficient hypothesis used here to make arbitrary
+set-theoretic lifts of continuous cochains continuous. Continuity of the two maps is a consequence
+of it, not data: see
 `TauCeti.ContCohomology.DiscreteShortExact.incl_continuous`. -/
 structure DiscreteShortExact (G : Type u) [Monoid G]
-    (A : Type v) [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-    (B : Type v) [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-    (C : Type v) [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C]
+    (A : Type vA) [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A]
+    [DistribMulAction G A]
+    (B : Type vB) [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B]
+    [DistribMulAction G B]
+    (C : Type vC) [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C]
     [DistribMulAction G C] where
   /-- The inclusion `A → B`. -/
   incl : A →+ B
@@ -137,10 +140,20 @@ namespace DiscreteShortExact
 section Basic
 
 variable {G : Type u} [Monoid G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
   (S : DiscreteShortExact G A B C)
+
+/-- Two short exact sequences with the same inclusion and projection are equal. -/
+@[ext]
+theorem ext {S T : DiscreteShortExact G A B C} (hincl : S.incl = T.incl)
+    (hproj : S.proj = T.proj) : S = T := by
+  cases S
+  cases T
+  cases hincl
+  cases hproj
+  rfl
 
 /-- The inclusion is continuous, `A` being discrete. -/
 theorem incl_continuous : Continuous S.incl := continuous_of_discreteTopology
@@ -160,9 +173,9 @@ end Basic
 section Restrict
 
 variable {G : Type u} [Group G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
   (S : DiscreteShortExact G A B C)
 
 /-- A short exact sequence of discrete `G`-modules restricts to one of discrete `T`-modules, for
@@ -188,9 +201,9 @@ end Restrict
 section Retract
 
 variable {G : Type u} [Monoid G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
   (S : DiscreteShortExact G A B C)
 
 /-- The retraction of the inclusion onto its image. It is a left inverse of `S.incl` everywhere
@@ -255,10 +268,10 @@ end Retract
 section Cochains
 
 variable {G : Type u} [Monoid G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
-  (S : DiscreteShortExact G A B C) {X : Type u} [TopologicalSpace X]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  (S : DiscreteShortExact G A B C) {X : Type w} [TopologicalSpace X]
 
 /-- The lift of a cochain into `C` obtained by composing it with a fixed set-theoretic section of
 the projection. It is continuous whenever the cochain is, `C` being discrete. -/
@@ -275,10 +288,9 @@ discrete, so composing it with an arbitrary section changes nothing. -/
 theorem continuous_liftCochain {f : X → C} (hf : Continuous f) : Continuous (S.liftCochain f) :=
   (continuous_of_discreteTopology (f := Function.surjInv S.proj_surjective)).comp hf
 
-/-- **A continuous cochain lifts.** This is the reason a short exact sequence of *discrete*
-modules has a long exact cohomology sequence: `f` is locally constant, so composing it with any
-set-theoretic section of the projection is continuous again. Stated on an arbitrary topological
-space, hence in every degree at once. -/
+/-- **A continuous cochain lifts.** Discreteness is the sufficient hypothesis used here: `f` is
+locally constant, so composing it with any set-theoretic section of the projection is continuous
+again. Stated on an arbitrary topological space, hence in every degree at once. -/
 theorem exists_continuous_lift {f : X → C} (hf : Continuous f) :
     ∃ e : X → B, Continuous e ∧ ∀ x, S.proj (e x) = f x :=
   ⟨S.liftCochain f, S.continuous_liftCochain hf, S.proj_liftCochain f⟩
@@ -331,9 +343,9 @@ end Cochains
 section LowDegreeCochains
 
 variable {G : Type u} [Monoid G] [TopologicalSpace G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
   (S : DiscreteShortExact G A B C)
 
 /-- Exactness of `0 → C²(G, A) → C²(G, B) → C²(G, C) → 0` in the middle: the degree-`2` instance
@@ -355,9 +367,9 @@ end LowDegreeCochains
 section Delta0Cochain
 
 variable {G : Type u} [Monoid G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
   (S : DiscreteShortExact G A B C)
 
 /-- The projection carries `d⁰` to `d⁰`. -/
@@ -398,11 +410,14 @@ end Delta0Cochain
 section Delta0
 
 variable {G : Type u} [Monoid G] [TopologicalSpace G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A]
+    [DistribMulAction G A]
     [ContinuousSMul G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B]
+    [DistribMulAction G B]
     [ContinuousSMul G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C]
+    [DistribMulAction G C]
   {S : DiscreteShortExact G A B C}
 
 omit [ContinuousSMul G A] in
@@ -433,9 +448,8 @@ theorem delta0Class_congr {b b' : B} (hb : ∀ g : G, g • S.proj b = S.proj b)
   refine H1pi_eq_iff.2 (mem_B1_iff.2 ⟨-a₀, fun g => S.incl_injective ?_⟩)
   have h₁ : S.incl (S.delta0Cochain b g) = g • b - b := incl_delta0Cochain hb g
   have h₂ : S.incl (S.delta0Cochain b' g) = g • b' - b' := incl_delta0Cochain hb' g
-  rw [map_sub, S.incl_equivariant, map_neg, ha₀]
-  change g • -(b' - b) - -(b' - b) = S.incl ((S.delta0Cochain b - S.delta0Cochain b') g)
-  rw [Pi.sub_apply, map_sub, h₁, h₂, smul_neg, smul_sub]
+  simp only [Pi.sub_apply]
+  rw [map_sub, S.incl_equivariant, map_neg, ha₀, map_sub, h₁, h₂, smul_neg, smul_sub]
   abel
 
 /-- The class attached to a sum of preimages is the sum of the classes. -/
@@ -491,9 +505,9 @@ end Delta0
 section Delta1Cochain
 
 variable {G : Type u} [Monoid G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
   (S : DiscreteShortExact G A B C)
 
 /-- The projection carries `d¹` to `d¹`. -/
@@ -533,11 +547,14 @@ end Delta1Cochain
 section Delta1
 
 variable {G : Type u} [Monoid G] [TopologicalSpace G] [ContinuousMul G]
-  {A : Type v} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A]
+    [DistribMulAction G A]
     [ContinuousSMul G A]
-  {B : Type v} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B]
+    [DistribMulAction G B]
     [ContinuousSMul G B]
-  {C : Type v} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
+  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C]
+    [DistribMulAction G C]
   {S : DiscreteShortExact G A B C}
 
 omit [ContinuousSMul G A] in
@@ -637,9 +654,14 @@ theorem delta1Hom_eq_zero_of_mem_B1 (f : Z1 G C) (hf : (f : G → C) ∈ B1 G C)
   have hzero : S.delta1Cochain (d0 G B b) = 0 := funext fun p => by
     rw [delta1Cochain, congrFun (d1_comp_d0_apply (G := G) b) p]
     exact S.retract_zero
+  have hsubtype :
+      (⟨S.delta1Cochain (d0 G B b),
+          delta1Cochain_mem_Z2 (continuous_d0_apply (G := G) b) he (isCocycle_coe f)⟩ :
+        Z2 G A) = 0 :=
+    Subtype.ext hzero
   rw [delta1Hom, AddMonoidHom.mk'_apply,
     delta1Class_congr _ (continuous_d0_apply (G := G) b) _ he _ (isCocycle_coe f) rfl,
-    delta1Class, show (⟨S.delta1Cochain (d0 G B b), _⟩ : Z2 G A) = 0 from Subtype.ext hzero]
+    delta1Class, hsubtype]
   exact map_zero _
 
 variable (S) in
