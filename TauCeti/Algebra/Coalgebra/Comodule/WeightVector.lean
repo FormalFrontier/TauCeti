@@ -14,14 +14,15 @@ public import TauCeti.Algebra.Coalgebra.Subcomodule.Basic
 
 A **weight vector** of a comodule `M` over a coalgebra `C` is a vector `v` whose coaction is
 `v ↦ v ⊗ c` for a single element `c` of `C`; equivalently, the line it spans is a subcomodule.
-For the representation attached to `M`, this says exactly that every point of the represented
-affine group scales `v`, by the value it takes on `c`.
+When `C` is the coordinate Hopf algebra of an affine group, this says that every point of the
+group scales `v`, by the value it takes on `c`.
 
 The weight of a nonzero weight vector is automatically group-like: the counit law forces
 `ε c = 1` and coassociativity forces `Δ c = c ⊗ c`, because a nonzero vector of a vector space is
 detected by a linear functional. So a one-dimensional subcomodule of a comodule over a field is
-the same thing as a character of the represented group, and there is no need to carry
-group-likeness as a hypothesis.
+specified by a group-like element. When `C` is the coordinate Hopf algebra of an affine group,
+that group-like element is a character, so there is no need to carry group-likeness as a
+hypothesis.
 
 Weight vectors are the eigenvector form of the fixed vectors of
 `TauCeti.Algebra.Coalgebra.Comodule.Fixed`: a fixed vector is a weight vector of weight `1`. They
@@ -34,6 +35,7 @@ are unavailable, and the flag induction of
 * `TauCeti.Comodule.HasNonzeroWeightVector`: a comodule contains a nonzero weight vector.
 * `TauCeti.Comodule.isGroupLikeElem_of_coact_eq_tmul`: the weight of a nonzero weight vector is
   group-like.
+* `TauCeti.Comodule.eq_of_coact_eq_tmul`: the weight of a nonzero weight vector is unique.
 * `TauCeti.Comodule.exists_isGroupLikeElem_coact_eq_tmul_of_toSubmodule_eq_span`: a subcomodule
   spanned by a single nonzero vector exhibits it as a weight vector.
 
@@ -63,8 +65,8 @@ variable [AddCommGroup M] [Module k M] [Comodule k C M]
 /-- A comodule has a nonzero weight vector if some nonzero `v` has coaction `v ⊗ c` for a
 group-like `c`.
 
-For the comodule corresponding to a group representation, this says that the represented group
-acts on the line spanned by `v` through the character `c`. -/
+When `C` is the coordinate Hopf algebra of an affine group, this says that the group acts on the
+line spanned by `v` through the character corresponding to `c`. -/
 def HasNonzeroWeightVector (k : Type u) (C : Type v) (M : Type w)
     [Field k] [AddCommMonoid C] [Module k C] [Coalgebra k C]
     [AddCommGroup M] [Module k M] [Comodule k C M] : Prop :=
@@ -100,6 +102,17 @@ theorem isGroupLikeElem_of_coact_eq_tmul {v : M} (hv : v ≠ 0) {c : C}
       (fun z ↦ TensorProduct.lid k (C ⊗[k] C)
         (TensorProduct.map phi (LinearMap.id : C ⊗[k] C →ₗ[k] C ⊗[k] C) z)) hassoc
     simpa [hphi] using hphi'.symm
+
+/-- The weight of a nonzero weight vector is unique. -/
+theorem eq_of_coact_eq_tmul {v : M} (hv : v ≠ 0) {c d : C}
+    (hc : coact (R := k) (C := C) (M := M) v = v ⊗ₜ[k] c)
+    (hd : coact (R := k) (C := C) (M := M) v = v ⊗ₜ[k] d) : c = d := by
+  obtain ⟨phi, hphi⟩ := Module.Projective.exists_dual_eq_one k hv
+  have h := hc.symm.trans hd
+  have hphi' := congrArg
+    (fun z ↦ TensorProduct.lid k C
+      (TensorProduct.map phi (LinearMap.id : C →ₗ[k] C) z)) h
+  simpa [hphi] using hphi'
 
 /-- Every vector of a line spanned by a weight vector is a weight vector of the same weight. -/
 theorem coact_eq_tmul_of_mem_span {v : M} {c : C}

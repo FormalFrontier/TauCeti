@@ -22,14 +22,15 @@ This is the formal induction step behind both Kolchin arguments in Layer 5 of th
 roadmap. Taking `S = {1}` recovers the unitriangular statement used for unipotent groups, where
 Kolchin's theorem supplies genuine fixed vectors; taking `S` to be the set of group-like elements
 gives the triangular statement Lie--Kolchin needs for solvable groups, where only eigenvectors are
-available and the diagonal characters survive in the conclusion.
+available and group-like elements survive on the diagonal. When `C` is the coordinate Hopf algebra
+of an affine group, these group-like elements are its diagonal characters.
 
 ## Main declarations
 
 * `TauCeti.Comodule.exists_basis_coefficientMatrix_isUpperTriangular_diag_mem_of_weight_vectors`:
   the induction, with the weights confined to a prescribed set.
 * `TauCeti.Comodule.exists_basis_coefficientMatrix_isUpperTriangular_of_weight_vectors`: its
-  group-like specialization, an upper-triangular basis whose diagonal coefficients are characters.
+  group-like specialization, with group-like diagonal coefficients.
 
 ## References
 
@@ -50,7 +51,7 @@ universe u v w
 noncomputable section
 
 variable {k : Type u} {C : Type v} {M : Type w}
-variable [Field k] [AddCommGroup C] [Module k C] [Coalgebra k C]
+variable [Field k] [AddCommMonoid C] [Module k C] [Coalgebra k C]
 variable [AddCommGroup M] [Module k M] [Comodule k C M]
 
 attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free
@@ -65,8 +66,19 @@ private def weightSpan (v : M) (c : C)
     simp only [map_smul, TensorProduct.map_tmul, Submodule.coe_subtype,
       LinearMap.id_coe, id_eq, TensorProduct.smul_tmul', hv]
 
+/-- The carrier module of `weightSpan` is the span used to construct it. -/
+private theorem weightSpan_toSubmodule (v : M) (c : C)
+    (hv : coact (R := k) (C := C) (M := M) v = v ⊗ₜ[k] c) :
+    (weightSpan v c hv).toSubmodule = k ∙ v :=
+  rfl
+
+/-- A bundled subcomodule has the same dimension as its underlying submodule. -/
+private theorem finrank_toSubmodule (N : Subcomodule k C M) :
+    finrank k N.toSubmodule = finrank k N :=
+  rfl
+
 /-- Every vector in the subcomodule spanned by a weight vector has the same weight. -/
-private theorem weightSpan_coact (v : M) (c : C)
+private theorem weightSpan_coact [Module.Flat k C] (v : M) (c : C)
     (hv : coact (R := k) (C := C) (M := M) v = v ⊗ₜ[k] c) (x : weightSpan v c hv) :
     coact (R := k) (C := C) (M := weightSpan v c hv) x = x ⊗ₜ[k] c := by
   apply Module.Flat.rTensor_preserves_injective_linearMap
@@ -79,26 +91,9 @@ private theorem weightSpan_coact (v : M) (c : C)
 /-- The subcomodule spanned by a nonzero weight vector has dimension one. -/
 private theorem weightSpan_finrank (v : M) (c : C)
     (hv : coact (R := k) (C := C) (M := M) v = v ⊗ₜ[k] c) (hv₀ : v ≠ 0) :
-    finrank k (weightSpan v c hv) = 1 :=
-  finrank_span_singleton hv₀
-
-/-- The diagonal of the combined coefficient matrix of an extension consists of the diagonals of
-the subcomodule and quotient blocks. -/
-private theorem coefficientMatrix_extensionBasis_diag_mem
-    {m n : ℕ} (S : Set C) (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
-    (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule))
-    (hN : ∀ i, coefficientMatrix (C := C) bN i i ∈ S)
-    (hQ : ∀ i, coefficientMatrix (C := C) bQ i i ∈ S)
-    (i : Fin (m + n)) :
-    coefficientMatrix (C := C) (extensionBasis N bN bQ) i i ∈ S := by
-  obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
-  cases i with
-  | inl i =>
-      rw [finSumFinEquiv_apply_left, coefficientMatrix_extensionBasis_castAdd_castAdd]
-      exact hN i
-  | inr i =>
-      rw [finSumFinEquiv_apply_right, coefficientMatrix_extensionBasis_natAdd_natAdd]
-      exact hQ i
+    finrank k (weightSpan v c hv) = 1 := by
+  rw [← finrank_toSubmodule, weightSpan_toSubmodule]
+  exact finrank_span_singleton hv₀
 
 /-- If every nonzero finite-dimensional `C`-comodule has a nonzero weight vector whose weight lies
 in `S`, then every finite-dimensional `C`-comodule has a basis whose coefficient matrix is upper
@@ -116,6 +111,7 @@ theorem exists_basis_coefficientMatrix_isUpperTriangular_diag_mem_of_weight_vect
     ∃ (n : ℕ) (b : Basis (Fin n) k M),
       (coefficientMatrix (C := C) b).IsUpperTriangular ∧
         ∀ i, coefficientMatrix (C := C) b i i ∈ S := by
+  let _ : AddCommGroup C := Module.addCommMonoidToAddCommGroup k
   generalize hdim : finrank k M = d
   induction d using Nat.strong_induction_on generalizing M with
   | h d ih =>
@@ -143,15 +139,23 @@ theorem exists_basis_coefficientMatrix_isUpperTriangular_diag_mem_of_weight_vect
           -- Unfold the local quotient abbreviation so the generic finrank bound applies.
           change finrank k (M ⧸ L.toSubmodule) < d
           have hsum := Module.finrank_quotient_add_finrank_le L.toSubmodule
-          have hLto : finrank k L.toSubmodule = 1 := hLfinrank
+          have hLto : finrank k L.toSubmodule = 1 :=
+            (finrank_toSubmodule L).trans hLfinrank
           rw [hLto, hdim] at hsum
           omega
         obtain ⟨n, bQ, hbQtri, hbQdiag⟩ := ih (finrank k Q) hQdim (M := Q) rfl
         refine ⟨1 + n, extensionBasis L bL bQ,
-          coefficientMatrix_extensionBasis_isUpperTriangular L bL bQ hbL.1 hbQtri,
-          coefficientMatrix_extensionBasis_diag_mem S L bL bQ (fun i ↦ ?_) hbQdiag⟩
-        rw [hbL.2 i]
-        exact hc
+          coefficientMatrix_extensionBasis_isUpperTriangular L bL bQ hbL.1 hbQtri, ?_⟩
+        intro i
+        obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
+        cases i with
+        | inl i =>
+            rw [finSumFinEquiv_apply_left, coefficientMatrix_extensionBasis_castAdd_castAdd,
+              hbL.2 i]
+            exact hc
+        | inr i =>
+            rw [finSumFinEquiv_apply_right, coefficientMatrix_extensionBasis_natAdd_natAdd]
+            exact hbQdiag i
       · let _ : Subsingleton M := not_nontrivial_iff_subsingleton.mp hM
         have hzero : finrank k M = 0 := Module.finrank_zero_of_subsingleton
         let b : Basis (Fin 0) k M := finBasisOfFinrankEq k M hzero
@@ -166,12 +170,12 @@ theorem exists_basis_coefficientMatrix_isUpperTriangular_of_weight_vectors
       [FiniteDimensional k V] [Nontrivial V], HasNonzeroWeightVector k C V) :
     ∃ (n : ℕ) (b : Basis (Fin n) k M),
       (coefficientMatrix (C := C) b).IsUpperTriangular ∧
-        ∀ i, IsGroupLikeElem k (coefficientMatrix (C := C) b i i) :=
-  exists_basis_coefficientMatrix_isUpperTriangular_diag_mem_of_weight_vectors
+        ∀ i, IsGroupLikeElem k (coefficientMatrix (C := C) b i i) := by
+  exact exists_basis_coefficientMatrix_isUpperTriangular_diag_mem_of_weight_vectors
     {c : C | IsGroupLikeElem k c} fun V _ _ _ _ _ ↦ by
-      obtain ⟨v, c, hv, hc, hvcoact⟩ :=
-        (hasNonzeroWeightVector_iff (k := k) (C := C)).mp (hweight V)
-      exact ⟨v, c, hv, hc, hvcoact⟩
+        obtain ⟨v, c, hv, hc, hvcoact⟩ :=
+          (hasNonzeroWeightVector_iff (k := k) (C := C)).mp (hweight V)
+        exact ⟨v, c, hv, hc, hvcoact⟩
 
 end
 
