@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeGroup.Basic
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Diagonal
-public import Mathlib.Algebra.Polynomial.Laurent
 
 /-!
 # A Laurent-polynomial path in the special linear group

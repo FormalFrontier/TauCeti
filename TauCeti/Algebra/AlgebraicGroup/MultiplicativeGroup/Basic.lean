@@ -254,6 +254,18 @@ theorem genericUnit_inv : (((genericUnit A)⁻¹ : (LaurentPolynomial A)ˣ) :
     LaurentPolynomial A) = LaurentPolynomial.T (-1) := by
   simp [genericUnit]
 
+/-- An integer power of the generic unit is the corresponding Laurent monomial. -/
+@[simp]
+theorem genericUnit_zpow_val (n : ℤ) :
+    ((genericUnit A ^ n : (LaurentPolynomial A)ˣ) : LaurentPolynomial A) =
+      LaurentPolynomial.T n := by
+  let f : LaurentPolynomial A →ₐ[A] LaurentPolynomial A := AlgHom.id A _
+  have hunit : genericUnit A = unitOfPoint f := by
+    apply Units.ext
+    simp [f]
+  rw [hunit, ← point_T (R := A)]
+  exact DFunLike.congr_fun (point_unitOfPoint f) (LaurentPolynomial.T n)
+
 /-- Mapping the generic unit along a Laurent-polynomial point gives the unit represented by
 that point. -/
 @[simp]

@@ -75,7 +75,7 @@ theorem rightTranslationAlgHom_apply (g : WithConv (H →ₐ[k] k)) (x : H) :
 
 /-- Composing a point with right translation is convolution by the translating point. -/
 @[simp]
-theorem ofConv_comp_rightTranslationAlgHom (f g : WithConv (H →ₐ[k] k)) :
+theorem toConv_comp_rightTranslationAlgHom (f g : WithConv (H →ₐ[k] k)) :
     WithConv.toConv (f.ofConv.comp (rightTranslationAlgHom g)) = f * g := by
   apply WithConv.ofConv_injective
   ext x
@@ -92,7 +92,7 @@ theorem ofConv_comp_rightTranslationAlgHom (f g : WithConv (H →ₐ[k] k)) :
 theorem ofConv_rightTranslationAlgHom (f g : WithConv (H →ₐ[k] k)) (x : H) :
     f.ofConv (rightTranslationAlgHom g x) = (f * g).ofConv x := by
   exact DFunLike.congr_fun
-    (congrArg WithConv.ofConv (ofConv_comp_rightTranslationAlgHom f g)) x
+    (congrArg WithConv.ofConv (toConv_comp_rightTranslationAlgHom f g)) x
 
 /-- The linear equivalence underlying right translation. -/
 private noncomputable def rightTranslationLinearEquiv (g : WithConv (H →ₐ[k] k)) :

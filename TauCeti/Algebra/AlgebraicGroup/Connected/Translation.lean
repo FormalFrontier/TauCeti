@@ -65,7 +65,7 @@ theorem rightTranslationHomeomorph_kernelPoint
         (AlgHom.kernelPoint g.ofConv) = _
   rw [AlgHom.comap_kernelPoint, rightTranslationAlgEquiv_toAlgHom]
   congr 1
-  exact congrArg WithConv.ofConv (ofConv_comp_rightTranslationAlgHom g h)
+  exact congrArg WithConv.ofConv (toConv_comp_rightTranslationAlgHom g h)
 
 /-- Right translation transports the connected component of a point to the connected component
 of its translate. -/

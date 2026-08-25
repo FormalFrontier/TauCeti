@@ -93,16 +93,6 @@ theorem pointsMulEquiv_conjugate_weightCocharacter (w : Fin N → ℤ)
     pointsMulEquiv_pointsHom_weightCocharacter, Cocharacter.constPoint_apply,
     ← AlgHom.mapValue_apply, pointsMulEquiv_mapValue]
 
-private theorem genericUnit_zpow_val (n : ℤ) :
-    ((MultiplicativeGroup.genericUnit A ^ n : (LaurentPolynomial A)ˣ) : LaurentPolynomial A) =
-      LaurentPolynomial.T n := by
-  let f : LaurentPolynomial A →ₐ[A] LaurentPolynomial A := AlgHom.id A _
-  have hunit : MultiplicativeGroup.genericUnit A = MultiplicativeGroup.unitOfPoint f := by
-    apply Units.ext
-    simp [f]
-  rw [hunit, ← MultiplicativeGroup.point_T (R := A)]
-  exact DFunLike.congr_fun (MultiplicativeGroup.point_unitOfPoint f) (LaurentPolynomial.T n)
-
 /-- The `(i,j)` entry of conjugation by the weight cocharacter is
 `g_ij * T ^ (w i - w j)`. -/
 theorem pointsMulEquiv_conjugate_weightCocharacter_apply (w : Fin N → ℤ)
@@ -118,8 +108,8 @@ theorem pointsMulEquiv_conjugate_weightCocharacter_apply (w : Fin N → ℤ)
   have hinv :
       (((MultiplicativeGroup.genericUnit A ^ w j)⁻¹ : (LaurentPolynomial A)ˣ) :
           LaurentPolynomial A) = LaurentPolynomial.T (-w j) := by
-    rw [← zpow_neg, genericUnit_zpow_val]
-  rw [genericUnit_zpow_val]
+    rw [← zpow_neg, MultiplicativeGroup.genericUnit_zpow_val]
+  rw [MultiplicativeGroup.genericUnit_zpow_val]
   -- Normalize the pointwise inverse of the diagonal function and the scalar-extension map;
   -- neither wrapper has an application lemma at this expression.
   change LaurentPolynomial.T (w i) *
