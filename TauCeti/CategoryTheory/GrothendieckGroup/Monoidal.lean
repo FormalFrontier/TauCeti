@@ -277,7 +277,8 @@ lemma liftRingHom_of (X : C) : liftRingHom a hone hmul (of X) = a.obj X :=
 invariant. -/
 @[simp]
 lemma liftRingHom_toAddMonoidHom :
-    ((liftRingHom a hone hmul : SplitK0 C →+* R) : SplitK0 C →+ R) = lift a := (rfl)
+    ((liftRingHom a hone hmul : SplitK0 C →+* R) : SplitK0 C →+ R) = lift a :=
+  hom_ext fun X => by rw [AddMonoidHom.coe_coe, liftRingHom_of, lift_of]
 
 end Lift
 
@@ -343,7 +344,7 @@ lemma mapRingHom_of (F : C ⥤ D) [F.Additive] [F.Monoidal] (X : C) :
 @[simp]
 lemma mapRingHom_toAddMonoidHom (F : C ⥤ D) [F.Additive] [F.Monoidal] :
     ((mapRingHom F : SplitK0 C →+* SplitK0 D) : SplitK0 C →+ SplitK0 D) = map F :=
-  (rfl)
+  hom_ext fun X => by rw [AddMonoidHom.coe_coe, mapRingHom_of, map_of]
 
 /-- `TauCeti.SplitK0.mapRingHom` sends the identity functor to the identity ring homomorphism. -/
 @[simp]
