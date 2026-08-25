@@ -19,6 +19,8 @@ Clifford action makes the target Clifford module a module for the original Lie a
 
 * `CliffordAlgebra.quadraticLift`: the quadratic realization of a skew-adjoint Lie action.
 * `CliffordAlgebra.quadraticLift_lie_ι`: its defining action on Clifford generators.
+* `CliffordAlgebra.quadraticLift_injective_iff`: the lift is injective exactly when the
+  skew-adjoint action it lifts is.
 * `CliffordAlgebra.cliffordInducedRep`: the induced Lie representation on a Clifford
   module.
 * `CliffordAlgebra.cliffordInducedRep_apply`: its defining equation.
@@ -29,6 +31,8 @@ Clifford action makes the target Clifford module a module for the original Lie a
   for a Killing-semisimple Lie algebra.
 * `CliffordAlgebra.adjointCliffordHom_lie_ι`: the lift acts on Clifford generators by the
   original adjoint action.
+* `CliffordAlgebra.adjointCliffordHom_injective`: the lift is injective, since the adjoint action
+  it encodes is faithful.
 
 ## References
 
@@ -83,6 +87,17 @@ theorem quadraticLift_lie_ι {K : Type u} [Field K]
     (θ : L →ₗ⁅K⁆ skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) (x : L) (v : V) :
     ⁅quadraticLift Q hQ θ x, ι Q v⁆ = ι Q ((θ x : Module.End K V) v) := by
   rw [quadraticLift_apply, soEquivQuadratic_lie_ι]
+
+/-- **The quadratic lift is injective exactly when the action it lifts is.** The lift is the
+skew-adjoint action followed by the quadratic realization equivalence and the inclusion of the
+quadratic Lie subalgebra, both of which are injective. -/
+theorem quadraticLift_injective_iff {K : Type u} [Field K]
+    {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    {L : Type w} [LieRing L] [LieAlgebra K L]
+    (θ : L →ₗ⁅K⁆ skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) :
+    Function.Injective (quadraticLift Q hQ θ) ↔ Function.Injective θ :=
+  (Subtype.val_injective.of_comp_iff _).trans ((soEquivQuadratic Q hQ).injective.of_comp_iff θ)
 
 /-- The Lie representation on a Clifford module induced through the quadratic realization. -/
 noncomputable def cliffordInducedRep {K : Type u} [Field K] {V : Type v} [AddCommGroup V]
@@ -147,5 +162,17 @@ theorem adjointCliffordHom_lie_ι (K : Type u) (L : Type v) [Field K]
       CliffordAlgebra.ι (_root_.TauCeti.LieAlgebra.killingQuadraticForm K L) ⁅x, y⁆ := by
   rw [adjointCliffordHom, quadraticLift_lie_ι,
     _root_.TauCeti.LieAlgebra.coe_killingAdjointSO, _root_.LieAlgebra.ad_apply]
+
+/-- **The adjoint quadratic lift of a Killing-semisimple Lie algebra is injective.** The lift is
+injective exactly when the adjoint action it lifts is
+(`CliffordAlgebra.quadraticLift_injective_iff`), and that action is faithful because the centre of
+a Killing-semisimple Lie algebra vanishes. -/
+theorem adjointCliffordHom_injective (K : Type u) (L : Type v) [Field K]
+    [LieRing L] [LieAlgebra K L] [FiniteDimensional K L] [Invertible (2 : K)]
+    [_root_.LieAlgebra.IsKilling K L] :
+    Function.Injective (adjointCliffordHom K L) :=
+  (quadraticLift_injective_iff _ _ _).2 <|
+    (_root_.TauCeti.LieAlgebra.killingAdjointSO_injective_iff K L).mpr
+      (_root_.LieAlgebra.center_eq_bot K L)
 
 end CliffordAlgebra
