@@ -33,8 +33,8 @@ linear-equivalence invariants, so the same bound holds for every divisor.
 ## Main definitions
 
 * `TauCeti.genus`: the genus `g` of `F / k` (Definition 1.4.15), as a natural number.  It is
-  junk-guarded twice: the supremum is finite by Proposition 1.4.14, and truncation to `ℕ` is
-  harmless because the defining quantity is `0` at `D = 0` when the constant field is exact.
+  finite for a function field by Proposition 1.4.14, and truncation to `ℕ` is harmless when the
+  constant field is exact.
 * `TauCeti.Divisor.indexOfSpecialty`: the index of specialty `i(D) = ℓ(D) - deg D - 1 + g`
   (Definition 1.5.1).
 
@@ -81,66 +81,8 @@ variable {k F : Type*} [Field k] [Field F] [Algebra k F]
 
 /-! ### The uniform bound on `deg D - ℓ(D)` -/
 
-/-- **The growth estimate** behind Stichtenoth's proof of Proposition 1.4.14, in divisor form: if
-the functions `c i` are linearly independent over `k⟮x⟯` and all their poles are dominated by a
-single divisor `C`, then the `#ι * (l + 1)` products `c i * x ^ j` with `j ≤ l` are `k`-linearly
-independent elements of `L(l (x)_∞ + C)`. -/
-private theorem card_mul_succ_le_dim_nsmul_poles_add (hF : IsFunctionField k F) {x : F}
-    (hx : Transcendental k x) {xu : Fˣ} (hxu : (xu : F) = x) {ι : Type*} [Fintype ι] (c : ι → Fˣ)
-    (hc : LinearIndependent k⟮x⟯ fun i ↦ (c i : F)) {C : Divisor k F}
-    (hC : ∀ i, Divisor.poles hF (c i) ≤ C) (l : ℕ) :
-    Fintype.card ι * (l + 1) ≤ Divisor.dim (l • Divisor.poles hF xu + C) := by
-  classical
-  have hmem : ∀ p : ι × Fin (l + 1),
-      (c p.1 : F) * x ^ (p.2 : ℕ) ∈ riemannRochSpace (l • Divisor.poles hF xu + C) := by
-    rintro ⟨i, j⟩
-    have hjle : (j : ℕ) ≤ l := Nat.lt_succ_iff.mp j.isLt
-    have hpow : Divisor.principal hF (xu ^ (j : ℕ)) = (j : ℕ) • Divisor.principal hF xu := by
-      rw [← zpow_natCast xu (j : ℕ), Divisor.principal_zpow, natCast_zsmul]
-    have hsplit : l • Divisor.poles hF xu =
-        (j : ℕ) • Divisor.poles hF xu + (l - (j : ℕ)) • Divisor.poles hF xu := by
-      rw [← add_nsmul, Nat.add_sub_cancel' hjle]
-    have hkey : Divisor.principal hF (c i * xu ^ (j : ℕ)) +
-          (l • Divisor.poles hF xu + C) =
-        Divisor.zeros hF (c i) + (C - Divisor.poles hF (c i)) +
-          (j : ℕ) • Divisor.zeros hF xu + (l - (j : ℕ)) • Divisor.poles hF xu := by
-      rw [Divisor.principal_mul, hpow, hsplit,
-        ← Divisor.zeros_sub_poles hF (c i), ← Divisor.zeros_sub_poles hF xu]
-      module
-    have hnonneg : (0 : Divisor k F) ≤
-        Divisor.principal hF (c i * xu ^ (j : ℕ)) + (l • Divisor.poles hF xu + C) := by
-      rw [hkey]
-      refine add_nonneg (add_nonneg (add_nonneg ?_ ?_) ?_) ?_
-      · exact WeilDivisor.isEffective_iff_zero_le.mp (Divisor.isEffective_zeros hF (c i))
-      · exact sub_nonneg.mpr (hC i)
-      · exact nsmul_nonneg
-          (WeilDivisor.isEffective_iff_zero_le.mp (Divisor.isEffective_zeros hF xu)) _
-      · exact nsmul_nonneg
-          (WeilDivisor.isEffective_iff_zero_le.mp (Divisor.isEffective_poles hF xu)) _
-    have hval : ((c i * xu ^ (j : ℕ) : Fˣ) : F) = (c i : F) * x ^ (j : ℕ) := by
-      rw [Units.val_mul, Units.val_pow_eq_pow_val, hxu]
-    rw [← hval]
-    exact (mem_riemannRochSpace_units_iff hF).mpr hnonneg
-  have hfam : LinearIndependent k fun p : ι × Fin (l + 1) ↦ (c p.1 : F) * x ^ (p.2 : ℕ) := by
-    have h := (linearIndependent_mul_pow_of_transcendental hx hc).comp
-      (fun p : ι × Fin (l + 1) ↦ (p.1, (p.2 : ℕ)))
-      (fun p q hpq ↦ by
-        simp only [Prod.mk.injEq, Fin.val_inj] at hpq
-        exact Prod.ext hpq.1 hpq.2)
-    simpa [Function.comp_def] using h
-  have hv : LinearIndependent k fun p : ι × Fin (l + 1) ↦
-      (⟨(c p.1 : F) * x ^ (p.2 : ℕ), hmem p⟩ :
-        riemannRochSpace (l • Divisor.poles hF xu + C)) := by
-    refine LinearIndependent.of_comp (riemannRochSpace (l • Divisor.poles hF xu + C)).subtype ?_
-    simpa [Function.comp_def] using hfam
-  have _ := finiteDimensional_riemannRochSpace hF (l • Divisor.poles hF xu + C)
-  have hcard := hv.fintype_card_le_finrank
-  rw [Divisor.dim_def]
-  simpa using hcard
-
-/-- The ladder underlying Stichtenoth's proof of Proposition 1.4.14: an effective divisor `B` of
-degree `n = [F : k(x)] > 0` and an effective divisor `C` with `ℓ(l B + C) ≥ n (l + 1)` for every
-`l`. -/
+/-- The ladder underlying Stichtenoth's proof of Proposition 1.4.14: a divisor `B` of some positive
+degree `n` and an effective divisor `C` such that `ℓ(l B + C) ≥ n (l + 1)` for every `l`. -/
 private theorem exists_growth_ladder (hF : IsFunctionField k F) :
     ∃ (B C : Divisor k F) (n : ℕ), 0 < n ∧ Divisor.degree B = n ∧ 0 ≤ C ∧
       ∀ l : ℕ, n * (l + 1) ≤ Divisor.dim (l • B + C) := by
@@ -171,8 +113,24 @@ private theorem exists_growth_ladder (hF : IsFunctionField k F) :
       have hfun : (fun i ↦ (c i : F)) = ⇑u := funext hcval
       rw [hfun]
       exact u.linearIndependent
-    have hgrowth := card_mul_succ_le_dim_nsmul_poles_add hF hx hxu c hli hC l
+    have hgrowth := Divisor.card_mul_succ_le_dim_nsmul_poles_add hF hx hxu c hli hC l
     simpa using hgrowth
+
+/-- If `L(E - A)` is nonzero, then `ℓ(E) - deg E ≤ ℓ(A) - deg A`. -/
+private theorem dim_sub_degree_le_of_riemannRochSpace_ne_bot (hF : IsFunctionField k F)
+    {A E : Divisor k F} (h : riemannRochSpace (E - A) ≠ ⊥) :
+    (Divisor.dim E : ℤ) - Divisor.degree E ≤ Divisor.dim A - Divisor.degree A := by
+  obtain ⟨z, hz, hz0⟩ := (Submodule.ne_bot_iff _).mp h
+  have hzmem : (0 : Divisor k F) ≤ Divisor.principal hF (Units.mk0 z hz0) + (E - A) :=
+    (mem_riemannRochSpace_units_iff hF (z := Units.mk0 z hz0)).mp hz
+  have hAle : A - Divisor.principal hF (Units.mk0 z hz0) ≤ E := by
+    refine sub_le_iff_le_add'.mpr (sub_nonneg.mp ?_)
+    rw [add_sub_assoc]
+    exact hzmem
+  have hstep := Divisor.dim_le_dim_add_degree_sub hF hAle
+  rw [Divisor.dim_sub_principal hF (Units.mk0 z hz0) A, Divisor.degree_sub,
+    Divisor.degree_principal, sub_zero] at hstep
+  linarith
 
 /-- **Stichtenoth, Proposition 1.4.14**: over all divisors of an algebraic function field the
 quantity `deg D - ℓ(D)` is bounded above.  This finiteness is what makes the genus well-defined;
@@ -210,23 +168,17 @@ theorem Divisor.bddAbove_range_degree_sub_dim (hF : IsFunctionField k F) :
   have hne : riemannRochSpace (l • B - A) ≠ ⊥ :=
     (Divisor.one_le_dim_iff_riemannRochSpace_ne_bot hF _).mp
       (hpos.trans (Divisor.dim_mono hF (sub_le_sub_left (le_posPart A) (l • B))))
-  obtain ⟨z, hz, hz0⟩ := (Submodule.ne_bot_iff _).mp hne
-  have hzmem : (0 : Divisor k F) ≤ Divisor.principal hF (Units.mk0 z hz0) + (l • B - A) :=
-    (mem_riemannRochSpace_units_iff hF (z := Units.mk0 z hz0)).mp hz
-  have hAle : A - Divisor.principal hF (Units.mk0 z hz0) ≤ l • B := by
-    refine sub_le_iff_le_add'.mpr (sub_nonneg.mp ?_)
-    rw [add_sub_assoc]
-    exact hzmem
-  have hfinal := Divisor.dim_le_dim_add_degree_sub hF hAle
-  rw [Divisor.dim_sub_principal hF (Units.mk0 z hz0) A, Divisor.degree_sub,
-    Divisor.degree_principal, sub_zero, hdeg l] at hfinal
+  have hfinal := dim_sub_degree_le_of_riemannRochSpace_ne_bot hF hne
+  rw [hdeg l] at hfinal
   linarith [hlow l]
 
 /-! ### The genus -/
 
 variable (k F) in
 /-- **The genus of an algebraic function field** (Stichtenoth, Definition 1.4.15):
-`g = max {deg D + 1 - ℓ(D)}`, a maximum that exists by Proposition 1.4.14.
+`g = sup {deg D + 1 - ℓ(D)}` after truncation to natural numbers.  When `IsFunctionField k F`,
+`TauCeti.Divisor.bddAbove_range_degree_sub_dim` makes this supremum finite; without that hypothesis,
+an unbounded range gives the junk value `0`.
 
 The value is truncated to `ℕ`.  Over an exact constant field this loses nothing, because `D = 0`
 already gives `deg 0 + 1 - ℓ(0) = 0`; see `TauCeti.exists_degree_add_one_sub_dim_eq_genus`.  Over a
@@ -244,6 +196,15 @@ private theorem bddAbove_range_genusValue (hF : IsFunctionField k F) :
   have h : Divisor.degree D - (Divisor.dim D : ℤ) ≤ γ := hγ ⟨D, rfl⟩
   have hbound : (Divisor.degree D + 1 - (Divisor.dim D : ℤ)).toNat ≤ (γ + 1).toNat := by omega
   exact hbound
+
+/-- The least-upper-bound half of the universal property defining the genus. -/
+theorem genus_le {c : ℕ}
+    (h : ∀ D : Divisor k F, Divisor.degree D + 1 - Divisor.dim D ≤ (c : ℤ)) :
+    genus k F ≤ c := by
+  rw [genus]
+  refine csSup_le (Set.range_nonempty _) ?_
+  rintro _ ⟨D, rfl⟩
+  exact Int.toNat_le.mpr (h D)
 
 /-- **Riemann's theorem** (Stichtenoth, Theorem 1.4.17), in the form that unwinds the definition
 of the genus: `deg D + 1 - ℓ(D) ≤ g` for every divisor `D`. -/
@@ -290,17 +251,7 @@ theorem exists_forall_dim_eq_degree_add_one_sub_genus (hF : IsFunctionField k F)
     linarith
   have hne : riemannRochSpace (D - A) ≠ ⊥ :=
     (Divisor.one_le_dim_iff_riemannRochSpace_ne_bot hF _).mp (by exact_mod_cast hgap)
-  obtain ⟨z, hz, hz0⟩ := (Submodule.ne_bot_iff _).mp hne
-  have hzmem : (0 : Divisor k F) ≤ Divisor.principal hF (Units.mk0 z hz0) + (D - A) :=
-    (mem_riemannRochSpace_units_iff hF (z := Units.mk0 z hz0)).mp hz
-  have hAle : A ≤ D - Divisor.principal hF (Units.mk0 z hz0)⁻¹ := by
-    rw [Divisor.principal_inv, sub_neg_eq_add]
-    refine sub_nonneg.mp ?_
-    rw [add_comm D (Divisor.principal hF (Units.mk0 z hz0)), add_sub_assoc]
-    exact hzmem
-  have hstep := Divisor.dim_le_dim_add_degree_sub hF hAle
-  rw [Divisor.dim_sub_principal hF (Units.mk0 z hz0)⁻¹ D, Divisor.degree_sub,
-    Divisor.degree_principal, sub_zero] at hstep
+  have hstep := dim_sub_degree_le_of_riemannRochSpace_ne_bot hF hne
   have hupper := Divisor.degree_add_one_sub_dim_le_genus hF D
   linarith
 
@@ -311,11 +262,15 @@ theorem exists_forall_dim_eq_degree_add_one_sub_genus (hF : IsFunctionField k F)
 noncomputable def Divisor.indexOfSpecialty (D : Divisor k F) : ℤ :=
   Divisor.dim D - Divisor.degree D - 1 + genus k F
 
+/-- Unfolding formula for the index of specialty. -/
+theorem Divisor.indexOfSpecialty_def (D : Divisor k F) :
+    Divisor.indexOfSpecialty D = Divisor.dim D - Divisor.degree D - 1 + genus k F := (rfl)
+
 /-- The index of specialty is nonnegative: this is exactly Riemann's theorem. -/
 theorem Divisor.indexOfSpecialty_nonneg (hF : IsFunctionField k F) (D : Divisor k F) :
     0 ≤ Divisor.indexOfSpecialty D := by
   have := Divisor.degree_add_one_sub_genus_le_dim hF D
-  rw [Divisor.indexOfSpecialty]
+  rw [Divisor.indexOfSpecialty_def]
   omega
 
 /-- The index of specialty vanishes in large degree (Stichtenoth, Definition 1.5.1, following
@@ -326,7 +281,7 @@ theorem exists_forall_indexOfSpecialty_eq_zero (hF : IsFunctionField k F)
   obtain ⟨c, hc⟩ := exists_forall_dim_eq_degree_add_one_sub_genus hF hex
   refine ⟨c, fun D hD ↦ ?_⟩
   have := hc D hD
-  rw [Divisor.indexOfSpecialty]
+  rw [Divisor.indexOfSpecialty_def]
   omega
 
 end TauCeti
