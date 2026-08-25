@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Data.Fintype.Order
 public import Mathlib.Order.GaloisConnection.Basic
 public import Mathlib.Topology.Instances.EReal.Lemmas
 public import TauCeti.Data.EReal.Operations
@@ -64,6 +65,8 @@ conditions that make the two marginal integrals of a dual pair meaningful.
   sections is upper semicontinuous;
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
   negative, which is the normalisation freedom of the dual problem;
+* `TauCeti.cTransform_coe` — over a nonempty finite source the transform of a coerced real
+  potential is the coercion of a real infimum;
 * `TauCeti.contactSet_subset_contactSet_cTransformSymm_cTransform` — sequentially transforming a
   feasible pair gives a dominating feasible pair with a larger contact set, and
   `TauCeti.cTransformSymm_cTransform_eq_of_mem_cSuperdifferential` — a potential agrees with its
@@ -254,6 +257,18 @@ theorem cTransformSymm_of_isEmpty [IsEmpty Y] (c : X × Y → ℝ) (ψ : Y → E
     cTransformSymm c ψ x = ⊤ := by
   simpa only [cTransformSymm_eq_cTransform] using
     cTransform_of_isEmpty (fun p : Y × X => c (p.2, p.1)) ψ x
+
+/-- On a nonempty finite source space the infimal `c`-transform of a real potential is itself
+real-valued: the `c`-transform of the coerced potential is the coercion of the real infimum. -/
+theorem cTransform_coe [Finite X] [Nonempty X] (c : X × Y → ℝ) (φ : X → ℝ) (y : Y) :
+    cTransform c (fun x ↦ (φ x : EReal)) y = ((⨅ x, (c (x, y) - φ x) : ℝ) : EReal) := by
+  obtain ⟨x₀, hx₀⟩ := exists_eq_ciInf_of_finite (f := fun x ↦ c (x, y) - φ x)
+  rw [cTransform_apply, ← hx₀]
+  refine le_antisymm ((iInf_le _ x₀).trans (le_of_eq (EReal.coe_sub _ _).symm))
+    (le_iInf fun x ↦ ?_)
+  rw [← EReal.coe_sub]
+  exact EReal.coe_le_coe_iff.2
+    (hx₀.symm ▸ ciInf_le (Finite.bddBelow_range fun x ↦ c (x, y) - φ x) x)
 
 /-- A `c`-transform is upper semicontinuous when each function in its defining infimum is upper
 semicontinuous. -/

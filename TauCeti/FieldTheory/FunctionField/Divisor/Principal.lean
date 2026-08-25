@@ -51,6 +51,9 @@ the places themselves.
   when `z ∈ kˣ`.
 * `TauCeti.Divisor.linearlyEquivalent_iff`: two divisors are linearly equivalent exactly when
   their difference is the divisor of a function (Definition 1.4.3).
+* `TauCeti.Divisor.mem_principalSubgroup_iff` and
+  `TauCeti.Divisor.divisorClass_eq_zero_iff`: the principal-subgroup and trivial-class predicates
+  in terms of the divisor of a function.
 
 ## Implementation notes
 
@@ -176,18 +179,29 @@ theorem principalDivisor_eq (hF : IsFunctionField k F) (z : Additive Fˣ) :
     (Place.orderSystem hF).principalDivisor z = principal hF (Additive.toMul z) := by
   rw [principal, principalHom, WeilDivisor.OrderSystem.principalHom_apply, ofMul_toMul]
 
+/-- A divisor belongs to the principal subgroup exactly when it is the divisor of a nonzero
+function. -/
+theorem mem_principalSubgroup_iff (hF : IsFunctionField k F) {D : Divisor k F} :
+    D ∈ (Place.orderSystem hF).principalSubgroup ↔ ∃ z : Fˣ, principal hF z = D := by
+  rw [WeilDivisor.OrderSystem.mem_principalSubgroup]
+  constructor
+  · rintro ⟨z, hz⟩
+    exact ⟨Additive.toMul z, by rwa [← principalDivisor_eq]⟩
+  · rintro ⟨z, hz⟩
+    exact ⟨Additive.ofMul z, by rwa [principalDivisor_eq, toMul_ofMul]⟩
+
+/-- A divisor has trivial divisor class exactly when it is the divisor of a nonzero function. -/
+theorem divisorClass_eq_zero_iff (hF : IsFunctionField k F) {D : Divisor k F} :
+    (Place.orderSystem hF).divisorClass D = 0 ↔ ∃ z : Fˣ, principal hF z = D := by
+  rw [WeilDivisor.OrderSystem.divisorClass_eq_zero_iff, mem_principalSubgroup_iff hF]
+
 /-- **Linear equivalence, in terms of functions**: two divisors are linearly equivalent exactly
 when their difference is the divisor of a function.  This is the multiplicative reading of
 `TauCeti.AlgebraicGeometry.WeilDivisor.OrderSystem.LinearlyEquivalent` for the order system of
 places (Stichtenoth, Definition 1.4.3). -/
 theorem linearlyEquivalent_iff (hF : IsFunctionField k F) {A B : Divisor k F} :
     (Place.orderSystem hF).LinearlyEquivalent A B ↔ ∃ z : Fˣ, principal hF z = A - B := by
-  rw [WeilDivisor.OrderSystem.linearlyEquivalent_iff_exists_principalDivisor]
-  constructor
-  · rintro ⟨g, hg⟩
-    exact ⟨Additive.toMul g, by rwa [← principalDivisor_eq]⟩
-  · rintro ⟨z, hz⟩
-    exact ⟨Additive.ofMul z, by rwa [principalDivisor_eq, toMul_ofMul]⟩
+  rw [WeilDivisor.OrderSystem.linearlyEquivalent_iff, mem_principalSubgroup_iff hF]
 
 /-- The divisor of a function algebraic over the constants is trivial: such a function has
 neither zeros nor poles. -/

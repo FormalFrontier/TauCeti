@@ -253,27 +253,15 @@ private theorem exists_generalLinearGroup_mulVec {v w : Fin m → k} (hv : v ≠
 /-- **The standard comodule of `GLₘ` over a field is simple** for `m ≠ 0`: its only subcomodules
 are the zero comodule and the whole column space. -/
 instance instIsSimpleOrderSubcomodule :
-    IsSimpleOrder (Subcomodule k (coordinateHopfAlgebra k m) (Fin m → k)) where
-  exists_pair_ne := by
-    refine ⟨⊥, ⊤, fun h ↦ ?_⟩
-    have hone : (Pi.single (0 : Fin m) (1 : k) : Fin m → k) ∈
-        (⊥ : Subcomodule k (coordinateHopfAlgebra k m) (Fin m → k)) :=
-      h ▸ Subcomodule.mem_top _
-    rw [Subcomodule.mem_bot] at hone
-    simpa using congrFun hone (0 : Fin m)
-  eq_bot_or_eq_top N := by
-    by_cases hN : ∀ w ∈ N, w = 0
-    · left
-      exact Subcomodule.ext fun w ↦ ⟨fun hw ↦ Subcomodule.mem_bot.mpr (hN w hw),
-        fun hw ↦ Subcomodule.mem_bot.mp hw ▸ zero_mem N⟩
-    · right
-      simp only [not_forall] at hN
-      obtain ⟨w, hwN, hw⟩ := hN
-      refine Subcomodule.ext fun v ↦ ⟨fun _ ↦ Subcomodule.mem_top v, fun _ ↦ ?_⟩
-      by_cases hv : v = 0
-      · exact hv ▸ zero_mem N
-      · obtain ⟨g, hg⟩ := exists_generalLinearGroup_mulVec k m hv hw
-        exact hg ▸ mulVec_mem k m N g hwN
+    IsSimpleOrder (Subcomodule k (coordinateHopfAlgebra k m) (Fin m → k)) := by
+  refine Subcomodule.isSimpleOrder_of_transitive
+    (Pi.single (0 : Fin m) (1 : k) : Fin m → k) ?_
+    (fun (g : Matrix.GeneralLinearGroup (Fin m) k) w ↦
+      (g : Matrix (Fin m) (Fin m) k) *ᵥ w) ?_ ?_
+  · intro h
+    simpa using congrFun h (0 : Fin m)
+  · exact fun hv hw ↦ exists_generalLinearGroup_mulVec k m hv hw
+  · exact fun N g _ hw ↦ mulVec_mem k m N g hw
 
 end Simple
 
