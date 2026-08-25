@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.Functor
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Points
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Borel
@@ -35,8 +34,6 @@ generation theorem and is not asserted here.
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup`: the algebra-valued points of
   the toral closure, viewed in `GLₙ`.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsNatIso`: the representing natural
-  isomorphism for those matrix-valued points.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralPoints`: the
   root-generated point subgroup is contained in the toral point subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints`: every represented
@@ -94,18 +91,6 @@ theorem kostantToralPointsSubgroup_def (A : Type v) [CommRing A] :
       GeneralLinear.hopfIdealPointsSubgroup n
         (kostantToralDefiningIdeal e h ρ M hM hnil b wt) A := by
   rw [kostantToralPointsSubgroup]
-
-/-- The quotient coordinate Hopf algebra of the Kostant toral closure represents its embedded
-matrix point groups, naturally in the value algebra. -/
-noncomputable def kostantToralPointsNatIso :
-    HopfAlgebra.pointsFunctor
-        (R := ℤ)
-        (H := CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-          (kostantToralDefiningIdeal e h ρ M hM hnil b wt)) ≅
-      GeneralLinear.hopfIdealPointsSubgroupFunctor n
-        (kostantToralDefiningIdeal e h ρ M hM hnil b wt) :=
-  GeneralLinear.hopfIdealPointsSubgroupNatIso n
-    (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
 
 /-- Membership in the points of the toral closure is vanishing on its defining Hopf ideal. -/
 @[simp]
