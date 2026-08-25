@@ -23,9 +23,10 @@ Mathlib's `IsIsotypicOfType`, `IsIsotypic`, and `isotypicComponent` through thos
 
 ## Main results
 
-* `LieModule.isIsotypicOfType_iff_isIsotypicOfType`: fixed-type isotypy transport for compatible
+* `LieModule.isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul`: fixed-type isotypy transport
+  for compatible actions.
+* `LieModule.isIsotypic_iff_isIsotypic_of_ι_smul`: pairwise isotypy transport for compatible
   actions.
-* `LieModule.isIsotypic_iff_isIsotypic`: pairwise isotypy transport for compatible actions.
 * `LieModule.lieSubmoduleOrderIso_isotypicComponent`: component transport for compatible actions.
 * `LieModule.mem_isotypicComponent_iff_mem_isotypicComponent_asModule`: canonical component
   membership normalization.
@@ -69,7 +70,7 @@ variable {R L M}
 
 /-- Lie-module isotypy of a fixed type is exactly Mathlib's module isotypy for compatible
 `U(L)`-actions. -/
-theorem isIsotypicOfType_iff_isIsotypicOfType
+theorem isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     (S : Type*) [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     [Module U S] [IsScalarTower R U S]
@@ -89,7 +90,7 @@ theorem isIsotypicOfType_iff_isIsotypicOfType
       (h (lieSubmoduleOrderIso hM P))
 
 /-- Lie-module isotypy is exactly Mathlib's module isotypy for a compatible `U(L)`-action. -/
-theorem isIsotypic_iff_isIsotypic
+theorem isIsotypic_iff_isIsotypic_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆) :
     IsIsotypic R L M ↔ _root_.IsIsotypic U M := by
   rw [isIsotypic_iff]
@@ -101,7 +102,7 @@ theorem isIsotypic_iff_isIsotypic
     let : IsScalarTower R U P := isScalarTower_asModule R L P
     let : IsIrreducible R L P :=
       (isSimpleModule_lieSubmoduleOrderIso_iff hM P).mp hQ
-    exact (isIsotypicOfType_iff_isIsotypicOfType hM P
+    exact (isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul hM P
       (asModule_ι_smul R L P) |>.mp (h P)).of_linearEquiv_type
       (lieSubmoduleLinearEquiv hM P)
   · intro h P hP
@@ -109,7 +110,7 @@ theorem isIsotypic_iff_isIsotypic
     let : IsScalarTower R U P := isScalarTower_asModule R L P
     let : IsSimpleModule U (lieSubmoduleOrderIso hM P) :=
       (isSimpleModule_lieSubmoduleOrderIso_iff hM P).mpr hP
-    exact isIsotypicOfType_iff_isIsotypicOfType hM P
+    exact isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul hM P
       (asModule_ι_smul R L P) |>.mpr
       ((h (lieSubmoduleOrderIso hM P)).of_linearEquiv_type
         (lieSubmoduleLinearEquiv hM P).symm)
@@ -135,7 +136,7 @@ theorem lieSubmoduleOrderIso_isotypicComponent
 
 /-- Membership in the Lie isotypic component is membership in the corresponding isotypic component
 for compatible `U(L)`-actions. -/
-theorem mem_isotypicComponent_iff_mem_isotypicComponent
+theorem mem_isotypicComponent_iff_mem_isotypicComponent_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     {S : Type*} [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     [Module U S] [IsScalarTower R U S]
@@ -163,7 +164,7 @@ theorem isotypicComponent_eq_top_iff_of_ι_smul
   rw [← map_eq_top_iff (lieSubmoduleOrderIso hM),
     lieSubmoduleOrderIso_isotypicComponent hM S hS,
     _root_.isotypicComponent_eq_top_iff,
-    isIsotypicOfType_iff_isIsotypicOfType hM S hS]
+    isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul hM S hS]
 
 end Compatible
 
@@ -180,7 +181,7 @@ theorem mem_isotypicComponent_iff_mem_isotypicComponent_asModule
     {S : Type*} [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     {m : M} :
     m ∈ isotypicComponent R L M S ↔ m ∈ _root_.isotypicComponent U M S :=
-  mem_isotypicComponent_iff_mem_isotypicComponent
+  mem_isotypicComponent_iff_mem_isotypicComponent_of_ι_smul
     (asModule_ι_smul R L M) (asModule_ι_smul R L S)
 
 end Canonical
