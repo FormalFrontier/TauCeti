@@ -210,9 +210,8 @@ private noncomputable def doubleExponents : ℤ[T;T⁻¹] →+* ℤ[T;T⁻¹] :=
 /-- Doubling exponents sends a Laurent monomial in degree `a` to one in degree `2a`. -/
 private theorem doubleExponents_single (a z : ℤ) :
     doubleExponents (AddMonoidAlgebra.single a z) = AddMonoidAlgebra.single (2 * a) z := by
-  change AddMonoidAlgebra.mapDomain (nsmulAddMonoidHom 2 : ℤ →+ ℤ)
-      (AddMonoidAlgebra.single a z) = AddMonoidAlgebra.single (2 * a) z
-  rw [AddMonoidAlgebra.mapDomain_single]
+  rw [doubleExponents, AddMonoidAlgebra.mapDomainRingHom_apply,
+    AddMonoidAlgebra.mapDomain_single]
   rfl
 
 /-- The graded Euler characteristic obtained by applying `Bigraded.euler` to the rank Poincaré
@@ -307,6 +306,7 @@ theorem coeff_gradedEulerChar (R : Type*) [Ring R] [StrongRankCondition R] (k : 
 /-- Only even exponents occur in the graded Euler characteristic: the grading variable is a square
 root of the Alexander variable, and the Alexander gradings of an odd-component diagram are
 integers. -/
+@[simp]
 theorem coeff_gradedEulerChar_of_odd (R : Type*) [Ring R] [StrongRankCondition R] {k : ℤ}
     (hk : Odd k) : (G.gradedEulerChar R).coeff k = 0 := by
   rw [G.coeff_gradedEulerChar R k]
