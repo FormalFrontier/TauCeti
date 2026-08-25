@@ -86,6 +86,13 @@ are the only ones to use.
 
 * Charles A. Weibel, *The K-book: An Introduction to Algebraic K-theory*, Chapter II, Section 6,
   for the product on `K₀` of a symmetric monoidal category.
+* `Mathlib/Algebra/DirectSum/Ring.lean`, whose bundled-multiplication proof pattern for the ring
+  structure on a graded direct sum is the one followed here: the associativity proof below is the
+  same `AddMonoidHom.mulLeft₃ = AddMonoidHom.mulRight₃` argument, the unit proofs the same
+  `mulHom 1 = AddMonoidHom.id` and `(mulHom).flip 1 = AddMonoidHom.id` arguments, and
+  `TauCeti.SplitK0.ringHom_ext` the same `RingHom.coe_addMonoidHom_injective` argument as
+  `DirectSum.ringHom_ext`, with the additive extensionality of the direct sum replaced by
+  `TauCeti.SplitK0.hom_ext`.
 * [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
   Layer 4b, whose representation ring `R(G)` -- the Grothendieck ring of `FDRep k G` with addition
   from `⊕` and multiplication from `⊗` -- is the motivating instance of this ring structure.
