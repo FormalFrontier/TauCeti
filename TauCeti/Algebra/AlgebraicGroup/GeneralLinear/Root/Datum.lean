@@ -35,6 +35,9 @@ X*(T) = ULift (Fin n) →₀ ℤ,    X_*(T) = ULift (Fin n) → ℤ.
 * `TauCeti.GeneralLinear.diagonalRootDatum`: the coordinate-difference root datum specialized to
   the diagonal torus lattice of `GL_n`.
 * `TauCeti.GeneralLinear.diagonalRootDatum_pairing_apply`: the closed Cartan-integer formula.
+* `TauCeti.GeneralLinear.diagonalRootDatum_reflection_apply` and
+  `diagonalRootDatum_coreflection_apply`: reflections transpose arbitrary character and
+  cocharacter coordinates.
 * `TauCeti.GeneralLinear.diagonalRootDatum_reflectionPerm`: reflections act by simultaneous
   coordinate transposition on the two indices.
 * `TauCeti.GeneralLinear.ofAdd_root_mem_nontrivialAdjointWeights`: every packaged root occurs as
@@ -68,11 +71,11 @@ abbrev DiagonalRootIndex (n : ℕ) :=
   SplitTorus.CoordinateRootIndex (ULift.{u} (Fin n))
 
 /-- The character-lattice vector `e_i - e_j`, defined for arbitrary matrix indices. -/
-@[expose] noncomputable def diagonalRoot {n : ℕ} (i j : Fin n) : ULift.{u} (Fin n) →₀ ℤ :=
+noncomputable def diagonalRoot {n : ℕ} (i j : Fin n) : ULift.{u} (Fin n) →₀ ℤ :=
   Multiplicative.toAdd (matrixUnitWeight i j)
 
 /-- The cocharacter-lattice vector `e_i - e_j`, defined for arbitrary matrix indices. -/
-@[expose] noncomputable def diagonalCoroot {n : ℕ} (i j : Fin n) : ULift.{u} (Fin n) → ℤ :=
+noncomputable def diagonalCoroot {n : ℕ} (i j : Fin n) : ULift.{u} (Fin n) → ℤ :=
   ⇑(diagonalRoot i j)
 
 /-- Evaluation of a diagonal root at a torus coordinate. -/
@@ -92,7 +95,7 @@ theorem diagonalCoroot_apply {n : ℕ} (i j : Fin n) (a : ULift.{u} (Fin n)) :
 /-- A diagonal coroot is the function underlying the corresponding diagonal root. -/
 theorem coe_diagonalRoot {n : ℕ} (i j : Fin n) :
     ⇑(diagonalRoot i j : ULift.{u} (Fin n) →₀ ℤ) = diagonalCoroot i j :=
-  rfl
+  by rw [diagonalCoroot]
 
 /-- The coordinate root datum on the diagonal split-torus lattices of `GL_n`.
 
@@ -175,6 +178,28 @@ theorem diagonalRootDatum_reflectionPerm {n : ℕ} (p q : DiagonalRootIndex n) :
       diagonalReflectionIndex p q := by
   rw [diagonalRootDatum, SplitTorus.coordinateRootDatum_reflectionPerm,
     diagonalReflectionIndex]
+
+/-- Reflection in the diagonal root indexed by `p` precomposes an arbitrary character with the
+corresponding coordinate transposition. -/
+@[simp]
+theorem diagonalRootDatum_reflection_apply {n : ℕ} (p : DiagonalRootIndex n)
+    (x : ULift.{u} (Fin n) →₀ ℤ) (a : ULift.{u} (Fin n)) :
+    (diagonalRootDatum n : RootDatum _ (ULift.{u} (Fin n) →₀ ℤ) _).reflection p x a =
+      x ((Equiv.swap p.1.1 p.1.2) a) := by
+  rw [diagonalRootDatum, SplitTorus.coordinateRootDatum_reflection_apply]
+  simp only [Equiv.swap_apply_def]
+  split_ifs <;> rfl
+
+/-- Coreflection in the diagonal root indexed by `p` precomposes an arbitrary cocharacter with the
+corresponding coordinate transposition. -/
+@[simp]
+theorem diagonalRootDatum_coreflection_apply {n : ℕ} (p : DiagonalRootIndex n)
+    (x : ULift.{u} (Fin n) → ℤ) (a : ULift.{u} (Fin n)) :
+    (diagonalRootDatum n : RootDatum _ _ (ULift.{u} (Fin n) → ℤ)).coreflection p x a =
+      x ((Equiv.swap p.1.1 p.1.2) a) := by
+  rw [diagonalRootDatum, SplitTorus.coordinateRootDatum_coreflection_apply]
+  simp only [Equiv.swap_apply_def]
+  split_ifs <;> rfl
 
 /-- The diagonal coordinate root datum is reduced. -/
 instance isReduced_diagonalRootDatum (n : ℕ) :
