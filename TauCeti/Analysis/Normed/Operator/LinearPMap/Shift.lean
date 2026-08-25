@@ -63,7 +63,7 @@ theorem subScalar_subScalar (A : X →ₗ.[R] X) (omega mu : R) :
   simp only [subScalar_apply]
   module
 
-/-- A bounded summand and a scalar shift commute: adding a globally defined map to `A` and then
+/-- A globally defined linear summand and a scalar shift commute: adding the map to `A` and then
 subtracting `omega I` gives the same operator either way round. -/
 @[simp]
 theorem vadd_subScalar {A : X →ₗ.[R] X} (f : X →ₗ[R] X) (omega : R) :
@@ -72,8 +72,8 @@ theorem vadd_subScalar {A : X →ₗ.[R] X} (f : X →ₗ[R] X) (omega : R) :
   rw [LinearPMap.vadd_apply, subScalar_apply, subScalar_apply, LinearPMap.vadd_apply]
   module
 
-/-- A scalar shift of a bounded perturbation absorbs into the perturbing map. This is the form
-in which the domain of a shifted perturbation is visibly the domain of `A`. -/
+/-- A scalar shift of a globally defined linear perturbation absorbs into the perturbing map.
+This is the form in which the domain of a shifted perturbation is visibly the domain of `A`. -/
 @[simp]
 theorem subScalar_vadd {A : X →ₗ.[R] X} (f : X →ₗ[R] X) (omega : R) :
     subScalar (f +ᵥ A) omega = (f - omega • LinearMap.id) +ᵥ A := by
