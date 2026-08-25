@@ -118,19 +118,6 @@ direct sum of the pieces with the quotient itself rather than with a separate gr
 noncomputable def zigzagGrade (n : ℕ) : Submodule k (nonisolatedZigzagQuotient k G) :=
   TauCeti.GradedAlgebra.gradeQuot (grade k (DoubledQuiver G)) (zigzagIdeal k G).asIdeal n
 
-/-- Membership in the induced degree-`n` piece is being the class of a homogeneous element. -/
-theorem mem_zigzagGrade_iff {n : ℕ} {x : nonisolatedZigzagQuotient k G} :
-    x ∈ zigzagGrade k G n ↔
-      ∃ y ∈ grade k (DoubledQuiver G) n, zigzagMk k G y = x := by
-  rw [zigzagGrade, TauCeti.GradedAlgebra.mem_gradeQuot_iff]
-  constructor
-  · rintro ⟨y, hy, hEq⟩
-    rw [← zigzagMk_apply k G] at hEq
-    exact ⟨y, hy, hEq⟩
-  · rintro ⟨y, hy, hEq⟩
-    rw [zigzagMk_apply k G] at hEq
-    exact ⟨y, hy, hEq⟩
-
 /-- A homogeneous element lands in the piece its degree names. -/
 @[simp]
 theorem zigzagMk_mem_zigzagGrade {n : ℕ} {y : pathAlgebra k (DoubledQuiver G)}
