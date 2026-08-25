@@ -56,8 +56,7 @@ omit [Fact (1 ≤ p)] in
 function vanishes outside `Ω`, so restricting the measure changes nothing. -/
 private theorem norm_testFunctionLp_eq (phi : 𝓓(Omega, ℝ)) :
     ‖testFunctionLp (mu := volume) p phi‖ = (eLpNorm (phi : _ → ℝ) p volume).toReal := by
-  rw [norm_testFunctionLp,
-    eLpNorm_restrict_eq_of_support_subset ((subset_tsupport _).trans phi.tsupport_subset)]
+  rw [Lp.norm_def, ← Lp.enorm_def, enorm_testFunctionLp_eq_eLpNorm]
 
 omit [Fact (1 ≤ p)] in
 /-- The `Lᵖ` norm of the gradient of a test function on `Ω`, computed by the ambient Lebesgue
@@ -65,10 +64,7 @@ measure and expressed through the Fréchet derivative. -/
 private theorem norm_gradientTestFunctionLp_eq (phi : 𝓓(Omega, ℝ)) :
     ‖gradientTestFunctionLp (mu := volume) p phi‖ =
       (eLpNorm (fderiv ℝ (phi : _ → ℝ)) p volume).toReal := by
-  rw [norm_gradientTestFunctionLp,
-    eLpNorm_restrict_eq_of_support_subset (support_gradient_testFunction_subset phi),
-    eLpNorm_congr_norm_ae
-      (ae_of_all _ fun x => norm_gradient_eq_norm_fderiv (𝕜 := ℝ) (phi : _ → ℝ) x)]
+  rw [Lp.norm_def, ← Lp.enorm_def, enorm_gradientTestFunctionLp_eq_eLpNorm_fderiv]
 
 /-- The Poincaré inequality for a single test function whose domain lies in a slab. -/
 private theorem norm_testFunctionLp_le_of_subset_slab (hp : p ≠ ∞) {i : Fin (n + 1)} {a b : ℝ}

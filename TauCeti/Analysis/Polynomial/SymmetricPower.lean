@@ -47,7 +47,8 @@ Lane F4.1 of the analytic Heegaard Floer roadmap opens with "`Sym^g(Σ)` geometr
 structure (elementary symmetric functions)", after Ozsváth--Szabó
 ([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1): a holomorphic coordinate on the
 surface identifies a neighbourhood in `Sym^g(Σ)` with an open subset of `Sym^g(ℂ)`, and the chart
-below is what makes that a chart on a topological manifold. The complex structure itself, and the
+below is what makes that a chart on a topological manifold; the charted structure is assembled
+from it in `TauCeti/Geometry/Manifold/SymmetricPower.lean`. The complex structure itself, and the
 totally real tori `T_α`, `T_β`, are separate later steps.
 -/
 
@@ -186,7 +187,7 @@ elementary symmetric functions of its points.
 
 This is the local model of the symmetric power of a Riemann surface at a tuple all of whose points
 lie in one coordinate patch; a general tuple is split into such groups by
-`TauCeti.Sym.isOpenEmbedding_appendSubtype`. -/
+`TauCeti.Sym.isOpenEmbedding_sumSubtype`. -/
 theorem isOpenEmbedding_coeffEquiv_comp_map {X : Type*} [TopologicalSpace X] {f : X → K}
     (hf : IsOpenEmbedding f) :
     IsOpenEmbedding fun s : Sym X n => coeffEquiv K n (Sym.map f s) := by

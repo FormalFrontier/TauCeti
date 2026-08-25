@@ -10,11 +10,11 @@ public import Mathlib.NumberTheory.RamificationInertia.Unramified
 /-!
 # Ramification indices in finite flat towers
 
-This file records two consequences of the fundamental identity for ramification and inertia in a
-finite flat extension of domains. First, the ramification index at any prime is at most the rank of
-the extension. Second, ramification cancels in a tower when the absolute ramification index at the
-top equals the absolute ramification index at the intermediate prime: multiplicativity then forces
-the relative ramification index to be one.
+This file records consequences of the fundamental identity for ramification and inertia in a finite
+flat extension of domains. The number of primes above a prime and each prime's contribution are at
+most the rank of the extension. Ramification also cancels in a tower when the absolute ramification
+index at the top equals the absolute ramification index at the intermediate prime: multiplicativity
+then forces the relative ramification index to be one.
 
 The cancellation result is the local step used in the finite-place half of the genus-field
 construction. At a rational prime dividing a prime discriminant, both the quadratic base and the
@@ -23,6 +23,8 @@ the compositum is unramified over the quadratic base.
 
 ## Main results
 
+* `TauCeti.RamificationInertia.ncard_primesOver_le_finrank`: the number of primes above a prime is
+  at most the rank of a finite flat extension.
 * `TauCeti.RamificationInertia.ramificationIdx_mul_inertiaDeg_le_finrank`: the contribution of one
   prime to the fundamental identity is at most the rank of the extension.
 * `TauCeti.RamificationInertia.ramificationIdx_le_finrank`: a ramification index is at most the
@@ -48,6 +50,19 @@ section Bounds
 
 variable {R S : Type*} [CommRing R] [IsDomain R] [CommRing S] [Algebra R S]
   [Module.Finite R S] [Module.Flat R S]
+
+/-- **There are at most `Module.finrank R S` primes above a prime.** Every ramification index and
+inertia degree in the fundamental identity is positive, so every prime above `p` contributes at
+least one to the rank. -/
+theorem ncard_primesOver_le_finrank (p : Ideal R) [p.IsPrime] :
+    (p.primesOver S).ncard ≤ finrank R S := by
+  have : Fintype (p.primesOver S) := (Algebra.QuasiFinite.finite_primesOver p).fintype
+  rw [← Nat.card_coe_set_eq, Nat.card_eq_fintype_card, ← Finset.card_univ,
+    Finset.card_eq_sum_ones, ← Ideal.sum_ramification_inertia_eq_finrank p S]
+  refine Finset.sum_le_sum fun q _ ↦ ?_
+  have : q.1.IsPrime := q.2.1
+  exact Nat.one_le_iff_ne_zero.mpr
+    (Nat.mul_ne_zero (q.1.ramificationIdx_pos R).ne' (q.1.inertiaDeg_pos R).ne')
 
 /-- **One prime's contribution to the fundamental identity is at most the extension rank.**
 For a prime `q` of `S` above a prime `p` of `R`, the product of its ramification index and inertia

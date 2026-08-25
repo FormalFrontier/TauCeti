@@ -20,7 +20,9 @@ file proves the forward direction of the places ↔ height one primes correspond
 the normalized `𝔭`-adic valuation. The prime in question is the centre `{r : R | ord_P r > 0}` of
 the place on `R`, so the valuation ring of the place is the localization of `R` there. The converse
 — that every height one prime of `R` arises this way, which upgrades this injection into a
-bijection — is not proved here; it belongs to the module constructing a place from a prime.
+bijection — is not proved here; it is proved in
+`TauCeti/FieldTheory/FunctionField/AffineModel/Prime.lean`, which constructs the place of a
+prime.
 
 This is the "places → height one primes" half of the affine-model dictionary that reduces divisor
 theory on the finite chart of a model to Mathlib's factorization calculus for fractional ideals.
@@ -30,8 +32,6 @@ integrally closed, then swallows everything integral over `k[x]`.
 
 ## Main results
 
-* `TauCeti.Place.mem_integers_of_isIntegral`: the valuation ring of a place is integrally closed,
-  so it contains everything integral over a subring it contains.
 * `TauCeti.Place.adjoin_le_integers_iff`: `k[x] ⊆ 𝒪_P` exactly when `x ∈ 𝒪_P`.
 * `TauCeti.Place.center`: the height one prime of an affine model below a place finite on it,
   with `TauCeti.Place.valuation_center` identifying the adic valuation of that prime with the
@@ -40,6 +40,9 @@ integrally closed, then swallows everything integral over `k[x]`.
 * `TauCeti.Place.existsUnique_valuation_eq`: the uniqueness statement, and
   `TauCeti.Place.valuationSubringAtPrime_eq_integers`: the valuation ring of the place is the
   localization of the model at the centre.
+* `TauCeti.Place.ord_algebraMap_eq_multiplicity_center`: the coefficient formula
+  `ord_P r = mult_(centre) (r)`, which reads an order at the place off the factorization of an
+  ideal of the model.
 
 ## References
 
@@ -60,18 +63,6 @@ universe u v w
 variable {k : Type u} {F : Type v} [Field k] [Field F] [Algebra k F] (P : Place k F)
 
 section Integers
-
-/-- The valuation ring of a place is integrally closed in `F`: an element of `F` integral over a
-`k`-algebra whose image lies in `𝒪_P` lies in `𝒪_P`. -/
-theorem mem_integers_of_isIntegral {R : Type w} [CommRing R] [Algebra R F]
-    (hR : ∀ r : R, algebraMap R F r ∈ P.integers) {y : F} (hy : IsIntegral R y) :
-    y ∈ P.integers := by
-  have hR' : ∀ r : R, algebraMap R F r ∈ P.valuation.valuationSubring :=
-    fun r ↦ P.mem_integers_iff.mp (hR r)
-  let : Algebra R P.valuation.valuationSubring := ((algebraMap R F).codRestrict _ hR').toAlgebra
-  have : IsScalarTower R P.valuation.valuationSubring F := .of_algebraMap_eq fun _ ↦ rfl
-  exact P.mem_integers_iff.mpr
-    ((Valuation.valuationSubring.integers P.valuation).isIntegral_iff_v_le_one.mp hy.tower_top)
 
 /-- **`k[x]` lies in the valuation ring of `P` exactly when `x` has no pole at `P`**: the
 criterion selecting the places on the finite chart of `x`. Its additive form is obtained from
@@ -127,6 +118,17 @@ theorem mem_center_asIdeal_iff_ord_pos {r : R} (hr : r ≠ 0) :
   rw [mem_center_asIdeal, P.valuation_eq_exp_neg_ord hr', ← WithZero.exp_zero (M := ℤ),
     WithZero.exp_lt_exp]
   omega
+
+/-- **The coefficient formula at a place finite on an affine model**: the order at `P` of a
+nonzero element of the model is the multiplicity of the centre of `P` in the ideal it generates.
+This is what turns a divisor supported on the finite chart of a model into a factorization of
+ideals. The hypothesis `r ≠ 0` guards the junk values `ord_P 0 = 0` and `mult_𝔭 ⊥ = 1`. -/
+theorem ord_algebraMap_eq_multiplicity_center {r : R} (hr : r ≠ 0) :
+    P.ord (algebraMap R F r) = multiplicity (P.center hR).asIdeal (Ideal.span {r}) := by
+  have hr' : algebraMap R F r ≠ 0 := (map_ne_zero_iff _ (IsFractionRing.injective R F)).mpr hr
+  rw [P.ord_eq_iff_valuation_eq_exp_neg hr', ← P.valuation_center hR,
+    HeightOneSpectrum.valuation_of_algebraMap,
+    HeightOneSpectrum.intValuation_eq_exp_neg_multiplicity _ hr]
 
 /-- A height one prime whose adic valuation is that of `P` is the centre of `P`. -/
 theorem eq_center {𝔭 : HeightOneSpectrum R} (h : 𝔭.valuation F = P.valuation) :

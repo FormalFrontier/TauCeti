@@ -30,6 +30,8 @@ the same counting API. That companion module records the resulting `JCenter` sin
 * `TauCeti.GridPoint.ICount_eq_sum_card_filter`,
   `TauCeti.GridPoint.ICount_eq_sum_card_filter_right`: an arbitrary ordered relation count as a
   sum of fiber counts.
+* `TauCeti.GridPoint.JNumMixed_eq_sum_singleton_left`: an arbitrary mixed numerator as a sum of
+  its singleton-left contributions.
 * `TauCeti.GridPoint.I_eq_sum_card_filter`, `TauCeti.GridPoint.I_eq_sum_card_filter_right`: the
   ordered southwest count as a sum of fiber counts over the left (resp. right) point set.
 * `TauCeti.GridPoint.I_singleton_left`, `TauCeti.GridPoint.I_singleton_right`: the ordered
@@ -113,6 +115,17 @@ points of `s` strictly southwest of it. -/
 theorem I_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × Fin n) :
     I s {p} = (s.filter fun q => IsSouthWest q p).card :=
   ICount_singleton_right _ s p
+
+/-- A mixed numerator is the sum, over the left point set, of its singleton-left
+contributions. -/
+theorem JNumMixed_eq_sum_singleton_left
+    (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+    (s t : Finset (Fin n × Fin n)) :
+    JNumMixed r s t = ∑ p ∈ s, JNumMixed r {p} t := by
+  rw [JNumMixed_def, ICount_eq_sum_card_filter, I_eq_sum_card_filter_right,
+    ← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl fun p _ => by
+    rw [JNumMixed_def, ICount_singleton_left, I_singleton_right]
 
 /-- The symmetrized numerator of the `J`-function against a single grid square splits into the two
 directed counts: the points of `t` strictly northeast of the square and the points strictly

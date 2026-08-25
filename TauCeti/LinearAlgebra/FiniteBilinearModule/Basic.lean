@@ -16,10 +16,10 @@ A finite abelian group equipped with a symmetric biadditive pairing into `ℚ/�
 is stored as its adjoint into Mathlib's `CharacterModule`; nondegeneracy asserts that this
 adjoint is bijective.
 
-This file provides the basic constructions needed for discriminant forms: isometries, restriction,
-form negation, orthogonal direct sums, radicals, orthogonal complements, isotropic elements,
-isotropic subgroups, and Lagrangians.  Nondegeneracy remains a predicate because restriction to a
-subgroup can be degenerate.
+This file provides the basic constructions needed for discriminant forms: morphisms, isometries,
+restriction, form negation, orthogonal direct sums, radicals, orthogonal complements, isotropic
+elements, isotropic subgroups, and Lagrangians. Nondegeneracy remains a predicate because
+restriction to a subgroup can be degenerate.
 
 ## References
 
@@ -31,11 +31,23 @@ subgroup can be degenerate.
 * `TauCeti.FiniteBilinearModule`: a finite abelian group with a symmetric `ℚ/ℤ`-valued pairing.
 * `TauCeti.FiniteBilinearModule.toBilin`: the pairing as a `ℤ`-bilinear map.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate`: bijectivity of the adjoint pairing.
+* `TauCeti.FiniteBilinearModule.Hom`: a pairing-preserving additive homomorphism.
 * `TauCeti.FiniteBilinearModule.Isometry`: a pairing-preserving additive equivalence.
 * `TauCeti.FiniteBilinearModule.orthogonalComplement`: the orthogonal complement of a subgroup.
 * `TauCeti.FiniteBilinearModule.IsIsotropicElem`: vanishing of the self-pairing on an element.
 * `TauCeti.FiniteBilinearModule.IsIsotropic`: vanishing of the pairing on a subgroup.
 * `TauCeti.FiniteBilinearModule.IsLagrangian`: equality with the orthogonal complement.
+
+## Main results
+
+* `TauCeti.FiniteBilinearModule.Isometry.map_orthogonalComplement`: an isometry carries
+  orthogonal complements to orthogonal complements.
+* `TauCeti.FiniteBilinearModule.Isometry.orthogonalComplementEquiv`: the induced equivalence
+  between corresponding orthogonal complements.
+* `TauCeti.FiniteBilinearModule.Isometry.isIsotropic_map_iff`: an isometry transports isotropic
+  subgroups.
+* `TauCeti.FiniteBilinearModule.Isometry.isLagrangian_map_iff`: an isometry transports Lagrangian
+  subgroups.
 -/
 
 public section
@@ -255,6 +267,86 @@ noncomputable def adjointEquiv (hA : A.IsNondegenerate) : A ≃+ CharacterModule
 theorem adjointEquiv_apply (hA : A.IsNondegenerate) (x : A) : A.adjointEquiv hA x = A.pairing x :=
   (rfl)
 
+/-! ## Morphisms and isometries -/
+
+/-- A morphism of finite bilinear modules is a pairing-preserving additive homomorphism. -/
+structure Hom (A : FiniteBilinearModule.{u}) (B : FiniteBilinearModule.{v}) where
+  /-- The underlying additive homomorphism. -/
+  toAddMonoidHom : A →+ B
+  /-- The homomorphism preserves the bilinear pairing. -/
+  map_pairing' : ∀ x y, B.pairing (toAddMonoidHom x) (toAddMonoidHom y) = A.pairing x y
+
+namespace Hom
+
+variable {A : FiniteBilinearModule.{u}} {B : FiniteBilinearModule.{v}}
+  {C : FiniteBilinearModule.{w}}
+
+instance : FunLike (Hom A B) A B where
+  coe f := f.toAddMonoidHom
+  coe_injective f g h := by
+    cases f
+    cases g
+    congr
+    exact DFunLike.coe_injective h
+
+instance : AddMonoidHomClass (Hom A B) A B where
+  map_add f := f.toAddMonoidHom.map_add
+  map_zero f := f.toAddMonoidHom.map_zero
+
+@[simp]
+theorem coe_toAddMonoidHom (f : Hom A B) : ⇑f.toAddMonoidHom = f := rfl
+
+/-- A morphism of finite bilinear modules preserves the stored pairing. -/
+@[simp]
+theorem map_pairing (f : Hom A B) (x y : A) : B.pairing (f x) (f y) = A.pairing x y :=
+  f.map_pairing' x y
+
+/-- Two morphisms are equal when they agree on every element. -/
+@[ext]
+theorem ext {f g : Hom A B} (h : ∀ x, f x = g x) : f = g :=
+  DFunLike.ext f g h
+
+/-- The identity morphism of a finite bilinear module. -/
+def id (A : FiniteBilinearModule) : Hom A A where
+  toAddMonoidHom := AddMonoidHom.id A
+  map_pairing' _ _ := rfl
+
+/-- The composite of two finite bilinear module morphisms. -/
+def comp (g : Hom B C) (f : Hom A B) : Hom A C where
+  toAddMonoidHom := g.toAddMonoidHom.comp f.toAddMonoidHom
+  map_pairing' x y := (g.map_pairing (f x) (f y)).trans (f.map_pairing x y)
+
+@[simp]
+theorem id_apply (A : FiniteBilinearModule) (x : A) : id A x = x := (rfl)
+
+@[simp]
+theorem comp_apply (g : Hom B C) (f : Hom A B) (x : A) : g.comp f x = g (f x) := (rfl)
+
+@[simp]
+theorem id_comp (f : Hom A B) : (id B).comp f = f := by
+  ext
+  rfl
+
+@[simp]
+theorem comp_id (f : Hom A B) : f.comp (id A) = f := by
+  ext
+  rfl
+
+@[simp]
+theorem comp_assoc {D : FiniteBilinearModule} (h : Hom C D) (g : Hom B C) (f : Hom A B) :
+    (h.comp g).comp f = h.comp (g.comp f) := by
+  ext
+  rfl
+
+/-- A morphism out of a nondegenerate finite bilinear module is injective. -/
+theorem injective (f : Hom A B) (hA : A.IsNondegenerate) : Function.Injective f := by
+  intro x y hxy
+  apply hA.injective
+  ext z
+  rw [← f.map_pairing x z, ← f.map_pairing y z, hxy]
+
+end Hom
+
 /-- An isometry of finite bilinear modules is an additive equivalence preserving the pairing. -/
 structure Isometry (A : FiniteBilinearModule.{u}) (B : FiniteBilinearModule.{v}) where
   /-- The underlying additive equivalence. -/
@@ -290,6 +382,19 @@ theorem coe_toAddEquiv (f : Isometry A B) : ⇑f.toAddEquiv = f := rfl
 @[simp]
 theorem map_pairing (f : Isometry A B) (x y : A) : B.pairing (f x) (f y) = A.pairing x y :=
   f.map_pairing' x y
+
+/-- An isometry is, after forgetting bijectivity, a morphism of finite bilinear modules. -/
+def toHom (f : Isometry A B) : Hom A B where
+  toAddMonoidHom := f.toAddEquiv.toAddMonoidHom
+  map_pairing' := f.map_pairing
+
+@[simp]
+theorem toHom_apply (f : Isometry A B) (x : A) : f.toHom x = f x := (rfl)
+
+/-- The underlying morphism of an isometry is bijective. -/
+theorem toHom_bijective (f : Isometry A B) : Function.Bijective f.toHom := by
+  simpa only [Function.Bijective, Function.Injective, Function.Surjective, toHom_apply,
+    coe_toAddEquiv] using f.toAddEquiv.bijective
 
 /-- Two isometries are equal when they agree on all elements. -/
 @[ext]
@@ -339,6 +444,19 @@ theorem apply_symm_apply (f : Isometry A B) (x : B) : f (f.symm x) = x :=
 theorem trans_apply (f : Isometry A B) (g : Isometry B C) (x : A) : (f.trans g) x = g (f x) :=
   f.toAddEquiv.trans_apply g.toAddEquiv x
 
+/-- Forgetting the identity isometry gives the identity morphism. -/
+@[simp]
+theorem refl_toHom (A : FiniteBilinearModule) : (refl A).toHom = Hom.id A := by
+  ext x
+  rw [toHom_apply, refl_apply, Hom.id_apply]
+
+/-- Forgetting a composite isometry gives the composite morphism. -/
+@[simp]
+theorem trans_toHom (f : Isometry A B) (g : Isometry B C) :
+    (f.trans g).toHom = g.toHom.comp f.toHom := by
+  ext x
+  rw [toHom_apply, trans_apply, Hom.comp_apply, toHom_apply, toHom_apply]
+
 /-- Nondegeneracy transfers along an isometry. -/
 theorem isNondegenerate (f : Isometry A B) (hA : A.IsNondegenerate) : B.IsNondegenerate := by
   rw [B.isNondegenerate_iff_injective]
@@ -356,6 +474,35 @@ theorem isNondegenerate_iff (f : Isometry A B) : A.IsNondegenerate ↔ B.IsNonde
   ⟨f.isNondegenerate, f.symm.isNondegenerate⟩
 
 end Isometry
+
+namespace Hom
+
+variable {A : FiniteBilinearModule.{u}} {B : FiniteBilinearModule.{v}}
+
+/-- A bijective morphism of finite bilinear modules is an isometry. -/
+noncomputable def toIsometry (f : Hom A B) (hf : Function.Bijective f) : Isometry A B where
+  toAddEquiv := AddEquiv.ofBijective f.toAddMonoidHom hf
+  map_pairing' := f.map_pairing
+
+@[simp]
+theorem toIsometry_apply (f : Hom A B) (hf : Function.Bijective f) (x : A) :
+    f.toIsometry hf x = f x := (rfl)
+
+/-- Forgetting a bijective morphism after packaging it as an isometry recovers the morphism. -/
+@[simp]
+theorem toIsometry_toHom (f : Hom A B) (hf : Function.Bijective f) :
+    (f.toIsometry hf).toHom = f := by
+  ext
+  rfl
+
+/-- Packaging the underlying morphism of an isometry recovers the isometry. -/
+@[simp]
+theorem toHom_toIsometry (f : Isometry A B) :
+    f.toHom.toIsometry f.toHom_bijective = f := by
+  ext
+  rfl
+
+end Hom
 
 /-- Restrict a finite bilinear module to an additive subgroup.
 
@@ -379,6 +526,14 @@ abbrev restrict (H : AddSubgroup A) : FiniteBilinearModule where
 
 theorem restrict_pairing (H : AddSubgroup A) (x y : H) :
     (restrict A H).pairing x y = A.pairing x.1 y.1 := (rfl)
+
+/-- The inclusion of a restricted finite bilinear module into the original module. -/
+def restrictHom (H : AddSubgroup A) : Hom (restrict A H) A where
+  toAddMonoidHom := H.subtype
+  map_pairing' _ _ := rfl
+
+@[simp]
+theorem restrictHom_apply (H : AddSubgroup A) (x : H) : A.restrictHom H x = x := (rfl)
 
 /-- Negate the pairing of a finite bilinear module. -/
 abbrev neg : FiniteBilinearModule where
@@ -639,54 +794,84 @@ theorem IsLagrangian.isIsotropic {H : AddSubgroup A} (hH : A.IsLagrangian H) :
     A.IsIsotropic H := by
   rw [A.isIsotropic_iff_le_orthogonalComplement, ← hH]
 
+/-- An isometry carries orthogonal complements to orthogonal complements. -/
+@[simp]
+theorem Isometry.map_orthogonalComplement {B : FiniteBilinearModule} (f : Isometry A B)
+    (H : AddSubgroup A) :
+    (A.orthogonalComplement H).map f.toAddEquiv =
+      B.orthogonalComplement (H.map f.toAddEquiv) := by
+  ext y
+  rw [AddSubgroup.mem_map, B.mem_orthogonalComplement_iff]
+  constructor
+  · rintro ⟨x, hx, rfl⟩ w hw
+    obtain ⟨z, hz, rfl⟩ := AddSubgroup.mem_map.mp hw
+    exact (f.map_pairing x z).trans ((A.mem_orthogonalComplement_iff H x).mp hx z hz)
+  · intro hy
+    refine ⟨f.symm y, ?_, f.apply_symm_apply y⟩
+    rw [A.mem_orthogonalComplement_iff]
+    intro z hz
+    rw [← f.map_pairing (f.symm y) z, f.apply_symm_apply]
+    exact hy (f z) (AddSubgroup.mem_map.mpr ⟨z, hz, rfl⟩)
+
+/-- An isometry restricts to an additive equivalence from the orthogonal complement of a subgroup
+onto the orthogonal complement of its image. -/
+def Isometry.orthogonalComplementEquiv {B : FiniteBilinearModule} (f : Isometry A B)
+    (H : AddSubgroup A) :
+    A.orthogonalComplement H ≃+ B.orthogonalComplement (H.map f.toAddEquiv) :=
+  (f.toAddEquiv.addSubgroupMap (A.orthogonalComplement H)).trans
+    (AddEquiv.addSubgroupCongr (f.map_orthogonalComplement (H := H)))
+
+/-- The restricted equivalence of orthogonal complements acts by the isometry. -/
+@[simp]
+theorem Isometry.coe_orthogonalComplementEquiv_apply {B : FiniteBilinearModule}
+    (f : Isometry A B) (H : AddSubgroup A) (x : A.orthogonalComplement H) :
+    (Isometry.orthogonalComplementEquiv A f H x : B) = f (x : A) := (rfl)
+
+/-- The inverse restricted equivalence of orthogonal complements acts by the inverse isometry. -/
+@[simp]
+theorem Isometry.coe_orthogonalComplementEquiv_symm_apply {B : FiniteBilinearModule}
+    (f : Isometry A B) (H : AddSubgroup A)
+    (y : B.orthogonalComplement (H.map f.toAddEquiv)) :
+    ((Isometry.orthogonalComplementEquiv A f H).symm y : A) = f.symm (y : B) := (rfl)
+
+/-- An isometry carries an element of the orthogonal complement of `H` into the orthogonal
+complement of `K` whenever the preimage of `K` is contained in `H`. -/
+theorem Isometry.map_mem_orthogonalComplement_of_forall_mem {B : FiniteBilinearModule}
+    (f : Isometry A B) {H : AddSubgroup A} {K : AddSubgroup B}
+    (h : ∀ x : A, f x ∈ K → x ∈ H) {x : A} (hx : x ∈ A.orthogonalComplement H) :
+    f x ∈ B.orthogonalComplement K := by
+  have hle : K ≤ H.map f.toAddEquiv := by
+    intro y hy
+    have hy' : f (f.symm y) ∈ K := by simpa
+    have hpre : f.symm y ∈ H := h (f.symm y) hy'
+    exact (AddSubgroup.mem_map_equiv (f := f.toAddEquiv) (K := H) (x := y)).mpr hpre
+  apply B.orthogonalComplement_anti hle
+  rw [← f.map_orthogonalComplement (H := H)]
+  exact AddSubgroup.mem_map_of_mem _ hx
+
+/-- An isometry carrying `H` onto `K` carries every element of `H^⊥` into `K^⊥`. -/
+theorem Isometry.map_mem_orthogonalComplement_of_map_eq {B : FiniteBilinearModule}
+    (f : Isometry A B) {H : AddSubgroup A} {K : AddSubgroup B}
+    (h : H.map f.toAddEquiv = K) {x : A} (hx : x ∈ A.orthogonalComplement H) :
+    f x ∈ B.orthogonalComplement K := by
+  rw [← h, ← f.map_orthogonalComplement (H := H)]
+  exact AddSubgroup.mem_map_of_mem _ hx
+
+/-- An isometry transports isotropic subgroups. -/
+@[simp]
+theorem Isometry.isIsotropic_map_iff {B : FiniteBilinearModule} (f : Isometry A B)
+    (H : AddSubgroup A) :
+    B.IsIsotropic (H.map f.toAddEquiv) ↔ A.IsIsotropic H := by
+  rw [B.isIsotropic_iff_le_orthogonalComplement, A.isIsotropic_iff_le_orthogonalComplement,
+    ← f.map_orthogonalComplement, AddSubgroup.map_le_map_iff_of_injective f.toAddEquiv.injective]
+
 /-- An isometry transports Lagrangian subgroups. -/
 @[simp]
 theorem Isometry.isLagrangian_map_iff {B : FiniteBilinearModule} (f : Isometry A B)
     (H : AddSubgroup A) :
     B.IsLagrangian (H.map f.toAddEquiv) ↔ A.IsLagrangian H := by
-  rw [isLagrangian_def, isLagrangian_def]
-  constructor
-  · intro hH
-    ext x
-    constructor
-    · intro hx
-      have hfx : f x ∈ B.orthogonalComplement (H.map f.toAddEquiv) := by
-        rw [← hH]
-        exact ⟨x, hx, rfl⟩
-      rw [A.mem_orthogonalComplement_iff]
-      intro y hy
-      rw [← f.map_pairing]
-      exact B.mem_orthogonalComplement_iff (H.map f.toAddEquiv) (f x) |>.mp hfx
-        (f y) ⟨y, hy, rfl⟩
-    · intro hx
-      have hfx : f x ∈ B.orthogonalComplement (H.map f.toAddEquiv) := by
-        rw [B.mem_orthogonalComplement_iff]
-        intro y hy
-        obtain ⟨z, hz, rfl⟩ := hy
-        exact (f.map_pairing x z).trans
-          (A.mem_orthogonalComplement_iff H x |>.mp hx z hz)
-      rw [← hH] at hfx
-      obtain ⟨y, hy, hxy⟩ := hfx
-      exact f.toAddEquiv.injective hxy ▸ hy
-  · intro hH
-    ext y
-    obtain ⟨x, rfl⟩ := f.toAddEquiv.surjective y
-    constructor
-    · rintro ⟨z, hz, hzx⟩
-      have hx : x ∈ H := f.toAddEquiv.injective hzx ▸ hz
-      rw [B.mem_orthogonalComplement_iff]
-      intro y hy
-      obtain ⟨w, hw, rfl⟩ := hy
-      exact (f.map_pairing x w).trans
-        (A.mem_orthogonalComplement_iff H x |>.mp (hH ▸ hx) w hw)
-    · intro hx
-      have hAx : x ∈ A.orthogonalComplement H := by
-        rw [A.mem_orthogonalComplement_iff]
-        intro z hz
-        rw [← f.map_pairing]
-        exact B.mem_orthogonalComplement_iff (H.map f.toAddEquiv) (f x) |>.mp hx
-          (f z) ⟨z, hz, rfl⟩
-      exact ⟨x, hH ▸ hAx, rfl⟩
+  rw [isLagrangian_def, isLagrangian_def, ← f.map_orthogonalComplement,
+    (AddSubgroup.map_injective f.toAddEquiv.injective).eq_iff]
 
 end FiniteBilinearModule
 

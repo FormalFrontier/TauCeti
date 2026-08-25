@@ -9,6 +9,10 @@ module
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 -- `TauCeti.diagGL` occurs in the conjugation statement below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+-- `MonoidHom.noncommCoprod` packages products of commuting one-parameter subgroups.
+public import Mathlib.GroupTheory.NoncommCoprod
+-- Non-public: the diagonal-matrix-unit product law is used only in a proof below.
+import TauCeti.LinearAlgebra.Matrix.Diagonal
 
 /-!
 # The commutator relations between transvections
@@ -44,11 +48,15 @@ elementary matrices against the diagonal torus.
   `GL n A`, namely `Matrix.SpecialLinearGroup.transvection` along
   `Matrix.SpecialLinearGroup.toGL`.
 * `TauCeti.transvectionHom`: the resulting homomorphism from the additive group of `A`.
+* `TauCeti.commutingTransvectionPairHom`: the product of two commuting transvection
+  homomorphisms, with a shared parameter.
 
 ## Main results
 
 * `TauCeti.commute_transvectionUnit`: transvections at index pairs that do not chain commute.
-* `TauCeti.commutatorElement_transvectionUnit`: the commutator of two chaining transvections.
+* `TauCeti.commutatorElement_transvectionUnit` and
+  `TauCeti.commutatorElement_transvectionUnit_reverse`: the commutators of two chaining
+  transvections in either orientation.
 * `TauCeti.det_transvectionUnit` and `TauCeti.transvectionUnit_injective`: a transvection has
   determinant `1`, and distinct parameters give distinct transvections.
 * `TauCeti.diagGL_mul_transvectionUnit_mul_inv`: conjugation by an invertible diagonal matrix.
@@ -71,11 +79,13 @@ namespace TauCeti
 
 universe u v
 
-variable {n : Type*} [DecidableEq n] {A : Type u} [CommRing A] {i j k l : n}
+variable {n : Type*} [DecidableEq n] {A : Type u} {i j k l : n}
 
 section Products
 
 variable [Fintype n]
+
+variable [CommRing A]
 
 /-- Conjugating a transvection by a diagonal matrix rescales its parameter by the two
 corresponding diagonal entries. The hypothesis says that the two diagonals are inverse to one
@@ -85,17 +95,12 @@ theorem diagonal_mul_transvection_mul_diagonal {v w : n → A} (hvw : ∀ a, v a
   have hd : diagonal v * diagonal w = (1 : Matrix n n A) := by
     rw [Matrix.diagonal_mul_diagonal]
     exact Matrix.diagonal_eq_one.2 (by ext a; exact hvw a)
-  have hs : diagonal v * single i j c * diagonal w = single i j (v i * c * w j) := by
-    ext a b
-    rw [Matrix.mul_assoc]
-    simp only [Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.single_apply]
-    by_cases h : i = a ∧ j = b
-    · obtain ⟨rfl, rfl⟩ := h
-      simp [mul_assoc]
-    · simp [h]
-  simp only [transvection, Matrix.mul_add, Matrix.mul_one, Matrix.add_mul, hd, hs]
+  simp only [transvection, Matrix.mul_add, Matrix.mul_one, Matrix.add_mul, hd,
+    diagonal_mul_single_mul_diagonal]
 
 end Products
+
+variable [CommRing A]
 
 /-! ## Transvections as invertible matrices -/
 
@@ -170,6 +175,24 @@ theorem commute_transvectionUnit (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k)
   (Matrix.SpecialLinearGroup.commute_transvection hij hkl hjk hli c d).map
     Matrix.SpecialLinearGroup.toGL
 
+/-- Two pointwise commuting transvection homomorphisms, evaluated at a shared parameter after a
+chosen endomorphism in the second component. This packages the standard construction of a
+one-parameter subgroup as a product of two commuting elementary one-parameter subgroups. -/
+def commutingTransvectionPairHom (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i)
+    (second : Multiplicative A →* Multiplicative A) : Multiplicative A →* GL n A :=
+  ((transvectionHom hij).noncommCoprod (transvectionHom hkl)
+      (fun c d ↦ by simpa only [transvectionHom_apply] using
+        commute_transvectionUnit hij hkl hjk hli c.toAdd d.toAdd)).comp
+    ((MonoidHom.id _).prod second)
+
+/-- The commuting-pair homomorphism evaluates to the product of its two transvections. -/
+@[simp]
+theorem commutingTransvectionPairHom_apply (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k)
+    (hli : l ≠ i) (second : Multiplicative A →* Multiplicative A) (c : Multiplicative A) :
+    commutingTransvectionPairHom hij hkl hjk hli second c =
+      transvectionUnit hij c.toAdd * transvectionUnit hkl (second c).toAdd := by
+  simp [commutingTransvectionPairHom]
+
 /-- The product of two chaining transvections in `GL n A`, in the two orders. -/
 theorem transvectionUnit_mul_transvectionUnit_eq_mul_mul
     (hij : i ≠ j) (hjl : j ≠ l) (hil : i ≠ l)
@@ -188,6 +211,19 @@ theorem commutatorElement_transvectionUnit (hij : i ≠ j) (hjl : j ≠ l) (hil 
   simp only [transvectionUnit, ← map_commutatorElement]
   exact congrArg SpecialLinearGroup.toGL
     (Matrix.SpecialLinearGroup.commutatorElement_transvection hij hjl hil c d)
+
+/-- The reverse-orientation form of the type-`A` Chevalley commutator relation:
+`[xᵢⱼ(c), xₖᵢ(d)] = xₖⱼ(-(dc))`. -/
+theorem commutatorElement_transvectionUnit_reverse
+    (hij : i ≠ j) (hki : k ≠ i) (hkj : k ≠ j) (c d : A) :
+    ⁅transvectionUnit hij c, transvectionUnit hki d⁆ = transvectionUnit hkj (-(d * c)) := by
+  calc
+    ⁅transvectionUnit hij c, transvectionUnit hki d⁆ =
+        ⁅transvectionUnit hki d, transvectionUnit hij c⁆⁻¹ :=
+      (commutatorElement_inv _ _).symm
+    _ = (transvectionUnit hkj (d * c))⁻¹ := by
+      rw [commutatorElement_transvectionUnit hki hij hkj]
+    _ = transvectionUnit hkj (-(d * c)) := transvectionUnit_inv hkj (d * c)
 
 end Unit
 

@@ -21,14 +21,29 @@ The reconstruction is total: entries after the last genuine visit use the junk v
 * `TauCeti.visitCount`: the number of visits to a value before a given index.
 * `TauCeti.visitTime`: the index of a given visit to a value.
 * `TauCeti.successorArray`: the values following successive visits to each value.
+* `TauCeti.visitCell`: the cell of the successor array a sequence uses at a given time.
 * `TauCeti.pathOfSuccessors`: reconstruction from an initial value and successor array.
 
 ## Main results
 
+* `TauCeti.visitCount_monotone`: visit counts are monotone in the horizon.
+* `TauCeti.visitCount_add`: a visit count splits at any intermediate index.
+* `TauCeti.visitTime_eq_of_eqOn`: a visit time is read off any sequence agreeing with the original
+  up to that time.
 * `TauCeti.successorArray_visitCount`: the defining step relation of the successor array.
 * `TauCeti.visitTime_eq_iff`: the fibres of the visit times, including the junk-value branch.
+* `TauCeti.apply_visitTime_of_infinite` and `TauCeti.visitTime_strictMono_of_infinite`: visit
+  times are genuine and strictly increasing when the value occurs infinitely often.
+* `TauCeti.apply_visitTime_of_le` and `TauCeti.visitTime_lt_visitTime_of_le`: the same two facts
+  below a visit that is known to exist.
 * `TauCeti.eq_pathOfSuccessors`: the uniqueness principle for the reconstruction.
 * `TauCeti.pathOfSuccessors_successorArray`: reconstruction inverts the successor decomposition.
+* `TauCeti.visitCell_injective`: distinct times use distinct cells.
+* `TauCeti.eqOn_iff_successorArray_visitCell`: a finite initial segment of a sequence is pinned
+  down by its initial value together with the successor-array entries at the cells that segment
+  designates. This is the finite-horizon form of `TauCeti.eq_pathOfSuccessors`, and the form a
+  finite-path event needs: the cells are read off a *reference* sequence, so they do not move with
+  the sequence being described.
 
 ## References
 
@@ -108,7 +123,7 @@ section Counting
 
 attribute [local instance] Classical.decEq
 
-variable {α : Type*} {x y : ℕ → α} {a : α} {k m n : ℕ}
+variable {α : Type*} {x y : ℕ → α} {a : α} {j k m n : ℕ}
 
 /-- Visit counts are `Nat.count` of the visiting predicate. -/
 theorem visitCount_eq_count [DecidableEq α] (x : ℕ → α) (a : α) (n : ℕ) :
@@ -120,6 +135,12 @@ theorem visitCount_eq_count [DecidableEq α] (x : ℕ → α) (a : α) (n : ℕ)
 theorem visitCount_zero (x : ℕ → α) (a : α) : visitCount x a 0 = 0 := by
   classical
   rw [visitCount_eq_count, Nat.count_zero]
+
+/-- Visit counts are monotone in the horizon. -/
+theorem visitCount_monotone (x : ℕ → α) (a : α) : Monotone (visitCount x a) := by
+  classical
+  intro m n hmn
+  simpa only [visitCount_eq_count] using Nat.count_monotone (fun i => x i = a) hmn
 
 /-- Visit counts before `n` depend only on sequence values before `n`. -/
 theorem visitCount_congr (h : ∀ i < n, x i = y i) : visitCount x a n = visitCount y a n := by
@@ -157,11 +178,36 @@ theorem visitCount_succ_of_ne (h : x n ≠ a) : visitCount x a (n + 1) = visitCo
   classical
   rw [visitCount_succ, ite_eq_right h]
 
+/-- **Splitting a visit count at an intermediate index.** The visits before `m + n` are the visits
+before `m` together with the visits the sequence shifted by `m` makes before `n`. -/
+theorem visitCount_add (x : ℕ → α) (a : α) (m n : ℕ) :
+    visitCount x a (m + n) = visitCount x a m + visitCount (fun i => x (m + i)) a n := by
+  classical
+  simpa only [visitCount_eq_count] using Nat.count_add (p := fun i => x i = a) m n
+
+/-- A stretch of a sequence that avoids `a` contributes nothing to its visit count. -/
+theorem visitCount_eq_zero_of_forall_ne (h : ∀ i < n, x i ≠ a) : visitCount x a n = 0 := by
+  classical
+  simpa only [visitCount_eq_count] using Nat.count_iff_forall_not.2 h
+
 /-- A time at which `x` has value `a` is the visit indexed by the number of earlier visits. -/
 @[simp]
 theorem visitTime_visitCount (h : x n = a) : visitTime x a (visitCount x a n) = n := by
   classical
   rw [visitTime, visitCount_eq_count, Nat.nth_count h]
+
+/-- **A visit time is read off any sequence agreeing with the original up to that time.** If `x`
+and `y` agree through index `n`, and `n` is a visit of `y` to `a` preceded by exactly `k` earlier
+visits, then `n` is the `k`-th visit of `x` as well.
+
+This is what transfers the visit structure of a reference path to a process known only to spell
+that path out over a finite horizon. -/
+theorem visitTime_eq_of_eqOn (hxy : ∀ i ≤ n, x i = y i) (hy : y n = a)
+    (hcount : visitCount y a n = k) : visitTime x a k = n := by
+  have hxc : visitCount x a n = k := by
+    rw [visitCount_congr fun i hi => hxy i hi.le, hcount]
+  rw [← hxc]
+  exact visitTime_visitCount ((hxy n le_rfl).trans hy)
 
 /-- The fibres of `visitTime`, including the junk-value branch. -/
 theorem visitTime_eq_iff :
@@ -170,6 +216,68 @@ theorem visitTime_eq_iff :
   classical
   simpa only [visitTime_def, visitCount_eq_count] using
     Nat.nth_eq_iff (p := fun i => x i = a) (k := k) (m := m)
+
+/-- If `x` visits `a` infinitely often, every visit time is a genuine visit. -/
+theorem apply_visitTime_of_infinite (h : {n | x n = a}.Infinite) (k : ℕ) :
+    x (visitTime x a k) = a := by
+  simpa only [visitTime_def] using Nat.nth_mem_of_infinite h k
+
+/-- The visit times of an infinitely often visited value are strictly increasing. -/
+theorem visitTime_strictMono_of_infinite (h : {n | x n = a}.Infinite) :
+    StrictMono (visitTime x a) := by
+  have heq : visitTime x a = Nat.nth fun n => x n = a := by
+    funext k
+    exact visitTime_def x a k
+  rw [heq]
+  exact Nat.nth_strictMono h
+
+/-- If a sequence starts at `a`, its zeroth visit to `a` occurs at time zero. -/
+@[simp]
+theorem visitTime_zero_of_eq (h : x 0 = a) : visitTime x a 0 = 0 := by
+  rw [visitTime_def, Nat.nth_zero_of_zero h]
+
+/-- If `x` visits `a` only finitely often, the number of visits before a genuine visit is smaller
+than the total number of visits. -/
+theorem visitCount_lt_card (hf : {n | x n = a}.Finite) (hn : x n = a) :
+    visitCount x a n < hf.toFinset.card := by
+  rw [visitCount_eq_count]
+  exact Nat.count_lt_card hf hn
+
+/-- If some time is the `m`-th visit of `x` to `a`, then every earlier visit is realised too: for
+`k ≤ m` some time is the `k`-th visit. -/
+theorem exists_visitCount_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hk : k ≤ m) :
+    ∃ n, x n = a ∧ visitCount x a n = k := by
+  obtain ⟨n, hn, hcount⟩ := h
+  have hcard : ∀ hf : {n | x n = a}.Finite, k < hf.toFinset.card := fun hf =>
+    hk.trans_lt (hcount ▸ visitCount_lt_card hf hn)
+  refine ⟨visitTime x a k, ?_, ?_⟩
+  · simpa only [visitTime_def] using Nat.nth_mem k hcard
+  · rw [visitCount_eq_count, visitTime_def]
+    exact Nat.count_nth hcard
+
+/-- If some time is the `m`-th visit of `x` to `a`, then the `k`-th visit time is a genuine visit
+for every `k ≤ m`. -/
+theorem apply_visitTime_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hk : k ≤ m) :
+    x (visitTime x a k) = a := by
+  obtain ⟨n, hn, hcount⟩ := exists_visitCount_of_le h hk
+  rw [← hcount, visitTime_visitCount hn]
+  exact hn
+
+/-- If some time is the `m`-th visit of `x` to `a`, the visit times up to `m` are strictly
+increasing. -/
+theorem visitTime_lt_visitTime_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hkj : k < j)
+    (hj : j ≤ m) : visitTime x a k < visitTime x a j := by
+  obtain ⟨n, hn, hcount⟩ := h
+  have hcard : ∀ hf : {n | x n = a}.Finite, j < hf.toFinset.card := fun hf =>
+    hj.trans_lt (hcount ▸ visitCount_lt_card hf hn)
+  simpa only [visitTime_def] using Nat.nth_lt_nth' hkj hcard
+
+/-- If `x` visits `a` infinitely often, every visit count is realised. -/
+theorem exists_visitCount_of_infinite (h : {n | x n = a}.Infinite) (m : ℕ) :
+    ∃ n, x n = a ∧ visitCount x a n = m := by
+  refine ⟨visitTime x a m, apply_visitTime_of_infinite h m, ?_⟩
+  apply (visitTime_strictMono_of_infinite h).injective
+  rw [visitTime_visitCount (apply_visitTime_of_infinite h m)]
 
 end Counting
 
@@ -250,6 +358,93 @@ theorem pathOfSuccessors_successorArray (x : ℕ → α) :
   exact eq_pathOfSuccessors rfl fun n => (successorArray_visitCount x n).symm
 
 end Reconstruction
+
+section Cells
+
+variable {α : Type*} {w x : ℕ → α} {i n : ℕ}
+
+/-- The cell of the successor array that `x` uses at time `n`: the value it takes there, paired
+with the number of earlier visits to that value. -/
+def visitCell (x : ℕ → α) (n : ℕ) : α × ℕ :=
+  (x n, visitCount x (x n) n)
+
+-- The parentheses in `(rfl)` opt out of the exported-theorem exposure check, so that this, the
+-- complete computational API of `visitCell`, can be stated without exposing its body.
+@[simp]
+theorem visitCell_def (x : ℕ → α) (n : ℕ) : visitCell x n = (x n, visitCount x (x n) n) :=
+  (rfl)
+
+/-- **Distinct times use distinct cells.** Two times carrying the same value are separated by that
+value's visit counts, which strictly increase across the earlier of the two. -/
+theorem visitCell_injective (x : ℕ → α) : Function.Injective (visitCell x) := by
+  classical
+  have key : ∀ i j : ℕ, i < j → visitCell x i ≠ visitCell x j := by
+    intro i j hij hcell
+    rw [visitCell_def, visitCell_def, Prod.mk.injEq] at hcell
+    obtain ⟨hval, hcount⟩ := hcell
+    have hstep : visitCount x (x i) (i + 1) = visitCount x (x i) i + 1 :=
+      visitCount_succ_of_eq rfl
+    have hmono : visitCount x (x i) (i + 1) ≤ visitCount x (x i) j := by
+      simpa only [visitCount_eq_count] using
+        Nat.count_monotone (fun k => x k = x i) (Nat.succ_le_of_lt hij)
+    rw [← hval] at hcount
+    omega
+  intro i j hcell
+  rcases Nat.lt_trichotomy i j with h | h | h
+  · exact absurd hcell (key i j h)
+  · exact h
+  · exact absurd hcell.symm (key j i h)
+
+/-- Along a sequence agreeing with `w` up to `n`, the successor-array entries at the cells `w`
+designates are the successors `w` prescribes. -/
+theorem successorArray_visitCell_eq_of_eqOn (h : ∀ i ≤ n, x i = w i) (hi : i < n) :
+    successorArray x (visitCell w i).1 (visitCell w i).2 = w (i + 1) := by
+  have hxi : x i = w i := h i hi.le
+  have hcount : visitCount w (w i) i = visitCount x (x i) i := by
+    rw [hxi]
+    exact (visitCount_congr fun l hl => h l (hl.le.trans hi.le)).symm
+  rw [visitCell_def, hcount, ← hxi]
+  rw [successorArray_visitCount x i]
+  exact h (i + 1) hi
+
+/-- Conversely, a sequence with the same initial value as `w` whose successor-array entries at the
+cells `w` designates are the ones `w` prescribes agrees with `w` up to `n`. -/
+theorem eqOn_of_successorArray_visitCell_eq (h₀ : x 0 = w 0)
+    (h : ∀ i < n, successorArray x (visitCell w i).1 (visitCell w i).2 = w (i + 1)) :
+    ∀ i ≤ n, x i = w i := by
+  have key : ∀ i ≤ n, ∀ l ≤ i, x l = w l := by
+    intro i
+    induction i with
+    | zero => intro _ l hl; rw [Nat.le_zero.1 hl]; exact h₀
+    | succ j ih =>
+      intro hj l hl
+      have hjn : j < n := hj
+      have hprev : ∀ l ≤ j, x l = w l := ih hjn.le
+      rcases Nat.lt_or_ge l (j + 1) with hlj | hlj
+      · exact hprev l (Nat.lt_succ_iff.1 hlj)
+      · have hlval : l = j + 1 := Nat.le_antisymm hl hlj
+        have hxj : x j = w j := hprev j (le_refl j)
+        have hcount : visitCount w (w j) j = visitCount x (x j) j := by
+          rw [hxj]
+          exact (visitCount_congr fun m hm => hprev m hm.le).symm
+        have hstep := h j hjn
+        rw [visitCell_def, hcount, ← hxj, successorArray_visitCount x j] at hstep
+        rw [hlval]
+        exact hstep
+  intro i hi
+  exact key n (le_refl n) i hi
+
+/-- **A finite initial segment is pinned down by its initial value and the successor-array entries
+at the cells it designates.** Both the cells and the prescribed successors are read off the
+reference sequence `w`, so the right-hand side is a condition on `x` through finitely many entries
+of its successor array at cells that do not depend on `x`. -/
+theorem eqOn_iff_successorArray_visitCell (w x : ℕ → α) (n : ℕ) :
+    (∀ i ≤ n, x i = w i) ↔
+      x 0 = w 0 ∧ ∀ i < n, successorArray x (visitCell w i).1 (visitCell w i).2 = w (i + 1) :=
+  ⟨fun h => ⟨h 0 (Nat.zero_le n), fun _ hi => successorArray_visitCell_eq_of_eqOn h hi⟩,
+    fun h => eqOn_of_successorArray_visitCell_eq h.1 h.2⟩
+
+end Cells
 
 end TauCeti
 

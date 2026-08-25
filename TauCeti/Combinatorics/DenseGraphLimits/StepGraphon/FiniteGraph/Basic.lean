@@ -189,15 +189,8 @@ theorem homDensity_finiteGraphGraphon (F : SimpleGraph V) [DecidableRel F.Adj] (
     have hp_iff : (∀ e ∈ F.edgeFinset, p e) ↔
         ∀ a b, F.Adj a b →
           (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b)) := by
-      constructor
-      · intro h a b hab
-        simpa only [p, Sym2.lift_mk] using h s(a, b) (by
-          simpa only [SimpleGraph.mem_edgeFinset, SimpleGraph.mem_edgeSet] using hab)
-      · intro h e he
-        induction e using Sym2.ind with
-        | _ a b =>
-          simpa only [p, Sym2.lift_mk] using h a b (by
-            simpa only [SimpleGraph.mem_edgeFinset, SimpleGraph.mem_edgeSet] using he)
+      simp only [SimpleGraph.mem_edgeFinset, SimpleGraph.mem_edgeSet, Sym2.forall, p,
+        Sym2.lift_mk]
     rw [Finset.prod_congr rfl fun e _ => hfac e, Finset.prod_boole]
     by_cases h : ∀ a b, F.Adj a b →
         (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b))
@@ -207,14 +200,8 @@ theorem homDensity_finiteGraphGraphon (F : SimpleGraph V) [DecidableRel F.Adj] (
   have hsum : (∑ ψ : V → Fin m, if ∀ a b, F.Adj a b →
         (G.map Fin.valEmbedding).Adj ((ψ a : ℕ)) ((ψ b : ℕ)) then (1 : ℝ) else 0)
       = (Nat.card (F →g G) : ℝ) := by
-    have hcongr : ∀ ψ : V → Fin m,
-        (if ∀ a b, F.Adj a b → (G.map Fin.valEmbedding).Adj ((ψ a : ℕ)) ((ψ b : ℕ))
-          then (1 : ℝ) else 0)
-          = if ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b) then 1 else 0 := fun ψ =>
-      if_congr (forall_congr' fun a => forall_congr' fun b =>
-        imp_congr_right fun _ => map_valEmbedding_adj_iff G (ψ a) (ψ b)) rfl rfl
-    rw [Finset.sum_congr rfl fun ψ _ => hcongr ψ, Finset.sum_boole,
-      card_hom_eq_card_adjPreservingMaps,
+    simp_rw [map_valEmbedding_adj_iff G]
+    rw [Finset.sum_boole, card_hom_eq_card_adjPreservingMaps,
       Nat.card_eq_fintype_card, Fintype.card_subtype]
   have hpi : (∫ x : V → I,
         (if ∀ a b, F.Adj a b →

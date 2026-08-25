@@ -5,26 +5,27 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Dimension.Constructions
+public import TauCeti.LinearAlgebra.ExtensionBasis
 public import TauCeti.Algebra.Coalgebra.Comodule.Flag.Basic
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
 /-!
-# Upper-unitriangular comodule structures and extensions
+# Upper-triangular comodule structures and extensions
 
-An extension of upper-unitriangular comodules is again upper unitriangular. More explicitly, let
-`N` be a subcomodule of `M`. A basis of `N` and a basis of `M ⧸ N` combine, using Mathlib's
+An extension of upper-triangular comodules is again upper triangular. More explicitly, let `N` be
+a subcomodule of `M`. A basis of `N` and a basis of `M ⧸ N` combine, using Mathlib's
 `Module.Basis.sumQuot`, into a basis of `M`. If the coefficient matrices on the subcomodule and
-quotient are upper unitriangular, then the combined coefficient matrix is upper unitriangular.
+quotient are upper triangular, then the combined coefficient matrix is upper triangular, and its
+diagonal is the concatenation of theirs; in particular unitriangularity is inherited too.
 
 The coefficient matrix has the expected block form. Its diagonal blocks are the coefficient
 matrices of `N` and `M ⧸ N`, its lower-left block is zero because `N` is stable, and its
 upper-right block records the extension class.
 
-This is the extension step needed by the Kolchin induction in Layer 5, "Unipotent groups", of the
-ReductiveGroups roadmap. A fixed line supplies the first upper-unitriangular block; applying the
-induction hypothesis to the quotient and this file to the resulting extension constructs the
-complete invariant flag.
+This is the extension step needed by the Kolchin inductions in Layer 5, "Unipotent groups", of the
+ReductiveGroups roadmap. A weight line supplies the first diagonal block; applying the induction
+hypothesis to the quotient and this file to the resulting extension constructs the complete
+invariant flag.
 
 ## Main declarations
 
@@ -35,8 +36,10 @@ complete invariant flag.
 * `TauCeti.Comodule.coefficientMatrix_extensionBasis_natAdd_natAdd`: the quotient diagonal block.
 * `TauCeti.Comodule.coefficientMatrix_extensionBasis_natAdd_castAdd`: the vanishing lower-left
   block.
-* `TauCeti.Comodule.coefficientMatrix_extensionBasis_isUpperUnitriangular`: closure of
-  upper-unitriangular comodule structures under extensions.
+* `TauCeti.Comodule.coefficientMatrix_extensionBasis_isUpperTriangular`: closure of
+  upper-triangular comodule structures under extensions.
+* `TauCeti.Comodule.coefficientMatrix_extensionBasis_isUpperUnitriangular`: its unitriangular
+  refinement.
 
 ## References
 
@@ -86,15 +89,14 @@ basis of the quotient. The construction is Mathlib's `Module.Basis.sumQuot`, rei
 standard equivalence `Fin m ⊕ Fin n ≃ Fin (m + n)`. -/
 def extensionBasis (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) : Basis (Fin (m + n)) k M :=
-  ((toSubmoduleBasis N bN).sumQuot bQ).reindex finSumFinEquiv
+  TauCeti.extensionBasis N.toSubmodule (toSubmoduleBasis N bN) bQ
 
 /-- On the first block, `extensionBasis` is the given basis of the subcomodule. -/
 @[simp]
 theorem extensionBasis_castAdd (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) (i : Fin m) :
     extensionBasis N bN bQ (Fin.castAdd n i) = bN i := by
-  rw [extensionBasis, Basis.reindex_apply, finSumFinEquiv_symm_apply_castAdd,
-    Basis.sumQuot_inl]
+  rw [extensionBasis, TauCeti.extensionBasis_castAdd]
   exact toSubmoduleBasis_apply N bN i
 
 /-- On the second block, the quotient classes of `extensionBasis` are the given quotient basis. -/
@@ -102,8 +104,7 @@ theorem extensionBasis_castAdd (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
 theorem extensionBasis_natAdd_mkQ (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) (j : Fin n) :
     Submodule.Quotient.mk (extensionBasis N bN bQ (Fin.natAdd m j)) = bQ j := by
-  rw [extensionBasis, Basis.reindex_apply, finSumFinEquiv_symm_apply_natAdd,
-    Basis.sumQuot_inr]
+  rw [extensionBasis, TauCeti.extensionBasis_natAdd_mkQ]
 
 /-- The first-block coordinates of an element of the subcomodule in `extensionBasis` are its
 coordinates in the given subcomodule basis. -/
@@ -111,12 +112,11 @@ coordinates in the given subcomodule basis. -/
 theorem extensionBasis_repr_castAdd (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) (x : N) (i : Fin m) :
     (extensionBasis N bN bQ).repr x (Fin.castAdd n i) = bN.repr x i := by
-  rw [extensionBasis, Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_castAdd]
   -- `N` and the subtype of `N.toSubmodule` have different wrappers, so expose the tautological
-  -- equivalence before applying Mathlib's quotient-basis coordinate theorem.
-  change (((toSubmoduleBasis N bN).sumQuot bQ).repr
-    ((toSubmoduleEquiv N x : N.toSubmodule) : M)) (Sum.inl i) = bN.repr x i
-  rw [Basis.sumQuot_repr_inl]
+  -- equivalence before applying the module-level coordinate theorem.
+  change ((extensionBasis N bN bQ).repr
+    ((toSubmoduleEquiv N x : N.toSubmodule) : M)) (Fin.castAdd n i) = bN.repr x i
+  rw [extensionBasis, TauCeti.extensionBasis_repr_castAdd]
   rfl
 
 /-- The second-block coordinates in `extensionBasis` are the coordinates of the quotient class. -/
@@ -125,8 +125,7 @@ theorem extensionBasis_repr_natAdd (N : Subcomodule k C M) (bN : Basis (Fin m) k
     (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule)) (x : M) (j : Fin n) :
     (extensionBasis N bN bQ).repr x (Fin.natAdd m j) =
       bQ.repr (N.toSubmodule.mkQ x) j := by
-  rw [extensionBasis, Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_natAdd,
-    Basis.sumQuot_repr_inr]
+  rw [extensionBasis, TauCeti.extensionBasis_repr_natAdd]
 
 /-- The subcomodule diagonal block of the combined coefficient matrix is the coefficient matrix
 in the given subcomodule basis. -/
@@ -192,6 +191,42 @@ theorem coefficientMatrix_extensionBasis_natAdd_natAdd
     _ = matrixCoefficient (R := k) (C := C) (bQ.coord i) (bQ j) := by
       rw [N.mkQ_apply, extensionBasis_natAdd_mkQ]
 
+/-- If the induced coefficient matrices on a subcomodule and its quotient are upper triangular,
+then the coefficient matrix on their combined basis is upper triangular. -/
+theorem coefficientMatrix_extensionBasis_isUpperTriangular
+    (N : Subcomodule k C M) (bN : Basis (Fin m) k N)
+    (bQ : Basis (Fin n) k (M ⧸ N.toSubmodule))
+    (hN : (coefficientMatrix (C := C) bN).IsUpperTriangular)
+    (hQ : (coefficientMatrix (C := C) bQ).IsUpperTriangular) :
+    (coefficientMatrix (C := C) (extensionBasis N bN bQ)).IsUpperTriangular := by
+  intro i j hji
+  obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
+  obtain ⟨j, rfl⟩ := finSumFinEquiv.surjective j
+  cases i with
+  | inl i =>
+      cases j with
+      | inl j =>
+          rw [finSumFinEquiv_apply_left, finSumFinEquiv_apply_left,
+            coefficientMatrix_extensionBasis_castAdd_castAdd]
+          simp only [finSumFinEquiv_apply_left] at hji
+          exact hN ((Fin.strictMono_castAdd n).lt_iff_lt.mp hji)
+      | inr j =>
+          rw [finSumFinEquiv_apply_left, finSumFinEquiv_apply_right] at hji
+          -- The two `Fin` embeddings do not simplify through `<`; their underlying indices
+          -- make the impossible cross-block inequality explicit.
+          change m + j.val < i.val at hji
+          omega
+  | inr i =>
+      cases j with
+      | inl j =>
+          rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_left,
+            coefficientMatrix_extensionBasis_natAdd_castAdd]
+      | inr j =>
+          rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_right,
+            coefficientMatrix_extensionBasis_natAdd_natAdd]
+          simp only [finSumFinEquiv_apply_right] at hji
+          exact hQ ((Fin.strictMono_natAdd m).lt_iff_lt.mp hji)
+
 variable [One C]
 
 /-- If the induced coefficient matrices on a subcomodule and its quotient are upper
@@ -203,43 +238,16 @@ theorem coefficientMatrix_extensionBasis_isUpperUnitriangular
     (hQ : (coefficientMatrix (C := C) bQ).IsUpperUnitriangular) :
     (coefficientMatrix (C := C) (extensionBasis N bN bQ)).IsUpperUnitriangular := by
   rw [Matrix.isUpperUnitriangular_def]
-  constructor
-  · intro i j hji
-    obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
-    obtain ⟨j, rfl⟩ := finSumFinEquiv.surjective j
-    cases i with
-    | inl i =>
-        cases j with
-        | inl j =>
-            rw [finSumFinEquiv_apply_left, finSumFinEquiv_apply_left,
-              coefficientMatrix_extensionBasis_castAdd_castAdd]
-            simp only [finSumFinEquiv_apply_left] at hji
-            exact hN.isUpperTriangular ((Fin.strictMono_castAdd n).lt_iff_lt.mp hji)
-        | inr j =>
-            rw [finSumFinEquiv_apply_left, finSumFinEquiv_apply_right] at hji
-            -- The two `Fin` embeddings do not simplify through `<`; their underlying indices
-            -- make the impossible cross-block inequality explicit.
-            change m + j.val < i.val at hji
-            omega
-    | inr i =>
-        cases j with
-        | inl j =>
-            rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_left,
-              coefficientMatrix_extensionBasis_natAdd_castAdd]
-        | inr j =>
-            rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_right,
-              coefficientMatrix_extensionBasis_natAdd_natAdd]
-            simp only [finSumFinEquiv_apply_right] at hji
-            exact hQ.isUpperTriangular ((Fin.strictMono_natAdd m).lt_iff_lt.mp hji)
-  · intro i
-    obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
-    cases i with
-    | inl i =>
-        rw [finSumFinEquiv_apply_left, coefficientMatrix_extensionBasis_castAdd_castAdd]
-        exact hN.apply_diag i
-    | inr i =>
-        rw [finSumFinEquiv_apply_right, coefficientMatrix_extensionBasis_natAdd_natAdd]
-        exact hQ.apply_diag i
+  refine ⟨coefficientMatrix_extensionBasis_isUpperTriangular N bN bQ hN.isUpperTriangular
+    hQ.isUpperTriangular, fun i ↦ ?_⟩
+  obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
+  cases i with
+  | inl i =>
+      rw [finSumFinEquiv_apply_left, coefficientMatrix_extensionBasis_castAdd_castAdd]
+      exact hN.apply_diag i
+  | inr i =>
+      rw [finSumFinEquiv_apply_right, coefficientMatrix_extensionBasis_natAdd_natAdd]
+      exact hQ.apply_diag i
 
 end
 

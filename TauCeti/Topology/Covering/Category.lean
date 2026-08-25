@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
-public import Mathlib.CategoryTheory.Comma.Over.Basic
 public import Mathlib.Topology.Category.TopCat.Basic
 public import Mathlib.Topology.Covering.Basic
+public import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # The category of covering spaces over a fixed base
@@ -66,11 +66,6 @@ namespace Over
 /-- The property of an object of `TopCat / X` that its structure morphism is a covering map. -/
 def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
   fun p ↦ _root_.IsCoveringMap p.hom
-
-/-- An isomorphism in `TopCat / X` induces an isomorphism on left objects. -/
-instance {X : TopCat.{u}} {p q : CategoryTheory.Over X} (f : p ⟶ q) [IsIso f] :
-    IsIso f.left :=
-  inferInstanceAs (IsIso ((CategoryTheory.Over.forget X).map f))
 
 /-- A morphism in `TopCat / X` is an isomorphism exactly when its map on left objects is a
 homeomorphism. -/
