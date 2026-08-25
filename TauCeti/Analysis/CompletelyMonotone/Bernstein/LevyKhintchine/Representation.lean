@@ -376,7 +376,7 @@ private lemma isBernsteinLevyMeasure_bernsteinLevyMeasureOfDerivative
     exact inverseCoordinateDensity_mul_min_le x
 
 private lemma drift_add_integral_bernsteinLevyMeasureOfDerivative
-    {σ : Measure ℝ≥0} [SigmaFinite σ] {t : ℝ}
+    {σ : Measure ℝ≥0} {t : ℝ}
     (hint : Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ)))) σ) :
     (σ {0}).toReal +
         ∫ x : ℝ≥0, (x : ℝ) * Real.exp (-(t * (x : ℝ)))
