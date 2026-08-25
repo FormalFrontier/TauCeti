@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
-public import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
+import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
+import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 public import Mathlib.MeasureTheory.Integral.Average
 public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 -- `Mathlib.MeasureTheory.Group.Integral` is imported privately: translation invariance of the
@@ -15,6 +15,9 @@ import Mathlib.MeasureTheory.Group.Integral
 -- `Mathlib.MeasureTheory.Measure.Prod` is imported privately: Tonelli's theorem
 -- appears only inside the proof of `TauCeti.eLpNorm_ballAverage_sub_le`.
 import Mathlib.MeasureTheory.Measure.Prod
+-- Continuity of composition by measure-preserving maps is used only to prove that ball averages
+-- of `Lᵖ` functions are continuous.
+import Mathlib.MeasureTheory.Function.LpSpace.ContinuousCompMeasurePreserving
 
 /-!
 # The ball average of an `Lᵖ` function
@@ -28,20 +31,20 @@ normalized indicator of a ball, and it is the smoothing operator behind the Fré
 compactness criterion in `Lᵖ`, hence behind Rellich--Kondrachov, Lane A.6 of
 `TauCetiRoadmap/PDE/README.md`.
 
-Four estimates are proved here, all for `1 ≤ p < ∞` and an additive Haar measure `μ` on a
-finite-dimensional real normed space. Writing `V = μ (Metric.ball 0 r)` for the volume of the
-ball, they are
+Four estimates are proved here, all for `1 ≤ p < ∞` and an additive Haar measure `μ` on a proper
+normed additive group. Writing `V = μ (Metric.ball 0 r)` for the volume of the ball, they are
 
 `‖A_r f x‖ ≤ V ^ (-1/p) ‖f‖_p`,
 `‖A_r f (x + e) - A_r f x‖ ≤ V ^ (-1/p) ‖f(· + e) - f‖_p`,
 `‖A_r f‖_p ≤ ‖f‖_p`,
 `‖A_r f - f‖_p ≤ C` whenever `‖f(· + e) - f‖_p ≤ C` for every `e` in the ball of radius `r`.
 
-Together they say that `A_r` maps the unit ball of `Lᵖ` into a set of functions that is uniformly
-bounded and uniformly equicontinuous, at the price of moving `f` by no more than its own modulus
-of continuity in `Lᵖ`. That is exactly the trade-off that the Fréchet--Kolmogorov criterion
-exploits: a family of functions whose translates move little in `Lᵖ` is uniformly close to a
-family of uniformly equicontinuous ones.
+For each fixed positive `r`, these estimates send a family with uniformly small `Lᵖ` translation
+increments to a uniformly bounded and uniformly equicontinuous family of ball averages. The
+equicontinuity bound includes the scale-dependent factor `V ^ (-1/p)`; its remaining modulus is
+the original family's uniform `Lᵖ` translation modulus. This is exactly the trade-off that the
+Fréchet--Kolmogorov criterion exploits: a family of functions whose translates move little in
+`Lᵖ` is uniformly close to a family of uniformly equicontinuous ones.
 
 The first two estimates come from a single Hölder bound,
 `TauCeti.enorm_setAverage_le`: the average of `g` over a set `s` of finite positive measure is at
@@ -60,8 +63,9 @@ Integrating in `x` and exchanging the two integrations, the inner integral becom
 `‖f(· + e) - f‖_p ^ p`, uniformly at most `C ^ p`, and the factor `V⁻¹` cancels against the
 measure of the ball the translation ranges over.
 
-Both the definition and the estimates are stated for a Banach-space-valued `f`. Only the domain
-is assumed finite-dimensional, which is what makes balls have finite positive measure.
+Both the definition and the estimates are stated for a Banach-space-valued `f`. The domain is
+assumed proper, which is what makes balls have finite measure; finite-dimensional real normed
+spaces are an important special case.
 
 The averages appearing here are the ones the Hardy--Littlewood maximal function
 `TauCeti.maximalFunction` takes a supremum of, so `‖A_r f x‖ ≤ M f x` for every `r > 0`. The two
@@ -83,6 +87,8 @@ the maximal inequality, so the two developments are kept apart.
   commutes with translation, and its increment is the ball average of the increment.
 * `TauCeti.enorm_ballAverage_add_sub_ballAverage_le`: the equicontinuity estimate, with modulus
   the `Lᵖ` modulus of continuity of `f` itself.
+* `TauCeti.continuous_ballAverage`, `TauCeti.memLp_ballAverage`: a ball average at positive
+  scale is continuous and remains in `Lᵖ`.
 * `TauCeti.ballAverage_sub_self`, `TauCeti.eLpNorm_ballAverage_sub_le`: the deviation of `f` from
   its ball average as an average of increments, and the `Lᵖ` approximation estimate.
 
@@ -126,13 +132,14 @@ theorem enorm_setAverage_rpow_le {q : ℝ} (hq : 1 ≤ q) (hf : AEStronglyMeasur
     have := rpow_lintegral_le_measure_univ_rpow_mul (μ := mu.restrict s)
       (u := fun y => ‖f y‖ₑ) hf.restrict.enorm hq
     rwa [Measure.restrict_apply_univ] at this
+  have hexp : -q + (q - 1) = (-1 : ℝ) := by ring
   calc ‖⨍ y in s, f y ∂mu‖ₑ ^ q
       ≤ ((mu s)⁻¹ * ∫⁻ y in s, ‖f y‖ₑ ∂mu) ^ q := ENNReal.rpow_le_rpow h0 hq0.le
     _ = (mu s)⁻¹ ^ q * (∫⁻ y in s, ‖f y‖ₑ ∂mu) ^ q := ENNReal.mul_rpow_of_nonneg _ _ hq0.le
     _ ≤ (mu s)⁻¹ ^ q * (mu s ^ (q - 1) * ∫⁻ y in s, ‖f y‖ₑ ^ q ∂mu) := mul_le_mul' le_rfl hholder
     _ = (mu s)⁻¹ * ∫⁻ y in s, ‖f y‖ₑ ^ q ∂mu := by
         rw [← mul_assoc, ENNReal.inv_rpow, ← ENNReal.rpow_neg, ← ENNReal.rpow_add _ _ hs0 hs,
-          show -q + (q - 1) = (-1 : ℝ) by ring, ENNReal.rpow_neg_one]
+          hexp, ENNReal.rpow_neg_one]
 
 /-- **Hölder's bound on an average**: the average of `f` over a set `s` of finite positive
 measure is at most `μ s ^ (-1/p)` times the `Lᵖ` seminorm of `f` on `s`. At `p = 1` this is the
@@ -206,12 +213,13 @@ end Translation
 
 section Estimates
 
-variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E]
-  [BorelSpace E] [FiniteDimensional ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F]
+variable {E F : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E] [ProperSpace E]
+  [NormedAddCommGroup F] [NormedSpace ℝ F]
   [CompleteSpace F] {mu : Measure E} [mu.IsAddHaarMeasure] {f : E → F} {p : ℝ≥0∞} {r : ℝ}
 
 omit [BorelSpace E] in
 /-- The ball average of a constant is that constant: the normalization is the intended one. -/
+@[simp]
 theorem ballAverage_const (hr : 0 < r) (c : F) (x : E) :
     ballAverage mu r (fun _ => c) x = c :=
   setAverage_const (measure_ball_pos mu x hr).ne' measure_ball_lt_top.ne c
@@ -243,9 +251,9 @@ theorem ballAverage_sub_ballAverage (hp : 1 ≤ p) (hf : MemLp f p mu) (e x : E)
 
 omit [CompleteSpace F] in
 /-- **The equicontinuity estimate**: the ball average moves by at most the `Lᵖ` modulus of
-continuity of `f` itself, up to the volume factor. The modulus does not involve the smoothing
-scale `r`, so a family of functions whose translates move uniformly little in `Lᵖ` has uniformly
-equicontinuous ball averages at every fixed scale. -/
+continuity of `f` itself, up to the scale-dependent volume factor
+`μ (ball 0 r) ^ (-1/p)`. Thus, at each fixed positive `r`, a family whose translates move
+uniformly little in `Lᵖ` has uniformly equicontinuous ball averages. -/
 theorem enorm_ballAverage_add_sub_ballAverage_le (hp : 1 ≤ p) (hp' : p ≠ ∞) (hf : MemLp f p mu)
     (hr : 0 < r) (e x : E) :
     ‖ballAverage mu r f (x + e) - ballAverage mu r f x‖ₑ ≤
@@ -256,6 +264,67 @@ theorem enorm_ballAverage_add_sub_ballAverage_le (hp : 1 ≤ p) (hp' : p ≠ ∞
   exact enorm_ballAverage_le hp hp'
     (hshift.aestronglyMeasurable.sub hf.aestronglyMeasurable) hr x
 
+omit [NormedSpace ℝ F] [CompleteSpace F] in
+/-- Translation is continuous in `Lᵖ` for every `Lᵖ` function. This private form is the input that
+turns the increment estimate into continuity of the ball average. -/
+private theorem tendsto_eLpNorm_comp_add_sub_of_memLp (hp : 1 ≤ p) (hp' : p ≠ ∞)
+    (hf : MemLp f p mu) :
+    Filter.Tendsto (fun e : E => eLpNorm (fun y => f (y + e) - f y) p mu) (nhds 0) (nhds 0) := by
+  let _ : Fact (1 ≤ p) := ⟨hp⟩
+  let T : E → C(E, E) := fun e => ⟨fun y => y + e, continuous_id.add continuous_const⟩
+  have hT : Continuous T := ContinuousMap.continuous_of_continuous_uncurry T (by
+    dsimp only [T, Function.uncurry_apply_pair, ContinuousMap.coe_mk]
+    fun_prop)
+  have hpres : ∀ e, MeasurePreserving (T e) mu mu := fun e => measurePreserving_add_right mu e
+  have hcomp : Continuous (fun e => Lp.compMeasurePreserving (T e) (hpres e) (hf.toLp f)) :=
+    continuous_const.compMeasurePreservingLp hT hpres hp'
+  have hdist : Filter.Tendsto
+      (fun e => edist (Lp.compMeasurePreserving (T e) (hpres e) (hf.toLp f)) (hf.toLp f))
+      (nhds 0) (nhds 0) := by
+    have hconst : Continuous (fun _ : E => hf.toLp f) := continuous_const
+    have hzero : Filter.Tendsto
+        (fun e => edist (Lp.compMeasurePreserving (T e) (hpres e) (hf.toLp f)) (hf.toLp f))
+        (nhds 0)
+        (nhds (edist (Lp.compMeasurePreserving (T 0) (hpres 0) (hf.toLp f)) (hf.toLp f))) :=
+      (hcomp.edist hconst).continuousAt
+    have hcompzero : Lp.compMeasurePreserving (T 0) (hpres 0) (hf.toLp f) = hf.toLp f := by
+      apply Lp.ext
+      exact (Lp.coeFn_compMeasurePreserving (hf.toLp f) (hpres 0)).mono fun y hy => by
+        simpa only [T, ContinuousMap.coe_mk, Function.comp_apply, add_zero] using hy
+    rw [hcompzero] at hzero
+    simpa only [edist_self] using hzero
+  apply hdist.congr'
+  filter_upwards with e
+  rw [Lp.toLp_compMeasurePreserving, Lp.edist_toLp_toLp]
+  rfl
+
+omit [CompleteSpace F] in
+/-- At every positive scale, the ball average of an `Lᵖ` function is continuous. -/
+theorem continuous_ballAverage (hp : 1 ≤ p) (hp' : p ≠ ∞) (hf : MemLp f p mu)
+    (hr : 0 < r) : Continuous (ballAverage mu r f) := by
+  rw [continuous_iff_continuousAt]
+  intro x
+  change Filter.Tendsto (ballAverage mu r f) (nhds x) (nhds (ballAverage mu r f x))
+  rw [tendsto_iff_edist_tendsto_0]
+  have hsub0 : Filter.Tendsto (fun y : E => y - x) (nhds x) (nhds (x - x)) :=
+    (continuous_id.sub (continuous_const : Continuous (fun _ : E => x))).tendsto x
+  have hsub : Filter.Tendsto (fun y : E => y - x) (nhds x) (nhds 0) := by
+    simpa only [sub_self] using hsub0
+  have htrans := (tendsto_eLpNorm_comp_add_sub_of_memLp hp hp' hf).comp hsub
+  have hfactor : mu (ball (0 : E) r) ^ (-(p.toReal)⁻¹) ≠ ∞ :=
+    ENNReal.rpow_ne_top_of_ne_zero (measure_ball_pos mu 0 hr).ne' measure_ball_lt_top.ne
+  have hupper := ENNReal.Tendsto.const_mul htrans (Or.inr hfactor)
+  have hupper_zero : Filter.Tendsto
+      (fun y => mu (ball (0 : E) r) ^ (-(p.toReal)⁻¹) *
+        eLpNorm (fun z => f (z + (y - x)) - f z) p mu) (nhds x) (nhds 0) := by
+    simpa only [Function.comp_apply, mul_zero] using hupper
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hupper_zero
+    (fun _ => bot_le) fun y => ?_
+  rw [edist_eq_enorm_sub]
+  have hbound := enorm_ballAverage_add_sub_ballAverage_le hp hp' hf hr (y - x) x
+  have hxy : x + (y - x) = y := by abel
+  rwa [hxy] at hbound
+
 /-- Writing the deviation of `f` from its ball average as an average of increments. -/
 theorem ballAverage_sub_self (hp : 1 ≤ p) (hf : MemLp f p mu) (hr : 0 < r) (x : E) :
     ballAverage mu r f x - f x = ⨍ e in ball (0 : E) r, (f (x + e) - f x) ∂mu := by
@@ -263,11 +332,16 @@ theorem ballAverage_sub_self (hp : 1 ≤ p) (hf : MemLp f p mu) (hr : 0 < r) (x 
     ⟨by rw [Measure.restrict_apply_univ]; exact measure_ball_lt_top⟩
   have hshift : MemLp (fun e => f (x + e)) p mu :=
     hf.comp_measurePreserving (measurePreserving_add_left mu x)
-  rw [ballAverage_eq_setAverage_ball_zero,
-    show (fun e => f (x + e) - f x) = (fun e => f (x + e)) - (fun _ => f x) from rfl,
-    setAverage_sub ((hshift.restrict _).integrable hp)
-      (integrableOn_const measure_ball_lt_top.ne),
-    setAverage_const (measure_ball_pos mu 0 hr).ne' measure_ball_lt_top.ne]
+  rw [ballAverage_eq_setAverage_ball_zero]
+  calc
+    (⨍ e in ball (0 : E) r, f (x + e) ∂mu) - f x =
+        (⨍ e in ball (0 : E) r, f (x + e) ∂mu) -
+          ⨍ _e in ball (0 : E) r, f x ∂mu := by
+      rw [setAverage_const (measure_ball_pos mu 0 hr).ne' measure_ball_lt_top.ne]
+    _ = ⨍ e in ball (0 : E) r, (f (x + e) - f x) ∂mu := by
+      simpa only [Pi.sub_apply] using
+        (setAverage_sub ((hshift.restrict _).integrable hp)
+          (integrableOn_const measure_ball_lt_top.ne)).symm
 
 omit [BorelSpace E] [CompleteSpace F] in
 /-- The analytic core shared by the two `Lᵖ` estimates below: after Hölder's inequality in the
@@ -317,6 +391,14 @@ theorem eLpNorm_ballAverage_le (hp : 1 ≤ p) (hp' : p ≠ ∞) (hf : AEStrongly
   rw [setLIntegral_congr_fun measurableSet_ball fun e _ => hslice e, setLIntegral_const,
     ← mul_assoc, mul_comm (mu (ball (0 : E) r))⁻¹, mul_assoc, ENNReal.inv_mul_cancel hV0 hVt,
     mul_one]
+
+omit [CompleteSpace F] in
+/-- At every positive scale, taking the ball average preserves membership in `Lᵖ`. -/
+theorem memLp_ballAverage (hf : MemLp f p mu) (hp : 1 ≤ p) (hp' : p ≠ ∞)
+    (hr : 0 < r) : MemLp (ballAverage mu r f) p mu :=
+  ⟨(continuous_ballAverage hp hp' hf hr).aestronglyMeasurable,
+    lt_of_le_of_lt (eLpNorm_ballAverage_le hp hp' hf.aestronglyMeasurable hr)
+      hf.eLpNorm_lt_top⟩
 
 /-- The `Lᵖ` approximation estimate for a strongly measurable representative. -/
 private theorem eLpNorm_ballAverage_sub_le_of_stronglyMeasurable (hp : 1 ≤ p) (hp' : p ≠ ∞)
