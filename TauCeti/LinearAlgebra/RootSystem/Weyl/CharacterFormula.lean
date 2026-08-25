@@ -27,8 +27,9 @@ combinatorics, with no Lie algebra in sight:
 Writing the numerator through the dot action `w ⬝ λ = w(λ + ρ) - ρ` (`TauCeti.dotAction`) rather
 than as `∑ sgn(w) e^{w(λ+ρ)}` is what keeps every exponent inside the weight lattice: the
 symmetric form `∏_{α>0}(e^{α/2} - e^{-α/2})` of the denominator needs the half-weights `α/2`,
-which are not weights, whereas `∏_{α>0}(1 - e^{-α})` and the `ρ`-shifted numerator both have all
-their exponents in `M`. The two normalizations differ by the factor `e^{ρ}`.
+which need not lie in `M` — nothing in the hypotheses below makes a root divisible by two —
+whereas `∏_{α>0}(1 - e^{-α})` and the `ρ`-shifted numerator both have all their exponents in `M`.
+The two normalizations differ by the factor `e^{ρ}`.
 
 The signs come from `TauCeti.weylSign`, the character `w ↦ (-1)^{ℓ(w)}` of the Weyl group; they
 are what makes the numerator *alternating*, which is the content of
@@ -98,14 +99,9 @@ group algebra of the weight space.
 
 This is the normalization all of whose exponents lie in the weight lattice; the symmetric form
 `∏_{α>0} (e^{α/2} - e^{-α/2})` is `e^{ρ}` times this one and needs the half-weights `α/2`, which
-are not weights. -/
+need not lie in `M`. -/
 noncomputable def weylDenominator : AddMonoidAlgebra ℤ M :=
   ∏ i ∈ posRootsFinset P b, (1 - AddMonoidAlgebra.single (-P.root i) 1)
-
-/-- `TauCeti.weylDenominator` unfolded: the product of `1 - e^{-α}` over the positive roots. -/
-theorem weylDenominator_def :
-    weylDenominator P b = ∏ i ∈ posRootsFinset P b, (1 - AddMonoidAlgebra.single (-P.root i) 1) :=
-  (rfl)
 
 /-- **The Weyl denominator, expanded.** Multiplying out `∏_{α>0} (1 - e^{-α})` indexes the terms by
 the subsets `T` of the positive roots, the term of `T` being `(-1)^{|T|} e^{-∑_{α ∈ T} α}`.
@@ -119,7 +115,7 @@ theorem weylDenominator_eq_sum_powerset :
   classical
   have hneg : (-1 : AddMonoidAlgebra ℤ M) = AddMonoidAlgebra.single 0 (-1) := by
     rw [AddMonoidAlgebra.single_neg, ← AddMonoidAlgebra.one_def]
-  rw [weylDenominator_def, Finset.prod_sub]
+  rw [weylDenominator, Finset.prod_sub]
   refine Finset.sum_congr rfl fun T _ ↦ ?_
   rw [Finset.prod_const_one, mul_one, AddMonoidAlgebra.prod_single, Finset.prod_const_one,
     Finset.sum_neg_distrib, hneg, AddMonoidAlgebra.single_pow, smul_zero,
@@ -152,17 +148,11 @@ normalization of the denominator rather than `TauCeti.weylDenominator`. -/
 noncomputable def weylNumerator (lam : M) : AddMonoidAlgebra ℤ M :=
   ∑ w : P.weylGroup, AddMonoidAlgebra.single (dotAction P b w lam) ((weylSign P b w : ℤ))
 
-/-- `TauCeti.weylNumerator` unfolded: the signed sum over the dot orbit. -/
-theorem weylNumerator_def (lam : M) :
-    weylNumerator P b lam
-      = ∑ w : P.weylGroup, AddMonoidAlgebra.single (dotAction P b w lam) ((weylSign P b w : ℤ)) :=
-  (rfl)
-
 /-- **The numerator is supported on the dot orbit**: its coefficient at a weight outside the orbit
 of `λ` vanishes, since no term of the sum sits there. -/
 theorem coeff_weylNumerator_eq_zero {lam x : M} (hx : ∀ w : P.weylGroup, dotAction P b w lam ≠ x) :
     (weylNumerator P b lam).coeff x = 0 := by
-  rw [weylNumerator_def, AddMonoidAlgebra.coeff_sum, Finsupp.coe_finsetSum, Finset.sum_apply]
+  rw [weylNumerator, AddMonoidAlgebra.coeff_sum, Finsupp.coe_finsetSum, Finset.sum_apply]
   refine Finset.sum_eq_zero fun w _ ↦ ?_
   rw [AddMonoidAlgebra.coeff_single, Finsupp.single_apply_eq_zero]
   exact fun h ↦ absurd h (Ne.symm (hx w))
@@ -173,10 +163,11 @@ the numerator by `sgn(v)`.
 This is the reindexing `w ↦ w * v` of the defining sum, and it is the source of every vanishing
 statement below: a weight fixed by an odd element of the Weyl group is one where the sum cancels
 against itself. -/
+@[simp]
 theorem weylNumerator_dotAction (v : P.weylGroup) (lam : M) :
     weylNumerator P b (dotAction P b v lam)
       = ((weylSign P b v : ℤ)) • weylNumerator P b lam := by
-  rw [weylNumerator_def, weylNumerator_def, Finset.smul_sum]
+  rw [weylNumerator, weylNumerator, Finset.smul_sum]
   refine Fintype.sum_bijective (· * v) (Group.mulRight_bijective v) _ _ fun w ↦ ?_
   have hsign : weylSign P b v * weylSign P b (w * v) = weylSign P b w := by
     rw [map_mul, ← mul_assoc, mul_comm (weylSign P b v) (weylSign P b w), mul_assoc,
@@ -226,10 +217,11 @@ variable [Invertible (2 : R)] [P.IsCrystallographic] [P.IsReduced] [Fintype P.we
 
 /-- **The coefficients of the numerator of a dominant weight are the signs.** No two Weyl-group
 elements carry a dominant weight to the same place, so the term of `w` sits alone at `w ⬝ λ`. -/
+@[simp]
 theorem coeff_weylNumerator_dotAction {lam : M} (hlam : lam ∈ dominantChamber P b)
     (w : P.weylGroup) :
     (weylNumerator P b lam).coeff (dotAction P b w lam) = ((weylSign P b w : ℤ)) := by
-  rw [weylNumerator_def, AddMonoidAlgebra.coeff_sum, Finsupp.coe_finsetSum, Finset.sum_apply,
+  rw [weylNumerator, AddMonoidAlgebra.coeff_sum, Finsupp.coe_finsetSum, Finset.sum_apply,
     Finset.sum_eq_single w]
   · rw [AddMonoidAlgebra.coeff_single, Finsupp.single_eq_same]
   · intro v _ hvw
