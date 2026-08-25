@@ -59,7 +59,8 @@ theorem gradedEulerChar_twoByTwo (R : Type*) [Ring R] [StrongRankCondition R] :
   rw [gradedEulerChar_eq_stateSum, GridDiagram.stateSum_def, huniv,
     Finset.sum_insert (by
       simp only [Finset.mem_singleton]
-      exact GridState.twoByTwoId_ne_twoByTwoSwap), Finset.sum_singleton,
+      exact GridState.twoByTwoId_ne_twoByTwoSwap), Finset.sum_singleton]
+  simp only [
     GridDiagram.maslovOℤ_twoByTwo_twoByTwoId, GridDiagram.alexanderTwoℤ_twoByTwo_twoByTwoId,
     GridDiagram.maslovOℤ_twoByTwo_twoByTwoSwap, GridDiagram.alexanderTwoℤ_twoByTwo_twoByTwoSwap]
   simp [Int.negOnePow_neg, Units.smul_def, sub_eq_add_neg, add_comm]

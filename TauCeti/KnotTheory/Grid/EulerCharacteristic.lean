@@ -199,13 +199,14 @@ theorem alexanderEulerChar_eq_sum_states (R : Type*) [Ring R] [StrongRankConditi
   rw [hconst, G.filter_bidegree_eq a m, Finset.sum_const, nsmul_eq_mul, mul_comm]
 
 /-- In an unoccupied Alexander degree the Euler characteristic vanishes. -/
+@[simp]
 theorem alexanderEulerChar_eq_zero_of_notMem (R : Type*) [Ring R] [StrongRankCondition R] {a : ℤ}
     (ha : a ∉ G.alexanderSupport) : G.alexanderEulerChar R a = 0 := by
   rw [G.alexanderEulerChar_eq_sum_states R a, Finset.filter_eq_empty_iff.2, Finset.sum_empty]
   exact fun x _ hx => ha ((G.mem_alexanderSupport_iff a).2 ⟨x, hx⟩)
 
 /-- The Euler characteristic of an Alexander degree does not depend on the coefficient ring. -/
-theorem alexanderEulerChar_eq_alexanderEulerChar (R S : Type*) [Ring R] [StrongRankCondition R]
+theorem alexanderEulerChar_ring_independent (R S : Type*) [Ring R] [StrongRankCondition R]
     [Ring S] [StrongRankCondition S] (a : ℤ) : G.alexanderEulerChar R a =
       G.alexanderEulerChar S a := by
   rw [G.alexanderEulerChar_eq_sum_states R a, G.alexanderEulerChar_eq_sum_states S a]
@@ -246,7 +247,7 @@ theorem gradedEulerChar_eq_smul_T_mul_det_weightMatrix (R : Type*) [Ring R]
   rw [G.gradedEulerChar_eq_stateSum R, G.1.stateSum_eq_smul_T_mul_det_weightMatrix]
 
 /-- The graded Euler characteristic does not depend on the coefficient ring. -/
-theorem gradedEulerChar_eq_gradedEulerChar (R S : Type*) [Ring R] [StrongRankCondition R]
+theorem gradedEulerChar_ring_independent (R S : Type*) [Ring R] [StrongRankCondition R]
     [Ring S] [StrongRankCondition S] : G.gradedEulerChar R = G.gradedEulerChar S := by
   rw [G.gradedEulerChar_eq_stateSum R, G.gradedEulerChar_eq_stateSum S]
 
@@ -284,17 +285,22 @@ theorem coeff_gradedEulerChar_of_not_even (R : Type*) [Ring R] {k : ℤ}
 
 /-- The graded Euler characteristic loses nothing: its coefficient in exponent `2a` is the Euler
 characteristic of Alexander degree `a`. -/
+@[simp]
 theorem coeff_gradedEulerChar_two_mul (R : Type*) [Ring R] [StrongRankCondition R] (a : ℤ) :
     (G.gradedEulerChar R).coeff (2 * a) = G.alexanderEulerChar R a := by
   rw [G.coeff_gradedEulerChar R (2 * a)]
   by_cases ha : a ∈ G.alexanderSupport
   · rw [Finset.sum_eq_single_of_mem a ha fun b _ hb => by
-      rw [ite_eq_right_iff]; exact fun h => absurd (show b = a by omega) hb]
+      rw [ite_eq_right_iff]
+      omega]
     simp
   · rw [G.alexanderEulerChar_eq_zero_of_notMem R ha]
     refine Finset.sum_eq_zero fun b hb => ?_
     rw [ite_eq_right_iff]
-    exact fun h => absurd (show a ∈ G.alexanderSupport from (show b = a by omega) ▸ hb) ha
+    intro h
+    have hba : b = a := by omega
+    subst b
+    exact (ha hb).elim
 
 /-- **The Euler characteristics of the Alexander degrees are the coefficients of the grid
 determinant.** The alternating count of grid states of Alexander degree `a`, weighted by the parity
