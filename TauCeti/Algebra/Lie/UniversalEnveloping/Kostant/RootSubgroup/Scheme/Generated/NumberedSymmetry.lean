@@ -502,6 +502,8 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom (m : ℕ
   induction m generalizing i with
   | zero =>
       rw [pow_zero, Function.iterate_zero_apply]
+      -- The hom of the `Aut` identity is definitionally the hom of `Iso.refl`; `change`
+      -- exposes it because keyed rewriting does not unfold the plain definition `Aut`.
       change _ ≫ (Iso.refl _).hom = _
       rw [Iso.refl_hom, Category.comp_id]
   | succ m ih =>
@@ -529,6 +531,8 @@ theorem kostantGeneratedNumberedSymmetryIso_pow_eq_one (m : ℕ)
   apply kostantGeneratedGroupScheme_hom_ext e h ρ M hM hnil b
   intro i
   rw [kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom, hσm, id_eq]
+  -- The right-hand identity is an `Aut`, whose hom is definitionally that of `Iso.refl`;
+  -- `change` exposes it because keyed rewriting does not unfold the plain definition `Aut`.
   change _ = _ ≫ (Iso.refl _).hom
   rw [Iso.refl_hom, Category.comp_id]
 
