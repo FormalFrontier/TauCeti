@@ -42,7 +42,8 @@ finite projective resolution, be treated as an exact category in its own right.
   closure is closure under binary biproducts, and for the canonical exact structure of an abelian
   category it agrees with Mathlib's
   `CategoryTheory.ObjectProperty.IsClosedUnderExtensions`.
-* `TauCeti.ExactStructure.isConflationExact_ι` and
+* `TauCeti.ExactStructure.isConflationExact_ι`,
+  `TauCeti.ExactStructure.isConflationExact_ιOfLE`, and
   `TauCeti.ExactStructure.reflectsConflations_ι`: the inclusion of the subcategory is
   conflation-exact and reflects conflations.
 
@@ -295,6 +296,16 @@ theorem fullSubcategory_conflation_iff (S : ShortComplex P.FullSubcategory) :
 /-- The inclusion of an extension-closed full subcategory is conflation-exact. -/
 theorem isConflationExact_ι : (E.fullSubcategory P hP).IsConflationExact E P.ι where
   map_conflation hS := hS
+
+/-- The inclusion associated to an implication between two extension-closed object properties is
+conflation-exact for their induced exact structures. -/
+theorem isConflationExact_ιOfLE {Q : ObjectProperty C} [Q.ContainsZero]
+    [Q.IsClosedUnderBinaryProducts] (hQ : E.IsExtensionClosed Q) (h : P ≤ Q) :
+    (E.fullSubcategory P hP).IsConflationExact (E.fullSubcategory Q hQ)
+      (ObjectProperty.ιOfLE h) where
+  map_conflation {S} hS := by
+    rw [fullSubcategory_conflation_iff] at hS ⊢
+    exact hS
 
 /-- The inclusion of an extension-closed full subcategory reflects conflations: a short complex
 of the subcategory whose image is a conflation of `E` is a conflation of the induced structure. -/

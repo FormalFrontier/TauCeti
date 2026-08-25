@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Functor
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.GL2.Subgroups
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic
 
 /-!
 # Representability of the dynamic subgroups of `GL₂`
@@ -56,103 +57,13 @@ universe u w
 
 variable {R : Type u} [CommRing R]
 
-/-- The pointwise equivalence from the dynamic parabolic to the upper-triangular Borel. -/
-noncomputable def parabolicBorelMulEquiv (A : CommAlgCat.{w} R) :
-    Cocharacter.parabolic A (dynamicCocharacter (R := R)) ≃* GL2Borel A where
-  toFun g := ⟨pointsMulEquiv (R := R) (A := A) 2 g,
-    (mem_dynamicParabolic_iff (R := R) (A := A) g).mp g.2⟩
-  invFun g := ⟨(pointsMulEquiv (R := R) (A := A) 2).symm g,
-    (mem_dynamicParabolic_iff (R := R) (A := A) _).mpr (by
-      rw [(pointsMulEquiv (R := R) (A := A) 2).apply_symm_apply]
-      exact g.2)⟩
-  left_inv g := Subtype.ext
-    ((pointsMulEquiv (R := R) (A := A) 2).symm_apply_apply
-      (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)))
-  right_inv g := Subtype.ext
-    ((pointsMulEquiv (R := R) (A := A) 2).apply_symm_apply (g : GL (Fin 2) A))
-  map_mul' g h := Subtype.ext
-    (map_mul (pointsMulEquiv (R := R) (A := A) 2)
-      (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) h)
-
-@[simp]
-theorem coe_parabolicBorelMulEquiv_apply (A : CommAlgCat.{w} R)
-    (g : Cocharacter.parabolic A (dynamicCocharacter (R := R))) :
-    ((parabolicBorelMulEquiv A g : GL2Borel A) : GL (Fin 2) A) =
-      pointsMulEquiv 2 (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) := by
-  unfold parabolicBorelMulEquiv
-  -- The equivalence stores this map under the `GL2Borel` subtype coercion.
-  change pointsMulEquiv 2 (g : WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) = _
-  rfl
-
-@[simp]
-theorem pointToGeneralLinear_parabolicBorelMulEquiv_symm_apply (A : CommAlgCat.{w} R)
-    (g : GL2Borel A) :
-    pointToGeneralLinear 2
-        (((parabolicBorelMulEquiv A).symm g :
-          Cocharacter.parabolic A (dynamicCocharacter (R := R))) :
-            WithConv (coordinateHopfAlgebra R 2 →ₐ[R] A)) =
-      (g : GL (Fin 2) A) := by
-  unfold parabolicBorelMulEquiv
-  -- The inverse field is the ambient inverse point equivalence, restricted to the subgroup.
-  rw [← pointsMulEquiv_apply]
-  change pointsMulEquiv 2 ((pointsMulEquiv 2).symm (g : GL (Fin 2) A)) = _
-  exact (pointsMulEquiv 2).apply_symm_apply (g : GL (Fin 2) A)
-
 /-- The Borel coordinate Hopf algebra represents the dynamic parabolic functor for
 `t ↦ diag(t, 1)`. -/
 noncomputable def borelPointsIsoParabolicFunctor :
     HopfAlgebra.pointsFunctor (R := R) (H := Borel.coordinateHopfAlgebra R) ≅
-      Cocharacter.parabolicFunctor (dynamicCocharacter (R := R)) :=
-  NatIso.ofComponents
-    (fun A ↦ ((Borel.pointsMulEquiv (R := R) (A := A)).trans
-      (parabolicBorelMulEquiv A).symm).toGrpIso)
-    (by
-      intro A B φ
-      ext f
-      apply Subtype.ext
-      apply (pointsMulEquiv (R := R) (A := B) 2).injective
-      -- `NatIso.ofComponents` expands the categorical compositions but leaves the subgroup
-      -- coercions opaque; the next `change` states their pointwise content.
-      change pointsMulEquiv 2
-          (((parabolicBorelMulEquiv B).symm
-            (Borel.pointsMulEquiv (R := R) (A := B)
-              (HopfAlgebra.mapPoints (H := Borel.coordinateHopfAlgebra R) φ f)) :
-                Cocharacter.parabolic B (dynamicCocharacter (R := R))) :
-            WithConv (coordinateHopfAlgebra R 2 →ₐ[R] B)) =
-        pointsMulEquiv 2
-          ((Cocharacter.mapParabolic (dynamicCocharacter (R := R)) φ
-            ((parabolicBorelMulEquiv A).symm
-              (Borel.pointsMulEquiv (R := R) (A := A) f)) :
-                Cocharacter.parabolic B (dynamicCocharacter (R := R))) :
-            WithConv (coordinateHopfAlgebra R 2 →ₐ[R] B))
-      rw [pointsMulEquiv_apply,
-        pointToGeneralLinear_parabolicBorelMulEquiv_symm_apply,
-        Cocharacter.coe_mapParabolic_apply, pointsMulEquiv_apply,
-        pointToGeneralLinear_mapValue,
-        pointToGeneralLinear_parabolicBorelMulEquiv_symm_apply]
-      simpa only [Borel.coe_mapBorel, CommAlgCat.hom_ofHom, CommAlgCat.ofHom_hom] using
-        congrArg Subtype.val
-          (Borel.pointsMulEquiv_mapValue (R := R) (A := A) (B := B) φ.hom f))
-
-/-- The forward component of `borelPointsIsoParabolicFunctor` is the composite of the
-Borel point equivalence with the inverse pointwise parabolic equivalence. -/
-@[simp]
-theorem borelPointsIsoParabolicFunctor_hom_app_apply (A : CommAlgCat.{w} R)
-    (f : HopfAlgebra.points (R := R) (H := Borel.coordinateHopfAlgebra R) A) :
-    (borelPointsIsoParabolicFunctor (R := R)).hom.app A f =
-      (parabolicBorelMulEquiv A).symm (Borel.pointsMulEquiv (R := R) (A := A) f) := by
-  unfold borelPointsIsoParabolicFunctor
-  rfl
-
-/-- The inverse component of `borelPointsIsoParabolicFunctor` is the composite of the
-pointwise parabolic equivalence with the inverse Borel point equivalence. -/
-@[simp]
-theorem borelPointsIsoParabolicFunctor_inv_app_apply (A : CommAlgCat.{w} R)
-    (g : Cocharacter.parabolic A (dynamicCocharacter (R := R))) :
-    (borelPointsIsoParabolicFunctor (R := R)).inv.app A g =
-      (Borel.pointsMulEquiv (R := R) (A := A)).symm (parabolicBorelMulEquiv A g) := by
-  unfold borelPointsIsoParabolicFunctor
-  rfl
+      Cocharacter.parabolicFunctor (dynamicCocharacter (R := R)) := by
+  rw [dynamicCocharacter_eq_weightCocharacter]
+  exact weightParabolicPointsIso R Borel.weights
 
 /-! ## The dynamic Levi -/
 

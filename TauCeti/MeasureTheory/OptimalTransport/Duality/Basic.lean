@@ -33,6 +33,8 @@ be finite or measurable.
 
 ## Main statements
 
+* `TauCeti.dualFeasible_ofReal_iff` — for a nonnegative real cost, feasibility for the
+  associated extended cost is the plain real pointwise inequality;
 * `TauCeti.DualFeasible.kantorovichDualValue_le_lintegral` — weak duality against one coupling;
 * `TauCeti.DualFeasible.kantorovichDualValue_le_transportCost` — weak duality against the primal
   infimum;
@@ -91,6 +93,14 @@ theorem dualFeasible_iff_ofReal_add_le : DualFeasible c φ ψ ↔
 theorem DualFeasible.ofReal_add_le (h : DualFeasible c φ ψ) (x : X) (y : Y) :
     ENNReal.ofReal (φ x + ψ y) ≤ c (x, y) :=
   dualFeasible_iff_ofReal_add_le.1 h x y
+
+/-- Dual feasibility for the extended cost attached to a nonnegative real cost is the plain
+real pointwise inequality. This is the bridge from a real linear-programming dual constraint to
+the canonical `TauCeti.DualFeasible` predicate. -/
+theorem dualFeasible_ofReal_iff {c : X × Y → ℝ} (hc : ∀ z, 0 ≤ c z) (φ : X → ℝ) (ψ : Y → ℝ) :
+    DualFeasible (fun z ↦ ENNReal.ofReal (c z)) φ ψ ↔ ∀ x y, φ x + ψ y ≤ c (x, y) := by
+  rw [dualFeasible_iff_ofReal_add_le]
+  exact forall_congr' fun x ↦ forall_congr' fun y ↦ ENNReal.ofReal_le_ofReal_iff (hc (x, y))
 
 /-- Increasing the cost preserves dual feasibility. -/
 theorem DualFeasible.mono_cost (h : DualFeasible c φ ψ) (hcc' : c ≤ c') :

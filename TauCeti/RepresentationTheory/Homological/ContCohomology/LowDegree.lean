@@ -135,6 +135,15 @@ theorem mem_C1_iff {f : G → M} : f ∈ C1 G M ↔ Continuous f := (Iff.rfl)
 @[simp]
 theorem mem_C2_iff {f : G × G → M} : f ∈ C2 G M ↔ Continuous f := mem_C1_iff
 
+/-- Over a discrete group every `1`-cochain is continuous. -/
+@[simp]
+theorem C1_eq_top [DiscreteTopology G] : C1 G M = ⊤ :=
+  (AddSubgroup.eq_top_iff' _).2 fun _ => mem_C1_iff.2 continuous_of_discreteTopology
+
+/-- Over a discrete group every `2`-cochain is continuous: `G × G` is discrete too. -/
+@[simp]
+theorem C2_eq_top [DiscreteTopology G] : C2 G M = ⊤ := C1_eq_top (G := G × G) (M := M)
+
 end Cochains
 
 section Differentials
