@@ -197,7 +197,6 @@ theorem coe_unit (t : Rˣ) (u v : ι → α → R) (hself : ∀ i, v i ⬝ᵥ u 
   (rfl)
 
 /-- The inverse of a member of a rank-one matrix family whose self-pairing is `t + 1`. -/
-@[simp]
 theorem inv_family (t : Rˣ) (u v : ι → α → R) (i : ι)
     (hii : v i ⬝ᵥ u i = (t : R) + 1) :
     (family u v i)⁻¹ = 1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (u i) (v i) :=
