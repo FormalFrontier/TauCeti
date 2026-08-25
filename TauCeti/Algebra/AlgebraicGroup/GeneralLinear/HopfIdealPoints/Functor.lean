@@ -143,6 +143,7 @@ theorem hopfIdealPointsSubgroupFunctor_map {A B : CommAlgCat.{w} R} (f : A ⟶ B
   (rfl)
 
 /-- The matrix-subgroup equivalence is natural in the value algebra. -/
+@[simp]
 theorem quotientPointsMulEquiv_mapValue {A B : CommAlgCat.{w} R} (f : A ⟶ B)
     (q : HopfAlgebra.points
       (R := R) (H := CommHopfAlgCat.quotient (coordinateHopfAlgebra R n) I) A) :
