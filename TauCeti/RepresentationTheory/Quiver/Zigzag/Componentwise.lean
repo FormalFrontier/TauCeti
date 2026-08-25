@@ -127,16 +127,37 @@ theorem zigzagComponentProjection_mk
 
 /-- Elements of the public zigzag algebra are equal when all their component projections agree. -/
 @[ext]
-theorem zigzagAlgebra_ext {x y : zigzagAlgebra k G}
+theorem zigzagAlgebra.ext {x y : zigzagAlgebra k G}
     (h : ∀ C, zigzagComponentProjection k G C x = zigzagComponentProjection k G C y) : x = y := by
   unfold zigzagAlgebra at x y
   exact funext h
+
+/-- Reconstructing a public zigzag-algebra element from its component projections returns the
+original element. -/
+@[simp]
+theorem zigzagAlgebra.mk_projections (x : zigzagAlgebra k G) :
+    zigzagAlgebraMk k G (fun C ↦ zigzagComponentProjection k G C x) = x := by
+  apply zigzagAlgebra.ext
+  intro C
+  rw [zigzagComponentProjection_mk]
 
 /-- Evaluation identifies a dependent product of algebras over a one-point index type with its
 unique factor. -/
 private noncomputable def algEquivPiUnique {ι : Type*} [Unique ι] (A : ι → AlgCat k) :
     (∀ i, A i) ≃ₐ[k] A default :=
   AlgEquiv.ofRingEquiv (f := RingEquiv.piUnique fun i ↦ A i) (by intro; rfl)
+
+/-- The product evaluation equivalence evaluates at the unique index. -/
+private theorem algEquivPiUnique_apply {ι : Type*} [Unique ι] (A : ι → AlgCat k)
+    (x : ∀ i, A i) : algEquivPiUnique k A x = x default := by
+  rfl
+
+/-- Composing the product evaluation equivalence first evaluates at the unique index. -/
+private theorem algEquivPiUnique_trans_apply {ι : Type*} [Unique ι] (A : ι → AlgCat k)
+    {B : Type*} [Semiring B] [Algebra k B] (e : A default ≃ₐ[k] B) (x : ∀ i, A i) :
+    (algEquivPiUnique k A).trans e x = e (x default) := by
+  change e (algEquivPiUnique k A x) = e (x default)
+  rw [algEquivPiUnique_apply]
 
 /-- The unique structure on the connected-component type of a connected graph, based at a
 specified witness vertex. -/
@@ -160,7 +181,7 @@ noncomputable def connectedComponentGraphIso (hconn : G.Connected)
 
 omit [Finite V] in
 /-- Every connected component of a connected graph on a nontrivial vertex type is nontrivial. -/
-theorem connectedComponent_nontrivial (hconn : G.Connected) [Nontrivial V]
+theorem nontrivial_connectedComponent (hconn : G.Connected) [Nontrivial V]
     (C : G.ConnectedComponent) : Nontrivial C := by
   let e := (connectedComponentGraphIso G hconn C).toEquiv
   exact (Equiv.nontrivial_congr e).mpr inferInstance
@@ -227,26 +248,52 @@ noncomputable def zigzagAlgebraEquivNonisolated (hconn : G.Connected) [Nontrivia
   unfold zigzagAlgebra
   letI := connectedComponentUnique G hconn
   letI : Nontrivial (default : G.ConnectedComponent) :=
-    connectedComponent_nontrivial G hconn default
+    nontrivial_connectedComponent G hconn default
   refine (algEquivPiUnique k (fun C : G.ConnectedComponent ↦
     zigzagComponentAlgebra k G C)).trans <|
       (zigzagComponentAlgebraEquivNonisolated k G default).trans ?_
   exact nonisolatedZigzagQuotientEquiv k (connectedComponentGraphIso G hconn default)
+
+/-- The comparison on the unique nonisolated component applies its two constituent
+equivalences in sequence. -/
+private theorem nonisolatedComponentComparison_apply (hconn : G.Connected) [Nontrivial V]
+    (C : G.ConnectedComponent) [Nontrivial C] (x : zigzagComponentAlgebra k G C) :
+    ((zigzagComponentAlgebraEquivNonisolated k G C).trans
+      (nonisolatedZigzagQuotientEquiv k
+        (connectedComponentGraphIso G hconn C))) x =
+      nonisolatedZigzagQuotientEquiv k (connectedComponentGraphIso G hconn C)
+        (zigzagComponentAlgebraEquivNonisolated k G C x) := by
+  rfl
 
 /-- The connected nonisolated comparison evaluates through any connected-component factor and
 the canonical graph isomorphism from that factor to the original graph. -/
 theorem zigzagAlgebraEquivNonisolated_apply (hconn : G.Connected) [Nontrivial V]
     (x : zigzagAlgebra k G) (C : G.ConnectedComponent) :
     zigzagAlgebraEquivNonisolated k G hconn x =
-      let _ := connectedComponent_nontrivial G hconn C
+      let _ := nontrivial_connectedComponent G hconn C
       nonisolatedZigzagQuotientEquiv k (connectedComponentGraphIso G hconn C)
         (zigzagComponentAlgebraEquivNonisolated k G C
           (zigzagComponentProjection k G C x)) := by
   let _ := connectedComponentUnique G hconn
+  let _ : Nontrivial (default : G.ConnectedComponent) :=
+    nontrivial_connectedComponent G hconn default
   have hC : C = default := Subsingleton.elim _ _
   subst C
   unfold zigzagAlgebra at x
-  rfl
+  change
+    ((algEquivPiUnique k (fun C : G.ConnectedComponent ↦
+      zigzagComponentAlgebra k G C)).trans
+        ((zigzagComponentAlgebraEquivNonisolated k G default).trans
+          (nonisolatedZigzagQuotientEquiv k
+            (connectedComponentGraphIso G hconn default)))) x =
+      nonisolatedZigzagQuotientEquiv k (connectedComponentGraphIso G hconn default)
+        (zigzagComponentAlgebraEquivNonisolated k G default (x default))
+  calc
+    _ = ((zigzagComponentAlgebraEquivNonisolated k G default).trans
+        (nonisolatedZigzagQuotientEquiv k
+          (connectedComponentGraphIso G hconn default))) (x default) :=
+      algEquivPiUnique_trans_apply k _ _ x
+    _ = _ := nonisolatedComponentComparison_apply k G hconn default (x default)
 
 /-- The inverse connected nonisolated comparison is computed componentwise by the inverse graph
 and component equivalences. -/
@@ -254,11 +301,11 @@ and component equivalences. -/
 theorem zigzagAlgebraEquivNonisolated_symm_apply_component (hconn : G.Connected)
     [Nontrivial V] (x : nonisolatedZigzagQuotient k G) (C : G.ConnectedComponent) :
     zigzagComponentProjection k G C ((zigzagAlgebraEquivNonisolated k G hconn).symm x) =
-      let _ := connectedComponent_nontrivial G hconn C
+      let _ := nontrivial_connectedComponent G hconn C
       (zigzagComponentAlgebraEquivNonisolated k G C).symm
         ((nonisolatedZigzagQuotientEquiv k
           (connectedComponentGraphIso G hconn C)).symm x) := by
-  let _ := connectedComponent_nontrivial G hconn C
+  let _ := nontrivial_connectedComponent G hconn C
   apply (zigzagComponentAlgebraEquivNonisolated k G C).injective
   rw [AlgEquiv.apply_symm_apply]
   apply (nonisolatedZigzagQuotientEquiv k
@@ -276,6 +323,17 @@ noncomputable def zigzagAlgebraEquivA1 :
     (zigzagComponentAlgebraEquivULiftDualNumber k (⊥ : SimpleGraph (Fin 1)) default).trans ?_
   exact ULift.algEquiv (R := k) (A := DualNumber k)
 
+/-- The comparison on the unique rank-one component first changes its component presentation and
+then lowers the universe lift. -/
+private theorem a1ComponentComparison_apply
+    (x : zigzagComponentAlgebra k (⊥ : SimpleGraph (Fin 1)) default) :
+    ((zigzagComponentAlgebraEquivULiftDualNumber k
+      (⊥ : SimpleGraph (Fin 1)) default).trans
+        (ULift.algEquiv (R := k) (A := DualNumber k))) x =
+      ULift.down (zigzagComponentAlgebraEquivULiftDualNumber k
+        (⊥ : SimpleGraph (Fin 1)) default x) := by
+  rw [AlgEquiv.trans_apply, ULift.algEquiv_apply]
+
 /-- The rank-one comparison evaluates the unique component and then lowers the universe lift. -/
 @[simp]
 theorem zigzagAlgebraEquivA1_apply (x : zigzagAlgebra k (⊥ : SimpleGraph (Fin 1))) :
@@ -284,7 +342,20 @@ theorem zigzagAlgebraEquivA1_apply (x : zigzagAlgebra k (⊥ : SimpleGraph (Fin 
         (⊥ : SimpleGraph (Fin 1)) default
           (zigzagComponentProjection k (⊥ : SimpleGraph (Fin 1)) default x)) := by
   unfold zigzagAlgebra at x
-  rfl
+  change
+    ((algEquivPiUnique k (fun C : (⊥ : SimpleGraph (Fin 1)).ConnectedComponent ↦
+      zigzagComponentAlgebra k (⊥ : SimpleGraph (Fin 1)) C)).trans
+        ((zigzagComponentAlgebraEquivULiftDualNumber k
+          (⊥ : SimpleGraph (Fin 1)) default).trans
+            (ULift.algEquiv (R := k) (A := DualNumber k)))) x =
+      ULift.down (zigzagComponentAlgebraEquivULiftDualNumber k
+        (⊥ : SimpleGraph (Fin 1)) default (x default))
+  calc
+    _ = ((zigzagComponentAlgebraEquivULiftDualNumber k
+        (⊥ : SimpleGraph (Fin 1)) default).trans
+          (ULift.algEquiv (R := k) (A := DualNumber k))) (x default) :=
+      algEquivPiUnique_trans_apply k _ _ x
+    _ = _ := a1ComponentComparison_apply k (x default)
 
 /-- The inverse rank-one comparison inserts a dual number into the unique lifted component. -/
 @[simp]
