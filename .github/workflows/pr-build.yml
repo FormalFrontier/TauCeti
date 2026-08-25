@@ -336,6 +336,12 @@ jobs:
           export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
           git config core.hooksPath /dev/null
           git config core.fsmonitor false
+          # An identity is required even by `merge --no-commit`, which prepares a commit it
+          # then does not write. Set one explicitly rather than inheriting: neutralising the
+          # global and system config above leaves a runner with none at all, and git will not
+          # invent one, so without this every merge fails with "empty ident name".
+          git config user.name "pr-build"
+          git config user.email "pr-build@taucetiproject.invalid"
 
           # From the canonical repository: refs/pull/N/head is maintained here for forks too,
           # so no fork is contacted at build time, and the SHA is checked below regardless.
