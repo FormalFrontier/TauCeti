@@ -74,7 +74,7 @@ open scoped MatrixGroups Pointwise HeckeCosetModule
 
 namespace HeckeRing.GL2
 
-variable {N : ℕ} [NeZero N]
+variable {N : ℕ}
 
 /-- **The diamond double coset** `Γ₁(N) · γ · Γ₁(N)` of an element `γ ∈ Γ₀(N)`, as an element of
 the basis of the Hecke ring of the pair `(Γ₁(N), Δ₀(N))`.
@@ -82,7 +82,7 @@ the basis of the Hecke ring of the pair `(Γ₁(N), Δ₀(N))`.
 It is indexed by an element of `Γ₀(N)` rather than by a unit of `ZMod N` because a double coset
 is formed from a matrix; that it depends only on the lower-right entry is
 `diamondCosetGamma1_eq_iff`, and `diamondHeckeElem` is the resulting unit-indexed element. -/
-noncomputable def diamondCosetGamma1 (N : ℕ) [NeZero N] (g : ↥(Gamma0 N)) :
+noncomputable def diamondCosetGamma1 (N : ℕ) (g : ↥(Gamma0 N)) :
     HeckeCoset (Delta0 N) ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) :=
   HeckeCoset.mk _ _ ⟨mapGL ℚ (g : SL(2, ℤ)), mapGL_mem_Delta0 N g⟩
 
@@ -134,6 +134,11 @@ theorem doubleCoset_out_diamondCosetGamma1_eq_iUnion_rightCosets (g : ↥(Gamma0
   rw [Set.iUnion_const, HeckeCoset.eq_iff.mp (hout.trans (diamondCosetGamma1_def g))]
   exact doubleCoset_eq_rightCoset_of_mem_normalizer (mapGL_mem_normalizer_Gamma1_map ℚ g)
 
+/-- The diamond coset of the identity is the identity double coset `Γ₁(N) · 1 · Γ₁(N)`. -/
+@[simp] theorem diamondCosetGamma1_one : diamondCosetGamma1 N 1 = 1 := by
+  rw [diamondCosetGamma1_def, HeckeCoset.one_def]
+  exact congrArg (HeckeCoset.mk _ _) (Subtype.ext (map_one (mapGL ℚ)))
+
 /-- **The diamond coset sees exactly the lower-right entry.** Two elements of `Γ₀(N)` give the
 same double coset precisely when they have the same image in `(ZMod N)ˣ`; the forward direction
 uses that `mapGL ℚ` is injective, so a rational coincidence is an integral one. -/
@@ -158,14 +163,17 @@ theorem diamondCosetGamma1_eq_iff {g₁ g₂ : ↥(Gamma0 N)} :
       mul_inv_mem_Gamma1_of_Gamma0Map_eq g₂ g₁ (congrArg Units.val heq.symm), ?_⟩
     rw [map_mul, map_inv]
 
-/-- The diamond coset of the identity is the identity double coset `Γ₁(N) · 1 · Γ₁(N)`. -/
-@[simp] theorem diamondCosetGamma1_one : diamondCosetGamma1 N 1 = 1 := by
-  rw [diamondCosetGamma1_def, HeckeCoset.one_def]
-  exact congrArg (HeckeCoset.mk _ _) (Subtype.ext (map_one (mapGL ℚ)))
+/-- The decomposition quotient of a diamond coset is a subsingleton: its representative
+normalizes `Γ₁(N)`, so the stabilizer `Γ₁(N) ∩ γΓ₁(N)γ⁻¹` is all of `Γ₁(N)`. -/
+private lemma subsingleton_decompQuotient_diamondCosetGamma1 (g : ↥(Gamma0 N)) :
+    Subsingleton (DecompQuotient ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      ((diamondCosetGamma1 N g).rep : GL (Fin 2) ℚ)) :=
+  subsingleton_decompQuotient
+    (Subgroup.conjAct_pointwise_smul_eq_self (rep_diamondCosetGamma1_mem_normalizer g)).ge
 
 section Product
 
-variable (g₁ g₂ : ↥(Gamma0 N))
+variable [NeZero N] (g₁ g₂ : ↥(Gamma0 N))
 
 /-- Every value of `HeckeCoset.mulMap` on two diamond cosets is the diamond coset of the
 product: writing each chosen representative as `a · γ` with `a ∈ Γ₁(N)` and pushing the middle
@@ -210,14 +218,6 @@ private lemma mulMap_diamondCosetGamma1 (p : DecompQuotient ((Gamma1 N).map (map
   exact mem_doubleCoset.mpr ⟨_, Subgroup.mul_mem _ (Subgroup.mul_mem _ p.1.out.2 ha) hc,
     1, Subgroup.one_mem _, key⟩
 
-/-- The decomposition quotient of a diamond coset is a subsingleton: its representative
-normalizes `Γ₁(N)`, so the stabilizer `Γ₁(N) ∩ γΓ₁(N)γ⁻¹` is all of `Γ₁(N)`. -/
-private lemma subsingleton_decompQuotient_diamondCosetGamma1 :
-    Subsingleton (DecompQuotient ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
-      ((diamondCosetGamma1 N g₁).rep : GL (Fin 2) ℚ)) :=
-  subsingleton_decompQuotient
-    (Subgroup.conjAct_pointwise_smul_eq_self (rep_diamondCosetGamma1_mem_normalizer g₁)).ge
-
 /-- **The diamond basis elements multiply**: `[Γ₁(N) γ₁ Γ₁(N)] · [Γ₁(N) γ₂ Γ₁(N)] =
 [Γ₁(N) γ₁γ₂ Γ₁(N)]` in the Hecke ring, over any coefficient semiring.
 
@@ -244,7 +244,7 @@ double coset of any `Γ₀(N)` matrix with lower-right entry `d`. Such a matrix 
 `CongruenceSubgroup.Gamma0Map_toHomUnits_surjective`, and `diamondCosetGamma1_eq_iff` makes the
 choice immaterial — `diamondHeckeElem_eq_single` is the resulting evaluation rule, through which
 every computation goes. -/
-noncomputable def diamondHeckeElem (N : ℕ) [NeZero N] (d : (ZMod N)ˣ) :
+noncomputable def diamondHeckeElem (N : ℕ) (d : (ZMod N)ˣ) :
     𝕋 (Delta0 N) ((Gamma1 N).map (mapGL ℚ)) ℤ :=
   HeckeCosetModule.single ℤ
     (diamondCosetGamma1 N (Gamma0Map_toHomUnits_surjective d).choose) 1
@@ -257,6 +257,8 @@ theorem diamondHeckeElem_eq_single {d : (ZMod N)ˣ} (g : ↥(Gamma0 N))
     diamondHeckeElem N d = HeckeCosetModule.single ℤ (diamondCosetGamma1 N g) 1 :=
   congrArg (HeckeCosetModule.single ℤ · 1) (diamondCosetGamma1_eq_iff.mpr
     ((Gamma0Map_toHomUnits_surjective d).choose_spec.trans hg.symm))
+
+variable [NeZero N]
 
 /-- **The diamonds inside the Hecke ring.** The map `d ↦ ⟨d⟩` is a monoid homomorphism
 `(ZMod N)ˣ →* 𝕋 Δ₀(N) Γ₁(N) ℤ`: this is the sense in which the diamond operators live in the
