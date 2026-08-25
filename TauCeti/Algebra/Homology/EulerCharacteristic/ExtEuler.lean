@@ -196,10 +196,12 @@ theorem IsExtBoundedOn.isEulerAdmissibleOn {P Q : ObjectProperty C} {N : ℕ}
 
 variable (k)
 
-/-- The alternating sum `∑_{n < N} (-1)ⁿ dim_k Extⁿ(X, Y)` of the `Ext` dimensions of the pair
-`(X, Y)` in the cohomological degrees below `N`. Truncating at an explicit bound is what keeps
-`TauCeti.extEuler` finite; its Euler-admissibility witness additionally ensures that every
-dimension in the sum is genuine. -/
+/-- The raw alternating sum `∑_{n < N} (-1)ⁿ * Module.finrank k Extⁿ(X, Y)` over the cohomological
+degrees below `N`. This definition takes no admissibility witness: a summand is the dimension of
+the corresponding `Ext` group only where that group is finite-dimensional, `Module.finrank`
+returning its `0` fallback elsewhere. Truncating at an explicit bound is what keeps the sum finite;
+`TauCeti.extEuler` is the version that supplies both a `TauCeti.IsExtFinite` witness, making every
+summand a genuine dimension, and a vanishing bound for `N`. -/
 noncomputable def truncatedExtEuler (X Y : C) (N : ℕ) : ℤ :=
   ∑ n ∈ Finset.range N, (-1) ^ n * (Module.finrank k (Ext.{w} X Y n) : ℤ)
 

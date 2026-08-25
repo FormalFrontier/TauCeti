@@ -60,6 +60,7 @@ noncomputable def extAddEquivOfIso (e : X ≅ X') (f : Y ≅ Y') (n : ℕ) :
   map_add' x y := by simp
 
 /-- `TauCeti.extAddEquivOfIso` composes with `e.inv` and `f.hom`. -/
+@[simp]
 theorem extAddEquivOfIso_apply (e : X ≅ X') (f : Y ≅ Y') (n : ℕ) (x : Ext.{w} X Y n) :
     extAddEquivOfIso e f n x =
       (Ext.mk₀ e.inv).comp (x.comp (Ext.mk₀ f.hom) (add_zero n)) (zero_add n) :=
@@ -73,6 +74,7 @@ noncomputable def extLinearEquivOfIso (R : Type t) [CommRing R] [Linear R C] (e 
   map_smul' r x := by simp [extAddEquivOfIso_apply]
 
 /-- `TauCeti.extLinearEquivOfIso` composes with `e.inv` and `f.hom`. -/
+@[simp]
 theorem extLinearEquivOfIso_apply (R : Type t) [CommRing R] [Linear R C] (e : X ≅ X')
     (f : Y ≅ Y') (n : ℕ) (x : Ext.{w} X Y n) :
     extLinearEquivOfIso R e f n x =
@@ -119,6 +121,7 @@ theorem exact_precomp (hS : S.ShortExact) (Y : C) (n : ℕ) :
 
 /-- The linear postcomposition map has `CategoryTheory.Abelian.Ext.postcomp` as its underlying
 function. -/
+@[simp]
 theorem coe_postcompOfLinear (R : Type t) [CommRing R] [Linear R C] {Y Z : C} {n a b : ℕ}
     (beta : Ext.{w} Y Z n) (X : C) (h : a + n = b) :
     ⇑(Ext.postcompOfLinear beta R X h) = Ext.postcomp beta X h :=
@@ -126,6 +129,7 @@ theorem coe_postcompOfLinear (R : Type t) [CommRing R] [Linear R C] {Y Z : C} {n
 
 /-- The linear precomposition map has `CategoryTheory.Abelian.Ext.precomp` as its underlying
 function. -/
+@[simp]
 theorem coe_precompOfLinear (R : Type t) [CommRing R] [Linear R C] {X Y : C} {n a b : ℕ}
     (alpha : Ext.{w} X Y n) (Z : C) (h : n + a = b) :
     ⇑(Ext.precompOfLinear alpha R Z h) = Ext.precomp alpha Z h :=
