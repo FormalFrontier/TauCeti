@@ -103,6 +103,7 @@ theorem localArithmeticFactor_apply_pow (f : IdealArithmeticFunction K)
   exact coeff_localPowerSeries f P n
 
 /-- A local arithmetic factor vanishes away from powers of its prime-ideal norm. -/
+@[simp]
 theorem localArithmeticFactor_apply_eq_zero_of_not_exists_pow_eq (f : IdealArithmeticFunction K)
     (P : HeightOneSpectrum (𝓞 K)) {m : ℕ}
     (hm : ¬ ∃ n : ℕ, Ideal.absNorm P.asIdeal ^ n = m) :
