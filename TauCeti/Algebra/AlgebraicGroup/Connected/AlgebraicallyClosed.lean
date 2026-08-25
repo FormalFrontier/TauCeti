@@ -79,7 +79,7 @@ theorem geometricallyConnectedCommHopfAlgProperty_iff_connectedSpace_of_isAlgClo
 namespace HopfAlgebra
 
 /-- Two specializations of a domain-valued algebra homomorphism agree on an idempotent. -/
-theorem algHom_apply_eq_of_isIdempotentElem
+private theorem algHom_apply_eq_of_isIdempotentElem
     {K H A : Type u} [CommSemiring K] [Semiring H] [Algebra K H]
     [CommSemiring A] [Algebra K A] [IsDomain A]
     (e : H) (he : IsIdempotentElem e) (q : H →ₐ[K] A)
