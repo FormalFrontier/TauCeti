@@ -55,8 +55,8 @@ returns to its initial state, and its excursion process is junk.
 
 ## Main definitions
 
-* `TauCeti.Probability.excursionWeight`: the probability that the chain started at `a₀` traverses a
-  given finite word and then returns to `a₀`.
+* `TauCeti.Probability.excursionWeight`: the product of transition weights along a given finite
+  word followed by a return to `a₀`; for a Markov kernel, this is the corresponding path mass.
 * `TauCeti.Probability.excursionLaw`: the law of the first excursion of the chain started at `a₀`.
 
 ## Main results
@@ -101,9 +101,9 @@ variable {α : Type*} [MeasurableSpace α]
 
 /-! ## The weight of a single excursion -/
 
-/-- The **excursion weight** of a finite word `e` at the base state `a₀`: the probability that the
-chain with transition kernel `κ`, started at `a₀`, traverses `e` and returns to `a₀`. It is the
-product of the transition weights along the loop word `a₀, e, a₀`. -/
+/-- The **excursion weight** of a finite word `e` at the base state `a₀`: the product of the
+transition weights along the loop word `a₀, e, a₀`. For a Markov kernel, this is the probability
+mass of traversing `e` from `a₀` and then returning to `a₀`. -/
 def excursionWeight (κ : Kernel α α) (a₀ : α) (e : List α) : ℝ≥0∞ :=
   ((loopPath a₀ [e]).consecutivePairs.map fun q => κ q.1 {q.2}).prod
 
@@ -119,14 +119,6 @@ theorem excursionWeight_nil (κ : Kernel α α) (a₀ : α) :
     excursionWeight κ a₀ [] = κ a₀ {a₀} := by
   rw [excursionWeight_def]
   simp [List.consecutivePairs]
-
-/-- A product over a `List.flatMap` is the product of the partial products. -/
-private theorem prod_map_flatMap {β γ M : Type*} [CommMonoid M] (g : β → List γ) (h : γ → M) :
-    ∀ bs : List β, ((bs.flatMap g).map h).prod = (bs.map fun e => ((g e).map h).prod).prod
-  | [] => by simp
-  | e :: bs => by
-    rw [List.flatMap_cons, List.map_append, List.prod_append, List.map_cons, List.prod_cons,
-      prod_map_flatMap g h bs]
 
 /-! ## The mass of a loop factors over its excursions -/
 
@@ -151,11 +143,15 @@ theorem markovChainLaw_map_prefix_apply_singleton_loopPathAt (bs : List (List α
     intro i
     rw [loopPathAt_def, loopPathAt_def]
     simp
+  have hweight : excursionWeight κ a₀ = fun e =>
+      ((loopPath a₀ [e]).consecutivePairs.map fun q => κ q.1 {q.2}).prod := by
+    funext e
+    rw [excursionWeight_def]
   rw [Finset.prod_congr rfl fun i _ => hstep i,
     prod_consecutivePairs_getD (fun a b => κ a {b}) a₀ _ (loopPath a₀ bs)
       (length_loopPath a₀ bs),
-    consecutivePairs_loopPath, prod_map_flatMap]
-  rfl
+    consecutivePairs_loopPath, hweight, List.map_flatMap]
+  simp only [List.flatMap, List.prod_flatten, List.map_map, Function.comp_def]
 
 /-- **The probability that the chain traverses a prescribed loop** is the product of the excursion
 weights of that loop. -/
@@ -207,8 +203,10 @@ theorem markovChainLaw_apply_setOf_excursionPrefix_eq
       (markovChainLaw_dirac_ae_apply_zero κ a₀) havoid,
     markovChainLaw_apply_setOf_loopPathAt]
 
-/-- The law of one excursion of the chain started at `a₀`: the law of the word the chain traverses
-strictly between its first two visits to `a₀`. -/
+/-- The law of the first excursion of the chain started at `a₀`. Under the returning hypothesis,
+this is the law of the word traversed strictly between the first two visits to `a₀`. If either
+visit is absent, `visitTime` uses its junk value `0`, so the interval used by `excursion` may be
+empty. -/
 def excursionLaw (κ : Kernel α α) [IsMarkovKernel κ] (a₀ : α) : Measure (List α) :=
   (markovChainLaw (Measure.dirac a₀) κ).map fun x => excursion x a₀ 0
 
