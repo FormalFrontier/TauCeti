@@ -18,9 +18,9 @@ above by a constant depending only on `F / k`.  The **genus** of `F / k` is the 
 truncated to `ℕ`.  Over an exact constant field the truncation changes nothing and `g` really is
 the maximum, attained at some divisor; over a non-exact one it is a junk value (see
 `TauCeti.genus`).  Unwinding the supremum gives **Riemann's theorem** `ℓ(D) ≥ deg D + 1 - g`,
-valid over any constant field, with equality as soon as `deg D` is large.  This file is
-Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., Proposition 1.4.14 through
-Definition 1.5.1.
+valid over any constant field; over an exact constant field there is moreover equality as soon
+as `deg D` is large.  This file is Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed.,
+Proposition 1.4.14 through Definition 1.5.1.
 
 The boundedness argument is the only substantial one.  Fix a transcendental `x`, let `B = (x)_∞`
 be its pole divisor, so that `deg B = [F : k(x)] = n` by the product formula, and let `C` be an
@@ -94,13 +94,12 @@ private theorem exists_growth_ladder (hF : IsFunctionField k F) :
   have hn : 0 < n := hnrank ▸ Module.finrank_pos
   obtain ⟨u⟩ : Nonempty (Module.Basis (Fin n) k⟮x⟯ F) :=
     ⟨Module.finBasisOfFinrankEq k⟮x⟯ F hnrank⟩
-  obtain ⟨xu, hxu⟩ : ∃ w : Fˣ, (w : F) = x := ⟨Units.mk0 x hx0, rfl⟩
   obtain ⟨c, hcval⟩ : ∃ w : Fin n → Fˣ, ∀ i, (w i : F) = u i :=
     ⟨fun i ↦ Units.mk0 (u i) (u.ne_zero i), fun _ ↦ rfl⟩
-  refine ⟨Divisor.poles hF xu, ∑ i : Fin n, Divisor.poles hF (c i), n, hn, ?_, ?_, ?_⟩
-  · have hxtr : ¬ IsAlgebraic k (xu : F) := by rw [hxu]; exact hx
-    have h := Divisor.degree_poles hF xu hxtr
-    rwa [hxu, hnrank] at h
+  refine ⟨Divisor.poles hF (Units.mk0 x hx0), ∑ i : Fin n, Divisor.poles hF (c i), n, hn,
+    ?_, ?_, ?_⟩
+  · have h := Divisor.degree_poles hF (Units.mk0 x hx0) hx
+    rwa [Units.val_mk0, hnrank] at h
   · exact Finset.sum_nonneg fun i _ ↦
       WeilDivisor.isEffective_iff_zero_le.mp (Divisor.isEffective_poles hF (c i))
   · intro l
@@ -113,7 +112,8 @@ private theorem exists_growth_ladder (hF : IsFunctionField k F) :
       have hfun : (fun i ↦ (c i : F)) = ⇑u := funext hcval
       rw [hfun]
       exact u.linearIndependent
-    have hgrowth := Divisor.card_mul_succ_le_dim_nsmul_poles_add hF hx hxu c hli hC l
+    have hgrowth :=
+      Divisor.card_mul_succ_le_dim_nsmul_poles_add hF (Units.mk0 x hx0) hx c hli hC l
     simpa using hgrowth
 
 /-- If `L(E - A)` is nonzero, then `ℓ(E) - deg E ≤ ℓ(A) - deg A`. -/
@@ -263,6 +263,7 @@ noncomputable def Divisor.indexOfSpecialty (D : Divisor k F) : ℤ :=
   Divisor.dim D - Divisor.degree D - 1 + genus k F
 
 /-- Unfolding formula for the index of specialty. -/
+@[simp]
 theorem Divisor.indexOfSpecialty_def (D : Divisor k F) :
     Divisor.indexOfSpecialty D = Divisor.dim D - Divisor.degree D - 1 + genus k F := (rfl)
 
