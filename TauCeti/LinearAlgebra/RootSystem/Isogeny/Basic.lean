@@ -473,11 +473,11 @@ def id (P : RootPairing ι R M N) : RootPairingIsogeny P P :=
     (id P).exponent i = 1 := by
   rw [id, ofEquiv]
 
-/-- Composing an isogeny on the right with the identity isogeny does not change it. -/
+/-- Composing an isogeny on the left with the identity isogeny does not change it. -/
 @[simp] theorem comp_id (f : RootPairingIsogeny P Q) : comp (id Q) f = f := by
   ext <;> simp [comp, id, ofEquiv]
 
-/-- Composing an isogeny on the left with the identity isogeny does not change it. -/
+/-- Composing an isogeny on the right with the identity isogeny does not change it. -/
 @[simp] theorem id_comp (f : RootPairingIsogeny P Q) : comp f (id P) = f := by
   ext <;> simp [comp, id, ofEquiv]
 
