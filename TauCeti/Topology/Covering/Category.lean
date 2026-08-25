@@ -25,6 +25,8 @@ fundamental-group actions.
 
 ## Main declarations
 
+* `TauCeti.Over.isCoveringMap` and `TauCeti.Over.isCoveringMap_iff`: the property of an object
+  of `TopCat / X` that its structure morphism is a covering map, and its membership lemma.
 * `TauCeti.CoveringSpace X`: covering spaces over `X` and maps over `X`.
 * `TauCeti.CoveringSpace.mk`, `proj`, `homMk`, `isoMk`: constructors for covering spaces and
   their morphisms and isomorphisms.
@@ -63,13 +65,18 @@ open CategoryTheory
 
 namespace Over
 
-/-- The property of an object of `TopCat / X` that its structure morphism is a covering map.
-
-It is `@[expose]`d so that downstream modules can build objects of the full subcategories it cuts
-out directly from a proof of `IsCoveringMap`. -/
-@[expose]
+/-- The property of an object of `TopCat / X` that its structure morphism is a covering map. -/
 def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
   fun p ↦ _root_.IsCoveringMap p.hom
+
+/-- Membership in the covering-map property of objects of `TopCat / X`.
+
+This is the lemma downstream modules use to build objects of the full subcategories that
+`TauCeti.Over.isCoveringMap` cuts out from a bare proof of `IsCoveringMap`. -/
+@[simp]
+theorem isCoveringMap_iff {X : TopCat.{u}} {p : CategoryTheory.Over X} :
+    isCoveringMap X p ↔ _root_.IsCoveringMap p.hom :=
+  Iff.rfl
 
 /-- A morphism in `TopCat / X` is an isomorphism exactly when its map on left objects is a
 homeomorphism. -/

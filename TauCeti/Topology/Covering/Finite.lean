@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Homotopy.Lifting
 public import TauCeti.Topology.Covering.Category
+public import TauCeti.Topology.Homotopy.Monodromy.Basic
 
 /-!
 # Finite covering spaces
@@ -19,8 +19,8 @@ as a property of an object of `TopCat / X`, names the resulting full subcategory
 Finiteness of all fibres is one condition rather than infinitely many as soon as the base is path
 connected: monodromy along a path is a bijection between the fibres over its endpoints, so the
 fibres over any two points of a path component are in bijection. That is
-`TauCeti.coveringFiberEquiv`, and `TauCeti.hasFiniteFibers_of_finite_fiber` is the resulting
-one-point criterion.
+`TauCeti.coveringFiberEquiv`, from `TauCeti.Topology.Homotopy.Monodromy.Basic`, and
+`TauCeti.hasFiniteFibers_of_finite_fiber` is the resulting one-point criterion.
 
 Finite covers are the covering-space side of the Galois-category picture: the fibre over a
 basepoint is a finite set with an action of `π₁`, and it is only for finite covers that the fibre
@@ -28,10 +28,9 @@ functor lands in `FintypeCat`.
 
 ## Main declarations
 
-* `TauCeti.coveringFiberEquiv`: monodromy along a homotopy class of paths is a bijection between
-  fibres.
-* `TauCeti.Over.hasFiniteFibers`: the property of an object of `TopCat / X` that all fibres of
-  its structure morphism are finite.
+* `TauCeti.Over.hasFiniteFibers` and `TauCeti.Over.hasFiniteFibers_iff`: the property of an
+  object of `TopCat / X` that all fibres of its structure morphism are finite, and its
+  membership lemma.
 * `TauCeti.FiniteCoveringSpace`: finite covering spaces over `X`.
 * `TauCeti.FiniteCoveringSpace.mk`, `proj`, `homMk`, `isoMk`, `forget`,
   `fullyFaithfulForget`, `isIso_iff_isHomeomorph_hom_left`: the constructor API.
@@ -51,20 +50,6 @@ section Fibers
 
 variable {E X : Type u} [TopologicalSpace E] [TopologicalSpace X] {p : E → X}
 
-/-- **Monodromy along a homotopy class of paths is a bijection between the fibres** over its
-endpoints. It is `IsCoveringMap.monodromy`, whose bijectivity Mathlib records, packaged as an
-equivalence. -/
-@[expose]
-noncomputable def coveringFiberEquiv (hp : IsCoveringMap p) {x y : X}
-    (γ : Path.Homotopic.Quotient x y) : ↥(p ⁻¹' {x}) ≃ ↥(p ⁻¹' {y}) :=
-  Equiv.ofBijective _ (hp.monodromy_bijective γ)
-
-@[simp]
-theorem coveringFiberEquiv_apply (hp : IsCoveringMap p) {x y : X}
-    (γ : Path.Homotopic.Quotient x y) (e : ↥(p ⁻¹' {x})) :
-    coveringFiberEquiv hp γ e = hp.monodromy γ e :=
-  rfl
-
 /-- Over a path-connected base, a covering map with one finite fibre has all fibres finite. -/
 theorem finite_fiber_of_finite_fiber [PathConnectedSpace X] (hp : IsCoveringMap p) {x₀ : X}
     (h : Finite ↥(p ⁻¹' {x₀})) (x : X) : Finite ↥(p ⁻¹' {x}) :=
@@ -77,13 +62,15 @@ end Fibers
 namespace Over
 
 /-- The property of an object of `TopCat / X` that all fibres of its structure morphism are
-finite.
-
-It is `@[expose]`d so that the finiteness of a fibre of a finite covering space is available by
-`inferInstance` in downstream modules. -/
-@[expose]
+finite. -/
 def hasFiniteFibers (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
   fun p => ∀ x : X, Finite ↥(⇑p.hom ⁻¹' {x})
+
+/-- Membership in the finite-fibre property of objects of `TopCat / X`. -/
+@[simp]
+theorem hasFiniteFibers_iff {X : TopCat.{u}} {p : CategoryTheory.Over X} :
+    hasFiniteFibers X p ↔ ∀ x : X, Finite ↥(⇑p.hom ⁻¹' {x}) :=
+  Iff.rfl
 
 end Over
 
@@ -112,7 +99,7 @@ instance : CoeOut (FiniteCoveringSpace X) TopCat where
 def mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
     (hfin : ∀ x : X, Finite ↥(⇑p ⁻¹' {x})) : FiniteCoveringSpace X where
   obj := CategoryTheory.Over.mk p
-  property := ⟨hp, hfin⟩
+  property := ⟨Over.isCoveringMap_iff.2 hp, Over.hasFiniteFibers_iff.2 hfin⟩
 
 @[simp]
 theorem mk_coe {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
@@ -145,11 +132,11 @@ theorem mk_proj {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
 
 /-- The projection from an object of `FiniteCoveringSpace X` is a covering map. -/
 theorem isCoveringMap_proj (p : FiniteCoveringSpace X) : _root_.IsCoveringMap p.proj :=
-  p.property.1
+  Over.isCoveringMap_iff.1 p.property.1
 
 /-- Every fibre of a finite covering space is finite. -/
 instance finite_fiber (p : FiniteCoveringSpace X) (x : X) : Finite ↥(⇑p.proj ⁻¹' {x}) :=
-  p.property.2 x
+  Over.hasFiniteFibers_iff.1 p.property.2 x
 
 /-- The inclusion `FiniteCoveringSpace X ⥤ CoveringSpace X` is fully faithful. -/
 def fullyFaithfulForget (X : TopCat.{u}) : (forget X).FullyFaithful :=
@@ -208,6 +195,6 @@ end FiniteCoveringSpace
 theorem hasFiniteFibers_of_finite_fiber {X : TopCat.{u}} [PathConnectedSpace X]
     (p : CoveringSpace X) (x₀ : X) (h : Finite ↥(⇑p.proj ⁻¹' {x₀})) :
     Over.hasFiniteFibers X p.obj :=
-  fun x => finite_fiber_of_finite_fiber p.isCoveringMap_proj h x
+  Over.hasFiniteFibers_iff.2 fun x => finite_fiber_of_finite_fiber p.isCoveringMap_proj h x
 
 end TauCeti

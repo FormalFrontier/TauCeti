@@ -81,7 +81,12 @@ theorem fiberFunctor_comp_of_equivalence (e : C ≌ D) [PreGaloisCategory C] [Pr
   preservesFiniteCoproducts := ⟨fun _ => inferInstance⟩
   preservesQuotientsByFiniteGroups _ _ _ := inferInstance
 
-/-- **A category equivalent to a Galois category is a Galois category.** -/
+/-- **A category equivalent to a Galois category is a Galois category.**
+
+Unlike `preGaloisCategory_of_equivalence` and `fiberFunctor_comp_of_equivalence`, this fixes the
+morphism universe of `D` to that of `C`. Mathlib's `GaloisCategory D` asks for a fibre functor
+into `FintypeCat.{v₂}`, while `GaloisCategory C` asks for one into `FintypeCat.{v₁}`, and there
+is no universe-lowering functor between the two to bridge the gap. -/
 theorem galoisCategory_of_equivalence {D : Type u₂} [Category.{v₁} D] (e : C ≌ D)
     [GaloisCategory D] : GaloisCategory C where
   toPreGaloisCategory := preGaloisCategory_of_equivalence e

@@ -28,7 +28,9 @@ nose. The equivalence is therefore built with identity unit and counit.
 * `TauCeti.isFiniteAction`: the property of a `G`-set that its underlying type is finite.
 * `TauCeti.FiniteAction`: finite `G`-sets as a full subcategory of all `G`-sets.
 * `TauCeti.FiniteAction.toActionFintypeCat` and `TauCeti.FiniteAction.ofActionFintypeCat`: the
-  two comparison functors.
+  two comparison functors, with `toActionFintypeCat_obj_V`, `toActionFintypeCat_obj_ρ_apply`,
+  `toActionFintypeCat_map_hom_apply` and their `ofActionFintypeCat` counterparts computing them
+  on underlying types, actions and maps.
 * `TauCeti.FiniteAction.equivalenceActionFintypeCat`: **finite `G`-sets are the same thing as
   actions of `G` in the category of finite types.**
 -/
@@ -43,20 +45,9 @@ namespace TauCeti
 
 variable (G : Type v) [Monoid G]
 
-/-- A `G`-set is *finite* when its underlying type is finite.
-
-It is `@[expose]`d because the full subcategory it cuts out is compared, object by object, with
-`Action FintypeCat G`. -/
-@[expose]
+/-- A `G`-set is *finite* when its underlying type is finite. -/
 def isFiniteAction : ObjectProperty (Action (Type u) G) :=
   fun A => Finite A.V
-
-/-- Finiteness of a `G`-set is preserved by isomorphisms of `G`-sets: an isomorphism is in
-particular a bijection of the underlying types. -/
-instance : (isFiniteAction.{u} G).IsClosedUnderIsomorphisms where
-  of_iso {A _} e h :=
-    have : Finite A.V := h
-    Finite.of_equiv A.V ((Action.forget _ G).mapIso e).toEquiv
 
 variable {G}
 
@@ -67,6 +58,13 @@ theorem isFiniteAction_iff (A : Action (Type u) G) :
   Iff.rfl
 
 variable (G)
+
+/-- Finiteness of a `G`-set is preserved by isomorphisms of `G`-sets: an isomorphism is in
+particular a bijection of the underlying types. -/
+instance : (isFiniteAction.{u} G).IsClosedUnderIsomorphisms where
+  of_iso {A _} e h :=
+    have : Finite A.V := h
+    (isFiniteAction_iff _).2 (Finite.of_equiv A.V ((Action.forget _ G).mapIso e).toEquiv)
 
 /-- Finite `G`-sets, as a full subcategory of all `G`-sets. -/
 abbrev FiniteAction : Type _ :=
@@ -90,17 +88,19 @@ def mk (A : Action (Type u) G) (hA : isFiniteAction G A) : FiniteAction G :=
 
 /-- The underlying type of a finite `G`-set is finite. -/
 instance finite (A : FiniteAction.{u} G) : Finite A.obj.V :=
-  A.property
+  (isFiniteAction_iff _).1 A.property
 
 variable (G)
 
 /-- A finite `G`-set, read as an action of `G` in the category of finite types.
 
-It is `@[expose]`d so that its values hold by `rfl` in downstream modules. -/
+It is `@[expose]`d because `FintypeCat` and `Type u` bracket the same data differently, so the
+characteristic lemmas below are equalities between two spellings of one term: without the body
+the statements do not even elaborate. -/
 @[expose]
 def toActionFintypeCat : FiniteAction.{u} G ⥤ Action FintypeCat.{u} G where
   obj A :=
-    { V := ⟨A.obj.V, A.property⟩
+    { V := ⟨A.obj.V, (isFiniteAction_iff _).1 A.property⟩
       ρ :=
         { toFun := fun g => ObjectProperty.homMk (A.obj.ρ g)
           map_one' := by
@@ -117,19 +117,48 @@ def toActionFintypeCat : FiniteAction.{u} G ⥤ Action FintypeCat.{u} G where
 
 /-- An action of `G` in the category of finite types, read as a finite `G`-set.
 
-It is `@[expose]`d so that its values hold by `rfl` in downstream modules. -/
+It is `@[expose]`d for the same reason as `TauCeti.FiniteAction.toActionFintypeCat`. -/
 @[expose]
 def ofActionFintypeCat : Action FintypeCat.{u} G ⥤ FiniteAction.{u} G :=
-  ObjectProperty.lift _ (FintypeCat.incl.mapAction G) fun B => B.V.property
+  ObjectProperty.lift _ (FintypeCat.incl.mapAction G) fun B => (isFiniteAction_iff _).2 B.V.property
 
+/-- The underlying finite type of a finite `G`-set, read in `FintypeCat`, is its underlying
+type. -/
 @[simp]
 theorem toActionFintypeCat_obj_V (A : FiniteAction.{u} G) :
     ((toActionFintypeCat G).obj A).V.obj = A.obj.V :=
   (rfl)
 
+/-- Reading a finite `G`-set in `FintypeCat` keeps the action of `G`. -/
+@[simp]
+theorem toActionFintypeCat_obj_ρ_apply (A : FiniteAction.{u} G) (g : G) (x : A.obj.V) :
+    ConcreteCategory.hom (((toActionFintypeCat G).obj A).ρ g) x = A.obj.ρ g x :=
+  (rfl)
+
+/-- Reading a map of finite `G`-sets in `FintypeCat` keeps the underlying map. -/
+@[simp]
+theorem toActionFintypeCat_map_hom_apply {A B : FiniteAction.{u} G} (f : A ⟶ B) (x : A.obj.V) :
+    ConcreteCategory.hom ((toActionFintypeCat G).map f).hom x = f.hom.hom x :=
+  (rfl)
+
+/-- The underlying type of an action of `G` in `FintypeCat`, read as a finite `G`-set, is its
+underlying finite type. -/
 @[simp]
 theorem ofActionFintypeCat_obj_obj_V (B : Action FintypeCat.{u} G) :
     ((ofActionFintypeCat G).obj B).obj.V = B.V.obj :=
+  (rfl)
+
+/-- Reading an action of `G` in `FintypeCat` as a finite `G`-set keeps the action of `G`. -/
+@[simp]
+theorem ofActionFintypeCat_obj_obj_ρ_apply (B : Action FintypeCat.{u} G) (g : G) (x : B.V) :
+    ((ofActionFintypeCat G).obj B).obj.ρ g x = ConcreteCategory.hom (B.ρ g) x :=
+  (rfl)
+
+/-- Reading a map of actions of `G` in `FintypeCat` as a map of finite `G`-sets keeps the
+underlying map. -/
+@[simp]
+theorem ofActionFintypeCat_map_hom_hom_apply {B C : Action FintypeCat.{u} G} (f : B ⟶ C)
+    (x : B.V) : ((ofActionFintypeCat G).map f).hom.hom x = ConcreteCategory.hom f.hom x :=
   (rfl)
 
 /-- **Finite `G`-sets are the same thing as actions of `G` in the category of finite types.**
@@ -137,7 +166,8 @@ theorem ofActionFintypeCat_obj_obj_V (B : Action FintypeCat.{u} G) :
 Both composites are the identity functor on the nose, since `FintypeCat` is by definition the
 full subcategory of `Type u` on the finite types.
 
-It is `@[expose]`d so that its values hold by `rfl` in downstream modules. -/
+It is `@[expose]`d for the same reason as `TauCeti.FiniteAction.toActionFintypeCat`, which it
+packages: without the body the underlying finite type of an object in its image is opaque. -/
 @[expose]
 def equivalenceActionFintypeCat : FiniteAction.{u} G ≌ Action FintypeCat.{u} G where
   functor := toActionFintypeCat G
