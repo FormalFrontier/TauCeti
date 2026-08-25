@@ -24,17 +24,17 @@ conditions supplied as implicit typeclass parameters:
 expressible without one; `TauCeti.instDecidableRelSumAdj` supplies it by the four-way case split its
 definition makes.  Mathlib's `SimpleGraph.edgeSetSumEquiv` matches the edges of a disjoint sum with
 a sum of edge sets, but reindexing a `Finset` product needs the edges of `G` and of `H` *tagged
-inside* `Sym2 (V ⊕ W)`, which is what `TauCeti.SimpleGraph.edgeSet_sum` records.
+inside* `Sym2 (V ⊕ W)`, which is what `SimpleGraph.edgeSet_sum` records.
 
 ## Main results
 
 * `TauCeti.instDecidableRelSumAdj` — adjacency in a disjoint sum is decidable;
-* `TauCeti.SimpleGraph.edgeFinset_iso` and `TauCeti.SimpleGraph.prod_edgeFinset_iso` — the edges of
+* `SimpleGraph.edgeFinset_iso` and `SimpleGraph.prod_edgeFinset_iso` — the edges of
   `H` are the edges of `G` read through `Sym2.map φ`, and a product over them reindexes;
-* `TauCeti.SimpleGraph.edgeSet_sum`, `TauCeti.SimpleGraph.edgeFinset_sum` and
-  `TauCeti.SimpleGraph.card_edgeFinset_sum` — the edges of a disjoint sum split into two tagged
+* `SimpleGraph.edgeSet_sum`, `SimpleGraph.edgeFinset_sum` and
+  `SimpleGraph.card_edgeFinset_sum` — the edges of a disjoint sum split into two tagged
   copies;
-* `TauCeti.SimpleGraph.prod_edgeFinset_sum` — a product over the edges of a disjoint sum factors.
+* `SimpleGraph.prod_edgeFinset_sum` — a product over the edges of a disjoint sum factors.
 -/
 
 public section
@@ -54,18 +54,16 @@ instance instDecidableRelSumAdj (G : SimpleGraph V) (H : SimpleGraph W)
   | .inl _, .inr _ => isFalse (by simp)
   | .inr _, .inl _ => isFalse (by simp)
 
-namespace SimpleGraph
-
 /-- The disjoint sum of two graphs is the join of their images under the two inclusions of a sum
 type. -/
-theorem sum_eq_sup_map (G : SimpleGraph V) (H : SimpleGraph W) :
+theorem _root_.SimpleGraph.sum_eq_sup_map (G : SimpleGraph V) (H : SimpleGraph W) :
     G ⊕g H = G.map Function.Embedding.inl ⊔ H.map Function.Embedding.inr := by
   ext a b
   cases a <;> cases b <;> simp
 
 /-- The edges of a disjoint sum are the edges of the two summands, tagged by the inclusions. -/
 @[simp]
-theorem edgeSet_sum (G : SimpleGraph V) (H : SimpleGraph W) :
+theorem _root_.SimpleGraph.edgeSet_sum (G : SimpleGraph V) (H : SimpleGraph W) :
     (G ⊕g H).edgeSet = Sym2.map Sum.inl '' G.edgeSet ∪ Sym2.map Sum.inr '' H.edgeSet := by
   rw [sum_eq_sup_map, SimpleGraph.edgeSet_sup, SimpleGraph.edgeSet_map, SimpleGraph.edgeSet_map]
   rfl
@@ -73,7 +71,7 @@ theorem edgeSet_sum (G : SimpleGraph V) (H : SimpleGraph W) :
 variable [Fintype V] [Fintype W] [DecidableRel G.Adj] [DecidableRel H.Adj]
 
 /-- An edge of `G` tagged by `Sum.inl` is never an edge of `H` tagged by `Sum.inr`. -/
-theorem disjoint_edgeFinset_sum :
+theorem _root_.SimpleGraph.disjoint_edgeFinset_sum :
     Disjoint (G.edgeFinset.map (Function.Embedding.inl (β := W)).sym2Map)
       (H.edgeFinset.map (Function.Embedding.inr (α := V)).sym2Map) := by
   classical
@@ -89,10 +87,9 @@ theorem disjoint_edgeFinset_sum :
       rw [← h₂] at h₁
       simp at h₁
 
-/-- The `Finset` form of `TauCeti.SimpleGraph.edgeSet_sum`. -/
-@[simp]
-theorem edgeFinset_sum (G : SimpleGraph V) (H : SimpleGraph W) [DecidableRel G.Adj]
-    [DecidableRel H.Adj] :
+/-- The `Finset` form of `SimpleGraph.edgeSet_sum`. -/
+theorem _root_.SimpleGraph.edgeFinset_sum (G : SimpleGraph V) (H : SimpleGraph W)
+    [DecidableRel G.Adj] [DecidableRel H.Adj] :
     (G ⊕g H).edgeFinset = by
       classical
       exact G.edgeFinset.map (Function.Embedding.inl).sym2Map
@@ -104,7 +101,7 @@ theorem edgeFinset_sum (G : SimpleGraph V) (H : SimpleGraph W) [DecidableRel G.A
 
 /-- A disjoint sum has as many edges as its two summands together. -/
 @[simp]
-theorem card_edgeFinset_sum :
+theorem _root_.SimpleGraph.card_edgeFinset_sum :
     (G ⊕g H).edgeFinset.card = G.edgeFinset.card + H.edgeFinset.card := by
   classical
   rw [edgeFinset_sum, Finset.card_union_of_disjoint disjoint_edgeFinset_sum, Finset.card_map,
@@ -112,7 +109,7 @@ theorem card_edgeFinset_sum :
 
 /-- A finite product indexed by the edges of a disjoint sum factors as the product over the edges
 of the left summand times the product over the edges of the right one. -/
-theorem prod_edgeFinset_sum {M : Type*} [CommMonoid M] (g : Sym2 (V ⊕ W) → M) :
+theorem _root_.SimpleGraph.prod_edgeFinset_sum {M : Type*} [CommMonoid M] (g : Sym2 (V ⊕ W) → M) :
     ∏ d ∈ (G ⊕g H).edgeFinset, g d
       = (∏ c ∈ G.edgeFinset, g (Sym2.map Sum.inl c))
         * ∏ c ∈ H.edgeFinset, g (Sym2.map Sum.inr c) := by
@@ -124,7 +121,7 @@ theorem prod_edgeFinset_sum {M : Type*} [CommMonoid M] (g : Sym2 (V ⊕ W) → M
 
 The two graphs have equally many edges (`SimpleGraph.Iso.card_edgeFinset_eq`), so the inclusion
 of one side into the other already forces equality. -/
-theorem edgeFinset_iso (φ : G ≃g H) :
+theorem _root_.SimpleGraph.edgeFinset_iso (φ : G ≃g H) :
     H.edgeFinset = G.edgeFinset.map ⟨Sym2.map φ, Sym2.map.injective φ.injective⟩ := by
   refine (Finset.eq_of_subset_of_card_le ?_ ?_).symm
   · intro d hd
@@ -138,11 +135,10 @@ theorem edgeFinset_iso (φ : G ≃g H) :
 
 /-- A finite product indexed by the edges of `H` is the product, over the edges of `G`, of the same
 function read through an isomorphism `φ : G ≃g H`. -/
-theorem prod_edgeFinset_iso {M : Type*} [CommMonoid M] (φ : G ≃g H) (g : Sym2 W → M) :
+theorem _root_.SimpleGraph.prod_edgeFinset_iso {M : Type*} [CommMonoid M] (φ : G ≃g H)
+    (g : Sym2 W → M) :
     ∏ d ∈ H.edgeFinset, g d = ∏ c ∈ G.edgeFinset, g (Sym2.map φ c) := by
   rw [edgeFinset_iso φ, Finset.prod_map]
   rfl
-
-end SimpleGraph
 
 end TauCeti
