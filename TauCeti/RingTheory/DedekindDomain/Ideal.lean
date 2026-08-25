@@ -49,6 +49,15 @@ namespace Ideal
 
 open IsDedekindDomain
 
+/-- If two ideals multiply to the unit ideal, then the first ideal is the unit ideal. -/
+theorem eq_one_of_mul_eq_one {R : Type*} [CommSemiring R] {I J : Ideal R} (h : I * J = 1) :
+    I = 1 := by
+  have hle : (1 : Ideal R) ≤ I := by
+    rw [← h]
+    exact Ideal.mul_le_left
+  rw [Ideal.one_eq_top, eq_top_iff]
+  simpa [Ideal.one_eq_top] using hle
+
 variable {R : Type*} [CommRing R] [IsDedekindDomain R]
 
 /-- An ideal of a Dedekind domain is **prime to** a set `S` of height-one primes when it is

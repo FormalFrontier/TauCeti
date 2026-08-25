@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.Basic
-public import Mathlib.RingTheory.DedekindDomain.Ideal.Basic
 public import Mathlib.RingTheory.UniqueFactorizationDomain.Finite
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.NormCoeff
+public import TauCeti.RingTheory.DedekindDomain.Ideal
 
 /-!
 # Ideal convolution of ideal arithmetic functions
@@ -111,7 +111,8 @@ theorem isMultiplicative_delta : IsMultiplicative (delta : IdealArithmeticFuncti
   by_cases hJ : J = 1
   · subst J
     simp
-  have hmul : I * J ≠ 1 := fun h ↦ hI (Ideal.eq_one_of_mul_eq_one h)
+  have hmul : I * J ≠ 1 := fun h ↦
+    hI (Subtype.ext (Ideal.eq_one_of_mul_eq_one (congrArg Subtype.val h)))
   rw [delta_of_ne_one hmul, delta_of_ne_one hI, delta_of_ne_one hJ, zero_mul]
 
 end IdealArithmeticFunction
@@ -186,9 +187,10 @@ theorem divisorsAntidiagonal_one :
   simp only [mem_divisorsAntidiagonal, Finset.mem_singleton, Prod.ext_iff]
   constructor
   · intro h
-    refine ⟨Ideal.eq_one_of_mul_eq_one h,
-      Ideal.eq_one_of_mul_eq_one (I := p.2) (J := p.1) ?_⟩
-    simpa [mul_comm] using h
+    refine ⟨Subtype.ext (Ideal.eq_one_of_mul_eq_one (congrArg Subtype.val h)),
+      Subtype.ext (Ideal.eq_one_of_mul_eq_one (I := (p.2 : Ideal (𝓞 K)))
+        (J := (p.1 : Ideal (𝓞 K))) ?_)⟩
+    simpa [mul_comm] using congrArg Subtype.val h
   · rintro ⟨h1, h2⟩
     rw [h1, h2, mul_one]
 
