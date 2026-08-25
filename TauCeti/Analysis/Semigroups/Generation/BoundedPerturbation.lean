@@ -113,7 +113,7 @@ variable {omega M lambda : ℝ}
 
 /-- **The resolvent set of a bounded perturbation of a generator.** For a semigroup of growth
 `(omega, M)` and a bounded `B`, every `lambda > omega + M ‖B‖` lies in the resolvent set of
-`B +ᵥ A`.
+`B +ᵥ S.generator`.
 
 This is the general-`M` statement; only the first power of the resolvent is controlled, which is
 exactly what a Neumann series gives. -/
@@ -129,8 +129,8 @@ theorem mem_resolventSet_generator_vadd (S : StronglyContinuousSemigroup X)
   nlinarith
 
 /-- **The resolvent bound for a bounded perturbation of a generator.** For a semigroup of growth
-`(omega, M)` and a bounded `B`, the resolvent of `B +ᵥ A` obeys
-`‖R(lambda, B + A)‖ ≤ M / (lambda - omega - M ‖B‖)` for `lambda > omega + M ‖B‖`. -/
+`(omega, M)` and a bounded `B`, the resolvent of `B +ᵥ S.generator` obeys
+`‖R(lambda, B + S.generator)‖ ≤ M / (lambda - omega - M ‖B‖)` for `lambda > omega + M ‖B‖`. -/
 theorem norm_resolvent_generator_vadd_le (S : StronglyContinuousSemigroup X)
     (hb : S.HasGrowthBound omega M) (B : X →L[ℝ] X) (hlambda : omega + M * ‖B‖ < lambda) :
     ‖LinearPMap.resolvent ((B : X →ₗ[ℝ] X) +ᵥ S.generator) lambda‖
