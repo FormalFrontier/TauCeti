@@ -5,20 +5,22 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.FieldTheory.IntermediateField.Adjoin.Transcendental
 public import TauCeti.FieldTheory.FunctionField.Divisor.ProductFormula
 
 /-!
 # Riemann's theorem and the genus
 
 For a divisor `D` of an algebraic function field `F / k`, the quantity `deg D - ℓ(D)` is bounded
-above by a constant depending only on `F / k`.  The **genus** of `F / k` is the resulting maximum
+above by a constant depending only on `F / k`.  The **genus** of `F / k` is the supremum
 
-`g := max {deg D + 1 - ℓ(D) | D a divisor}`,
+`g := sup {deg D + 1 - ℓ(D) | D a divisor}`,
 
-and unwinding the maximum gives **Riemann's theorem** `ℓ(D) ≥ deg D + 1 - g`, with equality as
-soon as `deg D` is large.  This file is Stichtenoth, *Algebraic Function Fields and Codes*,
-2nd ed., Proposition 1.4.14 through Definition 1.5.1.
+truncated to `ℕ`.  Over an exact constant field the truncation changes nothing and `g` really is
+the maximum, attained at some divisor; over a non-exact one it is a junk value (see
+`TauCeti.genus`).  Unwinding the supremum gives **Riemann's theorem** `ℓ(D) ≥ deg D + 1 - g`,
+valid over any constant field, with equality as soon as `deg D` is large.  This file is
+Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., Proposition 1.4.14 through
+Definition 1.5.1.
 
 The boundedness argument is the only substantial one.  Fix a transcendental `x`, let `B = (x)_∞`
 be its pole divisor, so that `deg B = [F : k(x)] = n` by the product formula, and let `C` be an

@@ -53,7 +53,7 @@ variable {k F : Type*} [Field k] [Field F] [Algebra k F] {x : F}
 
 /-- The powers of a transcendental element of `F`, read inside the simple extension `k⟮x⟯` that it
 generates, are linearly independent over `k`. -/
-theorem linearIndependent_gen_pow_of_transcendental (hx : Transcendental k x) :
+private theorem linearIndependent_gen_pow_of_transcendental (hx : Transcendental k x) :
     LinearIndependent k fun n : ℕ ↦ IntermediateField.AdjoinSimple.gen k x ^ n :=
   LinearIndependent.of_comp k⟮x⟯.val.toLinearMap <| by
     simpa [Function.comp_def] using linearIndependent_pow_of_transcendental hx
