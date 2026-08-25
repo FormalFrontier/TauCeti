@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.EMetricSpace.BoundedVariation
-public import TauCeti.Geometry.Manifold.Riemannian.Distance
+public import Mathlib.Geometry.Manifold.Riemannian.Basic
 public import TauCeti.Geometry.Manifold.Riemannian.EDistComparison
 
 /-!
@@ -123,24 +123,25 @@ variation is the supremum of finite sums, each of which reads only finitely many
 
 The stronger-looking conclusion with `pathELength I γ a b` on the left requires the converse
 comparison between Riemannian path length and metric variation. -/
-theorem eVariationOn_le_liminf_pathELength {γn : ℕ → ℝ → M}
-    (hγn : ∀ᶠ n in atTop, CMDiff[Icc a b] 1 (γn n))
-    (hγ : ∀ t ∈ Icc a b, Tendsto (fun n ↦ γn n t) atTop (nhds (γ t))) :
+theorem eVariationOn_le_liminf_pathELength {ι : Type*} {l : Filter ι} {γi : ι → ℝ → M}
+    (hγi : ∀ᶠ i in l, CMDiff[Icc a b] 1 (γi i))
+    (hγ : ∀ t ∈ Icc a b, Tendsto (fun i ↦ γi i t) l (nhds (γ t))) :
     eVariationOn γ (Icc a b) ≤
-      liminf (fun n ↦ Manifold.pathELength I (γn n) a b) atTop := by
+      liminf (fun i ↦ Manifold.pathELength I (γi i) a b) l := by
   rw [le_liminf_iff]
   intro v hv
-  filter_upwards [eVariationOn.lowerSemicontinuous_aux hγ hv, hγn] with n hn hγn
-  exact hn.trans_le (eVariationOn_le_pathELength hγn)
+  filter_upwards [eVariationOn.lowerSemicontinuous_aux hγ hv, hγi] with i hi hγi
+  exact hi.trans_le (eVariationOn_le_pathELength hγi)
 
 /-- Uniform convergence on `[a, b]` gives the metric-variation lower bound on the `liminf` of
 Riemannian path lengths of eventually `C¹` curves. This is the convergence mode in the Hopf--Rinow
 roadmap; the proof passes through the stronger pointwise result above. -/
-theorem eVariationOn_le_liminf_pathELength_of_tendstoUniformlyOn {γn : ℕ → ℝ → M}
-    (hγn : ∀ᶠ n in atTop, CMDiff[Icc a b] 1 (γn n))
-    (hγ : TendstoUniformlyOn γn γ atTop (Icc a b)) :
+theorem eVariationOn_le_liminf_pathELength_of_tendstoUniformlyOn
+    {ι : Type*} {l : Filter ι} {γi : ι → ℝ → M}
+    (hγi : ∀ᶠ i in l, CMDiff[Icc a b] 1 (γi i))
+    (hγ : TendstoUniformlyOn γi γ l (Icc a b)) :
     eVariationOn γ (Icc a b) ≤
-      liminf (fun n ↦ Manifold.pathELength I (γn n) a b) atTop :=
-  eVariationOn_le_liminf_pathELength hγn fun _ ht ↦ hγ.tendsto_at ht
+      liminf (fun i ↦ Manifold.pathELength I (γi i) a b) l :=
+  eVariationOn_le_liminf_pathELength hγi fun _ ht ↦ hγ.tendsto_at ht
 
 end TauCeti.Manifold
