@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.Compact.Intertwiner.Basic
 public import TauCeti.RepresentationTheory.Continuous.Schur
+public import TauCeti.RepresentationTheory.Irreducible
 public import Mathlib.Analysis.InnerProductSpace.Trace
 
 /-!
@@ -78,12 +79,6 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
       ((Module.finrank 𝕜 V : 𝕜)⁻¹ * LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V)) •
         ContinuousLinearMap.id 𝕜 V := by
   let : Representation.IsIrreducible π.toRepresentation := hirr
-  have : IsSimpleModule 𝕜[G] π.toRepresentation.asModule := inferInstance
-  have : Nontrivial π.toRepresentation.asModule :=
-    IsSimpleModule.nontrivial 𝕜[G] π.toRepresentation.asModule
-  -- Nontriviality lives on the `Representation.asModule` type synonym; transport it along
-  -- `Representation.asModuleEquiv` rather than through the synonym's definitional unfolding.
-  have : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
   obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr
     (averageIntertwiner π hπ π hπ T)
   have hc := congrArg ContIntertwiningMap.toContinuousLinearMap hc
@@ -92,8 +87,8 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
     ContIntertwiningMap.toContinuousLinearMap_one, ContinuousLinearMap.one_def] at hc
   have htrace := trace_averageOperator π hπ T
   rw [hc] at htrace
-  have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 := by
-    exact_mod_cast (Module.finrank_pos (R := 𝕜) (M := V)).ne'
+  have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 :=
+    Representation.IsIrreducible.natCast_finrank_ne_zero hirr
   have hc' : c = (Module.finrank 𝕜 V : 𝕜)⁻¹ *
       LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
     apply (eq_inv_mul_iff_mul_eq₀ hdim).2
