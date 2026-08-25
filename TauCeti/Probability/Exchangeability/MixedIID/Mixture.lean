@@ -70,10 +70,11 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 /-- **The mixture representation of a path law.** If `ν` is a mixing representative for `X`, the
 path law of `X` is the `μ.map ν`-mixture of the infinite product measures `P^{⊗ℕ}`. -/
 theorem pathLaw_eq_bind_infinitePi_of_mixedIIDWith {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} (hX : ∀ n, AEMeasurable (X n) μ) {ν : Ω → ProbabilityMeasure α}
+    {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
     (h : MixedIIDWith μ X ν) :
     pathLaw μ X = (μ.map ν).bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
-  have hΦ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ := aemeasurable_pi_lambda _ hX
+  have hΦ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ :=
+    aemeasurable_pi_lambda _ h.aemeasurable
   have hν : AEMeasurable ν μ := h.measurable_mixingRepresentative.aemeasurable
   have hpow : AEMeasurable (fun P : ProbabilityMeasure α =>
       Measure.infinitePi fun _ : ℕ => (P : Measure α)) (μ.map ν) :=
@@ -118,13 +119,13 @@ Normalization, however, is not needed. The roadmap states this target with
 `[IsProbabilityMeasure μ]`, but the justification it gives only separates finite from infinite base
 measures, and the proof goes through for any finite `μ`. -/
 theorem mixedIID_mixingLaw_unique {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
-    (hX : ∀ n, AEMeasurable (X n) μ) {ν ν' : Ω → ProbabilityMeasure α}
+    {ν ν' : Ω → ProbabilityMeasure α}
     (h : MixedIIDWith μ X ν) (h' : MixedIIDWith μ X ν') :
     μ.map ν = μ.map ν' := by
   have : IsFiniteMeasure (μ.map ν) := Measure.isFiniteMeasure_map _ _
   refine TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq ?_
-  rw [← pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX h,
-    ← pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX h']
+  rw [← pathLaw_eq_bind_infinitePi_of_mixedIIDWith h,
+    ← pathLaw_eq_bind_infinitePi_of_mixedIIDWith h']
 
 /-- **Existence and uniqueness of the mixing law.** A mixed i.i.d. process under a probability
 law has a unique probability measure `π` on `ProbabilityMeasure α` such that its path law is
@@ -133,7 +134,7 @@ the `π`-mixture of the infinite product measures `P^{⊗ℕ}`.
 This identifies the mixing law intrinsically from the path law, rather than merely comparing the
 pushforwards of two supplied mixing representatives as `mixedIID_mixingLaw_unique` does. -/
 theorem MixedIID.existsUnique_mixingLaw {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} (h : MixedIID μ X) (hX : ∀ n, AEMeasurable (X n) μ) :
+    {X : ℕ → Ω → α} (h : MixedIID μ X) :
     ∃! π : ProbabilityMeasure (ProbabilityMeasure α),
       pathLaw μ X = (π : Measure (ProbabilityMeasure α)).bind
         fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
@@ -144,14 +145,14 @@ theorem MixedIID.existsUnique_mixingLaw {μ : Measure Ω} [IsProbabilityMeasure 
   refine ⟨π, ?_, ?_⟩
   · change pathLaw μ X = (Measure.map ν μ).bind
       fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
-    exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν
+    exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith hν
   · intro π' hπ'
     apply ProbabilityMeasure.toMeasure_injective
     refine TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq ?_
     change (π' : Measure (ProbabilityMeasure α)).bind
         (fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) =
       (Measure.map ν μ).bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
-    exact hπ'.symm.trans (pathLaw_eq_bind_infinitePi_of_mixedIIDWith hX hν)
+    exact hπ'.symm.trans (pathLaw_eq_bind_infinitePi_of_mixedIIDWith hν)
 
 end Probability
 

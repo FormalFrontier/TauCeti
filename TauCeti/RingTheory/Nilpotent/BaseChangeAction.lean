@@ -328,13 +328,10 @@ theorem baseChangeExp_tmul_of_pow_eq_zero (x : A) (M : S)
       ∑ n ∈ range k, (t ^ n * r) ⊗ₜ[ℤ] integralDividedPower x M n (hM n) v := by
   simp [baseChangeExp_of_pow_eq_zero x M hM hk, smul_tmul']
 
-omit [Algebra ℤ R] in
-/-- Binomial convolution identity for truncated divided-power series.
-
-Adapted from Mathlib's `IsNilpotent.exp_add_of_commute` in
-`Mathlib/RingTheory/Nilpotent/Exp.lean` (Janos Wolosz). -/
-private theorem sum_pow_smul_mul_sum_pow_smul
-    {B : Type*} [Ring B] [Algebra R B] (D : ℕ → B) (k : ℕ)
+/-- Binomial convolution identity for truncated divided-power series. -/
+private theorem sum_pow_smul_mul_sum_pow_smul {R : Type*} [CommSemiring R]
+    {B : Type*} [NonUnitalNonAssocSemiring B] [Module R B] [SMulCommClass R B B]
+    [IsScalarTower R B B] (D : ℕ → B) (k : ℕ)
     (hzero : ∀ n, k ≤ n → D n = 0)
     (hmul : ∀ m n, D m * D n = Nat.choose (m + n) m • D (m + n))
     (t u : R) :
@@ -357,48 +354,31 @@ private theorem sum_pow_smul_mul_sum_pow_smul
   rw [hlarge, zero_add] at hsplit
   rw [← hsplit]
   symm
-  -- Step 3: Expand (t + u)^n by the binomial theorem and reindex via antidiagonals.
+  -- Step 3: Expand (t + u)^n by the binomial theorem, in a form depending only on the pair.
   calc
     ∑ n ∈ range k, (t + u) ^ n • D n =
-        ∑ n ∈ range k, (∑ ij ∈ antidiagonal n,
-          t ^ ij.1 * u ^ ij.2 * Nat.choose n ij.1) • D n := by
+        ∑ n ∈ range k, ∑ ij ∈ antidiagonal n,
+          (t ^ ij.1 * u ^ ij.2 * Nat.choose (ij.1 + ij.2) ij.1) • D (ij.1 + ij.2) := by
       refine sum_congr rfl fun n _ => ?_
-      rw [(Commute.all t u).add_pow']
-      simp only [sum_smul]
-      apply sum_congr rfl
-      intro ij hij
+      rw [(Commute.all t u).add_pow', sum_smul]
+      refine sum_congr rfl fun ij hij => ?_
+      rw [mem_antidiagonal] at hij
+      subst hij
       simp only [nsmul_eq_mul]
-      rw [mul_comm (Nat.choose n ij.1 : R), mul_assoc]
+      rw [mul_comm (Nat.choose (ij.1 + ij.2) ij.1 : R), mul_assoc]
+    -- Step 4: the antidiagonals of `0, …, k - 1` are the fibres of `ij ↦ ij.1 + ij.2` over
+    -- `range k`, so they reindex the low-degree part of the product range.
     _ = ∑ ij ∈ range k ×ˢ range k with ¬k ≤ ij.1 + ij.2,
         (t ^ ij.1 * u ^ ij.2 * Nat.choose (ij.1 + ij.2) ij.1) •
           D (ij.1 + ij.2) := by
-      simp_rw [sum_smul]
-      rw [sum_sigma']
-      symm
-      -- Step 4: Bijection between the disjoint antidiagonals and the filtered product range.
-      apply sum_bij (fun (ij : ℕ × ℕ) _ =>
-        (⟨ij.1 + ij.2, (ij.1, ij.2)⟩ : Sigma fun _ => ℕ × ℕ))
-      · intro ij hij
-        rw [mem_filter] at hij
-        exact mem_sigma.2 ⟨mem_range.2 (Nat.lt_of_not_ge hij.2),
-          mem_antidiagonal.2 rfl⟩
-      · intro a ha b hb hab
-        have hsnd : (a.1, a.2) = (b.1, b.2) :=
-          congrArg (fun z : Sigma fun _ => ℕ × ℕ => z.2) hab
-        exact Prod.ext (congrArg Prod.fst hsnd) (congrArg Prod.snd hsnd)
-      · rintro ⟨n, ij⟩ hij
-        rw [mem_sigma] at hij
-        have hn : n < k := mem_range.1 hij.1
-        have hij_sum : ij.1 + ij.2 = n := mem_antidiagonal.1 hij.2
-        exact ⟨ij, by
-          rw [mem_filter, mem_product]
-          exact ⟨⟨mem_range.2 (Nat.lt_of_le_of_lt (Nat.le_add_right _ _) (hij_sum ▸ hn)),
-            mem_range.2 (Nat.lt_of_le_of_lt (Nat.le_add_left _ _) (hij_sum ▸ hn))⟩,
-            not_le.2 (hij_sum ▸ hn)⟩, by
-          apply Sigma.ext hij_sum
-          rfl⟩
-      · intro ij _
-        rfl
+      simp only [not_le, ← mem_range]
+      rw [← sum_fiberwise_eq_sum_filter (range k ×ˢ range k) (range k)
+        (fun ij : ℕ × ℕ => ij.1 + ij.2) _]
+      refine sum_congr rfl fun n hn => ?_
+      refine sum_congr ?_ fun ij _ => rfl
+      ext ij
+      simp only [mem_filter, mem_product, mem_range, mem_antidiagonal] at hn ⊢
+      omega
 
 /-- The integral divided-power exponential satisfies the additive one-parameter group law over
 every commutative base ring. -/

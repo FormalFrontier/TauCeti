@@ -320,15 +320,53 @@ private theorem closedBall_sub_norm_subset (v : V) (R : ℝ) :
   ⟨Metric.closedBall_subset_closedBall (by linarith [norm_nonneg v]) hx,
     Metric.closedBall_subset_closedBall' (by simp [dist_zero_left]) hx⟩
 
-/-- The overlap ratio tends to one along integer radii, for a fixed translation.
+/-- The overlap ratio at radius `R` is at least `((R - ‖v‖) / R) ^ Module.finrank ℝ V`, for any
+translation no longer than the radius. -/
+private theorem sub_norm_div_pow_le_overlapRatio (v : V) {R : ℝ} (hR : ‖v‖ ≤ R) :
+    ((R - ‖v‖) / R) ^ Module.finrank ℝ V ≤ overlapRatio R v := by
+  have hR_nn : (0 : ℝ) ≤ R := (norm_nonneg v).trans hR
+  have hsub_nn : (0 : ℝ) ≤ R - ‖v‖ := sub_nonneg.mpr hR
+  have hball_pos : 0 < (volume (Metric.ball (0 : V) 1)).toReal :=
+    ENNReal.toReal_pos (ne_of_gt (Metric.measure_ball_pos volume 0 one_pos))
+      (ne_of_lt measure_ball_lt_top)
+  have hvol : ∀ r : ℝ, 0 ≤ r → (volume (Metric.closedBall (0 : V) r)).toReal =
+      r ^ Module.finrank ℝ V * (volume (Metric.ball (0 : V) 1)).toReal := fun r hr => by
+    simpa only [measureReal_def] using Measure.addHaar_real_closedBall volume (0 : V) hr
+  unfold overlapRatio
+  split_ifs with h
+  · -- A vanishing denominator forces `R = 0` with positive rank, so the left side vanishes too.
+    have hRd : R ^ Module.finrank ℝ V = 0 :=
+      (mul_eq_zero.mp ((hvol R hR_nn).symm.trans h)).resolve_right (ne_of_gt hball_pos)
+    have hR0 : R = 0 := by by_contra hne; exact pow_ne_zero _ hne hRd
+    rw [hR0] at hRd
+    rw [hR0, div_zero]
+    exact hRd.le
+  · have hden_pos : 0 < (volume (Metric.closedBall (0 : V) R)).toReal :=
+      lt_of_le_of_ne ENNReal.toReal_nonneg (Ne.symm h)
+    -- The ratio of the two Haar volumes is the claimed power, and the smaller ball sits inside
+    -- the overlap.
+    calc ((R - ‖v‖) / R) ^ Module.finrank ℝ V
+        = (R - ‖v‖) ^ Module.finrank ℝ V / R ^ Module.finrank ℝ V := by rw [div_pow]
+      _ = ((R - ‖v‖) ^ Module.finrank ℝ V * (volume (Metric.ball (0 : V) 1)).toReal) /
+          (R ^ Module.finrank ℝ V * (volume (Metric.ball (0 : V) 1)).toReal) := by
+          rw [mul_div_mul_right _ _ (ne_of_gt hball_pos)]
+      _ = (volume (Metric.closedBall (0 : V) (R - ‖v‖))).toReal /
+          (volume (Metric.closedBall (0 : V) R)).toReal := by
+          rw [hvol _ hsub_nn, hvol R hR_nn]
+      _ ≤ (volume (Metric.closedBall (0 : V) R ∩ Metric.closedBall v R)).toReal /
+          (volume (Metric.closedBall (0 : V) R)).toReal :=
+          div_le_div_of_nonneg_right
+            (ENNReal.toReal_mono
+              (ne_of_lt (lt_of_le_of_lt (measure_mono Set.inter_subset_left)
+                measure_closedBall_lt_top))
+              (measure_mono (closedBall_sub_norm_subset v R)))
+            hden_pos.le
 
-Since `closedBall 0 (R - ‖v‖) ⊆ closedBall 0 R ∩ closedBall v R`, the ratio is at least
-`((R - ‖v‖) / R) ^ d → 1` by the Haar ball formula, and it is at most `1`; squeeze. -/
+/-- The overlap ratio tends to one along integer radii, for a fixed translation. -/
 private theorem overlapRatio_tendsto_one (v : V) :
     Tendsto (fun n : ℕ => overlapRatio (n : ℝ) v) atTop (nhds 1) := by
-  set d := Module.finrank ℝ V
   -- Lower bound: `((n - ‖v‖) / n) ^ d → 1`.
-  have hlower : Tendsto (fun n : ℕ => ((↑n - ‖v‖) / ↑n) ^ d) atTop (nhds 1) := by
+  have hlower : Tendsto (fun n : ℕ => ((↑n - ‖v‖) / ↑n) ^ Module.finrank ℝ V) atTop (nhds 1) := by
     have h : Tendsto (fun n : ℕ => (↑n - ‖v‖) / (↑n : ℝ)) atTop (nhds 1) := by
       have h1 : ∀ᶠ n : ℕ in atTop, (↑n - ‖v‖) / (↑n : ℝ) = 1 - ‖v‖ / ↑n := by
         filter_upwards [Filter.eventually_gt_atTop 0] with n hn
@@ -337,48 +375,13 @@ private theorem overlapRatio_tendsto_one (v : V) :
         tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop
       exact Tendsto.congr' (EventuallyEq.symm h1)
         (by simpa using Tendsto.sub tendsto_const_nhds hc)
-    simpa using h.pow (n := d)
-  -- The ratio dominates the lower bound once `n > ‖v‖`, by the Haar ball formula.
-  have hdom : ∀ᶠ n : ℕ in atTop, ((↑n - ‖v‖) / ↑n) ^ d ≤ overlapRatio (n : ℝ) v := by
+    simpa using h.pow (n := Module.finrank ℝ V)
+  -- The ratio dominates that bound once the radius exceeds `‖v‖`.
+  have hdom : ∀ᶠ n : ℕ in atTop,
+      ((↑n - ‖v‖) / ↑n) ^ Module.finrank ℝ V ≤ overlapRatio (n : ℝ) v := by
     filter_upwards [Filter.eventually_gt_atTop (⌈‖v‖⌉₊)] with n hn
-    have hn_gt : ‖v‖ < (n : ℝ) :=
-      lt_of_le_of_lt (Nat.le_ceil _) (Nat.cast_lt.mpr hn)
-    have hn_pos : (0 : ℝ) < n := by linarith [norm_nonneg v]
-    have hsub_nn : (0 : ℝ) ≤ ↑n - ‖v‖ := by linarith
-    have hvol_pos := Metric.measure_closedBall_pos (volume : Measure V) 0 hn_pos
-    have hvol_ne_top : volume (Metric.closedBall (0 : V) (↑n)) ≠ ⊤ :=
-      ne_of_lt measure_closedBall_lt_top
-    have hvol_toReal_pos : 0 < (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
-      ENNReal.toReal_pos (ne_of_gt hvol_pos) hvol_ne_top
-    unfold overlapRatio
-    rw [ite_eq_right (ne_of_gt hvol_toReal_pos)]
-    have hball_pos : 0 < (volume (Metric.ball (0 : V) 1)).toReal :=
-      ENNReal.toReal_pos (ne_of_gt (Metric.measure_ball_pos volume 0 one_pos))
-        (ne_of_lt measure_ball_lt_top)
-    have hvol_sub : (volume (Metric.closedBall (0 : V) (↑n - ‖v‖))).toReal =
-        (↑n - ‖v‖) ^ d * (volume (Metric.ball (0 : V) 1)).toReal := by
-      rw [Measure.addHaar_closedBall volume (0 : V) hsub_nn, ENNReal.toReal_mul,
-          ENNReal.toReal_ofReal (by positivity)]
-    have hvol_n : (volume (Metric.closedBall (0 : V) (↑n))).toReal =
-        (↑n) ^ d * (volume (Metric.ball (0 : V) 1)).toReal := by
-      rw [Measure.addHaar_closedBall volume (0 : V) hn_pos.le, ENNReal.toReal_mul,
-          ENNReal.toReal_ofReal (by positivity)]
-    calc ((↑n - ‖v‖) / ↑n) ^ d
-        = (↑n - ‖v‖) ^ d / (↑n) ^ d := by rw [div_pow]
-      _ = ((↑n - ‖v‖) ^ d * (volume (Metric.ball (0 : V) 1)).toReal) /
-          ((↑n) ^ d * (volume (Metric.ball (0 : V) 1)).toReal) := by
-          rw [mul_div_mul_right _ _ (ne_of_gt hball_pos)]
-      _ = (volume (Metric.closedBall (0 : V) (↑n - ‖v‖))).toReal /
-          (volume (Metric.closedBall (0 : V) (↑n))).toReal := by
-          rw [hvol_sub, hvol_n]
-      _ ≤ (volume (Metric.closedBall (0 : V) (↑n) ∩ Metric.closedBall v (↑n))).toReal /
-          (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
-          div_le_div_of_nonneg_right
-            (ENNReal.toReal_mono
-              (ne_of_lt (lt_of_le_of_lt (measure_mono Set.inter_subset_left)
-                measure_closedBall_lt_top))
-              (measure_mono (closedBall_sub_norm_subset v ↑n)))
-            hvol_toReal_pos.le
+    exact sub_norm_div_pow_le_overlapRatio v
+      (lt_of_le_of_lt (Nat.le_ceil _) (Nat.cast_lt.mpr hn)).le
   -- Squeeze between that lower bound and the constant `1`.
   exact Filter.Tendsto.squeeze' hlower tendsto_const_nhds hdom
     (Filter.Eventually.of_forall fun n => overlapRatio_le_one (n : ℝ) v)

@@ -77,6 +77,18 @@ noncomputable def natDiagGL (a : Fin n → ℕ) : GL (Fin n) ℚ :=
   rw [natDiagGL, dite_eq_left ha, TauCeti.diagGL_coe]
   simp
 
+/-- **The integral witness of `natDiagGL`.** `natDiagGL n a` is the entrywise cast of the
+integral diagonal matrix with entries `a`.
+
+`natDiagGL_coe` gives the same matrix as a `ℚ`-valued diagonal; this states it in the form the
+integral-witness API asks for, so that `mapGL_mul_coe_eq_intMatrix` and its relatives can be
+applied to a product with `natDiagGL` in the middle without re-deriving the cast each time. -/
+lemma natDiagGL_coe_eq_map_intCast (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+    (↑(natDiagGL n a) : Matrix (Fin n) (Fin n) ℚ) =
+      (Matrix.diagonal (fun i ↦ (a i : ℤ))).map (Int.cast : ℤ → ℚ) := by
+  rw [natDiagGL_coe n a ha, Matrix.diagonal_map (by simp)]
+  norm_num
+
 lemma hasIntEntries_natDiagGL (a : Fin n → ℕ) : HasIntEntries n (natDiagGL n a) := by
   rw [natDiagGL]
   split_ifs with h

@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 -- `TauCeti.Algebra.CentralSimple.Degree` is imported publicly: `TauCeti.Algebra.deg` occurs in the
--- statements below, and it is the algebraically closed base change
--- `TauCeti.IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isAlgClosed` proved there that makes
--- an algebraically closed extension a splitting field. It also re-exports
+-- statements below, and it is the separably closed base change
+-- `TauCeti.IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isSepClosed` proved there that makes
+-- a separably closed extension a splitting field. It also re-exports
 -- `Mathlib.RingTheory.TensorProduct.Basic` (the `⊗[K]` notation and the algebra structure on
 -- `L ⊗[K] A`) and `Mathlib.Algebra.Central.Basic`, which is why neither is imported again here.
 public import TauCeti.Algebra.CentralSimple.Degree
@@ -30,9 +30,9 @@ import TauCeti.Algebra.Central.Quaternion
 
 A field extension `L / K` **splits** a `K`-algebra `A` when the scalar extension `L ⊗[K] A` is a
 full matrix algebra over `L`. This file defines that predicate, `TauCeti.Algebra.IsSplittingField`,
-gives it its basic API, and settles the two cases that need no field theory: an **algebraically
-closed** extension splits every finite-dimensional central simple algebra, and over a **finite**
-base field every central simple algebra is already split by the base field itself.
+gives it its basic API, and settles the two cases that need no additional field theory: a
+**separably closed** extension splits every finite-dimensional central simple algebra, and over a
+**finite** base field every central simple algebra is already split by the base field itself.
 
 The name is qualified because Mathlib's root-namespace `IsSplittingField` is the unrelated
 predicate that a field extension splits a *polynomial*.
@@ -64,7 +64,7 @@ an arbitrary `K`-algebra, where the degree is not yet meaningful.
 * `TauCeti.Algebra.finrank_eq_sq_of_algEquiv_matrix` and
   `TauCeti.Algebra.IsSplittingField.nonempty_algEquiv_matrix_deg`: the dimension count and, for a
   central simple `A`, the identification of the matrix size with the degree.
-* `TauCeti.Algebra.isSplittingField_of_isAlgClosed`: **an algebraically closed extension splits
+* `TauCeti.Algebra.isSplittingField_of_isSepClosed`: **a separably closed extension splits
   every finite-dimensional central simple algebra**.
 * `TauCeti.Algebra.isSplittingField_self_of_finite`: **over a finite field every central simple
   algebra is split by the base field**, so there is nothing to split.
@@ -91,7 +91,8 @@ be commutative), so it is left to the file that builds it.
 This implements the splitting-field half of the fourth bullet of Layer 6 ("Splitting fields,
 maximal subfields, and the index") of the
 [semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md),
-whose `Suggested.lean` pins `IsSplittingField` and `isSplittingField_of_isAlgClosed`, together with
+whose `Suggested.lean` pins `IsSplittingField`; the stronger separably closed form of its pinned
+algebraically closed splitting theorem is `isSplittingField_of_isSepClosed`, together with
 the splitting half of its "Finite base fields" bullet. See P. Gille, T. Szamuely, *Central Simple
 Algebras and Galois Cohomology*, Section 2.2, and R. S. Pierce, *Associative Algebras*, GTM 88,
 Chapter 13.
@@ -216,15 +217,16 @@ theorem isSplittingField_iff_deg :
   ⟨IsSplittingField.nonempty_algEquiv_matrix_deg K A L,
     fun h ↦ (isSplittingField_iff K A L).2 ⟨deg K A, h⟩⟩
 
-/-- **An algebraically closed extension splits every finite-dimensional central simple algebra.**
+/-- **A separably closed extension splits every finite-dimensional central simple algebra.**
 
-This is the base case of the splitting theory, and it needs no theory of maximal subfields: over an
-algebraically closed field the Wedderburn division algebra collapses, which is exactly
-`TauCeti.IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isAlgClosed`. Every finite-dimensional
-central simple `K`-algebra therefore has a splitting field, namely an algebraic closure of `K`. -/
-theorem isSplittingField_of_isAlgClosed [IsAlgClosed L] : IsSplittingField K A L :=
+This is the base case of the separable splitting theory, and it needs no theory of maximal
+subfields: over a separably closed field the Wedderburn division algebra collapses, which is
+exactly `TauCeti.IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isSepClosed`. Every
+finite-dimensional central simple `K`-algebra therefore has a separable splitting field, namely a
+separable closure of `K`. -/
+theorem isSplittingField_of_isSepClosed [IsSepClosed L] : IsSplittingField K A L :=
   (isSplittingField_iff_deg K A L).2
-    (IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isAlgClosed K L A)
+    (IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isSepClosed K L A)
 
 /-- **Over a finite field every central simple algebra is split by the base field.** A finite
 central division algebra is its own base field (little Wedderburn), so the Wedderburn presentation
@@ -247,16 +249,16 @@ section Examples
 open scoped _root_.Quaternion
 
 /-- **`ℂ` splits the real quaternions.** `ℂ` is algebraically closed, so this is
-`TauCeti.Algebra.isSplittingField_of_isAlgClosed`; all three of `Algebra.IsCentral ℝ ℍ[ℝ]`,
+`TauCeti.Algebra.isSplittingField_of_isSepClosed`; all three of `Algebra.IsCentral ℝ ℍ[ℝ]`,
 `IsSimpleRing ℍ[ℝ]` and `FiniteDimensional ℝ ℍ[ℝ]` are found by instance search. -/
-example : IsSplittingField ℝ ℍ[ℝ] ℂ := isSplittingField_of_isAlgClosed ℝ ℍ[ℝ] ℂ
+example : IsSplittingField ℝ ℍ[ℝ] ℂ := isSplittingField_of_isSepClosed ℝ ℍ[ℝ] ℂ
 
 /-- The splitting of `ℍ[ℝ]` by `ℂ` happens at the degree, so it is
 `ℂ ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℂ] Matrix (Fin 2) (Fin 2) ℂ` on the nose. -/
 example : Nonempty (ℂ ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℂ] Matrix (Fin 2) (Fin 2) ℂ) := by
   have hdeg : deg ℝ ℍ[ℝ] = 2 :=
     deg_eq_of_finrank_eq_sq (by rw [Quaternion.finrank_eq_four]; norm_num)
-  exact hdeg ▸ (isSplittingField_of_isAlgClosed ℝ ℍ[ℝ] ℂ).nonempty_algEquiv_matrix_deg ..
+  exact hdeg ▸ (isSplittingField_of_isSepClosed ℝ ℍ[ℝ] ℂ).nonempty_algEquiv_matrix_deg ..
 
 /-- **`ℝ` does not split the real quaternions**, so a central simple algebra need not be split by
 its own base field and the notion is not vacuous. A splitting over `ℝ` would make `ℍ[ℝ]` a matrix

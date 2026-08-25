@@ -6,7 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Squarefree.Basic
+public import Mathlib.Data.Nat.Prime.Basic
 import Mathlib.Algebra.Ring.Associated
+import Mathlib.Data.Nat.Factors
 import Mathlib.Data.Nat.Squarefree
 import Mathlib.Data.Rat.Lemmas
 import Mathlib.Tactic.FieldSimp
@@ -30,6 +32,11 @@ that Mathlib does not provide directly, used across the multiquadratic developme
   Every nonzero integer, and every nonzero rational, is a squarefree *integer* times a nonzero
   square. Mathlib has this for the natural numbers only (`Nat.sq_mul_squarefree`); these are the
   integer and rational forms, which is what a square-class argument over `ℚ` needs.
+* `Nat.four_dvd_or_exists_odd_prime_and_dvd_of_squarefree`: squarefreeness of *every* prime
+  divisor of an `n > 2`, read in a commutative ring, yields the single branch that Mathlib's
+  `Nat.four_dvd_or_exists_odd_prime_and_dvd_of_two_lt` splits into. This is the bridge from a
+  uniform hypothesis, which a caller can usually establish without knowing `n`, to the sharp
+  branch-dependent one that a proof consumes.
 -/
 
 public section
@@ -94,3 +101,26 @@ theorem Rat.exists_squarefree_int_mul_sq {q : ℚ} (hq : q ≠ 0) :
   rw [hnum] at habQ
   field_simp
   linear_combination habQ
+
+namespace Nat
+
+/-- **From uniform squarefreeness to the sharp branch.** If every prime dividing `n > 2` is
+squarefree in `R`, then either `4 ∣ n` and `2` is squarefree there, or some *odd* prime divides
+`n` and is squarefree there.
+
+Mathlib's `Nat.four_dvd_or_exists_odd_prime_and_dvd_of_two_lt` supplies the dichotomy on `n`; what
+this adds is carrying the squarefreeness through it. The point of stating it is that the two
+hypotheses differ in usability: the uniform one can be established with no knowledge of `n` — over
+`ℤ` it is free, since every rational prime is squarefree — while the branch-dependent one is what a
+proof consumes. Anything proved from the sharp form is therefore available from the uniform form
+through this lemma. -/
+theorem four_dvd_or_exists_odd_prime_and_dvd_of_squarefree {R : Type*} [CommRing R] {n : ℕ}
+    (hn : 2 < n) (hsf : ∀ p : ℕ, p.Prime → p ∣ n → Squarefree ((p : ℤ) : R)) :
+    (4 ∣ n ∧ Squarefree (2 : R)) ∨
+      ∃ p : ℕ, p.Prime ∧ p ≠ 2 ∧ p ∣ n ∧ Squarefree ((p : ℤ) : R) := by
+  rcases Nat.four_dvd_or_exists_odd_prime_and_dvd_of_two_lt hn with h4 | ⟨p, hp, hpn, hodd⟩
+  · exact Or.inl ⟨h4, by simpa using hsf 2 Nat.prime_two (dvd_trans ⟨2, rfl⟩ h4)⟩
+  · have hp_ne_two : p ≠ 2 := by rintro rfl; rw [Nat.odd_iff] at hodd; omega
+    exact Or.inr ⟨p, hp, hp_ne_two, hpn, hsf p hp hpn⟩
+
+end Nat

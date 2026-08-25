@@ -322,6 +322,43 @@ private theorem exists_intCast_dividedPower_f_mulVec_single (s : b.support) (n :
 
 namespace RootPairing.GeckConstruction
 
+/-- The distinguished upper-right coordinate of a divided power of a Geck raising generator.
+It is `1` in degree one and vanishes in every other degree. -/
+theorem dividedPower_e_apply_inl_inr_neg (s : b.support) (n : ℕ) :
+    let _i := P.indexNeg
+    TauCeti.Associative.dividedPower n (e s) (Sum.inl s) (Sum.inr (-s : ι)) =
+      if n = 1 then 1 else 0 := by
+  dsimp only
+  let _i := P.indexNeg
+  have hcol : TauCeti.Associative.dividedPower n (e s) (Sum.inl s) (Sum.inr (-s : ι)) =
+      (TauCeti.Associative.dividedPower n (e s) *ᵥ
+        Pi.single (Sum.inr (-s : ι)) 1) (Sum.inl s) := by
+    rw [Matrix.mulVec_single_one, Matrix.col_apply]
+  rw [hcol]
+  rw [TauCeti.Associative.dividedPower_def, Matrix.smul_mulVec, e_pow_mulVec_v_neg]
+  match n with
+  | 0 => simp [v]
+  | 1 => simp [u]
+  | 2 => simp [v]
+  | n + 3 => simp
+
+/-- The distinguished upper-right coordinate of a divided power of a Geck lowering generator.
+It is `1` in degree one and vanishes in every other degree. -/
+@[simp]
+theorem dividedPower_f_apply_inl_inr (s : b.support) (n : ℕ) :
+    TauCeti.Associative.dividedPower n (f s) (Sum.inl s) (Sum.inr (s : ι)) =
+      if n = 1 then 1 else 0 := by
+  let _i := P.indexNeg
+  have hcol : TauCeti.Associative.dividedPower n (f s) (Sum.inl s) (Sum.inr (s : ι)) =
+      (TauCeti.Associative.dividedPower n (f s) *ᵥ
+        Pi.single (Sum.inr (s : ι)) 1) (Sum.inl s) := by
+    rw [Matrix.mulVec_single_one, Matrix.col_apply]
+  rw [hcol, dividedPower_f_eq_omega_mul_dividedPower_e_mul_omega,
+    ← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, omega_mulVec_single, omega_mulVec_apply,
+    Matrix.mulVec_single_one]
+  simp only [Matrix.col_apply]
+  exact dividedPower_e_apply_inl_inr_neg s n
+
 /-- Every entry of a divided power of a numbered raising operator in Geck's representation is
 an integer. -/
 theorem exists_intCast_dividedPower_e_apply (s : b.support) (n : ℕ)

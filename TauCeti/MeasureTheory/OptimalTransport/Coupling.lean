@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 public import Mathlib.MeasureTheory.Measure.FiniteMeasureProd
 
 /-!
@@ -34,6 +35,9 @@ measures, and the probability case is packaged separately as a subtype of
 * `TauCeti.IsCoupling.measure_prod_univ` and `TauCeti.IsCoupling.measure_univ_prod` — the
   marginal formulas on measurable cylinders, with the converse
   `TauCeti.isCoupling_of_measure_prod_univ_of_measure_univ_prod`;
+* `TauCeti.IsCoupling.measurePreserving_fst`, `TauCeti.IsCoupling.measurePreserving_snd`,
+  `TauCeti.IsCoupling.integral_comp_fst`, and `TauCeti.IsCoupling.integral_comp_snd` — projection
+  and integral-transfer forms of the marginal conditions;
 * `TauCeti.exists_isCoupling_iff` — a finite measure and any other measure admit a coupling
   exactly when they have the same total mass, the witness being their normalised product;
 * `TauCeti.isCoupling_map_swap_iff` and `TauCeti.isCoupling_map_prodMap_iff` —
@@ -65,6 +69,9 @@ This is Layer 0, item 1 of the optimal-transport roadmap.
 
 ## References
 
+* `TauCeti/MeasureTheory/Measure/Coupling.lean` is the formal source for the
+  measure-preserving projection and integral-transfer declarations and proofs adapted here to the
+  plan-first `TauCeti.IsCoupling` interface.
 * C. Villani, *Optimal Transport: Old and New*, Grundlehren 338, 2009, Chapter 1
   ("Couplings and changes of variables"), Definition 1.1, which is this relation for two
   probability measures. `TauCeti.IsCoupling` states it for arbitrary measures, so the
@@ -94,6 +101,36 @@ structure IsCoupling (π : Measure (X × Y)) (μ : Measure X) (ν : Measure Y) :
   snd_eq : π.snd = ν
 
 namespace IsCoupling
+
+/-- The first projection out of a coupling is measure preserving. -/
+theorem measurePreserving_fst (hπ : IsCoupling π μ ν) :
+    MeasurePreserving Prod.fst π μ :=
+  ⟨measurable_fst, hπ.fst_eq⟩
+
+/-- The second projection out of a coupling is measure preserving. -/
+theorem measurePreserving_snd (hπ : IsCoupling π μ ν) :
+    MeasurePreserving Prod.snd π ν :=
+  ⟨measurable_snd, hπ.snd_eq⟩
+
+section Integral
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+
+/-- A function of the first coordinate integrates against a coupling as it does against the first
+marginal. -/
+theorem integral_comp_fst (hπ : IsCoupling π μ ν) {f : X → E}
+    (hf : AEStronglyMeasurable f μ) : ∫ p, f p.1 ∂π = ∫ x, f x ∂μ := by
+  rw [← hπ.measurePreserving_fst.map_eq] at hf ⊢
+  exact (integral_map measurable_fst.aemeasurable hf).symm
+
+/-- A function of the second coordinate integrates against a coupling as it does against the second
+marginal. -/
+theorem integral_comp_snd (hπ : IsCoupling π μ ν) {f : Y → E}
+    (hf : AEStronglyMeasurable f ν) : ∫ p, f p.2 ∂π = ∫ y, f y ∂ν := by
+  rw [← hπ.measurePreserving_snd.map_eq] at hf ⊢
+  exact (integral_map measurable_snd.aemeasurable hf).symm
+
+end Integral
 
 /-- A coupling gives the measurable cylinder `s ×ˢ univ` the source mass of `s`. -/
 theorem measure_prod_univ (hπ : IsCoupling π μ ν) {s : Set X} (hs : MeasurableSet s) :

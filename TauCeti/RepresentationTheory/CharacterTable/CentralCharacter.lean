@@ -139,8 +139,7 @@ to the scalar action on the other; a nonzero vector then forces the two scalars 
 theorem centralCharacter_eq_of_equiv {W : Type*} [AddCommGroup W] [Module k W]
     [FiniteDimensional k W] (σ : _root_.Representation k G W) [σ.IsIrreducible] (φ : ρ.Equiv σ) :
     centralCharacter σ = centralCharacter ρ := by
-  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] _
-  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
   obtain ⟨v, hv⟩ := exists_ne (0 : V)
   have hφv : φ.toIntertwiningMap v ≠ 0 := fun h0 =>
     hv (φ.toLinearEquiv.injective (by simpa using h0))

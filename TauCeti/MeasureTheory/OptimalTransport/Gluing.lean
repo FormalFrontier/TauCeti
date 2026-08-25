@@ -8,6 +8,7 @@ module
 public import Mathlib.Probability.Kernel.Composition.MeasureComp
 public import Mathlib.Probability.Kernel.Disintegration.StandardBorel
 public import TauCeti.Probability.Kernel.Composition.MeasureCompProd
+public import TauCeti.Probability.Kernel.Disintegration.Countable
 
 /-!
 # Gluing transport plans
@@ -20,8 +21,12 @@ measure on `X × Y` whose second marginal agrees with the first marginal of a me
 the composition of couplings.
 
 The construction is a composition-product against a conditional kernel, so it needs a
-disintegration of one of the two plans, hence a standard Borel hypothesis on one of the two outer
-spaces. The middle space `Y` carries no hypothesis at all.
+disintegration of one of the two plans. There are two ways to obtain one. Mathlib's regular
+conditional kernel gives it under a standard Borel hypothesis on one of the two *outer* spaces,
+the middle space `Y` then carrying no hypothesis at all. Alternatively, when the *middle* space is
+countable with measurable singletons, `TauCeti.MeasureTheory.countableCondKernel` gives it with no
+hypothesis on either outer space — the regime the cut distance of the dense graph limit theory
+needs, since its two carriers are arbitrary probability spaces.
 
 ## Main definitions
 
@@ -40,9 +45,12 @@ spaces. The middle space `Y` carries no hypothesis at all.
   `TauCeti.Measure.exists_glue_of_standardBorel_left` — **the gluing lemma**, in the two regimes
   obtained by disintegrating `σ` over `Y` (which needs `Z` standard Borel) and by disintegrating
   `π` over `Y` (which needs `X` standard Borel);
+* `TauCeti.MeasureTheory.exists_glue_of_countable_middle` — **the gluing lemma over a countable
+  middle space**, which needs nothing of either outer space;
 * `TauCeti.Measure.exists_comp_of_exists_glue` — the composition of plans read off a glued measure,
-  with `TauCeti.Measure.exists_comp_of_standardBorel_right` and
-  `TauCeti.Measure.exists_comp_of_standardBorel_left` its two concrete forms;
+  with `TauCeti.Measure.exists_comp_of_standardBorel_right`,
+  `TauCeti.Measure.exists_comp_of_standardBorel_left` and
+  `TauCeti.MeasureTheory.exists_comp_of_countable_middle` its three concrete forms;
 * `TauCeti.Measure.lintegral_map_prodMap_id_snd_le` — the composition estimate: a cost on `X × Z`
   dominated by the sum of a cost on `X × Y` and a cost on `Y × Z` integrates against the composed
   plan to at most the sum of the two integrals. This is the mechanism behind the triangle
@@ -64,8 +72,11 @@ and stating it this way keeps the theorems usable by any packaging of couplings 
 * C. Villani, *Topics in Optimal Transportation*, Graduate Studies in Mathematics 58, 2003,
   Lemma 7.6 ("Gluing lemma"), and *Optimal Transport: Old and New*, Grundlehren 338, 2009,
   Chapter 1. Both state it for three Polish probability spaces; the versions here ask for a
-  standard Borel structure on one outer space only, nothing on the middle space `Y`, and no
-  normalisation of the plans.
+  standard Borel structure on one outer space only — or, in the countable-middle version, for
+  nothing at all on the outer spaces — and no normalisation of the plans.
+* Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, the design-validation milestone preceding
+  the arbitrary-carrier triangle inequality of Layer 1 — "finite coupling gluing with zero-mass
+  middle atoms explicit". `TauCeti.MeasureTheory.exists_glue_of_countable_middle` is that gluing.
 -/
 
 public section
@@ -339,5 +350,68 @@ theorem exists_comp_of_standardBorel_left [StandardBorelSpace X] [IsFiniteMeasur
 end Comp
 
 end Measure
+
+namespace MeasureTheory
+
+/-! ### Gluing over a countable middle space
+
+These live in `TauCeti.MeasureTheory` rather than alongside their standard Borel siblings in
+`TauCeti.Measure`: `scripts/lint-dot-notation.py` forbids a *new* declaration under
+`TauCeti.Measure` whose statement mentions `MeasureTheory.Measure`, because such a namespace
+blocks dot notation on Mathlib's type. `TauCeti.MeasureTheory` is the namespace of the
+conditional kernel these consume. -/
+
+variable {X Y Z : Type*} [MeasurableSpace X] [MeasurableSpace Y] [MeasurableSpace Z]
+variable (π : Measure (X × Y)) (σ : Measure (Y × Z))
+
+/-- Gluing `π` against the conditional kernel of `σ` over a countable middle space recovers `σ` as
+the `(Y, Z)`-marginal, as soon as the two plans share their middle marginal. -/
+theorem snd_glue_countableCondKernel [Countable Y] [MeasurableSingletonClass Y] [Nonempty Z]
+    [IsFiniteMeasure σ] (hπσ : π.snd = σ.fst) :
+    (Measure.glue π (countableCondKernel σ)).snd = σ := by
+  let _ : IsFiniteMeasure π := ⟨by
+    rw [← _root_.MeasureTheory.Measure.snd_univ, hπσ]
+    exact measure_lt_top _ _⟩
+  rw [Measure.snd_glue, hπσ, _root_.MeasureTheory.Measure.disintegrate]
+
+/-- **The gluing lemma over a countable middle space.**
+
+Two plans sharing a middle marginal, `π.snd = σ.fst`, admit a joint law on `X × Y × Z` with `π`
+and `σ` as its two consecutive two-coordinate marginals, as soon as the middle space `Y` is
+countable with measurable singletons. Neither outer space carries any hypothesis — in particular
+neither is assumed standard Borel, so this is not a special case of either
+`TauCeti.Measure.exists_glue_of_standardBorel_right` or
+`TauCeti.Measure.exists_glue_of_standardBorel_left`, and conversely neither of those covers it.
+
+When `Z` is nonempty the explicit witness is `TauCeti.Measure.glue π (countableCondKernel σ)`; use
+it instead of this statement when the probability-measure or finiteness instances of the glued
+measure are needed. -/
+theorem exists_glue_of_countable_middle [Countable Y] [MeasurableSingletonClass Y]
+    [IsFiniteMeasure σ] (hπσ : π.snd = σ.fst) :
+    ∃ γ : Measure (X × Y × Z), γ.map (Prod.map id Prod.fst) = π ∧ γ.snd = σ := by
+  let _ : IsFiniteMeasure π := ⟨by
+    rw [← _root_.MeasureTheory.Measure.snd_univ, hπσ]
+    exact measure_lt_top _ _⟩
+  rcases isEmpty_or_nonempty Z with hZ | hZ
+  · let _ := hZ
+    have hσ : σ = 0 := _root_.MeasureTheory.Measure.eq_zero_of_isEmpty σ
+    have hπ : π = 0 := by
+      rw [← _root_.MeasureTheory.Measure.measure_univ_eq_zero,
+        ← _root_.MeasureTheory.Measure.snd_univ, hπσ, hσ]
+      simp
+    exact ⟨0, by simp [hπ], by simp [hσ]⟩
+  · let _ := hZ
+    exact ⟨Measure.glue π (countableCondKernel σ), Measure.map_prodMap_id_fst_glue π _,
+      snd_glue_countableCondKernel π σ hπσ⟩
+
+/-- Two plans sharing a middle marginal compose to a plan with the two outer marginals, when the
+middle space is countable. Unlike the two standard Borel forms, this asks nothing of either outer
+space. -/
+theorem exists_comp_of_countable_middle [Countable Y] [MeasurableSingletonClass Y]
+    [IsFiniteMeasure σ] (hπσ : π.snd = σ.fst) :
+    ∃ ζ : Measure (X × Z), ζ.fst = π.fst ∧ ζ.snd = σ.snd :=
+  Measure.exists_comp_of_exists_glue (exists_glue_of_countable_middle π σ hπσ)
+
+end MeasureTheory
 
 end TauCeti

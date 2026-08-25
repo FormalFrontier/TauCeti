@@ -34,6 +34,12 @@ quotient, and the Hodge filtration is transported across that identification.
   functoriality and the naturality of `TauCeti.Hodge.gradedComplexEquiv` in that map.
 * `TauCeti.Hodge.complexGradedF`, `TauCeti.Hodge.gradedF`: the Hodge filtration induced on the
   complex graded piece and on the complexified rational graded piece.
+* `TauCeti.Hodge.complexGradedConjugation`, `TauCeti.Hodge.gradedComplexConjugation`: the
+  conjugation induced on a complex graded piece by a conjugation stabilising the two filtration
+  steps it is built from, and its instance for a complexified rational filtration and lattice
+  conjugation.
+* `TauCeti.Hodge.gradedComplexEquiv_latticeConj`: the comparison of the two graded models
+  intertwines those conjugations.
 * `TauCeti.Hodge.gradedEquivOfEqBotOfEqTop`: across a step where the weight filtration jumps from
   zero to everything, the complexified graded piece is the whole complex model, compatibly with
   the conjugations and with the induced filtration.
@@ -338,6 +344,134 @@ theorem gradedF_of_eq_bot (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange �
     (hp : F p = ⊥) : gradedF hℚ hℂ WQ hWQ F k p = ⊥ := by
   rw [gradedF, complexGradedF_of_eq_bot _ F hp, Submodule.comap_bot, LinearMap.ker_eq_bot]
   exact (gradedComplexEquiv hℚ hℂ WQ hWQ k).injective
+
+section GradedConjugation
+
+variable (WC : ℤ → Submodule ℂ Vℂ) (ω : Conjugation Vℂ) (k : ℤ)
+
+/-- The conjugation induced on the `k`-th complex graded piece by a conjugation of the ambient
+space that stabilises the two steps `WC k` and `WC (k - 1)` the piece is built from. -/
+noncomputable def complexGradedConjugation (hk : ∀ x ∈ WC k, ω.toEquiv x ∈ WC k)
+    (hk₁ : ∀ x ∈ WC (k - 1), ω.toEquiv x ∈ WC (k - 1)) :
+    Conjugation (weightGradedComplex WC k) :=
+  (ω.restrict hk).quotient fun x hx ↦ by
+    simpa only [Submodule.submoduleOf, Submodule.mem_comap, Submodule.subtype_apply,
+      Conjugation.restrict_toEquiv_apply] using hk₁ (x : Vℂ) hx
+
+/-- The induced conjugation on a complex graded piece acts on classes through the ambient
+conjugation. -/
+@[simp]
+theorem complexGradedConjugation_mk (hk : ∀ x ∈ WC k, ω.toEquiv x ∈ WC k)
+    (hk₁ : ∀ x ∈ WC (k - 1), ω.toEquiv x ∈ WC (k - 1)) (x : WC k) :
+    (complexGradedConjugation WC ω k hk hk₁).toEquiv (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk ⟨ω.toEquiv (x : Vℂ), hk (x : Vℂ) x.2⟩ := by
+  rw [complexGradedConjugation, Conjugation.quotient_toEquiv_mk]
+  exact congrArg Submodule.Quotient.mk (Subtype.ext (ω.restrict_toEquiv_apply hk x))
+
+/-- Conjugating the filtration induced on a complex graded piece is inducing the conjugate
+filtration. -/
+theorem map_complexGradedConjugation_complexGradedF
+    (hk : ∀ x ∈ WC k, ω.toEquiv x ∈ WC k)
+    (hk₁ : ∀ x ∈ WC (k - 1), ω.toEquiv x ∈ WC (k - 1)) (F : ℤ → Submodule ℂ Vℂ) (p : ℤ) :
+    (complexGradedF WC F k p).map
+        (complexGradedConjugation WC ω k hk hk₁).toEquiv.toLinearMap =
+      complexGradedF WC (fun q ↦ (F q).map ω.toEquiv.toLinearMap) k p := by
+  refine le_antisymm ?_ ?_
+  · rw [Submodule.map_le_iff_le_comap]
+    intro u hu
+    obtain ⟨z, hz, rfl⟩ := (mem_complexGradedF_iff WC F k p u).1 hu
+    rw [Submodule.mem_comap, LinearEquiv.coe_coe, complexGradedConjugation_mk,
+      mem_complexGradedF_iff]
+    exact ⟨_, ⟨z, hz, rfl⟩, rfl⟩
+  · intro u hu
+    obtain ⟨y, hy, rfl⟩ :=
+      (mem_complexGradedF_iff WC (fun q ↦ (F q).map ω.toEquiv.toLinearMap) k p u).1 hu
+    obtain ⟨w, hw, hwy⟩ := hy
+    refine ⟨Submodule.Quotient.mk ⟨ω.toEquiv (y : Vℂ), hk (y : Vℂ) y.2⟩, ?_, ?_⟩
+    · simp only [SetLike.mem_coe, mem_complexGradedF_iff]
+      refine ⟨_, ?_, rfl⟩
+      simpa only [← hwy, LinearEquiv.coe_coe, ω.apply_apply, SetLike.mem_coe] using hw
+    · rw [LinearEquiv.coe_coe, complexGradedConjugation_mk]
+      exact congrArg Submodule.Quotient.mk (Subtype.ext (ω.apply_apply (y : Vℂ)))
+
+end GradedConjugation
+
+section RationalGradedConjugation
+
+variable (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange ℂ ιℂ) (WQ : ℤ → Submodule ℚ Vℚ)
+
+/-- The conjugation induced on the `k`-th graded piece of a complexified rational weight
+filtration by lattice conjugation. Every step of the filtration is the complexification of a
+rational subspace, hence conjugation-stable. -/
+noncomputable def gradedComplexConjugation (k : ℤ) :
+    Conjugation (weightGradedComplex (fun j ↦ rationalToComplexSubmodule hℚ hℂ (WQ j)) k) :=
+  complexGradedConjugation (fun j ↦ rationalToComplexSubmodule hℚ hℂ (WQ j))
+    (latticeConjugation hℂ) k
+    (fun x hx ↦ by
+      simpa only [latticeConjugation_toEquiv_apply] using
+        (rationalToComplexSubmodule_conj hℚ hℂ (WQ k)).le ⟨x, hx, rfl⟩)
+    (fun x hx ↦ by
+      simpa only [latticeConjugation_toEquiv_apply] using
+        (rationalToComplexSubmodule_conj hℚ hℂ (WQ (k - 1))).le ⟨x, hx, rfl⟩)
+
+/-- The induced conjugation on the graded piece of a complexified rational filtration acts on a
+class through lattice conjugation of a representative. -/
+@[simp]
+theorem gradedComplexConjugation_mk (k : ℤ)
+    (x : rationalToComplexSubmodule hℚ hℂ (WQ k)) :
+    (gradedComplexConjugation hℚ hℂ WQ k).toEquiv (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk ⟨latticeConj hℂ (x : Vℂ),
+        (rationalToComplexSubmodule_conj hℚ hℂ (WQ k)).le ⟨x, x.2, rfl⟩⟩ := by
+  rw [gradedComplexConjugation, complexGradedConjugation_mk]
+  exact congrArg Submodule.Quotient.mk (Subtype.ext (latticeConjugation_toEquiv_apply hℂ _))
+
+/-- Conjugating the filtration induced on the graded piece of a complexified rational filtration
+is inducing the conjugate filtration. -/
+theorem map_gradedComplexConjugation_complexGradedF (F : ℤ → Submodule ℂ Vℂ) (k p : ℤ) :
+    (complexGradedF (fun j ↦ rationalToComplexSubmodule hℚ hℂ (WQ j)) F k p).map
+        (gradedComplexConjugation hℚ hℂ WQ k).toEquiv.toLinearMap =
+      complexGradedF (fun j ↦ rationalToComplexSubmodule hℚ hℂ (WQ j))
+        (fun q ↦ (F q).map (latticeConj hℂ)) k p := by
+  rw [gradedComplexConjugation, map_complexGradedConjugation_complexGradedF]
+  simp only [latticeConjugation_toLinearMap]
+
+/-- **The comparison `TauCeti.Hodge.gradedComplexEquiv` intertwines the conjugations**: the
+canonical conjugation of the complexified rational graded piece corresponds to the conjugation
+that lattice conjugation induces on the complex graded piece.
+
+This is what makes the pure Hodge structure carried by `ℂ ⊗[ℚ] grᵂ_k` transportable to the
+complex graded piece `(W_k)_ℂ / (W_{k-1})_ℂ`, where the Hodge filtration of a mixed Hodge
+structure lives. -/
+theorem gradedComplexEquiv_latticeConj (hWQ : Monotone WQ) (k : ℤ)
+    (x : ℂ ⊗[ℚ] weightGradedRat WQ k) :
+    gradedComplexEquiv hℚ hℂ WQ hWQ k
+        (latticeConj (isBaseChange_ratTensorMap ℂ (weightGradedRat WQ k)) x) =
+      (gradedComplexConjugation hℚ hℂ WQ k).toEquiv (gradedComplexEquiv hℚ hℂ WQ hWQ k x) := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | tmul z y =>
+      induction y using Submodule.Quotient.induction_on with
+      | _ y =>
+        rw [latticeConj_ratTensorMap_tmul, gradedComplexEquiv_tmul_mk, gradedComplexEquiv_tmul_mk,
+          gradedComplexConjugation, complexGradedConjugation_mk]
+        refine congrArg Submodule.Quotient.mk (Subtype.ext ?_)
+        simp only [coe_rationalToComplexSubmoduleEquiv, LinearMap.baseChange_tmul,
+          Submodule.subtype_apply, latticeConjugation_toEquiv_apply]
+        rw [latticeConj_rationalToComplexLinearEquiv_tmul]
+  | add x y hx hy => simp only [map_add, hx, hy]
+
+/-- The inverse of the comparison intertwines the conjugations, in the form in which transport of
+a pure Hodge structure onto the complex graded piece consumes it. -/
+theorem gradedComplexEquiv_symm_latticeConj (hWQ : Monotone WQ) (k : ℤ)
+    (y : weightGradedComplex (fun j ↦ rationalToComplexSubmodule hℚ hℂ (WQ j)) k) :
+    (gradedComplexEquiv hℚ hℂ WQ hWQ k).symm ((gradedComplexConjugation hℚ hℂ WQ k).toEquiv y) =
+      (latticeConjugation (isBaseChange_ratTensorMap ℂ (weightGradedRat WQ k))).toEquiv
+        ((gradedComplexEquiv hℚ hℂ WQ hWQ k).symm y) := by
+  apply (gradedComplexEquiv hℚ hℂ WQ hWQ k).injective
+  rw [LinearEquiv.apply_symm_apply, latticeConjugation_toEquiv_apply,
+    gradedComplexEquiv_latticeConj hℚ hℂ WQ hWQ k, LinearEquiv.apply_symm_apply]
+
+end RationalGradedConjugation
 
 section Concentrated
 
