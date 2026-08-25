@@ -376,10 +376,11 @@ theorem windingNumber_eq_exciseCrossing_add {l u r θ θ' : ℝ}
     List.sum_cons, List.sum_nil, add_zero, W, CircularCapWindow.excise_def,
     CircularCapWindow.localContribution_def] using hmain
 
-/-- **Hungerbühler--Wasem Proposition 2.2 for one crossing window, in existential form.** Under
-the hypotheses of `windingNumber_eq_exciseCrossing_add` on a closed curve, its winding number is an
-integer plus the window's local contribution. The witness is the winding number of the closed,
-point-avoiding excised curve. -/
+/-- **One-window integrality consequence of crossing excision.** Under the hypotheses of
+`windingNumber_eq_exciseCrossing_add` on a closed curve, its winding number is an integer plus the
+window's local contribution. This is not yet Hungerbühler--Wasem Proposition 2.2: that proposition
+also requires identifying the local contribution with the crossing angle. The witness here is the
+winding number of the closed, point-avoiding excised curve. -/
 theorem exists_int_windingNumber_eq_add_windingNumber_sub_angle_div_two_pi
     {l u r θ θ' : ℝ} (hγ : IsPiecewiseC1On γ a b) (hal : a < l)
     (hlu : l < u) (hub : u < b) (hr : r ≠ 0) (hclosed : γ a = γ b)
