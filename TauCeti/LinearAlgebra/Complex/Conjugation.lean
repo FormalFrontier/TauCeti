@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Complex.Module
-public import Mathlib.LinearAlgebra.TensorProduct.Tower
+public import Mathlib.LinearAlgebra.TensorProduct.Basis
 
 /-!
 # The real points of a conjugate-linear involution
@@ -19,9 +19,12 @@ theorem of this file is that `V` is the complexification of that subspace: the c
 `ℂ ⊗[ℝ] realPoints K → V`, `c ⊗ₜ w ↦ c • w`
 
 is a `ℂ`-linear isomorphism.  Conversely a complexification `ℂ ⊗[ℝ] W` carries the conjugation
-`c ⊗ₜ w ↦ conj c ⊗ₜ w`.  So a conjugation on `V` is the same data as a presentation of `V` as the
-complexification of a real vector space, which is what makes conjugations the tool for realizing
-an object over `ℝ`.
+`c ⊗ₜ w ↦ conj c ⊗ₜ w`.  So each of the two constructions produces the other — a conjugation on
+`V` yields a presentation of `V` as a complexification, and every such presentation yields a
+conjugation — and in particular `V` admits a conjugation exactly when it is the complexification
+of a real vector space.  That is what makes conjugations the tool for realizing an object over
+`ℝ`.  The two constructions are not set up here as mutually inverse: a presentation carries a
+noncanonical choice of real carrier and isomorphism, which a conjugation does not.
 
 Everything is stated for an arbitrary `V`; no finite-dimensionality is used anywhere.
 
@@ -58,8 +61,9 @@ fields.  For the same reason `TauCeti.realPoints` asks only for the semilinear m
 makes sense without involutivity, and only the complexification theorem needs it.
 
 No definition here exposes its body: `TauCeti.mem_realPoints`, `TauCeti.conjRealPart_def`,
-`TauCeti.conjImagPart_def`, `TauCeti.realPointsLift_tmul`, `TauCeti.realPointsEquiv_tmul` and
-`TauCeti.tmulConj_tmul` are the characterizations a consumer works from.
+`TauCeti.conjImagPart_def`, `TauCeti.realPointsLift_tmul`, `TauCeti.realPointsEquiv_tmul`,
+`TauCeti.realPointsEquiv_symm_apply` and `TauCeti.tmulConj_tmul` are the characterizations a
+consumer works from.
 
 The real scalar structure on `V` is Mathlib's `Module.complexToReal`, the one `Module ℂ V` induces,
 so `r • v` and `(r : ℂ) • v` are definitionally equal and no scalar tower hypothesis is carried.
@@ -152,18 +156,10 @@ theorem conjRealPart_add_I_smul_conjImagPart (v : V) :
 splitting `ℂ ⊗[ℝ] W ≅ W ⊕ I · W` in the form the injectivity argument below uses it. -/
 theorem exists_one_tmul_add_I_tmul {W : Type*} [AddCommGroup W] [Module ℝ W] (u : ℂ ⊗[ℝ] W) :
     ∃ w₁ w₂ : W, u = 1 ⊗ₜ[ℝ] w₁ + Complex.I ⊗ₜ[ℝ] w₂ := by
-  induction u with
-  | zero => exact ⟨0, 0, by simp⟩
-  | tmul c w =>
-    refine ⟨c.re • w, c.im • w, ?_⟩
-    rw [← TensorProduct.smul_tmul, ← TensorProduct.smul_tmul, ← TensorProduct.add_tmul]
-    congr 1
-    simp only [Complex.real_smul, mul_one]
-    exact (Complex.re_add_im c).symm
-  | add u₁ u₂ h₁ h₂ =>
-    obtain ⟨a₁, b₁, rfl⟩ := h₁
-    obtain ⟨a₂, b₂, rfl⟩ := h₂
-    exact ⟨a₁ + a₂, b₁ + b₂, by rw [TensorProduct.tmul_add, TensorProduct.tmul_add]; abel⟩
+  obtain ⟨c, hc⟩ := TensorProduct.eq_repr_basis_left Complex.basisOneI u
+  refine ⟨c 0, c 1, ?_⟩
+  rw [← hc, Finsupp.sum_fintype _ _ (by simp), Fin.sum_univ_two, Complex.coe_basisOneI]
+  simp only [Matrix.cons_val_zero, Matrix.cons_val_one]
 
 /-! ### The complexification of the real points -/
 
@@ -179,6 +175,8 @@ theorem realPointsLift_tmul (c : ℂ) (w : realPoints K) :
     realPointsLift K (c ⊗ₜ[ℝ] w) = c • (w : V) := by
   simp [realPointsLift]
 
+/-- The lift is surjective once `K` is involutive: `v` is hit by
+`1 ⊗ₜ conjRealPart K v + I ⊗ₜ conjImagPart K v`. -/
 theorem realPointsLift_surjective (hK : Function.Involutive K) :
     Function.Surjective (realPointsLift K) := fun v =>
   ⟨1 ⊗ₜ[ℝ] ⟨conjRealPart K v, conjRealPart_mem hK v⟩ +
@@ -223,10 +221,21 @@ noncomputable def realPointsEquiv (hK : Function.Involutive K) :
   LinearEquiv.ofBijective (realPointsLift K)
     ⟨realPointsLift_injective, realPointsLift_surjective hK⟩
 
+/-- The isomorphism sends `c ⊗ₜ w` to `c • w`. -/
 @[simp]
 theorem realPointsEquiv_tmul (hK : Function.Involutive K) (c : ℂ) (w : realPoints K) :
     realPointsEquiv hK (c ⊗ₜ[ℝ] w) = c • (w : V) :=
   realPointsLift_tmul c w
+
+/-- The inverse of the isomorphism is the decomposition into real and imaginary parts:
+`v ↦ 1 ⊗ₜ conjRealPart K v + I ⊗ₜ conjImagPart K v`. -/
+@[simp]
+theorem realPointsEquiv_symm_apply (hK : Function.Involutive K) (v : V) :
+    (realPointsEquiv hK).symm v =
+      1 ⊗ₜ[ℝ] (⟨conjRealPart K v, conjRealPart_mem hK v⟩ : realPoints K) +
+        Complex.I ⊗ₜ[ℝ] (⟨conjImagPart K v, conjImagPart_mem hK v⟩ : realPoints K) := by
+  rw [LinearEquiv.symm_apply_eq, map_add, realPointsEquiv_tmul, realPointsEquiv_tmul, one_smul]
+  exact (conjRealPart_add_I_smul_conjImagPart v).symm
 
 /-! ### The conjugation of a complexification -/
 
@@ -235,8 +244,9 @@ section Complexification
 variable (W : Type*) [AddCommGroup W] [Module ℝ W]
 
 /-- The **conjugation of a complexification**: `c ⊗ₜ w ↦ conj c ⊗ₜ w`, conjugate-linear because
-conjugation is `ℝ`-linear and multiplicative on `ℂ`.  Together with `TauCeti.realPointsEquiv` it
-makes conjugations on `V` and presentations of `V` as a complexification the same data. -/
+conjugation is `ℝ`-linear and multiplicative on `ℂ`.  This is the construction converse to
+`TauCeti.realPointsEquiv`: it turns a presentation of a space as a complexification into a
+conjugation on it. -/
 noncomputable def tmulConj : (ℂ ⊗[ℝ] W) →ₛₗ[starRingEnd ℂ] (ℂ ⊗[ℝ] W) where
   toFun := TensorProduct.lift ((TensorProduct.mk ℝ ℂ W).comp Complex.conjAe.toLinearMap)
   map_add' := map_add _
@@ -249,11 +259,14 @@ noncomputable def tmulConj : (ℂ ⊗[ℝ] W) →ₛₗ[starRingEnd ℂ] (ℂ �
         Complex.conjAe_coe, TensorProduct.mk_apply, map_mul]
     | add u₁ u₂ h₁ h₂ => rw [smul_add, map_add, map_add, h₁, h₂, smul_add]
 
+/-- The conjugation of a complexification conjugates the scalar and leaves the vector alone. -/
 @[simp]
 theorem tmulConj_tmul (c : ℂ) (w : W) :
     tmulConj W (c ⊗ₜ[ℝ] w) = (starRingEnd ℂ) c ⊗ₜ[ℝ] w :=
   (rfl)
 
+/-- The conjugation of a complexification is involutive, so it is a conjugation in the sense of
+this file. -/
 theorem tmulConj_involutive : Function.Involutive (tmulConj W) := by
   intro u
   induction u with
