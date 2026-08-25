@@ -11,14 +11,15 @@ public import Mathlib.MeasureTheory.Measure.Prod
 /-!
 # Approximation by measurable rectangles
 
-Every measurable subset of a product of two finite measure spaces can be approximated in measure
-by a finite disjoint union of measurable rectangles.  The statement is valid for arbitrary
-measurable spaces: no countable-generation or standard-Borel hypothesis is needed.
+Every measurable subset of a product measurable space equipped with a finite measure can be
+approximated in measure by a finite disjoint union of measurable rectangles.  The statement is
+valid for arbitrary measurable spaces: no countable-generation or standard-Borel hypothesis is
+needed.
 
 This is the set-level approximation used in the finite-step reduction for the coupling triangle
 inequality of graphon cut distance.  A bounded measurable kernel is first approximated by a simple
-function; applying the result here to its finitely many level sets then makes that simple function
-depend on only finitely many measurable events in each coordinate.
+function; the result here is then applied to its finitely many level sets to construct an
+approximating simple function depending on only finitely many measurable events in each coordinate.
 
 The proof applies Mathlib's general density theorem
 `exists_measure_symmDiff_lt_of_generateFrom_isSetSemiring` to the semiring of measurable
@@ -62,20 +63,20 @@ private theorem isSetSemiring_measurable_prod :
     simp
   inter_mem := by
     rintro _ ⟨s, hs, t, ht, rfl⟩ _ ⟨u, hu, v, hv, rfl⟩
-    change MeasurableSet s at hs
-    change MeasurableSet t at ht
-    change MeasurableSet u at hu
-    change MeasurableSet v at hv
+    have hs : MeasurableSet s := by simpa only [Set.mem_ofPred_eq] using hs
+    have ht : MeasurableSet t := by simpa only [Set.mem_ofPred_eq] using ht
+    have hu : MeasurableSet u := by simpa only [Set.mem_ofPred_eq] using hu
+    have hv : MeasurableSet v := by simpa only [Set.mem_ofPred_eq] using hv
     refine ⟨s ∩ u, hs.inter hu, t ∩ v, ht.inter hv, ?_⟩
     ext
     simp only [Set.mem_prod, Set.mem_inter_iff]
     grind
   sdiff_eq_sUnion' := by
     rintro _ ⟨s, hs, t, ht, rfl⟩ _ ⟨u, hu, v, hv, rfl⟩
-    change MeasurableSet s at hs
-    change MeasurableSet t at ht
-    change MeasurableSet u at hu
-    change MeasurableSet v at hv
+    have hs : MeasurableSet s := by simpa only [Set.mem_ofPred_eq] using hs
+    have ht : MeasurableSet t := by simpa only [Set.mem_ofPred_eq] using ht
+    have hu : MeasurableSet u := by simpa only [Set.mem_ofPred_eq] using hu
+    have hv : MeasurableSet v := by simpa only [Set.mem_ofPred_eq] using hv
     let a : Set (X × Y) := (s \ u) ×ˢ t
     let b : Set (X × Y) := (s ∩ u) ×ˢ (t \ v)
     refine ⟨{a, b}, ?_, ?_, ?_⟩
@@ -98,24 +99,23 @@ private theorem isSetSemiring_measurable_prod :
       simp only [a, b, Set.mem_sdiff, Set.mem_prod, Set.mem_union, Set.mem_inter_iff]
       grind
 
-/-- A measurable subset of a product of finite measure spaces can be approximated in measure by a
-pairwise-disjoint finite union of measurable rectangles.
+/-- A measurable subset of a product measurable space with a finite measure can be approximated in
+measure by a pairwise-disjoint finite union of measurable rectangles.
 
 The output family contains no empty set, because it is the family of parts of a `Finpartition`.
 The conclusion uses `⋃₀ (I : Set (Set (X × Y)))` rather than an indexed union so callers may retain
 the finite family itself and refine all of its coordinate sides at once. -/
-theorem exists_finset_prod_measure_symmDiff_lt (μ : Measure X) (ν : Measure Y)
-    [IsFiniteMeasure μ] [IsFiniteMeasure ν] {s : Set (X × Y)} (hs : MeasurableSet s)
-    {ε : ℝ≥0∞} (hε : 0 < ε) :
+theorem exists_finset_prod_measure_symmDiff_lt (ρ : Measure (X × Y)) [IsFiniteMeasure ρ]
+    {s : Set (X × Y)} (hs : MeasurableSet s) {ε : ℝ≥0∞} (hε : 0 < ε) :
     ∃ I : Finset (Set (X × Y)),
       (∀ r ∈ I, ∃ a : Set X, MeasurableSet a ∧ ∃ b : Set Y, MeasurableSet b ∧ r = a ×ˢ b) ∧
       (I : Set (Set (X × Y))).PairwiseDisjoint id ∧ ∅ ∉ I ∧
-      (μ.prod ν) (⋃₀ (I : Set (Set (X × Y))) ∆ s) < ε := by
+      ρ (⋃₀ (I : Set (Set (X × Y))) ∆ s) < ε := by
   let C : Set (Set (X × Y)) :=
     Set.image2 (· ×ˢ ·) {a : Set X | MeasurableSet a} {b : Set Y | MeasurableSet b}
   have hC : IsSetSemiring C := isSetSemiring_measurable_prod
   have hcover : ∃ D : Set (Set (X × Y)),
-      D.Countable ∧ D ⊆ C ∧ (μ.prod ν) (⋃₀ D)ᶜ = 0 := by
+      D.Countable ∧ D ⊆ C ∧ ρ (⋃₀ D)ᶜ = 0 := by
     refine ⟨{Set.univ ×ˢ Set.univ}, Set.countable_singleton _, ?_, ?_⟩
     · rintro r hr
       rw [Set.mem_singleton_iff] at hr
@@ -129,9 +129,9 @@ theorem exists_finset_prod_measure_symmDiff_lt (μ : Measure X) (ν : Measure Y)
   obtain ⟨P, hPC⟩ := hC.mem_supClosure_iff.1 htC
   refine ⟨P.parts, ?_, P.disjoint, P.bot_notMem, ?_⟩
   · intro r hr
-    have hrect := hPC hr
-    change r ∈ Set.image2 (· ×ˢ ·) {a : Set X | MeasurableSet a}
-      {b : Set Y | MeasurableSet b} at hrect
+    have hrect : r ∈ Set.image2 (· ×ˢ ·) {a : Set X | MeasurableSet a}
+        {b : Set Y | MeasurableSet b} := by
+      simpa only [C] using hPC hr
     obtain ⟨a, ha, b, hb, rfl⟩ := hrect
     exact ⟨a, ha, b, hb, rfl⟩
   · have hUnion : ⋃₀ (P.parts : Set (Set (X × Y))) = t :=
@@ -157,7 +157,7 @@ theorem exists_finset_prod_symmetric_measure_symmDiff_lt (μ : Measure X) [IsFin
     Set.image2 (· ×ˢ ·) {a : Set X | MeasurableSet a} {b : Set X | MeasurableSet b}
   have hC : IsSetSemiring C := isSetSemiring_measurable_prod
   obtain ⟨I, hIrect, hIdis, hIempty, hIapprox⟩ :=
-    exists_finset_prod_measure_symmDiff_lt μ μ hs (ENNReal.half_pos hε.ne')
+    exists_finset_prod_measure_symmDiff_lt (μ.prod μ) hs (ENNReal.half_pos hε.ne')
   let u : Set (X × X) := ⋃₀ (I : Set (Set (X × X)))
   let J : Finset (Set (X × X)) := I.image fun r => Prod.swap ⁻¹' r
   have hIC : ∀ r ∈ I, r ∈ C := by
@@ -171,7 +171,7 @@ theorem exists_finset_prod_symmetric_measure_symmDiff_lt (μ : Measure X) [IsFin
     rw [Set.preimage_swap_prod]
     exact ⟨b, hb, a, ha, rfl⟩
   have huC : u ∈ supClosure C := by
-    change ⋃₀ (I : Set (Set (X × X))) ∈ supClosure C
+    simp only [u]
     rw [← Finset.sup_id_set_eq_sUnion]
     exact hC.isSetRing_supClosure.finsetSup_mem fun r hr => subset_supClosure (hIC r hr)
   have hswapUnion : ⋃₀ (J : Set (Set (X × X))) = Prod.swap ⁻¹' u := by
@@ -216,9 +216,9 @@ theorem exists_finset_prod_symmetric_measure_symmDiff_lt (μ : Measure X) [IsFin
       _ = ε := ENNReal.add_halves ε
   refine ⟨P.parts, ?_, P.disjoint, P.bot_notMem, ?_, ?_⟩
   · intro r hr
-    have hrect := hPC hr
-    change r ∈ Set.image2 (· ×ˢ ·) {a : Set X | MeasurableSet a}
-      {b : Set X | MeasurableSet b} at hrect
+    have hrect : r ∈ Set.image2 (· ×ˢ ·) {a : Set X | MeasurableSet a}
+        {b : Set X | MeasurableSet b} := by
+      simpa only [C] using hPC hr
     obtain ⟨a, ha, b, hb, rfl⟩ := hrect
     exact ⟨a, ha, b, hb, rfl⟩
   · have hUnion : ⋃₀ (P.parts : Set (Set (X × X))) = v :=
