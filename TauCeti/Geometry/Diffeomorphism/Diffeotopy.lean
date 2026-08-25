@@ -166,7 +166,6 @@ def final : M ≃ₘ^n⟮J, J⟯ M :=
   Φ.timeSlice 1
 
 /-- The final diffeomorphism is the time-one slice. -/
-@[simp]
 theorem final_def : Φ.final = Φ.timeSlice 1 :=
   (rfl)
 
@@ -267,15 +266,19 @@ theorem timeSlice_symm (t : I) :
 
 /-- A diffeotopy followed by its inverse fixes every point. -/
 @[simp]
-theorem symm_apply_apply (p : I × M) : Φ.symm (p.1, Φ p) = p.2 := by
-  simpa only [symm_timeSlice_apply, timeSlice_apply] using
-    (Φ.timeSlice p.1).symm_apply_apply p.2
+theorem symm_apply_apply (p : I × M) :
+    (Φ.toDiffeomorph.symm (p.1, (Φ.toDiffeomorph p).2)).2 = p.2 := by
+  have hp : (p.1, (Φ.toDiffeomorph p).2) = Φ.toDiffeomorph p :=
+    Prod.ext (Φ.fst_apply p).symm rfl
+  rw [hp, Φ.toDiffeomorph.symm_apply_apply]
 
 /-- The inverse diffeotopy followed by the original fixes every point. -/
 @[simp]
-theorem apply_symm_apply (p : I × M) : Φ (p.1, Φ.symm p) = p.2 := by
-  simpa only [symm_timeSlice_apply, timeSlice_apply] using
-    (Φ.timeSlice p.1).apply_symm_apply p.2
+theorem apply_symm_apply (p : I × M) :
+    (Φ.toDiffeomorph (p.1, (Φ.toDiffeomorph.symm p).2)).2 = p.2 := by
+  have hp : (p.1, (Φ.toDiffeomorph.symm p).2) = Φ.toDiffeomorph.symm p :=
+    Prod.ext (Φ.fst_symm_apply p).symm rfl
+  rw [hp, Φ.toDiffeomorph.apply_symm_apply]
 
 /-- The final diffeomorphism of the inverse diffeotopy is the inverse final diffeomorphism. -/
 @[simp]
