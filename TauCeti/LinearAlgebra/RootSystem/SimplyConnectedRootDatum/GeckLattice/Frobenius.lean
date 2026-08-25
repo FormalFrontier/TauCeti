@@ -172,11 +172,17 @@ theorem geckFrobenius_geckRootSubgroupMatrix (i : Fin t.rank ⊕ Fin t.rank) (u 
 /-- **The Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power.** -/
 @[simp]
 theorem geckFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
-    t.geckFrobenius ht p k A ⟨t.geckTorusMatrix ht s, t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
+    t.geckFrobenius ht p k A
+        ⟨diagGL fun i => torusCharacter s (t.geckWeightFin ht i), by
+          simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
+            t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
       ⟨t.geckTorusMatrix ht (s ^ p ^ k), t.geckTorusMatrix_mem_geckPoints ht A _⟩ :=
   Subtype.ext (by
     rw [coe_geckFrobenius]
-    apply TauCeti.UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantTorusMatrix)
+    simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
+      TauCeti.UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantTorusMatrix
+        (M := (t.geckCoordinateLattice ht).toAddSubgroup) (b := t.geckCoordinateBasisFin ht)
+        (wt := t.geckWeightFin ht) (p := p) (k := k) s)
 
 /-- **The Frobenius-fixed points of the pinned Geck carrier are its points over the
 Frobenius-fixed subring.** For `p` prime, `0 < k`, `A` an algebraic closure of `ZMod p` and

@@ -207,12 +207,15 @@ power.** -/
 @[simp]
 theorem kostantToralFrobenius_kostantTorusMatrix (s : κ → Aˣ) :
     kostantToralFrobenius e h ρ M hM hnil b wt p k A
-        ⟨kostantTorusMatrix M b wt s, kostantTorusMatrix_mem_toralPoints e h ρ M hM hnil b wt A s⟩ =
+        ⟨diagGL fun i => torusCharacter s (wt i), by
+          simpa only [kostantTorusMatrix_apply] using
+            kostantTorusMatrix_mem_toralPoints e h ρ M hM hnil b wt A s⟩ =
       ⟨kostantTorusMatrix M b wt (s ^ p ^ k),
         kostantTorusMatrix_mem_toralPoints e h ρ M hM hnil b wt A _⟩ :=
   Subtype.ext (by
     rw [coe_kostantToralFrobenius]
-    apply map_iterateFrobenius_kostantTorusMatrix)
+    simpa only [kostantTorusMatrix_apply] using
+      map_iterateFrobenius_kostantTorusMatrix (M := M) (b := b) (wt := wt) (p := p) (k := k) s)
 
 end Fintype
 
