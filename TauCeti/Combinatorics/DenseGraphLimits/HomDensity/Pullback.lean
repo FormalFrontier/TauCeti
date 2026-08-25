@@ -72,6 +72,7 @@ forward to `μ`, then `t(F, W.comap f) = t(F, W)`.
 Postcomposition with `f` is a measure-preserving map `(V → Ω', Πν) → (V → Ω, Πμ)` by
 `MeasureTheory.measurePreserving_pi`, and by `edgeFactor_comap` the integrand of the left-hand side
 is the integrand of the right-hand side composed with it. -/
+@[simp]
 theorem homDensity_comap (F : SimpleGraph V) [DecidableRel F.Adj] (W : Graphon Ω μ) {f : Ω' → Ω}
     (hf : MeasurePreserving f ν μ) :
     homDensity F (W.comap f hf.measurable ν) = homDensity F W := by
