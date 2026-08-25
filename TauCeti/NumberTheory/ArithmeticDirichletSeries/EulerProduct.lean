@@ -17,12 +17,12 @@ This file starts the Euler-product layer for arithmetic functions on nonzero ide
 coprime multiplicativity on the ideal carrier, builds the canonical formal power series at each
 height-one prime, and sends that series into Mathlib's `ArithmeticFunction.ofPowerSeries` API.
 
-`TauCeti.EulerProductData K f` packages exactly the remaining global assertion: the norm-regrouped
-coefficient of `f` is Mathlib's formal Euler product of these canonical local factors.  The local
-factors are derived from `f`, rather than stored as independently chosen data, so the package has
-no unconstrained values away from prime powers.  This equality is intentionally an input to the
-Layer 3.1 package; Layer 3.2 supplies the finite-factorization results used to construct general
-instances.  The delta function supplies the base example.
+`TauCeti.EulerProductData K f` packages the coprime-multiplicativity prerequisite for these
+canonical local factors.  The local factors are derived from `f`, rather than stored as
+independently chosen data, so the package has no unconstrained values away from prime powers.
+The equality between `normCoeff K f` and their formal Euler product is not part of the data;
+Layer 3.2 derives it from finite prime-power factorization.  The delta function supplies the base
+example.
 
 ## Main definitions
 
@@ -31,7 +31,8 @@ instances.  The delta function supplies the base example.
 * `TauCeti.IdealArithmeticFunction.localPowerSeries` has coefficient `f (P ^ n)` at `n`.
 * `TauCeti.IdealArithmeticFunction.localArithmeticFactor` realizes that power series as an
   arithmetic function supported on powers of `N(P)`.
-* `TauCeti.EulerProductData K f` asserts the formal ideal Euler-product identity for `f`.
+* `TauCeti.EulerProductData K f` records the multiplicativity prerequisite for the formal ideal
+  Euler-product identity.
 
 ## Roadmap role
 
@@ -221,23 +222,20 @@ theorem localArithmeticFactor_delta (P : HeightOneSpectrum (𝓞 K)) :
 
 end IdealArithmeticFunction
 
-variable (K : Type*) [Field K] [NumberField K]
+variable (K : Type*) [Field K]
 
-/-- Formal Euler-product data for an ideal arithmetic function.
+/-- Local Euler-product data for an ideal arithmetic function.
 
-The local factors are the canonical factors derived from the prime-power values of `f`.  Thus the
-only data stored here are propositions: coprime multiplicativity and the equality between the
-norm-regrouped coefficient and Mathlib's formal Euler product.  In the roadmap this equality is a
-Layer 3.1 transport hypothesis; the general constructors proving it come after the finite
-factorization theorem in Layer 3.2. -/
+The local factors are the canonical factors derived from the prime-power values of `f`, so the
+only prerequisite stored here is coprime multiplicativity.  The global equality between the
+norm-regrouped coefficient and Mathlib's formal Euler product is a theorem to be derived from the
+finite-factorization result in Layer 3.2, rather than an assumption in this structure. -/
 structure EulerProductData (f : IdealArithmeticFunction K) : Prop where
   isMultiplicative : f.IsMultiplicative
-  normCoeff_eq_eulerProduct :
-    normCoeff K f = ArithmeticFunction.eulerProduct f.localArithmeticFactor
 
 namespace EulerProductData
 
-variable {K : Type*} [Field K] [NumberField K]
+variable {K : Type*} [Field K]
 variable {f g : IdealArithmeticFunction K}
 
 /-- Euler-product data are proof-irrelevant for a fixed ideal arithmetic function. -/
@@ -249,32 +247,16 @@ theorem congr (hfg : f = g) (hf : EulerProductData K f) : EulerProductData K g :
   exact hf
 
 /-- The formal Euler product attached to data is multiplicative as an arithmetic function. -/
-theorem isMultiplicative_eulerProduct (hf : EulerProductData K f) :
+theorem isMultiplicative_eulerProduct [NumberField K] (hf : EulerProductData K f) :
     (ArithmeticFunction.eulerProduct f.localArithmeticFactor).IsMultiplicative :=
   ArithmeticFunction.isMultiplicative_eulerProduct _
     hf.isMultiplicative.isMultiplicative_localArithmeticFactor
-
-/-- The norm coefficient of an ideal arithmetic function carrying Euler-product data is
-multiplicative. -/
-theorem isMultiplicative_normCoeff (hf : EulerProductData K f) :
-    (normCoeff K f).IsMultiplicative := by
-  rw [hf.normCoeff_eq_eulerProduct]
-  exact hf.isMultiplicative_eulerProduct
 
 /-- The convolution identity has the tautological Euler product whose every local factor is
 `1`.  This is the base example for the package and fixes its zero-slot convention. -/
 @[simp]
 theorem delta : EulerProductData K IdealArithmeticFunction.delta where
   isMultiplicative := IdealArithmeticFunction.isMultiplicative_delta
-  normCoeff_eq_eulerProduct := by
-    rw [normCoeff_delta]
-    have hlocal :
-        (IdealArithmeticFunction.delta : IdealArithmeticFunction K).localArithmeticFactor =
-          fun _ => 1 := by
-      funext P
-      exact IdealArithmeticFunction.localArithmeticFactor_delta P
-    rw [hlocal]
-    simp [ArithmeticFunction.eulerProduct]
 
 end EulerProductData
 
