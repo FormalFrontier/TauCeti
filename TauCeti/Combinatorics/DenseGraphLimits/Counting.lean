@@ -5,7 +5,8 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Basic
+public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Coupling
+public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Pullback
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
 public import TauCeti.MeasureTheory.Integral.Pi
 
@@ -19,6 +20,13 @@ two graphons on one carrier by the cut norm of their difference:
 
 It is what makes the cut norm the right notion of distance for dense graph limits: the graph
 observables `t(F, ·)` are Lipschitz in it, uniformly in everything but the number of edges of `F`.
+
+Two graphons on *different* carriers are compared through a coupling `π` of the two carriers, which
+reads both as graphons on `(Ω₁ × Ω₂, π)`; their difference there is the overlaid difference
+`overlayDiff U W π`. Since the coordinate projections out of a coupling are measure preserving,
+`homDensity_comap` says the two densities are unchanged by that reading, so the same-carrier
+statement transfers verbatim: `counting_lemma_coupling`. This is the cross-carrier engine of the
+separation layer, and the form in which the counting lemma meets the coupling-primary `cutDist`.
 
 **The proof is a telescope over the edges.** Swap the edges of `F` from `W` to `U` one at a time.
 Each swap changes the integrand at a single edge `e₀ = s(a, b)`, weighted by the product of edge
@@ -38,14 +46,18 @@ no loss of constant. The outer integral is over a probability measure, so the bo
 ## Main results
 
 * `TauCeti.DenseGraphLimits.counting_lemma` — the forward counting lemma
-  `|t(F, U) - t(F, W)| ≤ e(F) · ‖U - W‖□`.
+  `|t(F, U) - t(F, W)| ≤ e(F) · ‖U - W‖□`;
+* `TauCeti.DenseGraphLimits.counting_lemma_coupling` — its cross-carrier coupling form, bounding the
+  density gap of two graphons on different carriers by the cut norm of the overlaid difference along
+  any coupling of the carriers.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 2 — the forward counting lemma; the
-  signature follows `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`. The cross-carrier coupling
-  form `counting_lemma_coupling`, the descent `homDensityOnSpace` to `GraphonSpace`, weak
-  regularity and total boundedness are separate targets and are not built here.
+* Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 2 — the forward counting lemma and its
+  cross-carrier coupling form; the signatures follow
+  `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`. The descent `homDensityOnSpace` to
+  `GraphonSpace`, weak regularity and total boundedness are separate targets and are not built
+  here.
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), Lemma 10.23.
 * S. Janson, *Graphons, cut norm and distance, couplings and rearrangements*, NYJM Monographs 4
   (2013), Lemma 7.2.
@@ -253,6 +265,48 @@ theorem counting_lemma (F : SimpleGraph V) [DecidableRel F.Adj] (U W : Graphon �
   rw [hrw] at h
   rw [homDensity_def, homDensity_def]
   exact h
+
+section CrossCarrier
+
+variable {Ω₁ Ω₂ : Type*} [MeasurableSpace Ω₁] [MeasurableSpace Ω₂] {μ₁ : Measure Ω₁}
+  {μ₂ : Measure Ω₂} [IsProbabilityMeasure μ₁] [IsProbabilityMeasure μ₂]
+
+omit [DecidableEq V] in
+/-- **The counting lemma, coupling form.** For any coupling `π` of the two carriers, the
+homomorphism densities of `F` in two graphons living on *different* probability spaces differ by at
+most `e(F)` times the cut norm of their overlaid difference along `π`.
+
+This is the cross-carrier engine: taking the infimum over couplings turns it into a bound by the
+cut distance, and hence into the forward direction of the separation theorem. No standard Borel or
+atomless hypothesis is needed, on either carrier.
+
+The proof is the same-carrier `counting_lemma` on the coupled space `(Ω₁ × Ω₂, π)`. Reading `U` and
+`W` there — as the pullbacks along the two coordinate projections, whose difference *is*
+`overlayDiff U W π` — changes neither density, because the projections out of a coupling are
+measure preserving (`homDensity_comap`).
+
+The `IsFiniteMeasure` instance the cut norm needs is supplied explicitly from the coupling, matching
+`TauCeti.DenseGraphLimits.cutDist_le`; being a `Prop` class it is interchangeable with any other. -/
+theorem counting_lemma_coupling (F : SimpleGraph V) [DecidableRel F.Adj] (U : Graphon Ω₁ μ₁)
+    (W : Graphon Ω₂ μ₂) {π : Measure (Ω₁ × Ω₂)}
+    (hπ : TauCeti.MeasureTheory.IsCoupling μ₁ μ₂ π) :
+    |homDensity F U - homDensity F W|
+      ≤ (F.edgeFinset.card : ℝ) * @cutNorm _ _ π hπ.isFiniteMeasure (overlayDiff U W π) := by
+  have := hπ.isProbabilityMeasure
+  have hU : homDensity F (U.comap Prod.fst measurable_fst π) = homDensity F U :=
+    homDensity_comap F U hπ.measurePreserving_fst
+  have hW : homDensity F (W.comap Prod.snd measurable_snd π) = homDensity F W :=
+    homDensity_comap F W hπ.measurePreserving_snd
+  have hker : (U.comap Prod.fst measurable_fst π).toSymmKernel
+      - (W.comap Prod.snd measurable_snd π).toSymmKernel = overlayDiff U W π := by
+    ext p q
+    simp
+  have h := counting_lemma F (U.comap Prod.fst measurable_fst π)
+    (W.comap Prod.snd measurable_snd π)
+  rw [hU, hW, hker] at h
+  exact h
+
+end CrossCarrier
 
 end DenseGraphLimits
 
