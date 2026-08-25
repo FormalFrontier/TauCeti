@@ -150,8 +150,12 @@ entrywise after removing the universe lift. -/
 theorem hopfIdealPointsSubgroupFunctor_map_apply {A B : CommAlgCat.{w} R} (f : A ⟶ B)
     (g : ULift.{u, w} (hopfIdealPointsSubgroup n I A)) :
     (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I B)
-      ((hopfIdealPointsSubgroupFunctor n I).map f
-        (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I A).symm g))).down =
+      (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I B).symm
+        (MulEquiv.ulift.symm
+          (mapHopfIdealPointsSubgroup n I f.hom
+            (MulEquiv.ulift
+              (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I A)
+                (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I A).symm g))))))).down =
       mapHopfIdealPointsSubgroup n I f.hom g.down :=
   (rfl)
 
