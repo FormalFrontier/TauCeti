@@ -267,6 +267,14 @@ noncomputable def Divisor.indexOfSpecialty (D : Divisor k F) : ℤ :=
 theorem Divisor.indexOfSpecialty_def (D : Divisor k F) :
     Divisor.indexOfSpecialty D = Divisor.dim D - Divisor.degree D - 1 + genus k F := (rfl)
 
+/-- The index of specialty is unchanged by subtracting a principal divisor. -/
+@[simp]
+theorem Divisor.indexOfSpecialty_sub_principal (hF : IsFunctionField k F) (z : Fˣ)
+    (D : Divisor k F) :
+    Divisor.indexOfSpecialty (D - Divisor.principal hF z) = Divisor.indexOfSpecialty D := by
+  rw [Divisor.indexOfSpecialty_def, Divisor.indexOfSpecialty_def,
+    Divisor.dim_sub_principal, Divisor.degree_sub, Divisor.degree_principal, sub_zero]
+
 /-- The index of specialty is nonnegative: this is exactly Riemann's theorem. -/
 theorem Divisor.indexOfSpecialty_nonneg (hF : IsFunctionField k F) (D : Divisor k F) :
     0 ≤ Divisor.indexOfSpecialty D := by
