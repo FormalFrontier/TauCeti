@@ -393,28 +393,27 @@ theorem rationalFunctionsEquiv_rationalFunctionsMul (f : X.functionField) (U : X
 /-- Multiplication by a product is the composite of the two multiplications. -/
 theorem rationalFunctionsMul_mul (f g : X.functionField) :
     rationalFunctionsMul X (f * g) = rationalFunctionsMul X g ≫ rationalFunctionsMul X f := by
-  refine Scheme.Modules.hom_ext _ _ fun U ↦ ?_
-  rcases (U : Set X).eq_empty_or_nonempty with hU | hU
-  · have := subsingleton_rationalFunctions U (SetLike.ext' hU)
-    ext x
-    exact Subsingleton.elim _ _
-  · have : Nonempty U := by simpa using hU
-    ext x
-    refine (rationalFunctionsEquiv U).injective ?_
-    simp [Scheme.Modules.Hom.comp_app, mul_assoc]
+  simp only [rationalFunctionsMul, map_mul]
+  let M : (Spec X.functionField).Modules :=
+    SheafOfModules.unit (Spec X.functionField).ringCatSheaf
+  let F := Scheme.Modules.pushforward (fromSpecFunctionField X)
+  let f' : Γ(Spec X.functionField, ⊤) := (rationalFunctionsRingEquiv (X := X) ⊤).symm f
+  let g' : Γ(Spec X.functionField, ⊤) := (rationalFunctionsRingEquiv (X := X) ⊤).symm g
+  change F.map (Scheme.Modules.globalSectionsSmul M (f' * g')) =
+    F.map (Scheme.Modules.globalSectionsSmul M g') ≫
+      F.map (Scheme.Modules.globalSectionsSmul M f')
+  rw [Scheme.Modules.globalSectionsSmul_mul, Functor.map_comp]
 
 /-- Multiplication by `1` is the identity. -/
 @[simp]
 theorem rationalFunctionsMul_one : rationalFunctionsMul X 1 = 𝟙 _ := by
-  refine Scheme.Modules.hom_ext _ _ fun U ↦ ?_
-  rcases (U : Set X).eq_empty_or_nonempty with hU | hU
-  · have := subsingleton_rationalFunctions U (SetLike.ext' hU)
-    ext x
-    exact Subsingleton.elim _ _
-  · have : Nonempty U := by simpa using hU
-    ext x
-    refine (rationalFunctionsEquiv U).injective ?_
-    simp
+  simp only [rationalFunctionsMul, map_one]
+  let M : (Spec X.functionField).Modules :=
+    SheafOfModules.unit (Spec X.functionField).ringCatSheaf
+  let F := Scheme.Modules.pushforward (fromSpecFunctionField X)
+  change F.map (Scheme.Modules.globalSectionsSmul M 1) = 𝟙 _
+  rw [Scheme.Modules.globalSectionsSmul_one]
+  exact F.map_id M
 
 end Mul
 

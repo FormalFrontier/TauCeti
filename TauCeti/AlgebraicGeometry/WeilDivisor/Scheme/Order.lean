@@ -21,9 +21,9 @@ This is the local algebraic input for the scheme-theoretic principal-divisor map
 that map also requires the separate global theorem that a nonzero rational function has nonzero
 order at only finitely many codimension-one points; no finiteness assumption is hidden here.
 
-Two elementary facts about `Scheme.ord` itself are recorded first: the constant function `1` has
-order zero (`Scheme.ord_one`), and a function regular on `U` has nonnegative order at every point
-of `U` (`Scheme.ord_germToFunctionField_nonneg`), that is, it has no poles where it is defined.
+An elementary fact about `Scheme.ord` itself is recorded first: a function regular on `U` has
+nonnegative order at every point of `U` (`Scheme.ord_germToFunctionField_nonneg`), that is, it has
+no poles where it is defined.
 
 The construction advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, the
 "principal divisors" part of "Divisors on a curve". It reuses Mathlib's
@@ -47,10 +47,6 @@ noncomputable section
 
 namespace Scheme
 
-/-- The order of vanishing of the constant function `1` is zero. -/
-lemma ord_one (x : X) : X.ord (1 : X.functionField) x = 0 := by
-  simpa using Scheme.ord_mul (X := X) (x := x) (f := 1) (g := 1) one_ne_zero one_ne_zero
-
 /-- A regular function on `U` has nonnegative order at every point of `U`: it has no poles where
 it is defined. -/
 lemma ord_germToFunctionField_nonneg {U : X.Opens} [Nonempty U] (a : Γ(X, U)) {x : X}
@@ -58,7 +54,10 @@ lemma ord_germToFunctionField_nonneg {U : X.Opens} [Nonempty U] (a : Γ(X, U)) {
   rcases eq_or_ne a 0 with rfl | ha
   · simp
   · have h := Scheme.ord_le_smul hx ha (1 : X.functionField)
-    rwa [Algebra.smul_def, mul_one, RingHom.algebraMap_toAlgebra, ord_one] at h
+    let _ : Nonempty (⊤ : X.Opens) := ⟨⟨x, trivial⟩⟩
+    have h_one : X.ord (1 : X.functionField) x = 0 := by
+      simpa using X.ord_of_isUnit (U := ⊤) isUnit_one (show x ∈ (⊤ : X.Opens) by trivial)
+    rwa [Algebra.smul_def, mul_one, RingHom.algebraMap_toAlgebra, h_one] at h
 
 end Scheme
 

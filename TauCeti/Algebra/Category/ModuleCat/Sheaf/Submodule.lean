@@ -54,8 +54,6 @@ def liftToSubmodule (N : M.Submodule) (φ : P ⟶ M)
         intro U V f
         ext x
         apply Subtype.ext
-        change (ConcreteCategory.hom (φ.app V)) ((ConcreteCategory.hom (P.map f)) x) =
-          (ConcreteCategory.hom (M.map f)) ((ConcreteCategory.hom (φ.app U)) x)
         exact _root_.PresheafOfModules.naturality_apply φ f x }
     (by
       intro U r m

@@ -13,8 +13,8 @@ public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Submodule
 /-!
 # The sheaf `𝒪_X(D)` of a Weil divisor
 
-For a Weil divisor `D` on an integral Noetherian scheme `X` which is regular in codimension one,
-this file builds the sheaf of `𝒪_X`-modules
+For a Weil divisor `D` on an integral locally Noetherian scheme `X` which is regular in
+codimension one, this file builds the sheaf of `𝒪_X`-modules
 
 `Γ(U, 𝒪_X(D)) = {f ∈ K(X) | f = 0 or ord_x f ≥ -D(x) for every codimension-one x ∈ U}`,
 
@@ -64,10 +64,14 @@ universe u
 
 namespace SchemeWeilDivisor
 
-variable {X : Scheme.{u}} [IsIntegral X] [IsNoetherian X]
+variable {X : Scheme.{u}} [IsIntegral X]
   [∀ x : CodimensionOnePoint X, IsDiscreteValuationRing (X.presheaf.stalk (x : X))]
 
 noncomputable section
+
+section LocallyNoetherian
+
+variable [IsLocallyNoetherian X]
 
 open Scheme in
 /-- The sections of `𝒪_X(D)` over an open subset `U`: the rational functions vanishing, or with
@@ -116,6 +120,7 @@ def sections (D : SchemeWeilDivisor X) (U : X.Opens) :
 /-- Membership in `SchemeWeilDivisor.sections`, unfolded: the condition is imposed one
 codimension-one point at a time, so it makes sense over an open subset not known to be
 nonempty. -/
+@[simp]
 lemma mem_sections {D : SchemeWeilDivisor X} {U : X.Opens}
     {s : Γ(Scheme.rationalFunctions X, U)} :
     s ∈ sections D U ↔ ∀ (x : CodimensionOnePoint X) (hx : (x : X) ∈ U),
@@ -127,6 +132,7 @@ lemma mem_sections {D : SchemeWeilDivisor X} {U : X.Opens}
 open Scheme in
 /-- Over a nonempty open subset, a section of `𝒦_X` lies in `𝒪_X(D)` exactly when it vanishes or
 has order at least `-D` at every codimension-one point of that subset. -/
+@[simp]
 lemma mem_sections_iff {D : SchemeWeilDivisor X} {U : X.Opens} [Nonempty U]
     {s : Γ(rationalFunctions X, U)} :
     s ∈ sections D U ↔ rationalFunctionsEquiv U s = 0 ∨
@@ -233,8 +239,11 @@ lemma toSheaf_ι {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) :
     toSheaf hD ≫ sheafι D = Scheme.toRationalFunctions X :=
   TauCeti.SheafOfModules.liftToSubmodule_ι _ _ _
 
+end LocallyNoetherian
+
 section Mul
 
+variable [IsNoetherian X]
 variable (g : Additive X.functionFieldˣ)
 
 /-- Multiplying a section of `𝒪_X(D)` by a nonzero rational function `g` gives a section of
