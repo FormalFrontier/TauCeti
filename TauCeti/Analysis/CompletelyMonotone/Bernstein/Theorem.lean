@@ -28,7 +28,7 @@ This is the **existence** half of the Bernstein milestone in
 is `TauCeti.RepresentsLaplace.unique`, the converse direction is
 `TauCeti.isContinuousCompletelyMonotoneOnIoi_laplaceTransform`, and all three combine in
 `Bernstein/HausdorffBernsteinWidder.lean` as `TauCeti.hausdorff_bernstein_widder` and
-`TauCeti.hausdorff_bernstein_widder_existsUnique`.
+`TauCeti.bernstein`.
 
 Finiteness of the representing measure is not an extra hypothesis but a consequence of complete
 monotonicity on the *closed* half-line: `IsCompletelyMonotone` builds in `Set.Ici 0`, so `f` takes a

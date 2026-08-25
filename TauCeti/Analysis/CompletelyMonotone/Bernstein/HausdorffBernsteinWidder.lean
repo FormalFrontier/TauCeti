@@ -23,9 +23,7 @@ uniqueness live in `Laplace/Representation.lean`.
 ## Main declarations
 
 * `TauCeti.exists_representsLaplace_of_isContinuousCompletelyMonotoneOnIoi`
-* `TauCeti.hausdorff_bernstein_widder`, `TauCeti.hausdorff_bernstein_widder_existsUnique`
-* `TauCeti.representsLaplace_iff_isContinuousCompletelyMonotoneOnIoi`
-* `TauCeti.bernstein`
+* `TauCeti.hausdorff_bernstein_widder`, `TauCeti.bernstein`
 * `TauCeti.bernsteinMeasure`: the canonical representing measure, with its uniqueness,
   total-mass, and algebraic API.
 
@@ -68,31 +66,17 @@ theorem hausdorff_bernstein_widder (f : ℝ → ℝ) :
   · rintro ⟨μ, hμ⟩
     exact hμ.isContinuousCompletelyMonotoneOnIoi
 
-/-- Unique-existence form of the Hausdorff--Bernstein--Widder theorem. -/
-theorem hausdorff_bernstein_widder_existsUnique (f : ℝ → ℝ) :
+/-- **Bernstein's theorem**, in the roadmap's unique-existence form: a function is the Laplace
+transform of a unique finite positive measure on `ℝ≥0` exactly when it is continuous on
+`[0, ∞)` and completely monotone on `(0, ∞)`.
+
+This is the unique-existence form of the Hausdorff--Bernstein--Widder theorem, named for the
+Part B Bernstein's-theorem milestone it completes. -/
+theorem bernstein (f : ℝ → ℝ) :
     IsContinuousCompletelyMonotoneOnIoi f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   rw [hausdorff_bernstein_widder]
   exact ⟨fun ⟨μ, hμ⟩ => ⟨μ, hμ, fun ν hν => hν.unique hμ⟩,
     fun ⟨μ, hμ, _⟩ => ⟨μ, hμ⟩⟩
-
-/-- **Bernstein's theorem, iff form.** A function is the Laplace transform of a finite positive
-measure on `ℝ≥0` exactly when it is continuous on `[0, ∞)` and completely monotone on `(0, ∞)`.
-
-This packages the two halves of the Hausdorff--Bernstein--Widder theorem in the direction order
-used by the roadmap milestone: representation implies complete monotonicity, and complete
-monotonicity implies existence of a representing measure. -/
-theorem representsLaplace_iff_isContinuousCompletelyMonotoneOnIoi {f : ℝ → ℝ} :
-    (∃ μ : Measure ℝ≥0, RepresentsLaplace μ f) ↔
-      IsContinuousCompletelyMonotoneOnIoi f :=
-  (hausdorff_bernstein_widder f).symm
-
-/-- **Bernstein's theorem**, in the roadmap's unique-existence form: a function is the Laplace
-transform of a unique finite positive measure on `ℝ≥0` exactly when it is continuous on
-`[0, ∞)` and completely monotone on `(0, ∞)`. -/
-theorem bernstein (f : ℝ → ℝ) :
-    IsContinuousCompletelyMonotoneOnIoi f ↔
-      ∃! μ : Measure ℝ≥0, RepresentsLaplace μ f :=
-  hausdorff_bernstein_widder_existsUnique f
 
 /-! ## The canonical representing measure -/
 
