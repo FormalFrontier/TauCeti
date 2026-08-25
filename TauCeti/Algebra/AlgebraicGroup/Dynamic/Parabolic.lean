@@ -181,17 +181,6 @@ theorem evalZeroPoint_constPolyPoint (g : WithConv (H →ₐ[R] A)) :
 /-! ### The generic point of a cocharacter and conjugation by it -/
 
 variable (A) in
-/-- The Laurent variable `T`, as a unit of `A[T;T⁻¹]`. It is the tautological `A[T;T⁻¹]`-point of
-the multiplicative group. -/
-noncomputable def genericUnit : (LaurentPolynomial A)ˣ :=
-  unitOfInvertible (LaurentPolynomial.T 1)
-
-/-- The generic unit is the Laurent variable `T`. -/
-@[simp]
-theorem genericUnit_val : (genericUnit A : LaurentPolynomial A) = LaurentPolynomial.T 1 := by
-  simp [genericUnit]
-
-variable (A) in
 /-- **A cocharacter on points**: the group homomorphism `𝔾ₘ(A) = Aˣ → G(A)` obtained from a
 cocharacter `l : 𝔾ₘ → G`, presented contravariantly as a bialgebra homomorphism
 `H →ₐc[R] R[T;T⁻¹]`. -/
@@ -217,11 +206,12 @@ variable (A) in
 evaluated at the tautological point `T` of the multiplicative group. -/
 noncomputable def genericPoint (l : H →ₐc[R] LaurentPolynomial R) :
     WithConv (H →ₐ[R] LaurentPolynomial A) :=
-  pointsHom (LaurentPolynomial A) l (genericUnit A)
+  pointsHom (LaurentPolynomial A) l (MultiplicativeGroup.genericUnit A)
 
 /-- The generic point is the value of the cocharacter at the generic unit `T`. -/
 theorem genericPoint_eq_pointsHom (l : H →ₐc[R] LaurentPolynomial R) :
-    genericPoint A l = pointsHom (LaurentPolynomial A) l (genericUnit A) := by
+    genericPoint A l =
+      pointsHom (LaurentPolynomial A) l (MultiplicativeGroup.genericUnit A) := by
   rw [genericPoint]
 
 variable (A) in
@@ -257,8 +247,12 @@ theorem mapValue_pointsHom (u : Aˣ) :
 
 /-- The induced map on Laurent coefficient algebras fixes the Laurent variable. -/
 theorem map_genericUnit :
-    Units.map (AddMonoidAlgebra.mapAlgHom ℤ φ).toMonoidHom (genericUnit A) = genericUnit B :=
-  Units.ext ((AddMonoidAlgebra.mapAlgHom_single φ (1 : ℤ) 1).trans (by rw [map_one]; rfl))
+    Units.map (AddMonoidAlgebra.mapAlgHom ℤ φ).toMonoidHom
+        (MultiplicativeGroup.genericUnit A) = MultiplicativeGroup.genericUnit B := by
+  apply Units.ext
+  rw [Units.coe_map, MultiplicativeGroup.genericUnit_val,
+    MultiplicativeGroup.genericUnit_val]
+  exact mapAlgHom_T φ 1
 
 /-- The constant-point inclusion is natural in the value algebra. -/
 theorem mapValue_constPoint (g : WithConv (H →ₐ[R] A)) :
@@ -277,9 +271,9 @@ theorem mapValue_genericPoint :
 theorem mapValue_conjugate {C : Type*} [CommSemiring C] [Algebra R C]
     (ψ : LaurentPolynomial A →ₐ[R] C) (g : WithConv (H →ₐ[R] A)) :
     AlgHom.mapValue ψ (conjugate A l g) =
-      pointsHom C l (Units.map ψ.toMonoidHom (genericUnit A)) *
+      pointsHom C l (Units.map ψ.toMonoidHom (MultiplicativeGroup.genericUnit A)) *
         AlgHom.mapValue (ψ.comp (IsScalarTower.toAlgHom R A (LaurentPolynomial A))) g *
-        (pointsHom C l (Units.map ψ.toMonoidHom (genericUnit A)))⁻¹ := by
+        (pointsHom C l (Units.map ψ.toMonoidHom (MultiplicativeGroup.genericUnit A)))⁻¹ := by
   rw [conjugate_apply, map_mul, map_mul, map_inv, genericPoint, mapValue_pointsHom, constPoint,
     AlgHom.mapValue_comp, MonoidHom.comp_apply]
 
@@ -414,7 +408,8 @@ theorem pointsHom_mem_levi (u : Aˣ) : pointsHom A l u ∈ levi A l := by
   have h : constPoint A (pointsHom A l u) = pointsHom (LaurentPolynomial A) l v :=
     mapValue_pointsHom _ l u
   rw [mem_levi_iff, conjugate_apply, h, genericPoint,
-    (pointsHom_commute (A := LaurentPolynomial A) l (genericUnit A) v).eq, mul_assoc,
+    (pointsHom_commute (A := LaurentPolynomial A) l (MultiplicativeGroup.genericUnit A) v).eq,
+    mul_assoc,
     mul_inv_cancel, mul_one]
 
 /-- For a commutative affine group every point is fixed by conjugation, so the dynamic Levi
@@ -505,8 +500,9 @@ variable (R A) in
 /-- The unit `T · T'` of `A[T;T⁻¹][T';T'⁻¹]`, the product of the two Laurent variables. -/
 private noncomputable def prodUnit : (LaurentPolynomial (LaurentPolynomial A))ˣ :=
   Units.map (IsScalarTower.toAlgHom R (LaurentPolynomial A)
-      (LaurentPolynomial (LaurentPolynomial A))).toMonoidHom (genericUnit A) *
-    genericUnit (LaurentPolynomial A)
+      (LaurentPolynomial (LaurentPolynomial A))).toMonoidHom
+        (MultiplicativeGroup.genericUnit A) *
+    MultiplicativeGroup.genericUnit (LaurentPolynomial A)
 
 variable (R A) in
 /-- The substitution `T ↦ T · T'`, as an `R`-algebra homomorphism
@@ -541,8 +537,10 @@ private theorem prodSubst_T :
   (MultiplicativeGroup.point_T (R := A) (prodUnit R A) 1).trans (by rw [zpow_one])
 
 private theorem map_prodSubst_genericUnit :
-    Units.map (prodSubst R A).toMonoidHom (genericUnit A) = prodUnit R A :=
-  Units.ext prodSubst_T
+    Units.map (prodSubst R A).toMonoidHom (MultiplicativeGroup.genericUnit A) = prodUnit R A :=
+  Units.ext (by
+    rw [Units.coe_map, MultiplicativeGroup.genericUnit_val]
+    exact prodSubst_T)
 
 private theorem prodSubst_comp_const :
     (prodSubst R A).comp (IsScalarTower.toAlgHom R A (LaurentPolynomial A)) =
@@ -599,8 +597,9 @@ theorem limit_mem_levi (g : parabolic A l) : limit A l g ∈ levi A l := by
     rw [hl, hr, conjugate_apply, constPoint, mapValue_conjugate, genericPoint, conj_conj, ← map_mul,
       mapValue_conjugate, map_prodSubst_genericUnit, prodSubst_comp_const, prodUnit,
       mul_comm (Units.map (IsScalarTower.toAlgHom R (LaurentPolynomial A)
-        (LaurentPolynomial (LaurentPolynomial A))).toMonoidHom (genericUnit A))
-        (genericUnit (LaurentPolynomial A))]
+        (LaurentPolynomial (LaurentPolynomial A))).toMonoidHom
+          (MultiplicativeGroup.genericUnit A))
+        (MultiplicativeGroup.genericUnit (LaurentPolynomial A))]
   -- Specialize the generic identity at `X = 0`.
   rw [mem_levi_iff, limit_apply, evalZeroPoint, constPoint, ← mapValue_conjugate_mapAlgHom, key,
     ← MonoidHom.comp_apply, ← AlgHom.mapValue_comp, mapAlgHom_evalZero_comp_scaleSubst,

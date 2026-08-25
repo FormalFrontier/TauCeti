@@ -285,6 +285,14 @@ lemma weightedDegreeClass_divisorClass (w : X → ℤ) (h : S.IsWeightedDegreeZe
     weightedDegreeClass w h (S.divisorClass D) = weightedDegree w D :=
   QuotientAddGroup.lift_mk' S.principalSubgroup h.principalSubgroup_le_weightedDegree_ker D
 
+/-- Linearly equivalent divisors have the same weighted degree when principal divisors have
+weighted degree zero. -/
+lemma weightedDegree_eq_of_linearlyEquivalent (w : X → ℤ) (h : S.IsWeightedDegreeZero w)
+    {D E : WeilDivisor X} (hDE : S.LinearlyEquivalent D E) :
+    weightedDegree w D = weightedDegree w E := by
+  rw [← weightedDegreeClass_divisorClass w h D,
+    S.divisorClass_eq_iff.mpr hDE, weightedDegreeClass_divisorClass]
+
 /-- The weighted-degree-zero part of the divisor class group, the abstract `Pic⁰` of the
 Jacobian roadmap: the kernel of the weighted degree map on divisor classes. -/
 @[expose] noncomputable def picZero (w : X → ℤ) (h : S.IsWeightedDegreeZero w) :

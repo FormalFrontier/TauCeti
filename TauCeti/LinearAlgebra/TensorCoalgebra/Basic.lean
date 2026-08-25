@@ -29,6 +29,14 @@ the `DGAInfinity` roadmap.
 * `TauCeti.ReducedTensorWords.deconcatenation`: sum over every nontrivial cut of a tensor word.
 * `TauCeti.ReducedTensorWords.subword`: a block of consecutive letters in a tensor word.
 
+## Main results
+
+* `TauCeti.ReducedTensorWords.of_tprod_congr`: a pure tensor word depends only on its letters,
+  even when the two sides present its length by different arithmetic expressions.
+* `TauCeti.ReducedTensorWords.subword_congr`: equal-length blocks in different ambient tuples or
+  at different offsets agree when their letters agree.
+* `TauCeti.ReducedTensorWords.deconcatenation_subword`: deconcatenation of a block.
+
 ## References
 
 * E. Getzler and J. D. S. Jones, *A-infinity algebras and the cyclic bar complex*, Sections 1--2.
@@ -73,6 +81,16 @@ theorem linearMap_ext {N : Type uN} [AddCommMonoid N] [Module R N]
   ext x
   exact h n x
 
+/-- Two pure tensor words of the same length with the same letters are equal.  The two lengths
+are separate arguments, so that this closes goals whose two sides were assembled from different
+arithmetic expressions for one length. -/
+theorem of_tprod_congr {k l : ℕ} (hk : 0 < k) (hkl : k = l) {u : Fin k → M}
+    {v : Fin l → M} (h : ∀ i : Fin k, u i = v (Fin.cast hkl i)) :
+    of R M ⟨k, hk⟩ (PiTensorProduct.tprod R u) =
+      of R M ⟨l, hkl ▸ hk⟩ (PiTensorProduct.tprod R v) := by
+  subst hkl
+  exact congrArg _ (congrArg _ (funext h))
+
 /-- Project reduced tensor words to a fixed positive tensor length. -/
 noncomputable def component (n : {n : ℕ // 0 < n}) :
     ReducedTensorWords R M →ₗ[R] TensorPower R n.1 M :=
@@ -89,12 +107,28 @@ theorem component_of (n : {n : ℕ // 0 < n}) (x : TensorPower R n.1 M) :
     component R M n (of R M n x) = x := by
   simp [component, of]
 
+/-- Reading off the component of a tensor word at its own length, presented by a second
+arithmetic expression for that length. -/
+theorem component_of_eq {m n : {k : ℕ // 0 < k}} (h : m = n) (z : TensorPower R m.1 M) :
+    component R M n (of R M m z) = TensorPower.cast R M (congrArg Subtype.val h) z := by
+  subst h
+  rw [component_of, TensorPower.cast_refl, LinearEquiv.refl_apply]
+
 /-- Projecting an included tensor power vanishes when the two lengths differ. -/
 @[simp]
 theorem component_of_of_ne {m n : {n : ℕ // 0 < n}} (h : m ≠ n) (x : TensorPower R m.1 M) :
     component R M n (of R M m x) = 0 := by
   simp [component, of, DirectSum.component.of, h]
 
+
+/-- A linear map assembled from its length components is that component on a tensor word of that
+length. -/
+@[simp]
+theorem toModule_of {N : Type uN} [AddCommMonoid N] [Module R N]
+    (φ : ∀ n : {n : ℕ // 0 < n}, TensorPower R n.1 M →ₗ[R] N) (n : {n : ℕ // 0 < n})
+    (z : TensorPower R n.1 M) :
+    DirectSum.toModule R {n : ℕ // 0 < n} N φ (of R M n z) = φ n z := by
+  simp [of]
 
 /-- Deconcatenation on words of one fixed length, summed over all nontrivial cuts. -/
 noncomputable def deconcatenationComponent (n : {n : ℕ // 0 < n}) :
@@ -178,6 +212,17 @@ theorem of_tprod_eq_subword {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
   rw [subword_eq_of_tprod R x hn (by omega)]
   congr 1
   exact congrArg _ (funext fun j ↦ (congrArg x (Fin.ext (Nat.zero_add j.1))).symm)
+
+/-- A block of a tensor word depends only on its letters, not on the tuple carrying them nor on
+where the block sits inside it. -/
+theorem subword_congr {n m : ℕ} (x : Fin n → M) (y : Fin m → M) {a a' b : ℕ} (hab : a + b ≤ n)
+    (hab' : a' + b ≤ m)
+    (h : ∀ (j : ℕ) (hj : j < b), x ⟨a + j, by omega⟩ = y ⟨a' + j, by omega⟩) :
+    subword R x a b = subword R y a' b := by
+  rcases Nat.eq_zero_or_pos b with rfl | hb
+  · rw [subword_length_zero, subword_length_zero]
+  · rw [subword_eq_of_tprod R x hb hab, subword_eq_of_tprod R y hb hab']
+    exact of_tprod_congr R M _ rfl fun j ↦ h j.1 j.isLt
 
 /-- Deconcatenating a block cuts it at each of its nontrivial internal positions. -/
 theorem deconcatenation_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} :

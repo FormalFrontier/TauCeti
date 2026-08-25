@@ -27,6 +27,8 @@ so that `ℓ` depends only on the linear equivalence class of a divisor.  It is 
   multiplication by `z` is a `k`-linear isomorphism `L(A) ≅ L(A - div z)`; hence
   `TauCeti.Divisor.dim_eq_of_linearlyEquivalent`, `ℓ` is an invariant of the linear equivalence
   class of a divisor.
+* `TauCeti.Divisor.dim_principal`: the dimension of a principal divisor is the degree of the
+  full constant field over `k`.
 * `TauCeti.riemannRochSpace_ne_bot_iff`: `L(D) ≠ 0` exactly when `D` is linearly equivalent to
   an effective divisor (Remark 1.4.5(b)).
 
@@ -123,6 +125,21 @@ theorem Divisor.dim_eq_of_linearlyEquivalent (hF : IsFunctionField k F) {A B : D
   obtain ⟨z, hz⟩ := (Divisor.linearlyEquivalent_iff hF).mp h
   have hB : B = A - Divisor.principal hF z := by rw [hz]; abel
   rw [hB, Divisor.dim_sub_principal]
+
+/-- The Riemann–Roch dimension of a principal divisor is the degree of the full constant field. -/
+@[simp]
+theorem Divisor.dim_principal (hF : IsFunctionField k F) (z : Fˣ) :
+    Divisor.dim (Divisor.principal hF z) = Module.finrank k (algebraicClosure k F) := by
+  have hlin : (Place.orderSystem hF).LinearlyEquivalent (Divisor.principal hF z)
+      (0 : Divisor k F) :=
+    (Divisor.linearlyEquivalent_iff hF).mpr ⟨z, by simp⟩
+  rw [Divisor.dim_eq_of_linearlyEquivalent hF hlin, Divisor.dim_zero hF]
+
+/-- Over an exact constant field, the Riemann–Roch dimension of a principal divisor is one. -/
+theorem Divisor.dim_principal_of_isIntegrallyClosedIn (hF : IsFunctionField k F)
+    (hex : IsIntegrallyClosedIn k F) (z : Fˣ) :
+    Divisor.dim (Divisor.principal hF z) = 1 := by
+  rw [Divisor.dim_principal hF, isIntegrallyClosedIn_iff_finrank_algebraicClosure_eq_one.mp hex]
 
 /-- **A Riemann–Roch space is nonzero exactly when its divisor is linearly equivalent to an
 effective divisor** (Stichtenoth, Remark 1.4.5(b)).  A nonzero `f ∈ L(D)` makes `div f + D`

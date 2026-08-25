@@ -36,6 +36,9 @@ is the special case that matters downstream.
   `IsRiemannianManifold I M`.
 * `TauCeti.IsRiemannianManifold.dist_le_toReal_pathELength`: the ambient distance of a Riemannian
   manifold, read through `IsRiemannianManifold.out`, is bounded by the length of any `C¹` path.
+* `TauCeti.Manifold.le_riemannianEDist_of_forall_le_pathELength`: the extended distance is bounded
+  below by any bound valid for the lengths of *all* `C¹` curves joining two points, since it is the
+  infimum of those lengths.
 
 ## References
 
@@ -73,6 +76,18 @@ theorem joined_of_riemannianEDist_lt_top {x y : M} (h : riemannianEDist I x y < 
     Joined x y := by
   obtain ⟨γ, hγ0, hγ1, hγ, -⟩ := exists_lt_of_riemannianEDist_lt h
   exact (JoinedIn.ofLine (F := univ) hγ.continuousOn hγ0 hγ1 (subset_univ _)).joined
+
+/-- The Riemannian extended distance is bounded below by any bound that is valid for the lengths
+of *all* `C¹` curves joining the two points: it is the infimum of those lengths. -/
+theorem le_riemannianEDist_of_forall_le_pathELength {x y : M} {c : ℝ≥0∞}
+    (h : ∀ γ : ℝ → M, γ 0 = x → γ 1 = y → CMDiff[Icc 0 1] 1 γ →
+      c ≤ pathELength I γ 0 1) :
+    c ≤ riemannianEDist I x y := by
+  by_contra hle
+  rw [not_le] at hle
+  obtain ⟨r, hr1, hr2⟩ := ENNReal.lt_iff_exists_nnreal_btwn.1 hle
+  obtain ⟨γ, h0, h1, hγ, hl⟩ := exists_lt_of_riemannianEDist_lt hr1
+  exact absurd ((h γ h0 h1 hγ).trans hl.le) (not_le.2 hr2)
 
 variable [IsManifold I 1 M] [IsContinuousRiemannianBundle E (fun x : M ↦ TangentSpace I x)]
 

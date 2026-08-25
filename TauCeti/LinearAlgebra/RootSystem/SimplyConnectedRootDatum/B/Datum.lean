@@ -296,14 +296,6 @@ private lemma typeBEnum_symm_typeBSimpleIndex (i : Fin n) :
 
 /-! ## The root datum -/
 
-/-- The standard dot-product pairing on the character and cocharacter coordinate lattices is
-perfect; this local instance supplies the perfect pairing required to construct the root datum. -/
-private instance : (dotProductBilin ℤ ℤ :
-    (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ) →ₗ[ℤ] ℤ).IsPerfPair := by
-  -- `dotProductEquiv` has `dotProductBilin` as its underlying linear map by definition.
-  change (dotProductEquiv ℤ (Fin n)).toLinearMap.IsPerfPair
-  infer_instance
-
 /-- The reflection in the root at index `k`, transported to the enumerated index type. -/
 private def typeBReflPerm (n : ℕ) (k : Fin (2 * n ^ 2)) : Equiv.Perm (Fin (2 * n ^ 2)) :=
   ((typeBEnum n).symm.trans

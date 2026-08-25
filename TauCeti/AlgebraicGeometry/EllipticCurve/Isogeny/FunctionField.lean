@@ -37,6 +37,9 @@ field. `TauCeti.Isogeny.comp` therefore lives here rather than beside `TauCeti.I
   its function-field law and `TauCeti.Isogeny.id_comp`, `TauCeti.Isogeny.comp_id`,
   `TauCeti.Isogeny.comp_assoc` the unit and associativity laws. The pointedness obligation is
   discharged privately when `comp` is defined.
+* `TauCeti.Isogeny.isScalarTower_fieldPullback`: the three pullbacks of a composite make
+  `F(W₃) ⊆ F(W₂) ⊆ F(W₁)` a scalar tower — the shared opening of the multiplicativity-under-
+  composition proofs in `Isogeny/Degree.lean` and `Isogeny/Separability.lean`.
 * `TauCeti.Isogeny.comp_right_injective` and `TauCeti.Isogeny.comp_right_inj`: precomposition
   by a fixed isogeny is injective. Equivalently, a factorisation `ψ = λ.comp φ` through a fixed
   `φ` determines its factor `λ` uniquely — the uniqueness half of factoring an isogeny, reached
@@ -275,6 +278,28 @@ pullbacks. -/
 theorem comp_fieldPullback (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
     (ψ.comp φ).fieldPullback = φ.fieldPullback.comp ψ.fieldPullback :=
   ((ψ.comp φ).fieldPullback_unique _ fun x ↦ by simp).symm
+
+/-- **The pullbacks of a composite isogeny form a scalar tower**: `F(W₃) ⊆ F(W₂) ⊆ F(W₁)`, the
+inclusions being the three function-field pullbacks. This is `comp_fieldPullback` read as a
+statement about algebra structures — the composite's pullback *is* the composite of the two, which
+is exactly the compatibility `IsScalarTower` asks for.
+
+The three `letI`s are part of the statement, because these algebra structures come from `AlgHom`s
+rather than from instances: a consumer installs the same three `let`s and this lemma then applies.
+It is the shared opening of every proof that an invariant is multiplicative under composition —
+`degree_comp`, `separableDegree_comp` and `inseparableDegree_comp` each begin with it. -/
+theorem isScalarTower_fieldPullback (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
+    letI := φ.fieldPullback.toRingHom.toAlgebra
+    letI := ψ.fieldPullback.toRingHom.toAlgebra
+    letI := (ψ.comp φ).fieldPullback.toRingHom.toAlgebra
+    IsScalarTower W₃.FunctionField W₂.FunctionField W₁.FunctionField := by
+  -- the statement's `letI`s fix the *type*, but instance search inside the proof needs them in
+  -- the local instance cache, so install them again here
+  let _ := φ.fieldPullback.toRingHom.toAlgebra
+  let _ := ψ.fieldPullback.toRingHom.toAlgebra
+  let _ := (ψ.comp φ).fieldPullback.toRingHom.toAlgebra
+  exact IsScalarTower.of_algebraMap_eq fun z ↦ by
+    simp [RingHom.algebraMap_toAlgebra, comp_fieldPullback]
 
 /-- The identity isogeny is a left unit for composition. -/
 @[simp]

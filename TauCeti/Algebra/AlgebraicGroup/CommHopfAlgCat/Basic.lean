@@ -6,14 +6,15 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Category.CommHopfAlgCat
+public import Mathlib.CategoryTheory.Monoidal.Cartesian.Grp
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.PointsFunctor
 
 /-!
 # Commutative Hopf algebras and their functor of points
 
-This file packages the contravariant functor that sends a commutative coordinate Hopf algebra
-`H` over a commutative ring `R` to its group-valued functor of points `A ↦ Hom_R(H, A)`.
+This file packages the group object represented by a commutative coordinate Hopf algebra and the
+contravariant functor that sends it to its group-valued functor of points `A ↦ Hom_R(H, A)`.
 
 The category of commutative Hopf algebras is Mathlib's bundled `CommHopfAlgCat`; this file
 adds the functor-of-points stack on top of it.
@@ -31,6 +32,9 @@ coordinate Hopf algebras acts on points by pre-composition.
   of coordinate morphisms.
 * `CommHopfAlgCat.pointsFunctor`: the contravariant functor
   `(CommHopfAlgCat R)ᵒᵖ ⥤ CommAlgCat R ⥤ GrpCat`.
+* `CommHopfAlgCat.grpObj`: the underlying object of the represented group object.
+* `CommHopfAlgCat.grpObjMap`: the contravariant morphism of represented group objects induced by a
+  coordinate Hopf-algebra morphism.
 
 ## References
 
@@ -45,7 +49,7 @@ functoriality uses Mathlib's convolution monoid and bialgebra morphism API, in p
 
 public section
 
-open CategoryTheory WithConv
+open CategoryTheory Opposite WithConv
 
 namespace TauCeti
 
@@ -54,6 +58,44 @@ universe u v w
 namespace CommHopfAlgCat
 
 variable {R : Type u} [CommRing R]
+
+/-- The underlying object `op (CommAlgCat.of R H)` of the group object represented by the
+commutative Hopf algebra `H`, carrying the induced `GrpObj` structure. -/
+noncomputable abbrev grpObj (H : _root_.CommHopfAlgCat.{u} R) :
+    (CommAlgCat.{u} R)ᵒᵖ :=
+  op (CommAlgCat.of R H)
+
+/-- The morphism of underlying group objects represented contravariantly by a morphism of
+commutative Hopf algebras. -/
+noncomputable def grpObjMap {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
+    grpObj K ⟶ grpObj H :=
+  (CommAlgCat.ofHom f.hom).op
+
+/-- Unopping `grpObjMap f` gives the underlying commutative-algebra morphism of `f`. -/
+@[simp]
+theorem grpObjMap_unop {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
+    (grpObjMap f).unop = CommAlgCat.ofHom f.hom := (rfl)
+
+/-- The identity coordinate morphism represents the identity group-object morphism. -/
+@[simp]
+theorem grpObjMap_id (H : _root_.CommHopfAlgCat.{u} R) :
+    grpObjMap (𝟙 H) = 𝟙 (grpObj H) := by
+  rfl
+
+/-- Composition of coordinate morphisms is represented contravariantly. -/
+@[simp]
+theorem grpObjMap_comp {H K L : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) (g : K ⟶ L) :
+    grpObjMap (f ≫ g) = grpObjMap g ≫ grpObjMap f := by
+  rfl
+
+/-- A morphism represented by a commutative Hopf-algebra morphism preserves the group-object
+multiplication. -/
+noncomputable instance grpObjMap_isMonHom {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
+    IsMonHom (grpObjMap f) := by
+  -- `grpObjMap` uses the concrete opposite-algebra spelling, whereas Mathlib registers the
+  -- `IsMonHom` instance on the definitionally equal morphism transported by the equivalence.
+  change IsMonHom (((commHopfAlgCatEquivCogrpCommAlgCat R).functor.map f).unop.hom.hom)
+  infer_instance
 
 /-- A morphism of coordinate commutative Hopf algebras induces a natural transformation
 between their group-valued points functors, contravariantly in the coordinate algebra.
