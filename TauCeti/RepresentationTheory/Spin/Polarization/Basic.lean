@@ -40,6 +40,10 @@ giving `dim W = l` both in dimension `2l` (type `Dₗ`) and in dimension `2l + 1
   `TauCeti.SpinPolarizationData.finrank_line_eq_one_of_finrank_eq_two_mul_add_one` are its
   odd-dimensional consequences: the isotropic summand again has dimension `l`, and the remainder
   is exactly a line.
+* `TauCeti.SpinPolarizationData.nondegenerate` and
+  `TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot`: a polarized quadratic form is
+  nondegenerate, away from characteristic two in general and unconditionally when there is no
+  remainder.
 
 ## References
 
@@ -138,46 +142,80 @@ theorem pairing_separatingRight {K : Type u} [CommRing K] {V : Type v}
   ext x
   simp only [P.pairingEquiv_apply, hy x, map_zero, LinearMap.zero_apply]
 
-/-- A polarization without an orthogonal remainder has nondegenerate quadratic form. -/
-theorem nondegenerate_of_line_eq_bot {K : Type u} [CommRing K] {V : Type v}
+/-- **A vector orthogonal to the whole space lies in the orthogonal remainder.** The polar pairing
+separates each isotropic summand from the other, and the remainder is orthogonal to both, so the
+two isotropic coordinates of such a vector vanish and only its remainder coordinate survives. -/
+private theorem mem_line_of_polarBilin_eq_zero {K : Type u} [CommRing K] {V : Type v}
     [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
-    (P : SpinPolarizationData Q) (hline : P.line = ⊥) : Q.Nondegenerate := by
-  have hker : Q.polarBilin.ker = ⊥ := by
-    rw [LinearMap.ker_eq_bot']
-    intro v hv
-    let x := (P.decompositionEquiv.symm v).1.1
-    let y := (P.decompositionEquiv.symm v).1.2
-    let z := (P.decompositionEquiv.symm v).2
-    have hz : z = 0 := by
-      apply Subtype.ext
-      simpa [hline] using z.property
-    have hdecomp : (x : V) + (y : V) + (z : V) = v := by
-      rw [← P.decompositionEquiv_apply]
-      exact P.decompositionEquiv.apply_symm_apply v
-    have hWW (a b : P.W) : QuadraticMap.polar Q (a : V) b = 0 := by
-      simp only [QuadraticMap.polar, ← Submodule.coe_add, P.isotropic_W, sub_self]
-    have hW'W' (a b : P.W') : QuadraticMap.polar Q (a : V) b = 0 := by
-      simp only [QuadraticMap.polar, ← Submodule.coe_add, P.isotropic_W', sub_self]
-    have hx : x = 0 := by
-      apply P.pairing_separatingLeft
-      intro b
-      have h := LinearMap.congr_fun hv (b : V)
-      simpa only [QuadraticMap.polarBilin_apply_apply, ← hdecomp,
-        QuadraticMap.polar_add_left, hW'W', P.line_orthogonal_W', LinearMap.zero_apply,
-        add_zero] using h
-    have hy : y = 0 := by
-      apply P.pairing_separatingRight
-      intro a
-      have h := LinearMap.congr_fun hv (a : V)
-      simpa only [QuadraticMap.polarBilin_apply_apply, ← hdecomp,
-        QuadraticMap.polar_add_left, hWW, P.line_orthogonal_W, LinearMap.zero_apply,
-        add_zero, zero_add, QuadraticMap.polar_comm Q y a] using h
-    rw [← hdecomp, hx, hy, hz]
-    simp
+    (P : SpinPolarizationData Q) {v : V} (hv : Q.polarBilin v = 0) : v ∈ P.line := by
+  let x := (P.decompositionEquiv.symm v).1.1
+  let y := (P.decompositionEquiv.symm v).1.2
+  let z := (P.decompositionEquiv.symm v).2
+  have hdecomp : (x : V) + (y : V) + (z : V) = v := by
+    rw [← P.decompositionEquiv_apply]
+    exact P.decompositionEquiv.apply_symm_apply v
+  have hWW (a b : P.W) : QuadraticMap.polar Q (a : V) b = 0 := by
+    simp only [QuadraticMap.polar, ← Submodule.coe_add, P.isotropic_W, sub_self]
+  have hW'W' (a b : P.W') : QuadraticMap.polar Q (a : V) b = 0 := by
+    simp only [QuadraticMap.polar, ← Submodule.coe_add, P.isotropic_W', sub_self]
+  have hx : x = 0 := by
+    apply P.pairing_separatingLeft
+    intro b
+    have h := LinearMap.congr_fun hv (b : V)
+    simpa only [QuadraticMap.polarBilin_apply_apply, ← hdecomp,
+      QuadraticMap.polar_add_left, hW'W', P.line_orthogonal_W', LinearMap.zero_apply,
+      add_zero] using h
+  have hy : y = 0 := by
+    apply P.pairing_separatingRight
+    intro a
+    have h := LinearMap.congr_fun hv (a : V)
+    simpa only [QuadraticMap.polarBilin_apply_apply, ← hdecomp,
+      QuadraticMap.polar_add_left, hWW, P.line_orthogonal_W, LinearMap.zero_apply,
+      add_zero, zero_add, QuadraticMap.polar_comm Q y a] using h
+  rw [← hdecomp, hx, hy]
+  simp
+
+/-- A quadratic form whose polar form has trivial kernel is nondegenerate. -/
+private theorem nondegenerate_of_ker_polarBilin_eq_bot {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} (hker : Q.polarBilin.ker = ⊥) :
+    Q.Nondegenerate := by
   refine ⟨le_antisymm (Q.radical_le_ker_polarBilin.trans hker.le) bot_le, ?_⟩
   rw [hker]
   nontriviality K
   simp only [rank_subsingleton', zero_le]
+
+/-- A polarization without an orthogonal remainder has nondegenerate quadratic form. -/
+theorem nondegenerate_of_line_eq_bot {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    (P : SpinPolarizationData Q) (hline : P.line = ⊥) : Q.Nondegenerate := by
+  refine nondegenerate_of_ker_polarBilin_eq_bot (LinearMap.ker_eq_bot'.2 fun v hv => ?_)
+  simpa [hline] using P.mem_line_of_polarBilin_eq_zero hv
+
+/-- **A polarization has nondegenerate quadratic form**, whatever its orthogonal remainder, as soon
+as `2` is invertible and the base ring has no zero divisors.
+
+A vector orthogonal to everything lies in the remainder, where the polar form is `2 Q` and `Q` is
+the square of the injective coordinate `SpinPolarizationData.lineCoordinate`; both hypotheses are
+needed to run that back. This subsumes `TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot`
+away from characteristic two, and it is what makes nondegeneracy redundant as a hypothesis
+alongside polarization data. -/
+theorem nondegenerate {K : Type u} [CommRing K] [NoZeroDivisors K] [Invertible (2 : K)]
+    {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    (P : SpinPolarizationData Q) : Q.Nondegenerate := by
+  refine nondegenerate_of_ker_polarBilin_eq_bot (LinearMap.ker_eq_bot'.2 fun v hv => ?_)
+  let z : P.line := ⟨v, P.mem_line_of_polarBilin_eq_zero hv⟩
+  have hQz : Q v = 0 := by
+    have h : (2 : K) * Q v = 0 := by
+      simpa only [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_self,
+        LinearMap.zero_apply, nsmul_eq_mul, Nat.cast_ofNat] using LinearMap.congr_fun hv v
+    rw [← invOf_mul_cancel_left (2 : K) (Q v), h, mul_zero]
+  have hcoord : P.lineCoordinate z = 0 := by
+    have h : P.lineCoordinate z * P.lineCoordinate z = 0 := by
+      rw [P.lineCoordinate_sq]
+      exact hQz
+    exact (mul_self_eq_zero.1 h)
+  exact congrArg Subtype.val (P.lineCoordinate_injective (by simpa using hcoord) :
+    z = (0 : P.line))
 
 section Dimension
 

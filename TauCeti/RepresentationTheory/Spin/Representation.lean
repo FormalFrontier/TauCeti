@@ -78,11 +78,7 @@ theorem pinRep_apply (Q : QuadraticForm K V) (P : SpinPolarizationData Q) (g : p
   simp [pinRep]
 
 /-- **The inclusion of the Spin group into the even Clifford subalgebra**, the Spin group
-consisting of even elements by `spinGroup.mem_even`.
-
-`@[expose]`, because the inclusion carries no data beyond the membership proof and proofs about
-the restricted actions read a Spin-group element as the even element `⟨↑g, _⟩` it is. -/
-@[expose]
+consisting of even elements by `spinGroup.mem_even`. -/
 def spinGroupToEven (Q : QuadraticForm K V) : spinGroup Q →* CliffordAlgebra.even Q :=
   Submonoid.inclusion fun _ hx => spinGroup.mem_even hx
 
@@ -90,7 +86,7 @@ def spinGroupToEven (Q : QuadraticForm K V) : spinGroup Q →* CliffordAlgebra.e
 @[simp]
 theorem coe_spinGroupToEven (Q : QuadraticForm K V) (g : spinGroup Q) :
     (spinGroupToEven Q g : CliffordAlgebra Q) = g :=
-  rfl
+  (rfl)
 
 /-- **The action of the even Clifford subalgebra on the spinor module** `S = ⋀·W`, the Fock action
 restricted along the inclusion of `CliffordAlgebra.even Q`.

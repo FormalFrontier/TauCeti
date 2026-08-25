@@ -7,11 +7,14 @@ module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.OddSplitting
 public import TauCeti.RepresentationTheory.Spin.Structure
--- Non-public: the coordinate surjection out of a product, the simplicity of a matrix algebra, and
--- the finite-dimensional injectivity criterion are all used only inside proofs.
+-- Non-public: the coordinate surjection out of a product, the simplicity of a matrix algebra, the
+-- finite-dimensional injectivity criterion, the anisotropic orthogonal basis carrying the volume
+-- element and the centrality of an endomorphism algebra are all used only inside proofs.
 import TauCeti.RingTheory.CentralIdempotent
+import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 import Mathlib.RingTheory.SimpleRing.Matrix
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+import Mathlib.Algebra.Central.End
 
 /-!
 # The structure theorem for an odd-dimensional Clifford algebra
@@ -50,12 +53,15 @@ and of a basis of the spinor module — so the statements are `Nonempty`, as the
 Once a polarization *is* fixed there is a canonical isomorphism to be had, and the last section
 records it. Only the basis of the spinor module was arbitrary above, so dropping it leaves the
 Fock action itself: `TauCeti.evenSpinAction` is a bijection from `even Q` onto
-`Module.End F (⋀·W)`, because the even subalgebra is simple (being a matrix algebra), so any
-nonzero action of it is faithful, and the two algebras have the same dimension. That statement,
-`TauCeti.SpinPolarizationData.evenCliffordEquivEnd`, is the odd-dimensional companion of the even
-`TauCeti.SpinPolarizationData.cliffordEquivEnd`, one grade down: in even dimension the *whole*
-Clifford algebra is `Module.End F (⋀·W)`, in odd dimension only its even half is, the whole
-algebra being two copies of that half.
+`Module.End F (⋀·W)`. That needs neither the matrix identification nor a separably closed field.
+The whole Fock action is onto (`TauCeti.spinAction_surjective`), and in odd dimension the even
+half already reaches as far: the volume element `ω` is central, so its image commutes with all of
+`Module.End F (⋀·W)` and is a scalar, and `ω` is odd with `ω² = c ≠ 0`, so each generator is
+`ι v = c⁻¹ (ι v * ω) * ω` with `ι v * ω` even. A dimension count then makes the surjection
+injective. That statement, `TauCeti.SpinPolarizationData.evenCliffordEquivEnd`, is the
+odd-dimensional companion of the even `TauCeti.SpinPolarizationData.cliffordEquivEnd`, one grade
+down: in even dimension the *whole* Clifford algebra is `Module.End F (⋀·W)`, in odd dimension
+only its even half is, the whole algebra being two copies of that half.
 
 ## Main results
 
@@ -65,9 +71,9 @@ algebra being two copies of that half.
   theorem in odd dimension**, `CliffordAlgebra Q ≃ₐ[F] M_{2^l}(F) × M_{2^l}(F)`.
 * `CliffordAlgebra.isSimpleRing_even_of_odd_finrank`: **the even subalgebra is a simple ring** in
   odd dimension, unlike the whole algebra.
-* `TauCeti.evenSpinAction_bijective` and `TauCeti.SpinPolarizationData.evenCliffordEquivEnd`:
+* `TauCeti.evenSpinAction_surjective` and `TauCeti.SpinPolarizationData.evenCliffordEquivEnd`:
   **the odd structure theorem in operator form**, that the Fock action identifies `even Q` with
-  `Module.End F (⋀·W)`.
+  `Module.End F (⋀·W)`, over any field of characteristic not two.
 * `TauCeti.SpinPolarizationData.finrank_exteriorAlgebra_W_of_finrank_eq_two_mul_add_one` and
   `TauCeti.SpinPolarizationData.finrank_even_eq_finrank_end_of_odd_finrank`: the dimension
   bookkeeping the operator form rests on.
@@ -212,8 +218,10 @@ end CliffordAlgebra
 /-! ### The odd structure theorem in operator form
 
 The matrix identification above is not canonical: it depends on a basis of the spinor module. The
-Fock action itself is canonical once a polarization is chosen, and the counting above says exactly
-that it identifies the even subalgebra with the operator algebra of the spinor module. -/
+Fock action itself is canonical once a polarization is chosen, and it identifies the even
+subalgebra with the operator algebra of the spinor module directly, over any field of
+characteristic not two: the polarization data carries the nondegeneracy, and the volume element
+does the rest without being normalized to a square root of one. -/
 
 namespace TauCeti
 
@@ -221,55 +229,99 @@ open CliffordAlgebra Module
 
 section OperatorForm
 
-variable {F : Type u} [Field F] [NeZero (2 : F)] [IsSepClosed F]
+variable {F : Type u} [Field F] [NeZero (2 : F)]
   {V : Type v} [AddCommGroup V] [Module F V] [FiniteDimensional F V] {Q : QuadraticForm F V}
-  (P : SpinPolarizationData Q) (hQ : Q.Nondegenerate) (hodd : Odd (finrank F V))
+  (P : SpinPolarizationData Q) (hodd : Odd (finrank F V))
 
-include hQ hodd
+include hodd
 
-/-- **The even Clifford action on the spinor module is faithful in odd dimension.** The even
-subalgebra is simple, and an algebra homomorphism out of a simple ring into a nonzero ring is
-injective. -/
-theorem evenSpinAction_injective : Function.Injective (evenSpinAction Q P) := by
-  have _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
-  have _ : IsSimpleRing ↥(even Q) :=
-    CliffordAlgebra.isSimpleRing_even_of_odd_finrank hQ hodd
-  exact RingHom.injective (evenSpinAction Q P).toRingHom
-
-/-- **The even Clifford action on the spinor module is onto in odd dimension.** It is injective,
-and the two algebras have the same dimension.
+/-- **The even Clifford action on the spinor module is onto in odd dimension.** The whole Fock
+action is onto by `TauCeti.spinAction_surjective`, and in odd dimension the even half already
+reaches everything the odd half does: the volume element `ω` of an orthogonal basis is central,
+odd, and squares to a nonzero scalar, so its image is a scalar operator, and every generator
+factors as `ι v = c⁻¹ (ι v * ω) * ω` with `ι v * ω` even.
 
 This is the sharp form of the odd-dimensional structure theorem: unlike the whole Clifford
 algebra, which needs both spinor modules to act faithfully, the even subalgebra already sees all
-of `Module.End F (⋀·W)`. -/
+of `Module.End F (⋀·W)`. Neither nondegeneracy nor a separably closed field is assumed: the
+polarization data carries the first (`TauCeti.SpinPolarizationData.nondegenerate`) and the
+argument never normalizes `ω`, which is what the second was for. -/
 theorem evenSpinAction_surjective : Function.Surjective (evenSpinAction Q P) := by
+  have _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
+  obtain ⟨l, hl, hlen, hspan, hQl⟩ := P.nondegenerate.exists_list_pairwise_isOrtho
+  set ω : CliffordAlgebra Q := (l.map (ι Q)).prod
+  set c : F := (-1 : F) ^ l.length.choose 2 * (l.map Q).prod
+  have hc : c ≠ 0 := by
+    refine mul_ne_zero (pow_ne_zero _ (neg_ne_zero.mpr one_ne_zero)) (List.prod_ne_zero ?_)
+    rintro hmem
+    obtain ⟨v, hv, hv0⟩ := List.mem_map.mp hmem
+    exact hQl v hv hv0
+  have hsq : ω * ω = algebraMap F (CliffordAlgebra Q) c := prod_map_ι_sq_scalar hl
+  have hωodd : ω ∈ evenOdd Q 1 := prod_map_ι_mem_evenOdd_one_of_odd_length (hlen ▸ hodd)
+  -- The image of the volume element is central, hence a scalar, hence already in the range.
+  have hωrange : spinAction Q P ω ∈ (evenSpinAction Q P).range := by
+    have hcentre : spinAction Q P ω ∈
+        Subalgebra.center F (Module.End F (ExteriorAlgebra F P.W)) := by
+      rw [Subalgebra.mem_center_iff]
+      intro f
+      obtain ⟨x, rfl⟩ := spinAction_surjective P f
+      rw [← map_mul, ← map_mul, Subalgebra.mem_center_iff.1
+        (prod_map_ι_mem_center_of_odd_length hl (hlen ▸ hodd) hspan) x]
+    obtain ⟨a, ha⟩ := (Algebra.IsCentral.mem_center_iff F).1 hcentre
+    exact ha ▸ Subalgebra.algebraMap_mem _ a
+  -- Each generator is an even element times the volume element, up to the scalar `c`.
+  have hgen : ∀ v : V, spinAction Q P (ι Q v) ∈ (evenSpinAction Q P).range := by
+    intro v
+    have hmem : ι Q v * ω ∈ even Q := by
+      rw [← Subalgebra.mem_toSubmodule, even_toSubmodule]
+      have h := SetLike.mul_mem_graded (ι_mem_evenOdd_one Q v) hωodd
+      rwa [show (1 : ZMod 2) + 1 = 0 by decide] at h
+    have hrw : spinAction Q P (ι Q v * ω) * (c⁻¹ • spinAction Q P ω) = spinAction Q P (ι Q v) := by
+      rw [mul_smul_comm, ← map_mul, mul_assoc, hsq, ← Algebra.commutes, ← Algebra.smul_def,
+        map_smul, smul_smul, inv_mul_cancel₀ hc, one_smul]
+    exact hrw ▸ Subalgebra.mul_mem _
+      ((AlgHom.mem_range _).2 ⟨⟨_, hmem⟩, evenSpinAction_apply Q P _⟩)
+      (Subalgebra.smul_mem _ hωrange _)
+  -- The generators generate, so the range of the even action is everything.
+  have hle : Algebra.adjoin F (Set.range (ι Q)) ≤
+      Subalgebra.comap (spinAction Q P) (evenSpinAction Q P).range :=
+    Algebra.adjoin_le (by rintro _ ⟨v, rfl⟩; exact hgen v)
+  intro f
+  obtain ⟨x, rfl⟩ := spinAction_surjective P f
+  exact (AlgHom.mem_range _).1 (hle ((adjoin_range_ι (Q := Q)).ge Algebra.mem_top))
+
+/-- **The even Clifford action on the spinor module is faithful in odd dimension.** It is onto an
+algebra of the same dimension, so it is injective. -/
+theorem evenSpinAction_injective : Function.Injective (evenSpinAction Q P) := by
   have _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
   exact (LinearMap.injective_iff_surjective_of_finrank_eq_finrank
     (f := (evenSpinAction Q P).toLinearMap)
-    (P.finrank_even_eq_finrank_end_of_odd_finrank hodd)).1
-    (evenSpinAction_injective P hQ hodd)
+    (P.finrank_even_eq_finrank_end_of_odd_finrank hodd)).2
+    (evenSpinAction_surjective P hodd)
 
 /-- **The even Clifford action on the spinor module is bijective in odd dimension**, the
-odd-dimensional counterpart of `TauCeti.spinAction_bijective`. -/
-theorem evenSpinAction_bijective : Function.Bijective (evenSpinAction Q P) :=
-  ⟨evenSpinAction_injective P hQ hodd, evenSpinAction_surjective P hQ hodd⟩
+odd-dimensional counterpart of `TauCeti.spinAction_bijective`. Kept private: it exists so that the
+bijectivity fed to `AlgEquiv.ofBijective` below carries the stated type, which is what lets the
+application lemma rewrite through it. -/
+private theorem evenSpinAction_bijective : Function.Bijective (evenSpinAction Q P) :=
+  ⟨evenSpinAction_injective P hodd, evenSpinAction_surjective P hodd⟩
 
 /-- **The odd structure theorem in operator form**: for a polarized quadratic space of odd
-dimension over a separably closed field of characteristic not two, the Fock action is an
-isomorphism of `F`-algebras from the even Clifford subalgebra onto the endomorphism algebra of the
-spinor module `S = ⋀·W`.
+dimension over a field of characteristic not two, the Fock action is an isomorphism of
+`F`-algebras from the even Clifford subalgebra onto the endomorphism algebra of the spinor module
+`S = ⋀·W`.
 
 This is the odd-dimensional companion of
 `TauCeti.SpinPolarizationData.cliffordEquivEnd`, one grade down: there the *whole* algebra is
 `Module.End F S`, here only its even half is, the whole algebra being two copies of it. -/
 noncomputable def SpinPolarizationData.evenCliffordEquivEnd :
     ↥(even Q) ≃ₐ[F] Module.End F (ExteriorAlgebra F P.W) :=
-  AlgEquiv.ofBijective (evenSpinAction Q P) (evenSpinAction_bijective P hQ hodd)
+  AlgEquiv.ofBijective (evenSpinAction Q P) (evenSpinAction_bijective P hodd)
 
 /-- The operator form of the odd structure theorem is the Fock action itself. -/
 @[simp]
 theorem SpinPolarizationData.evenCliffordEquivEnd_apply (x : ↥(even Q)) :
-    P.evenCliffordEquivEnd hQ hodd x = spinAction Q P x := by
+    P.evenCliffordEquivEnd hodd x = spinAction Q P x := by
   rw [SpinPolarizationData.evenCliffordEquivEnd, AlgEquiv.ofBijective_apply, evenSpinAction_apply]
 
 end OperatorForm
