@@ -28,6 +28,7 @@ abstract Lie-group exponential map.
 * `TauCeti.continuousMonoidHom_eq_expUnitHom_of_hasDerivAt`: it is the unique continuous
   one-parameter subgroup with that initial velocity.
 * `TauCeti.expUnitHom_injective`: distinct velocities generate distinct one-parameter subgroups.
+* `TauCeti.expUnitHom_inj`: the resulting equality normal form.
 * `TauCeti.existsUnique_eq_expUnitHom`: a continuous one-parameter subgroup of `Rˣ` whose
   underlying curve is differentiable at `0` is `expUnitHom x` for a unique `x : R`.
 
@@ -124,6 +125,7 @@ theorem continuousMonoidHom_eq_expUnitHom_of_hasDerivAt
 
 /-- Distinct velocities generate distinct one-parameter subgroups: the generator is recovered from
 `expUnitHom x` as the initial velocity of its underlying curve. -/
+@[grind inj]
 theorem expUnitHom_injective :
     Function.Injective (expUnitHom : R → ContinuousMonoidHom (Multiplicative ℝ) Rˣ) := by
   intro x y hxy
@@ -131,12 +133,19 @@ theorem expUnitHom_injective :
   rw [hxy] at hx
   exact hx.unique (hasDerivAt_expUnitHom_val_zero y)
 
-/-- **The one-parameter subgroups of `Rˣ` are exactly the exponentials.** A continuous
-one-parameter subgroup whose underlying curve is differentiable at `0` is `expUnitHom x` for a
-unique `x : R`; this is the bijection `Hom(ℝ, Rˣ) ≃ R` identifying `R` with the Lie algebra of
-`Rˣ`. The differentiability hypothesis is on the `R`-valued curve, since that is where the
-Banach-space derivative lives; upgrading it to mere continuity is a separate
-automatic-smoothness theorem. -/
+/-- Two exponential one-parameter subgroups agree exactly when their velocities do. -/
+@[simp]
+theorem expUnitHom_inj {x y : R} : expUnitHom x = expUnitHom y ↔ x = y :=
+  expUnitHom_injective.eq_iff
+
+/-- **The differentiable one-parameter subgroups of `Rˣ` are exactly the exponentials.** A
+continuous one-parameter subgroup whose underlying curve is differentiable at `0` is
+`expUnitHom x` for a unique `x : R`. Together with `expUnitHom_injective` this identifies the
+one-parameter subgroups satisfying that differentiability hypothesis with `R`, the Lie algebra of
+`Rˣ`. The unrestricted bijection between all of `ContinuousMonoidHom (Multiplicative ℝ) Rˣ` and
+`R` needs the automatic-smoothness theorem that a merely continuous one-parameter subgroup is
+already differentiable, which is not proved here. The differentiability hypothesis is stated for
+the `R`-valued curve, since that is where the Banach-space derivative lives. -/
 theorem existsUnique_eq_expUnitHom (φ : ContinuousMonoidHom (Multiplicative ℝ) Rˣ)
     (hφ : DifferentiableAt ℝ (fun t : ℝ => (φ (Multiplicative.ofAdd t) : R)) 0) :
     ∃! x : R, φ = expUnitHom x := by
