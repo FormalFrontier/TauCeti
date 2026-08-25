@@ -88,7 +88,7 @@ for Banach spaces, then certifies the two dimensions finite through
   the projection is the cokernel of `D₁`.
 * `TauCeti.parameterProj_surjective_iff`: for a surjective total linearization, the projection is
   surjective exactly when `D₁` is.
-* `TauCeti.ContinuousLinearMap.index_parameterProj`: for a surjective total linearization, the
+* `TauCeti.index_parameterProj`: for a surjective total linearization, the
   projection has the same index as `D₁`.
 * `TauCeti.isFredholm_parameterProj`: over Banach spaces, if `D₁` is Fredholm then the projection
   is Fredholm.
@@ -426,7 +426,7 @@ dimension of the finite-dimensional model space for a regular fibre.
 
 Neither operator is assumed Fredholm: both sides are differences of `Module.finrank`s, and the
 exact sequence matches the four dimensions in pairs, junk values included. -/
-theorem ContinuousLinearMap.index_parameterProj (hD : Function.Surjective (D₁.coprod D₂)) :
+theorem index_parameterProj (hD : Function.Surjective (D₁.coprod D₂)) :
     ContinuousLinearMap.index (parameterProj D₁ D₂) = ContinuousLinearMap.index D₁ := by
   rw [ContinuousLinearMap.index_eq_finrank_sub, ContinuousLinearMap.index_eq_finrank_sub,
     finrank_ker_parameterProj, finrank_quotient_range_parameterProj D₁ D₂ hD]
@@ -436,7 +436,7 @@ section Banach
 variable [IsRCLikeNormedField 𝕜] [CompleteSpace 𝕜] [CompleteSpace E] [CompleteSpace Λ]
 
 /-- **The parameter projection is Fredholm** as soon as `D₁` is, over Banach spaces. When the
-total linearization is surjective, `TauCeti.ContinuousLinearMap.index_parameterProj` also identifies
+total linearization is surjective, `TauCeti.index_parameterProj` also identifies
 their indices.
 
 Applying Sard--Smale in the nonlinear setting is a further step requiring a suitable smooth chart,
