@@ -50,8 +50,6 @@ that factorisation.
   `W → W.map (frobenius F p)`.
 * `TauCeti.Isogeny.iterateRelativeFrobeniusIsogeny`: the `n`-fold relative Frobenius
   `W → W.map (iterateFrobenius F p n)`.
-* `TauCeti.Isogeny.iterateRelativeFrobeniusPointHom`: its point map, given by
-  `(x, y) ↦ (x ^ (p ^ n), y ^ (p ^ n))`.
 
 ## Main results
 
@@ -63,6 +61,8 @@ that factorisation.
   `TauCeti.Isogeny.inseparableDegree_relativeFrobeniusIsogeny` splitting that as `1 · p`.
 * `TauCeti.Isogeny.degree_iterateRelativeFrobeniusIsogeny`: the `n`-fold iterate has degree
   `p ^ n` and is purely inseparable.
+* `TauCeti.Isogeny.mapAlong_iterateFrobenius_some`: its point-level formula is
+  `(x, y) ↦ (x ^ (p ^ n), y ^ (p ^ n))` for the existing generic point map.
 
 The degree is the shared tower comparison
 `WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow`, applied to the pullback: over the
@@ -81,9 +81,8 @@ that does want it.
 milestone and not a one-liner" (`README.md:429`), which asks for "the **Frobenius twist** `W^{(p)}`
 with its coefficient description and base-change API" — Mathlib's `WeierstrassCurve.map` along
 `frobenius`, consumed rather than redefined — and "the **relative Frobenius** `F_{W/K} : W →
-W^{(p)}` with its function-field pullback". Its point-level formula, the iterated twists
-`W^{(p^r)}` with iterated relative Frobenius, the factorisation `φ = φ_sep ∘ F_{W/K}^r` of
-AEC II.2.12, and Verschiebung remain.
+W^{(p)}` with its function-field pullback". Base-change compatibility, the factorisation
+`φ = φ_sep ∘ F_{W/K}^r` of AEC II.2.12, and Verschiebung remain.
 
 ## References
 
@@ -341,55 +340,16 @@ theorem degree_iterateRelativeFrobeniusIsogeny (n : ℕ) :
   exact _root_.WeierstrassCurve.Affine.finrank_fieldRange_of_apply_X_eq_pow W _
     (fieldPullback_iterateRelativeFrobeniusIsogeny_X p W n)
 
-/-- The `n`-fold relative Frobenius has separable degree one. -/
-theorem separableDegree_iterateRelativeFrobeniusIsogeny (n : ℕ) :
-    (iterateRelativeFrobeniusIsogeny p W n).separableDegree = 1 :=
-  separableDegree_eq_one_of_isPurelyInseparable
-    (iterateRelativeFrobeniusIsogeny p W n)
-
-/-- The `n`-fold relative Frobenius has inseparable degree `p ^ n`. -/
-theorem inseparableDegree_iterateRelativeFrobeniusIsogeny (n : ℕ) :
-    (iterateRelativeFrobeniusIsogeny p W n).inseparableDegree = p ^ n := by
-  rw [inseparableDegree_eq_degree_of_isPurelyInseparable,
-    degree_iterateRelativeFrobeniusIsogeny]
-
-section Point
-
-variable [DecidableEq F]
-
-/-- **The point map of the `n`-fold relative Frobenius.** It carries the point at infinity to
-itself and raises both coordinates of an affine point to their `p ^ n`-th powers. -/
-noncomputable def iterateRelativeFrobeniusPointHom (n : ℕ) :
-    W.Point →+ (W.map (iterateFrobenius F p n)).Point where
-  toFun := WeierstrassCurve.Affine.Point.mapAlong (iterateFrobenius F p n)
-    (iterateFrobenius F p n).injective
-  map_zero' := WeierstrassCurve.Affine.Point.mapAlong_zero _ _
-  map_add' P Q := by
-    let _ := (iterateFrobenius F p n).toAlgebra
-    -- Under this algebra structure, `algebraMap F F` is the iterated Frobenius. This exposes
-    -- Mathlib's additive `Affine.Point.map` behind `Point.mapAlong_eq_map`.
-    change WeierstrassCurve.Affine.Point.mapAlong (algebraMap F F)
-        (algebraMap F F).injective (P + Q) =
-      WeierstrassCurve.Affine.Point.mapAlong (algebraMap F F)
-          (algebraMap F F).injective P +
-        WeierstrassCurve.Affine.Point.mapAlong (algebraMap F F)
-          (algebraMap F F).injective Q
-    rw [WeierstrassCurve.Affine.Point.mapAlong_eq_map,
-      WeierstrassCurve.Affine.Point.mapAlong_eq_map,
-      WeierstrassCurve.Affine.Point.mapAlong_eq_map]
-    exact map_add _ P Q
-
 /-- The iterated relative Frobenius sends an affine point `(x, y)` to
 `(x ^ (p ^ n), y ^ (p ^ n))`. -/
 @[simp]
-theorem iterateRelativeFrobeniusPointHom_some (n : ℕ) {x y : F}
+theorem mapAlong_iterateFrobenius_some (n : ℕ) {x y : F}
     (h : W.Nonsingular x y) :
-    iterateRelativeFrobeniusPointHom p W n (.some x y h) =
+    WeierstrassCurve.Affine.Point.mapAlong (iterateFrobenius F p n)
+        (iterateFrobenius F p n).injective (.some x y h) =
       .some (x ^ p ^ n) (y ^ p ^ n)
         ((W.map_nonsingular (iterateFrobenius F p n).injective x y).mpr h) := by
-  simp [iterateRelativeFrobeniusPointHom, iterateFrobenius_def]
-
-end Point
+  simp [iterateFrobenius_def]
 
 end Isogeny
 
