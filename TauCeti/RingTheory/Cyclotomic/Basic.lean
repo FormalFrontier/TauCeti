@@ -468,6 +468,12 @@ embedding `TauCeti.Cyclotomic.complexEmbedding` is. -/
 theorem isPrimitiveRoot_complexRoot [NeZero e] : IsPrimitiveRoot (complexRoot e) e :=
   Complex.isPrimitiveRoot_exp e (NeZero.ne e)
 
+/-- Complex conjugation sends the distinguished primitive root to its inverse. -/
+theorem star_complexRoot [NeZero e] :
+    starRingEnd ℂ (complexRoot e) = (complexRoot e)⁻¹ := by
+  exact (Complex.inv_eq_conj
+    (isPrimitiveRoot_complexRoot.norm'_eq_one (NeZero.ne e))).symm
+
 /-- The distinguished complex root annihilates the integral cyclotomic polynomial. -/
 theorem eval₂_cyclotomic_complexRoot [NeZero e] :
     (cyclotomic e ℤ).eval₂ (Int.castRingHom ℂ) (complexRoot e) = 0 := by

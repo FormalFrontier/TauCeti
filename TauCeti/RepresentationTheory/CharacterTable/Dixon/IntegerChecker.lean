@@ -25,6 +25,8 @@ orthogonality. No equality of complex numbers is evaluated by the checker.
 
 * `TauCeti.ClassData.IsIntegerCharacterTableSpec`: the exact numbered certificate.
 * `TauCeti.ClassData.integerCharacterTableChecker`: its executable Boolean checker.
+* `TauCeti.ClassData.complexTableOfHom`: a numbered table mapped to `ℂ` and reindexed by
+  conjugacy classes.
 * `TauCeti.ClassData.complexTableOfInteger`: the integer ordinary table, cast and reindexed into
   the type expected by `TauCeti.IsCharacterTableSpec`.
 
@@ -123,13 +125,45 @@ theorem integerCharacterTableChecker_eq_true_iff
       d.IsIntegerCharacterTableSpec omega table degree := by
   simp [integerCharacterTableChecker]
 
+/-- Map a numbered table to `ℂ`, reindexing its rows by the cardinality of the conjugacy classes
+and its columns by the conjugacy classes themselves. -/
+noncomputable def complexTableOfHom {R : Type*} [Semiring R]
+    (f : R →+* ℂ) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R) :
+    Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ :=
+  (table.map f).submatrix
+    (finCongr d.numClasses_eq_card_conjClasses).symm d.equivConjClasses.symm
+
+/-- The mapped and reindexed table, evaluated at arbitrary row and column indices. -/
+@[simp]
+theorem complexTableOfHom_apply {R : Type*} [Semiring R]
+    (f : R →+* ℂ) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
+    d.complexTableOfHom f table i C =
+      f (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
+        (d.equivConjClasses.symm C)) :=
+  (rfl)
+
+/-- The mapped and reindexed table evaluated at a numbered row and numbered class. -/
+@[simp]
+theorem complexTableOfHom_apply_classOf {R : Type*} [Semiring R]
+    (f : R →+* ℂ) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    (i j : Fin d.numClasses) :
+    d.complexTableOfHom f table (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
+      f (table i j) := by
+  rw [d.complexTableOfHom_apply]
+  have hi : (finCongr d.numClasses_eq_card_conjClasses).symm
+      (finCongr d.numClasses_eq_card_conjClasses i) = i :=
+    (finCongr d.numClasses_eq_card_conjClasses).symm_apply_apply i
+  have hj : d.equivConjClasses.symm (d.classOf j) = j := by
+    rw [← d.equivConjClasses_apply j, Equiv.symm_apply_apply]
+  rw [hi, hj]
+
 /-- Cast a numbered integer table to `ℂ`, reindexing its rows by the cardinality of the conjugacy
 classes and its columns by the conjugacy classes themselves. -/
 noncomputable def complexTableOfInteger
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) :
     Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ :=
-  (table.map (Int.cast : ℤ → ℂ)).submatrix
-    (finCongr d.numClasses_eq_card_conjClasses).symm d.equivConjClasses.symm
+  d.complexTableOfHom (Int.castRingHom ℂ) table
 
 /-- The cast-and-reindexed integer table, evaluated at arbitrary row and column indices. -/
 @[simp]
@@ -138,21 +172,17 @@ theorem complexTableOfInteger_apply
     (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
     d.complexTableOfInteger table i C =
       (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
-        (d.equivConjClasses.symm C) : ℂ) :=
-  (rfl)
+        (d.equivConjClasses.symm C) : ℂ) := by
+  rw [complexTableOfInteger, d.complexTableOfHom_apply]
+  rfl
 
 /-- The cast-and-reindexed integer table evaluated at a numbered row and numbered class. -/
 theorem complexTableOfInteger_apply_classOf
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) (i j : Fin d.numClasses) :
     d.complexTableOfInteger table (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
       (table i j : ℂ) := by
-  rw [d.complexTableOfInteger_apply]
-  have hi : (finCongr d.numClasses_eq_card_conjClasses).symm
-      (finCongr d.numClasses_eq_card_conjClasses i) = i :=
-    (finCongr d.numClasses_eq_card_conjClasses).symm_apply_apply i
-  have hj : d.equivConjClasses.symm (d.classOf j) = j := by
-    rw [← d.equivConjClasses_apply j, Equiv.symm_apply_apply]
-  rw [hi, hj]
+  rw [complexTableOfInteger, d.complexTableOfHom_apply_classOf]
+  rfl
 
 namespace IsIntegerCharacterTableSpec
 
