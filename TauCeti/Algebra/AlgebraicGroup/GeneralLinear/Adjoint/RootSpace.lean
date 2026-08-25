@@ -254,7 +254,6 @@ theorem tangentMatrix_tangentScalarExtensionEquiv_adjointAction_diagonalTorus_ap
         ((cotangentDualMatrixEquiv (k := k) (n := n) x) i j) := by
   let M := Multiplicative (ULift.{u} (Fin n) →₀ ℤ)
   let K := MonoidAlgebra k M
-  let p : WithConv (K →ₐ[k] K) := toConv (AlgHom.id k K)
   rw [Derivation.tangentScalarExtensionEquiv_adjointAction
     (CommAlgCat.of k K)
     (toConv ((diagonalTorusCoordinateMap (R := k) (N := n)).hom :
@@ -265,8 +264,8 @@ theorem tangentMatrix_tangentScalarExtensionEquiv_adjointAction_diagonalTorus_ap
   rw [mul_assoc, mul_comm
     (algebraMap k K ((cotangentDualMatrixEquiv (k := k) (n := n) x) i j)), ← mul_assoc]
   rw [universalPoint_coordinate_mul_inv]
-  rw [mul_comm]
-  exact (MonoidAlgebra.single_eq_algebraMap_mul_of _ _).symm
+  rw [mul_comm (MonoidAlgebra.single (matrixUnitWeight i j) (1 : k)),
+    ← MonoidAlgebra.of_apply, ← MonoidAlgebra.single_eq_algebraMap_mul_of]
 
 /-- The matrix unit `E_ij` belongs to the adjoint weight space of the diagonal-torus character
 `e_i - e_j`.  This is the formal root-space version of diagonal conjugation scaling the

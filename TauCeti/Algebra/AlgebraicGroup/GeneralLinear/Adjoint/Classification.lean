@@ -74,11 +74,9 @@ theorem matrixUnitWeight_eq_of_mem_adjointWeightSpace_of_apply_ne_zero
     haction
   rw [tangentMatrix_tangentScalarExtensionEquiv_adjointAction_diagonalTorus_apply,
     tangentMatrix_tangentScalarExtensionEquiv_tmul, Matrix.smul_apply, Matrix.map_apply,
-    smul_eq_mul, mul_comm] at hentryAction
-  change MonoidAlgebra.single (matrixUnitWeight i j) (cotangentDualMatrixEquiv x i j) =
-    algebraMap k K (cotangentDualMatrixEquiv x i j) *
-      MonoidAlgebra.of k M alpha at hentryAction
-  rw [← MonoidAlgebra.single_eq_algebraMap_mul_of] at hentryAction
+    smul_eq_mul] at hentryAction
+  rw [mul_comm (MonoidAlgebra.single alpha 1), ← MonoidAlgebra.of_apply,
+    ← MonoidAlgebra.single_eq_algebraMap_mul_of] at hentryAction
   exact MonoidAlgebra.single_left_injective hentry hentryAction
 
 /-- The nontrivial adjoint weights of `GL_n` relative to its diagonal torus are exactly the
@@ -110,7 +108,7 @@ theorem mem_nontrivialAdjointWeights_diagonalTorus_iff
 
 /-- The set of nontrivial adjoint weights of `GL_n` is the set of off-diagonal matrix-unit
 characters. -/
-theorem nontrivialAdjointWeights_eq_setOf_matrixUnitWeight :
+theorem nontrivialAdjointWeights_diagonalTorus_eq_setOf_matrixUnitWeight :
     Derivation.nontrivialAdjointWeights
         (diagonalTorusCoordinateMap (R := k) (N := n)).hom =
       {alpha | ∃ i j, i ≠ j ∧ alpha = matrixUnitWeight i j} := by
