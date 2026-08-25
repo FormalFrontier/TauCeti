@@ -157,6 +157,33 @@ lemma regularUnitToFunctionField_apply
       Units.map (X.germToFunctionField (⊤ : X.Opens)).hom.toMonoidHom f := by
   rfl
 
+/-- The equivalence from global rational units to function-field units carries the image of a
+global regular unit to the unit induced by its germ in the function field. -/
+lemma rationalUnitSectionsEquiv_toRationalUnitSheaf_app
+    (f : ((X.presheaf.obj (op (⊤ : X.Opens))) : Type u)ˣ) :
+    rationalUnitSectionsEquiv X
+        (((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom (Additive.ofMul f)) =
+      Additive.ofMul (regularUnitToFunctionField X f) := by
+  have hunit :
+      ((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom (Additive.ofMul f) =
+        Additive.ofMul (Units.map
+          ((toRationalFunctionsRing X).hom.app
+            (op (⊤ : X.Opens))).hom.toMonoidHom f) :=
+    CategoryTheory.Sheaf.additiveUnitsFunctor_map_app_apply
+      (Opens.grothendieckTopology X) (toRationalFunctionsRing X)
+        (op (⊤ : X.Opens)) (Additive.ofMul f)
+  rw [hunit, rationalUnitSectionsEquiv_apply, regularUnitToFunctionField_apply]
+  apply congrArg Additive.ofMul
+  apply Units.ext
+  simp only [Units.coe_map]
+  -- The units API exposes underlying values, while the rational-functions comparison
+  -- theorems use the definitionally equal module-sheaf section type.
+  change rationalFunctionsRingEquiv (⊤ : X.Opens)
+      ((toRationalFunctionsRing X).hom.app (op (⊤ : X.Opens)) (f : Γ(X, ⊤))) =
+    X.germToFunctionField (⊤ : X.Opens) f
+  rw [← toRationalFunctionsRing_app, ← rationalFunctionsEquiv_apply,
+    rationalFunctionsEquiv_toRationalFunctions_app]
+
 /-- A nonzero rational function determines its principal Cartier divisor. The multiplicative
 group of the function field is written additively in the domain. -/
 def principalCartierDivisorAddHom : Additive X.functionFieldˣ →+ CartierDivisor X :=
@@ -193,29 +220,6 @@ lemma principalCartierDivisor_regularUnitToFunctionField
       (Units.map (X.germToFunctionField (⊤ : X.Opens)).hom f) = 0 := by
   refine (congrArg (principalCartierDivisor X)
     (regularUnitToFunctionField_apply X f).symm).trans ?_
-  have hmap :
-      rationalUnitSectionsEquiv X
-          (((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom (Additive.ofMul f)) =
-        Additive.ofMul (regularUnitToFunctionField X f) := by
-    have hunit :
-        ((toRationalUnitSheaf X).hom.app (op (⊤ : X.Opens))).hom (Additive.ofMul f) =
-          Additive.ofMul (Units.map
-            ((toRationalFunctionsRing X).hom.app
-              (op (⊤ : X.Opens))).hom.toMonoidHom f) :=
-      CategoryTheory.Sheaf.additiveUnitsFunctor_map_app_apply
-        (Opens.grothendieckTopology X) (toRationalFunctionsRing X)
-          (op (⊤ : X.Opens)) (Additive.ofMul f)
-    rw [hunit, rationalUnitSectionsEquiv_apply, regularUnitToFunctionField_apply]
-    apply congrArg Additive.ofMul
-    apply Units.ext
-    simp only [Units.coe_map]
-    -- The units API exposes underlying values, while the rational-functions comparison
-    -- theorems use the definitionally equal module-sheaf section type.
-    change rationalFunctionsRingEquiv (⊤ : X.Opens)
-        ((toRationalFunctionsRing X).hom.app (op (⊤ : X.Opens)) (f : Γ(X, ⊤))) =
-      X.germToFunctionField (⊤ : X.Opens) f
-    rw [← toRationalFunctionsRing_app, ← rationalFunctionsEquiv_apply,
-      rationalFunctionsEquiv_toRationalFunctions_app]
   have hsymm :
       (rationalUnitSectionsEquiv X).symm
           (Additive.ofMul (regularUnitToFunctionField X f)) =
@@ -223,7 +227,7 @@ lemma principalCartierDivisor_regularUnitToFunctionField
           (op (⊤ : X.Opens))).hom (Additive.ofMul f) := by
     apply (rationalUnitSectionsEquiv X).injective
     rw [AddEquiv.apply_symm_apply]
-    exact hmap.symm
+    exact (rationalUnitSectionsEquiv_toRationalUnitSheaf_app X f).symm
   calc
     principalCartierDivisor X (regularUnitToFunctionField X f) =
         (toCartierDivisor X) ((rationalUnitSectionsEquiv X).symm
