@@ -52,6 +52,12 @@ entry of the weight matrix equal to `1`, so its determinant vanishes as soon as 
 columns. Hence `∑_x (-1)^{M_O(x)} = 0`, that is, on any grid of size at least two exactly half of
 the states have even `O`-Maslov grading (`GridDiagram.sum_negOnePow_maslovOℤ_eq_zero`).
 
+The last section records the two diagram symmetries the state sum enjoys. The diagonal reflection
+leaves it unchanged, because it permutes the grid states while preserving both exponents. The
+marking swap, which reverses the orientation of every component of the presented link, sends `T`
+to `T⁻¹` up to an explicit monomial and sign: this is the grid incarnation of the symmetry
+`Δ_L(t) = Δ_L(t⁻¹)` of the Alexander polynomial.
+
 ## Main definitions
 
 * `TauCeti.GridDiagram.alexanderTwoWeight`, `TauCeti.GridDiagram.alexanderTwoShift`: the local
@@ -67,6 +73,8 @@ the states have even `O`-Maslov grading (`GridDiagram.sum_negOnePow_maslovOℤ_e
 * `TauCeti.GridDiagram.stateSum_eq_smul_T_mul_det_weightMatrix`: the grid determinant formula.
 * `TauCeti.GridDiagram.sum_negOnePow_maslovOℤ_eq_zero`: the alternating sign sum over grid states
   vanishes on every grid of size at least two.
+* `TauCeti.GridDiagram.stateSum_transpose`: the state sum is invariant under diagonal reflection.
+* `TauCeti.GridDiagram.stateSum_swapMarkings`: the marking swap inverts the grading variable.
 
 ## References
 
@@ -208,6 +216,49 @@ theorem sum_negOnePow_maslovOℤ_eq_zero (hn : 2 ≤ n) :
       simp only [Matrix.map_apply, weightMatrix_apply, hT]
     rw [Matrix.det_zero_of_row_eq hne hrow, one_mul, mul_zero]
   rw [← hA, hB]
+
+/-- The alternating Alexander state sum is invariant under the diagonal reflection of a grid
+diagram.
+
+Reflection permutes the grid states, and both exponents of the state sum, the `O`-Maslov grading
+and twice the Alexander grading, are carried along that permutation unchanged. -/
+theorem stateSum_transpose : G.transpose.stateSum = G.stateSum := by
+  rw [stateSum_def, stateSum_def]
+  refine Fintype.sum_equiv
+    (Function.Involutive.toPerm GridState.transpose GridState.transpose_transpose) _ _ fun x => ?_
+  have hM := G.maslovOℤ_transpose x.transpose
+  have hA := G.alexanderTwoℤ_transpose x.transpose
+  rw [GridState.transpose_transpose] at hM hA
+  rw [hM, hA]
+  rfl
+
+/-- Exchanging the two marking types inverts the grading variable of the alternating Alexander
+state sum, up to an explicit monomial and an explicit sign.
+
+The marking swap reverses the orientation of every component of the presented link, so this is the
+grid-diagram form of the symmetry `Δ_L(t) = Δ_L(t⁻¹)` of the Alexander polynomial. Twice the
+Alexander grading is negated up to the shift `2(n - 1)`, which contributes the monomial, and the
+`O`-Maslov parity turns into the `X`-Maslov parity, which contributes the sign
+`(-1)^{n + ℓ}` for `ℓ` the number of components. -/
+theorem stateSum_swapMarkings :
+    G.swapMarkings.stateSum =
+      ((n : ℤ) + G.componentCount).negOnePow • (T (-2 * ((n : ℤ) - 1)) * invert G.stateSum) := by
+  rw [stateSum_def, stateSum_def, map_sum, Finset.mul_sum, Finset.smul_sum]
+  refine Finset.sum_congr rfl fun x _ => ?_
+  have hsign : (G.maslovXℤ x).negOnePow =
+      ((n : ℤ) + G.componentCount).negOnePow * (G.maslovOℤ x).negOnePow := by
+    have hOO : ∀ u : ℤˣ,
+        Equiv.Perm.sign G.O.toPerm * (Equiv.Perm.sign G.O.toPerm * u) = u := fun u => by
+      rw [← mul_assoc, Int.units_mul_self, one_mul]
+    rw [G.negOnePow_maslovOℤ x, G.negOnePow_maslovXℤ x, ← G.sign_O_mul_sign_X]
+    simp [mul_comm, mul_left_comm, hOO]
+  have hexp : G.swapMarkings.alexanderTwoℤ x =
+      -2 * ((n : ℤ) - 1) + -G.alexanderTwoℤ x := by
+    rw [alexanderTwoℤ_swapMarkings]; ring
+  rw [maslovOℤ_swapMarkings, hsign, hexp, T_add, Units.smul_def, Units.smul_def, Units.smul_def,
+    zsmul_eq_mul, zsmul_eq_mul, zsmul_eq_mul, map_mul, map_intCast, invert_T]
+  push_cast
+  ring
 
 end GridDiagram
 
