@@ -118,26 +118,26 @@ theorem IsPiecewiseContMDiffOn.eVariationOn_le_pathELength
   exact hγ.riemannianEDist_le_pathELength_of_subset has hst htb
 
 /-- The metric variation of a pointwise limit is bounded by the `liminf` of the Riemannian path
-lengths of `C¹` approximating curves. Pointwise convergence is enough because metric variation is
-the supremum of finite sums, each of which reads only finitely many parameter values.
+lengths of eventually `C¹` approximating curves. Pointwise convergence is enough because metric
+variation is the supremum of finite sums, each of which reads only finitely many parameter values.
 
 The stronger-looking conclusion with `pathELength I γ a b` on the left requires the converse
 comparison between Riemannian path length and metric variation. -/
 theorem eVariationOn_le_liminf_pathELength {γn : ℕ → ℝ → M}
-    (hγn : ∀ n, CMDiff[Icc a b] 1 (γn n))
+    (hγn : ∀ᶠ n in atTop, CMDiff[Icc a b] 1 (γn n))
     (hγ : ∀ t ∈ Icc a b, Tendsto (fun n ↦ γn n t) atTop (nhds (γ t))) :
     eVariationOn γ (Icc a b) ≤
       liminf (fun n ↦ Manifold.pathELength I (γn n) a b) atTop := by
   rw [le_liminf_iff]
   intro v hv
-  exact (eVariationOn.lowerSemicontinuous_aux hγ hv).mono fun n hn ↦
-    hn.trans_le (eVariationOn_le_pathELength (hγn n))
+  filter_upwards [eVariationOn.lowerSemicontinuous_aux hγ hv, hγn] with n hn hγn
+  exact hn.trans_le (eVariationOn_le_pathELength hγn)
 
 /-- Uniform convergence on `[a, b]` gives the metric-variation lower bound on the `liminf` of
-Riemannian path lengths. This is the convergence mode in the Hopf--Rinow roadmap; the proof passes
-through the stronger pointwise result above. -/
+Riemannian path lengths of eventually `C¹` curves. This is the convergence mode in the Hopf--Rinow
+roadmap; the proof passes through the stronger pointwise result above. -/
 theorem eVariationOn_le_liminf_pathELength_of_tendstoUniformlyOn {γn : ℕ → ℝ → M}
-    (hγn : ∀ n, CMDiff[Icc a b] 1 (γn n))
+    (hγn : ∀ᶠ n in atTop, CMDiff[Icc a b] 1 (γn n))
     (hγ : TendstoUniformlyOn γn γ atTop (Icc a b)) :
     eVariationOn γ (Icc a b) ≤
       liminf (fun n ↦ Manifold.pathELength I (γn n) a b) atTop :=
