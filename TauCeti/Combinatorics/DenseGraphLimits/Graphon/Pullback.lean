@@ -73,18 +73,18 @@ The argument order follows `SymmKernel.comap`: the map first, then its measurabi
 carrier measure of the result, which the data does not determine. -/
 def comap (W : Graphon Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω')
     [IsProbabilityMeasure μ'] : Graphon Ω' μ' where
-  toFun x y := W (f x) (f y)
-  symm' x y := W.symm (f x) (f y)
-  meas' := W.measurable.comp (hf.prodMap hf)
-  bdd' := ⟨1, fun x y => by rw [abs_of_nonneg (W.nonneg _ _)]; exact W.le_one _ _⟩
-  mem01' x y := W.mem_Icc (f x) (f y)
+  toSymmKernel := W.toSymmKernel.comap f hf μ'
+  mem01' x y := by
+    change W.toSymmKernel.comap f hf μ' x y ∈ Set.Icc 0 1
+    simpa only [SymmKernel.comap_apply, coe_toSymmKernel] using W.mem_Icc (f x) (f y)
 
 variable (W : Graphon Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measure Ω')
   [IsProbabilityMeasure μ']
 
 /-- Pulling back a graphon evaluates it after applying the map to both arguments. -/
 @[simp]
-theorem comap_apply (x y : Ω') : W.comap f hf μ' x y = W (f x) (f y) := (rfl)
+theorem comap_apply (x y : Ω') : W.comap f hf μ' x y = W (f x) (f y) := by
+  exact SymmKernel.comap_apply W.toSymmKernel f hf μ' x y
 
 /-- The underlying kernel of a pulled-back graphon is the pullback of its kernel. This is the form
 the cut norm and the kernel algebra consume, so it is the bridge between this file and

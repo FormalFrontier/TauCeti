@@ -16,7 +16,7 @@ its pullback `W.comap f` on `(Ω', ν)` have the *same* homomorphism densities:
 `t(F, W.comap f) = t(F, W)` for every finite graph `F`.
 
 Unlike the corresponding statement for the cut norm
-(`TauCeti.DenseGraphLimits.SymmKernel.cutNorm_comap`), no cut-norm estimate or inequality is needed.
+(`TauCeti.DenseGraphLimits.cutNorm_comap`), no cut-norm estimate or inequality is needed.
 The proof is instead a measure-theoretic change-of-variables argument. A homomorphism density is
 an integral over vertex assignments `V → Ω`, and postcomposition with
 `f` sends assignments upstairs to assignments downstairs; `MeasureTheory.measurePreserving_pi`
