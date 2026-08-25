@@ -11,6 +11,7 @@ public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
+import Mathlib.Probability.Moments.ComplexMGF
 import TauCeti.Probability.Distributions.PDFInstances
 
 /-!
@@ -20,7 +21,8 @@ This file develops the elementary moment theory of Mathlib's gamma distribution.
 shape `a` and a positive rate `r` it computes every natural raw moment, the mean and the variance,
 the exact set of rates at which an exponential moment exists, and the moment- and
 cumulant-generating functions on that set. It also identifies the law of a positive rescaling: only
-the rate moves, and it moves by the scaling factor.
+the rate moves, and it moves by the scaling factor. Finally, it proves that the convolution of two
+gamma laws with the same rate adds their shape parameters.
 
 The moment and transform computations go through the same two reductions. The measure
 `gammaMeasure a r` is
@@ -45,6 +47,8 @@ shifted rate is still positive.
 * `TauCeti.mgf_id_gammaMeasure` — the moment-generating function is `(1 - t / r) ^ (-a)` there;
 * `TauCeti.cgf_id_gammaMeasure` — the cumulant-generating function is `-a * log (1 - t / r)`
   there, the real logarithm of the previous formula;
+* `TauCeti.gammaMeasure_conv_gammaMeasure` — convolution at a common rate adds the shape
+  parameters;
 * `TauCeti.gammaMeasure_map_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`.
 
 The cumulative distribution function is computed in
@@ -62,6 +66,7 @@ public section
 namespace TauCeti
 
 open MeasureTheory ProbabilityTheory Real Set
+open scoped MeasureTheory
 
 variable {a r : ℝ}
 
@@ -274,6 +279,65 @@ theorem variance_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
   rw [integral_sq_gammaMeasure ha hr, integral_id_gammaMeasure ha hr]
   field_simp
   ring
+
+/-! ### Convolution -/
+
+/-- The moment-generating function of a convolution is the product of the two
+moment-generating functions. This private form is specialized to real probability measures, as
+needed for gamma laws. -/
+private lemma mgf_id_conv {μ ν : Measure ℝ}
+    [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
+    mgf id (μ ∗ ν) = mgf id μ * mgf id ν := by
+  ext t
+  rw [Measure.conv, mgf_id_map (by fun_prop)]
+  -- `mgf_id_map` leaves addition under a lambda, while `IndepFun.mgf_add'` expects the
+  -- definitionally equal pointwise sum of the two projection functions.
+  change mgf ((fun p : ℝ × ℝ ↦ p.1) + fun p ↦ p.2) (μ.prod ν) t =
+    mgf id μ t * mgf id ν t
+  rw [(indepFun_prod measurable_id measurable_id).mgf_add'
+    (X := fun p : ℝ × ℝ ↦ p.1) (Y := fun p ↦ p.2)]
+  · rw [← mgf_id_map (μ := μ.prod ν) measurable_fst.aemeasurable,
+      ← mgf_id_map (μ := μ.prod ν) measurable_snd.aemeasurable]
+    simp
+  all_goals fun_prop
+
+/-- The convolution of two gamma laws with a common positive rate is a gamma law whose shape is
+the sum of the two positive shapes. -/
+@[simp]
+theorem gammaMeasure_conv_gammaMeasure {b : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 0 < r) :
+    gammaMeasure a r ∗ gammaMeasure b r = gammaMeasure (a + b) r := by
+  have hab : 0 < a + b := add_pos ha hb
+  let _ := isProbabilityMeasure_gammaMeasure ha hr
+  let _ := isProbabilityMeasure_gammaMeasure hb hr
+  let _ := isProbabilityMeasure_gammaMeasure hab hr
+  have hmgf : mgf id (gammaMeasure (a + b) r) =
+      mgf id (gammaMeasure a r ∗ gammaMeasure b r) := by
+    rw [mgf_id_conv]
+    ext t
+    simp only [Pi.mul_apply]
+    rcases lt_or_ge t r with ht | ht
+    · rw [mgf_id_gammaMeasure hab hr ht, mgf_id_gammaMeasure ha hr ht,
+        mgf_id_gammaMeasure hb hr ht, ← Real.rpow_add]
+      · congr 1
+        ring
+      · rw [sub_pos, div_lt_one hr]
+        exact ht
+    · rw [mgf_undef (by simpa [id_eq] using
+          not_integrable_exp_mul_id_gammaMeasure hab hr ht),
+        mgf_undef (by simpa [id_eq] using
+          not_integrable_exp_mul_id_gammaMeasure ha hr ht),
+        mgf_undef (by simpa [id_eq] using
+          not_integrable_exp_mul_id_gammaMeasure hb hr ht)]
+      simp
+  symm
+  apply Measure.ext_of_charFun
+  ext t
+  have ht : ((t : ℂ) * Complex.I).re ∈ interior
+      (integrableExpSet id (gammaMeasure (a + b) r)) := by
+    rw [integrableExpSet_id_gammaMeasure hab hr]
+    simpa using hr
+  have h := eqOn_complexMGF_of_mgf hmgf ht
+  rwa [complexMGF_id_mul_I, complexMGF_id_mul_I] at h
 
 /-! ### Scaling -/
 
