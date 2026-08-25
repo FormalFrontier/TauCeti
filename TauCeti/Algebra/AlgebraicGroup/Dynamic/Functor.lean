@@ -91,29 +91,23 @@ theorem coe_mapUnipotent_apply (l : H →ₐc[R] LaurentPolynomial R)
 /-- The dynamic parabolic attached to a cocharacter, as a group-valued functor. -/
 -- The object carrier must unfold when downstream modules construct natural transformations.
 @[expose] noncomputable def parabolicFunctor (l : H →ₐc[R] LaurentPolynomial R) :
-    CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
-  obj A := GrpCat.of (parabolic A l)
-  map φ := GrpCat.ofHom (mapParabolic l φ)
-  map_id _ := by ext; rfl
-  map_comp _ _ := by ext; rfl
+    CommAlgCat.{w} R ⥤ GrpCat.{max v w} :=
+  HopfAlgebra.subgroupFunctor (fun A ↦ parabolic A l)
+    (fun φ ↦ mapParabolic l φ) (by intros; rfl) (by intros; rfl)
 
 /-- The dynamic Levi attached to a cocharacter, as a group-valued functor. -/
 -- The object carrier must unfold when downstream modules construct natural transformations.
 @[expose] noncomputable def leviFunctor (l : H →ₐc[R] LaurentPolynomial R) :
-    CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
-  obj A := GrpCat.of (levi A l)
-  map φ := GrpCat.ofHom (mapLevi l φ)
-  map_id _ := by ext; rfl
-  map_comp _ _ := by ext; rfl
+    CommAlgCat.{w} R ⥤ GrpCat.{max v w} :=
+  HopfAlgebra.subgroupFunctor (fun A ↦ levi A l)
+    (fun φ ↦ mapLevi l φ) (by intros; rfl) (by intros; rfl)
 
 /-- The dynamic unipotent subgroup attached to a cocharacter, as a group-valued functor. -/
 -- The object carrier must unfold when downstream modules construct natural transformations.
 @[expose] noncomputable def unipotentFunctor (l : H →ₐc[R] LaurentPolynomial R) :
-    CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
-  obj A := GrpCat.of (unipotent A l)
-  map φ := GrpCat.ofHom (mapUnipotent l φ)
-  map_id _ := by ext; rfl
-  map_comp _ _ := by ext; rfl
+    CommAlgCat.{w} R ⥤ GrpCat.{max v w} :=
+  HopfAlgebra.subgroupFunctor (fun A ↦ unipotent A l)
+    (fun φ ↦ mapUnipotent l φ) (by intros; rfl) (by intros; rfl)
 
 theorem parabolicFunctor_obj (l : H →ₐc[R] LaurentPolynomial R) (A : CommAlgCat.{w} R) :
     (parabolicFunctor l).obj A = GrpCat.of (parabolic A l) :=

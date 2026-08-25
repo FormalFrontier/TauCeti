@@ -28,13 +28,17 @@ antipode calculations.
   weight-parabolic ideals.
 * `TauCeti.GeneralLinear.weightLeviGroupScheme`: the resulting finite-type closed subgroup
   scheme of `GL_N`.
-* `TauCeti.GeneralLinear.mem_weightLeviDefiningPointsSubgroup_iff`: its algebra-valued points are
-  exactly the matrices preserving every weight space.
+* `TauCeti.GeneralLinear.mem_weightLeviDefiningPointsSubgroup_iff_apply_eq_zero`: its
+  algebra-valued points are exactly the matrices preserving every weight space.
 
 ## References
 
 * G. R. Kempf, *Instability in invariant theory*, Annals of Mathematics 108 (1978), §2.
 * J. S. Milne, *Algebraic Groups* (2017), Chapter 13.
+* The closed-subgroup packaging specializes the generic construction abstracted from
+  `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic`, which in turn adapts
+  `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel` and
+  `TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic`.
 
 This advances the dynamic-parabolic route in Layer 7, "Structure theory", of the ReductiveGroups
 roadmap by constructing the scheme-level Levi attached to a weight cocharacter.
@@ -56,15 +60,6 @@ noncomputable def weightLeviDefiningHopfIdeal (w : Fin N → ℤ) :
     HopfIdeal R (coordinateHopfAlgebra R N) :=
   weightParabolicDefiningHopfIdeal R w ⊔ weightParabolicDefiningHopfIdeal R (-w)
 
-/-- The underlying ideal of the weight Levi is the sum of the two opposite
-weight-parabolic ideals. -/
-@[simp]
-theorem weightLeviDefiningHopfIdeal_toIdeal (w : Fin N → ℤ) :
-    (weightLeviDefiningHopfIdeal R w).toIdeal =
-      (weightParabolicDefiningHopfIdeal R w).toIdeal ⊔
-        (weightParabolicDefiningHopfIdeal R (-w)).toIdeal := by
-  rw [weightLeviDefiningHopfIdeal, HopfIdeal.sup_toIdeal]
-
 /-- The coordinate Hopf algebra of the weight Levi attached to `w`. -/
 noncomputable abbrev weightLeviCoordinateHopfAlgebra (w : Fin N → ℤ) :
     _root_.CommHopfAlgCat.{u} R :=
@@ -79,9 +74,7 @@ noncomputable abbrev weightLeviGroupScheme (w : Fin N → ℤ) :=
 /-- The closed immersion from the weight Levi into the named general linear group scheme. -/
 noncomputable def weightLeviInclusion (w : Fin N → ℤ) :
     weightLeviGroupScheme R w ⟶ groupScheme R N :=
-  CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
-      (weightLeviDefiningHopfIdeal R w) ≫
-    (eqToIso (groupScheme_def R N).symm).hom
+  hopfIdealInclusion R N (weightLeviDefiningHopfIdeal R w)
 
 /-- The weight-Levi inclusion is the quotient-spectrum inclusion followed by the named
 identification with `GL_N`. -/
@@ -90,41 +83,23 @@ theorem weightLeviInclusion_def (w : Fin N → ℤ) :
       CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
           (weightLeviDefiningHopfIdeal R w) ≫
         (eqToIso (groupScheme_def R N).symm).hom := by
-  rw [weightLeviInclusion]
-
-private theorem weightLeviInclusion_hom_left (w : Fin N → ℤ) :
-    (weightLeviInclusion R w).hom.hom.left =
-      (CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
-          (weightLeviDefiningHopfIdeal R w)).hom.hom.left ≫
-        ((eqToIso (groupScheme_def R N).symm).hom).hom.hom.left := by
-  rw [weightLeviInclusion_def]
-  rfl
+  rw [weightLeviInclusion, hopfIdealInclusion_def]
 
 /-- The weight-Levi inclusion into `GL_N` is a closed immersion. -/
 instance isClosedImmersion_weightLeviInclusion (w : Fin N → ℤ) :
     IsClosedImmersion (weightLeviInclusion R w).hom.hom.left := by
-  let c := (CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
-    (weightLeviDefiningHopfIdeal R w)).hom.hom.left
-  let e := ((eqToIso (groupScheme_def R N).symm).hom).hom.hom.left
-  have hc : IsClosedImmersion c := by infer_instance
-  have hce : IsClosedImmersion (c ≫ e) :=
-    (MorphismProperty.cancel_right_of_respectsIso _ c e).2 hc
-  rw [weightLeviInclusion_hom_left]
-  exact hce
+  rw [weightLeviInclusion]
+  infer_instance
 
 /-- The weight-Levi group scheme is locally of finite type over the base. -/
 instance locallyOfFiniteType_weightLeviGroupScheme (w : Fin N → ℤ) :
-    LocallyOfFiniteType (weightLeviGroupScheme R w).X.hom :=
-  FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
-    (⟨coordinateHopfAlgebra R N,
-      inferInstanceAs (Algebra.FiniteType R (coordinateHopfAlgebra R N))⟩ :
-      FiniteTypeCommHopfAlgCat R)
-    (weightLeviDefiningHopfIdeal R w)
+    LocallyOfFiniteType (weightLeviGroupScheme R w).X.hom := by
+  infer_instance
 
 /-- The subgroup cut out by the weight-Levi ideal consists exactly of matrices preserving every
 weight space: entries between distinct weights vanish. -/
 @[simp]
-theorem mem_weightLeviDefiningPointsSubgroup_iff (w : Fin N → ℤ)
+theorem mem_weightLeviDefiningPointsSubgroup_iff_apply_eq_zero (w : Fin N → ℤ)
     {A : Type*} [CommRing A] [Algebra R A]
     (g : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N)
       (CommAlgCat.of R A)) :
