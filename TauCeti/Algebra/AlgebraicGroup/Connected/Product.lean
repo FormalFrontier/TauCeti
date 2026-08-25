@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SemidirectProduct
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Properties
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
@@ -121,7 +120,6 @@ theorem productOfNormal (H : CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
       (CommHopfAlgCat.productOfNormal H I J hI) := by
   let A := CommHopfAlgCat.quotientNormalConjugation H I J hI
   apply image (CommHopfAlgCat.productMapOfNormal H I J hI)
-  rw [CommHopfAlgCat.normalSemidirectProduct_eq_coordinateHopfAlgebra]
   exact semidirectProduct (CommHopfAlgCat.quotient H I)
     (CommHopfAlgCat.quotient H J) A hIc hJc
 

@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SemidirectProduct
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Smooth
 
@@ -41,21 +40,23 @@ noncomputable section
 
 namespace smoothCommHopfAlgProperty
 
-variable {k : Type u} [Field k]
+variable {R : Type u} [CommRing R]
 
 /-- The semidirect product associated to an action of smooth affine groups is smooth. -/
-theorem semidirectProduct (H K : CommHopfAlgCat.{u} k)
+theorem semidirectProduct (H K : CommHopfAlgCat.{u} R)
     (A : GrpObj.Action (CommHopfAlgCat.grpObj K) (CommHopfAlgCat.grpObj H))
-    (hH : smoothCommHopfAlgProperty k H)
-    (hK : smoothCommHopfAlgProperty k K) :
-    smoothCommHopfAlgProperty k A.coordinateHopfAlgebra := by
+    (hH : smoothCommHopfAlgProperty R H)
+    (hK : smoothCommHopfAlgProperty R K) :
+    smoothCommHopfAlgProperty R A.coordinateHopfAlgebra := by
   rw [smoothCommHopfAlgProperty_iff] at hH hK ⊢
-  let _ : Algebra.Smooth k H := hH
-  let _ : Algebra.Smooth k K := hK
-  let _ : Algebra.Smooth H (H ⊗[k] K) := Algebra.Smooth.baseChange k K H
-  let _ : Algebra.Smooth k (H ⊗[k] K) := Algebra.Smooth.comp k H _
+  let _ : Algebra.Smooth R H := hH
+  let _ : Algebra.Smooth R K := hK
+  let _ : Algebra.Smooth H (H ⊗[R] K) := Algebra.Smooth.baseChange R K H
+  let _ : Algebra.Smooth R (H ⊗[R] K) := Algebra.Smooth.comp R H _
   -- Transport the inferred tensor-product smoothness across the coordinate-algebra equivalence.
   exact Algebra.Smooth.of_equiv A.coordinateAlgEquiv.symm
+
+variable {k : Type u} [Field k]
 
 /-- The scheme-theoretic multiplication image of a normal smooth closed affine subgroup and
 another smooth closed affine subgroup is smooth when the ambient affine group is finite type. -/
@@ -66,7 +67,6 @@ theorem productOfNormal (H : CommHopfAlgCat.{u} k) [Algebra.FiniteType k H]
     smoothCommHopfAlgProperty k (CommHopfAlgCat.productOfNormal H I J hI) := by
   let A := CommHopfAlgCat.quotientNormalConjugation H I J hI
   apply image (CommHopfAlgCat.productMapOfNormal H I J hI)
-  rw [CommHopfAlgCat.normalSemidirectProduct_eq_coordinateHopfAlgebra]
   exact semidirectProduct (CommHopfAlgCat.quotient H I)
     (CommHopfAlgCat.quotient H J) A hIs hJs
 
