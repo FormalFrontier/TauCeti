@@ -96,12 +96,20 @@ theorem coe_zigzagProjectiveProjection (i : V) (x : nonisolatedZigzagQuotient k 
       x * zigzagVertexIdempotent k G i :=
   (rfl)
 
+/-- Projecting an element of `Z e_i` back onto `Z e_i` fixes it. -/
+@[simp]
+theorem zigzagProjectiveProjection_coe (i : V) (x : zigzagProjective k G i) :
+    zigzagProjectiveProjection k G i (x : nonisolatedZigzagQuotient k G) = x := by
+  apply Subtype.ext
+  rw [coe_zigzagProjectiveProjection]
+  exact (mem_zigzagProjective_iff k G).mp x.2
+
 /-- The projection onto `Z e_i` splits its inclusion into the regular module. -/
 theorem zigzagProjectiveProjection_comp_subtype (i : V) :
     (zigzagProjectiveProjection k G i).comp (zigzagProjective k G i).subtype = LinearMap.id := by
-  ext x
-  simp only [LinearMap.comp_apply, LinearMap.id_apply, coe_zigzagProjectiveProjection]
-  exact (mem_zigzagProjective_iff k G).mp x.2
+  apply LinearMap.ext
+  intro x
+  exact zigzagProjectiveProjection_coe k G i x
 
 /-- The vertex ideal `Z e_i` is a projective left module over the zigzag relation quotient. -/
 theorem zigzagProjective_projective (i : V) :
