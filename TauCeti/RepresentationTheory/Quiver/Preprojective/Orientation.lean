@@ -137,7 +137,7 @@ end Sign
 
 section Doubled
 
-variable (k : Type w) {Q : Type u} [CommRing k] [Quiver.{v + 1} Q] [Finite Q]
+variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q] [Finite Q]
   (σ : ∀ ⦃i j : Q⦄, (i ⟶ j) → Bool)
 
 /-- **The isomorphism of doubled path algebras attached to a reorientation**: the path algebra of
@@ -149,14 +149,24 @@ noncomputable def reorientDoubledEquiv :
     (reorientSymmetrify_comp_reorientSymmetrifyInv σ)
     (reorientSymmetrifyInv_comp_reorientSymmetrify σ)
 
+/-- The doubled path-algebra comparison maps a path of two arrows by mapping each arrow. -/
+private theorem reorientDoubledEquiv_ofArrowComp {i j l : Symmetrify (Reorient Q σ)} (a : i ⟶ j)
+    (b : j ⟶ l) :
+    reorientDoubledEquiv k σ (ofPath ⟨i, l, a.toPath.comp b.toPath⟩) =
+      ofPath ⟨(reorientSymmetrify σ).obj i, (reorientSymmetrify σ).obj l,
+        ((reorientSymmetrify σ).map a).toPath.comp
+          ((reorientSymmetrify σ).map b).toPath⟩ := by
+  rw [reorientDoubledEquiv, mapAlgEquiv_apply, mapAlgHom_ofPath,
+    Prefunctor.mapTotalPath_mk, Prefunctor.mapPath_comp, Prefunctor.mapPath_toPath,
+    Prefunctor.mapPath_toPath]
+
 /-- An arrow which `σ` leaves alone keeps its head backtrack. -/
 @[simp]
 theorem reorientDoubledEquiv_headBacktrackElem_keep {i j : Q} (a : i ⟶ j) (ha : ¬ σ a) :
     reorientDoubledEquiv k σ (headBacktrackElem k (reorientKeep σ a ha))
       = headBacktrackElem k a := by
-  rw [headBacktrackElem_def, headBacktrackElem_def, reorientDoubledEquiv, mapAlgEquiv_apply,
-    mapAlgHom_ofPath, Prefunctor.mapTotalPath_mk, Prefunctor.mapPath_comp,
-    Prefunctor.mapPath_toPath, Prefunctor.mapPath_toPath, reorientSymmetrify_map_of_keep,
+  rw [headBacktrackElem_def, headBacktrackElem_def, reorientDoubledEquiv_ofArrowComp,
+    reorientSymmetrify_map_of_keep,
     reorientSymmetrify_map_reverse_of_keep]
   rfl
 
@@ -165,9 +175,8 @@ theorem reorientDoubledEquiv_headBacktrackElem_keep {i j : Q} (a : i ⟶ j) (ha 
 theorem reorientDoubledEquiv_tailBacktrackElem_keep {i j : Q} (a : i ⟶ j) (ha : ¬ σ a) :
     reorientDoubledEquiv k σ (tailBacktrackElem k (reorientKeep σ a ha))
       = tailBacktrackElem k a := by
-  rw [tailBacktrackElem_def, tailBacktrackElem_def, reorientDoubledEquiv, mapAlgEquiv_apply,
-    mapAlgHom_ofPath, Prefunctor.mapTotalPath_mk, Prefunctor.mapPath_comp,
-    Prefunctor.mapPath_toPath, Prefunctor.mapPath_toPath, reorientSymmetrify_map_of_keep,
+  rw [tailBacktrackElem_def, tailBacktrackElem_def, reorientDoubledEquiv_ofArrowComp,
+    reorientSymmetrify_map_of_keep,
     reorientSymmetrify_map_reverse_of_keep]
   rfl
 
@@ -177,9 +186,8 @@ arrow is the tail backtrack of the original. -/
 theorem reorientDoubledEquiv_headBacktrackElem_flip {i j : Q} (a : j ⟶ i) (ha : σ a) :
     reorientDoubledEquiv k σ (headBacktrackElem k (reorientFlip σ a ha))
       = tailBacktrackElem k a := by
-  rw [headBacktrackElem_def, tailBacktrackElem_def, reorientDoubledEquiv, mapAlgEquiv_apply,
-    mapAlgHom_ofPath, Prefunctor.mapTotalPath_mk, Prefunctor.mapPath_comp,
-    Prefunctor.mapPath_toPath, Prefunctor.mapPath_toPath, reorientSymmetrify_map_of_flip,
+  rw [headBacktrackElem_def, tailBacktrackElem_def, reorientDoubledEquiv_ofArrowComp,
+    reorientSymmetrify_map_of_flip,
     reorientSymmetrify_map_reverse_of_flip]
   rfl
 
@@ -189,11 +197,26 @@ arrow is the head backtrack of the original. -/
 theorem reorientDoubledEquiv_tailBacktrackElem_flip {i j : Q} (a : j ⟶ i) (ha : σ a) :
     reorientDoubledEquiv k σ (tailBacktrackElem k (reorientFlip σ a ha))
       = headBacktrackElem k a := by
-  rw [tailBacktrackElem_def, headBacktrackElem_def, reorientDoubledEquiv, mapAlgEquiv_apply,
-    mapAlgHom_ofPath, Prefunctor.mapTotalPath_mk, Prefunctor.mapPath_comp,
-    Prefunctor.mapPath_toPath, Prefunctor.mapPath_toPath, reorientSymmetrify_map_of_flip,
+  rw [tailBacktrackElem_def, headBacktrackElem_def, reorientDoubledEquiv_ofArrowComp,
+    reorientSymmetrify_map_of_flip,
     reorientSymmetrify_map_reverse_of_flip]
   rfl
+
+/-- The comparison of doubled path algebras matches the vertex idempotents. -/
+@[simp]
+theorem reorientDoubledEquiv_doubledVertexIdempotent (v : Q) :
+    reorientDoubledEquiv k σ (doubledVertexIdempotent k (reorientVertex σ v))
+      = doubledVertexIdempotent k v := by
+  rw [doubledVertexIdempotent_def, doubledVertexIdempotent_def, reorientDoubledEquiv,
+    mapAlgEquiv_apply, mapAlgHom_vertexIdempotent]
+  rfl
+
+end Doubled
+
+section DoubledSub
+
+variable (k : Type w) {Q : Type u} [CommRing k] [Quiver.{v + 1} Q] [Finite Q]
+  (σ : ∀ ⦃i j : Q⦄, (i ⟶ j) → Bool)
 
 /-- An arrow which `σ` leaves alone contributes its own difference of backtracks. -/
 theorem reorientDoubledEquiv_sub_keep {i j : Q} (a : i ⟶ j) (ha : ¬ σ a) :
@@ -213,16 +236,7 @@ theorem reorientDoubledEquiv_sub_flip {i j : Q} (a : j ⟶ i) (ha : σ a) :
     reorientDoubledEquiv_tailBacktrackElem_flip, reorientSign_of_true k ha, neg_one_smul,
     neg_sub]
 
-/-- The comparison of doubled path algebras matches the vertex idempotents. -/
-@[simp]
-theorem reorientDoubledEquiv_doubledVertexIdempotent (v : Q) :
-    reorientDoubledEquiv k σ (doubledVertexIdempotent k (reorientVertex σ v))
-      = doubledVertexIdempotent k v := by
-  rw [doubledVertexIdempotent_def, doubledVertexIdempotent_def, reorientDoubledEquiv,
-    mapAlgEquiv_apply, mapAlgHom_vertexIdempotent]
-  rfl
-
-end Doubled
+end DoubledSub
 
 /-! ### The relator of a reorientation is a signed relator -/
 

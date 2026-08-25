@@ -151,7 +151,8 @@ def reorientSymmetrify : Symmetrify (Reorient Q σ) ⥤q Symmetrify Q where
 
 /-- The inverse comparison: an arrow of the doubled quiver is sorted into one of the four pieces of
 a hom set of `Symmetrify (Reorient Q σ)` according to whether it runs forwards or backwards in `Q`
-and whether `σ` turns it around. -/
+and whether `σ` turns it around. Its object map remains exposed because reducing `obj := id` is
+needed to typecheck the dependent source and target types of its public arrow-map equations. -/
 @[expose]
 def reorientSymmetrifyInv : Symmetrify Q ⥤q Symmetrify (Reorient Q σ) where
   obj := id
@@ -171,6 +172,49 @@ theorem reorientSymmetrify_obj (i : Symmetrify (Reorient Q σ)) :
 @[simp]
 theorem reorientSymmetrifyInv_obj (i : Symmetrify Q) :
     (reorientSymmetrifyInv σ).obj i = i := rfl
+
+/-- The inverse comparison sends an arrow which `σ` leaves alone to the corresponding arrow of the
+reoriented quiver. -/
+@[simp]
+theorem reorientSymmetrifyInv_map_of_keep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) :
+    (reorientSymmetrifyInv σ).map (Symmetrify.of.map a) =
+      Symmetrify.of.map (reorientKeep σ a h) := by
+  change (if h' : σ a then Quiver.reverse (Symmetrify.of.map (reorientFlip σ a h'))
+    else Symmetrify.of.map (reorientKeep σ a h')) = Symmetrify.of.map (reorientKeep σ a h)
+  rw [dite_eq_right h]
+
+/-- The inverse comparison sends the formal reverse of an arrow which `σ` leaves alone to the
+formal reverse of the corresponding reoriented arrow. Deliberately not a `simp` lemma: simplifying
+formal reversal first would make this a non-normal-form rule. -/
+theorem reorientSymmetrifyInv_map_reverse_of_keep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) :
+    (reorientSymmetrifyInv σ).map (Quiver.reverse (Symmetrify.of.map a)) =
+      Quiver.reverse (Symmetrify.of.map (reorientKeep σ a h)) := by
+  change (if h' : σ a then Symmetrify.of.map (reorientFlip σ a h')
+    else Quiver.reverse (Symmetrify.of.map (reorientKeep σ a h'))) =
+      Quiver.reverse (Symmetrify.of.map (reorientKeep σ a h))
+  rw [dite_eq_right h]
+
+/-- The inverse comparison sends an arrow which `σ` turns around to the formal reverse of the
+corresponding reoriented arrow. -/
+@[simp]
+theorem reorientSymmetrifyInv_map_of_flip {i j : Q} (a : i ⟶ j) (h : σ a) :
+    (reorientSymmetrifyInv σ).map (Symmetrify.of.map a) =
+      Quiver.reverse (Symmetrify.of.map (reorientFlip σ a h)) := by
+  change (if h' : σ a then Quiver.reverse (Symmetrify.of.map (reorientFlip σ a h'))
+    else Symmetrify.of.map (reorientKeep σ a h')) =
+      Quiver.reverse (Symmetrify.of.map (reorientFlip σ a h))
+  rw [dite_eq_left h]
+
+/-- The inverse comparison sends the formal reverse of an arrow which `σ` turns around to the
+corresponding reoriented arrow. Deliberately not a `simp` lemma, for the reason recorded on
+`TauCeti.reorientSymmetrifyInv_map_reverse_of_keep`. -/
+theorem reorientSymmetrifyInv_map_reverse_of_flip {i j : Q} (a : i ⟶ j) (h : σ a) :
+    (reorientSymmetrifyInv σ).map (Quiver.reverse (Symmetrify.of.map a)) =
+      Symmetrify.of.map (reorientFlip σ a h) := by
+  change (if h' : σ a then Symmetrify.of.map (reorientFlip σ a h')
+    else Quiver.reverse (Symmetrify.of.map (reorientKeep σ a h'))) =
+      Symmetrify.of.map (reorientFlip σ a h)
+  rw [dite_eq_left h]
 
 /-- An arrow of `Q` which `σ` leaves alone stays an arrow of the doubled quiver. -/
 @[simp]
