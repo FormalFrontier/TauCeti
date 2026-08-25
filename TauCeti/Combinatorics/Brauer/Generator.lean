@@ -15,8 +15,10 @@ Besides the permutation diagrams, the Brauer diagrams on `k` strands are generat
 whose only horizontal arcs are the cap joining the bottom points `a` and `b` and the cup joining
 the top points `a` and `b`, every other boundary point lying on the through strand joining the two
 points with its index. These are the diagrams written `e` in Brauer's presentation; the classical
-generator `eᵢ` of `B_k(δ)` is `capCup i (i + 1)`, but nothing below needs the pair to be adjacent,
-so the pair is arbitrary throughout.
+generator `eᵢ` of `B_k(δ)` is the cap-cup diagram on a pair of consecutive indices, the two indices
+of `Fin k` with values `i` and `i + 1` where `i + 1 < k` — writing that pair as `i` and `i + 1` in
+`Fin k` would be wrong at the last index, where the successor wraps back to `0`. Nothing below
+needs the pair to be adjacent, so the pair is arbitrary throughout.
 
 A cap-cup diagram is the identity diagram transported along the transposition that exchanges the
 top point `a` with the bottom point `b`, which bends the two strands ending at `a` and at `b` into
@@ -34,7 +36,7 @@ Brauer algebra turns into Brauer's relations:
   (`TauCeti.composeDiagram_capCup_capCup`) and closes up exactly one loop in the middle
   (`TauCeti.middleLoopCount_capCup_capCup`), the single loop formed by the cap of the upper copy
   and the cup of the lower one. This is the relation the loop rule exists for, and the first
-  place the middle-loop count is computed exactly rather than bounded.
+  place a nonzero middle-loop count is computed exactly rather than only bounded below.
 * `s * e = e = e * s` for the transposition `s` of the pair
   (`TauCeti.composeDiagram_permToBrauer_swap_capCup` and
   `TauCeti.composeDiagram_capCup_permToBrauer_swap`), with no loop closing up because a
@@ -100,8 +102,8 @@ variable {k : ℕ} {a b c d i j : Fin k}
 
 /-- **The cap-cup diagram** on the pair `{a, b}`: the Brauer diagram whose only horizontal arcs
 are the cap joining the bottom points `a` and `b` and the cup joining the top points `a` and `b`.
-It is the Brauer generator `e` of the pair; the classical generator `eᵢ` is the case of the
-adjacent pair `{i, i + 1}`.
+It is the Brauer generator `e` of the pair; the classical generator `eᵢ` is the case of a
+consecutive pair, the two indices of `Fin k` with values `i` and `i + 1` where `i + 1 < k`.
 
 It is the identity diagram transported along the transposition exchanging the top point `a` with
 the bottom point `b`, which bends the strands ending at `a` and at `b` into a cap and a cup. On
