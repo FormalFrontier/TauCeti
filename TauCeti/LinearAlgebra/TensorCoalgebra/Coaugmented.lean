@@ -223,6 +223,7 @@ theorem subword_eq_zero_of_lt_add {n : ℕ} (x : Fin n → M) {a b : ℕ} (hab :
   rw [subword, dite_eq_right (by omega)]
 
 /-- An empty block inside a tuple is the empty word. -/
+@[simp]
 theorem subword_length_zero {n : ℕ} (x : Fin n → M) {a : ℕ} (ha : a ≤ n) :
     subword R x a 0 = emptyWord R M := by
   rw [subword_eq_of_tprod R x (by omega), emptyWord_eq_of_tprod R M]
@@ -526,6 +527,7 @@ section Reduced
 variable {M : Type uM} [AddCommMonoid M] [Module R M]
 
 /-- A nonempty block is the same word read in either presentation. -/
+@[simp]
 theorem reducedInclusion_subword {n : ℕ} (x : Fin n → M) {a b : ℕ} (hb : 0 < b) :
     reducedInclusion R M (ReducedTensorWords.subword R x a b) = subword R x a b := by
   by_cases hab : a + b ≤ n
@@ -586,7 +588,7 @@ theorem deconcatenation_reducedInclusion (w : ReducedTensorWords R M) :
   exact h
 
 /-- The letters of a tensor word are primitive. -/
-theorem deconcatenation_of_one (z : TensorPower R 1 M) :
+theorem deconcatenation_of_length_one (z : TensorPower R 1 M) :
     deconcatenation R M (of R M 1 z) =
       emptyWord R M ⊗ₜ[R] of R M 1 z + of R M 1 z ⊗ₜ[R] emptyWord R M := by
   have h := deconcatenation_reducedInclusion R M (ReducedTensorWords.of R M ⟨1, Nat.one_pos⟩ z)
