@@ -69,17 +69,19 @@ instance instMonoidalPresheafOfModulesRingCatSheafObj :
   inferInstanceAs (MonoidalCategory (PresheafOfModules.{u}
     (X.presheaf ⋙ forget₂ CommRingCat RingCat.{u})))
 
-/-- The braided category structure on presheaves of modules over the underlying presheaf
-of rings of `X`. -/
-instance instBraidedPresheafOfModulesRingCatSheafObj :
-    BraidedCategory (PresheafOfModules.{u} X.ringCatSheaf.obj) :=
-  inferInstanceAs (BraidedCategory (PresheafOfModules.{u}
+/-- The symmetric category structure on presheaves of modules over the underlying presheaf
+of rings of `X`, obtained from Mathlib's symmetric structure on presheaves of modules over
+a presheaf of commutative rings. -/
+instance instSymmetricPresheafOfModulesRingCatSheafObj :
+    SymmetricCategory (PresheafOfModules.{u} X.ringCatSheaf.obj) :=
+  inferInstanceAs (SymmetricCategory (PresheafOfModules.{u}
     (X.presheaf ⋙ forget₂ CommRingCat RingCat.{u})))
 
 namespace Modules
 
 /-- The functor of sheafified tensor products with a fixed second argument:
 it sends `M` to `M ⊗ N`. -/
+@[expose]
 def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductRightFunctor {X : Scheme.{u}}
     (N : X.Modules) : X.Modules ⥤ X.Modules :=
   (SheafOfModules.forget X.ringCatSheaf).comp
@@ -88,6 +90,7 @@ def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductRightFunctor {X : Schem
 
 /-- The functor of sheafified tensor products with a fixed first argument:
 it sends `N` to `M ⊗ N`. -/
+@[expose]
 def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductLeftFunctor {X : Scheme.{u}}
     (M : X.Modules) : X.Modules ⥤ X.Modules :=
   (SheafOfModules.forget X.ringCatSheaf).comp
@@ -96,19 +99,18 @@ def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductLeftFunctor {X : Scheme
 
 /-- The tensor product of two `𝒪ₓ`-modules: the sectionwise tensor product of the
 underlying presheaves of modules, sheafified. -/
+@[expose]
 def _root_.AlgebraicGeometry.Scheme.Modules.tensorProduct {X : Scheme.{u}}
     (M N : X.Modules) : X.Modules :=
   (tensorProductRightFunctor N).obj M
 
 @[simp]
-lemma _root_.AlgebraicGeometry.Scheme.Modules.tensorProduct_obj_val {X : Scheme.{u}}
+lemma _root_.AlgebraicGeometry.Scheme.Modules.tensorProduct_val {X : Scheme.{u}}
     (M N : X.Modules) :
     (tensorProduct M N).val =
       ((PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj
         (M.val ⊗ N.val)).val :=
-  by
-    rw [tensorProduct]
-    rfl
+  rfl
 
 /-- The defining identification of the tensor product with the sheafification of the
 sectionwise tensor product of the underlying presheaves of modules. -/
@@ -119,15 +121,11 @@ def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductIso {X : Scheme.{u}} (M
 
 /-- The sheafification of the underlying presheaf of modules of an `𝒪ₓ`-module is
 isomorphic to the module; this is the counit of the sheafification adjunction. -/
+@[expose]
 def _root_.AlgebraicGeometry.Scheme.Modules.sheafificationIso {X : Scheme.{u}} (M : X.Modules) :
-    (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj M.val ≅ M := by
-  have h := PresheafOfModules.instIsIsoFunctorSheafOfModulesCounitSheafificationAdjunction
-    (𝟙 X.ringCatSheaf.obj)
-  haveI h2 := ((NatTrans.isIso_iff_isIso_app
-    (PresheafOfModules.sheafificationAdjunction (𝟙 X.ringCatSheaf.obj)).counit).mp h) M
-  exact @asIso _ _ _ _
-    ((PresheafOfModules.sheafificationAdjunction
-      (𝟙 X.ringCatSheaf.obj)).counit.app M) h2
+    (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj M.val ≅ M :=
+  (asIso
+    (PresheafOfModules.sheafificationAdjunction (𝟙 X.ringCatSheaf.obj)).counit).app M
 
 /-- The forward map of `sheafificationIso` is the counit of the sheafification
 adjunction. -/
@@ -136,24 +134,18 @@ theorem _root_.AlgebraicGeometry.Scheme.Modules.sheafificationIso_hom {X : Schem
     (M : X.Modules) :
     (sheafificationIso M).hom =
       (PresheafOfModules.sheafificationAdjunction
-        (𝟙 X.ringCatSheaf.obj)).counit.app M := by
-  have h := PresheafOfModules.instIsIsoFunctorSheafOfModulesCounitSheafificationAdjunction
-    (𝟙 X.ringCatSheaf.obj)
-  have h2 := ((NatTrans.isIso_iff_isIso_app
-    (PresheafOfModules.sheafificationAdjunction (𝟙 X.ringCatSheaf.obj)).counit).mp h) M
-  change (asIso ((PresheafOfModules.sheafificationAdjunction
-      (𝟙 X.ringCatSheaf.obj)).counit.app M)).hom =
-    (PresheafOfModules.sheafificationAdjunction
-      (𝟙 X.ringCatSheaf.obj)).counit.app M
-  exact asIso_hom _
+        (𝟙 X.ringCatSheaf.obj)).counit.app M :=
+  rfl
 
 /-- An isomorphism of the first argument transports through the tensor product. -/
-def tensorProductCongrLeft {X : Scheme.{u}} {M M' N : X.Modules} (e : M ≅ M') :
+def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductCongrLeft {X : Scheme.{u}}
+    {M M' N : X.Modules} (e : M ≅ M') :
     tensorProduct M N ≅ tensorProduct M' N :=
   (tensorProductRightFunctor N).mapIso e
 
 /-- An isomorphism of the second argument transports through the tensor product. -/
-def tensorProductCongrRight {X : Scheme.{u}} {M N N' : X.Modules} (e : N ≅ N') :
+def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductCongrRight {X : Scheme.{u}}
+    {M N N' : X.Modules} (e : N ≅ N') :
     tensorProduct M N ≅ tensorProduct M N' :=
   (tensorProductLeftFunctor M).mapIso e
 
@@ -179,6 +171,15 @@ theorem _root_.AlgebraicGeometry.Scheme.Modules.tensorProductCongrLeft_trans {X 
     (tensorProductCongrLeft (X := X) (M := M₁) (M' := M₃) (N := N) (e₁ ≪≫ e₂)) =
       tensorProductCongrLeft (X := X) (N := N) e₁ ≪≫
         tensorProductCongrLeft (X := X) (N := N) e₂ :=
+  Functor.mapIso_trans _ e₁ e₂
+
+/-- Congruence in the second argument respects composition. -/
+@[simp]
+theorem _root_.AlgebraicGeometry.Scheme.Modules.tensorProductCongrRight_trans {X : Scheme.{u}}
+    (M : X.Modules) {N₁ N₂ N₃ : X.Modules} (e₁ : N₁ ≅ N₂) (e₂ : N₂ ≅ N₃) :
+    (tensorProductCongrRight (X := X) (M := M) (N := N₁) (N' := N₃) (e₁ ≪≫ e₂)) =
+      tensorProductCongrRight (X := X) (M := M) e₁ ≪≫
+        tensorProductCongrRight (X := X) (M := M) e₂ :=
   Functor.mapIso_trans _ e₁ e₂
 
 /-- Tensoring with the structure sheaf (on the left) does nothing. -/
