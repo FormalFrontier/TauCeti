@@ -487,6 +487,38 @@ noncomputable def coordinateHopfAlgebraAlgEquiv :
   letI : HopfAlgebra R (CoordinateRing R n) := hopfAlgebra R n
   exact AlgEquiv.refl
 
+/-- The localized generic matrix, read in the bundled coordinate Hopf algebra of `GLₙ`. -/
+noncomputable def genericMatrix :
+    Matrix (Fin n) (Fin n) (coordinateHopfAlgebra R n) :=
+  (localizedGenericMatrix R n).map (coordinateHopfAlgebraAlgEquiv R n)
+
+/-- An entry of the bundled generic matrix is the corresponding bundled coordinate. -/
+@[simp]
+theorem genericMatrix_apply (i j : Fin n) :
+    genericMatrix R n i j =
+      coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j))) := by
+  rw [genericMatrix, Matrix.map_apply, localizedGenericMatrix_apply]
+
+/-- The determinant of the bundled generic matrix is a unit. -/
+theorem isUnit_det_genericMatrix : IsUnit (genericMatrix R n).det := by
+  rw [genericMatrix, ← AlgEquiv.mapMatrix_apply, ← AlgEquiv.map_det]
+  exact (isUnit_det_localizedGenericMatrix R n).map
+    (coordinateHopfAlgebraAlgEquiv R n).toAlgHom
+
+/-- An entry of the inverse bundled generic matrix is the bundled image of the corresponding
+localized inverse entry. -/
+theorem genericMatrix_inv_apply (i j : Fin n) :
+    (genericMatrix R n)⁻¹ i j =
+      coordinateHopfAlgebraAlgEquiv R n ((localizedGenericMatrix R n)⁻¹ i j) := by
+  have h : (genericMatrix R n)⁻¹ =
+      ((localizedGenericMatrix R n)⁻¹).map (coordinateHopfAlgebraAlgEquiv R n) := by
+    apply Matrix.inv_eq_left_inv
+    rw [genericMatrix, ← Matrix.map_mul,
+      Matrix.nonsing_inv_mul _ (isUnit_det_localizedGenericMatrix R n)]
+    exact Matrix.map_one _ (map_zero _) (map_one _)
+  rw [h, Matrix.map_apply]
+
 /-- Mathlib has no `CommHopfAlgCat.of_comul` lemma exposing the comultiplication stored by
 `CommHopfAlgCat.of`. This bridge locally crosses the two definitional wrappers:
 `coordinateHopfAlgebra` stores `(hopfAlgebra R n).toCoalgebra` on the raw coordinate ring, and

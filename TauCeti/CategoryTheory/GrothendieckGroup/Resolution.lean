@@ -25,14 +25,18 @@ zero padding, and of every other choice -- and it is the first half of Weibel's 
 theorem: it exhibits `[X]` as an integral combination of classes of objects satisfying `P`, so
 those classes generate exact `K₀` as soon as every object admits a finite `P`-resolution.
 
-The second half, that the comparison map from the exact `K₀` of the full subcategory on `P` is
-also injective, needs the resolving hypotheses on `P` and Weibel's common-refinement argument,
-and is not proved here.
+For a property consisting of projectives, the second half — injectivity of the comparison map from
+the exact `K₀` of the full subcategory on `P` — is proved by Schanuel's and the horseshoe lemmas
+in `TauCeti/CategoryTheory/GrothendieckGroup/ProjectiveResolution.lean`; see
+`TauCeti.ExactStructure.resolutionEquiv`. The general resolving-subcategory case needs the packaged
+resolving hypotheses and Weibel's common-refinement argument, and is not proved here.
 
 ## Main definitions
 
 * `TauCeti.ExactStructure.FiniteResolution.eulerClass`: the alternating class of a finite
-  resolution in exact `K₀`.
+  resolution in ambient exact `K₀`.
+* `TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory`: the alternating class in
+  the exact `K₀` of an extension-closed full subcategory containing the resolution terms.
 
 ## Main results
 
@@ -60,9 +64,13 @@ open CategoryTheory CategoryTheory.Limits ZeroObject
 universe w v u
 
 variable {C : Type u} [Category.{v} C] [Preadditive C] [HasZeroObject C] [HasBinaryBiproducts C]
-  [EssentiallySmall.{w} C] {E : ExactStructure C} {P : ObjectProperty C}
+  {E : ExactStructure C} {P : ObjectProperty C}
 
 namespace ExactStructure.FiniteResolution
+
+section Ambient
+
+variable [EssentiallySmall.{w} C]
 
 /-- The Euler class of a finite `P`-resolution: the alternating sum of the classes of its
 resolving terms, ending with the class of its last syzygy. -/
@@ -112,9 +120,112 @@ theorem eulerClass_eq_eulerClass {X : C} (r s : E.FiniteResolution P X) :
     (r.biprod s).eulerClass = r.eulerClass + s.eulerClass := by
   rw [eulerClass_eq_of, eulerClass_eq_of, eulerClass_eq_of, ExactK0.of_biprod]
 
+end Ambient
+
+section FullSubcategory
+
+variable [LocallySmall.{w} C] [ObjectProperty.EssentiallySmall.{w} P]
+  [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
+
+/-- A property containing a zero object and closed under binary products is automatically
+replete, by `CategoryTheory.ObjectProperty.isClosedUnderIsomorphisms_of_containsZero`. -/
+local instance : P.IsClosedUnderIsomorphisms :=
+  ObjectProperty.isClosedUnderIsomorphisms_of_containsZero P
+
+variable (hP : E.IsExtensionClosed P)
+
+/-- **The Euler class of a finite `P`-resolution in the `K₀` of the full subcategory on `P`**: the
+alternating sum `[Q₀] - [Q₁] + ⋯ + (-1)ⁿ [Kₙ]` of the classes of its resolving terms and its last
+syzygy, all of which satisfy `P`, formed in the exact `K₀` of the exact structure induced on the
+full subcategory on `P`.
+
+Unlike `TauCeti.ExactStructure.FiniteResolution.eulerClass`, which lives in the `K₀` of the
+ambient category and telescopes to `[X]`, this class carries genuine information: nothing in the
+subcategory relates it to `X`. When `P` consists of projectives, its independence of the chosen
+resolution is
+`TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory_eq_eulerClassFullSubcategory`.
+-/
+noncomputable def eulerClassFullSubcategory :
+    ∀ {X : C}, E.FiniteResolution P X → ExactK0 (E.fullSubcategory P hP)
+  | _, .base hX => ExactK0.of ⟨_, hX⟩
+  | _, .step (Q := Q) hQ _ _ _ _ r =>
+      ExactK0.of ⟨Q, hQ⟩ - eulerClassFullSubcategory r
+
+@[simp] theorem eulerClassFullSubcategory_base {X : C} (hX : P X) :
+    (base (E := E) hX).eulerClassFullSubcategory hP = ExactK0.of ⟨X, hX⟩ := (rfl)
+
+@[simp] theorem eulerClassFullSubcategory_step {K Q X : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X)
+    (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
+    (r : E.FiniteResolution P K) :
+    (step hQ i p zero hp r).eulerClassFullSubcategory hP =
+      ExactK0.of ⟨Q, hQ⟩ - r.eulerClassFullSubcategory hP := (rfl)
+
+@[simp] theorem eulerClassFullSubcategory_ofIso {X Y : C} (e : X ≅ Y)
+    (r : E.FiniteResolution P X) :
+    (ofIso e r).eulerClassFullSubcategory hP = r.eulerClassFullSubcategory hP := by
+  cases r with
+  | base hX =>
+      rw [ofIso_base, eulerClassFullSubcategory_base, eulerClassFullSubcategory_base]
+      exact ExactK0.of_congr (ObjectProperty.isoMk _ e.symm :
+        (⟨Y, P.prop_of_iso e hX⟩ : P.FullSubcategory) ≅ ⟨X, hX⟩)
+  | step hQ i p zero hp r =>
+      rw [ofIso_step, eulerClassFullSubcategory_step, eulerClassFullSubcategory_step]
+
+/-- Padding a finite resolution by one trivial conflation does not change its Euler class. -/
+@[simp] theorem eulerClassFullSubcategory_zeroPad {X : C} (r : E.FiniteResolution P X) :
+    r.zeroPad.eulerClassFullSubcategory hP = r.eulerClassFullSubcategory hP := by
+  induction r with
+  | base hX =>
+      have hzero : IsZero (⟨0, P.prop_zero⟩ : P.FullSubcategory) :=
+        IsZero.of_full_of_faithful_of_isZero P.ι _ (isZero_zero C)
+      rw [zeroPad_base, eulerClassFullSubcategory_step, eulerClassFullSubcategory_base,
+        eulerClassFullSubcategory_base, ExactK0.of_eq_zero_of_isZero hzero, sub_zero]
+  | step hQ i p zero hp r ih =>
+      rw [zeroPad_step, eulerClassFullSubcategory_step, eulerClassFullSubcategory_step, ih]
+
+/-- Padding a finite resolution by any number of trivial conflations does not change its Euler
+class. -/
+@[simp] theorem eulerClassFullSubcategory_pad {X : C} (r : E.FiniteResolution P X) (n : ℕ) :
+    (r.pad n).eulerClassFullSubcategory hP = r.eulerClassFullSubcategory hP := by
+  induction n with
+  | zero => rw [pad_zero]
+  | succ n ih => rw [pad_succ, eulerClassFullSubcategory_zeroPad, ih]
+
+@[simp] theorem eulerClassFullSubcategory_biprod {X Y : C} (r : E.FiniteResolution P X)
+    (s : E.FiniteResolution P Y) :
+    (r.biprod s).eulerClassFullSubcategory hP =
+      r.eulerClassFullSubcategory hP + s.eulerClassFullSubcategory hP := by
+  induction r generalizing Y with
+  | @base X hX =>
+      cases s with
+      | @base Y hY =>
+          rw [biprod_base_base, eulerClassFullSubcategory_base, eulerClassFullSubcategory_base,
+            eulerClassFullSubcategory_base]
+          exact ExactK0.of_biprod_fullSubcategory hP hX hY
+      | @step K Q Y hQ i p zero hp s =>
+          simp only [biprod_base_step, eulerClassFullSubcategory]
+          rw [eulerClassFullSubcategory_ofIso,
+            ExactK0.of_biprod_fullSubcategory hP hX hQ]
+          abel
+  | @step K Q X hQ i p zero hp r ih =>
+      cases s with
+      | @base Y hY =>
+          simp only [biprod_step_base, eulerClassFullSubcategory]
+          rw [eulerClassFullSubcategory_ofIso,
+            ExactK0.of_biprod_fullSubcategory hP hQ hY]
+          abel
+      | @step K' Q' Y hQ' i' p' zero' hp' s =>
+          simp only [biprod_step_step, eulerClassFullSubcategory]
+          rw [ih, ExactK0.of_biprod_fullSubcategory hP hQ hQ']
+          abel
+
+end FullSubcategory
+
 end ExactStructure.FiniteResolution
 
 namespace ExactK0
+
+variable [EssentiallySmall.{w} C]
 
 variable (E P) in
 /-- The classes of the objects satisfying `P`, as a subset of exact `K₀`. -/

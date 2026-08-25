@@ -328,12 +328,6 @@ def typeCIndexEquiv (n : ℕ) : TypeCIndex n ≃ Fin (2 * n ^ 2) :=
       (((finTwoEquiv.symm.prodCongr (Equiv.refl (Fin n))).trans finProdFinEquiv).prodCongr
         (Equiv.refl (Fin n)))).trans (finProdFinEquiv.trans (finCongr (by ring)))
 
-private instance : (dotProductBilin ℤ ℤ :
-    (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ) →ₗ[ℤ] ℤ).IsPerfPair := by
-  -- These maps have definitionally identical linear-map fields; Mathlib provides no named bridge.
-  change (dotProductEquiv ℤ (Fin n)).toLinearMap.IsPerfPair
-  infer_instance
-
 /-- The pinned simply connected root datum of type `Cₙ`.
 
 Both lattices are `Fin n → ℤ`: the character lattice in the fundamental-weight basis and the

@@ -488,6 +488,32 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
   else if (k : ℕ) + 1 < n then typeDHalfTotal x - x.1 ⟨n - 1, by omega⟩
   else typeDHalfTotal x
 
+/-- The half-total of the `i`-th type `Dₙ` simple root. The chain roots `e_i - e_{i+1}` have
+coordinate sum `0`, so half-total `0`; the fork root `e_{n-2} + e_{n-1}` has coordinate sum `2`,
+so half-total `1`. -/
+private lemma typeDHalfTotal_typeDRootEquiv_apply_typeDSimpleIndex (hn : 4 ≤ n) (i : Fin n) :
+    typeDHalfTotal (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) =
+      if (i : ℕ) + 1 < n then 0 else 1 := by
+  by_cases hi : (i : ℕ) + 1 < n
+  · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 0 := by
+      rw [typeDSimpleRoot_of_add_one_lt hn hi]
+      simp_rw [Pi.sub_apply]
+      rw [Finset.sum_sub_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
+      omega
+    rw [ite_eq_left hi]
+    have h2 := two_mul_typeDHalfTotal (typeDRootEquiv n hn (typeDSimpleIndex n hn i))
+    rw [typeDRootEquiv_apply_typeDSimpleIndex, htotal] at h2
+    omega
+  · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 2 := by
+      rw [typeDSimpleRoot_of_not_add_one_lt hn hi]
+      simp_rw [Pi.add_apply]
+      rw [Finset.sum_add_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
+      norm_num
+    rw [ite_eq_right hi]
+    have h2 := two_mul_typeDHalfTotal (typeDRootEquiv n hn (typeDSimpleIndex n hn i))
+    rw [typeDRootEquiv_apply_typeDSimpleIndex, htotal] at h2
+    omega
+
 /-- The coordinates of the `i`-th simple root are the `i`-th standard basis vector. -/
 @[simp] theorem typeDSimpleRootCoordinates_typeDRootEquiv_apply_typeDSimpleIndex
     (hn : 4 ≤ n) (i : Fin n) :
@@ -496,16 +522,9 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
   funext k
   rw [typeDSimpleRootCoordinates]
   simp only [typeDRootEquiv_apply_typeDSimpleIndex]
+  have hhalf := typeDHalfTotal_typeDRootEquiv_apply_typeDSimpleIndex hn i
   by_cases hi : (i : ℕ) + 1 < n
-  · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 0 := by
-      rw [typeDSimpleRoot, dite_eq_left hi]
-      simp_rw [Pi.sub_apply]
-      rw [Finset.sum_sub_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
-      omega
-    have hhalf : typeDHalfTotal
-        (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) = 0 := by
-      simp only [typeDHalfTotal, typeDRootEquiv_apply_typeDSimpleIndex, htotal]
-      norm_num
+  · rw [ite_eq_left hi] at hhalf
     by_cases hk₂ : (k : ℕ) + 2 < n
     · rw [ite_eq_left hk₂]
       rw [typeDSimpleRoot, dite_eq_left hi]
@@ -523,15 +542,7 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
         simp only [Pi.single_apply]
         omega
   · have hiv : (i : ℕ) = n - 1 := by omega
-    have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 2 := by
-      rw [typeDSimpleRoot, dite_eq_right hi]
-      simp_rw [Pi.add_apply]
-      rw [Finset.sum_add_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
-      norm_num
-    have hhalf : typeDHalfTotal
-        (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) = 1 := by
-      simp only [typeDHalfTotal, typeDRootEquiv_apply_typeDSimpleIndex, htotal]
-      norm_num
+    rw [ite_eq_right hi] at hhalf
     by_cases hk₂ : (k : ℕ) + 2 < n
     · rw [ite_eq_left hk₂]
       rw [typeDSimpleRoot, dite_eq_right hi]

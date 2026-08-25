@@ -8,8 +8,10 @@ module
 public import Mathlib.Algebra.MonoidAlgebra.Defs
 public import TauCeti.Algebra.Lie.Weights.Integrality
 public import TauCeti.Algebra.Lie.Weights.Prod
+public import TauCeti.Algebra.Lie.Weights.TensorProduct
 public import TauCeti.Algebra.Lie.Weights.WeylInvariance
 public import TauCeti.LinearAlgebra.Dimension.DirectSum
+public import TauCeti.LinearAlgebra.TensorProduct.Decomposition
 
 public section
 
@@ -56,6 +58,10 @@ multiplicativity on tensor products expressible.
   `TauCeti.genWeightSpace_prod_eq_bot_iff` and
   `TauCeti.instLinearWeightsProd` the consequences a product of modules needs to have a character
   at all.
+* `TauCeti.finrank_genWeightSpace_tensorProduct`: the multiplicity of a tensor-product weight is
+  the convolution of the multiplicities in the two factors.
+* `TauCeti.formalCharacter_tensor`: **multiplicativity.** The character of a tensor product is the
+  product of the characters.
 * `TauCeti.formalCharacter_coeff_eq_finrank_weightSpace`: over an algebraically closed field of
   characteristic zero, for a Cartan subalgebra of a Killing-semisimple Lie algebra, the coefficients
   are the *honest* weight multiplicities.
@@ -275,6 +281,104 @@ theorem formalCharacter_prod :
   simp
 
 end Prod
+
+/-! ### Multiplicativity -/
+
+section TensorProduct
+
+open TensorProduct
+
+variable {K : Type u} {L : Type v} {M : Type w} {N : Type w₁} [Field K] [LieRing L]
+  [LieAlgebra K L] [LieRing.IsNilpotent L]
+  [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M] [LinearWeights K L M]
+  [FiniteDimensional K M] [IsTriangularizable K L M]
+  [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N] [LinearWeights K L N]
+  [FiniteDimensional K N] [IsTriangularizable K L N]
+
+open scoped Classical in
+/-- **Weight multiplicities in a tensor product are the convolution of the multiplicities in its
+factors.** The dimension of the generalized `χ`-weight space is the sum of
+`dim Mμ * dim Nν` over the pairs of weights satisfying `μ + ν = χ`.
+
+The tensor products of the generalized weight spaces form an independent family because the
+generalized weight-space decompositions of both factors are internal; their tensor products
+therefore decompose the ambient tensor product internally. -/
+theorem finrank_genWeightSpace_tensorProduct (χ : Dual K L) :
+    finrank K (genWeightSpace (M ⊗[K] N) (χ : L → K)) =
+      ∑ p : Weight K L M × Weight K L N,
+        if (p.1 : Dual K L) + (p.2 : Dual K L) = χ then
+          finrank K (genWeightSpace M (p.1 : L → K)) *
+            finrank K (genWeightSpace N (p.2 : L → K)) else 0 := by
+  classical
+  let A : Weight K L M × Weight K L N → Submodule K (M ⊗[K] N) := fun p ↦
+    Submodule.map₂ (TensorProduct.mk K M N) (genWeightSpace M p.1).toSubmodule
+      (genWeightSpace N p.2).toSubmodule
+  have hint : DirectSum.IsInternal A :=
+    DirectSum.IsInternal.tensorProduct
+      (fun μ : Weight K L M ↦ (genWeightSpace M μ).toSubmodule)
+      (fun ν : Weight K L N ↦ (genWeightSpace N ν).toSubmodule)
+      (isInternal_genWeightSpace K L M) (isInternal_genWeightSpace K L N)
+  let S := {p : Weight K L M × Weight K L N //
+    (p.1 : Dual K L) + (p.2 : Dual K L) = χ}
+  have hindep : iSupIndep fun p : S ↦ A p :=
+    hint.submodule_iSupIndep.comp Subtype.val_injective
+  have hspace : (genWeightSpace (M ⊗[K] N) (χ : L → K)).toSubmodule = ⨆ p : S, A p := by
+    apply le_antisymm
+    · rw [genWeightSpace_tensorProduct_eq_iSup]
+      refine iSup₂_le fun μ ν ↦ iSup_le fun hμν ↦ ?_
+      by_cases hμ : genWeightSpace M μ = ⊥
+      · simp [hμ, A]
+      by_cases hν : genWeightSpace N ν = ⊥
+      · simp [hν, A]
+      let m : Weight K L M := ⟨μ, hμ⟩
+      let n : Weight K L N := ⟨ν, hν⟩
+      have hadd : (m : Dual K L) + (n : Dual K L) = χ := by
+        ext x
+        simpa [m, n] using congrFun hμν x
+      exact le_iSup (fun p : S ↦ A p) ⟨(m, n), hadd⟩
+    · refine iSup_le fun p ↦ ?_
+      have hp : (p.1.1 : L → K) + (p.1.2 : L → K) = (χ : L → K) := by
+        exact congrArg (fun f : Dual K L ↦ (f : L → K)) p.property
+      rw [← hp]
+      simpa only [A] using map₂_mk_genWeightSpace_le M N p.1.1 p.1.2
+  rw [← finrank_toSubmodule]
+  rw [hspace, finrank_iSup_eq_sum_finrank_of_iSupIndep hindep]
+  rw [← Finset.sum_subtype
+    (s := (Finset.univ : Finset (Weight K L M × Weight K L N)).filter fun p ↦
+      (p.1 : Dual K L) + (p.2 : Dual K L) = χ)
+    (fun p ↦ by simp) (fun p ↦ finrank K (A p)), Finset.sum_filter]
+  refine Finset.sum_congr rfl fun p _ ↦ ?_
+  by_cases hp : (p.1 : Dual K L) + (p.2 : Dual K L) = χ
+  · simp only [hp, ite_true]
+    -- Unfolding `A` in the carrier does not update the dependent module instances inferred by
+    -- `finrank`; restating the goal makes those instances use the displayed `map₂` submodule.
+    change finrank K (Submodule.map₂ (TensorProduct.mk K M N)
+      (genWeightSpace M p.1).toSubmodule (genWeightSpace N p.2).toSubmodule) = _
+    rw [← TensorProduct.range_mapIncl,
+      LinearMap.finrank_range_of_inj
+        (Module.Flat.tensorProduct_mapIncl_injective_of_right
+          (genWeightSpace M p.1).toSubmodule (genWeightSpace N p.2).toSubmodule),
+      Module.finrank_tensorProduct]
+    rfl
+  · simp only [hp, ite_false]
+
+/-- **Multiplicativity of formal characters.** The formal character of a tensor product is the
+product of the formal characters of its two factors. -/
+@[simp]
+theorem formalCharacter_tensor :
+    formalCharacter K L (M ⊗[K] N) = formalCharacter K L M * formalCharacter K L N := by
+  classical
+  refine AddMonoidAlgebra.ext (Finsupp.ext fun χ ↦ ?_)
+  rw [formalCharacter_coeff, finrank_genWeightSpace_tensorProduct]
+  rw [formalCharacter_eq_sum_single, formalCharacter_eq_sum_single, Finset.sum_mul_sum]
+  simp only [AddMonoidAlgebra.single_mul_single, AddMonoidAlgebra.coeff_sum,
+    AddMonoidAlgebra.coeff_single]
+  push_cast
+  rw [Fintype.sum_prod_type]
+  simp_rw [Finset.sum_apply]
+  simp only [Finsupp.single_apply, eq_comm]
+
+end TensorProduct
 
 /-! ### The Cartan subalgebra of a Killing-semisimple Lie algebra over an algebraically closed field
 of characteristic zero -/

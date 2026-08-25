@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.Equiv.Opposite
 public import TauCeti.AlgebraicTopology.NotSimplyConnected
 public import TauCeti.AlgebraicTopology.Sphere.SimplyConnected
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.FundamentalGroup.Basic
@@ -19,9 +18,9 @@ two-sheeted antipodal quotient `mk n`.
 
 The antipodal cover is a regular covering map with deck group `ℤˣ`, and the covering sphere `Sⁿ`
 is simply connected for `2 ≤ n` by `TauCeti.simplyConnectedSpace_sphere_euclideanSpace`. The
-regular-cover comparison `TauCeti.Deck.IsRegular.fundamentalGroupEquiv` therefore identifies the
-fundamental group of `RPⁿ` at any basepoint with the opposite of the deck group. Since `ℤˣ` is
-commutative, the opposite drops out, yielding
+regular-cover comparison `TauCeti.Deck.IsRegular.fundamentalGroupDeckEquiv` therefore identifies
+the fundamental group of `RPⁿ` at any basepoint with the deck group itself (the opposite drops
+out because the deck group is commutative), yielding
 
   `FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ`.
 
@@ -79,9 +78,15 @@ def fundamentalGroupMulEquiv (hn : 2 ≤ n)
     {x : RealProjectiveSpace n} (e : (mk n) ⁻¹' {x}) :
     FundamentalGroup (RealProjectiveSpace n) x ≃* ℤˣ :=
   haveI := simplyConnectedSpace_sphere_euclideanSpace hn
-  (Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n) (isCoveringMap_mk n) e).trans
-    ((MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
-      (MulOpposite.opMulEquiv (M := ℤˣ)).symm)
+  have hcomm : ∀ a b : Deck (mk n), a * b = b * a := by
+    intro a b
+    obtain rfl | rfl := eq_one_or_eq_antipode n (by omega) a
+    · simp
+    · obtain rfl | rfl := eq_one_or_eq_antipode n (by omega) b
+      · simp
+      · simp [antipode_mul_self]
+  ((isRegular_mk n).fundamentalGroupDeckEquiv (isCoveringMap_mk n) e hcomm).trans
+    (deckMulEquiv n (by omega)).symm
 
 /-- Characterization of the element of `ℤˣ` assigned by `fundamentalGroupMulEquiv`: a loop
 class `γ` maps to `u : ℤˣ` exactly when its monodromy translate of the chosen lift `e` is
@@ -92,25 +97,11 @@ lemma fundamentalGroupMulEquiv_apply_eq_iff (hn : 2 ≤ n)
     (γ : FundamentalGroup (RealProjectiveSpace n) x) (u : ℤˣ) :
     fundamentalGroupMulEquiv n hn e γ = u ↔
       ((isCoveringMap_mk n).monodromy γ e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
-        u • (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) := by
+        u • (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :=by
   have := simplyConnectedSpace_sphere_euclideanSpace hn
-  let F := Deck.IsRegular.fundamentalGroupEquiv (isRegular_mk n) (isCoveringMap_mk n) e
-  let T := (MulEquiv.op (deckMulEquiv n (by omega)).symm).trans
-    (MulOpposite.opMulEquiv (M := ℤˣ)).symm
-  have hT (g : (Deck (mk n))ᵐᵒᵖ) : T g = u ↔ g = MulOpposite.op (deckMulEquiv n (by omega) u) := by
-    rw [T.eq_symm_apply.symm]
-    simp [T]
-  calc
-    fundamentalGroupMulEquiv n hn e γ = u ↔ T (F γ) = u := by
-      simp only [fundamentalGroupMulEquiv, F, T, MulEquiv.trans_apply]
-    _ ↔ F γ = MulOpposite.op (deckMulEquiv n (by omega) u) := hT (F γ)
-    _ ↔ ((MulOpposite.op (deckMulEquiv n (by omega) u)).unop •
-          (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)) =
-            (isCoveringMap_mk n).monodromy γ e :=
-      Deck.IsRegular.fundamentalGroupEquiv_apply_eq_iff (isRegular_mk n) (isCoveringMap_mk n) e γ _
-    _ ↔ ((isCoveringMap_mk n).monodromy γ e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) =
-          u • (e : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) := by
-      simp [Deck.smul_eq_apply, eq_comm]
+  rw [fundamentalGroupMulEquiv, MulEquiv.trans_apply, MulEquiv.symm_apply_eq,
+    Deck.IsRegular.fundamentalGroupDeckEquiv_apply_eq_iff, Deck.smul_eq_apply,
+    deckMulEquiv_apply, eq_comm]
 
 /-- The inverse equivalence sends an integer unit `u` to the loop class whose monodromy
 translates the chosen lift by `u`. -/
