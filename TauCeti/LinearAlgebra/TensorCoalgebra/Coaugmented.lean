@@ -27,11 +27,12 @@ presentations interchangeable downstream: an `A∞` structure is a square-zero c
 reduced coalgebra, while an `A∞` morphism is a morphism of the coaugmented ones.
 
 The combinatorics is the same as in the reduced case and is again organised through blocks of
-consecutive letters, `TauCeti.TensorWords.subword`.  The one difference is that an empty block is
-now the empty word rather than zero, so a degenerate cut no longer kills a summand and the two
-iterated coproducts have to be compared on the nondegenerate triangle `0 ≤ d ≤ c ≤ n` rather than
-on a square.  Extending both double sums over the full square by `Finset.sum_filter` reduces
-coassociativity to `Finset.sum_comm` all the same.
+consecutive letters, `TauCeti.TensorWords.subword`.  In both cases the two iterated coproducts are
+indexed by the triangle `0 ≤ d ≤ c ≤ n` of nested cuts and are compared after extending them to
+the full square.  The one difference is that an empty block is now the empty word rather than
+zero, so the degenerate summands outside the triangle no longer vanish: the extension is not free
+as it is in the reduced case, and it is carried out by `Finset.sum_filter`, which keeps the
+constraint `d ≤ c` as an explicit `if`.  Coassociativity is then `Finset.sum_comm` all the same.
 
 ## Main definitions
 
@@ -102,11 +103,6 @@ theorem linearMap_ext {N : Type uN} [AddCommMonoid N] [Module R N]
 noncomputable def component (n : ℕ) : TensorWords R M →ₗ[R] TensorPower R n M :=
   DirectSum.component R ℕ (fun n ↦ TensorPower R n M) n
 
-/-- Projection to a tensor length is the direct-sum component map. -/
-theorem component_def (n : ℕ) :
-    component R M n = DirectSum.component R ℕ (fun n ↦ TensorPower R n M) n := by
-  rw [component]
-
 /-- The component of an included tensor power at its own length is that tensor power. -/
 @[simp]
 theorem component_of (n : ℕ) (x : TensorPower R n M) :
@@ -133,13 +129,6 @@ theorem toModule_of {N : Type uN} [AddCommMonoid N] [Module R N]
 noncomputable def counit : TensorWords R M →ₗ[R] R :=
   (TensorPower.algebraMap₀ (R := R) (M := M)).symm.toLinearMap ∘ₗ component R M 0
 
-/-- The counit is the length-zero component followed by its canonical identification with the
-ground ring. -/
-theorem counit_apply (x : TensorWords R M) :
-    counit R M x =
-      (TensorPower.algebraMap₀ (R := R) (M := M)).symm (component R M 0 x) := by
-  simp only [counit, LinearMap.comp_apply, LinearEquiv.coe_coe]
-
 /-- On the empty length the counit is the canonical identification with the ground ring. -/
 @[simp]
 theorem counit_of_zero (z : TensorPower R 0 M) :
@@ -154,9 +143,9 @@ theorem counit_of_of_ne_zero {n : ℕ} (hn : n ≠ 0) (z : TensorPower R n M) :
 
 /-- The algebra map is inclusion into tensor length zero. -/
 theorem algebraMap_apply (r : R) :
-    Algebra.linearMap R (TensorWords R M) r =
+    algebraMap R (TensorWords R M) r =
       of R M 0 (TensorPower.algebraMap₀ (R := R) (M := M) r) := by
-  rw [Algebra.linearMap_apply, DirectSum.algebraMap_apply, TensorPower.galgebra_toFun_def,
+  rw [DirectSum.algebraMap_apply, TensorPower.galgebra_toFun_def,
     ← DirectSum.lof_eq_of R ℕ (fun n ↦ TensorPower R n M), of_def]
 
 /-- The algebra unit is the empty pure tensor in tensor length zero. -/
@@ -165,19 +154,12 @@ theorem one_eq_of_zero :
       of R M 0 (PiTensorProduct.tprod R fun i : Fin 0 ↦ (i.elim0 : M)) := by
   rw [DirectSum.one_def, TensorPower.gOne_def, of_def, DirectSum.lof_eq_of]
 
-/-- Including one from tensor length zero gives the algebra unit. -/
-@[simp]
-theorem of_zero_one :
-    of R M 0 (TensorPower.algebraMap₀ (R := R) (M := M) 1) =
-      (1 : TensorWords R M) := by
-  rw [← algebraMap_apply, Algebra.linearMap_apply, map_one]
-
 /-- The counit is a retraction of the coaugmentation given by the algebra map. -/
 @[simp]
 theorem counit_comp_algebraMap :
     counit R M ∘ₗ Algebra.linearMap R (TensorWords R M) = LinearMap.id := by
   refine LinearMap.ext_ring ?_
-  rw [LinearMap.comp_apply, algebraMap_apply]
+  rw [LinearMap.comp_apply, Algebra.linearMap_apply, algebraMap_apply]
   rw [counit_of_zero, LinearEquiv.symm_apply_apply, LinearMap.id_apply]
 
 /-- The counit retracts the coaugmentation on every scalar. -/
@@ -436,13 +418,13 @@ noncomputable instance instCoalgebraStruct : CoalgebraStruct R (TensorWords R M)
 
 /-- The comultiplication of the coalgebra structure is deconcatenation. -/
 @[simp]
-theorem comul_def :
+theorem comul_eq_deconcatenation :
     (CoalgebraStruct.comul : TensorWords R M →ₗ[R] TensorWords R M ⊗[R] TensorWords R M) =
       deconcatenation R M := rfl
 
 /-- The counit of the coalgebra structure is the length-zero coefficient. -/
 @[simp]
-theorem counit_def :
+theorem counit_eq_counit :
     (CoalgebraStruct.counit : TensorWords R M →ₗ[R] R) = counit R M := rfl
 
 /-- Tensor words form a coalgebra over the ground ring. -/
@@ -478,7 +460,7 @@ noncomputable def coaugmentation : R →ₗc[R] TensorWords R M where
   map_comp_comul := by
     ext
     simp only [LinearMap.comp_apply, CommSemiring.comul_apply, TensorProduct.map_tmul,
-      Algebra.linearMap_apply, map_one, comul_def, deconcatenation_one]
+      Algebra.linearMap_apply, map_one, comul_eq_deconcatenation, deconcatenation_one]
 
 /-- The linear map underlying the canonical coaugmentation is the algebra map. -/
 @[simp]
@@ -570,8 +552,8 @@ theorem reducedInclusion_comp_reducedProjection_add_algebraMap_comp_counit :
   intro n x
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · rw [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.comp_apply, LinearMap.id_apply,
-      reducedProjection_of_zero, map_zero, zero_add, counit_of_zero, algebraMap_apply,
-      LinearEquiv.apply_symm_apply]
+      reducedProjection_of_zero, map_zero, zero_add, counit_of_zero, Algebra.linearMap_apply,
+      algebraMap_apply, LinearEquiv.apply_symm_apply]
   · rw [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.comp_apply,
       reducedProjection_of_of_pos R M hn, counit_of_of_ne_zero R M hn.ne', map_zero, add_zero,
       reducedInclusion_of, LinearMap.id_apply]
@@ -692,7 +674,11 @@ theorem map_reducedProjection_comp_deconcatenation_comp_reducedInclusion :
   apply LinearMap.ext
   exact map_reducedProjection_deconcatenation_reducedInclusion R M
 
-/-- The letters of a tensor word are primitive. -/
+/-- The letters of a tensor word are primitive.
+
+This fires ahead of `TauCeti.TensorWords.deconcatenation_of`, whose right-hand side
+`deconcatenationComponent` has no computation rule for an abstract tensor power. -/
+@[simp high]
 theorem deconcatenation_of_length_one (z : TensorPower R 1 M) :
     deconcatenation R M (of R M 1 z) =
       (1 : TensorWords R M) ⊗ₜ[R] of R M 1 z +
