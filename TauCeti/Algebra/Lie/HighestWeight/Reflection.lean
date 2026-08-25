@@ -39,8 +39,9 @@ what will confine the weights of `M` to a finite set.
   group.**
 * `TauCeti.genWeightSpace_weylGroup_smul_eq_bot_iff`: a linear form is a nonweight exactly when
   each Weyl translate is a nonweight.
-* `TauCeti.sub_weylGroup_smul_mem_posRootCone_of_isHighestWeightVector`: every point of the Weyl
-  orbit of a weight remains below the highest weight in the positive root-cone order.
+* `TauCeti.sub_weylGroup_smul_mem_posRootCone_of_genWeightSpace_ne_bot_of_isHighestWeightVector`:
+  every point of the Weyl orbit of a weight remains below the highest weight in the positive
+  root-cone order.
 * `TauCeti.exists_int_apply_coroot_of_genWeightSpace_ne_bot_of_isHighestWeightVector`: those
   weights take integer values on the simple coroots.
 
@@ -153,7 +154,7 @@ with a highest weight vector of dominant integral weight `lam`, then for every w
 every Weyl-group element `w`, the difference `lam - w • χ` belongs to the positive root cone.
 
 This combines Weyl stability with the weight-cone theorem for highest weight modules. -/
-theorem sub_weylGroup_smul_mem_posRootCone_of_isHighestWeightVector
+theorem sub_weylGroup_smul_mem_posRootCone_of_genWeightSpace_ne_bot_of_isHighestWeightVector
     [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b lam v)
     (hlam : IsDominantIntegral b lam) (w : (IsKilling.rootSystem H).weylGroup)
     {χ : Dual K H} (hχ : genWeightSpace M ⇑χ ≠ ⊥) :
