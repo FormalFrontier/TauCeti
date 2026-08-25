@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.LinearAlgebra.Matrix.BilinearForm
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
 public section
@@ -30,8 +29,8 @@ therefore finiteness of the set of dominant weights under `lam`, which is how
 
 ## Main results
 
-* `TauCeti.IsFiniteType.finite_setOf_forall_sum_mul_le`: **a finite-type Cartan inequality has
-  finitely many natural solutions.**
+* `TauCeti.finite_setOf_forall_sum_mul_le`: **an inequality whose matrix has a positive
+  symmetrizer has finitely many natural solutions.**
 
 ## The argument
 
@@ -65,21 +64,20 @@ open scoped Matrix
 
 namespace TauCeti
 
-namespace IsFiniteType
-
 variable {B : Type*} [Fintype B] {A : Matrix B B ℤ}
 
-/-- **A finite-type Cartan inequality has finitely many natural solutions.** For a finite-type
-integer matrix `A` and any integer vector `y`, only finitely many vectors `c` of natural numbers
-satisfy `∑ j, A i j * c j ≤ y i` at every index `i`.
+/-- **A positively symmetrized matrix inequality has finitely many natural solutions.** Let `d` be
+a positive rational vector such that the matrix with entries `d i * A i j` is positive definite.
+For any integer vector `y`, only finitely many vectors `c` of natural numbers satisfy
+`∑ j, A i j * c j ≤ y i` at every index `i`.
 
 Positive definiteness of the symmetrization of `A` is what makes the solution set bounded: the
 inequalities force the length of `c` in the symmetrized form to stay below a bound read off from
 `y` alone. -/
-theorem finite_setOf_forall_sum_mul_le (h : IsFiniteType A) (y : B → ℤ) :
+theorem finite_setOf_forall_sum_mul_le (d : B → ℚ) (hd : ∀ i, 0 < d i)
+    (hpd : (Matrix.of fun i j ↦ d i * (A i j : ℚ)).PosDef) (y : B → ℤ) :
     {c : B → ℕ | ∀ i, ∑ j, A i j * (c j : ℤ) ≤ y i}.Finite := by
   classical
-  obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
   set S : Matrix B B ℚ := Matrix.of fun i j ↦ d i * (A i j : ℚ) with hSdef
   set F : LinearMap.BilinForm ℚ (B → ℚ) := Matrix.toBilin' S with hFdef
   have hFapply : ∀ u v : B → ℚ, F u v = u ⬝ᵥ S *ᵥ v := fun u v ↦ Matrix.toBilin'_apply' S u v
@@ -89,21 +87,29 @@ theorem finite_setOf_forall_sum_mul_le (h : IsFiniteType A) (y : B → ℤ) :
     simpa using hpd.isHermitian.apply p q
   have hnonneg : ∀ u : B → ℚ, 0 ≤ F u u := fun u ↦ by
     simpa [hFapply] using hpd.posSemidef.dotProduct_mulVec_nonneg u
-  have hsymm : LinearMap.IsSymm F := LinearMap.isSymm_def.mpr fun u v ↦ by
-    rw [RingHom.id_apply, hFapply, hFapply, Matrix.dotProduct_mulVec, ← Matrix.mulVec_transpose,
-      hST]
+  have hsymmB : F.IsSymm := LinearMap.BilinForm.isSymm_def.mpr fun u v ↦ by
+    rw [hFapply, hFapply, Matrix.dotProduct_mulVec, ← Matrix.mulVec_transpose, hST]
     exact dotProduct_comm _ _
-  -- Positive definiteness makes `S` invertible, so every functional is represented by the form.
-  have hsolve : ∀ w : B → ℚ, ∃ z : B → ℚ, S *ᵥ z = w := fun w ↦
-    ⟨S⁻¹ *ᵥ w, by
-      rw [Matrix.mulVec_mulVec, Matrix.mul_nonsing_inv S
-        ((Matrix.isUnit_iff_isUnit_det S).mp hpd.isUnit), Matrix.one_mulVec]⟩
-  obtain ⟨z, hz⟩ := hsolve fun i ↦ d i * (y i : ℚ)
-  have hdual : ∀ k : B, ∃ u : B → ℚ, ∀ x : B → ℚ, F x u = x k := by
-    intro k
-    obtain ⟨u, hu⟩ := hsolve (Pi.single k 1)
-    exact ⟨u, fun x ↦ by rw [hFapply, hu]; simp⟩
-  choose u hu using hdual
+  have hsymm : LinearMap.IsSymm F := LinearMap.BilinForm.isSymm_iff.mp hsymmB
+  -- Positive definiteness makes the form nondegenerate, so its duality equivalence represents the
+  -- weighted-sum functional and every coordinate functional.
+  have hFnondeg : F.Nondegenerate := by
+    rw [hFdef, Matrix.nondegenerate_toBilin'_iff, Matrix.nondegenerate_iff_det_ne_zero,
+      ← isUnit_iff_ne_zero, ← Matrix.isUnit_iff_isUnit_det]
+    exact hpd.isUnit
+  let weighted : Module.Dual ℚ (B → ℚ) :=
+    ∑ i, (d i * (y i : ℚ)) • LinearMap.proj i
+  let z : B → ℚ := (F.toDual hFnondeg).symm weighted
+  have hz : ∀ x : B → ℚ, F x z = ∑ i, x i * (d i * (y i : ℚ)) := by
+    intro x
+    rw [hsymmB.eq, LinearMap.BilinForm.apply_toDual_symm_apply]
+    simp only [weighted, LinearMap.sum_apply, LinearMap.smul_apply, smul_eq_mul,
+      LinearMap.proj_apply]
+    exact Finset.sum_congr rfl fun i _ ↦ by ring
+  let u : B → B → ℚ := fun k ↦ (F.toDual hFnondeg).symm (LinearMap.proj k)
+  have hu : ∀ (k : B) (x : B → ℚ), F x (u k) = x k := by
+    intro k x
+    rw [hsymmB.eq, LinearMap.BilinForm.apply_toDual_symm_apply, LinearMap.proj_apply]
   refine Set.Finite.subset
     (Set.Finite.pi fun _ : B ↦ Set.finite_Iic ⌈max 1 (F z z * ∑ k, F (u k) (u k))⌉₊)
     fun c hc ↦ ?_
@@ -119,7 +125,7 @@ theorem finite_setOf_forall_sum_mul_le (h : IsFiniteType A) (y : B → ℤ) :
     rw [Finset.mul_sum]
     exact Finset.sum_congr rfl fun j _ ↦ by ring
   have hxz : F (fun j ↦ (c j : ℚ)) z = ∑ i, (c i : ℚ) * (d i * (y i : ℚ)) := by
-    rw [hFapply, hz, dotProduct]
+    exact hz _
   have hxx : F (fun j ↦ (c j : ℚ)) (fun j ↦ (c j : ℚ))
       = ∑ i, (c i : ℚ) * (S *ᵥ fun j ↦ (c j : ℚ)) i := by
     rw [hFapply, dotProduct]
@@ -151,7 +157,5 @@ theorem finite_setOf_forall_sum_mul_le (h : IsFiniteType A) (y : B → ℤ) :
       exact (hsq.trans hcoord).trans (le_max_right _ _)
   rw [Set.mem_Iic, ← Nat.cast_le (α := ℚ)]
   exact hck.trans (Nat.le_ceil _)
-
-end IsFiniteType
 
 end TauCeti

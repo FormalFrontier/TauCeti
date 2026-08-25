@@ -102,7 +102,7 @@ takes a natural value on `mu`.
 The two hypotheses pull in opposite directions: the first writes `lam - mu` as `∑ j, c j • αⱼ` with
 `c j` natural, and the second bounds the resulting Cartan expression `∑ j, c j ⟨αⱼ, αᵢ^∨⟩` above.
 Positive definiteness of the symmetrized Cartan matrix
-(`TauCeti.IsFiniteType.finite_setOf_forall_sum_mul_le`) leaves only finitely many such `c`. -/
+(`TauCeti.finite_setOf_forall_sum_mul_le`) leaves only finitely many such `c`. -/
 theorem finite_setOf_dominant_sub_mem_posRootCone (lam : M) :
     {mu : M | lam - mu ∈ posRootCone P b ∧
       ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)}.Finite := by
@@ -129,8 +129,9 @@ theorem finite_setOf_dominant_sub_mem_posRootCone (lam : M) :
     simp only [hydef]
     push_cast
     ring
+  obtain ⟨d, hd, hpd⟩ := (isFiniteType_cartanMatrix b).transpose.exists_symmetrizer
   refine Set.Finite.subset
-    (((isFiniteType_cartanMatrix b).transpose.finite_setOf_forall_sum_mul_le y).image
+    ((finite_setOf_forall_sum_mul_le d hd hpd y).image
       fun c : b.support → ℕ ↦ lam - ∑ j : b.support, c j • P.root j) ?_
   rintro mu ⟨hcone, hdom⟩
   obtain ⟨f, hf⟩ := (mem_posRootCone P b).mp hcone
