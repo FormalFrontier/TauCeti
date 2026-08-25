@@ -17,13 +17,8 @@ file introduces `heckeUNat` and `heckeUCuspNat` as aliases of `heckeTNat` and
 explicit in their types.
 
 The theorem `heckeUNat_eq_heckeTNat` records the normalization promised by the ModularForms
-roadmap. The companion lemmas identify the alias with the upper-triangular slash sum, prove that
-it preserves every nebentypus space, and give its Fourier-coefficient formula
-
-`a_m(U_p f) = a_{pm}(f)`.
-
-Thus later newform arguments may use the modern `U_p` vocabulary without introducing an
-independent operator or a translation layer.
+roadmap. All operational properties of `U_p` are inherited directly from the existing `T_p`
+API through this equality.
 
 ## Main definitions
 
@@ -34,12 +29,6 @@ independent operator or a translation layer.
 
 * `HeckeRing.GL2.heckeUNat_eq_heckeTNat` and
   `HeckeRing.GL2.heckeUCuspNat_eq_heckeTCuspNat`: **`U_p = T_p`**.
-* `HeckeRing.GL2.heckeUNat_eq_upperTri` and
-  `HeckeRing.GL2.heckeUCuspNat_eq_upperTri`: the upper-triangular slash-sum description.
-* `HeckeRing.GL2.heckeUNat_mem_modFormCharSpace` and
-  `HeckeRing.GL2.heckeUCuspNat_mem_cuspFormCharSpace`: preservation of nebentypus.
-* `HeckeRing.GL2.qExpansion_coeff_heckeUNat` and
-  `HeckeRing.GL2.qExpansion_coeff_heckeUCuspNat`: the bad-prime coefficient formula.
 
 ## References
 
@@ -83,51 +72,6 @@ theorem heckeUCuspNat_eq_heckeTCuspNat (hp : p.Prime) (hpN : p ∣ N) :
     heckeUCuspNat (N := N) k p hp hpN =
       heckeTCuspNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) :=
   (rfl)
-
-/-- At a bad prime, `U_p` is the upper-triangular slash-sum operator. -/
-theorem heckeUNat_eq_upperTri (hp : p.Prime) (hpN : p ∣ N) :
-    heckeUNat (N := N) k p hp hpN = heckeSlashUpperTriModularFormEnd k hpN := by
-  rw [heckeUNat_eq_heckeTNat, heckeTNat_eq_upperTri]
-
-/-- At a bad prime, the cusp-form `U_p` is the upper-triangular slash-sum operator. -/
-theorem heckeUCuspNat_eq_upperTri (hp : p.Prime) (hpN : p ∣ N) :
-    heckeUCuspNat (N := N) k p hp hpN = heckeSlashUpperTriCuspFormEnd k hpN := by
-  rw [heckeUCuspNat_eq_heckeTCuspNat, heckeTCuspNat_eq_upperTri]
-
-/-- **The bad-prime operator preserves nebentypus:** `U_p` maps `M_k(N, χ)` into itself. -/
-theorem heckeUNat_mem_modFormCharSpace (hp : p.Prime) (hpN : p ∣ N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) :
-    heckeUNat (N := N) k p hp hpN f ∈ modFormCharSpace k χ := by
-  rw [heckeUNat_eq_upperTri]
-  exact heckeSlashUpperTriModularFormEnd_mem_modFormCharSpace k hpN χ hf
-
-/-- **The bad-prime operator preserves nebentypus on cusp forms:** `U_p` maps
-`S_k(N, χ)` into itself. -/
-theorem heckeUCuspNat_mem_cuspFormCharSpace (hp : p.Prime) (hpN : p ∣ N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ cuspFormCharSpace k χ) :
-    heckeUCuspNat (N := N) k p hp hpN f ∈ cuspFormCharSpace k χ := by
-  rw [heckeUCuspNat_eq_upperTri]
-  exact heckeSlashUpperTriCuspFormEnd_mem_cuspFormCharSpace k hpN χ hf
-
-/-- **The Fourier-coefficient formula for `U_p`:** at a prime dividing the level,
-`a_m(U_p f) = a_{pm}(f)`. -/
-theorem qExpansion_coeff_heckeUNat (hp : p.Prime) (hpN : p ∣ N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeUNat (N := N) k p hp hpN f)).coeff m =
-      (qExpansion 1 f).coeff (p * m) := by
-  rw [heckeUNat_eq_upperTri]
-  exact qExpansion_coeff_heckeSlashUpperTriModularFormEnd k hpN f m
-
-/-- **The Fourier-coefficient formula for `U_p` on cusp forms:**
-`a_m(U_p f) = a_{pm}(f)`. -/
-theorem qExpansion_coeff_heckeUCuspNat (hp : p.Prime) (hpN : p ∣ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeUCuspNat (N := N) k p hp hpN f)).coeff m =
-      (qExpansion 1 f).coeff (p * m) := by
-  rw [heckeUCuspNat_eq_upperTri]
-  exact qExpansion_coeff_heckeSlashUpperTriCuspFormEnd k hpN f m
 
 end HeckeRing.GL2
 
