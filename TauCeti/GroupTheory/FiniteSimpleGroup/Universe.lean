@@ -12,8 +12,8 @@ public import Mathlib.GroupTheory.Subgroup.Simple
 /-!
 # Universe lowering for classifications of finite simple groups
 
-Suppose a `Type`-valued family `C` contains, up to isomorphism, every finite simple group whose
-carrier lies in `Type`. Then it contains every finite simple group in an arbitrary universe.
+Suppose a family `C` contains, up to isomorphism, every finite simple group whose carrier lies in
+`Type`. Then it contains every finite simple group in an arbitrary universe.
 
 The reason is specific to finite groups. Mathlib's `Shrink.{0} G` transports the group structure
 of a finite group `G : Type u` to a carrier in `Type`, and `Shrink.mulEquiv` identifies the two
@@ -27,8 +27,8 @@ candidates may be established separately.
 
 ## Main result
 
-* `TauCeti.exists_mulEquiv_of_forall_finite_isSimpleGroup_zero`: a classification by a
-  `Type`-valued family in universe zero holds in every universe.
+* `TauCeti.exists_mulEquiv_of_forall_finite_isSimpleGroup_zero`: a classification of groups in
+  universe zero by a fixed family holds in every universe.
 
 ## Roadmap
 
@@ -42,15 +42,15 @@ public section
 
 namespace TauCeti
 
-universe u
+universe u v w
 
 /-- **A classification of finite simple groups in universe zero holds in every universe.**
 
-If every finite simple group with carrier in `Type` is isomorphic to a member of a fixed
-`Type`-valued family `C`, then the same conclusion holds for a finite simple group in any
-universe. No finiteness or simplicity assumption is made on the candidate groups themselves. -/
+If every finite simple group with carrier in `Type` is isomorphic to a member of a fixed family
+`C`, then the same conclusion holds for a finite simple group in any universe. No finiteness or
+simplicity assumption is made on the candidate groups themselves. -/
 theorem exists_mulEquiv_of_forall_finite_isSimpleGroup_zero
-    {ι : Type} (C : ι → Type) [∀ i, Group (C i)]
+    {ι : Type w} (C : ι → Type v) [∀ i, Group (C i)]
     (hC : ∀ (H : Type) [Group H] [Finite H] [IsSimpleGroup H],
       ∃ i, Nonempty (H ≃* C i))
     (G : Type u) [Group G] [Finite G] [IsSimpleGroup G] :
