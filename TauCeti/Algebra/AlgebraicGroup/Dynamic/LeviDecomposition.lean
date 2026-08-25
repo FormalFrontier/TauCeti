@@ -127,11 +127,7 @@ noncomputable def leviGroupExtension :
     GroupExtension (unipotent A l) (parabolic A l) (levi A l) where
   inl := unipotentToParabolic A l
   rightHom := limitToLevi A l
-  inl_injective := by
-    intro x y h
-    apply Subtype.ext
-    have h' := congrArg (fun z : parabolic A l => (z : WithConv (H →ₐ[R] A))) h
-    simpa only [coe_unipotentToParabolic_apply] using h'
+  inl_injective := Subgroup.inclusion_injective (unipotent_le_parabolic (A := A) (l := l))
   range_inl_eq_ker_rightHom := range_unipotentToParabolic_eq_ker_limitToLevi A l
   rightHom_surjective := limitToLevi_surjective A l
 
@@ -166,7 +162,7 @@ theorem leviGroupExtensionSplitting_apply (z : levi A l) :
     leviGroupExtensionSplitting A l z = leviToParabolic A l z := (rfl)
 
 /-- The action of the dynamic Levi subgroup on the dynamic unipotent subgroup by conjugation. -/
-noncomputable abbrev leviConjugation : levi A l →* MulAut (unipotent A l) :=
+noncomputable def leviConjugation : levi A l →* MulAut (unipotent A l) :=
   (leviGroupExtensionSplitting A l).conjAct
 
 /-- The Levi action is the conjugation action associated to the dynamic Levi group extension. -/
@@ -202,18 +198,18 @@ theorem leviDecompositionMulEquiv_apply
 
 /-- The Levi coordinate of the inverse decomposition is the limit of the parabolic point. -/
 @[simp]
-theorem leviDecompositionMulEquiv_symm_right (g : parabolic A l) :
+theorem leviDecompositionMulEquiv_symm_apply_right (g : parabolic A l) :
     ((leviDecompositionMulEquiv A l).symm g).right = limitToLevi A l g := (rfl)
 
 /-- The unipotent coordinate of the inverse decomposition is `g * limit(g)⁻¹`. -/
 @[simp]
-theorem coe_leviDecompositionMulEquiv_symm_left (g : parabolic A l) :
+theorem coe_leviDecompositionMulEquiv_symm_apply_left (g : parabolic A l) :
     (((leviDecompositionMulEquiv A l).symm g).left : WithConv (H →ₐ[R] A)) =
       (g : WithConv (H →ₐ[R] A)) * (limit A l g)⁻¹ := by
   have h := congrArg Subtype.val ((leviDecompositionMulEquiv A l).apply_symm_apply g)
   rw [leviDecompositionMulEquiv_apply] at h
   simp only [coe_unipotentToParabolic_apply, coe_leviToParabolic_apply, Subgroup.coe_mul] at h
-  rw [← h, leviDecompositionMulEquiv_symm_right, coe_limitToLevi_apply]
+  rw [← h, leviDecompositionMulEquiv_symm_apply_right, coe_limitToLevi_apply]
   group
 
 end
