@@ -104,10 +104,15 @@ class AnalysisTests(unittest.TestCase):
         self.assertTrue(owned["awaiting-review"])
 
 
-class BottleneckTests(unittest.TestCase):
+class CauseTests(unittest.TestCase):
+    """Why throughput fell: a stage backing up, a thinner intake, both, or an
+    honest admission that the queue does not explain it."""
+
     def base(self, **overrides):
         result = {"merged_per_hour": 1.0, "baseline_merged_per_hour": 5.0,
-                  "baseline_merged_count": 100, "stages": []}
+                  "baseline_merged_count": 100, "stages": [],
+                  "opened_per_hour": 5.0, "baseline_opened_per_hour": 5.0,
+                  "baseline_opened_count": 100}
         result.update(overrides)
         return result
 
@@ -119,16 +124,41 @@ class BottleneckTests(unittest.TestCase):
         item.update(kw)
         return item
 
-    def test_healthy_throughput_names_no_bottleneck(self):
-        self.assertIsNone(health.find_bottleneck(
+    def test_healthy_throughput_names_no_cause(self):
+        self.assertIsNone(health.find_cause(
             self.base(merged_per_hour=5.0, baseline_merged_per_hour=5.0)))
+
+    def test_thin_intake_is_itself_the_answer(self):
+        """Fewer merges because fewer arrived is a cause, not the absence of
+        one, and it wants the opposite response to a stuck queue: adding review
+        capacity does nothing about a week when nobody opened anything."""
+        found = health.find_cause(self.base(opened_per_hour=0.5, anomalies=[]))
+        self.assertEqual(found["kind"], "intake")
+        self.assertIn("fewer pull requests are arriving", found["why"])
+
+    def test_a_stuck_stage_and_thin_intake_are_both_reported(self):
+        found = health.find_cause(self.base(
+            opened_per_hour=0.5,
+            stages=[self.stage("awaiting-review", depth=10,
+                               entered_per_hour=3.0, left_per_hour=0.5)]))
+        self.assertEqual(found["kind"], "stage")
+        self.assertIn("Arrivals are also down", found["why"])
+
+    def test_an_unexplained_fall_says_so_rather_than_blaming_a_stage(self):
+        found = health.find_cause(self.base(anomalies=[]))
+        self.assertEqual(found["kind"], "unexplained")
+
+    def test_thin_intake_needs_a_baseline_to_claim_it(self):
+        found = health.find_cause(self.base(
+            opened_per_hour=0.5, baseline_opened_count=1, anomalies=[]))
+        self.assertEqual(found["kind"], "unexplained")
 
     def test_a_stage_filling_faster_than_it_drains_wins(self):
         result = self.base(stages=[
             self.stage("awaiting-CI", depth=50, entered_per_hour=1.0, left_per_hour=1.0),
             self.stage("awaiting-review", depth=10, entered_per_hour=3.0, left_per_hour=0.5),
         ])
-        self.assertEqual(health.find_bottleneck(result)["stage"], "awaiting-review")
+        self.assertEqual(health.find_cause(result)["stage"], "awaiting-review")
 
     def test_a_deep_but_draining_stage_is_not_the_bottleneck(self):
         """Depth alone means nothing: a queue can be long and perfectly healthy."""
@@ -136,7 +166,7 @@ class BottleneckTests(unittest.TestCase):
             self.stage("awaiting-CI", depth=200, entered_per_hour=2.0, left_per_hour=2.5),
             self.stage("ready-to-merge", depth=3, entered_per_hour=1.0, left_per_hour=0.2),
         ])
-        self.assertEqual(health.find_bottleneck(result)["stage"], "ready-to-merge")
+        self.assertEqual(health.find_cause(result)["stage"], "ready-to-merge")
 
     def test_no_stage_is_named_when_none_is_misbehaving(self):
         """Throughput can fall because nothing arrived. Naming a culprit anyway
@@ -147,23 +177,23 @@ class BottleneckTests(unittest.TestCase):
             self.stage("awaiting-review", depth=9, entered_per_hour=0.5, left_per_hour=0.6,
                        oldest_waiting_hours=4.0, baseline_median_dwell_hours=5.0),
         ])
-        self.assertIsNone(health.find_bottleneck(result))
+        self.assertIsNone(health.find_cause(result)["stage"])
 
     def test_a_stalled_stage_is_named_even_without_growth(self):
         result = self.base(stages=[
             self.stage("ready-to-merge", depth=4, entered_per_hour=0.1, left_per_hour=0.1,
                        oldest_waiting_hours=100.0, baseline_median_dwell_hours=2.0),
         ])
-        found = health.find_bottleneck(result)
+        found = health.find_cause(result)
         self.assertEqual(found["stage"], "ready-to-merge")
         self.assertIn("normal dwell", found["why"])
 
     def test_a_thin_baseline_reports_insufficient_data_not_health(self):
         """Zero merges over the baseline made the old gate read 0 >= 0 and call
         an empty repository healthy."""
-        found = health.find_bottleneck(self.base(
+        found = health.find_cause(self.base(
             merged_per_hour=0.0, baseline_merged_per_hour=0.0, baseline_merged_count=0))
-        self.assertTrue(found["insufficient_data"])
+        self.assertEqual(found["kind"], "insufficient_data")
 
     def test_a_stage_with_too_few_completions_is_not_judged_on_dwell(self):
         result = self.base(stages=[
@@ -171,7 +201,7 @@ class BottleneckTests(unittest.TestCase):
                        oldest_waiting_hours=500.0, baseline_median_dwell_hours=1.0,
                        baseline_left_count=1),
         ])
-        self.assertIsNone(health.find_bottleneck(result))
+        self.assertIsNone(health.find_cause(result)["stage"])
 
     def test_stages_waiting_on_the_author_are_never_blamed(self):
         """The project cannot fix these, so naming one would point effort at
@@ -180,12 +210,12 @@ class BottleneckTests(unittest.TestCase):
             self.stage("ci-failed", depth=99, entered_per_hour=9.0, left_per_hour=0.1),
             self.stage("awaiting-author", depth=99, entered_per_hour=9.0, left_per_hour=0.1),
         ])
-        self.assertIsNone(health.find_bottleneck(result))
+        self.assertIsNone(health.find_cause(result)["stage"])
 
     def test_an_empty_stage_is_not_a_bottleneck(self):
         result = self.base(stages=[self.stage("awaiting-review", depth=0,
                                               entered_per_hour=0.0, left_per_hour=0.0)])
-        self.assertIsNone(health.find_bottleneck(result))
+        self.assertIsNone(health.find_cause(result)["stage"])
 
 
 class TimingTests(unittest.TestCase):

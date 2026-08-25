@@ -6,7 +6,8 @@ the end of a queue, so a fall in it says something is wrong without saying what.
 
 It measures each lifecycle stage separately — arrival rate, departure rate,
 current depth, how long the oldest occupant has waited, and median dwell — each
-against a trailing baseline, and names the stage most responsible.
+against a trailing baseline, and names the cause: a stage backing up, an intake
+that has thinned, both, or neither.
 
 ## Reading it
 
@@ -21,10 +22,16 @@ Three things it deliberately does not do.
 drains as fast as it fills. The bottleneck is chosen on arrivals outrunning
 departures, and on occupants waiting longer than that stage normally takes.
 
-**It does not always name a culprit.** Throughput can fall because nothing
-arrived, so when no stage clears an anomaly threshold none is named. A heuristic
-that always finds someone to blame is not a diagnosis. A baseline with too few
-completed merges reports insufficient data rather than health.
+**A thin intake is an answer, not a shrug.** Fewer merges can mean the queue is
+stuck or simply that less went into it, and those want opposite responses:
+adding review capacity does nothing about a week when nobody opened anything. So
+arrival rates are compared against baseline too, and a fall in them is reported
+as the cause. When both are true, both are said.
+
+**It will admit to not knowing.** If arrivals are steady and no stage is backing
+up, the fall is reported as unexplained rather than pinned on whichever stage
+happened to be deepest. A baseline with too few merges reports insufficient data
+rather than health.
 
 **`ci-failed` and `awaiting-author` are never blamed.** Those wait on the
 contributor rather than on the project, and treating a backlog there as

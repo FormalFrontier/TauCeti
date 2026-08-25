@@ -179,12 +179,14 @@ def analyse(
             counted("merged_at", baseline_start, baseline_end), baseline_span),
         "merged_count": counted("merged_at", window_start, now),
         "baseline_merged_count": counted("merged_at", baseline_start, baseline_end),
+        "opened_count": counted("created_at", window_start, now),
+        "baseline_opened_count": counted("created_at", baseline_start, baseline_end),
         "open_prs": sum(1 for pr in prs if pr["state"] == "OPEN"),
         "open_prs_without_a_lifecycle_label": unlabelled_open,
         "stages": stages,
     }
     result["anomalies"] = anomalies(result)
-    result["bottleneck"] = find_bottleneck(result)
+    result["cause"] = find_cause(result)
     return result
 
 
@@ -263,23 +265,55 @@ def anomalies(result: dict) -> list[dict]:
     return found
 
 
-def find_bottleneck(result: dict) -> dict | None:
-    """The headline stage, when there is one to name.
+def find_cause(result: dict) -> dict | None:
+    """Why throughput is down, when it is.
 
-    Judged on backing up, not on depth: a stage can be very deep and perfectly
-    healthy if it drains as fast as it fills. A stage that meets no anomaly
-    condition is not named, even when throughput is down, because "the queue is
-    slow and no stage is misbehaving" is a real and useful answer.
+    Fewer merges can mean the queue is stuck or simply that less went into it,
+    and those want opposite responses: adding review capacity does nothing about
+    a week when nobody opened anything. Both are answers, so both are reported.
+    Only when neither holds is the fall genuinely unexplained, and saying so is
+    better than picking a stage to blame.
     """
     baseline = result["baseline_merged_per_hour"]
     if not baseline or result["baseline_merged_count"] < MIN_COMPLETIONS:
         # Nothing to compare against. Saying "healthy" here would be a guess
         # dressed as a finding.
-        return {"stage": None, "why": "not enough baseline data to judge", "insufficient_data": True}
+        return {"kind": "insufficient_data", "stage": None,
+                "why": "not enough baseline data to judge"}
     if result["merged_per_hour"] >= baseline * THROUGHPUT_FRACTION:
         return None
-    found = result.get("anomalies") or anomalies(result)
-    return found[0] if found else None
+
+    found = result["anomalies"] if "anomalies" in result else anomalies(result)
+    opened, opened_baseline = result["opened_per_hour"], result["baseline_opened_per_hour"]
+    intake_down = (
+        opened_baseline
+        and opened < opened_baseline * THROUGHPUT_FRACTION
+        and result["baseline_opened_count"] >= MIN_COMPLETIONS
+    )
+
+    if intake_down and not found:
+        return {
+            "kind": "intake", "stage": None,
+            "why": (
+                f"fewer pull requests are arriving: {opened:.2f}/h against "
+                f"{opened_baseline:.2f}/h. Nothing is stuck; there is less to merge"
+            ),
+        }
+    if found:
+        primary = dict(found[0], kind="stage")
+        if intake_down:
+            primary["why"] += (
+                f". Arrivals are also down, at {opened:.2f}/h against "
+                f"{opened_baseline:.2f}/h, so the queue is both thinner and slower"
+            )
+        return primary
+    return {
+        "kind": "unexplained", "stage": None,
+        "why": (
+            f"arrivals are steady at {opened:.2f}/h and no stage is backing up, "
+            "so the fall is not explained by the queue"
+        ),
+    }
 
 
 def report(result: dict) -> str:
@@ -312,23 +346,21 @@ def report(result: dict) -> str:
     lines.append("")
     lines.append("  * waiting on the contributor, not on the project")
     lines.append("")
-    bottleneck = result["bottleneck"]
     if result.get("open_prs_without_a_lifecycle_label"):
         lines.append(
             f"  note: {result['open_prs_without_a_lifecycle_label']} open PR(s) carry no single "
             "lifecycle label, so they are absent from every depth above"
         )
-    if bottleneck and bottleneck.get("insufficient_data"):
-        lines.append(f"  {bottleneck['why']}")
-    elif bottleneck:
-        found = result.get("anomalies") or []
-        lines.append(f"  bottleneck: {bottleneck['stage']} — {bottleneck['why']}")
-        for other in found[1:]:
-            lines.append(f"  also:       {other['stage']} — {other['why']}")
-    elif baseline and merged < baseline:
-        lines.append("  throughput is down but no stage is backing up; likely a quiet spell in arrivals")
-    else:
+
+    cause = result["cause"]
+    if cause is None:
         lines.append("  throughput is normal; no stage is backing up")
+    elif cause["kind"] == "stage":
+        lines.append(f"  cause: {cause['stage']} — {cause['why']}")
+        for other in (result.get("anomalies") or [])[1:]:
+            lines.append(f"  also:  {other['stage']} — {other['why']}")
+    else:
+        lines.append(f"  cause: {cause['why']}")
     return "\n".join(lines)
 
 
