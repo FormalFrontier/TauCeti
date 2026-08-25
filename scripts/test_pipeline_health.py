@@ -7,6 +7,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 
 import pipeline_health as health
+import pr_lifecycle as health_lc
 
 UTC = timezone.utc
 NOW = datetime(2026, 8, 25, 12, 0, tzinfo=UTC)
@@ -44,29 +45,29 @@ class IntervalTests(unittest.TestCase):
             (NOW - timedelta(hours=10), "awaiting-CI"),
             (NOW - timedelta(hours=8), "awaiting-review"),
         ])
-        spells = list(health.episodes(item, NOW))
+        spells = list(health_lc.label_intervals(item, NOW))
         self.assertEqual([s[0] for s in spells], ["awaiting-CI", "awaiting-review"])
         self.assertEqual((spells[0][2] - spells[0][1]), timedelta(hours=2))
 
     def test_an_open_pr_s_last_spell_is_still_running(self):
         item = pr(1, [(NOW - timedelta(hours=3), "awaiting-review")])
-        self.assertIsNone(list(health.episodes(item, NOW))[-1][2])
+        self.assertIsNone(list(health_lc.label_intervals(item, NOW))[-1][2])
 
     def test_a_merged_pr_s_last_spell_ends_at_the_merge(self):
         merged = NOW - timedelta(hours=1)
         item = pr(2, [(NOW - timedelta(hours=5), "ready-to-merge")],
                   state="MERGED", merged=merged)
-        _, start, end = list(health.episodes(item, NOW))[-1]
+        _, start, end = list(health_lc.label_intervals(item, NOW))[-1]
         self.assertEqual(end, merged)
 
     def test_non_lifecycle_labels_are_ignored(self):
         item = pr(3, [(NOW - timedelta(hours=4), "roadmap:algebra"),
                       (NOW - timedelta(hours=2), "awaiting-review")])
-        self.assertEqual([s[0] for s in health.episodes(item, NOW)],
+        self.assertEqual([s[0] for s in health_lc.label_intervals(item, NOW)],
                          ["awaiting-review"])
 
     def test_a_pr_with_no_lifecycle_events_yields_nothing(self):
-        self.assertEqual(list(health.episodes(pr(4, []), NOW)), [])
+        self.assertEqual(list(health_lc.label_intervals(pr(4, []), NOW)), [])
 
 
 class AnalysisTests(unittest.TestCase):
@@ -256,8 +257,6 @@ class ReportTests(unittest.TestCase):
         self.assertIn("waiting on the contributor", text)
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class AgreementTests(unittest.TestCase):
@@ -300,3 +299,7 @@ class AgreementTests(unittest.TestCase):
         ])
         stages = health.analyse(snapshot([item]), 24, 24 * 14, NOW)["stages"]
         self.assertAlmostEqual(max(s["oldest_waiting_hours"] for s in stages), 3.0, places=3)
+
+
+if __name__ == "__main__":
+    unittest.main()

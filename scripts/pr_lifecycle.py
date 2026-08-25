@@ -108,13 +108,66 @@ def review_cycle_starts(pr: dict) -> list[datetime]:
     return starts
 
 
-def episodes(pr: dict, now: datetime):
-    """Yield (state, entered, left) for each spell, with the joining rules applied.
+def label_intervals(pr: dict, now: datetime):
+    """Yield (label, applied, replaced) for each individual label application.
 
-    `state` is the label the spell began in. A spell that is still running has
-    `left` of None. This is the primitive both the queue-age histograms and the
-    per-stage rates are built on, so that "how long has this been waiting" has
-    exactly one answer.
+    Atomic: no joining. This is what per-label rates and dwell times are built
+    on, because "how many pull requests entered `awaiting-author` this hour" is
+    a question about that label and not about the spell containing it.
+
+    A running interval has `replaced` of None, but only when the label is still
+    on the pull request. The snapshot records label additions and not removals,
+    so a label that was taken off without another arriving would otherwise look
+    like it was still in force; that case is censored instead, since the honest
+    answer is that we cannot see when it ended.
+    """
+    timeline = [
+        (parse_dt(event["created_at"]), event["label"])
+        for event in events(pr) if event["label"] in LIFECYCLE_LABELS
+    ]
+    for index, (applied, label) in enumerate(timeline):
+        if index + 1 < len(timeline):
+            yield label, applied, timeline[index + 1][0]
+            continue
+        if pr["state"] == "OPEN":
+            if current_stage(pr) == label:
+                yield label, applied, None
+            # else: censored. The label went away and nothing replaced it.
+            continue
+        closed = parse_dt(pr.get("merged_at") or pr.get("closed_at"))
+        if closed:
+            yield label, applied, closed
+
+
+def group_of(label: str) -> str:
+    """The waiting-spell a label belongs to.
+
+    Siblings share a group because the wait does not restart when the pipeline
+    swaps one for the other: the author reads a build log for `ci-failed` and
+    review threads for `awaiting-author`, but the ball is in their court either
+    way, and a review round moves between `awaiting-review` and
+    `review-in-progress` without the author's wait beginning again.
+    """
+    if label in STATE_AUTHOR_ACTION:
+        return "author-action"
+    if label in STATE_REVIEW:
+        return "review"
+    return label
+
+
+def episodes(pr: dict, now: datetime):
+    """Yield (group, entered, left) for each waiting spell.
+
+    Grouped, not atomic: this answers "how long has this been waiting", where
+    swapping a label for its sibling does not restart the clock. Use
+    `label_intervals` for anything counted per label.
+
+    Note that this is deliberately not the same decomposition as
+    `review_cycle_starts`, which counts how many times a pull request has been
+    through review and treats only an author or CI state as ending a cycle. A
+    spell of waiting and a round of review are different questions, and a
+    pull request that reached `ready-to-merge` and came back has waited twice
+    while having been reviewed once.
     """
     timeline = [
         (parse_dt(event["created_at"]), event["label"])
@@ -123,32 +176,30 @@ def episodes(pr: dict, now: datetime):
     if not timeline:
         return
 
-    def joined(previous: str, nxt: str) -> bool:
-        return (
-            (previous in STATE_AUTHOR_ACTION and nxt in STATE_AUTHOR_ACTION)
-            or (previous in STATE_REVIEW and nxt in STATE_REVIEW)
-        )
-
-    spell_start, spell_label = timeline[0]
-    for index in range(1, len(timeline)):
-        at, label = timeline[index]
-        if joined(spell_label, label):
-            # Same spell continuing under a sibling label; the clock keeps running.
-            spell_label = label
+    spell_start, spell_group = timeline[0][0], group_of(timeline[0][1])
+    for at, label in timeline[1:]:
+        group = group_of(label)
+        if group == spell_group:
             continue
-        yield spell_label, spell_start, at
-        spell_start, spell_label = at, label
+        yield spell_group, spell_start, at
+        spell_start, spell_group = at, group
 
     if pr["state"] == "OPEN":
-        yield spell_label, spell_start, None
-    else:
-        closed = parse_dt(pr.get("merged_at") or pr.get("closed_at"))
-        yield spell_label, spell_start, closed or now
+        stage = current_stage(pr)
+        # Same censoring as label_intervals: a spell whose label was removed
+        # without replacement has ended at a time the snapshot cannot show.
+        if stage is not None and group_of(stage) == spell_group:
+            yield spell_group, spell_start, None
+        return
+    closed = parse_dt(pr.get("merged_at") or pr.get("closed_at"))
+    if closed:
+        yield spell_group, spell_start, closed
 
 
-def waiting_since(pr: dict) -> datetime | None:
-    """When the pull request's current spell began, whatever state it is in."""
-    timeline = list(episodes(pr, datetime.now(timezone.utc)))
-    if timeline and timeline[-1][2] is None:
-        return timeline[-1][1]
+def waiting_since(pr: dict, now: datetime | None = None) -> datetime | None:
+    """When the pull request's current spell began, or None if it is not in one."""
+    now = now or datetime.now(timezone.utc)
+    for _, start, end in episodes(pr, now):
+        if end is None:
+            return start
     return None

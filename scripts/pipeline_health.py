@@ -45,7 +45,8 @@ from pr_lifecycle import (  # noqa: E402
     STAGE_ORDER,
     STATE_AUTHOR_ACTION,
     current_stage,
-    episodes,
+    label_intervals,
+    waiting_since,
     iso_z,
     parse_dt,
 )
@@ -109,19 +110,25 @@ def analyse(
                 unlabelled_open += 1
             else:
                 depth[stage] += 1
+                # How long this pull request has been waiting is a question
+                # about its spell, not about the label currently on it: the
+                # clock does not restart when the pipeline swaps a label for
+                # its sibling. Rates below are the opposite, and use the atomic
+                # per-label intervals.
+                began = waiting_since(pr, now)
+                if began:
+                    waiting = (now - began).total_seconds() / 3600
+                    oldest[stage] = max(oldest.get(stage, 0.0), waiting)
 
-        for label, start, end in episodes(pr, now):
+        for label, start, end in label_intervals(pr, now):
             if baseline_start <= start < baseline_end:
                 entered[label]["baseline"] += 1
             if start >= window_start:
                 entered[label]["window"] += 1
 
             if end is None:
-                # Still in this stage: it contributes to how long the stage's
-                # current occupants have been waiting, but not to completed
-                # dwell times, which would bias them downwards.
-                waiting = (now - start).total_seconds() / 3600
-                oldest[label] = max(oldest.get(label, 0.0), waiting)
+                # Still running, so not a completed dwell: counting it would
+                # bias a stuck stage's median downwards.
                 continue
 
             hours = (end - start).total_seconds() / 3600
@@ -176,6 +183,7 @@ def analyse(
         "open_prs_without_a_lifecycle_label": unlabelled_open,
         "stages": stages,
     }
+    result["anomalies"] = anomalies(result)
     result["bottleneck"] = find_bottleneck(result)
     return result
 
@@ -193,8 +201,9 @@ def rounded(result: dict) -> dict:
     def fix(value):
         return round(value, ROUND_TO) if isinstance(value, float) else value
 
-    out = {k: fix(v) for k, v in result.items() if k != "stages"}
+    out = {k: fix(v) for k, v in result.items() if k not in ("stages", "anomalies")}
     out["stages"] = [{k: fix(v) for k, v in stage.items()} for stage in result["stages"]]
+    out["anomalies"] = [{k: fix(v) for k, v in a.items()} for a in result.get("anomalies") or []]
     return out
 
 
@@ -207,8 +216,55 @@ SLOWDOWN_FACTOR = 2.0        # the oldest occupant, against normal dwell
 THROUGHPUT_FRACTION = 0.75   # of baseline, below which something is wrong
 
 
+def anomalies(result: dict) -> list[dict]:
+    """Every project-owned stage misbehaving, worst first.
+
+    A pipeline can have more than one thing wrong with it, and on real data it
+    usually does: naming a single culprit hid a stage full of approved work that
+    was not merging, because a different stage happened to be filling faster.
+    """
+    found = []
+    for stage in result["stages"]:
+        if not stage["owned_by_project"] or not stage["depth"]:
+            continue
+        growth = stage["entered_per_hour"] - stage["left_per_hour"]
+        normal = stage["baseline_median_dwell_hours"]
+        enough = stage["baseline_left_count"] >= MIN_COMPLETIONS
+        slowdown = (
+            stage["oldest_waiting_hours"] / normal
+            if enough and normal and stage["oldest_waiting_hours"] else 0.0
+        )
+        filling = growth > GROWTH_PER_HOUR
+        stalled = slowdown >= SLOWDOWN_FACTOR
+        if not (filling or stalled):
+            continue
+        reasons = []
+        if filling:
+            reasons.append(
+                f"arriving at {stage['entered_per_hour']:.2f}/h and leaving at "
+                f"{stage['left_per_hour']:.2f}/h, so it is filling faster than it drains"
+            )
+        if stalled:
+            reasons.append(
+                f"its oldest has waited {stage['oldest_waiting_hours']:.0f}h against a "
+                f"{normal:.1f}h normal dwell"
+            )
+        found.append({
+            "stage": stage["stage"],
+            "depth": stage["depth"],
+            "growth_per_hour": growth,
+            "slowdown_factor": slowdown,
+            "why": "; ".join(reasons),
+        })
+    # Filling beats merely stalled, then by how fast, then by how far past normal.
+    found.sort(key=lambda item: (item["growth_per_hour"] > GROWTH_PER_HOUR,
+                                 item["growth_per_hour"], item["slowdown_factor"]),
+               reverse=True)
+    return found
+
+
 def find_bottleneck(result: dict) -> dict | None:
-    """The stage most responsible for the pipeline being slower than usual.
+    """The headline stage, when there is one to name.
 
     Judged on backing up, not on depth: a stage can be very deep and perfectly
     healthy if it drains as fast as it fills. A stage that meets no anomaly
@@ -222,41 +278,8 @@ def find_bottleneck(result: dict) -> dict | None:
         return {"stage": None, "why": "not enough baseline data to judge", "insufficient_data": True}
     if result["merged_per_hour"] >= baseline * THROUGHPUT_FRACTION:
         return None
-
-    candidates = []
-    for stage in result["stages"]:
-        if not stage["owned_by_project"] or not stage["depth"]:
-            continue
-        growth = stage["entered_per_hour"] - stage["left_per_hour"]
-        normal = stage["baseline_median_dwell_hours"]
-        enough = stage["baseline_left_count"] >= MIN_COMPLETIONS
-        slowdown = (
-            stage["oldest_waiting_hours"] / normal
-            if enough and normal and stage["oldest_waiting_hours"] else 0.0
-        )
-        filling = growth > GROWTH_PER_HOUR
-        stalled = slowdown >= SLOWDOWN_FACTOR
-        if filling or stalled:
-            candidates.append((filling, growth, slowdown, stage))
-
-    if not candidates:
-        return None
-    # Filling beats merely slow, then by how fast it is filling, then by how far
-    # past normal its oldest occupant is.
-    candidates.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
-    filling, growth, slowdown, stage = candidates[0]
-
-    if filling:
-        why = (
-            f"arriving at {stage['entered_per_hour']:.2f}/h and leaving at "
-            f"{stage['left_per_hour']:.2f}/h, so it is filling faster than it drains"
-        )
-    else:
-        why = (
-            f"its oldest occupant has waited {stage['oldest_waiting_hours']:.0f}h against a "
-            f"{stage['baseline_median_dwell_hours']:.1f}h normal dwell"
-        )
-    return {"stage": stage["stage"], "why": why, "depth": stage["depth"]}
+    found = result.get("anomalies") or anomalies(result)
+    return found[0] if found else None
 
 
 def report(result: dict) -> str:
@@ -298,7 +321,10 @@ def report(result: dict) -> str:
     if bottleneck and bottleneck.get("insufficient_data"):
         lines.append(f"  {bottleneck['why']}")
     elif bottleneck:
+        found = result.get("anomalies") or []
         lines.append(f"  bottleneck: {bottleneck['stage']} — {bottleneck['why']}")
+        for other in found[1:]:
+            lines.append(f"  also:       {other['stage']} — {other['why']}")
     elif baseline and merged < baseline:
         lines.append("  throughput is down but no stage is backing up; likely a quiet spell in arrivals")
     else:
