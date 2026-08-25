@@ -46,8 +46,15 @@ The real-variable theory of Euler's beta integral that the construction rests on
 * `TauCeti.hasDerivAt_regularizedIncompleteBeta` — the derivative on `(0, 1)`;
 * `TauCeti.regularizedIncompleteBeta_symm` — the reflection formula
   `I_x(a, b) = 1 - I_{1-x}(b, a)`;
-* `TauCeti.regularizedIncompleteBeta_add_one_left` — the unit-step recurrence
-  `I_x(a + 1, b) = I_x(a, b) - x ^ a * (1 - x) ^ b / (a * Β(a, b))`, for `0 ≤ x ≤ 1`.
+* `TauCeti.regularizedIncompleteBeta_one_right` and
+  `TauCeti.regularizedIncompleteBeta_one_left` — the elementary values `x ^ a` and
+  `1 - (1 - x) ^ b` at a unit parameter;
+* `TauCeti.regularizedIncompleteBeta_add_one_left` and
+  `TauCeti.regularizedIncompleteBeta_add_one_right` — the unit-step recurrences
+  `I_x(a + 1, b) = I_x(a, b) - x ^ a * (1 - x) ^ b / (a * Β(a, b))` and
+  `I_x(a, b + 1) = I_x(a, b) + x ^ a * (1 - x) ^ b / (b * Β(a, b))`, for `0 ≤ x ≤ 1`;
+* `TauCeti.regularizedIncompleteBeta_add_one_right_sub_add_one_left` — the step along the
+  antidiagonal `a + b = const`, whose increment is a generalized binomial coefficient.
 
 ## References
 
@@ -301,6 +308,28 @@ theorem regularizedIncompleteBeta_symm (ha : 0 < a) (hb : 0 < b) (x : ℝ) :
     regularizedIncompleteBeta_def_of_mem_Icc hb ha hmem', hsub, beta_comm b a,
     eq_sub_iff_add_eq, ← add_div, hadd, div_self (beta_pos ha hb).ne']
 
+/-! ## Boundary parameter values -/
+
+/-- At second parameter `1` the beta integrand loses its second factor, and the regularized
+incomplete beta function is the power `x ^ a`. -/
+@[simp]
+theorem regularizedIncompleteBeta_one_right (ha : 0 < a) (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    regularizedIncompleteBeta a 1 x = x ^ a := by
+  have hexp : a - 1 + 1 = a := by ring
+  rw [regularizedIncompleteBeta_def_of_mem_Icc ha one_pos ⟨hx0, hx1⟩, beta_one_right ha]
+  simp only [sub_self, Real.rpow_zero, mul_one]
+  rw [integral_rpow (Or.inl (by linarith : (-1 : ℝ) < a - 1)), hexp, Real.zero_rpow ha.ne',
+    sub_zero]
+  field_simp
+
+/-- At first parameter `1` the reflection formula turns
+`TauCeti.regularizedIncompleteBeta_one_right` into the complementary power `1 - (1 - x) ^ b`. -/
+@[simp]
+theorem regularizedIncompleteBeta_one_left (hb : 0 < b) (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    regularizedIncompleteBeta 1 b x = 1 - (1 - x) ^ b := by
+  rw [regularizedIncompleteBeta_symm one_pos hb x,
+    regularizedIncompleteBeta_one_right hb (by linarith) (by linarith)]
+
 /-! ## The unit-step recurrence -/
 
 /-- The unit-step recurrence in the first parameter,
@@ -349,5 +378,56 @@ theorem regularizedIncompleteBeta_add_one_left (ha : 0 < a) (hb : 0 < b)
   have hbeta := (beta_pos ha hb).ne'
   field_simp [hbeta, ha.ne', hab.ne']
   linear_combination -hftc
+
+/-- The unit-step recurrence in the second parameter,
+`I_x(a, b + 1) = I_x(a, b) + x ^ a * (1 - x) ^ b / (b * Β(a, b))`.
+
+It is the reflection of `TauCeti.regularizedIncompleteBeta_add_one_left`, and carries the same
+restriction `0 ≤ x ≤ 1` for the same reason. -/
+theorem regularizedIncompleteBeta_add_one_right (ha : 0 < a) (hb : 0 < b)
+    (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    regularizedIncompleteBeta a (b + 1) x = regularizedIncompleteBeta a b x +
+      x ^ a * (1 - x) ^ b / (b * beta a b) := by
+  have hstep := regularizedIncompleteBeta_add_one_left hb ha (by linarith : (0 : ℝ) ≤ 1 - x)
+    (by linarith : (1 : ℝ) - x ≤ 1)
+  rw [sub_sub_cancel, beta_comm b a] at hstep
+  rw [regularizedIncompleteBeta_symm ha (by linarith : (0 : ℝ) < b + 1) x, hstep,
+    regularizedIncompleteBeta_symm ha hb x]
+  ring
+
+/-- The step along the antidiagonal `a + b = const`, which is the recurrence the binomial tail
+runs on:
+`I_x(a, b + 1) - I_x(a + 1, b) = Γ(a + b + 1) / (Γ(a + 1) * Γ(b + 1)) * (x ^ a * (1 - x) ^ b)`.
+
+The coefficient is the generalized binomial coefficient `(a + b).choose a`, so at natural
+parameters `a = m` and `b = n - m` the right-hand side is the `m`-th binomial weight
+`(n.choose m) * x ^ m * (1 - x) ^ (n - m)`.
+
+The first parameter is only assumed nonnegative. At `a = 0` the identity reads
+`1 - I_x(1, b) = (1 - x) ^ b`, which holds precisely because
+`TauCeti.regularizedIncompleteBeta` takes the value `1` at first parameter `0`: the boundary
+convention is what makes the antidiagonal recurrence start at `a = 0`. -/
+theorem regularizedIncompleteBeta_add_one_right_sub_add_one_left (ha : 0 ≤ a) (hb : 0 < b)
+    (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    regularizedIncompleteBeta a (b + 1) x - regularizedIncompleteBeta (a + 1) b x =
+      Real.Gamma (a + b + 1) / (Real.Gamma (a + 1) * Real.Gamma (b + 1)) *
+        (x ^ a * (1 - x) ^ b) := by
+  rcases ha.eq_or_lt with rfl | ha
+  · rw [regularizedIncompleteBeta_zero_left (by linarith) hx0, zero_add,
+      regularizedIncompleteBeta_one_left hb hx0 hx1, Real.rpow_zero, Real.Gamma_one, one_mul,
+      zero_add, one_mul]
+    field_simp
+    ring
+  have hGa := (Real.Gamma_pos_of_pos ha).ne'
+  have hGb := (Real.Gamma_pos_of_pos hb).ne'
+  have hGab := (Real.Gamma_pos_of_pos (add_pos ha hb)).ne'
+  have hkey : 1 / (b * beta a b) + 1 / (a * beta a b) =
+      Real.Gamma (a + b + 1) / (Real.Gamma (a + 1) * Real.Gamma (b + 1)) := by
+    rw [ProbabilityTheory.beta, Real.Gamma_add_one ha.ne', Real.Gamma_add_one hb.ne',
+      Real.Gamma_add_one (add_pos ha hb).ne']
+    field_simp
+  rw [regularizedIncompleteBeta_add_one_right ha hb hx0 hx1,
+    regularizedIncompleteBeta_add_one_left ha hb hx0 hx1]
+  linear_combination (x ^ a * (1 - x) ^ b) * hkey
 
 end TauCeti
