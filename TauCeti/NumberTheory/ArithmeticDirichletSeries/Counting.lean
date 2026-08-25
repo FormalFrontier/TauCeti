@@ -125,7 +125,8 @@ theorem two_le_absNorm_idealPrimePower_real (A : IdealPrimePower K) :
     Ideal.absNorm_ne_zero_of_nonZeroDivisors A.1
   have hne_one : Ideal.absNorm (A.1 : Ideal (𝓞 K)) ≠ 1 := fun h ↦
     A.property.not_isUnit (Ideal.isUnit_iff.mpr (Ideal.absNorm_eq_one_iff.mp h))
-  exact_mod_cast (show 2 ≤ Ideal.absNorm (A.1 : Ideal (𝓞 K)) by omega)
+  have hnorm : 2 ≤ Ideal.absNorm (A.1 : Ideal (𝓞 K)) := by omega
+  exact_mod_cast hnorm
 
 /-- Below the cutoff `1` there is no nonzero integral ideal to count. -/
 theorem idealsLE_eq_empty_of_lt_one {x : ℝ} (hx : x < 1) : idealsLE K x = ∅ :=
@@ -185,10 +186,12 @@ noncomputable abbrev primePowerSummatory {M : Type*} [AddCommMonoid M]
     (w : IdealPrimePower K → M) (x : ℝ) : M :=
   summatory (fun A : IdealPrimePower K ↦ Ideal.absNorm (A : Ideal (𝓞 K))) w x
 
+/-- An ideal summatory function is the sum of its weight over the inclusive cutoff carrier. -/
 theorem idealSummatory_apply {M : Type*} [AddCommMonoid M] (w : (Ideal (𝓞 K))⁰ → M) (x : ℝ) :
     idealSummatory K w x = ∑ I ∈ idealsLE K x, w I :=
   summatory_apply _ w x
 
+/-- A prime summatory function is the sum of its weight over the inclusive cutoff carrier. -/
 theorem primeSummatory_apply {M : Type*} [AddCommMonoid M]
     (w : HeightOneSpectrum (𝓞 K) → M) (x : ℝ) :
     primeSummatory K w x = ∑ v ∈ primesLE K x, w v :=
@@ -260,11 +263,13 @@ noncomputable def primeCount (S : Set (HeightOneSpectrum (𝓞 K))) (x : ℝ) : 
 variable {K}
 variable {S T : Set (HeightOneSpectrum (𝓞 K))} {x : ℝ}
 
+/-- The logarithmically weighted prime count as an explicit sum over the inclusive carrier. -/
 theorem primeTheta_apply (S : Set (HeightOneSpectrum (𝓞 K))) (x : ℝ) :
     primeTheta K S x =
       ∑ v ∈ primesLE K x, S.indicator (fun v ↦ Real.log (Ideal.absNorm v.asIdeal : ℝ)) v :=
   by rw [primeTheta, primeSummatory_apply]
 
+/-- The unweighted prime count as an explicit sum over the inclusive carrier. -/
 theorem primeCount_apply (S : Set (HeightOneSpectrum (𝓞 K))) (x : ℝ) :
     primeCount K S x = ∑ v ∈ primesLE K x, S.indicator 1 v := by
   rw [primeCount, primeSummatory_apply]
@@ -381,10 +386,12 @@ theorem eventually_primeCount_eq_card (hS : S.Finite) :
     (S.indicator (1 : HeightOneSpectrum (𝓞 K) → ℝ)) hS.toFinset
     fun v hv ↦ Set.indicator_of_notMem (by simpa using hv) _] with x hx
   rw [primeCount, primeSummatory_apply]
-  rw [show (∑ v ∈ primesLE K x, S.indicator 1 v) =
-      ∑ v ∈ hS.toFinset, S.indicator 1 v by
-        rw [← primeSummatory_apply]
-        exact hx,
+  have hsum : (∑ v ∈ primesLE K x,
+      S.indicator (1 : HeightOneSpectrum (𝓞 K) → ℝ) v) =
+      ∑ v ∈ hS.toFinset, S.indicator (1 : HeightOneSpectrum (𝓞 K) → ℝ) v := by
+    rw [← primeSummatory_apply]
+    exact hx
+  rw [hsum,
     Finset.sum_congr rfl fun v hv ↦
     Set.indicator_of_mem (hS.mem_toFinset.mp hv) _, Set.ncard_eq_toFinset_card S hS]
   simp
