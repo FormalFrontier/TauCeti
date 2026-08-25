@@ -42,8 +42,8 @@ original one.
 * `TauCeti.Graded.shift`: the shift of a family of graded pieces.
 * `TauCeti.Graded.shiftEquiv`: the canonical equivalence between the underlying modules of a
   grading and its shift; at a shift by one, its inverse is unsuspension.
-* `TauCeti.MultilinearMap.suspExp`: the Koszul exponent for suspending a tuple.
-* `TauCeti.MultilinearMap.suspend`: the signed operation obtained by suspension.
+* `MultilinearMap.suspExp`: the Koszul exponent for suspending a tuple.
+* `MultilinearMap.suspend`: the signed operation obtained by suspension.
 
 ## Main results
 
@@ -53,11 +53,11 @@ original one.
 * `TauCeti.LinearMap.isHomogeneous_shiftEquiv` and
   `TauCeti.LinearMap.isHomogeneous_shiftEquiv_symm`: for a shift by `c`, the forward map has
   degree `-c` and the inverse has degree `c`; at `c = 1` these are suspension and unsuspension.
-* `TauCeti.MultilinearMap.isHomogeneous_shift_iff`: shifting the inputs by `c` and the target by
+* `MultilinearMap.isHomogeneous_shift_iff`: shifting the inputs by `c` and the target by
   `r` translates degree `q` in the shifted gradings to degree `q + r - ∑ i, c i` in the original
   gradings.
-* `TauCeti.MultilinearMap.isHomogeneous_suspension_iff` and
-  `TauCeti.MultilinearMap.isHomogeneous_suspension_fin_iff`: an arity-`n` operation has degree one
+* `MultilinearMap.isHomogeneous_suspension_iff` and
+  `MultilinearMap.isHomogeneous_suspension_fin_iff`: an arity-`n` operation has degree one
   after suspension exactly when it has degree `2 - n` before.
 
 ## References
@@ -278,6 +278,12 @@ theorem isHomogeneous_suspension_fin_iff {n : ℕ} {f : MultilinearMap R (fun _ 
 
 end Suspension
 
+end MultilinearMap
+
+end TauCeti
+
+namespace MultilinearMap
+
 section SignedSuspension
 
 variable {R : Type uR} {M : Type uM} [CommRing R] [AddCommMonoid M] [Module R M]
@@ -330,29 +336,40 @@ theorem suspExp_succ (k : ℕ) (d : ℕ → ℤ) :
 /-- The signed operation prescribed by the suspension square. The tensor power of the suspension
 map is not formalized here; this adopts its Koszul sign as the definition. -/
 @[expose]
-def suspend {k : ℕ} (d : ℕ → ℤ) (f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M) :
-    _root_.MultilinearMap R (fun _ : Fin k ↦ M) M :=
+def suspend {k : ℕ} (d : ℕ → ℤ) (f : MultilinearMap R (fun _ : Fin k ↦ M) M) :
+    MultilinearMap R (fun _ : Fin k ↦ M) M :=
   TauCeti.negOnePow R (suspExp k d) • f
 
 /-- Evaluation of a suspended multilinear operation. -/
 @[simp]
 theorem suspend_apply {k : ℕ} (d : ℕ → ℤ)
-    (f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M) (x : Fin k → M) :
+    (f : MultilinearMap R (fun _ : Fin k ↦ M) M) (x : Fin k → M) :
     suspend d f x = TauCeti.negOnePow R (suspExp k d) • f x := by
   rw [suspend, smul_apply]
 
 /-- Applying suspension twice restores the original operation. -/
 @[simp]
 theorem suspend_suspend {k : ℕ} (d : ℕ → ℤ)
-    (f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M) : suspend d (suspend d f) = f := by
+    (f : MultilinearMap R (fun _ : Fin k ↦ M) M) : suspend d (suspend d f) = f := by
   rw [suspend, suspend, smul_smul, ← TauCeti.negOnePow_add, ← two_mul,
     TauCeti.negOnePow_two_mul, one_smul]
 
+end SignedSuspension
+
+end MultilinearMap
+
+namespace TauCeti.MultilinearMap
+
+section HomogeneousSuspension
+
+open _root_.MultilinearMap (suspend suspend_suspend)
+
+variable {R : Type uR} {M : Type uM} [CommRing R] [AddCommMonoid M] [Module R M]
 variable {σ : Type*} [SetLike σ M] [SMulMemClass σ R M]
 
 /-- Suspending a homogeneous arity-`k` operation of degree `2 - k` produces one of degree one. -/
 theorem IsHomogeneous.suspend {k : ℕ} {𝒜 : ℤ → σ} {d : ℕ → ℤ}
-    {f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M}
+    {f : MultilinearMap R (fun _ : Fin k ↦ M) M}
     (hf : IsHomogeneous f (fun _ ↦ 𝒜) 𝒜 (2 - k)) :
     IsHomogeneous (suspend d f) (fun _ ↦ Graded.shift 𝒜 1) (Graded.shift 𝒜 1) 1 :=
   isHomogeneous_suspension_fin_iff.2 (hf.smul _)
@@ -360,7 +377,7 @@ theorem IsHomogeneous.suspend {k : ℕ} {𝒜 : ℤ → σ} {d : ℕ → ℤ}
 /-- Suspension gives an equivalence between the degree conditions on suspended and unsuspended
 operations. -/
 theorem isHomogeneous_suspend_iff {k : ℕ} {𝒜 : ℤ → σ} {d : ℕ → ℤ}
-    {f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M} :
+    {f : MultilinearMap R (fun _ : Fin k ↦ M) M} :
     IsHomogeneous (suspend d f) (fun _ ↦ Graded.shift 𝒜 1) (Graded.shift 𝒜 1) 1 ↔
       IsHomogeneous f (fun _ ↦ 𝒜) 𝒜 (2 - k) := by
   rw [isHomogeneous_suspension_fin_iff]
@@ -370,8 +387,6 @@ theorem isHomogeneous_suspend_iff {k : ℕ} {𝒜 : ℤ → σ} {d : ℕ → ℤ
     exact hf.smul _
   · exact fun hf ↦ hf.smul _
 
-end SignedSuspension
+end HomogeneousSuspension
 
-end MultilinearMap
-
-end TauCeti
+end TauCeti.MultilinearMap

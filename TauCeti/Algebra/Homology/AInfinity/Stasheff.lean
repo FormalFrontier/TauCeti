@@ -36,7 +36,7 @@ vanishes exactly when the other does.  Following the cited Getzler--Jones/Keller
 definition adopts the sign prescribed by the Koszul rule for the suspension square: because `s`
 has degree `-1`, its tensor power contributes
 `(-1) ^ (∑ i, (n - 1 - i) * d i)`.  The tensor power itself is not formalized here.  Its exponent
-is `TauCeti.MultilinearMap.suspExp`, and `TauCeti.AInfinity.barTerm_eq_smul` proves that the two
+is `MultilinearMap.suspExp`, and `TauCeti.AInfinity.barTerm_eq_smul` proves that the two
 corresponding Stasheff terms differ by this same sign for every decomposition `n = p + s + t`.
 
 Both sides also carry the Koszul coefficient of the inserted operation crossing the prefix
@@ -60,8 +60,8 @@ propositionally equal arities.
 ## Main definitions
 
 * `TauCeti.negOnePow`: the scalar `(-1) ^ e` of the ground ring.
-* `TauCeti.MultilinearMap.suspExp`: the exponent prescribed for suspending a tuple.
-* `TauCeti.MultilinearMap.suspend`: the suspended operation `b_k` attached to `m_k`.
+* `MultilinearMap.suspExp`: the exponent prescribed for suspending a tuple.
+* `MultilinearMap.suspend`: the suspended operation `b_k` attached to `m_k`.
 * `TauCeti.AInfinity.stasheffTerm` and `TauCeti.AInfinity.barTerm`: the `(p, s, t)` term of the
   unsuspended and of the suspended Stasheff identity.
 * `TauCeti.AInfinity.stasheffSum` and `TauCeti.AInfinity.barSum`: the two sides of `(SIₙ)`.
@@ -104,6 +104,8 @@ coalgebra.
 public section
 
 open scoped BigOperators
+open _root_.MultilinearMap
+open TauCeti.MultilinearMap
 
 universe uR uA
 
@@ -112,8 +114,6 @@ namespace TauCeti
 namespace AInfinity
 
 variable {R : Type uR} {A : Type uA} [CommRing R] [AddCommGroup A] [Module R A]
-
-open TauCeti.MultilinearMap
 
 /-! ### Operations on inputs indexed by the naturals -/
 
