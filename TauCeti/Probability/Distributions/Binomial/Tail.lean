@@ -145,15 +145,24 @@ theorem sum_Icc_choose_mul_pow_eq_regularizedIncompleteBeta (hmn : m ≤ n) (p :
     rw [Set.indicator_of_notMem (by simpa using this)]
     simp
 
-/-- The cumulative mass of a binomial law, the complement of the tail identity: for `m < n`,
+/-- The cumulative mass of a binomial law, the complement of the tail identity: for `m ≤ n`,
 `Bin(n, p).real {k | k ≤ m} = I_{1-p}(n - m, m + 1)`.
 
 This is the cumulative mass function that `TauCetiRoadmap/StandardDistributions/README.md`,
 Layer 1 defers to this layer. -/
 @[simp]
-theorem binomial_cumulative_eq_regularizedIncompleteBeta (hmn : m < n) (p : unitInterval) :
+theorem binomial_cumulative_eq_regularizedIncompleteBeta (hmn : m ≤ n) (p : unitInterval) :
     Bin(n, p).real {k | k ≤ m} =
       regularizedIncompleteBeta ((n : ℝ) - m) ((m : ℝ) + 1) (1 - (p : ℝ)) := by
+  rcases hmn.eq_or_lt with rfl | hmn
+  · have hsupport : {k : ℕ | k ≤ m} =ᵐ[Bin(m, p)] Set.univ := by
+      filter_upwards [ae_le_of_hasLaw_binomial (P := Bin(m, p)) HasLaw.id] with k hk
+      apply propext
+      change k ≤ m ↔ True
+      exact iff_true_intro hk
+    rw [measureReal_congr hsupport, probReal_univ, sub_self,
+      regularizedIncompleteBeta_zero_left (by positivity)
+        (by exact sub_nonneg.mpr (unitInterval.le_one p))]
   have hcast : ((m : ℝ) + 1) ≤ (n : ℝ) := by exact_mod_cast hmn
   have hb : (0 : ℝ) < (n : ℝ) - m := by linarith
   have hcompl : {k : ℕ | k ≤ m}ᶜ = {k : ℕ | m + 1 ≤ k} := by
