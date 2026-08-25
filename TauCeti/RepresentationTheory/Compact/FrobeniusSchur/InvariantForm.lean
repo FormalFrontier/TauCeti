@@ -17,12 +17,17 @@ import Mathlib.Analysis.Complex.Polynomial.Basic
 `ContRepresentation.frobeniusSchurIndicator_trichotomy` says that the indicator of an irreducible
 unitary representation of a compact group is `1`, `0` or `-1`, and pins which value occurs by the
 invariants of the symmetric and of the exterior square. This file replaces those two invariant
-counts by the classical reading of the three values as the **orthogonal**, **complex** and
-**symplectic** (quaternionic) types:
+counts by invariant **bilinear forms**:
 
 `ν₂(π) = 1` iff `π` carries a nondegenerate invariant **symmetric** bilinear form,
 `ν₂(π) = -1` iff it carries a nondegenerate invariant **alternating** one,
 `ν₂(π) = 0` iff it carries no nonzero invariant bilinear form at all.
+
+That is as far as this file goes: the classical reading of the three values as the real, complex
+and quaternionic types — that `π` is the complexification of a real representation, that it is not
+isomorphic to its conjugate, that it carries a quaternionic structure — is a further step, not
+proved here, since none of the statements below mentions a structure map or a real or quaternionic
+form.
 
 The bridge is the inner-product dictionary of
 `TauCeti/RepresentationTheory/Continuous/Square/BilinearForm.lean`: a tensor `t` of `V ⊗[ℂ] V`
@@ -51,15 +56,12 @@ deliberately given the same shape: invariance is the named predicate
 
 ## Main statements
 
-* `ContRepresentation.frobeniusSchurIndicator_eq_one_iff`: **the indicator is `1` exactly in the
-  orthogonal case**, that is, exactly when the representation carries a nondegenerate invariant
-  symmetric form.
-* `ContRepresentation.frobeniusSchurIndicator_eq_neg_one_iff`: **the indicator is `-1` exactly in
-  the symplectic case**, that is, exactly when the representation carries a nondegenerate invariant
-  alternating form.
-* `ContRepresentation.frobeniusSchurIndicator_eq_zero_iff`: **the indicator is `0` exactly in the
-  complex case**, that is, exactly when the representation carries no nonzero invariant bilinear
-  form.
+* `ContRepresentation.frobeniusSchurIndicator_eq_one_iff`: **the indicator is `1` exactly when the
+  representation carries a nondegenerate invariant symmetric form.**
+* `ContRepresentation.frobeniusSchurIndicator_eq_neg_one_iff`: **the indicator is `-1` exactly when
+  it carries a nondegenerate invariant alternating form.**
+* `ContRepresentation.frobeniusSchurIndicator_eq_zero_iff`: **the indicator is `0` exactly when it
+  carries no nonzero invariant bilinear form.**
 
 ## Implementation notes
 
@@ -102,7 +104,7 @@ omit [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpa
   [BorelSpace G] [FiniteDimensional ℂ V] in
 /-- A count of invariants that is at most `1` is `1` exactly when there is a nonzero invariant form
 of the kind the count records; on an irreducible representation such a form is the same thing as a
-nondegenerate one. This is the shape both the orthogonal and the symplectic case take. -/
+nondegenerate one. This is the shape both the symmetric and the alternating case take. -/
 private theorem finrank_eq_one_iff_exists_nondegenerate {M : Type*} [AddCommGroup M] [Module ℂ M]
     [FiniteDimensional ℂ M] {S : Submodule ℂ M} {P : BilinForm ℂ V → Prop}
     (hirr : Representation.IsIrreducible π.toRepresentation) (hle : finrank ℂ S ≤ 1)
@@ -126,9 +128,9 @@ variable (hπ : Continuous π)
 
 include hπ
 
-/-- **The indicator is `1` exactly in the orthogonal case**: an irreducible unitary representation
-of a compact group has Frobenius-Schur indicator `1` exactly when it carries a nondegenerate
-invariant symmetric bilinear form. -/
+/-- **The indicator is `1` exactly when there is an invariant symmetric form**: an irreducible
+unitary representation of a compact group has Frobenius-Schur indicator `1` exactly when it carries
+a nondegenerate invariant symmetric bilinear form. -/
 theorem frobeniusSchurIndicator_eq_one_iff (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 1 ↔
@@ -139,9 +141,9 @@ theorem frobeniusSchurIndicator_eq_one_iff (hunitary : IsUnitary π)
     ((Nat.le_add_right _ _).trans (finrank_invariants_squares_le_one hunitary hirr))
     (exists_isInvariantForm_isSymm_ne_zero_iff π hunitary)
 
-/-- **The indicator is `-1` exactly in the symplectic case**: an irreducible unitary representation
-of a compact group has Frobenius-Schur indicator `-1` exactly when it carries a nondegenerate
-invariant alternating bilinear form. -/
+/-- **The indicator is `-1` exactly when there is an invariant alternating form**: an irreducible
+unitary representation of a compact group has Frobenius-Schur indicator `-1` exactly when it
+carries a nondegenerate invariant alternating bilinear form. -/
 theorem frobeniusSchurIndicator_eq_neg_one_iff (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = -1 ↔
@@ -152,9 +154,9 @@ theorem frobeniusSchurIndicator_eq_neg_one_iff (hunitary : IsUnitary π)
     ((Nat.le_add_left _ _).trans (finrank_invariants_squares_le_one hunitary hirr))
     (exists_isInvariantForm_isAlt_ne_zero_iff π hunitary)
 
-/-- **The indicator is `0` exactly in the complex case**: an irreducible unitary representation of a
-compact group has Frobenius-Schur indicator `0` exactly when it carries no nonzero invariant
-bilinear form at all.
+/-- **The indicator is `0` exactly when there is no invariant form**: an irreducible unitary
+representation of a compact group has Frobenius-Schur indicator `0` exactly when it carries no
+nonzero invariant bilinear form at all.
 
 Over `ℂ` a nonzero invariant form on an irreducible representation is symmetric or alternating
 (`TauCeti.Representation.IsInvariantForm.isSymm_or_isAlt`), so the two preceding theorems account

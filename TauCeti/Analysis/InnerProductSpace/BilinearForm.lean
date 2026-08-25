@@ -113,14 +113,14 @@ theorem ofTensor_comm (t : V ⊗[𝕜] V) :
     (TensorProduct.commIsometry 𝕜 V V).inner_map_map t (w ⊗ₜ[𝕜] v)
 
 /-- **The form of a tensor is symmetric exactly when the tensor is symmetric.** -/
-@[grind =]
+@[simp, grind =]
 theorem isSymm_ofTensor_iff {t : V ⊗[𝕜] V} :
     (ofTensor t).IsSymm ↔ t ∈ symmetricTensors 𝕜 V := by
   rw [BilinForm.isSymm_iff_flip, mem_symmetricTensors, ← ofTensor_comm,
     ofTensor_injective.eq_iff]
 
 /-- **The form of a tensor is alternating exactly when the tensor is antisymmetric.** -/
-@[grind =]
+@[simp, grind =]
 theorem isAlt_ofTensor_iff {t : V ⊗[𝕜] V} :
     (ofTensor t).IsAlt ↔ t ∈ antisymmetricTensors 𝕜 V := by
   -- `LinearMap.BilinForm.IsAlt` is `LinearMap.IsAlt`, which is where the flip characterization is.

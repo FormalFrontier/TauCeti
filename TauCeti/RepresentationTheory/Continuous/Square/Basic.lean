@@ -128,7 +128,10 @@ theorem exteriorSquare_apply (g : G) :
 
 -- Both squares are `subrepresentation`s of the tensor square, so these are the general
 -- `TauCeti.ContRepresentation.mem_invariants_subrepresentation`; they are stated here because the
--- bodies of `symmetricSquare` and `exteriorSquare` are not visible outside this file.
+-- bodies of `symmetricSquare` and `exteriorSquare` are not visible outside this file. Neither is
+-- `@[simp]`, for the same reason that lemma is not: Mathlib's `@[simp]
+-- ContRepresentation.mem_invariants` already rewrites the left-hand side to
+-- `∀ g, symmetricSquare π g x = x`, so the attribute is a `simpNF` violation.
 
 omit [TopologicalSpace G] in
 /-- Membership in the invariants of the symmetric square, read in the tensor square. -/

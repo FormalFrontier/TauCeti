@@ -15,7 +15,8 @@ public import TauCeti.RepresentationTheory.Continuous.Subrepresentation
 This file defines when a continuous representation preserves a real or complex inner product. It
 characterizes unitarity through norm preservation, isometries, and Mathlib's `unitary` submonoid of
 continuous linear operators, and records the basic inner-product identities, the coefficient bound,
-and that unitarity passes to restrictions.
+that an action map is injective -- and, in finite dimensions, surjective -- and that unitarity
+passes to restrictions.
 
 The definition and its API implement the unitarity-predicate milestone in Layer 1 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/roadmap/representation-theory/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md).
@@ -90,6 +91,14 @@ theorem isometry (hπ : IsUnitary π) (g : G) : Isometry (π g) :=
 /-- Every action map of a unitary representation is injective. -/
 theorem injective (hπ : IsUnitary π) (g : G) : Function.Injective (π g) :=
   (hπ.isometry g).injective
+
+/-- In finite dimensions every action map of a unitary representation is surjective: it is
+injective, and an injective endomorphism of a finite-dimensional space is surjective. For a group
+representation this holds in every dimension, by `Representation.apply_bijective`. -/
+theorem surjective [FiniteDimensional 𝕜 V] (hπ : IsUnitary π) (g : G) :
+    Function.Surjective (π g) := by
+  have hinj : Function.Injective ((π g : V →L[𝕜] V) : V →ₗ[𝕜] V) := hπ.injective g
+  simpa only [ContinuousLinearMap.coe_coe] using LinearMap.injective_iff_surjective.mp hinj
 
 /-- Restriction along a monoid homomorphism preserves unitarity. -/
 theorem restrict {H : Type*} [Monoid H] (hπ : IsUnitary π) (φ : H →* G) :

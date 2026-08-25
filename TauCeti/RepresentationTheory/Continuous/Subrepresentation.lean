@@ -57,6 +57,11 @@ theorem coe_subrepresentation_apply (g : G) (v : W) :
     ((subrepresentation π W hW g v : W) : V) = π g (v : V) :=
   (rfl)
 
+-- Not `@[simp]`: Mathlib's `@[simp] ContRepresentation.mem_invariants` already rewrites the
+-- left-hand side to `∀ g, subrepresentation π W hW g x = x`, so the attribute would be a `simpNF`
+-- violation ("Left-hand side simplifies … using `ContRepresentation.mem_invariants`"). This is the
+-- `rw`-usable form of that normalization, as `ContRepresentation.mem_invariants_restrict` is for
+-- the restriction along a subgroup.
 /-- A vector of an invariant submodule is invariant for the restricted representation exactly when
 it is invariant for the ambient one: the restricted action is the ambient action. -/
 theorem mem_invariants_subrepresentation {x : W} :
