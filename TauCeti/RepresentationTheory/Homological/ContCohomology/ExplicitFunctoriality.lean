@@ -160,7 +160,7 @@ theorem compatiblePair_comp
     [TopologicalSpace G] [TopologicalSpace H] [TopologicalSpace K]
     {M : Type uM} {N : Type uN} {P : Type uP}
     [AddMonoid M] [AddMonoid N] [AddMonoid P]
-    [DistribMulAction G M] [DistribMulAction H N] [DistribMulAction K P]
+    [SMul G M] [SMul H N] [SMul K P]
     (φ : H →ₜ* G) (ψ : K →ₜ* H) (f : M →+ N) (q : N →+ P)
     (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
     (hq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) (k : K) (m : M) :
