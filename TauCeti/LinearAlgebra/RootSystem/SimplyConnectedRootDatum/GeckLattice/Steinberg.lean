@@ -69,12 +69,13 @@ data and are not repeated.
   a graph automorphism with the same order relation.
 * `TauCeti.DynkinType.geckElementaryGraphAut_one`: the identity node permutation gives the identity
   automorphism.
+* `TauCeti.DynkinType.geckElementaryFrobenius_zero`: the zeroth Frobenius iterate is the identity.
 * `TauCeti.DynkinType.geckElementarySteinberg_exponent_zero`: at exponent zero the Steinberg
   endomorphism is the graph automorphism.
 * `TauCeti.DynkinType.geckElementarySteinberg_pow_eq_geckElementaryFrobenius`: if `sigma ^ d = 1`
   then the `d`-th iterate of the Steinberg endomorphism is `Frob_{q ^ d}`.
-* `TauCeti.DynkinType.fixedSubgroup_geckElementarySteinberg_le`: consequently its fixed subgroup
-  lies in the fixed subgroup of `Frob_{q ^ d}`.
+* `fixedSubgroup_geckElementarySteinberg_le_fixedSubgroup_geckElementaryFrobenius`: consequently
+  its fixed subgroup lies in the fixed subgroup of `Frob_{q ^ d}`.
 
 ## References
 
@@ -201,6 +202,13 @@ theorem val_geckElementaryFrobenius_geckRootSubgroupParam (p n : ℕ)
   simpa only [geckElementaryFrobenius] using
     (kostantElementaryFrobenius_kostantRootSubgroupParam _ _ _ _ _ _ p n A i u)
 
+/-- **The zeroth Frobenius iterate is the identity.** -/
+@[simp]
+theorem geckElementaryFrobenius_zero (p : ℕ) (A : CommAlgCat.{v} ℤ) [ExpChar A p] :
+    t.geckElementaryFrobenius ht p 0 A = MonoidHom.id _ := by
+  simpa only [geckElementaryFrobenius] using
+    (kostantElementaryFrobenius_zero _ _ _ _ _ _ p A)
+
 /-- **The Steinberg endomorphism of the pinned elementary Chevalley group** attached to a symmetry
 of the Bourbaki-numbered Dynkin diagram: the graph automorphism composed with the `p ^ n`-power
 Frobenius, `γ ∘ Frob_q` for `q = p ^ n`.
@@ -243,6 +251,7 @@ theorem val_geckElementarySteinberg_geckRootSubgroupParam (hsigma : sigma ∈ t.
 /-- **At exponent zero the Steinberg endomorphism is the graph automorphism itself.** The Frobenius
 factor is the identity there, so the composite carries no field data; a finite group of Lie type
 uses a positive exponent. -/
+@[simp]
 theorem geckElementarySteinberg_exponent_zero (hsigma : sigma ∈ t.diagramSymmetry) (p : ℕ)
     (A : CommAlgCat.{v} ℤ) [ExpChar A p] :
     t.geckElementarySteinberg ht hsigma p 0 A =
@@ -273,8 +282,9 @@ theorem geckElementarySteinberg_pow_eq_geckElementaryFrobenius
 `Frob_{q ^ d}`.** Once the carrier is pinned and its fixed subgroups are identified, this is the
 containment of a graph-twisted group of Lie type in the untwisted group over the degree-`d`
 extension of its field of definition. The reverse containment is false in general. -/
-theorem fixedSubgroup_geckElementarySteinberg_le (hsigma : sigma ∈ t.diagramSymmetry) (p n : ℕ)
-    (A : CommAlgCat.{v} ℤ) [ExpChar A p] {d : ℕ} (hd : sigma ^ d = 1) :
+theorem fixedSubgroup_geckElementarySteinberg_le_fixedSubgroup_geckElementaryFrobenius
+    (hsigma : sigma ∈ t.diagramSymmetry) (p n : ℕ) (A : CommAlgCat.{v} ℤ) [ExpChar A p]
+    {d : ℕ} (hd : sigma ^ d = 1) :
     fixedSubgroup (t.geckElementarySteinberg ht hsigma p n A) ≤
       fixedSubgroup (t.geckElementaryFrobenius ht p (n * d) A) :=
   fixedSubgroup_kostantElementarySteinberg_le_fixedSubgroup_kostantElementaryFrobenius
