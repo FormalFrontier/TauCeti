@@ -623,6 +623,39 @@ theorem coordinateHopfAlgebra_antipode_X (i j : Fin n) :
       coordinateHopfAlgebraAlgEquiv R n ((localizedGenericMatrix R n)⁻¹ i j) := by
   rw [coordinateHopfAlgebra_antipode_apply, antipode_X]
 
+/-- The counit sends the bundled generic matrix to the identity matrix. -/
+@[simp]
+theorem map_counit_genericMatrix :
+    (genericMatrix R n).map (Bialgebra.counitAlgHom R (coordinateHopfAlgebra R n)) = 1 := by
+  ext i j
+  rw [Matrix.map_apply, genericMatrix_apply, Bialgebra.counitAlgHom_apply,
+    coordinateHopfAlgebra_counit_X, Matrix.one_apply]
+
+/-- The comultiplication sends the bundled generic matrix to the product of its two tensor
+inclusions: `Δ X = (X ⊗ 1)(1 ⊗ X)`. -/
+@[simp]
+theorem map_comul_genericMatrix :
+    (genericMatrix R n).map (Bialgebra.comulAlgHom R (coordinateHopfAlgebra R n)) =
+      (genericMatrix R n).map (Algebra.TensorProduct.includeLeft (R := R) (S := R)) *
+        (genericMatrix R n).map (Algebra.TensorProduct.includeRight (R := R)) := by
+  ext i j
+  rw [Matrix.map_apply, genericMatrix_apply, Bialgebra.comulAlgHom_apply,
+    coordinateHopfAlgebra_comul_X, Matrix.mul_apply]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  rw [Matrix.map_apply, Matrix.map_apply, genericMatrix_apply, genericMatrix_apply,
+    Algebra.TensorProduct.includeLeft_apply, Algebra.TensorProduct.includeRight_apply,
+    Algebra.TensorProduct.tmul_mul_tmul, one_mul, mul_one]
+
+/-- The antipode sends the bundled generic matrix to its bundled inverse. -/
+@[simp]
+theorem map_antipode_genericMatrix :
+    (genericMatrix R n).map
+        (HopfAlgebra.antipodeAlgHom (R := R) (A := coordinateHopfAlgebra R n)) =
+      (genericMatrix R n)⁻¹ := by
+  ext i j
+  rw [Matrix.map_apply, genericMatrix_apply, HopfAlgebra.antipodeAlgHom_apply,
+    coordinateHopfAlgebra_antipode_X, genericMatrix_inv_apply]
+
 /-- Two algebra homomorphisms out of the bundled coordinate Hopf algebra of `GLₙ` are equal if
 they agree on the localized generic entries. This is the bundled counterpart of
 `algHom_ext_away`. -/
