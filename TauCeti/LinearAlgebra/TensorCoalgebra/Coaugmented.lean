@@ -367,7 +367,7 @@ private theorem lTensor_deconcatenation_subword {n : ℕ} (y : Fin n → M) (a b
     _ = _ := Finset.sum_filter _ _
 
 /-- Both ways of iterating deconcatenation agree on every block of letters. -/
-theorem deconcatenation_coassoc_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) :
+private theorem deconcatenation_coassoc_subword {n : ℕ} (y : Fin n → M) (a b : ℕ) :
     TensorProduct.assoc R (TensorWords R M) (TensorWords R M) (TensorWords R M)
         (LinearMap.rTensor (TensorWords R M) (deconcatenation R M)
           (deconcatenation R M (subword R y a b))) =
@@ -669,6 +669,7 @@ theorem map_reducedProjection_comp_deconcatenation_comp_reducedInclusion :
   exact map_reducedProjection_deconcatenation_reducedInclusion R M
 
 /-- The letters of a tensor word are primitive. -/
+@[simp]
 theorem deconcatenation_of_length_one (z : TensorPower R 1 M) :
     deconcatenation R M (of R M 1 z) =
       (1 : TensorWords R M) ⊗ₜ[R] of R M 1 z +
