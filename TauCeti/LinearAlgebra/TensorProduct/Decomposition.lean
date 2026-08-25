@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.TensorProduct.Decomposition
-public import Mathlib.RingTheory.Flat.Domain
 
 /-!
 # Tensor products of internal decompositions
@@ -30,17 +29,17 @@ namespace DirectSum.IsInternal
 
 universe u v w x y
 
-variable {K : Type u} [Field K]
-variable {M : Type v} {N : Type w} [AddCommGroup M] [Module K M]
-  [AddCommGroup N] [Module K N]
+variable {K : Type u} [CommSemiring K]
+variable {M : Type v} {N : Type w} [AddCommMonoid M] [Module K M]
+  [AddCommMonoid N] [Module K N]
 variable {ι : Type x} {κ : Type y}
 variable (A : ι → Submodule K M) (B : κ → Submodule K N)
 
-attribute [local instance 1100] Module.Free.of_divisionRing Module.Flat.of_free
-
 /-- The tensor product of two submodules is linearly equivalent to its image in the tensor product
-of the ambient modules. Over a field the canonical map is injective. -/
-private noncomputable def summandEquiv (i : ι) (j : κ) :
+of the ambient modules. The internal decompositions split both summand inclusions, so their tensor
+product is injective. -/
+private noncomputable def summandEquiv [DecidableEq ι] [DecidableEq κ]
+    [DirectSum.Decomposition A] [DirectSum.Decomposition B] (i : ι) (j : κ) :
     A i ⊗[K] B j ≃ₗ[K] Submodule.map₂ (TensorProduct.mk K M N) (A i) (B j) :=
   LinearEquiv.ofBijective
     (LinearMap.codRestrict
@@ -48,8 +47,16 @@ private noncomputable def summandEquiv (i : ι) (j : κ) :
       (TensorProduct.mapIncl (A i) (B j)) fun z ↦ by
         rw [← TensorProduct.range_mapIncl]
         exact ⟨z, rfl⟩)
-    ⟨fun x y h ↦ Module.Flat.tensorProduct_mapIncl_injective_of_right (A i) (B j)
-        (congrArg Subtype.val h), fun z ↦ by
+    ⟨fun x y h ↦ LinearMap.injective_of_comp_eq_id (TensorProduct.mapIncl (A i) (B j))
+        (TensorProduct.map
+          (DirectSum.component K ι (fun i ↦ A i) i ∘ₗ DirectSum.decomposeLinearEquiv A)
+          (DirectSum.component K κ (fun j ↦ B j) j ∘ₗ DirectSum.decomposeLinearEquiv B)) (by
+            rw [← TensorProduct.map_comp, LinearMap.comp_assoc,
+              DirectSum.decomposeLinearEquiv_comp_subtype,
+              DirectSum.component_comp_lof_same, LinearMap.comp_assoc,
+              DirectSum.decomposeLinearEquiv_comp_subtype,
+              DirectSum.component_comp_lof_same, TensorProduct.map_id]) (congrArg Subtype.val h),
+      fun z ↦ by
       have hz : (z : M ⊗[K] N) ∈ LinearMap.range (TensorProduct.mapIncl (A i) (B j)) := by
         simpa only [TensorProduct.range_mapIncl] using z.property
       obtain ⟨x, hx⟩ := hz
@@ -57,7 +64,9 @@ private noncomputable def summandEquiv (i : ι) (j : κ) :
       apply Subtype.ext
       exact hx⟩
 
-@[simp] private theorem coe_summandEquiv (i : ι) (j : κ) (x : A i ⊗[K] B j) :
+@[simp] private theorem coe_summandEquiv [DecidableEq ι] [DecidableEq κ]
+    [DirectSum.Decomposition A] [DirectSum.Decomposition B]
+    (i : ι) (j : κ) (x : A i ⊗[K] B j) :
     ((summandEquiv A B i j x :
       Submodule.map₂ (TensorProduct.mk K M N) (A i) (B j)) : M ⊗[K] N) =
       TensorProduct.mapIncl (A i) (B j) x := rfl
