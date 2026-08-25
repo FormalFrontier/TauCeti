@@ -60,6 +60,7 @@ length `n + 1` as such a word through `List.getD`. Both of those list lemmas liv
   excursions that avoid `a₀`.
 * `TauCeti.loopPath_injOn`: those excursions are unique.
 * `TauCeti.loopPathAt_cons_add`: past its first excursion a loop is the loop of the remaining ones.
+* `TauCeti.loopPathAt_append_of_le`: over the span of its first excursions a loop is their loop.
 * `TauCeti.infinite_setOf_loopPathAt_eq`: read as a function on `ℕ`, a loop returns to its base
   letter infinitely often.
 * `TauCeti.map_range_loopPathAt`: reading that function over the loop's span spells the loop word
@@ -139,6 +140,20 @@ theorem loopSteps_eq_of_perm {bs bs' : List (List α)} (h : bs.Perm bs') :
     loopSteps bs = loopSteps bs' :=
   (h.map _).sum_eq
 
+@[simp]
+theorem loopSteps_append (bs cs : List (List α)) :
+    loopSteps (bs ++ cs) = loopSteps bs + loopSteps cs := by
+  simp [loopSteps]
+
+/-- A loop takes at least one step per excursion, since every excursion is followed by the step
+back to the base letter. -/
+theorem length_le_loopSteps (bs : List (List α)) : bs.length ≤ loopSteps bs := by
+  induction bs with
+  | nil => simp
+  | cons e bs ih =>
+    simp only [List.length_cons, loopSteps_cons]
+    omega
+
 /-- A loop, read as a function on `ℕ`: past its last letter it is padded with the base letter. -/
 def loopPathAt (a₀ : α) (bs : List (List α)) (i : ℕ) : α :=
   (loopPath a₀ bs).getD i a₀
@@ -187,6 +202,26 @@ theorem loopPathAt_eq_of_loopSteps_le (a₀ : α) (bs : List (List α)) {i : ℕ
   rcases eq_or_lt_of_le hi with rfl | hlt
   · exact loopPathAt_loopSteps a₀ bs
   · exact List.getD_eq_default _ _ (by rw [length_loopPath]; omega)
+
+/-- **A loop extends its own initial stretches.** Over the span of `bs`, the loop of `bs ++ cs`
+spells out the loop of `bs`: the two words share the prefix `loopPath a₀ bs`, and at the very end
+of that span both sit at the base letter, where the loop of `cs` starts. -/
+theorem loopPathAt_append_of_le (a₀ : α) (bs cs : List (List α)) {i : ℕ}
+    (hi : i ≤ loopSteps bs) :
+    loopPathAt a₀ (bs ++ cs) i = loopPathAt a₀ bs i := by
+  have hlen : (loopPath a₀ bs).dropLast.length = loopSteps bs := by
+    rw [List.length_dropLast, length_loopPath]
+    omega
+  rcases eq_or_lt_of_le hi with rfl | hlt
+  · refine Eq.trans ?_ (loopPathAt_loopSteps a₀ bs).symm
+    rw [loopPathAt_def, loopPath_append, List.getD_append_right _ _ _ _ hlen.le, hlen,
+      Nat.sub_self]
+    cases cs <;> simp
+  · have hlt' : i < (loopPath a₀ bs).dropLast.length := by omega
+    rw [loopPathAt_def, loopPath_append, List.getD_append _ _ _ _ hlt',
+      List.getD_eq_getElem _ _ hlt', loopPathAt_def,
+      List.getD_eq_getElem _ _ (by rw [length_loopPath]; omega)]
+    simp
 
 /-- **A loop returns to its base letter infinitely often**, since `loopPathAt` pads with that
 letter. This is what lets the excursion decomposition of a loop be read with no side condition. -/

@@ -65,9 +65,17 @@ that comes with the proof `List.pairwise_lt_finRange` that it does. The auxiliar
 column list as an argument and the results about it assume only that the list is strictly
 increasing, so the choice is confined to `TauCeti.rowReduce` itself.
 
-Only `TauCeti.rank_rowReduceMatrix` and `TauCeti.length_rowReduce_ofFn` need `F` commutative:
-`Matrix.rank` is defined over a commutative ring. Everything else, the algorithm included, works
-over a division ring.
+The file carries each block at the weakest `F` it needs. The invariant `IsRowReduceState` and
+the lemma that starts a sweep in it need only `[Zero F] [One F]`: the state records a `1` in each
+pivot column and a `0` elsewhere, and reads nothing else of `F`. Extending the invariant across a
+pivoting step needs `[Ring F]`, to subtract a multiple of the pivot row; that step never divides,
+so it is stated for an arbitrary already-normalised row. The row space `rowSpan` of a state, with
+the three lemmas characterising it as the span of the rows the state carries, needs only
+`[Semiring F]`: those only take and reflect a span. The sweep itself needs `[DivisionRing F]`
+and `[DecidableEq F]`, to scale a row by `(v j)⁻¹` and to test entries against zero, so every
+result about what the sweep *does* to the invariant or to the row space is stated there. Only
+`TauCeti.rank_rowReduceMatrix` and `TauCeti.length_rowReduce_ofFn` need `F` commutative,
+`Matrix.rank` being defined over a commutative ring.
 
 ## References
 
@@ -134,7 +142,13 @@ private def rowReduceAux : List (Fin n) → RowReduceState F n → RowReduceStat
 def rowReduce (L : List (Fin n → F)) : List (Fin n × (Fin n → F)) :=
   (rowReduceAux (List.finRange n) (([], L) : RowReduceState F n)).1
 
+end DivisionRing
+
 /-! ## The invariant -/
+
+section ZeroOne
+
+variable {F : Type u} [Zero F] [One F] {n : ℕ}
 
 -- The state is spelled out below rather than written `RowReduceState F n`: a private structure
 -- whose signature names a private abbreviation is not resolvable by the environment linters.
@@ -157,7 +171,6 @@ private structure IsRowReduceState (cs : List (Fin n))
   /-- Every unused row vanishes in every column already visited. -/
   todo_eq_zero : ∀ w ∈ s.2, ∀ d, d ∉ cs → w d = 0
 
-omit [DecidableEq F] in
 /-- A sweep starts in a valid state: nothing has been recorded and no column has been visited. -/
 private theorem isRowReduceState_nil (L : List (Fin n → F)) :
     IsRowReduceState (List.finRange n) (([], L) : RowReduceState F n) where
@@ -168,7 +181,12 @@ private theorem isRowReduceState_nil (L : List (Fin n → F)) :
   eq_zero_of_ne := by simp
   todo_eq_zero w _ d hd := absurd (List.mem_finRange d) hd
 
-omit [DecidableEq F] in
+end ZeroOne
+
+section Ring
+
+variable {F : Type u} [Ring F] {n : ℕ}
+
 /-- Recording a pivot row for a column preserves the invariant, and strikes that column off the
 ones still to visit: if `p` has a `1` in column `j` and vanishes in every column already visited,
 then appending `(j, p)` to the recorded rows and subtracting the appropriate multiple of `p` from
@@ -228,6 +246,12 @@ private theorem isRowReduceState_append_pivot {cs : List (Fin n)} {j : Fin n}
     · simp [hpj]
     · have hdmem : d ∉ j :: cs := by simp [hne, hd]
       simp [hs.todo_eq_zero w' hw' d hdmem, hp0 d hdmem]
+
+end Ring
+
+section DivisionRing
+
+variable {F : Type u} [DivisionRing F] [DecidableEq F] {n : ℕ}
 
 /-- One column of the sweep preserves the invariant. -/
 private theorem isRowReduceState_rowReduceStep {cs : List (Fin n)} {j : Fin n}
@@ -379,14 +403,19 @@ theorem range_row_rowReduceMatrix :
 
 end Echelon
 
+end DivisionRing
+
 /-! ## Elimination preserves the row space -/
+
+section Semiring
+
+variable {F : Type u} [Semiring F] {n : ℕ}
 
 /-- The row space of an elimination state: the span of the rows it still carries, recorded and
 unused alike. -/
 private def rowSpan (s : RowReduceState F n) : Submodule F (Fin n → F) :=
   Submodule.span F {v | v ∈ s.1.map Prod.snd ++ s.2}
 
-omit [DecidableEq F] in
 /-- A recorded row lies in the row space of its state. -/
 private theorem mem_rowSpan_of_mem_fst {s : RowReduceState F n} {q : Fin n × (Fin n → F)}
     (hq : q ∈ s.1) : q.2 ∈ rowSpan s := by
@@ -394,7 +423,6 @@ private theorem mem_rowSpan_of_mem_fst {s : RowReduceState F n} {q : Fin n × (F
   simp only [Set.mem_ofPred_eq, List.mem_append, List.mem_map]
   exact Or.inl ⟨q, hq, rfl⟩
 
-omit [DecidableEq F] in
 /-- An unused row lies in the row space of its state. -/
 private theorem mem_rowSpan_of_mem_snd {s : RowReduceState F n} {w : Fin n → F} (hw : w ∈ s.2) :
     w ∈ rowSpan s := by
@@ -402,7 +430,6 @@ private theorem mem_rowSpan_of_mem_snd {s : RowReduceState F n} {w : Fin n → F
   simp only [Set.mem_ofPred_eq, List.mem_append]
   exact Or.inr hw
 
-omit [DecidableEq F] in
 /-- The row space is the smallest submodule containing every row the state carries. -/
 private theorem rowSpan_le {s : RowReduceState F n} {p : Submodule F (Fin n → F)}
     (h₁ : ∀ q ∈ s.1, q.2 ∈ p) (h₂ : ∀ w ∈ s.2, w ∈ p) : rowSpan s ≤ p := by
@@ -412,6 +439,12 @@ private theorem rowSpan_le {s : RowReduceState F n} {p : Submodule F (Fin n → 
   rcases hv with ⟨q, hq, rfl⟩ | hv
   · exact h₁ q hq
   · exact h₂ v hv
+
+end Semiring
+
+section DivisionRing
+
+variable {F : Type u} [DivisionRing F] [DecidableEq F] {n : ℕ}
 
 /-- One column of the sweep preserves the row space. -/
 private theorem rowSpan_rowReduceStep (j : Fin n) (s : RowReduceState F n) :

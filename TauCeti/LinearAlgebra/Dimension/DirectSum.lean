@@ -43,6 +43,37 @@ theorem finrank_eq_sum_finrank_of_isInternal {K M ι : Type*} [DivisionRing K] [
   rw [← (LinearEquiv.ofBijective (DirectSum.coeLinearMap V) h).finrank_eq,
     Module.finrank_directSum]
 
+/-- **The dimension of an independent finite sum of subspaces is the sum of their dimensions.**
+Unlike `TauCeti.finrank_eq_sum_finrank_of_isInternal`, the ambient module here is the supremum of
+the given family rather than an independently supplied module. -/
+theorem finrank_iSup_eq_sum_finrank_of_iSupIndep {K M ι : Type*} [DivisionRing K]
+    [AddCommGroup M] [Module K M] [Fintype ι] {V : ι → Submodule K M}
+    [∀ i, Module.Finite K (V i)] (h : iSupIndep V) :
+    Module.finrank K ((⨆ i, V i) : Submodule K M) = ∑ i, Module.finrank K (V i) := by
+  classical
+  let S : Submodule K M := ⨆ i, V i
+  have hV : ∀ i, V i ≤ S := fun i ↦ le_iSup V i
+  let e : Submodule K S ≃o Set.Iic S := S.mapIic
+  have he : (e ∘ fun i ↦ (V i).comap S.subtype) = fun i ↦ ⟨V i, hV i⟩ := by
+    funext i
+    apply Subtype.ext
+    simp only [Function.comp_apply, e, Submodule.coe_mapIic_apply]
+    rw [Submodule.map_comap_subtype, inf_of_le_right (hV i)]
+  have hindep : iSupIndep fun i ↦ (V i).comap S.subtype := by
+    rw [← iSupIndep_map_orderIso_iff e, he]
+    exact iSupIndep.of_coe_Iic_comp h
+  have hint : DirectSum.IsInternal fun i ↦ (V i).comap S.subtype := by
+    refine DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top hindep ?_
+    apply e.injective
+    calc
+      e (⨆ i, (V i).comap S.subtype) = ⨆ i, e ((V i).comap S.subtype) := e.map_iSup _
+      _ = ⨆ i, ⟨V i, hV i⟩ := congrArg iSup he
+      _ = ⟨S, Set.mem_Iic.mpr le_rfl⟩ := Subtype.ext (by simp [S])
+      _ = e ⊤ := e.map_top.symm
+  rw [finrank_eq_sum_finrank_of_isInternal hint]
+  exact Finset.sum_congr rfl fun i _ ↦
+    (Submodule.comapSubtypeEquivOfLe (hV i)).finrank_eq
+
 /-- **The dimensions of the summands of an internal direct sum add up**, for a decomposition
 indexed by an arbitrary type in which only finitely many summands are nonzero. -/
 theorem finsum_finrank_eq_finrank_of_isInternal {K M ι : Type*} [DivisionRing K] [AddCommGroup M]
