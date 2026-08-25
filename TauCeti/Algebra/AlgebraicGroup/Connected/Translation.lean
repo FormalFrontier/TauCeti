@@ -65,17 +65,7 @@ theorem rightTranslationHomeomorph_kernelPoint
         (AlgHom.kernelPoint g.ofConv) = _
   rw [AlgHom.comap_kernelPoint, rightTranslationAlgEquiv_toAlgHom]
   congr 1
-  ext x
-  -- Composition of algebra homomorphisms must be exposed at application level before the
-  -- translation formula can rewrite it.
-  change g.ofConv (rightTranslationAlgHom h x) = (g * h).ofConv x
-  rw [rightTranslationAlgHom_apply, AlgHom.convMul_apply]
-  induction Coalgebra.comul (R := k) x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul x y =>
-      simp [TensorProduct.map_tmul, TensorProduct.rid_tmul,
-        Algebra.TensorProduct.lift_tmul, Algebra.smul_def, mul_comm]
+  exact congrArg WithConv.ofConv (toConv_comp_rightTranslationAlgHom g h)
 
 /-- Right translation transports the connected component of a point to the connected component
 of its translate. -/
