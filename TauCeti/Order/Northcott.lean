@@ -31,7 +31,7 @@ theorem finite_setOf_natCast_le (x : ℝ) : {i : ι | (N i : ℝ) ≤ x}.Finite 
 
 /-- The finite set of indices whose `N`-value is at most the real cutoff `x`. The cutoff is
 inclusive: an index with `N i = x` belongs to `normLE N x`. -/
-@[expose] public noncomputable def normLE (x : ℝ) : Finset ι :=
+public noncomputable def normLE (x : ℝ) : Finset ι :=
   (finite_setOf_natCast_le N x).toFinset
 
 @[simp, grind =]
@@ -46,10 +46,11 @@ theorem coe_normLE (x : ℝ) : (normLE N x : Set ι) = {i : ι | (N i : ℝ) ≤
 /-- The cardinality of the cutoff subtype agrees with that of its finite carrier. -/
 theorem Nat.card_coe_normLE (x : ℝ) :
     Nat.card {i : ι // (N i : ℝ) ≤ x} = (normLE N x).card := by
-  change Nat.card (↥({i : ι | (N i : ℝ) ≤ x} : Set ι)) = (normLE N x).card
+  rw [← Set.coe_ofPred]
   rw [Nat.card_coe_set_eq, Set.ncard_eq_toFinset_card _ (finite_setOf_natCast_le N x)]
   rfl
 
+/-- Increasing the real cutoff can only enlarge the finite carrier. -/
 theorem normLE_mono : Monotone (normLE N) := fun _ _ hxy _ hi ↦
   mem_normLE N |>.mpr <| (mem_normLE N |>.mp hi).trans hxy
 
@@ -76,7 +77,7 @@ theorem normLE_eq_empty_of_lt {b x : ℝ} (hb : ∀ i, b ≤ (N i : ℝ)) (hx : 
 
 /-- The inclusive summatory function of a weight `w`: the sum of `w` over all indices of
 `N`-value at most `x`. -/
-@[expose] public noncomputable def summatory {M : Type*} [AddCommMonoid M]
+public noncomputable def summatory {M : Type*} [AddCommMonoid M]
     (w : ι → M) (x : ℝ) : M :=
   ∑ i ∈ normLE N x, w i
 
@@ -89,14 +90,17 @@ theorem summatory_zero {M : Type*} [AddCommMonoid M] (x : ℝ) :
     summatory N (0 : ι → M) x = 0 := by
   simp [summatory]
 
+/-- Summation distributes over pointwise addition of weights. -/
 theorem summatory_add {M : Type*} [AddCommMonoid M] (w₁ w₂ : ι → M) (x : ℝ) :
     summatory N (w₁ + w₂) x = summatory N w₁ x + summatory N w₂ x := by
   simp [summatory, Finset.sum_add_distrib]
 
+/-- Summation distributes over pointwise subtraction of weights. -/
 theorem summatory_sub {M : Type*} [AddCommGroup M] (w₁ w₂ : ι → M) (x : ℝ) :
     summatory N (w₁ - w₂) x = summatory N w₁ x - summatory N w₂ x := by
   simp [summatory, Finset.sum_sub_distrib]
 
+/-- A real scalar can be pulled out of a summatory function. -/
 theorem summatory_const_mul (c : ℝ) (w : ι → ℝ) (x : ℝ) :
     summatory N (fun i ↦ c * w i) x = c * summatory N w x := by
   simp [summatory, Finset.mul_sum]
@@ -106,13 +110,17 @@ theorem summatory_eq_zero_of_lt {M : Type*} [AddCommMonoid M] {b x : ℝ}
     (hb : ∀ i, b ≤ (N i : ℝ)) (hx : x < b) (w : ι → M) : summatory N w x = 0 := by
   simp [summatory, normLE_eq_empty_of_lt N hb hx]
 
+/-- For a nonnegative cutoff, a summatory function has the same value at the cutoff and at its
+natural floor. -/
 theorem summatory_eq_summatory_natFloor {M : Type*} [AddCommMonoid M] (w : ι → M) {x : ℝ}
     (hx : 0 ≤ x) : summatory N w x = summatory N w (⌊x⌋₊ : ℝ) := by
   rw [summatory, summatory, normLE_eq_normLE_natFloor N hx]
 
+/-- The summatory function of a pointwise nonnegative real weight is nonnegative. -/
 theorem summatory_nonneg {w : ι → ℝ} (hw : ∀ i, 0 ≤ w i) (x : ℝ) : 0 ≤ summatory N w x :=
   Finset.sum_nonneg fun i _ ↦ hw i
 
+/-- Pointwise comparison of real weights gives the same comparison of their summatory functions. -/
 theorem summatory_le_summatory {w₁ w₂ : ι → ℝ} (h : ∀ i, w₁ i ≤ w₂ i) (x : ℝ) :
     summatory N w₁ x ≤ summatory N w₂ x :=
   Finset.sum_le_sum fun i _ ↦ h i
