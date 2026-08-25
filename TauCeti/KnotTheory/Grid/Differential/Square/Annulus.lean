@@ -7,7 +7,6 @@ module
 
 public import TauCeti.KnotTheory.Grid.Rectangle.Annulus
 public import TauCeti.KnotTheory.Grid.Unblocked
-import TauCeti.KnotTheory.Grid.StateCardinality
 
 /-!
 # The annular terms of the unblocked grid differential square vanish
@@ -30,11 +29,9 @@ The argument never inspects the `O`-markings, so it is insensitive to the weight
 runs over an arbitrary commutative coefficient ring, characteristic two included. This is the
 first case of the square-zero argument to be settled for the unblocked complex; the disjoint and
 overlapping cases, where two distinct decompositions must be paired against each other, remain.
-On a grid of size at most two there are at most two grid states, which leaves no room for the
-other two cases: if the two endpoints of a two-step term are distinct they exhaust the grid
-states, so every intermediate state is one of them and its term carries a diagonal matrix
-coefficient, while if the two endpoints coincide the term is annular. So the annular case alone
-gives `∂⁻ ∘ ∂⁻ = 0` there.
+On a grid of size at most two the annular case already suffices, because there is no room for the
+other two: that consequence is
+`GridDiagram.unblockedDifferential_comp_self_eq_zero_of_le_two` in `SmallGrid/Differential.lean`.
 
 ## Main results
 
@@ -45,8 +42,6 @@ gives `∂⁻ ∘ ∂⁻ = 0` there.
 * `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply`: the matrix of `∂⁻ ∘ ∂⁻`, as a sum
   over intermediate grid states of products of matrix coefficients.
 * `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply_self`: its diagonal entries vanish.
-* `TauCeti.GridDiagram.unblockedDifferential_comp_self_eq_zero_of_le_two`: on a grid of size at
-  most two the unblocked differential squares to zero.
 
 ## References
 
@@ -128,40 +123,6 @@ theorem notMem_support_unblockedDifferentialOnGenerator {x y : GridState n}
   rw [Finsupp.mem_support_iff, unblockedDifferentialOnGenerator_apply] at h
   rw [Finsupp.notMem_support_iff, unblockedDifferentialOnGenerator_apply]
   exact G.unblockedCoefficient_eq_zero_of_ne_zero R h
-
-/-- On a grid of size at most two the unblocked differential squares to zero.
-
-At most two grid states are available. If the source and the target of a two-step term are
-distinct they exhaust those states, so every intermediate state coincides with the source or with
-the target and its term is killed by the vanishing of the diagonal matrix coefficient. If instead
-the source and the target coincide, the term returns to its source and the annular argument
-applies. This is the first instance of the roadmap's square-zero milestone for `GC⁻`; the general
-case still needs the disjoint and overlapping juxtaposition cases. -/
-theorem unblockedDifferential_comp_self_eq_zero_of_le_two (hn : n ≤ 2) :
-    G.unblockedDifferential R ∘ₗ G.unblockedDifferential R =
-      (0 : GridChainMinus R n →ₗ[MvPolynomial (Fin n) R] GridChainMinus R n) := by
-  have hcard : Fintype.card (GridState n) ≤ 2 := by
-    rw [GridState.card]
-    simpa [Nat.factorial] using Nat.factorial_le hn
-  refine Finsupp.lhom_ext' fun x => LinearMap.ext_ring ?_
-  simp only [LinearMap.comp_apply, Finsupp.lsingle_apply, LinearMap.zero_comp,
-    LinearMap.zero_apply]
-  refine Finsupp.ext fun z => ?_
-  rw [G.unblockedDifferential_sq_single_apply R x z, Finsupp.coe_zero, Pi.zero_apply]
-  refine Finset.sum_eq_zero fun y _ => ?_
-  by_cases hyx : y = x
-  · rw [hyx, unblockedCoefficient_self, zero_mul]
-  by_cases hyz : y = z
-  · rw [hyz, unblockedCoefficient_self, mul_zero]
-  by_cases hzx : z = x
-  · rw [hzx]
-    exact G.unblockedCoefficient_mul_unblockedCoefficient_eq_zero R x y
-  have h3 : ({x, y, z} : Finset (GridState n)).card = 3 := by
-    rw [Finset.card_insert_of_notMem (by simp [Ne.symm hyx, Ne.symm hzx]),
-      Finset.card_insert_of_notMem (by simp [hyz]), Finset.card_singleton]
-  have hle : 3 ≤ Fintype.card (GridState n) := by
-    simpa [Finset.card_univ, h3] using Finset.card_le_univ ({x, y, z} : Finset (GridState n))
-  omega
 
 end GridDiagram
 

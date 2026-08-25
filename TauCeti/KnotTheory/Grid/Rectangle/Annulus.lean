@@ -23,22 +23,26 @@ they cover every square in a full horizontal band. Either way the union of the c
 a toroidal annulus, `GridRectangleBetween.coveredSquares_union_coveredSquares`.
 
 A grid state occupies one square in every column and one square in every row, so it meets every
-nonempty vertical band and every nonempty horizontal band. Consequently a grid state always meets
-the union of the squares covered by a returning pair
-(`GridRectangleBetween.not_disjoint_coveredSquares_or_not_disjoint_coveredSquares`). Applied to
-the `O`- or the `X`-markings of a grid diagram, both of which are grid states, this says that a
-returning pair of rectangles can never consist of two marking-free rectangles: the annular terms
-of a grid differential square vanish for a reason available to every flavour of the theory.
+nonempty vertical band and every nonempty horizontal band
+(`GridState.not_disjoint_product_univ_pointSet` and `GridState.not_disjoint_univ_product_pointSet`
+of `Diagram/Basic.lean`). Consequently a grid state always meets the union of the squares covered
+by a returning pair
+(`GridRectangleBetween.not_disjoint_coveredSquares_or_not_disjoint_coveredSquares`).
 
-The covered squares, and not the open grid-line interior, are the region a marking is tested
-against: markings sit at the centres of their squares, the convention fixed in
-`Rectangle/Squares.lean` and used by the gradings and by the unblocked complex `GC⁻`.
+The region a marking is tested against here is `GridRectangle.coveredSquares`: markings sit at the
+centres of their squares, the convention fixed in `Rectangle/Squares.lean` and used by the gradings
+and by the unblocked complex `GC⁻`. Applied to the `O`- or the `X`-markings of a grid diagram, both
+of which are grid states, the last lemma therefore says that a returning pair of rectangles can
+never consist of two rectangles disjoint from the markings' squares, so the annular terms vanish
+for any grid differential whose marking-free test is that disjointness — in particular for the
+`X`-test of the unblocked differential `∂⁻`. It does not apply as it stands to the fully blocked
+differential of `Complex.lean`, whose `GridRectangle.AvoidsMarkings` predicate still tests the open
+grid-line interior, treating markings as lattice points rather than as square centres; that is the
+acknowledged convention error whose correction is the open TauCeti#3135, and against the corrected
+square-centred predicate this lemma will serve the fully blocked case unchanged.
 
 ## Main results
 
-* `TauCeti.GridState.not_disjoint_product_univ_pointSet` and
-  `TauCeti.GridState.not_disjoint_univ_product_pointSet`: a grid state meets every nonempty
-  vertical band and every nonempty horizontal band of squares.
 * `TauCeti.GridRectangleBetween.sideColumns_eq_sideColumns`: a returning pair of rectangles uses
   the same two side columns.
 * `TauCeti.GridRectangleBetween.coveredSquares_union_coveredSquares`: the squares covered by a
@@ -58,31 +62,6 @@ Links*, Chapter 4.6.
 public section
 
 namespace TauCeti
-
-namespace GridState
-
-variable {n : ℕ}
-
-/-- A grid state occupies a square in every column, so it meets every nonempty vertical band of
-squares. -/
-theorem not_disjoint_product_univ_pointSet (M : GridState n) {s : Finset (Fin n)}
-    (hs : s.Nonempty) : ¬Disjoint (s ×ˢ (Finset.univ : Finset (Fin n))) M.pointSet := by
-  obtain ⟨c, hc⟩ := hs
-  intro h
-  exact Finset.disjoint_left.mp h (Finset.mk_mem_product hc (Finset.mem_univ (M c)))
-    ((M.mk_mem_pointSet c (M c)).mpr rfl)
-
-/-- A grid state occupies a square in every row, so it meets every nonempty horizontal band of
-squares. -/
-theorem not_disjoint_univ_product_pointSet (M : GridState n) {t : Finset (Fin n)}
-    (ht : t.Nonempty) : ¬Disjoint ((Finset.univ : Finset (Fin n)) ×ˢ t) M.pointSet := by
-  obtain ⟨r, hr⟩ := ht
-  intro h
-  exact Finset.disjoint_left.mp h
-    (Finset.mk_mem_product (Finset.mem_univ (M.columnOfRow r)) hr)
-    ((M.mk_mem_pointSet (M.columnOfRow r) r).mpr (M.apply_columnOfRow r))
-
-end GridState
 
 namespace GridRectangleBetween
 
@@ -217,8 +196,11 @@ theorem not_disjoint_union_coveredSquares_pointSet (M : GridState n) :
 /-- At least one rectangle of a returning pair covers a square occupied by any given grid state.
 
 Applied to the `O`- or `X`-markings of a grid diagram, this is the vanishing of the annular terms
-in the square of a grid differential: two rectangles that return to their source can never both
-be marking-free. -/
+in the square of a grid differential that tests markings by disjointness from
+`GridRectangle.coveredSquares`, such as the unblocked differential `∂⁻`: two rectangles that return
+to their source can never both avoid the markings in that sense. The fully blocked differential of
+`Complex.lean` is not yet such a differential, since `GridRectangle.AvoidsMarkings` still tests the
+open grid-line interior; see the module docstring. -/
 theorem not_disjoint_coveredSquares_or_not_disjoint_coveredSquares (M : GridState n) :
     ¬Disjoint R.toGridRectangle.coveredSquares M.pointSet ∨
       ¬Disjoint S.toGridRectangle.coveredSquares M.pointSet := by
