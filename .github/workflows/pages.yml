@@ -240,10 +240,10 @@ jobs:
             echo "build=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # The docs build recompiled all 6,842 TauCeti modules from source, 82% of this
-      # workflow's step time. ci.yml publishes their oleans, and ci.yml and pr-build.yml
-      # already restore them. Restore into the root project rather than docbuild:
-      # a path dependency builds in its own directory.
+      # The docs build compiles the whole library, which dominates this workflow.
+      # ci.yml publishes the library's oleans, and ci.yml and pr-build.yml already
+      # restore them. Restore into the root project rather than docbuild: a path
+      # dependency builds in its own directory.
       - name: Configure the Lake artifact cache (no-op unless the public endpoints are set)
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
