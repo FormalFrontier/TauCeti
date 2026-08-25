@@ -103,12 +103,6 @@ noncomputable def kostantNumberedSymmetryMatrix (A : Type) [CommRing A] :
   Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv
     (AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ.toAddEquiv M hθM)
 
-/-- The matrix of the numbered symmetry is the matrix of the base-changed restriction of `θ`. -/
-theorem kostantNumberedSymmetryMatrix_def (A : Type) [CommRing A] :
-    kostantNumberedSymmetryMatrix M b θ hθM A =
-      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv
-        (AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ.toAddEquiv M hθM) := (rfl)
-
 /-- The matrix of the numbered symmetry commutes with extension of the value ring. -/
 theorem map_kostantNumberedSymmetryMatrix {A B : Type} [CommRing A] [CommRing B]
     (φ : A →+* B) :
@@ -386,7 +380,7 @@ theorem coe_kostantNumberedSymmetryMatrix_apply (A : Type) [CommRing A] (i j : F
       (b.baseChange A).repr
         ((AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ.toAddEquiv M hθM).val
           ((b.baseChange A) j)) i := by
-  rw [kostantNumberedSymmetryMatrix_def, Units.coe_map]
+  rw [kostantNumberedSymmetryMatrix, Units.coe_map]
   exact LinearMap.toMatrixAlgEquiv_apply (b.baseChange A) _ i j
 
 /-- **A symmetry permuting the chosen lattice basis has a permutation matrix.** This is the

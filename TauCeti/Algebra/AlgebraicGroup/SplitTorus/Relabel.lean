@@ -54,11 +54,13 @@ noncomputable def characterRelabel (τ : Equiv.Perm sigma) :
   AddEquiv.toMultiplicative (Finsupp.domCongr τ)
 
 /-- Relabelling a character reindexes its coordinate function. -/
+@[simp]
 theorem characterRelabel_apply (τ : Equiv.Perm sigma) (x : Multiplicative (sigma →₀ ℤ)) :
     characterRelabel τ x =
       Multiplicative.ofAdd (Finsupp.equivMapDomain τ (Multiplicative.toAdd x)) := (rfl)
 
 /-- Relabelling an additively written character. -/
+@[simp]
 theorem characterRelabel_ofAdd (τ : Equiv.Perm sigma) (f : sigma →₀ ℤ) :
     characterRelabel τ (Multiplicative.ofAdd f) =
       Multiplicative.ofAdd (Finsupp.equivMapDomain τ f) := (rfl)
@@ -210,6 +212,23 @@ theorem relabelIso_inv (τ : Equiv.Perm sigma) :
   symm
   apply IsIso.eq_inv_of_hom_inv_id
   simp
+
+/-- Bundled relabelling is multiplicative, with the order reversed by categorical composition. -/
+@[simp]
+theorem relabelIso_mul (τ ν : Equiv.Perm sigma) :
+    relabelIso (sigma := sigma) R (τ * ν) = relabelIso R ν * relabelIso R τ := by
+  apply Iso.ext
+  rw [relabelIso_hom, CategoryTheory.Aut.Aut_mul_def]
+  -- The `hom` of `Iso.trans` is its categorical composite by definition.
+  change relabel R (τ * ν) = (relabelIso R τ).hom ≫ (relabelIso R ν).hom
+  rw [relabelIso_hom, relabelIso_hom, relabel_comp]
+
+/-- Bundled relabelling by the identity permutation is the identity automorphism. -/
+@[simp]
+theorem relabelIso_one : relabelIso (sigma := sigma) R 1 = 1 := by
+  apply Iso.ext
+  rw [relabelIso_hom, relabel_one]
+  rfl
 
 /-- The forward morphism of a power of a relabelling is relabelling by the corresponding
 permutation power. -/
