@@ -357,6 +357,8 @@ theorem hom_weightTorusCoordinateMap_reindex (τ : Equiv.Perm κ) (wt : Fin N �
   split_ifs with hij
   · rw [MonoidAlgebra.mapDomainBialgHom_single]
     congr 1
+    -- The bundled character maps reduce to their `Finsupp` representatives only by definitional
+    -- equality; the named relabelling lemma applies after exposing that layer.
     change Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i ∘ τ)) =
       SplitTorus.characterRelabel τ⁻¹
         (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)))

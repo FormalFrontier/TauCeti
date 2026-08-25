@@ -107,6 +107,8 @@ theorem comap_commonKernelHopfIdeal_le_of_comp_eq_comp
     (commonKernelHopfIdeal f).comap φ.hom hφ ≤ commonKernelHopfIdeal f := by
   rw [le_commonKernelHopfIdeal_iff]
   intro i x hx
+  -- Membership in the displayed ring-hom kernel reduces definitionally to evaluation by the
+  -- bundled Hopf-algebra morphism; exposing it lets us use injectivity of the postcomposition.
   change (f i).hom x = 0
   apply hm i
   rw [map_zero]

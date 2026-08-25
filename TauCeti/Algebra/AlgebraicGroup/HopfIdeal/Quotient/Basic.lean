@@ -278,6 +278,15 @@ lemma mkQuotient_comp_quotientIsoOfComapEq_hom (e : H ≅ H) (I : HopfIdeal R H)
     mkQuotient_comp_eqToHom, mkQuotient_comp_quotientIsoOfIso_hom]
   exact hI
 
+/-- The inverse quotient automorphism induced by an ideal-preserving ambient automorphism
+commutes with the quotient morphism. -/
+@[simp]
+lemma mkQuotient_comp_quotientIsoOfComapEq_inv (e : H ≅ H) (I : HopfIdeal R H)
+    (hI : I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2 = I) :
+    mkQuotient H I ≫ (quotientIsoOfComapEq e I hI).inv = e.inv ≫ mkQuotient H I := by
+  rw [← cancel_mono (quotientIsoOfComapEq e I hI).hom]
+  simp
+
 /-- The forward quotient isomorphism induced by an ambient isomorphism evaluates on quotient
 classes by applying the ambient isomorphism before taking the target quotient. -/
 @[simp]

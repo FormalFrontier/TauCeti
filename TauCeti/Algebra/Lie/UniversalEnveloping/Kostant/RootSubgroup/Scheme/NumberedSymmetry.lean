@@ -10,6 +10,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Torus
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.NumberedSymmetry
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Basic
+public import TauCeti.CategoryTheory.Aut.Basic
 
 /-!
 # The ambient coordinate automorphism of a numbered Kostant symmetry
@@ -51,8 +52,6 @@ weights are the weights of an admissible lattice: all of that is supplied by the
 
 ## Main results
 
-* `TauCeti.CategoryTheory.comp_aut_pow_hom_of_comp`: shared categorical bookkeeping for iterating
-  an automorphism which reindexes a family of morphisms.
 * `pointsMulEquiv_mapPointsFunctor_kostantNumberedSymmetryCoordinateIso`: on algebra-valued points
   the coordinate automorphism is conjugation by the base-changed matrix.
 * `kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap`: the pinning equation
@@ -76,29 +75,6 @@ L1 of `TauCetiRoadmap/CFSGStatement/README.md`.
 public section
 
 open AlgebraicGeometry CategoryTheory TensorProduct WithConv
-
-namespace TauCeti.CategoryTheory
-
-universe v u
-
-variable {C : Type u} [Category.{v} C] {X Y : C} {iota : Type*}
-
-/-- Iterating an automorphism which reindexes a family of morphisms reindexes that family by the
-corresponding function iterate. -/
-theorem comp_aut_pow_hom_of_comp (gamma : Aut X) (F : iota → (Y ⟶ X)) (s : iota → iota)
-    (h : ∀ i, F i ≫ gamma.hom = F (s i)) (m : ℕ) (i : iota) :
-    F i ≫ (gamma ^ m).hom = F ((s^[m]) i) := by
-  induction m generalizing i with
-  | zero =>
-      rw [pow_zero, Function.iterate_zero_apply]
-      change _ ≫ (Iso.refl _).hom = _
-      rw [Iso.refl_hom, Category.comp_id]
-  | succ m ih =>
-      rw [pow_succ]
-      change F i ≫ gamma.hom ≫ (gamma ^ m).hom = _
-      rw [← Category.assoc, h, ih, Function.iterate_succ_apply]
-
-end TauCeti.CategoryTheory
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
@@ -475,17 +451,21 @@ theorem kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorusCoordinateMap
     toConv (q.ofConv.comp s.hom.toAlgHom)
   have htorus_r : GeneralLinear.pointsMulEquiv n f =
       diagGL fun i => torusCharacter (SplitTorus.pointsMulEquiv q) (wt i) := by
-    change GeneralLinear.pointsMulEquiv n
-      ((CommHopfAlgCat.mapPointsFunctor r).app (CommAlgCat.of ℤ T) q) = _
-    exact GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
-      wt (CommAlgCat.of ℤ T) q
+    calc
+      _ = GeneralLinear.pointsMulEquiv n
+          ((CommHopfAlgCat.mapPointsFunctor r).app (CommAlgCat.of ℤ T) q) := by
+        rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+      _ = _ := GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
+        wt (CommAlgCat.of ℤ T) q
   have htorus_s : GeneralLinear.pointsMulEquiv n g =
       diagGL fun i =>
         torusCharacter (SplitTorus.pointsMulEquiv q) (wt (basisPerm⁻¹ i)) := by
-    change GeneralLinear.pointsMulEquiv n
-      ((CommHopfAlgCat.mapPointsFunctor s).app (CommAlgCat.of ℤ T) q) = _
-    exact GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
-      (fun i => wt (basisPerm⁻¹ i)) (CommAlgCat.of ℤ T) q
+    calc
+      _ = GeneralLinear.pointsMulEquiv n
+          ((CommHopfAlgCat.mapPointsFunctor s).app (CommAlgCat.of ℤ T) q) := by
+        rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+      _ = _ := GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
+        (fun i => wt (basisPerm⁻¹ i)) (CommAlgCat.of ℤ T) q
   have hp : toConv (f.ofConv.comp c.hom.toAlgHom) = g := by
     apply (GeneralLinear.pointsMulEquiv (R := ℤ) (A := CommAlgCat.of ℤ T) n).injective
     rw [pointsMulEquiv_comp_kostantNumberedSymmetryCoordinateIso, htorus_r, htorus_s,

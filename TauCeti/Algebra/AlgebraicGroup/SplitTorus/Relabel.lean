@@ -70,6 +70,8 @@ theorem characterRelabel_comp (τ ν : Equiv.Perm sigma) :
         (characterRelabel ν) =
       (characterRelabel (τ * ν) : Multiplicative (sigma →₀ ℤ) →* Multiplicative (sigma →₀ ℤ)) := by
   refine MonoidHom.ext fun x => ?_
+  -- Coercion from the bundled multiplicative equivalence exposes its additive `Finsupp` map only
+  -- by definitional equality; the named `equivMapDomain_trans` lemma applies at that layer.
   change Multiplicative.ofAdd
       (Finsupp.equivMapDomain τ (Finsupp.equivMapDomain ν (Multiplicative.toAdd x))) =
     Multiplicative.ofAdd
@@ -83,6 +85,7 @@ theorem characterRelabel_one :
     (characterRelabel (sigma := sigma) 1 :
       Multiplicative (sigma →₀ ℤ) →* Multiplicative (sigma →₀ ℤ)) = MonoidHom.id _ := by
   refine MonoidHom.ext fun x => ?_
+  -- As above, expose the additive representative of the bundled multiplicative equivalence.
   change Multiplicative.ofAdd
       (Finsupp.equivMapDomain (Equiv.refl sigma) (Multiplicative.toAdd x)) = x
   rw [Finsupp.equivMapDomain_refl]
@@ -199,6 +202,15 @@ theorem relabelIso_hom (τ : Equiv.Perm sigma) :
     (relabelIso (sigma := sigma) R τ).hom = relabel R τ :=
   by simp [relabelIso]
 
+/-- The inverse of the bundled relabelling is relabelling by the inverse permutation. -/
+@[simp]
+theorem relabelIso_inv (τ : Equiv.Perm sigma) :
+    (relabelIso (sigma := sigma) R τ).inv = relabel R τ⁻¹ := by
+  rw [relabelIso, asIso_inv]
+  symm
+  apply IsIso.eq_inv_of_hom_inv_id
+  simp
+
 /-- The forward morphism of a power of a relabelling is relabelling by the corresponding
 permutation power. -/
 @[simp]
@@ -210,6 +222,7 @@ theorem relabelIso_pow_hom (τ : Equiv.Perm sigma) (m : ℕ) :
       rfl
   | succ m ih =>
       rw [pow_succ]
+      -- Powers in `Aut` reduce definitionally to reverse categorical composition on homs.
       change relabel R τ ≫ ((relabelIso R τ) ^ m).hom = _
       rw [ih, relabel_comp, ← pow_succ']
 
@@ -229,6 +242,8 @@ theorem schemePointsMulEquiv_relabel {A : Type u} [CommRing A] [Algebra R A]
     MonoidHom.comp_apply]
   let chi := DiagonalizableGroup.schemePointsMulEquiv
     (R := R) (A := A) (characterGroup sigma) p
+  -- The point-coordinate equivalence evaluates basis characters only after unfolding its
+  -- presentation through the free abelian character equivalence.
   change chi (characterRelabel τ (Multiplicative.ofAdd (Finsupp.single i 1))) =
     chi (Multiplicative.ofAdd (Finsupp.single (τ i) 1))
   rw [characterRelabel_ofAdd, Finsupp.equivMapDomain_single]
