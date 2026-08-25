@@ -37,6 +37,8 @@ what will confine the weights of `M` to a finite set.
   weight module of dominant integral weight are stable under the reflection in a simple root.**
 * `TauCeti.genWeightSpace_weylGroup_smul_ne_bot`: **the weights are stable under the whole Weyl
   group.**
+* `TauCeti.genWeightSpace_weylGroup_smul_eq_bot_iff`: a linear form is a nonweight exactly when
+  each Weyl translate is a nonweight.
 * `TauCeti.sub_weylGroup_smul_mem_posRootCone_of_isHighestWeightVector`: every point of the Weyl
   orbit of a weight remains below the highest weight in the positive root-cone order.
 * `TauCeti.exists_int_apply_coroot_of_genWeightSpace_ne_bot_of_isHighestWeightVector`: those
@@ -124,7 +126,8 @@ theorem genWeightSpace_weylGroup_smul_ne_bot [LieModule.IsIrreducible K L M]
   induction l with
   | nil => simpa
   | cons i l ih =>
-    rw [wordProd_cons, mul_smul, RootPairing.weylGroup.ofIdx_smul]
+    rw [wordProd_cons, mul_smul, RootPairing.weylGroup.ofIdx_smul,
+      RootPairing.Equiv.reflection_smul]
     exact genWeightSpace_rootSystem_reflection_ne_bot hv hlam i.2 ih
 
 -- Not `@[simp]`: `b`, `lam`, and `v` cannot be inferred from the rewrite target, so `simpNF`
@@ -149,8 +152,7 @@ theorem genWeightSpace_weylGroup_smul_eq_bot_iff [LieModule.IsIrreducible K L M]
 with a highest weight vector of dominant integral weight `lam`, then for every weight `χ` and
 every Weyl-group element `w`, the difference `lam - w • χ` belongs to the positive root cone.
 
-This combines Weyl stability with the weight-cone theorem for highest weight modules. It is the
-bounded-orbit formulation used by the finite-support step. -/
+This combines Weyl stability with the weight-cone theorem for highest weight modules. -/
 theorem sub_weylGroup_smul_mem_posRootCone_of_isHighestWeightVector
     [LieModule.IsIrreducible K L M] (hv : IsHighestWeightVector b lam v)
     (hlam : IsDominantIntegral b lam) (w : (IsKilling.rootSystem H).weylGroup)
