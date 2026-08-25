@@ -115,9 +115,7 @@ theorem genWeightSpace_rootSystem_reflection_ne_bot [LieModule.IsIrreducible K L
 `M` be irreducible with a highest weight vector of dominant integral weight `lam`. If `χ` is a
 weight of `M`, then `w • χ` is a weight of `M` for every element `w` of the Weyl group.
 
-The module is not assumed finite-dimensional. Every Weyl-group element is written as a word in
-the simple reflections, and `TauCeti.genWeightSpace_rootSystem_reflection_ne_bot` is applied along
-that word. -/
+The module is not assumed finite-dimensional. -/
 theorem genWeightSpace_weylGroup_smul_ne_bot [LieModule.IsIrreducible K L M]
     (hv : IsHighestWeightVector b lam v) (hlam : IsDominantIntegral b lam)
     (w : (IsKilling.rootSystem H).weylGroup) {χ : Dual K H} (hχ : genWeightSpace M ⇑χ ≠ ⊥) :
@@ -129,24 +127,21 @@ theorem genWeightSpace_weylGroup_smul_ne_bot [LieModule.IsIrreducible K L M]
     rw [wordProd_cons, mul_smul, RootPairing.weylGroup.ofIdx_smul]
     exact genWeightSpace_rootSystem_reflection_ne_bot hv hlam i.2 ih
 
-/-- A linear form is a weight of an irreducible highest weight module of dominant integral weight
-exactly when any Weyl translate is. -/
-theorem genWeightSpace_weylGroup_smul_ne_bot_iff [LieModule.IsIrreducible K L M]
-    (hv : IsHighestWeightVector b lam v) (hlam : IsDominantIntegral b lam)
-    (w : (IsKilling.rootSystem H).weylGroup) (χ : Dual K H) :
-    genWeightSpace M ⇑(w • χ) ≠ ⊥ ↔ genWeightSpace M ⇑χ ≠ ⊥ := by
-  refine ⟨fun hwχ ↦ ?_, genWeightSpace_weylGroup_smul_ne_bot hv hlam w⟩
-  have h := genWeightSpace_weylGroup_smul_ne_bot hv hlam w⁻¹ hwχ
-  simpa only [inv_smul_smul] using h
-
 /-- A linear form is not a weight of an irreducible highest weight module of dominant integral
 weight exactly when any Weyl translate is not a weight. -/
 theorem genWeightSpace_weylGroup_smul_eq_bot_iff [LieModule.IsIrreducible K L M]
     (hv : IsHighestWeightVector b lam v) (hlam : IsDominantIntegral b lam)
     (w : (IsKilling.rootSystem H).weylGroup) (χ : Dual K H) :
     genWeightSpace M ⇑(w • χ) = ⊥ ↔ genWeightSpace M ⇑χ = ⊥ := by
-  simpa only [not_ne_iff] using
-    not_congr (genWeightSpace_weylGroup_smul_ne_bot_iff hv hlam w χ)
+  constructor
+  · intro hwχ
+    by_contra hχ
+    exact genWeightSpace_weylGroup_smul_ne_bot hv hlam w hχ hwχ
+  · intro hχ
+    by_contra hwχ
+    have h := genWeightSpace_weylGroup_smul_ne_bot hv hlam w⁻¹ hwχ
+    rw [inv_smul_smul] at h
+    exact h hχ
 
 /-- **The Weyl orbit of every weight remains below the highest weight.** If `M` is irreducible
 with a highest weight vector of dominant integral weight `lam`, then for every weight `χ` and
