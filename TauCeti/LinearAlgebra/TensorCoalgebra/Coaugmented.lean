@@ -38,8 +38,7 @@ coassociativity to `Finset.sum_comm` all the same.
 * `TauCeti.TensorWords`: the direct sum of all tensor powers, the empty one included.
 * `TauCeti.TensorWords.deconcatenation`: the sum over every cut of a tensor word.
 * `TauCeti.TensorWords.counit`: the length-zero coefficient.
-* The coaugmentation is `Algebra.linearMap R (TensorWords R M)`, inherited from Mathlib's graded
-  algebra structure on tensor powers and retracted by `TauCeti.TensorWords.counit`.
+* `TauCeti.TensorWords.coaugmentation`: the algebra map, bundled as a coalgebra morphism.
 * `TauCeti.TensorWords.reducedInclusion` and `TauCeti.TensorWords.reducedProjection`: the
   positive-length words as a direct summand.
 
@@ -470,6 +469,31 @@ theorem deconcatenation_one :
 theorem isGroupLikeElem_one : IsGroupLikeElem R (1 : TensorWords R M) where
   counit_eq_one := by simp
   comul_eq_tmul_self := by simp
+
+/-- The canonical coaugmentation, bundling the algebra map as a coalgebra morphism. -/
+noncomputable def coaugmentation : R →ₗc[R] TensorWords R M where
+  toLinearMap := Algebra.linearMap R (TensorWords R M)
+  counit_comp := by
+    exact counit_comp_algebraMap R M
+  map_comp_comul := by
+    ext
+    simp only [LinearMap.comp_apply, CommSemiring.comul_apply, TensorProduct.map_tmul,
+      Algebra.linearMap_apply, map_one, comul_def, deconcatenation_one]
+
+/-- The linear map underlying the canonical coaugmentation is the algebra map. -/
+@[simp]
+theorem coaugmentation_toLinearMap :
+    (coaugmentation R M : R →ₗ[R] TensorWords R M) =
+      Algebra.linearMap R (TensorWords R M) := by
+  rw [coaugmentation]
+  exact CoalgHom.coe_linearMap_mk _ _
+
+/-- The canonical coaugmentation sends a scalar through the algebra map. -/
+@[simp]
+theorem coaugmentation_apply (r : R) :
+    coaugmentation R M r = algebraMap R (TensorWords R M) r := by
+  change (coaugmentation R M : R →ₗ[R] TensorWords R M) r = _
+  rw [coaugmentation_toLinearMap, Algebra.linearMap_apply]
 
 /-! ## Comparison with the reduced tensor coalgebra -/
 
