@@ -45,7 +45,14 @@ on:
       - 'scripts/pipeline_health.py'
       - '.github/workflows/pages.yml'
   schedule:
-    - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs
+    # Every six hours (UTC). Not three: a successful run takes a median of 276
+    # minutes, 82% of it the doc-gen4 build, which every scheduled run forces
+    # regardless of the cache. Asking for a new one every three hours therefore
+    # queued runs behind each other, and GitHub discarded the superseded pending
+    # one -- 8 of the last 60 runs were cancelled that way, including the push
+    # that landed the pipeline-health report. Six hours is roughly what the
+    # workflow actually achieves, so the schedule now describes reality.
+    - cron: "23 */6 * * *"
   workflow_dispatch:
 
 permissions:
