@@ -74,9 +74,7 @@ the simple reflections of the Weyl group. -/
 @[simp]
 theorem weylCoxeterHom_wordProd (l : List b.support) :
     weylCoxeterHom P b ((coxeterMatrixOfBase P b).toCoxeterSystem.wordProd l) = wordProd P b l := by
-  rw [CoxeterSystem.wordProd, map_list_prod, List.map_map, wordProd]
-  exact congrArg List.prod (List.map_congr_left fun i _ ↦ by
-    rw [Function.comp_apply, CoxeterMatrix.toCoxeterSystem_simple, weylCoxeterHom_apply_simple])
+  simp [CoxeterSystem.wordProd, wordProd, map_list_prod]
 
 variable [P.IsReduced]
 
