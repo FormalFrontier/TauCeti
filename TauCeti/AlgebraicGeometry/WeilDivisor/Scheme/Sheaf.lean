@@ -132,7 +132,6 @@ lemma mem_sections {D : SchemeWeilDivisor X} {U : X.Opens}
 open Scheme in
 /-- Over a nonempty open subset, a section of `𝒦_X` lies in `𝒪_X(D)` exactly when it vanishes or
 has order at least `-D` at every codimension-one point of that subset. -/
-@[simp]
 lemma mem_sections_iff {D : SchemeWeilDivisor X} {U : X.Opens} [Nonempty U]
     {s : Γ(rationalFunctions X, U)} :
     s ∈ sections D U ↔ rationalFunctionsEquiv U s = 0 ∨
