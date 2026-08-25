@@ -146,8 +146,9 @@ theorem alexanderGradedObject_apply (R : Type*) [Ring R] (a m : ℤ) :
 `(m, a)`. -/
 theorem finrank_alexanderGradedObject (R : Type*) [Ring R] [StrongRankCondition R] (a m : ℤ) :
     Module.finrank R (G.alexanderGradedObject R a m) =
-      (Finset.univ.filter fun x : GridState n => G.bidegree x = (m, a)).card :=
-  G.finrank_bigradedChainPiece R (m, a)
+      (Finset.univ.filter fun x : GridState n => G.bidegree x = (m, a)).card := by
+  rw [G.alexanderGradedObject_apply R a m]
+  exact G.finrank_bigradedChainPiece R (m, a)
 
 private theorem finrankSupport_alexanderGradedObject_subset (R : Type*) [Ring R]
     [StrongRankCondition R]
