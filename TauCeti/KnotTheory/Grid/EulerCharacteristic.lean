@@ -208,7 +208,6 @@ private noncomputable def doubleExponents : ℤ[T;T⁻¹] →+* ℤ[T;T⁻¹] :=
   AddMonoidAlgebra.mapDomainRingHom ℤ (nsmulAddMonoidHom 2 : ℤ →+ ℤ)
 
 /-- Doubling exponents sends a Laurent monomial in degree `a` to one in degree `2a`. -/
-@[simp]
 private theorem doubleExponents_single (a z : ℤ) :
     doubleExponents (AddMonoidAlgebra.single a z) = AddMonoidAlgebra.single (2 * a) z := by
   change AddMonoidAlgebra.mapDomain (nsmulAddMonoidHom 2 : ℤ →+ ℤ)
