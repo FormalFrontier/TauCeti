@@ -13,19 +13,25 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Module
 # Isotypic Lie modules through the universal enveloping algebra
 
 This file transports Mathlib's isotypic-module interface across the universal-enveloping-algebra
-dictionary. Semisimplicity enters only in the characterization of an isotypic module by its
-unique component.
+dictionary. For an irreducible target type, semisimplicity enters only in the characterization of
+an isotypic module by its unique component.
 
 The generic equivalence and submodule interfaces live with the rest of the enveloping-algebra
 dictionary in `TauCeti.Algebra.Lie.UniversalEnveloping.Module`. The UEA-independent Lie-level
 predicates and component live in `TauCeti.Algebra.Lie.Isotypic`; this file identifies them with
 Mathlib's `IsIsotypicOfType`, `IsIsotypic`, and `isotypicComponent` through those interfaces.
 
-## Main definitions
+## Main results
 
-* `LieModule.isIsotypicOfType_iff_isIsotypicOfType_asModule`: fixed-type isotypy transport.
-* `LieModule.isIsotypic_iff_isIsotypic_asModule`: pairwise isotypy transport.
-* `LieModule.lieSubmoduleOrderIsoAsModule_isotypicComponent`: isotypic-component transport.
+* `LieModule.isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul`: fixed-type isotypy transport
+  for compatible actions.
+* `LieModule.isIsotypic_iff_isIsotypic_of_ι_smul`: pairwise isotypy transport for compatible
+  actions.
+* `LieModule.lieSubmoduleOrderIso_isotypicComponent`: component transport for compatible actions.
+* `LieModule.mem_isotypicComponent_iff_mem_isotypicComponent_asModule`: canonical component
+  membership normalization.
+* `LieModule.isotypicComponent_eq_top_iff_of_ι_smul`: the top-component criterion for an
+  irreducible type.
 
 ## Roadmap
 
@@ -33,6 +39,11 @@ This is the universal-enveloping-algebra bridge for Layer 6 of the Lie highest-w
 It deliberately stops before highest-weight classification: consumers such as Kostant-form
 modules can state that all irreducible Lie submodules are equivalent without rebuilding ring-level
 isotypic machinery.
+
+## References
+
+* `Mathlib/RingTheory/SimpleModule/Isotypic.lean` (Junyan Xu): the module-theoretic isotypic
+  interface and top-component criterion transported through the enveloping-algebra dictionary.
 -/
 
 public section
@@ -59,7 +70,7 @@ variable {R L M}
 
 /-- Lie-module isotypy of a fixed type is exactly Mathlib's module isotypy for compatible
 `U(L)`-actions. -/
-theorem isIsotypicOfType_iff_isIsotypicOfType_uea
+theorem isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     (S : Type*) [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     [Module U S] [IsScalarTower R U S]
@@ -68,60 +79,41 @@ theorem isIsotypicOfType_iff_isIsotypicOfType_uea
   rw [isIsotypicOfType_iff]
   constructor
   · intro h Q hQ
-    let P := (lieSubmoduleOrderIso hM).symm Q
-    let : Module U P := asModule R L P
-    let : IsScalarTower R U P := isScalarTower_asModule R L P
-    rw [← (lieSubmoduleOrderIso hM).apply_symm_apply Q] at hQ ⊢
-    let : IsSimpleModule U P :=
-      IsSimpleModule.congr (lieSubmoduleLinearEquiv hM P)
+    obtain ⟨P, rfl⟩ := (lieSubmoduleOrderIso hM).surjective Q
     let : IsIrreducible R L P :=
-      (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L P)).mpr inferInstance
-    exact (h P).map fun e => (lieSubmoduleLinearEquiv hM P).symm.trans
-      (lieModuleEquivEquivLinearEquiv (R := R) (L := L) (M := P) (N := S)
-        (asModule_ι_smul R L P) hS e)
+      (isSimpleModule_lieSubmoduleOrderIso_iff hM P).mp hQ
+    exact (nonempty_lieModuleEquiv_iff_nonempty_linearEquiv hM S hS P).mp (h P)
   · intro h P hP
-    let : Module U P := asModule R L P
-    let : IsScalarTower R U P := isScalarTower_asModule R L P
-    let Q := lieSubmoduleOrderIso hM P
-    let : IsSimpleModule U P :=
-      (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L P)).mp hP
-    let : IsSimpleModule U Q :=
-      IsSimpleModule.congr (lieSubmoduleLinearEquiv hM P).symm
-    exact (h Q).map fun e =>
-      (lieModuleEquivEquivLinearEquiv (R := R) (L := L) (M := P) (N := S)
-        (asModule_ι_smul R L P) hS).symm
-        ((lieSubmoduleLinearEquiv hM P).trans e)
+    let : IsSimpleModule U (lieSubmoduleOrderIso hM P) :=
+      (isSimpleModule_lieSubmoduleOrderIso_iff hM P).mpr hP
+    exact (nonempty_lieModuleEquiv_iff_nonempty_linearEquiv hM S hS P).mpr
+      (h (lieSubmoduleOrderIso hM P))
 
 /-- Lie-module isotypy is exactly Mathlib's module isotypy for a compatible `U(L)`-action. -/
-theorem isIsotypic_iff_isIsotypic_uea
+theorem isIsotypic_iff_isIsotypic_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆) :
     IsIsotypic R L M ↔ _root_.IsIsotypic U M := by
   rw [isIsotypic_iff]
   simp only [_root_.IsIsotypic]
   constructor
   · intro h Q hQ
-    let P := (lieSubmoduleOrderIso hM).symm Q
+    obtain ⟨P, rfl⟩ := (lieSubmoduleOrderIso hM).surjective Q
     let : Module U P := asModule R L P
     let : IsScalarTower R U P := isScalarTower_asModule R L P
-    rw [← (lieSubmoduleOrderIso hM).apply_symm_apply Q] at hQ ⊢
-    let : IsSimpleModule U P :=
-      IsSimpleModule.congr (lieSubmoduleLinearEquiv hM P)
     let : IsIrreducible R L P :=
-      (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L P)).mpr inferInstance
-    exact (isIsotypicOfType_iff_isIsotypicOfType_uea hM P
+      (isSimpleModule_lieSubmoduleOrderIso_iff hM P).mp hQ
+    exact (isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul hM P
       (asModule_ι_smul R L P) |>.mp (h P)).of_linearEquiv_type
       (lieSubmoduleLinearEquiv hM P)
   · intro h P hP
     let : Module U P := asModule R L P
     let : IsScalarTower R U P := isScalarTower_asModule R L P
-    let Q := lieSubmoduleOrderIso hM P
-    let : IsSimpleModule U P :=
-      (isIrreducible_iff_isSimpleModule (asModule_ι_smul R L P)).mp hP
-    let : IsSimpleModule U Q :=
-      IsSimpleModule.congr (lieSubmoduleLinearEquiv hM P).symm
-    exact isIsotypicOfType_iff_isIsotypicOfType_uea hM P
+    let : IsSimpleModule U (lieSubmoduleOrderIso hM P) :=
+      (isSimpleModule_lieSubmoduleOrderIso_iff hM P).mpr hP
+    exact isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul hM P
       (asModule_ι_smul R L P) |>.mpr
-      ((h Q).of_linearEquiv_type (lieSubmoduleLinearEquiv hM P).symm)
+      ((h (lieSubmoduleOrderIso hM P)).of_linearEquiv_type
+        (lieSubmoduleLinearEquiv hM P).symm)
 
 /-- A compatible submodule dictionary maps the Lie isotypic component to Mathlib's
 `U(L)`-isotypic component. -/
@@ -137,28 +129,14 @@ theorem lieSubmoduleOrderIso_isotypicComponent
     _root_.isotypicComponent]
   congr 1
   ext Q
-  -- Membership in the inverse-image family expands to the two equivalence types compared below.
-  change Nonempty (((lieSubmoduleOrderIso hM).symm Q) ≃ₗ⁅R,L⁆ S) ↔
-    Nonempty (Q ≃ₗ[U] S)
-  let P := (lieSubmoduleOrderIso hM).symm Q
-  let : Module U P := asModule R L P
-  let : IsScalarTower R U P := isScalarTower_asModule R L P
-  constructor
-  · rintro ⟨e⟩
-    have e' := (lieSubmoduleLinearEquiv hM P).symm.trans
-      (lieModuleEquivEquivLinearEquiv (R := R) (L := L) (M := P) (N := S)
-        (asModule_ι_smul R L P) hS e)
-    exact ⟨(lieSubmoduleOrderIso hM).apply_symm_apply Q ▸ e'⟩
-  · rintro ⟨e⟩
-    have e' : P ≃ₗ[U] S :=
-      (lieSubmoduleLinearEquiv hM P).trans
-        ((lieSubmoduleOrderIso hM).apply_symm_apply Q ▸ e)
-    exact ⟨(lieModuleEquivEquivLinearEquiv (R := R) (L := L) (M := P) (N := S)
-      (asModule_ι_smul R L P) hS).symm e'⟩
+  simp only [Set.mem_preimage, Set.mem_ofPred_eq]
+  obtain ⟨P, rfl⟩ := (lieSubmoduleOrderIso hM).surjective Q
+  rw [(lieSubmoduleOrderIso hM).symm_apply_apply]
+  exact nonempty_lieModuleEquiv_iff_nonempty_linearEquiv hM S hS P
 
 /-- Membership in the Lie isotypic component is membership in the corresponding isotypic component
 for compatible `U(L)`-actions. -/
-theorem mem_isotypicComponent_iff_uea
+theorem mem_isotypicComponent_iff_mem_isotypicComponent_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     {S : Type*} [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     [Module U S] [IsScalarTower R U S]
@@ -168,9 +146,10 @@ theorem mem_isotypicComponent_iff_uea
   rw [← mem_lieSubmoduleOrderIso hM,
     lieSubmoduleOrderIso_isotypicComponent hM S hS]
 
-/-- For compatible `U(L)`-actions on a completely reducible Lie module, the isotypic component of
-type `S` is the whole module exactly when the Lie module is isotypic of type `S`. -/
-theorem isotypicComponent_eq_top_iff_uea
+/-- For compatible `U(L)`-actions, an irreducible type `S`, and a completely reducible Lie module,
+the isotypic component of type `S` is the whole module exactly when the Lie module is isotypic of
+type `S`. -/
+theorem isotypicComponent_eq_top_iff_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     (S : Type*) [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     [Module U S] [IsScalarTower R U S]
@@ -185,7 +164,7 @@ theorem isotypicComponent_eq_top_iff_uea
   rw [← map_eq_top_iff (lieSubmoduleOrderIso hM),
     lieSubmoduleOrderIso_isotypicComponent hM S hS,
     _root_.isotypicComponent_eq_top_iff,
-    isIsotypicOfType_iff_isIsotypicOfType_uea hM S hS]
+    isIsotypicOfType_iff_isIsotypicOfType_of_ι_smul hM S hS]
 
 end Compatible
 
@@ -195,49 +174,15 @@ attribute [local instance] asModule isScalarTower_asModule
 
 variable {R L M}
 
-/-- Lie-module isotypy of a fixed type is exactly Mathlib's module isotypy for the canonical
-`U(L)`-actions. -/
-theorem isIsotypicOfType_iff_isIsotypicOfType_asModule
-    (S : Type*) [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S] :
-    IsIsotypicOfType R L M S ↔ _root_.IsIsotypicOfType U M S :=
-  isIsotypicOfType_iff_isIsotypicOfType_uea
-    (asModule_ι_smul R L M) S (asModule_ι_smul R L S)
-
-/-- Lie-module isotypy is exactly Mathlib's module isotypy for the canonical `U(L)`-action. -/
-theorem isIsotypic_iff_isIsotypic_asModule :
-    IsIsotypic R L M ↔ _root_.IsIsotypic U M :=
-  isIsotypic_iff_isIsotypic_uea (asModule_ι_smul R L M)
-
-/-- The canonical submodule dictionary maps the Lie isotypic component to Mathlib's
-`U(L)`-isotypic component. -/
-@[simp]
-theorem lieSubmoduleOrderIsoAsModule_isotypicComponent
-    (S : Type*) [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S] :
-    lieSubmoduleOrderIsoAsModule R L M (isotypicComponent R L M S) =
-      _root_.isotypicComponent U M S := by
-  rw [lieSubmoduleOrderIsoAsModule_def]
-  exact lieSubmoduleOrderIso_isotypicComponent
-    (asModule_ι_smul R L M) S (asModule_ι_smul R L S)
-
 /-- Membership in the Lie isotypic component is membership in the corresponding canonical
 `U(L)`-isotypic component. -/
 @[simp]
-theorem mem_isotypicComponent_iff
+theorem mem_isotypicComponent_iff_mem_isotypicComponent_asModule
     {S : Type*} [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     {m : M} :
     m ∈ isotypicComponent R L M S ↔ m ∈ _root_.isotypicComponent U M S :=
-  mem_isotypicComponent_iff_uea
+  mem_isotypicComponent_iff_mem_isotypicComponent_of_ι_smul
     (asModule_ι_smul R L M) (asModule_ι_smul R L S)
-
-/-- In a completely reducible Lie module, the isotypic component of type `S` is the whole module
-exactly when the Lie module is isotypic of type `S`. -/
-theorem isotypicComponent_eq_top_iff
-    (S : Type*) [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
-    [IsIrreducible R L S]
-    [ComplementedLattice (LieSubmodule R L M)] :
-    isotypicComponent R L M S = ⊤ ↔ IsIsotypicOfType R L M S :=
-  isotypicComponent_eq_top_iff_uea
-    (asModule_ι_smul R L M) S (asModule_ι_smul R L S)
 
 end Canonical
 
