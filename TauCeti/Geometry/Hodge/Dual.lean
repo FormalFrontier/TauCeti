@@ -36,8 +36,8 @@ the base on which the internal hom of Hodge structures is to be built.
 * `TauCeti.Hodge.HodgeStructureOn.dual_F`, `…dual_conjF`: the step of the dual filtration at
   index `p` is the annihilator of the original step `1 - p`, and the conjugate step is the
   annihilator of the original conjugate step `1 - p`.
-* `TauCeti.Hodge.HodgeStructureOn.dual_piece` and `…mem_dual_piece_iff`: the components of the
-  dual structure are annihilators of sums of complementary filtration steps.
+* `TauCeti.Hodge.HodgeStructureOn.dual_piece`: the components of the dual structure are
+  annihilators of sums of complementary filtration steps.
 * `TauCeti.Hodge.HodgeStructureOn.finrank_dual_piece`: the dimension of the `p`-th component of
   the dual equals that of the `(-p)`-th component.
 * `TauCeti.Hodge.HodgeStructureOn.apply_eq_zero_of_mem_piece_of_ne`: the dual pairing vanishes
@@ -189,13 +189,6 @@ theorem dual_F (p : ℤ) :
     (hs.dual).F p = (hs.F (1 - p)).dualAnnihilator :=
   (rfl)
 
-/-- Membership in a step of the dual filtration: vanishing on the step of
-complementary index. -/
-@[simp]
-theorem mem_dual_F_iff (p : ℤ) (φ : Module.Dual ℂ W) :
-    φ ∈ (hs.dual).F p ↔ ∀ v ∈ hs.F (1 - p), φ v = 0 := by
-  rw [hs.dual_F, Submodule.mem_dualAnnihilator]
-
 /-- The conjugate of a step of the dual filtration is the annihilator of a conjugate step. -/
 theorem dual_conjF (p : ℤ) :
     (hs.dual).conjF p = (hs.conjF (1 - p)).dualAnnihilator := by
@@ -209,16 +202,6 @@ theorem dual_piece (p : ℤ) :
   rw [piece_def, hs.dual_F, dual_conjF, ← Submodule.dualAnnihilator_sup_eq]
   have hidx : 1 - (-n - p) = n + 1 + p := by omega
   rw [hidx]
-
-/-- Membership in a component of the dual Hodge structure: vanishing on the two filtration steps
-of complementary index. -/
-@[simp]
-theorem mem_dual_piece_iff (p : ℤ) (φ : Module.Dual ℂ W) :
-    φ ∈ (hs.dual).piece p ↔
-      (∀ v ∈ hs.F (1 - p), φ v = 0) ∧ (∀ v ∈ hs.conjF (n + 1 + p), φ v = 0) := by
-  have hidx : 1 - (-n - p) = n + 1 + p := by omega
-  rw [piece_def, hs.dual_F, dual_conjF, hidx, Submodule.mem_inf,
-    Submodule.mem_dualAnnihilator, Submodule.mem_dualAnnihilator]
 
 section Dimension
 
@@ -285,7 +268,9 @@ theorem apply_eq_zero_of_mem_piece_of_ne {a p : ℤ}
     {u : W} {φ : Module.Dual ℂ W} (hu : u ∈ hs.piece a) (hφ : φ ∈ (hs.dual).piece p)
     (hne : a ≠ -p) :
     φ u = 0 := by
-  rw [mem_dual_piece_iff] at hφ
+  have hidx : 1 - (-n - p) = n + 1 + p := by omega
+  rw [piece_def, dual_F, dual_conjF, hidx, Submodule.mem_inf,
+    Submodule.mem_dualAnnihilator, Submodule.mem_dualAnnihilator] at hφ
   have hpair := (mem_piece_iff hs a u).mp hu
   rcases lt_trichotomy a (-p) with hlt | heq | hgt
   · have hlt' : n + 1 + p ≤ n - a := by omega
