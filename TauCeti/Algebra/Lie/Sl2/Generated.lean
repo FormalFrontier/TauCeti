@@ -147,6 +147,15 @@ theorem lieSpan_singleton_toSubmodule_eq_span (htop : t.toLieSubalgebra K = ⊤)
   · rintro _ ⟨i, rfl⟩
     exact pow_toEnd_f_mem_lieSpan_singleton K L f m i
 
+omit [LieAlgebra K L] [LieModule K L M] in
+/-- The primitive vector, read as a vector of the Lie submodule it generates. -/
+theorem hasPrimitiveVectorWith_lieSpan_singleton (P : t.HasPrimitiveVectorWith m μ)
+    (hm : m ∈ LieSubmodule.lieSpan K L {m}) :
+    t.HasPrimitiveVectorWith (⟨m, hm⟩ : LieSubmodule.lieSpan K L {m}) μ where
+  ne_zero := fun hc ↦ P.ne_zero (congrArg Subtype.val hc)
+  lie_h := Subtype.ext (by simpa using P.lie_h)
+  lie_e := Subtype.ext (by simpa using P.lie_e)
+
 end Span
 
 /-! ### Irreducibility of the generated submodule -/
@@ -173,15 +182,6 @@ theorem lieSpan_singleton_toSubmodule_eq_span_fin (htop : t.toLieSubalgebra K = 
     · simp [pow_toEnd_f_eq_zero_of_lt P hi]
   · rintro _ ⟨i, rfl⟩
     exact Submodule.subset_span ⟨(i : ℕ), rfl⟩
-
-omit [CharZero K] [LieAlgebra K L] [LieModule K L M] [IsNoetherian K M] in
-/-- The primitive vector, read as a vector of the Lie submodule it generates. -/
-theorem hasPrimitiveVectorWith_lieSpan_singleton (P : t.HasPrimitiveVectorWith m (n : K))
-    (hm : m ∈ LieSubmodule.lieSpan K L {m}) :
-    t.HasPrimitiveVectorWith (⟨m, hm⟩ : LieSubmodule.lieSpan K L {m}) (n : K) where
-  ne_zero := fun hc ↦ P.ne_zero (congrArg Subtype.val hc)
-  lie_h := Subtype.ext (by simpa using P.lie_h)
-  lie_e := Subtype.ext (by simpa using P.lie_e)
 
 /-- The ladder coefficients picked up on the way up a weight string of length `n + 1` are nonzero
 in characteristic zero. -/

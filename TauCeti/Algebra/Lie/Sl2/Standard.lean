@@ -447,6 +447,23 @@ theorem raise_coordVector (hi : i ≤ n) :
     · rw [Nat.cast_zero, zero_mul]
     · rw [ite_eq_right (show ¬ (j : ℕ) = i - 1 by have := j.isLt; omega), mul_zero]
 
+/-- The lowering operator sends the `i`-th coordinate vector to `(n - i)` times the `(i+1)`-st,
+uniformly in `i`: past the end of the weight string both sides vanish. -/
+theorem lower_coordVector :
+    lower K n (coordVector K n i) = ((n : K) - i) • coordVector K n (i + 1) := by
+  funext j
+  rw [smul_apply, coordVector_apply, lower_apply]
+  by_cases hji : (j : ℕ) = i + 1
+  · rw [dite_eq_left (show 0 < (j : ℕ) by omega), coordVector_apply,
+      ite_eq_left (show (j : ℕ) - 1 = i by omega), ite_eq_left hji, hji]
+    push_cast
+    ring
+  · rw [ite_eq_right hji, mul_zero]
+    by_cases hj0 : 0 < (j : ℕ)
+    · rw [dite_eq_left hj0, coordVector_apply,
+        ite_eq_right (show ¬(j : ℕ) - 1 = i by omega), mul_zero]
+    · rw [dite_eq_right hj0]
+
 end CoordVector
 
 /-- The action of `sl (Fin 2) K` on `V(n)` is the one given by `TauCeti.Sl2Std.rep`. This is the
