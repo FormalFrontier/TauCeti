@@ -122,20 +122,20 @@ lemma toRationalUnitSheaf_app_comp_toCartierDivisor :
   have h := congrArg (fun f => f.hom) h
   exact h
 
+local instance : Nonempty (⊤ : X.Opens) :=
+  ⟨⟨Classical.choice (inferInstanceAs (Nonempty X)), by simp⟩⟩
+
 /-- On the whole space, the units of the rational-function sheaf are the units of the function
 field. -/
 def rationalUnitSectionsEquiv :
     Additive (((rationalFunctionsRing X).presheaf.obj (op (⊤ : X.Opens)))ˣ) ≃+
       Additive X.functionFieldˣ := by
-  letI : Nonempty (⊤ : X.Opens) :=
-    ⟨⟨Classical.choice (inferInstanceAs (Nonempty X)), by simp⟩⟩
   exact (Units.mapEquiv (rationalFunctionsRingEquiv (⊤ : X.Opens)).toMulEquiv).toAdditive
 
 /-- The global rational-unit equivalence applies the rational-functions equivalence to a
 unit. -/
 @[simp]
 lemma rationalUnitSectionsEquiv_apply
-    [Nonempty (⊤ : X.Opens)]
     (f : ((rationalFunctionsRing X).presheaf.obj (op (⊤ : X.Opens)))ˣ) :
     rationalUnitSectionsEquiv X (Additive.ofMul f) =
       Additive.ofMul (Units.map
@@ -146,14 +146,11 @@ lemma rationalUnitSectionsEquiv_apply
 germ map. -/
 noncomputable def regularUnitToFunctionField :
     ((X.presheaf.obj (op (⊤ : X.Opens))) : Type u)ˣ →* X.functionFieldˣ := by
-  letI : Nonempty (⊤ : X.Opens) :=
-    ⟨⟨Classical.choice (inferInstanceAs (Nonempty X)), by simp⟩⟩
   exact Units.map (X.germToFunctionField (⊤ : X.Opens)).hom.toMonoidHom
 
 /-- The map on regular units applies the germ map to the underlying section. -/
 @[simp]
 lemma regularUnitToFunctionField_apply
-    [Nonempty (⊤ : X.Opens)]
     (f : ((X.presheaf.obj (op (⊤ : X.Opens))) : Type u)ˣ) :
     regularUnitToFunctionField X f =
       Units.map (X.germToFunctionField (⊤ : X.Opens)).hom.toMonoidHom f := by
@@ -190,7 +187,6 @@ lemma principalCartierDivisor_inv (f : X.functionFieldˣ) :
 /-- A global regular unit has zero principal Cartier divisor. -/
 @[simp]
 lemma principalCartierDivisor_regularUnitToFunctionField
-    [Nonempty (⊤ : X.Opens)]
     (f : ((X.presheaf.obj (op (⊤ : X.Opens))) : Type u)ˣ) :
     principalCartierDivisor X
       (Units.map (X.germToFunctionField (⊤ : X.Opens)).hom f) = 0 := by
