@@ -59,10 +59,10 @@ variable {X : TopCat.{u}}
 groupoid of `X` to types.
 
 A covering space is sent to its own monodromy functor, and a map of covering spaces to the natural
-transformation restricting that map to every fibre. The definition is opaque; its object and map
-values are characterized by `monodromyFunctor_obj`, `monodromyFunctor_map`, and
-`monodromyFunctor_map_app`. -/
-noncomputable def monodromyFunctor (X : TopCat.{u}) :
+transformation restricting that map to every fibre. Its object and map values are characterized
+by `monodromyFunctor_obj`, `monodromyFunctor_map`, and `monodromyFunctor_map_app`; the
+definition is `@[expose]`d so that those equations also hold by `rfl` in downstream modules. -/
+@[expose] noncomputable def monodromyFunctor (X : TopCat.{u}) :
     CoveringSpace X ⥤ (FundamentalGroupoid X ⥤ Type u) where
   obj p := p.isCoveringMap_proj.monodromyFunctor
   map {p q} f := IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj

@@ -76,16 +76,15 @@ private theorem mixingLaw_map_eq_of_blockLaw_map_eq
     {μ : Measure Ω} [IsFiniteMeasure μ] {Y : ℕ → Ω → (ℕ → α)}
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ Y ν)
     {f : (ℕ → α) → (ℕ → α)} (hf : Measurable f)
-    (hY : ∀ i, AEMeasurable (Y i) μ)
     (hblock : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
       blockLaw μ (fun i ω ↦ f (Y i ω)) k = blockLaw μ Y k) :
     μ.map (fun ω ↦ (ν ω).map hf.aemeasurable) = μ.map ν := by
-  have hmap := hν.map_values hf hY
+  have hmap := hν.map_values hf
   have hmap' : MixedIIDWith μ Y (fun ω ↦ (ν ω).map hf.aemeasurable) :=
     MixedIIDWith.intro hmap.measurable_mixingRepresentative fun m k hk ↦ by
       rw [← hblock m k hk]
       exact hmap.blockLaw_eq_mixture k hk
-  exact mixedIID_mixingLaw_unique hY hmap' hν
+  exact mixedIID_mixingLaw_unique hmap' hν
 
 /-- **The row mixing law inherits column symmetry.** For any mixing representative `ν` of the
 row process, invariance of the array law under the column permutation `τ` implies that pushing
@@ -96,11 +95,14 @@ This is a statement about the law `μ.map ν`, not an almost-sure assertion that
 theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α} {τ : Equiv.Perm ℕ}
     (hcol : (μ.map fun ω p ↦ X (p.1, τ p.2) ω) = μ.map fun ω p ↦ X p ω)
-    (hX : ∀ p, AEMeasurable (X p) μ)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν := by
+  -- the witness gives row measurability; the entries are its coordinates
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := fun p => by
+    have h1 : AEMeasurable (fun ω => arrayRow X p.1 ω p.2) μ :=
+      (measurable_pi_apply p.2).comp_aemeasurable (hν.aemeasurable p.1)
+    simpa [arrayRow_apply] using h1
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex τ)
-    (aemeasurable_arrayRow hX)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
   have hleft :
@@ -123,23 +125,26 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
 /-- **The row mixing law of a separately exchangeable array inherits the column symmetry.** -/
 theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayRow_eq
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α}
-    (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
+    (h : SeparatelyExchangeable μ X)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν)
     (τ : Equiv.Perm ℕ) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν :=
   mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
-    (separatelyExchangeable_iff.mp h 1 τ) hX hν
+    (separatelyExchangeable_iff.mp h 1 τ) hν
 
 /-- **The column mixing law inherits row symmetry.** This is the transpose of
 `mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant`. -/
 theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α} {σ : Equiv.Perm ℕ}
     (hrow : (μ.map fun ω p ↦ X (σ p.1, p.2) ω) = μ.map fun ω p ↦ X p ω)
-    (hX : ∀ p, AEMeasurable (X p) μ)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayCol X) ν) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν := by
+  -- the witness gives column measurability; the entries are its coordinates
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := fun p => by
+    have h1 : AEMeasurable (fun ω => arrayCol X p.2 ω p.1) μ :=
+      (measurable_pi_apply p.1).comp_aemeasurable (hν.aemeasurable p.2)
+    simpa [arrayCol_apply] using h1
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex σ)
-    (aemeasurable_arrayCol hX)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
   have hleft :
@@ -162,12 +167,12 @@ theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
 /-- **The column mixing law of a separately exchangeable array inherits the row symmetry.** -/
 theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayCol_eq
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α}
-    (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
+    (h : SeparatelyExchangeable μ X)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayCol X) ν)
     (σ : Equiv.Perm ℕ) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν :=
   mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
-    (separatelyExchangeable_iff.mp h σ 1) hX hν
+    (separatelyExchangeable_iff.mp h σ 1) hν
 
 /-- **De Finetti for the rows, with the inherited mixing-law symmetry.** A separately
 exchangeable array has a directing measure for its row process whose law is invariant under every
@@ -181,7 +186,7 @@ theorem SeparatelyExchangeable.exists_directing_arrayRow_mixingLaw_invariant
         μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν := by
   obtain ⟨ν, hν⟩ := (h.conditionallyIID_arrayRow hX).exists_directing
   exact ⟨ν, hν, fun τ ↦
-    h.mixingLaw_map_permReindex_arrayRow_eq hX (mixedIIDWith_of_conditionallyIIDWith hν) τ⟩
+    h.mixingLaw_map_permReindex_arrayRow_eq (mixedIIDWith_of_conditionallyIIDWith hν) τ⟩
 
 /-- **De Finetti for the columns, with the inherited mixing-law symmetry.** -/
 theorem SeparatelyExchangeable.exists_directing_arrayCol_mixingLaw_invariant
@@ -193,7 +198,7 @@ theorem SeparatelyExchangeable.exists_directing_arrayCol_mixingLaw_invariant
         μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν := by
   obtain ⟨ν, hν⟩ := (h.conditionallyIID_arrayCol hX).exists_directing
   exact ⟨ν, hν, fun σ ↦
-    h.mixingLaw_map_permReindex_arrayCol_eq hX (mixedIIDWith_of_conditionallyIIDWith hν) σ⟩
+    h.mixingLaw_map_permReindex_arrayCol_eq (mixedIIDWith_of_conditionallyIIDWith hν) σ⟩
 
 end Probability
 

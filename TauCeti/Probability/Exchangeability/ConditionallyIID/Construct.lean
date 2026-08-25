@@ -202,9 +202,7 @@ theorem pathLaw_iidMixtureLaw [IsProbabilityMeasure π] (hP : Measurable P) :
       = (π.map P).bind fun Q => Measure.infinitePi fun _ : ℕ => (Q : Measure α) := by
   have := isProbabilityMeasure_iidMixtureLaw (π := π) hP
   rw [← iidMixtureLaw_map_directing hP]
-  exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith
-    (fun n => ((measurable_pi_apply n).comp measurable_snd).aemeasurable)
-    (mixedIIDWith_iidMixtureLaw hP)
+  exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith (mixedIIDWith_iidMixtureLaw hP)
 
 /-- **The construction is genuinely richer than i.i.d.** If the canonical process happens to have
 independent coordinates, then its mixing law `π.map P` is a point mass — so a nondegenerate `π.map
@@ -227,7 +225,7 @@ theorem exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw [IsProbabilityMeasure π]
   refine ⟨Q, ?_⟩
   -- uniqueness of the mixing law then identifies `π.map P` with that constant's law
   rw [← iidMixtureLaw_map_directing hP,
-    mixedIID_mixingLaw_unique hX (mixedIIDWith_iidMixtureLaw hP)
+    mixedIID_mixingLaw_unique (mixedIIDWith_iidMixtureLaw hP)
       (MixedIIDWith.of_iIndepFun_identDistrib h hident)]
   change Measure.map (fun _ : T × (ℕ → α) => Q) (iidMixtureLaw π P) = Measure.dirac Q
   rw [Measure.map_const, measure_univ, one_smul]

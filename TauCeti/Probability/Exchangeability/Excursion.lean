@@ -36,11 +36,13 @@ exchangeable processes rests on: a recurrent Markov exchangeable process returns
 state infinitely often, so its excursions from that state form a genuine sequence of random
 finite paths, and the identities below are that sequence's finite-dimensional exchangeability.
 The combinatorial excursion process and its reconstruction of a recurrent path segment are set up
-in `TauCeti.Combinatorics.Enumerative.ExcursionProcess`.  Assembling the probability identities
-below into exchangeability of that process, and running de Finetti on it to exhibit the original
-process as a mixture of Markov chains (`TauCeti.Probability.MixedMarkovChain`, whose converse
-direction is `TauCeti.Probability.MixedMarkovChainWith.markovExchangeable`), still needs the
-recurrence hypothesis at the process level.
+in `TauCeti.Combinatorics.Enumerative.ExcursionProcess`, and
+`TauCeti.Probability.Exchangeability.Recurrence.Excursion` adds the recurrence hypothesis at the
+process level to assemble the identities below into exchangeability of that process
+(`TauCeti.Probability.MarkovExchangeable.exchangeable_excursionProcess`) and to run de Finetti on
+it.  Exhibiting the original process as a mixture of Markov chains
+(`TauCeti.Probability.MixedMarkovChain`, whose converse direction is
+`TauCeti.Probability.MixedMarkovChainWith.markovExchangeable`) is the remaining step.
 
 ## Main results
 

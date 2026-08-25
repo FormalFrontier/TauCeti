@@ -8,8 +8,8 @@ module
 public import Mathlib.NumberTheory.NumberField.ClassNumber
 public import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
 import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
+import TauCeti.NumberTheory.NumberField.Quadratic.RamifiedPrimesClassGroup
 import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
-import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
@@ -231,25 +231,8 @@ theorem classNumber_eq_two_of_minpoly_eq_X_sq_add_five
     exact (ClassGroup.mk0_eq_one_iff (mem_nonZeroDivisors_of_ne_zero hPne)).mp
       (by simpa [P0] using h)
   have hM := minkowski_bound_lt_three hmin hgen
-  have hclasses : ∀ C : ClassGroup (𝓞 K), C = 1 ∨ C = ClassGroup.mk0 P0 := by
-    intro C
-    obtain ⟨I, hIC, hIle⟩ := NumberField.exists_ideal_in_class_of_norm_le C
-    have hIlt : (I.1.absNorm : ℝ) < 3 := hIle.trans_lt hM
-    have hIleTwo : I.1.absNorm ≤ 2 := by
-      exact_mod_cast (Nat.lt_succ_iff.mp (by exact_mod_cast hIlt))
-    have hIpos : 0 < I.1.absNorm := absNorm_pos_of_nonZeroDivisors I
-    rcases (by omega : I.1.absNorm = 1 ∨ I.1.absNorm = 2) with hnorm | hnorm
-    · left
-      rw [← hIC]
-      exact (ClassGroup.mk0_eq_one_iff I.2).mpr <| by
-        rw [Ideal.absNorm_eq_one_iff.mp hnorm]
-        exact top_isPrincipal
-    · right
-      rw [← hIC]
-      have hIP : I.1 = P :=
-        eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram P I.1 hnorm
-      apply congrArg ClassGroup.mk0
-      exact Subtype.ext hIP
+  have hclasses : ∀ C : ClassGroup (𝓞 K), C = 1 ∨ C = ClassGroup.mk0 P0 :=
+    class_eq_one_or_eq_classGroupMk0_primeAboveTwo_of_minkowskiBound_lt_three hfin hram hM P
   have hupper : NumberField.classNumber K ≤ 2 := by
     rw [NumberField.classNumber]
     calc

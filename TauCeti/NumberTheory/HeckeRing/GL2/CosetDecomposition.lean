@@ -155,6 +155,13 @@ noncomputable def upperTriRep (b : Fin p) : GL (Fin 2) ℚ :=
   · simp [upperTriRep, ha]
   · simp [upperTriRep, ha]
 
+/-- The unique upper-triangular representative at index one is the identity matrix. -/
+@[simp] lemma upperTriRep_one (b : Fin 1) : upperTriRep 1 b = 1 := by
+  apply Units.ext
+  rw [coe_upperTriRep]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
 /-- **The representatives are upper triangular** — the hypothesis mathlib's
 `IsBoundedAtImInfty.slash` asks for. At `n = 2` this is the `(1, 0)` entry of
 `upperTriGL_apply_eq_zero_of_lt`. -/

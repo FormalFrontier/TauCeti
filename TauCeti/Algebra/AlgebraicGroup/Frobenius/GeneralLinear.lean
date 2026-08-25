@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.FixedPoints
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Frobenius
 
 /-!

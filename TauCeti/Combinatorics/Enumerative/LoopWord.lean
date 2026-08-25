@@ -9,6 +9,7 @@ public import Mathlib.Algebra.BigOperators.Group.List.Basic
 public import Mathlib.Data.List.GetD
 public import Mathlib.Data.List.Perm.Basic
 public import Mathlib.Data.Set.Function
+public import Mathlib.Order.Interval.Set.Infinite
 public import TauCeti.Combinatorics.Enumerative.TransitionCount
 
 /-!
@@ -58,6 +59,12 @@ length `n + 1` as such a word through `List.getD`. Both of those list lemmas liv
 * `TauCeti.exists_loopPath`: every word that starts and ends at `a₀` is a loop path, with
   excursions that avoid `a₀`.
 * `TauCeti.loopPath_injOn`: those excursions are unique.
+* `TauCeti.loopPathAt_cons_add`: past its first excursion a loop is the loop of the remaining ones.
+* `TauCeti.loopPathAt_append_of_le`: over the span of its first excursions a loop is their loop.
+* `TauCeti.infinite_setOf_loopPathAt_eq`: read as a function on `ℕ`, a loop returns to its base
+  letter infinitely often.
+* `TauCeti.map_range_loopPathAt`: reading that function over the loop's span spells the loop word
+  out again.
 
 ## References
 
@@ -133,6 +140,20 @@ theorem loopSteps_eq_of_perm {bs bs' : List (List α)} (h : bs.Perm bs') :
     loopSteps bs = loopSteps bs' :=
   (h.map _).sum_eq
 
+@[simp]
+theorem loopSteps_append (bs cs : List (List α)) :
+    loopSteps (bs ++ cs) = loopSteps bs + loopSteps cs := by
+  simp [loopSteps]
+
+/-- A loop takes at least one step per excursion, since every excursion is followed by the step
+back to the base letter. -/
+theorem length_le_loopSteps (bs : List (List α)) : bs.length ≤ loopSteps bs := by
+  induction bs with
+  | nil => simp
+  | cons e bs ih =>
+    simp only [List.length_cons, loopSteps_cons]
+    omega
+
 /-- A loop, read as a function on `ℕ`: past its last letter it is padded with the base letter. -/
 def loopPathAt (a₀ : α) (bs : List (List α)) (i : ℕ) : α :=
   (loopPath a₀ bs).getD i a₀
@@ -145,7 +166,6 @@ theorem loopPathAt_def (a₀ : α) (bs : List (List α)) (i : ℕ) :
 theorem loopPathAt_zero (a₀ : α) (bs : List (List α)) : loopPathAt a₀ bs 0 = a₀ := by
   cases bs <;> simp [loopPathAt_def]
 
-@[simp]
 theorem loopPathAt_loopSteps (a₀ : α) (bs : List (List α)) :
     loopPathAt a₀ bs (loopSteps bs) = a₀ := by
   induction bs with
@@ -155,6 +175,67 @@ theorem loopPathAt_loopSteps (a₀ : α) (bs : List (List α)) :
     rw [loopPathAt_def, loopPath_cons, loopSteps_cons, hstep, List.getD_cons_succ,
       List.getD_append_right _ _ _ _ (by omega)]
     simpa [loopPathAt_def] using ih
+
+/-- Inside its first excursion, a loop spells that excursion out. -/
+@[simp]
+theorem loopPathAt_cons_of_lt (a₀ : α) (e : List α) (bs : List (List α)) {i : ℕ}
+    (hi : i < e.length) : loopPathAt a₀ (e :: bs) (i + 1) = e[i] := by
+  rw [loopPathAt_def, loopPath_cons, List.getD_cons_succ,
+    List.getD_append _ _ _ _ hi, List.getD_eq_getElem _ _ hi]
+
+/-- **Past its first excursion, a loop is the loop of the remaining excursions.** The shift is by
+the length of that excursion plus the one step returning to the base letter. -/
+@[simp]
+theorem loopPathAt_cons_add (a₀ : α) (e : List α) (bs : List (List α)) (i : ℕ) :
+    loopPathAt a₀ (e :: bs) (e.length + 1 + i) = loopPathAt a₀ bs i := by
+  have hidx : e.length + 1 + i = e.length + i + 1 := by omega
+  rw [loopPathAt_def, loopPath_cons, hidx, List.getD_cons_succ,
+    List.getD_append_right _ _ _ _ (by omega), loopPathAt_def]
+  congr 1
+  omega
+
+/-- A loop sits at its base letter from its final letter onwards: `loopPathAt` pads with the base
+letter past the end of the word. -/
+@[simp]
+theorem loopPathAt_eq_of_loopSteps_le (a₀ : α) (bs : List (List α)) {i : ℕ}
+    (hi : loopSteps bs ≤ i) : loopPathAt a₀ bs i = a₀ := by
+  rcases eq_or_lt_of_le hi with rfl | hlt
+  · exact loopPathAt_loopSteps a₀ bs
+  · exact List.getD_eq_default _ _ (by rw [length_loopPath]; omega)
+
+/-- **A loop extends its own initial stretches.** Over the span of `bs`, the loop of `bs ++ cs`
+spells out the loop of `bs`: the two words share the prefix `loopPath a₀ bs`, and at the very end
+of that span both sit at the base letter, where the loop of `cs` starts. -/
+theorem loopPathAt_append_of_le (a₀ : α) (bs cs : List (List α)) {i : ℕ}
+    (hi : i ≤ loopSteps bs) :
+    loopPathAt a₀ (bs ++ cs) i = loopPathAt a₀ bs i := by
+  have hlen : (loopPath a₀ bs).dropLast.length = loopSteps bs := by
+    rw [List.length_dropLast, length_loopPath]
+    omega
+  rcases eq_or_lt_of_le hi with rfl | hlt
+  · refine Eq.trans ?_ (loopPathAt_loopSteps a₀ bs).symm
+    rw [loopPathAt_def, loopPath_append, List.getD_append_right _ _ _ _ hlen.le, hlen,
+      Nat.sub_self]
+    cases cs <;> simp
+  · have hlt' : i < (loopPath a₀ bs).dropLast.length := by omega
+    rw [loopPathAt_def, loopPath_append, List.getD_append _ _ _ _ hlt',
+      List.getD_eq_getElem _ _ hlt', loopPathAt_def,
+      List.getD_eq_getElem _ _ (by rw [length_loopPath]; omega)]
+    simp
+
+/-- **A loop returns to its base letter infinitely often**, since `loopPathAt` pads with that
+letter. This is what lets the excursion decomposition of a loop be read with no side condition. -/
+theorem infinite_setOf_loopPathAt_eq (a₀ : α) (bs : List (List α)) :
+    {i | loopPathAt a₀ bs i = a₀}.Infinite :=
+  (Set.Ici_infinite (loopSteps bs)).mono fun _ hi => loopPathAt_eq_of_loopSteps_le a₀ bs hi
+
+/-- **A loop read as a function on `ℕ` recovers the loop word.** Reading `loopPathAt` over the
+whole span of the loop spells out `loopPath` again. -/
+theorem map_range_loopPathAt (a₀ : α) (bs : List (List α)) :
+    (List.range (loopSteps bs + 1)).map (loopPathAt a₀ bs) = loopPath a₀ bs := by
+  refine List.ext_getElem (by simp) fun i hi hi' => ?_
+  rw [List.getElem_map, List.getElem_range, loopPathAt_def,
+    List.getD_eq_getElem _ _ hi']
 
 /-- A loop always starts at its base letter. -/
 theorem loopPath_eq_cons_tail (a₀ : α) (bs : List (List α)) :

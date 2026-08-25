@@ -10,7 +10,7 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.D.Basic
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E7.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.Basic

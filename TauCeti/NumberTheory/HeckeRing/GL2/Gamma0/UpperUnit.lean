@@ -9,6 +9,7 @@ public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Basic
 -- `intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0`: the diagonal entries of a `Γ₀(N)`
 -- matrix are mutually inverse mod `N`.
 public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Adjugate
 
 /-!
 # The upper-left unit character of `Δ₀(N)`
@@ -48,6 +49,11 @@ dropping the inverse would negate every twist downstream.
 * `HeckeRing.GL2.mapGL_mem_Delta0`: `Γ₀(N)` lands in `Δ₀(N)`, so the comparison below needs
   no membership hypothesis.
 * `HeckeRing.GL2.Delta0UpperUnit_mapGL`: on `Γ₀(N)` it is inverse to `Gamma0Map`.
+* `HeckeRing.GL2.adjugateGL_mapGL_mem_Delta0`: the adjugate of a `Γ₀(N)` matrix
+  is again in `Δ₀(N)`, being the image of another `Γ₀(N)` element.
+* `HeckeRing.GL2.Delta0UpperUnit_adjugateGL_mapGL`: on the adjugate the upper-left unit is
+  `Gamma0Map` itself rather than its inverse — the second, non-inverted face of the
+  character.
 
 ## References
 
@@ -59,11 +65,16 @@ dropping the inverse would negate every twist downstream.
   `delta0UpperUnit` and `delta0NebentypusDeltaChar`. Twelve source declarations are bundled
   here into one `MonoidHom` with a witness-free eliminator; the source states its API against
   a chosen `Classical.choose` witness instead.
+* The adjugate comparison `Delta0UpperUnit_adjugateGL_mapGL` follows `char_bridge` in the same
+  project's
+  [`HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean`](https://github.com/CBirkbeck/AINTLIB)
+  at the same commit. The source works with an explicit integral adjugate; here
+  `adjugateGL_eq_inv` reduces it to the already-proved `Delta0UpperUnit_mapGL` at `γ⁻¹`.
 -/
 
 public section
 
-open Matrix Matrix.SpecialLinearGroup CongruenceSubgroup HeckeRing.GLn
+open Matrix Matrix.SpecialLinearGroup CongruenceSubgroup HeckeRing.GLn TauCeti
 
 open scoped MatrixGroups
 
@@ -88,5 +99,31 @@ double-coset operator divides by the character rather than multiplying by it. -/
     MonoidHom.coe_toHomUnits, Gamma0Map]
   simpa only [MonoidHom.coe_mk, OneHom.coe_mk] using
     intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 (M := N) γ.2
+
+/-- The adjugate of a `Γ₀(N)` matrix again lies in `Δ₀(N)`: it is the image of `γ⁻¹`, which is
+in `Γ₀(N)` because that is a subgroup. -/
+lemma adjugateGL_mapGL_mem_Delta0 (γ : Gamma0 N) :
+    (adjugateGL (mapGL ℚ (γ : SL(2, ℤ))) : GL (Fin 2) ℚ) ∈ Delta0 N := by
+  rw [adjugateGL_mapGL]
+  exact mapGL_mem_Delta0 N γ⁻¹
+
+/-- **The adjugate half of the comparison.** On `Γ₀(N)` the upper-left unit of the *adjugate*
+is `Gamma0Map` itself, not its inverse: the adjugate is the image of `γ⁻¹`, and
+`Delta0UpperUnit_mapGL` inverts once more. Together the two pin down both faces of the
+character. -/
+-- This is the `@[simp]` half of the pair and `TauCeti.adjugateGL_mapGL` is not: that lemma's
+-- left-hand side occurs inside this one's, so tagging both would leave this statement
+-- non-normal. Do not add the tag there.
+@[simp] lemma Delta0UpperUnit_adjugateGL_mapGL (γ : Gamma0 N) :
+    Delta0UpperUnit N ⟨_, adjugateGL_mapGL_mem_Delta0 N γ⟩ = (Gamma0Map N).toHomUnits γ := by
+  -- The first step replaces one `Delta0 N` element by another. They have *equal values* —
+  -- that is `adjugateGL_mapGL` — but different membership proofs, and the proof component's
+  -- type mentions the value, so rewriting the value alone leaves an ill-typed motive.
+  -- `Subtype.ext` is the eliminator for exactly that: it discharges the pair from the value
+  -- equality, membership in a `Submonoid` being a proposition. A bare `rw [adjugateGL_mapGL]`
+  -- fails here for the motive reason, which is why the equality is supplied wholesale.
+  rw [show (⟨_, adjugateGL_mapGL_mem_Delta0 N γ⟩ : Delta0 N)
+      = ⟨_, mapGL_mem_Delta0 N γ⁻¹⟩ from Subtype.ext (adjugateGL_mapGL _),
+    Delta0UpperUnit_mapGL, map_inv, inv_inv]
 
 end HeckeRing.GL2
