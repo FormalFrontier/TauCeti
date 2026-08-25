@@ -324,6 +324,20 @@ theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
   rw [hweight, SplitTorus.apply_weightCharacter,
     ← SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv]
 
+/-- On algebra-valued points, the weight-torus coordinate morphism is the diagonal matrix whose
+`i`-th entry is the value of the character `wt i`. -/
+theorem pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap [Fintype κ]
+    (wt : Fin N → κ → ℤ) (A : CommAlgCat.{v} R)
+    (p : HopfAlgebra.points
+      (R := R) (H := MonoidAlgebra R (SplitTorus.characterGroup κ)) A) :
+    pointsMulEquiv N
+        ((CommHopfAlgCat.mapPointsFunctor (weightTorusCoordinateMap (R := R) wt)).app A p) =
+      diagGL fun i => torusCharacter (SplitTorus.pointsMulEquiv p) (wt i) := by
+  rw [mapPointsFunctor_weightTorusCoordinateMap_app, pointsMulEquiv_diagonalTorusPoints]
+  congr 1
+  funext i
+  exact diagonalTorusCoordinates_pointsMap_weightCharacterMap wt A p i
+
 end PointsFunctor
 
 section Symmetry
@@ -334,7 +348,8 @@ variable [Finite κ]
 bialgebra morphism of the weight-torus coordinate map by `τ⁻¹`. -/
 theorem hom_weightTorusCoordinateMap_reindex (τ : Equiv.Perm κ) (wt : Fin N → κ → ℤ) :
     (weightTorusCoordinateMap (R := R) fun i => wt i ∘ τ).hom =
-      (MonoidAlgebra.mapDomainBialgHom R (SplitTorus.characterRelabel τ⁻¹)).comp
+      (MonoidAlgebra.mapDomainBialgHom R
+        (SplitTorus.characterRelabel τ⁻¹).toMonoidHom).comp
         (weightTorusCoordinateMap (R := R) wt).hom := by
   apply coordinateHopfAlgebra_bialgHom_ext R N
   intro i j
@@ -342,6 +357,9 @@ theorem hom_weightTorusCoordinateMap_reindex (τ : Equiv.Perm κ) (wt : Fin N �
   split_ifs with hij
   · rw [MonoidAlgebra.mapDomainBialgHom_single]
     congr 1
+    change Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i ∘ τ)) =
+      SplitTorus.characterRelabel τ⁻¹
+        (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)))
     rw [SplitTorus.characterRelabel_ofAdd]
     congr 1
     ext k
@@ -357,22 +375,6 @@ theorem weightTorusCoordinateMap_reindex (τ : Equiv.Perm κ) (wt : Fin N → κ
   apply _root_.CommHopfAlgCat.hom_ext
   rw [_root_.CommHopfAlgCat.hom_comp, SplitTorus.hom_relabelCoordinateMap]
   exact hom_weightTorusCoordinateMap_reindex τ wt
-
-variable [Fintype κ]
-
-/-- On algebra-valued points, the weight-torus coordinate morphism is the diagonal matrix whose
-`i`-th entry is the value of the character `wt i`. -/
-theorem pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
-    (wt : Fin N → κ → ℤ) (A : CommAlgCat.{v} R)
-    (p : HopfAlgebra.points
-      (R := R) (H := MonoidAlgebra R (SplitTorus.characterGroup κ)) A) :
-    pointsMulEquiv N
-        ((CommHopfAlgCat.mapPointsFunctor (weightTorusCoordinateMap (R := R) wt)).app A p) =
-      diagGL fun i => torusCharacter (SplitTorus.pointsMulEquiv p) (wt i) := by
-  rw [mapPointsFunctor_weightTorusCoordinateMap_app, pointsMulEquiv_diagonalTorusPoints]
-  congr 1
-  funext i
-  exact diagonalTorusCoordinates_pointsMap_weightCharacterMap wt A p i
 
 end Symmetry
 

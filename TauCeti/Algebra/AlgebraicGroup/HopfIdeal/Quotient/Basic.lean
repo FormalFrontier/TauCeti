@@ -45,6 +45,8 @@ the finite-type coordinate-Hopf-algebra category.
 * `TauCeti.CommHopfAlgCat.quotientIsoOfSurjective`: a surjective ambient morphism identifies
   the source quotient by an inverse-image Hopf ideal with the target quotient.
 * `TauCeti.CommHopfAlgCat.quotientIsoOfIso`: the specialization to an ambient isomorphism.
+* `TauCeti.CommHopfAlgCat.quotientIsoOfComapEq`: an ideal-preserving ambient automorphism induces
+  an automorphism of the quotient.
 * `TauCeti.FiniteTypeCommHopfAlgCat.quotientIsoOfIso`: an ambient isomorphism induces an
   isomorphism between the corresponding finite-type Hopf-ideal quotients.
 * `TauCeti.FiniteTypeCommHopfAlgCat.quotientBotIso`: quotienting by the zero Hopf ideal does
@@ -259,6 +261,22 @@ lemma mkQuotient_comp_quotientIsoOfIso_inv (e : H ≅ K) (I : HopfIdeal R K) :
   rw [← cancel_mono (quotientIsoOfIso e I).hom]
   simp only [Category.assoc, Iso.inv_hom_id, Category.comp_id,
     mkQuotient_comp_quotientIsoOfIso_hom, Iso.inv_hom_id_assoc]
+
+/-- An automorphism preserving a Hopf ideal induces an automorphism of its quotient. -/
+noncomputable def quotientIsoOfComapEq (e : H ≅ H) (I : HopfIdeal R H)
+    (hI : I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2 = I) :
+    quotient H I ≅ quotient H I :=
+  eqToIso (congrArg (quotient H) hI.symm) ≪≫ quotientIsoOfIso e I
+
+/-- The quotient automorphism induced by an ideal-preserving ambient automorphism commutes with
+the quotient morphism. -/
+@[simp]
+lemma mkQuotient_comp_quotientIsoOfComapEq_hom (e : H ≅ H) (I : HopfIdeal R H)
+    (hI : I.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2 = I) :
+    mkQuotient H I ≫ (quotientIsoOfComapEq e I hI).hom = e.hom ≫ mkQuotient H I := by
+  rw [quotientIsoOfComapEq, Iso.trans_hom, eqToIso.hom, ← Category.assoc,
+    mkQuotient_comp_eqToHom, mkQuotient_comp_quotientIsoOfIso_hom]
+  exact hI
 
 /-- The forward quotient isomorphism induced by an ambient isomorphism evaluates on quotient
 classes by applying the ambient isomorphism before taking the target quotient. -/

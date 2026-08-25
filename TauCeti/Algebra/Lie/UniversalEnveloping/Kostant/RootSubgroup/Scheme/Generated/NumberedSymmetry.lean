@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.NumberedSymmetry
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Rigidity
@@ -114,13 +112,11 @@ private noncomputable def kostantGeneratedCoordinateNumberedSymmetryIso :
         (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) ≅
       CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
         (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) :=
-  eqToIso (congrArg
-      (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n))
-      (kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIso
-        e h ρ M hM hnil b σ θ hθM hθe hσ).symm) ≪≫
-    CommHopfAlgCat.quotientIsoOfIso
-      (kostantNumberedSymmetryCoordinateIso M b θ hθM)
-      (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
+  CommHopfAlgCat.quotientIsoOfComapEq
+    (kostantNumberedSymmetryCoordinateIso M b θ hθM)
+    (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
+    (kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIso
+      e h ρ M hM hnil b σ θ hθM hθe hσ)
 
 /-- The quotient coordinate automorphism is induced by the ambient coordinate automorphism. -/
 private theorem mkQuotient_comp_kostantGeneratedCoordinateNumberedSymmetryIso_hom :
@@ -131,11 +127,11 @@ private theorem mkQuotient_comp_kostantGeneratedCoordinateNumberedSymmetryIso_ho
       (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom ≫
         CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
           (kostantGeneratedDefiningIdeal e h ρ M hM hnil b) := by
-  rw [kostantGeneratedCoordinateNumberedSymmetryIso, Iso.trans_hom, eqToIso.hom,
-    ← Category.assoc, CommHopfAlgCat.mkQuotient_comp_eqToHom,
-    CommHopfAlgCat.mkQuotient_comp_quotientIsoOfIso_hom]
-  exact kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIso
-    e h ρ M hM hnil b σ θ hθM hθe hσ
+  exact CommHopfAlgCat.mkQuotient_comp_quotientIsoOfComapEq_hom
+    (kostantNumberedSymmetryCoordinateIso M b θ hθM)
+    (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
+    (kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIso
+      e h ρ M hM hnil b σ θ hθM hθe hσ)
 
 include hθe hσ in
 /-- The quotient coordinate automorphism permutes the factored root-subgroup maps. -/
@@ -214,25 +210,12 @@ theorem kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_pow_hom (m : ℕ
         ((kostantGeneratedNumberedSymmetryIso
           e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m).hom =
       kostantRootSubgroupToGenerated e h ρ M hM hnil b ((σ^[m]) i) := by
-  induction m generalizing i with
-  | zero =>
-      rw [pow_zero, Function.iterate_zero_apply]
-      -- The hom of the `Aut` identity is definitionally the hom of `Iso.refl`; `change`
-      -- exposes it because keyed rewriting does not unfold the plain definition `Aut`.
-      change _ ≫ (Iso.refl _).hom = _
-      rw [Iso.refl_hom, Category.comp_id]
-  | succ m ih =>
-      rw [pow_succ]
-      -- `Aut.Aut_mul_def` and `Iso.trans_hom` give this reversed composite; `change`
-      -- exposes it because keyed rewriting does not unfold the plain definition `Aut`.
-      change _ ≫
-        (kostantGeneratedNumberedSymmetryIso
-          e h ρ M hM hnil b σ θ hθM hθe hσ).hom ≫
-        ((kostantGeneratedNumberedSymmetryIso
-          e h ρ M hM hnil b σ θ hθM hθe hσ) ^ m).hom = _
-      rw [← Category.assoc,
-        kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom, ih,
-        Function.iterate_succ_apply]
+  exact TauCeti.CategoryTheory.comp_aut_pow_hom_of_comp
+    (kostantGeneratedNumberedSymmetryIso
+      e h ρ M hM hnil b σ θ hθM hθe hσ)
+    (kostantRootSubgroupToGenerated e h ρ M hM hnil b) σ
+    (kostantRootSubgroupToGenerated_comp_numberedSymmetryIso_hom
+      e h ρ M hM hnil b σ θ hθM hθe hσ) m i
 
 include hθe hσ in
 /-- If the numbering permutation has order dividing `m`, then so does its automorphism of the

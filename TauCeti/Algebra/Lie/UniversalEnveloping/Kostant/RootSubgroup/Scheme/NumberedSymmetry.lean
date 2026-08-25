@@ -30,7 +30,9 @@ in order to inherit it:
 The first says that conjugation permutes the represented Kostant root subgroups without touching
 their additive parameters. The second says that when `θ` permutes the chosen lattice basis by `π`,
 conjugation carries the represented weight torus of a weight family to the weight torus of the
-relabelled family, so that a subgroup scheme cut out by both families is preserved.
+relabelled family. Preserving a subgroup scheme cut out by both families additionally requires
+weight equivariance identifying that family with the original one, through a permutation of the
+torus index and `GeneralLinear.weightTorusCoordinateMap_reindex`.
 
 Neither identity is available from the construction of the coordinate automorphism, which goes
 through the functor of points: full faithfulness of the functor of points on commutative Hopf
@@ -49,6 +51,8 @@ weights are the weights of an admissible lattice: all of that is supplied by the
 
 ## Main results
 
+* `TauCeti.CategoryTheory.comp_aut_pow_hom_of_comp`: shared categorical bookkeeping for iterating
+  an automorphism which reindexes a family of morphisms.
 * `pointsMulEquiv_mapPointsFunctor_kostantNumberedSymmetryCoordinateIso`: on algebra-valued points
   the coordinate automorphism is conjugation by the base-changed matrix.
 * `kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap`: the pinning equation
@@ -72,6 +76,29 @@ L1 of `TauCetiRoadmap/CFSGStatement/README.md`.
 public section
 
 open AlgebraicGeometry CategoryTheory TensorProduct WithConv
+
+namespace TauCeti.CategoryTheory
+
+universe v u
+
+variable {C : Type u} [Category.{v} C] {X Y : C} {iota : Type*}
+
+/-- Iterating an automorphism which reindexes a family of morphisms reindexes that family by the
+corresponding function iterate. -/
+theorem comp_aut_pow_hom_of_comp (gamma : Aut X) (F : iota → (Y ⟶ X)) (s : iota → iota)
+    (h : ∀ i, F i ≫ gamma.hom = F (s i)) (m : ℕ) (i : iota) :
+    F i ≫ (gamma ^ m).hom = F ((s^[m]) i) := by
+  induction m generalizing i with
+  | zero =>
+      rw [pow_zero, Function.iterate_zero_apply]
+      change _ ≫ (Iso.refl _).hom = _
+      rw [Iso.refl_hom, Category.comp_id]
+  | succ m ih =>
+      rw [pow_succ]
+      change F i ≫ gamma.hom ≫ (gamma ^ m).hom = _
+      rw [← Category.assoc, h, ih, Function.iterate_succ_apply]
+
+end TauCeti.CategoryTheory
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
@@ -272,7 +299,7 @@ theorem pointsMulEquiv_mapPointsFunctor_kostantNumberedSymmetryCoordinateIso
   exact pointsMulEquiv_generalLinearPointsNumberedSymmetryMulEquiv M b θ hθM A f
 
 /-- Explicit precomposition form of the action of the recovered coordinate automorphism. -/
-theorem pointsMulEquiv_comp_kostantNumberedSymmetryCoordinateIso
+private theorem pointsMulEquiv_comp_kostantNumberedSymmetryCoordinateIso
     (A : CommAlgCat ℤ)
     (f : HopfAlgebra.points
       (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ n) A) :
@@ -389,11 +416,12 @@ theorem coe_kostantNumberedSymmetryMatrix_apply (A : Type) [CommRing A] (i j : F
 /-- **A symmetry permuting the chosen lattice basis has a permutation matrix.** This is the
 hypothesis under which conjugation normalizes the diagonal torus of `GLₙ`, and it holds for the
 coordinate permutation a Dynkin-diagram symmetry induces on Geck's lattice. -/
-theorem coe_kostantNumberedSymmetryMatrix_apply_of_perm (basisPerm : Equiv.Perm (Fin n))
+theorem coe_kostantNumberedSymmetryMatrix_of_perm (basisPerm : Equiv.Perm (Fin n))
     (hbasis : ∀ i, θ ((b i : M) : V) = ((b (basisPerm i) : M) : V))
-    (A : Type) [CommRing A] (i j : Fin n) :
-    (kostantNumberedSymmetryMatrix M b θ hθM A : Matrix (Fin n) (Fin n) A) i j =
-      if i = basisPerm j then 1 else 0 := by
+    (A : Type) [CommRing A] :
+    (kostantNumberedSymmetryMatrix M b θ hθM A : Matrix (Fin n) (Fin n) A) =
+      (basisPerm⁻¹).permMatrix A := by
+  ext i j
   rw [coe_kostantNumberedSymmetryMatrix_apply, Module.Basis.baseChange_apply]
   have hval : (AddEquiv.baseChangeInvariantRestrictUnit
       (R := A) θ.toAddEquiv M hθM).val ((1 : A) ⊗ₜ[ℤ] b j) = (1 : A) ⊗ₜ[ℤ] b (basisPerm j) := by
@@ -403,32 +431,7 @@ theorem coe_kostantNumberedSymmetryMatrix_apply_of_perm (basisPerm : Equiv.Perm 
     rw [AddEquiv.coe_invariantRestrict_apply]
     exact hbasis j
   rw [hval, Module.Basis.baseChange_repr_tmul, b.repr_self, Finsupp.single_apply]
-  simp [eq_comm]
-
-/-- A permutation matrix moves past a diagonal matrix, relabelling its entries. -/
-theorem kostantNumberedSymmetryMatrix_mul_diagGL (basisPerm : Equiv.Perm (Fin n))
-    (hbasis : ∀ i, θ ((b i : M) : V) = ((b (basisPerm i) : M) : V))
-    (A : Type) [CommRing A] (d : Fin n → Aˣ) :
-    kostantNumberedSymmetryMatrix M b θ hθM A * diagGL d =
-      diagGL (fun i => d (basisPerm⁻¹ i)) * kostantNumberedSymmetryMatrix M b θ hθM A := by
-  refine Units.ext ?_
-  refine Matrix.ext fun i k => ?_
-  rw [Units.val_mul, Units.val_mul, Matrix.mul_apply, Matrix.mul_apply]
-  simp only [coe_kostantNumberedSymmetryMatrix_apply_of_perm M b θ hθM basisPerm hbasis]
-  rw [Finset.sum_eq_single k, Finset.sum_eq_single i]
-  · rw [diagGL_apply, diagGL_apply, ite_eq_left rfl, ite_eq_left rfl]
-    by_cases hik : i = basisPerm k
-    · rw [ite_eq_left hik, one_mul, mul_one, hik]
-      rw [Equiv.Perm.inv_def, Equiv.symm_apply_apply]
-    · rw [ite_eq_right hik, zero_mul, mul_zero]
-  · intro l _ hli
-    rw [diagGL_apply, ite_eq_right (Ne.symm hli), zero_mul]
-  · intro hi
-    exact absurd (Finset.mem_univ i) hi
-  · intro l _ hlk
-    rw [diagGL_apply, ite_eq_right hlk, mul_zero]
-  · intro hk
-    exact absurd (Finset.mem_univ k) hk
+  simp [Equiv.Perm.permMatrix, PEquiv.toMatrix_apply, Equiv.eq_symm_apply, eq_comm]
 
 /-- **Conjugating a diagonal matrix by a basis-permuting symmetry relabels its entries by the
 inverse permutation.** In particular the diagonal torus of `GLₙ` is normalized. -/
@@ -438,13 +441,17 @@ theorem kostantNumberedSymmetryMatrix_conj_diagGL (basisPerm : Equiv.Perm (Fin n
     kostantNumberedSymmetryMatrix M b θ hθM A * diagGL d *
         (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ =
       diagGL (fun i => d (basisPerm⁻¹ i)) := by
-  rw [kostantNumberedSymmetryMatrix_mul_diagGL M b θ hθM basisPerm hbasis, mul_assoc,
-    mul_inv_cancel, mul_one]
+  rw [mul_diagGL_of_coe_eq_permMatrix
+      (kostantNumberedSymmetryMatrix M b θ hθM A) basisPerm⁻¹
+      (coe_kostantNumberedSymmetryMatrix_of_perm M b θ hθM basisPerm hbasis A) d,
+    mul_assoc, mul_inv_cancel, mul_one]
+  rfl
 
 /-- **A basis-permuting numbered symmetry carries the represented weight torus of a weight family
-to the weight torus of the relabelled family.** Together with the pinning equation for the root
-subgroups this is what makes a closed subgroup scheme of `GLₙ` cut out by root subgroups and a
-weight torus stable under the ambient coordinate automorphism. -/
+to the weight torus of the relabelled family.** Stability of a closed subgroup scheme cut out by
+the root subgroups and a weight torus additionally requires identifying this relabelled family
+with the original one, via weight equivariance and
+`GeneralLinear.weightTorusCoordinateMap_reindex`. -/
 theorem kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorusCoordinateMap
     {ι : Type} [Finite ι] (wt : Fin n → ι → ℤ) (basisPerm : Equiv.Perm (Fin n))
     (hbasis : ∀ i, θ ((b i : M) : V) = ((b (basisPerm i) : M) : V)) :
@@ -467,13 +474,17 @@ theorem kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorusCoordinateMap
       (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ n) (CommAlgCat.of ℤ T) :=
     toConv (q.ofConv.comp s.hom.toAlgHom)
   have htorus_r : GeneralLinear.pointsMulEquiv n f =
-      diagGL fun i => torusCharacter (SplitTorus.pointsMulEquiv q) (wt i) :=
-    GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
+      diagGL fun i => torusCharacter (SplitTorus.pointsMulEquiv q) (wt i) := by
+    change GeneralLinear.pointsMulEquiv n
+      ((CommHopfAlgCat.mapPointsFunctor r).app (CommAlgCat.of ℤ T) q) = _
+    exact GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
       wt (CommAlgCat.of ℤ T) q
   have htorus_s : GeneralLinear.pointsMulEquiv n g =
       diagGL fun i =>
-        torusCharacter (SplitTorus.pointsMulEquiv q) (wt (basisPerm⁻¹ i)) :=
-    GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
+        torusCharacter (SplitTorus.pointsMulEquiv q) (wt (basisPerm⁻¹ i)) := by
+    change GeneralLinear.pointsMulEquiv n
+      ((CommHopfAlgCat.mapPointsFunctor s).app (CommAlgCat.of ℤ T) q) = _
+    exact GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
       (fun i => wt (basisPerm⁻¹ i)) (CommAlgCat.of ℤ T) q
   have hp : toConv (f.ofConv.comp c.hom.toAlgHom) = g := by
     apply (GeneralLinear.pointsMulEquiv (R := ℤ) (A := CommAlgCat.of ℤ T) n).injective
