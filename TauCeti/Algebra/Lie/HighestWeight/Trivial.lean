@@ -63,8 +63,9 @@ private theorem IsHighestWeightVector.lie_eq_zero_of_mem_rootSpace_of_mem_negRoo
     (hv : IsHighestWeightVector b (0 : Dual K H) v)
     {alpha : H.root} (halpha : alpha ∈ negRoots (IsKilling.rootSystem H) b) {x : L}
     (hx : x ∈ rootSpace H (alpha : H → K)) : ⁅x, v⁆ = 0 := by
-  refine forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero
-    (H.isNonZero_coe_root (-alpha)) hv.ne_zero ?_ ?_ x ?_
+  refine forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero
+    (K := K) (L := L) (H := H) (M := M)
+    (α := ((-alpha : H.root) : Weight K H L)) ?_ ?_ x ?_
   · simpa using hv.lie_eq_smul (IsKilling.coroot (-alpha))
   · exact fun e he => hv.lie_eq_zero_of_mem_rootSpace
       (neg_mem_posRoots_of_mem_negRoots b halpha) he

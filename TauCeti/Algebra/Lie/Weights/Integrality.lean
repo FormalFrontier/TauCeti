@@ -60,8 +60,9 @@ root is what forces its weight to be dominant integral.
   `TauCeti.exists_nat_neg_of_lie_coroot_eq_smul_of_forall_rootSpace_neg_lie_eq_zero`: a nonzero
   vector on which `α^∨` acts by the scalar `μ` and which is killed by the root space `Lα`,
   respectively `L₍₋α₎`, forces `μ` to be a natural number, respectively minus a natural number.
-* `TauCeti.forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero`: a finite-dimensional
-  `sl₂` string starting at coroot weight zero stops immediately in the negative-root direction.
+* `TauCeti.forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero`:
+  a finite-dimensional `sl₂` string starting at coroot weight zero stops immediately in the
+  negative-root direction.
 * `TauCeti.genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast`: the generalized eigenspace of a
   coroot at a non-integer scalar vanishes.
 
@@ -267,25 +268,33 @@ theorem exists_nat_neg_of_lie_coroot_eq_smul_of_forall_rootSpace_neg_lie_eq_zero
   exact ⟨n, by rw [← hn, neg_neg]⟩
 
 /-- **A primitive vector of coroot weight zero is also killed in the negative direction.** If a
-nonzero vector is annihilated by `Lα` and has eigenvalue zero under `α^∨`, the finite-dimensional
-`sl₂` string through it stops immediately, so `L₍₋α₎` also annihilates it. -/
-theorem forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero {α : Weight K H L}
-    (hα : α.IsNonZero) {v : M} (hv0 : v ≠ 0)
+vector is annihilated by `Lα` and has eigenvalue zero under `α^∨`, the finite-dimensional `sl₂`
+string through it stops immediately, so `L₍₋α₎` also annihilates it. -/
+theorem forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero
+    {α : Weight K H L} {v : M}
     (hv : ⁅((IsKilling.coroot α : H) : L), v⁆ = 0)
     (hve : ∀ e ∈ rootSpace H α, ⁅e, v⁆ = 0) :
     ∀ f ∈ rootSpace H ((-α : Weight K H L) : H → K), ⁅f, v⁆ = 0 := by
-  obtain ⟨h, e, f, ht, he, hf⟩ := IsKilling.exists_isSl2Triple_of_weight_isNonZero hα
-  have P : ht.HasPrimitiveVectorWith v (0 : K) :=
-    { ne_zero := hv0
-      lie_h := by rw [ht.h_eq_coroot hα he hf]; simpa only [zero_smul] using hv
-      lie_e := hve e he }
-  have hfv : ⁅f, v⁆ = 0 := by
-    have := P.pow_toEnd_f_eq_zero_of_eq_nat (n := 0) (by simp)
-    simpa using this
-  have hspan := IsKilling.toSubmodule_rootSpace_eq_span (-α) hα.neg f ht.f_ne_zero hf
-  intro f' hf'
-  rw [← LieSubmodule.mem_toSubmodule, hspan, Submodule.mem_span_singleton] at hf'
-  obtain ⟨c, rfl⟩ := hf'
-  rw [smul_lie, hfv, smul_zero]
+  by_cases hv0 : v = 0
+  · subst v
+    simp
+  by_cases hα : α.IsNonZero
+  · obtain ⟨h, e, f, ht, he, hf⟩ := IsKilling.exists_isSl2Triple_of_weight_isNonZero hα
+    have P : ht.HasPrimitiveVectorWith v (0 : K) :=
+      { ne_zero := hv0
+        lie_h := by rw [ht.h_eq_coroot hα he hf]; simpa only [zero_smul] using hv
+        lie_e := hve e he }
+    have hfv : ⁅f, v⁆ = 0 := by
+      have := P.pow_toEnd_f_eq_zero_of_eq_nat (n := 0) (by simp)
+      simpa using this
+    have hspan := IsKilling.toSubmodule_rootSpace_eq_span (-α) hα.neg f ht.f_ne_zero hf
+    intro f' hf'
+    rw [← LieSubmodule.mem_toSubmodule, hspan, Submodule.mem_span_singleton] at hf'
+    obtain ⟨c, rfl⟩ := hf'
+    rw [smul_lie, hfv, smul_zero]
+  · intro f hf
+    apply hve f
+    have hα0 : (α : H → K) = 0 := not_not.mp hα
+    simpa only [Weight.coe_neg, hα0, neg_zero] using hf
 
 end TauCeti
