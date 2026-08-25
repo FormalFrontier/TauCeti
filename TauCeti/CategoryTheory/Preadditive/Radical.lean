@@ -62,6 +62,8 @@ addition, exactly as in the ring case.
   one object, where it recovers the non-units of `End X`.
 * `TauCeti.IsIrreducibleMorphism.mem_jacobsonRadical`: an irreducible morphism between objects
   with local endomorphism rings is radical.
+* `TauCeti.jacobsonRadicalSq_le_iff`: the universal property of the square of the radical, a
+  subgroup contains it exactly when it contains every composite of two radical morphisms.
 * `TauCeti.jacobsonRadicalSq_le_jacobsonRadical`,
   `TauCeti.comp_mem_jacobsonRadicalSq_left` and `TauCeti.comp_mem_jacobsonRadicalSq_right`: the
   square of the radical is a two-sided ideal contained in the radical.
@@ -224,29 +226,39 @@ section Local
 
 variable {X Y : C} [IsLocalRing (End X)] [IsLocalRing (End Y)]
 
-/-- **A composite that is invertible has an invertible first factor**, when the two objects it
-passes through have local endomorphism rings: the composite produces an idempotent of `End Y`,
-which is `0` or `𝟙 Y`, and `0` is excluded because `𝟙 X ≠ 0`. -/
-theorem isIso_of_isIso_comp (f : X ⟶ Y) (g : Y ⟶ X) (h : IsIso (f ≫ g)) : IsIso f := by
+omit [IsLocalRing (End X)] in
+/-- **A composite that is invertible has an invertible first factor**, when the object it passes
+through has a local endomorphism ring and the identity of its source is nonzero: the composite
+produces an idempotent of `End Y`, which is `0` or `𝟙 Y`, and `0` is excluded by `𝟙 X ≠ 0`.
+
+Only the nonvanishing of `𝟙 X` is used at the source, so it is taken as a plain hypothesis rather
+than as `[IsLocalRing (End X)]`; a caller with a local `End X` supplies `one_ne_zero`. -/
+theorem isIso_of_isIso_comp (hX : 𝟙 X ≠ 0) (f : X ⟶ Y) (g : Y ⟶ X) (h : IsIso (f ≫ g)) :
+    IsIso f := by
   have := h
   have hfp : f ≫ (g ≫ inv (f ≫ g)) = 𝟙 X := by rw [← Category.assoc, IsIso.hom_inv_id]
-  have hidem : IsIdempotentElem (M := End Y) ((g ≫ inv (f ≫ g)) ≫ f) := by
-    change ((g ≫ inv (f ≫ g)) ≫ f) ≫ (g ≫ inv (f ≫ g)) ≫ f = (g ≫ inv (f ≫ g)) ≫ f
-    rw [Category.assoc, ← Category.assoc f, hfp, Category.id_comp]
+  -- Multiplication in `End Y` is composition in the opposite order
+  -- (`CategoryTheory.End.mul_def`), so idempotence of `e` is the categorical identity below.
+  obtain ⟨e, he⟩ : ∃ e : End Y, e = (g ≫ inv (f ≫ g)) ≫ f := ⟨_, rfl⟩
+  have hidem : IsIdempotentElem e := by
+    rw [IsIdempotentElem, End.mul_def, he, Category.assoc, ← Category.assoc f, hfp,
+      Category.id_comp]
   rcases IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem hidem with h0 | h1
   · exfalso
-    have h0' : (g ≫ inv (f ≫ g)) ≫ f = 0 := h0
+    have h0' : (g ≫ inv (f ≫ g)) ≫ f = 0 := he.symm.trans h0
     have hf0 : f = 0 := by
       have hz : f ≫ (g ≫ inv (f ≫ g)) ≫ f = 0 := by rw [h0', Limits.comp_zero]
       rwa [← Category.assoc, hfp, Category.id_comp] at hz
     have hzero : f ≫ (g ≫ inv (f ≫ g)) = 0 := by
       simpa using congrArg (fun t : X ⟶ Y => t ≫ (g ≫ inv (f ≫ g))) hf0
-    exact one_ne_zero (α := End X) (hfp.symm.trans hzero)
-  · exact ⟨⟨g ≫ inv (f ≫ g), hfp, h1⟩⟩
+    exact hX (hfp.symm.trans hzero)
+  · exact ⟨⟨g ≫ inv (f ≫ g), hfp, he.symm.trans h1⟩⟩
 
 /-- **Between objects with local endomorphism rings the radical is the set of
 non-isomorphisms.** This is the description of `rad(X, Y)` for indecomposable `X` and `Y` under
-which it is used in Auslander-Reiten theory. -/
+which it is used in Auslander-Reiten theory. It is the `simp` normal form of radical membership
+in that setting, unlike the defining `TauCeti.mem_jacobsonRadical_iff`. -/
+@[simp]
 theorem mem_jacobsonRadical_iff_not_isIso {f : X ⟶ Y} :
     f ∈ jacobsonRadical X Y ↔ ¬ IsIso f := by
   constructor
@@ -256,7 +268,8 @@ theorem mem_jacobsonRadical_iff_not_isIso {f : X ⟶ Y} :
   · intro hf g
     obtain ⟨e, he⟩ : ∃ e : End X, e = f ≫ g := ⟨f ≫ g, rfl⟩
     have hnu : ¬ IsUnit e := fun hu =>
-      hf (isIso_of_isIso_comp f g (he ▸ (isUnit_iff_isIso e).1 hu))
+      hf (isIso_of_isIso_comp (one_ne_zero (α := End X)) f g
+        (he ▸ (isUnit_iff_isIso e).1 hu))
     have hiso : IsIso ((1 : End X) - e) :=
       (isUnit_iff_isIso _).1 (IsLocalRing.isUnit_one_sub_self_of_mem_nonunits e hnu)
     rw [he] at hiso
@@ -300,36 +313,48 @@ theorem comp_mem_jacobsonRadicalSq {X Z Y : C} {a : X ⟶ Z} {b : Z ⟶ Y}
     a ≫ b ∈ jacobsonRadicalSq X Y :=
   AddSubgroup.subset_closure ⟨Z, a, b, ha, hb, rfl⟩
 
+/-- **The universal property of the square of the radical**: an additive subgroup contains
+`rad²(X, Y)` exactly when it contains every composite of two radical morphisms.
+
+This is the elimination rule matching the introduction rule
+`TauCeti.comp_mem_jacobsonRadicalSq`; together they let containments of `rad²` be proved without
+unfolding the closure that defines it. -/
+theorem jacobsonRadicalSq_le_iff {X Y : C} {K : AddSubgroup (X ⟶ Y)} :
+    jacobsonRadicalSq X Y ≤ K ↔ ∀ (Z : C) (a : X ⟶ Z) (b : Z ⟶ Y),
+      a ∈ jacobsonRadical X Z → b ∈ jacobsonRadical Z Y → a ≫ b ∈ K := by
+  refine ⟨fun hle Z a b ha hb => hle (comp_mem_jacobsonRadicalSq ha hb), fun h => ?_⟩
+  refine AddSubgroup.closure_le _ |>.2 ?_
+  rintro _ ⟨Z, a, b, ha, hb, rfl⟩
+  exact h Z a b ha hb
+
 /-- **The square of the radical is contained in the radical**, the radical being closed under
 composition. -/
 theorem jacobsonRadicalSq_le_jacobsonRadical (X Y : C) :
-    jacobsonRadicalSq X Y ≤ jacobsonRadical X Y := by
-  refine AddSubgroup.closure_le _ |>.2 ?_
-  rintro _ ⟨Z, a, b, ha, -, rfl⟩
-  exact comp_mem_jacobsonRadical_right ha b
+    jacobsonRadicalSq X Y ≤ jacobsonRadical X Y :=
+  jacobsonRadicalSq_le_iff.2 fun _ _ b ha _ => comp_mem_jacobsonRadical_right ha b
 
 /-- **Precomposition preserves the square of the radical.** -/
 theorem comp_mem_jacobsonRadicalSq_left {W X Y : C} (h : W ⟶ X) {f : X ⟶ Y}
     (hf : f ∈ jacobsonRadicalSq X Y) : h ≫ f ∈ jacobsonRadicalSq W Y := by
-  have hle : jacobsonRadicalSq X Y ≤
-      (jacobsonRadicalSq W Y).comap (Preadditive.leftComp Y h) := by
-    refine AddSubgroup.closure_le _ |>.2 ?_
-    rintro _ ⟨Z, a, b, ha, hb, rfl⟩
-    change h ≫ a ≫ b ∈ jacobsonRadicalSq W Y
+  induction hf using AddSubgroup.closure_induction with
+  | mem x hx =>
+    obtain ⟨Z, a, b, ha, hb, rfl⟩ := hx
     rw [← Category.assoc]
     exact comp_mem_jacobsonRadicalSq (comp_mem_jacobsonRadical_left h ha) hb
-  exact hle hf
+  | zero => rw [Limits.comp_zero]; exact zero_mem _
+  | add x y _ _ hx hy => rw [Preadditive.comp_add]; exact add_mem hx hy
+  | neg x _ hx => rw [Preadditive.comp_neg]; exact neg_mem hx
 
 /-- **Postcomposition preserves the square of the radical.** -/
 theorem comp_mem_jacobsonRadicalSq_right {X Y Z : C} {f : X ⟶ Y}
     (hf : f ∈ jacobsonRadicalSq X Y) (h : Y ⟶ Z) : f ≫ h ∈ jacobsonRadicalSq X Z := by
-  have hle : jacobsonRadicalSq X Y ≤
-      (jacobsonRadicalSq X Z).comap (Preadditive.rightComp X h) := by
-    refine AddSubgroup.closure_le _ |>.2 ?_
-    rintro _ ⟨W, a, b, ha, hb, rfl⟩
-    change (a ≫ b) ≫ h ∈ jacobsonRadicalSq X Z
+  induction hf using AddSubgroup.closure_induction with
+  | mem x hx =>
+    obtain ⟨W, a, b, ha, hb, rfl⟩ := hx
     rw [Category.assoc]
     exact comp_mem_jacobsonRadicalSq ha (comp_mem_jacobsonRadical_right hb h)
-  exact hle hf
+  | zero => rw [Limits.zero_comp]; exact zero_mem _
+  | add x y _ _ hx hy => rw [Preadditive.add_comp]; exact add_mem hx hy
+  | neg x _ hx => rw [Preadditive.neg_comp]; exact neg_mem hx
 
 end TauCeti
