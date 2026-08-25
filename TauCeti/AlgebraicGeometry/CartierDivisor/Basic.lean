@@ -85,6 +85,7 @@ def cartierDivisorSheaf : TopCat.Sheaf AddCommGrpCat.{u} X :=
 def toCartierDivisorSheaf : rationalUnitSheaf X ⟶ cartierDivisorSheaf X :=
   cokernel.π (toRationalUnitSheaf X)
 
+/-- The quotient projection to the Cartier-divisor sheaf is an epimorphism. -/
 instance : Epi (toCartierDivisorSheaf X) := by
   dsimp only [toCartierDivisorSheaf]
   exact Cofork.IsColimit.epi (colimit.isColimit _)
