@@ -131,31 +131,16 @@ theorem map_kostantTorusSubgroup_conj_baseChangeInvariantRestrictUnit
         (MulAut.conj (AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM)).toMonoidHom
         (kostantTorusSubgroup M b wt A) =
       kostantTorusSubgroup M b wt A := by
-  set Φ := LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M) with hΦ
   set U := AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM with hU
-  let cA : η → A := fun i => algebraMap ℤ A (c i)
-  -- The torus points are the generic weight-torus automorphisms read in the general linear group.
-  have hpoints : Φ.symm.toMonoidHom.comp (basisWeightTorus (b.baseChange A) wt) =
-      kostantTorusPoints M b wt A :=
-    MonoidHom.ext fun s =>
-      Φ.symm_apply_eq.mpr (kostantTorusPoints_toLinearEquiv M b wt s).symm
-  -- Conjugation by `U` is conjugation by the underlying automorphism, read through `Φ`.
-  have hconj : (MulAut.conj U).toMonoidHom.comp Φ.symm.toMonoidHom =
-      Φ.symm.toMonoidHom.comp (MulAut.conj (Φ U)).toMonoidHom :=
-    MonoidHom.ext fun f => by simp [MulAut.conj_apply]
-  -- That underlying automorphism permutes the base-changed basis, as the generic result needs.
-  have hbasis : ∀ i, Φ U ((b.baseChange A) i) =
-      cA i • (b.baseChange A) (τ i) := fun i => by
-    rw [hΦ, LinearMap.GeneralLinearGroup.coeFn_generalLinearEquiv, hU,
-      AddEquiv.val_baseChangeInvariantRestrictUnit_apply]
-    exact AddEquiv.baseChange_invariantRestrict_map_baseChange_basis M b θ hθM τ c hθb i
-  have hnormalize :
-      Subgroup.map (MulAut.conj (Φ U)).toMonoidHom
-          (basisWeightTorus (b.baseChange A) wt).range =
-        (basisWeightTorus (b.baseChange A) wt).range :=
-    map_basisWeightTorus_range_conj_of_map_basis (b.baseChange A) wt τ σ (Φ U) cA hbasis hwt
-  rw [kostantTorusSubgroup_eq_range, ← hpoints, ← MonoidHom.map_range, Subgroup.map_map, hconj,
-    ← Subgroup.map_map, hnormalize]
+  have hcomp : (MulAut.conj U).toMonoidHom.comp (kostantTorusPoints M b wt A) =
+      (kostantTorusPoints M b wt A).comp
+        (MulEquiv.arrowCongr σ (MulEquiv.refl Aˣ)).toMonoidHom :=
+    MonoidHom.ext fun s => by
+      simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, MulAut.conj_apply, hU]
+      exact conj_kostantTorusPoints_of_baseChangeInvariantRestrictUnit
+        M b wt θ hθM τ σ c hθb hwt s
+  rw [kostantTorusSubgroup_eq_range, MonoidHom.map_range, hcomp, MonoidHom.range_comp,
+    MonoidHom.range_eq_top_of_surjective _ (MulEquiv.surjective _), ← MonoidHom.range_eq_map]
 
 end Subgroup
 

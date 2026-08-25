@@ -331,8 +331,7 @@ noncomputable def basisDiagonal (b : Basis ι R M) (w : ι → Rˣ) : M ≃ₗ[R
   rw [basisDiagonal, Basis.equiv_apply, Equiv.refl_apply, Basis.unitsSMul_apply, Units.smul_def]
 
 /-- A basis automorphism acting by scalar multiples intertwines diagonal automorphisms whose
-diagonal entries correspond under the induced basis-index map. The scalar factors cancel from the
-intertwining equation. -/
+diagonal entries correspond under the induced basis-index map. -/
 theorem basisDiagonal_intertwine_of_map_basis (b : Basis ι R M) (v w : ι → Rˣ) (c : ι → R)
     (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = c i • b (τ i))
     (hvw : ∀ i, w (τ i) = v i) :
