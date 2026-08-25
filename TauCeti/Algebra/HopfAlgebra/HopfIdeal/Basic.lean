@@ -356,6 +356,47 @@ theorem mem_ofIdeal {I : Ideal H} [I.IsTwoSided] {hcomul hcounit hantipode} {x :
     x ∈ ofIdeal (R := R) (H := H) I hcomul hcounit hantipode ↔ x ∈ I :=
   Iff.rfl
 
+/-- Construct the Hopf ideal spanned by a set of generators by checking the three Hopf-ideal
+closure conditions only on those generators. -/
+def ofSpan (S : Set H) [hS : (Ideal.span S).IsTwoSided]
+    (hcomul : ∀ x ∈ S,
+      Coalgebra.comul (R := R) x ∈
+        leftTensorIdeal (R := R) (H := H) (Ideal.span S) ⊔
+          rightTensorIdeal (R := R) (H := H) (Ideal.span S))
+    (hcounit : ∀ x ∈ S, Coalgebra.counit (R := R) x = 0)
+    (hantipode : ∀ x ∈ S, HopfAlgebra.antipode R x ∈ Ideal.span S) :
+    HopfIdeal R H :=
+  ofIdeal (Ideal.span S)
+    (fun x hx => by
+      induction hx using Submodule.span_induction with
+      | mem x hx => exact hcomul x hx
+      | zero => rw [map_zero]; exact zero_mem _
+      | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
+      | smul a x _ hx =>
+          rw [smul_eq_mul, Bialgebra.comul_mul]
+          exact Ideal.mul_mem_left _ _ hx)
+    (fun x hx => by
+      induction hx using Submodule.span_induction with
+      | mem x hx => exact hcounit x hx
+      | zero => rw [map_zero]
+      | add x y _ _ hx hy => rw [map_add, hx, hy, add_zero]
+      | smul a x _ hx => rw [smul_eq_mul, Bialgebra.counit_mul, hx, mul_zero])
+    (fun x hx => by
+      induction hx using Submodule.span_induction with
+      | mem x hx => exact hantipode x hx
+      | zero => rw [map_zero]; exact zero_mem _
+      | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
+      | smul a x _ hx =>
+          rw [smul_eq_mul, HopfAlgebra.antipode_mul_antidistrib]
+          exact Ideal.mul_mem_right _ _ hx)
+
+/-- The ideal underlying `ofSpan S` is the ideal span of `S`. -/
+@[simp]
+theorem ofSpan_toIdeal (S : Set H) [hS : (Ideal.span S).IsTwoSided]
+    (hcomul hcounit hantipode) :
+    (ofSpan (R := R) (H := H) S hcomul hcounit hantipode).toIdeal = Ideal.span S :=
+  by rw [toIdeal_carrier, ofSpan, ofIdeal_carrier]
+
 /-- The comultiplication of an element of a Hopf ideal lies in `I ⊗ H + H ⊗ I`. -/
 theorem comul_mem (I : HopfIdeal R H) {x : H} (hx : x ∈ I) :
     Coalgebra.comul (R := R) x ∈
