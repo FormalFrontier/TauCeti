@@ -78,16 +78,14 @@ theorem geometricallyConnectedCommHopfAlgProperty_iff_connectedSpace_of_isAlgClo
 
 namespace HopfAlgebra
 
-/-- Two specializations of a domain-valued point agree on an idempotent. -/
-theorem mapValue_apply_eq_of_isIdempotentElem
-    {K H A : Type u} [CommSemiring K] [Semiring H] [_root_.Bialgebra K H]
+/-- Two specializations of a domain-valued algebra homomorphism agree on an idempotent. -/
+theorem algHom_apply_eq_of_isIdempotentElem
+    {K H A : Type u} [CommSemiring K] [Semiring H] [Algebra K H]
     [CommSemiring A] [Algebra K A] [IsDomain A]
-    (e : H) (he : IsIdempotentElem e) (q : WithConv (H →ₐ[K] A))
+    (e : H) (he : IsIdempotentElem e) (q : H →ₐ[K] A)
     (phi psi : A →ₐ[K] K) :
-    (AlgHom.mapValue (H := H) phi q).ofConv e =
-      (AlgHom.mapValue (H := H) psi q).ofConv e := by
-  rcases IsIdempotentElem.iff_eq_zero_or_one.mp (he.map q.ofConv) with h | h <;>
-    simp [AlgHom.mapValue_apply, h]
+    phi (q e) = psi (q e) := by
+  rcases IsIdempotentElem.iff_eq_zero_or_one.mp (he.map q) with h | h <;> simp [h]
 
 /-- If a point of a finite-type Hopf algebra is connected to the identity by a path valued in a
 domain, its right translation fixes every idempotent. -/
@@ -112,8 +110,11 @@ theorem rightTranslationAlgHom_eq_self_of_path
     dsimp only [c]
     rw [← MonoidHom.comp_apply, ← AlgHom.mapValue_comp, hcomp,
       AlgHom.mapValue_id, MonoidHom.id_apply]
-  have hpath := mapValue_apply_eq_of_isIdempotentElem
-    (K := K) e he (c * x) phi psi
+  have hpath :
+      (AlgHom.mapValue (H := H) phi (c * x)).ofConv e =
+        (AlgHom.mapValue (H := H) psi (c * x)).ofConv e := by
+    simpa only [AlgHom.mapValue_apply, AlgHom.comp_apply] using
+      algHom_apply_eq_of_isIdempotentElem e he (c * x).ofConv phi psi
   rw [map_mul, hc phi, hphi] at hpath
   rw [map_mul, hc psi, hpsi, mul_one] at hpath
   calc

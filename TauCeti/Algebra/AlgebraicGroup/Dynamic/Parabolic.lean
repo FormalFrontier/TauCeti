@@ -250,11 +250,9 @@ theorem map_genericUnit :
     Units.map (AddMonoidAlgebra.mapAlgHom ℤ φ).toMonoidHom
         (MultiplicativeGroup.genericUnit A) = MultiplicativeGroup.genericUnit B := by
   apply Units.ext
-  change (AddMonoidAlgebra.mapAlgHom ℤ φ)
-      (MultiplicativeGroup.genericUnit A : LaurentPolynomial A) =
-    (MultiplicativeGroup.genericUnit B : LaurentPolynomial B)
-  rw [MultiplicativeGroup.genericUnit_val, MultiplicativeGroup.genericUnit_val,
-    mapAlgHom_T]
+  rw [Units.coe_map, MultiplicativeGroup.genericUnit_val,
+    MultiplicativeGroup.genericUnit_val]
+  exact mapAlgHom_T φ 1
 
 /-- The constant-point inclusion is natural in the value algebra. -/
 theorem mapValue_constPoint (g : WithConv (H →ₐ[R] A)) :
@@ -541,9 +539,7 @@ private theorem prodSubst_T :
 private theorem map_prodSubst_genericUnit :
     Units.map (prodSubst R A).toMonoidHom (MultiplicativeGroup.genericUnit A) = prodUnit R A :=
   Units.ext (by
-    change prodSubst R A
-        (MultiplicativeGroup.genericUnit A : LaurentPolynomial A) = prodUnit R A
-    rw [MultiplicativeGroup.genericUnit_val]
+    rw [Units.coe_map, MultiplicativeGroup.genericUnit_val]
     exact prodSubst_T)
 
 private theorem prodSubst_comp_const :

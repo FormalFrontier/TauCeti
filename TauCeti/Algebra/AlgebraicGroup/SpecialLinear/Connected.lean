@@ -9,7 +9,6 @@ public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic
 import TauCeti.Algebra.AlgebraicGroup.BaseChange.Naturality
 import TauCeti.Algebra.AlgebraicGroup.Connected.AlgebraicallyClosed
-import TauCeti.Algebra.AlgebraicGroup.Hopf.Translation
 import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.DiagonalPath
 import Mathlib.RingTheory.FiniteStability
 import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
@@ -193,13 +192,13 @@ private theorem rightTranslationAlgHom_eq_self
             rw [map_mul]
           _ = HopfAlgebra.rightTranslationAlgHom (E.symm A)
               (HopfAlgebra.rightTranslationAlgHom (E.symm B) e) :=
-            HopfAlgebra.rightTranslationAlgHom_mul _ _ _
+            DFunLike.congr_fun (HopfAlgebra.rightTranslationAlgHom_mul _ _) e
           _ = e := by rw [hB, hA]
     simpa [P] using hp
   · let _ : Subsingleton (Fin n) := not_nontrivial_iff_subsingleton.mp h
     have hmatrix : E g = 1 := Subsingleton.elim _ _
     have hg : g = 1 := E.injective (by simpa using hmatrix)
-    rw [hg, HopfAlgebra.rightTranslationAlgHom_one]
+    rw [hg, HopfAlgebra.rightTranslationAlgHom_one, AlgHom.id_apply]
 
 /-- The coordinate Hopf algebra of `SLₙ` is geometrically connected over every field. -/
 theorem geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra

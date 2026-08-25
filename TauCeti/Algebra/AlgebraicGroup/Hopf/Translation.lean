@@ -198,26 +198,24 @@ theorem rightTranslationAlgEquiv_mul (g h : WithConv (H →ₐ[k] k)) :
 
 /-- Translation by the identity point is the identity algebra endomorphism. -/
 @[simp]
-theorem rightTranslationAlgHom_one (x : H) :
-    rightTranslationAlgHom (1 : WithConv (H →ₐ[k] k)) x = x := by
-  rw [← DFunLike.congr_fun
-    (rightTranslationAlgEquiv_toAlgHom (1 : WithConv (H →ₐ[k] k))) x,
-    rightTranslationAlgEquiv_one]
+theorem rightTranslationAlgHom_one :
+    rightTranslationAlgHom (1 : WithConv (H →ₐ[k] k)) = AlgHom.id k H := by
+  rw [← rightTranslationAlgEquiv_toAlgHom, rightTranslationAlgEquiv_one]
   rfl
 
 /-- Translation by a convolution product is the composite of the two translation algebra
 endomorphisms. -/
 @[simp]
-theorem rightTranslationAlgHom_mul (g h : WithConv (H →ₐ[k] k)) (x : H) :
-    rightTranslationAlgHom (g * h) x =
-      rightTranslationAlgHom g (rightTranslationAlgHom h x) := by
-  rw [← DFunLike.congr_fun (rightTranslationAlgEquiv_toAlgHom (g * h)) x,
-    rightTranslationAlgEquiv_mul]
-  change rightTranslationAlgEquiv g (rightTranslationAlgEquiv h x) =
-    rightTranslationAlgHom g (rightTranslationAlgHom h x)
+theorem rightTranslationAlgHom_mul (g h : WithConv (H →ₐ[k] k)) :
+    rightTranslationAlgHom (g * h) =
+      (rightTranslationAlgHom g).comp (rightTranslationAlgHom h) := by
+  ext x
   calc
-    rightTranslationAlgEquiv g (rightTranslationAlgEquiv h x) =
-        rightTranslationAlgHom g (rightTranslationAlgEquiv h x) :=
+    rightTranslationAlgHom (g * h) x = rightTranslationAlgEquiv (g * h) x :=
+      (DFunLike.congr_fun (rightTranslationAlgEquiv_toAlgHom (g * h)) x).symm
+    _ = rightTranslationAlgEquiv g (rightTranslationAlgEquiv h x) :=
+      DFunLike.congr_fun (rightTranslationAlgEquiv_mul g h) x
+    _ = rightTranslationAlgHom g (rightTranslationAlgEquiv h x) :=
       DFunLike.congr_fun (rightTranslationAlgEquiv_toAlgHom g) _
     _ = rightTranslationAlgHom g (rightTranslationAlgHom h x) :=
       congrArg (rightTranslationAlgHom g)
