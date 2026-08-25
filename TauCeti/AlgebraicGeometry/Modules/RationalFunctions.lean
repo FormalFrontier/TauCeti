@@ -399,6 +399,8 @@ theorem rationalFunctionsMul_mul (f g : X.functionField) :
   let F := Scheme.Modules.pushforward (fromSpecFunctionField X)
   let f' : Γ(Spec X.functionField, ⊤) := (rationalFunctionsRingEquiv (X := X) ⊤).symm f
   let g' : Γ(Spec X.functionField, ⊤) := (rationalFunctionsRingEquiv (X := X) ⊤).symm g
+  -- Unfolding the local names here exposes the pushforward and scalar-multiplication wrappers;
+  -- their laws can then be applied without reasoning sectionwise.
   change F.map (Scheme.Modules.globalSectionsSmul M (f' * g')) =
     F.map (Scheme.Modules.globalSectionsSmul M g') ≫
       F.map (Scheme.Modules.globalSectionsSmul M f')
@@ -411,6 +413,8 @@ theorem rationalFunctionsMul_one : rationalFunctionsMul X 1 = 𝟙 _ := by
   let M : (Spec X.functionField).Modules :=
     SheafOfModules.unit (Spec X.functionField).ringCatSheaf
   let F := Scheme.Modules.pushforward (fromSpecFunctionField X)
+  -- As above, this definitional change only exposes the pushforward and scalar-multiplication
+  -- wrappers so their identity laws apply directly.
   change F.map (Scheme.Modules.globalSectionsSmul M 1) = 𝟙 _
   rw [Scheme.Modules.globalSectionsSmul_one]
   exact F.map_id M

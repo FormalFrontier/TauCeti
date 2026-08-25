@@ -19,7 +19,7 @@ land in `N` factors through `N`, uniquely because `N.ι` is a monomorphism.
 
 * `TauCeti.PresheafOfModules.liftToSubmodule` and `TauCeti.SheafOfModules.liftToSubmodule`, the
   factorization itself, with `liftToSubmodule_ι` recording that it does factor the given morphism;
-* `TauCeti.SheafOfModules.homOfLESubmodule`, the inclusion of one submodule of a sheaf of modules
+* `TauCeti.SheafOfModules.Submodule.homOfLE`, the inclusion of one submodule of a sheaf of modules
   into a larger one.
 
 No formalization is vendored; the constructions are `AddMonoidHom.codRestrict` applied section by
@@ -112,17 +112,21 @@ lemma ι_val_app_mem (N : M.Submodule) (U : Cᵒᵖ) (s : N.toSheafOfModules.val
     N.ι.val.app U s ∈ N.toSubmodule.obj U :=
   PresheafOfModules.ι_app_mem N.toSubmodule U s
 
+namespace Submodule
+
 /-- The inclusion of a submodule of a sheaf of modules into a larger one. The hypothesis is
 stated for the underlying submodules of the presheaf of modules, which is what
 `SheafOfModules.Submodule.le_iff` says the order on submodules of a sheaf of modules is. -/
-def homOfLESubmodule {N₁ N₂ : M.Submodule} (h : N₁.toSubmodule ≤ N₂.toSubmodule) :
+def homOfLE {N₁ N₂ : M.Submodule} (h : N₁.toSubmodule ≤ N₂.toSubmodule) :
     N₁.toSheafOfModules ⟶ N₂.toSheafOfModules :=
   ⟨_root_.PresheafOfModules.Submodule.homOfLE h⟩
 
 @[reassoc (attr := simp)]
-lemma homOfLESubmodule_ι {N₁ N₂ : M.Submodule} (h : N₁.toSubmodule ≤ N₂.toSubmodule) :
-    homOfLESubmodule h ≫ N₂.ι = N₁.ι :=
+lemma homOfLE_ι {N₁ N₂ : M.Submodule} (h : N₁.toSubmodule ≤ N₂.toSubmodule) :
+    homOfLE h ≫ N₂.ι = N₁.ι :=
   _root_.SheafOfModules.Hom.ext (_root_.PresheafOfModules.Submodule.homOfLE_ι h)
+
+end Submodule
 
 end
 

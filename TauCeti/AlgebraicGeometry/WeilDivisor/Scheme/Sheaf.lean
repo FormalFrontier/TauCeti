@@ -33,7 +33,7 @@ ring: it is exactly what makes `ord_x` subadditive, hence the displayed set a su
   `𝒪_X`-modules, together with its monomorphism `sheafι D : 𝒪_X(D) ⟶ 𝒦_X`;
 * `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.sheafHomOfLE`, the inclusion
   `𝒪_X(D) ⟶ 𝒪_X(E)` for `D ≤ E`, and
-  `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.toSheaf`, the factorization of `𝒪_X ⟶ 𝒦_X`
+  `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.unitToSheaf`, the factorization of `𝒪_X ⟶ 𝒦_X`
   through `𝒪_X(D)` for an effective `D`;
 * `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.sheafMulIso`, multiplication by a nonzero rational
   function as an isomorphism `𝒪_X(D) ≅ 𝒪_X(D - div g)`, and
@@ -210,12 +210,12 @@ lemma submodule_mono {D E : SchemeWeilDivisor X} (h : D ≤ E) :
 
 /-- The inclusion `𝒪_X(D) ⟶ 𝒪_X(E)` of the sheaf of a divisor into the sheaf of a larger one. -/
 def sheafHomOfLE {D E : SchemeWeilDivisor X} (h : D ≤ E) : sheaf D ⟶ sheaf E :=
-  TauCeti.SheafOfModules.homOfLESubmodule (submodule_mono h)
+  TauCeti.SheafOfModules.Submodule.homOfLE (submodule_mono h)
 
 @[reassoc (attr := simp)]
 lemma sheafHomOfLE_ι {D E : SchemeWeilDivisor X} (h : D ≤ E) :
     sheafHomOfLE h ≫ sheafι E = sheafι D :=
-  TauCeti.SheafOfModules.homOfLESubmodule_ι (submodule_mono h)
+  TauCeti.SheafOfModules.Submodule.homOfLE_ι (submodule_mono h)
 
 /-- For an effective divisor `D`, every regular function on `U` is a section of `𝒪_X(D)`. -/
 lemma toRationalFunctions_app_mem_sections {D : SchemeWeilDivisor X}
@@ -228,15 +228,22 @@ lemma toRationalFunctions_app_mem_sections {D : SchemeWeilDivisor X}
     (Scheme.ord_germToFunctionField_nonneg a hx)
 
 /-- For an effective divisor `D`, the inclusion `𝒪_X ⟶ 𝒦_X` factors through `𝒪_X(D)`. -/
-def toSheaf {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) :
+def unitToSheaf {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) :
     SheafOfModules.unit X.ringCatSheaf ⟶ sheaf D :=
   TauCeti.SheafOfModules.liftToSubmodule (submodule D) (Scheme.toRationalFunctions X)
     fun U a ↦ toRationalFunctions_app_mem_sections hD U.unop a
 
 @[simp, reassoc]
-lemma toSheaf_ι {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) :
-    toSheaf hD ≫ sheafι D = Scheme.toRationalFunctions X :=
+lemma unitToSheaf_ι {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) :
+    unitToSheaf hD ≫ sheafι D = Scheme.toRationalFunctions X :=
   TauCeti.SheafOfModules.liftToSubmodule_ι _ _ _
+
+/-- Transporting `𝒪_X(D)` along an equality of divisors. -/
+@[reassoc]
+lemma eqToHom_sheafι {D E : SchemeWeilDivisor X} (h : D = E) :
+    eqToHom (congrArg sheaf h) ≫ sheafι E = sheafι D := by
+  subst h
+  simp
 
 end LocallyNoetherian
 
@@ -279,17 +286,6 @@ lemma sheafMul_ι (D : SchemeWeilDivisor X) :
       sheafι D ≫ Scheme.rationalFunctionsMul X
         ((Additive.toMul g : X.functionFieldˣ) : X.functionField) :=
   TauCeti.SheafOfModules.liftToSubmodule_ι _ _ _
-
-variable {g}
-
-/-- Transporting `𝒪_X(D)` along an equality of divisors. -/
-@[reassoc]
-lemma eqToHom_sheafι {D E : SchemeWeilDivisor X} (h : D = E) :
-    eqToHom (congrArg sheaf h) ≫ sheafι E = sheafι D := by
-  subst h
-  simp
-
-variable (g)
 
 omit [AlgebraicGeometry.IsNoetherian X]
   [∀ x : CodimensionOnePoint X, IsDiscreteValuationRing (X.presheaf.stalk (x : X))] in
