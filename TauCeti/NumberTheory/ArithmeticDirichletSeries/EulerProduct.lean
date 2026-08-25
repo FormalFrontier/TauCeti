@@ -20,7 +20,9 @@ height-one prime, and sends that series into Mathlib's `ArithmeticFunction.ofPow
 `TauCeti.EulerProductData K f` packages exactly the remaining global assertion: the norm-regrouped
 coefficient of `f` is Mathlib's formal Euler product of these canonical local factors.  The local
 factors are derived from `f`, rather than stored as independently chosen data, so the package has
-no unconstrained values away from prime powers.  The delta function supplies the base example.
+no unconstrained values away from prime powers.  This equality is intentionally an input to the
+Layer 3.1 package; Layer 3.2 supplies the finite-factorization results used to construct general
+instances.  The delta function supplies the base example.
 
 ## Main definitions
 
@@ -225,7 +227,9 @@ variable (K : Type*) [Field K] [NumberField K]
 
 The local factors are the canonical factors derived from the prime-power values of `f`.  Thus the
 only data stored here are propositions: coprime multiplicativity and the equality between the
-norm-regrouped coefficient and Mathlib's formal Euler product. -/
+norm-regrouped coefficient and Mathlib's formal Euler product.  In the roadmap this equality is a
+Layer 3.1 transport hypothesis; the general constructors proving it come after the finite
+factorization theorem in Layer 3.2. -/
 structure EulerProductData (f : IdealArithmeticFunction K) : Prop where
   isMultiplicative : f.IsMultiplicative
   normCoeff_eq_eulerProduct :
