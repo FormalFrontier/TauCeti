@@ -35,9 +35,7 @@ components.
 
 * `TauCeti.DenseGraphLimits.homDensity_eq_of_iso` — `t(·, W)` is a graph isomorphism invariant;
 * `TauCeti.DenseGraphLimits.homDensity_bot` — `t(⊥, W) = 1`;
-* `TauCeti.DenseGraphLimits.homDensity_sum` — `t(F₁ ⊕g F₂, W) = t(F₁, W) · t(F₂, W)`;
-* `TauCeti.DenseGraphLimits.homDensity_eq_mul_of_iso_sum` — the same for any graph *isomorphic* to a
-  disjoint sum, which is the form a graph parameter indexed by `Fin`-representatives asks for.
+* `TauCeti.DenseGraphLimits.homDensity_sum` — `t(F₁ ⊕g F₂, W) = t(F₁, W) · t(F₂, W)`.
 
 ## References
 
@@ -181,15 +179,6 @@ theorem homDensity_sum (W : Graphon Ω μ) :
   simp_rw [hsplit]
   rw [integral_prod_mul (fun y : V₁ → Ω => ∏ c ∈ F₁.edgeFinset, edgeFactor W y c)
     (fun y : V₂ → Ω => ∏ c ∈ F₂.edgeFinset, edgeFactor W y c), homDensity_def, homDensity_def]
-
-/-- Multiplicativity in the form a graph parameter carried on `Fin`-representatives asks for: any
-graph *isomorphic* to a disjoint sum has the product density.  Combining
-`TauCeti.DenseGraphLimits.homDensity_sum` with isomorphism invariance removes the need for the
-vertex type to be a literal `⊕`. -/
-theorem homDensity_eq_mul_of_iso_sum {V : Type*} [Fintype V] {F : SimpleGraph V}
-    [DecidableRel F.Adj] (φ : F ≃g F₁ ⊕g F₂) (W : Graphon Ω μ) :
-    homDensity F W = homDensity F₁ W * homDensity F₂ W := by
-  rw [← homDensity_eq_of_iso φ, homDensity_sum]
 
 end DenseGraphLimits
 
