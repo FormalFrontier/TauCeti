@@ -354,7 +354,7 @@ is the class of that module. -/
 @[simp] theorem moduleEulerClass_base {M : ModuleCat.{u} R}
     (hM : finiteProjectiveModules R M) :
     moduleEulerClass R (.base hM) = ExactK0.of ⟨M, hM⟩ := by
-  change (ExactStructure.FiniteResolution.base hM).eulerClassFullSubcategory.{u, u, u + 1} _ = _
+  simp only [moduleEulerClass]
   exact ExactStructure.FiniteResolution.eulerClassFullSubcategory_base.{u, u, u + 1} _ hM
 
 /-- Prepending a resolving term to a finite resolution subtracts the remaining alternating
@@ -366,10 +366,7 @@ class from the class of that term. -/
       (finiteProjectiveModules R) K) :
     moduleEulerClass R (.step hQ i p zero hp r) =
       ExactK0.of ⟨Q, hQ⟩ - moduleEulerClass R r := by
-  change
-    (ExactStructure.FiniteResolution.step hQ i p zero hp r).eulerClassFullSubcategory.{u, u, u + 1}
-        _ =
-      ExactK0.of ⟨Q, hQ⟩ - r.eulerClassFullSubcategory.{u, u, u + 1} _
+  simp only [moduleEulerClass]
   exact ExactStructure.FiniteResolution.eulerClassFullSubcategory_step.{u, u, u + 1}
     _ hQ i p zero hp r
 
@@ -380,12 +377,10 @@ theorem moduleEulerClassOf_eq {M : ModuleCat.{u} R}
       (finiteProjectiveModules R) M)
     (r : (ExactStructure.abelian (ModuleCat.{u} R)).FiniteResolution
       (finiteProjectiveModules R) M) :
-    moduleEulerClassOf R hM = moduleEulerClass R r :=
-  by
-    change ExactStructure.eulerClassOf.{u, u, u + 1} _ hM =
-      r.eulerClassFullSubcategory.{u, u, u + 1} _
-    exact ExactStructure.eulerClassOf_eq.{u, u, u + 1}
-      (finiteProjectiveModules_le_isProjective R) hM r
+    moduleEulerClassOf R hM = moduleEulerClass R r := by
+  simp only [moduleEulerClassOf, moduleEulerClass]
+  exact ExactStructure.eulerClassOf_eq.{u, u, u + 1}
+    (finiteProjectiveModules_le_isProjective R) hM r
 
 /-- A finitely generated projective module is its own resolution, so its alternating class is its
 own class. -/
@@ -546,7 +541,7 @@ noncomputable def cartanEquivOfDivisionRing :
 @[simp] theorem cartanEquivOfDivisionRing_apply
     (x : ExactK0.{u} (finiteProjectiveModulesExactStructure K)) :
     cartanEquivOfDivisionRing K x = cartanMap K x := by
-  change cartanEquiv K (finiteModules_le_admitsFiniteResolution K) x = cartanMap K x
+  simp only [cartanEquivOfDivisionRing]
   exact cartanEquiv_apply K (finiteModules_le_admitsFiniteResolution K) x
 
 /-- The inverse of the division-ring Cartan equivalence is the alternating-resolution map. -/
@@ -554,8 +549,7 @@ noncomputable def cartanEquivOfDivisionRing :
     (x : ExactK0.{u} (finiteModulesExactStructure K)) :
     (cartanEquivOfDivisionRing K).symm x =
       cartanInverse K (finiteModules_le_admitsFiniteResolution K) x := by
-  change (cartanEquiv K (finiteModules_le_admitsFiniteResolution K)).symm x =
-    cartanInverse K (finiteModules_le_admitsFiniteResolution K) x
+  simp only [cartanEquivOfDivisionRing]
   exact cartanEquiv_symm_apply K (finiteModules_le_admitsFiniteResolution K) x
 
 /-- **The Cartan map of a division ring is bijective**, with no hypothesis: over a division ring
