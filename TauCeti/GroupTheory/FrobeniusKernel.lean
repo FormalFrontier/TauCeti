@@ -63,7 +63,7 @@ everything and `⊥` has index `|G|`.
 * `TauCeti.mem_frobeniusKernel`: membership, elementwise.
 * `TauCeti.inv_mem_frobeniusKernel_iff` and `TauCeti.conj_mem_frobeniusKernel_iff`: the kernel is
   closed under inversion and invariant under conjugation, for every subgroup `H`.
-* `TauCeti.frobeniusKernel_inter_conj_eq_singleton` and
+* `TauCeti.frobeniusKernel_inter_conj_smul_eq_singleton` and
   `TauCeti.frobeniusKernel_inter_eq_singleton`: the kernel meets every conjugate of `H`, and in
   particular `H` itself, exactly in the identity.
 * `TauCeti.IsTISubgroup.ncard_compl_frobeniusKernel`: the `Set.ncard` identity
@@ -161,7 +161,7 @@ theorem conj_mem_frobeniusKernel_iff {y g : G} :
 /-- **The Frobenius kernel meets each conjugate of `H` exactly in the identity.**  A nonidentity
 element of `g H g⁻¹` lies in a conjugate of `H`, so it is outside the kernel. -/
 @[simp]
-theorem frobeniusKernel_inter_conj_eq_singleton (g : G) :
+theorem frobeniusKernel_inter_conj_smul_eq_singleton (g : G) :
     frobeniusKernel H ∩ MulAut.conj g • (H : Set G) = {1} := by
   have key : ∀ y : G, y ∈ MulAut.conj g • (H : Set G) ↔ g⁻¹ * y * g ∈ H := fun y => by
     rw [Set.mem_smul_set_iff_inv_smul_mem]
@@ -175,10 +175,10 @@ theorem frobeniusKernel_inter_conj_eq_singleton (g : G) :
     exact ⟨one_mem_frobeniusKernel, (key 1).2 (by simp)⟩
 
 /-- **The Frobenius kernel meets `H` exactly in the identity**, the case `g = 1` of
-`TauCeti.frobeniusKernel_inter_conj_eq_singleton`. -/
+`TauCeti.frobeniusKernel_inter_conj_smul_eq_singleton`. -/
 @[simp]
 theorem frobeniusKernel_inter_eq_singleton : frobeniusKernel H ∩ (H : Set G) = {1} := by
-  simpa using frobeniusKernel_inter_conj_eq_singleton (H := H) 1
+  simpa using frobeniusKernel_inter_conj_smul_eq_singleton (H := H) 1
 
 /-- The Frobenius kernel of the whole group is trivial: every element lies in `⊤`. -/
 @[simp]
