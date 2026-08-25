@@ -220,7 +220,6 @@ noncomputable def zigzagAlgebraEquivNonisolated (hconn : G.Connected) [Nontrivia
 
 /-- The connected nonisolated comparison evaluates through any connected-component factor and
 the canonical graph isomorphism from that factor to the original graph. -/
-@[simp]
 theorem zigzagAlgebraEquivNonisolated_apply (hconn : G.Connected) [Nontrivial V]
     (x : zigzagAlgebra k G) (C : G.ConnectedComponent) :
     zigzagAlgebraEquivNonisolated k G hconn x =
