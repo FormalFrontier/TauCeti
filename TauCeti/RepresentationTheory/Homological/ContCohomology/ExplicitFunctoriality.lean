@@ -224,7 +224,8 @@ theorem cocyclesMap1_id :
         (fun g m => by simp) =
       AddMonoidHom.id _ := by
   ext c g
-  rfl
+  simpa only [cocyclesMap1_apply, cochainsMap1_apply, AddMonoidHom.id_apply] using
+    congr_fun (DFunLike.congr_fun (cochainsMap1_id (G := G) (M := M)) (c : G → M)) g
 
 /-- Pullback of continuous cocycles along a composite compatible pair is the composite of the
 pullbacks, in the reverse order. -/
@@ -241,7 +242,9 @@ theorem cocyclesMap1_comp
       (cocyclesMap1 H N K P ψ q hq hequivq).comp
         (cocyclesMap1 G M H N φ f hf hequiv) := by
   ext c k
-  rfl
+  simpa only [cocyclesMap1_apply, cochainsMap1_apply, AddMonoidHom.comp_apply] using
+    congr_fun
+      (DFunLike.congr_fun (cochainsMap1_comp φ ψ f q) (c : G → M)) k
 
 end Cocycles
 
@@ -279,8 +282,9 @@ theorem explicitMap1_id :
   intro x
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-      rw [explicitMap1_mk]
-      rfl
+      rw [explicitMap1_mk, AddMonoidHom.id_apply]
+      exact congrArg (fun z : Z1 G M => (z : H1 G M))
+        (DFunLike.congr_fun (cocyclesMap1_id G M) c)
 
 /-- Pullback on explicit `H¹` respects composition of compatible pairs. -/
 theorem explicitMap1_comp
@@ -300,7 +304,9 @@ theorem explicitMap1_comp
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
       rw [explicitMap1_mk, AddMonoidHom.comp_apply, explicitMap1_mk, explicitMap1_mk]
-      rfl
+      exact congrArg (fun z : Z1 K P => (z : H1 K P))
+        (DFunLike.congr_fun
+          (cocyclesMap1_comp G M H N φ f hf hequiv K P ψ q hq hequivq) c)
 
 end Cohomology
 
