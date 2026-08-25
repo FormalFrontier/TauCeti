@@ -5,19 +5,22 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Contour.WorkedExamples.HalfDisc.Poles
+public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.On
+public import TauCeti.Analysis.Contour.Residue.Basic
+public import TauCeti.Analysis.Contour.WorkedExamples.HalfDisc.Basic
+import TauCeti.Analysis.Contour.WorkedExamples.HalfDisc.Poles
 import TauCeti.Analysis.Contour.Residue.SimplePole
 
 /-!
-# A simple pole on the contour: the half-residue on a half-disc boundary
+# A possible singularity on the contour: the half-residue on a half-disc boundary
 
-The pure on-contour case of `WorkedExamples/HalfDisc/Poles.lean`: an integrand whose *only*
-singularity is a simple pole at the origin, which the half-disc contour passes straight through.
-Nothing is enclosed, so the whole principal value is the **half-residue**: because the contour
-crosses the singularity smoothly, its generalized winding number there is `½`
-(`windingNumber_halfDiscBoundary`), and the principal value picks up `π i · Res` instead of the
-`2π i · Res` the classical residue theorem would give for an enclosed pole. This is
-Hungerbühler–Wasem's motivating example, and the acceptance test for the whole development.
+The pure on-contour case of `WorkedExamples/HalfDisc/Poles.lean`: an integrand whose only possible
+singularity is at the origin, where it is at worst a simple pole and where the half-disc contour
+passes straight through. Nothing is enclosed, so the result is the **half-residue** identity: the
+origin's generalized winding number is `½` (`windingNumber_halfDiscBoundary`), and its contribution
+is `π i · Res`. When the singularity is a genuine simple pole, rather than removable or regular,
+this is half the `2π i · Res` contribution of an enclosed pole and is Hungerbühler–Wasem's
+motivating example.
 
 Each statement here is the `S = ∅` case of its counterpart in `HalfDisc/Poles.lean`, restated
 without the (then empty) sum over enclosed poles because that is the shape the Dirichlet-integral
@@ -64,7 +67,8 @@ private theorem simplePole_hypotheses {f : ℂ → ℂ}
         ((-1 : ℤ) : WithTop ℤ) ≤ meromorphicOrderAt f s) := by
   refine ⟨by simpa using hf, ?_, ?_⟩ <;>
     · intro s hs
-      rw [show s = 0 by simpa using hs]
+      have hs0 : s = 0 := by simpa using hs
+      rw [hs0]
       assumption
 
 /-- **The half-residue theorem on the half-disc boundary.** If `f` is holomorphic off the origin

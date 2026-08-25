@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Contour.WorkedExamples.HalfDisc.Basic
-public import TauCeti.Analysis.Contour.LogDerivFTC
-public import TauCeti.Analysis.Contour.Winding.UnboundedComponent
+import TauCeti.Analysis.Contour.LogDerivFTC
+import TauCeti.Analysis.Contour.Winding.UnboundedComponent
 
 /-!
 # The winding numbers of the half-disc contour
@@ -112,8 +112,9 @@ theorem norm_halfDiscBoundary_eq (hR : 0 ≤ R) {t : ℝ} (ht : R ≤ t) :
 
 /-- **The half-disc contour avoids the open upper half-disc.** A point strictly above the real axis
 and strictly inside the disc is neither real nor at distance `R` from the origin. -/
-theorem halfDiscBoundary_ne_of_im_pos_of_norm_lt (hR : 0 ≤ R) {s : ℂ} (him : 0 < s.im)
-    (hs : ‖s‖ < R) (t : ℝ) : halfDiscBoundary R t ≠ s := by
+theorem halfDiscBoundary_ne_of_im_pos_of_norm_lt {s : ℂ} (him : 0 < s.im) (hs : ‖s‖ < R)
+    (t : ℝ) : halfDiscBoundary R t ≠ s := by
+  have hR : 0 ≤ R := (norm_nonneg s).trans hs.le
   intro h
   rcases halfDiscBoundary_im_eq_zero_or_norm_eq hR t with hz | hn
   · exact him.ne' (h ▸ hz)
@@ -152,12 +153,13 @@ nor `B θ - s` (for `B` the lower semicircle) ever leaves the open lower half-pl
 contained in `Complex.slitPlane`. Since the whole circle has winding number `1`, the upper
 semicircle contributes `1` minus the lower one, and the two occurrences of that common
 logarithmic value cancel. -/
-theorem windingNumber_halfDiscBoundary_eq_one (hR : 0 < R) {s : ℂ} (him : 0 < s.im)
-    (hs : ‖s‖ < R) : windingNumber (halfDiscBoundary R) (-R) (R + Real.pi) s = 1 := by
+theorem windingNumber_halfDiscBoundary_eq_one {s : ℂ} (him : 0 < s.im) (hs : ‖s‖ < R) :
+    windingNumber (halfDiscBoundary R) (-R) (R + Real.pi) s = 1 := by
+  have hR : 0 < R := (norm_nonneg s).trans_lt hs
   have hpi := Real.pi_pos
   -- The index integral of the contour, as an ordinary integral.
   have havoid : ∀ t ∈ uIcc (-R) (R + Real.pi), halfDiscBoundary R t ≠ s :=
-    fun t _ => halfDiscBoundary_ne_of_im_pos_of_norm_lt hR.le him hs t
+    fun t _ => halfDiscBoundary_ne_of_im_pos_of_norm_lt him hs t
   have hcont : ContinuousOn (halfDiscBoundary R) (uIcc (-R) (R + Real.pi)) :=
     (continuous_halfDiscBoundary R).continuousOn
   have hint : IntervalIntegrable
@@ -245,12 +247,13 @@ theorem windingNumber_halfDiscBoundary_eq_one (hR : 0 < R) {s : ℂ} (him : 0 < 
       simpa using (hasDerivAt_id t).ofReal_comp
     have hderivR : (deriv fun u : ℝ => (u : ℂ)) = fun _ : ℝ => (1 : ℂ) :=
       funext fun t => (hofReal t).deriv
+    have hnR_le_R : -R ≤ R := by linarith
     rw [integral_index_eq_log_sub_log (h := fun u : ℝ => (u : ℂ)) (by linarith)
       (by fun_prop) (fun t _ => (hofReal t).differentiableAt)
       (by rw [hderivR]; exact continuousOn_const)
       (fun t _ => hslit _ (by simp)) (fun t ht => halfDiscBoundary_of_le ht.2.le)
       (halfDiscBoundary_of_le (by linarith)) (halfDiscBoundary_of_le le_rfl),
-      halfDiscBoundary_of_le le_rfl, halfDiscBoundary_of_le (show (-R : ℝ) ≤ R by linarith)]
+      halfDiscBoundary_of_le le_rfl, halfDiscBoundary_of_le hnR_le_R]
     push_cast
     ring_nf
   -- Assemble: the diameter and the lower arc cancel, leaving the full circle.
@@ -259,10 +262,11 @@ theorem windingNumber_halfDiscBoundary_eq_one (hR : 0 < R) {s : ℂ} (him : 0 < 
       = 2 * (Real.pi : ℂ) * Complex.I -
         (Complex.log ((R : ℂ) - s) - Complex.log (-(R : ℂ) - s)) := by
     rw [← hlower, ← hcircle, ← hsplitC]; ring
-  rw [harc, show Complex.log ((R : ℂ) - s) - Complex.log (-(R : ℂ) - s) +
+  have hcancel : Complex.log ((R : ℂ) - s) - Complex.log (-(R : ℂ) - s) +
       (2 * (Real.pi : ℂ) * Complex.I -
         (Complex.log ((R : ℂ) - s) - Complex.log (-(R : ℂ) - s)))
-      = 2 * (Real.pi : ℂ) * Complex.I from by ring]
+      = 2 * (Real.pi : ℂ) * Complex.I := by ring
+  rw [harc, hcancel]
   exact inv_mul_cancel₀ Complex.two_pi_I_ne_zero
 
 /-! ### The exterior values -/
@@ -305,9 +309,11 @@ theorem windingNumber_halfDiscBoundary_eq_zero_of_lt_norm (hR : 0 < R) {s : ℂ}
   rw [uIcc_of_le (by linarith)] at ht
   have hle : ‖halfDiscBoundary R t‖ ≤ R := norm_halfDiscBoundary_le hR.le ht.1
   rw [hteq] at hle
+  have hfactor : s + (c : ℂ) * s = ((1 + c : ℝ) : ℂ) * s := by
+    push_cast
+    ring
   have hnorm : ‖s + (c : ℂ) * s‖ = (1 + c) * ‖s‖ := by
-    rw [show s + (c : ℂ) * s = ((1 + c : ℝ) : ℂ) * s by push_cast; ring, norm_mul,
-      Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (by linarith)]
+    rw [hfactor, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (by linarith)]
   rw [hnorm] at hle
   nlinarith [norm_nonneg s]
 
