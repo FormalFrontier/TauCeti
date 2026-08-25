@@ -69,7 +69,7 @@ variable [HasSheafify J AddCommGrpCat.{v}]
 
 /-- Morphisms from the free abelian sheaf on `U` to an abelian sheaf `F` are additively
 equivalent to the sections of `F` over `U`. -/
-@[expose] def freeYonedaSheafSectionsEquiv (U : C) (F : Sheaf J AddCommGrpCat.{v}) :
+def freeYonedaSheafSectionsEquiv (U : C) (F : Sheaf J AddCommGrpCat.{v}) :
     ((freeYonedaSheafFunctor J).obj U ⟶ F) ≃+ F.obj.obj (op U) :=
   { ((sheafificationAdjunction J AddCommGrpCat.{v}).homEquiv _ _).trans
       (((Adjunction.whiskerRight Cᵒᵖ AddCommGrpCat.adj.{v}).homEquiv _ _).trans yonedaEquiv) with
@@ -86,7 +86,7 @@ lemma freeYonedaSheafSectionsEquiv_apply (U : C) (F : Sheaf J AddCommGrpCat.{v})
     freeYonedaSheafSectionsEquiv J U F f = yonedaEquiv
       ((Adjunction.whiskerRight Cᵒᵖ AddCommGrpCat.adj.{v}).homEquiv _ _
         ((sheafificationAdjunction J AddCommGrpCat.{v}).homEquiv _ _ f)) :=
-  rfl
+  (rfl)
 
 /-- The equivalence `freeYonedaSheafSectionsEquiv` is natural in the coefficient sheaf. -/
 lemma freeYonedaSheafSectionsEquiv_naturality_right {U : C}
