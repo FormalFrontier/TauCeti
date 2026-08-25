@@ -51,7 +51,7 @@ condition and the `𝒪_X`-module structure automatic.
   open subset vanish;
 * `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsMul`, multiplication by a rational function
   as an endomorphism of `𝒦_X`, obtained by pushing forward multiplication by the corresponding
-  global function on `Spec K(X)`; `rationalFunctionsEquiv_rationalFunctionsMul` identifies it
+  global function on `Spec K(X)`; `rationalFunctionsEquiv_rationalFunctionsMul_app` identifies it
   with multiplication on sections, and `rationalFunctionsMul_mul` and `rationalFunctionsMul_one`
   make it multiplicative, so that multiplying by a unit is an automorphism of `𝒦_X`;
 * the module morphism `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions` is
@@ -370,7 +370,7 @@ variable {X}
 
 /-- Multiplication by `f` really is multiplication by `f` on sections. -/
 @[simp]
-theorem rationalFunctionsEquiv_rationalFunctionsMul (f : X.functionField) (U : X.Opens)
+theorem rationalFunctionsEquiv_rationalFunctionsMul_app (f : X.functionField) (U : X.Opens)
     [Nonempty U] (s : Γ(rationalFunctions X, U)) :
     rationalFunctionsEquiv U (Scheme.Modules.Hom.app (rationalFunctionsMul X f) U s) =
       f * rationalFunctionsEquiv U s := by
@@ -391,6 +391,7 @@ theorem rationalFunctionsEquiv_rationalFunctionsMul (f : X.functionField) (U : X
   exact (rationalFunctionsRingEquiv (X := X) ⊤).apply_symm_apply f
 
 /-- Multiplication by a product is the composite of the two multiplications. -/
+@[simp]
 theorem rationalFunctionsMul_mul (f g : X.functionField) :
     rationalFunctionsMul X (f * g) = rationalFunctionsMul X g ≫ rationalFunctionsMul X f := by
   simp only [rationalFunctionsMul, map_mul]

@@ -37,7 +37,7 @@ ring: it is exactly what makes `ord_x` subadditive, hence the displayed set a su
   through `𝒪_X(D)` for an effective `D`;
 * `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.sheafMulIso`, multiplication by a nonzero rational
   function as an isomorphism `𝒪_X(D) ≅ 𝒪_X(D - div g)`, and
-  `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.nonempty_sheaf_iso_of_linearlyEquivalent`: linearly
+  `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.nonempty_iso_sheaf_of_linearlyEquivalent`: linearly
   equivalent divisors have isomorphic sheaves.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, "Divisors on a curve: Weil
@@ -188,6 +188,8 @@ def sheaf (D : SchemeWeilDivisor X) : X.Modules :=
 def sheafι (D : SchemeWeilDivisor X) : sheaf D ⟶ Scheme.rationalFunctions X :=
   (submodule D).ι
 
+/-- The canonical inclusion `𝒪_X(D) ⟶ 𝒦_X` is a monomorphism: over every open subset it is the
+inclusion of a submodule, hence injective. -/
 instance (D : SchemeWeilDivisor X) : Mono (sheafι D) := by
   have : ∀ U : (Opens X)ᵒᵖ,
       Mono (((Scheme.Modules.toPresheaf X).map (sheafι D)).app U) := fun _ ↦
@@ -216,6 +218,17 @@ def sheafHomOfLE {D E : SchemeWeilDivisor X} (h : D ≤ E) : sheaf D ⟶ sheaf E
 lemma sheafHomOfLE_ι {D E : SchemeWeilDivisor X} (h : D ≤ E) :
     sheafHomOfLE h ≫ sheafι E = sheafι D :=
   TauCeti.SheafOfModules.Submodule.homOfLE_ι (submodule_mono h)
+
+/-- The inclusion attached to `le_refl D` is the identity of `𝒪_X(D)`. -/
+@[simp]
+lemma sheafHomOfLE_refl (D : SchemeWeilDivisor X) : sheafHomOfLE (le_refl D) = 𝟙 (sheaf D) := by
+  rw [← cancel_mono (sheafι D), sheafHomOfLE_ι, Category.id_comp]
+
+/-- The inclusions attached to `D ≤ E` and `E ≤ F` compose to the one attached to `D ≤ F`. -/
+@[reassoc (attr := simp)]
+lemma sheafHomOfLE_comp {D E F : SchemeWeilDivisor X} (h : D ≤ E) (h' : E ≤ F) :
+    sheafHomOfLE h ≫ sheafHomOfLE h' = sheafHomOfLE (h.trans h') := by
+  rw [← cancel_mono (sheafι F), Category.assoc, sheafHomOfLE_ι, sheafHomOfLE_ι, sheafHomOfLE_ι]
 
 /-- For an effective divisor `D`, every regular function on `U` is a section of `𝒪_X(D)`. -/
 lemma toRationalFunctions_app_mem_sections {D : SchemeWeilDivisor X}
@@ -261,7 +274,7 @@ lemma rationalFunctionsMul_mem_sections {D : SchemeWeilDivisor X} {U : X.Opens}
         U s ∈ sections (D - (WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) U := by
   refine mem_sections.mpr fun x hx ↦ ?_
   have : Nonempty U := ⟨⟨x, hx⟩⟩
-  rw [Scheme.rationalFunctionsEquiv_rationalFunctionsMul]
+  rw [Scheme.rationalFunctionsEquiv_rationalFunctionsMul_app]
   by_cases h0 : Scheme.rationalFunctionsEquiv U s = 0
   · exact Or.inl (by rw [h0, mul_zero])
   · refine Or.inr ?_
@@ -335,7 +348,7 @@ variable {g}
 /-- **Linearly equivalent Weil divisors have isomorphic sheaves.** This is the sheaf-level form
 of the fact that `𝒪_X(D)` depends only on the divisor class of `D`, and the reason the divisor
 class group maps to isomorphism classes of `𝒪_X`-modules. -/
-theorem nonempty_sheaf_iso_of_linearlyEquivalent {D E : SchemeWeilDivisor X}
+theorem nonempty_iso_sheaf_of_linearlyEquivalent {D E : SchemeWeilDivisor X}
     (h : (WeilDivisor.OrderSystem.ofScheme X).LinearlyEquivalent D E) :
     Nonempty (sheaf D ≅ sheaf E) := by
   obtain ⟨g, hg⟩ :=
