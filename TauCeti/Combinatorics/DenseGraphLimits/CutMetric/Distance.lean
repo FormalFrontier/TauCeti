@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Coupling
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
+import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Pullback
 
 /-!
 # The cut distance of two graphons
@@ -46,9 +47,12 @@ overlaid difference, and the cut norm is even and drops along a pushforward
   `exists_isCoupling_cutNorm_lt` produces a coupling beating any strict upper bound;
 * `cutDist_nonneg` and `cutDist_le_one` are the range;
 * `cutDist_comm` is symmetry;
-* `cutDist_le_cutNorm_sub_of_measurePreserving` bounds the cut distance by the same-carrier cut
-  norm of the difference of two pullbacks, `cutDist_le_cutNorm_sub` is its identity case, and
-  `cutDist_self` follows.
+* `cutNorm_overlayDiff_map_prodMk` computes the overlaid cut norm of a coupling induced by two
+  measure-preserving maps, and `cutDist_le_cutNorm_sub_of_measurePreserving` bounds the cut
+  distance by that value; `cutDist_le_cutNorm_sub` is its identity case, and `cutDist_self`
+  follows;
+* `cutNorm_overlayDiff_diagonalCoupling` computes the value the diagonal coupling contributes to
+  that infimum: it is exactly the same-carrier cut norm of the difference.
 
 ## Implementation
 
@@ -199,6 +203,19 @@ section CommonCarrier
 
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
 
+/-- **A measure induced by two maps gives the cut norm of the difference of the two pullbacks.**
+Pulling the overlaid difference back along `x ↦ (f x, g x)` gives the difference of the pullbacks.
+Invariance under this measure-preserving map then identifies the two cut norms. -/
+theorem cutNorm_overlayDiff_map_prodMk [IsFiniteMeasure μ]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
+    {f : Ω → Ω₁} {g : Ω → Ω₂} (hf : Measurable f)
+    (hg : Measurable g) {π : Measure (Ω₁ × Ω₂)} [IsFiniteMeasure π]
+    (hπ : MeasurePreserving (fun x => (f x, g x)) μ π) :
+    cutNorm π (overlayDiff U W π) =
+      cutNorm μ
+        (U.toSymmKernel.comap f hf μ - W.toSymmKernel.comap g hg μ) := by
+  rw [← cutNorm_comap hπ, comap_overlayDiff_prodMk]
+
 /-- **A common carrier bounds the cut distance.** If `f` and `g` are measure preserving from a
 common finite-measure space onto the two carriers, then the cut distance is at most the ordinary cut
 norm of the difference of the two pullbacks.
@@ -214,14 +231,10 @@ theorem cutDist_le_cutNorm_sub_of_measurePreserving [IsFiniteMeasure μ]
     cutDist U W ≤
       cutNorm μ
         (U.toSymmKernel.comap f hf.measurable μ - W.toSymmKernel.comap g hg.measurable μ) := by
-  set h : Ω → Ω₁ × Ω₂ := fun x => (f x, g x) with hdef
-  have : IsProbabilityMeasure (μ.map h) := (isCoupling_map_prodMk hf hg).isProbabilityMeasure
-  refine (cutDist_le U W (isCoupling_map_prodMk hf hg)).trans ?_
-  have hmp : MeasurePreserving h μ (μ.map h) := ⟨hf.measurable.prodMk hg.measurable, rfl⟩
-  refine (cutNorm_le_cutNorm_comap _ hmp (overlayDiff U W (μ.map h))).trans_eq ?_
-  congr 1
-  ext x y
-  simp [hdef]
+  let _ := (isCoupling_map_prodMk hf hg).isProbabilityMeasure
+  exact (cutDist_le U W (isCoupling_map_prodMk hf hg)).trans_eq
+    (cutNorm_overlayDiff_map_prodMk U W hf.measurable hg.measurable
+      ⟨hf.measurable.prodMk hg.measurable, rfl⟩)
 
 variable [IsProbabilityMeasure μ]
 
@@ -237,6 +250,16 @@ theorem cutDist_le_cutNorm_sub (U W : Graphon Ω μ) :
   have := cutDist_le_cutNorm_sub_of_measurePreserving U W (MeasurePreserving.id μ)
     (MeasurePreserving.id μ)
   rwa [SymmKernel.comap_id, SymmKernel.comap_id] at this
+
+/-- **The diagonal coupling realises the same-carrier cut norm.** Of all the couplings the cut
+distance takes an infimum over, the diagonal one contributes exactly `‖U - W‖□`. -/
+@[simp]
+theorem cutNorm_overlayDiff_diagonalCoupling (U W : Graphon Ω μ) :
+    cutNorm (TauCeti.MeasureTheory.diagonalCoupling μ)
+        (overlayDiff U W (TauCeti.MeasureTheory.diagonalCoupling μ)) =
+      cutNorm μ (U.toSymmKernel - W.toSymmKernel) := by
+  rw [← cutNorm_comap (TauCeti.MeasureTheory.measurePreserving_diagonal μ),
+    comap_overlayDiff_diagonalCoupling]
 
 /-- The cut distance of a graphon to itself is zero. -/
 @[simp]
