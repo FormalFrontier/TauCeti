@@ -257,37 +257,34 @@ theorem lower_lt_upper_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : F
 /-- Every listed window's left endpoint chord has the common radius `ε`. -/
 theorem norm_sub_lower_eq_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
-    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) (t + δ)))
+    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) t))
     (h_at : ∀ t ∈ T, γ t = s) (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖)
     (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     ‖γ W.lower - s‖ = ε := by
   obtain ⟨t, ht, rfl⟩ := mem_exitCapWindows_iff.mp hW
-  exact norm_sub_exitCapWindow_lower_eq hδ hε (h_at t ht)
-    ((hγ t ht).mono (Icc_subset_Icc le_rfl (by linarith))) (hεL t ht)
+  exact norm_sub_exitCapWindow_lower_eq hδ hε (h_at t ht) (hγ t ht) (hεL t ht)
 
 /-- Every listed window's right endpoint chord has the common radius `ε`. -/
 theorem norm_sub_upper_eq_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
-    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) (t + δ)))
+    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc t (t + δ)))
     (h_at : ∀ t ∈ T, γ t = s) (hεR : ∀ t ∈ T, ε ≤ ‖γ (t + δ) - s‖)
     (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     ‖γ W.upper - s‖ = ε := by
   obtain ⟨t, ht, rfl⟩ := mem_exitCapWindows_iff.mp hW
-  exact norm_sub_exitCapWindow_upper_eq hδ hε (h_at t ht)
-    ((hγ t ht).mono (Icc_subset_Icc (by linarith) le_rfl)) (hεR t ht)
+  exact norm_sub_exitCapWindow_upper_eq hδ hε (h_at t ht) (hγ t ht) (hεR t ht)
 
 /-- The curve meets the cap's initial point at a listed window's lower endpoint, in the shape
 `IsPiecewiseC1On.exciseCrossings` consumes. -/
 theorem eq_circleMap_startAngle_of_mem_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ}
     {δ ε : ℝ} {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} (hδ : 0 < δ) (hε : 0 < ε)
-    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) (t + δ)))
+    (hγ : ∀ t ∈ T, ContinuousOn γ (Icc (t - δ) t))
     (h_at : ∀ t ∈ T, γ t = s) (hεL : ∀ t ∈ T, ε ≤ ‖γ (t - δ) - s‖)
     (hW : W ∈ exitCapWindows γ s T δ ε L_R L_L) :
     γ W.lower = circleMap s W.radius W.startAngle := by
   obtain ⟨t, ht, rfl⟩ := mem_exitCapWindows_iff.mp hW
   rw [← CircularCapWindow.cap_left]
-  exact (cap_exitCapWindow_lower_eq hδ hε (h_at t ht)
-    ((hγ t ht).mono (Icc_subset_Icc le_rfl (by linarith))) (hεL t ht)).symm
+  exact (cap_exitCapWindow_lower_eq hδ hε (h_at t ht) (hγ t ht) (hεL t ht)).symm
 
 /-- The curve meets the cap's terminal point at a listed window's upper endpoint, in the shape
 `IsPiecewiseC1On.exciseCrossings` consumes. -/
