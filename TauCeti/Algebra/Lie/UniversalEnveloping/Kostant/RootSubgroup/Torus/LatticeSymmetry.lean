@@ -31,7 +31,7 @@ group.
 
 * `TauCeti.UniversalEnvelopingAlgebra.baseChangeInvariantRestrictUnit_mul_kostantTorusPoints`:
   the scalar-extended symmetry intertwines a torus point with its reindexing.
-* `TauCeti.UniversalEnvelopingAlgebra.baseChangeInvariantRestrictUnit_conj_kostantTorusPoints`:
+* `TauCeti.UniversalEnvelopingAlgebra.conj_kostantTorusPoints_of_baseChangeInvariantRestrictUnit`:
   the corresponding conjugation formula.
 * `map_kostantTorusSubgroup_conj_baseChangeInvariantRestrictUnit`:
   the scalar-extended symmetry normalizes the entire Kostant torus subgroup.
@@ -64,14 +64,14 @@ section Pointwise
 variable {A : Type w} [CommRing A] [Algebra ℤ A]
 
 /-- **A monomial lattice symmetry intertwines the Kostant torus.** If the symmetry sends the basis
-vector indexed by `i` to a unit multiple of the one indexed by `τ i`, and their weights satisfy
+vector indexed by `i` to a scalar multiple of the one indexed by `τ i`, and their weights satisfy
 `wt (τ i) (σ j) = wt i j`, then the scalar-extended symmetry carries the torus point `s` past
 itself as the point obtained by contragredient reindexing through `σ`. In the intended pinned
 application this data comes from a numbered diagram symmetry. -/
 theorem baseChangeInvariantRestrictUnit_mul_kostantTorusPoints
     (θ : V ≃+ V) (hθM : ∀ v, θ v ∈ M ↔ v ∈ M) (τ : η → η) (σ : Equiv.Perm κ)
-    (c : η → ℤˣ)
-    (hθb : ∀ i, AddEquiv.invariantRestrict θ M hθM (b i) = (c i : ℤ) • b (τ i))
+    (c : η → ℤ)
+    (hθb : ∀ i, AddEquiv.invariantRestrict θ M hθM (b i) = c i • b (τ i))
     (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Aˣ) :
     AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM *
         kostantTorusPoints M b wt A s =
@@ -86,7 +86,7 @@ theorem baseChangeInvariantRestrictUnit_mul_kostantTorusPoints
     kostantTorusPoints_apply]
   let Θ : (A ⊗[ℤ] M) ≃ₗ[A] (A ⊗[ℤ] M) :=
     (AddEquiv.invariantRestrict θ M hθM).baseChange ℤ A M M
-  let cA : η → A := fun i => ((Units.map (algebraMap ℤ A) (c i) : Aˣ) : A)
+  let cA : η → A := fun i => algebraMap ℤ A (c i)
   have hbase : ∀ i, Θ ((b.baseChange A) i) = cA i • (b.baseChange A) (τ i) :=
     AddEquiv.baseChange_invariantRestrict_map_baseChange_basis M b θ hθM τ c hθb
   have hintertwine :
@@ -100,10 +100,10 @@ theorem baseChangeInvariantRestrictUnit_mul_kostantTorusPoints
 /-- **A compatible monomial lattice symmetry conjugates each Kostant torus point by reindexing
 its coordinates.** In the pinned application the lattice symmetry is induced by a numbered
 diagram symmetry. -/
-theorem baseChangeInvariantRestrictUnit_conj_kostantTorusPoints
+theorem conj_kostantTorusPoints_of_baseChangeInvariantRestrictUnit
     (θ : V ≃+ V) (hθM : ∀ v, θ v ∈ M ↔ v ∈ M) (τ : η → η) (σ : Equiv.Perm κ)
-    (c : η → ℤˣ)
-    (hθb : ∀ i, AddEquiv.invariantRestrict θ M hθM (b i) = (c i : ℤ) • b (τ i))
+    (c : η → ℤ)
+    (hθb : ∀ i, AddEquiv.invariantRestrict θ M hθM (b i) = c i • b (τ i))
     (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Aˣ) :
     AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM *
           kostantTorusPoints M b wt A s *
@@ -124,8 +124,8 @@ torus-points homomorphism onto itself. A numbered diagram symmetry supplies this
 intended pinned application. -/
 theorem map_kostantTorusSubgroup_conj_baseChangeInvariantRestrictUnit
     (θ : V ≃+ V) (hθM : ∀ v, θ v ∈ M ↔ v ∈ M) (τ : η → η) (σ : Equiv.Perm κ)
-    (c : η → ℤˣ)
-    (hθb : ∀ i, AddEquiv.invariantRestrict θ M hθM (b i) = (c i : ℤ) • b (τ i))
+    (c : η → ℤ)
+    (hθb : ∀ i, AddEquiv.invariantRestrict θ M hθM (b i) = c i • b (τ i))
     (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) :
     Subgroup.map
         (MulAut.conj (AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM)).toMonoidHom
@@ -133,7 +133,7 @@ theorem map_kostantTorusSubgroup_conj_baseChangeInvariantRestrictUnit
       kostantTorusSubgroup M b wt A := by
   set Φ := LinearMap.GeneralLinearGroup.generalLinearEquiv A (A ⊗[ℤ] M) with hΦ
   set U := AddEquiv.baseChangeInvariantRestrictUnit (R := A) θ M hθM with hU
-  let cA : η → A := fun i => ((Units.map (algebraMap ℤ A) (c i) : Aˣ) : A)
+  let cA : η → A := fun i => algebraMap ℤ A (c i)
   -- The torus points are the generic weight-torus automorphisms read in the general linear group.
   have hpoints : Φ.symm.toMonoidHom.comp (basisWeightTorus (b.baseChange A) wt) =
       kostantTorusPoints M b wt A :=
