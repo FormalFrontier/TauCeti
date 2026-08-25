@@ -71,6 +71,7 @@ theorem symmL_trivializationAt_self (x : M) (v : E) :
 
 /-- Over its own base point, the local frame attached to the canonical trivialization at `x` is
 the given basis of the model space. -/
+@[simp]
 theorem localFrame_trivializationAt_self {ι : Type*} (b : Basis ι 𝕜 E) (x : M) (i : ι) :
     (trivializationAt E (TangentSpace I) x).localFrame b i x = b i := by
   have hx : x ∈ (trivializationAt E (TangentSpace I) x).baseSet :=
