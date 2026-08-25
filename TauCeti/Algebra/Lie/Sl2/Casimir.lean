@@ -244,6 +244,19 @@ theorem sl2CasimirScalar_ne_zero {K : Type*} [Field K] [CharZero K] {n : ℕ} (h
     exact this
   exact div_ne_zero (mul_ne_zero hn' h₂) (by norm_num)
 
+/-- The Casimir scalar `n (n + 2) / 2` determines the natural number `n`: the scalar is
+`((n + 1)² - 1)/2` and `n + 1` is positive. -/
+theorem sl2CasimirScalar_injective {K : Type*} [Field K] [CharZero K] :
+    Function.Injective fun q : ℕ ↦ (q : K) * ((q : K) + 2) / 2 := by
+  intro p q hpq
+  simp only at hpq
+  rw [div_eq_div_iff two_ne_zero two_ne_zero] at hpq
+  have hfac : ((p : K) - q) * ((p : K) + q + 2) = 0 := by linear_combination hpq / 2
+  refine Nat.cast_injective (R := K)
+    (sub_eq_zero.1 ((mul_eq_zero.1 hfac).resolve_right fun hc ↦ ?_))
+  have hz : ((p + q + 2 : ℕ) : K) = 0 := by push_cast; linear_combination hc
+  exact absurd (Nat.cast_eq_zero.1 hz) (by omega)
+
 end Scalar
 
 /-! ### Injectivity on a nontrivial irreducible -/

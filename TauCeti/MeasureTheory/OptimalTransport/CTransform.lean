@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Data.Fintype.Order
+public import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
 public import Mathlib.Order.GaloisConnection.Basic
 public import Mathlib.Topology.Instances.EReal.Lemmas
 public import TauCeti.Data.EReal.Operations
@@ -21,7 +22,8 @@ that transform, the two closure operations it generates, the `c`-concave potenti
 and the contact set on which the dual constraint is an equality. It is the finite-real slice of
 the roadmap's broader transform interface; the extended-cost, analytic-sublevel, and compact
 attainment/lower-semicontinuity interfaces are separate follow-up slices. The elementary
-upper-semicontinuity results and a metric continuity result for real-valued transforms are
+upper-semicontinuity result for infimal transforms, the Borel measurability it gives with no
+hypothesis on the opposite factor, and a metric continuity result for real-valued transforms are
 included here.
 
 Even for a finite real cost and a finite real potential the infimum defining the transform can
@@ -36,12 +38,11 @@ is *not* the right one: with `c ≡ ⊤` and `φ ≡ 0`, `EReal` subtraction giv
 double transform of `φ` is `⊥` on nonempty factors and the inequality `φ ≤ φᶜᶜ` fails. The
 extended-cost interface needs its own conventions and is not built here.
 
-Nothing in this file is measure-theoretic. Most results are order-theoretic identities on bare
-types; the final analytic results give upper semicontinuity under topological hypotheses and
-uniform continuity of a real-valued transform when the cost is uniformly continuous on
-pseudometric spaces. These are the algebraic and topological halves of the Kantorovich dual
-problem, to be combined with the integrability conditions that make the two marginal integrals
-of a dual pair meaningful.
+Apart from the upper-semicontinuity and Borel measurability results, and the metric continuity
+result on pseudometric spaces, the two factors are bare types and the results are
+order-theoretic identities about the transform. They are the algebraic and topological halves of
+the Kantorovich dual problem, to be combined with the integrability conditions that make the two
+marginal integrals of a dual pair meaningful.
 
 ## Main definitions
 
@@ -65,7 +66,8 @@ of a dual pair meaningful.
   transform;
 * `TauCeti.isCConcave_iff` — `c`-concavity is exactly being fixed by the double transform;
 * `TauCeti.upperSemicontinuous_cTransform` — an infimal transform of upper-semicontinuous
-  sections is upper semicontinuous, while `TauCeti.uniformContinuous_iInf_sub` shows that a
+  sections is upper semicontinuous, and `TauCeti.measurable_cTransform_of_upperSemicontinuous` —
+  it is then Borel measurable, while `TauCeti.uniformContinuous_iInf_sub` shows that a
   real-valued infimal transform is uniformly continuous when the cost is uniformly continuous and
   its infima are finite;
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
@@ -373,6 +375,20 @@ theorem upperSemicontinuous_cTransformSymm_of_continuous [TopologicalSpace X]
     UpperSemicontinuous (cTransformSymm c ψ) :=
   upperSemicontinuous_cTransformSymm_of_upperSemicontinuous
     (fun y => (hc y).upperSemicontinuous) ψ
+
+/-- A `c`-transform is Borel measurable whenever every section `y ↦ c (x, y)` of the cost is
+upper semicontinuous. No hypothesis on the source is needed in this regime. -/
+theorem measurable_cTransform_of_upperSemicontinuous [TopologicalSpace Y] [MeasurableSpace Y]
+    [OpensMeasurableSpace Y] (hc : ∀ x, UpperSemicontinuous fun y => c (x, y)) (φ : X → EReal) :
+    Measurable (cTransform c φ) :=
+  (upperSemicontinuous_cTransform_of_upperSemicontinuous hc φ).measurable
+
+/-- A symmetric `c`-transform is Borel measurable whenever every section `x ↦ c (x, y)` of the
+cost is upper semicontinuous. -/
+theorem measurable_cTransformSymm_of_upperSemicontinuous [TopologicalSpace X] [MeasurableSpace X]
+    [OpensMeasurableSpace X] (hc : ∀ y, UpperSemicontinuous fun x => c (x, y)) (ψ : Y → EReal) :
+    Measurable (cTransformSymm c ψ) :=
+  (upperSemicontinuous_cTransformSymm_of_upperSemicontinuous hc ψ).measurable
 
 /-- Subtracting a sum whose final term is real can be reassociated when the minuend is real. -/
 private theorem coe_sub_add_coe (b : EReal) (d a : ℝ) :
