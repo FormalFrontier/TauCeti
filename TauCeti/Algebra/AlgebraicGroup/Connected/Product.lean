@@ -5,16 +5,16 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Product
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SemidirectProduct
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
+public import TauCeti.AlgebraicGeometry.Geometrically.Connected
 
 /-!
 # Geometric connectedness of products of affine groups
 
 The direct product of two affine groups over a field has coordinate Hopf algebra given by the
-tensor product of their coordinate algebras. This file proves that geometric connectedness is
-preserved by this construction.
+tensor product of their coordinate algebras. This file applies the affine tensor-product
+connectedness theorem to show that geometric connectedness is preserved by this construction.
 
 On the scheme side, the product is the fibre product of the two Hopf spectra over the spectrum of
 the ground field. Each projection has geometrically connected fibres by base change, and the
@@ -24,12 +24,10 @@ isomorphism then identifies the result with the spectrum of the tensor product.
 
 ## Main declarations
 
-* `TauCeti.geometricallyConnected_tensorProduct`: the tensor product of two commutative algebras
-  with geometrically connected spectra is geometrically connected.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty.tensorProduct`: the tensor product of two
   geometrically connected commutative Hopf algebras is geometrically connected.
-* `TauCeti.geometricallyConnectedCommHopfAlgProperty.semidirectProduct`: an internal semidirect
-  product of geometrically connected affine groups is geometrically connected.
+* `TauCeti.geometricallyConnectedCommHopfAlgProperty.semidirectProduct`: a semidirect product
+  associated to an action of geometrically connected affine groups is geometrically connected.
 
 ## References
 
@@ -43,7 +41,7 @@ result below proves that source is geometrically connected.
 
 public section
 
-open CategoryTheory Limits
+open CategoryTheory
 open scoped TensorProduct
 
 namespace TauCeti
@@ -57,31 +55,6 @@ private instance geometricallyConnected_respectsIso :
   MorphismProperty.IsStableUnderBaseChange.respectsIso
 
 variable {k : Type u} [Field k]
-
-/-- The spectrum of a tensor product of commutative algebras over a field is geometrically
-connected when the spectra of both factors are geometrically connected over that field. -/
-theorem geometricallyConnected_tensorProduct
-    (S T : Type u) [CommRing S] [CommRing T] [Algebra k S] [Algebra k T]
-    (hS : GeometricallyConnected (Spec.map (CommRingCat.ofHom (algebraMap k S))))
-    (hT : GeometricallyConnected (Spec.map (CommRingCat.ofHom (algebraMap k T)))) :
-    GeometricallyConnected
-      (Spec.map (CommRingCat.ofHom (algebraMap k (S ⊗[k] T)))) := by
-  let f := Spec.map (CommRingCat.ofHom (algebraMap k S))
-  let g := Spec.map (CommRingCat.ofHom (algebraMap k T))
-  let _ : GeometricallyConnected f := hS
-  let _ : GeometricallyConnected g := hT
-  let _ : UniversallyOpen f := inferInstance
-  let _ : UniversallyOpen g := inferInstance
-  have hproduct : GeometricallyConnected (pullback.fst f g ≫ f) :=
-    GeometricallyConnected.comp (pullback.fst f g) f
-  have hproduct' : GeometricallyConnected
-      ((pullbackSpecIso k S T).hom ≫
-        Spec.map (CommRingCat.ofHom (algebraMap k (S ⊗[k] T)))) := by
-    rw [pullbackSpecIso_hom_base]
-    exact hproduct
-  rw [MorphismProperty.cancel_left_of_respectsIso
-    (P := @GeometricallyConnected) (pullbackSpecIso k S T).hom] at hproduct'
-  exact hproduct'
 
 namespace geometricallyConnectedCommHopfAlgProperty
 
@@ -113,8 +86,8 @@ theorem tensorProduct (H K : CommHopfAlgCat.{u} k)
   exact (morphismProperty_hopfSpec_obj_X_hom_iff
     (P := @GeometricallyConnected) k (CommHopfAlgCat.of k (H ⊗[k] K))).mpr hspectrum
 
-/-- An internal semidirect product of geometrically connected affine groups is geometrically
-connected.
+/-- The semidirect product associated to an action of geometrically connected affine groups is
+geometrically connected.
 
 The action changes the group law but not the underlying affine scheme: on coordinate algebras,
 the carrier remains the tensor product. This formulation is the one used when multiplication of
