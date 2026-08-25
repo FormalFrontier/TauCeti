@@ -40,50 +40,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from pr_stats_graphs import (  # noqa: E402
+from pr_lifecycle import (  # noqa: E402
     LIFECYCLE_EPOCH,
-    LIFECYCLE_LABELS,
+    STAGE_ORDER,
     STATE_AUTHOR_ACTION,
-    atomic_write,
-    fetch_snapshot,
+    current_stage,
+    episodes,
     iso_z,
     parse_dt,
-    percentile,
 )
+from pr_stats_graphs import atomic_write, fetch_snapshot, percentile  # noqa: E402
 
-# Reported in pipeline order, which is also the order to read them in: a stage
-# is only the bottleneck if the ones feeding it are keeping up.
-STAGE_ORDER = [
-    "awaiting-CI",
-    "awaiting-review",
-    "review-in-progress",
-    "ready-to-merge",
-    "ci-failed",
-    "awaiting-author",
-]
 OWNED_BY_PROJECT = [s for s in STAGE_ORDER if s not in STATE_AUTHOR_ACTION]
-
-
-def lifecycle_intervals(pr: dict, now: datetime):
-    """Yield (label, entered, left) for each spell the PR spent in a stage.
-
-    The pipeline keeps exactly one lifecycle label on a PR at a time, so
-    consecutive label events bound each spell. An open PR's final spell is still
-    running, and is reported with `left` as None.
-    """
-    events = [
-        (parse_dt(e["created_at"]), e["label"])
-        for e in sorted(pr.get("labeled_events") or [], key=lambda e: e["created_at"])
-        if e["label"] in LIFECYCLE_LABELS
-    ]
-    for index, (entered, label) in enumerate(events):
-        if index + 1 < len(events):
-            yield label, entered, events[index + 1][0]
-        elif pr["state"] == "OPEN":
-            yield label, entered, None
-        else:
-            closed = parse_dt(pr.get("merged_at") or pr.get("closed_at"))
-            yield label, entered, closed or now
 
 
 def rate(count: int, hours: float) -> float:
@@ -100,17 +68,6 @@ def observable_hours(start: datetime, end: datetime) -> float:
     """
     start = max(start, LIFECYCLE_EPOCH)
     return max((end - start).total_seconds() / 3600, 0.0)
-
-
-def current_stage(pr: dict) -> str | None:
-    """The stage a PR is in now, from its labels rather than its history.
-
-    Taking the last timeline event instead would place a PR whose lifecycle
-    label was removed into a stage it has left, and would drop one that has no
-    events at all. The labels are what the pipeline actually maintains.
-    """
-    present = [label for label in pr.get("labels") or [] if label in LIFECYCLE_LABELS]
-    return present[0] if len(present) == 1 else None
 
 
 def analyse(
@@ -153,7 +110,7 @@ def analyse(
             else:
                 depth[stage] += 1
 
-        for label, start, end in lifecycle_intervals(pr, now):
+        for label, start, end in episodes(pr, now):
             if baseline_start <= start < baseline_end:
                 entered[label]["baseline"] += 1
             if start >= window_start:

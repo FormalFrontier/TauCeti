@@ -44,26 +44,29 @@ class IntervalTests(unittest.TestCase):
             (NOW - timedelta(hours=10), "awaiting-CI"),
             (NOW - timedelta(hours=8), "awaiting-review"),
         ])
-        spells = list(health.lifecycle_intervals(item, NOW))
+        spells = list(health.episodes(item, NOW))
         self.assertEqual([s[0] for s in spells], ["awaiting-CI", "awaiting-review"])
         self.assertEqual((spells[0][2] - spells[0][1]), timedelta(hours=2))
 
     def test_an_open_pr_s_last_spell_is_still_running(self):
         item = pr(1, [(NOW - timedelta(hours=3), "awaiting-review")])
-        self.assertIsNone(list(health.lifecycle_intervals(item, NOW))[-1][2])
+        self.assertIsNone(list(health.episodes(item, NOW))[-1][2])
 
     def test_a_merged_pr_s_last_spell_ends_at_the_merge(self):
         merged = NOW - timedelta(hours=1)
         item = pr(2, [(NOW - timedelta(hours=5), "ready-to-merge")],
                   state="MERGED", merged=merged)
-        _, start, end = list(health.lifecycle_intervals(item, NOW))[-1]
+        _, start, end = list(health.episodes(item, NOW))[-1]
         self.assertEqual(end, merged)
 
     def test_non_lifecycle_labels_are_ignored(self):
         item = pr(3, [(NOW - timedelta(hours=4), "roadmap:algebra"),
                       (NOW - timedelta(hours=2), "awaiting-review")])
-        self.assertEqual([s[0] for s in health.lifecycle_intervals(item, NOW)],
+        self.assertEqual([s[0] for s in health.episodes(item, NOW)],
                          ["awaiting-review"])
+
+    def test_a_pr_with_no_lifecycle_events_yields_nothing(self):
+        self.assertEqual(list(health.episodes(pr(4, []), NOW)), [])
 
 
 class AnalysisTests(unittest.TestCase):
@@ -255,3 +258,45 @@ class ReportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AgreementTests(unittest.TestCase):
+    """The charts and this report read the same timelines and must not disagree.
+
+    They did, by nineteen hours: one treated a ci-failed to awaiting-author swap
+    as a fresh wait and the other continued the spell. That is the whole reason
+    the lifecycle rules now live in one module.
+    """
+
+    def swapped_author_labels(self):
+        return pr(1, [
+            (NOW - timedelta(hours=20), "ci-failed"),
+            (NOW - timedelta(hours=1), "awaiting-author"),
+        ])
+
+    def test_waiting_time_matches_the_chart_generator(self):
+        import pr_stats_graphs as stats
+
+        item = self.swapped_author_labels()
+        theirs = stats.queue_age_metrics([item], NOW)["awaiting_author_hours"][0]
+        stages = health.analyse(snapshot([item]), 24, 24 * 14, NOW)["stages"]
+        mine = max(s["oldest_waiting_hours"] for s in stages)
+        self.assertAlmostEqual(theirs, mine, places=3)
+        self.assertAlmostEqual(theirs, 20.0, places=3)
+
+    def test_swapping_sibling_review_labels_continues_the_cycle(self):
+        item = pr(2, [
+            (NOW - timedelta(hours=12), "awaiting-review"),
+            (NOW - timedelta(hours=2), "review-in-progress"),
+        ])
+        stages = health.analyse(snapshot([item]), 24, 24 * 14, NOW)["stages"]
+        self.assertAlmostEqual(max(s["oldest_waiting_hours"] for s in stages), 12.0, places=3)
+
+    def test_a_push_back_to_ci_does_start_a_fresh_wait(self):
+        """Only sibling labels join; anything else is genuinely a new spell."""
+        item = pr(3, [
+            (NOW - timedelta(hours=30), "awaiting-author"),
+            (NOW - timedelta(hours=3), "awaiting-CI"),
+        ])
+        stages = health.analyse(snapshot([item]), 24, 24 * 14, NOW)["stages"]
+        self.assertAlmostEqual(max(s["oldest_waiting_hours"] for s in stages), 3.0, places=3)
