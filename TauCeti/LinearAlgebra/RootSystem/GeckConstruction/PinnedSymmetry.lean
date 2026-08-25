@@ -46,6 +46,9 @@ the toral carrier.
   contragrediently.
 * `TauCeti.DynkinType.geckDiagramModuleEquiv_geckRepresentation_rootGenerator`: the defining
   representation intertwines every numbered root generator with its permuted generator.
+* `TauCeti.DynkinType.geckDiagramIndexEquiv_pow_eq_one` and
+  `TauCeti.DynkinType.geckDiagramModuleEquiv_pow_eq_one`: a node permutation of finite order
+  induces a coordinate permutation, and a coordinate equivalence, of the same finite order.
 
 ## References
 
@@ -238,6 +241,89 @@ theorem geckDiagramModuleEquiv_geckRepresentation_rootGenerator
           geckModuleEquiv_mulVec_f (t.rationalDiagramAut ht hsigma)
             (t.geckDiagramBaseEquiv ht sigma)
             (coe_diagramBaseEquiv_eq_indexEquiv ht hsigma) (t.simpleSupportEquiv ht i) v
+
+/-! ## Order relations -/
+
+/-- Iterating the coordinate permutation on a Cartan coordinate iterates the node permutation.
+Every Cartan coordinate is numbered, so this determines the iterate on that summand. -/
+private theorem geckDiagramIndexEquiv_pow_apply_inl (hsigma : sigma ∈ t.diagramSymmetry) (n : ℕ) :
+    ∀ i : Fin t.rank,
+      (t.geckDiagramIndexEquiv ht hsigma ^ n) (Sum.inl (t.simpleSupportEquiv ht i)) =
+        Sum.inl (t.simpleSupportEquiv ht ((sigma ^ n) i)) := by
+  induction n with
+  | zero => intro i; simp
+  | succ n ih =>
+      intro i
+      have hstep : (t.geckDiagramIndexEquiv ht hsigma ^ (n + 1))
+            (Sum.inl (t.simpleSupportEquiv ht i)) =
+          (t.geckDiagramIndexEquiv ht hsigma ^ n)
+            (t.geckDiagramIndexEquiv ht hsigma (Sum.inl (t.simpleSupportEquiv ht i))) := by
+        rw [pow_succ, Equiv.Perm.mul_apply]
+      rw [hstep, geckDiagramIndexEquiv_apply_inl, geckDiagramBaseEquiv_apply_simpleSupportEquiv,
+        ih (sigma i), pow_succ, Equiv.Perm.mul_apply]
+
+/-- Iterating the coordinate permutation on a root coordinate iterates the induced permutation of
+the pinned root enumeration. -/
+private theorem geckDiagramIndexEquiv_pow_apply_inr (hsigma : sigma ∈ t.diagramSymmetry) (n : ℕ) :
+    ∀ k : Fin t.numRoots,
+      (t.geckDiagramIndexEquiv ht hsigma ^ n) (Sum.inr k) =
+        Sum.inr ((diagramRootPerm ht hsigma ^ n) k) := by
+  induction n with
+  | zero => intro k; simp
+  | succ n ih =>
+      intro k
+      have hstep : (t.geckDiagramIndexEquiv ht hsigma ^ (n + 1)) (Sum.inr k) =
+          (t.geckDiagramIndexEquiv ht hsigma ^ n)
+            (t.geckDiagramIndexEquiv ht hsigma (Sum.inr k)) := by
+        rw [pow_succ, Equiv.Perm.mul_apply]
+      rw [hstep, geckDiagramIndexEquiv_apply_inr, ih (diagramRootPerm ht hsigma k), pow_succ,
+        Equiv.Perm.mul_apply]
+
+/-- **A node permutation of finite order permutes the Geck coordinates with the same order
+relation.** Both summands inherit it: the Cartan coordinates are numbered by the nodes, and the
+root coordinates carry `TauCeti.DynkinType.diagramRootPerm`. -/
+theorem geckDiagramIndexEquiv_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {n : ℕ}
+    (hn : sigma ^ n = 1) : t.geckDiagramIndexEquiv ht hsigma ^ n = 1 := by
+  have hroot : diagramRootPerm ht hsigma ^ n = 1 := diagramRootPerm_pow_eq_one ht hsigma hn
+  refine Equiv.ext fun x => ?_
+  cases x with
+  | inl i =>
+      obtain ⟨i, rfl⟩ := (t.simpleSupportEquiv ht).surjective i
+      rw [geckDiagramIndexEquiv_pow_apply_inl ht hsigma n i, hn]
+      simp
+  | inr k =>
+      rw [geckDiagramIndexEquiv_pow_apply_inr ht hsigma n k, hroot]
+      simp
+
+/-- The iterated coordinate equivalence precomposes with the inverse of the iterated coordinate
+permutation. -/
+private theorem geckDiagramModuleEquiv_pow_apply (hsigma : sigma ∈ t.diagramSymmetry) (n : ℕ) :
+    ∀ (v : t.GeckIndex ht → ℚ) (x : t.GeckIndex ht),
+      ((t.geckDiagramModuleEquiv ht hsigma) ^ n) v x =
+        v ((t.geckDiagramIndexEquiv ht hsigma ^ n).symm x) := by
+  induction n with
+  | zero => intro v x; simp [← Equiv.Perm.inv_def]
+  | succ n ih =>
+      intro v x
+      have hsymm : ((t.geckDiagramIndexEquiv ht hsigma) ^ (n + 1)).symm x =
+          (t.geckDiagramIndexEquiv ht hsigma).symm
+            (((t.geckDiagramIndexEquiv ht hsigma) ^ n).symm x) := by
+        rw [← Equiv.Perm.inv_def, ← Equiv.Perm.inv_def, ← Equiv.Perm.inv_def, pow_succ,
+          mul_inv_rev, Equiv.Perm.mul_apply]
+      rw [pow_succ, LinearEquiv.mul_apply, ih (t.geckDiagramModuleEquiv ht hsigma v) x,
+        geckDiagramModuleEquiv_apply, hsymm]
+
+/-- **A node permutation of finite order induces a coordinate equivalence with the same order
+relation.** This is the hypothesis that
+`TauCeti.UniversalEnvelopingAlgebra.kostantElementaryNumberedSymmetryAut_pow_eq_one` consumes, so
+it is what turns `sigma ^ 2 = 1` or `sigma ^ 3 = 1` into the corresponding relation for the graph
+automorphism of a Chevalley group built on this lattice. -/
+theorem geckDiagramModuleEquiv_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {n : ℕ}
+    (hn : sigma ^ n = 1) : (t.geckDiagramModuleEquiv ht hsigma) ^ n = 1 := by
+  refine LinearEquiv.ext fun v => funext fun x => ?_
+  rw [geckDiagramModuleEquiv_pow_apply ht hsigma n v x,
+    geckDiagramIndexEquiv_pow_eq_one ht hsigma hn]
+  simp [← Equiv.Perm.inv_def]
 
 end
 

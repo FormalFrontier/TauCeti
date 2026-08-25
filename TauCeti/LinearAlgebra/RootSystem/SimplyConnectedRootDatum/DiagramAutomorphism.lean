@@ -386,6 +386,16 @@ theorem diagramAut_pow_eq_one (hσ : σ ∈ t.diagramSymmetry) {n : ℕ} (hn : �
         rw [map_pow, diagramAutHom_apply]
     _ = 1 := by rw [h, map_one]
 
+/-- **A node permutation of finite order permutes the root enumeration with the same order
+relation.** This is `TauCeti.DynkinType.diagramAut_pow_eq_one` read through the index component,
+and it is the form a construction indexed by the pinned root enumeration consumes. -/
+theorem diagramRootPerm_pow_eq_one (hσ : σ ∈ t.diagramSymmetry) {n : ℕ} (hn : σ ^ n = 1) :
+    diagramRootPerm ht hσ ^ n = 1 := by
+  have h := congrArg ⇑(RootPairing.Equiv.indexHom (t.simplyConnectedRootDatum ht))
+    (diagramAut_pow_eq_one ht hσ hn)
+  rw [map_pow, map_one] at h
+  exact h
+
 end
 
 end TauCeti.DynkinType
