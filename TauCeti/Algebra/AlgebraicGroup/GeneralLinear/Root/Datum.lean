@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Adjoint.RootSpace
-public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.RootDatum
+public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.RootDatum.Basic
 
 /-!
 # Coordinate roots for the diagonal torus in the general linear group
