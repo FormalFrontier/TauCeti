@@ -43,6 +43,10 @@ irreducible by.
 
 * `TauCeti.Representation.IsIrreducible.nontrivial`: an irreducible representation has a nonzero
   carrier.
+* `Representation.IsIrreducible.finrank_pos`: a finite-dimensional irreducible
+  representation has positive dimension.
+* `Representation.IsIrreducible.natCast_finrank_ne_zero`: in characteristic zero that
+  dimension is nonzero, hence invertible, in the base field.
 * `Representation.IsIrreducible.finiteDimensional`: an irreducible representation of a finite
   monoid is finite-dimensional.
 * `TauCeti.Representation.isIrreducible_of_finrank_eq_one`: a line is irreducible.
@@ -84,6 +88,23 @@ theorem IsIrreducible.nontrivial {ρ : Representation k G V} (h : ρ.IsIrreducib
   have _ : ρ.IsIrreducible := h
   have _ := IsSimpleModule.nontrivial k[G] ρ.asModule
   ρ.asModuleEquiv.symm.toEquiv.nontrivial
+
+/-- **A finite-dimensional irreducible representation has positive dimension.** This is what makes
+the degree of an irreducible character positive, and, cast into the base field by
+`Representation.IsIrreducible.natCast_finrank_ne_zero`, what lets the orthogonality relations and
+the integrated operator divide by that degree. -/
+theorem _root_.Representation.IsIrreducible.finrank_pos [FiniteDimensional k V]
+    {ρ : Representation k G V} (h : ρ.IsIrreducible) : 0 < Module.finrank k V :=
+  have := IsIrreducible.nontrivial h
+  Module.finrank_pos
+
+/-- **The dimension of an irreducible representation is nonzero in the base field.** In
+characteristic zero it is therefore invertible there: this is the scalar the orthogonality
+relations and the integrated operator of an irreducible representation are normalised by. -/
+theorem _root_.Representation.IsIrreducible.natCast_finrank_ne_zero [CharZero k]
+    [FiniteDimensional k V] {ρ : Representation k G V} (h : ρ.IsIrreducible) :
+    (Module.finrank k V : k) ≠ 0 :=
+  Nat.cast_ne_zero.mpr (Representation.IsIrreducible.finrank_pos h).ne'
 
 open scoped MonoidAlgebra in
 /-- **An irreducible representation of a finite monoid is finite-dimensional.** A simple module is
@@ -222,7 +243,7 @@ theorem _root_.Representation.asAlgebraHom_surjective_of_isIrreducible
   have : ρ.IsIrreducible := hρ
   have : IsSimpleModule k[G] ρ.asModule := inferInstance
   have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] ρ.asModule
-  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := IsIrreducible.nontrivial hρ
   have : Module.Finite (Module.End k[G] ρ.asModule) ρ.asModule :=
     finite_end_of_smulCommClass (R := k[G]) (M := ρ.asModule) k
   intro T

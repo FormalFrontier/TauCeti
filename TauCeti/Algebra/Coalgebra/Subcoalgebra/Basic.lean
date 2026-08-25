@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.LinearAlgebra.TensorProduct.RightExactness
 public import Mathlib.RingTheory.Coalgebra.Basic
 
 /-!
@@ -131,20 +132,21 @@ theorem mem_ofSubmodule {D : Submodule R C} {hD} {c : C} :
     c ∈ ofSubmodule (R := R) (C := C) D hD ↔ c ∈ D :=
   Iff.rfl
 
+/-- The comultiplication of any element lies in the tensor square of the top submodule,
+because the inclusion of `⊤` is surjective. -/
+theorem comul_mem_tensorSquare_top (c : C) :
+    Coalgebra.comul (R := R) c ∈
+      LinearMap.range (TensorProduct.map (⊤ : Submodule R C).subtype
+        (⊤ : Submodule R C).subtype) :=
+  LinearMap.mem_range.mpr
+    (TensorProduct.map_surjective (fun c ↦ ⟨⟨c, Submodule.mem_top⟩, rfl⟩)
+      (fun c ↦ ⟨⟨c, Submodule.mem_top⟩, rfl⟩) _)
+
 /-- The full coalgebra as a subcoalgebra. -/
 instance instTop : Top (Subcoalgebra R C) where
   top :=
     { carrier := ⊤
-      comul_mem' := by
-        intro c hc
-        refine TensorProduct.induction_on (Coalgebra.comul (R := R) (A := C) c) ?_ ?_ ?_
-        · exact ⟨0, by simp⟩
-        · intro x y
-          exact ⟨⟨x, Submodule.mem_top⟩ ⊗ₜ[R] ⟨y, Submodule.mem_top⟩, by simp⟩
-        · intro x y hx hy
-          rcases hx with ⟨x', rfl⟩
-          rcases hy with ⟨y', rfl⟩
-          exact ⟨x' + y', by simp⟩ }
+      comul_mem' := fun c _ ↦ comul_mem_tensorSquare_top c }
 
 @[simp]
 theorem top_toSubmodule : (⊤ : Subcoalgebra R C).toSubmodule = (⊤ : Submodule R C) :=

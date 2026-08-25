@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import Mathlib.LinearAlgebra.Matrix.Block
 import TauCeti.CategoryTheory.Comma.Over
@@ -202,9 +201,7 @@ noncomputable abbrev weightParabolicGroupScheme (w : Fin N → ℤ) :=
 /-- The closed immersion from the weight parabolic into the named general linear group scheme. -/
 noncomputable def weightParabolicInclusion (w : Fin N → ℤ) :
     weightParabolicGroupScheme R w ⟶ groupScheme R N :=
-  CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
-      (weightParabolicDefiningHopfIdeal R w) ≫
-    (eqToIso (groupScheme_def R N).symm).hom
+  hopfIdealInclusion R N (weightParabolicDefiningHopfIdeal R w)
 
 /-- The weight-parabolic inclusion is the quotient-spectrum inclusion followed by the named
 identification with `GL_N`. -/
@@ -213,7 +210,7 @@ theorem weightParabolicInclusion_def (w : Fin N → ℤ) :
       CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
           (weightParabolicDefiningHopfIdeal R w) ≫
         (eqToIso (groupScheme_def R N).symm).hom := by
-  rw [weightParabolicInclusion]
+  rw [weightParabolicInclusion, hopfIdealInclusion_def]
 
 /-- The coordinate morphism recovered from the weight-parabolic inclusion is the quotient
 coordinate map. -/
@@ -231,25 +228,11 @@ theorem weightParabolicInclusion_coordinateMap (w : Fin N → ℤ) :
   rw [weightParabolicCoordinateMap]
   simp
 
-private theorem weightParabolicInclusion_hom_left (w : Fin N → ℤ) :
-    (weightParabolicInclusion R w).hom.hom.left =
-      (CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
-          (weightParabolicDefiningHopfIdeal R w)).hom.hom.left ≫
-        ((eqToIso (groupScheme_def R N).symm).hom).hom.hom.left := by
-  rw [weightParabolicInclusion_def]
-  rfl
-
 /-- The weight-parabolic inclusion into `GL_N` is a closed immersion. -/
 instance isClosedImmersion_weightParabolicInclusion (w : Fin N → ℤ) :
     IsClosedImmersion (weightParabolicInclusion R w).hom.hom.left := by
-  let c := (CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R N)
-    (weightParabolicDefiningHopfIdeal R w)).hom.hom.left
-  let e := ((eqToIso (groupScheme_def R N).symm).hom).hom.hom.left
-  have hc : IsClosedImmersion c := by infer_instance
-  have hce : IsClosedImmersion (c ≫ e) :=
-    (MorphismProperty.cancel_right_of_respectsIso _ c e).2 hc
-  rw [weightParabolicInclusion_hom_left]
-  exact hce
+  rw [weightParabolicInclusion]
+  infer_instance
 
 /-- The weight-parabolic coordinate Hopf algebra with its finite-type property. -/
 noncomputable def weightParabolicFiniteTypeCoordinateHopfAlgebra (w : Fin N → ℤ) :
@@ -266,12 +249,8 @@ theorem weightParabolicFiniteTypeCoordinateHopfAlgebra_obj (w : Fin N → ℤ) :
 
 /-- The weight-parabolic group scheme is locally of finite type over the base. -/
 instance locallyOfFiniteType_weightParabolicGroupScheme (w : Fin N → ℤ) :
-    LocallyOfFiniteType (weightParabolicGroupScheme R w).X.hom :=
-  FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
-    (⟨coordinateHopfAlgebra R N,
-      inferInstanceAs (Algebra.FiniteType R (coordinateHopfAlgebra R N))⟩ :
-      FiniteTypeCommHopfAlgCat R)
-    (weightParabolicDefiningHopfIdeal R w)
+    LocallyOfFiniteType (weightParabolicGroupScheme R w).X.hom := by
+  infer_instance
 
 /-- The subgroup cut out by the weight-parabolic ideal consists exactly of block-triangular
 ambient points. -/

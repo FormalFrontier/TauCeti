@@ -48,18 +48,6 @@ namespace Subcoalgebra
 
 open Comodule
 
-private theorem tensorSquare_range_le_regular_range (D : Subcoalgebra R C) :
-    LinearMap.range (TensorProduct.map D.toSubmodule.subtype D.toSubmodule.subtype) ≤
-      LinearMap.range
-        (TensorProduct.map D.toSubmodule.subtype (LinearMap.id : C →ₗ[R] C)) := by
-  rintro _ ⟨t, rfl⟩
-  refine ⟨TensorProduct.map (LinearMap.id : D.toSubmodule →ₗ[R] D.toSubmodule)
-      D.toSubmodule.subtype t, ?_⟩
-  induction t with
-  | zero => simp only [map_zero]
-  | tmul d e => rfl
-  | add x y hx hy => simp only [map_add, hx, hy]
-
 /-- A subcoalgebra as a subcomodule of the regular right comodule.
 
 The underlying submodule is unchanged; the map `D ⊗ D → C ⊗ C` factors through
@@ -68,7 +56,7 @@ The underlying submodule is unchanged; the map `D ⊗ D → C ⊗ C` factors thr
   carrier := D.toSubmodule
   coact_mem' := by
     intro c hc
-    exact tensorSquare_range_le_regular_range D (D.comul_mem hc)
+    exact TensorProduct.range_map_mono le_rfl (by simp) (D.comul_mem hc)
 
 /-- The underlying submodule is unchanged when a subcoalgebra is viewed as a subcomodule of
 the regular comodule. -/
