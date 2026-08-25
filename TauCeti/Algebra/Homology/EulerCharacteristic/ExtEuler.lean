@@ -6,8 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Homology.DerivedCategory.Ext.EnoughProjectives
-public import Mathlib.Algebra.Homology.DerivedCategory.Ext.ExactSequences
-public import Mathlib.Algebra.Homology.DerivedCategory.Ext.Linear
+public import TauCeti.Algebra.Homology.Ext.Basic
 public import TauCeti.LinearAlgebra.Exact
 
 /-!
@@ -46,8 +45,6 @@ The value is defined by truncating the sum to the degrees below an explicit boun
   Layer 5's descent to Grothendieck groups will consume.
 * `TauCeti.truncatedExtEuler` and `TauCeti.extEuler`: the truncated alternating sum, and the
   Ext-Euler characteristic of an Euler-admissible pair.
-* `TauCeti.extLinearEquivOfIso`: the `k`-linear isomorphism `Extⁿ(X, Y) ≃ Extⁿ(X', Y')` induced
-  by isomorphisms `X ≅ X'` and `Y ≅ Y'`.
 
 ## Main results
 
@@ -58,7 +55,8 @@ The value is defined by truncating the sum to the degrees below an explicit boun
 * `TauCeti.IsEulerAdmissible.of_shortExact₂` and
   `TauCeti.IsEulerAdmissible.of_shortExact₂'`: Euler-admissibility is closed under extensions in
   either variable, and `TauCeti.IsEulerAdmissible.biprod`,
-  `TauCeti.IsEulerAdmissible.biprod'` under finite direct sums.
+  `TauCeti.IsEulerAdmissible.biprod'` under binary direct sums; the empty direct sum is covered by
+  `TauCeti.IsEulerAdmissible.of_isZero_left` and `TauCeti.IsEulerAdmissible.of_isZero_right`.
 * `TauCeti.IsExtFinite.finiteDimensional_hom`: Hom-finiteness is the degree-zero consequence of
   `Ext`-finiteness, and is kept as a separate predicate.
 * `TauCeti.extEuler_projective`: **projective evaluation**, `χ(P, Y) = dim_k Hom(P, Y)`.
@@ -173,6 +171,13 @@ theorem IsExtBoundedOn.isExtBounded {P Q : ObjectProperty C} {N : ℕ}
     (h : IsExtBoundedOn.{w} P Q N) {X Y : C} (hX : P X) (hY : Q Y) : IsExtBounded.{w} X Y :=
   (h.isExtBoundedBy hX hY).isExtBounded
 
+/-- A uniform vanishing bound passes to smaller object properties and may always be raised, in
+particular it restricts to full subcategories of the ones considered. -/
+theorem IsExtBoundedOn.mono {P P' Q Q' : ObjectProperty C} {N M : ℕ}
+    (h : IsExtBoundedOn.{w} P Q N) (hP : P' ≤ P) (hQ : Q' ≤ Q) (hNM : N ≤ M) :
+    IsExtBoundedOn.{w} P' Q' M :=
+  ⟨fun _ _ hX hY ↦ (h.isExtBoundedBy (hP _ hX) (hQ _ hY)).mono hNM⟩
+
 /-- Euler-admissibility on a pair of object properties passes to smaller properties, in
 particular to full subcategories of the ones considered. -/
 theorem IsEulerAdmissibleOn.mono {P P' Q Q' : ObjectProperty C}
@@ -241,41 +246,7 @@ theorem extEuler_eq_zero_of_isExtBoundedBy_zero {X Y : C} (h : IsEulerAdmissible
 
 /-! ### Isomorphism invariance -/
 
-variable {X X' Y Y' : C}
-
-/-- Isomorphisms `e : X ≅ X'` and `f : Y ≅ Y'` induce an isomorphism
-`Extⁿ(X, Y) ≃ Extⁿ(X', Y')`, by composing with `e.inv` on the left and with `f.hom` on the right.
-This is the action of an isomorphism through `CategoryTheory.Abelian.extFunctor`, spelled out so
-that `TauCeti.extLinearEquivOfIso` can refine it to a `k`-linear equivalence. -/
-noncomputable def extAddEquivOfIso (e : X ≅ X') (f : Y ≅ Y') (n : ℕ) :
-    Ext.{w} X Y n ≃+ Ext.{w} X' Y' n where
-  toFun x := (Ext.mk₀ e.inv).comp (x.comp (Ext.mk₀ f.hom) (add_zero n)) (zero_add n)
-  invFun y := (Ext.mk₀ e.hom).comp (y.comp (Ext.mk₀ f.inv) (add_zero n)) (zero_add n)
-  left_inv x := by simp
-  right_inv y := by simp
-  map_add' x y := by simp
-
-/-- `TauCeti.extAddEquivOfIso` composes with `e.inv` and `f.hom`. -/
-theorem extAddEquivOfIso_apply (e : X ≅ X') (f : Y ≅ Y') (n : ℕ) (x : Ext.{w} X Y n) :
-    extAddEquivOfIso e f n x =
-      (Ext.mk₀ e.inv).comp (x.comp (Ext.mk₀ f.hom) (add_zero n)) (zero_add n) :=
-  (rfl)
-
-/-- The `k`-linear refinement of `TauCeti.extAddEquivOfIso`: in a `k`-linear abelian category,
-isomorphisms `X ≅ X'` and `Y ≅ Y'` identify `Extⁿ(X, Y)` and `Extⁿ(X', Y')` as `k`-vector
-spaces. -/
-noncomputable def extLinearEquivOfIso (e : X ≅ X') (f : Y ≅ Y') (n : ℕ) :
-    Ext.{w} X Y n ≃ₗ[k] Ext.{w} X' Y' n where
-  __ := extAddEquivOfIso e f n
-  map_smul' r x := by simp [extAddEquivOfIso_apply]
-
-/-- `TauCeti.extLinearEquivOfIso` composes with `e.inv` and `f.hom`. -/
-theorem extLinearEquivOfIso_apply (e : X ≅ X') (f : Y ≅ Y') (n : ℕ) (x : Ext.{w} X Y n) :
-    extLinearEquivOfIso k e f n x =
-      (Ext.mk₀ e.inv).comp (x.comp (Ext.mk₀ f.hom) (add_zero n)) (zero_add n) :=
-  (rfl)
-
-variable {k}
+variable {k} {X X' Y Y' : C}
 
 /-- `Ext`-finiteness only depends on the isomorphism classes of the two objects. -/
 theorem IsExtFinite.of_iso (h : IsExtFinite.{w} k X Y) (e : X ≅ X') (f : Y ≅ Y') :
@@ -311,68 +282,6 @@ theorem extEuler_of_iso (h : IsEulerAdmissible.{w} k X Y)
 /-! ### Closure under extensions and finite direct sums -/
 
 variable {S : ShortComplex C}
-
-/-- Exactness of `Extⁿ(X, S.X₁) → Extⁿ(X, S.X₂) → Extⁿ(X, S.X₃)` at the middle term, for a short
-exact sequence `S`. This is `CategoryTheory.Abelian.Ext.covariant_sequence_exact₂` packaged as a
-`Function.Exact` statement about the postcomposition maps. -/
-theorem exact_postcomp (hS : S.ShortExact) (X : C) (n : ℕ) :
-    Function.Exact (Ext.postcomp (Ext.mk₀ S.f) X (add_zero n))
-      (Ext.postcomp (Ext.mk₀ S.g) X (add_zero n)) := fun x₂ ↦
-  ⟨fun hx ↦ Ext.covariant_sequence_exact₂ X hS x₂ hx, by
-    rintro ⟨x₁, rfl⟩
-    simp [S.zero]⟩
-
-/-- Exactness of `Extⁿ(S.X₃, Y) → Extⁿ(S.X₂, Y) → Extⁿ(S.X₁, Y)` at the middle term, for a short
-exact sequence `S`. This is `CategoryTheory.Abelian.Ext.contravariant_sequence_exact₂` packaged as
-a `Function.Exact` statement about the precomposition maps. -/
-theorem exact_precomp (hS : S.ShortExact) (Y : C) (n : ℕ) :
-    Function.Exact (Ext.precomp (Ext.mk₀ S.g) Y (zero_add n))
-      (Ext.precomp (Ext.mk₀ S.f) Y (zero_add n)) := fun x₂ ↦
-  ⟨fun hx ↦ Ext.contravariant_sequence_exact₂ hS Y x₂ hx, by
-    rintro ⟨x₃, rfl⟩
-    simp [S.zero]⟩
-
-/-- The linear postcomposition map agrees pointwise with `Ext.postcomp`. -/
-theorem postcompOfLinear_apply (R : Type t) [CommRing R] [Linear R C]
-    {Y Z : C} {n a b : ℕ} (beta : Ext.{w} Y Z n) (X : C)
-    (h : a + n = b) (x : Ext.{w} X Y a) :
-    Ext.postcompOfLinear beta R X h x = Ext.postcomp beta X h x :=
-  rfl
-
-/-- The linear precomposition map agrees pointwise with `Ext.precomp`. -/
-theorem precompOfLinear_apply (R : Type t) [CommRing R] [Linear R C]
-    {X Y : C} {n a b : ℕ} (alpha : Ext.{w} X Y n) (Z : C)
-    (h : n + a = b) (x : Ext.{w} Y Z a) :
-    Ext.precompOfLinear alpha R Z h x = Ext.precomp alpha Z h x :=
-  rfl
-
-variable (k)
-
-/-- The `k`-linear form of `TauCeti.exact_postcomp`. -/
-theorem exact_postcompOfLinear (hS : S.ShortExact) (X : C) (n : ℕ) :
-    Function.Exact (Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero n))
-      (Ext.postcompOfLinear (Ext.mk₀ S.g) k X (add_zero n)) := by
-  rw [show ⇑(Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero n)) =
-      Ext.postcomp (Ext.mk₀ S.f) X (add_zero n) from
-    funext fun x ↦ postcompOfLinear_apply k _ _ _ x]
-  rw [show ⇑(Ext.postcompOfLinear (Ext.mk₀ S.g) k X (add_zero n)) =
-      Ext.postcomp (Ext.mk₀ S.g) X (add_zero n) from
-    funext fun x ↦ postcompOfLinear_apply k _ _ _ x]
-  exact exact_postcomp hS X n
-
-/-- The `k`-linear form of `TauCeti.exact_precomp`. -/
-theorem exact_precompOfLinear (hS : S.ShortExact) (Y : C) (n : ℕ) :
-    Function.Exact (Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add n))
-      (Ext.precompOfLinear (Ext.mk₀ S.f) k Y (zero_add n)) := by
-  rw [show ⇑(Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add n)) =
-      Ext.precomp (Ext.mk₀ S.g) Y (zero_add n) from
-    funext fun x ↦ precompOfLinear_apply k _ _ _ x]
-  rw [show ⇑(Ext.precompOfLinear (Ext.mk₀ S.f) k Y (zero_add n)) =
-      Ext.precomp (Ext.mk₀ S.f) Y (zero_add n) from
-    funext fun x ↦ precompOfLinear_apply k _ _ _ x]
-  exact exact_precomp hS Y n
-
-variable {k}
 
 /-- **Extension closure in the second variable** for `Ext`-finiteness. -/
 theorem IsExtFinite.of_shortExact₂ (hS : S.ShortExact) {X : C} (h₁ : IsExtFinite.{w} k X S.X₁)
@@ -436,6 +345,29 @@ theorem IsEulerAdmissible.biprod' {X₁ X₂ Y : C} (h₁ : IsEulerAdmissible.{w
   IsEulerAdmissible.of_shortExact₂' (ShortComplex.Splitting.ofHasBinaryBiproduct X₁ X₂).shortExact
     h₁ h₂
 
+variable (k)
+
+/-- A zero object is Euler-admissible against every object: all of its `Ext` groups vanish. This
+is the empty case of `TauCeti.IsEulerAdmissible.biprod'`, the direct sum of no objects being a
+zero object. -/
+theorem IsEulerAdmissible.of_isZero_left {X Y : C} (hX : IsZero X) :
+    IsEulerAdmissible.{w} k X Y := by
+  have hb : IsExtBoundedBy.{w} X Y 0 := ⟨fun n _ ↦ subsingleton_ext_of_isZero_left hX Y n⟩
+  refine ⟨⟨fun n ↦ ?_⟩, hb.isExtBounded⟩
+  have : Subsingleton (Ext.{w} X Y n) := subsingleton_ext_of_isZero_left hX Y n
+  infer_instance
+
+/-- Every object is Euler-admissible against a zero object. This is the empty case of
+`TauCeti.IsEulerAdmissible.biprod`. -/
+theorem IsEulerAdmissible.of_isZero_right {X Y : C} (hY : IsZero Y) :
+    IsEulerAdmissible.{w} k X Y := by
+  have hb : IsExtBoundedBy.{w} X Y 0 := ⟨fun n _ ↦ subsingleton_ext_of_isZero_right X hY n⟩
+  refine ⟨⟨fun n ↦ ?_⟩, hb.isExtBounded⟩
+  have : Subsingleton (Ext.{w} X Y n) := subsingleton_ext_of_isZero_right X hY n
+  infer_instance
+
+variable {k}
+
 /-! ### Projective evaluation -/
 
 /-- All `Ext` groups of positive degree out of a projective object vanish, so a pair with
@@ -480,8 +412,8 @@ theorem extEuler_projective {P Y : C} [Projective P]
     truncatedExtEuler_zero, (Ext.linearEquiv₀ (R := k) (X := P) (Y := Y)).finrank_eq]
   simp
 
-/-- Hom-finite projectives are Euler-admissible against every object: this is the concrete source
-of Euler-admissibility on the projective side, and it is what makes
+/-- Hom-finite projectives are Euler-admissible against every object satisfying `Q`: this is the
+concrete source of Euler-admissibility on the projective side, and it is what makes
 `TauCeti.IsEulerAdmissibleOn` a nonempty hypothesis. -/
 theorem isEulerAdmissibleOn_of_projective {P Q : ObjectProperty C} (hP : ∀ X, P X → Projective X)
     (hHom : ∀ ⦃X Y : C⦄, P X → Q Y → FiniteDimensional k (X ⟶ Y)) :

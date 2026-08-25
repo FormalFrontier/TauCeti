@@ -11,8 +11,8 @@ public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 # Finiteness consequences of exact sequences
 
 This file records two elementary consequences of exactness at the middle term: finite-dimensional
-outer vector spaces force the middle vector space to be finite-dimensional, and trivial outer
-types force the middle additive group to be trivial.
+outer vector spaces (over a division ring) force the middle vector space to be finite-dimensional,
+and trivial outer types force the middle additive group to be trivial.
 -/
 
 public section
@@ -24,8 +24,9 @@ is `N`.
 
 This is deduced from `Module.Finite.of_exact`, which asks the second map to be surjective, by
 corestricting `g` to its range. -/
-theorem finiteDimensional_of_exact {k M N P : Type*} [Field k] [AddCommGroup M] [Module k M]
-    [AddCommGroup N] [Module k N] [AddCommGroup P] [Module k P] {f : M →ₗ[k] N} {g : N →ₗ[k] P}
+theorem finiteDimensional_of_exact {k M N P : Type*} [DivisionRing k] [AddCommGroup M]
+    [Module k M] [AddCommGroup N] [Module k N] [AddCommGroup P] [Module k P] {f : M →ₗ[k] N}
+    {g : N →ₗ[k] P}
     (h : Function.Exact f g) [FiniteDimensional k M] [FiniteDimensional k P] :
     FiniteDimensional k N :=
   Module.Finite.of_exact (g := g.rangeRestrict)
