@@ -54,8 +54,8 @@ fields is Kummer theory over `ℚ` and is not formalised here.
   the fixed field `F` of `H` at every prime of `𝓞 F`, then the exponent of `G` divides `H.index`,
   which is `Module.finrank ℚ F` by `IsGaloisGroup.index_eq_finrank` (in
   `TauCeti/FieldTheory/Galois/IsGaloisGroup.lean`).
-* `TauCeti.Multiquadratic.aut_exponent_dvd_finrank_of_unramified`: the resulting degree bound for
-  the automorphism group of an abelian number-field extension and an arbitrary intermediate field.
+* `NumberField.aut_exponent_dvd_finrank_of_isUnramifiedIn`: the resulting degree bound for the
+  automorphism group of an abelian number-field extension and an arbitrary intermediate field.
 
 ## References
 
@@ -203,7 +203,7 @@ end Unramified
 
 end NumberField
 
-namespace TauCeti.Multiquadratic
+namespace NumberField
 
 open scoped IsMulCommutative NumberField
 
@@ -212,7 +212,7 @@ variable {M : Type*} [Field M] [NumberField M] [IsAbelianGalois ℚ M]
 /-- **An abelian extension unramified over a subfield has exponent dividing its degree.**
 Let `M / ℚ` be an abelian number-field extension and let `F ⊆ M`. If every finite prime of `F`
 is unramified in `M`, then `Monoid.exponent Gal(M/ℚ) ∣ [F : ℚ]`. -/
-theorem aut_exponent_dvd_finrank_of_unramified (F : IntermediateField ℚ M)
+theorem aut_exponent_dvd_finrank_of_isUnramifiedIn (F : IntermediateField ℚ M)
     (hunr : ∀ q : Ideal (𝓞 F), q.IsPrime → q ≠ ⊥ → Algebra.IsUnramifiedIn (𝓞 M) q) :
     Monoid.exponent (M ≃ₐ[ℚ] M) ∣ Module.finrank ℚ F := by
   let _ : NumberField F := NumberField.of_intermediateField F
@@ -227,4 +227,4 @@ theorem aut_exponent_dvd_finrank_of_unramified (F : IntermediateField ℚ M)
   rw [IsGaloisGroup.index_eq_finrank H ℚ F M] at hpow
   exact hpow
 
-end TauCeti.Multiquadratic
+end NumberField
