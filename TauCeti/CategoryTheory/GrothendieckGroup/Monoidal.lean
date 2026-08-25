@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Ring.Associator
 public import Mathlib.CategoryTheory.Monoidal.Braided.Basic
 public import Mathlib.CategoryTheory.Monoidal.Preadditive
 public import TauCeti.CategoryTheory.GrothendieckGroup.Split
@@ -26,13 +27,14 @@ Sending `X` to that endomorphism is itself an isomorphism-invariant, biproduct-a
 of `X` -- additivity in `X` is `TauCeti.SplitK0.map` applied to tensoring on the *right* -- so it
 descends to `TauCeti.SplitK0.mulHom`, a biadditive multiplication with
 `[X] * [Y] = [X ⊗ Y]`. Distributivity is then automatic, and the remaining ring axioms are the
-associator, the unitors, and the braiding, checked on classes of objects by
-`TauCeti.SplitK0.induction_on`.
+associator, the unitors, and the braiding: each of them is an equality of bundled additive maps, so
+it is checked on the classes of objects by `TauCeti.SplitK0.hom_ext`.
 
 The multiplication is *not* obtained by a second presentation: no new relation is imposed, and the
 underlying additive group is unchanged. In particular a biproduct-additive invariant into a ring
-becomes a ring homomorphism exactly when it is multiplicative on classes of objects, which is how
-character-style invariants are recognized.
+becomes a ring homomorphism `TauCeti.SplitK0.liftRingHom` exactly when it sends the tensor unit to
+`1` and is multiplicative on the classes of objects, which is how character-style invariants are
+recognized.
 
 This is the ring structure the representation ring `R(G)` of a finite group carries. Split `K₀`
 is the right home for it: the Grothendieck group of a semisimple category, such as the
@@ -47,6 +49,8 @@ which is a separate matter and is not proved here; nothing below assumes semisim
 * `TauCeti.SplitK0.mulHom C`: multiplication on split `K₀`, as a biadditive map.
 * `TauCeti.SplitK0.instRing` and `TauCeti.SplitK0.instCommRing`: the ring structure, commutative
   for a braided category.
+* `TauCeti.SplitK0.liftRingHom`: the ring homomorphism induced by a multiplicative, unit-preserving
+  biproduct-additive invariant.
 * `TauCeti.SplitK0.mapRingHom`: the ring homomorphism induced by a monoidal additive functor.
 
 ## Main results
@@ -55,21 +59,24 @@ which is a separate matter and is not proved here; nothing below assumes semisim
   `TauCeti.SplitK0.one_def`: the unit is the class of the tensor unit.
 * `TauCeti.SplitK0.ringHom_ext`: two ring homomorphisms out of split `K₀` agreeing on the classes
   of objects are equal.
+* `TauCeti.SplitK0.mapRingHom_id` and `TauCeti.SplitK0.mapRingHom_comp`: the induced ring
+  homomorphism is functorial.
 
 ## Implementation notes
 
 `TauCeti.SplitK0.mulHom` is stated as a bundled `SplitK0 C →+ SplitK0 C →+ SplitK0 C` rather than
 as a bare function, because biadditivity is exactly what makes the ring axioms checkable on the
-classes of objects: each of associativity, commutativity, and multiplicativity of an induced map
-is proved by `TauCeti.SplitK0.induction_on` in each variable in turn, the additive steps being
-handled by the two distributive laws.
+classes of objects: associativity, commutativity, and multiplicativity of an induced map are each
+an equality of bundled maps, so `TauCeti.SplitK0.hom_ext` reduces them to the classes of objects
+with no additive bookkeeping left to do.
 
 The `Mul` and `One` instances are installed before the `Ring` instance so that the axioms can be
 stated in the usual notation; the `Ring` instance reuses them rather than introducing new
-operations. The axioms themselves are therefore stated and proved before the `Ring` instance
-exists, which is why they are `protected` declarations named after the ring axioms they discharge:
-once the instance is in place the general lemmas `mul_assoc`, `one_mul`, ... are the ones to use,
-and the `TauCeti.SplitK0`-qualified names are only the input to the instance.
+operations. Distributivity alone stages a private `NonUnitalNonAssocRing` structure, which is what
+makes Mathlib's bundled `AddMonoidHom.mulLeft₃`, `AddMonoidHom.mulRight₃` and `AddMonoidHom.mul`
+applicable to the remaining axioms. No axiom witness is exported under a `TauCeti.SplitK0` name:
+each is a field of the instance it discharges, so the general lemmas `mul_assoc`, `one_mul`, ...
+are the only ones to use.
 
 ## References
 
@@ -86,7 +93,7 @@ namespace TauCeti
 
 open CategoryTheory CategoryTheory.Limits CategoryTheory.MonoidalCategory
 
-universe w w' v v' u u'
+universe w w' w'' v v' v'' u u' u''
 
 namespace SplitK0
 
@@ -121,14 +128,14 @@ lemma mulLeft_biprod (X Y : C) :
 variable (C) in
 /-- Tensoring on the left is a biproduct-additive invariant of the left factor: this is the datum
 that descends the tensor product to a multiplication on split `K₀`. -/
-noncomputable def mulInvariant : AdditiveInvariant C (SplitK0 C →+ SplitK0 C) where
+private noncomputable def mulInvariant : AdditiveInvariant C (SplitK0 C →+ SplitK0 C) where
   obj := mulLeft
   map_iso _ _ e := mulLeft_congr e
   map_biprod := mulLeft_biprod
 
 /-- The invariant `TauCeti.SplitK0.mulInvariant` takes an object to tensoring on the left by it. -/
 @[simp]
-lemma mulInvariant_obj (X : C) : (mulInvariant C).obj X = mulLeft X := (rfl)
+private lemma mulInvariant_obj (X : C) : (mulInvariant C).obj X = mulLeft X := (rfl)
 
 variable (C) in
 /-- Multiplication on split `K₀`, as a biadditive map. -/
@@ -161,92 +168,67 @@ classes. -/
 theorem of_mul_of (X Y : C) : (of X : SplitK0 C) * of Y = of (X ⊗ Y) := by
   rw [mul_def, mulHom_of, mulLeft_of]
 
-/-! ### The ring axioms
+/-! ### The ring structure
 
-Distributivity is additivity of `TauCeti.SplitK0.mulHom` in each variable; the remaining axioms
-are proved on the classes of objects and propagated by it. -/
+Distributivity is additivity of `TauCeti.SplitK0.mulHom` in each variable; it already stages a
+`NonUnitalNonAssocRing` structure. The remaining axioms are then equalities of the bundled maps
+`AddMonoidHom.mulLeft₃`, `AddMonoidHom.mulRight₃` and `AddMonoidHom.mul`, so
+`TauCeti.SplitK0.hom_ext` reduces them to the classes of objects. -/
 
-/-- The product distributes over sums in the right factor. -/
-protected theorem mul_add (a b c : SplitK0 C) : a * (b + c) = a * b + a * c :=
-  map_add (mulHom C a) b c
+/-- Split `K₀` with the multiplication descended from the tensor product, before associativity and
+the unit are available: each field is additivity of `TauCeti.SplitK0.mulHom` in one of its two
+variables. This staging structure is what makes Mathlib's bundled multiplications
+`AddMonoidHom.mulLeft₃`, `AddMonoidHom.mulRight₃` and `AddMonoidHom.mul` applicable, so that the
+remaining ring axioms become equalities of additive maps. It is private, and the `Ring` instance
+below therefore repeats its four one-line field proofs rather than extending it: the module system
+exposes the value of an instance, which a private declaration may not enter. -/
+@[reducible]
+private noncomputable def nonUnitalNonAssocRing : NonUnitalNonAssocRing (SplitK0 C) where
+  left_distrib a b c := map_add (mulHom C a) b c
+  right_distrib a b c := by rw [mul_def, mul_def, mul_def, map_add, AddMonoidHom.add_apply]
+  zero_mul a := by rw [mul_def, map_zero, AddMonoidHom.zero_apply]
+  mul_zero a := map_zero (mulHom C a)
 
-/-- The product distributes over sums in the left factor. -/
-protected theorem add_mul (a b c : SplitK0 C) : (a + b) * c = a * c + b * c := by
-  rw [mul_def, mul_def, mul_def, map_add]
-  rfl
+section Associativity
 
-/-- Negating the right factor negates the product. -/
-protected theorem mul_neg (a b : SplitK0 C) : a * -b = -(a * b) :=
-  map_neg (mulHom C a) b
+attribute [local instance] nonUnitalNonAssocRing
 
-/-- Negating the left factor negates the product. -/
-protected theorem neg_mul (a b : SplitK0 C) : -a * b = -(a * b) := by
-  rw [mul_def, mul_def, map_neg]
-  rfl
+/-- Associativity of the tensor multiplication, as the equality of the two bundled triple products:
+this is the associator of `C`, and `TauCeti.SplitK0.hom_ext` reduces the equality to the classes of
+objects. -/
+private theorem mulLeft₃_eq_mulRight₃ :
+    (AddMonoidHom.mulLeft₃ : SplitK0 C →+ _) = AddMonoidHom.mulRight₃ := by
+  refine hom_ext fun X => hom_ext fun Y => hom_ext fun Z => ?_
+  simp only [AddMonoidHom.mulLeft₃_apply, AddMonoidHom.mulRight₃_apply, of_mul_of]
+  exact of_congr (α_ X Y Z)
 
-/-- The product with `0` on the right vanishes. -/
-protected theorem mul_zero (a : SplitK0 C) : a * 0 = 0 :=
-  map_zero (mulHom C a)
-
-/-- The product with `0` on the left vanishes. -/
-protected theorem zero_mul (a : SplitK0 C) : 0 * a = 0 := by
-  rw [mul_def, map_zero]
-  rfl
-
-private theorem mul_assoc_of_of (X Y : C) (c : SplitK0 C) :
-    (of X : SplitK0 C) * of Y * c = of X * (of Y * c) := by
-  induction c using SplitK0.induction_on with
-  | zero => simp only [SplitK0.mul_zero]
-  | of Z => rw [of_mul_of, of_mul_of, of_mul_of, of_mul_of, of_congr (α_ X Y Z)]
-  | add p q hp hq => rw [SplitK0.mul_add, SplitK0.mul_add, SplitK0.mul_add, hp, hq]
-  | neg p hp => rw [SplitK0.mul_neg, SplitK0.mul_neg, SplitK0.mul_neg, hp]
-
-private theorem mul_assoc_of (X : C) (b c : SplitK0 C) :
-    (of X : SplitK0 C) * b * c = of X * (b * c) := by
-  induction b using SplitK0.induction_on with
-  | zero => simp only [SplitK0.mul_zero, SplitK0.zero_mul]
-  | of Y => exact mul_assoc_of_of X Y c
-  | add p q hp hq =>
-      rw [SplitK0.mul_add, SplitK0.add_mul, SplitK0.add_mul, hp, hq, SplitK0.mul_add]
-  | neg p hp => rw [SplitK0.mul_neg, SplitK0.neg_mul, SplitK0.neg_mul, hp, SplitK0.mul_neg]
-
-/-- The product is associative; this is the associator of `C`, propagated by biadditivity. -/
-protected theorem mul_assoc (a b c : SplitK0 C) : a * b * c = a * (b * c) := by
-  induction a using SplitK0.induction_on with
-  | zero => simp only [SplitK0.zero_mul]
-  | of X => exact mul_assoc_of X b c
-  | add p q hp hq => rw [SplitK0.add_mul, SplitK0.add_mul, SplitK0.add_mul, hp, hq]
-  | neg p hp => rw [SplitK0.neg_mul, SplitK0.neg_mul, SplitK0.neg_mul, hp]
-
-/-- The class of the tensor unit is a left unit; this is the left unitor of `C`. -/
-protected theorem one_mul (a : SplitK0 C) : 1 * a = a := by
-  induction a using SplitK0.induction_on with
-  | zero => simp only [SplitK0.mul_zero]
-  | of X => rw [one_def, of_mul_of, of_congr (λ_ X)]
-  | add p q hp hq => rw [SplitK0.mul_add, hp, hq]
-  | neg p hp => rw [SplitK0.mul_neg, hp]
-
-/-- The class of the tensor unit is a right unit; this is the right unitor of `C`. -/
-protected theorem mul_one (a : SplitK0 C) : a * 1 = a := by
-  induction a using SplitK0.induction_on with
-  | zero => simp only [SplitK0.zero_mul]
-  | of X => rw [one_def, of_mul_of, of_congr (ρ_ X)]
-  | add p q hp hq => rw [SplitK0.add_mul, hp, hq]
-  | neg p hp => rw [SplitK0.neg_mul, hp]
+end Associativity
 
 /-- The tensor product makes the split Grothendieck group of a monoidal additive category a ring,
-with `[X] * [Y] = [X ⊗ Y]` and unit the class of the tensor unit. -/
+with `[X] * [Y] = [X ⊗ Y]` and unit the class of the tensor unit. Associativity is the associator
+of `C` and the unit laws are its unitors: each is an equality of bundled additive maps, so
+`TauCeti.SplitK0.hom_ext` reduces it to the classes of objects. -/
 noncomputable instance instRing : Ring (SplitK0 C) where
   __ := (inferInstance : AddCommGroup (SplitK0 C))
-  mul a b := a * b
-  one := 1
-  left_distrib := SplitK0.mul_add
-  right_distrib := SplitK0.add_mul
-  zero_mul := SplitK0.zero_mul
-  mul_zero := SplitK0.mul_zero
-  mul_assoc := SplitK0.mul_assoc
-  one_mul := SplitK0.one_mul
-  mul_one := SplitK0.mul_one
+  left_distrib a b c := map_add (mulHom C a) b c
+  right_distrib a b c := by rw [mul_def, mul_def, mul_def, map_add, AddMonoidHom.add_apply]
+  zero_mul a := by rw [mul_def, map_zero, AddMonoidHom.zero_apply]
+  mul_zero a := map_zero (mulHom C a)
+  mul_assoc a b c := by
+    simpa only [AddMonoidHom.mulLeft₃_apply, AddMonoidHom.mulRight₃_apply] using
+      DFunLike.congr_fun (DFunLike.congr_fun (DFunLike.congr_fun mulLeft₃_eq_mulRight₃ a) b) c
+  one_mul a := by
+    suffices h : mulHom C 1 = AddMonoidHom.id (SplitK0 C) by
+      rw [mul_def, h, AddMonoidHom.id_apply]
+    refine hom_ext fun X => ?_
+    rw [one_def, mulHom_of, mulLeft_of, AddMonoidHom.id_apply]
+    exact of_congr (λ_ X)
+  mul_one a := by
+    suffices h : (mulHom C).flip 1 = AddMonoidHom.id (SplitK0 C) by
+      rw [mul_def, ← AddMonoidHom.flip_apply, h, AddMonoidHom.id_apply]
+    refine hom_ext fun X => ?_
+    rw [AddMonoidHom.flip_apply, one_def, mulHom_of, mulLeft_of, AddMonoidHom.id_apply]
+    exact of_congr (ρ_ X)
 
 /-- Two ring homomorphisms out of split `K₀` agreeing on the classes of objects are equal. The
 target is a ring rather than a semiring: split `K₀` is generated by the classes of objects as a
@@ -257,6 +239,44 @@ theorem ringHom_ext {R : Type*} [NonAssocRing R] {f g : SplitK0 C →+* R}
   have hfg : (f : SplitK0 C →+ R) = (g : SplitK0 C →+ R) := hom_ext h
   exact RingHom.coe_addMonoidHom_injective hfg
 
+section Lift
+
+variable {R : Type*} [NonAssocRing R] (a : AdditiveInvariant C R) (hone : a.obj (𝟙_ C) = 1)
+  (hmul : ∀ X Y : C, a.obj (X ⊗ Y) = a.obj X * a.obj Y)
+
+/-- The ring homomorphism out of split `K₀` induced by a biproduct-additive invariant which sends
+the tensor unit to `1` and is multiplicative on tensor products. With
+`TauCeti.SplitK0.ringHom_ext` for uniqueness, this is the universal property of split `K₀` as a
+ring: it is what promotes a multiplicative invariant, such as a character, to a ring homomorphism.
+The target is a ring rather than a semiring because a `TauCeti.SplitK0.AdditiveInvariant` takes
+values in an additive *group*. -/
+noncomputable def liftRingHom : SplitK0 C →+* R where
+  toFun := lift a
+  map_zero' := map_zero (lift a)
+  map_add' := map_add (lift a)
+  map_one' := by
+    rw [one_def, lift_of]
+    exact hone
+  map_mul' := by
+    rw [AddMonoidHom.map_mul_iff]
+    refine hom_ext fun X => hom_ext fun Y => ?_
+    simp only [AddMonoidHom.compr₂_apply, AddMonoidHom.mul_apply, AddMonoidHom.compl₂_apply,
+      AddMonoidHom.comp_apply, of_mul_of, lift_of]
+    exact hmul X Y
+
+/-- The induced ring homomorphism takes the class of an object to the value of the invariant. -/
+@[simp]
+lemma liftRingHom_of (X : C) : liftRingHom a hone hmul (of X) = a.obj X :=
+  lift_of a X
+
+/-- The additive homomorphism underlying `TauCeti.SplitK0.liftRingHom` is the additive lift of the
+invariant. -/
+@[simp]
+lemma liftRingHom_toAddMonoidHom :
+    ((liftRingHom a hone hmul : SplitK0 C →+* R) : SplitK0 C →+ R) = lift a := (rfl)
+
+end Lift
+
 end Ring
 
 section CommRing
@@ -264,26 +284,19 @@ section CommRing
 variable {C : Type u} [Category.{v} C] [Preadditive C] [MonoidalCategory C]
   [MonoidalPreadditive C] [BraidedCategory C] [HasBinaryBiproducts C] [EssentiallySmall.{w} C]
 
-private theorem mul_comm_of (X : C) (b : SplitK0 C) :
-    (of X : SplitK0 C) * b = b * of X := by
-  induction b using SplitK0.induction_on with
-  | zero => simp only [SplitK0.mul_zero, SplitK0.zero_mul]
-  | of Y => rw [of_mul_of, of_mul_of, of_congr (β_ X Y)]
-  | add p q hp hq => rw [SplitK0.mul_add, SplitK0.add_mul, hp, hq]
-  | neg p hp => rw [SplitK0.mul_neg, SplitK0.neg_mul, hp]
-
-/-- The product is commutative; this is the braiding of `C`, propagated by biadditivity. -/
-protected theorem mul_comm (a b : SplitK0 C) : a * b = b * a := by
-  induction a using SplitK0.induction_on with
-  | zero => simp only [SplitK0.zero_mul, SplitK0.mul_zero]
-  | of X => exact mul_comm_of X b
-  | add p q hp hq => rw [SplitK0.add_mul, SplitK0.mul_add, hp, hq]
-  | neg p hp => rw [SplitK0.neg_mul, SplitK0.mul_neg, hp]
-
-/-- For a braided monoidal additive category the ring structure on split `K₀` is commutative. -/
+/-- For a braided monoidal additive category the ring structure on split `K₀` is commutative:
+commutativity is the equality of `AddMonoidHom.mul` with its flip, which `TauCeti.SplitK0.hom_ext`
+reduces to the braiding of `C`. -/
 noncomputable instance instCommRing : CommRing (SplitK0 C) where
   __ := instRing
-  mul_comm := SplitK0.mul_comm
+  mul_comm a b := by
+    suffices h : (AddMonoidHom.mul : SplitK0 C →+ SplitK0 C →+ SplitK0 C) = AddMonoidHom.mul.flip by
+      simpa only [AddMonoidHom.flip_apply, AddMonoidHom.mul_apply] using
+        DFunLike.congr_fun (DFunLike.congr_fun h a) b
+    refine hom_ext fun X => hom_ext fun Y => ?_
+    rw [AddMonoidHom.flip_apply, AddMonoidHom.mul_apply, AddMonoidHom.mul_apply, of_mul_of,
+      of_mul_of]
+    exact of_congr (β_ X Y)
 
 end CommRing
 
@@ -294,25 +307,16 @@ variable {C : Type u} [Category.{v} C] [Preadditive C] [MonoidalCategory C]
   {D : Type u'} [Category.{v'} D] [Preadditive D] [MonoidalCategory D]
   [MonoidalPreadditive D] [HasBinaryBiproducts D] [EssentiallySmall.{w'} D]
 
-private theorem map_mul_of_of (F : C ⥤ D) [F.Additive] [F.Monoidal] (X Y : C) :
-    map F ((of X : SplitK0 C) * of Y) = map F (of X) * map F (of Y) := by
-  rw [of_mul_of, map_of, map_of, map_of, of_mul_of, of_congr (Functor.Monoidal.μIso F X Y)]
-
-private theorem map_mul_of (F : C ⥤ D) [F.Additive] [F.Monoidal] (X : C) (b : SplitK0 C) :
-    map F ((of X : SplitK0 C) * b) = map F (of X) * map F b := by
-  induction b using SplitK0.induction_on with
-  | zero => simp only [SplitK0.mul_zero, map_zero]
-  | of Y => exact map_mul_of_of F X Y
-  | add p q hp hq => rw [SplitK0.mul_add, map_add, hp, hq, map_add, SplitK0.mul_add]
-  | neg p hp => rw [SplitK0.mul_neg, map_neg, hp, map_neg, SplitK0.mul_neg]
-
+/-- An additive functorial map is multiplicative; this is the comparison isomorphism
+`CategoryTheory.Functor.Monoidal.μIso`, transported along `hom_ext`. -/
 private theorem map_mul' (F : C ⥤ D) [F.Additive] [F.Monoidal] (a b : SplitK0 C) :
     map F (a * b) = map F a * map F b := by
-  induction a using SplitK0.induction_on with
-  | zero => simp only [SplitK0.zero_mul, map_zero]
-  | of X => exact map_mul_of F X b
-  | add p q hp hq => rw [SplitK0.add_mul, map_add, hp, hq, map_add, SplitK0.add_mul]
-  | neg p hp => rw [SplitK0.neg_mul, map_neg, hp, map_neg, SplitK0.neg_mul]
+  revert a b
+  rw [AddMonoidHom.map_mul_iff]
+  refine hom_ext fun X => hom_ext fun Y => ?_
+  simp only [AddMonoidHom.compr₂_apply, AddMonoidHom.mul_apply, AddMonoidHom.compl₂_apply,
+    AddMonoidHom.comp_apply, of_mul_of, map_of]
+  exact of_congr (Functor.Monoidal.μIso F X Y).symm
 
 /-- The ring homomorphism of split Grothendieck groups induced by a monoidal additive functor. -/
 noncomputable def mapRingHom (F : C ⥤ D) [F.Additive] [F.Monoidal] :
@@ -336,6 +340,28 @@ lemma mapRingHom_of (F : C ⥤ D) [F.Additive] [F.Monoidal] (X : C) :
 lemma mapRingHom_toAddMonoidHom (F : C ⥤ D) [F.Additive] [F.Monoidal] :
     ((mapRingHom F : SplitK0 C →+* SplitK0 D) : SplitK0 C →+ SplitK0 D) = map F :=
   (rfl)
+
+/-- `TauCeti.SplitK0.mapRingHom` sends the identity functor to the identity ring homomorphism. -/
+@[simp]
+lemma mapRingHom_id : mapRingHom (𝟭 C) = RingHom.id (SplitK0 C) :=
+  ringHom_ext fun X => by rw [mapRingHom_of, RingHom.id_apply, Functor.id_obj]
+
+/-- `TauCeti.SplitK0.mapRingHom` sends a composite of monoidal additive functors to the composite
+ring homomorphism. -/
+@[simp]
+lemma mapRingHom_comp {E : Type u''} [Category.{v''} E] [Preadditive E] [MonoidalCategory E]
+    [MonoidalPreadditive E] [HasBinaryBiproducts E] [EssentiallySmall.{w''} E] (F : C ⥤ D)
+    (G : D ⥤ E) [F.Additive] [G.Additive] [F.Monoidal] [G.Monoidal] :
+    mapRingHom (F ⋙ G) = (mapRingHom G).comp (mapRingHom F) :=
+  ringHom_ext fun X => by
+    rw [mapRingHom_of, RingHom.coe_comp, Function.comp_apply, mapRingHom_of, mapRingHom_of,
+      Functor.comp_obj]
+
+/-- Objectwise isomorphic monoidal additive functors induce the same ring homomorphism; in
+particular naturally isomorphic ones do. -/
+lemma mapRingHom_congr {F G : C ⥤ D} [F.Additive] [G.Additive] [F.Monoidal] [G.Monoidal]
+    (h : ∀ X : C, Nonempty (F.obj X ≅ G.obj X)) : mapRingHom F = mapRingHom G :=
+  ringHom_ext fun X => by rw [mapRingHom_of, mapRingHom_of, of_congr (h X).some]
 
 end Functoriality
 
