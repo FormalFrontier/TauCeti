@@ -246,8 +246,10 @@ jobs:
       # TauCeti modules, and the doc-gen4 step it feeds was 82% of the whole workflow. The
       # cache holds exactly those artifacts and this job was the only one not using it.
       #
-      # Restored into the root project, not docbuild: docbuild requires TauCeti by path and
-      # shares the parent's package directory, so the artifacts it needs live in ../.lake.
+      # Restored into the root project, not docbuild. `packagesDir` is why docbuild shares
+      # the parent's *dependencies* (Mathlib), but it is not why TauCeti's own build products
+      # live in ../.lake: a path dependency builds in its own directory, which for `path = "../"`
+      # is the repository root. That is the tree these artifacts belong to.
       - name: Configure the Lake artifact cache (no-op unless the public endpoints are set)
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
@@ -355,6 +357,12 @@ jobs:
 
       - name: Build examples project (checks the showcased TauCeti theorems)
         working-directory: web/examples
+        env:
+          # The artifact-cache settings above are written to GITHUB_ENV and so reach every
+          # later step, this one included. It is a different project against a different
+          # cache directory, so give it the same rule as the docs build rather than letting
+          # it reach a remote service that has nothing for it.
+          LAKE_NO_CACHE: "true"
         run: lake build
 
       - name: Build site (extracts the checked snippets, compiles Verso)
