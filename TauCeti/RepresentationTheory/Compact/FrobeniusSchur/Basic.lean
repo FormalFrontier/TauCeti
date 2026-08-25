@@ -46,7 +46,10 @@ For a **unitary** representation the indicator is real
 (`ContRepresentation.conj_frobeniusSchurIndicator`): conjugating the character inverts its
 argument, `(g²)⁻¹ = (g⁻¹)²`, and Haar measure on a compact group is inversion invariant. Its
 modulus is at most `dim V`. That it takes only the values `1`, `0`, `-1` on an irreducible is the
-reality trichotomy, which needs the invariant-form dictionary and is not proved here.
+reality trichotomy, which is not proved here but in
+`TauCeti/RepresentationTheory/Compact/FrobeniusSchur/Trichotomy.lean`; the reading of those three
+values as invariant bilinear forms is
+`TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantForm.lean`.
 
 ## Main definitions
 
