@@ -64,14 +64,8 @@ consequences. -/
 def IsNegativeGradient (φ : _root_.Flow ℝ E) (f : E → ℝ) : Prop :=
   ∀ x, IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y)
 
-/-- The defining orbitwise integral-curve characterization of a negative gradient flow. -/
-theorem isNegativeGradient_iff :
-    IsNegativeGradient φ f ↔
-      ∀ x, IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y) :=
-  Iff.rfl
-
 /-- The defining function is antitone along every orbit of its negative gradient flow. -/
-theorem IsNegativeGradient.antitone_orbit (hφ : IsNegativeGradient φ f) (x : E)
+theorem IsNegativeGradient.orbit_antitone (hφ : IsNegativeGradient φ f) (x : E)
     (hf : ∀ t, DifferentiableAt ℝ f (φ t x)) :
     Antitone (fun t ↦ f (φ t x)) := by
   simpa only [Function.comp_def] using
@@ -85,7 +79,7 @@ theorem IsNegativeGradient.value_le_of_mem_stableSet (hφ : IsNegativeGradient �
     f p ≤ f x := by
   have hlim : Tendsto (fun t ↦ f (φ t x)) atTop (𝓝 (f p)) :=
     hfp.tendsto.comp (mem_stableSet.mp hx)
-  simpa only [_root_.Flow.map_zero_apply] using (hφ.antitone_orbit x hf).le_of_tendsto hlim 0
+  simpa only [_root_.Flow.map_zero_apply] using (hφ.orbit_antitone x hf).le_of_tendsto hlim 0
 
 /-- A point in the unstable set of `p` has value at most `f p`.  Only differentiability along the
 chosen orbit and continuity at its limiting point are required. -/
@@ -95,7 +89,7 @@ theorem IsNegativeGradient.value_ge_of_mem_unstableSet (hφ : IsNegativeGradient
     f x ≤ f p := by
   have hlim : Tendsto (fun t ↦ f (φ t x)) atBot (𝓝 (f p)) :=
     hfp.tendsto.comp (mem_unstableSet.mp hx)
-  simpa only [_root_.Flow.map_zero_apply] using (hφ.antitone_orbit x hf).ge_of_tendsto hlim 0
+  simpa only [_root_.Flow.map_zero_apply] using (hφ.orbit_antitone x hf).ge_of_tendsto hlim 0
 
 /-- If an orbit converges to `p` in backward time and to `q` in forward time, then `f q ≤ f p`. -/
 theorem IsNegativeGradient.value_le_of_mem_unstableSet_inter_stableSet
@@ -127,7 +121,7 @@ private theorem IsNegativeGradient.orbit_eq_self_of_tendsto_const_value
     {c : ℝ} (hbot : Tendsto (fun t ↦ f (φ t x)) atBot (𝓝 c))
     (htop : Tendsto (fun t ↦ f (φ t x)) atTop (𝓝 c)) :
     ∀ t, φ t x = x := by
-  have hanti := hφ.antitone_orbit x hf
+  have hanti := hφ.orbit_antitone x hf
   have hvalue : ∀ t, f (φ t x) = f x := fun t ↦ by
     simpa only [_root_.Flow.map_zero_apply] using le_antisymm
       ((hanti.ge_of_tendsto hbot t).trans (hanti.le_of_tendsto htop 0))
