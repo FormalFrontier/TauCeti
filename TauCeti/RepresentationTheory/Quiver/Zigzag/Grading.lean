@@ -118,14 +118,6 @@ direct sum of the pieces with the quotient itself rather than with a separate gr
 noncomputable def zigzagGrade (n : ℕ) : Submodule k (nonisolatedZigzagQuotient k G) :=
   TauCeti.GradedAlgebra.gradeQuot (grade k (DoubledQuiver G)) (zigzagIdeal k G).asIdeal n
 
-/-- `zigzagGrade` is the generic descended piece instantiated at the uniform relation ideal. -/
-theorem zigzagGrade_def :
-    zigzagGrade k G =
-      TauCeti.GradedAlgebra.gradeQuot (grade k (DoubledQuiver G))
-        (zigzagIdeal k G).asIdeal := by
-  funext n
-  simp only [zigzagGrade]
-
 /-- Membership in the induced degree-`n` piece is being the class of a homogeneous element. -/
 theorem mem_zigzagGrade_iff {n : ℕ} {x : nonisolatedZigzagQuotient k G} :
     x ∈ zigzagGrade k G n ↔
@@ -151,30 +143,23 @@ the direct-sum graded algebra with the ungraded quotient asked for by the roadma
 internal sense in which the pieces are submodules of the quotient itself rather than a separate
 graded copy. -/
 theorem isInternal_zigzagGrade :
-    DirectSum.IsInternal (zigzagGrade k G) := by
-  rw [zigzagGrade_def]
-  exact TauCeti.GradedAlgebra.isInternal_gradeQuot (grade k (DoubledQuiver G))
+    DirectSum.IsInternal (zigzagGrade k G) :=
+  TauCeti.GradedAlgebra.isInternal_gradeQuot (grade k (DoubledQuiver G))
     (zigzagIdeal k G).asIdeal (isHomogeneous_zigzagIdeal k G)
 
 /-- Multiplication adds degrees in the induced grading: the product of a degree-`m` class and a
 degree-`n` class lies in degree `m + n`. -/
 theorem mul_mem_zigzagGrade {m n : ℕ} {x y : nonisolatedZigzagQuotient k G}
     (hx : x ∈ zigzagGrade k G m) (hy : y ∈ zigzagGrade k G n) :
-    x * y ∈ zigzagGrade k G (m + n) := by
-  rw [zigzagGrade_def] at hx hy ⊢
-  exact TauCeti.GradedAlgebra.mul_mem_gradeQuot _ _ hx hy
-
-instance : SetLike.GradedMonoid (zigzagGrade k G) := by
-  rw [zigzagGrade_def]
-  infer_instance
+    x * y ∈ zigzagGrade k G (m + n) :=
+  TauCeti.GradedAlgebra.mul_mem_gradeQuot _ _ hx hy
 
 /-- **The zigzag relation quotient is a graded algebra** for the induced path-length grading.
 This is kept as a definition rather than an instance so that callers choose when to introduce it
 locally; see `TauCeti.GradedAlgebra.gradedAlgebraGradeQuot`. -/
 @[instance_reducible]
-noncomputable def zigzagGradedAlgebra : GradedAlgebra (zigzagGrade k G) := by
-  rw [zigzagGrade_def]
-  exact TauCeti.GradedAlgebra.gradedAlgebraGradeQuot (grade k (DoubledQuiver G))
+noncomputable def zigzagGradedAlgebra : GradedAlgebra (zigzagGrade k G) :=
+  TauCeti.GradedAlgebra.gradedAlgebraGradeQuot (grade k (DoubledQuiver G))
     (zigzagIdeal k G).asIdeal (isHomogeneous_zigzagIdeal k G)
 
 /-- The descended piece is spanned by the images of any spanning family of the original piece:
@@ -190,7 +175,7 @@ private theorem mem_span_of_mem_zigzagGrade {n : ℕ}
     w ∈ Submodule.span k T := by
   have heq := TauCeti.GradedAlgebra.gradeQuot_eq_span_image
     (grade k (DoubledQuiver G)) (zigzagIdeal k G).asIdeal (i := n) hs
-  rw [zigzagGrade_def, heq] at hw
+  rw [zigzagGrade, heq] at hw
   refine (Submodule.span_le.2 ?_) hw
   rintro u ⟨z, hz, rfl⟩
   exact hmem z hz
