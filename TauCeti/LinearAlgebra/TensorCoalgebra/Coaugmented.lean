@@ -669,7 +669,6 @@ theorem map_reducedProjection_comp_deconcatenation_comp_reducedInclusion :
   exact map_reducedProjection_deconcatenation_reducedInclusion R M
 
 /-- The letters of a tensor word are primitive. -/
-@[simp]
 theorem deconcatenation_of_length_one (z : TensorPower R 1 M) :
     deconcatenation R M (of R M 1 z) =
       (1 : TensorWords R M) ⊗ₜ[R] of R M 1 z +
