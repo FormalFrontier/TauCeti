@@ -30,6 +30,8 @@ upstairs.
   the domain/flat Galois counting criterion.
 * `Ideal.card_inertia_eq_ramificationIdx`: the un-`In` form of the inertia count.
 * `Ideal.mem_inertia_pointwise_smul`: translation conjugates inertia subgroups.
+* `Ideal.inertia_pointwise_smul`: for a commutative Galois group, translation leaves the inertia
+  subgroup unchanged.
 * `Ideal.inertia_eq_of_liesOver`: for a commutative Galois group, all the primes above a fixed
   prime of the base have the same inertia subgroup.
 
@@ -110,7 +112,8 @@ variable (σ : G) (P : Ideal S)
 
 open scoped IsMulCommutative in
 /-- **A commutative Galois group has translation-invariant inertia subgroups.** -/
-theorem inertia_pointwise_smul_of_isMulCommutative [IsMulCommutative G] :
+@[simp]
+theorem inertia_pointwise_smul [IsMulCommutative G] :
     (σ • P).inertia G = P.inertia G := by
   ext τ
   rw [mem_inertia_pointwise_smul]
@@ -134,7 +137,7 @@ The Galois group acts transitively on the primes above `p`
 (`Ideal.mem_inertia_pointwise_smul`), so commutativity makes them all equal. -/
 theorem inertia_eq_of_liesOver : P.inertia G = Q.inertia G := by
   obtain ⟨σ, rfl⟩ := exists_smul_eq_of_isGaloisGroup p P Q G
-  exact (inertia_pointwise_smul_of_isMulCommutative σ P).symm
+  exact (inertia_pointwise_smul σ P).symm
 
 end InertiaOver
 

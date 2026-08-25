@@ -29,9 +29,9 @@ inertia subgroups. For a subgroup `H` with fixed field `F` and a prime `P` of `�
 `𝓞 F` below `P` is unramified over `ℤ` exactly when `P.inertia G ≤ H`: multiplicativity of
 ramification in the tower `ℤ ⊆ 𝓞 F ⊆ 𝓞 K` writes `e(P / ℤ)` as `e(𝔮 / ℤ) * e(P / 𝓞 F)`, and the
 two absolute indices are the cardinalities of `P.inertia G` and of `P.inertia H`, which is
-`P.inertia G ⊓ H`. When the Galois group is commutative all the primes above one rational prime
-share an inertia subgroup, so ramification of a rational prime in `F` can be tested at a single
-prime upstairs.
+`P.inertia G ⊓ H`. Quantifying over the primes above a rational prime `p` turns this into a test
+for ramification of `p` in `F`, and when the Galois group is commutative all those primes share an
+inertia subgroup, so a single prime upstairs suffices.
 
 Generation is then Minkowski's theorem. If `H` contains every inertia subgroup, the dictionary
 makes its fixed field `F` unramified over `ℚ` at every finite prime, and Minkowski's bound on the
@@ -53,8 +53,10 @@ fields is Kummer theory over `ℚ` and is not formalised here.
 
 * `NumberField.ramificationIdx_under_eq_one_iff_inertia_le`: unramifiedness of the intermediate
   prime below `P` is containment of the inertia subgroup of `P`.
-* `NumberField.notMem_ramifiedPrimes_iff_inertia_le`: the same dictionary for a rational prime,
-  for a commutative Galois group, tested at one prime upstairs.
+* `NumberField.notMem_ramifiedPrimes_iff_forall_inertia_le`: the same dictionary for a rational
+  prime, quantified over the primes of `𝓞 K` above it.
+* `NumberField.notMem_ramifiedPrimes_iff_inertia_le`: for a commutative Galois group, one prime
+  upstairs suffices.
 * `NumberField.eq_top_of_forall_inertia_le`: a subgroup of `G` containing every inertia subgroup
   is `⊤`.
 * `NumberField.iSup_inertia_eq_top`: the packaged generation statement.
@@ -140,6 +142,37 @@ theorem ramificationIdx_under_eq_one_iff_inertia_le (H : Subgroup G) [IsGaloisGr
     exact Nat.eq_of_mul_eq_mul_right (Nat.card_pos (α := P.inertia G))
       (by rw [one_mul]; exact htower.symm)
 
+/-- **Ramification of a rational prime in an intermediate field, read off the inertia subgroups.**
+Let `H` be a subgroup of `G` with fixed field `F`. A rational prime `p` is unramified in `F`
+exactly when the inertia subgroup of every prime of `𝓞 K` above `p` is contained in `H`.
+
+Every prime of `𝓞 F` above `p` is the prime below some prime of `𝓞 K` above `p`, so this is
+`NumberField.ramificationIdx_under_eq_one_iff_inertia_le` quantified over the primes upstairs. -/
+theorem notMem_ramifiedPrimes_iff_forall_inertia_le (H : Subgroup G) [IsGaloisGroup H F K]
+    {p : ℕ} (hp : p.Prime) :
+    p ∉ ramifiedPrimes F ↔ ∀ P : Ideal (𝓞 K), P.IsPrime →
+      P.LiesOver (Ideal.span {(p : ℤ)}) → P.inertia G ≤ H := by
+  have hmem : p ∉ ramifiedPrimes F ↔ Algebra.IsUnramifiedIn (𝓞 F) (Ideal.span {(p : ℤ)}) := by
+    simp only [mem_ramifiedPrimes_iff, not_and, not_not]
+    exact ⟨fun h => h hp, fun h _ => h⟩
+  rw [hmem, Algebra.isUnramifiedIn_iff_forall_ramificationIdx_eq_one]
+  constructor
+  · intro h P hP hPp
+    have : P.IsPrime := hP
+    have : P.LiesOver (Ideal.span {(p : ℤ)}) := hPp
+    rw [← ramificationIdx_under_eq_one_iff_inertia_le (F := F) H P hP]
+    exact h (P.under (𝓞 F)) inferInstance
+  · intro hle r hr hrp
+    have : r.IsPrime := hr
+    have : r.LiesOver (Ideal.span {(p : ℤ)}) := hrp
+    obtain ⟨P', hP'p, hP'r⟩ := (inferInstance : Nonempty (Ideal.primesOver r (𝓞 K))).some
+    have : P'.IsPrime := hP'p
+    have : P'.LiesOver r := hP'r
+    have hP'p2 : P'.LiesOver (Ideal.span {(p : ℤ)}) := Ideal.LiesOver.trans P' r _
+    have := (ramificationIdx_under_eq_one_iff_inertia_le (F := F) H P' hP'p).mpr
+      (hle P' hP'p hP'p2)
+    rwa [← Ideal.over_def (A := 𝓞 F) P' r] at this
+
 /-- **Ramification of a rational prime in an intermediate field, tested at one prime upstairs.**
 Let `H` be a subgroup of the abelian Galois group `G` with fixed field `F`, and let `P` be a prime
 of `𝓞 K` above the rational prime `p`. Then `p` is unramified in `F` exactly when the inertia
@@ -154,25 +187,11 @@ theorem notMem_ramifiedPrimes_iff_inertia_le [IsMulCommutative G] (H : Subgroup 
     p ∉ ramifiedPrimes F ↔ P.inertia G ≤ H := by
   have : P.IsPrime := hP
   have : P.LiesOver (Ideal.span {(p : ℤ)}) := hPp
-  have hmem : p ∉ ramifiedPrimes F ↔ Algebra.IsUnramifiedIn (𝓞 F) (Ideal.span {(p : ℤ)}) := by
-    simp only [mem_ramifiedPrimes_iff, not_and, not_not]
-    exact ⟨fun h => h hp, fun h _ => h⟩
-  rw [hmem, Algebra.isUnramifiedIn_iff_forall_ramificationIdx_eq_one]
-  constructor
-  · intro h
-    rw [← ramificationIdx_under_eq_one_iff_inertia_le (F := F) H P hP]
-    exact h (P.under (𝓞 F)) inferInstance
-  · intro hle r hr hrp
-    have : r.IsPrime := hr
-    have : r.LiesOver (Ideal.span {(p : ℤ)}) := hrp
-    obtain ⟨P', hP'p, hP'r⟩ := (inferInstance : Nonempty (Ideal.primesOver r (𝓞 K))).some
-    have : P'.IsPrime := hP'p
-    have : P'.LiesOver r := hP'r
-    have : P'.LiesOver (Ideal.span {(p : ℤ)}) := Ideal.LiesOver.trans P' r _
-    have hEq : P'.inertia G = P.inertia G :=
-      Ideal.inertia_eq_of_liesOver (Ideal.span {(p : ℤ)}) P' P G
-    have := (ramificationIdx_under_eq_one_iff_inertia_le (F := F) H P' hP'p).mpr (hEq ▸ hle)
-    rwa [← Ideal.over_def (A := 𝓞 F) P' r] at this
+  rw [notMem_ramifiedPrimes_iff_forall_inertia_le (K := K) (F := F) H hp]
+  refine ⟨fun h => h P hP hPp, fun h P' hP' hP'p => ?_⟩
+  have : P'.IsPrime := hP'
+  have : P'.LiesOver (Ideal.span {(p : ℤ)}) := hP'p
+  exact (Ideal.inertia_eq_of_liesOver (Ideal.span {(p : ℤ)}) P' P G).trans_le h
 
 end Intermediate
 
