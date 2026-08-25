@@ -7,18 +7,19 @@ module
 
 public import TauCeti.Analysis.Contour.Winding.Number.Affine
 import TauCeti.Analysis.Contour.LogDerivFTC
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 
 /-!
-# The winding number of a straight segment and its one-sided limits
+# The winding number of a straight segment
 
-The winding number of the straight segment `t ↦ v · t + z₀` about a point beside it is the
-logarithmic increment `(2πi)⁻¹ (log (b - q) - log (a - q))`, valid whenever the differences
-`(t : ℂ) - q` stay in the slit plane over `[a, b]`. Its one-sided limits at an interior
-point differ by exactly `1`.
+The winding number of the straight segment `t ↦ v · t + z₀` about a point not on it is the
+logarithmic increment `(2πi)⁻¹ (log (b - q) - log (a - q))`, valid whenever
+`(t : ℂ) ≠ q` for `t ∈ [a, b]`.
 
 This extends the segment winding API (`Segment/Basic.lean`) with the explicit formula for a
-single straight piece and the one-sided limit behaviour. The jump formula is the analytic input
-to the winding decomposition of HW Proposition 2.2 (ContourIntegration roadmap, Layer 1).
+single straight piece. The formula is a building block for the winding decomposition of
+HW Proposition 2.2 (ContourIntegration roadmap, Layer 1).
 
 ## Main results
 
@@ -26,11 +27,8 @@ to the winding decomposition of HW Proposition 2.2 (ContourIntegration roadmap, 
   segment, under a slit-plane hypothesis.**
 * `TauCeti.Contour.windingNumber_segment_of_im_ne_zero` — **specialization when the
   reference point has nonzero imaginary part.**
-* `TauCeti.Contour.tendsto_windingNumber_segment_add_mul_I` and
-  `TauCeti.Contour.tendsto_windingNumber_segment_sub_mul_I` — **one-sided limits at an interior
-  point, from the left and from the right.**
-* `TauCeti.Contour.tendsto_windingNumber_segment_sub_windingNumber_segment` — **the jump of the
-  segment's winding number across the segment is `1`.**
+* `TauCeti.Contour.windingNumber_segment_of_ne` — **the formula under the natural
+  avoidance hypothesis `(t : ℂ) ≠ q`**, covering real reference points on both sides.
 
 ## References
 
@@ -49,8 +47,8 @@ variable {v z₀ q : ℂ} {a b s : ℝ}
 
 /-- **The winding number of a straight segment about a point beside it** is the increment of the
 principal logarithm, valid whenever `(t : ℂ) - q` lies in the slit plane throughout `[a, b]`.
-This covers both the nonreal case (`q.im ≠ 0`) and real points before the segment
-(`q.re < a`). -/
+This covers both the nonreal case (`q.im ≠ 0`) and real points below the segment
+(`q.re < min a b`). -/
 theorem windingNumber_segment (hv : v ≠ 0)
     (hslit : ∀ t ∈ uIcc a b, (t : ℂ) - q ∈ slitPlane) :
     windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * q + z₀)
@@ -90,100 +88,101 @@ theorem windingNumber_segment_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) :
       = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * (log ((b : ℂ) - q) - log ((a : ℂ) - q)) :=
   windingNumber_segment hv (fun t _ => mem_slitPlane_iff.mpr (Or.inr (by simpa using hq)))
 
-/-- The difference `(r : ℂ) - (s + σ h I)` tends to `(r : ℂ) - s` as `h → 0⁺`. -/
-private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
-    Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝[>] 0) (𝓝 ((r : ℂ) - s)) := by
-  have : Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝 0)
-      (𝓝 ((r : ℂ) - (s + (σ * (0 : ℝ) : ℝ) * I))) := by
-    apply Continuous.tendsto
-    fun_prop
-  simpa using this.mono_left nhdsWithin_le_nhds
-
-/-- The far endpoint term: `log (b - (s ± h i)) → log (b - s)`, the limit point being a positive
-real and so in the slit plane. -/
-private theorem tendsto_log_far (hs : s < b) (σ : ℝ) :
-    Tendsto (fun h : ℝ => log ((b : ℂ) - (s + (σ * h : ℝ) * I))) (𝓝[>] 0)
-      (𝓝 (log ((b : ℂ) - s))) := by
-  have hmem : (b : ℂ) - s ∈ slitPlane :=
-    mem_slitPlane_iff.mpr (Or.inl (by simp only [sub_re, ofReal_re]; linarith only [hs]))
-  exact (continuousAt_clog hmem).tendsto.comp (tendsto_ofReal_sub_add_mul_I b s σ)
-
-private theorem re_neg_of_mem_Ioo (hs : s ∈ Ioo a b) : ((a : ℂ) - s).re < 0 := by
-  simp only [sub_re, ofReal_re]; linarith only [hs.1]
-
-private theorem norm_ofReal_sub_of_mem_Ioo (hs : s ∈ Ioo a b) : ‖(a : ℂ) - s‖ = s - a := by
-  simp only [← ofReal_sub, norm_real, Real.norm_eq_abs]
-  rw [abs_sub_comm, abs_of_pos (by linarith only [hs.1])]
-
-/-- **The winding number of a segment about a point approaching from the left.** The near endpoint
-term approaches the negative real axis from below. -/
-theorem tendsto_windingNumber_segment_add_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a b) :
-    Tendsto (fun h : ℝ =>
-        windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s + h * I) + z₀))
-      (𝓝[>] 0)
-      (𝓝 ((2 * (Real.pi : ℂ) * I)⁻¹ *
-        (log ((b : ℂ) - s) - (Real.log (s - a) - Real.pi * I)))) := by
-  have h_eq : ∀ᶠ h : ℝ in 𝓝[>] 0,
-      (2 * (Real.pi : ℂ) * I)⁻¹ *
-          (log ((b : ℂ) - (s + ((1 : ℝ) * h : ℝ) * I)) -
-            log ((a : ℂ) - (s + ((1 : ℝ) * h : ℝ) * I)))
-        = windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s + h * I) + z₀) := by
-    filter_upwards [self_mem_nhdsWithin] with h hh
-    have him : ((s : ℂ) + h * I).im ≠ 0 := by simpa using hh.ne'
-    rw [windingNumber_segment_of_im_ne_zero hv him]
-    simp
-  refine Tendsto.congr' h_eq (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_far hs.2 1) ?_))
-  have h1 : Tendsto (fun h : ℝ => (a : ℂ) - (s + ((1 : ℝ) * h : ℝ) * I)) (𝓝[>] 0)
-      (𝓝[{z : ℂ | z.im < 0}] ((a : ℂ) - s)) := by
-    rw [tendsto_nhdsWithin_iff]
-    refine ⟨tendsto_ofReal_sub_add_mul_I a s 1, ?_⟩
-    filter_upwards [self_mem_nhdsWithin] with h hh
-    simpa using hh
-  have h2 := (tendsto_log_nhdsWithin_im_neg_of_re_neg_of_im_zero
-    (re_neg_of_mem_Ioo hs) (by simp)).comp h1
-  simpa [Function.comp_def, norm_ofReal_sub_of_mem_Ioo hs] using h2
-
-/-- **The winding number of a segment about a point approaching from the right.** The near endpoint
-term approaches the negative real axis from above. -/
-theorem tendsto_windingNumber_segment_sub_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a b) :
-    Tendsto (fun h : ℝ =>
-        windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s - h * I) + z₀))
-      (𝓝[>] 0)
-      (𝓝 ((2 * (Real.pi : ℂ) * I)⁻¹ *
-        (log ((b : ℂ) - s) - (Real.log (s - a) + Real.pi * I)))) := by
-  have h_eq : ∀ᶠ h : ℝ in 𝓝[>] 0,
-      (2 * (Real.pi : ℂ) * I)⁻¹ *
-          (log ((b : ℂ) - (s + ((-1 : ℝ) * h : ℝ) * I)) -
-            log ((a : ℂ) - (s + ((-1 : ℝ) * h : ℝ) * I)))
-        = windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s - h * I) + z₀) := by
-    filter_upwards [self_mem_nhdsWithin] with h hh
-    have him : ((s : ℂ) - h * I).im ≠ 0 := by simpa using hh.ne'
-    rw [windingNumber_segment_of_im_ne_zero hv him]
-    simp [sub_eq_add_neg]
-  refine Tendsto.congr' h_eq (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_far hs.2 (-1)) ?_))
-  have h1 : Tendsto (fun h : ℝ => (a : ℂ) - (s + ((-1 : ℝ) * h : ℝ) * I)) (𝓝[>] 0)
-      (𝓝[{z : ℂ | 0 ≤ z.im}] ((a : ℂ) - s)) := by
-    rw [tendsto_nhdsWithin_iff]
-    refine ⟨tendsto_ofReal_sub_add_mul_I a s (-1), ?_⟩
-    filter_upwards [self_mem_nhdsWithin] with h hh
-    simpa using hh.le
-  have h2 := (tendsto_log_nhdsWithin_im_nonneg_of_re_neg_of_im_zero
-    (re_neg_of_mem_Ioo hs) (by simp)).comp h1
-  simpa [Function.comp_def, norm_ofReal_sub_of_mem_Ioo hs] using h2
-
-/-- **The jump of the winding number across a straight segment is `1`.** The left-side minus
-right-side difference tends to `1` as the probing points approach the segment. -/
-theorem tendsto_windingNumber_segment_sub_windingNumber_segment (hv : v ≠ 0) (hs : s ∈ Ioo a b) :
-    Tendsto (fun h : ℝ =>
-        windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s + h * I) + z₀) -
-          windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s - h * I) + z₀))
-      (𝓝[>] 0) (𝓝 1) := by
-  have h := (tendsto_windingNumber_segment_add_mul_I (z₀ := z₀) hv hs).sub
-    (tendsto_windingNumber_segment_sub_mul_I (z₀ := z₀) hv hs)
-  convert h using 2
-  have hπ : (2 * (Real.pi : ℂ) * I) ≠ 0 := by
-    simp [Real.pi_ne_zero, I_ne_zero]
-  field_simp
+/-- For negative reals, the `Complex.log` difference reduces to the `Real.log` difference:
+the shared `πi` branch offset cancels. -/
+private theorem log_sub_log_ofReal_of_neg {c d : ℝ} (hc : c < 0) (hd : d < 0) :
+    log (c : ℂ) - log (d : ℂ) = ((Real.log c - Real.log d : ℝ) : ℂ) := by
+  have hmc : (0 : ℝ) < -c := neg_pos.mpr hc
+  have hmd : (0 : ℝ) < -d := neg_pos.mpr hd
+  have hc_eq : (c : ℂ) = (-c : ℝ) * (-1 : ℂ) := by push_cast; ring
+  have hd_eq : (d : ℂ) = (-d : ℝ) * (-1 : ℂ) := by push_cast; ring
+  rw [hc_eq, hd_eq,
+      log_ofReal_mul hmc (by norm_num : (-1 : ℂ) ≠ 0),
+      log_ofReal_mul hmd (by norm_num : (-1 : ℂ) ≠ 0)]
+  simp only [Real.log_neg_eq_log, ofReal_sub]
   ring
+
+/-- **The winding number formula under the natural avoidance hypothesis.** The formula
+`(2πi)⁻¹ (log (b - q) - log (a - q))` holds whenever the affine-parametrised reference point
+avoids the segment, with no restriction to the slit plane. For nonreal `q` the slit-plane
+condition is automatic; for real `q` beyond the far endpoint, both `Complex.log` terms share
+the branch offset `πi`, which cancels in the difference. -/
+theorem windingNumber_segment_of_ne (hv : v ≠ 0)
+    (hne : ∀ t ∈ uIcc a b, (t : ℂ) ≠ q) :
+    windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * q + z₀)
+      = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * (log ((b : ℂ) - q) - log ((a : ℂ) - q)) := by
+  by_cases hq : q.im ≠ 0
+  · exact windingNumber_segment_of_im_ne_zero hv hq
+  simp only [not_not] at hq
+  have hqr : q = (q.re : ℂ) := Complex.ext (by simp) (by simp [hq])
+  rw [hqr] at hne ⊢
+  have hne_real : ∀ t ∈ uIcc a b, (t : ℝ) ≠ q.re := by
+    intro t ht h
+    exact hne t ht (by exact_mod_cast congrArg ofReal h)
+  by_cases hab : q.re < min a b
+  · exact windingNumber_segment hv (fun t ht => by
+      apply mem_slitPlane_iff.mpr; left
+      simp only [sub_re, ofReal_re]
+      have ht_lb : min a b ≤ t := ht.1
+      linarith only [ht_lb, hab])
+  · simp only [not_lt] at hab
+    have hgt : max a b < q.re := by
+      rcases le_or_gt q.re (max a b) with h | h
+      · exact absurd (hne_real q.re ⟨hab, h⟩) (not_not.mpr rfl)
+      · exact h
+    rw [windingNumber_affine (γ := fun t : ℝ => (t : ℂ)) (c := v) (d := z₀)
+        (z₀ := (q.re : ℂ)) hv]
+    have hne_sub : ∀ t ∈ uIcc a b, (t : ℂ) - (q.re : ℂ) ≠ 0 := by
+      intro t ht
+      simp only [ne_eq, sub_eq_zero]
+      exact_mod_cast hne_real t ht
+    have h_cont : ContinuousOn (fun t : ℝ => (t : ℂ)) (uIcc a b) :=
+      (by fun_prop : Continuous fun t : ℝ => (t : ℂ)).continuousOn
+    have h_avoid : ∀ t ∈ uIcc a b, (t : ℂ) ≠ (q.re : ℂ) := fun t ht => by
+      intro h; exact hne_sub t ht (by rw [h, sub_self])
+    have h_integrand : ∀ t : ℝ,
+        ((t : ℂ) - (q.re : ℂ))⁻¹ * deriv (fun t : ℝ => (t : ℂ)) t
+          = ((t : ℂ) - (q.re : ℂ))⁻¹ := by
+      intro t
+      have : deriv (fun t : ℝ => (t : ℂ)) t = 1 := ofRealCLM.hasDerivAt.deriv
+      rw [this, mul_one]
+    have h_intble : IntervalIntegrable
+        (fun t : ℝ => ((t : ℂ) - (q.re : ℂ))⁻¹) volume a b := by
+      refine ContinuousOn.intervalIntegrable ?_
+      exact ContinuousOn.inv₀ (by fun_prop) fun t ht => hne_sub t ht
+    have h_int : IntervalIntegrable
+        (fun t : ℝ => ((t : ℂ) - (q.re : ℂ))⁻¹ * deriv (fun t : ℝ => (t : ℂ)) t)
+        volume a b :=
+      h_intble.congr fun t _ => (h_integrand t).symm
+    rw [windingNumber_eq_integral_of_avoidance h_cont h_avoid h_int]
+    congr 1
+    rw [intervalIntegral.integral_congr (fun t _ => h_integrand t)]
+    have h_neg_b : (b : ℝ) - q.re < 0 := by linarith only [hgt, le_max_right a b]
+    have h_neg_a : (a : ℝ) - q.re < 0 := by linarith only [hgt, le_max_left a b]
+    rw [show (b : ℂ) - (q.re : ℂ) = ((b - q.re : ℝ) : ℂ) from by push_cast; ring,
+        show (a : ℂ) - (q.re : ℂ) = ((a - q.re : ℝ) : ℂ) from by push_cast; ring,
+        log_sub_log_ofReal_of_neg h_neg_b h_neg_a]
+    have h_real_eq : ∀ t ∈ Set.uIcc a b,
+        ((t : ℂ) - (q.re : ℂ))⁻¹ = ((((t - q.re)⁻¹ : ℝ) : ℂ)) := by
+      intro t _
+      push_cast
+      ring
+    rw [intervalIntegral.integral_congr h_real_eq, intervalIntegral.integral_ofReal]
+    congr 1
+    have hne_real' : ∀ t ∈ uIcc a b, t - q.re ≠ 0 := fun t ht =>
+      sub_ne_zero.mpr (hne_real t ht)
+    have h_deriv : ∀ t ∈ uIcc a b,
+        HasDerivAt (fun s => Real.log (s - q.re)) (t - q.re)⁻¹ t := by
+      intro t ht
+      have h1 : HasDerivAt (fun s => s - q.re) 1 t := (hasDerivAt_id t).sub_const q.re
+      have h2 : HasDerivAt Real.log (t - q.re)⁻¹ (t - q.re) :=
+        Real.hasDerivAt_log (hne_real' t ht)
+      have h3 := h2.comp t h1
+      simp only [mul_one] at h3
+      exact h3
+    have h_intble_real : IntervalIntegrable (fun t => (t - q.re)⁻¹) volume a b := by
+      refine ContinuousOn.intervalIntegrable ?_
+      exact ContinuousOn.inv₀ (continuousOn_id.sub continuousOn_const) hne_real'
+    exact intervalIntegral.integral_eq_sub_of_hasDerivAt h_deriv h_intble_real
 
 end TauCeti.Contour
