@@ -39,8 +39,6 @@ sequence and has to name the same two coefficient maps.
 
 * `TauCeti.ContCohomology.DiscreteShortExact`: a short exact sequence of discrete `G`-modules.
 * `TauCeti.ContCohomology.DiscreteShortExact.restrict`: the same sequence over a subgroup.
-* `TauCeti.ContCohomology.DiscreteShortExact.retract`: the retraction of `incl` onto its image,
-  which turns a cochain into `B` killed by `proj` into a cochain into `A`.
 * `TauCeti.ContCohomology.DiscreteShortExact.explicitDelta0` and
   `TauCeti.ContCohomology.DiscreteShortExact.explicitDelta1`: the connecting homomorphisms
   `H⁰(G, C) → H¹(G, A)` and `H¹(G, C) → H²(G, A)`.
@@ -75,9 +73,10 @@ coefficients — and is not used here.
 Both connecting maps are built from a *variable* preimage first, and the independence of the
 choice is a theorem rather than a definitional accident; only then is the map defined by choosing
 a preimage with `Function.surjInv`. The cochain-level constructions this passes through are
-private, since they depend on choices the mathematical statements must not mention; the public
-interface to them is `explicitDelta0_apply` and `explicitDelta1_apply`, which hold with whatever
-preimage a computation has in hand.
+private, including the retraction used on the kernel of the projection, since they depend on
+choices the mathematical statements must not mention; the public interface to them is
+`explicitDelta0_apply` and `explicitDelta1_apply`, which hold with whatever preimage a computation
+has in hand.
 
 The cochain sequences and the two connecting maps are stated for a topological monoid `G`, and
 degree `2` adds a continuous multiplication, since that is all the differentials and the two
@@ -200,37 +199,38 @@ variable {G : Type u} [Monoid G]
 (`retract_incl`) and a right inverse of it on the kernel of `S.proj` (`incl_retract`), which is
 the only place its value is used: it is what turns a cochain into `B` killed by the projection
 into a cochain into `A`. -/
-noncomputable def retract : B → A := Function.invFun S.incl
+private noncomputable def retract : B → A := Function.invFun S.incl
 
 @[simp]
-theorem retract_incl (a : A) : S.retract (S.incl a) = a :=
+private theorem retract_incl (a : A) : S.retract (S.incl a) = a :=
   Function.leftInverse_invFun S.incl_injective a
 
 /-- On the kernel of the projection the retraction is a genuine section of the inclusion. -/
-theorem incl_retract {b : B} (hb : S.proj b = 0) : S.incl (S.retract b) = b :=
+private theorem incl_retract {b : B} (hb : S.proj b = 0) : S.incl (S.retract b) = b :=
   Function.invFun_eq (S.exists_incl_eq hb)
 
 /-- The retraction is pinned by `incl_retract`: on the kernel of the projection it is the unique
 preimage. Every algebraic identity below is an instance of this and the injectivity of the
 inclusion. -/
-theorem retract_eq_iff {b : B} (hb : S.proj b = 0) {a : A} : S.retract b = a ↔ b = S.incl a :=
+private theorem retract_eq_iff {b : B} (hb : S.proj b = 0) {a : A} :
+    S.retract b = a ↔ b = S.incl a :=
   ⟨fun h => by rw [← h, S.incl_retract hb], fun h => by rw [h, S.retract_incl]⟩
 
 @[simp]
-theorem retract_zero : S.retract (0 : B) = 0 := by
+private theorem retract_zero : S.retract (0 : B) = 0 := by
   simpa using S.retract_incl 0
 
-theorem retract_add {b b' : B} (hb : S.proj b = 0) (hb' : S.proj b' = 0) :
+private theorem retract_add {b b' : B} (hb : S.proj b = 0) (hb' : S.proj b' = 0) :
     S.retract (b + b') = S.retract b + S.retract b' :=
   (S.retract_eq_iff (by rw [map_add, hb, hb', add_zero])).2 <| by
     rw [map_add, S.incl_retract hb, S.incl_retract hb']
 
-theorem retract_sub {b b' : B} (hb : S.proj b = 0) (hb' : S.proj b' = 0) :
+private theorem retract_sub {b b' : B} (hb : S.proj b = 0) (hb' : S.proj b' = 0) :
     S.retract (b - b') = S.retract b - S.retract b' :=
   (S.retract_eq_iff (by rw [map_sub, hb, hb', sub_zero])).2 <| by
     rw [map_sub, S.incl_retract hb, S.incl_retract hb']
 
-theorem retract_smul (g : G) {b : B} (hb : S.proj b = 0) :
+private theorem retract_smul (g : G) {b : B} (hb : S.proj b = 0) :
     S.retract (g • b) = g • S.retract b :=
   (S.retract_eq_iff (by rw [S.proj_equivariant, hb, smul_zero])).2 <| by
     rw [S.incl_equivariant, S.incl_retract hb]
@@ -243,8 +243,9 @@ theorem continuous_of_incl_comp {X : Type*} [TopologicalSpace X] {a : X → A}
     IsLocallyConstant.desc a S.incl ((IsLocallyConstant.iff_continuous _).2 h) S.incl_injective
 
 /-- Retracting a continuous cochain that is killed by the projection leaves it continuous. -/
-theorem continuous_retract_comp {X : Type*} [TopologicalSpace X] {φ : X → B} (hφ : Continuous φ)
-    (h0 : ∀ x, S.proj (φ x) = 0) : Continuous fun x => S.retract (φ x) :=
+private theorem continuous_retract_comp {X : Type*} [TopologicalSpace X] {φ : X → B}
+    (hφ : Continuous φ) (h0 : ∀ x, S.proj (φ x) = 0) :
+    Continuous fun x => S.retract (φ x) :=
   S.continuous_of_incl_comp <| by
     simpa only [fun x => S.incl_retract (h0 x)] using hφ
 
