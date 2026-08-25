@@ -10,6 +10,7 @@ public import Mathlib.Topology.Instances.EReal.Lemmas
 public import Mathlib.Topology.Semicontinuity.Basic
 public import TauCeti.Data.EReal.Operations
 public import TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic
+public import TauCeti.Topology.Semicontinuity.Compact
 
 /-!
 # Attainment and lower semicontinuity of the infimal `c`-transform
@@ -19,19 +20,20 @@ The upper-semicontinuity half of the topological theory of the infimal `c`-trans
 sections is upper semicontinuous, with no compactness anywhere. This file proves the other
 half, the compact regime.
 
-The engine is a value-function fact: if `g : X × Y → EReal` is jointly lower semicontinuous,
-then `y ↦ ⨅ x, g x y` is lower semicontinuous whenever `X` is compact
-(`TauCeti.lowerSemicontinuous_ciInf_of_isCompact`). The proof needs neither metrizability nor
-separation: a margin above the target level persists on a product neighborhood around each
-point of the compact factor, and finitely many of these neighborhoods cover the factor. If
-moreover every section is lower semicontinuous, the infimum is attained
+The engine is a pair of value-function facts proved in
+`TauCeti/Topology/Semicontinuity/Compact.lean`, stated there for arbitrary spaces: if
+`g : X × Y → EReal` is jointly lower semicontinuous, then `y ↦ ⨅ x, g x y` is lower
+semicontinuous whenever `X` is compact (`TauCeti.lowerSemicontinuous_ciInf_of_isCompact`), and
+if moreover every section is lower semicontinuous, the infimum is attained
 (`TauCeti.exists_ciInf_eq_of_isCompact`).
 
 Applied to the transform integrand `(x, y) ↦ (c (x, y) : EReal) - φ x`, this gives the compact
 regime for Kantorovich potentials: against a jointly lower-semicontinuous cost and an
 upper-semicontinuous potential, the infimal `c`-transform is lower semicontinuous
-(`TauCeti.lowerSemicontinuous_cTransform_of_lowerSemicontinuous`) and its defining infimum is
-attained over a compact nonempty source (`TauCeti.exists_cTransform_eq_of_lowerSemicontinuous`);
+(`TauCeti.lowerSemicontinuous_cTransform_of_lowerSemicontinuous`), while its defining infimum
+is attained over a compact nonempty source already under the weaker assumption that every cost
+section is lower semicontinuous
+(`TauCeti.exists_cTransform_eq_of_lowerSemicontinuous`);
 with both halves the transform is continuous
 (`TauCeti.continuous_cTransform_of_continuous_of_lowerSemicontinuous`), and either
 semicontinuity regime yields Borel measurability (`TauCeti.measurable_cTransform_*`). Every
@@ -39,8 +41,6 @@ statement has a symmetric counterpart for `TauCeti.cTransformSymm`.
 
 ## Main statements
 
-* `TauCeti.lowerSemicontinuous_ciInf_of_isCompact`,
-  `TauCeti.exists_ciInf_eq_of_isCompact` — the two value-function facts;
 * `TauCeti.lowerSemicontinuous_cTransform_of_lowerSemicontinuous`,
   `TauCeti.exists_cTransform_eq_of_lowerSemicontinuous`,
   `TauCeti.continuous_cTransform_of_continuous_of_lowerSemicontinuous`;
@@ -78,62 +78,22 @@ private theorem continuous_of_lowerSemicontinuous_upperSemicontinuous {α : Type
     tendsto_of_le_liminf_of_limsup_le (lowerSemicontinuous_iff_le_liminf.1 hl x)
       (upperSemicontinuous_iff_limsup_le.1 hu x)
 
-/-! ### The value-function facts -/
+/-! ### Application to the transform -/
 
-variable [TopologicalSpace X] [TopologicalSpace Y] {g : X × Y → EReal}
-
-/-- The infimum of a jointly lower-semicontinuous function over a compact factor is lower
-semicontinuous in the remaining variable. No separation or countability hypothesis is needed:
-a margin above the target level persists on a product neighborhood around each point of the
-compact factor, and finitely many of these neighborhoods cover the factor. -/
-theorem lowerSemicontinuous_ciInf_of_isCompact [CompactSpace X] (hg : LowerSemicontinuous g) :
-    LowerSemicontinuous fun y => ⨅ x, g (x, y) := by
-  rw [lowerSemicontinuous_iff_isOpen_preimage]
-  intro b
-  have key : ∀ y₀ : Y, ((fun y => ⨅ x, g (x, y)) y₀ ∈ Ioi b) →
-      ∃ w ∈ 𝓝 y₀, w ⊆ ((fun y => ⨅ x, g (x, y)) ⁻¹' Ioi b) := by
-    rintro y₀ (hy₀ : b < ⨅ x, g (x, y₀))
-    obtain ⟨m, hbm, hm⟩ := exists_between hy₀
-    -- every section at the base point stays above the margin
-    have hsec : ∀ x : X, m < g (x, y₀) := fun x ↦ lt_of_lt_of_le hm (iInf_le _ x)
-    -- around each source point the margin persists on a product of open neighborhoods
-    have hpoint : ∀ x : X, ∃ u : Set X, ∃ v : Set Y, u ∈ 𝓝 x ∧ v ∈ 𝓝 y₀ ∧
-        u ×ˢ v ⊆ g ⁻¹' Ioi m ∧ IsOpen u ∧ IsOpen v := by
-      intro x
-      have hmem : g ⁻¹' Ioi m ∈ 𝓝 ((x, y₀)) :=
-        (hg.isOpen_preimage m).mem_nhds (Set.mem_preimage.2 (Set.mem_Ioi.2 (hsec x)))
-      obtain ⟨u, v, hu_open, hxu, hv_open, hyv, huv⟩ := mem_nhds_prod_iff'.1 hmem
-      exact ⟨u, v, hu_open.mem_nhds hxu, hv_open.mem_nhds hyv, huv, hu_open, hv_open⟩
-    choose U V hU hV hUV hUopen hVopen using hpoint
-    obtain ⟨T, -, hTcover⟩ :=
-      isCompact_univ.elim_nhds_subcover U (fun x (_ : x ∈ univ) ↦ hU x)
-    set W : Set Y := ⋂ x ∈ T, V x with hWdef
-    have hWopen : IsOpen W := isOpen_biInter_finset fun x (_ : x ∈ T) ↦ hVopen x
-    have hsub : W ⊆ ((fun y => ⨅ x, g (x, y)) ⁻¹' Ioi b) := by
-      intro y hy
-      have hyV : ∀ x ∈ T, y ∈ V x := fun x hx ↦ Set.mem_iInter₂.1 hy x hx
-      refine Set.mem_preimage.2 (lt_of_lt_of_le hbm (le_iInf fun x ↦ le_of_lt ?_))
-      obtain ⟨p, hpT, hxU⟩ := Set.mem_iUnion₂.1 (hTcover (Set.mem_univ x))
-      exact Set.mem_preimage.1 (hUV p ⟨hxU, hyV p hpT⟩)
-    exact ⟨W, hWopen.mem_nhds (Set.mem_iInter₂.2 fun x (_ : x ∈ T) ↦ mem_of_mem_nhds (hV x)),
-      hsub⟩
-  exact isOpen_iff_mem_nhds.2 fun y₀ hy₀ ↦ let ⟨w, hw, hsub⟩ := key y₀ hy₀
-    mem_of_superset hw hsub
+variable [TopologicalSpace X] [TopologicalSpace Y]
 
 omit [TopologicalSpace Y] in
-/-- The infimum over a nonempty compact index factor of a family of lower-semicontinuous
-functions indexed by a second variable is attained by one of the sections. -/
-theorem exists_ciInf_eq_of_isCompact [CompactSpace X] (hne : Nonempty X)
-    (hgsec : ∀ y, LowerSemicontinuous fun x => g (x, y)) (y : Y) :
-    ∃ x : X, ⨅ x' : X, g (x', y) = g (x, y) := by
-  have hsec' : LowerSemicontinuousOn (fun x => g (x, y)) Set.univ :=
-    (hgsec y).lowerSemicontinuousOn Set.univ
-  obtain ⟨a, -, hmin⟩ :=
-    LowerSemicontinuousOn.exists_isMinOn Set.univ_nonempty isCompact_univ hsec'
-  refine ⟨a, le_antisymm (iInf_le_of_le a (le_refl _)) (le_iInf fun x' ↦ ?_)⟩
-  exact isMinOn_iff.1 hmin x' (mem_univ x')
-
-/-! ### Application to the transform -/
+/-- For a fixed target point, subtracting an upper-semicontinuous source potential from a
+lower-semicontinuous cost section keeps the section of the transform integrand lower
+semicontinuous. -/
+private theorem lowerSemicontinuous_section_sub_of_upperSemicontinuous {y : Y}
+    (hc : LowerSemicontinuous fun x => ((c (x, y) : ℝ) : EReal))
+    (hφ : UpperSemicontinuous φ) :
+    LowerSemicontinuous fun x => ((c (x, y) : ℝ) : EReal) - φ x := by
+  refine hc.add' ?_ ?_
+  · exact continuous_neg.comp_upperSemicontinuous_antitone hφ EReal.neg_strictAnti.antitone
+  · intro _
+    exact EReal.continuousAt_add (Or.inl (by simp)) (Or.inl (by simp))
 
 /-- Against a jointly lower-semicontinuous real cost, subtracting an upper-semicontinuous
 potential on the source keeps the integrand of the `c`-transform jointly lower
@@ -150,19 +110,17 @@ theorem lowerSemicontinuous_coe_sub_of_upperSemicontinuous
   · intro z
     exact EReal.continuousAt_add (Or.inl (by simp)) (Or.inl (by simp))
 
-/-- If the cost is jointly lower semicontinuous and the potential is upper semicontinuous,
+omit [TopologicalSpace Y] in
+/-- If every cost section is lower semicontinuous and the potential is upper semicontinuous,
 the infimum defining the `c`-transform is attained at some source point, provided the source
-space is compact and nonempty. -/
+space is compact and nonempty. No joint lower semicontinuity of the cost is needed. -/
 theorem exists_cTransform_eq_of_lowerSemicontinuous [CompactSpace X] (hne : Nonempty X)
-    (hc : LowerSemicontinuous fun z : X × Y => ((c z : ℝ) : EReal))
+    (hc : ∀ y', LowerSemicontinuous fun x' => ((c (x', y') : ℝ) : EReal))
     (hφ : UpperSemicontinuous φ) (y : Y) :
     ∃ x : X, cTransform c φ y = ((c (x, y) : ℝ) : EReal) - φ x := by
-  have hgsec : ∀ y', LowerSemicontinuous fun x' => ((c (x', y') : ℝ) : EReal) - φ x' :=
-    fun y' ↦
-      Semicontinuous.comp (lowerSemicontinuous_coe_sub_of_upperSemicontinuous hc hφ)
-        (Continuous.prodMk_left y')
   obtain ⟨x, hx⟩ :=
-    exists_ciInf_eq_of_isCompact (g := fun z => ((c z : ℝ) : EReal) - φ z.1) hne hgsec y
+    exists_ciInf_eq_of_isCompact (g := fun z => ((c z : ℝ) : EReal) - φ z.1) hne
+      (fun y' ↦ lowerSemicontinuous_section_sub_of_upperSemicontinuous (hc y') hφ) y
   refine ⟨x, ?_⟩
   rw [cTransform_apply]
   exact hx
@@ -213,17 +171,17 @@ theorem measurable_cTransform_of_continuous
 
 /-! ### The symmetric transform -/
 
-/-- If the cost is jointly lower semicontinuous and the potential is upper semicontinuous,
+omit [TopologicalSpace X] in
+/-- If every cost section is lower semicontinuous and the potential is upper semicontinuous,
 the infimum defining the symmetric `c`-transform is attained at some target point, provided
-the target space is compact and nonempty. -/
+the target space is compact and nonempty. No joint lower semicontinuity of the cost is
+needed. -/
 theorem exists_cTransformSymm_eq_of_lowerSemicontinuous [CompactSpace Y] (hne : Nonempty Y)
-    (hc : LowerSemicontinuous fun z : X × Y => ((c z : ℝ) : EReal))
+    (hc : ∀ x', LowerSemicontinuous fun y' => ((c (x', y') : ℝ) : EReal))
     (hψ : UpperSemicontinuous ψ) (x : X) :
     ∃ y : Y, cTransformSymm c ψ x = ((c (x, y) : ℝ) : EReal) - ψ y := by
-  have hc' : LowerSemicontinuous fun z : Y × X => ((c (z.2, z.1) : ℝ) : EReal) :=
-    Semicontinuous.comp hc continuous_swap
   obtain ⟨y, hy⟩ :=
-    exists_cTransform_eq_of_lowerSemicontinuous (c := fun z : Y × X => c (z.2, z.1)) hne hc' hψ x
+    exists_cTransform_eq_of_lowerSemicontinuous (c := fun z : Y × X => c (z.2, z.1)) hne hc hψ x
   refine ⟨y, ?_⟩
   rw [cTransform_apply (fun z : Y × X => c (z.2, z.1)) ψ x] at hy
   rw [cTransformSymm_apply, hy]
