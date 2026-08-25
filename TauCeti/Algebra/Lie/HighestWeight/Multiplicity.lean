@@ -50,7 +50,7 @@ strictly smaller height, a negative root having strictly negative height
 
 ## Main results
 
-* `TauCeti.genWeightSpace_eq_loweredWeightSpace_of_ne_of_isHighestWeightVector_of_lieSpan_eq_top`:
+* `TauCeti.genWeightSpace_eq_loweredWeightSpace_of_isHighestWeightVector_of_lieSpan_eq_top_of_ne`:
   below the highest weight, a weight space of a highest weight module is exactly what the lowering
   operators produce from above.
 * `TauCeti.finiteDimensional_genWeightSpace_of_isHighestWeightVector_of_lieSpan_eq_top`: **every
@@ -125,9 +125,7 @@ theorem loweredWeightSpace_le_iff {chi : H → K} {N : Submodule K M} :
   rw [loweredWeightSpace_eq_iSup]
   refine iSup₂_le fun gamma hgamma => Submodule.map₂_le.mpr fun x hx m hm => ?_
   rw [LieSubmodule.mem_toSubmodule] at hx hm
-  change (toEnd K L M) x m ∈ N
-  rw [LieModule.toEnd_apply_apply K L M]
-  exact h gamma hgamma x hx m hm
+  exact (LieModule.toEnd_apply_apply K L M x m).symm ▸ h gamma hgamma x hx m hm
 
 /-- **What the lowering operators produce at `chi` lies in the weight space at `chi`**: a root
 vector of `γ` carries the weight space at `chi - γ` into the weight space at `γ + (chi - γ)`. -/
@@ -146,22 +144,14 @@ together with what the lowering operators produce at `chi`. -/
 private def hwPiece (chi : H → K) : Submodule K M :=
   (Submodule.span K {v} ⊓ (genWeightSpace M chi : Submodule K M)) ⊔ loweredWeightSpace M b chi
 
-variable (M b v) in
-/-- `TauCeti.hwPiece` written out as a supremum, so that the two summands can be addressed. -/
-private theorem hwPiece_eq (chi : H → K) :
-    hwPiece M b v chi =
-      (Submodule.span K {v} ⊓ (genWeightSpace M chi : Submodule K M))
-        ⊔ loweredWeightSpace M b chi :=
-  (rfl)
-
 private theorem loweredWeightSpace_le_hwPiece (chi : H → K) :
     loweredWeightSpace M b chi ≤ hwPiece M b v chi := by
-  rw [hwPiece_eq]
+  rw [hwPiece]
   exact le_sup_right
 
 private theorem hwPiece_le_genWeightSpace (chi : H → K) :
     hwPiece M b v chi ≤ (genWeightSpace M chi : Submodule K M) := by
-  rw [hwPiece_eq]
+  rw [hwPiece]
   exact sup_le inf_le_right (loweredWeightSpace_le_genWeightSpace chi)
 
 /-- The candidate family is stable under the negative nilradical: decomposing an element of `n⁻`
@@ -195,7 +185,7 @@ private theorem iSup_hwPiece_eq_top (hv : IsHighestWeightVector b lam v)
   refine eq_top_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen ?_
     fun _ hx _ hm => lie_mem_iSup_hwPiece_of_mem_negativeNilradical hx hm
   refine le_iSup (fun chi : H → K => hwPiece M b v chi) ((lam : Dual K H) : H → K) ?_
-  rw [hwPiece_eq]
+  rw [hwPiece]
   exact Submodule.mem_sup_left
     (Submodule.mem_inf.mpr ⟨Submodule.mem_span_singleton_self v, hv.mem_genWeightSpace⟩)
 
@@ -216,7 +206,7 @@ lowering operators produce from the weights one negative root above it.**
 
 At the highest weight itself the weight space is instead the line spanned by the generator, by
 `TauCeti.genWeightSpace_eq_span_singleton_of_isHighestWeightVector_of_lieSpan_eq_top`. -/
-theorem genWeightSpace_eq_loweredWeightSpace_of_ne_of_isHighestWeightVector_of_lieSpan_eq_top
+theorem genWeightSpace_eq_loweredWeightSpace_of_isHighestWeightVector_of_lieSpan_eq_top_of_ne
     (hv : IsHighestWeightVector b lam v)
     (hgen : LieSubmodule.lieSpan K L {v} = ⊤) {chi : H → K}
     (hne : chi ≠ ((lam : Dual K H) : H → K)) :
@@ -227,7 +217,7 @@ theorem genWeightSpace_eq_loweredWeightSpace_of_ne_of_isHighestWeightVector_of_l
   have hdisj : Disjoint (Submodule.span K {v}) (genWeightSpace M chi : Submodule K M) :=
     Disjoint.mono_left hspan
       (by rw [LieSubmodule.disjoint_toSubmodule]; exact disjoint_genWeightSpace K H M hne.symm)
-  rw [← hwPiece_eq_genWeightSpace hv hgen chi, hwPiece_eq, disjoint_iff.mp hdisj, bot_sup_eq]
+  rw [← hwPiece_eq_genWeightSpace hv hgen chi, hwPiece, disjoint_iff.mp hdisj, bot_sup_eq]
 
 /-! ### Finite-dimensionality -/
 
@@ -244,7 +234,7 @@ private theorem fg_genWeightSpace_of_heightLinearMap_eq (hv : IsHighestWeightVec
     by_cases hne : ((chi : Dual K H) : H → K) = ((lam : Dual K H) : H → K)
     · rw [hne, genWeightSpace_eq_span_singleton_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen]
       exact Submodule.fg_span_singleton v
-    rw [genWeightSpace_eq_loweredWeightSpace_of_ne_of_isHighestWeightVector_of_lieSpan_eq_top
+    rw [genWeightSpace_eq_loweredWeightSpace_of_isHighestWeightVector_of_lieSpan_eq_top_of_ne
       hv hgen hne, loweredWeightSpace_eq_iSup]
     refine Submodule.fg_iSup _ fun gamma => Submodule.fg_iSup _ fun hgamma => ?_
     refine Submodule.FG.map₂ _ ((Submodule.fg_iff_finiteDimensional _).mpr inferInstance) ?_
