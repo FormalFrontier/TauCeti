@@ -48,13 +48,19 @@ pinned Mathlib has no Krull–Akizuki (the identifier and the hyphenated prose s
 zero times, against 69 files mentioning `IsDedekindDomain`) and no usable Nagata
 normalization-finiteness API.
 
-Removing the hypothesis therefore means building that route first. That is not an open-ended
-wish: `TauCetiRoadmap/EllipticCurves/README.md:1096` already names
-`RingTheory/IntegralClosure/NormalizationFinite` as one of the supports of this same isogeny
-development. So the inseparable statement is scheduled work with a home, and a slice of its own
-under this repository's one-topic-per-PR rule — not something to be folded into this file. This
-is the interim result until it lands. `IntermediateRing/Finite.lean` records the same limitation
-for the finiteness half.
+Removing the hypothesis means building that route in this repository, and its Noetherian half is
+now here. `TauCeti.IsIntegralClosure.isNoetherianRing`
+(`TauCeti/RingTheory/IntegralClosure/NormalizationFinite.lean`, with
+`TauCeti.integralClosure.isNoetherianRing` for Mathlib's subalgebra form) is Krull–Akizuki: the
+integral closure of a Noetherian domain of Krull dimension at most one in a finite extension of
+its fraction field is Noetherian, with no separability assumed, and it is stated for an abstract
+`IsIntegralClosure C A L` — so it applies to `φ.intermediateRing` directly. What is still missing
+for this file is the rest of the Dedekind conjunction along a separability-free route, replacing
+`IsIntegralClosure.isDedekindDomain` as a whole; that is a slice of its own under this
+repository's one-topic-per-PR rule, not something to be folded in here. This is the interim
+result until it lands. `IntermediateRing/Finite.lean` records the same limitation for the
+finiteness half, which Krull–Akizuki does not supply: the integral closure it produces is
+Noetherian but need not be a finite module.
 
 `IsDedekindDomain W₂.CoordinateRing` is taken as a hypothesis rather than derived. For an elliptic
 curve it is supplied by `WeierstrassCurve.Affine.isDedekindDomain_coordinateRing`, which needs
