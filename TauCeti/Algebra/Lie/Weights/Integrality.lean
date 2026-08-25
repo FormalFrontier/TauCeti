@@ -63,6 +63,8 @@ root is what forces its weight to be dominant integral.
 * `TauCeti.forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero`:
   a finite-dimensional `sl₂` string starting at coroot weight zero stops immediately in the
   negative-root direction.
+* `TauCeti.forall_rootSpace_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_neg_lie_eq_zero`:
+  the corresponding statement in the positive-root direction.
 * `TauCeti.genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast`: the generalized eigenspace of a
   coroot at a non-integer scalar vanishes.
 
@@ -296,5 +298,21 @@ theorem forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpa
     apply hve f
     have hα0 : (α : H → K) = 0 := not_not.mp hα
     simpa only [Weight.coe_neg, hα0, neg_zero] using hf
+
+/-- **A lowest-weight vector of coroot weight zero is also killed in the positive direction.** If a
+vector is annihilated by `L₍₋α₎` and has eigenvalue zero under `α^∨`, the finite-dimensional `sl₂`
+string through it stops immediately, so `Lα` also annihilates it. -/
+theorem forall_rootSpace_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_neg_lie_eq_zero
+    {α : Weight K H L} {v : M}
+    (hv : ⁅((IsKilling.coroot α : H) : L), v⁆ = 0)
+    (hvf : ∀ f ∈ rootSpace H (-α), ⁅f, v⁆ = 0) :
+    ∀ e ∈ rootSpace H (α : H → K), ⁅e, v⁆ = 0 := by
+  have hv' : ⁅((IsKilling.coroot (-α) : H) : L), v⁆ = 0 := by
+    rw [IsKilling.coroot_neg]
+    change ⁅-(((IsKilling.coroot α : H) : L)), v⁆ = 0
+    rw [neg_lie, hv, neg_zero]
+  simpa only [Weight.coe_neg, neg_neg] using
+    (forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero
+      (M := M) (α := -α) hv' hvf)
 
 end TauCeti
