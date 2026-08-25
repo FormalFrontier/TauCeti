@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Combinatorics.Quiver.Reorient
 public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Map
 public import TauCeti.RepresentationTheory.Quiver.Preprojective.Gauge
-public import TauCeti.RepresentationTheory.Quiver.Reorient
 
 /-!
 # Orientation independence of the additive preprojective algebra
@@ -66,6 +66,10 @@ obtained from the same proof.
 * `TauCeti.reorientPreprojectiveAlgebraEquiv_preprojectiveMk`: the isomorphism, computed on an
   arbitrary quotient representative, as the doubled-quiver identification followed by the rescaling
   by `-1` of the turned-around arrows.
+* `TauCeti.reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_keep` and its three
+  companions: the isomorphism, computed on each of the four kinds of generator. An arrow `σ` leaves
+  alone and its formal reverse are fixed, a turned-around arrow is carried to a formal reverse, and
+  the formal reverse of a turned-around arrow is carried to the negative of an arrow.
 
 ## Implementation notes
 
@@ -95,15 +99,11 @@ universe u v w
 
 section Sign
 
-variable (k : Type w) {Q : Type u} [Ring k] [Quiver.{v + 1} Q]
+variable (k : Type w) {Q : Type u} [One k] [Neg k] [Quiver.{v + 1} Q]
 
 /-- The sign labelling attached to a reorientation: an arrow which `σ` turns around enters the
 preprojective relator with the opposite sign, and every other arrow keeps its sign. -/
 def reorientSign (σ : ∀ ⦃i j : Q⦄, (i ⟶ j) → Bool) ⦃i j : Q⦄ (a : i ⟶ j) : k :=
-  if σ a then -1 else 1
-
-/-- The sign labelling, valued in the units of `k`. -/
-def reorientSignUnit (σ : ∀ ⦃i j : Q⦄, (i ⟶ j) → Bool) ⦃i j : Q⦄ (a : i ⟶ j) : kˣ :=
   if σ a then -1 else 1
 
 /-- A turned-around arrow gets the sign `-1`. -/
@@ -118,6 +118,16 @@ theorem reorientSign_of_false {σ : ∀ ⦃i j : Q⦄, (i ⟶ j) → Bool} {i j 
     (h : ¬ σ a) : reorientSign k σ a = 1 := by
   simp [reorientSign, h]
 
+end Sign
+
+section SignUnit
+
+variable (k : Type w) {Q : Type u} [Ring k] [Quiver.{v + 1} Q]
+
+/-- The sign labelling, valued in the units of `k`. -/
+def reorientSignUnit (σ : ∀ ⦃i j : Q⦄, (i ⟶ j) → Bool) ⦃i j : Q⦄ (a : i ⟶ j) : kˣ :=
+  if σ a then -1 else 1
+
 /-- The sign labelling takes values in `{1, -1}`, so it is its own inverse. -/
 @[simp]
 theorem reorientSignUnit_inv (σ : ∀ ⦃i j : Q⦄, (i ⟶ j) → Bool) ⦃i j : Q⦄ (a : i ⟶ j) :
@@ -131,7 +141,7 @@ theorem reorientSign_eq_coe_reorientSignUnit (σ : ∀ ⦃i j : Q⦄, (i ⟶ j) 
   rw [reorientSign, reorientSignUnit]
   split <;> simp
 
-end Sign
+end SignUnit
 
 /-! ### The induced isomorphism of doubled path algebras -/
 
@@ -159,6 +169,13 @@ private theorem reorientDoubledEquiv_ofArrowComp {i j l : Symmetrify (Reorient Q
   rw [reorientDoubledEquiv, mapAlgEquiv_apply, mapAlgHom_ofPath,
     Prefunctor.mapTotalPath_mk, Prefunctor.mapPath_comp, Prefunctor.mapPath_toPath,
     Prefunctor.mapPath_toPath]
+
+/-- Pushing an arrow of the doubled reoriented quiver along the comparison carries it to the image
+arrow. Deliberately not a `simp` lemma, `TauCeti.PathAlgebra.ofArrow_eq_ofPath` already rewriting
+its left-hand side. -/
+theorem reorientDoubledEquiv_ofArrow {x y : Symmetrify (Reorient Q σ)} (b : x ⟶ y) :
+    reorientDoubledEquiv k σ (ofArrow b) = ofArrow ((reorientSymmetrify σ).map b) := by
+  rw [reorientDoubledEquiv, mapAlgEquiv_apply, mapAlgHom_ofArrow]
 
 /-- An arrow which `σ` leaves alone keeps its head backtrack. -/
 @[simp]
@@ -377,6 +394,72 @@ theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk
     reorientPreprojectiveAlgebraEquivGauged_preprojectiveMk,
     preprojectiveAlgebraEquivGauged_symm_gaugedPreprojectiveMk]
   simp only [reorientSignUnit_inv, ← reorientSign_eq_coe_reorientSignUnit]
+
+/-! The four equations below compute the isomorphism on the generators of the reoriented algebra,
+which are the arrows of `Symmetrify (Reorient Q σ)`. They are deliberately not `simp` lemmas,
+`TauCeti.PathAlgebra.ofArrow_eq_ofPath` and `Quiver.Symmetrify.of_map` already rewriting their
+left-hand sides. Each proof isolates the image of the generator in a `have`, whose statement names
+the vertices of `Q` directly where rewriting leaves them spelled `(reorientSymmetrify σ).obj v`;
+those two spellings are definitionally equal, which is what the closing `rfl` uses, but they are
+not syntactically equal, so rewriting further inside the un-normalized form fails. -/
+
+/-- **The isomorphism fixes an arrow which `σ` leaves alone.** -/
+theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_keep {i j : Q} (a : i ⟶ j)
+    (ha : ¬ σ a) :
+    reorientPreprojectiveAlgebraEquiv k σ
+        (preprojectiveMk k (Reorient Q σ) (ofArrow (Symmetrify.of.map (reorientKeep σ a ha))))
+      = preprojectiveMk k Q (ofArrow (Symmetrify.of.map a)) := by
+  have h : reorientDoubledEquiv k σ (ofArrow (Symmetrify.of.map (reorientKeep σ a ha)))
+      = ofArrow (Symmetrify.of.map a) := by
+    rw [reorientDoubledEquiv_ofArrow, reorientSymmetrify_map_of_keep]
+    rfl
+  rw [reorientPreprojectiveAlgebraEquiv_preprojectiveMk, h, rescale_ofArrow, doubledLabelling_of,
+    reorientSign_of_false k ha, one_smul]
+
+/-- **The isomorphism fixes the formal reverse of an arrow which `σ` leaves alone.** -/
+theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_reverse_keep {i j : Q}
+    (a : i ⟶ j) (ha : ¬ σ a) :
+    reorientPreprojectiveAlgebraEquiv k σ (preprojectiveMk k (Reorient Q σ)
+        (ofArrow (Quiver.reverse (Symmetrify.of.map (reorientKeep σ a ha)))))
+      = preprojectiveMk k Q (ofArrow (Quiver.reverse (Symmetrify.of.map a))) := by
+  have h : reorientDoubledEquiv k σ
+        (ofArrow (Quiver.reverse (Symmetrify.of.map (reorientKeep σ a ha))))
+      = ofArrow (Quiver.reverse (Symmetrify.of.map a)) := by
+    rw [reorientDoubledEquiv_ofArrow, reorientSymmetrify_map_reverse_of_keep]
+    rfl
+  rw [reorientPreprojectiveAlgebraEquiv_preprojectiveMk, h, rescale_ofArrow,
+    doubledLabelling_reverse_of, one_smul]
+
+/-- **The isomorphism exchanges a turned-around arrow with a formal reverse**, without a sign: the
+arrow of `Reorient Q σ` carried by a turned-around arrow `a` of `Q` goes to the formal reverse
+of `a`. -/
+theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_flip {i j : Q} (a : j ⟶ i)
+    (ha : σ a) :
+    reorientPreprojectiveAlgebraEquiv k σ
+        (preprojectiveMk k (Reorient Q σ) (ofArrow (Symmetrify.of.map (reorientFlip σ a ha))))
+      = preprojectiveMk k Q (ofArrow (Quiver.reverse (Symmetrify.of.map a))) := by
+  have h : reorientDoubledEquiv k σ (ofArrow (Symmetrify.of.map (reorientFlip σ a ha)))
+      = ofArrow (Quiver.reverse (Symmetrify.of.map a)) := by
+    rw [reorientDoubledEquiv_ofArrow, reorientSymmetrify_map_of_flip]
+    rfl
+  rw [reorientPreprojectiveAlgebraEquiv_preprojectiveMk, h, rescale_ofArrow,
+    doubledLabelling_reverse_of, one_smul]
+
+/-- **The isomorphism negates the formal reverse of a turned-around arrow.** This is the one
+generator carrying the sign which repairs the change of orientation; every other generator above is
+carried to a generator on the nose. -/
+theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_reverse_flip {i j : Q}
+    (a : j ⟶ i) (ha : σ a) :
+    reorientPreprojectiveAlgebraEquiv k σ (preprojectiveMk k (Reorient Q σ)
+        (ofArrow (Quiver.reverse (Symmetrify.of.map (reorientFlip σ a ha)))))
+      = -preprojectiveMk k Q (ofArrow (Symmetrify.of.map a)) := by
+  have h : reorientDoubledEquiv k σ
+        (ofArrow (Quiver.reverse (Symmetrify.of.map (reorientFlip σ a ha))))
+      = ofArrow (Symmetrify.of.map a) := by
+    rw [reorientDoubledEquiv_ofArrow, reorientSymmetrify_map_reverse_of_flip]
+    rfl
+  rw [reorientPreprojectiveAlgebraEquiv_preprojectiveMk, h, rescale_ofArrow, doubledLabelling_of,
+    reorientSign_of_true k ha, neg_one_smul, map_neg]
 
 end Independence
 
