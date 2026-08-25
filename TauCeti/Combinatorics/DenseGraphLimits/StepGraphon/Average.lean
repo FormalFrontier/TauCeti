@@ -120,8 +120,9 @@ theorem stepGraphonAvg_apply (P : Finpartition (Set.univ : Set Ω))
   rw [stepGraphonAvg, stepGraphon_apply P hP (blockAverage P W) (blockAverage_comm P W) hx hy]
   rfl
 
-/-- On a partition rectangle whose left side is null, the block-average step graphon is zero. -/
-@[simp]
+/-- On a partition rectangle whose left side is null, the block-average step graphon is zero.
+
+This is not a simp lemma because the partition parts cannot be inferred from its left-hand side. -/
 theorem stepGraphonAvg_apply_of_measure_eq_zero_left
     (P : Finpartition (Set.univ : Set Ω)) (hP : ∀ p ∈ P.parts, MeasurableSet p)
     (W : Graphon Ω μ) {p q : P.parts} {x y : Ω} (hp : μ (p : Set Ω) = 0)
@@ -130,8 +131,9 @@ theorem stepGraphonAvg_apply_of_measure_eq_zero_left
   rw [stepGraphonAvg_apply P hP W hx hy, setAverage_eq, measureReal_prod_prod]
   simp [hp]
 
-/-- On a partition rectangle whose right side is null, the block-average step graphon is zero. -/
-@[simp]
+/-- On a partition rectangle whose right side is null, the block-average step graphon is zero.
+
+This is not a simp lemma because the partition parts cannot be inferred from its left-hand side. -/
 theorem stepGraphonAvg_apply_of_measure_eq_zero_right
     (P : Finpartition (Set.univ : Set Ω)) (hP : ∀ p ∈ P.parts, MeasurableSet p)
     (W : Graphon Ω μ) {p q : P.parts} {x y : Ω} (hq : μ (q : Set Ω) = 0)
@@ -179,8 +181,8 @@ theorem stepGraphonAvg_idem (P : Finpartition (Set.univ : Set Ω))
 
 /-- Averaging a step graphon recovers its prescribed value on every rectangle with two non-null
 sides.  The non-null hypotheses are necessary: the strict null-cell convention replaces the
-value on a null rectangle by zero. -/
-@[simp]
+value on a null rectangle by zero.  This is not a simp lemma because the partition parts cannot be
+inferred from its left-hand side. -/
 theorem stepGraphonAvg_stepGraphon_apply (P : Finpartition (Set.univ : Set Ω))
     (hP : ∀ p ∈ P.parts, MeasurableSet p)
     (val : P.parts → P.parts → Set.Icc (0 : ℝ) 1) (hsymm : ∀ p q, val p q = val q p)
