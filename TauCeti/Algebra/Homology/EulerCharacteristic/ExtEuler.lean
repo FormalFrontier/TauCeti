@@ -8,8 +8,7 @@ module
 public import Mathlib.Algebra.Homology.DerivedCategory.Ext.EnoughProjectives
 public import Mathlib.Algebra.Homology.DerivedCategory.Ext.ExactSequences
 public import Mathlib.Algebra.Homology.DerivedCategory.Ext.Linear
-public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
-public import Mathlib.RingTheory.Finiteness.Finsupp
+public import TauCeti.LinearAlgebra.Exact
 
 /-!
 # Euler-admissible pairs and the Ext-Euler characteristic
@@ -90,32 +89,6 @@ namespace TauCeti
 open CategoryTheory CategoryTheory.Abelian CategoryTheory.Limits
 
 universe w v u t
-
-section Auxiliary
-
-/-- If `M --f--> N --g--> P` is exact at `N` and both `M` and `P` are finite-dimensional, then so
-is `N`.
-
-This is the linear-algebra input behind every closure property of `IsExtFinite` below. It is
-deduced from `Module.Finite.of_exact`, which asks the second map to be surjective — as the maps
-of a long exact sequence are not — by corestricting `g` to its range, a finite-dimensional
-submodule of `P`. -/
-theorem finiteDimensional_of_exact {k M N P : Type*} [Field k] [AddCommGroup M] [Module k M]
-    [AddCommGroup N] [Module k N] [AddCommGroup P] [Module k P] {f : M →ₗ[k] N} {g : N →ₗ[k] P}
-    (h : Function.Exact f g) [FiniteDimensional k M] [FiniteDimensional k P] :
-    FiniteDimensional k N :=
-  Module.Finite.of_exact (g := g.rangeRestrict)
-    (fun x ↦ by rw [← h x, ← Subtype.coe_inj]; simp) g.surjective_rangeRestrict
-
-/-- If `M --f--> N --g--> P` is exact at `N` and both `M` and `P` vanish, then so does `N`. -/
-theorem subsingleton_of_exact {M N P : Type*} [Zero M] [AddCommGroup N] [Zero P] {f : M → N}
-    {g : N → P} (h : Function.Exact f g) (hf : f 0 = 0) [Subsingleton M] [Subsingleton P] :
-    Subsingleton N := by
-  refine subsingleton_of_forall_eq 0 fun x ↦ ?_
-  obtain ⟨y, rfl⟩ := (h x).1 (Subsingleton.elim _ _)
-  rw [Subsingleton.elim y 0, hf]
-
-end Auxiliary
 
 variable {C : Type u} [Category.{v} C] [Abelian C] (k : Type t) [Field k] [Linear k C]
   [HasExt.{w} C]
@@ -359,19 +332,45 @@ theorem exact_precomp (hS : S.ShortExact) (Y : C) (n : ℕ) :
     rintro ⟨x₃, rfl⟩
     simp [S.zero]⟩
 
+/-- The linear postcomposition map agrees pointwise with `Ext.postcomp`. -/
+theorem postcompOfLinear_apply (R : Type t) [CommRing R] [Linear R C]
+    {Y Z : C} {n a b : ℕ} (beta : Ext.{w} Y Z n) (X : C)
+    (h : a + n = b) (x : Ext.{w} X Y a) :
+    Ext.postcompOfLinear beta R X h x = Ext.postcomp beta X h x :=
+  rfl
+
+/-- The linear precomposition map agrees pointwise with `Ext.precomp`. -/
+theorem precompOfLinear_apply (R : Type t) [CommRing R] [Linear R C]
+    {X Y : C} {n a b : ℕ} (alpha : Ext.{w} X Y n) (Z : C)
+    (h : n + a = b) (x : Ext.{w} Y Z a) :
+    Ext.precompOfLinear alpha R Z h x = Ext.precomp alpha Z h x :=
+  rfl
+
 variable (k)
 
 /-- The `k`-linear form of `TauCeti.exact_postcomp`. -/
 theorem exact_postcompOfLinear (hS : S.ShortExact) (X : C) (n : ℕ) :
     Function.Exact (Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero n))
-      (Ext.postcompOfLinear (Ext.mk₀ S.g) k X (add_zero n)) :=
-  exact_postcomp hS X n
+      (Ext.postcompOfLinear (Ext.mk₀ S.g) k X (add_zero n)) := by
+  rw [show ⇑(Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero n)) =
+      Ext.postcomp (Ext.mk₀ S.f) X (add_zero n) from
+    funext fun x ↦ postcompOfLinear_apply k _ _ _ x]
+  rw [show ⇑(Ext.postcompOfLinear (Ext.mk₀ S.g) k X (add_zero n)) =
+      Ext.postcomp (Ext.mk₀ S.g) X (add_zero n) from
+    funext fun x ↦ postcompOfLinear_apply k _ _ _ x]
+  exact exact_postcomp hS X n
 
 /-- The `k`-linear form of `TauCeti.exact_precomp`. -/
 theorem exact_precompOfLinear (hS : S.ShortExact) (Y : C) (n : ℕ) :
     Function.Exact (Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add n))
-      (Ext.precompOfLinear (Ext.mk₀ S.f) k Y (zero_add n)) :=
-  exact_precomp hS Y n
+      (Ext.precompOfLinear (Ext.mk₀ S.f) k Y (zero_add n)) := by
+  rw [show ⇑(Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add n)) =
+      Ext.precomp (Ext.mk₀ S.g) Y (zero_add n) from
+    funext fun x ↦ precompOfLinear_apply k _ _ _ x]
+  rw [show ⇑(Ext.precompOfLinear (Ext.mk₀ S.f) k Y (zero_add n)) =
+      Ext.precomp (Ext.mk₀ S.f) Y (zero_add n) from
+    funext fun x ↦ precompOfLinear_apply k _ _ _ x]
+  exact exact_precomp hS Y n
 
 variable {k}
 
