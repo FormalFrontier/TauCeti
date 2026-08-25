@@ -107,6 +107,55 @@ theorem integralDividedPower_mul_integralDividedPower_of_commutator_eq_three_nsm
 
 /-! ## The generating-function form of the straightening rule -/
 
+/-- Summing over the truncated region
+`{(m, n, b, c, d, e) | m, n < N, (b, c, d, e) ∈ chainG2Index m n}` is the same as summing over the
+slice `{(a, b, c, d, e, q) | a + b + c + d + 2e < N, q + b + 2c + 3d + 3e < N}` of the hypercube,
+the summand transported along
+`(m, n, b, c, d, e) ↦ (n - b - c - d - 2e, b, c, d, e, m - b - 2c - 3d - 3e)`. For `N = 0` both
+sides are empty sums.
+
+This is the six-variable analogue of `sum_chainLeTwoIndex_diag_flip` in
+`TauCeti.RingTheory.Nilpotent.RootString.Basic`, whose name it follows: the inner index set is
+`Associative.chainG2Index m n` rather than `Associative.chainLeTwoIndex m n`. -/
+private theorem sum_chainG2Index_diag_flip {B : Type*} [AddCommMonoid B]
+    (F : ℕ × ℕ × ℕ × ℕ × ℕ × ℕ → B) (N : ℕ) :
+    ∑ w ∈ (range N ×ˢ range N).sigma (fun mn => Associative.chainG2Index mn.1 mn.2),
+        F (w.1.2 - w.2.1 - w.2.2.1 - w.2.2.2.1 - 2 * w.2.2.2.2, w.2.1, w.2.2.1, w.2.2.2.1,
+          w.2.2.2.2, w.1.1 - w.2.1 - 2 * w.2.2.1 - 3 * w.2.2.2.1 - 3 * w.2.2.2.2) =
+      ∑ w ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N with
+        w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1 < N ∧
+          w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1 < N, F w := by
+  refine Finset.sum_nbij'
+    (fun w => (w.1.2 - w.2.1 - w.2.2.1 - w.2.2.2.1 - 2 * w.2.2.2.2, w.2.1, w.2.2.1, w.2.2.2.1,
+      w.2.2.2.2, w.1.1 - w.2.1 - 2 * w.2.2.1 - 3 * w.2.2.2.1 - 3 * w.2.2.2.2))
+    (fun w => ⟨(w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1,
+      w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1),
+      (w.2.1, w.2.2.1, w.2.2.2.1, w.2.2.2.2.1)⟩) ?_ ?_ ?_ ?_ ?_
+  · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainG2Index] at hw
+    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range]
+    omega
+  · rintro ⟨a, b, c, d, e, q⟩ hw
+    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hw
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainG2Index]
+    omega
+  · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
+    obtain ⟨h1, h2⟩ := Associative.mem_chainG2Index.mp (Finset.mem_sigma.mp hw).2
+    -- Restate the two bounds with the pair projections reduced, so that `omega` can use them.
+    have hbn : b + c + d + 2 * e ≤ n := h1
+    have hbm : b + 2 * c + 3 * d + 3 * e ≤ m := h2
+    have e1 : m - b - 2 * c - 3 * d - 3 * e + b + 2 * c + 3 * d + 3 * e = m := by omega
+    have e2 : n - b - c - d - 2 * e + b + c + d + 2 * e = n := by omega
+    simp [e1, e2]
+  · rintro ⟨a, b, c, d, e, q⟩ _
+    have e1 : a + b + c + d + 2 * e - b - c - d - 2 * e = a := by omega
+    have e2 : q + b + 2 * c + 3 * d + 3 * e - b - 2 * c - 3 * d - 3 * e = q := by omega
+    simp [e1, e2]
+  · rintro ⟨⟨m, n⟩, b, c, d, e⟩ _
+    rfl
+
 -- The combinatorial core: a truncated left factor times a truncated right factor is the reordered
 -- sextuple product, once the truncation is wide enough that the reindexed hypercube contains no
 -- extra nonzero terms. The reindexing is
@@ -162,45 +211,23 @@ private theorem sum_smul_mul_sum_smul_of_chainG2Order {R : Type*} [CommRing R]
       ∑ w ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N with
         w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1 < N ∧
           w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1 < N, G w := by
-    refine Finset.sum_nbij'
-      (fun w => (w.1.2 - w.2.1 - w.2.2.1 - w.2.2.2.1 - 2 * w.2.2.2.2, w.2.1, w.2.2.1, w.2.2.2.1,
-        w.2.2.2.2, w.1.1 - w.2.1 - 2 * w.2.2.1 - 3 * w.2.2.2.1 - 3 * w.2.2.2.2))
-      (fun w => ⟨(w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1,
-        w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1),
-        (w.2.1, w.2.2.1, w.2.2.2.1, w.2.2.2.2.1)⟩) ?_ ?_ ?_ ?_ ?_
-    · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainG2Index] at hw
-      simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range]
-      omega
-    · rintro ⟨a, b, c, d, e, q⟩ hw
-      simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hw
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainG2Index]
-      omega
-    · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
-      obtain ⟨h1, h2⟩ := Associative.mem_chainG2Index.mp (Finset.mem_sigma.mp hw).2
-      have hbn : b + c + d + 2 * e ≤ n := h1
-      have hbm : b + 2 * c + 3 * d + 3 * e ≤ m := h2
-      have e1 : m - b - 2 * c - 3 * d - 3 * e + b + 2 * c + 3 * d + 3 * e = m := by omega
-      have e2 : n - b - c - d - 2 * e + b + c + d + 2 * e = n := by omega
-      simp [e1, e2]
-    · rintro ⟨a, b, c, d, e, q⟩ _
-      have e1 : a + b + c + d + 2 * e - b - c - d - 2 * e = a := by omega
-      have e2 : q + b + 2 * c + 3 * d + 3 * e - b - 2 * c - 3 * d - 3 * e = q := by omega
-      simp [e1, e2]
-    · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainG2Index] at hw
-      obtain ⟨a, rfl⟩ : ∃ a, n = a + (b + c + d + 2 * e) := ⟨n - b - c - d - 2 * e, by omega⟩
-      obtain ⟨q, rfl⟩ : ∃ q, m = q + (b + 2 * c + 3 * d + 3 * e) :=
-        ⟨m - b - 2 * c - 3 * d - 3 * e, by omega⟩
-      have h1 : a + (b + c + d + 2 * e) - b - c - d - 2 * e = a := by omega
-      have h2 : q + (b + 2 * c + 3 * d + 3 * e) - b - 2 * c - 3 * d - 3 * e = q := by omega
-      simp only [hG, h1, h2]
-      congr 1
-      simp only [mul_pow, pow_add, pow_mul]
-      ring
+    rw [← sum_chainG2Index_diag_flip G N]
+    refine Finset.sum_congr rfl ?_
+    -- On the region `m = q + (b + 2c + 3d + 3e)`, `n = a + (b + c + d + 2e)`, so the scalar
+    -- `t ^ m * u ^ n` is `G`'s `u ^ a * (t * u) ^ b * (t ^ 2 * u) ^ c * (t ^ 3 * u) ^ d *
+    -- (t ^ 3 * u ^ 2) ^ e * t ^ q`.
+    rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainG2Index] at hw
+    obtain ⟨a, rfl⟩ : ∃ a, n = a + (b + c + d + 2 * e) := ⟨n - b - c - d - 2 * e, by omega⟩
+    obtain ⟨q, rfl⟩ : ∃ q, m = q + (b + 2 * c + 3 * d + 3 * e) :=
+      ⟨m - b - 2 * c - 3 * d - 3 * e, by omega⟩
+    have h1 : a + (b + c + d + 2 * e) - b - c - d - 2 * e = a := by omega
+    have h2 : q + (b + 2 * c + 3 * d + 3 * e) - b - 2 * c - 3 * d - 3 * e = q := by omega
+    simp only [hG, h1, h2]
+    congr 1
+    simp only [mul_pow, pow_add, pow_mul]
+    ring
   -- Step 4: the terms of the hypercube outside that part vanish.
   have hsub : ∑ w ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N with
         w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1 < N ∧
