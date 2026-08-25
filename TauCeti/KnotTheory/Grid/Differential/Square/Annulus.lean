@@ -106,6 +106,7 @@ theorem unblockedDifferential_sq_single_apply (x z : GridState n) :
 
 /-- The diagonal entries of the matrix of `∂⁻ ∘ ∂⁻` vanish: every annular term of the square of
 the unblocked grid differential is individually zero, for every coefficient ring. -/
+@[simp↓]
 theorem unblockedDifferential_sq_single_apply_self (x : GridState n) :
     G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1)) x = 0 := by
   rw [G.unblockedDifferential_sq_single_apply R x x]
@@ -113,6 +114,7 @@ theorem unblockedDifferential_sq_single_apply_self (x : GridState n) :
     G.unblockedCoefficient_mul_unblockedCoefficient_eq_zero R x y
 
 /-- The source generator does not survive two applications of the unblocked differential. -/
+@[simp↓]
 theorem notMem_support_unblockedDifferential_sq_single (x : GridState n) :
     x ∉ (G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1))).support := by
   rw [Finsupp.notMem_support_iff]
