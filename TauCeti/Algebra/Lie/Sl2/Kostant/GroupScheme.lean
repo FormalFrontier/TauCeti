@@ -138,16 +138,16 @@ theorem rankOneRootWeight_one : rankOneRootWeight 1 = ![-2] := by
 @[simp]
 theorem torusCharacter_rankOneRootWeight_zero {A : Type*} [CommRing A]
     (s : Fin 1 → Aˣ) :
-    torusCharacter s (rankOneRootWeight 0) = (s 0) ^ 2 := by
-  rw [rankOneRootWeight_zero, torusCharacter_def]
+    torusCharacter s ![2] = (s 0) ^ 2 := by
+  rw [torusCharacter_def]
   simp
 
 /-- The negative-root character evaluates to the inverse square of the torus parameter. -/
 @[simp]
 theorem torusCharacter_rankOneRootWeight_one {A : Type*} [CommRing A]
     (s : Fin 1 → Aˣ) :
-    torusCharacter s (rankOneRootWeight 1) = (s 0)⁻¹ ^ 2 := by
-  rw [rankOneRootWeight_one, torusCharacter_def]
+    torusCharacter s ![-2] = (s 0)⁻¹ ^ 2 := by
+  rw [torusCharacter_def]
   simp [zpow_neg]
 
 /-- The two distinguished root vectors have weights `2` and `-2` for the rank-one Cartan
@@ -196,31 +196,15 @@ noncomputable def rankOneWeightTorusInGroupScheme :
   kostantWeightTorusInToral e h ρ M hM hnil b rankOneWeight
     span_range_rankOneWeight_eq_top
 
-/-- Including a root subgroup into the carrier and then into `GL₂` recovers its original Kostant
-root subgroup. -/
-@[simp]
-theorem rankOneRootSubgroup_comp_ι (i : Fin 2) :
-    rankOneRootSubgroup i ≫ rankOneGroupSchemeι =
-      kostantRootSubgroup e h ρ M hM i (hnil i) b :=
-  kostantRootSubgroupToToral_comp_ι e h ρ M hM hnil b rankOneWeight i
-
 /-- Each root subgroup is a closed immersion into the rank-one carrier. -/
 instance isClosedImmersion_rankOneRootSubgroup (i : Fin 2) :
     IsClosedImmersion (rankOneRootSubgroup i).hom.hom.left := by
   have hcomp : IsClosedImmersion
       ((rankOneRootSubgroup i ≫ rankOneGroupSchemeι).hom.hom.left) := by
-    rw [rankOneRootSubgroup_comp_ι]
+    rw [kostantRootSubgroupToToral_comp_ι]
     exact isClosedImmersion_kostantRootSubgroup_one i
   exact @IsClosedImmersion.of_comp _ _ _
     (rankOneRootSubgroup i).hom.hom.left rankOneGroupSchemeι.hom.hom.left hcomp inferInstance
-
-/-- Including the split torus into the carrier and then into `GL₂` recovers the represented
-weight torus. -/
-@[simp]
-theorem rankOneWeightTorus_comp_ι :
-    rankOneWeightTorus ≫ rankOneGroupSchemeι =
-      GeneralLinear.weightTorus (R := ℤ) rankOneWeight :=
-  kostantWeightTorusToToral_comp_ι e h ρ M hM hnil b rankOneWeight
 
 /-! ## Matrix equations -/
 
@@ -232,9 +216,8 @@ noncomputable abbrev rankOneTorusMatrix {A : Type*} [CommRing A] :
 /-- A rank-one torus point is the diagonal matrix `diag(s, s⁻¹)`. -/
 @[simp]
 theorem rankOneTorusMatrix_apply {A : Type*} [CommRing A] (s : Fin 1 → Aˣ) :
-    rankOneTorusMatrix s = diagGL ![s 0, (s 0)⁻¹] := by
-  change kostantTorusMatrix M b rankOneWeight s = _
-  rw [kostantTorusMatrix_apply]
+    diagGL (fun i => torusCharacter s (rankOneWeight i)) =
+      diagGL ![s 0, (s 0)⁻¹] := by
   apply Units.ext
   ext i j
   fin_cases i <;> fin_cases j <;>
