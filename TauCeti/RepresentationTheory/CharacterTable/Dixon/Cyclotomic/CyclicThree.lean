@@ -142,7 +142,6 @@ theorem cyclicGroupThreeExactCharacterTable_apply (i j : CyclicGroupThreeClassIn
          1, Cyclotomic.zeta 3 ^ 2, Cyclotomic.zeta 3] i j := by
   rfl
 
-@[simp]
 private theorem cyclicGroupThreeExactCharacterTable_apply_reindex (i j : Fin 3) :
     cyclicGroupThreeExactCharacterTable
         (cyclicGroupThreeClassIndexEquiv.symm i)
@@ -236,9 +235,12 @@ theorem cyclicGroupThreeExactCharacterTable_coeff_bound
 two conjugate cube roots modulo `7`.** -/
 @[simp]
 theorem cyclicGroupThree_lift_entry (i j : CyclicGroupThreeClassIndex) :
-    Cyclotomic.lift 3 cyclicGroupThreeDixonPrimeData.root
-        (Cyclotomic.conjugateResidues cyclicGroupThreeDixonPrimeData.root
-          (cyclicGroupThreeExactCharacterTable i j)) =
+    Cyclotomic.lift 3 (2 : ZMod 7)
+        (Cyclotomic.conjugateResidues (2 : ZMod 7)
+          ((!![1, 1, 1;
+               1, Cyclotomic.zeta 3, Cyclotomic.zeta 3 ^ 2;
+               1, Cyclotomic.zeta 3 ^ 2, Cyclotomic.zeta 3] :
+              Matrix CyclicGroupThreeClassIndex CyclicGroupThreeClassIndex (Cyclotomic 3)) i j)) =
       cyclicGroupThreeExactCharacterTable i j := by
   have hLift : ∀ {x : Cyclotomic (Monoid.exponent (Multiplicative (ZMod 3)))},
       (∀ k : Fin (Monoid.exponent (Multiplicative (ZMod 3))).totient,
@@ -248,7 +250,10 @@ theorem cyclicGroupThree_lift_entry (i j : CyclicGroupThreeClassIndex) :
         (Cyclotomic.conjugateResidues cyclicGroupThreeDixonPrimeData.root x) = x :=
     fun {_} => cyclicGroupThreeDixonPrimeData.lift_conjugateResidues
   rw [exponent_cyclicGroup_three] at hLift
-  exact hLift (cyclicGroupThreeExactCharacterTable_coeff_bound i j)
+  have h := hLift (cyclicGroupThreeExactCharacterTable_coeff_bound i j)
+  rw [cyclicGroupThreeDixonPrimeData_root,
+    cyclicGroupThreeExactCharacterTable_apply] at h
+  exact h
 
 /-- The displayed exact table, embedded in `ℂ` and reindexed by actual conjugacy classes. -/
 noncomputable def cyclicGroupThreeComplexCharacterTable :
