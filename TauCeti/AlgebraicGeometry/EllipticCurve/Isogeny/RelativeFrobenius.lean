@@ -341,8 +341,11 @@ theorem degree_iterateRelativeFrobeniusIsogeny (n : ℕ) :
     (fieldPullback_iterateRelativeFrobeniusIsogeny_X p W n)
 
 /-- The iterated relative Frobenius sends an affine point `(x, y)` to
-`(x ^ (p ^ n), y ^ (p ^ n))`. -/
-@[simp]
+`(x ^ (p ^ n), y ^ (p ^ n))`.
+
+Not a `simp` lemma: the generic `WeierstrassCurve.Affine.Point.mapAlong_some` already rewrites the
+left-hand side to `.some (iterateFrobenius F p n x) (iterateFrobenius F p n y) _`, so this only
+records the `p ^ n`-power form of the coordinates, which `iterateFrobenius_def` supplies. -/
 theorem mapAlong_iterateFrobenius_some (n : ℕ) {x y : F}
     (h : W.Nonsingular x y) :
     WeierstrassCurve.Affine.Point.mapAlong (iterateFrobenius F p n)
