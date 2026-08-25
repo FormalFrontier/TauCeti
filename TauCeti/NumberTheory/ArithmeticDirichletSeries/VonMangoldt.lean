@@ -190,6 +190,7 @@ theorem vonMangoldtTransform_apply_prime_pow (f : IdealArithmeticFunction K)
 
 /-- The support of a von Mangoldt transform is the intersection of the support of the original
 function with the prime-power ideals. -/
+@[simp]
 theorem vonMangoldtTransform_ne_zero_iff (f : IdealArithmeticFunction K)
     {A : (Ideal (𝓞 K))⁰} :
     f.vonMangoldtTransform A ≠ 0 ↔
@@ -219,6 +220,7 @@ theorem vonMangoldtTransform_apply_prime_pow (χ : MultiplicativeIdealWeight K)
 
 /-- The support of the von Mangoldt transform of a completely multiplicative weight consists
 exactly of the prime powers on which the weight is good. -/
+@[simp 1100]
 theorem vonMangoldtTransform_ne_zero_iff (χ : MultiplicativeIdealWeight K)
     {A : (Ideal (𝓞 K))⁰} :
     χ.toIdealArithmeticFunction.vonMangoldtTransform A ≠ 0 ↔
