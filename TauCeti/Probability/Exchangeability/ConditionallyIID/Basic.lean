@@ -194,6 +194,12 @@ theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ι → Ω → α}
   obtain ⟨ν, hν⟩ := h.exists_directing
   exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hν)
 
+/-- A conditionally i.i.d. family has a.e.-measurable coordinates, so no separate coordinate
+measurability hypothesis is needed. -/
+theorem ConditionallyIID.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
+    (h : ConditionallyIID μ X) (i : ι) : AEMeasurable (X i) μ :=
+  (mixedIID_of_conditionallyIID h).aemeasurable i
+
 end Probability
 
 end TauCeti
