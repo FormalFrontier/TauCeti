@@ -29,7 +29,7 @@ infinite-dimensional vector space is `Ext`-bounded but not `Ext`-finite against 
 a definition that totalizes the sum would return a junk value in exactly the first
 situation. This file therefore keeps
 the two conditions apart, as `IsExtFinite` and `IsExtBounded`, packages them as
-`IsEulerAdmissible`, and defines the Euler characteristic only from a witness of the second.
+`IsEulerAdmissible`, and defines the Euler characteristic only from a witness of both.
 
 The value is defined by truncating the sum to the degrees below an explicit bound
 (`truncatedExtEuler`); the whole content of `extEuler_eq` is that every bound beyond which the
@@ -42,11 +42,11 @@ The value is defined by truncating the sum to the degrees below an explicit boun
   given bound, resp. for all large `n`.
 * `TauCeti.IsEulerAdmissible`: the conjunction of the two, the hypothesis under which the
   Ext-Euler characteristic of the pair `(X, Y)` exists.
-* `TauCeti.IsExtBoundedOn` and `TauCeti.IsEulerAdmissibleOn`: the uniform versions for a pair of
-  object properties, the second one being the hypothesis Layer 5's descent to Grothendieck groups
-  will consume.
+* `TauCeti.IsExtBoundedOn` and `TauCeti.IsEulerAdmissibleOn`: respectively, uniform boundedness
+  and pointwise Euler-admissibility for a pair of object properties; the latter is the hypothesis
+  Layer 5's descent to Grothendieck groups will consume.
 * `TauCeti.truncatedExtEuler` and `TauCeti.extEuler`: the truncated alternating sum, and the
-  Ext-Euler characteristic of a pair with bounded `Ext`.
+  Ext-Euler characteristic of an Euler-admissible pair.
 * `TauCeti.extLinearEquivOfIso`: the `k`-linear isomorphism `Extⁿ(X, Y) ≃ Extⁿ(X', Y')` induced
   by isomorphisms `X ≅ X'` and `Y ≅ Y'`.
 
@@ -175,7 +175,7 @@ theorem IsExtFinite.finiteDimensional_hom {X Y : C} (h : IsExtFinite.{w} k X Y) 
 
 variable (k)
 
-/-! ### Uniform versions for a pair of object properties -/
+/-! ### Versions for a pair of object properties -/
 
 /-- A **uniform** `Ext`-vanishing bound for a pair of object properties: `Extⁿ(X, Y) = 0` in every
 degree `n ≥ N`, for all `X` satisfying `P` and all `Y` satisfying `Q`. For a category of modules
@@ -185,9 +185,10 @@ structure IsExtBoundedOn (P Q : ObjectProperty C) (N : ℕ) : Prop where
   /-- The bound `N` works for every pair of objects drawn from `P` and `Q`. -/
   isExtBoundedBy ⦃X Y : C⦄ (hX : P X) (hY : Q Y) : IsExtBoundedBy.{w} X Y N
 
-/-- Every pair of objects drawn from `P` and `Q` is Euler-admissible. This is the hypothesis under
-which the Ext-Euler characteristic descends to a pairing between the Grothendieck groups of the
-two subcategories. -/
+/-- Every pair of objects drawn from `P` and `Q` is Euler-admissible, with a bound that may depend
+on the pair. This is the hypothesis under which the Ext-Euler characteristic descends to a pairing
+between the Grothendieck groups of the two subcategories. A shared bound is the separate, stronger
+predicate `TauCeti.IsExtBoundedOn`. -/
 structure IsEulerAdmissibleOn (P Q : ObjectProperty C) : Prop where
   /-- Each pair of objects drawn from `P` and `Q` is Euler-admissible. -/
   isEulerAdmissible ⦃X Y : C⦄ (hX : P X) (hY : Q Y) : IsEulerAdmissible.{w} k X Y
@@ -219,8 +220,8 @@ variable (k)
 
 /-- The alternating sum `∑_{n < N} (-1)ⁿ dim_k Extⁿ(X, Y)` of the `Ext` dimensions of the pair
 `(X, Y)` in the cohomological degrees below `N`. Truncating at an explicit bound is what keeps
-`TauCeti.extEuler` free of a junk value: no alternating sum is attached to a pair whose `Ext`
-groups do not eventually vanish. -/
+`TauCeti.extEuler` finite; its Euler-admissibility witness additionally ensures that every
+dimension in the sum is genuine. -/
 noncomputable def truncatedExtEuler (X Y : C) (N : ℕ) : ℤ :=
   ∑ n ∈ Finset.range N, (-1) ^ n * (Module.finrank k (Ext.{w} X Y n) : ℤ)
 
@@ -243,23 +244,25 @@ theorem truncatedExtEuler_eq_of_le {X Y : C} {N M : ℕ} (h : IsExtBoundedBy.{w}
   have := h.subsingleton (by simpa using hn)
   simp [Module.finrank_zero_of_subsingleton]
 
-/-- **The Ext-Euler characteristic** `χ(X, Y) = ∑ n, (-1)ⁿ dim_k Extⁿ(X, Y)` of a pair whose
-`Ext` groups vanish in large degrees. The choice of vanishing bound made here is removed at once
-by `TauCeti.extEuler_eq`, so no result depends on it. -/
-noncomputable def extEuler {X Y : C} (h : IsExtBounded.{w} X Y) : ℤ :=
-  truncatedExtEuler.{w} k X Y h.exists_bound.choose
+/-- **The Ext-Euler characteristic** `χ(X, Y) = ∑ n, (-1)ⁿ dim_k Extⁿ(X, Y)` of an
+Euler-admissible pair. The choice of vanishing bound made here is removed at once by
+`TauCeti.extEuler_eq`, so no result depends on it. -/
+noncomputable def extEuler {X Y : C} (h : IsEulerAdmissible.{w} k X Y) : ℤ :=
+  truncatedExtEuler.{w} k X Y h.isExtBounded.exists_bound.choose
 
 /-- **Every** degree from which the `Ext` groups of the pair vanish computes its Ext-Euler
 characteristic. -/
-theorem extEuler_eq {X Y : C} (h : IsExtBounded.{w} X Y) {N : ℕ}
+theorem extEuler_eq {X Y : C} (h : IsEulerAdmissible.{w} k X Y) {N : ℕ}
     (hN : IsExtBoundedBy.{w} X Y N) : extEuler.{w} k h = truncatedExtEuler.{w} k X Y N := by
-  have key : extEuler.{w} k h = truncatedExtEuler.{w} k X Y h.exists_bound.choose := rfl
+  have key : extEuler.{w} k h =
+      truncatedExtEuler.{w} k X Y h.isExtBounded.exists_bound.choose := rfl
   exact key.trans
-    ((truncatedExtEuler_eq_of_le k h.exists_bound.choose_spec (le_max_left _ N)).symm.trans
+    ((truncatedExtEuler_eq_of_le k h.isExtBounded.exists_bound.choose_spec
+        (le_max_left _ N)).symm.trans
       (truncatedExtEuler_eq_of_le k hN (le_max_right _ N)))
 
 /-- The Ext-Euler characteristic of a pair with no `Ext` at all is zero. -/
-theorem extEuler_eq_zero_of_isExtBoundedBy_zero {X Y : C} (h : IsExtBounded.{w} X Y)
+theorem extEuler_eq_zero_of_isExtBoundedBy_zero {X Y : C} (h : IsEulerAdmissible.{w} k X Y)
     (h₀ : IsExtBoundedBy.{w} X Y 0) : extEuler.{w} k h = 0 := by
   rw [extEuler_eq k h h₀, truncatedExtEuler_zero]
 
@@ -324,9 +327,10 @@ theorem IsEulerAdmissible.of_iso (h : IsEulerAdmissible.{w} k X Y) (e : X ≅ X'
   ⟨h.isExtFinite.of_iso e f, h.isExtBounded.of_iso e f⟩
 
 /-- The Ext-Euler characteristic only depends on the isomorphism classes of the two objects. -/
-theorem extEuler_of_iso (h : IsExtBounded.{w} X Y) (h' : IsExtBounded.{w} X' Y') (e : X ≅ X')
-    (f : Y ≅ Y') : extEuler.{w} k h = extEuler.{w} k h' := by
-  obtain ⟨N, hN⟩ := h.exists_bound
+theorem extEuler_of_iso (h : IsEulerAdmissible.{w} k X Y)
+    (h' : IsEulerAdmissible.{w} k X' Y') (e : X ≅ X') (f : Y ≅ Y') :
+    extEuler.{w} k h = extEuler.{w} k h' := by
+  obtain ⟨N, hN⟩ := h.isExtBounded.exists_bound
   rw [extEuler_eq k h hN, extEuler_eq k h' (hN.of_iso e f)]
   exact Finset.sum_congr rfl fun n _ ↦ by
     rw [(extLinearEquivOfIso k e f n).finrank_eq]
@@ -470,7 +474,8 @@ theorem isEulerAdmissible_of_projective (P Y : C) [Projective P] [FiniteDimensio
 
 /-- **Projective evaluation**: the Ext-Euler characteristic of a pair with projective first entry
 is the dimension of its Hom space, `χ(P, Y) = dim_k Hom(P, Y)`. -/
-theorem extEuler_projective {P Y : C} [Projective P] (h : IsExtBounded.{w} P Y) :
+theorem extEuler_projective {P Y : C} [Projective P]
+    (h : IsEulerAdmissible.{w} k P Y) :
     extEuler.{w} k h = Module.finrank k (P ⟶ Y) := by
   rw [extEuler_eq k h (isExtBoundedBy_one_of_projective P Y), truncatedExtEuler_succ,
     truncatedExtEuler_zero, (Ext.linearEquiv₀ (R := k) (X := P) (Y := Y)).finrank_eq]
