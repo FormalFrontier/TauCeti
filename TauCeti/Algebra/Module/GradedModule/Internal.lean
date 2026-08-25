@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.DirectSum.Decomposition
+public import Mathlib.Algebra.Ring.NegOnePow
 
 /-!
 # Internally graded modules
@@ -70,5 +71,61 @@ noncomputable instance (G : InternalGrading R M) : DirectSum.Decomposition G.pie
   G.isInternal.chooseDecomposition
 
 end InternalGrading
+
+section ParityTwist
+
+variable {R : Type uR} {M : Type uM} [CommRing R] [AddCommMonoid M] [Module R M]
+
+/-- The parity operator of twist `q`: on the homogeneous piece of degree `e` it acts as the scalar
+`(-1)^(q * e)`.
+
+This is the operator through which every Koszul sign of this file is expressed: the sign acquired
+by moving an operation of degree `q` past homogeneous inputs of total degree `D` is the scalar by
+which `parityTwist G q` scales those inputs. -/
+noncomputable def InternalGrading.parityTwist (G : InternalGrading R M) (q : ℤ) : M →ₗ[R] M :=
+  DirectSum.coeLinearMap (fun e => G.piece e) ∘ₗ
+    DirectSum.toModule R ℤ (⨁ e : ℤ, G.piece e)
+      (fun e => (((q * e).negOnePow : ℤ) : R) •
+        DirectSum.lof R ℤ (fun e => G.piece e) e) ∘ₗ
+    (DirectSum.decomposeLinearEquiv (ℳ := G.piece)).toLinearMap
+
+
+end ParityTwist
+
+section ParityTwistLemmas
+
+variable {R : Type uR} {M : Type uM} [CommRing R] [AddCommMonoid M] [Module R M]
+
+/-- On a homogeneous element of degree `e`, the parity operator of twist `q` acts as the scalar
+`(-1)^(q * e)`. -/
+theorem InternalGrading.parityTwist_apply_of_mem (G : InternalGrading R M) {x : M} {e : ℤ}
+    (hx : x ∈ G.piece e) (q : ℤ) :
+    parityTwist G q x = (((q * e).negOnePow : ℤ) : R) • x := by
+  rw [parityTwist]
+  simp only [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply,
+    DirectSum.decomposeLinearEquiv_apply]
+  rw [DirectSum.decompose_of_mem (ℳ := G.piece) hx,
+    show DirectSum.of (fun i : ℤ => G.piece i) e ⟨x, hx⟩ =
+      DirectSum.lof R ℤ (fun i : ℤ => G.piece i) e ⟨x, hx⟩ from rfl]
+  simp [DirectSum.toModule_lof]
+
+/-- The parity operator preserves each homogeneous piece. -/
+theorem InternalGrading.parityTwist_mem_piece (G : InternalGrading R M) {x : M} {e : ℤ}
+    (hx : x ∈ G.piece e) (q : ℤ) :
+    parityTwist G q x ∈ G.piece e := by
+  rw [InternalGrading.parityTwist_apply_of_mem G hx q]
+  exact Submodule.smul_mem _ _ hx
+
+/-- The parity operator of twist zero is the identity. -/
+@[simp]
+theorem InternalGrading.parityTwist_zero (G : InternalGrading R M) :
+    parityTwist G 0 = LinearMap.id := by
+  refine DirectSum.decompose_lhom_ext (ℳ := G.piece) fun e => ?_
+  ext x
+  simp only [LinearMap.comp_apply]
+  have h := InternalGrading.parityTwist_apply_of_mem G (Submodule.coe_mem x) 0
+  simpa using h
+
+end ParityTwistLemmas
 
 end TauCeti
