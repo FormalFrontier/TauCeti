@@ -80,18 +80,6 @@ noncomputable abbrev geckBaseChangeDefiningIdeal :
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A
 
-/-- The base-changed Geck defining ideal is the generic transported Kostant toral ideal at the
-pinned Geck data. -/
-theorem geckBaseChangeDefiningIdeal_def :
-    t.geckBaseChangeDefiningIdeal ht A =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralBaseChangePresentationIdeal
-        (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
-        (t.geckCoordinateLattice ht).toAddSubgroup
-        (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
-        (t.isNilpotent_geckRepresentation_rootGenerator ht)
-        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A := by
-  rfl
-
 /-- Base-changing quotient maps commutes with transporting the defining ideal along an equality.
 This isolates the dependent equality transport used by `geckBaseChangeCoordinateIso`. -/
 private theorem baseChangeMap_mkQuotient_comp_eqToIso
@@ -175,18 +163,6 @@ noncomputable abbrev geckRootSubgroupBaseChangeCoordinateMap
     (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) A i
-
-/-- A transported numbered Geck root-subgroup coordinate map is the corresponding generic
-Kostant base-change map. -/
-theorem geckRootSubgroupBaseChangeCoordinateMap_def (i : Fin t.rank ⊕ Fin t.rank) :
-    t.geckRootSubgroupBaseChangeCoordinateMap ht A i =
-      UniversalEnvelopingAlgebra.kostantRootSubgroupBaseChangePresentationCoordinateMap
-          (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
-          (t.geckCoordinateLattice ht).toAddSubgroup
-          (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
-          (t.isNilpotent_geckRepresentation_rootGenerator ht)
-          (t.geckCoordinateBasisFin ht) A i := by
-  rfl
 
 /-- The base-changed `i`th Geck root-subgroup coordinate map factored through the transported
 Geck carrier. -/
