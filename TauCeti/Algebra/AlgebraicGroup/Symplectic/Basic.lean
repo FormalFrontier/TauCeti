@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Basic
 import TauCeti.CategoryTheory.Comma.Over
 
 /-!

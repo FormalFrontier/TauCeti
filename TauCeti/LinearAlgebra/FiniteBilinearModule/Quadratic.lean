@@ -37,6 +37,8 @@ the polar pairing is therefore `B(x, y)` modulo `ℤ`.
   `H^⊥ / H` by a quadratic-isotropic subgroup `H`.
 * `TauCeti.FiniteQuadraticModule.orthogonalQuotientCongr`: the canonical isometry between the
   orthogonal quotients along equal subgroups.
+* `TauCeti.FiniteQuadraticModule.Isometry.orthogonalQuotientEquiv`: transport of an orthogonal
+  quotient along an isometry carrying one isotropic subgroup onto another.
 
 ## References
 
@@ -879,6 +881,187 @@ theorem IsNondegenerate.card_orthogonalQuotient_mul_card_sq (hA : A.IsNondegener
   rw [pow_two, ← mul_assoc, hquot, mul_comm]
   exact FiniteBilinearModule.IsNondegenerate.card_mul_card_orthogonalComplement
     A.toFiniteBilinearModule hA H
+
+/-! ### Transport of an orthogonal quotient along an isometry -/
+
+namespace Isometry
+
+variable {A : FiniteQuadraticModule.{u}} {B : FiniteQuadraticModule.{v}}
+
+/-- The bilinear orthogonal-complement equivalence, with the underlying map normalized to the
+quadratic isometry's additive equivalence. -/
+private def orthogonalComplementEquiv (f : Isometry A B) (H : AddSubgroup A) :
+    A.toFiniteBilinearModule.orthogonalComplement H ≃+
+      B.toFiniteBilinearModule.orthogonalComplement (H.map f.toAddEquiv) := by
+  refine (FiniteBilinearModule.Isometry.orthogonalComplementEquiv
+    A.toFiniteBilinearModule f.toFiniteBilinearModule H).trans
+      (AddEquiv.addSubgroupCongr ?_)
+  rw [toFiniteBilinearModule_toAddEquiv]
+
+@[simp]
+private theorem coe_orthogonalComplementEquiv_apply (f : Isometry A B) (H : AddSubgroup A)
+    (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    (f.orthogonalComplementEquiv H x : B) = f (x : A) := by
+  simp only [orthogonalComplementEquiv, AddEquiv.trans_apply,
+    AddEquiv.addSubgroupCongr_apply,
+    FiniteBilinearModule.Isometry.coe_orthogonalComplementEquiv_apply]
+  exact congrArg (fun e : A ≃+ B => e (x : A)) f.toFiniteBilinearModule_toAddEquiv
+
+@[simp]
+private theorem coe_orthogonalComplementEquiv_symm_apply (f : Isometry A B)
+    (H : AddSubgroup A)
+    (y : B.toFiniteBilinearModule.orthogonalComplement (H.map f.toAddEquiv)) :
+    ((f.orthogonalComplementEquiv H).symm y : A) = f.symm (y : B) := by
+  simp only [orthogonalComplementEquiv, AddEquiv.symm_trans_apply,
+    AddEquiv.addSubgroupCongr_symm_apply,
+    FiniteBilinearModule.Isometry.coe_orthogonalComplementEquiv_symm_apply]
+  rw [← FiniteBilinearModule.Isometry.coe_toAddEquiv,
+    FiniteBilinearModule.Isometry.symm_toAddEquiv, toFiniteBilinearModule_toAddEquiv]
+  exact congrArg (fun e : B ≃ₗ[ℤ] A => e (y : B))
+    (QuadraticMap.IsometryEquiv.coe_symm_toLinearEquiv f)
+
+/-- The copy of `H` inside `H⊥` is carried onto the copy of the image of `H` inside its orthogonal
+complement. This is the hypothesis which makes the two quotients correspond. -/
+private theorem map_toIntSubmodule_subgroupInOrthogonalComplement (f : Isometry A B)
+    (H : AddSubgroup A) :
+    (A.subgroupInOrthogonalComplement H).toIntSubmodule.map
+        ((f.orthogonalComplementEquiv H).toIntLinearEquiv :
+          A.toFiniteBilinearModule.orthogonalComplement H →ₗ[ℤ]
+            B.toFiniteBilinearModule.orthogonalComplement (H.map f.toAddEquiv)) =
+      (B.subgroupInOrthogonalComplement (H.map f.toAddEquiv)).toIntSubmodule := by
+  ext y
+  rw [Submodule.mem_map_equiv]
+  -- `Submodule.mem_map_equiv` exposes the restricted linear equivalence, while the available
+  -- membership lemmas concern the underlying additive subgroups.  This `change` crosses that
+  -- subtype/coercion boundary so those named lemmas can be used; `rw` cannot unfold the inferred
+  -- `Module ℤ` instances far enough to expose the same goal.
+  change (f.orthogonalComplementEquiv H).symm y ∈
+      A.subgroupInOrthogonalComplement H ↔
+    y ∈ B.subgroupInOrthogonalComplement (H.map f.toAddEquiv)
+  rw [A.mem_subgroupInOrthogonalComplement_iff,
+    B.mem_subgroupInOrthogonalComplement_iff, coe_orthogonalComplementEquiv_symm_apply]
+  exact (AddSubgroup.mem_map_equiv (f := f.toAddEquiv) (K := H) (x := (y : B))).symm
+
+/-- A quadratic isometry carrying `H` onto `K` transports quadratic isotropy from `H` to `K`. -/
+theorem isIsotropic_of_map_eq (f : Isometry A B) {H : AddSubgroup A} {K : AddSubgroup B}
+    (hH : A.IsIsotropic H) (h : H.map f.toAddEquiv = K) : B.IsIsotropic K := by
+  rw [← h, f.isIsotropic_map_iff]
+  exact hH
+
+/-- The isometry of orthogonal quotients when the target subgroup is exactly the image. -/
+private noncomputable def orthogonalQuotientMap (f : Isometry A B) (H : AddSubgroup A)
+    (hH : A.IsIsotropic H) :
+    Isometry (A.orthogonalQuotient H hH)
+      (B.orthogonalQuotient (H.map f.toAddEquiv) ((f.isIsotropic_map_iff (H := H)).mpr hH)) where
+  toLinearEquiv := Submodule.Quotient.equiv _ _
+    (f.orthogonalComplementEquiv H).toIntLinearEquiv
+    (map_toIntSubmodule_subgroupInOrthogonalComplement f H)
+  map_app' q := by
+    induction q using orthogonalQuotient_induction_on with
+    | mk x =>
+      -- The quotient is definitionally a `Submodule.Quotient`, but its quadratic map is packaged
+      -- through two exposed finite-quadratic-module constructions.  This `change` reveals the
+      -- quotient representative without asking `rw` or `convert` to identify their distinct
+      -- inferred `Module ℤ` instances.
+      change (B.orthogonalQuotient (H.map f.toAddEquiv) _).quadratic
+          ((Submodule.Quotient.equiv _ _
+            (f.orthogonalComplementEquiv H).toIntLinearEquiv
+            (map_toIntSubmodule_subgroupInOrthogonalComplement f H))
+            (Submodule.Quotient.mk x)) = A.quadratic (x : A)
+      rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
+      -- After evaluating the quotient equivalence, the same representation boundary remains
+      -- between `Submodule.Quotient.mk` and the packaged `orthogonalQuotientMk`; named rewriting
+      -- cannot state that bridge without fixing the otherwise definitionally equal module instance.
+      change (B.orthogonalQuotient (H.map f.toAddEquiv) _).quadratic
+          (B.orthogonalQuotientMk (H.map f.toAddEquiv) _
+            (f.orthogonalComplementEquiv H x)) = A.quadratic (x : A)
+      rw [B.orthogonalQuotient_quadratic_mk, coe_orthogonalComplementEquiv_apply]
+      exact f.map_app (x : A)
+
+/-- The image-subgroup transport sends the class of `x ∈ H⊥` to the class of `f x`. -/
+@[simp]
+private theorem orthogonalQuotientMap_orthogonalQuotientMk (f : Isometry A B)
+    (H : AddSubgroup A) (hH : A.IsIsotropic H)
+    (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    f.orthogonalQuotientMap H hH (A.orthogonalQuotientMk H hH x) =
+      B.orthogonalQuotientMk (H.map f.toAddEquiv) ((f.isIsotropic_map_iff (H := H)).mpr hH)
+        (f.orthogonalComplementEquiv H x) := by
+  -- Both sides are quotient representatives, but their public constructors hide distinct inferred
+  -- `Module ℤ` instances.  Crossing that opaque boundary once here lets the Mathlib quotient-map
+  -- formulas finish the proof; `rw` or `convert` cannot expose a well-typed named bridge.
+  change (Submodule.Quotient.equiv _ _
+      (f.orthogonalComplementEquiv H).toIntLinearEquiv
+      (map_toIntSubmodule_subgroupInOrthogonalComplement f H))
+      (Submodule.Quotient.mk x) = Submodule.Quotient.mk _
+  rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
+  congr 1
+
+/-- **Transport of an orthogonal quotient along an isometry.** An isometry `f : A ≅ B` of finite
+quadratic modules carrying a quadratic-isotropic subgroup `H` of `A` onto `K` induces an isometry
+`H⊥ / H ≅ K⊥ / K`. -/
+noncomputable def orthogonalQuotientEquiv (f : Isometry A B) {H : AddSubgroup A}
+    {K : AddSubgroup B} (hH : A.IsIsotropic H) (h : H.map f.toAddEquiv = K) :
+    Isometry (A.orthogonalQuotient H hH)
+      (B.orthogonalQuotient K (f.isIsotropic_of_map_eq hH h)) :=
+  (f.orthogonalQuotientMap H hH).trans
+    (B.orthogonalQuotientCongr ((f.isIsotropic_map_iff (H := H)).mpr hH)
+      (f.isIsotropic_of_map_eq hH h) h)
+
+/-- **The representative formula for a transported orthogonal quotient.** The transported
+isometry sends the class of `x ∈ H⊥` to the class of `f x ∈ K⊥`. -/
+@[simp]
+theorem orthogonalQuotientEquiv_orthogonalQuotientMk (f : Isometry A B)
+    {H : AddSubgroup A} {K : AddSubgroup B} (hH : A.IsIsotropic H)
+    (h : H.map f.toAddEquiv = K)
+    (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    f.orthogonalQuotientEquiv hH h (A.orthogonalQuotientMk H hH x) =
+      B.orthogonalQuotientMk K (f.isIsotropic_of_map_eq hH h)
+        ⟨f (x : A), by
+          apply FiniteBilinearModule.Isometry.map_mem_orthogonalComplement_of_map_eq
+            A.toFiniteBilinearModule f.toFiniteBilinearModule (K := K) (x := (x : A))
+          · simpa only [toFiniteBilinearModule_toAddEquiv] using h
+          · exact x.2⟩ := by
+  rw [orthogonalQuotientEquiv, trans_apply, orthogonalQuotientMap_orthogonalQuotientMk,
+    B.orthogonalQuotientCongr_orthogonalQuotientMk]
+  apply congrArg (B.orthogonalQuotientMk K _)
+  exact Subtype.ext (coe_orthogonalComplementEquiv_apply f H x)
+
+/-- **The inverse representative formula for a transported orthogonal quotient.** The inverse
+transport sends the class of `y ∈ K⊥` to the class of `f.symm y ∈ H⊥`. -/
+@[simp]
+theorem orthogonalQuotientEquiv_symm_orthogonalQuotientMk (f : Isometry A B)
+    {H : AddSubgroup A} {K : AddSubgroup B} (hH : A.IsIsotropic H)
+    (h : H.map f.toAddEquiv = K)
+    (y : B.toFiniteBilinearModule.orthogonalComplement K) :
+    (f.orthogonalQuotientEquiv hH h).symm
+        (B.orthogonalQuotientMk K (f.isIsotropic_of_map_eq hH h) y) =
+      A.orthogonalQuotientMk H hH
+        ⟨f.symm (y : B), by
+          apply (AddSubgroup.mem_map_equiv (f := f.toAddEquiv) (K :=
+            A.toFiniteBilinearModule.orthogonalComplement H) (x := (y : B))).mp
+          have hcomp :
+              (A.toFiniteBilinearModule.orthogonalComplement H).map f.toAddEquiv =
+                B.toFiniteBilinearModule.orthogonalComplement (H.map f.toAddEquiv) := by
+            simpa only [toFiniteBilinearModule_toAddEquiv] using
+              f.toFiniteBilinearModule.map_orthogonalComplement (H := H)
+          -- `mem_map_equiv` leaves the additive equivalence coerced through its monoid hom;
+          -- normalize that coercion before rewriting with the subgroup equality.
+          change (y : B) ∈
+            (A.toFiniteBilinearModule.orthogonalComplement H).map f.toAddEquiv
+          rw [hcomp, h]
+          exact y.2⟩ := by
+  refine (Equiv.symm_apply_eq
+    (f.orthogonalQuotientEquiv hH h).toLinearEquiv.toEquiv).mpr ?_
+  -- `Equiv.symm_apply_eq` exposes the `toEquiv` coercion; normalize it to the isometry coercion
+  -- so the public forward representative formula applies.
+  change B.orthogonalQuotientMk K (f.isIsotropic_of_map_eq hH h) y =
+    f.orthogonalQuotientEquiv hH h
+      (A.orthogonalQuotientMk H hH ⟨f.symm (y : B), _⟩)
+  rw [orthogonalQuotientEquiv_orthogonalQuotientMk]
+  congr 1
+  exact Subtype.ext (f.apply_symm_apply (y : B)).symm
+
+end Isometry
 
 end FiniteQuadraticModule
 
