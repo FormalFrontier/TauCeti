@@ -706,6 +706,44 @@ theorem ReducedTensorWords.isHomogeneous_of_isGradedCoderiv (G : InternalGrading
 
 end Letter
 
+/-! ### Degree zero -/
+
+/-- A degree-`0` graded coderivation is a coderivation: the twist of degree zero is the identity,
+so the Koszul sign drops out of the co-Leibniz rule. -/
+theorem ReducedTensorWords.isGradedCoderivation_zero (G : InternalGrading R M)
+    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
+    (hb : IsGradedCoderivation G 0 b) : IsCoderivation R b := by
+  rw [isCoderivation_iff]
+  have heq := hb
+  simp only [IsGradedCoderivation] at heq
+  rw [InternalGrading.parityTwist_zero, ReducedTensorWords.map_id, LinearMap.rTensor_id,
+    LinearMap.comp_id, ← LinearMap.add_comp] at heq
+  exact heq
+
+/-- A coderivation is a degree-`0` graded coderivation. -/
+theorem ReducedTensorWords.isCoderivation_isGradedCoderivation (G : InternalGrading R M)
+    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
+    (hb : IsCoderivation R b) : IsGradedCoderivation G 0 b := by
+  rw [isCoderivation_iff] at hb
+  simp only [IsGradedCoderivation]
+  rw [hb, InternalGrading.parityTwist_zero, ReducedTensorWords.map_id, LinearMap.rTensor_id,
+    LinearMap.comp_id, ← LinearMap.add_comp]
+
+/-- At degree zero the graded Taylor expansion is the ungraded one. -/
+@[simp]
+theorem ReducedTensorWords.gradedCoderiv_zero (G : InternalGrading R M)
+    (F : ReducedTensorWords R M →ₗ[R] M) :
+    gradedCoderiv G F 0 = coderiv R F :=
+  IsCoderivation.eq_of_letter_comp_eq
+    (isGradedCoderivation_zero G (isGradedCoderivation_gradedCoderiv G F 0))
+    (isCoderivation_coderiv R F)
+    (by rw [letter_comp_gradedCoderiv, letter_comp_coderiv])
+
+
+
+/-! ### The submodule of graded coderivations -/
+
+
 
 end GradedCoderiv
 
