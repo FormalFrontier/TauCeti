@@ -237,6 +237,8 @@ private lemma integratedLaplaceKernel_zero_one_eq (x : ℝ≥0) :
     simp [integratedLaplaceKernel, intervalIntegral.integral_const]
   · simp only [hx, ↓reduceIte]
     have hx_real : (x : ℝ) ≠ 0 := NNReal.coe_ne_zero.mpr hx
+    -- Commute the product in the exponent to match the input shape of
+    -- `intervalIntegral.integral_comp_mul_left`.
     rw [integratedLaplaceKernel, show (fun t : ℝ => Real.exp (-(t * (x : ℝ)))) =
       fun t => Real.exp (-(x : ℝ) * t) by funext t; congr 1; ring,
       intervalIntegral.integral_comp_mul_left (f := Real.exp) (c := -(x : ℝ))
