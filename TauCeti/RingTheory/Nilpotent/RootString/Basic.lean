@@ -99,6 +99,49 @@ theorem integralDividedPower_mul_integralDividedPower_of_commutator_eq_two_nsmul
 
 /-! ## The generating-function form of the straightening rule -/
 
+/-- Summing over the truncated region `{(m, n, b, c) | m, n < N, (b, c) ∈ chainLeTwoIndex m n}` is
+the same as summing over the slice `{(a, b, c, q) | a + b + c < N, q + b + 2c < N}` of the
+hypercube, the summand transported along `(m, n, b, c) ↦ (n - b - c, b, c, m - b - 2c)`. For `N = 0`
+both sides are empty sums.
+
+This is the four-variable analogue of `sum_range_min_diag_flip` in
+`TauCeti.RingTheory.Nilpotent.ChevalleyCommutator`, whose name it follows: the inner index set is
+`Associative.chainLeTwoIndex m n` rather than `range (min m n + 1)`, and the image is a slice of the
+hypercube rather than of the cube. -/
+private theorem sum_chainLeTwoIndex_diag_flip {B : Type*} [AddCommMonoid B] (F : ℕ × ℕ × ℕ × ℕ → B)
+    (N : ℕ) : ∑ v ∈ (range N ×ˢ range N).sigma (fun mn => Associative.chainLeTwoIndex mn.1 mn.2),
+        F (v.1.2 - v.2.1 - v.2.2, v.2.1, v.2.2, v.1.1 - v.2.1 - 2 * v.2.2) =
+      ∑ v ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N with
+        v.1 + v.2.1 + v.2.2.1 < N ∧ v.2.2.2 + v.2.1 + 2 * v.2.2.1 < N, F v := by
+  refine Finset.sum_nbij'
+    (fun v => (v.1.2 - v.2.1 - v.2.2, v.2.1, v.2.2, v.1.1 - v.2.1 - 2 * v.2.2))
+    (fun v => ⟨(v.2.2.2 + v.2.1 + 2 * v.2.2.1, v.1 + v.2.1 + v.2.2.1), (v.2.1, v.2.2.1)⟩)
+    ?_ ?_ ?_ ?_ ?_
+  · rintro ⟨⟨m, n⟩, b, c⟩ hv
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainLeTwoIndex] at hv
+    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range]
+    omega
+  · rintro ⟨a, b, c, q⟩ hv
+    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hv
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainLeTwoIndex]
+    omega
+  · rintro ⟨⟨m, n⟩, b, c⟩ hv
+    obtain ⟨h1, h2⟩ := Associative.mem_chainLeTwoIndex.mp (Finset.mem_sigma.mp hv).2
+    -- Restate the two bounds with the pair projections reduced, so that `omega` can use them.
+    have hbn : b + c ≤ n := h1
+    have hbm : b + 2 * c ≤ m := h2
+    have e1 : m - b - 2 * c + b + 2 * c = m := by omega
+    have e2 : n - b - c + b + c = n := by omega
+    simp [e1, e2]
+  · rintro ⟨a, b, c, q⟩ _
+    have e1 : a + b + c - b - c = a := by omega
+    have e2 : q + b + 2 * c - b - 2 * c = q := by omega
+    simp [e1, e2]
+  · rintro ⟨⟨m, n⟩, b, c⟩ _
+    rfl
+
 -- The combinatorial core: a truncated left factor times a truncated right factor is the reordered
 -- quadruple product, once the truncation is wide enough that the reindexed hypercube contains no
 -- extra nonzero terms. The reindexing is `(m, n, b, c) ↦ (n - b - c, b, c, m - b - 2c)`, and the
@@ -143,53 +186,26 @@ private theorem sum_smul_mul_sum_smul_of_chainLeTwoOrder {R : Type*} [CommRing R
             Dx (v.1.1 - v.2.1 - 2 * v.2.2)) =
       ∑ v ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N with
         v.1 + v.2.1 + v.2.2.1 < N ∧ v.2.2.2 + v.2.1 + 2 * v.2.2.1 < N, G v := by
-    refine Finset.sum_nbij'
-      (fun v => (v.1.2 - v.2.1 - v.2.2, v.2.1, v.2.2, v.1.1 - v.2.1 - 2 * v.2.2))
-      (fun v => ⟨(v.2.2.2 + v.2.1 + 2 * v.2.2.1, v.1 + v.2.1 + v.2.2.1), (v.2.1, v.2.2.1)⟩)
-      ?_ ?_ ?_ ?_ ?_
-    · rintro ⟨⟨m, n⟩, b, c⟩ hv
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainLeTwoIndex] at hv
-      simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range]
-      omega
-    · rintro ⟨a, b, c, q⟩ hv
-      simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hv
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainLeTwoIndex]
-      omega
-    · rintro ⟨⟨m, n⟩, b, c⟩ hv
-      obtain ⟨h1, h2⟩ := Associative.mem_chainLeTwoIndex.mp (Finset.mem_sigma.mp hv).2
-      have hbn : b + c ≤ n := h1
-      have hbm : b + 2 * c ≤ m := h2
-      have e1 : m - b - 2 * c + b + 2 * c = m := by omega
-      have e2 : n - b - c + b + c = n := by omega
-      simp [e1, e2]
-    · rintro ⟨a, b, c, q⟩ _
-      have e1 : a + b + c - b - c = a := by omega
-      have e2 : q + b + 2 * c - b - 2 * c = q := by omega
-      simp [e1, e2]
-    · rintro ⟨⟨m, n⟩, b, c⟩ hv
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainLeTwoIndex] at hv
-      obtain ⟨a, rfl⟩ : ∃ a, n = a + (b + c) := ⟨n - b - c, by omega⟩
-      obtain ⟨q, rfl⟩ : ∃ q, m = q + (b + 2 * c) := ⟨m - b - 2 * c, by omega⟩
-      have h1 : a + (b + c) - b - c = a := by omega
-      have h2 : q + (b + 2 * c) - b - 2 * c = q := by omega
-      simp only [hG, h1, h2]
-      congr 1
-      simp only [mul_pow, pow_add, pow_mul]
-      ring
-  -- Step 4: the terms of the hypercube outside that part vanish.
-  have hsub : ∑ v ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N with
-        v.1 + v.2.1 + v.2.2.1 < N ∧ v.2.2.2 + v.2.1 + 2 * v.2.2.1 < N, G v =
-      ∑ v ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N, G v := by
-    refine Finset.sum_subset (Finset.filter_subset _ _) ?_
-    rintro ⟨a, b, c, q⟩ hmem hnot
-    simp only [Finset.mem_product, Finset.mem_range] at hmem
-    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hnot
-    have hor : N ≤ a + b + c ∨ N ≤ q + b + 2 * c := by omega
-    simp [hG, hzero a b c q hor]
-  rw [← hsrc, hbij, hsub, hbox]
+    rw [← sum_chainLeTwoIndex_diag_flip G N]
+    refine Finset.sum_congr rfl ?_
+    -- On the region `m = q + (b + 2c)`, `n = a + (b + c)`, so the scalar `t ^ m * u ^ n` is `G`'s
+    -- `u ^ a * (t * u) ^ b * (t ^ 2 * u) ^ c * t ^ q`.
+    rintro ⟨⟨m, n⟩, b, c⟩ hv
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainLeTwoIndex] at hv
+    obtain ⟨a, rfl⟩ : ∃ a, n = a + (b + c) := ⟨n - b - c, by omega⟩
+    obtain ⟨q, rfl⟩ : ∃ q, m = q + (b + 2 * c) := ⟨m - b - 2 * c, by omega⟩
+    have h1 : a + (b + c) - b - c = a := by omega
+    have h2 : q + (b + 2 * c) - b - 2 * c = q := by omega
+    simp only [hG, h1, h2]
+    congr 1
+    simp only [mul_pow, pow_add, pow_mul]
+    ring
+  -- Step 4: off that part the summand vanishes, so the slice already carries the whole sum.
+  rw [← hsrc, hbij, ← hbox]
+  exact Finset.sum_filter_of_ne fun v _ hne => by
+    by_contra h
+    exact hne (by simp [hG, hzero v.1 v.2.1 v.2.2.1 v.2.2.2 (by omega)])
 
 /-! ## The Chevalley commutator relation -/
 
