@@ -110,8 +110,10 @@ theorem exists_radius_perWindow_tendsto_log_norm_add_arg
   have ht₀' : t₀ ∈ Ioo (min a b) (max a b) := by
     rwa [min_eq_left hab.le, max_eq_right hab.le]
   refine ⟨R, hR_pos, L_R, L_L, hL_R, hL_L, h_tend_R, h_tend_L,
-    fun l u hRl hlt htu huR h_lo h_hi h_unique =>
-    perWindow_truncated_integral_tendsto hlt htu h_at
+    fun l u hRl hlt htu huR h_lo h_hi h_unique => ?_⟩
+  have h_endpoint_R : t₀ + (u - t₀) = u := by ring
+  have h_endpoint_L : t₀ - (t₀ - l) = l := by ring
+  exact perWindow_truncated_integral_tendsto hlt htu h_at
       (h_imm.continuousOn.mono (by
         rw [uIcc_of_le hab.le]
         exact Icc_subset_Icc (by linarith) h_hi))
@@ -128,10 +130,10 @@ theorem exists_radius_perWindow_tendsto_log_norm_add_arg
       h_unique
       (fun a' b' h1 h2 h3 => hc_R a' b' h1 h2 (h3.trans huR))
       (fun b' h1 h2 => hc_L l b' hRl h1 h2)
-      (by simpa only [show t₀ + (u - t₀) = u by ring] using
+      (by simpa only [h_endpoint_R] using
         hc_plus (u - t₀) (sub_pos.mpr htu) (by linarith))
-      (by simpa only [show t₀ - (t₀ - l) = l by ring] using
-        hc_minus (t₀ - l) (sub_pos.mpr hlt) (by linarith))⟩
+      (by simpa only [h_endpoint_L] using
+        hc_minus (t₀ - l) (sub_pos.mpr hlt) (by linarith))
 
 /-- **Existence of the Cauchy-kernel principal value along a piecewise-`C¹` immersion**: if
 every parameter of `[a, b]` where `γ` meets `s` is interior, the single-point Cauchy principal

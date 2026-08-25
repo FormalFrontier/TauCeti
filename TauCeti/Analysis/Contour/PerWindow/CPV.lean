@@ -310,16 +310,18 @@ theorem perWindow_truncated_integral_tendsto {γ : ℝ → ℂ} {s : ℂ} {l t�
         (hderiv_int.mono_set (by
           rw [uIcc_of_le hab, uIcc_of_le (by linarith)]
           exact Icc_subset_Icc (by linarith) (by linarith))) hε)
+  have h_endpoint_R : t₀ + (u - t₀) = u := by ring
+  have h_endpoint_L : t₀ - (t₀ - l) = l := by ring
   have h_argR : Tendsto (fun ε : ℝ => Complex.arg ((γ u - s) / (γ (τR ε) - s)))
       (𝓝[>] (0 : ℝ)) (𝓝 ((γ u - s) / L_R).arg) := by
-    simpa only [show t₀ + (u - t₀) = u by ring] using
+    simpa only [h_endpoint_R] using
       arg_annular_quotient_exitTime_tendsto_right (r := u - t₀) hγ_at h_diff_R
-        h_tendsto_R h_at (by simpa only [show t₀ + (u - t₀) = u by ring] using h_slit_plus) h_toR
+        h_tendsto_R h_at (by simpa only [h_endpoint_R] using h_slit_plus) h_toR
   have h_argL : Tendsto (fun ε : ℝ => Complex.arg ((γ (τL ε) - s) / (γ l - s)))
       (𝓝[>] (0 : ℝ)) (𝓝 ((-L_L) / (γ l - s)).arg) := by
-    simpa only [show t₀ - (t₀ - l) = l by ring] using
+    simpa only [h_endpoint_L] using
       arg_annular_quotient_exitTime_tendsto_left (r := t₀ - l) hγ_at h_diff_L
-        h_tendsto_L h_at (by simpa only [show t₀ - (t₀ - l) = l by ring] using h_slit_minus) h_toL
+        h_tendsto_L h_at (by simpa only [h_endpoint_L] using h_slit_minus) h_toL
   have h_ev : (fun ε : ℝ => ∫ t in l..u,
       if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) =ᶠ[𝓝[>] (0 : ℝ)]
       fun ε => ((Real.log ‖γ u - s‖ - Real.log ‖γ l - s‖ : ℝ) : ℂ) +
