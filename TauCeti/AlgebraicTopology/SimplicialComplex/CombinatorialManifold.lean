@@ -21,15 +21,10 @@ a manifold".
 
 The models are the complexes of `Simplex.Basic`: `simplex V` for a vertex set of `n + 1`
 elements, and `simplexBoundary V` for one of `n + 2` elements, so that both models have dimension
-`n`. Comparing against a model *inside the ambient vertex type* rather than against a fixed
-external model is what keeps the definitions on one type; the existential over `V` then makes
-them independent of which vertices the model uses, as soon as a relabeling is available.
-
-Stellar equivalence (`PreAbstractSimplicialComplex.StellarEquivalent`) is the relation "related
-by finitely many starrings and inverse starrings"; see its file for what is and is not claimed
-about it. Since a starring consumes a fresh vertex, the definitions below are the intended ones
-only over a vertex type with room to spare; the theorems here say exactly which vertices they
-use, and the standard models are recognised with no moves at all.
+`n`. They are compared using
+`PreAbstractSimplicialComplex.StellarEquivalentUpToRelabeling`, which injectively relabels both
+complexes in a common enlarged vertex type with infinitely many fresh vertices. Thus the
+definitions do not depend on the names or unused capacity of the original ambient vertex type.
 
 ## The dimension convention, and why `0` is a separate case
 
@@ -80,33 +75,22 @@ variable {ι : Type*} [DecidableEq ι] {K L : PreAbstractSimplicialComplex ι} {
 /-- `K` is a **combinatorial `n`-ball** when it is stellar equivalent to the simplex on some
 `(n + 1)`-element vertex set, the standard `n`-simplex. -/
 def IsCombinatorialBall (K : PreAbstractSimplicialComplex ι) (n : ℕ) : Prop :=
-  ∃ V : Finset ι, V.card = n + 1 ∧ StellarEquivalent K (simplex V)
+  ∃ V : Finset ι, V.card = n + 1 ∧ StellarEquivalentUpToRelabeling K (simplex V)
 
 /-- `K` is a **combinatorial `n`-sphere** when it is stellar equivalent to the boundary of the
 simplex on some `(n + 2)`-element vertex set, the boundary of the standard `(n+1)`-simplex. -/
 def IsCombinatorialSphere (K : PreAbstractSimplicialComplex ι) (n : ℕ) : Prop :=
-  ∃ V : Finset ι, V.card = n + 2 ∧ StellarEquivalent K (simplexBoundary V)
-
-/-- The defining property of a combinatorial ball, as an `Iff` usable outside this file. -/
-theorem isCombinatorialBall_iff :
-    IsCombinatorialBall K n ↔ ∃ V : Finset ι, V.card = n + 1 ∧ StellarEquivalent K (simplex V) :=
-  Iff.rfl
-
-/-- The defining property of a combinatorial sphere, as an `Iff` usable outside this file. -/
-theorem isCombinatorialSphere_iff :
-    IsCombinatorialSphere K n ↔
-      ∃ V : Finset ι, V.card = n + 2 ∧ StellarEquivalent K (simplexBoundary V) :=
-  Iff.rfl
+  ∃ V : Finset ι, V.card = n + 2 ∧ StellarEquivalentUpToRelabeling K (simplexBoundary V)
 
 /-- The standard `n`-simplex is a combinatorial `n`-ball, with no moves needed. -/
 theorem isCombinatorialBall_simplex (hV : V.card = n + 1) : IsCombinatorialBall (simplex V) n :=
-  ⟨V, hV, StellarEquivalent.refl _⟩
+  ⟨V, hV, StellarEquivalentUpToRelabeling.refl _⟩
 
 /-- The boundary of the standard `(n+1)`-simplex is a combinatorial `n`-sphere, with no moves
 needed. -/
 theorem isCombinatorialSphere_simplexBoundary (hV : V.card = n + 2) :
     IsCombinatorialSphere (simplexBoundary V) n :=
-  ⟨V, hV, StellarEquivalent.refl _⟩
+  ⟨V, hV, StellarEquivalentUpToRelabeling.refl _⟩
 
 /-- A one-vertex simplex is a combinatorial `0`-ball. -/
 theorem isCombinatorialBall_simplex_singleton (v : ι) :
@@ -118,14 +102,16 @@ theorem isCombinatorialSphere_simplexBoundary_pair (hvw : v ≠ w) :
     IsCombinatorialSphere (simplexBoundary {v, w}) 0 :=
   isCombinatorialSphere_simplexBoundary (Finset.card_pair hvw)
 
-/-- Being a combinatorial ball transfers along a stellar equivalence. -/
-theorem IsCombinatorialBall.of_stellarEquivalent (h : StellarEquivalent K L)
+/-- Being a combinatorial ball transfers along an intrinsic stellar equivalence. -/
+theorem IsCombinatorialBall.of_stellarEquivalentUpToRelabeling
+    (h : StellarEquivalentUpToRelabeling K L)
     (hL : IsCombinatorialBall L n) : IsCombinatorialBall K n := by
   obtain ⟨V, hV, hLV⟩ := hL
   exact ⟨V, hV, h.trans hLV⟩
 
-/-- Being a combinatorial sphere transfers along a stellar equivalence. -/
-theorem IsCombinatorialSphere.of_stellarEquivalent (h : StellarEquivalent K L)
+/-- Being a combinatorial sphere transfers along an intrinsic stellar equivalence. -/
+theorem IsCombinatorialSphere.of_stellarEquivalentUpToRelabeling
+    (h : StellarEquivalentUpToRelabeling K L)
     (hL : IsCombinatorialSphere L n) : IsCombinatorialSphere K n := by
   obtain ⟨V, hV, hLV⟩ := hL
   exact ⟨V, hV, h.trans hLV⟩
@@ -157,17 +143,27 @@ theorem IsCombinatorialSphere.finite_faces (h : IsCombinatorialSphere K n) : K.f
 
 /-- A combinatorial ball has a face; in particular it is not the void complex. -/
 theorem IsCombinatorialBall.ne_bot (h : IsCombinatorialBall K n) : K ≠ ⊥ := by
-  intro hK
-  have hdim := h.dimension_eq
-  rw [hK, dimension_bot] at hdim
-  simp at hdim
+  obtain ⟨V, hV, he⟩ := h
+  apply he.ne_bot
+  intro hbot
+  have hmem : V ∈ simplex V := self_mem_simplex.mpr (Finset.card_pos.mp (by omega))
+  rw [hbot] at hmem
+  exact hmem
 
 /-- A combinatorial sphere has a face; in particular it is not the void complex. -/
 theorem IsCombinatorialSphere.ne_bot (h : IsCombinatorialSphere K n) : K ≠ ⊥ := by
-  intro hK
-  have hdim := h.dimension_eq
-  rw [hK, dimension_bot] at hdim
-  simp at hdim
+  obtain ⟨V, hV, he⟩ := h
+  apply he.ne_bot
+  intro hbot
+  obtain ⟨v, hv⟩ := Finset.card_pos.mp (by omega : 0 < V.card)
+  have hVne : V ≠ {v} := by
+    intro heq
+    have := congrArg Finset.card heq
+    simp [hV] at this
+  have hmem : ({v} : Finset ι) ∈ simplexBoundary V :=
+    singleton_mem_simplexBoundary.mpr ⟨hv, hVne⟩
+  rw [hbot] at hmem
+  exact hmem
 
 /-! ### Combinatorial manifolds -/
 
@@ -184,12 +180,14 @@ def IsCombinatorialManifold (K : PreAbstractSimplicialComplex ι) : ℕ → Prop
       IsCombinatorialSphere (link K {v}) n ∨ IsCombinatorialBall (link K {v}) n
 
 /-- In dimension `0` the link condition says that every vertex has void link. -/
+@[simp]
 theorem isCombinatorialManifold_zero_iff :
     IsCombinatorialManifold K 0 ↔ ∀ ⦃v : ι⦄, ({v} : Finset ι) ∈ K → link K {v} = ⊥ :=
   Iff.rfl
 
 /-- In positive dimension the link condition says that every vertex link is a combinatorial
 sphere or ball one dimension down. -/
+@[simp]
 theorem isCombinatorialManifold_succ_iff :
     IsCombinatorialManifold K (n + 1) ↔ ∀ ⦃v : ι⦄, ({v} : Finset ι) ∈ K →
       IsCombinatorialSphere (link K {v}) n ∨ IsCombinatorialBall (link K {v}) n :=
@@ -245,8 +243,7 @@ theorem isCombinatorialManifold_simplexBoundary_zero (hV : V.card = 2) :
   rw [link_simplexBoundary (Finset.singleton_subset_iff.mpr hvmem), hw,
     simplexBoundary_singleton]
 
-/-- A combinatorial `n`-manifold has dimension at most `n`: deleting a vertex from a face leaves
-a face of that vertex's link, whose dimension is `n - 1`. -/
+/-- A combinatorial `n`-manifold has dimension at most `n`. -/
 theorem IsCombinatorialManifold.dimension_le (h : IsCombinatorialManifold K n) :
     dimension K ≤ (n : WithBot ℕ∞) := by
   refine dimension_le_iff.mpr fun σ hσ => ?_
