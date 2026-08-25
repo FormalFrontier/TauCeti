@@ -116,6 +116,7 @@ noncomputable def repartitionSpace : Submodule k (Place k F → F) where
       exact h
 
 /-- Membership in `A_F`, unfolded: the entries are integral at cofinitely many places. -/
+@[simp]
 theorem mem_repartitionSpace_iff {a : Place k F → F} :
     a ∈ repartitionSpace k F ↔ ∀ᶠ (P : Place k F) in Filter.cofinite, P.valuation (a P) ≤ 1 :=
   (Iff.rfl)
@@ -191,11 +192,6 @@ theorem adeleFiltration_mono {D E : Divisor k F} (h : D ≤ E) :
     adeleFiltration D ≤ adeleFiltration E := fun _ ha P ↦
   (ha P).trans (WithZero.exp_le_exp.mpr (WeilDivisor.coeff_le_coeff h P))
 
-/-- The bundled form of `TauCeti.adeleFiltration_mono`. -/
-theorem adeleFiltration_monotone :
-    Monotone (adeleFiltration : Divisor k F → Submodule k (Place k F → F)) :=
-  fun _ _ ↦ adeleFiltration_mono
-
 /-- The filtration is directed: any two of its members are contained in a third, namely the one
 attached to the pointwise maximum of the two divisors. -/
 theorem directed_adeleFiltration :
@@ -213,8 +209,9 @@ theorem adeleFiltration_le_repartitionSpace (D : Divisor k F) :
   intro hD
   exact hP (by simpa only [hD, WithZero.exp_zero] using ha P)
 
-/-- Every repartition is bounded by some divisor: the exceptional set is finite, and the orders
-of the entries there are the coefficients of a divisor that works. -/
+/-- Every repartition is bounded by some divisor: the exceptional set is finite, and the pole
+orders `max 0 (-ord_P (a P))` of the entries there are the coefficients of a divisor that
+works. -/
 theorem exists_mem_adeleFiltration {a : Place k F → F} (ha : a ∈ repartitionSpace k F) :
     ∃ D : Divisor k F, a ∈ adeleFiltration D := by
   classical
