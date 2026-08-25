@@ -260,15 +260,8 @@ theorem map_subtype_fixedSubgroup_of_coe_eq_map_iterateFrobenius
     (hF : ∀ g : S, (F g : Matrix.GeneralLinearGroup (Fin n) A) =
       Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g) :
     (fixedSubgroup F).map S.subtype =
-      S ⊓ fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) := by
-  refine le_antisymm ?_ ?_
-  · rintro _ ⟨g, hfix, rfl⟩
-    exact Subgroup.mem_inf.mpr ⟨g.2, mem_fixedSubgroup.mpr
-      ((hF g).symm.trans (congrArg Subtype.val (mem_fixedSubgroup.mp hfix)))⟩
-  · intro g hg
-    obtain ⟨hgS, hgF⟩ := Subgroup.mem_inf.mp hg
-    exact ⟨⟨g, hgS⟩, mem_fixedSubgroup.mpr
-      (Subtype.ext ((hF ⟨g, hgS⟩).trans (mem_fixedSubgroup.mp hgF))), rfl⟩
+      S ⊓ fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) :=
+  map_subtype_fixedSubgroup_of_coe_eq F _ hF
 
 /-- The points of a closed subgroup scheme fixed by the Frobenius, read as a subgroup of `GLₙ(A)`,
 are the points of that subgroup scheme that the entrywise Frobenius fixes. -/

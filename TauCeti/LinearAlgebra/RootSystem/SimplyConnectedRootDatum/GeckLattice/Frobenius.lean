@@ -43,8 +43,6 @@ subgroup appearing in it is finite, is simple, or is a named finite group.
 
 ## Main results
 
-* `TauCeti.DynkinType.geckPoints_eq_kostantToralPointsSubgroup`: the points of the pinned carrier
-  are the points of the Kostant toral closure of its pinned data.
 * `TauCeti.DynkinType.coe_geckFrobenius`: the endomorphism acts by the entrywise Frobenius.
 * `TauCeti.DynkinType.geckFrobenius_zero` and `TauCeti.DynkinType.geckFrobenius_add`: the iteration
   laws.
@@ -91,9 +89,9 @@ attribute [local instance high] Algebra.toModule
 
 variable (t : DynkinType) (ht : t.Valid) (p k : ℕ)
 
-/-- **The points of the pinned Geck carrier are the points of the Kostant toral closure** of the
-pinned lattice, root generators and weights it is built from. -/
-theorem geckPoints_eq_kostantToralPointsSubgroup (A : Type v) [CommRing A] :
+/-- The points of the pinned Geck carrier are the points of the Kostant toral closure of its
+pinned data. This implementation bridge is kept private; consumers use the named Geck API. -/
+private theorem geckPoints_eq_kostantToralPointsSubgroup (A : Type v) [CommRing A] :
     t.geckPoints ht A =
       TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup
         (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
@@ -157,6 +155,7 @@ theorem geckFrobenius_add (m : ℕ) :
 /-- **The Frobenius raises the parameter of a numbered Geck root subgroup to its `p ^ k`-th
 power**, which is the defining equation of the untwisted Steinberg map on the pinned simple root
 subgroups. -/
+@[simp]
 theorem geckFrobenius_geckRootSubgroupMatrix (i : Fin t.rank ⊕ Fin t.rank) (u : Multiplicative A) :
     t.geckFrobenius ht p k A
         ⟨t.geckRootSubgroupMatrix ht i
@@ -171,6 +170,7 @@ theorem geckFrobenius_geckRootSubgroupMatrix (i : Fin t.rank ⊕ Fin t.rank) (u 
     apply TauCeti.UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantRootSubgroupMatrix)
 
 /-- **The Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power.** -/
+@[simp]
 theorem geckFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
     t.geckFrobenius ht p k A ⟨t.geckTorusMatrix ht s, t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
       ⟨t.geckTorusMatrix ht (s ^ p ^ k), t.geckTorusMatrix_mem_geckPoints ht A _⟩ :=

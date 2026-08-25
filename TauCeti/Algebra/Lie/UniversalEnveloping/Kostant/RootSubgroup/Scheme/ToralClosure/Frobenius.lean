@@ -49,6 +49,9 @@ algebraic closedness or field hypothesis is used.
   Frobenius raises a root-subgroup parameter and a torus point to their `p ^ k`-th powers.
 * `TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius`: the endomorphism acts by the
   entrywise Frobenius.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_kostantRootSubgroupMatrix` and
+  `TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_kostantTorusMatrix`: its action on the
+  bundled root-subgroup and torus points.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_zero` and
   `TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_add`: the iteration laws.
 * `TauCeti.UniversalEnvelopingAlgebra.map_subtype_fixedSubgroup_kostantToralFrobenius_eq`: the
@@ -177,6 +180,41 @@ theorem coe_kostantToralFrobenius_apply
         Matrix.GeneralLinearGroup (Fin n) A) : Matrix (Fin n) (Fin n) A) r c =
       ((g : Matrix.GeneralLinearGroup (Fin n) A) : Matrix (Fin n) (Fin n) A) r c ^ p ^ k := by
   rw [coe_kostantToralFrobenius, Matrix.GeneralLinearGroup.map_apply, iterateFrobenius_def]
+
+/-- **The Frobenius raises a bundled root-subgroup parameter to its `p ^ k`-th power.** -/
+@[simp]
+theorem kostantToralFrobenius_kostantRootSubgroupMatrix (i : I) (t : Multiplicative A) :
+    kostantToralFrobenius e h ρ M hM hnil b wt p k A
+        ⟨kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm t),
+          kostantGeneratedPointsSubgroup_le_toralPoints e h ρ M hM hnil b wt A
+            (kostantRootSubgroupMatrix_mem_generatedPoints e h ρ M hM hnil b A i _)⟩ =
+      ⟨kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+            (Multiplicative.ofAdd (Multiplicative.toAdd t ^ p ^ k))),
+        kostantGeneratedPointsSubgroup_le_toralPoints e h ρ M hM hnil b wt A
+          (kostantRootSubgroupMatrix_mem_generatedPoints e h ρ M hM hnil b A i _)⟩ :=
+  Subtype.ext (by
+    rw [coe_kostantToralFrobenius]
+    apply map_iterateFrobenius_kostantRootSubgroupMatrix)
+
+section Fintype
+
+variable [Fintype κ]
+
+/-- **The Frobenius raises a bundled point of the represented weight torus to its `p ^ k`-th
+power.** -/
+@[simp]
+theorem kostantToralFrobenius_kostantTorusMatrix (s : κ → Aˣ) :
+    kostantToralFrobenius e h ρ M hM hnil b wt p k A
+        ⟨kostantTorusMatrix M b wt s, kostantTorusMatrix_mem_toralPoints e h ρ M hM hnil b wt A s⟩ =
+      ⟨kostantTorusMatrix M b wt (s ^ p ^ k),
+        kostantTorusMatrix_mem_toralPoints e h ρ M hM hnil b wt A _⟩ :=
+  Subtype.ext (by
+    rw [coe_kostantToralFrobenius]
+    apply map_iterateFrobenius_kostantTorusMatrix)
+
+end Fintype
 
 /-- The zeroth Frobenius iterate is the identity on the points of a toral closure. -/
 @[simp]
