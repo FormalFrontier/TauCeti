@@ -42,6 +42,7 @@ on:
       - 'scripts/loc_roadmap_graph.py'
       - 'scripts/participant_graph.py'
       - 'scripts/pr_stats_graphs.py'
+      - 'scripts/pipeline_health.py'
       - '.github/workflows/pages.yml'
   schedule:
     - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs
@@ -155,7 +156,26 @@ jobs:
           python3 scripts/pr_stats_graphs.py \
             --repo "${{ github.repository }}" \
             --out-dir web/static_files \
+            --dump-data "$RUNNER_TEMP/pr-snapshot.json" \
           || echo "::warning::PR statistics generation failed; keeping the committed fallback assets"
+
+      # Pipeline health reuses the snapshot the charts just fetched rather than
+      # walking every PR timeline a second time: that walk is thousands of
+      # requests and the dominant cost of this job. Publishing the result means
+      # anything asking "where is the queue stuck" reads a file instead of
+      # repeating the fetch.
+      - name: Derive pipeline health from the same snapshot
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -f "$RUNNER_TEMP/pr-snapshot.json" ]; then
+            python3 scripts/pipeline_health.py \
+              --data "$RUNNER_TEMP/pr-snapshot.json" \
+              --out web/static_files/pipeline-health.json \
+              --json > /dev/null \
+            || echo "::warning::pipeline health generation failed"
+          else
+            echo "::warning::no PR snapshot; skipping pipeline health"
+          fi
 
       # Pinned leanprover/elan release, verified by SHA-256, rather than whatever the installer
       # URL serves at the moment of the request; this elan chooses the toolchain that builds the
@@ -220,6 +240,34 @@ jobs:
             echo "build=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # The docs build compiles the whole library, which dominates this workflow.
+      # ci.yml publishes the library's oleans, and ci.yml and pr-build.yml already
+      # restore them. Restore into the root project rather than docbuild: a path
+      # dependency builds in its own directory.
+      - name: Configure the Lake artifact cache (no-op unless the public endpoints are set)
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: |
+          if [ -n "$PUBLIC_ARTIFACT_ENDPOINT" ] && [ -n "$PUBLIC_REVISION_ENDPOINT" ]; then
+            {
+              echo "LAKE_CACHE_DIR=$GITHUB_WORKSPACE/.lake/cache"
+              echo "LAKE_ARTIFACT_CACHE=true"
+              echo "LAKE_RESTORE_ARTIFACTS=true"
+              echo "TAUCETI_CACHE_ENABLED=1"
+            } >> "$GITHUB_ENV"
+            echo "::notice::Lake artifact cache enabled - restoring TauCeti's oleans for the docs build"
+          else
+            echo "::notice::Lake artifact cache not configured - the docs build will compile TauCeti from scratch"
+          fi
+
+      - name: Restore TauCeti's oleans from the public artifact cache
+        if: ${{ steps.docs-plan.outputs.build == 'true' && env.TAUCETI_CACHE_ENABLED == '1' }}
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: bash scripts/lake-cache-get.sh .
+
       - name: Fetch Mathlib oleans (docs project)
         if: steps.docs-plan.outputs.build == 'true'
         working-directory: docbuild
@@ -251,6 +299,8 @@ jobs:
         env:
           DOCGEN_LOCAL_MODULE_ROOTS: TauCeti
           DOCGEN_DEPS_DOCS_URL: https://leanprover-community.github.io/mathlib4_docs
+          # The restore above placed what this needs, so do not reach for a remote cache.
+          LAKE_NO_CACHE: "true"
         run: |
           rm -rf .lake/build/doc .lake/build/doc-data
           lake build TauCetiDocs:docs
@@ -300,6 +350,10 @@ jobs:
 
       - name: Build examples project (checks the showcased TauCeti theorems)
         working-directory: web/examples
+        env:
+          # GITHUB_ENV carries the cache settings into every later step, and this is a
+          # different project.
+          LAKE_NO_CACHE: "true"
         run: lake build
 
       - name: Build site (extracts the checked snippets, compiles Verso)

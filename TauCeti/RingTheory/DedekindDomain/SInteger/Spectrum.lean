@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.RamificationInertia.Valuation
+public import Mathlib.RingTheory.DedekindDomain.SelmerGroup
 public import TauCeti.RingTheory.DedekindDomain.SInteger.Basic
 
 /-!
@@ -223,6 +224,25 @@ lemma valuation_integerHeightOneSpectrumEquiv (v : {v : HeightOneSpectrum R // v
     (integerHeightOneSpectrumEquiv K S v).valuation K x
       = (v : HeightOneSpectrum R).valuation K x := by
   rw [integerHeightOneSpectrumEquiv_apply, valuation_integerPrimeOverOfNotMem]
+
+/-- **The correspondence preserves the integer-valued valuation**: the `Multiplicative ℤ`-valued
+valuation of the `S`-integers at the prime above `v` is the one of `R` at `v`. This is the `Kˣ`
+companion of `valuation_integerPrimeOverOfNotMem`. -/
+@[simp]
+lemma valuationOfNeZero_integerPrimeOverOfNotMem {v : HeightOneSpectrum R} (hv : v ∉ S) (u : Kˣ) :
+    (integerPrimeOverOfNotMem K S hv).valuationOfNeZero u = v.valuationOfNeZero u := by
+  rw [← WithZero.coe_inj, HeightOneSpectrum.valuationOfNeZero_eq,
+    HeightOneSpectrum.valuationOfNeZero_eq,
+    valuation_integerPrimeOverOfNotMem K S hv (u : K)]
+
+/-- Transport of the integer-valued valuation, phrased through the equivalence. Not a `simp`
+lemma: `integerHeightOneSpectrumEquiv_apply` rewrites the left-hand side to
+`integerPrimeOverOfNotMem` first, so this form is never in normal form — the `simp` lemma is
+`valuationOfNeZero_integerPrimeOverOfNotMem` above. -/
+lemma valuationOfNeZero_integerHeightOneSpectrumEquiv (v : {v : HeightOneSpectrum R // v ∉ S})
+    (u : Kˣ) : (integerHeightOneSpectrumEquiv K S v).valuationOfNeZero u
+      = (v : HeightOneSpectrum R).valuationOfNeZero u := by
+  rw [integerHeightOneSpectrumEquiv_apply, valuationOfNeZero_integerPrimeOverOfNotMem]
 
 /-- **The correspondence preserves valuations, read downwards**: the valuation of `𝒪_S` at an
 arbitrary prime `P` is the valuation of `R` at the prime under `P`. This is the form a consumer

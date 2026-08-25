@@ -39,6 +39,8 @@ differential convention with square-centered markings is a separate rectangle co
   order.
 * `TauCeti.GridPoint.JNumCenter`, `TauCeti.GridPoint.JCenter`: the numerator and the
   rational-valued pairing of a set of grid points against a set of marked squares.
+* `TauCeti.GridState.JNumCenterAt`: the singleton marking-pairing numerator contributed by one
+  grid point.
 * `TauCeti.GridDiagram.JO`, `TauCeti.GridDiagram.JX`: the pairings of a grid state against the
   `O`- and `X`-markings of a grid diagram.
 
@@ -47,6 +49,8 @@ differential convention with square-centered markings is a separate rectangle co
 * `TauCeti.GridPoint.ICenter_graph_eq_card`, `TauCeti.GridState.JNumCenter_pointSet_eq_card`,
   `TauCeti.GridDiagram.JO_eq_card`, `TauCeti.GridDiagram.JX_eq_card`: the pairings as
   column-index counts.
+* `TauCeti.GridState.JNumCenter_pointSet_eq_sum`: the marking-pairing numerator of a grid state as
+  the sum of the singleton contributions from its grid points.
 * `TauCeti.card_filter_le_eq_card_filter_lt_add_card_of_injective`,
   `TauCeti.GridState.ICenter_self_pointSet_eq_I_add_card`: weakening both comparisons of a
   column-pair count along an injective row assignment, in particular pairing a grid state against
@@ -161,6 +165,13 @@ theorem JNumCenter_eq_JNumMixed (s t : Finset (Fin n × Fin n)) :
 theorem JNumCenter_def (s t : Finset (Fin n × Fin n)) :
     JNumCenter s t = ICenter s t + I t s :=
   by rw [JNumCenter, JNumMixed_def, ICenter]
+
+/-- The numerator of the marking pairing is the sum, over the left point set, of its
+singleton-left contributions. -/
+theorem JNumCenter_eq_sum_singleton_left (s t : Finset (Fin n × Fin n)) :
+    JNumCenter s t = ∑ p ∈ s, JNumCenter {p} t := by
+  simp only [JNumCenter_eq_JNumMixed]
+  exact JNumMixed_eq_sum_singleton_left _ s t
 
 /-- The numerator of the marking pairing of a single grid point against marked squares is the
 sum of the numbers of markings weakly northeast and strictly southwest of the point. -/
@@ -282,6 +293,35 @@ end GridPoint
 namespace GridState
 
 variable {n : ℕ}
+
+/-- The contribution of the grid point `(c, r)` to the numerator of the marking pairing against
+the squares occupied by `m`. -/
+def JNumCenterAt (m : GridState n) (c r : Fin n) : ℕ :=
+  GridPoint.JNumCenter {(c, r)} m.pointSet
+
+/-- The local marking-pairing numerator as the existing singleton `JNumCenter` pairing. -/
+theorem JNumCenterAt_def (m : GridState n) (c r : Fin n) :
+    m.JNumCenterAt c r = GridPoint.JNumCenter {(c, r)} m.pointSet := by
+  rw [JNumCenterAt]
+
+/-- The local marking-pairing numerator as the sum of the numbers of markings weakly northeast
+and strictly southwest of the grid point. -/
+theorem JNumCenterAt_eq_card (m : GridState n) (c r : Fin n) :
+    m.JNumCenterAt c r =
+      (Finset.univ.filter fun d : Fin n => c ≤ d ∧ r ≤ m d).card +
+        (Finset.univ.filter fun d : Fin n => d < c ∧ m d < r).card := by
+  classical
+  rw [JNumCenterAt_def, GridPoint.JNumCenter_singleton_left, pointSet,
+    Finset.filter_image, Finset.card_image_of_injective _ fun _ _ h => congrArg Prod.fst h,
+    Finset.filter_image, Finset.card_image_of_injective _ fun _ _ h => congrArg Prod.fst h]
+  rfl
+
+/-- The marking-pairing numerator of a grid state against marked squares is the sum, over its
+columns, of the local numerators contributed by the occupied grid points. -/
+theorem JNumCenter_pointSet_eq_sum (x m : GridState n) :
+    GridPoint.JNumCenter x.pointSet m.pointSet = ∑ c : Fin n, m.JNumCenterAt c (x c) := by
+  rw [GridPoint.JNumCenter_eq_sum_singleton_left, x.sum_pointSet]
+  exact Finset.sum_congr rfl fun c _ => (m.JNumCenterAt_def c (x c)).symm
 
 /-- The southwest-of-center count of the point sets of two grid states, as a column-pair
 count. -/

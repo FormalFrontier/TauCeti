@@ -15,6 +15,8 @@ import Mathlib.Probability.Moments.MGFAnalytic
 -- Non-public: `Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq` supplies the
 -- Laplace-determinacy step in the uniqueness proof.
 import TauCeti.Probability.Moments.LaplaceDeterminacy
+-- Non-public: Markov's inequality supplies the Laplace tail bound.
+import Mathlib.MeasureTheory.Integral.Lebesgue.Markov
 
 /-!
 # Laplace representations for completely monotone functions
@@ -27,8 +29,14 @@ on `[0, ∞)`, and its possibly infinite-measure counterpart on `(0, ∞)`.
 
 * `TauCeti.laplaceTransform`: the Laplace transform of a measure on `ℝ≥0`, with its algebraic
   API and the bridge `TauCeti.laplaceTransform_eq_mgf` to Mathlib's moment-generating function.
+* `TauCeti.measure_compl_closedBall_le_sub_laplaceTransform_div`: a Markov tail bound, controlling
+  the mass a finite measure puts far from the origin by the gap between its total mass and its
+  Laplace transform at a positive parameter.
 * `TauCeti.RepresentsLaplace`: the predicate that a finite measure represents a function by its
   Laplace transform on `[0, ∞)`, with `congr`/`add`/`smul`/`unique` API.
+* `TauCeti.representsLaplace_laplaceTransformENN`: every finite measure on `ℝ≥0` is represented
+  by its extended-real Laplace transform, after taking real values; conversely,
+  `TauCeti.RepresentsLaplace.laplaceTransformENN_eq` recovers that extended-real transform.
 * `TauCeti.RepresentsLaplaceOnIoi`: the corresponding predicate for a possibly infinite measure
   on `(0, ∞)`, with its basic API and the easy direction of the representation theorem.
 * `TauCeti.isContinuousCompletelyMonotoneOnIoi_laplaceTransform`,
@@ -131,6 +139,65 @@ the point masses are the building blocks of the representing mixtures. -/
 lemma laplaceTransform_dirac (x₀ : ℝ≥0) (t : ℝ) :
     laplaceTransform (Measure.dirac x₀) t = Real.exp (-(t * (x₀ : ℝ))) := by
   rw [laplaceTransform_eq_mgf, mgf_dirac', mul_neg]
+
+/-! ## A Markov tail bound through the Laplace transform -/
+
+/-- The bounded coordinate `p ↦ 1 - e^{-xp}` integrates, against a finite measure, to the gap
+between the total mass and the Laplace transform at `x`. -/
+private lemma lintegral_ofReal_one_sub_exp_neg_mul (μ : Measure ℝ≥0) [IsFiniteMeasure μ] {x : ℝ}
+    (hx : 0 ≤ x) :
+    ∫⁻ p : ℝ≥0, ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ)))) ∂μ
+      = ENNReal.ofReal (μ.real univ - laplaceTransform μ x) := by
+  have hexp : Integrable (fun p : ℝ≥0 => Real.exp (-(x * (p : ℝ)))) μ :=
+    integrable_exp_neg_mul μ hx
+  have hint : Integrable (fun p : ℝ≥0 => 1 - Real.exp (-(x * (p : ℝ)))) μ :=
+    (integrable_const (1 : ℝ)).sub hexp
+  have hnonneg : 0 ≤ᵐ[μ] fun p : ℝ≥0 => 1 - Real.exp (-(x * (p : ℝ))) :=
+    .of_forall fun p => sub_nonneg.mpr (exp_neg_mul_le_one hx p)
+  rw [← ofReal_integral_eq_lintegral_ofReal hint hnonneg,
+    integral_sub (integrable_const (1 : ℝ)) hexp, ← laplaceTransform_apply]
+  simp
+
+/-- **A Markov tail bound through the Laplace transform.** For a finite measure on `ℝ≥0` and
+positive parameters `x` and `R`, the mass outside the closed ball of radius `R` is at most the
+Laplace gap `μ.real univ - laplaceTransform μ x` divided by `1 - e^{-xR}`.
+
+This is Markov's inequality applied to the bounded coordinate `p ↦ 1 - e^{-xp}`, which is at
+least `1 - e^{-xR}` outside the ball. It is a tightness input rather than a decay rate in `R`:
+the denominator only tends to `1` as `R → ∞`, and it is the numerator, made small by taking `x`
+small, that does the work. -/
+theorem measure_compl_closedBall_le_sub_laplaceTransform_div
+    (μ : Measure ℝ≥0) [IsFiniteMeasure μ]
+    {x R : ℝ} (hx : 0 < x) (hR : 0 < R) :
+    μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ
+      ≤ ENNReal.ofReal ((μ.real univ - laplaceTransform μ x) / (1 - Real.exp (-(x * R)))) := by
+  set c : ℝ := 1 - Real.exp (-(x * R)) with hc_def
+  have hc_pos : 0 < c := by
+    have : Real.exp (-(x * R)) < 1 := Real.exp_lt_one_iff.mpr (by nlinarith)
+    rw [hc_def]; linarith
+  have hmeas : AEMeasurable
+      (fun p : ℝ≥0 => ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ))))) μ :=
+    (ENNReal.measurable_ofReal.comp
+      (by fun_prop : Measurable fun p : ℝ≥0 => 1 - Real.exp (-(x * (p : ℝ))))).aemeasurable
+  have hsubset : (Metric.closedBall (0 : ℝ≥0) R)ᶜ
+      ⊆ {p : ℝ≥0 | ENNReal.ofReal c ≤ ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ))))} := by
+    intro p hp
+    have hRp : R ≤ (p : ℝ) := by
+      have : R < dist p (0 : ℝ≥0) := by simpa [Metric.mem_closedBall, not_le] using hp
+      simpa [NNReal.dist_eq] using this.le
+    have : Real.exp (-(x * (p : ℝ))) ≤ Real.exp (-(x * R)) :=
+      Real.exp_le_exp.mpr (neg_le_neg (mul_le_mul_of_nonneg_left hRp hx.le))
+    exact ENNReal.ofReal_le_ofReal (by rw [hc_def]; linarith)
+  calc
+    μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ
+        ≤ μ {p : ℝ≥0 | ENNReal.ofReal c ≤ ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ))))} :=
+      measure_mono hsubset
+    _ ≤ (∫⁻ p : ℝ≥0, ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ)))) ∂μ) / ENNReal.ofReal c :=
+      meas_ge_le_lintegral_div hmeas (ENNReal.ofReal_ne_zero_iff.mpr hc_pos) ENNReal.ofReal_ne_top
+    _ = ENNReal.ofReal (μ.real univ - laplaceTransform μ x) / ENNReal.ofReal c := by
+      rw [lintegral_ofReal_one_sub_exp_neg_mul μ hx.le]
+    _ = ENNReal.ofReal ((μ.real univ - laplaceTransform μ x) / c) :=
+      (ENNReal.ofReal_div_of_pos hc_pos).symm
 
 /-! ## Easy direction: finite measures give completely monotone Laplace transforms -/
 
@@ -260,10 +327,35 @@ private lemma norm_slope_neg_pow_mul_exp_neg_mul_le (n : ℕ) {y : ℝ} (hy : 0 
           simpa [hpow_abs] using mul_le_mul_of_nonneg_left hquot hpow_nonneg
     _ = (x : ℝ) ^ (n + 1) := by rw [pow_succ]
 
+/-- As `y` tends to `0` from the right, the integrals of the slopes at `0` of
+`z ↦ (-x) ^ n * exp (-(z * x))` tend to the `(n+1)`-st signed moment. -/
+private lemma tendsto_integral_slope_neg_pow_mul_exp_neg_mul_at_zero (μ : Measure ℝ≥0) (n : ℕ)
+    (hbound : Integrable (fun x : ℝ≥0 => (x : ℝ) ^ (n + 1)) μ) :
+    Tendsto (fun y : ℝ => ∫ x : ℝ≥0,
+        slope (fun z : ℝ => (-(x : ℝ)) ^ n * Real.exp (-(z * (x : ℝ)))) 0 y ∂μ)
+      (𝓝[Ici (0 : ℝ) \ {0}] 0) (𝓝 (∫ x : ℝ≥0, (-(x : ℝ)) ^ (n + 1) ∂μ)) := by
+  let K : ℝ → ℝ≥0 → ℝ := fun y x => (-(x : ℝ)) ^ n * Real.exp (-(y * (x : ℝ)))
+  refine tendsto_integral_filter_of_dominated_convergence
+    (μ := μ) (bound := fun x : ℝ≥0 => (x : ℝ) ^ (n + 1))
+    ?_ ?_ hbound ?_
+  · refine Filter.Eventually.of_forall fun y => ?_
+    simp only [slope_def_field]
+    fun_prop
+  · filter_upwards [eventually_mem_nhdsWithin] with y hy
+    refine Filter.Eventually.of_forall fun x => ?_
+    exact norm_slope_neg_pow_mul_exp_neg_mul_le n hy.1 x
+  · refine Filter.Eventually.of_forall fun x => ?_
+    have hderiv :
+        HasDerivWithinAt (fun y : ℝ => K y x) ((-(x : ℝ)) ^ (n + 1)) (Ici 0) 0 := by
+      have hlin : HasDerivAt (fun y : ℝ => -(y * (x : ℝ))) (-(x : ℝ)) 0 :=
+        (hasDerivAt_mul_const (x : ℝ)).neg
+      have hder := hlin.exp.const_mul ((-(x : ℝ)) ^ n)
+      simpa [K, pow_succ, mul_assoc, mul_comm, mul_left_comm] using hder.hasDerivWithinAt
+    exact (hasDerivWithinAt_iff_tendsto_slope.mp hderiv)
+
 /-- One-sided differentiation under the integral at the endpoint `t = 0`: within `[0, ∞)` the
 `n`-th signed moment kernel integral has the `(n+1)`-st as derivative, provided all moments are
-finite. Dominated convergence over the pointwise slopes supplies the limit; the slope of the
-integral is first exchanged with the integral of the slopes. -/
+finite. -/
 private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0)
     (hmom : ∀ n : ℕ, Integrable (fun x : ℝ≥0 => (x : ℝ) ^ n) μ) (n : ℕ) :
     HasDerivWithinAt (laplaceMomentTransform μ n) (laplaceMomentTransform μ (n + 1) 0)
@@ -274,25 +366,8 @@ private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0
     (-(x : ℝ)) ^ n * Real.exp (-(y * (x : ℝ)))
   have hlim :
       Tendsto (fun y : ℝ => ∫ x : ℝ≥0, slope (fun z : ℝ => K z x) 0 y ∂μ) l
-        (𝓝 (∫ x : ℝ≥0, (-(x : ℝ)) ^ (n + 1) ∂μ)) := by
-    refine tendsto_integral_filter_of_dominated_convergence
-      (μ := μ) (l := l) (bound := fun x : ℝ≥0 => (x : ℝ) ^ (n + 1))
-      ?_ ?_ (hmom (n + 1)) ?_
-    · exact Filter.Eventually.of_forall fun y => by
-        simpa [slope_def_field] using
-          (by fun_prop : AEStronglyMeasurable
-            (fun x : ℝ≥0 => (K y x - K 0 x) / (y - 0)) μ)
-    · filter_upwards [eventually_mem_nhdsWithin] with y hy
-      refine Filter.Eventually.of_forall fun x => ?_
-      exact norm_slope_neg_pow_mul_exp_neg_mul_le n hy.1 x
-    · refine Filter.Eventually.of_forall fun x => ?_
-      have hderiv :
-          HasDerivWithinAt (fun y : ℝ => K y x) ((-(x : ℝ)) ^ (n + 1)) (Ici 0) 0 := by
-        have hlin : HasDerivAt (fun y : ℝ => -(y * (x : ℝ))) (-(x : ℝ)) 0 := by
-          exact (hasDerivAt_mul_const (x : ℝ)).neg
-        have hder := hlin.exp.const_mul ((-(x : ℝ)) ^ n)
-        simpa [K, pow_succ, mul_assoc, mul_comm, mul_left_comm] using hder.hasDerivWithinAt
-      exact (hasDerivWithinAt_iff_tendsto_slope.mp hderiv)
+        (𝓝 (∫ x : ℝ≥0, (-(x : ℝ)) ^ (n + 1) ∂μ)) :=
+    tendsto_integral_slope_neg_pow_mul_exp_neg_mul_at_zero μ n (hmom (n + 1))
   -- Stage 2: the slope of the integral is the integral of the pointwise slopes.
   have hslope :
       (fun y : ℝ => slope (laplaceMomentTransform μ n) 0 y)
@@ -507,6 +582,36 @@ protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
 
 end RepresentsLaplace
 
+/-! ## The real and extended-real Laplace transforms -/
+
+/-- The real value of the extended-real Laplace transform of a finite measure is its usual
+Laplace transform. -/
+theorem toReal_laplaceTransformENN (μ : Measure ℝ≥0) (t : ℝ≥0) [IsFiniteMeasure μ] :
+    (laplaceTransformENN μ t).toReal = laplaceTransform μ (t : ℝ) := by
+  have h := ofReal_integral_eq_lintegral_ofReal (integrable_exp_neg_mul μ t.coe_nonneg)
+    (.of_forall fun p => (Real.exp_pos _).le)
+  rw [laplaceTransform_apply, laplaceTransformENN_apply]
+  simp_rw [neg_mul]
+  rw [← h, ENNReal.toReal_ofReal (integral_nonneg fun p => (Real.exp_pos _).le)]
+
+/-- **A finite measure is represented by its extended-real Laplace transform.** -/
+theorem representsLaplace_laplaceTransformENN (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
+    RepresentsLaplace μ fun t : ℝ => (laplaceTransformENN μ t.toNNReal).toReal := by
+  refine representsLaplace_iff.mpr ⟨inferInstance, fun t ht => ?_⟩
+  rw [toReal_laplaceTransformENN, Real.coe_toNNReal t ht]
+
+namespace RepresentsLaplace
+
+/-- A representing measure's extended-real Laplace transform is obtained by applying
+`ENNReal.ofReal` to the represented function on `ℝ≥0`. -/
+theorem laplaceTransformENN_eq (h : RepresentsLaplace μ f) (t : ℝ≥0) :
+    laplaceTransformENN μ t = ENNReal.ofReal (f t) := by
+  have := h.isFiniteMeasure
+  rw [h.eq_laplaceTransform t.coe_nonneg, ← toReal_laplaceTransformENN]
+  exact (ENNReal.ofReal_toReal (laplaceTransformENN_ne_top μ t)).symm
+
+end RepresentsLaplace
+
 /-! ## Open-half-line representation predicate -/
 
 variable {f : ℝ → ℝ} {μ : Measure ℝ≥0}
@@ -540,6 +645,21 @@ lemma integrable (h : RepresentsLaplaceOnIoi μ f) {t : ℝ} (ht : 0 < t) :
 /-- A representing measure has the advertised Laplace-transform values on `(0, ∞)`. -/
 lemma eq_laplaceTransform (h : RepresentsLaplaceOnIoi μ f) {t : ℝ} (ht : 0 < t) :
     f t = laplaceTransform μ t := h.2 t ht
+
+/-- A measure representing a function by its Laplace transform on `(0, ∞)` is sigma-finite. -/
+lemma sigmaFinite (h : RepresentsLaplaceOnIoi μ f) : SigmaFinite μ := by
+  have hint : Integrable (fun x : ℝ≥0 => Real.exp (-(x : ℝ))) μ := by
+    simpa using h.integrable one_pos
+  refine ⟨⟨⟨fun n : ℕ => Iic (n : ℝ≥0), fun _ => trivial, fun n => ?_, ?_⟩⟩⟩
+  · have hsubset : Iic (n : ℝ≥0) ⊆
+        {x | Real.exp (-(n : ℝ)) ≤ Real.exp (-(x : ℝ))} := by
+      intro x hx
+      exact Real.exp_le_exp.mpr (neg_le_neg (by exact_mod_cast hx))
+    exact (measure_mono hsubset).trans_lt
+      (hint.measure_ge_lt_top (Real.exp_pos (-(n : ℝ))))
+  · ext x
+    simp only [mem_iUnion, mem_Iic, mem_univ, iff_true]
+    exact exists_nat_ge x
 
 /-- A representation transports along agreement on the positive half-line: the predicate
 constrains `f` only there. -/

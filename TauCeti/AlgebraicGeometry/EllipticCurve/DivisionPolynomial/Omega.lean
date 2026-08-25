@@ -15,9 +15,9 @@ public import TauCeti.NumberTheory.EllipticDivisibilitySequence.ReducedInvariant
 
 `ω n` is the bivariate polynomial that the scalar-multiplication development identifies as the
 second (Jacobian) coordinate of multiplication by `n` on a Weierstrass curve — that
-identification is proved there, not here. This file supplies the polynomial itself, completing
-the `(φ, ψ)` pair of Mathlib's division-polynomial API: it defines `ω` and the 2-complement
-`ψc` of `ψ`, and proves the defining identity
+identification belongs there, not here, and is not yet in the library. This file supplies the
+polynomial itself, completing the `(φ, ψ)` pair of Mathlib's division-polynomial API: it defines
+`ω` and the 2-complement `ψc` of `ψ`, and proves the defining identity
 
 `2 ω n + a₁ φ n ψ n + a₃ (ψ n)³ = ψc n`,
 
@@ -42,6 +42,27 @@ and naturality in the coefficient ring for both families.
 * `WeierstrassCurve.map_ψc`, `.map_ω`, `.baseChange_ψc`, `.baseChange_ω`: naturality in the
   coefficient ring, in both the ring-hom and the algebra-tower form of the `ψ`/`φ` siblings.
 
+## References
+
+* [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], Exercise 3.7, which defines
+  the `(ψ, φ, ω)` triple for a general Weierstrass equation
+  `y² + a₁xy + a₃y = x³ + a₂x² + a₄x + a₆` (the short form is offered there only as an optional
+  simplification), and whose part (d), `[m]P = (φₘ/ψₘ², ωₘ/ψₘ³)`, is what makes `ω` a
+  `Y`-coordinate numerator and fixes the normalisation of `ω` taken here. Part (d) has no Lean
+  statement anywhere in this library yet: `DivisionPolynomial/ZSMul.lean` defines `smulY n` as
+  `ωₙ/ψₙ³`, but identifying that rational function with the `Y`-coordinate of `n • P` remains to
+  be proved.
+
+  The exercise's own recurrence fixes a different normalisation, and the two part company off the
+  short form. Its printed `4y ωₘ = ψₘ₋₁² ψₘ₊₂ + ψₘ₋₂ ψₘ₊₁²` is corrected by Silverman's errata
+  (the entry `Pages 105-106, Exercise 3.7` of
+  `math.brown.edu/johsilve/AEC/AECErrata2013.pdf`) to
+  `2 (2y + a₁x + a₃) ωₘ = ψₘ₋₁² ψₘ₊₂ - ψₘ₋₂ ψₘ₊₁²`; as `ψ_mul_ψc` reads that right-hand side as
+  `ψ₂ ψcₘ`, and `ψ₂ = 2y + a₁x + a₃`, the corrected recurrence says `2 ωₘ = ψcₘ`, so `ω₁` is
+  `(2y + a₁x + a₃)/2`. Part (d) instead forces `ω₁ = y`, which is what `ω_one` records; the two
+  normalisations agree exactly when `a₁ = a₃ = 0`. `ω_spec` below is the part-(d) one, its extra
+  `a₁ φₘ ψₘ + a₃ ψₘ³` being precisely that discrepancy.
+
 ## Provenance
 
 Ported from J. Xu and D. K. Angdinata's `LutzNagell/DivisionPolynomialOmega.lean` in AINTLIB
@@ -64,8 +85,9 @@ stated in the module docstring of pinned Mathlib's
 characteristic-zero universal ring and `ωₙ` its image under the universal morphism. This file
 discharges that docstring's `TODO: the bivariate polynomials ωₙ`. The remaining declarations
 with no source counterpart are the equation lemmas `ψc_def` and `ω_def` (the module system
-keeps both bodies unexposed, so each needs a named handle), `map_ψc`, and the two
-`baseChange_*` forms, which follow Mathlib's sibling `baseChange_ψ`/`baseChange_φ`.
+keeps both bodies unexposed, so each needs a named handle), the value lemmas `ψc_zero`,
+`ψc_one` and `ψc_two` (the `complEDS₂` values read at the curve's parameters), `map_ψc`, and
+the two `baseChange_*` forms, which follow Mathlib's sibling `baseChange_ψ`/`baseChange_φ`.
 -/
 
 open Polynomial
@@ -94,6 +116,9 @@ theorem ψc_def : W.ψc = complEDS₂ W.ψ₂ (C W.Ψ₃) (C W.preΨ₄) := (rfl
 
 /-- `ψc` at `1` is `ψ₂`, matching `ψ 1 * ψc 1 = ψ 2`. -/
 @[simp] theorem ψc_one : W.ψc 1 = W.ψ₂ := by rw [ψc_def, complEDS₂_one]
+
+/-- `ψc` at `2` is `preΨ₄`, matching `ψ 2 * ψc 2 = ψ 4`. -/
+@[simp] theorem ψc_two : W.ψc 2 = C W.preΨ₄ := by rw [ψc_def, complEDS₂_two]
 
 /-- The `ω` family of division polynomials: `ω n` gives the second coordinate in Jacobian
 coordinates of scalar multiplication by `n`. -/

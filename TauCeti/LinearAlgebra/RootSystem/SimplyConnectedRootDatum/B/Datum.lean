@@ -296,14 +296,6 @@ private lemma typeBEnum_symm_typeBSimpleIndex (i : Fin n) :
 
 /-! ## The root datum -/
 
-/-- The standard dot-product pairing on the character and cocharacter coordinate lattices is
-perfect; this local instance supplies the perfect pairing required to construct the root datum. -/
-private instance : (dotProductBilin ℤ ℤ :
-    (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ) →ₗ[ℤ] ℤ).IsPerfPair := by
-  -- `dotProductEquiv` has `dotProductBilin` as its underlying linear map by definition.
-  change (dotProductEquiv ℤ (Fin n)).toLinearMap.IsPerfPair
-  infer_instance
-
 /-- The reflection in the root at index `k`, transported to the enumerated index type. -/
 private def typeBReflPerm (n : ℕ) (k : Fin (2 * n ^ 2)) : Equiv.Perm (Fin (2 * n ^ 2)) :=
   ((typeBEnum n).symm.trans
@@ -513,15 +505,11 @@ private lemma typeBSimpleRoot_dotProduct_typeBDualVec (i j : Fin n) :
     split_ifs <;> omega
 
 private lemma linearIndependent_typeBSimpleRoot (n : ℕ) :
-    LinearIndependent ℤ fun i : Fin n => weight n (i : ℕ) - weight n ((i : ℕ) + 1) := by
-  rw [Fintype.linearIndependent_iff]
-  intro g hg j
-  have h := congrArg (· ⬝ᵥ typeBDualVec n (j : ℕ)) hg
-  simp only [sum_dotProduct, smul_dotProduct, smul_eq_mul, zero_dotProduct,
-    typeBSimpleRoot_dotProduct_typeBDualVec, mul_ite, mul_zero] at h
-  rw [Finset.sum_ite_eq' Finset.univ j fun i => g i * 2] at h
-  simp only [Finset.mem_univ, ite_true] at h
-  omega
+    LinearIndependent ℤ fun i : Fin n => weight n (i : ℕ) - weight n ((i : ℕ) + 1) :=
+  linearIndependent_of_dotProduct_diagonal (c := fun _ => 2)
+    (w := fun j : Fin n => typeBDualVec n (j : ℕ)) (fun _ => by norm_num)
+    (fun i => by rw [typeBSimpleRoot_dotProduct_typeBDualVec]; simp)
+    (fun i j hij => by rw [typeBSimpleRoot_dotProduct_typeBDualVec]; simp [hij])
 
 /-- The support of the pinned base of type `Bₙ`: the first `n` root indices. -/
 private abbrev typeBSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=

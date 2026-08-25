@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1
+public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.Basic
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.ModularForm
 
 /-!
@@ -19,7 +19,8 @@ discharges, once, the two side conditions the general construction carries.
 
 The Hecke triple itself is `HeckeRing/GL2/Gamma1.lean`'s instance, and the finiteness of the
 right-coset index follows from it. What is left is the positivity hypothesis, and that is
-`out_mem_glpos_of_delta0` from the same file: every element of `Δ₀(N)` has positive determinant
+`out_mem_glpos_of_delta0` from `HeckeRing/GL2/Gamma0/Basic.lean`, where it is stated for an
+arbitrary pair of flanks rather than for `Γ₁(N)`: every element of `Δ₀(N)` has positive determinant
 by definition, so no double coset of this triple ever fails it.
 
 The operators belong to the double coset itself, not to the representatives `heckeSlashSum` sums
@@ -46,7 +47,7 @@ recurrences — is a separate milestone and is not proved here.
 ## References
 
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
-  §3.4–3.5.
+  §3.4, Proposition 3.37, instantiated at `Γ₁ = Γ₂ = Γ₁(N)`.
 * [F. Diamond and J. Shurman, *A first course in modular forms*][diamondshurman2005], §5.2.
 -/
 

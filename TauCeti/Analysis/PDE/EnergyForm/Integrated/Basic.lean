@@ -36,6 +36,8 @@ derivative: once Lane A supplies `W^{k,p}(Ω)`, its value-gradient jets can feed
 * `TauCeti.PDE.integral_min_lam_mass_mul_norm_sq_le_energyFormIntegral_zero_drift_self`:
   the zero-drift integrated diagonal lower bound from a principal quadratic lower bound and
   nonnegative mass.
+* `TauCeti.PDE.integral_mul_norm_snd_sq_le_energyFormIntegral_zero_drift_self`: the integrated
+  zero-drift lower bound for the squared gradient component.
 * `TauCeti.PDE.UniformlyEllipticOn.norm_energyFormIntegral_le_on`: the corresponding
   boundedness estimate from uniform ellipticity on an a.e. domain.
 -/
@@ -421,6 +423,21 @@ lemma integral_min_lam_mass_mul_norm_sq_le_energyFormIntegral_zero_drift_self (h
   refine integral_mono_ae hlower henergy ?_
   filter_upwards [ha, hc] with x hax hcx
   exact min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self hlam
+    (fun ξ => by simpa [toQuadraticForm'_eq_dotProduct] using hax ξ) hcx (U x)
+
+/-- An integrated zero-drift energy form dominates the integral of the squared gradient
+component under an a.e. principal quadratic lower bound and nonnegative mass coefficient. -/
+lemma integral_mul_norm_snd_sq_le_energyFormIntegral_zero_drift_self
+    (ha : ∀ᵐ x ∂μ, ∀ ξ : EuclideanSpace ℝ n,
+      lam * ‖ξ‖ ^ 2 ≤ ξ ⬝ᵥ (a x *ᵥ ξ))
+    (hc : ∀ᵐ x ∂μ, 0 ≤ c x)
+    (hlower : Integrable (fun x => lam * ‖(U x).2‖ ^ 2) μ)
+    (henergy : Integrable (fun x => energyIntegrand (a x) 0 (c x) (U x) (U x)) μ) :
+    ∫ x, lam * ‖(U x).2‖ ^ 2 ∂μ ≤ energyFormIntegral μ a (fun _ => 0) c U U := by
+  rw [energyFormIntegral_def]
+  refine integral_mono_ae hlower henergy ?_
+  filter_upwards [ha, hc] with x hax hcx
+  exact mul_norm_snd_sq_le_energyIntegrand_zero_drift_self
     (fun ξ => by simpa [toQuadraticForm'_eq_dotProduct] using hax ξ) hcx (U x)
 
 /-- A zero-drift diagonal integrated energy form is nonnegative when the principal quadratic

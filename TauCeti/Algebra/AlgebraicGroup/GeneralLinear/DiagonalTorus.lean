@@ -5,7 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Scheme
 
 /-!
@@ -36,6 +38,9 @@ by the same equation required of a pinned Chevalley--Demazure group scheme.
 
 * `TauCeti.GeneralLinear.diagonalTorusPoints`: the diagonal embedding on algebra-valued points.
 * `TauCeti.GeneralLinear.diagonalTorusCoordinateMap`: its coordinate Hopf-algebra morphism.
+* `TauCeti.GeneralLinear.diagonalTorusCoordinateMap_X`: its value on each generic matrix entry.
+* `TauCeti.GeneralLinear.diagonalTorusCoordinateMap_baseChange`: compatibility with scalar
+  extension and the canonical coordinate Hopf-algebra base-change isomorphisms.
 * `TauCeti.GeneralLinear.diagonalTorus`: the corresponding group-scheme morphism.
 * `TauCeti.GeneralLinear.diagonalTorusPoints_mul_rootSubgroupPoints_mul_inv`: the root-character
   conjugation equation.
@@ -48,7 +53,7 @@ by the same equation required of a pinned Chevalley--Demazure group scheme.
 * J. E. Humphreys, *Linear Algebraic Groups* (1975), §26.3.
 * The points-map, natural-transformation, coordinate-morphism, and relative-spectrum
   constructions are adapted from the formal template in
-  `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup`.
+  `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup`.
 
 This is the split-torus and root-subgroup pinning equation in Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`, a prerequisite for milestone L0 of the
@@ -91,7 +96,7 @@ noncomputable def diagonalTorusPoints :
     WithConv (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ)) →ₐ[R] A) →*
       WithConv (coordinateHopfAlgebra R N →ₐ[R] A) :=
   (pointsMulEquiv (R := R) (A := A) N).symm.toMonoidHom.comp
-    ((diagGL (k := A) (n := N)).comp
+    ((diagGL (k := A)).comp
       ((diagonalTorusCoordinates (N := N) (A := A)).comp
         (SplitTorus.pointsMulEquiv (R := R) (A := A)).toMonoidHom))
 
@@ -265,6 +270,54 @@ theorem mapPointsFunctor_diagonalTorusCoordinateMap_app
         (diagonalTorusCoordinateMap (R := R) (N := N)).hom f.ofConv) p
   rw [← hfp, ← hnat, hp, mapValue_diagonalTorusPoints]
 
+/-- The diagonal-torus coordinate morphism sends a generic matrix entry to the corresponding
+coordinate character on the diagonal, and to zero off the diagonal. -/
+@[simp]
+theorem diagonalTorusCoordinateMap_X (i j : Fin N) :
+    (diagonalTorusCoordinateMap (R := R) (N := N)).hom
+        (coordinateHopfAlgebraAlgEquiv R N
+          (coordinateRingMap R N (MvPolynomial.X (i, j)))) =
+      if i = j then
+        MonoidAlgebra.single
+          (Multiplicative.ofAdd (Finsupp.single (ULift.up i) 1)) 1
+      else 0 := by
+  let K := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))
+  let p : WithConv (K →ₐ[R] K) := toConv (AlgHom.id R K)
+  have hpoints := mapPointsFunctor_diagonalTorusCoordinateMap_app
+    (R := R) (N := N) (CommAlgCat.of R K) p
+  have heval := congrArg
+    (fun q : WithConv (coordinateHopfAlgebra R N →ₐ[R] K) ↦ q.ofConv
+      (coordinateHopfAlgebraAlgEquiv R N
+        (coordinateRingMap R N (MvPolynomial.X (i, j))))) hpoints
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply] at heval
+  have hdiag := congrArg
+    (fun g : Matrix.GeneralLinearGroup (Fin N) K ↦ g i j)
+      (pointsMulEquiv_diagonalTorusPoints p)
+  rw [pointsMulEquiv_apply, pointToGeneralLinear_apply, diagGL_apply,
+    diagonalTorusCoordinates_apply, SplitTorus.pointsMulEquiv_apply_coe] at hdiag
+  have h := heval.trans hdiag
+  dsimp only [p, WithConv.toConv_ofConv, AlgHom.id_apply] at h
+  exact h
+
+/-- **The diagonal-torus coordinate morphism commutes with base change.** After identifying the
+base changes of the general-linear and split-torus coordinate Hopf algebras with their direct
+constructions over the new base, scalar extension of the diagonal embedding is the diagonal
+embedding over the new base. -/
+theorem diagonalTorusCoordinateMap_baseChange
+    (R K : Type u) [CommRing R] [CommRing K] [Algebra R K] :
+    (coordinateHopfAlgebraBaseChangeIso R K N).inv ≫
+        CommHopfAlgCat.baseChangeMap (diagonalTorusCoordinateMap (R := R) (N := N)) ≫
+        (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso R K
+          (SplitTorus.characterGroup (ULift.{u} (Fin N)))).hom =
+      diagonalTorusCoordinateMap (R := K) (N := N) := by
+  apply _root_.CommHopfAlgCat.hom_ext
+  apply coordinateHopfAlgebra_bialgHom_ext K N
+  intro i j
+  rw [coordinateHopfAlgebraBaseChangeMap_X]
+  rw [DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso_hom_apply,
+    diagonalTorusCoordinateMap_X, diagonalTorusCoordinateMap_X]
+  split_ifs <;> simp
+
 /-- The diagonal torus of `GLₙ`, as a morphism from the rank-`N` split torus group scheme. -/
 noncomputable def diagonalTorus :
     SplitTorus.groupScheme R (ULift.{u} (Fin N)) ⟶ groupScheme R N :=
@@ -302,8 +355,14 @@ private lemma groupSchemePointsMulEquiv_comp_diagonalTorus
             (SplitTorus.characterGroup (ULift.{u} (Fin N))) p)) := by
   let q := DiagonalizableGroup.groupSchemePointsMulEquiv (R := R) (A := A)
     (SplitTorus.characterGroup (ULift.{u} (Fin N))) p
-  have hmap := CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
-    (diagonalTorusCoordinateMap (R := R) (N := N)) q
+  have hmap : AlgebraicGeometry.Spec.mapMulEquiv
+      ((CommHopfAlgCat.mapPointsFunctor
+        (diagonalTorusCoordinateMap (R := R) (N := N))).app (CommAlgCat.of R A) q) =
+      AlgebraicGeometry.Spec.mapMulEquiv q ≫
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (diagonalTorusCoordinateMap (R := R) (N := N)).op).hom.hom :=
+    CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of R A)
+      (diagonalTorusCoordinateMap (R := R) (N := N)).hom q
   rw [mapPointsFunctor_diagonalTorusCoordinateMap_app] at hmap
   apply Over.OverMorphism.ext
   rw [groupSchemePointMulEquiv_apply_left, Over.comp_left]

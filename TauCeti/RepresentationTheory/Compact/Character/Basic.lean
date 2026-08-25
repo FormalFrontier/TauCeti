@@ -8,6 +8,7 @@ module
 public import TauCeti.RepresentationTheory.Compact.SchurOrthogonality
 public import TauCeti.RepresentationTheory.Continuous.Character
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # Orthonormality of the characters of a compact group
@@ -22,11 +23,11 @@ irreducibles; deriving it is not done here.
 
 Both statements are read off the Schur orthogonality relations of
 `TauCeti/RepresentationTheory/Compact/SchurOrthogonality.lean` and
-`TauCeti/RepresentationTheory/Compact/Intertwiner.lean`: a character is, up to conjugation, the sum
-of the diagonal matrix coefficients in an orthonormal basis, so an inner product of characters is a
-double sum of inner products of matrix coefficients. The `[Finite G]` shadow of these two results is
-Mathlib's `Representation.char_orthonormal`, whose finite average is replaced here by the Haar
-integral.
+`TauCeti/RepresentationTheory/Compact/Intertwiner/Basic.lean`: a character is, up to conjugation,
+the sum of the diagonal matrix coefficients in an orthonormal basis, so an inner product of
+characters is a double sum of inner products of matrix coefficients. The `[Finite G]` shadow of
+these two results is Mathlib's `Representation.char_orthonormal`, whose finite average is replaced
+here by the Haar integral.
 
 ## Main definitions
 
@@ -185,13 +186,8 @@ theorem character_orthonormal_self [IsAlgClosed 𝕜] (hunitary : IsUnitary π)
     ⟪characterLp π hπ, characterLp π hπ⟫_𝕜 = 1 := by
   classical
   let : Representation.IsIrreducible π.toRepresentation := hirr
-  have : Nontrivial π.toRepresentation.asModule :=
-    IsSimpleModule.nontrivial (MonoidAlgebra 𝕜 G) π.toRepresentation.asModule
-  -- Nontriviality lives on the `Representation.asModule` type synonym; transport it along
-  -- `Representation.asModuleEquiv` rather than through the synonym's definitional unfolding.
-  have : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
-  have hd : (Module.finrank 𝕜 V : 𝕜) ≠ 0 := by
-    exact_mod_cast (Module.finrank_pos (R := 𝕜) (M := V)).ne'
+  have hd : (Module.finrank 𝕜 V : 𝕜) ≠ 0 :=
+    Representation.IsIrreducible.natCast_finrank_ne_zero hirr
   set e := stdOrthonormalBasis 𝕜 V
   -- Only the diagonal term of each inner sum survives, so each of the `d` rows contributes `d⁻¹`.
   have hrow : ∀ i, ∑ k, ⟪matrixCoeffLp π hπ (e k) (e k), matrixCoeffLp π hπ (e i) (e i)⟫_𝕜 =

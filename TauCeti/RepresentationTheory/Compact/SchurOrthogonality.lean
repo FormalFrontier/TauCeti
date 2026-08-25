@@ -5,9 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.Compact.Intertwiner
+public import TauCeti.RepresentationTheory.Compact.Intertwiner.Basic
 public import TauCeti.RepresentationTheory.Continuous.Schur
 public import Mathlib.Analysis.InnerProductSpace.Trace
+import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # Schur orthogonality for irreducible compact-group representations
@@ -22,7 +23,7 @@ order of the Kronecker deltas and the placement of complex conjugation in Mathli
 the inner product is conjugate-linear in its first argument.
 
 The second relation, for a pair of representations, is proved in
-`TauCeti/RepresentationTheory/Compact/Intertwiner.lean` from the vanishing of the intertwiners
+`TauCeti/RepresentationTheory/Compact/Intertwiner/Basic.lean` from the vanishing of the intertwiners
 between them; the last section here packages it with the hypothesis Schur's lemma actually
 discharges, namely that the two irreducibles are inequivalent.
 
@@ -77,28 +78,11 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
     averageOperator π hπ π hπ T =
       ((Module.finrank 𝕜 V : 𝕜)⁻¹ * LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V)) •
         ContinuousLinearMap.id 𝕜 V := by
-  let : Representation.IsIrreducible π.toRepresentation := hirr
-  have : IsSimpleModule 𝕜[G] π.toRepresentation.asModule := inferInstance
-  have : Nontrivial π.toRepresentation.asModule :=
-    IsSimpleModule.nontrivial 𝕜[G] π.toRepresentation.asModule
-  -- Nontriviality lives on the `Representation.asModule` type synonym; transport it along
-  -- `Representation.asModuleEquiv` rather than through the synonym's definitional unfolding.
-  have : Nontrivial V := π.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
-  obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr
+  have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 :=
+    Representation.IsIrreducible.natCast_finrank_ne_zero hirr
+  have h := π.eq_finrank_inv_mul_trace_smul_id_of_irreducible hdim hirr
     (averageIntertwiner π hπ π hπ T)
-  have hc := congrArg ContIntertwiningMap.toContinuousLinearMap hc
-  simp only [toContinuousLinearMap_averageIntertwiner,
-    ContIntertwiningMap.toContinuousLinearMap_smul,
-    ContIntertwiningMap.toContinuousLinearMap_one, ContinuousLinearMap.one_def] at hc
-  have htrace := trace_averageOperator π hπ T
-  rw [hc] at htrace
-  have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 := by
-    exact_mod_cast (Module.finrank_pos (R := 𝕜) (M := V)).ne'
-  have hc' : c = (Module.finrank 𝕜 V : 𝕜)⁻¹ *
-      LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
-    apply (eq_inv_mul_iff_mul_eq₀ hdim).2
-    simpa [mul_comm] using htrace
-  rw [hc, hc']
+  rwa [toContinuousLinearMap_averageIntertwiner, trace_averageOperator] at h
 
 end Average
 

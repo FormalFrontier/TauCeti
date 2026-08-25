@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Combinatorics.SimpleGraph.Connected
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Diagram
 public import Mathlib.LinearAlgebra.RootSystem.Irreducible
 public import TauCeti.LinearAlgebra.RootSystem.InvariantSubmodule
@@ -43,22 +44,6 @@ open Module.End (invtSubmodule)
 namespace TauCeti
 
 namespace SimpleGraph
-
-/-- A graph on `Fin n` is preconnected if every nonzero vertex has an adjacent predecessor. -/
-private theorem preconnected_fin_of_exists_adj_lt {n : ℕ} {G : SimpleGraph (Fin n)}
-    (hn : 0 < n)
-    (h : ∀ i : Fin n, (i : ℕ) ≠ 0 → ∃ j : Fin n, (j : ℕ) < i ∧ G.Adj j i) :
-    G.Preconnected := by
-  let z : Fin n := ⟨0, hn⟩
-  have hreach (i : Fin n) : G.Reachable z i := by
-    induction hi : (i : ℕ) using Nat.strong_induction_on generalizing i with
-    | h k ih =>
-        rcases eq_or_ne k 0 with rfl | hk
-        · have hiz : i = z := Fin.ext (by simpa [z] using hi)
-          rw [hiz]
-        · obtain ⟨j, hji, hadj⟩ := h i (hi ▸ hk)
-          exact (ih (j : ℕ) (hi ▸ hji) j rfl).trans hadj.reachable
-  exact fun i j ↦ (hreach i).symm.trans (hreach j)
 
 /-- A graph containing every successor edge contains the path graph. -/
 private theorem pathGraph_le_of_adj_succ {n : ℕ} {G : SimpleGraph (Fin n)}
@@ -140,9 +125,8 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
       simpa only [rank_C, cartanMatrix_C] using hconn
   | D n =>
       have hn := valid_D.mp ht
-      let _ : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp (by omega)
       have hconn : (diagramGraph (CartanMatrix.D n)).Connected := by
-        refine ⟨SimpleGraph.preconnected_fin_of_exists_adj_lt (by omega) fun i hi ↦ ?_⟩
+        refine SimpleGraph.connected_fin_of_exists_adj_lt (by omega) fun i hi ↦ ?_
         by_cases hlast : (i : ℕ) = n - 1
         · let j : Fin n := ⟨n - 3, by omega⟩
           have hji : j = ⟨n - 3, by omega⟩ := rfl
@@ -157,14 +141,14 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
           exact ⟨j, by simp [j]; omega, hji ▸ adj_succ_D hn j (by simp [j]; omega)⟩
       simpa only [rank_D, cartanMatrix_D] using hconn
   | E6 =>
-      have hconn : (diagramGraph CartanMatrix.E₆).Connected := by
+      have hconn : (diagramGraph (CartanMatrix.E 6)).Connected := by
         rw [SimpleGraph.connected_iff_exists_forall_reachable]
         refine ⟨(3 : Fin 6), fun i ↦ ?_⟩
-        have h32 : (diagramGraph CartanMatrix.E₆).Adj 3 2 := by decide
-        have h20 : (diagramGraph CartanMatrix.E₆).Adj 2 0 := by decide
-        have h31 : (diagramGraph CartanMatrix.E₆).Adj 3 1 := by decide
-        have h34 : (diagramGraph CartanMatrix.E₆).Adj 3 4 := by decide
-        have h45 : (diagramGraph CartanMatrix.E₆).Adj 4 5 := by decide
+        have h32 : (diagramGraph (CartanMatrix.E 6)).Adj 3 2 := by decide
+        have h20 : (diagramGraph (CartanMatrix.E 6)).Adj 2 0 := by decide
+        have h31 : (diagramGraph (CartanMatrix.E 6)).Adj 3 1 := by decide
+        have h34 : (diagramGraph (CartanMatrix.E 6)).Adj 3 4 := by decide
+        have h45 : (diagramGraph (CartanMatrix.E 6)).Adj 4 5 := by decide
         fin_cases i
         · exact h32.reachable.trans h20.reachable
         · exact h31.reachable
@@ -174,15 +158,15 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
         · exact h34.reachable.trans h45.reachable
       simpa only [rank_E6, cartanMatrix_E6] using hconn
   | E7 =>
-      have hconn : (diagramGraph CartanMatrix.E₇).Connected := by
+      have hconn : (diagramGraph (CartanMatrix.E 7)).Connected := by
         rw [SimpleGraph.connected_iff_exists_forall_reachable]
         refine ⟨(3 : Fin 7), fun i ↦ ?_⟩
-        have h32 : (diagramGraph CartanMatrix.E₇).Adj 3 2 := by decide
-        have h20 : (diagramGraph CartanMatrix.E₇).Adj 2 0 := by decide
-        have h31 : (diagramGraph CartanMatrix.E₇).Adj 3 1 := by decide
-        have h34 : (diagramGraph CartanMatrix.E₇).Adj 3 4 := by decide
-        have h45 : (diagramGraph CartanMatrix.E₇).Adj 4 5 := by decide
-        have h56 : (diagramGraph CartanMatrix.E₇).Adj 5 6 := by decide
+        have h32 : (diagramGraph (CartanMatrix.E 7)).Adj 3 2 := by decide
+        have h20 : (diagramGraph (CartanMatrix.E 7)).Adj 2 0 := by decide
+        have h31 : (diagramGraph (CartanMatrix.E 7)).Adj 3 1 := by decide
+        have h34 : (diagramGraph (CartanMatrix.E 7)).Adj 3 4 := by decide
+        have h45 : (diagramGraph (CartanMatrix.E 7)).Adj 4 5 := by decide
+        have h56 : (diagramGraph (CartanMatrix.E 7)).Adj 5 6 := by decide
         fin_cases i
         · exact h32.reachable.trans h20.reachable
         · exact h31.reachable
@@ -193,16 +177,16 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
         · exact (h34.reachable.trans h45.reachable).trans h56.reachable
       simpa only [rank_E7, cartanMatrix_E7] using hconn
   | E8 =>
-      have hconn : (diagramGraph CartanMatrix.E₈).Connected := by
+      have hconn : (diagramGraph (CartanMatrix.E 8)).Connected := by
         rw [SimpleGraph.connected_iff_exists_forall_reachable]
         refine ⟨(3 : Fin 8), fun i ↦ ?_⟩
-        have h32 : (diagramGraph CartanMatrix.E₈).Adj 3 2 := by decide
-        have h20 : (diagramGraph CartanMatrix.E₈).Adj 2 0 := by decide
-        have h31 : (diagramGraph CartanMatrix.E₈).Adj 3 1 := by decide
-        have h34 : (diagramGraph CartanMatrix.E₈).Adj 3 4 := by decide
-        have h45 : (diagramGraph CartanMatrix.E₈).Adj 4 5 := by decide
-        have h56 : (diagramGraph CartanMatrix.E₈).Adj 5 6 := by decide
-        have h67 : (diagramGraph CartanMatrix.E₈).Adj 6 7 := by decide
+        have h32 : (diagramGraph (CartanMatrix.E 8)).Adj 3 2 := by decide
+        have h20 : (diagramGraph (CartanMatrix.E 8)).Adj 2 0 := by decide
+        have h31 : (diagramGraph (CartanMatrix.E 8)).Adj 3 1 := by decide
+        have h34 : (diagramGraph (CartanMatrix.E 8)).Adj 3 4 := by decide
+        have h45 : (diagramGraph (CartanMatrix.E 8)).Adj 4 5 := by decide
+        have h56 : (diagramGraph (CartanMatrix.E 8)).Adj 5 6 := by decide
+        have h67 : (diagramGraph (CartanMatrix.E 8)).Adj 6 7 := by decide
         fin_cases i
         · exact h32.reachable.trans h20.reachable
         · exact h31.reachable

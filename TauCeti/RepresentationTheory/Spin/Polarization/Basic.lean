@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 
 -- Private: `Subspace.dual_finrank_eq`, `Module.finrank_prod` and
 -- `LinearMap.finrank_le_finrank_of_injective` occur only inside the proofs of the dimension
@@ -138,6 +138,47 @@ theorem pairing_separatingRight {K : Type u} [CommRing K] {V : Type v}
   ext x
   simp only [P.pairingEquiv_apply, hy x, map_zero, LinearMap.zero_apply]
 
+/-- A polarization without an orthogonal remainder has nondegenerate quadratic form. -/
+theorem nondegenerate_of_line_eq_bot {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    (P : SpinPolarizationData Q) (hline : P.line = ⊥) : Q.Nondegenerate := by
+  have hker : Q.polarBilin.ker = ⊥ := by
+    rw [LinearMap.ker_eq_bot']
+    intro v hv
+    let x := (P.decompositionEquiv.symm v).1.1
+    let y := (P.decompositionEquiv.symm v).1.2
+    let z := (P.decompositionEquiv.symm v).2
+    have hz : z = 0 := by
+      apply Subtype.ext
+      simpa [hline] using z.property
+    have hdecomp : (x : V) + (y : V) + (z : V) = v := by
+      rw [← P.decompositionEquiv_apply]
+      exact P.decompositionEquiv.apply_symm_apply v
+    have hWW (a b : P.W) : QuadraticMap.polar Q (a : V) b = 0 := by
+      simp only [QuadraticMap.polar, ← Submodule.coe_add, P.isotropic_W, sub_self]
+    have hW'W' (a b : P.W') : QuadraticMap.polar Q (a : V) b = 0 := by
+      simp only [QuadraticMap.polar, ← Submodule.coe_add, P.isotropic_W', sub_self]
+    have hx : x = 0 := by
+      apply P.pairing_separatingLeft
+      intro b
+      have h := LinearMap.congr_fun hv (b : V)
+      simpa only [QuadraticMap.polarBilin_apply_apply, ← hdecomp,
+        QuadraticMap.polar_add_left, hW'W', P.line_orthogonal_W', LinearMap.zero_apply,
+        add_zero] using h
+    have hy : y = 0 := by
+      apply P.pairing_separatingRight
+      intro a
+      have h := LinearMap.congr_fun hv (a : V)
+      simpa only [QuadraticMap.polarBilin_apply_apply, ← hdecomp,
+        QuadraticMap.polar_add_left, hWW, P.line_orthogonal_W, LinearMap.zero_apply,
+        add_zero, zero_add, QuadraticMap.polar_comm Q y a] using h
+    rw [← hdecomp, hx, hy, hz]
+    simp
+  refine ⟨le_antisymm (Q.radical_le_ker_polarBilin.trans hker.le) bot_le, ?_⟩
+  rw [hker]
+  nontriviality K
+  simp only [rank_subsingleton', zero_le]
+
 section Dimension
 
 open Module
@@ -184,6 +225,16 @@ theorem line_eq_bot_of_even_finrank (h : Even (finrank K V)) : P.line = ⊥ := b
   have h₁ := P.finrank_line_le_one
   have h₂ := P.finrank_eq_two_mul_finrank_W_add_finrank_line
   exact Submodule.finrank_eq_zero.1 (by omega)
+
+/-- **A polarization with no remainder has even dimension.** The two isotropic summands are
+equidimensional, so with the remainder gone the dimension is twice that of `W`. This is the
+converse of `SpinPolarizationData.line_eq_bot_of_even_finrank`, and it is what lets the
+even-dimensional theory be stated with the single hypothesis `P.line = ⊥` that the parity
+splitting of the spinor module needs. -/
+theorem even_finrank_of_line_eq_bot (hline : P.line = ⊥) : Even (finrank K V) := by
+  have h := P.finrank_eq_two_mul_finrank_W_add_finrank_line
+  rw [hline, finrank_bot] at h
+  exact ⟨finrank K P.W, by omega⟩
 
 /-- **In even dimension the isotropic summand has half the dimension.** The isotropic summand `W`
 of a polarization of a `2l`-dimensional space has dimension `l`. This is the type `Dₗ` case, where

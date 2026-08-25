@@ -61,7 +61,7 @@ namespace TauCeti
 
 namespace SpecialLinear
 
-universe u w
+universe u v w
 
 variable (R : Type u) [CommRing R] (n : ℕ)
 
@@ -229,6 +229,12 @@ quotient. -/
 theorem finiteTypeCoordinateHopfAlgebra_obj :
     (finiteTypeCoordinateHopfAlgebra R n).obj = coordinateHopfAlgebra R n :=
   by rw [finiteTypeCoordinateHopfAlgebra]
+
+/-- The special-linear coordinate Hopf algebra is a finite-type `R`-algebra, being a quotient of
+the finite-type general-linear coordinate Hopf algebra. -/
+instance instAlgebraFiniteTypeCoordinateHopfAlgebra :
+    Algebra.FiniteType R (coordinateHopfAlgebra R n) :=
+  Algebra.FiniteType.quotient R (definingHopfIdeal R n).toIdeal
 
 /-! ### Algebra-valued points -/
 
@@ -417,7 +423,7 @@ theorem quotientPointsHom_pointsMulEquiv_symm
   apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).injective
   rw [pointsMulEquiv_toGL, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
 
-variable {B : Type w} [CommRing B] [Algebra R B]
+variable {B : Type v} [CommRing B] [Algebra R B]
 
 /-- The special-linear point equivalence is natural in the value algebra: postcomposition of Hopf
 points agrees with entrywise mapping of determinant-one matrices. -/
@@ -425,13 +431,11 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
       (CommAlgCat.of R A)) :
     (pointsMulEquiv (R := R) (A := B) n)
-        (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R n)
-          (CommAlgCat.ofHom phi) f) =
+        (AlgHom.mapValue (H := coordinateHopfAlgebra R n) phi f) =
       Matrix.SpecialLinearGroup.map phi.toRingHom
         ((pointsMulEquiv (R := R) (A := A) n) f) := by
   apply Matrix.SpecialLinearGroup.toGL_injective
-  rw [← pointsMulEquiv_toGL, ← CommHopfAlgCat.mapPoints_quotientPointsHom]
-  rw [HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
+  rw [← pointsMulEquiv_toGL, ← CommHopfAlgCat.mapValue_quotientPointsHom]
   rw [GeneralLinear.pointsMulEquiv_mapValue, pointsMulEquiv_toGL]
   apply Matrix.GeneralLinearGroup.ext
   intro i j
@@ -499,6 +503,9 @@ noncomputable def pointsNatIso :
       intro A B phi
       ext f
       apply ULift.ext
+      -- The natural isomorphism is still being constructed, so no component rewrite lemma is
+      -- available here. The functor maps and `MulEquiv.toGrpIso` reduce definitionally; after
+      -- removing the universe lift, the square is exactly the named pointwise naturality result.
       exact pointsMulEquiv_mapValue (R := R) (A := A) (B := B) n phi.hom f)
 
 /-- After transport along `specialLinearFunctor_obj`, the forward component of `pointsNatIso` is

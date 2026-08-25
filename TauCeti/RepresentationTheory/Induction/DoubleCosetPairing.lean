@@ -30,6 +30,9 @@ the pairing of two induced trivial representations.
   is the number of orbits of `G` on the product.
 * `TauCeti.characterPairing_ofMulAction_quotient_eq_card_doubleCosetQuotient`: the specialization
   to two coset spaces, whose value is the number of double cosets.
+* `TauCeti.characterPairing_ofMulAction_quotient_sub_punit_eq_card_doubleCosetQuotient_sub_one`:
+  the same pairing for the two coset permutation characters with the trivial character removed,
+  one less than the number of double cosets.
 * `TauCeti.characterPairing_ind_trivial_eq_card_doubleCosetQuotient`: the same value for the
   pairing of two induced trivial representations.
 
@@ -126,6 +129,38 @@ theorem characterPairing_ofMulAction_quotient_eq_card_doubleCosetQuotient
       (Nat.card (DoubleCoset.Quotient (H : Set G) K) : k) := by
   rw [characterPairing_ofMulAction_eq_card_orbits k (G ⧸ H) (G ⧸ K) hG,
     card_doubleCosetQuotient_eq_card_orbitQuotient]
+
+/-- **The pairing of two coset permutation characters with the trivial character removed.** For a
+finite group `G` whose order is invertible in `k`, subtracting the character of the one-point
+`G`-set from each of the characters of `k[G ⧸ H]` and `k[G ⧸ K]` drops their pairing from the
+number of double cosets `H \ G / K` to one less than it: the three extra Burnside terms are `1`
+each, because `G` is transitive on each coset space and on the point.
+
+For `K = H` this is the norm of the augmentation, or Steinberg, character of `k[G ⧸ H]`, whose
+value is therefore `#(H \ G / H) - 1`. -/
+theorem characterPairing_ofMulAction_quotient_sub_punit_eq_card_doubleCosetQuotient_sub_one
+    (hG : IsUnit (Nat.card G : k)) :
+    characterPairing
+        (ofCharacter (Representation.ofMulAction k G (G ⧸ H)) -
+          ofCharacter (Representation.ofMulAction k G PUnit.{w + 1}))
+        (ofCharacter (Representation.ofMulAction k G (G ⧸ K)) -
+          ofCharacter (Representation.ofMulAction k G PUnit.{w + 1})) =
+      (Nat.card (DoubleCoset.Quotient (H : Set G) K) : k) - 1 := by
+  have hpq (L : Subgroup G) :
+      characterPairing (ofCharacter (Representation.ofMulAction k G (G ⧸ L)))
+        (ofCharacter (Representation.ofMulAction k G PUnit.{w + 1})) = 1 := by
+    have := isPretransitive_prod_left (G := G) (G ⧸ L) PUnit.{w + 1}
+    rw [characterPairing_ofMulAction_eq_card_orbits k _ _ hG, card_orbitQuotient_eq_one]
+    norm_num
+  have hqq : characterPairing (ofCharacter (Representation.ofMulAction k G PUnit.{w + 1}))
+      (ofCharacter (Representation.ofMulAction k G PUnit.{w + 1})) = 1 := by
+    have := isPretransitive_prod_left (G := G) PUnit.{w + 1} PUnit.{w + 1}
+    rw [characterPairing_ofMulAction_eq_card_orbits k _ _ hG, card_orbitQuotient_eq_one]
+    norm_num
+  simp only [map_sub, LinearMap.sub_apply]
+  rw [characterPairing_ofMulAction_quotient_eq_card_doubleCosetQuotient k H K hG, hpq H,
+    (characterPairing_symm _ _).trans (hpq K), hqq]
+  ring
 
 /-- **The pairing of two induced trivial representations counts double cosets.** For a finite
 group `G` whose order is invertible in `k`, the pairing of the characters of `Ind_H^G 1` and

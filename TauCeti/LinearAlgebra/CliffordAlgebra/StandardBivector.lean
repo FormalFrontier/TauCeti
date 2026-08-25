@@ -165,6 +165,22 @@ private theorem soToExteriorLinear_standardBivectorToSoLinear
     (exteriorBasis n R).equivFun x
   rw [LinearEquiv.apply_symm_apply, soCoordinates_standardBivectorToSoLinear]
 
+/-- Two elements of the orthogonal Lie algebra with equal coordinates agree on every
+strictly-upper-triangular matrix entry. -/
+private theorem matrix_apply_eq_of_soCoordinates_eq_of_lt {A B : LieAlgebra.Orthogonal.so (Fin n) R}
+    (h : soCoordinates n R A = soCoordinates n R B) {a b : Fin n} (hab : a < b) :
+    (A : Matrix (Fin n) (Fin n) R) a b = (B : Matrix (Fin n) (Fin n) R) a b := by
+  let e : Fin 2 ↪o Fin n := OrderEmbedding.ofStrictMono ![a, b] (by
+    apply Fin.strictMono_iff_lt_succ.2
+    intro k
+    fin_cases k
+    simpa using hab)
+  -- the coordinate at `{a, b}` is `⅟2` times the `(a, b)` entry, once the bundled map is unfolded
+  have hs := congr_fun h (Set.powersetCard.ofFinEmbEquiv e)
+  simp only [soCoordinates, LinearMap.coe_mk, AddHom.coe_mk,
+    Equiv.symm_apply_apply] at hs
+  exact (mul_right_inj_of_invertible (⅟ (2 : R))).mp hs
+
 private theorem soCoordinates_injective : Function.Injective (soCoordinates n R) := by
   intro A B h
   apply Subtype.ext
@@ -175,40 +191,14 @@ private theorem soCoordinates_injective : Function.Injective (soCoordinates n R)
     have hC := (LieAlgebra.Orthogonal.mem_so (Fin n) R
       (C : Matrix (Fin n) (Fin n) R)).1 C.property
     exact congr_fun (congr_fun hC a) b
-  have hupper (a b : Fin n) (hab : a < b) :
-      (A : Matrix (Fin n) (Fin n) R) a b =
-        (B : Matrix (Fin n) (Fin n) R) a b := by
-    let e : Fin 2 ↪o Fin n := OrderEmbedding.ofStrictMono ![a, b] (by
-      apply Fin.strictMono_iff_lt_succ.2
-      intro k
-      fin_cases k
-      simpa using hab)
-    have hs := congr_fun h (Set.powersetCard.ofFinEmbEquiv e)
-    -- Expose the upper-triangular coordinate selected by the local order embedding.
-    change (⅟ (2 : R)) *
-        (A : Matrix (Fin n) (Fin n) R)
-          (Set.powersetCard.ofFinEmbEquiv.symm
-            (Set.powersetCard.ofFinEmbEquiv e) 0)
-          (Set.powersetCard.ofFinEmbEquiv.symm
-            (Set.powersetCard.ofFinEmbEquiv e) 1) =
-      (⅟ (2 : R)) *
-        (B : Matrix (Fin n) (Fin n) R)
-          (Set.powersetCard.ofFinEmbEquiv.symm
-            (Set.powersetCard.ofFinEmbEquiv e) 0)
-          (Set.powersetCard.ofFinEmbEquiv.symm
-            (Set.powersetCard.ofFinEmbEquiv e) 1) at hs
-    rw [Equiv.symm_apply_apply] at hs
-    -- Normalize the coordinate equality before cancelling the invertible factor `⅟ 2`.
-    change (⅟ (2 : R)) * (A : Matrix (Fin n) (Fin n) R) a b =
-      (⅟ (2 : R)) * (B : Matrix (Fin n) (Fin n) R) a b at hs
-    exact (mul_right_inj_of_invertible (⅟ (2 : R))).mp hs
   by_cases hij : i < j
-  · exact hupper i j hij
+  · exact matrix_apply_eq_of_soCoordinates_eq_of_lt n R h hij
   by_cases hji : j < i
   · calc
       (A : Matrix (Fin n) (Fin n) R) i j =
           -(A : Matrix (Fin n) (Fin n) R) j i := hskew A j i
-      _ = -(B : Matrix (Fin n) (Fin n) R) j i := congrArg Neg.neg (hupper j i hji)
+      _ = -(B : Matrix (Fin n) (Fin n) R) j i :=
+          congrArg Neg.neg (matrix_apply_eq_of_soCoordinates_eq_of_lt n R h hji)
       _ = (B : Matrix (Fin n) (Fin n) R) i j := (hskew B j i).symm
   · have hij' : i = j := le_antisymm (not_lt.mp hji) (not_lt.mp hij)
     subst j

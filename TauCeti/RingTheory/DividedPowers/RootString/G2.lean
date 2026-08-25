@@ -375,6 +375,63 @@ private theorem sum_g2Monomial_shift {n k : ℕ} {P Q : (ℕ × ℕ × ℕ × �
     (fun _ hq => hright _ (mem_filter_g2SeriesIndex.mp hq))
     (fun _ _ => rfl)
 
+-- `mul_dividedPower_quintuple` in the coordinates the series is indexed by: `g2Monomial n p`
+-- pins the exponent of `y` to `n` minus the weighted degree of `p`, so each of the four releases
+-- lands on a genuine `g2Monomial` only after the arithmetic of its own shift is discharged. The
+-- quadruple is arbitrary: the step this names never used its membership in `g2SeriesIndex n k`.
+private theorem mul_g2Monomial (hxy : x * y = y * x + z) (hxz : x * z = z * x + 2 • w)
+    (hxw : x * w = w * x + 3 • v) (hwz : w * z = z * w + 3 • s) (hxv : Commute x v)
+    (hxs : Commute x s) (hyz : Commute y z) (hwv : Commute w v) (hzs : Commute z s)
+    (hws : Commute w s) (hvs : Commute v s) (n : ℕ) (p : ℕ × ℕ × ℕ × ℕ) :
+    x * g2Monomial y z w v s n p =
+      g2Monomial y z w v s n p * x +
+        (if 0 < n - p.1 - p.2.1 - p.2.2.1 - 2 * p.2.2.2 then
+          (p.1 + 1) • g2Monomial y z w v s n (p.1 + 1, p.2.1, p.2.2.1, p.2.2.2) else 0) +
+        (if 0 < p.1 then
+          (2 * (p.2.1 + 1)) •
+            g2Monomial y z w v s n (p.1 - 1, p.2.1 + 1, p.2.2.1, p.2.2.2) else 0) +
+        (if 1 < p.1 then
+          (3 * (p.2.2.2 + 1)) •
+            g2Monomial y z w v s n (p.1 - 2, p.2.1, p.2.2.1, p.2.2.2 + 1) else 0) +
+        (if 0 < p.2.1 then
+          (3 * (p.2.2.1 + 1)) •
+            g2Monomial y z w v s n (p.1, p.2.1 - 1, p.2.2.1 + 1, p.2.2.2) else 0) := by
+  obtain ⟨b, c, d, e⟩ := p
+  have hA : n - (b + 1) - c - d - 2 * e = n - b - c - d - 2 * e - 1 := by omega
+  have hB : 0 < b → n - (b - 1) - (c + 1) - d - 2 * e = n - b - c - d - 2 * e := by omega
+  have hC : 1 < b → n - (b - 2) - c - d - 2 * (e + 1) = n - b - c - d - 2 * e := by omega
+  have hD : 0 < c → n - b - (c - 1) - (d + 1) - 2 * e = n - b - c - d - 2 * e := by omega
+  have eqB : (if 0 < b then (2 * (c + 1)) •
+        (dividedPower (n - (b - 1) - (c + 1) - d - 2 * e) y * (dividedPower (b - 1) z *
+          (dividedPower (c + 1) w * (dividedPower d v * dividedPower e s)))) else 0) =
+      (if 0 < b then (2 * (c + 1)) •
+        (dividedPower (n - b - c - d - 2 * e) y * (dividedPower (b - 1) z *
+          (dividedPower (c + 1) w * (dividedPower d v * dividedPower e s)))) else 0) := by
+    split_ifs with h
+    · rw [hB h]
+    · rfl
+  have eqC : (if 1 < b then (3 * (e + 1)) •
+        (dividedPower (n - (b - 2) - c - d - 2 * (e + 1)) y * (dividedPower (b - 2) z *
+          (dividedPower c w * (dividedPower d v * dividedPower (e + 1) s)))) else 0) =
+      (if 1 < b then (3 * (e + 1)) •
+        (dividedPower (n - b - c - d - 2 * e) y * (dividedPower (b - 2) z *
+          (dividedPower c w * (dividedPower d v * dividedPower (e + 1) s)))) else 0) := by
+    split_ifs with h
+    · rw [hC h]
+    · rfl
+  have eqD : (if 0 < c then (3 * (d + 1)) •
+        (dividedPower (n - b - (c - 1) - (d + 1) - 2 * e) y * (dividedPower b z *
+          (dividedPower (c - 1) w * (dividedPower (d + 1) v * dividedPower e s)))) else 0) =
+      (if 0 < c then (3 * (d + 1)) •
+        (dividedPower (n - b - c - d - 2 * e) y * (dividedPower b z *
+          (dividedPower (c - 1) w * (dividedPower (d + 1) v * dividedPower e s)))) else 0) := by
+    split_ifs with h
+    · rw [hD h]
+    · rfl
+  simp only [g2Monomial]
+  rw [mul_dividedPower_quintuple hxy hxz hxw hwz hxv hxs hyz hwv hzs hws hvs
+    (n - b - c - d - 2 * e) b c d e, hA, eqB, eqC, eqD]
+
 -- The defining recurrence of the sequence: it is what `dividedPower_mul_of_ad_dividedPower_series`
 -- consumes. Each summand of `g2Series n (k + 1)` is reached in four ways, with coefficients
 -- `b`, `2c`, `3d`, and `3e`, which add up to `k + 1`.
@@ -385,55 +442,6 @@ private theorem mul_g2Series (hxy : x * y = y * x + z) (hxz : x * z = z * x + 2 
     x * g2Series y z w v s n k =
       g2Series y z w v s n k * x + (k + 1) • g2Series y z w v s n (k + 1) := by
   classical
-  have hterm : ∀ p ∈ g2SeriesIndex n k,
-      x * g2Monomial y z w v s n p =
-        g2Monomial y z w v s n p * x +
-          (if 0 < n - p.1 - p.2.1 - p.2.2.1 - 2 * p.2.2.2 then
-            (p.1 + 1) • g2Monomial y z w v s n (p.1 + 1, p.2.1, p.2.2.1, p.2.2.2) else 0) +
-          (if 0 < p.1 then
-            (2 * (p.2.1 + 1)) •
-              g2Monomial y z w v s n (p.1 - 1, p.2.1 + 1, p.2.2.1, p.2.2.2) else 0) +
-          (if 1 < p.1 then
-            (3 * (p.2.2.2 + 1)) •
-              g2Monomial y z w v s n (p.1 - 2, p.2.1, p.2.2.1, p.2.2.2 + 1) else 0) +
-          (if 0 < p.2.1 then
-            (3 * (p.2.2.1 + 1)) •
-              g2Monomial y z w v s n (p.1, p.2.1 - 1, p.2.2.1 + 1, p.2.2.2) else 0) := by
-    rintro ⟨b, c, d, e⟩ _
-    have hA : n - (b + 1) - c - d - 2 * e = n - b - c - d - 2 * e - 1 := by omega
-    have hB : 0 < b → n - (b - 1) - (c + 1) - d - 2 * e = n - b - c - d - 2 * e := by omega
-    have hC : 1 < b → n - (b - 2) - c - d - 2 * (e + 1) = n - b - c - d - 2 * e := by omega
-    have hD : 0 < c → n - b - (c - 1) - (d + 1) - 2 * e = n - b - c - d - 2 * e := by omega
-    have eqB : (if 0 < b then (2 * (c + 1)) •
-          (dividedPower (n - (b - 1) - (c + 1) - d - 2 * e) y * (dividedPower (b - 1) z *
-            (dividedPower (c + 1) w * (dividedPower d v * dividedPower e s)))) else 0) =
-        (if 0 < b then (2 * (c + 1)) •
-          (dividedPower (n - b - c - d - 2 * e) y * (dividedPower (b - 1) z *
-            (dividedPower (c + 1) w * (dividedPower d v * dividedPower e s)))) else 0) := by
-      split_ifs with h
-      · rw [hB h]
-      · rfl
-    have eqC : (if 1 < b then (3 * (e + 1)) •
-          (dividedPower (n - (b - 2) - c - d - 2 * (e + 1)) y * (dividedPower (b - 2) z *
-            (dividedPower c w * (dividedPower d v * dividedPower (e + 1) s)))) else 0) =
-        (if 1 < b then (3 * (e + 1)) •
-          (dividedPower (n - b - c - d - 2 * e) y * (dividedPower (b - 2) z *
-            (dividedPower c w * (dividedPower d v * dividedPower (e + 1) s)))) else 0) := by
-      split_ifs with h
-      · rw [hC h]
-      · rfl
-    have eqD : (if 0 < c then (3 * (d + 1)) •
-          (dividedPower (n - b - (c - 1) - (d + 1) - 2 * e) y * (dividedPower b z *
-            (dividedPower (c - 1) w * (dividedPower (d + 1) v * dividedPower e s)))) else 0) =
-        (if 0 < c then (3 * (d + 1)) •
-          (dividedPower (n - b - c - d - 2 * e) y * (dividedPower b z *
-            (dividedPower (c - 1) w * (dividedPower (d + 1) v * dividedPower e s)))) else 0) := by
-      split_ifs with h
-      · rw [hD h]
-      · rfl
-    simp only [g2Monomial]
-    rw [mul_dividedPower_quintuple hxy hxz hxw hwz hxv hxs hyz hwv hzs hws hvs
-      (n - b - c - d - 2 * e) b c d e, hA, eqB, eqC, eqD]
   -- The four reindexings that identify the released families with the summands of the next term.
   have hshiftA : ∑ p ∈ {p ∈ g2SeriesIndex n k | 0 < n - p.1 - p.2.1 - p.2.2.1 - 2 * p.2.2.2},
         (p.1 + 1) • g2Monomial y z w v s n (p.1 + 1, p.2.1, p.2.2.1, p.2.2.2) =
@@ -510,7 +518,9 @@ private theorem mul_g2Series (hxy : x * y = y * x + z) (hxz : x * z = z * x + 2 
     congr 1
     have := (mem_g2SeriesIndex.mp hq).2
     omega
-  rw [g2Series, Finset.mul_sum, Finset.sum_mul, Finset.sum_congr rfl hterm]
+  rw [g2Series, Finset.mul_sum, Finset.sum_mul,
+    Finset.sum_congr rfl fun p _ =>
+      mul_g2Monomial hxy hxz hxw hwz hxv hxs hyz hwv hzs hws hvs n p]
   simp only [Finset.sum_add_distrib, ← Finset.sum_filter]
   rw [hshiftA, hshiftB, hshiftC, hshiftD, add_assoc, add_assoc, add_assoc, ← add_assoc _ _
     (∑ q ∈ {q ∈ g2SeriesIndex n (k + 1) | 0 < q.2.2.1}, (3 * q.2.2.1) • g2Monomial y z w v s n q),

@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Torus
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
 
@@ -193,6 +193,16 @@ theorem mkQuotient_comp_kostantRootSubgroupToralCoordinateMap (i : I) :
   CommHopfAlgCat.mkQuotient_comp_commonKernelLift
     (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i)
 
+/-- A surjective root-subgroup coordinate map remains surjective after factoring through the
+toral closure. -/
+theorem kostantRootSubgroupToralCoordinateMap_surjective_of_surjective (i : I)
+    (hi : Function.Surjective
+      (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom) :
+    Function.Surjective
+      (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).hom :=
+  CommHopfAlgCat.commonKernelLift_surjective_of_surjective
+    (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i) hi
+
 /-- The coordinate map through which the represented weight torus factors into the toral
 closure. -/
 noncomputable def kostantWeightTorusToralCoordinateMap :
@@ -220,6 +230,15 @@ noncomputable def kostantRootSubgroupToToral (i : I) :
     (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
       (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).op
 
+/-- The root-subgroup morphism into the toral closure is the spectrum map of its factored
+coordinate morphism, after the canonical identification of the additive group scheme. -/
+theorem kostantRootSubgroupToToral_def (i : I) :
+    kostantRootSubgroupToToral e h ρ M hM hnil b wt i =
+      eqToHom (AdditiveGroup.groupScheme_def ℤ) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+          (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).op :=
+  by rw [kostantRootSubgroupToToral]
+
 /-- Factoring a root subgroup through the toral closure and then including into `GLₙ` recovers
 the original represented root-subgroup morphism. -/
 @[simp]
@@ -239,6 +258,15 @@ noncomputable def kostantWeightTorusToToral :
   eqToHom (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup κ)) ≫
     (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
       (kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt).op
+
+/-- The weight-torus morphism into the toral closure is the spectrum map of its factored
+coordinate morphism, after the canonical presentation of the split torus. -/
+theorem kostantWeightTorusToToral_def :
+    kostantWeightTorusToToral e h ρ M hM hnil b wt =
+      eqToHom (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup κ)) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+          (kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt).op :=
+  by rw [kostantWeightTorusToToral]
 
 /-- Factoring the weight torus through the toral closure and then including into `GLₙ` recovers
 the original represented weight-torus morphism. -/

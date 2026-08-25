@@ -38,6 +38,8 @@ Layer 9 CAR worked instance.
 
 * `CliffordAlgebra.bivector_lie_ι`: its commutator action on a generator is the
   infinitesimal rotation determined by `QuadraticMap.polar`.
+* `CliffordAlgebra.ι_mul_ι_eq_bivector_add`: the product of two generators is
+  its Clifford bivector plus its scalar symmetric part.
 * `CliffordAlgebra.bivectorExterior_apply_ιMulti`: the exterior-square map on a
   decomposable bivector.
 * `CliffordAlgebra.equivExterior_bivector`,
@@ -78,6 +80,18 @@ noncomputable def bivector (a b : M) : CliffordAlgebra Q :=
 theorem bivector_def (a b : M) :
     bivector Q a b = (⅟ (2 : R)) • (ι Q a * ι Q b - ι Q b * ι Q a) := by
   rw [bivector]
+
+/-- The product of two Clifford generators is its bivector plus its scalar symmetric part. -/
+theorem ι_mul_ι_eq_bivector_add (a b : M) :
+    ι Q a * ι Q b =
+      bivector Q a b +
+        (⅟ (2 : R)) • algebraMap R (CliffordAlgebra Q) (QuadraticMap.polar Q a b) := by
+  have hcar := ι_mul_ι_add_swap (Q := Q) a b
+  symm
+  rw [bivector_def, ← smul_add, ← hcar]
+  match_scalars
+  · simpa only [one_add_one_eq_two] using invOf_mul_self (2 : R)
+  · ring
 
 /-- The alternating map whose value on two vectors is their half-normalized Clifford bivector. -/
 noncomputable def bivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordAlgebra Q :=

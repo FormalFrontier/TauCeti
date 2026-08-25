@@ -109,12 +109,13 @@ theorem map_F_le (f : Hom source target) (p : ℤ) :
 /-- A Hodge morphism preserves the conjugate Hodge filtration. -/
 theorem map_conjF_le (f : Hom source target) (p : ℤ) :
     (source.conjF p).map f.toLinearMap ≤ target.conjF p := by
-  rintro _ ⟨x, hx, rfl⟩
-  rw [target.mem_conjF_iff, latticeConjugation_toEquiv_apply, ← f.commutes_conj]
-  have hx' : (latticeConjugation h₁).toEquiv x ∈ source.F p :=
-    (source.mem_conjF_iff p x).mp hx
-  rw [latticeConjugation_toEquiv_apply] at hx'
-  exact f.map_mem_F p _ hx'
+  rw [source.conjF_def, target.conjF_def,
+    ← (latticeConjugation h₁).conjFiltration_def source.F p,
+    ← (latticeConjugation h₂).conjFiltration_def target.F p]
+  exact (latticeConjugation h₁).map_conjFiltration_le (latticeConjugation h₂)
+    source.F target.F f.toLinearMap
+    (fun x ↦ by simpa only [latticeConjugation_toEquiv_apply] using f.commutes_conj x)
+    (f.map_F_le p)
 
 /-- Elementwise form of preservation of the conjugate Hodge filtration. -/
 theorem map_mem_conjF (f : Hom source target) (p : ℤ) {x : W₁}

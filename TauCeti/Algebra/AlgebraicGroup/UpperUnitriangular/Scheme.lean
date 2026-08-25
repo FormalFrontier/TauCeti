@@ -10,6 +10,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.UpperUnitriangular.FunctorOfPoints
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.FiniteType
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # The upper-unitriangular group scheme
@@ -38,7 +39,7 @@ scheme interface, scheme-valued points are stated in the same universe as the ba
 * T. A. Springer, *Linear Algebraic Groups*, Section 2.4.
 
 The functor-of-points recovery follows the pattern used for root subgroups in
-`TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup`.
+`TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup`.
 -/
 
 public section
@@ -285,17 +286,12 @@ instance isClosedImmersion_inclusion :
   let c := ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
     (coordinateMap R n).op ≫
       eqToHom (GeneralLinear.groupScheme_def R n).symm).hom.hom.left
-  have he₁ : IsIso e₁ :=
-    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R (Fin n))))).isIso_hom
   have hc : AlgebraicGeometry.IsClosedImmersion c := by
     dsimp only [c]
     exact (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_comp_eqToHom_iff
       (GeneralLinear.groupScheme_def R n) _).2 (coordinateMap_surjective R n)
   have he₁c : AlgebraicGeometry.IsClosedImmersion (e₁ ≫ c) :=
-    (@MorphismProperty.cancel_left_of_respectsIso
-      _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ e₁ c he₁).2 hc
+    (MorphismProperty.cancel_left_of_respectsIso _ e₁ c).2 hc
   rw [inclusion_def]
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
   exact he₁c

@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Basic
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # A Kostant root subgroup is a closed copy of the additive group
@@ -315,17 +316,12 @@ theorem isClosedImmersion_kostantRootSubgroup :
   let c₁ := ((AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
     (kostantRootSubgroupCoordinateMap e h ρ M hM i hnil b).op ≫
       eqToHom (GeneralLinear.groupScheme_def ℤ n).symm).hom.hom.left
-  have he₁ : IsIso e₁ :=
-    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of ℤ))).mapIso
-      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of ℤ)))).mapIso
-        (eqToIso (AdditiveGroup.groupScheme_def ℤ)))).isIso_hom
   have hc₁ : IsClosedImmersion c₁ :=
     (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_comp_eqToHom_iff
       (GeneralLinear.groupScheme_def ℤ n) _).2
       (kostantRootSubgroupCoordinateMap_surjective e h ρ M hM i hnil b hc hstep hsq)
   have he₁c : IsClosedImmersion (e₁ ≫ c₁) :=
-    (@MorphismProperty.cancel_left_of_respectsIso
-      _ _ @IsClosedImmersion inferInstance _ _ _ e₁ c₁ he₁).2 hc₁
+    (MorphismProperty.cancel_left_of_respectsIso _ e₁ c₁).2 hc₁
   rw [kostantRootSubgroup_def]
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
   exact he₁c

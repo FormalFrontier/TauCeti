@@ -20,8 +20,11 @@ The resulting functor is faithful: a map over `X` is determined by all of its re
 fibres. Over a locally path-connected base, its fullness is proved in
 `TauCeti.Topology.Covering.Monodromy.Full`, and its restriction from connected covers to
 fibrewise pretransitive actions is packaged in
-`TauCeti.Topology.Covering.Monodromy.Connected`. Reconstruction and the characterization of the
-essential image are the remaining topological content of the classification of covering spaces by
+`TauCeti.Topology.Covering.Monodromy.Connected`. Over a path-connected, locally path-connected,
+semilocally simply connected base a connected cover can moreover be reconstructed from its
+action, which makes the connected restriction an equivalence
+(`TauCeti.ConnectedCoveringSpace.monodromyEquivalence`); the essential image over a general base
+is the remaining topological content of the classification of covering spaces by
 fundamental-groupoid actions.
 
 ## Main declarations
@@ -56,10 +59,10 @@ variable {X : TopCat.{u}}
 groupoid of `X` to types.
 
 A covering space is sent to its own monodromy functor, and a map of covering spaces to the natural
-transformation restricting that map to every fibre. The definition is opaque; its object and map
-values are characterized by `monodromyFunctor_obj`, `monodromyFunctor_map`, and
-`monodromyFunctor_map_app`. -/
-noncomputable def monodromyFunctor (X : TopCat.{u}) :
+transformation restricting that map to every fibre. Its object and map values are characterized
+by `monodromyFunctor_obj`, `monodromyFunctor_map`, and `monodromyFunctor_map_app`; the
+definition is `@[expose]`d so that those equations also hold by `rfl` in downstream modules. -/
+@[expose] noncomputable def monodromyFunctor (X : TopCat.{u}) :
     CoveringSpace X ⥤ (FundamentalGroupoid X ⥤ Type u) where
   obj p := p.isCoveringMap_proj.monodromyFunctor
   map {p q} f := IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj

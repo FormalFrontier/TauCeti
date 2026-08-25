@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+public import Mathlib.Algebra.Ring.Defs
 public import Mathlib.Data.Fin.Basic
 public import Mathlib.Data.Finset.Card
 public import Mathlib.Data.Finset.Prod
@@ -137,6 +139,29 @@ theorem card_pointSet (x : GridState n) : x.pointSet.card = n := by
   · intro a b hab
     exact Prod.mk.inj hab |>.1
 
+/-- A sum over the occupied squares of a grid state is a sum over the columns. -/
+theorem sum_pointSet {M : Type*} [AddCommMonoid M] (x : GridState n)
+    (f : Fin n × Fin n → M) : ∑ p ∈ x.pointSet, f p = ∑ c : Fin n, f (c, x c) := by
+  rw [pointSet, Finset.sum_image]
+  intro c _ c' _ hc
+  exact (Prod.ext_iff.mp hc).1
+
+/-- A grid state meets a set of columns in as many occupied squares as there are columns. -/
+theorem sum_ite_mem_columns {R : Type*} [Semiring R] (x : GridState n)
+    (C : Finset (Fin n)) :
+    ∑ p ∈ x.pointSet, (if p.1 ∈ C then (1 : R) else 0) = (C.card : R) := by
+  classical
+  rw [sum_pointSet]
+  simp
+
+/-- A grid state meets a set of rows in as many occupied squares as there are rows. -/
+theorem sum_ite_mem_rows {R : Type*} [Semiring R] (x : GridState n)
+    (D : Finset (Fin n)) :
+    ∑ p ∈ x.pointSet, (if p.2 ∈ D then (1 : R) else 0) = (D.card : R) := by
+  classical
+  rw [sum_pointSet, Equiv.sum_comp x.toPerm fun r => if r ∈ D then (1 : R) else 0]
+  simp
+
 /-- A grid state has a unique occupied row in each column. -/
 theorem existsUnique_row_of_column (x : GridState n) (c : Fin n) :
     ∃! r : Fin n, (c, r) ∈ x.pointSet := by
@@ -162,6 +187,25 @@ theorem apply_columnOfRow (x : GridState n) (r : Fin n) : x (x.columnOfRow r) = 
 /-- The column containing the point in row `x c` is `c`. -/
 theorem columnOfRow_apply (x : GridState n) (c : Fin n) : x.columnOfRow (x c) = c := by
   simp [columnOfRow]
+
+/-- A grid state occupies a square in every column, so it meets every nonempty vertical band of
+squares. -/
+theorem not_disjoint_product_univ_pointSet (M : GridState n) {s : Finset (Fin n)}
+    (hs : s.Nonempty) : ¬Disjoint (s ×ˢ (Finset.univ : Finset (Fin n))) M.pointSet := by
+  obtain ⟨c, hc⟩ := hs
+  intro h
+  exact Finset.disjoint_left.mp h (Finset.mk_mem_product hc (Finset.mem_univ (M c)))
+    ((M.mk_mem_pointSet c (M c)).mpr rfl)
+
+/-- A grid state occupies a square in every row, so it meets every nonempty horizontal band of
+squares. -/
+theorem not_disjoint_univ_product_pointSet (M : GridState n) {t : Finset (Fin n)}
+    (ht : t.Nonempty) : ¬Disjoint ((Finset.univ : Finset (Fin n)) ×ˢ t) M.pointSet := by
+  obtain ⟨r, hr⟩ := ht
+  intro h
+  exact Finset.disjoint_left.mp h
+    (Finset.mk_mem_product (Finset.mem_univ (M.columnOfRow r)) hr)
+    ((M.mk_mem_pointSet (M.columnOfRow r) r).mpr (M.apply_columnOfRow r))
 
 /-- Point sets of grid states are equal exactly when the underlying permutations are equal. -/
 @[simp]

@@ -15,8 +15,9 @@ public section
 
 Let `L` be a finite-dimensional Lie algebra with non-degenerate Killing form over a field of
 characteristic zero, let `H` be a splitting Cartan subalgebra, and let `M` be a finite-dimensional
-`L`-module. This file proves that the weights of `M` are **integral**: for every weight `χ` of `M`
-and every root `α`, the scalar `χ (α^∨)` is an integer.
+`L`-module. This file defines when a linear form is an **integral weight** and proves that module
+weights are integral: for every weight `χ` of `M` and every root `α`, the scalar `χ (α^∨)` is an
+integer.
 
 The proof here is the standard reduction to rank one that organises the whole highest-weight
 theory. A nonzero root `α` carries an `sl₂` triple `⟨eₐ, hₐ, fₐ⟩` with `eₐ ∈ Lα`, `fₐ ∈ L₍₋α₎` and,
@@ -42,16 +43,28 @@ root is what forces its weight to be dominant integral.
 
 ## Main results
 
+* `TauCeti.IsIntegralWeight`: a linear form takes integer values on every coroot. The integral
+  weights contain `0` and are closed under addition, negation, subtraction and `ℤ`-scaling
+  (`TauCeti.isIntegralWeight_zero`, `TauCeti.IsIntegralWeight.add`,
+  `TauCeti.IsIntegralWeight.neg`, `TauCeti.IsIntegralWeight.sub`,
+  `TauCeti.IsIntegralWeight.zsmul`).
 * `TauCeti.exists_int_of_hasEigenvalue_coroot`: every eigenvalue of a coroot `α^∨` acting on a
   finite-dimensional module is an integer.
 * `TauCeti.exists_int_apply_coroot`: **integrality of weights.** For a weight `χ` of a
   finite-dimensional module and a root `α`, the value `χ (α^∨)` is an integer.
+* `TauCeti.isIntegralWeight_of_weight`: a weight of a finite-dimensional module is an integral
+  weight.
 * `TauCeti.exists_int_apply_of_mem_span_coroot`: a weight of a finite-dimensional module is
   `ℤ`-valued on the whole coroot lattice, the `ℤ`-span of the coroots.
 * `TauCeti.exists_nat_of_lie_coroot_eq_smul_of_forall_rootSpace_lie_eq_zero` and
   `TauCeti.exists_nat_neg_of_lie_coroot_eq_smul_of_forall_rootSpace_neg_lie_eq_zero`: a nonzero
   vector on which `α^∨` acts by the scalar `μ` and which is killed by the root space `Lα`,
   respectively `L₍₋α₎`, forces `μ` to be a natural number, respectively minus a natural number.
+* `TauCeti.forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero`:
+  a finite-dimensional `sl₂` string starting at coroot weight zero stops immediately in the
+  negative-root direction.
+* `TauCeti.forall_rootSpace_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_neg_lie_eq_zero`:
+  the corresponding statement in the positive-root direction.
 * `TauCeti.genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast`: the generalized eigenspace of a
   coroot at a non-integer scalar vanishes.
 
@@ -116,6 +129,62 @@ theorem genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast {α : Weight K H L}
 
 /-! ### Integrality of weights -/
 
+/-- A weight is **integral** when it takes integer values on every coroot. -/
+def IsIntegralWeight (lam : Module.Dual K H) : Prop :=
+  ∀ α : Weight K H L, ∃ n : ℤ, lam (IsKilling.coroot α) = (n : K)
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- A linear form is integral if it takes an integer value on every coroot. -/
+theorem isIntegralWeight_of_forall_exists_int_apply_coroot {lam : Module.Dual K H}
+    (h : ∀ α : Weight K H L, ∃ n : ℤ, lam (IsKilling.coroot α) = (n : K)) :
+    IsIntegralWeight lam :=
+  h
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- An integral weight takes an integer value on each coroot. -/
+theorem IsIntegralWeight.exists_int_apply_coroot {lam : Module.Dual K H}
+    (hlam : IsIntegralWeight lam) (α : Weight K H L) :
+    ∃ n : ℤ, lam (IsKilling.coroot α) = (n : K) :=
+  hlam α
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- **The zero weight is integral.** -/
+@[simp]
+theorem isIntegralWeight_zero : IsIntegralWeight (0 : Module.Dual K H) :=
+  isIntegralWeight_of_forall_exists_int_apply_coroot fun _ ↦ ⟨0, by simp⟩
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- **A sum of integral weights is integral.** -/
+theorem IsIntegralWeight.add {lam mu : Module.Dual K H} (hlam : IsIntegralWeight lam)
+    (hmu : IsIntegralWeight mu) : IsIntegralWeight (lam + mu) :=
+  isIntegralWeight_of_forall_exists_int_apply_coroot fun α ↦ by
+    obtain ⟨m, hm⟩ := hlam.exists_int_apply_coroot α
+    obtain ⟨n, hn⟩ := hmu.exists_int_apply_coroot α
+    exact ⟨m + n, by rw [LinearMap.add_apply, hm, hn, Int.cast_add]⟩
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- **The negative of an integral weight is integral.** -/
+theorem IsIntegralWeight.neg {lam : Module.Dual K H} (hlam : IsIntegralWeight lam) :
+    IsIntegralWeight (-lam) :=
+  isIntegralWeight_of_forall_exists_int_apply_coroot fun α ↦ by
+    obtain ⟨n, hn⟩ := hlam.exists_int_apply_coroot α
+    exact ⟨-n, by rw [LinearMap.neg_apply, hn, Int.cast_neg]⟩
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- **A difference of integral weights is integral.** -/
+theorem IsIntegralWeight.sub {lam mu : Module.Dual K H} (hlam : IsIntegralWeight lam)
+    (hmu : IsIntegralWeight mu) : IsIntegralWeight (lam - mu) := by
+  rw [sub_eq_add_neg]
+  exact hlam.add hmu.neg
+
+omit [CharZero K] [IsTriangularizable K H L] in
+/-- **An integer multiple of an integral weight is integral.** -/
+theorem IsIntegralWeight.zsmul {lam : Module.Dual K H} (hlam : IsIntegralWeight lam) (z : ℤ) :
+    IsIntegralWeight (z • lam) :=
+  isIntegralWeight_of_forall_exists_int_apply_coroot fun α ↦ by
+    obtain ⟨n, hn⟩ := hlam.exists_int_apply_coroot α
+    exact ⟨z * n, by rw [LinearMap.smul_apply, hn, zsmul_eq_mul, Int.cast_mul]⟩
+
 /-- **Integrality of the weights of a finite-dimensional module.** For every weight `χ` of a
 finite-dimensional module `M` over a Killing-semisimple Lie algebra and every root `α`, the value
 `χ (α^∨)` is an integer.
@@ -129,6 +198,11 @@ dominance conditions of the highest-weight classification use. -/
 theorem exists_int_apply_coroot (χ : Weight K H M) (α : Weight K H L) :
     ∃ z : ℤ, χ (IsKilling.coroot α) = (z : K) :=
   exists_int_of_hasEigenvalue_coroot (χ.hasEigenvalueAt _)
+
+/-- **The weights of a finite-dimensional module are integral.** -/
+theorem isIntegralWeight_of_weight (χ : Weight K H M) :
+    IsIntegralWeight (χ : Module.Dual K H) :=
+  isIntegralWeight_of_forall_exists_int_apply_coroot fun α ↦ exists_int_apply_coroot χ α
 
 /-- **A weight is `ℤ`-valued on the coroot lattice.** The coroots of a Killing-semisimple Lie
 algebra span a `ℤ`-lattice in the Cartan subalgebra, and every weight of a finite-dimensional
@@ -194,5 +268,51 @@ theorem exists_nat_neg_of_lie_coroot_eq_smul_of_forall_rootSpace_neg_lie_eq_zero
   obtain ⟨n, hn⟩ :=
     exists_nat_of_lie_coroot_eq_smul_of_forall_rootSpace_lie_eq_zero (M := M) hα.neg hv0 hv' hvf
   exact ⟨n, by rw [← hn, neg_neg]⟩
+
+/-- **A primitive vector of coroot weight zero is also killed in the negative direction.** If a
+vector is annihilated by `Lα` and has eigenvalue zero under `α^∨`, the finite-dimensional `sl₂`
+string through it stops immediately, so `L₍₋α₎` also annihilates it. -/
+theorem forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero
+    {α : Weight K H L} {v : M}
+    (hv : ⁅((IsKilling.coroot α : H) : L), v⁆ = 0)
+    (hve : ∀ e ∈ rootSpace H α, ⁅e, v⁆ = 0) :
+    ∀ f ∈ rootSpace H ((-α : Weight K H L) : H → K), ⁅f, v⁆ = 0 := by
+  by_cases hv0 : v = 0
+  · subst v
+    simp
+  by_cases hα : α.IsNonZero
+  · obtain ⟨h, e, f, ht, he, hf⟩ := IsKilling.exists_isSl2Triple_of_weight_isNonZero hα
+    have P : ht.HasPrimitiveVectorWith v (0 : K) :=
+      { ne_zero := hv0
+        lie_h := by rw [ht.h_eq_coroot hα he hf]; simpa only [zero_smul] using hv
+        lie_e := hve e he }
+    have hfv : ⁅f, v⁆ = 0 := by
+      have := P.pow_toEnd_f_eq_zero_of_eq_nat (n := 0) (by simp)
+      simpa using this
+    have hspan := IsKilling.toSubmodule_rootSpace_eq_span (-α) hα.neg f ht.f_ne_zero hf
+    intro f' hf'
+    rw [← LieSubmodule.mem_toSubmodule, hspan, Submodule.mem_span_singleton] at hf'
+    obtain ⟨c, rfl⟩ := hf'
+    rw [smul_lie, hfv, smul_zero]
+  · intro f hf
+    apply hve f
+    have hα0 : (α : H → K) = 0 := not_not.mp hα
+    simpa only [Weight.coe_neg, hα0, neg_zero] using hf
+
+/-- **A lowest-weight vector of coroot weight zero is also killed in the positive direction.** If a
+vector is annihilated by `L₍₋α₎` and has eigenvalue zero under `α^∨`, the finite-dimensional `sl₂`
+string through it stops immediately, so `Lα` also annihilates it. -/
+theorem forall_rootSpace_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_neg_lie_eq_zero
+    {α : Weight K H L} {v : M}
+    (hv : ⁅((IsKilling.coroot α : H) : L), v⁆ = 0)
+    (hvf : ∀ f ∈ rootSpace H (-α), ⁅f, v⁆ = 0) :
+    ∀ e ∈ rootSpace H (α : H → K), ⁅e, v⁆ = 0 := by
+  have hcoe_neg : ((-IsKilling.coroot α : H) : L) = -((IsKilling.coroot α : H) : L) :=
+    map_neg H.subtype (IsKilling.coroot α)
+  have hv' : ⁅((IsKilling.coroot (-α) : H) : L), v⁆ = 0 := by
+    rw [IsKilling.coroot_neg, hcoe_neg, neg_lie, hv, neg_zero]
+  simpa only [Weight.coe_neg, neg_neg] using
+    (forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero
+      (M := M) (α := -α) hv' hvf)
 
 end TauCeti
