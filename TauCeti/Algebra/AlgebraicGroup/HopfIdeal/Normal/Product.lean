@@ -65,17 +65,6 @@ an action of affine group objects. -/
   letI : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
   exact GrpObj.Action.normalConjugation i j
 
-/-- The quotient conjugation action is the categorical normal-conjugation action on the two
-quotient inclusions. -/
-theorem quotientNormalConjugation_def
-    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
-    (hI : I.IsNormal) :
-    let i := quotientGrpObjInclusion H I
-    let j := quotientGrpObjInclusion H J
-    letI : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
-    quotientNormalConjugation H I J hI = GrpObj.Action.normalConjugation i j :=
-  rfl
-
 /-- The coordinate Hopf algebra of the semidirect product of a normal closed affine subgroup
 and another closed affine subgroup. Its underlying commutative algebra is
 `(H / I) ⊗[ R ] (H / J)`, and its Hopf structure records conjugation of the second subgroup
@@ -85,16 +74,6 @@ on the first. -/
     (hI : I.IsNormal) : _root_.CommHopfAlgCat.{u} R :=
   (commHopfAlgCatEquivCogrpCommAlgCat R).inverse.obj
     (op (quotientNormalConjugation H I J hI).semidirectProduct)
-
-/-- The normal semidirect-product coordinate algebra is transported from the explicitly named
-internal semidirect-product group object. -/
-theorem normalSemidirectProduct_def
-    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
-    (hI : I.IsNormal) :
-    normalSemidirectProduct H I J hI =
-      (commHopfAlgCatEquivCogrpCommAlgCat R).inverse.obj
-        (op (quotientNormalConjugation H I J hI).semidirectProduct) :=
-  (rfl)
 
 /-- The coordinate Hopf-algebra morphism dual to multiplication from the semidirect product of
 a normal closed subgroup and another closed subgroup into the ambient affine group. -/
