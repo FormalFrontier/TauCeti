@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Geometry.Manifold.Instances.Icc
-public import TauCeti.Topology.Homotopy.Isotopy.Basic
+public import TauCeti.Topology.Homotopy.AmbientIsotopic.Basic
 
 /-!
 # Smooth ambient isotopies
@@ -19,6 +19,8 @@ data and ensures that no unrelated choices of inverse maps are carried by the st
 The time interval is Mathlib's `unitInterval`, with its manifold-with-boundary structure modelled
 on `𝓡∂ 1`.  The total diffeomorphism is required to preserve the time coordinate.  Its slice at
 each `t : I` is therefore a self-diffeomorphism of `M`; `Diffeotopy.timeSlice` packages that fact.
+Diffeotopies coerce to their spatial component, so `Φ (t, x)` is the point of `M` reached from
+`x` at time `t`.
 Diffeotopies compose and invert, and forgetting smoothness gives the existing
 `TauCeti.AmbientIsotopy`.
 
@@ -32,17 +34,30 @@ bundled smooth embeddings, used for geometric knot presentations, is in
 
 * `TauCeti.Diffeotopy`: a level-preserving diffeomorphism of `I × M` starting at the identity.
 * `TauCeti.Diffeotopy.timeSlice`: the self-diffeomorphism of `M` at a fixed time.
+* `TauCeti.Diffeotopy.final`: the self-diffeomorphism at time one.
 * `TauCeti.Diffeotopy.refl`, `trans`, and `symm`: the constant, composite, and inverse
   diffeotopies.
 * `TauCeti.Diffeotopy.toAmbientIsotopy`: forget smoothness to obtain a continuous ambient
   isotopy.
+* `TauCeti.SmoothAmbientIsotopic`: smooth ambient isotopy of arbitrary bundled smooth maps.
+
+## Main results
+
+* `TauCeti.Diffeotopy.timeSlice_trans` and `timeSlice_symm`: time slices commute with composition
+  and inversion.
+* `TauCeti.Diffeotopy.final_trans` and `final_symm`: the corresponding calculus for final
+  diffeomorphisms.
+* `TauCeti.Diffeotopy.toAmbientIsotopy_final_apply`: forgetting smoothness preserves the final
+  action.
+* `TauCeti.SmoothAmbientIsotopic.refl`, `symm`, and `trans`: smooth ambient isotopy is an
+  equivalence relation.
 
 ## References
 
 * G. Burde and H. Zieschang, *Knots*, 2nd ed., de Gruyter (2003), Chapter 1, for ambient
   isotopy of knots.
-* M. Hirsch, *Differential Topology*, Springer GTM 33 (1976), Chapter 2, for smooth isotopies
-  and diffeotopies.
+* M. Hirsch, *Differential Topology*, Springer GTM 33 (1976), Chapter 8, §8.1, for smooth
+  isotopies and diffeotopies.
 -/
 
 public section
@@ -71,14 +86,22 @@ structure Diffeotopy (J : ModelWithCorners ℝ E H) (n : ℕ∞ω) (M : Type*)
   /-- The total diffeomorphism preserves the time coordinate. -/
   fst_apply (p : I × M) : (toDiffeomorph p).1 = p.1
   /-- The motion starts at the identity. -/
-  snd_apply_zero (x : M) : (toDiffeomorph (0, x)).2 = x
+  snd_apply_zero' (x : M) : (toDiffeomorph (0, x)).2 = x
 
 namespace Diffeotopy
 
+/-- Apply a diffeotopy as `Φ (t, x)`: the spatial component of the total diffeomorphism. -/
 instance instCoeFun : CoeFun (Diffeotopy J n M) fun _ => I × M → M where
   coe Φ p := (Φ.toDiffeomorph p).2
 
+attribute [simp] Diffeotopy.fst_apply
+
 variable (Φ : Diffeotopy J n M)
+
+/-- Applying a diffeotopy returns the spatial component of its total diffeomorphism. -/
+@[simp]
+theorem coe_apply (p : I × M) : Φ p = (Φ.toDiffeomorph p).2 :=
+  (rfl)
 
 /-- The total diffeomorphism of a diffeotopy sends `(t, x)` to `(t, Φ (t, x))`. -/
 theorem toDiffeomorph_apply (p : I × M) : Φ.toDiffeomorph p = (p.1, Φ p) := by
@@ -87,7 +110,7 @@ theorem toDiffeomorph_apply (p : I × M) : Φ.toDiffeomorph p = (p.1, Φ p) := b
 /-- A diffeotopy starts at the identity. -/
 @[simp]
 theorem apply_zero (x : M) : Φ (0, x) = x :=
-  Φ.snd_apply_zero x
+  Φ.snd_apply_zero' x
 
 /-- A diffeotopy is a `C^n` map of time and space into the ambient manifold. -/
 theorem contMDiff : ContMDiff ((𝓡∂ 1).prod J) J n Φ :=
@@ -100,21 +123,26 @@ theorem fst_symm_apply (p : I × M) : (Φ.toDiffeomorph.symm p).1 = p.1 := by
   rw [Φ.toDiffeomorph.apply_symm_apply] at h
   exact h.symm
 
+/-- The inverse total diffeomorphism sends `p` to its time coordinate paired with its spatial
+component. -/
+theorem toDiffeomorph_symm_apply (p : I × M) :
+    Φ.toDiffeomorph.symm p = (p.1, (Φ.toDiffeomorph.symm p).2) := by
+  exact Prod.ext (Φ.fst_symm_apply p) rfl
+
 /-- The time-`t` slice of a diffeotopy, bundled as a self-diffeomorphism of `M`. -/
 def timeSlice (t : I) : M ≃ₘ^n⟮J, J⟯ M where
   toEquiv :=
     { toFun := fun x ↦ Φ (t, x)
       invFun := fun y ↦ (Φ.toDiffeomorph.symm (t, y)).2
       left_inv := fun x ↦ by
-        change (Φ.toDiffeomorph.symm (t, (Φ.toDiffeomorph (t, x)).2)).2 = x
-        have hp : (t, (Φ.toDiffeomorph (t, x)).2) = Φ.toDiffeomorph (t, x) := by
-          exact Prod.ext (Φ.fst_apply (t, x)).symm rfl
+        simp only [coe_apply]
+        have hp : (t, (Φ.toDiffeomorph (t, x)).2) = Φ.toDiffeomorph (t, x) :=
+          (Φ.toDiffeomorph_apply (t, x)).symm
         rw [hp, Φ.toDiffeomorph.symm_apply_apply]
       right_inv := fun y ↦ by
-        change (Φ.toDiffeomorph (t, (Φ.toDiffeomorph.symm (t, y)).2)).2 = y
+        simp only [coe_apply]
         have hp : (t, (Φ.toDiffeomorph.symm (t, y)).2) =
-            Φ.toDiffeomorph.symm (t, y) := by
-          exact Prod.ext (Φ.fst_symm_apply (t, y)).symm rfl
+            Φ.toDiffeomorph.symm (t, y) := (Φ.toDiffeomorph_symm_apply (t, y)).symm
         rw [hp, Φ.toDiffeomorph.apply_symm_apply] }
   contMDiff_toFun :=
     Φ.contMDiff.comp (contMDiff_const.prodMk contMDiff_id)
@@ -127,22 +155,20 @@ def timeSlice (t : I) : M ≃ₘ^n⟮J, J⟯ M where
 theorem timeSlice_apply (t : I) (x : M) : Φ.timeSlice t x = Φ (t, x) :=
   (rfl)
 
-/-- The inverse of the time-`t` diffeomorphism is the spatial component of the inverse total
-diffeomorphism at time `t`. -/
-@[simp]
-theorem timeSlice_symm_apply (t : I) (x : M) :
-    (Φ.timeSlice t).symm x = (Φ.toDiffeomorph.symm (t, x)).2 :=
-  (rfl)
-
 /-- The time-zero slice of a diffeotopy is the identity diffeomorphism. -/
 @[simp]
 theorem timeSlice_zero : Φ.timeSlice 0 = _root_.Diffeomorph.refl J M n := by
   apply _root_.Diffeomorph.ext
   exact Φ.apply_zero
 
-/-- The final self-diffeomorphism of a diffeotopy. -/
+/-- The time-`1` self-diffeomorphism of a diffeotopy. -/
 def final : M ≃ₘ^n⟮J, J⟯ M :=
   Φ.timeSlice 1
+
+/-- The final diffeomorphism is the time-one slice. -/
+@[simp]
+theorem final_def : Φ.final = Φ.timeSlice 1 :=
+  (rfl)
 
 /-- The final diffeomorphism acts by the time-one slice. -/
 @[simp]
@@ -154,7 +180,7 @@ def refl (J : ModelWithCorners ℝ E H) (n : ℕ∞ω) (M : Type*) [TopologicalS
     [ChartedSpace H M] : Diffeotopy J n M where
   toDiffeomorph := _root_.Diffeomorph.refl ((𝓡∂ 1).prod J) (I × M) n
   fst_apply _ := rfl
-  snd_apply_zero _ := rfl
+  snd_apply_zero' _ := rfl
 
 /-- The constant diffeotopy fixes every point at every time. -/
 @[simp]
@@ -169,24 +195,30 @@ theorem timeSlice_refl (t : I) : (refl J n M).timeSlice t =
   intro x
   rfl
 
+/-- The final diffeomorphism of the constant diffeotopy is the identity. -/
+@[simp]
+theorem final_refl : (refl J n M).final = _root_.Diffeomorph.refl J M n := by
+  rw [final_def, timeSlice_refl]
+
 /-- Compose two diffeotopies pointwise, first `Φ` and then `Ψ`. -/
 def trans (Φ Ψ : Diffeotopy J n M) : Diffeotopy J n M where
   toDiffeomorph := Φ.toDiffeomorph.trans Ψ.toDiffeomorph
   fst_apply p := by
     rw [congr_fun (_root_.Diffeomorph.coe_trans Φ.toDiffeomorph Ψ.toDiffeomorph) p,
       Function.comp_apply, Ψ.fst_apply, Φ.fst_apply]
-  snd_apply_zero x := by
+  snd_apply_zero' x := by
     rw [congr_fun (_root_.Diffeomorph.coe_trans Φ.toDiffeomorph Ψ.toDiffeomorph) (0, x),
       Function.comp_apply, Φ.toDiffeomorph_apply, Φ.apply_zero]
-    exact Ψ.snd_apply_zero x
+    exact Ψ.apply_zero x
 
-/-- Composition of diffeotopies is pointwise composition of their time slices. -/
+/-- Evaluating a composite diffeotopy applies `Φ` and then `Ψ` at the same time. -/
 @[simp]
 theorem trans_apply (Ψ : Diffeotopy J n M) (p : I × M) :
     Φ.trans Ψ p = Ψ (p.1, Φ p) := by
-  rw [trans.eq_def]
-  change (Ψ.toDiffeomorph (Φ.toDiffeomorph p)).2 = _
-  rw [Φ.toDiffeomorph_apply]
+  simp only [coe_apply]
+  unfold trans
+  rw [congr_fun (_root_.Diffeomorph.coe_trans Φ.toDiffeomorph Ψ.toDiffeomorph) p,
+    Function.comp_apply, Φ.toDiffeomorph_apply]
 
 /-- The time slice of a composite diffeotopy is the composite of its time slices. -/
 @[simp]
@@ -194,40 +226,36 @@ theorem timeSlice_trans (Ψ : Diffeotopy J n M) (t : I) :
     (Φ.trans Ψ).timeSlice t = (Φ.timeSlice t).trans (Ψ.timeSlice t) := by
   apply _root_.Diffeomorph.ext
   intro x
-  change Φ.trans Ψ (t, x) = Ψ (t, Φ (t, x))
-  exact Φ.trans_apply Ψ (t, x)
+  simpa only [timeSlice_apply, _root_.Diffeomorph.coe_trans, Function.comp_apply] using
+    Φ.trans_apply Ψ (t, x)
 
 /-- The final diffeomorphism of a composite diffeotopy is the composite of the final
 diffeomorphisms. -/
-@[simp 1100]
-theorem final_trans (Ψ : Diffeotopy J n M) (x : M) :
-    (Φ.trans Ψ).final x = Ψ.final (Φ.final x) := by
-  rw [final_apply, trans_apply, ← final_apply, ← final_apply]
+@[simp]
+theorem final_trans (Ψ : Diffeotopy J n M) :
+    (Φ.trans Ψ).final = Φ.final.trans Ψ.final := by
+  simpa only [final_def] using Φ.timeSlice_trans Ψ 1
 
 /-- Reverse a diffeotopy by taking the inverse of its level-preserving total diffeomorphism. -/
 def symm (Φ : Diffeotopy J n M) : Diffeotopy J n M where
   toDiffeomorph := Φ.toDiffeomorph.symm
   fst_apply := Φ.fst_symm_apply
-  snd_apply_zero x := by
-    have hp : (0, x) = Φ.toDiffeomorph (0, x) := by
-      exact Prod.ext (Φ.fst_apply (0, x)).symm (Φ.apply_zero x).symm
-    rw [hp, Φ.toDiffeomorph.symm_apply_apply]
+  snd_apply_zero' x := by
+    have hp : Φ.toDiffeomorph (0, x) = (0, x) := by
+      rw [Φ.toDiffeomorph_apply, Φ.apply_zero]
+    rw [← hp, Φ.toDiffeomorph.symm_apply_apply]
 
-/-- A diffeotopy followed by its inverse fixes every point. -/
+/-- Evaluating the inverse diffeotopy uses the spatial component of the inverse total
+diffeomorphism. -/
 @[simp]
-theorem symm_apply_apply (p : I × M) : Φ.symm (p.1, Φ p) = p.2 := by
-  change (Φ.toDiffeomorph.symm (p.1, (Φ.toDiffeomorph p).2)).2 = p.2
-  have hp : (p.1, (Φ.toDiffeomorph p).2) = Φ.toDiffeomorph p := by
-    exact Prod.ext (Φ.fst_apply p).symm rfl
-  rw [hp, Φ.toDiffeomorph.symm_apply_apply]
+theorem symm_apply (p : I × M) : Φ.symm p = (Φ.toDiffeomorph.symm p).2 :=
+  (rfl)
 
-/-- The inverse diffeotopy followed by the original fixes every point. -/
+/-- The inverse of the time-`t` slice acts by the inverse diffeotopy at time `t`. -/
 @[simp]
-theorem apply_symm_apply (p : I × M) : Φ (p.1, Φ.symm p) = p.2 := by
-  change (Φ.toDiffeomorph (p.1, (Φ.toDiffeomorph.symm p).2)).2 = p.2
-  have hp : (p.1, (Φ.toDiffeomorph.symm p).2) = Φ.toDiffeomorph.symm p := by
-    exact Prod.ext (Φ.fst_symm_apply p).symm rfl
-  rw [hp, Φ.toDiffeomorph.apply_symm_apply]
+theorem symm_timeSlice_apply (t : I) (x : M) :
+    (Φ.timeSlice t).symm x = Φ.symm (t, x) :=
+  (rfl)
 
 /-- The time slice of the inverse diffeotopy is the inverse time slice. -/
 @[simp]
@@ -235,23 +263,39 @@ theorem timeSlice_symm (t : I) :
     Φ.symm.timeSlice t = (Φ.timeSlice t).symm := by
   apply _root_.Diffeomorph.ext
   intro x
-  rw [timeSlice_apply, timeSlice_symm_apply]
-  rfl
+  rw [timeSlice_apply, symm_timeSlice_apply]
+
+/-- A diffeotopy followed by its inverse fixes every point. -/
+@[simp]
+theorem symm_apply_apply (p : I × M) : Φ.symm (p.1, Φ p) = p.2 := by
+  simpa only [symm_timeSlice_apply, timeSlice_apply] using
+    (Φ.timeSlice p.1).symm_apply_apply p.2
+
+/-- The inverse diffeotopy followed by the original fixes every point. -/
+@[simp]
+theorem apply_symm_apply (p : I × M) : Φ (p.1, Φ.symm p) = p.2 := by
+  simpa only [symm_timeSlice_apply, timeSlice_apply] using
+    (Φ.timeSlice p.1).apply_symm_apply p.2
+
+/-- The final diffeomorphism of the inverse diffeotopy is the inverse final diffeomorphism. -/
+@[simp]
+theorem final_symm : Φ.symm.final = Φ.final.symm := by
+  simpa only [final_def] using Φ.timeSlice_symm 1
 
 /-- The final diffeomorphism of the inverse diffeotopy undoes the original final
 diffeomorphism. -/
 @[simp↓ 1100]
 theorem symm_final_final (x : M) :
     Φ.symm.final (Φ.final x) = x := by
-  rw [final_apply, final_apply]
-  exact Φ.symm_apply_apply (1, x)
+  rw [Φ.final_symm]
+  exact Φ.final.symm_apply_apply x
 
 /-- The final diffeomorphism undoes the final diffeomorphism of the inverse diffeotopy. -/
 @[simp↓ 1100]
 theorem final_symm_final (x : M) :
     Φ.final (Φ.symm.final x) = x := by
-  rw [final_apply, final_apply]
-  exact Φ.apply_symm_apply (1, x)
+  rw [Φ.final_symm]
+  exact Φ.final.apply_symm_apply x
 
 /-- Forgetting smoothness turns a diffeotopy into a continuous ambient isotopy. -/
 def toAmbientIsotopy : AmbientIsotopy M where
@@ -275,6 +319,30 @@ theorem toAmbientIsotopy_final_apply (x : M) :
     Φ.toAmbientIsotopy.final x = Φ.final x := by
   rw [AmbientIsotopy.final_apply, toAmbientIsotopy_apply, final_apply]
 
+/-- Forgetting smoothness commutes with composition of diffeotopies. -/
+@[simp]
+theorem toAmbientIsotopy_trans (Ψ : Diffeotopy J n M) :
+    (Φ.trans Ψ).toAmbientIsotopy = Φ.toAmbientIsotopy.trans Ψ.toAmbientIsotopy := by
+  apply AmbientIsotopy.ext
+  intro p
+  rw [toAmbientIsotopy_apply, AmbientIsotopy.trans_apply, toAmbientIsotopy_apply,
+    toAmbientIsotopy_apply, trans_apply]
+
+/-- Forgetting smoothness commutes with inversion of diffeotopies. -/
+@[simp]
+theorem toAmbientIsotopy_symm :
+    Φ.symm.toAmbientIsotopy = Φ.toAmbientIsotopy.symm := by
+  have htotal : Φ.toAmbientIsotopy.totalHomeomorph = Φ.toDiffeomorph.toHomeomorph := by
+    apply Homeomorph.ext
+    intro p
+    rw [AmbientIsotopy.totalHomeomorph_apply]
+    simpa only [toAmbientIsotopy_apply, _root_.Diffeomorph.coe_toHomeomorph] using
+      (Φ.toDiffeomorph_apply p).symm
+  apply AmbientIsotopy.ext
+  intro p
+  rw [toAmbientIsotopy_apply, AmbientIsotopy.symm_apply, htotal, symm_apply]
+  simp only [_root_.Diffeomorph.coe_toHomeomorph_symm]
+
 /-- Two diffeotopies are equal when their ambient motions agree pointwise. -/
 @[ext]
 theorem ext {Φ Ψ : Diffeotopy J n M} (h : ∀ p, Φ p = Ψ p) : Φ = Ψ := by
@@ -288,5 +356,102 @@ theorem ext {Φ Ψ : Diffeotopy J n M} (h : ∀ p, Φ p = Ψ p) : Φ = Ψ := by
       exact Prod.ext ((hφ p).trans (hψ p).symm) (h p)
 
 end Diffeotopy
+
+section SmoothAmbientIsotopic
+
+variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
+  {H' : Type*} [TopologicalSpace H'] {J' : ModelWithCorners ℝ E' H'}
+  {N : Type*} [TopologicalSpace N] [ChartedSpace H' N]
+
+variable {f g h : C^n⟮J, M; J', N⟯}
+
+/-- Two bundled smooth maps are **smoothly ambient isotopic** when the final diffeomorphism of a
+`C^n` diffeotopy of the codomain carries the first map to the second. -/
+def SmoothAmbientIsotopic (f g : C^n⟮J, M; J', N⟯) : Prop :=
+  ∃ Φ : Diffeotopy J' n N, Φ.final.toContMDiffMap.comp f = g
+
+/-- Smooth ambient isotopy is witnessed by a diffeotopy whose final diffeomorphism postcomposes
+the first smooth map to the second. -/
+theorem smoothAmbientIsotopic_def :
+    SmoothAmbientIsotopic f g ↔
+      ∃ Φ : Diffeotopy J' n N, Φ.final.toContMDiffMap.comp f = g :=
+  Iff.rfl
+
+namespace SmoothAmbientIsotopic
+
+/-- A diffeotopy carrying `f` to `g` witnesses their smooth ambient isotopy. -/
+theorem of_diffeotopy (Φ : Diffeotopy J' n N)
+    (hΦ : Φ.final.toContMDiffMap.comp f = g) : SmoothAmbientIsotopic f g :=
+  ⟨Φ, hΦ⟩
+
+/-- Smooth ambient isotopy of smooth maps is reflexive. -/
+@[refl]
+theorem refl (f : C^n⟮J, M; J', N⟯) : SmoothAmbientIsotopic f f := by
+  refine ⟨Diffeotopy.refl J' n N, ?_⟩
+  ext x
+  simp
+
+/-- Smooth ambient isotopy of smooth maps is symmetric. -/
+@[symm]
+theorem symm (hfg : SmoothAmbientIsotopic f g) : SmoothAmbientIsotopic g f := by
+  obtain ⟨Φ, hΦ⟩ := hfg
+  refine ⟨Φ.symm, ContMDiffMap.ext fun x ↦ ?_⟩
+  rw [ContMDiffMap.comp_apply]
+  have hx : Φ.final (f x) = g x := DFunLike.congr_fun hΦ x
+  rw [← hx]
+  exact Φ.symm_final_final (f x)
+
+/-- Smooth ambient isotopy of smooth maps is transitive. -/
+@[trans]
+theorem trans (hfg : SmoothAmbientIsotopic f g) (hgh : SmoothAmbientIsotopic g h) :
+    SmoothAmbientIsotopic f h := by
+  obtain ⟨Φ, hΦ⟩ := hfg
+  obtain ⟨Ψ, hΨ⟩ := hgh
+  have hxΦ (x : M) : Φ.final (f x) = g x := by
+    simpa only [ContMDiffMap.comp_apply, _root_.Diffeomorph.coe_coe] using
+      DFunLike.congr_fun hΦ x
+  have hxΨ (x : M) : Ψ.final (g x) = h x := by
+    simpa only [ContMDiffMap.comp_apply, _root_.Diffeomorph.coe_coe] using
+      DFunLike.congr_fun hΨ x
+  refine ⟨Φ.trans Ψ, ContMDiffMap.ext fun x ↦ ?_⟩
+  rw [ContMDiffMap.comp_apply, Diffeotopy.final_trans]
+  calc
+    Φ.final.trans Ψ.final (f x) = Ψ.final (Φ.final (f x)) := by
+      simpa only [Function.comp_apply] using
+        congr_fun (_root_.Diffeomorph.coe_trans Φ.final Ψ.final) (f x)
+    _ = h x := by rw [hxΦ, hxΨ]
+
+/-- Smooth ambient isotopy implies continuous ambient isotopy after forgetting smoothness. -/
+theorem ambientIsotopic (hfg : SmoothAmbientIsotopic f g) :
+    AmbientIsotopic (toContinuousMap f) (toContinuousMap g) := by
+  obtain ⟨Φ, hΦ⟩ := hfg
+  apply ambientIsotopic_def.mpr
+  refine ⟨Φ.toAmbientIsotopy, ?_⟩
+  ext x
+  rw [ContinuousMap.comp_apply, Diffeotopy.toAmbientIsotopy_final_apply]
+  exact DFunLike.congr_fun hΦ x
+
+/-- Smooth ambient isotopy is an equivalence relation on bundled smooth maps. -/
+theorem equivalence :
+    Equivalence (SmoothAmbientIsotopic (J := J) (J' := J') (n := n) (M := M) (N := N)) :=
+  ⟨refl, fun hfg ↦ hfg.symm, fun hfg hgh ↦ hfg.trans hgh⟩
+
+/-- The smooth-ambient-isotopy equivalence relation on bundled smooth maps. -/
+def setoid (J : ModelWithCorners ℝ E H) (J' : ModelWithCorners ℝ E' H') (n : ℕ∞ω)
+    (M : Type*) [TopologicalSpace M] [ChartedSpace H M]
+    (N : Type*) [TopologicalSpace N] [ChartedSpace H' N] :
+    Setoid C^n⟮J, M; J', N⟯ where
+  r := SmoothAmbientIsotopic
+  iseqv := equivalence
+
+/-- The relation of the smooth-ambient-isotopy setoid is smooth ambient isotopy. -/
+@[simp]
+theorem setoid_r_iff :
+    (setoid J J' n M N).r f g ↔ SmoothAmbientIsotopic f g :=
+  Iff.rfl
+
+end SmoothAmbientIsotopic
+
+end SmoothAmbientIsotopic
 
 end TauCeti
