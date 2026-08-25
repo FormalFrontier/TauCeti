@@ -59,7 +59,7 @@ are Mathlib's `Mathlib/Topology/Sheaves/Flasque.lean`, and the long exact sequen
 public section
 
 open CategoryTheory Limits Opposite TopologicalSpace
-open TauCeti.CategoryTheory.Sheaf (freeYonedaSheafFunctor freeYonedaSheafSectionsEquiv
+open TauCeti.CategoryTheory (freeYonedaSheafFunctor freeYonedaSheafSectionsEquiv
   freeYonedaSheafSectionsEquiv_naturality_left
   freeYonedaSheafSectionsEquiv_naturality_right)
 
