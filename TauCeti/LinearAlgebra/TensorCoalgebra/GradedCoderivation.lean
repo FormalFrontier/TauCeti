@@ -30,9 +30,8 @@ identity takes the sign-free shape
 `Δ ∘ b = (b ⊗ 1) ∘ Δ + (1 ⊗ b) ∘ (τ ⊗ 1) ∘ Δ`
 
 in which `τ = TauCeti.InternalGrading.parityTwist G q` acts on the left half of every cut.  For
-`q = 0` this reduces term by term to the ungraded theory: `parityTwist G 0` is the identity, the
-predicate `ReducedTensorWords.IsGradedCoderivation G 0` is `IsCoderivation`, and
-`gradedCoderiv G 0 F = coderiv F`.
+`q = 0` this reduces term by term to the ungraded theory: the twist of degree zero is the
+identity, so a degree-`0` graded coderivation is exactly an ungraded coderivation.
 
 ## Main definitions
 
@@ -42,9 +41,6 @@ predicate `ReducedTensorWords.IsGradedCoderivation G 0` is `IsCoderivation`, and
   words to letters, at degree `q`.
 * `TauCeti.ReducedTensorWords.IsGradedCoderivation`: the twisted co-Leibniz identity of a degree-`q`
   endomorphism of words.
-* `TauCeti.ReducedTensorWords.gradedCoderivations` and
-  `TauCeti.ReducedTensorWords.gradedCoderivEquivTaylor`: the submodule of degree-`q` graded
-  coderivations and its identification with the maps to single letters.
 * `TauCeti.ReducedTensorWords.gradedPiece`: the words whose letters have total degree `D`.
 
 ## Main results
