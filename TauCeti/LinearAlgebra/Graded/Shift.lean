@@ -348,15 +348,6 @@ theorem suspExp_add3 (a b c : ℕ) (d : ℕ → ℤ) :
     push_cast
     ring
 
-/-- Recurrence for the suspension exponent after adjoining a final input. -/
-theorem suspExp_succ (k : ℕ) (d : ℕ → ℤ) :
-    suspExp (k + 1) d = (∑ i ∈ Finset.range k, d i) + suspExp k d := by
-  rw [suspExp, suspExp, Finset.sum_range_succ]
-  simp only [Nat.cast_add, Nat.cast_one, add_sub_cancel_right, sub_self, zero_mul, add_zero]
-  rw [← Finset.sum_add_distrib]
-  exact Finset.sum_congr rfl fun i _ ↦ by
-    ring
-
 /-- The signed operation prescribed by the suspension square. The tensor power of the suspension
 map is not formalized here; this adopts its Koszul sign as the definition. -/
 def suspend {k : ℕ} {M : Fin k → Type uM} {N : Type uN}
@@ -378,7 +369,8 @@ theorem suspend_apply {k : ℕ} {M : Fin k → Type uM} {N : Type uN}
     suspend d f x = TauCeti.negOnePowCast R (suspExp k d) • f x := by
   rw [suspend_eq_smul, smul_apply]
 
-/-- Applying suspension twice restores the original operation. -/
+/-- Suspension for a fixed degree family is an involution, so `suspend d` also computes
+unsuspension. -/
 @[simp]
 theorem suspend_suspend {k : ℕ} {M : Fin k → Type uM} {N : Type uN}
     [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)] [AddCommMonoid N] [Module R N]
@@ -409,6 +401,7 @@ theorem isHomogeneous_suspend_iff {k : ℕ} {𝒜 : ℤ → σ} {d : ℕ → ℤ
   constructor
   · intro hf
     rw [← suspend_suspend d f]
+    rw [_root_.MultilinearMap.suspend_eq_smul]
     exact hf.smul _
   · exact fun hf ↦ hf.smul _
 

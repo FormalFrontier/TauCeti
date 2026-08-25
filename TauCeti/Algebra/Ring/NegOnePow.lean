@@ -5,13 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Homology.ComplexShapeSigns
+public import Mathlib.Algebra.Ring.NegOnePow
+public import Mathlib.Algebra.Module.Defs
 
 /-!
 # Powers of negative one in a ground ring
 
-This file provides the cast to a ground ring of Mathlib's integer-valued sign character
-`Int.negOnePow`.
+This file provides the cast to a ground ring of Mathlib's unit-valued sign character
+`Int.negOnePow : ℤ → ℤˣ`; the cast factors through `ℤ`.
 
 ## Main definitions
 
@@ -46,19 +47,9 @@ theorem negOnePowCast_one : negOnePowCast R 1 = -1 := by simp [negOnePowCast]
 theorem negOnePowCast_neg (a : ℤ) : negOnePowCast R (-a) = negOnePowCast R a := by
   simp [negOnePowCast]
 
-@[simp]
 theorem negOnePowCast_add (a b : ℤ) :
     negOnePowCast R (a + b) = negOnePowCast R a * negOnePowCast R b := by
   simp [negOnePowCast, Int.negOnePow_add]
-
-@[simp]
-theorem negOnePowCast_two : negOnePowCast R 2 = 1 := by simp [negOnePowCast]
-
-@[simp]
-theorem negOnePowCast_three : negOnePowCast R 3 = -1 := by simp [negOnePowCast, pow_succ]
-
-@[simp]
-theorem negOnePowCast_four : negOnePowCast R 4 = 1 := by simp [negOnePowCast, pow_succ]
 
 @[simp]
 theorem negOnePowCast_two_mul (a : ℤ) : negOnePowCast R (2 * a) = 1 := by

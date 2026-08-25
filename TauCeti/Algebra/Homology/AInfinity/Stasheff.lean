@@ -36,14 +36,13 @@ vanishes exactly when the other does.  Following the cited Getzler--Jones/Keller
 definition adopts the sign prescribed by the Koszul rule for the suspension square: because `s`
 has degree `-1`, its tensor power contributes
 `(-1) ^ (∑ i, (n - 1 - i) * d i)`.  The tensor power itself is not formalized here.  Its exponent
-is `MultilinearMap.suspExp`, and `TauCeti.AInfinity.barTerm_eq_smul` proves that the two
-corresponding Stasheff terms differ by this same sign for every decomposition `n = p + s + t`.
+is `MultilinearMap.suspExp`, and `TauCeti.AInfinity.suspendedStasheffTerm_eq_smul` proves that the
+two corresponding Stasheff terms differ by this same sign for every decomposition `n = p + s + t`.
 
 Both sides also carry the Koszul coefficient of the inserted operation crossing the prefix
 inputs, `(-1) ^ ((2 - s) * (d 0 + ⋯ + d (r - 1)))` before suspension and
 `(-1) ^ ((d 0 - 1) + ⋯ + (d (r - 1) - 1))` after; these are the coefficients of
-`MultilinearMap.koszulSign`, as
-`MultilinearMap.koszulSign_fin_eq_negOnePowCast_mul_sum_range` records. As in
+`MultilinearMap.koszulSign`. As in
 `TauCeti/LinearAlgebra/Graded/Insertion.lean`, the degrees of the inputs are supplied as an
 explicit parameter rather than read off a direct-sum decomposition; on the intended component the
 sign is a scalar, and `TauCeti.AInfinity.replaceBlock_mem_replaceDeg` proves that the supplied
@@ -60,21 +59,24 @@ propositionally equal arities.
 
 ## Main definitions
 
-* `TauCeti.AInfinity.evalNat`: evaluate a finite-arity operation on a natural-indexed input family.
-* `TauCeti.AInfinity.replaceBlock`, `TauCeti.AInfinity.blockDeg` and
-  `TauCeti.AInfinity.replaceDeg`: collapse an input block and record its resulting degree.
-* `TauCeti.AInfinity.stasheffTerm` and `TauCeti.AInfinity.barTerm`: the `(p, s, t)` term of the
-  unsuspended and of the suspended Stasheff identity.
-* `TauCeti.AInfinity.stasheffSum` and `TauCeti.AInfinity.barSum`: the two sides of `(SIₙ)`.
+* `TauCeti.MultilinearMap.evalNat`: evaluate a finite-arity operation on a natural-indexed input
+  family.
+* `TauCeti.replaceBlock`, `TauCeti.AInfinity.blockDeg` and `TauCeti.AInfinity.replaceDeg`: collapse
+  an input block and record its resulting degree.
+* `TauCeti.AInfinity.stasheffTerm` and `TauCeti.AInfinity.suspendedStasheffTerm`: the `(p, s, t)`
+  term of the unsuspended and suspended Stasheff identities.
+* `TauCeti.AInfinity.stasheffSum` and `TauCeti.AInfinity.suspendedStasheffSum`: the two sides of
+  `(SIₙ)`.
 
 ## Main results
 
 * `TauCeti.AInfinity.suspExp_replaceDeg`: the sign identity behind the whole comparison; the two
   exponents differ by the suspension sign of the whole arity, up to an even number.
-* `TauCeti.AInfinity.barTerm_eq_smul` and `TauCeti.AInfinity.barSum_eq_smul`: a suspended term,
-  and hence the suspended sum, is the unsuspended one scaled by that sign.
-* `TauCeti.AInfinity.barSum_eq_zero_iff`: the suspended identity free of the structural coefficient
-  `(-1) ^ (r + s * t)` holds exactly when the unsuspended identity does.
+* `TauCeti.AInfinity.suspendedStasheffTerm_eq_smul` and
+  `TauCeti.AInfinity.suspendedStasheffSum_eq_smul`: a suspended term, and hence the suspended sum,
+  is the unsuspended one scaled by that sign.
+* `TauCeti.AInfinity.suspendedStasheffSum_eq_zero_iff`: the suspended identity free of the
+  structural coefficient `(-1) ^ (r + s * t)` holds exactly when the unsuspended identity does.
 * `TauCeti.AInfinity.stasheffSum_one`, `TauCeti.AInfinity.stasheffSum_two`,
   `TauCeti.AInfinity.stasheffSum_three` and `TauCeti.AInfinity.stasheffSum_four`: the four
   identities written out using the supplied degree family.
@@ -112,13 +114,13 @@ universe uR uA uN
 
 namespace TauCeti
 
-namespace AInfinity
-
-variable {R : Type uR} {A : Type uA} [CommRing R] [AddCommGroup A] [Module R A]
-
 /-! ### Operations on inputs indexed by the naturals -/
 
+namespace MultilinearMap
+
 section Inputs
+
+variable {R : Type uR} {A : Type uA} [Semiring R] [AddCommMonoid A] [Module R A]
 
 /-- Evaluate an arity-`k` operation on the first `k` entries of a family of inputs indexed by the
 naturals.  Indexing inputs by `ℕ` rather than by `Fin k` keeps the index arithmetic of the
@@ -127,7 +129,7 @@ def evalNat {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
     (f : MultilinearMap R (fun _ : Fin k ↦ A) N) (x : ℕ → A) : N :=
   f fun i ↦ x i.1
 
-theorem evalNat_apply {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
+theorem evalNat_def {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
     (f : MultilinearMap R (fun _ : Fin k ↦ A) N) (x : ℕ → A) :
     evalNat f x = f (fun i ↦ x i.1) := (rfl)
 
@@ -135,13 +137,14 @@ theorem evalNat_apply {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
 theorem evalNat_congr {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
     (f : MultilinearMap R (fun _ : Fin k ↦ A) N) {x y : ℕ → A}
     (h : ∀ i < k, x i = y i) : evalNat f x = evalNat f y := by
-  rw [evalNat_apply, evalNat_apply]
+  rw [evalNat_def, evalNat_def]
   congr 1
   funext i
   exact h i i.isLt
 
 @[simp]
 theorem evalNat_smul {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
+    [SMulCommClass R R N]
     (c : R) (f : MultilinearMap R (fun _ : Fin k ↦ A) N) (x : ℕ → A) :
     evalNat (c • f) x = c • evalNat f x := by
   simp [evalNat]
@@ -170,6 +173,10 @@ theorem evalNat_four {N : Type uN} [AddCommMonoid N] [Module R N]
     evalNat f x = f ![x 0, x 1, x 2, x 3] := by
   exact congrArg f (FinVec.etaExpand_eq _).symm
 
+end Inputs
+
+end MultilinearMap
+
 /-- Replace the block of `s` entries at position `p` of a family indexed by the naturals by the
 single entry `v`.  This is the input tuple of the outer operation of a Stasheff term. -/
 def replaceBlock {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) : ℕ → α := fun i ↦
@@ -195,6 +202,7 @@ theorem replaceBlock_of_gt {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) {i
 /-- Evaluating an operation on a tuple whose replaced entry is scaled scales the value: the
 replaced entry sits in a single slot, in which the operation is linear. -/
 private theorem evalNat_replaceBlock_smul {u : ℕ} {N : Type uN}
+    {R : Type uR} {A : Type uA} [Semiring R] [AddCommMonoid A] [Module R A]
     [AddCommMonoid N] [Module R N]
     (f : MultilinearMap R (fun _ : Fin u ↦ A) N)
     (x : ℕ → A) {p : ℕ} (s : ℕ) (hp : p < u) (c : R) (v : A) :
@@ -213,7 +221,73 @@ private theorem evalNat_replaceBlock_smul {u : ℕ} {N : Type uN}
       · rw [replaceBlock_of_gt _ _ _ _ h', replaceBlock_of_gt _ _ _ _ h']
   rw [evalNat, evalNat, hupd (c • v), MultilinearMap.map_update_smul, ← hupd v]
 
-end Inputs
+end TauCeti
+
+namespace TauCeti.Fin
+
+/-- Identify a prefix, inserted block, and suffix with their total finite arity. -/
+def blockEquiv (p s t : ℕ) : Fin p ⊕ (Fin s ⊕ Fin t) ≃ Fin (p + s + t) :=
+  (Equiv.sumCongr (Equiv.refl (Fin p))
+      (finSumFinEquiv : Fin s ⊕ Fin t ≃ Fin (s + t))).trans <|
+    (finSumFinEquiv : Fin p ⊕ Fin (s + t) ≃ Fin (p + (s + t))).trans
+      (finCongr (by omega))
+
+@[simp]
+theorem blockEquiv_inl_val (p s t : ℕ) (i : Fin p) :
+    (blockEquiv p s t (.inl i) : ℕ) = i := by
+  simp [blockEquiv]
+
+@[simp]
+theorem blockEquiv_middle_val (p s t : ℕ) (j : Fin s) :
+    (blockEquiv p s t (.inr (.inl j)) : ℕ) = p + j := by
+  simp [blockEquiv]
+
+@[simp]
+theorem blockEquiv_suffix_val (p s t : ℕ) (j : Fin t) :
+    (blockEquiv p s t (.inr (.inr j)) : ℕ) = p + s + j := by
+  simp [blockEquiv]
+  omega
+
+/-- Identify a prefix, one collapsed slot, and suffix with their total finite arity. -/
+def oneSlotEquiv (p t : ℕ) : Fin p ⊕ (Unit ⊕ Fin t) ≃ Fin (p + 1 + t) :=
+  (Equiv.sumCongr (Equiv.refl (Fin p))
+    (Equiv.sumCongr finOneEquiv.symm (Equiv.refl (Fin t)))).trans (blockEquiv p 1 t)
+
+@[simp]
+theorem oneSlotEquiv_inl_val (p t : ℕ) (i : Fin p) :
+    (oneSlotEquiv p t (.inl i) : ℕ) = i := by
+  simp [oneSlotEquiv]
+
+@[simp]
+theorem oneSlotEquiv_middle_val (p t : ℕ) :
+    (oneSlotEquiv p t (.inr (.inl ())) : ℕ) = p := by
+  simp [oneSlotEquiv]
+
+@[simp]
+theorem oneSlotEquiv_suffix_val (p t : ℕ) (j : Fin t) :
+    (oneSlotEquiv p t (.inr (.inr j)) : ℕ) = p + 1 + j := by
+  simp [oneSlotEquiv]
+
+end TauCeti.Fin
+
+namespace TauCeti.Finset
+
+private theorem Icc_one_two : (Finset.Icc 1 2 : Finset ℕ) = {1, 2} := by decide
+
+private theorem Icc_one_three : (Finset.Icc 1 3 : Finset ℕ) = {1, 2, 3} := by decide
+
+private theorem Icc_one_four : (Finset.Icc 1 4 : Finset ℕ) = {1, 2, 3, 4} := by decide
+
+end TauCeti.Finset
+
+namespace TauCeti
+
+namespace AInfinity
+
+open TauCeti
+open _root_.MultilinearMap
+
+variable {R : Type uR} {A : Type uA} [CommRing R] [AddCommGroup A] [Module R A]
 
 /-! ### Evaluation of suspended operations -/
 
@@ -313,22 +387,6 @@ section Stasheff
 
 variable (m : ∀ k : ℕ, MultilinearMap R (fun _ : Fin k ↦ A) A) (d : ℕ → ℤ) (x : ℕ → A)
 
-/-- Identify the prefix, collapsed slot, and suffix indices with their total finite arity. -/
-def finOneSlotEquiv (p t : ℕ) : Fin p ⊕ (Unit ⊕ Fin t) ≃ Fin (p + 1 + t) :=
-  (Equiv.sumCongr (Equiv.refl (Fin p))
-      (Equiv.sumCongr finOneEquiv.symm (Equiv.refl (Fin t)))).trans <|
-    (Equiv.sumCongr (Equiv.refl (Fin p))
-      (finSumFinEquiv : Fin 1 ⊕ Fin t ≃ Fin (1 + t))).trans <|
-        (finSumFinEquiv : Fin p ⊕ Fin (1 + t) ≃ Fin (p + (1 + t))).trans
-          (finCongr (by omega))
-
-/-- Identify the prefix, inserted block, and suffix indices with their total finite arity. -/
-def finBlockEquiv (p s t : ℕ) : Fin p ⊕ (Fin s ⊕ Fin t) ≃ Fin (p + s + t) :=
-  (Equiv.sumCongr (Equiv.refl (Fin p))
-      (finSumFinEquiv : Fin s ⊕ Fin t ≃ Fin (s + t))).trans <|
-    (finSumFinEquiv : Fin p ⊕ Fin (s + t) ≃ Fin (p + (s + t))).trans
-      (finCongr (by omega))
-
 /-- The `(p, s, t)` term of the unsuspended Stasheff identity in arity `p + s + t`: the arity-`s`
 operation is substituted into the `p`-th slot of the arity-`p + 1 + t` operation.  Its sign is the
 structural Stasheff coefficient `(-1) ^ (p + s * t)` together with the Koszul coefficient
@@ -344,27 +402,32 @@ theorem stasheffTerm_def (p s t : ℕ) : stasheffTerm m d x p s t =
       evalNat (m (p + 1 + t))
         (replaceBlock x p s (evalNat (m s) fun j ↦ x (p + j))) := (rfl)
 
-/-- A Stasheff term is the existing signed one-slot substitution, evaluated after the canonical
-reindexing of its prefix, inserted block, and suffix. -/
-theorem stasheffTerm_eq_signedOneSlot (p s t : ℕ) :
+/-- Up to the structural coefficient `(-1) ^ (p + s * t)`, a Stasheff term is the existing signed
+one-slot substitution evaluated after the canonical reindexing of its three input blocks. -/
+theorem stasheffTerm_eq_smul_signedOneSlot (p s t : ℕ) :
     stasheffTerm m d x p s t =
       negOnePowCast R ((p : ℤ) + s * t) •
-        (((m (p + 1 + t)).domDomCongr (finOneSlotEquiv p t).symm).signedOneSlot
+        (((m (p + 1 + t)).domDomCongr (TauCeti.Fin.oneSlotEquiv p t).symm).signedOneSlot
           (2 - (s : ℤ)) (fun i : Fin p ↦ d i) (m s))
-            (fun i ↦ x (finBlockEquiv p s t i)) := by
+            (fun i ↦ x (TauCeti.Fin.blockEquiv p s t i)) := by
   rw [stasheffTerm_def, MultilinearMap.signedOneSlot_apply,
     MultilinearMap.koszulSign_eq_negOnePowCast, Fin.sum_univ_eq_sum_range, smul_smul,
     ← negOnePowCast_add]
   congr 1
-  rw [evalNat_apply, MultilinearMap.domDomCongr_apply]
+  rw [evalNat_def, MultilinearMap.domDomCongr_apply]
   congr 1
   funext i
-  obtain ⟨j, rfl⟩ := (finOneSlotEquiv p t).surjective i
+  obtain ⟨j, rfl⟩ := (TauCeti.Fin.oneSlotEquiv p t).surjective i
   rcases j with j | (j | j)
-  · simp [finOneSlotEquiv, finBlockEquiv, replaceBlock]
+  · rw [TauCeti.Fin.oneSlotEquiv_inl_val, replaceBlock_of_lt _ _ _ _ j.isLt]
+    simp only [Equiv.symm_apply_apply, Sum.elim_inl, TauCeti.Fin.blockEquiv_inl_val]
   · rcases j with ⟨⟩
-    simp [finOneSlotEquiv, finBlockEquiv, replaceBlock, evalNat_apply]
-  · simp [finOneSlotEquiv, finBlockEquiv, replaceBlock]
+    rw [TauCeti.Fin.oneSlotEquiv_middle_val, replaceBlock_self]
+    simp only [Equiv.symm_apply_apply, Sum.elim_inr, Sum.elim_inl,
+      TauCeti.Fin.blockEquiv_middle_val, evalNat_def]
+  · rw [TauCeti.Fin.oneSlotEquiv_suffix_val,
+      replaceBlock_of_gt _ _ _ _ (show p < p + 1 + (j : ℕ) by omega)]
+    simp only [Equiv.symm_apply_apply, Sum.elim_inr, TauCeti.Fin.blockEquiv_suffix_val]
     congr 1
     omega
 
@@ -394,13 +457,13 @@ theorem stasheffTerm_congr {e : ℕ → ℤ} {y : ℕ → A} (p s t : ℕ)
 the suspended operations, with no structural coefficient and with the Koszul coefficient of the
 degree-one operation `b_s` crossing the `p` suspended prefix inputs, whose degrees are `d i - 1`.
 -/
-def barTerm (p s t : ℕ) : A :=
+def suspendedStasheffTerm (p s t : ℕ) : A :=
   negOnePowCast R (∑ i ∈ Finset.range p, (d i - 1)) •
     evalNat (suspend (replaceDeg d p s) (m (p + 1 + t)))
       (replaceBlock x p s (evalNat (suspend (fun j ↦ d (p + j)) (m s)) fun j ↦ x (p + j)))
 
 /-- The defining expression for a suspended Stasheff term. -/
-theorem barTerm_def (p s t : ℕ) : barTerm m d x p s t =
+theorem suspendedStasheffTerm_def (p s t : ℕ) : suspendedStasheffTerm m d x p s t =
     negOnePowCast R (∑ i ∈ Finset.range p, (d i - 1)) •
       evalNat (suspend (replaceDeg d p s) (m (p + 1 + t)))
         (replaceBlock x p s
@@ -416,23 +479,32 @@ theorem stasheffSum_def (n : ℕ) : stasheffSum m d x n =
     ∑ p ∈ Finset.range (n + 1),
       ∑ s ∈ Finset.Icc 1 (n - p), stasheffTerm m d x p s (n - p - s) := (rfl)
 
+@[simp]
+theorem stasheffSum_zero : stasheffSum m d x 0 = 0 := by
+  simp [stasheffSum_def]
+
 /-- The left-hand side of the arity-`n` Stasheff identity in the suspended encoding: the sum of
-`TauCeti.AInfinity.barTerm` over the same decompositions `n = p + s + t`, with no structural
-coefficient.  Its identification with the arity-`n` component of `b ∘ b` on the bar coalgebra
-belongs to the tensor-coalgebra layer and is not proved here. -/
-def barSum (n : ℕ) : A :=
-  ∑ p ∈ Finset.range (n + 1), ∑ s ∈ Finset.Icc 1 (n - p), barTerm m d x p s (n - p - s)
+`TauCeti.AInfinity.suspendedStasheffTerm` over the same decompositions `n = p + s + t`, with no
+structural coefficient. Its identification with the arity-`n` component of `b ∘ b` on the bar
+coalgebra belongs to the tensor-coalgebra layer and is not proved here. -/
+def suspendedStasheffSum (n : ℕ) : A :=
+  ∑ p ∈ Finset.range (n + 1),
+    ∑ s ∈ Finset.Icc 1 (n - p), suspendedStasheffTerm m d x p s (n - p - s)
 
 /-- The defining double sum for the suspended Stasheff identity. -/
-theorem barSum_def (n : ℕ) : barSum m d x n =
+theorem suspendedStasheffSum_def (n : ℕ) : suspendedStasheffSum m d x n =
     ∑ p ∈ Finset.range (n + 1),
-      ∑ s ∈ Finset.Icc 1 (n - p), barTerm m d x p s (n - p - s) := (rfl)
+      ∑ s ∈ Finset.Icc 1 (n - p), suspendedStasheffTerm m d x p s (n - p - s) := (rfl)
+
+@[simp]
+theorem suspendedStasheffSum_zero : suspendedStasheffSum m d x 0 = 0 := by
+  simp [suspendedStasheffSum_def]
 
 /-- **The suspended and unsuspended Stasheff terms agree up to the suspension sign of the whole
 arity.**  The sign does not depend on the decomposition, which is why the two identities are
 equivalent. -/
-theorem barTerm_eq_smul (p s t : ℕ) :
-    barTerm m d x p s t =
+theorem suspendedStasheffTerm_eq_smul (p s t : ℕ) :
+    suspendedStasheffTerm m d x p s t =
       negOnePowCast R (suspExp (p + s + t) d) • stasheffTerm m d x p s t := by
   have hexp : (∑ i ∈ Finset.range p, (d i - 1)) + suspExp (p + 1 + t) (replaceDeg d p s)
         + suspExp s (fun j ↦ d (p + j))
@@ -441,17 +513,17 @@ theorem barTerm_eq_smul (p s t : ℕ) :
         + 2 * ((t : ℤ) - p - s * t) := by
     rw [suspExp_replaceDeg]
     ring
-  rw [barTerm, stasheffTerm, evalNat_suspend, evalNat_suspend,
+  rw [suspendedStasheffTerm, stasheffTerm, evalNat_suspend, evalNat_suspend,
     evalNat_replaceBlock_smul _ _ _ (by omega), smul_smul, smul_smul, smul_smul]
   congr 1
   rw [← negOnePowCast_add, ← negOnePowCast_add, hexp, negOnePowCast_add,
     negOnePowCast_two_mul, mul_one, negOnePowCast_add]
 
 /-- A suspended Stasheff term only reads the degrees and inputs below its total arity. -/
-theorem barTerm_congr {e : ℕ → ℤ} {y : ℕ → A} (p s t : ℕ)
+theorem suspendedStasheffTerm_congr {e : ℕ → ℤ} {y : ℕ → A} (p s t : ℕ)
     (hd : ∀ i < p + s + t, d i = e i) (hx : ∀ i < p + s + t, x i = y i) :
-    barTerm m d x p s t = barTerm m e y p s t := by
-  rw [barTerm_eq_smul, barTerm_eq_smul, suspExp_congr hd,
+    suspendedStasheffTerm m d x p s t = suspendedStasheffTerm m e y p s t := by
+  rw [suspendedStasheffTerm_eq_smul, suspendedStasheffTerm_eq_smul, suspExp_congr hd,
     stasheffTerm_congr m d x p s t hd hx]
 
 /-- The arity-`n` Stasheff sum only reads the first `n` supplied degrees and inputs. -/
@@ -469,37 +541,29 @@ theorem stasheffSum_congr {e : ℕ → ℤ} {y : ℕ → A} (n : ℕ)
   · intro i hi
     exact hx i (by omega)
 
-/-- The arity-`n` suspended Stasheff sum only reads the first `n` supplied degrees and inputs. -/
-theorem barSum_congr {e : ℕ → ℤ} {y : ℕ → A} (n : ℕ)
-    (hd : ∀ i < n, d i = e i) (hx : ∀ i < n, x i = y i) :
-    barSum m d x n = barSum m e y n := by
-  rw [barSum_def, barSum_def]
-  refine Finset.sum_congr rfl fun p hp ↦ ?_
-  refine Finset.sum_congr rfl fun s hs ↦ ?_
-  rw [Finset.mem_range] at hp
-  rw [Finset.mem_Icc] at hs
-  apply barTerm_congr m d x
-  · intro i hi
-    exact hd i (by omega)
-  · intro i hi
-    exact hx i (by omega)
-
 /-- **The suspended and unsuspended Stasheff identities agree up to a global sign.** -/
-theorem barSum_eq_smul (n : ℕ) :
-    barSum m d x n = negOnePowCast R (suspExp n d) • stasheffSum m d x n := by
-  rw [barSum, stasheffSum, Finset.smul_sum]
+theorem suspendedStasheffSum_eq_smul (n : ℕ) :
+    suspendedStasheffSum m d x n = negOnePowCast R (suspExp n d) • stasheffSum m d x n := by
+  rw [suspendedStasheffSum, stasheffSum, Finset.smul_sum]
   refine Finset.sum_congr rfl fun p hp ↦ ?_
   rw [Finset.smul_sum]
   refine Finset.sum_congr rfl fun s hs ↦ ?_
   rw [Finset.mem_range] at hp
   rw [Finset.mem_Icc] at hs
-  rw [barTerm_eq_smul, show p + s + (n - p - s) = n by omega]
+  rw [suspendedStasheffTerm_eq_smul, show p + s + (n - p - s) = n by omega]
+
+/-- The arity-`n` suspended Stasheff sum only reads the first `n` supplied degrees and inputs. -/
+theorem suspendedStasheffSum_congr {e : ℕ → ℤ} {y : ℕ → A} (n : ℕ)
+    (hd : ∀ i < n, d i = e i) (hx : ∀ i < n, x i = y i) :
+    suspendedStasheffSum m d x n = suspendedStasheffSum m e y n := by
+  rw [suspendedStasheffSum_eq_smul, suspendedStasheffSum_eq_smul, suspExp_congr hd,
+    stasheffSum_congr m d x n hd hx]
 
 /-- **The suspended Stasheff identity free of the structural coefficient holds exactly when the
 unsuspended one does.** -/
-theorem barSum_eq_zero_iff (n : ℕ) :
-    barSum m d x n = 0 ↔ stasheffSum m d x n = 0 := by
-  rw [barSum_eq_smul, negOnePowCast_smul_eq_zero_iff]
+theorem suspendedStasheffSum_eq_zero_iff (n : ℕ) :
+    suspendedStasheffSum m d x n = 0 ↔ stasheffSum m d x n = 0 := by
+  rw [suspendedStasheffSum_eq_smul, negOnePowCast_smul_eq_zero_iff]
 
 end Stasheff
 
@@ -509,23 +573,28 @@ section LowArity
 
 variable (m : ∀ k : ℕ, MultilinearMap R (fun _ : Fin k ↦ A) A) (d : ℕ → ℤ) (x : ℕ → A)
 
-private theorem Icc_one_two : (Finset.Icc 1 2 : Finset ℕ) = {1, 2} := by decide
-
-private theorem Icc_one_three : (Finset.Icc 1 3 : Finset ℕ) = {1, 2, 3} := by decide
-
-private theorem Icc_one_four : (Finset.Icc 1 4 : Finset ℕ) = {1, 2, 3, 4} := by decide
-
 /-- The arity-one identity is `m₁ m₁ = 0`. -/
 theorem stasheffSum_one : stasheffSum m d x 1 = m 1 ![m 1 ![x 0]] := by
-  simp [stasheffSum_def, stasheffTerm_def, Finset.sum_range_succ]
+  simp only [stasheffSum_def, Nat.reduceAdd, stasheffTerm_def, Finset.sum_range_succ,
+    Finset.range_one, Finset.sum_singleton, tsub_zero, Finset.Icc_self, CharP.cast_eq_zero,
+    zero_add, Finset.range_zero, Finset.sum_empty, mul_zero, add_zero, Nat.sub_zero, Nat.cast_one,
+    tsub_self, negOnePowCast_zero, Nat.add_one_sub_one, Nat.add_zero, evalNat_one,
+    replaceBlock_self, one_smul, Order.lt_one_iff, Finset.Icc_eq_empty_of_lt, zero_tsub]
 
 /-- The arity-two identity, evaluated: `m₁ m₂ - m₂ (m₁ ⊗ 1) - m₂ (1 ⊗ m₁)`, where the Koszul rule
 turns the last term into `(-1) ^ (d 0)` times `m₂ (a, m₁ b)`. -/
 theorem stasheffSum_two : stasheffSum m d x 2
     = m 1 ![m 2 ![x 0, x 1]] - m 2 ![m 1 ![x 0], x 1]
       - negOnePowCast R (d 0) • m 2 ![x 0, m 1 ![x 1]] := by
-  simp [stasheffSum_def, stasheffTerm_def, negOnePowCast_add, Finset.sum_range_succ,
-    Icc_one_two, evalNat_one, evalNat_two]
+  simp only [stasheffSum_def, Nat.reduceAdd, stasheffTerm_def, negOnePowCast_add,
+    Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton, tsub_zero,
+    Finset.Icc_one_two, CharP.cast_eq_zero, negOnePowCast_zero, one_mul, Finset.range_zero,
+    Finset.sum_empty, mul_zero, mul_one, Nat.sub_zero, zero_add, Finset.mem_singleton,
+    OfNat.one_ne_ofNat, not_false_eq_true, Finset.sum_insert, Nat.cast_one,
+    Nat.add_one_sub_one, negOnePowCast_one, evalNat_one, evalNat_two, replaceBlock_self,
+    Order.lt_one_iff, replaceBlock_of_gt, neg_smul, one_smul, Nat.cast_ofNat, tsub_self,
+    Nat.reduceSub, Nat.add_zero, Finset.Icc_self, neg_mul, Finset.sum_neg_distrib,
+    Int.reduceSub, add_zero, replaceBlock_of_lt, Finset.Icc_eq_empty_of_lt, zero_tsub]
   abel
 
 /-- The arity-three identity, evaluated using the supplied degrees `d 0, d 1, d 2` (without a
@@ -538,8 +607,18 @@ theorem stasheffSum_three : stasheffSum m d x 3
       + m 3 ![m 1 ![x 0], x 1, x 2]
       + negOnePowCast R (d 0) • m 3 ![x 0, m 1 ![x 1], x 2]
       + negOnePowCast R (d 0 + d 1) • m 3 ![x 0, x 1, m 1 ![x 2]] := by
-  simp [stasheffSum_def, stasheffTerm_def, negOnePowCast_add, Finset.sum_range_succ,
-    Icc_one_three, Icc_one_two, evalNat_one, evalNat_two, evalNat_three]
+  have h2 : negOnePowCast R 2 = 1 := negOnePowCast_even (by norm_num)
+  simp only [stasheffSum_def, Nat.reduceAdd, stasheffTerm_def, negOnePowCast_add,
+    Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton, tsub_zero,
+    Finset.Icc_one_three, CharP.cast_eq_zero, negOnePowCast_zero, one_mul, Finset.range_zero,
+    Finset.sum_empty, mul_zero, mul_one, Nat.sub_zero, zero_add, Finset.mem_insert,
+    OfNat.one_ne_ofNat, Finset.mem_singleton, or_self, not_false_eq_true, Finset.sum_insert,
+    Nat.cast_one, Nat.add_one_sub_one, Nat.cast_ofNat, h2, evalNat_one, evalNat_three,
+    replaceBlock_self, Order.lt_one_iff, replaceBlock_of_gt, Order.lt_two_iff, zero_le,
+    one_smul, Nat.reduceEqDiff, Nat.reduceSub, evalNat_two, tsub_self, Nat.add_zero,
+    Finset.Icc_one_two, negOnePowCast_one, neg_mul, neg_smul, Finset.sum_neg_distrib,
+    Int.reduceSub, add_zero, replaceBlock_of_lt, Std.le_refl, sub_self, zero_mul,
+    neg_add_rev, neg_neg, Finset.Icc_self, Finset.Icc_eq_empty_of_lt, zero_tsub, add_left_inj]
   abel
 
 /-- The arity-four identity, evaluated using the supplied degrees `d 0, d 1, d 2, d 3` (without a
@@ -557,9 +636,22 @@ theorem stasheffSum_four : stasheffSum m d x 4
       - negOnePowCast R (d 0) • m 4 ![x 0, m 1 ![x 1], x 2, x 3]
       - negOnePowCast R (d 0 + d 1) • m 4 ![x 0, x 1, m 1 ![x 2], x 3]
       - negOnePowCast R (d 0 + d 1 + d 2) • m 4 ![x 0, x 1, x 2, m 1 ![x 3]] := by
-  simp [stasheffSum_def, stasheffTerm_def, negOnePowCast_add, Finset.sum_range_succ,
-    Icc_one_four, Icc_one_three, Icc_one_two, evalNat_one, evalNat_two, evalNat_three,
-    evalNat_four]
+  have h2 : negOnePowCast R 2 = 1 := negOnePowCast_even (by norm_num)
+  have h3 : negOnePowCast R 3 = -1 := negOnePowCast_odd (by use 1; norm_num)
+  have h4 : negOnePowCast R 4 = 1 := negOnePowCast_even (by use 2; norm_num)
+  simp only [stasheffSum_def, Nat.reduceAdd, stasheffTerm_def, negOnePowCast_add,
+    Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton, tsub_zero,
+    Finset.Icc_one_four, CharP.cast_eq_zero, negOnePowCast_zero, one_mul, Finset.range_zero,
+    Finset.sum_empty, mul_zero, mul_one, Nat.sub_zero, zero_add, Finset.mem_insert,
+    OfNat.one_ne_ofNat, Finset.mem_singleton, or_self, not_false_eq_true, Finset.sum_insert,
+    Nat.cast_one, Nat.add_one_sub_one, Nat.cast_ofNat, h3, evalNat_one, evalNat_four,
+    replaceBlock_self, Order.lt_one_iff, replaceBlock_of_gt, Order.lt_two_iff, zero_le,
+    Nat.ofNat_pos, neg_smul, one_smul, Nat.reduceEqDiff, Nat.reduceSub, Int.reduceMul, h4,
+    evalNat_two, evalNat_three, tsub_self, Nat.add_zero, Finset.Icc_one_three,
+    negOnePowCast_one, neg_mul, Finset.sum_neg_distrib, h2, Int.reduceSub, add_zero,
+    replaceBlock_of_lt, Std.le_refl, Nat.one_lt_ofNat, sub_self, zero_mul,
+    negOnePowCast_neg, neg_add_rev, Finset.Icc_one_two, Nat.lt_add_one, Finset.Icc_self,
+    Finset.Icc_eq_empty_of_lt, zero_tsub]
   abel
 
 /-- The arity-two identity is the Leibniz rule for `m₁` and `m₂`, with the Koszul sign

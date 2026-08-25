@@ -182,12 +182,6 @@ def koszulSign {α : Type uα} [Fintype α] (q : ℤ) (d : α → ℤ) : R :=
 theorem koszulSign_eq_negOnePowCast {α : Type uα} [Fintype α] (q : ℤ) (d : α → ℤ) :
     koszulSign (R := R) q d = TauCeti.negOnePowCast R (q * ∑ i, d i) := (rfl)
 
-/-- A prefix-sum sign is the Koszul coefficient of the corresponding finite family. -/
-theorem koszulSign_fin_eq_negOnePowCast_mul_sum_range (q : ℤ) (d : ℕ → ℤ) (p : ℕ) :
-    koszulSign (R := R) q (fun i : Fin p ↦ d i) =
-      TauCeti.negOnePowCast R (q * ∑ i ∈ Finset.range p, d i) := by
-  rw [koszulSign, Fin.sum_univ_eq_sum_range]
-
 theorem koszulSign_add_degree {α : Type uα} [Fintype α] (q q' : ℤ) (d : α → ℤ) :
     koszulSign (R := R) (q + q') d =
       koszulSign (R := R) q d * koszulSign (R := R) q' d := by
