@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Geometry.Manifold.Riemannian.Basic
-public import Mathlib.Geometry.Manifold.Riemannian.PathELength
 
 /-!
 # Smooth paths with prescribed Riemannian path length
@@ -31,6 +30,8 @@ The construction uses Mathlib's `Real.smoothTransition` and
   arbitrary compact interval onto `[0, 1]`, preserving its endpoints and length.
 * `TauCeti.exists_contMDiff_pathELength_eq_add`: obtain a globally `C¹` path between the outer
   endpoints of two compatible `C¹` paths, with length equal to the sum of their lengths.
+* `TauCeti.Manifold.pathELength_lineMap`: the straight segment between two points of an inner
+  product space has length equal to the norm distance between them.
 
 ## References
 

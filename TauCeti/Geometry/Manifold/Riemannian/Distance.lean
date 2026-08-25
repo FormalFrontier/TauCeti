@@ -36,6 +36,9 @@ is the special case that matters downstream.
   `IsRiemannianManifold I M`.
 * `TauCeti.IsRiemannianManifold.dist_le_toReal_pathELength`: the ambient distance of a Riemannian
   manifold, read through `IsRiemannianManifold.out`, is bounded by the length of any `C¹` path.
+* `TauCeti.Manifold.le_riemannianEDist_of_forall_le_pathELength`: the extended distance is bounded
+  below by any bound valid for the lengths of *all* `C¹` curves joining two points, since it is the
+  infimum of those lengths.
 
 ## References
 

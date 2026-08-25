@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Geometry.Manifold.Riemannian.PathELength
 public import TauCeti.Geometry.Manifold.Riemannian.Basic
 public import TauCeti.Geometry.Manifold.VectorBundle.Tangent
 
@@ -27,6 +26,8 @@ bundle structures.
 * `TauCeti.Manifold.instRiemannianBundleOpen`,
   `TauCeti.Manifold.instIsContinuousRiemannianBundleOpen`, and
   `TauCeti.Manifold.instIsContMDiffRiemannianBundleOpen`: the corresponding scoped instances.
+* `TauCeti.Manifold.pathELength_subtypeVal_comp`: the length of a curve in an open submanifold
+  equals the length of its composition with the inclusion into the ambient manifold.
 
 The three instances are in the `TauCeti` scope; use `open scoped TauCeti` to install them. In
 particular, under the usual separation hypotheses this makes `EMetricSpace.ofRiemannianMetric`
