@@ -169,10 +169,32 @@ variable {E F : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [NormedAddComm
 centred at the point. -/
 def ballAverage (mu : Measure E) (r : ℝ) (f : E → F) (x : E) : F := ⨍ y in ball x r, f y ∂mu
 
-/-- The defining equation of the ball average. It is not a `rfl` lemma because `ballAverage` is
-not exposed. -/
+/-- The defining equation of the ball average. -/
 theorem ballAverage_apply (mu : Measure E) (r : ℝ) (f : E → F) (x : E) :
     ballAverage mu r f x = ⨍ y in ball x r, f y ∂mu := by rw [ballAverage]
+
+/-- The ball average of the zero function is zero. -/
+@[simp]
+theorem ballAverage_zero (mu : Measure E) (r : ℝ) (x : E) :
+    ballAverage mu r (0 : E → F) x = 0 :=
+  average_zero (mu.restrict (ball x r))
+
+/-- The ball average commutes with addition when both summands are integrable on the ball. -/
+theorem ballAverage_add {g : E → F} {x : E} (hf : IntegrableOn f (ball x r) mu)
+    (hg : IntegrableOn g (ball x r) mu) :
+    ballAverage mu r (f + g) x = ballAverage mu r f x + ballAverage mu r g x :=
+  setAverage_add hf hg
+
+/-- The ball average commutes with subtraction when both terms are integrable on the ball. -/
+theorem ballAverage_sub {g : E → F} {x : E} (hf : IntegrableOn f (ball x r) mu)
+    (hg : IntegrableOn g (ball x r) mu) :
+    ballAverage mu r (f - g) x = ballAverage mu r f x - ballAverage mu r g x :=
+  setAverage_sub hf hg
+
+/-- The ball average commutes with scalar multiplication. -/
+theorem ballAverage_smul (c : ℝ) (x : E) :
+    ballAverage mu r (c • f) x = c • ballAverage mu r f x :=
+  average_const_smul (mu.restrict (ball x r)) c f
 
 /-- The ball average depends on `f` only through its almost-everywhere class. -/
 theorem ballAverage_congr_ae [OpensMeasurableSpace E] {g : E → F} (h : f =ᵐ[mu] g) :
@@ -278,25 +300,20 @@ private theorem tendsto_eLpNorm_comp_add_sub_of_memLp (hp : 1 ≤ p) (hp' : p �
   have hpres : ∀ e, MeasurePreserving (T e) mu mu := fun e => measurePreserving_add_right mu e
   have hcomp : Continuous (fun e => Lp.compMeasurePreserving (T e) (hpres e) (hf.toLp f)) :=
     continuous_const.compMeasurePreservingLp hT hpres hp'
-  have hdist : Filter.Tendsto
-      (fun e => edist (Lp.compMeasurePreserving (T e) (hpres e) (hf.toLp f)) (hf.toLp f))
-      (nhds 0) (nhds 0) := by
-    have hconst : Continuous (fun _ : E => hf.toLp f) := continuous_const
-    have hzero : Filter.Tendsto
-        (fun e => edist (Lp.compMeasurePreserving (T e) (hpres e) (hf.toLp f)) (hf.toLp f))
-        (nhds 0)
-        (nhds (edist (Lp.compMeasurePreserving (T 0) (hpres 0) (hf.toLp f)) (hf.toLp f))) :=
-      (hcomp.edist hconst).continuousAt
-    have hcompzero : Lp.compMeasurePreserving (T 0) (hpres 0) (hf.toLp f) = hf.toLp f := by
-      apply Lp.ext
-      exact (Lp.coeFn_compMeasurePreserving (hf.toLp f) (hpres 0)).mono fun y hy => by
-        simpa only [T, ContinuousMap.coe_mk, Function.comp_apply, add_zero] using hy
-    rw [hcompzero] at hzero
-    simpa only [edist_self] using hzero
-  apply hdist.congr'
+  have hcompzero : Lp.compMeasurePreserving (T 0) (hpres 0) (hf.toLp f) = hf.toLp f := by
+    apply Lp.ext
+    exact (Lp.coeFn_compMeasurePreserving (hf.toLp f) (hpres 0)).mono fun y hy => by
+      simpa only [T, ContinuousMap.coe_mk, Function.comp_apply, add_zero] using hy
+  have hLp : Filter.Tendsto
+      (fun e => Lp.compMeasurePreserving (T e) (hpres e) (hf.toLp f)) (nhds 0)
+      (nhds (hf.toLp f)) := by
+    simpa only [hcompzero] using hcomp.tendsto 0
+  rw [Lp.tendsto_Lp_iff_tendsto_eLpNorm'] at hLp
+  apply hLp.congr'
   filter_upwards with e
-  rw [Lp.toLp_compMeasurePreserving, Lp.edist_toLp_toLp]
-  rfl
+  apply eLpNorm_congr_ae
+  exact ((Lp.coeFn_compMeasurePreserving (hf.toLp f) (hpres e)).trans
+    ((hpres e).quasiMeasurePreserving.ae_eq_comp hf.coeFn_toLp)).sub hf.coeFn_toLp
 
 omit [CompleteSpace F] in
 /-- At every positive scale, the ball average of an `Lᵖ` function is continuous. -/
@@ -304,6 +321,7 @@ theorem continuous_ballAverage (hp : 1 ≤ p) (hp' : p ≠ ∞) (hf : MemLp f p 
     (hr : 0 < r) : Continuous (ballAverage mu r f) := by
   rw [continuous_iff_continuousAt]
   intro x
+  -- `tendsto_iff_edist_tendsto_0` is stated for `Tendsto`, so unfold `ContinuousAt` here.
   change Filter.Tendsto (ballAverage mu r f) (nhds x) (nhds (ballAverage mu r f x))
   rw [tendsto_iff_edist_tendsto_0]
   have hsub0 : Filter.Tendsto (fun y : E => y - x) (nhds x) (nhds (x - x)) :=
