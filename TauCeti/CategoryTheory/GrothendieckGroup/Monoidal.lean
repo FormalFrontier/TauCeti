@@ -22,9 +22,9 @@ carries a monoidal structure whose tensor product is additive in each factor
 
 The construction is entirely a matter of feeding the tensor product to the universal property
 twice. For a fixed object `X`, tensoring on the left is an additive endofunctor of `C`, so
-`TauCeti.SplitK0.map` turns it into an endomorphism `TauCeti.SplitK0.mulLeft X` of the group.
-Sending `X` to that endomorphism is itself an isomorphism-invariant, biproduct-additive function
-of `X` -- additivity in `X` is `TauCeti.SplitK0.map` applied to tensoring on the *right* -- so it
+`TauCeti.SplitK0.map` turns it into an endomorphism of the group. Sending `X` to that
+endomorphism is itself an isomorphism-invariant, biproduct-additive function of `X` -- additivity
+in `X` is `TauCeti.SplitK0.map` applied to tensoring on the *right* -- so it
 descends to `TauCeti.SplitK0.mulHom`, a biadditive multiplication with
 `[X] * [Y] = [X ⊗ Y]`. Distributivity is then automatic, and the remaining ring axioms are the
 associator, the unitors, and the braiding: each of them is an equality of bundled additive maps, so
@@ -45,7 +45,6 @@ which is a separate matter and is not proved here; nothing below assumes semisim
 
 ## Main definitions
 
-* `TauCeti.SplitK0.mulLeft X`: tensoring on the left by `X`, as an endomorphism of split `K₀`.
 * `TauCeti.SplitK0.mulHom C`: multiplication on split `K₀`, as a biadditive map.
 * `TauCeti.SplitK0.instRing` and `TauCeti.SplitK0.instCommRing`: the ring structure, commutative
   for a braided category.
@@ -69,6 +68,11 @@ as a bare function, because biadditivity is exactly what makes the ring axioms c
 classes of objects: associativity, commutativity, and multiplicativity of an induced map are each
 an equality of bundled maps, so `TauCeti.SplitK0.hom_ext` reduces them to the classes of objects
 with no additive bookkeeping left to do.
+
+Tensoring on the left by a fixed object, and the two lemmas saying that it is an
+isomorphism-invariant, biproduct-additive function of that object, are the input to the second use
+of the universal property and have no role afterwards, so they are private: the public computation
+rule is `TauCeti.SplitK0.of_mul_of`.
 
 The `Mul` and `One` instances are installed before the `Ring` instance so that the axioms can be
 stated in the usual notation; the `Ring` instance reuses them rather than introducing new
@@ -103,22 +107,22 @@ variable {C : Type u} [Category.{v} C] [Preadditive C] [MonoidalCategory C]
   [MonoidalPreadditive C] [HasBinaryBiproducts C] [EssentiallySmall.{w} C]
 
 /-- Tensoring on the left by `X`, as an endomorphism of split `K₀`. -/
-noncomputable def mulLeft (X : C) : SplitK0 C →+ SplitK0 C :=
+private noncomputable def mulLeft (X : C) : SplitK0 C →+ SplitK0 C :=
   map (tensorLeft X)
 
 /-- Tensoring on the left by `X` sends the class of `Y` to the class of `X ⊗ Y`. -/
 @[simp]
-lemma mulLeft_of (X Y : C) : mulLeft X (of Y) = (of (X ⊗ Y) : SplitK0 C) :=
+private lemma mulLeft_of (X Y : C) : mulLeft X (of Y) = (of (X ⊗ Y) : SplitK0 C) :=
   map_of (tensorLeft X) Y
 
 /-- Isomorphic objects tensor on the left to the same endomorphism of split `K₀`. -/
-lemma mulLeft_congr {X Y : C} (e : X ≅ Y) :
+private lemma mulLeft_congr {X Y : C} (e : X ≅ Y) :
     (mulLeft X : SplitK0 C →+ SplitK0 C) = mulLeft Y :=
   map_congr fun Z => ⟨whiskerRightIso e Z⟩
 
 /-- Tensoring on the left by a biproduct is the sum of tensoring on the left by each summand;
 this is tensoring on the *right* applied to the defining relation of split `K₀`. -/
-lemma mulLeft_biprod (X Y : C) :
+private lemma mulLeft_biprod (X Y : C) :
     (mulLeft (X ⊞ Y) : SplitK0 C →+ SplitK0 C) = mulLeft X + mulLeft Y := by
   refine hom_ext fun Z => ?_
   have h := congrArg (map (tensorRight Z)) (of_biprod X Y)
@@ -144,7 +148,7 @@ noncomputable def mulHom : SplitK0 C →+ SplitK0 C →+ SplitK0 C :=
 
 /-- Multiplication by the class of an object is tensoring on the left by that object. -/
 @[simp]
-lemma mulHom_of (X : C) : mulHom C (of X) = mulLeft X := by
+private lemma mulHom_of (X : C) : mulHom C (of X) = mulLeft X := by
   rw [mulHom, lift_of, mulInvariant_obj]
 
 /-- The multiplication on split `K₀` induced by the tensor product. -/
