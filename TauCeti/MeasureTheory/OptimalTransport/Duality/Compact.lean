@@ -8,15 +8,17 @@ module
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Topology.UniformSpace.HeineCantor
 public import TauCeti.MeasureTheory.MeasurableSpace.Metric
+public import TauCeti.MeasureTheory.OptimalTransport.CTransform
 public import TauCeti.MeasureTheory.OptimalTransport.Finite.Duality
 
 /-!
 # Strong Kantorovich duality for continuous costs on compact spaces
 
-For a continuous nonnegative cost `c` on a product of two compact metric spaces, the transport
+For a continuous nonnegative cost `c` on a product of two compact pseudometric spaces, the transport
 problem and its dual have the same value:
 
-`transportCost (ENNReal.ofReal ∘ c) μ ν = sSup {kantorovichDualValue μ ν φ ψ}`,
+`(transportCost (ENNReal.ofReal ∘ c) μ ν).toReal =
+  sSup {kantorovichDualValue μ ν φ ψ}`,
 
 the supremum running over the pairs of *continuous* potentials with `φ x + ψ y ≤ c (x, y)`. Weak
 duality, proved for the general interface in `TauCeti.MeasureTheory.OptimalTransport.Duality.Basic`,
@@ -39,7 +41,7 @@ Two auxiliary results are of independent interest.
 twice inherits the modulus of continuity of the cost. This is what upgrades the step-function
 potentials produced by the finite problem to the continuous potentials the theorem advertises,
 and it is also why the bounded-continuous and the integrable dual classes have the same supremum.
-`TauCeti.exists_measurable_dist_lt` records the discretisation of a compact metric space by a
+`TauCeti.exists_measurable_dist_lt` records the discretisation of a compact pseudometric space by a
 measurable map to `Fin n`.
 
 ## Implementation notes
@@ -94,37 +96,15 @@ variable {X : Type u} {Y : Type v}
 
 section Transform
 
-variable [MetricSpace X] [MetricSpace Y] {c : X × Y → ℝ} {φ : X → ℝ} {ψ : Y → ℝ}
-
-/-- The infimal `c`-transform of a real potential inherits the modulus of continuity of the cost:
-if `c` is uniformly continuous and the differences `c (x, y) - φ x` are bounded below for each
-`y`, then `y ↦ ⨅ x, (c (x, y) - φ x)` is continuous. -/
-theorem continuous_iInf_sub [Nonempty X] (hc : UniformContinuous c)
-    (hbdd : ∀ y, BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
-    Continuous fun y ↦ ⨅ x, (c (x, y) - φ x) := by
-  refine Metric.continuous_iff.2 fun y ε hε ↦ ?_
-  obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hc (ε / 2) (by positivity)
-  have key : ∀ y₁ y₂ : Y, dist y₁ y₂ < δ →
-      (⨅ x, (c (x, y₁) - φ x)) - ε / 2 ≤ ⨅ x, (c (x, y₂) - φ x) := by
-    intro y₁ y₂ h
-    refine le_ciInf fun x ↦ ?_
-    have h1 : (⨅ x, (c (x, y₁) - φ x)) ≤ c (x, y₁) - φ x := ciInf_le (hbdd y₁) x
-    have h2 : dist (c (x, y₁)) (c (x, y₂)) < ε / 2 :=
-      hcδ (by simpa [Prod.dist_eq, max_eq_right dist_nonneg] using h)
-    rw [Real.dist_eq, abs_lt] at h2
-    linarith [h2.1, h2.2]
-  refine ⟨δ, hδ, fun y' hy' ↦ ?_⟩
-  have h1 := key y' y hy'
-  have h2 := key y y' (by rwa [dist_comm])
-  rw [Real.dist_eq, abs_lt]
-  constructor <;> linarith
+variable [PseudoMetricSpace X] [PseudoMetricSpace Y] {c : X × Y → ℝ} {φ : X → ℝ}
+  {ψ : Y → ℝ}
 
 variable [CompactSpace X] [CompactSpace Y] [Nonempty X] [Nonempty Y]
 
-/-- **Smoothing a dual pair.** On compact metric spaces, if the first potential of a feasible pair
-is bounded, then the pair is dominated pointwise by *continuous* potentials satisfying the same
-Kantorovich constraint. The improved pair is obtained by applying the infimal `c`-transform twice,
-so it inherits the modulus of continuity of the cost. -/
+/-- **Smoothing a dual pair.** On compact pseudometric spaces, if the first potential of a
+feasible pair is bounded, then the pair is dominated pointwise by *continuous* potentials
+satisfying the same Kantorovich constraint. The improved pair is obtained by applying the infimal
+`c`-transform twice, so it inherits the modulus of continuity of the cost. -/
 theorem exists_continuous_forall_add_le (hc : Continuous c) {M : ℝ}
     (hφM : ∀ x, |φ x| ≤ M) (hfeas : ∀ x y, φ x + ψ y ≤ c (x, y)) :
     ∃ φ' ψ', Continuous φ' ∧ Continuous ψ' ∧ (∀ x y, φ' x + ψ' y ≤ c (x, y)) ∧
@@ -338,8 +318,8 @@ end Finiteness
 
 section Duality
 
-variable [MetricSpace X] [CompactSpace X] [MeasurableSpace X] [BorelSpace X]
-  [MetricSpace Y] [CompactSpace Y] [MeasurableSpace Y] [BorelSpace Y]
+variable [PseudoMetricSpace X] [CompactSpace X] [MeasurableSpace X] [BorelSpace X]
+  [PseudoMetricSpace Y] [CompactSpace Y] [MeasurableSpace Y] [BorelSpace Y]
   {μ : Measure X} {ν : Measure Y} {c : X × Y → ℝ}
 
 /-- A continuous function on a compact space is integrable against a finite measure: the
@@ -349,7 +329,7 @@ private theorem integrable_of_continuous [IsFiniteMeasure μ] {f : X → ℝ} (h
   hf.integrable_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
 
 /-- **Approximate Kantorovich duality on compact spaces.** For a continuous nonnegative cost on a
-product of compact metric spaces and every `ε > 0` there is a pair of *continuous* potentials
+product of compact pseudometric spaces and every `ε > 0` there is a pair of *continuous* potentials
 satisfying the Kantorovich constraint whose value is within `ε` of the primal transport cost.
 Together with weak duality this closes the duality gap. -/
 theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure μ]
@@ -398,7 +378,8 @@ theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure �
     have hmass : ∑ p, T.toRealFun p = 1 := by
       rw [Fintype.sum_prod_type]
       rw [Finset.sum_congr rfl fun i (_ : i ∈ Finset.univ) ↦ T.sum_toRealFun_row i]
-      exact sum_toReal_pmf pμ
+      have h : ∑ i, pμ i = 1 := (tsum_fintype fun i ↦ pμ i).symm.trans pμ.tsum_coe
+      rw [← ENNReal.toReal_sum fun i _ ↦ pμ.apply_ne_top i, h, ENNReal.toReal_one]
     have hcost : T.cost (fun p ↦ C p + ε) = T.cost C + ε := by
       simp only [TransportMatrix.cost_def, add_mul, Finset.sum_add_distrib, ← Finset.mul_sum,
         hmass, mul_one]
@@ -430,7 +411,7 @@ theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure �
   rw [hTcost, ← hint]
   linarith
 
-omit [MetricSpace X] [CompactSpace X] [BorelSpace X] [MetricSpace Y] [CompactSpace Y]
+omit [PseudoMetricSpace X] [CompactSpace X] [BorelSpace X] [PseudoMetricSpace Y] [CompactSpace Y]
   [BorelSpace Y] in
 /-- **Weak duality in real form.** The value of an integrable feasible pair is at most the real
 number represented by the transport cost, provided the latter is finite. -/
@@ -443,9 +424,10 @@ theorem kantorovichDualValue_le_toReal_transportCost {φ : X → ℝ} {ψ : Y �
   (ENNReal.ofReal_le_iff_le_toReal hne).1
     (((dualFeasible_ofReal_iff hc0 φ ψ).2 hfeas).ofReal_kantorovichDualValue_le_transportCost hφ hψ)
 
-/-- **Strong Kantorovich duality on compact metrizable spaces.** For a continuous nonnegative cost
-on a product of compact metric spaces the primal transport cost is the least upper bound of the
-values of the pairs of continuous potentials satisfying the Kantorovich constraint. -/
+/-- **Strong Kantorovich duality on compact pseudometrizable spaces.** For a continuous
+nonnegative cost on a product of compact pseudometric spaces the primal transport cost is the
+least upper bound of the values of the pairs of continuous potentials satisfying the Kantorovich
+constraint. -/
 theorem isLUB_kantorovichDualValue_continuous [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     (hc : Continuous c) (hc0 : ∀ z, 0 ≤ c z) :
     IsLUB {r : ℝ | ∃ φ ψ, Continuous φ ∧ Continuous ψ ∧ (∀ x y, φ x + ψ y ≤ c (x, y)) ∧

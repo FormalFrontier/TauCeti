@@ -8,15 +8,15 @@ module
 public import Mathlib.MeasureTheory.Constructions.BorelSpace.Metric
 
 /-!
-# Measurable discretization of compact metric spaces
+# Measurable discretization of compact pseudometric spaces
 
-This file provides a finite measurable approximation of a compact metric space equipped with its
-Borel measurable structure.
+This file provides a finite measurable approximation of a compact pseudometric space equipped with
+its Borel measurable structure.
 
 ## Main statements
 
-* `TauCeti.exists_measurable_dist_lt` — a compact metric space admits a measurable map to a finite
-  type whose indexed approximation point is uniformly close to every point.
+* `TauCeti.exists_measurable_dist_lt` — a compact pseudometric space admits a measurable map to a
+  finite type whose indexed approximation point is uniformly close to every point.
 -/
 
 public section
@@ -29,9 +29,9 @@ namespace TauCeti
 
 universe u
 
-/-- A compact metric space admits, up to any positive error, an indexed finite family of
+/-- A compact pseudometric space admits, up to any positive error, an indexed finite family of
 approximation points and a measurable map assigning every point to a nearby one. -/
-theorem exists_measurable_dist_lt (X : Type u) [MetricSpace X] [CompactSpace X]
+theorem exists_measurable_dist_lt (X : Type u) [PseudoMetricSpace X] [CompactSpace X]
     [MeasurableSpace X] [BorelSpace X] {δ : ℝ} (hδ : 0 < δ) :
     ∃ (n : ℕ) (v : Fin n → X) (q : X → Fin n), Measurable q ∧ ∀ x, dist x (v (q x)) < δ := by
   classical

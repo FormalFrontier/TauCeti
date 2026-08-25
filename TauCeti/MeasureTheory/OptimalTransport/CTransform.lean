@@ -8,6 +8,7 @@ module
 public import Mathlib.Data.Fintype.Order
 public import Mathlib.Order.GaloisConnection.Basic
 public import Mathlib.Topology.Instances.EReal.Lemmas
+public import Mathlib.Topology.UniformSpace.HeineCantor
 public import TauCeti.Data.EReal.Operations
 
 /-!
@@ -62,7 +63,8 @@ conditions that make the two marginal integrals of a dual pair meaningful.
   transform;
 * `TauCeti.isCConcave_iff` — `c`-concavity is exactly being fixed by the double transform;
 * `TauCeti.upperSemicontinuous_cTransform` — an infimal transform of upper-semicontinuous
-  sections is upper semicontinuous;
+  sections is upper semicontinuous, while `TauCeti.continuous_iInf_sub` shows that a real-valued
+  infimal transform is continuous when the cost is uniformly continuous and its infima are finite;
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
   negative, which is the normalisation freedom of the dual problem;
 * `TauCeti.cTransform_coe` — over a nonempty finite source the transform of a coerced real
@@ -290,6 +292,30 @@ theorem cTransform_coe_eq_coe_iInf [Nonempty X] (c : X × Y → ℝ) (φ : X →
       rw [← hbr]
       simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 hx.le
   · simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 (ciInf_le hbdd x)
+
+/-- The infimal `c`-transform of a real potential inherits the modulus of continuity of the cost:
+if `c` is uniformly continuous and the differences `c (x, y) - φ x` are bounded below for each
+`y`, then `y ↦ ⨅ x, (c (x, y) - φ x)` is continuous. -/
+theorem continuous_iInf_sub [PseudoMetricSpace X] [PseudoMetricSpace Y] [Nonempty X]
+    {c : X × Y → ℝ} {φ : X → ℝ} (hc : UniformContinuous c)
+    (hbdd : ∀ y, BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
+    Continuous fun y ↦ ⨅ x, (c (x, y) - φ x) := by
+  refine Metric.continuous_iff.2 fun y ε hε ↦ ?_
+  obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hc (ε / 2) (by positivity)
+  have key : ∀ y₁ y₂ : Y, dist y₁ y₂ < δ →
+      (⨅ x, (c (x, y₁) - φ x)) - ε / 2 ≤ ⨅ x, (c (x, y₂) - φ x) := by
+    intro y₁ y₂ h
+    refine le_ciInf fun x ↦ ?_
+    have h1 : (⨅ x, (c (x, y₁) - φ x)) ≤ c (x, y₁) - φ x := ciInf_le (hbdd y₁) x
+    have h2 : dist (c (x, y₁)) (c (x, y₂)) < ε / 2 :=
+      hcδ (by simpa [Prod.dist_eq, max_eq_right dist_nonneg] using h)
+    rw [Real.dist_eq, abs_lt] at h2
+    linarith [h2.1, h2.2]
+  refine ⟨δ, hδ, fun y' hy' ↦ ?_⟩
+  have h1 := key y' y hy'
+  have h2 := key y y' (by rwa [dist_comm])
+  rw [Real.dist_eq, abs_lt]
+  constructor <;> linarith
 
 /-- A `c`-transform is upper semicontinuous when each function in its defining infimum is upper
 semicontinuous. -/
