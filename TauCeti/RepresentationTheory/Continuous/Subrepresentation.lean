@@ -21,6 +21,8 @@ action operator, the continuous counterpart of Mathlib's `Representation.subrepr
 
 ## Main results
 
+* `TauCeti.ContRepresentation.mem_invariants_subrepresentation`: a vector of the submodule is
+  invariant for the restricted representation exactly when it is invariant for the ambient one.
 * `TauCeti.ContRepresentation.toRepresentation_subrepresentation`: the underlying representation of
   a restricted continuous representation is the restriction of the underlying representation.
 * `TauCeti.ContRepresentation.continuous_subrepresentation`: the restriction of a continuous
@@ -54,6 +56,17 @@ variable {π : ContRepresentation R G V} {W : Submodule R V} {hW : ∀ g, ∀ v 
 theorem coe_subrepresentation_apply (g : G) (v : W) :
     ((subrepresentation π W hW g v : W) : V) = π g (v : V) :=
   (rfl)
+
+-- Not `@[simp]`: Mathlib's `@[simp] ContRepresentation.mem_invariants` already rewrites the
+-- left-hand side to `∀ g, subrepresentation π W hW g x = x`, so the attribute would be a `simpNF`
+-- violation ("Left-hand side simplifies … using `ContRepresentation.mem_invariants`"). This is the
+-- `rw`-usable form of that normalization, as `ContRepresentation.mem_invariants_restrict` is for
+-- the restriction along a subgroup.
+/-- A vector of an invariant submodule is invariant for the restricted representation exactly when
+it is invariant for the ambient one: the restricted action is the ambient action. -/
+theorem mem_invariants_subrepresentation {x : W} :
+    x ∈ (subrepresentation π W hW).invariants ↔ (x : V) ∈ π.invariants := by
+  simp [ContRepresentation.mem_invariants, Subtype.ext_iff]
 
 /-- The underlying representation of a restricted continuous representation is the restriction of
 the underlying representation. -/
