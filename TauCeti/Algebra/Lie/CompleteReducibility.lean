@@ -148,9 +148,8 @@ theorem homVanishingOn_le_homScalarOn (N : LieSubmodule K L M) :
   rintro φ ⟨hφ, hc⟩
   exact mem_homScalarOn.2 ⟨hφ, 0, fun n hn ↦ by rw [hc n hn, zero_smul]⟩
 
-/-- **Endomorphisms vanishing on `N` are a Lie submodule of those acting on `N` by a scalar.** The
-bracket of an element of `L` with an endomorphism landing in `N` and acting there by a scalar again
-lands in `N` and vanishes there. -/
+/-- **Bracketing an endomorphism acting scalarly on `N` with an element of `L` produces one
+vanishing on `N`.** The bracket again lands in `N` and vanishes there. -/
 theorem lie_mem_comap_homVanishingOn (N : LieSubmodule K L M) (x : L)
     (ψ : homScalarOn (L := L) N) :
     ⁅x, ψ⁆ ∈ (homVanishingOn N).comap (homScalarOn N).incl := by
