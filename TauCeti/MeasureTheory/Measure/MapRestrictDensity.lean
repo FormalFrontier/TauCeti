@@ -30,6 +30,8 @@ that the `[0, 1]` bounds hold *everywhere*, not merely almost everywhere. Consum
 function against a kernel and need a strict pointwise bound to feed an extremal argument; the
 truncation is invisible to every integral statement below, because it changes the derivative only
 on a `μ`-null set (`mapRestrictDensity_ae_eq_rnDeriv`).
+The private product-carrier regression below confirms that the density can be a genuinely
+fractional multiple of an indicator, rather than always an indicator itself.
 
 ## Main definitions
 
@@ -51,9 +53,6 @@ on a `μ`-null set (`mapRestrictDensity_ae_eq_rnDeriv`).
   `TauCeti.MeasureTheory.mapRestrictDensity_univ` — on a
   preimage the density collapses `μ`-almost everywhere to an indicator, so the construction extends
   the trivial case.
-* `TauCeti.MeasureTheory.mapRestrictDensity_fst_prod` — on a product carrier the density of a
-  rectangle is `μ`-almost everywhere a genuinely fractional multiple of an indicator, so no such
-  collapse holds in general.
 * `TauCeti.MeasureTheory.isFiniteMeasure_of_measurePreserving` — an auxiliary fact transferring
   finiteness from the source to the target of a measure-preserving map.
 
@@ -197,7 +196,7 @@ factor, a rectangle `s ×ˢ t` has density `ν.real t · 1_s` `μ`-almost everyw
 contributes its mass, not an indicator.  Together with `mapRestrictDensity_preimage` this pins the
 construction down — an indicator of a set on the base would be wrong whenever
 `0 < ν.real t < 1`. -/
-theorem mapRestrictDensity_fst_prod [SigmaFinite μ] [IsProbabilityMeasure ν] {s : Set Ω}
+private theorem mapRestrictDensity_fst_prod [SigmaFinite μ] [IsProbabilityMeasure ν] {s : Set Ω}
     (hs : MeasurableSet s) (t : Set Ω') :
     mapRestrictDensity Prod.fst (μ.prod ν) μ (s ×ˢ t) =ᵐ[μ]
       fun a => ν.real t * s.indicator 1 a := by
