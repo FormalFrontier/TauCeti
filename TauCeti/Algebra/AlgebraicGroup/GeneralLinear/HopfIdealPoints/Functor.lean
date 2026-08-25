@@ -149,14 +149,18 @@ theorem hopfIdealPointsSubgroupFunctor_map {A B : CommAlgCat.{w} R} (f : A ⟶ B
         eqToHom (hopfIdealPointsSubgroupFunctor_obj n I B).symm :=
   (rfl)
 
-/-- After transport along `hopfIdealPointsSubgroupFunctor_obj`, the morphism part of the Hopf-ideal
-matrix-points functor is the restricted entrywise matrix map. -/
+/-- The morphism part of the Hopf-ideal matrix-points functor applies the value-algebra morphism
+entrywise after removing the universe lift. -/
 @[simp]
 theorem hopfIdealPointsSubgroupFunctor_map_apply {A B : CommAlgCat.{w} R} (f : A ⟶ B)
     (g : ULift.{u, w} (hopfIdealPointsSubgroup n I A)) :
     (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I B)
-      ((hopfIdealPointsSubgroupFunctor n I).map f
-        (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I A).symm g))).down =
+      (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I B).symm
+        (MulEquiv.ulift.symm
+          (mapHopfIdealPointsSubgroup n I f.hom
+            (MulEquiv.ulift
+              (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I A)
+                (eqToHom (hopfIdealPointsSubgroupFunctor_obj n I A).symm g))))))).down =
       mapHopfIdealPointsSubgroup n I f.hom g.down :=
   (rfl)
 
