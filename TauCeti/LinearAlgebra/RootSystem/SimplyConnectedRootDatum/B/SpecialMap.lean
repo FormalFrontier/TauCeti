@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import TauCeti.LinearAlgebra.Matrix.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.RankTwo
 
@@ -44,10 +45,14 @@ later lift, together with its action on root subgroups, before the Suzuki--Ree l
 * `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mulVec_root` and
   `TauCeti.DynkinType.b2SpecialIsogenyMatrix_transpose_mulVec_coroot`: the equations on the pinned
   datum.
-* `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mul_self`: the square of the lattice map is
-  multiplication by `2`.
+* `TauCeti.DynkinType.b2SpecialIsogenyMatrix_mul_self` and its transpose counterpart: applying the
+  lattice map twice is multiplication by `2`.
+* `TauCeti.DynkinType.det_b2SpecialIsogenyMatrix`: the map has determinant `-2`, so it is an
+  isogeny and not a lattice automorphism.
 * `TauCeti.DynkinType.b2SpecialIsogenyExponent_mul_exponent`: the two rescaling exponents on an
   orbit multiply to the defining characteristic.
+* `TauCeti.DynkinType.b2SpecialIsogenyExponent_mul_pairing`: the Cartan integers transform by the
+  rule a special isogeny forces.
 
 ## References
 
@@ -205,6 +210,50 @@ theorem b2SpecialIsogenyMatrix_mul_self :
   fin_cases i <;> fin_cases j <;>
     simp [b2SpecialIsogenyMatrix_def, Matrix.mul_apply, Fin.sum_univ_succ]
 
+/-- The square of the cocharacter-lattice special matrix is twice the identity matrix. -/
+theorem b2SpecialIsogenyMatrix_transpose_mul_self :
+    b2SpecialIsogenyMatrixᵀ * b2SpecialIsogenyMatrixᵀ =
+      (2 : ℤ) • (1 : Matrix (Fin 2) (Fin 2) ℤ) := by
+  rw [← Matrix.transpose_mul, b2SpecialIsogenyMatrix_mul_self, Matrix.transpose_smul,
+    Matrix.transpose_one]
+
+/-- Applying the character-lattice special map twice is multiplication by the characteristic
+`2`. This is not a `simp` lemma: on `Fin 2` the simp set unfolds `*ᵥ` entrywise through
+`Matrix.mulVec_fin_two`, so the left-hand side is not in normal form. -/
+theorem b2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
+    b2SpecialIsogenyMatrix *ᵥ (b2SpecialIsogenyMatrix *ᵥ x) = (2 : ℤ) • x := by
+  rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_mul_self, Matrix.smul_mulVec,
+    Matrix.one_mulVec]
+
+/-- Applying the cocharacter-lattice special map twice is multiplication by the characteristic
+`2`. As for the character-lattice statement, this is not a `simp` lemma. -/
+theorem b2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
+    b2SpecialIsogenyMatrixᵀ *ᵥ (b2SpecialIsogenyMatrixᵀ *ᵥ x) = (2 : ℤ) • x := by
+  rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_transpose_mul_self, Matrix.smul_mulVec,
+    Matrix.one_mulVec]
+
+/-- The square relation for the character-lattice map, as an equality of linear maps. -/
+theorem b2SpecialIsogenyMatrix_mulVecLin_comp_self :
+    b2SpecialIsogenyMatrix.mulVecLin ∘ₗ b2SpecialIsogenyMatrix.mulVecLin =
+      (2 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
+  rw [← Matrix.mulVecLin_mul, b2SpecialIsogenyMatrix_mul_self]
+  ext x
+  simp
+
+/-- The square relation for the cocharacter-lattice map, as an equality of linear maps. -/
+theorem b2SpecialIsogenyMatrix_transpose_mulVecLin_comp_self :
+    b2SpecialIsogenyMatrixᵀ.mulVecLin ∘ₗ b2SpecialIsogenyMatrixᵀ.mulVecLin =
+      (2 : ℤ) • (LinearMap.id : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ)) := by
+  rw [← Matrix.mulVecLin_mul, b2SpecialIsogenyMatrix_transpose_mul_self]
+  ext x
+  simp
+
+/-- **The special map is an isogeny and not an automorphism of the character lattice**: its
+determinant is `-2`, of absolute value the characteristic. -/
+@[simp] theorem det_b2SpecialIsogenyMatrix : b2SpecialIsogenyMatrix.det = -2 := by
+  rw [b2SpecialIsogenyMatrix_def, Matrix.det_fin_two_of]
+  ring
+
 /-! ## Length and exponent conventions -/
 
 private theorem b2Length_mul_b2Length_specialIsogenyTableIndex (i : Fin 8) :
@@ -226,6 +275,37 @@ theorem b2SpecialIsogenyExponent_eq_one_or_eq_two (i : Fin (2 * 2 ^ 2)) :
   obtain ⟨j, rfl⟩ := b2Index_bijective.surjective i
   rw [b2SpecialIsogenyExponent_b2Index]
   decide +revert
+
+/-- **The special permutation exchanges long roots with short ones.** -/
+@[simp] theorem b2SpecialIsogenyExponent_indexEquiv_eq_one_iff (i : Fin (2 * 2 ^ 2)) :
+    b2SpecialIsogenyExponent (b2SpecialIsogenyIndexEquiv i) = 1 ↔
+      b2SpecialIsogenyExponent i = 2 := by
+  obtain ⟨j, rfl⟩ := b2Index_bijective.surjective i
+  rw [b2SpecialIsogenyIndexEquiv_b2Index, b2SpecialIsogenyExponent_b2Index,
+    b2SpecialIsogenyExponent_b2Index]
+  decide +revert
+
+/-- **The special permutation sends a short root to a long root.** -/
+@[simp] theorem b2SpecialIsogenyExponent_indexEquiv_eq_two_iff (i : Fin (2 * 2 ^ 2)) :
+    b2SpecialIsogenyExponent (b2SpecialIsogenyIndexEquiv i) = 2 ↔
+      b2SpecialIsogenyExponent i = 1 := by
+  have h := (b2SpecialIsogenyExponent_indexEquiv_eq_one_iff
+    (b2SpecialIsogenyIndexEquiv i)).symm
+  rw [b2SpecialIsogenyIndexEquiv_apply_apply] at h
+  exact h
+
+/-- **The Cartan integers transform by the rule a special isogeny forces.** Writing `α'` for the
+image of a root `α` under the special permutation, pairing the root equation against the coroot
+equation gives `ℓ(α) ⟨α', β'∨⟩ = ℓ(β) ⟨α, β∨⟩`. -/
+theorem b2SpecialIsogenyExponent_mul_pairing (i j : Fin (2 * 2 ^ 2)) :
+    b2SpecialIsogenyExponent i *
+        (typeBSimplyConnectedRootDatum 2).pairing
+          (b2SpecialIsogenyIndexEquiv i) (b2SpecialIsogenyIndexEquiv j) =
+      b2SpecialIsogenyExponent j * (typeBSimplyConnectedRootDatum 2).pairing i j := by
+  rw [← RootPairing.root_coroot_eq_pairing, toLinearMap_typeBSimplyConnectedRootDatum,
+    ← RootPairing.root_coroot_eq_pairing, toLinearMap_typeBSimplyConnectedRootDatum]
+  exact mul_dotProduct_eq_of_mulVec_eq_smul b2SpecialIsogenyMatrix_mulVec_root
+    b2SpecialIsogenyMatrix_transpose_mulVec_coroot i j
 
 private theorem b2SpecialIsogenyExponent_b2Index_simple (i : Fin 2) :
     b2SpecialIsogenyExponent (b2Index (Fin.castLE (by omega) i)) =

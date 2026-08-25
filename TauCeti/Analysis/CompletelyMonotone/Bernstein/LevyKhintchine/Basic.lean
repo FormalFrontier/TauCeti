@@ -12,7 +12,7 @@ import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 import Mathlib.Analysis.Calculus.ParametricIntegral
 
 /-!
-# The Levy--Khintchine construction of Bernstein functions
+# Levy--Khintchine exponents of Bernstein functions
 
 This file develops the forward half of the Levy--Khintchine representation for Bernstein
 functions. A measure `mu` on `ℝ≥0` is a Bernstein Levy measure when it has no atom at zero and
@@ -36,8 +36,9 @@ terms, is a Bernstein function.
 * `TauCeti.isBernsteinFunction_bernsteinLevyKhintchineExponent`: adding
   nonnegative killing and drift terms preserves the Bernstein property.
 
-The converse direction -- extracting the unique killing coefficient, drift coefficient, and
-Levy measure from an arbitrary Bernstein function -- remains separate.
+Existence of the converse triplet is proved in
+`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation`; uniqueness remains
+separate.
 
 ## References
 

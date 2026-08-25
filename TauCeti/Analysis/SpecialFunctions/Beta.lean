@@ -33,6 +33,7 @@ These are the analytic prerequisites of
 * `TauCeti.integral_rpow_mul_one_sub_rpow_add_one_right` — raising the second parameter by one
   splits the integral as a difference;
 * `ProbabilityTheory.beta_comm` — symmetry of `Β`;
+* `ProbabilityTheory.beta_one_right` — the value `Β(a, 1) = 1 / a`;
 * `ProbabilityTheory.beta_add_one_left` — the unit step `Β(a + 1, b) = a / (a + b) * Β(a, b)`.
 
 ## Implementation notes
@@ -156,6 +157,12 @@ variable {a b : ℝ}
 /-- Euler's beta function is symmetric in its two parameters. -/
 theorem beta_comm (a b : ℝ) : beta a b = beta b a := by
   rw [ProbabilityTheory.beta, ProbabilityTheory.beta, mul_comm (Real.Gamma a), add_comm a b]
+
+/-- Euler's beta function at second parameter `1`. -/
+@[simp]
+theorem beta_one_right (ha : 0 < a) : beta a 1 = 1 / a := by
+  rw [ProbabilityTheory.beta, Real.Gamma_one, mul_one, Real.Gamma_add_one ha.ne']
+  field_simp
 
 /-- The unit step of Euler's beta function in its first parameter. -/
 theorem beta_add_one_left (ha : a ≠ 0) (hab : a + b ≠ 0) :
