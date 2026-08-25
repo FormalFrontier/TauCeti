@@ -102,14 +102,16 @@ class AnalysisTests(unittest.TestCase):
 
 class BottleneckTests(unittest.TestCase):
     def base(self, **overrides):
-        result = {"merged_per_hour": 1.0, "baseline_merged_per_hour": 5.0, "stages": []}
+        result = {"merged_per_hour": 1.0, "baseline_merged_per_hour": 5.0,
+                  "baseline_merged_count": 100, "stages": []}
         result.update(overrides)
         return result
 
     def stage(self, name, **kw):
         item = {"stage": name, "owned_by_project": name not in health.STATE_AUTHOR_ACTION,
                 "depth": 0, "oldest_waiting_hours": 0.0, "entered_per_hour": 0.0,
-                "left_per_hour": 0.0, "baseline_median_dwell_hours": None}
+                "left_per_hour": 0.0, "baseline_median_dwell_hours": None,
+                "baseline_left_count": 20}
         item.update(kw)
         return item
 
@@ -132,6 +134,41 @@ class BottleneckTests(unittest.TestCase):
         ])
         self.assertEqual(health.find_bottleneck(result)["stage"], "ready-to-merge")
 
+    def test_no_stage_is_named_when_none_is_misbehaving(self):
+        """Throughput can fall because nothing arrived. Naming a culprit anyway
+        is how a heuristic becomes an oracle that is always confidently wrong."""
+        result = self.base(stages=[
+            self.stage("awaiting-CI", depth=5, entered_per_hour=1.0, left_per_hour=1.0,
+                       oldest_waiting_hours=2.0, baseline_median_dwell_hours=3.0),
+            self.stage("awaiting-review", depth=9, entered_per_hour=0.5, left_per_hour=0.6,
+                       oldest_waiting_hours=4.0, baseline_median_dwell_hours=5.0),
+        ])
+        self.assertIsNone(health.find_bottleneck(result))
+
+    def test_a_stalled_stage_is_named_even_without_growth(self):
+        result = self.base(stages=[
+            self.stage("ready-to-merge", depth=4, entered_per_hour=0.1, left_per_hour=0.1,
+                       oldest_waiting_hours=100.0, baseline_median_dwell_hours=2.0),
+        ])
+        found = health.find_bottleneck(result)
+        self.assertEqual(found["stage"], "ready-to-merge")
+        self.assertIn("normal dwell", found["why"])
+
+    def test_a_thin_baseline_reports_insufficient_data_not_health(self):
+        """Zero merges over the baseline made the old gate read 0 >= 0 and call
+        an empty repository healthy."""
+        found = health.find_bottleneck(self.base(
+            merged_per_hour=0.0, baseline_merged_per_hour=0.0, baseline_merged_count=0))
+        self.assertTrue(found["insufficient_data"])
+
+    def test_a_stage_with_too_few_completions_is_not_judged_on_dwell(self):
+        result = self.base(stages=[
+            self.stage("awaiting-review", depth=2, entered_per_hour=0.1, left_per_hour=0.1,
+                       oldest_waiting_hours=500.0, baseline_median_dwell_hours=1.0,
+                       baseline_left_count=1),
+        ])
+        self.assertIsNone(health.find_bottleneck(result))
+
     def test_stages_waiting_on_the_author_are_never_blamed(self):
         """The project cannot fix these, so naming one would point effort at
         exactly the wrong place."""
@@ -147,12 +184,71 @@ class BottleneckTests(unittest.TestCase):
         self.assertIsNone(health.find_bottleneck(result))
 
 
+class TimingTests(unittest.TestCase):
+    def test_replay_measures_the_snapshot_as_it_was(self):
+        """Otherwise every open interval gains however long the file sat on disk."""
+        old = NOW - timedelta(days=30)
+        data = snapshot([pr(1, [(old - timedelta(hours=2), "awaiting-review")])])
+        data["fetched_at"] = iso(old)
+        stage = next(s for s in health.analyse(data, 24, 24 * 14)["stages"]
+                     if s["stage"] == "awaiting-review")
+        self.assertAlmostEqual(stage["oldest_waiting_hours"], 2.0, places=3)
+
+    def test_the_baseline_excludes_the_recent_window(self):
+        """A baseline containing the window it is compared against is not a
+        comparison."""
+        recent = NOW - timedelta(hours=2)
+        data = snapshot([pr(1, [(recent, "awaiting-review")],
+                            state="MERGED", merged=recent + timedelta(minutes=1))])
+        result = health.analyse(data, 24, 24 * 14, NOW)
+        self.assertGreater(result["merged_per_hour"], 0)
+        self.assertEqual(result["baseline_merged_count"], 0)
+
+    def test_a_nonpositive_window_is_rejected(self):
+        with self.assertRaises(ValueError):
+            health.analyse(snapshot([]), 0, 24, NOW)
+
+
+class DepthTests(unittest.TestCase):
+    def test_depth_comes_from_current_labels_not_the_last_event(self):
+        """A PR whose lifecycle label was removed has left that stage."""
+        item = pr(1, [(NOW - timedelta(hours=5), "awaiting-review")])
+        item["labels"] = []
+        stage = next(s for s in health.analyse(snapshot([item]), 24, 24 * 14, NOW)["stages"]
+                     if s["stage"] == "awaiting-review")
+        self.assertEqual(stage["depth"], 0)
+
+    def test_an_open_pr_with_no_lifecycle_label_is_counted_and_reported(self):
+        """Silently omitting it would make the depths quietly not add up."""
+        item = pr(1, [])
+        item["labels"] = []
+        result = health.analyse(snapshot([item]), 24, 24 * 14, NOW)
+        self.assertEqual(result["open_prs_without_a_lifecycle_label"], 1)
+
+    def test_drafts_do_not_count_towards_depth(self):
+        item = pr(1, [(NOW - timedelta(hours=5), "awaiting-review")])
+        item["is_draft"] = True
+        stage = next(s for s in health.analyse(snapshot([item]), 24, 24 * 14, NOW)["stages"]
+                     if s["stage"] == "awaiting-review")
+        self.assertEqual(stage["depth"], 0)
+
+
+class RoundingTests(unittest.TestCase):
+    def test_comparisons_run_on_unrounded_values(self):
+        """One event in a fortnight rounds to a rate of exactly zero, which
+        silently changes which branch every threshold takes."""
+        result = health.analyse(snapshot([]), 24, 24 * 14, NOW)
+        self.assertIn("stages", health.rounded(result))
+        raw = {"merged_per_hour": 0.0044, "baseline_merged_per_hour": 0.0, "stages": []}
+        self.assertNotEqual(round(raw["merged_per_hour"], 2), raw["merged_per_hour"])
+
+
 class ReportTests(unittest.TestCase):
     def test_report_renders_and_names_the_author_owned_marker(self):
         result = health.analyse(snapshot([
             pr(1, [(NOW - timedelta(hours=2), "awaiting-review")]),
         ]), 24, 24 * 14, NOW)
-        text = health.report(result)
+        text = health.report(health.rounded(result))
         self.assertIn("awaiting-review", text)
         self.assertIn("waiting on the contributor", text)
 

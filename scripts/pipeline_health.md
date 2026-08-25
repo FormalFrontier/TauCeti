@@ -15,16 +15,26 @@ scripts/pipeline_health.py             # fetch and report
 scripts/pipeline_health.py --json      # machine-readable
 ```
 
-Two things it deliberately does not do.
+Three things it deliberately does not do.
 
 **Depth is not evidence.** A stage can be very deep and perfectly healthy if it
 drains as fast as it fills. The bottleneck is chosen on arrivals outrunning
 departures, and on occupants waiting longer than that stage normally takes.
 
+**It does not always name a culprit.** Throughput can fall because nothing
+arrived, so when no stage clears an anomaly threshold none is named. A heuristic
+that always finds someone to blame is not a diagnosis. A baseline with too few
+completed merges reports insufficient data rather than health.
+
 **`ci-failed` and `awaiting-author` are never blamed.** Those wait on the
 contributor rather than on the project, and treating a backlog there as
 something to fix would point effort at exactly the wrong place. They are
 reported, marked with `*`, and excluded from the bottleneck.
+
+Depths come from the labels a PR currently carries, not from the last event in
+its timeline, so a PR whose label was removed is not counted in a stage it has
+left. Open PRs carrying no single lifecycle label are counted separately and
+reported, rather than silently omitted.
 
 ## Where the data comes from
 
@@ -44,5 +54,13 @@ To work offline, dump a snapshot once and replay it:
 scripts/pr_stats_graphs.py --dump-data snap.json --out-dir /tmp/charts
 scripts/pipeline_health.py --data snap.json
 ```
+
+A replay is measured as at the snapshot's `fetched_at`, not as at now, so an old
+snapshot gives the answer it would have given when it was taken. `--as-of`
+overrides that.
+
+The baseline window is disjoint from the recent one, and both are clamped to the
+date the lifecycle labels landed, so a wide baseline is not diluted by time in
+which no event could have been recorded.
 
 That is also how the tests run, so they need no network.

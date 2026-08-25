@@ -42,6 +42,7 @@ on:
       - 'scripts/loc_roadmap_graph.py'
       - 'scripts/participant_graph.py'
       - 'scripts/pr_stats_graphs.py'
+      - 'scripts/pipeline_health.py'
       - '.github/workflows/pages.yml'
   schedule:
     - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs

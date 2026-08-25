@@ -41,11 +41,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pr_stats_graphs import (  # noqa: E402
+    LIFECYCLE_EPOCH,
     LIFECYCLE_LABELS,
     STATE_AUTHOR_ACTION,
+    atomic_write,
     fetch_snapshot,
     iso_z,
     parse_dt,
+    percentile,
 )
 
 # Reported in pipeline order, which is also the order to read them in: a stage
@@ -84,75 +87,115 @@ def lifecycle_intervals(pr: dict, now: datetime):
 
 
 def rate(count: int, hours: float) -> float:
-    return count / hours if hours else 0.0
+    return count / hours if hours > 0 else 0.0
 
 
-def median(values: list[float]) -> float | None:
-    if not values:
-        return None
-    ordered = sorted(values)
-    middle = len(ordered) // 2
-    if len(ordered) % 2:
-        return ordered[middle]
-    return (ordered[middle - 1] + ordered[middle]) / 2
+def observable_hours(start: datetime, end: datetime) -> float:
+    """Hours of the interval in which lifecycle labels could exist at all.
+
+    The labels landed on LIFECYCLE_EPOCH, so a window reaching back before it
+    contains time in which no event could have been recorded. Dividing by the
+    requested duration rather than the observable one understates every rate on
+    a wide baseline.
+    """
+    start = max(start, LIFECYCLE_EPOCH)
+    return max((end - start).total_seconds() / 3600, 0.0)
 
 
-def analyse(snapshot: dict, window_hours: float, baseline_hours: float, now: datetime) -> dict:
+def current_stage(pr: dict) -> str | None:
+    """The stage a PR is in now, from its labels rather than its history.
+
+    Taking the last timeline event instead would place a PR whose lifecycle
+    label was removed into a stage it has left, and would drop one that has no
+    events at all. The labels are what the pipeline actually maintains.
+    """
+    present = [label for label in pr.get("labels") or [] if label in LIFECYCLE_LABELS]
+    return present[0] if len(present) == 1 else None
+
+
+def analyse(
+    snapshot: dict,
+    window_hours: float,
+    baseline_hours: float,
+    now: datetime | None = None,
+) -> dict:
+    if window_hours <= 0 or baseline_hours <= 0:
+        raise ValueError("window and baseline must be positive")
+
+    # Replaying a snapshot must measure it as it was, not as though it were
+    # taken now: otherwise every open interval gains however long the file has
+    # been sitting on disk, and every recent rate reads as zero.
+    if now is None:
+        now = parse_dt(snapshot.get("fetched_at")) or datetime.now(timezone.utc)
+    now = now.astimezone(timezone.utc)
+
     prs = snapshot["prs"]
     window_start = now - timedelta(hours=window_hours)
-    baseline_start = now - timedelta(hours=baseline_hours)
+    # Disjoint, so the baseline is something to compare against rather than
+    # something the recent window is already part of.
+    baseline_end = window_start
+    baseline_start = baseline_end - timedelta(hours=baseline_hours)
+    window_span = observable_hours(window_start, now)
+    baseline_span = observable_hours(baseline_start, baseline_end)
 
     entered = defaultdict(lambda: {"window": 0, "baseline": 0})
     left = defaultdict(lambda: {"window": 0, "baseline": 0})
     dwell = defaultdict(lambda: {"window": [], "baseline": []})
     depth: defaultdict[str, int] = defaultdict(int)
     oldest: dict[str, float] = {}
+    unlabelled_open = 0
 
     for pr in prs:
+        if pr["state"] == "OPEN" and not pr["is_draft"]:
+            stage = current_stage(pr)
+            if stage is None:
+                unlabelled_open += 1
+            else:
+                depth[stage] += 1
+
         for label, start, end in lifecycle_intervals(pr, now):
-            if start >= baseline_start:
+            if baseline_start <= start < baseline_end:
                 entered[label]["baseline"] += 1
             if start >= window_start:
                 entered[label]["window"] += 1
 
             if end is None:
-                # Still in this stage: it contributes to depth and to how long
-                # the stage's current occupants have been waiting, but not to
-                # completed dwell times, which would bias them downwards.
-                depth[label] += 1
+                # Still in this stage: it contributes to how long the stage's
+                # current occupants have been waiting, but not to completed
+                # dwell times, which would bias them downwards.
                 waiting = (now - start).total_seconds() / 3600
                 oldest[label] = max(oldest.get(label, 0.0), waiting)
                 continue
 
             hours = (end - start).total_seconds() / 3600
-            if end >= baseline_start:
+            if baseline_start <= end < baseline_end:
                 left[label]["baseline"] += 1
                 dwell[label]["baseline"].append(hours)
             if end >= window_start:
                 left[label]["window"] += 1
                 dwell[label]["window"].append(hours)
 
-    def opened_or_merged(field: str, since: datetime) -> int:
+    def counted(field: str, start: datetime, end: datetime) -> int:
         return sum(
             1 for pr in prs
-            if pr.get(field) and parse_dt(pr[field]) >= since
+            if pr.get(field) and start <= parse_dt(pr[field]) < end
         )
 
     stages = []
     for label in STAGE_ORDER:
-        baseline_dwell = median(dwell[label]["baseline"])
-        window_dwell = median(dwell[label]["window"])
         stages.append({
             "stage": label,
             "owned_by_project": label not in STATE_AUTHOR_ACTION,
             "depth": depth[label],
-            "oldest_waiting_hours": round(oldest.get(label, 0.0), 1),
-            "entered_per_hour": round(rate(entered[label]["window"], window_hours), 2),
-            "left_per_hour": round(rate(left[label]["window"], window_hours), 2),
-            "baseline_entered_per_hour": round(rate(entered[label]["baseline"], baseline_hours), 2),
-            "baseline_left_per_hour": round(rate(left[label]["baseline"], baseline_hours), 2),
-            "median_dwell_hours": round(window_dwell, 2) if window_dwell is not None else None,
-            "baseline_median_dwell_hours": round(baseline_dwell, 2) if baseline_dwell is not None else None,
+            "oldest_waiting_hours": oldest.get(label, 0.0),
+            "entered_per_hour": rate(entered[label]["window"], window_span),
+            "left_per_hour": rate(left[label]["window"], window_span),
+            "baseline_entered_per_hour": rate(entered[label]["baseline"], baseline_span),
+            "baseline_left_per_hour": rate(left[label]["baseline"], baseline_span),
+            "left_count": left[label]["window"],
+            "baseline_left_count": left[label]["baseline"],
+            "median_dwell_hours": percentile(dwell[label]["window"], 0.5),
+            "baseline_median_dwell_hours": percentile(dwell[label]["baseline"], 0.5),
         })
 
     result = {
@@ -162,58 +205,100 @@ def analyse(snapshot: dict, window_hours: float, baseline_hours: float, now: dat
         "snapshot_fetched_at": snapshot.get("fetched_at"),
         "window_hours": window_hours,
         "baseline_hours": baseline_hours,
-        "opened_per_hour": round(rate(opened_or_merged("created_at", window_start), window_hours), 2),
-        "baseline_opened_per_hour": round(rate(opened_or_merged("created_at", baseline_start), baseline_hours), 2),
-        "merged_per_hour": round(rate(opened_or_merged("merged_at", window_start), window_hours), 2),
-        "baseline_merged_per_hour": round(rate(opened_or_merged("merged_at", baseline_start), baseline_hours), 2),
+        "observable_window_hours": window_span,
+        "observable_baseline_hours": baseline_span,
+        "opened_per_hour": rate(counted("created_at", window_start, now), window_span),
+        "baseline_opened_per_hour": rate(
+            counted("created_at", baseline_start, baseline_end), baseline_span),
+        "merged_per_hour": rate(counted("merged_at", window_start, now), window_span),
+        "baseline_merged_per_hour": rate(
+            counted("merged_at", baseline_start, baseline_end), baseline_span),
+        "merged_count": counted("merged_at", window_start, now),
+        "baseline_merged_count": counted("merged_at", baseline_start, baseline_end),
         "open_prs": sum(1 for pr in prs if pr["state"] == "OPEN"),
+        "open_prs_without_a_lifecycle_label": unlabelled_open,
         "stages": stages,
     }
     result["bottleneck"] = find_bottleneck(result)
     return result
 
 
+ROUND_TO = 2
+
+
+def rounded(result: dict) -> dict:
+    """Round for output only.
+
+    Comparisons run on the raw values: rounding first turns one event in a
+    fortnight into a rate of exactly zero, which silently changes which branch
+    every threshold takes.
+    """
+    def fix(value):
+        return round(value, ROUND_TO) if isinstance(value, float) else value
+
+    out = {k: fix(v) for k, v in result.items() if k != "stages"}
+    out["stages"] = [{k: fix(v) for k, v in stage.items()} for stage in result["stages"]]
+    return out
+
+
+# A stage must clear one of these to be blamed at all. Without them the search
+# always returns something, and a heuristic that always finds a culprit is not a
+# diagnosis.
+MIN_COMPLETIONS = 3          # below this a median dwell is noise
+GROWTH_PER_HOUR = 0.05       # arrivals must outpace departures by a real margin
+SLOWDOWN_FACTOR = 2.0        # the oldest occupant, against normal dwell
+THROUGHPUT_FRACTION = 0.75   # of baseline, below which something is wrong
+
+
 def find_bottleneck(result: dict) -> dict | None:
     """The stage most responsible for the pipeline being slower than usual.
 
-    Judged on backing up rather than on depth: a stage can be deep and perfectly
-    healthy if it is draining as fast as it fills. What matters is arrivals
-    outrunning departures, and occupants waiting longer than they normally do.
+    Judged on backing up, not on depth: a stage can be very deep and perfectly
+    healthy if it drains as fast as it fills. A stage that meets no anomaly
+    condition is not named, even when throughput is down, because "the queue is
+    slow and no stage is misbehaving" is a real and useful answer.
     """
-    if result["merged_per_hour"] >= result["baseline_merged_per_hour"] * 0.75:
+    baseline = result["baseline_merged_per_hour"]
+    if not baseline or result["baseline_merged_count"] < MIN_COMPLETIONS:
+        # Nothing to compare against. Saying "healthy" here would be a guess
+        # dressed as a finding.
+        return {"stage": None, "why": "not enough baseline data to judge", "insufficient_data": True}
+    if result["merged_per_hour"] >= baseline * THROUGHPUT_FRACTION:
         return None
 
-    scored = []
+    candidates = []
     for stage in result["stages"]:
         if not stage["owned_by_project"] or not stage["depth"]:
             continue
-        arriving = stage["entered_per_hour"]
-        leaving = stage["left_per_hour"]
-        # How far behind the stage is falling, relative to its own normal pace.
-        backlog_growth = arriving - leaving
-        baseline_dwell = stage["baseline_median_dwell_hours"] or 0
-        slowdown = 0.0
-        if baseline_dwell and stage["oldest_waiting_hours"]:
-            slowdown = stage["oldest_waiting_hours"] / baseline_dwell
-        scored.append((backlog_growth > 0, slowdown, backlog_growth, stage))
-
-    if not scored:
-        return None
-    scored.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
-    growing, slowdown, growth, stage = scored[0]
-
-    if growing:
-        why = (
-            f"arriving at {stage['entered_per_hour']}/h and leaving at "
-            f"{stage['left_per_hour']}/h, so it is filling faster than it drains"
+        growth = stage["entered_per_hour"] - stage["left_per_hour"]
+        normal = stage["baseline_median_dwell_hours"]
+        enough = stage["baseline_left_count"] >= MIN_COMPLETIONS
+        slowdown = (
+            stage["oldest_waiting_hours"] / normal
+            if enough and normal and stage["oldest_waiting_hours"] else 0.0
         )
-    elif slowdown > 2:
+        filling = growth > GROWTH_PER_HOUR
+        stalled = slowdown >= SLOWDOWN_FACTOR
+        if filling or stalled:
+            candidates.append((filling, growth, slowdown, stage))
+
+    if not candidates:
+        return None
+    # Filling beats merely slow, then by how fast it is filling, then by how far
+    # past normal its oldest occupant is.
+    candidates.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
+    filling, growth, slowdown, stage = candidates[0]
+
+    if filling:
         why = (
-            f"its oldest occupant has waited {stage['oldest_waiting_hours']}h against a "
-            f"{stage['baseline_median_dwell_hours']}h normal dwell"
+            f"arriving at {stage['entered_per_hour']:.2f}/h and leaving at "
+            f"{stage['left_per_hour']:.2f}/h, so it is filling faster than it drains"
         )
     else:
-        why = f"{stage['depth']} waiting, the deepest project-owned stage"
+        why = (
+            f"its oldest occupant has waited {stage['oldest_waiting_hours']:.0f}h against a "
+            f"{stage['baseline_median_dwell_hours']:.1f}h normal dwell"
+        )
     return {"stage": stage["stage"], "why": why, "depth": stage["depth"]}
 
 
@@ -248,7 +333,14 @@ def report(result: dict) -> str:
     lines.append("  * waiting on the contributor, not on the project")
     lines.append("")
     bottleneck = result["bottleneck"]
-    if bottleneck:
+    if result.get("open_prs_without_a_lifecycle_label"):
+        lines.append(
+            f"  note: {result['open_prs_without_a_lifecycle_label']} open PR(s) carry no single "
+            "lifecycle label, so they are absent from every depth above"
+        )
+    if bottleneck and bottleneck.get("insufficient_data"):
+        lines.append(f"  {bottleneck['why']}")
+    elif bottleneck:
         lines.append(f"  bottleneck: {bottleneck['stage']} — {bottleneck['why']}")
     elif baseline and merged < baseline:
         lines.append("  throughput is down but no stage is backing up; likely a quiet spell in arrivals")
@@ -266,17 +358,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--window", type=float, default=24.0, help="recent window, hours")
     parser.add_argument("--baseline", type=float, default=14 * 24.0, help="baseline, hours")
     parser.add_argument("--json", action="store_true", help="print JSON instead of a report")
+    parser.add_argument("--as-of", type=parse_dt,
+                        help="analyse as at this instant (default: the snapshot's fetched_at)")
     args = parser.parse_args(argv)
 
     snapshot = json.loads(args.data.read_text()) if args.data else fetch_snapshot(args.repo)
     if args.dump_data:
         args.dump_data.write_text(json.dumps(snapshot, indent=1))
 
-    now = datetime.now(timezone.utc)
-    result = analyse(snapshot, args.window, args.baseline, now)
+    result = rounded(analyse(snapshot, args.window, args.baseline, args.as_of))
 
     if args.out:
-        args.out.write_text(json.dumps(result, indent=1))
+        # Atomically, matching pr_stats_graphs.py: a half-written JSON file is
+        # worse than a missing one, because everything downstream trusts it.
+        atomic_write(args.out, json.dumps(result, indent=1))
     print(json.dumps(result, indent=1) if args.json else report(result))
     return 0
 
