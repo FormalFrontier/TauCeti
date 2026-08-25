@@ -241,7 +241,7 @@ theorem isSplittingField_self_iff_index_eq_one :
 /-- Over an algebraically closed field every central simple algebra has index one. -/
 theorem index_eq_one_of_isAlgClosed [IsAlgClosed K] : index K A = 1 :=
   (isSplittingField_self_iff_index_eq_one K A).1
-    (isSplittingField_of_isAlgClosed K A K)
+    (isSplittingField_of_isSepClosed K A K)
 
 /-- Over a finite field every central simple algebra has index one. -/
 theorem index_eq_one_of_finite [Finite K] : index K A = 1 :=
