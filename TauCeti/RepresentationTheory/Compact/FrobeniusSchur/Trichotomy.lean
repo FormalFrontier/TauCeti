@@ -37,14 +37,15 @@ at most `1`, because the invariants of the tensor square of an irreducible are a
 the two squares meet in `0`. A difference of two non-negative integers whose sum is at most `1` is
 `1`, `0` or `-1`, and each value is pinned by which of the two squares carries the invariant.
 
-The trichotomy is stated here for the indicator and the two invariant counts only. The classical
-reading of the three values as the **real**, **complex** and **quaternionic** types is *not*
-established here: it is the refinement of the trichotomy into the invariant-form dictionary -- that
-`ν₂ = 1` is the existence of a nonzero invariant *symmetric* bilinear form and `ν₂ = -1` that of an
-invariant *alternating* one, together with the structure-map reformulation over `ℝ` -- which needs
-the identification of the invariants of the two squares with invariant forms, a separate step for
-compact groups. The finite-group version of that dictionary is
-`TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Trichotomy.lean`.
+The trichotomy is stated here for the indicator and the two invariant counts only. Its refinement
+into the invariant-form dictionary -- that `ν₂ = 1` is the existence of a nonzero invariant
+*symmetric* bilinear form and `ν₂ = -1` that of an invariant *alternating* one -- is
+`TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantForm.lean`, which reads the two
+invariant counts off invariant forms through
+`TauCeti/RepresentationTheory/Continuous/Square/BilinearForm.lean`; the finite-group version of
+that dictionary is `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Trichotomy.lean`.
+What is still *not* established is the structure-map reformulation over `ℝ`, which reads the three
+values as the **real**, **complex** and **quaternionic** types.
 
 ## Main statements
 
