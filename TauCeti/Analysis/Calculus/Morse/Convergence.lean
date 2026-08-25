@@ -18,7 +18,8 @@ import Mathlib.Topology.UniformSpace.HeineCantor
 # Convergence of a negative gradient trajectory
 
 A negative gradient trajectory `γ` of `f`, followed forward in time and never leaving a compact
-set `K`, **converges**, and its limit is a critical point of `f`:
+set `K`, **converges** to a critical point of `f` provided that `f` has only finitely many critical
+points in `K`:
 
 `∃ p ∈ K, ∇ f p = 0 ∧ Tendsto γ atTop (𝓝 p)`.
 
@@ -92,7 +93,8 @@ namespace IsIntegralCurveOn
 /-! ### The trajectory is Lipschitz -/
 
 /-- **A negative gradient trajectory confined to a compact set is Lipschitz**, with any bound for
-the gradient on that set as its constant: the velocity of the trajectory *is* its gradient. -/
+the gradient on that set as its constant: the velocity is the negative gradient and therefore has
+the same norm as the gradient. -/
 theorem norm_sub_le_of_norm_gradient_le {C : ℝ}
     (hγ : IsIntegralCurveOn γ (fun _ x ↦ -∇ f x) (Ici 0)) (hmaps : MapsTo γ (Ici 0) K)
     (hC : ∀ y ∈ K, ‖∇ f y‖ ≤ C) {s t : ℝ} (hs : s ∈ Ici (0 : ℝ)) (ht : t ∈ Ici (0 : ℝ)) :
