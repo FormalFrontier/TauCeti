@@ -35,6 +35,8 @@ coordinate Hopf algebras acts on points by pre-composition.
 * `CommHopfAlgCat.grpObj`: the underlying object of the represented group object.
 * `CommHopfAlgCat.grpObjMap`: the contravariant morphism of represented group objects induced by a
   coordinate Hopf-algebra morphism.
+* `CommHopfAlgCat.grpObjMap_injective`: represented group-object maps determine their coordinate
+  Hopf-algebra morphisms.
 
 ## References
 
@@ -75,6 +77,22 @@ noncomputable def grpObjMap {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
 @[simp]
 theorem grpObjMap_unop {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
     (grpObjMap f).unop = CommAlgCat.ofHom f.hom := (rfl)
+
+/-- The underlying algebra homomorphism of the opposite of `grpObjMap f` is the underlying
+algebra homomorphism of `f`. -/
+theorem grpObjMap_unop_hom {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
+    (grpObjMap f).unop.hom = f.hom.toAlgHom :=
+  congrArg CommAlgCat.Hom.hom (grpObjMap_unop f)
+
+/-- Represented group-object maps determine their coordinate Hopf-algebra morphisms. -/
+theorem grpObjMap_injective {H K : _root_.CommHopfAlgCat.{u} R} :
+    Function.Injective (grpObjMap : (H ⟶ K) → (grpObj K ⟶ grpObj H)) := by
+  intro f g h
+  apply _root_.CommHopfAlgCat.hom_ext
+  apply BialgHom.ext
+  intro x
+  change f.hom.toAlgHom x = g.hom.toAlgHom x
+  simpa only [grpObjMap_unop_hom] using congrArg (fun q ↦ q.unop.hom x) h
 
 /-- The identity coordinate morphism represents the identity group-object morphism. -/
 @[simp]
