@@ -5,6 +5,7 @@ Authors: Claude, Codex
 -/
 module
 
+public import Mathlib.LinearAlgebra.TensorProduct.Basis
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.ScalarExtension
 
 /-!
@@ -19,6 +20,8 @@ extension of the subgroup, compatibly with further scalar extension.
 * `AddEquiv.invariantRestrict`: restriction to an invariant additive subgroup.
 * `AddEquiv.baseChangeInvariantRestrictUnit`: the induced automorphism after
   scalar extension.
+* `AddEquiv.baseChange_invariantRestrict_map_baseChange_basis`: its action on a base-changed
+  basis when the original restriction is monomial in that basis.
 * `AddEquiv.baseChangeInvariantRestrictUnit_pow_eq_one`: transport of an
   exponent bound to scalar extensions.
 * `AddEquiv.mapScalarExtensionAutomorphisms_baseChangeInvariantRestrictUnit`:
@@ -117,6 +120,19 @@ theorem val_baseChangeInvariantRestrictUnit_inv_tmul (θ : V ≃+ V) (M : S)
     LinearMap.GeneralLinearGroup.coe_ofLinearEquiv, ← LinearEquiv.baseChange_inv,
     LinearEquiv.baseChange_tmul]
   simp only [LinearEquiv.coe_inv]
+
+/-- If an invariant restriction sends each basis vector to a scalar multiple of another basis
+vector, its base change has the corresponding monomial action on the base-changed basis. -/
+theorem baseChange_invariantRestrict_map_baseChange_basis {η : Type*}
+    (M : S) (b : Module.Basis η ℤ M) (θ : V ≃+ V) (hθM : ∀ v, θ v ∈ M ↔ v ∈ M)
+    (τ : η → η) (c : η → ℤ)
+    (hθb : ∀ i, invariantRestrict θ M hθM (b i) = c i • b (τ i)) (i : η) :
+    (invariantRestrict θ M hθM).baseChange ℤ R M M ((b.baseChange R) i) =
+      algebraMap ℤ R (c i) • (b.baseChange R) (τ i) := by
+  rw [Module.Basis.baseChange_apply, LinearEquiv.baseChange_tmul, hθb,
+    Module.Basis.baseChange_apply, eq_intCast]
+  exact (map_zsmul (TensorProduct.mk ℤ R M (1 : R)) (c i) (b (τ i))).trans
+    (Int.cast_smul_eq_zsmul R (c i) ((1 : R) ⊗ₜ[ℤ] b (τ i))).symm
 
 /-- An exponent bound on `θ` is preserved by restriction and scalar extension. -/
 theorem baseChangeInvariantRestrictUnit_pow_eq_one (θ : V ≃+ V) (M : S)

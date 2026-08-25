@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weights
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Basic
 
 /-!
 # The upper-triangular Borel as a dynamic parabolic of `GL₂`
@@ -58,28 +58,14 @@ namespace GL2
 
 section Coordinate
 
-/-- The rank-one weights `(1, 0)` defining the standard dynamic cocharacter of `GL₂`. -/
-def dynamicWeights : Fin 2 → ℤ :=
-  fun i => if i = 0 then 1 else 0
-
-/-- The first weight of the standard dynamic cocharacter is one. -/
-@[simp]
-theorem dynamicWeights_zero : dynamicWeights 0 = 1 := by
-  simp [dynamicWeights]
-
-/-- The second weight of the standard dynamic cocharacter is zero. -/
-@[simp]
-theorem dynamicWeights_one : dynamicWeights 1 = 0 := by
-  simp [dynamicWeights]
-
 /-- The bialgebra morphism representing the standard cocharacter `t ↦ diag(t, 1)`. -/
 noncomputable def dynamicCocharacter :
     coordinateHopfAlgebra R 2 →ₐc[R] LaurentPolynomial R :=
-  weightCocharacter (R := R) dynamicWeights
+  weightCocharacter (R := R) Borel.weights
 
 /-- The standard dynamic cocharacter is the weight cocharacter for weights `(1, 0)`. -/
 theorem dynamicCocharacter_eq_weightCocharacter :
-    dynamicCocharacter (R := R) = weightCocharacter (R := R) dynamicWeights := by
+    dynamicCocharacter (R := R) = weightCocharacter (R := R) Borel.weights := by
   rfl
 
 end Coordinate
@@ -127,15 +113,15 @@ theorem pointsMulEquiv_limit_dynamicCocharacter
         ⟨GL2Borel.mk a d b, GL2Borel.mk_mem a d b⟩ := Subtype.ext hmatrix
     rw [hB, GL2Borel.diag_mk]
   have hnormalized : ∀ hg' : g ∈ Cocharacter.parabolic A
-      (weightCocharacter (R := R) dynamicWeights),
+      (weightCocharacter (R := R) Borel.weights),
       pointsMulEquiv 2
-          (Cocharacter.limit A (weightCocharacter (R := R) dynamicWeights) ⟨g, hg'⟩) =
+          (Cocharacter.limit A (weightCocharacter (R := R) Borel.weights) ⟨g, hg'⟩) =
         ((GL2Borel.torusHom
             (GL2Borel.diag ⟨pointsMulEquiv 2 g, hb⟩) : GL2Borel A) : GL (Fin 2) A) := by
     intro hg'
     apply Matrix.GeneralLinearGroup.ext
     intro i j
-    rw [pointsMulEquiv_limit_weightCocharacter_apply dynamicWeights g hg' i j]
+    rw [pointsMulEquiv_limit_weightCocharacter_apply Borel.weights g hg' i j]
     rw [GL2Borel.coe_torusHom, hdiag]
     fin_cases i <;> fin_cases j <;>
       simp [hmatrix, GL2Borel.coe_mk]

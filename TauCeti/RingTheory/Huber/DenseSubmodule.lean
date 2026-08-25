@@ -39,7 +39,7 @@ definition nor a pseudouniformiser has to be chosen.
 * [Bosch, Güntzer, Remmert, *Non-Archimedean Analysis*][bosch_guntzer_remmert], §3.7.2/1.
 * [Wedhorn, *Adic Spaces*][wedhorn_adic], Propositions 6.17–6.18.
 
-Adapted from the AINTLIB development (`github.com/smwyin/aintlib`, Apache-2.0), branch
+Adapted from the AINTLIB development (`github.com/CBirkbeck/AINTLIB`, Apache-2.0), branch
 `dev/adic-spaces` at commit `37bbdaeb9ad9`, file
 `projects/AdicSpaces/Adic spaces/WedhornBanachTheorem.lean`, where the same statement is
 `eq_top_of_dense_of_finite`. The argument is AINTLIB's; three things differ. The target is

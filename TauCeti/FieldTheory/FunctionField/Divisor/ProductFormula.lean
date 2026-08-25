@@ -401,7 +401,7 @@ theorem riemannRochSpace_eq_bot_of_degree_neg (hF : IsFunctionField k F) {D : Di
 /-- A divisor of negative degree has Riemann–Roch dimension zero. -/
 theorem Divisor.dim_eq_zero_of_degree_neg (hF : IsFunctionField k F) {D : Divisor k F}
     (hD : Divisor.degree D < 0) : Divisor.dim D = 0 := by
-  rw [Divisor.dim_def, riemannRochSpace_eq_bot_of_degree_neg hF hD,
-    finrank_bot]
+  exact (Divisor.dim_eq_zero_iff_riemannRochSpace_eq_bot hF D).mpr
+    (riemannRochSpace_eq_bot_of_degree_neg hF hD)
 
 end TauCeti
