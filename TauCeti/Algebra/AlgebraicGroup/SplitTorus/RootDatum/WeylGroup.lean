@@ -125,8 +125,7 @@ private noncomputable def coordinatePermRootDatumAut (e : Equiv.Perm σ) :
     exact domLCongr_coordinateRoot e p
   coroot_coweightMap := by
     funext p
-    change coordinatePermCoweightEquiv e ((coordinateRootDatum σ).coroot p) =
-      (coordinateRootDatum σ).coroot ((coordinatePermRootIndex e).symm p)
+    simp only [Function.comp_apply, LinearEquiv.coe_coe]
     rw [coordinateRootDatum_coroot, coordinateRootDatum_coroot,
       coordinatePermRootIndex_symm, coordinatePermRootIndex_coe]
     ext a
@@ -171,8 +170,8 @@ private theorem coordinatePermRootDatumAutHom_swap (i j : σ) (hij : i ≠ j) :
         (⟨(i, j), hij⟩ : CoordinateRootIndex σ) := by
   apply RootPairing.Equiv.weightHom_injective (coordinateRootDatum σ)
   ext x a
-  change (RootPairing.Equiv.weightEquiv (coordinateRootDatum σ) (coordinateRootDatum σ)
-      (coordinatePermRootDatumAut (Equiv.swap i j)) x) a = _
+  simp only [RootPairing.Equiv.weightHom_apply, coordinatePermRootDatumAutHom,
+    MonoidHom.coe_mk, OneHom.coe_mk]
   rw [RootPairing.Equiv.weightEquiv_apply,
     coordinatePermRootDatumAut_weightEquiv_apply]
   simp only [Finsupp.domLCongr_apply, Finsupp.domCongr_apply,
@@ -249,10 +248,9 @@ that permutation. -/
 theorem coordinateRootDatumWeylGroupMulEquiv_smul_apply
     (e : Equiv.Perm σ) (x : σ →₀ ℤ) (a : σ) :
     (coordinateRootDatumWeylGroupMulEquiv e • x) a = x (e.symm a) := by
-  change (RootPairing.Equiv.weightEquiv (coordinateRootDatum σ) (coordinateRootDatum σ)
-      (coordinatePermRootDatumAut e) x) a = _
-  rw [RootPairing.Equiv.weightEquiv_apply,
-    coordinatePermRootDatumAut_weightEquiv_apply]
+  rw [Subgroup.smul_def]
+  simp only [coordinateRootDatumWeylGroupMulEquiv, MulEquiv.ofBijective_apply,
+    coordinatePermWeylGroupHom, MonoidHom.codRestrict_apply]
   rfl
 
 /-- The Weyl element attached to a coordinate permutation applies that permutation to both
@@ -263,8 +261,11 @@ theorem coordinateRootDatumWeylGroupMulEquiv_rootIndex_apply
     (coordinateRootDatumWeylGroupMulEquiv e).1.indexEquiv p =
       coordinatePermRootIndex e p :=
   by
-    change (coordinatePermRootDatumAut e).indexEquiv p = coordinatePermRootIndex e p
-    rw [coordinatePermRootDatumAut_indexEquiv]
+    simpa only [coordinateRootDatumWeylGroupMulEquiv, MulEquiv.ofBijective_apply,
+      coordinatePermWeylGroupHom, MonoidHom.codRestrict_apply,
+      coordinatePermRootDatumAutHom, MonoidHom.coe_mk, OneHom.coe_mk] using
+        congrArg (fun f : CoordinateRootIndex σ ≃ CoordinateRootIndex σ ↦ f p)
+          (coordinatePermRootDatumAut_indexEquiv e)
 
 /-- A coordinate transposition corresponds to the reflection in the associated root. -/
 @[simp]
