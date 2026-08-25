@@ -158,40 +158,60 @@ jobs:
           set -uo pipefail
           repo='${{ github.repository }}'
 
-          # `mergeable` is computed asynchronously: null means "ask again", not "conflicted".
-          # `tostring` rather than `// "unknown"` on purpose — false is falsy to jq's `//`, so
-          # the alternative form would report every genuine conflict as "not computed yet".
-          mergeable=null
+          # Mergeability, the candidate, and both endpoints come from ONE response so they
+          # describe one recomputation. Reading `.mergeable` from one call and the merge ref
+          # from another lets a green mergeability be paired with a candidate resolved at a
+          # different moment.
+          #
+          # `tostring` rather than `// "unknown"` on purpose: false is falsy to jq's `//`, so
+          # the obvious form reports every genuine conflict as "not computed yet".
+          snap=""; mergeable=null
           for _ in 1 2 3 4 5 6; do
-            mergeable=$(gh api "repos/$repo/pulls/$NUM" --jq '.mergeable | tostring') || mergeable=null
-            [ "$mergeable" != "null" ] && break
+            snap=$(gh api "repos/$repo/pulls/$NUM" \
+              --jq '[(.mergeable|tostring), (.merge_commit_sha // ""), .head.sha, .base.ref] | join(" ")') || snap=""
+            mergeable=$(echo "$snap" | cut -d" " -f1)
+            [ -n "$snap" ] && [ "$mergeable" != "null" ] && break
             sleep 5
           done
-          if [ "$mergeable" != "true" ]; then
+          cand=$(echo "$snap" | cut -d" " -f2)
+          pr_head=$(echo "$snap" | cut -d" " -f3)
+          pr_base=$(echo "$snap" | cut -d" " -f4)
+
+          # Only an explicit false is a conflict. A null (still being computed) or a failed
+          # read is transient, and telling an author to update a branch that merges perfectly
+          # well sends a worker off to do a pointless round. That would land hardest straight
+          # after a Mathlib bump, when GitHub is recomputing every open PR's candidate at once
+          # and this step matters most.
+          if [ "$mergeable" = "false" ]; then
             echo "NEEDS_REBASE=1" >> "$GITHUB_ENV"
             echo "INFRA=1" >> "$GITHUB_ENV"
-            echo "::warning::PR #$NUM does not merge cleanly into $BASE_REF (mergeable=$mergeable); there is no candidate tree to build until it is updated"
+            echo "::warning::PR #$NUM does not merge cleanly into $BASE_REF; there is nothing to build until the branch is updated"
+            exit 0
+          fi
+          if [ -z "$snap" ] || [ "$mergeable" != "true" ] || [ -z "$cand" ]; then
+            echo "INFRA=1" >> "$GITHUB_ENV"
+            echo "::warning::mergeability for PR #$NUM is not settled yet (mergeable=$mergeable, candidate=${cand:-none}) — re-run pr-build"
             exit 0
           fi
 
-          # Every lookup below is `|| x=""` rather than bare: the step runs under `bash -e`,
-          # so an unguarded command substitution would abort it on a transient API blip and
-          # the report step would then describe an infrastructure hiccup as a failed build.
-          # Each failure instead lands on an explicit, named outcome.
-          cand=$(gh api "repos/$repo/git/ref/pull/$NUM/merge" --jq '.object.sha' 2>/dev/null) || cand=""
-          if [ -z "$cand" ]; then
-            echo "NEEDS_REBASE=1" >> "$GITHUB_ENV"
+          # The event's head and base must still be the PR's. Retargeting does not change the
+          # head SHA, so without the base check a result computed against one base branch
+          # could be posted as though it were about another.
+          if [ "$pr_head" != "$HEAD_SHA" ] || [ "$pr_base" != "$BASE_REF" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"
-            echo "::warning::PR #$NUM reports mergeable but has no merge ref yet; a later run will build it"
+            echo "::warning::PR #$NUM is now $pr_head onto $pr_base, not $HEAD_SHA onto $BASE_REF — the run for its current state will build it"
             exit 0
           fi
 
           parents=$(gh api "repos/$repo/commits/$cand" --jq '[.parents[].sha] | join(" ")') || parents=""
+          n_parents=$(echo "$parents" | wc -w | tr -d " ")
           cand_base=$(echo "$parents" | cut -d" " -f1)
           cand_head=$(echo "$parents" | cut -d" " -f2)
-          if [ -z "$cand_base" ] || [ -z "$cand_head" ] || [ "$cand_base" = "$cand_head" ]; then
+          # Exactly two, checked rather than sliced: a candidate is a merge of the base and
+          # the head and nothing else, and anything else is not a shape to guess about.
+          if [ "$n_parents" != "2" ] || [ -z "$cand_base" ] || [ -z "$cand_head" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"
-            echo "::warning::could not read two parents for merge candidate $cand — routing to human"
+            echo "::warning::merge candidate $cand has $n_parents parent(s), expected 2 — routing to human"
             exit 0
           fi
 
@@ -257,7 +277,7 @@ jobs:
           # routes to a human. The lakefiles are always human-owned and never overlaid automatically.
           # lake-manifest.json and lean-toolchain are also permitted, but ONLY as a
           # machine-validated forward bump: the "Validate the Lake-pin bump" step below
-          # runs the trusted base scripts/check-bump.sh and routes to a human if it is
+          # runs the workflow-pinned scripts/check-bump.sh and routes to a human if it is
           # anything other than a forward move (mathlib forward on its nominated branch,
           # transitive pins derived from mathlib, toolchain monotonic).
           if [ -z "$files" ]; then
@@ -394,8 +414,12 @@ jobs:
           allow-unsafe-pr-checkout: true
 
       # For a Lake-pin PR, validate it is a safe forward bump BEFORE overlaying its
-      # pins or building. The validator and the BASE config it judges against are the
-      # TRUSTED current target tip; mergebase/ only scopes the PR's own pin delta; pr/
+      # pins or building. The validator PROGRAM comes from gate/ — the commit that supplied
+      # this workflow — not from base/. base/ is the merge candidate's own parent, which is
+      # normally the target tip but can be behind it, and running a trust anchor from a
+      # commit that is behind means an older policy decides what may be auto-merged. The
+      # config it judges is still base/, which is exactly the config the candidate will be
+      # built against; mergebase/ only scopes the PR's own pin delta; pr/
       # is read as text — no PR code runs. An invalid/backward/forked bump sets INFRA=1
       # → not built, routed to a human. This same inline validation is what the
       # required `bump-guard` status is posted from in the final step (this job owns
@@ -404,7 +428,7 @@ jobs:
         if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
-          if bash base/scripts/check-bump.sh base mergebase pr; then
+          if bash gate/scripts/check-bump.sh base mergebase pr; then
             echo "Lake-pin bump validated — building with the PR's pins."
           else
             echo "BUMP_BAD=1" >> "$GITHUB_ENV"
@@ -664,13 +688,17 @@ jobs:
           # reads the current head, which carries its own statuses — so this is belt and
           # braces rather than a live hole. It is here because the alternative is leaving the
           # invariant implicit, and it costs one request.
+          # Fail closed: an unreadable answer is not a passing one. A status is keyed only by
+          # commit, so a green posted while the PR has moved on can outlive the state it was
+          # about -- the same SHA can become the head again later, two PRs can share a head,
+          # and retargeting does not change the head at all.
           head_moved=0
           if [ "${{ github.event_name }}" != "merge_group" ]; then
-            cur=$(gh api "repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.num }}" \
-                    --jq .head.sha 2>/dev/null) || cur=""
-            if [ -n "$cur" ] && [ "$cur" != "${{ steps.pr.outputs.sha }}" ]; then
+            now=$(gh api "repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.num }}" \
+                    --jq '[.head.sha, .base.ref] | join(" ")' 2>/dev/null) || now=""
+            if [ "$now" != "${{ steps.pr.outputs.sha }} ${{ steps.pr.outputs.base_ref }}" ]; then
               head_moved=1
-              echo "::warning::head moved from ${{ steps.pr.outputs.sha }} to $cur during this run"
+              echo "::warning::PR is now '${now:-unreadable}', not '${{ steps.pr.outputs.sha }} ${{ steps.pr.outputs.base_ref }}'"
             fi
           fi
 
@@ -694,7 +722,7 @@ jobs:
             return 0
           }
 
-          # bump-guard: this job already ran the trusted base scripts/check-bump.sh inline
+          # bump-guard: this job already ran the workflow-pinned scripts/check-bump.sh inline
           # (the "Validate the Lake-pin bump" step), so we post the required `bump-guard`
           # status from its result here rather than from a separate workflow. BUMP_BAD is set
           # only when a manifest/toolchain change failed that validator; anything else (no pin
@@ -719,7 +747,7 @@ jobs:
           if [ "${{ env.NEEDS_REBASE }}" = "1" ]; then
             state=failure; desc="does not merge cleanly into the target branch — update the branch, then this rebuilds"
           elif [ "$head_moved" = 1 ]; then
-            state=failure; desc="the branch moved during this build — the run for the new head statuses it"
+            state=failure; desc="the pull request changed during this build — the run for its current state statuses it"
           elif [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
             state=failure; desc="build not run — see the scope check"
