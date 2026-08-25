@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 
 -- Private: `Subspace.dual_finrank_eq`, `Module.finrank_prod` and
 -- `LinearMap.finrank_le_finrank_of_injective` occur only inside the proofs of the dimension
@@ -137,6 +137,47 @@ theorem pairing_separatingRight {K : Type u} [CommRing K] {V : Type v}
   apply P.pairingEquiv.injective
   ext x
   simp only [P.pairingEquiv_apply, hy x, map_zero, LinearMap.zero_apply]
+
+/-- A polarization without an orthogonal remainder has nondegenerate quadratic form. -/
+theorem nondegenerate_of_line_eq_bot {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    (P : SpinPolarizationData Q) (hline : P.line = ⊥) : Q.Nondegenerate := by
+  have hker : Q.polarBilin.ker = ⊥ := by
+    rw [LinearMap.ker_eq_bot']
+    intro v hv
+    let x := (P.decompositionEquiv.symm v).1.1
+    let y := (P.decompositionEquiv.symm v).1.2
+    let z := (P.decompositionEquiv.symm v).2
+    have hz : z = 0 := by
+      apply Subtype.ext
+      simpa [hline] using z.property
+    have hdecomp : (x : V) + (y : V) + (z : V) = v := by
+      rw [← P.decompositionEquiv_apply]
+      exact P.decompositionEquiv.apply_symm_apply v
+    have hWW (a b : P.W) : QuadraticMap.polar Q (a : V) b = 0 := by
+      simp only [QuadraticMap.polar, ← Submodule.coe_add, P.isotropic_W, sub_self]
+    have hW'W' (a b : P.W') : QuadraticMap.polar Q (a : V) b = 0 := by
+      simp only [QuadraticMap.polar, ← Submodule.coe_add, P.isotropic_W', sub_self]
+    have hx : x = 0 := by
+      apply P.pairing_separatingLeft
+      intro b
+      have h := LinearMap.congr_fun hv (b : V)
+      simpa only [QuadraticMap.polarBilin_apply_apply, ← hdecomp,
+        QuadraticMap.polar_add_left, hW'W', P.line_orthogonal_W', LinearMap.zero_apply,
+        add_zero] using h
+    have hy : y = 0 := by
+      apply P.pairing_separatingRight
+      intro a
+      have h := LinearMap.congr_fun hv (a : V)
+      simpa only [QuadraticMap.polarBilin_apply_apply, ← hdecomp,
+        QuadraticMap.polar_add_left, hWW, P.line_orthogonal_W, LinearMap.zero_apply,
+        add_zero, zero_add, QuadraticMap.polar_comm Q y a] using h
+    rw [← hdecomp, hx, hy, hz]
+    simp
+  refine ⟨le_antisymm (Q.radical_le_ker_polarBilin.trans hker.le) bot_le, ?_⟩
+  rw [hker]
+  nontriviality K
+  simp only [rank_subsingleton', zero_le]
 
 section Dimension
 

@@ -39,6 +39,8 @@ intersection of a chain of such `C`'s still meets every coset.
   a closed left transversal, in Mathlib's sense `Subgroup.IsComplement`.
 * `TauCeti.exists_continuous_section`: the normalized continuous section `G ⧸ H → G`.
 * `TauCeti.exists_continuous_section_of_le`: the continuous section of `G ⧸ K → G ⧸ H` for `K ≤ H`.
+* `TauCeti.exists_continuous_rightCosetFactorization`: the right-coset form, `g = w g * r g` with
+  `w g ∈ H` and `r g` depending only on the right coset `H * g`, both continuous.
 
 ## Implementation notes
 
@@ -256,5 +258,40 @@ theorem exists_continuous_section_of_le [CompactSpace G] [TotallyDisconnectedSpa
   obtain ⟨t, hcont, hsec, h1⟩ := exists_continuous_section H hH
   exact ⟨fun x => QuotientGroup.mk (t x), QuotientGroup.continuous_mk.comp hcont,
     fun x => by rw [Subgroup.quotientMapOfLE_apply_mk]; exact hsec x, by simp [h1]⟩
+
+/-- **The right-coset form of the continuous section.** For a closed subgroup `H` of a profinite
+group `G`, every `g : G` factors as `g = w g * r g` with `w g ∈ H`, where `r g` is a representative
+of the *right* coset `H * g` depending only on that coset and `w` is the resulting `H`-valued
+cocycle; both are continuous.
+
+Mathlib's quotient `G ⧸ H` is the space of *left* cosets, so `TauCeti.exists_continuous_section`
+produces a continuous choice of representatives of `g H`. Inverting exchanges the two sides:
+`r g = (s ⟦g⁻¹⟧)⁻¹` lies in `H * g` and depends only on `H * g`. This is the shape the coinduced
+module of Layer 7 consumes, since its defining equivariance `f (h * g) = h • f g` is along right
+cosets. -/
+theorem exists_continuous_rightCosetFactorization [CompactSpace G] [TotallyDisconnectedSpace G]
+    (H : Subgroup G) (hH : IsClosed (H : Set G)) :
+    ∃ (w : G → H) (r : G → G), Continuous w ∧ Continuous r ∧
+      (∀ g : G, (w g : G) * r g = g) ∧
+      (∀ (h : H) (g : G), w ((h : G) * g) = h * w g) ∧
+      (∀ (h : H) (g : G), r ((h : G) * g) = r g) := by
+  obtain ⟨s, hs_cont, hs_sec, -⟩ := exists_continuous_section H hH
+  have hcoset : ∀ (h : H) (g : G),
+      (QuotientGroup.mk (((h : G) * g)⁻¹) : G ⧸ H) = QuotientGroup.mk g⁻¹ := by
+    intro h g
+    rw [QuotientGroup.eq]
+    simp [mul_assoc, h.2]
+  have hmem : ∀ g : G, g * s (QuotientGroup.mk g⁻¹) ∈ H := by
+    intro g
+    have h := hs_sec (QuotientGroup.mk g⁻¹)
+    rw [QuotientGroup.eq] at h
+    simpa using H.inv_mem h
+  refine ⟨fun g => ⟨g * s (QuotientGroup.mk g⁻¹), hmem g⟩,
+    fun g => (s (QuotientGroup.mk g⁻¹))⁻¹, ?_, ?_, fun g => by simp, fun h g => ?_, fun h g => ?_⟩
+  · exact continuous_induced_rng.2 (continuous_id.mul
+      (hs_cont.comp (QuotientGroup.continuous_mk.comp continuous_inv)))
+  · exact (hs_cont.comp (QuotientGroup.continuous_mk.comp continuous_inv)).inv
+  · exact Subtype.ext (by simp only [hcoset, mul_assoc, Subgroup.coe_mul])
+  · simp only [hcoset]
 
 end TauCeti

@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Combinatorics.Young.HookLength
+public import TauCeti.Combinatorics.Young.HookLength.Basic
 public import TauCeti.Combinatorics.Young.StandardTableau.Basic
 
 /-!

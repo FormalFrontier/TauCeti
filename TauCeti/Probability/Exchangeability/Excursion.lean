@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Combinatorics.Enumerative.LoopWord
+public import TauCeti.Combinatorics.Enumerative.ExcursionProcess
 public import TauCeti.Probability.Exchangeability.MarkovExchangeable
 
 /-!
@@ -35,10 +35,14 @@ This is the finite-path symmetry that Diaconis and Freedman's representation the
 exchangeable processes rests on: a recurrent Markov exchangeable process returns to its initial
 state infinitely often, so its excursions from that state form a genuine sequence of random
 finite paths, and the identities below are that sequence's finite-dimensional exchangeability.
-Assembling them into an exchangeable process, and running de Finetti on it to exhibit the process
-as a mixture of Markov chains (`TauCeti.Probability.MixedMarkovChain`, whose converse direction is
-`TauCeti.Probability.MixedMarkovChainWith.markovExchangeable`), needs a recurrence hypothesis and
-the excursion process itself; neither is set up here.
+The combinatorial excursion process and its reconstruction of a recurrent path segment are set up
+in `TauCeti.Combinatorics.Enumerative.ExcursionProcess`, and
+`TauCeti.Probability.Exchangeability.Recurrence.Excursion` adds the recurrence hypothesis at the
+process level to assemble the identities below into exchangeability of that process
+(`TauCeti.Probability.MarkovExchangeable.exchangeable_excursionProcess`) and to run de Finetti on
+it.  Exhibiting the original process as a mixture of Markov chains
+(`TauCeti.Probability.MixedMarkovChain`, whose converse direction is
+`TauCeti.Probability.MixedMarkovChainWith.markovExchangeable`) is the remaining step.
 
 ## Main results
 

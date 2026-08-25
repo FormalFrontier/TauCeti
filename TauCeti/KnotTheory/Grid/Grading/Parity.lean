@@ -34,6 +34,12 @@ the two marking permutations, hence the sign of the component permutation `𝕏�
 `(-1)^{n + ℓ}` for `ℓ` link components. The normalization shift `n - 1` leaves
 `2 A(x) ≡ ℓ - 1 (mod 2)`.
 
+## Main definitions
+
+* `TauCeti.OddComponentGridDiagram`: a grid diagram with an odd number of link components.
+* `TauCeti.OddComponentGridDiagram.alexanderℤ`: the integer Alexander grading.
+* `TauCeti.OddComponentGridDiagram.bidegree`: the (`O`-Maslov, Alexander) degree of a grid state.
+
 ## Main results
 
 * `TauCeti.GridState.even_JNumCenter_pointSet_add`: the marking-pairing numerator of two grid
@@ -131,58 +137,6 @@ private theorem JNumCenter_pointSet_add_two_mul_eq (x y : GridState n) :
           (Finset.univ.filter fun d : Fin n => d < c ∧ x c ≤ y d).card =
       n * n := by
   classical
-  have hA : GridPoint.ICenter x.pointSet y.pointSet =
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card := by
-    rw [ICenter_pointSet_eq_card]
-    symm
-    calc
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card =
-          ∑ c ∈ Finset.univ, ((Finset.univ.filter fun p : Fin n × Fin n =>
-            p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p = c).card := by
-        apply Finset.sum_congr rfl
-        intro c _
-        have hfiber :
-            ((Finset.univ.filter fun p : Fin n × Fin n =>
-              p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p = c) =
-              {c} ×ˢ (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d) := by
-          ext p
-          rcases p with ⟨a, b⟩
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_product,
-            Finset.mem_singleton]
-          aesop
-        rw [hfiber, Finset.card_product]
-        simp
-      _ = ((Finset.univ.filter fun p : Fin n × Fin n =>
-          p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p ∈ Finset.univ).card :=
-        Finset.sum_card_fiberwise_eq_card_filter _ _ Prod.fst
-      _ = (Finset.univ.filter fun p : Fin n × Fin n =>
-          p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).card := by simp
-  have hB : GridPoint.I y.pointSet x.pointSet =
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card := by
-    rw [I_pointSet_eq_card]
-    symm
-    calc
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card =
-          ∑ c ∈ Finset.univ, ((Finset.univ.filter fun p : Fin n × Fin n =>
-            p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p = c).card := by
-        apply Finset.sum_congr rfl
-        intro c _
-        have hfiber :
-            ((Finset.univ.filter fun p : Fin n × Fin n =>
-              p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p = c) =
-              (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c) ×ˢ {c} := by
-          ext p
-          rcases p with ⟨a, b⟩
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_product,
-            Finset.mem_singleton]
-          aesop
-        rw [hfiber, Finset.card_product]
-        simp
-      _ = ((Finset.univ.filter fun p : Fin n × Fin n =>
-          p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p ∈ Finset.univ).card :=
-        Finset.sum_card_fiberwise_eq_card_filter _ _ Prod.snd
-      _ = (Finset.univ.filter fun p : Fin n × Fin n =>
-          p.1 < p.2 ∧ y p.1 < x p.2).card := by simp
   have key : ∀ c : Fin n,
       (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card
           + (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card
@@ -206,7 +160,8 @@ private theorem JNumCenter_pointSet_add_two_mul_eq (x y : GridState n) :
     Equiv.sum_comp x.toPerm fun r : Fin n => (r : ℕ)
   have hconst : ∑ _c : Fin n, n = n * n := by
     rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
-  rw [GridPoint.JNumCenter_def, hA, hB]
+  rw [JNumCenter_pointSet_eq_sum]
+  simp only [JNumCenterAt_eq_card, Finset.sum_add_distrib]
   omega
 
 /-- The marking-pairing numerator of two grid states has the parity of the grid size. -/
@@ -355,5 +310,58 @@ theorem alexander_exists_int_of_isKnot (hG : G.IsKnot) (x : GridState n) :
   exact odd_one
 
 end GridDiagram
+
+/-- A grid diagram with an odd number of link components. -/
+abbrev OddComponentGridDiagram (n : ℕ) :=
+  {G : GridDiagram n // Odd G.componentCount}
+
+namespace OddComponentGridDiagram
+
+variable {n : ℕ} (G : OddComponentGridDiagram n)
+
+/-- The integer Alexander grading of a grid state. -/
+def alexanderℤ (x : GridState n) : ℤ :=
+  G.1.alexanderTwoℤ x / 2
+
+/-- The integer Alexander grading is half of its numerator. -/
+theorem two_mul_alexanderℤ (x : GridState n) :
+    2 * G.alexanderℤ x = G.1.alexanderTwoℤ x := by
+  obtain ⟨a, ha⟩ := (G.1.even_alexanderTwoℤ_iff x).mpr G.2
+  rw [alexanderℤ, ha]
+  omega
+
+/-- The integer Alexander grading agrees with the original rational-valued Alexander grading. -/
+theorem alexander_eq_intCast (x : GridState n) :
+    G.1.alexander x = (G.alexanderℤ x : ℚ) := by
+  have htwo := G.1.two_mul_alexander_eq_intCast x
+  rw [← G.two_mul_alexanderℤ x] at htwo
+  push_cast at htwo
+  linarith
+
+/-- The (`O`-Maslov, Alexander) bidegree of a grid state. -/
+def bidegree (x : GridState n) : ℤ × ℤ :=
+  (G.1.maslovOℤ x, G.alexanderℤ x)
+
+/-- The first component of the grid bidegree is the integer `O`-Maslov grading. -/
+@[simp]
+theorem bidegree_fst (x : GridState n) : (G.bidegree x).1 = G.1.maslovOℤ x :=
+  by rw [bidegree]
+
+/-- The second component of the grid bidegree is the integer Alexander grading. -/
+@[simp]
+theorem bidegree_snd (x : GridState n) : (G.bidegree x).2 = G.alexanderℤ x :=
+  by rw [bidegree]
+
+/-- The finite set of bidegrees occupied by grid states. -/
+noncomputable def bidegreeSupport : Finset (ℤ × ℤ) :=
+  Finset.univ.image G.bidegree
+
+/-- A bidegree is occupied exactly when some grid state has that bidegree. -/
+@[simp]
+theorem mem_bidegreeSupport_iff (g : ℤ × ℤ) :
+    g ∈ G.bidegreeSupport ↔ ∃ x : GridState n, G.bidegree x = g := by
+  simp [bidegreeSupport]
+
+end OddComponentGridDiagram
 
 end TauCeti

@@ -15,10 +15,11 @@ plain independence with common marginal law.
 
 ## Main results
 
-* `MixedIIDWith.blockLaw_eq_pi_of_const`, `MixedIIDWith.aemeasurable_of_const`,
+* `MixedIIDWith.blockLaw_eq_pi_of_const`,
   `MixedIIDWith.map_eq_of_const` — what a constant mixing representative says: every injective
-  block law is the `m`-fold product of `p`, every coordinate is a.e. measurable, and every
-  coordinate has law `p`.
+  block law is the `m`-fold product of `p`, and every coordinate has law `p`.  Coordinate a.e.
+  measurability is not special to a constant representative; it comes from the general
+  `MixedIIDWith.aemeasurable` in `MixedIID/Basic.lean`.
 * `mixedIIDWith_const_iff_iIndepFun_and_map_eq` — a constant `p` is a mixing representative exactly
   when the coordinates are independent with common law `p`.
 -/
@@ -44,25 +45,12 @@ theorem MixedIIDWith.blockLaw_eq_pi_of_const {μ : Measure Ω} [IsProbabilityMea
   rw [h.blockLaw_eq_mixture k hk, Measure.bind_const, measure_univ, one_smul,
     ProbabilityMeasure.toMeasure_pi]
 
-/-- A constant mixing representative already forces the coordinates to be a.e. measurable, so no
-such hypothesis is needed alongside it: the singleton block law is the probability measure `p`,
-hence nonzero, while `Measure.map` of a non-a.e.-measurable function is `0`. -/
-theorem MixedIIDWith.aemeasurable_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ι → Ω → α} {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ι) :
-    AEMeasurable (X i) μ := by
-  have hblock :=
-    h.blockLaw_eq_pi_of_const (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
-  rw [blockLaw_def] at hblock
-  have hne : (μ.map fun ω (_ : Fin 1) => X i ω) ≠ 0 := by
-    rw [hblock]; exact IsProbabilityMeasure.ne_zero _
-  exact (measurable_pi_apply 0).comp_aemeasurable (AEMeasurable.of_map_ne_zero hne)
-
 /-- Every coordinate of a family with a constant mixing representative `p` has law `p`. -/
 theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ι → Ω → α}
     {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ι) :
     μ.map (X i) = (p : Measure α) := by
   have hone : AEMeasurable (fun ω (_ : Fin 1) => X i ω) μ :=
-    aemeasurable_pi_lambda _ fun _ => h.aemeasurable_of_const i
+    aemeasurable_pi_lambda _ fun _ => h.aemeasurable i
   have hblock :=
     h.blockLaw_eq_pi_of_const (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
   calc μ.map (X i)
@@ -78,7 +66,7 @@ injective selection the block law is a product measure, and `Measure.pi` on a fi
 exactly what independence of that finite subfamily means. -/
 theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ι → Ω → α}
     {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) : iIndepFun X μ := by
-  have hX : ∀ i, AEMeasurable (X i) μ := h.aemeasurable_of_const
+  have hX : ∀ i, AEMeasurable (X i) μ := h.aemeasurable
   rw [iIndepFun_iff_finset]
   intro s
   -- `Finset.restrict` is the coordinate restriction `fun i : s => X i`; unfold it so that the

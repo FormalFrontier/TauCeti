@@ -89,7 +89,7 @@ theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α]
   refine ⟨P, ?_⟩
   calc ρ = pathLaw ρ (fun n (x : ℕ → α) => x n) := hpath.symm
     _ = (ρ.map ν).bind fun Q => Measure.infinitePi fun _ : ℕ => (Q : Measure α) :=
-        pathLaw_eq_bind_infinitePi_of_mixedIIDWith (fun n => (hcoord n).aemeasurable) hmix
+        pathLaw_eq_bind_infinitePi_of_mixedIIDWith hmix
     _ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
         rw [hP, Measure.dirac_bind TauCeti.MeasureTheory.measurable_infinitePi_const]
 

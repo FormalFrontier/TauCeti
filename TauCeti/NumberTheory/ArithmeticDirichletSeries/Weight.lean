@@ -808,6 +808,13 @@ theorem zeroExtend_toIdealArithmeticFunction (χ : UnitaryIdealWeight K) :
     χ.toIdealArithmeticFunction.zeroExtend = ⇑χ.1 :=
   χ.1.zeroExtend_toIdealArithmeticFunction
 
+/-- The trivial unitary weight restricts to the constant-one ideal arithmetic function. -/
+@[simp]
+theorem toIdealArithmeticFunction_one :
+    (1 : UnitaryIdealWeight K).toIdealArithmeticFunction = 1 := by
+  rw [toIdealArithmeticFunction, val_one,
+    MultiplicativeIdealWeight.toIdealArithmeticFunction_one]
+
 /-- **A unitary weight is determined by its ideal arithmetic function.** -/
 theorem toIdealArithmeticFunction_injective :
     Function.Injective

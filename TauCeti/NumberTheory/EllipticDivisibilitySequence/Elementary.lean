@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.GroupWithZero.NonZeroDivisors
 public import Mathlib.NumberTheory.EllipticDivisibilitySequence
+import Mathlib.Tactic.LinearCombination
 
 /-!
 # Vanishing at zero and oddness of an elliptic sequence

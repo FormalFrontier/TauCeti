@@ -42,6 +42,7 @@ on:
       - 'scripts/loc_roadmap_graph.py'
       - 'scripts/participant_graph.py'
       - 'scripts/pr_stats_graphs.py'
+      - 'scripts/pipeline_health.py'
       - '.github/workflows/pages.yml'
   schedule:
     - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs
@@ -155,7 +156,26 @@ jobs:
           python3 scripts/pr_stats_graphs.py \
             --repo "${{ github.repository }}" \
             --out-dir web/static_files \
+            --dump-data "$RUNNER_TEMP/pr-snapshot.json" \
           || echo "::warning::PR statistics generation failed; keeping the committed fallback assets"
+
+      # Pipeline health reuses the snapshot the charts just fetched rather than
+      # walking every PR timeline a second time: that walk is thousands of
+      # requests and the dominant cost of this job. Publishing the result means
+      # anything asking "where is the queue stuck" reads a file instead of
+      # repeating the fetch.
+      - name: Derive pipeline health from the same snapshot
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -f "$RUNNER_TEMP/pr-snapshot.json" ]; then
+            python3 scripts/pipeline_health.py \
+              --data "$RUNNER_TEMP/pr-snapshot.json" \
+              --out web/static_files/pipeline-health.json \
+              --json > /dev/null \
+            || echo "::warning::pipeline health generation failed"
+          else
+            echo "::warning::no PR snapshot; skipping pipeline health"
+          fi
 
       # Pinned leanprover/elan release, verified by SHA-256, rather than whatever the installer
       # URL serves at the moment of the request; this elan chooses the toolchain that builds the
