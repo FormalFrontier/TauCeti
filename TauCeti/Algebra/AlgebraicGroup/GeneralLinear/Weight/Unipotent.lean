@@ -5,7 +5,10 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
+public import Mathlib.LinearAlgebra.Matrix.Block
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # Weight-unipotent subgroup schemes of the general linear group
@@ -34,7 +37,7 @@ inverse of a block-unitriangular matrix is block unitriangular.
 * G. R. Kempf, *Instability in invariant theory*, Annals of Mathematics 108 (1978), §2.
 * J. S. Milne, *Algebraic Groups* (2017), Chapter 13.
 
-This advances the dynamic-parabolic route in Layer 7, "Structure theory", of the
+This advances the dynamic-unipotent route in Layer 7, "Structure theory", of the
 ReductiveGroups roadmap by constructing the scheme-level unipotent subgroup attached to a weight
 cocharacter.
 -/
@@ -146,6 +149,7 @@ private theorem comul_sub_one_apply_mem (w : Fin N → ℤ) {i j : Fin N}
     Ideal.span (weightUnipotentRelationSet R w)
   let q : coordinateHopfAlgebra R N →ₐ[R] (coordinateHopfAlgebra R N ⧸ J) :=
     Ideal.Quotient.mkₐ R J
+  -- Fold the repeated defining span to `J`; this is only the local abbreviation above.
   change Coalgebra.comul (R := R)
       ((genericMatrix R N) i j -
         (1 : Matrix (Fin N) (Fin N) (coordinateHopfAlgebra R N)) i j) ∈
@@ -240,6 +244,7 @@ private theorem antipode_sub_one_apply_mem (w : Fin N → ℤ) {i j : Fin N}
     apply Matrix.inv_eq_left_inv
     rw [← Matrix.map_mul, Matrix.nonsing_inv_mul _ (isUnit_det_genericMatrix R N)]
     simp
+  -- Fold the repeated defining span to `J`; this is only the local abbreviation above.
   change HopfAlgebra.antipode R
       ((genericMatrix R N) i j -
         (1 : Matrix (Fin N) (Fin N) (coordinateHopfAlgebra R N)) i j) ∈ J
