@@ -127,6 +127,8 @@ theorem genWeightSpace_weylGroup_smul_ne_bot [LieModule.IsIrreducible K L M]
     rw [wordProd_cons, mul_smul, RootPairing.weylGroup.ofIdx_smul]
     exact genWeightSpace_rootSystem_reflection_ne_bot hv hlam i.2 ih
 
+-- Not `@[simp]`: `b`, `lam`, and `v` cannot be inferred from the rewrite target, so `simpNF`
+-- rejects the rule as one that will never apply.
 /-- A linear form is not a weight of an irreducible highest weight module of dominant integral
 weight exactly when any Weyl translate is not a weight. -/
 theorem genWeightSpace_weylGroup_smul_eq_bot_iff [LieModule.IsIrreducible K L M]
