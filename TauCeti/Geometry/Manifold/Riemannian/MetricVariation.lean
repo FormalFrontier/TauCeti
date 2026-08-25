@@ -33,8 +33,9 @@ file into lower semicontinuity of `Manifold.pathELength` itself.
   path length of a `C¹` curve.
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.eVariationOn_le_pathELength`: the piecewise-`C¹`
   version.
-* `TauCeti.Manifold.eVariationOn_le_liminf_pathELength`: the variation of a pointwise limit is
-  bounded by the `liminf` of the approximating Riemannian lengths.
+* `TauCeti.Manifold.eVariationOn_le_liminf_pathELength_of_eventually_le`: an eventual
+  variation-to-length bound passes to a pointwise limit and a `liminf`.
+* `TauCeti.Manifold.eVariationOn_le_liminf_pathELength`: the `C¹` specialization.
 * `TauCeti.Manifold.eVariationOn_le_liminf_pathELength_of_tendstoUniformlyOn`: the uniform-limit
   specialization used by the Hopf--Rinow roadmap.
 
@@ -117,21 +118,45 @@ theorem IsPiecewiseContMDiffOn.eVariationOn_le_pathELength
   rw [IsRiemannianManifold.out (I := I)]
   exact hγ.riemannianEDist_le_pathELength_of_subset has hst htb
 
-/-- The metric variation of a pointwise limit is bounded by the `liminf` of the Riemannian path
-lengths of eventually `C¹` approximating curves. Pointwise convergence is enough because metric
-variation is the supremum of finite sums, each of which reads only finitely many parameter values.
+omit [IsRiemannianManifold I M] in
+/-- An eventual bound of metric variation by Riemannian path length passes to pointwise limits and
+`liminf`s. Pointwise convergence is enough because metric variation is the supremum of finite
+sums, each of which reads only finitely many parameter values.
 
 The stronger-looking conclusion with `pathELength I γ a b` on the left requires the converse
 comparison between Riemannian path length and metric variation. -/
-theorem eVariationOn_le_liminf_pathELength {ι : Type*} {l : Filter ι} {γi : ι → ℝ → M}
-    (hγi : ∀ᶠ i in l, CMDiff[Icc a b] 1 (γi i))
+theorem eVariationOn_le_liminf_pathELength_of_eventually_le
+    {ι : Type*} {l : Filter ι} {γi : ι → ℝ → M}
+    (hγi : ∀ᶠ i in l,
+      eVariationOn (γi i) (Icc a b) ≤ Manifold.pathELength I (γi i) a b)
     (hγ : ∀ t ∈ Icc a b, Tendsto (fun i ↦ γi i t) l (nhds (γ t))) :
     eVariationOn γ (Icc a b) ≤
       liminf (fun i ↦ Manifold.pathELength I (γi i) a b) l := by
   rw [le_liminf_iff]
   intro v hv
   filter_upwards [eVariationOn.lowerSemicontinuous_aux hγ hv, hγi] with i hi hγi
-  exact hi.trans_le (eVariationOn_le_pathELength hγi)
+  exact hi.trans_le hγi
+
+/-- The metric variation of a pointwise limit is bounded by the `liminf` of the Riemannian path
+lengths of eventually `C¹` approximating curves. -/
+theorem eVariationOn_le_liminf_pathELength {ι : Type*} {l : Filter ι} {γi : ι → ℝ → M}
+    (hγi : ∀ᶠ i in l, CMDiff[Icc a b] 1 (γi i))
+    (hγ : ∀ t ∈ Icc a b, Tendsto (fun i ↦ γi i t) l (nhds (γ t))) :
+    eVariationOn γ (Icc a b) ≤
+      liminf (fun i ↦ Manifold.pathELength I (γi i) a b) l := by
+  exact eVariationOn_le_liminf_pathELength_of_eventually_le
+    (hγi.mono fun _ hi ↦ eVariationOn_le_pathELength hi) hγ
+
+/-- The metric variation of a pointwise limit is bounded by the `liminf` of the Riemannian path
+lengths of eventually piecewise-`C¹` approximating curves. -/
+theorem eVariationOn_le_liminf_pathELength_of_eventually_isPiecewiseContMDiffOn
+    {ι : Type*} {l : Filter ι} {γi : ι → ℝ → M}
+    (hγi : ∀ᶠ i in l, IsPiecewiseContMDiffOn I 1 (γi i) a b)
+    (hγ : ∀ t ∈ Icc a b, Tendsto (fun i ↦ γi i t) l (nhds (γ t))) :
+    eVariationOn γ (Icc a b) ≤
+      liminf (fun i ↦ Manifold.pathELength I (γi i) a b) l := by
+  exact eVariationOn_le_liminf_pathELength_of_eventually_le
+    (hγi.mono fun _ hi ↦ hi.eVariationOn_le_pathELength) hγ
 
 /-- Uniform convergence on `[a, b]` gives the metric-variation lower bound on the `liminf` of
 Riemannian path lengths of eventually `C¹` curves. This is the convergence mode in the Hopf--Rinow
@@ -143,5 +168,17 @@ theorem eVariationOn_le_liminf_pathELength_of_tendstoUniformlyOn
     eVariationOn γ (Icc a b) ≤
       liminf (fun i ↦ Manifold.pathELength I (γi i) a b) l :=
   eVariationOn_le_liminf_pathELength hγi fun _ ht ↦ hγ.tendsto_at ht
+
+/-- Uniform convergence on `[a, b]` gives the metric-variation lower bound on the `liminf` of
+Riemannian path lengths of eventually piecewise-`C¹` curves. -/
+theorem
+    eVariationOn_le_liminf_pathELength_of_eventually_isPiecewiseContMDiffOn_of_tendstoUniformlyOn
+    {ι : Type*} {l : Filter ι} {γi : ι → ℝ → M}
+    (hγi : ∀ᶠ i in l, IsPiecewiseContMDiffOn I 1 (γi i) a b)
+    (hγ : TendstoUniformlyOn γi γ l (Icc a b)) :
+    eVariationOn γ (Icc a b) ≤
+      liminf (fun i ↦ Manifold.pathELength I (γi i) a b) l :=
+  eVariationOn_le_liminf_pathELength_of_eventually_isPiecewiseContMDiffOn hγi
+    fun _ ht ↦ hγ.tendsto_at ht
 
 end TauCeti.Manifold
