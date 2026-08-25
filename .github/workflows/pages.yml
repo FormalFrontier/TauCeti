@@ -240,16 +240,10 @@ jobs:
             echo "build=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # TauCeti's own oleans, from the same public artifact cache ci.yml publishes to on
-      # every main push and pr-build.yml and ci.yml both restore from. Without this the docs
-      # job recompiles the entire library from source: a successful run was building 6,842
-      # TauCeti modules, and the doc-gen4 step it feeds was 82% of the whole workflow. The
-      # cache holds exactly those artifacts and this job was the only one not using it.
-      #
-      # Restored into the root project, not docbuild. `packagesDir` is why docbuild shares
-      # the parent's *dependencies* (Mathlib), but it is not why TauCeti's own build products
-      # live in ../.lake: a path dependency builds in its own directory, which for `path = "../"`
-      # is the repository root. That is the tree these artifacts belong to.
+      # The docs build recompiled all 6,842 TauCeti modules from source, 82% of this
+      # workflow's step time. ci.yml publishes their oleans, and ci.yml and pr-build.yml
+      # already restore them. Restore into the root project rather than docbuild:
+      # a path dependency builds in its own directory.
       - name: Configure the Lake artifact cache (no-op unless the public endpoints are set)
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
@@ -305,8 +299,7 @@ jobs:
         env:
           DOCGEN_LOCAL_MODULE_ROOTS: TauCeti
           DOCGEN_DEPS_DOCS_URL: https://leanprover-community.github.io/mathlib4_docs
-          # Restore only from the local $LAKE_CACHE_DIR the step above populated; the build
-          # itself never reaches a remote cache service. Same rule as ci.yml's build.
+          # The restore above placed what this needs, so do not reach for a remote cache.
           LAKE_NO_CACHE: "true"
         run: |
           rm -rf .lake/build/doc .lake/build/doc-data
@@ -358,10 +351,8 @@ jobs:
       - name: Build examples project (checks the showcased TauCeti theorems)
         working-directory: web/examples
         env:
-          # The artifact-cache settings above are written to GITHUB_ENV and so reach every
-          # later step, this one included. It is a different project against a different
-          # cache directory, so give it the same rule as the docs build rather than letting
-          # it reach a remote service that has nothing for it.
+          # GITHUB_ENV carries the cache settings into every later step, and this is a
+          # different project.
           LAKE_NO_CACHE: "true"
         run: lake build
 
