@@ -211,7 +211,6 @@ theorem range_parameterProj :
 
 /-- A parameter direction lies in the range of the parameter projection exactly when its
 infinitesimal effect on the equation is achievable by moving the solution. -/
-@[simp]
 theorem mem_range_parameterProj_iff {l : Λ} :
     l ∈ (parameterProj D₁ D₂).range ↔ D₂ l ∈ D₁.range := by
   rw [range_parameterProj]; rfl
