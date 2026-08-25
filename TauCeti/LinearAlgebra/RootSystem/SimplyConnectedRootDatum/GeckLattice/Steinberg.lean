@@ -61,8 +61,9 @@ data and are not repeated.
 
 ## Main results
 
-* `TauCeti.DynkinType.val_geckElementaryGraphAut_geckRootSubgroupParam` and
-  `TauCeti.DynkinType.val_geckElementarySteinberg_geckRootSubgroupParam`: the two displayed pinning
+* `TauCeti.DynkinType.val_geckElementaryGraphAut_geckRootSubgroupParam`,
+  `TauCeti.DynkinType.val_geckElementaryFrobenius_geckRootSubgroupParam`, and
+  `TauCeti.DynkinType.val_geckElementarySteinberg_geckRootSubgroupParam`: the three displayed
   equations on the represented root subgroups.
 * `TauCeti.DynkinType.geckElementaryGraphAut_pow_eq_one`: a node permutation of finite order induces
   a graph automorphism with the same order relation.
@@ -125,7 +126,8 @@ It moves the represented root subgroup numbered `i` to the one numbered
 `TauCeti.DynkinType.val_geckElementaryGraphAut_geckRootSubgroupParam`. It is not obtained from an
 isomorphism theorem for pinned groups and no uniqueness is claimed: the coordinate permutation is
 explicit data read off the diagram. -/
-abbrev geckElementaryGraphAut (hsigma : sigma ∈ t.diagramSymmetry) (A : CommAlgCat.{v} ℤ) :
+noncomputable def geckElementaryGraphAut (hsigma : sigma ∈ t.diagramSymmetry)
+    (A : CommAlgCat.{v} ℤ) :
     MulAut (t.geckElementarySubgroup ht A) :=
   kostantElementaryNumberedSymmetryAut
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
@@ -141,13 +143,14 @@ abbrev geckElementaryGraphAut (hsigma : sigma ∈ t.diagramSymmetry) (A : CommAl
 numbered `i` to the one numbered `diagramRootGeneratorPerm sigma i`, leaving the parameter
 untouched. The membership witness is an argument because the statement is about the underlying
 automorphism of the scalar extension, where proof irrelevance makes the choice immaterial. -/
+@[simp]
 theorem val_geckElementaryGraphAut_geckRootSubgroupParam (hsigma : sigma ∈ t.diagramSymmetry)
     (A : CommAlgCat.{v} ℤ) (i : Fin t.rank ⊕ Fin t.rank) (u : Multiplicative A)
     (hu : t.geckRootSubgroupParam ht i A u ∈ t.geckElementarySubgroup ht A) :
     (t.geckElementaryGraphAut ht hsigma A ⟨_, hu⟩ :
         LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (t.geckCoordinateLattice ht).toAddSubgroup)) =
-      t.geckRootSubgroupParam ht (diagramRootGeneratorPerm sigma i) A u :=
-  congrArg Subtype.val
+      t.geckRootSubgroupParam ht (diagramRootGeneratorPerm sigma i) A u := by
+  simpa only [geckElementaryGraphAut] using congrArg Subtype.val
     (kostantElementaryNumberedSymmetryAut_kostantRootSubgroupParam _ _ _ _ _ _ _ _ _ _ _ A i u)
 
 /-- **A node permutation of finite order induces a graph automorphism with the same order
@@ -156,11 +159,12 @@ and of `γ ^ 3 = 1` for the triality of `D₄`; the abstract construction asks f
 coordinate equivalence, which the pinned lattice supplies. -/
 theorem geckElementaryGraphAut_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry)
     (A : CommAlgCat.{v} ℤ) {n : ℕ} (hn : sigma ^ n = 1) :
-    t.geckElementaryGraphAut ht hsigma A ^ n = 1 :=
-  kostantElementaryNumberedSymmetryAut_pow_eq_one
-    _ _ _ _ _ _ _ _ _ _ _ A fun v => by
-      rw [t.geckDiagramModuleEquiv_pow_eq_one ht hsigma hn]
-      rfl
+    t.geckElementaryGraphAut ht hsigma A ^ n = 1 := by
+  simpa only [geckElementaryGraphAut] using
+    kostantElementaryNumberedSymmetryAut_pow_eq_one
+      _ _ _ _ _ _ _ _ _ _ _ A fun v => by
+        rw [t.geckDiagramModuleEquiv_pow_eq_one ht hsigma hn]
+        rfl
 
 /-- **The identity node permutation induces the identity automorphism.** So the nine untwisted
 families are the trivial case of the same construction, not a second one. -/
@@ -175,13 +179,27 @@ theorem geckElementaryGraphAut_one (A : CommAlgCat.{v} ℤ) :
 
 /-- The `p ^ n`-power Frobenius endomorphism of the pinned elementary Chevalley group: it raises
 the parameter of every represented root subgroup to the `p ^ n`-th power. -/
-abbrev geckElementaryFrobenius (p n : ℕ) (A : CommAlgCat.{v} ℤ) [ExpChar A p] :
+noncomputable def geckElementaryFrobenius (p n : ℕ) (A : CommAlgCat.{v} ℤ) [ExpChar A p] :
     t.geckElementarySubgroup ht A →* t.geckElementarySubgroup ht A :=
   kostantElementaryFrobenius
     (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
     (t.geckCoordinateLattice ht).toAddSubgroup
     (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht) p n A
+
+/-- **The defining equation of Frobenius on the pinned root subgroups**: it fixes the root
+subgroup numbered `i` and raises its parameter to the `p ^ n`-th power. -/
+@[simp]
+theorem val_geckElementaryFrobenius_geckRootSubgroupParam (p n : ℕ)
+    (A : CommAlgCat.{v} ℤ) [ExpChar A p] (i : Fin t.rank ⊕ Fin t.rank)
+    (u : Multiplicative A)
+    (hu : t.geckRootSubgroupParam ht i A u ∈ t.geckElementarySubgroup ht A) :
+    (t.geckElementaryFrobenius ht p n A ⟨_, hu⟩ :
+        LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (t.geckCoordinateLattice ht).toAddSubgroup)) =
+      t.geckRootSubgroupParam ht i A
+        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ n)) := by
+  simpa only [geckElementaryFrobenius] using
+    (kostantElementaryFrobenius_kostantRootSubgroupParam _ _ _ _ _ _ p n A i u)
 
 /-- **The Steinberg endomorphism of the pinned elementary Chevalley group** attached to a symmetry
 of the Bourbaki-numbered Dynkin diagram: the graph automorphism composed with the `p ^ n`-power
@@ -192,7 +210,7 @@ Its defining equation on the represented root subgroups,
 `TauCeti.DynkinType.val_geckElementarySteinberg_geckRootSubgroupParam`. The Suzuki--Ree families
 are not of this form: their Steinberg maps are odd powers of an exceptional isogeny and consume no
 diagram permutation. -/
-abbrev geckElementarySteinberg (hsigma : sigma ∈ t.diagramSymmetry) (p n : ℕ)
+noncomputable def geckElementarySteinberg (hsigma : sigma ∈ t.diagramSymmetry) (p n : ℕ)
     (A : CommAlgCat.{v} ℤ) [ExpChar A p] :
     t.geckElementarySubgroup ht A →* t.geckElementarySubgroup ht A :=
   kostantElementarySteinberg
@@ -210,6 +228,7 @@ the root subgroup numbered `i` to the one numbered `diagramRootGeneratorPerm sig
 its parameter to the `q`-th power, `q = p ^ n`. Together with
 `TauCeti.DynkinType.val_geckElementaryGraphAut_geckRootSubgroupParam` this is what pins the
 construction against the Bourbaki numbering of the diagram. -/
+@[simp]
 theorem val_geckElementarySteinberg_geckRootSubgroupParam (hsigma : sigma ∈ t.diagramSymmetry)
     (p n : ℕ) (A : CommAlgCat.{v} ℤ) [ExpChar A p] (i : Fin t.rank ⊕ Fin t.rank)
     (u : Multiplicative A)
@@ -217,8 +236,8 @@ theorem val_geckElementarySteinberg_geckRootSubgroupParam (hsigma : sigma ∈ t.
     (t.geckElementarySteinberg ht hsigma p n A ⟨_, hu⟩ :
         LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (t.geckCoordinateLattice ht).toAddSubgroup)) =
       t.geckRootSubgroupParam ht (diagramRootGeneratorPerm sigma i) A
-        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ n)) :=
-  congrArg Subtype.val
+        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ n)) := by
+  simpa only [geckElementarySteinberg] using congrArg Subtype.val
     (kostantElementarySteinberg_kostantRootSubgroupParam _ _ _ _ _ _ _ _ _ _ _ p n A i u)
 
 /-- **At exponent zero the Steinberg endomorphism is the graph automorphism itself.** The Frobenius
