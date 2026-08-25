@@ -70,7 +70,7 @@ variable {n : ℕ} {x y : GridState n} (R : GridRectangleBetween x y) (S : GridR
 /-- The initial side column of a returning rectangle is a side column of the outgoing one: away
 from the two side columns of `R` the states `x` and `y` agree, and there `S` could not exchange
 two distinct rows. -/
-theorem left_eq_left_or_left_eq_right : S.left = R.left ∨ S.left = R.right := by
+private theorem left_eq_left_or_left_eq_right : S.left = R.left ∨ S.left = R.right := by
   by_cases hl : S.left = R.left
   · exact Or.inl hl
   by_cases hr : S.left = R.right
@@ -81,7 +81,7 @@ theorem left_eq_left_or_left_eq_right : S.left = R.left ∨ S.left = R.right := 
   exact absurd (y.toPerm.injective h) S.left_ne_right
 
 /-- The terminal side column of a returning rectangle is a side column of the outgoing one. -/
-theorem right_eq_left_or_right_eq_right : S.right = R.left ∨ S.right = R.right := by
+private theorem right_eq_left_or_right_eq_right : S.right = R.left ∨ S.right = R.right := by
   by_cases hl : S.right = R.left
   · exact Or.inl hl
   by_cases hr : S.right = R.right
@@ -93,14 +93,14 @@ theorem right_eq_left_or_right_eq_right : S.right = R.left ∨ S.right = R.right
 
 /-- If a returning rectangle starts on the same side column as the outgoing one, then it also
 ends on the same side column. -/
-theorem right_eq_right_of_left_eq_left (h : S.left = R.left) : S.right = R.right := by
+private theorem right_eq_right_of_left_eq_left (h : S.left = R.left) : S.right = R.right := by
   rcases R.right_eq_left_or_right_eq_right S with h' | h'
   · exact absurd (h.trans h'.symm) S.left_ne_right
   · exact h'
 
 /-- If a returning rectangle starts on the terminal side column of the outgoing one, then it ends
 on the initial one. -/
-theorem right_eq_left_of_left_eq_right (h : S.left = R.right) : S.right = R.left := by
+private theorem right_eq_left_of_left_eq_right (h : S.left = R.right) : S.right = R.left := by
   rcases R.right_eq_left_or_right_eq_right S with h' | h'
   · exact h'
   · exact absurd (h.trans h'.symm) S.left_ne_right
@@ -114,20 +114,20 @@ theorem sideColumns_eq_sideColumns : S.sideColumns = R.sideColumns := by
 
 /-- A returning rectangle starting on the initial side column starts on the terminal side row:
 its two rows are those of the outgoing rectangle, in the opposite order. -/
-theorem bottom_eq_top_of_left_eq_left (h : S.left = R.left) : S.bottom = R.top := by
+private theorem bottom_eq_top_of_left_eq_left (h : S.left = R.left) : S.bottom = R.top := by
   rw [bottom_def, h, R.map_left, top_def]
 
 /-- A returning rectangle starting on the initial side column ends on the initial side row. -/
-theorem top_eq_bottom_of_left_eq_left (h : S.left = R.left) : S.top = R.bottom := by
+private theorem top_eq_bottom_of_left_eq_left (h : S.left = R.left) : S.top = R.bottom := by
   rw [top_def, R.right_eq_right_of_left_eq_left S h, R.map_right, bottom_def]
 
 /-- A returning rectangle starting on the terminal side column has the same two side rows, in the
 same order, as the outgoing one. -/
-theorem bottom_eq_bottom_of_left_eq_right (h : S.left = R.right) : S.bottom = R.bottom := by
+private theorem bottom_eq_bottom_of_left_eq_right (h : S.left = R.right) : S.bottom = R.bottom := by
   rw [bottom_def, h, R.map_right, bottom_def]
 
 /-- A returning rectangle starting on the terminal side column ends on the terminal side row. -/
-theorem top_eq_top_of_left_eq_right (h : S.left = R.right) : S.top = R.top := by
+private theorem top_eq_top_of_left_eq_right (h : S.left = R.right) : S.top = R.top := by
   rw [top_def, R.right_eq_left_of_left_eq_right S h, R.map_left, top_def]
 
 /-- A returning pair whose two rectangles start on the same side column covers a full vertical

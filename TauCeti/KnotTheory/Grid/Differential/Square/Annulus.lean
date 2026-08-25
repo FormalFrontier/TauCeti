@@ -117,7 +117,7 @@ theorem notMem_support_unblockedDifferential_sq_single (x : GridState n) :
 
 /-- The support of the unblocked differential contains no two-step return: if `y` occurs in
 `∂⁻ x`, then `x` does not occur in `∂⁻ y`. -/
-theorem notMem_support_unblockedDifferentialOnGenerator {x y : GridState n}
+theorem notMem_support_unblockedDifferentialOnGenerator_of_mem_support {x y : GridState n}
     (h : y ∈ (G.unblockedDifferentialOnGenerator R x).support) :
     x ∉ (G.unblockedDifferentialOnGenerator R y).support := by
   rw [Finsupp.mem_support_iff, unblockedDifferentialOnGenerator_apply] at h
