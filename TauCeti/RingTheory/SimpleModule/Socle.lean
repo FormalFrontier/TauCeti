@@ -53,14 +53,9 @@ theorem socle_le {N : Submodule R M} (h : ∀ m : Submodule R M, IsSimpleModule 
     socle R M ≤ N :=
   sSup_le h
 
-/-- The socle, written as the supremum of the simple submodules of `M`. -/
-theorem socle_eq_iSup :
-    socle R M = ⨆ m ∈ {m : Submodule R M | IsSimpleModule R m}, m :=
-  sSup_eq_iSup
-
 /-- **The socle is semisimple.** -/
 instance isSemisimpleModule_socle : IsSemisimpleModule R (socle R M) := by
-  rw [socle_eq_iSup]
+  rw [socle, sSup_eq_iSup]
   exact isSemisimpleModule_biSup_of_isSemisimpleModule_submodule fun m hm =>
     haveI : IsSimpleModule R m := hm
     inferInstance

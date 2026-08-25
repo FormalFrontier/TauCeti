@@ -347,14 +347,13 @@ noncomputable def zigzagTopEquiv (hns : ∀ i : V, ∃ j, G.Adj i j) :
 theorem zigzagTopEquiv_mk (hns : ∀ i : V, ∃ j, G.Adj i j)
     (x : nonisolatedZigzagQuotient k G) :
     zigzagTopEquiv k hns (Ideal.Quotient.mk _ x) = zigzagTrivialCoeff k G x := by
-  let f := zigzagTrivialCoeff k G
-  have hf : Function.Surjective f := zigzagTrivialCoeff_surjective k G
-  have hker : Ring.jacobson (nonisolatedZigzagQuotient k G) =
-      RingHom.ker f := jacobson_nonisolatedZigzagQuotient_eq_ker hns
-  change ((Ideal.quotientEquivAlgOfEq k hker).trans
-    (Ideal.quotientKerAlgEquivOfSurjective hf)) (Ideal.Quotient.mk _ x) = f x
-  rw [AlgEquiv.trans_apply, Ideal.quotientEquivAlgOfEq_mk,
-    Ideal.quotientKerAlgEquivOfSurjective_mk (f := f) hf x]
+  unfold zigzagTopEquiv
+  exact (congrArg
+    (Ideal.quotientKerAlgEquivOfSurjective (zigzagTrivialCoeff_surjective k G))
+    (Ideal.quotientEquivAlgOfEq_mk k
+      (jacobson_nonisolatedZigzagQuotient_eq_ker hns) x)).trans
+    (Ideal.quotientKerAlgEquivOfSurjective_mk
+      (zigzagTrivialCoeff_surjective k G) x)
 
 /-- **The top of a zigzag algebra is semisimple.** -/
 theorem isSemisimpleRing_quotient_jacobson_nonisolatedZigzagQuotient
