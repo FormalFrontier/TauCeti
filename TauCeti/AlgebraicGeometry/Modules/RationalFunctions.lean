@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.AlgebraicGeometry.Modules.GlobalSections
 public import Mathlib.AlgebraicGeometry.FunctionField
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 public import Mathlib.AlgebraicGeometry.Stalk
@@ -48,12 +49,21 @@ condition and the `𝒪_X`-module structure automatic.
   the restriction maps between nonempty open subsets are isomorphisms, and
   `TauCeti.AlgebraicGeometry.Scheme.subsingleton_rationalFunctions`, the sections over an empty
   open subset vanish;
+* `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsMul`, multiplication by a rational function
+  as an endomorphism of `𝒦_X`, obtained by pushing forward multiplication by the corresponding
+  global function on `Spec K(X)`; `rationalFunctionsEquiv_rationalFunctionsMul` identifies it
+  with multiplication on sections, and `rationalFunctionsMul_mul` and `rationalFunctionsMul_one`
+  make it multiplicative, so that multiplying by a unit is an automorphism of `𝒦_X`;
 * the module morphism `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions` is
   `X.germToFunctionField` on sections
   (`TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv_toRationalFunctions_app`), is
   injective on sections over every open subset of an integral scheme
   (`TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions_app_injective`), and is therefore a
   monomorphism.
+
+The sheaf `𝒪_X(D)` attached to a Weil divisor is the submodule of `𝒦_X` cut out by an order
+bound; it is built in `TauCeti/AlgebraicGeometry/WeilDivisor/Scheme/Sheaf.lean`, and the
+multiplication endomorphisms above are what make it depend only on the divisor class of `D`.
 
 The Cartier divisors of `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A ("Divisors on a
 curve: Weil divisors `⊕_x ℤ` and Cartier divisors; the dictionaries `Cartier ≃ line bundles`
@@ -90,6 +100,10 @@ def fromSpecFunctionField : Spec X.functionField ⟶ X :=
   X.fromSpecStalk (genericPoint X)
 
 variable {X}
+
+/-- The whole space is a nonempty open subset of an irreducible scheme. -/
+instance {X : Scheme.{u}} [IrreducibleSpace X] : Nonempty ((⊤ : X.Opens) : Type u) :=
+  ⟨⟨genericPoint X, trivial⟩⟩
 
 /-- The generic point of an irreducible scheme lies in every nonempty open subset. -/
 theorem genericPoint_mem (U : X.Opens) [Nonempty U] : genericPoint X ∈ U :=
@@ -337,6 +351,72 @@ theorem rationalFunctionsEquiv_toRationalFunctions_app (U : X.Opens) [Nonempty U
     rationalFunctionsEquiv U (Scheme.Modules.Hom.app (toRationalFunctions X) U r) =
       X.germToFunctionField U r := by
   exact ConcreteCategory.congr_hom (app_comp_functionFieldSectionsIso U) r
+
+section Mul
+
+variable (X)
+
+/-- Multiplication by a rational function, as an endomorphism of `𝒦_X`.
+
+It is the pushforward along `Spec K(X) ⟶ X` of multiplication by the corresponding global
+function on `Spec K(X)`, so no sheaf-theoretic gluing is needed to build it. -/
+def rationalFunctionsMul (f : X.functionField) :
+    rationalFunctions X ⟶ rationalFunctions X :=
+  (Scheme.Modules.pushforward (fromSpecFunctionField X)).map
+    (Scheme.Modules.globalSectionsSmul (SheafOfModules.unit _)
+      ((rationalFunctionsRingEquiv (X := X) ⊤).symm f))
+
+variable {X}
+
+/-- Multiplication by `f` really is multiplication by `f` on sections. -/
+@[simp]
+theorem rationalFunctionsEquiv_rationalFunctionsMul (f : X.functionField) (U : X.Opens)
+    [Nonempty U] (s : Γ(rationalFunctions X, U)) :
+    rationalFunctionsEquiv U (Scheme.Modules.Hom.app (rationalFunctionsMul X f) U s) =
+      f * rationalFunctionsEquiv U s := by
+  -- The pushforward of a scalar multiplication acts on sections over `U` as the scalar
+  -- multiplication over the preimage of `U`, which is multiplication in the ring of sections.
+  have hval : rationalFunctionsSectionsEquiv X U
+      (Scheme.Modules.Hom.app (rationalFunctionsMul X f) U s) =
+      (rationalFunctionsRing X).presheaf.map (homOfLE le_top).op
+          (rationalFunctionsSectionsEquiv X ⊤ ((rationalFunctionsRingEquiv (X := X) ⊤).symm f)) *
+        rationalFunctionsSectionsEquiv X U s :=
+    congrArg (rationalFunctionsSectionsEquiv X U)
+      (ConcreteCategory.congr_hom (Scheme.Modules.globalSectionsSmul_app
+        (SheafOfModules.unit (Spec X.functionField).ringCatSheaf)
+        ((rationalFunctionsRingEquiv (X := X) ⊤).symm f) (fromSpecFunctionField X ⁻¹ᵁ U)) s)
+  rw [rationalFunctionsEquiv_apply, hval, map_mul, rationalFunctionsRingEquiv_map,
+    ← rationalFunctionsEquiv_apply]
+  congr 1
+  exact (rationalFunctionsRingEquiv (X := X) ⊤).apply_symm_apply f
+
+/-- Multiplication by a product is the composite of the two multiplications. -/
+theorem rationalFunctionsMul_mul (f g : X.functionField) :
+    rationalFunctionsMul X (f * g) = rationalFunctionsMul X g ≫ rationalFunctionsMul X f := by
+  refine Scheme.Modules.hom_ext _ _ fun U ↦ ?_
+  rcases (U : Set X).eq_empty_or_nonempty with hU | hU
+  · have := subsingleton_rationalFunctions U (SetLike.ext' hU)
+    ext x
+    exact Subsingleton.elim _ _
+  · have : Nonempty U := by simpa using hU
+    ext x
+    refine (rationalFunctionsEquiv U).injective ?_
+    simp [Scheme.Modules.Hom.comp_app, mul_assoc]
+
+/-- Multiplication by `1` is the identity. -/
+@[simp]
+theorem rationalFunctionsMul_one : rationalFunctionsMul X 1 = 𝟙 _ := by
+  refine Scheme.Modules.hom_ext _ _ fun U ↦ ?_
+  rcases (U : Set X).eq_empty_or_nonempty with hU | hU
+  · have := subsingleton_rationalFunctions U (SetLike.ext' hU)
+    ext x
+    exact Subsingleton.elim _ _
+  · have : Nonempty U := by simpa using hU
+    ext x
+    refine (rationalFunctionsEquiv U).injective ?_
+    simp
+
+end Mul
 
 variable [IsIntegral X]
 
