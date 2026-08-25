@@ -104,11 +104,26 @@ using dual numbers precisely on singleton components. -/
 noncomputable def zigzagAlgebra : AlgCat k :=
   AlgCat.of k (∀ C : G.ConnectedComponent, zigzagComponentAlgebra k G C)
 
+/-- Construct an element of the public zigzag algebra from one element in each connected-component
+factor. -/
+noncomputable def zigzagAlgebraMk
+    (x : ∀ C : G.ConnectedComponent, zigzagComponentAlgebra k G C) : zigzagAlgebra k G := by
+  unfold zigzagAlgebra
+  exact x
+
 /-- Projection from the public zigzag algebra to the factor indexed by a connected component. -/
 noncomputable def zigzagComponentProjection (C : G.ConnectedComponent) :
     zigzagAlgebra k G →ₐ[k] zigzagComponentAlgebra k G C := by
   unfold zigzagAlgebra
   exact Pi.evalAlgHom k (fun C : G.ConnectedComponent ↦ zigzagComponentAlgebra k G C) C
+
+/-- Projecting a componentwise-constructed element recovers the specified component. -/
+@[simp]
+theorem zigzagComponentProjection_mk
+    (x : ∀ C : G.ConnectedComponent, zigzagComponentAlgebra k G C)
+    (C : G.ConnectedComponent) :
+    zigzagComponentProjection k G C (zigzagAlgebraMk k G x) = x C := by
+  rfl
 
 /-- Elements of the public zigzag algebra are equal when all their component projections agree. -/
 @[ext]
