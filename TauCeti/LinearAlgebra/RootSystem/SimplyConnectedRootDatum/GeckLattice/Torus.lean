@@ -13,7 +13,7 @@ import TauCeti.CategoryTheory.Comma.Over
 /-!
 # The split torus in the Geck carrier
 
-The pinned Geck representation of a valid Dynkin type `t` gives a morphism from the split torus
+The represented Geck lattice of a valid Dynkin type `t` gives a morphism from the split torus
 of rank `t.rank` into the explicit Kostant toral-closure carrier
 `TauCeti.DynkinType.geckGroupScheme`. This file proves that the morphism is a closed immersion
 whenever the Geck weights span the full character lattice.
@@ -25,11 +25,11 @@ an arbitrary Dynkin type. The spanning condition is known for the three unimodul
 types `E₈`, `F₄`, and `G₂`, where the root and weight lattices coincide, and this file records
 the resulting closed immersions explicitly.
 
-This supplies the closed split-torus component of the pinned Chevalley--Demazure carrier for those
+This supplies the intended closed split-torus component of a future pinning for those
 three types. Proving that it is maximal, constructing a compatible Borel, identifying the carrier
 as split reductive with the stated root datum, and constructing full-weight admissible lattices for
 the remaining types are separate Layer 9 steps in the ReductiveGroups roadmap. The resulting
-pinned carriers are consumed by milestone L0 of the CFSGStatement roadmap.
+completed carriers are consumed by milestone L0 of the CFSGStatement roadmap.
 
 ## Main declarations
 
@@ -59,7 +59,7 @@ variable (t : DynkinType) (ht : t.Valid)
 /-- Reindexing the Geck coordinates by a finite ordinal does not change the integral span of their
 weights. This is the bridge between the intrinsic `GeckIndex`-indexed weight calculation and the
 finite basis used to represent the group scheme in `GL`. -/
-theorem span_range_geckWeightFin_eq_span_range_geckWeight :
+private theorem span_range_geckWeightFin_eq_span_range_geckWeight :
     Submodule.span ℤ (Set.range (t.geckWeightFin ht)) =
       Submodule.span ℤ (Set.range (t.geckWeight ht)) := by
   congr 1
@@ -69,10 +69,7 @@ theorem span_range_geckWeightFin_eq_span_range_geckWeight :
     exact ⟨(Fintype.equivFin (t.GeckIndex ht)).symm i, rfl⟩
   · rintro ⟨i, rfl⟩
     refine ⟨Fintype.equivFin (t.GeckIndex ht) i, ?_⟩
-    change t.geckWeight ht
-        ((Fintype.equivFin (t.GeckIndex ht)).symm
-          (Fintype.equivFin (t.GeckIndex ht) i)) = t.geckWeight ht i
-    rw [Equiv.symm_apply_apply]
+    simp [geckWeightFin]
 
 /-- **Full character span makes the represented Geck torus a closed subgroup of the Geck
 carrier.** The hypothesis is exact: it says that the characters occurring in the Geck lattice
@@ -116,33 +113,22 @@ def geckWeightTorusClosedSubgroup
   have _ := t.isClosedImmersion_geckWeightTorus_of_span_eq_top ht hwt
   ClosedSubgroupScheme.mk (t.geckWeightTorus ht)
 
-/-- The underlying subobject of `geckWeightTorusClosedSubgroup` is represented by the pinned Geck
-weight-torus morphism. -/
-@[simp]
-theorem coe_geckWeightTorusClosedSubgroup
-    (hwt : Submodule.span ℤ (Set.range (t.geckWeight ht)) = ⊤) :
-    let _ := t.isClosedImmersion_geckWeightTorus_of_span_eq_top ht hwt
-    (t.geckWeightTorusClosedSubgroup ht hwt).1 = Subobject.mk (t.geckWeightTorus ht) := by
-  have _ := t.isClosedImmersion_geckWeightTorus_of_span_eq_top ht hwt
-  rw [geckWeightTorusClosedSubgroup]
-  exact ClosedSubgroupScheme.coe_mk _
-
 /-! ## The unimodular exceptional types -/
 
-/-- **The pinned Geck weight torus of type `E₈` is a closed immersion.** The type `E₈` roots
+/-- **The represented Geck weight torus of type `E₈` is a closed immersion.** The type `E₈` roots
 span the full weight lattice because its Cartan matrix is unimodular. -/
 instance isClosedImmersion_geckWeightTorus_E8 (ht : E8.Valid) :
     IsClosedImmersion (E8.geckWeightTorus ht).hom.hom.left := by
   exact E8.isClosedImmersion_geckWeightTorus_of_span_eq_top ht
     (span_range_geckWeight_E8_eq_top ht)
 
-/-- **The pinned Geck weight torus of type `F₄` is a closed immersion.** -/
+/-- **The represented Geck weight torus of type `F₄` is a closed immersion.** -/
 instance isClosedImmersion_geckWeightTorus_F4 (ht : F4.Valid) :
     IsClosedImmersion (F4.geckWeightTorus ht).hom.hom.left := by
   exact F4.isClosedImmersion_geckWeightTorus_of_span_eq_top ht
     (span_range_geckWeight_F4_eq_top ht)
 
-/-- **The pinned Geck weight torus of type `G₂` is a closed immersion.** -/
+/-- **The represented Geck weight torus of type `G₂` is a closed immersion.** -/
 instance isClosedImmersion_geckWeightTorus_G2 (ht : G2.Valid) :
     IsClosedImmersion (G2.geckWeightTorus ht).hom.hom.left := by
   exact G2.isClosedImmersion_geckWeightTorus_of_span_eq_top ht
