@@ -266,9 +266,11 @@ theorem lieSubalgebraOfSubgroup_top (hK : IsClosed ((⊤ : Subgroup G) : Set G))
   ext X
   simp
 
-/-- **The Lie algebra of `K` is invariant under the adjoint action of `K`.** For a normal closed
-subgroup this is the statement that `𝔨` is an ideal of `𝔤`; here it is the ingredient that makes
-the bracket land back in `𝔨`. -/
+/-- **The Lie algebra of `K` is invariant under the adjoint action of `K`.** Conjugating by `g ∈ K`
+carries the one-parameter subgroup of `X` to the one of `Ad g X`, which therefore also stays in `K`.
+This is the bundled form of `lieExp_smul_Ad_mem`, the statement that makes the adjoint orbit of the
+bracket proof run inside `𝔨`. Invariance under `Ad g` for `g` outside `K` — which for a normal `K`
+would say that `𝔨` is an ideal of `𝔤` — is not asserted here. -/
 theorem Ad_mem_lieSubalgebraOfSubgroup {K : Subgroup G} {hK : IsClosed (K : Set G)} {g : G}
     (hg : g ∈ K) {X : LeftInvariantDerivation I G}
     (hX : X ∈ lieSubalgebraOfSubgroup (I := I) K hK) :
