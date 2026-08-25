@@ -163,20 +163,11 @@ theorem markovChainLaw_apply_setOf_loopPathAt (bs : List (List α)) :
   rw [hset, ← Measure.map_apply (by fun_prop) (measurableSet_singleton _),
     markovChainLaw_map_prefix_apply_singleton_loopPathAt]
 
-/-- A point-mass law is attained almost surely. -/
-private theorem ae_eq_of_map_eq_dirac {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    {f : Ω → α} (hf : Measurable f) {a : α} (h : μ.map f = Measure.dirac a) :
-    ∀ᵐ ω ∂μ, f ω = a := by
-  have hcompl : μ {ω | ¬ f ω = a} = (μ.map f) {a}ᶜ := by
-    rw [Measure.map_apply hf (measurableSet_singleton a).compl]
-    rfl
-  rw [ae_iff, hcompl, h]
-  simp
-
 /-- **A chain started at `a₀` starts at `a₀`.** -/
 theorem markovChainLaw_dirac_ae_apply_zero (κ : Kernel α α) [IsMarkovKernel κ] (a₀ : α) :
     ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ), x 0 = a₀ :=
-  ae_eq_of_map_eq_dirac (measurable_pi_apply 0) (markovChainLaw_map_eval_zero _ _)
+  HasLaw.ae_eq_of_dirac
+    ⟨(measurable_pi_apply 0).aemeasurable, markovChainLaw_map_eval_zero _ _⟩
 
 end LoopMass
 
@@ -360,23 +351,16 @@ theorem map_excursionProcess_eq_excursionLaw
     (hret : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ), {n | x n = a₀}.Infinite) (k : ℕ) :
     (markovChainLaw (Measure.dirac a₀) κ).map
         (excursionProcess (fun n (x : ℕ → α) => x n) a₀ k) = excursionLaw κ a₀ := by
-  classical
-  refine Measure.ext fun A hA => ?_
-  have hbox := pathLaw_excursionProcess_apply_pi hret {k} fun _ => A
-  rw [Finset.prod_singleton] at hbox
-  have hset : (Set.pi ↑({k} : Finset ℕ) fun _ => A) = (fun y : ℕ → List α => y k) ⁻¹' A := by
-    ext y
-    simp
-  rw [hset, pathLaw_def, Measure.map_apply_of_aemeasurable
-      (aemeasurable_excursionProcess_pi (markovChainLaw (Measure.dirac a₀) κ) a₀)
-      (measurable_pi_apply k hA)] at hbox
-  -- Reading off the `k`-th coordinate of the whole excursion sequence is taking the `k`-th
-  -- excursion, so the two events of the chain are the same event.
   have hcoord : ((fun y : ℕ → List α => y k) ∘
       fun (x : ℕ → α) (j : ℕ) => excursionProcess (fun n (y : ℕ → α) => y n) a₀ j x)
       = excursionProcess (fun n (x : ℕ → α) => x n) a₀ k := rfl
-  rw [Measure.map_apply_of_aemeasurable (aemeasurable_excursionProcess_eval _ a₀ k) hA, ← hbox,
-    ← Set.preimage_comp, hcoord]
+  have h := congrArg (fun ν : Measure (ℕ → List α) => ν.map fun y => y k)
+    (pathLaw_excursionProcess_eq_infinitePi hret)
+  rw [pathLaw_def,
+    (measurable_pi_apply k).aemeasurable.map_map_of_aemeasurable
+      (aemeasurable_excursionProcess_pi (markovChainLaw (Measure.dirac a₀) κ) a₀),
+    hcoord, Measure.infinitePi_map_eval] at h
+  exact h
 
 /-- **The excursions of the chain are independent.** -/
 theorem iIndepFun_excursionProcess
@@ -448,7 +432,8 @@ theorem ae_infinite_setOf_eq_markovChainLaw_const (a₀ : α) :
   have hall : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) (Kernel.const α (Measure.dirac a₀))),
       ∀ n, x n = a₀ :=
     ae_all_iff.2 fun n =>
-      ae_eq_of_map_eq_dirac (measurable_pi_apply n) (markovChainLaw_const_map_eval a₀ n)
+      HasLaw.ae_eq_of_dirac
+        ⟨(measurable_pi_apply n).aemeasurable, markovChainLaw_const_map_eval a₀ n⟩
   filter_upwards [hall] with x hx
   rw [Set.eq_univ_of_forall hx]
   exact Set.infinite_univ
