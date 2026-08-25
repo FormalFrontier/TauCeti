@@ -31,8 +31,8 @@ the points of the curve `W.map f` over `S`, with no fields and no tower involved
   `F`-algebra, the transport along `algebraMap F K` *is* Mathlib's `Affine.Point.map`. A user
   holding only a ring homomorphism `f : F →+* K` writes `letI := f.toAlgebra` and gets the same
   statement for `f`.
-* `TauCeti.WeierstrassCurve.Affine.Point.mapAlong_iterateFrobenius_some`: iterated Frobenius sends
-  `(x, y)` to `(x ^ (p ^ n), y ^ (p ^ n))`.
+* `TauCeti.mapAlong_iterateFrobenius_some`: iterated Frobenius sends `(x, y)` to
+  `(x ^ (p ^ n), y ^ (p ^ n))`.
 
 `Affine.Point.map` is already an `AddMonoidHom`, so rewriting with `mapAlong_eq_map` gives
 `map_add`, `map_zero` and `map_zsmul` from Mathlib directly. Nothing field-level is defined or
@@ -131,25 +131,6 @@ lemma mapAlong_injective : Function.Injective (mapAlong f hf (W := W)) := by
   · obtain ⟨hx, hy⟩ := Affine.Point.some.inj hP
     simp only [hf hx, hf hy]
 
-section IterateFrobenius
-
-variable {F : Type*} [Field F] (p : ℕ) [ExpChar F p]
-  (W : _root_.WeierstrassCurve.Affine F)
-
-/-- The iterated Frobenius sends an affine point `(x, y)` to
-`(x ^ (p ^ n), y ^ (p ^ n))`.
-
-Not a `simp` lemma: `mapAlong_some` already rewrites the left-hand side to coordinates expressed
-using `iterateFrobenius`; this theorem records their `p ^ n`-power form. -/
-theorem mapAlong_iterateFrobenius_some (n : ℕ) {x y : F}
-    (h : W.Nonsingular x y) :
-    mapAlong (iterateFrobenius F p n) (iterateFrobenius F p n).injective (.some x y h) =
-      .some (x ^ p ^ n) (y ^ p ^ n)
-        ((W.map_nonsingular (iterateFrobenius F p n).injective x y).mpr h) := by
-  simp [iterateFrobenius_def]
-
-end IterateFrobenius
-
 section Field
 
 variable {F K : Type*} [Field F] [Field K] [DecidableEq F] [DecidableEq K] [Algebra F K]
@@ -174,6 +155,27 @@ lemma mapAlong_eq_map (P : W.toAffine.Point) :
 end Field
 
 end WeierstrassCurve.Affine.Point
+
+section IterateFrobenius
+
+variable {F : Type*} [Field F] (p : ℕ) [ExpChar F p]
+  (W : _root_.WeierstrassCurve.Affine F)
+
+/-- The iterated Frobenius sends an affine point `(x, y)` to
+`(x ^ (p ^ n), y ^ (p ^ n))`.
+
+Not a `simp` lemma: `WeierstrassCurve.Affine.Point.mapAlong_some` already rewrites the left-hand
+side to coordinates expressed using `iterateFrobenius`; this theorem records their `p ^ n`-power
+form. -/
+theorem mapAlong_iterateFrobenius_some (n : ℕ) {x y : F}
+    (h : W.Nonsingular x y) :
+    WeierstrassCurve.Affine.Point.mapAlong (iterateFrobenius F p n)
+        (iterateFrobenius F p n).injective (.some x y h) =
+      .some (x ^ p ^ n) (y ^ p ^ n)
+        ((W.map_nonsingular (iterateFrobenius F p n).injective x y).mpr h) := by
+  simp [iterateFrobenius_def]
+
+end IterateFrobenius
 
 end TauCeti
 
