@@ -60,6 +60,10 @@ variable {α β x : ℝ}
 
 /-! ### The cdf as an integral of the density -/
 
+/-- The `ℝ≥0∞`-valued beta density is the nonnegative wrapper of its real-valued companion. -/
+private lemma betaPDF_eq_ofReal_betaPDFReal (α β x : ℝ) :
+    betaPDF α β x = ENNReal.ofReal (betaPDFReal α β x) := rfl
+
 /-- The beta density is integrable: it is a nonnegative function whose Lebesgue integral is `1`. -/
 private lemma integrable_betaPDFReal (hα : 0 < α) (hβ : 0 < β) :
     Integrable (betaPDFReal α β) := by
@@ -73,9 +77,8 @@ half-line. This is the beta analogue of `ProbabilityTheory.cdf_gammaMeasure_eq_i
 private lemma cdf_betaMeasure_eq_integral (hα : 0 < α) (hβ : 0 < β) (x : ℝ) :
     cdf (betaMeasure α β) x = ∫ t in Iic x, betaPDFReal α β t := by
   have hp : IsProbabilityMeasure (betaMeasure α β) := isProbabilityMeasureBeta hα hβ
-  have hpdf : ∀ y : ℝ, betaPDF α β y = ENNReal.ofReal (betaPDFReal α β y) := fun _ => rfl
   rw [cdf_eq_real, betaMeasure, measureReal_def, withDensity_apply _ measurableSet_Iic]
-  simp_rw [hpdf]
+  simp_rw [betaPDF_eq_ofReal_betaPDFReal]
   refine (integral_eq_lintegral_of_nonneg_ae (ae_of_all _ (betaPDFReal_nonneg hα hβ)) ?_).symm
   exact (measurable_betaPDFReal α β).aestronglyMeasurable
 
