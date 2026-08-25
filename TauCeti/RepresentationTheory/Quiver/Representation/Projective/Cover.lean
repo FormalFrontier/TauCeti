@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.CategoryTheory.Preadditive.Projective.Cover
+public import TauCeti.CategoryTheory.Projective.Cover
 public import TauCeti.RepresentationTheory.Quiver.Representation.Comparison
 
 /-!
@@ -75,12 +75,13 @@ here.
   already a *split* epimorphism — so `Pᵢ` is the projective cover of `Sᵢ`.
 * `TauCeti.eq_id_of_comp_indecProjRepToSimpleRep_eq_self`: the cover is rigid — an endomorphism of
   `Pᵢ` commuting with it is the identity.
+* `TauCeti.isEssentialEpi_indecProjRepToSimpleRep`: the cover packaged as a
+  `TauCeti.IsEssentialEpi`, the form the general theory consumes.
 * `TauCeti.exists_comp_indecProjRepToSimpleRep_eq_and_isSplitEpi`: the cover is minimal — every
   projective representation mapping onto `Sᵢ` retracts onto `Pᵢ`, by a retraction that factors the
   given map through the cover.
-* `TauCeti.isEssentialEpi_indecProjRepToSimpleRep`: the cover packaged as a
-  `TauCeti.IsEssentialEpi`, and `TauCeti.exists_iso_indecProjRep`: **the cover is unique** — every
-  projective cover of `Sᵢ` is isomorphic to `Pᵢ` over `Sᵢ`.
+* `TauCeti.exists_iso_indecProjRep`: **the cover is unique** — every projective cover of `Sᵢ` is
+  isomorphic to `Pᵢ` over `Sᵢ`.
 
 ## References
 
@@ -167,8 +168,8 @@ theorem epi_of_epi_comp_indecProjRepToSimpleRep {i : Q}
 /-- **The cover is rigid**: with no nontrivial path `i → i`, an endomorphism of `Pᵢ` commuting
 with `Pᵢ ↠ Sᵢ` is the identity, not merely an isomorphism; in particular `Pᵢ ↠ Sᵢ` admits no
 automorphism over `Sᵢ` other than the identity. This is sharper than what an arbitrary projective
-cover gives, `TauCeti.IsEssentialEpi.isIso_of_comp_eq_self` concluding only that such an
-endomorphism is an isomorphism. -/
+cover gives, `TauCeti.IsEssentialEpi.isIso_of_comp_eq` concluding only that such an endomorphism is
+an isomorphism. -/
 theorem eq_id_of_comp_indecProjRepToSimpleRep_eq_self {i : Q}
     (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
     (f : indecProjRep k Q i ⟶ indecProjRep k Q i)
@@ -178,20 +179,6 @@ theorem eq_id_of_comp_indecProjRepToSimpleRep_eq_self {i : Q}
     (eq_indecProjRepBasis_nil_of_app_eq_simpleRepGenerator k h ?_)
   rw [← indecProjRepHomEquiv_apply, ← indecProjRepHomEquiv_comp, hf,
     indecProjRepHomEquiv_apply, indecProjRepToSimpleRep_app_nil]
-
-/-- **The cover is minimal**: with no nontrivial path `i → i`, every projective representation
-mapping onto `Sᵢ` retracts onto `Pᵢ`, so `Pᵢ` is a direct summand of it. The retraction is
-produced over the given map, factoring it through the cover. Projectivity lifts the map to `Pᵢ`
-along the cover, and `TauCeti.isSplitEpi_of_epi_comp_indecProjRepToSimpleRep` splits the lift. -/
-theorem exists_comp_indecProjRepToSimpleRep_eq_and_isSplitEpi {i : Q}
-    (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
-    {X : QuiverRep k Q} [Projective X] (f : X ⟶ simpleRep k Q i) (hf : Epi f) :
-    ∃ g : X ⟶ indecProjRep k Q i, g ≫ indecProjRepToSimpleRep k i = f ∧ IsSplitEpi g := by
-  have hcomp : Projective.factorThru f (indecProjRepToSimpleRep k i)
-      ≫ indecProjRepToSimpleRep k i = f := Projective.factorThru_comp _ _
-  refine ⟨_, hcomp, isSplitEpi_of_epi_comp_indecProjRepToSimpleRep k h _ ?_⟩
-  rw [hcomp]
-  exact hf
 
 /-- **`Pᵢ ↠ Sᵢ` is a projective cover**, packaged as a `TauCeti.IsEssentialEpi`: it is an
 epimorphism (`TauCeti.epi_indecProjRepToSimpleRep`) and essential
@@ -203,6 +190,16 @@ theorem isEssentialEpi_indecProjRepToSimpleRep {i : Q}
     IsEssentialEpi (indecProjRepToSimpleRep k i) where
   epi := inferInstance
   epi_of_epi_comp g hg := epi_of_epi_comp_indecProjRepToSimpleRep k h g hg
+
+/-- **The cover is minimal**: with no nontrivial path `i → i`, every projective representation
+mapping onto `Sᵢ` retracts onto `Pᵢ`, so `Pᵢ` is a direct summand of it. The retraction is
+produced over the given map, factoring it through the cover. This is the general minimality
+statement `TauCeti.IsEssentialEpi.exists_comp_eq_and_isSplitEpi` read at `Pᵢ ↠ Sᵢ`. -/
+theorem exists_comp_indecProjRepToSimpleRep_eq_and_isSplitEpi {i : Q}
+    (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
+    {X : QuiverRep k Q} [Projective X] (f : X ⟶ simpleRep k Q i) (hf : Epi f) :
+    ∃ g : X ⟶ indecProjRep k Q i, g ≫ indecProjRepToSimpleRep k i = f ∧ IsSplitEpi g :=
+  (isEssentialEpi_indecProjRepToSimpleRep k h).exists_comp_eq_and_isSplitEpi hf
 
 /-- **The projective cover of `Sᵢ` is `Pᵢ`, uniquely.** With no nontrivial path `i → i`, every
 projective cover of the vertex simple `Sᵢ` — every essential epimorphism onto it from a projective
