@@ -66,7 +66,8 @@ conditions that make the two marginal integrals of a dual pair meaningful.
 * `TauCeti.cTransform_add_const` — the transform turns an additive real constant into its
   negative, which is the normalisation freedom of the dual problem;
 * `TauCeti.cTransform_coe` — over a nonempty finite source the transform of a coerced real
-  potential is the coercion of a real infimum;
+  potential is the coercion of a real infimum, and `TauCeti.cTransform_coe_eq_coe_iInf` gives the
+  same conclusion for any nonempty source when the real infimum is bounded below;
 * `TauCeti.contactSet_subset_contactSet_cTransformSymm_cTransform` — sequentially transforming a
   feasible pair gives a dominating feasible pair with a larger contact set, and
   `TauCeti.cTransformSymm_cTransform_eq_of_mem_cSuperdifferential` — a potential agrees with its
@@ -269,6 +270,26 @@ theorem cTransform_coe [Finite X] [Nonempty X] (c : X × Y → ℝ) (φ : X → 
   rw [← EReal.coe_sub]
   exact EReal.coe_le_coe_iff.2
     (hx₀.symm ▸ ciInf_le (Finite.bddBelow_range fun x ↦ c (x, y) - φ x) x)
+
+/-- The `EReal`-valued infimal transform `TauCeti.cTransform` of a real potential is a
+real-valued infimum whenever that infimum is bounded below. -/
+theorem cTransform_coe_eq_coe_iInf [Nonempty X] (c : X × Y → ℝ) (φ : X → ℝ) (y : Y)
+    (hbdd : BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
+    cTransform c (fun x ↦ (φ x : EReal)) y = ((⨅ x, (c (x, y) - φ x) : ℝ) : EReal) := by
+  rw [cTransform_apply]
+  refine le_antisymm (le_of_forall_gt_imp_ge_of_dense fun b hb ↦ ?_) (le_iInf fun x ↦ ?_)
+  · rcases eq_top_or_lt_top b with rfl | hbt
+    · exact le_top
+    · have hbot : b ≠ ⊥ := ((EReal.bot_lt_coe _).trans hb).ne'
+      have hbr : ((b.toReal : ℝ) : EReal) = b := EReal.coe_toReal hbt.ne hbot
+      have hlt : (⨅ x, (c (x, y) - φ x)) < b.toReal := by
+        rw [← EReal.coe_lt_coe_iff, hbr]
+        exact hb
+      obtain ⟨x, hx⟩ := exists_lt_of_ciInf_lt hlt
+      refine (iInf_le _ x).trans ?_
+      rw [← hbr]
+      simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 hx.le
+  · simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 (ciInf_le hbdd x)
 
 /-- A `c`-transform is upper semicontinuous when each function in its defining infimum is upper
 semicontinuous. -/

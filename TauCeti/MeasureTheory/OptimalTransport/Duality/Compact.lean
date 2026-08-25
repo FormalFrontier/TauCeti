@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Topology.UniformSpace.HeineCantor
+public import TauCeti.MeasureTheory.MeasurableSpace.Metric
 public import TauCeti.MeasureTheory.OptimalTransport.Finite.Duality
 
 /-!
@@ -33,11 +34,11 @@ from below. Both estimates lose only a multiple of the modulus of continuity, so
 refine closes the duality gap.
 
 Two auxiliary results are of independent interest.
-`TauCeti.exists_continuous_forall_add_le` replaces a *bounded* feasible pair by a *continuous*
-one that dominates it pointwise: applying the infimal `c`-transform twice inherits the modulus of
-continuity of the cost. This is what upgrades the step-function potentials produced by the finite
-problem to the continuous potentials the theorem advertises, and it is also why the
-bounded-continuous and the integrable dual classes have the same supremum.
+`TauCeti.exists_continuous_forall_add_le` replaces a feasible pair whose first potential is
+*bounded* by a *continuous* one that dominates it pointwise: applying the infimal `c`-transform
+twice inherits the modulus of continuity of the cost. This is what upgrades the step-function
+potentials produced by the finite problem to the continuous potentials the theorem advertises,
+and it is also why the bounded-continuous and the integrable dual classes have the same supremum.
 `TauCeti.exists_measurable_dist_lt` records the discretisation of a compact metric space by a
 measurable map to `Fin n`.
 
@@ -55,8 +56,8 @@ additive normalisation of the cost and of the potentials.
 
 ## Main statements
 
-* `TauCeti.exists_continuous_forall_add_le` — a bounded feasible pair is dominated by a
-  continuous feasible pair;
+* `TauCeti.exists_continuous_forall_add_le` — a feasible pair whose first potential is bounded is
+  dominated by a continuous feasible pair;
 * `TauCeti.exists_continuous_forall_add_le_transportCost_le` — the approximate duality: for every
   `ε > 0` there is a continuous feasible pair whose value is within `ε` of the primal value;
 * `TauCeti.isLUB_kantorovichDualValue_continuous` — **strong Kantorovich duality**: the primal
@@ -91,27 +92,6 @@ universe u v
 
 variable {X : Type u} {Y : Type v}
 
-/-! ### The infimal transform as a real-valued function -/
-
-/-- The `EReal`-valued infimal transform `TauCeti.cTransform` of a real potential is the real
-infimum used in this file, whenever the latter is well behaved. -/
-theorem cTransform_coe_eq_coe_iInf [Nonempty X] (c : X × Y → ℝ) (φ : X → ℝ) (y : Y)
-    (hbdd : BddBelow (Set.range fun x ↦ c (x, y) - φ x)) :
-    cTransform c (fun x ↦ (φ x : EReal)) y = ((⨅ x, (c (x, y) - φ x) : ℝ) : EReal) := by
-  rw [cTransform_apply]
-  refine le_antisymm (le_of_forall_gt_imp_ge_of_dense fun b hb ↦ ?_) (le_iInf fun x ↦ ?_)
-  · rcases eq_top_or_lt_top b with rfl | hbt
-    · exact le_top
-    · have hbot : b ≠ ⊥ := ((EReal.bot_lt_coe _).trans hb).ne'
-      have hbr : ((b.toReal : ℝ) : EReal) = b := EReal.coe_toReal hbt.ne hbot
-      have hlt : (⨅ x, (c (x, y) - φ x)) < b.toReal := by
-        rw [← EReal.coe_lt_coe_iff, hbr]; exact hb
-      obtain ⟨x, hx⟩ := exists_lt_of_ciInf_lt hlt
-      refine (iInf_le _ x).trans ?_
-      rw [← hbr]
-      simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 hx.le
-  · simpa only [EReal.coe_sub] using EReal.coe_le_coe_iff.2 (ciInf_le hbdd x)
-
 section Transform
 
 variable [MetricSpace X] [MetricSpace Y] {c : X × Y → ℝ} {φ : X → ℝ} {ψ : Y → ℝ}
@@ -141,10 +121,10 @@ theorem continuous_iInf_sub [Nonempty X] (hc : UniformContinuous c)
 
 variable [CompactSpace X] [CompactSpace Y] [Nonempty X] [Nonempty Y]
 
-/-- **Smoothing a dual pair.** On compact metric spaces every *bounded* pair of potentials
-satisfying the Kantorovich constraint `φ x + ψ y ≤ c (x, y)` is dominated pointwise by a pair of
-*continuous* potentials satisfying the same constraint. The improved pair is obtained by applying
-the infimal `c`-transform twice, so it inherits the modulus of continuity of the cost. -/
+/-- **Smoothing a dual pair.** On compact metric spaces, if the first potential of a feasible pair
+is bounded, then the pair is dominated pointwise by *continuous* potentials satisfying the same
+Kantorovich constraint. The improved pair is obtained by applying the infimal `c`-transform twice,
+so it inherits the modulus of continuity of the cost. -/
 theorem exists_continuous_forall_add_le (hc : Continuous c) {M : ℝ}
     (hφM : ∀ x, |φ x| ≤ M) (hfeas : ∀ x y, φ x + ψ y ≤ c (x, y)) :
     ∃ φ' ψ', Continuous φ' ∧ Continuous ψ' ∧ (∀ x y, φ' x + ψ' y ≤ c (x, y)) ∧
@@ -200,49 +180,6 @@ theorem exists_continuous_forall_add_le (hc : Continuous c) {M : ℝ}
     linarith
 
 end Transform
-
-/-! ### Discretising a compact metric space -/
-
-/-- A compact metric space is discretised, up to any positive error, by a measurable map to a
-finite type together with a choice of marked point in each fibre. -/
-theorem exists_measurable_dist_lt (X : Type u) [MetricSpace X] [CompactSpace X]
-    [MeasurableSpace X] [BorelSpace X] {δ : ℝ} (hδ : 0 < δ) :
-    ∃ (n : ℕ) (v : Fin n → X) (q : X → Fin n), Measurable q ∧ ∀ x, dist x (v (q x)) < δ := by
-  classical
-  obtain ⟨t, ht⟩ := isCompact_univ.elim_finite_subcover (fun z : X ↦ Metric.ball z δ)
-    (fun _ ↦ Metric.isOpen_ball) fun x _ ↦ Set.mem_iUnion.2 ⟨x, Metric.mem_ball_self hδ⟩
-  set n := t.card
-  set v : Fin n → X := fun i ↦ (t.equivFin.symm i : X) with hv
-  have hcover : ∀ x : X, ∃ i : Fin n, dist x (v i) < δ := by
-    intro x
-    obtain ⟨z, hz, hxz⟩ := Set.mem_iUnion₂.1 (ht (Set.mem_univ x))
-    exact ⟨t.equivFin ⟨z, hz⟩, by simpa [hv] using hxz⟩
-  set S : X → Finset (Fin n) := fun x ↦ {i | dist x (v i) < δ} with hS
-  have hSne : ∀ x, (S x).Nonempty := fun x ↦ by
-    obtain ⟨i, hi⟩ := hcover x
-    exact ⟨i, by simpa [hS] using hi⟩
-  set q : X → Fin n := fun x ↦ (S x).min' (hSne x)
-  have hmemq : ∀ x, dist x (v (q x)) < δ := fun x ↦ by
-    simpa [hS] using (S x).min'_mem (hSne x)
-  refine ⟨n, v, q, ?_, hmemq⟩
-  refine measurable_to_countable' fun i ↦ ?_
-  have hfib : q ⁻¹' {i} =
-      Metric.ball (v i) δ \ ⋃ k ∈ Set.Iio i, Metric.ball (v k) δ := by
-    ext x
-    simp only [Set.mem_preimage, Set.mem_singleton_iff, Set.mem_sdiff, Metric.mem_ball]
-    constructor
-    · rintro rfl
-      refine ⟨hmemq x, fun hmem ↦ ?_⟩
-      obtain ⟨k, hk, hxk⟩ := Set.mem_iUnion₂.1 hmem
-      have hle : q x ≤ k := (S x).min'_le k (by simpa [hS] using Metric.mem_ball.1 hxk)
-      exact absurd (Set.mem_Iio.1 hk) hle.not_gt
-    · rintro ⟨hi, hlt⟩
-      have hmem : i ∈ S x := by simpa [hS] using hi
-      refine le_antisymm ((S x).min'_le i hmem) (not_lt.1 fun hcon ↦ hlt ?_)
-      exact Set.mem_iUnion₂.2 ⟨q x, Set.mem_Iio.2 hcon, Metric.mem_ball.2 (hmemq x)⟩
-  rw [hfib]
-  exact measurableSet_ball.diff
-    (MeasurableSet.biUnion (Set.to_countable _) fun _ _ ↦ measurableSet_ball)
 
 /-! ### Lifting a finite transport plan to a coupling -/
 
@@ -376,6 +313,27 @@ private theorem transportCost_le_ofReal_cost {n m : ℕ} {qX : X → Fin n} {qY 
 
 end Lift
 
+section Finiteness
+
+variable [TopologicalSpace X] [CompactSpace X] [MeasurableSpace X]
+  [TopologicalSpace Y] [CompactSpace Y] [MeasurableSpace Y]
+  {μ : Measure X} {ν : Measure Y} {c : X × Y → ℝ}
+
+/-- A continuous cost on a product of compact spaces is bounded, so the transport problem has a
+finite value. -/
+theorem transportCost_ne_top_of_continuous [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+    (hc : Continuous c) : transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≠ ⊤ := by
+  obtain ⟨K, hK⟩ := isCompact_univ.exists_bound_of_continuousOn hc.continuousOn
+  refine ne_top_of_le_ne_top (b := ENNReal.ofReal K) ENNReal.ofReal_ne_top ?_
+  refine (transportCost_le_lintegral (isCoupling_prod μ ν) _).trans ?_
+  calc ∫⁻ z, ENNReal.ofReal (c z) ∂(μ.prod ν)
+      ≤ ∫⁻ _ : X × Y, ENNReal.ofReal K ∂(μ.prod ν) :=
+        lintegral_mono fun z ↦ ENNReal.ofReal_le_ofReal
+          ((le_abs_self _).trans (by simpa using hK z (Set.mem_univ z)))
+    _ = ENNReal.ofReal K := by rw [lintegral_const, measure_univ, mul_one]
+
+end Finiteness
+
 /-! ### Strong duality -/
 
 section Duality
@@ -471,20 +429,6 @@ theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure �
     · exact (Integrable.of_finite (μ := ν.map qY)).comp_measurable hqY
   rw [hTcost, ← hint]
   linarith
-
-omit [BorelSpace X] [BorelSpace Y] in
-/-- A continuous cost on a product of compact spaces is bounded, so the transport problem has a
-finite value. -/
-theorem transportCost_ne_top_of_continuous [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
-    (hc : Continuous c) : transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≠ ⊤ := by
-  obtain ⟨K, hK⟩ := isCompact_univ.exists_bound_of_continuousOn hc.continuousOn
-  refine ne_top_of_le_ne_top (b := ENNReal.ofReal K) ENNReal.ofReal_ne_top ?_
-  refine (transportCost_le_lintegral (isCoupling_prod μ ν) _).trans ?_
-  calc ∫⁻ z, ENNReal.ofReal (c z) ∂(μ.prod ν)
-      ≤ ∫⁻ _ : X × Y, ENNReal.ofReal K ∂(μ.prod ν) :=
-        lintegral_mono fun z ↦ ENNReal.ofReal_le_ofReal
-          ((le_abs_self _).trans (by simpa using hK z (Set.mem_univ z)))
-    _ = ENNReal.ofReal K := by rw [lintegral_const, measure_univ, mul_one]
 
 omit [MetricSpace X] [CompactSpace X] [BorelSpace X] [MetricSpace Y] [CompactSpace Y]
   [BorelSpace Y] in
