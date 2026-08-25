@@ -159,6 +159,7 @@ theorem beta_comm (a b : ℝ) : beta a b = beta b a := by
   rw [ProbabilityTheory.beta, ProbabilityTheory.beta, mul_comm (Real.Gamma a), add_comm a b]
 
 /-- Euler's beta function at second parameter `1`. -/
+@[simp]
 theorem beta_one_right (ha : 0 < a) : beta a 1 = 1 / a := by
   rw [ProbabilityTheory.beta, Real.Gamma_one, mul_one, Real.Gamma_add_one ha.ne']
   field_simp

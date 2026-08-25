@@ -99,11 +99,12 @@ private lemma measureReal_Ici_binomial (n : ℕ) (p : unitInterval) : ∀ m : �
     have hfac : (n.choose m : ℝ) * (m.factorial : ℝ) * ((n - m).factorial : ℝ) =
         (n.factorial : ℝ) := by
       exact_mod_cast congrArg (Nat.cast (R := ℝ)) (Nat.choose_mul_factorial_mul_factorial hmn')
+    have hgamma_arg : (m : ℝ) + ((n : ℝ) - m) + 1 = (n : ℝ) + 1 := by ring
     have hcoeff : Real.Gamma ((m : ℝ) + ((n : ℝ) - m) + 1) /
         (Real.Gamma ((m : ℝ) + 1) * Real.Gamma ((n : ℝ) - m + 1)) = (n.choose m : ℝ) := by
       have hm0 : ((m.factorial : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.2 m.factorial_ne_zero
       have hnm0 : (((n - m).factorial : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (n - m).factorial_ne_zero
-      rw [show (m : ℝ) + ((n : ℝ) - m) + 1 = (n : ℝ) + 1 by ring, hsub,
+      rw [hgamma_arg, hsub,
         Real.Gamma_nat_eq_factorial, Real.Gamma_nat_eq_factorial, Real.Gamma_nat_eq_factorial,
         div_eq_iff (mul_ne_zero hm0 hnm0)]
       linarith
@@ -111,8 +112,8 @@ private lemma measureReal_Ici_binomial (n : ℕ) (p : unitInterval) : ∀ m : �
     have hpow' : (1 - (p : ℝ)) ^ ((n : ℝ) - m) = (1 - (p : ℝ)) ^ (n - m) := by
       rw [hsub, Real.rpow_natCast]
     rw [hcoeff, hpow, hpow'] at hstep
-    rw [measureReal_Ici_binomial_succ, ih hmn', Nat.cast_add, Nat.cast_one,
-      show (n : ℝ) - ((m : ℝ) + 1) + 1 = (n : ℝ) - m by ring]
+    have hsub_succ : (n : ℝ) - ((m : ℝ) + 1) + 1 = (n : ℝ) - m := by ring
+    rw [measureReal_Ici_binomial_succ, ih hmn', Nat.cast_add, Nat.cast_one, hsub_succ]
     linear_combination hstep
 
 /-- **The binomial tail is a regularized incomplete beta value.** For `m ≤ n` the mass that
@@ -158,7 +159,6 @@ theorem binomial_cumulative_eq_regularizedIncompleteBeta (hmn : m ≤ n) (p : un
   · have hsupport : {k : ℕ | k ≤ m} =ᵐ[Bin(m, p)] Set.univ := by
       filter_upwards [ae_le_of_hasLaw_binomial (P := Bin(m, p)) HasLaw.id] with k hk
       apply propext
-      change k ≤ m ↔ True
       exact iff_true_intro hk
     rw [measureReal_congr hsupport, probReal_univ, sub_self,
       regularizedIncompleteBeta_zero_left (by positivity)
@@ -170,7 +170,8 @@ theorem binomial_cumulative_eq_regularizedIncompleteBeta (hmn : m ≤ n) (p : un
     simp only [mem_compl_iff, mem_ofPred_eq, not_le]
     omega
   have htail := binomial_tail_eq_regularizedIncompleteBeta (m := m + 1) hmn p
-  rw [Nat.cast_add, Nat.cast_one, show (n : ℝ) - ((m : ℝ) + 1) + 1 = (n : ℝ) - m by ring] at htail
+  have hsub_succ : (n : ℝ) - ((m : ℝ) + 1) + 1 = (n : ℝ) - m := by ring
+  rw [Nat.cast_add, Nat.cast_one, hsub_succ] at htail
   have hsymm := regularizedIncompleteBeta_symm (by linarith : (0 : ℝ) < (m : ℝ) + 1) hb (p : ℝ)
   have := measureReal_compl (μ := Bin(n, p)) (s := {k : ℕ | k ≤ m}) .of_discrete
   rw [hcompl, htail, probReal_univ] at this
