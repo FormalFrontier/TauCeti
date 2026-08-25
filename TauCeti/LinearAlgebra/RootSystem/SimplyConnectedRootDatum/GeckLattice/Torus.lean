@@ -62,14 +62,8 @@ used to represent the group scheme in `GL`. -/
 private theorem span_range_geckWeightFin_eq_span_range_geckWeight :
     Submodule.span ℤ (Set.range (t.geckWeightFin ht)) =
       Submodule.span ℤ (Set.range (t.geckWeight ht)) := by
-  congr 1
-  ext μ
-  constructor
-  · rintro ⟨i, rfl⟩
-    exact ⟨(Fintype.equivFin (t.GeckIndex ht)).symm i, rfl⟩
-  · rintro ⟨i, rfl⟩
-    refine ⟨Fintype.equivFin (t.GeckIndex ht) i, ?_⟩
-    simp [geckWeightFin]
+  exact congrArg (Submodule.span ℤ)
+    ((Fintype.equivFin (t.GeckIndex ht)).symm.surjective.range_comp (t.geckWeight ht))
 
 /-- **Full character span makes the represented Geck torus a closed subgroup of the Geck
 carrier.** The hypothesis is exact: it says that the characters occurring in the Geck lattice
@@ -108,6 +102,17 @@ def geckWeightTorusClosedSubgroup
     ClosedSubgroupScheme (t.geckGroupScheme ht) :=
   have _ := t.isClosedImmersion_geckWeightTorus_of_span_eq_top ht hwt
   ClosedSubgroupScheme.mk (t.geckWeightTorus ht)
+
+/-- The underlying subobject of the closed Geck weight torus is represented by the defining
+weight-torus morphism. -/
+@[simp]
+theorem coe_geckWeightTorusClosedSubgroup
+    (hwt : Submodule.span ℤ (Set.range (t.geckWeight ht)) = ⊤) :
+    let _ := t.isClosedImmersion_geckWeightTorus_of_span_eq_top ht hwt
+    (t.geckWeightTorusClosedSubgroup ht hwt).1 = Subobject.mk (t.geckWeightTorus ht) := by
+  have _ := t.isClosedImmersion_geckWeightTorus_of_span_eq_top ht hwt
+  rw [geckWeightTorusClosedSubgroup]
+  exact ClosedSubgroupScheme.coe_mk _
 
 /-! ## The unimodular exceptional types -/
 
