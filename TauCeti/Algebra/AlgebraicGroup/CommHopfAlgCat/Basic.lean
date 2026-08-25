@@ -91,8 +91,8 @@ theorem grpObjMap_injective {H K : _root_.CommHopfAlgCat.{u} R} :
   apply _root_.CommHopfAlgCat.hom_ext
   apply BialgHom.ext
   intro x
-  change f.hom.toAlgHom x = g.hom.toAlgHom x
-  simpa only [grpObjMap_unop_hom] using congrArg (fun q ↦ q.unop.hom x) h
+  simpa only [grpObjMap_unop_hom, BialgHom.coe_toAlgHom] using
+    congrArg (fun q ↦ q.unop.hom x) h
 
 /-- The identity coordinate morphism represents the identity group-object morphism. -/
 @[simp]

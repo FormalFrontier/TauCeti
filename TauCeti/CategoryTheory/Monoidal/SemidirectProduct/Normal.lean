@@ -28,9 +28,6 @@ binary-product map used in the maximal-dimension construction of the unipotent r
 * `TauCeti.GrpObj.Action.normalConjugation`: conjugation along a map into the ambient group.
 * `TauCeti.GrpObj.Action.normalSemidirectMul`: multiplication from the resulting semidirect
   product into the ambient group.
-* `TauCeti.GrpObj.Action.inl_hom_comp_normalSemidirectMul_hom` and
-  `TauCeti.GrpObj.Action.inr_hom_comp_normalSemidirectMul_hom`: the corresponding identities on
-  underlying morphisms.
 
 ## References
 
@@ -214,23 +211,5 @@ theorem inr_comp_normalSemidirectMul
   rw [← Category.assoc, hleft, MonObj.one_comp]
   rw [← Category.assoc, hright, Category.id_comp]
   exact one_mul j
-
-/-- On underlying morphisms, normal semidirect multiplication restricts to the normal subgroup
-map on the first canonical factor. -/
-theorem inl_hom_comp_normalSemidirectMul_hom
-    (i : N ⟶ G) [IsMonHom.Normal i] (j : H ⟶ G) [IsMonHom j] :
-    let A := normalConjugation i j
-    A.inl.hom.hom ≫ (normalSemidirectMul i j).hom.hom = i := by
-  simpa only [Grp.comp_hom_hom, Grp.ofHom_hom_hom] using
-    congrArg (fun f ↦ f.hom.hom) (inl_comp_normalSemidirectMul i j)
-
-/-- On underlying morphisms, normal semidirect multiplication restricts to the second ambient
-map on the second canonical factor. -/
-theorem inr_hom_comp_normalSemidirectMul_hom
-    (i : N ⟶ G) [IsMonHom.Normal i] (j : H ⟶ G) [IsMonHom j] :
-    let A := normalConjugation i j
-    A.inr.hom.hom ≫ (normalSemidirectMul i j).hom.hom = j := by
-  simpa only [Grp.comp_hom_hom, Grp.ofHom_hom_hom] using
-    congrArg (fun f ↦ f.hom.hom) (inr_comp_normalSemidirectMul i j)
 
 end TauCeti.GrpObj.Action

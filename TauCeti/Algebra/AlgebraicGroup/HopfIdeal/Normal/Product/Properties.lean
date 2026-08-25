@@ -58,7 +58,9 @@ universe u
 
 noncomputable section
 
-variable {k : Type u} [Field k]
+section
+
+variable {k : Type u} [CommRing k]
 
 /-- Multiplication from the conjugation semidirect product restricts on its normal factor to the
 closed-subgroup quotient morphism. -/
@@ -73,8 +75,17 @@ theorem productMapOfNormal_comp_coordinateInl
   rw [grpObjMap_comp, GrpObj.Action.grpObjMap_coordinateInl]
   rw [grpObjMap_productMapOfNormal]
   rw [← quotientGrpObjInclusion_def]
-  exact GrpObj.Action.inl_hom_comp_normalSemidirectMul_hom
-    (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J)
+  have hrestriction :
+      let A := GrpObj.Action.normalConjugation
+        (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J)
+      A.inl.hom.hom ≫
+          (GrpObj.Action.normalSemidirectMul
+            (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J)).hom.hom =
+        quotientGrpObjInclusion H I := by
+    simpa only [Grp.comp_hom_hom, Grp.ofHom_hom_hom] using
+      congrArg (fun f ↦ f.hom.hom) (GrpObj.Action.inl_comp_normalSemidirectMul
+        (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J))
+  exact hrestriction
 
 /-- Multiplication from the conjugation semidirect product restricts on its acting factor to the
 closed-subgroup quotient morphism. -/
@@ -89,8 +100,21 @@ theorem productMapOfNormal_comp_coordinateInr
   rw [grpObjMap_comp, GrpObj.Action.grpObjMap_coordinateInr]
   rw [grpObjMap_productMapOfNormal]
   rw [← quotientGrpObjInclusion_def]
-  exact GrpObj.Action.inr_hom_comp_normalSemidirectMul_hom
-    (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J)
+  have hrestriction :
+      let A := GrpObj.Action.normalConjugation
+        (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J)
+      A.inr.hom.hom ≫
+          (GrpObj.Action.normalSemidirectMul
+            (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J)).hom.hom =
+        quotientGrpObjInclusion H J := by
+    simpa only [Grp.comp_hom_hom, Grp.ofHom_hom_hom] using
+      congrArg (fun f ↦ f.hom.hom) (GrpObj.Action.inr_comp_normalSemidirectMul
+        (quotientGrpObjInclusion H I) (quotientGrpObjInclusion H J))
+  exact hrestriction
+
+end
+
+variable {k : Type u} [Field k]
 
 /-- The defining Hopf ideal of the multiplication image lies below the ideal of the normal
 factor. Equivalently, the product image contains that factor as a closed subgroup scheme. -/
@@ -104,8 +128,7 @@ theorem productOfNormal_definingIdeal_le_left
     (HopfIdeal.mem_ker _).mp hx
   have hcomp := congrArg (fun f : H ⟶ quotient H I ↦ f.hom x)
     (productMapOfNormal_comp_coordinateInl H I J hI)
-  change ((quotientNormalConjugation H I J hI).coordinateInl).hom
-      ((productMapOfNormal H I J hI).hom x) = (mkQuotient H I).hom x at hcomp
+  simp only [_root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp, Function.comp_apply] at hcomp
   rw [← hcomp, hx0, map_zero]
 
 /-- The defining Hopf ideal of the multiplication image lies below the ideal of the acting
@@ -120,16 +143,14 @@ theorem productOfNormal_definingIdeal_le_right
     (HopfIdeal.mem_ker _).mp hx
   have hcomp := congrArg (fun f : H ⟶ quotient H J ↦ f.hom x)
     (productMapOfNormal_comp_coordinateInr H I J hI)
-  change ((quotientNormalConjugation H I J hI).coordinateInr).hom
-      ((productMapOfNormal H I J hI).hom x) = (mkQuotient H J).hom x at hcomp
+  simp only [_root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp, Function.comp_apply] at hcomp
   rw [← hcomp, hx0, map_zero]
 
 private theorem whiskerLeft_grpObjMap_unop_hom
     {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶ K) :
     (MonoidalCategoryStruct.whiskerLeft (grpObj H) (grpObjMap f)).unop.hom =
       Algebra.TensorProduct.map (AlgHom.id k H) f.hom.toAlgHom := by
-  change Algebra.TensorProduct.map (AlgHom.id k H) (grpObjMap f).unop.hom = _
-  rw [grpObjMap_unop_hom]
+  simp only [unop_whiskerLeft, CommAlgCat.whiskerLeft_hom, grpObjMap_unop_hom]
 
 private theorem grpObj_conj_unop_hom (H : _root_.CommHopfAlgCat.{u} k) :
     (GrpObj.conj (grpObj H)).unop.hom =
@@ -180,6 +201,20 @@ private noncomputable def normalSemidirectConjugationAlgHom
   dsimp only [normalSemidirectProduct]
   exact (GrpObj.Action.normalSemidirectConjugation i j).hom.unop.hom
 
+private theorem normalSemidirectConjugationAlgHom_def
+    (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
+    (hI : I.IsNormal) (hJ : J.IsNormal) :
+    normalSemidirectConjugationAlgHom H I J hI hJ = by
+      let i := quotientGrpObjInclusion H I
+      let j := quotientGrpObjInclusion H J
+      let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
+      let _ : IsMonHom.Normal j := (quotientGrpObjInclusion_normal_iff H J).2 hJ
+      let A := GrpObj.Action.normalConjugation i j
+      let _ := A.semidirectProductGrpObj
+      dsimp only [normalSemidirectProduct]
+      exact (GrpObj.Action.normalSemidirectConjugation i j).hom.unop.hom := by
+  rfl
+
 private theorem productMapOfNormal_conjugation_equivariant
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
     (hI : I.IsNormal) (hJ : J.IsNormal) :
@@ -214,8 +249,7 @@ private theorem productMapOfNormal_conjugation_equivariant
           grpObjMap (productMapOfNormal H I J hI)).unop.hom =
         (normalSemidirectConjugationAlgHom H I J hI hJ).comp
           (productMapOfNormal H I J hI).hom.toAlgHom := by
-    rw [hproduct, productMapOfNormal_hom]
-    dsimp only [normalSemidirectConjugationAlgHom]
+    rw [hproduct, productMapOfNormal_hom, normalSemidirectConjugationAlgHom_def]
     rfl
   exact hleft.symm.trans (hunop.trans hright)
 
