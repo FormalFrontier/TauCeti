@@ -109,7 +109,7 @@ public section
 
 namespace TauCeti.ContCohomology
 
-universe u v
+universe u v w
 
 section Cochains
 
@@ -166,6 +166,12 @@ variable {G M}
 @[simp]
 theorem d0_apply (m : M) (g : G) : d0 G M m g = g • m - m := (rfl)
 
+/-- An equivariant additive map commutes with the degree-`0` differential. -/
+theorem map_d0_apply {N : Type w} [AddCommGroup N] [DistribSMul G N] (φ : M →+ N)
+    (hφ : ∀ (g : G) (m : M), φ (g • m) = g • φ m) (m : M) (g : G) :
+    φ (d0 G M m g) = d0 G N (φ m) g := by
+  simp only [d0_apply, map_sub, hφ]
+
 /-- Membership in `B¹` is Mathlib's unbundled `1`-coboundary condition. -/
 @[simp]
 theorem mem_B1_iff {f : G → M} : f ∈ B1 G M ↔ groupCohomology.IsCoboundary₁ f := by
@@ -217,6 +223,12 @@ variable {G M}
 /-- The defining formula for `d¹`. -/
 @[simp]
 theorem d1_apply (f : G → M) (g h : G) : d1 G M f (g, h) = g • f h - f (g * h) + f g := (rfl)
+
+/-- An equivariant additive map commutes with the degree-`1` differential. -/
+theorem map_d1_apply {N : Type w} [AddCommGroup N] [DistribSMul G N] (φ : M →+ N)
+    (hφ : ∀ (g : G) (m : M), φ (g • m) = g • φ m) (f : G → M) (g h : G) :
+    φ (d1 G M f (g, h)) = d1 G N (fun x => φ (f x)) (g, h) := by
+  simp only [d1_apply, map_add, map_sub, hφ]
 
 /-- The defining formula for `d²`. -/
 @[simp]
