@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.RootSystem.Defs
+public import Mathlib.Algebra.Group.Basic
+public import Mathlib.Logic.Equiv.Basic
 
 /-!
 # Swapping two entries of an additive family
