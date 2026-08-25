@@ -235,32 +235,6 @@ variable {𝕜 G V : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] [Monoid G]
   [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
   {π : ContRepresentation 𝕜 G V}
 
-omit [IsAlgClosed 𝕜] [FiniteDimensional 𝕜 V] in
-/-- The invariants of the symmetric square, viewed inside the tensor square. -/
-private theorem map_invariants_symmetricSquare_le :
-    Submodule.map (symmetricTensors 𝕜 V).subtype (symmetricSquare π).invariants
-      ≤ (tprod π π).invariants := by
-  rintro _ ⟨x, hx, rfl⟩
-  refine (mem_invariants _).mpr fun g ↦ ?_
-  have h := congrArg (Subtype.val) ((mem_invariants x).mp hx g)
-  rw [← ContinuousLinearMap.coe_coe, symmetricSquare_apply,
-    coe_symmetricTensorsRestrict_apply] at h
-  rw [ContRepresentation.tprod_apply, TensorProduct.mapL_apply]
-  simpa using h
-
-omit [IsAlgClosed 𝕜] [FiniteDimensional 𝕜 V] in
-/-- The invariants of the exterior square, viewed inside the tensor square. -/
-private theorem map_invariants_exteriorSquare_le :
-    Submodule.map (antisymmetricTensors 𝕜 V).subtype (exteriorSquare π).invariants
-      ≤ (tprod π π).invariants := by
-  rintro _ ⟨x, hx, rfl⟩
-  refine (mem_invariants _).mpr fun g ↦ ?_
-  have h := congrArg (Subtype.val) ((mem_invariants x).mp hx g)
-  rw [← ContinuousLinearMap.coe_coe, exteriorSquare_apply,
-    coe_antisymmetricTensorsRestrict_apply] at h
-  rw [ContRepresentation.tprod_apply, TensorProduct.mapL_apply]
-  simpa using h
-
 /-- **The two invariant counts the Frobenius-Schur indicator subtracts add up to at most `1`.** The
 symmetric and the antisymmetric tensors meet in `0`, so their invariants sit in direct sum inside
 the invariants of the tensor square, which are at most a line. -/
@@ -284,10 +258,15 @@ theorem finrank_invariants_squares_le_one (hπ : IsUnitary π)
     have hbot := (isCompl_symmetricTensors_antisymmetricTensors 𝕜 V).inf_eq_bot
     rw [Submodule.eq_bot_iff] at hbot
     exact hbot x (Submodule.mem_inf.mpr ⟨hxS, hxA⟩)
+  have hSle : S ≤ (tprod π π).invariants := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact (mem_invariants_symmetricSquare_iff π).mp hx
+  have hAle : A ≤ (tprod π π).invariants := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact (mem_invariants_exteriorSquare_iff π).mp hx
   rw [← hSfr, ← hAfr]
   exact le_trans
-    (finrank_add_finrank_le_of_inf_eq_bot (K := 𝕜) (W := V ⊗[𝕜] V)
-      map_invariants_symmetricSquare_le map_invariants_exteriorSquare_le hinf)
+    (finrank_add_finrank_le_of_inf_eq_bot (K := 𝕜) (W := V ⊗[𝕜] V) hSle hAle hinf)
     (finrank_invariants_tprod_self_le_one hπ hirr)
 
 end Squares

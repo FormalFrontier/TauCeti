@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Lie.TensorProduct
 public import Mathlib.Algebra.Lie.Weights.Basic
+public import Mathlib.Algebra.Lie.Weights.Linear
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 
 /-!
@@ -41,6 +42,8 @@ weight spaces of `M ⊗ N` and must agree with it termwise
   `μ + ν = χ`, of the submodules spanned by `Mμ ⊗ Nν`.
 * `TauCeti.genWeightSpace_tensorProduct_ne_bot` and `TauCeti.exists_weight_add_eq`: **the weights of
   `M ⊗ N` are exactly the sums of a weight of `M` and a weight of `N`.**
+* `TauCeti.instLinearWeightsTensorProduct`: tensor products inherit linear weights from their
+  finite-dimensional triangularizable factors.
 
 ## Implementation notes
 
@@ -254,6 +257,30 @@ theorem exists_weight_add_eq (χ : Weight K L (M ⊗[K] N)) :
       simp
     exact absurd hμν (hc ⟨μ, hμ⟩ ⟨ν, hν⟩)
   exact absurd hbot χ.genWeightSpace_ne_bot
+
+/-- A tensor product of finite-dimensional triangularizable modules with linear weights again has
+linear weights. Every weight of the tensor product is a sum of weights of the two factors. -/
+instance instLinearWeightsTensorProduct [LinearWeights K L M] [LinearWeights K L N] :
+    LinearWeights K L (M ⊗[K] N) where
+  map_add χ hχ x y := by
+    obtain ⟨μ, ν, hμν⟩ := exists_weight_add_eq (⟨χ, hχ⟩ : Weight K L (M ⊗[K] N))
+    have hχ_eq : χ = (μ : L → K) + (ν : L → K) := by
+      simpa using hμν.symm
+    rw [hχ_eq]
+    simp only [Pi.add_apply, map_add]
+    ac_rfl
+  map_smul χ hχ t x := by
+    obtain ⟨μ, ν, hμν⟩ := exists_weight_add_eq (⟨χ, hχ⟩ : Weight K L (M ⊗[K] N))
+    have hχ_eq : χ = (μ : L → K) + (ν : L → K) := by
+      simpa using hμν.symm
+    rw [hχ_eq]
+    simp only [Pi.add_apply, map_smul, smul_eq_mul, mul_add]
+  map_lie χ hχ x y := by
+    obtain ⟨μ, ν, hμν⟩ := exists_weight_add_eq (⟨χ, hχ⟩ : Weight K L (M ⊗[K] N))
+    have hχ_eq : χ = (μ : L → K) + (ν : L → K) := by
+      simpa using hμν.symm
+    rw [hχ_eq]
+    simp only [Pi.add_apply, Weight.apply_lie, add_zero]
 
 end Field
 
