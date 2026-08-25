@@ -211,9 +211,7 @@ theorem id_eq_zero_of_isIso_of_mem_jacobsonRadical {X Y : C} {f : X ⟶ Y}
     (hf : f ∈ jacobsonRadical X Y) [IsIso f] : 𝟙 X = 0 := by
   have h : IsIso (𝟙 X - f ≫ inv f) := hf (inv f)
   rw [IsIso.hom_inv_id, sub_self] at h
-  obtain ⟨w, hw, -⟩ := h.out
-  rw [Limits.zero_comp] at hw
-  exact hw.symm
+  exact Limits.isIsoZeroSelfEquiv X h
 
 /-- **A radical morphism out of an object with a nonzero identity is not an isomorphism.** -/
 theorem not_isIso_of_mem_jacobsonRadical {X Y : C} {f : X ⟶ Y} (hX : 𝟙 X ≠ 0)
@@ -221,11 +219,6 @@ theorem not_isIso_of_mem_jacobsonRadical {X Y : C} {f : X ⟶ Y} (hX : 𝟙 X �
   fun _ => hX (id_eq_zero_of_isIso_of_mem_jacobsonRadical hf)
 
 /-! ### Objects with local endomorphism rings -/
-
-/-- The identity of an object with a local endomorphism ring is nonzero, `End X` being
-nontrivial. -/
-theorem id_ne_zero_of_isLocalRing_end (X : C) [IsLocalRing (End X)] : 𝟙 X ≠ 0 :=
-  fun h => one_ne_zero (α := End X) h
 
 section Local
 
@@ -248,7 +241,7 @@ theorem isIso_of_isIso_comp (f : X ⟶ Y) (g : Y ⟶ X) (h : IsIso (f ≫ g)) : 
       rwa [← Category.assoc, hfp, Category.id_comp] at hz
     have hzero : f ≫ (g ≫ inv (f ≫ g)) = 0 := by
       simpa using congrArg (fun t : X ⟶ Y => t ≫ (g ≫ inv (f ≫ g))) hf0
-    exact id_ne_zero_of_isLocalRing_end X (hfp.symm.trans hzero)
+    exact one_ne_zero (α := End X) (hfp.symm.trans hzero)
   · exact ⟨⟨g ≫ inv (f ≫ g), hfp, h1⟩⟩
 
 /-- **Between objects with local endomorphism rings the radical is the set of
@@ -259,18 +252,15 @@ theorem mem_jacobsonRadical_iff_not_isIso {f : X ⟶ Y} :
   constructor
   · intro hf hiso
     have := hiso
-    exact id_ne_zero_of_isLocalRing_end X (id_eq_zero_of_isIso_of_mem_jacobsonRadical hf)
+    exact one_ne_zero (α := End X) (id_eq_zero_of_isIso_of_mem_jacobsonRadical hf)
   · intro hf g
     obtain ⟨e, he⟩ : ∃ e : End X, e = f ≫ g := ⟨f ≫ g, rfl⟩
     have hnu : ¬ IsUnit e := fun hu =>
       hf (isIso_of_isIso_comp f g (he ▸ (isUnit_iff_isIso e).1 hu))
-    have hone : e + (1 - e) = 1 := by abel
-    have hsum : IsUnit (e + (1 - e)) := by rw [hone]; exact isUnit_one
-    rcases IsLocalRing.isUnit_or_isUnit_of_isUnit_add hsum with hu | hu
-    · exact absurd hu hnu
-    · have hiso : IsIso ((1 : End X) - e) := (isUnit_iff_isIso _).1 hu
-      rw [he] at hiso
-      exact hiso
+    have hiso : IsIso ((1 : End X) - e) :=
+      (isUnit_iff_isIso _).1 (IsLocalRing.isUnit_one_sub_self_of_mem_nonunits e hnu)
+    rw [he] at hiso
+    exact hiso
 
 /-- **All morphisms between non-isomorphic objects with local endomorphism rings are radical.** -/
 theorem jacobsonRadical_eq_top (h : IsEmpty (X ≅ Y)) : jacobsonRadical X Y = ⊤ := by
