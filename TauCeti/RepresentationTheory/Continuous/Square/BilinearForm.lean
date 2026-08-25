@@ -50,8 +50,7 @@ through `TauCeti.BilinForm.ofTensor_surjective`.
 
 ## Main statements
 
-* `ContRepresentation.isInvariantForm_ofTensor` and
-  `ContRepresentation.isInvariantForm_ofTensor_iff`: the form of a tensor is invariant for a unitary
+* `ContRepresentation.isInvariantForm_ofTensor_iff`: the form of a tensor is invariant for a unitary
   representation exactly when the tensor is invariant for the tensor square.
 * `ContRepresentation.map_ofTensor_invariants`: the same statement for the two spaces, rather than
   vector by vector.
@@ -93,7 +92,7 @@ variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G]
 
 /-- **The form of an invariant tensor is invariant.** Moving `π g ⊗ π g` across the inner product
 costs nothing because the representation is unitary. -/
-theorem isInvariantForm_ofTensor (hπ : IsUnitary π) {t : V ⊗[𝕜] V}
+private theorem isInvariantForm_ofTensor (hπ : IsUnitary π) {t : V ⊗[𝕜] V}
     (ht : t ∈ (tprod π π).invariants) :
     Representation.IsInvariantForm π.toRepresentation (BilinForm.ofTensor t) := by
   refine Representation.isInvariantForm_iff.mpr fun g v w => ?_
@@ -144,7 +143,7 @@ theorem map_ofTensor_invariants [FiniteDimensional 𝕜 V] (hπ : IsUnitary π) 
         (tprod π π).invariants = Representation.invariantForms π.toRepresentation := by
   refine Submodule.ext fun B => ⟨?_, fun hB => ?_⟩
   · rintro ⟨t, ht, rfl⟩
-    exact Representation.mem_invariantForms.mpr (isInvariantForm_ofTensor π hπ ht)
+    exact Representation.mem_invariantForms.mpr ((isInvariantForm_ofTensor_iff π hπ).mpr ht)
   · obtain ⟨t, rfl⟩ := BilinForm.ofTensor_surjective B
     exact ⟨t, (isInvariantForm_ofTensor_iff π hπ).mp
       (Representation.mem_invariantForms.mp hB), rfl⟩
@@ -178,7 +177,7 @@ private theorem map_ofTensor_map_subtype_invariants [FiniteDimensional 𝕜 V] (
         (Submodule.map W.subtype σ.invariants) = S := by
   refine Submodule.ext fun B => ⟨?_, fun hB => ?_⟩
   · rintro ⟨_, ⟨x, hx, rfl⟩, rfl⟩
-    exact (hS _).mpr ⟨isInvariantForm_ofTensor π hπ ((hσ x).mp hx), (hP _).mpr x.2⟩
+    exact (hS _).mpr ⟨(isInvariantForm_ofTensor_iff π hπ).mpr ((hσ x).mp hx), (hP _).mpr x.2⟩
   · obtain ⟨hBinv, hPB⟩ := (hS B).mp hB
     obtain ⟨t, rfl⟩ := BilinForm.ofTensor_surjective B
     exact ⟨t, ⟨⟨t, (hP t).mp hPB⟩,
