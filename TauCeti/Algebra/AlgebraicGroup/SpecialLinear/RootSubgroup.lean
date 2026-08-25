@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 -- The ambient root subgroup supplies the matrix calculation and the named `GLₙ` presentation.
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup
 -- The special-linear scheme supplies the group scheme, inclusion, and scheme points.
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Scheme
 

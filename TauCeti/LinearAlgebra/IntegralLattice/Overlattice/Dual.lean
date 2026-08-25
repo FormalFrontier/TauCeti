@@ -142,6 +142,18 @@ theorem mem_discriminantSubgroup_dual_iff (M : L.IntermediateCarrier)
 
 variable [L.IsNondegenerate]
 
+/-- The dual carrier of the lattice carried by an integral intermediate carrier is the dual
+intermediate carrier. -/
+theorem IsIntegral.toIntegralLattice_dualCarrier {M : L.IntermediateCarrier} (hM : IsIntegral M) :
+    hM.toIntegralLattice.dualCarrier = (dual M).1 := by
+  rw [coe_dual, IntegralLattice.dualCarrier, hM.toIntegralLattice_form,
+    hM.toIntegralLattice_carrier]
+
+/-- Since `L ≤ M`, the dual carrier of `M` is contained in the dual carrier of `L`. -/
+theorem IsIntegral.dualCarrier_le {M : L.IntermediateCarrier} (hM : IsIntegral M) :
+    hM.toIntegralLattice.dualCarrier ≤ L.dualCarrier := fun _ hx ↦
+  (dual M).2.2 (by rwa [hM.toIntegralLattice_dualCarrier] at hx)
+
 /-- **The dual of an intermediate carrier is the orthogonal complement of its subgroup.** Under
 the correspondence between intermediate carriers and subgroups of the discriminant group, taking
 the dual submodule corresponds to taking the orthogonal complement in the discriminant bilinear

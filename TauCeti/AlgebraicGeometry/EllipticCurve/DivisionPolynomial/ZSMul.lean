@@ -112,6 +112,11 @@ is the statement the Nagell–Lutz layer consumes.
 * `WeierstrassCurve.zsmul_point_eq_smulEval`: **the headline**. Over a field, `n • (x, y)`
   in Jacobian
   coordinates is `(φₙ(x,y) : ωₙ(x,y) : ψₙ(x,y))`, for every nonsingular `(x, y)` and every `n`.
+* `WeierstrassCurve.two_zsmul_eq_zero_of_evalEval_ψ₂_eq_zero`: the converse at `n = 2` — a
+  vanishing `ψ₂` at a nonsingular point forces `2 • P = 0`.
+* `WeierstrassCurve.addOrderOf_eq_two_iff_evalEval_ψ₂_eq_zero`: those two directions packaged as
+  the characterisation of two-torsion, `addOrderOf P = 2 ↔ ψ₂(x, y) = 0`. Its contrapositive is
+  what discharges the `addOrderOf ≠ 2` guard the Nagell–Lutz theorems carry.
 
 ## Provenance
 
@@ -379,7 +384,7 @@ lemma smulX_sub_smulX (hm : m ≠ 0) (hn : n ≠ 0) :
     smulX m - smulX n = polyToField (curve.ψ (n + m)) * polyToField (curve.ψ (n - m)) /
       (polyToField (curve.ψ n) * polyToField (curve.ψ m)) ^ 2 := by
   have key := isEllipticNet_polyToField_ψ n m 1 0
-  simp only [IsEllipticNet.rel, add_zero, ψ_one, map_one, mul_one] at key
+  simp only [IsEllipticNet.rel, add_zero, ψ_one, map_one] at key
   rw [smulX_eq hm, smulX_eq hn, sub_sub_sub_cancel_left,
     div_sub_div _ _ (pow_ne_zero 2 (polyToField_ψ_ne_zero hn))
       (pow_ne_zero 2 (polyToField_ψ_ne_zero hm)), mul_pow]
@@ -387,7 +392,7 @@ lemma smulX_sub_smulX (hm : m ≠ 0) (hn : n ≠ 0) :
   linear_combination -key
 
 /-- `smulX` is even in `n`. -/
-@[simp] lemma smulX_neg : smulX (-n) = smulX n := by simp [smulX_def, φ_neg, ψ_neg]
+@[simp] lemma smulX_neg : smulX (-n) = smulX n := by simp [smulX_def]
 
 /-- Negating a nonzero index negates the point: `smulY (-n)` is the long-Weierstrass `negY`
 of the coordinates `(smulX n, smulY n)`. -/
@@ -397,9 +402,8 @@ of the coordinates `(smulX n, smulY n)`. -/
   have key := WeierstrassCurve.Jacobian.negY_of_Z_ne_zero (W := pointedCurve)
     (P := ![polyToField (curve.φ n), polyToField (curve.ω n), polyToField (curve.ψ n)])
     (by simpa using polyToField_ψ_ne_zero h0)
-  simp only [WeierstrassCurve.Jacobian.negY_eq, pointedCurve_a₁, pointedCurve_a₃,
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
-    Matrix.tail_cons] at key
+  simp only [WeierstrassCurve.Jacobian.negY_eq, pointedCurve_a₁, pointedCurve_a₃, Matrix.head_cons,
+    Matrix.cons_val_two, Matrix.tail_cons] at key
   refine .trans ?_ key
   -- `ω_neg` negates the numerator and `ψ_neg` the denominator's cube, so the signs cancel.
   rw [smulY_def, ψ_neg, ω_neg]
@@ -494,7 +498,7 @@ lemma addX_smul_one_smul_one :
   have hψ₂ : polyToField (curve.ψ 2) ≠ 0 := polyToField_ψ_ne_zero two_ne_zero
   have hF := congrArg polyToField (C_Ψ₃ curve)
   simp only [map_sub polyToField, map_add polyToField, map_mul polyToField, map_pow polyToField,
-    map_ofNat, polyToField_Ψ₂Sq, polyToField_polynomial, mul_zero, ← ψ_three, ← ψ_two] at hF
+    map_ofNat, polyToField_Ψ₂Sq, polyToField_polynomial, ← ψ_three, ← ψ_two] at hF
   rw [Affine.addX, slopeOne_eq_neg_div, smulX_two, smulX_one, pointedCurve_a₁, pointedCurve_a₂]
   field_simp
   linear_combination hF
@@ -516,7 +520,7 @@ lemma addY_smul_one_smul_one :
   have hF := congrArg polyToField (ω_def curve 2)
   simp only [reducedInvarDenom_two, complEDS₂Aux_two, one_mul, sub_zero, hY, hneg, ← ψ_three,
     map_add polyToField, map_sub polyToField, map_mul polyToField, map_pow polyToField,
-    map_neg polyToField, map_ofNat, polyToField_polynomial, mul_zero, zero_mul, add_zero] at hF
+    map_neg polyToField, polyToField_polynomial, mul_zero] at hF
   rw [Affine.addY, Affine.negAddY, addX_smul_one_smul_one, smulY_one, smulX_two, smulX_one,
     slopeOne_eq_neg_div, Affine.negY, pointedCurve_a₁, pointedCurve_a₃, smulY_def 2, hF]
   field_simp
@@ -711,7 +715,7 @@ lemma algebraMap_comp_smulRing (n : ℤ) : algebraMap _ _ ∘ smulRing n = smulF
   -- Not `rfl`: `polyToField`'s body is unexposed, so its factorisation through `AdjoinRoot.mk`
   -- has to come from the equation lemma.
   ext i
-  fin_cases i <;> simp [Function.comp_def, polyToField_apply]
+  fin_cases i <;> simp [polyToField_apply]
 
 /-- **The Jacobian coordinates of `n • (X, Y)` are `(φₙ : ωₙ : ψₙ)`.** The Jacobian form of
 `Affine.zsmul_point_eq_smulX_smulY`: where the affine statement divides by `ψₙ²` and `ψₙ³`, the
@@ -748,11 +752,11 @@ theorem zsmul_point_eq_smulField : (n • Jacobian.point).point = ⟦smulField n
 /-- `smulRing` at `0` is the triple `(1, 1, 0)`, the universal-ring representation of the point
 at infinity. -/
 @[simp] lemma smulRing_zero : smulRing 0 = ![1, 1, 0] := by
-  simp [smulRing, smulPoly_zero, comp_fin3]
+  simp [smulRing, comp_fin3]
 
 /-- `smulField` at `0` is the triple `(1 : 1 : 0)`, the point at infinity. -/
 @[simp] lemma smulField_zero : smulField 0 = ![1, 1, 0] := by
-  simp [smulField, smulPoly_zero, comp_fin3]
+  simp [smulField, comp_fin3]
 
 /-- **The `Z`-coordinate of Mathlib's Jacobian doubling formula at `(φₙ, ωₙ, ψₙ)` is `ψ₂ₙ`** —
 already in the polynomial ring, with no reduction modulo the Weierstrass polynomial. -/
@@ -813,7 +817,7 @@ lemma dblXYZ_smulRing : dblXYZ curveRing (smulRing n) = smulRing (2 * n) := by
 -- discharged through `sub_eq_zero` and `ring` instead.
 lemma addZ_smulPoly : addZ (smulPoly m) (smulPoly n) = curve.ψ (n + m) * curve.ψ (n - m) := by
   have key := curve.isEllipticNet_ψ.isEllipticSequence n m 1
-  simp only [IsEllipticNet.rel, add_zero, ψ_one, mul_one] at key
+  simp only [IsEllipticNet.rel, add_zero, ψ_one] at key
   symm
   rw [← sub_eq_zero, ← key, addZ]
   simp only [smulPoly, fin3_def_ext, WeierstrassCurve.φ]
@@ -829,7 +833,7 @@ the triple at `n`, rescaled by `-1`. -/
   -- explicit `Matrix.cons_val_*` lemmas cannot match; the default `simp` set can, via the
   -- `Fin.reduceFinMk` simproc, after which the tuple projections and `ring` finish all three.
   funext i
-  fin_cases i <;> simp [smulPoly, smul_fin3, neg, negY, φ_neg, ψ_neg] <;> ring
+  fin_cases i <;> simp [smulPoly, smul_fin3, neg, negY] <;> ring
 
 /-- The negation rule over the universal ring. -/
 @[simp] lemma smulRing_neg :
@@ -874,7 +878,7 @@ lemma addXYZ_smulField :
   · rw [addXYZ_Z,
       (smul_fin3_ext (smulField (n + m)) (polyToField (curve.ψ (n - m)))).2.2, smulField_Z]
     have hF := congrArg polyToField (addZ_smulPoly (m := m) (n := n))
-    simp only [addZ, smulPoly, smulField, Function.comp_def, fin3_def_ext, map_sub polyToField,
+    simp only [addZ, smulPoly, smulField, Function.comp_def, map_sub polyToField,
       map_mul polyToField, map_pow polyToField] at hF ⊢
     linear_combination hF
   -- The nonvanishing side-goal is that same scaled projection, rewritten the same way.
@@ -943,8 +947,7 @@ what turns each identity over `curveRing` into the same identity for `W` at `(x,
   -- `Matrix.cons_val_*` lemmas cannot match it; the default `simp` set reduces it through the
   -- `Fin.reduceFinMk` simproc, and the three coordinates then close uniformly.
   funext i
-  fin_cases i <;> simp [Jacobian.smulRing, smulEval, ringEval_mk, evalEval_φ, evalEval_ω,
-    evalEval_ψ]
+  fin_cases i <;> simp [Jacobian.smulRing, smulEval, evalEval_φ, evalEval_ω, evalEval_ψ]
 
 end Universal
 
@@ -954,7 +957,7 @@ evaluations and needs no equation on `(x, y)`. -/
 @[simp] lemma smulEval_neg (n : ℤ) :
     smulEval W x y (-n) = (-1 : R) • Jacobian.neg W (smulEval W x y n) := by
   funext i
-  fin_cases i <;> (simp [smulEval, smul_fin3, Jacobian.neg, Jacobian.negY, φ_neg, ψ_neg]; try ring)
+  fin_cases i <;> (simp [smulEval, smul_fin3, Jacobian.neg, Jacobian.negY]; try ring)
 
 include eqn in
 /-- **The doubling formula for a concrete curve**: `dblXYZ_smulRing` specialized along the point
@@ -1045,5 +1048,92 @@ theorem zsmul_point_eq_smulEval {x y : F} (h : Affine.Nonsingular W x y) (n : �
     refine Quotient.sound ⟨-1, ?_⟩
     simp_rw [smulEval_neg]
     rfl
+
+/-- If `ψ₂` vanishes at `(x, y)` then `2 • P = 0`: the point equals its own negation, so adding
+it to itself lands at infinity. Field-local — no base ring is involved.
+
+Stated for the Jacobian point, matching the rest of the torsion API and
+`evalEval_ψ_eq_zero_of_zsmul_eq_zero`. The affine group law is defined by cases and so needs
+`DecidableEq`, but only inside the proof, where `classical` supplies it; the statement does not. -/
+theorem two_zsmul_eq_zero_of_evalEval_ψ₂_eq_zero {x y : F}
+    (hns : W.toAffine.Nonsingular x y) (hψ : W.ψ₂.evalEval x y = 0) :
+    (2 : ℤ) • Jacobian.Point.fromAffine (Affine.Point.some _ _ hns) = 0 := by
+  classical
+  rw [WeierstrassCurve.ψ₂, Affine.evalEval_polynomialY] at hψ
+  have hy : y = W.toAffine.negY x y := by simp only [Affine.negY]; linear_combination hψ
+  have haff : (2 : ℕ) • (Affine.Point.some _ _ hns) = 0 := by
+    rw [two_nsmul]; exact Affine.Point.add_self_of_Y_eq hy
+  have h := congrArg (Jacobian.Point.toAffineAddEquiv W).symm haff
+  rw [map_nsmul, map_zero] at h
+  rw [← natCast_zsmul] at h
+  exact_mod_cast h
+
+/-- **A torsion point is a root of its division polynomial.** If `n • P = 0` in the Jacobian
+point group, then `ψₙ` vanishes at `P`.
+
+This is where `zsmul_point_eq_smulEval` is consumed: it identifies `n • P` with the class of
+`(φₙ(x,y) : ωₙ(x,y) : ψₙ(x,y))`, and a Jacobian class is the point at infinity exactly when its
+`Z`-coordinate vanishes. -/
+theorem evalEval_ψ_eq_zero_of_zsmul_eq_zero {x y : F}
+    (hns : W.toAffine.Nonsingular x y) (n : ℤ)
+    (htors : n • (Jacobian.Point.fromAffine (Affine.Point.some _ _ hns)) = 0) :
+    (W.ψ n).evalEval x y = 0 := by
+  have heval := zsmul_point_eq_smulEval W hns n
+  have hzero := Jacobian.Point.zero_point (W' := W.toJacobian)
+  rw [Jacobian.Point.ext_iff] at htors
+  rw [heval, hzero] at htors
+  exact (Jacobian.Z_eq_zero_of_equiv (Quotient.exact htors)).mpr rfl
+
+/-- **Torsion transports between the affine and Jacobian point groups.** `n • P = 0` affinely,
+with `n : ℕ`, is the same statement as `(n : ℤ) • P = 0` on the Jacobian side.
+
+Stated as an **iff** because both directions are wanted: `addOrderOf` is `ℕ`-valued and affine
+while the theorems above take their torsion hypothesis on `Jacobian.Point.fromAffine`, so a
+vanishing statement travels forwards and a non-vanishing one backwards. The proof is the additive
+equivalence alone, so `P` ranges over every affine point, the point at infinity included.
+
+**Not a `simp` lemma.** Its left-hand side is not in simp normal form: `natCast_zsmul` rewrites
+`(n : ℤ) • Q` to `n • Q`, so tagging it `@[simp]` fails `simpNF`. The `ℤ`-cast orientation is
+nevertheless the useful one, because every consumer's torsion hypothesis is a `ℤ`-scalar
+multiple; stating it in `ℕ`-normal form would only move the cast to each call site. -/
+lemma zsmul_fromAffine_eq_zero_iff [DecidableEq F] {E : WeierstrassCurve F}
+    {P : Affine.Point E.toAffine} {n : ℕ} :
+    (n : ℤ) • Jacobian.Point.fromAffine P = 0 ↔ n • P = 0 := by
+  -- `fromAffine` is the `invFun` field of `toAffineAddEquiv`, so the two agree definitionally —
+  -- but `toAffineAddEquiv` is a plain `noncomputable def`, so `simp` cannot unfold it at
+  -- reducible transparency. Rewrite into equiv form first.
+  rw [natCast_zsmul, ← Jacobian.Point.toAffineAddEquiv_symm_apply,
+    ← map_nsmul (Jacobian.Point.toAffineAddEquiv E).symm, AddEquiv.map_eq_zero_iff]
+
+/-- **Two-torsion is exactly the vanishing of `ψ₂`.** For a nonsingular affine point, having order
+two and `ψ₂` vanishing there are the same condition. Forwards, order two gives `2 • P = 0` and
+`evalEval_ψ_eq_zero_of_zsmul_eq_zero` at `n = 2` reads off the vanishing; backwards,
+`two_zsmul_eq_zero_of_evalEval_ψ₂_eq_zero` gives `2 • P = 0`, so the order divides `2`, and a
+`.some` point is never `0`, which rules out `1`.
+
+Stated over the point's own field, with no arithmetic on the coefficients: consumers working over
+a fraction field transport their hypothesis across `algebraMap` at the call site.
+
+**Not a `simp` lemma.** Neither side is a normal form the other should rewrite towards, and both
+directions are wanted — the `≠`-form below is what discharges Nagell–Lutz's guard, while the
+`= 2` direction is what an order computation wants. -/
+theorem addOrderOf_eq_two_iff_evalEval_ψ₂_eq_zero [DecidableEq F] {x y : F}
+    (hns : W.toAffine.Nonsingular x y) :
+    addOrderOf (Affine.Point.some _ _ hns) = 2 ↔ W.ψ₂.evalEval x y = 0 := by
+  constructor
+  · intro h2
+    have h2P : (2 : ℕ) • Affine.Point.some _ _ hns = 0 := by
+      rw [← h2]; exact addOrderOf_nsmul_eq_zero _
+    have hψ := evalEval_ψ_eq_zero_of_zsmul_eq_zero W hns 2 (zsmul_fromAffine_eq_zero_iff.mpr h2P)
+    rwa [WeierstrassCurve.ψ_two] at hψ
+  · intro hψ
+    have h2P : (2 : ℕ) • Affine.Point.some _ _ hns = 0 :=
+      zsmul_fromAffine_eq_zero_iff.mp (two_zsmul_eq_zero_of_evalEval_ψ₂_eq_zero W hns hψ)
+    have hne_one : addOrderOf (Affine.Point.some _ _ hns) ≠ 1 := fun h ↦
+      Affine.Point.some_ne_zero hns (AddMonoid.addOrderOf_eq_one_iff.mp h)
+    rcases (Nat.dvd_prime Nat.prime_two).mp (addOrderOf_dvd_iff_nsmul_eq_zero.mpr h2P) with h | h
+    · exact absurd h hne_one
+    · exact h
+
 
 end WeierstrassCurve

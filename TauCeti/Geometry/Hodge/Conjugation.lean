@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Module.Submodule.Map
 public import Mathlib.Data.Complex.Basic
+public import Mathlib.LinearAlgebra.Quotient.Basic
 public import Mathlib.LinearAlgebra.TensorProduct.Map
 public import Mathlib.RingTheory.IsTensorProduct
 
@@ -23,11 +24,16 @@ complexification models.
 ## Main declarations
 
 * `TauCeti.Hodge.Conjugation`: a conjugate-linear involution of a complex vector space.
+* `TauCeti.Hodge.Conjugation.conjFiltration`: the conjugate of a complex filtration.
 * `TauCeti.Hodge.concreteLatticeConj`: conjugation on the tensor model `ℂ ⊗[ℤ] V`.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
 * `TauCeti.Hodge.latticeConj_unique`: uniqueness among conjugate-linear maps fixing the integral
   module.
 * `TauCeti.Hodge.Conjugation.restrict`: the conjugation induced on a stable complex subspace.
+* `TauCeti.Hodge.Conjugation.quotient`: the conjugation induced on the quotient by a stable
+  complex subspace.
+* `TauCeti.Hodge.Conjugation.map_comap_eq_comap_map`: an equivalence intertwining two conjugations
+  exchanges conjugation with taking preimages of subspaces.
 * `TauCeti.Hodge.latticeConjugation`: the abstract map bundled as a `Conjugation`.
 * `TauCeti.Hodge.integralMapToComplex`: complexification of an integral linear map between abstract
   complexification models.
@@ -78,6 +84,45 @@ theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
     (Submodule.map_symm_eq_iff ω.toEquiv).2 rfl
   simpa only [ω.toEquiv_symm] using h
 
+/-- The conjugate filtration obtained by mapping each step through a conjugation. -/
+noncomputable def conjFiltration (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    Submodule ℂ W :=
+  (F p).map ω.toEquiv.toLinearMap
+
+/-- A conjugate filtration step is the image of the original step under conjugation. -/
+theorem conjFiltration_def (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    ω.conjFiltration F p = (F p).map ω.toEquiv.toLinearMap :=
+  (rfl)
+
+/-- Conjugating an antitone filtration produces an antitone filtration. -/
+theorem conjFiltration_antitone (ω : Conjugation W) {F : ℤ → Submodule ℂ W}
+    (hF : Antitone F) : Antitone (ω.conjFiltration F) :=
+  fun _ _ hpq ↦ Submodule.map_mono (hF hpq)
+
+/-- Membership in a conjugate filtration step is detected by applying the conjugation. -/
+@[simp]
+theorem mem_conjFiltration_iff (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) (x : W) :
+    x ∈ ω.conjFiltration F p ↔ ω.toEquiv x ∈ F p := by
+  simp [conjFiltration, ω.toEquiv_symm]
+
+/-- Applying conjugation to a conjugate filtration step recovers the original step. -/
+@[simp]
+theorem conjFiltration_conjFiltration (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    (ω.conjFiltration F p).map ω.toEquiv.toLinearMap = F p :=
+  ω.map_map_eq_self (F p)
+
+variable {W' : Type v} [AddCommGroup W'] [Module ℂ W']
+
+/-- A linear map commuting with two conjugations carries the conjugate of a preserved filtration
+step into the corresponding conjugate filtration step. -/
+theorem map_conjFiltration_le (ω : Conjugation W) (ω' : Conjugation W')
+    (F : ℤ → Submodule ℂ W) (F' : ℤ → Submodule ℂ W') (f : W →ₗ[ℂ] W')
+    (hcomm : ∀ x, f (ω.toEquiv x) = ω'.toEquiv (f x)) {p : ℤ}
+    (hF : (F p).map f ≤ F' p) :
+    (ω.conjFiltration F p).map f ≤ ω'.conjFiltration F' p := by
+  rintro _ ⟨_, ⟨x, hx, rfl⟩, rfl⟩
+  exact ⟨f x, hF ⟨x, hx, rfl⟩, (hcomm x).symm⟩
+
 /-- A conjugation restricted to a stable complex subspace is involutive. -/
 private theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}
     (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
@@ -108,6 +153,44 @@ theorem map_restrict_comap_subtype (ω : Conjugation W) {U : Submodule ℂ W}
       (A.map ω.toEquiv.toLinearMap).comap U.subtype := by
   ext x
   simp
+
+/-- A linear equivalence intertwining two conjugations exchanges conjugating a preimage with
+taking the preimage of the conjugate. -/
+theorem map_comap_eq_comap_map {W' : Type v} [AddCommGroup W'] [Module ℂ W']
+    (ω : Conjugation W) (ω' : Conjugation W') (e : W ≃ₗ[ℂ] W')
+    (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x)) (A : Submodule ℂ W') :
+    (A.comap e.toLinearMap).map ω.toEquiv.toLinearMap =
+      (A.map ω'.toEquiv.toLinearMap).comap e.toLinearMap := by
+  ext y
+  simp only [Submodule.mem_map, Submodule.mem_comap, LinearEquiv.coe_coe]
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨e x, hx, (he x).symm⟩
+  · rintro ⟨z, hz, hzy⟩
+    refine ⟨ω.toEquiv y, ?_, ω.apply_apply y⟩
+    rw [he y, ← hzy, ω'.apply_apply]
+    exact hz
+
+/-- The conjugation induced on a quotient by a stable complex subspace is involutive. -/
+private theorem quotient_involutive (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
+    Function.Involutive (U.mapQ U ω.toEquiv.toLinearMap fun x hx ↦ hU x hx) := fun x ↦
+  Submodule.Quotient.induction_on _ x fun y ↦
+    congrArg Submodule.Quotient.mk (ω.apply_apply y)
+
+/-- The conjugation induced on the quotient of a complex vector space by a stable subspace. -/
+noncomputable def quotient (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation (W ⧸ U) where
+  toEquiv := LinearEquiv.ofInvolutive _ (ω.quotient_involutive hU)
+  involutive := ω.quotient_involutive hU
+
+/-- The induced conjugation on a quotient acts on classes through the ambient conjugation. -/
+@[simp]
+theorem quotient_toEquiv_mk (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (x : W) :
+    (ω.quotient hU).toEquiv (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (ω.toEquiv x) :=
+  (rfl)
 
 end Conjugation
 

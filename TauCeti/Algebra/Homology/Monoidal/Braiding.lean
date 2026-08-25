@@ -111,6 +111,16 @@ noncomputable def koszulBraidingSummand (X Y : CochainComplex (ModuleCat.{v} R) 
     HomologicalComplex.ιMapBifunctor Y X (curriedTensor (ModuleCat.{v} R))
       (ComplexShape.up ℤ) q p j (by dsimp at h ⊢; omega))
 
+/-- The bidegree component of the Koszul braiding is the ordinary module braiding, followed by
+the inclusion of the swapped summand, and scaled by `(-1)^(p*q)`. -/
+lemma koszulBraidingSummand_def (X Y : CochainComplex (ModuleCat.{v} R) ℤ) (p q j : ℤ)
+    (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q) = j) :
+    koszulBraidingSummand R X Y p q j h =
+      (p * q).negOnePow • ((β_ (X.X p) (Y.X q)).hom ≫
+        HomologicalComplex.ιMapBifunctor Y X (curriedTensor (ModuleCat.{v} R))
+          (ComplexShape.up ℤ) q p j (by dsimp at h ⊢; omega)) :=
+  (rfl)
+
 private lemma koszulBraidingSummand_comm (X Y : CochainComplex (ModuleCat.{v} R) ℤ)
     (p q j : ℤ)
     (h : ComplexShape.π (ComplexShape.up ℤ) (ComplexShape.up ℤ) (ComplexShape.up ℤ) (p, q) = j) :

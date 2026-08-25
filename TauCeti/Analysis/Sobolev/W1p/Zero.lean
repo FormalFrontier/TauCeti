@@ -104,23 +104,8 @@ copy of `C_c^∞(Ω)`, not just a quotient of it. -/
 theorem W1p.ofTestFunctionₗ_injective :
     Function.Injective (W1p.ofTestFunctionₗ mu Omega p) := by
   intro phi psi h
-  have hLp : testFunctionLp (mu := mu) p phi = testFunctionLp (mu := mu) p psi := by
-    simpa using congrArg W1p.value h
-  have hae : (phi : E → ℝ) =ᵐ[mu.restrict Omega] (psi : E → ℝ) := by
-    filter_upwards [testFunctionLp_apply_ae (mu := mu) p phi,
-      testFunctionLp_apply_ae (mu := mu) p psi] with x hx hy
-    rw [← hx, ← hy, hLp]
-  have hsubset : {x | (phi : E → ℝ) x ≠ psi x} ⊆ (Omega : Set E) := by
-    intro x hx
-    by_contra hxO
-    exact hx (by rw [image_eq_zero_of_notMem_tsupport fun hc => hxO (phi.tsupport_subset hc),
-      image_eq_zero_of_notMem_tsupport fun hc => hxO (psi.tsupport_subset hc)])
-  have hzero : mu {x | (phi : E → ℝ) x ≠ psi x} = 0 := by
-    have := ae_iff.1 hae
-    rwa [Measure.restrict_apply' Omega.isOpen.measurableSet,
-      Set.inter_eq_self_of_subset_left hsubset] at this
-  have hempty := (isOpen_ne_fun phi.continuous psi.continuous).measure_eq_zero_iff mu |>.1 hzero
-  exact TestFunction.ext fun x => not_not.1 fun hx => Set.eq_empty_iff_forall_notMem.1 hempty x hx
+  apply testFunctionLp_injective (nu := mu) (U := Omega) p
+  simpa using congrArg W1p.value h
 
 /-! ### The space `W^{1,p}_0(Ω)` -/
 

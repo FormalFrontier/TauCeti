@@ -5,13 +5,16 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.InfinityPlace.Unique
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.FunctionField
+import TauCeti.FieldTheory.FunctionField.Place.OfValuationSubring
+import TauCeti.RingTheory.Valuation.IntegralOfValuationLeOne
 import TauCeti.RingTheory.Valuation.Polynomial
 import Mathlib.RingTheory.Valuation.Integral
 
 /-!
-# An isogeny carries the place at infinity to the place at infinity
+# Pointedness at the place at infinity
 
 An isogeny of affine Weierstrass curves is a coordinate pullback `φ : R(W₂) → K(W₁)` carrying the
 integrality condition `MapsInfinity`, the algebraic form of `φ(O₁) = O₂`. This file reads that
@@ -28,8 +31,15 @@ so `MapsInfinity` puts `x₁` in it as well, contradicting the double pole `v_�
 `φ x₂` has a pole at `O₁`, and
 `WeierstrassCurve.Affine.isEquiv_infinityPlace_of_one_lt` identifies the restricted valuation.
 
-Nothing here uses ellipticity, separability, or the degree of `φ`: only the pullback, the
-integrality condition, and the Weierstrass equation of the target.
+Conversely, a bare function-field embedding is a pointed coordinate pullback when it carries the
+place at infinity to the place at infinity. The proof uses
+`TauCeti.isIntegral_of_forall_valuation_le_one`: a valuation bounded on the pulled-back coordinate
+ring is either trivial, or its proper valuation subring is the ring of a place. If the source
+coordinate had a pole there, uniqueness would identify that place with infinity, contradicting
+boundedness of the pulled-back target coordinate. This makes the source coordinate integral;
+integrality of the coordinate ring over the polynomial ring then gives `MapsInfinity`.
+
+Neither direction uses ellipticity, separability, or the degree of an isogeny.
 
 ## Main results
 
@@ -40,6 +50,8 @@ integrality condition, and the Weierstrass equation of the target.
 * `TauCeti.Isogeny.comap_infinityPlace_apply_algebraMap`: the restricted valuation, evaluated on
   the image of the target coordinate ring, is `v_∞ ∘ φ` — the computation rule the other two are
   stated through.
+* `TauCeti.CoordinatePullback.mapsInfinity_iff_isEquiv_comap_infinityPlace`: **the pointedness
+  criterion**, `MapsInfinity σ ↔ σ_*(O₁) = O₂`, for an embedding `σ` of function fields.
 
 ## Roadmap
 
@@ -47,9 +59,9 @@ integrality condition, and the Weierstrass equation of the target.
 unpointed induced-place map for finite function-field embeddings, with the named criterion
 `MapsInfinity λ ↔ λ_*(O₂) = O₃`, and functoriality of induced places along `λ ∘ φ = ψ` — which
 yields `λ_*(O₂) = λ_*(φ_*(O₁)) = ψ_*(O₁) = O₃` at the level of places, *then* `λ` is packaged".
-This file supplies the direction that the milestone applies to `φ` and to `ψ`: an isogeny pushes
-the place at infinity forward to the place at infinity. It is also the Layer-0 `inducedPlace` of
-`W₁.infinityPlace` along an isogeny, computed.
+This file supplies both the named criterion and the direction it applies to `φ` and to `ψ`: an
+isogeny pushes the place at infinity forward to the place at infinity. It is also the Layer-0
+`inducedPlace` of `W₁.infinityPlace` along an isogeny, computed.
 
 ## References
 
@@ -60,7 +72,7 @@ public section
 
 namespace TauCeti
 
-open Polynomial WeierstrassCurve.Affine
+open _root_.Polynomial WeierstrassCurve.Affine
 
 open scoped Polynomial.Bivariate
 
@@ -162,6 +174,98 @@ theorem isEquiv_comap_infinityPlace :
   exact one_lt_infinityPlace_pullback_X φ
 
 end Isogeny
+
+namespace CoordinatePullback
+
+variable {F : Type*} [Field F] {W₁ W₂ : WeierstrassCurve.Affine F}
+
+/-- **An embedding of function fields under which `x` acquires a pole at infinity maps infinity
+to infinity.** -/
+theorem mapsInfinity_of_one_lt_infinityPlace (σ : W₂.FunctionField →ₐ[F] W₁.FunctionField)
+    (h : 1 < infinityPlace W₁ (σ (algebraMap F[X] W₂.FunctionField X))) :
+    MapsInfinity (σ.comp (IsScalarTower.toAlgHom F W₂.CoordinateRing W₂.FunctionField)) := by
+  rw [mapsInfinity_iff]
+  let f := σ.comp (IsScalarTower.toAlgHom F W₂.CoordinateRing W₂.FunctionField)
+  let _ := f.toRingHom.toAlgebra
+  have hcoord : ∀ c : W₂.CoordinateRing,
+      algebraMap W₂.CoordinateRing W₁.FunctionField c = σ (algebraMap _ _ c) := fun _ ↦ rfl
+  set C := integralClosure W₂.CoordinateRing W₁.FunctionField
+  -- The affine coordinate of `W₁` is integral over the pulled-back coordinate ring.
+  have hx₁ : algebraMap F[X] W₁.FunctionField X ∈ C := by
+    rw [mem_integralClosure_iff]
+    let B := f.range.toSubring
+    have hf : Function.Injective f :=
+      σ.injective.comp (IsFractionRing.injective W₂.CoordinateRing W₂.FunctionField)
+    have hxB : IsIntegral B (algebraMap F[X] W₁.FunctionField X) :=
+      isIntegral_of_forall_valuation_le_one fun v hvle ↦ by
+        let _ : ValuativeRel W₁.FunctionField := v
+        let u := ValuativeRel.valuation W₁.FunctionField
+        have hmemV : ∀ c : W₂.CoordinateRing, f c ∈ u.valuationSubring := fun c ↦
+          (Valuation.mem_valuationSubring_iff _ _).2
+            ((Valuation.vle_one_iff u).1 (hvle (f c) ⟨c, rfl⟩))
+        have hFV : ∀ c : F, algebraMap F W₁.FunctionField c ∈ u.valuationSubring := fun c ↦ by
+          rw [← f.commutes]
+          exact hmemV _
+        by_cases hu : u.valuationSubring = ⊤
+        · exact (Valuation.vle_one_iff u).2
+            ((Valuation.mem_valuationSubring_iff _ _).1 (hu ▸ trivial))
+        · set P := Place.ofValuationSubring W₁.isFunctionField hFV hu
+          have hPint : P.integers = u.valuationSubring :=
+            Place.integers_ofValuationSubring _ hFV hu
+          by_contra hx
+          have hpole : 1 < P.valuation (algebraMap F[X] W₁.FunctionField X) :=
+            not_le.1 fun hle ↦ hx ((Valuation.vle_one_iff u).2
+              ((Valuation.mem_valuationSubring_iff _ _).1
+                (hPint ▸ P.mem_integers_iff.2 hle)))
+          have hequiv := isEquiv_infinityPlace_of_one_lt (W := W₁) (v := P.valuation) hpole
+          have hσx : σ (algebraMap F[X] W₂.FunctionField X) =
+              algebraMap W₂.CoordinateRing W₁.FunctionField
+                (algebraMap F[X] W₂.CoordinateRing X) := by
+            rw [hcoord, ← IsScalarTower.algebraMap_apply F[X] W₂.CoordinateRing W₂.FunctionField]
+          refine absurd ((Valuation.isEquiv_iff_val_le_one.1 hequiv).1 ?_) (not_le.2 h)
+          rw [hσx]
+          exact P.mem_integers_iff.1 (hPint ▸ hmemV _)
+    let e := (AlgEquiv.ofInjective f hf).toRingEquiv
+    exact (e.isIntegral_iff (by rfl) _).2 hxB
+  -- Every polynomial in that coordinate is then integral, so `F[X]` acts on the integral closure.
+  have hmemq : ∀ q : F[X], algebraMap F[X] W₁.FunctionField q ∈ C := by
+    intro q
+    induction q using Polynomial.induction_on with
+    | C a =>
+      rw [← Polynomial.algebraMap_eq, ← IsScalarTower.algebraMap_apply F F[X] W₁.FunctionField,
+        IsScalarTower.algebraMap_apply F W₂.CoordinateRing W₁.FunctionField]
+      exact Subalgebra.algebraMap_mem C _
+    | add p q hp hq => simpa using C.add_mem hp hq
+    | monomial n a hn =>
+      rw [pow_succ, ← mul_assoc, map_mul]
+      exact C.mul_mem hn hx₁
+  let _ := ((algebraMap F[X] W₁.FunctionField).codRestrict C hmemq).toAlgebra
+  have : IsScalarTower F[X] C W₁.FunctionField := IsScalarTower.of_algebraMap_eq fun _ ↦ rfl
+  -- The coordinate ring of `W₁` is integral over `F[X]`, hence over the integral closure.
+  intro z
+  refine isIntegral_trans (A := C) _ (IsIntegral.tower_top (R := F[X]) ?_)
+  exact (Algebra.IsIntegral.isIntegral (R := F[X]) z).map
+    (IsScalarTower.toAlgHom F[X] W₁.CoordinateRing W₁.FunctionField)
+
+/-- **The pointedness criterion.** An embedding `σ : F(W₂) → F(W₁)` restricts to a coordinate
+pullback which maps infinity to infinity exactly when the source's place at infinity restricts
+along `σ` to the target's place at infinity. -/
+theorem mapsInfinity_iff_isEquiv_comap_infinityPlace
+    (σ : W₂.FunctionField →ₐ[F] W₁.FunctionField) :
+    MapsInfinity (σ.comp (IsScalarTower.toAlgHom F W₂.CoordinateRing W₂.FunctionField)) ↔
+      ((infinityPlace W₁).comap σ.toRingHom).IsEquiv (infinityPlace W₂) := by
+  constructor
+  · intro hσ
+    have hfield : ({ pullback := _, mapsInfinity := hσ } :
+        Isogeny W₁ W₂).fieldPullback = σ :=
+      (Isogeny.fieldPullback_unique _ σ fun _ ↦ rfl).symm
+    exact hfield ▸ Isogeny.isEquiv_comap_infinityPlace ⟨_, hσ⟩
+  · intro hσ
+    refine mapsInfinity_of_one_lt_infinityPlace σ (not_le.1 fun hle ↦ ?_)
+    exact absurd ((Valuation.isEquiv_iff_val_le_one.1 hσ).1 hle)
+      (not_le.2 (one_lt_infinityPlace_X W₂))
+
+end CoordinatePullback
 
 end TauCeti
 

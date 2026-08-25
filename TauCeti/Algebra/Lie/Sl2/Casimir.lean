@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Sl2.Classification
+import TauCeti.Algebra.Lie.Basic
+import TauCeti.Algebra.Lie.Submodule.Atom
 
 /-!
 # The Casimir operator of an `sl₂` triple
@@ -268,15 +270,8 @@ theorem lie_eq_zero_of_hasPrimitiveVectorWith_zero (htop : t.toLieSubalgebra K =
       IsSl2Triple.mem_toLieSubalgebra_iff.1 (htop ▸ LieSubalgebra.mem_top y)
     rw [t.lie_e_f]
     simp [P.lie_e, hfm, P.lie_h]
-  have hne : maxTrivSubmodule K L M ≠ ⊥ := by
-    intro hcon
-    refine P.ne_zero ?_
-    have hmem : m ∈ maxTrivSubmodule K L M := (mem_maxTrivSubmodule K L M m).2 hgen
-    rw [hcon] at hmem
-    simpa using hmem
-  have htop' : maxTrivSubmodule K L M = ⊤ :=
-    (IsSimpleOrder.eq_bot_or_eq_top _).resolve_left hne
-  exact (mem_maxTrivSubmodule K L M v).1 (htop' ▸ LieSubmodule.mem_top v) x
+  exact (isTrivial_of_forall_lie_eq_zero_of_lieSpan_eq_top hgen
+    (lieSpan_singleton_eq_top_of_ne_zero (R := K) (L := L) (M := M) P.ne_zero)).trivial x v
 
 /-- **The Casimir operator of a nontrivial irreducible module is injective.** An irreducible module
 has a primitive vector of some weight `n : ℕ`, on which the Casimir operator acts by

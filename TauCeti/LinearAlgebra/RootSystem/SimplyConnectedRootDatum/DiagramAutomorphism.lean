@@ -60,6 +60,8 @@ The group of node permutations that the construction consumes is
 * `TauCeti.DynkinType.eq_diagramAut`: an automorphism of the pinned datum whose weight map is the
   coordinate permutation is the diagram automorphism, so the construction is the unique such
   automorphism.
+* `TauCeti.DynkinType.diagramAut_eq_one_iff`: the induced automorphism is trivial exactly when the
+  node permutation is trivial.
 * `TauCeti.DynkinType.diagramAut_pow_eq_one`: a node permutation of finite order induces an
   automorphism of the same finite order relation.
 
@@ -312,6 +314,24 @@ theorem eq_diagramAut {g : (t.simplyConnectedRootDatum ht).Aut} (hσ : σ ∈ t.
   apply LinearEquiv.toLinearMap_injective
   refine LinearMap.ext fun x => funext fun j => ?_
   simp [Equiv.Perm.one_def]
+
+/-- The diagram automorphism is trivial exactly when its node permutation is trivial. In
+particular, the construction is faithful on diagram symmetries. -/
+@[simp] theorem diagramAut_eq_one_iff (hσ : σ ∈ t.diagramSymmetry) :
+    diagramAut ht hσ = 1 ↔ σ = 1 := by
+  constructor
+  · intro h
+    apply Equiv.ext
+    intro i
+    have hindex := congrArg (fun g : (t.simplyConnectedRootDatum ht).Aut =>
+      g.indexEquiv (t.simpleIndex ht i)) h
+    simp only [diagramAut_indexEquiv, diagramRootPerm_simpleIndex,
+      RootPairing.Equiv.toHom_one, RootPairing.Hom.indexEquiv_one, Equiv.refl_apply] at hindex
+    have hval := congrArg Fin.val hindex
+    apply Fin.ext
+    simpa only [simpleIndex_val, Equiv.Perm.one_def, Equiv.refl_apply] using hval
+  · rintro rfl
+    exact diagramAut_one ht
 
 /-- The construction is multiplicative in the node permutation. -/
 @[simp] theorem diagramAut_mul (hσ : σ ∈ t.diagramSymmetry) (hτ : τ ∈ t.diagramSymmetry) :
