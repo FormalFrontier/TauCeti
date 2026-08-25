@@ -64,11 +64,11 @@ below that need `TauCeti.BilinForm.ofTensor_surjective` anyway discharge it.
 
 ## Implementation notes
 
-The last two statements are two readings of one argument, which is why they are both deduced from
-the private `ContRepresentation.exists_isInvariantForm_ne_zero_iff`, stated for an arbitrary
-subrepresentation of the tensor square cut out by a property of the corresponding forms. The two
-equivalences for the squares are read off the same shape, from the private
-`ContRepresentation.invariantsEquivOfMemIff`.
+The two equivalences for the squares are two readings of one argument, which is why they are both
+read off the private `ContRepresentation.invariantsEquivOfMemIff`, stated for an arbitrary
+subrepresentation of the tensor square cut out by a property of the corresponding forms. The last
+two statements carry no argument of their own: an equivalence identifies the two nontriviality
+statements, and a submodule is nontrivial exactly when it is not `⊥`.
 
 ## References
 
@@ -253,46 +253,30 @@ theorem coe_exteriorSquareInvariantsEquivAlternatingInvariantForms_apply [Finite
       BilinForm.ofTensor ((x : antisymmetricTensors 𝕜 V) : V ⊗[𝕜] V) :=
   coe_invariantsEquivOfMemIff_apply π hπ _ _ _ x
 
-/-- A nonzero invariant form with a property `P` is the same thing as a nonzero invariant tensor of
-the subrepresentation of the tensor square that `P` cuts out. Both squares are such a
-subrepresentation, for `P = IsSymm` and for `P = IsAlt`. -/
-private theorem exists_isInvariantForm_ne_zero_iff [FiniteDimensional 𝕜 V] (hπ : IsUnitary π)
-    {W : Submodule 𝕜 (V ⊗[𝕜] V)} {σ : ContRepresentation 𝕜 G W}
-    (hσ : ∀ x : W, x ∈ σ.invariants ↔ (x : V ⊗[𝕜] V) ∈ (tprod π π).invariants)
-    {P : BilinForm 𝕜 V → Prop} (hP : ∀ t : V ⊗[𝕜] V, P (BilinForm.ofTensor t) ↔ t ∈ W) :
-    (∃ B : BilinForm 𝕜 V,
-        Representation.IsInvariantForm π.toRepresentation B ∧ P B ∧ B ≠ 0) ↔
-      σ.invariants ≠ ⊥ := by
-  constructor
-  · rintro ⟨B, hB, hPB, hB0⟩
-    obtain ⟨t, rfl⟩ := BilinForm.ofTensor_surjective B
-    refine (Submodule.ne_bot_iff _).mpr ⟨⟨t, (hP t).mp hPB⟩, ?_, ?_⟩
-    · exact (hσ _).mpr ((isInvariantForm_ofTensor_iff π hπ hπ.surjective).mp hB)
-    · simpa [Subtype.ext_iff] using fun h => hB0 (by rw [h, map_zero])
-  · intro h
-    obtain ⟨x, hx, hx0⟩ := (Submodule.ne_bot_iff _).mp h
-    refine ⟨BilinForm.ofTensor (x : V ⊗[𝕜] V), ?_, ?_, ?_⟩
-    · exact isInvariantForm_ofTensor π hπ ((hσ x).mp hx)
-    · exact (hP _).mpr x.2
-    · rw [Ne, BilinForm.ofTensor_eq_zero_iff]
-      exact fun h0 => hx0 (Subtype.ext h0)
-
 /-- **A nonzero invariant symmetric form is the same thing as a nonzero invariant tensor of the
-symmetric square.** -/
+symmetric square**: both sides say that the two sides of
+`TauCeti.ContRepresentation.symmetricSquareInvariantsEquivSymmetricInvariantForms` are
+nontrivial. -/
 theorem exists_isInvariantForm_isSymm_ne_zero_iff [FiniteDimensional 𝕜 V] (hπ : IsUnitary π) :
     (∃ B : BilinForm 𝕜 V,
         Representation.IsInvariantForm π.toRepresentation B ∧ B.IsSymm ∧ B ≠ 0) ↔
-      (symmetricSquare π).invariants ≠ ⊥ :=
-  exists_isInvariantForm_ne_zero_iff π hπ (fun _ => mem_invariants_symmetricSquare_iff π)
-    fun _ => BilinForm.isSymm_ofTensor_iff
+      (symmetricSquare π).invariants ≠ ⊥ := by
+  rw [← Submodule.nontrivial_iff_ne_bot,
+    (symmetricSquareInvariantsEquivSymmetricInvariantForms π hπ).toEquiv.nontrivial_congr,
+    Submodule.nontrivial_iff_ne_bot, Submodule.ne_bot_iff]
+  simp_rw [Representation.mem_symmetricInvariantForms, and_assoc]
 
 /-- **A nonzero invariant alternating form is the same thing as a nonzero invariant tensor of the
-exterior square.** -/
+exterior square**: both sides say that the two sides of
+`TauCeti.ContRepresentation.exteriorSquareInvariantsEquivAlternatingInvariantForms` are
+nontrivial. -/
 theorem exists_isInvariantForm_isAlt_ne_zero_iff [FiniteDimensional 𝕜 V] (hπ : IsUnitary π) :
     (∃ B : BilinForm 𝕜 V,
         Representation.IsInvariantForm π.toRepresentation B ∧ B.IsAlt ∧ B ≠ 0) ↔
-      (exteriorSquare π).invariants ≠ ⊥ :=
-  exists_isInvariantForm_ne_zero_iff π hπ (fun _ => mem_invariants_exteriorSquare_iff π)
-    fun _ => BilinForm.isAlt_ofTensor_iff
+      (exteriorSquare π).invariants ≠ ⊥ := by
+  rw [← Submodule.nontrivial_iff_ne_bot,
+    (exteriorSquareInvariantsEquivAlternatingInvariantForms π hπ).toEquiv.nontrivial_congr,
+    Submodule.nontrivial_iff_ne_bot, Submodule.ne_bot_iff]
+  simp_rw [Representation.mem_alternatingInvariantForms, and_assoc]
 
 end ContRepresentation

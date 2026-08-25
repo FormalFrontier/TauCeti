@@ -51,8 +51,10 @@ unitary representation.
 `V ⊗[𝕜] V →ₛₗ[starRingEnd 𝕜] BilinForm 𝕜 V`; it is the composition of `innerSL` with the currying
 `TensorProduct.lcurry`, so its behaviour on `0`, on sums, on negation and on differences is the
 generic `map_zero`, `map_add`, `map_neg` and `map_sub`. Injectivity comes from
-`TensorProduct.ext_iff_inner_right`, and surjectivity in finite dimensions from the Riesz
-representation `InnerProductSpace.toDual` applied to the functional `TensorProduct.lift B`.
+`TensorProduct.ext_iff_inner_right`; surjectivity in finite dimensions is read off
+`TauCeti.BilinForm.ofTensorEquiv`, which is assembled from the Riesz representation
+`InnerProductSpace.toDual`, the identification `LinearMap.toContinuousLinearMap` of the linear with
+the continuous linear functionals, and the currying `TensorProduct.lift.equiv`.
 
 The two symmetry statements go through Mathlib's flip characterizations
 `LinearMap.BilinForm.isSymm_iff_flip` and `LinearMap.isAlt_iff_eq_neg_flip`, so the only geometric
@@ -130,35 +132,35 @@ theorem isAlt_ofTensor_iff {t : V ⊗[𝕜] V} :
     ← ofTensor_injective.eq_iff, map_neg, ofTensor_comm]
   exact eq_comm.trans (neg_eq_iff_eq_neg (a := BilinForm.flipHom (ofTensor t)) (b := ofTensor t))
 
-/-- **Every bilinear form on a finite-dimensional inner product space is the form of a tensor.**
-The preimage is the Riesz representative of the linear functional `TensorProduct.lift B` on the
-tensor square. -/
-theorem ofTensor_surjective [FiniteDimensional 𝕜 V] :
-    Function.Surjective (ofTensor : V ⊗[𝕜] V → BilinForm 𝕜 V) := by
-  intro B
-  have hfd : FiniteDimensional 𝕜 (V ⊗[𝕜] V) := Module.Finite.tensorProduct 𝕜 V V
-  have hcomplete : CompleteSpace (V ⊗[𝕜] V) := FiniteDimensional.complete 𝕜 _
-  refine ⟨(InnerProductSpace.toDual 𝕜 (V ⊗[𝕜] V)).symm
-    (LinearMap.toContinuousLinearMap (TensorProduct.lift B)), ?_⟩
-  refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
-  rw [ofTensor_apply, InnerProductSpace.toDual_symm_apply]
-  simp
-
 /-- **In finite dimensions the tensor square is the space of bilinear forms**, conjugate-linearly,
-through `TauCeti.BilinForm.ofTensor`. -/
+through `TauCeti.BilinForm.ofTensor`: the Riesz representation `InnerProductSpace.toDual` identifies
+a tensor with a functional on the tensor square, and the currying `TensorProduct.lift.equiv`
+identifies such a functional with a bilinear form. -/
 noncomputable def ofTensorEquiv [FiniteDimensional 𝕜 V] :
     V ⊗[𝕜] V ≃ₛₗ[starRingEnd 𝕜] BilinForm 𝕜 V :=
-  LinearEquiv.ofBijective ofTensor ⟨ofTensor_injective, ofTensor_surjective⟩
+  have : FiniteDimensional 𝕜 (V ⊗[𝕜] V) := Module.Finite.tensorProduct 𝕜 V V
+  have : CompleteSpace (V ⊗[𝕜] V) := FiniteDimensional.complete 𝕜 _
+  (InnerProductSpace.toDual 𝕜 (V ⊗[𝕜] V)).toLinearEquiv.trans
+    (LinearMap.toContinuousLinearMap.symm.trans
+      (TensorProduct.lift.equiv (RingHom.id 𝕜) V V 𝕜).symm)
 
 @[simp]
 theorem ofTensorEquiv_apply [FiniteDimensional 𝕜 V] (t : V ⊗[𝕜] V) :
-    ofTensorEquiv t = ofTensor t :=
-  (rfl)
+    ofTensorEquiv t = ofTensor t := by
+  refine LinearMap.ext fun v => LinearMap.ext fun w => ?_
+  rw [ofTensor_apply]
+  simp [ofTensorEquiv]
 
 @[simp]
 theorem coe_ofTensorEquiv [FiniteDimensional 𝕜 V] :
     (ofTensorEquiv (𝕜 := 𝕜) (V := V) : V ⊗[𝕜] V →ₛₗ[starRingEnd 𝕜] BilinForm 𝕜 V) = ofTensor :=
-  (rfl)
+  LinearMap.ext ofTensorEquiv_apply
+
+/-- **Every bilinear form on a finite-dimensional inner product space is the form of a tensor**,
+because `TauCeti.BilinForm.ofTensorEquiv` is an equivalence. -/
+theorem ofTensor_surjective [FiniteDimensional 𝕜 V] :
+    Function.Surjective (ofTensor : V ⊗[𝕜] V → BilinForm 𝕜 V) := fun B =>
+  ⟨ofTensorEquiv.symm B, by rw [← ofTensorEquiv_apply, LinearEquiv.apply_symm_apply]⟩
 
 end BilinForm
 
