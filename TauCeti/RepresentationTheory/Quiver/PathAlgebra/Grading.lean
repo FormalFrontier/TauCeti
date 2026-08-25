@@ -92,9 +92,8 @@ section Grade
 variable (k : Type w) (Q : Type u) [Semiring k] [Quiver.{v} Q]
 
 /-- The degree-`n` piece of the path-length grading of the path algebra: the `k`-span of the paths
-of length `n`. It is exposed so that gradings induced on quotients may unfold it. -/
-@[expose]
-noncomputable def grade (n : ℕ) : Submodule k (pathAlgebra k Q) :=
+of length `n`. -/
+noncomputable def grade (n : ℕ) : Submodule k (pathAlgebra k Q):=
   Submodule.span k
     ((fun x : Quiver.TotalPath Q => (ofPath x : pathAlgebra k Q)) ''
       {x : Quiver.TotalPath Q | x.2.2.length = n})
