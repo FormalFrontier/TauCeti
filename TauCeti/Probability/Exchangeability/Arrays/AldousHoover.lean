@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.Arrays.Basic
+public import TauCeti.Probability.Exchangeability.Arrays.Dissociated
 public import Mathlib.Data.Sym.Sym2
 public import Mathlib.MeasureTheory.Constructions.UnitInterval
 public import Mathlib.Probability.Independence.InfinitePi
@@ -35,6 +35,14 @@ exchangeable.  The proof reindexes the independent source family.  Row and colum
 act on their respective vertex variables and together on the cell variables, while leaving the
 global variable fixed.
 
+Dropping the global variable — that is, coding through a function `f` that ignores its first
+argument — gives the **ergodic form** of the representation, and the arrays it produces are
+*dissociated* as well as exchangeable: two blocks over disjoint row sets and disjoint column sets
+read disjoint sets of noise coordinates once the global one is out of the way, and the noise
+coordinates are independent.  This is the easy direction of the ergodic form of the theorem.  The
+global variable is exactly what dissociation forbids, by
+`JointlyDissociated.measure_preimage_eq_zero_or_one_of_const`.
+
 These results advance the exchangeable-arrays milestone in
 `TauCetiRoadmap/Exchangeability/README.md`, Layer 8.  The converse representation direction still
 has to construct the coding function from an exchangeable array.
@@ -50,7 +58,9 @@ has to construct the coding function from an exchangeable array.
 ## Main results
 
 * `TauCeti.Probability.AldousHoover.separatelyExchangeable_separateArray`;
-* `TauCeti.Probability.AldousHoover.jointlyExchangeable_jointArray`.
+* `TauCeti.Probability.AldousHoover.jointlyExchangeable_jointArray`;
+* `TauCeti.Probability.AldousHoover.separatelyDissociated_separateArray_of_snd`;
+* `TauCeti.Probability.AldousHoover.jointlyDissociated_jointArray_of_snd`.
 
 ## References
 
@@ -257,6 +267,175 @@ theorem jointlyExchangeable_jointArray
     map_noiseCongr_noiseMeasure]
 
 end Codings
+
+section Dissociation
+
+variable {α : Type*} [MeasurableSpace α]
+
+/-- A noise coordinate in a block is measurable for the σ-algebra that block generates. This
+restates `measurable_blockSigma_of_mem` with the coordinate family spelled out, which is what fixes
+it for unification. -/
+private theorem measurable_eval_blockSigma {κ ι : Type*} {S : Set (NoiseIndex κ ι)}
+    {q : NoiseIndex κ ι} (hq : q ∈ S) :
+    Measurable[blockSigma (fun (r : NoiseIndex κ ι) (u : NoiseIndex κ ι → I) => u r) S]
+      fun u : NoiseIndex κ ι → I => u q :=
+  measurable_blockSigma_of_mem
+    (Z := fun (r : NoiseIndex κ ι) (u : NoiseIndex κ ι → I) => u r) hq
+
+/-- The noise coordinates that the rectangular block along `e` and `f` of a separate
+Aldous--Hoover coding reads, with the global coordinate left out. -/
+private def separateBlockNoise (e f : ℕ → ℕ) : Set (NoiseIndex Axis (ℕ × ℕ)) := fun q =>
+  match q with
+  | .global => False
+  | .vertex .row i => i ∈ Set.range e
+  | .vertex .column j => j ∈ Set.range f
+  | .cell p => p.1 ∈ Set.range e ∧ p.2 ∈ Set.range f
+
+private theorem mem_separateBlockNoise_global_iff {e f : ℕ → ℕ} :
+    (NoiseIndex.global : NoiseIndex Axis (ℕ × ℕ)) ∈ separateBlockNoise e f ↔ False :=
+  (Iff.rfl)
+
+private theorem mem_separateBlockNoise_row_iff {e f : ℕ → ℕ} {i : ℕ} :
+    (NoiseIndex.vertex Axis.row i : NoiseIndex Axis (ℕ × ℕ)) ∈ separateBlockNoise e f ↔
+      i ∈ Set.range e :=
+  (Iff.rfl)
+
+private theorem mem_separateBlockNoise_column_iff {e f : ℕ → ℕ} {j : ℕ} :
+    (NoiseIndex.vertex Axis.column j : NoiseIndex Axis (ℕ × ℕ)) ∈ separateBlockNoise e f ↔
+      j ∈ Set.range f :=
+  (Iff.rfl)
+
+private theorem mem_separateBlockNoise_cell_iff {e f : ℕ → ℕ} {p : ℕ × ℕ} :
+    (NoiseIndex.cell p : NoiseIndex Axis (ℕ × ℕ)) ∈ separateBlockNoise e f ↔
+      p.1 ∈ Set.range e ∧ p.2 ∈ Set.range f :=
+  (Iff.rfl)
+
+/-- Blocks over disjoint row sets and disjoint column sets read disjoint noise coordinates. The
+global coordinate, which every block would read, is the only obstruction, and it has been removed
+from `separateBlockNoise`. -/
+private theorem disjoint_separateBlockNoise {e f e' f' : ℕ → ℕ}
+    (he : Disjoint (Set.range e) (Set.range e')) (hf : Disjoint (Set.range f) (Set.range f')) :
+    Disjoint (separateBlockNoise e f) (separateBlockNoise e' f') := by
+  rw [Set.disjoint_left]
+  rintro (_ | ⟨_ | _, i⟩ | p) hq hq'
+  · exact mem_separateBlockNoise_global_iff.mp hq
+  · exact Set.disjoint_left.mp he (mem_separateBlockNoise_row_iff.mp hq)
+      (mem_separateBlockNoise_row_iff.mp hq')
+  · exact Set.disjoint_left.mp hf (mem_separateBlockNoise_column_iff.mp hq)
+      (mem_separateBlockNoise_column_iff.mp hq')
+  · exact Set.disjoint_left.mp he (mem_separateBlockNoise_cell_iff.mp hq).1
+      (mem_separateBlockNoise_cell_iff.mp hq').1
+
+/-- A rectangular block of a global-free separate coding is measurable for the σ-algebra generated
+by the noise coordinates it reads. -/
+private theorem measurable_separateBlockNoise (g : I × I × I → α) (hg : Measurable g)
+    (e f : ℕ → ℕ) :
+    Measurable[blockSigma (fun (q : NoiseIndex Axis (ℕ × ℕ)) u => u q) (separateBlockNoise e f)]
+      fun u (p : ℕ × ℕ) => separateArray (fun q => g q.2) (e p.1, f p.2) u := by
+  refine measurable_pi_blockSigma _ fun p => ?_
+  have hrow : Measurable[blockSigma (fun (q : NoiseIndex Axis (ℕ × ℕ)) u => u q)
+      (separateBlockNoise e f)]
+      fun u : NoiseIndex Axis (ℕ × ℕ) → I => u (.vertex .row (e p.1)) :=
+    measurable_eval_blockSigma (mem_separateBlockNoise_row_iff.mpr ⟨p.1, rfl⟩)
+  have hcol : Measurable[blockSigma (fun (q : NoiseIndex Axis (ℕ × ℕ)) u => u q)
+      (separateBlockNoise e f)]
+      fun u : NoiseIndex Axis (ℕ × ℕ) → I => u (.vertex .column (f p.2)) :=
+    measurable_eval_blockSigma (mem_separateBlockNoise_column_iff.mpr ⟨p.2, rfl⟩)
+  have hcell : Measurable[blockSigma (fun (q : NoiseIndex Axis (ℕ × ℕ)) u => u q)
+      (separateBlockNoise e f)]
+      fun u : NoiseIndex Axis (ℕ × ℕ) → I => u (.cell (e p.1, f p.2)) :=
+    measurable_eval_blockSigma (mem_separateBlockNoise_cell_iff.mpr ⟨⟨p.1, rfl⟩, ⟨p.2, rfl⟩⟩)
+  simpa only [separateArray_apply, Function.comp_def] using
+    hg.comp (hrow.prodMk (hcol.prodMk hcell))
+
+/-- **A separate Aldous--Hoover coding that ignores its global variable is dissociated.** This is
+the easy direction of the ergodic form of the representation; the coded array is also separately
+exchangeable, by `separatelyExchangeable_separateArray` applied to `fun q => g q.2`. -/
+theorem separatelyDissociated_separateArray_of_snd (g : I × I × I → α) (hg : Measurable g) :
+    SeparatelyDissociated (noiseMeasure Axis (ℕ × ℕ)) (separateArray fun q => g q.2) :=
+  separatelyDissociated_iff.mpr fun e f e' f' he hf =>
+    indepFun_of_measurable_blockSigma (iIndepFun_eval_noiseMeasure Axis (ℕ × ℕ))
+      (fun q => measurable_pi_apply q) (disjoint_separateBlockNoise he hf)
+      (measurable_separateBlockNoise g hg e f) (measurable_separateBlockNoise g hg e' f')
+
+/-- Every unordered pair has a member. -/
+private theorem exists_mem_sym2 (s : Sym2 ℕ) : ∃ i, i ∈ s :=
+  Sym2.ind (fun a b => ⟨a, Sym2.mem_mk_left a b⟩) s
+
+/-- The noise coordinates that the square block along `e` of a joint Aldous--Hoover coding reads,
+with the global coordinate left out. A cell variable is read only when **both** its endpoints are
+selected, which is what makes two such blocks over disjoint index sets disjoint. -/
+private def jointBlockNoise (e : ℕ → ℕ) : Set (NoiseIndex Unit (Sym2 ℕ)) := fun q =>
+  match q with
+  | .global => False
+  | .vertex _ i => i ∈ Set.range e
+  | .cell s => ∀ i ∈ s, i ∈ Set.range e
+
+private theorem mem_jointBlockNoise_global_iff {e : ℕ → ℕ} :
+    (NoiseIndex.global : NoiseIndex Unit (Sym2 ℕ)) ∈ jointBlockNoise e ↔ False :=
+  (Iff.rfl)
+
+private theorem mem_jointBlockNoise_vertex_iff {e : ℕ → ℕ} {i : ℕ} :
+    (NoiseIndex.vertex () i : NoiseIndex Unit (Sym2 ℕ)) ∈ jointBlockNoise e ↔ i ∈ Set.range e :=
+  (Iff.rfl)
+
+private theorem mem_jointBlockNoise_cell_iff {e : ℕ → ℕ} {s : Sym2 ℕ} :
+    (NoiseIndex.cell s : NoiseIndex Unit (Sym2 ℕ)) ∈ jointBlockNoise e ↔
+      ∀ i ∈ s, i ∈ Set.range e :=
+  (Iff.rfl)
+
+/-- Square blocks over disjoint index sets read disjoint noise coordinates. -/
+private theorem disjoint_jointBlockNoise {e e' : ℕ → ℕ}
+    (he : Disjoint (Set.range e) (Set.range e')) :
+    Disjoint (jointBlockNoise e) (jointBlockNoise e') := by
+  rw [Set.disjoint_left]
+  rintro (_ | ⟨_, i⟩ | s) hq hq'
+  · exact mem_jointBlockNoise_global_iff.mp hq
+  · exact Set.disjoint_left.mp he (mem_jointBlockNoise_vertex_iff.mp hq)
+      (mem_jointBlockNoise_vertex_iff.mp hq')
+  · obtain ⟨i, hi⟩ := exists_mem_sym2 s
+    exact Set.disjoint_left.mp he (mem_jointBlockNoise_cell_iff.mp hq i hi)
+      (mem_jointBlockNoise_cell_iff.mp hq' i hi)
+
+/-- A square block of a global-free joint coding is measurable for the σ-algebra generated by the
+noise coordinates it reads. -/
+private theorem measurable_jointBlockNoise (g : I × I × I → α) (hg : Measurable g) (e : ℕ → ℕ) :
+    Measurable[blockSigma (fun (q : NoiseIndex Unit (Sym2 ℕ)) u => u q) (jointBlockNoise e)]
+      fun u (p : ℕ × ℕ) => jointArray (fun q => g q.2) (e p.1, e p.2) u := by
+  refine measurable_pi_blockSigma _ fun p => ?_
+  have hcell : ∀ i ∈ s(e p.1, e p.2), i ∈ Set.range e := by
+    intro i hi
+    rcases Sym2.mem_iff.mp hi with rfl | rfl
+    exacts [⟨p.1, rfl⟩, ⟨p.2, rfl⟩]
+  have hfst : Measurable[blockSigma (fun (q : NoiseIndex Unit (Sym2 ℕ)) u => u q)
+      (jointBlockNoise e)]
+      fun u : NoiseIndex Unit (Sym2 ℕ) → I => u (.vertex () (e p.1)) :=
+    measurable_eval_blockSigma (mem_jointBlockNoise_vertex_iff.mpr ⟨p.1, rfl⟩)
+  have hsnd : Measurable[blockSigma (fun (q : NoiseIndex Unit (Sym2 ℕ)) u => u q)
+      (jointBlockNoise e)]
+      fun u : NoiseIndex Unit (Sym2 ℕ) → I => u (.vertex () (e p.2)) :=
+    measurable_eval_blockSigma (mem_jointBlockNoise_vertex_iff.mpr ⟨p.2, rfl⟩)
+  have hcellMeas : Measurable[blockSigma (fun (q : NoiseIndex Unit (Sym2 ℕ)) u => u q)
+      (jointBlockNoise e)]
+      fun u : NoiseIndex Unit (Sym2 ℕ) → I => u (.cell s(e p.1, e p.2)) :=
+    measurable_eval_blockSigma (mem_jointBlockNoise_cell_iff.mpr hcell)
+  simpa only [jointArray_apply, Function.comp_def] using
+    hg.comp (hfst.prodMk (hsnd.prodMk hcellMeas))
+
+/-- **A joint Aldous--Hoover coding that ignores its global variable is jointly dissociated.** It
+need not be separately dissociated: the entries `X (i, j)` and `X (j, i)` read the same cell
+variable `u (.cell s(i, j))`, and for a coding through a symmetric `g` they are equal, which
+`SeparatelyDissociated.measure_preimage_eq_zero_or_one_of_symm` rules out unless they are trivial.
+The coded array is also jointly exchangeable, by `jointlyExchangeable_jointArray` applied to
+`fun q => g q.2`. -/
+theorem jointlyDissociated_jointArray_of_snd (g : I × I × I → α) (hg : Measurable g) :
+    JointlyDissociated (noiseMeasure Unit (Sym2 ℕ)) (jointArray fun q => g q.2) :=
+  jointlyDissociated_iff.mpr fun e e' he =>
+    indepFun_of_measurable_blockSigma (iIndepFun_eval_noiseMeasure Unit (Sym2 ℕ))
+      (fun q => measurable_pi_apply q) (disjoint_jointBlockNoise he)
+      (measurable_jointBlockNoise g hg e) (measurable_jointBlockNoise g hg e')
+
+end Dissociation
 
 end AldousHoover
 
