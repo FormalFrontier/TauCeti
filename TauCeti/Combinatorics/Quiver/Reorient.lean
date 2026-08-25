@@ -28,6 +28,9 @@ identification along which a construction on doubled quivers -- the additive pre
 ## Main definitions
 
 * `TauCeti.Reorient`: the quiver `Q` with the arrows labelled `true` by `σ` turned around.
+* `TauCeti.reorientHomEquiv`: the identification of a hom set of `Reorient Q σ` with the two
+  subtypes of hom sets of `Q` it is built from, together with `TauCeti.reorientHom_induction` the
+  general elimination interface for a reoriented arrow.
 * `TauCeti.reorientSymmetrify` and `TauCeti.reorientSymmetrifyInv`: the two prefunctors between
   the doubled quivers.
 
@@ -118,6 +121,53 @@ the head of the original arrow to its tail. -/
 @[expose]
 def reorientFlip {i j : Q} (a : j ⟶ i) (h : σ a) : reorientVertex σ i ⟶ reorientVertex σ j :=
   Sum.inr ⟨a, h⟩
+
+/-- **Every arrow of a reorientation is one of the two kinds**: the arrows `i ⟶ j` of
+`Reorient Q σ` are the arrows `i ⟶ j` of `Q` which `σ` leaves alone together with the arrows
+`j ⟶ i` of `Q` which `σ` turns around. This equivalence is the general elimination interface for a
+reoriented hom set, so no consumer needs to unfold `TauCeti.reorientQuiver`;
+`TauCeti.reorientHom_induction` is its tactic form. Exposed, like `TauCeti.reorientKeep` and
+`TauCeti.reorientFlip`, because its own computation lemmas below are proved by `rfl`. -/
+@[expose]
+def reorientHomEquiv (i j : Q) :
+    (reorientVertex σ i ⟶ reorientVertex σ j) ≃ {a : i ⟶ j // ¬ σ a} ⊕ {a : j ⟶ i // σ a} :=
+  Equiv.refl _
+
+/-- The elimination equivalence sends an arrow `σ` leaves alone to the left summand. -/
+@[simp]
+theorem reorientHomEquiv_reorientKeep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) :
+    reorientHomEquiv σ i j (reorientKeep σ a h) = Sum.inl ⟨a, h⟩ :=
+  rfl
+
+/-- The elimination equivalence sends an arrow `σ` turns around to the right summand. -/
+@[simp]
+theorem reorientHomEquiv_reorientFlip {i j : Q} (a : j ⟶ i) (h : σ a) :
+    reorientHomEquiv σ i j (reorientFlip σ a h) = Sum.inr ⟨a, h⟩ :=
+  rfl
+
+/-- The left summand of the elimination equivalence is an arrow `σ` leaves alone. -/
+@[simp]
+theorem reorientHomEquiv_symm_inl {i j : Q} (x : {a : i ⟶ j // ¬ σ a}) :
+    (reorientHomEquiv σ i j).symm (Sum.inl x) = reorientKeep σ x.1 x.2 :=
+  rfl
+
+/-- The right summand of the elimination equivalence is an arrow `σ` turns around. -/
+@[simp]
+theorem reorientHomEquiv_symm_inr {i j : Q} (y : {a : j ⟶ i // σ a}) :
+    (reorientHomEquiv σ i j).symm (Sum.inr y) = reorientFlip σ y.1 y.2 :=
+  rfl
+
+/-- **Case analysis on an arrow of a reorientation**: it is either an arrow of `Q` which `σ` leaves
+alone or an arrow of `Q` which `σ` turns around. This is the tactic form of
+`TauCeti.reorientHomEquiv`. -/
+@[elab_as_elim]
+theorem reorientHom_induction {i j : Q}
+    {motive : (reorientVertex σ i ⟶ reorientVertex σ j) → Prop}
+    (b : reorientVertex σ i ⟶ reorientVertex σ j)
+    (keep : ∀ (a : i ⟶ j) (h : ¬ σ a), motive (reorientKeep σ a h))
+    (flip : ∀ (a : j ⟶ i) (h : σ a), motive (reorientFlip σ a h)) : motive b := by
+  obtain ⟨a, h⟩ | ⟨a, h⟩ := b
+  exacts [keep a h, flip a h]
 
 /-- A sum over the vertices of a reorientation is a sum over the vertices of `Q`. -/
 theorem sum_reorientVertex {M : Type*} [AddCommMonoid M] [Fintype Q] (f : Reorient Q σ → M) :
