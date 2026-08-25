@@ -79,13 +79,11 @@ private theorem continuousLinearMapAt_eq_sum_localFrameCoeff
     {e : Trivialization E (TotalSpace.proj : TangentBundle I M → M)} [MemTrivializationAtlas e]
     {y : M} (hy : y ∈ e.baseSet) :
     e.continuousLinearMapAt 𝕜 y (X y) = ∑ i, e.localFrameCoeff I b i y (X y) • b i := by
-  conv_lhs => rw [e.eq_sum_localFrameCoeff_smul (I := I) (b := b) (s := X) hy]
-  rw [map_sum]
-  refine Finset.sum_congr rfl fun i _ ↦ ?_
-  rw [map_smul, Bundle.Trivialization.localFrame_apply_of_mem_baseSet _ _ hy,
-    Bundle.Trivialization.basisAt, Basis.map_apply,
-    Bundle.Trivialization.linearEquivAt_symm_apply, ← e.symmL_apply (R := 𝕜) hy,
-    e.continuousLinearMapAt_symmL hy]
+  rw [← b.sum_repr (e.continuousLinearMapAt 𝕜 y (X y))]
+  refine Finset.sum_congr rfl fun i _ ↦ congrArg (fun c ↦ c • b i) ?_
+  rw [e.localFrameCoeff_apply_of_mem_baseSet b hy X i]
+  simp [Bundle.Trivialization.basisAt,
+    Bundle.Trivialization.continuousLinearMapAt_apply_of_mem, hy]
 
 /-- The coordinate reading of a vector field restricted to a curve differentiates to the flat
 frame derivative of the field in the direction of the velocity. -/
