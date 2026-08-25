@@ -109,17 +109,11 @@ mass of traversing `e` from `a₀` and then returning to `a₀`. -/
 def excursionWeight (κ : Kernel α α) (a₀ : α) (e : List α) : ℝ≥0∞ :=
   ((loopPath a₀ [e]).consecutivePairs.map fun q => κ q.1 {q.2}).prod
 
-/-- The defining equation of `TauCeti.Probability.excursionWeight`. -/
-theorem excursionWeight_def (κ : Kernel α α) (a₀ : α) (e : List α) :
-    excursionWeight κ a₀ e =
-      ((loopPath a₀ [e]).consecutivePairs.map fun q => κ q.1 {q.2}).prod :=
-  (rfl)
-
 /-- The empty excursion is the single step from the base state back to itself. -/
 @[simp]
 theorem excursionWeight_nil (κ : Kernel α α) (a₀ : α) :
     excursionWeight κ a₀ [] = κ a₀ {a₀} := by
-  rw [excursionWeight_def]
+  rw [excursionWeight]
   simp [List.consecutivePairs]
 
 /-! ## The mass of a loop factors over its excursions -/
@@ -148,7 +142,7 @@ private theorem markovChainLaw_map_prefix_apply_singleton_loopPathAt (bs : List 
   have hweight : excursionWeight κ a₀ = fun e =>
       ((loopPath a₀ [e]).consecutivePairs.map fun q => κ q.1 {q.2}).prod := by
     funext e
-    rw [excursionWeight_def]
+    rw [excursionWeight]
   rw [Finset.prod_congr rfl fun i _ => hstep i,
     prod_consecutivePairs_getD (fun a b => κ a {b}) a₀ _ (loopPath a₀ bs)
       (length_loopPath a₀ bs),
@@ -435,6 +429,7 @@ variable [Countable α] [MeasurableSingletonClass α]
 
 omit [Countable α] [MeasurableSingletonClass α] in
 /-- **The chain that jumps to `a₀` from every state sits at `a₀` at every time.** -/
+@[simp]
 theorem markovChainLaw_const_map_eval (a₀ : α) (n : ℕ) :
     (markovChainLaw (Measure.dirac a₀) (Kernel.const α (Measure.dirac a₀))).map (fun x => x n)
       = Measure.dirac a₀ := by
@@ -460,6 +455,7 @@ theorem ae_infinite_setOf_eq_markovChainLaw_const (a₀ : α) :
 
 /-- **The excursions of that chain are empty.** Its excursion law is the point mass at the empty
 word, which is what the representation theorem must give for a chain that never leaves `a₀`. -/
+@[simp]
 theorem excursionLaw_const (a₀ : α) :
     excursionLaw (Kernel.const α (Measure.dirac a₀)) a₀ = Measure.dirac ([] : List α) := by
   refine Measure.ext_of_singleton fun e => ?_
@@ -479,7 +475,7 @@ theorem excursionLaw_const (a₀ : α) :
       have hzero : (Kernel.const α (Measure.dirac a₀)) a₀ {b} = 0 := by
         simp [hb]
       have hweight : excursionWeight (Kernel.const α (Measure.dirac a₀)) a₀ (b :: t) = 0 := by
-        rw [excursionWeight_def]
+        rw [excursionWeight]
         simp only [loopPath_cons, loopPath_nil, List.consecutivePairs, List.cons_append,
           List.tail_cons, List.zip_cons_cons, List.map_cons, List.prod_cons]
         rw [hzero, zero_mul]
