@@ -66,8 +66,9 @@ theorem characterRelabel_ofAdd (τ : Equiv.Perm sigma) (f : sigma →₀ ℤ) :
 /-- Relabelling is multiplicative in the permutation. -/
 @[simp]
 theorem characterRelabel_comp (τ ν : Equiv.Perm sigma) :
-    (characterRelabel τ).toMonoidHom.comp (characterRelabel ν).toMonoidHom =
-      (characterRelabel (τ * ν)).toMonoidHom := by
+    (characterRelabel τ : Multiplicative (sigma →₀ ℤ) →* Multiplicative (sigma →₀ ℤ)).comp
+        (characterRelabel ν) =
+      (characterRelabel (τ * ν) : Multiplicative (sigma →₀ ℤ) →* Multiplicative (sigma →₀ ℤ)) := by
   refine MonoidHom.ext fun x => ?_
   change Multiplicative.ofAdd
       (Finsupp.equivMapDomain τ (Finsupp.equivMapDomain ν (Multiplicative.toAdd x))) =
@@ -79,7 +80,8 @@ theorem characterRelabel_comp (τ ν : Equiv.Perm sigma) :
 /-- Relabelling by the identity permutation is the identity. -/
 @[simp]
 theorem characterRelabel_one :
-    (characterRelabel (sigma := sigma) 1).toMonoidHom = MonoidHom.id _ := by
+    (characterRelabel (sigma := sigma) 1 :
+      Multiplicative (sigma →₀ ℤ) →* Multiplicative (sigma →₀ ℤ)) = MonoidHom.id _ := by
   refine MonoidHom.ext fun x => ?_
   change Multiplicative.ofAdd
       (Finsupp.equivMapDomain (Equiv.refl sigma) (Multiplicative.toAdd x)) = x
@@ -92,13 +94,13 @@ variable [Finite sigma]
 groups. -/
 noncomputable def characterRelabelHom (τ : Equiv.Perm sigma) :
     characterGroup sigma ⟶ characterGroup sigma :=
-  FGCommGrpCat.ofHom (characterRelabel τ).toMonoidHom
+  FGCommGrpCat.ofHom (characterRelabel τ)
 
 /-- The underlying monoid homomorphism of `characterRelabelHom`. -/
 @[simp]
 theorem toMonoidHom_characterRelabelHom (τ : Equiv.Perm sigma) :
     FGCommGrpCat.toMonoidHom (characterRelabelHom τ) =
-      (characterRelabel τ).toMonoidHom :=
+      characterRelabel τ :=
   (rfl)
 
 /-- Relabelling of character groups is multiplicative in the permutation. -/
@@ -130,7 +132,7 @@ noncomputable def relabelCoordinateMap (τ : Equiv.Perm sigma) :
 /-- The bialgebra morphism underlying the coordinate relabelling. -/
 theorem hom_relabelCoordinateMap (τ : Equiv.Perm sigma) :
     (relabelCoordinateMap R τ).hom =
-      MonoidAlgebra.mapDomainBialgHom R (characterRelabel τ).toMonoidHom :=
+      MonoidAlgebra.mapDomainBialgHom R (characterRelabel τ) :=
   (rfl)
 
 /-- Coordinate relabelling is multiplicative in the permutation. -/
@@ -140,7 +142,7 @@ theorem relabelCoordinateMap_comp (τ ν : Equiv.Perm sigma) :
       relabelCoordinateMap (sigma := sigma) R (ν * τ) := by
   apply _root_.CommHopfAlgCat.hom_ext
   rw [_root_.CommHopfAlgCat.hom_comp, hom_relabelCoordinateMap, hom_relabelCoordinateMap,
-    hom_relabelCoordinateMap, ← characterRelabel_comp, MonoidAlgebra.mapDomainBialgHom_comp]
+    hom_relabelCoordinateMap, ← MonoidAlgebra.mapDomainBialgHom_comp, characterRelabel_comp]
 
 /-- Coordinate relabelling by the identity permutation is the identity. -/
 @[simp]
