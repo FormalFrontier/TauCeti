@@ -35,7 +35,7 @@ from below. Both estimates lose only a multiple of the modulus of continuity, so
 refine closes the duality gap.
 
 Two auxiliary results are of independent interest.
-`TauCeti.exists_continuous_forall_add_le_and_le_and_le` replaces a feasible pair whose first
+`TauCeti.exists_continuous_feasible_pair_dominating` replaces a feasible pair whose first
 potential is *bounded* by a *continuous* one that dominates it pointwise: applying the infimal
 `c`-transform twice inherits the modulus of continuity of the cost. This is what upgrades the
 step-function potentials produced by the finite problem to the continuous potentials the theorem
@@ -58,7 +58,7 @@ additive normalisation of the cost and of the potentials.
 
 ## Main statements
 
-* `TauCeti.exists_continuous_forall_add_le_and_le_and_le` — a feasible pair whose first potential
+* `TauCeti.exists_continuous_feasible_pair_dominating` — a feasible pair whose first potential
   is bounded is dominated by a continuous feasible pair;
 * `TauCeti.exists_continuous_forall_add_le_transportCost_le` — the approximate duality: for every
   `ε > 0` there is a continuous feasible pair whose value is within `ε` of the primal value;
@@ -105,7 +105,7 @@ variable [CompactSpace X] [CompactSpace Y] [Nonempty X] [Nonempty Y]
 feasible pair is bounded, then the pair is dominated pointwise by *continuous* potentials
 satisfying the same Kantorovich constraint. The improved pair is obtained by applying the infimal
 `c`-transform twice, so it inherits the modulus of continuity of the cost. -/
-theorem exists_continuous_forall_add_le_and_le_and_le (hc : Continuous c) {M : ℝ}
+theorem exists_continuous_feasible_pair_dominating (hc : Continuous c) {M : ℝ}
     (hφM : ∀ x, |φ x| ≤ M) (hfeas : ∀ x y, φ x + ψ y ≤ c (x, y)) :
     ∃ φ' ψ', Continuous φ' ∧ Continuous ψ' ∧ (∀ x y, φ' x + ψ' y ≤ c (x, y)) ∧
       (∀ x, φ x ≤ φ' x) ∧ ∀ y, ψ y ≤ ψ' y := by
@@ -336,8 +336,10 @@ theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure �
   -- discretise both factors finely enough that the cost varies by less than `ε / 2`
   have hcu : UniformContinuous c := CompactSpace.uniformContinuous_of_continuous hc
   obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hcu (ε / 2) (by positivity)
-  obtain ⟨n, v, qX, hqX, hvX⟩ := exists_measurable_dist_lt X hδ
-  obtain ⟨m, w, qY, hqY, hwY⟩ := exists_measurable_dist_lt Y hδ
+  obtain ⟨n, v, qX, hqX, hvX⟩ :=
+    exists_measurable_dist_lt X isCompact_univ.totallyBounded hδ
+  obtain ⟨m, w, qY, hqY, hwY⟩ :=
+    exists_measurable_dist_lt Y isCompact_univ.totallyBounded hδ
   have hosc : ∀ x y, |c (x, y) - c (v (qX x), w (qY y))| < ε / 2 := fun x y ↦ by
     have hd : dist ((x, y) : X × Y) (v (qX x), w (qY y)) < δ := by
       rw [Prod.dist_eq]
@@ -387,7 +389,7 @@ theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure �
   have hFinX : Nonempty (Fin n) := ⟨qX (Classical.arbitrary X)⟩
   obtain ⟨i₀, hi₀⟩ := Finite.exists_max (fun i : Fin n ↦ |a i|)
   obtain ⟨φ, ψ, hφc, hψc, hfeas', hφle, hψle⟩ :=
-    exists_continuous_forall_add_le_and_le_and_le (c := c) (φ := fun x ↦ a (qX x))
+    exists_continuous_feasible_pair_dominating (c := c) (φ := fun x ↦ a (qX x))
       (ψ := fun y ↦ b (qY y)) hc (M := |a i₀|) (fun x ↦ hi₀ (qX x)) hstepfeas
   refine ⟨φ, ψ, hφc, hψc, hfeas', hlift.trans (ENNReal.ofReal_le_ofReal ?_)⟩
   have hint : kantorovichDualValue μ ν (fun x ↦ a (qX x)) (fun y ↦ b (qY y))

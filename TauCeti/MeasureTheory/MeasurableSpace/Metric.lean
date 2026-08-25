@@ -9,15 +9,15 @@ public import Mathlib.MeasureTheory.Constructions.BorelSpace.Metric
 public import Mathlib.Topology.UniformSpace.Cauchy
 
 /-!
-# Measurable discretization of compact pseudometric spaces
+# Measurable discretization of totally bounded pseudometric spaces
 
-This file provides a finite measurable approximation of a compact pseudometric space whose open
-sets are measurable.
+This file provides a finite measurable approximation of a totally bounded pseudometric space whose
+open sets are measurable.
 
 ## Main statements
 
-* `TauCeti.exists_measurable_dist_lt` — a compact pseudometric space admits a measurable map to a
-  finite type whose indexed approximation point is uniformly close to every point.
+* `TauCeti.exists_measurable_dist_lt` — a totally bounded pseudometric space admits a measurable map
+  to a finite type whose indexed approximation point is uniformly close to every point.
 -/
 
 public section
@@ -30,15 +30,15 @@ namespace TauCeti
 
 universe u
 
-/-- A compact pseudometric space admits, up to any positive error, an indexed finite family of
-approximation points and a measurable map assigning every point to a nearby one. -/
-theorem exists_measurable_dist_lt (X : Type u) [PseudoMetricSpace X] [CompactSpace X]
-    [MeasurableSpace X] [OpensMeasurableSpace X] {δ : ℝ} (hδ : 0 < δ) :
+/-- A totally bounded pseudometric space admits, up to any positive error, an indexed finite family
+of approximation points and a measurable map assigning every point to a nearby one. -/
+theorem exists_measurable_dist_lt (X : Type u) [PseudoMetricSpace X] [MeasurableSpace X]
+    [OpensMeasurableSpace X] (hX : TotallyBounded (Set.univ : Set X)) {δ : ℝ} (hδ : 0 < δ) :
     ∃ (n : ℕ) (v : Fin n → X) (q : X → Fin n), Measurable q ∧ ∀ x, dist x (v (q x)) < δ := by
   classical
   obtain ⟨s, -, hs, hcover⟩ :=
     Metric.finite_approx_of_totallyBounded (s := (Set.univ : Set X))
-      isCompact_univ.totallyBounded δ hδ
+      hX δ hδ
   let t := hs.toFinset
   set n := t.card
   set v : Fin n → X := fun i ↦ (t.equivFin.symm i : X) with hv
