@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.IsPrimePow
-public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
+import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Weight
 
 /-!
@@ -14,15 +14,15 @@ public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Weight
 
 The von Mangoldt function of a nonzero ideal `A` of the ring of integers of a number field is
 `log N(P)` when `A` is a positive power of a prime ideal `P`, and zero otherwise.  This file
-packages that function as an `IdealArithmeticFunction` and defines its pointwise twist by a
-completely multiplicative ideal weight.
+packages that function as an `IdealArithmeticFunction` and defines its pointwise product with an
+ideal arithmetic function.
 
 ## Main definitions
 
 * `TauCeti.IdealArithmeticFunction.vonMangoldt` is the complex-valued ideal von Mangoldt
   function.
-* `TauCeti.MultiplicativeIdealWeight.vonMangoldtTransform` is the weighted function
-  `A ↦ χ(A) Λ(A)`.
+* `TauCeti.IdealArithmeticFunction.vonMangoldtTransform` sends `f` to the weighted function
+  `A ↦ f(A) Λ(A)`.
 
 ## Main results
 
@@ -30,8 +30,9 @@ completely multiplicative ideal weight.
   power of a prime ideal.
 * `TauCeti.IdealArithmeticFunction.vonMangoldt_ne_zero_iff` says that its support is exactly the
   prime-power ideals.
-* `TauCeti.MultiplicativeIdealWeight.vonMangoldtTransform_ne_zero_iff` identifies the support of
-  the weighted transform as the good prime powers for the weight.
+* `TauCeti.IdealArithmeticFunction.vonMangoldtTransform_ne_zero_iff` identifies the support of
+  the transform, and its specialization in `TauCeti.MultiplicativeIdealWeight` describes this as
+  the good prime powers for a completely multiplicative weight.
 
 The definition chooses a prime base from a proof that `A` is a prime power.  The prime base is
 unique for ideals: if positive powers of two prime ideals agree, each prime divides the other, and
@@ -156,76 +157,100 @@ theorem vonMangoldt_re_nonneg {A : (Ideal (𝓞 K))⁰} :
         (IsDedekindDomain.HeightOneSpectrum.ofPrime hP)).le)
   · rw [vonMangoldt_eq_zero_of_not_isPrimePow hA, Complex.zero_re]
 
+/-- The **von Mangoldt transform** of an ideal arithmetic function `f`: the pointwise product
+`A ↦ f(A) Λ(A)`. -/
+noncomputable def vonMangoldtTransform (f : IdealArithmeticFunction K) :
+    IdealArithmeticFunction K :=
+  f * vonMangoldt
+
+/-- Evaluation of the von Mangoldt transform. -/
+@[simp]
+theorem vonMangoldtTransform_apply (f : IdealArithmeticFunction K)
+    (A : (Ideal (𝓞 K))⁰) :
+    f.vonMangoldtTransform A = f A * vonMangoldt A := by
+  rw [vonMangoldtTransform, Pi.mul_apply]
+
+/-- Every von Mangoldt transform vanishes at the unit ideal.
+
+This is a named convenience lemma rather than a simp lemma: the general evaluation rule already
+simplifies this case. -/
+theorem vonMangoldtTransform_one (f : IdealArithmeticFunction K) :
+    f.vonMangoldtTransform 1 = 0 := by
+  rw [vonMangoldtTransform_apply, vonMangoldt_one, mul_zero]
+
+/-- The von Mangoldt transform on a positive power of a prime ideal.
+
+This is a named convenience lemma rather than a simp lemma: the general evaluation rule already
+simplifies this case. -/
+theorem vonMangoldtTransform_apply_prime_pow (f : IdealArithmeticFunction K)
+    {P : (Ideal (𝓞 K))⁰} (hP : Prime (P : Ideal (𝓞 K))) {n : ℕ} (hn : 0 < n) :
+    f.vonMangoldtTransform (P ^ n) =
+      f (P ^ n) * Real.log (Ideal.absNorm (P : Ideal (𝓞 K))) := by
+  rw [vonMangoldtTransform_apply, vonMangoldt_apply_prime_pow hP hn]
+
+/-- The support of a von Mangoldt transform is the intersection of the support of the original
+function with the prime-power ideals. -/
+theorem vonMangoldtTransform_ne_zero_iff (f : IdealArithmeticFunction K)
+    {A : (Ideal (𝓞 K))⁰} :
+    f.vonMangoldtTransform A ≠ 0 ↔
+      IsPrimePow (A : Ideal (𝓞 K)) ∧ f A ≠ 0 := by
+  rw [vonMangoldtTransform_apply, mul_ne_zero_iff, vonMangoldt_ne_zero_iff, and_comm]
+
+/-- A von Mangoldt transform vanishes exactly when it lies outside the intersection of the
+original support with the prime powers.
+
+This is not a simp lemma because the general evaluation rule normalizes its left-hand side to a
+pointwise product. -/
+theorem vonMangoldtTransform_eq_zero_iff (f : IdealArithmeticFunction K)
+    {A : (Ideal (𝓞 K))⁰} :
+    f.vonMangoldtTransform A = 0 ↔
+      ¬ (IsPrimePow (A : Ideal (𝓞 K)) ∧ f A ≠ 0) := by
+  simpa only [not_ne_iff] using not_congr (f.vonMangoldtTransform_ne_zero_iff (A := A))
+
+/-- In particular, every von Mangoldt transform is supported on prime powers. -/
+theorem vonMangoldtTransform_eq_zero_of_not_isPrimePow (f : IdealArithmeticFunction K)
+    {A : (Ideal (𝓞 K))⁰} (hA : ¬ IsPrimePow (A : Ideal (𝓞 K))) :
+    f.vonMangoldtTransform A = 0 := by
+  rw [vonMangoldtTransform_apply, vonMangoldt_eq_zero_of_not_isPrimePow hA, mul_zero]
+
+/-- The transform of the constant-one ideal arithmetic function is the ideal von Mangoldt
+function. -/
+@[simp]
+theorem one_vonMangoldtTransform :
+    (1 : IdealArithmeticFunction K).vonMangoldtTransform = vonMangoldt := by
+  rw [vonMangoldtTransform, one_mul]
+
 end IdealArithmeticFunction
 
 namespace MultiplicativeIdealWeight
 
-/-- The **von Mangoldt transform** attached to a completely multiplicative ideal weight `χ`:
-the ideal arithmetic function `A ↦ χ(A) Λ(A)`. -/
-noncomputable def vonMangoldtTransform (χ : MultiplicativeIdealWeight K) :
-    IdealArithmeticFunction K :=
-  χ.toIdealArithmeticFunction * IdealArithmeticFunction.vonMangoldt
-
-/-- Evaluation of the weighted von Mangoldt transform. -/
-@[simp]
-theorem vonMangoldtTransform_apply (χ : MultiplicativeIdealWeight K)
-    (A : (Ideal (𝓞 K))⁰) :
-    χ.vonMangoldtTransform A = χ A * IdealArithmeticFunction.vonMangoldt A := by
-  rw [vonMangoldtTransform, Pi.mul_apply, toIdealArithmeticFunction_apply]
-
-/-- The weighted von Mangoldt transform vanishes at the unit ideal.
-
-This is a named convenience lemma rather than a simp lemma: the general evaluation rule already
-simplifies this case. -/
-theorem vonMangoldtTransform_one (χ : MultiplicativeIdealWeight K) :
-    χ.vonMangoldtTransform 1 = 0 := by
-  rw [vonMangoldtTransform_apply, IdealArithmeticFunction.vonMangoldt_one, mul_zero]
-
-/-- The weighted von Mangoldt transform on a positive power of a prime ideal.
-
-This is a named convenience lemma rather than a simp lemma: the general evaluation rule already
-simplifies this case. -/
+/-- The von Mangoldt transform of a completely multiplicative weight on a positive power of a
+prime ideal. -/
 theorem vonMangoldtTransform_apply_prime_pow (χ : MultiplicativeIdealWeight K)
     {P : (Ideal (𝓞 K))⁰} (hP : Prime (P : Ideal (𝓞 K))) {n : ℕ} (hn : 0 < n) :
-    χ.vonMangoldtTransform (P ^ n) =
+    χ.toIdealArithmeticFunction.vonMangoldtTransform (P ^ n) =
       χ P ^ n * Real.log (Ideal.absNorm (P : Ideal (𝓞 K))) := by
-  rw [vonMangoldtTransform_apply,
-    IdealArithmeticFunction.vonMangoldt_apply_prime_pow hP hn]
+  rw [IdealArithmeticFunction.vonMangoldtTransform_apply_prime_pow _ hP hn,
+    toIdealArithmeticFunction_apply]
   congr 1
   exact map_pow χ (P : Ideal (𝓞 K)) n
 
-/-- The support of the weighted von Mangoldt transform consists exactly of the prime powers on
-which the weight is good. -/
+/-- The support of the von Mangoldt transform of a completely multiplicative weight consists
+exactly of the prime powers on which the weight is good. -/
 theorem vonMangoldtTransform_ne_zero_iff (χ : MultiplicativeIdealWeight K)
     {A : (Ideal (𝓞 K))⁰} :
-    χ.vonMangoldtTransform A ≠ 0 ↔
+    χ.toIdealArithmeticFunction.vonMangoldtTransform A ≠ 0 ↔
       IsPrimePow (A : Ideal (𝓞 K)) ∧ χ.IsGood (A : Ideal (𝓞 K)) := by
-  rw [vonMangoldtTransform_apply, mul_ne_zero_iff,
-    IdealArithmeticFunction.vonMangoldt_ne_zero_iff, χ.apply_ne_zero_iff_isGood, and_comm]
+  rw [IdealArithmeticFunction.vonMangoldtTransform_ne_zero_iff,
+    toIdealArithmeticFunction_apply, χ.apply_ne_zero_iff_isGood]
 
-/-- The weighted von Mangoldt transform vanishes exactly away from the good prime powers.
-
-This is not a simp lemma because the general evaluation rule normalizes its left-hand side to a
-condition on `χ A` and prime-power support. -/
+/-- The von Mangoldt transform of a completely multiplicative weight vanishes exactly away from
+the good prime powers. -/
 theorem vonMangoldtTransform_eq_zero_iff (χ : MultiplicativeIdealWeight K)
     {A : (Ideal (𝓞 K))⁰} :
-    χ.vonMangoldtTransform A = 0 ↔
+    χ.toIdealArithmeticFunction.vonMangoldtTransform A = 0 ↔
       ¬ (IsPrimePow (A : Ideal (𝓞 K)) ∧ χ.IsGood (A : Ideal (𝓞 K))) := by
   simpa only [not_ne_iff] using not_congr (χ.vonMangoldtTransform_ne_zero_iff (A := A))
-
-/-- In particular, the weighted von Mangoldt transform is supported on prime powers. -/
-theorem vonMangoldtTransform_eq_zero_of_not_isPrimePow (χ : MultiplicativeIdealWeight K)
-    {A : (Ideal (𝓞 K))⁰} (hA : ¬ IsPrimePow (A : Ideal (𝓞 K))) :
-    χ.vonMangoldtTransform A = 0 := by
-  rw [vonMangoldtTransform_apply,
-    IdealArithmeticFunction.vonMangoldt_eq_zero_of_not_isPrimePow hA, mul_zero]
-
-/-- The transform of the trivial ideal weight is the ideal von Mangoldt function. -/
-@[simp]
-theorem one_vonMangoldtTransform :
-    (1 : MultiplicativeIdealWeight K).vonMangoldtTransform =
-      IdealArithmeticFunction.vonMangoldt := by
-  rw [vonMangoldtTransform, toIdealArithmeticFunction_one, one_mul]
 
 end MultiplicativeIdealWeight
 
