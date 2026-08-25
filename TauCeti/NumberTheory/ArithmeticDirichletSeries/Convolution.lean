@@ -80,6 +80,18 @@ namespace TauCeti
 
 open scoped nonZeroDivisors NumberField
 
+namespace Ideal
+
+variable {K : Type*} [Field K]
+
+/-- If two nonzero ideals multiply to the unit ideal, then the first ideal is the unit ideal. -/
+theorem eq_one_of_mul_eq_one {I J : (Ideal (𝓞 K))⁰} (h : I * J = 1) : I = 1 := by
+  have hunit : IsUnit (I : Ideal (𝓞 K)) :=
+    isUnit_iff_exists_inv.mpr ⟨(J : Ideal (𝓞 K)), by simpa using congrArg Subtype.val h⟩
+  exact Subtype.ext ((Ideal.isUnit_iff.mp hunit).trans Ideal.one_eq_top.symm)
+
+end Ideal
+
 namespace IdealArithmeticFunction
 
 variable {K : Type*} [Field K]
@@ -101,6 +113,18 @@ theorem delta_one : delta (1 : (Ideal (𝓞 K))⁰) = 1 := by
 @[simp]
 theorem delta_of_ne_one {A : (Ideal (𝓞 K))⁰} (hA : A ≠ 1) : delta A = 0 := by
   simp [delta, hA]
+
+/-- The convolution identity is multiplicative. -/
+theorem isMultiplicative_delta : IsMultiplicative (delta : IdealArithmeticFunction K) := by
+  refine ⟨delta_one, fun {I J} _ ↦ ?_⟩
+  by_cases hI : I = 1
+  · subst I
+    simp
+  by_cases hJ : J = 1
+  · subst J
+    simp
+  have hmul : I * J ≠ 1 := fun h ↦ hI (Ideal.eq_one_of_mul_eq_one h)
+  rw [delta_of_ne_one hmul, delta_of_ne_one hI, delta_of_ne_one hJ, zero_mul]
 
 end IdealArithmeticFunction
 
@@ -174,13 +198,9 @@ theorem divisorsAntidiagonal_one :
   simp only [mem_divisorsAntidiagonal, Finset.mem_singleton, Prod.ext_iff]
   constructor
   · intro h
-    have h' : (p.1 : Ideal (𝓞 K)) * (p.2 : Ideal (𝓞 K)) = 1 := by
-      simpa using congrArg Subtype.val h
-    refine ⟨Subtype.ext ?_, Subtype.ext ?_⟩
-    · simpa [Ideal.one_eq_top] using
-        Ideal.isUnit_iff.mp (isUnit_of_dvd_one ⟨(p.2 : Ideal (𝓞 K)), h'.symm⟩)
-    · simpa [Ideal.one_eq_top] using Ideal.isUnit_iff.mp
-        (isUnit_of_dvd_one ⟨(p.1 : Ideal (𝓞 K)), by rw [← h', mul_comm]⟩)
+    refine ⟨Ideal.eq_one_of_mul_eq_one h,
+      Ideal.eq_one_of_mul_eq_one (I := p.2) (J := p.1) ?_⟩
+    simpa [mul_comm] using h
   · rintro ⟨h1, h2⟩
     rw [h1, h2, mul_one]
 
