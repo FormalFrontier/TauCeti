@@ -60,6 +60,12 @@ noncomputable def weightLeviDefiningHopfIdeal (w : Fin N → ℤ) :
     HopfIdeal R (coordinateHopfAlgebra R N) :=
   weightParabolicDefiningHopfIdeal R w ⊔ weightParabolicDefiningHopfIdeal R (-w)
 
+/-- The weight-Levi ideal is the join of the ideals for the two opposite weight parabolics. -/
+theorem weightLeviDefiningHopfIdeal_def (w : Fin N → ℤ) :
+    weightLeviDefiningHopfIdeal R w =
+      weightParabolicDefiningHopfIdeal R w ⊔ weightParabolicDefiningHopfIdeal R (-w) := by
+  rw [weightLeviDefiningHopfIdeal]
+
 /-- The coordinate Hopf algebra of the weight Levi attached to `w`. -/
 noncomputable abbrev weightLeviCoordinateHopfAlgebra (w : Fin N → ℤ) :
     _root_.CommHopfAlgCat.{u} R :=
@@ -107,7 +113,7 @@ theorem mem_weightLeviDefiningPointsSubgroup_iff_apply_eq_zero (w : Fin N → �
         (weightLeviDefiningHopfIdeal R w) (CommAlgCat.of R A) ↔
       ∀ i j, w i ≠ w j →
         (pointsMulEquiv N g : Matrix (Fin N) (Fin N) A) i j = 0 := by
-  rw [weightLeviDefiningHopfIdeal,
+  rw [weightLeviDefiningHopfIdeal_def,
     CommHopfAlgCat.quotientPointsSubgroup_sup, Subgroup.mem_inf,
     mem_weightParabolicDefiningPointsSubgroup_iff_blockTriangular,
     mem_weightParabolicDefiningPointsSubgroup_iff_blockTriangular]

@@ -46,9 +46,9 @@ variable (R : Type u) [CommRing R] {N : ℕ}
 private theorem mapWeightParabolic_id (w : Fin N → ℤ) (A : CommAlgCat.{v} R)
     (g : Cocharacter.parabolic A (weightCocharacter (R := R) w)) :
     Cocharacter.mapParabolic (weightCocharacter (R := R) w) (𝟙 A) g = g := by
-  change ((Cocharacter.parabolicFunctor (weightCocharacter (R := R) w)).map (𝟙 A)) g = g
-  exact ConcreteCategory.congr_hom
-    ((Cocharacter.parabolicFunctor (weightCocharacter (R := R) w)).map_id A) g
+  apply Subtype.ext
+  rw [Cocharacter.coe_mapParabolic_apply, CommAlgCat.hom_id,
+    AlgHom.mapValue_id, MonoidHom.id_apply]
 
 private theorem mapWeightParabolic_comp (w : Fin N → ℤ)
     {A B C : CommAlgCat.{v} R} (φ : A ⟶ B) (ψ : B ⟶ C)
@@ -56,11 +56,10 @@ private theorem mapWeightParabolic_comp (w : Fin N → ℤ)
     Cocharacter.mapParabolic (weightCocharacter (R := R) w) (φ ≫ ψ) g =
       Cocharacter.mapParabolic (weightCocharacter (R := R) w) ψ
         (Cocharacter.mapParabolic (weightCocharacter (R := R) w) φ g) := by
-  change ((Cocharacter.parabolicFunctor (weightCocharacter (R := R) w)).map (φ ≫ ψ)) g =
-    (((Cocharacter.parabolicFunctor (weightCocharacter (R := R) w)).map φ ≫
-      (Cocharacter.parabolicFunctor (weightCocharacter (R := R) w)).map ψ) g)
-  exact ConcreteCategory.congr_hom
-    ((Cocharacter.parabolicFunctor (weightCocharacter (R := R) w)).map_comp φ ψ) g
+  apply Subtype.ext
+  rw [Cocharacter.coe_mapParabolic_apply, Cocharacter.coe_mapParabolic_apply,
+    Cocharacter.coe_mapParabolic_apply, CommAlgCat.hom_comp,
+    AlgHom.mapValue_comp, MonoidHom.comp_apply]
 
 private theorem mem_weightParabolicSubgroup_iff (w : Fin N → ℤ)
     (A : CommAlgCat.{v} R)

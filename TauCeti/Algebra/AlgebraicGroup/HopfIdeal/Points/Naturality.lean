@@ -346,7 +346,7 @@ noncomputable def quotientPointsSubgroupFunctorIso :
 
 /-- A Hopf quotient represents any value-algebra-stable family of ambient point subgroups
 whose membership condition agrees with vanishing on the Hopf ideal. -/
-@[expose] noncomputable def quotientPointsSubgroupRepresentingIso :
+noncomputable def quotientPointsSubgroupRepresentingIso :
     HopfAlgebra.pointsFunctor (R := R) (H := quotient H I) ≅
       HopfAlgebra.subgroupFunctor S mapS mapS_id mapS_comp :=
   (quotientPointsSubgroupNatIso H I).trans

@@ -49,9 +49,9 @@ variable (R : Type u) [CommRing R] {N : ℕ}
 private theorem mapWeightLevi_id (w : Fin N → ℤ) (A : CommAlgCat.{v} R)
     (g : Cocharacter.levi A (weightCocharacter (R := R) w)) :
     Cocharacter.mapLevi (weightCocharacter (R := R) w) (𝟙 A) g = g := by
-  change ((Cocharacter.leviFunctor (weightCocharacter (R := R) w)).map (𝟙 A)) g = g
-  exact ConcreteCategory.congr_hom
-    ((Cocharacter.leviFunctor (weightCocharacter (R := R) w)).map_id A) g
+  apply Subtype.ext
+  rw [Cocharacter.coe_mapLevi_apply, CommAlgCat.hom_id,
+    AlgHom.mapValue_id, MonoidHom.id_apply]
 
 private theorem mapWeightLevi_comp (w : Fin N → ℤ)
     {A B C : CommAlgCat.{v} R} (φ : A ⟶ B) (ψ : B ⟶ C)
@@ -59,11 +59,10 @@ private theorem mapWeightLevi_comp (w : Fin N → ℤ)
     Cocharacter.mapLevi (weightCocharacter (R := R) w) (φ ≫ ψ) g =
       Cocharacter.mapLevi (weightCocharacter (R := R) w) ψ
         (Cocharacter.mapLevi (weightCocharacter (R := R) w) φ g) := by
-  change ((Cocharacter.leviFunctor (weightCocharacter (R := R) w)).map (φ ≫ ψ)) g =
-    (((Cocharacter.leviFunctor (weightCocharacter (R := R) w)).map φ ≫
-      (Cocharacter.leviFunctor (weightCocharacter (R := R) w)).map ψ) g)
-  exact ConcreteCategory.congr_hom
-    ((Cocharacter.leviFunctor (weightCocharacter (R := R) w)).map_comp φ ψ) g
+  apply Subtype.ext
+  rw [Cocharacter.coe_mapLevi_apply, Cocharacter.coe_mapLevi_apply,
+    Cocharacter.coe_mapLevi_apply, CommAlgCat.hom_comp,
+    AlgHom.mapValue_comp, MonoidHom.comp_apply]
 
 private theorem mem_weightLeviSubgroup_iff (w : Fin N → ℤ)
     (A : CommAlgCat.{v} R)
