@@ -163,7 +163,7 @@ respect to the `O`-Maslov grading.
 
 The complex shape is `ComplexShape.down ℤ` because the grid differential drops the Maslov
 grading by one. -/
-noncomputable def alexanderEulerChar (R : Type*) [Ring R] [StrongRankCondition R] (a : ℤ) : ℤ :=
+noncomputable def alexanderEulerChar (R : Type*) [Ring R] (a : ℤ) : ℤ :=
   GradedObject.eulerChar (ComplexShape.down ℤ) (G.alexanderGradedObject R a)
 
 /-- The Euler characteristic of an Alexander degree, as a finite alternating sum of the ranks of
@@ -216,7 +216,7 @@ each Alexander degree, weighted by the corresponding monomial.
 
 The grading variable `T` is a square root of the Alexander variable, as in `Determinant.lean`, so
 Alexander degree `a` contributes the monomial `T^{2a}`. -/
-noncomputable def gradedEulerChar (R : Type*) [Ring R] [StrongRankCondition R] : ℤ[T;T⁻¹] :=
+noncomputable def gradedEulerChar (R : Type*) [Ring R] : ℤ[T;T⁻¹] :=
   ∑ a ∈ G.alexanderSupport, G.alexanderEulerChar R a • T (2 * a)
 
 /-- **The graded Euler characteristic is the alternating Alexander state sum.** Regrouping the
@@ -265,7 +265,7 @@ theorem sum_alexanderEulerChar_eq_zero (R : Type*) [Ring R] [StrongRankCondition
 /-! ### Reading the Alexander degrees off the coefficients -/
 
 /-- The coefficients of the graded Euler characteristic, degree by degree. -/
-theorem coeff_gradedEulerChar (R : Type*) [Ring R] [StrongRankCondition R] (k : ℤ) :
+theorem coeff_gradedEulerChar (R : Type*) [Ring R] (k : ℤ) :
     (G.gradedEulerChar R).coeff k =
       ∑ a ∈ G.alexanderSupport, if 2 * a = k then G.alexanderEulerChar R a else 0 := by
   simp only [gradedEulerChar, AddMonoidAlgebra.coeff_sum, Finset.sum_apply',
@@ -274,7 +274,7 @@ theorem coeff_gradedEulerChar (R : Type*) [Ring R] [StrongRankCondition R] (k : 
 /-- Only even exponents occur in the graded Euler characteristic: the grading variable is a square
 root of the Alexander variable, and the Alexander gradings of an odd-component diagram are
 integers. -/
-theorem coeff_gradedEulerChar_of_not_even (R : Type*) [Ring R] [StrongRankCondition R] {k : ℤ}
+theorem coeff_gradedEulerChar_of_not_even (R : Type*) [Ring R] {k : ℤ}
     (hk : ¬ Even k) : (G.gradedEulerChar R).coeff k = 0 := by
   rw [G.coeff_gradedEulerChar R k]
   refine Finset.sum_eq_zero fun a _ => ?_
