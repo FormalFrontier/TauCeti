@@ -75,6 +75,8 @@ def comap (W : Graphon Ω μ) (f : Ω' → Ω) (hf : Measurable f) (μ' : Measur
     [IsProbabilityMeasure μ'] : Graphon Ω' μ' where
   toSymmKernel := W.toSymmKernel.comap f hf μ'
   mem01' x y := by
+    -- `mem01'` is stated through the inherited raw `toFun` field. Since `SymmKernel.comap` is
+    -- opaque, expose its coercion definitionally before applying its public evaluation lemma.
     change W.toSymmKernel.comap f hf μ' x y ∈ Set.Icc 0 1
     simpa only [SymmKernel.comap_apply, coe_toSymmKernel] using W.mem_Icc (f x) (f y)
 
