@@ -323,16 +323,6 @@ theorem pairwise_upper_lt_lower_exitCapWindows {γ : ℝ → ℂ} {s : ℂ} {T :
   rw [exitCapWindow_upper, exitCapWindow_lower]
   linarith
 
-/-- A strictly left-to-right list of circular-cap windows has pairwise disjoint intervals. -/
-theorem pairwise_disjoint_interval_of_pairwise_upper_lt_lower {windows : List CircularCapWindow}
-    (h : windows.Pairwise fun W V ↦ W.upper < V.lower) :
-    windows.Pairwise fun W V ↦ Disjoint W.interval V.interval := by
-  refine h.imp ?_
-  intro W V hWV
-  rw [Set.disjoint_left]
-  intro t htW htV
-  rw [CircularCapWindow.mem_interval_iff] at htW htV
-  linarith [htW.2, htV.1]
 
 /-- Strictly ordered exit-time cap windows are pairwise disjoint, the hypothesis shape of the
 simultaneous excision in `Crossing.FiniteExcision`. -/
