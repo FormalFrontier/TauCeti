@@ -31,11 +31,7 @@ underlying presheaf of rings of `X` and combined with sheafification.
   isomorphism of one argument through the tensor product;
 * `AlgebraicGeometry.Scheme.Modules.tensorProductUnitIsoLeft/right` identify
   `𝒪ₓ ⊗ M` and `M ⊗ 𝒪ₓ` with `M`;
-* `AlgebraicGeometry.Scheme.Modules.tensorProductComm` provides symmetry;
-* `AlgebraicGeometry.Scheme.Modules.tensorProductSheafAssoc` provides the
-  associativity isomorphism at the level of sheafifications of sectionwise tensor
-  products, the form from which associativity of iterated tensor products of modules is
-  obtained by composing with `tensorProductIso` and `sheafificationIso`.
+* `AlgebraicGeometry.Scheme.Modules.tensorProductComm` provides symmetry.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, item "Invertible
 sheaves on a scheme; the Picard group `Pic X` under `⊗`": the tensor product is the
@@ -205,18 +201,6 @@ def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductComm {X : Scheme.{u}}
   (tensorProductIso M N).symm ≪≫
     (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).mapIso (β_ M.val N.val) ≪≫
       tensorProductIso N M
-
-/-- Associativity of the sectionwise tensor product after sheafification: this is the form
-in which associativity of the tensor product of `𝒪ₓ`-modules is available; combined with
-`tensorProductIso` and `sheafificationIso` it yields an associativity isomorphism for
-iterated tensor products. -/
-def _root_.AlgebraicGeometry.Scheme.Modules.tensorProductSheafAssoc {X : Scheme.{u}}
-    (M N P : X.Modules) :
-    (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj
-      ((M.val ⊗ N.val) ⊗ P.val) ≅
-    (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).obj
-      (M.val ⊗ (N.val ⊗ P.val)) :=
-  (PresheafOfModules.sheafification (𝟙 X.ringCatSheaf.obj)).mapIso (α_ M.val N.val P.val)
 
 end Modules
 
