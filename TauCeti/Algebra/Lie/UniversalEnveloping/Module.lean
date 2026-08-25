@@ -314,6 +314,7 @@ theorem isIrreducible_iff_isSimpleModule
 
 /-- A Lie submodule is irreducible exactly when its image under a compatible enveloping-algebra
 submodule dictionary is simple. -/
+@[simp]
 theorem isSimpleModule_lieSubmoduleOrderIso_iff
     (hcompat : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     (P : LieSubmodule R L M) :
@@ -471,19 +472,6 @@ end Hom
 
 /-! #### Submodule equivalences -/
 
-/-- A compatible enveloping-algebra action on a Lie submodule agrees, after inclusion, with the
-action on the ambient Lie module. -/
-theorem coe_smul_of_ι_smul
-    [LieModule R L M]
-    (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
-    (P : LieSubmodule R L M) (u : U) (p : P) :
-    letI := asModule R L P
-    ((u • p : P) : M) = u • (p : M) := by
-  let : Module U P := asModule R L P
-  let : IsScalarTower R U P := isScalarTower_asModule R L P
-  exact map_smul_of_map_ι_smul (R := R) (L := L) (M := P) (N := M) P.subtype
-    (fun x p => by rw [asModule_ι_smul R L P, hM]; exact P.incl.map_lie x p) u p
-
 /-- A Lie submodule with its canonical `U(L)`-action is linearly equivalent, by the identity map,
 to its image under an arbitrary compatible enveloping-algebra submodule dictionary. -/
 noncomputable def lieSubmoduleLinearEquiv
@@ -501,7 +489,8 @@ noncomputable def lieSubmoduleLinearEquiv
       map_add' := fun _ _ => rfl
       map_smul' := fun u p => by
         ext
-        exact coe_smul_of_ι_smul hM P u p }
+        exact map_smul_of_map_ι_smul (R := R) (L := L) (M := P) (N := M) P.subtype
+          (fun x p => by rw [asModule_ι_smul R L P, hM]; exact P.incl.map_lie x p) u p }
 
 /-- The compatible-action submodule equivalence preserves the underlying ambient element. -/
 @[simp]
@@ -582,6 +571,16 @@ theorem mem_lieSubmoduleOrderIsoAsModule {P : LieSubmodule R L M} {m : M} :
 theorem mem_lieSubmoduleOrderIsoAsModule_symm {Q : Submodule U M} {m : M} :
     m ∈ (lieSubmoduleOrderIsoAsModule R L M).symm Q ↔ m ∈ Q :=
   (Iff.rfl)
+
+/-- The canonical `U(L)`-action on a Lie submodule agrees, after inclusion, with the canonical
+action on the ambient Lie module. -/
+@[simp]
+theorem coe_asModule_smul_lieSubmodule (P : LieSubmodule R L M) (u : U) (p : P) :
+    ((u • p : P) : M) = u • (p : M) := by
+  exact map_smul_of_map_ι_smul (R := R) (L := L) (M := P) (N := M) P.subtype
+    (fun x p => by
+      rw [asModule_ι_smul R L P, asModule_ι_smul R L M]
+      exact P.incl.map_lie x p) u p
 
 end Canonical
 
