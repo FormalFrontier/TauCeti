@@ -55,9 +55,7 @@ theorem IsDissipative.vadd_subScalar (hA : IsDissipative A) (B : X →L[ℝ] X) 
   have hstep : mu • (x : X) -
       (((B : X →ₗ[ℝ] X) - ‖B‖ • LinearMap.id) +ᵥ A) x
       = ((mu + ‖B‖) • (x : X) - A x) - B (x : X) := by
-    have hval : (((B : X →ₗ[ℝ] X) - ‖B‖ • LinearMap.id) +ᵥ A) x
-        = (B (x : X) - ‖B‖ • (x : X)) + A x := rfl
-    rw [hval]
+    rw [LinearPMap.vadd_apply, LinearMap.sub_apply, LinearMap.smul_apply, LinearMap.id_apply]
     module
   have hdis : (mu + ‖B‖) * ‖(x : X)‖ ≤ ‖(mu + ‖B‖) • (x : X) - A x‖ :=
     hA (mu + ‖B‖) (by linarith [norm_nonneg B]) ⟨(x : X), x.2⟩
@@ -90,12 +88,10 @@ theorem IsMDissipative.vadd_subScalar (hA : IsMDissipative A) (B : X →L[ℝ] X
     linarith [norm_nonneg B]
   obtain ⟨z, hz⟩ := (LinearPMap.smul_sub_bijective
     (LinearPMap.mem_resolventSet_vadd B hres hbound hsmall)).surjective y
-  have hval : (((B : X →ₗ[ℝ] X) - ‖B‖ • LinearMap.id) +ᵥ A) z
-      = (B (z : X) - ‖B‖ • (z : X)) + A z := rfl
-  have hzval : ((B : X →ₗ[ℝ] X) +ᵥ A) z = B (z : X) + A z := rfl
   have hgoal : (‖B‖ + 1) • (z : X) - (((B : X →ₗ[ℝ] X) - ‖B‖ • LinearMap.id) +ᵥ A) z
       = (2 * ‖B‖ + 1) • (z : X) - ((B : X →ₗ[ℝ] X) +ᵥ A) z := by
-    rw [hval, hzval]
+    rw [LinearPMap.vadd_apply, LinearPMap.vadd_apply, LinearMap.sub_apply,
+      LinearMap.smul_apply, LinearMap.id_apply]
     module
   exact ⟨z, hgoal.trans hz⟩
 

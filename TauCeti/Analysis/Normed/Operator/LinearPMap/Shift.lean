@@ -68,9 +68,7 @@ subtracting `omega I` gives the same operator either way round. -/
 theorem vadd_subScalar {A : X →ₗ.[R] X} (f : X →ₗ[R] X) (omega : R) :
     f +ᵥ subScalar A omega = subScalar (f +ᵥ A) omega := by
   refine LinearPMap.ext rfl fun x hf hg => ?_
-  have hleft : (f +ᵥ subScalar A omega) ⟨x, hf⟩ = f x + ((-omega) • x + A ⟨x, hf⟩) := rfl
-  have hright : subScalar (f +ᵥ A) omega ⟨x, hg⟩ = (-omega) • x + (f x + A ⟨x, hf⟩) := rfl
-  rw [hleft, hright]
+  rw [LinearPMap.vadd_apply, subScalar_apply, subScalar_apply, LinearPMap.vadd_apply]
   module
 
 /-- A scalar shift of a bounded perturbation absorbs into the perturbing map. This is the form
@@ -78,9 +76,8 @@ in which the domain of a shifted perturbation is visibly the domain of `A`. -/
 theorem subScalar_vadd {A : X →ₗ.[R] X} (f : X →ₗ[R] X) (omega : R) :
     subScalar (f +ᵥ A) omega = (f - omega • LinearMap.id) +ᵥ A := by
   refine LinearPMap.ext rfl fun x hf hg => ?_
-  have hleft : subScalar (f +ᵥ A) omega ⟨x, hf⟩ = (-omega) • x + (f x + A ⟨x, hg⟩) := rfl
-  have hright : ((f - omega • LinearMap.id) +ᵥ A) ⟨x, hg⟩ = (f x - omega • x) + A ⟨x, hg⟩ := rfl
-  rw [hleft, hright]
+  rw [subScalar_apply, LinearPMap.vadd_apply, LinearPMap.vadd_apply, LinearMap.sub_apply,
+    LinearMap.smul_apply, LinearMap.id_apply]
   module
 
 end TauCeti.LinearPMap
