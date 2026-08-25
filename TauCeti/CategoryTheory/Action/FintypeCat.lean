@@ -92,12 +92,7 @@ instance finite (A : FiniteAction.{u} G) : Finite A.obj.V :=
 
 variable (G)
 
-/-- A finite `G`-set, read as an action of `G` in the category of finite types.
-
-It is `@[expose]`d because `FintypeCat` and `Type u` bracket the same data differently, so the
-characteristic lemmas below are equalities between two spellings of one term: without the body
-the statements do not even elaborate. -/
-@[expose]
+/-- A finite `G`-set, read as an action of `G` in the category of finite types. -/
 def toActionFintypeCat : FiniteAction.{u} G ⥤ Action FintypeCat.{u} G where
   obj A :=
     { V := ⟨A.obj.V, (isFiniteAction_iff _).1 A.property⟩
@@ -115,10 +110,7 @@ def toActionFintypeCat : FiniteAction.{u} G ⥤ Action FintypeCat.{u} G where
         apply ObjectProperty.hom_ext
         simpa using f.hom.comm g }
 
-/-- An action of `G` in the category of finite types, read as a finite `G`-set.
-
-It is `@[expose]`d for the same reason as `TauCeti.FiniteAction.toActionFintypeCat`. -/
-@[expose]
+/-- An action of `G` in the category of finite types, read as a finite `G`-set. -/
 def ofActionFintypeCat : Action FintypeCat.{u} G ⥤ FiniteAction.{u} G :=
   ObjectProperty.lift _ (FintypeCat.incl.mapAction G) fun B => (isFiniteAction_iff _).2 B.V.property
 
@@ -132,13 +124,19 @@ theorem toActionFintypeCat_obj_V (A : FiniteAction.{u} G) :
 /-- Reading a finite `G`-set in `FintypeCat` keeps the action of `G`. -/
 @[simp]
 theorem toActionFintypeCat_obj_ρ_apply (A : FiniteAction.{u} G) (g : G) (x : A.obj.V) :
-    ConcreteCategory.hom (((toActionFintypeCat G).obj A).ρ g) x = A.obj.ρ g x :=
+    cast (toActionFintypeCat_obj_V G A)
+        (ConcreteCategory.hom (((toActionFintypeCat G).obj A).ρ g)
+          (cast (toActionFintypeCat_obj_V G A).symm x)) =
+      A.obj.ρ g x :=
   (rfl)
 
 /-- Reading a map of finite `G`-sets in `FintypeCat` keeps the underlying map. -/
 @[simp]
 theorem toActionFintypeCat_map_hom_apply {A B : FiniteAction.{u} G} (f : A ⟶ B) (x : A.obj.V) :
-    ConcreteCategory.hom ((toActionFintypeCat G).map f).hom x = f.hom.hom x :=
+    cast (toActionFintypeCat_obj_V G B)
+        (ConcreteCategory.hom ((toActionFintypeCat G).map f).hom
+          (cast (toActionFintypeCat_obj_V G A).symm x)) =
+      f.hom.hom x :=
   (rfl)
 
 /-- The underlying type of an action of `G` in `FintypeCat`, read as a finite `G`-set, is its
@@ -151,24 +149,27 @@ theorem ofActionFintypeCat_obj_obj_V (B : Action FintypeCat.{u} G) :
 /-- Reading an action of `G` in `FintypeCat` as a finite `G`-set keeps the action of `G`. -/
 @[simp]
 theorem ofActionFintypeCat_obj_obj_ρ_apply (B : Action FintypeCat.{u} G) (g : G) (x : B.V) :
-    ((ofActionFintypeCat G).obj B).obj.ρ g x = ConcreteCategory.hom (B.ρ g) x :=
+    cast (ofActionFintypeCat_obj_obj_V G B)
+        (((ofActionFintypeCat G).obj B).obj.ρ g
+          (cast (ofActionFintypeCat_obj_obj_V G B).symm x)) =
+      ConcreteCategory.hom (B.ρ g) x :=
   (rfl)
 
 /-- Reading a map of actions of `G` in `FintypeCat` as a map of finite `G`-sets keeps the
 underlying map. -/
 @[simp]
 theorem ofActionFintypeCat_map_hom_hom_apply {B C : Action FintypeCat.{u} G} (f : B ⟶ C)
-    (x : B.V) : ((ofActionFintypeCat G).map f).hom.hom x = ConcreteCategory.hom f.hom x :=
+    (x : B.V) :
+    cast (ofActionFintypeCat_obj_obj_V G C)
+        (((ofActionFintypeCat G).map f).hom.hom
+          (cast (ofActionFintypeCat_obj_obj_V G B).symm x)) =
+      ConcreteCategory.hom f.hom x :=
   (rfl)
 
 /-- **Finite `G`-sets are the same thing as actions of `G` in the category of finite types.**
 
 Both composites are the identity functor on the nose, since `FintypeCat` is by definition the
-full subcategory of `Type u` on the finite types.
-
-It is `@[expose]`d for the same reason as `TauCeti.FiniteAction.toActionFintypeCat`, which it
-packages: without the body the underlying finite type of an object in its image is opaque. -/
-@[expose]
+full subcategory of `Type u` on the finite types. -/
 def equivalenceActionFintypeCat : FiniteAction.{u} G ≌ Action FintypeCat.{u} G where
   functor := toActionFintypeCat G
   inverse := ofActionFintypeCat G

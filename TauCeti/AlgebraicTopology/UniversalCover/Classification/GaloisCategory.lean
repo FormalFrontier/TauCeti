@@ -76,13 +76,30 @@ namespace TauCeti.FiniteCoveringSpace
 variable {X : TopCat.{u}} (x₀ : X) [PathConnectedSpace X] [LocallyPathConnectedSpace X]
   [SemilocallySimplyConnectedSpace X]
 
-/-- The functor taking a finite covering space of `X` to the fibre over `x₀`, a finite set with
-the monodromy action of `π₁(X, x₀)`.
+private theorem cast_apply_of_heq {α α' β β' : Type u} (hα : α = α') (hβ : β = β')
+    {f : α → β} {f' : α' → β'} (hf : HEq f f') (x : α') :
+    cast hβ (f (cast hα.symm x)) = f' x := by
+  subst α'
+  subst β'
+  exact congrFun (eq_of_heq hf) x
 
-It is `@[expose]`d because the fibre it produces is bundled with its finiteness proof: without
-the body the underlying type of `(finiteFiberActionFunctor x₀).obj p` is opaque and the
-characteristic lemmas below do not elaborate. -/
-@[expose]
+private theorem heq_of_cast_apply {α α' β β' : Type u} (hα : α = α') (hβ : β = β')
+    {f : α → β} {f' : α' → β'}
+    (h : ∀ x, cast hβ (f (cast hα.symm x)) = f' x) : HEq f f' := by
+  subst α'
+  subst β'
+  exact heq_of_eq (funext h)
+
+private theorem cast_mulAction_of_action_eq {G : Type u} [Monoid G]
+    {A B : Action (Type u) G} (h : A = B) :
+    cast (congrArg (fun T : Action (Type u) G => MulAction G T.V) h)
+        (Action.instMulAction A) =
+      Action.instMulAction B := by
+  subst B
+  rfl
+
+/-- The functor taking a finite covering space of `X` to the fibre over `x₀`, a finite set with
+the monodromy action of `π₁(X, x₀)`. -/
 def finiteFiberActionFunctor :
     FiniteCoveringSpace X ⥤ FiniteAction.{u} (FundamentalGroup X x₀) :=
   ObjectProperty.lift _ (forget X ⋙ CoveringSpace.fiberActionFunctor x₀) fun p =>
@@ -96,29 +113,76 @@ theorem finiteFiberActionFunctor_obj_obj (p : FiniteCoveringSpace X) :
   (rfl)
 
 omit [PathConnectedSpace X] [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
+/-- The underlying type of the finite action attached to a finite cover is its fibre over the
+basepoint. -/
+@[simp]
+theorem finiteFiberActionFunctor_obj_obj_V (p : FiniteCoveringSpace X) :
+    ((finiteFiberActionFunctor x₀).obj p).obj.V =
+      ((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj p)).V :=
+  congrArg Action.V (finiteFiberActionFunctor_obj_obj x₀ p)
+
+omit [PathConnectedSpace X] [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
 /-- A loop class acts on the fibre of a finite cover over `x₀` by monodromy. -/
 @[simp]
 theorem finiteFiberActionFunctor_obj_obj_ρ_apply (p : FiniteCoveringSpace X)
     (g : FundamentalGroup X x₀) (e : ⇑p.proj ⁻¹' {x₀}) :
-    ((finiteFiberActionFunctor x₀).obj p).obj.ρ g e = p.isCoveringMap_proj.monodromy g e :=
-  (rfl)
+    cast (finiteFiberActionFunctor_obj_obj_V x₀ p)
+        (((finiteFiberActionFunctor x₀).obj p).obj.ρ g
+          (cast (finiteFiberActionFunctor_obj_obj_V x₀ p).symm e)) =
+      p.isCoveringMap_proj.monodromy g e := by
+  exact (cast_apply_of_heq
+    (finiteFiberActionFunctor_obj_obj_V x₀ p)
+    (finiteFiberActionFunctor_obj_obj_V x₀ p)
+    (f' := ConcreteCategory.hom
+      (((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj p)).ρ g)) (by
+        cases finiteFiberActionFunctor_obj_obj x₀ p
+        rfl) e).trans
+    (CoveringSpace.fiberActionFunctor_obj_ρ_apply x₀ ((forget X).obj p) g e)
 
 omit [PathConnectedSpace X] [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
 /-- The `MulAction` carried by the fibre of a finite cover over `x₀` is Mathlib's monodromy
 action. -/
 theorem finiteFiberActionFunctor_obj_obj_mulAction (p : FiniteCoveringSpace X) :
-    Action.instMulAction ((finiteFiberActionFunctor x₀).obj p).obj =
+    cast (congrArg (fun A : Action (Type u) (FundamentalGroup X x₀) =>
+      MulAction (FundamentalGroup X x₀) A.V)
+      (finiteFiberActionFunctor_obj_obj x₀ p))
+      (Action.instMulAction ((finiteFiberActionFunctor x₀).obj p).obj) =
       p.isCoveringMap_proj.fundamentalGroupMulAction x₀ :=
-  (rfl)
+  by
+    exact (cast_mulAction_of_action_eq
+      (finiteFiberActionFunctor_obj_obj x₀ p)).trans
+        (CoveringSpace.fiberActionFunctor_obj_mulAction x₀ ((forget X).obj p))
+
+omit [PathConnectedSpace X] [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
+private theorem finiteFiberActionFunctor_map_hom_hom_heq
+    {p q : FiniteCoveringSpace X} (f : p ⟶ q) :
+    HEq (fun x => ConcreteCategory.hom ((finiteFiberActionFunctor x₀).map f).hom.hom x)
+      (fun x => ConcreteCategory.hom
+        ((CoveringSpace.fiberActionFunctor x₀).map ((forget X).map f)).hom x) := by
+  unfold finiteFiberActionFunctor
+  rfl
 
 omit [PathConnectedSpace X] [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
 /-- A map of finite covering spaces acts on the fibre over `x₀` by restriction. -/
 @[simp]
-theorem finiteFiberActionFunctor_map_hom_hom {p q : FiniteCoveringSpace X} (f : p ⟶ q) :
-    ((finiteFiberActionFunctor x₀).map f).hom.hom =
-      ↾(IsCoveringMap.fiberMap f.hom.left.hom
-        (CoveringSpace.proj_hom_comp_hom_left_hom ((forget X).map f)) x₀) :=
-  CoveringSpace.fiberActionFunctor_map_hom x₀ ((forget X).map f)
+theorem finiteFiberActionFunctor_map_hom_hom {p q : FiniteCoveringSpace X} (f : p ⟶ q)
+    (e : ⇑p.proj ⁻¹' {x₀}) :
+    cast (finiteFiberActionFunctor_obj_obj_V x₀ q)
+        (((finiteFiberActionFunctor x₀).map f).hom.hom
+          (cast (finiteFiberActionFunctor_obj_obj_V x₀ p).symm e)) =
+      (↾(IsCoveringMap.fiberMap f.hom.left.hom
+        (CoveringSpace.proj_hom_comp_hom_left_hom ((forget X).map f)) x₀)) e := by
+  exact (cast_apply_of_heq
+    (finiteFiberActionFunctor_obj_obj_V x₀ p)
+    (finiteFiberActionFunctor_obj_obj_V x₀ q)
+    (f' := fun x => ConcreteCategory.hom
+      ((CoveringSpace.fiberActionFunctor x₀).map ((forget X).map f)).hom x)
+    (finiteFiberActionFunctor_map_hom_hom_heq x₀ f) e).trans
+    (congrArg (fun k :
+        ((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj p)).V ⟶
+          ((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj q)).V =>
+        ConcreteCategory.hom k e)
+      (CoveringSpace.fiberActionFunctor_map_hom x₀ ((forget X).map f)))
 
 /-- The fibre-action functor of finite covers, followed by the inclusion of finite `π₁(X, x₀)`-sets
 into all of them, is the fibre-action functor of covers restricted to finite ones. -/
@@ -154,11 +218,7 @@ instance finiteFiberActionFunctor_isEquivalence :
 
 /-- **Finite covering spaces of `X` are equivalent to finite `π₁(X, x₀)`-sets.**
 
-This is the restriction of `TauCeti.CoveringSpace.fiberActionEquivalence` to finite covers.
-
-It is `@[expose]`d for the same reason as `TauCeti.FiniteCoveringSpace.finiteFiberActionFunctor`,
-which it repackages. -/
-@[expose]
+This is the restriction of `TauCeti.CoveringSpace.fiberActionEquivalence` to finite covers. -/
 def finiteFiberActionEquivalence :
     FiniteCoveringSpace X ≌ FiniteAction.{u} (FundamentalGroup X x₀) :=
   (finiteFiberActionFunctor x₀).asEquivalence
@@ -169,36 +229,88 @@ theorem finiteFiberActionEquivalence_functor :
   (rfl)
 
 /-- **Finite covering spaces of `X` are equivalent to actions of `π₁(X, x₀)` on finite sets**, in
-Mathlib's `Action FintypeCat` form.
-
-It is `@[expose]`d for the same reason as `TauCeti.FiniteCoveringSpace.fiberFunctor`, whose
-`fiberFunctor_map_hom` is stated through it. -/
-@[expose]
+Mathlib's `Action FintypeCat` form. -/
 def fiberActionFintypeCatEquivalence :
     FiniteCoveringSpace X ≌ Action FintypeCat.{u} (FundamentalGroup X x₀) :=
   (finiteFiberActionEquivalence x₀).trans (FiniteAction.equivalenceActionFintypeCat _)
 
-/-- The fibre of a finite covering space over `x₀`, as a functor to finite sets.
+@[simp]
+theorem fiberActionFintypeCatEquivalence_functor :
+    (fiberActionFintypeCatEquivalence x₀).functor =
+      finiteFiberActionFunctor x₀ ⋙
+        FiniteAction.toActionFintypeCat (FundamentalGroup X x₀) :=
+  by
+    unfold fiberActionFintypeCatEquivalence
+    rw [Equivalence.trans_functor, finiteFiberActionEquivalence_functor,
+      FiniteAction.equivalenceActionFintypeCat_functor]
 
-It is `@[expose]`d because `FintypeCat` brackets a finite type together with its finiteness
-proof: without the body the type of `(fiberFunctor x₀).map f` is opaque and
-`fiberFunctor_map_hom` does not elaborate. -/
-@[expose]
+/-- The fibre of a finite covering space over `x₀`, as a functor to finite sets. -/
 def fiberFunctor : FiniteCoveringSpace X ⥤ FintypeCat.{u} :=
   (fiberActionFintypeCatEquivalence x₀).functor ⋙ Action.forget FintypeCat _
 
 @[simp]
+theorem fiberFunctor_eq :
+    fiberFunctor x₀ =
+      (finiteFiberActionFunctor x₀ ⋙
+        FiniteAction.toActionFintypeCat (FundamentalGroup X x₀)) ⋙
+          Action.forget FintypeCat _ :=
+  by
+    unfold fiberFunctor
+    rw [fiberActionFintypeCatEquivalence_functor]
+
+@[simp]
 theorem fiberFunctor_obj (p : FiniteCoveringSpace X) :
     ((fiberFunctor x₀).obj p).obj = ↥(⇑p.proj ⁻¹' {x₀}) :=
-  (rfl)
+  by
+    rw [fiberFunctor_eq]
+    exact (FiniteAction.toActionFintypeCat_obj_V _ _).trans
+      (finiteFiberActionFunctor_obj_obj_V x₀ p)
+
+private theorem fiberFunctor_map_hom_heq {p q : FiniteCoveringSpace X} (f : p ⟶ q) :
+    HEq (fun x => ((fiberFunctor x₀).map f).hom x)
+      (fun x => ConcreteCategory.hom (↾(IsCoveringMap.fiberMap f.hom.left.hom
+        (CoveringSpace.proj_hom_comp_hom_left_hom ((forget X).map f)) x₀)) x) := by
+  have h₁ : HEq (fun x => ((fiberFunctor x₀).map f).hom x)
+      (fun x => ConcreteCategory.hom
+        ((FiniteAction.toActionFintypeCat (FundamentalGroup X x₀)).map
+          ((finiteFiberActionFunctor x₀).map f)).hom x) := by
+    unfold fiberFunctor fiberActionFintypeCatEquivalence
+    rw [Equivalence.trans_functor, finiteFiberActionEquivalence_functor,
+      FiniteAction.equivalenceActionFintypeCat_functor]
+    simp only [Functor.comp_map, Action.forget_map]
+    rfl
+  have h₂ : HEq
+      (fun x => ConcreteCategory.hom
+        ((FiniteAction.toActionFintypeCat (FundamentalGroup X x₀)).map
+          ((finiteFiberActionFunctor x₀).map f)).hom x)
+      (fun x => ConcreteCategory.hom ((finiteFiberActionFunctor x₀).map f).hom.hom x) := by
+    simpa only using heq_of_cast_apply
+      (FiniteAction.toActionFintypeCat_obj_V _ ((finiteFiberActionFunctor x₀).obj p))
+      (FiniteAction.toActionFintypeCat_obj_V _ ((finiteFiberActionFunctor x₀).obj q))
+      (FiniteAction.toActionFintypeCat_map_hom_apply _ ((finiteFiberActionFunctor x₀).map f))
+  have h₃ := finiteFiberActionFunctor_map_hom_hom_heq x₀ f
+  have h₄ : HEq
+      (fun x => ConcreteCategory.hom
+        ((CoveringSpace.fiberActionFunctor x₀).map ((forget X).map f)).hom x)
+      (fun x => ConcreteCategory.hom (↾(IsCoveringMap.fiberMap f.hom.left.hom
+        (CoveringSpace.proj_hom_comp_hom_left_hom ((forget X).map f)) x₀)) x) :=
+    heq_of_eq (congrArg (fun k :
+        ((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj p)).V ⟶
+          ((CoveringSpace.fiberActionFunctor x₀).obj ((forget X).obj q)).V =>
+        fun x => ConcreteCategory.hom k x)
+      (CoveringSpace.fiberActionFunctor_map_hom x₀ ((forget X).map f)))
+  exact h₁.trans (h₂.trans (h₃.trans h₄))
 
 /-- A map of finite covering spaces acts on the fibre over `x₀` by restriction. -/
 @[simp]
-theorem fiberFunctor_map_hom {p q : FiniteCoveringSpace X} (f : p ⟶ q) :
-    ((fiberFunctor x₀).map f).hom =
-      ↾(IsCoveringMap.fiberMap f.hom.left.hom
-        (CoveringSpace.proj_hom_comp_hom_left_hom ((forget X).map f)) x₀) :=
-  CoveringSpace.fiberActionFunctor_map_hom x₀ ((forget X).map f)
+theorem fiberFunctor_map_hom {p q : FiniteCoveringSpace X} (f : p ⟶ q)
+    (e : ⇑p.proj ⁻¹' {x₀}) :
+    cast (fiberFunctor_obj x₀ q)
+        (((fiberFunctor x₀).map f).hom (cast (fiberFunctor_obj x₀ p).symm e)) =
+      (↾(IsCoveringMap.fiberMap f.hom.left.hom
+        (CoveringSpace.proj_hom_comp_hom_left_hom ((forget X).map f)) x₀)) e := by
+  exact cast_apply_of_heq (fiberFunctor_obj x₀ p) (fiberFunctor_obj x₀ q)
+    (fiberFunctor_map_hom_heq x₀ f) e
 
 /-- **The finite covering spaces of `X` satisfy the axioms (G1)–(G3) of a Galois category.**
 

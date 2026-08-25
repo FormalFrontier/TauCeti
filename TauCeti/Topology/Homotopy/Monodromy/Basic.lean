@@ -84,11 +84,7 @@ variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X] {p : E → X} {
 
 /-- **Monodromy along a homotopy class of paths is a bijection between the fibres** over its
 endpoints. It is `IsCoveringMap.monodromy`, whose bijectivity Mathlib records, packaged as an
-equivalence.
-
-It is `@[expose]`d because Mathlib gives `Equiv.ofBijective` no application lemma, so
-`coveringFiberEquiv_apply` can only be proved by `rfl`. -/
-@[expose]
+equivalence. -/
 noncomputable def coveringFiberEquiv (hp : IsCoveringMap p) {x y : X}
     (γ : Path.Homotopic.Quotient x y) : ↥(p ⁻¹' {x}) ≃ ↥(p ⁻¹' {y}) :=
   Equiv.ofBijective _ (hp.monodromy_bijective γ)
@@ -97,7 +93,7 @@ noncomputable def coveringFiberEquiv (hp : IsCoveringMap p) {x y : X}
 theorem coveringFiberEquiv_apply (hp : IsCoveringMap p) {x y : X}
     (γ : Path.Homotopic.Quotient x y) (e : ↥(p ⁻¹' {x})) :
     coveringFiberEquiv hp γ e = hp.monodromy γ e :=
-  rfl
+  Equiv.ofBijective_apply _ _ _
 
 namespace IsCoveringMap
 

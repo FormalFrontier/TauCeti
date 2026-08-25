@@ -40,7 +40,7 @@ functor lands in `FintypeCat`.
 
 public section
 
-universe u
+universe u v
 
 namespace TauCeti
 
@@ -48,7 +48,7 @@ open CategoryTheory
 
 section Fibers
 
-variable {E X : Type u} [TopologicalSpace E] [TopologicalSpace X] {p : E → X}
+variable {E : Type u} {X : Type v} [TopologicalSpace E] [TopologicalSpace X] {p : E → X}
 
 /-- Over a path-connected base, a covering map with one finite fibre has all fibres finite. -/
 theorem finite_fiber_of_finite_fiber [PathConnectedSpace X] (hp : IsCoveringMap p) {x₀ : X}
