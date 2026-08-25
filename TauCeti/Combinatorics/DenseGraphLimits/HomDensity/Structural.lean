@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Basic
-public import TauCeti.Combinatorics.SimpleGraph.EdgeFinset
+public import TauCeti.Combinatorics.SimpleGraph.Sum
 public import Mathlib.MeasureTheory.Integral.Prod
 
 /-!
@@ -117,6 +117,43 @@ theorem homDensity_sum (W : Graphon Ω μ) :
       ((Measure.pi fun _ : V₁ => μ).prod (Measure.pi fun _ : V₂ => μ))
       (Measure.pi fun _ : V₁ ⊕ V₂ => μ) :=
     measurePreserving_sumPiEquivProdPi_symm fun _ : V₁ ⊕ V₂ => μ
+  -- The combinatorial half, stated for an arbitrary assignment `z` on the sum: the edges of a
+  -- disjoint sum are those of the two summands tagged by `Sum.inl` and `Sum.inr`, so the product
+  -- over them splits, each factor read in the assignment restricted to its own summand.
+  have hedge : ∀ z : V₁ ⊕ V₂ → Ω,
+      (∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d)
+        = (∏ c ∈ F₁.edgeFinset, edgeFactor W (z ∘ Sum.inl) c)
+          * ∏ c ∈ F₂.edgeFinset, edgeFactor W (z ∘ Sum.inr) c := by
+    intro z
+    have key : ∀ s : F₁.edgeSet ⊕ F₂.edgeSet,
+        Sum.elim (fun c : F₁.edgeSet => edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
+            (fun c : F₂.edgeSet => edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂)) s
+          = edgeFactor W z ((edgeSetSumEquiv.symm s : (F₁ ⊕g F₂).edgeSet) : Sym2 (V₁ ⊕ V₂)) := by
+      rintro (⟨c, hc⟩ | ⟨c, hc⟩)
+      · induction c using Sym2.ind with
+        | _ a b =>
+          have hmap : ((edgeSetSumEquiv.symm (Sum.inl ⟨s(a, b), hc⟩) : (F₁ ⊕g F₂).edgeSet) :
+              Sym2 (V₁ ⊕ V₂)) = Sym2.map Sum.inl s(a, b) := rfl
+          simp [hmap]
+      · induction c using Sym2.ind with
+        | _ a b =>
+          have hmap : ((edgeSetSumEquiv.symm (Sum.inr ⟨s(a, b), hc⟩) : (F₁ ⊕g F₂).edgeSet) :
+              Sym2 (V₁ ⊕ V₂)) = Sym2.map Sum.inr s(a, b) := rfl
+          simp [hmap]
+    calc ∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d
+        = ∏ d : (F₁ ⊕g F₂).edgeSet, edgeFactor W z (d : Sym2 (V₁ ⊕ V₂)) :=
+          Finset.prod_subtype _ (fun _ ↦ SimpleGraph.mem_edgeFinset) _
+      _ = ∏ s : F₁.edgeSet ⊕ F₂.edgeSet,
+            Sum.elim (fun c : F₁.edgeSet => edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
+              (fun c : F₂.edgeSet => edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂)) s :=
+          (Fintype.prod_equiv edgeSetSumEquiv.symm _ _ key).symm
+      _ = (∏ c : F₁.edgeSet, edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
+            * ∏ c : F₂.edgeSet, edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂) :=
+          Fintype.prod_sum_type ..
+      _ = _ := by
+          congr 1 <;> exact (Finset.prod_subtype _ (fun _ ↦ SimpleGraph.mem_edgeFinset) _).symm
+  -- The analytic half: an assignment on the sum is a pair of assignments, one per summand, so the
+  -- integrand becomes a product of a function of the first and a function of the second.
   have hsplit : ∀ p : (V₁ → Ω) × (V₂ → Ω),
       (∏ d ∈ (F₁ ⊕g F₂).edgeFinset,
           edgeFactor W ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p) d)
@@ -133,47 +170,7 @@ theorem homDensity_sum (W : Graphon Ω μ) :
       funext v
       rw [Function.comp_apply, MeasurableEquiv.coe_sumPiEquivProdPi_symm,
         Equiv.sumPiEquivProdPi_symm_apply]
-    have hedge :
-        (∏ d ∈ (F₁ ⊕g F₂).edgeFinset,
-            edgeFactor W
-              ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p) d) =
-          (∏ c ∈ F₁.edgeFinset,
-              edgeFactor W
-                ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p)
-                (Sym2.map Sum.inl c))
-            * ∏ c ∈ F₂.edgeFinset,
-              edgeFactor W
-                ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p)
-                (Sym2.map Sum.inr c) := by
-      rw [Finset.prod_subtype (F₁ ⊕g F₂).edgeFinset
-          (fun _ ↦ SimpleGraph.mem_edgeFinset),
-        Fintype.prod_equiv (SimpleGraph.edgeSetSumEquiv (G := F₁) (H := F₂))
-          (fun d ↦ edgeFactor W
-            ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p) d)
-          (fun d ↦ edgeFactor W
-            ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p)
-            ((SimpleGraph.edgeSetSumEquiv (G := F₁) (H := F₂)).symm d))
-          (fun d ↦ congrArg
-            (edgeFactor W
-              ((MeasurableEquiv.sumPiEquivProdPi fun _ : V₁ ⊕ V₂ => Ω).symm p))
-            (congrArg Subtype.val
-              ((SimpleGraph.edgeSetSumEquiv (G := F₁) (H := F₂)).symm_apply_apply d).symm)),
-        Fintype.prod_sum_type]
-      congr 1
-      · rw [Finset.prod_subtype F₁.edgeFinset (fun _ ↦ SimpleGraph.mem_edgeFinset)]
-        apply Fintype.prod_congr
-        rintro ⟨c, hc⟩
-        induction c using Sym2.ind with
-        | _ a b => rfl
-      · rw [Finset.prod_subtype F₂.edgeFinset (fun _ ↦ SimpleGraph.mem_edgeFinset)]
-        apply Fintype.prod_congr
-        rintro ⟨c, hc⟩
-        induction c using Sym2.ind with
-        | _ a b => rfl
-    rw [hedge]
-    congr 1
-    · exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hleft]
-    · exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hright]
+    rw [hedge, hleft, hright]
   rw [homDensity_def, ← hmp.integral_comp' fun z : (V₁ ⊕ V₂) → Ω =>
       ∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d]
   simp_rw [hsplit]
