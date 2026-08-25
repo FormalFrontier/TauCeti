@@ -492,8 +492,8 @@ theorem coaugmentation_toLinearMap :
 @[simp]
 theorem coaugmentation_apply (r : R) :
     coaugmentation R M r = algebraMap R (TensorWords R M) r := by
-  change (coaugmentation R M : R →ₗ[R] TensorWords R M) r = _
-  rw [coaugmentation_toLinearMap, Algebra.linearMap_apply]
+  exact (LinearMap.congr_fun (coaugmentation_toLinearMap R M) r).trans
+    (Algebra.linearMap_apply R (TensorWords R M) r)
 
 /-! ## Comparison with the reduced tensor coalgebra -/
 
