@@ -35,6 +35,8 @@ coordinate Hopf algebras acts on points by pre-composition.
 * `CommHopfAlgCat.grpObj`: the underlying object of the represented group object.
 * `CommHopfAlgCat.grpObjMap`: the contravariant morphism of represented group objects induced by a
   coordinate Hopf-algebra morphism.
+* `CommHopfAlgCat.whiskerLeft_grpObjMap_unop_hom`: the coordinate description of left whiskering
+  a represented group-object map.
 * `CommHopfAlgCat.grpObjMap_injective`: represented group-object maps determine their coordinate
   Hopf-algebra morphisms.
 
@@ -78,11 +80,19 @@ noncomputable def grpObjMap {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
 theorem grpObjMap_unop {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
     (grpObjMap f).unop = CommAlgCat.ofHom f.hom := (rfl)
 
-/-- The underlying algebra homomorphism of the opposite of `grpObjMap f` is the underlying
+/-- The underlying algebra homomorphism obtained by unopping `grpObjMap f` is the underlying
 algebra homomorphism of `f`. -/
 theorem grpObjMap_unop_hom {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
     (grpObjMap f).unop.hom = f.hom.toAlgHom :=
   congrArg CommAlgCat.Hom.hom (grpObjMap_unop f)
+
+/-- Unopping the left whiskering of a represented group-object map gives the tensor product of
+the identity with its underlying coordinate algebra map. -/
+theorem whiskerLeft_grpObjMap_unop_hom
+    {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K) :
+    (MonoidalCategoryStruct.whiskerLeft (grpObj H) (grpObjMap f)).unop.hom =
+      Algebra.TensorProduct.map (AlgHom.id R H) f.hom.toAlgHom := by
+  simp only [unop_whiskerLeft, CommAlgCat.whiskerLeft_hom, grpObjMap_unop_hom]
 
 /-- Represented group-object maps determine their coordinate Hopf-algebra morphisms. -/
 theorem grpObjMap_injective {H K : _root_.CommHopfAlgCat.{u} R} :

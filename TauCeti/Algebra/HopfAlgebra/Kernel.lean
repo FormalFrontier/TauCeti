@@ -30,6 +30,7 @@ dictionary.
 * `TauCeti.HopfIdeal.kerOfSurjective`: the Hopf ideal given by the kernel of a surjective bialgebra
   morphism.
 * `TauCeti.HopfIdeal.ker`: the kernel Hopf ideal of an arbitrary bialgebra morphism over a field.
+* `TauCeti.HopfIdeal.ker_le_ker_comp`: a Hopf kernel grows under postcomposition.
 * `TauCeti.HopfIdeal.kerOfSurjective_eq_ker`: comparison of the two constructions over a field.
 * `TauCeti.HopfIdeal.kerOfSurjective_toIdeal` and
   `TauCeti.HopfIdeal.mem_kerOfSurjective`: its characteristic API.
@@ -54,7 +55,7 @@ open scoped TensorProduct
 
 namespace TauCeti
 
-universe u v w
+universe u v w x
 
 namespace HopfIdeal
 
@@ -286,6 +287,13 @@ theorem ker_toIdeal (f : H →ₐc[k] K) :
 @[simp]
 theorem mem_ker (f : H →ₐc[k] K) {x : H} : x ∈ ker f ↔ f x = 0 :=
   mem_ofKerComul f _
+
+/-- The kernel Hopf ideal of a morphism is contained in the kernel after postcomposition. -/
+theorem ker_le_ker_comp {L : Type x} [Ring L] [HopfAlgebra k L]
+    (f : H →ₐc[k] K) (g : K →ₐc[k] L) : ker f ≤ ker (g.comp f) := by
+  intro h hh
+  rw [mem_ker] at hh ⊢
+  rw [BialgHom.comp_apply, hh, map_zero]
 
 /-- Over a field, the kernel constructed for a surjective morphism agrees with the canonical
 kernel, which does not require the surjectivity hypothesis. -/

@@ -20,8 +20,9 @@ homomorphism. This file packages the corresponding coordinate Hopf-algebra morph
 the product subgroup as its scheme-theoretic image.
 
 This is the multiplication-image object required by the maximal-dimension construction of the
-unipotent radical. Establishing its containment of both factors and closure of normality,
-connectedness, smoothness, and unipotence are subsequent steps.
+unipotent radical. Containment of both factors and normality are proved in
+`TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Properties`; connectedness, smoothness,
+and unipotence of the image remain subsequent steps.
 
 ## Main declarations
 
@@ -101,10 +102,9 @@ theorem productMapOfNormal_def
           (op (GrpObj.Action.normalSemidirectMul i j)) :=
   (rfl)
 
-/-- The underlying coordinate algebra map of `productMapOfNormal` is the opposite of normal
-semidirect multiplication. -/
-@[simp]
-theorem productMapOfNormal_hom
+/-- The underlying coordinate algebra map of `productMapOfNormal` is the algebra map obtained by
+unopping normal semidirect multiplication. -/
+theorem productMapOfNormal_hom_toAlgHom
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     let i := quotientGrpObjInclusion H I
@@ -113,11 +113,12 @@ theorem productMapOfNormal_hom
     (productMapOfNormal H I J hI).hom.toAlgHom =
       (GrpObj.Action.normalSemidirectMul i j).hom.hom.unop.hom := by
   rw [productMapOfNormal_def]
+  -- The unit of Mathlib's Hopf/cogroup equivalence is definitionally the identity on the
+  -- underlying algebra map, leaving exactly the unop of semidirect multiplication.
   rfl
 
 /-- The represented group-object map of `productMapOfNormal` is normal semidirect
 multiplication. -/
-@[simp]
 theorem grpObjMap_productMapOfNormal
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
@@ -129,7 +130,7 @@ theorem grpObjMap_productMapOfNormal
   apply Quiver.Hom.unop_inj
   apply CommAlgCat.hom_ext
   rw [grpObjMap_unop_hom]
-  exact productMapOfNormal_hom H I J hI
+  exact productMapOfNormal_hom_toAlgHom H I J hI
 
 variable {k : Type u} [Field k]
 

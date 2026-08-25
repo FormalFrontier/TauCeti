@@ -32,10 +32,10 @@ separate steps.
 * `TauCeti.CommHopfAlgCat.productMapOfNormal_comp_coordinateInl` and
   `TauCeti.CommHopfAlgCat.productMapOfNormal_comp_coordinateInr`: multiplication restricts to the
   two original closed-subgroup inclusions.
-* `TauCeti.CommHopfAlgCat.productOfNormal_definingIdeal_le_left` and
-  `TauCeti.CommHopfAlgCat.productOfNormal_definingIdeal_le_right`: the product image contains both
+* `TauCeti.CommHopfAlgCat.ker_productMapOfNormal_le_left` and
+  `TauCeti.CommHopfAlgCat.ker_productMapOfNormal_le_right`: the product image contains both
   factors.
-* `TauCeti.CommHopfAlgCat.isNormal_productOfNormal_definingIdeal`: the product of two normal
+* `TauCeti.CommHopfAlgCat.isNormal_ker_productMapOfNormal`: the product of two normal
   closed affine subgroups is normal.
 
 ## References
@@ -64,7 +64,7 @@ variable {k : Type u} [CommRing k]
 
 /-- Multiplication from the conjugation semidirect product restricts on its normal factor to the
 closed-subgroup quotient morphism. -/
-@[reassoc]
+@[reassoc (attr := simp)]
 theorem productMapOfNormal_comp_coordinateInl
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H) (hI : I.IsNormal) :
     productMapOfNormal H I J hI ≫ (quotientNormalConjugation H I J hI).coordinateInl =
@@ -89,7 +89,7 @@ theorem productMapOfNormal_comp_coordinateInl
 
 /-- Multiplication from the conjugation semidirect product restricts on its acting factor to the
 closed-subgroup quotient morphism. -/
-@[reassoc]
+@[reassoc (attr := simp)]
 theorem productMapOfNormal_comp_coordinateInr
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H) (hI : I.IsNormal) :
     productMapOfNormal H I J hI ≫ (quotientNormalConjugation H I J hI).coordinateInr =
@@ -118,72 +118,33 @@ variable {k : Type u} [Field k]
 
 /-- The defining Hopf ideal of the multiplication image lies below the ideal of the normal
 factor. Equivalently, the product image contains that factor as a closed subgroup scheme. -/
-theorem productOfNormal_definingIdeal_le_left
+theorem ker_productMapOfNormal_le_left
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H) (hI : I.IsNormal) :
     HopfIdeal.ker (productMapOfNormal H I J hI).hom ≤ I := by
-  rw [← HopfIdeal.toIdeal_le_toIdeal]
-  intro x hx
-  rw [← mkQuotient_eq_zero_iff H I x]
-  have hx0 : (productMapOfNormal H I J hI).hom x = 0 :=
-    (HopfIdeal.mem_ker _).mp hx
-  have hcomp := congrArg (fun f : H ⟶ quotient H I ↦ f.hom x)
-    (productMapOfNormal_comp_coordinateInl H I J hI)
-  simp only [_root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp, Function.comp_apply] at hcomp
-  rw [← hcomp, hx0, map_zero]
+  calc
+    HopfIdeal.ker (productMapOfNormal H I J hI).hom ≤
+        HopfIdeal.ker ((quotientNormalConjugation H I J hI).coordinateInl.hom.comp
+          (productMapOfNormal H I J hI).hom) :=
+      HopfIdeal.ker_le_ker_comp _ _
+    _ = HopfIdeal.ker (mkQuotient H I).hom := by
+      rw [← _root_.CommHopfAlgCat.hom_comp,
+        productMapOfNormal_comp_coordinateInl]
+    _ = I := HopfIdeal.ker_mkBialgHom I
 
 /-- The defining Hopf ideal of the multiplication image lies below the ideal of the acting
 factor. Equivalently, the product image contains that factor as a closed subgroup scheme. -/
-theorem productOfNormal_definingIdeal_le_right
+theorem ker_productMapOfNormal_le_right
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H) (hI : I.IsNormal) :
     HopfIdeal.ker (productMapOfNormal H I J hI).hom ≤ J := by
-  rw [← HopfIdeal.toIdeal_le_toIdeal]
-  intro x hx
-  rw [← mkQuotient_eq_zero_iff H J x]
-  have hx0 : (productMapOfNormal H I J hI).hom x = 0 :=
-    (HopfIdeal.mem_ker _).mp hx
-  have hcomp := congrArg (fun f : H ⟶ quotient H J ↦ f.hom x)
-    (productMapOfNormal_comp_coordinateInr H I J hI)
-  simp only [_root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp, Function.comp_apply] at hcomp
-  rw [← hcomp, hx0, map_zero]
-
-private theorem whiskerLeft_grpObjMap_unop_hom
-    {H K : _root_.CommHopfAlgCat.{u} k} (f : H ⟶ K) :
-    (MonoidalCategoryStruct.whiskerLeft (grpObj H) (grpObjMap f)).unop.hom =
-      Algebra.TensorProduct.map (AlgHom.id k H) f.hom.toAlgHom := by
-  simp only [unop_whiskerLeft, CommAlgCat.whiskerLeft_hom, grpObjMap_unop_hom]
-
-private theorem grpObj_conj_unop_hom (H : _root_.CommHopfAlgCat.{u} k) :
-    (GrpObj.conj (grpObj H)).unop.hom =
-      HopfAlgebra.conjugationAlgHom (R := k) (H := H) := by
-  have hinv :
-      ((WithConv.toConv
-        (Bialgebra.TensorProduct.includeLeft (R := k) (H₁ := H) (H₂ := H)).toAlgHom)⁻¹).ofConv =
-        (Bialgebra.TensorProduct.includeLeft (R := k) (H₁ := H) (H₂ := H)).toAlgHom.comp
-          (HopfAlgebra.antipodeAlgHom k H) := rfl
-  have hmul :
-      (WithConv.toConv
-          (Bialgebra.TensorProduct.includeLeft (R := k) (H₁ := H) (H₂ := H)).toAlgHom *
-        WithConv.toConv
-          (Bialgebra.TensorProduct.includeRight (R := k) (H₁ := H) (H₂ := H)).toAlgHom).ofConv =
-        (Algebra.TensorProduct.lift
-          (Bialgebra.TensorProduct.includeLeft (R := k) (H₁ := H) (H₂ := H)).toAlgHom
-          (Bialgebra.TensorProduct.includeRight (R := k) (H₁ := H) (H₂ := H)).toAlgHom
-          (fun _ _ ↦ .all _ _)).comp (Bialgebra.comulAlgHom k H) := by
-    ext x
-    exact AlgHom.convMul_apply _ _ x
-  apply WithConv.toConv_injective
-  rw [HopfAlgebra.toConv_conjugationAlgHom]
-  rw [GrpObj.conj, CategoryTheory.Hom.mul_def, CategoryTheory.Hom.mul_def,
-    CategoryTheory.Hom.inv_def]
-  ext x
-  simp only [unop_comp, CommAlgCat.hom_comp, CommAlgCat.lift_unop_hom,
-    CommAlgCat.mul_op_of_unop_hom, CommAlgCat.inv_op_of_unop_hom,
-    CommAlgCat.fst_unop_hom, CommAlgCat.snd_unop_hom,
-    AlgHom.convMul_apply, hinv, hmul, AlgHom.coe_comp, Function.comp_apply]
-  congr 1
-  apply Algebra.TensorProduct.ext'
-  intro a b
-  simp
+  calc
+    HopfIdeal.ker (productMapOfNormal H I J hI).hom ≤
+        HopfIdeal.ker ((quotientNormalConjugation H I J hI).coordinateInr.hom.comp
+          (productMapOfNormal H I J hI).hom) :=
+      HopfIdeal.ker_le_ker_comp _ _
+    _ = HopfIdeal.ker (mkQuotient H J).hom := by
+      rw [← _root_.CommHopfAlgCat.hom_comp,
+        productMapOfNormal_comp_coordinateInr]
+    _ = J := HopfIdeal.ker_mkBialgHom J
 
 /-- The coordinate algebra map of simultaneous ambient conjugation on the normal semidirect
 product. -/
@@ -191,29 +152,14 @@ private noncomputable def normalSemidirectConjugationAlgHom
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
     (hI : I.IsNormal) (hJ : J.IsNormal) :
     normalSemidirectProduct H I J hI →ₐ[k]
-      (H ⊗[k] normalSemidirectProduct H I J hI) := by
+      (H ⊗[k] normalSemidirectProduct H I J hI) :=
   let i := quotientGrpObjInclusion H I
   let j := quotientGrpObjInclusion H J
   let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
   let _ : IsMonHom.Normal j := (quotientGrpObjInclusion_normal_iff H J).2 hJ
   let A := GrpObj.Action.normalConjugation i j
   let _ := A.semidirectProductGrpObj
-  dsimp only [normalSemidirectProduct]
-  exact (GrpObj.Action.normalSemidirectConjugation i j).hom.unop.hom
-
-private theorem normalSemidirectConjugationAlgHom_def
-    (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
-    (hI : I.IsNormal) (hJ : J.IsNormal) :
-    normalSemidirectConjugationAlgHom H I J hI hJ = by
-      let i := quotientGrpObjInclusion H I
-      let j := quotientGrpObjInclusion H J
-      let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
-      let _ : IsMonHom.Normal j := (quotientGrpObjInclusion_normal_iff H J).2 hJ
-      let A := GrpObj.Action.normalConjugation i j
-      let _ := A.semidirectProductGrpObj
-      dsimp only [normalSemidirectProduct]
-      exact (GrpObj.Action.normalSemidirectConjugation i j).hom.unop.hom := by
-  rfl
+  (GrpObj.Action.normalSemidirectConjugation i j).hom.unop.hom
 
 private theorem productMapOfNormal_conjugation_equivariant
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
@@ -249,13 +195,15 @@ private theorem productMapOfNormal_conjugation_equivariant
           grpObjMap (productMapOfNormal H I J hI)).unop.hom =
         (normalSemidirectConjugationAlgHom H I J hI hJ).comp
           (productMapOfNormal H I J hI).hom.toAlgHom := by
-    rw [hproduct, productMapOfNormal_hom, normalSemidirectConjugationAlgHom_def]
+    rw [hproduct, productMapOfNormal_hom_toAlgHom]
+    -- Expanding the local action instances identifies the named coordinate map with the unop of
+    -- categorical semidirect conjugation, and composition in the opposite category reverses.
     rfl
   exact hleft.symm.trans (hunop.trans hright)
 
 /-- If both factors are normal, the Hopf ideal defining their scheme-theoretic multiplication
 image is normal. Thus the product image is a normal closed affine subgroup of the ambient group. -/
-theorem isNormal_productOfNormal_definingIdeal
+theorem isNormal_ker_productMapOfNormal
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
     (hI : I.IsNormal) (hJ : J.IsNormal) :
     (HopfIdeal.ker (productMapOfNormal H I J hI).hom).IsNormal :=
