@@ -39,7 +39,7 @@ scheme interface, scheme-valued points are stated in the same universe as the ba
 * T. A. Springer, *Linear Algebraic Groups*, Section 2.4.
 
 The functor-of-points recovery follows the pattern used for root subgroups in
-`TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup`.
+`TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup`.
 -/
 
 public section
