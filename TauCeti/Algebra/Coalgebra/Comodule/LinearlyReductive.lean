@@ -40,8 +40,9 @@ milestone in Layer 6 of the ReductiveGroups roadmap.
 ## Main declarations
 
 * `TauCeti.Comodule.IsCompletelyReducible`: every subcomodule has a subcomodule complement.
-* `TauCeti.Comodule.IsCompletelyReducible.exists_isCompl`: the accessor producing that
-  complement.
+* `TauCeti.Comodule.IsCompletelyReducible.of_exists_isCompl` and
+  `TauCeti.Comodule.IsCompletelyReducible.exists_isCompl`: construct and use complete
+  reducibility through complementary subcomodules.
 * `TauCeti.Comodule.fixedSubcomodule_eq_top_of_isCompletelyReducible_of_forall_exists_fixed` and
   `TauCeti.Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_exists_fixed`: a
   completely reducible comodule all of whose nonzero subcomodules contain nonzero fixed vectors
@@ -92,6 +93,14 @@ def IsCompletelyReducible : Prop :=
     IsCompl W.toSubmodule Q.toSubmodule
 
 variable {k C V}
+
+/-- Construct complete reducibility by supplying a complementary subcomodule for every
+subcomodule. -/
+theorem IsCompletelyReducible.of_exists_isCompl
+    (h : ∀ W : Subcomodule k C V, ∃ Q : Subcomodule k C V,
+      IsCompl W.toSubmodule Q.toSubmodule) :
+    IsCompletelyReducible k C V :=
+  h
 
 /-- The subcomodule complement supplied by complete reducibility.
 

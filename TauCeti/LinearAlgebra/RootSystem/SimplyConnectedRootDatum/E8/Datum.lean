@@ -32,14 +32,17 @@ root datum, without a two hundred and forty by two hundred and forty table.
 
 ## The lattices
 
-Only the coroots are asked to span their lattice, in
-`TauCeti.DynkinType.corootSpan_e8SimplyConnectedRootDatum_eq_top`, which is the condition the
-pinned Chevalley--Demazure construction consumes. In the sibling files that condition is the
-asymmetric half of the pinning, the roots spanning the root lattice at the index recorded by the
-Cartan determinant inside the weight lattice. Type `E₈` is one of the three types — with `F₄` and
-`G₂` — whose Cartan determinant is `1`, so here the root and the weight lattice agree and the
-simply connected form is also the adjoint one; the datum is nevertheless stated through the same
-coroot-side condition as its siblings, which is what the per-type dispatcher will collect.
+Both families span their lattice here, so the datum carries a `RootPairing.IsRootSystem` instance:
+the roots by `TauCeti.DynkinType.span_root_e8SimplyConnectedRootDatum_eq_top` and the coroots by
+`TauCeti.DynkinType.corootSpan_e8SimplyConnectedRootDatum_eq_top`. It is the coroot half that the
+pinned Chevalley--Demazure construction consumes as its simply connected condition, and the datum
+is stated through that same coroot-side condition as its siblings, which is what the per-type
+dispatcher will collect. The root half is particular to `E₈`, one of the three types — with `F₄`
+and `G₂` — whose Cartan determinant is `1`: its root lattice is already the whole weight lattice
+and the simply connected form is also the adjoint one. The `F₄` and `G₂` files carry an instance
+for that same reason. In the files of the remaining types, whose Cartan determinant is greater than
+`1`, the roots span only the root lattice, sitting inside the weight lattice at the index recorded
+by that determinant, and no such instance exists.
 
 ## Main definitions
 
@@ -52,6 +55,8 @@ coroot-side condition as its siblings, which is what the per-type dispatcher wil
   symmetric, type `E₈` being simply laced.
 * `TauCeti.DynkinType.hasCartanType_e8SimplyConnectedRootDatum`: the pinned base has Cartan type
   `E8`.
+* `TauCeti.DynkinType.span_root_e8SimplyConnectedRootDatum_eq_top`: the roots span the character
+  lattice, as the type `E₈` Cartan matrix is unimodular.
 * `TauCeti.DynkinType.corootSpan_e8SimplyConnectedRootDatum_eq_top`: the coroots span the
   cocharacter lattice, the simply connected condition.
 
@@ -132,6 +137,29 @@ fundamental-weight and simple-coroot bases being dual to one another. -/
 @[simp] lemma e8SimplyConnectedRootDatum_pairing (i j : Fin 240) :
     e8SimplyConnectedRootDatum.pairing i j = e8Root i ⬝ᵥ e8Coroot j := (rfl)
 
+/-- **The roots of the pinned type `E₈` datum span the character lattice.** The simple roots are
+the rows of the type `E₈` Cartan matrix, whose determinant is `1`, so its row map is surjective
+over `ℤ`. This is the integral distinction between `E₈` and the other simply laced exceptional
+types: here the root lattice is already the full weight lattice. -/
+theorem span_root_e8SimplyConnectedRootDatum_eq_top :
+    Submodule.span ℤ (Set.range e8SimplyConnectedRootDatum.root) = ⊤ := by
+  have hsurj : Function.Surjective (CartanMatrix.E 8).vecMulLinear := by
+    rw [Matrix.coe_vecMulLinear, Matrix.vecMul_surjective_iff_isUnit,
+      Matrix.isUnit_iff_isUnit_det, CartanMatrix.E₈_det]
+    exact isUnit_one
+  have hrow : Submodule.span ℤ (Set.range (CartanMatrix.E 8).row) = ⊤ := by
+    rw [← range_vecMulLinear, LinearMap.range_eq_top.mpr hsurj]
+  apply top_unique
+  calc
+    (⊤ : Submodule ℤ (Fin 8 → ℤ)) =
+        Submodule.span ℤ (Set.range (CartanMatrix.E 8).row) := hrow.symm
+    _ ≤ Submodule.span ℤ (Set.range e8SimplyConnectedRootDatum.root) := by
+      apply Submodule.span_mono
+      rintro _ ⟨i, rfl⟩
+      refine ⟨e8SimpleIndex i, ?_⟩
+      rw [e8SimplyConnectedRootDatum_root, root_e8SimpleIndex]
+      rfl
+
 /-! ## The pinned base -/
 
 /-- **The coroots of the pinned type `E₈` datum span the cocharacter lattice.** This is the simply
@@ -139,6 +167,12 @@ connected lattice condition required by the pinned Chevalley--Demazure construct
 theorem corootSpan_e8SimplyConnectedRootDatum_eq_top :
     e8SimplyConnectedRootDatum.corootSpan ℤ = ⊤ :=
   corootSpan_eq_top_of_coroot_eq_single coroot_e8SimpleIndex
+
+/-- The pinned type `E₈` datum is a root system over `ℤ`: both its root and coroot families span
+their respective lattices. -/
+instance : e8SimplyConnectedRootDatum.IsRootSystem where
+  span_root_eq_top := span_root_e8SimplyConnectedRootDatum_eq_top
+  span_coroot_eq_top := corootSpan_e8SimplyConnectedRootDatum_eq_top
 
 /-- The support of the pinned base of type `E₈`: the first eight root indices. -/
 private abbrev e8SimpleSupport : Finset (Fin 240) := simpleSupport e8SimpleIndex_injective

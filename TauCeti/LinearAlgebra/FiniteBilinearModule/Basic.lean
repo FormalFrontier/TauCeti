@@ -42,6 +42,8 @@ restriction to a subgroup can be degenerate.
 
 * `TauCeti.FiniteBilinearModule.Isometry.map_orthogonalComplement`: an isometry carries
   orthogonal complements to orthogonal complements.
+* `TauCeti.FiniteBilinearModule.Isometry.orthogonalComplementEquiv`: the induced equivalence
+  between corresponding orthogonal complements.
 * `TauCeti.FiniteBilinearModule.Isometry.isIsotropic_map_iff`: an isometry transports isotropic
   subgroups.
 * `TauCeti.FiniteBilinearModule.Isometry.isLagrangian_map_iff`: an isometry transports Lagrangian
@@ -810,6 +812,50 @@ theorem Isometry.map_orthogonalComplement {B : FiniteBilinearModule} (f : Isomet
     intro z hz
     rw [← f.map_pairing (f.symm y) z, f.apply_symm_apply]
     exact hy (f z) (AddSubgroup.mem_map.mpr ⟨z, hz, rfl⟩)
+
+/-- An isometry restricts to an additive equivalence from the orthogonal complement of a subgroup
+onto the orthogonal complement of its image. -/
+def Isometry.orthogonalComplementEquiv {B : FiniteBilinearModule} (f : Isometry A B)
+    (H : AddSubgroup A) :
+    A.orthogonalComplement H ≃+ B.orthogonalComplement (H.map f.toAddEquiv) :=
+  (f.toAddEquiv.addSubgroupMap (A.orthogonalComplement H)).trans
+    (AddEquiv.addSubgroupCongr (f.map_orthogonalComplement (H := H)))
+
+/-- The restricted equivalence of orthogonal complements acts by the isometry. -/
+@[simp]
+theorem Isometry.coe_orthogonalComplementEquiv_apply {B : FiniteBilinearModule}
+    (f : Isometry A B) (H : AddSubgroup A) (x : A.orthogonalComplement H) :
+    (Isometry.orthogonalComplementEquiv A f H x : B) = f (x : A) := (rfl)
+
+/-- The inverse restricted equivalence of orthogonal complements acts by the inverse isometry. -/
+@[simp]
+theorem Isometry.coe_orthogonalComplementEquiv_symm_apply {B : FiniteBilinearModule}
+    (f : Isometry A B) (H : AddSubgroup A)
+    (y : B.orthogonalComplement (H.map f.toAddEquiv)) :
+    ((Isometry.orthogonalComplementEquiv A f H).symm y : A) = f.symm (y : B) := (rfl)
+
+/-- An isometry carries an element of the orthogonal complement of `H` into the orthogonal
+complement of `K` whenever the preimage of `K` is contained in `H`. -/
+theorem Isometry.map_mem_orthogonalComplement_of_forall_mem {B : FiniteBilinearModule}
+    (f : Isometry A B) {H : AddSubgroup A} {K : AddSubgroup B}
+    (h : ∀ x : A, f x ∈ K → x ∈ H) {x : A} (hx : x ∈ A.orthogonalComplement H) :
+    f x ∈ B.orthogonalComplement K := by
+  have hle : K ≤ H.map f.toAddEquiv := by
+    intro y hy
+    have hy' : f (f.symm y) ∈ K := by simpa
+    have hpre : f.symm y ∈ H := h (f.symm y) hy'
+    exact (AddSubgroup.mem_map_equiv (f := f.toAddEquiv) (K := H) (x := y)).mpr hpre
+  apply B.orthogonalComplement_anti hle
+  rw [← f.map_orthogonalComplement (H := H)]
+  exact AddSubgroup.mem_map_of_mem _ hx
+
+/-- An isometry carrying `H` onto `K` carries every element of `H^⊥` into `K^⊥`. -/
+theorem Isometry.map_mem_orthogonalComplement_of_map_eq {B : FiniteBilinearModule}
+    (f : Isometry A B) {H : AddSubgroup A} {K : AddSubgroup B}
+    (h : H.map f.toAddEquiv = K) {x : A} (hx : x ∈ A.orthogonalComplement H) :
+    f x ∈ B.orthogonalComplement K := by
+  rw [← h, ← f.map_orthogonalComplement (H := H)]
+  exact AddSubgroup.mem_map_of_mem _ hx
 
 /-- An isometry transports isotropic subgroups. -/
 @[simp]
