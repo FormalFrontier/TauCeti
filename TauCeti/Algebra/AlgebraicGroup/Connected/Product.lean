@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Product
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SemidirectProduct
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
-public import TauCeti.CategoryTheory.Monoidal.SemidirectProduct.Basic
 
 /-!
 # Geometric connectedness of products of affine groups
@@ -24,6 +24,8 @@ isomorphism then identifies the result with the spectrum of the tensor product.
 
 ## Main declarations
 
+* `TauCeti.geometricallyConnected_tensorProduct`: the tensor product of two commutative algebras
+  with geometrically connected spectra is geometrically connected.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty.tensorProduct`: the tensor product of two
   geometrically connected commutative Hopf algebras is geometrically connected.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty.semidirectProduct`: an internal semidirect
@@ -54,9 +56,34 @@ private instance geometricallyConnected_respectsIso :
     MorphismProperty.RespectsIso @GeometricallyConnected :=
   MorphismProperty.IsStableUnderBaseChange.respectsIso
 
-namespace geometricallyConnectedCommHopfAlgProperty
-
 variable {k : Type u} [Field k]
+
+/-- The spectrum of a tensor product of commutative algebras over a field is geometrically
+connected when the spectra of both factors are geometrically connected over that field. -/
+theorem geometricallyConnected_tensorProduct
+    (S T : Type u) [CommRing S] [CommRing T] [Algebra k S] [Algebra k T]
+    (hS : GeometricallyConnected (Spec.map (CommRingCat.ofHom (algebraMap k S))))
+    (hT : GeometricallyConnected (Spec.map (CommRingCat.ofHom (algebraMap k T)))) :
+    GeometricallyConnected
+      (Spec.map (CommRingCat.ofHom (algebraMap k (S ⊗[k] T)))) := by
+  let f := Spec.map (CommRingCat.ofHom (algebraMap k S))
+  let g := Spec.map (CommRingCat.ofHom (algebraMap k T))
+  let _ : GeometricallyConnected f := hS
+  let _ : GeometricallyConnected g := hT
+  let _ : UniversallyOpen f := inferInstance
+  let _ : UniversallyOpen g := inferInstance
+  have hproduct : GeometricallyConnected (pullback.fst f g ≫ f) :=
+    GeometricallyConnected.comp (pullback.fst f g) f
+  have hproduct' : GeometricallyConnected
+      ((pullbackSpecIso k S T).hom ≫
+        Spec.map (CommRingCat.ofHom (algebraMap k (S ⊗[k] T)))) := by
+    rw [pullbackSpecIso_hom_base]
+    exact hproduct
+  rw [MorphismProperty.cancel_left_of_respectsIso
+    (P := @GeometricallyConnected) (pullbackSpecIso k S T).hom] at hproduct'
+  exact hproduct'
+
+namespace geometricallyConnectedCommHopfAlgProperty
 
 /-- The tensor product of two geometrically connected commutative Hopf algebras is geometrically
 connected. Contravariantly, direct products of geometrically connected affine groups over a
@@ -70,49 +97,21 @@ theorem tensorProduct (H K : CommHopfAlgCat.{u} k)
     (hK : geometricallyConnectedCommHopfAlgProperty k K) :
     geometricallyConnectedCommHopfAlgProperty k
       (CommHopfAlgCat.of k (H ⊗[k] K)) := by
-  let f := Spec.map (CommRingCat.ofHom (algebraMap k H))
-  let g := Spec.map (CommRingCat.ofHom (algebraMap k K))
-  have hf : GeometricallyConnected f := by
+  have hf : GeometricallyConnected
+      (Spec.map (CommRingCat.ofHom (algebraMap k H))) := by
     rw [← morphismProperty_hopfSpec_obj_X_hom_iff
       (P := @GeometricallyConnected) k H]
     exact (geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec k H).mp hH
-  have hg : GeometricallyConnected g := by
+  have hg : GeometricallyConnected
+      (Spec.map (CommRingCat.ofHom (algebraMap k K))) := by
     rw [← morphismProperty_hopfSpec_obj_X_hom_iff
       (P := @GeometricallyConnected) k K]
     exact (geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec k K).mp hK
-  let _ : GeometricallyConnected f := hf
-  let _ : GeometricallyConnected g := hg
-  let _ : UniversallyOpen f := inferInstance
-  let _ : UniversallyOpen g := inferInstance
-  have hproduct : GeometricallyConnected (pullback.fst f g ≫ f) :=
-    GeometricallyConnected.comp (pullback.fst f g) f
-  have hspectrum : GeometricallyConnected
-      (Spec.map (CommRingCat.ofHom (algebraMap k (H ⊗[k] K)))) := by
-    have hproduct' : GeometricallyConnected
-        ((pullbackSpecIso k H K).hom ≫
-          Spec.map (CommRingCat.ofHom (algebraMap k (H ⊗[k] K)))) := by
-      rw [pullbackSpecIso_hom_base]
-      exact hproduct
-    rw [MorphismProperty.cancel_left_of_respectsIso
-      (P := @GeometricallyConnected) (pullbackSpecIso k H K).hom] at hproduct'
-    exact hproduct'
+  have hspectrum := geometricallyConnected_tensorProduct H K hf hg
   apply (geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec
     k (CommHopfAlgCat.of k (H ⊗[k] K))).mpr
   exact (morphismProperty_hopfSpec_obj_X_hom_iff
     (P := @GeometricallyConnected) k (CommHopfAlgCat.of k (H ⊗[k] K))).mpr hspectrum
-
-/-- The coordinate algebra underlying a semidirect product is explicitly equivalent to the
-tensor product of the two coordinate algebras. -/
-private noncomputable def semidirectProductCarrierAlgEquiv
-    (H K : CommHopfAlgCat.{u} k)
-    (A : GrpObj.Action (CommHopfAlgCat.grpObj K) (CommHopfAlgCat.grpObj H)) :
-    (((commHopfAlgCatEquivCogrpCommAlgCat k).inverse.obj
-      (Opposite.op A.semidirectProduct) : CommHopfAlgCat.{u} k) : Type u) ≃ₐ[k]
-      (H ⊗[k] K) := by
-  let _ := A.semidirectProductGrpObj
-  exact CommAlgCat.algEquivOfIso
-    (A := A.semidirectProduct.X.unop) (B := CommAlgCat.of k (H ⊗[k] K))
-    (eqToIso (congrArg Opposite.unop A.semidirectProduct_X))
 
 /-- An internal semidirect product of geometrically connected affine groups is geometrically
 connected.
@@ -125,15 +124,13 @@ theorem semidirectProduct (H K : CommHopfAlgCat.{u} k)
     (A : GrpObj.Action (CommHopfAlgCat.grpObj K) (CommHopfAlgCat.grpObj H))
     (hH : geometricallyConnectedCommHopfAlgProperty k H)
     (hK : geometricallyConnectedCommHopfAlgProperty k K) :
-    geometricallyConnectedCommHopfAlgProperty k
-      ((commHopfAlgCatEquivCogrpCommAlgCat k).inverse.obj (Opposite.op A.semidirectProduct)) := by
-  let _ := A.semidirectProductGrpObj
+    geometricallyConnectedCommHopfAlgProperty k A.coordinateHopfAlgebra := by
   have h := tensorProduct H K hH hK
   rw [geometricallyConnectedCommHopfAlgProperty_iff] at h
   rw [geometricallyConnectedCommHopfAlgProperty_iff]
   intro L _ _
   let eL := Algebra.TensorProduct.congr
-    (semidirectProductCarrierAlgEquiv H K A) (AlgEquiv.refl : L ≃ₐ[k] L)
+    A.coordinateAlgEquiv (AlgEquiv.refl : L ≃ₐ[k] L)
   exact (PrimeSpectrum.homeomorphOfRingEquiv eL.toRingEquiv).connectedSpace_iff.mpr (h L)
 
 end geometricallyConnectedCommHopfAlgProperty
