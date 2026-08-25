@@ -256,7 +256,7 @@ noncomputable def zigzagAlgebraEquivNonisolated (hconn : G.Connected) [Nontrivia
 
 /-- The comparison on the unique nonisolated component applies its two constituent
 equivalences in sequence. -/
-private theorem nonisolatedComponentComparison_apply (hconn : G.Connected) [Nontrivial V]
+private theorem nonisolatedComponentComparison_apply (hconn : G.Connected)
     (C : G.ConnectedComponent) [Nontrivial C] (x : zigzagComponentAlgebra k G C) :
     ((zigzagComponentAlgebraEquivNonisolated k G C).trans
       (nonisolatedZigzagQuotientEquiv k
