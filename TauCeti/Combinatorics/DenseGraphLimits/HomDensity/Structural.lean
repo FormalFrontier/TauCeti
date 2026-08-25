@@ -37,8 +37,7 @@ components.
 * `TauCeti.DenseGraphLimits.homDensity_bot` — `t(⊥, W) = 1`;
 * `TauCeti.DenseGraphLimits.homDensity_sum` — `t(F₁ ⊕g F₂, W) = t(F₁, W) · t(F₂, W)`;
 * `TauCeti.DenseGraphLimits.homDensity_eq_mul_of_iso_sum` — the same for any graph *isomorphic* to a
-  disjoint sum, which is the form a graph parameter indexed by `Fin`-representatives asks for;
-* `TauCeti.DenseGraphLimits.homDensity_sum_bot` — adjoining isolated vertices changes nothing.
+  disjoint sum, which is the form a graph parameter indexed by `Fin`-representatives asks for.
 
 ## References
 
@@ -191,14 +190,6 @@ theorem homDensity_eq_mul_of_iso_sum {V : Type*} [Fintype V] {F : SimpleGraph V}
     [DecidableRel F.Adj] (φ : F ≃g F₁ ⊕g F₂) (W : Graphon Ω μ) :
     homDensity F W = homDensity F₁ W * homDensity F₂ W := by
   rw [← homDensity_eq_of_iso φ, homDensity_sum]
-
-/-- **The added-vertex telescope.** Adjoining isolated vertices leaves a density unchanged — the
-combination of multiplicativity with normalization that a level-by-level count of labelled graphs
-runs on. -/
-@[simp]
-theorem homDensity_sum_bot (W : Graphon Ω μ) :
-    homDensity (F₁ ⊕g (⊥ : SimpleGraph V₂)) W = homDensity F₁ W := by
-  rw [homDensity_sum, homDensity_bot, mul_one]
 
 end DenseGraphLimits
 
