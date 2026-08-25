@@ -10,7 +10,6 @@ public import TauCeti.Geometry.Manifold.VectorBundle.SectionAlongCurve
 public import Mathlib.Analysis.Calculus.Deriv.Add
 public import Mathlib.Analysis.Calculus.Deriv.Comp
 public import Mathlib.Analysis.Calculus.Deriv.Mul
-public import Mathlib.Geometry.Manifold.VectorBundle.MDifferentiable
 
 /-!
 # A moving-chart formula for covariant differentiation along a curve
@@ -224,9 +223,8 @@ private theorem alongCurveInChartWithin_const_smul (c : 𝕜) (s : Set 𝕜) (x 
       c • alongCurveInChartWithin cov γ V s x t := by
   have hcoord : sectionCoord (F := E) γ (fun r ↦ c • V r) x =
       c • sectionCoord (F := E) γ V x := by
-    funext r
-    rw [sectionCoord_apply]
-    simp only [Pi.smul_apply, sectionCoord_apply, map_smul]
+    rw [sectionCoord_smul (F := E) γ V (fun _ ↦ c) x]
+    rfl
   rw [alongCurveInChartWithin_apply, alongCurveInChartWithin_apply, hcoord,
     derivWithin_const_smul_field]
   simp only [Pi.smul_apply, map_smul, smul_apply, smul_add]

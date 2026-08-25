@@ -49,6 +49,7 @@ def sectionCoord (x : M) (t : 𝕜) : F :=
   (trivializationAt F V x).continuousLinearMapAt 𝕜 (γ t) (W t)
 
 /-- The defining formula for the coordinate reading of a section along a curve. -/
+@[simp]
 theorem sectionCoord_apply (x : M) (t : 𝕜) :
     sectionCoord (F := F) (V := V) γ W x t =
       (trivializationAt F V x).continuousLinearMapAt 𝕜 (γ t) (W t) :=
