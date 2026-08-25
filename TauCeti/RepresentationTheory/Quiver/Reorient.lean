@@ -174,8 +174,8 @@ theorem reorientSymmetrifyInv_obj (i : Symmetrify Q) :
     (reorientSymmetrifyInv σ).obj i = i := rfl
 
 /-- The inverse comparison sends an arrow which `σ` leaves alone to the corresponding arrow of the
-reoriented quiver. -/
-@[simp]
+reoriented quiver. Deliberately not a `simp` lemma: `Quiver.Symmetrify.of_map` rewrites
+`Symmetrify.of.map a` to `Sum.inl a` on the left-hand side, and `simpNF` rejects it. -/
 theorem reorientSymmetrifyInv_map_of_keep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) :
     (reorientSymmetrifyInv σ).map (Symmetrify.of.map a) =
       Symmetrify.of.map (reorientKeep σ a h) := by
@@ -195,8 +195,8 @@ theorem reorientSymmetrifyInv_map_reverse_of_keep {i j : Q} (a : i ⟶ j) (h : �
   rw [dite_eq_right h]
 
 /-- The inverse comparison sends an arrow which `σ` turns around to the formal reverse of the
-corresponding reoriented arrow. -/
-@[simp]
+corresponding reoriented arrow. Deliberately not a `simp` lemma, for the reason recorded on
+`TauCeti.reorientSymmetrifyInv_map_of_keep`. -/
 theorem reorientSymmetrifyInv_map_of_flip {i j : Q} (a : i ⟶ j) (h : σ a) :
     (reorientSymmetrifyInv σ).map (Symmetrify.of.map a) =
       Quiver.reverse (Symmetrify.of.map (reorientFlip σ a h)) := by
