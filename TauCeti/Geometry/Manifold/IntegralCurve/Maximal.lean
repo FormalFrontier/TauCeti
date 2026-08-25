@@ -20,10 +20,11 @@ open interval around `0` on which any integral curve through `x` exists.
 This file builds it. `maximalIntegralCurveInterval v x` is the union of the open intervals around
 `0` carrying an integral curve of `v` taking the value `x` at time `0`, and
 `maximalIntegralCurve v x` is the curve obtained by reading off, at each time of that set, the
-value of any such witness. Uniqueness of integral curves on a common interval makes the reading
-unambiguous, so the maximal curve restricts to every witness, is itself an integral curve on the
-whole interval, and is the largest one: every integral curve through `x` on an open interval around
-`0` is one of its restrictions.
+value of one such witness, chosen arbitrarily. That choice becomes immaterial once `M` is a
+separated boundaryless `C^1` manifold and `v` is a `C^1` field: uniqueness of integral curves on a
+common interval then makes the reading unambiguous, so the maximal curve restricts to every
+witness, is itself an integral curve on the whole interval, and is the largest one: every integral
+curve through `x` on an open interval around `0` is one of its restrictions.
 
 The interval is open and `Set.OrdConnected`, hence an interval in the order sense, and it contains
 `0` as soon as `v` is `C^1` at `x` on a boundaryless manifold. At a finite endpoint the extension
@@ -62,9 +63,9 @@ arbitrary initial time is recovered by translating the parameter with
   maximal curve has no cluster point in the manifold, with
   `eventually_notMem_nhdsLT_maximalIntegralCurve` and
   `eventually_notMem_nhdsGT_maximalIntegralCurve` the compact-set forms.
-* `maximalIntegralCurveInterval_eq_univ_of_mapsTo_isCompact`: a maximal curve confined to a compact
-  set is defined for all time, and `isMIntegralCurve_maximalIntegralCurve` specializes this to a
-  compact manifold: **a `C^1` vector field on a compact manifold is complete**.
+* `maximalIntegralCurveInterval_eq_univ_of_isCompact_of_mapsTo`: a maximal curve confined to a
+  compact set is defined for all time, and `isMIntegralCurve_maximalIntegralCurve` specializes this
+  to a compact manifold: **a `C^1` vector field on a compact manifold is complete**.
 * `maximalIntegralCurveInterval_eq_univ_iff`: the maximal interval is all of `ℝ` exactly when some
   global integral curve passes through `x` at time `0`.
 
@@ -182,12 +183,14 @@ theorem zero_mem_maximalIntegralCurveInterval [CompleteSpace E] [IsManifold I 1 
   exact hγε.subset_maximalIntegralCurveInterval h0 hγ0 h0
 
 /-- **The maximal integral curve** of `v` through `x`: at a time of `maximalIntegralCurveInterval
-v x` it is the value there of any integral curve of `v` through `x` defined at that time, and
-outside that set it is junk-valued at `x`.
+v x` it is the value there of one integral curve of `v` through `x` defined at that time, chosen
+arbitrarily, and outside that set it is junk-valued at `x`.
 
-Uniqueness of integral curves makes the value independent of the witness; this is the content of
-`IsMIntegralCurveOn.eqOn_maximalIntegralCurve`, which is what all the results below use instead of
-the definition. -/
+No hypothesis on `M` or `v` is imposed here, so at this generality the definition only selects the
+value of some witness. Under the hypotheses of `IsMIntegralCurveOn.eqOn_maximalIntegralCurve` — `M`
+separated, boundaryless and `C^1`, and `v` a `C^1` field — uniqueness of integral curves makes the
+value independent of the witness, and that theorem, rather than this definition, is what all the
+results below use. -/
 noncomputable def maximalIntegralCurve (v : (x : M) → TangentSpace I x) (x : M) (t : ℝ) : M :=
   letI := Classical.dec (t ∈ maximalIntegralCurveInterval v x)
   if h : t ∈ maximalIntegralCurveInterval v x then
@@ -322,7 +325,7 @@ theorem eventually_notMem_nhdsGT_maximalIntegralCurve [CompleteSpace E]
 /-- **A maximal integral curve confined to a compact set is defined for all time.** Neither
 endpoint of the maximal interval can be finite, since the escape lemma would force the curve out of
 the compact set there. -/
-theorem maximalIntegralCurveInterval_eq_univ_of_mapsTo_isCompact [CompleteSpace E]
+theorem maximalIntegralCurveInterval_eq_univ_of_isCompact_of_mapsTo [CompleteSpace E]
     (hv : CMDiff 1 (fun y ↦ (⟨y, v y⟩ : TangentBundle I M)))
     (h0 : (0 : ℝ) ∈ maximalIntegralCurveInterval v x) {K : Set M} (hK : IsCompact K)
     (hmem : MapsTo (maximalIntegralCurve v x) (maximalIntegralCurveInterval v x) K) :
@@ -359,7 +362,7 @@ theorem isMIntegralCurve_maximalIntegralCurve [CompleteSpace E] [CompactSpace M]
     IsMIntegralCurve (maximalIntegralCurve v x) v := by
   have h0 := zero_mem_maximalIntegralCurveInterval (v := v) (x := x) hv.contMDiffAt
   rw [isMIntegralCurve_iff_isMIntegralCurveOn,
-    ← maximalIntegralCurveInterval_eq_univ_of_mapsTo_isCompact hv h0 isCompact_univ
+    ← maximalIntegralCurveInterval_eq_univ_of_isCompact_of_mapsTo hv h0 isCompact_univ
       (fun _ _ ↦ mem_univ _)]
   exact isMIntegralCurveOn_maximalIntegralCurve hv
 
