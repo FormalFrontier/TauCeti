@@ -30,16 +30,7 @@ namespace TauCeti
 
 open CategoryTheory AlgebraicGeometry Opposite
 
-universe u v
-
-/-- Pulling an isomorphism-invariant object property forward and then backward along an
-equivalence recovers the original property. -/
-theorem objectProperty_inverseImage_equivalence_inverse
-    {C : Type u} {D : Type v} [Category C] [Category D]
-    (P : ObjectProperty C) [P.IsClosedUnderIsomorphisms] (e : C ≌ D) :
-    (P.inverseImage e.inverse).inverseImage e.functor = P := by
-  ext X
-  exact (P.prop_iff_of_iso (e.unitIso.app X)).symm
+universe u
 
 /-- `Spec` as an anti-equivalence from commutative `S`-Hopf algebras onto affine group
 schemes over `Spec S`. The underlying functor is Mathlib's `AlgebraicGeometry.hopfSpec`,
@@ -71,6 +62,19 @@ noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso (S 
     Functor.isoWhiskerLeft (hopfSpec S).toEssImage (ObjectProperty.ιOfLECompιIso _) ≪≫
     (hopfSpec S).toEssImageCompι
 
+/-- The object produced by the affine Hopf/group-scheme anti-equivalence is the bundled Hopf
+spectrum. -/
+noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.functorObjIso
+    (R : Type u) [CommRing R] (H : (CommHopfAlgCat.{u} R)ᵒᵖ) :
+    (commHopfAlgCatOpEquivAffineGroupSchemeCat
+        (CommRingCat.of R)).functor.obj H ≅
+      ⟨(hopfSpec (CommRingCat.of R)).obj H, by
+        rw [affineGroupSchemeProperty_iff, hopfSpec_obj_X_left]
+        infer_instance⟩ :=
+  (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
+    ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+      (CommRingCat.of R)).app H)
+
 /-- To identify the inverse image of an isomorphism-invariant property of affine group schemes
 under the Hopf-algebra/group-scheme anti-equivalence, it suffices to identify that property on
 Hopf spectra. -/
@@ -90,9 +94,7 @@ theorem objectProperty_inverseImage_commHopfAlgCatOpEquiv
       infer_instance⟩
   let e : (commHopfAlgCatOpEquivAffineGroupSchemeCat
       (CommRingCat.of R)).functor.obj H ≅ G :=
-    (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
-      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-        (CommRingCat.of R)).app H)
+    commHopfAlgCatOpEquivAffineGroupSchemeCat.functorObjIso R H
   rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.op_iff]
   exact (P.prop_iff_of_iso e).trans (h H.unop)
 

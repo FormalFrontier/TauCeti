@@ -5,15 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RingTheory.Polynomial.IsIntegral
-import Mathlib.Tactic.ComputeDegree
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Denominator
+public import TauCeti.RingTheory.Polynomial.IsIntegral
 
 /-!
 # Integrality of points on a Weierstrass curve over a unique factorization domain
 
 Let `R` be a unique factorization domain with fraction field `K` and let `W : WeierstrassCurve R`
-have coefficients in `R`. This file gives the two integrality steps of the Nagell–Lutz argument
+have coefficients in `R`. This file gives the three integrality steps of the Nagell–Lutz argument
 that do not mention torsion.
 
 The first is the rational-root step. If the `x`-coordinate of a `K`-point is a root of some
@@ -26,7 +25,14 @@ denominator at all, so `den x` is a unit and `x` is integral.
 The second is a consequence of the curve equation alone: once `x` comes from `R`, `y` is a root of
 the monic quadratic `Y² + (a₁x + a₃)Y − (x³ + a₂x² + a₄x + a₆)` over `R`, so `y` is integral over
 `R`. That step needs no domain, fraction-field or factorisation hypothesis, so it is stated over an
-arbitrary `R`-algebra, with the fraction-field version as a corollary.
+arbitrary `R`-algebra, with the `IsLocalization.IsInteger` form as a corollary over any commutative
+`R`-algebra in which `R` is integrally closed.
+
+The third is the scaling that replaces integrality in the **order-two case**, the one case of
+Nagell–Lutz where the conclusion is weaker. Where the `Y`-derivative of the Weierstrass polynomial
+vanishes — `2y + a₁x + a₃ = 0`, which is what the division-polynomial API calls `ψ₂ = 0` — a bound
+`4x ∈ R` scales to `8y ∈ R`. Like the second step this needs no domain, fraction field or
+factorisation, only an `R`-algebra.
 
 ## Main results
 
@@ -35,12 +41,18 @@ arbitrary `R`-algebra, with the fraction-field version as a corollary.
   leading coefficient.
 * `TauCeti.WeierstrassCurve.isIntegral_y_of_equation_of_isIntegral_x`: over **any** `R`-algebra, a
   point whose `x`-coordinate is integral over `R` has `y`-coordinate integral over `R`.
-* `TauCeti.WeierstrassCurve.isInteger_y_of_equation_of_isInteger_x`: its fraction-field corollary,
-  the shape the Nagell–Lutz argument consumes.
+* `TauCeti.WeierstrassCurve.isInteger_y_of_equation_of_isInteger_x`: its `IsLocalization.IsInteger`
+  corollary over any commutative `R`-algebra in which `R` is integrally closed, the shape the
+  Nagell–Lutz argument consumes.
+* `WeierstrassCurve.isInteger_eight_mul_y_of_evalEval_polynomialY_eq_zero`: the third step, for the
+  **order-two case**, where the first two do not give integrality of `y`. It is in the root
+  `WeierstrassCurve` namespace, where `W.isInteger_eight_mul_y_…` elaborates; the declarations
+  above predate that convention and `scripts/lint-dot-notation.py` carries them as grandfathered
+  entries.
 
-Both are stated for an arbitrary point: no torsion, ellipticity or minimality hypothesis. In the
-Nagell–Lutz argument the polynomial `f` is a division polynomial, whose leading coefficient is the
-order of the torsion point.
+All three are stated for an arbitrary point: no torsion, ellipticity or minimality hypothesis. In
+the Nagell–Lutz argument the polynomial `f` is a division polynomial, whose leading coefficient is
+the order of the torsion point, and `ψ₂` vanishes exactly at the points of order two.
 
 This advances the Nagell–Lutz integrality milestone of
 `TauCetiRoadmap/EllipticCurves/README.md`, Layer 6, item "The torsion subgroup and Nagell–Lutz".
@@ -52,6 +64,16 @@ that roadmap at `dev/modular-curves @ 9fec8eba7652`:
 `LutzNagell/LutzNagellTheorem/PIDPrimeOrder.lean`, declarations
 `isInteger_of_root_squarefree_leading_coeff` and `y_isInteger_of_x_isInteger_on_curve`. The latter
 is generalised here from the fraction field to an arbitrary `R`-algebra.
+
+`isInteger_eight_mul_y_of_evalEval_polynomialY_eq_zero` is the `y` half of
+`bounded_den_of_order_two_general` (`LutzNagell/LutzNagellTheorem/GeneralPrimeOrder.lean:176` at
+`main @ 1c1c74664e40071c2c2165bc55ca2616a67ccd6b`), which states both halves together over `ℚ`/`ℤ`
+as `(∃ n : ℤ, (n : ℚ) = 4 * x) ∧ ∃ m : ℤ, (m : ℚ) = 8 * y` for a point of order two. Two departures:
+the conclusion is `IsLocalization.IsInteger` over general `R`/`K`, so the source's
+`isInteger_int_iff` bridge is not needed; and the two-torsion hypothesis is weakened to the
+vanishing of `polynomialY`, which is what the `y` half actually uses and which makes the statement
+independent of the point-level `[n]`-multiplication development. The `x` half is separately the
+merged `den_dvd_four_of_order_two`.
 -/
 
 public section
@@ -64,28 +86,6 @@ namespace WeierstrassCurve
 
 variable {R : Type*} [CommRing R] (W : _root_.WeierstrassCurve R)
 
--- An element satisfying a monic quadratic relation with integral coefficients is integral: this
--- is `IsIntegral.of_aeval_monic_of_isIntegral_coeff` for `X ^ 2 + C b * X + C c`, with the degree
--- computation and the per-coefficient obligations discharged. Kept here rather than exported,
--- since `isIntegral_y_of_equation_of_isIntegral_x` is its only consumer.
-private theorem isIntegral_of_sq_add_mul_add_eq_zero {A : Type*} [CommRing A] [Algebra R A]
-    {b c y : A} (hb : IsIntegral R b) (hc : IsIntegral R c) (h : y ^ 2 + b * y + c = 0) :
-    IsIntegral R y := by
-  nontriviality A
-  have hdeg : (X ^ 2 + (C b * X + C c) : A[X]).natDegree = 2 := by compute_degree!
-  refine IsIntegral.of_aeval_monic_of_isIntegral_coeff (p := X ^ 2 + (C b * X + C c))
-    (monic_X_pow_add (by compute_degree!)) (by omega) ?_ ?_
-  · have : Polynomial.eval y (X ^ 2 + (C b * X + C c) : A[X]) = 0 := by
-      simpa only [eval_add, eval_pow, eval_X, eval_mul, eval_C, add_assoc] using h
-    rw [this]
-    exact isIntegral_zero
-  · intro i
-    match i with
-    | 0 => simpa using hc
-    | 1 => simpa using hb
-    | 2 => simpa using (isIntegral_one : IsIntegral R (1 : A))
-    | (n + 3) => simpa using (isIntegral_zero : IsIntegral R (0 : A))
-
 /-- **An integral `x`-coordinate forces an integral `y`-coordinate**, over any `R`-algebra.
 
 On the curve, `y` is a root of the monic quadratic `Y² + (a₁x + a₃)Y − (x³ + a₂x² + a₄x + a₆)`,
@@ -97,7 +97,7 @@ theorem isIntegral_y_of_equation_of_isIntegral_x {A : Type*} [CommRing A] [Algeb
   simp only [_root_.WeierstrassCurve.baseChange, _root_.WeierstrassCurve.map_a₁,
     _root_.WeierstrassCurve.map_a₂, _root_.WeierstrassCurve.map_a₃,
     _root_.WeierstrassCurve.map_a₄, _root_.WeierstrassCurve.map_a₆] at h
-  refine isIntegral_of_sq_add_mul_add_eq_zero
+  refine IsIntegral.of_sq_add_mul_add_eq_zero
     (b := algebraMap R A W.a₁ * x + algebraMap R A W.a₃)
     (c := -(x ^ 3 + algebraMap R A W.a₂ * x ^ 2 + algebraMap R A W.a₄ * x + algebraMap R A W.a₆))
     ((isIntegral_algebraMap.mul hx).add isIntegral_algebraMap)
@@ -127,23 +127,58 @@ theorem isInteger_x_of_equation_of_is_root_of_squarefree_leadingCoeff
 
 end UniqueFactorization
 
-section IntegrallyClosed
+end FractionField
 
-variable [IsIntegrallyClosed R]
+section IntegrallyClosedIn
 
-/-- **On the curve over a fraction field, an integral `x`-coordinate forces an integral
-`y`-coordinate.** The `IsLocalization.IsInteger` form of `isIntegral_y_of_equation_of_isIntegral_x`,
-which is the shape the Nagell–Lutz argument consumes. -/
+variable {K : Type*} [CommRing K] [Algebra R K] [IsIntegrallyClosedIn R K] {x y : K}
+
+/-- **On the curve, an integral `x`-coordinate forces an integral `y`-coordinate.** The
+`IsLocalization.IsInteger` form of `isIntegral_y_of_equation_of_isIntegral_x`, which is the shape
+the Nagell–Lutz argument consumes.
+
+`K` need not be a fraction field of `R`, nor even a field: integral closedness **relative to `K`**
+is what the argument uses, over any commutative `R`-algebra. It is strictly weaker than
+`[IsIntegrallyClosed R] [IsFractionRing R K]` — those two imply it
+(`isIntegrallyClosed_iff_isIntegrallyClosedIn`, and Mathlib supplies the instance), but not
+conversely. -/
 theorem isInteger_y_of_equation_of_isInteger_x (h : (W.baseChange K).toAffine.Equation x y)
     (hx : IsLocalization.IsInteger R x) : IsLocalization.IsInteger R y := by
   obtain ⟨x₀, hx₀⟩ := hx
-  exact RingHom.mem_rangeS.mpr (IsIntegrallyClosed.isIntegral_iff.mp
+  exact RingHom.mem_rangeS.mpr (IsIntegrallyClosedIn.isIntegral_iff.mp
     (isIntegral_y_of_equation_of_isIntegral_x W h (hx₀ ▸ isIntegral_algebraMap)))
 
-end IntegrallyClosed
-
-end FractionField
+end IntegrallyClosedIn
 
 end WeierstrassCurve
 
 end TauCeti
+
+namespace WeierstrassCurve
+
+variable {R : Type*} [CommRing R] {K : Type*} [CommRing K] [Algebra R K]
+variable (W : WeierstrassCurve R) {x y : K}
+
+/-- **Where the `Y`-derivative vanishes, a bound on `x` scales to one on `y`**: if
+`polynomialY` vanishes at `(x, y)` and `4x` is integral, then `8y` is integral.
+
+This is the `y` half of the order-two exception in Nagell–Lutz — the case where a torsion point
+need not have integral coordinates at all, and where `8y` rather than `y` is what lies in `R`.
+`polynomialY` is `∂/∂Y` of the Weierstrass polynomial, evaluating to `2y + a₁x + a₃`, and is what
+the division-polynomial API calls `ψ₂`. Taking its vanishing as the hypothesis is strictly weaker
+than two-torsion and needs no field, no fraction ring and no `Nonsingular`: a point of order two
+satisfies it, and so does any pair at which `ψ₂` happens to vanish. -/
+theorem isInteger_eight_mul_y_of_evalEval_polynomialY_eq_zero
+    (hy : (W.baseChange K).toAffine.polynomialY.evalEval x y = 0)
+    (hx : IsLocalization.IsInteger R (4 * x)) : IsLocalization.IsInteger R (8 * y) := by
+  -- Evaluated, the hypothesis is `2y + a₁x + a₃ = 0`; scaling by `4` gives `8y = -(a₁ · 4x + 4a₃)`,
+  -- whose right-hand side is integral because `4x` is. `y` itself need not be.
+  rw [_root_.WeierstrassCurve.Affine.evalEval_polynomialY] at hy
+  simp only [_root_.WeierstrassCurve.baseChange, _root_.WeierstrassCurve.map_a₁,
+    _root_.WeierstrassCurve.map_a₃] at hy
+  obtain ⟨c, hc⟩ := hx
+  refine ⟨-(W.a₁ * c + 4 * W.a₃), ?_⟩
+  simp only [map_neg, map_add, map_mul, map_ofNat, hc]
+  linear_combination (-4) * hy
+
+end WeierstrassCurve

@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
 public import Mathlib.Algebra.Lie.Weights.Chain
 public import TauCeti.Algebra.Lie.Sl2.WeightMultiplicity
+public import TauCeti.Algebra.Lie.Submodule.Finrank
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 public import TauCeti.Algebra.Lie.Weights.Integrality
 public import TauCeti.Algebra.Lie.Weights.Reflection
@@ -86,15 +87,6 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [IsAlgClosed K]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra]
   {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
   [FiniteDimensional K M]
-
-omit [CharZero K] [IsAlgClosed K] [IsKilling K L] [FiniteDimensional K L] [H.IsCartanSubalgebra]
-  [LieModule K L M] [FiniteDimensional K M] in
-/-- The type underlying a Lie submodule is the type underlying its carrier submodule, so the two
-have the same dimension. This states once the definitional equality that the dimension counts
-below pass through. -/
-private theorem finrank_toSubmodule (N : LieSubmodule K H M) :
-    finrank K N.toSubmodule = finrank K N :=
-  rfl
 
 omit [CharZero K] [IsAlgClosed K] [IsKilling K L] [FiniteDimensional K L]
   [H.IsCartanSubalgebra] in

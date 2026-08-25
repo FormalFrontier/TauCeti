@@ -7,9 +7,10 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.Reduced
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.NonSimplyLaced
 
 /-!
-# Reducedness of the simply-laced pinned root data
+# Reducedness of the pinned root data
 
 The pinned simply connected root data of types `A`, `D`, `E₆`, `E₇`, and `E₈` are reduced. Their
 character and cocharacter lattices use different preferred bases, so reducedness is not obtained
@@ -18,8 +19,9 @@ symmetric root--coroot pairing. `RootPairing.isReduced_of_pairing_comm` then rul
 multiples among their roots.
 
 These instances supply the reducedness hypothesis needed to apply Mathlib's Geck construction to
-the rational scalar extensions of the pinned data. The non-simply-laced types require a separate
-argument because their root--coroot pairings are not symmetric.
+the rational scalar extensions of the pinned data. The non-simply-laced cases are supplied by
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.NonSimplyLaced`; the final theorem here
+joins the two cases uniformly.
 
 ## Main results
 
@@ -28,6 +30,8 @@ argument because their root--coroot pairings are not symmetric.
   `e7SimplyConnectedRootDatum`, and `e8SimplyConnectedRootDatum`.
 * `DynkinType.isReduced_simplyConnectedRootDatum_of_isSimplyLaced`: the uniform reducedness
   theorem for every valid simply-laced Dynkin type.
+* `DynkinType.isReduced_simplyConnectedRootDatum`: the uniform reducedness theorem for every
+  valid Dynkin type.
 
 ## References
 
@@ -87,5 +91,13 @@ theorem isReduced_simplyConnectedRootDatum_of_isSimplyLaced (t : DynkinType) (ht
       exact instIsReducedE8SimplyConnectedRootDatum
   | F4 => simp at hs
   | G2 => simp at hs
+
+/-- **The pinned integral datum is reduced**, uniformly in the valid Dynkin type. The simply-laced
+and non-simply-laced halves are proved by different criteria, so this only joins them. -/
+theorem isReduced_simplyConnectedRootDatum (t : DynkinType) (ht : t.Valid) :
+    (t.simplyConnectedRootDatum ht).IsReduced := by
+  by_cases hs : t.IsSimplyLaced
+  · exact isReduced_simplyConnectedRootDatum_of_isSimplyLaced t ht hs
+  · exact isReduced_simplyConnectedRootDatum_of_not_isSimplyLaced t ht hs
 
 end TauCeti.DynkinType

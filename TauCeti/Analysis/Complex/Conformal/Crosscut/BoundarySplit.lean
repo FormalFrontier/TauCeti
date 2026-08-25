@@ -177,20 +177,17 @@ theorem frontier_inter_closure_image_inter_sphere_subset_inter (hUo : IsOpen U)
 third set is needed: the image of the cut is adherent to both sides, so its closure adds nothing.
 
 The decomposition `U = (U ∩ ball ζ ρ) ∪ (U \ closedBall ζ ρ) ∪ (U ∩ sphere ζ ρ)` is
-`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` together with `Set.sdiff_union_inter`;
-taking images and closures, `frontier (f '' U) ⊆ closure (f '' U)` splits into the three closures,
-and the third is absorbed by
+`TauCeti.image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere`;
+taking closures, `frontier (f '' U) ⊆ closure (f '' U)` splits into the three closures, and the
+third is absorbed by
 `TauCeti.image_inter_sphere_subset_closure_image_inter_ball`. -/
 theorem frontier_image_subset_union_closure_image (hUo : IsOpen U) (hfc : ContinuousOn f U)
     (hρ : ρ ≠ 0) :
     frontier (f '' U) ⊆
       closure (f '' (U ∩ ball ζ ρ)) ∪ closure (f '' (U \ closedBall ζ ρ)) := by
-  have hset : U = U ∩ ball ζ ρ ∪ U \ closedBall ζ ρ ∪ U ∩ sphere ζ ρ := by
-    rw [← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
   have himg : f '' U =
-      f '' (U ∩ ball ζ ρ) ∪ f '' (U \ closedBall ζ ρ) ∪ f '' (U ∩ sphere ζ ρ) := by
-    conv_lhs => rw [hset]
-    rw [image_union, image_union]
+      f '' (U ∩ ball ζ ρ) ∪ f '' (U \ closedBall ζ ρ) ∪ f '' (U ∩ sphere ζ ρ) :=
+    image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere f
   have hγ : closure (f '' (U ∩ sphere ζ ρ)) ⊆ closure (f '' (U ∩ ball ζ ρ)) :=
     closure_minimal (image_inter_sphere_subset_closure_image_inter_ball hUo hfc hρ) isClosed_closure
   refine frontier_subset_closure.trans ?_

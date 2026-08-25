@@ -90,6 +90,67 @@ lemma det_eq_one_of_mem_SLnZ {g : GL (Fin n) ℚ} (hg : g ∈ SLnZ n) :
   obtain ⟨σ, rfl⟩ := (mem_SLnZ_iff n).mp hg
   exact congrArg Units.val (SpecialLinearGroup.det_mapGL (S := ℚ) σ)
 
+/-- **Integral representatives survive two-sided integral translation.** If `A` represents
+`g ∈ GL_n(ℚ)` entrywise over `ℤ`, then `τ * A * δ` represents `mapGL τ * g * mapGL δ` for any
+`τ δ : SL_n(ℤ)`.
+
+Nothing here is specific to a level or a dimension: it is the statement that the entrywise
+`ℤ → ℚ` cast is multiplicative, packaged for the two-sided translations that every
+change-of-representative argument performs. -/
+lemma mapGL_mul_coe_eq_intMatrix (τ δ : SpecialLinearGroup (Fin n) ℤ)
+    (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
+    (hA : (↑g : Matrix (Fin n) (Fin n) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
+    (↑(mapGL ℚ τ * g * mapGL ℚ δ) : Matrix (Fin n) (Fin n) ℚ) =
+      ((τ : Matrix (Fin n) (Fin n) ℤ) * A * (δ : Matrix (Fin n) (Fin n) ℤ)).map
+        (Int.cast : ℤ → ℚ) := by
+  have h₁ := map_mul (Int.castRingHom ℚ).mapMatrix
+    ((τ : Matrix (Fin n) (Fin n) ℤ) * A) (δ : Matrix (Fin n) (Fin n) ℤ)
+  have h₂ := map_mul (Int.castRingHom ℚ).mapMatrix (τ : Matrix (Fin n) (Fin n) ℤ) A
+  simp only [RingHom.mapMatrix_apply, Int.coe_castRingHom] at h₁ h₂
+  simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, map_apply_coe,
+    RingHom.mapMatrix_apply, algebraMap_int_eq, Int.coe_castRingHom, hA]
+  rw [h₁, h₂]
+
+-- Adapted from [AINTLIB](https://github.com/CBirkbeck/AINTLIB) commit
+-- `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck,
+-- `LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/AtkinLehner.lean`, declaration
+-- `gl_eq_of_intMat_eq`. The source states it privately at `Fin 2` and proves it entrywise; at
+-- general `n` it is a consequence of `mapGL_mul_coe_eq_intMatrix` above, and the double-coset
+-- form its callers want is added alongside.
+/-- **Lifting an integral equivalence to `GL_n(ℚ)`.** The converse reading of
+`mapGL_mul_coe_eq_intMatrix`: if the integral witnesses of `g` and `h` are related by
+`τ * A * δ = B` with `τ`, `δ` of determinant one, then `h` *is* the two-sided translate
+of `g`.
+
+`mapGL_mul_coe_eq_intMatrix` computes the matrix of a translate; this recovers the translate
+from its matrix, which is what a change-of-representative argument actually needs — such an
+argument produces an integral identity and must conclude an identity in `GL_n(ℚ)`. -/
+lemma eq_mapGL_mul_mul_mapGL_of_intMatrix_eq (τ δ : SpecialLinearGroup (Fin n) ℤ)
+    (g h : GL (Fin n) ℚ) (A B : Matrix (Fin n) (Fin n) ℤ)
+    (hA : (↑g : Matrix (Fin n) (Fin n) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (hB : (↑h : Matrix (Fin n) (Fin n) ℚ) = B.map (Int.cast : ℤ → ℚ))
+    (hτδ : (τ : Matrix (Fin n) (Fin n) ℤ) * A * (δ : Matrix (Fin n) (Fin n) ℤ) = B) :
+    h = mapGL ℚ τ * g * mapGL ℚ δ :=
+  Units.ext (by rw [hB, ← hτδ, ← mapGL_mul_coe_eq_intMatrix n τ δ g A hA])
+
+/-- **Double-coset membership from an integral equivalence.** Determinant-one integral matrices
+relating the witnesses of `g` and `h` put `h` in the `SL_n(ℤ)`-double coset of `g`.
+
+This is the shape every "same double coset" argument ends in: the work is done over `ℤ`, by
+exhibiting the two determinant-one factors, and this converts that into the membership
+statement.
+`det_eq_of_mem_doubleCoset_SLnZ` is the companion in the other direction, extracting the
+determinant invariant from such a membership. -/
+lemma mem_doubleCoset_SLnZ_of_intMatrix_eq (τ δ : SpecialLinearGroup (Fin n) ℤ)
+    (g h : GL (Fin n) ℚ) (A B : Matrix (Fin n) (Fin n) ℤ)
+    (hA : (↑g : Matrix (Fin n) (Fin n) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (hB : (↑h : Matrix (Fin n) (Fin n) ℚ) = B.map (Int.cast : ℤ → ℚ))
+    (hτδ : (τ : Matrix (Fin n) (Fin n) ℤ) * A * (δ : Matrix (Fin n) (Fin n) ℤ) = B) :
+    h ∈ DoubleCoset.doubleCoset g (SLnZ n) (SLnZ n) :=
+  DoubleCoset.mem_doubleCoset.mpr
+    ⟨mapGL ℚ τ, coe_mem_SLnZ n τ, mapGL ℚ δ, coe_mem_SLnZ n δ,
+      eq_mapGL_mul_mul_mapGL_of_intMatrix_eq n τ δ g h A B hA hB hτδ⟩
+
 /-- The case of coefficient subgroups inside `SL_n(ℤ)`, which is how the congruence subgroups
 get it. -/
 lemma det_eq_of_mem_doubleCoset_of_le_SLnZ {H₁ H₂ : Subgroup (GL (Fin n) ℚ)}

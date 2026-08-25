@@ -10,38 +10,28 @@ public import TauCeti.Data.Sym.Disjoint
 public import TauCeti.Topology.Sym.Basic
 
 /-!
-# The symmetric power is locally a product
+# Disjoint open embeddings into a symmetric power
 
-The `n`-th symmetric power of a space is not a product, but it becomes one over a decomposition of
-the points into disjoint open pieces. Two statements say this:
+Given open embeddings with pairwise disjoint ranges, ordered tuples mapped pointwise through those
+embeddings embed openly as unordered tuples. In particular, given pairwise disjoint open
+neighbourhoods `U i` of `n` distinct points, their product is an open subspace of `Sym α n`;
+obtaining such neighbourhoods in a Hausdorff space is a separate step. The proof comes from
+`TauCeti.Sym.ofFn` being continuous and open together with `IsOpenEmbedding.piMap`.
 
-* concatenation `TauCeti.Sym.appendSubtype` of an unordered `n`-tuple of points of an open set `U`
-  and an unordered `m`-tuple of points of a disjoint open set `V` is an **open embedding**
-  `Sym U n × Sym V m ↪ Sym α (n + m)`, whose range is described in
-  `TauCeti.Sym.mem_range_appendSubtype`;
-* given open embeddings with pairwise disjoint ranges, ordered tuples mapped pointwise through
-  those embeddings embed openly as unordered tuples. In particular, given pairwise disjoint open
-  neighbourhoods `U i` of `n` distinct points, their product is an open subspace of `Sym α n`;
-  obtaining such neighbourhoods in a Hausdorff space is a separate step.
-
-The first statement combines the continuous and open concatenation map on symmetric powers with
-functoriality for open embeddings; those general facts come from the open quotient map
-`TauCeti.Sym.ofFn` and `Fin.appendHomeomorph`. The second comes from `ofFn` being continuous and
-open together with `IsOpenEmbedding.piMap`.
-
-Iterating the first statement over the distinct points of a tuple, with the multiplicities as the
-degrees, is how the symmetric power of a surface is charted: a neighbourhood of a tuple with
+Splitting over the distinct points of a tuple, with the multiplicities as the degrees, is how the
+symmetric power of a surface is charted: a neighbourhood of a tuple with
 distinct points `z₁, …, z_k` of multiplicities `n₁, …, n_k` is a product of the symmetric powers
 `Sym^{n_j}` of disjoint coordinate discs, each of which is an open subspace of affine space by
 `TauCeti.Sym.isOpenEmbedding_coeffEquiv_comp_map`. Lane F4.1 of the analytic Heegaard Floer
 roadmap needs exactly this to give `Sym^g(Σ)` its complex structure, after Ozsváth--Szabó
-([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1); the charts themselves are in
-`TauCeti/Analysis/Polynomial/SymmetricPower.lean`.
+([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1). The coefficient homeomorphism
+is in `TauCeti/Analysis/Polynomial/SymmetricPower.lean`, while the charts and charted structure are
+in `TauCeti/Geometry/Manifold/SymmetricPower.lean`. Family-level concatenation along disjoint open
+sets, and the Hausdorff separation producing the family that a given tuple needs, are in
+`TauCeti/Topology/Sym/Family.lean`.
 
-## Main declarations
+## Main declaration
 
-* `TauCeti.Sym.isOpenEmbedding_appendSubtype`: concatenation along a disjoint pair of open sets is
-  an open embedding of the product of the two symmetric powers.
 * `TauCeti.Sym.isOpenEmbedding_ofFn_map`: open embeddings with pairwise disjoint ranges induce an
   open embedding from their product into the symmetric power.
 -/
@@ -54,32 +44,7 @@ namespace TauCeti
 
 namespace Sym
 
-variable {α : Type*} [TopologicalSpace α] {m n : ℕ} {U V : Set α}
-
-/-! ### Concatenation along a disjoint pair of open sets -/
-
-/-- Concatenating an unordered tuple of points of `U` and one of points of `V` is continuous. -/
-@[continuity, fun_prop]
-theorem continuous_appendSubtype : Continuous (appendSubtype U V n m) := by
-  rw [appendSubtype_eq_append_map]
-  exact continuous_append.comp
-    ((continuous_map continuous_subtype_val).prodMap (continuous_map continuous_subtype_val))
-
-/-- For open sets `U` and `V`, concatenating their symmetric-power points is an open map. -/
-theorem isOpenMap_appendSubtype (hU : IsOpen U) (hV : IsOpen V) :
-    IsOpenMap (appendSubtype U V n m) := by
-  rw [appendSubtype_eq_append_map]
-  exact isOpenMap_append.comp
-    ((isOpenMap_map hU.isOpenMap_subtype_val).prodMap (isOpenMap_map hV.isOpenMap_subtype_val))
-
-/-- **The symmetric power is locally a product.** For disjoint open sets `U` and `V`, concatenation
-identifies `Sym U n × Sym V m` with an open subspace of `Sym α (n + m)`, namely the unordered
-tuples supported in `U ∪ V` with exactly `n` of their points in `U`
-(`TauCeti.Sym.mem_range_appendSubtype`). -/
-theorem isOpenEmbedding_appendSubtype (hU : IsOpen U) (hV : IsOpen V) (h : Disjoint U V) :
-    IsOpenEmbedding (appendSubtype U V n m) :=
-  .of_continuous_injective_isOpenMap continuous_appendSubtype (appendSubtype_injective h)
-    (isOpenMap_appendSubtype hU hV)
+variable {α : Type*} [TopologicalSpace α] {n : ℕ}
 
 /-! ### Tuples mapped into pairwise disjoint open ranges -/
 

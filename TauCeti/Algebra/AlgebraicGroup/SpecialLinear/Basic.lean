@@ -61,7 +61,7 @@ namespace TauCeti
 
 namespace SpecialLinear
 
-universe u w
+universe u v w
 
 variable (R : Type u) [CommRing R] (n : ℕ)
 
@@ -250,14 +250,18 @@ private theorem determinantPoints_eq_mapPointsFunctor_app
   rw [GeneralLinear.determinantPoints_apply_apply,
     CommHopfAlgCat.mapPointsFunctor_app_apply_apply]
 
-/-- Membership in the point subgroup cut out by the determinant kernel is determinant one. -/
-private theorem mem_definingPointsSubgroup_iff_det_eq_one
+/-- Membership in the point subgroup cut out by the determinant kernel is determinant one.
+This is the ambient membership criterion that further cuts consume; the determinant-one cut of
+the orthogonal group (`TauCeti.SpecialOrthogonal`) combines it with the orthogonal one. -/
+@[simp]
+theorem mem_definingPointsSubgroup_iff_det_eq_one
     (g : HopfAlgebra.points (R := R)
       (H := GeneralLinear.coordinateHopfAlgebra R n) (CommAlgCat.of R A)) :
     g ∈ CommHopfAlgCat.quotientPointsSubgroup
         (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
         (CommAlgCat.of R A) ↔
-      Matrix.GeneralLinearGroup.det (GeneralLinear.pointsMulEquiv n g) = 1 := by
+      (GeneralLinear.pointsMulEquiv n g : Matrix (Fin n) (Fin n) A).det = 1 := by
+  rw [← Matrix.GeneralLinearGroup.val_det_apply, Units.val_eq_one]
   constructor
   · intro hg
     have hpoint : GeneralLinear.determinantPoints R n g = 1 := by
@@ -289,13 +293,8 @@ private noncomputable def pointsSubgroupToSL
       (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
       (CommAlgCat.of R A)) :
     Matrix.SpecialLinearGroup (Fin n) A :=
-  ⟨(GeneralLinear.pointsMulEquiv n g.1).val, by
-    have hg : g.1 ∈ CommHopfAlgCat.quotientPointsSubgroup
-        (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-        (CommAlgCat.of R A) := g.property
-    have hdet := (mem_definingPointsSubgroup_iff_det_eq_one R n g.1).mp hg
-    simpa only [Matrix.GeneralLinearGroup.val_det_apply, Units.val_one] using
-      congrArg Units.val hdet⟩
+  ⟨(GeneralLinear.pointsMulEquiv n g.1).val,
+    (mem_definingPointsSubgroup_iff_det_eq_one R n g.1).mp g.property⟩
 
 /-- Including the matrix attached to a determinant-kernel point recovers its ambient
 general-linear matrix. -/
@@ -319,7 +318,8 @@ private noncomputable def slToPointsSubgroup
   ⟨(GeneralLinear.pointsMulEquiv (R := R) n).symm
       (Matrix.SpecialLinearGroup.toGL s), by
     apply (mem_definingPointsSubgroup_iff_det_eq_one R n _).mpr
-    rw [MulEquiv.apply_symm_apply, Matrix.SpecialLinearGroup.coeToGL_det]⟩
+    rw [MulEquiv.apply_symm_apply]
+    exact s.property⟩
 
 /-- The ambient point underlying `slToPointsSubgroup` is obtained from the general-linear point
 equivalence. -/
@@ -417,7 +417,7 @@ theorem quotientPointsHom_pointsMulEquiv_symm
   apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).injective
   rw [pointsMulEquiv_toGL, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
 
-variable {B : Type w} [CommRing B] [Algebra R B]
+variable {B : Type v} [CommRing B] [Algebra R B]
 
 /-- The special-linear point equivalence is natural in the value algebra: postcomposition of Hopf
 points agrees with entrywise mapping of determinant-one matrices. -/
@@ -425,13 +425,11 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
       (CommAlgCat.of R A)) :
     (pointsMulEquiv (R := R) (A := B) n)
-        (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R n)
-          (CommAlgCat.ofHom phi) f) =
+        (AlgHom.mapValue (H := coordinateHopfAlgebra R n) phi f) =
       Matrix.SpecialLinearGroup.map phi.toRingHom
         ((pointsMulEquiv (R := R) (A := A) n) f) := by
   apply Matrix.SpecialLinearGroup.toGL_injective
-  rw [← pointsMulEquiv_toGL, ← CommHopfAlgCat.mapPoints_quotientPointsHom]
-  rw [HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
+  rw [← pointsMulEquiv_toGL, ← CommHopfAlgCat.mapValue_quotientPointsHom]
   rw [GeneralLinear.pointsMulEquiv_mapValue, pointsMulEquiv_toGL]
   apply Matrix.GeneralLinearGroup.ext
   intro i j
@@ -499,6 +497,9 @@ noncomputable def pointsNatIso :
       intro A B phi
       ext f
       apply ULift.ext
+      -- The natural isomorphism is still being constructed, so no component rewrite lemma is
+      -- available here. The functor maps and `MulEquiv.toGrpIso` reduce definitionally; after
+      -- removing the universe lift, the square is exactly the named pointwise naturality result.
       exact pointsMulEquiv_mapValue (R := R) (A := A) (B := B) n phi.hom f)
 
 /-- After transport along `specialLinearFunctor_obj`, the forward component of `pointsNatIso` is

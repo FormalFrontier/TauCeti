@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Connected.Comultiplication
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
 import Mathlib.RingTheory.FiniteStability
 import Mathlib.RingTheory.Idempotents
 import TauCeti.Algebra.AlgebraicGroup.Connected.Translation

@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Algebra.Prod
 public import Mathlib.Data.Set.Card
 public import Mathlib.RingTheory.Idempotents
 public import Mathlib.RingTheory.SimpleRing.Field
@@ -33,6 +34,10 @@ that are also central.  The one nontrivial ingredient below,
 idempotent of `Subring.center R`, which for simple `R` is a field by
 `IsSimpleRing.isField_center`; a field has only the idempotents `0` and `1`.
 
+The last section applies that dichotomy in the other direction: a surjection of algebras
+`A × A ↠ B` onto a *simple* `B` sends `(1, 0)` to a central idempotent, so one of the two blocks
+already maps onto `B` (`TauCeti.exists_algHom_surjective_of_prod`).
+
 ## Main definitions
 
 * `TauCeti.centralIdempotents R`: the set of central idempotents of `R`.
@@ -48,6 +53,8 @@ idempotent of `Subring.center R`, which for simple `R` is a field by
 * `TauCeti.card_centralIdempotents_pi`: the count is multiplicative over a finite product, whence
   `TauCeti.card_centralIdempotents_pi_of_isSimpleRing`: a finite product of simple rings has
   `2 ^ (number of factors)` central idempotents.
+* `TauCeti.exists_algHom_surjective_of_prod`: a surjection of algebras `A × A ↠ B` onto a simple
+  ring restricts to a surjection along one of the two coordinates.
 
 ## Implementation notes
 
@@ -191,5 +198,89 @@ theorem card_centralIdempotents_pi_of_isSimpleRing {ι : Type*} [Finite ι] (A :
   exact Finset.prod_congr rfl fun i _ => card_centralIdempotents_of_isSimpleRing (A i)
 
 end IsSimpleRing
+
+/-! ### A surjection onto a simple ring from a product of two copies of an algebra -/
+
+section ProdSurjection
+
+variable {F A B : Type*} [CommSemiring F] [Ring A] [Algebra F A] [Ring B] [Algebra F B]
+
+/-- The images of the two coordinate units of `A × A` add up to the unit of `B`. -/
+private theorem map_one_zero_add_map_zero_one (φ : (A × A) →ₐ[F] B) :
+    φ (1, 0) + φ (0, 1) = 1 := by
+  have hone : ((1, 0) + (0, 1) : A × A) = 1 := by simp [Prod.ext_iff]
+  rw [← map_add, hone, map_one]
+
+/-- The coordinate map `a ↦ φ (a, 0)` attached to an algebra map out of `A × A`, packaged as an
+algebra map once the image of `(1, 0)` is known to be the unit. It is multiplicative and linear for
+every `φ`; unitality is exactly the hypothesis. -/
+private def prodFirstAlgHom (φ : (A × A) →ₐ[F] B) (hu : φ (1, 0) = 1) : A →ₐ[F] B where
+  toFun a := φ (a, 0)
+  map_one' := hu
+  map_mul' a a' := by rw [← map_mul]; congr 1; simp
+  map_zero' := map_zero φ
+  map_add' a a' := by rw [← map_add]; congr 1; simp
+  commutes' r := by
+    have hr : ((algebraMap F A r : A), (0 : A)) = algebraMap F (A × A) r * (1, 0) := by
+      simp [Prod.algebraMap_apply]
+    rw [hr, map_mul, AlgHom.commutes, hu, mul_one]
+
+/-- The first coordinate map is what its name says: `a ↦ φ (a, 0)`. -/
+private theorem prodFirstAlgHom_apply (φ : (A × A) →ₐ[F] B) (hu : φ (1, 0) = 1) (a : A) :
+    prodFirstAlgHom φ hu a = φ (a, 0) := (rfl)
+
+/-- If the image of `(1, 0)` is the unit then the first coordinate map is surjective as soon as `φ`
+is: the image of `(0, 1)` is then complementary to `1`, so it vanishes, and with it the whole
+second coordinate. -/
+private theorem prodFirstAlgHom_surjective (φ : (A × A) →ₐ[F] B) (hu : φ (1, 0) = 1)
+    (hφ : Function.Surjective φ) : Function.Surjective (prodFirstAlgHom φ hu) := by
+  have hw : φ (0, 1) = 0 := by
+    have hsum := map_one_zero_add_map_zero_one φ
+    rw [hu] at hsum
+    simpa using hsum
+  intro b
+  obtain ⟨⟨a₁, a₂⟩, rfl⟩ := hφ b
+  refine ⟨a₁, ?_⟩
+  have hsplit : ((a₁, a₂) : A × A) = (a₁, 0) + (0, a₂) * (0, 1) := by simp
+  rw [prodFirstAlgHom_apply, hsplit, map_add, map_mul, hw, mul_zero, add_zero]
+
+/-- **A surjection onto a simple ring from a product of two copies of an algebra factors through a
+coordinate.** The image of `(1, 0)` is a central idempotent of `B`, hence `0` or `1`
+(`TauCeti.centralIdempotents_eq_pair`); whichever it is, one of the two coordinate maps
+`a ↦ φ (a, 0)`, `a ↦ φ (0, a)` is an algebra map onto `B`.
+
+This is what turns a two-block splitting of an algebra into a statement about a single block; it is
+used that way for an odd-dimensional Clifford algebra in
+`TauCeti/RepresentationTheory/Spin/OddStructure.lean`. -/
+theorem exists_algHom_surjective_of_prod [IsSimpleRing B] (φ : (A × A) →ₐ[F] B)
+    (hφ : Function.Surjective φ) : ∃ ψ : A →ₐ[F] B, Function.Surjective ψ := by
+  -- The swap of the two factors, used to reduce the second case to the first.
+  set swap : (A × A) →ₐ[F] (A × A) := (AlgHom.snd F A A).prod (AlgHom.fst F A A) with hswap
+  have hidem : IsIdempotentElem (φ (1, 0)) := by
+    have hsq : ((1 : A), (0 : A)) * (1, 0) = (1, 0) := by simp
+    calc φ (1, 0) * φ (1, 0) = φ ((1, 0) * (1, 0)) := (map_mul φ _ _).symm
+      _ = φ (1, 0) := by rw [hsq]
+  have hmem : φ (1, 0) ∈ centralIdempotents B := by
+    refine mem_centralIdempotents.mpr ⟨hidem, Subring.mem_center_iff.mpr fun x => ?_⟩
+    obtain ⟨a, rfl⟩ := hφ x
+    rw [← map_mul, ← map_mul]
+    congr 1
+    simp [Prod.ext_iff]
+  have hpair := centralIdempotents_eq_pair (R := B) ▸ hmem
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hpair
+  rcases hpair with h | h
+  · -- `φ (1, 0) = 0`, so `φ (0, 1) = 1` and the *second* coordinate is the surjective one.
+    have hw : φ (0, 1) = 1 := by
+      have hsum := map_one_zero_add_map_zero_one φ
+      rwa [h, zero_add] at hsum
+    have hswapone : swap (1, 0) = ((0 : A), (1 : A)) := by simp [hswap]
+    have hu : (φ.comp swap) (1, 0) = 1 := by
+      rw [AlgHom.comp_apply, hswapone, hw]
+    refine ⟨prodFirstAlgHom (φ.comp swap) hu, prodFirstAlgHom_surjective _ hu fun b => ?_⟩
+    obtain ⟨⟨a₁, a₂⟩, ha⟩ := hφ b
+    exact ⟨(a₂, a₁), by simpa [hswap] using ha⟩
+  · exact ⟨prodFirstAlgHom φ h, prodFirstAlgHom_surjective φ h hφ⟩
+
+end ProdSurjection
 
 end TauCeti

@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.Equivalence
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.JordanDecomposition
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
+import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Jordan decomposition of algebraic-group points
@@ -202,12 +203,10 @@ theorem isUnipotent_pointsAction_unipotentPart (g : WithConv (H →ₐ[k] K))
 /-- The semisimple and unipotent parts of an algebraic-group point commute. -/
 theorem commute_semisimplePart_unipotentPart (g : WithConv (H →ₐ[k] K)) :
     Commute (semisimplePart k H K g) (unipotentPart k H K g) := by
-  rw [commute_iff_eq]
-  apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
-  simp only [map_mul, Tannaka.fgPointTensorIsoEquiv_apply,
-    fgPointTensorIso_semisimplePart, fgPointTensorIso_unipotentPart]
-  exact (Tannaka.commute_fgPointSemisimplePartTensorIso_fgPointUnipotentPartTensorIso
-    k H K g).eq
+  refine Commute.of_map (Tannaka.fgPointTensorIsoEquiv k H K).injective ?_
+  simp only [Tannaka.fgPointTensorIsoEquiv_apply, fgPointTensorIso_semisimplePart,
+    fgPointTensorIso_unipotentPart]
+  exact Tannaka.commute_fgPointSemisimplePartTensorIso_fgPointUnipotentPartTensorIso k H K g
 
 /-- Multiplying the semisimple and unipotent parts recovers the original algebraic-group
 point. -/
@@ -238,37 +237,25 @@ theorem isSemisimple_isUnipotent_unique (g s u : WithConv (H →ₐ[k] K))
         LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M u) =
           LinearMap.GeneralLinearGroup.ofLinearEquiv
             (Comodule.pointsAction M (unipotentPart k H K g)) := by
-    let rho : WithConv (H →ₐ[k] K) →*
-        LinearMap.GeneralLinearGroup K (K ⊗[k] M) :=
-      (LinearMap.GeneralLinearGroup.generalLinearEquiv K (K ⊗[k] M)).symm.toMonoidHom.comp
-        (Comodule.pointsAction M)
     apply GeneralLinearGroup.isSemisimple_isUnipotent_unique
     · exact hs M
     · exact (isUnipotentPoint_def u).mp hu M
-    · exact hc.map rho
+    · exact (GeneralLinearGroup.commute_ofLinearEquiv_iff _ _).2
+        (hc.map (Comodule.pointsAction M))
     · exact isSemisimple_pointsAction_semisimplePart k H K g M
     · exact isUnipotent_pointsAction_unipotentPart k H K g M
-    · exact (commute_semisimplePart_unipotentPart k H K g).map rho
+    · exact (GeneralLinearGroup.commute_ofLinearEquiv_iff _ _).2
+        ((commute_semisimplePart_unipotentPart k H K g).map (Comodule.pointsAction M))
     · rw [← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
         ← LinearMap.GeneralLinearGroup.ofLinearEquiv_mul, ← map_mul, ← map_mul, hmul,
         semisimplePart_mul_unipotentPart]
   constructor
-  · apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
-    apply Tannaka.scalarExtensionComponent_ext
+  · apply Tannaka.fgPoint_ext_of_forall_ofLinearEquiv_pointsAction k H K
     intro M
-    simp only [Tannaka.fgPointTensorIsoEquiv_apply,
-      Tannaka.scalarExtensionComponent_fgPointTensorIso]
-    apply LinearMap.ext
-    intro x
-    exact congrArg (fun a : LinearMap.GeneralLinearGroup K (K ⊗[k] M) ↦ a.val x) (h_unique M).1
-  · apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
-    apply Tannaka.scalarExtensionComponent_ext
+    exact (h_unique M).1
+  · apply Tannaka.fgPoint_ext_of_forall_ofLinearEquiv_pointsAction k H K
     intro M
-    simp only [Tannaka.fgPointTensorIsoEquiv_apply,
-      Tannaka.scalarExtensionComponent_fgPointTensorIso]
-    apply LinearMap.ext
-    intro x
-    exact congrArg (fun a : LinearMap.GeneralLinearGroup K (K ⊗[k] M) ↦ a.val x) (h_unique M).2
+    exact (h_unique M).2
 
 /-- The canonical point-level Jordan decomposition has the defining semisimple, unipotent,
 commutation, and product properties. -/

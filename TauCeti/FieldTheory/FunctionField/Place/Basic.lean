@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.AlgebraicClosure
+public import Mathlib.RingTheory.Valuation.Integral
 public import Mathlib.RingTheory.Valuation.IsTrivialOn
 public import TauCeti.RingTheory.Valuation.Discrete.Order
 
@@ -44,7 +45,17 @@ equivalence is needed and equality of places *is* equality of valuations
   `algebraicClosure k F` is contained in `𝒪_P`
   (`TauCeti.Place.mem_integers_of_mem_algebraicClosure`).
 * `TauCeti.Place.integers_injective`: a place is determined by its valuation ring
-  (Stichtenoth, Theorem 1.1.13).
+  (Stichtenoth, Theorem 1.1.13), and `TauCeti.Place.eq_of_integers_le`: the valuation ring of a
+  place is a maximal proper subring of `F`, so a place whose valuation ring contains that of
+  another place is that place (Stichtenoth, Theorem 1.1.13(d)).
+* `TauCeti.Place.mem_integers_of_isIntegral`: the valuation ring of a place is integrally closed
+  in `F`.
+* `TauCeti.Place.degree_eq_one_iff_algebraMap_surjective` and
+  `TauCeti.Place.degree_eq_one_iff_forall_exists_valuation_sub_lt_one`: the rational places are
+  those whose residue field is exhausted by the constants, equivalently those at which every
+  integral function agrees with a constant to first order;
+  `TauCeti.Place.residueFieldEquivOfDegreeEqOne` identifies the residue field of such a place
+  with `k`.
 
 ## Implementation notes
 
@@ -270,6 +281,13 @@ theorem mem_maximalIdeal_iff_valuation_lt_one {f : P.integers} :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ P.valuation (f : F) < 1 :=
   Valuation.mem_maximalIdeal_iff (v := P.valuation)
 
+/-- The elements of positive order are exactly those of valuation less than one: the maximal
+ideal of `𝒪_P`, read at the level of `F`. -/
+theorem valuation_lt_one_iff_ord_pos {f : F} (hf : f ≠ 0) :
+    P.valuation f < 1 ↔ 0 < P.ord f := by
+  rw [P.valuation_eq_exp_neg_ord hf, ← WithZero.exp_zero, WithZero.exp_lt_exp]
+  omega
+
 theorem mem_maximalIdeal_iff_ord_pos {f : P.integers} (hf : (f : F) ≠ 0) :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ 0 < P.ord (f : F) :=
   Valuation.mem_maximalIdeal_iff_ord_pos P.valuation hf
@@ -286,9 +304,55 @@ theorem eq_of_isEquiv {P Q : Place k F} (h : P.valuation.IsEquiv Q.valuation) : 
   ext (Valuation.eq_of_isEquiv_of_surjective
     P.valuation_surjective Q.valuation_surjective h)
 
+@[simp]
+theorem valuation_isEquiv_iff {P Q : Place k F} : P.valuation.IsEquiv Q.valuation ↔ P = Q := by
+  refine ⟨eq_of_isEquiv, ?_⟩
+  rintro rfl
+  exact Valuation.IsEquiv.refl
+
 /-- A place is determined by its valuation ring (Stichtenoth, Theorem 1.1.13). -/
 theorem integers_injective : Function.Injective (integers : Place k F → ValuationSubring F) :=
   fun _ _ h => eq_of_isEquiv ((Valuation.isEquiv_iff_valuationSubring _ _).mpr h)
+
+/-- **The valuation ring of a place is a maximal proper subring of `F`** (Stichtenoth,
+Theorem 1.1.13(d)), in the form used to recognize a place from a containment of valuation
+rings: a place whose valuation ring contains the valuation ring of another place is that
+place. -/
+theorem eq_of_integers_le {P Q : Place k F} (h : P.integers ≤ Q.integers) : P = Q := by
+  refine integers_injective (le_antisymm h ?_)
+  by_contra hle
+  obtain ⟨f, hfQ, hfP⟩ := SetLike.not_le_iff_exists.mp hle
+  rw [mem_integers_iff_ord_nonneg] at hfQ
+  rw [mem_integers_iff_ord_nonneg, not_le] at hfP
+  have hf0 : f ≠ 0 := by rintro rfl; simp at hfP
+  have hgP : 0 < P.ord f⁻¹ := by rw [ord_inv]; omega
+  have hgQ : 0 ≤ Q.ord f⁻¹ := by
+    rw [← mem_integers_iff_ord_nonneg]
+    exact h (P.mem_integers_iff_ord_nonneg.mpr hgP.le)
+  have hgQ0 : Q.ord f⁻¹ = 0 := by rw [ord_inv] at hgQ ⊢; omega
+  refine Q.integers_ne_top (top_unique fun y _ ↦ ?_)
+  rcases eq_or_ne y 0 with rfl | hy0
+  · exact zero_mem _
+  set n := (max 0 (-P.ord y)).toNat with hn
+  have hmem : y * f⁻¹ ^ n ∈ P.integers := by
+    rw [mem_integers_iff_ord_nonneg, ord_mul _ hy0 (pow_ne_zero _ (inv_ne_zero hf0)), ord_pow]
+    have : (1 : ℤ) ≤ P.ord f⁻¹ := hgP
+    nlinarith [Int.toNat_of_nonneg (le_max_left 0 (-P.ord y)), le_max_right 0 (-P.ord y)]
+  have := Q.mem_integers_iff_ord_nonneg.mp (h hmem)
+  rw [ord_mul _ hy0 (pow_ne_zero _ (inv_ne_zero hf0)), ord_pow, hgQ0] at this
+  exact Q.mem_integers_iff_ord_nonneg.mpr (by omega)
+
+/-- The valuation ring of a place is integrally closed in `F`: an element of `F` integral over a
+`k`-algebra whose image lies in `𝒪_P` lies in `𝒪_P`. -/
+theorem mem_integers_of_isIntegral {R : Type*} [CommRing R] [Algebra R F]
+    (hR : ∀ r : R, algebraMap R F r ∈ P.integers) {y : F} (hy : IsIntegral R y) :
+    y ∈ P.integers := by
+  have hR' : ∀ r : R, algebraMap R F r ∈ P.valuation.valuationSubring :=
+    fun r ↦ P.mem_integers_iff.mp (hR r)
+  let : Algebra R P.valuation.valuationSubring := ((algebraMap R F).codRestrict _ hR').toAlgebra
+  have : IsScalarTower R P.valuation.valuationSubring F := .of_algebraMap_eq fun _ ↦ rfl
+  exact P.mem_integers_iff.mpr
+    ((Valuation.valuationSubring.integers P.valuation).isIntegral_iff_v_le_one.mp hy.tower_top)
 
 end IntegersOrder
 
@@ -310,9 +374,16 @@ theorem residue_eq_zero_iff_valuation_lt_one {f : P.integers} :
     IsLocalRing.residue P.integers f = 0 ↔ P.valuation (f : F) < 1 := by
   rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_valuation_lt_one]
 
+/-- Evaluation at a place vanishes on a nonzero function exactly when that function has
+positive order: the additive form of `TauCeti.Place.residue_eq_zero_iff_valuation_lt_one`. -/
+theorem residue_eq_zero_iff_ord_pos {f : P.integers} (hf : (f : F) ≠ 0) :
+    IsLocalRing.residue P.integers f = 0 ↔ 0 < P.ord (f : F) := by
+  rw [IsLocalRing.residue_eq_zero_iff, P.mem_maximalIdeal_iff_ord_pos hf]
+
 /-- The **degree** `deg P = [F_P : k]` of a place (Stichtenoth, Definition 1.1.14). Its
 finiteness, which guards the junk value of `Module.finrank`, holds whenever `F/k` is a function
-field (Stichtenoth, Proposition 1.1.15). -/
+field: see `TauCeti.Place.finiteDimensional_residueField` (Stichtenoth,
+Proposition 1.1.15). -/
 noncomputable def degree : ℕ := Module.finrank k P.ResidueField
 
 theorem degree_eq_finrank : P.degree = Module.finrank k P.ResidueField := (rfl)
@@ -320,6 +391,62 @@ theorem degree_eq_finrank : P.degree = Module.finrank k P.ResidueField := (rfl)
 theorem one_le_degree [Module.Finite k P.ResidueField] : 1 ≤ P.degree := by
   rw [degree_eq_finrank]
   exact Module.finrank_pos
+
+/-- A place has degree one exactly when every residue is the residue of a constant: the
+**rational** places (Stichtenoth, Definition 1.1.14). -/
+theorem degree_eq_one_iff_algebraMap_surjective :
+    P.degree = 1 ↔ Function.Surjective (algebraMap k P.ResidueField) := by
+  rw [degree_eq_finrank, Algebra.finrank_eq_one_iff_bijective_algebraMap]
+  exact ⟨And.right, fun h ↦ ⟨FaithfulSMul.algebraMap_injective k _, h⟩⟩
+
+/-- A place is rational exactly when every function integral at `P` agrees with a constant to
+first order: this is the sense in which the value `f(P)` of a function at a rational place is
+an element of `k`. The multiplicative form avoids the junk value `ord_P 0 = 0`, which occurs
+here whenever `f` is itself a constant. -/
+theorem degree_eq_one_iff_forall_exists_valuation_sub_lt_one :
+    P.degree = 1 ↔
+      ∀ f ∈ P.integers, ∃ c : k, P.valuation (f - algebraMap k F c) < 1 := by
+  have hsub : ∀ (a : P.integers) (c : k),
+      ((a - algebraMap k P.integers c : P.integers) : F) = (a : F) - algebraMap k F c :=
+    fun a c ↦ by
+      rw [← ValuationSubring.algebraMap_apply P.integers (a - algebraMap k P.integers c),
+        _root_.map_sub, ← IsScalarTower.algebraMap_apply k P.integers F,
+        ValuationSubring.algebraMap_apply]
+  have key : ∀ (a : P.integers) (c : k),
+      P.valuation ((a : F) - algebraMap k F c) < 1 ↔
+        IsLocalRing.residue P.integers a = algebraMap k P.ResidueField c := by
+    intro a c
+    rw [← hsub a c, ← P.residue_eq_zero_iff_valuation_lt_one, _root_.map_sub, sub_eq_zero]
+    rw [IsScalarTower.algebraMap_apply k P.integers P.ResidueField,
+      IsLocalRing.ResidueField.algebraMap_eq]
+  rw [degree_eq_one_iff_algebraMap_surjective]
+  constructor
+  · intro h f hf
+    obtain ⟨c, hc⟩ := h (IsLocalRing.residue P.integers ⟨f, hf⟩)
+    exact ⟨c, (key ⟨f, hf⟩ c).mpr hc.symm⟩
+  · intro h y
+    obtain ⟨a, rfl⟩ := IsLocalRing.residue_surjective y
+    obtain ⟨c, hc⟩ := h (a : F) a.2
+    exact ⟨c, ((key a c).mp hc).symm⟩
+
+/-- **A rational place has residue field `k`**: at a place of degree one the constants map
+isomorphically onto the residue field, so `f(P)` really is an element of `k`. -/
+noncomputable def residueFieldEquivOfDegreeEqOne (h : P.degree = 1) : k ≃ₐ[k] P.ResidueField :=
+  AlgEquiv.ofBijective (Algebra.ofId k P.ResidueField)
+    ⟨(algebraMap k P.ResidueField).injective,
+      (degree_eq_one_iff_algebraMap_surjective P).mp h⟩
+
+@[simp]
+theorem residueFieldEquivOfDegreeEqOne_apply (h : P.degree = 1) (c : k) :
+    residueFieldEquivOfDegreeEqOne P h c = algebraMap k P.ResidueField c :=
+  AlgEquiv.ofBijective_apply _ _ _
+
+/-- If the residue field of a place is algebraic over an algebraically closed field of constants,
+then the place is rational (Stichtenoth, Remark 1.1.17). -/
+theorem degree_eq_one_of_isAlgClosed_of_isIntegral [IsAlgClosed k]
+    [Algebra.IsIntegral k P.ResidueField] : P.degree = 1 :=
+  (degree_eq_one_iff_algebraMap_surjective P).mpr
+    (IsAlgClosed.algebraMap_bijective_of_isIntegral (k := k)).2
 
 end ResidueField
 

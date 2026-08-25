@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.Bialgebra.Equiv
 public import Mathlib.RingTheory.Bialgebra.GroupLike
 public import TauCeti.Algebra.Coalgebra.GroupLike.Map
+public import TauCeti.Algebra.Coalgebra.Subcoalgebra.GroupLike
 
 /-!
 # Functoriality of group-like elements
@@ -19,6 +20,8 @@ bialgebra equivalence induces a multiplicative equivalence of group-like element
 ## Main declarations
 
 * `TauCeti.GroupLike.map`: the homomorphism on group-like elements induced by a bialgebra map.
+* `TauCeti.GroupLike.groupLikeSetSpan_eq_top_of_surjective`: a surjective bialgebra map preserves
+  spanning by group-like elements.
 * `TauCeti.GroupLike.mapEquiv`: the equivalence induced by a bialgebra equivalence.
 -/
 
@@ -60,6 +63,36 @@ theorem map_comp {C : Type*} [Semiring C] [Bialgebra R C]
     map (g.comp f) = (map g).comp (map f) := by
   ext x
   rfl
+
+/-- A surjective bialgebra morphism preserves spanning by group-like elements. -/
+theorem groupLikeSetSpan_eq_top_of_surjective (f : A →ₐc[R] B)
+    (hf : Function.Surjective f)
+    (hA : Subcoalgebra.groupLikeSetSpan (R := R) (C := A) Set.univ = ⊤) :
+    Subcoalgebra.groupLikeSetSpan (R := R) (C := B) Set.univ = ⊤ := by
+  rw [Subcoalgebra.groupLikeSetSpan_eq_top_iff_span_eq_top] at hA ⊢
+  apply top_unique
+  intro b _
+  obtain ⟨a, rfl⟩ := hf b
+  have ha : a ∈ Submodule.span R
+      (Set.range (_root_.GroupLike.val (R := R) (A := A))) := by
+    rw [hA]
+    trivial
+  apply Submodule.span_induction (R := R) (M := A)
+      (s := Set.range (_root_.GroupLike.val (R := R) (A := A)))
+      (p := fun x _ ↦ f x ∈ Submodule.span R
+        (Set.range (_root_.GroupLike.val (R := R) (A := B))))
+      (x := a)
+  · intro x hx
+    obtain ⟨g, rfl⟩ := hx
+    exact Submodule.subset_span ⟨map f g, by simp⟩
+  · simp
+  · intro x y _ _ hx hy
+    rw [map_add]
+    exact Submodule.add_mem _ hx hy
+  · intro r x _ hx
+    rw [map_smul]
+    exact Submodule.smul_mem _ r hx
+  · exact ha
 
 /-- A bialgebra equivalence induces a multiplicative equivalence of group-like elements. -/
 def mapEquiv (e : A ≃ₐc[R] B) :

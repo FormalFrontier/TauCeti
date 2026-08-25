@@ -26,8 +26,8 @@ homomorphism compatible with the structure maps from `A`.
 
 Refinement is the shape the intersection of two rational subsets produces: `R(T₁/s₁) ∩ R(T₂/s₂)`
 is presented with denominator `s₁ * s₂`, a multiple of each. That is why this elementary notion is
-enough to compare presentations, and it is what keeps an adic Nullstellensatz out of the
-construction — see the Provenance section.
+enough to compare presentations, and it is what keeps a valuative criterion for integrality out
+of the construction — see the Provenance section.
 
 The statements below repeat the uniformity preamble of `locUniformSpace`,
 `isUniformAddGroup_locUniformSpace` and `isTopologicalRing_locUniformSpace`, once per presentation,
@@ -81,17 +81,29 @@ the same factor-of-an-inverted-element argument Mathlib packages as
 across the completion. Its
 power-boundedness condition is *not* proved — it is carried as the field
 `HasLocLiftPowerBounded.locLift_divByS_isPowerBounded` of a hypothesis class, because from a bare
-containment it needs the adic Nullstellensatz (Wedhorn Proposition 7.14), which AINTLIB records as
-an open ticket. Restricting attention to a refining presentation is what removes that dependency:
-the fraction in question is then a distinguished one, and `isPowerBounded_divBy` already covers it.
+containment it needs a valuative criterion for integrality. Wedhorn's is Proposition 7.18, whose
+own proof is the bare citation [Hu2] Lemma 3.3; he applies it in Lemma 8.1 through Proposition
+7.52(1), a reformulation of 7.18(1). AINTLIB instead reduces to height one, pairing 7.18 with
+Proposition 7.41, which bounds a height-one continuous valuation by `1` on `A°`; it calls that
+combination an *adic Nullstellensatz*, a name Wedhorn does not use, and records it as an open
+ticket. Restricting
+attention to a refining presentation is what removes that dependency: the fraction in question is
+then a distinguished one, and `isPowerBounded_divBy` already covers it.
 So the construction here is unconditional where AINTLIB's rests on an assumed class.
 
 ## References
 
 * [T. Wedhorn, *Adic Spaces*][wedhorn_adic] (arXiv:1910.05934v1), §8.1–§8.2 for the structure
-  presheaf and its restriction maps, and Proposition 8.2 for the containment form.
+  presheaf and its restriction maps, and Proposition 8.2 for the containment form. Proposition
+  7.18 is the criterion it needs, reached in Lemma 8.1 via Proposition 7.52(1); Proposition 7.41
+  belongs to AINTLIB's height-one reduction rather than to Wedhorn's route. Definition 7.14, which
+  names rings of integral elements, is a different result and does not supply it.
 * [C. Birkbeck, *AINTLIB*](https://github.com/CBirkbeck/AINTLIB), branch `dev/adic-spaces`,
-  commit `37bbdaeb`, `projects/AdicSpaces/Adic spaces/Presheaf.lean`.
+  commit `37bbdaeb9`, under `projects/AdicSpaces/`:
+  * `Adic spaces/Presheaf.lean` — the restriction maps built from a containment.
+  * `Adic spaces/PresheafIdentification.lean` — the decomposition into Propositions 7.18 and 7.41.
+  * `docs/TICKETS-axiom-clean.md` — records that combination as an open ticket, under the *adic
+    Nullstellensatz* name used above.
 -/
 
 namespace TauCeti.Huber
@@ -143,6 +155,24 @@ theorem toCompletionLoc_unit_inv_eq {a r : A} (h : s = a * r)
   -- `a * (r/s) = (a * r)/s = s/s = 1`, then transport along the completion map
   rw [hu.unit_spec, toCompletionLoc_apply, ← UniformSpace.Completion.coe_mul, ← divBy_mul, ← h,
     divBy_self, UniformSpace.Completion.coe_one]
+
+/-- Multiplying the image of `t` by the inverse of the image of the denominator gives the
+distinguished fraction `t/s` in `A⟨T/s⟩`. -/
+theorem toCompletionLoc_mul_unit_inv_eq_divBy (t : A)
+    (hu : letI := locUniformSpace P T s S hden
+      letI := isUniformAddGroup_locUniformSpace P T s S hden
+      letI := isTopologicalRing_locUniformSpace P T s S hden
+      IsUnit (toCompletionLoc P T s S hden s)) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    toCompletionLoc P T s S hden t * ↑hu.unit⁻¹ =
+      ((divBy t s : S) : UniformSpace.Completion S) := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  rw [toCompletionLoc_unit_inv_eq P T s S hden (mul_one s).symm hu, toCompletionLoc_apply,
+    ← UniformSpace.Completion.coe_mul, divBy_one, algebraMap_mul_invSelf]
 
 /-- **`t/a` is power-bounded when `t * r` is a numerator.** If the denominator factors as
 `s = a * r` and `t * r` lies in `T`, then `t/a` is the distinguished fraction `(t * r)/s`, which is

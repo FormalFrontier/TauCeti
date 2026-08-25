@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.GeneralLinear
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Torus
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
@@ -171,8 +171,7 @@ private theorem groupSchemePoint_comp_weightTorusRepresentation
     (R := ℤ) (A := A) (SplitTorus.characterGroup κ) p
   let f := CommHopfAlgCat.ofHom (DiagonalizableGroup.diagonalCoordinateMap bL
     (fun x => SplitTorus.weightCharacter (wt x)))
-  have hmap := CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of ℤ A) f q
-  rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
+  have hmap := CommHopfAlgCat.mapMulEquiv_mapDomain (CommAlgCat.of ℤ A) f.hom q
   apply Over.OverMorphism.ext
   rw [GeneralLinear.groupSchemePointMulEquiv_apply_left, Over.comp_left,
     weightTorusRepresentation_def, DiagonalizableGroup.diagonalGroupSchemeHom_def]
@@ -262,9 +261,9 @@ theorem schemePointsMulEquiv_comp_weightTorusRepresentation_apply
   have hGL := congrArg (GeneralLinear.schemePointsMulEquiv n A) hp
   have hTorus : SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) p =
       SplitTorus.pointsMulEquiv q := by
-    ext x
-    exact (SplitTorus.schemePointsMulEquiv_apply_coe p x).trans
-      (SplitTorus.pointsMulEquiv_apply_coe q x).symm
+    rw [SplitTorus.schemePointsMulEquiv_eq_freeAbelianCharEquiv,
+      DiagonalizableGroup.schemePointsMulEquiv_eq_pointsMulEquiv_groupSchemePointsMulEquiv,
+      SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv]
   rw [hGL, GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv]
   rw [GeneralLinear.pointsMulEquiv_apply]
   rw [hTorus]

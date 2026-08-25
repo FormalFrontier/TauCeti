@@ -26,8 +26,9 @@ relationship between `x` and `y`.
 
 When `y` is obtained from `x` by a rectangle move `R : GridRectangleBetween x y`, the two states
 share all but two of their occupied squares (`RectangleSwap.lean`), so each marking pairing
-`J_O(x) - J_O(y)` collapses to a difference of four corner `J`-singletons: the source corners
-`(left, bottom)`, `(right, top)` against the target corners `(left, top)`, `(right, bottom)`.
+`J_O(x) - J_O(y)` collapses to a difference of four corner `JCenter`-singletons: the source
+corners `(left, bottom)`, `(right, top)` against the target corners `(left, top)`,
+`(right, bottom)`.
 For Maslov gradings the state self-pairing does not cancel, so this file also localizes its
 change to the moving corners and their pairings with the shared part of the two states. Feeding
 these localized formulas back into the grading reductions removes the opaque whole-state
@@ -41,11 +42,12 @@ marking-local because the state self-pairing cancels there.
   twice the marking pairing change.
 * `TauCeti.GridDiagram.alexander_sub_alexander_eq`: the Alexander grading change is the difference
   of the two marking pairing changes; the state self-pairing cancels.
-* `TauCeti.GridRectangleBetween.J_pointSet_sub_eq`: across a rectangle move, the change in the
-  pairing of a state's points against an arbitrary fixed point set collapses to the four moving
-  corners.
+* `TauCeti.GridRectangleBetween.JCenter_pointSet_sub_eq`: across a rectangle move, the change in
+  the marking pairing of a state's points against an arbitrary fixed point set collapses to the
+  four moving corners.
 * `TauCeti.GridDiagram.JO_sub_JO_eq`, `TauCeti.GridDiagram.JX_sub_JX_eq`: across a
-  rectangle move the marking pairing change is a difference of four corner `J`-singletons.
+  rectangle move the marking pairing change is a difference of four corner
+  `JCenter`-singletons.
 * `TauCeti.GridRectangleBetween.J_self_sub_J_self_eq`: across a rectangle move, the state
   self-pairing change is localized to the moving corners and the shared state points.
 * `TauCeti.GridDiagram.alexander_change_rectangle`,
@@ -150,14 +152,16 @@ fixed point set `P` collapses to the four moving corners: the source corners `(l
 `(right, top)` against the target corners `(left, top)`, `(right, bottom)`. The shared part of the
 two states cancels. The marking-pairing localizations specialize this at the `O`- and
 `X`-marking sets. -/
-theorem J_pointSet_sub_eq (P : Finset (Fin n × Fin n)) :
-    GridPoint.J x.pointSet P - GridPoint.J y.pointSet P =
-      (GridPoint.J {(R.left, R.bottom)} P + GridPoint.J {(R.right, R.top)} P) -
-        (GridPoint.J {(R.left, R.top)} P + GridPoint.J {(R.right, R.bottom)} P) := by
+theorem JCenter_pointSet_sub_eq (P : Finset (Fin n × Fin n)) :
+    GridPoint.JCenter x.pointSet P - GridPoint.JCenter y.pointSet P =
+      (GridPoint.JCenter {(R.left, R.bottom)} P + GridPoint.JCenter {(R.right, R.top)} P) -
+        (GridPoint.JCenter {(R.left, R.top)} P + GridPoint.JCenter {(R.right, R.bottom)} P) := by
   have key₁ :=
-    GridPoint.J_insert_pair_left (P := P) R.left_bottom_notMem_insert_inter R.right_top_notMem_inter
+    GridPoint.JCenter_insert_pair_left (P := P) R.left_bottom_notMem_insert_inter
+      R.right_top_notMem_inter
   have key₂ :=
-    GridPoint.J_insert_pair_left (P := P) R.left_top_notMem_insert_inter R.right_bottom_notMem_inter
+    GridPoint.JCenter_insert_pair_left (P := P) R.left_top_notMem_insert_inter
+      R.right_bottom_notMem_inter
   rw [← R.source_pointSet_eq] at key₁
   rw [← R.target_pointSet_eq] at key₂
   rw [key₁, key₂]
@@ -175,7 +179,7 @@ related: this is the algebraic shape of the grading formula. -/
 theorem maslovO_sub_maslovO_eq (x y : GridState n) :
     G.maslovO x - G.maslovO y =
       (GridState.J x x - GridState.J y y) - 2 * (G.JO x - G.JO y) := by
-  rw [maslovO_eq, maslovO_eq]
+  rw [maslovO_def, maslovO_def]
   ring
 
 /-- The difference of the `X`-Maslov grading at two grid states splits into the change in the
@@ -183,7 +187,7 @@ state self-pairing and twice the change in the `X`-marking pairing. -/
 theorem maslovX_sub_maslovX_eq (x y : GridState n) :
     G.maslovX x - G.maslovX y =
       (GridState.J x x - GridState.J y y) - 2 * (G.JX x - G.JX y) := by
-  rw [maslovX_eq, maslovX_eq]
+  rw [maslovX_def, maslovX_def]
   ring
 
 /-- The Alexander grading change at two grid states is the difference of the two marking pairing
@@ -202,18 +206,22 @@ source corners `(left, bottom)`, `(right, top)` against the target corners `(lef
 `(right, bottom)`. The two states share all but their corners, and the shared part cancels. -/
 theorem JO_sub_JO_eq (R : GridRectangleBetween x y) :
     G.JO x - G.JO y =
-      (GridPoint.J {(R.left, R.bottom)} G.OSet + GridPoint.J {(R.right, R.top)} G.OSet) -
-        (GridPoint.J {(R.left, R.top)} G.OSet + GridPoint.J {(R.right, R.bottom)} G.OSet) := by
+      (GridPoint.JCenter {(R.left, R.bottom)} G.OSet +
+          GridPoint.JCenter {(R.right, R.top)} G.OSet) -
+        (GridPoint.JCenter {(R.left, R.top)} G.OSet +
+          GridPoint.JCenter {(R.right, R.bottom)} G.OSet) := by
   rw [JO_def, JO_def]
-  exact R.J_pointSet_sub_eq G.OSet
+  exact R.JCenter_pointSet_sub_eq G.OSet
 
 /-- Across a rectangle move the `X`-marking pairing change collapses to the four corners. -/
 theorem JX_sub_JX_eq (R : GridRectangleBetween x y) :
     G.JX x - G.JX y =
-      (GridPoint.J {(R.left, R.bottom)} G.XSet + GridPoint.J {(R.right, R.top)} G.XSet) -
-        (GridPoint.J {(R.left, R.top)} G.XSet + GridPoint.J {(R.right, R.bottom)} G.XSet) := by
+      (GridPoint.JCenter {(R.left, R.bottom)} G.XSet +
+          GridPoint.JCenter {(R.right, R.top)} G.XSet) -
+        (GridPoint.JCenter {(R.left, R.top)} G.XSet +
+          GridPoint.JCenter {(R.right, R.bottom)} G.XSet) := by
   rw [JX_def, JX_def]
-  exact R.J_pointSet_sub_eq G.XSet
+  exact R.JCenter_pointSet_sub_eq G.XSet
 
 /-- The Alexander grading change across a rectangle move, localized to the four corners: it is the
 four `X`-corner pairings minus the four `O`-corner pairings, in each case the two source corners
@@ -221,10 +229,14 @@ against the two target corners. The state self-pairing cancels (`alexander_sub_a
 the shared squares cancel (`JX_sub_JX_eq`, `JO_sub_JO_eq`). -/
 theorem alexander_change_rectangle (R : GridRectangleBetween x y) :
     G.alexander x - G.alexander y =
-      ((GridPoint.J {(R.left, R.bottom)} G.XSet + GridPoint.J {(R.right, R.top)} G.XSet) -
-          (GridPoint.J {(R.left, R.top)} G.XSet + GridPoint.J {(R.right, R.bottom)} G.XSet)) -
-        ((GridPoint.J {(R.left, R.bottom)} G.OSet + GridPoint.J {(R.right, R.top)} G.OSet) -
-          (GridPoint.J {(R.left, R.top)} G.OSet + GridPoint.J {(R.right, R.bottom)} G.OSet)) := by
+      ((GridPoint.JCenter {(R.left, R.bottom)} G.XSet +
+            GridPoint.JCenter {(R.right, R.top)} G.XSet) -
+          (GridPoint.JCenter {(R.left, R.top)} G.XSet +
+            GridPoint.JCenter {(R.right, R.bottom)} G.XSet)) -
+        ((GridPoint.JCenter {(R.left, R.bottom)} G.OSet +
+            GridPoint.JCenter {(R.right, R.top)} G.OSet) -
+          (GridPoint.JCenter {(R.left, R.top)} G.OSet +
+            GridPoint.JCenter {(R.right, R.bottom)} G.OSet)) := by
   rw [alexander_sub_alexander_eq, JX_sub_JX_eq G R, JO_sub_JO_eq G R]
 
 /-- The `O`-Maslov grading change across a rectangle move, with both the state self-pairing
@@ -237,8 +249,10 @@ theorem maslovO_change_rectangle (R : GridRectangleBetween x y) :
             (GridPoint.J {(R.left, R.top)} {(R.right, R.bottom)} +
               GridPoint.J {(R.left, R.top)} (x.pointSet ∩ y.pointSet) +
               GridPoint.J {(R.right, R.bottom)} (x.pointSet ∩ y.pointSet))) -
-        2 * ((GridPoint.J {(R.left, R.bottom)} G.OSet + GridPoint.J {(R.right, R.top)} G.OSet) -
-          (GridPoint.J {(R.left, R.top)} G.OSet + GridPoint.J {(R.right, R.bottom)} G.OSet)) := by
+        2 * ((GridPoint.JCenter {(R.left, R.bottom)} G.OSet +
+              GridPoint.JCenter {(R.right, R.top)} G.OSet) -
+          (GridPoint.JCenter {(R.left, R.top)} G.OSet +
+            GridPoint.JCenter {(R.right, R.bottom)} G.OSet)) := by
   rw [maslovO_sub_maslovO_eq, R.J_self_sub_J_self_eq, JO_sub_JO_eq G R]
 
 /-- The `X`-Maslov grading change across a rectangle move, with both the state self-pairing
@@ -251,8 +265,10 @@ theorem maslovX_change_rectangle (R : GridRectangleBetween x y) :
             (GridPoint.J {(R.left, R.top)} {(R.right, R.bottom)} +
               GridPoint.J {(R.left, R.top)} (x.pointSet ∩ y.pointSet) +
               GridPoint.J {(R.right, R.bottom)} (x.pointSet ∩ y.pointSet))) -
-        2 * ((GridPoint.J {(R.left, R.bottom)} G.XSet + GridPoint.J {(R.right, R.top)} G.XSet) -
-          (GridPoint.J {(R.left, R.top)} G.XSet + GridPoint.J {(R.right, R.bottom)} G.XSet)) := by
+        2 * ((GridPoint.JCenter {(R.left, R.bottom)} G.XSet +
+              GridPoint.JCenter {(R.right, R.top)} G.XSet) -
+          (GridPoint.JCenter {(R.left, R.top)} G.XSet +
+            GridPoint.JCenter {(R.right, R.bottom)} G.XSet)) := by
   rw [maslovX_sub_maslovX_eq, R.J_self_sub_J_self_eq, JX_sub_JX_eq G R]
 
 end GridDiagram

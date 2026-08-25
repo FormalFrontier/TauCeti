@@ -5,8 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RepresentationTheory.FDRep
+public import Mathlib.CategoryTheory.Skeletal
 public import Mathlib.RepresentationTheory.Intertwining
+public import TauCeti.RepresentationTheory.FDRep
+public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
 # Isomorphism of representations and of the modules they carry
@@ -30,12 +32,18 @@ theory counts, while the objects being classified are representations.
 * `TauCeti.fdRepIsoOfAsModuleLinearEquiv`: over a commutative ring, and for module-finite carriers,
   such an isomorphism of modules is an isomorphism of the objects of `FDRep k G` that the
   representations name.
+* `TauCeti.nonempty_fdRepIso_iff`: the two notions of isomorphism agree on `FDRep k G`, so a
+  classification proved for representations reads off as a classification of objects.
+* `TauCeti.toSkeleton_fdRepOf_toRepresentation_eq_iff`: two subrepresentations determine the same
+  module-finite representation class exactly when their associated submodules are linearly
+  equivalent.
 -/
 
 public section
 
 namespace TauCeti
 
+open CategoryTheory
 open scoped MonoidAlgebra
 
 namespace Representation
@@ -105,5 +113,41 @@ noncomputable def fdRepIsoOfAsModuleLinearEquiv (f : ρ.asModule ≃ₗ[k[G]] σ
     FDRep.of ρ ≅ FDRep.of σ :=
   (CategoryTheory.forget₂ (FDRep k G) (Rep k G)).preimageIso
     (Rep.mkIso (Representation.equivOfAsModuleLinearEquiv f))
+
+/-- **The two notions of isomorphism agree on `FDRep k G`.** Two objects are isomorphic exactly when
+the representations they carry are equivalent, so a classification of representations up to
+equivalence is a classification of the objects of `FDRep k G` up to isomorphism. -/
+theorem nonempty_fdRepIso_iff {X Y : FDRep k G} :
+    Nonempty (X ≅ Y) ↔ Nonempty (_root_.Representation.Equiv X.ρ Y.ρ) :=
+  by
+    constructor
+    · rintro ⟨i⟩
+      have e := _root_.Representation.equivOfIso
+        ((CategoryTheory.forget₂ (FDRep k G) (Rep k G)).mapIso i)
+      -- Transport the equivalence along the forgetful functor's representation comparison.
+      rw [FDRep.forget₂_ρ, FDRep.forget₂_ρ] at e
+      exact ⟨e⟩
+    · rintro ⟨φ⟩
+      have i := fdRepIsoOfAsModuleLinearEquiv
+        (Representation.asModuleLinearEquivOfEquiv φ)
+      -- `FDRep.of_ρ_eq_self` records the definitional object identifications here.
+      rw [FDRep.of_ρ_eq_self, FDRep.of_ρ_eq_self] at i
+      exact ⟨i⟩
+
+/-- **The module-finite representation classes carried by two subrepresentations agree
+exactly when their associated group-algebra submodules are linearly equivalent.** -/
+theorem toSkeleton_fdRepOf_toRepresentation_eq_iff
+    {K X : Type u} [CommRing K] [AddCommGroup X] [Module K X]
+    {π : _root_.Representation K G X} (S T : Subrepresentation π)
+    [Module.Finite K S.toSubmodule] [Module.Finite K T.toSubmodule] :
+    toSkeleton (FDRep.of S.toRepresentation) = toSkeleton (FDRep.of T.toRepresentation) ↔
+      Nonempty (S.asSubmodule ≃ₗ[K[G]] T.asSubmodule) := by
+  rw [toSkeleton_eq_toSkeleton_iff, nonempty_fdRepIso_iff,
+    Representation.nonempty_equiv_iff]
+  exact Nonempty.congr
+    (fun e => (S.asModuleEquivAsSubmodule).symm.trans e |>.trans
+      T.asModuleEquivAsSubmodule)
+    (fun e => S.asModuleEquivAsSubmodule.trans e |>.trans
+      T.asModuleEquivAsSubmodule.symm)
 
 end TauCeti

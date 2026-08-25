@@ -8,6 +8,8 @@ module
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 
 import Mathlib.Algebra.EuclideanDomain.Int
+-- `dvd_mul_mul_apply` and `dvd_diag_of_dvd_entries`, used only inside proofs below.
+import TauCeti.LinearAlgebra.Matrix.Divisibility
 import Mathlib.Data.Int.GCD
 import Mathlib.Data.Sign.Basic
 import Mathlib.LinearAlgebra.Determinant
@@ -29,6 +31,14 @@ operations of determinant one:
   monotone under divisibility, with `L * A * R = diagonal d`.
 * `Matrix.smith_normal_form_unique`: two nonnegative chained diagonals in the same
   `GL_n(ℤ)`-equivalence class are equal, so the invariant factors of `A` are well defined.
+* `Matrix.invariant_factor_zero_dvd_entries`: the first entry of a chained diagonal form
+  divides every entry of `A`. The converse direction, and the general fact both rest on, are
+  `Matrix.dvd_diag_of_dvd_entries` and `Matrix.dvd_mul_mul_apply` in
+  `TauCeti/LinearAlgebra/Matrix/Divisibility.lean` — neither carries a Smith-normal-form
+  hypothesis, so neither lives here.
+* `Matrix.associated_invariant_factor_zero_gcd` and `Matrix.invariant_factor_zero_eq_gcd`: hence
+  the first entry is an associate of the gcd of the entries of `A`, and equals it once its sign
+  is known — so it is readable off the matrix without choosing a factorisation.
 
 Mathlib's `Submodule.smithNormalForm` provides basis-level diagonalization over a PID; this
 file supplies the matrix-level statement over `ℤ`, refined in three ways that the basis-level
@@ -41,10 +51,12 @@ on `2 × 2` blocks.
 This is the elementary divisor theorem in the form needed for the theory of Hecke rings of
 `GL_n`: it produces the diagonal double coset representatives of Shimura, chapter 3.
 
-Ported from the AINTLIB `LeanModularForms` project
-([`LeanModularForms/HeckeRIngs/GLn/DiagonalCosets.lean`](https://github.com/CBirkbeck/AINTLIB),
-Chris Birkbeck) — the pure-matrix half of that file; the Hecke-theoretic half is ported
-separately on top of the arithmetic Hecke triple.
+Ported from the AINTLIB `LeanModularForms` project (Chris Birkbeck), Apache-2.0, at commit
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`: the diagonalisation and uniqueness half from
+[`LeanModularForms/HeckeRIngs/GLn/DiagonalCosets.lean`](https://github.com/CBirkbeck/AINTLIB)
+— the pure-matrix part of that file, its Hecke-theoretic part being ported separately on top of
+the arithmetic Hecke triple — and the content characterisation from
+[`HeckeRIngs/GLn/CongruenceHecke/AtkinLehner.lean`](https://github.com/CBirkbeck/AINTLIB).
 
 ## References
 
@@ -471,16 +483,6 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
       rw [ite_eq_right (fun h ↦ hj (by rw [h]; rfl)), ite_eq_left rfl]
     · intro i hi0 hij; simp only [d', ite_eq_right hi0, ite_eq_right hij]
 
-private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
-    (L R : Matrix (Fin m) (Fin m) ℤ) (heq : L * Matrix.diagonal d * R = Matrix.diagonal d') :
-    ∀ i, c ∣ d' i := by
-  -- read the value off the diagonal so the product identity `heq` applies entrywise
-  intro i; rw [show d' i = (Matrix.diagonal d') i i by simp, ← heq, mul_apply]
-  apply Finset.dvd_sum; intro k _; rw [mul_apply]; apply dvd_mul_of_dvd_left
-  apply Finset.dvd_sum; intro l _; simp only [diagonal_apply]; split_ifs with h
-  · subst h; exact dvd_mul_of_dvd_right (hc l) _
-  · simp
-
 private noncomputable def fin1Sum (k : ℕ) : Fin (k + 1) ≃ Fin 1 ⊕ Fin k :=
   (Fin.castOrderIso (show k + 1 = 1 + k by omega)).toEquiv.trans finSumFinEquiv.symm
 
@@ -648,9 +650,13 @@ private lemma exists_divChain_of_pos_diagonal_succ {k : ℕ}
   have hd₂_chain : ∀ (i : ℕ) (hi : i + 1 < k + 2),
       d₂ ⟨i, by omega⟩ ∣ d₂ ⟨i + 1, hi⟩ :=
     divChain_prepend k (d₁ 0) d_tail'
-      (dvd_diag_of_SL_transform (k + 1) (fun i : Fin (k + 1) ↦ d₁ ⟨i.val + 1, by omega⟩)
-        d_tail' (d₁ 0) (fun i ↦ hd₁_div ⟨i.val + 1, by omega⟩)
-        (L_tail : Matrix _ _ ℤ) (R_tail : Matrix _ _ ℤ) hmul_tail) hd_tail'_chain
+      (fun i ↦ dvd_diag_of_dvd_entries
+        (Matrix.diagonal fun i : Fin (k + 1) ↦ d₁ ⟨i.val + 1, by omega⟩) (d₁ 0) d_tail'
+        (L_tail : Matrix _ _ ℤ) (R_tail : Matrix _ _ ℤ) hmul_tail
+        (fun p q ↦ by
+          rcases eq_or_ne p q with rfl | hpq
+          · simpa using hd₁_div ⟨p.val + 1, by omega⟩
+          · simp [Matrix.diagonal_apply_ne _ hpq]) i) hd_tail'_chain
   refine ⟨d₂, hd₂_pos, hd₂_chain, slSuccEmbed L_tail * L₁, R₁ * slSuccEmbed R_tail, ?_⟩
   simp only [SpecialLinearGroup.coe_mul]
   -- reassociate to expose `L₁ * diagonal d * R₁`, the shape `hmul₁` rewrites
@@ -771,6 +777,15 @@ private lemma prod_take_dvd_of_mul_diagonal_mul_eq {c d : Fin n → ℤ}
       simp only [Matrix.submatrix_apply, hgeq])
     simp [this]
 
+/-- Inverting a two-sided unimodular transformation. Used both by the uniqueness proof and by
+the content characterisation below, which otherwise repeat the same three lines. -/
+private lemma inv_mul_mul_inv_of_mul_mul_eq {S : Type*} [Semiring S]
+    {A B : Matrix (Fin n) (Fin n) S} (L R : GeneralLinearGroup (Fin n) S)
+    (h : (L : Matrix (Fin n) (Fin n) S) * A * (R : Matrix (Fin n) (Fin n) S) = B) :
+    (↑L⁻¹ : Matrix (Fin n) (Fin n) S) * B * (↑R⁻¹ : Matrix (Fin n) (Fin n) S) = A := by
+  rw [← h]
+  simp [Matrix.mul_assoc]
+
 /-- **Uniqueness of the Smith normal form**: two nonnegative diagonals with divisibility
 chains in the same `GL_n(ℤ)`-equivalence class are equal — including singular forms, whose
 chains vanish from the first zero on.  Together with
@@ -782,9 +797,8 @@ theorem smith_normal_form_unique {c d : Fin n → ℤ} (hc_pos : ∀ i, 0 ≤ c 
     (h : (L : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal c *
       (R : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal d) : c = d := by
   have h' : (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal d *
-      (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal c := by
-    rw [← h]
-    simp [Matrix.mul_assoc]
+      (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal c :=
+    inv_mul_mul_inv_of_mul_mul_eq L R h
   have key : ∀ k (hk : k ≤ n),
       ∏ j : Fin k, c ⟨j.val, by omega⟩ = ∏ j : Fin k, d ⟨j.val, by omega⟩ := fun k hk ↦
     Int.dvd_antisymm
@@ -812,5 +826,77 @@ theorem smith_normal_form_unique {c d : Fin n → ℤ} (hc_pos : ∀ i, 0 ≤ c 
   by_cases hpre : (∏ j : Fin i.val, d ⟨j.val, by omega⟩) = 0
   · rw [chain_zero hd hpre, chain_zero hc (by rw [key i.val (by omega)]; exact hpre)]
   · exact mul_left_cancel₀ hpre hprod₁
+
+/-! ## The first entry of a chained diagonal form is the content
+
+The first entry of a chained diagonal form is a common divisor of the entries of the original
+matrix, and every common divisor divides it — so it is an **associate** of the gcd of the
+entries (equal to it up to a unit), and in particular depends only on the matrix and not on the
+chosen factorisation. Over `ℤ`, where the units are `±1`, the nonnegativity that
+`Matrix.exists_smith_normal_form_of_det_pos` supplies pins the sign and the equality is
+exact.
+
+Adapted from [AINTLIB](https://github.com/CBirkbeck/AINTLIB) (Chris Birkbeck), Apache-2.0, at
+commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`,
+`LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/AtkinLehner.lean`. The source states the two
+divisibility directions privately at `Fin 2` as `snf_first_dvd_entry₂` and
+`dvd_snf_first_of_dvd_entries`, proved by entrywise cofactor algebra; the proofs here are a
+re-derivation at general `n`, where inverting the unimodular factors removes the need for that
+algebra. The source's third lemma `snf_mutual_dvd_eq` is **not** ported here: its conclusion follows
+from `Matrix.dvd_diag_of_dvd_entries` applied in both directions together with a determinant
+cancellation — it does *not* go through `Matrix.smith_normal_form_unique` — and it belongs
+with the Atkin–Lehner material that consumes it rather than here. -/
+
+/-- **The first entry of a chained diagonal form divides every entry.** If
+`L * A * R = diagonal d` with `L`, `R` unimodular and `d 0` dividing every `d k`, then `d 0`
+divides every entry of `A`.
+
+Inverting the unimodular factors writes `A = L⁻¹ * diagonal d * R⁻¹`, and `d 0` divides every
+entry of `diagonal d`, so `dvd_mul_mul_apply` carries it to every entry of `A`. No step is
+integer-specific, so this holds over any commutative semiring. -/
+theorem invariant_factor_zero_dvd_entries {S : Type*} [CommSemiring S] [NeZero n]
+    (A : Matrix (Fin n) (Fin n) S) (d : Fin n → S) (hd0 : ∀ k, d 0 ∣ d k)
+    (L R : GeneralLinearGroup (Fin n) S)
+    (h : (L : Matrix (Fin n) (Fin n) S) * A * (R : Matrix (Fin n) (Fin n) S) =
+      Matrix.diagonal d) (i j : Fin n) : d 0 ∣ A i j := by
+  rw [← inv_mul_mul_inv_of_mul_mul_eq L R h]
+  refine dvd_mul_mul_apply (fun p q ↦ ?_) _ _ i j
+  rcases eq_or_ne p q with rfl | hpq
+  · simpa using hd0 p
+  · simp [Matrix.diagonal_apply_ne _ hpq]
+
+/-- **The first entry is an associate of the content.** It equals the gcd of the entries up to
+a unit, so up to that unit it is determined by the matrix alone — the factorisation may be
+chosen freely.
+
+`Matrix.smith_normal_form_unique` says the whole chained diagonal is determined; this says the
+first entry is determined, up to a unit, by something directly readable off the matrix. The
+hypotheses are exactly what `Finset.gcd` needs; over `ℤ` they hold by instance, and
+`Matrix.invariant_factor_zero_eq_gcd` then pins the sign when `d 0` is known nonnegative. -/
+theorem associated_invariant_factor_zero_gcd {S : Type*} [CommSemiring S]
+    [NormalizedGCDMonoid S] [NeZero n] (A : Matrix (Fin n) (Fin n) S) (d : Fin n → S)
+    (hd0 : ∀ k, d 0 ∣ d k) (L R : GeneralLinearGroup (Fin n) S)
+    (h : (L : Matrix (Fin n) (Fin n) S) * A * (R : Matrix (Fin n) (Fin n) S) =
+      Matrix.diagonal d) :
+    Associated (d 0) (Finset.univ.gcd fun p : Fin n × Fin n ↦ A p.1 p.2) :=
+  associated_of_dvd_dvd
+    (Finset.dvd_gcd fun p _ ↦ invariant_factor_zero_dvd_entries A d hd0 L R h p.1 p.2)
+    (dvd_diag_of_dvd_entries A _ d _ _ h
+      (fun i j ↦ Finset.gcd_dvd (Finset.mem_univ (i, j))) 0)
+
+/-- **The first entry *is* the content**, once its sign is known. This is the integer
+specialization of `Matrix.associated_invariant_factor_zero_gcd`: `Finset.gcd` over `ℤ` is
+normalized, so nonnegativity of `d 0` — which `Matrix.exists_smith_normal_form_of_det_pos`
+supplies — upgrades the associate relation to an equality, and consumers need not redo the
+sign argument. The sign is the only integer-specific part; the two results above hold over a
+commutative semiring and a normalized GCD monoid respectively. -/
+theorem invariant_factor_zero_eq_gcd [NeZero n] (A : Matrix (Fin n) (Fin n) ℤ)
+    (d : Fin n → ℤ) (hd0 : ∀ k, d 0 ∣ d k) (hnonneg : 0 ≤ d 0)
+    (L R : GeneralLinearGroup (Fin n) ℤ)
+    (h : (L : Matrix (Fin n) (Fin n) ℤ) * A * (R : Matrix (Fin n) (Fin n) ℤ) =
+      Matrix.diagonal d) :
+    d 0 = Finset.univ.gcd fun p : Fin n × Fin n ↦ A p.1 p.2 :=
+  Int.eq_of_associated_of_nonneg (associated_invariant_factor_zero_gcd A d hd0 L R h) hnonneg
+    (Int.nonneg_of_normalize_eq_self Finset.normalize_gcd)
 
 end Matrix

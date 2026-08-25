@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 public import TauCeti.AlgebraicGeometry.SchemeTheoreticImage
 
