@@ -104,7 +104,8 @@ theorem _root_.ModularForm.qExpansion_slash_natDiagGL_d_one
       (d : ℂ) ^ (k - 1) • (qExpansion 1 f).expand d (NeZero.ne d) := by
   rw [slash_natDiagGL_d_one_eq_smul_levelRaise hle f,
     UpperHalfPlane.qExpansion_smul
-      (ModularFormClass.analyticAt_cuspFunction_zero (ModularForm.levelRaise d hle f) one_pos h𝒢'),
+      (ModularFormClass.analyticAt_cuspFunction_zero
+        (ModularForm.levelRaise d hle f) one_pos h𝒢'),
     ModularForm.qExpansion_levelRaise h𝒢 h𝒢' hle]
 
 /-- The coefficient form of `qExpansion_slash_natDiagGL_d_one`: the diagonal term contributes

@@ -51,7 +51,7 @@ construction and spans the Geck module over `ℚ`, so it discharges the stabilit
 every Kostant root-subgroup consumer has so far carried.
 
 The orbit is in fact finitely generated over `ℤ`: it coincides with the coordinate lattice of
-`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/GeckLattice.lean`, because that
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/GeckLattice/Basic.lean`, because that
 lattice is preserved by the whole form, so it is a full lattice in the sense of Humphreys §27.
 Nor is the pinned Lie
 algebra asserted to be semisimple, which
@@ -63,6 +63,8 @@ not claimed. This file is the numbered input those later steps consume.
 * `TauCeti.DynkinType.kostantForm`: the pinned simple-generator Kostant form.
 * `TauCeti.DynkinType.geckRepresentation`: the defining matrix representation of `U(L)`.
 * `TauCeti.DynkinType.geckWeight`: the integral weight of a Geck coordinate.
+* `TauCeti.DynkinType.rootGeneratorWeight`: the integral root of a numbered raising or lowering
+  generator.
 * `TauCeti.DynkinType.geckOrbit`: the integral orbit of the standard coordinate vectors.
 
 ## Main results
@@ -75,10 +77,12 @@ not claimed. This file is the numbered input those later steps consume.
   acts nilpotently.
 * `TauCeti.DynkinType.isCartanWeightVector_geckRepresentation_single`: the standard coordinate
   vectors are Cartan weight vectors with integer weights.
+* `TauCeti.DynkinType.lie_lieBasis_h_rootGenerator`: the Cartan action on each numbered root
+  generator is given by its integral root.
 * `TauCeti.DynkinType.geckRepresentation_mem_geckOrbit` and
   `TauCeti.DynkinType.span_geckOrbit_eq_top`: the integral orbit is stable under the Kostant form
   and spans the Geck module over `ℚ`.
-* In `…/GeckLattice.lean`, `TauCeti.DynkinType.geckOrbit_eq_geckCoordinateLattice` and
+* In `…/GeckLattice/Basic.lean`, `TauCeti.DynkinType.geckOrbit_eq_geckCoordinateLattice` and
   `TauCeti.DynkinType.instIsLatticeGeckOrbit`: the orbit equals the coordinate lattice and is a
   full, finitely generated lattice.
 
@@ -167,6 +171,29 @@ theorem span_kostantForm_eq_top :
     Submodule.span ℚ (t.kostantForm ht :
         Set (_root_.UniversalEnvelopingAlgebra ℚ (t.lieAlgebra ht))) = ⊤ :=
   (t.lieBasis ht).span_kostantForm_eq_top
+
+/-! ## The roots of the numbered generators -/
+
+/-- **The root of a numbered raising or lowering generator**, as an integral character of the
+pinned Cartan generators: the corresponding Bourbaki Cartan-matrix row for a raising generator,
+and its negative for a lowering generator. -/
+def rootGeneratorWeight : Fin t.rank ⊕ Fin t.rank → Fin t.rank → ℤ :=
+  (t.lieBasis ht).rootGeneratorWeight
+
+@[simp] theorem rootGeneratorWeight_inl (i j : Fin t.rank) :
+    t.rootGeneratorWeight ht (.inl i) j = t.cartanMatrix i j := by
+  rw [rootGeneratorWeight, LieAlgebra.Basis.rootGeneratorWeight_inl, lieBasis_A_eq]
+
+@[simp] theorem rootGeneratorWeight_inr (i j : Fin t.rank) :
+    t.rootGeneratorWeight ht (.inr i) j = -t.cartanMatrix i j := by
+  rw [rootGeneratorWeight, LieAlgebra.Basis.rootGeneratorWeight_inr, lieBasis_A_eq]
+
+/-- **The pinned Cartan generators act on a numbered root generator through its root.** -/
+theorem lie_lieBasis_h_rootGenerator (i : Fin t.rank ⊕ Fin t.rank) (j : Fin t.rank) :
+    ⁅(t.lieBasis ht).h j, (t.lieBasis ht).rootGenerator i⁆ =
+      ((t.rootGeneratorWeight ht i j : ℤ) : ℚ) • (t.lieBasis ht).rootGenerator i := by
+  rw [rootGeneratorWeight]
+  exact (t.lieBasis ht).lie_h_rootGenerator i j
 
 /-! ## The defining representation -/
 
@@ -269,8 +296,8 @@ Every downstream consumer of a Kostant root subgroup takes a `ℤ`-submodule pre
 integral form as a hypothesis. This one is preserved by construction, by
 `TauCeti.DynkinType.geckRepresentation_mem_geckOrbit`, and it is full by
 `TauCeti.DynkinType.span_geckOrbit_eq_top`. Its finite generation over `ℤ` is proved in
-`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/GeckLattice.lean`, where the orbit is
-identified with the coordinate lattice. -/
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/GeckLattice/Basic.lean`,
+where the orbit is identified with the coordinate lattice. -/
 def geckOrbit : Submodule ℤ (t.GeckIndex ht → ℚ) :=
   UniversalEnvelopingAlgebra.orbitOfRep (t.kostantForm ht) (t.geckRepresentation ht)
     (range fun x => Pi.single x 1)

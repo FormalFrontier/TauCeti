@@ -46,6 +46,8 @@ maps of finitely many distinct places are simultaneously surjective
   places are incomparable.
 * `TauCeti.Place.exists_forall_residue_eq`: simultaneous surjectivity of the residue maps of
   finitely many distinct places.
+* `TauCeti.Place.exists_residue_eq_and_forall_mem_ord_eq`: a prescribed residue at one place
+  together with prescribed orders at finitely many others.
 
 ## Implementation notes
 
@@ -150,6 +152,38 @@ theorem exists_ord_eq_one_and_forall_mem_ord_eq_zero :
   refine ⟨t, ?_, fun Q hQ hQP ↦ ?_⟩
   · simpa using ht P (Finset.mem_insert_self P s)
   · simpa [hQP] using ht Q (Finset.mem_insert_of_mem hQ)
+
+/-- A prescribed residue at one place, together with prescribed orders at finitely many others.
+Compared with `TauCeti.Place.exists_forall_residue_eq`, only one residue is prescribed, but the
+function is additionally required to be *small* — of prescribed order, in particular of
+prescribed positive order — at each of the remaining places. This is the shape Stichtenoth's
+count of the zeros of a function consumes: a lift of a residue basis at one place must not
+interfere with the other places under consideration. -/
+theorem exists_residue_eq_and_forall_mem_ord_eq (y : P.ResidueField) (r : Place k F → ℤ) :
+    ∃ g : F, ∃ hg : g ∈ P.integers,
+      IsLocalRing.residue P.integers ⟨g, hg⟩ = y ∧ ∀ Q ∈ s, Q ≠ P → Q.ord g = r Q := by
+  classical
+  obtain ⟨z, hz⟩ := IsLocalRing.residue_surjective (R := P.integers) y
+  obtain ⟨g, hg⟩ := exists_forall_mem_ord_sub_eq (insert P s)
+    (fun Q ↦ if Q = P then (z : F) else 0) (fun Q ↦ if Q = P then 1 else r Q)
+  have hgP : P.ord (g - (z : F)) = 1 := by simpa using hg P (Finset.mem_insert_self P s)
+  have hsub : g - (z : F) ∈ P.integers := P.mem_integers_iff_ord_nonneg.mpr (by omega)
+  have hmem : g ∈ P.integers := by
+    have hrw : g = g - (z : F) + (z : F) := by ring
+    rw [hrw]
+    exact add_mem hsub z.2
+  refine ⟨g, hmem, ?_, fun Q hQ hQP ↦ ?_⟩
+  · have hne : g - (z : F) ≠ 0 := fun h ↦ by simp [h] at hgP
+    have hvaluation : P.valuation (g - (z : F)) < 1 := by
+      rw [P.valuation_eq_exp_neg_ord hne, hgP, ← WithZero.exp_zero (M := ℤ),
+        WithZero.exp_lt_exp]
+      norm_num
+    have key : IsLocalRing.residue P.integers (⟨g, hmem⟩ - z) = 0 := by
+      rw [P.residue_eq_zero_iff_valuation_lt_one]
+      simpa only [AddSubgroupClass.coe_sub] using hvaluation
+    rw [map_sub, sub_eq_zero] at key
+    rw [key, hz]
+  · simpa [hQP] using hg Q (Finset.mem_insert_of_mem hQ)
 
 variable {P}
 

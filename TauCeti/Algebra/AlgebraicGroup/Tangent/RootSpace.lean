@@ -46,6 +46,8 @@ one, or that `G` is reductive. When `π` does exhibit a split maximal torus `T` 
   finite.**
 * `Derivation.endOfPoint_tmul_of_mem_adjointWeightSpace`: a point of `D(M)` acts on the
   `α`-weight submodule by the value of `α` at that point.
+* `Derivation.mem_adjointWeightSpace_iff_universalPointAction`: weight-space membership can be
+  tested using the universal point of `D(M)`.
 * `Derivation.lie_mem_adjointWeightSpace_mul`: the adjoint weight decomposition is a Lie
   grading: `[𝔤_α, 𝔤_β] ⊆ 𝔤_{αβ}`.
 
@@ -70,6 +72,7 @@ consumes those pinned Chevalley--Demazure groups.
 
 public section
 
+open CategoryTheory WithConv
 open scoped DirectSum TensorProduct
 
 namespace Derivation
@@ -109,6 +112,74 @@ theorem mem_adjointWeightSpace {π : H →ₐc[R] MonoidAlgebra R M} {α : M}
   letI : Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
     adjointComodule (R := R) (H := H)
   DiagonalizableGroup.mem_weightSpace
+
+/-- Membership in an adjoint weight space can be tested on the universal point of the
+diagonalizable group. The universal point acts on a weight vector of weight `alpha` by the
+group-algebra basis element `[alpha]`.
+
+This is the converse to `endOfPoint_tmul_of_mem_adjointWeightSpace` at the universal point. -/
+theorem mem_adjointWeightSpace_iff_universalPointAction
+    {R H : Type u} [CommRing R] [CommRing H] [HopfAlgebra R H]
+    [Module.Finite R (Bialgebra.CotangentSpace R H)]
+    [Module.Projective R (Bialgebra.CotangentSpace R H)]
+    {M : Type u} [CommGroup M]
+    (pi : H →ₐc[R] MonoidAlgebra R M) (alpha : M)
+    (x : Module.Dual R (Bialgebra.CotangentSpace R H)) :
+    x ∈ adjointWeightSpace pi alpha ↔
+      (adjointAction (CommAlgCat.of R (MonoidAlgebra R M))
+          (toConv (pi : H →ₐ[R] MonoidAlgebra R M))).val (1 ⊗ₜ[R] x) =
+        MonoidAlgebra.single alpha (1 : R) ⊗ₜ[R] x := by
+  let V := Module.Dual R (Bialgebra.CotangentSpace R H)
+  let U := ULift.{u} H
+  let K := MonoidAlgebra R M
+  let phi : U →ₐ[R] K :=
+    (pi : H →ₐ[R] K).comp (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toAlgHom
+  let g : HopfAlgebra.points (H := H) (CommAlgCat.of R U) :=
+    toConv (ULift.algEquiv (R := R) : U ≃ₐ[R] H).symm.toAlgHom
+  have hmapPoint : HopfAlgebra.mapPoints (H := H) (CommAlgCat.ofHom phi) g =
+      toConv (pi : H →ₐ[R] K) := by
+    apply WithConv.ofConv_injective
+    ext h
+    rfl
+  have hnatural :=
+    (adjointPointRepresentation (R := R) (H := H)).action_mapPoints_one_tmul
+      (CommAlgCat.ofHom phi) g x
+  rw [adjointPointRepresentation_action, hmapPoint] at hnatural
+  have hcore :
+      TensorProduct.comm R V K
+          (TensorProduct.map LinearMap.id (pi : H →ₗc[R] K).toLinearMap
+            ((adjointComodule (R := R) (H := H)).coact x)) =
+        (adjointAction (CommAlgCat.of R K) (toConv (pi : H →ₐ[R] K))).val
+          (1 ⊗ₜ[R] x) := by
+    rw [adjointComodule_coact_apply]
+    rw [hnatural]
+    let z :=
+      (((adjointPointRepresentation (R := R) (H := H)).action
+        (CommAlgCat.of R U) g).val (1 ⊗ₜ[R] x))
+    -- Naturality is expressed through bundled scalar extension, while the coaction side uses
+    -- tensor maps. Neither wrapper exposes a theorem for its underlying linear map, so unfold
+    -- those wrappers definitionally before proving the resulting tensor identity.
+    change
+      TensorProduct.comm R V K
+          (TensorProduct.map LinearMap.id (pi : H →ₗc[R] K).toLinearMap
+            (TensorProduct.comm R H V
+              (TensorProduct.map
+                (ULift.algEquiv (R := R) : U ≃ₐ[R] H).toLinearMap LinearMap.id z))) =
+        GeneralLinear.scalarExtensionMap (V := V) (CommAlgCat.ofHom phi) z
+    induction z using TensorProduct.induction_on with
+    | zero => simp
+    | add a b ha hb => simpa only [map_add] using congrArg₂ (fun p q ↦ p + q) ha hb
+    | tmul a y =>
+        simp only [TensorProduct.map_tmul, LinearMap.id_apply, TensorProduct.comm_tmul]
+        rw [GeneralLinear.scalarExtensionMap_tmul]
+        rfl
+  rw [mem_adjointWeightSpace]
+  constructor
+  · intro hx
+    rw [← hcore, hx, TensorProduct.comm_tmul]
+  · intro hx
+    apply (TensorProduct.comm R V K).injective
+    rw [hcore, hx, TensorProduct.comm_tmul]
 
 /-- **The Lie algebra of `G` is the internal direct sum of its weight submodules under a
 homomorphism from a diagonalizable group.** -/

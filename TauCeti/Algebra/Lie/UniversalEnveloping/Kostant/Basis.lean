@@ -22,6 +22,8 @@ identification with the classical all-root Kostant form requires a separate comp
 ## Main definitions and results
 
 * `LieAlgebra.Basis.rootGenerator`: the combined raising and lowering generators.
+* `LieAlgebra.Basis.rootGeneratorWeight`: their weights against the Cartan generators.
+* `LieAlgebra.Basis.lie_h_rootGenerator`: the corresponding Cartan-action relation.
 * `LieAlgebra.Basis.kostantForm`: the associated simple-generator Kostant form.
 * `LieAlgebra.Basis.kostantForm_le_iff`: its universal property.
 * `LieAlgebra.Basis.span_kostantForm_eq_top`: the form spans the enveloping algebra.
@@ -53,6 +55,31 @@ theorem rootGenerator_inl (i : ι) : rootGenerator b (.inl i) = b.e i := (rfl)
 /-- The combined root-generator family evaluates to the lowering generator on the right summand. -/
 @[simp]
 theorem rootGenerator_inr (i : ι) : rootGenerator b (.inr i) = b.f i := (rfl)
+
+/-- The integral weights of the combined raising and lowering generators against the Cartan
+generators. -/
+def rootGeneratorWeight : ι ⊕ ι → ι → ℤ :=
+  Sum.elim (fun i j => b.A i j) fun i j => -b.A i j
+
+/-- A raising generator has the corresponding row of the Cartan matrix as its weight. -/
+@[simp]
+theorem rootGeneratorWeight_inl (i j : ι) :
+    rootGeneratorWeight b (.inl i) j = b.A i j := (rfl)
+
+/-- A lowering generator has the negative of the corresponding row of the Cartan matrix as its
+weight. -/
+@[simp]
+theorem rootGeneratorWeight_inr (i j : ι) :
+    rootGeneratorWeight b (.inr i) j = -b.A i j := (rfl)
+
+/-- A Cartan generator acts on a combined root generator through its integral weight. -/
+theorem lie_h_rootGenerator (i : ι ⊕ ι) (j : ι) :
+    ⁅b.h j, rootGenerator b i⁆ = ((rootGeneratorWeight b i j : ℤ) : ℚ) • rootGenerator b i := by
+  cases i with
+  | inl i =>
+    rw [rootGenerator_inl, rootGeneratorWeight_inl, b.lie_h_e, Int.cast_smul_eq_zsmul]
+  | inr i =>
+    rw [rootGenerator_inr, rootGeneratorWeight_inr, b.lie_h_f, Int.cast_smul_eq_zsmul]
 
 /-- The combined root generators have the union of the raising and lowering ranges. -/
 theorem range_rootGenerator : range (rootGenerator b) = range b.e ∪ range b.f :=

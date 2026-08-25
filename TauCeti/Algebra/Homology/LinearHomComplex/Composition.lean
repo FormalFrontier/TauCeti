@@ -35,9 +35,9 @@ is Keller's `m₂ (g, f) = g ∘ f` convention.
 Mathlib's `CategoryTheory.EnrichedCategory` instead asks for
 `Hom(X, Y) ⊗ Hom(Y, Z) ⟶ Hom(X, Z)`; converting between the two orders is exactly the Koszul
 braiding of `CochainComplex (ModuleCat R) ℤ`, built in
-`TauCeti/Algebra/Homology/Monoidal/Braiding.lean` and imported here.  The enrichment itself, that
-is, the `EnrichedCategory` instance and its associativity and unit axioms in Mathlib's factor
-order, is left to a later file.
+`TauCeti/Algebra/Homology/Monoidal/Braiding.lean` and imported here.  The `EnrichedCategory`
+instance and its associativity and unit axioms in Mathlib's factor order are constructed in
+`TauCeti/Algebra/Homology/LinearHomComplex/Enrichment.lean`.
 
 The monoidal structure used here is Mathlib's `HomologicalComplex.monoidalCategory` at
 `ComplexShape.up ℤ`; nothing is re-totalized.  The whiskering component equations

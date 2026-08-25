@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.RamifiedPrime.Product
 public import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
 public import TauCeti.NumberTheory.ClassGroup.ElementaryTwoQuotient
+import TauCeti.Algebra.Group.Subgroup.TwoTorsionClosure
 import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 import Mathlib.NumberTheory.NumberField.ClassNumber
 
@@ -326,32 +327,19 @@ theorem two_pow_le_natCard_closure_image_classGroupMk0
     simp only [Finset.coe_powerset, Set.mem_preimage, Set.mem_powerset_iff,
       Finset.coe_subset] at hS hT
     simp only at hST
-    -- The classes of the symmetric difference multiply to `1`.
-    have heq : ∏ p ∈ S \ T, ClassGroup.mk0 (Q p) = ∏ p ∈ T \ S, ClassGroup.mk0 (Q p) := by
-      have hS' := Finset.prod_inter_mul_prod_sdiff S T fun p => ClassGroup.mk0 (Q p)
-      have hT' := Finset.prod_inter_mul_prod_sdiff T S fun p => ClassGroup.mk0 (Q p)
-      rw [Finset.inter_comm T S] at hT'
-      exact mul_left_cancel (hS'.trans (hST.trans hT'.symm))
-    have hUV : ∏ p ∈ S \ T ∪ T \ S, ClassGroup.mk0 (Q p) = 1 := by
-      rw [Finset.prod_union disjoint_sdiff_sdiff, ← heq, ← sq, ← Finset.prod_pow]
-      exact Finset.prod_eq_one fun p hp =>
-        hsq p (Finset.mem_of_mem_erase (hS (Finset.mem_sdiff.mp hp).1))
-    have hsubs : S \ T ∪ T \ S ⊆ s := by
-      intro p hp
-      rcases Finset.mem_union.mp hp with h | h
-      · exact Finset.mem_of_mem_erase (hS (Finset.mem_sdiff.mp h).1)
-      · exact Finset.mem_of_mem_erase (hT (Finset.mem_sdiff.mp h).1)
-    have hqnot : q ∉ S \ T ∪ T \ S := by
-      intro hp
-      rcases Finset.mem_union.mp hp with h | h
-      · exact Finset.notMem_erase q s (hS (Finset.mem_sdiff.mp h).1)
-      · exact Finset.notMem_erase q s (hT (Finset.mem_sdiff.mp h).1)
+    have hsymmDiff_erase : S \ T ∪ T \ S ⊆ s.erase q :=
+      Finset.union_subset (Finset.sdiff_subset.trans hS) (Finset.sdiff_subset.trans hT)
+    have hsymmDiff_s : S \ T ∪ T \ S ⊆ s := hsymmDiff_erase.trans (Finset.erase_subset q s)
+    have hqnot : q ∉ S \ T ∪ T \ S := fun hp => Finset.notMem_erase q s (hsymmDiff_erase hp)
+    have hprod_symmDiff_eq_one : ∏ p ∈ S \ T ∪ T \ S, ClassGroup.mk0 (Q p) = 1 := by
+      rw [prod_sdiff_union_sdiff _ fun p hp =>
+        hsq p (Finset.mem_of_mem_erase (hS (Finset.mem_inter.mp hp).1)), hST, ← sq,
+        ← Finset.prod_pow]
+      exact Finset.prod_eq_one fun p hp => hsq p (Finset.mem_of_mem_erase (hT hp))
     rcases eq_empty_or_eq_primeFactors_of_prod_classGroupMk0_eq_one Q hmin hgen hsf hd
-        (fun p hp => hram p (hsubs hp)) (fun p hp => hprime p (hsubs hp))
-        (fun p hp => hover p (hsubs hp)) hUV with hempty | hpf
-    · exact Finset.Subset.antisymm
-        (Finset.sdiff_eq_empty_iff_subset.mp (Finset.union_eq_empty.mp hempty).1)
-        (Finset.sdiff_eq_empty_iff_subset.mp (Finset.union_eq_empty.mp hempty).2)
+        (fun p hp => hram p (hsymmDiff_s hp)) (fun p hp => hprime p (hsymmDiff_s hp))
+        (fun p hp => hover p (hsymmDiff_s hp)) hprod_symmDiff_eq_one with hempty | hpf
+    · exact Finset.symmDiff_eq_empty.mp ((Finset.symmDiff_def S T).trans hempty)
     · exact absurd (by rw [hpf]; exact hq) hqnot
   have himg : (fun S : Finset ℕ => ∏ p ∈ S, ClassGroup.mk0 (Q p)) '' ↑(s.erase q).powerset ⊆
       (↑(Subgroup.closure ((fun p ↦ ClassGroup.mk0 (Q p)) '' (↑s : Set ℕ))) :

@@ -28,6 +28,8 @@ the base is disconnected.
   morphisms at each object act pretransitively on that object's value.
 * `TauCeti.PretransitiveFundamentalGroupoidAction`: the full subcategory of functors satisfying
   that property.
+* `TauCeti.ConnectedCoveringSpace.isPretransitive_fiberAction`: pretransitivity of Mathlib's
+  `IsCoveringMap.fundamentalGroupMulAction` on the fibre over a basepoint.
 * `TauCeti.ConnectedCoveringSpace.monodromyFunctor`: monodromy of connected covers, valued in
   fibrewise pretransitive fundamental-groupoid actions.
 * `TauCeti.ConnectedCoveringSpace.monodromyFunctor_faithful` and
@@ -162,6 +164,21 @@ theorem monodromy_isFiberwisePretransitive [LocallyPathConnectedSpace X]
     locallyPathConnectedSpace_of_isLocalHomeomorph p.isCoveringMap_proj.isLocalHomeomorph
   let _ : PathConnectedSpace (p : TopCat) := PathConnectedSpace.of_locallyPathConnectedSpace
   exact IsCoveringMap.exists_monodromy_eq p.isCoveringMap_proj e e'
+
+/-- The fundamental group at `x₀` acts pretransitively on the fibre of a connected covering space
+over `x₀`; the fibre may be empty, when the base is disconnected.
+
+This is `TauCeti.IsCoveringMap.monodromy_isPretransitive` applied to the total space, which is
+path connected because a connected cover of a locally path-connected base is connected and
+locally path connected. -/
+theorem isPretransitive_fiberAction [LocallyPathConnectedSpace X] (p : ConnectedCoveringSpace X)
+    (x₀ : X) :
+    letI := p.isCoveringMap_proj.fundamentalGroupMulAction x₀
+    MulAction.IsPretransitive (FundamentalGroup X x₀) (⇑p.proj ⁻¹' {x₀}) := by
+  let _ : LocallyPathConnectedSpace (p : TopCat) :=
+    locallyPathConnectedSpace_of_isLocalHomeomorph p.isCoveringMap_proj.isLocalHomeomorph
+  let _ : PathConnectedSpace (p : TopCat) := PathConnectedSpace.of_locallyPathConnectedSpace
+  exact IsCoveringMap.monodromy_isPretransitive p.isCoveringMap_proj x₀
 
 /-- Monodromy as a functor from connected covering spaces over `X` to fibrewise pretransitive
 fundamental-groupoid actions.

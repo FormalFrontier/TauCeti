@@ -38,8 +38,8 @@ endomorphism-valued one-form `CovariantDerivative.difference ∇ ∇'` vanishes.
 
 ## Main definitions and results
 
-* `TauCeti.Manifold.koszul`: the right-hand side of the Koszul formula, a function of the
-  Riemannian metric alone.
+* `TauCeti.Manifold.koszul` and `TauCeti.Manifold.koszul_apply`: the right-hand side of the Koszul
+  formula, a function of the Riemannian metric alone, and its defining formula.
 * `CovariantDerivative.IsLeviCivita`: a covariant derivative on the tangent bundle is
   torsion free and compatible with the metric.
 * `CovariantDerivative.IsLeviCivita.two_inner_eq_koszul`: the Koszul formula.
@@ -136,6 +136,17 @@ def koszul (X Y Z : Π x : M, TangentSpace I x) (x : M) : ℝ :=
     + inner ℝ (mlieBracket I X Y x) (Z x)
     - inner ℝ (mlieBracket I X Z x) (Y x)
     - inner ℝ (mlieBracket I Y Z x) (X x)
+
+/-- The defining formula for the Koszul expression, available outside the module where
+`TauCeti.Manifold.koszul` is defined. -/
+theorem koszul_apply (X Y Z : Π x : M, TangentSpace I x) (x : M) :
+    koszul I X Y Z x =
+      mvfderiv I (fun y ↦ inner ℝ (Y y) (Z y)) x (X x)
+        + mvfderiv I (fun y ↦ inner ℝ (Z y) (X y)) x (Y x)
+        - mvfderiv I (fun y ↦ inner ℝ (X y) (Y y)) x (Z x)
+        + inner ℝ (mlieBracket I X Y x) (Z x)
+        - inner ℝ (mlieBracket I X Z x) (Y x)
+        - inner ℝ (mlieBracket I Y Z x) (X x) := (rfl)
 
 variable {X Y Z : Π x : M, TangentSpace I x} {x : M}
 

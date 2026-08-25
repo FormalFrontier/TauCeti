@@ -40,7 +40,8 @@ Buzzard, and Joël Riou.
 * `TauCeti.Hodge.HodgeStructureOn.finite_setOf_piece_ne_bot`: only finitely many Hodge components
   are nonzero, because the filtration is bounded.
 * `TauCeti.Hodge.HodgeStructureOn.comap`: transport of a Hodge structure along a linear
-  equivalence intertwining the conjugations.
+  equivalence intertwining the conjugations, with the transport of its Hodge components
+  `TauCeti.Hodge.HodgeStructureOn.comap_piece`.
 * `TauCeti.Hodge.HodgeStructureOn.IsEffective`: the filtration is supported in bidegrees with
   both indices nonnegative.
 -/
@@ -81,34 +82,33 @@ variable {ω : Conjugation W} {n : ℤ}
 
 /-- The conjugate of the `p`-th step of the Hodge filtration. -/
 noncomputable def conjF (hs : HodgeStructureOn W ω n) (p : ℤ) : Submodule ℂ W :=
-  (hs.F p).map ω.toEquiv.toLinearMap
+  ω.conjFiltration hs.F p
 
 /-- The conjugate filtration step is the image under the specified conjugation. -/
 theorem conjF_def (hs : HodgeStructureOn W ω n) (p : ℤ) :
     hs.conjF p = (hs.F p).map ω.toEquiv.toLinearMap :=
-  (rfl)
+  ω.conjFiltration_def hs.F p
 
 /-- The conjugate of the Hodge filtration is decreasing. -/
 theorem conjF_antitone (hs : HodgeStructureOn W ω n) : Antitone hs.conjF :=
-  fun p q hpq ↦ by
-    rw [hs.conjF_def, hs.conjF_def]
-    exact Submodule.map_mono (hs.F_antitone hpq)
+  ω.conjFiltration_antitone hs.F_antitone
 
 /-- Membership in a conjugate filtration step is detected by applying the conjugation. -/
 @[simp]
 theorem mem_conjF_iff (hs : HodgeStructureOn W ω n) (p : ℤ) (x : W) :
-    x ∈ hs.conjF p ↔ ω.toEquiv x ∈ hs.F p := by
-  simp [conjF, ω.toEquiv_symm]
+    x ∈ hs.conjF p ↔ ω.toEquiv x ∈ hs.F p :=
+  ω.mem_conjFiltration_iff hs.F p x
 
 /-- Conjugating a filtration step twice recovers that step. -/
 @[simp]
 theorem conjF_conjF (hs : HodgeStructureOn W ω n) (p : ℤ) :
-    (hs.conjF p).map ω.toEquiv.toLinearMap = hs.F p := by
-  exact ω.map_map_eq_self (hs.F p)
+    (hs.conjF p).map ω.toEquiv.toLinearMap = hs.F p :=
+  ω.conjFiltration_conjFiltration hs.F p
 
 /-- Opposedness expressed using `conjF`. -/
 theorem isCompl_F_conjF (hs : HodgeStructureOn W ω n) (p : ℤ) :
     IsCompl (hs.F p) (hs.conjF (n + 1 - p)) := by
+  rw [hs.conjF_def]
   exact hs.opposed p
 
 /-- The Hodge filtration is separated: some step is zero. -/
@@ -256,18 +256,7 @@ noncomputable def comap (e : W ≃ₗ[ℂ] W')
     obtain ⟨p, hp⟩ := hs.F_top
     exact ⟨p, by rw [hp, Submodule.comap_top]⟩
   opposed p := by
-    have hmap : ((hs.F (n + 1 - p)).comap e.toLinearMap).map ω.toEquiv.toLinearMap =
-        ((hs.F (n + 1 - p)).map ω'.toEquiv.toLinearMap).comap e.toLinearMap := by
-      ext y
-      simp only [Submodule.mem_map, Submodule.mem_comap, LinearEquiv.coe_coe]
-      constructor
-      · rintro ⟨x, hx, rfl⟩
-        exact ⟨e x, hx, (he x).symm⟩
-      · rintro ⟨z, hz, hzy⟩
-        refine ⟨ω.toEquiv y, ?_, ω.apply_apply y⟩
-        rw [he y, ← hzy, ω'.apply_apply]
-        exact hz
-    rw [hmap]
+    rw [Conjugation.map_comap_eq_comap_map ω ω' e he]
     refine ⟨?_, ?_⟩
     · rw [disjoint_iff, ← Submodule.comap_inf, (hs.opposed p).disjoint.eq_bot,
         Submodule.comap_bot, LinearMap.ker_eq_bot]
@@ -281,6 +270,22 @@ noncomputable def comap (e : W ≃ₗ[ℂ] W')
 theorem comap_F (e : W ≃ₗ[ℂ] W') (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x))
     (hs : HodgeStructureOn W' ω' n) (p : ℤ) :
     (hs.comap e he).F p = (hs.F p).comap e.toLinearMap := (rfl)
+
+/-- Transport along an equivalence intertwining the conjugations takes the conjugate filtration
+to the preimage of the conjugate filtration. -/
+@[simp]
+theorem comap_conjF (e : W ≃ₗ[ℂ] W') (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x))
+    (hs : HodgeStructureOn W' ω' n) (p : ℤ) :
+    (hs.comap e he).conjF p = (hs.conjF p).comap e.toLinearMap := by
+  rw [conjF_def, comap_F, Conjugation.map_comap_eq_comap_map ω ω' e he, conjF_def]
+
+/-- Transport along an equivalence intertwining the conjugations takes each Hodge component to
+the preimage of the corresponding Hodge component. -/
+@[simp]
+theorem comap_piece (e : W ≃ₗ[ℂ] W') (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x))
+    (hs : HodgeStructureOn W' ω' n) (p : ℤ) :
+    (hs.comap e he).piece p = (hs.piece p).comap e.toLinearMap := by
+  rw [piece_def, comap_F, comap_conjF, piece_def, Submodule.comap_inf]
 
 end Comap
 

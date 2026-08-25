@@ -137,58 +137,6 @@ private theorem JNumCenter_pointSet_add_two_mul_eq (x y : GridState n) :
           (Finset.univ.filter fun d : Fin n => d < c ∧ x c ≤ y d).card =
       n * n := by
   classical
-  have hA : GridPoint.ICenter x.pointSet y.pointSet =
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card := by
-    rw [ICenter_pointSet_eq_card]
-    symm
-    calc
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card =
-          ∑ c ∈ Finset.univ, ((Finset.univ.filter fun p : Fin n × Fin n =>
-            p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p = c).card := by
-        apply Finset.sum_congr rfl
-        intro c _
-        have hfiber :
-            ((Finset.univ.filter fun p : Fin n × Fin n =>
-              p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p = c) =
-              {c} ×ˢ (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d) := by
-          ext p
-          rcases p with ⟨a, b⟩
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_product,
-            Finset.mem_singleton]
-          aesop
-        rw [hfiber, Finset.card_product]
-        simp
-      _ = ((Finset.univ.filter fun p : Fin n × Fin n =>
-          p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).filter fun p => Prod.fst p ∈ Finset.univ).card :=
-        Finset.sum_card_fiberwise_eq_card_filter _ _ Prod.fst
-      _ = (Finset.univ.filter fun p : Fin n × Fin n =>
-          p.1 ≤ p.2 ∧ x p.1 ≤ y p.2).card := by simp
-  have hB : GridPoint.I y.pointSet x.pointSet =
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card := by
-    rw [I_pointSet_eq_card]
-    symm
-    calc
-      ∑ c : Fin n, (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card =
-          ∑ c ∈ Finset.univ, ((Finset.univ.filter fun p : Fin n × Fin n =>
-            p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p = c).card := by
-        apply Finset.sum_congr rfl
-        intro c _
-        have hfiber :
-            ((Finset.univ.filter fun p : Fin n × Fin n =>
-              p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p = c) =
-              (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c) ×ˢ {c} := by
-          ext p
-          rcases p with ⟨a, b⟩
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_product,
-            Finset.mem_singleton]
-          aesop
-        rw [hfiber, Finset.card_product]
-        simp
-      _ = ((Finset.univ.filter fun p : Fin n × Fin n =>
-          p.1 < p.2 ∧ y p.1 < x p.2).filter fun p => Prod.snd p ∈ Finset.univ).card :=
-        Finset.sum_card_fiberwise_eq_card_filter _ _ Prod.snd
-      _ = (Finset.univ.filter fun p : Fin n × Fin n =>
-          p.1 < p.2 ∧ y p.1 < x p.2).card := by simp
   have key : ∀ c : Fin n,
       (Finset.univ.filter fun d : Fin n => c ≤ d ∧ x c ≤ y d).card
           + (Finset.univ.filter fun d : Fin n => d < c ∧ y d < x c).card
@@ -212,7 +160,8 @@ private theorem JNumCenter_pointSet_add_two_mul_eq (x y : GridState n) :
     Equiv.sum_comp x.toPerm fun r : Fin n => (r : ℕ)
   have hconst : ∑ _c : Fin n, n = n * n := by
     rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
-  rw [GridPoint.JNumCenter_def, hA, hB]
+  rw [JNumCenter_pointSet_eq_sum]
+  simp only [JNumCenterAt_eq_card, Finset.sum_add_distrib]
   omega
 
 /-- The marking-pairing numerator of two grid states has the parity of the grid size. -/

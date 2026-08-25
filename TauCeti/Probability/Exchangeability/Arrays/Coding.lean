@@ -193,7 +193,7 @@ theorem SeparatelyExchangeable.exists_arrayLaw_eq_map_unitIntervalCoding
     exact hinv τ
   · have hpath : pathLaw μ (arrayRow X) = deFinettiBarycenter (μ.map ν) := by
       rw [deFinettiBarycenter_def]
-      exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith (aemeasurable_arrayRow hX)
+      exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith
         (mixedIIDWith_of_conditionallyIIDWith hν)
     simp only [ProbabilityMeasure.coe_mk]
     rw [map_prod_unitIntervalCoding_array (μ.map ν), ← hpath, map_uncurry_pathLaw_arrayRow hX]

@@ -32,6 +32,7 @@ which is proved where those objects live, not here.
 
 * `TauCeti.adjugateGL_one`, `TauCeti.adjugateGL_mul`: `adj(1) = 1` and `adj(gh) = adj(h) adj(g)`.
 * `TauCeti.adjugateGL_eq_inv`: on determinant one, `adj(g) = g⁻¹`.
+* `TauCeti.adjugateGL_mapGL`: on a special-linear image, `adj(mapGL σ) = mapGL σ⁻¹`.
 * `TauCeti.adjugateGL_adjugateGL`: in size two, `adj` is an involution.
 
 ## References
@@ -81,6 +82,14 @@ group of determinant-one matrices, where it is then an anti-automorphism. -/
 lemma adjugateGL_eq_inv {g : GL n R} (hg : (g : Matrix n n R).det = 1) : adjugateGL g = g⁻¹ := by
   ext
   rw [adjugateGL_val, Matrix.coe_units_inv, Matrix.inv_def, hg, Ring.inverse_one, one_smul]
+
+/-- **Adjugate is inversion on a special-linear image.** An element of `SL n R` has determinant
+one in every `R`-algebra `S`, so `adjugateGL` is inversion on its image, and `mapGL S` is a
+monoid map. This is `adjugateGL_eq_inv` in the form its consumers meet: the determinant
+hypothesis is discharged once here rather than at each call site. -/
+lemma adjugateGL_mapGL {S : Type*} [CommRing S] [Algebra R S] (σ : SpecialLinearGroup n R) :
+    adjugateGL (SpecialLinearGroup.mapGL S σ) = SpecialLinearGroup.mapGL S σ⁻¹ := by
+  rw [adjugateGL_eq_inv (congrArg Units.val (SpecialLinearGroup.det_mapGL (S := S) σ)), map_inv]
 
 /-- **In size two the adjugate is an involution.** `adjugate` squares to
 `det ^ (card n - 2) • id`, and the size-two hypothesis makes that exponent vanish. -/
