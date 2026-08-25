@@ -18,9 +18,12 @@ two constructions exactly.
 
 Thus the roots packaged by `GeneralLinear.diagonalRootDatum` are neither merely an abstract
 coordinate model nor just a subset of the adjoint weights: their range is the complete set
-`Derivation.nontrivialAdjointWeights` extracted from the pair `(GL_n, T)`. The induced
-equivalence records the canonical root indexing. The existing adjoint classification then
-identifies each root space with the line spanned by the corresponding matrix unit `E_ij`.
+`Derivation.nontrivialAdjointWeights` for the diagonal-torus morphism. The induced equivalence
+records the canonical root indexing. The existing adjoint classification then identifies each
+root space with the line spanned by the corresponding matrix unit `E_ij`.
+
+This is a worked-example bridge between two concrete constructions. It does not assert that the
+diagonal torus is maximal or construct the general root datum of a reductive pair.
 
 ## Main declarations
 
@@ -36,9 +39,10 @@ identifies each root space with the line spanned by the corresponding matrix uni
 * J. S. Milne, *Algebraic Groups* (2017), Example 19.7 and Section 21.1.
 * J. E. Humphreys, *Linear Algebraic Groups* (1975), Sections 16.1 and 26.3.
 
-This completes the root-set identification for the standard split pair `(GL_n, T)` in Layer 7,
-"Root datum of `(G, T)`", of the ReductiveGroups roadmap. Constructing root data for arbitrary
-split reductive groups and identifying their Weyl groups remain separate milestones.
+This supplies the root-set computation for the standard split `GL_n` worked example in Layer 7,
+"Root datum of `(G, T)`", of the ReductiveGroups roadmap. Proving maximality of the diagonal torus,
+constructing root data for arbitrary split reductive pairs, and identifying their Weyl groups
+remain separate milestones.
 -/
 
 public section
