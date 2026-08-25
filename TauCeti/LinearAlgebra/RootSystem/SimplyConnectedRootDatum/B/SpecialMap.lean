@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.Matrix.SpecialMap
+import TauCeti.LinearAlgebra.Matrix.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.RankTwo
 
@@ -220,32 +220,16 @@ theorem b2SpecialIsogenyMatrix_transpose_mul_self :
 /-- Applying the character-lattice special map twice is multiplication by the characteristic
 `2`. -/
 @[simp] theorem b2SpecialIsogenyMatrix_mulVec_self (x : Fin 2 → ℤ) :
-    ![b2SpecialIsogenyMatrix 0 0 *
-          (b2SpecialIsogenyMatrix 0 0 * x 0 + b2SpecialIsogenyMatrix 0 1 * x 1) +
-        b2SpecialIsogenyMatrix 0 1 *
-          (b2SpecialIsogenyMatrix 1 0 * x 0 + b2SpecialIsogenyMatrix 1 1 * x 1),
-      b2SpecialIsogenyMatrix 1 0 *
-          (b2SpecialIsogenyMatrix 0 0 * x 0 + b2SpecialIsogenyMatrix 0 1 * x 1) +
-        b2SpecialIsogenyMatrix 1 1 *
-          (b2SpecialIsogenyMatrix 1 0 * x 0 + b2SpecialIsogenyMatrix 1 1 * x 1)] =
-      (2 : ℤ) • x := by
-  ext i
-  fin_cases i <;> simp [b2SpecialIsogenyMatrix_def]
+    b2SpecialIsogenyMatrix *ᵥ (b2SpecialIsogenyMatrix *ᵥ x) = (2 : ℤ) • x := by
+  rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_mul_self, Matrix.smul_mulVec,
+    Matrix.one_mulVec]
 
 /-- Applying the cocharacter-lattice special map twice is multiplication by the characteristic
 `2`. -/
 @[simp] theorem b2SpecialIsogenyMatrix_transpose_mulVec_self (x : Fin 2 → ℤ) :
-    ![b2SpecialIsogenyMatrix 0 0 *
-          (b2SpecialIsogenyMatrix 0 0 * x 0 + b2SpecialIsogenyMatrix 1 0 * x 1) +
-        b2SpecialIsogenyMatrix 1 0 *
-          (b2SpecialIsogenyMatrix 0 1 * x 0 + b2SpecialIsogenyMatrix 1 1 * x 1),
-      b2SpecialIsogenyMatrix 0 1 *
-          (b2SpecialIsogenyMatrix 0 0 * x 0 + b2SpecialIsogenyMatrix 1 0 * x 1) +
-        b2SpecialIsogenyMatrix 1 1 *
-          (b2SpecialIsogenyMatrix 0 1 * x 0 + b2SpecialIsogenyMatrix 1 1 * x 1)] =
-      (2 : ℤ) • x := by
-  ext i
-  fin_cases i <;> simp [b2SpecialIsogenyMatrix_def]
+    b2SpecialIsogenyMatrixᵀ *ᵥ (b2SpecialIsogenyMatrixᵀ *ᵥ x) = (2 : ℤ) • x := by
+  rw [Matrix.mulVec_mulVec, b2SpecialIsogenyMatrix_transpose_mul_self, Matrix.smul_mulVec,
+    Matrix.one_mulVec]
 
 /-- The square relation for the character-lattice map, as an equality of linear maps. -/
 theorem b2SpecialIsogenyMatrix_mulVecLin_comp_self :
