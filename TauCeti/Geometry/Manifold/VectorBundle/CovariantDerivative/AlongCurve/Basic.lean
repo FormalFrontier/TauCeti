@@ -28,8 +28,8 @@ set `s`, so that the construction applies on a closed interval as well as on all
 unrestricted operator is the `s = Set.univ` case, exactly as Mathlib's `fderiv` is the
 `Set.univ` case of `fderivWithin`.  This first part of the along-curve API proves the
 characteristic additive and scalar Leibniz laws, locality in the field and parameter set, and
-naturality under differentiable reparametrization.  A subsequent file will identify the formula
-in an arbitrary fixed chart and compare it with the ambient covariant derivative of a pulled-back
+naturality under differentiable reparametrization.  `AlongCurve/Pullback.lean` identifies the
+formula in an arbitrary fixed chart and with the ambient covariant derivative of a pulled-back
 vector field.
 
 ## Main definitions and results
