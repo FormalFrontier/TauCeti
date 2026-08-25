@@ -74,6 +74,12 @@ arbitrary initial time is recovered by translating the parameter with
   Layer 1, "Maximal interval and homogeneity".
 * [Lee, J. M. (2012). _Introduction to Smooth Manifolds_. Springer New York.][lee2012],
   Chapter 9, Theorems 9.12 and 9.16.
+* [michaellee94, mathlib4#26413: _Existence of maximal solutions for ODEs meeting
+  Picard--Lindelöf conditions_](https://github.com/leanprover-community/mathlib4/pull/26413),
+  for the maximal-solution and maximal-domain API direction.
+* [Winston Yin, mathlib4#26394: _Existence of local flows on
+  manifolds_](https://github.com/leanprover-community/mathlib4/pull/26394), for the manifold
+  local-flow formulation and uniform local existence near an initial point.
 -/
 
 public section
@@ -90,17 +96,13 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 lying in some open interval around `0` on which an integral curve of `v` taking the value `x` at
 time `0` is defined.
 
-It is an open interval containing `0` (`isOpen_maximalIntegralCurveInterval`,
-`ordConnected_maximalIntegralCurveInterval`, `zero_mem_maximalIntegralCurveInterval`), and
-`maximalIntegralCurve v x` is an integral curve of `v` on it. -/
+It is open and order-connected (`isOpen_maximalIntegralCurveInterval`,
+`ordConnected_maximalIntegralCurveInterval`). Under the local-existence hypotheses of
+`zero_mem_maximalIntegralCurveInterval`, it contains `0`, and `maximalIntegralCurve v x` is an
+integral curve of `v` on it. -/
 def maximalIntegralCurveInterval (v : (x : M) → TangentSpace I x) (x : M) : Set ℝ :=
   {t | ∃ γ : ℝ → M, ∃ a b : ℝ,
     IsMIntegralCurveOn γ v (Ioo a b) ∧ γ 0 = x ∧ 0 ∈ Ioo a b ∧ t ∈ Ioo a b}
-
-theorem mem_maximalIntegralCurveInterval_iff :
-    t ∈ maximalIntegralCurveInterval v x ↔ ∃ γ : ℝ → M, ∃ a b : ℝ,
-      IsMIntegralCurveOn γ v (Ioo a b) ∧ γ 0 = x ∧ 0 ∈ Ioo a b ∧ t ∈ Ioo a b :=
-  Iff.rfl
 
 /-- An integral curve of `v` through `x` on an open interval around `0` is defined on a subset of
 the maximal interval of existence. -/
@@ -109,6 +111,7 @@ theorem IsMIntegralCurveOn.subset_maximalIntegralCurveInterval
     Ioo a b ⊆ maximalIntegralCurveInterval v x :=
   fun _ ht ↦ ⟨γ, a, b, hγ, hx, h0, ht⟩
 
+/-- The maximal interval of existence is open. -/
 theorem isOpen_maximalIntegralCurveInterval : IsOpen (maximalIntegralCurveInterval v x) := by
   rw [isOpen_iff_forall_mem_open]
   rintro t ⟨γ, a, b, hγ, hx, h0, ht⟩
@@ -188,8 +191,15 @@ the definition. -/
 noncomputable def maximalIntegralCurve (v : (x : M) → TangentSpace I x) (x : M) (t : ℝ) : M :=
   letI := Classical.dec (t ∈ maximalIntegralCurveInterval v x)
   if h : t ∈ maximalIntegralCurveInterval v x then
-    (mem_maximalIntegralCurveInterval_iff.mp h).choose t
+    h.choose t
   else x
+
+/-- Outside the maximal interval of existence, the junk value of the maximal integral curve is its
+initial point. -/
+@[simp]
+theorem maximalIntegralCurve_eq_of_not_mem (h : t ∉ maximalIntegralCurveInterval v x) :
+    maximalIntegralCurve v x t = x := by
+  simp [maximalIntegralCurve, h]
 
 /-- At a time of the maximal interval of existence, the maximal integral curve takes the value of
 some integral curve of `v` through `x`. -/
@@ -197,9 +207,11 @@ theorem exists_isMIntegralCurveOn_maximalIntegralCurve_eq
     (h : t ∈ maximalIntegralCurveInterval v x) :
     ∃ γ : ℝ → M, ∃ a b : ℝ, IsMIntegralCurveOn γ v (Ioo a b) ∧ γ 0 = x ∧ (0 : ℝ) ∈ Ioo a b ∧
       t ∈ Ioo a b ∧ maximalIntegralCurve v x t = γ t := by
-  obtain ⟨a, b, hγ⟩ := (mem_maximalIntegralCurveInterval_iff.mp h).choose_spec
+  obtain ⟨a, b, hγ⟩ := h.choose_spec
   exact ⟨_, a, b, hγ.1, hγ.2.1, hγ.2.2.1, hγ.2.2.2, dite_eq_left h⟩
 
+/-- At the initial time, the maximal integral curve takes its prescribed initial value. -/
+@[simp]
 theorem maximalIntegralCurve_zero (h : (0 : ℝ) ∈ maximalIntegralCurveInterval v x) :
     maximalIntegralCurve v x 0 = x := by
   obtain ⟨γ, _, _, _, hx, _, _, heq⟩ := exists_isMIntegralCurveOn_maximalIntegralCurve_eq h
