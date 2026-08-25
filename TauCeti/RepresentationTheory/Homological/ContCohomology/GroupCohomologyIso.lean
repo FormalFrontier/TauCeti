@@ -40,8 +40,8 @@ degree `2` where discreteness enters the denominator, `B²` being the image of t
 
 * `TauCeti.ContCohomology.C1_eq_top` and `TauCeti.ContCohomology.C2_eq_top`: over a discrete group
   every cochain is continuous.
-* `TauCeti.ContCohomology.d0_eq_d₀₁`, `d1_eq_d₁₂` and `d2_eq_d₂₃`: the explicit differentials are
-  Mathlib's, on the nose.
+* `TauCeti.ContCohomology.d0_apply_eq_d₀₁_hom_apply` and its degree-`1` and degree-`2`
+  counterparts: the explicit differentials are Mathlib's, on the nose.
 * `TauCeti.ContCohomology.mem_cocycles₁_iff_mem_Z1`,
   `TauCeti.ContCohomology.mem_coboundaries₁_iff_mem_B1` and their degree-`2` and degree-`0`
   counterparts: the dictionary between the two sets of cocycles and coboundaries.
@@ -52,11 +52,10 @@ The universes are pinned by the pin and not by the mathematics. Mathlib states i
 group cohomology for `{k G : Type u}`, so taking `k = ℤ` forces `G` into `Type 0` in every
 statement below that mentions a `Rep ℤ G`; and it states `groupCohomology` for `A : Rep.{u} k G`,
 which forces the coefficient module into that universe too. So the three comparison isomorphisms
-carry `G M : Type`, while the differentials and the four membership dictionaries — which mention
-`cocycles₁`, `cocycles₂`, `coboundaries₁` and `coboundaries₂`, whose universes constrain only `k`
-and `G` — keep `M` in an arbitrary universe. `C1_eq_top` and `C2_eq_top` mention nothing of
-Mathlib's theory and are fully polymorphic. When the pin drops these restrictions the binders
-here can simply be widened.
+carry `G M : Type`, while the differentials, membership dictionaries, and numerator equivalences
+keep every universe not constrained by Mathlib's representation API arbitrary. `C1_eq_top` and
+`C2_eq_top` mention nothing of Mathlib's theory and are fully polymorphic. When the pin drops these
+restrictions the binders here can simply be widened.
 
 The isomorphisms are built as `AddEquiv`s and not as isomorphisms in `ModuleCat ℤ`. The explicit
 `H¹` and `H²` are bare additive groups by construction, their inherited quotient topology being the
@@ -92,39 +91,28 @@ universe u v
 
 open groupCohomology
 
-section DiscreteCochains
-
-variable (G : Type u) [TopologicalSpace G] [DiscreteTopology G]
-  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-
-/-- Over a discrete group every `1`-cochain is continuous. -/
-theorem C1_eq_top : C1 G M = ⊤ :=
-  (AddSubgroup.eq_top_iff' _).2 fun _ => mem_C1_iff.2 continuous_of_discreteTopology
-
-/-- Over a discrete group every `2`-cochain is continuous: `G × G` is discrete too. -/
-theorem C2_eq_top : C2 G M = ⊤ :=
-  (AddSubgroup.eq_top_iff' _).2 fun _ => mem_C2_iff.2 continuous_of_discreteTopology
-
-end DiscreteCochains
-
 section Differentials
 
 variable (G : Type) [Group G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
 
+/- `Rep.ofDistribMulAction ℤ G M` has carrier definitionally equal to `M`, and its action is
+definitionally the original `G`-action. The comparison proofs below use those definitional
+identifications; the named Mathlib formulas record the two sides being identified. -/
+
 /-- The explicit degree-`0` differential is Mathlib's `d₀₁`. -/
-theorem d0_eq_d₀₁ (m : M) :
+theorem d0_apply_eq_d₀₁_hom_apply (m : M) :
     d0 G M m = (groupCohomology.d₀₁ (Rep.ofDistribMulAction ℤ G M)).hom m :=
   funext fun g =>
     (d0_apply m g).trans (d₀₁_hom_apply (A := Rep.ofDistribMulAction ℤ G M) m g).symm
 
 /-- The explicit degree-`1` differential is Mathlib's `d₁₂`. -/
-theorem d1_eq_d₁₂ (f : G → M) :
+theorem d1_apply_eq_d₁₂_hom_apply (f : G → M) :
     d1 G M f = (groupCohomology.d₁₂ (Rep.ofDistribMulAction ℤ G M)).hom f :=
   funext fun q =>
     (d1_apply f q.1 q.2).trans (d₁₂_hom_apply (A := Rep.ofDistribMulAction ℤ G M) f q).symm
 
 /-- The explicit degree-`2` differential is Mathlib's `d₂₃`. -/
-theorem d2_eq_d₂₃ (f : G × G → M) :
+theorem d2_apply_eq_d₂₃_hom_apply (f : G × G → M) :
     d2 G M f = (groupCohomology.d₂₃ (Rep.ofDistribMulAction ℤ G M)).hom f :=
   funext fun q =>
     (d2_apply f q.1 q.2.1 q.2.2).trans
@@ -132,18 +120,23 @@ theorem d2_eq_d₂₃ (f : G × G → M) :
 
 end Differentials
 
-section Dictionary
+section DictionaryDegree0
 
-variable {G : Type} [Group G] [TopologicalSpace G] [DiscreteTopology G]
-  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DistribMulAction G M]
+variable {G : Type u} [Group G] {M : Type v} [AddCommGroup M] [DistribMulAction G M]
 
-omit [TopologicalSpace G] [DiscreteTopology G] [TopologicalSpace M] [IsTopologicalAddGroup M] in
 /-- Degree `0`: the invariants of the induced representation are the explicit `H⁰ = M^G`. -/
 theorem mem_invariants_iff_mem_H0 (m : M) :
     m ∈ (Rep.ofDistribMulAction ℤ G M).ρ.invariants ↔ m ∈ H0 G M :=
   ⟨fun h => (FixedPoints.mem_addSubgroup G M m).2 fun g => h g,
     fun h g => (FixedPoints.mem_addSubgroup G M m).1 h g⟩
+
+end DictionaryDegree0
+
+section DictionaryPositiveDegree
+
+variable {G : Type} [Group G] [TopologicalSpace G] [DiscreteTopology G]
+  {M : Type v} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M]
 
 /-- Degree `1`, cocycles: over a discrete group the continuity half of `Z¹` is free, so the
 continuous `1`-cocycles are Mathlib's `1`-cocycles. -/
@@ -179,14 +172,14 @@ theorem mem_coboundaries₂_iff_mem_B2 (f : G × G → M) :
       fun g h => congrFun hc (g, h)⟩,
     fun h => (mem_B2_iff'.1 h).elim fun c hc => ⟨c, funext fun p => hc.2 p.1 p.2⟩⟩
 
-end Dictionary
+end DictionaryPositiveDegree
 
-section ComparisonDegree0
+section NumeratorDegree0
 
 /-! Degree `0` is the one degree where the comparison needs no hypothesis on the topology at all:
 both sides are the invariants, and continuity constrains no `0`-cochain. -/
 
-variable (G : Type) [Group G] (M : Type) [AddCommGroup M] [DistribMulAction G M]
+variable (G : Type u) [Group G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
 
 /-- Degree `0`, on the carriers: the explicit `H⁰(G, M) = M^G` is the submodule of invariants of
 the induced representation. -/
@@ -203,6 +196,12 @@ theorem H0AddEquivInvariants_val (m : H0 G M) : (H0AddEquivInvariants G M m).1 =
 @[simp]
 theorem H0AddEquivInvariants_symm_val (m : (Rep.ofDistribMulAction ℤ G M).ρ.invariants) :
     ((H0AddEquivInvariants G M).symm m).1 = m.1 := (rfl)
+
+end NumeratorDegree0
+
+section ComparisonDegree0
+
+variable (G : Type) [Group G] (M : Type) [AddCommGroup M] [DistribMulAction G M]
 
 /-- **Layer 3, degree 0 against Mathlib's discrete group cohomology.** The explicit `H⁰(G, M)` is
 Mathlib's `H⁰` of the representation attached to the action. -/
@@ -227,10 +226,10 @@ theorem explicitH0IsoGroupCohomology_symm_apply
 
 end ComparisonDegree0
 
-section ComparisonDegree1
+section NumeratorDegree1
 
 variable (G : Type) [Group G] [TopologicalSpace G] [DiscreteTopology G]
-  (M : Type) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M]
 
 /-- Degree `1`, on the numerators: the continuous `1`-cocycles are Mathlib's `1`-cocycles. -/
@@ -249,47 +248,54 @@ theorem Z1AddEquivCocycles₁_coe (z : Z1 G M) :
 theorem Z1AddEquivCocycles₁_symm_coe (c : cocycles₁ (Rep.ofDistribMulAction ℤ G M)) :
     (((Z1AddEquivCocycles₁ G M).symm c : Z1 G M) : G → M) = ⇑c := (rfl)
 
+end NumeratorDegree1
+
+section ComparisonDegree1
+
+variable (G : Type) [Group G] [TopologicalSpace G] [DiscreteTopology G]
+  (M : Type) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M]
+
 variable [ContinuousSMul G M]
 
 /-- **Layer 3, degree 1 against Mathlib's discrete group cohomology.** Every continuity condition
 is vacuous for a discrete group, so this identifies subquotients of the same function space.
 Layer 4 uses it at every finite level. -/
 noncomputable def explicitH1IsoGroupCohomology :
-    H1 G M ≃+ groupCohomology (Rep.ofDistribMulAction ℤ G M) 1 :=
-  AddEquiv.ofBijective
-    (QuotientAddGroup.lift _
-      ((groupCohomology.H1π (Rep.ofDistribMulAction ℤ G M)).hom.toAddMonoidHom.comp
-        (Z1AddEquivCocycles₁ G M).toAddMonoidHom)
-      fun z hz => (groupCohomology.H1π_eq_zero_iff _).2
-        ((mem_coboundaries₁_iff_mem_B1 z.1).2 (AddSubgroup.mem_addSubgroupOf.1 hz)))
-    ⟨(injective_iff_map_eq_zero _).2 fun x hx => by
-        induction x using QuotientAddGroup.induction_on with
-        | _ z =>
-          rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
-          exact (mem_coboundaries₁_iff_mem_B1 z.1).1 ((groupCohomology.H1π_eq_zero_iff _).1 hx),
-      fun y => by
-        induction y using groupCohomology.H1_induction_on with
-        | h c => exact ⟨((Z1AddEquivCocycles₁ G M).symm c : Z1 G M), rfl⟩⟩
+    H1 G M ≃+ groupCohomology (Rep.ofDistribMulAction ℤ G M) 1 := by
+  let φ := (groupCohomology.H1π (Rep.ofDistribMulAction ℤ G M)).hom.toAddMonoidHom.comp
+    (Z1AddEquivCocycles₁ G M).toAddMonoidHom
+  have hφ : Function.Surjective φ := fun y => by
+    induction y using groupCohomology.H1_induction_on with
+    | h c => exact ⟨((Z1AddEquivCocycles₁ G M).symm c : Z1 G M), rfl⟩
+  have hker : (B1 G M).addSubgroupOf (Z1 G M) = φ.ker := by
+    ext z
+    constructor
+    · exact fun hz => (groupCohomology.H1π_eq_zero_iff _).2
+        ((mem_coboundaries₁_iff_mem_B1 z.1).2 hz)
+    · exact fun hz => (mem_coboundaries₁_iff_mem_B1 z.1).1
+        ((groupCohomology.H1π_eq_zero_iff _).1 hz)
+  exact QuotientAddGroup.liftEquiv _ hφ hker
 
 @[simp]
-theorem explicitH1IsoGroupCohomology_apply (z : Z1 G M) :
+theorem explicitH1IsoGroupCohomology_mk (z : Z1 G M) :
     explicitH1IsoGroupCohomology G M (z : H1 G M) =
       groupCohomology.H1π _ (Z1AddEquivCocycles₁ G M z) :=
   (rfl)
 
 @[simp]
-theorem explicitH1IsoGroupCohomology_symm_apply
+theorem explicitH1IsoGroupCohomology_symm_H1π
     (c : cocycles₁ (Rep.ofDistribMulAction ℤ G M)) :
     (explicitH1IsoGroupCohomology G M).symm (groupCohomology.H1π _ c) =
       (((Z1AddEquivCocycles₁ G M).symm c : Z1 G M) : H1 G M) := by
-  rw [AddEquiv.symm_apply_eq, explicitH1IsoGroupCohomology_apply, AddEquiv.apply_symm_apply]
+  rw [AddEquiv.symm_apply_eq, explicitH1IsoGroupCohomology_mk, AddEquiv.apply_symm_apply]
 
 end ComparisonDegree1
 
-section ComparisonDegree2
+section NumeratorDegree2
 
 variable (G : Type) [Group G] [TopologicalSpace G] [DiscreteTopology G]
-  (M : Type) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M]
 
 /-- Degree `2`, on the numerators: the continuous `2`-cocycles are Mathlib's `2`-cocycles. -/
@@ -308,40 +314,47 @@ theorem Z2AddEquivCocycles₂_coe (z : Z2 G M) :
 theorem Z2AddEquivCocycles₂_symm_coe (c : cocycles₂ (Rep.ofDistribMulAction ℤ G M)) :
     (((Z2AddEquivCocycles₂ G M).symm c : Z2 G M) : G × G → M) = ⇑c := (rfl)
 
+end NumeratorDegree2
+
+section ComparisonDegree2
+
+variable (G : Type) [Group G] [TopologicalSpace G] [DiscreteTopology G]
+  (M : Type) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M]
+
 variable [ContinuousSMul G M]
 
 /-- **Layer 3, degree 2 against Mathlib's discrete group cohomology.** The denominator is where
 discreteness is used twice over: `B²` is the image of the *continuous* `1`-cochains, and over a
 discrete group those exhaust `G → M`. -/
 noncomputable def explicitH2IsoGroupCohomology :
-    H2 G M ≃+ groupCohomology (Rep.ofDistribMulAction ℤ G M) 2 :=
-  AddEquiv.ofBijective
-    (QuotientAddGroup.lift _
-      ((groupCohomology.H2π (Rep.ofDistribMulAction ℤ G M)).hom.toAddMonoidHom.comp
-        (Z2AddEquivCocycles₂ G M).toAddMonoidHom)
-      fun z hz => (groupCohomology.H2π_eq_zero_iff _).2
-        ((mem_coboundaries₂_iff_mem_B2 z.1).2 (AddSubgroup.mem_addSubgroupOf.1 hz)))
-    ⟨(injective_iff_map_eq_zero _).2 fun x hx => by
-        induction x using QuotientAddGroup.induction_on with
-        | _ z =>
-          rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
-          exact (mem_coboundaries₂_iff_mem_B2 z.1).1 ((groupCohomology.H2π_eq_zero_iff _).1 hx),
-      fun y => by
-        induction y using groupCohomology.H2_induction_on with
-        | h c => exact ⟨((Z2AddEquivCocycles₂ G M).symm c : Z2 G M), rfl⟩⟩
+    H2 G M ≃+ groupCohomology (Rep.ofDistribMulAction ℤ G M) 2 := by
+  let φ := (groupCohomology.H2π (Rep.ofDistribMulAction ℤ G M)).hom.toAddMonoidHom.comp
+    (Z2AddEquivCocycles₂ G M).toAddMonoidHom
+  have hφ : Function.Surjective φ := fun y => by
+    induction y using groupCohomology.H2_induction_on with
+    | h c => exact ⟨((Z2AddEquivCocycles₂ G M).symm c : Z2 G M), rfl⟩
+  have hker : (B2 G M).addSubgroupOf (Z2 G M) = φ.ker := by
+    ext z
+    constructor
+    · exact fun hz => (groupCohomology.H2π_eq_zero_iff _).2
+        ((mem_coboundaries₂_iff_mem_B2 z.1).2 hz)
+    · exact fun hz => (mem_coboundaries₂_iff_mem_B2 z.1).1
+        ((groupCohomology.H2π_eq_zero_iff _).1 hz)
+  exact QuotientAddGroup.liftEquiv _ hφ hker
 
 @[simp]
-theorem explicitH2IsoGroupCohomology_apply (z : Z2 G M) :
+theorem explicitH2IsoGroupCohomology_mk (z : Z2 G M) :
     explicitH2IsoGroupCohomology G M (z : H2 G M) =
       groupCohomology.H2π _ (Z2AddEquivCocycles₂ G M z) :=
   (rfl)
 
 @[simp]
-theorem explicitH2IsoGroupCohomology_symm_apply
+theorem explicitH2IsoGroupCohomology_symm_H2π
     (c : cocycles₂ (Rep.ofDistribMulAction ℤ G M)) :
     (explicitH2IsoGroupCohomology G M).symm (groupCohomology.H2π _ c) =
       (((Z2AddEquivCocycles₂ G M).symm c : Z2 G M) : H2 G M) := by
-  rw [AddEquiv.symm_apply_eq, explicitH2IsoGroupCohomology_apply, AddEquiv.apply_symm_apply]
+  rw [AddEquiv.symm_apply_eq, explicitH2IsoGroupCohomology_mk, AddEquiv.apply_symm_apply]
 
 end ComparisonDegree2
 
