@@ -54,8 +54,6 @@ which needs no coordinate ring, is
   the Frobenius-fixed points onto the entrywise-fixed matrices.
 * `TauCeti.GeneralLinear.iterateFrobeniusHopfIdealPoints_eq_self_iff`: a matrix point of the closed
   subgroup scheme is Frobenius-fixed exactly when all of its entries are.
-* `TauCeti.GeneralLinear.map_subtype_fixedSubgroup_of_coe_eq_map_iterateFrobenius`: the fixed
-  points of any endomorphism of a subgroup of `GLₙ(A)` acting by the entrywise Frobenius.
 * `TauCeti.GeneralLinear.map_subtype_fixedSubgroup_iterateFrobeniusHopfIdealPoints`: the fixed
   points of the restricted Frobenius, read in `GLₙ(A)`.
 * `TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring` and
@@ -246,23 +244,6 @@ theorem iterateFrobeniusHopfIdealPoints_add (m : ℕ) :
   rw [iterateFrobeniusHopfIdealPoints, iterateFrobeniusHopfIdealPoints,
     iterateFrobeniusHopfIdealPoints, h, mapHopfIdealPointsSubgroup_comp]
 
-/-- **Fixed points of an endomorphism acting by the entrywise Frobenius.** If a group endomorphism
-of a subgroup `S ≤ GLₙ(A)` raises every matrix entry to its `p ^ k`-th power, then its fixed
-subgroup, read inside `GLₙ(A)`, consists of the elements of `S` that the entrywise Frobenius fixes.
-
-Stated for an arbitrary such endomorphism rather than only for
-`TauCeti.GeneralLinear.iterateFrobeniusHopfIdealPoints`, because a carrier presented by a Hopf ideal
-is usually reached through a named subgroup whose defining equation is
-`TauCeti.GeneralLinear.coe_iterateFrobeniusHopfIdealPoints` transported along an equality of
-subgroups, and that transport changes the endomorphism while preserving the hypothesis below. -/
-theorem map_subtype_fixedSubgroup_of_coe_eq_map_iterateFrobenius
-    {S : Subgroup (Matrix.GeneralLinearGroup (Fin n) A)} (F : S →* S)
-    (hF : ∀ g : S, (F g : Matrix.GeneralLinearGroup (Fin n) A) =
-      Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g) :
-    (fixedSubgroup F).map S.subtype =
-      S ⊓ fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) :=
-  map_subtype_fixedSubgroup_of_coe_eq F _ hF
-
 /-- The points of a closed subgroup scheme fixed by the Frobenius, read as a subgroup of `GLₙ(A)`,
 are the points of that subgroup scheme that the entrywise Frobenius fixes. -/
 theorem map_subtype_fixedSubgroup_iterateFrobeniusHopfIdealPoints :
@@ -270,7 +251,7 @@ theorem map_subtype_fixedSubgroup_iterateFrobeniusHopfIdealPoints :
         (hopfIdealPointsSubgroup n I A).subtype =
       hopfIdealPointsSubgroup n I A ⊓
         fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) :=
-  map_subtype_fixedSubgroup_of_coe_eq_map_iterateFrobenius n p k _
+  TauCeti.map_subtype_fixedSubgroup_of_coe_eq _ _
     (coe_iterateFrobeniusHopfIdealPoints n p k I)
 
 end ClosedSubgroup

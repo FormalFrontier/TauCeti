@@ -46,6 +46,8 @@ subgroup appearing in it is finite, is simple, or is a named finite group.
 * `TauCeti.DynkinType.coe_geckFrobenius`: the endomorphism acts by the entrywise Frobenius.
 * `TauCeti.DynkinType.geckFrobenius_zero` and `TauCeti.DynkinType.geckFrobenius_add`: the iteration
   laws.
+* `TauCeti.DynkinType.geckFrobenius_eq_self_iff`: a carrier point is fixed exactly when all of its
+  matrix entries are fixed.
 * `TauCeti.DynkinType.geckFrobenius_geckRootSubgroupMatrix` and
   `TauCeti.DynkinType.geckFrobenius_geckTorusMatrix`: the equations on the pinned root subgroups
   and on the pinned weight torus.
@@ -152,6 +154,17 @@ theorem geckFrobenius_add (m : ℕ) :
   rw [coe_geckFrobenius_apply, MonoidHom.comp_apply, coe_geckFrobenius_apply,
     coe_geckFrobenius_apply, ← pow_mul, ← pow_add, Nat.add_comm k m]
 
+/-- A point of the pinned Geck carrier is fixed by its Frobenius endomorphism exactly when every
+one of its matrix entries lies in the Frobenius-fixed subring. -/
+@[simp]
+theorem geckFrobenius_eq_self_iff (g : t.geckPoints ht A) :
+    t.geckFrobenius ht p k A g = g ↔
+      ∀ r c, ((g : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) :
+          Matrix (Fin (t.geckDim ht)) (Fin (t.geckDim ht)) A) r c ∈
+        frobeniusFixedSubring A p k := by
+  rw [← SetLike.coe_eq_coe, coe_geckFrobenius,
+    Matrix.GeneralLinearGroup.map_iterateFrobenius_eq_self_iff]
+
 /-- **The Frobenius raises the parameter of a numbered Geck root subgroup to its `p ^ k`-th
 power**, which is the defining equation of the untwisted Steinberg map on the pinned simple root
 subgroups. -/
@@ -191,8 +204,8 @@ theorem map_subtype_fixedSubgroup_geckFrobenius_eq :
     (fixedSubgroup (t.geckFrobenius ht p k A)).map (t.geckPoints ht A).subtype =
       (t.geckPoints ht ↥(frobeniusFixedSubring A p k)).map
         (Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype) := by
-  rw [GeneralLinear.map_subtype_fixedSubgroup_of_coe_eq_map_iterateFrobenius (t.geckDim ht) p k
-      (t.geckFrobenius ht p k A) (t.coe_geckFrobenius ht p k A),
+  rw [TauCeti.map_subtype_fixedSubgroup_of_coe_eq (t.geckFrobenius ht p k A) _
+      (t.coe_geckFrobenius ht p k A),
     t.geckPoints_def ht A, t.geckPoints_def ht ↥(frobeniusFixedSubring A p k),
     GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring]
 

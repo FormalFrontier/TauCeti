@@ -252,7 +252,7 @@ theorem map_subtype_fixedSubgroup_kostantToralFrobenius :
         (kostantToralPointsSubgroup e h ρ M hM hnil b wt A).subtype =
       kostantToralPointsSubgroup e h ρ M hM hnil b wt A ⊓
         fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) :=
-  GeneralLinear.map_subtype_fixedSubgroup_of_coe_eq_map_iterateFrobenius n p k _
+  TauCeti.map_subtype_fixedSubgroup_of_coe_eq _ _
     (coe_kostantToralFrobenius e h ρ M hM hnil b wt p k A)
 
 /-- **The points of a toral closure over the Frobenius-fixed subring are its Frobenius-fixed
