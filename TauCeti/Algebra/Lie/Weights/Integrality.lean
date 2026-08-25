@@ -307,11 +307,10 @@ theorem forall_rootSpace_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_n
     (hv : ⁅((IsKilling.coroot α : H) : L), v⁆ = 0)
     (hvf : ∀ f ∈ rootSpace H (-α), ⁅f, v⁆ = 0) :
     ∀ e ∈ rootSpace H (α : H → K), ⁅e, v⁆ = 0 := by
+  have hcoe_neg : ((-IsKilling.coroot α : H) : L) = -((IsKilling.coroot α : H) : L) :=
+    map_neg H.subtype (IsKilling.coroot α)
   have hv' : ⁅((IsKilling.coroot (-α) : H) : L), v⁆ = 0 := by
-    rw [IsKilling.coroot_neg,
-      show ((-IsKilling.coroot α : H) : L) = -((IsKilling.coroot α : H) : L) by
-        exact map_neg H.subtype (IsKilling.coroot α),
-      neg_lie, hv, neg_zero]
+    rw [IsKilling.coroot_neg, hcoe_neg, neg_lie, hv, neg_zero]
   simpa only [Weight.coe_neg, neg_neg] using
     (forall_rootSpace_neg_lie_eq_zero_of_lie_coroot_eq_zero_of_forall_rootSpace_lie_eq_zero
       (M := M) (α := -α) hv' hvf)
