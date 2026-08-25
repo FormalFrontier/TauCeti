@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.Graded.Multilinear
+public import TauCeti.LinearAlgebra.Graded.Insertion
+import Mathlib.Tactic.Ring
 
 /-!
 # Shifted gradings and the suspension of graded operations
@@ -41,6 +42,8 @@ original one.
 * `TauCeti.Graded.shift`: the shift of a family of graded pieces.
 * `TauCeti.Graded.shiftEquiv`: the canonical equivalence between the underlying modules of a
   grading and its shift; at a shift by one, its inverse is unsuspension.
+* `TauCeti.MultilinearMap.suspExp`: the Koszul exponent for suspending a tuple.
+* `TauCeti.MultilinearMap.suspend`: the signed operation obtained by suspension.
 
 ## Main results
 
@@ -274,6 +277,100 @@ theorem isHomogeneous_suspension_fin_iff {n : ℕ} {f : MultilinearMap R (fun _ 
   simp
 
 end Suspension
+
+section SignedSuspension
+
+variable {R : Type uR} {M : Type uM} [CommRing R] [AddCommMonoid M] [Module R M]
+
+/-- The exponent of the sign prescribed by the Koszul rule for suspending a tuple of inputs with
+degrees `d`. The suspension map has degree `-1`, so input `i` contributes its degree once for
+every input to its right. -/
+@[expose]
+def suspExp (k : ℕ) (d : ℕ → ℤ) : ℤ :=
+  ∑ i ∈ Finset.range k, ((k : ℤ) - 1 - i) * d i
+
+/-- The defining sum for the suspension exponent. -/
+theorem suspExp_def (k : ℕ) (d : ℕ → ℤ) :
+    suspExp k d = ∑ i ∈ Finset.range k, ((k : ℤ) - 1 - i) * d i := rfl
+
+@[simp]
+theorem suspExp_zero (d : ℕ → ℤ) : suspExp 0 d = 0 := by simp [suspExp]
+
+@[simp]
+theorem suspExp_one (d : ℕ → ℤ) : suspExp 1 d = 0 := by simp [suspExp]
+
+/-- The suspension exponent only reads the first `k` degrees. -/
+theorem suspExp_congr {k : ℕ} {d e : ℕ → ℤ} (h : ∀ i < k, d i = e i) :
+    suspExp k d = suspExp k e := by
+  apply Finset.sum_congr rfl
+  intro i hi
+  rw [h i (Finset.mem_range.1 hi)]
+
+/-- Split the suspension exponent between an initial block and the block following it. -/
+theorem suspExp_add (a b : ℕ) (d : ℕ → ℤ) :
+    suspExp (a + b) d =
+      (∑ i ∈ Finset.range a, ((a : ℤ) + b - 1 - i) * d i) +
+        ∑ j ∈ Finset.range b, ((b : ℤ) - 1 - j) * d (a + j) := by
+  rw [suspExp, Finset.sum_range_add]
+  refine congrArg₂ (· + ·) (Finset.sum_congr rfl fun i _ ↦ ?_)
+    (Finset.sum_congr rfl fun j _ ↦ ?_)
+  · rfl
+  · push_cast
+    ring
+
+/-- Recurrence for the suspension exponent after adjoining a final input. -/
+theorem suspExp_succ (k : ℕ) (d : ℕ → ℤ) :
+    suspExp (k + 1) d = (∑ i ∈ Finset.range k, d i) + suspExp k d := by
+  rw [suspExp, suspExp, Finset.sum_range_succ]
+  simp only [Nat.cast_add, Nat.cast_one, add_sub_cancel_right, sub_self, zero_mul, add_zero]
+  rw [← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl fun i _ ↦ by
+    ring
+
+/-- The signed operation prescribed by the suspension square. The tensor power of the suspension
+map is not formalized here; this adopts its Koszul sign as the definition. -/
+@[expose]
+def suspend {k : ℕ} (d : ℕ → ℤ) (f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M) :
+    _root_.MultilinearMap R (fun _ : Fin k ↦ M) M :=
+  TauCeti.negOnePow R (suspExp k d) • f
+
+/-- Evaluation of a suspended multilinear operation. -/
+@[simp]
+theorem suspend_apply {k : ℕ} (d : ℕ → ℤ)
+    (f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M) (x : Fin k → M) :
+    suspend d f x = TauCeti.negOnePow R (suspExp k d) • f x := by
+  rw [suspend, smul_apply]
+
+/-- Applying suspension twice restores the original operation. -/
+@[simp]
+theorem suspend_suspend {k : ℕ} (d : ℕ → ℤ)
+    (f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M) : suspend d (suspend d f) = f := by
+  rw [suspend, suspend, smul_smul, ← TauCeti.negOnePow_add, ← two_mul,
+    TauCeti.negOnePow_two_mul, one_smul]
+
+variable {σ : Type*} [SetLike σ M] [SMulMemClass σ R M]
+
+/-- Suspending a homogeneous arity-`k` operation of degree `2 - k` produces one of degree one. -/
+theorem IsHomogeneous.suspend {k : ℕ} {𝒜 : ℤ → σ} {d : ℕ → ℤ}
+    {f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M}
+    (hf : IsHomogeneous f (fun _ ↦ 𝒜) 𝒜 (2 - k)) :
+    IsHomogeneous (suspend d f) (fun _ ↦ Graded.shift 𝒜 1) (Graded.shift 𝒜 1) 1 :=
+  isHomogeneous_suspension_fin_iff.2 (hf.smul _)
+
+/-- Suspension gives an equivalence between the degree conditions on suspended and unsuspended
+operations. -/
+theorem isHomogeneous_suspend_iff {k : ℕ} {𝒜 : ℤ → σ} {d : ℕ → ℤ}
+    {f : _root_.MultilinearMap R (fun _ : Fin k ↦ M) M} :
+    IsHomogeneous (suspend d f) (fun _ ↦ Graded.shift 𝒜 1) (Graded.shift 𝒜 1) 1 ↔
+      IsHomogeneous f (fun _ ↦ 𝒜) 𝒜 (2 - k) := by
+  rw [isHomogeneous_suspension_fin_iff]
+  constructor
+  · intro hf
+    rw [← suspend_suspend d f]
+    exact hf.smul _
+  · exact fun hf ↦ hf.smul _
+
+end SignedSuspension
 
 end MultilinearMap
 

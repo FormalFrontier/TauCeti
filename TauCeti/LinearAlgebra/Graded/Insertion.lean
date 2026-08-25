@@ -29,6 +29,7 @@ proves that insertion adds the degrees of the outer and inner operations.
 ## Main definitions
 
 * `MultilinearMap.oneSlot`: substitute one multilinear map into a specified block of another.
+* `TauCeti.negOnePow`: the scalar `(-1) ^ e` in a ground ring.
 * `MultilinearMap.koszulSign`: the sign acquired by crossing the prefix inputs.
 * `MultilinearMap.signedOneSlot`: one-slot substitution scaled by the Koszul sign for supplied
   prefix degrees, correct when the prefix inputs have those degrees.
@@ -46,6 +47,56 @@ open TauCeti
 open MultilinearMap
 
 universe uR uα uβ uγ uM uN
+
+namespace TauCeti
+
+section NegOnePow
+
+variable {R : Type uR} [Ring R]
+
+variable (R) in
+/-- The scalar `(-1) ^ e` in a ground ring. -/
+@[expose]
+def negOnePow (e : ℤ) : R := (((ComplexShape.up ℤ).ε e : ℤ) : R)
+
+@[simp]
+theorem negOnePow_zero : negOnePow R 0 = 1 := by simp [negOnePow]
+
+@[simp]
+theorem negOnePow_one : negOnePow R 1 = -1 := by simp [negOnePow]
+
+@[simp]
+theorem negOnePow_neg (a : ℤ) : negOnePow R (-a) = negOnePow R a := by simp [negOnePow]
+
+theorem negOnePow_add (a b : ℤ) :
+    negOnePow R (a + b) = negOnePow R a * negOnePow R b := by
+  simp [negOnePow, Int.negOnePow_add]
+
+@[simp]
+theorem negOnePow_two_mul (a : ℤ) : negOnePow R (2 * a) = 1 := by simp [negOnePow]
+
+theorem negOnePow_even {e : ℤ} (he : Even e) : negOnePow R e = 1 := by
+  simp [negOnePow, Int.negOnePow_even _ he]
+
+theorem negOnePow_odd {e : ℤ} (he : Odd e) : negOnePow R e = -1 := by
+  simp [negOnePow, Int.negOnePow_odd _ he]
+
+variable {A : Type*} [AddCommMonoid A] [Module R A]
+
+/-- The scalar `(-1) ^ e` acts as an involution. -/
+@[simp]
+theorem negOnePow_smul_negOnePow_smul (e : ℤ) (a : A) :
+    negOnePow R e • (negOnePow R e • a) = a := by
+  rw [smul_smul, ← negOnePow_add, ← two_mul, negOnePow_two_mul, one_smul]
+
+@[simp]
+theorem negOnePow_smul_eq_zero_iff (e : ℤ) (a : A) : negOnePow R e • a = 0 ↔ a = 0 := by
+  refine ⟨fun h ↦ ?_, fun h ↦ by simp [h]⟩
+  rw [← negOnePow_smul_negOnePow_smul (R := R) e a, h, smul_zero]
+
+end NegOnePow
+
+end TauCeti
 
 namespace MultilinearMap
 
@@ -175,19 +226,18 @@ variable [Ring R]
 /-- The Koszul coefficient acquired when a degree-`q` operation crosses homogeneous inputs with
 degrees `d i`. -/
 def koszulSign {α : Type uα} [Fintype α] (q : ℤ) (d : α → ℤ) : R :=
-  (((ComplexShape.up ℤ).ε (q * ∑ i, d i) : ℤ) : R)
+  TauCeti.negOnePow R (q * ∑ i, d i)
 
 /-- The tensor-sign character on cochain degrees is the usual power of negative one. -/
 @[simp]
 theorem koszulSign_eq_negOnePow {α : Type uα} [Fintype α] (q : ℤ) (d : α → ℤ) :
     koszulSign (R := R) q d = (((q * ∑ i, d i).negOnePow : ℤ) : R) := by
-  simp [koszulSign]
+  simp [koszulSign, TauCeti.negOnePow]
 
 theorem koszulSign_add_degree {α : Type uα} [Fintype α] (q q' : ℤ) (d : α → ℤ) :
     koszulSign (R := R) (q + q') d =
       koszulSign (R := R) q d * koszulSign (R := R) q' d := by
-  simp only [koszulSign, add_mul, ComplexShape.ε_add, Units.val_mul]
-  norm_cast
+  simp only [koszulSign, add_mul, TauCeti.negOnePow_add]
 
 end KoszulSign
 
