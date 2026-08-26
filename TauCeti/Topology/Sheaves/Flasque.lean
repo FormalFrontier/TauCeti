@@ -21,14 +21,14 @@ surjective. This file proves that a flasque sheaf has no higher cohomology.
 
 ## Main declarations
 
-* `TauCeti.TopCat.Sheaf.isFlasque_of_injective`: an injective object in the category of abelian
+* `TauCeti.Topology.isFlasque_of_injective`: an injective object in the category of abelian
   sheaves is flasque;
-* `TauCeti.TopCat.Sheaf.subsingleton_H'_succ_of_isFlasque`: a flasque sheaf has vanishing
+* `TauCeti.Topology.subsingleton_H'_succ_of_isFlasque`: a flasque sheaf has vanishing
   cohomology in every positive degree over every open subset;
-* `TauCeti.TopCat.Sheaf.subsingleton_H_succ_of_isFlasque`: the same statement for the cohomology
+* `TauCeti.Topology.subsingleton_H_succ_of_isFlasque`: the same statement for the cohomology
   of the whole space;
-* `TauCeti.TopCat.Sheaf.subsingleton_H'_succ_skyscraperSheaf` and
-  `TauCeti.TopCat.Sheaf.subsingleton_H_succ_skyscraperSheaf`: skyscraper sheaves are acyclic.
+* `TauCeti.Topology.subsingleton_H'_succ_skyscraperSheaf` and
+  `TauCeti.Topology.subsingleton_H_succ_skyscraperSheaf`: skyscraper sheaves are acyclic.
 
 The proof is the classical dimension shift. Embedding a flasque sheaf `F` in an injective sheaf
 `I` gives a short exact sequence `0 ⟶ F ⟶ I ⟶ Q ⟶ 0`, and the covariant long exact sequence of
@@ -59,14 +59,14 @@ are Mathlib's `Mathlib/Topology/Sheaves/Flasque.lean`, and the long exact sequen
 public section
 
 open CategoryTheory Limits Opposite TopologicalSpace
-open TauCeti.CategoryTheory.Sheaf (freeYonedaFunctor freeYonedaSectionsEquiv
+open TauCeti.CategoryTheory (freeYonedaFunctor freeYonedaSectionsEquiv
   freeYonedaSectionsEquiv_naturality_left freeYonedaSectionsEquiv_naturality_right)
 
 universe u
 
 namespace TauCeti
 
-namespace TopCat.Sheaf
+namespace Topology
 
 variable {X : TopCat.{u}}
 
@@ -188,6 +188,6 @@ instance subsingleton_H_succ_skyscraperSheaf (p₀ : X) (A : AddCommGrpCat.{u})
 
 end
 
-end TopCat.Sheaf
+end Topology
 
 end TauCeti

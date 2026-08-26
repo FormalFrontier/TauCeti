@@ -19,11 +19,11 @@ a functor of the object of the site and records their universal property and its
 
 ## Main declarations
 
-* `TauCeti.CategoryTheory.Sheaf.freeYonedaFunctor J`, the functor sending `U` to the sheafification
+* `TauCeti.CategoryTheory.freeYonedaFunctor J`, the functor sending `U` to the sheafification
   of the free abelian presheaf on `yoneda.obj U`;
-* `TauCeti.CategoryTheory.Sheaf.freeYonedaSectionsEquiv`, the additive equivalence between
+* `TauCeti.CategoryTheory.freeYonedaSectionsEquiv`, the additive equivalence between
   morphisms from that sheaf to `F` and sections of `F` over `U`;
-* `TauCeti.CategoryTheory.Sheaf.mono_freeYonedaFunctor_map`, saying that a monomorphism of site
+* `TauCeti.CategoryTheory.mono_freeYonedaFunctor_map`, saying that a monomorphism of site
   objects induces a monomorphism between the corresponding free abelian sheaves.
 
 The equivalence composes the sheafification adjunction, the free-forgetful adjunction for abelian
@@ -44,8 +44,6 @@ universe v u
 namespace TauCeti
 
 namespace CategoryTheory
-
-namespace Sheaf
 
 variable {C : Type u} [Category.{v} C] (J : GrothendieckTopology C)
 
@@ -123,8 +121,6 @@ instance mono_freeYonedaFunctor_map {U V : C} (i : U ⟶ V) [Mono i] :
     Mono ((freeYonedaFunctor J).map i) := by
   dsimp only [freeYonedaFunctor, Functor.comp_map]
   infer_instance
-
-end Sheaf
 
 end CategoryTheory
 
