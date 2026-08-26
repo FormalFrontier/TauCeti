@@ -30,7 +30,7 @@ the points of the curve `W.map f` over `S`, with no fields and no tower involved
   `F`-algebra, the transport along `algebraMap F K` *is* Mathlib's `Affine.Point.map`. A user
   holding only a ring homomorphism `f : F →+* K` writes `letI := f.toAlgebra` and gets the same
   statement for `f`.
-* `TauCeti.WeierstrassCurve.Affine.Point.mapAlong_iterateFrobenius_some`: iterated Frobenius
+* `TauCeti.mapAlong_iterateFrobenius_some`: iterated Frobenius
   sends `(x, y)` to `(x ^ (p ^ n), y ^ (p ^ n))`.
 
 `Affine.Point.map` is already an `AddMonoidHom`, so rewriting with `mapAlong_eq_map` gives
@@ -153,6 +153,8 @@ lemma mapAlong_eq_map (P : W.toAffine.Point) :
 
 end Field
 
+end WeierstrassCurve.Affine.Point
+
 section IterateFrobenius
 
 variable {R : Type*} [CommRing R] (p : ℕ) [ExpChar R p]
@@ -167,14 +169,13 @@ form. -/
 theorem mapAlong_iterateFrobenius_some (n : ℕ)
     (hinj : Function.Injective (iterateFrobenius R p n)) {x y : R}
     (h : W.Nonsingular x y) :
-    mapAlong (iterateFrobenius R p n) hinj (.some x y h) =
+    WeierstrassCurve.Affine.Point.mapAlong
+        (iterateFrobenius R p n) hinj (.some x y h) =
       .some (x ^ p ^ n) (y ^ p ^ n)
         ((W.map_nonsingular hinj x y).mpr h) := by
   simp [iterateFrobenius_def]
 
 end IterateFrobenius
-
-end WeierstrassCurve.Affine.Point
 
 end TauCeti
 
