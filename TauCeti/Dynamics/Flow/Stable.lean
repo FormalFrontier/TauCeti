@@ -61,31 +61,21 @@ theorem mem_unstableSet {φ : _root_.Flow ℝ α} {x y : α} :
     y ∈ unstableSet φ x ↔ Tendsto (fun t ↦ φ t y) atBot (𝓝 x) :=
   Iff.rfl
 
-private theorem tendsto_add_const_atTop (t : ℝ) :
-    Tendsto (fun u : ℝ ↦ u + t) atTop atTop := by
-  refine tendsto_atTop.2 fun b ↦ (eventually_ge_atTop (b - t)).mono fun u hu ↦ ?_
-  linarith
-
-private theorem tendsto_add_const_atBot (t : ℝ) :
-    Tendsto (fun u : ℝ ↦ u + t) atBot atBot := by
-  refine tendsto_atBot.2 fun b ↦ (eventually_le_atBot (b - t)).mono fun u hu ↦ ?_
-  linarith
-
 /-- The stable set of a point is invariant under every time map of the flow. -/
 theorem isInvariant_stableSet (φ : _root_.Flow ℝ α) (x : α) :
     IsInvariant φ (stableSet φ x) := by
   intro t y hy
   rw [mem_stableSet] at hy ⊢
-  simpa only [Function.comp_def, ← φ.map_add] using
-    hy.comp (tendsto_add_const_atTop t)
+  simpa only [Function.comp_def, ← φ.map_add, id_eq] using
+    hy.comp (tendsto_atTop_add_const_right atTop t tendsto_id)
 
 /-- The unstable set of a point is invariant under every time map of the flow. -/
 theorem isInvariant_unstableSet (φ : _root_.Flow ℝ α) (x : α) :
     IsInvariant φ (unstableSet φ x) := by
   intro t y hy
   rw [mem_unstableSet] at hy ⊢
-  simpa only [Function.comp_def, ← φ.map_add] using
-    hy.comp (tendsto_add_const_atBot t)
+  simpa only [Function.comp_def, ← φ.map_add, id_eq] using
+    hy.comp (tendsto_atBot_add_const_right atBot t tendsto_id)
 
 /-- If some trajectory converges to `x` in forward time, then `x` is fixed by every time map of
 the flow. -/
@@ -96,8 +86,8 @@ theorem fixed_of_mem_stableSet [T2Space α] {φ : _root_.Flow ℝ α} {x y : α}
   have hleft : Tendsto (fun u ↦ φ t (φ u y)) atTop (𝓝 (φ t x)) :=
     (φ.continuous_toFun t).continuousAt.tendsto.comp hy
   have hright : Tendsto (fun u ↦ φ t (φ u y)) atTop (𝓝 x) := by
-    simpa only [Function.comp_def, ← φ.map_add, add_comm] using
-      hy.comp (tendsto_add_const_atTop t)
+    simpa only [Function.comp_def, ← φ.map_add, add_comm, id_eq] using
+      hy.comp (tendsto_atTop_add_const_right atTop t tendsto_id)
   exact tendsto_nhds_unique hleft hright
 
 /-- If some trajectory converges to `x` in backward time, then `x` is fixed by every time map of
@@ -109,8 +99,8 @@ theorem fixed_of_mem_unstableSet [T2Space α] {φ : _root_.Flow ℝ α} {x y : �
   have hleft : Tendsto (fun u ↦ φ t (φ u y)) atBot (𝓝 (φ t x)) :=
     (φ.continuous_toFun t).continuousAt.tendsto.comp hy
   have hright : Tendsto (fun u ↦ φ t (φ u y)) atBot (𝓝 x) := by
-    simpa only [Function.comp_def, ← φ.map_add, add_comm] using
-      hy.comp (tendsto_add_const_atBot t)
+    simpa only [Function.comp_def, ← φ.map_add, add_comm, id_eq] using
+      hy.comp (tendsto_atBot_add_const_right atBot t tendsto_id)
   exact tendsto_nhds_unique hleft hright
 
 /-- A point belongs to its stable set exactly when it is fixed by the flow. -/
@@ -131,7 +121,8 @@ theorem self_mem_unstableSet_iff [T2Space α] {φ : _root_.Flow ℝ α} {x : α}
 
 /-- Time reversal is an involution. -/
 @[simp]
-theorem reverse_reverse (φ : _root_.Flow ℝ α) : φ.reverse.reverse = φ :=
+theorem reverse_reverse {τ : Type*} [TopologicalSpace τ] [SubtractionCommMonoid τ]
+    [ContinuousNeg τ] (φ : _root_.Flow τ α) : φ.reverse.reverse = φ :=
   _root_.Flow.ext fun t _ ↦ by simp only [_root_.Flow.reverse_apply, neg_neg]
 
 /-- Time reversal exchanges stable and unstable sets. -/
@@ -154,14 +145,14 @@ theorem unstableSet_reverse (φ : _root_.Flow ℝ α) (x : α) :
 
 /-- Under the identity flow, the stable set of `x` is the singleton `{x}`. -/
 @[simp]
-theorem stableSet_id [T2Space α] (x : α) :
+theorem stableSet_id [T1Space α] (x : α) :
     stableSet (_root_.Flow.id ℝ α) x = {x} := by
   ext y
   simp [stableSet]
 
 /-- Under the identity flow, the unstable set of `x` is the singleton `{x}`. -/
 @[simp]
-theorem unstableSet_id [T2Space α] (x : α) :
+theorem unstableSet_id [T1Space α] (x : α) :
     unstableSet (_root_.Flow.id ℝ α) x = {x} := by
   ext y
   simp [unstableSet]
