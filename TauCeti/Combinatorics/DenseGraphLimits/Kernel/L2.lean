@@ -137,23 +137,27 @@ theorem l2sq_zero : l2sq μ (0 : SymmKernel Ω μ) = 0 := by
 variable [IsFiniteMeasure μ]
 
 /-- The `L²` inner product is additive in its left argument. -/
+@[simp]
 theorem l2inner_add_left (K L M : SymmKernel Ω μ) :
     l2inner μ (K + L) M = l2inner μ K M + l2inner μ L M := by
   simp only [l2inner_def, SymmKernel.coe_add, Pi.add_apply, add_mul]
   exact integral_add (SymmKernel.integrable_mul μ K M) (SymmKernel.integrable_mul μ L M)
 
 /-- The `L²` inner product is additive in its right argument. -/
+@[simp]
 theorem l2inner_add_right (K L M : SymmKernel Ω μ) :
     l2inner μ K (L + M) = l2inner μ K L + l2inner μ K M := by
   rw [l2inner_comm, l2inner_add_left, l2inner_comm μ L K, l2inner_comm μ M K]
 
 /-- The `L²` inner product subtracts in its left argument. -/
+@[simp]
 theorem l2inner_sub_left (K L M : SymmKernel Ω μ) :
     l2inner μ (K - L) M = l2inner μ K M - l2inner μ L M := by
   simp only [l2inner_def, SymmKernel.coe_sub, Pi.sub_apply, sub_mul]
   exact integral_sub (SymmKernel.integrable_mul μ K M) (SymmKernel.integrable_mul μ L M)
 
 /-- The `L²` inner product subtracts in its right argument. -/
+@[simp]
 theorem l2inner_sub_right (K L M : SymmKernel Ω μ) :
     l2inner μ K (L - M) = l2inner μ K L - l2inner μ K M := by
   rw [l2inner_comm μ, l2inner_sub_left, l2inner_comm μ M K, l2inner_comm μ L K]
