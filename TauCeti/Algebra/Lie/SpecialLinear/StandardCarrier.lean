@@ -156,10 +156,14 @@ theorem val_cartanGenerator (i : Fin r) :
 
 /-- The standard representation of `sl_{r+1}` on coordinate vectors, extended to the universal
 enveloping algebra. -/
-noncomputable abbrev rep :
+noncomputable def rep :
     _root_.UniversalEnvelopingAlgebra ℚ (sl (Fin (r + 1)) ℚ) →ₐ[ℚ]
       Module.End ℚ (Fin (r + 1) → ℚ) :=
   LieSubalgebra.matrixRepresentation (sl (Fin (r + 1)) ℚ)
+
+/-- The standard representation is the defining matrix representation of `sl_{r+1}`. -/
+theorem rep_def : rep r = LieSubalgebra.matrixRepresentation (sl (Fin (r + 1)) ℚ) := by
+  rw [rep]
 
 theorem rep_ι_apply (x : sl (Fin (r + 1)) ℚ) (v : Fin (r + 1) → ℚ) :
     rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ x) v =
@@ -465,25 +469,52 @@ noncomputable abbrev groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
 
 /-- The numbered root subgroup `x_k : 𝔾ₐ → G` of the type `A_r` carrier. -/
-noncomputable abbrev rootSubgroup (k : Fin r ⊕ Fin r) :
+noncomputable def rootSubgroup (k : Fin r ⊕ Fin r) :
     AdditiveGroup.groupScheme ℤ ⟶ groupScheme r :=
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k
 
+/-- The numbered root subgroup of the type `A_r` carrier is the Kostant root subgroup of the
+numbered generator, corestricted to the toral closure. -/
+theorem rootSubgroup_def (k : Fin r ⊕ Fin r) :
+    rootSubgroup r k =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k := by
+  rw [rootSubgroup]
+
 /-- The rank-`r` split weight torus `T → G` of the type `A_r` carrier. Maximality is not
 asserted here; see the scope disclaimer in the module documentation. -/
-noncomputable abbrev weightTorus : SplitTorus.groupScheme ℤ (Fin r) ⟶ groupScheme r :=
+noncomputable def weightTorus : SplitTorus.groupScheme ℤ (Fin r) ⟶ groupScheme r :=
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
 
+/-- The split torus of the type `A_r` carrier is the Kostant weight torus of the standard
+lattice, corestricted to the toral closure. -/
+theorem weightTorus_def :
+    weightTorus r =
+      TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
+  rw [weightTorus]
+
 /-- The `A`-valued points of the type `A_r` carrier, as matrices. -/
-noncomputable abbrev points (A : Type) [CommRing A] :
+noncomputable def points (A : Type) [CommRing A] :
     Subgroup (Matrix.GeneralLinearGroup (Fin (r + 1)) A) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
+
+/-- The matrix points of the type `A_r` carrier are the Kostant toral points of the standard
+lattice. -/
+theorem points_def (A : Type) [CommRing A] :
+    points r A =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A := by
+  rw [points]
 
 /-! ## The pinning -/
 
@@ -554,17 +585,34 @@ instance isClosedImmersion_weightTorus :
     (span_range_weight_eq_top r)
 
 /-- The parametrized numbered root subgroup on points of a value algebra. -/
-noncomputable abbrev rootSubgroupParam (k : Fin r ⊕ Fin r) (A : CommAlgCat ℤ) :
+noncomputable def rootSubgroupParam (k : Fin r ⊕ Fin r) (A : CommAlgCat ℤ) :
     Multiplicative A →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (lattice r).toAddSubgroup) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupParam (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r) k
     (isNilpotent_rep_rootGenerator r k) A
 
+/-- The parametrized numbered root subgroup is the Kostant divided-power exponential of the
+numbered generator. -/
+theorem rootSubgroupParam_def (k : Fin r ⊕ Fin r) (A : CommAlgCat ℤ) :
+    rootSubgroupParam r k A =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupParam (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r) k
+        (isNilpotent_rep_rootGenerator r k) A := by
+  rw [rootSubgroupParam]
+
 /-- The split weight torus on points of a value algebra. -/
-noncomputable abbrev torusPoints (A : CommAlgCat ℤ) :
+noncomputable def torusPoints (A : CommAlgCat ℤ) :
     (Fin r → Aˣ) →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (lattice r).toAddSubgroup) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints (lattice r).toAddSubgroup
     (latticeBasis r) (weight r) A
+
+/-- The split weight torus on points is the Kostant torus of the standard lattice, taken in the
+coordinate basis and the weights of the coordinate vectors. -/
+theorem torusPoints_def (A : CommAlgCat ℤ) :
+    torusPoints r A =
+      TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints (lattice r).toAddSubgroup
+        (latticeBasis r) (weight r) A := by
+  rw [torusPoints]
 
 /-- **The pinning equation of the type `A_r` carrier.** A torus point `s` conjugates the
 root-subgroup element of parameter `u` into the one of parameter `α_k(s) u`, where `α_k` is the
