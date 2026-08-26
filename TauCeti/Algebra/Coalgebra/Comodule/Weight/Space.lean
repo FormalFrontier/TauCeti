@@ -205,7 +205,7 @@ theorem hasNonzeroWeightVector_iff_exists_groupLikeWeightSpace_ne_bot :
   · rintro ⟨m, c, hm, hc, hcoact⟩
     refine ⟨⟨c, hc⟩, ?_⟩
     exact (groupLikeWeightSpace (M := M) ⟨c, hc⟩).ne_bot_iff.mpr
-      ⟨m, hcoact, hm⟩
+      ⟨m, mem_groupLikeWeightSpace.mpr hcoact, hm⟩
   · rintro ⟨c, hc⟩
     obtain ⟨m, hm, hm0⟩ := (groupLikeWeightSpace (M := M) c).ne_bot_iff.mp hc
     exact ⟨m, c.val, hm0, c.isGroupLikeElem_val, mem_groupLikeWeightSpace.mp hm⟩
