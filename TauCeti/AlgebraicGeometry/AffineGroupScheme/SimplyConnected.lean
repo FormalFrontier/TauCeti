@@ -29,7 +29,7 @@ monomorphism of schemes is an isomorphism. This gives the kernel-free characteri
 
 ## Main declarations
 
-* `TauCeti.simplyConnectedSemisimpleAffineGroupSchemeProperty`: simple connectedness for
+* `TauCeti.simplyConnectedSemisimpleAffineGroupSchemeProperty`: simple connectivity for
   semisimple affine group schemes over a field.
 * `TauCeti.SimplyConnectedSemisimpleAffineGroupSchemeCat`: the corresponding full subcategory.
 * `TauCeti.simplyConnectedSemisimpleAffineGroupSchemeProperty_iff_forall_mono`: a semisimple
@@ -96,7 +96,7 @@ theorem isIso (hG : simplyConnectedSemisimpleAffineGroupSchemeProperty k G)
     (hf : GroupScheme.IsCentralIsogeny ((semisimpleAffineGroupSchemeForget k).map f)) : IsIso f :=
   hG H f hf
 
-/-- Establish simple connectedness by proving that every central isogeny onto the group is an
+/-- Establish simple connectivity by proving that every central isogeny onto the group is an
 isomorphism. -/
 theorem mk
     (hG : ∀ (H : SemisimpleAffineGroupSchemeCat k) (f : H ⟶ G),
@@ -106,7 +106,7 @@ theorem mk
 
 end simplyConnectedSemisimpleAffineGroupSchemeProperty
 
-/-- Simple connectedness of semisimple affine group schemes is invariant under isomorphism. -/
+/-- Simple connectivity of semisimple affine group schemes is invariant under isomorphism. -/
 instance (k : Type u) [Field k] :
     (simplyConnectedSemisimpleAffineGroupSchemeProperty k).IsClosedUnderIsomorphisms where
   of_iso {G K} e hG H f hf := by

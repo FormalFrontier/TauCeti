@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicGeometry.Morphisms.Finite
-public import Mathlib.AlgebraicGeometry.Morphisms.FlatMono
+public import Mathlib.AlgebraicGeometry.Morphisms.Flat
 public import Mathlib.CategoryTheory.Monoidal.Cartesian.CommGrp_
 public import Mathlib.GroupTheory.Subgroup.Center
 
@@ -36,8 +36,6 @@ central kernel and that every isogeny out of a commutative group scheme is centr
 * `TauCeti.GroupScheme.hasCentralKernel`: the corresponding morphism property.
 * `TauCeti.GroupScheme.isogenies`: the finite, flat, surjective morphism property on group schemes.
 * `TauCeti.GroupScheme.IsIsogeny`: the corresponding predicate on a group-scheme morphism.
-* `TauCeti.GroupScheme.IsIsogeny.isIso_of_mono`: an isogeny whose underlying scheme morphism is
-  monic is an isomorphism.
 * `TauCeti.GroupScheme.centralIsogenies`: the central-isogeny morphism property.
 * `TauCeti.GroupScheme.IsCentralIsogeny`: an isogeny with central kernel.
 * `TauCeti.GroupScheme.isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel`: the predicate-level
@@ -217,24 +215,6 @@ theorem flat {f : G ⟶ H} (hf : IsIsogeny f) : Flat f.hom.hom.left :=
 /-- The underlying scheme morphism of a group-scheme isogeny is surjective. -/
 theorem surjective {f : G ⟶ H} (hf : IsIsogeny f) : Surjective f.hom.hom.left :=
   (isIsogeny_iff f).mp hf |>.2.2
-
-/-- A group-scheme isogeny whose underlying scheme morphism is monic is an isomorphism. -/
-theorem isIso_of_mono {f : G ⟶ H} (hf : IsIsogeny f) [Mono f.hom.hom.left] : IsIso f := by
-  let _ : IsFinite f.hom.hom.left := hf.isFinite
-  let _ : Flat f.hom.hom.left := hf.flat
-  let _ : Surjective f.hom.hom.left := hf.surjective
-  let _ : IsIso f.hom.hom.left := Flat.isIso_of_surjective_of_mono f.hom.hom.left
-  let _ : IsIso ((Over.forget (Spec (CommRingCat.of k))).map f.hom.hom) :=
-    inferInstanceAs (IsIso f.hom.hom.left)
-  let _ : IsIso f.hom.hom :=
-    isIso_of_reflects_iso f.hom.hom (Over.forget (Spec (CommRingCat.of k)))
-  let _ : IsIso ((Mon.forget (Over (Spec (CommRingCat.of k)))).map f.hom) :=
-    inferInstanceAs (IsIso f.hom.hom)
-  let _ : IsIso f.hom :=
-    isIso_of_reflects_iso f.hom (Mon.forget (Over (Spec (CommRingCat.of k))))
-  let _ : IsIso ((Grp.forget₂Mon (Over (Spec (CommRingCat.of k)))).map f) :=
-    inferInstanceAs (IsIso f.hom)
-  exact isIso_of_reflects_iso f (Grp.forget₂Mon (Over (Spec (CommRingCat.of k))))
 
 /-- A composite of group-scheme isogenies is an isogeny. -/
 theorem comp {f : G ⟶ H} {g : H ⟶ K} (hf : IsIsogeny f) (hg : IsIsogeny g) :
