@@ -119,7 +119,6 @@ function lies in `L(n · P_∞)` exactly when it is a polynomial of degree at mo
 Regularity at the finite places is exactly polynomiality, by Mathlib's
 `IsDedekindDomain.HeightOneSpectrum.mem_integers_of_valuation_le_one` for `k[X]`; the remaining
 condition at infinity is `deg f ≤ n`, because `ord_∞` is minus the degree. -/
-@[simp]
 theorem mem_riemannRochSpace_zsmul_ofPoint_infty_iff {n : ℕ} {f : RatFunc k} :
     f ∈ riemannRochSpace ((n : ℤ) • WeilDivisor.ofPoint (Place.infty k)) ↔
       ∃ q : k[X], q.degree ≤ (n : WithBot ℕ) ∧ algebraMap k[X] (RatFunc k) q = f := by
