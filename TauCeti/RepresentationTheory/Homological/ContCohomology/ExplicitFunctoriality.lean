@@ -293,9 +293,9 @@ theorem cocyclesMap2_apply (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
 /-- Pullback of continuous degree-two cocycles along the identity compatible pair is the
 identity. -/
 @[simp]
-theorem cocyclesMap2_id (hid : ∀ (g : G) (m : M),
-    (AddMonoidHom.id M) ((ContinuousMonoidHom.id G) g • m) = g • (AddMonoidHom.id M) m) :
-    cocyclesMap2 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id hid =
+theorem cocyclesMap2_id :
+    cocyclesMap2 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id
+      (fun g m => by simp) =
       AddMonoidHom.id _ := by
   ext c p
   obtain ⟨g, h⟩ := p
@@ -309,9 +309,10 @@ theorem cocyclesMap2_comp
     (P : Type uP) [AddCommGroup P] [TopologicalSpace P] [IsTopologicalAddGroup P]
     [DistribMulAction K P]
     (ψ : K →ₜ* H) (q : N →+ P) (hq : Continuous q)
-    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n)
-    (hcomp : ∀ (k : K) (m : M), (q.comp f) ((φ.comp ψ) k • m) = k • (q.comp f) m) :
-    cocyclesMap2 G M K P (φ.comp ψ) (q.comp f) (hq.comp hf) hcomp =
+    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) :
+    cocyclesMap2 G M K P (φ.comp ψ) (q.comp f) (hq.comp hf)
+      (fun k m => by
+        exact comp_apply_smul (φ : H →* G) (ψ : K →* H) f q hequiv hequivq k m) =
       (cocyclesMap2 H N K P ψ q hq hequivq).comp
         (cocyclesMap2 G M H N φ f hf hequiv) := by
   ext c p
@@ -402,9 +403,9 @@ theorem explicitMap2_mk [ContinuousMul G] [ContinuousMul H]
 
 /-- Pullback by the identity compatible pair is the identity on explicit `H²`. -/
 @[simp]
-theorem explicitMap2_id [ContinuousMul G] (hid : ∀ (g : G) (m : M),
-    (AddMonoidHom.id M) ((ContinuousMonoidHom.id G) g • m) = g • (AddMonoidHom.id M) m) :
-    explicitMap2 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id hid =
+theorem explicitMap2_id [ContinuousMul G] :
+    explicitMap2 G M G M (ContinuousMonoidHom.id G) (AddMonoidHom.id M) continuous_id
+      (fun g m => by simp) =
       AddMonoidHom.id _ := by
   apply AddMonoidHom.ext
   intro x
@@ -412,7 +413,7 @@ theorem explicitMap2_id [ContinuousMul G] (hid : ∀ (g : G) (m : M),
   | _ c =>
       rw [explicitMap2_mk, AddMonoidHom.id_apply]
       exact congrArg (fun z : Z2 G M => (z : H2 G M))
-        (DFunLike.congr_fun (cocyclesMap2_id G M hid) c)
+        (DFunLike.congr_fun (cocyclesMap2_id G M) c)
 
 /-- Pullback on explicit `H²` respects composition of compatible pairs. -/
 theorem explicitMap2_comp
@@ -423,9 +424,10 @@ theorem explicitMap2_comp
     (P : Type uP) [AddCommGroup P] [TopologicalSpace P] [IsTopologicalAddGroup P]
     [DistribMulAction K P] [ContinuousSMul K P]
     (ψ : K →ₜ* H) (q : N →+ P) (hq : Continuous q)
-    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n)
-    (hcomp : ∀ (k : K) (m : M), (q.comp f) ((φ.comp ψ) k • m) = k • (q.comp f) m) :
-    explicitMap2 G M K P (φ.comp ψ) (q.comp f) (hq.comp hf) hcomp =
+    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) :
+    explicitMap2 G M K P (φ.comp ψ) (q.comp f) (hq.comp hf)
+      (fun k m => by
+        exact comp_apply_smul (φ : H →* G) (ψ : K →* H) f q hequiv hequivq k m) =
       (explicitMap2 H N K P ψ q hq hequivq).comp
         (explicitMap2 G M H N φ f hf hequiv) := by
   apply AddMonoidHom.ext
@@ -435,7 +437,7 @@ theorem explicitMap2_comp
       rw [explicitMap2_mk, AddMonoidHom.comp_apply, explicitMap2_mk, explicitMap2_mk]
       exact congrArg (fun z : Z2 K P => (z : H2 K P))
         (DFunLike.congr_fun
-          (cocyclesMap2_comp G M H N φ f hf hequiv K P ψ q hq hequivq hcomp) c)
+          (cocyclesMap2_comp G M H N φ f hf hequiv K P ψ q hq hequivq) c)
 
 end Cohomology
 
@@ -459,6 +461,19 @@ theorem explicitRes1_mk (S : Subgroup G) (c : Z1 G M) :
         continuous_id (fun _ _ => rfl) c : H1 S M) :=
   explicitMap1_mk G M S M _ _ _ _ c
 
+/-- Restricting explicit `H¹` first to `S` and then to a subgroup `T` of `S` is restriction
+along the composite inclusion. -/
+theorem explicitRes1_comp (S : Subgroup G) (T : Subgroup S) :
+    (explicitRes1 S M T).comp (explicitRes1 G M S) =
+      explicitMap1 G M T M
+        ((ContinuousMonoidHom.subgroupSubtype S).comp
+          (ContinuousMonoidHom.subgroupSubtype T))
+        (AddMonoidHom.id M) continuous_id (fun _ _ => rfl) := by
+  exact (explicitMap1_comp G M S M (ContinuousMonoidHom.subgroupSubtype S)
+    (AddMonoidHom.id M) continuous_id (fun _ _ => rfl) T M
+    (ContinuousMonoidHom.subgroupSubtype T) (AddMonoidHom.id M) continuous_id
+    (fun _ _ => rfl) (fun _ _ => rfl)).symm
+
 /-- Restriction on explicit `H²`, induced by the subgroup inclusion and the identity coefficient
 map. -/
 noncomputable def explicitRes2 (S : Subgroup G) [ContinuousMul G] [ContinuousMul S] :
@@ -473,6 +488,20 @@ theorem explicitRes2_mk (S : Subgroup G) [ContinuousMul G] [ContinuousMul S] (c 
       (cocyclesMap2 G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
         continuous_id (fun _ _ => rfl) c : H2 S M) :=
   explicitMap2_mk G M S M _ _ _ _ c
+
+/-- Restricting explicit `H²` first to `S` and then to a subgroup `T` of `S` is restriction
+along the composite inclusion. -/
+theorem explicitRes2_comp (S : Subgroup G) (T : Subgroup S)
+    [ContinuousMul G] [ContinuousMul S] [ContinuousMul T] :
+    (explicitRes2 S M T).comp (explicitRes2 G M S) =
+      explicitMap2 G M T M
+        ((ContinuousMonoidHom.subgroupSubtype S).comp
+          (ContinuousMonoidHom.subgroupSubtype T))
+        (AddMonoidHom.id M) continuous_id (fun _ _ => rfl) := by
+  exact (explicitMap2_comp G M S M (ContinuousMonoidHom.subgroupSubtype S)
+    (AddMonoidHom.id M) continuous_id (fun _ _ => rfl) T M
+    (ContinuousMonoidHom.subgroupSubtype T) (AddMonoidHom.id M) continuous_id
+    (fun _ _ => rfl)).symm
 
 /-- The coefficient map on explicit `H¹` induced by a continuous equivariant additive
 homomorphism. -/
@@ -535,7 +564,7 @@ theorem explicitCoeff2_mk [ContinuousMul G]
 @[simp]
 theorem explicitCoeff2_id [ContinuousMul G] :
     explicitCoeff2 G M (DistribMulActionHom.id G) continuous_id = AddMonoidHom.id _ :=
-  explicitMap2_id G M fun _ _ => rfl
+  explicitMap2_id G M
 
 /-- Coefficient maps on explicit `H²` respect composition. -/
 theorem explicitCoeff2_comp [ContinuousMul G]
@@ -550,7 +579,7 @@ theorem explicitCoeff2_comp [ContinuousMul G]
   -- identity group map and the bundled composite coefficient map.
   convert explicitMap2_comp G M G N (ContinuousMonoidHom.id G) f hf
     (fun g m => f.map_smul g m) G P (ContinuousMonoidHom.id G) q hq
-    (fun g n => q.map_smul g n) (fun g m => (q.comp f).map_smul g m) using 1 <;>
+    (fun g n => q.map_smul g n) using 1 <;>
     ext <;> rfl
 
 end NamedMaps
