@@ -49,10 +49,10 @@ bidegree, and the strictness of a morphism of mixed Hodge structures.
 
 * `TauCeti.Hodge.MixedHodgeStructure.deligneSplitting_disjoint_WC`: `I^{p,q}` meets `W_{p+q-1}`
   trivially.
-* `TauCeti.Hodge.MixedHodgeStructure.piece_le_map_deligneSplitting`: `I^{p,q}` covers the Hodge
-  component `H^{p,k-p}` of `gr^W_k`, granted the recovery of the previous weight step.
 * `TauCeti.Hodge.MixedHodgeStructure.WC_eq_iSup_deligneSplitting`: the recovery
   `W_k = ⨆_{p+q ≤ k} I^{p,q}` of the weight filtration.
+* `TauCeti.Hodge.MixedHodgeStructure.map_deligneSplitting_eq_piece`: the image of `I^{p,q}` in
+  `gr^W_{p+q}` is the Hodge component `H^{p,q}`.
 * `TauCeti.Hodge.MixedHodgeStructure.iSup_deligneSplittingFamily_eq_top`: the bigrading spans.
 * `TauCeti.Hodge.MixedHodgeStructure.iSupIndep_deligneSplittingFamily`: the pieces are
   independent.
@@ -106,6 +106,7 @@ theorem deligneSplitting_inf_WC_le (p q m : ℤ) (hm : m < p + q) :
   have hmk : (Submodule.Quotient.mk (⟨a, haW⟩ : mhs.WC m) : weightGradedComplex mhs.WC m) =
       Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC m) := by
     refine (Submodule.Quotient.eq _).2 (Submodule.mem_comap.2 ?_)
+    -- Unfold the subtype subtraction at the quotient boundary to ambient membership in `WC`.
     change a - x ∈ mhs.WC (m - 1)
     exact hax ▸ Submodule.neg_mem _ hb
   have hu₁ : Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC m) ∈
@@ -161,7 +162,8 @@ theorem deligneSplitting_eq_bot_of_WC_eq_top {k : ℤ} (hk : mhs.WC k = ⊤) {p 
 
 This is the bookkeeping that makes the correction step below work: the terms of the formula for
 `I^{p',q'}` all match, index for index, terms of the formula for `I^{p,q}` once `p' < p`. -/
-theorem deligneSplitting_le_sup_of_lt {p q p' q' : ℤ} (hp : p' < p) (hd : p' + q' < p + q) :
+private theorem deligneSplitting_le_sup_of_lt {p q p' q' : ℤ} (hp : p' < p)
+    (hd : p' + q' < p + q) :
     mhs.deligneSplitting p' q' ≤
       (mhs.conjF q ⊓ mhs.WC (p + q)) ⊔
         ⨆ j : ℕ, mhs.conjF (q - (j : ℤ) - 1) ⊓ mhs.WC (p + q - (j : ℤ) - 2) := by
@@ -189,7 +191,7 @@ A representative is corrected by subtracting the part of its error term supporte
 at least `p`, which lies in `F^p` and in `W_{k-1}`, so that neither membership in `F^p` nor the
 class in `gr^W_k` changes; what is left of the error term lies in the second factor of Deligne's
 formula. -/
-theorem piece_le_map_deligneSplitting {k : ℤ}
+private theorem piece_le_map_deligneSplitting {k : ℤ}
     (hW : mhs.WC (k - 1) ≤
       ⨆ (rs : ℤ × ℤ) (_ : rs.1 + rs.2 ≤ k - 1), mhs.deligneSplitting rs.1 rs.2)
     (p : ℤ) :
@@ -226,6 +228,7 @@ theorem piece_le_map_deligneSplitting {k : ℤ}
   refine ⟨⟨(y : Vℂ) - c, hxW⟩, hx, ?_⟩
   rw [Submodule.mkQ_apply, ← hyu]
   refine (Submodule.Quotient.eq _).2 (Submodule.mem_comap.2 ?_)
+  -- Unfold the quotient representatives and `submoduleOf` membership back in the ambient space.
   change (y : Vℂ) - c - (y : Vℂ) ∈ mhs.WC (k - 1)
   have hneg : (y : Vℂ) - c - (y : Vℂ) = -c := by abel
   exact hneg ▸ Submodule.neg_mem _ hc.2
@@ -270,6 +273,31 @@ theorem WC_eq_iSup_deligneSplitting (k : ℤ) :
   · exact key k h
   · exact (mhs.WC_monotone h.le).trans (by rw [hk₀]; exact bot_le)
 
+private theorem map_deligneSplitting_le_piece (p q : ℤ) :
+    ((mhs.deligneSplitting p q).submoduleOf (mhs.WC (p + q))).map
+        ((mhs.WC (p + q - 1)).submoduleOf (mhs.WC (p + q))).mkQ ≤
+      (mhs.complexGradedHodgeStructure (p + q)).piece p := by
+  rintro _ ⟨x, hx, rfl⟩
+  have hxI : (x : Vℂ) ∈ mhs.deligneSplitting p q := hx
+  refine mhs.mk_mem_complexGradedHodgeStructure_piece (p + q) p x
+    (mhs.deligneSplitting_le_F p q hxI) ?_
+  have hconj := mhs.deligneSplitting_le_conjF_sup_WC p q hxI
+  have hmono : mhs.conjF q ⊔ mhs.WC (p + q - 2) ≤
+      mhs.conjF q ⊔ mhs.WC (p + q - 1) :=
+    sup_le le_sup_left (le_sup_of_le_right (mhs.WC_monotone (by omega)))
+  simpa only [conjF_def, add_sub_cancel_left] using hmono hconj
+
+/-- The image of the Deligne bigrading piece `I^{p,q}` in `gr^W_{p+q}` is exactly the pure Hodge
+component `H^{p,q}` of that graded piece. -/
+theorem map_deligneSplitting_eq_piece (p q : ℤ) :
+    ((mhs.deligneSplitting p q).submoduleOf (mhs.WC (p + q))).map
+        ((mhs.WC (p + q - 1)).submoduleOf (mhs.WC (p + q))).mkQ =
+      (mhs.complexGradedHodgeStructure (p + q)).piece p := by
+  apply le_antisymm
+  · exact mhs.map_deligneSplitting_le_piece p q
+  · have hW := (mhs.WC_eq_iSup_deligneSplitting (p + q - 1)).le
+    simpa only [add_sub_cancel_left] using mhs.piece_le_map_deligneSplitting hW p
+
 /-- **Deligne's bigrading spans**: the supremum of all the pieces `I^{p,q}` is the whole complex
 vector space. -/
 theorem iSup_deligneSplittingFamily_eq_top :
@@ -308,6 +336,7 @@ theorem iSup_deligneSplitting_disjoint_WC (m : ℤ) :
       obtain ⟨u, hu, v, hv, huv⟩ := Submodule.mem_sup.1 (hsplit hx1)
       have huW : u ∈ mhs.WC m := by
         have hle := mhs.deligneSplitting_le_WC (p - 1) (m - (p - 1)) hu
+        -- Normalize the total degree of `I^{p-1,m-(p-1)}` to the ambient weight `m`.
         rwa [show p - 1 + (m - (p - 1)) = m by ring] at hle
       have hvW : v ∈ mhs.WC m := by
         have hvu : v = x - u := by rw [← huv]; abel
@@ -326,12 +355,14 @@ theorem iSup_deligneSplitting_disjoint_WC (m : ℤ) :
       have hclassv : Submodule.Quotient.mk (⟨v, hvW⟩ : mhs.WC m) ∈
           (mhs.complexGradedHodgeStructure m).F (p - 1 + 1) := by
         rw [complexGradedHodgeStructure_F, mem_complexGradedF_iff]
+        -- Normalize the successor filtration index before using `hvF : v ∈ F p`.
         exact ⟨⟨v, hvW⟩, by rwa [show p - 1 + 1 = p by ring], rfl⟩
       have huv' : (Submodule.Quotient.mk (⟨u, huW⟩ : mhs.WC m) :
             weightGradedComplex mhs.WC m) =
           -Submodule.Quotient.mk (⟨v, hvW⟩ : mhs.WC m) := by
         rw [eq_neg_iff_add_eq_zero, ← Submodule.Quotient.mk_add]
         refine (Submodule.Quotient.mk_eq_zero _).2 (Submodule.mem_comap.2 ?_)
+        -- Unfold addition of quotient representatives to ambient membership in the lower step.
         change u + v ∈ mhs.WC (m - 1)
         rw [huv]
         exact hx2
@@ -343,6 +374,7 @@ theorem iSup_deligneSplitting_disjoint_WC (m : ℤ) :
         ((Submodule.Quotient.mk_eq_zero ((mhs.WC (m - 1)).submoduleOf (mhs.WC m))).1 hzero)
       have hu0 : u = 0 := by
         have := (mhs.deligneSplitting_disjoint_WC (p - 1) (m - (p - 1))).le_bot
+          -- Normalize the lower weight step for the total degree of the selected piece.
           ⟨hu, by rwa [show p - 1 + (m - (p - 1)) - 1 = m - 1 by ring]⟩
         simpa using this
       have hxv : x = v := by rw [← huv, hu0, zero_add]
@@ -464,6 +496,7 @@ theorem iSupIndep_deligneSplittingFamily : iSupIndep mhs.deligneSplittingFamily 
     refine mhs.mk_mem_complexGradedHodgeStructure_piece (p + q) p ⟨x, hxW⟩
       (mhs.deligneSplitting_le_F p q hx1) ?_
     have hle := mhs.deligneSplitting_le_conjF_sup_WC p q hx1
+    -- Express the second bidegree `q` in the graded-piece convention `(p + q) - p`.
     rw [conjF_def, show q = p + q - p by ring] at hle
     exact (sup_le le_sup_left (le_sup_of_le_right (mhs.WC_monotone (by omega)))) hle
   have hmk : (Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC (p + q)) :
@@ -472,6 +505,7 @@ theorem iSupIndep_deligneSplittingFamily : iSupIndep mhs.deligneSplittingFamily 
         Submodule.Quotient.mk (⟨z₂, hz₂.2⟩ : mhs.WC (p + q)) := by
     rw [← Submodule.Quotient.mk_add]
     refine (Submodule.Quotient.eq _).2 (Submodule.mem_comap.2 ?_)
+    -- Unfold subtraction of quotient representatives to membership in the lower weight step.
     change x - (z₁ + z₂) ∈ mhs.WC (p + q - 1)
     have hrest : x - (z₁ + z₂) = z₃ + w' := by rw [hxeq]; abel
     rw [hrest]
