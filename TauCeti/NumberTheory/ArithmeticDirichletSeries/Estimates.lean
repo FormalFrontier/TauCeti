@@ -185,6 +185,7 @@ theorem idealCount_linearBounds : Nonempty (IdealCountingLinearBounds K) := by
 
 /-- The trivial ideal weight has norm coefficient the number of nonzero integral ideals of the
 given absolute norm, so its absolute value is that count. -/
+@[simp]
 theorem norm_normCoeff_one (n : ℕ) :
     ‖normCoeff K (1 : IdealArithmeticFunction K) n‖ = (normFiber K n).card := by
   rw [normCoeff_eq_sum_normFiber]
@@ -241,8 +242,10 @@ theorem abscissaOfAbsConv_normCoeff_one_le :
 private theorem sum_Ioc_norm_normCoeff_one (n : ℕ) :
     ∑ k ∈ Finset.Ioc 0 n, ‖normCoeff K (1 : IdealArithmeticFunction K) k‖
       = Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ (n : ℝ)} := by
-  rw [← sum_norm_normCoeff_one,
-    show Finset.Icc 1 n = Finset.Ioc 0 n from Finset.Icc_succ_left_eq_Ioc _ _]
+  -- Normalize the order-theoretic successor in the interval rewrite to the natural numeral `1`.
+  have hinterval : Finset.Icc 1 n = Finset.Ioc 0 n := by
+    simpa only [Nat.succ_eq_succ] using Finset.Icc_succ_left_eq_Ioc 0 n
+  rw [← sum_norm_normCoeff_one, hinterval]
 
 /-- **Divergence at `s = 1`.** The Dirichlet series of the trivial ideal weight does not converge
 at `s = 1`.
@@ -369,6 +372,7 @@ theorem abscissaOfAbsConv_normCoeff_one :
 
 /-- The Dirichlet series of the trivial ideal weight converges exactly on the open half-plane
 `Re s > 1`; on the line `Re s = 1` it diverges. -/
+@[simp]
 theorem LSeriesSummable_normCoeff_one_iff {s : ℂ} :
     LSeriesSummable (normCoeff K (1 : IdealArithmeticFunction K)) s ↔ 1 < s.re := by
   refine ⟨fun h ↦ ?_, fun h ↦ LSeriesSummable_of_abscissaOfAbsConv_lt_re ?_⟩
@@ -399,6 +403,7 @@ theorem abscissaOfAbsConv_dedekindZetaCoeff :
   rw [normCoeff_one_apply, ite_eq_right hn]
 
 /-- The Dedekind zeta series converges exactly on the open half-plane `Re s > 1`. -/
+@[simp]
 theorem LSeriesSummable_dedekindZetaCoeff_iff {s : ℂ} :
     LSeriesSummable (fun n ↦ (dedekindZetaCoeff K n : ℂ)) s ↔ 1 < s.re := by
   rw [← LSeriesSummable_normCoeff_one_iff K]
