@@ -46,8 +46,8 @@ graph.
 
 ## Main results
 
-* `TauCeti.Finpartition.setIntegral_prod_eq_sum_parts` and
-  `TauCeti.Finpartition.integral_eq_sum_parts`: a measurable finite partition splits an
+* `Finpartition.setIntegral_prod_eq_sum_parts` and
+  `Finpartition.integral_eq_sum_parts`: a measurable finite partition splits an
   integral over a rectangle, respectively over the whole product carrier, into a finite sum over
   its subrectangles;
 * `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le`: block averaging over a refinement
@@ -91,8 +91,6 @@ public section
 noncomputable section
 
 open MeasureTheory Set
-
-namespace TauCeti
 
 namespace Finpartition
 
@@ -142,6 +140,8 @@ theorem integral_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
   simp
 
 end Finpartition
+
+namespace TauCeti
 
 namespace DenseGraphLimits
 

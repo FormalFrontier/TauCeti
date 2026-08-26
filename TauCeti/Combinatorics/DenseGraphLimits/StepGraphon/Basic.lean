@@ -28,8 +28,8 @@ measurability immediate and does not choose a distinguished index for each point
 
 ## Main results
 
-* `TauCeti.Finpartition.iUnion_parts` and
-  `TauCeti.Finpartition.inter_part_eq_self_or_empty_of_le` are the two covering facts about a
+* `Finpartition.iUnion_parts` and
+  `Finpartition.inter_part_eq_self_or_empty_of_le` are the two covering facts about a
   `Finpartition` of the carrier that the block constructions and their refinements run on;
 * `TauCeti.DenseGraphLimits.stepGraphon_apply` evaluates the graphon on a specified block;
 * `TauCeti.DenseGraphLimits.stepGraphon_inj` says that, for a fixed partition, two step graphons
@@ -50,8 +50,6 @@ public section
 noncomputable section
 
 open Set
-
-namespace TauCeti
 
 namespace Finpartition
 
@@ -74,6 +72,8 @@ theorem inter_part_eq_self_or_empty_of_le {P Q : Finpartition (Set.univ : Set Ω
     exact absurd hx.2 (Set.disjoint_left.mp (P.disjoint hp' hp h) (hrp' hx.1))
 
 end Finpartition
+
+namespace TauCeti
 
 namespace DenseGraphLimits
 
