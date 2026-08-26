@@ -322,13 +322,15 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
   obtain ⟨n, hn⟩ := hΓ.exists_int_windingNumber hclosed fun t ht heq =>
     h_off_sub h hh_pos hh_lt ⟨t, ht, heq⟩
   have hmn : m = n + 1 := by
-    apply eq_of_dist_intCast_lt_one
+    by_contra hne
+    have h1 : (1 : ℝ) ≤ dist (m : ℂ) ((n + 1 : ℤ) : ℂ) := by
+      rw [Complex.isometry_intCast.dist_eq]; exact Int.pairwise_one_le_dist hne
     rw [hm, hn] at hh_near
-    have : ((n + 1 : ℤ) : ℂ) = (n : ℂ) + 1 := by push_cast; ring
-    rw [this, dist_eq_norm]
-    calc ‖(m : ℂ) - ((n : ℂ) + 1)‖ = ‖(m : ℂ) - n - 1‖ := by ring_nf
-      _ < 1 / 2 := by rw [← dist_eq_norm]; exact hh_near
-      _ < 1 := by norm_num
+    have hcast : ((n + 1 : ℤ) : ℂ) = (n : ℂ) + 1 := by push_cast; ring
+    rw [hcast] at h1
+    have : dist ((m : ℂ) - (n : ℂ)) 1 = dist (m : ℂ) ((n : ℂ) + 1) := by
+      simp [dist_eq_norm]; ring_nf
+    linarith
   have h_jump : windingNumber Γ a c (v * (s + h * I) + z₀)
       = windingNumber Γ a c (v * (s - h * I) + z₀) + 1 := by
     rw [hm, hn, hmn]; push_cast; ring
