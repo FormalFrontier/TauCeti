@@ -43,6 +43,14 @@ The string is indexed by `j : ℕ` and the displacement is the `ℕ`-scalar mult
 `Module.Dual K H`; `Nat.cast_smul_eq_nsmul` converts to the `(j : K) • α` spelling where a
 computation in the base field is wanted.
 
+The index `j = 0` is **included**: `0 ∈ weightString M hα μ` exactly when `μ` itself is a weight, so
+`weightString` is the whole `α`-string above `μ` and `mem_weightString_iff` characterises membership
+with no side condition on `j`.  Freudenthal's inner sum runs over `j ≥ 1` instead, i.e. over
+`(weightString M hα μ).erase 0`; being a subset of the string, that index set is finite for the same
+reason, which is the finiteness this file supplies.  Restricting the definition itself to `j ≥ 1`
+would lose the `j = 0` term, which is the multiplicity `mult_μ` standing on the *left* of the
+recursion, and would make every statement below carry a `0 < j` hypothesis.
+
 `TauCeti.weightString` carries the hypothesis `α ≠ 0` as an explicit argument rather than
 choosing a junk value, because the `α = 0` case is genuinely infinite (whenever `μ` is a weight)
 rather than merely uninteresting;
@@ -106,7 +114,9 @@ theorem finite_setOf_genWeightSpace_add_nsmul_ne_bot {alpha : Dual K H} (halpha 
     (LieModule.finite_genWeightSpace_ne_bot K H M)
 
 /-- **The `α`-string above `μ`**: the `j : ℕ` for which `μ + j • α` is a weight of `M`.  The
-hypothesis `α ≠ 0` is what makes the string finite. -/
+hypothesis `α ≠ 0` is what makes the string finite.  The index `j = 0` is included, so this is the
+full string; the `j ≥ 1` index set of Freudenthal's inner sum is the subset
+`(weightString M halpha mu).erase 0`. -/
 noncomputable def weightString {alpha : Dual K H} (halpha : alpha ≠ 0) (mu : Dual K H) :
     Finset ℕ :=
   (finite_setOf_genWeightSpace_add_nsmul_ne_bot M halpha mu).toFinset
