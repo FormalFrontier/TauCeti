@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.Modules.GlobalSections
+public import TauCeti.AlgebraicGeometry.Scheme.Opens
 public import Mathlib.AlgebraicGeometry.FunctionField
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 public import Mathlib.AlgebraicGeometry.Stalk
@@ -100,11 +101,6 @@ def fromSpecFunctionField : Spec X.functionField ⟶ X :=
   X.fromSpecStalk (genericPoint X)
 
 variable {X}
-
-/-- The whole space is a nonempty open subset of a nonempty scheme. -/
-instance {X : Scheme.{u}} [Nonempty X] : Nonempty ((⊤ : X.Opens) : Type u) :=
-  let ⟨x⟩ := ‹Nonempty X›
-  ⟨⟨x, trivial⟩⟩
 
 /-- The generic point of an irreducible scheme lies in every nonempty open subset. -/
 theorem genericPoint_mem (U : X.Opens) [Nonempty U] : genericPoint X ∈ U :=
@@ -362,8 +358,9 @@ variable (X)
 It is the pushforward along `Spec K(X) ⟶ X` of multiplication by the corresponding global
 function on `Spec K(X)`, so no sheaf-theoretic gluing is needed to build it. -/
 def rationalFunctionsMul (f : X.functionField) :
-    rationalFunctions X ⟶ rationalFunctions X :=
-  (Scheme.Modules.pushforward (fromSpecFunctionField X)).map
+    rationalFunctions X ⟶ rationalFunctions X := by
+  let _ : Nonempty ((⊤ : X.Opens) : Type u) := instNonemptyTop
+  exact (Scheme.Modules.pushforward (fromSpecFunctionField X)).map
     (Scheme.Modules.globalSectionsSmul (SheafOfModules.unit _)
       ((rationalFunctionsRingEquiv (X := X) ⊤).symm f))
 
@@ -375,6 +372,7 @@ theorem rationalFunctionsEquiv_rationalFunctionsMul_app (f : X.functionField) (U
     [Nonempty U] (s : Γ(rationalFunctions X, U)) :
     rationalFunctionsEquiv U (Scheme.Modules.Hom.app (rationalFunctionsMul X f) U s) =
       f * rationalFunctionsEquiv U s := by
+  let _ : Nonempty ((⊤ : X.Opens) : Type u) := instNonemptyTop
   -- The pushforward of a scalar multiplication acts on sections over `U` as the scalar
   -- multiplication over the preimage of `U`, which is multiplication in the ring of sections.
   have hval : rationalFunctionsSectionsEquiv X U
@@ -395,6 +393,7 @@ theorem rationalFunctionsEquiv_rationalFunctionsMul_app (f : X.functionField) (U
 @[simp]
 theorem rationalFunctionsMul_mul (f g : X.functionField) :
     rationalFunctionsMul X (f * g) = rationalFunctionsMul X g ≫ rationalFunctionsMul X f := by
+  let _ : Nonempty ((⊤ : X.Opens) : Type u) := instNonemptyTop
   simp only [rationalFunctionsMul, map_mul]
   let M : (Spec X.functionField).Modules :=
     SheafOfModules.unit (Spec X.functionField).ringCatSheaf
@@ -411,6 +410,7 @@ theorem rationalFunctionsMul_mul (f g : X.functionField) :
 /-- Multiplication by `1` is the identity. -/
 @[simp]
 theorem rationalFunctionsMul_one : rationalFunctionsMul X 1 = 𝟙 _ := by
+  let _ : Nonempty ((⊤ : X.Opens) : Type u) := instNonemptyTop
   simp only [rationalFunctionsMul, map_one]
   let M : (Spec X.functionField).Modules :=
     SheafOfModules.unit (Spec X.functionField).ringCatSheaf
