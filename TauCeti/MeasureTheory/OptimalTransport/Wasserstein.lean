@@ -81,9 +81,9 @@ order-theoretic API, the vanishing on the diagonal, symmetry, the one-sided Dira
 `TauCeti.wassersteinEDist_mono_exponent` — monotonicity holds already from `p = 0` — do not.
 
 The measures are raw `MeasureTheory.Measure`s, not bundled probability measures. The theorems that
-genuinely need normalisation — monotonicity in the exponent, the Dirac identities, attainment —
-take the `MeasureTheory.IsProbabilityMeasure` instances they use, while the order-theoretic API,
-symmetry and the vanishing on the diagonal hold for arbitrary measures.
+genuinely need normalisation — monotonicity in the exponent, the Dirac identities, attainment and
+separation — take the `MeasureTheory.IsProbabilityMeasure` instances they use, while the
+order-theoretic API, symmetry and the vanishing on the diagonal hold for arbitrary measures.
 
 This is Layer 3, item 1 of the optimal-transport roadmap. The basepoint-independence lemmas that
 item 2 rests on are proved here, on the Dirac identity; the finite-moment spaces `P_p (X)`
@@ -256,8 +256,9 @@ theorem wassersteinEDist_dirac_dirac [MeasurableSingletonClass X]
 
 /-- **Basepoint independence of the `p`-moment.** By `TauCeti.wassersteinEDist_dirac_left` the
 Wasserstein distance from a Dirac law is the `p`-th moment of `ν` about its atom, and moving the
-basepoint costs at most the ground distance between the two basepoints: the constant function is
-in every `L^p` of a probability measure, and Minkowski's inequality does the rest. -/
+basepoint costs at most the ground distance between the two basepoints: the constant function has
+extended `eLpNorm` equal to `edist x₁ x₀`, possibly `∞`, and Minkowski's inequality does the
+rest. -/
 theorem wassersteinEDist_dirac_left_le_add (hd : Measurable fun z : X × X ↦ edist z.1 z.2)
     (hp : 1 ≤ p) (x₀ x₁ : X) (ν : Measure X) [IsProbabilityMeasure ν] :
     wassersteinEDist p (Measure.dirac x₁) ν
