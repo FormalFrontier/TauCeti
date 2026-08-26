@@ -6,25 +6,19 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+public import TauCeti.Probability.Moments.Covariance
 
 /-!
-# Covariance matrices of Euclidean-valued measures
+# The covariance matrix of a multivariate Gaussian
 
-This file packages the coordinate covariances of a measure on a finite-dimensional Euclidean
-space as a matrix. It identifies that matrix with the covariance parameter of Mathlib's
-multivariate Gaussian and connects it to Mathlib's basis-free `covarianceBilin`.
-
-The `MemLp id 2 μ` hypothesis in the comparison theorem is essential. Mathlib deliberately sets
-`covarianceBilin μ` to zero when this hypothesis fails, whereas its scalar `covariance` is
-totalized coordinate by coordinate.
+This file identifies the generic covariance matrix from
+`TauCeti.Probability.Moments.Covariance` with the covariance parameter of Mathlib's multivariate
+Gaussian.
 
 ## Main results
 
-* `TauCeti.covMatrix` is the matrix of coordinate covariances of a measure.
 * `TauCeti.covMatrix_multivariateGaussian` recovers the covariance parameter of a multivariate
   Gaussian law.
-* `TauCeti.covarianceBilin_eq_covMatrix` identifies the matrix and bilinear-form views of
-  covariance when the measure has a finite second moment.
 
 ## References
 
@@ -36,79 +30,22 @@ public section
 
 noncomputable section
 
-open MeasureTheory ProbabilityTheory
-
-open scoped RealInnerProductSpace
+open ProbabilityTheory
 
 namespace TauCeti
 
 variable {ι : Type*}
 
-/-- The covariance matrix of a measure on a finite-dimensional Euclidean space. Its `(i, j)`
-entry is the scalar covariance of the `i`th and `j`th coordinate projections. -/
-def covMatrix (μ : Measure (EuclideanSpace ℝ ι)) : Matrix ι ι ℝ :=
-  fun i j => cov[fun z => z i, fun z => z j; μ]
-
-/-- An entry of `covMatrix` is the covariance of the corresponding coordinate projections. -/
-@[simp]
-theorem covMatrix_apply (μ : Measure (EuclideanSpace ℝ ι)) (i j : ι) :
-    covMatrix μ i j = cov[fun z => z i, fun z => z j; μ] := (rfl)
-
-/-- Covariance matrices are symmetric. -/
-theorem covMatrix_apply_comm (μ : Measure (EuclideanSpace ℝ ι)) (i j : ι) :
-    covMatrix μ i j = covMatrix μ j i := by
-  rw [covMatrix_apply, covMatrix_apply, covariance_comm]
-
-/-- A covariance matrix is Hermitian (equivalently, symmetric over `ℝ`). -/
-theorem covMatrix_isHermitian (μ : Measure (EuclideanSpace ℝ ι)) :
-    (covMatrix μ).IsHermitian := by
-  rw [Matrix.isHermitian_iff_isSymm, Matrix.IsSymm.ext_iff]
-  exact fun i j => covMatrix_apply_comm μ j i
+local instance : DecidableEq ι := Classical.decEq ι
 
 /-- The covariance matrix of a positive-semidefinite multivariate Gaussian is its covariance
 parameter. -/
 @[simp]
-theorem covMatrix_multivariateGaussian [Fintype ι] [DecidableEq ι] (m : EuclideanSpace ℝ ι)
+theorem covMatrix_multivariateGaussian [Fintype ι] (m : EuclideanSpace ℝ ι)
     {S : Matrix ι ι ℝ} (hS : S.PosSemidef) :
     covMatrix (multivariateGaussian m S) = S := by
-  ext i j
-  exact covariance_eval_multivariateGaussian hS i j
-
-/-- For a finite measure with finite second moment, the entrywise covariance matrix represents
-Mathlib's basis-free covariance bilinear form. -/
-theorem covarianceBilin_eq_covMatrix [Fintype ι] [DecidableEq ι]
-    (μ : Measure (EuclideanSpace ℝ ι)) [IsFiniteMeasure μ] (hμ : MemLp id 2 μ)
-    (x y : EuclideanSpace ℝ ι) :
-    covarianceBilin μ x y = ⟪x, (covMatrix μ).toEuclideanLin y⟫ := by
-  have hcoord : ∀ i, MemLp (fun z : EuclideanSpace ℝ ι => z i) 2 μ := by
-    intro i
-    simpa only [id_eq, EuclideanSpace.coe_proj] using
-      hμ.continuousLinearMap_comp (𝕜 := ℝ) (EuclideanSpace.proj i)
-  have hpi := covarianceBilin_apply_pi (μ := μ) (X := fun i z => z i) hcoord x y
-  have hfun : (fun z : EuclideanSpace ℝ ι => WithLp.toLp 2 (fun i => z i)) = id := by
-    funext z
-    exact WithLp.toLp_ofLp 2 z
-  rw [hfun, Measure.map_id] at hpi
-  rw [hpi]
-  simp only [PiLp.inner_apply, RCLike.inner_apply, conj_trivial, Matrix.toLpLin_apply,
-    Matrix.mulVec, dotProduct]
-  apply Finset.sum_congr rfl
-  intro i _
-  rw [Finset.sum_mul]
-  apply Finset.sum_congr rfl
-  intro j _
-  rw [covMatrix_apply]
-  ring
-
-/-- The covariance matrix of a finite measure with finite second moment is positive semidefinite. -/
-theorem covMatrix_posSemidef [Fintype ι]
-    (μ : Measure (EuclideanSpace ℝ ι)) [IsFiniteMeasure μ] (hμ : MemLp id 2 μ) :
-    (covMatrix μ).PosSemidef := by
   classical
-  rw [← Matrix.isPositive_toEuclideanLin_iff]
-  refine ⟨Matrix.isSymmetric_toEuclideanLin_iff.mpr (covMatrix_isHermitian μ), fun x => ?_⟩
-  have hnonneg := covarianceBilin_self_nonneg (μ := μ) x
-  rw [covarianceBilin_eq_covMatrix μ hμ x x] at hnonneg
-  simpa only [RCLike.re_to_real, real_inner_comm] using hnonneg
+  ext i j
+  simpa only [covMatrix_apply] using covariance_eval_multivariateGaussian hS i j
 
 end TauCeti
