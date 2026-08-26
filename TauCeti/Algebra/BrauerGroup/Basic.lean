@@ -59,7 +59,7 @@ it is Mathlib's Kronecker product of matrix algebras, `Matrix.kroneckerTMulAlgEq
 is indexed by `Fin m × Fin n`, transported along `finProdFinEquiv` to the `Fin (m * n)` indexing
 that `IsBrauerEquivalent` is stated in. Since neither central simplicity nor positivity of the
 sizes enters, it is stated in that generality first, as
-`TauCeti.Matrix.kroneckerTMulFinAlgEquiv`, over any commutative semiring and any two algebras
+`Matrix.kroneckerTMulFinAlgEquiv`, over any commutative semiring and any two algebras
 over it; `TauCeti.CSA.tensorProductMatrixAlgEquiv` is the bundled `CSA` reading that Brauer
 equivalence consumes. Everything about the tensor product below is a consequence of it and of the
 transport `Algebra.TensorProduct.congr`.
@@ -78,7 +78,7 @@ moved. This is not a restriction in practice: `BrauerGroup K` is the interesting
   `TauCeti.CSA.base K` is `K` itself.
 * `TauCeti.CSA.matrix A n` and `TauCeti.CSA.tensorProduct A B`: `Mₙ(A)` and `A ⊗[K] B` as terms
   of `CSA K`. The underlying type of each is the expected one by definition.
-* `TauCeti.Matrix.kroneckerTMulFinAlgEquiv`: matrix absorption
+* `Matrix.kroneckerTMulFinAlgEquiv`: matrix absorption
   `Mₘ(A) ⊗[R] Mₙ(B) ≃ₐ[R] M_{mn}(A ⊗[R] B)` for arbitrary algebras and sizes, and
   `TauCeti.CSA.tensorProductMatrixAlgEquiv`, its bundled `CSA` reading.
 
@@ -185,7 +185,7 @@ variable {K}
 
 /-- **Matrix absorption** for central simple algebras:
 `Mₘ(A) ⊗[K] Mₙ(B) ≃ₐ[K] M_{mn}(A ⊗[K] B)` as an isomorphism of terms of `CSA K`. This is
-`TauCeti.Matrix.kroneckerTMulFinAlgEquiv`, read through the constructors `TauCeti.CSA.matrix` and
+`Matrix.kroneckerTMulFinAlgEquiv`, read through the constructors `TauCeti.CSA.matrix` and
 `TauCeti.CSA.tensorProduct`, whose underlying types are the expected ones by definition. -/
 def CSA.tensorProductMatrixAlgEquiv (A B : CSA.{u, v} K) (m n : ℕ) [NeZero m] [NeZero n] :
     CSA.tensorProduct (CSA.matrix A m) (CSA.matrix B n) ≃ₐ[K]

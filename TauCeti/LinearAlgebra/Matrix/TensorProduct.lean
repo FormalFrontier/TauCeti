@@ -16,7 +16,7 @@ matrix algebras.
 
 ## Main result
 
-* `TauCeti.Matrix.kroneckerTMulFinAlgEquiv`: matrix absorption
+* `Matrix.kroneckerTMulFinAlgEquiv`: matrix absorption
   `M_m(A) ⊗[R] M_n(B) ≃ₐ[R] M_(mn)(A ⊗[R] B)`.
 -/
 
@@ -24,11 +24,11 @@ public section
 
 open scoped Kronecker TensorProduct
 
-namespace TauCeti
+namespace Matrix
 
 /-- **Matrix absorption**: `M_m(A) ⊗[R] M_n(B) ≃ₐ[R] M_(mn)(A ⊗[R] B)`, over any commutative
 semiring `R` and any two `R`-algebras, in any two sizes. -/
-def Matrix.kroneckerTMulFinAlgEquiv (m n : ℕ) (R : Type*) [CommSemiring R] (A : Type*) [Semiring A]
+def kroneckerTMulFinAlgEquiv (m n : ℕ) (R : Type*) [CommSemiring R] (A : Type*) [Semiring A]
     [Algebra R A] (B : Type*) [Semiring B] [Algebra R B] :
     Matrix (Fin m) (Fin m) A ⊗[R] Matrix (Fin n) (Fin n) B ≃ₐ[R]
       Matrix (Fin (m * n)) (Fin (m * n)) (A ⊗[R] B) :=
@@ -38,7 +38,7 @@ def Matrix.kroneckerTMulFinAlgEquiv (m n : ℕ) (R : Type*) [CommSemiring R] (A 
 /-- The finite-index matrix absorption equivalence sends a pure tensor to the reindexed
 Kronecker tensor product. -/
 @[simp]
-theorem Matrix.kroneckerTMulFinAlgEquiv_tmul (m n : ℕ) (R : Type*) [CommSemiring R]
+theorem kroneckerTMulFinAlgEquiv_tmul (m n : ℕ) (R : Type*) [CommSemiring R]
     (A : Type*) [Semiring A] [Algebra R A] (B : Type*) [Semiring B] [Algebra R B]
     (a : Matrix (Fin m) (Fin m) A) (b : Matrix (Fin n) (Fin n) B) :
     Matrix.kroneckerTMulFinAlgEquiv m n R A B (a ⊗ₜ[R] b) =
@@ -48,7 +48,7 @@ theorem Matrix.kroneckerTMulFinAlgEquiv_tmul (m n : ℕ) (R : Type*) [CommSemiri
 /-- The inverse finite-index matrix absorption equivalence sends a matrix unit at paired finite
 indices with a pure-tensor coefficient to the tensor of the two corresponding matrix units. -/
 @[simp]
-theorem Matrix.kroneckerTMulFinAlgEquiv_symm_single_tmul (m n : ℕ) (R : Type*)
+theorem kroneckerTMulFinAlgEquiv_symm_single_tmul (m n : ℕ) (R : Type*)
     [CommSemiring R] (A : Type*) [Semiring A] [Algebra R A] (B : Type*) [Semiring B]
     [Algebra R B] (ia ja : Fin m) (ib jb : Fin n) (a : A) (b : B) :
     (Matrix.kroneckerTMulFinAlgEquiv m n R A B).symm
@@ -58,4 +58,4 @@ theorem Matrix.kroneckerTMulFinAlgEquiv_symm_single_tmul (m n : ℕ) (R : Type*)
   rw [Matrix.kroneckerTMulFinAlgEquiv_tmul, Matrix.single_kroneckerTMul_single]
   simp
 
-end TauCeti
+end Matrix
