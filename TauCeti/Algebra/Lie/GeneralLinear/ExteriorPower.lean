@@ -15,19 +15,19 @@ import Mathlib.LinearAlgebra.ExteriorPower.Basis
 # Exterior powers of the standard general-linear module
 
 The infinitesimal exterior-power action restricts along the matrix-to-endomorphism equivalence to
-an action of a general linear Lie algebra. For `d ≤ n`, the wedge of the first `d` standard basis
-vectors in `Kⁿ` is a highest-weight vector for this action.
+an action of a general linear Lie algebra. Over a nontrivial ring, for `d ≤ n`, the wedge of the
+first `d` standard basis vectors in `Kⁿ` is a highest-weight vector for this action.
 
 ## Main definitions
 
 * `exteriorPower.glLieMap`: the action of matrices on an exterior power.
 * `exteriorPower.firstBasisWedge`: the wedge of the first standard basis vectors.
-* `exteriorPower.fundamentalWeight`: its `0/1` weight.
+* `exteriorPower.fundamentalWeight`: the first-`d` coordinate-indicator weight.
 
 ## Main result
 
-* `exteriorPower.isGlHighestWeightVector_firstBasisWedge`: the first basis wedge is a highest-weight
-  vector.
+* `exteriorPower.isGlHighestWeightVector_firstBasisWedge`: over a nontrivial ring, the first basis
+  wedge is a highest-weight vector when `d ≤ n`.
 
 ## Roadmap context
 
@@ -43,6 +43,8 @@ open scoped Matrix
 namespace exteriorPower
 
 attribute [local instance 100] LieRing.ofAssociativeRing
+
+section Action
 
 variable {K : Type*} [CommRing K]
 
@@ -101,7 +103,14 @@ theorem firstBasisWedge_eq_ιMulti (d n : ℕ) (h : d ≤ n) :
   funext i x
   simp [Pi.basisFun_apply, Pi.single_apply]
 
-/-- The `0/1` weight of the `d`-th exterior power of the standard `gl_n` module. -/
+end Action
+
+section Weight
+
+variable {K : Type*} [Zero K] [One K]
+
+/-- The tuple that is `1` on the first `d` coordinates and `0` afterward. When `d ≤ n`, this is
+the weight of the first basis wedge in the `d`-th exterior power of the standard `gl_n` module. -/
 def fundamentalWeight (d n : ℕ) : Fin n → K :=
   fun j => if j.val < d then 1 else 0
 
@@ -111,9 +120,28 @@ theorem fundamentalWeight_apply (d n : ℕ) (j : Fin n) :
     fundamentalWeight (K := K) d n j = if j.val < d then 1 else 0 := by
   rw [fundamentalWeight]
 
+end Weight
+
+section HighestWeight
+
+variable {K : Type*} [CommRing K]
+
+/-- The fundamental exterior weight is dominant integral in characteristic zero. -/
+theorem isGlDominantIntegral_fundamentalWeight [CharZero K] (d n : ℕ) :
+    TauCeti.IsGlDominantIntegral (fundamentalWeight (K := K) d n) := by
+  rw [TauCeti.isGlDominantIntegral_iff]
+  intro i j hij
+  by_cases hi : i.val < d
+  · by_cases hj : j.val < d
+    · exact ⟨0, by simp [hi, hj]⟩
+    · exact ⟨1, by simp [hi, hj]⟩
+  · have hj : ¬j.val < d := by omega
+    exact ⟨0, by simp [hi, hj]⟩
+
 /-- The first basis wedge is nonzero. -/
 theorem firstBasisWedge_ne_zero [Nontrivial K] (d n : ℕ) (h : d ≤ n) :
     firstBasisWedge (K := K) d n h ≠ 0 := by
+  rw [firstBasisWedge]
   exact (ιMulti_family_linearIndependent_ofBasis K d (Pi.basisFun K (Fin n))).ne_zero
     (firstBasisSet d n h)
 
@@ -192,7 +220,8 @@ private theorem lie_single_firstBasisWedge_of_lt (d n : ℕ) (h : d ≤ n)
   · simp only [hjk, ite_false]
     exact (ιMulti K d).map_update_zero _ _
 
-/-- The first basis wedge is a highest-weight vector for the exterior-power action. -/
+/-- Over a nontrivial ring, the first basis wedge is a highest-weight vector for the exterior-power
+action when `d ≤ n`. -/
 theorem isGlHighestWeightVector_firstBasisWedge [Nontrivial K] (d n : ℕ) (h : d ≤ n) :
     letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
       glLieRingModule (K := K) (n := Fin n) d
@@ -202,5 +231,7 @@ theorem isGlHighestWeightVector_firstBasisWedge [Nontrivial K] (d n : ℕ) (h : 
     ⟨firstBasisWedge_ne_zero (K := K) d n h, fun i => ?_, fun i j hij => ?_⟩
   · exact lie_single_self_firstBasisWedge (K := K) d n h i
   · exact lie_single_firstBasisWedge_of_lt (K := K) d n h hij
+
+end HighestWeight
 
 end exteriorPower
