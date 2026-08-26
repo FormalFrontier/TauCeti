@@ -163,10 +163,6 @@ noncomputable def rep :
       Module.End ℚ (Fin (r + 1) → ℚ) :=
   LieSubalgebra.matrixRepresentation (sl (Fin (r + 1)) ℚ)
 
-/-- The standard representation is the defining matrix representation of `sl_{r+1}`. -/
-theorem rep_def : rep r = LieSubalgebra.matrixRepresentation (sl (Fin (r + 1)) ℚ) := by
-  rw [rep]
-
 theorem rep_ι_apply (x : sl (Fin (r + 1)) ℚ) (v : Fin (r + 1) → ℚ) :
     rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ x) v =
       (x : Matrix (Fin (r + 1)) (Fin (r + 1)) ℚ) *ᵥ v :=
@@ -469,15 +465,6 @@ noncomputable def carrierι : groupScheme r ⟶ TauCeti.GeneralLinear.groupSchem
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
 
-/-- The inclusion of the type `A_r` carrier into `GL_{r+1}` is the inclusion of the Kostant toral
-closure of the standard lattice. -/
-theorem carrierι_def :
-    carrierι r =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator r)
-        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
-        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
-  rw [carrierι]
-
 /-- **The type `A_r` carrier is a closed subgroup scheme of `GL_{r+1}`.** -/
 instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι r).hom.hom.left := by
   rw [carrierι]
@@ -490,30 +477,12 @@ noncomputable def rootSubgroup (k : Fin r ⊕ Fin r) :
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k
 
-/-- The numbered root subgroup of the type `A_r` carrier is the Kostant root subgroup of the
-numbered generator, corestricted to the toral closure. -/
-theorem rootSubgroup_def (k : Fin r ⊕ Fin r) :
-    rootSubgroup r k =
-      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral (rootGenerator r)
-        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
-        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k := by
-  rw [rootSubgroup]
-
 /-- The rank-`r` split weight torus `T → G` of the type `A_r` carrier. Maximality is not
 asserted here; see the scope disclaimer in the module documentation. -/
 noncomputable def weightTorus : SplitTorus.groupScheme ℤ (Fin r) ⟶ groupScheme r :=
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
-
-/-- The split torus of the type `A_r` carrier is the Kostant weight torus of the standard
-lattice, corestricted to the toral closure. -/
-theorem weightTorus_def :
-    weightTorus r =
-      TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator r)
-        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
-        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
-  rw [weightTorus]
 
 /-- Including a numbered root subgroup of the type `A_r` carrier into `GL_{r+1}` recovers the
 Kostant root subgroup of the numbered generator. -/
@@ -541,15 +510,6 @@ noncomputable def points (A : Type) [CommRing A] :
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
 
-/-- The matrix points of the type `A_r` carrier are the Kostant toral points of the standard
-lattice. -/
-theorem points_def (A : Type) [CommRing A] :
-    points r A =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
-        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
-        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A := by
-  rw [points]
-
 /-- A matrix is a point of the type `A_r` carrier exactly when the associated convolution point
 kills its toral defining Hopf ideal. -/
 @[simp]
@@ -561,7 +521,7 @@ theorem mem_points_iff (A : Type) [CommRing A]
           (kostantForm_apply_mem_lattice r) (isNilpotent_rep_rootGenerator r)
           (latticeBasis r) (weight r),
         ((GeneralLinear.pointsMulEquiv (R := ℤ) (r + 1)).symm g).ofConv x = 0 := by
-  rw [points_def]
+  rw [points]
   exact TauCeti.UniversalEnvelopingAlgebra.mem_kostantToralPointsSubgroup_iff
     _ _ _ _ _ _ _ _ A g
 
@@ -640,28 +600,11 @@ noncomputable def rootSubgroupParam (k : Fin r ⊕ Fin r) (A : CommAlgCat ℤ) :
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r) k
     (isNilpotent_rep_rootGenerator r k) A
 
-/-- The parametrized numbered root subgroup is the Kostant divided-power exponential of the
-numbered generator. -/
-theorem rootSubgroupParam_def (k : Fin r ⊕ Fin r) (A : CommAlgCat ℤ) :
-    rootSubgroupParam r k A =
-      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupParam (rootGenerator r)
-        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r) k
-        (isNilpotent_rep_rootGenerator r k) A := by
-  rw [rootSubgroupParam]
-
 /-- The split weight torus on points of a value algebra. -/
 noncomputable def torusPoints (A : CommAlgCat ℤ) :
     (Fin r → Aˣ) →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (lattice r).toAddSubgroup) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints (lattice r).toAddSubgroup
     (latticeBasis r) (weight r) A
-
-/-- The split weight torus on points is the Kostant torus of the standard lattice, taken in the
-coordinate basis and the weights of the coordinate vectors. -/
-theorem torusPoints_def (A : CommAlgCat ℤ) :
-    torusPoints r A =
-      TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints (lattice r).toAddSubgroup
-        (latticeBasis r) (weight r) A := by
-  rw [torusPoints]
 
 /-- **The pinning equation of the type `A_r` carrier.** A torus point `s` conjugates the
 root-subgroup element of parameter `u` into the one of parameter `α_k(s) u`, where `α_k` is the
