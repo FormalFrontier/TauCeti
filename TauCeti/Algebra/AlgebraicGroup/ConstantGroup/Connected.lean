@@ -60,7 +60,7 @@ universe u v w
 noncomputable section
 
 variable {k : Type u} [Field k]
-variable {H : Type v} [CommRing H] [HopfAlgebra k H]
+variable {H : Type v} [CommRing H] [Bialgebra k H]
 variable (G : Type w) [Group G] [Finite G]
 
 omit [Group G] in
