@@ -234,22 +234,13 @@ bookkeeping. -/
 private lemma exists_offset_of_primeFactors_subset (hp : 0 < p)
     (hpN : p.primeFactors ⊆ N.primeFactors) {a b : ℤ} (ha : (N : ℤ) ∣ a - 1) :
     ∃ j : ℕ, j < p ∧ (p : ℤ) ∣ b - a * j := by
-  have hp' : (0 : ℤ) < p := by exact_mod_cast hp
   have hgcd : Int.gcd a p = 1 :=
     Int.isCoprime_iff_gcd_eq_one.mp (isCoprime_of_primeFactors_subset hp hpN ha)
-  obtain ⟨u, hu⟩ := exists_mod_clearing a (-b) p hgcd
-  have hj0 : (0 : ℤ) ≤ u % p := Int.emod_nonneg _ hp'.ne'
-  refine ⟨(u % p).toNat, ?_, ?_⟩
-  · have := Int.emod_lt_of_pos u hp'
-    omega
-  · rw [Int.toNat_of_nonneg hj0]
-    have hquot : u - u % (p : ℤ) = (p : ℤ) * (u / (p : ℤ)) := by
-      linarith [Int.mul_ediv_add_emod u (p : ℤ)]
-    have hp_ur : (p : ℤ) ∣ u - u % (p : ℤ) := hquot ▸ dvd_mul_right _ _
-    have hclear := dvd_sub hu (dvd_mul_of_dvd_left hp_ur a)
-    have hcollapse : u * a + -b - (u - u % (p : ℤ)) * a = a * (u % p) - b := by ring
-    rw [hcollapse] at hclear
-    simpa only [neg_sub] using dvd_neg.mpr hclear
+  obtain ⟨r, hr0, hrlt, hr⟩ := exists_reduced_shear a b p hp hgcd
+  refine ⟨r.toNat, ?_, ?_⟩
+  · omega
+  · rw [Int.toNat_of_nonneg hr0]
+    simpa only [neg_sub] using dvd_neg.mpr hr
 
 /-- **The forward factorisation at an index supported on the level.** If every prime factor of
 `p` divides `N`, then for `γ ∈ Γ₁(N)` the product `diag(1, p) · γ` lies in one of the `p` right

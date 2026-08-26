@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Diagonal.QExpansion
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Prime
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.QExpansion
 
 /-!
 # The Fourier-coefficient recurrence for `Tₚ`, at every prime

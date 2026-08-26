@@ -23,9 +23,10 @@ This file identifies them, which is the roadmap's flagged *normalisation lemma*:
 
 `heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) = heckeSlashUpperTriModularFormEnd k hpN`,
 
-and likewise on cusp forms. Everything already known about the classical operator — the
-recurrence `aₘ(Tₚ f) = a_{p m}(f)` on `q`-expansions, stability of each nebentypus space —
-transfers to the abstract one by rewriting with these two equalities, which are `simp` lemmas.
+and likewise on cusp forms. These `simp` lemmas provide the normalization bridge between the
+abstract and explicit constructions. Nebentypus preservation and the `q`-expansion recurrence
+for the canonical `heckeTNat` operator are proved at every level-supported index in
+`HeckeSlash/LevelSupported.lean`.
 
 ## How the two are matched
 

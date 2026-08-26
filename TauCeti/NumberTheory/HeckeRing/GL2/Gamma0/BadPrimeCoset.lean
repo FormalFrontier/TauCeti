@@ -105,24 +105,24 @@ private lemma dvd_lowerRight_witness (A : Matrix (Fin 2) (Fin 2) ℤ) (N m : ℕ
   exact ((Int.isCoprime_iff_gcd_eq_one.mpr ham).symm).dvd_of_dvd_mul_left
     (h_key ▸ dvd_add (dvd_refl _) (dvd_mul_of_dvd_left hm_ba _))
 
-/-- **The reduced shear parameter.** With `A 0 0` coprime to `m` there is an `r` in `[0, m)`
-clearing the upper row modulo `m`: `m ∣ A 0 0 * r - A 0 1`.
+/-- **The reduced shear parameter.** With `a` coprime to `m` there is an `r` in `[0, m)`
+solving `a * r ≡ b (mod m)`.
 
 Split out of `exists_unimodular_mul_upperTriangular` below: it is the arithmetic half, and
 isolating it keeps that lemma's matrix bookkeeping readable. -/
-private lemma exists_reduced_shear (A : Matrix (Fin 2) (Fin 2) ℤ) (m : ℕ) (hm_pos : 0 < m)
-    (ham : Int.gcd (A 0 0) m = 1) :
-    ∃ r : ℤ, 0 ≤ r ∧ r < m ∧ (m : ℤ) ∣ (A 0 0 * r - A 0 1) := by
-  obtain ⟨t_inv, ht⟩ := exists_mod_clearing (A 0 0) (-A 0 1) m ham
+lemma exists_reduced_shear (a b : ℤ) (m : ℕ) (hm_pos : 0 < m)
+    (ham : Int.gcd a m = 1) :
+    ∃ r : ℤ, 0 ≤ r ∧ r < m ∧ (m : ℤ) ∣ a * r - b := by
+  obtain ⟨t_inv, ht⟩ := exists_mod_clearing a (-b) m ham
   refine ⟨t_inv % (m : ℤ), Int.emod_nonneg _ (by omega), Int.emod_lt_of_pos _ (by omega), ?_⟩
   -- `t_inv` differs from its residue by a multiple of `m`, so subtracting that multiple of
-  -- `A 0 0` from Bézout's combination leaves the divisibility intact.
+  -- `a` from Bézout's combination leaves the divisibility intact.
   have hquot : t_inv - t_inv % (m : ℤ) = (m : ℤ) * (t_inv / (m : ℤ)) := by
     linarith [Int.mul_ediv_add_emod t_inv ((m : ℤ))]
   have hm_tr : (m : ℤ) ∣ (t_inv - t_inv % (m : ℤ)) := hquot ▸ dvd_mul_right _ _
-  have h := dvd_sub ht (dvd_mul_of_dvd_left hm_tr (A 0 0))
-  have hcollapse : t_inv * A 0 0 + -A 0 1 - (t_inv - t_inv % (m : ℤ)) * A 0 0
-      = A 0 0 * (t_inv % (m : ℤ)) - A 0 1 := by ring
+  have h := dvd_sub ht (dvd_mul_of_dvd_left hm_tr a)
+  have hcollapse : t_inv * a + -b - (t_inv - t_inv % (m : ℤ)) * a
+      = a * (t_inv % (m : ℤ)) - b := by ring
   rwa [hcollapse] at h
 
 /-- **The determinant of an integral witness.** If `A` represents `g ∈ GL₂(ℚ)` entrywise over
@@ -179,7 +179,8 @@ lemma exists_unimodular_mul_upperTriangular (N : ℕ) (A : Matrix (Fin 2) (Fin 2
     ∃ (L : Matrix (Fin 2) (Fin 2) ℤ) (r : ℤ), L.det = 1 ∧ (N : ℤ) ∣ L 1 0 ∧ 0 ≤ r ∧ r < m ∧
       A = L * (Matrix.of ![![(1 : ℤ), r], ![0, (m : ℤ)]]) := by
   obtain ⟨c₀, hc₀⟩ := hAN
-  obtain ⟨r, hr_nonneg, hr_lt, hm_ar_b⟩ := exists_reduced_shear A m hm_pos ham
+  obtain ⟨r, hr_nonneg, hr_lt, hm_ar_b⟩ :=
+    exists_reduced_shear (A 0 0) (A 0 1) m hm_pos ham
   obtain ⟨q₂, hq₂⟩ := dvd_lowerRight_witness A N m c₀ r hc₀ hdet ham hm_ar_b
   obtain ⟨q₁, hq₁⟩ := hm_ar_b
   refine ⟨Matrix.of ![![A 0 0, -q₁], ![(N : ℤ) * c₀, q₂]], r, ?_, ?_, hr_nonneg, hr_lt, ?_⟩

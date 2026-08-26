@@ -6,14 +6,15 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Operators
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.QExpansion
 
 /-!
 # The Hecke operators at an index supported on the level
 
 Call a positive integer `n` *supported on the level* `N` when every prime factor of `n` divides
 `N`, that is `n.primeFactors ⊆ N.primeFactors`. These are the indices at which the decomposition
-proved here writes the double coset `Γ₁(N) · diag(1, n) · Γ₁(N)` as `n` upper-triangular right
-cosets
+of `HeckeRing/GL2/Gamma1/UpperTriCosets.lean` writes the double coset
+`Γ₁(N) · diag(1, n) · Γ₁(N)` as `n` upper-triangular right cosets
 `Γ₁(N) · !![1, b; 0, n]` — no further coset appears, as it does at a prime `p ∤ N`. The prime
 powers `p ^ r` with `p ∣ N` are supported on the level whether or not they divide it, and they
 are the reason this regime is worth naming: `p ∣ N` alone does not reach `T_{p²}`.
@@ -29,16 +30,17 @@ the vocabulary of modern papers the operator at `p ∣ N` is `U_p`
 (`heckeUNat`, an alias of `T_p` by `heckeUNat_eq_heckeTNat`), so the same statement reads
 `T_{p^r} = U_p ^ r`; no second operator is introduced.
 
-⚠ This is **not** the multiplicativity `T_m T_n = T_{m n}` for coprime `m`, `n`. That statement
-concerns indices coprime to each other, holds at good primes, and needs the whole coset
-decomposition of `Gamma1/CoprimeCosets.lean`; the one proved here concerns indices *sharing* the
-level's primes and degenerates the prime-power recurrence
+⚠ This does not supply multiplicativity for arbitrary coprime indices: it applies when each
+index is supported on the level, whether or not the two indices are coprime. An index with a
+prime factor outside the level needs the whole coset decomposition of
+`Gamma1/CoprimeCosets.lean`. In the level-supported case the identity degenerates the
+prime-power recurrence
 `T_{p^{r+2}} = T_p T_{p^{r+1}} − p^{k−1}⟨p⟩ T_{p^r}` to `T_{p^r} = T_p ^ r`, the zero-extended
 diamond `⟨p⟩` vanishing at `p ∣ N`.
 
 Two consequences are recorded alongside: `T_n` preserves each nebentypus space `M_k(N, χ)` and
-`S_k(N, χ)` there, and its effect on `q`-expansions is `aₘ(T_n f) = a_{n m}(f)` — the `p ∣ N`
-recurrence of `UpperTri/ModularForm.lean` at every level-supported index.
+`S_k(N, χ)` there, and its effect on `q`-expansions is `aₘ(T_n f) = a_{n m}(f)`, proved from
+the function-level recurrence in `UpperTri/QExpansion.lean`.
 
 ## Main results
 
@@ -51,7 +53,7 @@ recurrence of `UpperTri/ModularForm.lean` at every level-supported index.
   commute.
 * `HeckeRing.GL2.heckeTNat_pow_of_primeFactors_subset`: `T_{n^r} = T_n ^ r` at every
   level-supported index, with its cusp-form counterpart.
-* `HeckeRing.GL2.heckeTNat_pow_of_prime_dvd`: **`T_{p^r} = T_p ^ r` at `p ∣ N`**, with its
+* `HeckeRing.GL2.heckeTNat_pow_of_dvd`: **`T_{p^r} = T_p ^ r` at `p ∣ N`**, with its
   cusp-form counterpart.
 * `HeckeRing.GL2.heckeTNat_mem_modFormCharSpace_of_primeFactors_subset` with its
   cusp-form counterpart: the operator preserves `M_k(N, χ)` and `S_k(N, χ)`.
@@ -117,8 +119,8 @@ on `M_k(Γ₁(N))`.
 
 Both sides are upper-triangular sums, and `upperTriRep_mul_upperTriRep` matches the pairs of
 representatives with the representatives at index `n · m` bijectively. Nothing here is a
-coprimality statement: `n` and `m` share the level's primes by hypothesis, and the identity
-holds for `n = m` in particular. -/
+coprimality statement: each of `n` and `m` is supported on the level, and the identity holds
+whether or not they are coprime (in particular, for `n = m`). -/
 theorem heckeTNat_mul_of_primeFactors_subset {n m : ℕ} [NeZero n] [NeZero m]
     (hn : n.primeFactors ⊆ N.primeFactors) (hm : m.primeFactors ⊆ N.primeFactors) :
     heckeTNat (N := N) k (n * m) = heckeTNat (N := N) k n * heckeTNat (N := N) k m :=
@@ -145,7 +147,7 @@ commuting family the simultaneous-diagonalisation arguments consume at the bad p
 theorem commute_heckeTNat_of_primeFactors_subset {n m : ℕ} [NeZero n] [NeZero m]
     (hn : n.primeFactors ⊆ N.primeFactors) (hm : m.primeFactors ⊆ N.primeFactors) :
     Commute (heckeTNat (N := N) k n) (heckeTNat (N := N) k m) := by
-  rw [Commute, SemiconjBy, ← heckeTNat_mul_of_primeFactors_subset k hn hm,
+  rw [commute_iff_eq, ← heckeTNat_mul_of_primeFactors_subset k hn hm,
     ← heckeTNat_mul_of_primeFactors_subset k hm hn]
   exact heckeTNat_congr k (mul_comm n m)
 
@@ -153,7 +155,7 @@ theorem commute_heckeTNat_of_primeFactors_subset {n m : ℕ} [NeZero n] [NeZero 
 theorem commute_heckeTCuspNat_of_primeFactors_subset {n m : ℕ} [NeZero n] [NeZero m]
     (hn : n.primeFactors ⊆ N.primeFactors) (hm : m.primeFactors ⊆ N.primeFactors) :
     Commute (heckeTCuspNat (N := N) k n) (heckeTCuspNat (N := N) k m) := by
-  rw [Commute, SemiconjBy, ← heckeTCuspNat_mul_of_primeFactors_subset k hn hm,
+  rw [commute_iff_eq, ← heckeTCuspNat_mul_of_primeFactors_subset k hn hm,
     ← heckeTCuspNat_mul_of_primeFactors_subset k hm hn]
   exact heckeTCuspNat_congr k (mul_comm n m)
 
@@ -187,23 +189,29 @@ theorem heckeTCuspNat_pow_of_primeFactors_subset {n : ℕ} [NeZero n]
         heckeTCuspNat_mul_of_primeFactors_subset k (primeFactors_pow_subset hn r) hn, ih,
         pow_succ]
 
-/-- **`T_{p^r} = T_p ^ r` at a prime `p ∣ N`**, on `M_k(Γ₁(N))`.
+/-- **`T_{p^r} = T_p ^ r` at a divisor `p ∣ N`**, on `M_k(Γ₁(N))`.
 
-This is the degenerate case of the prime-power recurrence
+The roadmap's prime case is the degenerate case of the prime-power recurrence
 `T_{p^{r+2}} = T_p T_{p^{r+1}} − p^{k−1} ⟨p⟩ T_{p^r}`: the zero-extended diamond `⟨p⟩` vanishes
-at `p ∣ N`, leaving `T_{p^{r+1}} = T_p T_{p^r}`. Read through `heckeUNat_eq_heckeTNat` the
-statement is `T_{p^r} = U_p ^ r`; there is no second operator. -/
-theorem heckeTNat_pow_of_prime_dvd (hp : p.Prime) (hpN : p ∣ N) (r : ℕ) :
-    heckeTNat (N := N) k (p ^ r) (_hn := ⟨pow_ne_zero r hp.ne_zero⟩)
-      = heckeTNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) ^ r :=
-  let _ : NeZero p := ⟨hp.ne_zero⟩
+at a prime `p ∣ N`, leaving `T_{p^{r+1}} = T_p T_{p^r}`. In that case, read through
+`heckeUNat_eq_heckeTNat`, the statement is `T_{p^r} = U_p ^ r`; there is no second operator. -/
+theorem heckeTNat_pow_of_dvd (hpN : p ∣ N) (r : ℕ) :
+    heckeTNat (N := N) k (p ^ r)
+        (_hn := ⟨pow_ne_zero r fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩)
+      = heckeTNat (N := N) k p
+          (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) ^ r :=
+  let _ : NeZero p :=
+    ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
   heckeTNat_pow_of_primeFactors_subset k (Nat.primeFactors_mono hpN (NeZero.ne N)) r
 
-/-- **`T_{p^r} = T_p ^ r` at a prime `p ∣ N`**, on `S_k(Γ₁(N))`. -/
-theorem heckeTCuspNat_pow_of_prime_dvd (hp : p.Prime) (hpN : p ∣ N) (r : ℕ) :
-    heckeTCuspNat (N := N) k (p ^ r) (_hn := ⟨pow_ne_zero r hp.ne_zero⟩)
-      = heckeTCuspNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) ^ r :=
-  let _ : NeZero p := ⟨hp.ne_zero⟩
+/-- **`T_{p^r} = T_p ^ r` at a divisor `p ∣ N`**, on `S_k(Γ₁(N))`. -/
+theorem heckeTCuspNat_pow_of_dvd (hpN : p ∣ N) (r : ℕ) :
+    heckeTCuspNat (N := N) k (p ^ r)
+        (_hn := ⟨pow_ne_zero r fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩)
+      = heckeTCuspNat (N := N) k p
+          (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) ^ r :=
+  let _ : NeZero p :=
+    ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
   heckeTCuspNat_pow_of_primeFactors_subset k (Nat.primeFactors_mono hpN (NeZero.ne N)) r
 
 section Nebentypus
