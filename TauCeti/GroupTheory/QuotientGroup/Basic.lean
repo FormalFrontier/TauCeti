@@ -19,6 +19,8 @@ coset for that action, and, for the trivial subgroup, the compatibility of the i
 The stabilizer of the coset `sH` is the conjugate subgroup `sHs⁻¹`
 (`TauCeti.stabilizer_quotientGroup_mk`); this is Mathlib's `MulAction.stabilizer_quotient`, which
 covers the trivial coset, transported along `MulAction.stabilizer_smul_eq_stabilizer_map_conj`.
+Read elementwise, it says that `g` fixes `sH` exactly when the conjugate `s⁻¹gs` lies in `H`
+(`TauCeti.smul_quotientGroup_mk_eq_iff`).
 
 The cosets of `⊥` in a group `G` are the elements of `G`, and Mathlib's
 `QuotientGroup.quotientBot` is that identification.  The identification is equivariant for left
@@ -27,6 +29,7 @@ translation, and the only element of `G` fixing a coset of `⊥` is the identity
 ## Main statements
 
 * `TauCeti.stabilizer_quotientGroup_mk`: the stabilizer of `sH` in `G` is `sHs⁻¹`.
+* `TauCeti.smul_quotientGroup_mk_eq_iff`: `g` fixes the coset `sH` exactly when `s⁻¹gs ∈ H`.
 * `TauCeti.quotientBot_equivariant`: `QuotientGroup.quotientBot` intertwines left translation on
   `G ⧸ ⊥` with left translation in `G`.
 * `TauCeti.quotientBot_smul_eq_self_iff`: a group element fixes a coset of the trivial subgroup
@@ -56,6 +59,16 @@ theorem stabilizer_quotientGroup_mk (H : Subgroup G) (s : G) :
   ext x
   rw [Subgroup.mem_map_equiv, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← map_inv,
     MulAut.smul_def, MulAut.conj_symm_apply, MulAut.conj_apply, inv_inv]
+
+/-- **A group element fixes the coset `sH` exactly when the conjugate `s⁻¹gs` lies in `H`.** This
+is `TauCeti.stabilizer_quotientGroup_mk` read elementwise.
+
+Not a `simp` lemma: `simp` rewrites the left-hand side further, to `↑(g * s) = ↑s`. -/
+theorem smul_quotientGroup_mk_eq_iff {H : Subgroup G} (g s : G) :
+    g • ((s : G ⧸ H)) = s ↔ s⁻¹ * g * s ∈ H := by
+  rw [← MulAction.mem_stabilizer_iff, stabilizer_quotientGroup_mk,
+    Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← map_inv, MulAut.smul_def, MulAut.conj_apply]
+  simp [mul_assoc]
 
 /-- Left translation on the cosets of the trivial subgroup is left translation in the group.
 

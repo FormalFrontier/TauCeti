@@ -8,63 +8,71 @@ module
 -- `TauCeti.GL2Borel` is the subgroup every statement below is about, and this module re-exports
 -- the `GL` notation together with the coercion of an element of `GL n R` to its matrix.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
+-- `TauCeti.GL2WeylElement` occurs in the statement of the inverse of the identification with
+-- `OnePoint`.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Bruhat
 -- `TauCeti.diagGL` occurs in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 -- `TauCeti.jordanGL` occurs in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.ScalarUnipotent
 -- `TauCeti.GL2NonSplitTorusHom` occurs in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.NonSplitTorus
--- The action of a group on the cosets of a subgroup occurs in the statements below.
-public import Mathlib.GroupTheory.GroupAction.Quotient
+-- `TauCeti.smul_quotientGroup_mk_eq_iff` is the fixed-coset criterion the counts below run on, and
+-- this module re-exports the action of a group on the cosets of a subgroup.
+public import TauCeti.GroupTheory.QuotientGroup.Basic
+-- `OnePoint F` with its `GL (Fin 2) F` action is the model of the projective line used here.
+public import Mathlib.Topology.Compactification.OnePoint.ProjectiveLine
 -- `Set.ncard` occurs in the statements below.
 public import Mathlib.Data.Set.Card
--- Non-public: `Fintype.card_option` is used only inside the scalar count.
-import Mathlib.Data.Fintype.Option
 
 /-!
-# The cosets of the Borel subgroup of `GL₂`, and how a matrix permutes them
+# The cosets of the Borel subgroup of `GL₂` are the projective line
 
 The coset space `GL₂(F) ⧸ B` of the Borel subgroup of invertible upper-triangular matrices is the
 **projective line** over `F`: a coset `g B` remembers exactly the line spanned by the first column
-of `g`, because right multiplication by an upper-triangular matrix rescales that column. This file
-makes the identification concrete by naming one representative per coset,
+of `g`, because right multiplication by an upper-triangular matrix rescales that column. Mathlib
+already models the projective line as `OnePoint F`, with the Möbius action of `GL (Fin 2) F` on it
+(`OnePoint.instGLAction`), and this file supplies the missing bridge: the Borel subgroup is the
+stabilizer of the point at infinity (`TauCeti.GL2Borel.stabilizer_infty`), and the action is
+transitive, so translating `∞` identifies the two
+(`TauCeti.GL2Borel.quotientEquivOnePoint`), equivariantly.
 
-`TauCeti.GL2Borel.cosetRep none = 1` and `TauCeti.GL2Borel.cosetRep (some t) = !![t, 1; 1, 0]`,
+The point of the identification is the **fixed-coset count**, which the bridge turns into a
+fixed-point count on `OnePoint F`, where Mathlib's `OnePoint.smul_infty_eq_self_iff` and
+`Matrix.GeneralLinearGroup.fixpointPolynomial_aeval_eq_zero_iff` compute it. For an element
+`!![a, b; 0, d]` of the Borel subgroup itself, `∞` is fixed and the fixed affine points are the
+roots of the linear equation `(d - a) t = b`; so there are two fixed points when `a ≠ d`, and one
+when `a = d` and `b ≠ 0`. A scalar matrix is central, so it fixes every coset, and an element with
+no upper-triangular conjugate fixes none.
 
-whose first columns are `(1, 0)` and `(t, 1)`, the `q + 1` lines of `F²`. Over a field these
-`q + 1` matrices meet every coset exactly once (`TauCeti.GL2Borel.cosetRepEquiv`).
+Those four statements are read off for the four families of conjugacy classes of `GL₂(𝔽_q)`: a
+scalar matrix fixes all `q + 1` cosets, a diagonal matrix with distinct entries `2`, a Jordan block
+`1`, and an element of the non-split torus that does not come from `F` fixes `0`. Those four
+numbers, less one, are the character values of the Steinberg representation.
 
-The point of the parametrization is the **fixed-coset count**: `g` fixes the coset of `y` exactly
-when `y⁻¹ g y` is upper triangular, and along the representatives above that condition is a single
-polynomial equation in `t`. Writing `g = !![p, q; r, s]`, the coset of `cosetRep none` is fixed
-exactly when `r = 0`, and the coset of `cosetRep (some t)` exactly when
-
-`q + (p - s) t - r t² = 0`.
-
-Both conditions say that the corresponding line is an eigenline of `g`, which is why the count
-depends only on the conjugacy class. It is read off here for the four families of conjugacy classes
-of `GL₂(𝔽_q)`: `q + 1` fixed cosets for a scalar matrix, `2` for a diagonal matrix with distinct
-entries, `1` for a Jordan block, and `0` for an element of the non-split torus that does not come
-from `F`. Those four numbers, less one, are the character values of the Steinberg representation.
-
-Only the scalar count needs `F` to be finite; the other three are the same over any field, and are
-stated there. The elliptic case needs none of the parametrization either:
-`TauCeti.GL2NonSplitTorus.conj_notMem_gl2Borel` already says that no conjugate of such an element is
-upper triangular, so no coset at all is fixed.
+Only the scalar count needs `F` to be finite, and only because it is the one whose value is the
+number of points; the other three are the same over any field, and the two general Borel counts
+hold there too.
 
 ## Main definitions
 
-* `TauCeti.GL2Borel.cosetRep`: the `q + 1` coset representatives, indexed by `Option R`.
-* `TauCeti.GL2Borel.cosetRepEquiv`: over a field they index the coset space,
-  `Option F ≃ GL₂(F) ⧸ B`.
-* `TauCeti.GL2Borel.fixedCosetsEquiv`: the cosets fixed by `g` are indexed by the representatives
-  whose conjugate of `g` is upper triangular.
+* `TauCeti.GL2Borel.quotientEquivOnePoint`: the identification `GL₂(F) ⧸ B ≃ OnePoint F` of the
+  coset space with Mathlib's model of the projective line, by translating the point at infinity.
 
 ## Main results
 
-* `TauCeti.GL2Borel.conj_cosetRep_none_mem_iff` and
-  `TauCeti.GL2Borel.conj_cosetRep_some_mem_iff`: the conjugate of `g` by a representative is upper
-  triangular exactly when the displayed entry equation holds.
+* `TauCeti.GL2Borel.stabilizer_infty`: the Borel subgroup is the stabilizer of `∞` for the Möbius
+  action of `GL₂(F)` on `OnePoint F`.
+* `TauCeti.GL2Borel.quotientEquivOnePoint_smul`: that identification is equivariant, whence
+  `TauCeti.GL2Borel.natCard_fixedCosets_eq_ncard`, the fixed cosets of `g` are counted by its fixed
+  points on `OnePoint F`.
+* `TauCeti.GL2Borel.natCard_fixedCosets_of_mem_of_ne` and
+  `TauCeti.GL2Borel.natCard_fixedCosets_of_mem_of_eq`: an upper-triangular element fixes exactly
+  `2` cosets when its diagonal entries differ, and exactly `1` when they agree and it is not
+  diagonal.
+* `TauCeti.GL2Borel.scalar_smul_quotient_eq_self` and
+  `TauCeti.GL2Borel.natCard_fixedCosets_eq_zero`: a scalar matrix fixes every coset, and an element
+  with no upper-triangular conjugate fixes none.
 * `TauCeti.GL2Borel.natCard_fixedCosets_scalar`, `TauCeti.GL2Borel.natCard_fixedCosets_diagGL`,
   `TauCeti.GL2Borel.natCard_fixedCosets_jordanGL` and
   `TauCeti.GL2Borel.natCard_fixedCosets_gl2NonSplitTorusHom`: the counts `q + 1`, `2`, `1` and `0`
@@ -83,7 +91,7 @@ public section
 
 namespace TauCeti
 
-open Matrix
+open Matrix OnePoint
 
 universe u
 
@@ -93,227 +101,186 @@ section CommRing
 
 variable {R : Type u} [CommRing R]
 
-/-- **The coset representatives of the Borel subgroup of `GL₂`**: the identity, whose first column
-spans the line `(1, 0)`, and the matrices `!![t, 1; 1, 0]`, whose first columns span the remaining
-lines `(t, 1)`. Over a field these meet every coset of `TauCeti.GL2Borel` exactly once
-(`TauCeti.GL2Borel.cosetRepEquiv`). -/
-def cosetRep : Option R → GL (Fin 2) R
-  | none => 1
-  | some t =>
-    { val := !![t, 1; 1, 0]
-      inv := !![0, 1; 1, -t]
-      val_inv := by
-        rw [Matrix.mul_fin_two, Matrix.one_fin_two]
-        congr 1
-        simp
-      inv_val := by
-        rw [Matrix.mul_fin_two, Matrix.one_fin_two]
-        congr 1
-        simp }
+/-- **A scalar matrix fixes every coset** of the Borel subgroup: scalar matrices are central, so a
+conjugate of one is itself, and they are upper triangular.
 
-/-- The representative of the coset of the Borel subgroup itself is the identity. -/
-@[simp, grind =]
-theorem cosetRep_none : cosetRep (none : Option R) = 1 :=
-  (rfl)
+Not a `simp` lemma: it would rewrite the fixed-coset subtype of a scalar matrix to a trivial
+subtype, which `TauCeti.GL2Borel.natCard_fixedCosets_scalar` could then no longer count. -/
+theorem scalar_smul_quotient_eq_self (u : Rˣ) (c : GL (Fin 2) R ⧸ GL2Borel R) :
+    Matrix.GeneralLinearGroup.scalar (Fin 2) u • c = c := by
+  induction c using QuotientGroup.induction_on with
+  | H y =>
+    rw [smul_quotientGroup_mk_eq_iff, ← Matrix.GeneralLinearGroup.scalar_commute, mul_assoc,
+      inv_mul_cancel, mul_one]
+    exact scalar_mem R u
 
-/-- The matrix underlying the representative indexed by `t`. -/
-@[simp, grind =]
-theorem coe_cosetRep_some (t : R) :
-    ((cosetRep (some t) : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) = !![t, 1; 1, 0] :=
-  (rfl)
-
-/-- The inverse of `TauCeti.GL2Borel.cosetRep (some t)`, written out. This is deliberately not a
-`simp` lemma: `simp` pushes the inverse inside the coercion instead, so its left-hand side is not
-in normal form. -/
-theorem coe_inv_cosetRep_some (t : R) :
-    (((cosetRep (some t))⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) = !![0, 1; 1, -t] :=
-  (rfl)
-
-/-- Conjugating by the representative `TauCeti.GL2Borel.cosetRep none` does nothing, so the
-resulting upper-triangularity condition is that of `g` itself: the line `(1, 0)` is an eigenline
-exactly when the lower-left entry vanishes. -/
-theorem conj_cosetRep_none_mem_iff (g : GL (Fin 2) R) :
-    (cosetRep (none : Option R))⁻¹ * g * cosetRep none ∈ GL2Borel R ↔
-      (g : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 := by
-  rw [cosetRep_none, inv_one, one_mul, mul_one, mem_iff]
-
-/-- The lower-left entry of the conjugate of `g = !![p, q; r, s]` by
-`TauCeti.GL2Borel.cosetRep (some t)` is `q + (p - s) t - r t²`. -/
-theorem coe_conj_cosetRep_some_apply_one_zero (g : GL (Fin 2) R) (t : R) :
-    (((cosetRep (some t))⁻¹ * g * cosetRep (some t) : GL (Fin 2) R) :
-        Matrix (Fin 2) (Fin 2) R) 1 0 =
-      (g : Matrix (Fin 2) (Fin 2) R) 0 1 +
-        ((g : Matrix (Fin 2) (Fin 2) R) 0 0 - (g : Matrix (Fin 2) (Fin 2) R) 1 1) * t -
-        (g : Matrix (Fin 2) (Fin 2) R) 1 0 * t ^ 2 := by
-  rw [Units.val_mul, Units.val_mul, coe_inv_cosetRep_some, coe_cosetRep_some]
-  simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero,
-    Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-  ring
-
-/-- **The fixed-coset equation.** Conjugating `g = !![p, q; r, s]` by the representative
-`TauCeti.GL2Borel.cosetRep (some t)` makes it upper triangular exactly when
-`q + (p - s) t - r t² = 0`, the condition for `(t, 1)` to span an eigenline of `g`. -/
-theorem conj_cosetRep_some_mem_iff (g : GL (Fin 2) R) (t : R) :
-    (cosetRep (some t))⁻¹ * g * cosetRep (some t) ∈ GL2Borel R ↔
-      (g : Matrix (Fin 2) (Fin 2) R) 0 1 +
-          ((g : Matrix (Fin 2) (Fin 2) R) 0 0 - (g : Matrix (Fin 2) (Fin 2) R) 1 1) * t -
-          (g : Matrix (Fin 2) (Fin 2) R) 1 0 * t ^ 2 = 0 := by
-  rw [mem_iff, coe_conj_cosetRep_some_apply_one_zero]
+/-- **An element with no upper-triangular conjugate fixes no coset at all.** A fixed coset would
+exhibit such a conjugate. Over a field this is the elliptic case: the matrix has no eigenline. -/
+theorem natCard_fixedCosets_eq_zero {g : GL (Fin 2) R}
+    (h : ∀ y : GL (Fin 2) R, y * g * y⁻¹ ∉ GL2Borel R) :
+    Nat.card {c : GL (Fin 2) R ⧸ GL2Borel R // g • c = c} = 0 := by
+  have hnone : ∀ c : GL (Fin 2) R ⧸ GL2Borel R, ¬ g • c = c := by
+    refine QuotientGroup.mk_surjective.forall.2 fun y hy => ?_
+    exact h y⁻¹ (by simpa using (smul_quotientGroup_mk_eq_iff g y).1 hy)
+  have : IsEmpty {c : GL (Fin 2) R ⧸ GL2Borel R // g • c = c} := ⟨fun c => hnone c.1 c.2⟩
+  exact Nat.card_of_isEmpty
 
 end CommRing
+
+section OnePointModel
+
+variable (F : Type u) [Field F] [DecidableEq F]
+
+/-- **The Borel subgroup is the stabilizer of the point at infinity** for the Möbius action of
+`GL₂(F)` on Mathlib's model `OnePoint F` of the projective line: the coset `B` is the line spanned
+by the first basis vector. -/
+theorem stabilizer_infty :
+    MulAction.stabilizer (GL (Fin 2) F) (∞ : OnePoint F) = GL2Borel F :=
+  Subgroup.ext fun _ =>
+    MulAction.mem_stabilizer_iff.trans (OnePoint.smul_infty_eq_self_iff.trans mem_iff.symm)
+
+/-- The matrix `!![t, 1; 1, 0]` carries `∞` to the affine point `t`. -/
+private theorem upperRightHom_mul_gl2WeylElement_smul_infty (t : F) :
+    (Matrix.GeneralLinearGroup.upperRightHom t * GL2WeylElement F) • (∞ : OnePoint F) =
+      (t : OnePoint F) := by
+  rw [OnePoint.smul_infty_eq_ite]
+  simp [Matrix.GeneralLinearGroup.upperRightHom, Matrix.mul_apply, Fin.sum_univ_two]
+
+/-- **The cosets of the Borel subgroup are the points of the projective line**: translating the
+point at infinity identifies `GL₂(F) ⧸ B` with Mathlib's model `OnePoint F`. It is a bijection
+because `TauCeti.GL2Borel.stabilizer_infty` identifies the stabilizer of `∞` with `B`, and because
+the action is transitive. -/
+noncomputable def quotientEquivOnePoint : GL (Fin 2) F ⧸ GL2Borel F ≃ OnePoint F :=
+  (Subgroup.quotientEquivOfEq (stabilizer_infty F).symm).trans <|
+    Equiv.ofBijective (MulAction.ofQuotientStabilizer (GL (Fin 2) F) (∞ : OnePoint F))
+      ⟨MulAction.injective_ofQuotientStabilizer _ _, fun x => by
+        cases x with
+        | infty => exact ⟨QuotientGroup.mk 1, one_smul _ _⟩
+        | coe t =>
+          exact ⟨QuotientGroup.mk (Matrix.GeneralLinearGroup.upperRightHom t * GL2WeylElement F),
+            upperRightHom_mul_gl2WeylElement_smul_infty F t⟩⟩
+
+/-- The point of the projective line attached to the coset of `g` is `g • ∞`, the line spanned by
+the first column of `g`. -/
+@[simp]
+theorem quotientEquivOnePoint_mk (g : GL (Fin 2) F) :
+    quotientEquivOnePoint F (QuotientGroup.mk g) = g • (∞ : OnePoint F) :=
+  (rfl)
+
+/-- **The identification is equivariant**, so it matches fixed cosets with fixed points. -/
+@[simp]
+theorem quotientEquivOnePoint_smul (g : GL (Fin 2) F) (c : GL (Fin 2) F ⧸ GL2Borel F) :
+    quotientEquivOnePoint F (g • c) = g • quotientEquivOnePoint F c := by
+  induction c using QuotientGroup.induction_on with
+  | H y => rw [MulAction.Quotient.smul_mk, quotientEquivOnePoint_mk, quotientEquivOnePoint_mk,
+      smul_eq_mul, mul_smul]
+
+/-- The coset carried to `∞` is the Borel subgroup itself. -/
+@[simp]
+theorem quotientEquivOnePoint_symm_infty :
+    (quotientEquivOnePoint F).symm ∞ = QuotientGroup.mk 1 := by
+  rw [Equiv.symm_apply_eq, quotientEquivOnePoint_mk, one_smul]
+
+/-- The coset carried to the affine point `t` is that of `!![t, 1; 1, 0]`, whose first column spans
+the line through `(t, 1)`. -/
+@[simp]
+theorem quotientEquivOnePoint_symm_coe (t : F) :
+    (quotientEquivOnePoint F).symm (t : OnePoint F) =
+      QuotientGroup.mk (Matrix.GeneralLinearGroup.upperRightHom t * GL2WeylElement F) := by
+  rw [Equiv.symm_apply_eq, quotientEquivOnePoint_mk,
+    upperRightHom_mul_gl2WeylElement_smul_infty]
+
+variable {F}
+
+/-- **The fixed-coset count is a fixed-point count on the projective line**, by the equivariant
+identification `TauCeti.GL2Borel.quotientEquivOnePoint`. -/
+theorem natCard_fixedCosets_eq_ncard (g : GL (Fin 2) F) :
+    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // g • c = c} =
+      {x : OnePoint F | g • x = x}.ncard :=
+  Nat.card_congr <| (quotientEquivOnePoint F).subtypeEquiv fun c => by
+    rw [Set.mem_ofPred_eq, ← quotientEquivOnePoint_smul]
+    exact (Equiv.apply_eq_iff_eq _).symm
+
+/-- The affine points fixed by an upper-triangular `!![a, b; 0, d]` are the roots of the linear
+equation `(d - a) t = b`. This is Mathlib's
+`Matrix.GeneralLinearGroup.fixpointPolynomial_aeval_eq_zero_iff` with the quadratic term struck
+out. -/
+private theorem smul_coe_eq_self_iff_of_mem {g : GL (Fin 2) F} (hg : g ∈ GL2Borel F) (t : F) :
+    g • (t : OnePoint F) = t ↔
+      ((g : Matrix (Fin 2) (Fin 2) F) 1 1 - (g : Matrix (Fin 2) (Fin 2) F) 0 0) * t =
+        (g : Matrix (Fin 2) (Fin 2) F) 0 1 := by
+  rw [← Matrix.GeneralLinearGroup.fixpointPolynomial_aeval_eq_zero_iff]
+  simp [Matrix.GeneralLinearGroup.fixpointPolynomial, mem_iff.1 hg, sub_eq_zero]
+
+end OnePointModel
 
 section Field
 
 variable {F : Type u} [Field F]
 
-private theorem cosetRep_quotient_injective :
-    Function.Injective fun x : Option F =>
-      (QuotientGroup.mk (cosetRep x) : GL (Fin 2) F ⧸ GL2Borel F) := by
-  intro x y hxy
-  rw [QuotientGroup.eq, mem_iff] at hxy
-  obtain _ | s := x <;> obtain _ | t := y
-  · rfl
-  · rw [cosetRep_none, inv_one, one_mul, coe_cosetRep_some] at hxy
-    simp at hxy
-  · rw [cosetRep_none, mul_one, coe_inv_cosetRep_some] at hxy
-    simp at hxy
-  · rw [Units.val_mul, coe_inv_cosetRep_some, coe_cosetRep_some] at hxy
-    simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero,
-      Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply] at hxy
-    have hst : t = s := by linear_combination hxy
-    rw [hst]
+/-- **An upper-triangular element with distinct diagonal entries fixes exactly two cosets**: the
+Borel subgroup itself, and the line spanned by the second eigenvector. -/
+theorem natCard_fixedCosets_of_mem_of_ne {g : GL (Fin 2) F} (hg : g ∈ GL2Borel F)
+    (h : (g : Matrix (Fin 2) (Fin 2) F) 0 0 ≠ (g : Matrix (Fin 2) (Fin 2) F) 1 1) :
+    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // g • c = c} = 2 := by
+  classical
+  have hne : (g : Matrix (Fin 2) (Fin 2) F) 1 1 - (g : Matrix (Fin 2) (Fin 2) F) 0 0 ≠ 0 :=
+    sub_ne_zero.2 (Ne.symm h)
+  have hset : {x : OnePoint F | g • x = x} =
+      {∞, (((g : Matrix (Fin 2) (Fin 2) F) 0 1 /
+        ((g : Matrix (Fin 2) (Fin 2) F) 1 1 - (g : Matrix (Fin 2) (Fin 2) F) 0 0) : F) :
+          OnePoint F)} := by
+    ext x
+    cases x with
+    | infty => simp [OnePoint.smul_infty_eq_self_iff, mem_iff.1 hg]
+    | coe t =>
+      rw [Set.mem_ofPred_eq, smul_coe_eq_self_iff_of_mem hg]
+      simp [eq_div_iff hne, mul_comm]
+  rw [natCard_fixedCosets_eq_ncard, hset, Set.ncard_pair (by simp)]
 
-private theorem cosetRep_quotient_surjective :
-    Function.Surjective fun x : Option F =>
-      (QuotientGroup.mk (cosetRep x) : GL (Fin 2) F ⧸ GL2Borel F) := by
-  refine QuotientGroup.mk_surjective.forall.2 fun g => ?_
-  by_cases hr : (g : Matrix (Fin 2) (Fin 2) F) 1 0 = 0
-  · refine ⟨none, QuotientGroup.eq.2 ?_⟩
-    rw [cosetRep_none, inv_one, one_mul, mem_iff]
-    exact hr
-  · refine ⟨some ((g : Matrix (Fin 2) (Fin 2) F) 0 0 / (g : Matrix (Fin 2) (Fin 2) F) 1 0),
-      QuotientGroup.eq.2 ?_⟩
-    rw [mem_iff, Units.val_mul, coe_inv_cosetRep_some]
-    simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero,
-      Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-    field_simp
-    ring
+/-- **An upper-triangular element with equal diagonal entries but a nonzero upper-right entry fixes
+exactly one coset**: the Borel subgroup itself, the line of its single eigenvector. -/
+theorem natCard_fixedCosets_of_mem_of_eq {g : GL (Fin 2) F} (hg : g ∈ GL2Borel F)
+    (h : (g : Matrix (Fin 2) (Fin 2) F) 0 0 = (g : Matrix (Fin 2) (Fin 2) F) 1 1)
+    (hb : (g : Matrix (Fin 2) (Fin 2) F) 0 1 ≠ 0) :
+    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // g • c = c} = 1 := by
+  classical
+  have hset : {x : OnePoint F | g • x = x} = {∞} := by
+    ext x
+    cases x with
+    | infty => simp [OnePoint.smul_infty_eq_self_iff, mem_iff.1 hg]
+    | coe t =>
+      rw [Set.mem_ofPred_eq, smul_coe_eq_self_iff_of_mem hg]
+      simp [← h, Ne.symm hb]
+  rw [natCard_fixedCosets_eq_ncard, hset, Set.ncard_singleton]
 
-variable (F) in
-/-- **The cosets of the Borel subgroup are the points of the projective line**: the `q + 1`
-representatives of `TauCeti.GL2Borel.cosetRep` index the coset space `GL₂(F) ⧸ B`. -/
-noncomputable def cosetRepEquiv : Option F ≃ GL (Fin 2) F ⧸ GL2Borel F :=
-  Equiv.ofBijective _ ⟨cosetRep_quotient_injective, cosetRep_quotient_surjective⟩
-
+/-- **A diagonal matrix with distinct entries fixes exactly two cosets**, the two coordinate
+axes. -/
 @[simp]
-theorem cosetRepEquiv_apply (x : Option F) :
-    cosetRepEquiv F x = (QuotientGroup.mk (cosetRep x) : GL (Fin 2) F ⧸ GL2Borel F) :=
-  (rfl)
-
-/-- A matrix fixes the coset of `y` exactly when the conjugate `y⁻¹ g y` is upper triangular. -/
-theorem smul_quotientMk_eq_iff (g y : GL (Fin 2) F) :
-    g • (QuotientGroup.mk y : GL (Fin 2) F ⧸ GL2Borel F) = QuotientGroup.mk y ↔
-      y⁻¹ * g * y ∈ GL2Borel F := by
-  rw [MulAction.Quotient.smul_mk, QuotientGroup.eq, ← Subgroup.inv_mem_iff]
-  simp [mul_assoc]
-
-variable (F) in
-/-- **The cosets fixed by `g` are indexed by the fixed representatives.** Together with
-`TauCeti.GL2Borel.conj_cosetRep_none_mem_iff` and `TauCeti.GL2Borel.conj_cosetRep_some_mem_iff`
-this turns a fixed-coset count into the count of solutions of an equation in one variable. -/
-noncomputable def fixedCosetsEquiv (g : GL (Fin 2) F) :
-    {x : Option F // (cosetRep x)⁻¹ * g * cosetRep x ∈ GL2Borel F} ≃
-      {c : GL (Fin 2) F ⧸ GL2Borel F // g • c = c} :=
-  (cosetRepEquiv F).subtypeEquiv fun x => by
-    rw [cosetRepEquiv_apply, smul_quotientMk_eq_iff]
-
-/-- The coset that `TauCeti.GL2Borel.fixedCosetsEquiv` attaches to a parameter `x` is the coset of
-the representative `TauCeti.GL2Borel.cosetRep x`. -/
-@[simp]
-theorem coe_fixedCosetsEquiv_apply (g : GL (Fin 2) F)
-    (x : {x : Option F // (cosetRep x)⁻¹ * g * cosetRep x ∈ GL2Borel F}) :
-    (fixedCosetsEquiv F g x : GL (Fin 2) F ⧸ GL2Borel F) =
-      QuotientGroup.mk (cosetRep (x : Option F)) :=
-  (rfl)
-
-/-- **The fixed-coset count** is the number of parameters whose representative conjugates `g` into
-the Borel subgroup. -/
-theorem natCard_fixedCosets_eq_ncard (g : GL (Fin 2) F) :
-    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // g • c = c} =
-      {x : Option F | (cosetRep x)⁻¹ * g * cosetRep x ∈ GL2Borel F}.ncard := by
-  exact (Nat.card_congr (fixedCosetsEquiv F g)).symm
-
-/-- **A diagonal matrix with distinct entries fixes exactly two cosets**, the two coordinate axes:
-the equation of `TauCeti.GL2Borel.conj_cosetRep_some_mem_iff` reads `(a - b) t = 0`. -/
 theorem natCard_fixedCosets_diagGL {a b : Fˣ} (hab : a ≠ b) :
-    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // diagGL ![a, b] • c = c} = 2 := by
-  have hab' : (a : F) - (b : F) ≠ 0 := sub_ne_zero.2 fun h => hab (Units.ext h)
-  have e00 : ((diagGL ![a, b] : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 0 0 = (a : F) := by simp
-  have e01 : ((diagGL ![a, b] : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 0 1 = 0 := by simp
-  have e10 : ((diagGL ![a, b] : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 1 0 = 0 := by simp
-  have e11 : ((diagGL ![a, b] : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 1 1 = (b : F) := by simp
-  rw [natCard_fixedCosets_eq_ncard]
-  have hpair : {x : Option F | (cosetRep x)⁻¹ * diagGL ![a, b] * cosetRep x ∈ GL2Borel F} =
-      {none, some 0} := by
-    ext x
-    obtain _ | t := x
-    · simp only [Set.mem_ofPred_eq, conj_cosetRep_none_mem_iff, e10, Set.mem_insert_iff,
-        Set.mem_singleton_iff, true_or]
-    · rw [Set.mem_ofPred_eq, conj_cosetRep_some_mem_iff, e00, e01, e10, e11]
-      simp only [Set.mem_insert_iff, Set.mem_singleton_iff, reduceCtorEq, Option.some.injEq,
-        false_or]
-      constructor
-      · intro h
-        rcases mul_eq_zero.1 (by linear_combination h : ((a : F) - (b : F)) * t = 0) with h' | h'
-        · exact absurd h' hab'
-        · exact h'
-      · rintro rfl
-        ring
-  rw [hpair, Set.ncard_pair (by simp)]
+    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // diagGL ![a, b] • c = c} = 2 :=
+  natCard_fixedCosets_of_mem_of_ne (mem_iff.2 (by simp))
+    (by simpa using fun h => hab (Units.ext h))
 
-/-- **A Jordan block fixes exactly one coset**, the line of its single eigenvector: the equation of
-`TauCeti.GL2Borel.conj_cosetRep_some_mem_iff` reads `b = 0`, which is excluded. -/
+/-- **A Jordan block fixes exactly one coset**, the line of its single eigenvector. -/
+@[simp]
 theorem natCard_fixedCosets_jordanGL (a : Fˣ) {b : F} (hb : b ≠ 0) :
-    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // jordanGL a b • c = c} = 1 := by
-  have e00 : ((jordanGL a b : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 0 0 = (a : F) := by
-    rw [coe_jordanGL]; simp
-  have e01 : ((jordanGL a b : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 0 1 = b := by
-    rw [coe_jordanGL]; simp
-  have e10 : ((jordanGL a b : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 1 0 = 0 := by
-    rw [coe_jordanGL]; simp
-  have e11 : ((jordanGL a b : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 1 1 = (a : F) := by
-    rw [coe_jordanGL]; simp
-  rw [natCard_fixedCosets_eq_ncard]
-  have hsingle : {x : Option F | (cosetRep x)⁻¹ * jordanGL a b * cosetRep x ∈ GL2Borel F} =
-      {none} := by
-    ext x
-    obtain _ | t := x
-    · simp only [Set.mem_ofPred_eq, conj_cosetRep_none_mem_iff, e10, Set.mem_singleton_iff]
-    · rw [Set.mem_ofPred_eq, conj_cosetRep_some_mem_iff, e00, e01, e10, e11]
-      simp only [Set.mem_singleton_iff, reduceCtorEq, iff_false]
-      intro h
-      exact hb (by linear_combination h)
-  rw [hsingle, Set.ncard_singleton]
+    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // jordanGL a b • c = c} = 1 :=
+  natCard_fixedCosets_of_mem_of_eq (jordanGL_mem_gl2Borel a b) (by simp) (by simpa using hb)
 
 section NonSplit
 
-variable {E : Type u} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
+variable {E : Type*} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
 
 /-- **An element of the non-split torus outside `F` fixes no coset at all.** A fixed coset would
 exhibit an upper-triangular conjugate, which is exactly what
 `TauCeti.GL2NonSplitTorus.conj_notMem_gl2Borel` forbids. This is the elliptic case: no eigenvalue of
 such a matrix lies in `F`, so it has no eigenline over `F`. -/
+@[simp]
 theorem natCard_fixedCosets_gl2NonSplitTorusHom {x : Eˣ}
     (hx : (x : E) ∉ Set.range (algebraMap F E)) :
-    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // GL2NonSplitTorusHom F E hE x • c = c} = 0 := by
-  have hnone : ∀ c : GL (Fin 2) F ⧸ GL2Borel F,
-      ¬ GL2NonSplitTorusHom F E hE x • c = c := by
-    refine QuotientGroup.mk_surjective.forall.2 fun y hy => ?_
-    exact GL2NonSplitTorus.conj_notMem_gl2Borel hE hx y⁻¹
-      (by simpa using (smul_quotientMk_eq_iff _ y).1 hy)
-  have : IsEmpty {c : GL (Fin 2) F ⧸ GL2Borel F // GL2NonSplitTorusHom F E hE x • c = c} :=
-    ⟨fun c => hnone c.1 c.2⟩
-  exact Nat.card_of_isEmpty
+    Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // GL2NonSplitTorusHom F E hE x • c = c} = 0 :=
+  natCard_fixedCosets_eq_zero (GL2NonSplitTorus.conj_notMem_gl2Borel hE hx)
 
 end NonSplit
 
@@ -323,29 +290,16 @@ section FiniteField
 
 variable {F : Type u} [Field F] [Fintype F]
 
-/-- **A scalar matrix fixes every coset**, so it fixes all `q + 1` points of the projective line:
-the equation of `TauCeti.GL2Borel.conj_cosetRep_some_mem_iff` degenerates to `0 = 0`. -/
+/-- **A scalar matrix fixes every coset**, so it fixes all `q + 1` points of the projective line.
+
+Unlike its three companions this is deliberately not a `simp` lemma: over a finite field the fixed
+cosets form a `Fintype`, so `simp` rewrites the left-hand side by `Nat.card_eq_fintype_card` and it
+is not in `simp`-normal form. -/
 theorem natCard_fixedCosets_scalar (u : Fˣ) :
     Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F //
         Matrix.GeneralLinearGroup.scalar (Fin 2) u • c = c} = Fintype.card F + 1 := by
-  have e00 : ((Matrix.GeneralLinearGroup.scalar (Fin 2) u : GL (Fin 2) F) :
-      Matrix (Fin 2) (Fin 2) F) 0 0 = (u : F) := by simp [Matrix.scalar_apply]
-  have e01 : ((Matrix.GeneralLinearGroup.scalar (Fin 2) u : GL (Fin 2) F) :
-      Matrix (Fin 2) (Fin 2) F) 0 1 = 0 := by simp [Matrix.scalar_apply]
-  have e10 : ((Matrix.GeneralLinearGroup.scalar (Fin 2) u : GL (Fin 2) F) :
-      Matrix (Fin 2) (Fin 2) F) 1 0 = 0 := by simp [Matrix.scalar_apply]
-  have e11 : ((Matrix.GeneralLinearGroup.scalar (Fin 2) u : GL (Fin 2) F) :
-      Matrix (Fin 2) (Fin 2) F) 1 1 = (u : F) := by simp [Matrix.scalar_apply]
-  rw [natCard_fixedCosets_eq_ncard]
-  have huniv : {x : Option F | (cosetRep x)⁻¹ * Matrix.GeneralLinearGroup.scalar (Fin 2) u *
-      cosetRep x ∈ GL2Borel F} = Set.univ := by
-    ext x
-    obtain _ | t := x
-    · simp only [Set.mem_ofPred_eq, conj_cosetRep_none_mem_iff, e10, Set.mem_univ]
-    · rw [Set.mem_ofPred_eq, conj_cosetRep_some_mem_iff, e00, e01, e10, e11]
-      simp only [Set.mem_univ, iff_true]
-      ring
-  rw [huniv, Set.ncard_univ, Nat.card_eq_fintype_card, Fintype.card_option]
+  rw [Nat.card_congr (Equiv.subtypeUnivEquiv (scalar_smul_quotient_eq_self u)),
+    ← Subgroup.index_eq_card, index_eq]
 
 end FiniteField
 

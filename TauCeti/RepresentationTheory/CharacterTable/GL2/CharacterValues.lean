@@ -95,7 +95,7 @@ theorem character_GL2Steinberg_jordanGL (a : Fˣ) {b : F} (hb : b ≠ 0) :
 
 section Elliptic
 
-variable {E : Type u} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
+variable {E : Type*} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
 
 /-- **The Steinberg character at an elliptic element is `-1`.** An element of the non-split torus
 coming from `E ∖ F` has no eigenline over `F`, so it fixes no point of the projective line at all
@@ -134,7 +134,7 @@ theorem character_GL2PrincipalSeries_one_one_jordanGL (a : Fˣ) {b : F} (hb : b 
 
 section Elliptic
 
-variable {E : Type u} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
+variable {E : Type*} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
 
 /-- The boundary principal series has character `0` at an elliptic element: no point of the
 projective line is fixed, so the permutation character vanishes. -/
