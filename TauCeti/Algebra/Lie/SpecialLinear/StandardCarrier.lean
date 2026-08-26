@@ -59,8 +59,9 @@ is any group here claimed to be finite or simple.
   coordinate vectors and the roots of the numbered generators.
 * `TauCeti.SlStd.lattice` and `TauCeti.SlStd.latticeBasis`: the standard admissible lattice and its
   coordinate basis.
-* `TauCeti.SlStd.groupScheme`, `TauCeti.SlStd.rootSubgroup`, `TauCeti.SlStd.weightTorus` and
-  `TauCeti.SlStd.points`: the carrier, its pinned generating morphisms, and its matrix points.
+* `TauCeti.SlStd.groupScheme`, `TauCeti.SlStd.carrierι`, `TauCeti.SlStd.rootSubgroup`,
+  `TauCeti.SlStd.weightTorus` and `TauCeti.SlStd.points`: the carrier, its closed immersion into
+  `GL_{r+1}`, its pinned generating morphisms, and its matrix points.
 
 ## Main results
 
@@ -468,6 +469,28 @@ noncomputable abbrev groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
 
+/-- **The canonical closed immersion of the type `A_r` carrier into `GL_{r+1}`**: the carrier is
+by construction a closed subgroup scheme of the general linear group scheme of the standard
+lattice. -/
+noncomputable def carrierι : groupScheme r ⟶ TauCeti.GeneralLinear.groupScheme ℤ (r + 1) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator r)
+    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
+    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+
+/-- The inclusion of the type `A_r` carrier into `GL_{r+1}` is the inclusion of the Kostant toral
+closure of the standard lattice. -/
+theorem carrierι_def :
+    carrierι r =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
+  rw [carrierι]
+
+/-- **The type `A_r` carrier is a closed subgroup scheme of `GL_{r+1}`.** -/
+instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι r).hom.hom.left := by
+  rw [carrierι]
+  infer_instance
+
 /-- The numbered root subgroup `x_k : 𝔾ₐ → G` of the type `A_r` carrier. -/
 noncomputable def rootSubgroup (k : Fin r ⊕ Fin r) :
     AdditiveGroup.groupScheme ℤ ⟶ groupScheme r :=
@@ -499,6 +522,25 @@ theorem weightTorus_def :
         (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r)
         (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
   rw [weightTorus]
+
+/-- Including a numbered root subgroup of the type `A_r` carrier into `GL_{r+1}` recovers the
+Kostant root subgroup of the numbered generator. -/
+@[simp]
+theorem rootSubgroup_comp_carrierι (k : Fin r ⊕ Fin r) :
+    rootSubgroup r k ≫ carrierι r =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroup (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup (kostantForm_apply_mem_lattice r) k
+        (isNilpotent_rep_rootGenerator r k) (latticeBasis r) := by
+  rw [rootSubgroup, carrierι,
+    TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_comp_ι]
+
+/-- Including the split torus of the type `A_r` carrier into `GL_{r+1}` recovers the weight torus
+of the weights of the standard module. -/
+@[simp]
+theorem weightTorus_comp_carrierι :
+    weightTorus r ≫ carrierι r = TauCeti.GeneralLinear.weightTorus (R := ℤ) (weight r) := by
+  rw [weightTorus, carrierι,
+    TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_comp_ι]
 
 /-- The `A`-valued points of the type `A_r` carrier, as matrices. -/
 noncomputable def points (A : Type) [CommRing A] :
