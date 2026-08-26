@@ -156,7 +156,6 @@ private theorem isCompl_piece_one_piece_zero (hs : HodgeStructureOn W ω 1)
 
 /-- For an effective weight-one Hodge structure, the `i`-eigenspace of the Weil operator is
 exactly the Hodge component `H^{1,0}`. -/
-@[simp]
 theorem eigenspace_weilOperator_I (hs : HodgeStructureOn W ω 1) (heff : hs.IsEffective) :
     Module.End.eigenspace hs.weilOperator Complex.I = hs.piece 1 := by
   refine eigenspace_eq_of_isCompl (μ := Complex.I) (ν := -Complex.I)
@@ -167,7 +166,6 @@ theorem eigenspace_weilOperator_I (hs : HodgeStructureOn W ω 1) (heff : hs.IsEf
 
 /-- For an effective weight-one Hodge structure, the `-i`-eigenspace of the Weil operator is
 exactly the conjugate Hodge component `H^{0,1}`. -/
-@[simp]
 theorem eigenspace_weilOperator_neg_I (hs : HodgeStructureOn W ω 1) (heff : hs.IsEffective) :
     Module.End.eigenspace hs.weilOperator (-Complex.I) = hs.piece 0 := by
   refine eigenspace_eq_of_isCompl (μ := -Complex.I) (ν := Complex.I)
@@ -198,7 +196,6 @@ private theorem eigenspace_eq_comap_of_intertwine {U : Type*} [AddCommGroup U] [
 
 /-- On the literal complexification `ℂ ⊗[ℝ] V_ℝ`, the `i`-eigenspace of the scalar extension of
 the real almost complex structure corresponds to `H^{1,0}` under `realPointsEquiv`. -/
-@[simp]
 theorem eigenspace_baseChange_realAlmostComplexStructure_I
     (hs : HodgeStructureOn W ω 1) (heff : hs.IsEffective) :
     Module.End.eigenspace
@@ -213,7 +210,6 @@ theorem eigenspace_baseChange_realAlmostComplexStructure_I
 
 /-- On the literal complexification `ℂ ⊗[ℝ] V_ℝ`, the `-i`-eigenspace of the scalar extension of
 the real almost complex structure corresponds to `H^{0,1}` under `realPointsEquiv`. -/
-@[simp]
 theorem eigenspace_baseChange_realAlmostComplexStructure_neg_I
     (hs : HodgeStructureOn W ω 1) (heff : hs.IsEffective) :
     Module.End.eigenspace
