@@ -30,8 +30,11 @@ technical: `4α = 0` is the statement that `q` is well defined on a two-torsion 
 
 The companion `TauCeti.FiniteQuadraticModule.kleinFourIsometryOfGenerators` turns an additive
 equivalence `(ℤ/2)² ≃+ A` matching the three displayed values into an isometry onto `A`, which is
-how a discriminant form of order four and exponent two is identified.  It needs no induction: the
-four elements of `(ℤ/2)²` are checked one by one.
+how a discriminant form of order four and exponent two is identified.
+
+The quotient construction is a rank-two adaptation of the private cyclic construction in
+`TauCeti/LinearAlgebra/IntegralLattice/RootLattice/TypeE.lean`; the two can be unified when that
+construction is promoted to shared API.
 
 ## Main declarations
 
@@ -43,8 +46,9 @@ four elements of `(ℤ/2)²` are checked one by one.
 
 ## References
 
-* V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.1, where
-  the corresponding two-torsion forms are written `u₁` and `v₁` in the full-norm convention.
+* V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.1 for
+  discriminant forms and §1.8, Proposition 1.8.1 for the forms written `u₁` and `v₁` in the
+  full-norm convention.
 * W. Ebeling, *Lattices and Codes*, Chapter 1.
 
 This is part of Layer 3 of `TauCetiRoadmap/IntegralLattices/README.md`.
@@ -75,19 +79,24 @@ private def kleinFourBilin : LinearMap.BilinMap ℤ (ℤ × ℤ) (AddCircle (1 :
     (fun c u v ↦ by
       simp only [Prod.smul_fst, Prod.smul_snd, smul_eq_mul, mul_left_comm, mul_smul, smul_add])
 
+private theorem kleinFourBilin_apply (u v : ℤ × ℤ) :
+    kleinFourBilin α β γ u v =
+      (u.1 * v.1) • α + (u.2 * v.2) • β + (u.1 * v.2) • γ := by
+  rw [kleinFourBilin, LinearMap.mk₂_apply]
+
 /-- The quadratic map `(m, k) ↦ m²α + k²β + mkγ` on `ℤ × ℤ`. -/
 private def kleinFourAux : QuadraticMap ℤ (ℤ × ℤ) (AddCircle (1 : ℚ)) :=
   (kleinFourBilin α β γ).toQuadraticMap
 
 private theorem kleinFourAux_apply (u : ℤ × ℤ) :
-    kleinFourAux α β γ u = (u.1 * u.1) • α + (u.2 * u.2) • β + (u.1 * u.2) • γ := (rfl)
+    kleinFourAux α β γ u = (u.1 * u.1) • α + (u.2 * u.2) • β + (u.1 * u.2) • γ := by
+  rw [kleinFourAux, LinearMap.BilinMap.toQuadraticMap_apply, kleinFourBilin_apply]
 
 private theorem polar_kleinFourAux (u v : ℤ × ℤ) :
     QuadraticMap.polar (kleinFourAux α β γ) u v =
       (2 * (u.1 * v.1)) • α + (2 * (u.2 * v.2)) • β + (u.1 * v.2 + u.2 * v.1) • γ := by
-  have hB : ∀ x y : ℤ × ℤ, kleinFourBilin α β γ x y
-      = (x.1 * y.1) • α + (x.2 * y.2) • β + (x.1 * y.2) • γ := fun _ _ ↦ (rfl)
-  rw [kleinFourAux, LinearMap.BilinMap.polar_toQuadraticMap, hB, hB]
+  rw [kleinFourAux, LinearMap.BilinMap.polar_toQuadraticMap, kleinFourBilin_apply,
+    kleinFourBilin_apply]
   have e₁ : (2 * (u.1 * v.1) : ℤ) = u.1 * v.1 + v.1 * u.1 := by ring
   have e₂ : (2 * (u.2 * v.2) : ℤ) = u.2 * v.2 + v.2 * u.2 := by ring
   have e₃ : (u.1 * v.2 + u.2 * v.1 : ℤ) = u.1 * v.2 + v.1 * u.2 := by ring
@@ -205,33 +214,38 @@ theorem kleinFour_pairing (x y : ZMod 2 × ZMod 2) :
     (kleinFour α β γ h₄α h₄β h₂γ).toFiniteBilinearModule.pairing x y =
       QuadraticMap.polar (kleinFourMap α β γ h₄α h₄β h₂γ) x y := (rfl)
 
-/-- **An additive equivalence from `(ℤ/2)²` matching the three generator values is an isometry.**
+omit h₄α h₄β h₂γ in
+/-- **An additive equivalence from `(ℤ/2)²` matching all three nonzero values is an isometry.**
 
-The four elements of `(ℤ/2)²` are checked one by one, so no hypothesis beyond the three displayed
-values is needed.  The target is stated as a bare quadratic map so that the construction applies
-to a discriminant form before it is packaged as a finite quadratic module. -/
+No hypothesis beyond the three displayed values is needed.  Both forms are stated as bare quadratic
+maps so that the construction applies before either is packaged as a finite quadratic module. -/
 noncomputable def kleinFourIsometryOfGenerators {A : Type*} [AddCommGroup A]
+    (q : QuadraticMap ℤ (ZMod 2 × ZMod 2) (AddCircle (1 : ℚ)))
     (r : QuadraticMap ℤ A (AddCircle (1 : ℚ))) (e : ZMod 2 × ZMod 2 ≃+ A)
-    (h₁ : r (e (1, 0)) = α) (h₂ : r (e (0, 1)) = β) (h₃ : r (e (1, 1)) = α + β + γ) :
-    (kleinFourMap α β γ h₄α h₄β h₂γ).IsometryEquiv r where
+    (h₁ : r (e (1, 0)) = q (1, 0)) (h₂ : r (e (0, 1)) = q (0, 1))
+    (h₃ : r (e (1, 1)) = q (1, 1)) : q.IsometryEquiv r where
   toLinearEquiv := e.toIntLinearEquiv
   map_app' x := by
     have hcases : ∀ c : ZMod 2, c = 0 ∨ c = 1 := by decide
     obtain ⟨c, d⟩ := x
-    -- Identify the bundled linear equivalence with its underlying additive equivalence.
-    change r (e (c, d)) = kleinFourMap α β γ h₄α h₄β h₂γ (c, d)
+    -- The linear and additive equivalences have definitionally equal coercions, so the named
+    -- reflexive theorem `AddEquiv.coe_toIntLinearEquiv` gives `simp` no rewrite step here.
+    change r (e (c, d)) = q (c, d)
     rcases hcases c with rfl | rfl <;> rcases hcases d with rfl | rfl
     · rw [Prod.mk_zero_zero, map_zero, map_zero, map_zero]
-    · rw [kleinFourMap_apply_zero_one, h₂]
-    · rw [kleinFourMap_apply_one_zero, h₁]
-    · rw [kleinFourMap_apply_one_one, h₃]
+    · exact h₂
+    · exact h₁
+    · exact h₃
 
+omit h₄α h₄β h₂γ in
 @[simp]
 theorem kleinFourIsometryOfGenerators_apply {A : Type*} [AddCommGroup A]
+    (q : QuadraticMap ℤ (ZMod 2 × ZMod 2) (AddCircle (1 : ℚ)))
     (r : QuadraticMap ℤ A (AddCircle (1 : ℚ))) (e : ZMod 2 × ZMod 2 ≃+ A)
-    (h₁ : r (e (1, 0)) = α) (h₂ : r (e (0, 1)) = β) (h₃ : r (e (1, 1)) = α + β + γ)
+    (h₁ : r (e (1, 0)) = q (1, 0)) (h₂ : r (e (0, 1)) = q (0, 1))
+    (h₃ : r (e (1, 1)) = q (1, 1))
     (x : ZMod 2 × ZMod 2) :
-    kleinFourIsometryOfGenerators α β γ h₄α h₄β h₂γ r e h₁ h₂ h₃ x = e x := (rfl)
+    kleinFourIsometryOfGenerators q r e h₁ h₂ h₃ x = e x := (rfl)
 
 end FiniteQuadraticModule
 

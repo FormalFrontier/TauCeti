@@ -925,13 +925,20 @@ theorem zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_zero_one (hn : Ev
   rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup, AddEquiv.ofBijective_apply,
     AddMonoidHom.coprod_apply, map_zero, zero_add, checkerboardZModTwoHom_one]
 
-/-! ## The discriminant pairings -/
+/-- The even-rank identification sends the diagonal generator of `(ℤ/2)²` to the cospinor
+class. -/
+@[simp]
+theorem zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_one (hn : Even n) :
+    zmodTwoProdAddEquivCheckerboardDiscriminantGroup n hn (1, 1) =
+      checkerboardCospinorClass n := by
+  have hsplit : ((1 : ZMod 2), (1 : ZMod 2)) =
+      ((1 : ZMod 2), (0 : ZMod 2)) + ((0 : ZMod 2), (1 : ZMod 2)) := by
+    rw [Prod.mk_add_mk, add_zero, zero_add]
+  rw [hsplit, map_add, zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_zero,
+    zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_zero_one,
+    checkerboardVectorClass_add_checkerboardSpinorClass]
 
-/-- A rational number which is an integer vanishes in `ℚ/ℤ`. -/
-private theorem checkerboard_coe_eq_zero {q : ℚ} (m : ℤ) (h : q = (m : ℚ)) :
-    ((q : ℚ) : AddCircle (1 : ℚ)) = 0 := by
-  rw [AddCircle.coe_eq_zero_iff_mem_one]
-  exact Submodule.mem_one.mpr ⟨m, by simpa using h.symm⟩
+/-! ## The discriminant pairings -/
 
 /-- **The vector class is bilinear-isotropic**: the ambient self-pairing `⟨v, v⟩ = 1` is an
 integer, so `b(v, v) = 0`. -/
@@ -941,7 +948,7 @@ theorem discriminantPairing_checkerboardVectorClass_self :
       (checkerboardVectorClass n) = 0 := by
   rw [checkerboardVectorClass, discriminantPairing_mk,
     checkerboardLattice_form_checkerboardVector_self]
-  exact checkerboard_coe_eq_zero 1 (by norm_num)
+  exact AddCircle.coe_eq_zero_of_eq_intCast 1 (by norm_num)
 
 /-- **The spinor class has self-pairing `b(s, s) = n / 4`.** -/
 @[simp]
@@ -961,56 +968,56 @@ theorem discriminantPairing_checkerboardVectorClass_checkerboardSpinorClass :
 
 /-! ## The discriminant quadratic module of an even-rank checkerboard lattice -/
 
-omit [NeZero n] in
-/-- **The spinor half-norm `n / 8` is four-torsion in `ℚ/ℤ` when `n` is even.**  This is exactly
-what makes the discriminant form of an even-rank checkerboard lattice a quadratic module on
-`(ℤ/2)²`. -/
-theorem four_zsmul_coe_spinorHalfNorm (hn : Even n) :
-    (4 : ℤ) • ((((n : ℚ) / 8 : ℚ)) : AddCircle (1 : ℚ)) = 0 := by
-  obtain ⟨k, hk⟩ := hn
-  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
-  change ((((4 : ℚ) * ((n : ℚ) / 8)) : ℚ) : AddCircle (1 : ℚ)) = 0
-  refine checkerboard_coe_eq_zero (k : ℤ) ?_
-  rw [hk]
-  push_cast
-  ring
-
-/-- The even-rank identification sends the diagonal generator of `(ℤ/2)²` to the cospinor
-class. -/
-@[simp]
-theorem zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_one (hn : Even n) :
-    zmodTwoProdAddEquivCheckerboardDiscriminantGroup n hn (1, 1) =
-      checkerboardCospinorClass n := by
-  have hsplit : ((1 : ZMod 2), (1 : ZMod 2)) =
-      ((1 : ZMod 2), (0 : ZMod 2)) + ((0 : ZMod 2), (1 : ZMod 2)) := by
-    rw [Prod.mk_add_mk, add_zero, zero_add]
-  rw [hsplit, map_add, zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_zero,
-    zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_zero_one,
-    checkerboardVectorClass_add_checkerboardSpinorClass]
-
 /-- **The standard `(ℤ/2)²` model of the even-rank checkerboard discriminant form**: the vector
 class has quadratic value `1 / 2`, either spinor class has `n / 8`, and the vector and spinor
 classes pair to `1 / 2`.
 
 For `n ≡ 0 mod 8` this is Nikulin's `u₁`, for `n ≡ 4 mod 8` it is `v₁`, and for `n ≡ 2 mod 4` the
 two spinor classes carry the quarter-integral values `n / 8`. -/
-@[expose] noncomputable def checkerboardStandardQuadraticModule (hn : Even n) :
+@[expose] noncomputable def checkerboardStandardQuadraticModule (n : ℕ) (hn : Even n) :
     FiniteQuadraticModule :=
   FiniteQuadraticModule.kleinFour (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
     ((((n : ℚ) / 8 : ℚ)) : AddCircle (1 : ℚ)) (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
-    (by
-      -- `change` exposes the quotient-induced ℤ-action as multiplication in ℚ; rewriting
-      -- cannot cross this definitional representation boundary.
-      change ((((4 : ℚ) * ((1 : ℚ) / 2)) : ℚ) : AddCircle (1 : ℚ)) = 0
-      rw [AddCircle.coe_eq_zero_iff_mem_one]
-      exact Submodule.mem_one.mpr ⟨2, by norm_num⟩)
-    (four_zsmul_coe_spinorHalfNorm n hn)
-    (by
-      -- `change` exposes the quotient-induced ℤ-action as multiplication in ℚ; rewriting
-      -- cannot cross this definitional representation boundary.
-      change ((((2 : ℚ) * ((1 : ℚ) / 2)) : ℚ) : AddCircle (1 : ℚ)) = 0
-      rw [AddCircle.coe_eq_zero_iff_mem_one]
-      exact Submodule.mem_one.mpr ⟨1, by norm_num⟩)
+    (AddCircle.zsmul_coe_eq_zero_of_mul_eq_intCast 4 2 (by norm_num))
+    (AddCircle.four_zsmul_coe_div_eight_eq_zero_of_even n hn)
+    (AddCircle.zsmul_coe_eq_zero_of_mul_eq_intCast 2 1 (by norm_num))
+
+omit [NeZero n] in
+/-- The first standard generator has quadratic value `1 / 2`. -/
+@[simp]
+theorem checkerboardStandardQuadraticModule_quadratic_one_zero (hn : Even n) :
+    (checkerboardStandardQuadraticModule n hn).quadratic (1, 0) =
+      (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) := by
+  change FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _ (1, 0) = _
+  rw [FiniteQuadraticModule.kleinFourMap_apply_one_zero]
+
+omit [NeZero n] in
+/-- The second standard generator has quadratic value `n / 8`. -/
+@[simp]
+theorem checkerboardStandardQuadraticModule_quadratic_zero_one (hn : Even n) :
+    (checkerboardStandardQuadraticModule n hn).quadratic (0, 1) =
+      (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) := by
+  change FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _ (0, 1) = _
+  rw [FiniteQuadraticModule.kleinFourMap_apply_zero_one]
+
+omit [NeZero n] in
+/-- The diagonal standard generator has quadratic value `n / 8`. -/
+@[simp]
+theorem checkerboardStandardQuadraticModule_quadratic_one_one (hn : Even n) :
+    (checkerboardStandardQuadraticModule n hn).quadratic (1, 1) =
+      (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) := by
+  change FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _ (1, 1) = _
+  rw [FiniteQuadraticModule.kleinFourMap_apply_one_one, add_right_comm, ← AddCircle.coe_add]
+  rw [AddCircle.coe_eq_zero_of_eq_intCast 1 (by norm_num), zero_add]
+
+omit [NeZero n] in
+/-- The two standard generators pair to `1 / 2`. -/
+@[simp]
+theorem checkerboardStandardQuadraticModule_pairing_one_zero_zero_one (hn : Even n) :
+    (checkerboardStandardQuadraticModule n hn).toFiniteBilinearModule.pairing (1, 0) (0, 1) =
+      (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) := by
+  change QuadraticMap.polar (FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _) (1, 0) (0, 1) = _
+  rw [FiniteQuadraticModule.polar_kleinFourMap_one_zero_zero_one]
 
 /-- **The standard model is isometric to the discriminant quadratic module of an even-rank
 checkerboard lattice**, by the identification carrying `(1, 0)` to the vector class and `(0, 1)`
@@ -1021,33 +1028,34 @@ its quadratic form is the displayed one. -/
 noncomputable def checkerboardDiscriminantQuadraticIsometry (hn : Even n) :
     FiniteQuadraticModule.Isometry (checkerboardStandardQuadraticModule n hn)
       ((checkerboardLattice n).discriminantQuadraticModule (isEven_checkerboardLattice n)) :=
-  FiniteQuadraticModule.kleinFourIsometryOfGenerators _ _ _ _ _ _
+  FiniteQuadraticModule.kleinFourIsometryOfGenerators
+    (FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _)
     ((checkerboardLattice n).discriminantQuadraticMap (isEven_checkerboardLattice n))
     (zmodTwoProdAddEquivCheckerboardDiscriminantGroup n hn)
     (by
       rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_zero,
-        discriminantQuadraticMap_checkerboardVectorClass])
+        discriminantQuadraticMap_checkerboardVectorClass,
+        FiniteQuadraticModule.kleinFourMap_apply_one_zero])
     (by
       rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_zero_one,
-        discriminantQuadraticMap_checkerboardSpinorClass])
+        discriminantQuadraticMap_checkerboardSpinorClass,
+        FiniteQuadraticModule.kleinFourMap_apply_zero_one])
     (by
       have hhalf :
           (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) +
               (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
-        -- `change` exposes addition induced by the quotient map as rational addition; rewriting
-        -- cannot cross this definitional representation boundary.
-        change ((((1 : ℚ) / 2 + (1 : ℚ) / 2) : ℚ) : AddCircle (1 : ℚ)) = 0
-        exact checkerboard_coe_eq_zero 1 (by norm_num)
+        rw [← AddCircle.coe_add]
+        exact AddCircle.coe_eq_zero_of_eq_intCast 1 (by norm_num)
       rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_one,
-        discriminantQuadraticMap_checkerboardCospinorClass, add_right_comm,
-        hhalf, zero_add])
+        discriminantQuadraticMap_checkerboardCospinorClass,
+        FiniteQuadraticModule.kleinFourMap_apply_one_one, add_right_comm, hhalf, zero_add])
 
 /-- The even-rank quadratic isometry acts through the discriminant-group equivalence. -/
 @[simp]
 theorem checkerboardDiscriminantQuadraticIsometry_apply (hn : Even n) (x : ZMod 2 × ZMod 2) :
     checkerboardDiscriminantQuadraticIsometry n hn x =
       zmodTwoProdAddEquivCheckerboardDiscriminantGroup n hn x :=
-  FiniteQuadraticModule.kleinFourIsometryOfGenerators_apply _ _ _ _ _ _ _ _ _ _ _ x
+  FiniteQuadraticModule.kleinFourIsometryOfGenerators_apply _ _ _ _ _ _ x
 
 /-- **The standard `(ℤ/2)²` model is nondegenerate**, since the discriminant form of a
 nondegenerate lattice is. -/
