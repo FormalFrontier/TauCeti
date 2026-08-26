@@ -35,6 +35,8 @@ the root-system case is irreducibility, which Mathlib packages as
 
 ## Main results
 
+* `TauCeti.diagramGraph_submatrix`: the diagram of a principal submatrix is the pullback of the
+  diagram along the reindexing.
 * `TauCeti.IsFiniteType.isAcyclic_diagramGraph`: **the diagram of a finite-type matrix is a
   forest**. The affine diagrams `Ãₙ` for `n ≥ 2`, the ones whose diagrams are cycles, are excluded
   here in one theorem.
@@ -84,6 +86,15 @@ theorem diagramGraph_adj {i j : B} :
 
 instance [DecidableEq B] (A : Matrix B B ℤ) : DecidableRel (diagramGraph A).Adj :=
   fun _ _ ↦ decidable_of_iff _ diagramGraph_adj.symm
+
+/-- **The diagram of a principal submatrix is the pullback of the diagram.** Restricting a matrix
+to an injectively indexed family of indices deletes from its diagram exactly the vertices outside
+that family, keeping every edge between two of the remaining ones. -/
+theorem diagramGraph_submatrix {C : Type*} {f : C → B} (hf : Function.Injective f)
+    (A : Matrix B B ℤ) : diagramGraph (A.submatrix f f) = (diagramGraph A).comap f := by
+  ext i j
+  rw [diagramGraph_adj, SimpleGraph.comap_adj, diagramGraph_adj, Matrix.submatrix_apply,
+    Matrix.submatrix_apply, hf.ne_iff]
 
 namespace IsFiniteType
 
