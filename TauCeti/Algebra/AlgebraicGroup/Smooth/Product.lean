@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SemidirectProduct
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.CommHopfAlgCat
 import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Smooth
 
@@ -69,8 +69,10 @@ theorem productOfNormal (H : CommHopfAlgCat.{u} k) [Algebra.FiniteType k H]
     smoothCommHopfAlgProperty k (CommHopfAlgCat.productOfNormal H I J hI) := by
   let A := CommHopfAlgCat.quotientNormalConjugation H I J hI
   apply image (CommHopfAlgCat.productMapOfNormal H I J hI)
-  exact semidirectProduct (CommHopfAlgCat.quotient H I)
-    (CommHopfAlgCat.quotient H J) A hIs hJs
+  exact (smoothCommHopfAlgProperty k).prop_of_iso
+    (CommHopfAlgCat.normalSemidirectProductIso H I J hI).symm
+    (semidirectProduct (CommHopfAlgCat.quotient H I)
+      (CommHopfAlgCat.quotient H J) A hIs hJs)
 
 end smoothCommHopfAlgProperty
 

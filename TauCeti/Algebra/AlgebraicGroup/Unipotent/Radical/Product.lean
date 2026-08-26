@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Basic
 import TauCeti.Algebra.AlgebraicGroup.Connected.Product
 import TauCeti.Algebra.AlgebraicGroup.Smooth.Product
