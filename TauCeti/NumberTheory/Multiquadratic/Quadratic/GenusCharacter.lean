@@ -84,7 +84,7 @@ with `P` is `0`.
 
 The prime-discriminant hypothesis is not part of the definition, so that the expression rewrites by
 computation; the API below supplies the facts specific to prime discriminants. -/
-@[expose] def primeDiscriminantChar (P n : ℤ) : ℤ :=
+def primeDiscriminantChar (P n : ℤ) : ℤ :=
   if P = -4 then ZMod.χ₄ (n : ZMod 4)
   else if P = 8 then ZMod.χ₈ (n : ZMod 8)
   else if P = -8 then ZMod.χ₈' (n : ZMod 8)
@@ -188,11 +188,8 @@ private theorem sq_emod_eight (a : ℤ) : a ^ 2 % 8 = 0 ∨ a ^ 2 % 8 = 1 ∨ a 
 
 /-- An integer whose square is divisible by `4` is even. -/
 private theorem two_dvd_of_four_dvd_sq {x : ℤ} (h : (4 : ℤ) ∣ x ^ 2) : 2 ∣ x := by
-  rcases Int.even_or_odd x with hx | ⟨k, rfl⟩
-  · exact hx.two_dvd
-  · obtain ⟨m, hm⟩ : ∃ m : ℤ, k ^ 2 + k = m := ⟨_, rfl⟩
-    rw [show (2 * k + 1) ^ 2 = 4 * (k ^ 2 + k) + 1 by ring, hm] at h
-    omega
+  rw [← even_iff_two_dvd, ← Int.even_pow' (m := x) (n := 2) (by norm_num), even_iff_two_dvd]
+  exact dvd_trans (by norm_num) h
 
 /-- **The odd half of the genus-character relation.** If an odd prime `p` divides `D` but not `n`,
 and `4n = x² - D y²`, then `n` is a nonzero quadratic residue modulo `p`: reducing the hypothesis
@@ -288,7 +285,7 @@ private theorem prod_emod_four_eq_one {s : Finset ℤ} (hs : ∀ P ∈ s, P % 4 
 
 /-- **The genus-character relation.** Let `D = ∏ P ∈ s, P` be a factorization of a discriminant
 into prime discriminants, at most one of them even, as produced by
-`IsFundamentalDiscriminant.exists_finset_primeDiscriminant`. Every integer `n` coprime to `D` and
+`IsFundamentalDiscriminant.exists_finset_primeDiscriminant`. Every integer `n` coprime to `P` and
 represented by the principal form of discriminant `D`, `4n = x² - D y²`, has trivial character at
 each `P ∈ s`.
 
@@ -297,14 +294,14 @@ The hypothesis that at most one member of `s` is even is what makes the compleme
 theorem primeDiscriminantChar_eq_one_of_mem_of_four_mul_eq_sq_sub_mul_sq {s : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
     (heven : ∀ P ∈ s, ∀ P' ∈ s, IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
-    {P : ℤ} (hP : P ∈ s) {n x y : ℤ} (hcop : IsCoprime n (∏ P ∈ s, P))
+    {P : ℤ} (hP : P ∈ s) {n x y : ℤ} (hcop : IsCoprime n P)
     (h : 4 * n = x ^ 2 - (∏ P ∈ s, P) * y ^ 2) :
     primeDiscriminantChar P n = 1 := by
   classical
   have hprod : ∏ P' ∈ s, P' = P * ∏ P' ∈ s.erase P, P' := (Finset.mul_prod_erase s _ hP).symm
-  rw [hprod] at hcop h
+  rw [hprod] at h
   refine primeDiscriminantChar_eq_one_of_four_mul_eq_sq_sub_mul_sq (hs P hP) ?_
-    hcop.of_mul_right_left h
+    hcop h
   intro hPeven
   refine prod_emod_four_eq_one fun P' hP' => ?_
   have hmem : P' ∈ s := Finset.mem_of_mem_erase hP'
@@ -317,6 +314,22 @@ characters they carry. The genus characters of a fundamental discriminant `D` ar
 the subsets of a prime-discriminant factorization of `D`. -/
 def genusChar (s : Finset ℤ) (n : ℤ) : ℤ := ∏ P ∈ s, primeDiscriminantChar P n
 
+/-- A genus character is the product of its prime-discriminant characters. -/
+theorem genusChar_def (s : Finset ℤ) (n : ℤ) :
+    genusChar s n = ∏ P ∈ s, primeDiscriminantChar P n := (rfl)
+
+/-- The genus character indexed by the empty set is trivial. -/
+@[simp] theorem genusChar_empty (n : ℤ) : genusChar ∅ n = 1 := by simp [genusChar_def]
+
+/-- A singleton genus character is its prime-discriminant character. -/
+@[simp] theorem genusChar_singleton (P n : ℤ) :
+    genusChar {P} n = primeDiscriminantChar P n := by simp [genusChar_def]
+
+/-- Inserting a fresh prime discriminant multiplies its character into the genus character. -/
+@[simp] theorem genusChar_insert {s : Finset ℤ} {P : ℤ} (hP : P ∉ s) (n : ℤ) :
+    genusChar (insert P s) n = primeDiscriminantChar P n * genusChar s n := by
+  simp [genusChar_def, hP]
+
 /-- A genus character is completely multiplicative. -/
 theorem genusChar_mul (s : Finset ℤ) (m n : ℤ) :
     genusChar s (m * n) = genusChar s m * genusChar s n := by
@@ -327,16 +340,18 @@ theorem genusChar_mul (s : Finset ℤ) (m n : ℤ) :
 
 /-- **The genus characters are trivial on the values of the principal form.** For a
 prime-discriminant factorization `D = ∏ P ∈ s, P` and any subset `t ⊆ s`, the genus character
-indexed by `t` is trivial at every integer coprime to `D` that the principal form of discriminant
-`D` represents. This is the statement that the genus characters descend to the class group. -/
+indexed by `t` is trivial at every integer coprime to the product of the factors in `t` that the
+principal form of discriminant `D` represents. This is the arithmetic input for a future proof that
+the genus characters descend to the class group. -/
 theorem genusChar_eq_one_of_four_mul_eq_sq_sub_mul_sq {s t : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
     (heven : ∀ P ∈ s, ∀ P' ∈ s, IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
-    (hts : t ⊆ s) {n x y : ℤ} (hcop : IsCoprime n (∏ P ∈ s, P))
+    (hts : t ⊆ s) {n x y : ℤ} (hcop : IsCoprime n (∏ P ∈ t, P))
     (h : 4 * n = x ^ 2 - (∏ P ∈ s, P) * y ^ 2) :
     genusChar t n = 1 :=
   Finset.prod_eq_one fun _ hP =>
-    primeDiscriminantChar_eq_one_of_mem_of_four_mul_eq_sq_sub_mul_sq hs heven (hts hP) hcop h
+    primeDiscriminantChar_eq_one_of_mem_of_four_mul_eq_sq_sub_mul_sq hs heven (hts hP)
+      (hcop.of_prod_right _ hP) h
 
 /-! ### Genus characters on the norms of a quadratic field -/
 
@@ -363,29 +378,28 @@ theorem exists_sq_sub_fundamentalDiscriminant_mul_sq_eq_four_mul_norm
 /-- **The genus characters of a quadratic field are trivial on the norms of its integers.** Let
 `K = ℚ(√d)` with `d` squarefree and let `D = fundamentalDiscriminant d` factor as `∏ P ∈ s, P` into
 prime discriminants, at most one even. If the norm of an algebraic integer `z` of `K` is coprime to
-`D`, then every character `primeDiscriminantChar P` with `P ∈ s` is trivial at it.
+`P`, then the character `primeDiscriminantChar P` is trivial at it.
 
-Norms of ideals, hence the values on which the genus characters of the class group are evaluated,
-are norms of this shape up to sign, so this is the well-definedness input for reading the genus
-characters as characters of the (narrow) class group of `K`. -/
+This theorem handles element norms. Applying genus characters to ideal-class representatives will
+require a further argument comparing representatives through principal ideals. -/
 theorem primeDiscriminantChar_norm_eq_one {s : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
     (heven : ∀ P ∈ s, ∀ P' ∈ s, IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
     (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (hsf : Squarefree d) {P : ℤ} (hP : P ∈ s) (z : 𝓞 K)
-    (hcop : IsCoprime (Algebra.norm ℤ z) (fundamentalDiscriminant d)) :
+    (hcop : IsCoprime (Algebra.norm ℤ z) P) :
     primeDiscriminantChar P (Algebra.norm ℤ z) = 1 := by
   obtain ⟨A, B, hAB⟩ :=
     exists_sq_sub_fundamentalDiscriminant_mul_sq_eq_four_mul_norm hmin hgen hsf z
   refine primeDiscriminantChar_eq_one_of_mem_of_four_mul_eq_sq_sub_mul_sq hs heven hP
-    (by rw [hprod]; exact hcop) (x := A) (y := B) ?_
+    hcop (x := A) (y := B) ?_
   rw [hprod]
   linear_combination -hAB
 
 /-- **Genus characters obstruct norms.** If the genus character of the quadratic field
 `K = ℚ(√d)` at a prime discriminant `P` dividing its fundamental discriminant takes the value
-`-1` at an integer `n` coprime to that discriminant, then `n` is not the norm of any algebraic
+`-1` at an integer `n` coprime to `P`, then `n` is not the norm of any algebraic
 integer of `K`. This is the form in which genus theory rules out representations. -/
 theorem norm_ne_of_primeDiscriminantChar_eq_neg_one {s : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
@@ -393,7 +407,7 @@ theorem norm_ne_of_primeDiscriminantChar_eq_neg_one {s : Finset ℤ}
     (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (hsf : Squarefree d) {P n : ℤ} (hP : P ∈ s)
-    (hcop : IsCoprime n (fundamentalDiscriminant d))
+    (hcop : IsCoprime n P)
     (hchar : primeDiscriminantChar P n = -1) (z : 𝓞 K) : Algebra.norm ℤ z ≠ n := by
   intro hz
   subst hz
