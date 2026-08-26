@@ -7,7 +7,7 @@ module
 
 -- `ZMod.coe_int_isUnit_iff_isCoprime` is used only inside a proof, so this stays private.
 import Mathlib.Data.ZMod.Units
-import TauCeti.Data.ZMod.Divisibility
+import TauCeti.Data.Int.LinearCongruence
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.DoubleCoset
 public import TauCeti.NumberTheory.HeckeRing.GLn.DiagonalCosets
 
@@ -51,8 +51,9 @@ the remaining parameter into a second `Γ₀(N)` factor, which is what makes the
   `dvd_lowerRight_witness`, `shimura_prop_3_33_gen` and `shimura_prop_3_33`.
 
   Five source declarations are deliberately **not** ported. `exists_mod_clearing` is the
-  Bézout step behind `Int.exists_nonneg_lt_and_dvd_mul_sub`, and `ZMod.exists_dvd_sub_val_mul`
-  (`TauCeti/Data/ZMod/Divisibility.lean`) already solves that congruence.
+  Bézout step behind `Int.exists_nonneg_lt_and_dvd_mul_sub`
+  (`TauCeti/Data/Int/LinearCongruence.lean`), which repackages the congruence solver
+  `ZMod.exists_dvd_sub_val_mul`.
   `diagMat_one_mem_Delta0` and `diagMat_mem_Delta0_of_gcd` are already on main as
   `natDiagGL_one_mem_Delta0` and
   `natDiagGL_mem_Delta0_of_coprime`. `fin2_col_scale` exists only to drive the source's

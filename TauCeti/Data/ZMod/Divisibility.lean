@@ -25,8 +25,6 @@ consumed there and in `HeckeRing/GL2/Gamma1/CoprimeCosets.lean`.
 
 * `ZMod.exists_dvd_sub_val_mul`: the congruence `j b ≡ a (mod n)` has a solution `j : ZMod n`
   whenever `b` is a unit modulo `n`.
-* `Int.exists_nonneg_lt_and_dvd_mul_sub`: the same solution as an integer in `[0, n)` when
-  the coefficient is coprime to `n`.
 -/
 
 public section
@@ -47,23 +45,3 @@ lemma exists_dvd_sub_val_mul (n : ℕ) [NeZero n] (a b : ℤ)
   rw [hunit, mul_one, sub_self]
 
 end ZMod
-
-namespace Int
-
-/-- **A reduced integer solution to a linear congruence.** With `a` coprime to `m` there is an
-`r` in `[0, m)` solving `a * r ≡ b (mod m)`.
-
-This is `ZMod.exists_dvd_sub_val_mul` repackaged from a residue class into its canonical integer
-representative. -/
-lemma exists_nonneg_lt_and_dvd_mul_sub (a b : ℤ) (m : ℕ) (hm_pos : 0 < m)
-    (ham : Int.gcd a m = 1) :
-    ∃ r : ℤ, 0 ≤ r ∧ r < m ∧ (m : ℤ) ∣ a * r - b := by
-  have : NeZero m := ⟨hm_pos.ne'⟩
-  have hunit : IsUnit ((a : ℤ) : ZMod m) := (ZMod.coe_int_isUnit_iff_isCoprime a m).mpr
-    (isCoprime_comm.mp (Int.isCoprime_iff_gcd_eq_one.mpr ham))
-  obtain ⟨r, hr⟩ := ZMod.exists_dvd_sub_val_mul m b a hunit
-  refine ⟨(r.val : ℤ), Int.natCast_nonneg _, by exact_mod_cast r.val_lt, ?_⟩
-  rw [← neg_sub, mul_comm]
-  exact dvd_neg.mpr hr
-
-end Int

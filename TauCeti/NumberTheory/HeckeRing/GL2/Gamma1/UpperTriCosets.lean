@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import TauCeti.Data.ZMod.Divisibility
+import TauCeti.Data.Int.LinearCongruence
 public import TauCeti.NumberTheory.HeckeRing.GL2.CosetDecomposition
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Diagonal.Coset
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.Basic

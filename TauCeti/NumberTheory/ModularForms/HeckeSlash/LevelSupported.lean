@@ -246,7 +246,8 @@ theorem heckeTCuspNat_mem_cuspFormCharSpace_of_primeFactors_subset (n : ℕ) [Ne
 end Nebentypus
 
 /-- **The `q`-expansion recurrence at an index supported on the level**:
-`aₘ(T_n f) = a_{n m}(f)`. At a prime `p ∣ N` this is the Diamond–Shurman recurrence
+`aₘ(T_n f) = a_{n m}(f)`. When `f` lies in a nebentypus-`χ` space, at a prime `p ∣ N`
+this is the Diamond–Shurman recurrence
 `aₘ(Tₚ f) = a_{m p}(f) + χ(p) p^{k-1} a_{m/p}(f)` with its second term killed by `χ(p) = 0`;
 at `n = p ^ r` it is the `r`-fold iterate of that. -/
 theorem qExpansion_coeff_heckeTNat_of_primeFactors_subset (n : ℕ) [NeZero n]
