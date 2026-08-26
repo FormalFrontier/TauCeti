@@ -197,5 +197,4 @@
     "modules": [
       "Mathlib.RingTheory.Valuation.ValuativeRel.Comap"
     ]
-  }
-]
+  }]
