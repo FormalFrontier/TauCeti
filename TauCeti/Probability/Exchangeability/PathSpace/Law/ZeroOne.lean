@@ -86,8 +86,10 @@ theorem infinitePi_of_pathTail_trivial [StandardBorelSpace α]
   have hν_meas : Measurable ν := hmix.measurable_mixingRepresentative
   -- Preimages under the canonical witness are tail events.
   have hpre : ∀ {A : Set (ProbabilityMeasure α)}, MeasurableSet A →
-      MeasurableSet[pathTail α] (ν ⁻¹' A) := fun hA =>
-    measurable_tailProcess_directingProbabilityMeasure hA
+      MeasurableSet[pathTail α] (ν ⁻¹' A) := fun {A} hA => by
+    have htail : MeasurableSet[tailProcess (fun n (x : ℕ → α) => x n)] (ν ⁻¹' A) :=
+      measurable_tailProcess_directingProbabilityMeasure hA
+    simpa only [pathTail_eq_tailProcess] using htail
   have hprob : IsProbabilityMeasure (ρ.map ν) :=
     Measure.isProbabilityMeasure_map hν_meas.aemeasurable
   have hzo : IsZeroOneMeasure (ρ.map ν) :=

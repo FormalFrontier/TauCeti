@@ -9,6 +9,7 @@ public import TauCeti.Probability.Exchangeability.Contractability
 public import TauCeti.Probability.Exchangeability.FullyExchangeable
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
+public import TauCeti.Probability.Process.Tail.Basic
 
 /-!
 # Process-level ↔ path-law bridges for exchangeability
@@ -28,6 +29,9 @@ The bridges realize the Layer 0 roadmap item asking for process-level ↔ path-l
 directions. They reuse the existing `FullyExchangeable` path-law bridge from
 `FullyExchangeable.lean` and the contractability bridge from `Contractability.lean`; no
 measure-theoretic infrastructure is vendored.
+
+The general tail bridge `comap_pathTail_le_tailProcess` records that pulling the path-space tail
+back along a process yields a sub-σ-algebra of that process's tail.
 -/
 
 public section
@@ -41,6 +45,24 @@ namespace TauCeti
 namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+
+omit [MeasurableSpace Ω] in
+/-- **Tail events of the path law pull back to tail events of the process.** The path map sends the
+coordinate `x ↦ x k` to `X k`, so it carries the future σ-algebra from time `n` on path space into
+the future σ-algebra of the process, and the tails are the infima of those. -/
+theorem comap_pathTail_le_tailProcess (X : ℕ → Ω → α) :
+    MeasurableSpace.comap (fun ω i => X i ω) (pathTail α) ≤ tailProcess X := by
+  simp only [tailProcess_eq_iInf_tailFamily]
+  refine le_iInf fun n => ?_
+  calc MeasurableSpace.comap (fun ω i => X i ω)
+          (⨅ j, tailFamily (fun k (x : ℕ → α) => x k) j)
+      ≤ MeasurableSpace.comap (fun ω i => X i ω)
+          (tailFamily (fun k (x : ℕ → α) => x k) n) :=
+        MeasurableSpace.comap_mono (iInf_le _ n)
+    _ = tailFamily X n := by
+        simp only [tailFamily_eq_iSup_comap, MeasurableSpace.comap_iSup,
+          MeasurableSpace.comap_comp]
+        rfl
 
 /-- A fully exchangeable process has an exchangeable path law. -/
 theorem FullyExchangeable.exchangeableLaw_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}

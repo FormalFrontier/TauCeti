@@ -9,11 +9,8 @@ module
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
 -- Public: the constant-witness dictionary, in which the conclusion "i.i.d." is stated.
 public import TauCeti.Probability.Exchangeability.MixedIID.Const
--- Non-public: the process-to-path-law bridge for exchangeability, used only inside proofs.
+-- Non-public: the process-to-path-law bridges, used only inside proofs.
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
--- Non-public: the mixture identity of an i.i.d. family, used only inside proofs.
-import TauCeti.Probability.Exchangeability.IID
-import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # An exchangeable process with a trivial tail is i.i.d.
@@ -35,10 +32,6 @@ exchangeable event of the path law has no such description in terms of the proce
 
 ## Main results
 
-* `TauCeti.Probability.comap_pathTail_le_tailProcess` — tail events of the path law pull back to
-  tail events of the process;
-* `TauCeti.Probability.mixedIIDWith_const_of_pathLaw_eq_infinitePi` — a process with a product path
-  law is i.i.d., the converse of the mixture representation at a Dirac mixing law;
 * `TauCeti.Probability.exists_mixedIIDWith_const_of_exchangeable_of_tailProcess_trivial` — the
   criterion, in the form naming the common law;
 * `TauCeti.Probability.iIndepFun_of_exchangeable_of_tailProcess_trivial` — its independence form.
@@ -63,51 +56,6 @@ namespace TauCeti
 namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
-
-omit [MeasurableSpace Ω] in
-/-- **Tail events of the path law pull back to tail events of the process.** The path map sends the
-coordinate `x ↦ x k` to `X k`, so it carries the future σ-algebra from time `n` on path space into
-the future σ-algebra of the process, and the tails are the infima of those. -/
-theorem comap_pathTail_le_tailProcess (X : ℕ → Ω → α) :
-    MeasurableSpace.comap (fun ω i => X i ω) (pathTail α) ≤ tailProcess X := by
-  simp only [tailProcess_eq_iInf_tailFamily]
-  refine le_iInf fun n => ?_
-  calc MeasurableSpace.comap (fun ω i => X i ω)
-          (⨅ j, tailFamily (fun k (x : ℕ → α) => x k) j)
-      ≤ MeasurableSpace.comap (fun ω i => X i ω)
-          (tailFamily (fun k (x : ℕ → α) => x k) n) :=
-        MeasurableSpace.comap_mono (iInf_le _ n)
-    _ = tailFamily X n := by
-        simp only [tailFamily_eq_iSup_comap, MeasurableSpace.comap_iSup,
-          MeasurableSpace.comap_comp]
-        rfl
-
-/-- **A process with a product path law is i.i.d.**, with the product factor as its constant mixing
-representative.
-
-This is the converse of the mixture representation `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` at a
-Dirac mixing law: there the path law is the mixture of the powers `Q^{⊗ℕ}` along the law of the
-mixing representative, and a single power is the mixture along a point mass. -/
-theorem mixedIIDWith_const_of_pathLaw_eq_infinitePi {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n)) {P : ProbabilityMeasure α}
-    (hpath : pathLaw μ X = Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
-    MixedIIDWith μ X fun _ => P := by
-  have hcoord : MixedIIDWith (Measure.infinitePi fun _ : ℕ => (P : Measure α))
-      (fun n (x : ℕ → α) => x n) fun _ => P :=
-    MixedIIDWith.of_iIndepFun_map_eq
-      (iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α)) (X := fun _ x => x)
-        fun _ => measurable_id)
-      fun n => by simp [Measure.infinitePi_map_eval]
-  have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
-  refine MixedIIDWith.intro measurable_const fun m k hk => ?_
-  have hsel : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
-    measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
-  have hblock : blockLaw μ X k = blockLaw (pathLaw μ X) (fun n p => p n) k := by
-    simp only [blockLaw_def, pathLaw_def]
-    rw [Measure.map_map hsel hφ]
-    rfl
-  rw [hblock, hpath, hcoord.blockLaw_eq_pi_of_const k hk, Measure.bind_const, measure_univ,
-    one_smul, ProbabilityMeasure.toMeasure_pi]
 
 /-- **An exchangeable process with a trivial tail σ-algebra is i.i.d.**, and its common law is
 named: there is a probability measure `P` on the state space with `fun _ => P` a mixing

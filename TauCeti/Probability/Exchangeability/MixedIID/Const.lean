@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.IID
+import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # Constant mixing measures
@@ -22,6 +23,8 @@ plain independence with common marginal law.
   `MixedIIDWith.aemeasurable` in `MixedIID/Basic.lean`.
 * `mixedIIDWith_const_iff_iIndepFun_and_map_eq` — a constant `p` is a mixing representative exactly
   when the coordinates are independent with common law `p`.
+* `mixedIIDWith_const_of_pathLaw_eq_infinitePi` — a process whose path law is an infinite product
+  has the product factor as a constant mixing representative.
 -/
 
 public section
@@ -111,6 +114,33 @@ theorem mixedIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω} [IsProbabi
     (MixedIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
   ⟨fun h => ⟨h.iIndepFun_of_const, h.map_eq_of_const⟩,
     fun ⟨hindep, hlaw⟩ => MixedIIDWith.of_iIndepFun_map_eq hindep hlaw⟩
+
+/-- **A process with a product path law is i.i.d.**, with the product factor as its constant mixing
+representative.
+
+This is the converse of the mixture representation `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` at a
+Dirac mixing law: there the path law is the mixture of the powers `Q^{⊗ℕ}` along the law of the
+mixing representative, and a single power is the mixture along a point mass. -/
+theorem mixedIIDWith_const_of_pathLaw_eq_infinitePi {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n)) {P : ProbabilityMeasure α}
+    (hpath : pathLaw μ X = Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
+    MixedIIDWith μ X fun _ => P := by
+  have hcoord : MixedIIDWith (Measure.infinitePi fun _ : ℕ => (P : Measure α))
+      (fun n (x : ℕ → α) => x n) fun _ => P :=
+    MixedIIDWith.of_iIndepFun_map_eq
+      (iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α)) (X := fun _ x => x)
+        fun _ => measurable_id)
+      fun n => by simp [Measure.infinitePi_map_eval]
+  have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
+  refine MixedIIDWith.intro measurable_const fun m k hk => ?_
+  have hsel : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
+    measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
+  have hblock : blockLaw μ X k = blockLaw (pathLaw μ X) (fun n p => p n) k := by
+    simp only [blockLaw_def, pathLaw_def]
+    rw [Measure.map_map hsel hφ]
+    rfl
+  rw [hblock, hpath, hcoord.blockLaw_eq_pi_of_const k hk, Measure.bind_const, measure_univ,
+    one_smul, ProbabilityMeasure.toMeasure_pi]
 
 end Probability
 
