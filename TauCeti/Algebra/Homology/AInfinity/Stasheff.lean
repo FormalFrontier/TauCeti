@@ -367,7 +367,6 @@ theorem suspendedStasheffSum_def (n : ℕ) : suspendedStasheffSum m d x n =
     ∑ p ∈ Finset.range (n + 1),
       ∑ s ∈ Finset.Icc 1 (n - p), suspendedStasheffTerm m d x p s (n - p - s) := (rfl)
 
-@[simp]
 theorem suspendedStasheffSum_zero : suspendedStasheffSum m d x 0 = 0 := by
   simp [suspendedStasheffSum_def]
 
@@ -434,7 +433,6 @@ theorem suspendedStasheffSum_congr {e : ℕ → ℤ} {y : ℕ → A} (n : ℕ)
 
 /-- **The suspended Stasheff identity free of the structural coefficient holds exactly when the
 unsuspended one does.** -/
-@[simp]
 theorem suspendedStasheffSum_eq_zero_iff (n : ℕ) :
     suspendedStasheffSum m d x n = 0 ↔ stasheffSum m d x n = 0 := by
   rw [suspendedStasheffSum_eq_smul, negOnePowCast_smul_eq_zero_iff]
