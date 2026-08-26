@@ -8,8 +8,6 @@ module
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Tactic.LinearCombination
 import Mathlib.Tactic.Ring
-public import Mathlib.Data.Fin.VecNotation
-import Mathlib.Data.Fin.Tuple.Reflection
 public import TauCeti.LinearAlgebra.Graded.Insertion
 public import TauCeti.LinearAlgebra.Graded.Shift
 
@@ -59,10 +57,8 @@ propositionally equal arities.
 
 ## Main definitions
 
-* `MultilinearMap.evalNat`: evaluate a finite-arity operation on a natural-indexed input
-  family.
-* `TauCeti.replaceBlock`, `TauCeti.AInfinity.blockDeg` and `TauCeti.AInfinity.replaceDeg`: collapse
-  an input block and record its resulting degree.
+* `TauCeti.AInfinity.blockDeg` and `TauCeti.AInfinity.replaceDeg`: record the degree resulting from
+  collapsing an input block.
 * `TauCeti.AInfinity.stasheffTerm` and `TauCeti.AInfinity.suspendedStasheffTerm`: the `(p, s, t)`
   term of the unsuspended and suspended Stasheff identities.
 * `TauCeti.AInfinity.stasheffSum` and `TauCeti.AInfinity.suspendedStasheffSum`: the two sides of
@@ -112,90 +108,7 @@ open TauCeti.MultilinearMap
 
 universe uR uA uN
 
-namespace MultilinearMap
-
-section Inputs
-
-variable {R : Type uR} {A : Type uA} [Semiring R] [AddCommMonoid A] [Module R A]
-
-/-- Evaluate an arity-`k` operation on the first `k` entries of a family of inputs indexed by the
-naturals.  Indexing inputs by `ℕ` rather than by `Fin k` keeps the index arithmetic of the
-Stasheff sums below free of transports between propositionally equal arities. -/
-def evalNat {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
-    (f : MultilinearMap R (fun _ : Fin k ↦ A) N) (x : ℕ → A) : N :=
-  f fun i ↦ x i.1
-
-theorem evalNat_def {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
-    (f : MultilinearMap R (fun _ : Fin k ↦ A) N) (x : ℕ → A) :
-    evalNat f x = f (fun i ↦ x i.1) := (rfl)
-
-/-- `evalNat` only reads the entries whose indices are below the operation's arity. -/
-theorem evalNat_congr {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
-    (f : MultilinearMap R (fun _ : Fin k ↦ A) N) {x y : ℕ → A}
-    (h : ∀ i < k, x i = y i) : evalNat f x = evalNat f y := by
-  rw [evalNat_def, evalNat_def]
-  congr 1
-  funext i
-  exact h i i.isLt
-
-@[simp]
-theorem evalNat_smul {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
-    [SMulCommClass R R N]
-    (c : R) (f : MultilinearMap R (fun _ : Fin k ↦ A) N) (x : ℕ → A) :
-    evalNat (c • f) x = c • evalNat f x := by
-  simp [evalNat]
-
-@[simp]
-theorem evalNat_one {N : Type uN} [AddCommMonoid N] [Module R N]
-    (f : MultilinearMap R (fun _ : Fin 1 ↦ A) N) (x : ℕ → A) :
-    evalNat f x = f ![x 0] := by
-  exact congrArg f (FinVec.etaExpand_eq _).symm
-
-@[simp]
-theorem evalNat_two {N : Type uN} [AddCommMonoid N] [Module R N]
-    (f : MultilinearMap R (fun _ : Fin 2 ↦ A) N) (x : ℕ → A) :
-    evalNat f x = f ![x 0, x 1] := by
-  exact congrArg f (FinVec.etaExpand_eq _).symm
-
-@[simp]
-theorem evalNat_three {N : Type uN} [AddCommMonoid N] [Module R N]
-    (f : MultilinearMap R (fun _ : Fin 3 ↦ A) N) (x : ℕ → A) :
-    evalNat f x = f ![x 0, x 1, x 2] := by
-  exact congrArg f (FinVec.etaExpand_eq _).symm
-
-@[simp]
-theorem evalNat_four {N : Type uN} [AddCommMonoid N] [Module R N]
-    (f : MultilinearMap R (fun _ : Fin 4 ↦ A) N) (x : ℕ → A) :
-    evalNat f x = f ![x 0, x 1, x 2, x 3] := by
-  exact congrArg f (FinVec.etaExpand_eq _).symm
-
-end Inputs
-
-end MultilinearMap
-
 namespace TauCeti
-
-/-- Replace the block of `s` entries at position `p` of a family indexed by the naturals by the
-single entry `v`.  This is the input tuple of the outer operation of a Stasheff term. -/
-def replaceBlock {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) : ℕ → α := fun i ↦
-  if i < p then x i else if i = p then v else x (i + s - 1)
-
-@[simp]
-theorem replaceBlock_of_lt {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) {i : ℕ} (h : i < p) :
-    replaceBlock x p s v i = x i := by simp [replaceBlock, h]
-
-@[simp]
-theorem replaceBlock_self {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) :
-    replaceBlock x p s v p = v := by simp [replaceBlock]
-
-@[simp]
-theorem replaceBlock_of_gt {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) {i : ℕ} (h : p < i) :
-    replaceBlock x p s v i = x (i + s - 1) := by
-  simp only [replaceBlock]
-  split_ifs with h₁ h₂
-  · exact absurd h₁ (by omega)
-  · exact absurd h₂ (by omega)
-  · rfl
 
 /-- Evaluating an operation on a tuple whose replaced entry is scaled scales the value: the
 replaced entry sits in a single slot, in which the operation is linear. -/
@@ -217,56 +130,9 @@ private theorem evalNat_replaceBlock_smul {u : ℕ} {N : Type uN}
       rcases lt_or_gt_of_ne h with h' | h'
       · rw [replaceBlock_of_lt _ _ _ _ h', replaceBlock_of_lt _ _ _ _ h']
       · rw [replaceBlock_of_gt _ _ _ _ h', replaceBlock_of_gt _ _ _ _ h']
-  rw [evalNat, evalNat, hupd (c • v), MultilinearMap.map_update_smul, ← hupd v]
+  rw [evalNat_def, evalNat_def, hupd (c • v), MultilinearMap.map_update_smul, ← hupd v]
 
 end TauCeti
-
-namespace Fin
-
-/-- Identify a prefix, inserted block, and suffix with their total finite arity. -/
-def blockEquiv (p s t : ℕ) : Fin p ⊕ (Fin s ⊕ Fin t) ≃ Fin (p + s + t) :=
-  (Equiv.sumCongr (Equiv.refl (Fin p))
-      (finSumFinEquiv : Fin s ⊕ Fin t ≃ Fin (s + t))).trans <|
-    (finSumFinEquiv : Fin p ⊕ Fin (s + t) ≃ Fin (p + (s + t))).trans
-      (finCongr (by omega))
-
-@[simp]
-theorem blockEquiv_inl_val (p s t : ℕ) (i : Fin p) :
-    (blockEquiv p s t (.inl i) : ℕ) = i := by
-  simp [blockEquiv]
-
-@[simp]
-theorem blockEquiv_middle_val (p s t : ℕ) (j : Fin s) :
-    (blockEquiv p s t (.inr (.inl j)) : ℕ) = p + j := by
-  simp [blockEquiv]
-
-@[simp]
-theorem blockEquiv_suffix_val (p s t : ℕ) (j : Fin t) :
-    (blockEquiv p s t (.inr (.inr j)) : ℕ) = p + s + j := by
-  simp [blockEquiv]
-  omega
-
-/-- Identify a prefix, one collapsed slot, and suffix with their total finite arity. -/
-def oneSlotEquiv (p t : ℕ) : Fin p ⊕ (Unit ⊕ Fin t) ≃ Fin (p + 1 + t) :=
-  (Equiv.sumCongr (Equiv.refl (Fin p))
-    (Equiv.sumCongr finOneEquiv.symm (Equiv.refl (Fin t)))).trans (blockEquiv p 1 t)
-
-@[simp]
-theorem oneSlotEquiv_inl_val (p t : ℕ) (i : Fin p) :
-    (oneSlotEquiv p t (.inl i) : ℕ) = i := by
-  simp [oneSlotEquiv]
-
-@[simp]
-theorem oneSlotEquiv_middle_val (p t : ℕ) :
-    (oneSlotEquiv p t (.inr (.inl ())) : ℕ) = p := by
-  simp [oneSlotEquiv]
-
-@[simp]
-theorem oneSlotEquiv_suffix_val (p t : ℕ) (j : Fin t) :
-    (oneSlotEquiv p t (.inr (.inr j)) : ℕ) = p + 1 + j := by
-  simp [oneSlotEquiv]
-
-end Fin
 
 namespace Finset
 
@@ -285,9 +151,13 @@ namespace AInfinity
 open TauCeti
 open _root_.MultilinearMap
 
-variable {R : Type uR} {A : Type uA} [CommRing R] [AddCommGroup A] [Module R A]
+variable {R : Type uR} {A : Type uA} [CommRing R]
 
 /-! ### Evaluation of suspended operations -/
+
+section Evaluation
+
+variable [AddCommMonoid A] [Module R A]
 
 @[simp]
 theorem evalNat_suspend {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
@@ -295,6 +165,8 @@ theorem evalNat_suspend {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
     (x : ℕ → A) :
     evalNat (suspend d f) x = negOnePowCast R (suspExp k d) • evalNat f x := by
   rw [suspend_eq_smul, evalNat_smul]
+
+end Evaluation
 
 /-! ### The degrees of a substituted tuple -/
 
@@ -383,6 +255,7 @@ end Degrees
 
 section Stasheff
 
+variable [AddCommMonoid A] [Module R A]
 variable (m : ∀ k : ℕ, MultilinearMap R (fun _ : Fin k ↦ A) A) (d : ℕ → ℤ) (x : ℕ → A)
 
 /-- The `(p, s, t)` term of the unsuspended Stasheff identity in arity `p + s + t`: the arity-`s`
@@ -501,6 +374,7 @@ theorem suspendedStasheffSum_zero : suspendedStasheffSum m d x 0 = 0 := by
 /-- **The suspended and unsuspended Stasheff terms agree up to the suspension sign of the whole
 arity.**  The sign does not depend on the decomposition, which is why the two identities are
 equivalent. -/
+@[simp]
 theorem suspendedStasheffTerm_eq_smul (p s t : ℕ) :
     suspendedStasheffTerm m d x p s t =
       negOnePowCast R (suspExp (p + s + t) d) • stasheffTerm m d x p s t := by
@@ -540,6 +414,7 @@ theorem stasheffSum_congr {e : ℕ → ℤ} {y : ℕ → A} (n : ℕ)
     exact hx i (by omega)
 
 /-- **The suspended and unsuspended Stasheff identities agree up to a global sign.** -/
+@[simp]
 theorem suspendedStasheffSum_eq_smul (n : ℕ) :
     suspendedStasheffSum m d x n = negOnePowCast R (suspExp n d) • stasheffSum m d x n := by
   rw [suspendedStasheffSum, stasheffSum, Finset.smul_sum]
@@ -559,6 +434,7 @@ theorem suspendedStasheffSum_congr {e : ℕ → ℤ} {y : ℕ → A} (n : ℕ)
 
 /-- **The suspended Stasheff identity free of the structural coefficient holds exactly when the
 unsuspended one does.** -/
+@[simp]
 theorem suspendedStasheffSum_eq_zero_iff (n : ℕ) :
     suspendedStasheffSum m d x n = 0 ↔ stasheffSum m d x n = 0 := by
   rw [suspendedStasheffSum_eq_smul, negOnePowCast_smul_eq_zero_iff]
@@ -569,6 +445,7 @@ end Stasheff
 
 section LowArity
 
+variable [AddCommGroup A] [Module R A]
 variable (m : ∀ k : ℕ, MultilinearMap R (fun _ : Fin k ↦ A) A) (d : ℕ → ℤ) (x : ℕ → A)
 
 /-- The arity-one identity is `m₁ m₁ = 0`. -/
@@ -683,6 +560,7 @@ end LowArity
 
 section Comparison
 
+variable [AddCommMonoid A] [Module R A]
 variable {σ : Type*} [SetLike σ A] (𝒜 : ℤ → σ)
 
 /-- `TauCeti.AInfinity.blockDeg` is the degree of the value of an operation of degree `2 - s` on a
@@ -693,7 +571,7 @@ theorem evalNat_mem_blockDeg {s : ℕ} (f : MultilinearMap R (fun _ : Fin s ↦ 
     (p : ℕ) (hx : ∀ j < s, x (p + j) ∈ 𝒜 (d (p + j))) :
     evalNat f (fun j ↦ x (p + j)) ∈ 𝒜 (blockDeg d p s) := by
   rw [blockDeg_def, ← Fin.sum_univ_eq_sum_range (fun j ↦ d (p + j)) s,
-    show ∀ a : ℤ, a + 2 - s = a + (2 - s) from fun a ↦ by ring]
+    show ∀ a : ℤ, a + 2 - s = a + (2 - s) from fun a ↦ by ring, evalNat_def]
   exact hf.map_mem _ _ fun j ↦ hx j j.isLt
 
 /-- **The supplied degrees of a Stasheff term are the actual ones.** If an arity-`s` operation is
@@ -704,11 +582,13 @@ theorem replaceBlock_mem_replaceDeg {s : ℕ}
     (hf : MultilinearMap.IsHomogeneous f (fun _ ↦ 𝒜) 𝒜 (2 - s))
     (hx : ∀ i, x i ∈ 𝒜 (d i)) (p i : ℕ) :
     replaceBlock x p s (evalNat f fun j ↦ x (p + j)) i ∈ 𝒜 (replaceDeg d p s i) := by
-  rw [replaceDeg, replaceBlock, replaceBlock]
-  split_ifs with h₁ h₂
-  · exact hx i
-  · exact evalNat_mem_blockDeg 𝒜 f hf p (fun j _ ↦ hx (p + j))
-  · exact hx _
+  rcases lt_trichotomy i p with h | rfl | h
+  · rw [replaceBlock_of_lt _ _ _ _ h, replaceDeg_of_lt _ _ _ h]
+    exact hx i
+  · rw [replaceBlock_self, replaceDeg_self]
+    exact evalNat_mem_blockDeg 𝒜 f hf i (fun j _ ↦ hx (i + j))
+  · rw [replaceBlock_of_gt _ _ _ _ h, replaceDeg_of_gt _ _ _ h]
+    exact hx _
 
 end Comparison
 
