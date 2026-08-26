@@ -437,20 +437,6 @@ theorem ReducedTensorWords.isGradedCoderivation_iff {q : ℤ}
             deconcatenation R M) :=
   Iff.rfl
 
-/-- Twisting letterwise preserves each step of the conilpotence filtration. -/
-private theorem map_twist_mem_filtration (G : InternalGrading R M) (q : ℤ) {m : ℕ}
-    (z : ReducedTensorWords R M) (hz : z ∈ filtration R M m) :
-    ReducedTensorWords.map (R := R) (InternalGrading.parityTwist G q) z ∈ filtration R M m := by
-  have key : filtration R M m ≤
-      (filtration R M m).comap
-        (ReducedTensorWords.map (R := R) (InternalGrading.parityTwist G q)) := by
-    rw [filtration_le_iff]
-    intro k _ z' hz'
-    obtain ⟨x, rfl⟩ := hz'
-    rw [Submodule.mem_comap, ReducedTensorWords.map_of]
-    exact of_mem_filtration R M (k := k) (n := m) (by omega) _
-  exact key hz
-
 /-- On a block of a pure tensor word, twisting letterwise is the twisted tuple read in place. -/
 private theorem map_twist_subword (G : InternalGrading R M) (q : ℤ) {n : ℕ}
     (x : Fin n → M) {a b : ℕ} (hab : a + b ≤ n) :
@@ -768,10 +754,12 @@ noncomputable def ReducedTensorWords.gradedCoderivations (G : InternalGrading R 
     simp only [LinearMap.add_apply]
     abel
   zero_mem' := by
+    -- membership in the carrier unfolds to the predicate, which the iff then exposes
     change IsGradedCoderivation G q 0
     rw [isGradedCoderivation_iff]
     simp [LinearMap.zero_comp]
   smul_mem' r x hx := by
+    -- membership in the carrier unfolds to the predicate, which the iff then exposes
     change IsGradedCoderivation G q (r • x)
     rw [isGradedCoderivation_iff]
     refine LinearMap.ext fun z => ?_
