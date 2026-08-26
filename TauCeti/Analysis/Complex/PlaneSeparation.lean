@@ -6,14 +6,13 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.ContinuousLog
-public import TauCeti.Topology.ConnectedComponents
-public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
-public import Mathlib.Topology.Connected.LocallyPathConnected
-import Mathlib.Analysis.Complex.CoveringMap
+import TauCeti.Topology.ConnectedComponents
+import Mathlib.Analysis.Complex.BranchLogRoot
+import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.Complex.Tietze
 import Mathlib.Analysis.Convex.Contractible
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
-import Mathlib.Topology.Homotopy.Lifting
+import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.Topology.Piecewise
 import Mathlib.Topology.TietzeExtension
 
@@ -43,20 +42,20 @@ Suppose then that the Borsuk map has a logarithm `h` on `K`. Extend `h` to a con
 `H : ℂ → ℂ` by Tietze and put `G = exp ∘ H`: a *nowhere-vanishing* continuous function on the whole
 plane agreeing with `(z - a) / (z - b)` on `K`. The component `V` is open, its frontier lies in `K`
 (`TauCeti.frontier_connectedComponentIn_subset_compl`), and `b` misses `closure V = V ∪ frontier V`.
-So the two closed sets `closure V` and its complement carry the continuous functions
-`z ↦ G z * (z - b)` and `z ↦ z - a`, which agree on `frontier (closure V) ⊆ frontier V ⊆ K` because
-there `G z * (z - b) = ((z - a) / (z - b)) * (z - b) = z - a`. Their piecewise combination
+The globally continuous functions `z ↦ G z * (z - b)` and `z ↦ z - a` agree on
+`frontier (closure V) ⊆ frontier V ⊆ K`, because there
+`G z * (z - b) = ((z - a) / (z - b)) * (z - b) = z - a`. Therefore
+`Continuous.piecewise` shows that their piecewise combination
 
 > `Φ = (closure V).piecewise (fun z => G z * (z - b)) (fun z => z - a)`
 
-is therefore continuous, and it vanishes nowhere: on `closure V` because `G` is zero-free and
+is continuous, and it vanishes nowhere: on `closure V` because `G` is zero-free and
 `b ∉ closure V`, off `closure V` because `a ∈ V`.
 
-A zero-free continuous function on the plane has a continuous logarithm
-(`TauCeti.hasContinuousLogOn_univ_of_ne_zero`, lifting through the covering map
-`Complex.exp` on a simply connected, locally path-connected space), hence so does its restriction
-to any circle. But `V` is bounded, so a large enough circle about `a` misses `closure V`, and there
-`Φ z = z - a`, which has **no** continuous logarithm on a circle about `a`
+A zero-free continuous function on the plane has a continuous logarithm by
+`Complex.exists_continuousOn_eqOn_exp_comp`, hence so does its restriction to any circle. But `V`
+is bounded, so a large enough circle about `a` misses `closure V`, and there `Φ z = z - a`, which
+has **no** continuous logarithm on a circle about `a`
 (`TauCeti.not_hasContinuousLogOn_sub_sphere`) — the classical winding obstruction, proved here by
 following `t ↦ h (a + r * exp (t * I)) - t * I - log r` once around and finding it both constant and
 shifted by `2 * π * I`. That contradiction is the theorem.
@@ -78,21 +77,17 @@ waits on.
 Mathlib has no separation theory for the plane and no Jordan curve theorem, and layer L5 is absent
 from [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the in-progress
 human-curated Riemann-mapping-theorem effort. The lifting of a zero-free continuous function
-through `Complex.exp` is assembled from Mathlib's `Complex.isCoveringMapOn_exp` and
-`IsCoveringMapOn.existsUnique_continuousMap_lifts` rather than reproved.
+through `Complex.exp` is supplied by Mathlib's `Complex.exists_continuousOn_eqOn_exp_comp`.
 
 ## Main results
 
-* `TauCeti.hasContinuousLogOn_univ_of_ne_zero` — a zero-free continuous complex-valued function on
-  a simply connected, locally path-connected space has a continuous logarithm.
 * `TauCeti.not_hasContinuousLogOn_sub_sphere` — `z ↦ z - a` has no continuous logarithm on a circle
   centred at `a`.
 * `TauCeti.mem_connectedComponentIn_of_hasContinuousLogOn` — **Borsuk's separation theorem**: a
   continuous logarithm of the Borsuk map on a bounded closed set puts the two points in one
   component of the complement.
 * `TauCeti.hasContinuousLogOn_sub_div_sub_iff` — the resulting equivalence.
-* `TauCeti.janiszewski` — **Janiszewski's theorem**, and
-  `TauCeti.notMem_connectedComponentIn_or_notMem_connectedComponentIn` its separating form.
+* `TauCeti.janiszewski` — **Janiszewski's theorem**.
 
 ## References
 
@@ -112,26 +107,6 @@ open scoped Real
 
 variable {K : Set ℂ} {a b : ℂ}
 
-/-! ## Logarithms on a simply connected space -/
-
-/-- **A zero-free continuous function has a continuous logarithm on a simply connected space.**
-The lift is produced by Mathlib's lifting criterion
-`IsCoveringMapOn.existsUnique_continuousMap_lifts` along the covering map
-`Complex.isCoveringMapOn_exp` of `Complex.exp` over `{0}ᶜ`, which asks the domain to be simply
-connected and locally path connected.
-
-Unlike `Complex.exists_continuousOn_eqOn_exp_comp`, which produces a *holomorphic* branch of the
-logarithm of a holomorphic function on a simply connected open subset of `ℂ`, nothing here is
-differentiable: the hypothesis is continuity and the conclusion is a continuous logarithm. -/
-theorem hasContinuousLogOn_univ_of_ne_zero {X : Type*} [TopologicalSpace X]
-    [SimplyConnectedSpace X] [LocallyPathConnectedSpace X] {g : X → ℂ} (hg : Continuous g)
-    (h0 : ∀ x, g x ≠ 0) : HasContinuousLogOn g univ := by
-  obtain ⟨x₀⟩ : Nonempty X := PathConnectedSpace.nonempty
-  obtain ⟨F, ⟨-, hF⟩, -⟩ :=
-    Complex.isCoveringMapOn_exp.existsUnique_continuousMap_lifts (⟨g, hg⟩ : C(X, ℂ))
-      (a₀ := x₀) (e₀ := Complex.log (g x₀)) (Complex.exp_log (h0 x₀)) fun x => h0 x
-  exact hasContinuousLogOn_iff.mpr ⟨F, F.continuous.continuousOn, fun x _ => congrFun hF x⟩
-
 /-! ## The winding obstruction on a circle -/
 
 /-- **A circle carries no continuous logarithm of the map to its centre.** If `exp (h z) = z - a`
@@ -146,13 +121,13 @@ theorem not_hasContinuousLogOn_sub_sphere {r : ℝ} (hr : 0 < r) (a : ℂ) :
     ¬ HasContinuousLogOn (fun z => z - a) (sphere a r) := by
   rw [hasContinuousLogOn_iff]
   rintro ⟨h, hcont, heq⟩
-  set γ : ℝ → ℂ := fun t => a + r * Complex.exp (t * Complex.I) with hγdef
-  have hγsub : ∀ t, γ t - a = r * Complex.exp (t * Complex.I) := fun t => by
-    simp [hγdef]
+  set γ : ℝ → ℂ := circleMap a r with hγdef
+  have hγsub : ∀ t, γ t - a = circleMap 0 r t := fun t => by
+    rw [hγdef, circleMap_sub_center]
   have hγmem : ∀ t, γ t ∈ sphere a r := fun t => by
-    rw [mem_sphere_iff_norm, hγsub, norm_mul, Complex.norm_exp_ofReal_mul_I,
-      Complex.norm_real, Real.norm_eq_abs, abs_of_pos hr, mul_one]
-  have hγc : Continuous γ := by fun_prop
+    simpa only [hγdef] using circleMap_mem_sphere a hr.le t
+  have hγc : Continuous γ := by
+    simpa only [hγdef] using continuous_circleMap a r
   set k : ℝ → ℂ := fun t => h (γ t) - t * Complex.I - Real.log r with hkdef
   have hkc : Continuous k := by
     have hhγ : Continuous fun t : ℝ => h (γ t) := hcont.comp_continuous hγc hγmem
@@ -162,18 +137,16 @@ theorem not_hasContinuousLogOn_sub_sphere {r : ℝ} (hr : 0 < r) (a : ℂ) :
   have hk1 : ∀ t, Complex.exp (k t) = 1 := fun t => by
     rw [hkdef]
     have hr0 : (r : ℂ) ≠ 0 := by exact_mod_cast hr.ne'
-    rw [Complex.exp_sub, Complex.exp_sub, heq _ (hγmem t), hγsub, hexpr, mul_div_assoc,
-      div_self (Complex.exp_ne_zero _), mul_one, div_self hr0]
-  have hpre : IsPreconnected (range k) := by
-    rw [← image_univ]
-    exact isPreconnected_univ.image k hkc.continuousOn
+    rw [Complex.exp_sub, Complex.exp_sub, heq _ (hγmem t), hγsub, circleMap_zero, hexpr]
+    field_simp
+  have hpre : IsPreconnected (range k) := isPreconnected_range hkc
   have hconst : k 0 = k (2 * π) :=
     eq_of_isPreconnected_of_forall_exp_eq_one hpre (by rintro w ⟨t, rfl⟩; exact hk1 t)
       (mem_range_self 0) (mem_range_self (2 * π))
-  have hγ0 : γ 0 = a + r := by simp [hγdef]
-  have hγ2 : γ (2 * π) = a + r := by simp [hγdef]
+  have hγ2 : γ (2 * π) = γ 0 := by
+    simpa [hγdef] using periodic_circleMap a r 0
   rw [hkdef] at hconst
-  simp only [hγ0, hγ2, Complex.ofReal_zero, zero_mul, sub_zero] at hconst
+  simp only [hγ2, Complex.ofReal_zero, zero_mul, sub_zero] at hconst
   have hzero : ((2 * π : ℝ) : ℂ) * Complex.I = 0 := by linear_combination hconst
   rcases mul_eq_zero.mp hzero with hπ | hI
   · exact (by positivity : (0 : ℝ) < 2 * π).ne' (by exact_mod_cast hπ)
@@ -202,8 +175,8 @@ private theorem not_hasContinuousLogOn_of_isBounded_connectedComponentIn (hK : I
   -- extend the logarithm to the whole plane and exponentiate it
   obtain ⟨H, hH⟩ :=
     ContinuousMap.exists_restrict_eq (Y := ℂ) hK ⟨K.domRestrict h, hcont.domRestrict⟩
-  have hHK : ∀ z ∈ K, H z = h z := fun z hz =>
-    congrArg (fun f : C(K, ℂ) => f ⟨z, hz⟩) hH
+  have hHK : ∀ z ∈ K, H z = h z := fun z hz => by
+    simpa using DFunLike.congr_fun hH ⟨z, hz⟩
   set G : ℂ → ℂ := fun z => Complex.exp (H z) with hGdef
   have hGK : ∀ z ∈ K, G z = (z - a) / (z - b) := fun z hz => by
     simp only [hGdef]
@@ -239,8 +212,15 @@ private theorem not_hasContinuousLogOn_of_isBounded_connectedComponentIn (hK : I
       have h₂ : dist z a = R := mem_sphere.mp hz
       exact absurd h₂ h₁.ne
     rw [hΦdef, piecewise_eq_of_notMem _ _ _ hzcl]
+  have hΦlog : HasContinuousLogOn Φ univ := by
+    have hUc : IsSimplyConnected (univ : Set ℂ) :=
+      (Homeomorph.Set.univ ℂ).toHomotopyEquiv.simplyConnectedSpace
+    obtain ⟨h, hcont, heq⟩ := Complex.exists_continuousOn_eqOn_exp_comp hUc isOpen_univ
+      hΦc.continuousOn (by rintro ⟨z, -, hz⟩; exact hΦ0 z hz)
+    exact hasContinuousLogOn_iff.mpr
+      ⟨h, hcont, fun z hz => by simpa only [Function.comp_apply] using heq hz⟩
   exact not_hasContinuousLogOn_sub_sphere hR a
-    (((hasContinuousLogOn_univ_of_ne_zero hΦc hΦ0).mono (subset_univ _)).congr hsphere)
+    ((hΦlog.mono (subset_univ _)).congr hsphere)
 
 /-- **Borsuk's separation theorem.** If the Borsuk map `z ↦ (z - a) / (z - b)` of two points
 outside a bounded closed set `K ⊆ ℂ` has a continuous logarithm on `K`, then `K` does not separate
@@ -295,15 +275,5 @@ theorem janiszewski {S T : Set ℂ} (hS : IsClosed S) (hT : IsClosed T) (hSb : I
   mem_connectedComponentIn_of_hasContinuousLogOn (hS.union hT) (hSb.union hTb)
     ((hasContinuousLogOn_sub_div_sub hS hSsep).union hS hT hST
       (hasContinuousLogOn_sub_div_sub hT hTsep))
-
-/-- **The separating form of Janiszewski's theorem.** If the union of two bounded closed sets with
-preconnected intersection separates `a` from `b`, then one of the two already does. -/
-theorem notMem_connectedComponentIn_or_notMem_connectedComponentIn {S T : Set ℂ} (hS : IsClosed S)
-    (hT : IsClosed T) (hSb : IsBounded S) (hTb : IsBounded T) (hST : IsPreconnected (S ∩ T))
-    (hsep : b ∉ connectedComponentIn (S ∪ T)ᶜ a) :
-    b ∉ connectedComponentIn Sᶜ a ∨ b ∉ connectedComponentIn Tᶜ a := by
-  by_contra hcon
-  simp only [not_or, not_not] at hcon
-  exact hsep (janiszewski hS hT hSb hTb hST hcon.1 hcon.2)
 
 end TauCeti

@@ -50,8 +50,7 @@ connected space a component `C` of an open `F` is itself open, and a point `y �
 of `C` has its own component of `F` as an open neighbourhood, which therefore meets `C`; two
 components that meet are equal, so `y ∈ C` — and an open set is disjoint from its frontier.
 
-Equivalently `frontier (connectedComponentIn F x) ⊆ F \ connectedComponentIn F x` is empty on the
-`F` side: the component is clopen in `F`. -/
+Equivalently, `frontier (connectedComponentIn F x) ∩ F = ∅`: the component is clopen in `F`. -/
 theorem frontier_connectedComponentIn_subset_compl [LocallyConnectedSpace X] {F : Set X}
     (hF : IsOpen F) (x : X) : frontier (connectedComponentIn F x) ⊆ Fᶜ := by
   intro y hy hyF
