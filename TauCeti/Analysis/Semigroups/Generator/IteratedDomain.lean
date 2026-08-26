@@ -176,8 +176,7 @@ theorem tendsto_pow_smul_resolventFun_pow_apply (hb : S.HasGrowthBound omega M) 
   | zero => simp
   | succ n ih =>
       refine (S.tendsto_smul_resolventFun_comp hb ih).congr fun lambda => ?_
-      rw [map_smul, smul_smul, ← pow_succ', pow_succ' (S.resolventFun hb lambda),
-        mul_apply_eq_comp]
+      simp only [map_smul, smul_smul, pow_succ', mul_apply_eq_comp]
 
 /-- Density of `D(Aⁿ)` at a prescribed growth bound; the growth bound is only a device for
 naming the resolvent, and `StronglyContinuousSemigroup.dense_domainPow` drops it. -/
