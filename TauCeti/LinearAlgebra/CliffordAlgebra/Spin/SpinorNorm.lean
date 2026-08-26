@@ -22,6 +22,7 @@ Spin group.
 
 ## Main results
 
+* `CliffordAlgebra.orthogonalDetSquareClass`: the determinant modulo squares on `O(Q)`.
 * `CliffordAlgebra.orthogonalSpinorNorm`: the square-class-valued spinor norm on `O(Q)`.
 * `CliffordAlgebra.spinorNorm`: its restriction to `SO(Q)`.
 * `CliffordAlgebra.range_spinToSpecialOrthogonal_eq_ker_spinorNorm`: the Spin image is
@@ -44,6 +45,22 @@ universe u v
 
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
   [FiniteDimensional K V] [Invertible (2 : K)]
+
+/-- The determinant of an orthogonal transformation, reduced modulo squares. -/
+noncomputable def orthogonalDetSquareClass (Q : QuadraticForm K V) :
+    QuadraticMap.orthogonalGroup Q →* Multiplicative (SquareClassGroup K) :=
+  squareClassHom.comp <|
+    LinearEquiv.det.comp (QuadraticMap.orthogonalGroup Q).subtype
+
+omit [FiniteDimensional K V] [Invertible (2 : K)] in
+/-- The determinant square-class map evaluates by taking the determinant modulo squares. -/
+@[simp]
+theorem orthogonalDetSquareClass_apply (Q : QuadraticForm K V)
+    (g : QuadraticMap.orthogonalGroup Q) :
+    orthogonalDetSquareClass Q g = squareClassHom (LinearEquiv.det (g : V ≃ₗ[K] V)) :=
+  by
+    rw [orthogonalDetSquareClass]
+    simp only [MonoidHom.comp_apply, Subgroup.coe_subtype]
 
 private theorem lipschitzToOrthogonal_surjective_of_invertible
     (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
