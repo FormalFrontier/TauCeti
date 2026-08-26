@@ -83,29 +83,6 @@ namespace TauCeti.Multiquadratic
 variable {M : Type*} [Field M] [NumberField M] [IsGalois ℚ M]
 
 omit [IsGalois ℚ M] in
-/-- A subgroup fixes `ℚ(z)` pointwise exactly when each of its elements fixes `z`. -/
-private theorem le_fixingSubgroup_adjoin_singleton_iff {H : Subgroup (M ≃ₐ[ℚ] M)} {z : M} :
-    H ≤ fixingSubgroup (M ≃ₐ[ℚ] M) ((adjoin ℚ {z} : IntermediateField ℚ M) : Set M) ↔
-      ∀ σ ∈ H, σ z = z := by
-  refine ⟨fun h σ hσ => (_root_.mem_fixingSubgroup_iff _).mp (h hσ) z (subset_adjoin ℚ {z} rfl),
-    fun h => (IntermediateField.le_iff_le H _).mp
-      (adjoin_le_iff.mpr (Set.singleton_subset_iff.mpr ?_))⟩
-  exact (IntermediateField.mem_fixedField_iff H z).mpr h
-
-omit [IsGalois ℚ M] in
-/-- One automorphism fixes `ℚ(z)` pointwise exactly when it fixes `z`. -/
-private theorem mem_fixingSubgroup_adjoin_singleton_iff {σ : M ≃ₐ[ℚ] M} {z : M} :
-    σ ∈ fixingSubgroup (M ≃ₐ[ℚ] M) ((adjoin ℚ {z} : IntermediateField ℚ M) : Set M) ↔
-      σ z = z := by
-  refine ⟨fun h => (_root_.mem_fixingSubgroup_iff _).mp h z (subset_adjoin ℚ {z} rfl),
-    fun h => ?_⟩
-  refine le_fixingSubgroup_adjoin_singleton_iff.mpr (fun ρ hρ => ?_)
-    (Subgroup.subset_closure (Set.mem_singleton σ))
-  have hstab : Subgroup.closure {σ} ≤ MulAction.stabilizer (M ≃ₐ[ℚ] M) z :=
-    (Subgroup.closure_le _).mpr (Set.singleton_subset_iff.mpr (by simpa using h))
-  simpa using hstab hρ
-
-omit [IsGalois ℚ M] in
 /-- An automorphism sends a square root of a rational number to plus or minus itself. -/
 private theorem apply_eq_or_eq_neg {σ : M ≃ₐ[ℚ] M} {z : M} {c : ℚ}
     (hz : z ^ 2 = algebraMap ℚ M c) : σ z = z ∨ σ z = -z := by
@@ -120,7 +97,13 @@ private theorem mem_fixingSubgroup_adjoin_singleton_of_conj {σ g : M ≃ₐ[ℚ
     (h : g⁻¹ * σ * g ∈
       fixingSubgroup (M ≃ₐ[ℚ] M) ((adjoin ℚ {z} : IntermediateField ℚ M) : Set M)) :
     σ ∈ fixingSubgroup (M ≃ₐ[ℚ] M) ((adjoin ℚ {z} : IntermediateField ℚ M) : Set M) := by
-  rw [mem_fixingSubgroup_adjoin_singleton_iff] at h ⊢
+  rw [_root_.mem_fixingSubgroup_iff] at h ⊢
+  change (∀ y ∈ adjoin ℚ {z}, (g⁻¹ * σ * g) • y = y) at h
+  change ∀ y ∈ adjoin ℚ {z}, σ • y = y
+  rw [IntermediateField.forall_mem_adjoin_smul_eq_self_iff] at h ⊢
+  simp only [Set.mem_singleton_iff, forall_eq] at h ⊢
+  change (g⁻¹ * σ * g) z = z at h
+  change σ z = z
   rw [AlgEquiv.mul_apply, AlgEquiv.mul_apply, AlgEquiv.aut_inv, AlgEquiv.symm_apply_eq] at h
   rcases apply_eq_or_eq_neg (σ := g) hz with hg | hg
   · rwa [hg] at h
@@ -212,7 +195,14 @@ theorem notMem_ramifiedPrimes_adjoin_mul {x y : M} {a b : ℚ}
   obtain ⟨τ, hτI, hτx⟩ : ∃ τ ∈ P₀.inertia (M ≃ₐ[ℚ] M), τ x ≠ x := by
     by_contra hcon
     push Not at hcon
-    exact hP₀x (le_fixingSubgroup_adjoin_singleton_iff.mpr hcon)
+    apply hP₀x
+    intro σ hσ
+    rw [_root_.mem_fixingSubgroup_iff]
+    change ∀ z ∈ adjoin ℚ {x}, σ • z = z
+    rw [IntermediateField.forall_mem_adjoin_smul_eq_self_iff]
+    simp only [Set.mem_singleton_iff, forall_eq]
+    change σ x = x
+    exact hcon σ hσ
   have hτ1 : τ ≠ 1 := fun h => hτx (by rw [h]; rfl)
   have hτF : τ ∉ fixingSubgroup (M ≃ₐ[ℚ] M) ((adjoin ℚ {y} : IntermediateField ℚ M) : Set M) :=
     fun hmem => hτ1 (Subgroup.disjoint_def.mp hdisj hτI hmem)
@@ -220,7 +210,12 @@ theorem notMem_ramifiedPrimes_adjoin_mul {x y : M} {a b : ℚ}
   -- the inertia subgroup at `P₀` fixes `ℚ(r x y)` pointwise
   have hkey : P₀.inertia (M ≃ₐ[ℚ] M) ≤ fixingSubgroup (M ≃ₐ[ℚ] M)
       ((adjoin ℚ {algebraMap ℚ M r * (x * y)} : IntermediateField ℚ M) : Set M) :=
-    le_fixingSubgroup_adjoin_singleton_iff.mpr fun σ hσ => by
+    fun σ hσ => by
+      rw [_root_.mem_fixingSubgroup_iff]
+      change ∀ z ∈ adjoin ℚ {algebraMap ℚ M r * (x * y)}, σ • z = z
+      rw [IntermediateField.forall_mem_adjoin_smul_eq_self_iff]
+      simp only [Set.mem_singleton_iff, forall_eq]
+      change σ (algebraMap ℚ M r * (x * y)) = algebraMap ℚ M r * (x * y)
       by_cases hσF : σ ∈ fixingSubgroup (M ≃ₐ[ℚ] M)
         ((adjoin ℚ {y} : IntermediateField ℚ M) : Set M)
       · rw [Subgroup.disjoint_def.mp hdisj hσ hσF]
@@ -232,7 +227,13 @@ theorem notMem_ramifiedPrimes_adjoin_mul {x y : M} {a b : ℚ}
           rw [AlgEquiv.mul_apply, hτneg, map_neg] at h1
           exact neg_eq_iff_eq_neg.mp h1
         have hσy : σ y = -y := (apply_eq_or_eq_neg hy).resolve_left fun hfix =>
-          hσF (mem_fixingSubgroup_adjoin_singleton_iff.mpr hfix)
+          hσF (by
+            rw [_root_.mem_fixingSubgroup_iff]
+            change ∀ z ∈ adjoin ℚ {y}, σ • z = z
+            rw [IntermediateField.forall_mem_adjoin_smul_eq_self_iff]
+            simp only [Set.mem_singleton_iff, forall_eq]
+            change σ y = y
+            exact hfix)
         rw [map_mul, map_mul, AlgEquiv.commutes, hσx, hσy, neg_mul_neg]
   -- every prime above `p` is a translate of `P₀`, and its inertia subgroup the conjugate one
   refine (NumberField.notMem_ramifiedPrimes_iff_forall_inertia_le (K := M)
