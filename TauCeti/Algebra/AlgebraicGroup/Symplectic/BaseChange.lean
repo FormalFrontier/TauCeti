@@ -121,10 +121,7 @@ private theorem map_baseChangeHopfIdeal_definingHopfIdeal :
       definingHopfIdeal K m := by
   apply HopfIdeal.ext
   intro x
-  change x ∈
-      ((CommHopfAlgCat.baseChangeHopfIdeal (K := K) (definingHopfIdeal R m)).map
-        (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m)).hom.hom).toIdeal ↔
-    x ∈ (definingHopfIdeal K m).toIdeal
+  rw [← HopfIdeal.mem_toIdeal, ← HopfIdeal.mem_toIdeal]
   rw [HopfIdeal.map_toIdeal,
     CommHopfAlgCat.baseChangeHopfIdeal_toIdeal, definingHopfIdeal_toIdeal,
     definingHopfIdeal_toIdeal, Ideal.map_span, Ideal.map_span]
