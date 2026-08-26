@@ -12,8 +12,9 @@ public import TauCeti.MeasureTheory.OptimalTransport.Cost.Basic
 
 This file defines finite `c`-cyclical monotonicity for an extended-nonnegative transport cost.
 The definition is purely cost-theoretic: it does not require a measure, topology, or duality
-theory. A certified plan is almost-everywhere concentrated on a measurable cyclically monotone
-set; the converse and statements about topological support require additional hypotheses.
+theory. A certified plan is almost-everywhere concentrated on a cyclically monotone set, and
+that set can be taken measurable as soon as the cost and both potentials are measurable; the
+converse and statements about topological support require additional hypotheses.
 
 This is Layer 2, item 7 of the optimal-transport roadmap.
 -/
@@ -38,8 +39,9 @@ permutation `σ`, the diagonal total cost `∑ i, c (x i, y i)` is at most the r
 cost `∑ i, c (x i, y (σ i))`.
 
 This is Villani's finite-family form of the condition. A certified plan is almost-everywhere
-concentrated on a measurable `c`-cyclically monotone set; the converse and any statement about
-topological support need additional hypotheses. Infinite costs allow forbidden rearrangements. -/
+concentrated on a `c`-cyclically monotone set — measurably so when the cost and both potentials
+are measurable; the converse and any statement about topological support need additional
+hypotheses. Infinite costs allow forbidden rearrangements. -/
 def IsCyclicallyMonotone (c : X × Y → ℝ≥0∞) (S : Set (X × Y)) : Prop :=
   ∀ (n : ℕ) (x : Fin n → X) (y : Fin n → Y), (∀ i, (x i, y i) ∈ S) →
     ∀ σ : Equiv.Perm (Fin n), ∑ i, c (x i, y i) ≤ ∑ i, c (x i, y (σ i))

@@ -21,7 +21,9 @@ Monge and barycentre layers verify instead of re-solving a transport problem.
 
 This file builds that certificate for the raw extended-nonnegative interface — an arbitrary cost
 `c : X × Y → ℝ≥0∞` on arbitrary measurable spaces — and shows that it is exact: in the
-dual-attainment regime, an optimal plan is concentrated on the contact set. No topology,
+dual-attainment regime, an optimal plan of almost-everywhere measurable cost is concentrated on
+the contact set. Measurability of the cost is needed for that converse only, and never for the
+consequences drawn from a certificate. No topology,
 compactness, or lower semicontinuity is used, so the certificate applies verbatim to the
 Borel-cost regime, where a dual optimizer is produced by other means. It is a statement
 about the *unregularized* Kantorovich problem only: an entropy-regularized optimizer is
@@ -31,7 +33,8 @@ about it here.
 
 The last section connects the cost-level notion of `c`-cyclical monotonicity to certificates by
 proving that a contact set is always `c`-cyclically monotone. Hence a certified plan is
-concentrated on a measurable `c`-cyclically monotone set. The converse implication — that
+concentrated on a `c`-cyclically monotone set, which is measurable as soon as the cost and both
+potentials are. The converse implication — that
 concentration on a `c`-cyclically monotone set forces optimality — is the
 Schachermayer--Teichmann theorem and is not proved here.
 
@@ -51,10 +54,11 @@ Schachermayer--Teichmann theorem and is not proved here.
 * `TauCeti.IsDualCertificate.isOptimalCoupling` and
   `TauCeti.IsDualCertificate.kantorovichDualValue_le` — a certificate proves primal optimality
   of the plan and dual optimality of the pair;
-* `TauCeti.isDualCertificate_iff` — **complementary slackness**: for a fixed feasible integrable
-  pair and a fixed coupling, being a certificate is exactly having finite cost no larger than
-  the dual value, so `TauCeti.IsOptimalCoupling.isDualCertificate` recovers the certificate from
-  optimality whenever the dual value is attained;
+* `TauCeti.isDualCertificate_iff` — **complementary slackness**: for a fixed coupling `π` and a
+  fixed feasible integrable pair, being a certificate is exactly having finite cost no larger
+  than the dual value, provided `AEMeasurable c π`; so `TauCeti.IsOptimalCoupling.isDualCertificate`
+  recovers the certificate from an optimal plan of almost-everywhere measurable cost whenever
+  the dual value is attained;
 * `TauCeti.isDualCertificate_graphPlan` and
   `TauCeti.transportCost_eq_lintegral_of_ae_mem_dualContactSet` — the Monge form: the
   Kantorovich value is attained at the graph plan of a map whose graph lies almost everywhere in
@@ -62,7 +66,8 @@ Schachermayer--Teichmann theorem and is not proved here.
   the map as a minimizer among transport maps;
 * `TauCeti.DualFeasible.isCyclicallyMonotone_dualContactSet` and
   `TauCeti.IsDualCertificate.exists_isCyclicallyMonotone` — contact sets are `c`-cyclically
-  monotone, and a certified plan is concentrated on a measurable such set.
+  monotone, and a certified plan whose cost and potentials are measurable is concentrated on a
+  measurable such set.
 
 ## Implementation notes
 
@@ -395,12 +400,13 @@ theorem isDualCertificate_graphPlan (hc : AEMeasurable c (graphPlan T μ))
     have hcontact : NullMeasurableSet (dualContactSet c φ ψ) (graphPlan T μ) := by
       simpa only [dualContactSet] using nullMeasurableSet_eq_fun hsum hcost
     have hf := aemeasurable_prodMk_self hT.aemeasurable
-    rw [ae_iff]
-    change graphPlan T μ (dualContactSet c φ ψ)ᶜ = 0
-    rw [graphPlan_def,
-      Measure.map_apply₀ hf (by simpa only [graphPlan_def] using hcontact.compl)]
-    change μ {x | (x, T x) ∉ dualContactSet c φ ψ} = 0
-    exact ae_iff.1 hae
+    -- Transport the a.e. statement along the graph map. The contact set is only
+    -- `NullMeasurableSet` here, so `ae_map_iff` does not apply and the pushforward is unfolded
+    -- by hand through `Measure.map_apply₀`.
+    rw [ae_iff, ← Set.compl_def, graphPlan_def,
+      Measure.map_apply₀ hf (by simpa only [graphPlan_def] using hcontact.compl),
+      Set.preimage_compl, Set.compl_def, ← ae_iff]
+    simpa only [Set.mem_preimage] using hae
 
 /-- **The Kantorovich value is attained at the graph plan of a certified transport map.** With
 `TauCeti.transportCost_le_lintegral_of_hasLaw`, this exhibits the map as a minimizer among
@@ -441,9 +447,10 @@ theorem DualFeasible.isCyclicallyMonotone_dualContactSet (h : DualFeasible c φ 
     _ ≤ ∑ i, c (x i, y (σ i)) :=
       Finset.sum_le_sum fun i _ ↦ h.ofReal_add_le (x i) (y (σ i))
 
-/-- **A certified plan is concentrated on a measurable `c`-cyclically monotone set.** The
-converse implication, that concentration on a `c`-cyclically monotone set forces optimality, is
-the Schachermayer--Teichmann theorem and needs topological hypotheses. -/
+/-- **A certified plan with measurable cost and potentials is concentrated on a measurable
+`c`-cyclically monotone set.** The converse implication, that concentration on a
+`c`-cyclically monotone set forces optimality, is the Schachermayer--Teichmann theorem and needs
+topological hypotheses. -/
 theorem IsDualCertificate.exists_isCyclicallyMonotone [MeasurableSpace X] [MeasurableSpace Y]
     {μ : Measure X} {ν : Measure Y} {π : Measure (X × Y)}
     (h : IsDualCertificate c π μ ν φ ψ) (hc : Measurable c) (hφm : Measurable φ)
