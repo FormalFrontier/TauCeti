@@ -47,7 +47,10 @@ namespace TauCeti.Contour
 
 variable {K : Set ℂ} {v z₀ : ℂ} {a b s : ℝ}
 
-/-- **A segment crossing a set once has its ends in different components of the complement.** -/
+/-- **A segment crossing a set once has its ends in different components of the complement.**
+Let `K` be closed with `K \ {p}` preconnected, crossed by a straight segment at an interior point
+`p = v · s + z₀` with `K` adherent from both sides of the segment. Then the two endpoints
+`v · a + z₀` and `v · b + z₀` lie in different connected components of `Kᶜ`. -/
 theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK : IsClosed K)
     (hv : v ≠ 0) (hs : s ∈ Ioo a b)
     (hseg : ∀ t ∈ Icc a b, v * t + z₀ ∈ K → t = s)
@@ -150,9 +153,12 @@ theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK 
   have hJ := hjump q₁ (by rw [mem_ball, dist_comm]; exact hq₁r) q₂
     (by rw [mem_ball, dist_comm]; exact hq₂r) hq₁im hq₂im
   rw [hW] at hJ
-  exact one_ne_zero (add_left_cancel (hJ.symm.trans (add_zero _).symm))
+  simp at hJ
 
-/-- **One end of a segment crossing a bounded set once lies in its filled hull.** -/
+/-- **One end of a segment crossing a bounded set once lies in its filled hull.**
+Under the same hypotheses as
+`notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton`, plus boundedness of `K`,
+at least one of `v · a + z₀` and `v · b + z₀` lies in `filledHull K`. -/
 theorem mem_filledHull_or_mem_filledHull_of_isPreconnected_sdiff_singleton (hK : IsClosed K)
     (hKb : IsBounded K) (hv : v ≠ 0) (hs : s ∈ Ioo a b)
     (hseg : ∀ t ∈ Icc a b, v * t + z₀ ∈ K → t = s)

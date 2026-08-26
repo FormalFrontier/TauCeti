@@ -7,9 +7,7 @@ module
 
 public import TauCeti.Analysis.Contour.Winding.Number.Segment.Formula
 public import TauCeti.Analysis.Contour.PiecewiseC1On
-import Mathlib.Analysis.Complex.RealDeriv
-import Mathlib.Analysis.Convex.Topology
-import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
+import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import TauCeti.Analysis.Contour.Winding.Continuity
 import TauCeti.Analysis.Contour.Winding.Integer
 import TauCeti.Analysis.Contour.Winding.LocallyConstant
@@ -18,9 +16,9 @@ import TauCeti.Analysis.Contour.Winding.Number.Concat
 /-!
 # The jump of the winding number across a straight segment
 
-Letting the reference point approach an interior point of the segment from the two sides,
-`q = s ± i h` with `h → 0⁺`, the two limits of the index integral differ by exactly `1`:
-this is the jump across the segment.
+Letting the reference point `v · (s ± h·i) + z₀` approach an interior point `v · s + z₀`
+of the segment from the two sides as `h → 0⁺`, the two limits of the index integral differ
+by exactly `1`: this is the jump across the segment.
 
 For a *closed* piecewise-`C¹` curve one of whose pieces is a straight segment, the rest of the
 curve stays away from an interior point `p` of that piece and contributes a difference that is
@@ -50,7 +48,7 @@ open scoped Topology
 
 namespace TauCeti.Contour
 
-variable {v z₀ q : ℂ} {a b c s : ℝ}
+variable {v z₀ : ℂ} {a b c s : ℝ}
 
 private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
     Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝[>] 0) (𝓝 ((r : ℂ) - s)) := by
@@ -84,7 +82,7 @@ theorem tendsto_windingNumber_segment_add_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
     filter_upwards [self_mem_nhdsWithin] with h hh
     have him : ((s : ℂ) + h * I).im ≠ 0 := by simpa using hh.ne'
     rw [windingNumber_segment_of_im_ne_zero hv him]
-    simp
+    simp only [one_mul]
   refine Tendsto.congr' h_eq (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_far hs.2 1) ?_))
   have h1 : Tendsto (fun h : ℝ => (a : ℂ) - (s + ((1 : ℝ) * h : ℝ) * I)) (𝓝[>] 0)
       (𝓝[{z : ℂ | z.im < 0}] ((a : ℂ) - s)) := by
@@ -115,7 +113,7 @@ theorem tendsto_windingNumber_segment_sub_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
     filter_upwards [self_mem_nhdsWithin] with h hh
     have him : ((s : ℂ) - h * I).im ≠ 0 := by simpa using hh.ne'
     rw [windingNumber_segment_of_im_ne_zero hv him]
-    simp [sub_eq_add_neg]
+    simp only [neg_mul, one_mul, sub_eq_add_neg, ofReal_neg]
   refine Tendsto.congr' h_eq (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_far hs.2 (-1)) ?_))
   have h1 : Tendsto (fun h : ℝ => (a : ℂ) - (s + ((-1 : ℝ) * h : ℝ) * I)) (𝓝[>] 0)
       (𝓝[{z : ℂ | 0 ≤ z.im}] ((a : ℂ) - s)) := by
@@ -150,11 +148,11 @@ theorem tendsto_windingNumber_segment_sub_windingNumber_segment (hv : v ≠ 0) (
 private theorem convex_halfDisc (p v : ℂ) (r σ : ℝ) :
     Convex ℝ (ball p r ∩ {w : ℂ | 0 < σ * ((w - p) / v).im}) := by
   have hlin : IsLinearMap ℝ fun w : ℂ => σ * (w / v).im :=
-    { map_add := by intro x y; simp [add_div, Complex.add_im]; ring
+    { map_add := by intro x y; simp only [add_div, Complex.add_im]; ring
       map_smul := by intro s x; simp [Complex.real_smul, Complex.mul_im, mul_div_assoc]; ring }
   have heq : {w : ℂ | 0 < σ * ((w - p) / v).im}
       = (fun x => -p + x) ⁻¹' {w | 0 < σ * (w / v).im} := by
-    ext w; simp [neg_add_eq_sub]
+    ext w; simp only [mem_ofPred_eq, neg_add_eq_sub, mem_preimage]
   rw [heq]
   exact (convex_ball p r).inter ((convex_halfSpace_gt hlin _).translate_preimage_right _)
 
@@ -194,7 +192,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     · apply him
       have : (v * (t : ℂ) + z₀ - p) / v = ((t : ℂ) - s) := by
         rw [hp_def]; field_simp; ring
-      rw [this]; simp
+      rw [this]; simp only [sub_im, ofReal_im, sub_self]
     · exact hball hw hmem'
   have h_const : ∀ σ : ℝ, ∀ w₁ ∈ ball p r, ∀ w₂ ∈ ball p r,
       0 < σ * ((w₁ - p) / v).im → 0 < σ * ((w₂ - p) / v).im →
@@ -214,12 +212,13 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     intro h
     have : (v * (s + h * I) + z₀ - p) / v = h * I := by
       rw [hp_def]; field_simp; ring
-    rw [this]; simp
+    rw [this]; simp only [mul_im, ofReal_re, I_re, mul_zero, ofReal_im, I_im, mul_one, add_zero]
   have h_im_sub : ∀ h : ℝ, ((v * (s - h * I) + z₀ - p) / v).im = -h := by
     intro h
     have : (v * (s - h * I) + z₀ - p) / v = -(h * I) := by
       rw [hp_def]; field_simp; ring
-    rw [this]; simp
+    rw [this]; simp only [neg_im, mul_im, ofReal_re, I_re, mul_zero, ofReal_im, I_im, mul_one,
+      add_zero]
   have h_dist_add : ∀ h : ℝ, dist (v * (s + h * I) + z₀) p = ‖v‖ * |h| := by
     intro h
     rw [dist_eq_norm, hp_def]
@@ -231,7 +230,6 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     have : v * (s - h * I) + z₀ - (v * s + z₀) = -(v * (h * I)) := by ring
     rw [this, norm_neg, norm_mul, norm_mul, Complex.norm_I, mul_one, Complex.norm_real,
       Real.norm_eq_abs]
-  have hv_pos : 0 < ‖v‖ := norm_pos_iff.mpr hv
   have h_small : ∀ᶠ h : ℝ in 𝓝[>] 0, 0 < h ∧ ‖v‖ * |h| < r := by
     have hlt : ∀ᶠ h : ℝ in 𝓝 (0 : ℝ), ‖v‖ * |h| < r := by
       have : Continuous fun h : ℝ => ‖v‖ * |h| := by fun_prop
@@ -319,16 +317,13 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     h_off_add h hh_pos hh_lt ⟨t, ht, heq⟩
   obtain ⟨n, hn⟩ := hΓ.exists_int_windingNumber hclosed fun t ht heq =>
     h_off_sub h hh_pos hh_lt ⟨t, ht, heq⟩
-  have hmn : m = n + 1 := by
-    by_contra hne
-    have h1 : (1 : ℝ) ≤ dist (m : ℂ) ((n + 1 : ℤ) : ℂ) := by
-      rw [Complex.isometry_intCast.dist_eq]; exact Int.pairwise_one_le_dist hne
-    rw [hm, hn] at hh_near
-    have hcast : ((n + 1 : ℤ) : ℂ) = (n : ℂ) + 1 := by push_cast; ring
-    rw [hcast] at h1
-    have : dist ((m : ℂ) - (n : ℂ)) 1 = dist (m : ℂ) ((n : ℂ) + 1) := by
-      simp [dist_eq_norm]; ring_nf
-    linarith
+  have hmn : m = n + 1 :=
+    eq_of_dist_intCast_lt_one (n := n + 1) (by
+      rw [hm, hn] at hh_near
+      rw [show ((n + 1 : ℤ) : ℂ) = (n : ℂ) + 1 from by push_cast; ring]
+      have : dist ((m : ℂ) - (n : ℂ)) 1 = dist (m : ℂ) ((n : ℂ) + 1) := by
+        simp only [dist_eq_norm]; ring_nf
+      linarith)
   have h_jump : windingNumber Γ a c (v * (s + h * I) + z₀)
       = windingNumber Γ a c (v * (s - h * I) + z₀) + 1 := by
     rw [hm, hn, hmn]; push_cast; ring
