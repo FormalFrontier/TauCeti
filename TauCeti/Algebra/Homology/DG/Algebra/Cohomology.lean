@@ -83,8 +83,10 @@ def cycles (h : IsDGAlgebra 𝒜 d) : Subalgebra R A where
   carrier := {a | d a = 0}
   mul_mem' ha hb := h.map_mul_eq_zero ha hb
   one_mem' := h.map_one
-  add_mem' {a b} ha hb := show d (a + b) = 0 by
-    rw [map_add, show d a = 0 from ha, show d b = 0 from hb, add_zero]
+  add_mem' {a b} ha hb := by
+    have ha' : d a = 0 := ha
+    have hb' : d b = 0 := hb
+    simp only [Set.mem_ofPred_eq, map_add, ha', hb', add_zero]
   zero_mem' := map_zero d
   algebraMap_mem' := h.map_algebraMap
 
@@ -119,21 +121,26 @@ theorem iSup_cyclesDeg (h : IsDGAlgebra 𝒜 d) : ⨆ p : ℤ, h.cyclesDeg p = �
 inside the cycles.  It is a two-sided ideal there: a cycle times a boundary is a boundary by the
 Leibniz rule read backwards, and a boundary times a cycle is the differential of the same
 product. -/
-def boundaries (h : IsDGAlgebra 𝒜 d) : TwoSidedIdeal h.cycles :=
-  TwoSidedIdeal.mk' {z : h.cycles | (z : A) ∈ LinearMap.range d}
-    (show ((0 : h.cycles) : A) ∈ LinearMap.range d by
-      simpa only [Subalgebra.coe_zero] using Submodule.zero_mem _)
-    (fun {x y} hx hy => show ((x + y : h.cycles) : A) ∈ LinearMap.range d by
-      simpa only [Subalgebra.coe_add] using Submodule.add_mem _ hx hy)
-    (fun {x} hx => show ((-x : h.cycles) : A) ∈ LinearMap.range d by
-      simpa only [Subalgebra.coe_neg] using Submodule.neg_mem _ hx)
-    (fun {x y} hy => show ((x * y : h.cycles) : A) ∈ LinearMap.range d by
-      obtain ⟨b, hb⟩ := hy
-      simpa only [Subalgebra.coe_mul, ← hb] using h.mul_mem_range_of_map_left_eq_zero x.2 b)
-    (fun {x y} hx => show ((x * y : h.cycles) : A) ∈ LinearMap.range d by
-      obtain ⟨a, ha⟩ := hx
-      exact ⟨a * (y : A), by
-        rw [h.map_mul_of_map_right_eq_zero a y.2, ha, Subalgebra.coe_mul]⟩)
+def boundaries (h : IsDGAlgebra 𝒜 d) : TwoSidedIdeal h.cycles := by
+  have zero_mem : ((0 : h.cycles) : A) ∈ LinearMap.range d := by
+    simpa only [Subalgebra.coe_zero] using Submodule.zero_mem (LinearMap.range d)
+  have add_mem {x y : h.cycles} (hx : (x : A) ∈ LinearMap.range d)
+      (hy : (y : A) ∈ LinearMap.range d) : ((x + y : h.cycles) : A) ∈ LinearMap.range d := by
+    simpa only [Subalgebra.coe_add] using Submodule.add_mem (LinearMap.range d) hx hy
+  have neg_mem {x : h.cycles} (hx : (x : A) ∈ LinearMap.range d) :
+      ((-x : h.cycles) : A) ∈ LinearMap.range d := by
+    simpa only [Subalgebra.coe_neg] using Submodule.neg_mem (LinearMap.range d) hx
+  have mul_left_mem {x y : h.cycles} (hy : (y : A) ∈ LinearMap.range d) :
+      ((x * y : h.cycles) : A) ∈ LinearMap.range d := by
+    obtain ⟨b, hb⟩ := hy
+    simpa only [Subalgebra.coe_mul, ← hb] using h.mul_mem_range_of_map_left_eq_zero x.2 b
+  have mul_right_mem {x y : h.cycles} (hx : (x : A) ∈ LinearMap.range d) :
+      ((x * y : h.cycles) : A) ∈ LinearMap.range d := by
+    obtain ⟨a, ha⟩ := hx
+    exact ⟨a * (y : A), by
+      rw [h.map_mul_of_map_right_eq_zero a y.2, ha, Subalgebra.coe_mul]⟩
+  exact TwoSidedIdeal.mk' {z : h.cycles | (z : A) ∈ LinearMap.range d}
+    zero_mem add_mem neg_mem mul_left_mem mul_right_mem
 
 @[simp]
 lemma mem_boundaries (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
@@ -155,7 +162,8 @@ lemma toCohomology_surjective (h : IsDGAlgebra 𝒜 d) : Function.Surjective h.t
 @[simp]
 lemma toCohomology_eq_zero_iff (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
     h.toCohomology z = 0 ↔ z ∈ h.boundaries := by
-  rw [show (0 : h.cohomology) = h.toCohomology 0 from (map_zero h.toCohomology).symm]
+  have hzero : (0 : h.cohomology) = h.toCohomology 0 := (map_zero h.toCohomology).symm
+  rw [hzero]
   exact (RingCon.eq _).trans (by rw [TwoSidedIdeal.rel_iff, sub_zero])
 
 /-- The homogeneous projections annihilate everything supported in the other degrees. -/
@@ -193,10 +201,10 @@ instance instGradedMonoidCohomologyGrading (h : IsDGAlgebra 𝒜 d) :
 
 /-- Every cohomology class is a sum of homogeneous classes. -/
 theorem iSup_cohomologyGrading (h : IsDGAlgebra 𝒜 d) : ⨆ p : ℤ, h.cohomologyGrading p = ⊤ := by
-  rw [show (⨆ p : ℤ, h.cohomologyGrading p) =
-      Submodule.map h.toCohomology.toLinearMap (⨆ p : ℤ, h.cyclesDeg p) from
-    (Submodule.map_iSup _ _).symm, h.iSup_cyclesDeg, Submodule.map_top,
-    LinearMap.range_eq_top]
+  have hgrading : (⨆ p : ℤ, h.cohomologyGrading p) =
+      Submodule.map h.toCohomology.toLinearMap (⨆ p : ℤ, h.cyclesDeg p) :=
+    (Submodule.map_iSup _ _).symm
+  rw [hgrading, h.iSup_cyclesDeg, Submodule.map_top, LinearMap.range_eq_top]
   exact h.toCohomology_surjective
 
 /-- The homogeneous cohomology classes of distinct degrees are independent: a homogeneous cycle
@@ -207,9 +215,11 @@ theorem iSupIndep_cohomologyGrading (h : IsDGAlgebra 𝒜 d) : iSupIndep h.cohom
   rw [Submodule.disjoint_def]
   rintro x hx hx'
   obtain ⟨z, hz, rfl⟩ := h.mem_cohomologyGrading.mp hx
-  rw [show (⨆ (q : ℤ) (_ : q ≠ p), h.cohomologyGrading q) =
-      Submodule.map h.toCohomology.toLinearMap (⨆ (q : ℤ) (_ : q ≠ p), h.cyclesDeg q) by
-    simp only [cohomologyGrading, Submodule.map_iSup]] at hx'
+  have hother : (⨆ (q : ℤ) (_ : q ≠ p), h.cohomologyGrading q) =
+      Submodule.map h.toCohomology.toLinearMap
+        (⨆ (q : ℤ) (_ : q ≠ p), h.cyclesDeg q) := by
+    simp only [cohomologyGrading, Submodule.map_iSup]
+  rw [hother] at hx'
   obtain ⟨w, hw, hwz⟩ := hx'
   have hle : Submodule.map h.cycles.val.toLinearMap (⨆ (q : ℤ) (_ : q ≠ p), h.cyclesDeg q)
       ≤ ⨆ (q : ℤ) (_ : q ≠ p), 𝒜 q := by
@@ -219,18 +229,15 @@ theorem iSupIndep_cohomologyGrading (h : IsDGAlgebra 𝒜 d) : iSupIndep h.cohom
     exact iSup_le fun hq => le_iSup_of_le q (le_iSup_of_le hq (Submodule.map_comap_le _ _))
   have hwp : GradedRing.proj 𝒜 p (w : A) = 0 :=
     proj_eq_zero_of_mem_biSup (hle (Submodule.mem_map_of_mem hw))
-  obtain ⟨a, ha⟩ : ((z - w : h.cycles) : A) ∈ LinearMap.range d :=
+  have hzw : ((z - w : h.cycles) : A) ∈ LinearMap.range d :=
     h.mem_boundaries.mp (h.toCohomology_eq_zero_iff.mp
       (by rw [map_sub]; exact sub_eq_zero_of_eq hwz.symm))
   have hzz : GradedRing.proj 𝒜 p (z : A) = (z : A) := by
     rw [GradedRing.proj_apply]
     exact DirectSum.decompose_of_mem_same 𝒜 hz
-  have hp : p - 1 + 1 = p := by omega
-  have hda : GradedRing.proj 𝒜 p (d a) = d (GradedRing.proj 𝒜 (p - 1) a) := by
-    rw [h.apply_proj (p - 1) a, hp]
-  have key := congrArg (GradedRing.proj 𝒜 p) ha
-  rw [Subalgebra.coe_sub, map_sub, hwp, sub_zero, hzz, hda] at key
-  exact h.toCohomology_eq_zero_iff.mpr (h.mem_boundaries.mpr ⟨_, key⟩)
+  have hz_boundary : (z : A) ∈ LinearMap.range d := by
+    simpa only [Subalgebra.coe_sub, map_sub, hwp, sub_zero, hzz] using h.proj_mem_range hzw p
+  exact h.toCohomology_eq_zero_iff.mpr (h.mem_boundaries.mpr hz_boundary)
 
 /-- **The cohomology of a differential graded algebra is a graded algebra.**  Its degree-`p` piece
 is the module of degree-`p` cohomology classes. -/
@@ -259,7 +266,7 @@ theorem boundaries_isDGAlgebra_zero : (isDGAlgebra_zero 𝒜).boundaries = ⊥ :
       Submodule.mem_bot]
     exact ⟨fun hz => Subtype.ext (by simpa using hz), fun hz => by simp [hz]⟩
 
-theorem toCohomology_bijective_isDGAlgebra_zero :
+theorem toCohomology_isDGAlgebra_zero_bijective :
     Function.Bijective (isDGAlgebra_zero 𝒜).toCohomology := by
   refine ⟨fun z w hzw => ?_, (isDGAlgebra_zero 𝒜).toCohomology_surjective⟩
   have hb : z - w ∈ (isDGAlgebra_zero 𝒜).boundaries :=
@@ -273,7 +280,7 @@ nothing.  That this identification is one of *graded* algebras is
 noncomputable def algEquivCohomologyOfZero : A ≃ₐ[R] (isDGAlgebra_zero 𝒜).cohomology :=
   (Subalgebra.topEquiv.symm.trans
       (Subalgebra.equivOfEq _ _ (cycles_isDGAlgebra_zero 𝒜).symm)).trans
-    (AlgEquiv.ofBijective _ (toCohomology_bijective_isDGAlgebra_zero 𝒜))
+    (AlgEquiv.ofBijective _ (toCohomology_isDGAlgebra_zero_bijective 𝒜))
 
 @[simp]
 theorem algEquivCohomologyOfZero_apply (a : A) :

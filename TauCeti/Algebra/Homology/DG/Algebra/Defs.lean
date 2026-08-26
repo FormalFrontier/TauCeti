@@ -31,8 +31,8 @@ sign.  The cochain-complex presentation, in which the same data is a monoid obje
 of this file.
 
 Only a homogeneous *left* factor is constrained by the Leibniz axiom, because the sign depends on
-its degree alone.  Both one-sided extensions to an arbitrary factor are proved below by decomposing
-that factor into its homogeneous components.
+its degree alone.  Decomposing into homogeneous components extends the Leibniz rule to an arbitrary
+left factor against a cycle, and shows that a cycle times a boundary is a boundary.
 
 ## Main definitions
 
@@ -88,6 +88,8 @@ structure IsDGAlgebra (𝒜 : ℤ → Submodule R A) [GradedAlgebra 𝒜] (d : A
   leibniz : ∀ {p : ℤ} {a : A}, a ∈ 𝒜 p → ∀ b : A,
     d (a * b) = d a * b + p.negOnePow • (a * d b)
 
+attribute [grind =>] IsDGAlgebra.map_mem
+
 variable {𝒜 : ℤ → Submodule R A} [GradedAlgebra 𝒜] {d : A →ₗ[R] A}
 
 namespace IsDGAlgebra
@@ -125,6 +127,12 @@ theorem apply_proj (h : IsDGAlgebra 𝒜 d) (p : ℤ) (a : A) :
         map_zero, GradedRing.proj_apply,
         DirectSum.decompose_of_mem_ne 𝒜 hdx (fun hq => hpq (by omega))]
   | add x y hx hy => simp only [map_add, hx, hy]
+
+/-- Every homogeneous projection of a boundary is again a boundary. -/
+theorem proj_mem_range (h : IsDGAlgebra 𝒜 d) {a : A} (ha : a ∈ LinearMap.range d) (p : ℤ) :
+    GradedRing.proj 𝒜 p a ∈ LinearMap.range d := by
+  obtain ⟨b, rfl⟩ := ha
+  exact ⟨GradedRing.proj 𝒜 (p - 1) b, by simpa using h.apply_proj (p - 1) b⟩
 
 /-- The homogeneous components of a cycle are cycles. -/
 theorem map_proj_eq_zero (h : IsDGAlgebra 𝒜 d) {a : A} (ha : d a = 0) (p : ℤ) :
