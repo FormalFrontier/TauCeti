@@ -112,8 +112,7 @@ instance (k : Type u) [Field k] :
     calc
       (CommHopfAlgCat.centerDefiningIdeal K.obj.obj).comap e₁.hom.hom hf =
           CommHopfAlgCat.centerDefiningIdeal H.obj.obj := by
-        simpa only [HopfIdeal.comap_eq_comapOfField] using
-          CommHopfAlgCat.comapOfField_centerDefiningIdeal e₁
+        simpa only using CommHopfAlgCat.comap_centerDefiningIdeal e₁
       _ = HopfIdeal.augmentation k H.obj.obj :=
         (adjointSemisimpleCommHopfAlgProperty_iff H).1 hH
       _ = (HopfIdeal.augmentation k K.obj.obj).comap e₁.hom.hom hf := by

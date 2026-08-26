@@ -31,6 +31,9 @@ schemes in the affine Hopf-algebra dictionary.
 * `TauCeti.HopfIdeal.comap`: the inverse image of a Hopf ideal under a surjective morphism.
 * `TauCeti.HopfIdeal.comapOfField`: the inverse image along an arbitrary morphism over a field.
 * `TauCeti.HopfIdeal.comap_toIdeal` and `TauCeti.HopfIdeal.mem_comap`: characteristic API.
+* `TauCeti.HopfIdeal.comapOfField_toIdeal` and `TauCeti.HopfIdeal.mem_comapOfField`:
+  characteristic API over a field.
+* `TauCeti.HopfIdeal.comap_eq_comapOfField`: comparison of the two constructions over a field.
 * `TauCeti.HopfIdeal.comap_le_comap_iff_of_surjective`: surjective inverse image reflects
   containment.
 * `TauCeti.HopfIdeal.comap_bot`: the kernel of a surjective morphism is the inverse image of
@@ -44,9 +47,9 @@ schemes in the affine Hopf-algebra dictionary.
 
 ## References
 
-The construction is the standard inverse image of a Hopf ideal along a surjective Hopf algebra
-morphism, reduced here to the quotient-kernel construction already in
-`TauCeti.Algebra.HopfAlgebra.Kernel`.
+The constructions are the standard inverse images of Hopf ideals, reduced here to the
+quotient-kernel constructions already in `TauCeti.Algebra.HopfAlgebra.Kernel`. Over a general
+base the morphism is assumed surjective; over a field it is arbitrary.
 -/
 
 public section
@@ -73,6 +76,15 @@ noncomputable def comap (I : HopfIdeal R K) (f : H →ₐc[R] K)
       rw [BialgHom.coe_comp]
       exact (Ideal.Quotient.mkₐ_surjective R I.toIdeal).comp hf)
 
+/-- The ordinary kernel calculation shared by both inverse-image constructions. -/
+private theorem ker_quotient_comp (I : HopfIdeal R K) (f : H →ₐc[R] K) :
+    RingHom.ker ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f : H →ₐ[R] K ⧸ I.toIdeal) =
+      Ideal.comap (f : H →+* K) I.toIdeal := by
+  ext h
+  simp only [RingHom.mem_ker, Ideal.mem_comap, BialgHom.comp_apply,
+    Bialgebra.Quotient.mkBialgHom_apply, Ideal.Quotient.eq_zero_iff_mem,
+    BialgHom.coe_toAlgHom, RingHom.coe_coe]
+
 /-- The underlying ideal of `I.comap f hf` is the ordinary ideal-theoretic inverse image. -/
 @[simp]
 theorem comap_toIdeal (I : HopfIdeal R K) (f : H →ₐc[R] K)
@@ -80,11 +92,7 @@ theorem comap_toIdeal (I : HopfIdeal R K) (f : H →ₐc[R] K)
     (I.comap f hf).toIdeal = Ideal.comap (f : H →+* K) I.toIdeal := by
   -- Unfold `comap` once, then use the characteristic API of the hidden kernel construction.
   change (kerOfSurjective ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f) _).toIdeal = _
-  rw [kerOfSurjective_toIdeal]
-  ext h
-  simp only [RingHom.mem_ker, Ideal.mem_comap, BialgHom.comp_toAlgHom, AlgHom.comp_apply,
-    BialgHom.coe_toAlgHom, Bialgebra.Quotient.mkBialgHom_apply,
-    Ideal.Quotient.eq_zero_iff_mem, RingHom.coe_coe]
+  rw [kerOfSurjective_toIdeal, ker_quotient_comp]
 
 /-- Membership in the inverse-image Hopf ideal is membership after applying the morphism. -/
 @[simp]
@@ -263,13 +271,9 @@ noncomputable def comapOfField (I : HopfIdeal k K) (f : H →ₐc[k] K) : HopfId
 @[simp]
 theorem comapOfField_toIdeal (I : HopfIdeal k K) (f : H →ₐc[k] K) :
     (I.comapOfField f).toIdeal = Ideal.comap (f : H →+* K) I.toIdeal := by
-  rw [comapOfField, ker_toIdeal]
-  ext h
-  simp only [RingHom.mem_ker, Ideal.mem_comap, BialgHom.comp_apply,
-    Bialgebra.Quotient.mkBialgHom_apply, Ideal.Quotient.eq_zero_iff_mem,
-    BialgHom.coe_toAlgHom, RingHom.coe_coe]
+  rw [comapOfField, ker_toIdeal, ker_quotient_comp]
 
-/-- Membership in the field-valued inverse image is membership after applying the morphism. -/
+/-- Membership in the inverse image over a field is membership after applying the morphism. -/
 @[simp]
 theorem mem_comapOfField {I : HopfIdeal k K} {f : H →ₐc[k] K} {h : H} :
     h ∈ I.comapOfField f ↔ f h ∈ I := by
@@ -277,12 +281,10 @@ theorem mem_comapOfField {I : HopfIdeal k K} {f : H →ₐc[k] K} {h : H} :
   exact mem_toIdeal
 
 /-- Over a field, the surjective inverse image agrees with the unrestricted construction. -/
-@[simp]
 theorem comap_eq_comapOfField (I : HopfIdeal k K) (f : H →ₐc[k] K)
     (hf : Function.Surjective f) :
     I.comap f hf = I.comapOfField f := by
-  ext h
-  rw [mem_comapOfField, mem_comap]
+  rw [comap_eq_kerOfSurjective, comapOfField, kerOfSurjective_eq_ker]
 
 /-- Inverse image of Hopf ideals over a field is monotone. -/
 theorem comapOfField_mono (f : H →ₐc[k] K) {I J : HopfIdeal k K} (hIJ : I ≤ J) :
@@ -305,7 +307,7 @@ theorem comapOfField_id (I : HopfIdeal k H) :
   rw [mem_comapOfField, BialgHom.coe_id]
   rfl
 
-/-- Field-valued inverse image of Hopf ideals is compatible with composition. -/
+/-- Inverse image of Hopf ideals over a field is compatible with composition. -/
 @[simp]
 theorem comapOfField_comapOfField (I : HopfIdeal k L) (g : K →ₐc[k] L)
     (f : H →ₐc[k] K) :

@@ -42,6 +42,8 @@ dictionary.
   is `I`.
 * `TauCeti.HopfIdeal.ker_lTensor_eq_rightTensorIdeal`: tensoring on the left by a flat algebra
   carries the kernel of an algebra map to the corresponding right tensor ideal.
+* `TauCeti.HopfIdeal.tensorProduct_map_injective`: over a field, tensoring two injective algebra
+  morphisms gives an injective tensor-product algebra morphism.
 
 ## References
 
@@ -113,6 +115,25 @@ theorem ker_lTensor_eq_rightTensorIdeal {A B : Type*} [CommRing A] [CommRing B]
   rw [hsubtype, rightTensorIdeal_def]
   exact TensorProduct.AlgebraTensorModule.range_lTensor_idealMap
     (R := R) A R (RingHom.ker f)
+
+section Field
+
+variable {k : Type u} [Field k]
+
+/-- Over a field, the tensor-product algebra morphism induced by two injective algebra morphisms
+is injective. -/
+theorem tensorProduct_map_injective {A B C D : Type*}
+    [Ring A] [Ring B] [Ring C] [Ring D]
+    [Algebra k A] [Algebra k B] [Algebra k C] [Algebra k D]
+    (f : A →ₐ[k] B) (g : C →ₐ[k] D)
+    (hf : Function.Injective f) (hg : Function.Injective g) :
+    Function.Injective (Algebra.TensorProduct.map f g) := by
+  -- Expose the underlying linear map so the named tensor-product map lemmas can rewrite it.
+  change Function.Injective (Algebra.TensorProduct.map f g).toLinearMap
+  rw [Algebra.TensorProduct.toLinearMap_map, TensorProduct.AlgebraTensorModule.map_eq]
+  exact TensorProduct.map_injective_of_flat_flat f.toLinearMap g.toLinearMap hf hg
+
+end Field
 
 variable [HopfAlgebra R H] [HopfAlgebra R K]
 
@@ -223,10 +244,7 @@ private theorem tensor_kerLiftAlg_injective (f : H →ₐ[k] K) :
       (Algebra.TensorProduct.map (Ideal.kerLiftAlg f) (Ideal.kerLiftAlg f)) := by
   let f' : (H ⧸ RingHom.ker f) →ₐ[k] K := Ideal.kerLiftAlg f
   have hf' : Function.Injective f' := Ideal.kerLiftAlg_injective f
-  -- Expose the underlying linear map so the named tensor-product map lemmas can rewrite it.
-  change Function.Injective (Algebra.TensorProduct.map f' f').toLinearMap
-  rw [Algebra.TensorProduct.toLinearMap_map, TensorProduct.AlgebraTensorModule.map_eq]
-  exact TensorProduct.map_injective_of_flat_flat f'.toLinearMap f'.toLinearMap hf' hf'
+  exact tensorProduct_map_injective f' f' hf' hf'
 
 /-- The comultiplication of an element in the ordinary kernel of a Hopf-algebra morphism over a
 field belongs to `ker f ⊗ H + H ⊗ ker f`. -/

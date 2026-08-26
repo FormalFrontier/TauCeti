@@ -21,7 +21,7 @@ equality and is then carried through `hopfSpec`.
 
 ## Main declarations
 
-* `TauCeti.CommHopfAlgCat.comapOfField_centerDefiningIdeal`: center ideals are preserved by
+* `TauCeti.CommHopfAlgCat.comap_centerDefiningIdeal`: center ideals are preserved by
   isomorphisms.
 * `TauCeti.CommHopfAlgCat.centerCoordinateMap`: restriction of an isomorphism to the coordinate
   Hopf algebras of the centers.
@@ -55,10 +55,9 @@ variable {H K : _root_.CommHopfAlgCat.{v} k}
 
 /-- **An isomorphism of commutative Hopf algebras preserves the ideal defining the center.** -/
 @[simp]
-theorem comapOfField_centerDefiningIdeal (e : H ≅ K) :
-    (centerDefiningIdeal K).comapOfField e.hom.hom = centerDefiningIdeal H := by
-  rw [← HopfIdeal.comap_eq_comapOfField _ _
-    (ConcreteCategory.bijective_of_isIso e.hom).2]
+theorem comap_centerDefiningIdeal (e : H ≅ K) :
+    (centerDefiningIdeal K).comap e.hom.hom
+        (ConcreteCategory.bijective_of_isIso e.hom).2 = centerDefiningIdeal H := by
   let he : Function.Bijective e.hom.hom := ConcreteCategory.bijective_of_isIso e.hom
   let he' : Function.Bijective e.inv.hom := ConcreteCategory.bijective_of_isIso e.inv
   have hforward : centerDefiningIdeal H ≤
@@ -80,13 +79,8 @@ theorem comapOfField_centerDefiningIdeal (e : H ≅ K) :
 /-- The isomorphism on coordinate Hopf algebras obtained by restricting an ambient isomorphism
 to the centers. -/
 noncomputable def centerCoordinateIso (e : H ≅ K) :
-    quotient H (centerDefiningIdeal H) ≅ quotient K (centerDefiningIdeal K) := by
-  have hcomap :
-      (centerDefiningIdeal K).comap e.hom.hom
-          (ConcreteCategory.bijective_of_isIso e.hom).2 = centerDefiningIdeal H := by
-    simpa only [HopfIdeal.comap_eq_comapOfField] using
-      comapOfField_centerDefiningIdeal e
-  exact eqToIso (congrArg (quotient H) hcomap.symm) ≪≫
+    quotient H (centerDefiningIdeal H) ≅ quotient K (centerDefiningIdeal K) :=
+  eqToIso (congrArg (quotient H) (comap_centerDefiningIdeal e).symm) ≪≫
     quotientIsoOfIso e (centerDefiningIdeal K)
 
 /-- The coordinate morphism obtained by restricting an ambient isomorphism to the centers. -/
@@ -106,11 +100,7 @@ theorem mkQuotient_comp_centerCoordinateMap (e : H ≅ K) :
     mkQuotient H (centerDefiningIdeal H) ≫ centerCoordinateMap e =
       e.hom ≫ mkQuotient K (centerDefiningIdeal K) := by
   rw [centerCoordinateMap, centerCoordinateIso]
-  simp only [Iso.trans_hom, eqToIso.hom]
-  rw [← Category.assoc, mkQuotient_comp_eqToHom,
-    mkQuotient_comp_quotientIsoOfIso_hom]
-  simpa only [HopfIdeal.comap_eq_comapOfField] using
-    comapOfField_centerDefiningIdeal e
+  simp
 
 /-- On quotient classes, restriction to the center applies the ambient isomorphism before taking
 the target quotient class. -/

@@ -36,8 +36,6 @@ cut out by `J`, namely its normal closure.
 * `TauCeti.HopfIdeal.isNormal_bot`: the zero Hopf ideal is normal.
 * `TauCeti.HopfIdeal.isNormal_iSup`: arbitrary suprema of normal Hopf ideals are normal.
 * `TauCeti.HopfIdeal.normalCore`: the largest normal Hopf ideal below a given Hopf ideal.
-* `TauCeti.HopfIdeal.IsNormal.comapOfField_of_injective`: inverse image along an injective
-  bialgebra morphism over a field preserves normality.
 * `TauCeti.HopfIdeal.IsNormal.comap_of_bijective`: normality is preserved by pullback along a
   bijective bialgebra morphism.
 * `TauCeti.CommHopfAlgCat.quotientPointsSubgroup_normal`: a normal Hopf ideal cuts out a normal
@@ -237,84 +235,6 @@ namespace HopfIdeal
 variable {R : Type u} [CommRing R]
 variable {H K : Type v} [CommRing H] [CommRing K]
 variable [HopfAlgebra R H] [HopfAlgebra R K]
-
-section Field
-
-variable {k : Type u} [Field k]
-variable [HopfAlgebra k H] [HopfAlgebra k K]
-
-/-- Pulling a normal Hopf ideal back along an injective bialgebra morphism over a field preserves
-normality.
-
-Contravariantly, the scheme-theoretic image of a normal closed affine subgroup under a
-surjective affine-group morphism is normal. Injectivity is used only to reflect vanishing after
-tensoring the first coordinate map. -/
-theorem IsNormal.comapOfField_of_injective {I : HopfIdeal k K} (hI : I.IsNormal)
-    (f : H →ₐc[k] K) (hf : Function.Injective f) :
-    (I.comapOfField f).IsNormal := by
-  rw [isNormal_iff_conjugation_mem]
-  intro x hx
-  let q : K →ₐ[k] K ⧸ I.toIdeal := Ideal.Quotient.mkₐ k I.toIdeal
-  let g : H →ₐ[k] K ⧸ I.toIdeal := q.comp f.toAlgHom
-  have hqker : RingHom.ker q = I.toIdeal := by
-    exact Ideal.Quotient.mkₐ_ker k I.toIdeal
-  have hconjK := hI.conjugation_mem (mem_comapOfField.mp hx)
-  have hzeroK :
-      Algebra.TensorProduct.map (AlgHom.id k K) q
-          (HopfAlgebra.conjugationAlgHom (R := k) (H := K) (f x)) = 0 := by
-    rw [← RingHom.mem_ker, ker_lTensor_eq_rightTensorIdeal q]
-    rw [hqker]
-    exact hconjK
-  have hmaps :
-      Algebra.TensorProduct.map f.toAlgHom g =
-        (Algebra.TensorProduct.map (AlgHom.id k K) q).comp
-          (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom) := by
-    rw [← Algebra.TensorProduct.map_comp, AlgHom.id_comp]
-  have hzero :
-      Algebra.TensorProduct.map f.toAlgHom g
-          (HopfAlgebra.conjugationAlgHom (R := k) (H := H) x) = 0 := by
-    calc
-      Algebra.TensorProduct.map f.toAlgHom g
-          (HopfAlgebra.conjugationAlgHom (R := k) (H := H) x) =
-          Algebra.TensorProduct.map (AlgHom.id k K) q
-            (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom
-              (HopfAlgebra.conjugationAlgHom (R := k) (H := H) x)) := by
-            rw [hmaps, AlgHom.comp_apply]
-      _ = Algebra.TensorProduct.map (AlgHom.id k K) q
-          (HopfAlgebra.conjugationAlgHom (R := k) (H := K) (f x)) := by
-            exact congrArg (Algebra.TensorProduct.map (AlgHom.id k K) q)
-              (AlgHom.congr_fun (HopfAlgebra.map_comp_conjugationAlgHom f) x)
-      _ = 0 := hzeroK
-  have hgker : (I.comapOfField f).toIdeal = RingHom.ker g := by
-    rw [comapOfField_toIdeal]
-    ext y
-    simp [g, q, Ideal.Quotient.eq_zero_iff_mem, mem_toIdeal]
-  rw [hgker, ← ker_lTensor_eq_rightTensorIdeal g, RingHom.mem_ker]
-  have hinjective : Function.Injective
-      (Algebra.TensorProduct.map f.toAlgHom (AlgHom.id k (K ⧸ I.toIdeal))) := by
-    change Function.Injective
-      (Algebra.TensorProduct.map f.toAlgHom (AlgHom.id k (K ⧸ I.toIdeal))).toLinearMap
-    rw [Algebra.TensorProduct.toLinearMap_map, TensorProduct.AlgebraTensorModule.map_eq]
-    exact TensorProduct.map_injective_of_flat_flat f.toLinearMap
-      (LinearMap.id (R := k) (M := K ⧸ I.toIdeal)) hf Function.injective_id
-  apply hinjective
-  have hmaps' :
-      (Algebra.TensorProduct.map f.toAlgHom (AlgHom.id k (K ⧸ I.toIdeal))).comp
-          (Algebra.TensorProduct.map (AlgHom.id k H) g) =
-        Algebra.TensorProduct.map f.toAlgHom g := by
-    rw [← Algebra.TensorProduct.map_comp, AlgHom.comp_id, AlgHom.id_comp]
-  calc
-    Algebra.TensorProduct.map f.toAlgHom (AlgHom.id k (K ⧸ I.toIdeal))
-        (Algebra.TensorProduct.map (AlgHom.id k H) g
-          (HopfAlgebra.conjugationAlgHom (R := k) (H := H) x)) =
-      Algebra.TensorProduct.map f.toAlgHom g
-        (HopfAlgebra.conjugationAlgHom (R := k) (H := H) x) := by
-          rw [← AlgHom.comp_apply, hmaps']
-    _ = 0 := hzero
-    _ = Algebra.TensorProduct.map f.toAlgHom (AlgHom.id k (K ⧸ I.toIdeal)) 0 :=
-      (map_zero _).symm
-
-end Field
 
 /-- Pulling a normal Hopf ideal back along a bijective bialgebra morphism preserves normality. -/
 theorem IsNormal.comap_of_bijective {I : HopfIdeal R K} (hI : I.IsNormal) (f : H →ₐc[R] K)
