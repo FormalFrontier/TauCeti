@@ -197,7 +197,7 @@ theorem idealPrimePower_eq_of_base_eq_of_exponent_eq {A B : IdealPrimePower K}
     hbase, hexp]
 
 /-- A prime-power ideal has exponent one exactly when it is itself prime. -/
-theorem primePowerExponent_eq_one_iff (A : IdealPrimePower K) :
+@[simp] theorem primePowerExponent_eq_one_iff (A : IdealPrimePower K) :
     primePowerExponent A = 1 ↔ Prime (A : Ideal (𝓞 K)) := by
   refine ⟨fun h ↦ ?_, fun h ↦ primePowerExponent_eq h (pow_one _)⟩
   rw [← primePowerBase_pow_primePowerExponent A, h, pow_one]
