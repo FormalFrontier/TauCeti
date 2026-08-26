@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.MeasureTheory.MeasurableSpace.Analytic
-public import TauCeti.MeasureTheory.OptimalTransport.CTransform
+public import TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic
 
 /-!
 # Analytic measurability of the infimal `c`-transform
@@ -48,37 +48,37 @@ variable {X Y : Type*} [TopologicalSpace X] [PolishSpace X] [MeasurableSpace X] 
   [TopologicalSpace Y] [PolishSpace Y] [MeasurableSpace Y] [BorelSpace Y]
   {c : X × Y → ℝ} {φ : X → EReal} {ψ : Y → EReal}
 
-/-- If the defining integrand of a `c`-transform is Borel measurable, every strict sublevel of
-the transform is analytic. It is the second-coordinate projection of the corresponding Borel
-strict sublevel of the integrand. -/
+/-- If a strict sublevel of the defining integrand of a `c`-transform is Borel measurable, the
+corresponding strict sublevel of the transform is analytic. It is the second-coordinate projection
+of that integrand sublevel. -/
 theorem analyticSet_setOf_cTransform_lt (a : EReal)
-    (h : Measurable fun z : X × Y => (c z : EReal) - φ z.1) :
+    (h : MeasurableSet {z : X × Y | (c z : EReal) - φ z.1 < a}) :
     AnalyticSet {y | cTransform c φ y < a} := by
   simpa only [cTransform_apply] using
     MeasureTheory.analyticSet_setOf_iInf_lt
-      (fun z : X × Y => (c z : EReal) - φ z.1) a (h measurableSet_Iio)
+      (fun z : X × Y => (c z : EReal) - φ z.1) a h
 
-/-- If the defining integrand of a symmetric `c`-transform is Borel measurable, every strict
-sublevel of the transform is analytic. -/
+/-- If a strict sublevel of the defining integrand of a symmetric `c`-transform is Borel
+measurable, the corresponding strict sublevel of the transform is analytic. -/
 theorem analyticSet_setOf_cTransformSymm_lt (a : EReal)
-    (h : Measurable fun z : X × Y => (c z : EReal) - ψ z.2) :
+    (h : MeasurableSet {z : X × Y | (c z : EReal) - ψ z.2 < a}) :
     AnalyticSet {x | cTransformSymm c ψ x < a} := by
   simpa only [cTransformSymm_apply] using
     MeasureTheory.analyticSet_setOf_iInf_lt
       (fun z : Y × X => (c (z.2, z.1) : EReal) - ψ z.1) a
-        ((h.comp measurable_swap) measurableSet_Iio)
+        (h.preimage measurable_swap)
 
-/-- A strict sublevel of a `c`-transform with Borel defining integrand is measurable after
-completing any finite Borel measure on the target. -/
+/-- A strict sublevel of a `c`-transform is measurable after completing any finite Borel measure
+on the target when the corresponding integrand sublevel is Borel measurable. -/
 theorem nullMeasurableSet_setOf_cTransform_lt (μ : Measure Y) [IsFiniteMeasure μ] (a : EReal)
-    (h : Measurable fun z : X × Y => (c z : EReal) - φ z.1) :
+    (h : MeasurableSet {z : X × Y | (c z : EReal) - φ z.1 < a}) :
     NullMeasurableSet {y | cTransform c φ y < a} μ :=
   MeasureTheory.AnalyticSet.nullMeasurableSet (analyticSet_setOf_cTransform_lt a h) μ
 
-/-- A strict sublevel of a symmetric `c`-transform with Borel defining integrand is measurable
-after completing any finite Borel measure on the source. -/
+/-- A strict sublevel of a symmetric `c`-transform is measurable after completing any finite Borel
+measure on the source when the corresponding integrand sublevel is Borel measurable. -/
 theorem nullMeasurableSet_setOf_cTransformSymm_lt (μ : Measure X) [IsFiniteMeasure μ]
-    (a : EReal) (h : Measurable fun z : X × Y => (c z : EReal) - ψ z.2) :
+    (a : EReal) (h : MeasurableSet {z : X × Y | (c z : EReal) - ψ z.2 < a}) :
     NullMeasurableSet {x | cTransformSymm c ψ x < a} μ :=
   MeasureTheory.AnalyticSet.nullMeasurableSet (analyticSet_setOf_cTransformSymm_lt a h) μ
 
@@ -90,7 +90,8 @@ theorem nullMeasurable_cTransform (μ : Measure Y) [IsFiniteMeasure μ]
     NullMeasurable (cTransform c φ) μ := by
   have hm : @Measurable (NullMeasurableSpace Y μ) EReal _ _ (cTransform c φ) :=
     measurable_of_Iio fun a =>
-      MeasureTheory.AnalyticSet.nullMeasurableSet (analyticSet_setOf_cTransform_lt a h) μ
+      MeasureTheory.AnalyticSet.nullMeasurableSet
+        (analyticSet_setOf_cTransform_lt a (h measurableSet_Iio)) μ
   exact hm
 
 /-- A symmetric `c`-transform with Borel defining integrand is measurable for the completion of
@@ -100,7 +101,8 @@ theorem nullMeasurable_cTransformSymm (μ : Measure X) [IsFiniteMeasure μ]
     NullMeasurable (cTransformSymm c ψ) μ := by
   have hm : @Measurable (NullMeasurableSpace X μ) EReal _ _ (cTransformSymm c ψ) :=
     measurable_of_Iio fun a =>
-      MeasureTheory.AnalyticSet.nullMeasurableSet (analyticSet_setOf_cTransformSymm_lt a h) μ
+      MeasureTheory.AnalyticSet.nullMeasurableSet
+        (analyticSet_setOf_cTransformSymm_lt a (h measurableSet_Iio)) μ
   exact hm
 
 end TauCeti
