@@ -196,14 +196,6 @@ private theorem integral_comp_eq_sum (μ : Measure X) [IsProbabilityMeasure μ] 
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [measureReal_def, Measure.map_apply hq (MeasurableSet.singleton i), smul_eq_mul]
 
-/-- Conditioning on a fibre puts almost every point in that fibre. -/
-private theorem ae_cond_eq {n : ℕ} {q : X → Fin n} (hq : Measurable q) (μ : Measure X)
-    (i : Fin n) : ∀ᵐ x ∂μ[|q ⁻¹' {i}], q x = i := by
-  rw [ae_iff]
-  have hfib : {x | ¬q x = i} = (q ⁻¹' {i})ᶜ := by ext x; simp
-  rw [hfib, ProbabilityTheory.cond_apply (hq (MeasurableSet.singleton i)),
-    Set.inter_compl_self, measure_empty, mul_zero]
-
 /-- A nonzero matrix entry has a nonzero source fibre. -/
 private theorem row_fiber_ne_zero {n m : ℕ} {q : X → Fin n} {μ : Measure X}
     {pμ : PMF (Fin n)} {pν : PMF (Fin m)} (hpμ : ∀ i, pμ i = μ (q ⁻¹' {i}))
@@ -295,12 +287,14 @@ private theorem transportCost_le_ofReal_cost {n m : ℕ} {qX : X → Fin n} {qY 
       have hfib1 : ∀ᵐ z ∂((μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])), qX z.1 = i := by
         refine (Measure.ae_prod_iff_ae_ae ?_).2 ?_
         · exact (hqX.comp measurable_fst) (MeasurableSet.singleton i)
-        · filter_upwards [ae_cond_eq hqX μ i] with x hx
+        · filter_upwards [ProbabilityTheory.ae_cond_mem (μ := μ)
+            (hqX (MeasurableSet.singleton i))] with x hx
           exact ae_of_all _ fun _ ↦ hx
       have hfib2 : ∀ᵐ z ∂((μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])), qY z.2 = j := by
         refine (Measure.ae_prod_iff_ae_ae ?_).2 ?_
         · exact (hqY.comp measurable_snd) (MeasurableSet.singleton j)
-        · exact ae_of_all _ fun _ ↦ ae_cond_eq hqY ν j
+        · exact ae_of_all _ fun _ ↦ ProbabilityTheory.ae_cond_mem (μ := ν)
+            (hqY (MeasurableSet.singleton j))
       refine le_trans (lintegral_mono_ae ?_) (by rw [lintegral_const, measure_univ, mul_one])
       filter_upwards [hfib1, hfib2] with z h1 h2
       refine ENNReal.ofReal_le_ofReal ?_
