@@ -177,6 +177,10 @@ def IsGraphical (t : AffineDynkinType) : Prop := t ≠ A 1
 
 instance : DecidablePred IsGraphical := fun t ↦ inferInstanceAs (Decidable (t ≠ A 1))
 
+/-- Graphicality unfolded: `TauCeti.AffineDynkinType.IsGraphical` is a `def` into `Prop`, so a
+consumer outside this file needs this equation to read it. -/
+theorem isGraphical_iff_ne_A_one {t : AffineDynkinType} : t.IsGraphical ↔ t ≠ A 1 := Iff.rfl
+
 @[simp] lemma isGraphical_A {n : ℕ} : (A n).IsGraphical ↔ n ≠ 1 := by simp [IsGraphical]
 @[simp] lemma isGraphical_D (n : ℕ) : (D n).IsGraphical := by simp [IsGraphical]
 @[simp] lemma isGraphical_E6 : E6.IsGraphical := by simp [IsGraphical]
@@ -334,6 +338,13 @@ def cartanMatrix (t : AffineDynkinType) : Matrix (Fin t.nodes) (Fin t.nodes) ℤ
   | x => (2 : ℤ) • (1 : Matrix (Fin x.nodes) (Fin x.nodes) ℤ) - x.graph.adjMatrix ℤ
 
 @[simp] lemma cartanMatrix_A_one : (A 1).cartanMatrix = !![2, -2; -2, 2] := (rfl)
+
+/-- The entries of the `A₁` Cartan matrix: `2` on the diagonal, and the multiplicity-two `-2` off
+it. The matrix literal of `TauCeti.AffineDynkinType.cartanMatrix_A_one` is awkward to read entry
+by entry outside this file, where `Fin (A 1).nodes` no longer reduces. -/
+lemma cartanMatrix_A_one_apply (i j : Fin (A 1).nodes) :
+    (A 1).cartanMatrix i j = if i = j then 2 else -2 := by
+  fin_cases i <;> fin_cases j <;> decide
 
 /-- **Away from `A₁`, the generalized Cartan matrix is `2I - A`**, the degenerate diagrams outside
 `TauCeti.AffineDynkinType.Valid` included. At `E₈` this is where Mathlib's numbering of
