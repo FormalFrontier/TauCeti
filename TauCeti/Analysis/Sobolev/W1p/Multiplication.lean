@@ -36,9 +36,8 @@ into an estimate on a compactly contained subdomain.  Having it as a *bounded op
 than as a pointwise membership statement, is what lets those arguments range over a family of
 cutoffs while keeping uniform control of the resulting Sobolev norms.
 
-The factor `2` in `‖ψ u‖ ≤ 2 M ‖u‖` is not optimal — the sharp constant for the Euclidean jet norm
-used here is `√2 M` — but it is explicit, and it is the only shape the downstream localization
-arguments need.
+The factor `2` in `‖ψ u‖ ≤ 2 M ‖u‖` is explicit, and it is the only shape the downstream
+localization arguments need.
 
 ## Main declarations
 
