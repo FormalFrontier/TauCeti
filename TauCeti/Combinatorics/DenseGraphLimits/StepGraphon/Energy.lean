@@ -107,7 +107,7 @@ omit [IsProbabilityMeasure μ] in
 subrectangles, splitting any integral over it into a finite sum. -/
 theorem setIntegral_prod_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
     (hR : ∀ r ∈ R.parts, MeasurableSet r) {S T : Set Ω} (hS : MeasurableSet S)
-    (hT : MeasurableSet T) {f : Ω × Ω → ℝ} (hf : Integrable f (μ.prod μ)) :
+    (hT : MeasurableSet T) {f : Ω × Ω → ℝ} (hf : IntegrableOn f (S ×ˢ T) (μ.prod μ)) :
     ∫ z in S ×ˢ T, f z ∂(μ.prod μ)
       = ∑ rs : R.parts × R.parts,
           ∫ z in ((rs.1 : Set Ω) ∩ S) ×ˢ ((rs.2 : Set Ω) ∩ T), f z ∂(μ.prod μ) := by
@@ -133,7 +133,8 @@ theorem setIntegral_prod_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
       = S ×ˢ T := by
     rw [iUnion_prod (fun r : R.parts => (r : Set Ω) ∩ S) fun r : R.parts => (r : Set Ω) ∩ T,
       ← iUnion_inter, ← iUnion_inter, iUnion_parts R, univ_inter, univ_inter]
-  rw [← hunion, integral_iUnion_fintype hmeas hdisj fun _ => hf.integrableOn]
+  rw [← hunion, integral_iUnion_fintype hmeas hdisj fun _ =>
+    hf.mono_set (prod_mono inter_subset_right inter_subset_right)]
 
 omit [IsProbabilityMeasure μ] in
 /-- A finite measurable partition of the carrier splits an integral over the whole product carrier
@@ -143,7 +144,7 @@ theorem integral_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
     ∫ z, f z ∂(μ.prod μ)
       = ∑ rs : R.parts × R.parts, ∫ z in (rs.1 : Set Ω) ×ˢ (rs.2 : Set Ω), f z ∂(μ.prod μ) := by
   rw [← setIntegral_univ (μ := μ.prod μ), ← univ_prod_univ,
-    setIntegral_prod_eq_sum_parts μ R hR MeasurableSet.univ MeasurableSet.univ hf]
+    setIntegral_prod_eq_sum_parts μ R hR MeasurableSet.univ MeasurableSet.univ hf.integrableOn]
   simp
 
 /-- Two kernels with the same integral over every rectangle of a partition `Q` have the same
@@ -156,9 +157,9 @@ private theorem rectIntegral_eq_of_le {P Q : Finpartition (Set.univ : Set Ω)}
     K.rectIntegral μ (p : Set Ω) (q : Set Ω) = L.rectIntegral μ (p : Set Ω) (q : Set Ω) := by
   rw [SymmKernel.rectIntegral_def, SymmKernel.rectIntegral_def,
     setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
-      (SymmKernel.integrable_uncurry μ K),
+      (SymmKernel.integrable_uncurry μ K).integrableOn,
     setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
-      (SymmKernel.integrable_uncurry μ L)]
+      (SymmKernel.integrable_uncurry μ L).integrableOn]
   refine Finset.sum_congr rfl fun rs _ => ?_
   rcases inter_eq_self_or_empty href rs.1.property p.property with h1 | h1
   · rcases inter_eq_self_or_empty href rs.2.property q.property with h2 | h2

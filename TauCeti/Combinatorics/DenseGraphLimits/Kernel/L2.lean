@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
+public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Basic
 public import Mathlib.MeasureTheory.Integral.Prod
 
 /-!
@@ -17,7 +17,7 @@ defines the integrals `l2inner μ K L = ∫ K · L` and `l2sq μ K = ∫ K²` at
 symmetric kernels.  When `μ` is finite, bounded kernels are square-integrable, so these integrals
 are the `L²(μ ⊗ μ)` inner product and its induced norm squared.  The integrability of a single
 kernel over the product carrier is already available as `SymmKernel.integrable_uncurry` from the
-rectangle-integral layer, and everything here is built on it.
+basic kernel layer, and everything here is built on it.
 
 **Why plain integrals and not `Lp`.**  A `SymmKernel` is a strict everywhere-defined
 representative, and the whole point of that convention is that a difference `K - L` is again a
