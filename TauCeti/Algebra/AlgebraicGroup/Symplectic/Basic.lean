@@ -135,6 +135,18 @@ noncomputable def relationMatrix :
       (genericMatrix R m)ᵀ -
     (JFin m R).map (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m)))
 
+/-- The symplectic relation matrix is the generic matrix preserving the standard alternating
+form, minus that form. -/
+theorem relationMatrix_def :
+    relationMatrix R m =
+      genericMatrix R m *
+          (JFin m R).map
+            (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m))) *
+          (genericMatrix R m)ᵀ -
+        (JFin m R).map
+          (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m))) := by
+  rw [relationMatrix]
+
 /-- The set of defining relations: the entries of the relation matrix. -/
 def relationSet : Set (GeneralLinear.coordinateHopfAlgebra R (m + m)) :=
   Set.range fun ij : Fin (m + m) × Fin (m + m) => relationMatrix R m ij.1 ij.2
@@ -144,9 +156,19 @@ theorem relationMatrix_mem_relationSet (i j : Fin (m + m)) :
     relationMatrix R m i j ∈ relationSet R m :=
   ⟨(i, j), rfl⟩
 
+/-- An element is a symplectic defining relation exactly when it is an entry of the relation
+matrix. -/
+theorem mem_relationSet_iff {x : GeneralLinear.coordinateHopfAlgebra R (m + m)} :
+    x ∈ relationSet R m ↔ ∃ i j, relationMatrix R m i j = x := by
+  constructor
+  · rintro ⟨⟨i, j⟩, rfl⟩
+    exact ⟨i, j, rfl⟩
+  · rintro ⟨i, j, rfl⟩
+    exact relationMatrix_mem_relationSet R m i j
+
 /-- Mapping the relation matrix through an algebra morphism gives the relation of the images:
 the generic matrix maps entrywise, and the constant form maps to the constant form. -/
-private theorem relationMatrix_map {T : Type*} [CommRing T] [Algebra R T]
+theorem relationMatrix_map {T : Type*} [CommRing T] [Algebra R T]
     (phi : GeneralLinear.coordinateHopfAlgebra R (m + m) →ₐ[R] T) :
     (relationMatrix R m).map phi =
       (genericMatrix R m).map phi * (JFin m R).map (algebraMap R T) *
