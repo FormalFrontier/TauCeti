@@ -132,7 +132,6 @@ theorem checkerboardSimpleRoot_mem_checkerboardCarrier (hn : 4 ≤ n) (i : Fin n
 
 /-- **The Gram matrix of the Bourbaki simple roots in the checkerboard lattice is the Cartan
 matrix of type `Dₙ`.** -/
-@[simp]
 theorem checkerboardLattice_form_checkerboardSimpleRoot (hn : 4 ≤ n) (i j : Fin n) :
     (checkerboardLattice n).form (checkerboardSimpleRoot n hn i) (checkerboardSimpleRoot n hn j) =
       ((CartanMatrix.D n i j : ℤ) : ℚ) := by
@@ -295,7 +294,6 @@ theorem determinant_checkerboardLattice (hn : 4 ≤ n) :
     gramMatrix_checkerboardSimpleRootBasis hn]
 
 /-- Each simple root has norm two, the diagonal entry of the Cartan matrix. -/
-@[simp]
 theorem checkerboardLattice_form_checkerboardSimpleRoot_self (hn : 4 ≤ n) (i : Fin n) :
     (checkerboardLattice n).form (checkerboardSimpleRoot n hn i) (checkerboardSimpleRoot n hn i) =
       2 := by
