@@ -29,7 +29,7 @@ upstairs.
 * `TauCeti.RamificationInertia.ncard_primesOver_eq_natCard_iff_of_isGaloisGroup`:
   the domain/flat Galois counting criterion.
 * `Ideal.card_inertia_eq_ramificationIdx`: the un-`In` form of the inertia count.
-* `Ideal.mem_inertia_pointwise_smul`: translation conjugates inertia subgroups.
+* `Ideal.mem_inertia_pointwise_smul_iff`: translation conjugates inertia subgroups.
 * `Ideal.inertia_pointwise_smul`: for a commutative Galois group, translation leaves the inertia
   subgroup unchanged.
 * `Ideal.inertia_eq_of_liesOver`: for a commutative Galois group, all the primes above a fixed
@@ -96,7 +96,7 @@ variable {S : Type*} [CommRing S] {G : Type*} [Group G] [MulSemiringAction G S]
 /-- **Inertia is conjugated by the Galois action.** An element `τ` lies in the inertia subgroup of
 the translated ideal `σ • P` exactly when its conjugate `σ⁻¹ τ σ` lies in the inertia subgroup
 of `P`. -/
-theorem mem_inertia_pointwise_smul {σ τ : G} {P : Ideal S} :
+theorem mem_inertia_pointwise_smul_iff {σ τ : G} {P : Ideal S} :
     τ ∈ (σ • P).inertia G ↔ σ⁻¹ * τ * σ ∈ P.inertia G := by
   simp only [AddSubgroup.mem_inertia, Submodule.mem_toAddSubgroup]
   constructor
@@ -116,7 +116,7 @@ open scoped IsMulCommutative in
 theorem inertia_pointwise_smul [IsMulCommutative G] :
     (σ • P).inertia G = P.inertia G := by
   ext τ
-  rw [mem_inertia_pointwise_smul]
+  rw [mem_inertia_pointwise_smul_iff]
   refine iff_of_eq (congrArg (· ∈ P.inertia G) ?_)
   rw [mul_comm σ⁻¹ τ, mul_assoc, inv_mul_cancel, mul_one]
 
@@ -134,7 +134,7 @@ include p in
 /-- **All the inertia subgroups over a fixed prime coincide, for a commutative Galois group.**
 The Galois group acts transitively on the primes above `p`
 (`Ideal.exists_smul_eq_of_isGaloisGroup`), and translation conjugates inertia subgroups
-(`Ideal.mem_inertia_pointwise_smul`), so commutativity makes them all equal. -/
+(`Ideal.mem_inertia_pointwise_smul_iff`), so commutativity makes them all equal. -/
 theorem inertia_eq_of_liesOver : P.inertia G = Q.inertia G := by
   obtain ⟨σ, rfl⟩ := exists_smul_eq_of_isGaloisGroup p P Q G
   exact (inertia_pointwise_smul σ P).symm
