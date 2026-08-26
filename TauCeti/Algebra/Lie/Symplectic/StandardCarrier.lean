@@ -513,12 +513,6 @@ noncomputable def latticeBasis :
   unfold latticeBasis lattice
   rw [Module.Basis.reindex_apply, Module.Basis.restrictScalars_apply, Pi.basisFun_apply]
 
-@[simp] theorem coe_latticeBasis_finSumFinEquiv (a : Fin (n + 1) ⊕ Fin (n + 1)) :
-    ((latticeBasis n (finSumFinEquiv a) : (lattice n).toAddSubgroup) :
-      (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) = Pi.single a 1 := by
-  rw [coe_latticeBasis]
-  simp
-
 /-- The weight attached to the enumerated coordinate basis. -/
 def basisWeight (a : Fin ((n + 1) + (n + 1))) : Fin (n + 1) → ℤ :=
   weight n (finSumFinEquiv.symm a)
@@ -701,8 +695,8 @@ theorem rep_rootGenerator_latticeBasis (k : Fin (n + 1) ⊕ Fin (n + 1)) :
       (1 : ℤ) • ((latticeBasis n (finSumFinEquiv (rootTarget n k)) :
           (lattice n).toAddSubgroup) :
         (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) := by
-  rw [coe_latticeBasis_finSumFinEquiv, coe_latticeBasis_finSumFinEquiv,
-    rep_rootGenerator_apply, one_smul]
+  simp only [coe_latticeBasis, Equiv.symm_apply_apply]
+  rw [rep_rootGenerator_apply, one_smul]
   cases k with
   | inl i =>
       by_cases hi : i = Fin.last n
