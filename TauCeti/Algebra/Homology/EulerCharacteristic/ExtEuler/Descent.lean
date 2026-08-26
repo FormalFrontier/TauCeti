@@ -105,10 +105,6 @@ private theorem alternating_finrank_sub_add_sub_correction
       have hd := finrank_sub_finrank_sub_finrank_of_exact (f N) (g N) (δ N) (f (N + 1))
         (hfg N) (hgδ N) (hδf N)
       rw [htA, htB, htD]
-      change _ = (-1 : ℤ) ^ (N + 1) * Module.finrank k (f (N + 1)).ker
-      change (Module.finrank k (B N) : ℤ) - Module.finrank k (A N) -
-          Module.finrank k (D N) =
-        -(Module.finrank k (f N).ker : ℤ) - Module.finrank k (f (N + 1)).ker at hd
       calc
         _ = (tB N - tA N - tD N) +
             (-1 : ℤ) ^ N * ((Module.finrank k (B N) : ℤ) -
