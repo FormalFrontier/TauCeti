@@ -54,7 +54,7 @@ variable (R : Type u) [CommRing R] (N : ℕ)
 
 /-- The coordinate morphism of the diagonal torus is the coordinate morphism of the standard
 diagonal representation of its character group. -/
-theorem diagonalTorusCoordinateMap_eq_diagonalCoordinateMap :
+private theorem diagonalTorusCoordinateMap_eq_diagonalCoordinateMap :
     diagonalTorusCoordinateMap (R := R) (N := N) =
       CommHopfAlgCat.ofHom
         (DiagonalizableGroup.diagonalCoordinateMap (Pi.basisFun R (Fin N)) fun i =>
