@@ -90,16 +90,21 @@ private lemma prod_erase_reflection_weylDenominator [DecidableEq ι] {i : ι}
 The reflection permutes the factors belonging to the positive roots other than `αᵢ`. Its one
 exceptional factor changes from `1 - e^{-αᵢ}` to `1 - e^{αᵢ}`, and
 `1 - e^{αᵢ} = -e^{αᵢ}(1 - e^{-αᵢ})`. -/
+@[simp]
 theorem mapDomain_reflection_weylDenominator {i : ι} (hi : i ∈ b.support) :
-    AddMonoidAlgebra.mapDomainRingHom ℤ (P.reflection i).toAddEquiv.toAddMonoidHom
-        (weylDenominator P b) =
+    AddMonoidAlgebra.mapDomain (P.reflection i) (weylDenominator P b) =
       -AddMonoidAlgebra.single (P.root i) 1 * weylDenominator P b := by
   classical
   let A := AddMonoidAlgebra ℤ M
   let F : ι → A := fun j ↦ 1 - AddMonoidAlgebra.single (-P.root j) 1
   have hiPos : i ∈ posRootsFinset P b :=
     (mem_posRootsFinset P b i).mpr (support_subset_posRoots P b hi)
-  rw [weylDenominator_def, map_prod]
+  -- Read the reflection as a ring homomorphism of the group algebra to distribute over the
+  -- product of denominator factors.
+  have hring : AddMonoidAlgebra.mapDomain (R := ℤ) (P.reflection i) (weylDenominator P b) =
+      AddMonoidAlgebra.mapDomainRingHom ℤ (P.reflection i).toAddEquiv.toAddMonoidHom
+        (weylDenominator P b) := rfl
+  rw [hring, weylDenominator_def, map_prod]
   simp only [map_sub, map_one, AddMonoidAlgebra.mapDomainRingHom_apply,
     AddMonoidAlgebra.mapDomain_single, map_neg]
   -- `mapDomainRingHom` retains the additive-hom coercion; expose the underlying linear map so
@@ -136,7 +141,6 @@ theorem coeff_weylDenominator_dotAction_ofIdx {i : ι} (hi : i ∈ b.support) (x
       -(weylDenominator P b).coeff x := by
   have h := congrArg (fun f : AddMonoidAlgebra ℤ M ↦
     f.coeff ((P.reflection i) x)) (mapDomain_reflection_weylDenominator P b hi)
-  rw [AddMonoidAlgebra.mapDomainRingHom_apply] at h
   -- Expose the underlying `Finsupp.mapDomain` to read its coefficient at the image of `x`.
   change (Finsupp.mapDomain (P.reflection i) (weylDenominator P b).coeff)
       ((P.reflection i) x) = _ at h
