@@ -133,12 +133,13 @@ theorem fundamentalGroupMulEquivPathComponent_apply
 component, which contains each of its initial segments. -/
 @[simp]
 theorem fundamentalGroupMulEquivPathComponent_symm_fromPath (γ : Path x₀ x₀) :
-    (fundamentalGroupMulEquivPathComponent x₀).symm (FundamentalGroup.fromPath ⟦γ⟧) =
+    (fundamentalGroupMulEquivPathComponent x₀).symm
+        (FundamentalGroup.fromPath (Path.Homotopic.Quotient.mk γ)) =
       FundamentalGroup.fromPath
-        ⟦Path.codRestrict (x := pathComponentSelf x₀) (y := pathComponentSelf x₀) γ
-          (fun t => ⟨Path.initialSegmentFamily γ t⟩)⟧ := by
-  rw [MulEquiv.symm_apply_eq, fundamentalGroupMulEquivPathComponent_apply,
-    FundamentalGroup.map_fromPath]
+        (Path.Homotopic.Quotient.mk
+          (Path.codRestrict (x := pathComponentSelf x₀) (y := pathComponentSelf x₀) γ
+            (fun t => ⟨Path.initialSegmentFamily γ t⟩))) := by
+  rw [MulEquiv.symm_apply_eq, fundamentalGroupMulEquivPathComponent_apply]
   exact congrArg FundamentalGroup.fromPath <| congrArg Path.Homotopic.Quotient.mk <|
     (Path.map_codRestrict (s := pathComponent x₀) (x := pathComponentSelf x₀)
       (y := pathComponentSelf x₀) γ (fun t => ⟨Path.initialSegmentFamily γ t⟩)).symm
