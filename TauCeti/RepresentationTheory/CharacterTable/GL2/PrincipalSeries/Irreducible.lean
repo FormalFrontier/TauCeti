@@ -72,6 +72,14 @@ course in `Type`, so nothing of the intended application is lost. The purely gro
 lemmas about the Weyl conjugation keep both an arbitrary universe and an arbitrary commutative
 ring.
 
+That pin is not a choice this file could make differently. The predicate
+`TauCeti.MackeyDisjoint` is itself declared for a field and a group in one universe, so the very
+statement of the Mackey condition at `ℂ` and `GL (Fin 2) F` needs `F : Type`; and the criterion
+that consumes it ends at Mathlib's `FDRep.simple_iff_end_is_rank_one`, which is stated for
+`{k : Type u} {G : Type u}`. Relaxing the pin therefore means an upstream generalization of that
+Mathlib lemma, not a change here. `TauCeti/RepresentationTheory/CharacterTable/GL2/Steinberg.lean`
+records the same obstruction for the companion criterion `FDRep.simple_iff_char_is_norm_one`.
+
 Mackey disjointness is unfolded through `TauCeti.mackeyDisjoint_iff_finrank_eq_zero` and Schur's
 lemma rather than by exhibiting intertwiners by hand: both sides of the Mackey condition at `w`
 are one-dimensional, so `FDRep.finrank_hom_simple_simple` reduces the condition to the existence
