@@ -292,19 +292,11 @@ theorem weightUnipotentQuotient_mk_genericMatrix_apply (w : Fin N → ℤ) {i j 
         (coordinateHopfAlgebra R N ⧸ (weightUnipotentDefiningHopfIdeal R w).toIdeal)) i j := by
   rw [← genericMatrix_apply (R := R) (n := N) i j,
     ← Ideal.Quotient.mkₐ_eq_mk (R₁ := R)]
-  have hrel : (genericMatrix R N) i j -
-      (1 : Matrix (Fin N) (Fin N) (coordinateHopfAlgebra R N)) i j ∈
-        (weightUnipotentDefiningHopfIdeal R w).toIdeal := by
-    rw [weightUnipotentDefiningHopfIdeal_toIdeal]
-    exact Ideal.subset_span (sub_one_apply_mem_weightUnipotentRelationSet R w hij)
-  by_cases hEq : i = j
-  · subst j
-    simp only [Matrix.one_apply, ↓reduceIte]
-    rw [Ideal.Quotient.mkₐ_eq_mk, Ideal.Quotient.mk_eq_one_iff_sub_mem]
-    simpa [Matrix.one_apply] using hrel
-  · simp only [Matrix.one_apply, hEq, ↓reduceIte]
-    rw [Ideal.Quotient.mkₐ_eq_mk, Ideal.Quotient.eq_zero_iff_mem]
-    simpa [Matrix.one_apply, hEq] using hrel
+  apply (Ideal.quotientEquivAlgOfEq R
+    (weightUnipotentDefiningHopfIdeal_toIdeal R w)).injective
+  simpa only [Ideal.Quotient.mkₐ_eq_mk, Ideal.quotientEquivAlgOfEq_mk,
+    Matrix.one_apply, apply_ite, map_one, map_zero] using
+    quotient_genericMatrix_apply R w hij
 
 /-- The coordinate Hopf algebra of the weight-unipotent subgroup attached to `w`. -/
 noncomputable abbrev weightUnipotentCoordinateHopfAlgebra (w : Fin N → ℤ) :
