@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.CategoryTheory.Sites.SheafCohomology.FreeYoneda
+public import TauCeti.Algebra.Homology.Ext.Basic
+public import TauCeti.CategoryTheory.Sites.FreeYoneda
 public import TauCeti.CategoryTheory.Sites.SheafCohomology.Terminal
-public import Mathlib.Algebra.Homology.DerivedCategory.Ext.ExactSequences
 public import Mathlib.CategoryTheory.Abelian.GrothendieckCategory.HasExt
 public import Mathlib.Topology.Sheaves.Abelian
 public import Mathlib.Topology.Sheaves.Flasque
@@ -21,21 +21,21 @@ surjective. This file proves that a flasque sheaf has no higher cohomology.
 
 ## Main declarations
 
-* `TauCeti.Topology.isFlasque_of_injective`: an injective object in the category of abelian
+* `TauCeti.TopCat.Sheaf.isFlasque_of_injective`: an injective object in the category of abelian
   sheaves is flasque;
-* `TauCeti.Topology.subsingleton_H'_succ_of_isFlasque`: a flasque sheaf has vanishing cohomology
-  in every positive degree over every open subset;
-* `TauCeti.Topology.subsingleton_H_succ_of_isFlasque`: the same statement for the cohomology of
-  the whole space;
-* `TauCeti.Topology.subsingleton_H'_succ_skyscraperSheaf` and
-  `TauCeti.Topology.subsingleton_H_succ_skyscraperSheaf`: skyscraper sheaves are acyclic.
+* `TauCeti.TopCat.Sheaf.subsingleton_H'_succ_of_isFlasque`: a flasque sheaf has vanishing
+  cohomology in every positive degree over every open subset;
+* `TauCeti.TopCat.Sheaf.subsingleton_H_succ_of_isFlasque`: the same statement for the cohomology
+  of the whole space;
+* `TauCeti.TopCat.Sheaf.subsingleton_H'_succ_skyscraperSheaf` and
+  `TauCeti.TopCat.Sheaf.subsingleton_H_succ_skyscraperSheaf`: skyscraper sheaves are acyclic.
 
 The proof is the classical dimension shift. Embedding a flasque sheaf `F` in an injective sheaf
 `I` gives a short exact sequence `0 ⟶ F ⟶ I ⟶ Q ⟶ 0`, and the covariant long exact sequence of
 `Ext` presents `Hⁿ⁺¹(U, F)` as a quotient of `Hⁿ(U, Q)`. In degree zero, the sections of `Q` over
 `U` lift to sections of `I` because `F` is flasque, so the quotient vanishes; in higher degrees
 `Q` is again flasque, because `I` is, and induction applies. That `I` is flasque is the point at
-which `TauCeti/CategoryTheory/Sites/SheafCohomology/FreeYoneda.lean` enters: an inclusion of open
+which `TauCeti/CategoryTheory/Sites/FreeYoneda.lean` enters: an inclusion of open
 subsets induces a monomorphism of the free abelian sheaves they generate, and `Hom(-, I)` turns it
 into the restriction map of `I`.
 
@@ -59,14 +59,14 @@ are Mathlib's `Mathlib/Topology/Sheaves/Flasque.lean`, and the long exact sequen
 public section
 
 open CategoryTheory Limits Opposite TopologicalSpace
-open TauCeti.CategoryTheory (freeYonedaSheafFunctor freeYonedaSheafSectionsEquiv
-  freeYonedaSheafSectionsEquiv_naturality_left)
+open TauCeti.CategoryTheory.Sheaf (freeYonedaFunctor freeYonedaSectionsEquiv
+  freeYonedaSectionsEquiv_naturality_left freeYonedaSectionsEquiv_naturality_right)
 
 universe u
 
 namespace TauCeti
 
-namespace Topology
+namespace TopCat.Sheaf
 
 variable {X : TopCat.{u}}
 
@@ -81,88 +81,29 @@ instance isFlasque_of_injective
   epi {U V} i := by
     rw [AddCommGrpCat.epi_iff_surjective]
     intro s
-    refine ⟨freeYonedaSheafSectionsEquiv _ U.unop F
-      (Injective.factorThru ((freeYonedaSheafSectionsEquiv _ V.unop F).symm s)
-        ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).map i.unop)), ?_⟩
-    have h := freeYonedaSheafSectionsEquiv_naturality_left
+    refine ⟨freeYonedaSectionsEquiv _ U.unop F
+      (Injective.factorThru ((freeYonedaSectionsEquiv _ V.unop F).symm s)
+        ((freeYonedaFunctor (Opens.grothendieckTopology X)).map i.unop)), ?_⟩
+    have h := freeYonedaSectionsEquiv_naturality_left
       (Opens.grothendieckTopology X) i.unop F
-      (Injective.factorThru ((freeYonedaSheafSectionsEquiv _ V.unop F).symm s)
-        ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).map i.unop))
+      (Injective.factorThru ((freeYonedaSectionsEquiv _ V.unop F).symm s)
+        ((freeYonedaFunctor (Opens.grothendieckTopology X)).map i.unop))
     rw [Injective.comp_factorThru, AddEquiv.apply_symm_apply] at h
     exact h.symm
 
-/-- The private degree-zero identification for the source appearing definitionally in
-`Sheaf.H'`. Unlike `freeYonedaSheafSectionsEquiv`, this follows the separate free-abelian
-presheaf construction used by `Sheaf.cohomologyPresheafFunctor`. -/
-private noncomputable def cohomologySourceSectionsEquiv (U : Opens X)
+private instance isFlasque_injectiveCokernelSequence_X₂
     (F : Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}) :
-    ((presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
-      (yoneda.obj U ⋙ AddCommGrpCat.free) ⟶ F) ≃+ F.obj.obj (op U) :=
-  { ((sheafificationAdjunction (Opens.grothendieckTopology X) AddCommGrpCat.{u}).homEquiv
-      _ _).trans
-      (((Adjunction.whiskerRight (Opens X)ᵒᵖ AddCommGrpCat.adj.{u}).homEquiv _ _).trans
-        yonedaEquiv) with
-    map_add' := by
-      intro f g
-      dsimp
-      rw [(sheafificationAdjunction (Opens.grothendieckTopology X)
-        AddCommGrpCat.{u}).homAddEquiv_add]
-      rfl }
+    TopCat.Presheaf.IsFlasque (injectiveCokernelSequence F).X₂.obj :=
+  isFlasque_of_injective _
 
-private lemma cohomologySourceSectionsEquiv_apply (U : Opens X)
-    (F : Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u})
-    (f : (presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
-      (yoneda.obj U ⋙ AddCommGrpCat.free) ⟶ F) :
-    cohomologySourceSectionsEquiv U F f = yonedaEquiv
-      ((Adjunction.whiskerRight (Opens X)ᵒᵖ AddCommGrpCat.adj.{u}).homEquiv _ _
-        ((sheafificationAdjunction (Opens.grothendieckTopology X)
-          AddCommGrpCat.{u}).homEquiv _ _ f)) :=
-  (rfl)
-
-private lemma cohomologySourceSectionsEquiv_naturality_right (U : Opens X)
-    {F G : Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}}
-    (f : (presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
-      (yoneda.obj U ⋙ AddCommGrpCat.free) ⟶ F) (g : F ⟶ G) :
-    cohomologySourceSectionsEquiv U G (f ≫ g) =
-      g.hom.app (op U) (cohomologySourceSectionsEquiv U F f) := by
-  rw [cohomologySourceSectionsEquiv_apply, cohomologySourceSectionsEquiv_apply]
-  rw [Adjunction.homEquiv_naturality_right, Adjunction.homEquiv_naturality_right,
-    yonedaEquiv_comp]
-  rfl
-
-/-- The cokernel sequence of the chosen embedding of a sheaf into an injective sheaf. -/
-private noncomputable abbrev injectiveCokernelSequence
-    (F : Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}) :=
-  ShortComplex.cokernelSequence (Injective.ι F)
-
-/-- The chosen injective cokernel sequence is short exact. -/
-private lemma injectiveCokernelSequence_shortExact
-    (F : Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}) :
-    (injectiveCokernelSequence F).ShortExact := by
-  let _ : Mono (injectiveCokernelSequence F).f := by
-    dsimp [injectiveCokernelSequence, ShortComplex.cokernelSequence]
-    infer_instance
-  exact { exact := ShortComplex.cokernelSequence_exact _ }
-
-/-- The common dimension-shift step: it suffices that composition with the extension class of
-the chosen injective cokernel sequence vanishes. -/
-private lemma subsingleton_ext_succ_of_comp_extClass_eq_zero
-    (P F : Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}) (n : ℕ)
-    (hzero : ∀ x₃ : Abelian.Ext P (injectiveCokernelSequence F).X₃ n,
-      x₃.comp (injectiveCokernelSequence_shortExact F).extClass rfl = 0) :
-    Subsingleton (Abelian.Ext P F (n + 1)) := by
-  let S := injectiveCokernelSequence F
-  let _ : Mono S.f := by
-    dsimp [S, injectiveCokernelSequence, ShortComplex.cokernelSequence]
-    infer_instance
-  let _ : Injective S.X₂ := by
-    dsimp [S, injectiveCokernelSequence, ShortComplex.cokernelSequence]
-    infer_instance
-  let hS := injectiveCokernelSequence_shortExact F
-  refine subsingleton_of_forall_eq 0 fun y => ?_
-  obtain ⟨x₃, rfl⟩ := Abelian.Ext.covariant_sequence_exact₁ P hS y
-    (Abelian.Ext.eq_zero_of_injective _) rfl
-  exact hzero x₃
+-- Mathlib's `Sheaf.H'` is definitionally this `Ext` group. Naming the boundary once keeps the
+-- dimension-shifting proof independent of the implementation unfolding needed to expose it.
+private lemma subsingleton_H'_iff_ext
+    (F : Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}) (n : ℕ) (U : Opens X) :
+    Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} F n U) ↔
+      Subsingleton (Abelian.Ext.{u}
+        ((freeYonedaFunctor (Opens.grothendieckTopology X)).obj U) F n) :=
+  Iff.rfl
 
 /-- The dimension-shifting induction: a flasque sheaf has no cohomology in positive degrees over
 any open subset. -/
@@ -173,62 +114,43 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
   induction n with
   | zero =>
     intro F hF U
-    -- Mathlib's `Sheaf.H' F m U` is an `abbrev` for this `Ext` group, but reaching that form
-    -- requires unfolding `Sheaf.cohomologyPresheafFunctor`, an ordinary `def` for which Mathlib
-    -- exports no equation, so no `rw`/`simp` step performs the conversion; the only alternative
-    -- is a transport lemma restating Mathlib's own `abbrev`, which duplicates it. The long exact
-    -- sequence used below is stated directly for `Abelian.Ext`, so cross the boundary here, once.
-    change Subsingleton
-      (Abelian.Ext.{u}
-        ((presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
-          (yoneda.obj U ⋙ AddCommGrpCat.free)) F 1)
+    rw [subsingleton_H'_iff_ext]
     apply subsingleton_ext_succ_of_comp_extClass_eq_zero
     intro x₃
     let S := injectiveCokernelSequence F
-    let _ : TopCat.Presheaf.IsFlasque S.X₁.obj := by dsimp [S]; exact hF
-    let hS := injectiveCokernelSequence_shortExact F
-    have hepi : Epi (S.g.hom.app (op U)) := TopCat.Sheaf.IsFlasque.epi_of_shortExact hS
+    have hS₁ : TopCat.Presheaf.IsFlasque S.X₁.obj := by dsimp [S]; exact hF
+    have hS := injectiveCokernelSequence_shortExact F
+    have hepi : Epi (S.g.hom.app (op U)) :=
+      @TopCat.Sheaf.IsFlasque.epi_of_shortExact X U S hS hS₁
     rw [AddCommGrpCat.epi_iff_surjective] at hepi
     obtain ⟨t, ht⟩ := hepi
-      (cohomologySourceSectionsEquiv U S.X₃ (Abelian.Ext.addEquiv₀ x₃))
+      (freeYonedaSectionsEquiv _ U S.X₃ (Abelian.Ext.addEquiv₀ x₃))
     have hx₃ : x₃ =
-        (Abelian.Ext.mk₀ ((cohomologySourceSectionsEquiv U S.X₂).symm t)).comp
+        (Abelian.Ext.mk₀ ((freeYonedaSectionsEquiv _ U S.X₂).symm t)).comp
         (Abelian.Ext.mk₀ S.g) (add_zero 0) := by
       rw [Abelian.Ext.mk₀_comp_mk₀]
       refine (Abelian.Ext.mk₀_addEquiv₀_apply x₃).symm.trans (congrArg Abelian.Ext.mk₀ ?_)
-      refine (cohomologySourceSectionsEquiv U S.X₃).injective ?_
-      rw [cohomologySourceSectionsEquiv_naturality_right, AddEquiv.apply_symm_apply, ht]
+      refine (freeYonedaSectionsEquiv _ U S.X₃).injective ?_
+      rw [freeYonedaSectionsEquiv_naturality_right, AddEquiv.apply_symm_apply, ht]
     rw [hx₃, Abelian.Ext.comp_assoc_of_second_deg_zero, hS.comp_extClass,
       Abelian.Ext.comp_zero]
   | succ n ih =>
     intro F hF U
-    -- The same unfolding as in the base case, for the same reason; see the comment there.
-    change Subsingleton
-      (Abelian.Ext.{u}
-        ((presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
-          (yoneda.obj U ⋙ AddCommGrpCat.free)) F (n + 1 + 1))
+    rw [subsingleton_H'_iff_ext]
     apply subsingleton_ext_succ_of_comp_extClass_eq_zero
     intro x₃
     let S := injectiveCokernelSequence F
-    let _ : TopCat.Presheaf.IsFlasque S.X₁.obj := by dsimp [S]; exact hF
-    let _ : TopCat.Presheaf.IsFlasque S.X₂.obj := by
-      dsimp [S, injectiveCokernelSequence, ShortComplex.cokernelSequence]
-      infer_instance
-    let hS := injectiveCokernelSequence_shortExact F
-    let _ : TopCat.Presheaf.IsFlasque S.X₃.obj :=
-      TopCat.Sheaf.IsFlasque.of_shortExact_of_isFlasque₁₂ hS
-    let _ : Subsingleton
-        (_root_.CategoryTheory.Sheaf.H'.{u} S.X₃ (n + 1) U) :=
-      ih S.X₃ inferInstance U
-    let _ : Subsingleton
+    have hS₁ : TopCat.Presheaf.IsFlasque S.X₁.obj := by dsimp [S]; exact hF
+    have hS := injectiveCokernelSequence_shortExact F
+    have hS₃ : TopCat.Presheaf.IsFlasque S.X₃.obj :=
+      @TopCat.Sheaf.IsFlasque.of_shortExact_of_isFlasque₁₂ X S hS hS₁ (by infer_instance)
+    have hH : Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} S.X₃ (n + 1) U) :=
+      ih S.X₃ hS₃ U
+    have hExt : Subsingleton
         (Abelian.Ext.{u}
-          ((presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
-            (yoneda.obj U ⋙ AddCommGrpCat.free)) S.X₃ (n + 1)) := by
-      -- The same boundary in the other direction, and equally unavoidable: the induction
-      -- hypothesis is phrased in the public `Sheaf.H'` form, this goal in the `Ext` form.
-      change Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} S.X₃ (n + 1) U)
-      infer_instance
-    rw [Subsingleton.elim x₃ 0, Abelian.Ext.zero_comp]
+          ((freeYonedaFunctor (Opens.grothendieckTopology X)).obj U) S.X₃ (n + 1)) :=
+      (subsingleton_H'_iff_ext S.X₃ (n + 1) U).mp hH
+    rw [@Subsingleton.elim _ hExt x₃ 0, Abelian.Ext.zero_comp]
 
 /-- A flasque sheaf of abelian groups has vanishing cohomology in every positive degree over
 every open subset. -/
@@ -266,6 +188,6 @@ instance subsingleton_H_succ_skyscraperSheaf (p₀ : X) (A : AddCommGrpCat.{u})
 
 end
 
-end Topology
+end TopCat.Sheaf
 
 end TauCeti
