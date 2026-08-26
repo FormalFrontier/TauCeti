@@ -88,7 +88,8 @@ variable {α F : Type*} [MeasurableSpace α] [NormedAddCommGroup F]
 /-- An `Lᵖ` comparison estimate obtained by approximating two functions uniformly on a measurable
 set and controlling their tails off that set. This is the three-term-plus-tail estimate used in
 the Fréchet--Kolmogorov argument. -/
-theorem eLpNorm_sub_le_of_approxOn_of_tails {K : Set α} (hp : 1 ≤ p) (hp' : p ≠ ∞)
+theorem eLpNorm_sub_le_of_dist_bdd_of_eLpNorm_indicator_compl_le {K : Set α}
+    (hp : 1 ≤ p) (hp' : p ≠ ∞)
     (hK : MeasurableSet K) {f f' A A' : α → F} {a b : ℝ≥0∞} {η : ℝ}
     (hf : AEStronglyMeasurable f mu) (hf' : AEStronglyMeasurable f' mu)
     (hA : AEStronglyMeasurable A mu) (hA' : AEStronglyMeasurable A' mu)
@@ -168,8 +169,7 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
   have hgB : ∀ i : S, ∀ x : E,
       ballAverage mu r ⇑(i : Lp F p mu) x ∈ closedBall (0 : F) Bₑ.toReal := fun i x => by
     simpa only [Bₑ, V] using ballAverage_mem_closedBall_of_eLpNorm_le hp hp'
-      (fun j : S => Lp.aestronglyMeasurable (j : Lp F p mu)) hr hM
-      (fun j => hbdd _ j.2) i x
+      (Lp.aestronglyMeasurable (i : Lp F p mu)) hr hM (hbdd _ i.2) x
   -- The uniform equicontinuity of the ball averages, at the fixed scale `r`.
   have hequi : UniformEquicontinuous fun i : S => ballAverage mu r ⇑(i : Lp F p mu) :=
     uniformEquicontinuous_ballAverage hp hp' (fun i => Lp.memLp (i : Lp F p mu)) hr
@@ -202,18 +202,12 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
       (continuous_ballAverage hp hp' (Lp.memLp (i : Lp F p mu)) hr).comp continuous_subtype_val⟩
   let 𝒜 : Set (BoundedContinuousFunction K F) := Set.range φ
   have hφequi : Equicontinuous fun i : S => (φ i : K → F) := by
-    intro x U hU
-    filter_upwards [continuous_subtype_val.continuousAt.eventually
-      (hequi.equicontinuous (x : E) U hU)] with y hy
-    intro i
-    simpa only [φ, BoundedContinuousFunction.mkOfCompact_apply, ContinuousMap.coe_mk] using hy i
+    change Equicontinuous (K.domRestrict ∘
+      fun i : S => ballAverage mu r ⇑(i : Lp F p mu))
+    exact (equicontinuous_restrict_iff _).2 (hequi.equicontinuous.equicontinuousOn K)
   have hAequi : Equicontinuous ((↑) : 𝒜 → K → F) := by
-    intro x U hU
-    filter_upwards [hφequi x U hU] with y hy
-    intro a
-    obtain ⟨i, hi⟩ := a.2
-    rw [← hi]
-    exact hy i
+    rw [← Set.comp_rangeSplitting φ]
+    exact hφequi.comp (Set.rangeSplitting φ)
   have hAcompact : IsCompact (closure 𝒜) :=
     BoundedContinuousFunction.arzela_ascoli (closedBall (0 : F) Bₑ.toReal)
       (isCompact_closedBall _ _) 𝒜 (by
@@ -223,9 +217,12 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
           hgB i x) hAequi
   have hAtb : TotallyBounded 𝒜 := hAcompact.totallyBounded.subset subset_closure
   obtain ⟨t, htA, htfin, htcover⟩ := hAtb.exists_subset (dist_mem_uniformity hη)
+  -- Choose an original family index representing each member of the finite net `t`.
   let _ : Finite t := htfin.to_subtype
   choose idx hidx using fun q : t => htA q.2
+  -- The representatives of `t` give the required finite subset of the original family `S`.
   refine ⟨Subtype.val '' Set.range idx, Set.finite_range idx |>.image _, fun f hf => ?_⟩
+  -- Use the Arzelà--Ascoli cover to choose a net point close to the ball average of `f`.
   obtain ⟨q, hqt, hfq⟩ : ∃ q ∈ t, dist (φ ⟨f, hf⟩) q < η := by
     simpa only [mem_iUnion, mem_ofPred_eq, exists_prop] using
       htcover (Set.mem_range_self ⟨f, hf⟩)
@@ -234,6 +231,7 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
   have hφdist : dist (φ ⟨f, hf⟩) (φ j) < η := by
     rw [hidx q']
     exact hfq
+  -- Pull its representative index back to the finite subset of `S` constructed above.
   refine mem_iUnion₂.2 ⟨(j : Lp F p mu), ⟨j, ⟨q', rfl⟩, rfl⟩, ?_⟩
   set f' : Lp F p mu := (j : Lp F p mu)
   set A : E → F := ballAverage mu r ⇑f
@@ -258,8 +256,8 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
   have hmain : eLpNorm (⇑f - ⇑f') p mu ≤ ENNReal.ofReal (3 * ε / 4) := by
     calc eLpNorm (⇑f - ⇑f') p mu
         ≤ ε₁ + (ENNReal.ofReal η * W + ε₁) + (ε₁ + ε₁) := by
-          exact eLpNorm_sub_le_of_approxOn_of_tails hp hp' hmeasK hfm hf'm hAm hA'm hη.le
-            (hsmooth f hf) (hsmooth f' j.2) hmid (hRS f hf) (hRS f' j.2)
+          exact eLpNorm_sub_le_of_dist_bdd_of_eLpNorm_indicator_compl_le hp hp' hmeasK hfm hf'm
+            hAm hA'm hη.le (hsmooth f hf) (hsmooth f' j.2) hmid (hRS f hf) (hRS f' j.2)
       _ ≤ ENNReal.ofReal (ε / 8) + (ENNReal.ofReal (ε / 4) + ENNReal.ofReal (ε / 8)) +
             (ENNReal.ofReal (ε / 8) + ENNReal.ofReal (ε / 8)) := by
           gcongr
