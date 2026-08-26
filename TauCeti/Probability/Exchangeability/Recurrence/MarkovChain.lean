@@ -266,10 +266,12 @@ private theorem excursionPrefix_eq_ofFn_iff (x : ℕ → α) (a₀ : α) {m : �
   rw [List.ext_getElem_iff]
   simp [excursionPrefix_def, Fin.forall_iff]
 
-/-- **The finite-dimensional laws of the excursion process are products.** The first `m` excursions
-of the chain are independent, each with law `TauCeti.Probability.excursionLaw`. -/
-theorem prefixLaw_excursionProcess_eq_pi
-    (hret : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ), {n | x n = a₀}.Infinite) (m : ℕ) :
+/-- **The finite-dimensional laws of the excursion process are products.** Once the chain almost
+surely makes its `m`-th return, its first `m` excursions are independent, each with law
+`TauCeti.Probability.excursionLaw`. -/
+theorem prefixLaw_excursionProcess_eq_pi (m : ℕ)
+    (hvisit : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ),
+      ∃ n, x n = a₀ ∧ visitCount x a₀ n = m) :
     prefixLaw (markovChainLaw (Measure.dirac a₀) κ)
         (excursionProcess (fun n (x : ℕ → α) => x n) a₀) m
       = Measure.pi fun _ : Fin m => excursionLaw κ a₀ := by
@@ -283,20 +285,19 @@ theorem prefixLaw_excursionProcess_eq_pi
     ext x
     simp [funext_iff]
   rw [hset]
-  -- Infinitely many returns realise every visit count, in particular the ones prescribed here.
-  have hvisit : ∀ j : ℕ, ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ),
-      ∃ n, x n = a₀ ∧ visitCount x a₀ n = j :=
-    fun j => hret.mono fun x hx => exists_visitCount_of_infinite hx j
   by_cases havoid : ∀ i : Fin m, a₀ ∉ w i
   · have hpref : {x : ℕ → α | ∀ i : Fin m, excursion x a₀ i.val = w i}
         = {x : ℕ → α | excursionPrefix x a₀ (List.ofFn w).length = List.ofFn w} := by
       ext x
       simp only [Set.mem_ofPred_eq, List.length_ofFn]
       exact (excursionPrefix_eq_ofFn_iff x a₀ w).symm
-    rw [hpref, markovChainLaw_apply_setOf_excursionPrefix_eq (hvisit _)
+    rw [hpref, markovChainLaw_apply_setOf_excursionPrefix_eq (by simpa using hvisit)
       (by simpa using fun i => havoid i), List.map_ofFn, List.prod_ofFn]
     exact Finset.prod_congr rfl fun i _ =>
-      (excursionLaw_apply_singleton (hvisit 1) (havoid i)).symm
+      (excursionLaw_apply_singleton
+        (hvisit.mono fun x hx => exists_visitCount_of_le hx
+          (Nat.succ_le_iff.2 (Nat.lt_of_le_of_lt (Nat.zero_le i.val) i.isLt)))
+        (havoid i)).symm
   · obtain ⟨i₀, hi₀⟩ := not_forall.1 havoid
     have hi₀ : a₀ ∈ w i₀ := not_not.1 hi₀
     have hempty : {x : ℕ → α | ∀ i : Fin m, excursion x a₀ i.val = w i} = ∅ := by
@@ -308,15 +309,18 @@ theorem prefixLaw_excursionProcess_eq_pi
     exact (Finset.prod_eq_zero (Finset.mem_univ i₀)
       (excursionLaw_apply_singleton_of_mem hi₀)).symm
 
-/-- **The excursion process gives boxes their product mass.** -/
-theorem pathLaw_excursionProcess_apply_pi
-    (hret : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ), {n | x n = a₀}.Infinite)
-    (s : Finset ℕ) (t : ℕ → Set (List α)) :
+/-- **The excursion process gives finite boxes their product mass.** It is enough that the chain
+almost surely makes all returns needed by the coordinates in the box. -/
+theorem pathLaw_excursionProcess_apply_pi (s : Finset ℕ) (t : ℕ → Set (List α))
+    (hvisit : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ),
+      ∃ n, x n = a₀ ∧ visitCount x a₀ n = s.sup fun i => i + 1) :
     pathLaw (markovChainLaw (Measure.dirac a₀) κ)
         (excursionProcess (fun n (x : ℕ → α) => x n) a₀) (Set.pi ↑s t)
       = ∏ i ∈ s, excursionLaw κ a₀ (t i) := by
   classical
-  obtain ⟨m, hm⟩ := s.exists_nat_subset_range
+  let m := s.sup fun i => i + 1
+  have hm : s ⊆ Finset.range m := fun i hi =>
+    Finset.mem_range.2 ((Nat.lt_succ_self i).trans_le (Finset.le_sup hi))
   have hX := aemeasurable_excursionProcess_pi (markovChainLaw (Measure.dirac a₀) κ) a₀
   have hbox : (Set.pi ↑s t : Set (ℕ → List α))
       = prefixProj (List α) m ⁻¹'
@@ -332,7 +336,8 @@ theorem pathLaw_excursionProcess_apply_pi
       simpa [hi] using h ⟨i, Finset.mem_range.1 (hm hi)⟩
   rw [hbox, ← Measure.map_apply (measurable_prefixProj m)
       (MeasurableSet.univ_pi fun _ => MeasurableSet.of_discrete),
-    map_prefixProj_pathLaw _ hX, prefixLaw_excursionProcess_eq_pi hret, Measure.pi_pi]
+    map_prefixProj_pathLaw _ hX, prefixLaw_excursionProcess_eq_pi m (by simpa [m] using hvisit),
+    Measure.pi_pi]
   rw [Fin.prod_univ_eq_prod_range
     (fun i => excursionLaw κ a₀ (if i ∈ s then t i else Set.univ)) m]
   simp only [apply_ite (excursionLaw κ a₀), measure_univ]
@@ -344,23 +349,29 @@ theorem pathLaw_excursionProcess_eq_infinitePi
     pathLaw (markovChainLaw (Measure.dirac a₀) κ)
         (excursionProcess (fun n (x : ℕ → α) => x n) a₀)
       = Measure.infinitePi fun _ : ℕ => excursionLaw κ a₀ :=
-  Measure.eq_infinitePi _ fun s t _ => pathLaw_excursionProcess_apply_pi hret s t
+  Measure.eq_infinitePi _ fun s t _ =>
+    pathLaw_excursionProcess_apply_pi s t
+      (hret.mono fun _ hx => exists_visitCount_of_infinite hx (s.sup fun i => i + 1))
 
-/-- **Every excursion of the chain has the excursion law.** -/
-theorem map_excursionProcess_eq_excursionLaw
-    (hret : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ), {n | x n = a₀}.Infinite) (k : ℕ) :
+/-- **Every realized excursion of the chain has the excursion law.** For coordinate `k`, it is
+enough that the chain almost surely makes its `(k + 1)`-st return. -/
+theorem map_excursionProcess_eq_excursionLaw (k : ℕ)
+    (hvisit : ∀ᵐ x ∂(markovChainLaw (Measure.dirac a₀) κ),
+      ∃ n, x n = a₀ ∧ visitCount x a₀ n = k + 1) :
     (markovChainLaw (Measure.dirac a₀) κ).map
         (excursionProcess (fun n (x : ℕ → α) => x n) a₀ k) = excursionLaw κ a₀ := by
-  have hcoord : ((fun y : ℕ → List α => y k) ∘
-      fun (x : ℕ → α) (j : ℕ) => excursionProcess (fun n (y : ℕ → α) => y n) a₀ j x)
+  let i : Fin (k + 1) := ⟨k, Nat.lt_succ_self k⟩
+  have hcoord : ((fun y : Fin (k + 1) → List α => y i) ∘
+      fun (x : ℕ → α) (j : Fin (k + 1)) =>
+        excursionProcess (fun n (y : ℕ → α) => y n) a₀ j.val x)
       = excursionProcess (fun n (x : ℕ → α) => x n) a₀ k := rfl
-  have h := congrArg (fun ν : Measure (ℕ → List α) => ν.map fun y => y k)
-    (pathLaw_excursionProcess_eq_infinitePi hret)
-  rw [pathLaw_def,
-    (measurable_pi_apply k).aemeasurable.map_map_of_aemeasurable
-      (aemeasurable_excursionProcess_pi (markovChainLaw (Measure.dirac a₀) κ) a₀),
-    hcoord, Measure.infinitePi_map_eval] at h
-  exact h
+  have h := congrArg (fun ν : Measure (Fin (k + 1) → List α) => ν.map fun y => y i)
+    (prefixLaw_excursionProcess_eq_pi (k + 1) hvisit)
+  rw [prefixLaw_def, blockLaw_def,
+    (measurable_pi_apply i).aemeasurable.map_map_of_aemeasurable
+      (aemeasurable_pi_lambda _ fun j => aemeasurable_excursionProcess_eval _ a₀ j.val),
+    hcoord, Measure.pi_map_eval] at h
+  simpa using h
 
 /-- **The excursions of the chain are independent.** -/
 theorem iIndepFun_excursionProcess
@@ -370,7 +381,8 @@ theorem iIndepFun_excursionProcess
   have hX := aemeasurable_excursionProcess_pi (markovChainLaw (Measure.dirac a₀) κ) a₀
   have hlaw : (fun k => (markovChainLaw (Measure.dirac a₀) κ).map
       (excursionProcess (fun n (x : ℕ → α) => x n) a₀ k)) = fun _ : ℕ => excursionLaw κ a₀ :=
-    funext fun k => map_excursionProcess_eq_excursionLaw hret k
+    funext fun k => map_excursionProcess_eq_excursionLaw k
+      (hret.mono fun _ hx => exists_visitCount_of_infinite hx (k + 1))
   rw [iIndepFun_iff_map_fun_eq_infinitePi_map₀ hX, hlaw, ← pathLaw_def]
   exact pathLaw_excursionProcess_eq_infinitePi hret
 
@@ -383,7 +395,8 @@ theorem conditionallyIIDWith_excursionProcess
       (excursionProcess (fun n (x : ℕ → α) => x n) a₀)
       (fun _ => ⟨excursionLaw κ a₀, isProbabilityMeasure_excursionLaw⟩) :=
   conditionallyIIDWith_const_iff_iIndepFun_and_map_eq.2
-    ⟨iIndepFun_excursionProcess hret, fun k => map_excursionProcess_eq_excursionLaw hret k⟩
+    ⟨iIndepFun_excursionProcess hret, fun k => map_excursionProcess_eq_excursionLaw k
+      (hret.mono fun _ hx => exists_visitCount_of_infinite hx (k + 1))⟩
 
 /-- **A recurrent Markov chain is the concatenation of i.i.d. excursions.** Drawing excursions
 independently from the excursion law and concatenating them reproduces the chain: the chain is
