@@ -75,7 +75,10 @@ different total mass — get the value `∞` with no case split, and `TauCeti.wa
 
 The exponent is unrestricted in the definition. Only `1 ≤ p` makes the triangle inequality true,
 and `TauCeti.wassersteinEDist_exponent_zero` records that the value collapses to `0` at `p = 0`
-whenever the two measures are coupled at all; every theorem that needs `p ≠ 0` says so.
+whenever the two measures are coupled at all. A theorem carries `p ≠ 0` exactly when it needs it:
+the two-Dirac value, the transport-cost bridge, attainment and separation do, while the
+order-theoretic API, the vanishing on the diagonal, symmetry, the one-sided Dirac identities and
+`TauCeti.wassersteinEDist_mono_exponent` — monotonicity holds already from `p = 0` — do not.
 
 The measures are raw `MeasureTheory.Measure`s, not bundled probability measures. The theorems that
 genuinely need normalisation — monotonicity in the exponent, the Dirac identities, attainment —
