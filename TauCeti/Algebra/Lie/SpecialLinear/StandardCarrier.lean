@@ -14,6 +14,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
 public import TauCeti.LinearAlgebra.Eigenspace.Binomial
 public import TauCeti.RingTheory.Binomial
+import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
 import TauCeti.CategoryTheory.Comma.Over
 
 /-!
@@ -235,20 +236,6 @@ private theorem diagSingle_mulVec (a k : Fin (r + 1)) :
   · subst h; simp
   · simp [h, Ne.symm h]
 
-/-- The commutator of a difference of two diagonal matrix units with a matrix unit is the
-corresponding Kronecker multiple of that matrix unit. -/
-private theorem commutator_diagSingleSub_single (a b c d : Fin (r + 1)) :
-    (Matrix.single a a (1 : ℚ) - Matrix.single b b 1) * Matrix.single c d 1 -
-        Matrix.single c d 1 * (Matrix.single a a (1 : ℚ) - Matrix.single b b 1) =
-      (((if a = c then (1 : ℚ) else 0) - (if b = c then 1 else 0)) -
-          ((if d = a then (1 : ℚ) else 0) - (if d = b then 1 else 0))) •
-        Matrix.single c d 1 := by
-  ext x y
-  simp only [Matrix.sub_apply, Matrix.mul_apply, Matrix.single_apply, Matrix.smul_apply,
-    smul_eq_mul, ite_and, sub_mul, mul_sub, mul_ite, mul_zero, mul_one, Finset.sum_ite_eq,
-    Finset.mem_univ, ite_true]
-  split_ifs <;> simp_all
-
 /-- Every standard coordinate vector is a Cartan weight vector, of the weight recorded by
 `TauCeti.SlStd.weight`. -/
 theorem isCartanWeightVector_single (k : Fin (r + 1)) :
@@ -291,9 +278,14 @@ theorem lie_cartanGenerator_rootGenerator (k : Fin r ⊕ Fin r) (j : Fin r) :
         Matrix.single (rootTarget r k) (rootSource r k) (1 : ℚ) := by
     rw [← val_rootGenerator]
     rfl
-  rw [sl_bracket, hcoe, val_cartanGenerator, val_rootGenerator,
-    commutator_diagSingleSub_single, ← cartanCoeff r k j]
-  simp only [Int.cast_sub, apply_ite (fun z : ℤ => (z : ℚ)), Int.cast_one, Int.cast_zero]
+  rw [hcoe]
+  change ⁅(cartanGenerator r j).1, (rootGenerator r k).1⁆ = _
+  rw [val_cartanGenerator, val_rootGenerator,
+    lie_single_of_mem_diagonalCartan
+      (sub_mem (single_self_mem_diagonalCartan j.castSucc 1)
+        (single_self_mem_diagonalCartan j.succ 1)), ← cartanCoeff r k j]
+  simp only [Matrix.sub_apply, Matrix.single_apply, and_self, Int.cast_sub,
+    apply_ite (fun z : ℤ => (z : ℚ)), Int.cast_one, Int.cast_zero, eq_comm]
 
 /-! ## The standard admissible lattice -/
 
