@@ -85,6 +85,7 @@ theorem isConnected_map (A : C) [PreGaloisCategory.IsConnected A] :
 
 /-- **Connectedness transports along an equivalence of categories**: for an equivalence
 `F : C ⥤ D`, an object `A` of `C` is connected exactly when `F.obj A` is. -/
+@[simp]
 theorem isConnected_map_iff (A : C) :
     PreGaloisCategory.IsConnected (F.obj A) ↔ PreGaloisCategory.IsConnected A := by
   refine ⟨fun h => ?_, fun _ => isConnected_map F A⟩

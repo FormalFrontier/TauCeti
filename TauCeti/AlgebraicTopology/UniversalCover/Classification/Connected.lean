@@ -25,23 +25,21 @@ on the other side of `TauCeti.CoveringSpace.fiberActionEquivalence`, where it sa
 monodromy action on the fibre over `x₀` is transitive and nonempty
 (`TauCeti.isConnected_action_iff_isTransitiveAction`). That in turn is the condition already known
 to characterise connected covers: transitivity of monodromy is
-`TauCeti.ConnectedCoveringSpace.isTransitiveAction_fiberAction`, and conversely a cover realising a
-transitive action is isomorphic to a connected one by
-`TauCeti.ConnectedCoveringSpace.exists_fiberAction_iso`, hence has homeomorphic total space.
+`TauCeti.ConnectedCoveringSpace.isTransitiveAction_fiberAction`, and conversely a cover with
+transitive monodromy has path-connected total space, because path lifting joins every point of the
+total space to a point of the fibre over `x₀` and monodromy joins any two points of that fibre.
+That converse needs no hypothesis on `X` beyond path connectedness, so the dictionary between
+transitive monodromy and a connected total space is established before the classification is
+invoked; only the passage to the categorical statement uses the full standing hypotheses.
 
-The only topology used is path lifting, through `TauCeti.CoveringSpace.nonempty_fiber`: the
-initial objects of `TauCeti.CoveringSpace X` are the covers with empty total space, and to read
-that off the fibre over `x₀` one needs a nonempty cover to have a nonempty fibre. Everything else
-is the transport of a categorical condition along an already-established equivalence. The
-statement is what lets the Galois-theoretic vocabulary — connected objects, and the Galois
-correspondence phrased through them — be used on covering spaces.
+The initial objects of `TauCeti.CoveringSpace X` play no special role here: they are the covers
+with empty total space over any base, which is
+`TauCeti.CoveringSpace.isInitial_iff_isEmpty` in the general covering-space API.
 
 ## Main declarations
 
 * `TauCeti.CoveringSpace.isTransitiveAction_fiberAction_iff_connectedSpace`: the monodromy action
   on the fibre over `x₀` is transitive exactly when the total space is connected.
-* `TauCeti.CoveringSpace.isInitial_iff_isEmpty`: a covering space is an initial object exactly
-  when its total space is empty.
 * `TauCeti.CoveringSpace.isConnected_iff_connectedSpace`: **a covering space of `X` is a connected
   object of `TauCeti.CoveringSpace X` exactly when its total space is a connected space.**
 * `TauCeti.ConnectedCoveringSpace.isConnected_forget_obj`: a connected covering space is a
@@ -65,43 +63,47 @@ universe u
 namespace TauCeti.CoveringSpace
 
 variable {X : TopCat.{u}} (x₀ : X) [PathConnectedSpace X] [LocallyPathConnectedSpace X]
-  [SemilocallySimplyConnectedSpace X]
 
 /-- The monodromy action of `π₁(X, x₀)` on the fibre of a covering space over `x₀` is transitive
-exactly when the total space of that cover is connected. -/
+exactly when the total space of that cover is connected.
+
+This is deliberately not `@[simp]`: `TauCeti.isTransitiveAction_iff` is already a simp lemma, so
+the left-hand side is not in simp normal form and `simpNF` rejects the attribute. -/
 theorem isTransitiveAction_fiberAction_iff_connectedSpace (p : CoveringSpace X) :
     isTransitiveAction (FundamentalGroup X x₀) ((fiberActionFunctor x₀).obj p) ↔
       ConnectedSpace (p : TopCat) := by
   constructor
   · intro h
-    obtain ⟨q, ⟨e⟩⟩ :=
-      ConnectedCoveringSpace.exists_fiberAction_iso x₀ ((fiberActionFunctor x₀).obj p) h
-    have hq : ConnectedSpace ((totalSpace X).obj ((ConnectedCoveringSpace.forget X).obj q)) :=
-      q.property.2
-    exact (TopCat.homeoOfIso
-      ((totalSpace X).mapIso ((fiberActionFunctor x₀).preimageIso e))).connectedSpace_iff.mp hq
+    obtain ⟨htrans, ⟨e₀⟩⟩ := (isTransitiveAction_iff _).mp h
+    have hjoin {a b : (p : TopCat)} (q : Path.Homotopic.Quotient a b) : Joined a b := by
+      induction q using Path.Homotopic.Quotient.ind with
+      | mk γ => exact ⟨γ⟩
+    -- Path lifting joins every point of the total space to a point of the fibre over `x₀`.
+    have key (e : (p : TopCat)) : ∃ f : ⇑p.proj ⁻¹' {x₀}, Joined e (f : (p : TopCat)) :=
+      ⟨_, hjoin (p.isCoveringMap_proj.liftPathQuotient
+        (Path.Homotopic.Quotient.mk (PathConnectedSpace.somePath (p.proj e) x₀)) ⟨e, rfl⟩)⟩
+    -- Transitivity of the monodromy action joins any two points of that fibre.
+    have hfib (f f' : ⇑p.proj ⁻¹' {x₀}) : Joined (f : (p : TopCat)) (f' : (p : TopCat)) := by
+      obtain ⟨g, hg⟩ := htrans.exists_smul_eq f f'
+      have hg' : (p.isCoveringMap_proj.monodromy g.toPath f : (p : TopCat)) = f' :=
+        congrArg Subtype.val hg
+      have := hjoin (p.isCoveringMap_proj.liftPathQuotient g.toPath f)
+      rwa [hg'] at this
+    have : PathConnectedSpace (p : TopCat) := by
+      refine ⟨⟨(e₀ : ⇑p.proj ⁻¹' {x₀}).1⟩, fun a b => ?_⟩
+      obtain ⟨f, hf⟩ := key a
+      obtain ⟨f', hf'⟩ := key b
+      exact (hf.trans (hfib f f')).trans hf'.symm
+    infer_instance
   · intro h
     exact ConnectedCoveringSpace.isTransitiveAction_fiberAction x₀
       (⟨p.obj, ⟨p.property, h⟩⟩ : ConnectedCoveringSpace X)
 
-/-- **A covering space of `X` is an initial object of `TauCeti.CoveringSpace X` exactly when its
-total space is empty.** The empty cover is therefore the initial object, and a cover is
-"non-initial" in the sense of the definition of a connected object exactly when it is nonempty. -/
-theorem isInitial_iff_isEmpty (p : CoveringSpace X) :
-    Nonempty (IsInitial p) ↔ IsEmpty (p : TopCat) := by
-  obtain ⟨x₀⟩ := PathConnectedSpace.nonempty (X := (X : Type u))
-  constructor
-  · rintro ⟨h⟩
-    have hf : IsEmpty (ToType ((fiberActionFunctor x₀).obj p)) :=
-      isEmpty_of_isInitial_action (h.isInitialObj (fiberActionFunctor x₀) p)
-    by_contra hne
-    exact hf.elim (nonempty_fiber p (not_isEmpty_iff.mp hne) x₀).some
-  · intro h
-    exact ⟨(isInitialActionOfIsEmpty (A := (fiberActionFunctor x₀).obj p)
-      ⟨fun a => h.elim a.1⟩).isInitialOfObj (fiberActionFunctor x₀) p⟩
+variable [SemilocallySimplyConnectedSpace X]
 
 /-- **A covering space of `X` is a connected object of `TauCeti.CoveringSpace X` exactly when its
 total space is a connected space.** -/
+@[simp]
 theorem isConnected_iff_connectedSpace (p : CoveringSpace X) :
     PreGaloisCategory.IsConnected p ↔ ConnectedSpace (p : TopCat) := by
   obtain ⟨x₀⟩ := PathConnectedSpace.nonempty (X := (X : Type u))
