@@ -46,7 +46,7 @@ identity, so a degree-`0` graded coderivation is exactly an ungraded coderivatio
 ## Main results
 
 * `TauCeti.ReducedTensorWords.isGradedCoderivation_gradedCoderiv`,
-  `TauCeti.ReducedTensorWords.letter_comp_gradedCoderiv`: `gradedCoderiv G q F` is a degree-`q`
+  `TauCeti.ReducedTensorWords.letter_comp_gradedCoderiv`: `gradedCoderiv G F q` is a degree-`q`
   graded coderivation with letter component `F`.
 * `TauCeti.ReducedTensorWords.IsGradedCoderivation.eq_of_letter_comp_eq`: a graded coderivation is
   determined by its letter component.
@@ -770,6 +770,7 @@ noncomputable def ReducedTensorWords.gradedCoderivations (G : InternalGrading R 
     Submodule R (ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) where
   carrier := {b | IsGradedCoderivation G q b}
   add_mem' {b₁ b₂} hb₁ hb₂ := by
+    -- membership in the carrier unfolds to the predicate, which the iff then exposes
     change IsGradedCoderivation G q (b₁ + b₂)
     rw [isGradedCoderivation_iff]
     refine LinearMap.ext fun z => ?_
@@ -821,6 +822,7 @@ noncomputable def ReducedTensorWords.gradedCoderivEquivTaylor (G : InternalGradi
   map_add' b₁ b₂ := LinearMap.comp_add _ _ _
   map_smul' r b := LinearMap.comp_smul _ _ _
 
+/-- The graded coderivation/Taylor equivalence sends a coderivation to its letter component. -/
 @[simp]
 theorem ReducedTensorWords.gradedCoderivEquivTaylor_apply (G : InternalGrading R M) (q : ℤ)
     (b : gradedCoderivations G q) :
@@ -828,6 +830,7 @@ theorem ReducedTensorWords.gradedCoderivEquivTaylor_apply (G : InternalGrading R
       letter R M ∘ₗ (b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) :=
   by rfl
 
+/-- The inverse of the graded coderivation/Taylor equivalence is the graded Taylor expansion. -/
 @[simp]
 theorem ReducedTensorWords.gradedCoderivEquivTaylor_symm_apply (G : InternalGrading R M) (q : ℤ)
     (F : ReducedTensorWords R M →ₗ[R] M) :
