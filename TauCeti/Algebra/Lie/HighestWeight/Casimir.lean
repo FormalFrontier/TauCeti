@@ -435,14 +435,8 @@ theorem casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top
   have hker : ∀ w : M, f w = 0 ↔
       UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) w = c • w := fun w ↦ by
     simp [hf, sub_eq_zero]
-  have hcentral : ∀ (x : L) (w : M), f ⁅x, w⁆ = ⁅x, f w⁆ := by
-    intro x w
-    have h := congrArg (UniversalEnvelopingAlgebra.representation K L M)
-      (ι_mul_casimirElement (K := K) (L := L) x)
-    rw [map_mul, map_mul, UniversalEnvelopingAlgebra.representation_ι] at h
-    have h₁ := congrArg (fun g : Module.End K M ↦ g w) h
-    simp only [Module.End.mul_apply, LieModule.toEnd_apply_apply] at h₁
-    simp [hf, h₁]
+  have hcentral : ∀ (x : L) (w : M), f ⁅x, w⁆ = ⁅x, f w⁆ := fun x w ↦ by
+    simp [hf, representation_casimirElement_lie x w]
   set N : LieSubmodule K L M :=
     { __ := LinearMap.ker f
       lie_mem := fun {x w} hw ↦ by

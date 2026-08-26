@@ -50,6 +50,12 @@ jobs:
   # `build` commit STATUS posted in the final step, not this job's auto-created check-run.
   sandboxed-build:
     runs-on: ubuntu-24.04
+    outputs:
+      status-sha: ${{ steps.pr.outputs.status_sha }}
+      build-state: ${{ steps.report.outputs.build-state }}
+      build-description: ${{ steps.report.outputs.build-description }}
+      publication-required: ${{ steps.report.outputs.publication-required }}
+      reported-toolchain: ${{ steps.cache_stage.outputs.toolchain }}
     env:
       LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71
       LANDRUN_VER: v0.1.14
@@ -61,6 +67,9 @@ jobs:
       LAKE_ARTIFACT_CACHE: ""
       LAKE_RESTORE_ARTIFACTS: ""
       LAKE_CACHE_DIR: ""
+      # Enabled only for a merge-group commit when the upload service is configured. The
+      # sandbox then stages the fully audited root-package outputs for the isolated publisher.
+      STAGE_LAKE_CACHE: ""
     steps:
       # --- Trusted setup: no PR code runs until the landrun build phase ---
       - name: Resolve PR head
@@ -553,8 +562,8 @@ jobs:
           fi
 
       # Restore only Mathlib's compressed, content-addressed `.ltar` download store from a
-      # trusted main publisher. This workflow is restore-only: neither fork PRs nor merge-group
-      # candidates can publish cache contents. For a validated pin bump the expressions hash the
+      # trusted main publisher. This workflow never writes that GitHub Actions cache. For a
+      # validated pin bump the expressions hash the
       # already-overlaid files under base/, so an exact new-pin snapshot is preferred. A
       # Mathlib-only bump can fall back to the newest same-toolchain main snapshot; a toolchain
       # bump misses both keys and refetches from Mathlib's server. `lake exe cache get` below
@@ -638,6 +647,8 @@ jobs:
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+          S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
+          S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
         run: |
           if [ -n "$PUBLIC_ARTIFACT_ENDPOINT" ] && [ -n "$PUBLIC_REVISION_ENDPOINT" ]; then
             {
@@ -649,6 +660,17 @@ jobs:
             echo "::notice::Lake artifact cache enabled — will fetch TauCeti's oleans and build incrementally"
           else
             echo "::notice::Lake artifact cache not configured — building TauCeti/ from scratch (set the LAKE_CACHE_*_PUBLIC repo variables to enable)"
+          fi
+          # A merge-group head is the commit GitHub will land. Stage its outputs after every
+          # sandboxed audit so the required build can wait for publication. A changed lakefile
+          # is deliberately excluded at this layer: this workflow still builds against trusted
+          # base config until the exact-head change lands, so its outputs would not describe the
+          # candidate revision's configuration.
+          if [ "${{ github.event_name }}" = "merge_group" ] \
+             && [ "${HUMAN_LAKEFILE:-}" != "1" ] \
+             && [ -n "$S3_ARTIFACT_ENDPOINT" ] && [ -n "$S3_REVISION_ENDPOINT" ]; then
+            echo "STAGE_LAKE_CACHE=1" >> "$GITHUB_ENV"
+            echo "::notice::merge-group outputs will be staged for pre-landing publication"
           fi
 
       # Restore TauCeti's own root-package oleans from the public Lake cache. The fetch logic
@@ -696,10 +718,35 @@ jobs:
             --rox "$PWD/base" --rw "$PWD/base/.lake" \
             --env PATH --env HOME --env CI \
             --env LAKE_NO_CACHE --env LAKE_ARTIFACT_CACHE --env LAKE_RESTORE_ARTIFACTS --env LAKE_CACHE_DIR \
-            --env WATCHDOG_TOOLCHAIN \
+            --env WATCHDOG_TOOLCHAIN --env STAGE_LAKE_CACHE \
             -- bash -euxo pipefail -c 'cd base && exec bash scripts/sandbox-build.sh'
 
+      - name: Prepare merge-group cache artifact metadata
+        id: cache_stage
+        if: ${{ github.event_name == 'merge_group' && env.STAGE_LAKE_CACHE == '1' && steps.build.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          test -s base/.lake/cache-staging/outputs.jsonl
+          TOOLCHAIN="$(cat base/lean-toolchain)"
+          case "$TOOLCHAIN" in
+            leanprover/lean4:[A-Za-z0-9]*) ;;
+            *) echo "::error::invalid toolchain pin '$TOOLCHAIN'"; exit 1 ;;
+          esac
+          printf 'toolchain=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
+          echo 'staged=true' >> "$GITHUB_OUTPUT"
+
+      - name: Hand the merge-group oleans to the isolated publisher
+        if: ${{ steps.cache_stage.outputs.staged == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lake-cache-staging-${{ steps.pr.outputs.status_sha }}
+          path: base/.lake/cache-staging
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
       - name: Report build and bump-guard statuses to the PR head commit
+        id: report
         if: always()
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
@@ -797,7 +844,20 @@ jobs:
           else
             state=failure; desc="sandboxed build, audit, or simp-NF lint failed"
           fi
-          post_status build "$state" "$desc"
+          {
+            echo "build-state=$state"
+            echo "build-description=$desc"
+            if [ "${{ github.event_name }}" = "merge_group" ] && [ "${STAGE_LAKE_CACHE:-}" = "1" ]; then
+              echo 'publication-required=true'
+            else
+              echo 'publication-required=false'
+            fi
+          } >> "$GITHUB_OUTPUT"
+          # PR heads are reported immediately. A merge-group head is reported by the finalizer
+          # job below, after its exact revision map has reached the public cache endpoint.
+          if [ "${{ github.event_name }}" != "merge_group" ]; then
+            post_status build "$state" "$desc"
+          fi
 
           # scope: the merge-policy verdict, posted as its OWN status so a policy issue never hides the
           # build result (the bug this split fixes — an out-of-scope PR used to post its "human review"
@@ -833,3 +893,70 @@ jobs:
             exit 1
           fi
           [ "$state" = "success" ]
+
+  # Only an already-audited merge-group commit may publish. The reusable workflow runs on a
+  # fresh runner, checks out only that commit's toolchain pin, and is the sole holder of the key.
+  publish-merge-group-cache:
+    needs: sandboxed-build
+    if: ${{ always() && needs.sandboxed-build.result == 'success' && needs.sandboxed-build.outputs.publication-required == 'true' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/publish-lake-cache.yml
+    with:
+      revision: ${{ needs.sandboxed-build.outputs.status-sha }}
+      artifact-name: lake-cache-staging-${{ needs.sandboxed-build.outputs.status-sha }}
+      reported-toolchain: ${{ needs.sandboxed-build.outputs.reported-toolchain }}
+      publication-required: true
+    secrets:
+      LAKE_CACHE_KEY: ${{ secrets.LAKE_CACHE_KEY }}
+
+  # The merge queue's required `build` status is posted only here. In a configured installation,
+  # green therefore means both that the combined commit passed every sandboxed audit and that a
+  # fresh checkout can fetch its exact output map from the public cache before GitHub lands it.
+  finalize-merge-group-build:
+    needs: [sandboxed-build, publish-merge-group-cache]
+    if: ${{ always() && github.event_name == 'merge_group' }}
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      STATUS_SHA: ${{ needs.sandboxed-build.outputs.status-sha }}
+      BUILD_JOB_RESULT: ${{ needs.sandboxed-build.result }}
+      BUILD_STATE: ${{ needs.sandboxed-build.outputs.build-state }}
+      BUILD_DESCRIPTION: ${{ needs.sandboxed-build.outputs.build-description }}
+      PUBLICATION_REQUIRED: ${{ needs.sandboxed-build.outputs.publication-required }}
+      PUBLISH_JOB_RESULT: ${{ needs.publish-merge-group-cache.result }}
+      PUBLISHED: ${{ needs.publish-merge-group-cache.outputs.published }}
+    steps:
+      - name: Post the terminal merge-group build status
+        run: |
+          set -uo pipefail
+          if [ "$BUILD_JOB_RESULT" != "success" ] || [ "$BUILD_STATE" != "success" ]; then
+            state=failure
+            description="${BUILD_DESCRIPTION:-sandboxed merge-group build did not complete}"
+          elif [ "$PUBLICATION_REQUIRED" = "true" ] \
+               && { [ "$PUBLISH_JOB_RESULT" != "success" ] || [ "$PUBLISHED" != "true" ]; }; then
+            state=failure
+            description="build passed, but its exact Lake cache was not published"
+          elif [ "$PUBLICATION_REQUIRED" = "true" ]; then
+            state=success
+            description="sandboxed build passed; exact revision cache is public"
+          else
+            state=success
+            description="sandboxed build passed (cache upload is not configured)"
+          fi
+
+          posted=0
+          for attempt in 1 2 3; do
+            if gh api -X POST "repos/${{ github.repository }}/statuses/$STATUS_SHA" \
+                 -f state="$state" -f context=build -f description="$description" \
+                 -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"; then
+              posted=1
+              break
+            fi
+            echo "::warning::posting the build status failed (attempt $attempt/3)"
+            [ "$attempt" = 3 ] || sleep $((attempt * 5))
+          done
+          [ "$posted" = 1 ] || { echo "::error::could not post the merge-group build status"; exit 1; }
+          [ "$state" = success ]
