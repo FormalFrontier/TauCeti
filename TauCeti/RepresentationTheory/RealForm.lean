@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Complex.Module
 public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RingTheory.Finiteness.Descent
+public import TauCeti.LinearAlgebra.Complex.Conjugation
 public import TauCeti.RepresentationTheory.InvariantForm.BaseChange
 
 /-!
@@ -38,16 +38,39 @@ consumes them -- `Representation.frobeniusSchurIndicator_eq_one_of_isRealizableO
 `TauCeti.RepresentationTheory.CharacterTable.FrobeniusSchur.RealForm` -- asks for a finite group
 only where it sums over the group.
 
+A real form is a statement about an auxiliary carrier `W`; the equivalent statement *inside* `V` is
+a **real structure**, a conjugation `K` of `V` -- a conjugate-linear involution -- commuting with
+the action.  Its real points `TauCeti.realPoints K` carry a real representation whose
+complexification is `ρ` (`Representation.IsRealStructure.isRealForm`), and conversely a real form
+transports the conjugation `c ⊗ₜ w ↦ conj c ⊗ₜ w` of `ℂ ⊗[ℝ] W` to `V`
+(`Representation.IsRealForm.exists_isRealStructure`).  So the two notions agree
+(`Representation.isRealizableOverReal_iff_exists_isRealStructure`).  This is the form in which
+realizability is *produced*: the route to it for an irreducible representation with
+Frobenius-Schur indicator `1` is to build the conjugation out of an invariant symmetric bilinear
+form and an invariant Hermitian inner product, and a real form on a carrier is not something one
+writes down directly.
+
 ## Main definitions
 
 * `Representation.IsRealForm`: `σ` is a real form of `ρ`.
 * `Representation.IsRealizableOverReal`: `ρ` admits a real form on a carrier pinned by the
   dimension of `V`.
+* `Representation.IsRealStructure`: `K` is a real structure on `ρ`, that is, a conjugation of `V`
+  commuting with the action.
+* `Representation.IsRealStructure.rep`: the real representation it induces on the real points.
 
 ## Main results
 
 * `Representation.isRealForm_iff_nonempty_equiv`: a real form is exactly an equivalence of
   representations from the complexification of `σ` to `ρ`.
+* `Representation.IsRealStructure.isRealForm`: **the real points of a real structure are a real
+  form**, and `Representation.IsRealForm.exists_isRealStructure` is the converse.
+* `Representation.IsRealStructure.isRealizableOverReal`: a real structure on a finite-dimensional
+  `ρ` realizes it over `ℝ` in the pinned sense.
+* `Representation.isRealizableOverReal_iff_exists_isRealStructure`: over a finite-dimensional `V`,
+  realizability over `ℝ` is exactly the existence of a real structure.
+* `Representation.IsRealStructure.finrank_realPoints`: the real points of a real structure have
+  `ℝ`-dimension `finrank ℂ V`.
 * `Representation.IsRealForm.char_eq`: the character of a representation with a real
   form is the character of that real form, in particular real-valued
   (`Representation.IsRealForm.conj_char`).
@@ -251,5 +274,106 @@ theorem IsRealForm.isRealizableOverReal [FiniteDimensional ℂ V] (h : IsRealFor
   simp only [MonoidHom.coe_mk, OneHom.coe_mk, LinearEquiv.trans_apply,
     LinearEquiv.baseChange_tmul, LinearEquiv.conj_apply_apply, LinearEquiv.symm_apply_apply]
   exact he g (f.symm x)
+
+/-! ### Real structures -/
+
+variable (ρ) in
+/-- A **real structure** on a complex representation: a conjugation of the underlying space -- a
+conjugate-linear involution `K` -- that commutes with the action.  This is the intrinsic form of
+`Representation.IsRealForm`, phrased inside `V` instead of on an auxiliary real carrier, and it is
+the form in which realizability over `ℝ` is produced.
+
+The conjugation is carried unbundled, matching `Representation.IsInvariantForm`; the two fields are
+exactly the data of a `TauCeti.Hodge.Conjugation` together with equivariance. -/
+structure IsRealStructure (K : V →ₛₗ[starRingEnd ℂ] V) : Prop where
+  /-- The conjugation is an involution. -/
+  involutive : Function.Involutive ⇑K
+  /-- The conjugation intertwines the action with itself. -/
+  isIntertwining (g : G) (v : V) : K (ρ g v) = ρ g (K v)
+
+namespace IsRealStructure
+
+variable {K : V →ₛₗ[starRingEnd ℂ] V} (h : IsRealStructure ρ K)
+
+include h
+
+/-- The action preserves the real points of a real structure: that is exactly the commutation
+`K (ρ g v) = ρ g (K v)` read on a fixed vector.  It is stated for the `ℝ`-linear restriction
+`(ρ g).restrictScalars ℝ` of the action, which is the shape `Representation.subrepresentation`
+consumes in `Representation.IsRealStructure.rep`. -/
+theorem apply_mem_realPoints (g : G) :
+    ∀ v ∈ realPoints K, ((ρ g).restrictScalars ℝ) v ∈ realPoints K := by
+  intro v hv
+  rw [mem_realPoints] at hv
+  rw [LinearMap.coe_restrictScalars, mem_realPoints, h.isIntertwining, hv]
+
+/-- **The real representation carried by the real points** of a real structure: reading `ρ` with
+only its `ℝ`-linearity, the real points are an invariant subspace, and
+`Representation.subrepresentation` restricts the action to them. -/
+def rep : Representation ℝ G (realPoints K) :=
+  Representation.subrepresentation
+    { toFun := fun g => (ρ g).restrictScalars ℝ
+      map_one' := LinearMap.ext fun _ => by simp
+      map_mul' := fun _ _ => LinearMap.ext fun _ => by simp }
+    (realPoints K) h.apply_mem_realPoints
+
+-- `(rfl)`, not `rfl`: the body of `rep` is not `@[expose]`d, so a bare `rfl` proof would be
+-- rechecked against the exported environment, where the restriction is opaque.
+@[simp]
+theorem coe_rep_apply (g : G) (w : realPoints K) : (h.rep g w : V) = ρ g (w : V) := (rfl)
+
+/-- **The real points of a real structure are a real form.**  The `ℂ`-linear isomorphism is
+`TauCeti.realPointsEquiv`, which says that `V` is the complexification of the real points, and it
+intertwines the two actions because `ρ g` acts on a real point by its restriction. -/
+theorem isRealForm : IsRealForm ρ h.rep :=
+  ⟨realPointsEquiv h.involutive, fun g w => by
+    rw [realPointsEquiv_tmul, realPointsEquiv_tmul, one_smul, one_smul, coe_rep_apply]⟩
+
+/-- **A real structure realizes `ρ` over `ℝ`** in the pinned sense, once `V` is
+finite-dimensional. -/
+theorem isRealizableOverReal [FiniteDimensional ℂ V] : IsRealizableOverReal ρ :=
+  h.isRealForm.isRealizableOverReal
+
+/-- The real points of a real structure have the `ℝ`-dimension that `V` has over `ℂ`; with
+Mathlib's `finrank_real_of_complex` this says they halve the real dimension of `V`.  Equivariance
+plays no part, so this is the conjugation-level `TauCeti.finrank_realPoints` read on a real
+structure. -/
+theorem finrank_realPoints : finrank ℝ (realPoints K) = finrank ℂ V :=
+  TauCeti.finrank_realPoints h.involutive
+
+end IsRealStructure
+
+/-- **A real form produces a real structure.**  Transport the conjugation `c ⊗ₜ w ↦ conj c ⊗ₜ w` of
+the complexification (`TauCeti.tmulConj`) along the isomorphism `ℂ ⊗[ℝ] W ≃ₗ[ℂ] V`.  It commutes
+with the action because the action on the complexification is `1 ⊗ σ g`, which leaves the first
+tensor factor -- the one being conjugated -- alone. -/
+theorem IsRealForm.exists_isRealStructure (h : IsRealForm ρ σ) :
+    ∃ K : V →ₛₗ[starRingEnd ℂ] V, IsRealStructure ρ K := by
+  obtain ⟨φ⟩ := isRealForm_iff_nonempty_equiv.mp h
+  set e : (ℂ ⊗[ℝ] W) ≃ₗ[ℂ] V := φ.toLinearEquiv with he
+  have hφ : ∀ (g : G) (u : ℂ ⊗[ℝ] W), e (baseChange ℂ σ g u) = ρ g (e u) := fun g u => by
+    simpa [he, Equiv.toLinearEquiv_apply] using φ.isIntertwining (g := g) (v := u)
+  -- The witness is a composition of semilinear maps; `LinearMap.comp` supplies its map laws.
+  refine ⟨e.toLinearMap ∘ₛₗ (tmulConj W ∘ₛₗ e.symm.toLinearMap), ?_, ?_⟩
+  · intro v
+    simp
+  · intro g v
+    have hu : tmulConj W (baseChange ℂ σ g (e.symm v))
+        = baseChange ℂ σ g (tmulConj W (e.symm v)) := by
+      rw [baseChange_apply]
+      exact tmulConj_baseChange (σ g) (e.symm v)
+    have hsymm : e.symm (ρ g v) = baseChange ℂ σ g (e.symm v) := by
+      rw [e.symm_apply_eq, hφ, e.apply_symm_apply]
+    simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe]
+    rw [hsymm, hu, hφ]
+
+/-- **Realizability over `ℝ` is the existence of a real structure.**  This is the working form of
+realizability: the two implications are `Representation.IsRealStructure.isRealizableOverReal` and
+`Representation.IsRealForm.exists_isRealStructure` applied to a real form on the pinned carrier. -/
+theorem isRealizableOverReal_iff_exists_isRealStructure [FiniteDimensional ℂ V] :
+    IsRealizableOverReal ρ ↔ ∃ K : V →ₛₗ[starRingEnd ℂ] V, IsRealStructure ρ K := by
+  refine ⟨fun h => ?_, fun ⟨_, hK⟩ => hK.isRealizableOverReal⟩
+  obtain ⟨_, hσ⟩ := h
+  exact hσ.exists_isRealStructure
 
 end Representation

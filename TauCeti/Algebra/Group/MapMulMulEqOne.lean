@@ -53,7 +53,10 @@ def MonoidHom.ofMapMulMulEqOne {f : G → H} (hf₁ : f 1 = 1)
     rw [eq_mul_inv_iff_mul_eq, eq_comm, ← inv_mul_eq_one, ← mul_assoc, ← this]
     exact hf _ _ _ <| by group
 
-@[to_additive (attr := simp)]
+/-- The homomorphism built by `MonoidHom.ofMapMulMulEqOne` has the original map as its
+underlying function. -/
+@[to_additive (attr := simp) /-- The homomorphism built by the additive constructor has the
+original map as its underlying function. -/]
 lemma MonoidHom.coe_ofMapMulMulEqOne {f : G → H} (hf₁ : f 1 = 1)
     (hf : ∀ a b c, a * b * c = 1 → f a * f b * f c = 1) :
     ⇑(ofMapMulMulEqOne hf₁ hf) = f :=

@@ -7,7 +7,7 @@ module
 
 -- Public: the array symmetry and the inherited invariance of the row mixing law are the
 -- hypothesis and the conclusion of the representation.
-public import TauCeti.Probability.Exchangeability.Arrays.MixingLaw
+public import TauCeti.Probability.Exchangeability.Arrays.DeFinetti
 -- Public: the coding map and the barycenter identity it satisfies appear in every statement.
 public import TauCeti.Probability.DeFinetti.Coding
 -- Non-public: the mixture form of a row path law is used only inside proofs.

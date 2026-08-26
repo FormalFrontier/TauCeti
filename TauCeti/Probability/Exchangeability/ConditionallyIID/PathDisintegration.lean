@@ -74,11 +74,11 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 /-- The prefix pushforward of the joint path law is the block-level disintegration, by the defining
 identity at the first `n` coordinates. -/
 theorem ConditionallyIIDWith.map_prefixProjPair_jointPathLaw_eq_disintegration
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) (n : ℕ) :
+    (h : ConditionallyIIDWith μ X ν) (n : ℕ) :
     (jointPathLaw μ X ν).map (prefixProjPair (ProbabilityMeasure α) α n)
       = μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
-  rw [map_prefixProjPair_jointPathLaw hX h.measurable_directing.aemeasurable n]
+  rw [map_prefixProjPair_jointPathLaw h.aemeasurable h.measurable_directing.aemeasurable n]
   exact h.jointLaw_eq_disintegration (fun i : Fin n => (i : ℕ)) Fin.val_injective
 
 /-! ### The full-path disintegration -/
@@ -90,7 +90,7 @@ directing measure together with the *whole* path is the disintegration
 The definition of `ConditionallyIIDWith` gives this along each finite selection of coordinates; this
 upgrades it to the entire path at once. -/
 theorem ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw [IsFiniteMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) :
+    (h : ConditionallyIIDWith μ X ν) :
     jointPathLaw μ X ν = iidMixtureLaw (μ.map ν) id := by
   have : IsFiniteMeasure (jointPathLaw μ X ν) := by
     rw [jointPathLaw_def]; exact Measure.isFiniteMeasure_map _ _
@@ -100,7 +100,7 @@ theorem ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw [IsFiniteMeasure μ]
   have hker : Measurable F :=
     TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _
       measurable_id
-  rw [ConditionallyIIDWith.map_prefixProjPair_jointPathLaw_eq_disintegration h hX n,
+  rw [ConditionallyIIDWith.map_prefixProjPair_jointPathLaw_eq_disintegration h n,
     map_prefixProjPair_iidMixtureLaw
       (P := (id : ProbabilityMeasure α → ProbabilityMeasure α)) measurable_id n]
   simp only [id_eq]
