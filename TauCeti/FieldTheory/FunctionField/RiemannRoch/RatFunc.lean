@@ -119,6 +119,7 @@ function lies in `L(n · P_∞)` exactly when it is a polynomial of degree at mo
 Regularity at the finite places is exactly polynomiality, by Mathlib's
 `IsDedekindDomain.HeightOneSpectrum.mem_integers_of_valuation_le_one` for `k[X]`; the remaining
 condition at infinity is `deg f ≤ n`, because `ord_∞` is minus the degree. -/
+@[simp]
 theorem mem_riemannRochSpace_zsmul_ofPoint_infty_iff {n : ℕ} {f : RatFunc k} :
     f ∈ riemannRochSpace ((n : ℤ) • WeilDivisor.ofPoint (Place.infty k)) ↔
       ∃ q : k[X], q.degree ≤ (n : WithBot ℕ) ∧ algebraMap k[X] (RatFunc k) q = f := by
@@ -184,16 +185,17 @@ theorem Divisor.dim_zsmul_ofPoint_infty (k : Type*) [Field k] (n : ℕ) :
 /-- `L(n · P_∞)` is trivial for `n < 0`: a nonzero function in it would have no pole at all,
 hence be a constant, and a nonzero constant does not vanish at infinity.  This is the
 negative-degree half of the computation of `ℓ(n · P_∞)`. -/
-theorem riemannRochSpace_zsmul_ofPoint_infty_of_neg {n : ℤ} (hn : n < 0) :
+theorem riemannRochSpace_zsmul_ofPoint_infty_eq_bot_of_neg {n : ℤ} (hn : n < 0) :
     riemannRochSpace (n • WeilDivisor.ofPoint (Place.infty k)) = ⊥ :=
   riemannRochSpace_eq_bot_of_lt_zero (IsFunctionField.ratFunc k)
     (zsmul_ofPoint_infty_lt_zero hn)
 
 /-- **`ℓ(n · P_∞)` for every integer `n`**: it is `n + 1` for `n ≥ 0`, and `0` once `n < 0`. -/
+@[simp]
 theorem Divisor.dim_zsmul_ofPoint_infty_eq_toNat (k : Type*) [Field k] (n : ℤ) :
     Divisor.dim (n • WeilDivisor.ofPoint (Place.infty k)) = (n + 1).toNat := by
   rcases lt_or_ge n 0 with hn | hn
-  · rw [Divisor.dim_def, riemannRochSpace_zsmul_ofPoint_infty_of_neg hn, finrank_bot]
+  · rw [Divisor.dim_def, riemannRochSpace_zsmul_ofPoint_infty_eq_bot_of_neg hn, finrank_bot]
     omega
   · obtain ⟨m, rfl⟩ : ∃ m : ℕ, n = m := ⟨n.toNat, (Int.toNat_of_nonneg hn).symm⟩
     rw [Divisor.dim_zsmul_ofPoint_infty]
