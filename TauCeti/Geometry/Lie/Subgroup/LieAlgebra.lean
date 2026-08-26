@@ -27,18 +27,21 @@ subalgebra of `𝔤` they generate, defined for every subgroup, and this file pr
 membership is exactly the defining condition
 (`TauCeti.Lie.mem_lieSubalgebraOfSubgroup`).
 
-Each of the three closure properties is a limit of elements of `K`, and each uses a different
-piece of the Layer 0/1 machinery:
+Addition and the bracket produce the new element as a *limit* of elements of `K`, each using a
+different piece of the Layer 0/1 machinery; scalars involve no limit at all:
 
-* scalars are free, because `t • (c • X) = (t * c) • X`;
+* scalars are free: `t • (c • X) = (t * c) • X` reparametrises the exponential line of `X`, so the
+  one-parameter subgroup of `c • X` is a reparametrisation of that of `X` and lands in `K` on the
+  nose;
 * addition is the **Trotter product formula** `TauCeti.Lie.tendsto_lieExp_smul_mul_lieExp_smul_pow`,
   which exhibits `lieExp (t • (X + Y))` as a limit of products of elements of `K`;
 * the bracket is the **infinitesimal adjoint**. If `X` and `Y` both generate one-parameter
   subgroups inside `K` then so does `Ad (lieExp (s • X)) Y`, by the conjugation formula
   `TauCeti.Lie.conj_lieExp`; the curve `s ↦ Ad (lieExp (s • X)) Y` therefore runs inside `𝔨` and
   starts at `Y`, and its derivative at `0` is `⁅X, Y⁆` by
-  `TauCeti.Lie.hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero`. A difference quotient of a
-  curve in a linear subspace stays in that subspace, so `⁅X, Y⁆` lies in its closure.
+  `TauCeti.Lie.hasDerivAt_Ad_lieExp_smul_apply_zero`, the derivation-level form of the Layer 1
+  theorem `TauCeti.Lie.hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero`. A difference quotient
+  of a curve in a linear subspace stays in that subspace, so `⁅X, Y⁆` lies in its closure.
 
 ## Why the definition generates, and closedness
 
@@ -68,6 +71,11 @@ target — the closed-subgroup theorem, promoting `K` to an embedded Lie subgrou
 * `TauCeti.Lie.lieExp_smul_add_mem`, `TauCeti.Lie.lieExp_smul_smul_mem` and
   `TauCeti.Lie.lieExp_smul_lie_mem`: the three closure properties, stated on the defining
   condition itself so that they can be used without producing the bundled subalgebra.
+* `TauCeti.Lie.hasDerivAt_Ad_lieExp_smul_apply_zero`: the adjoint orbit `s ↦ Ad (lieExp (s • X)) Y`
+  has derivative `⁅X, Y⁆` at the origin. This is the derivation-level infinitesimal adjoint, the
+  analytic input to bracket closure.
+* `TauCeti.Lie.lieSubalgebraOfSubgroup_le_iff`: the universal property of the generated subalgebra,
+  for an arbitrary subgroup.
 * `TauCeti.Lie.mem_lieSubalgebraOfSubgroup` and `TauCeti.Lie.coe_lieSubalgebraOfSubgroup`: for a
   closed subgroup, the Lie algebra of `K` is exactly `𝔨`.
 * `TauCeti.Lie.isClosed_setOf_forall_lieExp_smul_mem`: the candidate Lie algebra is a closed
@@ -153,6 +161,69 @@ theorem lieExp_smul_Ad_mem {K : Subgroup G} {g : G} (hg : g ∈ K)
   rw [hconj]
   exact K.mul_mem (K.mul_mem hg (hY t)) (K.inv_mem hg)
 
+/-! ### The derivative of the adjoint orbit -/
+
+/-- **The infinitesimal adjoint, on derivations.** The adjoint orbit `s ↦ Ad (lieExp (s • X)) Y`
+has derivative `⁅X, Y⁆` at `s = 0`.
+
+This is `TauCeti.Lie.hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero`, the same statement for
+the tangent space at the identity, transported across the canonical isometric identification
+`TauCeti.Lie.leftInvariantDerivationLinearIsometryEquivModelVectorSpace` of
+`LeftInvariantDerivation I G` with the model space `E`. Bracket closure below is the only consumer
+so far: it is what makes `⁅X, Y⁆` a limit of difference quotients of a curve in `𝔨`. -/
+theorem hasDerivAt_Ad_lieExp_smul_apply_zero (X Y : LeftInvariantDerivation I G) :
+    HasDerivAt (fun s : ℝ => Ad (I := I) (lieExp (I := I) (s • X)) Y) ⁅X, Y⁆ 0 := by
+  let e : LeftInvariantDerivation I G ≃ₗᵢ[ℝ] E :=
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G)
+  -- Evaluation at the identity, read in the model space, is the linear equivalence `lieExp` and
+  -- `Ad` are built from; this named `rfl` lemma is the bridge between the two spellings.
+  have he : ∀ Z : LeftInvariantDerivation I G, (e Z : E) =
+      (leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
+        BoundarylessManifold.isInteriorPoint Z : E) := fun Z =>
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply Z
+  -- The exponential line of the tangent vector of `X` is the one-parameter subgroup of `X`; the
+  -- two differ only by the bridge `he`, so the equality is `congrArg` applied to it.
+  have hexp : ∀ s : ℝ,
+      mulInvariantExp (I := I) (G := G) (s • ((e X : E) : GroupLieAlgebra I G)) =
+        lieExp (I := I) (s • X) := fun s => by
+    rw [lieExp_eq_mulInvariantExp, map_smul]
+    exact congrArg (fun v : GroupLieAlgebra I G =>
+      mulInvariantExp (I := I) (G := G) (s • v)) (he X)
+  -- Evaluation at the identity is a Lie equivalence, so it carries `⁅X, Y⁆` to the tangent-level
+  -- adjoint action the derivative theorem produces.
+  have hbracket : ((e ⁅X, Y⁆ : E) : GroupLieAlgebra I G) =
+      LieAlgebra.ad ℝ (GroupLieAlgebra I G) ((e X : E) : GroupLieAlgebra I G)
+        ((e Y : E) : GroupLieAlgebra I G) := by
+    have hmap := (leftInvariantDerivationLieEquivGroupLieAlgebra
+      (I := I) (G := G) BoundarylessManifold.isInteriorPoint).map_lie X Y
+    simp only [leftInvariantDerivationLieEquivGroupLieAlgebra_apply] at hmap
+    rw [he X, he Y, he ⁅X, Y⁆, LieAlgebra.ad_apply]
+    exact hmap
+  -- Read the orbit in the model space, where the tangent-level theorem applies. As in that
+  -- theorem, the `show E from` ascription is what exposes the model space `E` — to which
+  -- `GroupLieAlgebra I G` reduces definitionally — to the normed-space derivative API.
+  have key : HasDerivAt (fun s : ℝ => (e (Ad (I := I) (lieExp (I := I) (s • X)) Y) : E))
+      (e ⁅X, Y⁆) 0 := by
+    have hraw := hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero (I := I) (G := G)
+      ((e X : E) : GroupLieAlgebra I G) ((e Y : E) : GroupLieAlgebra I G)
+    have hfun : (fun s : ℝ => (e (Ad (I := I) (lieExp (I := I) (s • X)) Y) : E)) =
+        fun s : ℝ => show E from tangentAd (I := I)
+          (mulInvariantExp (I := I) (G := G) (s • ((e X : E) : GroupLieAlgebra I G)))
+          ((e Y : E) : GroupLieAlgebra I G) := by
+      funext s
+      rw [hexp s]
+      exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
+        (I := I) (lieExp (I := I) (s • X)) Y
+    rw [hfun, hbracket]
+    exact hraw
+  -- Transport the derivative back along the identification, which is linear and continuous.
+  have hcomp := (e.symm.toContinuousLinearEquiv.hasFDerivAt
+    (x := (fun s : ℝ => (e (Ad (I := I) (lieExp (I := I) (s • X)) Y) : E)) 0)).comp_hasDerivAt
+      0 key
+  simpa [Function.comp_def] using hcomp
+
+/-! ### Bracket closure -/
+
 /-- **Bracket closure.** The curve `s ↦ Ad (lieExp (s • X)) Y` takes its values in the candidate
 Lie algebra of `K`, starts at `Y` and has derivative `⁅X, Y⁆` at `s = 0`; its difference quotients
 therefore lie in the linear span, and the bracket is their limit. -/
@@ -175,46 +246,7 @@ theorem lieExp_smul_lie_mem {K : Subgroup G} (hK : IsClosed (K : Set G))
     with hφ
   have hφmem : ∀ s : ℝ, φ s ∈ S := fun s => lieExp_smul_Ad_mem (hX s) hY
   have hφzero : φ 0 = Y := by simp [hφ]
-  -- Its derivative at the origin is the bracket.
-  have hderiv : HasDerivAt φ ⁅X, Y⁆ 0 := by
-    let e : LeftInvariantDerivation I G ≃ₗᵢ[ℝ] E :=
-      leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G)
-    -- Evaluation at the identity, read in the model space, is the equivalence `lieExp` is built
-    -- from; this is the bridge between the two spellings.
-    have he : ∀ Z : LeftInvariantDerivation I G, (e Z : E) =
-        ((leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G)
-          BoundarylessManifold.isInteriorPoint Z : GroupLieAlgebra I G) : E) := fun Z =>
-      leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply Z
-    have hexp : ∀ s : ℝ,
-        mulInvariantExp (I := I) (G := G) (s • ((e X : E) : GroupLieAlgebra I G)) =
-          lieExp (I := I) (s • X) := by
-      intro s
-      rw [lieExp_eq_mulInvariantExp, map_smul, he X]
-      rfl
-    have hbracket : ((e ⁅X, Y⁆ : E) : GroupLieAlgebra I G) =
-        LieAlgebra.ad ℝ (GroupLieAlgebra I G) ((e X : E) : GroupLieAlgebra I G)
-          ((e Y : E) : GroupLieAlgebra I G) := by
-      have hmap := (leftInvariantDerivationLieEquivGroupLieAlgebra
-        (I := I) (G := G) BoundarylessManifold.isInteriorPoint).map_lie X Y
-      simp only [leftInvariantDerivationLieEquivGroupLieAlgebra_apply] at hmap
-      rw [he X, he Y, he ⁅X, Y⁆]
-      exact hmap
-    have key : HasDerivAt (fun s : ℝ => (e (φ s) : E)) (e ⁅X, Y⁆) 0 := by
-      have hraw := hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero (I := I) (G := G)
-        ((e X : E) : GroupLieAlgebra I G) ((e Y : E) : GroupLieAlgebra I G)
-      have hfun : (fun s : ℝ => (e (φ s) : E)) =
-          fun s : ℝ => show E from tangentAd (I := I)
-            (mulInvariantExp (I := I) (G := G) (s • ((e X : E) : GroupLieAlgebra I G)))
-            ((e Y : E) : GroupLieAlgebra I G) := by
-        funext s
-        rw [hexp s, hφ]
-        exact leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
-          (I := I) (lieExp (I := I) (s • X)) Y
-      rw [hfun, hbracket]
-      exact hraw
-    have hcomp := (e.symm.toContinuousLinearEquiv.hasFDerivAt
-      (x := (fun s : ℝ => (e (φ s) : E)) 0)).comp_hasDerivAt 0 key
-    simpa [Function.comp_def] using hcomp
+  have hderiv : HasDerivAt φ ⁅X, Y⁆ 0 := hasDerivAt_Ad_lieExp_smul_apply_zero X Y
   -- A difference quotient of a curve in `S` stays in `S`, and `S` is closed.
   have hslope : ∀ s : ℝ, slope φ 0 s ∈ S := by
     intro s
@@ -245,8 +277,19 @@ theorem mem_lieSubalgebraOfSubgroup_of_forall {K : Subgroup G} {X : LeftInvarian
     (hX : ∀ t : ℝ, lieExp (I := I) (t • X) ∈ K) : X ∈ lieSubalgebraOfSubgroup (I := I) K :=
   LieSubalgebra.subset_lieSpan hX
 
+/-- **The universal property of the Lie algebra of a subgroup.** It is the least Lie subalgebra
+containing every derivation whose one-parameter subgroup lies in `K`, so a Lie subalgebra contains
+it as soon as it contains those derivations. No hypothesis on `K` is needed; together with
+`mem_lieSubalgebraOfSubgroup_of_forall` this is the elimination rule for an arbitrary subgroup. -/
+theorem lieSubalgebraOfSubgroup_le_iff {K : Subgroup G}
+    {L : LieSubalgebra ℝ (LeftInvariantDerivation I G)} :
+    lieSubalgebraOfSubgroup (I := I) K ≤ L ↔
+      ∀ X : LeftInvariantDerivation I G, (∀ t : ℝ, lieExp (I := I) (t • X) ∈ K) → X ∈ L :=
+  LieSubalgebra.lieSpan_le
+
 /-- **The Lie algebra of a closed subgroup is exactly `𝔨`**: the three closure properties make the
 defining condition a Lie subalgebra, so generating it adds nothing. -/
+@[simp]
 theorem mem_lieSubalgebraOfSubgroup {K : Subgroup G} (hK : IsClosed (K : Set G))
     {X : LeftInvariantDerivation I G} :
     X ∈ lieSubalgebraOfSubgroup (I := I) K ↔ ∀ t : ℝ, lieExp (I := I) (t • X) ∈ K := by
@@ -257,7 +300,7 @@ theorem mem_lieSubalgebraOfSubgroup {K : Subgroup G} (hK : IsClosed (K : Set G))
       add_mem' := fun {_ _} hZ hW => lieExp_smul_add_mem hK hZ hW
       smul_mem' := fun c {_} hZ => lieExp_smul_smul_mem hZ c
       lie_mem' := fun {_ _} hZ hW => lieExp_smul_lie_mem hK hZ hW }
-  exact (LieSubalgebra.lieSpan_le (K := S)).mpr (fun _ hZ => hZ) hX
+  exact lieSubalgebraOfSubgroup_le_iff (L := S) |>.mpr (fun _ hZ => hZ) hX
 
 /-- **The Lie algebra of a closed subgroup is exactly `𝔨`**, as sets. -/
 theorem coe_lieSubalgebraOfSubgroup {K : Subgroup G} (hK : IsClosed (K : Set G)) :
@@ -302,13 +345,16 @@ theorem lieSubalgebraOfSubgroup_top :
 /-- **The Lie algebra of `K` is invariant under the adjoint action of `K`.** Conjugating by `g ∈ K`
 carries the one-parameter subgroup of `X` to the one of `Ad g X`, which therefore also stays in `K`.
 This is the bundled form of `lieExp_smul_Ad_mem`, the statement that makes the adjoint orbit of the
-bracket proof run inside `𝔨`. Invariance under `Ad g` for `g` outside `K` — which for a normal `K`
-would say that `𝔨` is an ideal of `𝔤` — is not asserted here. -/
-theorem Ad_mem_lieSubalgebraOfSubgroup {K : Subgroup G} (hK : IsClosed (K : Set G)) {g : G}
+bracket proof run inside `𝔨`. No hypothesis on `K` is needed: `Ad g` is an automorphism of `𝔤`
+preserving the generating set, hence preserves the subalgebra it generates. Invariance under `Ad g`
+for `g` outside `K` — which for a normal `K` would say that `𝔨` is an ideal of `𝔤` — is not
+asserted here. -/
+theorem Ad_mem_lieSubalgebraOfSubgroup {K : Subgroup G} {g : G}
     (hg : g ∈ K) {X : LeftInvariantDerivation I G}
     (hX : X ∈ lieSubalgebraOfSubgroup (I := I) K) :
     Ad (I := I) g X ∈ lieSubalgebraOfSubgroup (I := I) K :=
-  mem_lieSubalgebraOfSubgroup_of_forall fun t =>
-    lieExp_smul_Ad_mem hg ((mem_lieSubalgebraOfSubgroup hK).mp hX) t
+  lieSubalgebraOfSubgroup_le_iff
+      (L := (lieSubalgebraOfSubgroup (I := I) K).comap (Ad (I := I) g).toLieHom)
+      |>.mpr (fun _ hY => mem_lieSubalgebraOfSubgroup_of_forall (lieExp_smul_Ad_mem hg hY)) hX
 
 end TauCeti.Lie
