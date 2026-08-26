@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.KleinFour
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Cardinality
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Quadratic
 
@@ -37,6 +38,14 @@ has order four; the form is positive definite, so the Gram determinant in any in
 `2s = v`, and is `(ℤ/2)²` when `n` is even.  The two spinor classes then carry the same quadratic
 value, and their mutual pairing is `b(s, c) = (n - 2) / 4`.
 
+For even `n` the file goes further and identifies the discriminant form itself, not only its group:
+the quadratic values `q(v) = 1 / 2` and `q(s) = q(c) = n / 8` together with the pairing
+`b(v, s) = 1 / 2` present it on `(ℤ/2)²`, and `checkerboardDiscriminantQuadraticIsometry` is an
+isometry of finite quadratic modules from that presented model onto `A_L`.  Group order alone does
+not determine this form: as `n` runs over the even residues modulo eight the model runs through
+Nikulin's `u₁` (for `n ≡ 0`), his `v₁` (for `n ≡ 4`), and the two forms with quarter-integral
+spinor values (for `n ≡ 2 mod 4`).
+
 The representatives are the ones fixed by Conway and Sloane, so that later glue calculations —
 in particular the enlargement of `D₈` to `E₈` — can reuse them without a change of
 representative.
@@ -55,6 +64,8 @@ representative.
   group of an odd-rank checkerboard lattice is `ℤ/4`.
 * `TauCeti.IntegralLattice.zmodTwoProdAddEquivCheckerboardDiscriminantGroup`: the discriminant
   group of an even-rank checkerboard lattice is `(ℤ/2)²`.
+* `TauCeti.IntegralLattice.checkerboardStandardQuadraticModule`: the presented `(ℤ/2)²` model of
+  the discriminant form of an even-rank checkerboard lattice.
 
 ## Main results
 
@@ -70,6 +81,14 @@ representative.
   `n / 8`.
 * `TauCeti.IntegralLattice.discriminantPairing_checkerboardSpinorClass_checkerboardCospinorClass`:
   the mutual pairing `(n - 2) / 4` of the spinor and cospinor classes.
+* `TauCeti.IntegralLattice.discriminantPairing_checkerboardVectorClass_checkerboardSpinorClass`,
+  `discriminantPairing_checkerboardVectorClass_self`,
+  `discriminantPairing_checkerboardSpinorClass_self`: the remaining pairing values `1 / 2`, `0`
+  and `n / 4`.
+* `TauCeti.IntegralLattice.checkerboardDiscriminantQuadraticIsometry`: for even `n`, the presented
+  model is isometric to the discriminant quadratic module.
+* `TauCeti.IntegralLattice.isNondegenerate_checkerboardStandardQuadraticModule`: the presented
+  model is nondegenerate.
 
 ## References
 
@@ -905,6 +924,139 @@ theorem zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_zero_one (hn : Ev
       checkerboardSpinorClass n := by
   rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup, AddEquiv.ofBijective_apply,
     AddMonoidHom.coprod_apply, map_zero, zero_add, checkerboardZModTwoHom_one]
+
+/-! ## The discriminant pairings -/
+
+/-- A rational number which is an integer vanishes in `ℚ/ℤ`. -/
+private theorem checkerboard_coe_eq_zero {q : ℚ} (m : ℤ) (h : q = (m : ℚ)) :
+    ((q : ℚ) : AddCircle (1 : ℚ)) = 0 := by
+  rw [AddCircle.coe_eq_zero_iff_mem_one]
+  exact Submodule.mem_one.mpr ⟨m, by simpa using h.symm⟩
+
+/-- **The vector class is bilinear-isotropic**: the ambient self-pairing `⟨v, v⟩ = 1` is an
+integer, so `b(v, v) = 0`. -/
+@[simp]
+theorem discriminantPairing_checkerboardVectorClass_self :
+    (checkerboardLattice n).discriminantPairing (checkerboardVectorClass n)
+      (checkerboardVectorClass n) = 0 := by
+  rw [checkerboardVectorClass, discriminantPairing_mk,
+    checkerboardLattice_form_checkerboardVector_self]
+  exact checkerboard_coe_eq_zero 1 (by norm_num)
+
+/-- **The spinor class has self-pairing `b(s, s) = n / 4`.** -/
+@[simp]
+theorem discriminantPairing_checkerboardSpinorClass_self :
+    (checkerboardLattice n).discriminantPairing (checkerboardSpinorClass n)
+      (checkerboardSpinorClass n) = (((n : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) := by
+  rw [checkerboardSpinorClass, discriminantPairing_mk,
+    checkerboardLattice_form_checkerboardSpinor_self]
+
+/-- **The vector and spinor classes pair to `1 / 2`.**  This is the value which distinguishes the
+`(ℤ/2)²` discriminant module from the orthogonal sum of two rank-one modules. -/
+@[simp]
+theorem discriminantPairing_checkerboardVectorClass_checkerboardSpinorClass :
+    (checkerboardLattice n).discriminantPairing (checkerboardVectorClass n)
+      (checkerboardSpinorClass n) = (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) := by
+  rw [checkerboardVectorClass, checkerboardSpinorClass, discriminantPairing_mk,
+    checkerboardLattice_form_checkerboardVector_checkerboardSpinor]
+
+/-! ## The discriminant quadratic module of an even-rank checkerboard lattice -/
+
+/-- The class of `1 / 2` in `ℚ/ℤ` doubles to zero. -/
+theorem coe_half_add_coe_half :
+    (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) + (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
+  -- Expand the sum through the quotient map `ℚ → ℚ/ℤ`.
+  change ((((1 : ℚ) / 2 + (1 : ℚ) / 2) : ℚ) : AddCircle (1 : ℚ)) = 0
+  exact checkerboard_coe_eq_zero 1 (by norm_num)
+
+/-- The class of `1 / 2` in `ℚ/ℤ` is two-torsion. -/
+theorem two_zsmul_coe_half :
+    (2 : ℤ) • (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
+  rw [two_zsmul, coe_half_add_coe_half]
+
+/-- The class of `1 / 2` in `ℚ/ℤ` is in particular four-torsion, as the parameters of a
+`(ℤ/2)²` quadratic module must be. -/
+theorem four_zsmul_coe_half :
+    (4 : ℤ) • (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
+  have hfour : (4 : ℤ) = 2 * 2 := by norm_num
+  rw [hfour, mul_smul, two_zsmul_coe_half, smul_zero]
+
+omit [NeZero n] in
+/-- **The spinor half-norm `n / 8` is four-torsion in `ℚ/ℤ` when `n` is even.**  This is exactly
+what makes the discriminant form of an even-rank checkerboard lattice a quadratic module on
+`(ℤ/2)²`. -/
+theorem four_zsmul_coe_spinorHalfNorm (hn : Even n) :
+    (4 : ℤ) • ((((n : ℚ) / 8 : ℚ)) : AddCircle (1 : ℚ)) = 0 := by
+  obtain ⟨k, hk⟩ := hn
+  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
+  change ((((4 : ℚ) * ((n : ℚ) / 8)) : ℚ) : AddCircle (1 : ℚ)) = 0
+  refine checkerboard_coe_eq_zero (k : ℤ) ?_
+  rw [hk]
+  push_cast
+  ring
+
+/-- The even-rank identification sends the diagonal generator of `(ℤ/2)²` to the cospinor
+class. -/
+@[simp]
+theorem zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_one (hn : Even n) :
+    zmodTwoProdAddEquivCheckerboardDiscriminantGroup n hn (1, 1) =
+      checkerboardCospinorClass n := by
+  have hsplit : ((1 : ZMod 2), (1 : ZMod 2)) =
+      ((1 : ZMod 2), (0 : ZMod 2)) + ((0 : ZMod 2), (1 : ZMod 2)) := by
+    rw [Prod.mk_add_mk, add_zero, zero_add]
+  rw [hsplit, map_add, zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_zero,
+    zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_zero_one,
+    checkerboardVectorClass_add_checkerboardSpinorClass]
+
+/-- **The standard `(ℤ/2)²` model of the even-rank checkerboard discriminant form**: the vector
+class has quadratic value `1 / 2`, either spinor class has `n / 8`, and the vector and spinor
+classes pair to `1 / 2`.
+
+For `n ≡ 0 mod 8` this is Nikulin's `u₁`, for `n ≡ 4 mod 8` it is `v₁`, and for `n ≡ 2 mod 4` the
+two spinor classes carry the quarter-integral values `n / 8`. -/
+@[expose] noncomputable def checkerboardStandardQuadraticModule (hn : Even n) :
+    FiniteQuadraticModule :=
+  FiniteQuadraticModule.kleinFour (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
+    ((((n : ℚ) / 8 : ℚ)) : AddCircle (1 : ℚ)) (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
+    four_zsmul_coe_half (four_zsmul_coe_spinorHalfNorm n hn)
+    two_zsmul_coe_half
+
+/-- **The standard model is isometric to the discriminant quadratic module of an even-rank
+checkerboard lattice**, by the identification carrying `(1, 0)` to the vector class and `(0, 1)`
+to the spinor class.
+
+This is the `Dₙ` row of the ADE table for even `n`: not only is the discriminant group `(ℤ/2)²`,
+its quadratic form is the displayed one. -/
+noncomputable def checkerboardDiscriminantQuadraticIsometry (hn : Even n) :
+    FiniteQuadraticModule.Isometry (checkerboardStandardQuadraticModule n hn)
+      ((checkerboardLattice n).discriminantQuadraticModule (isEven_checkerboardLattice n)) :=
+  FiniteQuadraticModule.kleinFourIsometryOfGenerators _ _ _ _ _ _
+    ((checkerboardLattice n).discriminantQuadraticMap (isEven_checkerboardLattice n))
+    (zmodTwoProdAddEquivCheckerboardDiscriminantGroup n hn)
+    (by
+      rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_zero,
+        discriminantQuadraticMap_checkerboardVectorClass])
+    (by
+      rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_zero_one,
+        discriminantQuadraticMap_checkerboardSpinorClass])
+    (by
+      rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_one,
+        discriminantQuadraticMap_checkerboardCospinorClass, add_right_comm,
+        coe_half_add_coe_half, zero_add])
+
+/-- The even-rank quadratic isometry acts through the discriminant-group equivalence. -/
+@[simp]
+theorem checkerboardDiscriminantQuadraticIsometry_apply (hn : Even n) (x : ZMod 2 × ZMod 2) :
+    checkerboardDiscriminantQuadraticIsometry n hn x =
+      zmodTwoProdAddEquivCheckerboardDiscriminantGroup n hn x :=
+  FiniteQuadraticModule.kleinFourIsometryOfGenerators_apply _ _ _ _ _ _ _ _ _ _ _ x
+
+/-- **The standard `(ℤ/2)²` model is nondegenerate**, since the discriminant form of a
+nondegenerate lattice is. -/
+theorem isNondegenerate_checkerboardStandardQuadraticModule (hn : Even n) :
+    (checkerboardStandardQuadraticModule n hn).IsNondegenerate :=
+  ((checkerboardDiscriminantQuadraticIsometry n hn).isNondegenerate_iff).mpr
+    (isNondegenerate_discriminantQuadraticModule _ _)
 
 end IntegralLattice
 
