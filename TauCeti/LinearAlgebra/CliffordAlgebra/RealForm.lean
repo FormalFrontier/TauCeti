@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Equivs
+import Mathlib.Algebra.Order.Star.Real
+import Mathlib.LinearAlgebra.Matrix.DotProduct
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Dimension
 
@@ -155,21 +157,8 @@ theorem nondegenerate_realCliffordForm (p q : ℕ) : (realCliffordForm p q).Nond
 theorem posDef_realCliffordForm_zero (n : ℕ) : (realCliffordForm n 0).PosDef := by
   intro v hv
   rw [realCliffordForm_apply]
-  simp only [Nat.add_zero]
-  have hsum : (∑ i : Fin n, realCliffordWeight n 0 i * (v i * v i)) =
-      ∑ i, v i * v i := by
-    apply Finset.sum_congr rfl
-    intro i _
-    rw [realCliffordWeight_of_lt i.isLt, one_mul]
-  rw [hsum]
-  refine (Fintype.sum_pos_iff_of_nonneg fun i => mul_self_nonneg (v i)).2 ?_
-  rw [Pi.lt_def]
-  constructor
-  · intro i
-    exact mul_self_nonneg (v i)
-  · rw [Function.ne_iff] at hv
-    obtain ⟨i, hi⟩ := hv
-    exact ⟨i, mul_self_pos.2 hi⟩
+  simpa [realCliffordWeight, dotProduct] using
+    (Matrix.dotProduct_star_self_pos_iff (v := v)).2 hv
 
 /-- The real Clifford algebra of signature `(p, q)` has dimension `2 ^ (p + q)`, as every Clifford
 algebra of a space of that dimension does. This is the count that forces the surjections built
