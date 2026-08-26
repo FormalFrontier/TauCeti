@@ -47,31 +47,11 @@ variable {ι : Type*}
 
 attribute [local instance] Classical.decEq
 
-/-- A finite nonempty chain in a partial order has a greatest element. -/
-private theorem exists_greatest_of_isChain {α : Type*} [PartialOrder α] (s : Finset α)
-    (hs : s.Nonempty) (hchain : IsChain (· ≤ ·) (s : Set α)) :
-    ∃ a ∈ s, ∀ b ∈ s, b ≤ a := by
-  obtain ⟨a, hmax⟩ := s.exists_maximal hs
-  refine ⟨a, hmax.prop, fun b hb => ?_⟩
-  rcases hchain.total hb hmax.prop with hba | hab
-  · exact hba
-  · exact hmax.le_of_ge hb hab
-
-private theorem barycentricSubdivisionLinearMap_apply (K : AbstractSimplicialComplex ι)
-    (a : Face K →₀ ℝ) (v : ι) :
-    barycentricSubdivisionLinearMap K a v =
-      ∑ σ ∈ a.support, a σ *
-        if v ∈ σ.1 then (σ.1.card : ℝ)⁻¹ else 0 := by
-  conv_lhs => rw [← a.sum_single]
-  simp only [Finsupp.sum]
-  rw [map_sum, Finset.sum_apply']
-  apply Finset.sum_congr rfl
-  intro σ _
-  have hs : Finsupp.single σ (a σ) = a σ • Finsupp.single σ (1 : ℝ) := by
-    rw [Finsupp.smul_single]
-    simp
-  rw [hs, map_smul, Finsupp.smul_apply, barycentricSubdivisionLinearMap_single,
-    faceBarycenter_apply, smul_eq_mul]
+/-- A face is nonempty, so the reciprocal of its cardinality is positive. -/
+private theorem inv_card_pos (K : AbstractSimplicialComplex ι) (σ : Face K) :
+    0 < (σ.1.card : ℝ)⁻¹ := by
+  have : 0 < σ.1.card := Finset.card_pos.mpr (K.isRelLowerSet_faces.prop_of_mem σ.2)
+  positivity
 
 /-- The greatest face of a nonnegative chain-supported combination is exactly the coordinate
 support of its image under the barycentric-subdivision linear map. -/
@@ -91,10 +71,7 @@ private theorem support_barycentricSubdivisionLinearMap_eq_greatest
     have hvτ : v ∉ τ.1 := fun h => hvσ (hmax τ hτ h)
     simp [hvτ]
   · intro hvσ
-    have hcard : 0 < (σ.1.card : ℝ)⁻¹ := by
-      have : 0 < σ.1.card := Finset.card_pos.mpr
-        (K.isRelLowerSet_faces.prop_of_mem σ.2)
-      positivity
+    have hcard : 0 < (σ.1.card : ℝ)⁻¹ := inv_card_pos K σ
     have hapos : 0 < a σ := lt_of_le_of_ne (ha σ) (Finsupp.mem_support_iff.mp hσ).symm
     apply ne_of_gt
     rw [barycentricSubdivisionLinearMap_apply]
@@ -102,6 +79,19 @@ private theorem support_barycentricSubdivisionLinearMap_eq_greatest
     · intro τ hτ
       exact mul_nonneg (ha τ) (by positivity)
     · exact ⟨σ, hσ, by simp [hvσ, hapos, hcard]⟩
+
+/-- A nonzero nonnegative combination supported on a chain of faces has nonzero image. -/
+private theorem barycentricSubdivisionLinearMap_ne_zero (K : AbstractSimplicialComplex ι)
+    {a : Face K →₀ ℝ} (ha : ∀ σ, 0 ≤ a σ)
+    (hchain : IsChain (· ≤ ·) (a.support : Set (Face K))) (ha0 : a ≠ 0) :
+    barycentricSubdivisionLinearMap K a ≠ 0 := by
+  obtain ⟨σ, hσ, hσmax⟩ := exists_greatest_of_isChain a.support
+    (Finsupp.support_nonempty_iff.mpr ha0) hchain
+  intro hzero
+  have hne := K.isRelLowerSet_faces.prop_of_mem σ.2
+  rw [← support_barycentricSubdivisionLinearMap_eq_greatest K ha hσ hσmax, hzero,
+    Finsupp.support_zero] at hne
+  simp at hne
 
 private theorem exists_mem_greatest_not_mem_of_ne_face (K : AbstractSimplicialComplex ι)
     {a : Face K →₀ ℝ} (hchain : IsChain (· ≤ ·) (a.support : Set (Face K)))
@@ -145,29 +135,17 @@ private theorem barycentricSubdivisionLinearMap_injective_of_nonneg_of_isChain
   induction hmeasure : a.support.card + b.support.card using Nat.strong_induction_on
     generalizing a b with
   | h n ih =>
-      -- A nonzero nonnegative combination has nonempty image support, so the zero cases agree.
+      -- A nonzero nonnegative combination has nonzero image, so the zero cases agree.
       by_cases ha0 : a = 0
       · subst a
         by_cases hb0 : b = 0
         · exact hb0.symm
-        · exfalso
-          obtain ⟨σ, hσ, hσmax⟩ := exists_greatest_of_isChain b.support
-            (Finsupp.support_nonempty_iff.mpr hb0) hcb
-          have hsupp := support_barycentricSubdivisionLinearMap_eq_greatest K hb hσ hσmax
-          have hzero : barycentricSubdivisionLinearMap K b = 0 := by simpa using hab.symm
-          have hne := K.isRelLowerSet_faces.prop_of_mem σ.2
-          rw [← hsupp, hzero, Finsupp.support_zero] at hne
-          simp at hne
+        · exact absurd (by simpa using hab.symm)
+            (barycentricSubdivisionLinearMap_ne_zero K hb hcb hb0)
       · by_cases hb0 : b = 0
         · subst b
-          exfalso
-          obtain ⟨σ, hσ, hσmax⟩ := exists_greatest_of_isChain a.support
-            (Finsupp.support_nonempty_iff.mpr ha0) hca
-          have hsupp := support_barycentricSubdivisionLinearMap_eq_greatest K ha hσ hσmax
-          have hzero : barycentricSubdivisionLinearMap K a = 0 := by simpa using hab
-          have hne := K.isRelLowerSet_faces.prop_of_mem σ.2
-          rw [← hsupp, hzero, Finsupp.support_zero] at hne
-          simp at hne
+          exact absurd (by simpa using hab)
+            (barycentricSubdivisionLinearMap_ne_zero K ha hca ha0)
         · obtain ⟨σ, hσa, hσmaxa⟩ := exists_greatest_of_isChain a.support
             (Finsupp.support_nonempty_iff.mpr ha0) hca
           obtain ⟨τ, hτb, hτmaxb⟩ := exists_greatest_of_isChain b.support
@@ -183,10 +161,7 @@ private theorem barycentricSubdivisionLinearMap_injective_of_nonneg_of_isChain
             exists_mem_greatest_not_mem_of_ne_face K hca hσmaxa
           obtain ⟨w, hwσ, hwb⟩ :=
             exists_mem_greatest_not_mem_of_ne_face K hcb hτmaxb
-          have hcard : 0 < (σ.1.card : ℝ)⁻¹ := by
-            have : 0 < σ.1.card := Finset.card_pos.mpr
-              (K.isRelLowerSet_faces.prop_of_mem σ.2)
-            positivity
+          have hcard : 0 < (σ.1.card : ℝ)⁻¹ := inv_card_pos K σ
           have habσ : a σ = b σ := by
             -- Evaluate at an exposed vertex for each chain to compare the greatest coefficients
             -- in both directions.
@@ -231,12 +206,8 @@ theorem barycentricSubdivisionRealizationMap_injective (K : AbstractSimplicialCo
   intro x y hxy
   apply Subtype.ext
   apply barycentricSubdivisionLinearMap_injective_of_nonneg_of_isChain K x.1 y.1
-  · intro σ
-    let x' : StandardSimplex (carrier _ x).1 := ⟨x.1, mem_convexHull_carrier _ x⟩
-    exact StandardSimplex.nonneg x' σ
-  · intro σ
-    let y' : StandardSimplex (carrier _ y).1 := ⟨y.1, mem_convexHull_carrier _ y⟩
-    exact StandardSimplex.nonneg y' σ
+  · exact Realization.nonneg _ x
+  · exact Realization.nonneg _ y
   · exact (TauCeti.PreAbstractSimplicialComplex.mem_barycentricSubdivision_iff.mp
       (support_mem _ x)).2
   · exact (TauCeti.PreAbstractSimplicialComplex.mem_barycentricSubdivision_iff.mp
