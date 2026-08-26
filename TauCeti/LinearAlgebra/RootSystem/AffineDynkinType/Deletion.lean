@@ -143,7 +143,7 @@ def bourbakiNode : (t : AffineDynkinType) → Fin t.finiteType.rank → Fin t.no
 @[simp] lemma bourbakiNode_A (n : ℕ) : (A n).bourbakiNode = Fin.succ := (rfl)
 
 /-- Deleting the affine node `0` of the cycle `Ãₙ` shifts every node number down by one. -/
-lemma bourbakiNode_A_val (n : ℕ) (i : Fin (A n).finiteType.rank) :
+@[simp] lemma bourbakiNode_A_val (n : ℕ) (i : Fin (A n).finiteType.rank) :
     (((A n).bourbakiNode i : Fin (A n).nodes) : ℕ) = (i : ℕ) + 1 := (rfl)
 
 /-- The relabelling of the affine `Dₙ` moves only the two ends: the Bourbaki node `0` sits at the
