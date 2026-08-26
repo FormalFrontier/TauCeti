@@ -12,7 +12,6 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Relations
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Torus
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
-public import TauCeti.Algebra.Module.Rat
 public import TauCeti.LinearAlgebra.Eigenspace.Binomial
 public import TauCeti.RingTheory.Binomial
 import TauCeti.CategoryTheory.Comma.Over
@@ -56,8 +55,8 @@ is any group here claimed to be finite or simple.
 * `TauCeti.SlStd.rootGenerator` and `TauCeti.SlStd.cartanGenerator`: the Bourbaki-numbered
   Chevalley generators of `sl_{r+1}`, as elements of `LieAlgebra.SpecialLinear.sl`.
 * `TauCeti.SlStd.rep`: the standard representation, extended to the universal enveloping algebra.
-* `TauCeti.SlStd.weight` and `TauCeti.SlStd.rootWeight`: the integral weights of the coordinate
-  vectors and the roots of the numbered generators.
+* `TauCeti.SlStd.weight` and `TauCeti.SlStd.rootGeneratorWeight`: the integral weights of the
+  coordinate vectors and the roots of the numbered generators.
 * `TauCeti.SlStd.lattice` and `TauCeti.SlStd.latticeBasis`: the standard admissible lattice and its
   coordinate basis.
 * `TauCeti.SlStd.groupScheme`, `TauCeti.SlStd.rootSubgroup`, `TauCeti.SlStd.weightTorus` and
@@ -76,7 +75,8 @@ is any group here claimed to be finite or simple.
   subgroups of the carrier.
 * `TauCeti.SlStd.torusPoints_conj_rootSubgroupParam` and
   `TauCeti.SlStd.weightTorus_conj_rootSubgroup`: the pinning equation
-  `t(s) x_k(u) t(s)⁻¹ = x_k(α_k(s) u)`, on points and at the level of group schemes.
+  `t(s) x_k(u) t(s)⁻¹ = x_k(α_k(s) u)`, on matrix points and on `A`-valued scheme points
+  after corestriction to the carrier.
 
 ## References
 
@@ -214,15 +214,15 @@ def weight (k : Fin (r + 1)) (i : Fin r) : ℤ :=
 /-- The root of a numbered raising or lowering generator, as an integral character of the
 numbered Cartan generators: the `i`-th row of the type `A` Cartan matrix on a raising generator
 and its negative on a lowering one. -/
-def rootWeight : Fin r ⊕ Fin r → Fin r → ℤ
+def rootGeneratorWeight : Fin r ⊕ Fin r → Fin r → ℤ
   | .inl i => fun j => CartanMatrix.A r i j
   | .inr i => fun j => -CartanMatrix.A r i j
 
-@[simp] theorem rootWeight_inl (i j : Fin r) :
-    rootWeight r (.inl i) j = CartanMatrix.A r i j := (rfl)
+@[simp] theorem rootGeneratorWeight_inl (i j : Fin r) :
+    rootGeneratorWeight r (.inl i) j = CartanMatrix.A r i j := (rfl)
 
-@[simp] theorem rootWeight_inr (i j : Fin r) :
-    rootWeight r (.inr i) j = -CartanMatrix.A r i j := (rfl)
+@[simp] theorem rootGeneratorWeight_inr (i j : Fin r) :
+    rootGeneratorWeight r (.inr i) j = -CartanMatrix.A r i j := (rfl)
 
 /-- A diagonal matrix unit acts on a standard coordinate vector by the corresponding
 Kronecker delta. -/
@@ -266,27 +266,27 @@ private theorem cartanCoeff (k : Fin r ⊕ Fin r) (j : Fin r) :
     ((if j.castSucc = rootTarget r k then (1 : ℤ) else 0) -
         (if j.succ = rootTarget r k then 1 else 0)) -
       ((if rootSource r k = j.castSucc then (1 : ℤ) else 0) -
-        (if rootSource r k = j.succ then 1 else 0)) = rootWeight r k j := by
+        (if rootSource r k = j.succ then 1 else 0)) = rootGeneratorWeight r k j := by
   cases k with
   | inl i =>
-      rw [rootTarget_inl, rootSource_inl, rootWeight_inl, CartanMatrix.A]
+      rw [rootTarget_inl, rootSource_inl, rootGeneratorWeight_inl, CartanMatrix.A]
       simp only [Matrix.of_apply, Fin.ext_iff, Fin.val_succ, Fin.val_castSucc]
       split_ifs <;> omega
   | inr i =>
-      rw [rootTarget_inr, rootSource_inr, rootWeight_inr, CartanMatrix.A]
+      rw [rootTarget_inr, rootSource_inr, rootGeneratorWeight_inr, CartanMatrix.A]
       simp only [Matrix.of_apply, Fin.ext_iff, Fin.val_succ, Fin.val_castSucc]
       split_ifs <;> omega
 
 /-- **The numbered Cartan generators act on the numbered root generators through the type `A`
 Cartan matrix.** This is the relation that makes the split torus of the carrier below act on the
-root subgroup at `k` through the character `TauCeti.SlStd.rootWeight r k`. -/
+root subgroup at `k` through the character `TauCeti.SlStd.rootGeneratorWeight r k`. -/
 theorem lie_cartanGenerator_rootGenerator (k : Fin r ⊕ Fin r) (j : Fin r) :
     ⁅cartanGenerator r j, rootGenerator r k⁆ =
-      ((rootWeight r k j : ℤ) : ℚ) • rootGenerator r k := by
+      ((rootGeneratorWeight r k j : ℤ) : ℚ) • rootGenerator r k := by
   refine Subtype.ext ?_
-  have hcoe : (((((rootWeight r k j : ℤ) : ℚ) • rootGenerator r k) :
+  have hcoe : (((((rootGeneratorWeight r k j : ℤ) : ℚ) • rootGenerator r k) :
       sl (Fin (r + 1)) ℚ) : Matrix (Fin (r + 1)) (Fin (r + 1)) ℚ) =
-      ((rootWeight r k j : ℤ) : ℚ) •
+      ((rootGeneratorWeight r k j : ℤ) : ℚ) •
         Matrix.single (rootTarget r k) (rootSource r k) (1 : ℚ) := by
     rw [← val_rootGenerator]
     rfl
@@ -516,6 +516,21 @@ theorem points_def (A : Type) [CommRing A] :
         (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A := by
   rw [points]
 
+/-- A matrix is a point of the type `A_r` carrier exactly when the associated convolution point
+kills its toral defining Hopf ideal. -/
+@[simp]
+theorem mem_points_iff (A : Type) [CommRing A]
+    (g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
+    g ∈ points r A ↔
+      ∀ x ∈ TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal (rootGenerator r)
+          (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+          (kostantForm_apply_mem_lattice r) (isNilpotent_rep_rootGenerator r)
+          (latticeBasis r) (weight r),
+        ((GeneralLinear.pointsMulEquiv (R := ℤ) (r + 1)).symm g).ofConv x = 0 := by
+  rw [points_def]
+  exact TauCeti.UniversalEnvelopingAlgebra.mem_kostantToralPointsSubgroup_iff
+    _ _ _ _ _ _ _ _ A g
+
 /-! ## The pinning -/
 
 /-- A numbered root generator carries the coordinate basis vector at its source to the one at its
@@ -623,15 +638,15 @@ theorem torusPoints_conj_rootSubgroupParam (k : Fin r ⊕ Fin r) (A : CommAlgCat
     torusPoints r A s * rootSubgroupParam r k A u * (torusPoints r A s)⁻¹ =
       rootSubgroupParam r k A
         (Multiplicative.ofAdd
-          ((TauCeti.torusCharacter s (rootWeight r k) : A) *
+          ((TauCeti.torusCharacter s (rootGeneratorWeight r k) : A) *
             Multiplicative.toAdd u)) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_conj_kostantRootSubgroupParam
     _ _ _ _ _ _ _ (isCartanWeightVector_latticeBasis r)
     (fun j => lie_cartanGenerator_rootGenerator r k j) _ A s u
 
-/-- **The scheme-level pinning equation of the type `A_r` carrier.** Conjugation by a point of the
-split torus rescales the parameter of a numbered root subgroup by the corresponding root
-character. -/
+/-- **The pinning equation on `A`-valued scheme points of the type `A_r` carrier.** After
+corestriction to the carrier, conjugation by a split-torus point rescales the parameter of a
+numbered root subgroup by the corresponding root character. -/
 theorem weightTorus_conj_rootSubgroup (k : Fin r ⊕ Fin r) (A : Type) [CommRing A]
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ (Fin r)).X)
@@ -645,7 +660,7 @@ theorem weightTorus_conj_rootSubgroup (k : Fin r ⊕ Fin r) (A : Type) [CommRing
       (AdditiveGroup.schemePointsMulEquiv A).symm
           (Multiplicative.ofAdd
             ((TauCeti.torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
-              (rootWeight r k) : A) * u)) ≫
+              (rootGeneratorWeight r k) : A) * u)) ≫
         (rootSubgroup r k).hom.hom :=
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
     _ _ _ _ _ _ _ (isCartanWeightVector_latticeBasis r) (isNilpotent_rep_rootGenerator r) A
