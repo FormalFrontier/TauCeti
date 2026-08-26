@@ -16,13 +16,17 @@ A pair of integrable potentials `φ`, `ψ` satisfying the Kantorovich dual const
 concentrated on the *contact set* where that constraint is an equality, the two bounds meet:
 the plan is optimal, the pair is a dual optimizer, and there is no duality gap. This is
 complementary slackness, and the resulting data is the standard optimality certificate that the
-Monge, barycentre and entropic layers verify instead of re-solving a transport problem.
+Monge and barycentre layers verify instead of re-solving a transport problem.
 
 This file builds that certificate for the raw extended-nonnegative interface — an arbitrary cost
 `c : X × Y → ℝ≥0∞` on arbitrary measurable spaces — and shows that it is exact: in the
 dual-attainment regime, an optimal plan is concentrated on the contact set. No topology,
 compactness, or lower semicontinuity is used, so the certificate applies verbatim to the
-Borel-cost and entropic regimes where a dual optimizer is produced by other means.
+Borel-cost regime, where a dual optimizer is produced by other means. It is a statement
+about the *unregularized* Kantorovich problem only: an entropy-regularized optimizer is
+characterised by the stationarity condition `dπ / d(μ ⊗ ν) = exp ((φ ⊕ ψ - c) / ε)` and is
+typically of full support, so it is not concentrated on a contact set and no claim is made
+about it here.
 
 The last section defines `c`-cyclical monotonicity in Villani's finite-family form and proves
 that a contact set is always `c`-cyclically monotone. Hence a certified plan is concentrated on
