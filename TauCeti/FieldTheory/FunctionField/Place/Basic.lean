@@ -377,6 +377,7 @@ instance : IsScalarTower k P.integers F :=
 /-- A constant, viewed in `𝒪_P` and then back in `F`, is that constant.  The name says
 `constants` rather than `integers` because `TauCeti.Place.coe_algebraMap_integers` is the
 corresponding statement for the algebra map between the valuation rings of two places. -/
+@[simp, norm_cast]
 theorem coe_algebraMap_constants (c : k) :
     ((algebraMap k P.integers c : P.integers) : F) = algebraMap k F c := by
   rw [IsScalarTower.algebraMap_apply k P.integers F, ValuationSubring.algebraMap_apply]

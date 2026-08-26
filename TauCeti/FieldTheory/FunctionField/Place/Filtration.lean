@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Dimension.RankNullity
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
+public import TauCeti.LinearAlgebra.Dimension.Tower
 
 /-!
 # The order filtration of a function field at a place
@@ -16,9 +16,10 @@ together with the nonzero functions satisfying `ord_P z ≥ a` forms the `k`-sub
 
 `𝔪_P^a = {z ∈ F | v_P z ≤ exp (-a)}`
 
-of `F`, decreasing in `a`, equal to the valuation ring `𝒪_P` at `a = 0` and to the maximal ideal
-`𝔪_P` at `a = 1`.  For negative `a` it is the fractional ideal of functions with a pole of order
-at most `-a`, so the whole filtration lives inside `F` and no completion is taken.
+of `F`, decreasing in `a`.  At `a = 0` its membership condition is `v_P z ≤ 1`, that of the
+valuation ring `𝒪_P`, and at `a = 1` it is `v_P z < 1`, that of the maximal ideal `𝔪_P` of `𝒪_P`.
+For negative `a` it is the fractional ideal of functions with a pole of order at most `-a`, so the
+whole filtration lives inside `F` and no completion is taken.
 
 This file constructs that filtration and computes its successive quotients.  Multiplication by a
 function of order `-a` identifies `𝔪_P^a / 𝔪_P^(a + 1)` with the residue field `F_P`
@@ -42,7 +43,7 @@ these local quotients, and so computes `dim_k (A_F(E) / A_F(D)) = deg E - deg D`
 
 ## Main results
 
-* `TauCeti.Place.rank_quotient_filtration_succ`: one step of the filtration has the rank of the
+* `TauCeti.Place.rank_quotient_filtration_add_one`: one step of the filtration has the rank of the
   residue field.
 * `TauCeti.Place.finrank_quotient_filtration_add` and
   `TauCeti.Place.finrank_quotient_filtration`: `dim_k (𝔪_P^a / 𝔪_P^b) = (b - a) · deg P`, in the
@@ -93,10 +94,8 @@ The defining condition is the multiplicative `v_P z ≤ exp (-a)`, which is junk
 `TauCeti.Place.mem_filtration_iff_le_ord` is the additive form. -/
 noncomputable def filtration (P : Place k F) (a : ℤ) : Submodule k F :=
   letI : Algebra k P.valuation.integer :=
-    ((algebraMap k F).codRestrict P.valuation.integer fun c ↦ by
-      rcases eq_or_ne c 0 with rfl | hc
-      · simp
-      · exact (P.isTrivialOn.eq_one c hc).le).toAlgebra
+    ((algebraMap k F).codRestrict P.valuation.integer
+      (Valuation.IsTrivialOn.valuation_algebraMap_le_one P.valuation)).toAlgebra
   letI : IsScalarTower k P.valuation.integer F := .of_algebraMap_eq fun _ ↦ rfl
   (P.valuation.leSubmodule (WithZero.exp (-a))).restrictScalars k
 
@@ -120,28 +119,33 @@ theorem mem_filtration_iff_le_ord {a : ℤ} {z : F} (hz : z ≠ 0) :
 theorem mem_filtration_zero_iff {z : F} : z ∈ P.filtration 0 ↔ z ∈ P.integers := by
   simp [mem_integers_iff]
 
-/-- `𝔪_P^1` is the maximal ideal of `𝒪_P`. -/
-theorem mem_filtration_one_iff {z : F} (hz : z ≠ 0) :
-    z ∈ P.filtration 1 ↔ P.valuation z < 1 := by
-  rw [P.mem_filtration_iff_le_ord hz, P.valuation_lt_one_iff_ord_pos hz]
-  omega
+/-- Membership in `𝔪_P^1` is the maximal-ideal condition `v_P z < 1`
+(`TauCeti.Place.mem_maximalIdeal_iff_valuation_lt_one`): `𝔪_P^1` is the maximal ideal of `𝒪_P`,
+seen inside `F`. -/
+theorem mem_filtration_one_iff {z : F} : z ∈ P.filtration 1 ↔ P.valuation z < 1 := by
+  rcases eq_or_ne z 0 with rfl | hz
+  · simp
+  · rw [P.mem_filtration_iff_le_ord hz, P.valuation_lt_one_iff_ord_pos hz]
+    omega
 
 /-- The filtration decreases: vanishing to higher order is a stronger condition. -/
 theorem filtration_antitone : Antitone P.filtration := fun a b hab z hz ↦
-  hz.trans (WithZero.exp_le_exp.mpr (by omega))
+  P.mem_filtration_iff.mpr
+    ((P.mem_filtration_iff.mp hz).trans (WithZero.exp_le_exp.mpr (by omega)))
 
 /-- A function of order at least `a` and one of order at least `b` have a product of order at
 least `a + b`. -/
 theorem mul_mem_filtration {a b : ℤ} {z w : F} (hz : z ∈ P.filtration a)
     (hw : w ∈ P.filtration b) : z * w ∈ P.filtration (a + b) := by
-  have hz' : P.valuation z ≤ WithZero.exp (-a) := hz
-  have hw' : P.valuation w ≤ WithZero.exp (-b) := hw
   rw [mem_filtration_iff, map_mul, neg_add, WithZero.exp_add]
-  exact mul_le_mul' hz' hw'
+  exact mul_le_mul' (P.mem_filtration_iff.mp hz) (P.mem_filtration_iff.mp hw)
 
-/-- A nonzero function lies in the step of the filtration cut out by its own order. -/
-theorem mem_filtration_ord {z : F} (hz : z ≠ 0) : z ∈ P.filtration (P.ord z) :=
-  (P.mem_filtration_iff_le_ord hz).mpr le_rfl
+/-- A function lies in the step of the filtration cut out by its own order.  At `z = 0` this
+reads `0 ∈ 𝔪_P^0`, the junk value `ord_P 0 = 0` doing no harm. -/
+theorem mem_filtration_ord (z : F) : z ∈ P.filtration (P.ord z) := by
+  rcases eq_or_ne z 0 with rfl | hz
+  · simp
+  · exact (P.mem_filtration_iff_le_ord hz).mpr le_rfl
 
 /-! ### The successive quotients -/
 
@@ -151,47 +155,46 @@ variable {P} {a : ℤ} {s : F}
 
 /-- Multiplying a function of order at least `a` by one of order `-a` lands in the valuation
 ring: the integrality behind the evaluation map `TauCeti.Place.filtrationResidue`. -/
-theorem mul_mem_integers_of_mem_filtration (hs : P.ord s = -a) (hs0 : s ≠ 0) {z : F}
+theorem mul_mem_integers_of_mem_filtration (hs : P.ord s = -a) {z : F}
     (hz : z ∈ P.filtration a) : s * z ∈ P.integers := by
+  rcases eq_or_ne s 0 with rfl | hs0
+  · simp
   rcases eq_or_ne z 0 with rfl | hz0
   · simp
-  · rw [P.mem_integers_iff_ord_nonneg, P.ord_mul hs0 hz0, hs]
-    have := (P.mem_filtration_iff_le_ord hz0).mp hz
-    omega
+  rw [P.mem_integers_iff_ord_nonneg, P.ord_mul hs0 hz0, hs]
+  have := (P.mem_filtration_iff_le_ord hz0).mp hz
+  omega
 
 /-- Evaluation of `s · z` at `P`, for a fixed function `s` of order `-a`: a `k`-linear map from
 `𝔪_P^a` to the residue field `F_P`, whose kernel is `𝔪_P^(a + 1)` and which is surjective.  It
-is the local form of the evaluation map in Stichtenoth's proof of Lemma 1.4.8. -/
-noncomputable def filtrationResidue (hs : P.ord s = -a) (hs0 : s ≠ 0) :
+is the local form of the evaluation map in Stichtenoth's proof of Lemma 1.4.8.
+
+The nonvanishing hypothesis on `s` is not needed to define the map, but scopes it to the range
+where it is the intended one: `TauCeti.Place.ker_filtrationResidue` and
+`TauCeti.Place.filtrationResidue_surjective` both fail at `s = 0`. -/
+noncomputable def filtrationResidue (hs : P.ord s = -a) (_hs0 : s ≠ 0) :
     P.filtration a →ₗ[k] P.ResidueField where
   toFun z := IsScalarTower.toAlgHom k P.integers P.ResidueField
-    ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs hs0 z.2⟩
+    ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs z.2⟩
   map_add' z w := by
     rw [← map_add]
     exact congrArg _ (Subtype.ext (by push_cast; ring))
   map_smul' c z := by
     rw [RingHom.id_apply, ← map_smul]
-    exact congrArg _
-      (Subtype.ext (by push_cast [Algebra.smul_def, coe_algebraMap_constants]; ring))
+    exact congrArg _ (Subtype.ext (by push_cast [Algebra.smul_def]; ring))
 
 @[simp]
 theorem filtrationResidue_apply (hs : P.ord s = -a) (hs0 : s ≠ 0) (z : P.filtration a) :
     filtrationResidue hs hs0 z =
-      IsLocalRing.residue P.integers
-        ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs hs0 z.2⟩ :=
+      IsLocalRing.residue P.integers ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs z.2⟩ :=
   (rfl)
 
-/-- The evaluation `z ↦ (s · z)(P)` kills exactly the next step of the filtration. -/
-theorem ker_filtrationResidue (hs : P.ord s = -a) (hs0 : s ≠ 0) :
-    LinearMap.ker (filtrationResidue hs hs0) =
-      (P.filtration (a + 1)).submoduleOf (P.filtration a) := by
-  have hmem : ∀ z : P.filtration a,
-      z ∈ (P.filtration (a + 1)).submoduleOf (P.filtration a) ↔
-        (z : F) ∈ P.filtration (a + 1) := fun _ ↦ Iff.rfl
-  ext z
-  rw [LinearMap.mem_ker, hmem, filtrationResidue_apply]
+/-- The evaluation `z ↦ (s · z)(P)` vanishes exactly on the next step of the filtration. -/
+theorem filtrationResidue_eq_zero_iff (hs : P.ord s = -a) (hs0 : s ≠ 0) (z : P.filtration a) :
+    filtrationResidue hs hs0 z = 0 ↔ (z : F) ∈ P.filtration (a + 1) := by
+  rw [filtrationResidue_apply]
   rcases eq_or_ne (z : F) 0 with hz0 | hz0
-  · have h0 : (⟨s * (z : F), mul_mem_integers_of_mem_filtration hs hs0 z.2⟩ : P.integers) = 0 :=
+  · have h0 : (⟨s * (z : F), mul_mem_integers_of_mem_filtration hs z.2⟩ : P.integers) = 0 :=
       Subtype.ext (by simp [hz0])
     rw [h0, map_zero, hz0]
     simp
@@ -199,8 +202,18 @@ theorem ker_filtrationResidue (hs : P.ord s = -a) (hs0 : s ≠ 0) :
       P.mem_filtration_iff_le_ord hz0]
     omega
 
+/-- The evaluation `z ↦ (s · z)(P)` kills exactly the next step of the filtration. -/
+theorem ker_filtrationResidue (hs : P.ord s = -a) (hs0 : s ≠ 0) :
+    LinearMap.ker (filtrationResidue hs hs0) =
+      (P.filtration (a + 1)).submoduleOf (P.filtration a) := by
+  have hmem : ∀ w : P.filtration a,
+      w ∈ (P.filtration (a + 1)).submoduleOf (P.filtration a) ↔ (w : F) ∈ P.filtration (a + 1) :=
+    fun _ ↦ Submodule.mem_comap
+  ext z
+  rw [LinearMap.mem_ker, hmem, filtrationResidue_eq_zero_iff]
+
 /-- Every residue is attained: `z ↦ (s · z)(P)` maps `𝔪_P^a` onto the residue field. -/
-theorem surjective_filtrationResidue (hs : P.ord s = -a) (hs0 : s ≠ 0) :
+theorem filtrationResidue_surjective (hs : P.ord s = -a) (hs0 : s ≠ 0) :
     Function.Surjective (filtrationResidue hs hs0) := by
   intro ξ
   obtain ⟨u, rfl⟩ := IsLocalRing.residue_surjective (R := P.integers) ξ
@@ -222,51 +235,24 @@ noncomputable def filtrationQuotientEquivResidueField (hs : P.ord s = -a) (hs0 :
     (↥(P.filtration a) ⧸ (P.filtration (a + 1)).submoduleOf (P.filtration a)) ≃ₗ[k]
       P.ResidueField :=
   (Submodule.quotEquivOfEq _ _ (ker_filtrationResidue hs hs0).symm).trans
-    ((filtrationResidue hs hs0).quotKerEquivOfSurjective (surjective_filtrationResidue hs hs0))
+    ((filtrationResidue hs hs0).quotKerEquivOfSurjective (filtrationResidue_surjective hs hs0))
 
 /-- The quotient equivalence evaluates the residue of `s * z` on a representative `z`. -/
 @[simp]
 theorem filtrationQuotientEquivResidueField_apply_mk (hs : P.ord s = -a) (hs0 : s ≠ 0)
     (z : P.filtration a) :
     filtrationQuotientEquivResidueField hs hs0 (Submodule.Quotient.mk z) =
-      IsLocalRing.residue P.integers
-        ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs hs0 z.2⟩ := by
+      IsLocalRing.residue P.integers ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs z.2⟩ := by
   simp [filtrationQuotientEquivResidueField]
 
 end Residue
 
 /-- One step of the order filtration has the rank of the residue field. -/
-theorem rank_quotient_filtration_succ (a : ℤ) :
+theorem rank_quotient_filtration_add_one (a : ℤ) :
     Module.rank k (↥(P.filtration a) ⧸ (P.filtration (a + 1)).submoduleOf (P.filtration a)) =
       Module.rank k P.ResidueField := by
   obtain ⟨s, hs0, hs⟩ := P.exists_ne_zero_ord_eq (-a)
   exact (filtrationQuotientEquivResidueField hs hs0).rank_eq
-
-/-- Rank is additive along a tower `p ≤ q ≤ r` of subspaces: the relative quotients of the two
-steps add up to the relative quotient of the composite.  This is Noether's third isomorphism
-theorem together with rank–nullity, and is what turns the one-step computation
-`TauCeti.Place.rank_quotient_filtration_succ` into the dimension formula below. -/
-private lemma rank_quotient_submoduleOf_tower {M : Type*} [AddCommGroup M] [Module k M]
-    {p q r : Submodule k M} (hpq : p ≤ q) (hqr : q ≤ r) :
-    Module.rank k (↥r ⧸ p.submoduleOf r) =
-      Module.rank k (↥q ⧸ p.submoduleOf q) + Module.rank k (↥r ⧸ q.submoduleOf r) := by
-  have hAB : p.submoduleOf r ≤ q.submoduleOf r := Submodule.comap_mono hpq
-  set A := p.submoduleOf r with hA
-  set f : ↥q →ₗ[k] (↥r ⧸ A) := A.mkQ ∘ₗ Submodule.inclusion hqr with hf
-  have hker : LinearMap.ker f = p.submoduleOf q := by
-    ext z
-    simp [hf, hA, Submodule.submoduleOf, Submodule.inclusion]
-  have hrange : LinearMap.range f = (q.submoduleOf r).map A.mkQ := by
-    rw [hf, LinearMap.range_comp, Submodule.range_inclusion]
-    rfl
-  have e₁ : (↥q ⧸ p.submoduleOf q) ≃ₗ[k] ↥((q.submoduleOf r).map A.mkQ) :=
-    (Submodule.quotEquivOfEq _ _ hker.symm).trans
-      ((f.quotKerEquivRange).trans (LinearEquiv.ofEq _ _ hrange))
-  have e₂ : ((↥r ⧸ A) ⧸ (q.submoduleOf r).map A.mkQ) ≃ₗ[k] (↥r ⧸ q.submoduleOf r) :=
-    Submodule.quotientQuotientEquivQuotient A (q.submoduleOf r) hAB
-  have key := Submodule.rank_quotient_add_rank ((q.submoduleOf r).map A.mkQ)
-  rw [e₂.rank_eq, ← e₁.rank_eq] at key
-  rw [← key, add_comm]
 
 /-- Transport of a relative rank along an equality of indices, which lets the induction below
 step from `a + (n + 1 : ℕ)` to `(a + n) + 1` without rewriting inside a quotient type. -/
@@ -291,7 +277,7 @@ theorem rank_quotient_filtration_add (a : ℤ) (n : ℕ) :
     have hpq : P.filtration (a + n + 1) ≤ P.filtration (a + n) := P.filtration_antitone (by omega)
     have hqr : P.filtration (a + n) ≤ P.filtration a := P.filtration_antitone (by omega)
     rw [rank_quotient_filtration_congr P hcast, rank_quotient_submoduleOf_tower hpq hqr,
-      rank_quotient_filtration_succ, ih]
+      rank_quotient_filtration_add_one, ih]
     push_cast
     ring
 
