@@ -26,9 +26,7 @@ numbered raising and lowering generators with the ones numbered by `σ`, and it 
 weights contragrediently. On the group-scheme side,
 `TauCeti.UniversalEnvelopingAlgebra.kostantToralNumberedSymmetryIso` converts exactly that data
 into an automorphism of a Kostant toral closure. What this file supplies is the missing bridge
-between them, the permutation `TauCeti.DynkinType.geckDiagramBasisPerm` of the finite-ordinal
-coordinate basis, and the resulting named automorphism of the pinned carrier with its pinning
-equations.
+between them and the resulting named automorphism of the pinned carrier with its pinning equations.
 
 Writing `γ` for the automorphism, `xᵢ` for the root subgroup of the numbered generator `i` and
 `T` for the represented weight torus, those equations are
@@ -38,10 +36,9 @@ Writing `γ` for the automorphism, `xᵢ` for the root subgroup of the numbered 
 ```
 
 with `σ` acting on the raising and lowering halves of the generator index by the same node
-permutation. The first is the defining equation of a graph automorphism of a pinned group: it fixes
-`γ` once the pinning is fixed, and it is stated on the simple root subgroups only, which is where a
-pinning normalizes the parameter. The second says that `γ` normalizes the torus and acts on its
-cocharacters by the node permutation.
+permutation. The first is the expected pinning equation for a graph automorphism, stated on the
+simple root subgroups where a pinning normalizes the parameter. The second says that `γ` normalizes
+the torus and acts on its cocharacters by the node permutation.
 
 The construction is multiplicative in the node permutation, and
 `TauCeti.DynkinType.geckDiagramAutHom` records that as a homomorphism out of the symmetry group of
@@ -58,8 +55,6 @@ isomorphism theorem for pinned groups, which is not proved here.
 
 ## Main definitions
 
-* `TauCeti.DynkinType.geckDiagramBasisPerm`: the permutation of the finite-ordinal Geck coordinate
-  basis induced by a diagram symmetry.
 * `TauCeti.DynkinType.geckDiagramAut`: the induced automorphism of the pinned Geck carrier.
 * `TauCeti.DynkinType.geckDiagramAutHom`: the same construction as a homomorphism out of the
   symmetry group of the Bourbaki-numbered Cartan matrix.
@@ -115,14 +110,14 @@ variable {t : DynkinType} (ht : t.Valid) {sigma tau : Equiv.Perm (Fin t.rank)}
 /-- The permutation of the finite-ordinal Geck coordinate basis induced by a symmetry of the
 Bourbaki-numbered Dynkin diagram. It is `TauCeti.DynkinType.geckDiagramIndexEquiv` read through the
 `Fintype.equivFin` ordering of the Geck index. -/
-def geckDiagramBasisPerm (hsigma : sigma ∈ t.diagramSymmetry) :
+private def geckDiagramBasisPerm (hsigma : sigma ∈ t.diagramSymmetry) :
     Equiv.Perm (Fin (t.geckDim ht)) :=
   (Fintype.equivFin (t.GeckIndex ht)).permCongr (t.geckDiagramIndexEquiv ht hsigma)
 
 /-- The coordinate basis permutation acts by transporting the Geck-index permutation along the
 `Fintype.equivFin` ordering. -/
 @[simp]
-theorem geckDiagramBasisPerm_apply (hsigma : sigma ∈ t.diagramSymmetry)
+private theorem geckDiagramBasisPerm_apply (hsigma : sigma ∈ t.diagramSymmetry)
     (i : Fin (t.geckDim ht)) :
     t.geckDiagramBasisPerm ht hsigma i =
       Fintype.equivFin (t.GeckIndex ht)
@@ -131,7 +126,8 @@ theorem geckDiagramBasisPerm_apply (hsigma : sigma ∈ t.diagramSymmetry)
 
 /-- **The pinned module symmetry permutes the finite-ordinal coordinate basis.** This is the
 basis-permutation hypothesis of the Kostant toral-closure symmetry construction. -/
-theorem geckDiagramModuleEquiv_coe_geckCoordinateBasisFin (hsigma : sigma ∈ t.diagramSymmetry)
+private theorem geckDiagramModuleEquiv_coe_geckCoordinateBasisFin
+    (hsigma : sigma ∈ t.diagramSymmetry)
     (i : Fin (t.geckDim ht)) :
     t.geckDiagramModuleEquiv ht hsigma
         ((t.geckCoordinateBasisFin ht i : (t.geckCoordinateLattice ht).toAddSubgroup) :
@@ -144,7 +140,7 @@ theorem geckDiagramModuleEquiv_coe_geckCoordinateBasisFin (hsigma : sigma ∈ t.
 /-- **The finite-ordinal Geck weights are equivariant** for the coordinate basis permutation and
 the node permutation. This is the weight hypothesis of the Kostant toral-closure symmetry
 construction. -/
-theorem geckWeightFin_geckDiagramBasisPerm (hsigma : sigma ∈ t.diagramSymmetry)
+private theorem geckWeightFin_geckDiagramBasisPerm (hsigma : sigma ∈ t.diagramSymmetry)
     (i : Fin (t.geckDim ht)) (k : Fin t.rank) :
     t.geckWeightFin ht (t.geckDiagramBasisPerm ht hsigma i) (sigma k) =
       t.geckWeightFin ht i k := by
@@ -204,8 +200,7 @@ private theorem inv_geckDiagramAut (hsigma : sigma ∈ t.diagramSymmetry) :
 /-! ## The pinning equations -/
 
 /-- **The graph automorphism carries the `i`th numbered root subgroup to the one numbered by the
-permuted index**, without changing its additive parameter. This is the equation a pinning fixes the
-automorphism by. -/
+permuted index**, without changing its additive parameter. This is the expected pinning equation. -/
 @[simp]
 theorem geckRootSubgroup_comp_geckDiagramAut_hom (hsigma : sigma ∈ t.diagramSymmetry)
     (i : Fin t.rank ⊕ Fin t.rank) :
