@@ -73,8 +73,11 @@ same two pieces the geometric picture uses.
   `link_stellarSubdivision_singleton`: away from the new vertex the subdivision is `deletion K σ`,
   and the link of the new vertex is the boundary `closedStar K σ ⊓ deletion K σ` of the closed
   star.
+* `PreAbstractSimplicialComplex.map_stellarSubdivision`: injective relabeling commutes with
+  stellar subdivision.
 * `PreAbstractSimplicialComplex.dimension_stellarSubdivision`: starring preserves the dimension.
-* `PreAbstractSimplicialComplex.finite_faces_stellarSubdivision`: starring preserves finiteness.
+* `PreAbstractSimplicialComplex.finite_faces_stellarSubdivision_iff`: a genuine starring
+  preserves and reflects finiteness.
 * `PreAbstractSimplicialComplex.isCone_stellarSubdivision_of_closedStar_eq_self`: starring a
   complex that is its own closed star at `σ` produces a cone with apex the new vertex; for a
   simplex, `PreAbstractSimplicialComplex.link_stellarSubdivision_simplex_self` identifies the
@@ -263,7 +266,7 @@ theorem link_stellarSubdivision_singleton (hv : ({v} : Finset ι) ∉ K) :
     exact ⟨hne, Finset.disjoint_singleton_right.mpr hvρ,
       (insert_mem_stellarSubdivision_iff hvρ).mpr ⟨hρσ, hstar⟩⟩
 
-/-! ### Dimension and finiteness -/
+/-! ### Relabeling -/
 
 /-- An injective relabeling commutes with stellar subdivision. -/
 @[simp]
@@ -272,50 +275,41 @@ theorem map_stellarSubdivision {κ : Type*} [DecidableEq κ] (f : ι → κ)
     (stellarSubdivision K σ v).map f = stellarSubdivision (K.map f) (σ.image f) (f v) := by
   ext ω
   constructor
+  -- Map a source face through the two clauses defining stellar subdivision.
   · intro hω
-    change ∃ τ, τ ∈ stellarSubdivision K σ v ∧ τ.image f = ω at hω
-    obtain ⟨τ, hτ, rfl⟩ := hω
+    have hωmap : ω ∈ (stellarSubdivision K σ v).map f := hω
+    rw [mem_map_iff] at hωmap
+    obtain ⟨τ, hτ, rfl⟩ := hωmap
     rw [mem_stellarSubdivision_iff] at hτ
     apply mem_stellarSubdivision_iff.mpr
     rcases hτ with ⟨hvτ, hτK, hτσ⟩ | ⟨hvτ, hτσ, hτK⟩
-    · refine Or.inl ⟨?_, ⟨τ, hτK, rfl⟩, ?_⟩
-      · rintro h
-        obtain ⟨x, hx, hfx⟩ := Finset.mem_image.mp h
-        exact hvτ ((hf hfx) ▸ hx)
+    · refine Or.inl ⟨fun h => hvτ (hf.mem_finset_image.mp h),
+        mem_map_iff.mpr ⟨τ, hτK, rfl⟩, ?_⟩
       · exact fun h => hτσ ((Finset.image_subset_image_iff hf).mp h)
     · refine Or.inr ⟨Finset.mem_image.mpr ⟨v, hvτ, rfl⟩, ?_, ?_⟩
       · rw [← Finset.image_erase hf]
         exact fun h => hτσ ((Finset.image_subset_image_iff hf).mp h)
       · rw [← Finset.image_erase hf, ← Finset.image_union]
-        exact ⟨τ.erase v ∪ σ, hτK, rfl⟩
+        exact mem_map_iff.mpr ⟨τ.erase v ∪ σ, hτK, rfl⟩
+  -- Lift a target face uniquely back through the injective relabeling.
   · intro hω
     have hω' := mem_stellarSubdivision_iff.mp hω
-    change ∃ τ, τ ∈ stellarSubdivision K σ v ∧ τ.image f = ω
+    apply mem_map_iff.mpr
     rcases hω' with ⟨hvω, hωK, hωσ⟩ | ⟨hvω, hωσ, hωK⟩
-    · change ∃ τ, τ ∈ K ∧ τ.image f = ω at hωK
+    · rw [mem_map_iff] at hωK
       obtain ⟨τ, hτK, rfl⟩ := hωK
       have hvτ : v ∉ τ := fun h => hvω (Finset.mem_image.mpr ⟨v, h, rfl⟩)
       refine ⟨τ, mem_stellarSubdivision_iff.mpr (Or.inl ⟨hvτ, hτK, ?_⟩), rfl⟩
       exact fun h => hωσ (Finset.image_subset_image h)
-    · change ∃ η, η ∈ K ∧ η.image f = ω.erase (f v) ∪ σ.image f at hωK
+    · rw [mem_map_iff] at hωK
       obtain ⟨η, hηK, hη⟩ := hωK
-      let ρ := η.filter fun x => f x ∈ ω.erase (f v)
-      have hρω : ρ.image f = ω.erase (f v) := by
-        ext y
-        constructor
-        · rintro hy
-          obtain ⟨x, hx, rfl⟩ := Finset.mem_image.mp hy
-          exact (Finset.mem_filter.mp hx).2
-        · intro hy
-          have hy' : y ∈ η.image f := by
-            rw [hη]
-            exact Finset.mem_union_left _ hy
-          obtain ⟨x, hxη, hxy⟩ := Finset.mem_image.mp hy'
-          subst y
-          exact Finset.mem_image.mpr ⟨x, Finset.mem_filter.mpr ⟨hxη, hy⟩, rfl⟩
+      obtain ⟨ρ, -, hρω⟩ := Finset.subset_image_iff.mp
+        (hη ▸ Finset.subset_union_left : ω.erase (f v) ⊆ η.image f)
       have hvρ : v ∉ ρ := by
         intro hvρ
-        exact Finset.notMem_erase (f v) ω ((Finset.mem_filter.mp hvρ).2)
+        have hmem : f v ∈ ρ.image f := Finset.mem_image_of_mem f hvρ
+        rw [hρω] at hmem
+        exact Finset.notMem_erase (f v) ω hmem
       have hρσ : ¬ σ ⊆ ρ := by
         intro h
         apply hωσ
@@ -329,6 +323,8 @@ theorem map_stellarSubdivision {κ : Type*} [DecidableEq κ] (f : ι → κ)
         exact ⟨hρσ, by rwa [hρη_eq]⟩
       refine ⟨insert v ρ, hsource, ?_⟩
       rw [Finset.image_insert, hρω, Finset.insert_erase hvω]
+
+/-! ### Dimension and finiteness -/
 
 /-- **Starring a nonempty set at a fresh vertex preserves the dimension.** -/
 @[simp]
@@ -382,6 +378,58 @@ theorem finite_faces_stellarSubdivision (hfin : K.faces.Finite) :
         Finset.insert_erase hvτ⟩)
   exact Set.Finite.subset (hfin.union (Set.Finite.biUnion hfin fun ω _ =>
     Set.Finite.image _ ω.powerset.finite_toSet)) hsub
+
+/-- The face of a stellar subdivision that records a source face. Faces containing the starred
+face are recorded by adjoining the new vertex to their complement; all other faces survive. -/
+private def starRecord (σ : Finset ι) (v : ι) (τ : Finset ι) : Finset ι :=
+  if σ ⊆ τ then insert v (τ \ σ) else τ
+
+private theorem starRecord_of_subset (h : σ ⊆ τ) :
+    starRecord σ v τ = insert v (τ \ σ) := by
+  simp [starRecord, h]
+
+private theorem starRecord_of_not_subset (h : ¬ σ ⊆ τ) : starRecord σ v τ = τ := by
+  simp [starRecord, h]
+
+private theorem starRecord_mem (hσ : σ ∈ K) (hv : ({v} : Finset ι) ∉ K) (hτ : τ ∈ K) :
+    starRecord σ v τ ∈ stellarSubdivision K σ v := by
+  have hvτ : v ∉ τ := notMem_of_singleton_notMem hv hτ
+  by_cases hsub : σ ⊆ τ
+  · have hvsdiff : v ∉ τ \ σ := fun h => hvτ (Finset.mem_sdiff.mp h).1
+    rw [starRecord_of_subset hsub]
+    refine (insert_mem_stellarSubdivision_iff hvsdiff).mpr ⟨?_, ?_⟩
+    · obtain ⟨x, hx⟩ := (K.isRelLowerSet_faces hσ).1
+      exact fun h => (Finset.mem_sdiff.mp (h hx)).2 hx
+    · rwa [Finset.sdiff_union_of_subset hsub]
+  · rw [starRecord_of_not_subset hsub]
+    exact (mem_stellarSubdivision_iff_of_notMem hvτ).mpr ⟨hτ, hsub⟩
+
+private theorem starRecord_injOn (hv : ({v} : Finset ι) ∉ K) :
+    Set.InjOn (starRecord σ v) K.faces := by
+  intro τ₁ h₁ τ₂ h₂ heq
+  have hv₁ : v ∉ τ₁ := notMem_of_singleton_notMem hv h₁
+  have hv₂ : v ∉ τ₂ := notMem_of_singleton_notMem hv h₂
+  by_cases hs₁ : σ ⊆ τ₁ <;> by_cases hs₂ : σ ⊆ τ₂
+  · have hd₁ : v ∉ τ₁ \ σ := fun h => hv₁ (Finset.mem_sdiff.mp h).1
+    have hd₂ : v ∉ τ₂ \ σ := fun h => hv₂ (Finset.mem_sdiff.mp h).1
+    rw [starRecord_of_subset hs₁, starRecord_of_subset hs₂] at heq
+    have hsdiff : τ₁ \ σ = τ₂ \ σ := by
+      have := congrArg (fun s => Finset.erase s v) heq
+      rwa [Finset.erase_insert hd₁, Finset.erase_insert hd₂] at this
+    rw [← Finset.sdiff_union_of_subset hs₁, ← Finset.sdiff_union_of_subset hs₂, hsdiff]
+  · rw [starRecord_of_subset hs₁, starRecord_of_not_subset hs₂] at heq
+    exact absurd (heq ▸ Finset.mem_insert_self v (τ₁ \ σ)) hv₂
+  · rw [starRecord_of_not_subset hs₁, starRecord_of_subset hs₂] at heq
+    exact absurd (heq ▸ Finset.mem_insert_self v (τ₂ \ σ)) hv₁
+  · rwa [starRecord_of_not_subset hs₁, starRecord_of_not_subset hs₂] at heq
+
+/-- A genuine stellar subdivision preserves and reflects finiteness of the face collection. -/
+theorem finite_faces_stellarSubdivision_iff (hσ : σ ∈ K) (hv : ({v} : Finset ι) ∉ K) :
+    (stellarSubdivision K σ v).faces.Finite ↔ K.faces.Finite := by
+  refine ⟨fun hfin => ?_, finite_faces_stellarSubdivision⟩
+  refine Set.Finite.of_finite_image (hfin.subset ?_) (starRecord_injOn (σ := σ) hv)
+  rintro ω ⟨ρ, hρ, rfl⟩
+  exact starRecord_mem hσ hv hρ
 
 /-! ### Starring a closed star, and the standard model
 

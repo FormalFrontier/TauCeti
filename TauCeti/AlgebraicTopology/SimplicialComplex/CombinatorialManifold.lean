@@ -23,8 +23,8 @@ The models are the complexes of `Simplex.Basic`: `simplex V` for a vertex set of
 elements, and `simplexBoundary V` for one of `n + 2` elements, so that both models have dimension
 `n`. They are compared using
 `PreAbstractSimplicialComplex.StellarEquivalentUpToRelabeling`, which injectively relabels both
-complexes in a common enlarged vertex type. Thus the definitions do not depend on the names of
-the original vertices.
+complexes in a common enlarged vertex type; the comparison relation therefore quantifies over
+the chosen vertex names.
 
 ## The dimension convention, and why `0` is a separate case
 
@@ -48,12 +48,13 @@ silently wrong rather than merely unused. The two cases are exposed by
   `PreAbstractSimplicialComplex.IsCombinatorialSphere.dimension_eq`: a combinatorial `n`-ball and
   a combinatorial `n`-sphere both have dimension `n`.
 * `PreAbstractSimplicialComplex.isCombinatorialManifold_simplex`: the standard `n`-simplex is
-  a combinatorial `n`-manifold, every vertex being a boundary vertex.
+  a combinatorial `n`-manifold.
 * `PreAbstractSimplicialComplex.isCombinatorialManifold_simplexBoundary`: the boundary of the
-  standard `(n+1)`-simplex is a combinatorial `n`-manifold, every vertex being an interior
-  vertex.
+  standard `(n+1)`-simplex is a combinatorial `n`-manifold.
 * `PreAbstractSimplicialComplex.IsCombinatorialManifold.dimension_le`: a combinatorial
   `n`-manifold has dimension at most `n`.
+* `PreAbstractSimplicialComplex.IsCombinatorialManifold.dimension_eq`: a nonvoid combinatorial
+  `n`-manifold has dimension exactly `n`.
 
 ## References
 
@@ -72,25 +73,24 @@ variable {ι : Type*} [DecidableEq ι] {K L : PreAbstractSimplicialComplex ι} {
 
 /-! ### Combinatorial balls and spheres -/
 
-/-- `K` is a **combinatorial `n`-ball** when it is stellar equivalent to the simplex on some
-`(n + 1)`-element vertex set, the standard `n`-simplex. -/
+/-- `K` is a **combinatorial `n`-ball** when it is stellar equivalent up to relabeling to the
+simplex on some `(n + 1)`-element vertex set, the standard `n`-simplex. -/
 def IsCombinatorialBall (K : PreAbstractSimplicialComplex ι) (n : ℕ) : Prop :=
   ∃ V : Finset ι, V.card = n + 1 ∧ StellarEquivalentUpToRelabeling K (simplex V)
 
-/-- `K` is a **combinatorial `n`-sphere** when it is stellar equivalent to the boundary of the
-simplex on some `(n + 2)`-element vertex set, the boundary of the standard `(n+1)`-simplex. -/
+/-- `K` is a **combinatorial `n`-sphere** when it is stellar equivalent up to relabeling to the
+boundary of the simplex on some `(n + 2)`-element vertex set, the boundary of the standard
+`(n+1)`-simplex. -/
 def IsCombinatorialSphere (K : PreAbstractSimplicialComplex ι) (n : ℕ) : Prop :=
   ∃ V : Finset ι, V.card = n + 2 ∧ StellarEquivalentUpToRelabeling K (simplexBoundary V)
 
 /-- The witness characterization of a combinatorial ball. -/
-@[simp]
 theorem isCombinatorialBall_iff :
     IsCombinatorialBall K n ↔
       ∃ V : Finset ι, V.card = n + 1 ∧ StellarEquivalentUpToRelabeling K (simplex V) :=
   Iff.rfl
 
 /-- The witness characterization of a combinatorial sphere. -/
-@[simp]
 theorem isCombinatorialSphere_iff :
     IsCombinatorialSphere K n ↔
       ∃ V : Finset ι, V.card = n + 2 ∧
@@ -114,31 +114,27 @@ theorem IsCombinatorialBall.of_stellarEquivalentUpToRelabeling
   obtain ⟨V, hV, hLV⟩ := hL
   exact ⟨V, hV, h.trans hLV⟩
 
-/-- Starring the top face of the standard `n`-simplex at a fresh vertex gives a combinatorial
-`n`-ball. -/
-theorem isCombinatorialBall_stellarSubdivision_simplex (hV : V.card = n + 1) (hv : v ∉ V) :
-    IsCombinatorialBall (stellarSubdivision (simplex V) V v) n :=
-  IsCombinatorialBall.of_stellarEquivalentUpToRelabeling
-    (stellarEquivalent_stellarSubdivision (self_mem_simplex.mpr (Finset.card_pos.mp (by omega)))
-      (fun h => hv (singleton_mem_simplex.mp h))).symm.stellarEquivalentUpToRelabeling
-    (isCombinatorialBall_simplex hV)
-
-/-- A one-vertex simplex is a combinatorial `0`-ball. -/
-theorem isCombinatorialBall_simplex_singleton (v : ι) :
-    IsCombinatorialBall (simplex {v}) 0 :=
-  isCombinatorialBall_simplex (Finset.card_singleton v)
-
-/-- The two vertices of an edge form a combinatorial `0`-sphere. -/
-theorem isCombinatorialSphere_simplexBoundary_pair (hvw : v ≠ w) :
-    IsCombinatorialSphere (simplexBoundary {v, w}) 0 :=
-  isCombinatorialSphere_simplexBoundary (Finset.card_pair hvw)
-
 /-- Being a combinatorial sphere transfers along an intrinsic stellar equivalence. -/
 theorem IsCombinatorialSphere.of_stellarEquivalentUpToRelabeling
     (h : StellarEquivalentUpToRelabeling K L)
     (hL : IsCombinatorialSphere L n) : IsCombinatorialSphere K n := by
   obtain ⟨V, hV, hLV⟩ := hL
   exact ⟨V, hV, h.trans hLV⟩
+
+/-- Starring a face of a combinatorial ball at a fresh vertex gives another combinatorial ball. -/
+theorem IsCombinatorialBall.stellarSubdivision (h : IsCombinatorialBall K n) (hσ : σ ∈ K)
+    (hv : ({v} : Finset ι) ∉ K) :
+    IsCombinatorialBall (stellarSubdivision K σ v) n :=
+  IsCombinatorialBall.of_stellarEquivalentUpToRelabeling
+    (stellarEquivalent_stellarSubdivision hσ hv).symm.stellarEquivalentUpToRelabeling h
+
+/-- Starring a face of a combinatorial sphere at a fresh vertex gives another combinatorial
+sphere. -/
+theorem IsCombinatorialSphere.stellarSubdivision (h : IsCombinatorialSphere K n) (hσ : σ ∈ K)
+    (hv : ({v} : Finset ι) ∉ K) :
+    IsCombinatorialSphere (stellarSubdivision K σ v) n :=
+  IsCombinatorialSphere.of_stellarEquivalentUpToRelabeling
+    (stellarEquivalent_stellarSubdivision hσ hv).symm.stellarEquivalentUpToRelabeling h
 
 /-- A combinatorial `n`-ball has dimension `n`. -/
 theorem IsCombinatorialBall.dimension_eq (h : IsCombinatorialBall K n) :
@@ -167,24 +163,17 @@ theorem IsCombinatorialSphere.finite_faces (h : IsCombinatorialSphere K n) : K.f
 
 /-- A combinatorial ball has a face; in particular it is not the void complex. -/
 theorem IsCombinatorialBall.ne_bot (h : IsCombinatorialBall K n) : K ≠ ⊥ := by
-  obtain ⟨V, hV, he⟩ := h
-  apply he.ne_bot
   intro hbot
-  have hVne : V.Nonempty := Finset.card_pos.mp (by omega)
-  have hmem : V ∈ simplex V := self_mem_simplex.mpr hVne
-  rw [hbot] at hmem
-  exact hmem.elim
+  have hdim := h.dimension_eq
+  rw [hbot, dimension_bot] at hdim
+  exact (WithBot.natCast_ne_bot n) hdim.symm
 
 /-- A combinatorial sphere has a face; in particular it is not the void complex. -/
 theorem IsCombinatorialSphere.ne_bot (h : IsCombinatorialSphere K n) : K ≠ ⊥ := by
-  obtain ⟨V, hV, he⟩ := h
-  apply he.ne_bot
-  obtain ⟨v, hv⟩ : V.Nonempty := Finset.card_pos.mp (by omega)
   intro hbot
-  have hmem : ({v} : Finset ι) ∈ simplexBoundary V :=
-    singleton_mem_simplexBoundary.mpr ⟨hv, fun h => by simp [h] at hV⟩
-  rw [hbot] at hmem
-  exact hmem.elim
+  have hdim := h.dimension_eq
+  rw [hbot, dimension_bot] at hdim
+  exact (WithBot.natCast_ne_bot n) hdim.symm
 
 /-! ### Combinatorial manifolds -/
 
@@ -201,26 +190,23 @@ def IsCombinatorialManifold (K : PreAbstractSimplicialComplex ι) : ℕ → Prop
       IsCombinatorialSphere (link K {v}) n ∨ IsCombinatorialBall (link K {v}) n
 
 /-- In dimension `0` the link condition says that every vertex has void link. -/
-@[simp]
 theorem isCombinatorialManifold_zero_iff :
     IsCombinatorialManifold K 0 ↔ ∀ ⦃v : ι⦄, ({v} : Finset ι) ∈ K → link K {v} = ⊥ :=
   Iff.rfl
 
 /-- In positive dimension the link condition says that every vertex link is a combinatorial
 sphere or ball one dimension down. -/
-@[simp]
 theorem isCombinatorialManifold_succ_iff :
     IsCombinatorialManifold K (n + 1) ↔ ∀ ⦃v : ι⦄, ({v} : Finset ι) ∈ K →
       IsCombinatorialSphere (link K {v}) n ∨ IsCombinatorialBall (link K {v}) n :=
   Iff.rfl
 
-/-- The standard `n`-simplex is a combinatorial `n`-manifold. In positive dimension every vertex
-is a boundary vertex. -/
+/-- The standard `n`-simplex is a combinatorial `n`-manifold. -/
 theorem isCombinatorialManifold_simplex (hV : V.card = n + 1) :
     IsCombinatorialManifold (simplex V) n := by
   cases n with
   | zero =>
-      intro v hv
+      refine isCombinatorialManifold_zero_iff.mpr fun v hv => ?_
       have hvmem : v ∈ V := singleton_mem_simplex.mp hv
       have hcard : (V \ {v}).card = V.card - 1 := by
         rw [Finset.card_sdiff_of_subset (Finset.singleton_subset_iff.mpr hvmem),
@@ -228,7 +214,7 @@ theorem isCombinatorialManifold_simplex (hV : V.card = n + 1) :
       have hempty : V \ {v} = ∅ := Finset.card_eq_zero.mp (by omega)
       rw [link_simplex (Finset.singleton_subset_iff.mpr hvmem), hempty, simplex_empty]
   | succ n =>
-      intro v hv
+      refine isCombinatorialManifold_succ_iff.mpr fun v hv => ?_
       have hvmem : v ∈ V := singleton_mem_simplex.mp hv
       rw [link_simplex (Finset.singleton_subset_iff.mpr hvmem)]
       refine Or.inr (isCombinatorialBall_simplex ?_)
@@ -236,13 +222,12 @@ theorem isCombinatorialManifold_simplex (hV : V.card = n + 1) :
         Finset.card_singleton, hV]
       omega
 
-/-- The boundary of the standard `(n+1)`-simplex is a combinatorial `n`-manifold. In positive
-dimension every vertex is an interior vertex. -/
+/-- The boundary of the standard `(n+1)`-simplex is a combinatorial `n`-manifold. -/
 theorem isCombinatorialManifold_simplexBoundary (hV : V.card = n + 2) :
     IsCombinatorialManifold (simplexBoundary V) n := by
   cases n with
   | zero =>
-      intro v hv
+      refine isCombinatorialManifold_zero_iff.mpr fun v hv => ?_
       have hvmem : v ∈ V := (singleton_mem_simplexBoundary.mp hv).1
       have hcard : (V \ {v}).card = V.card - 1 := by
         rw [Finset.card_sdiff_of_subset (Finset.singleton_subset_iff.mpr hvmem),
@@ -251,7 +236,7 @@ theorem isCombinatorialManifold_simplexBoundary (hV : V.card = n + 2) :
       rw [link_simplexBoundary (Finset.singleton_subset_iff.mpr hvmem), hw,
         simplexBoundary_singleton]
   | succ n =>
-      intro v hv
+      refine isCombinatorialManifold_succ_iff.mpr fun v hv => ?_
       have hvmem : v ∈ V := (singleton_mem_simplexBoundary.mp hv).1
       rw [link_simplexBoundary (Finset.singleton_subset_iff.mpr hvmem)]
       refine Or.inl (isCombinatorialSphere_simplexBoundary ?_)
@@ -292,5 +277,31 @@ theorem IsCombinatorialManifold.dimension_le (h : IsCombinatorialManifold K n) :
         omega
   have : σ.card - 1 ≤ n := by omega
   exact_mod_cast this
+
+/-- A nonvoid combinatorial `n`-manifold has dimension exactly `n`. -/
+theorem IsCombinatorialManifold.dimension_eq (h : IsCombinatorialManifold K n) (hK : K ≠ ⊥) :
+    dimension K = (n : WithBot ℕ∞) := by
+  apply le_antisymm h.dimension_le
+  obtain ⟨τ, hτ, -⟩ := SetLike.exists_of_lt (bot_lt_iff_ne_bot.mpr hK)
+  cases n with
+  | zero =>
+      have hle := le_dimension hτ
+      apply le_trans (b := ((τ.card - 1 : ℕ) : WithBot ℕ∞))
+      · exact_mod_cast Nat.zero_le (τ.card - 1)
+      · exact hle
+  | succ n =>
+      obtain ⟨v, hvτ⟩ := (K.isRelLowerSet_faces hτ).1
+      have hvK : ({v} : Finset ι) ∈ K := singleton_mem_of_mem hτ hvτ
+      have hlinkdim : dimension (link K {v}) = (n : WithBot ℕ∞) := by
+        rcases isCombinatorialManifold_succ_iff.mp h hvK with hs | hb
+        · exact hs.dimension_eq
+        · exact hb.dimension_eq
+      obtain ⟨σ, hσ, hcard⟩ := exists_face_card_eq_of_dimension_eq hlinkdim
+      obtain ⟨-, hdis, hface⟩ := mem_link.mp hσ
+      have hvσ : v ∉ σ := Finset.disjoint_singleton_right.mp hdis
+      rw [Finset.union_singleton] at hface
+      have hle := le_dimension hface
+      rw [Finset.card_insert_of_notMem hvσ, hcard] at hle
+      simpa using hle
 
 end PreAbstractSimplicialComplex

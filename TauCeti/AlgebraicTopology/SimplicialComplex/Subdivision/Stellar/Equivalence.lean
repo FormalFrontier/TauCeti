@@ -51,6 +51,11 @@ common enlarged vertex type and allows arbitrary injective relabelings.
   have the same dimension.
 * `PreAbstractSimplicialComplex.StellarEquivalent.finite_faces_iff`: stellar equivalence
   preserves and reflects finiteness of the face collection.
+* `PreAbstractSimplicialComplex.StellarEquivalentUpToRelabeling.induction_on`: invariants of
+  intrinsic stellar equivalence follow from the common-relabeling generators.
+* `PreAbstractSimplicialComplex.StellarEquivalentUpToRelabeling.dimension_eq`,
+  `finite_faces_iff`, and `ne_bot_iff`: intrinsic stellar equivalence preserves dimension,
+  face finiteness, and nonvoidness.
 -/
 
 public section
@@ -68,7 +73,6 @@ def IsStellarMove (K L : PreAbstractSimplicialComplex ι) : Prop :=
   ∃ σ : Finset ι, ∃ v : ι, σ ∈ K ∧ ({v} : Finset ι) ∉ K ∧ L = stellarSubdivision K σ v
 
 /-- The witness description of a stellar move. -/
-@[simp]
 theorem isStellarMove_iff :
     IsStellarMove K L ↔
       ∃ σ : Finset ι, ∃ v : ι, σ ∈ K ∧ ({v} : Finset ι) ∉ K ∧
@@ -85,66 +89,11 @@ theorem IsStellarMove.dimension_eq (h : IsStellarMove K L) : dimension L = dimen
   obtain ⟨σ, v, hσ, hv, rfl⟩ := h
   exact dimension_stellarSubdivision hv (K.isRelLowerSet_faces hσ).1
 
-/-- A stellar move out of a complex with finitely many faces lands in a complex with finitely
-many faces. -/
-theorem IsStellarMove.finite_faces (h : IsStellarMove K L) (hK : K.faces.Finite) :
-    L.faces.Finite := by
-  obtain ⟨σ, v, -, -, rfl⟩ := h
-  exact finite_faces_stellarSubdivision hK
-
-/-- The face of the starring `stellarSubdivision K σ v` that records a face `τ` of `K`: a face
-containing the starred face `σ` is recorded as the new vertex adjoined to its complement, and any
-other face survives unchanged. This is the injection behind
-`PreAbstractSimplicialComplex.IsStellarMove.finite_faces_of_finite`. -/
-private def starRecord (σ : Finset ι) (v : ι) (τ : Finset ι) : Finset ι :=
-  if σ ⊆ τ then insert v (τ \ σ) else τ
-
-private theorem starRecord_of_subset (h : σ ⊆ τ) :
-    starRecord σ v τ = insert v (τ \ σ) := by
-  simp [starRecord, h]
-
-private theorem starRecord_of_not_subset (h : ¬ σ ⊆ τ) : starRecord σ v τ = τ := by
-  simp [starRecord, h]
-
-private theorem starRecord_mem (hσ : σ ∈ K) (hv : ({v} : Finset ι) ∉ K) (hτ : τ ∈ K) :
-    starRecord σ v τ ∈ stellarSubdivision K σ v := by
-  have hvτ : v ∉ τ := notMem_of_singleton_notMem hv hτ
-  by_cases hsub : σ ⊆ τ
-  · have hvsdiff : v ∉ τ \ σ := fun h => hvτ (Finset.mem_sdiff.mp h).1
-    rw [starRecord_of_subset hsub]
-    refine (insert_mem_stellarSubdivision_iff hvsdiff).mpr ⟨?_, ?_⟩
-    · obtain ⟨x, hx⟩ := (K.isRelLowerSet_faces hσ).1
-      exact fun h => (Finset.mem_sdiff.mp (h hx)).2 hx
-    · rwa [Finset.sdiff_union_of_subset hsub]
-  · rw [starRecord_of_not_subset hsub]
-    exact (mem_stellarSubdivision_iff_of_notMem hvτ).mpr ⟨hτ, hsub⟩
-
-private theorem starRecord_injOn (hv : ({v} : Finset ι) ∉ K) :
-    Set.InjOn (starRecord σ v) K.faces := by
-  intro τ₁ h₁ τ₂ h₂ heq
-  have hv₁ : v ∉ τ₁ := notMem_of_singleton_notMem hv h₁
-  have hv₂ : v ∉ τ₂ := notMem_of_singleton_notMem hv h₂
-  by_cases hs₁ : σ ⊆ τ₁ <;> by_cases hs₂ : σ ⊆ τ₂
-  · have hd₁ : v ∉ τ₁ \ σ := fun h => hv₁ (Finset.mem_sdiff.mp h).1
-    have hd₂ : v ∉ τ₂ \ σ := fun h => hv₂ (Finset.mem_sdiff.mp h).1
-    rw [starRecord_of_subset hs₁, starRecord_of_subset hs₂] at heq
-    have hsdiff : τ₁ \ σ = τ₂ \ σ := by
-      have := congrArg (fun s => Finset.erase s v) heq
-      rwa [Finset.erase_insert hd₁, Finset.erase_insert hd₂] at this
-    rw [← Finset.sdiff_union_of_subset hs₁, ← Finset.sdiff_union_of_subset hs₂, hsdiff]
-  · rw [starRecord_of_subset hs₁, starRecord_of_not_subset hs₂] at heq
-    exact absurd (heq ▸ Finset.mem_insert_self v (τ₁ \ σ)) hv₂
-  · rw [starRecord_of_not_subset hs₁, starRecord_of_subset hs₂] at heq
-    exact absurd (heq ▸ Finset.mem_insert_self v (τ₂ \ σ)) hv₁
-  · rwa [starRecord_of_not_subset hs₁, starRecord_of_not_subset hs₂] at heq
-
-/-- A stellar move reflects finiteness of the face collection. -/
-theorem IsStellarMove.finite_faces_of_finite (h : IsStellarMove K L) (hL : L.faces.Finite) :
-    K.faces.Finite := by
+/-- A stellar move preserves and reflects finiteness of the face collection. -/
+theorem IsStellarMove.finite_faces_iff (h : IsStellarMove K L) :
+    K.faces.Finite ↔ L.faces.Finite := by
   obtain ⟨σ, v, hσ, hv, rfl⟩ := h
-  refine Set.Finite.of_finite_image (hL.subset ?_) (starRecord_injOn (σ := σ) hv)
-  rintro ω ⟨ρ, hρ, rfl⟩
-  exact starRecord_mem hσ hv hρ
+  exact (finite_faces_stellarSubdivision_iff hσ hv).symm
 
 /-- **Stellar equivalence**: `K` and `L` are joined by a finite sequence of stellar moves and
 inverse stellar moves. -/
@@ -179,17 +128,13 @@ image complexes. -/
 theorem IsStellarMove.map {κ : Type*} [DecidableEq κ] (h : IsStellarMove K L)
     (f : ι → κ) (hf : Function.Injective f) : IsStellarMove (K.map f) (L.map f) := by
   obtain ⟨σ, v, hσ, hv, rfl⟩ := h
-  refine ⟨σ.image f, f v, ⟨σ, hσ, rfl⟩, ?_, map_stellarSubdivision f hf⟩
+  refine ⟨σ.image f, f v, mem_map_iff.mpr ⟨σ, hσ, rfl⟩, ?_,
+    map_stellarSubdivision f hf⟩
   intro hfv
-  change ∃ τ, τ ∈ K ∧ τ.image f = {f v} at hfv
+  rw [mem_map_iff] at hfv
   obtain ⟨τ, hτ, hτf⟩ := hfv
-  have hvτ : v ∈ τ := by
-    by_contra hvτ
-    have : f v ∉ τ.image f := by
-      rintro h
-      obtain ⟨x, hx, hfx⟩ := Finset.mem_image.mp h
-      exact hvτ ((hf hfx) ▸ hx)
-    exact this (hτf.symm ▸ Finset.mem_singleton_self (f v))
+  have hvτ : v ∈ τ := hf.mem_finset_image.mp
+    (hτf ▸ Finset.mem_singleton_self (f v))
   exact hv (singleton_mem_of_mem hτ hvτ)
 
 /-- A complex is stellar equivalent to any of its starrings at a fresh vertex. -/
@@ -202,6 +147,19 @@ theorem equivalence_stellarEquivalent : Equivalence (StellarEquivalent (ι := ι
   Relation.EqvGen.is_equivalence _
 
 namespace StellarEquivalent
+
+/-- To prove a property of stellar equivalent complexes, it suffices to prove it for a stellar
+move and show that it is reflexive, symmetric, and transitive. -/
+theorem induction_on (h : StellarEquivalent K L)
+    {P : PreAbstractSimplicialComplex ι → PreAbstractSimplicialComplex ι → Prop}
+    (rel : ∀ A B, IsStellarMove A B → P A B) (refl : ∀ A, P A A)
+    (symm : ∀ A B, P A B → P B A)
+    (trans : ∀ A B C, P A B → P B C → P A C) : P K L := by
+  induction h with
+  | rel A B h => exact rel A B h
+  | refl => exact refl _
+  | symm A B _ ih => exact symm A B ih
+  | trans A B C _ _ ih₁ ih₂ => exact trans A B C ih₁ ih₂
 
 /-- An injective relabeling carries a stellar equivalence to one between the image complexes. -/
 theorem map {κ : Type*} [DecidableEq κ] (h : StellarEquivalent K L)
@@ -223,7 +181,7 @@ theorem dimension_eq (h : StellarEquivalent K L) : dimension L = dimension K := 
 /-- Stellar equivalence preserves and reflects finiteness of the face collection. -/
 theorem finite_faces_iff (h : StellarEquivalent K L) : K.faces.Finite ↔ L.faces.Finite := by
   induction h with
-  | rel _ _ h => exact ⟨h.finite_faces, h.finite_faces_of_finite⟩
+  | rel _ _ h => exact h.finite_faces_iff
   | refl => rfl
   | symm _ _ _ ih => exact ih.symm
   | trans _ _ _ _ _ ih₁ ih₂ => exact ih₁.trans ih₂
@@ -235,33 +193,11 @@ theorem ne_bot (h : StellarEquivalent K L) (hL : L ≠ ⊥) : K ≠ ⊥ := by
 
 end StellarEquivalent
 
-omit [DecidableEq ι] in
-private theorem dimension_map_of_injective {κ : Type*} [DecidableEq κ]
-    (f : ι → κ) (hf : Function.Injective f) : dimension (K.map f) = dimension K := by
-  apply le_antisymm
-  · rw [dimension_le_iff]
-    intro τ hτ
-    obtain ⟨σ, hσ, rfl⟩ := hτ
-    rw [Finset.card_image_iff.mpr hf.injOn]
-    exact le_dimension hσ
-  · rw [dimension_le_iff]
-    intro σ hσ
-    have hmem : σ.image f ∈ K.map f := ⟨σ, hσ, rfl⟩
-    rw [← Finset.card_image_iff.mpr hf.injOn]
-    exact le_dimension hmem
-
-omit [DecidableEq ι] in
-private theorem finite_faces_map_iff_of_injective {κ : Type*} [DecidableEq κ]
-    (f : ι → κ) (hf : Function.Injective f) : (K.map f).faces.Finite ↔ K.faces.Finite := by
-  -- By definition, `map` exposes its face set as the direct image of the original face set.
-  change ((fun σ : Finset ι => σ.image f) '' K.faces).Finite ↔ K.faces.Finite
-  exact Set.finite_image_iff (Finset.image_injective hf).injOn
-
 /-! ### Intrinsic stellar equivalence -/
 
 /-- **Stellar equivalence up to relabeling.** At each generating step, the two complexes are
-injectively relabeled inside the common enlarged vertex type `ι ⊕ ℕ`. Taking the equivalence
-closure makes the result independent of the chosen relabelings and lets such comparisons compose. -/
+injectively relabeled inside the common enlarged vertex type `ι ⊕ ℕ`. The generator existentially
+quantifies these relabelings, and the equivalence closure lets such comparisons compose. -/
 def StellarEquivalentUpToRelabeling (K L : PreAbstractSimplicialComplex ι) : Prop :=
   Relation.EqvGen
     (fun A B => ∃ f g : ι ↪ (ι ⊕ ℕ), StellarEquivalent (A.map f) (B.map g)) K L
