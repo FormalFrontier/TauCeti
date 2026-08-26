@@ -177,10 +177,6 @@ private lemma le_add_ofPoint (D : Divisor k F) (P : Place k F) :
   le_add_of_nonneg_right
     (WeilDivisor.isEffective_iff_zero_le.mp (WeilDivisor.isEffective_ofPoint P))
 
-private lemma coe_algebraMap_integers (P : Place k F) (c : k) :
-    ((algebraMap k P.integers c : P.integers) : F) = algebraMap k F c := by
-  rw [IsScalarTower.algebraMap_apply k P.integers F, ValuationSubring.algebraMap_apply]
-
 private lemma mul_mem_integers (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0) {x : F}
     (hx : x ∈ riemannRochSpace (D + WeilDivisor.ofPoint P)) : t * x ∈ P.integers := by
   rcases eq_or_ne x 0 with rfl | hx0
@@ -204,7 +200,7 @@ private noncomputable def residueEval (D : Divisor k F) (P : Place k F) {t : F}
   map_smul' c x := by
     rw [RingHom.id_apply, ← map_smul]
     exact congrArg _
-      (Subtype.ext (by push_cast [Algebra.smul_def, coe_algebraMap_integers]; ring))
+      (Subtype.ext (by push_cast [Algebra.smul_def, Place.coe_algebraMap_constants]; ring))
 
 private lemma residueEval_apply (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0)
     (x : riemannRochSpace (D + WeilDivisor.ofPoint P)) :
@@ -252,11 +248,7 @@ private lemma finiteDimensional_and_finrank_add_ofPoint_le (hF : IsFunctionField
       Module.finrank k (riemannRochSpace (D + WeilDivisor.ofPoint P)) ≤
         Module.finrank k (riemannRochSpace D) + P.degree := by
   have : FiniteDimensional k P.ResidueField := Place.finiteDimensional_residueField P hF
-  obtain ⟨t, ht0, ht⟩ : ∃ t : F, t ≠ 0 ∧ P.ord t = D.coeff P + 1 := by
-    obtain ⟨t, ht⟩ := P.ord_surjective (D.coeff P + 1)
-    rcases eq_or_ne t 0 with rfl | ht0
-    · exact ⟨1, one_ne_zero, by rw [P.ord_one, ← ht, P.ord_zero]⟩
-    · exact ⟨t, ht0, ht⟩
+  obtain ⟨t, ht0, ht⟩ := P.exists_ne_zero_ord_eq (D.coeff P + 1)
   have hle : riemannRochSpace D ≤ riemannRochSpace (D + WeilDivisor.ofPoint P) :=
     riemannRochSpace_mono (le_add_ofPoint D P)
   have hkerfin : FiniteDimensional k (LinearMap.ker (residueEval D P ht ht0)) := by
