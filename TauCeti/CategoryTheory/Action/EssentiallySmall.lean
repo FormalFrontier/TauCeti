@@ -24,16 +24,14 @@ category which is literally small, one functor being no more data than its singl
 with the induced monoid homomorphism on endomorphisms. Smallness then transports back along
 `CategoryTheory.essentiallySmall_congr`.
 
-The bound `max v w` is the honest one, `w` being the universe of the morphisms of `V`: the group
-contributes its own universe `v`, since a functor out of `SingleObj G` carries a map defined on
-the morphisms `G`, and that map is data.
+The bound `max v z` is the honest one, `z` being the universe in which `V` is essentially small:
+the group contributes its own universe `v`, since a functor out of `SingleObj G` carries a map
+defined on the morphisms `G`, and that map is data, while the single value of that functor is an
+object of the small model, of size `z`.
 
-The small model of `V` is asked for in that same universe `w`. That is the case that occurs — a
-category essentially small at all is normally so at its own morphism universe, `FGModuleCat.{u} k`
-for `k : Type u` being the instance used here — and taking the two universes to be equal is what
-keeps the universe of the conclusion determined by the universes of `V` and of `G` alone, with no
-third universe entering it, so that instance search does not have to solve `max v ? = max u v`
-for an unknown universe.
+That universe `z` is left independent of the morphism universe `w` of `V`. A category essentially
+small at all is normally so at its own morphism universe — `FGModuleCat.{u} k` for `k : Type u`,
+the instance used here, is — but nothing in the transport needs the two to agree.
 
 This supplies the smallness hypothesis that
 `TauCeti/CategoryTheory/GrothendieckGroup/Split.lean` asks of a category before its split
@@ -48,7 +46,7 @@ instantiation is `TauCeti/RepresentationTheory/RepresentationRing.lean`.
 
 public section
 
-universe u v w
+universe u v w z
 
 namespace CategoryTheory
 
@@ -57,9 +55,9 @@ namespace Action
 /-- **Actions on an essentially small category are essentially small.** The equivalence with the
 functor category out of `CategoryTheory.SingleObj G` turns an action into a single object of a
 small model of `V` together with a monoid homomorphism from `G` into its endomorphisms, which is
-data of size `max v w`. -/
-instance essentiallySmall {V : Type u} [Category.{w} V] [EssentiallySmall.{w} V] (G : Type v)
-    [Monoid G] : EssentiallySmall.{max v w} (Action V G) :=
+data of size `max v z`. -/
+instance essentiallySmall {V : Type u} [Category.{w} V] [EssentiallySmall.{z} V] (G : Type v)
+    [Monoid G] : EssentiallySmall.{max v z} (Action V G) :=
   (essentiallySmall_congr ((Action.functorCategoryEquivalence V G).trans
     (Equivalence.congrRight (equivSmallModel V)))).2 inferInstance
 

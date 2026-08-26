@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Category.FGModuleCat.Abelian
-public import Mathlib.CategoryTheory.Preadditive.Biproducts
 public import Mathlib.RingTheory.Finiteness.Small
 public import Mathlib.RepresentationTheory.Character
 
@@ -30,10 +29,11 @@ representation only when its carrier already lies there. A module-finite carrier
 neither the dimension nor the character. Only the character transfer needs `k` to be a field, `k`
 being a commutative ring throughout otherwise.
 
-Finally it records the remaining functoriality property of the character that Mathlib's
+Finally it records the two structural properties of the character that Mathlib's
 `RepresentationTheory/Character.lean` leaves out beside `FDRep.char_iso` and `FDRep.char_tensor`:
-the character is **additive on biproducts**. That is the last of the three conditions making the
-character an invariant of the representation ring, `TauCeti.repRingCharacter`.
+the character is **additive on biproducts**, and the character of the **tensor unit** is the
+constant function `1`. Those are what is still missing before the character can be read as a ring
+homomorphism out of the representation ring, `TauCeti.repRingCharacter`.
 
 ## Main definitions
 
@@ -51,6 +51,7 @@ character an invariant of the representation ring, `TauCeti.repRingCharacter`.
 * `FDRep.ofShrinkEquiv`: `FDRep.ofShrink ρ` carries a representation equivalent to `ρ`, whence
   `FDRep.finrank_ofShrink` and `FDRep.character_ofShrink`.
 * `FDRep.char_biprod`: the character is additive on biproducts.
+* `FDRep.char_tensorUnit`: the character of the tensor unit is the constant function `1`.
 -/
 
 public section
@@ -187,6 +188,7 @@ ring; see `TauCeti.repRingCharacter`.
 The proof splits the identity of `X ⊞ Y` as the sum of the two idempotents
 `biprod.inl ∘ biprod.fst` and `biprod.inr ∘ biprod.snd` (`CategoryTheory.Limits.biprod.total`) and
 evaluates the trace of `ρ g` against each summand with `FDRep.trace_comp_of_retraction`. -/
+@[simp]
 theorem char_biprod (X Y : FDRep k G) : (X ⊞ Y).character = X.character + Y.character := by
   ext g
   have htot : (biprod.inl : X ⟶ X ⊞ Y).hom.hom.hom ∘ₗ (biprod.fst : X ⊞ Y ⟶ X).hom.hom.hom
@@ -208,5 +210,24 @@ theorem char_biprod (X Y : FDRep k G) : (X ⊞ Y).character = X.character + Y.ch
     trace_comp_of_retraction biprod.inr biprod.snd biprod.inr_snd, Pi.add_apply]
 
 end Biproduct
+
+section TensorUnit
+
+open CategoryTheory MonoidalCategory
+
+/-- **The character of the tensor unit of `FDRep k G` is the constant function `1`**, the unit
+being the trivial representation on `k` itself. Beside `FDRep.char_tensor` this is what makes the
+character multiplicative out of the representation ring, see `TauCeti.repRingCharacter`. -/
+@[simp]
+theorem char_tensorUnit (k : Type u) (G : Type v) [Field k] [Monoid G] :
+    (𝟙_ (FDRep k G)).character = 1 := by
+  ext g
+  -- the two sides are the same object, not merely isomorphic ones: `Action.instMonoidalCategory`
+  -- takes the unit of `Action V G` to be the unit of `V` with the trivial action, and the unit of
+  -- `FGModuleCat k` is `k` itself, which is what `FDRep.of` bundles here
+  have hunit : 𝟙_ (FDRep k G) = FDRep.of (Representation.trivial k G k) := rfl
+  rw [hunit, Pi.one_apply, character_of_trivial]
+
+end TensorUnit
 
 end FDRep
