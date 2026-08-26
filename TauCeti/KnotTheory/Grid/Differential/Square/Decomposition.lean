@@ -7,6 +7,7 @@ module
 
 public import TauCeti.KnotTheory.Grid.Differential.Square.Support
 public import TauCeti.KnotTheory.Grid.Rectangle.Swap
+public import TauCeti.KnotTheory.Grid.Unblocked
 
 /-!
 # Two-step rectangle decompositions
@@ -23,6 +24,9 @@ between two given states is determined by its side columns.
 ## Main definitions
 
 * `TauCeti.GridRectangleDecomposition`: two composable oriented grid rectangles.
+* `TauCeti.GridDiagram.unblockedDecompositions`: the two-step rectangle decompositions both of
+  whose rectangles the unblocked differential counts.
+* `TauCeti.GridDiagram.decompositionWeight`: the product of the two rectangle weights.
 
 ## Main results
 
@@ -35,6 +39,10 @@ between two given states is determined by its side columns.
   columns the target of a decomposition agrees with its source.
 * `TauCeti.GridRectangleDecomposition.target_mem_twoStepColumnSwapNeighbors`: the target of a
   decomposition is reached from its source by two nontrivial column transpositions.
+* `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply`: the matrix of `∂⁻ ∘ ∂⁻`, as a sum
+  over intermediate grid states of products of matrix coefficients.
+* `TauCeti.GridDiagram.sum_unblockedCoefficient_mul_unblockedCoefficient`: the two-step matrix
+  entry of `∂⁻ ∘ ∂⁻` is the sum of the weights of the counted decompositions.
 
 ## References
 
@@ -127,5 +135,75 @@ theorem target_mem_twoStepColumnSwapNeighbors (D : GridRectangleDecomposition x 
         ⟨D.second.left, D.second.right, D.second.left_ne_right, D.second.target_eq_swapColumns⟩⟩
 
 end GridRectangleDecomposition
+
+namespace GridDiagram
+
+variable {n : ℕ} (G : GridDiagram n)
+
+/-- The two-step rectangle decompositions from `x` to `z` both of whose rectangles the unblocked
+differential counts: both are empty and cover no `X`-marking. -/
+noncomputable def unblockedDecompositions (x z : GridState n) :
+    Finset (GridRectangleDecomposition x z) := by
+  classical
+  exact Finset.univ.filter fun D =>
+    D.first ∈ G.unblockedRectangles x D.middle ∧ D.second ∈ G.unblockedRectangles D.middle z
+
+/-- A two-step decomposition is counted exactly when each of its two rectangles is. -/
+@[simp]
+theorem mem_unblockedDecompositions {x z : GridState n}
+    (D : GridRectangleDecomposition x z) :
+    D ∈ G.unblockedDecompositions x z ↔
+      D.first ∈ G.unblockedRectangles x D.middle ∧
+        D.second ∈ G.unblockedRectangles D.middle z := by
+  classical
+  simp [unblockedDecompositions]
+
+variable (R : Type*) [CommSemiring R]
+
+/-- The weight of a two-step rectangle decomposition in the square of the unblocked differential:
+the product of the weights `V^{O(r)}` of its two rectangles. -/
+noncomputable abbrev decompositionWeight {x z : GridState n}
+    (D : GridRectangleDecomposition x z) : MvPolynomial (Fin n) R :=
+  G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
+
+/-- The matrix of the square of the unblocked differential: its `(x, z)` entry is the sum over
+intermediate grid states of the products of the two matrix coefficients. -/
+theorem unblockedDifferential_sq_single_apply (x z : GridState n) :
+    G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1)) z =
+      ∑ y : GridState n, G.unblockedCoefficient R x y * G.unblockedCoefficient R y z := by
+  rw [unblockedDifferential_single, unblockedDifferential_apply_apply,
+    Finsupp.sum_fintype _ _ fun _ => zero_mul _]
+  exact Finset.sum_congr rfl fun y _ => by
+    rw [unblockedDifferentialOnGenerator_apply]
+
+/-- The two-step matrix entry of the square of the unblocked differential is the sum of the
+weights of the two-step decompositions it counts. -/
+theorem sum_unblockedCoefficient_mul_unblockedCoefficient (x z : GridState n) :
+    ∑ y : GridState n, G.unblockedCoefficient R x y * G.unblockedCoefficient R y z =
+      ∑ D ∈ G.unblockedDecompositions x z, G.decompositionWeight R D := by
+  have hstep : ∀ y : GridState n,
+      G.unblockedCoefficient R x y * G.unblockedCoefficient R y z =
+        ∑ p ∈ (G.unblockedRectangles x y) ×ˢ (G.unblockedRectangles y z),
+          G.OMonomial R p.1.toGridRectangle * G.OMonomial R p.2.toGridRectangle := fun y => by
+    rw [G.unblockedCoefficient_def R x y, G.unblockedCoefficient_def R y z, Finset.sum_mul_sum]
+    exact (Finset.sum_product' _ _ _).symm
+  rw [Finset.sum_congr rfl fun y (_ : y ∈ Finset.univ) => hstep y, Finset.sum_sigma']
+  refine Finset.sum_nbij' (fun q => ⟨q.1, q.2.1, q.2.2⟩)
+    (fun D => ⟨D.middle, D.first, D.second⟩) ?_ ?_ ?_ ?_ ?_
+  · rintro ⟨y, r₁, r₂⟩ hq
+    rw [Finset.mem_sigma, Finset.mem_product] at hq
+    exact (G.mem_unblockedDecompositions _).mpr ⟨hq.2.1, hq.2.2⟩
+  · intro D hD
+    rw [G.mem_unblockedDecompositions D] at hD
+    rw [Finset.mem_sigma, Finset.mem_product]
+    exact ⟨Finset.mem_univ _, hD.1, hD.2⟩
+  · rintro ⟨y, r₁, r₂⟩ -
+    rfl
+  · intro D _
+    rfl
+  · rintro ⟨y, r₁, r₂⟩ -
+    rfl
+
+end GridDiagram
 
 end TauCeti

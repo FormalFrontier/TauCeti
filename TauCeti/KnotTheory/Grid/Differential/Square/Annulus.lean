@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.KnotTheory.Grid.Rectangle.Annulus
-public import TauCeti.KnotTheory.Grid.Unblocked
+public import TauCeti.KnotTheory.Grid.Differential.Square.Decomposition
 
 /-!
 # The annular terms of the unblocked grid differential square vanish
@@ -39,8 +39,6 @@ other two: that consequence is
   grid states, one of the two directions carries no rectangle the unblocked differential counts.
 * `TauCeti.GridDiagram.unblockedCoefficient_mul_unblockedCoefficient_eq_zero`: the product of the
   two matrix coefficients of `∂⁻` between a pair of grid states vanishes.
-* `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply`: the matrix of `∂⁻ ∘ ∂⁻`, as a sum
-  over intermediate grid states of products of matrix coefficients.
 * `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply_self`: its diagonal entries vanish.
 
 ## References
@@ -88,16 +86,6 @@ theorem unblockedCoefficient_mul_unblockedCoefficient_eq_zero (x y : GridState n
   by_cases h : G.unblockedCoefficient R x y = 0
   · rw [h, zero_mul]
   · rw [G.unblockedCoefficient_eq_zero_of_ne_zero R h, mul_zero]
-
-/-- The matrix of the square of the unblocked differential: its `(x, z)` entry is the sum over
-intermediate grid states of the products of the two matrix coefficients. -/
-theorem unblockedDifferential_sq_single_apply (x z : GridState n) :
-    G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1)) z =
-      ∑ y : GridState n, G.unblockedCoefficient R x y * G.unblockedCoefficient R y z := by
-  rw [unblockedDifferential_single, unblockedDifferential_apply_apply,
-    Finsupp.sum_fintype _ _ fun _ => zero_mul _]
-  exact Finset.sum_congr rfl fun y _ => by
-    rw [unblockedDifferentialOnGenerator_apply]
 
 /-- The diagonal entries of the matrix of `∂⁻ ∘ ∂⁻` vanish: every annular term of the square of
 the unblocked grid differential is individually zero, for every coefficient ring. -/

@@ -7,7 +7,7 @@ module
 
 import Mathlib.RingTheory.MvPolynomial.Basic
 public import Mathlib.Algebra.CharP.Two
-public import TauCeti.KnotTheory.Grid.Differential.Square.Annulus
+public import TauCeti.KnotTheory.Grid.Differential.Square.Decomposition
 public import TauCeti.KnotTheory.Grid.Differential.Square.SideOverlap
 
 /-!
@@ -27,27 +27,17 @@ the decompositions the unblocked differential counts: it exchanges the two toroi
 preserves emptiness, `X`-avoidance and the weight `V^{O(r)}`, and it changes the intermediate
 state, so it has no fixed point. In characteristic two the paired terms cancel.
 
-To run the pairing the two-step terms are first reindexed as a single sum over
-`GridDiagram.unblockedDecompositions`, the finite set of two-step decompositions both of whose
-rectangles the unblocked differential counts. That reindexing,
-`GridDiagram.sum_unblockedCoefficient_mul_unblockedCoefficient`, holds for every pair of grid
-states and every coefficient ring, and is the shared entry point for the remaining case: two
-rectangles sharing exactly one side column, `GridRectangleDecomposition.HasOneCommonSide`.
-
-## Main definitions
-
-* `TauCeti.GridDiagram.unblockedDecompositions`: the two-step rectangle decompositions both of
-  whose rectangles the unblocked differential counts.
-* `TauCeti.GridDiagram.decompositionWeight`: the weight of such a decomposition, the product of
-  the two rectangle weights.
+The shared bookkeeping in `Decomposition.lean` first reindexes the two-step terms as a single sum
+over the finite set of decompositions both of whose rectangles the unblocked differential counts.
+That reindexing holds for every pair of grid states and coefficient ring, and is also the entry
+point for the remaining case: two rectangles sharing exactly one side column,
+`GridRectangleDecomposition.HasOneCommonSide`.
 
 ## Main results
 
 * `TauCeti.GridRectangleDecomposition.hasDisjointSides_of_disjoint`: every two-step decomposition
   whose target is the source with two disjoint column transpositions applied has disjoint pairs of
   side columns.
-* `TauCeti.GridDiagram.sum_unblockedCoefficient_mul_unblockedCoefficient`: the two-step matrix
-  entry of `∂⁻ ∘ ∂⁻` is the sum of the weights of the counted decompositions.
 * `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply_eq_zero_of_disjoint`: in
   characteristic two, that entry vanishes when the target is the source with two disjoint column
   transpositions applied.
@@ -131,68 +121,17 @@ end GridRectangleDecomposition
 
 namespace GridDiagram
 
-variable {n : ℕ} (G : GridDiagram n)
-
-/-- The two-step rectangle decompositions from `x` to `z` both of whose rectangles the unblocked
-differential counts: both are empty and cover no `X`-marking. -/
-noncomputable def unblockedDecompositions (x z : GridState n) :
-    Finset (GridRectangleDecomposition x z) := by
-  classical
-  exact Finset.univ.filter fun D =>
-    D.first ∈ G.unblockedRectangles x D.middle ∧ D.second ∈ G.unblockedRectangles D.middle z
-
-/-- A two-step decomposition is counted exactly when each of its two rectangles is. -/
-@[simp]
-theorem mem_unblockedDecompositions {x z : GridState n}
-    (D : GridRectangleDecomposition x z) :
-    D ∈ G.unblockedDecompositions x z ↔
-      D.first ∈ G.unblockedRectangles x D.middle ∧
-        D.second ∈ G.unblockedRectangles D.middle z := by
-  classical
-  simp [unblockedDecompositions]
-
-variable (R : Type*) [CommSemiring R]
-
-/-- The weight of a two-step rectangle decomposition in the square of the unblocked differential:
-the product of the weights `V^{O(r)}` of its two rectangles. -/
-noncomputable def decompositionWeight {x z : GridState n}
-    (D : GridRectangleDecomposition x z) : MvPolynomial (Fin n) R :=
-  G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
-
-/-- The two-step matrix entry of the square of the unblocked differential is the sum of the
-weights of the two-step decompositions it counts. -/
-theorem sum_unblockedCoefficient_mul_unblockedCoefficient (x z : GridState n) :
-    ∑ y : GridState n, G.unblockedCoefficient R x y * G.unblockedCoefficient R y z =
-      ∑ D ∈ G.unblockedDecompositions x z, G.decompositionWeight R D := by
-  have hstep : ∀ y : GridState n,
-      G.unblockedCoefficient R x y * G.unblockedCoefficient R y z =
-        ∑ p ∈ (G.unblockedRectangles x y) ×ˢ (G.unblockedRectangles y z),
-          G.OMonomial R p.1.toGridRectangle * G.OMonomial R p.2.toGridRectangle := fun y => by
-    rw [G.unblockedCoefficient_def R x y, G.unblockedCoefficient_def R y z, Finset.sum_mul_sum]
-    exact (Finset.sum_product' _ _ _).symm
-  rw [Finset.sum_congr rfl fun y (_ : y ∈ Finset.univ) => hstep y, Finset.sum_sigma']
-  refine Finset.sum_nbij' (fun q => ⟨q.1, q.2.1, q.2.2⟩)
-    (fun D => ⟨D.middle, D.first, D.second⟩) ?_ ?_ ?_ ?_ ?_
-  · rintro ⟨y, r₁, r₂⟩ hq
-    rw [Finset.mem_sigma, Finset.mem_product] at hq
-    exact (G.mem_unblockedDecompositions _).mpr ⟨hq.2.1, hq.2.2⟩
-  · intro D hD
-    rw [G.mem_unblockedDecompositions D] at hD
-    rw [Finset.mem_sigma, Finset.mem_product]
-    exact ⟨Finset.mem_univ _, hD.1, hD.2⟩
-  · rintro ⟨y, r₁, r₂⟩ -
-    rfl
-  · intro D _
-    rfl
-  · rintro ⟨y, r₁, r₂⟩ -
-    rfl
+variable {n : ℕ} (G : GridDiagram n) (R : Type*) [CommSemiring R]
 
 /-- Reordering a two-step decomposition with disjoint side columns preserves its weight: the two
 toroidal domains are exchanged. -/
 theorem decompositionWeight_commute {x z : GridState n}
     (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
     G.decompositionWeight R (D.commute h) = G.decompositionWeight R D := by
-  rw [decompositionWeight, decompositionWeight, D.commute_first_toGridRectangle h,
+  change G.OMonomial R (D.commute h).first.toGridRectangle *
+      G.OMonomial R (D.commute h).second.toGridRectangle =
+    G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
+  rw [D.commute_first_toGridRectangle h,
     D.commute_second_toGridRectangle h, mul_comm]
 
 /-- Reordering a counted two-step decomposition with disjoint side columns gives another counted
