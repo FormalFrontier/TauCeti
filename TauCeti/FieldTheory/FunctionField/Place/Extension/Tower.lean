@@ -59,7 +59,6 @@ variable [IsScalarTower k₀ k₁ F₁] [IsScalarTower k₁ k₂ F₂]
 variable [IsScalarTower k₀ F₀ F₁] [IsScalarTower k₁ F₁ F₂]
 variable [IsScalarTower k₀ k₂ F₂] [IsScalarTower k₀ F₀ F₂]
 variable [Algebra.IsIntegral F₀ F₁] [Algebra.IsIntegral F₁ F₂]
-variable [Algebra.IsIntegral F₀ F₂]
 
 /-- **Restriction of places is functorial in a tower**: restricting a place of `F₂ / k₂`
 first to `F₁ / k₁` and then to `F₀ / k₀` gives its direct restriction to `F₀ / k₀`.
@@ -67,14 +66,16 @@ first to `F₁ / k₁` and then to `F₀ / k₀` gives its direct restriction to
 This is the normalized-place form of transitivity of valuation restriction. -/
 @[simp]
 theorem restrict_restrict (P : Place k₂ F₂) :
-    (P.restrict k₁ F₁).restrict k₀ F₀ = P.restrict k₀ F₀ := by
+    (P.restrict k₁ F₁).restrict k₀ F₀ =
+      @restrict k₀ k₂ F₀ F₂ _ _ _ _ _ _ _ _ _ _ _ P
+        (Algebra.IsIntegral.trans F₁) := by
+  let _ : Algebra.IsIntegral F₀ F₂ := Algebra.IsIntegral.trans F₁
   rw [restrict_eq_iff_integers_le]
   intro x hx
   rw [mem_integers_restrict_iff]
   rw [← IsScalarTower.algebraMap_apply F₀ F₁ F₂]
   exact (mem_integers_restrict_iff k₀ F₀ P x).mp hx
 
-omit [Algebra.IsIntegral F₀ F₂] in
 /-- **Ramification indices are multiplicative in towers** (Stichtenoth, Proposition 3.1.6):
 `e(P₂ / P₀) = e(P₂ / P₁) e(P₁ / P₀)` for the restrictions `P₁` and `P₀` of `P₂`. -/
 theorem ramificationIdx_restrict_mul (P : Place k₂ F₂) :
@@ -100,8 +101,10 @@ theorem ramificationIdx_restrict_mul (P : Place k₂ F₂) :
 /-- **Relative residue degrees are multiplicative in towers** (Stichtenoth, Proposition 3.1.6):
 `f(P₂ / P₀) = f(P₂ / P₁) f(P₁ / P₀)` for the restrictions `P₁` and `P₀` of `P₂`. -/
 theorem relativeDegree_restrict_mul (P : Place k₂ F₂) :
-    P.relativeDegree k₀ F₀ =
+    @relativeDegree k₀ k₂ F₀ F₂ _ _ _ _ _ _ _ _ _ _ _ P
+        (Algebra.IsIntegral.trans F₁) =
       P.relativeDegree k₁ F₁ * (P.restrict k₁ F₁).relativeDegree k₀ F₀ := by
+  let _ : Algebra.IsIntegral F₀ F₂ := Algebra.IsIntegral.trans F₁
   rw [relativeDegree_def, relativeDegree_def, relativeDegree_def]
   let _ : Algebra ((P.restrict k₁ F₁).restrict k₀ F₀).integers P.integers :=
     ((algebraMap (P.restrict k₁ F₁).integers P.integers).comp
@@ -133,6 +136,9 @@ theorem relativeDegree_restrict_mul (P : Place k₂ F₂) :
       have hxy : y = x := Subtype.ext hy
       subst y
       rfl
+    -- The direct residue-field algebra synthesized by `finrank_eq_of_equiv_equiv` and the
+    -- locally defined composite algebra have definitionally equal maps, but no named equality
+    -- relates the two structures for rewriting; `change` exposes that definitional equality.
     change (algebraMap ((P.restrict k₁ F₁).restrict k₀ F₀).ResidueField P.ResidueField)
         (e (IsLocalRing.residue (P.restrict k₀ F₀).integers x)) =
       algebraMap (P.restrict k₀ F₀).ResidueField P.ResidueField
