@@ -25,7 +25,7 @@ need.
 
 ## Main declarations
 
-* `TauCeti.sigma_fst_eq_of_path`: a path out of the `i`-th summand of a disjoint union ends in
+* `TauCeti.sigmaFst_eq_of_path`: a path out of the `i`-th summand of a disjoint union ends in
   the `i`-th summand.
 * `TauCeti.exists_path_map_sigmaMk_eq`: **a path between two points of the `i`-th summand is the
   image of a path in that summand.**
@@ -46,7 +46,7 @@ open Topology unitInterval
 variable {ι : Type*} {X : ι → Type*} [∀ i, TopologicalSpace (X i)]
 
 /-- A path out of the `i`-th summand of a disjoint union ends in the `i`-th summand. -/
-theorem sigma_fst_eq_of_path {i : ι} {x : X i} {z : Σ j, X j}
+theorem sigmaFst_eq_of_path {i : ι} {x : X i} {z : Σ j, X j}
     (γ : Path (⟨i, x⟩ : Σ j, X j) z) : z.1 = i := by
   obtain ⟨j, g, hg⟩ := ContinuousMap.exists_lift_sigma γ.toContinuousMap
   have hγ : ∀ t, γ t = ⟨j, g t⟩ := fun t => DFunLike.congr_fun hg t
@@ -76,9 +76,9 @@ theorem exists_quotient_map_sigmaMk_eq {i : ι} {x y : X i}
 
 /-- A path homotopy class out of the `i`-th summand of a disjoint union ends in the `i`-th
 summand. -/
-theorem sigma_fst_eq_of_quotient {i : ι} {x : X i} {z : Σ j, X j}
+theorem sigmaFst_eq_of_quotient {i : ι} {x : X i} {z : Σ j, X j}
     (γ : Path.Homotopic.Quotient (⟨i, x⟩ : Σ j, X j) z) : z.1 = i := by
   obtain ⟨γ⟩ := γ
-  exact sigma_fst_eq_of_path γ
+  exact sigmaFst_eq_of_path γ
 
 end TauCeti
