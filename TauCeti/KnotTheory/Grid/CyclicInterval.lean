@@ -34,6 +34,8 @@ directions before taking products.
 * `TauCeti.Grid.mem_cIoo_or_mem_cIoo_swap_iff`: a point lies in one opposite arc exactly when
   it is not an endpoint.
 * `TauCeti.Grid.cIoo_union_swap`: the two opposite arcs cover the endpoint complement.
+* `TauCeti.Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap`: two points separated by a pair of
+  endpoints separate that pair in turn.
 * `TauCeti.Grid.card_cIoo_add_card_cIoo_swap`: the two arc lengths add to `n - 2`.
 * `TauCeti.Grid.cIoo_image_rev`: reversing a clockwise open arc by `Fin.rev` gives the clockwise
   open arc with reversed, exchanged endpoints.
@@ -398,6 +400,29 @@ theorem not_mem_cIoo_iff {a b x : Fin n} (h : a ≠ b) :
       exact right_notMem_cIoo a b
     · intro hxab
       exact not_mem_cIoo_and_cIoo_swap a b x ⟨hxab, hx⟩
+
+/-- Two points separated by a pair of endpoints separate that pair in turn.
+
+If `a` lies on the clockwise arc from `c` to `d` while `b` lies on the opposite arc, then the four
+points occur in the cyclic order `c`, `a`, `d`, `b`, so `d` lies on the clockwise arc from `a` to
+`b`. Together with `Grid.mem_cIoo_swap_of_mem_cIoo_of_mem_cIoo_swap` this is the exchange step
+that reorders a pair of grid rectangles. -/
+theorem mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo c d)
+    (hb : b ∈ cIoo d c) : d ∈ cIoo a b := by
+  have hab : a ≠ b := fun h => (Finset.disjoint_left.mp (disjoint_cIoo_swap c d) ha) (h ▸ hb)
+  rw [mem_cIoo] at ha hb ⊢
+  obtain ⟨hcd, ha⟩ := ha
+  obtain ⟨-, hb⟩ := hb
+  have hcd' : c.val ≠ d.val := fun h => hcd (Fin.val_injective h)
+  have hab' : a.val ≠ b.val := fun h => hab (Fin.val_injective h)
+  refine ⟨hab, ?_⟩
+  split_ifs at ha hb ⊢ <;> omega
+
+/-- The companion of `Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap` for the opposite arc: in the
+cyclic order `c`, `a`, `d`, `b`, the point `c` lies on the clockwise arc from `b` to `a`. -/
+theorem mem_cIoo_swap_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo c d)
+    (hb : b ∈ cIoo d c) : c ∈ cIoo b a :=
+  mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hb ha
 
 /-- The two opposite cyclic intervals cover exactly the complement of their endpoints. -/
 @[simp]

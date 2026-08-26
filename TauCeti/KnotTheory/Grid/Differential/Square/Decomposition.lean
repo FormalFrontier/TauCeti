@@ -28,6 +28,11 @@ between two given states is determined by its side columns.
 
 * `TauCeti.GridRectangleDecomposition.ext`: a decomposition is determined by the ordered side
   columns of its two rectangles.
+* `TauCeti.GridRectangleDecomposition.sideColumns_injective`: the same statement as injectivity of
+  the ordered quadruple of side columns, which makes the decompositions between two states a
+  finite type.
+* `TauCeti.GridRectangleDecomposition.apply_eq_of_notMem_sideColumns`: away from the four side
+  columns the target of a decomposition agrees with its source.
 * `TauCeti.GridRectangleDecomposition.target_mem_twoStepColumnSwapNeighbors`: the target of a
   decomposition is reached from its source by two nontrivial column transpositions.
 
@@ -81,6 +86,34 @@ theorem ext {D E : GridRectangleDecomposition x z}
             GridRectangleBetween.eq_of_sides hsecondLeft hsecondRight
           subst Esecond
           rfl
+
+/-- A two-step rectangle decomposition is determined by the ordered quadruple of side columns of
+its two rectangles. -/
+theorem sideColumns_injective (x z : GridState n) :
+    Function.Injective fun D : GridRectangleDecomposition x z =>
+      (D.first.left, D.first.right, D.second.left, D.second.right) := by
+  intro D E h
+  simp only [Prod.mk.injEq] at h
+  exact ext h.1 h.2.1 h.2.2.1 h.2.2.2
+
+/-- Two-step rectangle decompositions between fixed states have decidable equality: such a
+decomposition is determined by its four side columns. -/
+instance : DecidableEq (GridRectangleDecomposition x z) :=
+  (sideColumns_injective x z).decidableEq
+
+/-- For fixed source and target grid states, the two-step rectangle decompositions between them
+form a finite type. -/
+noncomputable instance : Fintype (GridRectangleDecomposition x z) :=
+  Fintype.ofInjective _ (sideColumns_injective x z)
+
+/-- Away from the four side columns of a two-step decomposition, its target state agrees with its
+source state: neither rectangle moves such a column. -/
+theorem apply_eq_of_notMem_sideColumns (D : GridRectangleDecomposition x z) {c : Fin n}
+    (h₁ : c ∉ D.first.sideColumns) (h₂ : c ∉ D.second.sideColumns) : z c = x c := by
+  rw [D.first.mem_sideColumns] at h₁
+  rw [D.second.mem_sideColumns] at h₂
+  rw [not_or] at h₁ h₂
+  rw [D.second.map_of_ne c h₂.1 h₂.2, D.first.map_of_ne c h₁.1 h₁.2]
 
 /-- The target of a two-step rectangle decomposition is a two-step column-swap neighbour of its
 source: each of the two rectangles transposes its pair of distinct side columns. -/
