@@ -177,7 +177,7 @@ theorem sum_unblockedCoefficient_mul_unblockedCoefficient_eq_zero_of_disjoint
   · exact G.commute_mem_unblockedDecompositions D _ hD
   · exact D.commute_commute _
 
-/-- In characteristic two, the square of the unblocked grid differential has no matrix entry
+/-- In characteristic two, the square of the unblocked grid differential has zero matrix entry
 between a grid state and the state obtained from it by two disjoint column transpositions.
 
 Together with the vanishing of the diagonal entries in `Annulus.lean`, this leaves only the case
