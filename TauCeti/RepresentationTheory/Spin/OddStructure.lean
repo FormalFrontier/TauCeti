@@ -8,13 +8,12 @@ module
 public import TauCeti.LinearAlgebra.CliffordAlgebra.OddSplitting
 public import TauCeti.RepresentationTheory.Spin.Structure
 -- Non-public: the coordinate surjection out of a product, the simplicity of a matrix algebra, the
--- finite-dimensional injectivity criterion, the anisotropic orthogonal basis carrying the volume
--- element and the centrality of an endomorphism algebra are all used only inside proofs.
+-- finite-dimensional injectivity criterion and the anisotropic orthogonal basis carrying the
+-- volume element are all used only inside proofs.
 import TauCeti.RingTheory.CentralIdempotent
 import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 import Mathlib.RingTheory.SimpleRing.Matrix
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
-import Mathlib.Algebra.Central.End
 
 /-!
 # The structure theorem for an odd-dimensional Clifford algebra
@@ -259,7 +258,7 @@ theorem evenSpinAction_surjective : Function.Surjective (evenSpinAction Q P) := 
     have hmem : ι Q v * ω ∈ even Q := by
       rw [← Subalgebra.mem_toSubmodule, even_toSubmodule]
       have h := SetLike.mul_mem_graded (ι_mem_evenOdd_one Q v) hωodd
-      rwa [show (1 : ZMod 2) + 1 = 0 by decide] at h
+      rwa [CharTwo.add_self_eq_zero] at h
     have hrw : spinAction Q P (ι Q v * ω) * (c⁻¹ • spinAction Q P ω) = spinAction Q P (ι Q v) := by
       rw [mul_smul_comm, ← map_mul, mul_assoc, hsq, ← Algebra.commutes, ← Algebra.smul_def,
         map_smul, smul_smul, inv_mul_cancel₀ hc, one_smul]
