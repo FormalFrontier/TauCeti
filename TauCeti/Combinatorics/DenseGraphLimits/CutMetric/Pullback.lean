@@ -1,0 +1,298 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Claude
+-/
+module
+
+public import Mathlib.Probability.Distributions.Bernoulli
+public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Distance
+public import TauCeti.MeasureTheory.Measure.UnitIntervalMap
+
+/-!
+# The map form of the cut distance, and its agreement with the coupling form
+
+The **map form** of the cut distance is the classical one: read both graphons on the canonical
+carrier `(I, volume)` through measure-preserving maps, and take the infimum of the cut norm of the
+difference of the two pullbacks,
+
+`δ□ᵐᵃᵖ(U, W) = inf { ‖U ∘ (f × f) − W ∘ (g × g)‖□ | f : I → Ω₁, g : I → Ω₂ measure preserving }`.
+
+The main result is that it agrees with the coupling-primary `cutDist` over standard Borel carriers,
+`cutDist_eq_cutDistPullback`. This is the design equivalence that justifies taking the coupling
+form as primary: nothing is lost by doing so, since on the carriers where the classical definition
+is usually stated the two numbers are equal.
+
+**Atoms are allowed.** No atomless hypothesis appears on either carrier, and none is needed. The
+inequality `cutDistPullback ≤ cutDist` turns a coupling into a pair of maps by pushing `(I, volume)`
+forward onto the coupling itself — a probability measure on the standard Borel space `Ω₁ × Ω₂` —
+and `exists_measurePreserving_from_unitInterval` (Janson, Thm A.9) does that with no atomless
+hypothesis. That is the whole content of the harder direction: an *arbitrary* coupling, however
+atomic, is realized by a pair of measure-preserving maps out of `(I, volume)`, because the pair of
+projections of such a realization has the coupling as its joint law. The three regressions at the
+end of the file instantiate the equivalence at a point-mass coupling, at a finitely atomic one, and
+at one mixing an atomic with a continuous direction; they are what the absence of an atomless
+hypothesis buys, and each fails to typecheck for any formulation that assumes one.
+
+**Why the easy direction is easy.** A pair of measure-preserving maps `f, g` out of a common
+carrier pushes that carrier forward to a coupling along `x ↦ (f x, g x)`, and the overlaid
+difference along that coupling pulls back to the plain difference of pullbacks — this is
+`cutDist_le_cutNorm_sub_of_measurePreserving`, already available on an arbitrary common carrier.
+Specializing it to `(I, volume)` gives `cutDist ≤ cutDistPullback` outright.
+
+**The junk value.** `cutDistPullback` is an infimum over a set of reals that is empty when a
+carrier receives no measure-preserving map from `(I, volume)` at all, and then it is `0` by the
+`sInf` convention. Every statement below that could see that value carries the standard Borel
+hypotheses that rule it out (`pullbackCutNorms_nonempty`); the two that do not —
+`cutDistPullback_le` and `cutDistPullback_comm` — are true regardless, the first because it only
+uses a witness and the second because the two index sets are literally equal.
+
+## Main definitions
+
+* `TauCeti.DenseGraphLimits.cutDistPullback` — the infimum, over pairs of measure-preserving maps
+  from `(I, volume)` to the two carriers, of the cut norm of the difference of the two pullbacks.
+
+## Main results
+
+* `cutDist_eq_cutDistPullback` — **the coupling and map forms of the cut distance agree** over
+  standard Borel carriers, atoms allowed; it is `cutDist_le_cutDistPullback` and
+  `cutDistPullback_le_cutDist` together;
+* `cutDistPullback_le` and `le_cutDistPullback` are the introduction and elimination rules for the
+  infimum, and `exists_measurePreserving_cutNorm_sub_lt` produces a pair of maps beating any strict
+  upper bound;
+* `cutDistPullback_comm` is symmetry, and holds with no hypothesis on either carrier;
+* `cutDistPullback_nonneg`, `cutDistPullback_le_one`, `cutDistPullback_self` and
+  `cutDistPullback_le_cutNorm_sub` are the range and the same-carrier bounds.
+
+## References
+
+* S. Janson, *Graphons, cut norm and distance, couplings and rearrangements*, NYJM Monographs 4
+  (2013), Thm 6.9 (the two forms agree) with Thm A.9 (the transport from `(I, volume)`).
+* L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), §8.2.
+* Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 5 — `cutDistPullback` and
+  `cutDist_eq_cutDistPullback`, whose signatures follow
+  `TauCetiRoadmap/DenseGraphLimits/Suggested.lean` (with the two carrier measures implicit, as
+  they are for `cutDist` here). The atomless mod-null equivalence
+  `exists_mpModNull_equiv_unitInterval` is the layer's other target and is not built here.
+-/
+
+public section
+
+noncomputable section
+
+open MeasureTheory TauCeti.MeasureTheory
+
+open scoped unitInterval
+
+namespace TauCeti
+
+namespace DenseGraphLimits
+
+variable {Ω₁ Ω₂ : Type*} [MeasurableSpace Ω₁] [MeasurableSpace Ω₂]
+variable {μ₁ : Measure Ω₁} {μ₂ : Measure Ω₂} [IsProbabilityMeasure μ₁] [IsProbabilityMeasure μ₂]
+
+/-- The set of cut norms of the difference of the two pullbacks, one for each pair of
+measure-preserving maps from `(I, volume)` to the two carriers. The map form of the cut distance is
+its infimum.
+
+Bounded below by `0` through `nonneg_of_mem_pullbackCutNorms`, and nonempty over standard Borel
+carriers by `pullbackCutNorms_nonempty`; both facts are needed by the `csInf` rules, and are stated
+once here rather than unfolded at each use. -/
+private def pullbackCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : Set ℝ :=
+  {r | ∃ (f : I → Ω₁) (g : I → Ω₂) (hf : MeasurePreserving f volume μ₁)
+      (hg : MeasurePreserving g volume μ₂),
+    cutNorm volume (U.toSymmKernel.comap f hf.measurable volume
+      - W.toSymmKernel.comap g hg.measurable volume) = r}
+
+/-- Every pair of measure-preserving maps contributes its pulled-back cut norm. -/
+private theorem mem_pullbackCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {f : I → Ω₁}
+    {g : I → Ω₂} (hf : MeasurePreserving f volume μ₁) (hg : MeasurePreserving g volume μ₂) :
+    cutNorm volume (U.toSymmKernel.comap f hf.measurable volume
+      - W.toSymmKernel.comap g hg.measurable volume) ∈ pullbackCutNorms U W :=
+  ⟨f, g, hf, hg, rfl⟩
+
+/-- Over standard Borel carriers there is at least one pair of maps to compare along: this is
+Janson's Thm A.9, applied to each carrier separately. -/
+private theorem pullbackCutNorms_nonempty [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : (pullbackCutNorms U W).Nonempty := by
+  obtain ⟨f, hf⟩ := Measure.exists_measurePreserving_from_unitInterval μ₁
+  obtain ⟨g, hg⟩ := Measure.exists_measurePreserving_from_unitInterval μ₂
+  exact ⟨_, mem_pullbackCutNorms U W hf hg⟩
+
+/-- Every pulled-back cut norm is nonnegative, being a cut norm. -/
+private theorem nonneg_of_mem_pullbackCutNorms {U : Graphon Ω₁ μ₁} {W : Graphon Ω₂ μ₂} {r : ℝ}
+    (hr : r ∈ pullbackCutNorms U W) : 0 ≤ r := by
+  obtain ⟨f, g, hf, hg, rfl⟩ := hr
+  exact cutNorm_nonneg volume _
+
+/-- The set of pulled-back cut norms is bounded below by `0`. -/
+private theorem bddBelow_pullbackCutNorms (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
+    BddBelow (pullbackCutNorms U W) :=
+  ⟨0, fun _ hr => nonneg_of_mem_pullbackCutNorms hr⟩
+
+/-- **The map form of the cut distance**: the infimum, over measure-preserving maps from the
+canonical carrier `(I, volume)` to each of `(Ω₁, μ₁)` and `(Ω₂, μ₂)`, of the cut norm of the
+difference of the two pullbacks.
+
+This is the classical definition. Over standard Borel carriers it agrees with the
+coupling-primary `cutDist` (`cutDist_eq_cutDistPullback`); off them it can be a junk `0`, since the
+infimum is then taken over an empty set. -/
+def cutDistPullback (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : ℝ := sInf (pullbackCutNorms U W)
+
+/-- The map form of the cut distance is at most the pulled-back cut norm along any pair of
+measure-preserving maps: the introduction rule for the infimum. -/
+theorem cutDistPullback_le (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {f : I → Ω₁} {g : I → Ω₂}
+    (hf : MeasurePreserving f volume μ₁) (hg : MeasurePreserving g volume μ₂) :
+    cutDistPullback U W ≤ cutNorm volume (U.toSymmKernel.comap f hf.measurable volume
+      - W.toSymmKernel.comap g hg.measurable volume) :=
+  csInf_le (bddBelow_pullbackCutNorms U W) (mem_pullbackCutNorms U W hf hg)
+
+/-- To bound the map form of the cut distance from below it suffices to bound every pulled-back cut
+norm from below: the elimination rule for the infimum. The standard Borel hypotheses are what make
+the infimum a genuine one rather than the empty-set junk value. -/
+theorem le_cutDistPullback [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂] {c : ℝ}
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
+    (h : ∀ (f : I → Ω₁) (g : I → Ω₂) (hf : MeasurePreserving f volume μ₁)
+      (hg : MeasurePreserving g volume μ₂),
+      c ≤ cutNorm volume (U.toSymmKernel.comap f hf.measurable volume
+        - W.toSymmKernel.comap g hg.measurable volume)) :
+    c ≤ cutDistPullback U W :=
+  le_csInf (pullbackCutNorms_nonempty U W) (by
+    rintro r ⟨f, g, hf, hg, rfl⟩
+    exact h f g hf hg)
+
+/-- Any strict upper bound on the map form of the cut distance is beaten by some pair of
+measure-preserving maps. This is the form in which a `cutDistPullback` hypothesis is used: it turns
+an infimum into an explicit pair of maps. -/
+theorem exists_measurePreserving_cutNorm_sub_lt [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {c : ℝ} (h : cutDistPullback U W < c) :
+    ∃ (f : I → Ω₁) (g : I → Ω₂) (hf : MeasurePreserving f volume μ₁)
+      (hg : MeasurePreserving g volume μ₂),
+      cutNorm volume (U.toSymmKernel.comap f hf.measurable volume
+        - W.toSymmKernel.comap g hg.measurable volume) < c := by
+  rw [cutDistPullback] at h
+  obtain ⟨r, ⟨f, g, hf, hg, rfl⟩, hlt⟩ :=
+    exists_lt_of_csInf_lt (pullbackCutNorms_nonempty U W) h
+  exact ⟨f, g, hf, hg, hlt⟩
+
+/-- Exchanging the roles of the two maps negates the difference of the pullbacks, and the cut norm
+is even, so each pulled-back cut norm for `U, W` is one for `W, U`. -/
+private theorem pullbackCutNorms_subset_comm (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
+    pullbackCutNorms U W ⊆ pullbackCutNorms W U := by
+  rintro r ⟨f, g, hf, hg, rfl⟩
+  refine ⟨g, f, hg, hf, ?_⟩
+  rw [← cutNorm_neg volume (W.toSymmKernel.comap g hg.measurable volume
+    - U.toSymmKernel.comap f hf.measurable volume), neg_sub]
+
+/-- The index set of the map form is symmetric in the two graphons. -/
+private theorem pullbackCutNorms_comm (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
+    pullbackCutNorms U W = pullbackCutNorms W U :=
+  subset_antisymm (pullbackCutNorms_subset_comm U W) (pullbackCutNorms_subset_comm W U)
+
+/-- The map form of the cut distance is symmetric.
+
+No hypothesis is needed: the two infima are taken over *the same* set of reals, since a pair
+`(f, g)` for `(U, W)` is a pair `(g, f)` for `(W, U)` with the same value. -/
+theorem cutDistPullback_comm (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
+    cutDistPullback U W = cutDistPullback W U := by
+  rw [cutDistPullback, cutDistPullback, pullbackCutNorms_comm]
+
+/-- The map form of the cut distance is nonnegative. -/
+theorem cutDistPullback_nonneg [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : 0 ≤ cutDistPullback U W :=
+  le_cutDistPullback U W fun _ _ _ _ => cutNorm_nonneg volume _
+
+/-! ### The two forms agree -/
+
+/-- **A pair of measure-preserving maps bounds the cut distance from above.** This is the easy half
+of `cutDist_eq_cutDistPullback`: the graph of `(f, g)` pushes `volume` forward to a coupling, along
+which the overlaid difference is exactly the difference of the two pullbacks. -/
+theorem cutDist_le_cutDistPullback [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : cutDist U W ≤ cutDistPullback U W :=
+  le_cutDistPullback U W fun _ _ hf hg => cutDist_le_cutNorm_sub_of_measurePreserving U W hf hg
+
+/-- **Every coupling is realized by a pair of measure-preserving maps.** This is the substance of
+`cutDist_eq_cutDistPullback`.
+
+A coupling `π` of two standard Borel probability spaces is itself a probability measure on the
+standard Borel space `Ω₁ × Ω₂`, so Janson's Thm A.9 gives a measure-preserving `h : I → Ω₁ × Ω₂`.
+Its two coordinates are measure preserving onto the two carriers, and `h` is their pairing, so the
+overlaid difference along `π` pulls back along `h` to the difference of the two pullbacks. No
+atomless hypothesis enters: `π` may be a point mass. -/
+theorem cutDistPullback_le_cutDist [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : cutDistPullback U W ≤ cutDist U W := by
+  refine le_cutDist U W fun π hπ => ?_
+  have := hπ.isProbabilityMeasure
+  obtain ⟨h, hh⟩ := Measure.exists_measurePreserving_from_unitInterval π
+  have hf : MeasurePreserving (fun t => (h t).1) volume μ₁ := hπ.measurePreserving_fst.comp hh
+  have hg : MeasurePreserving (fun t => (h t).2) volume μ₂ := hπ.measurePreserving_snd.comp hh
+  refine (cutDistPullback_le U W hf hg).trans_eq ?_
+  exact (cutNorm_overlayDiff_map_prodMk U W hf.measurable hg.measurable hh).symm
+
+/-- **The coupling and map forms of the cut distance agree**, over standard Borel carriers, with
+atoms allowed.
+
+This is the design equivalence behind the coupling-primary definition: the classical
+measure-preserving-map infimum is not more general, so nothing is lost by taking the cross-carrier
+coupling form — which needs no hypothesis even to be stated — as the primary object. In particular
+the whole `cutDist` API transfers to `cutDistPullback` over standard Borel carriers. -/
+theorem cutDist_eq_cutDistPullback [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : cutDist U W = cutDistPullback U W :=
+  le_antisymm (cutDist_le_cutDistPullback U W) (cutDistPullback_le_cutDist U W)
+
+/-- The map form of the cut distance is at most `1`, by transport from `cutDist_le_one`. -/
+theorem cutDistPullback_le_one [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : cutDistPullback U W ≤ 1 :=
+  (cutDist_eq_cutDistPullback U W) ▸ cutDist_le_one U W
+
+section CommonCarrier
+
+variable {Ω : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω] {μ : Measure Ω}
+  [IsProbabilityMeasure μ]
+
+/-- The map form of the cut distance of a graphon to itself is zero. -/
+@[simp]
+theorem cutDistPullback_self (U : Graphon Ω μ) : cutDistPullback U U = 0 :=
+  (cutDist_eq_cutDistPullback U U) ▸ cutDist_self U
+
+/-- On a common standard Borel carrier the map form of the cut distance is at most the cut norm of
+the difference, by transport from `cutDist_le_cutNorm_sub`. As there, the reverse inequality is
+false: a measure-preserving rearrangement of the carrier leaves the left-hand side at `0` while the
+right-hand side can be bounded away from it. -/
+theorem cutDistPullback_le_cutNorm_sub (U W : Graphon Ω μ) :
+    cutDistPullback U W ≤ cutNorm μ (U.toSymmKernel - W.toSymmKernel) :=
+  (cutDist_eq_cutDistPullback U W) ▸ cutDist_le_cutNorm_sub U W
+
+end CommonCarrier
+
+/-! ### Regressions: couplings with atoms
+
+The harder direction of `cutDist_eq_cutDistPullback` applies Janson's Thm A.9 to the *coupling*, so
+the atomic cases to check are atomic couplings. These three instantiations run the equivalence at a
+point-mass coupling, at a finitely atomic one, and at one mixing an atomic with a continuous
+direction; each of them fails to typecheck for any formulation that assumes the carriers, or the
+coupling, atomless. -/
+
+/-- Regression: both carriers are point masses, so every coupling of them is a point mass. -/
+private theorem cutDist_eq_cutDistPullback_dirac (U : Graphon ℝ (Measure.dirac 0))
+    (W : Graphon ℝ (Measure.dirac 1)) : cutDist U W = cutDistPullback U W :=
+  cutDist_eq_cutDistPullback U W
+
+/-- Regression: both carriers are two-atom Bernoulli laws, so every coupling of them is finitely
+atomic. -/
+private theorem cutDist_eq_cutDistPullback_finite_atomic {p q : I}
+    (U : Graphon ℝ (ProbabilityTheory.bernoulliMeasure 0 1 p))
+    (W : Graphon ℝ (ProbabilityTheory.bernoulliMeasure 0 1 q)) :
+    cutDist U W = cutDistPullback U W :=
+  cutDist_eq_cutDistPullback U W
+
+/-- Regression: one carrier is atomic and the other is `(I, volume)`, so a coupling of them has an
+atomic and a continuous direction at once. -/
+private theorem cutDist_eq_cutDistPullback_mixed {p : I}
+    (U : Graphon ℝ (ProbabilityTheory.bernoulliMeasure 0 1 p)) (W : Graphon I volume) :
+    cutDist U W = cutDistPullback U W :=
+  cutDist_eq_cutDistPullback U W
+
+end DenseGraphLimits
+
+end TauCeti
