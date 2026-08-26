@@ -188,6 +188,11 @@ private def castMatrixProdTargetEquiv {R S A : Type*} [CommSemiring R]
     S ≃ₐ[R] Matrix (Fin n) (Fin n) A × Matrix (Fin n) (Fin n) A :=
   h ▸ e
 
+private theorem pow_half_sub_add_eight (n d : ℕ) (h : d ≤ n) :
+    2 ^ ((n + 8 - d) / 2) = 2 ^ ((n - d) / 2) * 16 := by
+  rw [show (n + 8 - d) / 2 = (n - d) / 2 + 4 by omega, pow_add]
+  norm_num
+
 private noncomputable def realCliffordPositiveZeroEquiv :
     C 0 0 ≃ₐ[ℝ] Matrix (Fin 1) (Fin 1) ℝ :=
   realCliffordZeroZeroEquiv.trans (matrixOneEquiv ℝ ℝ)
@@ -296,69 +301,25 @@ private theorem realClifford_positiveAxis_classification (p : ℕ) :
             tsub_zero, Nat.mod_self, Nat.add_zero, Nat.add_mod_right, Nat.add_one_sub_one,
             Nat.mod_succ, Nat.reduceSub, Nat.reduceMod, Nat.one_mod] at prev ⊢
         all_goals obtain ⟨e⟩ := prev
-        · refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans ?_⟩
-          refine (Algebra.TensorProduct.congr e
-            (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_
-          have hsize : 2 ^ ((n + 8) / 2) = 2 ^ (n / 2) * 16 := by
-            rw [show (n + 8) / 2 = n / 2 + 4 by omega, pow_add]
-            norm_num
-          exact castMatrixTargetEquiv hsize.symm
+        all_goals
+          refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans
+            ((Algebra.TensorProduct.congr e
+              (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_)⟩
+        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 0 (by omega)).symm
             (matrixTensorMatrixEquiv ℝ ℝ (2 ^ (n / 2)) 16)
-        · refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans ?_⟩
-          refine (Algebra.TensorProduct.congr e
-            (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_
-          have hsize : 2 ^ ((n + 8 - 1) / 2) = 2 ^ ((n - 1) / 2) * 16 := by
-            rw [show (n + 8 - 1) / 2 = (n - 1) / 2 + 4 by omega, pow_add]
-            norm_num
-          exact castMatrixProdTargetEquiv hsize.symm
+        · exact castMatrixProdTargetEquiv (pow_half_sub_add_eight n 1 (by omega)).symm
             (matrixProdTensorMatrixEquiv ℝ ℝ (2 ^ ((n - 1) / 2)) 16)
-        · refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans ?_⟩
-          refine (Algebra.TensorProduct.congr e
-            (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_
-          have hsize : 2 ^ ((n + 8) / 2) = 2 ^ (n / 2) * 16 := by
-            rw [show (n + 8) / 2 = n / 2 + 4 by omega, pow_add]
-            norm_num
-          exact castMatrixTargetEquiv hsize.symm
+        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 0 (by omega)).symm
             (matrixTensorMatrixEquiv ℝ ℝ (2 ^ (n / 2)) 16)
-        · refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans ?_⟩
-          refine (Algebra.TensorProduct.congr e
-            (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_
-          have hsize : 2 ^ ((n + 8 - 1) / 2) = 2 ^ ((n - 1) / 2) * 16 := by
-            rw [show (n + 8 - 1) / 2 = (n - 1) / 2 + 4 by omega, pow_add]
-            norm_num
-          exact castMatrixTargetEquiv hsize.symm
+        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 1 (by omega)).symm
             (matrixTensorMatrixEquiv ℝ ℂ (2 ^ ((n - 1) / 2)) 16)
-        · refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans ?_⟩
-          refine (Algebra.TensorProduct.congr e
-            (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_
-          have hsize : 2 ^ ((n + 8 - 2) / 2) = 2 ^ ((n - 2) / 2) * 16 := by
-            rw [show (n + 8 - 2) / 2 = (n - 2) / 2 + 4 by omega, pow_add]
-            norm_num
-          exact castMatrixTargetEquiv hsize.symm
+        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 2 (by omega)).symm
             (matrixTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((n - 2) / 2)) 16)
-        · refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans ?_⟩
-          refine (Algebra.TensorProduct.congr e
-            (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_
-          have hsize : 2 ^ ((n + 8 - 3) / 2) = 2 ^ ((n - 3) / 2) * 16 := by
-            rw [show (n + 8 - 3) / 2 = (n - 3) / 2 + 4 by omega, pow_add]
-            norm_num
-          exact castMatrixProdTargetEquiv hsize.symm
+        · exact castMatrixProdTargetEquiv (pow_half_sub_add_eight n 3 (by omega)).symm
             (matrixProdTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((n - 3) / 2)) 16)
-        · refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans ?_⟩
-          refine (Algebra.TensorProduct.congr e
-            (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_
-          have hsize : 2 ^ ((n + 8 - 2) / 2) = 2 ^ ((n - 2) / 2) * 16 := by
-            rw [show (n + 8 - 2) / 2 = (n - 2) / 2 + 4 by omega, pow_add]
-            norm_num
-          exact castMatrixTargetEquiv hsize.symm
+        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 2 (by omega)).symm
             (matrixTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((n - 2) / 2)) 16)
-        · refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans ?_⟩
-          refine (Algebra.TensorProduct.congr e
-            (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_
-          have hsize : 2 ^ ((n + 8 - 1) / 2) = 2 ^ ((n - 1) / 2) * 16 := by
-            rw [show (n + 8 - 1) / 2 = (n - 1) / 2 + 4 by omega, pow_add]
-            norm_num
-          exact castMatrixTargetEquiv hsize.symm
+        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 1 (by omega)).symm
             (matrixTensorMatrixEquiv ℝ ℂ (2 ^ ((n - 1) / 2)) 16)
 
 private theorem realClifford_negativeAxis_classification (q : ℕ) :
@@ -376,56 +337,43 @@ private theorem realClifford_negativeAxis_classification (q : ℕ) :
         Nat.reduceAdd, Nat.reduceMod, Nat.add_one_sub_one, Nat.add_succ_sub_one,
         Nat.mod_succ] at prev ⊢
     all_goals obtain ⟨e⟩ := prev
-    · refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans ?_⟩
-      refine (Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_
-      have hsize : 2 ^ (n / 2) = 2 ^ ((0 + (n + 1 + 1) - 2) / 2) := by
+    all_goals
+      refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans
+        ((Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_)⟩
+    · have hsize : 2 ^ (n / 2) = 2 ^ ((0 + (n + 1 + 1) - 2) / 2) := by
         congr 1
         omega
       exact castMatrixTargetEquiv hsize (realMatrixTensorQuaternionEquiv (2 ^ (n / 2)))
-    · refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans ?_⟩
-      refine (Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_
-      have hsize : 2 ^ ((n - 1) / 2) = 2 ^ ((0 + (n + 1 + 1) - 3) / 2) := by
+    · have hsize : 2 ^ ((n - 1) / 2) = 2 ^ ((0 + (n + 1 + 1) - 3) / 2) := by
         congr 1
         omega
       exact castMatrixProdTargetEquiv hsize
         (realMatrixProdTensorQuaternionEquiv (2 ^ ((n - 1) / 2)))
-    · refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans ?_⟩
-      refine (Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_
-      have hsize : 2 ^ (n / 2) = 2 ^ ((0 + (n + 1 + 1) - 2) / 2) := by
+    · have hsize : 2 ^ (n / 2) = 2 ^ ((0 + (n + 1 + 1) - 2) / 2) := by
         congr 1
         omega
       exact castMatrixTargetEquiv hsize (realMatrixTensorQuaternionEquiv (2 ^ (n / 2)))
-    · refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans ?_⟩
-      refine (Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_
-      have hsize : 2 ^ ((n - 1) / 2) * 2 = 2 ^ ((0 + (n + 1)) / 2) := by
+    · have hsize : 2 ^ ((n - 1) / 2) * 2 = 2 ^ ((0 + (n + 1)) / 2) := by
         rw [show (0 + (n + 1)) / 2 = (n - 1) / 2 + 1 by omega, pow_add]
         norm_num
       exact castMatrixTargetEquiv hsize
         (complexMatrixTensorQuaternionEquiv (2 ^ ((n - 1) / 2)))
-    · refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans ?_⟩
-      refine (Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_
-      have hsize : 2 ^ ((n - 2) / 2) * 4 = 2 ^ ((0 + (n + 1 + 1)) / 2) := by
+    · have hsize : 2 ^ ((n - 2) / 2) * 4 = 2 ^ ((0 + (n + 1 + 1)) / 2) := by
         rw [show (0 + (n + 1 + 1)) / 2 = (n - 2) / 2 + 2 by omega, pow_add]
         norm_num
       exact castMatrixTargetEquiv hsize
         (quaternionMatrixTensorQuaternionEquiv (2 ^ ((n - 2) / 2)))
-    · refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans ?_⟩
-      refine (Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_
-      have hsize : 2 ^ ((n - 3) / 2) * 4 = 2 ^ ((0 + (n + 1)) / 2) := by
+    · have hsize : 2 ^ ((n - 3) / 2) * 4 = 2 ^ ((0 + (n + 1)) / 2) := by
         rw [show (0 + (n + 1)) / 2 = (n - 3) / 2 + 2 by omega, pow_add]
         norm_num
       exact castMatrixProdTargetEquiv hsize
         (quaternionMatrixProdTensorQuaternionEquiv (2 ^ ((n - 3) / 2)))
-    · refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans ?_⟩
-      refine (Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_
-      have hsize : 2 ^ ((n - 2) / 2) * 4 = 2 ^ ((0 + (n + 1 + 1)) / 2) := by
+    · have hsize : 2 ^ ((n - 2) / 2) * 4 = 2 ^ ((0 + (n + 1 + 1)) / 2) := by
         rw [show (0 + (n + 1 + 1)) / 2 = (n - 2) / 2 + 2 by omega, pow_add]
         norm_num
       exact castMatrixTargetEquiv hsize
         (quaternionMatrixTensorQuaternionEquiv (2 ^ ((n - 2) / 2)))
-    · refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans ?_⟩
-      refine (Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_
-      have hsize : 2 ^ ((n - 1) / 2) * 2 = 2 ^ ((0 + (n + 1)) / 2) := by
+    · have hsize : 2 ^ ((n - 1) / 2) * 2 = 2 ^ ((0 + (n + 1)) / 2) := by
         rw [show (0 + (n + 1)) / 2 = (n - 1) / 2 + 1 by omega, pow_add]
         norm_num
       exact castMatrixTargetEquiv hsize
@@ -442,19 +390,17 @@ private theorem realCliffordClassification_add_both (p q n : ℕ)
     exact Nat.mod_lt _ (by norm_num)
   interval_cases r <;> simp only at h ⊢
   all_goals obtain ⟨e⟩ := h
-  · refine ⟨(realCliffordBottIterEquiv p q n).trans ?_⟩
-    refine (Algebra.TensorProduct.congr e
-      (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_
-    have hsize : 2 ^ ((p + q) / 2) * 2 ^ n = 2 ^ (((p + n) + (q + n)) / 2) := by
+  all_goals
+    refine ⟨(realCliffordBottIterEquiv p q n).trans
+      ((Algebra.TensorProduct.congr e
+        (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_)⟩
+  · have hsize : 2 ^ ((p + q) / 2) * 2 ^ n = 2 ^ (((p + n) + (q + n)) / 2) := by
       rw [← pow_add]
       congr 1
       omega
     exact castMatrixTargetEquiv hsize
       (matrixTensorMatrixEquiv ℝ ℝ (2 ^ ((p + q) / 2)) (2 ^ n))
-  · refine ⟨(realCliffordBottIterEquiv p q n).trans ?_⟩
-    refine (Algebra.TensorProduct.congr e
-      (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_
-    have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
+  · have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
         2 ^ (((p + n) + (q + n) - 1) / 2) := by
       rw [← pow_add]
       congr 1
@@ -462,10 +408,7 @@ private theorem realCliffordClassification_add_both (p q n : ℕ)
       omega
     exact castMatrixTargetEquiv hsize
       (matrixTensorMatrixEquiv ℝ ℂ (2 ^ ((p + q - 1) / 2)) (2 ^ n))
-  · refine ⟨(realCliffordBottIterEquiv p q n).trans ?_⟩
-    refine (Algebra.TensorProduct.congr e
-      (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_
-    have hsize : 2 ^ ((p + q - 2) / 2) * 2 ^ n =
+  · have hsize : 2 ^ ((p + q - 2) / 2) * 2 ^ n =
         2 ^ (((p + n) + (q + n) - 2) / 2) := by
       rw [← pow_add]
       congr 1
@@ -473,10 +416,7 @@ private theorem realCliffordClassification_add_both (p q n : ℕ)
       omega
     exact castMatrixTargetEquiv hsize
       (matrixTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((p + q - 2) / 2)) (2 ^ n))
-  · refine ⟨(realCliffordBottIterEquiv p q n).trans ?_⟩
-    refine (Algebra.TensorProduct.congr e
-      (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_
-    have hsize : 2 ^ ((p + q - 3) / 2) * 2 ^ n =
+  · have hsize : 2 ^ ((p + q - 3) / 2) * 2 ^ n =
         2 ^ (((p + n) + (q + n) - 3) / 2) := by
       rw [← pow_add]
       congr 1
@@ -484,10 +424,7 @@ private theorem realCliffordClassification_add_both (p q n : ℕ)
       omega
     exact castMatrixProdTargetEquiv hsize
       (matrixProdTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((p + q - 3) / 2)) (2 ^ n))
-  · refine ⟨(realCliffordBottIterEquiv p q n).trans ?_⟩
-    refine (Algebra.TensorProduct.congr e
-      (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_
-    have hsize : 2 ^ ((p + q - 2) / 2) * 2 ^ n =
+  · have hsize : 2 ^ ((p + q - 2) / 2) * 2 ^ n =
         2 ^ (((p + n) + (q + n) - 2) / 2) := by
       rw [← pow_add]
       congr 1
@@ -495,10 +432,7 @@ private theorem realCliffordClassification_add_both (p q n : ℕ)
       omega
     exact castMatrixTargetEquiv hsize
       (matrixTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((p + q - 2) / 2)) (2 ^ n))
-  · refine ⟨(realCliffordBottIterEquiv p q n).trans ?_⟩
-    refine (Algebra.TensorProduct.congr e
-      (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_
-    have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
+  · have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
         2 ^ (((p + n) + (q + n) - 1) / 2) := by
       rw [← pow_add]
       congr 1
@@ -506,19 +440,13 @@ private theorem realCliffordClassification_add_both (p q n : ℕ)
       omega
     exact castMatrixTargetEquiv hsize
       (matrixTensorMatrixEquiv ℝ ℂ (2 ^ ((p + q - 1) / 2)) (2 ^ n))
-  · refine ⟨(realCliffordBottIterEquiv p q n).trans ?_⟩
-    refine (Algebra.TensorProduct.congr e
-      (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_
-    have hsize : 2 ^ ((p + q) / 2) * 2 ^ n = 2 ^ (((p + n) + (q + n)) / 2) := by
+  · have hsize : 2 ^ ((p + q) / 2) * 2 ^ n = 2 ^ (((p + n) + (q + n)) / 2) := by
       rw [← pow_add]
       congr 1
       omega
     exact castMatrixTargetEquiv hsize
       (matrixTensorMatrixEquiv ℝ ℝ (2 ^ ((p + q) / 2)) (2 ^ n))
-  · refine ⟨(realCliffordBottIterEquiv p q n).trans ?_⟩
-    refine (Algebra.TensorProduct.congr e
-      (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_
-    have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
+  · have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
         2 ^ (((p + n) + (q + n) - 1) / 2) := by
       rw [← pow_add]
       congr 1
