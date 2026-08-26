@@ -27,8 +27,7 @@ surjective. This file proves that a flasque sheaf has no higher cohomology.
   cohomology in every positive degree over every open subset;
 * `TauCeti.Topology.subsingleton_H_succ_of_isFlasque`: the same statement for the cohomology
   of the whole space;
-* `TauCeti.Topology.subsingleton_H'_succ_skyscraperSheaf` and
-  `TauCeti.Topology.subsingleton_H_succ_skyscraperSheaf`: skyscraper sheaves are acyclic.
+* `TauCeti.Topology.isFlasque_skyscraperSheaf`: skyscraper sheaves are flasque, and hence acyclic.
 
 The proof is the classical dimension shift. Embedding a flasque sheaf `F` in an injective sheaf
 `I` gives a short exact sequence `0 ⟶ F ⟶ I ⟶ Q ⟶ 0`, and the covariant long exact sequence of
@@ -59,7 +58,7 @@ are Mathlib's `Mathlib/Topology/Sheaves/Flasque.lean`, and the long exact sequen
 public section
 
 open CategoryTheory Limits Opposite TopologicalSpace
-open TauCeti.CategoryTheory (freeYonedaFunctor freeYonedaSectionsEquiv
+open TauCeti.CategoryTheory (freeYonedaFunctor freeYonedaSectionsEquiv sheafH'_eq
   freeYonedaSectionsEquiv_naturality_left freeYonedaSectionsEquiv_naturality_right)
 
 universe u
@@ -96,15 +95,6 @@ private instance isFlasque_injectiveCokernelSequence_X₂
     TopCat.Presheaf.IsFlasque (injectiveCokernelSequence F).X₂.obj :=
   isFlasque_of_injective _
 
--- Mathlib's `Sheaf.H'` is definitionally this `Ext` group. Naming the boundary once keeps the
--- dimension-shifting proof independent of the implementation unfolding needed to expose it.
-private lemma subsingleton_H'_iff_ext
-    (F : Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}) (n : ℕ) (U : Opens X) :
-    Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} F n U) ↔
-      Subsingleton (Abelian.Ext.{u}
-        ((freeYonedaFunctor (Opens.grothendieckTopology X)).obj U) F n) :=
-  Iff.rfl
-
 /-- The dimension-shifting induction: a flasque sheaf has no cohomology in positive degrees over
 any open subset. -/
 private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
@@ -114,14 +104,15 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
   induction n with
   | zero =>
     intro F hF U
-    rw [subsingleton_H'_iff_ext]
-    apply subsingleton_ext_succ_of_comp_extClass_eq_zero
+    rw [sheafH'_eq]
+    apply subsingleton_ext_succ_of_injectiveCokernelSequence
     intro x₃
     let S := injectiveCokernelSequence F
     have hS₁ : TopCat.Presheaf.IsFlasque S.X₁.obj := by dsimp [S]; exact hF
+    let _ : TopCat.Presheaf.IsFlasque S.X₁.obj := hS₁
     have hS := injectiveCokernelSequence_shortExact F
     have hepi : Epi (S.g.hom.app (op U)) :=
-      @TopCat.Sheaf.IsFlasque.epi_of_shortExact X U S hS hS₁
+      TopCat.Sheaf.IsFlasque.epi_of_shortExact hS
     rw [AddCommGrpCat.epi_iff_surjective] at hepi
     obtain ⟨t, ht⟩ := hepi
       (freeYonedaSectionsEquiv _ U S.X₃ (Abelian.Ext.addEquiv₀ x₃))
@@ -136,20 +127,21 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
       Abelian.Ext.comp_zero]
   | succ n ih =>
     intro F hF U
-    rw [subsingleton_H'_iff_ext]
-    apply subsingleton_ext_succ_of_comp_extClass_eq_zero
+    rw [sheafH'_eq]
+    apply subsingleton_ext_succ_of_injectiveCokernelSequence
     intro x₃
     let S := injectiveCokernelSequence F
     have hS₁ : TopCat.Presheaf.IsFlasque S.X₁.obj := by dsimp [S]; exact hF
+    let _ : TopCat.Presheaf.IsFlasque S.X₁.obj := hS₁
     have hS := injectiveCokernelSequence_shortExact F
     have hS₃ : TopCat.Presheaf.IsFlasque S.X₃.obj :=
-      @TopCat.Sheaf.IsFlasque.of_shortExact_of_isFlasque₁₂ X S hS hS₁ (by infer_instance)
+      TopCat.Sheaf.IsFlasque.of_shortExact_of_isFlasque₁₂ hS
     have hH : Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} S.X₃ (n + 1) U) :=
       ih S.X₃ hS₃ U
     have hExt : Subsingleton
         (Abelian.Ext.{u}
           ((freeYonedaFunctor (Opens.grothendieckTopology X)).obj U) S.X₃ (n + 1)) :=
-      (subsingleton_H'_iff_ext S.X₃ (n + 1) U).mp hH
+      by simpa only [sheafH'_eq] using hH
     rw [@Subsingleton.elim _ hExt x₃ 0, Abelian.Ext.zero_comp]
 
 /-- A flasque sheaf of abelian groups has vanishing cohomology in every positive degree over
@@ -171,20 +163,11 @@ instance subsingleton_H_succ_of_isFlasque
       (TauCeti.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH (n + 1) isTerminalTop F).inv)
     ((ConcreteCategory.bijective_of_isIso _).injective)
 
-/-- A skyscraper sheaf has vanishing cohomology in every positive degree over every open
-subset. -/
-instance subsingleton_H'_succ_skyscraperSheaf (p₀ : X) (A : AddCommGrpCat.{u})
-    [(U : Opens X) → Decidable (p₀ ∈ U)] (n : ℕ) (U : Opens X) :
-    Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} (skyscraperSheaf p₀ A) (n + 1) U) := by
-  have := isFlasque_skyscraperSheaf_of_hasZeroObject p₀ A
-  exact subsingleton_H'_succ_of_isFlasque _ n U
-
-/-- A skyscraper sheaf has vanishing cohomology in every positive degree. -/
-instance subsingleton_H_succ_skyscraperSheaf (p₀ : X) (A : AddCommGrpCat.{u})
-    [(U : Opens X) → Decidable (p₀ ∈ U)] (n : ℕ) :
-    Subsingleton (_root_.CategoryTheory.Sheaf.H.{u} (skyscraperSheaf p₀ A) (n + 1)) := by
-  have := isFlasque_skyscraperSheaf_of_hasZeroObject p₀ A
-  exact subsingleton_H_succ_of_isFlasque _ n
+/-- A skyscraper sheaf of abelian groups is flasque. -/
+instance isFlasque_skyscraperSheaf (p₀ : X) (A : AddCommGrpCat.{u})
+    [(U : Opens X) → Decidable (p₀ ∈ U)] :
+    TopCat.Presheaf.IsFlasque (skyscraperSheaf p₀ A).obj :=
+  isFlasque_skyscraperSheaf_of_hasZeroObject p₀ A
 
 end
 
