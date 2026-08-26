@@ -48,8 +48,8 @@ Finally there are two dual invariant vectors, unconditionally in `n` and `R`: th
 vector is fixed (`TauCeti.KnotTheory.burau_mulVec_one`), and the row vector
 `(1, t, …, t ^ (n - 1))` is fixed (`TauCeti.KnotTheory.vecMul_burau_geom`). The kernel of the
 latter covector is therefore an invariant submodule, and for `2 ≤ n` over a nontrivial ring it is
-a proper nonzero one, which is the reducibility that the *reduced* Burau representation — the
-restriction to that kernel — is carved out of in `TauCeti/KnotTheory/Burau/Reduced.lean`. The
+a proper nonzero one. The *reduced* Burau representation is constructed on the span of the Burau
+columns inside that kernel in `TauCeti/KnotTheory/Burau/Reduced.lean`. The
 comparison with the Seifert-matrix Alexander polynomial of `TauCeti/KnotTheory/Alexander.lean` needs
 the closure of a braid to a link and is not built here.
 
