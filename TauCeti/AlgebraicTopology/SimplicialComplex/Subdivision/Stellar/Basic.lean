@@ -265,6 +265,71 @@ theorem link_stellarSubdivision_singleton (hv : ({v} : Finset ι) ∉ K) :
 
 /-! ### Dimension and finiteness -/
 
+/-- An injective relabeling commutes with stellar subdivision. -/
+@[simp]
+theorem map_stellarSubdivision {κ : Type*} [DecidableEq κ] (f : ι → κ)
+    (hf : Function.Injective f) :
+    (stellarSubdivision K σ v).map f = stellarSubdivision (K.map f) (σ.image f) (f v) := by
+  ext ω
+  constructor
+  · intro hω
+    change ∃ τ, τ ∈ stellarSubdivision K σ v ∧ τ.image f = ω at hω
+    obtain ⟨τ, hτ, rfl⟩ := hω
+    rw [mem_stellarSubdivision_iff] at hτ
+    apply mem_stellarSubdivision_iff.mpr
+    rcases hτ with ⟨hvτ, hτK, hτσ⟩ | ⟨hvτ, hτσ, hτK⟩
+    · refine Or.inl ⟨?_, ⟨τ, hτK, rfl⟩, ?_⟩
+      · rintro h
+        obtain ⟨x, hx, hfx⟩ := Finset.mem_image.mp h
+        exact hvτ ((hf hfx) ▸ hx)
+      · exact fun h => hτσ ((Finset.image_subset_image_iff hf).mp h)
+    · refine Or.inr ⟨Finset.mem_image.mpr ⟨v, hvτ, rfl⟩, ?_, ?_⟩
+      · rw [← Finset.image_erase hf]
+        exact fun h => hτσ ((Finset.image_subset_image_iff hf).mp h)
+      · rw [← Finset.image_erase hf, ← Finset.image_union]
+        exact ⟨τ.erase v ∪ σ, hτK, rfl⟩
+  · intro hω
+    have hω' := mem_stellarSubdivision_iff.mp hω
+    change ∃ τ, τ ∈ stellarSubdivision K σ v ∧ τ.image f = ω
+    rcases hω' with ⟨hvω, hωK, hωσ⟩ | ⟨hvω, hωσ, hωK⟩
+    · change ∃ τ, τ ∈ K ∧ τ.image f = ω at hωK
+      obtain ⟨τ, hτK, rfl⟩ := hωK
+      have hvτ : v ∉ τ := fun h => hvω (Finset.mem_image.mpr ⟨v, h, rfl⟩)
+      refine ⟨τ, mem_stellarSubdivision_iff.mpr (Or.inl ⟨hvτ, hτK, ?_⟩), rfl⟩
+      exact fun h => hωσ (Finset.image_subset_image h)
+    · change ∃ η, η ∈ K ∧ η.image f = ω.erase (f v) ∪ σ.image f at hωK
+      obtain ⟨η, hηK, hη⟩ := hωK
+      let ρ := η.filter fun x => f x ∈ ω.erase (f v)
+      have hρω : ρ.image f = ω.erase (f v) := by
+        ext y
+        constructor
+        · rintro hy
+          obtain ⟨x, hx, rfl⟩ := Finset.mem_image.mp hy
+          exact (Finset.mem_filter.mp hx).2
+        · intro hy
+          have hy' : y ∈ η.image f := by
+            rw [hη]
+            exact Finset.mem_union_left _ hy
+          obtain ⟨x, hxη, hxy⟩ := Finset.mem_image.mp hy'
+          subst y
+          exact Finset.mem_image.mpr ⟨x, Finset.mem_filter.mpr ⟨hxη, hy⟩, rfl⟩
+      have hvρ : v ∉ ρ := by
+        intro hvρ
+        exact Finset.notMem_erase (f v) ω ((Finset.mem_filter.mp hvρ).2)
+      have hρσ : ¬ σ ⊆ ρ := by
+        intro h
+        apply hωσ
+        rw [← hρω]
+        exact Finset.image_subset_image h
+      have hρη_eq : ρ ∪ σ = η := by
+        apply (Finset.image_inj hf).mp
+        rw [Finset.image_union, hρω, hη]
+      have hsource : insert v ρ ∈ stellarSubdivision K σ v := by
+        rw [insert_mem_stellarSubdivision_iff hvρ]
+        exact ⟨hρσ, by rwa [hρη_eq]⟩
+      refine ⟨insert v ρ, hsource, ?_⟩
+      rw [Finset.image_insert, hρω, Finset.insert_erase hvω]
+
 /-- **Starring a nonempty set at a fresh vertex preserves the dimension.** -/
 @[simp]
 theorem dimension_stellarSubdivision (hv : ({v} : Finset ι) ∉ K) (hσne : σ.Nonempty) :
