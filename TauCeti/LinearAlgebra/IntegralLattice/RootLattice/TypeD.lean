@@ -999,11 +999,15 @@ two spinor classes carry the quarter-integral values `n / 8`. -/
   FiniteQuadraticModule.kleinFour (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
     ((((n : ℚ) / 8 : ℚ)) : AddCircle (1 : ℚ)) (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
     (by
+      -- `change` exposes the quotient-induced ℤ-action as multiplication in ℚ; rewriting
+      -- cannot cross this definitional representation boundary.
       change ((((4 : ℚ) * ((1 : ℚ) / 2)) : ℚ) : AddCircle (1 : ℚ)) = 0
       rw [AddCircle.coe_eq_zero_iff_mem_one]
       exact Submodule.mem_one.mpr ⟨2, by norm_num⟩)
     (four_zsmul_coe_spinorHalfNorm n hn)
     (by
+      -- `change` exposes the quotient-induced ℤ-action as multiplication in ℚ; rewriting
+      -- cannot cross this definitional representation boundary.
       change ((((2 : ℚ) * ((1 : ℚ) / 2)) : ℚ) : AddCircle (1 : ℚ)) = 0
       rw [AddCircle.coe_eq_zero_iff_mem_one]
       exact Submodule.mem_one.mpr ⟨1, by norm_num⟩)
@@ -1030,6 +1034,8 @@ noncomputable def checkerboardDiscriminantQuadraticIsometry (hn : Even n) :
       have hhalf :
           (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) +
               (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
+        -- `change` exposes addition induced by the quotient map as rational addition; rewriting
+        -- cannot cross this definitional representation boundary.
         change ((((1 : ℚ) / 2 + (1 : ℚ) / 2) : ℚ) : AddCircle (1 : ℚ)) = 0
         exact checkerboard_coe_eq_zero 1 (by norm_num)
       rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_one,
