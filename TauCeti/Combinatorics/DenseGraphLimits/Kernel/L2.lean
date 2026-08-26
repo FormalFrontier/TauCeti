@@ -5,27 +5,30 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
+public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Basic
+public import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.MeasureTheory.Measure.FiniteMeasure
 
 /-!
 # The `L²` pairing of symmetric kernels
 
 The Frieze--Kannan weak regularity argument runs on an `L²(μ ⊗ μ)` potential, so the block-average
 step graphons of a refinement chain must be compared in `L²` and not only in cut norm.  This file
-supplies that pairing at the level of strict symmetric kernels: `l2inner` is the `L²(μ ⊗ μ)` inner
-product `∫ K · L` and `l2sq` is the induced norm squared `∫ K²`.
+defines the integrals `l2inner μ K L = ∫ K · L` and `l2sq μ K = ∫ K²` at the level of strict
+symmetric kernels.  When `μ` is finite, bounded kernels are square-integrable, so these integrals
+are the `L²(μ ⊗ μ)` inner product and its induced norm squared.
 
 **Why plain integrals and not `Lp`.**  A `SymmKernel` is a strict everywhere-defined
 representative, and the whole point of that convention is that a difference `K - L` is again a
 literal kernel.  Passing through `MeasureTheory.Lp` would replace each kernel by an a.e. class and
 force a.e. bookkeeping into a layer that has no need of it; the a.e. view is taken once, later, on
-the graphon quotient.  Kernels are bounded and the carrier is finite, so the integrals below always
-converge and the expansion `l2sq_sub` needs no side conditions.
+the graphon quotient.  Kernels are bounded, so when `μ` is finite the integrals below converge and
+the expansion `l2sq_sub` needs no additional side conditions.
 
 ## Main definitions
 
-* `TauCeti.DenseGraphLimits.l2inner` is the `L²(μ ⊗ μ)` inner product of two symmetric kernels;
-* `TauCeti.DenseGraphLimits.l2sq` is the `L²(μ ⊗ μ)` norm squared of a symmetric kernel.
+* `TauCeti.DenseGraphLimits.l2inner` is the integral of the product of two symmetric kernels;
+* `TauCeti.DenseGraphLimits.l2sq` is the integral of the square of a symmetric kernel.
 
 ## Main results
 
@@ -76,7 +79,8 @@ theorem integrable_sq [IsFiniteMeasure μ] (K : SymmKernel Ω μ) :
 
 end SymmKernel
 
-/-- The `L²(μ ⊗ μ)` inner product of two symmetric kernels. -/
+/-- The integral of the product of two symmetric kernels.  For finite `μ`, this is their
+`L²(μ ⊗ μ)` inner product. -/
 def l2inner (K L : SymmKernel Ω μ) : ℝ := ∫ p, K p.1 p.2 * L p.1 p.2 ∂(μ.prod μ)
 
 /-- The defining equation of `l2inner`. The definition's body is not exposed across module
@@ -84,7 +88,8 @@ boundaries, so this is the unfolding lemma downstream modules should use. -/
 theorem l2inner_def (K L : SymmKernel Ω μ) :
     l2inner μ K L = ∫ p, K p.1 p.2 * L p.1 p.2 ∂(μ.prod μ) := (rfl)
 
-/-- The `L²(μ ⊗ μ)` norm squared of a symmetric kernel. -/
+/-- The integral of the square of a symmetric kernel.  For finite `μ`, this is its `L²(μ ⊗ μ)`
+norm squared. -/
 def l2sq (K : SymmKernel Ω μ) : ℝ := ∫ p, K p.1 p.2 ^ 2 ∂(μ.prod μ)
 
 /-- The defining equation of `l2sq`. The definition's body is not exposed across module boundaries,
@@ -105,6 +110,26 @@ theorem l2sq_nonneg (K : SymmKernel Ω μ) : 0 ≤ l2sq μ K := by
 theorem l2inner_comm (K L : SymmKernel Ω μ) : l2inner μ K L = l2inner μ L K := by
   simp only [l2inner_def, mul_comm]
 
+/-- Pairing the zero kernel on the left with any kernel gives zero. -/
+@[simp]
+theorem l2inner_zero_left (K : SymmKernel Ω μ) : l2inner μ 0 K = 0 := by
+  simp [l2inner_def]
+
+/-- Pairing any kernel with the zero kernel on the right gives zero. -/
+@[simp]
+theorem l2inner_zero_right (K : SymmKernel Ω μ) : l2inner μ K 0 = 0 := by
+  rw [l2inner_comm, l2inner_zero_left]
+
+/-- Negating the left argument negates the pairing. -/
+@[simp]
+theorem l2inner_neg_left (K L : SymmKernel Ω μ) : l2inner μ (-K) L = -l2inner μ K L := by
+  simp only [l2inner_def, SymmKernel.coe_neg, Pi.neg_apply, neg_mul, integral_neg]
+
+/-- Negating the right argument negates the pairing. -/
+@[simp]
+theorem l2inner_neg_right (K L : SymmKernel Ω μ) : l2inner μ K (-L) = -l2inner μ K L := by
+  rw [l2inner_comm, l2inner_neg_left, l2inner_comm μ L K]
+
 @[simp]
 theorem l2sq_zero : l2sq μ (0 : SymmKernel Ω μ) = 0 := by
   simp [l2sq_def]
@@ -116,6 +141,11 @@ theorem l2inner_add_left (K L M : SymmKernel Ω μ) :
     l2inner μ (K + L) M = l2inner μ K M + l2inner μ L M := by
   simp only [l2inner_def, SymmKernel.coe_add, Pi.add_apply, add_mul]
   exact integral_add (SymmKernel.integrable_mul μ K M) (SymmKernel.integrable_mul μ L M)
+
+/-- The `L²` inner product is additive in its right argument. -/
+theorem l2inner_add_right (K L M : SymmKernel Ω μ) :
+    l2inner μ K (L + M) = l2inner μ K L + l2inner μ K M := by
+  rw [l2inner_comm, l2inner_add_left, l2inner_comm μ L K, l2inner_comm μ M K]
 
 /-- The `L²` inner product subtracts in its left argument. -/
 theorem l2inner_sub_left (K L M : SymmKernel Ω μ) :
@@ -136,6 +166,7 @@ theorem l2sq_sub (K L : SymmKernel Ω μ) :
     l2inner_comm μ L K, l2sq_eq_l2inner_self μ K, l2sq_eq_l2inner_self μ L]
   ring
 
+omit [IsFiniteMeasure μ] in
 /-- A kernel with values in `[-1, 1]` has `L²` norm squared at most `1` over a probability
 carrier. -/
 theorem l2sq_le_one_of_abs_le_one [IsProbabilityMeasure μ] (K : SymmKernel Ω μ)

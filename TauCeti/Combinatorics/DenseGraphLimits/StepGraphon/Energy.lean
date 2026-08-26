@@ -243,9 +243,8 @@ theorem l2inner_graphon_stepGraphonAvg (hP : ∀ p ∈ P.parts, MeasurableSet p)
       = graphonPartitionEnergy μ P hP W := by
   rw [l2inner_stepGraphonAvg_eq_sum, graphonPartitionEnergy_eq_sum]
 
-/-- The defect identity: the `L²` distance from `W` to its block average is the `L²` norm squared of
-`W` minus the partition energy.  This is the form of orthogonality the weak regularity iteration
-uses — a large defect is exactly a large available energy gain. -/
+/-- The defect identity: the `L²` distance from `W` to its block average is the remaining gap
+between the graphon's `L²` norm squared and the current partition energy. -/
 theorem l2sq_sub_stepGraphonAvg (hP : ∀ p ∈ P.parts, MeasurableSet p) (W : Graphon Ω μ) :
     l2sq μ (W.toSymmKernel - (stepGraphonAvg (μ := μ) P hP W).toSymmKernel)
       = l2sq μ W.toSymmKernel - graphonPartitionEnergy μ P hP W := by
