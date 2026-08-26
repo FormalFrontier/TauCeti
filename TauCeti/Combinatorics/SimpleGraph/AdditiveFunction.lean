@@ -31,9 +31,9 @@ that `2I - A` is *not* the Laplacian `D - A` unless `G` is `2`-regular, so Mathl
 results do not apply directly: the additive function replaces `2`-regularity, and `δ i * δ j` is
 the edge weight it induces.
 
-Kac calls such a `δ` an additive function, and a connected graph admits a positive one exactly
-when it is an affine diagram. That classification is not proved here; the results below take `δ`
-as given.
+Kac calls such a `δ` an additive function, and a connected simple graph admits a positive one
+exactly when it is a graphical affine diagram (so excluding the multiplicity-two diagram `A₁`).
+That classification is not proved here; the results below take `δ` as given.
 
 ## Main definitions
 
@@ -261,24 +261,34 @@ theorem posSemidef_graphCartanMatrix [StarRing R] [TrivialStar R] (hpos : ∀ i,
   · rw [star_trivial]
     exact dotProduct_graphCartanMatrix_mulVec_nonneg G hpos hδ x
 
-end Ordered
-
-section Real
-
-variable {δ : V → ℝ}
-
 /-- The null vectors of `2I - A`, in edge-local form. -/
 theorem graphCartanMatrix_mulVec_eq_zero_iff_forall_adj (hpos : ∀ i, 0 < δ i)
-    (hδ : ∀ i, ∑ j ∈ G.neighborFinset i, δ j = 2 * δ i) (x : V → ℝ) :
-    graphCartanMatrix G ℝ *ᵥ x = 0 ↔ ∀ i j, G.Adj i j → x i * δ j = x j * δ i := by
-  rw [← (posSemidef_graphCartanMatrix G hpos hδ).dotProduct_mulVec_zero_iff x, star_trivial,
-    dotProduct_graphCartanMatrix_mulVec_eq_zero_iff_forall_adj G hpos hδ]
+    (hδ : ∀ i, ∑ j ∈ G.neighborFinset i, δ j = 2 * δ i) (x : V → R) :
+    graphCartanMatrix G R *ᵥ x = 0 ↔ ∀ i j, G.Adj i j → x i * δ j = x j * δ i := by
+  constructor
+  · intro hx
+    apply (dotProduct_graphCartanMatrix_mulVec_eq_zero_iff_forall_adj G hpos hδ x).1
+    rw [hx, dotProduct_zero]
+  · intro hx
+    funext i
+    rw [graphCartanMatrix_mulVec_apply, Pi.zero_apply]
+    have hsum : δ i * (∑ j ∈ G.neighborFinset i, x j) = δ i * (2 * x i) := by
+      calc
+        δ i * (∑ j ∈ G.neighborFinset i, x j) =
+            ∑ j ∈ G.neighborFinset i, δ i * x j := Finset.mul_sum ..
+        _ = ∑ j ∈ G.neighborFinset i, x i * δ j :=
+          Finset.sum_congr rfl fun j hj ↦ by
+            simpa only [mul_comm] using (hx i j ((SimpleGraph.mem_neighborFinset ..).1 hj)).symm
+        _ = x i * (∑ j ∈ G.neighborFinset i, δ j) := (Finset.mul_sum ..).symm
+        _ = x i * (2 * δ i) := by rw [hδ i]
+        _ = δ i * (2 * x i) := by ring
+    rw [mul_left_cancel₀ (hpos i).ne' hsum, sub_self]
 
 /-- **On a connected graph the null space of `2I - A` is the line spanned by the additive
 function.** Since `2I - A` is positive semidefinite, this is the radical of its bilinear form. -/
 theorem ker_mulVecLin_graphCartanMatrix (hG : G.Connected) (hpos : ∀ i, 0 < δ i)
     (hδ : ∀ i, ∑ j ∈ G.neighborFinset i, δ j = 2 * δ i) :
-    LinearMap.ker (Matrix.mulVecLin (graphCartanMatrix G ℝ)) = Submodule.span ℝ {δ} := by
+    LinearMap.ker (Matrix.mulVecLin (graphCartanMatrix G R)) = Submodule.span R {δ} := by
   refine le_antisymm (fun x hx ↦ ?_) ?_
   · rw [LinearMap.mem_ker, Matrix.mulVecLin_apply,
       graphCartanMatrix_mulVec_eq_zero_iff_forall_adj G hpos hδ] at hx
@@ -293,6 +303,6 @@ theorem ker_mulVecLin_graphCartanMatrix (hG : G.Connected) (hpos : ∀ i, 0 < δ
       Matrix.mulVecLin_apply]
     exact graphCartanMatrix_mulVec_eq_zero G hδ
 
-end Real
+end Ordered
 
 end TauCeti

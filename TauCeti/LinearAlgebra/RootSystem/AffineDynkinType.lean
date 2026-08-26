@@ -180,6 +180,7 @@ instance : DecidablePred IsGraphical := fun t ↦ inferInstanceAs (Decidable (t 
 
 /-- Graphicality unfolded: `TauCeti.AffineDynkinType.IsGraphical` is a `def` into `Prop`, so a
 consumer outside this file needs this equation to read it. -/
+@[simp]
 theorem isGraphical_iff_ne_A_one {t : AffineDynkinType} : t.IsGraphical ↔ t ≠ A 1 := Iff.rfl
 
 @[simp] lemma isGraphical_A {n : ℕ} : (A n).IsGraphical ↔ n ≠ 1 := by simp [IsGraphical]
@@ -344,6 +345,7 @@ def cartanMatrix (t : AffineDynkinType) : Matrix (Fin t.nodes) (Fin t.nodes) ℤ
 it. Reading the matrix literal of `TauCeti.AffineDynkinType.cartanMatrix_A_one` entry by entry
 takes a `fin_cases` on both indices, and the body of `TauCeti.AffineDynkinType.cartanMatrix` is
 not exposed, so `decide` cannot do it outside this file. -/
+@[simp]
 lemma cartanMatrix_A_one_apply (i j : Fin (A 1).nodes) :
     (A 1).cartanMatrix i j = if i = j then 2 else -2 := by
   fin_cases i <;> fin_cases j <;> decide
