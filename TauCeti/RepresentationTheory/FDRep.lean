@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Category.FGModuleCat.Abelian
+public import Mathlib.CategoryTheory.Preadditive.Biproducts
 public import Mathlib.RingTheory.Finiteness.Small
 public import Mathlib.RepresentationTheory.Character
 
@@ -28,6 +30,11 @@ representation only when its carrier already lies there. A module-finite carrier
 neither the dimension nor the character. Only the character transfer needs `k` to be a field, `k`
 being a commutative ring throughout otherwise.
 
+Finally it records the remaining functoriality property of the character that Mathlib's
+`RepresentationTheory/Character.lean` leaves out beside `FDRep.char_iso` and `FDRep.char_tensor`:
+the character is **additive on biproducts**. That is the last of the three conditions making the
+character an invariant of the representation ring, `TauCeti.repRingCharacter`.
+
 ## Main definitions
 
 * `FDRep.ofShrink`: a module-finite representation on a carrier in an arbitrary universe, as an
@@ -43,6 +50,9 @@ being a commutative ring throughout otherwise.
 * `FDRep.of_ρ_eq_self`: rebundling the representation carried by an object returns that object.
 * `FDRep.ofShrinkEquiv`: `FDRep.ofShrink ρ` carries a representation equivalent to `ρ`, whence
   `FDRep.finrank_ofShrink` and `FDRep.character_ofShrink`.
+* `FDRep.hom_comm`: a morphism of finite-dimensional representations intertwines the two actions,
+  as an identity of `k`-linear maps.
+* `FDRep.char_biprod`: the character is additive on biproducts.
 -/
 
 public section
@@ -145,5 +155,63 @@ theorem character_ofShrink (g : G) : (ofShrink ρ).character g = ρ.character g 
   congrFun (Representation.char_iso (ofShrinkEquiv ρ)) g
 
 end ShrinkCharacter
+
+section Biproduct
+
+open CategoryTheory Limits
+
+variable {k : Type u} {G : Type v} [Field k] [Monoid G]
+
+/-- **A morphism of finite-dimensional representations intertwines the two actions**, read as an
+identity of `k`-linear maps rather than of morphisms of `FGModuleCat k`. This is Mathlib's
+`CategoryTheory.Action.Hom.comm` with both layers of bundling — the finitely generated module and
+the module — removed, which is the form the trace computations below need. -/
+theorem hom_comm {X Y : FDRep k G} (f : X ⟶ Y) (g : G) :
+    f.hom.hom.hom ∘ₗ X.ρ g = Y.ρ g ∘ₗ f.hom.hom.hom := by
+  simpa using congrArg (fun t : X.V ⟶ Y.V => t.hom.hom) (f.comm g)
+
+/-- The trace of `ρ g` cut down to a retract: if `p ∘ i` is the identity of `X`, then the trace of
+`ρ g` composed with the idempotent `i ∘ p` is the character of `X`.
+
+This is the one computation behind `FDRep.char_biprod`: cyclicity of the trace moves `p` past
+`ρ g ∘ i`, equivariance of `i` moves `ρ g` past it in the other direction, and what is left is
+`p ∘ i = 𝟙` applied to `X.ρ g`. -/
+private theorem trace_comp_of_retraction {X B : FDRep k G} (i : X ⟶ B) (p : B ⟶ X)
+    (h : i ≫ p = 𝟙 X) (g : G) :
+    LinearMap.trace k B ((B.ρ g ∘ₗ i.hom.hom.hom) ∘ₗ p.hom.hom.hom) = X.character g := by
+  rw [LinearMap.trace_comp_comm', ← hom_comm i g, ← LinearMap.comp_assoc]
+  rw [show p.hom.hom.hom ∘ₗ i.hom.hom.hom = LinearMap.id by
+    simpa using congrArg (fun t : X ⟶ X => t.hom.hom.hom) h]
+  simp [FDRep.character]
+
+/-- **The character is additive on biproducts.** Together with `FDRep.char_iso` and
+`FDRep.char_tensor` this is what makes the character a ring homomorphism out of the representation
+ring; see `TauCeti.repRingCharacter`.
+
+The proof splits the identity of `X ⊞ Y` as the sum of the two idempotents
+`biprod.inl ∘ biprod.fst` and `biprod.inr ∘ biprod.snd` (`CategoryTheory.Limits.biprod.total`) and
+evaluates the trace of `ρ g` against each summand with `FDRep.trace_comp_of_retraction`. -/
+theorem char_biprod (X Y : FDRep k G) : (X ⊞ Y).character = X.character + Y.character := by
+  ext g
+  have htot : (biprod.inl : X ⟶ X ⊞ Y).hom.hom.hom ∘ₗ (biprod.fst : X ⊞ Y ⟶ X).hom.hom.hom
+      + (biprod.inr : Y ⟶ X ⊞ Y).hom.hom.hom ∘ₗ (biprod.snd : X ⊞ Y ⟶ Y).hom.hom.hom
+      = LinearMap.id := by
+    have h := congrArg (fun t : (X ⊞ Y) ⟶ (X ⊞ Y) => t.hom.hom.hom)
+      (biprod.total (X := X) (Y := Y))
+    simp only [Action.id_hom] at h
+    exact h
+  have hsplit : (X ⊞ Y).ρ g
+      = ((X ⊞ Y).ρ g ∘ₗ (biprod.inl : X ⟶ X ⊞ Y).hom.hom.hom)
+          ∘ₗ (biprod.fst : X ⊞ Y ⟶ X).hom.hom.hom
+        + ((X ⊞ Y).ρ g ∘ₗ (biprod.inr : Y ⟶ X ⊞ Y).hom.hom.hom)
+          ∘ₗ (biprod.snd : X ⊞ Y ⟶ Y).hom.hom.hom := by
+    rw [LinearMap.comp_assoc, LinearMap.comp_assoc, ← LinearMap.comp_add, htot,
+      LinearMap.comp_id]
+  change LinearMap.trace k _ ((X ⊞ Y).ρ g) = _
+  rw [hsplit, map_add, trace_comp_of_retraction biprod.inl biprod.fst biprod.inl_fst,
+    trace_comp_of_retraction biprod.inr biprod.snd biprod.inr_snd]
+  rfl
+
+end Biproduct
 
 end FDRep
