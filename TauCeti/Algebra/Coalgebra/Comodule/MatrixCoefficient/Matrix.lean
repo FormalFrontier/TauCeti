@@ -93,7 +93,6 @@ theorem coefficientMatrix_corestrict (b : Basis ι R M) (f : C →ₗc[R] D) :
     (CoassocSimps.lid_comp_map (b.coord i) f.toLinearMap)
     (coact (R := R) (C := C) (M := M) (b j))
   rw [TensorProduct.map_map, LinearMap.id_comp, LinearMap.comp_id]
-  change _ = f.toLinearMap _
   exact h
 
 /-- The counit of a coefficient entry is the corresponding identity-matrix entry. -/
