@@ -134,7 +134,10 @@ theorem weightGradedComplex_mk_eq_mk_iff (WC : ℤ → Submodule ℂ Vℂ) (k : 
   Submodule.Quotient.eq ((WC (k - 1)).submoduleOf (WC k))
 
 /-- A class in the `k`-th complex graded piece vanishes exactly when its representative already
-lies in the step below. -/
+lies in the step below.
+
+This is not a simp lemma: `Submodule.Quotient.mk_eq_zero` already simplifies its left-hand side,
+so the `simpNF` linter rejects the attribute here. -/
 theorem weightGradedComplex_mk_eq_zero_iff (WC : ℤ → Submodule ℂ Vℂ) (k : ℤ) (x : WC k) :
     (Submodule.Quotient.mk x : weightGradedComplex WC k) = 0 ↔ (x : Vℂ) ∈ WC (k - 1) :=
   Submodule.Quotient.mk_eq_zero ((WC (k - 1)).submoduleOf (WC k))
