@@ -80,6 +80,38 @@ theorem toConv_conjugationAlgHom :
             (R := R) (H₁ := H) (H₂ := H)).toAlgHom)⁻¹ := by
   rw [conjugationAlgHom, toConv_ofConv]
 
+/-- The coordinate morphism of conjugation is natural in the commutative Hopf algebra. -/
+theorem map_comp_conjugationAlgHom {K : Type w} [CommSemiring K] [HopfAlgebra R K]
+    (f : H →ₐc[R] K) :
+    (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom).comp
+        (conjugationAlgHom (R := R) (H := H)) =
+      (conjugationAlgHom (R := R) (H := K)).comp f.toAlgHom := by
+  apply WithConv.toConv_injective
+  change
+    AlgHom.mapValue (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom)
+        (toConv (conjugationAlgHom (R := R) (H := H))) =
+      AlgHom.mapDomain f (toConv (conjugationAlgHom (R := R) (H := K)))
+  have hleft :
+      AlgHom.mapValue (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom)
+          (toConv (Bialgebra.TensorProduct.includeLeft
+            (R := R) (H₁ := H) (H₂ := H)).toAlgHom) =
+        AlgHom.mapDomain f (toConv (Bialgebra.TensorProduct.includeLeft
+          (R := R) (H₁ := K) (H₂ := K)).toAlgHom) := by
+    apply WithConv.ofConv_injective
+    ext x
+    simp [AlgHom.mapValue_apply, AlgHom.mapDomain_apply]
+  have hright :
+      AlgHom.mapValue (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom)
+          (toConv (Bialgebra.TensorProduct.includeRight
+            (R := R) (H₁ := H) (H₂ := H)).toAlgHom) =
+        AlgHom.mapDomain f (toConv (Bialgebra.TensorProduct.includeRight
+          (R := R) (H₁ := K) (H₂ := K)).toAlgHom) := by
+    apply WithConv.ofConv_injective
+    ext x
+    simp [AlgHom.mapValue_apply, AlgHom.mapDomain_apply]
+  rw [toConv_conjugationAlgHom, toConv_conjugationAlgHom,
+    map_mul, map_mul, map_inv, map_mul, map_mul, map_inv, hleft, hright]
+
 /-- Evaluating the coordinate morphism of left conjugation at two algebra-valued points gives
 their group-theoretic conjugate.
 

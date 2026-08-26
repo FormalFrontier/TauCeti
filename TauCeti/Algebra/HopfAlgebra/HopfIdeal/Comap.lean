@@ -8,9 +8,13 @@ module
 public import TauCeti.Algebra.HopfAlgebra.Kernel
 
 /-!
-# Inverse images of Hopf ideals along surjective Hopf algebra morphisms
+# Inverse images of Hopf ideals
 
-This file records the inverse image of a Hopf ideal along a surjective bialgebra morphism.
+This file records inverse images of Hopf ideals. Over a general commutative base, a surjective
+bialgebra morphism supplies the tensor exactness needed for the construction. Over a field, the
+kernel of the composite with the quotient morphism gives the inverse image along an arbitrary
+bialgebra morphism.
+
 For a surjective morphism `f : H →ₐc[R] K` and a Hopf ideal `I` of `K`, the preimage
 `f ⁻¹ I` is a Hopf ideal of `H`. The construction is made by applying the existing
 kernel-of-a-surjective-Hopf-map theorem to the composite `H → K → K/I`.
@@ -25,6 +29,7 @@ schemes in the affine Hopf-algebra dictionary.
 ## Main declarations
 
 * `TauCeti.HopfIdeal.comap`: the inverse image of a Hopf ideal under a surjective morphism.
+* `TauCeti.HopfIdeal.comapOfField`: the inverse image along an arbitrary morphism over a field.
 * `TauCeti.HopfIdeal.comap_toIdeal` and `TauCeti.HopfIdeal.mem_comap`: characteristic API.
 * `TauCeti.HopfIdeal.comap_le_comap_iff_of_surjective`: surjective inverse image reflects
   containment.
@@ -241,6 +246,74 @@ theorem comap_comap (I : HopfIdeal R L) (g : K →ₐc[R] L) (hg : Function.Surj
   ext h
   rw [mem_comap, mem_comap, mem_comap, BialgHom.coe_comp]
   rfl
+
+section Field
+
+variable {k : Type u} [Field k]
+variable [HopfAlgebra k H] [HopfAlgebra k K] [HopfAlgebra k L]
+
+/-- The inverse image of a Hopf ideal along an arbitrary bialgebra morphism over a field.
+
+Unlike `HopfIdeal.comap`, this construction needs no surjectivity hypothesis: over a field the
+kernel of every bialgebra morphism is a Hopf ideal. -/
+noncomputable def comapOfField (I : HopfIdeal k K) (f : H →ₐc[k] K) : HopfIdeal k H :=
+  ker ((Bialgebra.Quotient.mkBialgHom I.toIdeal).comp f)
+
+/-- The underlying ideal of `comapOfField` is the ordinary ideal-theoretic inverse image. -/
+@[simp]
+theorem comapOfField_toIdeal (I : HopfIdeal k K) (f : H →ₐc[k] K) :
+    (I.comapOfField f).toIdeal = Ideal.comap (f : H →+* K) I.toIdeal := by
+  rw [comapOfField, ker_toIdeal]
+  ext h
+  simp only [RingHom.mem_ker, Ideal.mem_comap, BialgHom.comp_apply,
+    Bialgebra.Quotient.mkBialgHom_apply, Ideal.Quotient.eq_zero_iff_mem,
+    BialgHom.coe_toAlgHom, RingHom.coe_coe]
+
+/-- Membership in the field-valued inverse image is membership after applying the morphism. -/
+@[simp]
+theorem mem_comapOfField {I : HopfIdeal k K} {f : H →ₐc[k] K} {h : H} :
+    h ∈ I.comapOfField f ↔ f h ∈ I := by
+  rw [← mem_toIdeal, comapOfField_toIdeal, Ideal.mem_comap]
+  exact mem_toIdeal
+
+/-- Over a field, the surjective inverse image agrees with the unrestricted construction. -/
+@[simp]
+theorem comap_eq_comapOfField (I : HopfIdeal k K) (f : H →ₐc[k] K)
+    (hf : Function.Surjective f) :
+    I.comap f hf = I.comapOfField f := by
+  ext h
+  rw [mem_comapOfField, mem_comap]
+
+/-- Inverse image of Hopf ideals over a field is monotone. -/
+theorem comapOfField_mono (f : H →ₐc[k] K) {I J : HopfIdeal k K} (hIJ : I ≤ J) :
+    I.comapOfField f ≤ J.comapOfField f := by
+  intro h hh
+  exact mem_comapOfField.mpr (hIJ (mem_comapOfField.mp hh))
+
+/-- The inverse image of the zero Hopf ideal over a field is the Hopf-ideal kernel. -/
+@[simp]
+theorem comapOfField_bot (f : H →ₐc[k] K) :
+    (⊥ : HopfIdeal k K).comapOfField f = ker f := by
+  ext h
+  rw [mem_comapOfField, mem_ker, mem_bot]
+
+/-- Pulling a Hopf ideal back along the identity over a field leaves it unchanged. -/
+@[simp]
+theorem comapOfField_id (I : HopfIdeal k H) :
+    I.comapOfField (BialgHom.id k H) = I := by
+  ext h
+  rw [mem_comapOfField, BialgHom.coe_id]
+  rfl
+
+/-- Field-valued inverse image of Hopf ideals is compatible with composition. -/
+@[simp]
+theorem comapOfField_comapOfField (I : HopfIdeal k L) (g : K →ₐc[k] L)
+    (f : H →ₐc[k] K) :
+    (I.comapOfField g).comapOfField f = I.comapOfField (g.comp f) := by
+  ext h
+  rw [mem_comapOfField, mem_comapOfField, mem_comapOfField, BialgHom.comp_apply]
+
+end Field
 
 end HopfIdeal
 
