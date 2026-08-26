@@ -158,7 +158,7 @@ theorem relationMatrix_mem_relationSet (i j : Fin (m + m)) :
 
 /-- An element is a symplectic defining relation exactly when it is an entry of the relation
 matrix. -/
-theorem mem_relationSet_iff {x : GeneralLinear.coordinateHopfAlgebra R (m + m)} :
+@[simp] theorem mem_relationSet_iff {x : GeneralLinear.coordinateHopfAlgebra R (m + m)} :
     x ∈ relationSet R m ↔ ∃ i j, relationMatrix R m i j = x := by
   constructor
   · rintro ⟨⟨i, j⟩, rfl⟩
@@ -168,7 +168,7 @@ theorem mem_relationSet_iff {x : GeneralLinear.coordinateHopfAlgebra R (m + m)} 
 
 /-- Mapping the relation matrix through an algebra morphism gives the relation of the images:
 the generic matrix maps entrywise, and the constant form maps to the constant form. -/
-theorem relationMatrix_map {T : Type*} [CommRing T] [Algebra R T]
+@[simp] theorem relationMatrix_map {T : Type*} [CommRing T] [Algebra R T]
     (phi : GeneralLinear.coordinateHopfAlgebra R (m + m) →ₐ[R] T) :
     (relationMatrix R m).map phi =
       (genericMatrix R m).map phi * (JFin m R).map (algebraMap R T) *
