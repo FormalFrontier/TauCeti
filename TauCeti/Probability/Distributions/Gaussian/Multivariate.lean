@@ -36,12 +36,11 @@ namespace TauCeti
 
 variable {ι : Type*}
 
-local instance : DecidableEq ι := Classical.decEq ι
 
 /-- The covariance matrix of a positive-semidefinite multivariate Gaussian is its covariance
 parameter. -/
 @[simp]
-theorem covMatrix_multivariateGaussian [Fintype ι] (m : EuclideanSpace ℝ ι)
+theorem covMatrix_multivariateGaussian [Fintype ι] [DecidableEq ι] (m : EuclideanSpace ℝ ι)
     {S : Matrix ι ι ℝ} (hS : S.PosSemidef) :
     covMatrix (multivariateGaussian m S) = S := by
   classical

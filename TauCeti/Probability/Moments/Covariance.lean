@@ -43,7 +43,6 @@ namespace TauCeti
 
 variable {ι : Type*}
 
-local instance : DecidableEq ι := Classical.decEq ι
 
 /-- The covariance matrix of a measure on a finite-dimensional Euclidean space. Its `(i, j)`
 entry is the scalar covariance of the `i`th and `j`th coordinate projections. -/
@@ -68,7 +67,7 @@ theorem isHermitian_covMatrix (μ : Measure (EuclideanSpace ℝ ι)) :
 
 /-- For a finite measure with finite second moment, the entrywise covariance matrix represents
 Mathlib's basis-free covariance bilinear form. -/
-theorem covarianceBilin_eq_covMatrix [Fintype ι]
+theorem covarianceBilin_eq_covMatrix [Fintype ι] [DecidableEq ι]
     (μ : Measure (EuclideanSpace ℝ ι)) [IsFiniteMeasure μ] (hμ : MemLp id 2 μ)
     (x y : EuclideanSpace ℝ ι) :
     covarianceBilin μ x y = ⟪x, (covMatrix μ).toEuclideanLin y⟫ := by
