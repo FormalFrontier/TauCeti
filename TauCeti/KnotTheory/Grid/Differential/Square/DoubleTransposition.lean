@@ -137,7 +137,10 @@ covered squares, are merely exchanged. -/
 @[simp]
 theorem commute_mem_unblockedDecompositions_iff {x z : GridState n}
     (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
-    D.commute h ∈ G.unblockedDecompositions x z ↔
+    ((D.commute h).first.IsEmpty ∧
+        Disjoint D.second.toGridRectangle.coveredSquares G.XSet) ∧
+      (D.commute h).second.IsEmpty ∧
+        Disjoint D.first.toGridRectangle.coveredSquares G.XSet ↔
       D ∈ G.unblockedDecompositions x z := by
   have hforward : ∀ (E : GridRectangleDecomposition x z) (hE : E.HasDisjointSides),
       E ∈ G.unblockedDecompositions x z → E.commute hE ∈ G.unblockedDecompositions x z := by
@@ -155,11 +158,15 @@ theorem commute_mem_unblockedDecompositions_iff {x z : GridState n}
         (G.isEmpty_of_mem_unblockedRectangles h₂), ?_⟩
       rw [E.commute_second_toGridRectangle hE]
       exact G.disjoint_XSet_of_mem_unblockedRectangles h₁
-  constructor
-  · intro hD
-    simpa only [D.commute_commute h] using
-      hforward (D.commute h) (D.hasDisjointSides_commute h) hD
-  · exact hforward D h
+  have hiff : D.commute h ∈ G.unblockedDecompositions x z ↔
+      D ∈ G.unblockedDecompositions x z := by
+    constructor
+    · intro hD
+      simpa only [D.commute_commute h] using
+        hforward (D.commute h) (D.hasDisjointSides_commute h) hD
+    · exact hforward D h
+  simpa only [G.mem_unblockedDecompositions, G.mem_unblockedRectangles,
+    D.commute_first_toGridRectangle h, D.commute_second_toGridRectangle h] using hiff
 
 variable [CharP R 2]
 
@@ -182,7 +189,9 @@ theorem sum_unblockedCoefficient_mul_unblockedCoefficient_eq_zero_of_disjoint
     (fun D _ => ?_)
   · rw [G.decompositionWeight_commute R D]
     exact CharTwo.add_self_eq_zero _
-  · exact (G.commute_mem_unblockedDecompositions_iff D _).mpr hD
+  · simpa only [G.mem_unblockedDecompositions, G.mem_unblockedRectangles,
+      D.commute_first_toGridRectangle, D.commute_second_toGridRectangle] using
+      (G.commute_mem_unblockedDecompositions_iff D _).mpr hD
   · exact D.commute_commute _
 
 /-- In characteristic two, the square of the unblocked grid differential has zero matrix entry
