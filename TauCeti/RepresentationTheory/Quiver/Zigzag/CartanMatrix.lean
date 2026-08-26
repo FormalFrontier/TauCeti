@@ -42,9 +42,10 @@ generalized Cartan matrix `2I - A_G` of the graph.
 
 * `TauCeti.restrictScalars_zigzagProjective_eq_iSup_zigzagCorner`: the vertex projective `Z e_j`
   is the sum of the corners `e_i Z e_j`.
-* `TauCeti.zigzagGradedCorner_zero_self`, `TauCeti.zigzagGradedCorner_one_of_adj` and
-  `TauCeti.zigzagGradedCorner_two_self`: the three nonvanishing graded corners, each spanned by a
-  single basis vector, together with the vanishing of all the others.
+* `TauCeti.zigzagGradedCorner_zero_self_eq_span`,
+  `TauCeti.zigzagGradedCorner_one_eq_span_of_adj` and
+  `TauCeti.zigzagGradedCorner_two_self_eq_span`: the three nonvanishing graded corners, each
+  spanned by a single basis vector, together with the vanishing of all the others.
 * `TauCeti.zigzagGradedCartanMatrix_apply`: **the entrywise graded Cartan formula.**
 * `TauCeti.zigzagGradedCartanMatrix_eq`: the same formula in matrix notation,
   `C_G(q) = (1 + q²) I + q A_G`.
@@ -106,6 +107,9 @@ the elements which `e_i` fixes on the left and `e_j` fixes on the right. -/
 noncomputable def zigzagCorner (i j : V) : Submodule k (nonisolatedZigzagQuotient k G) :=
   LinearMap.eqLocus (zigzagCornerMap k G i j) LinearMap.id
 
+/-- Membership in the corner `e_i Z e_j`: an element belongs to it exactly when multiplying it by
+`e_i` on the left and by `e_j` on the right fixes it. -/
+@[simp]
 theorem mem_zigzagCorner_iff {i j : V} {x : nonisolatedZigzagQuotient k G} :
     x ∈ zigzagCorner k G i j ↔
       zigzagVertexIdempotent k G i * x * zigzagVertexIdempotent k G j = x := by
@@ -196,6 +200,13 @@ noncomputable def zigzagGradedCorner (i j : V) (n : ℕ) :
     Submodule k (nonisolatedZigzagQuotient k G) :=
   zigzagCorner k G i j ⊓ zigzagGrade k G n
 
+/-- Membership in a graded corner: an element belongs to it exactly when it lies in the corner and
+is homogeneous of that degree. -/
+@[simp]
+theorem mem_zigzagGradedCorner_iff {i j : V} {n : ℕ} {x : nonisolatedZigzagQuotient k G} :
+    x ∈ zigzagGradedCorner k G i j n ↔ x ∈ zigzagCorner k G i j ∧ x ∈ zigzagGrade k G n :=
+  Iff.rfl
+
 /-- An element of a graded corner is cut out by the corner map from a spanning family of its
 degree.  This is the shape in which each of the three degrees below is computed: it reduces the
 graded corner to the span of the corner map applied to the vertex idempotents, the arrows, or the
@@ -212,7 +223,7 @@ private theorem zigzagGradedCorner_le_span_image {i j : V} {n : ℕ}
   exact Submodule.mem_map_of_mem hgrade
 
 /-- **The degree-zero corner at a vertex is spanned by its idempotent.** -/
-theorem zigzagGradedCorner_zero_self (i : V) :
+theorem zigzagGradedCorner_zero_self_eq_span (i : V) :
     zigzagGradedCorner k G i i 0 = Submodule.span k {zigzagVertexIdempotent k G i} := by
   refine le_antisymm ?_ ?_
   · refine le_trans (zigzagGradedCorner_le_span_image k G
@@ -231,7 +242,7 @@ theorem zigzagGradedCorner_zero_self (i : V) :
       zigzagMk_mem_zigzagGrade k G (PathAlgebra.vertexIdempotent_mem_grade_zero _)⟩
 
 /-- **The degree-zero corner between distinct vertices vanishes.** -/
-theorem zigzagGradedCorner_zero_of_ne {i j : V} (h : i ≠ j) :
+theorem zigzagGradedCorner_zero_eq_bot_of_ne {i j : V} (h : i ≠ j) :
     zigzagGradedCorner k G i j 0 = ⊥ := by
   refine le_antisymm ?_ bot_le
   refine le_trans (zigzagGradedCorner_le_span_image k G
@@ -248,7 +259,7 @@ theorem zigzagGradedCorner_zero_of_ne {i j : V} (h : i ≠ j) :
 
 /-- **The degree-one corner over an edge is spanned by the arrow crossing it.** The corner at
 `(i, j)` sees the arrow which starts at `j` and ends at `i`. -/
-theorem zigzagGradedCorner_one_of_adj {i j : V} (h : G.Adj j i) :
+theorem zigzagGradedCorner_one_eq_span_of_adj {i j : V} (h : G.Adj j i) :
     zigzagGradedCorner k G i j 1 = Submodule.span k {zigzagMk k G (ofArrow (arrow G h))} := by
   refine le_antisymm ?_ ?_
   · refine le_trans (zigzagGradedCorner_le_span_image k G
@@ -271,7 +282,7 @@ theorem zigzagGradedCorner_one_of_adj {i j : V} (h : G.Adj j i) :
       zigzagMk_mem_zigzagGrade k G (PathAlgebra.ofArrow_mem_grade_one _)⟩
 
 /-- **The degree-one corner over a nonedge vanishes.** -/
-theorem zigzagGradedCorner_one_of_not_adj {i j : V} (h : ¬G.Adj j i) :
+theorem zigzagGradedCorner_one_eq_bot_of_not_adj {i j : V} (h : ¬G.Adj j i) :
     zigzagGradedCorner k G i j 1 = ⊥ := by
   refine le_antisymm ?_ bot_le
   refine le_trans (zigzagGradedCorner_le_span_image k G
@@ -288,7 +299,7 @@ theorem zigzagGradedCorner_one_of_not_adj {i j : V} (h : ¬G.Adj j i) :
     exact Submodule.zero_mem _
 
 /-- **The degree-two corner at a vertex is spanned by its volume class.** -/
-theorem zigzagGradedCorner_two_self (i : V) :
+theorem zigzagGradedCorner_two_self_eq_span (i : V) :
     zigzagGradedCorner k G i i 2 = Submodule.span k {zigzagVolume k G i} := by
   refine le_antisymm ?_ ?_
   · refine le_trans (zigzagGradedCorner_le_span_image k G
@@ -308,7 +319,7 @@ theorem zigzagGradedCorner_two_self (i : V) :
     exact Submodule.subset_span ⟨i, rfl⟩
 
 /-- **The degree-two corner between distinct vertices vanishes.** -/
-theorem zigzagGradedCorner_two_of_ne {i j : V} (h : i ≠ j) :
+theorem zigzagGradedCorner_two_eq_bot_of_ne {i j : V} (h : i ≠ j) :
     zigzagGradedCorner k G i j 2 = ⊥ := by
   refine le_antisymm ?_ bot_le
   refine le_trans (zigzagGradedCorner_le_span_image k G
@@ -324,7 +335,7 @@ theorem zigzagGradedCorner_two_of_ne {i j : V} (h : i ≠ j) :
     exact Submodule.zero_mem _
 
 /-- **Every corner of degree at least three vanishes**, because the whole degree-`n` piece does. -/
-theorem zigzagGradedCorner_of_three_le (i j : V) {n : ℕ} (hn : 3 ≤ n) :
+theorem zigzagGradedCorner_eq_bot_of_three_le (i j : V) {n : ℕ} (hn : 3 ≤ n) :
     zigzagGradedCorner k G i j n = ⊥ := by
   rw [zigzagGradedCorner, zigzagGrade_eq_bot_of_three_le k G hn, inf_bot_eq]
 
@@ -334,52 +345,45 @@ theorem zigzagGradedCorner_of_three_le (i j : V) {n : ℕ} (hn : 3 ≤ n) :
 /-- The degree-zero corner at a vertex is one-dimensional. -/
 theorem finrank_zigzagGradedCorner_zero_self (i : V) :
     Module.finrank k (zigzagGradedCorner k G i i 0) = 1 := by
-  rw [zigzagGradedCorner_zero_self]
+  rw [zigzagGradedCorner_zero_self_eq_span]
   exact finrank_span_singleton (zigzagVertexIdempotent_ne_zero k G i)
 
 /-- The degree-zero corner between distinct vertices has dimension zero. -/
 theorem finrank_zigzagGradedCorner_zero_of_ne {i j : V} (h : i ≠ j) :
     Module.finrank k (zigzagGradedCorner k G i j 0) = 0 := by
-  rw [zigzagGradedCorner_zero_of_ne k G h, finrank_bot]
+  rw [zigzagGradedCorner_zero_eq_bot_of_ne k G h, finrank_bot]
 
 /-- The degree-one corner over a nonedge has dimension zero. -/
 theorem finrank_zigzagGradedCorner_one_of_not_adj {i j : V} (h : ¬G.Adj j i) :
     Module.finrank k (zigzagGradedCorner k G i j 1) = 0 := by
-  rw [zigzagGradedCorner_one_of_not_adj k G h, finrank_bot]
+  rw [zigzagGradedCorner_one_eq_bot_of_not_adj k G h, finrank_bot]
 
 /-- The degree-two corner between distinct vertices has dimension zero. -/
 theorem finrank_zigzagGradedCorner_two_of_ne {i j : V} (h : i ≠ j) :
     Module.finrank k (zigzagGradedCorner k G i j 2) = 0 := by
-  rw [zigzagGradedCorner_two_of_ne k G h, finrank_bot]
+  rw [zigzagGradedCorner_two_eq_bot_of_ne k G h, finrank_bot]
 
 /-- **The graded Cartan entries vanish in every degree at least three**: this is what makes the
 truncated sum defining `TauCeti.zigzagGradedCartanMatrix` lose nothing. -/
 theorem finrank_zigzagGradedCorner_of_three_le (i j : V) {n : ℕ} (hn : 3 ≤ n) :
     Module.finrank k (zigzagGradedCorner k G i j n) = 0 := by
-  rw [zigzagGradedCorner_of_three_le k G i j hn, finrank_bot]
+  rw [zigzagGradedCorner_eq_bot_of_three_le k G i j hn, finrank_bot]
 
-section Nonisolated
-
-variable (hns : ∀ i : V, ∃ j, G.Adj i j)
-include hns
-
-/-- The degree-one corner over an edge is one-dimensional. -/
+/-- The degree-one corner over an edge is one-dimensional: the arrow crossing the edge is nonzero
+because traversing it and returning is the nonzero volume class at its head. -/
 theorem finrank_zigzagGradedCorner_one_of_adj {i j : V} (h : G.Adj j i) :
     Module.finrank k (zigzagGradedCorner k G i j 1) = 1 := by
-  rw [zigzagGradedCorner_one_of_adj k G h]
-  refine finrank_span_singleton ?_
-  have hne := (linearIndependent_zigzagBasisFun k G hns).ne_zero
-    (Sum.inr (Sum.inl (⟨(j, i), h⟩ : G.Dart)))
-  rwa [zigzagBasisFun_inr_inl] at hne
+  rw [zigzagGradedCorner_one_eq_span_of_adj k G h]
+  refine finrank_span_singleton fun harrow => ?_
+  have hvol := zigzagMk_ofArrow_mul_ofArrow_symm k G (⟨(j, i), h⟩ : G.Dart)
+  rw [harrow, zero_mul] at hvol
+  exact zigzagVolume_ne_zero k G h.symm hvol.symm
 
-/-- The degree-two corner at a vertex is one-dimensional. -/
-theorem finrank_zigzagGradedCorner_two_self (i : V) :
+/-- The degree-two corner at a vertex with a neighbour is one-dimensional. -/
+theorem finrank_zigzagGradedCorner_two_self_of_adj {i j : V} (h : G.Adj i j) :
     Module.finrank k (zigzagGradedCorner k G i i 2) = 1 := by
-  rw [zigzagGradedCorner_two_self]
-  obtain ⟨j, hj⟩ := hns i
-  exact finrank_span_singleton (zigzagVolume_ne_zero k G hj)
-
-end Nonisolated
+  rw [zigzagGradedCorner_two_self_eq_span]
+  exact finrank_span_singleton (zigzagVolume_ne_zero k G h)
 
 /-! ### The graded Cartan matrix -/
 
@@ -408,18 +412,13 @@ theorem zigzagGradedCartanMatrix_apply_of_ne_of_not_adj {i j : V} (hne : i ≠ j
   push_cast
   ring
 
-section Entries
-
-variable (hns : ∀ i : V, ∃ j, G.Adj i j)
-include hns
-
-/-- **The diagonal graded Cartan entry is `1 + q²`**: the vertex idempotent in degree zero and the
-volume class in degree two. -/
-theorem zigzagGradedCartanMatrix_apply_self (i : V) :
+/-- **The diagonal graded Cartan entry at a vertex with a neighbour is `1 + q²`**: the vertex
+idempotent in degree zero and the volume class in degree two. -/
+theorem zigzagGradedCartanMatrix_apply_self_of_adj {i j : V} (h : G.Adj i j) :
     zigzagGradedCartanMatrix k G i i = 1 + X ^ 2 := by
   rw [zigzagGradedCartanMatrix_apply_eq_sum, finrank_zigzagGradedCorner_zero_self,
     finrank_zigzagGradedCorner_one_of_not_adj k G (G.irrefl (v := i)),
-    finrank_zigzagGradedCorner_two_self k G hns]
+    finrank_zigzagGradedCorner_two_self_of_adj k G h]
   push_cast
   ring
 
@@ -428,7 +427,7 @@ theorem zigzagGradedCartanMatrix_apply_of_adj {i j : V} (h : G.Adj i j) :
     zigzagGradedCartanMatrix k G i j = X := by
   have hne : i ≠ j := G.ne_of_adj h
   rw [zigzagGradedCartanMatrix_apply_eq_sum, finrank_zigzagGradedCorner_zero_of_ne k G hne,
-    finrank_zigzagGradedCorner_one_of_adj k G hns h.symm,
+    finrank_zigzagGradedCorner_one_of_adj k G h.symm,
     finrank_zigzagGradedCorner_two_of_ne k G hne]
   push_cast
   ring
@@ -439,11 +438,16 @@ theorem isSymm_zigzagGradedCartanMatrix : (zigzagGradedCartanMatrix k G).IsSymm 
   rcases eq_or_ne i j with rfl | hne
   · rfl
   · by_cases h : G.Adj i j
-    · rw [zigzagGradedCartanMatrix_apply_of_adj k G hns h.symm,
-        zigzagGradedCartanMatrix_apply_of_adj k G hns h]
+    · rw [zigzagGradedCartanMatrix_apply_of_adj k G h.symm,
+        zigzagGradedCartanMatrix_apply_of_adj k G h]
     · rw [zigzagGradedCartanMatrix_apply_of_ne_of_not_adj k G (Ne.symm hne)
         fun hji => h hji.symm,
         zigzagGradedCartanMatrix_apply_of_ne_of_not_adj k G hne h]
+
+section Nonisolated
+
+variable (hns : ∀ i : V, ∃ j, G.Adj i j)
+include hns
 
 section Decidable
 
@@ -455,11 +459,12 @@ theorem zigzagGradedCartanMatrix_apply (i j : V) :
     zigzagGradedCartanMatrix k G i j =
       (if i = j then 1 + X ^ 2 else 0) + if G.Adj i j then X else 0 := by
   rcases eq_or_ne i j with rfl | hne
-  · rw [zigzagGradedCartanMatrix_apply_self k G hns, ite_eq_left rfl,
+  · obtain ⟨j, hj⟩ := hns i
+    rw [zigzagGradedCartanMatrix_apply_self_of_adj k G hj, ite_eq_left rfl,
       ite_eq_right (G.irrefl (v := i)), add_zero]
   · rw [ite_eq_right hne, zero_add]
     by_cases h : G.Adj i j
-    · rw [zigzagGradedCartanMatrix_apply_of_adj k G hns h, ite_eq_left h]
+    · rw [zigzagGradedCartanMatrix_apply_of_adj k G h, ite_eq_left h]
     · rw [zigzagGradedCartanMatrix_apply_of_ne_of_not_adj k G hne h, ite_eq_right h]
 
 /-- **The graded Cartan matrix of a zigzag algebra is `(1 + q²) I + q A_G`.** -/
@@ -529,6 +534,6 @@ theorem sum_eval_one_zigzagGradedCartanMatrix_eq_finrank_zigzagProjective (j : V
 
 end Sum
 
-end Entries
+end Nonisolated
 
 end TauCeti
