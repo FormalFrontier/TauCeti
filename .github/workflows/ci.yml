@@ -61,6 +61,7 @@ jobs:
           python3 scripts/test_workflow_pins.py
           python3 scripts/test_landrun_pin.py
           python3 scripts/test_elan_pin.py
+          python3 scripts/test_attest_pr_config.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
           python3 scripts/test_toolchain_tags.py

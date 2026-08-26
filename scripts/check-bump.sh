@@ -34,8 +34,9 @@
 #
 # where each dir holds the repo's lean-toolchain, lake-manifest.json, lakefile.toml
 # (and optionally lakefile.lean). base_dir is the CURRENT target-branch tip — the
-# trusted config the PR actually builds and merges against, and what a genuine bump is
-# validated against. merge_base_dir is the PR's merge-base with the target branch, used
+# trusted forward-progress policy anchor a genuine bump is validated against. The exact-head
+# build uses the candidate config after separately attesting its lakefile to the merge base.
+# merge_base_dir is the PR's merge-base with the target branch, used
 # only to decide whether the PR changed these files at all (so a PR that is merely
 # behind the tip is not judged as if it had edited them). Exit 0 = safe forward bump
 # (or no pin change); exit 1 = not auto-mergeable (route to a human). Reasons printed.
