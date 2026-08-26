@@ -97,8 +97,8 @@ theorem isInitial_iff_isEmpty (p : CoveringSpace X) :
     by_contra hne
     exact hf.elim (nonempty_fiber p (not_isEmpty_iff.mp hne) x₀).some
   · intro h
-    exact ⟨isInitialOfIsInitialObj (fiberActionFunctor x₀)
-      (isInitialActionOfIsEmpty (A := (fiberActionFunctor x₀).obj p) ⟨fun a => h.elim a.1⟩)⟩
+    exact ⟨(isInitialActionOfIsEmpty (A := (fiberActionFunctor x₀).obj p)
+      ⟨fun a => h.elim a.1⟩).isInitialOfObj (fiberActionFunctor x₀) p⟩
 
 /-- **A covering space of `X` is a connected object of `TauCeti.CoveringSpace X` exactly when its
 total space is a connected space.** -/

@@ -25,7 +25,6 @@ whose objects are not finite sets.
 ## Main declarations
 
 * `TauCeti.isConnected_of_iso`: an object isomorphic to a connected object is connected.
-* `TauCeti.isInitialOfIsInitialObj`: an equivalence reflects initial objects.
 * `TauCeti.isConnected_map`: an equivalence carries connected objects to connected objects.
 * `TauCeti.isConnected_map_iff`: connectedness of `F.obj A` is equivalent to connectedness of `A`.
 -/
@@ -69,14 +68,10 @@ private def unitIsoApp (A : C) : A ≅ F.inv.obj (F.obj A) :=
 private def counitIsoApp (B : D) : F.obj (F.inv.obj B) ≅ B :=
   F.asEquivalence.counitIso.app B
 
-/-- An equivalence of categories reflects initial objects. -/
-def isInitialOfIsInitialObj {A : C} (h : IsInitial (F.obj A)) : IsInitial A :=
-  IsInitial.ofIso (h.isInitialObj F.inv (F.obj A)) (unitIsoApp F A).symm
-
 /-- An equivalence of categories carries connected objects to connected objects. -/
 theorem isConnected_map (A : C) [PreGaloisCategory.IsConnected A] :
     PreGaloisCategory.IsConnected (F.obj A) where
-  notInitial h := PreGaloisCategory.IsConnected.notInitial (isInitialOfIsInitialObj F h)
+  notInitial h := PreGaloisCategory.IsConnected.notInitial (h.isInitialOfObj F A)
   noTrivialComponent Y i hm hni := by
     have _ : Mono i := hm
     have _ : Mono (F.inv.map i) := F.inv.map_mono i

@@ -67,15 +67,8 @@ theorem nonempty_iff_not_isInitial_action (A : Action (Type u) G) :
 Both directions come from the forgetful functor to types, which preserves and reflects finite
 limits and hence monomorphisms. -/
 theorem mono_action_iff_injective {A B : Action (Type u) G} (f : A ⟶ B) :
-    Mono f ↔ Function.Injective f.hom := by
-  constructor
-  · intro _
-    have hf : Mono ((Action.forget (Type u) G).map f) := (Action.forget (Type u) G).map_mono f
-    exact (CategoryTheory.mono_iff_injective f.hom).mp hf
-  · intro hf
-    have hm : Mono ((Action.forget (Type u) G).map f) :=
-      (CategoryTheory.mono_iff_injective f.hom).mpr hf
-    exact (Action.forget (Type u) G).mono_of_mono_map hm
+    Mono f ↔ Function.Injective f.hom :=
+  ((Action.forget (Type u) G).mono_map_iff_mono f).symm.trans (mono_iff_injective _)
 
 /-- **A `G`-set is connected exactly when it is transitive**, that is, exactly when its underlying
 type is nonempty and `G` acts transitively on it. -/
