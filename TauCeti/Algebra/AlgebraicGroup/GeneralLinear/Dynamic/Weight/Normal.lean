@@ -162,6 +162,14 @@ theorem isNormal_weightUnipotentInParabolicHopfIdeal (w : Fin N → ℤ) :
   apply (mem_weightUnipotentDefiningPointsSubgroup_iff R w _).mpr
   simpa only [map_mul, map_inv] using hconj
 
+private theorem mkQuotient_comp_eqToIso {H : _root_.CommHopfAlgCat.{u} R}
+    {I J : HopfIdeal R H} (hIJ : I = J) :
+    CommHopfAlgCat.mkQuotient H I ≫
+        (eqToIso (congrArg (CommHopfAlgCat.quotient H) hIJ)).hom =
+      CommHopfAlgCat.mkQuotient H J := by
+  subst J
+  simp
+
 /-- The quotient-coordinate isomorphism underlying the identification of the relative
 weight-unipotent quotient spectrum. -/
 private noncomputable def weightUnipotentInParabolicCoordinateIso (w : Fin N → ℤ) :
@@ -233,9 +241,9 @@ theorem weightUnipotentInParabolicGroupSchemeIso_hom_comp_weightUnipotentToParab
   dsimp only [q]
   rw [hq_def, ← Category.assoc,
     CommHopfAlgCat.mkQuotient_comp_quotientMapOfLe]
-  rw [weightUnipotentInParabolicCoordinateIso, Iso.trans_hom, eqToIso.hom,
-    ← Category.assoc, CommHopfAlgCat.mkQuotient_comp_eqToHom,
+  rw [weightUnipotentInParabolicCoordinateIso, Iso.trans_hom, ← Category.assoc,
+    mkQuotient_comp_eqToIso (R := R)
+      (weightUnipotentInParabolicHopfIdeal_comap R w).symm,
     CommHopfAlgCat.mkQuotient_comp_quotientIsoOfSurjective_hom, hq_def]
-  exact weightUnipotentInParabolicHopfIdeal_comap R w
 
 end TauCeti.GeneralLinear.Dynamic
