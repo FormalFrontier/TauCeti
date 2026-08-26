@@ -45,13 +45,14 @@ namespace CliffordAlgebra
 
 open TauCeti
 
-universe u v
+universe u v w
 
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
   [FiniteDimensional K V] [Invertible (2 : K)]
 
 /-- The determinant of an orthogonal transformation, reduced modulo squares. -/
-noncomputable def orthogonalDetSquareClass (Q : QuadraticForm K V) :
+noncomputable def orthogonalDetSquareClass {N : Type w} [AddCommMonoid N] [Module K N]
+    (Q : QuadraticMap K V N) :
     QuadraticMap.orthogonalGroup Q →* Multiplicative (SquareClassGroup K) :=
   squareClassHom.comp <|
     LinearEquiv.det.comp (QuadraticMap.orthogonalGroup Q).subtype
@@ -59,7 +60,8 @@ noncomputable def orthogonalDetSquareClass (Q : QuadraticForm K V) :
 omit [FiniteDimensional K V] [Invertible (2 : K)] in
 /-- The determinant square-class map evaluates by taking the determinant modulo squares. -/
 @[simp]
-theorem orthogonalDetSquareClass_apply (Q : QuadraticForm K V)
+theorem orthogonalDetSquareClass_apply {N : Type w} [AddCommMonoid N] [Module K N]
+    (Q : QuadraticMap K V N)
     (g : QuadraticMap.orthogonalGroup Q) :
     orthogonalDetSquareClass Q g = squareClassHom (LinearEquiv.det (g : V ≃ₗ[K] V)) :=
   by
