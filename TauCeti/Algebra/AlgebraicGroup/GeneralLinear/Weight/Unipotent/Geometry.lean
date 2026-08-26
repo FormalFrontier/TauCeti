@@ -24,9 +24,9 @@ determinant is one and polynomial evaluation extends across the localization. Th
 quotient relations then give mutually inverse maps.
 
 The polynomial presentation proves that the represented subgroup is smooth over every
-commutative base ring and geometrically connected over a field. Together with the pointwise
-unipotence theorem, these are the scheme-theoretic properties required of the unipotent factor
-in the dynamic Levi decomposition.
+commutative base ring and geometrically connected over a field. A forthcoming pointwise
+unipotence theorem will supply the remaining property required of the unipotent factor in the
+dynamic Levi decomposition.
 
 ## Main declarations
 
@@ -265,7 +265,7 @@ private theorem weightUnipotentPolynomialToQuotient_comp_quotientToPolynomial
         (weightUnipotentDefiningHopfIdeal_toIdeal R w)).injective
       simpa only [weightUnipotentPolynomialToQuotient, Matrix.one_apply, apply_ite,
         map_one, map_zero, Ideal.Quotient.mkₐ_eq_mk, Ideal.quotientEquivAlgOfEq_mk] using
-        (quotient_genericMatrix_apply R w hle).symm
+        (quotient_genericMatrix_apply_of_le R w hle).symm
   exact DFunLike.congr_fun hcomp y
 
 /-- The weight-unipotent coordinate algebra is a polynomial algebra on the entries `X_ij` for
@@ -279,10 +279,19 @@ noncomputable def weightUnipotentCoordinateAlgEquiv (w : Fin N → ℤ) :
     (weightUnipotentQuotientToPolynomial_comp_polynomialToQuotient R w)
     (weightUnipotentPolynomialToQuotient_comp_quotientToPolynomial R w)
 
-/-- The polynomial presentation sends a quotient generic-matrix entry to the corresponding
-polynomial weight-unipotent matrix entry. -/
-@[simp]
+/-- The polynomial presentation sends a canonical quotient generic-matrix entry to the
+corresponding polynomial weight-unipotent matrix entry. -/
 theorem weightUnipotentCoordinateAlgEquiv_mk_genericMatrix_apply
+    (w : Fin N → ℤ) (i j : Fin N) :
+    weightUnipotentCoordinateAlgEquiv R w
+        (Ideal.Quotient.mkₐ R (weightUnipotentDefiningHopfIdeal R w).toIdeal
+          ((genericMatrix R N) i j)) =
+      weightUnipotentPolynomialGenericMatrix R w i j := by
+  unfold weightUnipotentCoordinateAlgEquiv
+  exact weightUnipotentQuotientToPolynomial_mk_genericMatrix_apply R w i j
+
+@[simp]
+private theorem weightUnipotentCoordinateAlgEquiv_mk_apply
     (w : Fin N → ℤ) (i j : Fin N) :
     weightUnipotentCoordinateAlgEquiv R w
         (Ideal.Quotient.mk (weightUnipotentDefiningHopfIdeal R w).toIdeal
@@ -291,8 +300,7 @@ theorem weightUnipotentCoordinateAlgEquiv_mk_genericMatrix_apply
       weightUnipotentPolynomialGenericMatrix R w i j := by
   rw [← genericMatrix_apply (R := R) (n := N) i j,
     ← Ideal.Quotient.mkₐ_eq_mk (R₁ := R)]
-  unfold weightUnipotentCoordinateAlgEquiv
-  exact weightUnipotentQuotientToPolynomial_mk_genericMatrix_apply R w i j
+  exact weightUnipotentCoordinateAlgEquiv_mk_genericMatrix_apply R w i j
 
 /-- The inverse polynomial presentation sends a free variable to its quotient matrix entry. -/
 @[simp]
@@ -302,7 +310,7 @@ theorem weightUnipotentCoordinateAlgEquiv_symm_X
       Ideal.Quotient.mkₐ R (weightUnipotentDefiningHopfIdeal R w).toIdeal
         ((genericMatrix R N) ij.1.1 ij.1.2) := by
   apply (weightUnipotentCoordinateAlgEquiv R w).injective
-  rw [AlgEquiv.apply_symm_apply, Ideal.Quotient.mkₐ_eq_mk, genericMatrix_apply,
+  rw [AlgEquiv.apply_symm_apply,
     weightUnipotentCoordinateAlgEquiv_mk_genericMatrix_apply,
     weightUnipotentPolynomialGenericMatrix_apply_of_lt R w ij.2]
 
