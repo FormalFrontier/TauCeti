@@ -58,8 +58,8 @@ are Mathlib's `Mathlib/Topology/Sheaves/Flasque.lean`, and the long exact sequen
 public section
 
 open CategoryTheory Limits Opposite TopologicalSpace
-open TauCeti.CategoryTheory (freeYonedaFunctor freeYonedaSectionsEquiv sheafH'_eq
-  freeYonedaSectionsEquiv_naturality_left freeYonedaSectionsEquiv_naturality_right)
+open TauCeti.CategoryTheory (freeYonedaSheafFunctor freeYonedaSheafSectionsEquiv sheafH'_eq
+  freeYonedaSheafSectionsEquiv_naturality_left freeYonedaSheafSectionsEquiv_naturality_right)
 
 universe u
 
@@ -80,13 +80,13 @@ instance isFlasque_of_injective
   epi {U V} i := by
     rw [AddCommGrpCat.epi_iff_surjective]
     intro s
-    refine ⟨freeYonedaSectionsEquiv _ U.unop F
-      (Injective.factorThru ((freeYonedaSectionsEquiv _ V.unop F).symm s)
-        ((freeYonedaFunctor (Opens.grothendieckTopology X)).map i.unop)), ?_⟩
-    have h := freeYonedaSectionsEquiv_naturality_left
+    refine ⟨freeYonedaSheafSectionsEquiv _ U.unop F
+      (Injective.factorThru ((freeYonedaSheafSectionsEquiv _ V.unop F).symm s)
+        ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).map i.unop)), ?_⟩
+    have h := freeYonedaSheafSectionsEquiv_naturality_left
       (Opens.grothendieckTopology X) i.unop F
-      (Injective.factorThru ((freeYonedaSectionsEquiv _ V.unop F).symm s)
-        ((freeYonedaFunctor (Opens.grothendieckTopology X)).map i.unop))
+      (Injective.factorThru ((freeYonedaSheafSectionsEquiv _ V.unop F).symm s)
+        ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).map i.unop))
     rw [Injective.comp_factorThru, AddEquiv.apply_symm_apply] at h
     exact h.symm
 
@@ -115,14 +115,14 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
       TopCat.Sheaf.IsFlasque.epi_of_shortExact hS
     rw [AddCommGrpCat.epi_iff_surjective] at hepi
     obtain ⟨t, ht⟩ := hepi
-      (freeYonedaSectionsEquiv _ U S.X₃ (Abelian.Ext.addEquiv₀ x₃))
+      (freeYonedaSheafSectionsEquiv _ U S.X₃ (Abelian.Ext.addEquiv₀ x₃))
     have hx₃ : x₃ =
-        (Abelian.Ext.mk₀ ((freeYonedaSectionsEquiv _ U S.X₂).symm t)).comp
+        (Abelian.Ext.mk₀ ((freeYonedaSheafSectionsEquiv _ U S.X₂).symm t)).comp
         (Abelian.Ext.mk₀ S.g) (add_zero 0) := by
       rw [Abelian.Ext.mk₀_comp_mk₀]
       refine (Abelian.Ext.mk₀_addEquiv₀_apply x₃).symm.trans (congrArg Abelian.Ext.mk₀ ?_)
-      refine (freeYonedaSectionsEquiv _ U S.X₃).injective ?_
-      rw [freeYonedaSectionsEquiv_naturality_right, AddEquiv.apply_symm_apply, ht]
+      refine (freeYonedaSheafSectionsEquiv _ U S.X₃).injective ?_
+      rw [freeYonedaSheafSectionsEquiv_naturality_right, AddEquiv.apply_symm_apply, ht]
     rw [hx₃, Abelian.Ext.comp_assoc_of_second_deg_zero, hS.comp_extClass,
       Abelian.Ext.comp_zero]
   | succ n ih =>
@@ -140,7 +140,7 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
       ih S.X₃ hS₃ U
     have hExt : Subsingleton
         (Abelian.Ext.{u}
-          ((freeYonedaFunctor (Opens.grothendieckTopology X)).obj U) S.X₃ (n + 1)) :=
+          ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).obj U) S.X₃ (n + 1)) :=
       by simpa only [sheafH'_eq] using hH
     rw [@Subsingleton.elim _ hExt x₃ 0, Abelian.Ext.zero_comp]
 
