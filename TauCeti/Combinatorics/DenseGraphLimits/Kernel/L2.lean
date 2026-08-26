@@ -153,7 +153,7 @@ theorem l2sq_neg (K : SymmKernel Ω μ) : l2sq μ (-K) = l2sq μ K := by
 /-- Scaling a kernel scales its squared `L²` seminorm by the square of the scalar. -/
 @[simp]
 theorem l2sq_smul (c : ℝ) (K : SymmKernel Ω μ) : l2sq μ (c • K) = c ^ 2 * l2sq μ K := by
-  rw [l2sq_eq_l2inner_self, l2inner_smul_left, l2inner_smul_right, l2sq_eq_l2inner_self]
+  simp only [l2sq_eq_l2inner_self, l2inner_smul_left, l2inner_smul_right]
   ring
 
 variable [IsFiniteMeasure μ]
@@ -188,8 +188,8 @@ theorem l2inner_sub_right (K L M : SymmKernel Ω μ) :
 cross term, this is the Pythagoras identity the energy increment uses. -/
 theorem l2sq_sub (K L : SymmKernel Ω μ) :
     l2sq μ (K - L) = l2sq μ K - 2 * l2inner μ K L + l2sq μ L := by
-  rw [l2sq_eq_l2inner_self, l2inner_sub_left, l2inner_sub_right, l2inner_sub_right,
-    l2inner_comm μ L K, l2sq_eq_l2inner_self μ K, l2sq_eq_l2inner_self μ L]
+  simp only [l2sq_eq_l2inner_self, l2inner_sub_left, l2inner_sub_right]
+  rw [l2inner_comm μ L K]
   ring
 
 omit [IsFiniteMeasure μ] in

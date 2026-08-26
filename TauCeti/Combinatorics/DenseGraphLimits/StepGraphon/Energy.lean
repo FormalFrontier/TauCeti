@@ -19,9 +19,9 @@ This file builds that potential.
 `graphonPartitionEnergy μ P hP W` is the `L²(μ ⊗ μ)` norm squared of the block-average step graphon
 `stepGraphonAvg`, that is of `E[W | P ⊗ P]`.  Its two structural properties are proved here:
 
-* **projection.** The block-average step graphon is the `L²` orthogonal projection of `W` onto the
-  functions constant on the rectangles of `P`, in the concrete form
-  `l2inner_graphon_stepGraphonAvg`; hence the exact defect identity `l2sq_sub_stepGraphonAvg`.
+* **projection moment.** Pairing `W` with its block-average step graphon gives the self-pairing of
+  that block average (`l2inner_graphon_stepGraphonAvg`); hence the exact defect identity
+  `l2sq_sub_stepGraphonAvg`.
 * **Pythagoras.** Refining the partition increases the energy by exactly the `L²` norm squared of
   the change in the block-average step graphon (`graphonPartitionEnergy_increment`), so the energy
   is monotone under refinement.
@@ -46,8 +46,8 @@ graph.
 
 ## Main results
 
-* `TauCeti.DenseGraphLimits.setIntegral_prod_eq_sum_parts` and
-  `TauCeti.DenseGraphLimits.integral_eq_sum_parts`: a measurable finite partition splits an
+* `TauCeti.Finpartition.setIntegral_prod_eq_sum_parts` and
+  `TauCeti.Finpartition.integral_eq_sum_parts`: a measurable finite partition splits an
   integral over a rectangle, respectively over the whole product carrier, into a finite sum over
   its subrectangles;
 * `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le`: block averaging over a refinement
@@ -55,11 +55,9 @@ graph.
 * `TauCeti.DenseGraphLimits.l2inner_stepGraphonAvg_eq_sum`: the block computation everything else
   is read off from — pairing any kernel against a block-average step graphon;
 * `TauCeti.DenseGraphLimits.graphonPartitionEnergy_eq_sum`: the energy as a finite block sum;
-* `TauCeti.DenseGraphLimits.l2inner_graphon_stepGraphonAvg`: the block average is the `L²`
-  orthogonal projection of `W`, and
+* `TauCeti.DenseGraphLimits.l2inner_graphon_stepGraphonAvg`: the projection moment identity, and
   `TauCeti.DenseGraphLimits.l2inner_stepGraphonAvg_of_le` is its refinement form;
-* `TauCeti.DenseGraphLimits.graphonPartitionEnergy_le_l2sq`: Bessel's inequality for that
-  projection;
+* `TauCeti.DenseGraphLimits.graphonPartitionEnergy_le_l2sq`: the corresponding Bessel-type bound;
 * `TauCeti.DenseGraphLimits.l2sq_sub_stepGraphonAvg`: the defect identity `‖W - E[W|P⊗P]‖₂² =
   ‖W‖₂² - E(P)`;
 * `TauCeti.DenseGraphLimits.graphonPartitionEnergy_increment`: the `L²`-Pythagoras increment;
@@ -79,7 +77,7 @@ graph.
   `_mono` / `_nonneg` / `_le_one` corollaries).  The signatures of `graphonPartitionEnergy` and of
   its `_eq` / `_increment` / `_mono` / `_nonneg` / `_le_one` companions, together with the
   `_mono` and `_nonneg` proofs, follow `TauCetiRoadmap/DenseGraphLimits/Suggested.lean` (Layer 2);
-  the block computation, the projection identity and the defect identity are developed here.
+  the block computation, the projection moment identity and the defect identity are developed here.
 * The roadmap lists the null-cell `Finpartition` convention — including unchanged weighted energy,
   the scope of `stepGraphonAvg_rectIntegral_of_le` and of the increment — under its
   migration-backed routes, with an independent development in `Graphon/RegularityFinpartition.lean`
@@ -96,13 +94,10 @@ open MeasureTheory Set
 
 namespace TauCeti
 
-namespace DenseGraphLimits
+namespace Finpartition
 
-variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
 
-section Decomposition
-
-omit [IsProbabilityMeasure μ] in
 /-- A finite measurable partition of the carrier cuts a rectangle into finitely many disjoint
 subrectangles, splitting any integral over it into a finite sum. -/
 theorem setIntegral_prod_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
@@ -132,11 +127,10 @@ theorem setIntegral_prod_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
   have hunion : (⋃ rs : R.parts × R.parts, ((rs.1 : Set Ω) ∩ S) ×ˢ ((rs.2 : Set Ω) ∩ T))
       = S ×ˢ T := by
     rw [iUnion_prod (fun r : R.parts => (r : Set Ω) ∩ S) fun r : R.parts => (r : Set Ω) ∩ T,
-      ← iUnion_inter, ← iUnion_inter, iUnion_parts R, univ_inter, univ_inter]
+      ← iUnion_inter, ← iUnion_inter, Finpartition.iUnion_parts R, univ_inter, univ_inter]
   rw [← hunion, integral_iUnion_fintype hmeas hdisj fun _ =>
     hf.mono_set (prod_mono inter_subset_right inter_subset_right)]
 
-omit [IsProbabilityMeasure μ] in
 /-- A finite measurable partition of the carrier splits an integral over the whole product carrier
 into a finite sum over its rectangles. -/
 theorem integral_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
@@ -147,6 +141,14 @@ theorem integral_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
     setIntegral_prod_eq_sum_parts μ R hR MeasurableSet.univ MeasurableSet.univ hf.integrableOn]
   simp
 
+end Finpartition
+
+namespace DenseGraphLimits
+
+variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+
+section Decomposition
+
 /-- Two kernels with the same integral over every rectangle of a partition `Q` have the same
 integral over every rectangle of any coarser partition `P`. -/
 private theorem rectIntegral_eq_of_le {P Q : Finpartition (Set.univ : Set Ω)}
@@ -156,13 +158,14 @@ private theorem rectIntegral_eq_of_le {P Q : Finpartition (Set.univ : Set Ω)}
       = L.rectIntegral μ (r : Set Ω) (s : Set Ω)) (p q : P.parts) :
     K.rectIntegral μ (p : Set Ω) (q : Set Ω) = L.rectIntegral μ (p : Set Ω) (q : Set Ω) := by
   rw [SymmKernel.rectIntegral_def, SymmKernel.rectIntegral_def,
-    setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
+    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
       (SymmKernel.integrable_uncurry μ K).integrableOn,
-    setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
+    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
       (SymmKernel.integrable_uncurry μ L).integrableOn]
   refine Finset.sum_congr rfl fun rs _ => ?_
-  rcases inter_eq_self_or_empty href rs.1.property p.property with h1 | h1
-  · rcases inter_eq_self_or_empty href rs.2.property q.property with h2 | h2
+  rcases Finpartition.inter_part_eq_self_or_empty_of_le href rs.1.property p.property with h1 | h1
+  · rcases Finpartition.inter_part_eq_self_or_empty_of_le href rs.2.property q.property with
+      h2 | h2
     · rw [h1, h2]
       simpa only [SymmKernel.rectIntegral_def] using h rs.1 rs.2
     · rw [h2]
@@ -203,7 +206,7 @@ theorem l2inner_stepGraphonAvg_eq_sum (hP : ∀ p ∈ P.parts, MeasurableSet p) 
     l2inner μ K (stepGraphonAvg (μ := μ) P hP W).toSymmKernel
       = ∑ pq : P.parts × P.parts, K.rectIntegral μ (pq.1 : Set Ω) (pq.2 : Set Ω)
         * ⨍ z in (pq.1 : Set Ω) ×ˢ (pq.2 : Set Ω), W z.1 z.2 ∂(μ.prod μ) := by
-  rw [l2inner_def, integral_eq_sum_parts μ P hP
+  rw [l2inner_def, Finpartition.integral_eq_sum_parts μ P hP
     (SymmKernel.integrable_mul μ K (stepGraphonAvg (μ := μ) P hP W).toSymmKernel)]
   simp only [Graphon.coe_toSymmKernel]
   exact Finset.sum_congr rfl fun pq _ => setIntegral_mul_stepGraphonAvg μ P hP W K pq.1 pq.2
@@ -233,8 +236,8 @@ theorem graphonPartitionEnergy_eq_sum (hP : ∀ p ∈ P.parts, MeasurableSet p) 
   exact Finset.sum_congr rfl fun pq _ => by
     rw [stepGraphonAvg_rectIntegral P hP W pq.1 pq.2]
 
-/-- The block-average step graphon is the `L²` orthogonal projection of `W`: pairing `W` against it
-already returns the partition energy. -/
+/-- The projection moment identity: pairing `W` against its block average equals the self-pairing
+of that block average, namely the partition energy. -/
 theorem l2inner_graphon_stepGraphonAvg (hP : ∀ p ∈ P.parts, MeasurableSet p) (W : Graphon Ω μ) :
     l2inner μ W.toSymmKernel (stepGraphonAvg (μ := μ) P hP W).toSymmKernel
       = graphonPartitionEnergy μ P hP W := by
@@ -248,8 +251,8 @@ theorem l2sq_sub_stepGraphonAvg (hP : ∀ p ∈ P.parts, MeasurableSet p) (W : G
   rw [l2sq_sub, l2inner_graphon_stepGraphonAvg, graphonPartitionEnergy_eq]
   ring
 
-/-- The partition energy never exceeds the `L²` norm squared of the graphon — Bessel's inequality
-for the block-average projection. -/
+/-- The partition energy never exceeds the `L²` norm squared of the graphon — the Bessel-type
+bound following from the projection moment identity. -/
 theorem graphonPartitionEnergy_le_l2sq (hP : ∀ p ∈ P.parts, MeasurableSet p) (W : Graphon Ω μ) :
     graphonPartitionEnergy μ P hP W ≤ l2sq μ W.toSymmKernel := by
   have h := l2sq_nonneg μ (W.toSymmKernel - (stepGraphonAvg (μ := μ) P hP W).toSymmKernel)
@@ -279,8 +282,8 @@ theorem graphonPartitionEnergy_increment (hP : ∀ p ∈ P.parts, MeasurableSet 
       = graphonPartitionEnergy μ P hP W
         + l2sq μ ((stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel
           - (stepGraphonAvg (μ := μ) P hP W).toSymmKernel) := by
-  rw [l2sq_sub, l2inner_stepGraphonAvg_of_le μ P Q hP hQ href W, graphonPartitionEnergy_eq μ Q,
-    graphonPartitionEnergy_eq μ P]
+  simp only [l2sq_sub, l2inner_stepGraphonAvg_of_le μ P Q hP hQ href W,
+    graphonPartitionEnergy_eq]
   ring
 
 /-- The partition energy is monotone under refinement — the `≥ 0` corollary of the Pythagoras
@@ -300,7 +303,7 @@ theorem graphonPartitionEnergy_nonneg (hP : ∀ p ∈ P.parts, MeasurableSet p) 
 
 /-- Block averaging does not change the partition energy at the same partition: the block-average
 step graphon is already constant on the rectangles of `P`, so averaging it again changes nothing.
-This is the projection identity `E(P, E[W|P⊗P]) = E(P, W)`. -/
+This is the idempotence identity `E(P, E[W|P⊗P]) = E(P, W)`. -/
 @[simp]
 theorem graphonPartitionEnergy_stepGraphonAvg (hP : ∀ p ∈ P.parts, MeasurableSet p)
     (W : Graphon Ω μ) :

@@ -28,9 +28,9 @@ measurability immediate and does not choose a distinguished index for each point
 
 ## Main results
 
-* `TauCeti.DenseGraphLimits.iUnion_parts` and `TauCeti.DenseGraphLimits.inter_eq_self_or_empty`
-  are the two covering facts about a `Finpartition` of the carrier that the block constructions
-  and their refinements run on;
+* `TauCeti.Finpartition.iUnion_parts` and
+  `TauCeti.Finpartition.inter_part_eq_self_or_empty_of_le` are the two covering facts about a
+  `Finpartition` of the carrier that the block constructions and their refinements run on;
 * `TauCeti.DenseGraphLimits.stepGraphon_apply` evaluates the graphon on a specified block;
 * `TauCeti.DenseGraphLimits.stepGraphon_inj` says that, for a fixed partition, two step graphons
   are equal exactly when their block values agree;
@@ -53,14 +53,8 @@ open Set
 
 namespace TauCeti
 
-namespace DenseGraphLimits
+namespace Finpartition
 
-variable {Ω : Type*} [MeasurableSpace Ω] {μ : MeasureTheory.Measure Ω}
-  [MeasureTheory.IsProbabilityMeasure μ]
-
-section Parts
-
-omit [MeasurableSpace Ω] in
 /-- The parts of a finite partition of the carrier cover it. -/
 theorem iUnion_parts (P : Finpartition (Set.univ : Set Ω)) :
     ⋃ p : P.parts, (p : Set Ω) = Set.univ := by
@@ -68,10 +62,9 @@ theorem iUnion_parts (P : Finpartition (Set.univ : Set Ω)) :
   obtain ⟨p, hp, hxp⟩ := Set.mem_sUnion.mp (P.isPartition_parts.sUnion_eq_univ ▸ Set.mem_univ x)
   exact Set.mem_iUnion.2 ⟨⟨p, hp⟩, hxp⟩
 
-omit [MeasurableSpace Ω] in
 /-- Under refinement, a part of the finer partition is either contained in a given part of the
 coarser one or disjoint from it. -/
-theorem inter_eq_self_or_empty {P Q : Finpartition (Set.univ : Set Ω)} (href : Q ≤ P)
+theorem inter_part_eq_self_or_empty_of_le {P Q : Finpartition (Set.univ : Set Ω)} (href : Q ≤ P)
     {r : Set Ω} (hr : r ∈ Q.parts) {p : Set Ω} (hp : p ∈ P.parts) :
     r ∩ p = r ∨ r ∩ p = ∅ := by
   obtain ⟨p', hp', hrp'⟩ := href hr
@@ -80,7 +73,12 @@ theorem inter_eq_self_or_empty {P Q : Finpartition (Set.univ : Set Ω)} (href : 
   · refine Or.inr (Set.eq_empty_of_subset_empty fun x hx => ?_)
     exact absurd hx.2 (Set.disjoint_left.mp (P.disjoint hp' hp h) (hrp' hx.1))
 
-end Parts
+end Finpartition
+
+namespace DenseGraphLimits
+
+variable {Ω : Type*} [MeasurableSpace Ω] {μ : MeasureTheory.Measure Ω}
+  [MeasureTheory.IsProbabilityMeasure μ]
 
 section StepValue
 
@@ -90,7 +88,7 @@ omit [MeasurableSpace Ω] in
 /-- Every point of the carrier belongs to one of the parts of a partition of `Set.univ`. -/
 private theorem exists_part (x : Ω) : ∃ p : P.parts, x ∈ (p : Set Ω) := by
   refine Set.mem_iUnion.1 ?_
-  rw [iUnion_parts P]
+  rw [Finpartition.iUnion_parts P]
   exact Set.mem_univ x
 
 /-- The finite rectangle-indicator sum underlying a step graphon. -/
