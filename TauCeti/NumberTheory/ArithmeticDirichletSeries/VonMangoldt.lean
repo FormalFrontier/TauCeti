@@ -66,6 +66,14 @@ open scoped nonZeroDivisors NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
+/-- The absolute norm of a prime ideal is greater than one. -/
+theorem one_lt_absNorm_of_prime {P : Ideal (𝓞 K)} (hP : Prime P) :
+    1 < Ideal.absNorm P := by
+  rw [Nat.one_lt_iff_ne_zero_and_ne_one]
+  exact ⟨Ideal.absNorm_eq_zero_iff.not.mpr hP.ne_zero,
+    Ideal.absNorm_eq_one_iff.not.mpr fun htop ↦
+      hP.not_isUnit (Ideal.isUnit_iff.mpr htop)⟩
+
 namespace IdealArithmeticFunction
 
 open Classical in
@@ -118,13 +126,6 @@ theorem vonMangoldt_eq_zero_of_not_isPrimePow {A : (Ideal (𝓞 K))⁰}
     (hA : ¬ IsPrimePow (A : Ideal (𝓞 K))) :
     (vonMangoldt : IdealArithmeticFunction K) A = 0 := by
   simp [vonMangoldt, hA]
-
-private theorem one_lt_absNorm_of_prime {P : Ideal (𝓞 K)} (hP : Prime P) :
-    1 < Ideal.absNorm P := by
-  rw [Nat.one_lt_iff_ne_zero_and_ne_one]
-  exact ⟨Ideal.absNorm_eq_zero_iff.not.mpr hP.ne_zero,
-    Ideal.absNorm_eq_one_iff.not.mpr fun htop ↦
-      hP.not_isUnit (Ideal.isUnit_iff.mpr htop)⟩
 
 /-- The support of the ideal von Mangoldt function is exactly the set of prime-power ideals. -/
 theorem vonMangoldt_ne_zero_iff {A : (Ideal (𝓞 K))⁰} :
