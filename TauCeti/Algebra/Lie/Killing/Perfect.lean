@@ -45,11 +45,10 @@ namespace TauCeti
 
 open LieAlgebra LieModule Module
 
-variable (K L : Type*) [Field K] [LieRing L] [LieAlgebra K L]
-
 section Killing
 
-variable [FiniteDimensional K L] [LieAlgebra.IsKilling K L]
+variable (K L : Type*) [Field K] [LieRing L] [LieAlgebra K L] [FiniteDimensional K L]
+  [LieAlgebra.IsKilling K L]
 
 /-- **A Lie algebra with nondegenerate Killing form is perfect**: `⁅L, L⁆ = L`.
 
@@ -89,7 +88,9 @@ theorem derivedSeries_one_eq_top_of_isKilling : derivedSeries K L 1 = ⊤ := by
 
 end Killing
 
-variable {K L}
+section Perfect
+
+variable {K L : Type*} [CommRing K] [LieRing L] [LieAlgebra K L]
 variable {M : Type*} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 
 /-- **Over a perfect Lie algebra an action that composes to zero is zero.** Each bracket `⁅y, z⁆`
@@ -113,5 +114,7 @@ theorem isTrivial_of_derivedSeries_one_eq_top_of_lie_lie_eq_zero (hL : derivedSe
   | zero => rw [zero_lie]
   | add u v _ _ hu hv => rw [add_lie, hu, hv, add_zero]
   | smul t u _ hu => rw [smul_lie, hu, smul_zero]
+
+end Perfect
 
 end TauCeti

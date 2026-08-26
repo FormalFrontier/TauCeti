@@ -321,6 +321,7 @@ theorem ι_mul_casimirElement (z : L) :
 /-- **The Casimir element commutes with the Lie action.**  This is the pointwise form of
 `TauCeti.ι_mul_casimirElement`: the Casimir operator of a module is a homomorphism of Lie
 modules. -/
+@[simp]
 theorem representation_casimirElement_lie
     {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
     (x : L) (m : M) :
@@ -335,6 +336,7 @@ theorem representation_casimirElement_lie
 /-- **The Casimir operator is natural in the module.**  A homomorphism of Lie modules intertwines
 the two Casimir operators, since it intertwines each of the double brackets `⁅xᵢ, ⁅yᵢ, -⁆⁆` that
 make up the action. -/
+@[simp]
 theorem map_representation_casimirElement
     {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
     {N : Type*} [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
