@@ -118,6 +118,7 @@ private theorem monodromy_sigmaMap_aux (hf : ∀ i, IsCoveringMap (f i)) {i : ι
 /-- **Monodromy commutes with the inclusion of a summand.** Transporting a point of the fibre of
 `f i` over `x` into the disjoint union and letting the assembled cover transport it along the
 image of `γ` gives the same result as transporting along `γ` first. -/
+@[simp]
 theorem monodromy_sigmaMap (hf : ∀ i, IsCoveringMap (f i)) {i : ι} {x y : X i}
     (γ : Path.Homotopic.Quotient x y) (e : (f i ⁻¹' {x} : Set (E i))) :
     (isCoveringMap_sigmaMap f hf).monodromy
