@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs INSIDE the landrun sandbox (offline, no token, writes confined to
-# base/.lake). For every prepared Lean source under <prep>/src, elaborate it
+# Runs INSIDE the landrun sandbox (offline, no token, writes confined to the
+# exact candidate tree's .lake directory). For every prepared Lean source under <prep>/src,
 # with Mathlib's countHeartbeats linter and write the linter's output next to
 # it as <name>.hb. The library has already been built by the caller, so a
 # file's imports resolve from the built oleans and only these single files are
@@ -10,7 +10,7 @@
 # log (the caller's render step reports it) and never fails this script, so one
 # bad file cannot sink the whole profile.
 #
-# Usage: measure.sh <prep-dir>   (with the working directory at the built base)
+# Usage: measure.sh <prep-dir>   (with the working directory at the built candidate)
 set -uo pipefail
 prep="${1:?usage: measure.sh <prep-dir>}"
 
