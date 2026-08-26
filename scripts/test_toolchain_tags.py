@@ -421,6 +421,14 @@ class PostIfChanged(unittest.TestCase):
         self._zulip(fake)
         self.assertTrue(tt.post_if_changed(self.ROWS))
 
+    def test_it_corrects_the_old_fence_before_posting_a_new_state(self):
+        old = tt.post_content(self.ROWS, "0" * 16).replace("```shell", "```", 1)
+        fake = FakeZulip([self._message("0" * 16, content=old)])
+        self._zulip(fake)
+        self.assertTrue(tt.post_if_changed(self.ROWS))
+        self.assertEqual(fake.updated, [(1, old.replace("```", "```shell", 1))])
+        self.assertEqual(fake.sent, [tt.post_content(self.ROWS, tt.state_digest(self.ROWS))])
+
     def test_it_ignores_messages_from_other_accounts(self):
         # A human replying in the topic must not be mistaken for the last report.
         digest = tt.state_digest(self.ROWS)

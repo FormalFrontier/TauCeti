@@ -569,6 +569,13 @@ def post_if_changed(rows, dry_run=False):
     z = zp.Zulip(email, api_key, site)
     zp.check(z)
     message, previous = last_posted_report(z, z.my_user_id())
+    old_fence = "```\npython3 scripts/toolchain_tags.py --brief\n```"
+    shell_fence = "```shell\npython3 scripts/toolchain_tags.py --brief\n```"
+    if message and previous != digest and old_fence in message["content"]:
+        corrected = message["content"].replace(old_fence, shell_fence, 1)
+        log(f"correcting the shell fence in message {message['id']}")
+        z.update_message(message["id"], corrected)
+        message = dict(message, content=corrected)
     if previous == digest and message["content"] == content:
         log(f"state unchanged since the last post ({digest}); saying nothing")
         return False
