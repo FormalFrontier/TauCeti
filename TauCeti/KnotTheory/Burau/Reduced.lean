@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Data.Matrix.ColumnRowPartitioned
 public import TauCeti.KnotTheory.Burau.Basic
 public import TauCeti.KnotTheory.Burau.RankOneMatrix
 
@@ -300,71 +301,62 @@ theorem burauColMatrix_mulVec_burauCoordMatrix_mulVec (n : ℕ) (t : Rˣ) (x : F
       funext i
       exact Fin.elim0 i
   | succ m =>
-      -- `P` stacks the coordinate rows above the geometric covector. `Q` appends a scaled final
-      -- basis vector to the Burau columns, making both matrices square.
-      let P : Matrix (Fin (m + 1)) (Fin (m + 1)) R := fun i a =>
-        Fin.lastCases ((t : R) ^ (a : ℕ)) (fun j => burauCoordMatrix (m + 1) t j a) i
-      let Q : Matrix (Fin (m + 1)) (Fin (m + 1)) R := fun a j =>
-        Fin.lastCases
-          ((Pi.single (Fin.last m) (((t⁻¹ : Rˣ) : R) ^ m) : Fin (m + 1) → R) a)
-          (fun i => burauColMatrix (m + 1) (t : R) a i) j
-      -- The four cases are the two established column identities and the two new final blocks.
-      have hPQ : P * Q = 1 := by
+      let geom : Fin (m + 1) → R := fun a => (t : R) ^ (a : ℕ)
+      let lastCol : Fin (m + 1) → R :=
+        Pi.single (Fin.last m) (((t⁻¹ : Rˣ) : R) ^ m)
+      let P : Matrix (Fin m ⊕ Fin 1) (Fin (m + 1)) R :=
+        Matrix.fromRows (burauCoordMatrix (m + 1) t) (Matrix.replicateRow (Fin 1) geom)
+      let Q : Matrix (Fin (m + 1)) (Fin m ⊕ Fin 1) R :=
+        Matrix.fromCols (burauColMatrix (m + 1) (t : R)) (Matrix.replicateCol (Fin 1) lastCol)
+      have hcoordLast : burauCoordMatrix (m + 1) t * Matrix.replicateCol (Fin 1) lastCol = 0 := by
         ext i j
-        refine Fin.lastCases ?_ (fun i => ?_) i <;> refine Fin.lastCases ?_ (fun j => ?_) j
-        · change (∑ a, P (Fin.last m) a * Q a (Fin.last m)) = _
-          simp only [P, Q, Fin.lastCases_last]
-          change (fun a : Fin (m + 1) => (t : R) ^ (a : ℕ)) ⬝ᵥ
-              Pi.single (Fin.last m) (((t⁻¹ : Rˣ) : R) ^ m) =
-            (1 : Matrix (Fin (m + 1)) (Fin (m + 1)) R) (Fin.last m) (Fin.last m)
-          rw [dotProduct_single, Matrix.one_apply, ite_eq_left rfl]
-          have hunit : (t ^ m) * (t⁻¹) ^ m = (1 : Rˣ) := by
-            rw [← mul_pow, mul_inv_cancel, one_pow]
-          exact congrArg Units.val hunit
-        · change (∑ a, P (Fin.last m) a * Q a j.castSucc) = _
-          simp only [P, Q, Fin.lastCases_last, Fin.lastCases_castSucc]
-          change ((fun a : Fin (m + 1) => (t : R) ^ (a : ℕ)) ᵥ*
-              burauColMatrix (m + 1) (t : R)) j =
-            (1 : Matrix (Fin (m + 1)) (Fin (m + 1)) R) (Fin.last m) j.castSucc
-          rw [congrFun (geom_vecMul_burauColMatrix (m + 1) (t : R)) j, Matrix.one_apply,
-            ite_eq_right (by simp [Fin.ext_iff]; omega)]
-          rfl
-        · change (∑ a, P i.castSucc a * Q a (Fin.last m)) = _
-          simp only [P, Q, Fin.lastCases_last, Fin.lastCases_castSucc]
-          change burauCoordMatrix (m + 1) t i ⬝ᵥ
-              Pi.single (Fin.last m) (((t⁻¹ : Rˣ) : R) ^ m) =
-            (1 : Matrix (Fin (m + 1)) (Fin (m + 1)) R) i.castSucc (Fin.last m)
-          rw [dotProduct_single, burauCoordMatrix_apply,
-            ite_eq_right (by simp only [Fin.val_last]; omega), Matrix.one_apply,
-            ite_eq_right (Fin.castSucc_ne_last i)]
-          simp
-        · change (∑ a, P i.castSucc a * Q a j.castSucc) = _
-          simp only [P, Q, Fin.lastCases_castSucc]
-          change (burauCoordMatrix (m + 1) t * burauColMatrix (m + 1) (t : R)) i j =
-            (1 : Matrix (Fin (m + 1)) (Fin (m + 1)) R) i.castSucc j.castSucc
-          rw [burauCoordMatrix_mul_burauColMatrix]
-          simp [Matrix.one_apply, Fin.ext_iff]
-      have hQP : Q * P = 1 := mul_eq_one_comm.mp hPQ
+        change burauCoordMatrix (m + 1) t i ⬝ᵥ lastCol = 0
+        simp only [lastCol]
+        rw [dotProduct_single, burauCoordMatrix_apply,
+          ite_eq_right (by simp only [Fin.val_last]; omega)]
+        simp
+      have hgeomCol : Matrix.replicateRow (Fin 1) geom *
+          burauColMatrix (m + 1) (t : R) = 0 := by
+        ext i j
+        change geom ⬝ᵥ burauCol (t : R) j = 0
+        exact geom_dotProduct_burauCol (t : R) j
+      have hgeomLast : Matrix.replicateRow (Fin 1) geom *
+          Matrix.replicateCol (Fin 1) lastCol = 1 := by
+        ext i j
+        change geom ⬝ᵥ lastCol = (1 : Matrix (Fin 1) (Fin 1) R) i j
+        simp only [lastCol]
+        rw [dotProduct_single]
+        change (t : R) ^ m * ((t⁻¹ : Rˣ) : R) ^ m =
+          (1 : Matrix (Fin 1) (Fin 1) R) i j
+        rw [Matrix.one_apply, ite_eq_left (Subsingleton.elim i j)]
+        have hunit : (t ^ m) * (t⁻¹) ^ m = (1 : Rˣ) := by
+          rw [← mul_pow, mul_inv_cancel, one_pow]
+        exact congrArg Units.val hunit
+      have hPQ : P * Q = 1 := by
+        dsimp only [P, Q]
+        rw [Matrix.fromRows_mul_fromCols, burauCoordMatrix_mul_burauColMatrix,
+          hcoordLast, hgeomCol, hgeomLast, Matrix.fromBlocks_one]
+      have hQP : Q * P = 1 :=
+        (Matrix.fromCols_mul_fromRows_eq_one_comm finSumFinEquiv.symm
+          (burauColMatrix (m + 1) (t : R)) (Matrix.replicateCol (Fin 1) lastCol)
+          (burauCoordMatrix (m + 1) t) (Matrix.replicateRow (Fin 1) geom)).mpr hPQ
       have hrec : Q *ᵥ (P *ᵥ x) = x := by
         rw [Matrix.mulVec_mulVec, hQP, Matrix.one_mulVec]
-      have hPcast (j : Fin m) :
-          (P *ᵥ x) j.castSucc = (burauCoordMatrix (m + 1) t *ᵥ x) j := by
-        change P j.castSucc ⬝ᵥ x = burauCoordMatrix (m + 1) t j ⬝ᵥ x
-        simp only [P, Fin.lastCases_castSucc]
-      have hPlast : (P *ᵥ x) (Fin.last m) = 0 := by
-        change P (Fin.last m) ⬝ᵥ x = 0
-        simpa only [P, Fin.lastCases_last] using hx
-      funext a
-      rw [← congrFun hrec a]
-      change (∑ j : Fin m, burauColMatrix (m + 1) (t : R) a j *
-          (burauCoordMatrix (m + 1) t *ᵥ x) j) =
-        ∑ j : Fin (m + 1), Q a j * (P *ᵥ x) j
-      rw [Fin.sum_univ_castSucc]
-      simp only [P, Q, Fin.lastCases_castSucc, Fin.lastCases_last]
-      rw [hPlast, mul_zero, add_zero]
-      apply Finset.sum_congr rfl
-      intro j hj
-      rw [hPcast]
+      have hPx : P *ᵥ x =
+          Sum.elim (burauCoordMatrix (m + 1) t *ᵥ x) (0 : Fin 1 → R) := by
+        dsimp only [P]
+        rw [Matrix.fromRows_mulVec]
+        congr 1
+        simpa [Matrix.replicateRow_mulVec_eq_const, geom] using hx
+      calc
+        burauColMatrix (m + 1) (t : R) *ᵥ (burauCoordMatrix (m + 1) t *ᵥ x) =
+            burauColMatrix (m + 1) (t : R) *ᵥ (burauCoordMatrix (m + 1) t *ᵥ x) +
+              Matrix.replicateCol (Fin 1) lastCol *ᵥ (0 : Fin 1 → R) := by simp
+        _ = Q *ᵥ Sum.elim (burauCoordMatrix (m + 1) t *ᵥ x) (0 : Fin 1 → R) := by
+          dsimp only [Q]
+          rw [Matrix.fromCols_mulVec_sumElim]
+        _ = Q *ᵥ (P *ᵥ x) := by rw [hPx]
+        _ = x := hrec
 
 /-- The determinant of an elementary reduced Burau matrix is `-t`, as for the unreduced one. -/
 @[simp]
@@ -413,29 +405,14 @@ private theorem reducedBurauSelfPairing (t : R) (i : Fin (n - 1)) :
     reducedBurauRow t i ⬝ᵥ Pi.single i 1 = t + 1 := by
   rw [dotProduct_single_one, reducedBurauRow_self]
 
-private theorem reducedBurauDistantPairings (t : R) {i j : Fin (n - 1)}
-    (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
-    reducedBurauRow t i ⬝ᵥ Pi.single j 1 = 0 ∧
-      reducedBurauRow t j ⬝ᵥ Pi.single i 1 = 0 := by
-  rw [dotProduct_single_one, dotProduct_single_one, reducedBurauRow_of_not_adjacent t h,
-    reducedBurauRow_of_not_adjacent t h.symm]
-  exact ⟨rfl, rfl⟩
-
-private theorem reducedBurauAdjacentPairings (t : R) {i j : Fin (n - 1)}
-    (h : (i : ℕ) + 1 = j) :
-    reducedBurauRow t i ⬝ᵥ Pi.single j 1 = -t ∧
-      reducedBurauRow t j ⬝ᵥ Pi.single i 1 = -1 := by
-  rw [dotProduct_single_one, dotProduct_single_one, reducedBurauRow_of_succ t h,
-    reducedBurauRow_of_succ_rev t h]
-  exact ⟨rfl, rfl⟩
-
 /-- **The distant commutation relation** for the elementary reduced Burau matrices. -/
 theorem reducedBurauMatrix_mul_comm (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
     reducedBurauMatrix t i * reducedBurauMatrix t j =
       reducedBurauMatrix t j * reducedBurauMatrix t i :=
   RankOneMatrix.family_mul_comm (fun i => Pi.single i (1 : R)) (reducedBurauRow t)
-    (reducedBurauDistantPairings t h).1 (reducedBurauDistantPairings t h).2
+    (by rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent t h])
+    (by rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent t h.symm])
 
 /-- **The braid relation** for the elementary reduced Burau matrices. -/
 theorem reducedBurauMatrix_braid (t : R) {i j : Fin (n - 1)}
@@ -443,7 +420,9 @@ theorem reducedBurauMatrix_braid (t : R) {i j : Fin (n - 1)}
     reducedBurauMatrix t i * reducedBurauMatrix t j * reducedBurauMatrix t i =
       reducedBurauMatrix t j * reducedBurauMatrix t i * reducedBurauMatrix t j :=
   RankOneMatrix.family_braid_of_adjacent t (fun i => Pi.single i (1 : R)) (reducedBurauRow t)
-    (reducedBurauSelfPairing t) (reducedBurauAdjacentPairings t) h
+    (reducedBurauSelfPairing t)
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ t h])
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ_rev t h]) h
 
 /-- **The quadratic relation** for the elementary reduced Burau matrices, equivalently
 `(x - 1) * (x + t) = 0`. This is the Iwahori-Hecke quadratic relation in the normalisation with
@@ -480,8 +459,10 @@ theorem inv_reducedBurauMatrix (t : Rˣ) (i : Fin (n - 1)) :
 the elementary braid `sigma i` to `TauCeti.KnotTheory.reducedBurauGL t i`. -/
 def reducedBurau (n : ℕ) (t : Rˣ) : BraidGroup n →* GL (Fin (n - 1)) R :=
   RankOneMatrix.representation n t (fun i => Pi.single i (1 : R)) (reducedBurauRow (t : R))
-    (reducedBurauSelfPairing (t : R)) (reducedBurauDistantPairings (t : R))
-    (reducedBurauAdjacentPairings (t : R))
+    (reducedBurauSelfPairing (t : R))
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent (t : R) h])
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ (t : R) h])
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ_rev (t : R) h])
 
 /-- The reduced Burau representation takes an elementary braid to the elementary reduced Burau
 matrix. -/
@@ -490,7 +471,9 @@ theorem reducedBurau_sigma (t : Rˣ) (i : Fin (n - 1)) :
     reducedBurau n t (BraidGroup.sigma i) = (reducedBurauGL t i : GL (Fin (n - 1)) R) :=
   RankOneMatrix.representation_sigma n t (fun i => Pi.single i (1 : R))
     (reducedBurauRow (t : R)) (reducedBurauSelfPairing (t : R))
-    (reducedBurauDistantPairings (t : R)) (reducedBurauAdjacentPairings (t : R)) i
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent (t : R) h])
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ (t : R) h])
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ_rev (t : R) h]) i
 
 /-- The determinant of the reduced Burau matrix of a braid is `-t` raised to its exponent sum, as
 for the unreduced representation. -/
@@ -499,7 +482,9 @@ theorem det_reducedBurau (t : Rˣ) (b : BraidGroup n) :
       (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) :=
   RankOneMatrix.det_representation n t (fun i => Pi.single i (1 : R))
     (reducedBurauRow (t : R)) (reducedBurauSelfPairing (t : R))
-    (reducedBurauDistantPairings (t : R)) (reducedBurauAdjacentPairings (t : R)) b
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent (t : R) h])
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ (t : R) h])
+    (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ_rev (t : R) h]) b
 
 /-- **The reduced Burau representation is the restriction of the unreduced one** to the span of the
 Burau columns. -/

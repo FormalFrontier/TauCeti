@@ -46,26 +46,29 @@ pairings. -/
 def representation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
-      v i ⬝ᵥ u j = 0 ∧ v j ⬝ᵥ u i = 0)
-    (hbraid : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j →
-      v i ⬝ᵥ u j = -(t : R) ∧ v j ⬝ᵥ u i = -1) : BraidGroup n →* GL α R :=
+      v i ⬝ᵥ u j = 0)
+    (hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v i ⬝ᵥ u j = -(t : R))
+    (hreverse : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v j ⬝ᵥ u i = -1) :
+    BraidGroup n →* GL α R :=
   BraidGroup.lift (unit t u v hself)
     (fun h => Units.ext (by
       simp only [Units.val_mul, coe_unit]
-      exact family_mul_comm u v (hcomm h).1 (hcomm h).2))
+      exact family_mul_comm u v (hcomm h) (hcomm h.symm)))
     (fun h => Units.ext (by
       simp only [Units.val_mul, coe_unit]
-      exact family_braid_of_adjacent (t : R) u v hself hbraid h))
+      exact family_braid_of_adjacent (t : R) u v hself hforward hreverse h))
 
 /-- A rank-one braid-group representation takes an elementary braid to its corresponding unit. -/
 @[simp]
 theorem representation_sigma (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
-      v i ⬝ᵥ u j = 0 ∧ v j ⬝ᵥ u i = 0)
-    (hbraid : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j →
-      v i ⬝ᵥ u j = -(t : R) ∧ v j ⬝ᵥ u i = -1) (i : Fin (n - 1)) :
-    representation n t u v hself hcomm hbraid (BraidGroup.sigma i) = unit t u v hself i :=
+      v i ⬝ᵥ u j = 0)
+    (hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v i ⬝ᵥ u j = -(t : R))
+    (hreverse : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v j ⬝ᵥ u i = -1)
+    (i : Fin (n - 1)) :
+    representation n t u v hself hcomm hforward hreverse (BraidGroup.sigma i) =
+      unit t u v hself i :=
   BraidGroup.lift_sigma _ _ _ i
 
 /-- The determinant character of a rank-one braid-group representation with the Burau
@@ -73,13 +76,14 @@ pairings. -/
 theorem det_representation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
-      v i ⬝ᵥ u j = 0 ∧ v j ⬝ᵥ u i = 0)
-    (hbraid : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j →
-      v i ⬝ᵥ u j = -(t : R) ∧ v j ⬝ᵥ u i = -1) (b : BraidGroup n) :
-    Matrix.GeneralLinearGroup.det (representation n t u v hself hcomm hbraid b) =
+      v i ⬝ᵥ u j = 0)
+    (hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v i ⬝ᵥ u j = -(t : R))
+    (hreverse : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v j ⬝ᵥ u i = -1)
+    (b : BraidGroup n) :
+    Matrix.GeneralLinearGroup.det (representation n t u v hself hcomm hforward hreverse b) =
       (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) := by
   have key : (Matrix.GeneralLinearGroup.det (n := α) (R := R)).comp
-      (representation n t u v hself hcomm hbraid) =
+      (representation n t u v hself hcomm hforward hreverse) =
       (zpowersHom Rˣ (-t)).comp (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1))) := by
     refine BraidGroup.hom_ext fun i => ?_
     apply Units.ext

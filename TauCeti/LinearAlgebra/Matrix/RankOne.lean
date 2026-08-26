@@ -88,13 +88,14 @@ theorem family_braid (t : R) (u v : ι → α → R) {i j : ι} (hii : v i ⬝�
 in the symmetric form: the two possible adjacency orders are covered at once. -/
 theorem family_braid_of_adjacent (t : R) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = t + 1)
-    (hbraid : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v i ⬝ᵥ u j = -t ∧ v j ⬝ᵥ u i = -1)
+    (hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v i ⬝ᵥ u j = -t)
+    (hreverse : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v j ⬝ᵥ u i = -1)
     {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
     family u v i * family u v j * family u v i =
       family u v j * family u v i * family u v j := by
   rcases h with h | h
-  · exact family_braid t u v (hself i) (hself j) (hbraid h).1 (hbraid h).2
-  · exact (family_braid t u v (hself j) (hself i) (hbraid h).1 (hbraid h).2).symm
+  · exact family_braid t u v (hself i) (hself j) (hforward h) (hreverse h)
+  · exact (family_braid t u v (hself j) (hself i) (hforward h) (hreverse h)).symm
 
 /-- The quadratic relation for a member of a rank-one matrix family whose self-pairing is
 `t + 1`. -/
