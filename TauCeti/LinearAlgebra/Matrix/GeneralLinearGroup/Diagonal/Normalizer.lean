@@ -57,29 +57,17 @@ variable [Semiring k]
 
 /-- A permutation as an invertible matrix.  The inverse in the matrix entry is what makes this a
 homomorphism with Mathlib's convention for multiplication in `Equiv.Perm`. -/
-@[expose] def permutationGL {ι : Type*} [Fintype ι] [DecidableEq ι] :
-    Equiv.Perm ι →* GL ι k where
-  toFun σ :=
-    { val := σ⁻¹.permMatrix k
-      inv := σ.permMatrix k
-      val_inv := by rw [← Matrix.permMatrix_mul]; simp
-      inv_val := by rw [← Matrix.permMatrix_mul]; simp }
-  map_one' := by
-    apply Units.ext
-    -- Reduce equality of units to the defining permutation matrices.
-    change (1 : Equiv.Perm ι)⁻¹.permMatrix k = 1
-    simp
-  map_mul' σ τ := by
-    apply Units.ext
-    -- Reduce multiplicativity in `GL` to Mathlib's multiplication convention for `permMatrix`.
-    change (σ * τ)⁻¹.permMatrix k = σ⁻¹.permMatrix k * τ⁻¹.permMatrix k
-    rw [_root_.mul_inv_rev, Matrix.permMatrix_mul]
+def permutationGL {ι : Type*} [Fintype ι] [DecidableEq ι] :
+    Equiv.Perm ι →* GL ι k :=
+  (Matrix.permMatrixHom (R := k)).toHomUnits
 
 /-- The matrix underlying `permutationGL σ` is the permutation matrix of `σ⁻¹`. -/
 @[simp]
 theorem permutationGL_coe {ι : Type*} [Fintype ι] [DecidableEq ι] (σ : Equiv.Perm ι) :
     (permutationGL (k := k) σ : Matrix ι ι k) = σ⁻¹.permMatrix k :=
-  rfl
+  by
+    rw [permutationGL, MonoidHom.coe_toHomUnits]
+    rfl
 
 /-- Conjugating a diagonal matrix by a permutation matrix relabels its diagonal entries. -/
 @[simp]
@@ -449,23 +437,30 @@ noncomputable def diagonalNormalizerPerm :
   map_one' := diagonalNormalizerPermFun_one
   map_mul' := diagonalNormalizerPermFun_mul
 
-/-- Every coordinate permutation is induced by a permutation matrix in the normalizer. -/
-theorem diagonalNormalizerPerm_surjective :
-    Function.Surjective (diagonalNormalizerPerm (k := k) (n := n)) := by
-  intro σ
-  let p : Subgroup.normalizer (diagonalTorus k n : Set (GL (Fin n) k)) :=
-    ⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩
-  refine ⟨p, ?_⟩
-  -- The homomorphism's underlying function is the uniquely chosen permutation factor.
-  change diagonalNormalizerPermFun p = σ
-  have hone : (p : GL (Fin n) k) =
+/-- The coordinate permutation induced by a permutation matrix is the original permutation. -/
+@[simp]
+theorem diagonalNormalizerPerm_permutationGL (σ : Equiv.Perm (Fin n)) :
+    diagonalNormalizerPerm (k := k) (n := n)
+        ⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩ = σ := by
+  -- Unfold only the homomorphism's value so uniqueness can identify its chosen factor.
+  change diagonalNormalizerPermFun
+    ⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩ = σ
+  have hone : permutationGL (k := k) σ =
       diagGL (fun _ ↦ (1 : kˣ)) * permutationGL (k := k) σ := by
-    -- Rewrite the subtype value as its defining permutation matrix with a trivial diagonal factor.
+    -- Present the trivial diagonal factor as the image of the identity.
     change permutationGL (k := k) σ =
       diagGL (1 : Fin n → kˣ) * permutationGL (k := k) σ
     rw [map_one, one_mul]
   apply permutation_eq_of_diagGL_mul_permutationGL_eq (k := k)
-  exact (diagonalNormalizer_factor p).symm.trans hone
+  exact (diagonalNormalizer_factor
+    ⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩).symm.trans hone
+
+/-- Every coordinate permutation is induced by a permutation matrix in the normalizer. -/
+theorem diagonalNormalizerPerm_surjective :
+    Function.Surjective (diagonalNormalizerPerm (k := k) (n := n)) := by
+  intro σ
+  exact ⟨⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩,
+    diagonalNormalizerPerm_permutationGL σ⟩
 
 /-- The coordinate permutation induced by a normalizer element is trivial exactly for elements
 of the diagonal torus. -/
@@ -520,6 +515,16 @@ theorem diagonalNormalizerQuotientMulEquivPerm_mk
   by
     unfold diagonalNormalizerQuotientMulEquivPerm
     rfl
+
+/-- The inverse quotient equivalence sends a coordinate permutation to the class of its
+permutation matrix. -/
+@[simp]
+theorem diagonalNormalizerQuotientMulEquivPerm_symm_apply (σ : Equiv.Perm (Fin n)) :
+    (diagonalNormalizerQuotientMulEquivPerm (k := k) (n := n)).symm σ =
+      Subgroup.normalizerQuotientMk (diagonalTorus k n)
+        ⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩ := by
+  apply (diagonalNormalizerQuotientMulEquivPerm (k := k) (n := n)).injective
+  simp
 
 end Field
 
