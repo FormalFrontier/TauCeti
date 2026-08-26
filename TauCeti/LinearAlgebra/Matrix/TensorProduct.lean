@@ -43,7 +43,9 @@ theorem kroneckerTMulFinAlgEquiv_tmul (m n : ℕ) (R : Type*) [CommSemiring R]
     (a : Matrix (Fin m) (Fin m) A) (b : Matrix (Fin n) (Fin n) B) :
     Matrix.kroneckerTMulFinAlgEquiv m n R A B (a ⊗ₜ[R] b) =
       Matrix.reindex finProdFinEquiv finProdFinEquiv (a ⊗ₖₜ b) := by
-  rfl
+  simp only [kroneckerTMulFinAlgEquiv, AlgEquiv.trans_apply,
+    Matrix.kroneckerTMulAlgEquiv_apply, kroneckerTMulLinearEquiv_tmul,
+    Matrix.coe_reindexAlgEquiv]
 
 /-- The inverse finite-index matrix absorption equivalence sends a matrix unit at paired finite
 indices with a pure-tensor coefficient to the tensor of the two corresponding matrix units. -/

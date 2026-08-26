@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.EightPeriodicity
 
 import Mathlib.RingTheory.TensorProduct.Pi
 import Mathlib.LinearAlgebra.Matrix.Unique
-import Mathlib.LinearAlgebra.CliffordAlgebra.Equivs
-import Mathlib.Algebra.Module.Equiv.Basic
 import Mathlib.Analysis.Complex.Polynomial.Basic
 import TauCeti.Algebra.CentralSimple.Quaternion
 import TauCeti.Algebra.CentralSimple.Splitting
@@ -48,27 +46,21 @@ private abbrev C (p q : ℕ) :=
 def realCliffordResidue (p q : ℕ) : ℕ :=
   (q + 8 - p % 8) % 8
 
-/-- The defining formula for `realCliffordResidue`. -/
-theorem realCliffordResidue_def (p q : ℕ) :
-    realCliffordResidue p q = (q + 8 - p % 8) % 8 :=
-  (rfl)
-
 /-- The real Clifford residue is one of the eight table indices. -/
 theorem realCliffordResidue_lt_eight (p q : ℕ) : realCliffordResidue p q < 8 := by
-  rw [realCliffordResidue_def]
+  rw [realCliffordResidue]
   exact Nat.mod_lt _ (by norm_num)
 
 @[simp]
 theorem realCliffordResidue_add_add_right (p q n : ℕ) :
     realCliffordResidue (p + n) (q + n) = realCliffordResidue p q := by
-  simp only [realCliffordResidue_def]
+  simp only [realCliffordResidue]
   omega
 
 /-- The exact real algebra classification of the standard Clifford algebra of signature `(p,q)`.
 The matrix size is stated uniformly in terms of the total dimension. -/
-inductive IsRealCliffordClassified (p q : ℕ) : Prop where
-  | intro (classification :
-    match realCliffordResidue p q with
+def IsRealCliffordClassified (p q : ℕ) : Prop :=
+  match realCliffordResidue p q with
   | 0 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
       Matrix (Fin (2 ^ ((p + q) / 2))) (Fin (2 ^ ((p + q) / 2))) ℝ)
   | 1 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
@@ -87,36 +79,7 @@ inductive IsRealCliffordClassified (p q : ℕ) : Prop where
   | 7 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
       Matrix (Fin (2 ^ ((p + q - 1) / 2))) (Fin (2 ^ ((p + q - 1) / 2))) ℝ ×
         Matrix (Fin (2 ^ ((p + q - 1) / 2))) (Fin (2 ^ ((p + q - 1) / 2))) ℝ)
-    | _ => False)
-
-/-- Characterization of the real Clifford classification by the signature residue. -/
-@[simp]
-theorem isRealCliffordClassified_iff (p q : ℕ) :
-    IsRealCliffordClassified p q ↔
-      match realCliffordResidue p q with
-      | 0 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
-          Matrix (Fin (2 ^ ((p + q) / 2))) (Fin (2 ^ ((p + q) / 2))) ℝ)
-      | 1 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
-          Matrix (Fin (2 ^ ((p + q - 1) / 2))) (Fin (2 ^ ((p + q - 1) / 2))) ℂ)
-      | 2 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
-          Matrix (Fin (2 ^ ((p + q - 2) / 2))) (Fin (2 ^ ((p + q - 2) / 2))) ℍ[ℝ])
-      | 3 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
-          Matrix (Fin (2 ^ ((p + q - 3) / 2))) (Fin (2 ^ ((p + q - 3) / 2))) ℍ[ℝ] ×
-            Matrix (Fin (2 ^ ((p + q - 3) / 2))) (Fin (2 ^ ((p + q - 3) / 2))) ℍ[ℝ])
-      | 4 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
-          Matrix (Fin (2 ^ ((p + q - 2) / 2))) (Fin (2 ^ ((p + q - 2) / 2))) ℍ[ℝ])
-      | 5 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
-          Matrix (Fin (2 ^ ((p + q - 1) / 2))) (Fin (2 ^ ((p + q - 1) / 2))) ℂ)
-      | 6 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
-          Matrix (Fin (2 ^ ((p + q) / 2))) (Fin (2 ^ ((p + q) / 2))) ℝ)
-      | 7 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
-          Matrix (Fin (2 ^ ((p + q - 1) / 2))) (Fin (2 ^ ((p + q - 1) / 2))) ℝ ×
-            Matrix (Fin (2 ^ ((p + q - 1) / 2))) (Fin (2 ^ ((p + q - 1) / 2))) ℝ)
-      | _ => False := by
-  constructor
-  · rintro ⟨classification⟩
-    exact classification
-  · exact IsRealCliffordClassified.intro
+  | _ => False
 
 private noncomputable def realCliffordZeroZeroEquiv :
     _root_.CliffordAlgebra (realCliffordForm 0 0) ≃ₐ[ℝ] ℝ := by
@@ -305,7 +268,7 @@ private noncomputable def realCliffordPositiveSevenEquiv :
 private theorem realClifford_positiveAxis_base (p : ℕ) (hp : p < 8) :
     IsRealCliffordClassified p 0 := by
   interval_cases p <;>
-    simp only [isRealCliffordClassified_iff, realCliffordResidue, zero_add, Nat.zero_mod,
+    simp only [IsRealCliffordClassified, realCliffordResidue, zero_add, Nat.zero_mod,
       tsub_zero, Nat.mod_self, Nat.add_zero, Nat.reduceDiv, Nat.pow_zero, Nat.one_mod,
       Nat.add_one_sub_one, Nat.mod_succ, Nat.reduceMod, Nat.reduceSub, Nat.reducePow] <;>
     first
@@ -329,7 +292,7 @@ private theorem realClifford_positiveAxis_classification (p : ℕ) :
         have hmod : n % 8 < 8 := Nat.mod_lt _ (by norm_num)
         let periodicity := Classical.choice (nonempty_realCliffordEightPeriodicityEquiv n 0)
         interval_cases hn : n % 8 <;>
-          simp only [isRealCliffordClassified_iff, realCliffordResidue, zero_add, hn,
+          simp only [IsRealCliffordClassified, realCliffordResidue, zero_add, hn,
             tsub_zero, Nat.mod_self, Nat.add_zero, Nat.add_mod_right, Nat.add_one_sub_one,
             Nat.mod_succ, Nat.reduceSub, Nat.reduceMod, Nat.one_mod] at prev ⊢
         all_goals obtain ⟨e⟩ := prev
@@ -362,13 +325,13 @@ private theorem realClifford_negativeAxis_classification (q : ℕ) :
     IsRealCliffordClassified 0 q := by
   rcases q with _ | _ | n
   · exact realClifford_positiveAxis_classification 0
-  · simp only [isRealCliffordClassified_iff, realCliffordResidue, zero_add, Nat.reduceAdd,
+  · simp only [IsRealCliffordClassified, realCliffordResidue, zero_add, Nat.reduceAdd,
       Nat.zero_mod, tsub_zero, Nat.reduceMod, Nat.add_one_sub_one, Nat.reduceDiv, Nat.pow_zero]
     exact ⟨realCliffordZeroOneEquivComplex.trans (matrixOneEquiv ℝ ℂ)⟩
   · have prev := realClifford_positiveAxis_classification n
     have hmod : n % 8 < 8 := Nat.mod_lt _ (by norm_num)
     interval_cases hn : n % 8 <;>
-      simp only [isRealCliffordClassified_iff, realCliffordResidue, zero_add, hn, tsub_zero,
+      simp only [IsRealCliffordClassified, realCliffordResidue, zero_add, hn, tsub_zero,
         Nat.mod_self, Nat.add_zero, Nat.zero_mod, Nat.add_mod_right, Nat.add_mod, Nat.one_mod,
         Nat.reduceAdd, Nat.reduceMod, Nat.add_one_sub_one, Nat.add_succ_sub_one,
         Nat.mod_succ] at prev ⊢
@@ -409,8 +372,8 @@ private theorem realClifford_negativeAxis_classification (q : ℕ) :
 private theorem isRealCliffordClassified_add_add_right (p q n : ℕ)
     (h : IsRealCliffordClassified p q) :
     IsRealCliffordClassified (p + n) (q + n) := by
-  rw [isRealCliffordClassified_iff, realCliffordResidue_add_add_right]
-  rw [isRealCliffordClassified_iff] at h
+  rw [IsRealCliffordClassified, realCliffordResidue_add_add_right]
+  rw [IsRealCliffordClassified] at h
   generalize hr : realCliffordResidue p q = r at h
   have hrlt : r < 8 := by
     rw [← hr]
