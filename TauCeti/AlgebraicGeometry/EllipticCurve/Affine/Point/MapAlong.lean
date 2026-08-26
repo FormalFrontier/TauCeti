@@ -155,22 +155,19 @@ end Field
 
 section IterateFrobenius
 
-variable {R : Type*} [CommRing R] (p : ℕ) [ExpChar R p]
-  (W : _root_.WeierstrassCurve.Affine R)
+variable (p : ℕ) [ExpChar R p]
 
 /-- The iterated Frobenius sends an affine point `(x, y)` to
 `(x ^ (p ^ n), y ^ (p ^ n))`.
 
-Not a `simp` lemma: `WeierstrassCurve.Affine.Point.mapAlong_some` already rewrites the left-hand
-side to coordinates expressed using `iterateFrobenius`; this theorem records their `p ^ n`-power
-form. -/
+Not a `simp` lemma: `mapAlong_some` already rewrites the left-hand side to coordinates expressed
+using `iterateFrobenius`; this theorem records their `p ^ n`-power form. -/
 theorem mapAlong_iterateFrobenius_some (n : ℕ)
     (hinj : Function.Injective (iterateFrobenius R p n)) {x y : R}
-    (h : W.Nonsingular x y) :
-    WeierstrassCurve.Affine.Point.mapAlong
-        (iterateFrobenius R p n) hinj (.some x y h) =
+    (h : W.toAffine.Nonsingular x y) :
+    mapAlong (iterateFrobenius R p n) hinj (.some x y h) =
       .some (x ^ p ^ n) (y ^ p ^ n)
-        ((W.map_nonsingular hinj x y).mpr h) := by
+        ((Affine.map_nonsingular W.toAffine hinj x y).mpr h) := by
   simp [iterateFrobenius_def]
 
 end IterateFrobenius
