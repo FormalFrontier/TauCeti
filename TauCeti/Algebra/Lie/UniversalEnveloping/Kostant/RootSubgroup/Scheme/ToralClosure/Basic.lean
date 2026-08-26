@@ -83,12 +83,26 @@ variable (wt : Fin n → κ → ℤ)
   | .inr _ => (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj
 
 /-- The family consisting of every root-subgroup coordinate map and the weight-torus map. -/
-@[expose] noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
+noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
     GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
       kostantToralGeneratorCodomain (I := I) (κ := κ) j :=
   match j with
   | .inl i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b
   | .inr _ => GeneralLinear.weightTorusCoordinateMap wt
+
+/-- At a root index the generator family is the corresponding root-subgroup coordinate map. -/
+@[simp]
+theorem kostantToralGeneratorMap_inl (i : I) :
+    kostantToralGeneratorMap e h ρ M hM hnil b wt (.inl i) =
+      kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b :=
+  (rfl)
+
+/-- At the torus index the generator family is the weight-torus coordinate map. -/
+@[simp]
+theorem kostantToralGeneratorMap_inr (u : Unit) :
+    kostantToralGeneratorMap e h ρ M hM hnil b wt (.inr u) =
+      GeneralLinear.weightTorusCoordinateMap wt :=
+  (rfl)
 
 /-- The defining Hopf ideal of the closed subgroup scheme generated jointly by the represented
 Kostant root subgroups and the represented weight torus. It is the largest Hopf ideal killed by

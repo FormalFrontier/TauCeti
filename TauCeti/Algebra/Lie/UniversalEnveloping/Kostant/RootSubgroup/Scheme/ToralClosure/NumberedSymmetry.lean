@@ -146,13 +146,13 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_ho
   · intro j
     cases j with
     | inl i =>
-        dsimp [kostantToralGeneratorMap, kostantToralGeneratorCodomain, s, m]
-        rw [Category.comp_id,
+        dsimp only [kostantToralGeneratorCodomain, s, m]
+        rw [kostantToralGeneratorMap_inl, kostantToralGeneratorMap_inl, Category.comp_id,
           kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
             e h ρ M hM hnil b σ θ hθM hθe (Function.surjInv hσ i),
           Function.surjInv_eq hσ]
     | inr u =>
-        simpa [kostantToralGeneratorMap, kostantToralGeneratorCodomain, s, m] using
+        simpa only [kostantToralGeneratorMap_inr, kostantToralGeneratorCodomain, s, m] using
           kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorus
             M b wt θ hθM basisPerm hbasis torusPerm hwt
 
@@ -191,13 +191,14 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_in
   · intro j
     cases j with
     | inl i =>
-        dsimp [kostantToralGeneratorMap, kostantToralGeneratorCodomain, s, m]
-        rw [Category.comp_id,
+        dsimp only [kostantToralGeneratorCodomain, s, m]
+        rw [kostantToralGeneratorMap_inl, kostantToralGeneratorMap_inl, Category.comp_id,
           ← kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
             e h ρ M hM hnil b σ θ hθM hθe i,
           Iso.inv_hom_id_assoc]
     | inr u =>
-        simpa [kostantToralGeneratorMap, kostantToralGeneratorCodomain, s, m] using htorusInv
+        simpa only [kostantToralGeneratorMap_inr, kostantToralGeneratorCodomain, s, m]
+          using htorusInv
 
 include hθe hσ hbasis hwt in
 /-- **The numbered-symmetry coordinate automorphism preserves the toral defining ideal.** The root
