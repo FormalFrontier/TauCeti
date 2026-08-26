@@ -122,7 +122,7 @@ This is the converse of the mixture representation `pathLaw_eq_bind_infinitePi_o
 Dirac mixing law: there the path law is the mixture of the powers `Q^{⊗ℕ}` along the law of the
 mixing representative, and a single power is the mixture along a point mass. -/
 theorem mixedIIDWith_const_of_pathLaw_eq_infinitePi {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n)) {P : ProbabilityMeasure α}
+    {X : ℕ → Ω → α} (hX_meas : ∀ n, AEMeasurable (X n) μ) {P : ProbabilityMeasure α}
     (hpath : pathLaw μ X = Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
     MixedIIDWith μ X fun _ => P := by
   have hcoord : MixedIIDWith (Measure.infinitePi fun _ : ℕ => (P : Measure α))
@@ -131,13 +131,14 @@ theorem mixedIIDWith_const_of_pathLaw_eq_infinitePi {μ : Measure Ω} [IsProbabi
       (iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α)) (X := fun _ x => x)
         fun _ => measurable_id)
       fun n => by simp [Measure.infinitePi_map_eval]
-  have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
+  have hφ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ :=
+    aemeasurable_pi_lambda _ hX_meas
   refine MixedIIDWith.intro measurable_const fun m k hk => ?_
   have hsel : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
     measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
   have hblock : blockLaw μ X k = blockLaw (pathLaw μ X) (fun n p => p n) k := by
     simp only [blockLaw_def, pathLaw_def]
-    rw [Measure.map_map hsel hφ]
+    rw [hsel.aemeasurable.map_map_of_aemeasurable hφ]
     rfl
   rw [hblock, hpath, hcoord.blockLaw_eq_pi_of_const k hk, Measure.bind_const, measure_univ,
     one_smul, ProbabilityMeasure.toMeasure_pi]

@@ -65,23 +65,25 @@ representative, so the coordinates are independent with common law `P`
 Triviality of the tail is exactly what makes the de Finetti mixture degenerate: the canonical
 directing measure is tail-measurable, so a trivial tail leaves it no room to vary. -/
 theorem exists_mixedIIDWith_const_of_exchangeable_of_tailProcess_trivial [StandardBorelSpace α]
-    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
+    (hX_meas : ∀ n, AEMeasurable (X n) μ)
     (hX : Exchangeable μ X)
     (htriv : ∀ s, MeasurableSet[tailProcess X] s → μ s = 0 ∨ μ s = 1) :
     ∃ P : ProbabilityMeasure α, MixedIIDWith μ X fun _ => P := by
-  have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
+  have hφ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ :=
+    aemeasurable_pi_lambda _ hX_meas
   have hprob : IsProbabilityMeasure (pathLaw μ X) := by
     rw [pathLaw_def]
-    exact Measure.isProbabilityMeasure_map hφ.aemeasurable
+    exact Measure.isProbabilityMeasure_map hφ
   have hlaw : ExchangeableLaw (pathLaw μ X) :=
-    (exchangeable_iff_exchangeableLaw_pathLaw fun n => (hX_meas n).aemeasurable).mp hX
+    (exchangeable_iff_exchangeableLaw_pathLaw hX_meas).mp hX
   have hpathTail : ∀ s, MeasurableSet[pathTail α] s → pathLaw μ X s = 0 ∨ pathLaw μ X s = 1 := by
     intro s hs
     have hs' : MeasurableSet s :=
       tailProcess_le_ambient 0 (fun k _ => measurable_pi_apply k) s hs
     have hpull : MeasurableSet[tailProcess X] ((fun ω i => X i ω) ⁻¹' s) :=
       comap_pathTail_le_tailProcess X _ ⟨s, hs, rfl⟩
-    rw [pathLaw_def, Measure.map_apply hφ hs']
+    rw [pathLaw_def, Measure.map_apply_of_aemeasurable hφ hs']
     exact htriv _ hpull
   obtain ⟨P, hP⟩ := infinitePi_of_pathTail_trivial hlaw hpathTail
   exact ⟨P, mixedIIDWith_const_of_pathLaw_eq_infinitePi hX_meas hP⟩
@@ -91,7 +93,8 @@ identical-distribution half of "i.i.d." is available alongside it, through
 `exists_mixedIIDWith_const_of_exchangeable_of_tailProcess_trivial` and
 `MixedIIDWith.map_eq_of_const`. -/
 theorem iIndepFun_of_exchangeable_of_tailProcess_trivial [StandardBorelSpace α]
-    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
+    (hX_meas : ∀ n, AEMeasurable (X n) μ)
     (hX : Exchangeable μ X)
     (htriv : ∀ s, MeasurableSet[tailProcess X] s → μ s = 0 ∨ μ s = 1) :
     iIndepFun X μ := by

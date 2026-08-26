@@ -273,7 +273,7 @@ theorem JointlyDissociated.exists_mixedIIDWith_const_arrayDiag [StandardBorelSpa
     (hX : ∀ p, Measurable (X p)) :
     ∃ P : ProbabilityMeasure α, MixedIIDWith μ (arrayDiag X) fun _ => P :=
   exists_mixedIIDWith_const_of_exchangeable_of_tailProcess_trivial
-    (fun n => by simpa only [arrayDiag_apply] using hX (n, n))
+    (fun n => by simpa only [arrayDiag_apply] using (hX (n, n)).aemeasurable)
     (hexch.exchangeable_arrayDiag fun p => (hX p).aemeasurable)
     fun _ hs => h.measure_eq_zero_or_one_of_tailProcess_arrayDiag hX hs
 
