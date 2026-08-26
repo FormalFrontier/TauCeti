@@ -23,12 +23,13 @@ the mixture collapses: the process is plainly i.i.d.
 This is the process-level companion of the law-level `infinitePi_of_pathTail_trivial`, and the
 zero-one criterion a proof of independence can aim at when independence itself is hard to see but
 the tail is visibly trivial. That is the situation for the diagonal of a dissociated exchangeable
-array, whose entries dissociation makes only *pairwise* independent, and which
-`JointlyDissociated.iIndepFun_arrayDiag` upgrades to i.i.d. through this criterion.
+array, whose diagonal is independent by dissociation and identically distributed by joint
+exchangeability.
 
 The hypothesis is triviality of the **tail**, not of the larger exchangeable σ-algebra: the tail is
-what pulls back from a path event to a process event (`comap_pathTail_le_tailProcess`), whereas an
-exchangeable event of the path law has no such description in terms of the process.
+what pulls back into the canonical process σ-algebra `tailProcess X`
+(`comap_pathTail_le_tailProcess`). The exchangeable σ-algebra has only its pullback along the path
+map, whose triviality would be a stronger and less directly checkable process-level assumption.
 
 ## Main results
 

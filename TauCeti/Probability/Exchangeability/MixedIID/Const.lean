@@ -125,23 +125,16 @@ theorem mixedIIDWith_const_of_pathLaw_eq_infinitePi {μ : Measure Ω} [IsProbabi
     {X : ℕ → Ω → α} (hX_meas : ∀ n, AEMeasurable (X n) μ) {P : ProbabilityMeasure α}
     (hpath : pathLaw μ X = Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
     MixedIIDWith μ X fun _ => P := by
-  have hcoord : MixedIIDWith (Measure.infinitePi fun _ : ℕ => (P : Measure α))
-      (fun n (x : ℕ → α) => x n) fun _ => P :=
-    MixedIIDWith.of_iIndepFun_map_eq
-      (iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α)) (X := fun _ x => x)
-        fun _ => measurable_id)
-      fun n => by simp [Measure.infinitePi_map_eval]
   have hφ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ :=
     aemeasurable_pi_lambda _ hX_meas
-  refine MixedIIDWith.intro measurable_const fun m k hk => ?_
-  have hsel : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
-    measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
-  have hblock : blockLaw μ X k = blockLaw (pathLaw μ X) (fun n p => p n) k := by
-    simp only [blockLaw_def, pathLaw_def]
-    rw [hsel.aemeasurable.map_map_of_aemeasurable hφ]
+  have hmap (n : ℕ) : μ.map (X n) = P := by
+    rw [← Measure.infinitePi_map_eval (μ := fun _ : ℕ => (P : Measure α)) n, ← hpath,
+      pathLaw_def, (measurable_pi_apply n).aemeasurable.map_map_of_aemeasurable hφ]
     rfl
-  rw [hblock, hpath, hcoord.blockLaw_eq_pi_of_const k hk, Measure.bind_const, measure_univ,
-    one_smul, ProbabilityMeasure.toMeasure_pi]
+  exact MixedIIDWith.of_iIndepFun_map_eq
+    ((iIndepFun_iff_map_fun_eq_infinitePi_map₀ hφ).mpr (by
+      rw [← pathLaw_def, hpath]
+      simp only [hmap])) hmap
 
 end Probability
 

@@ -35,9 +35,10 @@ That argument never inspects a non-tail exchangeable event, so it proves the sha
 `infinitePi_of_pathTail_trivial`, which asks for triviality only on the path tail. Since
 `pathTail_le_exchangeableSigma` puts the path tail inside the exchangeable σ-algebra, triviality on
 the larger σ-algebra is the stronger hypothesis, and `infinitePi_of_exchangeableSigma_trivial` is
-the corollary. The sharper form is what a process-level criterion consumes: a tail event of a
-process pulls back from a path tail event, whereas an exchangeable event of the path law has no
-such process-level description.
+the corollary. The sharper form is what a process-level criterion consumes: the path tail pulls
+back into the canonical process σ-algebra `tailProcess X`, whereas the exchangeable σ-algebra has
+only its pullback along the path map, a stronger and less directly checkable process-level
+assumption.
 
 Working at the mixing-law level avoids needing a general "measurable into `ProbabilityMeasure α`
 implies almost everywhere constant" interface: the Giry-specific Dirac theorem is exactly the tool
