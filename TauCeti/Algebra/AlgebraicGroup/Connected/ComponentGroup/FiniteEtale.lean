@@ -12,24 +12,15 @@ public import TauCeti.Algebra.AlgebraicGroup.Connected.ComponentGroup.Representa
 
 Let `H` be the coordinate Hopf algebra of a finite-type affine group over an algebraically
 closed field. The fppf quotient by the identity component is represented by the constant group
-scheme on the finite group of connected components of `Spec H`. This file names that canonical
-representing group scheme and records that its structural morphism is finite and etale.
-
-No smoothness hypothesis on `H` is needed over an algebraically closed field. The representer is
-constant, and constant finite group schemes are finite etale over any commutative base ring. The
-existing isomorphism `componentGroupFppfGroupObjectIso` identifies its fppf points with the
-component quotient, compatibly with the quotient projection.
+scheme on the finite group of connected components of `Spec H`. This group scheme is finite and
+etale by the corresponding instances for constant finite group schemes.
 
 ## Main declarations
 
-* `TauCeti.FiniteTypeCommHopfAlgCat.componentGroupScheme`: the canonical group scheme
-  representing the component quotient.
-* `TauCeti.FiniteTypeCommHopfAlgCat.componentGroupRepresentation`: the representation
-  isomorphism from the fppf component quotient to the named coordinate model.
-* `TauCeti.FiniteTypeCommHopfAlgCat.isFinite_componentGroupScheme`: its structural morphism is
-  finite.
-* `TauCeti.FiniteTypeCommHopfAlgCat.etale_componentGroupScheme`: its structural morphism is
-  etale.
+* `TauCeti.FiniteTypeCommHopfAlgCat.componentGroupScheme`: the constant group scheme on the
+  connected components of `Spec H`.
+* `TauCeti.FiniteTypeCommHopfAlgCat.componentGroupFppfSheafIsoComponentGroupSchemePoints`: the
+  component quotient is isomorphic to the sheafified functor of points of that scheme.
 
 ## References
 
@@ -52,99 +43,52 @@ universe u
 
 variable {k : Type u} [Field k] [IsAlgClosed k]
 
-/-- The coordinate Hopf algebra of the component group of a finite-type affine group over an
-algebraically closed field.
-
-It is the function Hopf algebra on the finite group of connected components of the prime
-spectrum. -/
-noncomputable def componentGroupCoordinateHopfAlgebra
-    (H : FiniteTypeCommHopfAlgCat.{u, u} k) : CommHopfAlgCat.{u} k :=
-  CommHopfAlgCat.of k
-    (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H)))
-
-/-- The component-group coordinate Hopf algebra is the function Hopf algebra on the connected
-components. -/
-theorem componentGroupCoordinateHopfAlgebra_def
-    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    componentGroupCoordinateHopfAlgebra H =
-      CommHopfAlgCat.of k
-        (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))) := by
-  rfl
-
-/-- The finite constant group scheme representing the component quotient of a finite-type
-affine group over an algebraically closed field. -/
-noncomputable def componentGroupScheme
+/-- The constant group scheme on the connected components of the spectrum of a finite-type
+commutative Hopf algebra over an algebraically closed field. -/
+noncomputable abbrev componentGroupScheme
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     Grp (Over (Spec (CommRingCat.of k))) :=
   ConstantGroup.groupScheme k (ConnectedComponents (PrimeSpectrum H))
 
-/-- The component group scheme is relative spectrum applied to its coordinate Hopf algebra. -/
-theorem componentGroupScheme_def (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    componentGroupScheme H =
-      (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).obj
-        (op (componentGroupCoordinateHopfAlgebra H)) := by
-  simpa only [componentGroupScheme, componentGroupCoordinateHopfAlgebra] using
-    ConstantGroup.groupScheme_def k (ConnectedComponents (PrimeSpectrum H))
-
-/-- The scheme underlying the component group is the spectrum of the function algebra on the
-connected components. -/
-@[simp]
-theorem componentGroupScheme_X_left (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    (componentGroupScheme H).X.left =
-      Spec (CommRingCat.of
-        (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H)))) := by
-  exact ConstantGroup.groupScheme_X_left k (ConnectedComponents (PrimeSpectrum H))
-
-/-- The structural morphism of the component group is induced by the scalar inclusion into its
-function algebra. -/
-@[simp]
-theorem componentGroupScheme_X_hom (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    (componentGroupScheme H).X.hom =
-      eqToHom (componentGroupScheme_X_left H) ≫
-        Spec.map (CommRingCat.ofHom
-          (algebraMap k
-            (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H))))) := by
-  exact ConstantGroup.groupScheme_X_hom k (ConnectedComponents (PrimeSpectrum H))
-
-/-- The fppf component quotient is represented by the group scheme with the named component-group
-coordinate Hopf algebra. -/
-noncomputable def componentGroupRepresentation
+/-- The fppf component quotient is represented by `componentGroupScheme H`: its underlying sheaf
+is isomorphic to the sheafification of the scheme's Yoneda functor of points on affine schemes. -/
+noncomputable def componentGroupFppfSheafIsoComponentGroupSchemePoints
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    componentGroupFppfSheaf H ≅
-      CommHopfAlgCat.pointsFppfGroupObject (componentGroupCoordinateHopfAlgebra H) :=
-  componentGroupFppfGroupObjectIso H ≪≫
-    eqToIso (congrArg CommHopfAlgCat.pointsFppfGroupObject
-      (componentGroupCoordinateHopfAlgebra_def H).symm)
-
-/-- Under the named representation, the component quotient projection is the sheafified
-component-coordinate morphism, followed only by the equality identifying the named coordinate
-algebra. -/
-theorem componentGroupFppfProjection_comp_componentGroupRepresentation_hom
-    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    componentGroupFppfProjection H ≫ (componentGroupRepresentation H).hom =
-      componentCoordinateFppfGroupObjectHom H ≫
-        eqToHom (congrArg CommHopfAlgCat.pointsFppfGroupObject
-          (componentGroupCoordinateHopfAlgebra_def H).symm) := by
-  rw [componentGroupRepresentation, Iso.trans_hom, ← Category.assoc,
-    componentGroupFppfProjection_comp_componentGroupFppfGroupObjectIso_hom]
-  rfl
-
-/-- The component group scheme is affine. -/
-instance isAffine_componentGroupScheme (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    IsAffine (componentGroupScheme H).X.left := by
-  unfold componentGroupScheme
-  infer_instance
-
-/-- The structural morphism of the component group scheme is finite. -/
-instance isFinite_componentGroupScheme (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    IsFinite (componentGroupScheme H).X.hom := by
-  unfold componentGroupScheme
-  infer_instance
-
-/-- The structural morphism of the component group scheme is etale. -/
-instance etale_componentGroupScheme (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    Etale (componentGroupScheme H).X.hom := by
-  unfold componentGroupScheme
-  infer_instance
+    (componentGroupFppfSheaf H).X ≅
+      (presheafToSheaf (CommAlgCat.fppfTopology k) (Type (u + 1))).obj
+        (((AlgebraicGeometry.algSpec (CommRingCat.of k)).op ⋙
+          yoneda.obj (componentGroupScheme H).X) ⋙
+            CategoryTheory.uliftFunctor.{u + 1, u}) := by
+  let K := CommHopfAlgCat.of k
+    (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H)))
+  let F := presheafToSheaf (CommAlgCat.fppfTopology k) (Type (u + 1))
+  have hPoints :
+      HopfAlgebra.pointsGroupPresheaf K ⋙ GrpCat.uliftFunctor.{u + 1, u} ⋙
+          forget GrpCat.{u + 1} =
+        HopfAlgebra.pointsPresheaf K ⋙ CategoryTheory.uliftFunctor.{u + 1, u} := by
+    rfl
+  let e₀ : (CommHopfAlgCat.pointsPresheafGrp K).X ≅
+      HopfAlgebra.pointsPresheaf K ⋙ CategoryTheory.uliftFunctor.{u + 1, u} :=
+    eqToIso (CommHopfAlgCat.pointsPresheafGrp_X_eq K) ≪≫ eqToIso hPoints
+  let e₁ : HopfAlgebra.pointsPresheaf K ⋙ CategoryTheory.uliftFunctor.{u + 1, u} ≅
+      CommHopfAlgCat.schemePointsPresheaf K ⋙
+        CategoryTheory.uliftFunctor.{u + 1, u} :=
+    Functor.isoWhiskerRight
+      (CommHopfAlgCat.pointsPresheafIsoSchemePointsPresheaf K)
+      CategoryTheory.uliftFunctor.{u + 1, u}
+  have hScheme : CommHopfAlgCat.schemePointsPresheaf K =
+      (AlgebraicGeometry.algSpec (CommRingCat.of k)).op ⋙
+        yoneda.obj (componentGroupScheme H).X := by
+    dsimp only [componentGroupScheme]
+    rw [ConstantGroup.groupScheme_def]
+  let e₂ : CommHopfAlgCat.schemePointsPresheaf K ⋙
+        CategoryTheory.uliftFunctor.{u + 1, u} ≅
+      (((AlgebraicGeometry.algSpec (CommRingCat.of k)).op ⋙
+        yoneda.obj (componentGroupScheme H).X) ⋙
+          CategoryTheory.uliftFunctor.{u + 1, u}) :=
+    Functor.isoWhiskerRight (eqToIso hScheme) CategoryTheory.uliftFunctor.{u + 1, u}
+  exact (Grp.forget _).mapIso (componentGroupFppfGroupObjectIso H) ≪≫
+    eqToIso (CommHopfAlgCat.pointsFppfGroupObject_X_eq K) ≪≫
+      F.mapIso (e₀ ≪≫ e₁ ≪≫ e₂)
 
 end TauCeti.FiniteTypeCommHopfAlgCat
