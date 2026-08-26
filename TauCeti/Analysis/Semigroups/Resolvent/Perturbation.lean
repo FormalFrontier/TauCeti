@@ -19,9 +19,9 @@ such `lambda` in the resolvent set of the perturbed generator, with
 `‖R(lambda, B + S.generator)‖ ≤ M / (lambda - omega - M ‖B‖)`.
 
 Only the first power of the perturbed resolvent is controlled this way: iterating the Neumann
-bound costs `M ^ n` rather than `M`, so it does not feed Hille--Yosida at `M > 1`. The generation
-statement itself is proved at `M = 1` in
-`TauCeti/Analysis/Semigroups/Generation/BoundedPerturbation.lean`.
+bound costs `M ^ n` rather than `M`, so it does not feed Hille--Yosida at `M > 1`. The general
+generation theorem instead passes to an equivalent norm, reducing the operator argument to the
+`M = 1` case; see `TauCeti/Analysis/Semigroups/Generation/BoundedPerturbation.lean`.
 
 ## Main results
 
