@@ -23,8 +23,8 @@ The models are the complexes of `Simplex.Basic`: `simplex V` for a vertex set of
 elements, and `simplexBoundary V` for one of `n + 2` elements, so that both models have dimension
 `n`. They are compared using
 `PreAbstractSimplicialComplex.StellarEquivalentUpToRelabeling`, which injectively relabels both
-complexes in a common enlarged vertex type with infinitely many fresh vertices. Thus the
-definitions do not depend on the names or unused capacity of the original ambient vertex type.
+complexes in a common enlarged vertex type. Thus the definitions do not depend on the names of
+the original vertices.
 
 ## The dimension convention, and why `0` is a separate case
 
@@ -107,15 +107,21 @@ theorem isCombinatorialSphere_simplexBoundary (hV : V.card = n + 2) :
     IsCombinatorialSphere (simplexBoundary V) n :=
   ⟨V, hV, StellarEquivalentUpToRelabeling.refl _⟩
 
+/-- Being a combinatorial ball transfers along an intrinsic stellar equivalence. -/
+theorem IsCombinatorialBall.of_stellarEquivalentUpToRelabeling
+    (h : StellarEquivalentUpToRelabeling K L)
+    (hL : IsCombinatorialBall L n) : IsCombinatorialBall K n := by
+  obtain ⟨V, hV, hLV⟩ := hL
+  exact ⟨V, hV, h.trans hLV⟩
+
 /-- Starring the top face of the standard `n`-simplex at a fresh vertex gives a combinatorial
 `n`-ball. -/
 theorem isCombinatorialBall_stellarSubdivision_simplex (hV : V.card = n + 1) (hv : v ∉ V) :
-    IsCombinatorialBall (stellarSubdivision (simplex V) V v) n := by
-  have hVne : V.Nonempty := Finset.card_pos.mp (by omega)
-  have he : StellarEquivalent (stellarSubdivision (simplex V) V v) (simplex V) :=
-    (stellarEquivalent_stellarSubdivision (self_mem_simplex.mpr hVne)
-      (fun h => hv (singleton_mem_simplex.mp h))).symm
-  exact ⟨V, hV, he.stellarEquivalentUpToRelabeling⟩
+    IsCombinatorialBall (stellarSubdivision (simplex V) V v) n :=
+  IsCombinatorialBall.of_stellarEquivalentUpToRelabeling
+    (stellarEquivalent_stellarSubdivision (self_mem_simplex.mpr (Finset.card_pos.mp (by omega)))
+      (fun h => hv (singleton_mem_simplex.mp h))).symm.stellarEquivalentUpToRelabeling
+    (isCombinatorialBall_simplex hV)
 
 /-- A one-vertex simplex is a combinatorial `0`-ball. -/
 theorem isCombinatorialBall_simplex_singleton (v : ι) :
@@ -126,13 +132,6 @@ theorem isCombinatorialBall_simplex_singleton (v : ι) :
 theorem isCombinatorialSphere_simplexBoundary_pair (hvw : v ≠ w) :
     IsCombinatorialSphere (simplexBoundary {v, w}) 0 :=
   isCombinatorialSphere_simplexBoundary (Finset.card_pair hvw)
-
-/-- Being a combinatorial ball transfers along an intrinsic stellar equivalence. -/
-theorem IsCombinatorialBall.of_stellarEquivalentUpToRelabeling
-    (h : StellarEquivalentUpToRelabeling K L)
-    (hL : IsCombinatorialBall L n) : IsCombinatorialBall K n := by
-  obtain ⟨V, hV, hLV⟩ := hL
-  exact ⟨V, hV, h.trans hLV⟩
 
 /-- Being a combinatorial sphere transfers along an intrinsic stellar equivalence. -/
 theorem IsCombinatorialSphere.of_stellarEquivalentUpToRelabeling
@@ -168,13 +167,24 @@ theorem IsCombinatorialSphere.finite_faces (h : IsCombinatorialSphere K n) : K.f
 
 /-- A combinatorial ball has a face; in particular it is not the void complex. -/
 theorem IsCombinatorialBall.ne_bot (h : IsCombinatorialBall K n) : K ≠ ⊥ := by
-  exact fun hbot =>
-    WithBot.natCast_ne_bot n (h.dimension_eq.symm.trans (dimension_eq_bot_iff.mpr hbot))
+  obtain ⟨V, hV, he⟩ := h
+  apply he.ne_bot
+  intro hbot
+  have hVne : V.Nonempty := Finset.card_pos.mp (by omega)
+  have hmem : V ∈ simplex V := self_mem_simplex.mpr hVne
+  rw [hbot] at hmem
+  exact hmem.elim
 
 /-- A combinatorial sphere has a face; in particular it is not the void complex. -/
 theorem IsCombinatorialSphere.ne_bot (h : IsCombinatorialSphere K n) : K ≠ ⊥ := by
-  exact fun hbot =>
-    WithBot.natCast_ne_bot n (h.dimension_eq.symm.trans (dimension_eq_bot_iff.mpr hbot))
+  obtain ⟨V, hV, he⟩ := h
+  apply he.ne_bot
+  obtain ⟨v, hv⟩ : V.Nonempty := Finset.card_pos.mp (by omega)
+  intro hbot
+  have hmem : ({v} : Finset ι) ∈ simplexBoundary V :=
+    singleton_mem_simplexBoundary.mpr ⟨hv, fun h => by simp [h] at hV⟩
+  rw [hbot] at hmem
+  exact hmem.elim
 
 /-! ### Combinatorial manifolds -/
 

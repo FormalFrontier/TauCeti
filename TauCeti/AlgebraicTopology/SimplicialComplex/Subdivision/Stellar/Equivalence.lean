@@ -34,8 +34,7 @@ that theorem, keeps the two apart.
 A stellar move demands a *fresh* vertex, one spanning no face of the complex yet. That hypothesis
 is what makes the move honest. The same-type relation records literal move sequences, while
 `StellarEquivalentUpToRelabeling` compares complexes intrinsically: it first embeds both into a
-common vertex type with an infinite supply of fresh vertices and allows arbitrary injective
-relabelings.
+common enlarged vertex type and allows arbitrary injective relabelings.
 
 ## Main definitions
 
@@ -261,9 +260,8 @@ private theorem finite_faces_map_iff_of_injective {κ : Type*} [DecidableEq κ]
 /-! ### Intrinsic stellar equivalence -/
 
 /-- **Stellar equivalence up to relabeling.** At each generating step, the two complexes are
-injectively relabeled inside the common enlarged vertex type `ι ⊕ ℕ`, where stellar moves always
-have an infinite reserve of fresh vertices. Taking the equivalence closure makes the result
-independent of the chosen relabelings and lets such comparisons compose. -/
+injectively relabeled inside the common enlarged vertex type `ι ⊕ ℕ`. Taking the equivalence
+closure makes the result independent of the chosen relabelings and lets such comparisons compose. -/
 def StellarEquivalentUpToRelabeling (K L : PreAbstractSimplicialComplex ι) : Prop :=
   Relation.EqvGen
     (fun A B => ∃ f g : ι ↪ (ι ⊕ ℕ), StellarEquivalent (A.map f) (B.map g)) K L
