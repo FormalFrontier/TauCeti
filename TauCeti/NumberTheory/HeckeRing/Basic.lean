@@ -288,8 +288,9 @@ The two double cosets splice because `Γ₂ Γ₂ = Γ₂`: an element of the pr
 is again in `Γ₁ δ₁ Γ₂`, hence in some `Γ₁ aᵢ`.
 
 ⚠ The union is **not** disjoint, and the family `(i, j) ↦ Γ₁ aᵢ bⱼ` is in general far from
-injective: the number of pairs hitting a fixed coset is `multiplicity`, the structure constant
-of the Hecke product. The identity supplies coverage only, exactly as
+injective. Any repetitions here are right-coset collisions; this theorem neither counts them nor
+identifies them with `DoubleCoset.multiplicity`, which uses left-coset representatives. The
+identity supplies coverage only, exactly as
 `doubleCoset_eq_iUnion_rightCosets_of_forall_exists` does for a single double coset. -/
 lemma doubleCoset_mul_doubleCoset_eq_iUnion_rightCosets {Γ₁ Γ₂ Γ₃ : Subgroup G} {δ₁ δ₂ : G}
     {ι κ : Type*} (a : ι → G) (b : κ → G)

@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Independence
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Gamma1
 
 /-!
@@ -42,9 +41,9 @@ Which right cosets the products `aᵢ bⱼ` run over is a set-level question wit
 it, so it is answered where the rest of the double-coset vocabulary lives: they cover the
 **product set** `Γ₁ δ₁ Γ₂ · Γ₂ δ₂ Γ₃`, by
 `DoubleCoset.doubleCoset_mul_doubleCoset_eq_iUnion_rightCosets` (`HeckeRing/Basic.lean`). They do
-so with repetition — the number of pairs landing in a given coset is Shimura's multiplicity, the
-structure constant of `HeckeRing/Multiplication.lean` — which is why the criterion below has to
-be told separately that the cosets are distinct.
+so with repetition, which is why the criterion below has to be told separately that the cosets
+are distinct. These right-coset collision counts are not identified here with
+`DoubleCoset.multiplicity`, which is defined using left-coset representatives.
 
 ## What this does and does not give
 
@@ -52,9 +51,9 @@ Putting these together gives the criterion `heckeSlashSum_heckeSlashSum_eq_hecke
 if the product set is a *single* double coset `Γ₁ δ₃ Γ₃` and the pairs `(i, j)` do meet each of
 its right cosets exactly once, then the composite operator is the operator of `Γ₁ δ₃ Γ₃`. At
 `Γ₁ = Γ₂ = Γ₃ = Γ₁(N)` this is `heckeSlashGamma1ModularFormEnd_mul_of_doubleCoset_eq_mul` and
-its cusp-form companion: the multiplicativity statement
-`[D₁] · [D₂] = [D₃] ⟹ T_{D₁} T_{D₂} = T_{D₃}`, in the exact case where the ring-side product
-`HeckeCosetModule.mul_single_single_of_mulMap_eq` is a single basis element.
+its cusp-form companion. The criterion is formally analogous to the ring-side
+single-basis-element criterion `HeckeCosetModule.mul_single_single_of_mulMap_eq`, but no
+identification with that criterion is made here.
 
 ⚠ The general multiplicity-weighted statement — the composite as `∑_D m(D₁, D₂; D) · T_D`, and
 with it the ring homomorphism `𝕋 → Module.End` — is **not** proved here. It needs, beyond this
@@ -169,12 +168,12 @@ include hcover₁ hinj₁ hcover₂ hinj₂ in
 `Γ₁ δ₁ Γ₂ · Γ₂ δ₂ Γ₃` is that coset and the products `aᵢ bⱼ` meet each of its right cosets
 exactly once.
 
-The two hypotheses are the function-level counterpart of the two that
-`HeckeCosetModule.mul_single_single_of_mulMap_eq` asks on the ring side, where together they say
-that `[D₁] · [D₂] = [D₃]`: `hD₃` is that the product lands in the single coset `D₃`, and `hinj₃`
-that `D₃` occurs there with multiplicity one. The covering half of the hypothesis
-`heckeSlashSum_eq_sum_of_rightCosets` would otherwise need is automatic, by
-`doubleCoset_mul_doubleCoset_eq_iUnion_rightCosets`. -/
+The two hypotheses are formally analogous to those of
+`HeckeCosetModule.mul_single_single_of_mulMap_eq`: `hD₃` says that the product set is the single
+coset `D₃`, while `hinj₃` says that the products have no right-coset collisions. This does not
+identify `hinj₃` with the left-representative count used by `DoubleCoset.multiplicity`. The
+covering half of the hypothesis `heckeSlashSum_eq_sum_of_rightCosets` would otherwise need is
+automatic, by `doubleCoset_mul_doubleCoset_eq_iUnion_rightCosets`. -/
 theorem heckeSlashSum_heckeSlashSum_eq_heckeSlashSum
     (hD₃ : doubleCoset (D₃.out : GL (Fin 2) ℚ) (Γ₁ : Set (GL (Fin 2) ℚ)) Γ₃ =
       doubleCoset (D₁.out : GL (Fin 2) ℚ) (Γ₁ : Set (GL (Fin 2) ℚ)) Γ₂ *
@@ -219,8 +218,8 @@ variable {N : ℕ} [NeZero N]
 
 include hcover₁ hinj₁ hcover₂ hinj₂ hD₃ hinj₃
 
-/-- **The Hecke operators of level `Γ₁(N)` multiply**, in the case where the product of the two
-double cosets is the single double coset `D₃` with multiplicity one.
+/-- **The Hecke operators of level `Γ₁(N)` multiply**, when the product set is the single double
+coset `D₃` and the products of the chosen right-coset representatives have no collisions.
 
 `Module.End` multiplies by composition, so `D₁` acts first on the right-hand side of the
 underlying identity `(f ∣ D₁) ∣ D₂ = f ∣ D₃`; that is the order recorded here. -/
@@ -235,8 +234,9 @@ theorem heckeSlashGamma1ModularFormEnd_mul_of_doubleCoset_eq_mul :
     D₃ hD₃ hinj₃ ⇑f hf
   simpa [coe_heckeSlashGamma1ModularFormEnd] using congrFun this τ
 
-/-- **The Hecke operators of level `Γ₁(N)` multiply on cusp forms**, in the case where the
-product of the two double cosets is the single double coset `D₃` with multiplicity one. -/
+/-- **The Hecke operators of level `Γ₁(N)` multiply on cusp forms**, when the product set is the
+single double coset `D₃` and the products of the chosen right-coset representatives have no
+collisions. -/
 theorem heckeSlashGamma1CuspFormEnd_mul_of_doubleCoset_eq_mul :
     heckeSlashGamma1CuspFormEnd k D₂ * heckeSlashGamma1CuspFormEnd k D₁ =
       heckeSlashGamma1CuspFormEnd k D₃ := by
