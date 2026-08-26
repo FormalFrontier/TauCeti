@@ -231,7 +231,6 @@ theorem cdf_chiSquaredMeasure_eq (hk : 0 < k) (x : ℝ) :
 
 /-- At zero degrees of freedom the cumulative distribution function is the unit step at the
 origin. -/
-@[simp]
 theorem cdf_chiSquaredMeasure_zero (x : ℝ) :
     cdf (chiSquaredMeasure 0) x = if 0 ≤ x then 1 else 0 := by
   rw [chiSquaredMeasure_zero, cdf_dirac]
@@ -251,12 +250,10 @@ theorem variance_id_chiSquaredMeasure (hk : 0 < k) : variance id (chiSquaredMeas
   ring
 
 /-- At zero degrees of freedom the mean is `0`. -/
-@[simp]
 theorem integral_id_chiSquaredMeasure_zero : ∫ x, x ∂chiSquaredMeasure 0 = 0 := by
   rw [chiSquaredMeasure_zero, integral_dirac]
 
 /-- At zero degrees of freedom the variance is `0`. -/
-@[simp]
 theorem variance_id_chiSquaredMeasure_zero : variance id (chiSquaredMeasure 0) = 0 := by
   rw [chiSquaredMeasure_zero]
   exact variance_dirac 0
@@ -296,25 +293,21 @@ theorem charFun_chiSquaredMeasure (hk : 0 < k) (t : ℝ) :
   congr 1 <;> ring
 
 /-- At zero degrees of freedom every exponential moment exists. -/
-@[simp]
 theorem integrableExpSet_id_chiSquaredMeasure_zero :
     integrableExpSet id (chiSquaredMeasure 0) = univ := by
   rw [chiSquaredMeasure_zero, integrableExpSet_dirac]
 
 /-- At zero degrees of freedom the moment-generating function is identically `1`. -/
-@[simp]
 theorem mgf_id_chiSquaredMeasure_zero (t : ℝ) : mgf id (chiSquaredMeasure 0) t = 1 := by
   rw [chiSquaredMeasure_zero, mgf_dirac']
   simp
 
 /-- At zero degrees of freedom the cumulant-generating function is identically `0`. -/
-@[simp]
 theorem cgf_id_chiSquaredMeasure_zero (t : ℝ) : cgf id (chiSquaredMeasure 0) t = 0 := by
   rw [chiSquaredMeasure_zero, cgf_dirac']
   simp
 
 /-- At zero degrees of freedom the characteristic function is identically `1`. -/
-@[simp]
 theorem charFun_chiSquaredMeasure_zero (t : ℝ) : charFun (chiSquaredMeasure 0) t = 1 := by
   rw [chiSquaredMeasure_zero, charFun_dirac]
   simp
