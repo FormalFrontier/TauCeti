@@ -137,7 +137,7 @@ image, so its elements are `D`-combinations. That is why the hypotheses bounding
 `D` appear here as well. -/
 theorem extendToLocalization_lt_of_mem_locIdealImage {v : Valuation A Γ₀} (hs : v s ≠ 0)
     (hA₀ : ∀ a ∈ P.ringOfDefinition, v a ≤ 1) (hT : ∀ t ∈ T, v t ≤ v s)
-    {γ : Γ₀} (hγ : γ ≠ 0) {n : ℕ} (hn : ∀ b ∈ P.idealImage n, v b < γ)
+    {γ : Γ₀} {n : ℕ} (hn : ∀ b ∈ P.idealImage n, v b < γ)
     {x : S} (hx : x ∈ locIdealImage P T s S n) :
     v.extendToLocalization (Valuation.powers_le_supp_primeCompl hs) S x < γ := by
   obtain ⟨d, hd, rfl⟩ := (mem_locIdealImage_iff P T s S n).mp hx
@@ -148,7 +148,7 @@ theorem extendToLocalization_lt_of_mem_locIdealImage {v : Valuation A Γ₀} (hs
     obtain ⟨b, hb, rfl⟩ := hy
     rw [toLocSubring_apply, Valuation.extendToLocalization_apply_map_apply]
     exact hn _ ((P.mem_idealImage n).mpr ⟨b, hb, rfl⟩)
-  | zero => simpa using zero_lt_iff.mpr hγ
+  | zero => simpa using hn 0 (P.idealImage n).zero_mem
   | add y z _ _ hy hz => exact lt_of_le_of_lt (Valuation.map_add _ _ _) (max_lt hy hz)
   | smul r y _ hy =>
     rw [smul_eq_mul, MulMemClass.coe_mul, Valuation.map_mul]
@@ -188,7 +188,7 @@ theorem isContinuous_extendToLocalization [IsTopologicalRing A]
       zero_mem' := by simpa using zero_lt_iff.mpr hb
       neg_mem' := fun {x} hx ↦ by simpa using hx }
   exact AddSubgroup.isOpen_mono (H₁ := locIdealImage P T s S n) (H₂ := G)
-    (fun x hx ↦ extendToLocalization_lt_of_mem_locIdealImage S P T s hs hA₀ hT hb
+    (fun x hx ↦ extendToLocalization_lt_of_mem_locIdealImage S P T s hs hA₀ hT
       (fun c hc ↦ hn hc) hx)
     (isOpen_locIdealImage P T s S hden n)
 
