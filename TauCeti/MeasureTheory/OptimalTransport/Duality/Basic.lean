@@ -168,11 +168,8 @@ statement about a single plan; it underlies both weak duality and complementary 
 theorem kantorovichDualValue_eq_integral (hπ : IsCoupling π μ ν) (hφ : Integrable φ μ)
     (hψ : Integrable ψ ν) :
     kantorovichDualValue μ ν φ ψ = ∫ z, (φ z.1 + ψ z.2) ∂π := by
-  have hφπ : Integrable (fun z : X × Y ↦ φ z.1) π :=
-    hπ.measurePreserving_fst.integrable_comp_of_integrable hφ
-  have hψπ : Integrable (fun z : X × Y ↦ ψ z.2) π :=
-    hπ.measurePreserving_snd.integrable_comp_of_integrable hψ
-  rw [kantorovichDualValue_def, integral_add hφπ hψπ,
+  rw [kantorovichDualValue_def,
+    integral_add (hπ.integrable_comp_fst hφ) (hπ.integrable_comp_snd hψ),
     hπ.integral_comp_fst hφ.aestronglyMeasurable,
     hπ.integral_comp_snd hψ.aestronglyMeasurable]
 
