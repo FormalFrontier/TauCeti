@@ -114,20 +114,6 @@ noncomputable def leviSemidirectMap {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     intro g
     exact mapUnipotent_leviConjugation l φ z g
 
-/-- The unipotent coordinate of extension on the dynamic Levi semidirect product. -/
-@[simp]
-theorem leviSemidirectMap_apply_left {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
-    (g : (unipotent A l) ⋊[leviConjugation A l] (levi A l)) :
-    (leviSemidirectMap l φ g).left = mapUnipotent l φ g.left :=
-  by unfold leviSemidirectMap; rfl
-
-/-- The Levi coordinate of extension on the dynamic Levi semidirect product. -/
-@[simp]
-theorem leviSemidirectMap_apply_right {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
-    (g : (unipotent A l) ⋊[leviConjugation A l] (levi A l)) :
-    (leviSemidirectMap l φ g).right = mapLevi l φ g.right :=
-  by unfold leviSemidirectMap; rfl
-
 /-- Extension of the value algebra commutes with the dynamic Levi decomposition equivalence. -/
 theorem mapParabolic_leviDecompositionMulEquiv_apply
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
@@ -136,17 +122,17 @@ theorem mapParabolic_leviDecompositionMulEquiv_apply
       leviDecompositionMulEquiv B l (leviSemidirectMap l φ g) := by
   rw [leviDecompositionMulEquiv_apply, leviDecompositionMulEquiv_apply, map_mul,
     mapParabolic_unipotentToParabolic, mapParabolic_leviToParabolic,
-    leviSemidirectMap_apply_left, leviSemidirectMap_apply_right]
+    leviSemidirectMap, SemidirectProduct.map_left, SemidirectProduct.map_right]
 
 private theorem leviSemidirectMap_id (A : CommAlgCat.{w} R) :
     leviSemidirectMap l (𝟙 A) = MonoidHom.id _ := by
-  ext g <;> simp
+  ext g <;> simp [leviSemidirectMap]
 
 private theorem leviSemidirectMap_comp {A B C : CommAlgCat.{w} R}
     (φ : A ⟶ B) (ψ : B ⟶ C) :
     leviSemidirectMap l (φ ≫ ψ) =
       (leviSemidirectMap l ψ).comp (leviSemidirectMap l φ) := by
-  ext g <;> simp
+  ext g <;> simp [leviSemidirectMap]
 
 /-- The semidirect product `U(l)(A) ⋊ Z(l)(A)` in the dynamic Levi decomposition, functorial in
 the commutative value algebra `A`. -/
