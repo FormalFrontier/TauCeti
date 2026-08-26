@@ -13,6 +13,7 @@ import Mathlib.Data.Fin.Tuple.Sort
 import Mathlib.Data.Int.ModEq
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.LinearCombination
+import Mathlib.Tactic.Ring
 import TauCeti.NumberTheory.EllipticDivisibilitySequence.SignEquivariance
 
 /-!
