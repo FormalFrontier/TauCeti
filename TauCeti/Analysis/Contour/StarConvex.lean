@@ -157,6 +157,19 @@ theorem cauchyIntegralFormula_starConvex {z : ℂ} (hstar : StarConvex ℝ x Ω)
   cauchyIntegralFormula_nullHomologous hopen hf hγ hγΩ hclosed
     (isNullHomologous_of_starConvex hstar hγ hclosed hγΩ) hz hoff
 
+/-- **Cauchy's integral formula on a disc, for the `k`-th derivative** — the `Metric.ball` case of
+`TauCeti.Contour.cauchyIntegralFormula_iteratedDeriv_starConvex`. -/
+theorem cauchyIntegralFormula_iteratedDeriv_ball {c : ℂ} {r : ℝ} {z : ℂ}
+    (hf : DifferentiableOn ℂ f (Metric.ball c r)) (hγ : IsPiecewiseC1On γ a b)
+    (hγr : ∀ t ∈ uIcc a b, γ t ∈ Metric.ball c r) (hclosed : γ a = γ b)
+    (hz : z ∈ Metric.ball c r) (hoff : ∀ t ∈ uIcc a b, γ t ≠ z) (k : ℕ) :
+    ∫ t in a..b, deriv γ t • (f (γ t) / (γ t - z) ^ (k + 1))
+      = 2 * (Real.pi : ℂ) * Complex.I * windingNumber γ a b z *
+          (iteratedDeriv k f z / (k.factorial : ℂ)) :=
+  cauchyIntegralFormula_iteratedDeriv_starConvex
+    ((convex_ball c r).starConvex (hγr a left_mem_uIcc)) Metric.isOpen_ball hf hγ hγr hclosed hz
+    hoff k
+
 /-- **Cauchy's integral formula on a disc** — the `Metric.ball` case of
 `TauCeti.Contour.cauchyIntegralFormula_starConvex`. -/
 theorem cauchyIntegralFormula_ball {c : ℂ} {r : ℝ} {z : ℂ}
