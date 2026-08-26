@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.GroupWithZero.Units.Basic
-public import Mathlib.Algebra.Group.Subgroup.Even
 public import TauCeti.Algebra.Group.Units.Basic
 
 /-!
