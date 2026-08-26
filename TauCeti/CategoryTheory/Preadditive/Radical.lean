@@ -259,8 +259,10 @@ theorem mem_jacobsonRadical_self_iff_mem_jacobson {X : C} {f : End X} :
 
 /-- **On a single object the radical is the Jacobson radical of the endomorphism ring.** This is
 `TauCeti.mem_jacobsonRadical_self_iff_mem_jacobson` as an equality of subgroups, the form in which
-`rad(X, X)` is handed to the ring theory of `End X`: the division ring by which Auslander-Reiten
-theory divides is `End X ⧸ Ring.jacobson (End X)`. -/
+`rad(X, X)` is handed to the ring theory of `End X`: the quotient by which Auslander-Reiten theory
+divides is `End X ⧸ Ring.jacobson (End X)`, which is a division ring in the case that theory works
+in, that of an object with a local endomorphism ring, but not for an arbitrary object of an
+arbitrary preadditive category. -/
 theorem jacobsonRadical_self_eq_jacobson (X : C) :
     jacobsonRadical X X = (Ring.jacobson (End X)).toAddSubgroup :=
   AddSubgroup.ext fun _ => mem_jacobsonRadical_self_iff_mem_jacobson

@@ -167,6 +167,7 @@ theorem indecomposable_iff_idempotent_eq_zero_or_id [HasBinaryBiproducts C]
   ⟨fun hX ↦ ⟨hX.1, fun _ he ↦ idempotent_eq_zero_or_id_of_indecomposable hX he⟩,
     fun hX ↦ indecomposable_of_idempotent_eq_zero_or_id hX.1 hX.2⟩
 
+omit [Preadditive C] in
 /-- **A composite that is invertible has an invertible first factor**, when the object it passes
 through has only the trivial idempotent endomorphisms and the identity of the source is nonzero:
 the composite produces the idempotent `(g ≫ inv (f ≫ g)) ≫ f` of `Y`, which is then `0` or `𝟙 Y`,
@@ -174,8 +175,11 @@ and `0` is excluded by `𝟙 X ≠ 0`.
 
 The hypotheses are the two consequences of indecomposability that the argument uses, in the form
 `TauCeti.idempotent_eq_zero_or_id_of_indecomposable` supplies the second one; neither is stated as
-indecomposability itself, which would need biproducts and splitting idempotents. -/
-theorem isIso_of_isIso_comp {X Y : C} (hX : 𝟙 X ≠ 0)
+indecomposability itself, which would need biproducts and splitting idempotents. Only the zero
+morphisms are used, not the additivity of the hom-groups, so the statement is made at
+`CategoryTheory.Limits.HasZeroMorphisms` rather than in the preadditive setting of the rest of
+this file. -/
+theorem isIso_of_isIso_comp [HasZeroMorphisms C] {X Y : C} (hX : 𝟙 X ≠ 0)
     (hY : ∀ e : Y ⟶ Y, e ≫ e = e → e = 0 ∨ e = 𝟙 Y) (f : X ⟶ Y) (g : Y ⟶ X)
     (h : IsIso (f ≫ g)) : IsIso f := by
   have := h
