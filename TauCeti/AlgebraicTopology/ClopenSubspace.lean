@@ -172,12 +172,26 @@ instance instLocallyPathConnectedSpaceSubtypePathComponent [LocallyPathConnected
     LocallyPathConnectedSpace (pathComponent x₀) :=
   (IsOpen.pathComponent x₀).locallyPathConnectedSpace
 
-/-- In a locally path connected space the path components are clopen, so they inherit semilocal
-simple connectivity. -/
-instance instSemilocallySimplyConnectedSpaceSubtypePathComponent [LocallyPathConnectedSpace X]
+/-- A path component inherits semilocal simple connectivity: an ambient null-homotopy based in
+the component remains in that component. -/
+instance instSemilocallySimplyConnectedSpaceSubtypePathComponent
     [SemilocallySimplyConnectedSpace X] :
     SemilocallySimplyConnectedSpace (pathComponent x₀) :=
-  semilocallySimplyConnectedSpace_of_isClopen (IsClopen.pathComponent x₀)
+  ⟨fun a => by
+    obtain ⟨U, hU, hloop⟩ :=
+      SemilocallySimplyConnectedSpace.exists_mem_nhds_loops_nullhomotopic (a : X)
+    refine ⟨Subtype.val ⁻¹' U, continuous_subtype_val.tendsto a hU, fun γ hγ => ?_⟩
+    obtain ⟨H⟩ := hloop (γ.map continuous_subtype_val) (by simpa using hγ)
+    have hγmem : ∀ t, (γ.map continuous_subtype_val) t ∈ pathComponent x₀ := fun t =>
+      (γ t).2
+    have hmem : ∀ p : I × I, H p ∈ pathComponent x₀ := fun p =>
+      Joined.mem_pathComponent
+        ⟨Path.initialSegmentFamily (H.evalAt p.2) p.1⟩
+        (H.map_zero_left p.2 ▸ hγmem p.2)
+    exact Path.homotopic_of_continuous_square (fun p => ⟨H p, hmem p⟩)
+      (H.continuous.subtype_mk hmem) (fun t => Subtype.ext (H.map_zero_left t))
+      (fun t => Subtype.ext (H.map_one_left t)) (fun t => Subtype.ext (H.source t))
+      (fun t => Subtype.ext (H.target t))⟩
 
 /-- The basepoint of `X`, viewed as a point of its own path component. -/
 abbrev pathComponentSelf : (pathComponent x₀ : Set X) :=
@@ -187,7 +201,7 @@ abbrev pathComponentSelf : (pathComponent x₀ : Set X) :=
 
 /-- **The path component of `x₀` carries the fundamental group of `X` at `x₀`.** Loops at `x₀`
 and their homotopies never leave the path component. -/
-@[expose] noncomputable def fundamentalGroupMulEquivPathComponent :
+noncomputable def fundamentalGroupMulEquivPathComponent :
     FundamentalGroup (pathComponent x₀) (pathComponentSelf x₀) ≃* FundamentalGroup X x₀ :=
   MulEquiv.ofBijective
     (FundamentalGroup.map
@@ -230,7 +244,7 @@ theorem fundamentalGroupMulEquivPathComponent_apply
       FundamentalGroup.map
         (⟨Subtype.val, continuous_subtype_val⟩ : C(pathComponent x₀, X))
         (pathComponentSelf x₀) g :=
-  rfl
+  MulEquiv.ofBijective_apply _ _ g
 
 /-- The inverse path-component equivalence corestricts a representative loop to the path
 component, which contains each of its initial segments. -/
