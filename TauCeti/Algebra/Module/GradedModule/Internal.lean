@@ -79,9 +79,9 @@ variable {R : Type uR} {M : Type uM} [CommRing R] [AddCommMonoid M] [Module R M]
 /-- The parity operator of twist `q`: on the homogeneous piece of degree `e` it acts as the scalar
 `(-1)^(q * e)`.
 
-This is the operator through which every Koszul sign of this file is expressed: the sign acquired
-by moving an operation of degree `q` past homogeneous inputs of total degree `D` is the scalar by
-which `parityTwist G q` scales those inputs. -/
+Downstream modules express their Koszul signs through this operator: the sign acquired by moving
+an operation of degree `q` past homogeneous inputs of total degree `D` is the scalar by which
+`parityTwist G q` scales those inputs. -/
 noncomputable def InternalGrading.parityTwist (G : InternalGrading R M) (q : ℤ) : M →ₗ[R] M :=
   DirectSum.coeLinearMap (fun e => G.piece e) ∘ₗ
     DirectSum.toModule R ℤ (⨁ e : ℤ, G.piece e)
@@ -105,8 +105,7 @@ theorem InternalGrading.parityTwist_apply_of_mem (G : InternalGrading R M) {x : 
   simp only [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply,
     DirectSum.decomposeLinearEquiv_apply]
   rw [DirectSum.decompose_of_mem (ℳ := G.piece) hx,
-    show DirectSum.of (fun i : ℤ => G.piece i) e ⟨x, hx⟩ =
-      DirectSum.lof R ℤ (fun i : ℤ => G.piece i) e ⟨x, hx⟩ from rfl]
+    ← DirectSum.lof_eq_of R ℤ (fun i : ℤ => G.piece i)]
   simp [DirectSum.toModule_lof]
 
 /-- The parity operator preserves each homogeneous piece. -/

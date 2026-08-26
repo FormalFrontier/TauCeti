@@ -318,7 +318,8 @@ theorem IsCoderivation.eq_of_letter_comp_eq
 
 variable (R)
 
-/-- Cutting a word at every nontrivial position, indexed by the length of the left half. -/
+/-- Replacing a summation over `Finset.Ioo 0 n` by one over `Finset.range n`, provided the
+summand at `0` vanishes. -/
 theorem sum_Ioo_eq_sum_range {N : Type*} [AddCommMonoid N] (n : ℕ) (g : ℕ → N)
     (hg : g 0 = 0) : ∑ c ∈ Finset.Ioo 0 n, g c = ∑ c ∈ Finset.range n, g c := by
   refine Finset.sum_subset (fun c hc ↦ ?_) fun c hc hc' ↦ ?_
