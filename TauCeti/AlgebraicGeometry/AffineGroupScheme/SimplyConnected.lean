@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-import Mathlib.AlgebraicGeometry.Morphisms.FlatMono
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Semisimple
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Isomorphism
 
@@ -124,37 +123,6 @@ instance (k : Type u) [Field k] :
 abbrev SimplyConnectedSemisimpleAffineGroupSchemeCat (k : Type u) [Field k] :=
   (simplyConnectedSemisimpleAffineGroupSchemeProperty k).FullSubcategory
 
-/-- A central isogeny of semisimple affine group schemes is an isomorphism if its underlying
-scheme morphism is monic.
-
-The isogeny supplies finiteness, flatness, and surjectivity. Finiteness supplies quasi-compactness,
-so the flat-surjective-monomorphism criterion applies to the underlying scheme morphism; the
-successive forgetful functors then reflect the resulting isomorphism. -/
-theorem GroupScheme.IsCentralIsogeny.isIso_of_mono
-    {G H : SemisimpleAffineGroupSchemeCat k} (f : G ⟶ H)
-    (hf : GroupScheme.IsCentralIsogeny ((semisimpleAffineGroupSchemeForget k).map f))
-    [hmono : Mono ((semisimpleAffineGroupSchemeForget k).map f).hom.hom.left] : IsIso f := by
-  let q := (semisimpleAffineGroupSchemeForget k).map f
-  let _ : IsFinite q.hom.hom.left := hf.isFinite
-  let _ : Flat q.hom.hom.left := hf.flat
-  let _ : Surjective q.hom.hom.left := hf.surjective
-  let _ : Mono q.hom.hom.left := hmono
-  let _ : IsIso q.hom.hom.left := Flat.isIso_of_surjective_of_mono q.hom.hom.left
-  let _ : IsIso ((Over.forget (Spec (CommRingCat.of k))).map q.hom.hom) :=
-    inferInstanceAs (IsIso q.hom.hom.left)
-  let _ : IsIso q.hom.hom :=
-    isIso_of_reflects_iso q.hom.hom (Over.forget (Spec (CommRingCat.of k)))
-  let _ : IsIso ((Mon.forget (Over (Spec (CommRingCat.of k)))).map q.hom) :=
-    inferInstanceAs (IsIso q.hom.hom)
-  let _ : IsIso q.hom :=
-    isIso_of_reflects_iso q.hom (Mon.forget (Over (Spec (CommRingCat.of k))))
-  let _ : IsIso ((Grp.forget₂Mon (Over (Spec (CommRingCat.of k)))).map q) :=
-    inferInstanceAs (IsIso q.hom)
-  let _ : IsIso q :=
-    isIso_of_reflects_iso q (Grp.forget₂Mon (Over (Spec (CommRingCat.of k))))
-  let _ : IsIso ((semisimpleAffineGroupSchemeForget k).map f) := inferInstanceAs (IsIso q)
-  exact isIso_of_reflects_iso f (semisimpleAffineGroupSchemeForget k)
-
 /-- A semisimple affine group scheme is simply connected exactly when the underlying scheme map
 of every central isogeny onto it is a monomorphism. -/
 theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_iff_forall_mono
@@ -171,6 +139,7 @@ theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_iff_forall_mono
     infer_instance
   · intro hG H f hf
     let _ : Mono ((semisimpleAffineGroupSchemeForget k).map f).hom.hom.left := hG H f hf
-    exact GroupScheme.IsCentralIsogeny.isIso_of_mono f hf
+    let _ : IsIso ((semisimpleAffineGroupSchemeForget k).map f) := hf.isIsogeny.isIso_of_mono
+    exact isIso_of_reflects_iso f (semisimpleAffineGroupSchemeForget k)
 
 end TauCeti
