@@ -138,8 +138,11 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
   induction n with
   | zero =>
     intro F hF U
-    -- Mathlib defines `Sheaf.H' F m U` to be this `Ext` group; unfold it here to use the
-    -- long exact sequence API, which is stated directly for `Abelian.Ext`.
+    -- Mathlib's `Sheaf.H' F m U` is an `abbrev` for this `Ext` group, but reaching that form
+    -- requires unfolding `Sheaf.cohomologyPresheafFunctor`, an ordinary `def` for which Mathlib
+    -- exports no equation, so no `rw`/`simp` step performs the conversion; the only alternative
+    -- is a transport lemma restating Mathlib's own `abbrev`, which duplicates it. The long exact
+    -- sequence used below is stated directly for `Abelian.Ext`, so cross the boundary here, once.
     change Subsingleton
       (Abelian.Ext.{u}
         ((presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
@@ -165,8 +168,7 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
       Abelian.Ext.comp_zero]
   | succ n ih =>
     intro F hF U
-    -- As in the base case, unfold Mathlib's definition of `Sheaf.H'` only at the boundary
-    -- where the dimension-shifting argument invokes the `Abelian.Ext` API.
+    -- The same unfolding as in the base case, for the same reason; see the comment there.
     change Subsingleton
       (Abelian.Ext.{u}
         ((presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
@@ -189,8 +191,8 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
         (Abelian.Ext.{u} ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).obj U)
           S.X₃ (n + 1)) := by
       rw [freeYonedaSheafFunctor_obj]
-      -- The induction hypothesis is stated using the public `Sheaf.H'` API, while this
-      -- dimension-shift goal uses its underlying `Ext` group, so unfold that wrapper here.
+      -- The same boundary in the other direction, and equally unavoidable: the induction
+      -- hypothesis is phrased in the public `Sheaf.H'` form, this goal in the `Ext` form.
       change Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} S.X₃ (n + 1) U)
       infer_instance
     rw [Subsingleton.elim x₃ 0, Abelian.Ext.zero_comp]
