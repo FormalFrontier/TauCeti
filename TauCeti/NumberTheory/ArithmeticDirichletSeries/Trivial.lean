@@ -27,7 +27,8 @@ each positive norm.  Thus the trivial ideal weight over `ℚ` regroups to the co
 
 This is Layer **1.3**, the trivial specialization, of
 `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`.  It completes Layer 1 without asserting the
-exact abscissa of convergence, whose proof belongs to Layer 5.
+exact abscissa of convergence; that is Layer 5, proved in
+`TauCeti.abscissaOfAbsConv_normCoeff_one`.
 -/
 
 public section

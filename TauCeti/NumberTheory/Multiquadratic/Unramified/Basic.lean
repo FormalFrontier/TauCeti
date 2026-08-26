@@ -26,7 +26,8 @@ squarefree integers so the output is ready for the discriminant arithmetic in th
 
 The remaining half of maximality is arithmetic: identify the quadratic subfields in this
 presentation from their discriminants and embed them in the prime-discriminant compositum
-`candidateGenusField hd`.
+`candidateGenusField hd`. The discriminant constraints those subfields satisfy are
+`TauCeti/NumberTheory/Multiquadratic/Unramified/Subfields.lean`.
 
 This is the classical reduction in the genus-field construction; see D. A. Cox,
 *Primes of the Form x² + ny²*, §6.A, and F. Lemmermeyer, *Reciprocity Laws: From Euler to

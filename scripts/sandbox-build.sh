@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # sandbox-build.sh — the offline, landrun-sandboxed build + audits + environment lint of
-# the overlaid TauCeti/ sources, factored out of .github/workflows/pr-build.yml.
+# the candidate TauCeti sources, factored out of .github/workflows/pr-build.yml.
 #
 # pr-build.yml invokes this inside landrun with a fixed, comment-free one-liner
 # (`cd base && exec bash scripts/sandbox-build.sh`), so the workflow's `bash -c` payload
@@ -59,3 +59,28 @@ bash scripts/lint-env.sh
 # Mathlib's copyright/Authors checks (excluding the deliberately empty root), and generates the
 # text-linter import root under .lake/ without relying on TauCeti.lean's imports.
 bash scripts/lint-style.sh
+
+# A merge-group commit that passes every audit is the exact commit GitHub will land. Pack its
+# root-package outputs while still inside landrun, after the final operation that executes
+# candidate code. The host uploads only this data-only staging tree to a fresh, secret-isolated
+# publisher job. Ordinary PRs and installations without upload endpoints leave this disabled.
+if [ "${STAGE_LAKE_CACHE:-}" = "1" ]; then
+  if ! grep -Eq '^[[:space:]]*platformIndependent[[:space:]]*=[[:space:]]*true' lakefile.toml; then
+    echo "lakefile.toml no longer sets platformIndependent = true" >&2
+    exit 1
+  fi
+  if grep -Eq '^[[:space:]]*(fixedToolchain|bootstrap)[[:space:]]*=[[:space:]]*true' lakefile.toml; then
+    echo "lakefile.toml changes the toolchain cache scope" >&2
+    exit 1
+  fi
+
+  export LAKE_ARTIFACT_CACHE=true
+  export LAKE_RESTORE_ARTIFACTS=true
+  export LAKE_NO_CACHE=true
+  export LAKE_CACHE_DIR="$PWD/.lake/cache"
+  lake build >/dev/null
+  lake build --no-build -o .lake/outputs.jsonl
+  echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"
+  rm -rf .lake/cache-staging
+  lake cache stage .lake/outputs.jsonl .lake/cache-staging
+fi
