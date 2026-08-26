@@ -5,16 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Dimension.Free
 public import Mathlib.LinearAlgebra.Dimension.RankNullity
-public import Mathlib.LinearAlgebra.Isomorphisms
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
 
 /-!
 # The order filtration of a function field at a place
 
-A place `P` of `F / k` filters `F` by the order of vanishing at `P`: for an integer `a` the
-functions with `ord_P z ≥ a` form a `k`-subspace
+A place `P` of `F / k` filters `F` by the order of vanishing at `P`: for an integer `a`, zero
+together with the nonzero functions satisfying `ord_P z ≥ a` forms the `k`-subspace
 
 `𝔪_P^a = {z ∈ F | v_P z ≤ exp (-a)}`
 
@@ -56,8 +54,8 @@ these local quotients, and so computes `dim_k (A_F(E) / A_F(D)) = deg E - deg D`
 ## Implementation notes
 
 Membership is stated multiplicatively, as `v_P z ≤ exp (-a)`, and never in the additive form
-`ord_P z ≥ a`, which the junk value `ord_P 0 = 0` would get wrong at `a ≤ 0`: the additive
-carrier would not contain `0` at negative `a` and so would not be a subspace.  This is the
+`ord_P z ≥ a`, which the junk value `ord_P 0 = 0` would get wrong at `a > 0`: the additive
+carrier would not contain `0` at positive `a` and so would not be a subspace.  This is the
 convention of `TauCeti.riemannRochSpace` and `TauCeti.adeleFiltration`, of which this filtration
 is the one-place shadow; `TauCeti.Place.mem_filtration_iff_le_ord` is the additive form, guarded
 by `z ≠ 0`.
@@ -87,22 +85,20 @@ variable {k F : Type*} [Field k] [Field F] [Algebra k F]
 
 /-! ### The filtration -/
 
-/-- The subspace `𝔪_P^a = {z ∈ F | ord_P z ≥ a}` of functions vanishing to order at least `a`
+/-- The subspace `𝔪_P^a` whose nonzero elements are the functions satisfying `ord_P z ≥ a`
 at `P`, for `a` an arbitrary integer: for `a ≤ 0` it is the space of functions with a pole of
 order at most `-a` at `P`, and for `a > 0` the `a`-th power of the maximal ideal of `𝒪_P`.
 
 The defining condition is the multiplicative `v_P z ≤ exp (-a)`, which is junk-free at `z = 0`;
 `TauCeti.Place.mem_filtration_iff_le_ord` is the additive form. -/
-noncomputable def filtration (P : Place k F) (a : ℤ) : Submodule k F where
-  __ := P.valuation.leAddSubgroup (WithZero.exp (-a))
-  smul_mem' c z hz := by
-    have hz' : P.valuation z ≤ WithZero.exp (-a) := hz
-    rcases eq_or_ne c 0 with rfl | hc
-    · simp
-    · have hcz : P.valuation (c • z) ≤ WithZero.exp (-a) := by
-        rw [Algebra.smul_def, map_mul, P.isTrivialOn.eq_one c hc, one_mul]
-        exact hz'
-      exact hcz
+noncomputable def filtration (P : Place k F) (a : ℤ) : Submodule k F :=
+  letI : Algebra k P.valuation.integer :=
+    ((algebraMap k F).codRestrict P.valuation.integer fun c ↦ by
+      rcases eq_or_ne c 0 with rfl | hc
+      · simp
+      · exact (P.isTrivialOn.eq_one c hc).le).toAlgebra
+  letI : IsScalarTower k P.valuation.integer F := .of_algebraMap_eq fun _ ↦ rfl
+  (P.valuation.leSubmodule (WithZero.exp (-a))).restrictScalars k
 
 variable (P : Place k F)
 
@@ -113,8 +109,8 @@ theorem mem_filtration_iff {a : ℤ} {z : F} :
   (Iff.rfl)
 
 /-- The additive form of membership in `𝔪_P^a`.  The nonvanishing hypothesis guards the junk
-value `ord_P 0 = 0`: the zero function lies in `𝔪_P^a` for every `a`, including the negative
-ones. -/
+value `ord_P 0 = 0`: the zero function lies in `𝔪_P^a` for every `a`, whereas the inequality
+`a ≤ ord_P 0` fails precisely when `a > 0`. -/
 theorem mem_filtration_iff_le_ord {a : ℤ} {z : F} (hz : z ≠ 0) :
     z ∈ P.filtration a ↔ a ≤ P.ord z := by
   rw [mem_filtration_iff, P.valuation_eq_exp_neg_ord hz, WithZero.exp_le_exp]
@@ -178,6 +174,7 @@ noncomputable def filtrationResidue (hs : P.ord s = -a) (hs0 : s ≠ 0) :
     exact congrArg _
       (Subtype.ext (by push_cast [Algebra.smul_def, coe_algebraMap_constants]; ring))
 
+@[simp]
 theorem filtrationResidue_apply (hs : P.ord s = -a) (hs0 : s ≠ 0) (z : P.filtration a) :
     filtrationResidue hs hs0 z =
       IsLocalRing.residue P.integers
@@ -226,6 +223,15 @@ noncomputable def filtrationQuotientEquivResidueField (hs : P.ord s = -a) (hs0 :
       P.ResidueField :=
   (Submodule.quotEquivOfEq _ _ (ker_filtrationResidue hs hs0).symm).trans
     ((filtrationResidue hs hs0).quotKerEquivOfSurjective (surjective_filtrationResidue hs hs0))
+
+/-- The quotient equivalence evaluates the residue of `s * z` on a representative `z`. -/
+@[simp]
+theorem filtrationQuotientEquivResidueField_apply_mk (hs : P.ord s = -a) (hs0 : s ≠ 0)
+    (z : P.filtration a) :
+    filtrationQuotientEquivResidueField hs hs0 (Submodule.Quotient.mk z) =
+      IsLocalRing.residue P.integers
+        ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs hs0 z.2⟩ := by
+  simp [filtrationQuotientEquivResidueField]
 
 end Residue
 
