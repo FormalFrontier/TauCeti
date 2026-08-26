@@ -179,6 +179,7 @@ theorem kleinFourMap_apply_one_one :
   simpa using kleinFourMap_intCast α β γ h₄α h₄β h₂γ 1 1
 
 /-- The two standard generators of `(ℤ/2)²` pair to `γ`. -/
+@[simp]
 theorem polar_kleinFourMap_one_zero_zero_one :
     QuadraticMap.polar (kleinFourMap α β γ h₄α h₄β h₂γ) (1, 0) (0, 1) = γ := by
   rw [QuadraticMap.polar, kleinFourMap_apply_one_zero, kleinFourMap_apply_zero_one]

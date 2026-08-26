@@ -951,8 +951,7 @@ theorem discriminantPairing_checkerboardSpinorClass_self :
   rw [checkerboardSpinorClass, discriminantPairing_mk,
     checkerboardLattice_form_checkerboardSpinor_self]
 
-/-- **The vector and spinor classes pair to `1 / 2`.**  This is the value which distinguishes the
-`(ℤ/2)²` discriminant module from the orthogonal sum of two rank-one modules. -/
+/-- **The vector and spinor classes pair to `1 / 2`.** -/
 @[simp]
 theorem discriminantPairing_checkerboardVectorClass_checkerboardSpinorClass :
     (checkerboardLattice n).discriminantPairing (checkerboardVectorClass n)
@@ -961,25 +960,6 @@ theorem discriminantPairing_checkerboardVectorClass_checkerboardSpinorClass :
     checkerboardLattice_form_checkerboardVector_checkerboardSpinor]
 
 /-! ## The discriminant quadratic module of an even-rank checkerboard lattice -/
-
-/-- The class of `1 / 2` in `ℚ/ℤ` doubles to zero. -/
-theorem coe_half_add_coe_half :
-    (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) + (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
-  -- Expand the sum through the quotient map `ℚ → ℚ/ℤ`.
-  change ((((1 : ℚ) / 2 + (1 : ℚ) / 2) : ℚ) : AddCircle (1 : ℚ)) = 0
-  exact checkerboard_coe_eq_zero 1 (by norm_num)
-
-/-- The class of `1 / 2` in `ℚ/ℤ` is two-torsion. -/
-theorem two_zsmul_coe_half :
-    (2 : ℤ) • (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
-  rw [two_zsmul, coe_half_add_coe_half]
-
-/-- The class of `1 / 2` in `ℚ/ℤ` is in particular four-torsion, as the parameters of a
-`(ℤ/2)²` quadratic module must be. -/
-theorem four_zsmul_coe_half :
-    (4 : ℤ) • (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
-  have hfour : (4 : ℤ) = 2 * 2 := by norm_num
-  rw [hfour, mul_smul, two_zsmul_coe_half, smul_zero]
 
 omit [NeZero n] in
 /-- **The spinor half-norm `n / 8` is four-torsion in `ℚ/ℤ` when `n` is even.**  This is exactly
@@ -1018,8 +998,15 @@ two spinor classes carry the quarter-integral values `n / 8`. -/
     FiniteQuadraticModule :=
   FiniteQuadraticModule.kleinFour (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
     ((((n : ℚ) / 8 : ℚ)) : AddCircle (1 : ℚ)) (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
-    four_zsmul_coe_half (four_zsmul_coe_spinorHalfNorm n hn)
-    two_zsmul_coe_half
+    (by
+      change ((((4 : ℚ) * ((1 : ℚ) / 2)) : ℚ) : AddCircle (1 : ℚ)) = 0
+      rw [AddCircle.coe_eq_zero_iff_mem_one]
+      exact Submodule.mem_one.mpr ⟨2, by norm_num⟩)
+    (four_zsmul_coe_spinorHalfNorm n hn)
+    (by
+      change ((((2 : ℚ) * ((1 : ℚ) / 2)) : ℚ) : AddCircle (1 : ℚ)) = 0
+      rw [AddCircle.coe_eq_zero_iff_mem_one]
+      exact Submodule.mem_one.mpr ⟨1, by norm_num⟩)
 
 /-- **The standard model is isometric to the discriminant quadratic module of an even-rank
 checkerboard lattice**, by the identification carrying `(1, 0)` to the vector class and `(0, 1)`
@@ -1040,9 +1027,14 @@ noncomputable def checkerboardDiscriminantQuadraticIsometry (hn : Even n) :
       rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_zero_one,
         discriminantQuadraticMap_checkerboardSpinorClass])
     (by
+      have hhalf :
+          (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) +
+              (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
+        change ((((1 : ℚ) / 2 + (1 : ℚ) / 2) : ℚ) : AddCircle (1 : ℚ)) = 0
+        exact checkerboard_coe_eq_zero 1 (by norm_num)
       rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_one,
         discriminantQuadraticMap_checkerboardCospinorClass, add_right_comm,
-        coe_half_add_coe_half, zero_add])
+        hhalf, zero_add])
 
 /-- The even-rank quadratic isometry acts through the discriminant-group equivalence. -/
 @[simp]
