@@ -5,8 +5,10 @@ Authors: Chris Birkbeck, Claude
 -/
 module
 
--- `ZMod.coe_int_isUnit_iff_isCoprime` is used only inside a proof, so this stays private.
+-- `ZMod.coe_int_isUnit_iff_isCoprime` and `ZMod.exists_dvd_sub_val_mul` are used only inside
+-- proofs, so these stay private.
 import Mathlib.Data.ZMod.Units
+import TauCeti.Data.ZMod.Divisibility
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.DoubleCoset
 public import TauCeti.NumberTheory.HeckeRing.GLn.DiagonalCosets
 
@@ -47,11 +49,13 @@ the remaining parameter into a second `Γ₀(N)` factor, which is what makes the
 * Ported from [AINTLIB](https://github.com/CBirkbeck/AINTLIB) commit
   `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck,
   `LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/Props.lean`, declarations
-  `exists_mod_clearing`, `dvd_lowerRight_witness`, `shimura_prop_3_33_gen` and
-  `shimura_prop_3_33`.
+  `dvd_lowerRight_witness`, `shimura_prop_3_33_gen` and `shimura_prop_3_33`.
 
-  Four source declarations are deliberately **not** ported. `diagMat_one_mem_Delta0` and
-  `diagMat_mem_Delta0_of_gcd` are already on main as `natDiagGL_one_mem_Delta0` and
+  Five source declarations are deliberately **not** ported. `exists_mod_clearing` is the
+  Bézout step behind `exists_reduced_shear`, and `ZMod.exists_dvd_sub_val_mul`
+  (`TauCeti/Data/ZMod/Divisibility.lean`) already solves that congruence.
+  `diagMat_one_mem_Delta0` and `diagMat_mem_Delta0_of_gcd` are already on main as
+  `natDiagGL_one_mem_Delta0` and
   `natDiagGL_mem_Delta0_of_coprime`. `fin2_col_scale` exists only to drive the source's
   entrywise `fin_cases`/`linarith` verification of the final matrix identity, which is done
   here by factoring `!![1, r; 0, m]` and reusing `HeckeRing.GLn.mapGL_mul_coe_eq_intMatrix`.
@@ -71,17 +75,6 @@ open Matrix Matrix.SpecialLinearGroup CongruenceSubgroup HeckeRing.GLn
 open scoped MatrixGroups
 
 namespace HeckeRing.GL2
-
-/-- **Bézout, in the shape a row operation needs.** If `a` is coprime to `p` then the residue
-of `c` can be cleared by adding a multiple of `a`: some `t` has `p ∣ t * a + c`.
-
-Stated over `ℤ` with `p : ℕ` because the modulus arrives as a natural determinant. -/
-lemma exists_mod_clearing (a c : ℤ) (p : ℕ) (hap : Int.gcd a p = 1) :
-    ∃ t : ℤ, (p : ℤ) ∣ (t * a + c) := by
-  refine ⟨-c * Int.gcdA a p, ⟨c * Int.gcdB a p, ?_⟩⟩
-  have bez := Int.gcd_eq_gcd_ab a p
-  rw [hap] at bez
-  linear_combination c * bez
 
 /-- **Clearing the upper row clears the lower-right entry too.** For an integral matrix whose
 lower-left entry is `N * c₀` and whose determinant is `m`, with the upper-left entry coprime to
@@ -108,22 +101,20 @@ private lemma dvd_lowerRight_witness (A : Matrix (Fin 2) (Fin 2) ℤ) (N m : ℕ
 /-- **The reduced shear parameter.** With `a` coprime to `m` there is an `r` in `[0, m)`
 solving `a * r ≡ b (mod m)`.
 
-Split out of `exists_unimodular_mul_upperTriangular` below: it is the arithmetic half, and
-isolating it keeps that lemma's matrix bookkeeping readable. -/
+This is `ZMod.exists_dvd_sub_val_mul` repackaged: that lemma returns the solution as a residue
+class, and the two consumers here — the column reduction below and the `Γ₁(N)` offset in
+`Gamma1/UpperTriCosets.lean` — both need it as an integer in `[0, m)`. -/
 lemma exists_reduced_shear (a b : ℤ) (m : ℕ) (hm_pos : 0 < m)
     (ham : Int.gcd a m = 1) :
     ∃ r : ℤ, 0 ≤ r ∧ r < m ∧ (m : ℤ) ∣ a * r - b := by
-  obtain ⟨t_inv, ht⟩ := exists_mod_clearing a (-b) m ham
-  refine ⟨t_inv % (m : ℤ), Int.emod_nonneg _ (by omega), Int.emod_lt_of_pos _ (by omega), ?_⟩
-  -- `t_inv` differs from its residue by a multiple of `m`, so subtracting that multiple of
-  -- `a` from Bézout's combination leaves the divisibility intact.
-  have hquot : t_inv - t_inv % (m : ℤ) = (m : ℤ) * (t_inv / (m : ℤ)) := by
-    linarith [Int.mul_ediv_add_emod t_inv ((m : ℤ))]
-  have hm_tr : (m : ℤ) ∣ (t_inv - t_inv % (m : ℤ)) := hquot ▸ dvd_mul_right _ _
-  have h := dvd_sub ht (dvd_mul_of_dvd_left hm_tr a)
-  have hcollapse : t_inv * a + -b - (t_inv - t_inv % (m : ℤ)) * a
-      = a * (t_inv % (m : ℤ)) - b := by ring
-  rwa [hcollapse] at h
+  have : NeZero m := ⟨hm_pos.ne'⟩
+  have hunit : IsUnit ((a : ℤ) : ZMod m) := (ZMod.coe_int_isUnit_iff_isCoprime a m).mpr
+    (isCoprime_comm.mp (Int.isCoprime_iff_gcd_eq_one.mpr ham))
+  obtain ⟨r, hr⟩ := ZMod.exists_dvd_sub_val_mul m b a hunit
+  refine ⟨(r.val : ℤ), Int.natCast_nonneg _, by exact_mod_cast r.val_lt, ?_⟩
+  -- `hr` divides `b - r * a`; negating and commuting the product is the whole gap
+  rw [← neg_sub, mul_comm]
+  exact dvd_neg.mpr hr
 
 /-- **The determinant of an integral witness.** If `A` represents `g ∈ GL₂(ℚ)` entrywise over
 `ℤ` and `g` has determinant `m`, then `A` has determinant `m` over `ℤ`.
