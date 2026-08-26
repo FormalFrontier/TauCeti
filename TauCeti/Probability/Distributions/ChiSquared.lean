@@ -29,9 +29,11 @@ formulas rather than a density.
 
 ## Main definitions
 
-* `TauCeti.Probability.chiSquaredPDFReal` — the real-valued density,
-  `x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Γ (k / 2))` on `[0, ∞)`;
-* `TauCeti.Probability.chiSquaredPDF` — its `ℝ≥0∞`-valued companion;
+* `TauCeti.Probability.chiSquaredPDFReal` — the real-valued candidate density formula,
+  `x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Γ (k / 2))` on `[0, ∞)`,
+  which is a probability density when `0 < k`;
+* `TauCeti.Probability.chiSquaredPDF` — its `ℝ≥0∞`-valued companion, which is a probability
+  density when `0 < k`;
 * `TauCeti.Probability.chiSquaredMeasure` — the law.
 
 ## Main results
@@ -102,13 +104,14 @@ variable {k l : ℝ}
 
 /-! ### The density -/
 
-/-- The probability density function of the chi-squared law with `k` degrees of freedom, in the
+/-- The candidate density formula for the chi-squared law with `k` degrees of freedom, in the
 textbook normalisation: `x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Γ (k / 2))` on the
-nonnegative half-line, and `0` below it. -/
+nonnegative half-line, and `0` below it. It is a probability density when `0 < k`. -/
 def chiSquaredPDFReal (k x : ℝ) : ℝ :=
   if 0 ≤ x then x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Real.Gamma (k / 2)) else 0
 
-/-- The `ℝ≥0∞`-valued density of the chi-squared law with `k` degrees of freedom. -/
+/-- The `ℝ≥0∞`-valued companion to `chiSquaredPDFReal`. It is a probability density when
+`0 < k`. -/
 def chiSquaredPDF (k x : ℝ) : ℝ≥0∞ := ENNReal.ofReal (chiSquaredPDFReal k x)
 
 /-- The chi-squared density is the gamma density of shape `k / 2` and rate `1 / 2`. The only
@@ -117,8 +120,9 @@ theorem chiSquaredPDFReal_eq_gammaPDFReal (k x : ℝ) :
     chiSquaredPDFReal k x = gammaPDFReal (k / 2) (1 / 2) x := by
   rw [chiSquaredPDFReal, gammaPDFReal]
   split_ifs with hx
-  · rw [show -((1 : ℝ) / 2 * x) = -x / 2 by ring, Real.div_rpow zero_le_one (by norm_num),
-      Real.one_rpow, div_eq_mul_inv, div_eq_mul_inv, mul_inv, one_div]
+  · have hneg : -((1 : ℝ) / 2 * x) = -x / 2 := by ring
+    rw [hneg, Real.div_rpow zero_le_one (by norm_num), Real.one_rpow, div_eq_mul_inv,
+      div_eq_mul_inv, mul_inv, one_div]
     ring
   · rfl
 
@@ -157,6 +161,7 @@ theorem chiSquaredMeasure_zero : chiSquaredMeasure 0 = Measure.dirac 0 := by
   rw [chiSquaredMeasure, ite_eq_left rfl]
 
 /-- There is no chi-squared law with negative degrees of freedom: the measure is zero. -/
+@[simp]
 theorem chiSquaredMeasure_of_neg (hk : k < 0) : chiSquaredMeasure k = 0 := by
   rw [chiSquaredMeasure, ite_eq_right hk.ne, ite_eq_right (not_lt.mpr hk.le)]
 
@@ -221,11 +226,12 @@ the regularized lower incomplete gamma function `P (k / 2, x / 2)`. -/
 @[simp]
 theorem cdf_chiSquaredMeasure_eq (hk : 0 < k) (x : ℝ) :
     cdf (chiSquaredMeasure k) x = regularizedGamma (k / 2) (x / 2) := by
-  rw [chiSquaredMeasure_eq_gammaMeasure hk, cdf_gammaMeasure_eq (by positivity) one_half_pos,
-    show (1 : ℝ) / 2 * x = x / 2 by ring]
+  rw [chiSquaredMeasure_eq_gammaMeasure hk, cdf_gammaMeasure_eq (by positivity) one_half_pos]
+  ring_nf
 
 /-- At zero degrees of freedom the cumulative distribution function is the unit step at the
 origin. -/
+@[simp]
 theorem cdf_chiSquaredMeasure_zero (x : ℝ) :
     cdf (chiSquaredMeasure 0) x = if 0 ≤ x then 1 else 0 := by
   rw [chiSquaredMeasure_zero, cdf_dirac]
@@ -245,10 +251,12 @@ theorem variance_id_chiSquaredMeasure (hk : 0 < k) : variance id (chiSquaredMeas
   ring
 
 /-- At zero degrees of freedom the mean is `0`. -/
+@[simp]
 theorem integral_id_chiSquaredMeasure_zero : ∫ x, x ∂chiSquaredMeasure 0 = 0 := by
   rw [chiSquaredMeasure_zero, integral_dirac]
 
 /-- At zero degrees of freedom the variance is `0`. -/
+@[simp]
 theorem variance_id_chiSquaredMeasure_zero : variance id (chiSquaredMeasure 0) = 0 := by
   rw [chiSquaredMeasure_zero]
   exact variance_dirac 0
@@ -267,15 +275,17 @@ theorem integrableExpSet_id_chiSquaredMeasure (hk : 0 < k) :
 exponential moment is integrable. -/
 theorem mgf_id_chiSquaredMeasure (hk : 0 < k) {t : ℝ} (ht : t < 1 / 2) :
     mgf id (chiSquaredMeasure k) t = (1 - 2 * t) ^ (-(k / 2)) := by
-  rw [chiSquaredMeasure_eq_gammaMeasure hk, mgf_id_gammaMeasure (by positivity) one_half_pos ht,
-    show (1 : ℝ) - t / (1 / 2) = 1 - 2 * t by ring]
+  rw [chiSquaredMeasure_eq_gammaMeasure hk, mgf_id_gammaMeasure (by positivity) one_half_pos ht]
+  congr 1
+  all_goals ring
 
 /-- The cumulant-generating function of a chi-squared law on the half-line `t < 1 / 2`. It is the
 real logarithm of `TauCeti.Probability.mgf_id_chiSquaredMeasure`. -/
 theorem cgf_id_chiSquaredMeasure (hk : 0 < k) {t : ℝ} (ht : t < 1 / 2) :
     cgf id (chiSquaredMeasure k) t = -(k / 2) * Real.log (1 - 2 * t) := by
-  rw [chiSquaredMeasure_eq_gammaMeasure hk, cgf_id_gammaMeasure (by positivity) one_half_pos ht,
-    show (1 : ℝ) - t / (1 / 2) = 1 - 2 * t by ring]
+  rw [chiSquaredMeasure_eq_gammaMeasure hk, cgf_id_gammaMeasure (by positivity) one_half_pos ht]
+  congr 2
+  all_goals ring
 
 /-- The characteristic function of a chi-squared law with positive degrees of freedom, at every
 real `t`. The base has real part `1`, so the principal power does not meet the branch cut. -/
@@ -286,21 +296,25 @@ theorem charFun_chiSquaredMeasure (hk : 0 < k) (t : ℝ) :
   congr 1 <;> ring
 
 /-- At zero degrees of freedom every exponential moment exists. -/
+@[simp]
 theorem integrableExpSet_id_chiSquaredMeasure_zero :
     integrableExpSet id (chiSquaredMeasure 0) = univ := by
   rw [chiSquaredMeasure_zero, integrableExpSet_dirac]
 
 /-- At zero degrees of freedom the moment-generating function is identically `1`. -/
+@[simp]
 theorem mgf_id_chiSquaredMeasure_zero (t : ℝ) : mgf id (chiSquaredMeasure 0) t = 1 := by
   rw [chiSquaredMeasure_zero, mgf_dirac']
   simp
 
 /-- At zero degrees of freedom the cumulant-generating function is identically `0`. -/
+@[simp]
 theorem cgf_id_chiSquaredMeasure_zero (t : ℝ) : cgf id (chiSquaredMeasure 0) t = 0 := by
   rw [chiSquaredMeasure_zero, cgf_dirac']
   simp
 
 /-- At zero degrees of freedom the characteristic function is identically `1`. -/
+@[simp]
 theorem charFun_chiSquaredMeasure_zero (t : ℝ) : charFun (chiSquaredMeasure 0) t = 1 := by
   rw [chiSquaredMeasure_zero, charFun_dirac]
   simp
@@ -323,8 +337,8 @@ theorem chiSquaredMeasure_conv_chiSquaredMeasure (hk : 0 ≤ k) (hl : 0 ≤ l) :
     simp
   rw [chiSquaredMeasure_eq_gammaMeasure hk', chiSquaredMeasure_eq_gammaMeasure hl',
     chiSquaredMeasure_eq_gammaMeasure (by linarith),
-    gammaMeasure_conv_gammaMeasure (by positivity) (by positivity) one_half_pos,
-    show k / 2 + l / 2 = (k + l) / 2 by ring]
+    gammaMeasure_conv_gammaMeasure (by positivity) (by positivity) one_half_pos]
+  ring_nf
 
 /-- Two degrees of freedom give the exponential law of rate `1 / 2`. -/
 theorem chiSquaredMeasure_two : chiSquaredMeasure 2 = expMeasure (1 / 2) := by
