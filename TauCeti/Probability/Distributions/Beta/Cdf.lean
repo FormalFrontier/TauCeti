@@ -18,7 +18,7 @@ parameters it is the regularized incomplete beta function `TauCeti.regularizedIn
 `I_x(α, β)`.
 
 This is the beta entry of the closed-form cdf target of
-`TauCetiRoadmap/StandardDistributions/README.md`, Layer 2, and the last one that layer asks for.
+`TauCetiRoadmap/StandardDistributions/README.md`, Layer 2.
 
 The identity holds for every real `x`, with no constraint to the unit interval: outside `[0, 1]`
 both sides are constant, because `TauCeti.regularizedIncompleteBeta` clamps its argument there.
@@ -60,10 +60,6 @@ variable {α β x : ℝ}
 
 /-! ### The cdf as an integral of the density -/
 
-/-- The `ℝ≥0∞`-valued beta density is the nonnegative wrapper of its real-valued companion. -/
-private lemma betaPDF_eq_ofReal_betaPDFReal (α β x : ℝ) :
-    betaPDF α β x = ENNReal.ofReal (betaPDFReal α β x) := rfl
-
 /-- The beta density is integrable: it is a nonnegative function whose Lebesgue integral is `1`. -/
 private lemma integrable_betaPDFReal (hα : 0 < α) (hβ : 0 < β) :
     Integrable (betaPDFReal α β) := by
@@ -78,7 +74,7 @@ private lemma cdf_betaMeasure_eq_integral (hα : 0 < α) (hβ : 0 < β) (x : ℝ
     cdf (betaMeasure α β) x = ∫ t in Iic x, betaPDFReal α β t := by
   have hp : IsProbabilityMeasure (betaMeasure α β) := isProbabilityMeasureBeta hα hβ
   rw [cdf_eq_real, betaMeasure, measureReal_def, withDensity_apply _ measurableSet_Iic]
-  simp_rw [betaPDF_eq_ofReal_betaPDFReal]
+  simp only [betaPDF]
   refine (integral_eq_lintegral_of_nonneg_ae (ae_of_all _ (betaPDFReal_nonneg hα hβ)) ?_).symm
   exact (measurable_betaPDFReal α β).aestronglyMeasurable
 
@@ -87,10 +83,8 @@ private lemma cdf_betaMeasure_eq_integral (hα : 0 < α) (hβ : 0 < β) (x : ℝ
 /-- Below the origin the beta density integrates to `0`. -/
 private lemma setIntegral_betaPDFReal_Iic_of_nonpos (α β : ℝ) (hx : x ≤ 0) :
     ∫ t in Iic x, betaPDFReal α β t = 0 := by
-  have h : ∀ t ∈ Iio x, betaPDFReal α β t = 0 := by
-    intro t ht
-    rw [betaPDFReal, ite_eq_right fun ht' => absurd ht'.1 (not_lt.mpr (ht.trans_le hx).le)]
-  rw [integral_Iic_eq_integral_Iio, setIntegral_congr_fun measurableSet_Iio h, integral_zero]
+  exact setIntegral_eq_zero_of_forall_eq_zero fun t ht ↦ by
+    rw [betaPDFReal, ite_eq_right fun ht' ↦ absurd ht'.1 (not_lt.mpr (ht.trans hx))]
 
 /-- On the support the beta density is the beta integrand divided by `Β(α, β)`, so on `[0, 1]` the
 cdf integral is the normalized integral defining `I_x(α, β)`. -/
@@ -107,6 +101,8 @@ private lemma setIntegral_betaPDFReal_Iic_of_mem_Icc (hα : 0 < α) (hβ : 0 < �
   rw [← Iic_union_Ioc_eq_Iic hx₀, setIntegral_union (Iic_disjoint_Ioc le_rfl) measurableSet_Ioc
       hint.integrableOn hint.integrableOn,
     setIntegral_betaPDFReal_Iic_of_nonpos α β le_rfl, zero_add, integral_Ioc_eq_integral_Ioo,
+    -- `hdens` fails at `t = x = 1`: there `betaPDFReal` is zero, but `0 ^ (β - 1)` is
+    -- one when `β = 1`, so drop the endpoint.
     setIntegral_congr_fun measurableSet_Ioo hdens, ← integral_Ioc_eq_integral_Ioo,
     ← intervalIntegral.integral_of_le hx₀, intervalIntegral.integral_const_mul]
   ring
