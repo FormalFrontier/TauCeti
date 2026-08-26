@@ -39,8 +39,7 @@ classification.
 * `TauCeti.mem_riemannRochSpace_zsmul_ofPoint_infty_iff` and
   `TauCeti.riemannRochSpace_zsmul_ofPoint_infty`: `L(n · P_∞)` is the space of polynomials of
   degree at most `n` for `n : ℕ`, in membership form and as an equality of `k`-subspaces of
-  `k(x)`; negative multiples are handled by
-  `TauCeti.riemannRochSpace_zsmul_ofPoint_infty_eq_bot_of_neg`.
+  `k(x)`.
 * `TauCeti.Divisor.dim_natCast_zsmul_ofPoint_infty`: `ℓ(n · P_∞) = n + 1` for `n : ℕ`, the
   model computation of Example 1.4.18; `TauCeti.Divisor.dim_zsmul_ofPoint_infty` gives the
   formula for every integer, including negative multiples where the space is trivial.
@@ -158,13 +157,6 @@ theorem Divisor.dim_natCast_zsmul_ofPoint_infty (k : Type*) [Field k] (n : ℕ) 
       degreeLT_succ_eq_degreeLE).finrank_eq
   rw [Divisor.dim_def, hmap, ← hLT, Module.finrank_eq_card_basis (degreeLT.basis k (n + 1)),
     Fintype.card_fin]
-
-/-- `L(n · P_∞)` is trivial for `n < 0`: a nonzero function in it would have no pole at all,
-hence be a constant, and a nonzero constant does not vanish at infinity.  This is the
-negative-degree half of the computation of `ℓ(n · P_∞)`. -/
-theorem riemannRochSpace_zsmul_ofPoint_infty_eq_bot_of_neg {n : ℤ} (hn : n < 0) :
-    riemannRochSpace (n • WeilDivisor.ofPoint (Place.infty k)) = ⊥ :=
-  riemannRochSpace_zsmul_ofPoint_eq_bot_of_neg (IsFunctionField.ratFunc k) (Place.infty k) hn
 
 /-- **`ℓ(n · P_∞)` for every integer `n`**: it is `n + 1` for `n ≥ 0`, and `0` once `n < 0`. -/
 @[simp]

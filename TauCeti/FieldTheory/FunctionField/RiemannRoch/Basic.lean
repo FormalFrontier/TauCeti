@@ -166,12 +166,6 @@ theorem riemannRochSpace_eq_bot_of_lt_zero (hF : IsFunctionField k F) {D : Divis
   rw [hzero P] at h1
   exact neg_nonpos.mp h1
 
-/-- A negative multiple of a point divisor has trivial Riemann–Roch space. -/
-theorem riemannRochSpace_zsmul_ofPoint_eq_bot_of_neg (hF : IsFunctionField k F)
-    (P : Place k F) {n : ℤ} (hn : n < 0) :
-    riemannRochSpace (n • WeilDivisor.ofPoint P) = ⊥ :=
-  riemannRochSpace_eq_bot_of_lt_zero hF (WeilDivisor.zsmul_ofPoint_lt_zero P hn)
-
 /-! ### The one-place estimate -/
 
 section OnePlace
