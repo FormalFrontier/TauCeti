@@ -153,12 +153,10 @@ private theorem convex_halfDisc (p v : ℂ) (r σ : ℝ) :
     { map_add := by intro x y; simp [add_div, Complex.add_im]; ring
       map_smul := by intro s x; simp [Complex.real_smul, Complex.mul_im, mul_div_assoc]; ring }
   have heq : {w : ℂ | 0 < σ * ((w - p) / v).im}
-      = {w : ℂ | σ * (p / v).im < σ * (w / v).im} := by
-    ext w; simp only [mem_ofPred_eq, sub_div, Complex.sub_im]; constructor
-    · intro h; linarith
-    · intro h; linarith
+      = (fun x => -p + x) ⁻¹' {w | 0 < σ * (w / v).im} := by
+    ext w; simp [neg_add_eq_sub]
   rw [heq]
-  exact (convex_ball p r).inter (convex_halfSpace_gt hlin _)
+  exact (convex_ball p r).inter ((convex_halfSpace_gt hlin _).translate_preimage_right _)
 
 /-- **A closed curve jumps by one across a straight piece.** Let `Γ` be a closed piecewise-`C¹`
 curve on `[a, c]` which on `[a, b]` is the straight segment `t ↦ v · t + z₀`, and let
