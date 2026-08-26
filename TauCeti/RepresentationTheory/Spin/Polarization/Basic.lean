@@ -42,8 +42,8 @@ giving `dim W = l` both in dimension `2l` (type `Dₗ`) and in dimension `2l + 1
   is exactly a line.
 * `TauCeti.SpinPolarizationData.nondegenerate` and
   `TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot`: a polarized quadratic form is
-  nondegenerate, away from characteristic two in general and unconditionally when there is no
-  remainder.
+  nondegenerate, as soon as `2` is a regular scalar of a reduced ring in general and
+  unconditionally when there is no remainder.
 
 ## References
 
@@ -192,24 +192,24 @@ theorem nondegenerate_of_line_eq_bot {K : Type u} [CommRing K] {V : Type v}
   simpa [hline] using P.mem_line_of_polarBilin_eq_zero hv
 
 /-- **A polarization has nondegenerate quadratic form**, whatever its orthogonal remainder, as soon
-as `2` is invertible and the base ring is reduced.
+as `2` is a regular scalar and the base ring is reduced.
 
 A vector orthogonal to everything lies in the remainder, where the polar form is `2 Q` and `Q` is
 the square of the injective coordinate `SpinPolarizationData.lineCoordinate`; both hypotheses are
-needed to run that back — the square only has to vanish for a square-zero scalar, which is all a
-reduced ring is asked for. This subsumes
-`TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot` away from characteristic two, and it
-is what makes nondegeneracy redundant as a hypothesis alongside polarization data. -/
-theorem nondegenerate {K : Type u} [CommRing K] [IsReduced K] [Invertible (2 : K)]
+needed to run that back — cancelling the `2` only asks it to be regular, not invertible, and the
+square only has to vanish for a square-zero scalar, which is all a reduced ring is asked for. This
+subsumes `TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot` away from characteristic two,
+and it is what makes nondegeneracy redundant as a hypothesis alongside polarization data. -/
+theorem nondegenerate {K : Type u} [CommRing K] [IsReduced K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
-    (P : SpinPolarizationData Q) : Q.Nondegenerate := by
+    (P : SpinPolarizationData Q) (h2 : IsSMulRegular K (2 : K)) : Q.Nondegenerate := by
   refine nondegenerate_of_ker_polarBilin_eq_bot (LinearMap.ker_eq_bot'.2 fun v hv => ?_)
   let z : P.line := ⟨v, P.mem_line_of_polarBilin_eq_zero hv⟩
   have hQz : Q v = 0 := by
-    have h : (2 : K) * Q v = 0 := by
-      simpa only [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_self,
-        LinearMap.zero_apply, nsmul_eq_mul, Nat.cast_ofNat] using LinearMap.congr_fun hv v
-    rw [← invOf_mul_cancel_left (2 : K) (Q v), h, mul_zero]
+    refine h2.right_eq_zero_of_smul ?_
+    simpa only [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_self,
+      LinearMap.zero_apply, nsmul_eq_mul, Nat.cast_ofNat, smul_eq_mul] using
+      LinearMap.congr_fun hv v
   have hcoord : P.lineCoordinate z = 0 := by
     have h : P.lineCoordinate z ^ 2 = 0 := by
       rw [pow_two, P.lineCoordinate_sq]

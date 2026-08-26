@@ -231,7 +231,8 @@ polarization data carries the first (`TauCeti.SpinPolarizationData.nondegenerate
 argument never normalizes `ω`, which is what the second was for. -/
 theorem evenSpinAction_surjective : Function.Surjective (evenSpinAction Q P) := by
   have _ : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
-  obtain ⟨l, hl, hlen, hspan, hQl⟩ := P.nondegenerate.exists_list_pairwise_isOrtho
+  obtain ⟨l, hl, hlen, hspan, hQl⟩ :=
+    (P.nondegenerate ((isUnit_of_invertible (2 : F)).isSMulRegular F)).exists_list_pairwise_isOrtho
   set ω : CliffordAlgebra Q := (l.map (ι Q)).prod
   set c : F := (-1 : F) ^ l.length.choose 2 * (l.map Q).prod
   have hc : c ≠ 0 := by

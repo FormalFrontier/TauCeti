@@ -577,7 +577,8 @@ theorem isIrreducible_spinRep_of_isSquare
     (hodd : Odd (finrank K V)) : (spinRep Q P).IsIrreducible := by
   have _ : Invertible (2 : K) := invertibleOfNonzero (NeZero.ne (2 : K))
   exact isIrreducible_spinRep_of_span_of_surjective P
-    (CliffordAlgebra.span_spinGroup_eq_even_of_isSquare Q P.nondegenerate hsq)
+    (CliffordAlgebra.span_spinGroup_eq_even_of_isSquare Q
+      (P.nondegenerate ((isUnit_of_invertible (2 : K)).isSMulRegular K)) hsq)
     (evenSpinAction_surjective P hodd)
 
 variable [IsSepClosed K]
