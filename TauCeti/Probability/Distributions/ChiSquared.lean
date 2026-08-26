@@ -309,29 +309,29 @@ theorem integrableExpSet_id_chiSquaredMeasure (hk : 0 < k) :
     integrableExpSet_id_gammaMeasure (by positivity) one_half_pos]
 
 /-- The moment-generating function of a chi-squared law with nonnegative degrees of freedom on the
-half-line `t < 1 / 2`. -/
+half-line `t < 2⁻¹`. -/
 @[simp]
-theorem mgf_id_chiSquaredMeasure (hk : 0 ≤ k) {t : ℝ} (ht : t < 1 / 2) :
+theorem mgf_id_chiSquaredMeasure (hk : 0 ≤ k) {t : ℝ} (ht : t < 2⁻¹) :
     mgf id (chiSquaredMeasure k) t = (1 - 2 * t) ^ (-(k / 2)) := by
   rcases hk.eq_or_lt' with rfl | hk
   · rw [chiSquaredMeasure_zero, mgf_dirac']
     simp
   · rw [chiSquaredMeasure_eq_gammaMeasure hk,
-      mgf_id_gammaMeasure (by positivity) one_half_pos ht]
+      mgf_id_gammaMeasure (by positivity) one_half_pos (by rwa [one_div])]
     congr 1
     all_goals ring
 
 /-- The cumulant-generating function of a chi-squared law with nonnegative degrees of freedom on
-the half-line `t < 1 / 2`. It is the real logarithm of
+the half-line `t < 2⁻¹`. It is the real logarithm of
 `TauCeti.Probability.mgf_id_chiSquaredMeasure`. -/
 @[simp]
-theorem cgf_id_chiSquaredMeasure (hk : 0 ≤ k) {t : ℝ} (ht : t < 1 / 2) :
+theorem cgf_id_chiSquaredMeasure (hk : 0 ≤ k) {t : ℝ} (ht : t < 2⁻¹) :
     cgf id (chiSquaredMeasure k) t = -(k / 2) * Real.log (1 - 2 * t) := by
   rcases hk.eq_or_lt' with rfl | hk
   · rw [chiSquaredMeasure_zero, cgf_dirac']
     simp
   · rw [chiSquaredMeasure_eq_gammaMeasure hk,
-      cgf_id_gammaMeasure (by positivity) one_half_pos ht]
+      cgf_id_gammaMeasure (by positivity) one_half_pos (by rwa [one_div])]
     congr 2
     all_goals ring
 
