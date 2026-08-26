@@ -19,12 +19,14 @@ of the Dedekind zeta function.  This file turns that single asymptotic into the 
 bounds that every later estimate of the roadmap counts against, and then spends them on the exact
 abscissa of absolute convergence of the trivial ideal weight.
 
-Both directions are needed, and each is used exactly once.  The upper bound makes the partial sums
-of the norm coefficients `O(n)`, so Mathlib's `LSeriesSummable_of_sum_norm_bigO` gives absolute
-convergence on `Re s > 1`.  The lower bound makes the series diverge at `s = 1`: over a block
-`N < n ≤ m N` of fixed ratio `m` the terms `‖a n‖ / n` add up to at least `lower - upper / m`,
-which is at least `lower / 2` once `m ≥ 2 * upper / lower`, while the blocks of a convergent
-series of nonnegative terms must become arbitrarily small.
+Both directions are needed.  Convergence uses the upper bound alone: it makes the partial sums of
+the norm coefficients `O(n)`, so Mathlib's `LSeriesSummable_of_sum_norm_bigO` gives absolute
+convergence on `Re s > 1`.  Divergence at `s = 1` uses both bounds together, to estimate the mass
+of a block `N < n ≤ m N` of fixed ratio `m` as a difference of endpoint counts: the lower bound at
+the right endpoint `m N` and the upper bound at the left endpoint `N` leave the block at least
+`lower * m N - upper * N` of coefficient mass, so the terms `‖a n‖ / n` add up to at least
+`lower - upper / m`, which is at least `lower / 2` once `m ≥ 2 * upper / lower`, while the blocks
+of a convergent series of nonnegative terms must become arbitrarily small.
 
 ## Main definitions
 
@@ -36,9 +38,12 @@ series of nonnegative terms must become arbitrarily small.
 * `TauCeti.idealCount_linearBounds`: such a package exists for every number field.
 * `TauCeti.abscissaOfAbsConv_normCoeff_one`: the abscissa of absolute convergence of the trivial
   ideal weight is exactly `1`; `TauCeti.LSeriesSummable_normCoeff_one_iff` is the sharp
-  convergence criterion, and `TauCeti.abscissaOfAbsConv_dedekindZetaCoeff` and
-  `TauCeti.LSeriesSummable_dedekindZetaCoeff_iff` restate both for Mathlib's Dedekind zeta
-  coefficients.
+  convergence criterion.
+* `TauCeti.abscissaOfAbsConv_dedekindZetaCoeff` and `TauCeti.LSeriesSummable_dedekindZetaCoeff_iff`
+  are the same two statements for `TauCeti.dedekindZetaCoeff`, the coefficient system Mathlib's
+  `NumberField.dedekindZeta` is the `LSeries` of.  That system counts *all* integral ideals, so it
+  differs from the trivial norm coefficients at `n = 0` and the two statements are related only
+  through the `n ≠ 0` congruence `LSeries.abscissaOfAbsConv_congr`.
 
 ## Implementation notes
 
@@ -109,7 +114,8 @@ constants `lower` and `upper`, both positive, with
 
 Only the existence of such a package matters; `TauCeti.idealCount_linearBounds` provides it from
 Mathlib's asymptotic `NumberField.Ideal.tendsto_norm_le_div_atTop₀`. Both inequalities are used:
-the upper one for absolute convergence to the right of `1`, the lower one for divergence at `1`. -/
+the upper one alone gives absolute convergence to the right of `1`, and the two together give
+divergence at `1`. -/
 structure IdealCountingLinearBounds where
   /-- The constant in the lower bound. -/
   lower : ℝ
@@ -246,13 +252,83 @@ private theorem sum_Ioc_norm_normCoeff_one (n : ℕ) :
     simpa only [Nat.succ_eq_succ] using Finset.Icc_succ_left_eq_Ioc 0 n
   rw [← sum_norm_normCoeff_one, hinterval]
 
+/-- **The fixed-ratio block lower bound.** Once the block ratio `m` is at least
+`2 * upper / lower`, the terms of the Dirichlet series of the trivial ideal weight at `s = 1` over
+a block `N < k ≤ m N` add up to at least `lower / 2`, uniformly in `N ≥ 1`.
+
+Both linear ideal counts enter, as a difference of endpoint counts: the lower bound at the right
+endpoint `m N` and the upper bound at the left endpoint `N` leave the block at least
+`lower * m N - upper * N` of coefficient mass, and every term of the block is divided by at most
+`m N`. -/
+private theorem lower_div_two_le_sum_Ioc_norm_term (b : IdealCountingLinearBounds K) {m N : ℕ}
+    (hm : 2 * b.upper / b.lower ≤ (m : ℝ)) (hN : 1 ≤ N) :
+    b.lower / 2 ≤ ∑ k ∈ Finset.Ioc N (m * N),
+      ‖LSeries.term (normCoeff K (1 : IdealArithmeticFunction K)) 1 k‖ := by
+  set g : ℕ → ℝ := fun n ↦ ‖LSeries.term (normCoeff K (1 : IdealArithmeticFunction K)) 1 n‖
+    with hgdef
+  have hmpos : (0 : ℝ) < m :=
+    lt_of_lt_of_le (div_pos (by linarith [b.upper_pos]) b.lower_pos) hm
+  have hm1 : 1 ≤ m := by exact_mod_cast hmpos
+  have hupperm : b.upper / m ≤ b.lower / 2 := by
+    rw [div_le_div_iff₀ hmpos two_pos]
+    have := (div_le_iff₀ b.lower_pos).mp hm
+    linarith
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
+  have hNM : N ≤ m * N := Nat.le_mul_of_pos_left N (lt_of_lt_of_le zero_lt_one hm1)
+  have hMpos : (0 : ℝ) < (m * N : ℕ) := by
+    exact_mod_cast Nat.lt_of_lt_of_le hN hNM
+  have hstep : ∀ k ∈ Finset.Ioc N (m * N),
+      ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ / ((m * N : ℕ) : ℝ) ≤ g k := by
+    intro k hk
+    obtain ⟨hk1, hk2⟩ := Finset.mem_Ioc.mp hk
+    have hk0 : k ≠ 0 := by omega
+    have hkpos : (0 : ℝ) < k := by
+      exact_mod_cast Nat.pos_of_ne_zero hk0
+    have hgk : g k = ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ / (k : ℝ) := by
+      rw [hgdef]
+      simp only [LSeries.norm_term_eq, Complex.one_re, ite_eq_right hk0, Real.rpow_one]
+    rw [hgk]
+    refine div_le_div_of_nonneg_left (norm_nonneg _) hkpos ?_
+    exact_mod_cast hk2
+  have h1 : (∑ k ∈ Finset.Ioc N (m * N),
+      ‖normCoeff K (1 : IdealArithmeticFunction K) k‖) / ((m * N : ℕ) : ℝ)
+      ≤ ∑ k ∈ Finset.Ioc N (m * N), g k := by
+    rw [Finset.sum_div]
+    exact Finset.sum_le_sum hstep
+  refine le_trans ?_ h1
+  have hsplit : (∑ k ∈ Finset.Ioc 0 N, ‖normCoeff K (1 : IdealArithmeticFunction K) k‖)
+      + ∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖
+      = ∑ k ∈ Finset.Ioc 0 (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ :=
+    Finset.sum_Ioc_consecutive _ (Nat.zero_le N) hNM
+  have hlow : b.lower * ((m * N : ℕ) : ℝ)
+      ≤ ∑ k ∈ Finset.Ioc 0 (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ := by
+    rw [sum_Ioc_norm_normCoeff_one]
+    exact b.le_card _ (by exact_mod_cast Nat.lt_of_lt_of_le hN hNM)
+  have hup : (∑ k ∈ Finset.Ioc 0 N, ‖normCoeff K (1 : IdealArithmeticFunction K) k‖)
+      ≤ b.upper * (N : ℝ) := by
+    rw [sum_Ioc_norm_normCoeff_one]
+    exact b.card_le _ (by exact_mod_cast hN)
+  rw [le_div_iff₀ hMpos]
+  have hcast : ((m * N : ℕ) : ℝ) = (m : ℝ) * (N : ℝ) := by push_cast; ring
+  have hkey : b.lower / 2 * ((m : ℝ) * N) ≤ b.lower * ((m : ℝ) * N) - b.upper * N := by
+    have h2 : b.upper * (N : ℝ) ≤ b.lower / 2 * ((m : ℝ) * N) := by
+      have := mul_le_mul_of_nonneg_right hupperm (le_of_lt hNpos)
+      rw [div_mul_eq_mul_div, div_le_iff₀ hmpos] at this
+      nlinarith
+    nlinarith [b.lower_pos]
+  calc b.lower / 2 * ((m * N : ℕ) : ℝ) = b.lower / 2 * ((m : ℝ) * N) := by rw [hcast]
+    _ ≤ b.lower * ((m : ℝ) * N) - b.upper * N := hkey
+    _ = b.lower * ((m * N : ℕ) : ℝ) - b.upper * N := by rw [hcast]
+    _ ≤ ∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ := by
+        linarith
+
 /-- **Divergence at `s = 1`.** The Dirichlet series of the trivial ideal weight does not converge
 at `s = 1`.
 
-The lower linear ideal count is what forces this: over a block `N < n ≤ m N` of fixed ratio `m`
-the terms add up to at least `lower - upper / m`, hence to at least `lower / 2` once
-`m ≥ 2 * upper / lower`, whereas the blocks of a convergent series of nonnegative terms become
-arbitrarily small. -/
+The two-sided linear ideal counts are what force this: by
+`TauCeti.lower_div_two_le_sum_Ioc_norm_term` every block `N < n ≤ m N` of fixed ratio
+`m ≥ 2 * upper / lower` carries mass at least `lower / 2`, whereas the blocks of a convergent
+series of nonnegative terms become arbitrarily small. -/
 theorem not_LSeriesSummable_normCoeff_one :
     ¬ LSeriesSummable (normCoeff K (1 : IdealArithmeticFunction K)) 1 := by
   intro hsum
@@ -267,63 +343,6 @@ theorem not_LSeriesSummable_normCoeff_one :
     rw [hmdef]
     push_cast
     linarith [Nat.le_ceil (2 * b.upper / b.lower)]
-  have hupperm : b.upper / m ≤ b.lower / 2 := by
-    have hmpos : (0 : ℝ) < m := by exact_mod_cast hm1
-    rw [div_le_div_iff₀ hmpos two_pos]
-    have := (div_le_iff₀ b.lower_pos).mp hmR
-    linarith
-  -- the block lower bound
-  have hblock : ∀ N : ℕ, 1 ≤ N → b.lower / 2 ≤ ∑ k ∈ Finset.Ioc N (m * N), g k := by
-    intro N hN
-    have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
-    have hNM : N ≤ m * N := Nat.le_mul_of_pos_left N (lt_of_lt_of_le zero_lt_one hm1)
-    have hMpos : (0 : ℝ) < (m * N : ℕ) := by
-      exact_mod_cast Nat.lt_of_lt_of_le hN hNM
-    have hstep : ∀ k ∈ Finset.Ioc N (m * N),
-        ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ / ((m * N : ℕ) : ℝ) ≤ g k := by
-      intro k hk
-      obtain ⟨hk1, hk2⟩ := Finset.mem_Ioc.mp hk
-      have hk0 : k ≠ 0 := by omega
-      have hkpos : (0 : ℝ) < k := by
-        exact_mod_cast Nat.pos_of_ne_zero hk0
-      have hgk : g k = ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ / (k : ℝ) := by
-        rw [hgdef]
-        simp only [LSeries.norm_term_eq, Complex.one_re, ite_eq_right hk0, Real.rpow_one]
-      rw [hgk]
-      refine div_le_div_of_nonneg_left (norm_nonneg _) hkpos ?_
-      exact_mod_cast hk2
-    have h1 : (∑ k ∈ Finset.Ioc N (m * N),
-        ‖normCoeff K (1 : IdealArithmeticFunction K) k‖) / ((m * N : ℕ) : ℝ)
-        ≤ ∑ k ∈ Finset.Ioc N (m * N), g k := by
-      rw [Finset.sum_div]
-      exact Finset.sum_le_sum hstep
-    refine le_trans ?_ h1
-    have hsplit : (∑ k ∈ Finset.Ioc 0 N, ‖normCoeff K (1 : IdealArithmeticFunction K) k‖)
-        + ∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖
-        = ∑ k ∈ Finset.Ioc 0 (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ :=
-      Finset.sum_Ioc_consecutive _ (Nat.zero_le N) hNM
-    have hlow : b.lower * ((m * N : ℕ) : ℝ)
-        ≤ ∑ k ∈ Finset.Ioc 0 (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ := by
-      rw [sum_Ioc_norm_normCoeff_one]
-      exact b.le_card _ (by exact_mod_cast Nat.lt_of_lt_of_le hN hNM)
-    have hup : (∑ k ∈ Finset.Ioc 0 N, ‖normCoeff K (1 : IdealArithmeticFunction K) k‖)
-        ≤ b.upper * (N : ℝ) := by
-      rw [sum_Ioc_norm_normCoeff_one]
-      exact b.card_le _ (by exact_mod_cast hN)
-    rw [le_div_iff₀ hMpos]
-    have hcast : ((m * N : ℕ) : ℝ) = (m : ℝ) * (N : ℝ) := by push_cast; ring
-    have hkey : b.lower / 2 * ((m : ℝ) * N) ≤ b.lower * ((m : ℝ) * N) - b.upper * N := by
-      have h2 : b.upper * (N : ℝ) ≤ b.lower / 2 * ((m : ℝ) * N) := by
-        have := mul_le_mul_of_nonneg_right hupperm (le_of_lt hNpos)
-        have hmpos : (0 : ℝ) < m := by exact_mod_cast hm1
-        rw [div_mul_eq_mul_div, div_le_iff₀ hmpos] at this
-        nlinarith
-      nlinarith [b.lower_pos]
-    calc b.lower / 2 * ((m * N : ℕ) : ℝ) = b.lower / 2 * ((m : ℝ) * N) := by rw [hcast]
-      _ ≤ b.lower * ((m : ℝ) * N) - b.upper * N := hkey
-      _ = b.lower * ((m * N : ℕ) : ℝ) - b.upper * N := by rw [hcast]
-      _ ≤ ∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ := by
-          linarith
   -- the blocks of a convergent series of nonnegative terms are eventually small
   have hpartial : Tendsto (fun N : ℕ ↦ ∑ k ∈ Finset.Ioc 0 N, g k) atTop (𝓝 (∑' k, g k)) := by
     refine (hgsum.hasSum.tendsto_sum_nat.comp (tendsto_add_atTop_nat 1)).congr fun N ↦ ?_
@@ -353,15 +372,16 @@ theorem not_LSeriesSummable_normCoeff_one :
     have hbound : ∑ k ∈ Finset.Ioc 0 (m * N), g k ≤ ∑' k, g k :=
       hgsum.sum_le_tsum _ (fun k _ ↦ hgnn k)
     linarith
-  linarith [hblock N h2]
+  linarith [lower_div_two_le_sum_Ioc_norm_term K b hmR h2]
 
 /-! ### The exact abscissa, and its Dedekind zeta form -/
 
 /-- **The exact abscissa of absolute convergence of the trivial ideal weight is `1`.**
 
-The upper linear ideal count supplies convergence on `Re s > 1` and the lower one divergence at
-`s = 1`; no analytic continuation of the Dedekind zeta function, and no knowledge of its pole, is
-involved. -/
+The upper linear ideal count on its own supplies convergence on `Re s > 1`, and the two counts
+together supply divergence at `s = 1`; no analytic continuation of the Dedekind zeta function, and
+no knowledge of its pole, is involved. -/
+@[simp]
 theorem abscissaOfAbsConv_normCoeff_one :
     LSeries.abscissaOfAbsConv (normCoeff K (1 : IdealArithmeticFunction K)) = 1 := by
   refine le_antisymm (abscissaOfAbsConv_normCoeff_one_le K) ?_
@@ -387,14 +407,8 @@ theorem LSeriesSummable_normCoeff_one_iff {s : ℂ} :
   · rw [abscissaOfAbsConv_normCoeff_one K]
     exact_mod_cast h
 
-/-- The exact abscissa of absolute convergence of the trivial *unitary* ideal weight. -/
-theorem abscissaOfAbsConv_normCoeff_toIdealArithmeticFunction_one :
-    LSeries.abscissaOfAbsConv
-      (normCoeff K (1 : UnitaryIdealWeight K).toIdealArithmeticFunction) = 1 := by
-  rw [UnitaryIdealWeight.toIdealArithmeticFunction_one]
-  exact abscissaOfAbsConv_normCoeff_one K
-
 /-- **The Dedekind zeta series has abscissa of absolute convergence `1`.** -/
+@[simp]
 theorem abscissaOfAbsConv_dedekindZetaCoeff :
     LSeries.abscissaOfAbsConv (fun n ↦ (dedekindZetaCoeff K n : ℂ)) = 1 := by
   rw [← abscissaOfAbsConv_normCoeff_one K]
