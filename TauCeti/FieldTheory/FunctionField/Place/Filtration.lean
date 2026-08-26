@@ -169,10 +169,10 @@ theorem mul_mem_integers_of_mem_filtration (hs : P.ord s = -a) {z : F}
 `𝔪_P^a` to the residue field `F_P`, whose kernel is `𝔪_P^(a + 1)` and which is surjective.  It
 is the local form of the evaluation map in Stichtenoth's proof of Lemma 1.4.8.
 
-The nonvanishing hypothesis on `s` is not needed to define the map, but scopes it to the range
-where it is the intended one: `TauCeti.Place.ker_filtrationResidue` and
-`TauCeti.Place.filtrationResidue_surjective` both fail at `s = 0`. -/
-noncomputable def filtrationResidue (hs : P.ord s = -a) (_hs0 : s ≠ 0) :
+Defining the map needs nothing beyond `hs`; it is only its kernel and its surjectivity
+(`TauCeti.Place.ker_filtrationResidue`, `TauCeti.Place.filtrationResidue_surjective`) that fail
+at `s = 0`, so those carry the nonvanishing hypothesis. -/
+noncomputable def filtrationResidue (hs : P.ord s = -a) :
     P.filtration a →ₗ[k] P.ResidueField where
   toFun z := IsScalarTower.toAlgHom k P.integers P.ResidueField
     ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs z.2⟩
@@ -184,14 +184,14 @@ noncomputable def filtrationResidue (hs : P.ord s = -a) (_hs0 : s ≠ 0) :
     exact congrArg _ (Subtype.ext (by push_cast [Algebra.smul_def]; ring))
 
 @[simp]
-theorem filtrationResidue_apply (hs : P.ord s = -a) (hs0 : s ≠ 0) (z : P.filtration a) :
-    filtrationResidue hs hs0 z =
+theorem filtrationResidue_apply (hs : P.ord s = -a) (z : P.filtration a) :
+    filtrationResidue hs z =
       IsLocalRing.residue P.integers ⟨s * (z : F), mul_mem_integers_of_mem_filtration hs z.2⟩ :=
   (rfl)
 
 /-- The evaluation `z ↦ (s · z)(P)` vanishes exactly on the next step of the filtration. -/
 theorem filtrationResidue_eq_zero_iff (hs : P.ord s = -a) (hs0 : s ≠ 0) (z : P.filtration a) :
-    filtrationResidue hs hs0 z = 0 ↔ (z : F) ∈ P.filtration (a + 1) := by
+    filtrationResidue hs z = 0 ↔ (z : F) ∈ P.filtration (a + 1) := by
   rw [filtrationResidue_apply]
   rcases eq_or_ne (z : F) 0 with hz0 | hz0
   · have h0 : (⟨s * (z : F), mul_mem_integers_of_mem_filtration hs z.2⟩ : P.integers) = 0 :=
@@ -204,17 +204,17 @@ theorem filtrationResidue_eq_zero_iff (hs : P.ord s = -a) (hs0 : s ≠ 0) (z : P
 
 /-- The evaluation `z ↦ (s · z)(P)` kills exactly the next step of the filtration. -/
 theorem ker_filtrationResidue (hs : P.ord s = -a) (hs0 : s ≠ 0) :
-    LinearMap.ker (filtrationResidue hs hs0) =
+    LinearMap.ker (filtrationResidue hs) =
       (P.filtration (a + 1)).submoduleOf (P.filtration a) := by
   have hmem : ∀ w : P.filtration a,
       w ∈ (P.filtration (a + 1)).submoduleOf (P.filtration a) ↔ (w : F) ∈ P.filtration (a + 1) :=
     fun _ ↦ Submodule.mem_comap
   ext z
-  rw [LinearMap.mem_ker, hmem, filtrationResidue_eq_zero_iff]
+  rw [LinearMap.mem_ker, hmem, filtrationResidue_eq_zero_iff hs hs0]
 
 /-- Every residue is attained: `z ↦ (s · z)(P)` maps `𝔪_P^a` onto the residue field. -/
 theorem filtrationResidue_surjective (hs : P.ord s = -a) (hs0 : s ≠ 0) :
-    Function.Surjective (filtrationResidue hs hs0) := by
+    Function.Surjective (filtrationResidue hs) := by
   intro ξ
   obtain ⟨u, rfl⟩ := IsLocalRing.residue_surjective (R := P.integers) ξ
   have hu : s⁻¹ * (u : F) ∈ P.filtration a := by
@@ -235,7 +235,7 @@ noncomputable def filtrationQuotientEquivResidueField (hs : P.ord s = -a) (hs0 :
     (↥(P.filtration a) ⧸ (P.filtration (a + 1)).submoduleOf (P.filtration a)) ≃ₗ[k]
       P.ResidueField :=
   (Submodule.quotEquivOfEq _ _ (ker_filtrationResidue hs hs0).symm).trans
-    ((filtrationResidue hs hs0).quotKerEquivOfSurjective (filtrationResidue_surjective hs hs0))
+    ((filtrationResidue hs).quotKerEquivOfSurjective (filtrationResidue_surjective hs hs0))
 
 /-- The quotient equivalence evaluates the residue of `s * z` on a representative `z`. -/
 @[simp]

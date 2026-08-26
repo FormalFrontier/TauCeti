@@ -211,23 +211,23 @@ the map `x ↦ (t · x)(P)` sends `L(D + P)` to the residue field of `P`, and it
 It is the local map `TauCeti.Place.filtrationResidue` restricted along
 `L(D + P) ≤ 𝔪_P^(-(D P + 1))`. -/
 private noncomputable def residueEval (D : Divisor k F) (P : Place k F) {t : F}
-    (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0) :
+    (ht : P.ord t = D.coeff P + 1) :
     riemannRochSpace (D + WeilDivisor.ofPoint P) →ₗ[k] P.ResidueField :=
-  (Place.filtrationResidue (a := -(D.coeff P + 1)) (by rw [neg_neg]; exact ht) ht0).comp
+  (Place.filtrationResidue (a := -(D.coeff P + 1)) (by rw [neg_neg]; exact ht)).comp
     (Submodule.inclusion (riemannRochSpace_add_ofPoint_le_filtration D P))
 
 /-- The kernel of `TauCeti.residueEval` is `L(D)`, sitting inside `L(D + P)` as the comap of the
 inclusion `TauCeti.riemannRochSpace_mono`.  This is the structural heart of Stichtenoth's proof of
 Lemma 1.4.8, and here it is `TauCeti.Place.ker_filtrationResidue` read inside `L(D + P)`. -/
 private lemma ker_residueEval (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0) :
-    LinearMap.ker (residueEval D P ht ht0) =
+    LinearMap.ker (residueEval D P ht) =
       Submodule.comap (riemannRochSpace (D + WeilDivisor.ofPoint P)).subtype
         (riemannRochSpace D) := by
   have hidx : -(D.coeff P + 1) + 1 = -D.coeff P := by ring
   ext x
   rw [LinearMap.mem_ker, residueEval, LinearMap.comp_apply,
-    Place.filtrationResidue_eq_zero_iff, Submodule.coe_inclusion, hidx, Submodule.mem_comap,
-    Submodule.subtype_apply, mem_riemannRochSpace_iff_mem_filtration x.2]
+    Place.filtrationResidue_eq_zero_iff _ ht0, Submodule.coe_inclusion, hidx,
+    Submodule.mem_comap, Submodule.subtype_apply, mem_riemannRochSpace_iff_mem_filtration x.2]
 
 /-- Stichtenoth's proof of Lemma 1.4.8 in its one-place form, carrying both conclusions the two
 public statements below project out of: `L(D + P)` stays finite-dimensional, and its dimension
@@ -242,24 +242,24 @@ private lemma finiteDimensional_and_finrank_add_ofPoint_le (hF : IsFunctionField
   obtain ⟨t, ht0, ht⟩ := P.exists_ne_zero_ord_eq (D.coeff P + 1)
   have hle : riemannRochSpace D ≤ riemannRochSpace (D + WeilDivisor.ofPoint P) :=
     riemannRochSpace_mono (le_add_ofPoint D P)
-  have hkerfin : FiniteDimensional k (LinearMap.ker (residueEval D P ht ht0)) := by
-    rw [ker_residueEval]
+  have hkerfin : FiniteDimensional k (LinearMap.ker (residueEval D P ht)) := by
+    rw [ker_residueEval ht ht0]
     exact Module.Finite.equiv (Submodule.comapSubtypeEquivOfLe hle).symm
-  have hkerrank : Module.finrank k (LinearMap.ker (residueEval D P ht ht0)) =
+  have hkerrank : Module.finrank k (LinearMap.ker (residueEval D P ht)) =
       Module.finrank k (riemannRochSpace D) := by
-    rw [ker_residueEval]
+    rw [ker_residueEval ht ht0]
     exact (Submodule.comapSubtypeEquivOfLe hle).finrank_eq
   have hquotfin : FiniteDimensional k
-      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht ht0)) :=
-    Module.Finite.equiv (LinearMap.quotKerEquivRange (residueEval D P ht ht0)).symm
+      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht)) :=
+    Module.Finite.equiv (LinearMap.quotKerEquivRange (residueEval D P ht)).symm
   have hfin : FiniteDimensional k (riemannRochSpace (D + WeilDivisor.ofPoint P)) :=
-    Module.Finite.of_submodule_quotient (LinearMap.ker (residueEval D P ht ht0))
+    Module.Finite.of_submodule_quotient (LinearMap.ker (residueEval D P ht))
   refine ⟨hfin, ?_⟩
-  have hquot := Submodule.finrank_quotient_add_finrank (LinearMap.ker (residueEval D P ht ht0))
+  have hquot := Submodule.finrank_quotient_add_finrank (LinearMap.ker (residueEval D P ht))
   have hrange : Module.finrank k
-      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht ht0)) ≤
+      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht)) ≤
         P.degree := by
-    rw [(LinearMap.quotKerEquivRange (residueEval D P ht ht0)).finrank_eq, Place.degree_eq_finrank]
+    rw [(LinearMap.quotKerEquivRange (residueEval D P ht)).finrank_eq, Place.degree_eq_finrank]
     exact Submodule.finrank_le _
   omega
 
