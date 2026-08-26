@@ -40,6 +40,10 @@ homomorphism inverting `s`.
 
 The reverse map — extending a point of `R(T/s)` to a continuous valuation on the *completed*
 localisation — is not constructed here; it is the remaining half of the roadmap's homeomorphism.
+Its pre-completion form is
+`TauCeti.AlgebraicGeometry.AdicSpace.Spa.Localization.Surjective`, which extends a point of
+`R(T/s)` to the *uncompleted* localisation `Aₛ` and so identifies the image of
+`Spa (Aₛ, Aₛ⁺)` with `R(T/s)`; passing from `Aₛ` to `A⟨T/s⟩` is still open.
 
 ## Main definitions
 
