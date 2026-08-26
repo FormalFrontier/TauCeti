@@ -13,7 +13,7 @@ public import Mathlib.RingTheory.PowerSeries.Expand
 public import TauCeti.NumberTheory.ModularForms.Basic
 public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 
 import TauCeti.Analysis.Complex.UpperHalfPlane.Manifold
 
@@ -713,14 +713,13 @@ end Nebentypus
 
 section QExpansion
 
-local notation "𝕢" => Function.Periodic.qParam
-
 variable {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)}
 
 /-- Scaling the argument by `d` raises the local parameter at the cusp `∞` to the `d`-th
 power: `q(d τ) = q(τ) ^ d`. -/
 lemma qParam_one_scaleGL_smul [NeZero d] (τ : ℍ) :
-    𝕢 1 ((scaleGL d • τ : ℍ) : ℂ) = 𝕢 1 (τ : ℂ) ^ d := by
+    Function.Periodic.qParam 1 ((scaleGL d • τ : ℍ) : ℂ) =
+      Function.Periodic.qParam 1 (τ : ℂ) ^ d := by
   simp only [Function.Periodic.qParam, coe_scaleGL_smul]
   rw [← Complex.exp_nat_mul]
   ring_nf
@@ -734,7 +733,8 @@ theorem ModularForm.qExpansion_levelRaise [𝒢'.HasDetOne] [NeZero d]
       (qExpansion 1 f).expand d (NeZero.ne d) := by
   have hd : d ≠ 0 := NeZero.ne d
   have : Fact (IsCusp OnePoint.infty 𝒢) := ⟨Subgroup.isCusp_of_mem_strictPeriods one_pos h𝒢⟩
-  have key : ∀ τ : ℍ, HasSum (fun m ↦ ((qExpansion 1 f).expand d hd).coeff m • 𝕢 1 (τ : ℂ) ^ m)
+  have key : ∀ τ : ℍ, HasSum (fun m ↦ ((qExpansion 1 f).expand d hd).coeff m •
+      Function.Periodic.qParam 1 (τ : ℂ) ^ m)
       (ModularForm.levelRaise d hle f τ) := by
     intro τ
     have h1 := ModularForm.hasSum_qExpansion f (h := 1) one_pos h𝒢 (scaleGL d • τ)

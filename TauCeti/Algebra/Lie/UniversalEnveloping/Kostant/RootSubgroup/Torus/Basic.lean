@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary.Basic
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
