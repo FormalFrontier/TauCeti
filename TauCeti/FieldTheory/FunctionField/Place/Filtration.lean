@@ -54,7 +54,7 @@ these local quotients, and so computes `dim_k (A_F(E) / A_F(D)) = deg E - deg D`
 
 ## Implementation notes
 
-Membership is stated multiplicatively, as `v_P z ≤ exp (-a)`, and never in the additive form
+Membership is stated multiplicatively, as `v_P z ≤ exp (-a)`, and not in the unguarded additive form
 `ord_P z ≥ a`, which the junk value `ord_P 0 = 0` would get wrong at `a > 0`: the additive
 carrier would not contain `0` at positive `a` and so would not be a subspace.  This is the
 convention of `TauCeti.riemannRochSpace` and `TauCeti.adeleFiltration`, of which this filtration
