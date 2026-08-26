@@ -31,8 +31,8 @@ powers and factors the absolute Frobenius through Mathlib's base-change map.
 * `relativeFrobenius_comp_map`: composing relative Frobenius with the base-change map recovers
   absolute Frobenius.
 * `relativeFrobenius_map`: the pointwise form of that identity.
-* `iterateRelativeFrobenius_comp_map`: the iterated relative Frobenius followed by the iterated
-  coefficient Frobenius is the `p ^ n`-power map.
+* `iterateRelativeFrobenius_comp_map`: the iterated coefficient Frobenius followed by the
+  iterated relative Frobenius is the `p ^ n`-power map.
 
 ## Roadmap
 

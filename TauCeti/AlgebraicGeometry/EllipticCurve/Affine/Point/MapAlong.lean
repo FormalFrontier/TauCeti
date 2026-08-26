@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-public import Mathlib.Algebra.CharP.Algebra
 
 /-!
 # The point map induced by a ring homomorphism

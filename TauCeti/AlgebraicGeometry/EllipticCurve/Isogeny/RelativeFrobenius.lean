@@ -258,8 +258,9 @@ theorem iterateRelativeFrobeniusPullback_apply (n : ℕ)
   rw [iterateRelativeFrobeniusPullback, AlgHom.comp_apply,
     IsScalarTower.toAlgHom_apply]
 
-/-- **The iterated relative Frobenius maps infinity to infinity.** Each coordinate function is
-integral over its `p ^ n`-th power in the pulled-back coordinate ring. -/
+/-- **The iterated relative Frobenius maps infinity to infinity.** Every element of
+`W.CoordinateRing` has its `p ^ n`-th power in the pulled-back coordinate ring and is therefore
+integral over that ring. -/
 theorem mapsInfinity_iterateRelativeFrobeniusPullback (n : ℕ) :
     (iterateRelativeFrobeniusPullback p W n).MapsInfinity := by
   refine CoordinatePullback.mapsInfinity_of_pow (iterateRelativeFrobeniusPullback p W n)
