@@ -170,14 +170,14 @@ private theorem spinGroupRepresentation_apply {K : Type u} [Field K]
 
 /-- The same, with the even element spelled out in the coordinates the half-spin lemmas of
 `TauCeti/RepresentationTheory/Spin/HalfSpin.lean` are stated in. Only the coercion lemma
-`TauCeti.coe_spinGroupToEven` is used, not the definition of the inclusion. -/
+`TauCeti.coe_spinGroupToEven_apply` is used, not the definition of the inclusion. -/
 private theorem spinGroupRepresentation_apply_mk {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
     {M : Type*} [AddCommGroup M] [Module K M]
     (F : CliffordAlgebra.even Q →ₐ[K] Module.End K M) (g : spinGroup Q) :
     spinGroupRepresentation F g = F ⟨g, spinGroup.mem_even g.2⟩ := by
   rw [spinGroupRepresentation_apply]
-  exact congrArg F (Subtype.ext (coe_spinGroupToEven Q g))
+  exact congrArg F (Subtype.ext (coe_spinGroupToEven_apply Q g))
 
 private noncomputable def spinGroupAlgebraHom {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} :
@@ -203,7 +203,7 @@ private theorem spinGroupAlgebraHom_surjective {K : Type u} [Field K]
   rw [show Set.range ⇑(spinGroupToEven Q) =
       Set.range fun g : spinGroup Q ↦
         (⟨g, spinGroup.mem_even g.2⟩ : CliffordAlgebra.even Q) from
-    congrArg Set.range (funext fun g ↦ Subtype.ext (coe_spinGroupToEven Q g))]
+    congrArg Set.range (funext fun g ↦ Subtype.ext (coe_spinGroupToEven_apply Q g))]
   apply (Submodule.span_range_subtype_eq_top_iff
     (CliffordAlgebra.even Q).toSubmodule
       (fun g : spinGroup Q ↦ spinGroup.mem_even g.2)).2
@@ -545,7 +545,8 @@ theorem isIrreducible_spinRep_of_span_of_surjective
     (hsurj : Function.Surjective (evenSpinAction Q P)) : (spinRep Q P).IsIrreducible := by
   have hEq : spinGroupRepresentation (evenSpinAction Q P) = spinRep Q P :=
     DFunLike.ext _ _ fun g => by
-      rw [spinGroupRepresentation_apply, evenSpinAction_apply, coe_spinGroupToEven, spinRep_apply]
+      rw [spinGroupRepresentation_apply, evenSpinAction_apply, coe_spinGroupToEven_apply,
+        spinRep_apply]
   exact hEq ▸ isIrreducible_spinGroupRepresentation hspan (evenSpinAction Q P) hsurj
 
 /-- A subspace of the spinor module that is neither zero nor everything is not invariant under the

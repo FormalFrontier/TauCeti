@@ -33,7 +33,7 @@ one-dimensional, the odd block is zero and the even action is again onto.
 * `TauCeti.spinGroupToEven` is the inclusion of the Spin group into the even Clifford subalgebra
   and `TauCeti.evenSpinAction` is the Fock action restricted to that subalgebra, through which the
   Spin representation factors by `TauCeti.evenSpinAction_apply` and
-  `TauCeti.coe_spinGroupToEven`.
+  `TauCeti.coe_spinGroupToEven_apply`.
 * `TauCeti.spinAction_surjective` identifies the Fock action as onto the full endomorphism algebra
   when the first isotropic summand is finite free.
 
@@ -84,7 +84,7 @@ def spinGroupToEven (Q : QuadraticForm K V) : spinGroup Q →* CliffordAlgebra.e
 
 /-- A Spin-group element sits in the even subalgebra as itself. -/
 @[simp]
-theorem coe_spinGroupToEven (Q : QuadraticForm K V) (g : spinGroup Q) :
+theorem coe_spinGroupToEven_apply (Q : QuadraticForm K V) (g : spinGroup Q) :
     (spinGroupToEven Q g : CliffordAlgebra Q) = g :=
   (rfl)
 
