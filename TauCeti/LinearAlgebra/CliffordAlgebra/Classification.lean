@@ -53,7 +53,7 @@ private theorem realCliffordResidue_add_both (p q n : ℕ) :
 
 /-- The exact real algebra classification of the standard Clifford algebra of signature `(p,q)`.
 The matrix size is stated uniformly in terms of the total dimension. -/
-def RealCliffordClassification (p q : ℕ) : Prop :=
+abbrev RealCliffordClassification (p q : ℕ) : Prop :=
   match realCliffordResidue p q with
   | 0 => Nonempty (_root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
       Matrix (Fin (2 ^ ((p + q) / 2))) (Fin (2 ^ ((p + q) / 2))) ℝ)
@@ -92,13 +92,6 @@ private def matrixOneEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra 
   (Matrix.uniqueAlgEquiv (R := R) (A := A) (m := Unit)).symm.trans
     (Matrix.reindexAlgEquiv R A (Equiv.ofUnique Unit (Fin 1)))
 
-private def matrixTensorMatrixEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A]
-    (m n : ℕ) :
-    Matrix (Fin m) (Fin m) A ⊗[R] Matrix (Fin n) (Fin n) R ≃ₐ[R]
-      Matrix (Fin (m * n)) (Fin (m * n)) A :=
-  (Matrix.kroneckerTMulFinAlgEquiv m n R A R).trans
-    (Algebra.TensorProduct.rid R R A).mapMatrix
-
 private def prodTensorAlgebraEquiv (R A B : Type*) [CommSemiring R]
     [Semiring A] [Semiring B] [Algebra R A] [Algebra R B] :
     (A × A) ⊗[R] B ≃ₐ[R] (A ⊗[R] B) × (A ⊗[R] B) :=
@@ -106,16 +99,6 @@ private def prodTensorAlgebraEquiv (R A B : Type*) [CommSemiring R]
     (Algebra.TensorProduct.prodRight R R B A A).trans <|
     AlgEquiv.prodCongr (Algebra.TensorProduct.comm R B A)
       (Algebra.TensorProduct.comm R B A)
-
-private def matrixProdTensorMatrixEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A]
-    (m n : ℕ) :
-    (Matrix (Fin m) (Fin m) A × Matrix (Fin m) (Fin m) A) ⊗[R]
-        Matrix (Fin n) (Fin n) R ≃ₐ[R]
-      Matrix (Fin (m * n)) (Fin (m * n)) A ×
-        Matrix (Fin (m * n)) (Fin (m * n)) A :=
-  (prodTensorAlgebraEquiv R (Matrix (Fin m) (Fin m) A)
-    (Matrix (Fin n) (Fin n) R)).trans <|
-    AlgEquiv.prodCongr (matrixTensorMatrixEquiv R A m n) (matrixTensorMatrixEquiv R A m n)
 
 private noncomputable def complexTensorQuaternionEquiv :
     ℂ ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] Matrix (Fin 2) (Fin 2) ℂ := by
@@ -142,39 +125,6 @@ private def flattenMatrixEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Alge
   (Matrix.compAlgEquiv (Fin m) (Fin n) A R).trans
     (Matrix.reindexAlgEquiv R A finProdFinEquiv)
 
-private noncomputable def realMatrixTensorQuaternionEquiv (m : ℕ) :
-    Matrix (Fin m) (Fin m) ℝ ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ]
-      Matrix (Fin m) (Fin m) ℍ[ℝ] :=
-  (matrixTensorAlgebraEquiv ℝ ℝ ℍ[ℝ] m).trans
-    (Algebra.TensorProduct.lid ℝ ℍ[ℝ]).mapMatrix
-
-private noncomputable def complexMatrixTensorQuaternionEquiv (m : ℕ) :
-    Matrix (Fin m) (Fin m) ℂ ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ]
-      Matrix (Fin (m * 2)) (Fin (m * 2)) ℂ :=
-  (matrixTensorAlgebraEquiv ℝ ℂ ℍ[ℝ] m).trans <|
-    complexTensorQuaternionEquiv.mapMatrix.trans <| flattenMatrixEquiv ℝ ℂ m 2
-
-private noncomputable def quaternionMatrixTensorQuaternionEquiv (m : ℕ) :
-    Matrix (Fin m) (Fin m) ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ]
-      Matrix (Fin (m * 4)) (Fin (m * 4)) ℝ :=
-  (matrixTensorAlgebraEquiv ℝ ℍ[ℝ] ℍ[ℝ] m).trans <|
-    Quaternion.tensorSelfAlgEquivMatrix.mapMatrix.trans <| flattenMatrixEquiv ℝ ℝ m 4
-
-private noncomputable def realMatrixProdTensorQuaternionEquiv (m : ℕ) :
-    (Matrix (Fin m) (Fin m) ℝ × Matrix (Fin m) (Fin m) ℝ) ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ]
-      Matrix (Fin m) (Fin m) ℍ[ℝ] × Matrix (Fin m) (Fin m) ℍ[ℝ] :=
-  (prodTensorAlgebraEquiv ℝ (Matrix (Fin m) (Fin m) ℝ) ℍ[ℝ]).trans <|
-    AlgEquiv.prodCongr (realMatrixTensorQuaternionEquiv m)
-      (realMatrixTensorQuaternionEquiv m)
-
-private noncomputable def quaternionMatrixProdTensorQuaternionEquiv (m : ℕ) :
-    (Matrix (Fin m) (Fin m) ℍ[ℝ] × Matrix (Fin m) (Fin m) ℍ[ℝ]) ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ]
-      Matrix (Fin (m * 4)) (Fin (m * 4)) ℝ ×
-        Matrix (Fin (m * 4)) (Fin (m * 4)) ℝ :=
-  (prodTensorAlgebraEquiv ℝ (Matrix (Fin m) (Fin m) ℍ[ℝ]) ℍ[ℝ]).trans <|
-    AlgEquiv.prodCongr (quaternionMatrixTensorQuaternionEquiv m)
-      (quaternionMatrixTensorQuaternionEquiv m)
-
 private def castMatrixTargetEquiv {R S A : Type*} [CommSemiring R]
     [Semiring S] [Semiring A] [Algebra R S] [Algebra R A] {m n : ℕ} (h : m = n)
     (e : S ≃ₐ[R] Matrix (Fin m) (Fin m) A) :
@@ -188,10 +138,54 @@ private def castMatrixProdTargetEquiv {R S A : Type*} [CommSemiring R]
     S ≃ₐ[R] Matrix (Fin n) (Fin n) A × Matrix (Fin n) (Fin n) A :=
   h ▸ e
 
+private def matrixTensorByCoefficientEquiv {R A B D : Type*} [CommSemiring R]
+    [Semiring A] [Semiring B] [Semiring D] [Algebra R A] [Algebra R B] [Algebra R D]
+    {n : ℕ} (m : ℕ) (coeff : A ⊗[R] B ≃ₐ[R] Matrix (Fin n) (Fin n) D) :
+    Matrix (Fin m) (Fin m) A ⊗[R] B ≃ₐ[R]
+      Matrix (Fin (m * n)) (Fin (m * n)) D :=
+  (matrixTensorAlgebraEquiv R A B m).trans <|
+    coeff.mapMatrix.trans <| flattenMatrixEquiv R D m n
+
+private def matrixModelTensorEquiv {R S T A B D : Type*} [CommSemiring R]
+    [Semiring S] [Semiring T] [Semiring A] [Semiring B] [Semiring D]
+    [Algebra R S] [Algebra R T] [Algebra R A] [Algebra R B] [Algebra R D]
+    {m n k : ℕ} (step : T ≃ₐ[R] S ⊗[R] B)
+    (model : S ≃ₐ[R] Matrix (Fin m) (Fin m) A)
+    (coeff : A ⊗[R] B ≃ₐ[R] Matrix (Fin n) (Fin n) D) (h : m * n = k) :
+    T ≃ₐ[R] Matrix (Fin k) (Fin k) D :=
+  step.trans <| (Algebra.TensorProduct.congr model (AlgEquiv.refl : B ≃ₐ[R] B)).trans <|
+    castMatrixTargetEquiv h (matrixTensorByCoefficientEquiv m coeff)
+
+private def matrixProdModelTensorEquiv {R S T A B D : Type*} [CommSemiring R]
+    [Semiring S] [Semiring T] [Semiring A] [Semiring B] [Semiring D]
+    [Algebra R S] [Algebra R T] [Algebra R A] [Algebra R B] [Algebra R D]
+    {m n k : ℕ} (step : T ≃ₐ[R] S ⊗[R] B)
+    (model : S ≃ₐ[R]
+      Matrix (Fin m) (Fin m) A × Matrix (Fin m) (Fin m) A)
+    (coeff : A ⊗[R] B ≃ₐ[R] Matrix (Fin n) (Fin n) D) (h : m * n = k) :
+    T ≃ₐ[R] Matrix (Fin k) (Fin k) D × Matrix (Fin k) (Fin k) D :=
+  step.trans <| (Algebra.TensorProduct.congr model (AlgEquiv.refl : B ≃ₐ[R] B)).trans <|
+    (prodTensorAlgebraEquiv R (Matrix (Fin m) (Fin m) A) B).trans <|
+      castMatrixProdTargetEquiv h <|
+        AlgEquiv.prodCongr (matrixTensorByCoefficientEquiv m coeff)
+          (matrixTensorByCoefficientEquiv m coeff)
+
 private theorem pow_half_sub_add_eight (n d : ℕ) (h : d ≤ n) :
     2 ^ ((n + 8 - d) / 2) = 2 ^ ((n - d) / 2) * 16 := by
   rw [show (n + 8 - d) / 2 = (n - d) / 2 + 4 by omega, pow_add]
   norm_num
+
+private theorem pow_half_sub_add_both (p q n d : ℕ) (h : d ≤ p + q) :
+    2 ^ ((p + q - d) / 2) * 2 ^ n =
+      2 ^ (((p + n) + (q + n) - d) / 2) := by
+  rw [← pow_add]
+  congr 1
+  omega
+
+private theorem pow_half_sub_mul_pow (n d s t : ℕ)
+    (h : (n - d) / 2 + s = t / 2) :
+    2 ^ ((n - d) / 2) * 2 ^ s = 2 ^ (t / 2) := by
+  rw [← pow_add, h]
 
 private noncomputable def realCliffordPositiveZeroEquiv :
     C 0 0 ≃ₐ[ℝ] Matrix (Fin 1) (Fin 1) ℝ :=
@@ -227,49 +221,37 @@ private noncomputable def realCliffordPositiveFourEquiv :
 private noncomputable def realCliffordZeroThreeEquiv :
     C 0 3 ≃ₐ[ℝ]
       Matrix (Fin 1) (Fin 1) ℍ[ℝ] × Matrix (Fin 1) (Fin 1) ℍ[ℝ] :=
-  (realCliffordQuaternionRecurrenceEquiv 0 1).trans <|
-    (Algebra.TensorProduct.congr realCliffordOneZeroEquivProd
-      (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans <|
-    (prodTensorAlgebraEquiv ℝ ℝ ℍ[ℝ]).trans <|
-    AlgEquiv.prodCongr
-      ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans (matrixOneEquiv ℝ ℍ[ℝ]))
-      ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans (matrixOneEquiv ℝ ℍ[ℝ]))
+  matrixProdModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 1)
+    (realCliffordOneZeroEquivProd.trans <|
+      AlgEquiv.prodCongr (matrixOneEquiv ℝ ℝ) (matrixOneEquiv ℝ ℝ))
+    ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans (matrixOneEquiv ℝ ℍ[ℝ])) (by norm_num)
 
 private noncomputable def realCliffordPositiveFiveEquiv :
     C 5 0 ≃ₐ[ℝ]
       Matrix (Fin 2) (Fin 2) ℍ[ℝ] × Matrix (Fin 2) (Fin 2) ℍ[ℝ] :=
-  (realCliffordSignatureSwitchRecurrenceEquiv 3 0).trans <|
-    (Algebra.TensorProduct.congr realCliffordZeroThreeEquiv
-      (AlgEquiv.refl : Matrix (Fin 2) (Fin 2) ℝ ≃ₐ[ℝ] _)).trans <|
-    matrixProdTensorMatrixEquiv ℝ ℍ[ℝ] 1 2
+  matrixProdModelTensorEquiv (realCliffordSignatureSwitchRecurrenceEquiv 3 0)
+    realCliffordZeroThreeEquiv (matrixEquivTensor (Fin 2) ℝ ℍ[ℝ]).symm (by norm_num)
 
 private noncomputable def realCliffordZeroFourEquiv :
     C 0 4 ≃ₐ[ℝ] Matrix (Fin 2) (Fin 2) ℍ[ℝ] :=
-  (realCliffordQuaternionRecurrenceEquiv 0 2).trans <|
-    (Algebra.TensorProduct.congr realCliffordPositiveTwoEquiv
-      (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans <|
-    realMatrixTensorQuaternionEquiv 2
+  matrixModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 2)
+    realCliffordPositiveTwoEquiv
+    ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans (matrixOneEquiv ℝ ℍ[ℝ])) (by norm_num)
 
 private noncomputable def realCliffordPositiveSixEquiv :
     C 6 0 ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℍ[ℝ] :=
-  (realCliffordSignatureSwitchRecurrenceEquiv 4 0).trans <|
-    (Algebra.TensorProduct.congr realCliffordZeroFourEquiv
-      (AlgEquiv.refl : Matrix (Fin 2) (Fin 2) ℝ ≃ₐ[ℝ] _)).trans <|
-    matrixTensorMatrixEquiv ℝ ℍ[ℝ] 2 2
+  matrixModelTensorEquiv (realCliffordSignatureSwitchRecurrenceEquiv 4 0)
+    realCliffordZeroFourEquiv (matrixEquivTensor (Fin 2) ℝ ℍ[ℝ]).symm (by norm_num)
 
 private noncomputable def realCliffordZeroFiveEquiv :
     C 0 5 ≃ₐ[ℝ] Matrix (Fin 4) (Fin 4) ℂ :=
-  (realCliffordQuaternionRecurrenceEquiv 0 3).trans <|
-    (Algebra.TensorProduct.congr realCliffordPositiveThreeEquiv
-      (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans <|
-    complexMatrixTensorQuaternionEquiv 2
+  matrixModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 3)
+    realCliffordPositiveThreeEquiv complexTensorQuaternionEquiv (by norm_num)
 
 private noncomputable def realCliffordPositiveSevenEquiv :
     C 7 0 ≃ₐ[ℝ] Matrix (Fin 8) (Fin 8) ℂ :=
-  (realCliffordSignatureSwitchRecurrenceEquiv 5 0).trans <|
-    (Algebra.TensorProduct.congr realCliffordZeroFiveEquiv
-      (AlgEquiv.refl : Matrix (Fin 2) (Fin 2) ℝ ≃ₐ[ℝ] _)).trans <|
-    matrixTensorMatrixEquiv ℝ ℂ 4 2
+  matrixModelTensorEquiv (realCliffordSignatureSwitchRecurrenceEquiv 5 0)
+    realCliffordZeroFiveEquiv (matrixEquivTensor (Fin 2) ℝ ℂ).symm (by norm_num)
 
 private theorem realClifford_positiveAxis_base (p : ℕ) (hp : p < 8) :
     RealCliffordClassification p 0 := by
@@ -301,26 +283,30 @@ private theorem realClifford_positiveAxis_classification (p : ℕ) :
             tsub_zero, Nat.mod_self, Nat.add_zero, Nat.add_mod_right, Nat.add_one_sub_one,
             Nat.mod_succ, Nat.reduceSub, Nat.reduceMod, Nat.one_mod] at prev ⊢
         all_goals obtain ⟨e⟩ := prev
-        all_goals
-          refine ⟨(realCliffordEightPeriodicityEquiv n 0).trans
-            ((Algebra.TensorProduct.congr e
-              (AlgEquiv.refl : Matrix (Fin 16) (Fin 16) ℝ ≃ₐ[ℝ] _)).trans ?_)⟩
-        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 0 (by omega)).symm
-            (matrixTensorMatrixEquiv ℝ ℝ (2 ^ (n / 2)) 16)
-        · exact castMatrixProdTargetEquiv (pow_half_sub_add_eight n 1 (by omega)).symm
-            (matrixProdTensorMatrixEquiv ℝ ℝ (2 ^ ((n - 1) / 2)) 16)
-        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 0 (by omega)).symm
-            (matrixTensorMatrixEquiv ℝ ℝ (2 ^ (n / 2)) 16)
-        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 1 (by omega)).symm
-            (matrixTensorMatrixEquiv ℝ ℂ (2 ^ ((n - 1) / 2)) 16)
-        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 2 (by omega)).symm
-            (matrixTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((n - 2) / 2)) 16)
-        · exact castMatrixProdTargetEquiv (pow_half_sub_add_eight n 3 (by omega)).symm
-            (matrixProdTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((n - 3) / 2)) 16)
-        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 2 (by omega)).symm
-            (matrixTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((n - 2) / 2)) 16)
-        · exact castMatrixTargetEquiv (pow_half_sub_add_eight n 1 (by omega)).symm
-            (matrixTensorMatrixEquiv ℝ ℂ (2 ^ ((n - 1) / 2)) 16)
+        · exact ⟨matrixModelTensorEquiv (realCliffordEightPeriodicityEquiv n 0) e
+            (matrixEquivTensor (Fin 16) ℝ ℝ).symm
+            (pow_half_sub_add_eight n 0 (by omega)).symm⟩
+        · exact ⟨matrixProdModelTensorEquiv (realCliffordEightPeriodicityEquiv n 0) e
+            (matrixEquivTensor (Fin 16) ℝ ℝ).symm
+            (pow_half_sub_add_eight n 1 (by omega)).symm⟩
+        · exact ⟨matrixModelTensorEquiv (realCliffordEightPeriodicityEquiv n 0) e
+            (matrixEquivTensor (Fin 16) ℝ ℝ).symm
+            (pow_half_sub_add_eight n 0 (by omega)).symm⟩
+        · exact ⟨matrixModelTensorEquiv (realCliffordEightPeriodicityEquiv n 0) e
+            (matrixEquivTensor (Fin 16) ℝ ℂ).symm
+            (pow_half_sub_add_eight n 1 (by omega)).symm⟩
+        · exact ⟨matrixModelTensorEquiv (realCliffordEightPeriodicityEquiv n 0) e
+            (matrixEquivTensor (Fin 16) ℝ ℍ[ℝ]).symm
+            (pow_half_sub_add_eight n 2 (by omega)).symm⟩
+        · exact ⟨matrixProdModelTensorEquiv (realCliffordEightPeriodicityEquiv n 0) e
+            (matrixEquivTensor (Fin 16) ℝ ℍ[ℝ]).symm
+            (pow_half_sub_add_eight n 3 (by omega)).symm⟩
+        · exact ⟨matrixModelTensorEquiv (realCliffordEightPeriodicityEquiv n 0) e
+            (matrixEquivTensor (Fin 16) ℝ ℍ[ℝ]).symm
+            (pow_half_sub_add_eight n 2 (by omega)).symm⟩
+        · exact ⟨matrixModelTensorEquiv (realCliffordEightPeriodicityEquiv n 0) e
+            (matrixEquivTensor (Fin 16) ℝ ℂ).symm
+            (pow_half_sub_add_eight n 1 (by omega)).symm⟩
 
 private theorem realClifford_negativeAxis_classification (q : ℕ) :
     RealCliffordClassification 0 q := by
@@ -337,47 +323,38 @@ private theorem realClifford_negativeAxis_classification (q : ℕ) :
         Nat.reduceAdd, Nat.reduceMod, Nat.add_one_sub_one, Nat.add_succ_sub_one,
         Nat.mod_succ] at prev ⊢
     all_goals obtain ⟨e⟩ := prev
-    all_goals
-      refine ⟨(realCliffordQuaternionRecurrenceEquiv 0 n).trans
-        ((Algebra.TensorProduct.congr e (AlgEquiv.refl : ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ])).trans ?_)⟩
-    · have hsize : 2 ^ (n / 2) = 2 ^ ((0 + (n + 1 + 1) - 2) / 2) := by
-        congr 1
-        omega
-      exact castMatrixTargetEquiv hsize (realMatrixTensorQuaternionEquiv (2 ^ (n / 2)))
-    · have hsize : 2 ^ ((n - 1) / 2) = 2 ^ ((0 + (n + 1 + 1) - 3) / 2) := by
-        congr 1
-        omega
-      exact castMatrixProdTargetEquiv hsize
-        (realMatrixProdTensorQuaternionEquiv (2 ^ ((n - 1) / 2)))
-    · have hsize : 2 ^ (n / 2) = 2 ^ ((0 + (n + 1 + 1) - 2) / 2) := by
-        congr 1
-        omega
-      exact castMatrixTargetEquiv hsize (realMatrixTensorQuaternionEquiv (2 ^ (n / 2)))
-    · have hsize : 2 ^ ((n - 1) / 2) * 2 = 2 ^ ((0 + (n + 1)) / 2) := by
-        rw [show (0 + (n + 1)) / 2 = (n - 1) / 2 + 1 by omega, pow_add]
-        norm_num
-      exact castMatrixTargetEquiv hsize
-        (complexMatrixTensorQuaternionEquiv (2 ^ ((n - 1) / 2)))
-    · have hsize : 2 ^ ((n - 2) / 2) * 4 = 2 ^ ((0 + (n + 1 + 1)) / 2) := by
-        rw [show (0 + (n + 1 + 1)) / 2 = (n - 2) / 2 + 2 by omega, pow_add]
-        norm_num
-      exact castMatrixTargetEquiv hsize
-        (quaternionMatrixTensorQuaternionEquiv (2 ^ ((n - 2) / 2)))
-    · have hsize : 2 ^ ((n - 3) / 2) * 4 = 2 ^ ((0 + (n + 1)) / 2) := by
-        rw [show (0 + (n + 1)) / 2 = (n - 3) / 2 + 2 by omega, pow_add]
-        norm_num
-      exact castMatrixProdTargetEquiv hsize
-        (quaternionMatrixProdTensorQuaternionEquiv (2 ^ ((n - 3) / 2)))
-    · have hsize : 2 ^ ((n - 2) / 2) * 4 = 2 ^ ((0 + (n + 1 + 1)) / 2) := by
-        rw [show (0 + (n + 1 + 1)) / 2 = (n - 2) / 2 + 2 by omega, pow_add]
-        norm_num
-      exact castMatrixTargetEquiv hsize
-        (quaternionMatrixTensorQuaternionEquiv (2 ^ ((n - 2) / 2)))
-    · have hsize : 2 ^ ((n - 1) / 2) * 2 = 2 ^ ((0 + (n + 1)) / 2) := by
-        rw [show (0 + (n + 1)) / 2 = (n - 1) / 2 + 1 by omega, pow_add]
-        norm_num
-      exact castMatrixTargetEquiv hsize
-        (complexMatrixTensorQuaternionEquiv (2 ^ ((n - 1) / 2)))
+    · exact ⟨matrixModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 n) e
+        ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans (matrixOneEquiv ℝ ℍ[ℝ]))
+        (by simpa only [Nat.sub_zero, Nat.reducePow, mul_one, Nat.zero_add] using
+          pow_half_sub_mul_pow n 0 0 (n + 1 + 1 - 2) (by omega))⟩
+    · exact ⟨matrixProdModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 n) e
+        ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans (matrixOneEquiv ℝ ℍ[ℝ]))
+        (by simpa only [Nat.reducePow, mul_one, Nat.zero_add] using
+          pow_half_sub_mul_pow n 1 0 (n + 1 + 1 - 3) (by omega))⟩
+    · exact ⟨matrixModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 n) e
+        ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans (matrixOneEquiv ℝ ℍ[ℝ]))
+        (by simpa only [Nat.sub_zero, Nat.reducePow, mul_one, Nat.zero_add] using
+          pow_half_sub_mul_pow n 0 0 (n + 1 + 1 - 2) (by omega))⟩
+    · exact ⟨matrixModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 n) e
+        complexTensorQuaternionEquiv
+        (by simpa only [Nat.reducePow, Nat.zero_add] using
+          pow_half_sub_mul_pow n 1 1 (n + 1) (by omega))⟩
+    · exact ⟨matrixModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 n) e
+        Quaternion.tensorSelfAlgEquivMatrix
+        (by simpa only [Nat.reducePow, Nat.zero_add] using
+          pow_half_sub_mul_pow n 2 2 (n + 1 + 1) (by omega))⟩
+    · exact ⟨matrixProdModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 n) e
+        Quaternion.tensorSelfAlgEquivMatrix
+        (by simpa only [Nat.reducePow, Nat.zero_add] using
+          pow_half_sub_mul_pow n 3 2 (n + 1) (by omega))⟩
+    · exact ⟨matrixModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 n) e
+        Quaternion.tensorSelfAlgEquivMatrix
+        (by simpa only [Nat.reducePow, Nat.zero_add] using
+          pow_half_sub_mul_pow n 2 2 (n + 1 + 1) (by omega))⟩
+    · exact ⟨matrixModelTensorEquiv (realCliffordQuaternionRecurrenceEquiv 0 n) e
+        complexTensorQuaternionEquiv
+        (by simpa only [Nat.reducePow, Nat.zero_add] using
+          pow_half_sub_mul_pow n 1 1 (n + 1) (by omega))⟩
 
 private theorem realCliffordClassification_add_both (p q n : ℕ)
     (h : RealCliffordClassification p q) :
@@ -390,70 +367,30 @@ private theorem realCliffordClassification_add_both (p q n : ℕ)
     exact Nat.mod_lt _ (by norm_num)
   interval_cases r <;> simp only at h ⊢
   all_goals obtain ⟨e⟩ := h
-  all_goals
-    refine ⟨(realCliffordBottIterEquiv p q n).trans
-      ((Algebra.TensorProduct.congr e
-        (AlgEquiv.refl : Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ ≃ₐ[ℝ] _)).trans ?_)⟩
-  · have hsize : 2 ^ ((p + q) / 2) * 2 ^ n = 2 ^ (((p + n) + (q + n)) / 2) := by
-      rw [← pow_add]
-      congr 1
-      omega
-    exact castMatrixTargetEquiv hsize
-      (matrixTensorMatrixEquiv ℝ ℝ (2 ^ ((p + q) / 2)) (2 ^ n))
-  · have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
-        2 ^ (((p + n) + (q + n) - 1) / 2) := by
-      rw [← pow_add]
-      congr 1
-      simp [realCliffordResidue] at hr
-      omega
-    exact castMatrixTargetEquiv hsize
-      (matrixTensorMatrixEquiv ℝ ℂ (2 ^ ((p + q - 1) / 2)) (2 ^ n))
-  · have hsize : 2 ^ ((p + q - 2) / 2) * 2 ^ n =
-        2 ^ (((p + n) + (q + n) - 2) / 2) := by
-      rw [← pow_add]
-      congr 1
-      simp [realCliffordResidue] at hr
-      omega
-    exact castMatrixTargetEquiv hsize
-      (matrixTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((p + q - 2) / 2)) (2 ^ n))
-  · have hsize : 2 ^ ((p + q - 3) / 2) * 2 ^ n =
-        2 ^ (((p + n) + (q + n) - 3) / 2) := by
-      rw [← pow_add]
-      congr 1
-      simp [realCliffordResidue] at hr
-      omega
-    exact castMatrixProdTargetEquiv hsize
-      (matrixProdTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((p + q - 3) / 2)) (2 ^ n))
-  · have hsize : 2 ^ ((p + q - 2) / 2) * 2 ^ n =
-        2 ^ (((p + n) + (q + n) - 2) / 2) := by
-      rw [← pow_add]
-      congr 1
-      simp [realCliffordResidue] at hr
-      omega
-    exact castMatrixTargetEquiv hsize
-      (matrixTensorMatrixEquiv ℝ ℍ[ℝ] (2 ^ ((p + q - 2) / 2)) (2 ^ n))
-  · have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
-        2 ^ (((p + n) + (q + n) - 1) / 2) := by
-      rw [← pow_add]
-      congr 1
-      simp [realCliffordResidue] at hr
-      omega
-    exact castMatrixTargetEquiv hsize
-      (matrixTensorMatrixEquiv ℝ ℂ (2 ^ ((p + q - 1) / 2)) (2 ^ n))
-  · have hsize : 2 ^ ((p + q) / 2) * 2 ^ n = 2 ^ (((p + n) + (q + n)) / 2) := by
-      rw [← pow_add]
-      congr 1
-      omega
-    exact castMatrixTargetEquiv hsize
-      (matrixTensorMatrixEquiv ℝ ℝ (2 ^ ((p + q) / 2)) (2 ^ n))
-  · have hsize : 2 ^ ((p + q - 1) / 2) * 2 ^ n =
-        2 ^ (((p + n) + (q + n) - 1) / 2) := by
-      rw [← pow_add]
-      congr 1
-      simp [realCliffordResidue] at hr
-      omega
-    exact castMatrixProdTargetEquiv hsize
-      (matrixProdTensorMatrixEquiv ℝ ℝ (2 ^ ((p + q - 1) / 2)) (2 ^ n))
+  · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
+      (matrixEquivTensor (Fin (2 ^ n)) ℝ ℝ).symm
+      (pow_half_sub_add_both p q n 0 (by omega))⟩
+  · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
+      (matrixEquivTensor (Fin (2 ^ n)) ℝ ℂ).symm
+      (pow_half_sub_add_both p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
+  · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
+      (matrixEquivTensor (Fin (2 ^ n)) ℝ ℍ[ℝ]).symm
+      (pow_half_sub_add_both p q n 2 (by simp [realCliffordResidue] at hr; omega))⟩
+  · exact ⟨matrixProdModelTensorEquiv (realCliffordBottIterEquiv p q n) e
+      (matrixEquivTensor (Fin (2 ^ n)) ℝ ℍ[ℝ]).symm
+      (pow_half_sub_add_both p q n 3 (by simp [realCliffordResidue] at hr; omega))⟩
+  · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
+      (matrixEquivTensor (Fin (2 ^ n)) ℝ ℍ[ℝ]).symm
+      (pow_half_sub_add_both p q n 2 (by simp [realCliffordResidue] at hr; omega))⟩
+  · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
+      (matrixEquivTensor (Fin (2 ^ n)) ℝ ℂ).symm
+      (pow_half_sub_add_both p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
+  · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
+      (matrixEquivTensor (Fin (2 ^ n)) ℝ ℝ).symm
+      (pow_half_sub_add_both p q n 0 (by omega))⟩
+  · exact ⟨matrixProdModelTensorEquiv (realCliffordBottIterEquiv p q n) e
+      (matrixEquivTensor (Fin (2 ^ n)) ℝ ℝ).symm
+      (pow_half_sub_add_both p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
 
 /-- The real Clifford algebra of every finite signature is the full matrix algebra, complex
 matrix algebra, quaternionic matrix algebra, or split algebra prescribed by `(q - p) mod 8`. -/
