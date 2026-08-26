@@ -122,7 +122,7 @@ end Sign
 
 section SignUnit
 
-variable (k : Type w) {Q : Type u} [Ring k] [Quiver.{v + 1} Q]
+variable (k : Type w) {Q : Type u} [Monoid k] [HasDistribNeg k] [Quiver.{v + 1} Q]
 
 /-- The sign labelling, valued in the units of `k`. -/
 def reorientSignUnit (σ : ∀ ⦃i j : Q⦄, (i ⟶ j) → Bool) ⦃i j : Q⦄ (a : i ⟶ j) : kˣ :=
