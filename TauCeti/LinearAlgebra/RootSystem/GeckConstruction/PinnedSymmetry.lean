@@ -36,7 +36,7 @@ the toral carrier.
   module.
 * `TauCeti.DynkinType.geckDiagramModuleEquiv`: the resulting rational linear equivalence.
 * `TauCeti.DynkinType.diagramRootGeneratorPerm`: the induced permutation of the simple raising and
-  lowering indices.
+  lowering indices, together with its multiplicativity in the node permutation.
 
 ## Main results
 
@@ -201,6 +201,30 @@ theorem diagramRootGeneratorPerm_apply_inr (i : Fin t.rank) :
     diagramRootGeneratorPerm sigma (Sum.inr i) = Sum.inr (sigma i) := by
   rw [diagramRootGeneratorPerm]
   rfl
+
+/-- The identity node permutation induces the identity permutation of the generator indices. -/
+@[simp]
+theorem diagramRootGeneratorPerm_one :
+    diagramRootGeneratorPerm (1 : Equiv.Perm (Fin t.rank)) = 1 := by
+  ext i
+  cases i <;> rfl
+
+/-- The permutation of the generator indices is multiplicative in the node permutation. -/
+@[simp]
+theorem diagramRootGeneratorPerm_mul (sigma tau : Equiv.Perm (Fin t.rank)) :
+    diagramRootGeneratorPerm (sigma * tau) =
+      diagramRootGeneratorPerm sigma * diagramRootGeneratorPerm tau := by
+  ext i
+  cases i <;> rfl
+
+/-- A power of the node permutation induces the corresponding power of the generator
+permutation. -/
+@[simp]
+theorem diagramRootGeneratorPerm_pow (sigma : Equiv.Perm (Fin t.rank)) (m : ℕ) :
+    diagramRootGeneratorPerm (sigma ^ m) = diagramRootGeneratorPerm sigma ^ m := by
+  induction m with
+  | zero => rw [pow_zero, pow_zero, diagramRootGeneratorPerm_one]
+  | succ m ih => rw [pow_succ, pow_succ, diagramRootGeneratorPerm_mul, ih]
 
 /-- **The pinned Geck-module symmetry intertwines every represented simple root generator with
 the generator carrying the permuted number.** This is exactly the additive pinning equation
