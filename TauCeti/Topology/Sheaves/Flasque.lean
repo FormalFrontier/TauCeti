@@ -189,6 +189,8 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
         (Abelian.Ext.{u} ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).obj U)
           S.X₃ (n + 1)) := by
       rw [freeYonedaSheafFunctor_obj]
+      -- The induction hypothesis is stated using the public `Sheaf.H'` API, while this
+      -- dimension-shift goal uses its underlying `Ext` group, so unfold that wrapper here.
       change Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} S.X₃ (n + 1) U)
       infer_instance
     rw [Subsingleton.elim x₃ 0, Abelian.Ext.zero_comp]
