@@ -378,8 +378,8 @@ theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDis
     exact D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.left (x D.second.left)).mpr rfl)
       ((D.mem_interior_first_iff _).mpr
-        ⟨Grid.mem_cIoo_swap_of_mem_cIoo_of_mem_cIoo_swap hcol ha,
-          Grid.mem_cIoo_swap_of_mem_cIoo_of_mem_cIoo_swap hrow hxa⟩)
+        ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha hcol,
+          Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hxa hrow⟩)
   · -- away from the first pair of side columns the two states agree
     exact D.second.not_mem_interior_of_isEmpty h₂
       ((D.middle.mem_pointSet p).mpr (by rw [D.first.map_of_ne p.1 hpleft hpright, hpx]))
@@ -431,7 +431,7 @@ theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDi
     exact D.second.not_mem_interior_of_isEmpty h₂ D.first_right_mem_middle_pointSet
       ((D.mem_interior_second_iff h _).mpr
         ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hcol hd,
-          Grid.mem_cIoo_swap_of_mem_cIoo_of_mem_cIoo_swap hrow hxc⟩)
+          Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hxc hrow⟩)
   by_cases hpright : p.1 = D.second.right
   · -- the point of the new source state on the terminal side column of the second rectangle
     rw [hpright, Equiv.swap_apply_right] at hpx
@@ -447,19 +447,12 @@ theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDi
         fun hc => hout₂ ⟨hcol, hc⟩
     exact D.second.not_mem_interior_of_isEmpty h₂ D.first_left_mem_middle_pointSet
       ((D.mem_interior_second_iff h _).mpr
-        ⟨Grid.mem_cIoo_swap_of_mem_cIoo_of_mem_cIoo_swap hcol hc,
+        ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hc hcol,
           Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hrow hxd⟩)
   · -- away from the second pair of side columns the two states agree
     rw [Equiv.swap_apply_of_ne_of_ne hpleft hpright] at hpx
     exact D.first.not_mem_interior_of_isEmpty h₁ ((x.mem_pointSet p).mpr hpx)
       ((D.mem_interior_first_iff p).mpr ⟨hcol, hrow⟩)
-
-/-- Reordering a two-step decomposition into two empty rectangles with disjoint side columns
-again gives two empty rectangles. -/
-theorem isEmpty_and_isEmpty_commute (D : GridRectangleDecomposition x z)
-    (h : D.HasDisjointSides) (h₁ : D.first.IsEmpty) (h₂ : D.second.IsEmpty) :
-    (D.commute h).first.IsEmpty ∧ (D.commute h).second.IsEmpty :=
-  ⟨D.isEmpty_commute_first h h₁ h₂, D.isEmpty_commute_second h h₁ h₂⟩
 
 end GridRectangleDecomposition
 

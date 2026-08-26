@@ -405,8 +405,7 @@ theorem not_mem_cIoo_iff {a b x : Fin n} (h : a ≠ b) :
 
 If `a` lies on the clockwise arc from `c` to `d` while `b` lies on the opposite arc, then the four
 points occur in the cyclic order `c`, `a`, `d`, `b`, so `d` lies on the clockwise arc from `a` to
-`b`. Together with `Grid.mem_cIoo_swap_of_mem_cIoo_of_mem_cIoo_swap` this is the exchange step
-that reorders a pair of grid rectangles. -/
+`b`. -/
 theorem mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo c d)
     (hb : b ∈ cIoo d c) : d ∈ cIoo a b := by
   have hab : a ≠ b := fun h => (Finset.disjoint_left.mp (disjoint_cIoo_swap c d) ha) (h ▸ hb)
@@ -417,12 +416,6 @@ theorem mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo
   have hab' : a.val ≠ b.val := fun h => hab (Fin.val_injective h)
   refine ⟨hab, ?_⟩
   split_ifs at ha hb ⊢ <;> omega
-
-/-- The companion of `Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap` for the opposite arc: in the
-cyclic order `c`, `a`, `d`, `b`, the point `c` lies on the clockwise arc from `b` to `a`. -/
-theorem mem_cIoo_swap_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo c d)
-    (hb : b ∈ cIoo d c) : c ∈ cIoo b a :=
-  mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hb ha
 
 /-- The two opposite cyclic intervals cover exactly the complement of their endpoints. -/
 @[simp]
