@@ -163,8 +163,8 @@ theorem exists_isCoupling_of_wassersteinEDist_ne_top (h : wassersteinEDist p μ 
   exact ⟨π, hπ⟩
 
 /-- At the exponent `0` the objective is identically `0`, so the Wasserstein distance of any two
-coupled measures vanishes. This is why every theorem below that compares exponents or that treats
-`W_p` as a distance excludes `p = 0`. -/
+coupled measures vanishes. Thus distance-specific results below exclude `p = 0`, although
+monotonicity in the exponent remains valid when its lower exponent is `0`. -/
 theorem wassersteinEDist_exponent_zero (h : ∃ π, IsCoupling π μ ν) :
     wassersteinEDist 0 μ ν = 0 := by
   obtain ⟨π, hπ⟩ := h
