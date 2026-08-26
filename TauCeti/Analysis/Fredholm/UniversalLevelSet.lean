@@ -37,6 +37,8 @@ the parameter space.
   total linearization is topologically complemented.
 * `TauCeti.universalImplicitFunction`: the resulting local parametrization of the universal level
   set by the kernel of the total derivative.
+* `TauCeti.eventually_mem_image_universalImplicitFunction`: that parametrization covers the level
+  set through the base point locally.
 * `TauCeti.hasStrictFDerivAt_snd_universalImplicitFunction`: in these coordinates, projection to
   the parameter space differentiates to `TauCeti.parameterProj`.
 
@@ -107,8 +109,10 @@ theorem hasRightInverse_coprod (hD₁ : ContinuousLinearMap.IsFredholm D₁)
   refine ⟨R.prod L, fun y => ?_⟩
   have hq_eq : q = P.comp D₂ := by
     rfl
+  have hPL : P (D₂ (L y)) = q (qinv (P y)) := by
+    simp [L, hq_eq]
   have hP_sub : P (y - D₂ (L y)) = 0 := by
-    rw [map_sub, show P (D₂ (L y)) = q (qinv (P y)) by simp [L, hq_eq]]
+    rw [map_sub, hPL]
     exact sub_eq_zero.mpr (hqinv (P y)).symm
   have hsub_mem : y - D₂ (L y) ∈ pkg.decCodom.X₁ := by
     rw [← Submodule.ker_projectionOntoL pkg.decCodom.isTopCompl.symm]
@@ -120,8 +124,10 @@ theorem hasRightInverse_coprod (hD₁ : ContinuousLinearMap.IsFredholm D₁)
   have hright : D₁ (pkg.quasiInverse (y - D₂ (L y))) = y - D₂ (L y) := by
     simp [ContinuousLinearMap.FredholmPackage.quasiInverse, pkg.eq_equiv, hproj,
       FredholmDecomposition.proj]
+  have hR : R y = pkg.quasiInverse (y - D₂ (L y)) := by
+    simp [R]
   simp only [ContinuousLinearMap.coprod_apply, ContinuousLinearMap.prod_apply]
-  rw [show R y = pkg.quasiInverse (y - D₂ (L y)) by rfl, hright, sub_add_cancel]
+  rw [hR, hright, sub_add_cancel]
 
 /-- The kernel of a surjective total linearization is topologically complemented when its
 fixed-parameter part is Fredholm. This is the complemented-kernel hypothesis required by the
@@ -182,6 +188,34 @@ theorem eventually_universalImplicitFunction_mem_levelSet
   have himplicit := hf.map_implicitFunctionOfComplemented_eq (LinearMap.range_eq_top.mpr hD)
     (hD₁.closedComplemented_ker_coprod hD)
   exact (tendsto_const_nhds.prodMk_nhds tendsto_id).eventually himplicit
+
+/-- **The universal implicit function covers the level set locally.** Given any neighbourhood `s`
+of zero in the kernel of the total derivative, every point `x` near `a` with `f x = f a` is
+`universalImplicitFunction hf hD₁ hD v` for some kernel coordinate `v ∈ s`.
+
+Together with `TauCeti.eventually_universalImplicitFunction_mem_levelSet` this says that the
+universal implicit function parametrizes the level set through `a` near `a`. -/
+theorem eventually_mem_image_universalImplicitFunction
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) a)
+    (hD₁ : ContinuousLinearMap.IsFredholm D₁)
+    (hD : Function.Surjective (D₁.coprod D₂))
+    {s : Set (D₁.coprod D₂).ker} (hs : s ∈ 𝓝 (0 : (D₁.coprod D₂).ker)) :
+    ∀ᶠ x in 𝓝 a, f x = f a → x ∈ universalImplicitFunction hf hD₁ hD '' s := by
+  have hf' : (D₁.coprod D₂).range = ⊤ := LinearMap.range_eq_top.mpr hD
+  have hker : (D₁.coprod D₂).ker.ClosedComplemented := hD₁.closedComplemented_ker_coprod hD
+  set e := hf.implicitToOpenPartialHomeomorphOfComplemented f (D₁.coprod D₂) hf' hker
+  have hcoord : Tendsto (fun x ↦ (e x).2) (𝓝 a) (𝓝 0) := by
+    have hea : e a = (f a, 0) :=
+      hf.implicitToOpenPartialHomeomorphOfComplemented_self hf' hker
+    have := (e.continuousAt
+      (hf.mem_implicitToOpenPartialHomeomorphOfComplemented_source hf' hker)).tendsto
+    rw [hea] at this
+    exact (continuous_snd.tendsto _).comp this
+  filter_upwards [hf.eq_implicitFunctionOfComplemented hf' hker, hcoord hs] with x hx hmem hfx
+  refine ⟨(e x).2, hmem, ?_⟩
+  unfold universalImplicitFunction
+  rw [← hfx]
+  exact hx
 
 /-- The derivative at zero of the universal implicit function is the inclusion of the kernel of
 the total derivative. In particular, this parametrization has exactly the expected tangent map. -/
