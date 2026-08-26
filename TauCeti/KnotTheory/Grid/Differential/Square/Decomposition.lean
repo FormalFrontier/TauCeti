@@ -162,9 +162,18 @@ variable (R : Type*) [CommSemiring R]
 
 /-- The weight of a two-step rectangle decomposition in the square of the unblocked differential:
 the product of the weights `V^{O(r)}` of its two rectangles. -/
-noncomputable abbrev decompositionWeight {x z : GridState n}
+noncomputable def decompositionWeight {x z : GridState n}
     (D : GridRectangleDecomposition x z) : MvPolynomial (Fin n) R :=
   G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
+
+/-- The weight of a two-step decomposition is the product of its rectangle weights. -/
+@[simp]
+theorem decompositionWeight_def {x z : GridState n}
+    (D : GridRectangleDecomposition x z) :
+    G.decompositionWeight R D =
+      G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle := by
+  unfold decompositionWeight
+  rfl
 
 /-- The matrix of the square of the unblocked differential: its `(x, z)` entry is the sum over
 intermediate grid states of the products of the two matrix coefficients. -/
