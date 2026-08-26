@@ -22,7 +22,7 @@ first `d` standard basis vectors in `Kⁿ` is a highest-weight vector for this a
 
 * `exteriorPower.glLieMap`: the action of matrices on an exterior power.
 * `exteriorPower.firstBasisWedge`: the wedge of the first standard basis vectors.
-* `exteriorPower.fundamentalWeight`: the first-`d` coordinate-indicator weight.
+* `exteriorPower.firstCoordinatesWeight`: the first-`d` coordinate-indicator weight.
 
 ## Main result
 
@@ -111,14 +111,14 @@ variable {K : Type*} [Zero K] [One K]
 
 /-- The tuple that is `1` on the first `d` coordinates and `0` afterward. When `d ≤ n`, this is
 the weight of the first basis wedge in the `d`-th exterior power of the standard `gl_n` module. -/
-def fundamentalWeight (d n : ℕ) : Fin n → K :=
+def firstCoordinatesWeight (d n : ℕ) : Fin n → K :=
   fun j => if j.val < d then 1 else 0
 
-/-- The fundamental exterior weight is `1` on the first `d` coordinates and `0` afterward. -/
+/-- The first-coordinates weight is `1` on the first `d` coordinates and `0` afterward. -/
 @[simp]
-theorem fundamentalWeight_apply (d n : ℕ) (j : Fin n) :
-    fundamentalWeight (K := K) d n j = if j.val < d then 1 else 0 := by
-  rw [fundamentalWeight]
+theorem firstCoordinatesWeight_apply (d n : ℕ) (j : Fin n) :
+    firstCoordinatesWeight (K := K) d n j = if j.val < d then 1 else 0 := by
+  rw [firstCoordinatesWeight]
 
 end Weight
 
@@ -126,9 +126,9 @@ section HighestWeight
 
 variable {K : Type*} [CommRing K]
 
-/-- The fundamental exterior weight is dominant integral in characteristic zero. -/
-theorem isGlDominantIntegral_fundamentalWeight [CharZero K] (d n : ℕ) :
-    TauCeti.IsGlDominantIntegral (fundamentalWeight (K := K) d n) := by
+/-- The first-coordinates weight is dominant integral in characteristic zero. -/
+theorem isGlDominantIntegral_firstCoordinatesWeight [CharZero K] (d n : ℕ) :
+    TauCeti.IsGlDominantIntegral (firstCoordinatesWeight (K := K) d n) := by
   rw [TauCeti.isGlDominantIntegral_iff]
   intro i j hij
   by_cases hi : i.val < d
@@ -158,14 +158,14 @@ private theorem lie_single_self_firstBasisWedge (d n : ℕ) (h : d ≤ n) (k : F
     letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
       glLieRingModule (K := K) (n := Fin n) d
     ⁅Matrix.single k k (1 : K), firstBasisWedge (K := K) d n h⁆ =
-      fundamentalWeight (K := K) d n k • firstBasisWedge (K := K) d n h := by
+      firstCoordinatesWeight (K := K) d n k • firstBasisWedge (K := K) d n h := by
   classical
   rw [firstBasisWedge_eq_ιMulti, gl_lie_def, glLieMap_apply_ιMulti]
   simp_rw [single_mulVec_firstBasis d n h]
   by_cases hk : k.val < d
   · let a : Fin d := ⟨k.val, hk⟩
     have hka : k = Fin.castLE h a := Fin.ext rfl
-    simp only [fundamentalWeight_apply, hk, ite_true, one_smul]
+    simp only [firstCoordinatesWeight_apply, hk, ite_true, one_smul]
     rw [Finset.sum_eq_single a]
     · simp only [hka, ite_true]
       simp
@@ -176,7 +176,7 @@ private theorem lie_single_self_firstBasisWedge (d n : ℕ) (h : d ≤ n) (k : F
       simp only [hkb, ite_false]
       exact (ιMulti K d).map_update_zero _ _
     · simp
-  · simp only [fundamentalWeight_apply, hk, ite_false, zero_smul]
+  · simp only [firstCoordinatesWeight_apply, hk, ite_false, zero_smul]
     apply Finset.sum_eq_zero
     intro a _
     have hka : k ≠ Fin.castLE h a := by
@@ -225,7 +225,7 @@ action when `d ≤ n`. -/
 theorem isGlHighestWeightVector_firstBasisWedge [Nontrivial K] (d n : ℕ) (h : d ≤ n) :
     letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
       glLieRingModule (K := K) (n := Fin n) d
-    TauCeti.IsGlHighestWeightVector (fundamentalWeight (K := K) d n)
+    TauCeti.IsGlHighestWeightVector (firstCoordinatesWeight (K := K) d n)
       (firstBasisWedge (K := K) d n h) := by
   refine TauCeti.isGlHighestWeightVector_iff.mpr
     ⟨firstBasisWedge_ne_zero (K := K) d n h, fun i => ?_, fun i j hij => ?_⟩
