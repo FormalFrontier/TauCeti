@@ -47,8 +47,8 @@ cause.
 * `TauCeti.BraidGroup.strand` and `TauCeti.BraidGroup.strandSucc`: the two strands that `sigma i`
   crosses, as elements of `Fin n`.
 * `TauCeti.BraidGroup.transposition i`: the transposition of those two strands.
-* `TauCeti.BraidGroup.strandIncl`: the inclusion `BraidGroup (n + 1) →* BraidGroup (n + 2)` adding
-  one uncrossed strand.
+* `TauCeti.BraidGroup.strandIncl`: the homomorphism adding one uncrossed strand,
+  `BraidGroup (n + 1) →* BraidGroup (n + 2)`.
 * `TauCeti.BraidGroup.permHom n`: the underlying-permutation homomorphism.
 * `TauCeti.BraidGroup.pureSubgroup n`: the pure braid group, its kernel.
 
@@ -314,10 +314,10 @@ theorem permHom_surjective (n : ℕ) : Function.Surjective (permHom n) := by
     rintro _ ⟨i, rfl⟩
     exact ⟨sigma i, by rw [permHom_sigma, transposition_eq_swap_castSucc_succ]⟩
 
-/-- The inclusion of `BraidGroup (n + 1)` into `BraidGroup (n + 2)` that adds one strand and
-leaves it uncrossed: each elementary braid is sent to the elementary braid of the same index,
-and the new top strand is never touched. This is the homomorphism the Markov stabilization move
-is built from. -/
+/-- The homomorphism from `BraidGroup (n + 1)` to `BraidGroup (n + 2)` that adds one strand and
+leaves it uncrossed: each elementary braid is sent to the elementary braid of the same index, and
+the new top strand is never touched. This is the homomorphism the Markov stabilization move is
+built from. -/
 def strandIncl {n : ℕ} : BraidGroup (n + 1) →* BraidGroup (n + 2) :=
   lift (fun i : Fin n ↦ sigma i.castSucc) (fun h ↦ sigma_mul_sigma_comm (by simpa using h))
     (fun h ↦ sigma_braid (by simpa using h))
@@ -328,18 +328,15 @@ theorem strandIncl_sigma {n : ℕ} (i : Fin n) : strandIncl (sigma i) = sigma i.
 
 /-- The added strand does not interfere: on the old strands, `strandIncl b` permutes exactly as
 `b` does. -/
+@[simp]
 theorem permHom_strandIncl_castSucc {n : ℕ} (b : BraidGroup (n + 1)) (i : Fin (n + 1)) :
     permHom (n + 2) (strandIncl b) i.castSucc = (permHom (n + 1) b i).castSucc := by
   revert i
   induction b using sigma_induction_on with
   | sigma k =>
     intro i
-    have hstrand : strand (n := n + 2) k.castSucc = (strand (n := n + 1) k).castSucc :=
-      Fin.ext (by simp)
-    have hstrandSucc : strandSucc (n := n + 2) k.castSucc =
-        (strandSucc (n := n + 1) k).castSucc := Fin.ext (by simp)
-    rw [strandIncl_sigma, permHom_sigma, permHom_sigma, transposition_eq_swap,
-      transposition_eq_swap, hstrand, hstrandSucc]
+    rw [strandIncl_sigma, permHom_sigma, permHom_sigma, transposition_eq_swap_castSucc_succ,
+      transposition_eq_swap_castSucc_succ, Fin.succ_castSucc]
     exact ((Fin.castSucc_injective (n + 1)).map_swap _ _ _).symm
   | one => simp
   | mul b b' hb hb' =>
@@ -357,9 +354,7 @@ theorem permHom_strandIncl_castSucc {n : ℕ} (b : BraidGroup (n + 1)) (i : Fin 
 theorem permHom_sigma_last (n : ℕ) :
     permHom (n + 2) (sigma (Fin.last n)) =
       Equiv.swap (Fin.castSucc (Fin.last n)) (Fin.last (n + 1)) := by
-  have hstrand : strand (n := n + 2) (Fin.last n) = Fin.castSucc (Fin.last n) := Fin.ext (by simp)
-  have hstrandSucc : strandSucc (n := n + 2) (Fin.last n) = Fin.last (n + 1) := Fin.ext (by simp)
-  rw [permHom_sigma, transposition_eq_swap, hstrand, hstrandSucc]
+  rw [permHom_sigma, transposition_eq_swap_castSucc_succ, Fin.succ_last]
 
 /-- The strand added by `strandIncl` is left where it is. -/
 @[simp]
@@ -367,13 +362,9 @@ theorem permHom_strandIncl_last {n : ℕ} (b : BraidGroup (n + 1)) :
     permHom (n + 2) (strandIncl b) (Fin.last (n + 1)) = Fin.last (n + 1) := by
   induction b using sigma_induction_on with
   | sigma k =>
-    rw [strandIncl_sigma, permHom_sigma, transposition_eq_swap]
-    have hk := k.isLt
-    refine Equiv.swap_apply_of_ne_of_ne ?_ ?_
-    · simp only [ne_eq, Fin.ext_iff, Fin.val_last, val_strand, Fin.val_castSucc]
-      omega
-    · simp only [ne_eq, Fin.ext_iff, Fin.val_last, val_strandSucc, Fin.val_castSucc]
-      omega
+    rw [strandIncl_sigma, permHom_sigma, transposition_eq_swap_castSucc_succ,
+      Fin.succ_castSucc]
+    exact Equiv.swap_apply_of_ne_of_ne (Fin.castSucc_ne_last _).symm (Fin.castSucc_ne_last _).symm
   | one => simp
   | mul b b' hb hb' => rw [map_mul, map_mul, Equiv.Perm.mul_apply, hb', hb]
   | inv b hb =>

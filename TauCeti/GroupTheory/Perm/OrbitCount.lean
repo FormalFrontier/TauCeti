@@ -22,7 +22,7 @@ by one, both stated so that they apply to a permutation of a *different* type th
 are compared with.
 
 * `TauCeti.orbitCount_conj`: conjugation does not change the number of orbits.
-* `TauCeti.orbitCount_add_one_eq_of_apply_eq`: if `σ : Equiv.Perm α` is carried by an injection
+* `TauCeti.orbitCount_add_one_eq_of_semiconj`: if `σ : Equiv.Perm α` is carried by an injection
   `f : α → β` to `τ : Equiv.Perm β`, and `f` misses exactly one point `p` of `β`, then `τ` has one
   orbit more than `σ` — the extra orbit is the fixed point `p`.
 * `TauCeti.orbitCount_mul_swap_add_one`: multiplying a permutation by a transposition that moves
@@ -35,16 +35,16 @@ move on braids, in `TauCeti/KnotTheory/Markov.lean`.
 
 ## Implementation notes
 
-`orbitCount` is `Nat.card` of a `Quotient`, so it is `0` exactly when the permutation has
-infinitely many orbits; every result below that compares two counts assumes the ambient type is
-finite.
+`orbitCount` is `Nat.card` of a `Quotient`, so it is `0` when the permutation has infinitely many
+orbits or no orbits at all; every result below that compares two counts assumes the ambient type
+is finite.
 
-Both counting results are deduced from one private lemma, `orbitCount_add_one_eq_aux`, whose
-input is a map `F : α → β` carrying the orbits of `σ` bijectively onto the orbits of `τ` other
-than a fixed point `p` of `τ`. That hypothesis is an `Iff` between `SameCycle σ x y` and
-`SameCycle τ (F x) (F y)`, and in each of the two applications it is obtained from a one-step
-statement propagated over all integer powers by
-`TauCeti.sameCycle_zpow_of_forall_sameCycle_apply`.
+Both counting results are deduced from one private lemma, `orbitCount_add_one_eq_aux`, whose input
+is a map `F : α → β` carrying the orbits of `σ` bijectively onto the orbits of `τ` other than a
+fixed point `p` of `τ`. Its `SameCycle` hypothesis comes from Mathlib's
+`Equiv.Perm.sameCycle_extendDomain` for adjoining a point. For splicing a point into an orbit, a
+one-step statement is propagated over all integer powers by the private lemma
+`sameCycle_zpow_of_forall_sameCycle_apply`.
 -/
 
 public section
@@ -63,7 +63,13 @@ infinitely many orbits. -/
 noncomputable def orbitCount (σ : Equiv.Perm α) : ℕ :=
   Nat.card (Quotient (Equiv.Perm.SameCycle.setoid σ))
 
+/-- The defining equation of `TauCeti.orbitCount`. -/
+theorem orbitCount_def (σ : Equiv.Perm α) :
+    orbitCount σ = Nat.card (Quotient (Equiv.Perm.SameCycle.setoid σ)) :=
+  (rfl)
+
 /-- Each point of `α` is its own orbit under the identity permutation. -/
+@[simp]
 theorem orbitCount_one : orbitCount (1 : Equiv.Perm α) = Nat.card α := by
   refine (Nat.card_congr (Equiv.ofBijective (Quotient.mk (SameCycle.setoid (1 : Perm α)))
     ⟨fun x y hxy ↦ ?_, Quotient.mk_surjective⟩)).symm
@@ -71,6 +77,7 @@ theorem orbitCount_one : orbitCount (1 : Equiv.Perm α) = Nat.card α := by
 
 /-- Conjugate permutations have the same number of orbits: conjugation by `g` relabels the points
 by `g`, hence relabels the orbits. -/
+@[simp]
 theorem orbitCount_conj (g σ : Equiv.Perm α) : orbitCount (g * σ * g⁻¹) = orbitCount σ := by
   refine (Nat.card_congr (Quotient.congr (ra := SameCycle.setoid σ)
     (rb := SameCycle.setoid (g * σ * g⁻¹)) g fun x y ↦ ?_)).symm
@@ -82,7 +89,8 @@ theorem orbitCount_conj (g σ : Equiv.Perm α) : orbitCount (g * σ * g⁻¹) = 
 /-- Propagate a one-step comparison over all integer powers: if every point `x` of `β` lies in the
 same `π`-cycle as its image `g x` does after one step of `σ`, then it lies in the same `π`-cycle
 as its image after any number of steps, forwards or backwards. -/
-theorem sameCycle_zpow_of_forall_sameCycle_apply {π : Equiv.Perm α} {σ : Equiv.Perm β} {g : β → α}
+private theorem sameCycle_zpow_of_forall_sameCycle_apply {π : Equiv.Perm α}
+    {σ : Equiv.Perm β} {g : β → α}
     (h : ∀ x, SameCycle π (g x) (g (σ x))) (i : ℤ) (x : β) :
     SameCycle π (g x) (g ((σ ^ i) x)) := by
   have hinv : ∀ x, SameCycle π (g x) (g (σ⁻¹ x)) := fun x ↦ by
@@ -128,48 +136,44 @@ private theorem orbitCount_add_one_eq_aux [Finite β] {σ : Equiv.Perm α} {τ :
       | _ y =>
         obtain ⟨x, rfl⟩ := hsurj y fun hy ↦ hc (congrArg _ hy)
         exact ⟨Quotient.mk _ x, rfl⟩
-  rw [orbitCount, orbitCount, Nat.card_congr key,
+  rw [orbitCount_def, orbitCount_def, Nat.card_congr key,
     ← Finite.card_option (α := { c : Quotient (SameCycle.setoid τ) // c ≠ Quotient.mk _ p })]
   exact Nat.card_congr (Equiv.optionSubtypeNe (Quotient.mk (SameCycle.setoid τ) p))
 
 /-- **Adjoining a fixed point adds one orbit.** If an injection `f : α → β` intertwines
 `σ : Equiv.Perm α` with `τ : Equiv.Perm β` and its image is the complement of a single point `p`,
 then `p` is a fixed point of `τ` and is the only orbit of `τ` that is not an orbit of `σ`. -/
-theorem orbitCount_add_one_eq_of_apply_eq [Finite β] {f : α → β} {p : β} {σ : Equiv.Perm α}
+theorem orbitCount_add_one_eq_of_semiconj [Finite β] {f : α → β} {p : β}
+    {σ : Equiv.Perm α}
     {τ : Equiv.Perm β} (hf : Function.Injective f) (hfp : ∀ x, f x ≠ p)
-    (hsurj : ∀ y, y ≠ p → ∃ x, f x = y) (hcomm : ∀ x, τ (f x) = f (σ x)) :
+    (hsurj : ∀ y, y ≠ p → ∃ x, f x = y) (hcomm : Function.Semiconj f σ τ) :
     orbitCount σ + 1 = orbitCount τ := by
-  have hinv : ∀ x, τ⁻¹ (f x) = f (σ⁻¹ x) := fun x ↦ by
-    have h1 : τ (f (σ⁻¹ x)) = f x := by rw [hcomm (σ⁻¹ x)]; simp
-    rw [← h1]
-    simp
-  have hτneg : (τ : Equiv.Perm β) ^ (-1 : ℤ) = τ⁻¹ := by simp
-  have hσneg : (σ : Equiv.Perm α) ^ (-1 : ℤ) = σ⁻¹ := by simp
-  -- The intertwining relation propagates to every integer power.
-  have hzpow : ∀ (i : ℤ) (x : α), (τ ^ i) (f x) = f ((σ ^ i) x) := by
-    intro i
-    induction i using Int.induction_on with
-    | zero => simp
-    | succ k ih =>
-      intro x
-      simp only [zpow_add, zpow_one, Equiv.Perm.mul_apply, hcomm]
-      exact ih (σ x)
-    | pred k ih =>
-      intro x
-      simp only [sub_eq_add_neg, zpow_add, hτneg, hσneg, Equiv.Perm.mul_apply, hinv x]
-      exact ih (σ⁻¹ x)
   -- The point `p` is missed by `f`, and `τ` preserves the image of `f`, so `τ` fixes `p`.
   have hp : τ p = p := by
     by_contra hcon
     obtain ⟨x, hx⟩ := hsurj (τ p) hcon
     refine hfp (σ⁻¹ x) (τ.injective ?_)
-    rw [hcomm (σ⁻¹ x)]
+    rw [← hcomm (σ⁻¹ x)]
     simp [hx]
-  refine orbitCount_add_one_eq_aux (F := f) (fun x y ↦ ⟨?_, ?_⟩) hfp hp hsurj
-  · rintro ⟨i, rfl⟩
-    exact ⟨i, hzpow i x⟩
-  · rintro ⟨i, hi⟩
-    exact ⟨i, hf (by rw [← hzpow i x, hi])⟩
+  classical
+  let e : α ≃ {y : β // y ≠ p} := Equiv.ofBijective (fun x ↦ ⟨f x, hfp x⟩) ⟨
+    fun x y hxy ↦ hf (Subtype.ext_iff.mp hxy), fun ⟨y, hy⟩ ↦ by
+      obtain ⟨x, rfl⟩ := hsurj y hy
+      exact ⟨x, rfl⟩⟩
+  have hτ : τ = σ.extendDomain e := by
+    ext y
+    by_cases hy : y = p
+    · subst y
+      rw [Equiv.Perm.extendDomain_apply_not_subtype]
+      · exact hp
+      · exact fun h ↦ h rfl
+    · obtain ⟨x, rfl⟩ := hsurj y hy
+      have he : (e x : β) = f x := rfl
+      rw [← he, Equiv.Perm.extendDomain_apply_image]
+      exact (hcomm x).symm
+  refine orbitCount_add_one_eq_aux (F := f) (fun x y ↦ ?_) hfp hp hsurj
+  rw [hτ]
+  exact (Equiv.Perm.sameCycle_extendDomain (g := σ) (f := e)).symm
 
 /-- **Splicing a fixed point into another orbit removes one orbit.** If `τ` fixes `p` and `a ≠ p`,
 then in `τ * Equiv.swap a p` the point `p` has joined the orbit of `a`, and no other orbit has
