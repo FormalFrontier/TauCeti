@@ -185,7 +185,6 @@ theorem idealCount_linearBounds : Nonempty (IdealCountingLinearBounds K) := by
 
 /-- The trivial ideal weight has norm coefficient the number of nonzero integral ideals of the
 given absolute norm, so its absolute value is that count. -/
-@[simp]
 theorem norm_normCoeff_one (n : ℕ) :
     ‖normCoeff K (1 : IdealArithmeticFunction K) n‖ = (normFiber K n).card := by
   rw [normCoeff_eq_sum_normFiber]
