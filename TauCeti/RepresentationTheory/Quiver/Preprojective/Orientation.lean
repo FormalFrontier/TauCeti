@@ -41,7 +41,7 @@ sign-flipped arrows by `-1` and fixes their formal reverses, gives
 
 Turning around a single arrow is the case of a labelling supported on one arrow; an arbitrary `σ`
 performs an arbitrary composite of such flips in one step, so the isomorphism above compares `Q`
-with the result of any prescribed reorientation of its arrows. Nothing is assumed about the
+with the explicit quiver `Reorient Q σ`. Nothing is assumed about the
 characteristic of `k`: in characteristic two the sign is invisible, and the same statement is
 obtained from the same proof.
 
@@ -84,8 +84,8 @@ what the transposition step of the proof does; the equality does *not* hold hom 
 This is the orientation-independence clause of Layer 4 of
 `TauCetiRoadmap/ZigzagPreprojective/README.md`, which asks to turn around a chosen arrow by an
 algebra isomorphism rescaling one of the exchanged arrows by `-1`, to check that it sends every
-local relation to the corresponding relation, and to compose these maps into independence of all
-orientations of a fixed underlying graph, including in characteristic two. See Crawley-Boevey,
+local relation to the corresponding relation, and to compose these maps into independence under
+every explicit reorientation `Reorient Q σ`, including in characteristic two. See Crawley-Boevey,
 *Quiver algebras, weighted projective lines, and the Deligne--Simpson problem*, Section 1.
 -/
 
@@ -176,6 +176,18 @@ its left-hand side. -/
 theorem reorientDoubledEquiv_ofArrow {x y : Symmetrify (Reorient Q σ)} (b : x ⟶ y) :
     reorientDoubledEquiv k σ (ofArrow b) = ofArrow ((reorientSymmetrify σ).map b) := by
   rw [reorientDoubledEquiv, mapAlgEquiv_apply, mapAlgHom_ofArrow]
+
+/-- The arrow computation for the doubled path-algebra comparison, with its object map normalized
+to the vertices of the reoriented quiver. -/
+theorem reorientDoubledEquiv_ofArrow_normalized {x y : Symmetrify (Reorient Q σ)} (b : x ⟶ y) :
+    reorientDoubledEquiv k σ (ofArrow b) =
+      ofArrow (Quiver.homOfEq ((reorientSymmetrify σ).map b)
+        (reorientSymmetrify_obj σ x :
+          (reorientSymmetrify σ).obj x = (show Symmetrify Q from x))
+        (reorientSymmetrify_obj σ y :
+          (reorientSymmetrify σ).obj y = (show Symmetrify Q from y))) := by
+  rw [reorientDoubledEquiv_ofArrow]
+  exact (ofArrow_homOfEq _ _ _).symm
 
 /-- An arrow which `σ` leaves alone keeps its head backtrack. -/
 @[simp]
@@ -398,10 +410,9 @@ theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk
 /-! The four equations below compute the isomorphism on the generators of the reoriented algebra,
 which are the arrows of `Symmetrify (Reorient Q σ)`. They are deliberately not `simp` lemmas,
 `TauCeti.PathAlgebra.ofArrow_eq_ofPath` and `Quiver.Symmetrify.of_map` already rewriting their
-left-hand sides. Each proof isolates the image of the generator in a `have`, whose statement names
-the vertices of `Q` directly where rewriting leaves them spelled `(reorientSymmetrify σ).obj v`;
-those two spellings are definitionally equal, which is what the closing `rfl` uses, but they are
-not syntactically equal, so rewriting further inside the un-normalized form fails. -/
+left-hand sides. Each proof computes the image through
+`TauCeti.reorientDoubledEquiv_ofArrow_normalized`, so the object map is rewritten explicitly rather
+than discharged by definitional equality. -/
 
 /-- **The isomorphism fixes an arrow which `σ` leaves alone.** -/
 theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_keep {i j : Q} (a : i ⟶ j)
@@ -411,8 +422,9 @@ theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_keep {i j : Q}
       = preprojectiveMk k Q (ofArrow (Symmetrify.of.map a)) := by
   have h : reorientDoubledEquiv k σ (ofArrow (Symmetrify.of.map (reorientKeep σ a ha)))
       = ofArrow (Symmetrify.of.map a) := by
-    rw [reorientDoubledEquiv_ofArrow, reorientSymmetrify_map_of_keep]
-    rfl
+    rw [reorientDoubledEquiv_ofArrow_normalized]
+    rw [reorientSymmetrify_map_of_keep]
+    exact ofArrow_homOfEq _ _ _
   rw [reorientPreprojectiveAlgebraEquiv_preprojectiveMk, h, rescale_ofArrow, doubledLabelling_of,
     reorientSign_of_false k ha, one_smul]
 
@@ -425,8 +437,9 @@ theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_reverse_keep {
   have h : reorientDoubledEquiv k σ
         (ofArrow (Quiver.reverse (Symmetrify.of.map (reorientKeep σ a ha))))
       = ofArrow (Quiver.reverse (Symmetrify.of.map a)) := by
-    rw [reorientDoubledEquiv_ofArrow, reorientSymmetrify_map_reverse_of_keep]
-    rfl
+    rw [reorientDoubledEquiv_ofArrow_normalized]
+    rw [reorientSymmetrify_map_reverse_of_keep]
+    exact ofArrow_homOfEq _ _ _
   rw [reorientPreprojectiveAlgebraEquiv_preprojectiveMk, h, rescale_ofArrow,
     doubledLabelling_reverse_of, one_smul]
 
@@ -440,8 +453,9 @@ theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_flip {i j : Q}
       = preprojectiveMk k Q (ofArrow (Quiver.reverse (Symmetrify.of.map a))) := by
   have h : reorientDoubledEquiv k σ (ofArrow (Symmetrify.of.map (reorientFlip σ a ha)))
       = ofArrow (Quiver.reverse (Symmetrify.of.map a)) := by
-    rw [reorientDoubledEquiv_ofArrow, reorientSymmetrify_map_of_flip]
-    rfl
+    rw [reorientDoubledEquiv_ofArrow_normalized]
+    rw [reorientSymmetrify_map_of_flip]
+    exact ofArrow_homOfEq _ _ _
   rw [reorientPreprojectiveAlgebraEquiv_preprojectiveMk, h, rescale_ofArrow,
     doubledLabelling_reverse_of, one_smul]
 
@@ -456,8 +470,9 @@ theorem reorientPreprojectiveAlgebraEquiv_preprojectiveMk_ofArrow_reverse_flip {
   have h : reorientDoubledEquiv k σ
         (ofArrow (Quiver.reverse (Symmetrify.of.map (reorientFlip σ a ha))))
       = ofArrow (Symmetrify.of.map a) := by
-    rw [reorientDoubledEquiv_ofArrow, reorientSymmetrify_map_reverse_of_flip]
-    rfl
+    rw [reorientDoubledEquiv_ofArrow_normalized]
+    rw [reorientSymmetrify_map_reverse_of_flip]
+    exact ofArrow_homOfEq _ _ _
   rw [reorientPreprojectiveAlgebraEquiv_preprojectiveMk, h, rescale_ofArrow, doubledLabelling_of,
     reorientSign_of_true k ha, neg_one_smul, map_neg]
 

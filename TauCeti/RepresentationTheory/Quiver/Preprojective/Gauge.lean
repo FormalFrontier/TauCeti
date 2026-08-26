@@ -63,9 +63,9 @@ negates under reversal. The `-` sign in `ρ_ε` is exactly the antisymmetry of t
 
 Reversing the orientation of an arrow of `Q` is here a change of the labelling `ε`, not a change of
 the quiver: the results below establish gauge independence for the labellings of one fixed quiver
-and hence in one fixed doubled path algebra. The cross-quiver form of orientation independence,
-which compares the preprojective algebras of two quivers with a common underlying graph, is proved
-in `TauCeti.RepresentationTheory.Quiver.Preprojective.Orientation`; it consumes the gauge
+and hence in one fixed doubled path algebra. The reorientation form of orientation independence,
+which compares `Q` with an explicit `Reorient Q σ`, is proved in
+`TauCeti.RepresentationTheory.Quiver.Preprojective.Orientation`; it consumes the gauge
 isomorphism below after identifying the two doubled path algebras.
 
 ## References

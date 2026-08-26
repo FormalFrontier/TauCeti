@@ -7,16 +7,14 @@ module
 
 public import Mathlib.Combinatorics.Quiver.Symmetric
 public import Mathlib.Data.Fintype.BigOperators
-public import Mathlib.Data.Fintype.Sum
 public import TauCeti.Combinatorics.Quiver.Prefunctor
 
 /-!
 # Reorienting a quiver
 
-Two quivers with the same underlying graph differ by a choice, for each edge, of which of its two
-directions carries the arrow. This file records such a choice as a `Bool`-valued labelling `σ` of
-the arrows of a quiver `Q` and builds the quiver `TauCeti.Reorient Q σ`, whose arrows are those of
-`Q` with the ones labelled `true` turned around.
+A `Bool`-valued labelling `σ` of the arrows of a quiver `Q` specifies a change of orientation: this
+file builds the quiver `TauCeti.Reorient Q σ`, whose arrows are those of `Q` with the ones labelled
+`true` turned around.
 
 The two doubled quivers `Quiver.Symmetrify (Reorient Q σ)` and `Quiver.Symmetrify Q` carry exactly
 the same arrows, distributed differently between an arrow and its formal reverse. That is the
@@ -29,7 +27,7 @@ identification along which a construction on doubled quivers -- the additive pre
 
 * `TauCeti.Reorient`: the quiver `Q` with the arrows labelled `true` by `σ` turned around.
 * `TauCeti.reorientHomEquiv`: the identification of a hom set of `Reorient Q σ` with the two
-  subtypes of hom sets of `Q` it is built from, together with `TauCeti.reorientHom_induction` the
+  subtypes of hom sets of `Q` it is built from, together with `TauCeti.reorientHom_induction_on` the
   general elimination interface for a reoriented arrow.
 * `TauCeti.reorientSymmetrify` and `TauCeti.reorientSymmetrifyInv`: the two prefunctors between
   the doubled quivers.
@@ -112,13 +110,11 @@ definitionally equal, so this is the identity; naming it keeps the two quiver st
 abbrev reorientVertex (v : Q) : Reorient Q σ := v
 
 /-- The arrow of `Reorient Q σ` carried by an arrow of `Q` which `σ` leaves alone. -/
-@[expose]
 def reorientKeep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) : reorientVertex σ i ⟶ reorientVertex σ j :=
   Sum.inl ⟨a, h⟩
 
 /-- The arrow of `Reorient Q σ` carried by an arrow of `Q` which `σ` turns around: it runs from
 the head of the original arrow to its tail. -/
-@[expose]
 def reorientFlip {i j : Q} (a : j ⟶ i) (h : σ a) : reorientVertex σ i ⟶ reorientVertex σ j :=
   Sum.inr ⟨a, h⟩
 
@@ -126,9 +122,7 @@ def reorientFlip {i j : Q} (a : j ⟶ i) (h : σ a) : reorientVertex σ i ⟶ re
 `Reorient Q σ` are the arrows `i ⟶ j` of `Q` which `σ` leaves alone together with the arrows
 `j ⟶ i` of `Q` which `σ` turns around. This equivalence is the general elimination interface for a
 reoriented hom set, so no consumer needs to unfold `TauCeti.reorientQuiver`;
-`TauCeti.reorientHom_induction` is its tactic form. Exposed, like `TauCeti.reorientKeep` and
-`TauCeti.reorientFlip`, because its own computation lemmas below are proved by `rfl`. -/
-@[expose]
+`TauCeti.reorientHom_induction_on` is its tactic form. -/
 def reorientHomEquiv (i j : Q) :
     (reorientVertex σ i ⟶ reorientVertex σ j) ≃ {a : i ⟶ j // ¬ σ a} ⊕ {a : j ⟶ i // σ a} :=
   Equiv.refl _
@@ -137,31 +131,31 @@ def reorientHomEquiv (i j : Q) :
 @[simp]
 theorem reorientHomEquiv_reorientKeep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) :
     reorientHomEquiv σ i j (reorientKeep σ a h) = Sum.inl ⟨a, h⟩ :=
-  rfl
+  (rfl)
 
 /-- The elimination equivalence sends an arrow `σ` turns around to the right summand. -/
 @[simp]
 theorem reorientHomEquiv_reorientFlip {i j : Q} (a : j ⟶ i) (h : σ a) :
     reorientHomEquiv σ i j (reorientFlip σ a h) = Sum.inr ⟨a, h⟩ :=
-  rfl
+  (rfl)
 
 /-- The left summand of the elimination equivalence is an arrow `σ` leaves alone. -/
 @[simp]
 theorem reorientHomEquiv_symm_inl {i j : Q} (x : {a : i ⟶ j // ¬ σ a}) :
     (reorientHomEquiv σ i j).symm (Sum.inl x) = reorientKeep σ x.1 x.2 :=
-  rfl
+  (rfl)
 
 /-- The right summand of the elimination equivalence is an arrow `σ` turns around. -/
 @[simp]
 theorem reorientHomEquiv_symm_inr {i j : Q} (y : {a : j ⟶ i // σ a}) :
     (reorientHomEquiv σ i j).symm (Sum.inr y) = reorientFlip σ y.1 y.2 :=
-  rfl
+  (rfl)
 
 /-- **Case analysis on an arrow of a reorientation**: it is either an arrow of `Q` which `σ` leaves
 alone or an arrow of `Q` which `σ` turns around. This is the tactic form of
 `TauCeti.reorientHomEquiv`. -/
 @[elab_as_elim]
-theorem reorientHom_induction {i j : Q}
+theorem reorientHom_induction_on {i j : Q}
     {motive : (reorientVertex σ i ⟶ reorientVertex σ j) → Prop}
     (b : reorientVertex σ i ⟶ reorientVertex σ j)
     (keep : ∀ (a : i ⟶ j) (h : ¬ σ a), motive (reorientKeep σ a h))
@@ -188,7 +182,8 @@ theorem sum_reorientHom {M : Type*} [AddCommMonoid M] [∀ i j : Q, Fintype (i �
 /-- The comparison prefunctor from the doubled reoriented quiver to the doubled quiver. It is the
 identity on vertices; on arrows it forgets which of the four pieces of a hom set of
 `Symmetrify (Reorient Q σ)` an arrow came from and remembers only whether it runs forwards or
-backwards in `Q`. -/
+backwards in `Q`. The body is exposed because the dependent source and target types of its public
+arrow-map equations contain the object map. -/
 @[expose]
 def reorientSymmetrify : Symmetrify (Reorient Q σ) ⥤q Symmetrify Q where
   obj := id
@@ -201,8 +196,8 @@ def reorientSymmetrify : Symmetrify (Reorient Q σ) ⥤q Symmetrify Q where
 
 /-- The inverse comparison: an arrow of the doubled quiver is sorted into one of the four pieces of
 a hom set of `Symmetrify (Reorient Q σ)` according to whether it runs forwards or backwards in `Q`
-and whether `σ` turns it around. Its object map remains exposed because reducing `obj := id` is
-needed to typecheck the dependent source and target types of its public arrow-map equations. -/
+and whether `σ` turns it around. As for `TauCeti.reorientSymmetrify`, exposure is needed for the
+dependent endpoint types of its public arrow-map equations. -/
 @[expose]
 def reorientSymmetrifyInv : Symmetrify Q ⥤q Symmetrify (Reorient Q σ) where
   obj := id
@@ -216,12 +211,12 @@ def reorientSymmetrifyInv : Symmetrify Q ⥤q Symmetrify (Reorient Q σ) where
 /-- The comparison of doubled quivers is the identity on vertices. -/
 @[simp]
 theorem reorientSymmetrify_obj (i : Symmetrify (Reorient Q σ)) :
-    (reorientSymmetrify σ).obj i = i := rfl
+    (reorientSymmetrify σ).obj i = i := (rfl)
 
 /-- The inverse comparison of doubled quivers is the identity on vertices. -/
 @[simp]
 theorem reorientSymmetrifyInv_obj (i : Symmetrify Q) :
-    (reorientSymmetrifyInv σ).obj i = i := rfl
+    (reorientSymmetrifyInv σ).obj i = i := (rfl)
 
 /-- The defining case distinction of the inverse comparison on an arrow of `Q`, stated in terms of
 `TauCeti.reorientKeep` and `TauCeti.reorientFlip`. The two sides are definitionally equal, the
@@ -231,7 +226,7 @@ private theorem reorientSymmetrifyInv_map_of {i j : Q} (a : i ⟶ j) :
     (reorientSymmetrifyInv σ).map (Symmetrify.of.map a) =
       if h : σ a then Quiver.reverse (Symmetrify.of.map (reorientFlip σ a h))
         else Symmetrify.of.map (reorientKeep σ a h) :=
-  rfl
+  (rfl)
 
 /-- The defining case distinction of the inverse comparison on the formal reverse of an arrow of
 `Q`; see `TauCeti.reorientSymmetrifyInv_map_of`. -/
@@ -239,7 +234,7 @@ private theorem reorientSymmetrifyInv_map_reverse_of {i j : Q} (a : i ⟶ j) :
     (reorientSymmetrifyInv σ).map (Quiver.reverse (Symmetrify.of.map a)) =
       if h : σ a then Symmetrify.of.map (reorientFlip σ a h)
         else Quiver.reverse (Symmetrify.of.map (reorientKeep σ a h)) :=
-  rfl
+  (rfl)
 
 /-- The inverse comparison sends an arrow which `σ` leaves alone to the corresponding arrow of the
 reoriented quiver. Deliberately not a `simp` lemma: `Quiver.Symmetrify.of_map` rewrites
@@ -278,7 +273,7 @@ theorem reorientSymmetrifyInv_map_reverse_of_flip {i j : Q} (a : i ⟶ j) (h : �
 theorem reorientSymmetrify_map_of_keep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) :
     (reorientSymmetrify σ).map (Symmetrify.of.map (reorientKeep σ a h)) =
       Symmetrify.of.map a :=
-  rfl
+  (rfl)
 
 /-- The formal reverse of an arrow which `σ` leaves alone stays a formal reverse. Deliberately not
 a `simp` lemma: `Quiver.symmetrify_reverse` rewrites `Quiver.reverse` to `Sum.swap` on the left-hand
@@ -286,21 +281,21 @@ side, and `simpNF` rejects the pair. -/
 theorem reorientSymmetrify_map_reverse_of_keep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) :
     (reorientSymmetrify σ).map (Quiver.reverse (Symmetrify.of.map (reorientKeep σ a h))) =
       Quiver.reverse (Symmetrify.of.map a) :=
-  rfl
+  (rfl)
 
 /-- An arrow of `Q` which `σ` turns around becomes the formal reverse of itself. -/
 @[simp]
 theorem reorientSymmetrify_map_of_flip {i j : Q} (a : j ⟶ i) (h : σ a) :
     (reorientSymmetrify σ).map (Symmetrify.of.map (reorientFlip σ a h)) =
       Quiver.reverse (Symmetrify.of.map a) :=
-  rfl
+  (rfl)
 
 /-- The formal reverse of a turned-around arrow is the arrow itself. Deliberately not a `simp`
 lemma, for the reason recorded on `TauCeti.reorientSymmetrify_map_reverse_of_keep`. -/
 theorem reorientSymmetrify_map_reverse_of_flip {i j : Q} (a : j ⟶ i) (h : σ a) :
     (reorientSymmetrify σ).map (Quiver.reverse (Symmetrify.of.map (reorientFlip σ a h))) =
       Symmetrify.of.map a :=
-  rfl
+  (rfl)
 
 /-- **The two comparisons are inverse**, starting from the reoriented quiver. -/
 theorem reorientSymmetrify_comp_reorientSymmetrifyInv :
