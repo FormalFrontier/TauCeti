@@ -28,7 +28,8 @@ Forgetting continuity is only sound in the direction "continuous intertwiner ↦
 hypothesis of the vanishing half is inequivalence as *continuous* representations, which is the
 weaker of the two hypotheses to discharge. `ContRepresentation.nonempty_equiv_iff` is what
 closes the gap: in finite dimensions over a complete field the two notions of equivalence agree,
-because every linear map out of a finite-dimensional normed space is continuous.
+because every linear map out of a finite-dimensional Hausdorff topological vector space is
+continuous.
 
 ## Main statements
 

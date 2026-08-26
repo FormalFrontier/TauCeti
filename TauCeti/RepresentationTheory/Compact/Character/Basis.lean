@@ -159,7 +159,8 @@ theorem exists_forall_inner_matrixCoeffLp_eq [IsAlgClosed 𝕜] (hunitary : IsUn
   refine ⟨c, fun v w ↦ ?_⟩
   have hTv : T v = c • v := by
     calc
-      T v = f v := rfl
+      T v = f v :=
+        (LinearMap.toIntertwiningMap π.toRepresentation π.toRepresentation T hcomm v).symm
       _ = f' v :=
         (_root_.ContRepresentation.intertwiningMapEquiv_symm_apply_apply f v).symm
       _ = (c • (1 : ContIntertwiningMap π π)) v :=
