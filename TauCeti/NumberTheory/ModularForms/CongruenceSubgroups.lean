@@ -190,16 +190,8 @@ theorem mapGL_mem_normalizer_Gamma1_map (S : Type*) [CommRing S] (g : ↥(Gamma0
     mapGL S (g : SL(2, ℤ)) ∈
       Subgroup.normalizer (((Gamma1 N).map (mapGL S) : Subgroup (GL (Fin 2) S)) :
         Set (GL (Fin 2) S)) := by
-  refine Subgroup.mem_normalizer_iff.mpr fun y ↦ ⟨fun hy ↦ ?_, fun hy ↦ ?_⟩
-  · obtain ⟨σ, hσ, rfl⟩ := Subgroup.mem_map.mp hy
-    exact Subgroup.mem_map.mpr ⟨(g : SL(2, ℤ)) * σ * (g : SL(2, ℤ))⁻¹,
-      Gamma0_normalizes_Gamma1 g σ hσ, by simp [map_mul, map_inv]⟩
-  · obtain ⟨σ, hσ, hσy⟩ := Subgroup.mem_map.mp hy
-    refine Subgroup.mem_map.mpr ⟨(g : SL(2, ℤ))⁻¹ * σ * (g : SL(2, ℤ)), ?_, ?_⟩
-    · simpa [inv_inv] using Gamma0_normalizes_Gamma1
-        ⟨(g : SL(2, ℤ))⁻¹, (Gamma0 N).inv_mem g.property⟩ σ hσ
-    · rw [map_mul, map_mul, map_inv, hσy]
-      group
+  exact Subgroup.le_normalizer_map (H := Gamma1 N) (mapGL S)
+    (Subgroup.mem_map.mpr ⟨g, Gamma0_le_normalizer_Gamma1 N g.property, rfl⟩)
 
 /-- `(Gamma1 N).map (mapGL ℝ)` is invariant under conjugation by `Gamma0 N` elements
 in `GL₂(ℝ)`: the pointwise-conjugation form of `mapGL_mem_normalizer_Gamma1_map`. -/

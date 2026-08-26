@@ -107,14 +107,14 @@ normalizes `Γ₁(N)`. -/
     (doubleCoset_eq_rightCoset_of_mem_normalizer (mapGL_mem_normalizer_Gamma1_map ℚ g))
 
 /-- The chosen representative of a diamond coset lies in the right coset `Γ₁(N) γ`. -/
-lemma rep_diamondCosetGamma1_mem_rightCoset (g : ↥(Gamma0 N)) :
+private lemma rep_diamondCosetGamma1_mem_rightCoset (g : ↥(Gamma0 N)) :
     ((diamondCosetGamma1 N g).rep : GL (Fin 2) ℚ) ∈
       op (mapGL ℚ (g : SL(2, ℤ))) • ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) :=
   diamondCosetGamma1_toSet g ▸ (diamondCosetGamma1 N g).rep_mem
 
 /-- The chosen representative of a diamond coset again normalizes `Γ₁(N)`: it lies in
 `Γ₁(N) γ Γ₁(N)`, all of whose elements do. -/
-lemma rep_diamondCosetGamma1_mem_normalizer (g : ↥(Gamma0 N)) :
+private lemma rep_diamondCosetGamma1_mem_normalizer (g : ↥(Gamma0 N)) :
     ((diamondCosetGamma1 N g).rep : GL (Fin 2) ℚ) ∈
       Subgroup.normalizer (((Gamma1 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) :
         Set (GL (Fin 2) ℚ)) :=
