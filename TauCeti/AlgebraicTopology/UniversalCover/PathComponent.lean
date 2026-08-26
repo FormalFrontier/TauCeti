@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicTopology.ClopenSubspace
+public import TauCeti.AlgebraicTopology.PathComponent
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.FundamentalGroup.UniversalCover
 public import TauCeti.Topology.Covering.Clopen
 
@@ -18,8 +18,8 @@ path component of `x₀`, and the roadmap's standing hypotheses accordingly allo
 cover of `pathComponent x₀` instead. This file does that.
 
 For `X` locally path connected and semilocally simply connected — but *not* assumed path
-connected — the path component of `x₀` is a clopen subspace which inherits all three standing
-hypotheses (`TauCeti/AlgebraicTopology/ClopenSubspace.lean`). Its universal cover is therefore
+connected — the path component of `x₀` inherits all three standing hypotheses
+(`TauCeti/AlgebraicTopology/PathComponent.lean`). Its universal cover is therefore
 available, and because the subspace is clopen the composite of its endpoint projection with the
 inclusion is a covering map of `X` itself, with range exactly `pathComponent x₀`. Total-space
 path connectedness and simple connectivity are inherited from the universal cover, being
@@ -115,6 +115,14 @@ noncomputable def deckPathComponentCoverProjEquiv :
     (UniversalCover.deckFundamentalGroupEquiv (pathComponentSelf x₀)).trans <|
       MulEquiv.op (fundamentalGroupMulEquivPathComponent x₀)
 
+private theorem deckPathComponentCoverProjEquiv_symm_op_eq (g : FundamentalGroup X x₀) :
+    (deckPathComponentCoverProjEquiv x₀).symm (MulOpposite.op g) =
+      (MulEquiv.subgroupCongr (deck_pathComponentCoverProj x₀)).symm
+        ((UniversalCover.deckFundamentalGroupEquiv (pathComponentSelf x₀)).symm
+          (MulOpposite.op ((fundamentalGroupMulEquivPathComponent x₀).symm g))) := by
+  rw [deckPathComponentCoverProjEquiv]
+  rfl
+
 /-- The inverse deck-group equivalence sends `op g` to the loop deck transformation associated
 to the inverse of the corresponding loop in the path component. -/
 @[simp]
@@ -123,9 +131,7 @@ theorem deckPathComponentCoverProjEquiv_symm_op (g : FundamentalGroup X x₀) :
       (MulEquiv.subgroupCongr (deck_pathComponentCoverProj x₀)).symm
         (UniversalCover.loopDeck (pathComponentSelf x₀)
           ((fundamentalGroupMulEquivPathComponent x₀).symm g)⁻¹) := by
-  change (MulEquiv.subgroupCongr (deck_pathComponentCoverProj x₀)).symm
-      ((UniversalCover.deckFundamentalGroupEquiv (pathComponentSelf x₀)).symm
-        (MulOpposite.op ((fundamentalGroupMulEquivPathComponent x₀).symm g))) = _
-  rw [UniversalCover.deckFundamentalGroupEquiv_symm_op]
+  rw [deckPathComponentCoverProjEquiv_symm_op_eq,
+    UniversalCover.deckFundamentalGroupEquiv_symm_op]
 
 end TauCeti

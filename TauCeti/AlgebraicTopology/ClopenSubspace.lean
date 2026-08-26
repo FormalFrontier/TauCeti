@@ -19,12 +19,10 @@ a preconnected set meeting the clopen set `s`, hence contained in `s`. Consequen
 `↥s → X` is an isomorphism on fundamental groups at every basepoint of `s`, and semilocal simple
 connectivity is inherited by `↥s`.
 
-The motivating instance is the path component of a point in a locally path connected space, which
-is clopen by `IsClopen.pathComponent`. The universal-cover development assumes throughout that its
-base is path connected; the results here supply the three standing hypotheses for the path
-component of an arbitrary point of a locally path connected, semilocally simply connected space,
-so that the whole theory applies to a base which is not path connected. See
-`TauCeti/AlgebraicTopology/UniversalCover/PathComponent.lean` for that application.
+The motivating application is to the path component of a point in a locally path connected space,
+which is clopen by `IsClopen.pathComponent`. See
+`TauCeti/AlgebraicTopology/PathComponent.lean` for the path-component API and
+`TauCeti/AlgebraicTopology/UniversalCover/PathComponent.lean` for the resulting universal cover.
 
 ## Main declarations
 
@@ -38,9 +36,6 @@ so that the whole theory applies to a base which is not path connected. See
   the clopen subspace.
 * `TauCeti.semilocallySimplyConnectedSpace_of_isClopen`: a clopen subspace of a semilocally
   simply connected space is semilocally simply connected.
-* Instances making `↥(pathComponent x₀)` path connected, locally path connected and semilocally
-  simply connected, and `TauCeti.fundamentalGroupMulEquivPathComponent` identifying its
-  fundamental group with that of `X`.
 
 ## References
 
@@ -156,114 +151,5 @@ theorem semilocallySimplyConnectedSpace_of_isClopen [SemilocallySimplyConnectedS
     refine ⟨Subtype.val ⁻¹' U, continuous_subtype_val.tendsto a hU, fun γ hγ => ?_⟩
     exact homotopic_refl_of_map_subtypeVal_homotopic_refl hs
       (hloop (γ.map continuous_subtype_val) (by simpa using hγ))
-
-section PathComponent
-
-variable (x₀ : X)
-
-/-- The path component of a point, as a subspace, is path connected. -/
-instance instPathConnectedSpaceSubtypePathComponent :
-    PathConnectedSpace (pathComponent x₀) :=
-  isPathConnected_iff_pathConnectedSpace.mp isPathConnected_pathComponent
-
-/-- In a locally path connected space the path components are open, hence locally path connected
-as subspaces. -/
-instance instLocallyPathConnectedSpaceSubtypePathComponent [LocallyPathConnectedSpace X] :
-    LocallyPathConnectedSpace (pathComponent x₀) :=
-  (IsOpen.pathComponent x₀).locallyPathConnectedSpace
-
-/-- A path component inherits semilocal simple connectivity: an ambient null-homotopy based in
-the component remains in that component. -/
-instance instSemilocallySimplyConnectedSpaceSubtypePathComponent
-    [SemilocallySimplyConnectedSpace X] :
-    SemilocallySimplyConnectedSpace (pathComponent x₀) :=
-  ⟨fun a => by
-    obtain ⟨U, hU, hloop⟩ :=
-      SemilocallySimplyConnectedSpace.exists_mem_nhds_loops_nullhomotopic (a : X)
-    refine ⟨Subtype.val ⁻¹' U, continuous_subtype_val.tendsto a hU, fun γ hγ => ?_⟩
-    obtain ⟨H⟩ := hloop (γ.map continuous_subtype_val) (by simpa using hγ)
-    have hγmem : ∀ t, (γ.map continuous_subtype_val) t ∈ pathComponent x₀ := fun t =>
-      (γ t).2
-    have hmem : ∀ p : I × I, H p ∈ pathComponent x₀ := fun p =>
-      Joined.mem_pathComponent
-        ⟨Path.initialSegmentFamily (H.evalAt p.2) p.1⟩
-        (H.map_zero_left p.2 ▸ hγmem p.2)
-    exact Path.homotopic_of_continuous_square (fun p => ⟨H p, hmem p⟩)
-      (H.continuous.subtype_mk hmem) (fun t => Subtype.ext (H.map_zero_left t))
-      (fun t => Subtype.ext (H.map_one_left t)) (fun t => Subtype.ext (H.source t))
-      (fun t => Subtype.ext (H.target t))⟩
-
-/-- The basepoint of `X`, viewed as a point of its own path component. -/
-abbrev pathComponentSelf : (pathComponent x₀ : Set X) :=
-  ⟨x₀, mem_pathComponent_self x₀⟩
-
-@[simp] theorem pathComponentSelf_coe : (pathComponentSelf x₀ : X) = x₀ := (rfl)
-
-/-- **The path component of `x₀` carries the fundamental group of `X` at `x₀`.** Loops at `x₀`
-and their homotopies never leave the path component. -/
-noncomputable def fundamentalGroupMulEquivPathComponent :
-    FundamentalGroup (pathComponent x₀) (pathComponentSelf x₀) ≃* FundamentalGroup X x₀ :=
-  MulEquiv.ofBijective
-    (FundamentalGroup.map
-      (⟨Subtype.val, continuous_subtype_val⟩ : C(pathComponent x₀, X))
-      (pathComponentSelf x₀)) <| by
-    constructor
-    · rw [injective_iff_map_eq_one]
-      intro g hg
-      obtain ⟨γ, rfl⟩ := Quotient.exists_rep (FundamentalGroup.toPath g)
-      have hnull : (γ.map continuous_subtype_val).Homotopic (Path.refl x₀) := by
-        refine (FundamentalGroupoid.fromPath_eq_iff_homotopic _ _).mp ?_
-        exact (FundamentalGroup.map_fromPath
-            (⟨Subtype.val, continuous_subtype_val⟩ : C(pathComponent x₀, X))
-            (pathComponentSelf x₀) γ).symm.trans
-          (hg.trans (FundamentalGroupoid.id_eq_path_refl (FundamentalGroupoid.mk x₀)))
-      refine (FundamentalGroupoid.fromPath_eq_iff_homotopic _ _).mpr ?_
-      obtain ⟨H⟩ := hnull
-      have hγmem : ∀ t, (γ.map continuous_subtype_val) t ∈ pathComponent x₀ := fun t =>
-        ⟨Path.initialSegmentFamily (γ.map continuous_subtype_val) t⟩
-      have hmem : ∀ p : I × I, H p ∈ pathComponent x₀ := fun p =>
-        Joined.mem_pathComponent
-          ⟨Path.initialSegmentFamily (H.evalAt p.2) p.1⟩
-          (H.map_zero_left p.2 ▸ hγmem p.2)
-      refine Path.homotopic_of_continuous_square (fun p => ⟨H p, hmem p⟩)
-        (H.continuous.subtype_mk hmem) (fun t => Subtype.ext ?_) (fun t => Subtype.ext ?_)
-        (fun t => Subtype.ext ?_) (fun t => Subtype.ext ?_) <;> simp
-    · intro g
-      obtain ⟨γ, rfl⟩ := Quotient.exists_rep (FundamentalGroup.toPath g)
-      let hmem : ∀ t, γ t ∈ pathComponent x₀ := fun t => ⟨Path.initialSegmentFamily γ t⟩
-      refine ⟨FundamentalGroup.fromPath
-        ⟦Path.codRestrict (x := pathComponentSelf x₀) (y := pathComponentSelf x₀)
-          γ hmem⟧, ?_⟩
-      rw [FundamentalGroup.map_fromPath, Path.map_codRestrict]
-      rfl
-
-@[simp]
-theorem fundamentalGroupMulEquivPathComponent_apply
-    (g : FundamentalGroup (pathComponent x₀) (pathComponentSelf x₀)) :
-    fundamentalGroupMulEquivPathComponent x₀ g =
-      FundamentalGroup.map
-        (⟨Subtype.val, continuous_subtype_val⟩ : C(pathComponent x₀, X))
-        (pathComponentSelf x₀) g :=
-  MulEquiv.ofBijective_apply _ _ g
-
-/-- The inverse path-component equivalence corestricts a representative loop to the path
-component, which contains each of its initial segments. -/
-theorem fundamentalGroupMulEquivPathComponent_symm_fromPath (γ : Path x₀ x₀) :
-    (fundamentalGroupMulEquivPathComponent x₀).symm (FundamentalGroup.fromPath ⟦γ⟧) =
-      FundamentalGroup.fromPath
-        ⟦Path.codRestrict (x := pathComponentSelf x₀) (y := pathComponentSelf x₀) γ
-          (fun t => ⟨Path.initialSegmentFamily γ t⟩)⟧ := by
-  rw [MulEquiv.symm_apply_eq, fundamentalGroupMulEquivPathComponent_apply,
-    FundamentalGroup.map_fromPath]
-  change Path.Homotopic.Quotient.mk γ =
-    Path.Homotopic.Quotient.mk
-      ((Path.codRestrict (x := pathComponentSelf x₀) (y := pathComponentSelf x₀) γ
-        (fun t => ⟨Path.initialSegmentFamily γ t⟩)).map continuous_subtype_val)
-  exact congrArg Path.Homotopic.Quotient.mk
-    (Path.map_codRestrict (s := pathComponent x₀) (x := pathComponentSelf x₀)
-      (y := pathComponentSelf x₀) γ
-      (fun t => show γ t ∈ pathComponent x₀ from ⟨Path.initialSegmentFamily γ t⟩)).symm
-
-end PathComponent
 
 end TauCeti
