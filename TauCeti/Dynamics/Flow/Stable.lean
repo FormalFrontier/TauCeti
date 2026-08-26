@@ -114,6 +114,7 @@ theorem fixed_of_mem_unstableSet [T2Space α] {φ : _root_.Flow ℝ α} {x y : �
   exact tendsto_nhds_unique hleft hright
 
 /-- A point belongs to its stable set exactly when it is fixed by the flow. -/
+@[simp 1200]
 theorem self_mem_stableSet_iff [T2Space α] {φ : _root_.Flow ℝ α} {x : α} :
     x ∈ stableSet φ x ↔ ∀ t, φ t x = x := by
   refine ⟨fun hx t ↦ fixed_of_mem_stableSet hx t, fun hx ↦ ?_⟩
@@ -121,6 +122,7 @@ theorem self_mem_stableSet_iff [T2Space α] {φ : _root_.Flow ℝ α} {x : α} :
   simpa only [hx] using (tendsto_const_nhds : Tendsto (fun _ : ℝ ↦ x) atTop (𝓝 x))
 
 /-- A point belongs to its unstable set exactly when it is fixed by the flow. -/
+@[simp 1200]
 theorem self_mem_unstableSet_iff [T2Space α] {φ : _root_.Flow ℝ α} {x : α} :
     x ∈ unstableSet φ x ↔ ∀ t, φ t x = x := by
   refine ⟨fun hx t ↦ fixed_of_mem_unstableSet hx t, fun hx ↦ ?_⟩
