@@ -6,19 +6,22 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Connected.Clopen
+public import Mathlib.Topology.Connected.LocallyConnected
 public import Mathlib.Topology.Irreducible
 import Mathlib.Topology.Homeomorph.Lemmas
 
 /-!
 # Connected components
 
-This file records general topological properties of the quotient of a space by its connected
-components.
+This file records general topological properties of connected components, and of the quotient of a
+space by them.
 
 ## Main declarations
 
 * `TauCeti.Homeomorph.image_connectedComponent`: a homeomorphism maps a connected component onto
   the connected component of the image point.
+* `TauCeti.frontier_connectedComponentIn_subset_compl`: in a locally connected space, a connected
+  component of an open set has its frontier in the complement of that set.
 * `TauCeti.instT1SpaceConnectedComponents`: the connected-components quotient of any topological
   space is a T1 space.
 * `TauCeti.finite_connectedComponents_of_finite_irreducibleComponents`: finiteness of the
@@ -41,6 +44,24 @@ theorem Homeomorph.image_connectedComponent {Y : Type*} [TopologicalSpace Y]
     e '' connectedComponent x = connectedComponent (e x) := by
   simpa only [connectedComponentIn_univ, Set.image_univ_of_surjective e.surjective] using
     e.image_connectedComponentIn (s := Set.univ) (x := x) (Set.mem_univ x)
+
+/-- **The frontier of a connected component of an open set misses the set.** In a locally
+connected space a component `C` of an open `F` is itself open, and a point `y ∈ F` in the closure
+of `C` has its own component of `F` as an open neighbourhood, which therefore meets `C`; two
+components that meet are equal, so `y ∈ C` — and an open set is disjoint from its frontier.
+
+Equivalently `frontier (connectedComponentIn F x) ⊆ F \ connectedComponentIn F x` is empty on the
+`F` side: the component is clopen in `F`. -/
+theorem frontier_connectedComponentIn_subset_compl [LocallyConnectedSpace X] {F : Set X}
+    (hF : IsOpen F) (x : X) : frontier (connectedComponentIn F x) ⊆ Fᶜ := by
+  intro y hy hyF
+  have hC : IsOpen (connectedComponentIn F x) := hF.connectedComponentIn
+  obtain ⟨z, hzy, hzx⟩ :=
+    mem_closure_iff.mp hy.1 _ hF.connectedComponentIn (mem_connectedComponentIn hyF)
+  have hyC : y ∈ connectedComponentIn F x := by
+    rw [connectedComponentIn_eq hzx, ← connectedComponentIn_eq hzy]
+    exact mem_connectedComponentIn hyF
+  exact hy.2 (by rwa [hC.interior_eq])
 
 /-- The quotient of a topological space by its connected components is a T1 space. -/
 instance instT1SpaceConnectedComponents : T1Space (ConnectedComponents X) :=
