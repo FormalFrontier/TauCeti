@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors, Archon Horizon (claude+codex), Axel Delaval,
 -/
 module
 
-public import Mathlib.Topology.EMetricSpace.BoundedVariation
 public import TauCeti.Geometry.Manifold.Riemannian.Distance
 public import TauCeti.Geometry.Manifold.Riemannian.EDistComparison
+public import TauCeti.Topology.EMetricSpace.BoundedVariation
 
 /-!
 # The total variation of a curve is bounded by its Riemannian path length
@@ -22,9 +22,9 @@ The proof tests the total variation on an arbitrary finite monotone partition: t
 distance between consecutive partition points is at most the path length over that subinterval,
 and `TauCeti.Manifold.sum_pathELength_eq` telescopes the resulting sum. Combined with Mathlib's
 lower semicontinuity of `eVariationOn`, the bound passes to pointwise — hence to uniform — limits
-of curves and gives a lower bound for the `liminf` of their Riemannian lengths. The transfer
-lemma carrying that last step is stated at the metric level, since its proof uses no manifold
-structure.
+of curves and gives a lower bound for the `liminf` of their Riemannian lengths. The transfer lemma
+carrying that last step is stated in `TauCeti.Topology.EMetricSpace.BoundedVariation`, since its
+proof uses no manifold structure.
 
 This is one direction of the identification of Riemannian path length with total variation. The
 opposite inequality is the remaining ingredient needed to turn the `liminf` bounds proved here
@@ -33,8 +33,8 @@ into lower semicontinuity of `Manifold.pathELength` itself.
 Like the corner-smoothing comparison of
 `TauCeti/Geometry/Manifold/Riemannian/EDistComparison.lean`, the piecewise-`C¹` statement here
 only compares the piecewise formulation with Mathlib's `C¹` `Manifold.pathELength`: no piecewise
-notion of length or variation is introduced, and the limit results are stated for `C¹` curves
-only, as the Hopf--Rinow roadmap prescribes.
+notion of length or variation is introduced. The limit results concern arbitrary pointwise or
+uniform limits of families that are eventually `C¹`.
 
 ## Main results
 
@@ -73,24 +73,6 @@ open scoped Bundle ContDiff ENNReal Manifold
 noncomputable section
 
 namespace TauCeti
-
-section Variation
-
-variable {α : Type*} [LinearOrder α] {X : Type*} [PseudoEMetricSpace X]
-
-/-- If the total variations of the maps `F i` on `s` are eventually bounded by `u i`, then the
-total variation on `s` of a pointwise limit of the `F i` is at most `liminf u`. -/
-theorem eVariationOn_le_liminf_of_eventually_le {ι : Type*} {l : Filter ι} {s : Set α}
-    {f : α → X} {F : ι → α → X} {u : ι → ℝ≥0∞}
-    (hu : ∀ᶠ i in l, eVariationOn (F i) s ≤ u i)
-    (hf : ∀ x ∈ s, Tendsto (fun i ↦ F i x) l (nhds (f x))) :
-    eVariationOn f s ≤ liminf u l := by
-  rw [le_liminf_iff]
-  intro v hv
-  filter_upwards [eVariationOn.lowerSemicontinuous_aux hf hv, hu] with i hi hui
-  exact hi.trans_le hui
-
-end Variation
 
 namespace Manifold
 
