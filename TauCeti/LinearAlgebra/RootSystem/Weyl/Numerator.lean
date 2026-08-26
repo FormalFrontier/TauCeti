@@ -17,8 +17,9 @@ public section
 
 The Weyl character formula is an identity in the integral group algebra `ℤ[M]` of the weight space
 of a root pairing, between the formal character of an irreducible module and two universal
-elements of that algebra: the Weyl numerator `N(λ)` and the Weyl denominator `Δ`. Since `Δ` is not
-invertible in `ℤ[M]`, the formula is read there in the cross-multiplied form
+elements of that algebra: the Weyl numerator `N(λ)` and the Weyl denominator `Δ`. As soon as there
+is a positive root, `Δ` is not invertible in `ℤ[M]` — it then augments to `0`, whereas a unit
+augments to `±1` — so the formula is read there in the cross-multiplied form
 `ch L(λ) · Δ = N(λ)`, the familiar quotient `N(λ) / Δ` living in a localization where `Δ` becomes
 invertible. This file builds the **Weyl numerator**
 `N(λ) = ∑_{w ∈ W} sgn(w) e^{w ⬝ λ}`, the alternating sum over the *dot* orbit of `λ`, and its
@@ -106,11 +107,16 @@ normalization of the denominator rather than `TauCeti.weylDenominator`. -/
 noncomputable def weylNumerator (lam : M) : AddMonoidAlgebra ℤ M :=
   ∑ w : P.weylGroup, AddMonoidAlgebra.single (dotAction P b w lam) ((weylSign P b w : ℤ))
 
+/-- `N(λ)` is the signed sum `∑_{w ∈ W} sgn(w) e^{w ⬝ λ}` over the dot orbit, by definition. -/
+lemma weylNumerator_def (lam : M) : weylNumerator P b lam =
+    ∑ w : P.weylGroup, AddMonoidAlgebra.single (dotAction P b w lam) ((weylSign P b w : ℤ)) := by
+  rw [weylNumerator]
+
 /-- **The numerator is supported on the dot orbit**: its coefficient at a weight outside the orbit
 of `λ` vanishes, since no term of the sum sits there. -/
 theorem coeff_weylNumerator_eq_zero {lam x : M} (hx : ∀ w : P.weylGroup, dotAction P b w lam ≠ x) :
     (weylNumerator P b lam).coeff x = 0 := by
-  simp only [weylNumerator, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
+  simp only [weylNumerator_def, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
     AddMonoidAlgebra.coeff_single]
   exact Finset.sum_eq_zero fun w _ ↦
     Finsupp.single_apply_eq_zero.mpr fun h ↦ absurd h (Ne.symm (hx w))
@@ -125,7 +131,7 @@ against itself. -/
 theorem weylNumerator_dotAction (v : P.weylGroup) (lam : M) :
     weylNumerator P b (dotAction P b v lam)
       = ((weylSign P b v : ℤ)) • weylNumerator P b lam := by
-  rw [weylNumerator, weylNumerator, Finset.smul_sum]
+  rw [weylNumerator_def, weylNumerator_def, Finset.smul_sum]
   refine Fintype.sum_bijective (· * v) (Group.mulRight_bijective v) _ _ fun w ↦ ?_
   have hsign : weylSign P b v * weylSign P b (w * v) = weylSign P b w := by
     rw [map_mul, mul_left_comm, Int.units_mul_self, mul_one]
@@ -165,7 +171,7 @@ elements carry `λ` to the same place, so the term of `w` sits alone at `w ⬝ �
 theorem coeff_weylNumerator_dotAction_of_injective {lam : M}
     (hlam : Function.Injective fun w : P.weylGroup ↦ dotAction P b w lam) (w : P.weylGroup) :
     (weylNumerator P b lam).coeff (dotAction P b w lam) = ((weylSign P b w : ℤ)) := by
-  simp only [weylNumerator, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
+  simp only [weylNumerator_def, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
     AddMonoidAlgebra.coeff_single]
   rw [Finset.sum_eq_single w]
   · exact Finsupp.single_eq_same

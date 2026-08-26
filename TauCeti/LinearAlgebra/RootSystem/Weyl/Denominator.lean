@@ -68,6 +68,11 @@ need not lie in `M`. -/
 noncomputable def weylDenominator : AddMonoidAlgebra ℤ M :=
   ∏ i ∈ posRootsFinset P b, (1 - AddMonoidAlgebra.single (-P.root i) 1)
 
+/-- `Δ` is the product of `1 - e^{-α}` over the positive roots, by definition. -/
+lemma weylDenominator_def : weylDenominator P b =
+    ∏ i ∈ posRootsFinset P b, (1 - AddMonoidAlgebra.single (-P.root i) 1) := by
+  rw [weylDenominator]
+
 /-- **The Weyl denominator, expanded.** Multiplying out `∏_{α>0} (1 - e^{-α})` indexes the terms by
 the subsets `T` of the positive roots, the term of `T` being `(-1)^{|T|} e^{-∑_{α ∈ T} α}`.
 
@@ -78,7 +83,7 @@ theorem weylDenominator_eq_sum_powerset :
       ∑ T ∈ (posRootsFinset P b).powerset,
         AddMonoidAlgebra.single (-∑ i ∈ T, P.root i) ((-1) ^ T.card) := by
   classical
-  rw [weylDenominator, Finset.prod_sub]
+  rw [weylDenominator_def, Finset.prod_sub]
   refine Finset.sum_congr rfl fun T _ ↦ ?_
   have hpow : (-1 : AddMonoidAlgebra ℤ M) ^ T.card
       = AddMonoidAlgebra.single 0 ((-1) ^ T.card) := by
