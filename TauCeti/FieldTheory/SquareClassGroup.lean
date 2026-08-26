@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Group.Subgroup.Even
 public import Mathlib.Algebra.Module.ZMod
 public import Mathlib.LinearAlgebra.LinearIndependent.Defs
 public import TauCeti.Algebra.Group.Units.Basic

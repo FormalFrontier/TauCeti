@@ -370,7 +370,7 @@ theorem posDef_iff_sigNeg_eq_zero_and_radical_eq_bot (Q : _root_.QuadraticForm K
   constructor
   · intro hQ
     refine ⟨(forall_nonneg_iff_sigNeg_eq_zero Q).mp hQ.nonneg, ?_⟩
-    exact QuadraticMap.nondegenerate_iff_radical_eq_bot.mp hQ.anisotropic.nondegenerate
+    exact QuadraticMap.Anisotropic.radical_eq_bot hQ.anisotropic
   · rintro ⟨hneg, hrad⟩
     obtain ⟨W, hWrank, hWpos⟩ := exists_finrank_eq_sigPos_and_posDef Q
     have hsig := sigPos_add_sigNeg_add_radical (Q := Q)

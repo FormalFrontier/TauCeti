@@ -27,9 +27,9 @@ separate.
   spinor norm with the determinant square-class map for a positive-definite real form.
 * `CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_posDef` proves surjectivity for any
   finite-dimensional positive-definite real form.
-* `CliffordAlgebra.spinPQ` and `CliffordAlgebra.spinN` name the real and compact Spin groups.
-* `CliffordAlgebra.spinNDoubleCover` packages the compact real Spin double cover in positive
-  dimension.
+* `CliffordAlgebra.realCliffordSpinGroup` names the real Spin groups by signature.
+* `CliffordAlgebra.realCliffordSpinGroupZero` names the compact real Spin group.
+* `CliffordAlgebra.realCliffordSpinDoubleCoverZero` packages its double cover in positive dimension.
 
 ## References
 
@@ -50,66 +50,53 @@ universe u
 
 variable {V : Type u} [AddCommGroup V] [Module ℝ V]
 
-private theorem posDef_unit_isSquare (Q : QuadraticForm ℝ V) (hQ : Q.PosDef) (v : V)
-    [Invertible (Q v)] : IsSquare (unitOfInvertible (Q v)) := by
-  have hvQ : Q v ≠ 0 := Invertible.ne_zero _
-  have hv : v ≠ 0 := by
-    intro hv
-    subst v
-    simp at hvQ
-  rw [← isSquare_units_val_iff, val_unitOfInvertible, Real.isSquare_iff]
-  exact (hQ v hv).le
-
 variable [FiniteDimensional ℝ V]
 
 /-- On a finite-dimensional positive-definite real quadratic space, the orthogonal spinor norm is
 the square class of the determinant. -/
 theorem orthogonalSpinorNorm_eq_detSquareClass_of_posDef
     (Q : QuadraticForm ℝ V) (hQ : Q.PosDef) :
-    orthogonalSpinorNorm Q hQ.anisotropic.nondegenerate = orthogonalDetSquareClass Q := by
-  exact orthogonalSpinorNorm_eq_detSquareClass_of_isSquare Q hQ.anisotropic.nondegenerate
-    (posDef_unit_isSquare Q hQ)
+    orthogonalSpinorNorm Q hQ.anisotropic.nondegenerate =
+      QuadraticMap.orthogonalDetSquareClass Q := by
+  exact orthogonalSpinorNorm_eq_detSquareClass_of_isSquare_apply Q hQ.anisotropic.nondegenerate
+    fun v => Real.isSquare_iff.2 (hQ.nonneg v)
 
 /-- The Spin action of a finite-dimensional positive-definite real quadratic space is onto its
 special orthogonal group. -/
 theorem spinToSpecialOrthogonal_surjective_of_posDef
     (Q : QuadraticForm ℝ V) (hQ : Q.PosDef) :
     Function.Surjective (spinToSpecialOrthogonal Q) := by
-  exact spinToSpecialOrthogonal_surjective_of_unit_isSquare Q hQ.anisotropic.nondegenerate
-    (posDef_unit_isSquare Q hQ)
+  exact spinToSpecialOrthogonal_surjective_of_isSquare_apply Q hQ.anisotropic.nondegenerate
+    fun v => Real.isSquare_iff.2 (hQ.nonneg v)
 
 /-- The real Spin group of signature `(p, q)`. -/
-abbrev spinPQ (p q : ℕ) := spinGroup (realCliffordForm p q)
+abbrev realCliffordSpinGroup (p q : ℕ) := spinGroup (realCliffordForm p q)
 
 /-- The compact real Spin group `Spin(n)`. -/
-abbrev spinN (n : ℕ) := spinPQ n 0
+abbrev realCliffordSpinGroupZero (n : ℕ) := realCliffordSpinGroup n 0
 
 /-- The algebraic double cover from `Spin(n)` to the special orthogonal group in positive
 dimension. -/
-noncomputable def spinNDoubleCover (n : ℕ) (hn : 0 < n) :
-    GroupExtension (Multiplicative (ZMod 2)) (spinN n)
-      (QuadraticMap.specialOrthogonalGroup (realCliffordForm n 0)) := by
-  let : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
-  exact spinDoubleCoverOfSurjective (realCliffordForm n 0)
+noncomputable def realCliffordSpinDoubleCoverZero (n : ℕ) [NeZero n] :
+    GroupExtension (Multiplicative (ZMod 2)) (realCliffordSpinGroupZero n)
+      (QuadraticMap.specialOrthogonalGroup (realCliffordForm n 0)) :=
+  spinDoubleCoverOfSurjective (realCliffordForm n 0)
     (nondegenerate_realCliffordForm n 0)
     (spinToSpecialOrthogonal_surjective_of_posDef _ (posDef_realCliffordForm_zero n))
 
 /-- The inclusion in the compact real Spin double cover sends the generator to the distinguished
 element `-1` of the Spin group. -/
 @[simp]
-theorem spinNDoubleCover_inl_ofAdd_one (n : ℕ) (hn : 0 < n) :
-    let _ : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
-    (spinNDoubleCover n hn).inl (Multiplicative.ofAdd 1) =
+theorem realCliffordSpinDoubleCoverZero_inl_ofAdd_one (n : ℕ) [NeZero n] :
+    (realCliffordSpinDoubleCoverZero n).inl (Multiplicative.ofAdd 1) =
       spinGroup.negOne (realCliffordForm n 0) (nondegenerate_realCliffordForm n 0).ne_zero := by
-  let : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
-  rw [spinNDoubleCover, spinDoubleCoverOfSurjective_inl_ofAdd_one]
+  rw [realCliffordSpinDoubleCoverZero, spinDoubleCoverOfSurjective_inl_ofAdd_one]
 
 /-- The projection in the compact real Spin double cover is the Spin action. -/
 @[simp]
-theorem spinNDoubleCover_rightHom (n : ℕ) (hn : 0 < n) :
-    (spinNDoubleCover n hn).rightHom =
+theorem realCliffordSpinDoubleCoverZero_rightHom (n : ℕ) [NeZero n] :
+    (realCliffordSpinDoubleCoverZero n).rightHom =
       spinToSpecialOrthogonal (realCliffordForm n 0) := by
-  let : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
-  rw [spinNDoubleCover, spinDoubleCoverOfSurjective_rightHom]
+  rw [realCliffordSpinDoubleCoverZero, spinDoubleCoverOfSurjective_rightHom]
 
 end CliffordAlgebra

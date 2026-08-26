@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.Subgroup.Even
+public import Mathlib.Algebra.Group.Even
 public import Mathlib.Algebra.Group.Units.Defs
 
 import Mathlib.Algebra.Group.Commute.Units
@@ -26,13 +26,13 @@ public section
 namespace TauCeti
 
 /-- A unit is a square exactly when its underlying monoid element is a square. -/
-theorem isSquare_units_val_iff {K : Type*} [Monoid K] {u : Kˣ} :
-    IsSquare (u : K) ↔ IsSquare u := by
+theorem isSquare_units_val_iff {M : Type*} [Monoid M] {u : Mˣ} :
+    IsSquare (u : M) ↔ IsSquare u := by
   constructor
   · rintro ⟨x, hx⟩
     have hxu : IsUnit x := isUnit_mul_self_iff.mp (hx ▸ u.isUnit)
     exact ⟨hxu.unit, Units.ext (by simpa using hx)⟩
   · rintro ⟨v, rfl⟩
-    exact ⟨(v : K), by simp⟩
+    exact ⟨(v : M), by simp⟩
 
 end TauCeti
