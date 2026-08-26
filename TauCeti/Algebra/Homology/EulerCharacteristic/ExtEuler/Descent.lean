@@ -22,7 +22,7 @@ full subcategories.
 
 ## Main results
 
-* `TauCeti.extEuler_shortExact₂` and `TauCeti.extEuler_shortExact₂'`: additivity in the second
+* `TauCeti.extEuler_shortExact₂` and `TauCeti.extEuler_shortExact₁`: additivity in the second
   and first variables.
 * `TauCeti.extEulerPairing`: descent to a biadditive pairing on the exact `K₀` groups of two
   extension-closed full subcategories.
@@ -73,7 +73,57 @@ private theorem finrank_sub_finrank_sub_finrank_of_exact
     congrArg (fun S : Submodule k D ↦ Module.finrank k S) hδf.linearMap_ker_eq
   omega
 
-private theorem truncatedExtEuler_sub_add_sub_correction {S : ShortComplex C} (hS : S.ShortExact)
+private theorem alternating_finrank_sub_add_sub_correction
+    {A B D : ℕ → Type*}
+    [∀ n, AddCommGroup (A n)] [∀ n, Module k (A n)]
+    [∀ n, AddCommGroup (B n)] [∀ n, Module k (B n)]
+    [∀ n, AddCommGroup (D n)] [∀ n, Module k (D n)]
+    (tA tB tD : ℕ → ℤ)
+    (f : ∀ n, A n →ₗ[k] B n) (g : ∀ n, B n →ₗ[k] D n)
+    (δ : ∀ n, D n →ₗ[k] A (n + 1))
+    (hA : ∀ n, FiniteDimensional k (A n))
+    (hB : ∀ n, FiniteDimensional k (B n))
+    (hD : ∀ n, FiniteDimensional k (D n))
+    (htA0 : tA 0 = 0) (htB0 : tB 0 = 0) (htD0 : tD 0 = 0)
+    (htA : ∀ n, tA (n + 1) = tA n + (-1 : ℤ) ^ n * Module.finrank k (A n))
+    (htB : ∀ n, tB (n + 1) = tB n + (-1 : ℤ) ^ n * Module.finrank k (B n))
+    (htD : ∀ n, tD (n + 1) = tD n + (-1 : ℤ) ^ n * Module.finrank k (D n))
+    (hinj : Function.Injective (f 0))
+    (hfg : ∀ n, Function.Exact (f n) (g n))
+    (hgδ : ∀ n, Function.Exact (g n) (δ n))
+    (hδf : ∀ n, Function.Exact (δ n) (f (n + 1))) (N : ℕ) :
+    tB N - tA N - tD N =
+      (-1 : ℤ) ^ N * Module.finrank k (f N).ker := by
+  induction N with
+  | zero =>
+      rw [htA0, htB0, htD0, LinearMap.ker_eq_bot.mpr hinj, finrank_bot]
+      simp
+  | succ N ih =>
+      let _ := hA N
+      let _ := hB N
+      let _ := hD N
+      have hd := finrank_sub_finrank_sub_finrank_of_exact (f N) (g N) (δ N) (f (N + 1))
+        (hfg N) (hgδ N) (hδf N)
+      rw [htA, htB, htD]
+      change _ = (-1 : ℤ) ^ (N + 1) * Module.finrank k (f (N + 1)).ker
+      change (Module.finrank k (B N) : ℤ) - Module.finrank k (A N) -
+          Module.finrank k (D N) =
+        -(Module.finrank k (f N).ker : ℤ) - Module.finrank k (f (N + 1)).ker at hd
+      calc
+        _ = (tB N - tA N - tD N) +
+            (-1 : ℤ) ^ N * ((Module.finrank k (B N) : ℤ) -
+              Module.finrank k (A N) - Module.finrank k (D N)) := by ring
+        _ = (-1 : ℤ) ^ N * Module.finrank k (f N).ker +
+            (-1 : ℤ) ^ N * ((Module.finrank k (B N) : ℤ) -
+              Module.finrank k (A N) - Module.finrank k (D N)) := by rw [ih]
+        _ = (-1 : ℤ) ^ N * Module.finrank k (f N).ker +
+            (-1 : ℤ) ^ N * (-(Module.finrank k (f N).ker : ℤ) -
+              Module.finrank k (f (N + 1)).ker) := by rw [hd]
+        _ = (-1 : ℤ) ^ (N + 1) * Module.finrank k (f (N + 1)).ker := by
+          rw [pow_succ]
+          ring
+
+private theorem truncatedExtEuler_shortExact_correction₂ {S : ShortComplex C} (hS : S.ShortExact)
     (X : C)
     (h₁ : IsExtFinite.{w} k X S.X₁) (h₂ : IsExtFinite.{w} k X S.X₂)
     (h₃ : IsExtFinite.{w} k X S.X₃) (N : ℕ) :
@@ -81,130 +131,64 @@ private theorem truncatedExtEuler_sub_add_sub_correction {S : ShortComplex C} (h
         truncatedExtEuler.{w} k X S.X₃ N =
       (-1 : ℤ) ^ N * Module.finrank k
         (Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero N)).ker := by
-  induction N with
-  | zero =>
-      let _ := hS.mono_f
-      have hinj : Function.Injective
-          (Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero 0)) :=
-        Ext.postcomp_mk₀_injective_of_mono X S.f
-      rw [truncatedExtEuler_zero, truncatedExtEuler_zero, truncatedExtEuler_zero,
-        LinearMap.ker_eq_bot.mpr hinj, finrank_bot]
-      simp
-  | succ N ih =>
-      let f := Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero N)
-      let g := Ext.postcompOfLinear (Ext.mk₀ S.g) k X (add_zero N)
-      let δ : Ext.{w} X S.X₃ N →ₗ[k] Ext.{w} X S.X₁ (N + 1) :=
-        Ext.postcompOfLinear hS.extClass k X rfl
-      let f' := Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero (N + 1))
-      let _ := h₁.finiteDimensional N
-      let _ := h₂.finiteDimensional N
-      let _ := h₃.finiteDimensional N
-      have hfg : Function.Exact f g := exact_postcompOfLinear k hS X N
-      have hgδ : Function.Exact g δ := by
-        have h := Ext.covariant_sequence_exact₃' X hS N (N + 1) rfl
-        rw [ShortComplex.ab_exact_iff_function_exact] at h
-        -- Mathlib states this with `AddCommGrpCat.ofHom`; expose the underlying linear maps.
-        change Function.Exact g δ at h
-        exact h
-      have hδf : Function.Exact δ f' := by
-        have h := Ext.covariant_sequence_exact₁' X hS N (N + 1) rfl
-        rw [ShortComplex.ab_exact_iff_function_exact] at h
-        -- Mathlib states this with `AddCommGrpCat.ofHom`; expose the underlying linear maps.
-        change Function.Exact δ f' at h
-        exact h
-      have hd := finrank_sub_finrank_sub_finrank_of_exact f g δ f' hfg hgδ hδf
-      rw [truncatedExtEuler_succ, truncatedExtEuler_succ, truncatedExtEuler_succ]
-      let d₁ : ℤ := Module.finrank k (Ext.{w} X S.X₁ N)
-      let d₂ : ℤ := Module.finrank k (Ext.{w} X S.X₂ N)
-      let d₃ : ℤ := Module.finrank k (Ext.{w} X S.X₃ N)
-      -- Normalize the successor sums and local map abbreviations for the rank calculation.
-      change truncatedExtEuler.{w} k X S.X₂ N + (-1 : ℤ) ^ N * d₂ -
-          (truncatedExtEuler.{w} k X S.X₁ N + (-1 : ℤ) ^ N * d₁) -
-          (truncatedExtEuler.{w} k X S.X₃ N + (-1 : ℤ) ^ N * d₃) = _
-      change _ = (-1 : ℤ) ^ (N + 1) * Module.finrank k f'.ker
-      change truncatedExtEuler.{w} k X S.X₂ N - truncatedExtEuler.{w} k X S.X₁ N -
-          truncatedExtEuler.{w} k X S.X₃ N =
-        (-1 : ℤ) ^ N * Module.finrank k f.ker at ih
-      change d₂ - d₁ - d₃ =
-        -(Module.finrank k f.ker : ℤ) - Module.finrank k f'.ker at hd
-      calc
-        _ = (truncatedExtEuler.{w} k X S.X₂ N - truncatedExtEuler.{w} k X S.X₁ N -
-              truncatedExtEuler.{w} k X S.X₃ N) +
-            (-1 : ℤ) ^ N * (d₂ - d₁ - d₃) := by ring
-        _ = (-1 : ℤ) ^ N * Module.finrank k f.ker +
-            (-1 : ℤ) ^ N * (d₂ - d₁ - d₃) := by rw [ih]
-        _ = (-1 : ℤ) ^ N * Module.finrank k f.ker +
-            (-1 : ℤ) ^ N * (-(Module.finrank k f.ker : ℤ) -
-              Module.finrank k f'.ker) := by rw [hd]
-        _ = (-1 : ℤ) ^ (N + 1) * Module.finrank k f'.ker := by
-          rw [pow_succ]
-          ring
+  let _ := hS.mono_f
+  apply alternating_finrank_sub_add_sub_correction
+    (tA := fun n ↦ truncatedExtEuler.{w} k X S.X₁ n)
+    (tB := fun n ↦ truncatedExtEuler.{w} k X S.X₂ n)
+    (tD := fun n ↦ truncatedExtEuler.{w} k X S.X₃ n)
+    (f := fun n ↦ Ext.postcompOfLinear (Ext.mk₀ S.f) k X (add_zero n))
+    (g := fun n ↦ Ext.postcompOfLinear (Ext.mk₀ S.g) k X (add_zero n))
+    (δ := fun n ↦ Ext.postcompOfLinear hS.extClass k X rfl)
+    (fun n ↦ h₁.finiteDimensional n) (fun n ↦ h₂.finiteDimensional n)
+    (fun n ↦ h₃.finiteDimensional n)
+    (truncatedExtEuler_zero k X S.X₁) (truncatedExtEuler_zero k X S.X₂)
+    (truncatedExtEuler_zero k X S.X₃)
+    (fun n ↦ truncatedExtEuler_succ k X S.X₁ n)
+    (fun n ↦ truncatedExtEuler_succ k X S.X₂ n)
+    (fun n ↦ truncatedExtEuler_succ k X S.X₃ n)
+    (Ext.postcomp_mk₀_injective_of_mono X S.f)
+    (fun n ↦ exact_postcompOfLinear k hS X n)
+  · intro n
+    have h := Ext.covariant_sequence_exact₃' X hS n (n + 1) rfl
+    rw [ShortComplex.ab_exact_iff_function_exact] at h
+    exact h
+  · intro n
+    have h := Ext.covariant_sequence_exact₁' X hS n (n + 1) rfl
+    rw [ShortComplex.ab_exact_iff_function_exact] at h
+    exact h
 
-private theorem truncatedExtEuler_sub_sub_correction' {S : ShortComplex C} (hS : S.ShortExact)
+private theorem truncatedExtEuler_shortExact_correction₁ {S : ShortComplex C} (hS : S.ShortExact)
     (Y : C) (h₁ : IsExtFinite.{w} k S.X₁ Y) (h₂ : IsExtFinite.{w} k S.X₂ Y)
     (h₃ : IsExtFinite.{w} k S.X₃ Y) (N : ℕ) :
     truncatedExtEuler.{w} k S.X₂ Y N - truncatedExtEuler.{w} k S.X₃ Y N -
         truncatedExtEuler.{w} k S.X₁ Y N =
       (-1 : ℤ) ^ N * Module.finrank k
         (Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add N)).ker := by
-  induction N with
-  | zero =>
-      let _ := hS.epi_g
-      have hinj : Function.Injective
-          (Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add 0)) :=
-        Ext.precomp_mk₀_injective_of_epi Y S.g
-      rw [truncatedExtEuler_zero, truncatedExtEuler_zero, truncatedExtEuler_zero,
-        LinearMap.ker_eq_bot.mpr hinj, finrank_bot]
-      simp
-  | succ N ih =>
-      let f := Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add N)
-      let g := Ext.precompOfLinear (Ext.mk₀ S.f) k Y (zero_add N)
-      let δ : Ext.{w} S.X₁ Y N →ₗ[k] Ext.{w} S.X₃ Y (N + 1) :=
-        Ext.precompOfLinear hS.extClass k Y (Nat.one_add N)
-      let f' := Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add (N + 1))
-      let _ := h₁.finiteDimensional N
-      let _ := h₂.finiteDimensional N
-      let _ := h₃.finiteDimensional N
-      have hfg : Function.Exact f g := exact_precompOfLinear k hS Y N
-      have hgδ : Function.Exact g δ := by
-        have h := Ext.contravariant_sequence_exact₁' hS Y N (N + 1) (Nat.one_add N)
-        rw [ShortComplex.ab_exact_iff_function_exact] at h
-        -- Mathlib states this with `AddCommGrpCat.ofHom`; expose the underlying linear maps.
-        change Function.Exact g δ at h
-        exact h
-      have hδf : Function.Exact δ f' := by
-        have h := Ext.contravariant_sequence_exact₃' hS Y N (N + 1) (Nat.one_add N)
-        rw [ShortComplex.ab_exact_iff_function_exact] at h
-        -- Mathlib states this with `AddCommGrpCat.ofHom`; expose the underlying linear maps.
-        change Function.Exact δ f' at h
-        exact h
-      have hd := finrank_sub_finrank_sub_finrank_of_exact f g δ f' hfg hgδ hδf
-      rw [truncatedExtEuler_succ, truncatedExtEuler_succ, truncatedExtEuler_succ]
-      let d₁ : ℤ := Module.finrank k (Ext.{w} S.X₃ Y N)
-      let d₂ : ℤ := Module.finrank k (Ext.{w} S.X₂ Y N)
-      let d₃ : ℤ := Module.finrank k (Ext.{w} S.X₁ Y N)
-      -- Normalize the successor sums and local map abbreviations for the rank calculation.
-      change truncatedExtEuler.{w} k S.X₂ Y N + (-1 : ℤ) ^ N * d₂ -
-          (truncatedExtEuler.{w} k S.X₃ Y N + (-1 : ℤ) ^ N * d₁) -
-          (truncatedExtEuler.{w} k S.X₁ Y N + (-1 : ℤ) ^ N * d₃) = _
-      change _ = (-1 : ℤ) ^ (N + 1) * Module.finrank k f'.ker
-      change truncatedExtEuler.{w} k S.X₂ Y N - truncatedExtEuler.{w} k S.X₃ Y N -
-          truncatedExtEuler.{w} k S.X₁ Y N =
-        (-1 : ℤ) ^ N * Module.finrank k f.ker at ih
-      change d₂ - d₁ - d₃ =
-        -(Module.finrank k f.ker : ℤ) - Module.finrank k f'.ker at hd
-      calc
-        _ = (truncatedExtEuler.{w} k S.X₂ Y N - truncatedExtEuler.{w} k S.X₃ Y N -
-              truncatedExtEuler.{w} k S.X₁ Y N) +
-            (-1 : ℤ) ^ N * (d₂ - d₁ - d₃) := by ring
-        _ = (-1 : ℤ) ^ N * Module.finrank k f.ker +
-            (-1 : ℤ) ^ N * (d₂ - d₁ - d₃) := by rw [ih]
-        _ = (-1 : ℤ) ^ N * Module.finrank k f.ker +
-            (-1 : ℤ) ^ N * (-(Module.finrank k f.ker : ℤ) -
-              Module.finrank k f'.ker) := by rw [hd]
-        _ = (-1 : ℤ) ^ (N + 1) * Module.finrank k f'.ker := by
-          rw [pow_succ]
-          ring
+  let _ := hS.epi_g
+  apply alternating_finrank_sub_add_sub_correction
+    (tA := fun n ↦ truncatedExtEuler.{w} k S.X₃ Y n)
+    (tB := fun n ↦ truncatedExtEuler.{w} k S.X₂ Y n)
+    (tD := fun n ↦ truncatedExtEuler.{w} k S.X₁ Y n)
+    (f := fun n ↦ Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add n))
+    (g := fun n ↦ Ext.precompOfLinear (Ext.mk₀ S.f) k Y (zero_add n))
+    (δ := fun n ↦ Ext.precompOfLinear hS.extClass k Y (Nat.one_add n))
+    (fun n ↦ h₃.finiteDimensional n) (fun n ↦ h₂.finiteDimensional n)
+    (fun n ↦ h₁.finiteDimensional n)
+    (truncatedExtEuler_zero k S.X₃ Y) (truncatedExtEuler_zero k S.X₂ Y)
+    (truncatedExtEuler_zero k S.X₁ Y)
+    (fun n ↦ truncatedExtEuler_succ k S.X₃ Y n)
+    (fun n ↦ truncatedExtEuler_succ k S.X₂ Y n)
+    (fun n ↦ truncatedExtEuler_succ k S.X₁ Y n)
+    (Ext.precomp_mk₀_injective_of_epi Y S.g)
+    (fun n ↦ exact_precompOfLinear k hS Y n)
+  · intro n
+    have h := Ext.contravariant_sequence_exact₁' hS Y n (n + 1) (Nat.one_add n)
+    rw [ShortComplex.ab_exact_iff_function_exact] at h
+    exact h
+  · intro n
+    have h := Ext.contravariant_sequence_exact₃' hS Y n (n + 1) (Nat.one_add n)
+    rw [ShortComplex.ab_exact_iff_function_exact] at h
+    exact h
 
 /-! ### Additivity on short exact sequences -/
 
@@ -222,7 +206,7 @@ theorem extEuler_shortExact₂ {S : ShortComplex C} (hS : S.ShortExact) (X : C)
     hN₂.mono ((le_max_left _ _).trans (le_max_right _ _))
   have hb₃ : IsExtBoundedBy.{w} X S.X₃ N :=
     hN₃.mono ((le_max_right _ _).trans (le_max_right _ _))
-  have h := truncatedExtEuler_sub_add_sub_correction hS X h₁.isExtFinite h₂.isExtFinite
+  have h := truncatedExtEuler_shortExact_correction₂ hS X h₁.isExtFinite h₂.isExtFinite
     h₃.isExtFinite N
   let _ := hb₁.subsingleton (le_refl N)
   have hz : Module.finrank k
@@ -233,7 +217,7 @@ theorem extEuler_shortExact₂ {S : ShortComplex C} (hS : S.ShortExact) (X : C)
   omega
 
 /-- The Ext-Euler characteristic is additive on a short exact sequence in its first variable. -/
-theorem extEuler_shortExact₂' {S : ShortComplex C} (hS : S.ShortExact) (Y : C)
+theorem extEuler_shortExact₁ {S : ShortComplex C} (hS : S.ShortExact) (Y : C)
     (h₁ : IsEulerAdmissible.{w} k S.X₁ Y) (h₂ : IsEulerAdmissible.{w} k S.X₂ Y)
     (h₃ : IsEulerAdmissible.{w} k S.X₃ Y) :
     extEuler.{w} k h₂ = extEuler.{w} k h₁ + extEuler.{w} k h₃ := by
@@ -246,7 +230,7 @@ theorem extEuler_shortExact₂' {S : ShortComplex C} (hS : S.ShortExact) (Y : C)
     hN₂.mono ((le_max_left _ _).trans (le_max_right _ _))
   have hb₃ : IsExtBoundedBy.{w} S.X₃ Y N :=
     hN₃.mono ((le_max_right _ _).trans (le_max_right _ _))
-  have h := truncatedExtEuler_sub_sub_correction' hS Y h₁.isExtFinite h₂.isExtFinite
+  have h := truncatedExtEuler_shortExact_correction₁ hS Y h₁.isExtFinite h₂.isExtFinite
     h₃.isExtFinite N
   let _ := hb₃.subsingleton (le_refl N)
   have hz : Module.finrank k
@@ -322,7 +306,7 @@ private theorem extEulerRight_conflation
   have hc : (ExactStructure.abelian C).Conflation (S.map P.ι) :=
     (ExactStructure.fullSubcategory_conflation_iff hP S).mp hS
   have hS' : (S.map P.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
-  exact extEuler_shortExact₂' hS' Y.obj
+  exact extEuler_shortExact₁ hS' Y.obj
     (h.isEulerAdmissible S.X₁.property Y.property)
     (h.isEulerAdmissible S.X₂.property Y.property)
     (h.isEulerAdmissible S.X₃.property Y.property)
