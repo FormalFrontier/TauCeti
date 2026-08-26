@@ -271,6 +271,7 @@ root subgroup at `k` through the character `TauCeti.SlStd.rootGeneratorWeight r 
 theorem lie_cartanGenerator_rootGenerator (k : Fin r ⊕ Fin r) (j : Fin r) :
     ⁅cartanGenerator r j, rootGenerator r k⁆ =
       ((rootGeneratorWeight r k j : ℤ) : ℚ) • rootGenerator r k := by
+  let _ : LieRing (Matrix (Fin (r + 1)) (Fin (r + 1)) ℚ) := LieRing.ofAssociativeRing
   refine Subtype.ext ?_
   have hcoe : (((((rootGeneratorWeight r k j : ℤ) : ℚ) • rootGenerator r k) :
       sl (Fin (r + 1)) ℚ) : Matrix (Fin (r + 1)) (Fin (r + 1)) ℚ) =
@@ -278,8 +279,7 @@ theorem lie_cartanGenerator_rootGenerator (k : Fin r ⊕ Fin r) (j : Fin r) :
         Matrix.single (rootTarget r k) (rootSource r k) (1 : ℚ) := by
     rw [← val_rootGenerator]
     rfl
-  rw [hcoe]
-  change ⁅(cartanGenerator r j).1, (rootGenerator r k).1⁆ = _
+  rw [LieSubalgebra.coe_bracket, hcoe]
   rw [val_cartanGenerator, val_rootGenerator,
     lie_single_of_mem_diagonalCartan
       (sub_mem (single_self_mem_diagonalCartan j.castSucc 1)
