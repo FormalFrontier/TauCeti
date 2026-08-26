@@ -95,14 +95,11 @@ namespace HeckeRing.GL2
 
 variable (k : ℤ) {Δ : Submonoid (GL (Fin 2) ℚ)} {Γ₁ Γ₂ Γ₃ : Subgroup (GL (Fin 2) ℚ)}
 
+attribute [local instance] Fintype.ofFinite
+
 section Chosen
 
 variable (D : HeckeCoset Δ Γ₁ Γ₂) [Finite (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹)]
-
-/-- The enumeration `∑` needs, obtained from the `Finite` assumption by choice, exactly as in
-`HeckeSlash/Basic.lean`; no statement below depends on which enumeration is chosen. -/
-noncomputable local instance : Fintype (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹) :=
-  Fintype.ofFinite _
 
 /-- **Slashing a slash sum multiplies the representatives on the right.** No hypothesis on `f` is
 needed: the slash action is additive in the function and `f ∣[k] (a x) = (f ∣[k] a) ∣[k] x`. -/
@@ -118,12 +115,6 @@ section Composite
 variable (D₁ : HeckeCoset Δ Γ₁ Γ₂) (D₂ : HeckeCoset Δ Γ₂ Γ₃)
   [Finite (DecompQuotient Γ₂ Γ₁ (D₁.out : GL (Fin 2) ℚ)⁻¹)]
   [Finite (DecompQuotient Γ₃ Γ₂ (D₂.out : GL (Fin 2) ℚ)⁻¹)]
-
-noncomputable local instance : Fintype (DecompQuotient Γ₂ Γ₁ (D₁.out : GL (Fin 2) ℚ)⁻¹) :=
-  Fintype.ofFinite _
-
-noncomputable local instance : Fintype (DecompQuotient Γ₃ Γ₂ (D₂.out : GL (Fin 2) ℚ)⁻¹) :=
-  Fintype.ofFinite _
 
 /-- **The composite of two slash sums, over the representatives they are defined with.** The
 statement holds for an arbitrary `f : ℍ → ℂ`; it is the choice-dependent form of the identity,
