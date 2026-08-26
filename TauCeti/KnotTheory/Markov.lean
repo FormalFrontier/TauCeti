@@ -41,7 +41,7 @@ relation: the number of components of the closure.
   number of components. This is the invariant that keeps the relation from being everything.
 * `TauCeti.markovEquiv_sigma_last_one_one`: the trivial braid on one strand and the single
   crossing `σ₀` on two strands are Markov equivalent.
-* `TauCeti.not_markovEquiv_one_one`: trivial braids on different numbers of strands are *not*
+* `TauCeti.not_markovEquiv_one_of_ne`: trivial braids on different numbers of strands are *not*
   Markov equivalent.
 * `TauCeti.not_markovEquiv_sigma_last_one_two`: the single crossing and the trivial braid on two
   strands are not Markov equivalent.
@@ -106,21 +106,19 @@ a link, which the library cannot yet express; this is the count read off the bra
 noncomputable def componentCount (β : MarkovBraid) : ℕ :=
   orbitCount (permHom (β.predStrands + 1) β.braid)
 
-/-- The defining equation of `TauCeti.MarkovBraid.componentCount`. -/
-theorem componentCount_def (β : MarkovBraid) :
-    β.componentCount = orbitCount (permHom (β.predStrands + 1) β.braid) :=
-  (rfl)
-
 /-- The trivial braid on `n + 1` strands has component count `n + 1`. Informally, its closure is
 the `(n + 1)`-component unlink. -/
 @[simp]
 theorem componentCount_one (n : ℕ) : componentCount ⟨n, 1⟩ = n + 1 := by
-  rw [componentCount_def, map_one, orbitCount_one, Nat.card_eq_fintype_card, Fintype.card_fin]
+  unfold componentCount
+  rw [map_one, orbitCount_one, Nat.card_eq_fintype_card, Fintype.card_fin]
 
 /-- Conjugate braids have closures with the same number of components. -/
+@[simp]
 theorem componentCount_conj {n : ℕ} (b c : BraidGroup (n + 1)) :
     componentCount ⟨n, c * b * c⁻¹⟩ = componentCount ⟨n, b⟩ := by
-  rw [componentCount_def, componentCount_def, map_mul, map_mul, map_inv, orbitCount_conj]
+  unfold componentCount
+  rw [map_mul, map_mul, map_inv, orbitCount_conj]
 
 end MarkovBraid
 
@@ -143,16 +141,20 @@ private theorem orbitCount_permHom_strandIncl_mul_swap {n : ℕ} (b : BraidGroup
 namespace MarkovBraid
 
 /-- **Positive stabilization does not change the number of components of the closure.** -/
+@[simp]
 theorem componentCount_stabilize {n : ℕ} (b : BraidGroup (n + 1)) :
     componentCount ⟨n + 1, strandIncl b * sigma (Fin.last n)⟩ = componentCount ⟨n, b⟩ := by
-  rw [componentCount_def, componentCount_def, map_mul, permHom_sigma_last]
+  unfold componentCount
+  rw [map_mul, permHom_sigma_last]
   exact orbitCount_permHom_strandIncl_mul_swap b
 
 /-- **Negative stabilization does not change the number of components of the closure.** The sign
 of the new crossing is irrelevant here, a transposition being its own inverse. -/
+@[simp]
 theorem componentCount_stabilizeInv {n : ℕ} (b : BraidGroup (n + 1)) :
     componentCount ⟨n + 1, strandIncl b * (sigma (Fin.last n))⁻¹⟩ = componentCount ⟨n, b⟩ := by
-  rw [componentCount_def, componentCount_def, map_mul, map_inv, permHom_sigma_last, Equiv.swap_inv]
+  unfold componentCount
+  rw [map_mul, map_inv, permHom_sigma_last, Equiv.swap_inv]
   exact orbitCount_permHom_strandIncl_mul_swap b
 
 end MarkovBraid
@@ -242,7 +244,7 @@ theorem markovEquiv_sigma_last_one_one :
 /-- **Markov equivalence is not the total relation.** Trivial braids on different numbers of
 strands have different component counts, so they are never Markov equivalent. Informally, their
 closures are unlinks with different numbers of components. -/
-theorem not_markovEquiv_one_one {m n : ℕ} (hmn : m ≠ n) :
+theorem not_markovEquiv_one_of_ne {m n : ℕ} (hmn : m ≠ n) :
     ¬ MarkovEquiv ⟨m, 1⟩ ⟨n, 1⟩ := fun h ↦ by
   have hcount := h.componentCount_eq
   rw [MarkovBraid.componentCount_one, MarkovBraid.componentCount_one] at hcount
@@ -253,6 +255,6 @@ strands, since they have different component counts. Informally, their closures 
 and the two-component unlink, respectively. -/
 theorem not_markovEquiv_sigma_last_one_two :
     ¬ MarkovEquiv ⟨1, sigma (Fin.last 0)⟩ ⟨1, (1 : BraidGroup 2)⟩ := fun h ↦
-  not_markovEquiv_one_one (Nat.zero_ne_one) (markovEquiv_sigma_last_one_one.symm.trans h)
+  not_markovEquiv_one_of_ne (Nat.zero_ne_one) (markovEquiv_sigma_last_one_one.symm.trans h)
 
 end TauCeti

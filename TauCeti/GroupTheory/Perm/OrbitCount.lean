@@ -36,8 +36,9 @@ move on braids, in `TauCeti/KnotTheory/Markov.lean`.
 ## Implementation notes
 
 `orbitCount` is `Nat.card` of a `Quotient`, so it is `0` when the permutation has infinitely many
-orbits or no orbits at all; every result below that compares two counts assumes the ambient type
-is finite.
+orbits or no orbits at all. The two orbit-addition and orbit-removal results assume only that the
+quotient of the relevant permutation by `Equiv.Perm.SameCycle` is finite; conjugation preserves
+the count without any finiteness assumption.
 
 Both counting results are deduced from one private lemma, `orbitCount_add_one_eq_aux`, whose input
 is a map `F : α → β` carrying the orbits of `σ` bijectively onto the orbits of `τ` other than a
@@ -62,11 +63,6 @@ this counts the cycles of `σ` *together with* its fixed points, whereas
 infinitely many orbits. -/
 noncomputable def orbitCount (σ : Equiv.Perm α) : ℕ :=
   Nat.card (Quotient (Equiv.Perm.SameCycle.setoid σ))
-
-/-- The defining equation of `TauCeti.orbitCount`. -/
-theorem orbitCount_def (σ : Equiv.Perm α) :
-    orbitCount σ = Nat.card (Quotient (Equiv.Perm.SameCycle.setoid σ)) :=
-  (rfl)
 
 /-- Each point of `α` is its own orbit under the identity permutation. -/
 @[simp]
@@ -111,7 +107,8 @@ private theorem sameCycle_zpow_of_forall_sameCycle_apply {π : Equiv.Perm α}
 /-- The counting step shared by the two results below. A map `F : α → β` whose fibrewise behaviour
 identifies the `σ`-orbits with the `τ`-orbits, and whose image is exactly the complement of a
 fixed point `p` of `τ`, exhibits `τ` as having one orbit more than `σ`. -/
-private theorem orbitCount_add_one_eq_aux [Finite β] {σ : Equiv.Perm α} {τ : Equiv.Perm β}
+private theorem orbitCount_add_one_eq_aux {σ : Equiv.Perm α} {τ : Equiv.Perm β}
+    [Finite (Quotient (SameCycle.setoid τ))]
     {F : α → β} {p : β} (hiff : ∀ x y, SameCycle σ x y ↔ SameCycle τ (F x) (F y))
     (hne : ∀ x, F x ≠ p) (hp : τ p = p) (hsurj : ∀ y, y ≠ p → ∃ x, F x = y) :
     orbitCount σ + 1 = orbitCount τ := by
@@ -136,16 +133,17 @@ private theorem orbitCount_add_one_eq_aux [Finite β] {σ : Equiv.Perm α} {τ :
       | _ y =>
         obtain ⟨x, rfl⟩ := hsurj y fun hy ↦ hc (congrArg _ hy)
         exact ⟨Quotient.mk _ x, rfl⟩
-  rw [orbitCount_def, orbitCount_def, Nat.card_congr key,
+  unfold orbitCount
+  rw [Nat.card_congr key,
     ← Finite.card_option (α := { c : Quotient (SameCycle.setoid τ) // c ≠ Quotient.mk _ p })]
   exact Nat.card_congr (Equiv.optionSubtypeNe (Quotient.mk (SameCycle.setoid τ) p))
 
 /-- **Adjoining a fixed point adds one orbit.** If an injection `f : α → β` intertwines
 `σ : Equiv.Perm α` with `τ : Equiv.Perm β` and its image is the complement of a single point `p`,
 then `p` is a fixed point of `τ` and is the only orbit of `τ` that is not an orbit of `σ`. -/
-theorem orbitCount_add_one_eq_of_semiconj [Finite β] {f : α → β} {p : β}
-    {σ : Equiv.Perm α}
-    {τ : Equiv.Perm β} (hf : Function.Injective f) (hfp : ∀ x, f x ≠ p)
+theorem orbitCount_add_one_eq_of_semiconj {f : α → β} {p : β} {σ : Equiv.Perm α}
+    {τ : Equiv.Perm β} [Finite (Quotient (SameCycle.setoid τ))]
+    (hf : Function.Injective f) (hfp : ∀ x, f x ≠ p)
     (hsurj : ∀ y, y ≠ p → ∃ x, f x = y) (hcomm : Function.Semiconj f σ τ) :
     orbitCount σ + 1 = orbitCount τ := by
   -- The point `p` is missed by `f`, and `τ` preserves the image of `f`, so `τ` fixes `p`.
@@ -178,7 +176,8 @@ theorem orbitCount_add_one_eq_of_semiconj [Finite β] {f : α → β} {p : β}
 /-- **Splicing a fixed point into another orbit removes one orbit.** If `τ` fixes `p` and `a ≠ p`,
 then in `τ * Equiv.swap a p` the point `p` has joined the orbit of `a`, and no other orbit has
 changed. -/
-theorem orbitCount_mul_swap_add_one [Finite β] [DecidableEq β] {τ : Equiv.Perm β} {p a : β}
+theorem orbitCount_mul_swap_add_one [DecidableEq β] {τ : Equiv.Perm β}
+    [Finite (Quotient (SameCycle.setoid τ))] {p a : β}
     (hp : τ p = p) (hne : a ≠ p) :
     orbitCount (τ * Equiv.swap a p) + 1 = orbitCount τ := by
   classical
