@@ -452,6 +452,7 @@ two coordinates. -/
 /-- The coordinate sum of a Bourbaki simple root of type `Dₙ`: a chain root `eᵢ - eᵢ₊₁` has sum
 zero and the fork root `e_{n-2} + e_{n-1}` has sum two. In particular every simple root has even
 coordinate sum. -/
+@[simp]
 theorem sum_typeDSimpleRoot (hn : 4 ≤ n) (i : Fin n) :
     ∑ j : Fin n, typeDSimpleRoot n hn i j = if (i : ℕ) + 1 < n then 0 else 2 := by
   split_ifs with hi
@@ -527,6 +528,7 @@ private lemma typeDSimpleRoot_dotProduct_of_not_add_one_lt (hn : 4 ≤ n) {i : F
 /-- **The simple roots of type `Dₙ` have the Cartan matrix as Gram matrix.** Type `Dₙ` is simply
 laced and its roots have squared length two, so the coroot of a root is the root itself and the
 Cartan integer `⟨αᵢ, αⱼ^∨⟩` is the classical dot product. -/
+@[simp]
 theorem typeDSimpleRoot_dotProduct (hn : 4 ≤ n) (i j : Fin n) :
     typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
   by_cases hi : (i : ℕ) + 1 < n

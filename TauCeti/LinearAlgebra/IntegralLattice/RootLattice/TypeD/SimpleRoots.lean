@@ -63,7 +63,7 @@ available: this deduces it from the lattice, rather than the other way round.
   is `CartanMatrix.D n`.
 * `TauCeti.IntegralLattice.determinant_checkerboardLattice`: the signed determinant of the
   checkerboard lattice is `(CartanMatrix.D n).det`.
-* `TauCeti.IntegralLattice.det_cartanMatrixD`: `(CartanMatrix.D n).det = 4`.
+* `CartanMatrix.D_det`: `(CartanMatrix.D n).det = 4`.
 
 ## References
 
@@ -132,6 +132,7 @@ theorem checkerboardSimpleRoot_mem_checkerboardCarrier (hn : 4 ≤ n) (i : Fin n
 
 /-- **The Gram matrix of the Bourbaki simple roots in the checkerboard lattice is the Cartan
 matrix of type `Dₙ`.** -/
+@[simp]
 theorem checkerboardLattice_form_checkerboardSimpleRoot (hn : 4 ≤ n) (i j : Fin n) :
     (checkerboardLattice n).form (checkerboardSimpleRoot n hn i) (checkerboardSimpleRoot n hn j) =
       ((CartanMatrix.D n i j : ℤ) : ℚ) := by
@@ -159,6 +160,7 @@ private theorem two_smul_single_last_mem_span (hn : 4 ≤ n) :
     rw [checkerboardLastIndex_val]
     omega
   have hchain : ((⟨n - 2, by omega⟩ : Fin n) : ℕ) + 1 < n := by
+    -- `omega` does not normalize the coercion of this proof-carrying `Fin` constructor.
     change n - 2 + 1 < n
     omega
   have hkey : (2 : ℤ) • Pi.single (checkerboardLastIndex n) (1 : ℤ) =
@@ -292,29 +294,8 @@ theorem determinant_checkerboardLattice (hn : 4 ≤ n) :
   rw [determinant_eq_gramDet _ (checkerboardSimpleRootBasis n hn), gramDet_def,
     gramMatrix_checkerboardSimpleRootBasis hn]
 
-/-- **The determinant of the Cartan matrix of type `Dₙ` is `4`.**
-
-The argument is lattice-theoretic rather than a direct expansion: the Cartan matrix is the Gram
-matrix of the checkerboard lattice in its simple-root basis, so its determinant is a square, and
-its absolute value is the order of the checkerboard discriminant group, which is four. -/
-theorem det_cartanMatrixD (hn : 4 ≤ n) : (CartanMatrix.D n).det = 4 := by
-  have : NeZero n := ⟨by omega⟩
-  have hmul : Matrix.of (DynkinType.typeDSimpleRoot n hn) *
-      Matrix.transpose (Matrix.of (DynkinType.typeDSimpleRoot n hn)) = CartanMatrix.D n := by
-    ext i j
-    rw [Matrix.mul_apply, ← DynkinType.typeDSimpleRoot_dotProduct hn i j]
-    simp [dotProduct]
-  have hsq : (CartanMatrix.D n).det = (Matrix.of (DynkinType.typeDSimpleRoot n hn)).det ^ 2 := by
-    rw [← hmul, Matrix.det_mul, Matrix.det_transpose, sq]
-  have hnonneg : 0 ≤ (CartanMatrix.D n).det := by
-    rw [hsq]
-    exact sq_nonneg _
-  have habs : ((CartanMatrix.D n).det).natAbs = 4 := by
-    rw [← determinant_checkerboardLattice hn, ← discriminant_def]
-    exact discriminant_checkerboardLattice n
-  omega
-
 /-- Each simple root has norm two, the diagonal entry of the Cartan matrix. -/
+@[simp]
 theorem checkerboardLattice_form_checkerboardSimpleRoot_self (hn : 4 ≤ n) (i : Fin n) :
     (checkerboardLattice n).form (checkerboardSimpleRoot n hn i) (checkerboardSimpleRoot n hn i) =
       2 := by
@@ -324,3 +305,30 @@ theorem checkerboardLattice_form_checkerboardSimpleRoot_self (hn : 4 ≤ n) (i :
 end IntegralLattice
 
 end TauCeti
+
+namespace CartanMatrix
+
+/-- **The determinant of the Cartan matrix of type `Dₙ` is `4`.**
+
+The argument is lattice-theoretic rather than a direct expansion: the Cartan matrix is the Gram
+matrix of the checkerboard lattice in its simple-root basis, so its determinant is a square, and
+its absolute value is the order of the checkerboard discriminant group, which is four. -/
+theorem D_det (hn : 4 ≤ n) : (D n).det = 4 := by
+  have : NeZero n := ⟨by omega⟩
+  have hmul : Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn) *
+      Matrix.transpose (Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn)) = D n := by
+    ext i j
+    rw [Matrix.mul_apply, ← TauCeti.DynkinType.typeDSimpleRoot_dotProduct hn i j]
+    simp [dotProduct]
+  have hsq : (D n).det = (Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn)).det ^ 2 := by
+    rw [← hmul, Matrix.det_mul, Matrix.det_transpose, sq]
+  have hnonneg : 0 ≤ (D n).det := by
+    rw [hsq]
+    exact sq_nonneg _
+  have habs : ((D n).det).natAbs = 4 := by
+    rw [← TauCeti.IntegralLattice.determinant_checkerboardLattice hn,
+      ← TauCeti.IntegralLattice.discriminant_def]
+    exact TauCeti.IntegralLattice.discriminant_checkerboardLattice n
+  omega
+
+end CartanMatrix
