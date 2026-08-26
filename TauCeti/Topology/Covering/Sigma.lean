@@ -44,26 +44,21 @@ open Topology
 variable {ι : Type*} {E X : ι → Type*} [∀ i, TopologicalSpace (E i)]
   [∀ i, TopologicalSpace (X i)] (f : ∀ i, E i → X i)
 
-omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)] in
-/-- The `i`-th summand of `Σ i, E i` is exactly the part of the disjoint union of the `f i` that
-lies over the `i`-th summand of `Σ i, X i`. -/
-theorem preimage_sigmaMap_range_sigmaMk (i : ι) :
-    Sigma.map id f ⁻¹' Set.range (Sigma.mk i) = Set.range (Sigma.mk i) := by
-  ext ⟨j, e⟩
-  simp [Sigma.map, eq_comm]
-
 /-- **A disjoint union of covering maps is a covering map.** -/
 theorem isCoveringMap_sigmaMap (hf : ∀ i, IsCoveringMap (f i)) :
     IsCoveringMap (Sigma.map id f) := by
   rintro ⟨i, x⟩
+  -- The `i`-th summand of `Σ i, E i` is exactly the part of `Σ i, E i` lying over the `i`-th
+  -- summand of `Σ i, X i`.
+  have hpre : Sigma.map id f ⁻¹' Set.range (Sigma.mk i) = Set.range (Sigma.mk i) := by
+    simpa using (Set.image_sigmaMk_preimage_sigmaMap Function.injective_id f i Set.univ).symm
   have hopen : IsOpen (Sigma.map id f ⁻¹' Set.range (Sigma.mk i)) := by
-    rw [preimage_sigmaMap_range_sigmaMk]
+    rw [hpre]
     exact isOpen_range_sigmaMk
   refine IsCoveringMapOn.of_isCoveringMap_restrictPreimage _ isOpen_range_sigmaMk hopen ?_ _
     ⟨x, rfl⟩
   let hE : (Sigma.map id f ⁻¹' Set.range (Sigma.mk i) : Set (Σ i, E i)) ≃ₜ E i :=
-    (Homeomorph.setCongr (preimage_sigmaMap_range_sigmaMk f i)).trans
-      (IsEmbedding.sigmaMk (σ := E)).toHomeomorph.symm
+    (Homeomorph.setCongr hpre).trans (IsEmbedding.sigmaMk (σ := E)).toHomeomorph.symm
   let hX : X i ≃ₜ (Set.range (Sigma.mk i) : Set (Σ i, X i)) :=
     (IsEmbedding.sigmaMk (σ := X)).toHomeomorph
   have heq : (Set.range (Sigma.mk i)).restrictPreimage (Sigma.map id f) =
@@ -76,25 +71,12 @@ theorem isCoveringMap_sigmaMap (hf : ∀ i, IsCoveringMap (f i)) :
   rw [heq]
   exact ((hf i).comp_homeomorph hE).homeomorph_comp hX
 
-omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)] in
-/-- The fibre of a disjoint union of maps over `⟨i, x⟩` consists of the points of the `i`-th
-summand lying over `x`. -/
-theorem image_sigmaMk_preimage_singleton (i : ι) (x : X i) :
-    Sigma.mk i '' (f i ⁻¹' {x}) = Sigma.map id f ⁻¹' {(⟨i, x⟩ : Σ j, X j)} := by
-  refine Set.Subset.antisymm ?_ ?_
-  · rintro _ ⟨e, he, rfl⟩
-    simpa [Sigma.map] using he
-  · rintro ⟨j, e⟩ hje
-    have hje' : (⟨j, f j e⟩ : Σ k, X k) = ⟨i, x⟩ := hje
-    obtain rfl : j = i := congrArg Sigma.fst hje'
-    exact ⟨e, sigma_mk_injective hje', rfl⟩
-
 /-- **The fibre of a disjoint union of maps over `⟨i, x⟩` is the fibre of the `i`-th map over
 `x`**, through the inclusion of the `i`-th summand. -/
 noncomputable def sigmaMapFiberEquiv (i : ι) (x : X i) :
     (f i ⁻¹' {x} : Set (E i)) ≃ (Sigma.map id f ⁻¹' {(⟨i, x⟩ : Σ i, X i)} : Set (Σ i, E i)) :=
-  (Equiv.Set.image _ _ sigma_mk_injective).trans
-    (Equiv.setCongr (image_sigmaMk_preimage_singleton f i x))
+  (Equiv.Set.image _ _ sigma_mk_injective).trans <| Equiv.setCongr <| by
+    simpa using Set.image_sigmaMk_preimage_sigmaMap Function.injective_id f i {x}
 
 omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)] in
 @[simp]
