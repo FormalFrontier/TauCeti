@@ -5,10 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.GeneralLinear
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.Basic
-public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
-public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Torus
 
 /-!
 # The diagonal torus as a closed subgroup of the general linear group
@@ -27,8 +24,10 @@ maximal among tori is a separate geometric step in Layer 7 of the ReductiveGroup
 
 ## Main declarations
 
-* `TauCeti.GeneralLinear.diagonalTorus_eq_diagonalGroupSchemeHom`: the diagonal torus is the
-  diagonalizable-group representation with the standard character weights.
+* `TauCeti.GeneralLinear.diagonalTorus_eq_weightTorus`: the diagonal torus is the weight torus
+  for the standard basis of its character lattice.
+* `TauCeti.GeneralLinear.diagonalTorus_eq_diagonalGroupSchemeHom`: its equivalent description as
+  a diagonalizable-group representation.
 * `TauCeti.GeneralLinear.isClosedImmersion_diagonalTorus`: the diagonal torus morphism is a
   closed immersion.
 * `TauCeti.GeneralLinear.diagonalTorusClosedSubgroup`: the diagonal torus as a closed subgroup
@@ -37,6 +36,11 @@ maximal among tori is a separate geometric step in Layer 7 of the ReductiveGroup
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §§12 and 21.
+* `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Torus` and
+  `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Torus`, whose
+  weight-torus closedness constructions supplied the internal template.
+* `TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.GeneralLinear`, in particular
+  `DiagonalizableGroup.isClosedImmersion_diagonalGroupSchemeHom`.
 
 This advances the split maximal-torus and root-datum target in Layer 7 of the ReductiveGroups
 roadmap.
@@ -52,33 +56,35 @@ universe u
 
 variable (R : Type u) [CommRing R] (N : ℕ)
 
-/-- The coordinate morphism of the diagonal torus is the coordinate morphism of the standard
-diagonal representation of its character group. -/
-private theorem diagonalTorusCoordinateMap_eq_diagonalCoordinateMap :
+/-- The coordinate morphism of the diagonal torus is the weight-torus coordinate morphism for the
+standard basis of its character lattice. -/
+private theorem diagonalTorusCoordinateMap_eq_weightTorusCoordinateMap :
     diagonalTorusCoordinateMap (R := R) (N := N) =
-      CommHopfAlgCat.ofHom
-        (DiagonalizableGroup.diagonalCoordinateMap (Pi.basisFun R (Fin N)) fun i =>
-          SplitTorus.weightCharacter
-            (Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i))) := by
+      weightTorusCoordinateMap (R := R) (fun i =>
+        Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i)) := by
   apply _root_.CommHopfAlgCat.hom_ext
   apply coordinateHopfAlgebra_bialgHom_ext R N
   intro i j
-  rw [diagonalTorusCoordinateMap_X]
-  -- Expose the underlying algebra map hidden by `CommHopfAlgCat.ofHom` so that the
-  -- diagonal-coordinate formula can rewrite the right-hand side.
-  change _ = DiagonalizableGroup.diagonalCoordinateMap (Pi.basisFun R (Fin N))
-    (fun i => SplitTorus.weightCharacter
-      (Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i))) _
-  rw [DiagonalizableGroup.diagonalCoordinateMap_X]
+  rw [diagonalTorusCoordinateMap_X, hom_weightTorusCoordinateMap,
+    weightTorusCoordinateBialgHom_X]
   rcases eq_or_ne i j with rfl | hij
-  · rw [Matrix.diagonal_apply_eq]
-    simp only [↓reduceIte]
-    congr 2
-    apply Multiplicative.toAdd.injective
-    ext x
-    rw [SplitTorus.toAdd_weightCharacter]
-    simp [Pi.basisFun_apply, Pi.single_apply, Finsupp.single_apply, eq_comm]
-  · simp [hij, Matrix.diagonal_apply_ne]
+  · have hweight :
+        Finsupp.equivFunOnFinite.symm
+            (Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i)) =
+          Finsupp.single (ULift.up i) 1 := by
+      ext k
+      simp [Pi.basisFun_apply, Finsupp.single_apply, eq_comm]
+    rw [hweight]
+  · simp [hij]
+
+/-- The diagonal torus is the weight torus prescribed by the standard basis of its character
+lattice. -/
+theorem diagonalTorus_eq_weightTorus :
+    diagonalTorus (R := R) (N := N) =
+      weightTorus (R := R) (fun i =>
+        Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i)) := by
+  rw [diagonalTorus_def, weightTorus_def,
+    diagonalTorusCoordinateMap_eq_weightTorusCoordinateMap]
 
 /-- The diagonal torus is the general diagonalizable-group representation specialized to the
 standard basis of its character lattice. -/
@@ -88,27 +94,18 @@ theorem diagonalTorus_eq_diagonalGroupSchemeHom :
         (SplitTorus.characterGroup (ULift.{u} (Fin N))) (Pi.basisFun R (Fin N)) fun i =>
           SplitTorus.weightCharacter
             (Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i)) := by
-  rw [diagonalTorus_def, DiagonalizableGroup.diagonalGroupSchemeHom_def]
-  rw [diagonalTorusCoordinateMap_eq_diagonalCoordinateMap]
+  rw [diagonalTorus_eq_weightTorus, weightTorus_eq_diagonalGroupSchemeHom]
 
 /-- **The diagonal split torus is a closed subgroup scheme of `GL_n` over every commutative
 base ring.** -/
 instance isClosedImmersion_diagonalTorus :
     IsClosedImmersion (diagonalTorus (R := R) (N := N)).hom.hom.left := by
-  rw [diagonalTorus_eq_diagonalGroupSchemeHom]
-  apply DiagonalizableGroup.isClosedImmersion_diagonalGroupSchemeHom
-  let wt : Fin N → ULift.{u} (Fin N) → ℤ := fun i =>
-    Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i)
-  have hrange : Set.range wt = Set.range (Pi.basisFun ℤ (ULift.{u} (Fin N))) := by
-    ext x
-    constructor
-    · rintro ⟨i, rfl⟩
-      exact ⟨ULift.up i, rfl⟩
-    · rintro ⟨i, rfl⟩
-      exact ⟨i.down, congrArg (Pi.basisFun ℤ (ULift.{u} (Fin N))) i.up_down.symm⟩
-  have hspan : Submodule.span ℤ (Set.range wt) = ⊤ := by
-    rw [hrange, (Pi.basisFun ℤ (ULift.{u} (Fin N))).span_eq]
-  exact SplitTorus.closure_range_weightCharacter_eq_top wt hspan
+  rw [diagonalTorus_eq_weightTorus]
+  apply isClosedImmersion_weightTorus
+  change Submodule.span ℤ
+    (Set.range ((Pi.basisFun ℤ (ULift.{u} (Fin N))) ∘ ULift.up)) = ⊤
+  rw [ULift.up_surjective.range_comp (Pi.basisFun ℤ (ULift.{u} (Fin N))),
+    (Pi.basisFun ℤ (ULift.{u} (Fin N))).span_eq]
 
 /-- The diagonal split torus as a closed subgroup scheme of `GL_n`. -/
 noncomputable def diagonalTorusClosedSubgroup :
