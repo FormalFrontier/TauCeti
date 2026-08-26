@@ -382,24 +382,25 @@ theorem rep_kostantForm_mem_lattice
 
 /-- The weight of an integral combination of coordinate vectors, as a linear map into the
 character lattice of the split torus of rank `r`. -/
-def weightMap : (Fin (r + 1) → ℤ) →ₗ[ℤ] Fin r → ℤ where
+private def weightMap : (Fin (r + 1) → ℤ) →ₗ[ℤ] Fin r → ℤ where
   toFun x i := x i.castSucc - x i.succ
   map_add' x y := by funext i; simp only [Pi.add_apply]; ring
   map_smul' c x := by funext i; simp only [Pi.smul_apply, smul_eq_mul, RingHom.id_apply]; ring
 
 @[simp]
-theorem weightMap_apply (x : Fin (r + 1) → ℤ) (i : Fin r) :
+private theorem weightMap_apply (x : Fin (r + 1) → ℤ) (i : Fin r) :
     weightMap r x i = x i.castSucc - x i.succ := (rfl)
 
 /-- The weight of the `k`-th coordinate vector is the image of its indicator function. -/
-theorem weightMap_single (k : Fin (r + 1)) : weightMap r (Pi.single k 1) = weight r k := by
+private theorem weightMap_single (k : Fin (r + 1)) :
+    weightMap r (Pi.single k 1) = weight r k := by
   funext i
   simp only [weightMap_apply, weight, Pi.single_apply]
   simp only [eq_comm]
 
 /-- **The weight map is surjective**: the differences `x_i - x_{i+1}` realize every integral
 character, by partial summation. -/
-theorem weightMap_surjective : Function.Surjective (weightMap r) := by
+private theorem weightMap_surjective : Function.Surjective (weightMap r) := by
   classical
   intro y
   refine ⟨fun j => -∑ n ∈ Finset.range (j : ℕ), (if h : n < r then y ⟨n, h⟩ else 0), ?_⟩
