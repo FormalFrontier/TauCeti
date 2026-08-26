@@ -23,10 +23,8 @@ to faithful flatness. Combining this with the existing coordinate criterion for 
 shows that it is a central isogeny exactly when, in addition, its scheme-theoretic kernel Hopf
 ideal is central.
 
-The criteria are stated both as equivalences and as constructors and projections. Thus a
-coordinate construction can establish a central isogeny without leaving commutative algebra, and
-a scheme-theoretic central isogeny immediately exposes the finiteness and faithful-flatness facts
-needed by later arguments.
+The criteria let coordinate constructions establish central isogenies without leaving commutative
+algebra, and let scheme-theoretic central isogenies expose the corresponding coordinate facts.
 
 ## Main declarations
 
@@ -73,30 +71,6 @@ theorem isIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat (f : H ⟶ K) :
   rw [IsFinite.SpecMap_iff, flat_and_surjective_SpecMap_iff]
   rfl
 
-/-- A finite faithfully flat morphism of commutative Hopf algebras induces an isogeny of affine
-group schemes. -/
-theorem isIsogeny_hopfSpec_map_of_finite_of_faithfullyFlat (f : H ⟶ K)
-    (hfinite : f.hom.toAlgHom.toRingHom.Finite)
-    (hflat : f.hom.toAlgHom.toRingHom.FaithfullyFlat) :
-    IsIsogeny ((hopfSpec (CommRingCat.of k)).map f.op) :=
-  (isIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat f).2 ⟨hfinite, hflat⟩
-
-namespace IsIsogeny
-
-/-- The coordinate morphism of an affine group-scheme isogeny is finite. -/
-theorem hom_finite {f : H ⟶ K}
-    (hf : IsIsogeny ((hopfSpec (CommRingCat.of k)).map f.op)) :
-    f.hom.toAlgHom.toRingHom.Finite :=
-  (isIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat f).1 hf |>.1
-
-/-- The coordinate morphism of an affine group-scheme isogeny is faithfully flat. -/
-theorem hom_faithfullyFlat {f : H ⟶ K}
-    (hf : IsIsogeny ((hopfSpec (CommRingCat.of k)).map f.op)) :
-    f.hom.toAlgHom.toRingHom.FaithfullyFlat :=
-  (isIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat f).1 hf |>.2
-
-end IsIsogeny
-
 /-- **Coordinate criterion for a central isogeny.** The affine group-scheme morphism induced by
 `f` is a central isogeny exactly when `f` is finite and faithfully flat and its kernel Hopf ideal
 is central. -/
@@ -107,37 +81,5 @@ theorem isCentralIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat_and_isCentra
           (CommHopfAlgCat.kernelHopfIdeal f).IsCentral := by
   rw [isCentralIsogeny_hopfSpec_map_iff,
     isIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat, and_assoc]
-
-/-- A finite faithfully flat morphism of commutative Hopf algebras with central kernel induces a
-central isogeny of affine group schemes. -/
-theorem isCentralIsogeny_hopfSpec_map_of_finite_of_faithfullyFlat_of_isCentral (f : H ⟶ K)
-    (hfinite : f.hom.toAlgHom.toRingHom.Finite)
-    (hflat : f.hom.toAlgHom.toRingHom.FaithfullyFlat)
-    (hcentral : (CommHopfAlgCat.kernelHopfIdeal f).IsCentral) :
-    IsCentralIsogeny ((hopfSpec (CommRingCat.of k)).map f.op) :=
-  (isCentralIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat_and_isCentral f).2
-    ⟨hfinite, hflat, hcentral⟩
-
-namespace IsCentralIsogeny
-
-/-- The coordinate morphism of an affine central isogeny is finite. -/
-theorem hom_finite {f : H ⟶ K}
-    (hf : IsCentralIsogeny ((hopfSpec (CommRingCat.of k)).map f.op)) :
-    f.hom.toAlgHom.toRingHom.Finite :=
-  hf.isIsogeny.hom_finite
-
-/-- The coordinate morphism of an affine central isogeny is faithfully flat. -/
-theorem hom_faithfullyFlat {f : H ⟶ K}
-    (hf : IsCentralIsogeny ((hopfSpec (CommRingCat.of k)).map f.op)) :
-    f.hom.toAlgHom.toRingHom.FaithfullyFlat :=
-  hf.isIsogeny.hom_faithfullyFlat
-
-/-- The kernel Hopf ideal of an affine central isogeny is central. -/
-theorem isCentral_kernelHopfIdeal {f : H ⟶ K}
-    (hf : IsCentralIsogeny ((hopfSpec (CommRingCat.of k)).map f.op)) :
-    (CommHopfAlgCat.kernelHopfIdeal f).IsCentral :=
-  (isCentralIsogeny_hopfSpec_map_iff f).1 hf |>.2
-
-end IsCentralIsogeny
 
 end TauCeti.GroupScheme
