@@ -156,27 +156,20 @@ lemma mem_boundaries (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
 boundaries.  Its quotient representation is wrapped; maps out of cohomology are constructed with
 `TauCeti.IsDGAlgebra.cohomologyLift`. -/
 structure cohomology (h : IsDGAlgebra 𝒜 d) where
-  private mk ::
   /-- The underlying quotient class.  Use `TauCeti.IsDGAlgebra.cohomologyLift` to define algebra
   homomorphisms out of cohomology. -/
   quotient : h.boundaries.ringCon.Quotient
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 instance instRingCohomology (h : IsDGAlgebra 𝒜 d) : Ring h.cohomology := by
   let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
     ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
   exact { Equiv.ring e with toSemiring := Equiv.semiring e }
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 instance instAlgebraCohomology (h : IsDGAlgebra 𝒜 d) : Algebra R h.cohomology := by
   let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
     ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
   exact Equiv.algebra R e
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 /-- The passage from a cycle to its cohomology class. -/
 @[expose]
 def toCohomology (h : IsDGAlgebra 𝒜 d) : h.cycles →ₐ[R] h.cohomology := by
@@ -184,8 +177,6 @@ def toCohomology (h : IsDGAlgebra 𝒜 d) : h.cycles →ₐ[R] h.cohomology := b
     ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
   exact (Equiv.algEquiv R e).symm.toAlgHom.comp (RingCon.mkₐ R h.boundaries.ringCon)
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 lemma toCohomology_surjective (h : IsDGAlgebra 𝒜 d) : Function.Surjective h.toCohomology :=
   fun x => by
     obtain ⟨x⟩ := x
@@ -194,8 +185,6 @@ lemma toCohomology_surjective (h : IsDGAlgebra 𝒜 d) : Function.Surjective h.t
     change cohomology.mk (RingCon.mkₐ R h.boundaries.ringCon z) = cohomology.mk x
     rw [hz]
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 /-- Descend an algebra homomorphism from cycles to cohomology, provided that it annihilates every
 boundary. -/
 @[expose]
@@ -238,8 +227,6 @@ theorem cohomologyLift_unique (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Alg
   ext z
   exact (h.cohomologyLift_toCohomology f hf z).symm
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 @[simp]
 lemma toCohomology_eq_zero_iff (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
     h.toCohomology z = 0 ↔ z ∈ h.boundaries := by
