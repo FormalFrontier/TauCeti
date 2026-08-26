@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SemidirectProduct
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Properties
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Properties
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
 public import TauCeti.AlgebraicGeometry.Geometrically.Connected
 
