@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Algebra.Subalgebra.Lattice
+public import Mathlib.Algebra.Algebra.TransferInstance
+public import Mathlib.RingTheory.Congruence.Hom
 public import Mathlib.RingTheory.TwoSidedIdeal.Lattice
 public import TauCeti.Algebra.Homology.DG.Algebra.Defs
 
@@ -36,8 +38,9 @@ cycles and the cohomology algebra is the associated `RingCon` quotient.
 * `TauCeti.IsDGAlgebra.cyclesDeg`: the homogeneous cycles of a fixed degree.
 * `TauCeti.IsDGAlgebra.boundaries`: the image of the differential, as a two-sided ideal of the
   cycles.
-* `TauCeti.IsDGAlgebra.cohomology` and `TauCeti.IsDGAlgebra.toCohomology`: the cohomology algebra
-  and the map taking a cycle to its class.
+* `TauCeti.IsDGAlgebra.cohomology`, `TauCeti.IsDGAlgebra.toCohomology`, and
+  `TauCeti.IsDGAlgebra.cohomologyLift`: the cohomology algebra, its quotient map, and its universal
+  property for algebra homomorphisms.
 * `TauCeti.IsDGAlgebra.cohomologyGrading`: the grading of the cohomology algebra by the classes of
   homogeneous cycles.
 * `TauCeti.algEquivCohomologyOfZero`: a graded algebra with zero differential is its own
@@ -108,7 +111,8 @@ theorem iSup_cyclesDeg (h : IsDGAlgebra 𝒜 d) : ⨆ p : ℤ, h.cyclesDeg p = �
   refine eq_top_iff.mpr fun z _ => ?_
   have hz : d (z : A) = 0 := z.2
   set s := (decompose 𝒜 (z : A)).support
-  have hmem : ∀ p : ℤ, d (decompose 𝒜 (z : A) p : A) = 0 := fun p => h.map_decompose_eq_zero hz p
+  have hmem : ∀ p : ℤ, d (decompose 𝒜 (z : A) p : A) = 0 :=
+    fun p => h.map_proj_eq_zero hz p
   have hsum : z = ∑ p ∈ s, (⟨(decompose 𝒜 (z : A) p : A), hmem p⟩ : h.cycles) := by
     refine Subtype.ext ?_
     simpa [AddSubmonoidClass.coe_finsetSum] using
@@ -149,22 +153,111 @@ lemma mem_boundaries (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
   exact TwoSidedIdeal.mem_mk' _ _ _ _ _ _ _
 
 /-- The **cohomology algebra** `H(A)` of a differential graded algebra: the cycles modulo the
-boundaries. -/
-abbrev cohomology (h : IsDGAlgebra 𝒜 d) : Type _ := h.boundaries.ringCon.Quotient
+boundaries.  Its quotient representation is wrapped; maps out of cohomology are constructed with
+`TauCeti.IsDGAlgebra.cohomologyLift`. -/
+structure cohomology (h : IsDGAlgebra 𝒜 d) where
+  private mk ::
+  /-- The underlying quotient class.  Use `TauCeti.IsDGAlgebra.cohomologyLift` to define algebra
+  homomorphisms out of cohomology. -/
+  quotient : h.boundaries.ringCon.Quotient
 
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
+instance instRingCohomology (h : IsDGAlgebra 𝒜 d) : Ring h.cohomology := by
+  let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
+    ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
+  exact { Equiv.ring e with toSemiring := Equiv.semiring e }
+
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
+instance instAlgebraCohomology (h : IsDGAlgebra 𝒜 d) : Algebra R h.cohomology := by
+  let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
+    ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
+  exact Equiv.algebra R e
+
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
 /-- The passage from a cycle to its cohomology class. -/
-def toCohomology (h : IsDGAlgebra 𝒜 d) : h.cycles →ₐ[R] h.cohomology :=
-  RingCon.mkₐ R h.boundaries.ringCon
+@[expose]
+def toCohomology (h : IsDGAlgebra 𝒜 d) : h.cycles →ₐ[R] h.cohomology := by
+  let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
+    ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
+  exact (Equiv.algEquiv R e).symm.toAlgHom.comp (RingCon.mkₐ R h.boundaries.ringCon)
 
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
 lemma toCohomology_surjective (h : IsDGAlgebra 𝒜 d) : Function.Surjective h.toCohomology :=
-  RingCon.mkₐ_surjective _
+  fun x => by
+    obtain ⟨x⟩ := x
+    obtain ⟨z, hz⟩ := (RingCon.mkₐ_surjective (α := R) h.boundaries.ringCon) x
+    refine ⟨z, ?_⟩
+    change cohomology.mk (RingCon.mkₐ R h.boundaries.ringCon z) = cohomology.mk x
+    rw [hz]
 
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
+/-- Descend an algebra homomorphism from cycles to cohomology, provided that it annihilates every
+boundary. -/
+@[expose]
+def cohomologyLift (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Algebra R B]
+    (f : h.cycles →ₐ[R] B) (hf : ∀ z : h.cycles, z ∈ h.boundaries → f z = 0) :
+    h.cohomology →ₐ[R] B := by
+  let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
+    ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
+  exact (h.boundaries.ringCon.liftₐ f fun x y hxy => by
+      rw [RingCon.ker_apply]
+      have hzero := hf (x - y) ((h.boundaries.rel_iff x y).mp hxy)
+      rw [map_sub, sub_eq_zero] at hzero
+      change f x = f y
+      exact hzero).comp (Equiv.algEquiv R e).toAlgHom
+
+@[simp]
+theorem cohomologyLift_toCohomology (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Algebra R B]
+    (f : h.cycles →ₐ[R] B) (hf : ∀ z : h.cycles, z ∈ h.boundaries → f z = 0)
+    (z : h.cycles) : h.cohomologyLift f hf (h.toCohomology z) = f z :=
+  rfl
+
+/-- Algebra homomorphisms out of cohomology are equal if they agree on all cycle classes. -/
+@[ext]
+theorem cohomologyHom_ext (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Algebra R B]
+    {f g : h.cohomology →ₐ[R] B} (hfg : f.comp h.toCohomology = g.comp h.toCohomology) :
+    f = g := by
+  apply AlgHom.ext
+  intro x
+  obtain ⟨z, rfl⟩ := h.toCohomology_surjective x
+  exact DFunLike.congr_fun hfg z
+
+/-- The lift from cohomology is the unique algebra homomorphism with the prescribed values on
+cycle classes. -/
+theorem cohomologyLift_unique (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Algebra R B]
+    (f : h.cycles →ₐ[R] B) (hf : ∀ z : h.cycles, z ∈ h.boundaries → f z = 0)
+    (g : h.cohomology →ₐ[R] B) (hg : g.comp h.toCohomology = f) :
+    g = h.cohomologyLift f hf := by
+  apply h.cohomologyHom_ext
+  rw [hg]
+  ext z
+  exact (h.cohomologyLift_toCohomology f hf z).symm
+
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
 @[simp]
 lemma toCohomology_eq_zero_iff (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
     h.toCohomology z = 0 ↔ z ∈ h.boundaries := by
-  have hzero : (0 : h.cohomology) = h.toCohomology 0 := (map_zero h.toCohomology).symm
-  rw [hzero]
-  exact (RingCon.eq _).trans (by rw [TwoSidedIdeal.rel_iff, sub_zero])
+  constructor
+  · intro hz
+    have hz' := congrArg cohomology.quotient hz
+    change (z : h.boundaries.ringCon.Quotient) = 0 at hz'
+    have hrel := (RingCon.eq h.boundaries.ringCon).mp hz'
+    simpa only [TwoSidedIdeal.rel_iff, sub_zero] using hrel
+  · intro hz
+    have quotient_injective : Function.Injective
+        (cohomology.quotient : h.cohomology → h.boundaries.ringCon.Quotient) := by
+      rintro ⟨x⟩ ⟨y⟩ hxy
+      congr
+    apply quotient_injective
+    change (z : h.boundaries.ringCon.Quotient) = 0
+    apply (RingCon.eq h.boundaries.ringCon).mpr
+    simpa only [TwoSidedIdeal.rel_iff, sub_zero] using hz
 
 /-- The homogeneous projections annihilate everything supported in the other degrees. -/
 private theorem proj_eq_zero_of_mem_biSup {p : ℤ} {x : A}

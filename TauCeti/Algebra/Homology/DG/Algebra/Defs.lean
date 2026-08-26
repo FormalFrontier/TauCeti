@@ -83,7 +83,7 @@ structure IsDGAlgebra (𝒜 : ℤ → Submodule R A) [GradedAlgebra 𝒜] (d : A
   /-- The differential raises the degree by one. -/
   map_mem : ∀ {p : ℤ} {a : A}, a ∈ 𝒜 p → d a ∈ 𝒜 (p + 1)
   /-- The differential squares to zero. -/
-  apply_apply (a : A) : d (d a) = 0
+  sq_zero (a : A) : d (d a) = 0
   /-- The graded Leibniz rule for a left factor of degree `p`. -/
   leibniz : ∀ {p : ℤ} {a : A}, a ∈ 𝒜 p → ∀ b : A,
     d (a * b) = d a * b + p.negOnePow • (a * d b)
@@ -139,11 +139,6 @@ theorem map_proj_eq_zero (h : IsDGAlgebra 𝒜 d) {a : A} (ha : d a = 0) (p : �
     d (GradedRing.proj 𝒜 p a) = 0 := by
   rw [h.apply_proj, ha, map_zero]
 
-/-- The homogeneous components of a cycle, in their `DirectSum.decompose` spelling, are cycles. -/
-theorem map_decompose_eq_zero (h : IsDGAlgebra 𝒜 d) {a : A} (ha : d a = 0) (p : ℤ) :
-    d (decompose 𝒜 a p : A) = 0 :=
-  h.map_proj_eq_zero ha p
-
 /-- The Leibniz rule against a cycle on the right: the sign disappears with the term it multiplies,
 so the left factor need not be homogeneous. -/
 theorem map_mul_of_map_right_eq_zero (h : IsDGAlgebra 𝒜 d) (a : A) {b : A} (hb : d b = 0) :
@@ -159,6 +154,13 @@ theorem map_mul_eq_zero (h : IsDGAlgebra 𝒜 d) {a b : A} (ha : d a = 0) (hb : 
     d (a * b) = 0 := by
   rw [h.map_mul_of_map_right_eq_zero a hb, ha, zero_mul]
 
+/-- A homogeneous cycle times a boundary is, up to the sign of the cycle's degree, the
+differential of the product. -/
+theorem mul_map_eq_negOnePow_smul_map_mul (h : IsDGAlgebra 𝒜 d) {p : ℤ} {a : A}
+    (ha : a ∈ 𝒜 p) (hda : d a = 0) (b : A) :
+    a * d b = p.negOnePow • d (a * b) := by
+  simp only [h.leibniz ha b, hda, zero_mul, zero_add, smul_smul, Int.units_mul_self, one_smul]
+
 /-- A cycle times a boundary is a boundary.  Componentwise this is the Leibniz rule read backwards:
 `x * d b = (-1) ^ |x| * d (x * b)` when `x` is a homogeneous cycle. -/
 theorem mul_mem_range_of_map_left_eq_zero (h : IsDGAlgebra 𝒜 d) {a : A} (ha : d a = 0) (b : A) :
@@ -166,8 +168,9 @@ theorem mul_mem_range_of_map_left_eq_zero (h : IsDGAlgebra 𝒜 d) {a : A} (ha :
   classical
   rw [← DirectSum.sum_support_decompose 𝒜 a, Finset.sum_mul]
   refine Submodule.sum_mem _ fun p _ => ⟨p.negOnePow • ((decompose 𝒜 a p : A) * b), ?_⟩
-  rw [Units.smul_def, map_zsmul, ← Units.smul_def, h.leibniz (SetLike.coe_mem _) b,
-    h.map_decompose_eq_zero ha p, zero_mul, zero_add, smul_smul, Int.units_mul_self, one_smul]
+  rw [Units.smul_def, map_zsmul, ← Units.smul_def]
+  exact
+    (h.mul_map_eq_negOnePow_smul_map_mul (SetLike.coe_mem _) (h.map_proj_eq_zero ha p) b).symm
 
 end IsDGAlgebra
 
@@ -175,7 +178,7 @@ end IsDGAlgebra
 theorem isDGAlgebra_zero (𝒜 : ℤ → Submodule R A) [GradedAlgebra 𝒜] :
     IsDGAlgebra 𝒜 (0 : A →ₗ[R] A) where
   map_mem := fun _ => zero_mem _
-  apply_apply _ := rfl
+  sq_zero _ := rfl
   leibniz := fun _ _ => by simp
 
 end TauCeti
