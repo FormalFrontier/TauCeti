@@ -9,6 +9,11 @@ public import Mathlib.Probability.Distributions.Gamma
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
+public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
+public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
+import Mathlib.Analysis.Analytic.IsolatedZeros
+import Mathlib.Analysis.Complex.Convex
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Probability.Moments.ComplexMGF
@@ -35,6 +40,14 @@ shape from `a` to `a + n`, and a factor `exp (t * x)` shifts the rate from `r` t
 second shift explains the exponential moment domain: it is exactly the half-line on which the
 shifted rate is still positive.
 
+The characteristic function is not computed by a contour integral. Mathlib's
+`ProbabilityTheory.complexMGF` is analytic on the vertical strip cut out by the interior of the
+exponential-moment domain, here the half-plane `{z | z.re < r}`; the principal power
+`z ↦ (1 - z / r) ^ (-a)` is analytic there too, because the base has real part `1 - z.re / r > 0`
+and so avoids the branch cut; and the two agree at the real points of the half-plane by
+`TauCeti.mgf_id_gammaMeasure`. Those points accumulate at `0`, so the identity theorem forces the
+two to agree on the whole half-plane, and in particular on the imaginary axis.
+
 ## Main results
 
 * `TauCeti.integral_pow_gammaMeasure` — the natural raw moments, `Γ (a + n) / (Γ a * r ^ n)`, with
@@ -47,6 +60,8 @@ shifted rate is still positive.
 * `TauCeti.mgf_id_gammaMeasure` — the moment-generating function is `(1 - t / r) ^ (-a)` there;
 * `TauCeti.cgf_id_gammaMeasure` — the cumulant-generating function is `-a * log (1 - t / r)`
   there, the real logarithm of the previous formula;
+* `TauCeti.charFun_gammaMeasure` — the characteristic function is `(1 - I * t / r) ^ (-a)`, the
+  analytic continuation of the moment-generating function to the half-plane `{z | z.re < r}`;
 * `TauCeti.gammaMeasure_conv_gammaMeasure` — convolution at a common rate adds the shape
   parameters;
 * `TauCeti.gammaMeasure_map_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`.
@@ -278,6 +293,79 @@ theorem variance_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
   simp only [Pi.pow_apply, id_eq]
   rw [integral_sq_gammaMeasure ha hr, integral_id_gammaMeasure ha hr]
   field_simp
+  ring
+
+/-! ### The characteristic function -/
+
+/-- The vertical strip on which the complex moment-generating function of a gamma law is analytic
+is the open half-plane `{z | z.re < r}`. -/
+private lemma complexMGF_strip_gammaMeasure (ha : 0 < a) (hr : 0 < r) :
+    {z : ℂ | z.re ∈ interior (integrableExpSet id (gammaMeasure a r))} = {z : ℂ | z.re < r} := by
+  simp [integrableExpSet_id_gammaMeasure ha hr, isOpen_Iio.interior_eq]
+
+/-- On the half-plane `{z | z.re < r}` the base `1 - z / r` has positive real part, so the
+principal power `(1 - z / r) ^ (-a)` stays off the branch cut and is analytic there. -/
+private lemma analyticOnNhd_one_sub_div_cpow (a : ℝ) (hr : 0 < r) :
+    AnalyticOnNhd ℂ (fun z : ℂ ↦ (1 - z / (r : ℂ)) ^ (-(a : ℂ))) {z : ℂ | z.re < r} := by
+  intro z hz
+  simp only [Set.mem_ofPred_eq] at hz
+  refine AnalyticAt.cpow ?_ analyticAt_const ?_
+  · exact analyticAt_const.sub (analyticAt_id.div analyticAt_const
+      (by exact_mod_cast hr.ne'))
+  · rw [Complex.mem_slitPlane_iff]
+    refine Or.inl ?_
+    rw [Complex.sub_re, Complex.one_re, Complex.div_ofReal_re, sub_pos, div_lt_one hr]
+    exact hz
+
+/-- The characteristic function of a gamma law with positive shape and rate is
+`(1 - I * t / r) ^ (-a)`, the principal power of a base of real part `1 - 0 = 1`.
+
+The formula is obtained from `TauCeti.mgf_id_gammaMeasure` by analytic continuation: both
+`ProbabilityTheory.complexMGF` and the displayed power are analytic on the half-plane
+`{z | z.re < r}`, and they agree along the real points of that half-plane, which accumulate at
+`0`. -/
+theorem charFun_gammaMeasure (ha : 0 < a) (hr : 0 < r) (t : ℝ) :
+    charFun (gammaMeasure a r) t = (1 - Complex.I * t / r) ^ (-(a : ℂ)) := by
+  have hpre : IsPreconnected {z : ℂ | z.re < r} := (convex_halfSpace_re_lt r).isPreconnected
+  have hf : AnalyticOnNhd ℂ (complexMGF id (gammaMeasure a r)) {z : ℂ | z.re < r} := by
+    rw [← complexMGF_strip_gammaMeasure ha hr]
+    exact analyticOnNhd_complexMGF
+  have hg := analyticOnNhd_one_sub_div_cpow (r := r) a hr
+  have h0 : (0 : ℂ) ∈ {z : ℂ | z.re < r} := by simpa using hr
+  -- The two functions agree at every real point of the half-plane.
+  have key : ∀ x : ℝ, x < r →
+      complexMGF id (gammaMeasure a r) (x : ℂ) = (1 - (x : ℂ) / (r : ℂ)) ^ (-(a : ℂ)) := by
+    intro x hx
+    have hb : (0 : ℝ) ≤ 1 - x / r := by
+      rw [sub_nonneg, div_le_one hr]
+      exact hx.le
+    rw [complexMGF_ofReal, mgf_id_gammaMeasure ha hr hx, Complex.ofReal_cpow hb]
+    push_cast
+    ring_nf
+  -- Those points accumulate at `0`, so the identity theorem applies.
+  have hfreq : ∃ᶠ z in nhdsWithin (0 : ℂ) {(0 : ℂ)}ᶜ,
+      complexMGF id (gammaMeasure a r) z = (1 - z / (r : ℂ)) ^ (-(a : ℂ)) := by
+    have hnat : Filter.Tendsto (fun n : ℕ ↦ ((n : ℝ) + 2)) Filter.atTop Filter.atTop :=
+      Filter.tendsto_atTop_add_const_right _ 2 tendsto_natCast_atTop_atTop
+    have hreal : Filter.Tendsto (fun n : ℕ ↦ (r / ((n : ℝ) + 2))) Filter.atTop (nhds 0) :=
+      Filter.Tendsto.div_atTop tendsto_const_nhds hnat
+    have hcomplex : Filter.Tendsto (fun n : ℕ ↦ ((r / ((n : ℝ) + 2) : ℝ) : ℂ)) Filter.atTop
+        (nhdsWithin (0 : ℂ) {(0 : ℂ)}ᶜ) := by
+      refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ?_
+        (.of_forall fun n ↦ ?_)
+      · have h := (Complex.continuous_ofReal.tendsto (0 : ℝ)).comp hreal
+        simpa [Function.comp_def] using h
+      · simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Complex.ofReal_eq_zero]
+        positivity
+    refine hcomplex.frequently (.of_forall fun n ↦ key _ ?_)
+    rw [div_lt_iff₀ (by positivity)]
+    nlinarith [hr, Nat.cast_nonneg (α := ℝ) n]
+  have heq := hf.eqOn_of_preconnected_of_frequently_eq hg hpre h0 hfreq
+  have hmem : ((t : ℂ) * Complex.I) ∈ {z : ℂ | z.re < r} := by simpa using hr
+  have hval := heq hmem
+  rw [complexMGF_id_mul_I] at hval
+  rw [hval]
+  congr 1
   ring
 
 /-! ### Convolution -/
