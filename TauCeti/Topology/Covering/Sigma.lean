@@ -1,0 +1,133 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.Topology.Covering.Basic
+public import Mathlib.Topology.Homotopy.Lifting
+
+/-!
+# Covering maps of a disjoint union
+
+A family of covering maps `f i : E i → X i` assembles into a single map
+`Sigma.map id f : (Σ i, E i) → Σ i, X i`, and this file proves that the assembled map is again a
+covering map, identifies its fibres, and computes its monodromy.
+
+Everything is local: the summand `Set.range (Sigma.mk i)` is open in `Σ i, X i`, the assembled
+map restricts over it to `f i` up to the two open embeddings, and `IsCoveringMap` is a pointwise
+condition, so the summandwise statements glue with no compatibility to check.
+
+## Main declarations
+
+* `TauCeti.isCoveringMap_sigmaMap`: **a disjoint union of covering maps is a covering map.**
+* `TauCeti.sigmaMapFiberEquiv`: the fibre of `Sigma.map id f` over `⟨i, x⟩` is the fibre of
+  `f i` over `x`.
+* `TauCeti.monodromy_sigmaMap`: that identification intertwines the monodromy of `f i` along a
+  path with the monodromy of `Sigma.map id f` along its image in `Σ i, X i`.
+
+## References
+
+This supplies the topological half of the disconnected case of Stage 2, item 8 of
+`TauCetiRoadmap/UniversalCovers/README.md`, whose classification of covering spaces by functors
+out of the fundamental groupoid is currently available only over a path-connected base
+(`TauCeti.CoveringSpace.monodromyEquivalence`).
+-/
+
+public section
+
+namespace TauCeti
+
+open Topology
+
+variable {ι : Type*} {E X : ι → Type*} [∀ i, TopologicalSpace (E i)]
+  [∀ i, TopologicalSpace (X i)] (f : ∀ i, E i → X i)
+
+omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)] in
+/-- The `i`-th summand of `Σ i, E i` is exactly the part of the disjoint union of the `f i` that
+lies over the `i`-th summand of `Σ i, X i`. -/
+theorem preimage_sigmaMap_range_sigmaMk (i : ι) :
+    Sigma.map id f ⁻¹' Set.range (Sigma.mk i) = Set.range (Sigma.mk i) := by
+  ext ⟨j, e⟩
+  simp [Sigma.map, eq_comm]
+
+/-- **A disjoint union of covering maps is a covering map.** -/
+theorem isCoveringMap_sigmaMap (hf : ∀ i, IsCoveringMap (f i)) :
+    IsCoveringMap (Sigma.map id f) := by
+  rintro ⟨i, x⟩
+  have hopen : IsOpen (Sigma.map id f ⁻¹' Set.range (Sigma.mk i)) := by
+    rw [preimage_sigmaMap_range_sigmaMk]
+    exact isOpen_range_sigmaMk
+  refine IsCoveringMapOn.of_isCoveringMap_restrictPreimage _ isOpen_range_sigmaMk hopen ?_ _
+    ⟨x, rfl⟩
+  let hE : (Sigma.map id f ⁻¹' Set.range (Sigma.mk i) : Set (Σ i, E i)) ≃ₜ E i :=
+    (Homeomorph.setCongr (preimage_sigmaMap_range_sigmaMk f i)).trans
+      (IsEmbedding.sigmaMk (σ := E)).toHomeomorph.symm
+  let hX : X i ≃ₜ (Set.range (Sigma.mk i) : Set (Σ i, X i)) :=
+    (IsEmbedding.sigmaMk (σ := X)).toHomeomorph
+  have heq : (Set.range (Sigma.mk i)).restrictPreimage (Sigma.map id f) =
+      hX ∘ f i ∘ hE := by
+    refine funext fun p ↦ Subtype.ext ?_
+    obtain ⟨⟨j, e⟩, hje⟩ := p
+    obtain rfl : j = i := by simpa [Sigma.map, eq_comm] using hje
+    simp [Set.restrictPreimage, Sigma.map, hE, hX, Homeomorph.setCongr, Equiv.setCongr,
+      Equiv.subtypeEquivProp]
+  rw [heq]
+  exact ((hf i).comp_homeomorph hE).homeomorph_comp hX
+
+omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)] in
+/-- The fibre of a disjoint union of maps over `⟨i, x⟩` consists of the points of the `i`-th
+summand lying over `x`. -/
+theorem image_sigmaMk_preimage_singleton (i : ι) (x : X i) :
+    Sigma.mk i '' (f i ⁻¹' {x}) = Sigma.map id f ⁻¹' {(⟨i, x⟩ : Σ j, X j)} := by
+  refine Set.Subset.antisymm ?_ ?_
+  · rintro _ ⟨e, he, rfl⟩
+    simpa [Sigma.map] using he
+  · rintro ⟨j, e⟩ hje
+    have hje' : (⟨j, f j e⟩ : Σ k, X k) = ⟨i, x⟩ := hje
+    obtain rfl : j = i := congrArg Sigma.fst hje'
+    exact ⟨e, sigma_mk_injective hje', rfl⟩
+
+/-- **The fibre of a disjoint union of maps over `⟨i, x⟩` is the fibre of the `i`-th map over
+`x`**, through the inclusion of the `i`-th summand. -/
+@[expose] noncomputable def sigmaMapFiberEquiv (i : ι) (x : X i) :
+    (f i ⁻¹' {x} : Set (E i)) ≃ (Sigma.map id f ⁻¹' {(⟨i, x⟩ : Σ i, X i)} : Set (Σ i, E i)) :=
+  (Equiv.Set.image _ _ sigma_mk_injective).trans
+    (Equiv.setCongr (image_sigmaMk_preimage_singleton f i x))
+
+omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)] in
+@[simp]
+theorem sigmaMapFiberEquiv_apply_coe (i : ι) (x : X i) (e : (f i ⁻¹' {x} : Set (E i))) :
+    (sigmaMapFiberEquiv f i x e : Σ i, E i) = ⟨i, (e : E i)⟩ :=
+  (rfl)
+
+/-- The raw form of `monodromy_sigmaMap`, with the two fibre elements written as explicit pairs
+rather than through `sigmaMapFiberEquiv`, so that the lifted path can be rewritten. -/
+private theorem monodromy_sigmaMap_aux (hf : ∀ i, IsCoveringMap (f i)) {i : ι} {x y : X i}
+    (γ : Path.Homotopic.Quotient x y) (e : (f i ⁻¹' {x} : Set (E i)))
+    (he : (⟨i, (e : E i)⟩ : Σ j, E j) ∈ Sigma.map id f ⁻¹' {(⟨i, x⟩ : Σ j, X j)})
+    (he' : (⟨i, (((hf i).monodromy γ e : E i))⟩ : Σ j, E j) ∈
+      Sigma.map id f ⁻¹' {(⟨i, y⟩ : Σ j, X j)}) :
+    (isCoveringMap_sigmaMap f hf).monodromy
+        (γ.map (⟨Sigma.mk i, continuous_sigmaMk⟩ : C(X i, Σ j, X j))) ⟨_, he⟩ = ⟨_, he'⟩ := by
+  refine (isCoveringMap_sigmaMap f hf).monodromy_eq_of_map_eq
+    (((hf i).liftPathQuotient γ e).map (⟨Sigma.mk i, continuous_sigmaMk⟩ : C(E i, Σ j, E j))) ?_
+  rw [← Path.Homotopic.Quotient.map_comp]
+  change ((hf i).liftPathQuotient γ e).map
+    ((⟨Sigma.mk i, continuous_sigmaMk⟩ : C(X i, Σ j, X j)).comp ⟨f i, (hf i).continuous⟩) = _
+  rw [Path.Homotopic.Quotient.map_comp, (hf i).map_liftPathQuotient]
+  exact Path.Homotopic.Quotient.map_cast γ
+
+/-- **Monodromy commutes with the inclusion of a summand.** Transporting a point of the fibre of
+`f i` over `x` into the disjoint union and letting the assembled cover transport it along the
+image of `γ` gives the same result as transporting along `γ` first. -/
+theorem monodromy_sigmaMap (hf : ∀ i, IsCoveringMap (f i)) {i : ι} {x y : X i}
+    (γ : Path.Homotopic.Quotient x y) (e : (f i ⁻¹' {x} : Set (E i))) :
+    (isCoveringMap_sigmaMap f hf).monodromy
+        (γ.map (⟨Sigma.mk i, continuous_sigmaMk⟩ : C(X i, Σ j, X j)))
+        (sigmaMapFiberEquiv f i x e) =
+      sigmaMapFiberEquiv f i y ((hf i).monodromy γ e) :=
+  monodromy_sigmaMap_aux f hf γ e _ _
+
+end TauCeti

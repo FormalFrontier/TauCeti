@@ -63,8 +63,9 @@ open CategoryTheory
 
 namespace Over
 
-/-- The property of an object of `TopCat / X` that its structure morphism is a covering map. -/
-def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
+/-- The property of an object of `TopCat / X` that its structure morphism is a covering map. The
+definition is `@[expose]`d so that it unfolds in downstream modules. -/
+@[expose] def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
   fun p ↦ _root_.IsCoveringMap p.hom
 
 /-- A morphism in `TopCat / X` is an isomorphism exactly when its map on left objects is a
@@ -97,8 +98,10 @@ abbrev totalSpace (X : TopCat.{u}) : CoveringSpace X ⥤ TopCat :=
 instance : CoeOut (CoveringSpace X) TopCat where
   coe p := p.obj.left
 
-/-- Construct a covering space over `X` from a covering map `p`. -/
-def mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p) : CoveringSpace X where
+/-- Construct a covering space over `X` from a covering map `p`. Its total space and projection
+are computed by `mk_coe` and `mk_proj`; the definition is `@[expose]`d so that those equations
+also hold by `rfl` in downstream modules. -/
+@[expose] def mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p) : CoveringSpace X where
   obj := CategoryTheory.Over.mk p
   property := hp
 
