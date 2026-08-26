@@ -7,7 +7,6 @@ module
 
 import Mathlib.RingTheory.MvPolynomial.Basic
 public import Mathlib.Algebra.CharP.Two
-public import TauCeti.KnotTheory.Grid.Differential.Square.Decomposition
 public import TauCeti.KnotTheory.Grid.Differential.Square.SideOverlap
 
 /-!
@@ -132,26 +131,35 @@ theorem decompositionWeight_commute {x z : GridState n}
     D.commute_first_toGridRectangle h,
     D.commute_second_toGridRectangle h, mul_comm]
 
-/-- Reordering a counted two-step decomposition with disjoint side columns gives another counted
-decomposition: both rectangles stay empty and the two domains, hence the covered squares, are
-merely exchanged. -/
-theorem commute_mem_unblockedDecompositions {x z : GridState n}
-    (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides)
-    (hD : D ∈ G.unblockedDecompositions x z) :
-    D.commute h ∈ G.unblockedDecompositions x z := by
-  rw [G.mem_unblockedDecompositions D] at hD
-  obtain ⟨h₁, h₂⟩ := hD
-  refine (G.mem_unblockedDecompositions _).mpr ⟨?_, ?_⟩
-  · rw [G.mem_unblockedRectangles]
-    refine ⟨D.isEmpty_commute_first h (G.isEmpty_of_mem_unblockedRectangles h₁)
-      (G.isEmpty_of_mem_unblockedRectangles h₂), ?_⟩
-    rw [D.commute_first_toGridRectangle h]
-    exact G.disjoint_XSet_of_mem_unblockedRectangles h₂
-  · rw [G.mem_unblockedRectangles]
-    refine ⟨D.isEmpty_commute_second h (G.isEmpty_of_mem_unblockedRectangles h₁)
-      (G.isEmpty_of_mem_unblockedRectangles h₂), ?_⟩
-    rw [D.commute_second_toGridRectangle h]
-    exact G.disjoint_XSet_of_mem_unblockedRectangles h₁
+/-- Reordering a two-step decomposition with disjoint side columns preserves whether the
+unblocked differential counts it: both rectangles stay empty and the two domains, hence the
+covered squares, are merely exchanged. -/
+@[simp]
+theorem commute_mem_unblockedDecompositions_iff {x z : GridState n}
+    (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
+    D.commute h ∈ G.unblockedDecompositions x z ↔
+      D ∈ G.unblockedDecompositions x z := by
+  have hforward : ∀ (E : GridRectangleDecomposition x z) (hE : E.HasDisjointSides),
+      E ∈ G.unblockedDecompositions x z → E.commute hE ∈ G.unblockedDecompositions x z := by
+    intro E hE hmem
+    rw [G.mem_unblockedDecompositions E] at hmem
+    obtain ⟨h₁, h₂⟩ := hmem
+    refine (G.mem_unblockedDecompositions _).mpr ⟨?_, ?_⟩
+    · rw [G.mem_unblockedRectangles]
+      refine ⟨E.isEmpty_commute_first hE (G.isEmpty_of_mem_unblockedRectangles h₁)
+        (G.isEmpty_of_mem_unblockedRectangles h₂), ?_⟩
+      rw [E.commute_first_toGridRectangle hE]
+      exact G.disjoint_XSet_of_mem_unblockedRectangles h₂
+    · rw [G.mem_unblockedRectangles]
+      refine ⟨E.isEmpty_commute_second hE (G.isEmpty_of_mem_unblockedRectangles h₁)
+        (G.isEmpty_of_mem_unblockedRectangles h₂), ?_⟩
+      rw [E.commute_second_toGridRectangle hE]
+      exact G.disjoint_XSet_of_mem_unblockedRectangles h₁
+  constructor
+  · intro hD
+    simpa only [D.commute_commute h] using
+      hforward (D.commute h) (D.hasDisjointSides_commute h) hD
+  · exact hforward D h
 
 variable [CharP R 2]
 
@@ -174,7 +182,7 @@ theorem sum_unblockedCoefficient_mul_unblockedCoefficient_eq_zero_of_disjoint
     (fun D _ => ?_)
   · rw [G.decompositionWeight_commute R D]
     exact CharTwo.add_self_eq_zero _
-  · exact G.commute_mem_unblockedDecompositions D _ hD
+  · exact (G.commute_mem_unblockedDecompositions_iff D _).mpr hD
   · exact D.commute_commute _
 
 /-- In characteristic two, the square of the unblocked grid differential has zero matrix entry

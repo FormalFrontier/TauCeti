@@ -32,9 +32,9 @@ between two given states is determined by its side columns.
 
 * `TauCeti.GridRectangleDecomposition.ext`: a decomposition is determined by the ordered side
   columns of its two rectangles.
-* `TauCeti.GridRectangleDecomposition.sideColumns_injective`: the same statement as injectivity of
-  the ordered quadruple of side columns, which makes the decompositions between two states a
-  finite type.
+* `TauCeti.GridRectangleDecomposition.orderedSideColumns_injective`: the same statement as
+  injectivity of the ordered quadruple of side columns, which makes the decompositions between
+  two states a finite type.
 * `TauCeti.GridRectangleDecomposition.apply_eq_of_notMem_sideColumns`: away from the four side
   columns the target of a decomposition agrees with its source.
 * `TauCeti.GridRectangleDecomposition.target_mem_twoStepColumnSwapNeighbors`: the target of a
@@ -97,7 +97,7 @@ theorem ext {D E : GridRectangleDecomposition x z}
 
 /-- A two-step rectangle decomposition is determined by the ordered quadruple of side columns of
 its two rectangles. -/
-theorem sideColumns_injective (x z : GridState n) :
+theorem orderedSideColumns_injective (x z : GridState n) :
     Function.Injective fun D : GridRectangleDecomposition x z =>
       (D.first.left, D.first.right, D.second.left, D.second.right) := by
   intro D E h
@@ -107,12 +107,12 @@ theorem sideColumns_injective (x z : GridState n) :
 /-- Two-step rectangle decompositions between fixed states have decidable equality: such a
 decomposition is determined by its four side columns. -/
 instance : DecidableEq (GridRectangleDecomposition x z) :=
-  (sideColumns_injective x z).decidableEq
+  (orderedSideColumns_injective x z).decidableEq
 
 /-- For fixed source and target grid states, the two-step rectangle decompositions between them
 form a finite type. -/
 noncomputable instance : Fintype (GridRectangleDecomposition x z) :=
-  Fintype.ofInjective _ (sideColumns_injective x z)
+  Fintype.ofInjective _ (orderedSideColumns_injective x z)
 
 /-- Away from the four side columns of a two-step decomposition, its target state agrees with its
 source state: neither rectangle moves such a column. -/
