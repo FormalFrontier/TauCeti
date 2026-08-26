@@ -106,6 +106,14 @@ theorem splice_eq_zero {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M)
     (h : ¬(0 < d ∧ p + d ≤ b ∧ a + b ≤ n)) : splice R x a b p d e = 0 := by
   rw [splice, dite_eq_right h]
 
+/-- A spliced word vanishes when the collapsed block does not fit into the block being spliced
+into: either the collapsed block is empty, or it overruns that block. -/
+theorem splice_eq_zero_of_not_fits {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M)
+    (h : ¬(0 < d ∧ p + d ≤ b)) : splice R x a b p d e = 0 := by
+  rcases Nat.eq_zero_or_pos d with rfl | hd
+  · exact splice_zero_length R x a b p e
+  · exact splice_eq_zero_of_block_lt_add R x e (by omega)
+
 /-- A spliced word depends only on the letters of the block it splices, not on the tuple carrying
 them nor on the position of the block in it. -/
 theorem splice_congr {n m : ℕ} (x : Fin n → M) (y : Fin m → M) {a a' b p d : ℕ} (e : M)

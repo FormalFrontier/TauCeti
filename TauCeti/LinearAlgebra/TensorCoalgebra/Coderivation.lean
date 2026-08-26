@@ -163,13 +163,6 @@ private theorem coderiv_of (F : ReducedTensorWords R M →ₗ[R] M) (n : {n : �
   rw [coderiv, toModule_of]
   simp only [LinearMap.sum_apply]
 
-/-- A Taylor summand vanishes when its collapsed block does not fit in the block it splices. -/
-private theorem splice_eq_zero_of_not_fits {n : ℕ} (x : Fin n → M) {a b p d : ℕ} (e : M)
-    (h : ¬(0 < d ∧ p + d ≤ b)) : splice R x a b p d e = 0 := by
-  rcases Nat.eq_zero_or_pos d with rfl | hd
-  · exact splice_zero_length R x a b p e
-  · exact splice_eq_zero_of_block_lt_add R x e (by omega)
-
 /-- A Taylor summand on a tensor word that is a block of a longer tuple, read back in that
 tuple. -/
 private theorem coderivSummand_tprod_of_eq (F : ReducedTensorWords R M →ₗ[R] M) {n b : ℕ}

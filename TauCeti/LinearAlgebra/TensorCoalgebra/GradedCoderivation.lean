@@ -91,17 +91,8 @@ ungraded Taylor summand at position `p` with it produces the graded, Koszul-sign
 private noncomputable def ReducedTensorWords.gradedTwistFirst (G : InternalGrading R M) (q : ℤ)
     (n p : ℕ) :
     TensorPower R n M →ₗ[R] TensorPower R n M :=
-  PiTensorProduct.lift
-    (MultilinearMap.compLinearMap (PiTensorProduct.tprod R (s := fun _ : Fin n => M))
-      fun i => if i.val < p then parityTwist G q else LinearMap.id)
-
-private theorem ReducedTensorWords.gradedTwistFirst_tprod (G : InternalGrading R M) (q : ℤ)
-    (n p : ℕ)
-    (x : Fin n → M) :
-    gradedTwistFirst G q n p (PiTensorProduct.tprod R x)
-      = PiTensorProduct.tprod R
-          fun i => (if i.val < p then parityTwist G q else LinearMap.id) (x i) := by
-  rw [gradedTwistFirst, PiTensorProduct.lift.tprod, _root_.MultilinearMap.compLinearMap_apply]
+  PiTensorProduct.map (s := fun _ : Fin n => M) (t := fun _ : Fin n => M)
+    fun i => if i.val < p then parityTwist G q else LinearMap.id
 
 /-- The `(p, d)` summand of the graded Taylor expansion of `F` at degree `q`: the ungraded summand,
 precomposed with the twist of the letters preceding the collapsed block. -/
@@ -122,8 +113,8 @@ theorem ReducedTensorWords.gradedCoderivSummand_tprod (G : InternalGrading R M)
       subword R x p d :=
     subword_congr R _ _ (by omega) (by omega) fun j hj ↦ by
       simp [show ¬(p + j < p) from by omega]
-  rw [gradedCoderivSummand, LinearMap.coe_comp, Function.comp_apply, gradedTwistFirst_tprod,
-    coderivSummand_tprod R F hd hpd, hsub]
+  rw [gradedCoderivSummand, LinearMap.coe_comp, Function.comp_apply, gradedTwistFirst,
+    PiTensorProduct.map_tprod, coderivSummand_tprod R F hd hpd, hsub]
   refine splice_congr R _ _ _ (by omega) (by omega) fun j hj ↦ ?_
   simp only [twistedTuple, Nat.zero_le, true_and]
   by_cases hj' : j < p <;> simp [hj']
@@ -518,11 +509,8 @@ private theorem sum_tmul_splice_eq_zero (G : InternalGrading R M)
         splice R (twistedTuple G q x c p) c (n - c) p d (F (subword R x (c + p) d)) = 0 := by
   refine Finset.sum_eq_zero fun d hd ↦ ?_
   simp only [Finset.mem_range] at hd
-  rcases Nat.eq_zero_or_pos d with rfl | hd'
-  · rw [splice_zero_length R (twistedTuple G q x c p) c (n - c) p
-      (F (subword R x (c + p) 0)), TensorProduct.tmul_zero]
-  · rw [splice_eq_zero_of_block_lt_add R (twistedTuple G q x c p)
-      (F (subword R x (c + p) d)) (by omega), TensorProduct.tmul_zero]
+  rw [splice_eq_zero_of_not_fits R (twistedTuple G q x c p)
+    (F (subword R x (c + p) d)) (by omega), TensorProduct.tmul_zero]
 
 /-- The words `twistedTuple G q x 0 m` and `twistedTuple G q x 0 c` agree on their first `c`
 letters whenever `c ≤ m ≤ n`, since twisting only affects positions below the twist length. -/
