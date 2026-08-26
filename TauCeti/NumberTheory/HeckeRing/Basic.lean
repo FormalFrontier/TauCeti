@@ -68,6 +68,9 @@ merges. The degree section is instead ported from the AINTLIB `LeanModularForms`
   `DoubleCoset.doubleCoset_eq_iUnion_leftCosets` and `mk_out_mul_injective`.
 * `DoubleCoset.doubleCoset_eq_iUnion_rightCosets_of_forall_exists`: a criterion for a supplied
   family of right-coset representatives to cover a double coset.
+* `DoubleCoset.doubleCoset_mul_doubleCoset_eq_iUnion_rightCosets`: Shimura's covering identity —
+  the products `aᵢbⱼ` of two families of right-coset representatives cover the product set
+  `Γ₁δ₁Γ₂ · Γ₂δ₂Γ₃`, though not without repetition.
 * `IsHeckeTriple.commensurable_conjAct_inv_left`, and the `Finite` instance beside it: that
   right-coset index is finite, the mirror of the `Fintype` instance on `DecompQuotient H₁ H₂ g`.
 
@@ -275,6 +278,50 @@ lemma op_mul_out_inv_smul_injective (Γ₁ Γ₂ : Subgroup G) (g : G) :
     Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← ConjAct.toConjAct_inv,
     ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, inv_inv]
   simpa [mul_assoc] using h
+
+/-- **Shimura's covering identity for a product of double cosets** (§3.4). If `Γ₁ δ₁ Γ₂` is the
+union of the right cosets `Γ₁ aᵢ` and `Γ₂ δ₂ Γ₃` is the union of the right cosets `Γ₂ bⱼ`, then
+the pointwise product `Γ₁ δ₁ Γ₂ · Γ₂ δ₂ Γ₃` is the union of the right cosets `Γ₁ aᵢ bⱼ`.
+
+The two double cosets splice because `Γ₂ Γ₂ = Γ₂`: an element of the product is `u v` with
+`u ∈ Γ₁ δ₁ Γ₂` and `v ∈ Γ₂ δ₂ Γ₃`; writing `v = g bⱼ` with `g ∈ Γ₂` moves `g` into `u`, and `u g`
+is again in `Γ₁ δ₁ Γ₂`, hence in some `Γ₁ aᵢ`.
+
+⚠ The union is **not** disjoint, and the family `(i, j) ↦ Γ₁ aᵢ bⱼ` is in general far from
+injective. Any repetitions here are right-coset collisions; this theorem neither counts them nor
+identifies them with `DoubleCoset.multiplicity`, which uses left-coset representatives. The
+identity supplies coverage only, exactly as
+`doubleCoset_eq_iUnion_rightCosets_of_forall_exists` does for a single double coset. -/
+lemma doubleCoset_mul_doubleCoset_eq_iUnion_rightCosets {Γ₁ Γ₂ Γ₃ : Subgroup G} {δ₁ δ₂ : G}
+    {ι κ : Type*} (a : ι → G) (b : κ → G)
+    (hcover₁ : doubleCoset δ₁ (Γ₁ : Set G) Γ₂ = ⋃ i, MulOpposite.op (a i) • (Γ₁ : Set G))
+    (hcover₂ : doubleCoset δ₂ (Γ₂ : Set G) Γ₃ = ⋃ j, MulOpposite.op (b j) • (Γ₂ : Set G)) :
+    doubleCoset δ₁ (Γ₁ : Set G) Γ₂ * doubleCoset δ₂ (Γ₂ : Set G) Γ₃ =
+      ⋃ p : ι × κ, MulOpposite.op (a p.1 * b p.2) • (Γ₁ : Set G) := by
+  ext x
+  constructor
+  · rintro ⟨u, hu, v, hv, rfl⟩
+    -- name the coset of `v`, and push its `Γ₂`-part across into `u`
+    obtain ⟨j, hj⟩ := Set.mem_iUnion.mp (hcover₂ ▸ hv)
+    have hg : v * (b j)⁻¹ ∈ Γ₂ := (mem_rightCoset_iff _).mp hj
+    obtain ⟨h₁, hh₁, h₂, hh₂, hu'⟩ := mem_doubleCoset.mp hu
+    have hug : u * (v * (b j)⁻¹) ∈ doubleCoset δ₁ (Γ₁ : Set G) Γ₂ :=
+      mem_doubleCoset.mpr ⟨h₁, hh₁, h₂ * (v * (b j)⁻¹), Γ₂.mul_mem hh₂ hg, by rw [hu', mul_assoc]⟩
+    obtain ⟨i, hi⟩ := Set.mem_iUnion.mp (hcover₁ ▸ hug)
+    exact Set.mem_iUnion.mpr ⟨(i, j), (mem_rightCoset_iff _).mpr
+      (by simpa [mul_assoc] using (mem_rightCoset_iff _).mp hi)⟩
+  · intro hx
+    obtain ⟨p, hp⟩ := Set.mem_iUnion.mp hx
+    have hxa : x * (b p.2)⁻¹ * (a p.1)⁻¹ ∈ Γ₁ := by
+      simpa [mul_assoc] using (mem_rightCoset_iff _).mp hp
+    have ha : a p.1 ∈ doubleCoset δ₁ (Γ₁ : Set G) Γ₂ :=
+      hcover₁ ▸ Set.mem_iUnion.mpr ⟨p.1, (mem_rightCoset_iff _).mpr (by simp)⟩
+    have hb : b p.2 ∈ doubleCoset δ₂ (Γ₂ : Set G) Γ₃ :=
+      hcover₂ ▸ Set.mem_iUnion.mpr ⟨p.2, (mem_rightCoset_iff _).mpr (by simp)⟩
+    obtain ⟨h₁, hh₁, h₂, hh₂, ha'⟩ := mem_doubleCoset.mp ha
+    refine ⟨x * (b p.2)⁻¹, mem_doubleCoset.mpr
+      ⟨x * (b p.2)⁻¹ * (a p.1)⁻¹ * h₁, Γ₁.mul_mem hxa hh₁, h₂, hh₂, ?_⟩, b p.2, hb, by simp⟩
+    rw [mul_assoc _ h₁ δ₁, mul_assoc _ (h₁ * δ₁) h₂, ← ha', inv_mul_cancel_right]
 
 end DoubleCoset
 

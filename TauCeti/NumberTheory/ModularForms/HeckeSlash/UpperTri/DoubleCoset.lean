@@ -23,9 +23,10 @@ This file identifies them, which is the roadmap's flagged *normalisation lemma*:
 
 `heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) = heckeSlashUpperTriModularFormEnd k hpN`,
 
-and likewise on cusp forms. Everything already known about the classical operator — the
-recurrence `aₘ(Tₚ f) = a_{p m}(f)` on `q`-expansions, stability of each nebentypus space —
-transfers to the abstract one by rewriting with these two equalities, which are `simp` lemmas.
+and likewise on cusp forms. These `simp` lemmas provide the normalization bridge between the
+abstract and explicit constructions. Nebentypus preservation and the `q`-expansion recurrence
+for the canonical `heckeTNat` operator are proved at every level-supported index in
+`HeckeSlash/LevelSupported.lean`.
 
 ## How the two are matched
 
@@ -37,11 +38,17 @@ is `HeckeRing/GL2/Gamma1/UpperTriCosets.lean`: at `p ∣ N` the `p` cosets
 those in turns the abstract sum into `heckeSlashUpperTri`, and the two bundled endomorphisms
 then agree because both are that function on the underlying `ℍ → ℂ`.
 
-## Why `p ∣ N` and no primality
+## Why level-supportedness, and the bundled `p ∣ N` case
 
-`p ∣ N` is what makes the `p` upper-triangular representatives exhaust the coset; for `p ∤ N` and
-`p` prime there is one further coset and the identification below is false as stated. No
-primality is needed anywhere: at `p ∣ N` the count is `p` for every `p`, prime or not.
+The condition `p.primeFactors ⊆ N.primeFactors` makes the `p` upper-triangular representatives
+exhaust the coset; for `p ∤ N` and `p` prime there is one further coset and the identification
+below is false as stated. No primality is needed anywhere.
+
+The function-level statement `heckeSlashSum_diagCosetGamma1` is proved under the weaker
+hypothesis the coset decomposition actually uses — every prime factor of `p` divides `N` — since
+the prime powers `q ^ r` with `q ∣ N` satisfy it without dividing `N`. The two bundled operators
+stay at the special case `p ∣ N`, because `heckeSlashUpperTriModularFormEnd` is only constructed
+there.
 
 Following Miyake, Diamond–Shurman and Shimura, no separate `Uₚ` is introduced — this *is* `Tₚ` at
 `p ∣ N`, and the identification proved here is what lets literature stated in either vocabulary be
@@ -50,7 +57,8 @@ consumed.
 ## Main results
 
 * `HeckeRing.GL2.heckeSlashSum_diagCosetGamma1`: on underlying functions, the abstract slash sum
-  of `diagCosetGamma1 N p` is `heckeSlashUpperTri k p`.
+  of `diagCosetGamma1 N p` is `heckeSlashUpperTri k p`, at any index whose prime factors all
+  divide the level — `p ∣ N` is the case the bundled operators below are stated at.
 * `HeckeRing.GL2.heckeSlashGamma1ModularFormEnd_diagCosetGamma1`,
   `HeckeRing.GL2.heckeSlashGamma1CuspFormEnd_diagCosetGamma1`: **the normalisation lemma**, on
   `M_k(Γ₁(N))` and on `S_k(Γ₁(N))`.
@@ -87,15 +95,21 @@ for, which `p ∣ N` and `NeZero N` already supply. -/
 private lemma pos_of_dvd (hpN : p ∣ N) : 0 < p :=
   Nat.pos_of_ne_zero fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))
 
-/-- **The abstract slash sum of `diag(1, p)` is the classical upper-triangular sum**, for
-`p ∣ N`. This is `heckeSlashSum_coe_eq_sum_of_rightCosets` fed with the decomposition of
-`HeckeRing/GL2/Gamma1/UpperTriCosets.lean`; slash-invariance of `f`, the one hypothesis that
-lemma needs, is carried by the form class. -/
-theorem heckeSlashSum_diagCosetGamma1 (hpN : p ∣ N) {F : Type*} [FunLike F ℍ ℂ]
+/-- The prime factors of a divisor of a nonzero level are prime factors of the level: the
+hypothesis the coset decomposition asks for, in the form `p ∣ N` supplies. -/
+private lemma primeFactors_subset_of_dvd (hpN : p ∣ N) : p.primeFactors ⊆ N.primeFactors :=
+  Nat.primeFactors_mono hpN (NeZero.ne N)
+
+/-- **The abstract slash sum of `diag(1, p)` is the classical upper-triangular sum**, at any
+index supported on the level. This is `heckeSlashSum_coe_eq_sum_of_rightCosets` fed with the
+decomposition of `HeckeRing/GL2/Gamma1/UpperTriCosets.lean`; slash-invariance of `f`, the one
+hypothesis that lemma needs, is carried by the form class. -/
+theorem heckeSlashSum_diagCosetGamma1 (hp : 0 < p) (hpN : p.primeFactors ⊆ N.primeFactors)
+    {F : Type*} [FunLike F ℍ ℂ]
     [SlashInvariantFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) :
     heckeSlashSum k (diagCosetGamma1 N p) ⇑f = heckeSlashUpperTri k p ⇑f :=
   (heckeSlashSum_coe_eq_sum_of_rightCosets k (diagCosetGamma1 N p) (upperTriRep p)
-    (doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets (pos_of_dvd hpN) hpN)
+    (doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets hp hpN)
     op_upperTriRep_smul_injective f).trans (heckeSlashUpperTri_def k p ⇑f).symm
 
 /-- **The normalisation lemma on `M_k(Γ₁(N))`.** For `p ∣ N` the Hecke operator of the double
@@ -107,7 +121,7 @@ theorem heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
       heckeSlashUpperTriModularFormEnd k hpN :=
   LinearMap.ext fun f ↦ DFunLike.ext' <| by
     rw [coe_heckeSlashGamma1ModularFormEnd, coe_heckeSlashUpperTriModularFormEnd,
-      heckeSlashSum_diagCosetGamma1 k hpN f]
+      heckeSlashSum_diagCosetGamma1 k (pos_of_dvd hpN) (primeFactors_subset_of_dvd hpN) f]
 
 /-- **The normalisation lemma on `S_k(Γ₁(N))`.** -/
 @[simp]
@@ -115,7 +129,7 @@ theorem heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
     heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) = heckeSlashUpperTriCuspFormEnd k hpN :=
   LinearMap.ext fun f ↦ DFunLike.ext' <| by
     rw [coe_heckeSlashGamma1CuspFormEnd, coe_heckeSlashUpperTriCuspFormEnd,
-      heckeSlashSum_diagCosetGamma1 k hpN f]
+      heckeSlashSum_diagCosetGamma1 k (pos_of_dvd hpN) (primeFactors_subset_of_dvd hpN) f]
 
 end HeckeRing.GL2
 

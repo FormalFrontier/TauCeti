@@ -34,6 +34,12 @@ noncomputable def ord (v : _root_.Valuation F ℤᵐ⁰) (f : F) : ℤ :=
 theorem ord_def (v : _root_.Valuation F ℤᵐ⁰) (f : F) : ord v f = -WithZero.log (v f) :=
   (rfl)
 
+/-- The order function commutes with restriction along a ring homomorphism. -/
+@[simp]
+theorem ord_comap {K : Type*} [Field K] (v : _root_.Valuation F ℤᵐ⁰) (f : K →+* F)
+    (x : K) : ord (v.comap f) x = ord v (f x) := by
+  rw [ord_def, ord_def, _root_.Valuation.comap_apply]
+
 /-- Translation between the multiplicative valuation and its additive order. -/
 theorem valuation_eq_exp_neg_ord (v : _root_.Valuation F ℤᵐ⁰) {f : F} (hf : f ≠ 0) :
     v f = WithZero.exp (-ord v f) := by

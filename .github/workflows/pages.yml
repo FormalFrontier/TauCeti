@@ -263,6 +263,13 @@ jobs:
 
       - name: Restore TauCeti's oleans from the public artifact cache
         if: ${{ steps.docs-plan.outputs.build == 'true' && env.TAUCETI_CACHE_ENABLED == '1' }}
+        # The job's default working directory is web/; this script lives at the root.
+        working-directory: ${{ github.workspace }}
+        # A cache is an optimisation and must not be able to break the deploy. The script
+        # already treats a miss as non-fatal and falls back to compiling from scratch;
+        # this extends that to the script failing outright, which is how a mistake here
+        # cost a whole run.
+        continue-on-error: true
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}

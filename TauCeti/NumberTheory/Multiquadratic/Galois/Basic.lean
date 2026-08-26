@@ -25,6 +25,7 @@ The explicit identification of the group with `(ℤ/2)ⁿ` is a separate, later 
 ## Main results
 
 * `TauCeti.Multiquadratic.isSplittingField`: `M` is the splitting field of `∏ᵢ (X² - dᵢ)`.
+* `TauCeti.Multiquadratic.finiteDimensional_adjoin_range`: `M` is finite-dimensional over `K`.
 * `TauCeti.Multiquadratic.isGalois`: `M / K` is Galois (when `2 ≠ 0` in `K`).
 * `TauCeti.Multiquadratic.aut_mul_self_eq_one`: every `σ : M ≃ₐ[K] M` satisfies `σ * σ = 1`.
 * `TauCeti.Multiquadratic.aut_commute`: the automorphism group is commutative.
@@ -172,6 +173,13 @@ theorem isSplittingField (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :
     refine le_antisymm le_top ?_
     rw [← Algebra.adjoin_eq_top_of_intermediateField halg (adjoin_gen_eq_top (root := root))]
     exact Algebra.adjoin_mono hsub
+
+/-- A multiquadratic field is finite-dimensional over `K`: it is the splitting field of
+`∏ᵢ (X² - dᵢ)`, a polynomial over `K`. -/
+theorem finiteDimensional_adjoin_range (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :
+    FiniteDimensional K (adjoin K (Set.range root)) :=
+  haveI := isSplittingField hroot
+  IsSplittingField.finiteDimensional _ (definingPolynomial d)
 
 /-- A multiquadratic field over a field in which `2 ≠ 0` is Galois: it is the splitting field of
 `∏ᵢ (X² - dᵢ)` (hence normal), and each generator satisfies a separable quadratic. -/

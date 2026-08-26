@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 
 /-!
 # Diagonal elements in the standard representation
@@ -14,7 +14,7 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 This file describes the action of the invertible diagonal matrices `TauCeti.diagGL t` in the
 standard representation. These elements are the concrete points of the diagonal torus used to
 compute characters and weight spaces; the matrices themselves, and the torus they form, are in
-`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal`.
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic`.
 
 ## Main statements
 

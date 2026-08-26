@@ -618,9 +618,10 @@ if [ -s "$TMP/new.txt" ]; then
   echo "— as a deliberate, commented exception — use @[nolint <linter>] plus a"
   echo "'<linter> <declName>' line in $ALLOWLIST (for docString: a baseline entry"
   echo "instead, since the scan ignores @[nolint])."
-  echo "If a flagged declaration is NOT in your diff, your branch likely carries a stale"
-  echo "copy of a file that main has since cleaned up (the CI build overlays your whole"
-  echo "TauCeti/ tree onto current main): merge main into your branch and re-push."
+  echo "If a flagged declaration is NOT in your diff: running this locally, your tree may"
+  echo "carry a stale copy of a file main has since cleaned up, and merging main into your"
+  echo "branch fixes that. In CI it will not be the cause — pr-build compiles your branch"
+  echo "already merged with main — so there it is something your change affected indirectly."
   fail "$(wc -l < "$TMP/new.txt") new violation(s); see the list above"
 fi
 

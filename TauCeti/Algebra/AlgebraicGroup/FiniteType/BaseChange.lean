@@ -28,6 +28,8 @@ the original points evaluated on `K`-algebras.
   `K ⊗[k] H`.
 * `FiniteTypeCommHopfAlgCat.baseChangeMap`: scalar extension of a coordinate morphism.
 * `FiniteTypeCommHopfAlgCat.baseChangeFunctor`: functorial base change.
+* `FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso`: lift an isomorphism between specified
+  underlying base-changed objects to the finite-type full subcategory.
 * `FiniteTypeCommHopfAlgCat.baseChangePointsMulEquiv`: the inherited point equivalence
   `(K ⊗[k] H →ₐ[K] A) ≃* (H →ₐ[k] A)`.
 
@@ -104,6 +106,33 @@ lemma baseChangeFunctor_obj (H : FiniteTypeCommHopfAlgCat.{u, v} k) :
 lemma baseChangeFunctor_map {H L : FiniteTypeCommHopfAlgCat.{u, v} k} (φ : H ⟶ L) :
     (baseChangeFunctor (K := K)).map φ = baseChangeMap (K := K) φ :=
   (rfl)
+
+/-- Lift an isomorphism between specified underlying base-changed Hopf algebras to the
+finite-type full subcategory. The object equalities record the chosen presentations of the
+source and target coordinate Hopf algebras. -/
+noncomputable def baseChangeIsoOfObjIso
+    {H : FiniteTypeCommHopfAlgCat.{u, v} k}
+    {H' : FiniteTypeCommHopfAlgCat.{w, max w v} K}
+    {B : _root_.CommHopfAlgCat.{v} k} {B' : _root_.CommHopfAlgCat.{max w v} K}
+    (hH : H.obj = B) (hH' : H'.obj = B')
+    (e : CommHopfAlgCat.baseChange (K := K) B ≅ B') :
+    baseChange (K := K) H ≅ H' :=
+  ObjectProperty.isoMk _ <|
+    eqToIso (congrArg (CommHopfAlgCat.baseChange (K := K)) hH) ≪≫ e ≪≫ eqToIso hH'.symm
+
+/-- The underlying morphism of `baseChangeIsoOfObjIso` is the supplied isomorphism, conjugated
+by the specified object equalities. -/
+@[simp]
+theorem baseChangeIsoOfObjIso_hom
+    {H : FiniteTypeCommHopfAlgCat.{u, v} k}
+    {H' : FiniteTypeCommHopfAlgCat.{w, max w v} K}
+    {B : _root_.CommHopfAlgCat.{v} k} {B' : _root_.CommHopfAlgCat.{max w v} K}
+    (hH : H.obj = B) (hH' : H'.obj = B')
+    (e : CommHopfAlgCat.baseChange (K := K) B ≅ B') :
+    (baseChangeIsoOfObjIso hH hH' e).hom.hom =
+      (eqToIso (congrArg (CommHopfAlgCat.baseChange (K := K)) hH) ≪≫ e ≪≫
+        eqToIso hH'.symm).hom := by
+  simp only [baseChangeIsoOfObjIso, ObjectProperty.isoMk_hom, ObjectProperty.homMk_hom]
 
 variable (A : CommAlgCat.{x} K)
 

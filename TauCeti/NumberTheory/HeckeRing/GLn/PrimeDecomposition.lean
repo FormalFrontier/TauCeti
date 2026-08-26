@@ -76,6 +76,13 @@ lemma primePowDiag_pos (p : ℕ) (hp : 0 < p) (e : Fin n → ℕ) :
     ∀ i, 0 < primePowDiag n p e i :=
   fun _ ↦ pow_pos hp _
 
+/-- The `p`-power diagonal turns a sum of exponent vectors into the entrywise product. -/
+@[simp]
+lemma primePowDiag_add (p : ℕ) (e f : Fin n → ℕ) :
+    primePowDiag n p (e + f) = primePowDiag n p e * primePowDiag n p f := by
+  ext i
+  simp [pow_add]
+
 /-- Monotone exponents give a divisibility chain of `p`-power diagonals. -/
 lemma isDvdChain_primePowDiag (p : ℕ) (e : Fin n → ℕ) (hmono : Monotone e) :
     IsDvdChain (primePowDiag n p e) :=

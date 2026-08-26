@@ -304,6 +304,11 @@ theorem mem_convexHull_carrier (K : AbstractSimplicialComplex ι) (x : Realizati
   rw [carrier_val]
   exact StandardSimplex.mem_convexHull_support ⟨x.1, hx⟩
 
+/-- The barycentric coordinates of a point of the realization are nonnegative. -/
+theorem Realization.nonneg (K : AbstractSimplicialComplex ι) (x : Realization K) (v : ι) :
+    0 ≤ x.1 v :=
+  StandardSimplex.nonneg (σ := (carrier K x).1) ⟨x.1, mem_convexHull_carrier K x⟩ v
+
 /-- The carrier is contained in every finite vertex set whose closed simplex contains the point. -/
 theorem carrier_minimal (K : AbstractSimplicialComplex ι) (x : Realization K) {σ : Finset ι}
     (hx : x.1 ∈ convexHull ℝ (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))) :

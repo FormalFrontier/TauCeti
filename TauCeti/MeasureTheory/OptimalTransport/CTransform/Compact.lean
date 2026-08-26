@@ -164,8 +164,9 @@ theorem exists_cTransformSymm_coe_eq [CompactSpace Y] [Nonempty Y]
 omit [TopologicalSpace Y] in
 /-- On a nonempty compact source, a lower semicontinuous cost section and an upper semicontinuous
 real-valued potential make the `c`-transform real-valued: the infimum is attained, and its value at
-a minimiser is a difference of reals. This is the compact counterpart of
-`TauCeti.cTransform_coe`, which assumes a finite source. -/
+a minimiser is a difference of reals. The general bridge `TauCeti.cTransform_coe` instead assumes
+that the corresponding real infimum is bounded below; compactness and semicontinuity here supply
+both that bound and attainment. -/
 theorem exists_cTransform_coe_eq_coe [CompactSpace X] [Nonempty X]
     (hc : LowerSemicontinuous fun x => c (x, y)) (hf : UpperSemicontinuous f) :
     ∃ b : ℝ, cTransform c (fun x => (f x : EReal)) y = (b : EReal) := by

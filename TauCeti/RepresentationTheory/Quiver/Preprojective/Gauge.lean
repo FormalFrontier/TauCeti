@@ -63,11 +63,10 @@ negates under reversal. The `-` sign in `ρ_ε` is exactly the antisymmetry of t
 
 Reversing the orientation of an arrow of `Q` is here a change of the labelling `ε`, not a change of
 the quiver: the results below establish gauge independence for the labellings of one fixed quiver
-and hence in one fixed doubled path algebra. The doubled quivers attached to two reorientations of
-a common underlying graph are canonically isomorphic, but comparing their algebras additionally
-needs the induced path-algebra isomorphism, which does not exist in this repository and is not
-built here. So the cross-quiver form of orientation independence, which quantifies over two quivers
-with a common underlying graph, is deliberately left unstated by this file.
+and hence in one fixed doubled path algebra. The reorientation form of orientation independence,
+which compares `Q` with an explicit `Reorient Q σ`, is proved in
+`TauCeti.RepresentationTheory.Quiver.Preprojective.Orientation`; it consumes the gauge
+isomorphism below after identifying the two doubled path algebras.
 
 ## References
 
@@ -75,8 +74,9 @@ This is the gauge clause of Layer 4 of `TauCetiRoadmap/ZigzagPreprojective/READM
 to reverse a chosen arrow by an algebra isomorphism rescaling one of the exchanged arrows by `-1`,
 and then to generalize from signs to an antisymmetric sign function on oriented edges and prove
 independence under the explicit gauge change. This file proves that gauge clause; the cross-quiver
-clause preceding it is not proved here. See Crawley-Boevey, *Quiver algebras, weighted
-projective lines, and the Deligne--Simpson problem*, Section 1.
+clause preceding it is proved in
+`TauCeti.RepresentationTheory.Quiver.Preprojective.Orientation`. See Crawley-Boevey, *Quiver
+algebras, weighted projective lines, and the Deligne--Simpson problem*, Section 1.
 -/
 
 public section

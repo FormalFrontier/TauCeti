@@ -9,6 +9,7 @@ public import Mathlib.Algebra.MonoidAlgebra.Basic
 public import Mathlib.Algebra.Group.Subgroup.Finite
 public import Mathlib.GroupTheory.Perm.Sign
 public import Mathlib.RepresentationTheory.Basic
+public import TauCeti.Algebra.MonoidAlgebra.SubgroupCharSum
 public import TauCeti.RepresentationTheory.Symmetric.RowColumnSubgroup
 
 /-!
@@ -21,6 +22,12 @@ algebra of the symmetric group on the entries of `t`.
 The defining coefficient formulas are accompanied by the translation laws that characterize
 the two factors: the row group fixes `a_t`, while the column group acts on `b_t` through the
 sign character.  In particular, each factor squares to its subgroup order times itself.
+Both factors are instances of a single construction: the character sum
+`∑_{h ∈ H} χ(h) h` of a multiplicative character over a finite subgroup,
+`TauCeti.subgroupCharSum`.  The row symmetrizer is the trivial character over the row group and
+the column antisymmetrizer is the sign character over the column group, so the coefficient
+formula, the two translation laws, the square, and the values on a trivial or full subgroup are
+read off from that shared API instead of being proved once for each factor.
 These are the elementary inputs to the essential-idempotence theorem for `c_t` and the
 construction of Specht modules.  The two extreme shapes are also evaluated here: a trivial row or
 column group collapses the corresponding factor to `1`, so on a shape with at most one row the
@@ -66,11 +73,16 @@ local instance (t : YoungTableau μ) : DecidablePred (· ∈ rowSubgroup t) :=
 local instance (t : YoungTableau μ) : DecidablePred (· ∈ colSubgroup t) :=
   Classical.decPred _
 
+/-- The sign character of the symmetric group, valued in `ℚ`.  Together with the trivial
+character it is one of the two characters whose character sums over a subgroup are the
+symmetrizers of this file. -/
+noncomputable def signChar {α : Type*} [DecidableEq α] [Fintype α] : Equiv.Perm α →* ℚ :=
+  (Int.castRingHom ℚ).toMonoidHom.comp ((Units.coeHom ℤ).comp Equiv.Perm.sign)
+
 @[simp]
-private theorem permSign_cast_mul_self (σ : Equiv.Perm (Fin μ.card)) :
-    ((Equiv.Perm.sign σ : ℤ) : ℚ) * ((Equiv.Perm.sign σ : ℤ) : ℚ) = 1 := by
-  rw [← Int.cast_mul, ← Units.val_mul, Int.units_mul_self]
-  simp
+theorem signChar_apply {α : Type*} [DecidableEq α] [Fintype α] (σ : Equiv.Perm α) :
+    signChar σ = ((Equiv.Perm.sign σ : ℤ) : ℚ) :=
+  (rfl)
 
 /-- The **row symmetrizer** `a_t`, the sum of the permutations preserving the rows of `t`. -/
 noncomputable def rowSymmetrizer (t : YoungTableau μ) :
@@ -111,22 +123,25 @@ theorem youngSymmetrizer_def (t : YoungTableau μ) :
     youngSymmetrizer t = rowSymmetrizer t * columnAntisymmetrizer t :=
   (rfl)
 
+/-- The row symmetrizer is the character sum of the trivial character over the row group. -/
+theorem rowSymmetrizer_eq_subgroupCharSum (t : YoungTableau μ) :
+    rowSymmetrizer t = subgroupCharSum 1 (rowSubgroup t) := by
+  rw [rowSymmetrizer_def, subgroupCharSum_def]
+  simp
+
+/-- The column antisymmetrizer is the character sum of the sign character over the column
+group. -/
+theorem columnAntisymmetrizer_eq_subgroupCharSum (t : YoungTableau μ) :
+    columnAntisymmetrizer t = subgroupCharSum signChar (colSubgroup t) := by
+  rw [columnAntisymmetrizer_def, subgroupCharSum_def]
+  simp
+
 /-- The coefficient of a permutation in the row symmetrizer is its row-group indicator. -/
 @[simp]
 theorem rowSymmetrizer_coeff (t : YoungTableau μ) (σ : Equiv.Perm (Fin μ.card)) :
     (rowSymmetrizer t).coeff σ = if σ ∈ rowSubgroup t then 1 else 0 := by
-  classical
-  rw [rowSymmetrizer_def, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
-  simp only [MonoidAlgebra.of_apply, MonoidAlgebra.coeff_single, Finsupp.single_apply]
-  by_cases hσ : σ ∈ rowSubgroup t
-  · rw [ite_eq_left hσ,
-      Finset.sum_eq_single (⟨σ, hσ⟩ : rowSubgroup t)]
-    · simp
-    · exact fun p _ hp => ite_eq_right fun h => hp (Subtype.ext h)
-    · simp
-  · rw [ite_eq_right hσ]
-    exact Finset.sum_eq_zero fun p _ =>
-      ite_eq_right fun h : (p : Equiv.Perm (Fin μ.card)) = σ => hσ (h ▸ p.property)
+  rw [rowSymmetrizer_eq_subgroupCharSum, subgroupCharSum_coeff]
+  simp
 
 /-- The coefficient of a permutation in the column antisymmetrizer is its sign on the column
 group and zero off that group. -/
@@ -134,43 +149,24 @@ group and zero off that group. -/
 theorem columnAntisymmetrizer_coeff (t : YoungTableau μ) (σ : Equiv.Perm (Fin μ.card)) :
     (columnAntisymmetrizer t).coeff σ =
       if σ ∈ colSubgroup t then ((Equiv.Perm.sign σ : ℤ) : ℚ) else 0 := by
-  classical
-  rw [columnAntisymmetrizer_def, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
-  simp only [MonoidAlgebra.coeff_smul_apply, MonoidAlgebra.of_apply,
-    MonoidAlgebra.coeff_single, Finsupp.single_apply, smul_eq_mul]
-  by_cases hσ : σ ∈ colSubgroup t
-  · rw [ite_eq_left hσ,
-      Finset.sum_eq_single (⟨σ, hσ⟩ : colSubgroup t)]
-    · simp
-    · exact fun q _ hq => by
-        rw [ite_eq_right fun h => hq (Subtype.ext h), mul_zero]
-    · simp
-  · rw [ite_eq_right hσ]
-    exact Finset.sum_eq_zero fun q _ => by
-      rw [ite_eq_right fun h : (q : Equiv.Perm (Fin μ.card)) = σ => hσ (h ▸ q.property),
-        mul_zero]
+  rw [columnAntisymmetrizer_eq_subgroupCharSum, subgroupCharSum_coeff]
+  simp
 
 /-- Left multiplication by a member of the row group fixes the row symmetrizer. -/
 @[simp]
 theorem mul_rowSymmetrizer_left (t : YoungTableau μ) (p : rowSubgroup t) :
     MonoidAlgebra.single (p : Equiv.Perm (Fin μ.card)) 1 * rowSymmetrizer t =
       rowSymmetrizer t := by
-  rw [← MonoidAlgebra.of_apply, rowSymmetrizer_def, Finset.mul_sum]
-  simp_rw [← (MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card))).map_mul]
-  apply Fintype.sum_equiv (Equiv.mulLeft p)
-  intro q
-  rfl
+  rw [rowSymmetrizer_eq_subgroupCharSum, single_mul_subgroupCharSum]
+  simp
 
 /-- Right multiplication by a member of the row group fixes the row symmetrizer. -/
 @[simp]
 theorem mul_rowSymmetrizer_right (t : YoungTableau μ) (p : rowSubgroup t) :
     rowSymmetrizer t * MonoidAlgebra.single (p : Equiv.Perm (Fin μ.card)) 1 =
       rowSymmetrizer t := by
-  rw [← MonoidAlgebra.of_apply, rowSymmetrizer_def, Finset.sum_mul]
-  simp_rw [← (MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card))).map_mul]
-  apply Fintype.sum_equiv (Equiv.mulRight p)
-  intro q
-  rfl
+  rw [rowSymmetrizer_eq_subgroupCharSum, subgroupCharSum_mul_single]
+  simp
 
 /-- Left multiplication by a member of the column group scales the column antisymmetrizer by
 the sign of that member. -/
@@ -179,14 +175,8 @@ theorem mul_columnAntisymmetrizer_left (t : YoungTableau μ) (q : colSubgroup t)
     MonoidAlgebra.single (q : Equiv.Perm (Fin μ.card)) 1 * columnAntisymmetrizer t =
       ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
         columnAntisymmetrizer t := by
-  rw [← MonoidAlgebra.of_apply, columnAntisymmetrizer_def, Finset.mul_sum, Finset.smul_sum]
-  simp_rw [mul_smul_comm,
-    ← (MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card))).map_mul]
-  apply Fintype.sum_equiv (Equiv.mulLeft q)
-  intro p
-  simp only [Equiv.coe_mulLeft, Subgroup.coe_mul, Equiv.Perm.sign_mul, Units.val_mul,
-    Int.cast_mul, smul_smul]
-  rw [← mul_assoc, permSign_cast_mul_self, one_mul]
+  rw [columnAntisymmetrizer_eq_subgroupCharSum, single_mul_subgroupCharSum]
+  simp
 
 /-- Right multiplication by a member of the column group scales the column antisymmetrizer by
 the sign of that member. -/
@@ -195,35 +185,22 @@ theorem mul_columnAntisymmetrizer_right (t : YoungTableau μ) (q : colSubgroup t
     columnAntisymmetrizer t * MonoidAlgebra.single (q : Equiv.Perm (Fin μ.card)) 1 =
       ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
         columnAntisymmetrizer t := by
-  rw [← MonoidAlgebra.of_apply, columnAntisymmetrizer_def, Finset.sum_mul, Finset.smul_sum]
-  simp_rw [smul_mul_assoc,
-    ← (MonoidAlgebra.of ℚ (Equiv.Perm (Fin μ.card))).map_mul]
-  apply Fintype.sum_equiv (Equiv.mulRight q)
-  intro p
-  simp only [Equiv.coe_mulRight, Subgroup.coe_mul, Equiv.Perm.sign_mul, Units.val_mul,
-    Int.cast_mul, smul_smul]
-  rw [mul_left_comm, permSign_cast_mul_self, mul_one]
+  rw [columnAntisymmetrizer_eq_subgroupCharSum, subgroupCharSum_mul_single]
+  simp
 
 /-- The row symmetrizer squares to the order of the row group times itself. -/
 @[simp]
 theorem rowSymmetrizer_sq (t : YoungTableau μ) :
     rowSymmetrizer t * rowSymmetrizer t =
       Nat.card (rowSubgroup t) • rowSymmetrizer t := by
-  nth_rewrite 1 [rowSymmetrizer_def]
-  rw [Finset.sum_mul]
-  simp_rw [MonoidAlgebra.of_apply, mul_rowSymmetrizer_left]
-  rw [Finset.sum_const, Finset.card_univ, Nat.card_eq_fintype_card]
+  rw [rowSymmetrizer_eq_subgroupCharSum, subgroupCharSum_mul_self]
 
 /-- The column antisymmetrizer squares to the order of the column group times itself. -/
 @[simp]
 theorem columnAntisymmetrizer_sq (t : YoungTableau μ) :
     columnAntisymmetrizer t * columnAntisymmetrizer t =
       Nat.card (colSubgroup t) • columnAntisymmetrizer t := by
-  nth_rewrite 1 [columnAntisymmetrizer_def]
-  rw [Finset.sum_mul]
-  simp_rw [smul_mul_assoc, MonoidAlgebra.of_apply, mul_columnAntisymmetrizer_left, smul_smul,
-    permSign_cast_mul_self, one_smul]
-  rw [Finset.sum_const, Finset.card_univ, Nat.card_eq_fintype_card]
+  rw [columnAntisymmetrizer_eq_subgroupCharSum, subgroupCharSum_mul_self]
 
 /-- The row group fixes the Young symmetrizer on the left. -/
 @[simp]
@@ -296,19 +273,13 @@ theorem youngSymmetrizer_ne_zero (t : YoungTableau μ) :
 /-- A trivial row group leaves the row symmetrizer as the empty symmetrization, `1`. -/
 theorem rowSymmetrizer_eq_one (t : YoungTableau μ) (h : rowSubgroup t = ⊥) :
     rowSymmetrizer t = 1 := by
-  ext σ
-  by_cases hσ : σ = 1
-  · simp [rowSymmetrizer_coeff, h, MonoidAlgebra.one_def, hσ]
-  · simp [rowSymmetrizer_coeff, h, MonoidAlgebra.one_def, Subgroup.mem_bot, hσ]
+  rw [rowSymmetrizer_eq_subgroupCharSum, subgroupCharSum_eq_one _ _ h]
 
 /-- A trivial column group leaves the column antisymmetrizer as the empty antisymmetrization,
 `1`. -/
 theorem columnAntisymmetrizer_eq_one (t : YoungTableau μ) (h : colSubgroup t = ⊥) :
     columnAntisymmetrizer t = 1 := by
-  ext σ
-  by_cases hσ : σ = 1
-  · simp [columnAntisymmetrizer_coeff, h, MonoidAlgebra.one_def, hσ]
-  · simp [columnAntisymmetrizer_coeff, h, MonoidAlgebra.one_def, Subgroup.mem_bot, hσ]
+  rw [columnAntisymmetrizer_eq_subgroupCharSum, subgroupCharSum_eq_one _ _ h]
 
 /-- With a trivial column group the Young symmetrizer is the row symmetrizer. -/
 theorem youngSymmetrizer_eq_rowSymmetrizer (t : YoungTableau μ) (h : colSubgroup t = ⊥) :
@@ -397,13 +368,10 @@ theorem youngSymmetrizerOver_eq_sum_of_rowSubgroup_eq_top (t : YoungTableau μ)
       ∑ σ : Equiv.Perm (Fin μ.card), MonoidAlgebra.of k (Equiv.Perm (Fin μ.card)) σ := by
   rw [youngSymmetrizerOver_def,
     youngSymmetrizer_eq_rowSymmetrizer t (colSubgroup_eq_bot_of_rowSubgroup_eq_top t h),
-    rowSymmetrizer_def, map_sum]
-  refine Finset.sum_bij (fun p _ => (p : Equiv.Perm (Fin μ.card)))
-    (fun _ _ => Finset.mem_univ _) (fun _ _ _ _ hab => Subtype.ext hab)
-    (fun σ _ => ?_) fun p _ => ?_
-  · refine ⟨⟨σ, by rw [h]; exact Subgroup.mem_top σ⟩, ?_, rfl⟩
-    simp
-  · rw [MonoidAlgebra.of_apply, MonoidAlgebra.mapAlgHom_single, map_one, MonoidAlgebra.of_apply]
+    rowSymmetrizer_eq_subgroupCharSum, subgroupCharSum_eq_sum_of_eq_top _ _ h, map_sum]
+  refine Finset.sum_congr rfl fun σ _ => ?_
+  rw [MonoidHom.one_apply, one_smul, MonoidAlgebra.of_apply, MonoidAlgebra.mapAlgHom_single,
+    map_one, MonoidAlgebra.of_apply]
 
 end Transport
 
@@ -422,14 +390,10 @@ theorem youngSymmetrizerOver_eq_sum_of_colSubgroup_eq_top (t : YoungTableau μ)
         (Equiv.Perm.sign σ : ℤ) • MonoidAlgebra.of k (Equiv.Perm (Fin μ.card)) σ := by
   rw [youngSymmetrizerOver_def,
     youngSymmetrizer_eq_columnAntisymmetrizer t (rowSubgroup_eq_bot_of_colSubgroup_eq_top t h),
-    columnAntisymmetrizer_def, map_sum]
-  refine Finset.sum_bij (fun q _ => (q : Equiv.Perm (Fin μ.card)))
-    (fun _ _ => Finset.mem_univ _) (fun _ _ _ _ hab => Subtype.ext hab)
-    (fun σ _ => ?_) fun q _ => ?_
-  · refine ⟨⟨σ, by rw [h]; exact Subgroup.mem_top σ⟩, ?_, rfl⟩
-    simp
-  · rw [Int.cast_smul_eq_zsmul ℚ, map_zsmul, MonoidAlgebra.of_apply,
-      MonoidAlgebra.mapAlgHom_single, map_one, MonoidAlgebra.of_apply]
+    columnAntisymmetrizer_eq_subgroupCharSum, subgroupCharSum_eq_sum_of_eq_top _ _ h, map_sum]
+  refine Finset.sum_congr rfl fun σ _ => ?_
+  rw [signChar_apply, Int.cast_smul_eq_zsmul ℚ, map_zsmul, MonoidAlgebra.of_apply,
+    MonoidAlgebra.mapAlgHom_single, map_one, MonoidAlgebra.of_apply]
 
 end TransportRing
 
