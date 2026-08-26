@@ -22,13 +22,10 @@ public import Mathlib.Algebra.BrauerGroup.Defs
 -- what bundles `Mₙ(A)` as a term of `CSA K`.
 public import Mathlib.Algebra.Central.Matrix
 public import Mathlib.RingTheory.SimpleRing.Matrix
--- Mathlib's Kronecker product of matrix algebras is the body of
--- `TauCeti.Matrix.kroneckerTMulFinAlgEquiv`, and a compiled definition may not refer to a
--- privately imported one, so this import is public too. It re-exports
--- `Mathlib.Data.Matrix.Composition` and `Mathlib.RingTheory.TensorProduct.Maps`, hence the two
--- further equivalences used in the proofs below, `Matrix.compAlgEquiv` and
--- `Algebra.TensorProduct.congr`, which is why neither is imported again here.
-public import Mathlib.RingTheory.MatrixAlgebra
+-- The finite-index Kronecker equivalence used by the Brauer constructions below. It re-exports
+-- `Mathlib.RingTheory.MatrixAlgebra`, hence `Matrix.compAlgEquiv` and
+-- `Algebra.TensorProduct.congr` are also available here.
+public import TauCeti.LinearAlgebra.Matrix.TensorProduct
 
 /-!
 # Brauer equivalence: bundling central simple algebras, matrices, and the tensor product
@@ -183,19 +180,6 @@ theorem isBrauerEquivalent_matrix_congr {A B : CSA.{u, v} K} (h : IsBrauerEquiva
   ((isBrauerEquivalent_matrix K A m).trans h).trans (isBrauerEquivalent_matrix K B n).symm
 
 /-! ### Matrix absorption -/
-
-/-- **Matrix absorption**: `Mₘ(A) ⊗[R] Mₙ(B) ≃ₐ[R] M_{mn}(A ⊗[R] B)`, over any commutative
-semiring `R` and any two `R`-algebras, in any two sizes.
-
-Neither central simplicity nor positivity of the sizes plays any part, so neither is assumed;
-`TauCeti.CSA.tensorProductMatrixAlgEquiv` is the bundled reading that Brauer equivalence
-consumes. -/
-def Matrix.kroneckerTMulFinAlgEquiv (m n : ℕ) (R : Type*) [CommSemiring R] (A : Type*) [Semiring A]
-    [Algebra R A] (B : Type*) [Semiring B] [Algebra R B] :
-    Matrix (Fin m) (Fin m) A ⊗[R] Matrix (Fin n) (Fin n) B ≃ₐ[R]
-      Matrix (Fin (m * n)) (Fin (m * n)) (A ⊗[R] B) :=
-  (Matrix.kroneckerTMulAlgEquiv (Fin m) (Fin n) R R A B).trans
-    (Matrix.reindexAlgEquiv R _ finProdFinEquiv)
 
 variable {K}
 

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.NegativePlane
+public import TauCeti.LinearAlgebra.Matrix.TensorProduct
 
 import TauCeti.Algebra.CentralSimple.Quaternion
 
@@ -17,7 +18,8 @@ tensoring by sixteen-by-sixteen real matrices.
 
 ## Main result
 
-* `realCliffordEightPeriodicityEquiv` gives the eight-step equivalence for every real signature.
+* `nonempty_realCliffordEightPeriodicityEquiv` gives the eight-step equivalence for every real
+  signature.
 
 ## References
 
@@ -41,11 +43,10 @@ private abbrev M16 := Matrix (Fin 16) (Fin 16) ℝ
 private def matrixTensorSelf (n : ℕ) :
     Matrix (Fin n) (Fin n) ℝ ⊗[ℝ] Matrix (Fin n) (Fin n) ℝ ≃ₐ[ℝ]
       Matrix (Fin (n * n)) (Fin (n * n)) ℝ :=
-  (Matrix.kroneckerAlgEquiv (Fin n) (Fin n) ℝ).trans
-    (Matrix.reindexAlgEquiv ℝ ℝ finProdFinEquiv)
+  (Matrix.kroneckerTMulFinAlgEquiv n n ℝ ℝ ℝ).trans
+    (Algebra.TensorProduct.lid ℝ ℝ).mapMatrix
 
-/-- Eight-step periodicity for standard real Clifford algebras. -/
-noncomputable def realCliffordEightPeriodicityEquiv (p q : ℕ) :
+private noncomputable def realCliffordEightPeriodicityEquivImpl (p q : ℕ) :
     _root_.CliffordAlgebra (realCliffordForm (p + 8) q) ≃ₐ[ℝ]
       _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
         Matrix (Fin 16) (Fin 16) ℝ := by
@@ -88,5 +89,12 @@ noncomputable def realCliffordEightPeriodicityEquiv (p q : ℕ) :
       (Algebra.TensorProduct.congr (AlgEquiv.refl : M4 ≃ₐ[ℝ] M4)
         (matrixTensorSelf 2)).trans (matrixTensorSelf 4)
   exact chain.trans normalize
+
+/-- Eight-step periodicity for standard real Clifford algebras. -/
+theorem nonempty_realCliffordEightPeriodicityEquiv (p q : ℕ) :
+    Nonempty (_root_.CliffordAlgebra (realCliffordForm (p + 8) q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
+        Matrix (Fin 16) (Fin 16) ℝ) :=
+  ⟨realCliffordEightPeriodicityEquivImpl p q⟩
 
 end TauCeti
