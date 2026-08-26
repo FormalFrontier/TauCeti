@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Coalgebra.Comodule.Flag.Extension
-public import TauCeti.Algebra.Coalgebra.Comodule.WeightVector
+public import TauCeti.Algebra.Coalgebra.Comodule.Weight.Vector
 
 /-!
 # Building upper-triangular bases from weight vectors
