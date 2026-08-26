@@ -185,10 +185,8 @@ theorem weightParabolicCoordinateMap_apply (w : Fin N → ℤ)
 /-- The quotient coordinate morphism defining the weight parabolic is surjective. -/
 theorem weightParabolicCoordinateMap_surjective (w : Fin N → ℤ) :
     Function.Surjective (weightParabolicCoordinateMap R w).hom := by
-  intro y
-  obtain ⟨x, rfl⟩ := Ideal.Quotient.mkₐ_surjective R
-    (weightParabolicDefiningHopfIdeal R w).toIdeal y
-  exact ⟨x, weightParabolicCoordinateMap_apply R w x⟩
+  exact CommHopfAlgCat.mkQuotient_surjective
+    (coordinateHopfAlgebra R N) (weightParabolicDefiningHopfIdeal R w)
 
 /-- A forbidden coordinate vanishes in the weight-parabolic coordinate algebra. -/
 @[simp]

@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Unipotent
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Unipotent.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Map
@@ -30,7 +30,7 @@ the existing dynamic statement that the weight parabolic normalizes its unipoten
   inclusion between the ambient defining Hopf ideals.
 * `TauCeti.GeneralLinear.Dynamic.weightUnipotentInParabolicHopfIdeal`: the Hopf ideal in the
   parabolic coordinate algebra cutting out the unipotent subgroup.
-* `TauCeti.GeneralLinear.Dynamic.weightUnipotentInParabolicHopfIdeal_isNormal`: scheme-level
+* `TauCeti.GeneralLinear.Dynamic.isNormal_weightUnipotentInParabolicHopfIdeal`: scheme-level
   normality of the weight-unipotent subgroup in the weight parabolic.
 * `TauCeti.GeneralLinear.Dynamic.weightUnipotentToParabolic`: the resulting closed immersion of
   group schemes.
@@ -138,7 +138,7 @@ end Points
 /-- The relative weight-unipotent Hopf ideal is normal in the weight-parabolic coordinate Hopf
 algebra. Equivalently, the represented weight-unipotent subgroup is normal in the represented
 weight parabolic over every commutative value algebra. -/
-theorem weightUnipotentInParabolicHopfIdeal_isNormal (w : Fin N → ℤ) :
+theorem isNormal_weightUnipotentInParabolicHopfIdeal (w : Fin N → ℤ) :
     (weightUnipotentInParabolicHopfIdeal R w).IsNormal := by
   rw [CommHopfAlgCat.isNormal_iff_quotientPointsSubgroup_normal]
   intro A
