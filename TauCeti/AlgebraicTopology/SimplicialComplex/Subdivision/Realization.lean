@@ -36,8 +36,6 @@ The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear To
   maps to the barycenter of the face it represents.
 * `AbstractSimplicialComplex.barycentricSubdivisionLinearMap_apply`: the coordinates of a linear
   combination of face barycenters.
-* `AbstractSimplicialComplex.exists_greatest_of_isChain`: a finite nonempty chain in a partial
-  order has a greatest element.
 -/
 
 public section
@@ -53,7 +51,7 @@ variable {ι : Type*}
 attribute [local instance] Classical.decEq
 
 /-- A finite nonempty chain in a partial order has a greatest element. -/
-theorem exists_greatest_of_isChain {α : Type*} [PartialOrder α] (s : Finset α)
+private theorem exists_greatest_of_isChain {α : Type*} [PartialOrder α] (s : Finset α)
     (hs : s.Nonempty) (hchain : IsChain (· ≤ ·) (s : Set α)) :
     ∃ a ∈ s, ∀ b ∈ s, b ≤ a := by
   classical

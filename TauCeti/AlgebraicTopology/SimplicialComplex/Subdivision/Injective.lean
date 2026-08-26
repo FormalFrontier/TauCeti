@@ -47,6 +47,17 @@ variable {ι : Type*}
 
 attribute [local instance] Classical.decEq
 
+/-- A finite nonempty chain in a partial order has a greatest element. -/
+private theorem exists_greatest_of_isChain {α : Type*} [PartialOrder α] (s : Finset α)
+    (hs : s.Nonempty) (hchain : IsChain (· ≤ ·) (s : Set α)) :
+    ∃ a ∈ s, ∀ b ∈ s, b ≤ a := by
+  classical
+  obtain ⟨a, hmax⟩ := s.exists_maximal hs
+  refine ⟨a, hmax.prop, fun b hb => ?_⟩
+  rcases hchain.total hb hmax.prop with hba | hab
+  · exact hba
+  · exact hmax.le_of_ge hb hab
+
 /-- A face is nonempty, so the reciprocal of its cardinality is positive. -/
 private theorem inv_card_pos (K : AbstractSimplicialComplex ι) (σ : Face K) :
     0 < (σ.1.card : ℝ)⁻¹ := by
