@@ -36,8 +36,10 @@ extension satisfies the two conditions defining a point of `Spa (Aₛ, Aₛ⁺)`
   `TauCeti.Huber.PairOfDefinition.isRingOfIntegralElements_integralClosure_adjoin_plus` makes a
   ring of integral elements of `Aₛ`.
 
-Both come from the same two inequalities on `v`, namely `v t ≤ v s` for every numerator and
-`v s ≠ 0` — which is to say, from `v` lying in the rational subset `R(T/s)`.
+Both use `v t ≤ v s` for every numerator and `v s ≠ 0`. Continuity additionally requires `v` to
+be continuous and `v ≤ 1` on the chosen ring of definition `A₀`; sub-unitness on the plus ring
+additionally requires `v ≤ 1` on `A⁺`. For a point of `Spa(A, A⁺)`, continuity and the bound on
+`A⁺` are part of membership, while a choice `A₀ ⊆ A⁺` supplies the remaining bound.
 
 ## Why continuity needs a bound on the ring of definition
 
