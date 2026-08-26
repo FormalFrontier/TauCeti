@@ -73,8 +73,9 @@ def sigmaMonodromyNatIso (f : ∀ i, E i → X i)
           ((isCoveringMap_sigmaMap f hf).monodromy
             (γ.map (⟨Sigma.mk i, continuous_sigmaMk⟩ : C(X i, Σ j, X j))) p) =
             (hf i).monodromy γ ((sigmaMapFiberEquiv f i x).symm p) := by
-        obtain ⟨v, rfl⟩ := (sigmaMapFiberEquiv f i x).surjective p
-        rw [monodromy_sigmaMap f hf γ v, Equiv.symm_apply_apply, Equiv.symm_apply_apply]
+        apply (sigmaMapFiberEquiv f i y).injective
+        rw [Equiv.apply_symm_apply, ← monodromy_sigmaMap]
+        exact congrArg _ (Equiv.apply_symm_apply (sigmaMapFiberEquiv f i x) p).symm
       exact (congrArg (fun w => (e i).hom.app (FundamentalGroupoid.mk y) w) h).trans
         (NatTrans.naturality_apply (e i).hom γ ((sigmaMapFiberEquiv f i x).symm p)))
 
@@ -92,8 +93,20 @@ theorem exists_monodromyFunctor_iso_sigma (F : FundamentalGroupoid (Σ i, X i) �
     (FundamentalGroupoid.map (⟨Sigma.mk i, continuous_sigmaMk⟩ : C(X i, Σ j, X j)) ⋙ F)
   let f : ∀ i, ((q i : TopCat) : Type u) → X i := fun i => ⇑(q i).proj
   have hf : ∀ i, IsCoveringMap (f i) := fun i => (q i).isCoveringMap_proj
-  exact ⟨mk (TopCat.ofHom ⟨Sigma.map id f, (isCoveringMap_sigmaMap f hf).continuous⟩)
-    (isCoveringMap_sigmaMap f hf), ⟨sigmaMonodromyNatIso f hf F fun i => (hq i).some⟩⟩
+  let p : TopCat.of (Σ i, ((q i : TopCat) : Type u)) ⟶ TopCat.of (Σ i, X i) :=
+    TopCat.ofHom ⟨Sigma.map id f, (isCoveringMap_sigmaMap f hf).continuous⟩
+  let hp : IsCoveringMap p := isCoveringMap_sigmaMap f hf
+  let Q : CoveringSpace (TopCat.of (Σ i, X i)) := mk p hp
+  refine ⟨Q, ⟨?_⟩⟩
+  let h : (Q : TopCat) ≃ₜ TopCat.of (Σ i, ((q i : TopCat) : Type u)) :=
+    TopCat.homeoOfIso (eqToIso (mk_coe p hp))
+  have hh : p.hom ∘ h = Q.proj.hom := by
+    funext z
+    have hproj := DFunLike.congr_fun (congrArg TopCat.Hom.hom (mk_proj p hp)) z
+    exact hproj.symm
+  exact eqToIso (monodromyFunctor_obj Q) ≪≫
+    IsCoveringMap.monodromyNatIso Q.isCoveringMap_proj hp h hh ≪≫
+      sigmaMonodromyNatIso f hf F fun i => (hq i).some
 
 /-- **The classification of covering spaces of a disjoint union by fundamental-groupoid
 actions.** Over a disjoint union of path-connected, locally path-connected, semilocally simply

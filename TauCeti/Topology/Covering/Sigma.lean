@@ -91,7 +91,7 @@ theorem image_sigmaMk_preimage_singleton (i : ι) (x : X i) :
 
 /-- **The fibre of a disjoint union of maps over `⟨i, x⟩` is the fibre of the `i`-th map over
 `x`**, through the inclusion of the `i`-th summand. -/
-@[expose] noncomputable def sigmaMapFiberEquiv (i : ι) (x : X i) :
+noncomputable def sigmaMapFiberEquiv (i : ι) (x : X i) :
     (f i ⁻¹' {x} : Set (E i)) ≃ (Sigma.map id f ⁻¹' {(⟨i, x⟩ : Σ i, X i)} : Set (Σ i, E i)) :=
   (Equiv.Set.image _ _ sigma_mk_injective).trans
     (Equiv.setCongr (image_sigmaMk_preimage_singleton f i x))
@@ -101,6 +101,18 @@ omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)]
 theorem sigmaMapFiberEquiv_apply_coe (i : ι) (x : X i) (e : (f i ⁻¹' {x} : Set (E i))) :
     (sigmaMapFiberEquiv f i x e : Σ i, E i) = ⟨i, (e : E i)⟩ :=
   (rfl)
+
+omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)] in
+/-- The inverse fibre equivalence sends an element in the `i`-th summand back to that element. -/
+@[simp]
+theorem sigmaMapFiberEquiv_symm_apply_mk (i : ι) (x : X i) (e : E i)
+    (he : e ∈ f i ⁻¹' {x}) :
+    (sigmaMapFiberEquiv f i x).symm
+        ⟨⟨i, e⟩, by simpa [Sigma.map] using he⟩ = ⟨e, he⟩ := by
+  apply (sigmaMapFiberEquiv f i x).injective
+  rw [Equiv.apply_symm_apply]
+  apply Subtype.ext
+  exact (sigmaMapFiberEquiv_apply_coe f i x ⟨e, he⟩).symm
 
 /-- The raw form of `monodromy_sigmaMap`, with the two fibre elements written as explicit pairs
 rather than through `sigmaMapFiberEquiv`, so that the lifted path can be rewritten. -/
@@ -114,6 +126,8 @@ private theorem monodromy_sigmaMap_aux (hf : ∀ i, IsCoveringMap (f i)) {i : ι
   refine (isCoveringMap_sigmaMap f hf).monodromy_eq_of_map_eq
     (((hf i).liftPathQuotient γ e).map (⟨Sigma.mk i, continuous_sigmaMk⟩ : C(E i, Σ j, E j))) ?_
   rw [← Path.Homotopic.Quotient.map_comp]
+  -- The composite `Sigma.map id f ∘ Sigma.mk i` reduces to `Sigma.mk i ∘ f i`; spelling the
+  -- inclusions as structure literals makes this dependent endpoint equality definitional.
   change ((hf i).liftPathQuotient γ e).map
     ((⟨Sigma.mk i, continuous_sigmaMk⟩ : C(X i, Σ j, X j)).comp ⟨f i, (hf i).continuous⟩) = _
   rw [Path.Homotopic.Quotient.map_comp, (hf i).map_liftPathQuotient]

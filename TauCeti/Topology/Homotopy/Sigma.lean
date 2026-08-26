@@ -45,16 +45,11 @@ open Topology unitInterval
 
 variable {ι : Type*} {X : ι → Type*} [∀ i, TopologicalSpace (X i)]
 
-/-- A path in a disjoint union runs through a single summand. -/
-theorem exists_forall_path_eq_sigmaMk {a b : Σ j, X j} (γ : Path a b) :
-    ∃ (i : ι) (g : C(I, X i)), ∀ t, γ t = ⟨i, g t⟩ := by
-  obtain ⟨i, g, hg⟩ := ContinuousMap.exists_lift_sigma γ.toContinuousMap
-  exact ⟨i, g, fun t => DFunLike.congr_fun hg t⟩
-
 /-- A path out of the `i`-th summand of a disjoint union ends in the `i`-th summand. -/
 theorem sigma_fst_eq_of_path {i : ι} {x : X i} {z : Σ j, X j}
     (γ : Path (⟨i, x⟩ : Σ j, X j) z) : z.1 = i := by
-  obtain ⟨j, g, hγ⟩ := exists_forall_path_eq_sigmaMk γ
+  obtain ⟨j, g, hg⟩ := ContinuousMap.exists_lift_sigma γ.toContinuousMap
+  have hγ : ∀ t, γ t = ⟨j, g t⟩ := fun t => DFunLike.congr_fun hg t
   rw [γ.target.symm.trans (hγ 1)]
   exact congrArg Sigma.fst ((hγ 0).symm.trans γ.source)
 
@@ -63,7 +58,8 @@ in that summand.** -/
 theorem exists_path_map_sigmaMk_eq {i : ι} {x y : X i}
     (γ : Path (⟨i, x⟩ : Σ j, X j) ⟨i, y⟩) :
     ∃ γ' : Path x y, γ'.map continuous_sigmaMk = γ := by
-  obtain ⟨j, g, hγ⟩ := exists_forall_path_eq_sigmaMk γ
+  obtain ⟨j, g, hg⟩ := ContinuousMap.exists_lift_sigma γ.toContinuousMap
+  have hγ : ∀ t, γ t = ⟨j, g t⟩ := fun t => DFunLike.congr_fun hg t
   obtain rfl : j = i := congrArg Sigma.fst ((hγ 0).symm.trans γ.source)
   exact ⟨⟨g, sigma_mk_injective ((hγ 0).symm.trans γ.source),
     sigma_mk_injective ((hγ 1).symm.trans γ.target)⟩, Path.ext (funext fun t => (hγ t).symm)⟩
