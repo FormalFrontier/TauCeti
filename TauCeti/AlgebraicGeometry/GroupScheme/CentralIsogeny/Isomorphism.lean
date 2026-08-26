@@ -117,23 +117,13 @@ theorem isIso_of_mono {f : G ⟶ H} (hf : IsIsogeny f) [Mono f.hom.hom.left] : I
   let _ : IsFinite f.hom.hom.left := hf.isFinite
   let _ : Flat f.hom.hom.left := hf.flat
   let _ : Surjective f.hom.hom.left := hf.surjective
-  let _ : IsIso f.hom.hom.left := Flat.isIso_of_surjective_of_mono f.hom.hom.left
-  -- These forgetful functors are reducible projections on morphisms. The explicit `change`
-  -- steps record each definitional identification before reflecting the isomorphism.
-  let _ : IsIso ((Over.forget (Spec (CommRingCat.of k))).map f.hom.hom) := by
-    change IsIso f.hom.hom.left
-    infer_instance
-  let _ : IsIso f.hom.hom :=
-    isIso_of_reflects_iso f.hom.hom (Over.forget (Spec (CommRingCat.of k)))
-  let _ : IsIso ((Mon.forget (Over (Spec (CommRingCat.of k)))).map f.hom) := by
-    change IsIso f.hom.hom
-    infer_instance
-  let _ : IsIso f.hom :=
-    isIso_of_reflects_iso f.hom (Mon.forget (Over (Spec (CommRingCat.of k))))
-  let _ : IsIso ((Grp.forget₂Mon (Over (Spec (CommRingCat.of k)))).map f) := by
-    change IsIso f.hom
-    infer_instance
-  exact isIso_of_reflects_iso f (Grp.forget₂Mon (Over (Spec (CommRingCat.of k))))
+  apply (isIso_iff_of_reflects_iso f
+    (Grp.forget₂Mon (Over (Spec (CommRingCat.of k))))).mp
+  apply (isIso_iff_of_reflects_iso f.hom
+    (Mon.forget (Over (Spec (CommRingCat.of k))))).mp
+  apply (isIso_iff_of_reflects_iso f.hom.hom
+    (Over.forget (Spec (CommRingCat.of k)))).mp
+  exact Flat.isIso_of_surjective_of_mono f.hom.hom.left
 
 end IsIsogeny
 
