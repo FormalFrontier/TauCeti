@@ -37,10 +37,11 @@ triviality of `χ₄`, `χ₈` or `χ₈'` at `n`.
 
 Because `4 * N(z) = A² - D * B²` for every algebraic integer `z` of the quadratic field
 `K = ℚ(√d)` with `D = fundamentalDiscriminant d`, the relation says that the genus characters of
-`D` are trivial on the norms of `K`. That is the first step towards reading them as characters of
-the narrow class group of `K`, whose independence is the lower bound `t - 1` in the genus-theoretic
-`2`-rank formula. Contrapositively, `norm_ne_of_primeDiscriminantChar_eq_neg_one` is the classical
-obstruction: an integer with a nontrivial genus character is not a norm.
+`D` are trivial on the norms of `K` coprime to `D`. That is the first step towards reading them as
+characters of the narrow class group of `K`, whose independence is the lower bound `t - 1` in the
+genus-theoretic `2`-rank formula. Contrapositively,
+`norm_ne_of_primeDiscriminantChar_eq_neg_one` is the classical obstruction: an integer with a
+nontrivial genus character is not a norm.
 
 The genus characters and this relation are classical; see D. A. Cox, *Primes of the Form x² + ny²*,
 §3.B, and F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2.
@@ -61,8 +62,8 @@ The genus characters and this relation are classical; see D. A. Cox, *Primes of 
   prime discriminant, and for a genus character, of a prime-discriminant factorization of `D`.
 * `TauCeti.Multiquadratic.exists_sq_sub_fundamentalDiscriminant_mul_sq_eq_four_mul_norm`: the norm
   form of a quadratic field, written with its fundamental discriminant.
-* `TauCeti.Multiquadratic.primeDiscriminantChar_norm_eq_one`: the genus characters of `ℚ(√d)` are
-  trivial on the norms of its algebraic integers, and
+* `TauCeti.Multiquadratic.primeDiscriminantChar_norm_eq_one`: the character at `P` is trivial on
+  the norms of algebraic integers of `ℚ(√d)` that are coprime to `P`, and
   `TauCeti.Multiquadratic.norm_ne_of_primeDiscriminantChar_eq_neg_one` is the resulting obstruction.
 -/
 
