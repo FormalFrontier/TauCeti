@@ -7,14 +7,10 @@ module
 
 public import Mathlib.Algebra.GroupWithZero.Units.Basic
 public import Mathlib.Algebra.Group.Subgroup.Even
-
-import Mathlib.Algebra.Group.Commute.Units
+public import TauCeti.Algebra.Group.Units.Basic
 
 /-!
-# Units and powers in groups with zero
-
-A unit is a square exactly when its underlying monoid element is a square
-(`TauCeti.isSquare_units_val_iff`).
+# Powers in groups with zero
 
 A product `a ^ i * a⁻¹ ^ (n - i)`, in which the two exponents are natural numbers adding up to
 `n`, is the integer power `a ^ (2 * i - n)`.  Such a product is what a diagonal matrix
@@ -29,16 +25,6 @@ statement for the exponents `i` and `n - i` of `a` and `a⁻¹`.
 public section
 
 namespace TauCeti
-
-/-- A unit is a square exactly when its underlying monoid element is a square. -/
-theorem isSquare_units_val_iff {K : Type*} [Monoid K] {u : Kˣ} :
-    IsSquare (u : K) ↔ IsSquare u := by
-  constructor
-  · rintro ⟨x, hx⟩
-    have hxu : IsUnit x := isUnit_mul_self_iff.mp (hx ▸ u.isUnit)
-    exact ⟨hxu.unit, Units.ext (by simpa using hx)⟩
-  · rintro ⟨v, rfl⟩
-    exact ⟨(v : K), by simp⟩
 
 /-- **A power of `a` times a power of `a⁻¹` is an integer power of `a`**: for `i ≤ n`, the
 exponents `i` and `n - i` combine to `i - (n - i) = 2 * i - n`. -/

@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.Module.ZMod
 public import Mathlib.LinearAlgebra.LinearIndependent.Defs
-public import TauCeti.Algebra.GroupWithZero.Units.Basic
+public import TauCeti.Algebra.Group.Units.Basic
 
 /-!
 # The square-class group `Kˣ ⧸ (Kˣ)²`

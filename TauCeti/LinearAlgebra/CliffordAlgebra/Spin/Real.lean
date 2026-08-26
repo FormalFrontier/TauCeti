@@ -94,16 +94,6 @@ noncomputable def spinNDoubleCover (n : ℕ) (hn : 0 < n) :
     (nondegenerate_realCliffordForm n 0)
     (spinToSpecialOrthogonal_surjective_of_posDef _ (posDef_realCliffordForm_zero n))
 
-/-- The compact real Spin double cover is the generic construction applied to positive-definite
-surjectivity. -/
-theorem spinNDoubleCover_def (n : ℕ) (hn : 0 < n) :
-    spinNDoubleCover n hn =
-      let _ : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
-      spinDoubleCoverOfSurjective (realCliffordForm n 0)
-        (nondegenerate_realCliffordForm n 0)
-        (spinToSpecialOrthogonal_surjective_of_posDef _ (posDef_realCliffordForm_zero n)) :=
-  (rfl)
-
 /-- The inclusion in the compact real Spin double cover sends the generator to the distinguished
 element `-1` of the Spin group. -/
 @[simp]
@@ -112,7 +102,7 @@ theorem spinNDoubleCover_inl_ofAdd_one (n : ℕ) (hn : 0 < n) :
     (spinNDoubleCover n hn).inl (Multiplicative.ofAdd 1) =
       spinGroup.negOne (realCliffordForm n 0) (nondegenerate_realCliffordForm n 0).ne_zero := by
   let : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
-  rw [spinNDoubleCover_def, spinDoubleCoverOfSurjective_inl_ofAdd_one]
+  rw [spinNDoubleCover, spinDoubleCoverOfSurjective_inl_ofAdd_one]
 
 /-- The projection in the compact real Spin double cover is the Spin action. -/
 @[simp]
@@ -120,6 +110,6 @@ theorem spinNDoubleCover_rightHom (n : ℕ) (hn : 0 < n) :
     (spinNDoubleCover n hn).rightHom =
       spinToSpecialOrthogonal (realCliffordForm n 0) := by
   let : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
-  rw [spinNDoubleCover_def, spinDoubleCoverOfSurjective_rightHom]
+  rw [spinNDoubleCover, spinDoubleCoverOfSurjective_rightHom]
 
 end CliffordAlgebra
