@@ -13,7 +13,8 @@ import Mathlib.MeasureTheory.Function.LpSpace.Complete
 /-!
 # The Sobolev embedding `W^{1,p}_0(Ω) ↪ L^{p⋆}(Ω)`
 
-This file proves the **subcritical Sobolev embedding** on `W^{1,p}_0(Ω)`: for a domain
+This file proves the **critical Sobolev embedding in the `p < n` regime** on
+`W^{1,p}_0(Ω)`: for a domain
 `Ω ⊆ E` in a finite-dimensional real inner product space of dimension `n`, an exponent
 `1 ≤ p` and the Sobolev conjugate `p⋆` determined by `1/p⋆ + 1/n = 1/p` (so `p < n`),
 
@@ -121,8 +122,8 @@ theorem W1p.isClosed_setOf_eLpNorm_value_le (q : ENNReal) (C : ℝ≥0) :
 
 Only the closedness of the estimate is used, so the hypothesis may be any
 Gagliardo--Nirenberg--Sobolev variant available for test functions; the target exponent `q` is
-unrelated to `p`. Both norms on the left are taken for the ambient measure, which is harmless for
-a test function because it vanishes outside `Ω`. -/
+unrelated to `p`. Both norms in the hypothesis are taken with respect to the ambient measure,
+which is harmless for a test function because it vanishes outside `Ω`. -/
 theorem W1p.eLpNorm_value_le_of_forall_testFunction {q : ENNReal} {C : ℝ≥0}
     (h : ∀ phi : 𝓓(Omega, ℝ),
       eLpNorm (phi : E → ℝ) q mu ≤ C * eLpNorm (fderiv ℝ (phi : E → ℝ)) p mu)
@@ -144,13 +145,13 @@ theorem W1p.eLpNorm_value_le_of_forall_testFunction {q : ENNReal} {C : ℝ≥0}
 variable {pstar : ENNReal}
 
 omit [MeasurableSpace E] [FiniteDimensional ℝ E] [BorelSpace E] in
-/-- The Sobolev conjugate is an admissible `Lᵖ` exponent: `1/p⋆ ≤ 1/p ≤ 1`.  This discharges the
-`Fact (1 ≤ p⋆)` instance that `L^{p⋆}(Ω)` needs to be a normed space. -/
-theorem one_le_of_inv_add_inv_finrank_eq_inv
-    (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) : 1 ≤ pstar := by
+/-- If `1 ≤ p` and `1/p⋆ + 1/n = 1/p`, then `1 ≤ p⋆`. This discharges the
+`Fact (1 ≤ p⋆)` instance that `L^{p⋆}` needs to be a normed space. -/
+theorem one_le_of_inv_add_inv_natCast_eq_inv (n : ℕ)
+    (hexp : pstar⁻¹ + (n : ℝ≥0∞)⁻¹ = p⁻¹) : 1 ≤ pstar := by
   have hp1 : (1 : ℝ≥0∞) ≤ p := Fact.out
   rw [← ENNReal.inv_le_one]
-  calc pstar⁻¹ ≤ pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ := le_self_add
+  calc pstar⁻¹ ≤ pstar⁻¹ + (n : ℝ≥0∞)⁻¹ := le_self_add
     _ = p⁻¹ := hexp
     _ ≤ 1 := ENNReal.inv_le_one.2 hp1
 
@@ -261,7 +262,7 @@ theorem W1p0.memLp_value (hpstar : pstar ≠ ∞)
 /-- The **Sobolev embedding** `W^{1,p}_0(Ω) → L^{p⋆}(Ω)` as a linear map, before recording its
 boundedness.  It sends a Sobolev function to its own `L^{p⋆}` class, so the underlying function is
 unchanged; see `TauCeti.W1p0.coeFn_sobolevEmbeddingL`. -/
-def W1p0.sobolevEmbeddingₗ (hpstar : pstar ≠ ∞)
+private def W1p0.sobolevEmbeddingₗ (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) :
     W1p0 mu Omega p →ₗ[ℝ] Lp ℝ pstar (mu.restrict Omega) where
   toFun u := (W1p0.memLp_value hpstar hexp u).toLp _
@@ -281,7 +282,7 @@ def W1p0.sobolevEmbeddingₗ (hpstar : pstar ≠ ∞)
     simp only [RingHom.id_apply, Submodule.coe_smul, hvalue]
     exact Lp.coeFn_smul _ _
 
-theorem W1p0.coeFn_sobolevEmbeddingₗ (hpstar : pstar ≠ ∞)
+private theorem W1p0.coeFn_sobolevEmbeddingₗ (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) (u : W1p0 mu Omega p) :
     W1p0.sobolevEmbeddingₗ hpstar hexp u =ᵐ[mu.restrict Omega]
       (W1p.value (u : W1p mu Omega p) : E → ℝ) :=
@@ -289,7 +290,7 @@ theorem W1p0.coeFn_sobolevEmbeddingₗ (hpstar : pstar ≠ ∞)
 
 /-- The `L^{p⋆}` norm of the image is controlled by the `Lᵖ` norm of the *gradient* alone, which
 is sharper than the bound by the full graph norm that makes the embedding continuous. -/
-theorem W1p0.norm_sobolevEmbeddingₗ_le (hpstar : pstar ≠ ∞)
+private theorem W1p0.norm_sobolevEmbeddingₗ_le (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) (u : W1p0 mu Omega p) :
     ‖W1p0.sobolevEmbeddingₗ hpstar hexp u‖ ≤
       SNormLESNormFDerivOfEqConst ℝ mu p.toReal * ‖W1p.gradient (u : W1p mu Omega p)‖ := by
@@ -316,19 +317,28 @@ def W1p0.sobolevEmbeddingL (hpstar : pstar ≠ ∞)
       (W1p0.norm_sobolevEmbeddingₗ_le hpstar hexp u).trans
         (mul_le_mul_of_nonneg_left (W1p.norm_gradient_le _) (NNReal.coe_nonneg _))
 
-@[simp]
-theorem W1p0.sobolevEmbeddingL_apply (hpstar : pstar ≠ ∞)
-    (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) (u : W1p0 mu Omega p) :
-    W1p0.sobolevEmbeddingL hpstar hexp u = W1p0.sobolevEmbeddingₗ hpstar hexp u := by
-  rw [W1p0.sobolevEmbeddingL, LinearMap.mkContinuous_apply]
-
 /-- The Sobolev embedding does not change the function: the image of `u` in `L^{p⋆}(Ω)` is `u`
 itself. -/
 theorem W1p0.coeFn_sobolevEmbeddingL (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) (u : W1p0 mu Omega p) :
     W1p0.sobolevEmbeddingL hpstar hexp u =ᵐ[mu.restrict Omega]
       (W1p.value (u : W1p mu Omega p) : E → ℝ) :=
-  W1p0.coeFn_sobolevEmbeddingₗ hpstar hexp u
+  by
+    rw [W1p0.sobolevEmbeddingL, LinearMap.mkContinuous_apply]
+    exact W1p0.coeFn_sobolevEmbeddingₗ hpstar hexp u
+
+/-- The Sobolev embedding is injective. -/
+theorem W1p0.sobolevEmbeddingL_injective (hpstar : pstar ≠ ∞)
+    (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) :
+    Function.Injective
+      (W1p0.sobolevEmbeddingL (mu := mu) (Omega := Omega) (p := p) hpstar hexp) := by
+  intro u v huv
+  apply Subtype.ext
+  apply W1p.ext_value
+  apply Lp.ext
+  filter_upwards [W1p0.coeFn_sobolevEmbeddingL hpstar hexp u,
+    W1p0.coeFn_sobolevEmbeddingL hpstar hexp v] with x hu hv
+  rw [← hu, ← hv, huv]
 
 /-- The image of `u` under the Sobolev embedding is bounded in `L^{p⋆}` by the `Lᵖ` norm of the
 gradient of `u` alone.  This is the quantitative content of the embedding, sharper than the bound
@@ -337,7 +347,7 @@ theorem W1p0.norm_sobolevEmbeddingL_le (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) (u : W1p0 mu Omega p) :
     ‖W1p0.sobolevEmbeddingL hpstar hexp u‖ ≤
       SNormLESNormFDerivOfEqConst ℝ mu p.toReal * ‖W1p.gradient (u : W1p mu Omega p)‖ := by
-  rw [W1p0.sobolevEmbeddingL_apply]
+  rw [W1p0.sobolevEmbeddingL, LinearMap.mkContinuous_apply]
   exact W1p0.norm_sobolevEmbeddingₗ_le hpstar hexp u
 
 end TauCeti
