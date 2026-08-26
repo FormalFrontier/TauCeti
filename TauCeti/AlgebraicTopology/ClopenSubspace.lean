@@ -180,17 +180,76 @@ instance instSemilocallySimplyConnectedSpaceSubtypePathComponent [LocallyPathCon
   semilocallySimplyConnectedSpace_of_isClopen (IsClopen.pathComponent x₀)
 
 /-- The basepoint of `X`, viewed as a point of its own path component. -/
-def pathComponentSelf : (pathComponent x₀ : Set X) :=
+abbrev pathComponentSelf : (pathComponent x₀ : Set X) :=
   ⟨x₀, mem_pathComponent_self x₀⟩
 
 @[simp] theorem pathComponentSelf_coe : (pathComponentSelf x₀ : X) = x₀ := (rfl)
 
 /-- **The path component of `x₀` carries the fundamental group of `X` at `x₀`.** Loops at `x₀`
-and their homotopies never leave the path component, which is clopen because `X` is locally
-path connected. -/
-noncomputable def fundamentalGroupMulEquivPathComponent [LocallyPathConnectedSpace X] :
+and their homotopies never leave the path component. -/
+@[expose] noncomputable def fundamentalGroupMulEquivPathComponent :
     FundamentalGroup (pathComponent x₀) (pathComponentSelf x₀) ≃* FundamentalGroup X x₀ :=
-  fundamentalGroupMulEquivOfIsClopen (IsClopen.pathComponent x₀) (pathComponentSelf x₀)
+  MulEquiv.ofBijective
+    (FundamentalGroup.map
+      (⟨Subtype.val, continuous_subtype_val⟩ : C(pathComponent x₀, X))
+      (pathComponentSelf x₀)) <| by
+    constructor
+    · rw [injective_iff_map_eq_one]
+      intro g hg
+      obtain ⟨γ, rfl⟩ := Quotient.exists_rep (FundamentalGroup.toPath g)
+      have hnull : (γ.map continuous_subtype_val).Homotopic (Path.refl x₀) := by
+        refine (FundamentalGroupoid.fromPath_eq_iff_homotopic _ _).mp ?_
+        exact (FundamentalGroup.map_fromPath
+            (⟨Subtype.val, continuous_subtype_val⟩ : C(pathComponent x₀, X))
+            (pathComponentSelf x₀) γ).symm.trans
+          (hg.trans (FundamentalGroupoid.id_eq_path_refl (FundamentalGroupoid.mk x₀)))
+      refine (FundamentalGroupoid.fromPath_eq_iff_homotopic _ _).mpr ?_
+      obtain ⟨H⟩ := hnull
+      have hγmem : ∀ t, (γ.map continuous_subtype_val) t ∈ pathComponent x₀ := fun t =>
+        ⟨Path.initialSegmentFamily (γ.map continuous_subtype_val) t⟩
+      have hmem : ∀ p : I × I, H p ∈ pathComponent x₀ := fun p =>
+        Joined.mem_pathComponent
+          ⟨Path.initialSegmentFamily (H.evalAt p.2) p.1⟩
+          (H.map_zero_left p.2 ▸ hγmem p.2)
+      refine Path.homotopic_of_continuous_square (fun p => ⟨H p, hmem p⟩)
+        (H.continuous.subtype_mk hmem) (fun t => Subtype.ext ?_) (fun t => Subtype.ext ?_)
+        (fun t => Subtype.ext ?_) (fun t => Subtype.ext ?_) <;> simp
+    · intro g
+      obtain ⟨γ, rfl⟩ := Quotient.exists_rep (FundamentalGroup.toPath g)
+      let hmem : ∀ t, γ t ∈ pathComponent x₀ := fun t => ⟨Path.initialSegmentFamily γ t⟩
+      refine ⟨FundamentalGroup.fromPath
+        ⟦Path.codRestrict (x := pathComponentSelf x₀) (y := pathComponentSelf x₀)
+          γ hmem⟧, ?_⟩
+      rw [FundamentalGroup.map_fromPath, Path.map_codRestrict]
+      rfl
+
+@[simp]
+theorem fundamentalGroupMulEquivPathComponent_apply
+    (g : FundamentalGroup (pathComponent x₀) (pathComponentSelf x₀)) :
+    fundamentalGroupMulEquivPathComponent x₀ g =
+      FundamentalGroup.map
+        (⟨Subtype.val, continuous_subtype_val⟩ : C(pathComponent x₀, X))
+        (pathComponentSelf x₀) g :=
+  rfl
+
+/-- The inverse path-component equivalence corestricts a representative loop to the path
+component, which contains each of its initial segments. -/
+@[simp]
+theorem fundamentalGroupMulEquivPathComponent_symm_fromPath (γ : Path x₀ x₀) :
+    (fundamentalGroupMulEquivPathComponent x₀).symm (FundamentalGroup.fromPath ⟦γ⟧) =
+      FundamentalGroup.fromPath
+        ⟦Path.codRestrict (x := pathComponentSelf x₀) (y := pathComponentSelf x₀) γ
+          (fun t => ⟨Path.initialSegmentFamily γ t⟩)⟧ := by
+  rw [MulEquiv.symm_apply_eq, fundamentalGroupMulEquivPathComponent_apply,
+    FundamentalGroup.map_fromPath]
+  change Path.Homotopic.Quotient.mk γ =
+    Path.Homotopic.Quotient.mk
+      ((Path.codRestrict (x := pathComponentSelf x₀) (y := pathComponentSelf x₀) γ
+        (fun t => ⟨Path.initialSegmentFamily γ t⟩)).map continuous_subtype_val)
+  exact congrArg Path.Homotopic.Quotient.mk
+    (Path.map_codRestrict (s := pathComponent x₀) (x := pathComponentSelf x₀)
+      (y := pathComponentSelf x₀) γ
+      (fun t => show γ t ∈ pathComponent x₀ from ⟨Path.initialSegmentFamily γ t⟩)).symm
 
 end PathComponent
 

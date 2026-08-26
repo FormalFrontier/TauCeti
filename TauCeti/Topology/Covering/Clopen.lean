@@ -26,8 +26,6 @@ work without assuming `p` surjective or `s = X`.
 
 * `TauCeti.isCoveringMap_subtypeVal_comp`: the composite of a covering map onto a clopen subspace
   with the subspace inclusion is a covering map.
-* `TauCeti.range_subtypeVal_comp_of_surjective`: a surjection onto `s`, composed with the
-  inclusion, has range exactly `s`.
 -/
 
 public section
@@ -47,11 +45,5 @@ theorem isCoveringMap_subtypeVal_comp (hs : IsClopen s) {p : E → s} (hp : IsCo
   · refine IsEvenlyCovered.to_isEvenlyCovered_preimage
       (IsEvenlyCovered.of_preimage_eq_empty Empty (hs.isClosed.isOpen_compl.mem_nhds hx) ?_)
     exact Set.eq_empty_of_forall_notMem fun e he => he (p e).2
-
-omit [TopologicalSpace E] [TopologicalSpace X] in
-/-- A surjection onto a subspace, composed with the inclusion, has range that subspace. -/
-theorem range_subtypeVal_comp_of_surjective {p : E → s} (hp : Function.Surjective p) :
-    Set.range (Subtype.val ∘ p) = s := by
-  rw [Set.range_comp, hp.range_eq, Set.image_univ, Subtype.range_coe]
 
 end TauCeti

@@ -76,7 +76,7 @@ omit [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
 /-- The image of the path-component cover is exactly the path component of `x₀`. -/
 theorem range_pathComponentCoverProj :
     Set.range (pathComponentCoverProj x₀) = pathComponent x₀ :=
-  range_subtypeVal_comp_of_surjective UniversalCover.proj_surjective
+  (UniversalCover.proj_surjective.range_comp Subtype.val).trans Subtype.range_coe
 
 /-- **Universal property of the path-component cover.** A continuous map into `X` from a path
 connected, locally path connected, simply connected space lifts uniquely once the image of one
@@ -84,7 +84,7 @@ point is prescribed. Path connectedness of the source is what confines its image
 path component of `X`, so no hypothesis on the values of `f` is required beyond the one implicit
 in `he`. -/
 theorem existsUnique_continuousMap_lifts_pathComponent {A : Type*} [TopologicalSpace A]
-    [PathConnectedSpace A] [LocallyPathConnectedSpace A] [SimplyConnectedSpace A] (f : C(A, X))
+    [LocallyPathConnectedSpace A] [SimplyConnectedSpace A] (f : C(A, X))
     (a₀ : A) (e₀ : PathComponentCover x₀) (he : pathComponentCoverProj x₀ e₀ = f a₀) :
     ∃! F : C(A, PathComponentCover x₀),
       F a₀ = e₀ ∧ pathComponentCoverProj x₀ ∘ F = f := by
@@ -114,5 +114,18 @@ noncomputable def deckPathComponentCoverProjEquiv :
   (MulEquiv.subgroupCongr (deck_pathComponentCoverProj x₀)).trans <|
     (UniversalCover.deckFundamentalGroupEquiv (pathComponentSelf x₀)).trans <|
       MulEquiv.op (fundamentalGroupMulEquivPathComponent x₀)
+
+/-- The inverse deck-group equivalence sends `op g` to the loop deck transformation associated
+to the inverse of the corresponding loop in the path component. -/
+@[simp]
+theorem deckPathComponentCoverProjEquiv_symm_op (g : FundamentalGroup X x₀) :
+    (deckPathComponentCoverProjEquiv x₀).symm (MulOpposite.op g) =
+      (MulEquiv.subgroupCongr (deck_pathComponentCoverProj x₀)).symm
+        (UniversalCover.loopDeck (pathComponentSelf x₀)
+          ((fundamentalGroupMulEquivPathComponent x₀).symm g)⁻¹) := by
+  change (MulEquiv.subgroupCongr (deck_pathComponentCoverProj x₀)).symm
+      ((UniversalCover.deckFundamentalGroupEquiv (pathComponentSelf x₀)).symm
+        (MulOpposite.op ((fundamentalGroupMulEquivPathComponent x₀).symm g))) = _
+  rw [UniversalCover.deckFundamentalGroupEquiv_symm_op]
 
 end TauCeti
