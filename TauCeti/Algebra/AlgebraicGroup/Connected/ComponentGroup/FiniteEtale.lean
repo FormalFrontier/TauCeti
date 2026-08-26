@@ -37,7 +37,7 @@ This completes the algebraically closed-field case of the finite etale component
 Layer 3, "Identity component `G°` and component group `π₀(G)`", of the ReductiveGroups roadmap.
 -/
 
-@[expose] public section
+public section
 
 open CategoryTheory Opposite
 
