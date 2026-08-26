@@ -62,14 +62,10 @@ noncomputable def componentGroupFppfSheafIsoComponentGroupSchemePoints
   let K := CommHopfAlgCat.of k
     (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H)))
   let F := presheafToSheaf (CommAlgCat.fppfTopology k) (Type (u + 1))
-  have hPoints :
-      HopfAlgebra.pointsGroupPresheaf K ⋙ GrpCat.uliftFunctor.{u + 1, u} ⋙
-          forget GrpCat.{u + 1} =
-        HopfAlgebra.pointsPresheaf K ⋙ CategoryTheory.uliftFunctor.{u + 1, u} := by
-    rfl
   let e₀ : (CommHopfAlgCat.pointsPresheafGrp K).X ≅
       HopfAlgebra.pointsPresheaf K ⋙ CategoryTheory.uliftFunctor.{u + 1, u} :=
-    eqToIso (CommHopfAlgCat.pointsPresheafGrp_X_eq K) ≪≫ eqToIso hPoints
+    eqToIso (CommHopfAlgCat.pointsPresheafGrp_X_eq K) ≪≫
+      eqToIso (CommHopfAlgCat.pointsGroupPresheaf_ulift_forget K)
   let e₁ : HopfAlgebra.pointsPresheaf K ⋙ CategoryTheory.uliftFunctor.{u + 1, u} ≅
       CommHopfAlgCat.schemePointsPresheaf K ⋙
         CategoryTheory.uliftFunctor.{u + 1, u} :=

@@ -115,6 +115,14 @@ theorem groupFunctorGrpIso_hom {C : Type u} [Category.{v} C]
     (groupFunctorGrpIso e).hom = groupFunctorGrpMap e.hom := by
   rw [groupFunctorGrpIso.eq_1]
 
+/-- Forgetting the universe lift of the group-valued points presheaf agrees with universe-lifting
+its underlying type-valued points presheaf. -/
+theorem pointsGroupPresheaf_ulift_forget (H : _root_.CommHopfAlgCat.{u} R) :
+    HopfAlgebra.pointsGroupPresheaf H ⋙ GrpCat.uliftFunctor.{u + 1, u} ⋙
+        forget GrpCat.{u + 1} =
+      HopfAlgebra.pointsPresheaf H ⋙ CategoryTheory.uliftFunctor.{u + 1, u} := by
+  rfl
+
 /-- The convolution-points presheaf as a group object in type-valued presheaves, with values
 lifted to the universe in which the affine-site sheafification lives. -/
 noncomputable def pointsPresheafGrp (H : _root_.CommHopfAlgCat.{u} R) :
