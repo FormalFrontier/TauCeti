@@ -45,6 +45,8 @@ the definition below.
   `TauCeti.kroneckerRep` is the one attached to its two components. Together with
   `TauCeti.kroneckerRep_hom_ext` this is the promised identification, mirroring the pair
   `TauCeti.oneLoopRepHom_oneLoopRepScalar` / `TauCeti.oneLoopRep_hom_ext` of the loop quiver.
+* `TauCeti.kroneckerHom_eta`: the same for two arbitrary representations, every morphism between
+  them being `TauCeti.kroneckerHom` of its two components.
 
 ## Implementation notes
 
@@ -224,6 +226,16 @@ theorem kroneckerHom_app_src (w : ∀ a, ρ.map (Quiver.Kronecker.arrowPath a) �
 theorem kroneckerHom_app_tgt (w : ∀ a, ρ.map (Quiver.Kronecker.arrowPath a) ≫ q
     = p ≫ σ.map (Quiver.Kronecker.arrowPath a)) :
     (kroneckerHom p q w).app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) = q := (rfl)
+
+/-- **Every morphism of representations of the generalized Kronecker quiver is the one attached to
+its two components**, the form of `TauCeti.kroneckerRepHom_eta` for representations that are not
+presented by `TauCeti.kroneckerRep`: the commuting square along an arrow is naturality along the
+path of that arrow. -/
+theorem kroneckerHom_eta (e : ρ ⟶ σ) :
+    kroneckerHom (e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
+      (e.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))
+      (fun a ↦ e.naturality (Quiver.Kronecker.arrowPath a)) = e :=
+  kroneckerRep_hom_ext (kroneckerHom_app_src _ _ _) (kroneckerHom_app_tgt _ _ _)
 
 end HomOfComponents
 
