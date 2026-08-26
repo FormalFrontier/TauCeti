@@ -140,35 +140,13 @@ theorem mapParabolic_leviDecompositionMulEquiv_apply
 
 private theorem leviSemidirectMap_id (A : CommAlgCat.{w} R) :
     leviSemidirectMap l (𝟙 A) = MonoidHom.id _ := by
-  apply MonoidHom.ext
-  intro g
-  apply SemidirectProduct.ext
-  · apply Subtype.ext
-    rw [leviSemidirectMap_apply_left, coe_mapUnipotent_apply, CommAlgCat.hom_id,
-      AlgHom.mapValue_id, MonoidHom.id_apply]
-    rfl
-  · apply Subtype.ext
-    rw [leviSemidirectMap_apply_right, coe_mapLevi_apply, CommAlgCat.hom_id,
-      AlgHom.mapValue_id, MonoidHom.id_apply]
-    rfl
+  ext g <;> simp
 
 private theorem leviSemidirectMap_comp {A B C : CommAlgCat.{w} R}
     (φ : A ⟶ B) (ψ : B ⟶ C) :
     leviSemidirectMap l (φ ≫ ψ) =
       (leviSemidirectMap l ψ).comp (leviSemidirectMap l φ) := by
-  apply MonoidHom.ext
-  intro g
-  apply SemidirectProduct.ext
-  · apply Subtype.ext
-    rw [MonoidHom.comp_apply, leviSemidirectMap_apply_left, leviSemidirectMap_apply_left,
-      leviSemidirectMap_apply_left, coe_mapUnipotent_apply, coe_mapUnipotent_apply,
-      coe_mapUnipotent_apply, CommAlgCat.hom_comp, AlgHom.mapValue_comp,
-      MonoidHom.comp_apply]
-  · apply Subtype.ext
-    rw [MonoidHom.comp_apply, leviSemidirectMap_apply_right, leviSemidirectMap_apply_right,
-      leviSemidirectMap_apply_right, coe_mapLevi_apply, coe_mapLevi_apply,
-      coe_mapLevi_apply, CommAlgCat.hom_comp, AlgHom.mapValue_comp,
-      MonoidHom.comp_apply]
+  ext g <;> simp
 
 /-- The semidirect product `U(l)(A) ⋊ Z(l)(A)` in the dynamic Levi decomposition, functorial in
 the commutative value algebra `A`. -/
