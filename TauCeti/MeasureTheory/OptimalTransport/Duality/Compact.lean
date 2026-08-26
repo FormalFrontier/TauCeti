@@ -37,7 +37,7 @@ potentials are read back as step functions on the fibres, which bounds the conti
 from below. Both estimates lose only a multiple of the modulus of continuity, so letting the net
 refine closes the duality gap.
 
-The smoothing result `TauCeti.exists_continuous_forall_add_le_and_le` replaces any feasible pair
+The smoothing result `TauCeti.exists_continuous_feasible_pair_dominating` replaces any feasible pair
 by a *continuous* one that dominates it pointwise: applying the infimal
 `c`-transform twice inherits the modulus of continuity of the cost. This is what upgrades the
 step-function potentials produced by the finite problem to the continuous potentials the theorem
@@ -61,8 +61,8 @@ additive normalisation of the cost and of the potentials.
 
 ## Main statements
 
-* `TauCeti.exists_continuous_forall_add_le_and_le` — a feasible pair is dominated by a continuous
-  feasible pair;
+* `TauCeti.exists_continuous_feasible_pair_dominating` — a feasible pair is dominated by a
+  continuous feasible pair;
 * `TauCeti.exists_continuous_forall_add_le_transportCost_le` — the approximate duality: for every
   `ε > 0` there is a continuous feasible pair whose value is within `ε` of the primal value;
 * `TauCeti.isLUB_kantorovichDualValue_continuous` — **strong Kantorovich duality**: the primal
@@ -114,7 +114,7 @@ variable [CompactSpace X] [CompactSpace Y] [Nonempty X] [Nonempty Y]
 pointwise by *continuous* potentials
 satisfying the same Kantorovich constraint. The improved pair is obtained by applying the infimal
 `c`-transform twice, so it inherits the modulus of continuity of the cost. -/
-theorem exists_continuous_forall_add_le_and_le (hc : Continuous c)
+theorem exists_continuous_feasible_pair_dominating (hc : Continuous c)
     (hfeas : ∀ x y, φ x + ψ y ≤ c (x, y)) :
     ∃ φ' ψ', Continuous φ' ∧ Continuous ψ' ∧ (∀ x y, φ' x + ψ' y ≤ c (x, y)) ∧
       (∀ x, φ x ≤ φ' x) ∧ ∀ y, ψ y ≤ ψ' y := by
@@ -409,7 +409,7 @@ theorem exists_continuous_forall_add_le_transportCost_le [IsProbabilityMeasure �
     linarith [this.1, this.2]
   -- upgrade the step potentials to continuous ones
   obtain ⟨φ, ψ, hφc, hψc, hfeas', hφle, hψle⟩ :=
-    exists_continuous_forall_add_le_and_le (c := c) (φ := fun x ↦ a (qX x))
+    exists_continuous_feasible_pair_dominating (c := c) (φ := fun x ↦ a (qX x))
       (ψ := fun y ↦ b (qY y)) hc hstepfeas
   refine ⟨φ, ψ, hφc, hψc, hfeas', hlift.trans (ENNReal.ofReal_le_ofReal ?_)⟩
   have hint : kantorovichDualValue μ ν (fun x ↦ a (qX x)) (fun y ↦ b (qY y))
