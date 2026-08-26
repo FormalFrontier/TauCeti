@@ -6,13 +6,13 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Basic
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Unipotent
-public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Unipotent
 import TauCeti.Algebra.AlgebraicGroup.Unipotent.SemidirectProduct
 import TauCeti.RingTheory.Smooth.GeometricallyReduced
 
 /-!
-# Unipotence of products of unipotent-radical candidates
+# Unipotence of normal products
 
 Let `I` and `J` cut out smooth unipotent closed subgroups of a finite-type affine group, with
 `I` normal. Multiplication is a homomorphism from their conjugation semidirect product into the
@@ -29,10 +29,10 @@ normality of the image are supplied by the normal-product API.
 
 ## Main declarations
 
+* `TauCeti.smoothUnipotentCommHopfAlgProperty.normalSemidirectProduct`: the named normal
+  semidirect product of two smooth unipotent groups is smooth unipotent.
 * `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.productOfNormal`: the multiplication
   image of two smooth unipotent subgroups has geometrically unipotent points.
-* `TauCeti.HopfIdeal.IsUnipotentRadicalCandidate.geometricallyUnipotent_productOfNormal`: the
-  candidate-level form of the result.
 
 ## References
 
@@ -54,6 +54,41 @@ universe u
 
 noncomputable section
 
+namespace smoothUnipotentCommHopfAlgProperty
+
+variable {k : Type u} [Field k]
+
+/-- The named normal semidirect product of two smooth unipotent closed subgroups is smooth
+unipotent. -/
+theorem normalSemidirectProduct (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (I J : HopfIdeal k H) (hI : I.IsNormal)
+    (hIu : smoothUnipotentCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H I))
+    (hJu : smoothUnipotentCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H J)) :
+    smoothUnipotentCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.of k
+        (CommHopfAlgCat.normalSemidirectProduct H.obj I J hI)) := by
+  let _ : Algebra.FiniteType k (CommHopfAlgCat.quotient H.obj I) :=
+    (FiniteTypeCommHopfAlgCat.quotient H I).property
+  let _ : Algebra.FiniteType k (CommHopfAlgCat.quotient H.obj J) :=
+    (FiniteTypeCommHopfAlgCat.quotient H J).property
+  let A := CommHopfAlgCat.quotientNormalConjugation H.obj I J hI
+  let _ : Algebra.FiniteType k A.coordinateHopfAlgebra :=
+    GrpObj.Action.coordinateHopfAlgebra_finiteType A
+  have hsource : smoothUnipotentCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.of k A.coordinateHopfAlgebra) :=
+    smoothUnipotentCommHopfAlgProperty.semidirectProduct k
+      (FiniteTypeCommHopfAlgCat.quotient H I)
+      (FiniteTypeCommHopfAlgCat.quotient H J) A hIu hJu
+  let e : FiniteTypeCommHopfAlgCat.of k
+      (CommHopfAlgCat.normalSemidirectProduct H.obj I J hI) ≅
+      FiniteTypeCommHopfAlgCat.of k A.coordinateHopfAlgebra :=
+    ObjectProperty.isoMk _ (CommHopfAlgCat.normalSemidirectProductIso H.obj I J hI)
+  exact (smoothUnipotentCommHopfAlgProperty k).prop_of_iso e.symm hsource
+
+end smoothUnipotentCommHopfAlgProperty
+
 namespace geometricallyUnipotentPointsCommHopfAlgProperty
 
 variable {k : Type u} [Field k]
@@ -71,57 +106,20 @@ theorem productOfNormal (H : FiniteTypeCommHopfAlgCat.{u, u} k)
       (FiniteTypeCommHopfAlgCat.quotient H J)) :
     geometricallyUnipotentPointsCommHopfAlgProperty k
       (CommHopfAlgCat.productOfNormal H.obj I J hI) := by
-  let _ : Algebra.FiniteType k (CommHopfAlgCat.quotient H.obj I) :=
-    (FiniteTypeCommHopfAlgCat.quotient H I).property
-  let _ : Algebra.FiniteType k (CommHopfAlgCat.quotient H.obj J) :=
-    (FiniteTypeCommHopfAlgCat.quotient H J).property
-  let A := CommHopfAlgCat.quotientNormalConjugation H.obj I J hI
-  let N := CommHopfAlgCat.normalSemidirectProduct H.obj I J hI
-  let _ : Algebra.FiniteType k A.coordinateHopfAlgebra :=
-    GrpObj.Action.coordinateHopfAlgebra_finiteType A
-  let _ : Algebra.FiniteType k N :=
-    Algebra.FiniteType.equiv
-      (inferInstanceAs (Algebra.FiniteType k A.coordinateHopfAlgebra))
-      (CommHopfAlgCat.ofIso
-        (CommHopfAlgCat.normalSemidirectProductIso H.obj I J hI)).toAlgEquiv.symm
-  have hsource : smoothUnipotentCommHopfAlgProperty k
-      (FiniteTypeCommHopfAlgCat.of k A.coordinateHopfAlgebra) :=
-    smoothUnipotentCommHopfAlgProperty.semidirectProduct k
-      (FiniteTypeCommHopfAlgCat.quotient H I)
-      (FiniteTypeCommHopfAlgCat.quotient H J) A hIu hJu
-  let e : FiniteTypeCommHopfAlgCat.of k N ≅
-      FiniteTypeCommHopfAlgCat.of k A.coordinateHopfAlgebra :=
-    ObjectProperty.isoMk _ (CommHopfAlgCat.normalSemidirectProductIso H.obj I J hI)
-  have hsourceN : smoothUnipotentCommHopfAlgProperty k
-      (FiniteTypeCommHopfAlgCat.of k N) :=
-    (smoothUnipotentCommHopfAlgProperty k).prop_of_iso e.symm hsource
-  have hsourceN' :=
+  have hsource := smoothUnipotentCommHopfAlgProperty.normalSemidirectProduct
+    H I J hI hIu hJu
+  have hsource' :=
     (smoothUnipotentCommHopfAlgProperty_iff k
-      (FiniteTypeCommHopfAlgCat.of k N)).mp hsourceN
-  let _ : Algebra.Smooth k N := hsourceN'.1
-  let _ : IsReduced N := isReduced_of_smooth_of_field k N
+      (FiniteTypeCommHopfAlgCat.of k
+        (CommHopfAlgCat.normalSemidirectProduct H.obj I J hI))).mp hsource
+  let _ : Algebra.Smooth k (CommHopfAlgCat.normalSemidirectProduct H.obj I J hI) := hsource'.1
+  let _ : IsReduced (CommHopfAlgCat.normalSemidirectProduct H.obj I J hI) :=
+    isReduced_of_smooth_of_field k _
   apply image_of_reduced (CommHopfAlgCat.productMapOfNormal H.obj I J hI)
   rw [geometricallyUnipotentPointsCommHopfAlgProperty_iff]
-  exact hsourceN'.2
+  exact hsource'.2
 
 end geometricallyUnipotentPointsCommHopfAlgProperty
-
-namespace HopfIdeal.IsUnipotentRadicalCandidate
-
-variable {k : Type u} [Field k]
-variable {H : FiniteTypeCommHopfAlgCat.{u, u} k} {I J : HopfIdeal k H}
-
-/-- The scheme-theoretic multiplication image of two unipotent-radical candidates has
-geometrically unipotent points. -/
-theorem geometricallyUnipotent_productOfNormal
-    (hI : IsUnipotentRadicalCandidate H I)
-    (hJ : IsUnipotentRadicalCandidate H J) :
-    geometricallyUnipotentPointsCommHopfAlgProperty k
-      (CommHopfAlgCat.productOfNormal H.obj I J hI.isNormal) :=
-  geometricallyUnipotentPointsCommHopfAlgProperty.productOfNormal H I J hI.isNormal
-    hI.smoothUnipotent hJ.smoothUnipotent
-
-end HopfIdeal.IsUnipotentRadicalCandidate
 
 end
 

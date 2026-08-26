@@ -85,6 +85,17 @@ noncomputable def normalSemidirectProductIso
       (quotientNormalConjugation H I J hI).coordinateHopfAlgebra := by
   rw [normalSemidirectProduct]
 
+/-- The coordinate algebra of the named normal semidirect product is finite type when the
+coordinate algebras of both factors are finite type. -/
+noncomputable instance normalSemidirectProduct_finiteType
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) [Algebra.FiniteType R (quotient H I)]
+    [Algebra.FiniteType R (quotient H J)] :
+    Algebra.FiniteType R (normalSemidirectProduct H I J hI) :=
+  Algebra.FiniteType.equiv
+    (GrpObj.Action.coordinateHopfAlgebra_finiteType (quotientNormalConjugation H I J hI))
+    (CommHopfAlgCat.ofIso (normalSemidirectProductIso H I J hI)).toAlgEquiv.symm
+
 /-- The coordinate morphism representing inclusion of the normal factor in the named normal
 semidirect product. -/
 noncomputable def normalSemidirectProductCoordinateInl
