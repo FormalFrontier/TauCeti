@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SemidirectProduct
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Smooth
 
