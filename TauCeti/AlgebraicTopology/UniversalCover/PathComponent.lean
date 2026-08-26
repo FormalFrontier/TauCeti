@@ -65,9 +65,9 @@ projection followed by the inclusion of the path component. -/
 abbrev pathComponentCoverProj : PathComponentCover x₀ → X :=
   Subtype.val ∘ UniversalCover.proj
 
-/-- **The universal cover of a path component covers the whole space.** The path component is
-clopen, so the missing fibres over the other path components are evenly covered by empty
-trivialisations. -/
+/-- **The universal cover of a path component is a covering map into the ambient space.** The path
+component is clopen, so fibres over the other path components are empty and evenly covered by
+empty trivialisations. -/
 theorem isCoveringMap_pathComponentCoverProj : IsCoveringMap (pathComponentCoverProj x₀) :=
   isCoveringMap_subtypeVal_comp (IsClopen.pathComponent x₀)
     (UniversalCover.isCoveringMap (pathComponentSelf x₀))

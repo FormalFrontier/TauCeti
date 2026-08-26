@@ -34,9 +34,9 @@ namespace TauCeti
 
 variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X] {s : Set X}
 
-/-- **A covering map onto a clopen subspace covers the whole space.** Points of `s` inherit their
-evenly covered neighbourhoods through the open inclusion, and points outside `s` are evenly
-covered by `sᶜ` with empty fibre. -/
+/-- **A covering map onto a clopen subspace is a covering map into the ambient space.** Points of
+`s` inherit their evenly covered neighbourhoods through the open inclusion, and points outside
+`s` are evenly covered by `sᶜ` with empty fibre. -/
 theorem isCoveringMap_subtypeVal_comp (hs : IsClopen s) {p : E → s} (hp : IsCoveringMap p) :
     IsCoveringMap (Subtype.val ∘ p) := by
   intro x
