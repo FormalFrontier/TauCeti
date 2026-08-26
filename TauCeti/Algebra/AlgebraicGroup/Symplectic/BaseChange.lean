@@ -25,7 +25,7 @@ general base-change theorem for Hopf-ideal quotients gives the result.
 * `TauCeti.Symplectic.coordinateHopfAlgebraBaseChangeIso`: base change of the coordinate Hopf
   algebra of `Sp₂ₘ`.
 * `TauCeti.Symplectic.baseChangeMap_coordinateMap_comp_coordinateHopfAlgebraBaseChangeIso_hom`:
-  compatibility with the closed immersion into `GL (m + m)`.
+  compatibility with the quotient coordinate morphisms from `O(GL (m + m))`.
 * `TauCeti.Symplectic.finiteTypeCoordinateHopfAlgebraBaseChangeIso`: the finite-type form of the
   same isomorphism.
 
@@ -55,37 +55,33 @@ universe u v
 variable (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
 variable (m : ℕ)
 
-/-- The general-linear base-change isomorphism sends the scalar extension of the generic matrix
-to the generic matrix over the new base. -/
-private theorem coordinateHopfAlgebraBaseChangeIso_hom_genericMatrix :
-    let _ : Algebra R (GeneralLinear.coordinateHopfAlgebra K (m + m)) :=
-      Algebra.compHom _ (algebraMap R K)
-    let _ : IsScalarTower R K (GeneralLinear.coordinateHopfAlgebra K (m + m)) :=
-      IsScalarTower.of_algebraMap_eq' rfl
-    (genericMatrix R m).map
-        (((GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K
-          (m + m)).hom.hom.toAlgHom.restrictScalars R).comp
-          (Algebra.TensorProduct.includeRight :
-            GeneralLinear.coordinateHopfAlgebra R (m + m) →ₐ[R]
-              K ⊗[R] GeneralLinear.coordinateHopfAlgebra R (m + m))) =
-      genericMatrix K m := by
-  let _ : Algebra R (GeneralLinear.coordinateHopfAlgebra K (m + m)) :=
-    Algebra.compHom _ (algebraMap R K)
-  let _ : IsScalarTower R K (GeneralLinear.coordinateHopfAlgebra K (m + m)) :=
-    IsScalarTower.of_algebraMap_eq' rfl
-  ext i j
-  rw [Matrix.map_apply]
-  rw [genericMatrix_apply]
-  rw [AlgHom.comp_apply, Algebra.TensorProduct.includeRight_apply]
-  rw [genericMatrix_apply]
-  have h := GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_apply.{u, v}
-    R K (m + m) 1 (MvPolynomial.X (i, j))
-  -- The categorical concrete map and the stored bialgebra homomorphism are the same map, but the
-  -- object-property wrapper prevents the elaborator from seeing that equality definitionally.
-  change (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m)).hom.hom.toAlgHom
-      (1 ⊗ₜ[R] GeneralLinear.coordinateHopfAlgebraAlgEquiv R (m + m)
-        (GeneralLinear.coordinateRingMap R (m + m) (MvPolynomial.X (i, j)))) = _ at h
-  simpa only [AlgHom.coe_restrictScalars', one_smul, MvPolynomial.map_X] using h
+/-- The `R`-algebra structure obtained by restricting the coordinate algebra over `K`. -/
+noncomputable local instance : Algebra R (GeneralLinear.coordinateHopfAlgebra K (m + m)) :=
+  Algebra.compHom _ (algebraMap R K)
+
+/-- The coordinate algebra over `K` is a scalar tower over `R → K`. -/
+local instance : IsScalarTower R K (GeneralLinear.coordinateHopfAlgebra K (m + m)) :=
+  IsScalarTower.of_algebraMap_eq' rfl
+
+/-- The restriction of the general-linear base-change isomorphism to the original coordinate
+Hopf algebra. -/
+private noncomputable def baseChangeAlgHom :
+    GeneralLinear.coordinateHopfAlgebra R (m + m) →ₐ[R]
+      GeneralLinear.coordinateHopfAlgebra K (m + m) :=
+  ((GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K
+    (m + m)).hom.hom.toAlgHom.restrictScalars R).comp
+    (Algebra.TensorProduct.includeRight :
+      GeneralLinear.coordinateHopfAlgebra R (m + m) →ₐ[R]
+        K ⊗[R] GeneralLinear.coordinateHopfAlgebra R (m + m))
+
+/-- Applying the restricted base-change map is applying the ambient isomorphism to a scalar pure
+tensor. -/
+private theorem baseChangeAlgHom_apply (x : GeneralLinear.coordinateHopfAlgebra R (m + m)) :
+    baseChangeAlgHom R K m x =
+      (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m)).hom.hom
+        (1 ⊗ₜ[R] x) := by
+  simp only [baseChangeAlgHom, AlgHom.comp_apply, Algebra.TensorProduct.includeRight_apply,
+    AlgHom.coe_restrictScalars', BialgHom.coe_toAlgHom]
 
 /-- The general-linear base-change isomorphism carries each scalar-extended symplectic relation
 to the corresponding relation over the new base. -/
@@ -93,23 +89,17 @@ private theorem coordinateHopfAlgebraBaseChangeIso_hom_relationMatrix (i j : Fin
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m)).hom.hom
         (1 ⊗ₜ[R] relationMatrix R m i j) =
       relationMatrix K m i j := by
-  let _ : Algebra R (GeneralLinear.coordinateHopfAlgebra K (m + m)) :=
-    Algebra.compHom _ (algebraMap R K)
-  let _ : IsScalarTower R K (GeneralLinear.coordinateHopfAlgebra K (m + m)) :=
-    IsScalarTower.of_algebraMap_eq' rfl
-  let φ :=
-    ((GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K
-      (m + m)).hom.hom.toAlgHom.restrictScalars R).comp
-      (Algebra.TensorProduct.includeRight :
-        GeneralLinear.coordinateHopfAlgebra R (m + m) →ₐ[R]
-          K ⊗[R] GeneralLinear.coordinateHopfAlgebra R (m + m))
-  have hgeneric : (genericMatrix R m).map φ = genericMatrix K m :=
-    coordinateHopfAlgebraBaseChangeIso_hom_genericMatrix R K m
-  -- `φ` is the restriction to the original coordinate algebra of the map on its scalar
-  -- extension; exposing that application lets the public relation-matrix mapping theorem apply.
-  change φ (relationMatrix R m i j) = relationMatrix K m i j
-  have hmatrix := relationMatrix_map R m φ
-  rw [hgeneric, JFin_map] at hmatrix
+  rw [← baseChangeAlgHom_apply R K m]
+  have hgeneric : (genericMatrix R m).map (baseChangeAlgHom R K m) = genericMatrix K m := by
+    ext i j
+    rw [Matrix.map_apply, genericMatrix_apply, genericMatrix_apply]
+    have h := congrFun (congrFun
+      (GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_genericMatrix R K (m + m)) i) j
+    rw [Matrix.map_apply, GeneralLinear.genericMatrix_apply,
+      GeneralLinear.genericMatrix_apply] at h
+    simpa only [baseChangeAlgHom] using h
+  have hmatrix := relationMatrix_map R m (baseChangeAlgHom R K m)
+  rw [hgeneric] at hmatrix
   rw [relationMatrix_def K m, JFin_map]
   exact congrFun (congrFun hmatrix i) j
 
@@ -119,42 +109,24 @@ private theorem map_baseChangeHopfIdeal_definingHopfIdeal :
     (CommHopfAlgCat.baseChangeHopfIdeal (K := K) (definingHopfIdeal R m)).map
         (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m)).hom.hom =
       definingHopfIdeal K m := by
-  apply HopfIdeal.ext
-  intro x
-  rw [← HopfIdeal.mem_toIdeal, ← HopfIdeal.mem_toIdeal]
-  rw [HopfIdeal.map_toIdeal,
-    CommHopfAlgCat.baseChangeHopfIdeal_toIdeal, definingHopfIdeal_toIdeal,
-    definingHopfIdeal_toIdeal, Ideal.map_span, Ideal.map_span]
+  refine CommHopfAlgCat.map_baseChangeHopfIdeal_of_toIdeal_eq_span
+    (definingHopfIdeal R m) (definingHopfIdeal K m)
+    (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m))
+    (definingHopfIdeal_toIdeal R m) (definingHopfIdeal_toIdeal K m) ?_
+  have hrel (i j : Fin (m + m)) :
+      (fun x : GeneralLinear.coordinateHopfAlgebra R (m + m) =>
+        (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m)).hom.hom
+          (1 ⊗ₜ[R] x)) (relationMatrix R m i j) = relationMatrix K m i j :=
+    coordinateHopfAlgebraBaseChangeIso_hom_relationMatrix R K m i j
+  ext x
   constructor
+  · rintro ⟨_, hy, rfl⟩
+    obtain ⟨i, j, rfl⟩ := (mem_relationSet_iff R m).mp hy
+    exact (hrel i j).symm ▸ relationMatrix_mem_relationSet K m i j
   · intro hx
-    have hle : Ideal.span
-        ((GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K
-            (m + m)).hom.hom.toAlgHom.toRingHom ''
-          Algebra.TensorProduct.includeRight '' relationSet R m) ≤
-        Ideal.span (relationSet K m) := by
-      rw [Ideal.span_le]
-      rintro _ ⟨_, ⟨z, hz, rfl⟩, rfl⟩
-      obtain ⟨i, j, rfl⟩ := (mem_relationSet_iff R m).mp hz
-      have hmem := Ideal.subset_span (relationMatrix_mem_relationSet K m i j)
-      rw [← coordinateHopfAlgebraBaseChangeIso_hom_relationMatrix R K m i j] at hmem
-      simpa only [Algebra.TensorProduct.includeRight_apply, BialgHom.coe_toAlgHom,
-        AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using hmem
-    exact hle hx
-  · intro hx
-    have hle : Ideal.span (relationSet K m) ≤
-        Ideal.span
-          ((GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K
-              (m + m)).hom.hom.toAlgHom.toRingHom ''
-            Algebra.TensorProduct.includeRight '' relationSet R m) := by
-      rw [Ideal.span_le]
-      intro z hz
-      obtain ⟨i, j, rfl⟩ := (mem_relationSet_iff K m).mp hz
-      exact Ideal.subset_span ⟨1 ⊗ₜ[R] relationMatrix R m i j,
-        ⟨relationMatrix R m i j, relationMatrix_mem_relationSet R m i j, rfl⟩,
-        by simpa only [Algebra.TensorProduct.includeRight_apply, BialgHom.coe_toAlgHom,
-          AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using
-          coordinateHopfAlgebraBaseChangeIso_hom_relationMatrix R K m i j⟩
-    exact hle hx
+    obtain ⟨i, j, rfl⟩ := (mem_relationSet_iff K m).mp hx
+    exact ⟨relationMatrix R m i j, relationMatrix_mem_relationSet R m i j,
+      hrel i j⟩
 
 /-- Base change of the symplectic coordinate Hopf algebra is canonically the symplectic
 coordinate Hopf algebra over the new base. -/

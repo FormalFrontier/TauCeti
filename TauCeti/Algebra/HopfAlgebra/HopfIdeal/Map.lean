@@ -297,7 +297,6 @@ theorem comap_map_of_surjective (I : HopfIdeal R H) (f : H →ₐc[R] K)
     exact Iff.rfl
 
 /-- Along a bijective morphism, inverse image after image recovers the Hopf ideal. -/
-@[simp]
 theorem comap_map_of_bijective (I : HopfIdeal R H) (f : H →ₐc[R] K)
     (hf : Function.Bijective f) : (I.map f).comap f hf.2 = I := by
   rw [comap_map_of_surjective, (kerOfSurjective_eq_bot_iff f hf.2).2 hf.1, sup_bot_eq]

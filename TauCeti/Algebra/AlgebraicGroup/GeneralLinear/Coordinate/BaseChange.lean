@@ -327,6 +327,30 @@ theorem coordinateHopfAlgebraBaseChangeIso_hom_apply
     CategoryTheory.Iso.symm_hom, CommHopfAlgCat.ofIsoSelf_inv]
   exact coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n s p
 
+/-- The general-linear base-change isomorphism sends the scalar extension of the bundled generic
+matrix to the bundled generic matrix over the new base. -/
+theorem coordinateHopfAlgebraBaseChangeIso_hom_genericMatrix
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K] (n : ℕ) :
+    let _ : Algebra R (coordinateHopfAlgebra K n) :=
+      Algebra.compHom _ (algebraMap R K)
+    let _ : IsScalarTower R K (coordinateHopfAlgebra K n) :=
+      IsScalarTower.of_algebraMap_eq' rfl
+    (genericMatrix R n).map
+        (((coordinateHopfAlgebraBaseChangeIso R K n).hom.hom.toAlgHom.restrictScalars R).comp
+          (Algebra.TensorProduct.includeRight :
+            coordinateHopfAlgebra R n →ₐ[R] K ⊗[R] coordinateHopfAlgebra R n)) =
+      genericMatrix K n := by
+  let _ : Algebra R (coordinateHopfAlgebra K n) :=
+    Algebra.compHom _ (algebraMap R K)
+  let _ : IsScalarTower R K (coordinateHopfAlgebra K n) :=
+    IsScalarTower.of_algebraMap_eq' rfl
+  ext i j
+  rw [Matrix.map_apply, genericMatrix_apply, AlgHom.comp_apply,
+    Algebra.TensorProduct.includeRight_apply, genericMatrix_apply]
+  simpa only [AlgHom.coe_restrictScalars', BialgHom.coe_toAlgHom, one_smul,
+    MvPolynomial.map_X] using
+    coordinateHopfAlgebraBaseChangeIso_hom_apply.{u, v} R K n 1 (MvPolynomial.X (i, j))
+
 /-- The inverse categorical base-change isomorphism sends an extended polynomial coordinate back
 to its scalar pure tensor. -/
 @[simp]

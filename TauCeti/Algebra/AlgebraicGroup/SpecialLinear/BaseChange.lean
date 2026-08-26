@@ -92,17 +92,14 @@ private theorem map_baseChangeHopfIdeal_definingHopfIdeal :
         (GeneralLinear.determinantGroupLike K n :
           GeneralLinear.coordinateHopfAlgebra K n) :=
     coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike R K n
-  apply HopfIdeal.ext
-  intro x
-  rw [← HopfIdeal.mem_toIdeal, HopfIdeal.map_toIdeal,
-    CommHopfAlgCat.baseChangeHopfIdeal_toIdeal, definingHopfIdeal_toIdeal]
-  rw [Ideal.map_span, Set.image_singleton]
-  rw [Ideal.map_span, Set.image_singleton]
-  rw [
-    Algebra.TensorProduct.includeRight_apply, TensorProduct.tmul_sub, map_sub,
-    ← Algebra.TensorProduct.one_def, map_one,
-    hdet,
-    ← HopfIdeal.mem_toIdeal, definingHopfIdeal_toIdeal]
+  refine CommHopfAlgCat.map_baseChangeHopfIdeal_of_toIdeal_eq_span
+    (definingHopfIdeal R n) (definingHopfIdeal K n)
+    (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K n)
+    (definingHopfIdeal_toIdeal R n) (definingHopfIdeal_toIdeal K n) ?_
+  simp only [Set.image_singleton, TensorProduct.tmul_sub, map_sub,
+    ← Algebra.TensorProduct.one_def, map_one]
+  congr 1
+  exact congrArg (fun x => x - 1) hdet
 
 /-- Base change of the special-linear coordinate Hopf algebra is canonically the
 special-linear coordinate Hopf algebra over the new base. -/
