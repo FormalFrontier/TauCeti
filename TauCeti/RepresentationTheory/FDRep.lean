@@ -50,8 +50,6 @@ character an invariant of the representation ring, `TauCeti.repRingCharacter`.
 * `FDRep.of_ρ_eq_self`: rebundling the representation carried by an object returns that object.
 * `FDRep.ofShrinkEquiv`: `FDRep.ofShrink ρ` carries a representation equivalent to `ρ`, whence
   `FDRep.finrank_ofShrink` and `FDRep.character_ofShrink`.
-* `FDRep.hom_comm`: a morphism of finite-dimensional representations intertwines the two actions,
-  as an identity of `k`-linear maps.
 * `FDRep.char_biprod`: the character is additive on biproducts.
 -/
 
@@ -162,14 +160,6 @@ open CategoryTheory Limits
 
 variable {k : Type u} {G : Type v} [Field k] [Monoid G]
 
-/-- **A morphism of finite-dimensional representations intertwines the two actions**, read as an
-identity of `k`-linear maps rather than of morphisms of `FGModuleCat k`. This is Mathlib's
-`CategoryTheory.Action.Hom.comm` with both layers of bundling — the finitely generated module and
-the module — removed, which is the form the trace computations below need. -/
-theorem hom_comm {X Y : FDRep k G} (f : X ⟶ Y) (g : G) :
-    f.hom.hom.hom ∘ₗ X.ρ g = Y.ρ g ∘ₗ f.hom.hom.hom := by
-  simpa using congrArg (fun t : X.V ⟶ Y.V => t.hom.hom) (f.comm g)
-
 /-- The trace of `ρ g` cut down to a retract: if `p ∘ i` is the identity of `X`, then the trace of
 `ρ g` composed with the idempotent `i ∘ p` is the character of `X`.
 
@@ -179,9 +169,15 @@ This is the one computation behind `FDRep.char_biprod`: cyclicity of the trace m
 private theorem trace_comp_of_retraction {X B : FDRep k G} (i : X ⟶ B) (p : B ⟶ X)
     (h : i ≫ p = 𝟙 X) (g : G) :
     LinearMap.trace k B ((B.ρ g ∘ₗ i.hom.hom.hom) ∘ₗ p.hom.hom.hom) = X.character g := by
-  rw [LinearMap.trace_comp_comm', ← hom_comm i g, ← LinearMap.comp_assoc]
-  rw [show p.hom.hom.hom ∘ₗ i.hom.hom.hom = LinearMap.id by
-    simpa using congrArg (fun t : X ⟶ X => t.hom.hom.hom) h]
+  -- equivariance of `i`, namely `CategoryTheory.Action.Hom.comm`, read through the two layers of
+  -- bundling: `simp` strips the morphisms of `FGModuleCat k` and of `ModuleCat k` down to their
+  -- underlying linear maps, so no definitional unfolding is involved
+  have hcomm : i.hom.hom.hom ∘ₗ X.ρ g = B.ρ g ∘ₗ i.hom.hom.hom := by
+    simpa using congrArg (fun t : X.V ⟶ B.V => t.hom.hom) (i.comm g)
+  -- the retraction `h`, read the same way; here `simp` also rewrites the underlying map of `𝟙 X`
+  have hpi : p.hom.hom.hom ∘ₗ i.hom.hom.hom = LinearMap.id := by
+    simpa using congrArg (fun t : X ⟶ X => t.hom.hom.hom) h
+  rw [LinearMap.trace_comp_comm', ← hcomm, ← LinearMap.comp_assoc, hpi]
   simp [FDRep.character]
 
 /-- **The character is additive on biproducts.** Together with `FDRep.char_iso` and
@@ -207,10 +203,9 @@ theorem char_biprod (X Y : FDRep k G) : (X ⊞ Y).character = X.character + Y.ch
           ∘ₗ (biprod.snd : X ⊞ Y ⟶ Y).hom.hom.hom := by
     rw [LinearMap.comp_assoc, LinearMap.comp_assoc, ← LinearMap.comp_add, htot,
       LinearMap.comp_id]
-  change LinearMap.trace k _ ((X ⊞ Y).ρ g) = _
-  rw [hsplit, map_add, trace_comp_of_retraction biprod.inl biprod.fst biprod.inl_fst,
-    trace_comp_of_retraction biprod.inr biprod.snd biprod.inr_snd]
-  rfl
+  rw [FDRep.character, hsplit, map_add,
+    trace_comp_of_retraction biprod.inl biprod.fst biprod.inl_fst,
+    trace_comp_of_retraction biprod.inr biprod.snd biprod.inr_snd, Pi.add_apply]
 
 end Biproduct
 

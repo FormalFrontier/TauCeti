@@ -33,7 +33,8 @@ descends to `R(G)` at all is the conjunction of three facts about it: it is an i
 invariant (`FDRep.char_iso`), it is additive on biproducts (`FDRep.char_biprod`), and it is
 multiplicative on tensor products (`FDRep.char_tensor`), the unit going to the constant function
 `1`. Its image is described exactly: it is the virtual-character lattice
-`TauCeti.virtualCharacters`, and in particular every value is a class function.
+`TauCeti.virtualCharacters`, and in particular, when `G` is a group, so that conjugation and hence
+the class functions make sense, every value is a class function.
 
 Note what is *not* claimed. The character homomorphism is injective over an algebraically closed
 field of characteristic zero — that is the statement that a virtual representation is determined by
@@ -43,7 +44,6 @@ hence a Jordan-Hölder decomposition inside `FDRep k G`, and is not proved here.
 ## Main definitions
 
 * `TauCeti.repRing`: the representation ring `R(G)`.
-* `TauCeti.characterInvariant`: the character as a biproduct-additive invariant of `FDRep k G`.
 * `TauCeti.repRingCharacter`: the character homomorphism `R(G) →+* (G → k)`.
 
 ## Main statements
@@ -56,8 +56,8 @@ hence a Jordan-Hölder decomposition inside `FDRep k G`, and is not proved here.
 * `TauCeti.repRingCharacter_mem_virtualCharacters` and `TauCeti.range_repRingCharacter`: **its
   image is the virtual-character lattice**, with `TauCeti.mem_range_repRingCharacter_iff` the
   elementwise form.
-* `TauCeti.repRingCharacter_mem_classFunction`: every value of the character homomorphism is a
-  class function, elementwise `TauCeti.repRingCharacter_conj`.
+* `TauCeti.repRingCharacter_mem_classFunction`: for a group `G`, every value of the character
+  homomorphism is a class function, elementwise `TauCeti.repRingCharacter_conj`.
 
 ## References
 
@@ -97,8 +97,11 @@ abbrev repRing (k : Type u) (G : Type v) [Field k] [Monoid G] : Type (max u v) :
 
 /-- **The character as an invariant of the representation ring.** The three fields are the three
 functoriality properties of `FDRep.character`: it is defined on objects, it does not change under
-an isomorphism (`FDRep.char_iso`), and it is additive on biproducts (`FDRep.char_biprod`). -/
-noncomputable def characterInvariant (k : Type u) (G : Type v) [Field k] [Monoid G] :
+an isomorphism (`FDRep.char_iso`), and it is additive on biproducts (`FDRep.char_biprod`).
+
+This is only the construction datum of `TauCeti.repRingCharacter`, whose characteristic property
+`TauCeti.repRingCharacter_of` is the intended interface, so it is not part of the public API. -/
+private noncomputable def characterInvariant (k : Type u) (G : Type v) [Field k] [Monoid G] :
     SplitK0.AdditiveInvariant (FDRep k G) (G → k) where
   obj V := V.character
   map_iso _ _ i := FDRep.char_iso i
@@ -109,8 +112,11 @@ constant function `1`. -/
 theorem character_tensorUnit (k : Type u) (G : Type v) [Field k] [Monoid G] :
     (𝟙_ (FDRep k G)).character = 1 := by
   ext g
-  -- the unit acts by the identity, whose trace is the dimension of `k` over itself
-  have hρ : (𝟙_ (FDRep k G)).ρ g = LinearMap.id := rfl
+  -- the unit acts by the identity, whose trace is the dimension of `k` over itself; that its
+  -- action is the identity is `CategoryTheory.Action.tensorUnit_ρ`, which `simp` uses after
+  -- `FDRep.ρ` has been unfolded to the underlying linear map of that action
+  have hρ : (𝟙_ (FDRep k G)).ρ g = LinearMap.id := by
+    simp [FDRep.ρ, ← End.one_def, map_one, Module.End.one_eq_id]
   have hrank : Module.finrank k ↑(𝟙_ (FDRep k G)).V = 1 := Module.finrank_self k
   rw [Pi.one_apply, FDRep.character, hρ, LinearMap.trace_id, hrank, Nat.cast_one]
 

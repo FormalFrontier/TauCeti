@@ -31,8 +31,9 @@ the morphisms `G`, and that map is data.
 The small model of `V` is asked for in that same universe `w`. That is the case that occurs — a
 category essentially small at all is normally so at its own morphism universe, `FGModuleCat.{u} k`
 for `k : Type u` being the instance used here — and taking the two universes to be equal is what
-keeps the universe of the conclusion determined by `V` alone, so that instance search does not
-have to solve `max v ? = max u v` for an unknown universe.
+keeps the universe of the conclusion determined by the universes of `V` and of `G` alone, with no
+third universe entering it, so that instance search does not have to solve `max v ? = max u v`
+for an unknown universe.
 
 This supplies the smallness hypothesis that
 `TauCeti/CategoryTheory/GrothendieckGroup/Split.lean` asks of a category before its split
