@@ -102,7 +102,7 @@ noncomputable def normalSemidirectProductCoordinateInr
     (quotientNormalConjugation H I J hI).coordinateInr
 
 /-- The normal-factor coordinate morphism is transported by the canonical comparison. -/
-theorem normalSemidirectProductCoordinateInl_eq
+theorem normalSemidirectProductCoordinateInl_def
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     normalSemidirectProductCoordinateInl H I J hI =
@@ -111,7 +111,7 @@ theorem normalSemidirectProductCoordinateInl_eq
   rw [normalSemidirectProductCoordinateInl]
 
 /-- The acting-factor coordinate morphism is transported by the canonical comparison. -/
-theorem normalSemidirectProductCoordinateInr_eq
+theorem normalSemidirectProductCoordinateInr_def
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     normalSemidirectProductCoordinateInr H I J hI =
@@ -120,7 +120,7 @@ theorem normalSemidirectProductCoordinateInr_eq
   rw [normalSemidirectProductCoordinateInr]
 
 /-- The coordinate map obtained directly from categorical normal semidirect multiplication. -/
-noncomputable def normalSemidirectMultiplicationCoordinateMap
+private noncomputable def normalSemidirectMultiplicationCoordinateMap
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     H ⟶ (quotientNormalConjugation H I J hI).coordinateHopfAlgebra := by
@@ -141,8 +141,7 @@ noncomputable def productMapOfNormal
 
 /-- After the canonical comparison, the product coordinate morphism is the transport of
 categorical normal semidirect multiplication. -/
-@[reassoc (attr := simp)]
-theorem productMapOfNormal_comp_normalSemidirectProductIso_hom
+private theorem productMapOfNormal_comp_normalSemidirectProductIso_hom
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     productMapOfNormal H I J hI ≫ (normalSemidirectProductIso H I J hI).hom =
@@ -151,7 +150,7 @@ theorem productMapOfNormal_comp_normalSemidirectProductIso_hom
 
 /-- The underlying algebra map of the direct categorical coordinate map is obtained by
 unopping normal semidirect multiplication. -/
-theorem normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom
+private theorem normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     let i := quotientGrpObjInclusion H I
@@ -166,7 +165,7 @@ theorem normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom
 
 /-- The represented group-object map of the direct categorical coordinate map is normal
 semidirect multiplication. -/
-theorem grpObjMap_normalSemidirectMultiplicationCoordinateMap
+private theorem grpObjMap_normalSemidirectMultiplicationCoordinateMap
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     let i := quotientGrpObjInclusion H I
@@ -192,10 +191,7 @@ theorem grpObjMap_productMapOfNormal
       (GrpObj.Action.normalSemidirectMul i j).hom.hom := by
   rw [← grpObjMap_comp]
   rw [productMapOfNormal_comp_normalSemidirectProductIso_hom]
-  apply Quiver.Hom.unop_inj
-  apply CommAlgCat.hom_ext
-  rw [grpObjMap_unop_hom]
-  exact normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom H I J hI
+  exact grpObjMap_normalSemidirectMultiplicationCoordinateMap H I J hI
 
 variable {k : Type u} [Field k]
 

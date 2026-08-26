@@ -71,11 +71,10 @@ theorem productMapOfNormal_comp_coordinateInl
       mkQuotient H I := by
   have _ : IsMonHom.Normal (quotientGrpObjInclusion H I) :=
     (quotientGrpObjInclusion_normal_iff H I).2 hI
-  rw [normalSemidirectProductCoordinateInl_eq, ← Category.assoc,
-    productMapOfNormal_comp_normalSemidirectProductIso_hom]
+  rw [normalSemidirectProductCoordinateInl_def, ← Category.assoc]
   apply grpObjMap_injective
-  rw [grpObjMap_comp, GrpObj.Action.grpObjMap_coordinateInl]
-  rw [grpObjMap_normalSemidirectMultiplicationCoordinateMap]
+  rw [grpObjMap_comp, grpObjMap_comp, GrpObj.Action.grpObjMap_coordinateInl,
+    grpObjMap_productMapOfNormal]
   rw [← quotientGrpObjInclusion_def]
   have hrestriction :
       let A := GrpObj.Action.normalConjugation
@@ -98,11 +97,10 @@ theorem productMapOfNormal_comp_coordinateInr
       mkQuotient H J := by
   have _ : IsMonHom.Normal (quotientGrpObjInclusion H I) :=
     (quotientGrpObjInclusion_normal_iff H I).2 hI
-  rw [normalSemidirectProductCoordinateInr_eq, ← Category.assoc,
-    productMapOfNormal_comp_normalSemidirectProductIso_hom]
+  rw [normalSemidirectProductCoordinateInr_def, ← Category.assoc]
   apply grpObjMap_injective
-  rw [grpObjMap_comp, GrpObj.Action.grpObjMap_coordinateInr]
-  rw [grpObjMap_normalSemidirectMultiplicationCoordinateMap]
+  rw [grpObjMap_comp, grpObjMap_comp, GrpObj.Action.grpObjMap_coordinateInr,
+    grpObjMap_productMapOfNormal]
   rw [← quotientGrpObjInclusion_def]
   have hrestriction :
       let A := GrpObj.Action.normalConjugation
@@ -208,8 +206,9 @@ private theorem productMapOfNormal_conjugation_equivariant
         (normalSemidirectConjugationAlgHom H I J hI hJ).comp
           ((productMapOfNormal H I J hI ≫
             (normalSemidirectProductIso H I J hI).hom).hom.toAlgHom) := by
-    rw [hproduct, productMapOfNormal_comp_normalSemidirectProductIso_hom,
-      normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom]
+    have hproductHom := congrArg (fun q ↦ q.unop.hom) hproduct
+    rw [grpObjMap_unop_hom] at hproductHom
+    rw [hproduct, hproductHom]
     -- Expanding the local action instances identifies the named coordinate map with the unop of
     -- categorical semidirect conjugation, and composition in the opposite category reverses.
     rfl
