@@ -79,7 +79,9 @@ theorem sub_one_apply_mem_weightUnipotentRelationSet (w : Fin N → ℤ) {i j : 
       weightUnipotentRelationSet R w :=
   ⟨i, j, hij, rfl⟩
 
-private theorem quotient_genericMatrix_apply (w : Fin N → ℤ) {i j : Fin N}
+/-- A matrix coordinate on or above the weight-block diagonal is fixed in the quotient by the
+explicit weight-unipotent relation ideal. -/
+theorem quotient_genericMatrix_apply (w : Fin N → ℤ) {i j : Fin N}
     (hij : w i ≤ w j) :
     Ideal.Quotient.mkₐ R (Ideal.span (weightUnipotentRelationSet R w))
         ((genericMatrix R N) i j) =
@@ -279,24 +281,6 @@ theorem weightUnipotentDefiningHopfIdeal_toIdeal (w : Fin N → ℤ) :
     (weightUnipotentDefiningHopfIdeal R w).toIdeal =
       Ideal.span (weightUnipotentRelationSet R w) := by
   rw [weightUnipotentDefiningHopfIdeal, HopfIdeal.ofSpan_toIdeal]
-
-/-- In the weight-unipotent quotient, a matrix coordinate on or above the weight-block
-diagonal is the corresponding entry of the identity matrix. -/
-@[simp]
-theorem weightUnipotentQuotient_mk_genericMatrix_apply (w : Fin N → ℤ) {i j : Fin N}
-    (hij : w i ≤ w j) :
-    Ideal.Quotient.mk (weightUnipotentDefiningHopfIdeal R w).toIdeal
-        ((coordinateHopfAlgebraAlgEquiv R N)
-          ((coordinateRingMap R N) (MvPolynomial.X (i, j)))) =
-      (1 : Matrix (Fin N) (Fin N)
-        (coordinateHopfAlgebra R N ⧸ (weightUnipotentDefiningHopfIdeal R w).toIdeal)) i j := by
-  rw [← genericMatrix_apply (R := R) (n := N) i j,
-    ← Ideal.Quotient.mkₐ_eq_mk (R₁ := R)]
-  apply (Ideal.quotientEquivAlgOfEq R
-    (weightUnipotentDefiningHopfIdeal_toIdeal R w)).injective
-  simpa only [Ideal.Quotient.mkₐ_eq_mk, Ideal.quotientEquivAlgOfEq_mk,
-    Matrix.one_apply, apply_ite, map_one, map_zero] using
-    quotient_genericMatrix_apply R w hij
 
 /-- The coordinate Hopf algebra of the weight-unipotent subgroup attached to `w`. -/
 noncomputable abbrev weightUnipotentCoordinateHopfAlgebra (w : Fin N → ℤ) :

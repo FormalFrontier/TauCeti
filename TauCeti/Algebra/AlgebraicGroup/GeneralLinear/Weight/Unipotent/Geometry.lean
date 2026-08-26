@@ -76,7 +76,7 @@ def weightUnipotentPolynomialGenericMatrix (w : Fin N → ℤ) :
 theorem weightUnipotentPolynomialGenericMatrix_apply_of_lt (w : Fin N → ℤ)
     {i j : Fin N} (hij : w j < w i) :
     weightUnipotentPolynomialGenericMatrix R w i j =
-      MvPolynomial.X (show WeightUnipotentIndex w from ⟨(i, j), hij⟩) := by
+      MvPolynomial.X ⟨(i, j), hij⟩ := by
   simp [weightUnipotentPolynomialGenericMatrix, hij]
 
 /-- An entry on or above the weight-block diagonal is the corresponding identity entry. -/
@@ -260,9 +260,12 @@ private theorem weightUnipotentPolynomialToQuotient_comp_quotientToPolynomial
     · have hle : w i ≤ w j := not_lt.mp hij
       rw [weightUnipotentQuotientToPolynomial_mk_genericMatrix_apply,
         weightUnipotentPolynomialGenericMatrix_apply_of_le R w hle,
-        AlgHom.id_apply, Ideal.Quotient.mkₐ_eq_mk, genericMatrix_apply,
-        weightUnipotentQuotient_mk_genericMatrix_apply R w hle]
-      by_cases h : i = j <;> simp [Matrix.one_apply, h]
+        AlgHom.id_apply]
+      apply (Ideal.quotientEquivAlgOfEq R
+        (weightUnipotentDefiningHopfIdeal_toIdeal R w)).injective
+      simpa only [weightUnipotentPolynomialToQuotient, Matrix.one_apply, apply_ite,
+        map_one, map_zero, Ideal.Quotient.mkₐ_eq_mk, Ideal.quotientEquivAlgOfEq_mk] using
+        (quotient_genericMatrix_apply R w hle).symm
   exact DFunLike.congr_fun hcomp y
 
 /-- The weight-unipotent coordinate algebra is a polynomial algebra on the entries `X_ij` for
