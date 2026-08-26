@@ -18,23 +18,26 @@ coordinates. Since transpositions generate the finite symmetric group, the Weyl 
 root datum is canonically isomorphic to `Equiv.Perm σ`.
 
 The equivalence constructed here is characterized both on reflections and on its actions on the
-character lattice and the root-index type. It applies in particular to the diagonal root datum of
-`GL_n`, whose coordinate type is `ULift (Fin n)`.
+character lattice and the root-index type.
 
 ## Main declarations
 
-* `TauCeti.SplitTorus.coordinatePermRootIndex`: simultaneous application of a coordinate
-  permutation to both entries of a root index.
-* `TauCeti.SplitTorus.coordinateRootDatumWeylGroupMulEquiv`: the canonical multiplicative
+* `TauCeti.SplitTorus.coordinatePermMulEquivWeylGroup`: the canonical multiplicative
   equivalence from coordinate permutations to the Weyl group.
+* `TauCeti.SplitTorus.coordinatePermMulEquivWeylGroup_swap` and
+  `coordinatePermMulEquivWeylGroup_symm_ofIdx`: coordinate transpositions correspond to root
+  reflections in both directions.
+* `TauCeti.SplitTorus.coordinatePermMulEquivWeylGroup_smul_apply` and
+  `coordinatePermMulEquivWeylGroup_indexEquiv_apply`: the induced actions on characters and root
+  indices.
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), Example 19.7 and Section 21.1.
 * J. E. Humphreys, *Linear Algebraic Groups* (1975), Sections 16.1 and 26.3.
 
-This completes the Weyl-group identification for the coordinate root datum used by the split
-`GL_n` example in Layer 7, "Root datum of `(G, T)`", of the ReductiveGroups roadmap.
+This advances the split Weyl-group part of Layer 7, "Root datum of `(G, T)`", of the
+ReductiveGroups roadmap.
 -/
 
 public section
@@ -47,33 +50,11 @@ noncomputable section
 
 variable {σ : Type*}
 
-attribute [local instance] Classical.decEq
-
-/-- A coordinate permutation acts on a root index by applying it to both entries. -/
-noncomputable def coordinatePermRootIndex (e : Equiv.Perm σ) :
-    CoordinateRootIndex σ ≃ CoordinateRootIndex σ :=
-  Equiv.subtypeEquiv (e.prodCongr e) (fun p ↦ by simp)
-
-/-- A coordinate permutation acts componentwise on an ordered root index. -/
-@[simp]
-theorem coordinatePermRootIndex_coe (e : Equiv.Perm σ) (p : CoordinateRootIndex σ) :
-    (coordinatePermRootIndex e p).1 = (e p.1.1, e p.1.2) :=
-  by
-    rw [coordinatePermRootIndex]
-    rfl
-
-private theorem coordinatePermRootIndex_symm (e : Equiv.Perm σ) :
-    (coordinatePermRootIndex e).symm = coordinatePermRootIndex e.symm := by
-  apply Equiv.ext
-  intro p
-  apply (coordinatePermRootIndex e).injective
-  apply Subtype.ext
-  simp only [Equiv.apply_symm_apply, coordinatePermRootIndex_coe]
-
 private theorem domLCongr_coordinateRoot (e : Equiv.Perm σ) (p : CoordinateRootIndex σ) :
     Finsupp.domLCongr (R := ℤ) e (coordinateRoot p.1.1 p.1.2) =
       coordinateRoot (coordinatePermRootIndex e p).1.1
         (coordinatePermRootIndex e p).1.2 := by
+  classical
   ext a
   simp only [Finsupp.domLCongr_apply, Finsupp.domCongr_apply,
     Finsupp.equivMapDomain_apply]
@@ -109,6 +90,7 @@ private noncomputable def coordinatePermRootDatumAut (e : Equiv.Perm σ) :
     simp only [Function.comp_apply, coordinateRootDatum_root]
     exact domLCongr_coordinateRoot e p
   coroot_coweightMap := by
+    classical
     funext p
     simp only [Function.comp_apply, LinearEquiv.coe_coe]
     rw [coordinateRootDatum_coroot, coordinateRootDatum_coroot,
@@ -121,7 +103,6 @@ private noncomputable def coordinatePermRootDatumAut (e : Equiv.Perm σ) :
   bijective_coweightMap :=
     (LinearEquiv.piCongrLeft' ℤ (fun _ : σ ↦ ℤ) e.symm).bijective
 
-@[simp]
 private theorem coordinatePermRootDatumAut_weightMap_apply
     (e : Equiv.Perm σ) (x : σ →₀ ℤ) :
     ((coordinatePermRootDatumAut e : RootPairing.Aut (coordinateRootDatum σ)) :
@@ -129,7 +110,7 @@ private theorem coordinatePermRootDatumAut_weightMap_apply
       Finsupp.domLCongr (R := ℤ) e x :=
   by
     rw [coordinatePermRootDatumAut]
-    rfl
+    simp only [LinearEquiv.coe_coe]
 
 private theorem coordinatePermRootDatumAut_indexEquiv (e : Equiv.Perm σ) :
     (coordinatePermRootDatumAut e).indexEquiv = coordinatePermRootIndex e := by
@@ -141,19 +122,31 @@ private noncomputable def coordinatePermRootDatumAutHom :
   toFun := coordinatePermRootDatumAut
   map_one' := by
     apply RootPairing.Equiv.weightHom_injective (coordinateRootDatum σ)
-    ext x a
-    simp only [RootPairing.Equiv.weightHom_apply]
+    apply LinearEquiv.ext
+    intro x
+    simp only [RootPairing.Equiv.weightHom_apply,
+      RootPairing.Equiv.weightEquiv_apply, coordinatePermRootDatumAut_weightMap_apply,
+      map_one, Equiv.Perm.one_def, Finsupp.domLCongr_refl,
+      LinearEquiv.refl_apply]
+    -- The remaining application of the identity linear equivalence is definitional.
     rfl
   map_mul' e f := by
     apply RootPairing.Equiv.weightHom_injective (coordinateRootDatum σ)
-    ext x a
-    simp only [RootPairing.Equiv.weightHom_apply, map_mul, LinearEquiv.mul_apply]
-    rfl
+    apply LinearEquiv.ext
+    intro x
+    simp only [RootPairing.Equiv.weightHom_apply, map_mul, LinearEquiv.mul_apply,
+      RootPairing.Equiv.weightEquiv_apply, coordinatePermRootDatumAut_weightMap_apply]
+    simpa only [Equiv.Perm.mul_def, LinearEquiv.trans_apply] using
+      congrArg (fun g : (σ →₀ ℤ) ≃ₗ[ℤ] (σ →₀ ℤ) ↦ g x)
+        (Finsupp.domLCongr_trans (R := ℤ) f e).symm
 
-private theorem coordinatePermRootDatumAutHom_swap (i j : σ) (hij : i ≠ j) :
+private theorem coordinatePermRootDatumAutHom_swap [DecidableEq σ]
+    (i j : σ) (hij : i ≠ j) :
     coordinatePermRootDatumAutHom (Equiv.swap i j) =
       RootPairing.Equiv.reflection (coordinateRootDatum σ)
         (⟨(i, j), hij⟩ : CoordinateRootIndex σ) := by
+  cases Subsingleton.elim ‹DecidableEq σ› (Classical.decEq σ)
+  classical
   apply RootPairing.Equiv.weightHom_injective (coordinateRootDatum σ)
   ext x a
   simp only [RootPairing.Equiv.weightHom_apply, coordinatePermRootDatumAutHom,
@@ -181,6 +174,7 @@ private theorem coordinatePermRootDatumAutHom_injective :
 private theorem coordinatePermRootDatumAutHom_range :
     MonoidHom.range (coordinatePermRootDatumAutHom (σ := σ)) =
       (coordinateRootDatum σ).weylGroup := by
+  classical
   apply le_antisymm
   · rintro _ ⟨e, rfl⟩
     induction e using Equiv.Perm.swap_induction_on with
@@ -224,31 +218,33 @@ private theorem coordinatePermWeylGroupHom_bijective :
 /-- The Weyl group of the coordinate-difference root datum is canonically the permutation group
 of its coordinates. The equivalence sends a transposition to the reflection in the corresponding
 root. -/
-noncomputable def coordinateRootDatumWeylGroupMulEquiv :
+noncomputable def coordinatePermMulEquivWeylGroup :
     Equiv.Perm σ ≃* (coordinateRootDatum σ).weylGroup :=
   MulEquiv.ofBijective coordinatePermWeylGroupHom coordinatePermWeylGroupHom_bijective
 
-private theorem coordinateRootDatumWeylGroupMulEquiv_val (e : Equiv.Perm σ) :
-    (coordinateRootDatumWeylGroupMulEquiv e).1 = coordinatePermRootDatumAut e := by
-  rfl
+private theorem coordinatePermMulEquivWeylGroup_val (e : Equiv.Perm σ) :
+    (coordinatePermMulEquivWeylGroup e).1 = coordinatePermRootDatumAut e := by
+  simp only [coordinatePermMulEquivWeylGroup, MulEquiv.ofBijective_apply,
+    coordinatePermWeylGroupHom, MonoidHom.codRestrict_apply,
+    coordinatePermRootDatumAutHom, MonoidHom.coe_mk, OneHom.coe_mk]
 
-/-- The underlying root-datum automorphism acts on the character lattice by reindexing through
-the inverse coordinate permutation. -/
+/-- The underlying root-datum automorphism pushes each character coordinate forward along the
+permutation; equivalently, its value at `a` is the original value at `e.symm a`. -/
 @[simp]
-theorem coordinateRootDatumWeylGroupMulEquiv_weightMap_apply
+theorem coordinatePermMulEquivWeylGroup_weightMap_apply
     (e : Equiv.Perm σ) (x : σ →₀ ℤ) :
-    (coordinateRootDatumWeylGroupMulEquiv e).1.weightMap x =
+    (coordinatePermMulEquivWeylGroup e).1.weightMap x =
       Finsupp.domLCongr (R := ℤ) e x := by
-  rw [coordinateRootDatumWeylGroupMulEquiv_val]
+  rw [coordinatePermMulEquivWeylGroup_val]
   exact coordinatePermRootDatumAut_weightMap_apply e x
 
 /-- The underlying root-datum automorphism acts contravariantly on the cocharacter lattice. -/
 @[simp]
-theorem coordinateRootDatumWeylGroupMulEquiv_coweightMap_apply
+theorem coordinatePermMulEquivWeylGroup_coweightMap_apply
     (e : Equiv.Perm σ) (x : σ → ℤ) (a : σ) :
-    (coordinateRootDatumWeylGroupMulEquiv e).1.coweightMap x a = x (e a) := by
-  rw [coordinateRootDatumWeylGroupMulEquiv_val, coordinatePermRootDatumAut]
-  rfl
+    (coordinatePermMulEquivWeylGroup e).1.coweightMap x a = x (e a) := by
+  rw [coordinatePermMulEquivWeylGroup_val, coordinatePermRootDatumAut]
+  simp only [LinearEquiv.coe_coe, LinearEquiv.piCongrLeft'_apply, Equiv.symm_symm]
 
 /-- The Weyl-group action is the restriction of Mathlib's root-datum automorphism action, which
 is implemented by `RootPairing.Equiv.weightHom`. -/
@@ -256,35 +252,37 @@ private theorem coordinateRootDatumWeylGroup_smul_eq_weightMap
     (w : (coordinateRootDatum σ).weylGroup) (x : σ →₀ ℤ) :
     w • x = w.1.weightMap x := by
   rw [Subgroup.smul_def]
+  -- Mathlib has no lemma unfolding this `DistribMulAction` instance to `weightHom`.
   change (RootPairing.Equiv.weightHom (coordinateRootDatum σ) w.1) x = _
   rw [RootPairing.Equiv.weightHom_apply, RootPairing.Equiv.weightEquiv_apply]
 
 /-- A coordinate permutation acts on the character lattice by moving each coordinate through
 that permutation. -/
 @[simp]
-theorem coordinateRootDatumWeylGroupMulEquiv_smul_apply
+theorem coordinatePermMulEquivWeylGroup_smul_apply
     (e : Equiv.Perm σ) (x : σ →₀ ℤ) (a : σ) :
-    (coordinateRootDatumWeylGroupMulEquiv e • x) a = x (e.symm a) := by
+    (coordinatePermMulEquivWeylGroup e • x) a = x (e.symm a) := by
   rw [coordinateRootDatumWeylGroup_smul_eq_weightMap,
-    coordinateRootDatumWeylGroupMulEquiv_weightMap_apply,
+    coordinatePermMulEquivWeylGroup_weightMap_apply,
     Finsupp.domLCongr_apply, Finsupp.domCongr_apply,
     Finsupp.equivMapDomain_apply]
 
 /-- The Weyl element attached to a coordinate permutation applies that permutation to both
 entries of every root index. -/
 @[simp]
-theorem coordinateRootDatumWeylGroupMulEquiv_rootIndex_apply
+theorem coordinatePermMulEquivWeylGroup_indexEquiv_apply
     (e : Equiv.Perm σ) (p : CoordinateRootIndex σ) :
-    (coordinateRootDatumWeylGroupMulEquiv e).1.indexEquiv p =
+    (coordinatePermMulEquivWeylGroup e).1.indexEquiv p =
       coordinatePermRootIndex e p :=
   by
-    rw [coordinateRootDatumWeylGroupMulEquiv_val,
+    rw [coordinatePermMulEquivWeylGroup_val,
       coordinatePermRootDatumAut_indexEquiv]
 
 /-- A coordinate transposition corresponds to the reflection in the associated root. -/
 @[simp]
-theorem coordinateRootDatumWeylGroupMulEquiv_swap (i j : σ) (hij : i ≠ j) :
-    coordinateRootDatumWeylGroupMulEquiv (Equiv.swap i j) =
+theorem coordinatePermMulEquivWeylGroup_swap [DecidableEq σ]
+    (i j : σ) (hij : i ≠ j) :
+    coordinatePermMulEquivWeylGroup (Equiv.swap i j) =
       RootPairing.weylGroup.ofIdx (coordinateRootDatum σ)
         (⟨(i, j), hij⟩ : CoordinateRootIndex σ) := by
   apply Subtype.ext
@@ -293,13 +291,14 @@ theorem coordinateRootDatumWeylGroupMulEquiv_swap (i j : σ) (hij : i ≠ j) :
 /-- The inverse Weyl-group equivalence sends a root reflection to the transposition of its two
 coordinates. -/
 @[simp]
-theorem coordinateRootDatumWeylGroupMulEquiv_symm_ofIdx (p : CoordinateRootIndex σ) :
-    (coordinateRootDatumWeylGroupMulEquiv (σ := σ)).symm
+theorem coordinatePermMulEquivWeylGroup_symm_ofIdx [DecidableEq σ]
+    (p : CoordinateRootIndex σ) :
+    (coordinatePermMulEquivWeylGroup (σ := σ)).symm
         (RootPairing.weylGroup.ofIdx (coordinateRootDatum σ) p) =
       Equiv.swap p.1.1 p.1.2 := by
-  apply (coordinateRootDatumWeylGroupMulEquiv (σ := σ)).injective
+  apply (coordinatePermMulEquivWeylGroup (σ := σ)).injective
   rw [MulEquiv.apply_symm_apply]
-  exact (coordinateRootDatumWeylGroupMulEquiv_swap p.1.1 p.1.2 p.2).symm
+  exact (coordinatePermMulEquivWeylGroup_swap p.1.1 p.1.2 p.2).symm
 
 end
 

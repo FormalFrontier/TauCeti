@@ -27,6 +27,8 @@ reflecting root. The construction is independent of any choice of an enumeration
 ## Main declarations
 
 * `TauCeti.SplitTorus.CoordinateRootIndex`: ordered pairs of distinct coordinates.
+* `TauCeti.SplitTorus.coordinatePermRootIndex`: simultaneous application of a coordinate
+  permutation to both entries of a root index.
 * `TauCeti.SplitTorus.coordinateRoot` and `coordinateCoroot`: the vectors `e_i - e_j`, defined
   for arbitrary pairs of coordinates.
 * `TauCeti.SplitTorus.coordinateRootDatum`: the resulting reduced root datum.
@@ -62,6 +64,51 @@ variable {σ : Type*}
 
 /-- Ordered pairs of distinct coordinates, indexing the roots `e_i - e_j`. -/
 abbrev CoordinateRootIndex (σ : Type*) := {p : σ × σ // p.1 ≠ p.2}
+
+/-- A coordinate permutation acts on a root index by applying it to both entries. -/
+noncomputable def coordinatePermRootIndex (e : Equiv.Perm σ) :
+    CoordinateRootIndex σ ≃ CoordinateRootIndex σ :=
+  Equiv.subtypeEquiv (e.prodCongr e) (fun p ↦ by simp)
+
+/-- A coordinate permutation acts componentwise on an ordered root index. -/
+@[simp]
+theorem coordinatePermRootIndex_coe (e : Equiv.Perm σ) (p : CoordinateRootIndex σ) :
+    (coordinatePermRootIndex e p).1 = (e p.1.1, e p.1.2) := by
+  rw [coordinatePermRootIndex]
+  simp only [Equiv.subtypeEquiv_apply, Equiv.prodCongr_apply]
+  -- `Equiv.prodCongr` uses `Prod.map`, whose application reduces definitionally.
+  rfl
+
+/-- Inverting a coordinate permutation inverts its action on root indices. -/
+@[simp]
+theorem coordinatePermRootIndex_symm (e : Equiv.Perm σ) :
+    (coordinatePermRootIndex e).symm = coordinatePermRootIndex e.symm := by
+  apply Equiv.ext
+  intro p
+  apply (coordinatePermRootIndex e).injective
+  apply Subtype.ext
+  simp only [Equiv.apply_symm_apply, coordinatePermRootIndex_coe]
+
+/-- The identity coordinate permutation acts trivially on root indices. -/
+@[simp]
+theorem coordinatePermRootIndex_one :
+    coordinatePermRootIndex (1 : Equiv.Perm σ) = 1 := by
+  apply Equiv.ext
+  intro p
+  apply Subtype.ext
+  rw [coordinatePermRootIndex_coe]
+  -- The identity equivalence acts definitionally on the underlying pair.
+  rfl
+
+/-- Products of coordinate permutations act by the corresponding product on root indices. -/
+@[simp]
+theorem coordinatePermRootIndex_mul (e f : Equiv.Perm σ) :
+    coordinatePermRootIndex (e * f) =
+      coordinatePermRootIndex e * coordinatePermRootIndex f := by
+  apply Equiv.ext
+  intro p
+  apply Subtype.ext
+  simp only [coordinatePermRootIndex_coe, Equiv.Perm.mul_def, Equiv.trans_apply]
 
 /-- The character-lattice vector `e_i - e_j`, defined for any two coordinates. -/
 noncomputable def coordinateRoot (i j : σ) : σ →₀ ℤ := by
@@ -148,26 +195,6 @@ private theorem coordinateCorootEmbedding_apply (p : CoordinateRootIndex σ) :
     coordinateCorootEmbedding p = coordinateCoroot p.1.1 p.1.2 :=
   rfl
 
-/-- Reflection in the root indexed by `p`, acting on ordered pairs by transposing both
-coordinates. -/
-noncomputable def coordinateReflectionIndex (p : CoordinateRootIndex σ) :
-    CoordinateRootIndex σ ≃ CoordinateRootIndex σ := by
-  classical
-  exact Equiv.subtypeEquiv
-    ((Equiv.swap p.1.1 p.1.2).prodCongr (Equiv.swap p.1.1 p.1.2)) (fun q ↦ by simp)
-
-open Classical in
-/-- The two coordinates of `coordinateReflectionIndex p q` are obtained by applying the
-transposition attached to `p` to the two coordinates of `q`. -/
-@[simp]
-theorem coordinateReflectionIndex_coe (p q : CoordinateRootIndex σ) :
-    (coordinateReflectionIndex p q).1 =
-      ((Equiv.swap p.1.1 p.1.2) q.1.1, (Equiv.swap p.1.1 p.1.2) q.1.2) :=
-  by
-    rw [coordinateReflectionIndex]
-    simp only [Equiv.subtypeEquiv_apply, Equiv.prodCongr_apply]
-    rfl
-
 private theorem coordinatePairing_comm (p q : CoordinateRootIndex σ) :
     dotPairing (coordinateRoot p.1.1 p.1.2) (coordinateCoroot q.1.1 q.1.2) =
       dotPairing (coordinateRoot q.1.1 q.1.2) (coordinateCoroot p.1.1 p.1.2) := by
@@ -177,25 +204,29 @@ private theorem coordinatePairing_comm (p q : CoordinateRootIndex σ) :
   simp only [eq_comm]
   ring
 
-private theorem coordinateRoot_reflection (p q : CoordinateRootIndex σ) :
+private theorem coordinateRoot_reflection [DecidableEq σ]
+    (p q : CoordinateRootIndex σ) :
     preReflection (coordinateRoot p.1.1 p.1.2)
         (dotPairing.flip (coordinateCoroot p.1.1 p.1.2))
         (coordinateRoot q.1.1 q.1.2) =
-      coordinateRoot (coordinateReflectionIndex p q).1.1
-        (coordinateReflectionIndex p q).1.2 := by
+      coordinateRoot (coordinatePermRootIndex (Equiv.swap p.1.1 p.1.2) q).1.1
+        (coordinatePermRootIndex (Equiv.swap p.1.1 p.1.2) q).1.2 := by
+  cases Subsingleton.elim ‹DecidableEq σ› (Classical.decEq σ)
   classical
   rw [preReflection_apply, LinearMap.flip_apply,
     dotPairing_coordinateRoot_coordinateCoroot]
-  simp only [coordinateRoot, coordinateReflectionIndex_coe]
+  simp only [coordinateRoot, coordinatePermRootIndex_coe]
   rw [apply_swap_eq (fun i : σ ↦ Finsupp.single i (1 : ℤ)) p.1.1 p.1.2 q.1.1,
     apply_swap_eq (fun i : σ ↦ Finsupp.single i (1 : ℤ)) p.1.1 p.1.2 q.1.2]
   module
 
-private theorem coordinateCoroot_reflection (p q : CoordinateRootIndex σ) :
+private theorem coordinateCoroot_reflection [DecidableEq σ]
+    (p q : CoordinateRootIndex σ) :
     preReflection (coordinateCoroot p.1.1 p.1.2) (dotPairing (coordinateRoot p.1.1 p.1.2))
         (coordinateCoroot q.1.1 q.1.2) =
-      coordinateCoroot (coordinateReflectionIndex p q).1.1
-        (coordinateReflectionIndex p q).1.2 := by
+      coordinateCoroot (coordinatePermRootIndex (Equiv.swap p.1.1 p.1.2) q).1.1
+        (coordinatePermRootIndex (Equiv.swap p.1.1 p.1.2) q).1.2 := by
+  cases Subsingleton.elim ‹DecidableEq σ› (Classical.decEq σ)
   classical
   ext a
   have h := congrArg (fun f : σ →₀ ℤ ↦ f a) (coordinateRoot_reflection p q)
@@ -205,17 +236,18 @@ private theorem coordinateCoroot_reflection (p q : CoordinateRootIndex σ) :
   rw [coordinatePairing_comm p q]
   exact h
 
+open Classical in
 /-- The reduced root datum of all coordinate differences `e_i - e_j` on a finite coordinate
 type `σ`, paired by the split-torus dot product. -/
 noncomputable def coordinateRootDatum (σ : Type*) [Finite σ] :
     RootDatum (CoordinateRootIndex σ) (σ →₀ ℤ) (σ → ℤ) :=
   RootPairing.mk' dotPairing coordinateRootEmbedding coordinateCorootEmbedding
     coordinateRoot_coroot_two
-    (fun p _ ⟨q, hq⟩ ↦ ⟨coordinateReflectionIndex p q, by
+    (fun p _ ⟨q, hq⟩ ↦ ⟨coordinatePermRootIndex (Equiv.swap p.1.1 p.1.2) q, by
       rw [coordinateRootEmbedding_apply] at hq ⊢
       rw [← hq]
       exact (coordinateRoot_reflection p q).symm⟩)
-    (fun p _ ⟨q, hq⟩ ↦ ⟨coordinateReflectionIndex p q, by
+    (fun p _ ⟨q, hq⟩ ↦ ⟨coordinatePermRootIndex (Equiv.swap p.1.1 p.1.2) q, by
       rw [coordinateCorootEmbedding_apply] at hq ⊢
       rw [← hq]
       exact (coordinateCoroot_reflection p q).symm⟩)
@@ -318,8 +350,12 @@ theorem coordinateRootDatum_coreflection_apply [Finite σ] (p : CoordinateRootIn
 
 /-- Reflections in the coordinate root datum transpose both coordinates of the root index. -/
 @[simp]
-theorem coordinateRootDatum_reflectionPerm [Finite σ] (p q : CoordinateRootIndex σ) :
-    (coordinateRootDatum σ).reflectionPerm p q = coordinateReflectionIndex p q := by
+theorem coordinateRootDatum_reflectionPerm [Finite σ] [DecidableEq σ]
+    (p q : CoordinateRootIndex σ) :
+    (coordinateRootDatum σ).reflectionPerm p q =
+      coordinatePermRootIndex (Equiv.swap p.1.1 p.1.2) q := by
+  cases Subsingleton.elim ‹DecidableEq σ› (Classical.decEq σ)
+  classical
   apply (coordinateRootDatum σ).root.injective
   rw [(coordinateRootDatum σ).root_reflectionPerm]
   rw [RootPairing.reflection_apply, coordinateRootDatum_root, coordinateRootDatum_root]
