@@ -73,6 +73,13 @@ lemma coeff_sub (D E : WeilDivisor X) (x : X) :
     coeff (D - E) x = coeff D x - coeff E x :=
   rfl
 
+/-- The coefficient of an integer multiple of a Weil divisor is the corresponding multiple of
+the coefficient. -/
+@[simp]
+lemma coeff_zsmul (n : ℤ) (D : WeilDivisor X) (x : X) :
+    coeff (n • D) x = n * coeff D x :=
+  rfl
+
 @[ext]
 lemma ext {D E : WeilDivisor X} (h : ∀ x, coeff D x = coeff E x) : D = E :=
   Finsupp.ext h
