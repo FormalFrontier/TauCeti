@@ -367,7 +367,7 @@ private lemma analyticAt_cuspFunction_one_galoisProd (f : F) (c : CuspTranslatio
 
 /-- The width-`1` order of the Galois product over a cusp translation orbit is the order of that
 orbit's factor at its own width. -/
-lemma qExpansion_one_galoisProd_cuspTranslationOrbit_order_eq (f : F)
+private lemma qExpansion_one_galoisProd_cuspTranslationOrbit_order_eq (f : F)
     (c : CuspTranslationOrbit 𝒢) :
     (qExpansion 1 (galoisProd (cuspTranslationOrbitWidth c) (quotientFunc f c.out))).order =
       (qExpansion (cuspTranslationOrbitWidth c : ℝ) (quotientFunc f c.out)).order :=
@@ -388,7 +388,7 @@ private lemma qExpansion_cuspTranslationOrbit_ne_zero {f : F} (hf : (⇑f : ℍ 
 omit [𝒢.IsFiniteRelIndex 𝒮ℒ] in
 /-- The period of the base coset is the integer cusp width of `𝒢`: both are characterised by
 divisibility of the exponents `n` with `T ^ n ∈ 𝒢`. -/
-lemma minimalPeriod_TSL_mk_one :
+private lemma minimalPeriod_TSL_mk_one :
     minimalPeriod (TSL • ·) (QuotientGroup.mk 1 : 𝒮ℒ ⧸ 𝒢.subgroupOf 𝒮ℒ) =
       Subgroup.integerCuspWidth 𝒢 := by
   have hsmul : ∀ n : ℕ, (TSL ^ n • (QuotientGroup.mk 1 : 𝒮ℒ ⧸ 𝒢.subgroupOf 𝒮ℒ)) =
