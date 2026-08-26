@@ -19,9 +19,8 @@ Spec K ⟶ Spec H.
 
 This homomorphism is an isogeny exactly when the coordinate ring map `f` is finite and faithfully
 flat. Finiteness translates directly across `Spec`; flatness together with surjectivity translates
-to faithful flatness. Combining this with the existing coordinate criterion for central kernels
-shows that it is a central isogeny exactly when, in addition, its scheme-theoretic kernel Hopf
-ideal is central.
+to faithful flatness. Together with the existing coordinate criterion for central kernels, this
+lets consumers characterize central isogenies entirely in Hopf coordinates.
 
 The criteria let coordinate constructions establish central isogenies without leaving commutative
 algebra, and let scheme-theoretic central isogenies expose the corresponding coordinate facts.
@@ -30,8 +29,6 @@ algebra, and let scheme-theoretic central isogenies expose the corresponding coo
 
 * `TauCeti.GroupScheme.isIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat`: the coordinate
   criterion for an isogeny.
-* `TauCeti.GroupScheme.isCentralIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat_and_isCentral`:
-  the corresponding criterion for a central isogeny.
 
 ## References
 
@@ -70,16 +67,5 @@ theorem isIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat (f : H ⟶ K) :
         Surjective (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))) ↔ _
   rw [IsFinite.SpecMap_iff, flat_and_surjective_SpecMap_iff]
   rfl
-
-/-- **Coordinate criterion for a central isogeny.** The affine group-scheme morphism induced by
-`f` is a central isogeny exactly when `f` is finite and faithfully flat and its kernel Hopf ideal
-is central. -/
-theorem isCentralIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat_and_isCentral (f : H ⟶ K) :
-    IsCentralIsogeny ((hopfSpec (CommRingCat.of k)).map f.op) ↔
-      f.hom.toAlgHom.toRingHom.Finite ∧
-        f.hom.toAlgHom.toRingHom.FaithfullyFlat ∧
-          (CommHopfAlgCat.kernelHopfIdeal f).IsCentral := by
-  rw [isCentralIsogeny_hopfSpec_map_iff,
-    isIsogeny_hopfSpec_map_iff_finite_and_faithfullyFlat, and_assoc]
 
 end TauCeti.GroupScheme
