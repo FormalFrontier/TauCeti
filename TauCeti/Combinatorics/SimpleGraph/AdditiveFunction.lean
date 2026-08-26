@@ -132,6 +132,7 @@ theorem graphCartanMatrix_apply [Ring R] (i j : V) :
     split_ifs <;> simp
 
 /-- `2I - A` is compatible with a change of coefficient ring. -/
+@[simp]
 theorem graphCartanMatrix_map {S : Type*} [Ring R] [Ring S] (f : R →+* S) :
     (graphCartanMatrix G R).map f = graphCartanMatrix G S := by
   ext i j

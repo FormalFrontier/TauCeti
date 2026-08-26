@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Combinatorics.SimpleGraph.AdditiveFunction
 public import TauCeti.LinearAlgebra.RootSystem.AffineDynkinType
 
 /-!
@@ -39,6 +38,8 @@ with the semidefiniteness that makes the null space the radical of the form.
 
 * `TauCeti.AffineDynkinType.realCartanMatrix_eq_graphCartanMatrix`: away from `A₁` the form is the
   matrix `2I - A` of the underlying graph.
+* `TauCeti.AffineDynkinType.realCartanMatrix_mulVec_cast_marks_eq_zero`: the marks are a null
+  vector of the real form.
 * `TauCeti.AffineDynkinType.posSemidef_realCartanMatrix`: the symmetrized form of a valid affine
   simply-laced diagram is positive semidefinite.
 * `TauCeti.AffineDynkinType.ker_mulVecLin_realCartanMatrix`: its radical is the line spanned by
@@ -194,6 +195,17 @@ private theorem eq_A_one_of_not_isGraphical (hg : ¬ t.IsGraphical) : t = A 1 :=
   exact hg (isGraphical_iff_ne_A_one.2 h)
 
 /-! ### The general statements -/
+
+/-- **The marks are a null vector of the real Cartan matrix**: `Cδ = 0`. -/
+theorem realCartanMatrix_mulVec_cast_marks_eq_zero (ht : t.Valid) :
+    t.realCartanMatrix *ᵥ (fun i ↦ (t.marks i : ℝ)) = 0 := by
+  funext i
+  simp only [_root_.Matrix.mulVec_apply, dotProduct, _root_.Matrix.row_apply,
+    realCartanMatrix_apply]
+  have h := congrFun (cartanMatrix_mulVec_marks_eq_zero ht) i
+  simp only [_root_.Matrix.mulVec_apply, dotProduct, _root_.Matrix.row_apply] at h
+  norm_cast
+  simpa only [Pi.zero_apply, Int.cast_zero] using congrArg (fun z : ℤ ↦ (z : ℝ)) h
 
 /-- **The symmetrized form of a valid affine simply-laced diagram is positive semidefinite.**
 Away from `A₁` this is the semidefiniteness of `2I - A` for a graph carrying a positive additive
