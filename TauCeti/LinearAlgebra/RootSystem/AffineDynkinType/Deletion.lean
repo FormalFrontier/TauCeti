@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.AffineDynkinType
+public import TauCeti.LinearAlgebra.RootSystem.AffineDynkinType.Basic
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
 /-!
@@ -25,12 +25,12 @@ neighbour with a smaller number, which is what makes connectedness a single indu
 `TauCeti.DynkinType.cartanMatrix` is numbered as in Bourbaki's plates. Concretely:
 
 * `Ãₙ` is the cycle on `Fin (n + 1)` and its affine node is `0`, so the Bourbaki node `i` of `Aₙ`
-  is the affine node `i + 1`: deleting `0` from a cycle leaves a path.
+  is node `i + 1` of the affine diagram: deleting `0` from a cycle leaves a path.
 * The affine `Dₙ` is the path `0 - ⋯ - (n-2)` with a leaf `n - 1` at node `1` and a leaf `n` at
   node `n - 3`, and its affine node is `0`. Deleting it leaves the chain
   `(n-1) - 1 - 2 - ⋯ - (n-3)` forking into `n - 2` and `n`, which is `Dₙ` with the Bourbaki node
-  `0` at the affine node `n - 1`, the Bourbaki nodes `1, …, n - 2` unmoved, and the Bourbaki node
-  `n - 1` at the affine node `n`.
+  `0` at node `n - 1` of the affine diagram, the Bourbaki nodes `1, …, n - 2` unmoved, and the
+  Bourbaki node `n - 1` at node `n` of the affine diagram.
 * The affine `E₆`, `E₇` and `E₈` are the stars `T₃,₃,₃`, `T₂,₄,₄` and `T₂,₃,₆` with the trivalent
   node numbered `0` and arms numbered outwards, and their affine nodes are the outermost nodes
   `2`, `4` and `8` of a longest arm. Deleting one shortens that arm by one, giving `T₂,₃,₃`,
@@ -46,8 +46,8 @@ with the node it is deleted from. So the theorems below assume only
 
 * `TauCeti.AffineDynkinType.finiteType`: the finite `TauCeti.DynkinType` an affine simply-laced
   diagram extends.
-* `TauCeti.AffineDynkinType.bourbakiNode`: the affine node carrying a given Bourbaki-numbered node
-  of that finite type.
+* `TauCeti.AffineDynkinType.bourbakiNode`: the node of the affine diagram carrying a given
+  Bourbaki-numbered node of that finite type.
 * `TauCeti.AffineDynkinType.bourbakiGraphEmbedding`: the same map, bundled as an embedding of the
   finite Dynkin diagram into the affine one.
 
