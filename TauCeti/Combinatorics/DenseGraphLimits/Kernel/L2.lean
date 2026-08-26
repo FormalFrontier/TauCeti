@@ -5,9 +5,8 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Basic
+public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
 public import Mathlib.MeasureTheory.Integral.Prod
-import Mathlib.MeasureTheory.Measure.FiniteMeasure
 
 /-!
 # The `L²` pairing of symmetric kernels
@@ -16,7 +15,9 @@ The Frieze--Kannan weak regularity argument runs on an `L²(μ ⊗ μ)` potentia
 step graphons of a refinement chain must be compared in `L²` and not only in cut norm.  This file
 defines the integrals `l2inner μ K L = ∫ K · L` and `l2sq μ K = ∫ K²` at the level of strict
 symmetric kernels.  When `μ` is finite, bounded kernels are square-integrable, so these integrals
-are the `L²(μ ⊗ μ)` inner product and its induced norm squared.
+are the `L²(μ ⊗ μ)` inner product and its induced norm squared.  The integrability of a single
+kernel over the product carrier is already available as `SymmKernel.integrable_uncurry` from the
+rectangle-integral layer, and everything here is built on it.
 
 **Why plain integrals and not `Lp`.**  A `SymmKernel` is a strict everywhere-defined
 representative, and the whole point of that convention is that a difference `K - L` is again a
@@ -42,7 +43,9 @@ the expansion `l2sq_sub` needs no additional side conditions.
 
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), §9.2.
 * Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 1/2 — `l2sq` and the analytic energy
-  stack.
+  stack.  The `l2sq` signature and the `l2sq_nonneg` proof are taken from
+  `TauCetiRoadmap/DenseGraphLimits/Suggested.lean` (Layer 1/2); the inner product `l2inner` and its
+  bilinear API are developed here.
 -/
 
 public section
@@ -64,13 +67,8 @@ bounded, and the product measure of a finite measure with itself is finite. -/
 theorem integrable_mul [IsFiniteMeasure μ] (K L : SymmKernel Ω μ) :
     Integrable (fun p : Ω × Ω => K p.1 p.2 * L p.1 p.2) (μ.prod μ) := by
   obtain ⟨C, hC⟩ := K.exists_bound
-  obtain ⟨D, hD⟩ := L.exists_bound
-  have hmeas : Measurable fun p : Ω × Ω => K p.1 p.2 * L p.1 p.2 := K.measurable.mul L.measurable
-  refine Integrable.of_bound hmeas.aestronglyMeasurable (C * D) (ae_of_all _ fun p => ?_)
-  have hCp := hC p.1 p.2
-  have hDp := hD p.1 p.2
-  rw [Real.norm_eq_abs, abs_mul]
-  exact mul_le_mul hCp hDp (abs_nonneg _) ((abs_nonneg _).trans hCp)
+  exact (L.integrable_uncurry μ).bdd_mul K.measurable.aestronglyMeasurable
+    (ae_of_all _ fun p => by simpa [Real.norm_eq_abs] using hC p.1 p.2)
 
 /-- A symmetric kernel is square integrable on the product carrier. -/
 theorem integrable_sq [IsFiniteMeasure μ] (K : SymmKernel Ω μ) :
@@ -130,9 +128,33 @@ theorem l2inner_neg_left (K L : SymmKernel Ω μ) : l2inner μ (-K) L = -l2inner
 theorem l2inner_neg_right (K L : SymmKernel Ω μ) : l2inner μ K (-L) = -l2inner μ K L := by
   rw [l2inner_comm, l2inner_neg_left, l2inner_comm μ L K]
 
+/-- Scaling the left argument scales the pairing. -/
+@[simp]
+theorem l2inner_smul_left (c : ℝ) (K L : SymmKernel Ω μ) :
+    l2inner μ (c • K) L = c * l2inner μ K L := by
+  simp only [l2inner_def, SymmKernel.coe_smul, Pi.smul_apply, smul_eq_mul, mul_assoc,
+    integral_const_mul]
+
+/-- Scaling the right argument scales the pairing. -/
+@[simp]
+theorem l2inner_smul_right (c : ℝ) (K L : SymmKernel Ω μ) :
+    l2inner μ K (c • L) = c * l2inner μ K L := by
+  rw [l2inner_comm, l2inner_smul_left, l2inner_comm μ L K]
+
 @[simp]
 theorem l2sq_zero : l2sq μ (0 : SymmKernel Ω μ) = 0 := by
   simp [l2sq_def]
+
+/-- The `L²` norm squared is unchanged by negation. -/
+@[simp]
+theorem l2sq_neg (K : SymmKernel Ω μ) : l2sq μ (-K) = l2sq μ K := by
+  simp [l2sq_eq_l2inner_self]
+
+/-- Scaling a kernel scales its `L²` norm squared by the square of the scalar. -/
+@[simp]
+theorem l2sq_smul (c : ℝ) (K : SymmKernel Ω μ) : l2sq μ (c • K) = c ^ 2 * l2sq μ K := by
+  rw [l2sq_eq_l2inner_self, l2inner_smul_left, l2inner_smul_right, l2sq_eq_l2inner_self]
+  ring
 
 variable [IsFiniteMeasure μ]
 
@@ -179,8 +201,7 @@ theorem l2sq_le_one_of_abs_le_one [IsProbabilityMeasure μ] (K : SymmKernel Ω �
   calc
     (∫ p : Ω × Ω, K p.1 p.2 ^ 2 ∂(μ.prod μ)) ≤ ∫ _p : Ω × Ω, (1 : ℝ) ∂(μ.prod μ) := by
       refine integral_mono (SymmKernel.integrable_sq μ K) (integrable_const 1) fun p => ?_
-      have hp := h p.1 p.2
-      nlinarith [abs_nonneg (K p.1 p.2), sq_abs (K p.1 p.2)]
+      exact (sq_le_one_iff_abs_le_one _).2 (h p.1 p.2)
     _ = 1 := by simp
 
 end DenseGraphLimits

@@ -28,10 +28,12 @@ This file builds that potential.
 
 Both rest on the same block computation: the energy is a finite sum of block contributions
 (`graphonPartitionEnergy_eq_sum`), and a block average over a *refinement* still reproduces the
-coarse block integrals (`stepGraphonAvg_rectIntegral_of_le`).  That last point is where the
-null-cell convention of `stepGraphonAvg` is tested: a part of the finer partition may be null, and
-the convention assigning it the value zero is exactly what keeps its contribution to the coarse
-block integral correct.
+coarse block integrals (`stepGraphonAvg_rectIntegral_of_le`).  That last identity needs no
+hypothesis excluding null parts: a null part of the finer partition cuts out a null rectangle,
+which contributes zero to both sides whatever value the step graphon takes there.  The null-cell
+convention of `stepGraphonAvg` is what makes it a well-defined strict `[0, 1]`-valued
+representative at all — it is load-bearing for `stepGraphonAvg_idem` — but it is not what makes
+this identity true.
 
 This is `‖E[W | P ⊗ P]‖₂²` written entirely in terms of finite block averages; the identification
 with `MeasureTheory.condExp` belongs to the later a.e. layer, and nothing here needs it.  It is also
@@ -44,9 +46,20 @@ graph.
 
 ## Main results
 
+* `TauCeti.DenseGraphLimits.setIntegral_prod_eq_sum_parts` and
+  `TauCeti.DenseGraphLimits.integral_eq_sum_parts`: a measurable finite partition splits an
+  integral over a rectangle, respectively over the whole product carrier, into a finite sum over
+  its subrectangles;
 * `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le`: block averaging over a refinement
   preserves the coarse block integrals;
+* `TauCeti.DenseGraphLimits.l2inner_stepGraphonAvg_eq_sum`: the block computation everything else
+  is read off from — pairing any kernel against a block-average step graphon;
 * `TauCeti.DenseGraphLimits.graphonPartitionEnergy_eq_sum`: the energy as a finite block sum;
+* `TauCeti.DenseGraphLimits.l2inner_graphon_stepGraphonAvg`: the block average is the `L²`
+  orthogonal projection of `W`, and
+  `TauCeti.DenseGraphLimits.l2inner_stepGraphonAvg_of_le` is its refinement form;
+* `TauCeti.DenseGraphLimits.graphonPartitionEnergy_le_l2sq`: Bessel's inequality for that
+  projection;
 * `TauCeti.DenseGraphLimits.l2sq_sub_stepGraphonAvg`: the defect identity `‖W - E[W|P⊗P]‖₂² =
   ‖W‖₂² - E(P)`;
 * `TauCeti.DenseGraphLimits.graphonPartitionEnergy_increment`: the `L²`-Pythagoras increment;
@@ -63,7 +76,16 @@ graph.
   (1999), 175--220.
 * Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 2 — the analytic energy stack
   (`graphonPartitionEnergy`, `graphonPartitionEnergy_eq`, the `L²`-Pythagoras increment and its
-  `_mono` / `_nonneg` / `_le_one` corollaries).
+  `_mono` / `_nonneg` / `_le_one` corollaries).  The signatures of `graphonPartitionEnergy` and of
+  its `_eq` / `_increment` / `_mono` / `_nonneg` / `_le_one` companions, together with the
+  `_mono` and `_nonneg` proofs, follow `TauCetiRoadmap/DenseGraphLimits/Suggested.lean` (Layer 2);
+  the block computation, the projection identity and the defect identity are developed here.
+* The roadmap lists the null-cell `Finpartition` convention — including unchanged weighted energy,
+  the scope of `stepGraphonAvg_rectIntegral_of_le` and of the increment — under its
+  migration-backed routes, with an independent development in `Graphon/RegularityFinpartition.lean`
+  in `cameronfreer/graphon` (Apache 2.0) at commit
+  `dfd7ecc9b197d8211842935204bcec6051d57863`.  No material is adapted from that source; the proofs
+  here are the `L²` route through `l2inner_stepGraphonAvg_eq_sum`.
 -/
 
 public section
@@ -76,41 +98,14 @@ namespace TauCeti
 
 namespace DenseGraphLimits
 
-variable {Ω : Type*}
-
-section Parts
-
-/-- The parts of a finite partition of the carrier cover it. -/
-private theorem iUnion_parts (R : Finpartition (Set.univ : Set Ω)) :
-    ⋃ r : R.parts, (r : Set Ω) = Set.univ := by
-  refine eq_univ_of_forall fun x => ?_
-  have hx : x ∈ ⋃₀ (R.parts : Set (Set Ω)) := by
-    rw [← Finset.sup_id_set_eq_sUnion, R.sup_parts]
-    exact mem_univ x
-  obtain ⟨r, hr, hxr⟩ := mem_sUnion.mp hx
-  exact mem_iUnion.2 ⟨⟨r, hr⟩, hxr⟩
-
-/-- Under refinement, a part of the finer partition is either contained in a given part of the
-coarser one or disjoint from it. -/
-private theorem inter_eq_self_or_empty {P Q : Finpartition (Set.univ : Set Ω)} (href : Q ≤ P)
-    {r : Set Ω} (hr : r ∈ Q.parts) {p : Set Ω} (hp : p ∈ P.parts) :
-    r ∩ p = r ∨ r ∩ p = ∅ := by
-  obtain ⟨p', hp', hrp'⟩ := href hr
-  by_cases h : p' = p
-  · exact Or.inl (inter_eq_self_of_subset_left (h ▸ hrp'))
-  · refine Or.inr (eq_empty_of_subset_empty fun x hx => ?_)
-    exact absurd hx.2 (disjoint_left.mp (P.disjoint hp' hp h) (hrp' hx.1))
-
-end Parts
-
-variable [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
 
 section Decomposition
 
 omit [IsProbabilityMeasure μ] in
 /-- A finite measurable partition of the carrier cuts a rectangle into finitely many disjoint
 subrectangles, splitting any integral over it into a finite sum. -/
-private theorem setIntegral_prod_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
+theorem setIntegral_prod_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
     (hR : ∀ r ∈ R.parts, MeasurableSet r) {S T : Set Ω} (hS : MeasurableSet S)
     (hT : MeasurableSet T) {f : Ω × Ω → ℝ} (hf : Integrable f (μ.prod μ)) :
     ∫ z in S ×ˢ T, f z ∂(μ.prod μ)
@@ -143,7 +138,7 @@ private theorem setIntegral_prod_eq_sum_parts (R : Finpartition (Set.univ : Set 
 omit [IsProbabilityMeasure μ] in
 /-- A finite measurable partition of the carrier splits an integral over the whole product carrier
 into a finite sum over its rectangles. -/
-private theorem integral_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
+theorem integral_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
     (hR : ∀ r ∈ R.parts, MeasurableSet r) {f : Ω × Ω → ℝ} (hf : Integrable f (μ.prod μ)) :
     ∫ z, f z ∂(μ.prod μ)
       = ∑ rs : R.parts × R.parts, ∫ z in (rs.1 : Set Ω) ×ˢ (rs.2 : Set Ω), f z ∂(μ.prod μ) := by
@@ -179,9 +174,9 @@ end Decomposition
 variable (P Q : Finpartition (Set.univ : Set Ω))
 
 /-- Block averaging over a refinement still reproduces the block integrals of the coarser
-partition.  This is where the null-cell convention of `stepGraphonAvg` is exercised: a null part of
-the finer partition is given the value zero, and contributes zero to the coarse block integral,
-which is exactly what this identity requires. -/
+partition.  No hypothesis excluding null parts is needed: a null part of the finer partition cuts
+out a null rectangle, which contributes zero to both sides whatever value the step graphon takes
+there. -/
 theorem stepGraphonAvg_rectIntegral_of_le (hP : ∀ p ∈ P.parts, MeasurableSet p)
     (hQ : ∀ r ∈ Q.parts, MeasurableSet r) (href : Q ≤ P) (W : Graphon Ω μ) (p q : P.parts) :
     (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ (p : Set Ω) (q : Set Ω)
@@ -209,6 +204,7 @@ theorem l2inner_stepGraphonAvg_eq_sum (hP : ∀ p ∈ P.parts, MeasurableSet p) 
         * ⨍ z in (pq.1 : Set Ω) ×ˢ (pq.2 : Set Ω), W z.1 z.2 ∂(μ.prod μ) := by
   rw [l2inner_def, integral_eq_sum_parts μ P hP
     (SymmKernel.integrable_mul μ K (stepGraphonAvg (μ := μ) P hP W).toSymmKernel)]
+  simp only [Graphon.coe_toSymmKernel]
   exact Finset.sum_congr rfl fun pq _ => setIntegral_mul_stepGraphonAvg μ P hP W K pq.1 pq.2
 
 /-- The **graphon partition energy** of `W` over a measurable finite partition `P`: the
