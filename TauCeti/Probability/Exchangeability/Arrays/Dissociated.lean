@@ -28,8 +28,8 @@ notions the two array symmetries ask for:
 * `JointlyDissociated μ X` — the square blocks over `A × A` and `A' × A'` are independent whenever
   `A ∩ A' = ∅`. This is the notion paired with `JointlyExchangeable`, and it is genuinely weaker
   (`SeparatelyDissociated.jointlyDissociated`): a symmetric array is not separately dissociated
-  unless its entries are trivial, since `X (i, j)` and `X (j, i)` are then equal while separate
-  dissociation asks them to be independent; it may perfectly well be jointly dissociated.
+  unless its off-diagonal entries are trivial, since `X (i, j)` and `X (j, i)` are then equal while
+  separate dissociation asks them to be independent; it may perfectly well be jointly dissociated.
 
 Index sets are presented, as in `Arrays/Block.lean`, by index maps `e f : ℕ → ℕ`, so that the two
 sub-arrays are the rectangular blocks `arrayBlock X e f` and `arrayBlock X e' f'` and the
@@ -243,7 +243,8 @@ theorem separatelyDissociated_of_iIndepFun (hX : iIndepFun X μ) (hX_meas : ∀ 
     @measurable_pi_lambda _ _ _ (blockSigma X (Set.range a ×ˢ Set.range b)) _ _ fun p =>
       measurable_blockSigma_of_mem (Z := X) (S := Set.range a ×ˢ Set.range b)
         ⟨⟨p.1, rfl⟩, ⟨p.2, rfl⟩⟩
-  exact indepFun_of_measurable_blockSigma hX (fun p _ => hX_meas p)
+  exact indepFun_of_measurable_blockSigma (hX.precomp Subtype.val_injective)
+    (fun p _ => hX_meas p)
     (Set.disjoint_left.mpr fun p hp hp' => Set.disjoint_left.mp he hp.1 hp'.1)
     (key e f) (key e' f')
 
