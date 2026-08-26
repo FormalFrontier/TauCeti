@@ -51,6 +51,8 @@ jobs:
           PYTHONPATH=scripts python3 scripts/test_loc_roadmap_graph.py
           PYTHONPATH=scripts python3 scripts/test_participant_graph.py
           PYTHONPATH=scripts python3 scripts/test_pr_stats_graphs.py
+          PYTHONPATH=scripts python3 scripts/test_pr_lifecycle.py
+          PYTHONPATH=scripts python3 scripts/test_pipeline_health.py
           python3 scripts/pr_status/test_stuck_alerts.py
           python3 scripts/test_roadmap_label.py
           python3 scripts/pr_status/test_pr_labels.py

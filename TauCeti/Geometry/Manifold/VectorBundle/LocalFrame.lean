@@ -33,6 +33,9 @@ a time.
   `e.basisAt b hx` of the fibre at a point of `e.baseSet`.
 * `TauCeti.Manifold.localFrameCoeff_localFrame`: the same duality, stated for the frame sections
   themselves.
+* `TauCeti.Manifold.symmL_basis_eq_localFrame` and
+  `TauCeti.Manifold.continuousLinearMapAt_localFrame`: a trivialization transports basis vectors
+  to its local frame and reads those frame vectors back as basis vectors.
 * `TauCeti.Manifold.contMDiffOn_hom_of_localFrame`: a section of the bundle of continuous linear
   maps is `C^n` once its evaluations on a local frame of the source bundle are.
 -/
@@ -71,6 +74,20 @@ theorem localFrameCoeff_basisAt [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : �
 theorem localFrameCoeff_localFrame [DecidableEq ι] (hx : x ∈ e.baseSet) (i j : ι) :
     e.localFrameCoeff I b i x (e.localFrame b j x) = if i = j then 1 else 0 := by
   rw [e.localFrame_apply_of_mem_baseSet b hx, localFrameCoeff_basisAt b hx]
+
+/-- The continuous inverse of a trivialization transports a model-fibre basis vector to the
+corresponding local-frame vector. -/
+theorem symmL_basis_eq_localFrame (hx : x ∈ e.baseSet) (i : ι) :
+    e.symmL 𝕜 x (b i) = e.localFrame b i x := by
+  rw [e.symmL_apply hx]
+  simp [Bundle.Trivialization.localFrame_apply_of_mem_baseSet,
+    Bundle.Trivialization.basisAt, hx]
+
+/-- A trivialization reads a vector of its local frame as the corresponding model-fibre basis
+vector. -/
+theorem continuousLinearMapAt_localFrame (hx : x ∈ e.baseSet) (i : ι) :
+    e.continuousLinearMapAt 𝕜 x (e.localFrame b i x) = b i := by
+  rw [← symmL_basis_eq_localFrame b hx i, e.continuousLinearMapAt_symmL hx]
 
 /-! ### Testing a hom-bundle section on a local frame -/
 
@@ -115,10 +132,8 @@ theorem contMDiffOn_hom_of_localFrame (hu : IsOpen u)
     rw [heh, Bundle.Trivialization.continuousLinearMap_apply]
     simp only [ContinuousLinearMap.comp_apply]
     rw [e.symmL_apply (hu' hy).1]
-    have hframe : e.symm y (b j) = e.localFrame b j y := by
-      simp [Bundle.Trivialization.localFrame_apply_of_mem_baseSet,
-        Bundle.Trivialization.basisAt, (hu' hy).1]
-    rw [hframe, Bundle.Trivialization.continuousLinearMapAt_apply_of_mem 𝕜 e' (hu' hy).2]
+    rw [← e.symmL_apply (R := 𝕜) (hu' hy).1, symmL_basis_eq_localFrame b (hu' hy).1,
+      Bundle.Trivialization.continuousLinearMapAt_apply_of_mem 𝕜 e' (hu' hy).2]
   have hcoord (j : ι) : ContMDiffOn I 𝓘(𝕜, F') n (fun y ↦ (eh ⟨y, A y⟩).2 (b j)) u := by
     refine ContMDiffOn.congr ?_ fun y hy ↦ key hy j
     exact (e'.contMDiffOn_section_iff hu (hu'.trans inter_subset_right)).1 (hA j)

@@ -188,6 +188,25 @@ theorem apply_columnOfRow (x : GridState n) (r : Fin n) : x (x.columnOfRow r) = 
 theorem columnOfRow_apply (x : GridState n) (c : Fin n) : x.columnOfRow (x c) = c := by
   simp [columnOfRow]
 
+/-- A grid state occupies a square in every column, so it meets every nonempty vertical band of
+squares. -/
+theorem not_disjoint_product_univ_pointSet (M : GridState n) {s : Finset (Fin n)}
+    (hs : s.Nonempty) : ¬Disjoint (s ×ˢ (Finset.univ : Finset (Fin n))) M.pointSet := by
+  obtain ⟨c, hc⟩ := hs
+  intro h
+  exact Finset.disjoint_left.mp h (Finset.mk_mem_product hc (Finset.mem_univ (M c)))
+    ((M.mk_mem_pointSet c (M c)).mpr rfl)
+
+/-- A grid state occupies a square in every row, so it meets every nonempty horizontal band of
+squares. -/
+theorem not_disjoint_univ_product_pointSet (M : GridState n) {t : Finset (Fin n)}
+    (ht : t.Nonempty) : ¬Disjoint ((Finset.univ : Finset (Fin n)) ×ˢ t) M.pointSet := by
+  obtain ⟨r, hr⟩ := ht
+  intro h
+  exact Finset.disjoint_left.mp h
+    (Finset.mk_mem_product (Finset.mem_univ (M.columnOfRow r)) hr)
+    ((M.mk_mem_pointSet (M.columnOfRow r) r).mpr (M.apply_columnOfRow r))
+
 /-- Point sets of grid states are equal exactly when the underlying permutations are equal. -/
 @[simp]
 theorem pointSet_inj {x y : GridState n} : x.pointSet = y.pointSet ↔ x = y := by

@@ -98,30 +98,11 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
   have hu :=
     geometricallyUnipotentPointsCommHopfAlgProperty.forall_isUnipotentPoint hJunipotent
   have hcr : Comodule.IsCompletelyReducible k (coordinateHopfAlgebra k n) (Fin n → k) := by
-    apply Comodule.IsCompletelyReducible.of_exists_isCompl
-    intro W
     cases n with
-    | zero =>
-        have hW : W = ⊥ := by
-          ext m
-          constructor
-          · intro _
-            rw [Subcomodule.mem_bot]
-            exact Subsingleton.elim _ _
-          · intro hm
-            exact (Subcomodule.mem_bot.mp hm) ▸ zero_mem W
-        refine ⟨⊤, ?_⟩
-        simpa [hW] using
-          (isCompl_bot_top : IsCompl (⊥ : Submodule k (Fin 0 → k)) ⊤)
+    | zero => exact Comodule.isCompletelyReducible_of_subsingleton
     | succ n =>
         let _ : NeZero n.succ := ⟨Nat.succ_ne_zero n⟩
-        exact (eq_bot_or_eq_top W).elim
-          (fun h ↦ ⟨⊤, by
-            simpa [h] using
-              (isCompl_bot_top : IsCompl (⊥ : Submodule k (Fin n.succ → k)) ⊤)⟩)
-          (fun h ↦ ⟨⊥, by
-            simpa [h] using
-              (isCompl_top_bot : IsCompl (⊤ : Submodule k (Fin n.succ → k)) ⊥)⟩)
+        exact Comodule.isCompletelyReducible_of_isSimpleOrder
   have htrivial :=
     mkQuotient_coact_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isCompletelyReducible
       hJnormal hu hcr
@@ -136,34 +117,18 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
 theorem reductiveCommHopfAlgProperty_finiteTypeCoordinateHopfAlgebra
     (k : Type u) [Field k] (n : Nat) :
     reductiveCommHopfAlgProperty k (finiteTypeCoordinateHopfAlgebra k n) := by
-  rw [reductiveCommHopfAlgProperty_iff]
   let e := coordinateHopfAlgebraFiniteTypeObjIso k n
-  refine ⟨(smoothCommHopfAlgProperty_iff _).mp <|
+  apply reductiveCommHopfAlgProperty_of_geometricFiber_iso k _
+    (finiteTypeCoordinateHopfAlgebra (AlgebraicClosure k) n)
+    ((smoothCommHopfAlgProperty_iff _).mp <|
       (smoothCommHopfAlgProperty k).prop_of_iso e
-        ((smoothCommHopfAlgProperty_iff _).mpr inferInstance),
-    (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e
-      (geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra k n), ?_⟩
-  intro I hI _ hU
-  let K := AlgebraicClosure k
-  let Hbar := FiniteTypeCommHopfAlgCat.baseChange (K := K)
-    (finiteTypeCoordinateHopfAlgebra k n)
-  let Gbar := finiteTypeCoordinateHopfAlgebra K n
-  let e : Hbar ≅ Gbar := finiteTypeCoordinateHopfAlgebraBaseChangeIso k K n
-  let f : Gbar →ₐc[K] Hbar := FiniteTypeCommHopfAlgCat.toBialgHom e.inv
-  have hf : Function.Bijective f := ConcreteCategory.bijective_of_isIso e.inv
-  let J : HopfIdeal K Gbar := I.comap f hf.2
-  have hJnormal : J.IsNormal := hI.comap_of_bijective f hf.1 hf.2
-  let qIso : FiniteTypeCommHopfAlgCat.quotient Gbar J ≅
-      FiniteTypeCommHopfAlgCat.quotient Hbar I :=
-    FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm I
-  have hJU : smoothUnipotentCommHopfAlgProperty K
-      (FiniteTypeCommHopfAlgCat.quotient Gbar J) :=
-    (smoothUnipotentCommHopfAlgProperty K).prop_of_iso qIso.symm hU
-  have hJ : J = HopfIdeal.augmentation K Gbar :=
-    eq_augmentation_of_isNormal_of_smoothUnipotent K n J hJnormal hJU
-  rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hf.2,
-    HopfIdeal.comap_augmentation]
-  exact hJ
+        ((smoothCommHopfAlgProperty_iff _).mpr inferInstance))
+    ((geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e
+      (geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra k n))
+    (finiteTypeCoordinateHopfAlgebraBaseChangeIso k (AlgebraicClosure k) n)
+  intro I hI hU
+  exact eq_augmentation_of_isNormal_of_smoothUnipotent
+    (AlgebraicClosure k) n I hI hU
 
 end
 

@@ -5,18 +5,26 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Geometry.Manifold.VectorBundle.Tangent
-public import Mathlib.Geometry.Manifold.MFDeriv.Basic
+public import Mathlib.Geometry.Manifold.MFDeriv.Atlas
+public import Mathlib.Geometry.Manifold.VectorBundle.LocalFrame
 
 /-!
-# Tangent bundles of open submanifolds
+# Tangent-bundle trivializations at their own base point, and open submanifolds
 
-This file identifies the tangent spaces of an open submanifold with those of its ambient manifold
+The canonical tangent-bundle trivialization at a point `x` is built from the chart at `x`, so on
+the fibre over `x` itself it is the identity.  This file records that fact in both directions.
+
+It then identifies the tangent spaces of an open submanifold with those of its ambient manifold
 and shows that, near each point, the inverse tangent-bundle trivializations agree under that
 identification.
 
 ## Main results
 
+* `TauCeti.Manifold.continuousLinearMapAt_trivializationAt_self` and
+  `TauCeti.Manifold.symmL_trivializationAt_self`: the canonical trivialization at `x` and its
+  inverse act as the identity on the fibre over `x`.
+* `TauCeti.Manifold.localFrame_trivializationAt_self`: consequently its local frame at `x` is the
+  chosen basis of the model space.
 * `TauCeti.Manifold.tangentSpaceOpenEquiv`: the canonical continuous linear equivalence between
   the tangent space of an open submanifold and the ambient tangent space.
 * `TauCeti.Manifold.mfderiv_subtype_val`: the differential of the inclusion is the canonical
@@ -27,7 +35,7 @@ identification.
 
 public section
 
-open Bundle Filter Manifold TopologicalSpace
+open Bundle Filter Manifold Module TopologicalSpace
 open scoped Bundle Manifold Topology
 
 noncomputable section
@@ -39,6 +47,47 @@ variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+
+section BasePoint
+
+variable [IsManifold I 1 M]
+
+/-- Read in the canonical trivialization at `x`, a tangent vector at `x` itself is its own
+coordinate vector: the trivialization is built from the chart at `x`, whose transition function
+with itself has derivative the identity. -/
+@[simp]
+theorem continuousLinearMapAt_trivializationAt_self (x : M) (v : TangentSpace I x) :
+    (trivializationAt E (TangentSpace I) x).continuousLinearMapAt 𝕜 x v = v := by
+  rw [TangentBundle.continuousLinearMapAt_trivializationAt_eq_core (mem_chart_source H x)]
+  exact (tangentBundleCore I M).coordChange_self (achart H x) x (mem_chart_source H x) v
+
+/-- The inverse form of `TauCeti.Manifold.continuousLinearMapAt_trivializationAt_self`: over its
+own base point, the inverse of the canonical trivialization is the identity. -/
+@[simp]
+theorem symmL_trivializationAt_self (x : M) (v : E) :
+    (trivializationAt E (TangentSpace I) x).symmL 𝕜 x v = v := by
+  rw [TangentBundle.symmL_trivializationAt_eq_core (mem_chart_source H x)]
+  exact (tangentBundleCore I M).coordChange_self (achart H x) x (mem_chart_source H x) v
+
+private theorem localFrame_apply_eq_symmL {ι : Type*} (b : Basis ι 𝕜 E)
+    (e : Trivialization E (TotalSpace.proj : TangentBundle I M → M)) [MemTrivializationAtlas e]
+    {x : M} (hx : x ∈ e.baseSet) (i : ι) :
+    e.localFrame b i x = e.symmL 𝕜 x (b i) := by
+  rw [Bundle.Trivialization.localFrame_apply_of_mem_baseSet _ _ hx,
+    Bundle.Trivialization.basisAt, Basis.map_apply,
+    Bundle.Trivialization.linearEquivAt_symm_apply, ← e.symmL_apply (R := 𝕜) hx]
+
+/-- Over its own base point, the local frame attached to the canonical trivialization at `x` is
+the given basis of the model space. -/
+@[simp]
+theorem localFrame_trivializationAt_self {ι : Type*} (b : Basis ι 𝕜 E) (x : M) (i : ι) :
+    (trivializationAt E (TangentSpace I) x).localFrame b i x = b i := by
+  have hx : x ∈ (trivializationAt E (TangentSpace I) x).baseSet :=
+    mem_baseSet_trivializationAt E (TangentSpace I) x
+  rw [localFrame_apply_eq_symmL b _ hx]
+  exact symmL_trivializationAt_self (I := I) x (b i)
+
+end BasePoint
 
 /-- The canonical identification between the tangent space of an open submanifold and the ambient
 tangent space. Both are Mathlib's type synonym for the common model vector space.

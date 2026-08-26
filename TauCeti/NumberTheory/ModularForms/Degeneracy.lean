@@ -13,12 +13,21 @@ public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 
+import TauCeti.Analysis.Complex.UpperHalfPlane.Manifold
+
 /-!
 # The level-raising degeneracy maps `V_d`
 
 For a positive integer `d`, the *level-raising* (or *degeneracy*) map `V_d` sends a function on
 the upper half-plane to `τ ↦ f (d τ)`. It is the slash action by `diag(d, 1)`, renormalized by
 `d ^ (1 - k)` so that no power of `d` is introduced.
+
+Properties of `f` transport **up** to `V_d f` — the level of the congruence subgroup, the
+eigenvalue and nebentypus transport, the `q`-expansion — which is what makes `V_d` a map of
+modular forms. Two of them also read back **down**: the slash transformation law
+(`slash_conjScale_eq_smul_of_slash_scaleGL`) and holomorphy
+(`mdifferentiable_of_comp_scaleGL_smul`), which is what recognizes a bare function as a form at
+the lower level. The `q`-expansion results go up only.
 
 ## Main definitions
 
@@ -48,6 +57,12 @@ the upper half-plane to `τ ↦ f (d τ)`. It is the slash action by `diag(d, 1)
   conjugate of a `Γ₀(dM)` matrix lies in `Γ₀(M)` with the same lower-right entry, `V_d` carries
   `M_k(Γ₁(M), χ)` into `M_k(Γ₁(dM), χ ∘ ZMod.unitsMap)`, and likewise for `S_k`: the nebentypus
   of `V_d f` is that of `f` read along `(ZMod (dM))ˣ → (ZMod M)ˣ`.
+* `TauCeti.slash_conjScale_eq_smul_of_slash_scaleGL`,
+  `TauCeti.mdifferentiable_of_comp_scaleGL_smul`: the descent, for an `f : ℍ → ℂ` not assumed to
+  be a form. If the level-raise of `f` is an eigenvector of the slash by `γ`, then `f` is one
+  for `conjScale d γ` with the same eigenvalue, and if the level-raise of `f` is holomorphic
+  then so is `f`. These are what read a transformation law and holomorphy back down from
+  `V_d f` to `f`, as the level-lowering step of the conductor theorem does.
 * `TauCeti.ModularForm.qExpansion_levelRaise`, `TauCeti.CuspForm.qExpansion_levelRaise`: the
   `q`-expansion of `V_d f` is that of `f` with `q` replaced by `q ^ d`, that is, its
   `PowerSeries.expand d`; on coefficients (`TauCeti.ModularForm.qExpansion_levelRaise_coeff`
@@ -61,13 +76,22 @@ and the conductor statement of Layer 4 is phrased with this normalization of `V_
 
 * Diamond–Shurman, *A first course in modular forms*, §5.6
 * Miyake, *Modular forms*, §4.6
+* The descent section adapts [AINTLIB](https://github.com/CBirkbeck/AINTLIB) commit
+  `2baa76f74`, Apache-2.0, Chris Birkbeck,
+  `projects/LeanModularForms/LeanModularForms/Eigenforms/ConductorTheorem.lean` lines 84-137 —
+  the level-lowering block of `conductor_theorem_dichotomy_cuspForm_strong`. Half of that block
+  is deliberately not ported: `ModularGroup_T_mem_Gamma1`, `conductor_slash_levelRaise_eq` and
+  `smul_levelRaiseFun` already exist here in more general form (`T_zpow_mem_Gamma1`,
+  `ModularForm.slash_levelRaise_eq_smul` with `mem_modFormCharSpace_iff_nebentypus`, and the
+  `ℂ`-linearity of `levelRaiseₗ`), and AINTLIB's two `fun_eq_..._inv_smul` lemmas are not
+  needed, mathlib's `mdifferentiable_smul` reaching the holomorphy descent directly.
 -/
 
 public noncomputable section
 
 open Matrix Matrix.SpecialLinearGroup UpperHalfPlane CongruenceSubgroup Function
 
-open scoped MatrixGroups ModularForm Pointwise
+open scoped Manifold MatrixGroups ModularForm Pointwise
 
 namespace TauCeti
 
@@ -128,6 +152,22 @@ lemma slash_scaleGL_apply [NeZero d] (k : ℤ) (f : ℍ → ℂ) (τ : ℍ) :
     (f ∣[k] scaleGL d) τ = (d : ℂ) ^ (k - 1) * f (scaleGL d • τ) := by
   rw [ModularForm.slash_apply, σ_eq_refl_of_det_pos val_det_scaleGL_pos]
   simp [mul_comm]
+
+/-- **The defining formula for `V_d`, for a bare function**: the renormalized slash
+`d ^ (1 - k) • (f ∣[k] diag(d, 1))` is `τ ↦ f (d τ)`, with no stray power of `d`. This is
+`ModularForm.levelRaise_apply` for an `f : ℍ → ℂ` that is not yet known to be a modular form,
+which is the situation of the conductor theorem: there the transformation law of `f` is what is
+being proved, so `f` cannot be assumed to carry one.
+
+Stated between functions rather than pointwise, because that is the form in which a hypothesis
+`⇑g = d ^ (1 - k) • (f ∣[k] diag(d, 1))` is rewritten; `congrFun` gives the values. It is not a
+`simp` lemma: `Pi.smul_apply` takes the pointwise left-hand side out of simp-normal form. -/
+lemma smul_slash_scaleGL_eq [NeZero d] (k : ℤ) (f : ℍ → ℂ) :
+    (d : ℂ) ^ (1 - k) • (f ∣[k] scaleGL d) = fun τ ↦ f (scaleGL d • τ) := by
+  have hd : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne d)
+  funext τ
+  rw [Pi.smul_apply, smul_eq_mul, slash_scaleGL_apply, ← mul_assoc, ← zpow_add₀ hd]
+  simp
 
 /-! ### The level-raising operator -/
 
@@ -431,6 +471,44 @@ lemma CuspForm.slash_levelRaise_eq_smul [𝒢'.HasDetOne] [NeZero d]
   rw [σ_eq_refl_of_det_pos val_det_scaleGL_pos, ContinuousAlgEquiv.refl_apply]
 
 end Slash
+
+/-! ### Descending along the level-raise -/
+
+section Descent
+
+/-- Slashing by a fixed matrix can be cancelled: it is a group action, so slashing by `A⁻¹`
+undoes it. -/
+private lemma slash_left_cancel (k : ℤ) (A : GL (Fin 2) ℝ) {f g : ℍ → ℂ}
+    (h : f ∣[k] A = g ∣[k] A) : f = g := by
+  simpa [← SlashAction.slash_mul] using congrArg (· ∣[k] A⁻¹) h
+
+/-- **Eigenvalue descent**, the converse of `ModularForm.slash_levelRaise_eq_smul`. If the
+level-raise of `f` is an eigenvector of the slash by `γ` with eigenvalue `z`, then `f` itself is
+an eigenvector of the slash by the conjugate matrix `conjScale d γ`, with the same eigenvalue.
+
+Both sides of the hypothesis and of the conclusion scale together, so the normalizing scalar
+`d ^ (1 - k)` of `V_d` cancels and does not appear. Applied to `γ ∈ Γ₀(dM)`, this is what
+descends a nebentypus through `V_d`: the level-lowering step of the conductor theorem, where
+`f` is only known to be a function and this transformation law is what exhibits it as a form. -/
+lemma slash_conjScale_eq_smul_of_slash_scaleGL [NeZero d] (f : ℍ → ℂ) (γ : SL(2, ℤ)) {c : ℤ}
+    (hc : γ 1 0 = d * c) {z : ℂ}
+    (hf : (f ∣[k] scaleGL d) ∣[k] mapGL ℝ γ = z • (f ∣[k] scaleGL d)) :
+    f ∣[k] mapGL ℝ (conjScale d γ c hc) = z • f := by
+  rw [slash_scaleGL_slash_mapGL f γ hc] at hf
+  refine slash_left_cancel k (scaleGL d) ?_
+  rw [hf, _root_.ModularForm.smul_slash, σ_eq_refl_of_det_pos val_det_scaleGL_pos,
+    ContinuousAlgEquiv.refl_apply]
+
+/-- **Holomorphy descent.** If `τ ↦ f (d τ)` is holomorphic on `ℍ`, then so is `f`. This is
+`UpperHalfPlane.mdifferentiable_comp_smul_iff` — holomorphy is invariant under any
+positive-determinant Möbius action — read at `g = diag(d, 1)`; with `smul_slash_scaleGL_eq` it
+descends holomorphy through `V_d` at every weight. -/
+lemma mdifferentiable_of_comp_scaleGL_smul [NeZero d] {f : ℍ → ℂ}
+    (hf : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) fun τ ↦ f (scaleGL d • τ)) :
+    MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f :=
+  (UpperHalfPlane.mdifferentiable_comp_smul_iff val_det_scaleGL_pos).mp hf
+
+end Descent
 
 /-! ### The nebentypus character of a level-raise -/
 

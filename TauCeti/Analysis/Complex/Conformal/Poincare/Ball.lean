@@ -371,7 +371,7 @@ theorem pseudoHyperbolicExpr_lt_iff_mem_ball (ha : ‖a‖ < 1) (hz : ‖z‖ < 
     exact iff_of_false (not_lt.2 (ht.le.trans (pseudoHyperbolicExpr_nonneg z a)))
       (not_lt.2 ((pseudoHyperbolicRadius_neg ha hD ht).le.trans dist_nonneg))
   have hdenpos : 0 < ‖(1 : ℂ) - conj a * z‖ :=
-    norm_pos_iff.2 (one_sub_conj_mul_ne_zero_of_norm_lt_one hz ha)
+    norm_one_sub_conj_mul_pos_of_norm_lt_one hz ha
   have hid := sq_norm_sub_sub_mul_sq_norm_one_sub_conj_mul a z t hD.ne'
   rw [pseudoHyperbolicExpr_def, norm_div, div_lt_iff₀ hdenpos, mem_ball, dist_eq_norm,
     ← sq_lt_sq₀ (norm_nonneg _) (by positivity),
@@ -391,7 +391,7 @@ theorem pseudoHyperbolicExpr_le_iff_mem_closedBall (ha : ‖a‖ < 1) (hz : ‖z
     exact iff_of_false (not_le.2 (ht.trans_le (pseudoHyperbolicExpr_nonneg z a)))
       (not_le.2 ((pseudoHyperbolicRadius_neg ha hD ht).trans_le dist_nonneg))
   have hdenpos : 0 < ‖(1 : ℂ) - conj a * z‖ :=
-    norm_pos_iff.2 (one_sub_conj_mul_ne_zero_of_norm_lt_one hz ha)
+    norm_one_sub_conj_mul_pos_of_norm_lt_one hz ha
   have hid := sq_norm_sub_sub_mul_sq_norm_one_sub_conj_mul a z t hD.ne'
   rw [pseudoHyperbolicExpr_def, norm_div, div_le_iff₀ hdenpos, mem_closedBall, dist_eq_norm,
     ← sq_le_sq₀ (norm_nonneg _) (by positivity),

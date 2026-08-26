@@ -13,11 +13,15 @@ import TauCeti.Topology.DiscreteSeparation
 # Analyticity through `ofComplex`
 
 A function holomorphic on the upper half-plane, extended to `ℂ` by `ofComplex`, is
-analytic at every point of the open upper half-plane.
+analytic at every point of the open upper half-plane. Holomorphy on `ℍ` is also invariant
+under the Möbius action of a positive-determinant real matrix, the biholomorphism
+`UpperHalfPlane.mdifferentiable_smul` exhibits.
 
 ## Main declarations
 
 * `TauCeti.UpperHalfPlane.analyticAt_comp_ofComplex`.
+* `TauCeti.UpperHalfPlane.mdifferentiable_comp_smul_iff` — `τ ↦ f (g • τ)` is holomorphic
+  exactly when `f` is, for `g : GL (Fin 2) ℝ` of positive determinant.
 * `TauCeti.UpperHalfPlane.not_accPt_zeros_comp_ofComplex` and
   `TauCeti.UpperHalfPlane.exists_isOpen_zeros_inter` — a subset's zeros isolate in an
   open neighbourhood.
@@ -32,7 +36,7 @@ public section
 
 open UpperHalfPlane
 
-open scoped Manifold
+open scoped Manifold MatrixGroups
 
 namespace TauCeti.UpperHalfPlane
 
@@ -79,6 +83,24 @@ lemma exists_isOpen_zeros_inter {g : ℍ → ℂ} (hg : MDiff g) (hg0 : g ≠ 0)
     ext z
     exact ⟨fun hz => ⟨hz.1, hW hz.1, hz.2⟩, fun hz => ⟨hz.1, hz.2.2⟩⟩
   rw [hmassage hUV, hmassage hK, hUZ]
+
+/-! ### Holomorphy and the Möbius action -/
+
+/-- **Holomorphy is invariant under a positive-determinant Möbius action.** For any
+`g : GL (Fin 2) ℝ` with `0 < det g`, the function `τ ↦ f (g • τ)` is holomorphic exactly when
+`f` is: `g` acts on `ℍ` by a biholomorphism, whose inverse is the action of `g⁻¹`, again of
+positive determinant. -/
+lemma mdifferentiable_comp_smul_iff {g : GL (Fin 2) ℝ} (hg : 0 < (g.det : ℝ)) {f : ℍ → ℂ} :
+    MDiff (fun τ ↦ f (g • τ)) ↔ MDiff f := by
+  have hg' : 0 < ((g⁻¹).det : ℝ) := by
+    rw [map_inv, Units.val_inv_eq_inv_val]
+    exact inv_pos.mpr hg
+  refine ⟨fun hf ↦ ?_, fun hf ↦ hf.comp (mdifferentiable_smul hg)⟩
+  have hcomp : f = (fun τ ↦ f (g • τ)) ∘ fun τ : ℍ ↦ g⁻¹ • τ := by
+    funext τ
+    simp [smul_smul]
+  rw [hcomp]
+  exact hf.comp (mdifferentiable_smul hg')
 
 end TauCeti.UpperHalfPlane
 

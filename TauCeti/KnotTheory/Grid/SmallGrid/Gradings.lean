@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.KnotTheory.Grid.Grading.Parity
 public import TauCeti.KnotTheory.Grid.Unknot
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.NormNum
@@ -20,7 +21,12 @@ graph and `X` markings on the transposition graph.
 The named states are available from `StateCardinality` and the standard diagram itself from
 `Unknot`, where it is the smallest member of the unknot grid family. Here we combine that
 small-grid API with the integer grading API to compute the two generators' Maslov and Alexander
-gradings in this concrete diagram.
+gradings in this concrete diagram, and package the diagram with its odd-component witness.
+
+## Main definitions
+
+* `TauCeti.OddComponentGridDiagram.twoByTwo`: the standard two-by-two unknot grid packaged with
+  its odd-component witness.
 
 ## Main results
 
@@ -224,5 +230,18 @@ theorem alexander_twoByTwo_eq_neg_one_or_eq_zero (x : GridState 2) :
   alexander_eq_neg_one_or_eq_zero_of_two twoByTwo x
 
 end GridDiagram
+
+namespace OddComponentGridDiagram
+
+/-- The standard `2 × 2` unknot grid diagram, as an odd-component grid diagram: it presents a
+knot, so its component count is one. -/
+abbrev twoByTwo : OddComponentGridDiagram 2 :=
+  ⟨GridDiagram.twoByTwo, by
+    have h : GridDiagram.twoByTwo.componentCount = 1 :=
+      GridDiagram.unknot_zero ▸ (GridDiagram.isKnot_def _).1 (GridDiagram.isKnot_unknot 0)
+    rw [h]
+    exact odd_one⟩
+
+end OddComponentGridDiagram
 
 end TauCeti

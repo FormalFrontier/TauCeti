@@ -52,6 +52,9 @@ verifies for the standard triple of `sl (Fin 2) K`.
 * `TauCeti.linearIndependent_pow_toEnd_f`: the `n + 1` vectors of the string are linearly
   independent, being eigenvectors of `h` for the distinct eigenvalues `n, n - 2, …, -n`.
 * `TauCeti.weightStringSubmodule_eq_top`: a primitive vector of an irreducible module generates it.
+* `TauCeti.pow_toEnd_e_pow_toEnd_f_self` and `TauCeti.pow_toEnd_e_pow_toEnd_f_eq_zero`: raising a
+  string vector back up returns a multiple of the primitive vector, with the explicit ladder
+  coefficient, and raising it further gives zero.
 * `TauCeti.basisOfHasPrimitiveVectorWith`: the resulting ladder basis of an irreducible module,
   with the action of the triple on it read off in `TauCeti.lie_h_basisOfHasPrimitiveVectorWith`,
   `TauCeti.lie_f_basisOfHasPrimitiveVectorWith` and
@@ -139,6 +142,31 @@ theorem weightStringSubmodule_eq_top [LieModule.IsIrreducible K (t.toLieSubalgeb
     (P : t.HasPrimitiveVectorWith m μ) : weightStringSubmodule P = ⊤ :=
   LieSubmodule.eq_top_of_isIrreducible _ _ _ _
 
+/-! ### Climbing back up the string -/
+
+/-- **Raising a string vector back to the top.** Applying the raising operator `j` times to the
+`j`-th vector `fʲ • m` of the weight string of a primitive vector of weight `μ` returns `m`, scaled
+by the product of the ladder coefficients `(i + 1)(μ - i)` picked up on the way up. -/
+theorem pow_toEnd_e_pow_toEnd_f_self (P : t.HasPrimitiveVectorWith m μ) (j : ℕ) :
+    (toEnd K L M e ^ j) ((toEnd K L M f ^ j) m)
+      = (∏ i ∈ Finset.range j, (((i : K) + 1) * (μ - i))) • m := by
+  induction j with
+  | zero => simp
+  | succ j ih =>
+    rw [pow_succ (toEnd K L M e), Module.End.mul_apply, toEnd_apply_apply,
+      P.lie_e_pow_succ_toEnd_f j, map_smul, ih, smul_smul, Finset.prod_range_succ]
+    congr 1
+    ring
+
+/-- **Raising past the top of the string gives zero.** Applying the raising operator more times
+than the string vector has been lowered lands above the primitive vector, which the raising
+operator kills. -/
+theorem pow_toEnd_e_pow_toEnd_f_eq_zero (P : t.HasPrimitiveVectorWith m μ) {i j : ℕ}
+    (hij : i < j) : (toEnd K L M e ^ j) ((toEnd K L M f ^ i) m) = 0 := by
+  refine Module.End.pow_map_zero_of_le hij ?_
+  rw [pow_succ' (toEnd K L M e), Module.End.mul_apply, pow_toEnd_e_pow_toEnd_f_self P i, map_smul,
+    toEnd_apply_apply, P.lie_e, smul_zero]
+
 end CommRing
 
 section Domain
@@ -157,6 +185,20 @@ step `n` gives zero. Mathlib's
 theorem pow_toEnd_f_eq_zero_of_lt [IsNoetherian K M] (P : t.HasPrimitiveVectorWith m (n : K))
     {i : ℕ} (hi : n < i) : (toEnd K L M f ^ i) m = 0 :=
   Module.End.pow_map_zero_of_le hi (P.pow_toEnd_f_eq_zero_of_eq_nat rfl)
+
+/-- The weight string of a primitive vector of weight `n : ℕ` may be truncated to its `n + 1`
+nonzero positions without changing its span: everything past step `n` is zero. -/
+theorem span_range_pow_toEnd_f_eq_span_range_fin [IsNoetherian K M]
+    (P : t.HasPrimitiveVectorWith m (n : K)) :
+    Submodule.span K (Set.range fun i : ℕ ↦ (toEnd K L M f ^ i) m) =
+      Submodule.span K (Set.range fun i : Fin (n + 1) ↦ (toEnd K L M f ^ (i : ℕ)) m) := by
+  refine le_antisymm (Submodule.span_le.2 ?_) (Submodule.span_le.2 ?_)
+  · rintro _ ⟨i, rfl⟩
+    rcases le_or_gt i n with hi | hi
+    · exact Submodule.subset_span ⟨⟨i, by omega⟩, rfl⟩
+    · simp [pow_toEnd_f_eq_zero_of_lt P hi]
+  · rintro _ ⟨i, rfl⟩
+    exact Submodule.subset_span ⟨(i : ℕ), rfl⟩
 
 /-! ### Linear independence of the string -/
 
@@ -182,17 +224,8 @@ theorem span_range_pow_toEnd_f_eq_top [IsNoetherian K M]
     [LieModule.IsIrreducible K (t.toLieSubalgebra K) M]
     (P : t.HasPrimitiveVectorWith m (n : K)) :
     Submodule.span K (Set.range fun i : Fin (n + 1) ↦ (toEnd K L M f ^ (i : ℕ)) m) = ⊤ := by
-  have hspan : Submodule.span K (Set.range fun i : ℕ ↦ (toEnd K L M f ^ i) m) =
-      Submodule.span K (Set.range fun i : Fin (n + 1) ↦ (toEnd K L M f ^ (i : ℕ)) m) := by
-    refine le_antisymm (Submodule.span_le.2 ?_) (Submodule.span_le.2 ?_)
-    · rintro _ ⟨i, rfl⟩
-      rcases le_or_gt i n with hi | hi
-      · exact Submodule.subset_span ⟨⟨i, by omega⟩, rfl⟩
-      · have hzero : (toEnd K L M f ^ i) m = 0 := pow_toEnd_f_eq_zero_of_lt P hi
-        simp [hzero]
-    · rintro _ ⟨i, rfl⟩
-      exact Submodule.subset_span ⟨(i : ℕ), rfl⟩
-  rw [← hspan, ← weightStringSubmodule_toSubmodule P, weightStringSubmodule_eq_top P]
+  rw [← span_range_pow_toEnd_f_eq_span_range_fin P, ← weightStringSubmodule_toSubmodule P,
+    weightStringSubmodule_eq_top P]
   simp
 
 /-- **The ladder basis.** A module irreducible over the subalgebra of an `sl₂` triple, with a

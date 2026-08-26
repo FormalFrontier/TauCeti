@@ -31,6 +31,8 @@ the precise affine-group statement that the geometric fibre is the trivial group
 * `TauCeti.reductiveCommHopfAlgProperty`: reductivity for finite-type commutative Hopf algebras
   over a field.
 * `TauCeti.ReductiveCommHopfAlgCat`: the corresponding full subcategory.
+* `TauCeti.reductiveCommHopfAlgProperty_of_geometricFiber_iso`: establish reductivity using an
+  isomorphic direct model of the geometric fibre.
 * `TauCeti.reductiveCommHopfAlgProperty.eq_augmentation`: every connected normal smooth
   unipotent closed subgroup of a reductive group's geometric fibre is trivial.
 * `TauCeti.reductiveCommHopfAlgProperty.bot_eq_augmentation`: the zero Hopf ideal of a reductive
@@ -97,6 +99,42 @@ instance (k : Type u) [Field k] :
     (reductiveCommHopfAlgProperty k).IsClosedUnderIsomorphisms :=
   inferInstanceAs ((geometricNormalSubgroupFreeCommHopfAlgProperty k
     (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k))).IsClosedUnderIsomorphisms)
+
+/-- Establish reductivity by identifying the geometric fibre with a direct model on which normal
+smooth unipotent closed subgroups can be eliminated. This packages the transport of Hopf ideals,
+normality, the quotient property, and the augmentation ideal across the identification. -/
+theorem reductiveCommHopfAlgProperty_of_geometricFiber_iso
+    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (G : FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
+    (hsmooth : Algebra.Smooth k H)
+    (hconnected : geometricallyConnectedCommHopfAlgProperty k H.obj)
+    (e : FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H ≅ G)
+    (htrivial : ∀ (I : HopfIdeal (AlgebraicClosure k) G), I.IsNormal →
+      smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.quotient G I) →
+      I = HopfIdeal.augmentation (AlgebraicClosure k) G) :
+    reductiveCommHopfAlgProperty k H := by
+  rw [reductiveCommHopfAlgProperty_iff]
+  refine ⟨hsmooth, hconnected, ?_⟩
+  intro I hI _ hU
+  let f : G →ₐc[AlgebraicClosure k]
+      FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H :=
+    FiniteTypeCommHopfAlgCat.toBialgHom e.inv
+  have hf : Function.Bijective f := ConcreteCategory.bijective_of_isIso e.inv
+  let J : HopfIdeal (AlgebraicClosure k) G := I.comap f hf.2
+  have hJnormal : J.IsNormal := hI.comap_of_bijective f hf.1 hf.2
+  let qIso : FiniteTypeCommHopfAlgCat.quotient G J ≅
+      FiniteTypeCommHopfAlgCat.quotient
+        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I :=
+    FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm I
+  have hJU : smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)
+      (FiniteTypeCommHopfAlgCat.quotient G J) :=
+    (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso qIso.symm hU
+  have hJ : J = HopfIdeal.augmentation (AlgebraicClosure k) G :=
+    htrivial J hJnormal hJU
+  rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hf.2,
+    HopfIdeal.comap_augmentation]
+  exact hJ
 
 /-- The category of reductive finite-type commutative Hopf algebras over a field. -/
 abbrev ReductiveCommHopfAlgCat (k : Type u) [Field k] :=

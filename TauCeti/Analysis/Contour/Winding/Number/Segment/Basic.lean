@@ -14,7 +14,7 @@ import TauCeti.MeasureTheory.Integral.OddSymmetric
 
 A straight segment traversed symmetrically **through** its reference point contributes nothing to
 the generalized winding number about that point. The mechanism is oddness: for the real inclusion
-`γ t = t` on `[-R, R]`, the index integrand `γ̇ t / (γ t - 0) = 1 / t` is odd, so every
+`γ t = t` on `[-R, R]`, the index integrand `γ' t / (γ t - 0) = 1 / t` is odd, so every
 `ε`-truncated integral over the symmetric interval vanishes *identically* — not merely in the
 limit — and the principal value is `0` with no limiting argument at all. The general segment
 `γ t = v · t + z₀` about `z₀` then follows by transporting along the affine change of coordinates

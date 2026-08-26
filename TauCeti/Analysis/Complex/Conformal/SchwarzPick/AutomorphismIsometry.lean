@@ -48,12 +48,12 @@ private lemma poincare_defect_quotient {a : ℂ} (ha : ‖a‖ < 1) {z : ℂ} (h
     ‖(1 - (starRingEnd ℂ) a * a) / (1 - (starRingEnd ℂ) a * z) ^ 2‖
         / (1 - ‖(z - a) / (1 - (starRingEnd ℂ) a * z)‖ ^ 2)
       = 1 / (1 - ‖z‖ ^ 2) := by
-  have hden : (1 : ℂ) - (starRingEnd ℂ) a * z ≠ 0 :=
-    one_sub_conj_mul_ne_zero_of_norm_lt_one hz ha
-  have hD_pos : (0 : ℝ) < ‖(1 : ℂ) - (starRingEnd ℂ) a * z‖ ^ 2 :=
-    pow_pos (norm_pos_iff.mpr hden) 2
-  have hz_pos : (0 : ℝ) < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
-  have ha_pos : (0 : ℝ) < 1 - ‖a‖ ^ 2 := by nlinarith [norm_nonneg a]
+  have hDpos : (0 : ℝ) < ‖(1 : ℂ) - (starRingEnd ℂ) a * z‖ :=
+    norm_one_sub_conj_mul_pos_of_norm_lt_one hz ha
+  have hDne : ‖(1 : ℂ) - (starRingEnd ℂ) a * z‖ ≠ 0 := hDpos.ne'
+  have hD_pos : (0 : ℝ) < ‖(1 : ℂ) - (starRingEnd ℂ) a * z‖ ^ 2 := pow_pos hDpos 2
+  have hz_pos : (0 : ℝ) < 1 - ‖z‖ ^ 2 := one_sub_sq_norm_pos_of_norm_lt_one hz
+  have ha_pos : (0 : ℝ) < 1 - ‖a‖ ^ 2 := one_sub_sq_norm_pos_of_norm_lt_one ha
   -- Norm of the derivative factor: `(1 - ‖a‖ ^ 2) / ‖1 - conj a * z‖ ^ 2`.
   have hnum : ‖(1 - (starRingEnd ℂ) a * a) / (1 - (starRingEnd ℂ) a * z) ^ 2‖
       = (1 - ‖a‖ ^ 2) / ‖(1 : ℂ) - (starRingEnd ℂ) a * z‖ ^ 2 := by
