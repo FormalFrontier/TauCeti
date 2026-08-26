@@ -326,7 +326,7 @@ lemma rationalFunctionsMul_neg_comp :
 
 omit [∀ x : CodimensionOnePoint X, IsDiscreteValuationRing (X.presheaf.stalk (x : X))] in
 /-- The divisor bookkeeping behind `SchemeWeilDivisor.sheafMulIso`. -/
-lemma sub_principalDivisor_sub_principalDivisor_neg (D : SchemeWeilDivisor X) :
+private lemma sub_principalDivisor_sub_principalDivisor_neg (D : SchemeWeilDivisor X) :
     D - (WeilDivisor.OrderSystem.ofScheme X).principalDivisor g -
         (WeilDivisor.OrderSystem.ofScheme X).principalDivisor (-g) = D := by
   rw [WeilDivisor.OrderSystem.principalDivisor_neg]
@@ -354,14 +354,15 @@ lemma sheafMulIso_hom (D : SchemeWeilDivisor X) :
     (sheafMulIso g D).hom = sheafMul g D := by
   rw [sheafMulIso]
 
-/-- The inverse morphism of `sheafMulIso` is multiplication by `g⁻¹`, followed by transport
-along the resulting equality of divisors. -/
-@[simp]
-lemma sheafMulIso_inv (D : SchemeWeilDivisor X) :
-    (sheafMulIso g D).inv =
-      sheafMul (-g) (D - (WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) ≫
-        eqToHom (congrArg sheaf (sub_principalDivisor_sub_principalDivisor_neg g D)) := by
-  rw [sheafMulIso]
+/-- The inverse morphism of `sheafMulIso`, included into `𝒦_X`, is multiplication by `g⁻¹`. -/
+@[reassoc (attr := simp)]
+lemma sheafMulIso_inv_ι (D : SchemeWeilDivisor X) :
+    (sheafMulIso g D).inv ≫ sheafι D =
+      sheafι (D - (WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) ≫
+        Scheme.rationalFunctionsMul X
+          ((Additive.toMul (-g) : X.functionFieldˣ) : X.functionField) := by
+  rw [← cancel_epi (sheafMulIso g D).hom, Iso.hom_inv_id_assoc, sheafMulIso_hom,
+    sheafMul_ι_assoc, rationalFunctionsMul_comp_neg, Category.comp_id]
 
 variable {g}
 
