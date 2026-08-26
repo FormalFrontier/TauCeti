@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
 public import TauCeti.Algebra.HopfAlgebra.Kernel
+import TauCeti.Algebra.TensorProduct.Injective
 
 /-!
 # Normal scheme-theoretic images
@@ -28,7 +29,7 @@ with `H ⊗ ker f`, which is precisely normality of the image Hopf ideal.
 
 ## Main declarations
 
-* `TauCeti.HopfIdeal.IsNormal.comapOfField_of_injective`: inverse image along an injective
+* `TauCeti.HopfIdeal.IsNormal.comap_of_injective`: inverse image along an injective
   bialgebra morphism over a field preserves normality.
 * `TauCeti.HopfIdeal.isNormal_ker_of_conjugation_equivariant`: the scheme-theoretic image of an
   equivariant affine-group homomorphism is normal.
@@ -66,15 +67,15 @@ normality.
 Contravariantly, the scheme-theoretic image of a normal closed affine subgroup under a
 surjective affine-group morphism is normal. Injectivity is used only to reflect vanishing after
 tensoring the first coordinate map. -/
-theorem IsNormal.comapOfField_of_injective {I : HopfIdeal k K} (hI : I.IsNormal)
+theorem IsNormal.comap_of_injective {I : HopfIdeal k K} (hI : I.IsNormal)
     (f : H →ₐc[k] K) (hf : Function.Injective f) :
-    (I.comapOfField f).IsNormal := by
+    (I.comap f).IsNormal := by
   rw [isNormal_iff_conjugation_mem]
   intro x hx
   let q : K →ₐ[k] K ⧸ I.toIdeal := Ideal.Quotient.mkₐ k I.toIdeal
   let g : H →ₐ[k] K ⧸ I.toIdeal := q.comp f.toAlgHom
   have hqker : RingHom.ker q = I.toIdeal := Ideal.Quotient.mkₐ_ker k I.toIdeal
-  have hconjK := hI.conjugation_mem (mem_comapOfField.mp hx)
+  have hconjK := hI.conjugation_mem (mem_comap.mp hx)
   -- First push conjugation-stability through the quotient of the target.
   have hzeroK :
       Algebra.TensorProduct.map (AlgHom.id k K) q
@@ -103,8 +104,8 @@ theorem IsNormal.comapOfField_of_injective {I : HopfIdeal k K} (hI : I.IsNormal)
             exact congrArg (Algebra.TensorProduct.map (AlgHom.id k K) q)
               (AlgHom.congr_fun (HopfAlgebra.tensorProduct_map_comp_conjugationAlgHom f) x)
       _ = 0 := hzeroK
-  have hgker : (I.comapOfField f).toIdeal = RingHom.ker g := by
-    rw [comapOfField_toIdeal]
+  have hgker : (I.comap f).toIdeal = RingHom.ker g := by
+    rw [comap_toIdeal]
     ext y
     simp [g, q, Ideal.Quotient.eq_zero_iff_mem, mem_toIdeal]
   rw [hgker, ← ker_lTensor_eq_rightTensorIdeal g, RingHom.mem_ker]
@@ -114,7 +115,8 @@ theorem IsNormal.comapOfField_of_injective {I : HopfIdeal k K} (hI : I.IsNormal)
         Algebra.TensorProduct.map f.toAlgHom g := by
     rw [← Algebra.TensorProduct.map_comp, AlgHom.comp_id, AlgHom.id_comp]
   -- Finally reflect vanishing through the injective first tensor-factor map.
-  apply tensorProduct_map_injective f.toAlgHom (AlgHom.id k (K ⧸ I.toIdeal)) hf
+  apply Algebra.TensorProduct.map_injective_of_injective f.toAlgHom
+    (AlgHom.id k (K ⧸ I.toIdeal)) hf
     Function.injective_id
   calc
     Algebra.TensorProduct.map f.toAlgHom (AlgHom.id k (K ⧸ I.toIdeal))

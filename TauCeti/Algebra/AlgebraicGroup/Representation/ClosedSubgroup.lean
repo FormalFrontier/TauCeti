@@ -115,14 +115,14 @@ theorem eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one
     simpa only [corestrict_coact_apply] using htrivial m
   have haugmentationQ : HopfIdeal.augmentation R Q = ⊥ :=
     augmentation_eq_bot_of_isFaithful_of_coact_eq_tmul_one hfaithfulQ htrivialQ
-  have hcomapBot : (⊥ : HopfIdeal R Q).comap q hq = I := by
+  have hcomapBot : (⊥ : HopfIdeal R Q).comapOfSurjective q hq = I := by
     ext x
-    rw [HopfIdeal.mem_comap, HopfIdeal.mem_bot,
+    rw [HopfIdeal.mem_comapOfSurjective, HopfIdeal.mem_bot,
       CommHopfAlgCat.mkQuotient_eq_zero_iff, HopfIdeal.mem_toIdeal]
   calc
-    I = (⊥ : HopfIdeal R Q).comap q hq := hcomapBot.symm
-    _ = (HopfIdeal.augmentation R Q).comap q hq := by rw [haugmentationQ]
-    _ = HopfIdeal.augmentation R H := HopfIdeal.comap_augmentation q hq
+    I = (⊥ : HopfIdeal R Q).comapOfSurjective q hq := hcomapBot.symm
+    _ = (HopfIdeal.augmentation R Q).comapOfSurjective q hq := by rw [haugmentationQ]
+    _ = HopfIdeal.augmentation R H := HopfIdeal.comapOfSurjective_augmentation q hq
 
 end TrivialFaithful
 

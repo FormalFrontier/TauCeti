@@ -108,15 +108,15 @@ instance (k : Type u) [Field k] :
     let f : H.obj.obj →ₐc[k] K.obj.obj := e₁.hom.hom
     have hf : Function.Surjective f := ConcreteCategory.bijective_of_isIso e₁.hom |>.2
     apply (adjointSemisimpleCommHopfAlgProperty_iff K).2
-    apply (HopfIdeal.comap_eq_comap_iff_of_surjective e₁.hom.hom hf).mp
+    apply (HopfIdeal.comapOfSurjective_eq_comapOfSurjective_iff e₁.hom.hom hf).mp
     calc
-      (CommHopfAlgCat.centerDefiningIdeal K.obj.obj).comap e₁.hom.hom hf =
+      (CommHopfAlgCat.centerDefiningIdeal K.obj.obj).comapOfSurjective e₁.hom.hom hf =
           CommHopfAlgCat.centerDefiningIdeal H.obj.obj := by
-        simpa only using CommHopfAlgCat.comap_centerDefiningIdeal e₁
+        simpa only using CommHopfAlgCat.comapOfSurjective_centerDefiningIdeal e₁
       _ = HopfIdeal.augmentation k H.obj.obj :=
         (adjointSemisimpleCommHopfAlgProperty_iff H).1 hH
-      _ = (HopfIdeal.augmentation k K.obj.obj).comap e₁.hom.hom hf := by
-        simpa only using (HopfIdeal.comap_augmentation e₁.hom.hom hf).symm
+      _ = (HopfIdeal.augmentation k K.obj.obj).comapOfSurjective e₁.hom.hom hf := by
+        simpa only using (HopfIdeal.comapOfSurjective_augmentation e₁.hom.hom hf).symm
 
 /-- The category of adjoint semisimple finite-type commutative Hopf algebras over a field. -/
 abbrev AdjointSemisimpleCommHopfAlgCat (k : Type u) [Field k] :=

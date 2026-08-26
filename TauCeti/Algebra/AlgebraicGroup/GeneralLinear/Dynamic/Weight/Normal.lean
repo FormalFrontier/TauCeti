@@ -83,8 +83,8 @@ noncomputable def weightUnipotentInParabolicHopfIdeal (w : Fin N → ℤ) :
 /-- Pulling the relative weight-unipotent Hopf ideal back to the ambient general linear
 coordinate algebra recovers the original weight-unipotent defining ideal. -/
 @[simp]
-theorem weightUnipotentInParabolicHopfIdeal_comap (w : Fin N → ℤ) :
-    (weightUnipotentInParabolicHopfIdeal R w).comap
+theorem weightUnipotentInParabolicHopfIdeal_comapOfSurjective (w : Fin N → ℤ) :
+    (weightUnipotentInParabolicHopfIdeal R w).comapOfSurjective
         (weightParabolicCoordinateMap R w).hom
         (weightParabolicCoordinateMap_surjective R w) =
       weightUnipotentDefiningHopfIdeal R w := by
@@ -96,7 +96,7 @@ theorem weightUnipotentInParabolicHopfIdeal_comap (w : Fin N → ℤ) :
     rw [HopfIdeal.mem_kerOfSurjective, weightParabolicCoordinateMap_apply,
       Ideal.Quotient.mkₐ_eq_mk, Ideal.Quotient.eq_zero_iff_mem, HopfIdeal.mem_toIdeal]
   rw [weightUnipotentInParabolicHopfIdeal,
-    HopfIdeal.comap_map_of_surjective, hker, sup_eq_left]
+    HopfIdeal.comapOfSurjective_map, hker, sup_eq_left]
   exact weightParabolicDefiningHopfIdeal_le_weightUnipotent R w
 
 section Points
@@ -177,7 +177,7 @@ private noncomputable def weightUnipotentInParabolicCoordinateIso (w : Fin N →
       CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
         (weightUnipotentInParabolicHopfIdeal R w) :=
   eqToIso (congrArg (CommHopfAlgCat.quotient (coordinateHopfAlgebra R N))
-      (weightUnipotentInParabolicHopfIdeal_comap R w).symm) ≪≫
+      (weightUnipotentInParabolicHopfIdeal_comapOfSurjective R w).symm) ≪≫
     CommHopfAlgCat.quotientIsoOfSurjective
       (weightParabolicCoordinateMap R w)
       (weightParabolicCoordinateMap_surjective R w)
@@ -243,7 +243,7 @@ theorem weightUnipotentInParabolicGroupSchemeIso_hom_comp_weightUnipotentToParab
     CommHopfAlgCat.mkQuotient_comp_quotientMapOfLe]
   rw [weightUnipotentInParabolicCoordinateIso, Iso.trans_hom, ← Category.assoc,
     mkQuotient_comp_eqToIso (R := R)
-      (weightUnipotentInParabolicHopfIdeal_comap R w).symm,
+      (weightUnipotentInParabolicHopfIdeal_comapOfSurjective R w).symm,
     CommHopfAlgCat.mkQuotient_comp_quotientIsoOfSurjective_hom, hq_def]
 
 end TauCeti.GeneralLinear.Dynamic
