@@ -180,7 +180,6 @@ instance : DecidablePred IsGraphical := fun t ↦ inferInstanceAs (Decidable (t 
 
 /-- Graphicality unfolded: `TauCeti.AffineDynkinType.IsGraphical` is a `def` into `Prop`, so a
 consumer outside this file needs this equation to read it. -/
-@[simp]
 theorem isGraphical_iff_ne_A_one {t : AffineDynkinType} : t.IsGraphical ↔ t ≠ A 1 := Iff.rfl
 
 @[simp] lemma isGraphical_A {n : ℕ} : (A n).IsGraphical ↔ n ≠ 1 := by simp [IsGraphical]
