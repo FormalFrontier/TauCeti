@@ -21,6 +21,9 @@ tautological action of the ambient homeomorphism group `E ≃ₜ E` on `E`
 (`TauCeti.Homeomorph.applyMulAction`). Each deck transformation preserves `p`, hence
 preserves every fibre of `p`.
 
+The deck group only sees `p` through the equalities `p (φ e) = p e`, so corestricting `p` to a
+subspace of its target leaves it unchanged (`TauCeti.deck_subtypeVal_comp`).
+
 ## References
 
 This file follows the deck-transformation target in the Tau Ceti universal-covers roadmap,
@@ -107,5 +110,18 @@ lemma inv_smul_eq_symm_apply (φ : Deck p) (e : E) : (φ⁻¹ : Deck p) • e = 
 -- subgroup instances in `TauCeti.Topology.Algebra.Homeomorph.Action`; `Deck p` is a `Subgroup`.
 
 end Deck
+
+section Corestrict
+
+variable {E B : Type*} [TopologicalSpace E] {s : Set B}
+
+/-- Corestricting the target of a map to a subspace does not change its deck group: the subspace
+inclusion is injective, so a homeomorphism commutes with the corestriction exactly when it
+commutes with the original map. -/
+theorem deck_subtypeVal_comp (p : E → s) : Deck (Subtype.val ∘ p) = Deck p := by
+  ext φ
+  simp only [Deck.mem_iff, Function.comp_apply, Subtype.val_inj]
+
+end Corestrict
 
 end TauCeti
