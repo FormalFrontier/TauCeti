@@ -79,6 +79,7 @@ theorem domainPow_succ_le (A : E →ₗ.[R] E) (n : ℕ) : domainPow A (n + 1) �
       obtain ⟨hxd, hAx⟩ := mem_domainPow_succ.mp hx
       exact mem_domainPow_succ.mpr ⟨hxd, ih hAx⟩
 
+/-- The iterated domains `D(Aⁿ)` decrease as the iteration count increases. -/
 theorem domainPow_antitone (A : E →ₗ.[R] E) : Antitone (domainPow A) :=
   antitone_nat_of_succ_le (domainPow_succ_le A)
 
