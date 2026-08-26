@@ -370,8 +370,6 @@ theorem JointlyExchangeable.exchangeable_arrayDiag {μ : Measure Ω} {X : ℕ ×
     Exchangeable μ (arrayDiag X) :=
   FullyExchangeable.exchangeable (h.fullyExchangeable_arrayDiag hX) fun i => hX (i, i)
 
-/-! ## De Finetti for the rows -/
-
 /-! ## The two symmetries are distinct -/
 
 /-- The deterministic diagonal-indicator array over a sample space `S`: its `(i, j)` entry is

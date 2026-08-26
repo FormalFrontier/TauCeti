@@ -17,12 +17,16 @@ state space, the rows and columns of a separately exchangeable array are conditi
 are the rows of a block of a jointly exchangeable one, and the directing measures produced this way
 inherit the symmetry of the array.
 
-**This is the only file in the array subtree that reaches the de Finetti summit.** `Arrays.Basic`
-carries the symmetry predicates and their elementary theory, `Arrays.Block` the combinatorics of
-blocks, and `Arrays.MixingLaw` the results that hold of *any* supplied mixing representative. Each
-of those is now independent of `DeFinetti.Theorem`, so a file needing only array symmetry — for
-instance `Arrays.AldousHoover`, which uses four declarations from `Arrays.Basic` — no longer
-depends transitively on the whole representation theory.
+**This is the array subtree's only direct import of the de Finetti summit.** `Arrays.Coding`
+reaches `DeFinetti.Theorem` too, transitively through this module, which is as it should be: the
+coding representation is a de Finetti consequence. What changed is that the dependency now arrives
+through the one file whose subject it is.
+
+`Arrays.Basic` carries the symmetry predicates and their elementary theory, `Arrays.Block` the
+combinatorics of blocks, and `Arrays.MixingLaw` the results that hold of *any* supplied mixing
+representative. Each of those is now independent of `DeFinetti.Theorem`, so a file needing only
+array symmetry — for instance `Arrays.AldousHoover`, which uses four declarations from
+`Arrays.Basic` — no longer depends on the representation theory at all.
 
 The layering is therefore
 
