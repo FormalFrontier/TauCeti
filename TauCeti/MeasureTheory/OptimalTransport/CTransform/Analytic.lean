@@ -49,13 +49,6 @@ variable {X Y : Type*} [TopologicalSpace X] [PolishSpace X] [MeasurableSpace X] 
   [TopologicalSpace Y] [PolishSpace Y] [MeasurableSpace Y] [BorelSpace Y]
   {c : X × Y → ℝ} {φ : X → EReal} {ψ : Y → EReal}
 
-/-- `NullMeasurable` is definitionally measurability from the measure's
-`NullMeasurableSpace`, so measurable strict sublevels suffice. -/
-private lemma nullMeasurable_of_forall_nullMeasurableSet_Iio
-    {Z : Type*} [MeasurableSpace Z] {μ : Measure Z} {f : Z → EReal}
-    (h : ∀ a, NullMeasurableSet {z | f z < a} μ) : NullMeasurable f μ :=
-  measurable_of_Iio h
-
 /-- If a strict sublevel of the defining integrand of a `c`-transform is Borel measurable, the
 corresponding strict sublevel of the transform is analytic. It is the second-coordinate projection
 of that integrand sublevel. -/
@@ -96,7 +89,7 @@ s-finite Borel measure on the target. This is deliberately `NullMeasurable`, not
 theorem nullMeasurable_cTransform (μ : Measure Y) [SFinite μ]
     (h : Measurable fun z : X × Y => (c z : EReal) - φ z.1) :
     NullMeasurable (cTransform c φ) μ :=
-  nullMeasurable_of_forall_nullMeasurableSet_Iio fun a =>
+  measurable_of_Iio fun a =>
     nullMeasurableSet_setOf_cTransform_lt μ a (h measurableSet_Iio)
 
 /-- A symmetric `c`-transform with Borel defining integrand is measurable for the completion of
@@ -104,7 +97,7 @@ every s-finite Borel measure on the source. -/
 theorem nullMeasurable_cTransformSymm (μ : Measure X) [SFinite μ]
     (h : Measurable fun z : X × Y => (c z : EReal) - ψ z.2) :
     NullMeasurable (cTransformSymm c ψ) μ :=
-  nullMeasurable_of_forall_nullMeasurableSet_Iio fun a =>
+  measurable_of_Iio fun a =>
     nullMeasurableSet_setOf_cTransformSymm_lt μ a (h measurableSet_Iio)
 
 end TauCeti
