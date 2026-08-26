@@ -5,9 +5,10 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.Probability.Distributions.Bernoulli
+import Mathlib.Probability.Distributions.Bernoulli
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Distance
 public import TauCeti.MeasureTheory.Measure.UnitIntervalMap
+import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Pullback
 
 /-!
 # The map form of the cut distance, and its agreement with the coupling form
@@ -42,10 +43,10 @@ Specializing it to `(I, volume)` gives `cutDist ≤ cutDistPullback` outright.
 
 **The junk value.** `cutDistPullback` is an infimum over a set of reals that is empty when a
 carrier receives no measure-preserving map from `(I, volume)` at all, and then it is `0` by the
-`sInf` convention. Every statement below that could see that value carries the standard Borel
-hypotheses that rule it out (`pullbackCutNorms_nonempty`); the two that do not —
-`cutDistPullback_le` and `cutDistPullback_comm` — are true regardless, the first because it only
-uses a witness and the second because the two index sets are literally equal.
+`sInf` convention. The elimination rules and the comparison with `cutDist` carry standard Borel
+hypotheses that rule this out (`pullbackCutNorms_nonempty`). The range and common-carrier bounds
+hold without them: in the empty case they reduce to the corresponding fact about `0`, and in the
+nonempty case any witness supplies the required upper bound.
 
 ## Main definitions
 
@@ -198,9 +199,12 @@ theorem cutDistPullback_comm (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
   rw [cutDistPullback, cutDistPullback, pullbackCutNorms_comm]
 
 /-- The map form of the cut distance is nonnegative. -/
-theorem cutDistPullback_nonneg [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
-    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : 0 ≤ cutDistPullback U W :=
-  le_cutDistPullback U W fun _ _ _ _ => cutNorm_nonneg volume _
+theorem cutDistPullback_nonneg (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
+    0 ≤ cutDistPullback U W := by
+  rw [cutDistPullback]
+  by_cases h : (pullbackCutNorms U W).Nonempty
+  · exact le_csInf h fun _ hr => nonneg_of_mem_pullbackCutNorms hr
+  · rw [Set.not_nonempty_iff_eq_empty.mp h, Real.sInf_empty]
 
 /-! ### The two forms agree -/
 
@@ -240,28 +244,60 @@ theorem cutDist_eq_cutDistPullback [StandardBorelSpace Ω₁] [StandardBorelSpac
     (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : cutDist U W = cutDistPullback U W :=
   le_antisymm (cutDist_le_cutDistPullback U W) (cutDistPullback_le_cutDist U W)
 
-/-- The map form of the cut distance is at most `1`, by transport from `cutDist_le_one`. -/
-theorem cutDistPullback_le_one [StandardBorelSpace Ω₁] [StandardBorelSpace Ω₂]
-    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) : cutDistPullback U W ≤ 1 :=
-  (cutDist_eq_cutDistPullback U W) ▸ cutDist_le_one U W
+/-- The map form of the cut distance is at most `1`. -/
+theorem cutDistPullback_le_one (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
+    cutDistPullback U W ≤ 1 := by
+  by_cases h : (pullbackCutNorms U W).Nonempty
+  · obtain ⟨_, f, g, hf, hg, rfl⟩ := h
+    refine (cutDistPullback_le U W hf hg).trans ((cutNorm_le_integral_abs _ _).trans ?_)
+    calc
+      ∫ p, |U.toSymmKernel.comap f hf.measurable volume p.1 p.2 -
+          W.toSymmKernel.comap g hg.measurable volume p.1 p.2| ∂(volume.prod volume)
+          ≤ ∫ _p, (1 : ℝ) ∂(volume.prod volume) :=
+        integral_mono
+          (U.toSymmKernel.comap f hf.measurable volume -
+            W.toSymmKernel.comap g hg.measurable volume).integrable_uncurry.abs
+          (integrable_const 1) fun p => by
+            simp only [SymmKernel.comap_apply]
+            change |U (f p.1) (f p.2) - W (g p.1) (g p.2)| ≤ 1
+            rw [abs_le]
+            constructor <;> linarith [U.nonneg (f p.1) (f p.2), U.le_one (f p.1) (f p.2),
+              W.nonneg (g p.1) (g p.2), W.le_one (g p.1) (g p.2)]
+      _ = 1 := by simp
+  · rw [cutDistPullback, Set.not_nonempty_iff_eq_empty.mp h, Real.sInf_empty]
+    norm_num
 
 section CommonCarrier
 
-variable {Ω : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω] {μ : Measure Ω}
-  [IsProbabilityMeasure μ]
+variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
 
 /-- The map form of the cut distance of a graphon to itself is zero. -/
 @[simp]
-theorem cutDistPullback_self (U : Graphon Ω μ) : cutDistPullback U U = 0 :=
-  (cutDist_eq_cutDistPullback U U) ▸ cutDist_self U
+theorem cutDistPullback_self (U : Graphon Ω μ) : cutDistPullback U U = 0 := by
+  by_cases h : (pullbackCutNorms U U).Nonempty
+  · obtain ⟨_, f, _, hf, _, _⟩ := h
+    exact le_antisymm (by simpa using cutDistPullback_le U U hf hf) (cutDistPullback_nonneg U U)
+  · rw [cutDistPullback, Set.not_nonempty_iff_eq_empty.mp h, Real.sInf_empty]
 
-/-- On a common standard Borel carrier the map form of the cut distance is at most the cut norm of
-the difference, by transport from `cutDist_le_cutNorm_sub`. As there, the reverse inequality is
-false: a measure-preserving rearrangement of the carrier leaves the left-hand side at `0` while the
-right-hand side can be bounded away from it. -/
+/-- On a common carrier the map form of the cut distance is at most the cut norm of the difference.
+As for `cutDist_le_cutNorm_sub`, the reverse inequality is false: a measure-preserving rearrangement
+of the carrier leaves the left-hand side at `0` while the right-hand side can be bounded away from
+it. -/
 theorem cutDistPullback_le_cutNorm_sub (U W : Graphon Ω μ) :
-    cutDistPullback U W ≤ cutNorm μ (U.toSymmKernel - W.toSymmKernel) :=
-  (cutDist_eq_cutDistPullback U W) ▸ cutDist_le_cutNorm_sub U W
+    cutDistPullback U W ≤ cutNorm μ (U.toSymmKernel - W.toSymmKernel) := by
+  by_cases h : (pullbackCutNorms U W).Nonempty
+  · obtain ⟨_, f, _, hf, _, _⟩ := h
+    calc
+      cutDistPullback U W ≤ cutNorm volume
+          (U.toSymmKernel.comap f hf.measurable volume -
+            W.toSymmKernel.comap f hf.measurable volume) := cutDistPullback_le U W hf hf
+      _ = cutNorm volume
+          ((U.toSymmKernel - W.toSymmKernel).comap f hf.measurable volume) := by
+            rw [SymmKernel.comap_sub]
+      _ = cutNorm μ (U.toSymmKernel - W.toSymmKernel) :=
+        cutNorm_comap hf (U.toSymmKernel - W.toSymmKernel)
+  · rw [cutDistPullback, Set.not_nonempty_iff_eq_empty.mp h, Real.sInf_empty]
+    exact cutNorm_nonneg μ _
 
 end CommonCarrier
 
