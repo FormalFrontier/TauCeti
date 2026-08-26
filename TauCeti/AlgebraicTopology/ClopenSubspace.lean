@@ -234,7 +234,6 @@ theorem fundamentalGroupMulEquivPathComponent_apply
 
 /-- The inverse path-component equivalence corestricts a representative loop to the path
 component, which contains each of its initial segments. -/
-@[simp]
 theorem fundamentalGroupMulEquivPathComponent_symm_fromPath (γ : Path x₀ x₀) :
     (fundamentalGroupMulEquivPathComponent x₀).symm (FundamentalGroup.fromPath ⟦γ⟧) =
       FundamentalGroup.fromPath
