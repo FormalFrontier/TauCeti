@@ -5,8 +5,7 @@ Authors: Chris Birkbeck, Claude
 -/
 module
 
--- `ZMod.coe_int_isUnit_iff_isCoprime` and `ZMod.exists_dvd_sub_val_mul` are used only inside
--- proofs, so these stay private.
+-- `ZMod.coe_int_isUnit_iff_isCoprime` is used only inside a proof, so this stays private.
 import Mathlib.Data.ZMod.Units
 import TauCeti.Data.ZMod.Divisibility
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.DoubleCoset
@@ -52,7 +51,7 @@ the remaining parameter into a second `Γ₀(N)` factor, which is what makes the
   `dvd_lowerRight_witness`, `shimura_prop_3_33_gen` and `shimura_prop_3_33`.
 
   Five source declarations are deliberately **not** ported. `exists_mod_clearing` is the
-  Bézout step behind `exists_reduced_shear`, and `ZMod.exists_dvd_sub_val_mul`
+  Bézout step behind `Int.exists_nonneg_lt_and_dvd_mul_sub`, and `ZMod.exists_dvd_sub_val_mul`
   (`TauCeti/Data/ZMod/Divisibility.lean`) already solves that congruence.
   `diagMat_one_mem_Delta0` and `diagMat_mem_Delta0_of_gcd` are already on main as
   `natDiagGL_one_mem_Delta0` and
@@ -97,24 +96,6 @@ private lemma dvd_lowerRight_witness (A : Matrix (Fin 2) (Fin 2) ℤ) (N m : ℕ
     exact ⟨-w, by linarith⟩
   exact ((Int.isCoprime_iff_gcd_eq_one.mpr ham).symm).dvd_of_dvd_mul_left
     (h_key ▸ dvd_add (dvd_refl _) (dvd_mul_of_dvd_left hm_ba _))
-
-/-- **The reduced shear parameter.** With `a` coprime to `m` there is an `r` in `[0, m)`
-solving `a * r ≡ b (mod m)`.
-
-This is `ZMod.exists_dvd_sub_val_mul` repackaged: that lemma returns the solution as a residue
-class, and the two consumers here — the column reduction below and the `Γ₁(N)` offset in
-`Gamma1/UpperTriCosets.lean` — both need it as an integer in `[0, m)`. -/
-lemma exists_reduced_shear (a b : ℤ) (m : ℕ) (hm_pos : 0 < m)
-    (ham : Int.gcd a m = 1) :
-    ∃ r : ℤ, 0 ≤ r ∧ r < m ∧ (m : ℤ) ∣ a * r - b := by
-  have : NeZero m := ⟨hm_pos.ne'⟩
-  have hunit : IsUnit ((a : ℤ) : ZMod m) := (ZMod.coe_int_isUnit_iff_isCoprime a m).mpr
-    (isCoprime_comm.mp (Int.isCoprime_iff_gcd_eq_one.mpr ham))
-  obtain ⟨r, hr⟩ := ZMod.exists_dvd_sub_val_mul m b a hunit
-  refine ⟨(r.val : ℤ), Int.natCast_nonneg _, by exact_mod_cast r.val_lt, ?_⟩
-  -- `hr` divides `b - r * a`; negating and commuting the product is the whole gap
-  rw [← neg_sub, mul_comm]
-  exact dvd_neg.mpr hr
 
 /-- **The determinant of an integral witness.** If `A` represents `g ∈ GL₂(ℚ)` entrywise over
 `ℤ` and `g` has determinant `m`, then `A` has determinant `m` over `ℤ`.
@@ -171,7 +152,7 @@ lemma exists_unimodular_mul_upperTriangular (N : ℕ) (A : Matrix (Fin 2) (Fin 2
       A = L * (Matrix.of ![![(1 : ℤ), r], ![0, (m : ℤ)]]) := by
   obtain ⟨c₀, hc₀⟩ := hAN
   obtain ⟨r, hr_nonneg, hr_lt, hm_ar_b⟩ :=
-    exists_reduced_shear (A 0 0) (A 0 1) m hm_pos ham
+    Int.exists_nonneg_lt_and_dvd_mul_sub (A 0 0) (A 0 1) m hm_pos ham
   obtain ⟨q₂, hq₂⟩ := dvd_lowerRight_witness A N m c₀ r hc₀ hdet ham hm_ar_b
   obtain ⟨q₁, hq₁⟩ := hm_ar_b
   refine ⟨Matrix.of ![![A 0 0, -q₁], ![(N : ℤ) * c₀, q₂]], r, ?_, ?_, hr_nonneg, hr_lt, ?_⟩

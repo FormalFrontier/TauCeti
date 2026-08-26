@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.BadPrimeCoset
+import TauCeti.Data.ZMod.Divisibility
 public import TauCeti.NumberTheory.HeckeRing.GL2.CosetDecomposition
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Diagonal.Coset
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.Basic
@@ -236,7 +236,7 @@ private lemma exists_offset_of_primeFactors_subset (hp : 0 < p)
     ∃ j : ℕ, j < p ∧ (p : ℤ) ∣ b - a * j := by
   have hgcd : Int.gcd a p = 1 :=
     Int.isCoprime_iff_gcd_eq_one.mp (isCoprime_of_primeFactors_subset hp hpN ha)
-  obtain ⟨r, hr0, hrlt, hr⟩ := exists_reduced_shear a b p hp hgcd
+  obtain ⟨r, hr0, hrlt, hr⟩ := Int.exists_nonneg_lt_and_dvd_mul_sub a b p hp hgcd
   refine ⟨r.toNat, ?_, ?_⟩
   · omega
   · rw [Int.toNat_of_nonneg hr0]
