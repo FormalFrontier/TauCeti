@@ -27,7 +27,6 @@ and their intersections.
 
 ## Main declarations
 
-* `Flow.IsNegativeGradient`: every orbit of a flow solves the negative gradient equation.
 * `Flow.IsNegativeGradient.value_le_of_mem_stableSet`: stable-set points lie above the
   limiting critical value.
 * `Flow.IsNegativeGradient.value_ge_of_mem_unstableSet`: unstable-set points lie below
@@ -56,20 +55,6 @@ namespace Flow
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
   {φ : _root_.Flow ℝ E} {f : E → ℝ} {p q x : E}
-
-/-- A real flow is the **negative gradient flow** of `f` when each of its orbit curves solves
-`γ' = -∇f(γ)`.  Regularity and uniqueness assumptions used to construct the flow remain
-separate; this predicate records precisely the differential equation needed by its dynamical
-consequences. -/
-def IsNegativeGradient (φ : _root_.Flow ℝ E) (f : E → ℝ) : Prop :=
-  ∀ x, IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y)
-
-/-- The defining function is antitone along every orbit of its negative gradient flow. -/
-theorem IsNegativeGradient.orbit_antitone (hφ : IsNegativeGradient φ f) (x : E)
-    (hf : ∀ t, DifferentiableAt ℝ f (φ t x)) :
-    Antitone (fun t ↦ f (φ t x)) := by
-  simpa only [Function.comp_def] using
-    TauCeti.IsIntegralCurve.antitone_comp_neg_gradient (hφ x) hf
 
 /-- A point in the stable set of `p` has value at least `f p`.  Only differentiability along the
 chosen orbit and continuity at its limiting point are required. -/
@@ -105,7 +90,7 @@ private theorem IsNegativeGradient.orbit_eq_of_const_value (hφ : IsNegativeGrad
     (hf : ∀ t, DifferentiableAt ℝ f (φ t x)) (hc : ∀ t, f (φ t x) = f x) (t u : ℝ) :
     φ t x = φ u x := by
   let γ : ℝ → E := fun v ↦ φ v x
-  have hγ : IsIntegralCurve γ (fun _ y ↦ -∇ f y) := hφ x
+  have hγ : IsIntegralCurve γ (fun _ y ↦ -∇ f y) := hφ.isIntegralCurve x
   apply is_const_of_deriv_eq_zero (fun v ↦ (hγ v).differentiableAt) _ t u
   intro v
   have hgrad : ∇ f (γ v) = 0 :=
