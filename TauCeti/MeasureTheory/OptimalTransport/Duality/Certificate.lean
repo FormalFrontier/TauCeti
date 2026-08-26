@@ -32,9 +32,9 @@ typically of full support, so it is not concentrated on a contact set and no cla
 about it here.
 
 The last section connects the cost-level notion of `c`-cyclical monotonicity to certificates by
-proving that a contact set is always `c`-cyclically monotone. Hence a certified plan is
-concentrated on a `c`-cyclically monotone set, which is measurable as soon as the cost and both
-potentials are. The converse implication — that
+proving that the contact set of a dual feasible pair is `c`-cyclically monotone. Hence a
+certified plan is concentrated on a `c`-cyclically monotone set, which is measurable as soon as
+the cost and both potentials are. The converse implication — that
 concentration on a `c`-cyclically monotone set forces optimality — is the
 Schachermayer--Teichmann theorem and is not proved here.
 
