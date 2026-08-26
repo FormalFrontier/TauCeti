@@ -90,8 +90,7 @@ theorem nullMeasurable_cTransform (μ : Measure Y) [IsFiniteMeasure μ]
     NullMeasurable (cTransform c φ) μ := by
   have hm : @Measurable (NullMeasurableSpace Y μ) EReal _ _ (cTransform c φ) :=
     measurable_of_Iio fun a =>
-      MeasureTheory.AnalyticSet.nullMeasurableSet
-        (analyticSet_setOf_cTransform_lt a (h measurableSet_Iio)) μ
+      nullMeasurableSet_setOf_cTransform_lt μ a (h measurableSet_Iio)
   exact hm
 
 /-- A symmetric `c`-transform with Borel defining integrand is measurable for the completion of
@@ -101,8 +100,7 @@ theorem nullMeasurable_cTransformSymm (μ : Measure X) [IsFiniteMeasure μ]
     NullMeasurable (cTransformSymm c ψ) μ := by
   have hm : @Measurable (NullMeasurableSpace X μ) EReal _ _ (cTransformSymm c ψ) :=
     measurable_of_Iio fun a =>
-      MeasureTheory.AnalyticSet.nullMeasurableSet
-        (analyticSet_setOf_cTransformSymm_lt a (h measurableSet_Iio)) μ
+      nullMeasurableSet_setOf_cTransformSymm_lt μ a (h measurableSet_Iio)
   exact hm
 
 end TauCeti
