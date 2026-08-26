@@ -29,8 +29,6 @@ sides of the segment near `p`: it is one larger on the side to the left of the d
 
 ## Main results
 
-* `TauCeti.Contour.segment_ne_of_im_ne_zero` — the straight segment avoids points off its
-  carrying line.
 * `TauCeti.Contour.tendsto_windingNumber_segment_add_mul_I` and
   `TauCeti.Contour.tendsto_windingNumber_segment_sub_mul_I` — one-sided limits of the winding
   number at an interior point, from the left and from the right.
@@ -53,17 +51,6 @@ open scoped Topology
 namespace TauCeti.Contour
 
 variable {v z₀ q : ℂ} {a b c s : ℝ}
-
-/-- The straight segment `t ↦ v · t + z₀` avoids `v · q + z₀` when `q` is not real. -/
-theorem segment_ne_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (t : ℝ) :
-    v * (t : ℂ) + z₀ ≠ v * q + z₀ := by
-  intro h
-  have h' : v * ((t : ℂ) - q) = 0 := by linear_combination h
-  rcases mul_eq_zero.mp h' with h'' | h''
-  · exact hv h''
-  · apply hq
-    have := congrArg Complex.im h''
-    simpa using this.symm
 
 private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
     Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝[>] 0) (𝓝 ((r : ℂ) - s)) := by
@@ -162,21 +149,16 @@ theorem tendsto_windingNumber_segment_sub_windingNumber_segment (hv : v ≠ 0) (
 
 private theorem convex_halfDisc (p v : ℂ) (r σ : ℝ) :
     Convex ℝ (ball p r ∩ {w : ℂ | 0 < σ * ((w - p) / v).im}) := by
-  refine (convex_ball p r).inter ?_
-  rw [convex_iff_forall_pos]
-  intro x hx y hy α β hα hβ hαβ
-  simp only [mem_ofPred_eq] at hx hy ⊢
-  have key : (α • x + β • y - p) / v = α • ((x - p) / v) + β • ((y - p) / v) := by
-    have : p = α • p + β • p := by
-      rw [← add_smul, hαβ, one_smul]
-    conv_lhs => rw [this]
-    simp only [Complex.real_smul]
-    ring
-  rw [key, Complex.add_im, Complex.real_smul, Complex.real_smul, Complex.mul_im, Complex.mul_im]
-  simp only [ofReal_re, ofReal_im, zero_mul, add_zero]
-  have h₁ := mul_pos hα hx
-  have h₂ := mul_pos hβ hy
-  nlinarith
+  have hlin : IsLinearMap ℝ fun w : ℂ => σ * (w / v).im :=
+    { map_add := by intro x y; simp [add_div, Complex.add_im]; ring
+      map_smul := by intro s x; simp [Complex.real_smul, Complex.mul_im, mul_div_assoc]; ring }
+  have heq : {w : ℂ | 0 < σ * ((w - p) / v).im}
+      = {w : ℂ | σ * (p / v).im < σ * (w / v).im} := by
+    ext w; simp only [mem_ofPred_eq, sub_div, Complex.sub_im]; constructor
+    · intro h; linarith
+    · intro h; linarith
+  rw [heq]
+  exact (convex_ball p r).inter (convex_halfSpace_gt hlin _)
 
 /-- **A closed curve jumps by one across a straight piece.** Let `Γ` be a closed piecewise-`C¹`
 curve on `[a, c]` which on `[a, b]` is the straight segment `t ↦ v · t + z₀`, and let
