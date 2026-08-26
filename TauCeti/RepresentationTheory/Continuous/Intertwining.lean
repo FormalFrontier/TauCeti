@@ -79,6 +79,12 @@ theorem intertwiningMapEquiv_apply (f : ContIntertwiningMap π ρ) :
     intertwiningMapEquiv f = f.toIntertwiningMap :=
   (rfl)
 
+/-- The forward intertwiner identification preserves pointwise evaluation. -/
+@[simp]
+theorem intertwiningMapEquiv_apply_apply (f : ContIntertwiningMap π ρ) (v : V) :
+    intertwiningMapEquiv f v = f v :=
+  (rfl)
+
 /-- The inverse intertwiner identification preserves pointwise evaluation. -/
 @[simp]
 theorem intertwiningMapEquiv_symm_apply_apply
