@@ -61,17 +61,17 @@ for a standard Borel structure, which is what the gluing lemma consumes.
   `TauCeti.wassersteinEDist_eq_transportCost_rpow` — for `0 < p < ∞`, the exact bridge to Layer 1's
   transport cost of `edist ^ p`, with `TauCeti.wassersteinEDist_one_eq_transportCost` the case
   `p = 1`;
-* `TauCeti.exists_isCoupling_eLpNorm_eq` — on a Polish metric space and for a finite exponent the
-  infimum is attained, so `W_p` is a minimum;
+* `TauCeti.exists_isCoupling_eLpNorm_eq_wassersteinEDist` — on a Polish metric space and for a
+  finite exponent the infimum is attained, so `W_p` is a minimum;
 * `TauCeti.wassersteinEDist_eq_zero_iff` — on a Polish metric space and for a finite nonzero
   exponent, `W_p (μ, ν) = 0` exactly when `μ = ν`.
 
 ## Implementation notes
 
 The infimum is an iterated `⨅` over plans and over proofs of `TauCeti.IsCoupling`, matching
-`TauCeti.transportCost`: measures with no coupling at all — for instance two probability measures
-on a space that is empty for one of them, or two finite measures of different total mass — get the
-value `∞` with no case split, and `TauCeti.wassersteinEDist_le` is `iInf₂_le`.
+`TauCeti.transportCost`: measures with no coupling at all — for instance two finite measures of
+different total mass — get the value `∞` with no case split, and `TauCeti.wassersteinEDist_le` is
+`iInf₂_le`.
 
 The exponent is unrestricted in the definition. Only `1 ≤ p` makes the triangle inequality true,
 and `TauCeti.wassersteinEDist_exponent_zero` records that the value collapses to `0` at `p = 0`
@@ -82,9 +82,10 @@ genuinely need normalisation — monotonicity in the exponent, the Dirac identit
 take the `MeasureTheory.IsProbabilityMeasure` instances they use, while the order-theoretic API,
 symmetry and the vanishing on the diagonal hold for arbitrary measures.
 
-This is Layer 3, item 1 of the optimal-transport roadmap. The finite-moment spaces `P_p (X)`, the
-basepoint-independence of the moment condition, and the metric structure carried by an anchored
-finite-distance component are item 2 and are not built here.
+This is Layer 3, item 1 of the optimal-transport roadmap. The basepoint-independence lemmas that
+item 2 rests on are proved here, on the Dirac identity; the finite-moment spaces `P_p (X)`
+themselves and the metric structure carried by an anchored finite-distance component are item 2
+and are not built here.
 
 ## References
 
@@ -174,6 +175,7 @@ variable [PseudoEMetricSpace X]
 
 /-- Vanishing on the diagonal: the diagonal plan `TauCeti.graphPlan id μ` couples `μ` with itself
 and gives the ground distance the value `0` everywhere on its support. -/
+@[simp]
 theorem wassersteinEDist_self (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (p : ℝ≥0∞)
     (μ : Measure X) : wassersteinEDist p μ μ = 0 := by
   refine le_antisymm ?_ (zero_le ..)
@@ -216,6 +218,7 @@ section Dirac
 probability target, so the Wasserstein distance from `δ x` is the `L^p (ν)` seminorm of the ground
 distance to `x`. This is the identity that later identifies the finite-moment space `P_p (X)` with
 the finite-distance component of a Dirac law. -/
+@[simp]
 theorem wassersteinEDist_dirac_left (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (p : ℝ≥0∞)
     (x : X) (ν : Measure X) [IsProbabilityMeasure ν] :
     wassersteinEDist p (Measure.dirac x) ν = eLpNorm (fun y ↦ edist x y) p ν := by
@@ -229,6 +232,7 @@ theorem wassersteinEDist_dirac_left (hd : Measurable fun z : X × X ↦ edist z.
 
 /-- The mirror image of `TauCeti.wassersteinEDist_dirac_left`: the Wasserstein distance to a Dirac
 target is the `L^p (μ)` seminorm of the ground distance to the atom. -/
+@[simp]
 theorem wassersteinEDist_dirac_right (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (p : ℝ≥0∞)
     (μ : Measure X) [IsProbabilityMeasure μ] (y : X) :
     wassersteinEDist p μ (Measure.dirac y) = eLpNorm (fun x ↦ edist x y) p μ := by
@@ -237,7 +241,11 @@ theorem wassersteinEDist_dirac_right (hd : Measurable fun z : X × X ↦ edist z
 
 /-- **The two-Dirac value.** The only coupling of `δ x` with `δ y` is `δ (x, y)`, so the
 Wasserstein distance of two Dirac measures is the ground distance of their atoms, for every
-nonzero exponent. This is the acceptance check `W_p (δ_x, δ_y) = d (x, y)`. -/
+nonzero exponent. This is the acceptance check `W_p (δ_x, δ_y) = d (x, y)`.
+
+Unlike the two one-sided Dirac identities this is not a `simp` lemma: its left-hand side is
+already normalised by `TauCeti.wassersteinEDist_dirac_right` followed by Mathlib's
+`MeasureTheory.eLpNorm_dirac`, and the `simpNF` linter rejects the redundant tag. -/
 theorem wassersteinEDist_dirac_dirac [MeasurableSingletonClass X]
     (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (hp : p ≠ 0) (x y : X) :
     wassersteinEDist p (Measure.dirac x) (Measure.dirac y) = edist x y := by
@@ -396,7 +404,7 @@ variable {X : Type u} [MetricSpace X] [MeasurableSpace X] [BorelSpace X]
 defining the Wasserstein distance is a minimum: some coupling realises it. This is the primal
 attainment of `TauCeti.exists_isOptimalCoupling_edist_rpow`, transported across the bridge
 `TauCeti.wassersteinEDist_rpow_eq_transportCost`. -/
-theorem exists_isCoupling_eLpNorm_eq (hp0 : p ≠ 0) (hp : p ≠ ∞) (μ ν : Measure X)
+theorem exists_isCoupling_eLpNorm_eq_wassersteinEDist (hp0 : p ≠ 0) (hp : p ≠ ∞) (μ ν : Measure X)
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
     ∃ π, IsCoupling π μ ν ∧
       eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π = wassersteinEDist p μ ν := by
@@ -415,7 +423,7 @@ theorem wassersteinEDist_eq_zero_iff (hp0 : p ≠ 0) (hp : p ≠ ∞) (μ ν : M
     [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
     wassersteinEDist p μ ν = 0 ↔ μ = ν := by
   refine ⟨fun h ↦ ?_, fun h ↦ h ▸ wassersteinEDist_self measurable_edist p μ⟩
-  obtain ⟨π, hπ, hval⟩ := exists_isCoupling_eLpNorm_eq hp0 hp μ ν
+  obtain ⟨π, hπ, hval⟩ := exists_isCoupling_eLpNorm_eq_wassersteinEDist hp0 hp μ ν
   have hzero : (fun z : X × X ↦ edist z.1 z.2) =ᵐ[π] 0 :=
     (eLpNorm_eq_zero_iff measurable_edist.aestronglyMeasurable hp0).1 (hval.trans h)
   have hdiag : (Prod.fst : X × X → X) =ᵐ[π] Prod.snd := by
