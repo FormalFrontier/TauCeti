@@ -67,24 +67,24 @@ private theorem hasDerivAt_exp_neg (u : ℝ) :
   (HasDerivAt.comp (x := u) (Real.hasDerivAt_exp (-u)) ((hasDerivAt_id u).neg)).congr_deriv (by
     ring)
 
+/-- Derivative of `w ↦ w²/2`. -/
+private theorem hasDerivAt_sq_div_two (r : ℝ) :
+    HasDerivAt (fun w : ℝ => w ^ 2 / 2) r r :=
+  ((hasDerivAt_id' r).pow 2).div_const (2 : ℝ) |>.congr_deriv (by ring)
+
 /-- The derivative of the auxiliary function `w ↦ w²/2 - exp (-w) - w + 1`. -/
 private theorem deriv_aux_sub (r : ℝ) :
-    deriv (fun w : ℝ => w ^ 2 / 2 - Real.exp (-w) - w + 1) r = r + Real.exp (-r) - 1 := by
-  have d2 : DifferentiableAt ℝ (fun w : ℝ => w ^ 2 / 2) r := by fun_prop
-  have dn : DifferentiableAt ℝ (fun w : ℝ => Real.exp (-w)) r := by fun_prop
-  have dc : DifferentiableAt ℝ (fun _ : ℝ => (1:ℝ)) r := by fun_prop
-  have dm := (d2.sub dn).sub (by fun_prop : DifferentiableAt ℝ (fun w : ℝ => w) r)
-  change deriv ((((fun w : ℝ => w ^ 2 / 2) - fun w : ℝ => Real.exp (-w)) - fun w : ℝ => w)
-      + fun _ : ℝ => (1:ℝ)) r = _
-  rw [deriv_add dm dc,
-    deriv_sub ((d2.sub dn)) (by fun_prop : DifferentiableAt ℝ (fun w : ℝ => w) r),
-    deriv_sub d2 dn, (hasDerivAt_exp_neg r).deriv,
-    show deriv (fun w : ℝ => w) r = 1 from by simp, deriv_const]
-  have hpow2 : deriv (fun w : ℝ => w ^ 2 / 2) r = r := by
-    have hv := ((hasDerivAt_pow 2 r).div_const 2).deriv
-    linarith [show r ^ (2 - 1) = r from by norm_num]
-  rw [hpow2]
-  ring
+    deriv (fun w : ℝ => w ^ 2 / 2 - Real.exp (-w) - w + 1) r = r + Real.exp (-r) - 1 :=
+  ((((hasDerivAt_sq_div_two r).sub (hasDerivAt_exp_neg r)).sub (hasDerivAt_id' r)).add
+    (hasDerivAt_const r (1 : ℝ))).congr_deriv (by ring) |>.deriv
+
+/-- The derivative of the auxiliary function `w ↦ w²/2 + (w+1)·exp (-w) - 1`. -/
+private theorem deriv_aux_add (r : ℝ) :
+    deriv (fun w : ℝ => w ^ 2 / 2 + (w + 1) * Real.exp (-w) - 1) r =
+      r * (1 - Real.exp (-r)) :=
+  (((hasDerivAt_sq_div_two r).add
+      (((hasDerivAt_id' r).add (hasDerivAt_const r (1 : ℝ))).mul (hasDerivAt_exp_neg r))).sub
+    (hasDerivAt_const r (1 : ℝ))).congr_deriv (by dsimp; ring) |>.deriv
 
 /-- For `s ≥ 0`, `exp (-s) - 1 + s` lies between `0` and `s²/2`. -/
 private theorem abs_exp_neg_sub_one_add_self_le {s : ℝ} (hs : 0 ≤ s) :
@@ -122,32 +122,8 @@ private theorem exp_sub_one_sub_self_le_sq_div_two_mul_exp {s : ℝ} (hs : 0 ≤
       fun_prop
     · intro x hx
       rw [interior_Ici] at hx
-      have d2 : DifferentiableAt ℝ (fun w : ℝ => w ^ 2 / 2) x := by fun_prop
-      have dp : DifferentiableAt ℝ (fun w : ℝ => (w + 1) * Real.exp (-w)) x := by fun_prop
-      have dc : DifferentiableAt ℝ (fun _ : ℝ => (1:ℝ)) x := by fun_prop
-      have dia : DifferentiableAt ℝ (fun w : ℝ => w + 1) x := by fun_prop
-      have de : DifferentiableAt ℝ (fun w : ℝ => Real.exp (-w)) x := by fun_prop
-      have dpv : deriv (fun w : ℝ => (w + 1) * Real.exp (-w)) x
-          = Real.exp (-x) + (x + 1) * -(Real.exp (-x)) := by
-        change deriv (((fun w : ℝ => w + 1)) * fun w : ℝ => Real.exp (-w)) x = _
-        rw [deriv_mul dia de,
-          show deriv (fun w : ℝ => w + 1) x = 1 from by simp,
-          (hasDerivAt_exp_neg x).deriv]
-        ring
-      have d2v : deriv (fun w : ℝ => w ^ 2 / 2) x = x := by
-        have heq : (fun w : ℝ => w ^ 2 / 2) = fun w : ℝ => (1 / 2) * w ^ 2 := by
-          funext w; ring
-        rw [heq, deriv_const_mul_field (u := 1 / 2)]
-        norm_num
-        ring
-      change 0 ≤ deriv (((fun w : ℝ => w ^ 2 / 2) + fun w : ℝ => (w + 1) * Real.exp (-w))
-          - fun _ : ℝ => (1:ℝ)) x
-      rw [deriv_sub (d2.add dp) dc, deriv_add d2 dp, dpv, d2v, deriv_const, sub_zero]
-      have hx0 : 0 < x := hx
-      have hle1 : Real.exp (-x) ≤ 1 := Real.exp_le_one_iff.mpr (by linarith)
-      rw [show x + (Real.exp (-x) + (x + 1) * -(Real.exp (-x)))
-            = x * (1 - Real.exp (-x)) from by ring]
-      exact mul_nonneg hx0.le (by linarith)
+      rw [deriv_aux_add x]
+      exact mul_nonneg hx.le (sub_nonneg.mpr (Real.exp_le_one_iff.mpr (neg_nonpos.mpr hx.le)))
   have hq := hmono (Set.mem_Ici.mpr le_rfl) (Set.mem_Ici.mpr hs) hs
   norm_num at hq
   -- `s²/2 + (s+1)e^{-s} ≥ 1`; multiply by `e^s > 0`.
@@ -229,20 +205,8 @@ theorem coe_expNegMulBcf (t : ℝ) (m : α →ᵇ ℝ) :
   BoundedContinuousFunction.coe_ofNormedAddCommGroup _ _ _ _
 
 theorem norm_expNegMulBcf_le (t : ℝ) (m : α →ᵇ ℝ) :
-    ‖expNegMulBcf t m‖ ≤ Real.exp (|t| * ‖m‖) := by
-  refine (BoundedContinuousFunction.norm_le (Real.exp_nonneg _)).mpr fun x => ?_
-  have hx : |m x| ≤ ‖m‖ := m.norm_coe_le_norm x
-  have hv1 : ‖expNegMulBcf t m x‖ = Real.exp (-(t * m x)) := by
-    simp only [coe_expNegMulBcf, Real.norm_eq_abs, abs_of_nonneg (Real.exp_nonneg _)]
-  have hd2 : Real.exp (|t| * |m x|) ≤ Real.exp (|t| * ‖m‖) :=
-    Real.exp_le_exp.mpr (mul_le_mul_of_nonneg_left hx (abs_nonneg t))
-  rw [hv1]
-  have h2 : Real.exp (-(t * m x)) ≤ Real.exp (|t| * |m x|) :=
-    Real.exp_le_exp.mpr (by
-      have h4 := le_abs_self (-(t * m x))
-      rw [abs_neg, abs_mul] at h4
-      exact h4)
-  exact le_trans h2 hd2
+    ‖expNegMulBcf t m‖ ≤ Real.exp (|t| * ‖m‖) :=
+  BoundedContinuousFunction.norm_ofNormedAddCommGroup_le _ (by positivity) _
 
 /-- Uniform second-order control of the difference quotients of the exponential multiplier:
 `(exp (-t·m) - 1) / t` differs from `-m` by at most `t/2 · ‖m‖² · e^{t‖m‖}` in sup norm. -/
@@ -355,18 +319,13 @@ def StronglyContinuousSemigroup.ofMultiplication (m : α →ᵇ ℝ) :
           (nhds ((((0:ℝ≥0) : ℝ) * ‖m‖ * Real.exp (((0:ℝ≥0) : ℝ) * ‖m‖)) * ‖f‖)) :=
         hcont.continuousAt.tendsto
       simpa using h0
-    change Filter.Tendsto
-      (fun t : ℝ≥0 => ContinuousLinearMap.mul ℝ (α →ᵇ ℝ) (expNegMulBcf (t : ℝ) m) f)
-      (nhds (0:ℝ≥0))
-      (nhds (ContinuousLinearMap.mul ℝ (α →ᵇ ℝ) (expNegMulBcf (0 : ℝ) m) f))
     refine (tendsto_iff_dist_tendsto_zero).mpr ?_
     exact squeeze_zero (fun _ => dist_nonneg) (fun t => key t) hbdd
 
 @[simp]
 theorem StronglyContinuousSemigroup.ofMultiplication_apply (m : α →ᵇ ℝ) (t : ℝ≥0)
     (f : α →ᵇ ℝ) : ofMultiplication m t f = expNegMulBcf (t : ℝ) m * f := by
-  rw [show (ofMultiplication m) t = ContinuousLinearMap.mul ℝ (α →ᵇ ℝ)
-    (expNegMulBcf (t : ℝ) m) from rfl]
+  rw [ofMultiplication]
   rfl
 
 /-- Pointwise action of the multiplication semigroup: `(S(t) f)(x) = e^{-t·m x} · f(x)`. -/
@@ -442,25 +401,19 @@ private theorem tendsto_quot_orbit_ofMultiplication (m : α →ᵇ ℝ) (f : α 
     eventually_mem_nhdsWithin
   exact hmem.mono fun t ht => hbound t (Set.mem_Ioi.mp ht)
 
-/-- The multiplication semigroup has everywhere-defined generator: its domain is the whole
-space. -/
-theorem StronglyContinuousSemigroup.ofMultiplication_domain_eq_top (m : α →ᵇ ℝ) :
-    (ofMultiplication m).domain = ⊤ ∧
-      (ofMultiplication m).generator =
-        (ContinuousLinearMap.mul ℝ (α →ᵇ ℝ) (-m)).toLinearMap.toPMap ⊤ :=
-  generator_eq_toPMap_top_of_forall_tendsto _ _ (tendsto_quot_orbit_ofMultiplication m)
-
 /-- The generator domain of the multiplication semigroup is the whole space. -/
-theorem StronglyContinuousSemigroup.ofMultiplication_domain_eq_top' (m : α →ᵇ ℝ) :
+@[simp]
+theorem StronglyContinuousSemigroup.ofMultiplication_domain_eq_top (m : α →ᵇ ℝ) :
     (ofMultiplication m).domain = ⊤ :=
-  (ofMultiplication_domain_eq_top m).1
+  (generator_eq_toPMap_top_of_forall_tendsto _ _ (tendsto_quot_orbit_ofMultiplication m)).1
 
 /-- **The generator of the multiplication semigroup** is multiplication by `-m`, on the whole
 space. -/
+@[simp]
 theorem StronglyContinuousSemigroup.ofMultiplication_generator (m : α →ᵇ ℝ) :
     (ofMultiplication m).generator =
       (ContinuousLinearMap.mul ℝ (α →ᵇ ℝ) (-m)).toLinearMap.toPMap ⊤ :=
-  (ofMultiplication_domain_eq_top m).2
+  (generator_eq_toPMap_top_of_forall_tendsto _ _ (tendsto_quot_orbit_ofMultiplication m)).2
 
 
 /-! ## The concrete resolvent -/
@@ -470,10 +423,6 @@ private theorem integral_exp_neg_mul_Ioi {a : ℝ} (ha : 0 < a) :
     ∫ t : ℝ in Set.Ioi 0, Real.exp (-(a * t)) = a⁻¹ := by
   simpa [pow_zero, one_mul] using integral_pow_mul_exp_neg_mul_Ioi 0 ha
 
-/-- Pointwise absolute-value bound for a bounded continuous function. -/
-private theorem abs_norm_coe_le (f : α →ᵇ ℝ) (x : α) : |f x| ≤ ‖f‖ := by
-  simpa using f.norm_coe_le_norm x
-
 /-- The pointwise inverse `(c + m)⁻¹` of a positive perturbation of a bounded continuous
 multiplier, as bounded continuous function.  The hypothesis `‖m‖ < c` guarantees
 `c + m x ≥ c - ‖m‖ > 0` for every `x`. -/
@@ -481,10 +430,10 @@ def invAddBcf (c : ℝ) (m : α →ᵇ ℝ) (hc : ‖m‖ < c) : α →ᵇ ℝ :
   BoundedContinuousFunction.ofNormedAddCommGroup (fun x => (c + m x)⁻¹)
     (by
       refine Continuous.inv₀ (continuous_const.add m.continuous) fun x => ?_
-      have h := abs_le.mp (abs_norm_coe_le m x)
+      have h := abs_le.mp (m.norm_coe_le_norm x)
       exact ne_of_gt (by linarith))
     (1 / (c - ‖m‖)) fun x => by
-      have h := abs_le.mp (abs_norm_coe_le m x)
+      have h := abs_le.mp (m.norm_coe_le_norm x)
       have hge : c - ‖m‖ ≤ c + m x := by linarith
       have hpos : (0 : ℝ) < c - ‖m‖ := by linarith
       have hxpos : (0 : ℝ) < c + m x := by linarith
@@ -496,47 +445,17 @@ theorem coe_invAddBcf (c : ℝ) (m : α →ᵇ ℝ) (hc : ‖m‖ < c) :
     ⇑(invAddBcf c m hc) = fun x => (c + m x)⁻¹ :=
   BoundedContinuousFunction.coe_ofNormedAddCommGroup _ _ _ _
 
-/-- The sup-norm bound for `invAddBcf`. -/
-private theorem norm_invAddBcf_le (c : ℝ) (m : α →ᵇ ℝ) (hc : ‖m‖ < c) :
-    ‖invAddBcf c m hc‖ ≤ 1 / (c - ‖m‖) := by
-  refine (BoundedContinuousFunction.norm_le (by positivity)).mpr fun x => ?_
-  have h := abs_le.mp (abs_norm_coe_le m x)
-  have hge : c - ‖m‖ ≤ c + m x := by linarith
-  have hpos : (0 : ℝ) < c - ‖m‖ := by linarith
-  have hxpos : (0 : ℝ) < c + m x := by linarith
-  simp only [coe_invAddBcf]
-  rw [Real.norm_eq_abs, abs_inv, abs_of_pos hxpos, inv_eq_one_div]
-  exact one_div_le_one_div_of_le hpos hge
-
 /-- Multiplication by the pointwise inverse `(c + m)⁻¹`; this is the resolvent of the
 multiplication semigroup for `c > ‖m‖`, see
 `StronglyContinuousSemigroup.ofMultiplication_resolvent_eq`. -/
 def resolventMulLeft (c : ℝ) (m : α →ᵇ ℝ) (hc : ‖m‖ < c) :
     (α →ᵇ ℝ) →L[ℝ] (α →ᵇ ℝ) :=
-  LinearMap.mkContinuous
-    { toFun := fun f => ContinuousLinearMap.mul ℝ (α →ᵇ ℝ) (invAddBcf c m hc) f
-      map_add' := fun f g => by
-        refine BoundedContinuousFunction.ext fun x => ?_
-        simp only [ContinuousLinearMap.mul_apply', BoundedContinuousFunction.mul_apply,
-          BoundedContinuousFunction.coe_add, Pi.add_apply, coe_invAddBcf]
-        ring
-      map_smul' := fun r f => by
-        refine BoundedContinuousFunction.ext fun x => ?_
-        simp only [ContinuousLinearMap.mul_apply', BoundedContinuousFunction.mul_apply,
-          BoundedContinuousFunction.coe_smul, smul_eq_mul,
-          coe_invAddBcf, RingHom.id_apply]
-        ring }
-    (1 / (c - ‖m‖)) fun f => by
-      calc ‖ContinuousLinearMap.mul ℝ (α →ᵇ ℝ) (invAddBcf c m hc) f‖
-          ≤ ‖invAddBcf c m hc‖ * ‖f‖ := norm_mul_le _ _
-        _ ≤ 1 / (c - ‖m‖) * ‖f‖ :=
-              mul_le_mul_of_nonneg_right (norm_invAddBcf_le c m hc) (norm_nonneg _)
+  ContinuousLinearMap.mul ℝ (α →ᵇ ℝ) (invAddBcf c m hc)
 
 @[simp]
 theorem resolventMulLeft_apply (c : ℝ) (m : α →ᵇ ℝ) (hc : ‖m‖ < c) (f : α →ᵇ ℝ) :
     resolventMulLeft c m hc f = invAddBcf c m hc * f := by
-  simp only [resolventMulLeft, LinearMap.mkContinuous_apply,
-    ContinuousLinearMap.mul_apply']
+  rw [resolventMulLeft]
   rfl
 
 /-- Pointwise action of the concrete resolvent:
@@ -577,22 +496,19 @@ theorem StronglyContinuousSemigroup.ofMultiplication_resolvent_eq (m : α →ᵇ
       = ∫ t : ℝ in Set.Ioi 0,
           Real.exp (-(c * t)) * Real.exp (-((t : ℝ) * m x)) * f x := by
     -- evaluate the Bochner integral at `x` through the continuous-linear evaluator
-    change BoundedContinuousFunction.evalCLM (𝕜 := ℝ) x
-      ((ofMultiplication m).resolvent (ofMultiplication_hasGrowthBound m) c hc f) = _
+    rw [← BoundedContinuousFunction.evalCLM_apply (𝕜 := ℝ)]
     rw [StronglyContinuousSemigroup.resolvent_apply, ← hcomm]
     refine MeasureTheory.setIntegral_congr_fun measurableSet_Ioi ?_
     intro t ht
     have hu : ((t.toNNReal : ℝ≥0) : ℝ) = t := Real.coe_toNNReal t ht.le
-    change (BoundedContinuousFunction.evalCLM ℝ x)
-        (Real.exp (-(c * t)) • ((StronglyContinuousSemigroup.ofMultiplication m).realOperator t) f)
-      = Real.exp (-(c * t)) * Real.exp (-(t * m x)) * f x
+    dsimp
     rw [hpt t ht, StronglyContinuousSemigroup.ofMultiplication_apply_apply, hu]
     ring
   rw [resolventMulLeft_apply_apply, hstep1,
     MeasureTheory.setIntegral_congr_fun measurableSet_Ioi
       fun t (_ : t ∈ Set.Ioi 0) => hnorm t,
     MeasureTheory.integral_const_mul, integral_exp_neg_mul_Ioi
-      (by have h := abs_le.mp (abs_norm_coe_le m x); linarith)]
+      (by have h := abs_le.mp (m.norm_coe_le_norm x); linarith)]
   ring
 
 /-- Through the bridge lemma `generator_resolvent_eq`, the concrete formula identifies the
@@ -620,5 +536,14 @@ def ContractionSemigroup.ofMultiplication (m : α →ᵇ ℝ) (hm : ∀ x, 0 ≤
           simp only [coe_expNegMulBcf, Real.norm_eq_abs,
             abs_of_nonneg (Real.exp_nonneg _)]
           exact Real.exp_le_one_iff.mpr (neg_nonpos.mpr (mul_nonneg t.coe_nonneg (hm x)))
+
+/-- The C₀-semigroup underlying the multiplication contraction semigroup is the multiplication
+semigroup. -/
+@[simp]
+theorem ContractionSemigroup.ofMultiplication_toStronglyContinuousSemigroup
+    (m : α →ᵇ ℝ) (hm : ∀ x, 0 ≤ m x) :
+    (ContractionSemigroup.ofMultiplication m hm).toStronglyContinuousSemigroup =
+      StronglyContinuousSemigroup.ofMultiplication m := by
+  rw [ContractionSemigroup.ofMultiplication]
 
 end TauCeti.Semigroups
