@@ -345,21 +345,20 @@ theorem charFun_gammaMeasure (ha : 0 < a) (hr : 0 < r) (t : ℝ) :
   -- Those points accumulate at `0`, so the identity theorem applies.
   have hfreq : ∃ᶠ z in nhdsWithin (0 : ℂ) {(0 : ℂ)}ᶜ,
       complexMGF id (gammaMeasure a r) z = (1 - z / (r : ℂ)) ^ (-(a : ℂ)) := by
-    have hnat : Filter.Tendsto (fun n : ℕ ↦ ((n : ℝ) + 2)) Filter.atTop Filter.atTop :=
-      Filter.tendsto_atTop_add_const_right _ 2 tendsto_natCast_atTop_atTop
-    have hreal : Filter.Tendsto (fun n : ℕ ↦ (r / ((n : ℝ) + 2))) Filter.atTop (nhds 0) :=
-      Filter.Tendsto.div_atTop tendsto_const_nhds hnat
-    have hcomplex : Filter.Tendsto (fun n : ℕ ↦ ((r / ((n : ℝ) + 2) : ℝ) : ℂ)) Filter.atTop
-        (nhdsWithin (0 : ℂ) {(0 : ℂ)}ᶜ) := by
-      refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ?_
-        (.of_forall fun n ↦ ?_)
-      · have h := (Complex.continuous_ofReal.tendsto (0 : ℝ)).comp hreal
-        simpa [Function.comp_def] using h
-      · simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Complex.ofReal_eq_zero]
-        positivity
-    refine hcomplex.frequently (.of_forall fun n ↦ key _ ?_)
-    rw [div_lt_iff₀ (by positivity)]
-    nlinarith [hr, Nat.cast_nonneg (α := ℝ) n]
+    have hreal : ∃ᶠ (x : ℝ) in nhdsWithin (0 : ℝ) {(0 : ℝ)}ᶜ,
+        complexMGF id (gammaMeasure a r) x =
+          (1 - (x : ℂ) / (r : ℂ)) ^ (-(a : ℂ)) := by
+      apply Filter.Eventually.frequently
+      filter_upwards [nhdsWithin_le_nhds (Iio_mem_nhds hr)] with x hx
+      exact key x hx
+    rw [Filter.frequently_iff_seq_forall] at hreal ⊢
+    obtain ⟨xs, hx_tendsto, hx_eq⟩ := hreal
+    refine ⟨fun n ↦ xs n, ?_, fun n ↦ ?_⟩
+    · rw [tendsto_nhdsWithin_iff] at hx_tendsto ⊢
+      constructor
+      · simpa using (Filter.tendsto_ofReal_iff.mpr hx_tendsto.1)
+      · simpa using hx_tendsto.2
+    · simpa using hx_eq n
   have heq := hf.eqOn_of_preconnected_of_frequently_eq hg hpre h0 hfreq
   have hmem : ((t : ℂ) * Complex.I) ∈ {z : ℂ | z.re < r} := by simpa using hr
   have hval := heq hmem
