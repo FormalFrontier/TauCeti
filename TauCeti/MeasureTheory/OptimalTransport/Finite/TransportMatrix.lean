@@ -148,7 +148,7 @@ theorem sum_toRealFun_col (A : TransportMatrix μ ν) (j : κ) :
 
 /-- The real-valued entries of a transportation matrix have total mass one. -/
 theorem sum_toRealFun (A : TransportMatrix μ ν) : ∑ p, A.toRealFun p = 1 := by
-  simpa only [toRealFun_apply, toPMF_apply] using PMF.sum_toReal_apply A.toPMF
+  simpa only [toRealFun_apply, toPMF_apply] using PMF.sum_toReal_eq_one A.toPMF
 
 /-- The total cost of a finite transportation matrix. The cost function is real-valued, so
 negative costs are allowed. -/

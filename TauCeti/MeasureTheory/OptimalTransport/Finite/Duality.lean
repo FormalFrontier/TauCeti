@@ -108,7 +108,7 @@ theorem finiteDualValue_add_const_add_const (μ : PMF ι) (ν : PMF κ) (φ : ι
     finiteDualValue μ ν (fun i ↦ φ i + a) (fun j ↦ ψ j + b)
       = finiteDualValue μ ν φ ψ + a + b := by
   simp only [finiteDualValue_def, mul_add, Finset.sum_add_distrib, ← Finset.sum_mul,
-    PMF.sum_toReal_apply, one_mul]
+    PMF.sum_toReal_eq_one, one_mul]
   ring
 
 /-- Adding a constant to the first potential adds it to the dual value: the first marginal has
@@ -259,7 +259,7 @@ private theorem realPlans_subset_stdSimplex : RealPlans μ ν ⊆ stdSimplex ℝ
   refine ⟨hf.1, ?_⟩
   rw [Fintype.sum_prod_type]
   simp only [hf.2.1]
-  exact PMF.sum_toReal_apply μ
+  exact PMF.sum_toReal_eq_one μ
 
 private theorem isClosed_realPlans : IsClosed (RealPlans μ ν) := by
   have h1 : IsClosed {f : ι × κ → ℝ | ∀ q, 0 ≤ f q} := by

@@ -9,6 +9,7 @@ public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Topology.UniformSpace.HeineCantor
 public import TauCeti.MeasureTheory.MeasurableSpace.Metric
 public import TauCeti.MeasureTheory.OptimalTransport.CTransform
+public import TauCeti.MeasureTheory.OptimalTransport.Cost.Compact
 public import TauCeti.MeasureTheory.OptimalTransport.Finite.Duality
 
 /-!
@@ -165,8 +166,9 @@ theorem exists_continuous_forall_add_le_and_le (hc : Continuous c)
         dist (c (x, y)) (c (x', y)) < ε := fun ε hε ↦ by
       obtain ⟨δ, hδ, hcδ⟩ := Metric.uniformContinuous_iff.1 hcu ε hε
       refine ⟨δ, hδ, fun y x x' hxx' ↦ ?_⟩
-      exact hcδ (show dist ((x, y) : X × Y) (x', y) < δ by
-        simpa [Prod.dist_eq] using hxx')
+      have hprod : dist ((x, y) : X × Y) (x', y) < δ := by
+        simpa [Prod.dist_eq] using hxx'
+      exact hcδ hprod
     exact (uniformContinuous_iInf_sub (c := fun q : Y × X ↦ c (q.2, q.1))
       (φ := ψ') hcuX hbddφ).continuous
   · intro x y
@@ -326,26 +328,6 @@ private theorem transportCost_le_ofReal_cost {n m : ℕ} {qX : X → Fin n} {qY 
         exact Finset.sum_congr rfl fun j _ ↦ hentry i j
 
 end Lift
-
-section Finiteness
-
-variable [TopologicalSpace X] [CompactSpace X] [MeasurableSpace X]
-  [TopologicalSpace Y] [CompactSpace Y] [MeasurableSpace Y]
-  {μ : Measure X} {ν : Measure Y} {c : X × Y → ℝ}
-
-/-- A continuous cost on a product of compact spaces is bounded, so the transport problem has a
-finite value. -/
-theorem transportCost_ne_top_of_continuous [IsFiniteMeasure μ]
-    (hπ : ∃ π, IsCoupling π μ ν) (hc : Continuous c) :
-    transportCost (fun z ↦ ENNReal.ofReal (c z)) μ ν ≠ ⊤ := by
-  obtain ⟨K, hK⟩ := isCompact_univ.exists_bound_of_continuousOn hc.continuousOn
-  refine ne_top_of_le_ne_top (b := ENNReal.ofReal K * μ univ)
-    (ENNReal.mul_ne_top ENNReal.ofReal_ne_top (measure_ne_top μ univ)) ?_
-  refine (transportCost_mono fun z ↦ ENNReal.ofReal_le_ofReal
-    ((le_abs_self _).trans (by simpa using hK z (Set.mem_univ z)))).trans_eq ?_
-  exact transportCost_const hπ _
-
-end Finiteness
 
 /-! ### Strong duality -/
 
