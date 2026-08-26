@@ -230,6 +230,12 @@ the exponents `k ≥ 2` to Chebyshev's `ψ`. -/
 noncomputable def higherPrimePowerTheta (K : Type*) [Field K] [NumberField K] (x : ℝ) : ℝ :=
   primePowerSummatory K higherPrimePowerWeight x
 
+/-- The higher-prime-power theta function is the summatory function of the standard weight. -/
+@[simp]
+theorem higherPrimePowerTheta_apply (K : Type*) [Field K] [NumberField K] (x : ℝ) :
+    higherPrimePowerTheta K x = primePowerSummatory K higherPrimePowerWeight x := by
+  rw [higherPrimePowerTheta]
+
 /-- The higher-prime-power sum is nonnegative. -/
 theorem higherPrimePowerTheta_nonneg (K : Type*) [Field K] [NumberField K] (x : ℝ) :
     0 ≤ higherPrimePowerTheta K x :=
@@ -266,7 +272,7 @@ theorem higherPrimePowerTheta_le_card_primesLE_mul_log
       ite_eq_right fun h ↦ hAT (Finset.mem_filter.mpr ⟨hA, h⟩)]
   have hsum : higherPrimePowerTheta K x
       = ∑ A ∈ T, Real.log (Ideal.absNorm (primePowerBase A).asIdeal) := by
-    rw [higherPrimePowerTheta, primePowerSummatory_apply, ← Finset.sum_subset hsub hzero]
+    rw [higherPrimePowerTheta_apply, primePowerSummatory_apply, ← Finset.sum_subset hsub hzero]
     exact Finset.sum_congr rfl fun A hA ↦ by
       rw [higherPrimePowerWeight, ite_eq_left (hmemT A hA).2]
   have hmaps : ∀ A ∈ T, primePowerBase A ∈ primesLE K (Real.sqrt x) := by
@@ -376,7 +382,7 @@ theorem primePowerSummatory_isBigO_of_le_higherPrimePowerWeight
       _ ≤ ∑ A ∈ primePowersLE K x, C * higherPrimePowerWeight A :=
         Finset.sum_le_sum fun A _ ↦ hw A
       _ = C * higherPrimePowerTheta K x := by
-        rw [higherPrimePowerTheta, primePowerSummatory_apply, Finset.mul_sum]
+        rw [higherPrimePowerTheta_apply, primePowerSummatory_apply, Finset.mul_sum]
   refine Asymptotics.IsBigO.of_bound
     (C * (Module.finrank ℚ K / (2 * Real.log 2))) ?_
   filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
