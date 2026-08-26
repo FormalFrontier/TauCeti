@@ -102,9 +102,7 @@ instance isClosedImmersion_diagonalTorus :
     IsClosedImmersion (diagonalTorus (R := R) (N := N)).hom.hom.left := by
   rw [diagonalTorus_eq_weightTorus]
   apply isClosedImmersion_weightTorus
-  rw [show (fun i => Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i)) =
-      (Pi.basisFun ℤ (ULift.{u} (Fin N))) ∘ ULift.up from rfl]
-  rw [ULift.up_surjective.range_comp (Pi.basisFun ℤ (ULift.{u} (Fin N))),
+  rw [Set.range_comp', ULift.up_surjective.range_eq, Set.image_univ,
     (Pi.basisFun ℤ (ULift.{u} (Fin N))).span_eq]
 
 /-- The diagonal split torus as a closed subgroup scheme of `GL_n`. -/
