@@ -118,26 +118,25 @@ theorem typeDDiagonalMatrix_mem_typeD (d : ι → K) :
   -- Membership in `typeD` unfolds to the ambient skew-adjoint matrix equation.
   change (typeDDiagonalMatrix d)ᵀ * LieAlgebra.Orthogonal.JD ι K =
     LieAlgebra.Orthogonal.JD ι K * (-typeDDiagonalMatrix d)
-  rw [typeDDiagonalMatrix, typeDDiagonalValue]
-  rw [← Matrix.fromBlocks_diagonal]
-  rw [Matrix.fromBlocks_transpose, LieAlgebra.Orthogonal.JD,
-    Matrix.fromBlocks_multiply, Matrix.fromBlocks_neg, Matrix.fromBlocks_multiply]
-  simp
+  ext (i | i) (j | j) <;> by_cases h : i = j <;>
+    simp [typeDDiagonalMatrix, typeDDiagonalValue, LieAlgebra.Orthogonal.JD,
+      Matrix.diagonal_mul, Matrix.mul_diagonal, h]
 
-/-- In a type-`D` matrix, the paired diagonal entries are negatives. -/
+/-- In a type-`D` matrix, the lower-right block is the negative transpose of the upper-left
+block. -/
 @[simp]
-theorem typeD_apply_inr_inr (A : LieAlgebra.Orthogonal.typeD ι K) (i : ι) :
-    (A : Matrix (ι ⊕ ι) (ι ⊕ ι) K) (.inr i) (.inr i) =
-      -(A : Matrix (ι ⊕ ι) (ι ⊕ ι) K) (.inl i) (.inl i) := by
+theorem typeD_apply_inr_inr (A : LieAlgebra.Orthogonal.typeD ι K) (i j : ι) :
+    (A : Matrix (ι ⊕ ι) (ι ⊕ ι) K) (.inr i) (.inr j) =
+      -(A : Matrix (ι ⊕ ι) (ι ⊕ ι) K) (.inl j) (.inl i) := by
   have hA := A.2
   -- The subtype witness is membership in the skew-adjoint matrix submodule.
   change (A : Matrix (ι ⊕ ι) (ι ⊕ ι) K) ∈
     skewAdjointMatricesSubmodule (LieAlgebra.Orthogonal.JD ι K) at hA
   rw [mem_skewAdjointMatricesSubmodule] at hA
-  -- Unfold the submodule predicate once to read its paired diagonal entry.
+  -- Unfold the submodule predicate once to read the two corresponding block entries.
   change (A : Matrix (ι ⊕ ι) (ι ⊕ ι) K)ᵀ * LieAlgebra.Orthogonal.JD ι K =
     LieAlgebra.Orthogonal.JD ι K * (-(A : Matrix (ι ⊕ ι) (ι ⊕ ι) K)) at hA
-  have h := congr_fun (congr_fun hA (.inl i)) (.inr i)
+  have h := congr_fun (congr_fun hA (.inl i)) (.inr j)
   exact neg_eq_iff_eq_neg.mp (by
     simpa [LieAlgebra.Orthogonal.JD, Matrix.mul_apply, Matrix.one_apply] using h.symm)
 
@@ -166,12 +165,12 @@ def typeDDiagonalEquiv : (ι → K) ≃ₗ[K] typeDDiagonalCartan K ι where
     apply Subtype.ext
     apply Subtype.ext
     ext (i | i) (j | j) <;> by_cases hij : i = j <;>
-      simp [typeDDiagonalMatrix, typeDDiagonalValue, hij, add_comm]
+      simp [typeDDiagonalMatrix, typeDDiagonalValue, hij, eq_comm, add_comm]
   map_smul' c d := by
     apply Subtype.ext
     apply Subtype.ext
     ext (i | i) (j | j) <;> by_cases hij : i = j <;>
-      simp [typeDDiagonalMatrix, typeDDiagonalValue, hij]
+      simp [typeDDiagonalMatrix, typeDDiagonalValue, hij, eq_comm]
   invFun A i := (A : Matrix (ι ⊕ ι) (ι ⊕ ι) K) (.inl i) (.inl i)
   left_inv d := by
     ext i
@@ -188,7 +187,9 @@ def typeDDiagonalEquiv : (ι → K) ≃ₗ[K] typeDDiagonalCartan K ι where
     · subst b
       rcases a with i | i
       · simp [typeDDiagonalMatrix]
-      · simp [typeDDiagonalMatrix]
+      · simp only [typeDDiagonalMatrix_apply, ↓reduceIte, typeDDiagonalValue_inr]
+        exact (typeD_apply_inr_inr
+          (A : LieAlgebra.Orthogonal.typeD ι K) i i).symm
     · rw [typeDDiagonalMatrix_apply, ite_eq_right hab]
       exact (mem_typeDDiagonalCartan_iff_isDiag.mp A.2 hab).symm
 
@@ -231,8 +232,8 @@ private theorem exists_isRegular_typeDDiagonalValue_sub (h2 : IsRegular (2 : K))
     by_cases hij : i = j
     · subst j
       simp only [typeDDiagonalValue_inr, Pi.single_eq_same, typeDDiagonalValue_inl]
-      rw [show (-1 : K) - 1 = (-1) * 2 by ring]
-      exact isUnit_neg_one.isRegular.mul h2
+      simpa only [sub_eq_add_neg, ← neg_add, one_add_one_eq_two, neg_one_mul] using
+        isUnit_neg_one.isRegular.mul h2
     · simpa [typeDDiagonalValue, hij] using
         (isUnit_neg_one.isRegular : IsRegular (-1 : K))
   · refine ⟨Pi.single i 1, ?_⟩
@@ -240,8 +241,7 @@ private theorem exists_isRegular_typeDDiagonalValue_sub (h2 : IsRegular (2 : K))
     · subst j
       simp only [typeDDiagonalValue_inl, Pi.single_eq_same, typeDDiagonalValue_inr,
         sub_neg_eq_add]
-      rw [show (1 : K) + 1 = 2 by ring]
-      exact h2
+      simpa only [one_add_one_eq_two] using h2
     · simpa [typeDDiagonalValue, hij] using (isRegular_one : IsRegular (1 : K))
   · have hij : i ≠ j := fun h => hab (congrArg Sum.inr h)
     refine ⟨Pi.single i 1, ?_⟩
@@ -250,16 +250,14 @@ private theorem exists_isRegular_typeDDiagonalValue_sub (h2 : IsRegular (2 : K))
 /-- The adjoint action of the matrix `diag(d, -d)` scales each matrix entry by the difference of
 its two coordinate weights. -/
 @[simp]
-theorem typeDDiagonalMatrix_lie_apply (d : ι → K) (X : LieAlgebra.Orthogonal.typeD ι K)
+theorem typeDDiagonalMatrix_lie_apply (d : ι → K) (X : Matrix (ι ⊕ ι) (ι ⊕ ι) K)
     (a b : ι ⊕ ι) :
-    (⁅typeDDiagonalMatrix d, (X : Matrix (ι ⊕ ι) (ι ⊕ ι) K)⁆ :
-        Matrix (ι ⊕ ι) (ι ⊕ ι) K) a b =
-      (typeDDiagonalValue d a - typeDDiagonalValue d b) *
-        (X : Matrix (ι ⊕ ι) (ι ⊕ ι) K) a b := by
+    ⁅typeDDiagonalMatrix d, X⁆ a b =
+      (typeDDiagonalValue d a - typeDDiagonalValue d b) * X a b := by
   simpa only [typeDDiagonalMatrix, diagonal_apply_eq] using
     lie_apply_of_mem_diagonalCartan
       (diagonal_mem_diagonalCartan (typeDDiagonalValue d))
-      (X : Matrix (ι ⊕ ι) (ι ⊕ ι) K) a b
+      X a b
 
 /-- The adjoint action of the bundled Cartan element `diag(d, -d)` has the same entrywise normal
 form. -/
@@ -275,16 +273,12 @@ theorem typeDDiagonalEquiv_lie_apply (d : ι → K) (X : LieAlgebra.Orthogonal.t
 /-- Bracketing in the reverse order with the matrix `diag(d, -d)` scales each matrix entry by the
 reverse weight difference. -/
 @[simp]
-theorem lie_typeDDiagonalMatrix_apply (X : LieAlgebra.Orthogonal.typeD ι K) (d : ι → K)
+theorem lie_typeDDiagonalMatrix_apply (X : Matrix (ι ⊕ ι) (ι ⊕ ι) K) (d : ι → K)
     (a b : ι ⊕ ι) :
-    (⁅(X : Matrix (ι ⊕ ι) (ι ⊕ ι) K), typeDDiagonalMatrix d⁆ :
-        Matrix (ι ⊕ ι) (ι ⊕ ι) K) a b =
-      (typeDDiagonalValue d b - typeDDiagonalValue d a) *
-        (X : Matrix (ι ⊕ ι) (ι ⊕ ι) K) a b := by
+    ⁅X, typeDDiagonalMatrix d⁆ a b =
+      (typeDDiagonalValue d b - typeDDiagonalValue d a) * X a b := by
   have hskew :
-      (⁅(X : Matrix (ι ⊕ ι) (ι ⊕ ι) K), typeDDiagonalMatrix d⁆ :
-        Matrix (ι ⊕ ι) (ι ⊕ ι) K) =
-        -⁅typeDDiagonalMatrix d, (X : Matrix (ι ⊕ ι) (ι ⊕ ι) K)⁆ :=
+      ⁅X, typeDDiagonalMatrix d⁆ = -⁅typeDDiagonalMatrix d, X⁆ :=
     (lie_skew _ _).symm
   rw [hskew, Matrix.neg_apply, typeDDiagonalMatrix_lie_apply]
   ring
