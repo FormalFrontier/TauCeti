@@ -39,7 +39,9 @@ value, and their mutual pairing is `b(s, c) = (n - 2) / 4`.
 
 The representatives are the ones fixed by Conway and Sloane, so that later glue calculations —
 in particular the enlargement of `D₈` to `E₈` — can reuse them without a change of
-representative.
+representative.  The identification of this coordinate model with the *root* lattice of type
+`Dₙ` — a `ℤ`-basis of Bourbaki simple roots whose Gram matrix is `CartanMatrix.D n` — is in
+`TauCeti.LinearAlgebra.IntegralLattice.RootLattice.TypeD.SimpleRoots`.
 
 ## Main definitions
 
@@ -277,6 +279,10 @@ variable [NeZero n]
 /-- The final coordinate index `n - 1` of `Fin n`.  The Conway–Sloane vector class of the
 checkerboard discriminant group is the standard vector at this index. -/
 def checkerboardLastIndex : Fin n := ⟨n - 1, Nat.sub_lt (NeZero.pos n) Nat.one_pos⟩
+
+/-- The underlying natural number of the final coordinate index is `n - 1`. -/
+@[simp]
+theorem checkerboardLastIndex_val : ((checkerboardLastIndex n : Fin n) : ℕ) = n - 1 := (rfl)
 
 variable {n} in
 /-- **The dual of the checkerboard lattice**: a rational vector pairs integrally with every
