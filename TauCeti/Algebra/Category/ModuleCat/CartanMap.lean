@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Category.FGModuleCat.EssentiallySmall
 public import Mathlib.Algebra.Category.ModuleCat.Projective
 public import Mathlib.Algebra.Homology.ShortComplex.ModuleCat
-public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import TauCeti.CategoryTheory.GrothendieckGroup.ProjectiveResolution
 
 /-!
@@ -42,26 +42,24 @@ recorded as
 `TauCeti.cartanEquivOfDivisionRing`.
 
 Nothing here computes a Cartan matrix: that needs bases of the two groups, hence the
-Krull--Schmidt hypotheses of a finite-dimensional algebra, and is left to the sequel. The
-dictionary between the object property used here and the finite-dimensionality condition in which
-that sequel is stated is `TauCeti.finite_iff_finiteDimensional`.
+Krull--Schmidt hypotheses of a finite-dimensional algebra, and is left to the sequel.
 
 ## Main definitions
 
-* `TauCeti.finiteModules` and `TauCeti.finiteProjectiveModules`: the two object properties.
+* `ModuleCat.isFG` and `TauCeti.finiteProjectiveModules`: the two object properties.
 * `TauCeti.finiteModulesExactStructure`, `TauCeti.finiteProjectiveModulesExactStructure` and
-  `TauCeti.finiteProjectiveDimensionExactStructure`: the exact structures induced on them, and on
+  `TauCeti.finiteProjectiveResolutionExactStructure`: the exact structures induced on them, and on
   the modules admitting finite resolutions by finitely generated projectives, by the canonical
   exact structure of `ModuleCat R`.
 * `TauCeti.cartanMap`: the Cartan map `K₀(proj R) ⟶ G₀(mod R)`.
 * `TauCeti.moduleResolutionEquiv`: the resolution theorem in `ModuleCat R`, comparing `K₀(proj R)`
   with the Grothendieck group of the modules admitting finite resolutions by finitely generated
   projectives.
-* `TauCeti.fromFiniteProjectiveDimension` and `TauCeti.toFiniteProjectiveDimension`: the two
+* `TauCeti.fromFiniteProjectiveResolution` and `TauCeti.toFiniteProjectiveResolution`: the two
   comparison maps between that group and `G₀(mod R)`.
-* `TauCeti.moduleEulerClass` and `TauCeti.moduleEulerClassOf`: the alternating class in
-  `K₀(proj R)` of a particular finite resolution by finitely generated projectives, and the class
-  determined by any such resolution.
+* `TauCeti.moduleEulerClassOf` and `TauCeti.moduleEulerClass`: the alternating class in
+  `K₀(proj R)` determined by any finite resolution by finitely generated projectives, and the
+  specialized value for a particular resolution.
 * `TauCeti.cartanInverse` and `TauCeti.cartanEquiv`: the inverse of the Cartan map and the
   resulting isomorphism, under the hypothesis that every finitely generated module has a finite
   resolution by finitely generated projectives.
@@ -70,7 +68,7 @@ that sequel is stated is `TauCeti.finite_iff_finiteDimensional`.
 
 * `TauCeti.finiteModulesExactStructure_conflation_iff` and
   `TauCeti.finiteProjectiveModulesExactStructure_conflation_iff`, and
-  `TauCeti.finiteProjectiveDimensionExactStructure_conflation_iff`: the conflations of the three
+  `TauCeti.finiteProjectiveResolutionExactStructure_conflation_iff`: the conflations of the three
   structures are the short exact sequences of modules with terms in the subcategory.
 * `TauCeti.finiteProjectiveModulesExactStructure_eq_split`: the exact structure of the finitely
   generated projectives is the split one.
@@ -80,8 +78,6 @@ that sequel is stated is `TauCeti.finite_iff_finiteDimensional`.
   class.
 * `TauCeti.cartanMap_bijective`: the module form of the resolution theorem, and
   `TauCeti.cartanMap_bijective_of_divisionRing` for the division-ring instance of its hypothesis.
-* `TauCeti.finite_iff_finiteDimensional`: over a finite-dimensional algebra the finitely generated
-  modules are the finite-dimensional ones.
 
 ## References
 
@@ -105,10 +101,7 @@ universe u
 
 variable (R : Type u) [Ring R]
 
-/-! ### The finitely generated modules and the finitely generated projectives -/
-
-/-- The object property of being a finitely generated module. -/
-def finiteModules : ObjectProperty (ModuleCat.{u} R) := fun M => Module.Finite R M
+/-! ### The finitely generated projectives -/
 
 /-- The object property of being a finitely generated projective module. -/
 def finiteProjectiveModules : ObjectProperty (ModuleCat.{u} R) :=
@@ -116,22 +109,19 @@ def finiteProjectiveModules : ObjectProperty (ModuleCat.{u} R) :=
 
 variable {R}
 
-@[simp] theorem finiteModules_iff {M : ModuleCat.{u} R} :
-    finiteModules R M ↔ Module.Finite R M := Iff.rfl
-
 @[simp] theorem finiteProjectiveModules_iff {M : ModuleCat.{u} R} :
     finiteProjectiveModules R M ↔ Module.Finite R M ∧ Module.Projective R M := Iff.rfl
 
 variable (R)
 
 theorem finiteProjectiveModules_le_finiteModules :
-    finiteProjectiveModules R ≤ finiteModules R := fun _ h =>
-  finiteModules_iff.mpr (finiteProjectiveModules_iff.mp h).1
+    finiteProjectiveModules R ≤ ModuleCat.isFG R := fun _ h =>
+  (ModuleCat.isFG_iff _).mpr (finiteProjectiveModules_iff.mp h).1
 
-instance : (finiteModules R).IsClosedUnderIsomorphisms where
+instance : (ModuleCat.isFG.{u} R).IsClosedUnderIsomorphisms where
   of_iso {M N} e h := by
-    have : Module.Finite R M := finiteModules_iff.mp h
-    exact finiteModules_iff.mpr (Module.Finite.equiv e.toLinearEquiv)
+    have : Module.Finite R M := (ModuleCat.isFG_iff M).mp h
+    exact (ModuleCat.isFG_iff N).mpr (Module.Finite.equiv e.toLinearEquiv)
 
 instance : (finiteProjectiveModules R).IsClosedUnderIsomorphisms where
   of_iso {M N} e h := by
@@ -140,32 +130,23 @@ instance : (finiteProjectiveModules R).IsClosedUnderIsomorphisms where
     exact finiteProjectiveModules_iff.mpr
       ⟨Module.Finite.equiv e.toLinearEquiv, Module.Projective.of_equiv e.toLinearEquiv⟩
 
-/-- The trivial module is finitely generated, being the image of `R`. -/
-private theorem finite_pUnit : Module.Finite R (PUnit.{u + 1}) :=
-  Module.Finite.of_surjective (0 : R →ₗ[R] PUnit) fun _ => ⟨0, Subsingleton.elim _ _⟩
-
-instance : (finiteModules R).ContainsZero where
+instance : (ModuleCat.isFG.{u} R).ContainsZero where
   exists_zero := ⟨ModuleCat.of R PUnit, ModuleCat.isZero_of_subsingleton _,
-    finiteModules_iff.mpr (finite_pUnit R)⟩
+    (ModuleCat.isFG_iff _).mpr inferInstance⟩
 
 instance : (finiteProjectiveModules R).ContainsZero where
   exists_zero := ⟨ModuleCat.of R PUnit, ModuleCat.isZero_of_subsingleton _,
-    finiteProjectiveModules_iff.mpr ⟨finite_pUnit R, inferInstance⟩⟩
+    finiteProjectiveModules_iff.mpr ⟨inferInstance, inferInstance⟩⟩
 
 /-! ### Essential smallness -/
 
-/-- **The finitely generated modules are essentially small**: each of them is a quotient of some
-`Rⁿ`, and the quotients of the modules `Rⁿ` are indexed by the small type of pairs consisting of
-an `n : ℕ` and a submodule of `Rⁿ`. -/
-instance : ObjectProperty.EssentiallySmall.{u} (finiteModules R) where
-  exists_small_le' := by
-    refine ⟨ObjectProperty.ofObj (fun p : Σ n : ℕ, Submodule R (Fin n → R) =>
-      ModuleCat.of R ((Fin p.1 → R) ⧸ p.2)), inferInstance, fun M hM => ?_⟩
-    have : Module.Finite R M := finiteModules_iff.mp hM
-    obtain ⟨n, f, hf⟩ := Module.Finite.exists_fin' R (M : Type u)
-    exact ⟨ModuleCat.of R ((Fin n → R) ⧸ LinearMap.ker f),
-      (ObjectProperty.ofObj_iff _ _).2 ⟨⟨n, LinearMap.ker f⟩, rfl⟩,
-      ⟨(f.quotKerEquivOfSurjective hf).symm.toModuleIso⟩⟩
+instance : ObjectProperty.EssentiallySmall.{u} (ModuleCat.isFG.{u} R) := by
+  refine ⟨ObjectProperty.ofObj (fun p : Σ n : ℕ, Submodule R (Fin n → R) =>
+    ModuleCat.of R ((Fin p.1 → R) ⧸ p.2)), inferInstance, fun M hM => ?_⟩
+  obtain ⟨n, S, ⟨e⟩⟩ := @Module.Finite.exists_fin_quot_equiv R (M : Type u)
+    _ _ _ ((ModuleCat.isFG_iff M).mp hM)
+  exact ⟨ModuleCat.of R ((Fin n → R) ⧸ S),
+    (ObjectProperty.ofObj_iff _ _).2 ⟨⟨n, S⟩, rfl⟩, ⟨e.symm.toModuleIso⟩⟩
 
 instance : ObjectProperty.EssentiallySmall.{u} (finiteProjectiveModules R) :=
   ObjectProperty.EssentiallySmall.of_le (finiteProjectiveModules_le_finiteModules R)
@@ -175,12 +156,13 @@ instance : ObjectProperty.EssentiallySmall.{u} (finiteProjectiveModules R) :=
 /-- **The finitely generated modules are extension closed**: the middle term of a short exact
 sequence with finitely generated ends is finitely generated. -/
 theorem isExtensionClosed_finiteModules :
-    (ExactStructure.abelian (ModuleCat.{u} R)).IsExtensionClosed (finiteModules R) where
+    (ExactStructure.abelian (ModuleCat.{u} R)).IsExtensionClosed (ModuleCat.isFG R) where
   prop_X₂ {S} hS h₁ h₃ := by
     rw [ExactStructure.abelian_conflation] at hS
-    have : Module.Finite R S.X₁ := finiteModules_iff.mp h₁
-    have : Module.Finite R S.X₃ := finiteModules_iff.mp h₃
-    exact finiteModules_iff.mpr <| Module.Finite.of_exact (f := S.f.hom) (g := S.g.hom)
+    have : Module.Finite R S.X₁ := (ModuleCat.isFG_iff S.X₁).mp h₁
+    have : Module.Finite R S.X₃ := (ModuleCat.isFG_iff S.X₃).mp h₃
+    exact (ModuleCat.isFG_iff S.X₂).mpr <|
+      Module.Finite.of_exact (f := S.f.hom) (g := S.g.hom)
       ((ShortComplex.ShortExact.moduleCat_exact_iff_function_exact S).1 hS.exact)
       hS.moduleCat_surjective_g
 
@@ -192,7 +174,7 @@ theorem finiteProjectiveModules_le_isProjective :
   have : Module.Projective R M := (finiteProjectiveModules_iff.mp hM).2
   exact (ExactStructure.abelian_isProjective_iff M).2 inferInstance
 
-instance : (finiteModules R).IsClosedUnderBinaryProducts :=
+instance : (ModuleCat.isFG.{u} R).IsClosedUnderBinaryProducts :=
   (isExtensionClosed_finiteModules R).isClosedUnderBinaryProducts
 
 instance : (finiteProjectiveModules R).IsClosedUnderBinaryProducts := by
@@ -201,14 +183,14 @@ instance : (finiteProjectiveModules R).IsClosedUnderBinaryProducts := by
     (ExactStructure.isProjective_biprod (finiteProjectiveModules_le_isProjective R M hM)
       (finiteProjectiveModules_le_isProjective R N hN))
   apply finiteProjectiveModules_iff.mpr
-  exact ⟨finiteModules_iff.mp ((finiteModules R).prop_biprod_of_isClosedUnderBinaryProducts
+  exact ⟨(ModuleCat.isFG_iff _).mp ((ModuleCat.isFG R).prop_biprod_of_isClosedUnderBinaryProducts
     (finiteProjectiveModules_le_finiteModules R M hM)
     (finiteProjectiveModules_le_finiteModules R N hN)), inferInstance⟩
 
 /-- **The exact structure of the finitely generated modules**: the short exact sequences of
 `R`-modules all of whose terms are finitely generated. -/
 noncomputable def finiteModulesExactStructure :
-    ExactStructure (finiteModules R).FullSubcategory :=
+    ExactStructure (FGModuleCat.{u} R) :=
   (ExactStructure.abelian (ModuleCat.{u} R)).fullSubcategory _ (isExtensionClosed_finiteModules R)
 
 /-- **The exact structure of the finitely generated projective modules**, induced from the
@@ -231,10 +213,10 @@ theorem finiteProjectiveModulesExactStructure_eq_split :
 /-- The conflations of finitely generated modules are the short exact sequences of `R`-modules
 whose three terms are finitely generated. -/
 @[simp] theorem finiteModulesExactStructure_conflation_iff
-    (S : ShortComplex (finiteModules R).FullSubcategory) :
-    (finiteModulesExactStructure R).Conflation S ↔ (S.map (finiteModules R).ι).ShortExact :=
+    (S : ShortComplex (FGModuleCat.{u} R)) :
+    (finiteModulesExactStructure R).Conflation S ↔ (S.map (ModuleCat.isFG R).ι).ShortExact :=
   (ExactStructure.fullSubcategory_conflation_iff (E := ExactStructure.abelian (ModuleCat.{u} R))
-    (P := finiteModules R) (isExtensionClosed_finiteModules R) S).trans
+    (P := ModuleCat.isFG R) (isExtensionClosed_finiteModules R) S).trans
     (ExactStructure.abelian_conflation _)
 
 /-- The conflations of finitely generated projective modules are the short exact sequences of
@@ -262,7 +244,7 @@ noncomputable def cartanMap :
 
 @[simp] theorem cartanMap_of {M : ModuleCat.{u} R} (hM : finiteProjectiveModules R M) :
     cartanMap R (ExactK0.of ⟨M, hM⟩) =
-      ExactK0.of ⟨M, finiteModules_iff.mpr (finiteProjectiveModules_iff.mp hM).1⟩ :=
+      ExactK0.of ⟨M, (ModuleCat.isFG_iff M).mpr (finiteProjectiveModules_iff.mp hM).1⟩ :=
   ExactK0.map_of _ _ _
 
 /-! ### The resolution theorem -/
@@ -272,15 +254,15 @@ generated: each step of the resolution presents it as a quotient of a finitely g
 module. -/
 theorem admitsFiniteResolution_le_finiteModules :
     (ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution (finiteProjectiveModules R) ≤
-      finiteModules R := by
+      ModuleCat.isFG R := by
   intro M hM
   refine (ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution_induction
     (finiteProjectiveModules R) (finiteProjectiveModules_le_finiteModules R)
     (fun {K Q X} hQ {i p zero} hconf _ => ?_) hM
   rw [ExactStructure.abelian_conflation] at hconf
   have : Module.Finite R Q := (finiteProjectiveModules_iff.mp hQ).1
-  exact finiteModules_iff.mpr <|
-    Module.Finite.of_surjective p.hom hconf.moduleCat_surjective_g
+  change Module.Finite R X
+  exact Module.Finite.of_surjective p.hom hconf.moduleCat_surjective_g
 
 instance : ObjectProperty.EssentiallySmall.{u}
     ((ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
@@ -290,7 +272,7 @@ instance : ObjectProperty.EssentiallySmall.{u}
 /-- **The exact structure of the modules admitting finite resolutions by finitely generated
 projectives**: the short exact sequences of `R`-modules all of whose terms admit such a
 resolution. -/
-noncomputable def finiteProjectiveDimensionExactStructure :
+noncomputable def finiteProjectiveResolutionExactStructure :
     ExactStructure ((ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
       (finiteProjectiveModules R)).FullSubcategory :=
   (ExactStructure.abelian (ModuleCat.{u} R)).fullSubcategory _
@@ -299,10 +281,10 @@ noncomputable def finiteProjectiveDimensionExactStructure :
 
 /-- The conflations of modules admitting finite resolutions by finitely generated projectives are
 the short exact sequences of modules whose three terms admit such resolutions. -/
-@[simp] theorem finiteProjectiveDimensionExactStructure_conflation_iff
+@[simp] theorem finiteProjectiveResolutionExactStructure_conflation_iff
     (S : ShortComplex ((ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
       (finiteProjectiveModules R)).FullSubcategory) :
-    (finiteProjectiveDimensionExactStructure R).Conflation S ↔
+    (finiteProjectiveResolutionExactStructure R).Conflation S ↔
       (S.map ((ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
         (finiteProjectiveModules R)).ι).ShortExact :=
   (ExactStructure.fullSubcategory_conflation_iff
@@ -319,7 +301,7 @@ This is `TauCeti.ExactStructure.resolutionEquiv` in `ModuleCat R`; its inverse s
 module to the alternating class of any such resolution. -/
 noncomputable def moduleResolutionEquiv :
     ExactK0.{u} (finiteProjectiveModulesExactStructure R) ≃+
-      ExactK0.{u} (finiteProjectiveDimensionExactStructure R) :=
+      ExactK0.{u} (finiteProjectiveResolutionExactStructure R) :=
   ExactStructure.resolutionEquiv.{u, u, u + 1} (finiteProjectiveModules_le_isProjective R)
 
 @[simp] theorem moduleResolutionEquiv_of {M : ModuleCat.{u} R}
@@ -348,27 +330,6 @@ noncomputable def moduleEulerClass {M : ModuleCat.{u} R}
   r.eulerClassFullSubcategory.{u, u, u + 1}
     (ExactStructure.isExtensionClosed_of_le_isProjective
       (finiteProjectiveModules_le_isProjective R))
-
-/-- The alternating class of the length-zero resolution of a finitely generated projective module
-is the class of that module. -/
-@[simp] theorem moduleEulerClass_base {M : ModuleCat.{u} R}
-    (hM : finiteProjectiveModules R M) :
-    moduleEulerClass R (.base hM) = ExactK0.of ⟨M, hM⟩ := by
-  simp only [moduleEulerClass]
-  exact ExactStructure.FiniteResolution.eulerClassFullSubcategory_base.{u, u, u + 1} _ hM
-
-/-- Prepending a resolving term to a finite resolution subtracts the remaining alternating
-class from the class of that term. -/
-@[simp] theorem moduleEulerClass_step {K Q M : ModuleCat.{u} R}
-    (hQ : finiteProjectiveModules R Q) (i : K ⟶ Q) (p : Q ⟶ M) (zero : i ≫ p = 0)
-    (hp : (ExactStructure.abelian (ModuleCat.{u} R)).Conflation (ShortComplex.mk i p zero))
-    (r : (ExactStructure.abelian (ModuleCat.{u} R)).FiniteResolution
-      (finiteProjectiveModules R) K) :
-    moduleEulerClass R (.step hQ i p zero hp r) =
-      ExactK0.of ⟨Q, hQ⟩ - moduleEulerClass R r := by
-  simp only [moduleEulerClass]
-  exact ExactStructure.FiniteResolution.eulerClassFullSubcategory_step.{u, u, u + 1}
-    _ hQ i p zero hp r
 
 /-- Every finite resolution of a module by finitely generated projectives computes its alternating
 class. -/
@@ -400,16 +361,16 @@ own class. -/
 
 /-- The comparison map from the Grothendieck group of the modules admitting finite resolutions by
 finitely generated projectives to `G₀(mod R)`. -/
-noncomputable def fromFiniteProjectiveDimension :
-    ExactK0.{u} (finiteProjectiveDimensionExactStructure R) →+
+noncomputable def fromFiniteProjectiveResolution :
+    ExactK0.{u} (finiteProjectiveResolutionExactStructure R) →+
       ExactK0.{u} (finiteModulesExactStructure R) :=
   ExactK0.map _ (ExactStructure.isConflationExact_ιOfLE _ (isExtensionClosed_finiteModules R)
     (admitsFiniteResolution_le_finiteModules R))
 
-@[simp] theorem fromFiniteProjectiveDimension_of {M : ModuleCat.{u} R}
+@[simp] theorem fromFiniteProjectiveResolution_of {M : ModuleCat.{u} R}
     (hM : (ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
       (finiteProjectiveModules R) M) :
-    fromFiniteProjectiveDimension R (ExactK0.of ⟨M, hM⟩) =
+    fromFiniteProjectiveResolution R (ExactK0.of ⟨M, hM⟩) =
       ExactK0.of ⟨M, admitsFiniteResolution_le_finiteModules R M hM⟩ :=
   ExactK0.map_of _ _ _
 
@@ -418,49 +379,50 @@ generated projectives**, where the resolution theorem `TauCeti.moduleResolutionE
 made it an isomorphism. All that is left of the Cartan map is therefore the comparison of these
 modules with all finitely generated modules. -/
 theorem cartanMap_apply (x : ExactK0.{u} (finiteProjectiveModulesExactStructure R)) :
-    cartanMap R x = fromFiniteProjectiveDimension R (moduleResolutionEquiv R x) := by
+    cartanMap R x = fromFiniteProjectiveResolution R (moduleResolutionEquiv R x) := by
   refine DFunLike.congr_fun (ExactK0.hom_ext (f := cartanMap R)
-    (g := (fromFiniteProjectiveDimension R).comp
+    (g := (fromFiniteProjectiveResolution R).comp
       (moduleResolutionEquiv R).toAddMonoidHom) fun M => ?_) x
   rcases M with ⟨M, hM⟩
   simp
 
 section Inverse
 
-variable (h : finiteModules R ≤
+variable (h : ModuleCat.isFG R ≤
   (ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution (finiteProjectiveModules R))
 
 /-- Under the hypothesis that every finitely generated module admits a finite resolution by
 finitely generated projectives, the comparison map from `G₀(mod R)` to the Grothendieck group of
 the modules admitting such resolutions. -/
-noncomputable def toFiniteProjectiveDimension :
+noncomputable def toFiniteProjectiveResolution :
     ExactK0.{u} (finiteModulesExactStructure R) →+
-      ExactK0.{u} (finiteProjectiveDimensionExactStructure R) :=
+      ExactK0.{u} (finiteProjectiveResolutionExactStructure R) :=
   ExactK0.map _ (ExactStructure.isConflationExact_ιOfLE (isExtensionClosed_finiteModules R)
     (ExactStructure.isExtensionClosed_admitsFiniteResolution
       (finiteProjectiveModules_le_isProjective R)) h)
 
-@[simp] theorem toFiniteProjectiveDimension_of {M : ModuleCat.{u} R} (hM : finiteModules R M) :
-    toFiniteProjectiveDimension R h (ExactK0.of ⟨M, hM⟩) = ExactK0.of ⟨M, h M hM⟩ :=
+@[simp] theorem toFiniteProjectiveResolution_of {M : ModuleCat.{u} R}
+    (hM : ModuleCat.isFG R M) :
+    toFiniteProjectiveResolution R h (ExactK0.of ⟨M, hM⟩) = ExactK0.of ⟨M, h M hM⟩ :=
   ExactK0.map_of _ _ _
 
 /-- The two comparison maps with the modules admitting finite resolutions by finitely generated
 projectives are inverse to one another, since under the hypothesis the two object properties
 agree. -/
-@[simp] theorem fromFiniteProjectiveDimension_toFiniteProjectiveDimension
+@[simp] theorem fromFiniteProjectiveResolution_toFiniteProjectiveResolution
     (y : ExactK0.{u} (finiteModulesExactStructure R)) :
-    fromFiniteProjectiveDimension R (toFiniteProjectiveDimension R h y) = y := by
+    fromFiniteProjectiveResolution R (toFiniteProjectiveResolution R h y) = y := by
   refine DFunLike.congr_fun (ExactK0.hom_ext
-    (f := (fromFiniteProjectiveDimension R).comp (toFiniteProjectiveDimension R h))
+    (f := (fromFiniteProjectiveResolution R).comp (toFiniteProjectiveResolution R h))
     (g := AddMonoidHom.id _) fun M => ?_) y
   rcases M with ⟨M, hM⟩
   simp
 
-@[simp] theorem toFiniteProjectiveDimension_fromFiniteProjectiveDimension
-    (y : ExactK0.{u} (finiteProjectiveDimensionExactStructure R)) :
-    toFiniteProjectiveDimension R h (fromFiniteProjectiveDimension R y) = y := by
+@[simp] theorem toFiniteProjectiveResolution_fromFiniteProjectiveResolution
+    (y : ExactK0.{u} (finiteProjectiveResolutionExactStructure R)) :
+    toFiniteProjectiveResolution R h (fromFiniteProjectiveResolution R y) = y := by
   refine DFunLike.congr_fun (ExactK0.hom_ext
-    (f := (toFiniteProjectiveDimension R h).comp (fromFiniteProjectiveDimension R))
+    (f := (toFiniteProjectiveResolution R h).comp (fromFiniteProjectiveResolution R))
     (g := AddMonoidHom.id _) fun M => ?_) y
   rcases M with ⟨M, hM⟩
   simp
@@ -471,9 +433,9 @@ alternating class of any such resolution. -/
 noncomputable def cartanInverse :
     ExactK0.{u} (finiteModulesExactStructure R) →+
       ExactK0.{u} (finiteProjectiveModulesExactStructure R) :=
-  (moduleResolutionEquiv R).symm.toAddMonoidHom.comp (toFiniteProjectiveDimension R h)
+  (moduleResolutionEquiv R).symm.toAddMonoidHom.comp (toFiniteProjectiveResolution R h)
 
-@[simp] theorem cartanInverse_of {M : ModuleCat.{u} R} (hM : finiteModules R M) :
+@[simp] theorem cartanInverse_of {M : ModuleCat.{u} R} (hM : ModuleCat.isFG R M) :
     cartanInverse R h (ExactK0.of ⟨M, hM⟩) = moduleEulerClassOf R (h M hM) := by
   simp [cartanInverse]
 
@@ -517,16 +479,16 @@ variable (K : Type u) [DivisionRing K]
 /-- Over a division ring every module is projective, so the finitely generated projective modules
 are exactly the finitely generated ones. -/
 theorem finiteModules_le_finiteProjectiveModules :
-    finiteModules K ≤ finiteProjectiveModules K := by
+    ModuleCat.isFG K ≤ finiteProjectiveModules K := by
   intro M hM
   have : Module.Free K (M : Type u) := Module.Free.of_divisionRing K M
   exact finiteProjectiveModules_iff.mpr
-    ⟨finiteModules_iff.mp hM, Module.Projective.of_free⟩
+    ⟨(ModuleCat.isFG_iff M).mp hM, Module.Projective.of_free⟩
 
 /-- Over a division ring every finitely generated module is its own finite projective resolution,
 so the hypothesis of the resolution theorem holds. -/
 theorem finiteModules_le_admitsFiniteResolution :
-    finiteModules K ≤ (ExactStructure.abelian (ModuleCat.{u} K)).admitsFiniteResolution
+    ModuleCat.isFG K ≤ (ExactStructure.abelian (ModuleCat.{u} K)).admitsFiniteResolution
       (finiteProjectiveModules K) :=
   (finiteModules_le_finiteProjectiveModules K).trans
     (ExactStructure.le_admitsFiniteResolution _ _)
