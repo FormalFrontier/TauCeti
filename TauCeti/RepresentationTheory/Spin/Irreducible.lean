@@ -545,7 +545,7 @@ theorem isIrreducible_spinRep_of_span_of_surjective
     (hsurj : Function.Surjective (evenSpinAction Q P)) : (spinRep Q P).IsIrreducible := by
   have hEq : spinGroupRepresentation (evenSpinAction Q P) = spinRep Q P :=
     DFunLike.ext _ _ fun g => by
-      rw [spinGroupRepresentation_apply, evenSpinAction_spinGroupToEven]
+      rw [spinGroupRepresentation_apply, evenSpinAction_apply, coe_spinGroupToEven, spinRep_apply]
   exact hEq ▸ isIrreducible_spinGroupRepresentation hspan (evenSpinAction Q P) hsurj
 
 /-- A subspace of the spinor module that is neither zero nor everything is not invariant under the

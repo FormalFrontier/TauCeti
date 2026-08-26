@@ -69,8 +69,6 @@ only its even half is, the whole algebra being two copies of that half.
   subalgebra is a matrix algebra** `M_{2^l}(F)` in dimension `2 * l + 1`.
 * `CliffordAlgebra.nonempty_algEquiv_matrix_prod_of_finrank_eq_two_mul_add_one`: **the structure
   theorem in odd dimension**, `CliffordAlgebra Q ≃ₐ[F] M_{2^l}(F) × M_{2^l}(F)`.
-* `CliffordAlgebra.isSimpleRing_even_of_odd_finrank`: **the even subalgebra is a simple ring** in
-  odd dimension, unlike the whole algebra.
 * `TauCeti.evenSpinAction_surjective` and `TauCeti.SpinPolarizationData.evenCliffordEquivEnd`:
   **the odd structure theorem in operator form**, that the Fock action identifies `even Q` with
   `Module.End F (⋀·W)`, over any field of characteristic not two.
@@ -198,21 +196,6 @@ theorem nonempty_algEquiv_matrix_prod_of_finrank_eq_two_mul_add_one {l : ℕ}
   obtain ⟨f⟩ := nonempty_algEquiv_even_matrix_of_finrank_eq_two_mul_add_one hQ hV
   exact ⟨e.trans (f.prodCongr f)⟩
 
-/-- **The even subalgebra of an odd-dimensional Clifford algebra is a simple ring.** It is a matrix
-algebra over the base field by
-`CliffordAlgebra.nonempty_algEquiv_even_matrix_of_finrank_eq_two_mul_add_one`, and matrix algebras
-over a field are simple.
-
-The whole algebra is not: in odd dimension it is a product of two matrix algebras, so `(1, 0)` is
-a central idempotent other than `0` and `1`. Simplicity of the even half is what forces every
-nonzero action of it to be faithful, and hence — the dimensions agreeing — onto. -/
-theorem isSimpleRing_even_of_odd_finrank (hQ : Q.Nondegenerate) (hodd : Odd (finrank F V)) :
-    IsSimpleRing ↥(even Q) := by
-  obtain ⟨l, hV⟩ := hodd
-  have _ : Nonempty (Fin (2 ^ l)) := ⟨⟨0, Nat.two_pow_pos l⟩⟩
-  obtain ⟨e⟩ := nonempty_algEquiv_even_matrix_of_finrank_eq_two_mul_add_one hQ hV
-  exact IsSimpleRing.of_ringEquiv e.symm.toRingEquiv inferInstance
-
 end CliffordAlgebra
 
 /-! ### The odd structure theorem in operator form
@@ -299,13 +282,6 @@ theorem evenSpinAction_injective : Function.Injective (evenSpinAction Q P) := by
     (P.finrank_even_eq_finrank_end_of_odd_finrank hodd)).2
     (evenSpinAction_surjective P hodd)
 
-/-- **The even Clifford action on the spinor module is bijective in odd dimension**, the
-odd-dimensional counterpart of `TauCeti.spinAction_bijective`. Kept private: it exists so that the
-bijectivity fed to `AlgEquiv.ofBijective` below carries the stated type, which is what lets the
-application lemma rewrite through it. -/
-private theorem evenSpinAction_bijective : Function.Bijective (evenSpinAction Q P) :=
-  ⟨evenSpinAction_injective P hodd, evenSpinAction_surjective P hodd⟩
-
 /-- **The odd structure theorem in operator form**: for a polarized quadratic space of odd
 dimension over a field of characteristic not two, the Fock action is an isomorphism of
 `F`-algebras from the even Clifford subalgebra onto the endomorphism algebra of the spinor module
@@ -316,13 +292,14 @@ This is the odd-dimensional companion of
 `Module.End F S`, here only its even half is, the whole algebra being two copies of it. -/
 noncomputable def SpinPolarizationData.evenCliffordEquivEnd :
     ↥(even Q) ≃ₐ[F] Module.End F (ExteriorAlgebra F P.W) :=
-  AlgEquiv.ofBijective (evenSpinAction Q P) (evenSpinAction_bijective P hodd)
+  AlgEquiv.ofBijective (evenSpinAction Q P)
+    ⟨evenSpinAction_injective P hodd, evenSpinAction_surjective P hodd⟩
 
 /-- The operator form of the odd structure theorem is the Fock action itself. -/
 @[simp]
 theorem SpinPolarizationData.evenCliffordEquivEnd_apply (x : ↥(even Q)) :
-    P.evenCliffordEquivEnd hodd x = spinAction Q P x := by
-  rw [SpinPolarizationData.evenCliffordEquivEnd, AlgEquiv.ofBijective_apply, evenSpinAction_apply]
+    P.evenCliffordEquivEnd hodd x = spinAction Q P x :=
+  (congrFun (AlgEquiv.coe_ofBijective _ _) x).trans (evenSpinAction_apply Q P x)
 
 end OperatorForm
 

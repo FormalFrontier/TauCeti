@@ -192,14 +192,15 @@ theorem nondegenerate_of_line_eq_bot {K : Type u} [CommRing K] {V : Type v}
   simpa [hline] using P.mem_line_of_polarBilin_eq_zero hv
 
 /-- **A polarization has nondegenerate quadratic form**, whatever its orthogonal remainder, as soon
-as `2` is invertible and the base ring has no zero divisors.
+as `2` is invertible and the base ring is reduced.
 
 A vector orthogonal to everything lies in the remainder, where the polar form is `2 Q` and `Q` is
 the square of the injective coordinate `SpinPolarizationData.lineCoordinate`; both hypotheses are
-needed to run that back. This subsumes `TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot`
-away from characteristic two, and it is what makes nondegeneracy redundant as a hypothesis
-alongside polarization data. -/
-theorem nondegenerate {K : Type u} [CommRing K] [NoZeroDivisors K] [Invertible (2 : K)]
+needed to run that back — the square only has to vanish for a square-zero scalar, which is all a
+reduced ring is asked for. This subsumes
+`TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot` away from characteristic two, and it
+is what makes nondegeneracy redundant as a hypothesis alongside polarization data. -/
+theorem nondegenerate {K : Type u} [CommRing K] [IsReduced K] [Invertible (2 : K)]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
     (P : SpinPolarizationData Q) : Q.Nondegenerate := by
   refine nondegenerate_of_ker_polarBilin_eq_bot (LinearMap.ker_eq_bot'.2 fun v hv => ?_)
@@ -210,10 +211,10 @@ theorem nondegenerate {K : Type u} [CommRing K] [NoZeroDivisors K] [Invertible (
         LinearMap.zero_apply, nsmul_eq_mul, Nat.cast_ofNat] using LinearMap.congr_fun hv v
     rw [← invOf_mul_cancel_left (2 : K) (Q v), h, mul_zero]
   have hcoord : P.lineCoordinate z = 0 := by
-    have h : P.lineCoordinate z * P.lineCoordinate z = 0 := by
-      rw [P.lineCoordinate_sq]
+    have h : P.lineCoordinate z ^ 2 = 0 := by
+      rw [pow_two, P.lineCoordinate_sq]
       exact hQz
-    exact (mul_self_eq_zero.1 h)
+    exact eq_zero_of_pow_eq_zero h
   exact congrArg Subtype.val (P.lineCoordinate_injective (by simpa using hcoord) :
     z = (0 : P.line))
 

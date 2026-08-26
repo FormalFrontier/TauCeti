@@ -20,12 +20,11 @@ Clifford action generates every endomorphism of the exterior model.
 
 The Spin group lies inside the even subalgebra (`spinGroup.mem_even`), so the Spin representation
 factors through the even Clifford action `TauCeti.evenSpinAction` along the inclusion
-`TauCeti.spinGroupToEven`, which is `TauCeti.evenSpinAction_spinGroupToEven`. How much of the
-endomorphism algebra that restricted action reaches is exactly what distinguishes the two parities
-of the ambient dimension: in *positive* even dimension it splits off the two half-spin blocks,
-while in odd dimension it is still everything. Dimension zero is the degenerate exception to the
-even description, `W` being `⊥` there, so that `S = K` is one-dimensional, the odd block is zero
-and the even action is again onto.
+`TauCeti.spinGroupToEven`. How much of the endomorphism algebra that restricted action reaches is
+exactly what distinguishes the two parities of the ambient dimension: in *positive* even dimension
+it splits off the two half-spin blocks, while in odd dimension it is still everything. Dimension
+zero is the degenerate exception to the even description, `W` being `⊥` there, so that `S = K` is
+one-dimensional, the odd block is zero and the even action is again onto.
 
 ## Main definitions and results
 
@@ -33,7 +32,8 @@ and the even action is again onto.
   on the exterior model.
 * `TauCeti.spinGroupToEven` is the inclusion of the Spin group into the even Clifford subalgebra
   and `TauCeti.evenSpinAction` is the Fock action restricted to that subalgebra, through which the
-  Spin representation factors by `TauCeti.evenSpinAction_spinGroupToEven`.
+  Spin representation factors by `TauCeti.evenSpinAction_apply` and
+  `TauCeti.coe_spinGroupToEven`.
 * `TauCeti.spinAction_surjective` identifies the Fock action as onto the full endomorphism algebra
   when the first isotropic summand is finite free.
 
@@ -103,12 +103,6 @@ noncomputable def evenSpinAction (Q : QuadraticForm K V) (P : SpinPolarizationDa
 theorem evenSpinAction_apply (Q : QuadraticForm K V) (P : SpinPolarizationData Q)
     (x : CliffordAlgebra.even Q) : evenSpinAction Q P x = spinAction Q P x :=
   (rfl)
-
-/-- **The Spin representation factors through the even Clifford action**: a Spin-group element acts
-as the even Clifford element it is. -/
-theorem evenSpinAction_spinGroupToEven (Q : QuadraticForm K V) (P : SpinPolarizationData Q)
-    (g : spinGroup Q) : evenSpinAction Q P (spinGroupToEven Q g) = spinRep Q P g := by
-  rw [evenSpinAction_apply, coe_spinGroupToEven, spinRep_apply]
 
 /-- When the first isotropic summand is finite free, the Fock action of a Clifford algebra on its
 exterior model is onto the full endomorphism algebra. -/
