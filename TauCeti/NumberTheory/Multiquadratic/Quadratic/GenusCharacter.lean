@@ -120,7 +120,7 @@ particular it depends only on `p`, not on the sign normalization `p* = (-1) ^ ((
     (not_isEvenPrimeDiscriminant_oddPrimeDiscriminant hodd), oddPrimeDiscriminant_natAbs]
 
 /-- The character attached to a prime discriminant is completely multiplicative. -/
-theorem primeDiscriminantChar_mul (P m n : ℤ) :
+@[simp] theorem primeDiscriminantChar_mul (P m n : ℤ) :
     primeDiscriminantChar P (m * n) =
       primeDiscriminantChar P m * primeDiscriminantChar P n := by
   unfold primeDiscriminantChar
@@ -331,7 +331,7 @@ theorem genusChar_def (s : Finset ℤ) (n : ℤ) :
   simp [genusChar_def, hP]
 
 /-- A genus character is completely multiplicative. -/
-theorem genusChar_mul (s : Finset ℤ) (m n : ℤ) :
+@[simp] theorem genusChar_mul (s : Finset ℤ) (m n : ℤ) :
     genusChar s (m * n) = genusChar s m * genusChar s n := by
   simp [genusChar, primeDiscriminantChar_mul, Finset.prod_mul_distrib]
 
