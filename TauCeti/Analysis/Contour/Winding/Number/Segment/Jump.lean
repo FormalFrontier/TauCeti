@@ -175,6 +175,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
   set p : ℂ := v * s + z₀ with hp_def
   have hab : a < b := hs.1.trans hs.2
   have hac : a ≤ c := hab.le.trans hbc
+  -- Stage 1: half-disc constancy — winding number is constant on each side near p
   have hΓcont : ContinuousOn Γ (uIcc a c) := hΓ.continuousOn
   have hIcc_ab : Icc a b ⊆ uIcc a c := by
     rw [uIcc_of_le hac]; exact Icc_subset_Icc le_rfl hbc
@@ -210,6 +211,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     exact hΓ.windingNumber_eq_of_mem_connectedComponentIn hclosed
       ((convex_halfDisc p v r σ).isPreconnected.subset_connectedComponentIn ⟨hw₂, h₂⟩ hDsub
         ⟨hw₁, h₁⟩)
+  -- Stage 2: coordinate identities for test points v·(s ± h·i) + z₀
   have h_im_add : ∀ h : ℝ, ((v * (s + h * I) + z₀ - p) / v).im = h := by
     intro h
     have : (v * (s + h * I) + z₀ - p) / v = h * I := by
@@ -238,6 +240,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
       exact this.continuousAt.eventually_lt continuousAt_const (by simpa using hr)
     exact (eventually_mem_nhdsWithin.and (hlt.filter_mono nhdsWithin_le_nhds)).mono fun h hh =>
       ⟨hh.1, hh.2⟩
+  -- Stage 3: decompose Γ = segment [a,b] ∪ rest [b,c]; rest is continuous at p
   have h_avoid_bc : ∀ t ∈ uIcc b c, Γ t ≠ p := by
     intro t ht heq
     exact hp ⟨t, by rwa [uIcc_of_le hbc] at ht, heq⟩
@@ -287,6 +290,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     intro h hh hlt
     refine h_off _ (by rw [Metric.mem_ball, h_dist_sub]; exact hlt) ?_
     rw [h_im_sub]; exact (neg_lt_zero.mpr hh).ne
+  -- Stage 4: the segment part tends to 1, the rest tends to 0, so the total tends to 1
   have h_tend : Tendsto (fun h : ℝ =>
       windingNumber Γ a c (v * (s + h * I) + z₀) - windingNumber Γ a c (v * (s - h * I) + z₀))
       (𝓝[>] 0) (𝓝 1) := by
@@ -303,6 +307,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     refine Tendsto.congr' h_eq ?_
     simpa using
       (tendsto_windingNumber_segment_sub_windingNumber_segment (z₀ := z₀) hv hs).add h_rest
+  -- Stage 5: integrality forces the limit to be exactly 1, propagate to the half-discs
   have h_near : ∀ᶠ h : ℝ in 𝓝[>] 0,
       dist (windingNumber Γ a c (v * (s + h * I) + z₀) - windingNumber Γ a c (v * (s - h * I) + z₀))
         (1 : ℂ) < 1 / 2 :=

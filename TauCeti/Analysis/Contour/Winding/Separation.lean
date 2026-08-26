@@ -49,7 +49,7 @@ variable {K : Set ℂ} {v z₀ : ℂ} {a b s : ℝ}
 
 /-- **A segment crossing a set once has its ends in different components of the complement.** -/
 theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK : IsClosed K)
-    (hv : v ≠ 0) (hs : s ∈ Ioo a b) (hp : v * s + z₀ ∈ K)
+    (hv : v ≠ 0) (hs : s ∈ Ioo a b)
     (hseg : ∀ t ∈ Icc a b, v * t + z₀ ∈ K → t = s)
     (hKp : IsPreconnected (K \ {v * s + z₀}))
     (hleft : v * s + z₀ ∈ closure (K ∩ {q | 0 < ((q - (v * s + z₀)) / v).im}))
@@ -57,9 +57,11 @@ theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK 
     v * b + z₀ ∉ connectedComponentIn Kᶜ (v * a + z₀) := by
   intro hmem
   set p : ℂ := v * s + z₀ with hp_def
+  have hp : p ∈ K := hK.closure_subset (closure_mono inter_subset_left hleft)
   have hab : a < b := hs.1.trans hs.2
   have hx : v * a + z₀ ∈ Kᶜ := fun h => hs.1.ne (hseg a ⟨le_rfl, hab.le⟩ h)
   have hy : v * b + z₀ ∈ Kᶜ := fun h => hs.2.ne' (hseg b ⟨hab.le, le_rfl⟩ h)
+  -- Stage 1: smooth the return path through `Kᶜ`
   have hCopen : IsOpen (connectedComponentIn Kᶜ (v * a + z₀)) :=
     hK.isOpen_compl.connectedComponentIn
   have hCpath : IsPathConnected (connectedComponentIn Kᶜ (v * a + z₀)) :=
@@ -78,6 +80,7 @@ theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK 
     apply hthick
     rw [mem_thickening_iff]
     exact ⟨π₀ ⟨t, ht⟩, ⟨_, rfl⟩, by simpa using hgδ ⟨t, ht⟩⟩
+  -- Stage 2: construct the closed curve Γ = segment ∪ smooth return
   set Γ : ℝ → ℂ := fun t => if t ≤ b then v * t + z₀ else g (t - b) with hΓ_def
   have hΓseg : EqOn Γ (fun t : ℝ => v * (t : ℂ) + z₀) (Icc a b) := fun t ht => ite_eq_left ht.2
   have hΓg : ∀ t ∈ Icc b (b + 1), Γ t = g (t - b) := by
@@ -114,12 +117,14 @@ theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK 
       · have hg1' : ContDiff ℝ 1 fun t : ℝ => g (t - b) :=
           ContDiff.comp (ContDiff.of_le hg le_top) (ContDiff.sub contDiff_id contDiff_const)
         exact hg1'.contDiffOn.congr fun t ht => hΓg t ⟨hc.trans ht.1, (hcd ht).2⟩
+  -- Stage 3: the smooth part avoids p, so the jump formula applies
   have hpg : p ∉ Γ '' Icc b (b + 1) := by
     rintro ⟨t, ht, hpt⟩
     rw [hΓg t ht] at hpt
     exact hgK (t - b) ⟨by linarith [ht.1], by linarith [ht.2]⟩ (by rw [hpt]; exact hp)
   obtain ⟨r, hr, hjump⟩ := exists_forall_windingNumber_eq_add_one_of_eqOn_segment hΓpw hΓclosed
     (by linarith : b ≤ b + 1) hΓseg hv hs hpg
+  -- Stage 4: winding number is constant on K \ {p} yet jumps — contradiction
   obtain ⟨q₁, ⟨hq₁K, hq₁im⟩, hq₁r⟩ := Metric.mem_closure_iff.mp hleft r hr
   obtain ⟨q₂, ⟨hq₂K, hq₂im⟩, hq₂r⟩ := Metric.mem_closure_iff.mp hright r hr
   simp only [mem_ofPred_eq] at hq₁im hq₂im
@@ -149,7 +154,7 @@ theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK 
 
 /-- **One end of a segment crossing a bounded set once lies in its filled hull.** -/
 theorem mem_filledHull_or_mem_filledHull_of_isPreconnected_sdiff_singleton (hK : IsClosed K)
-    (hKb : IsBounded K) (hv : v ≠ 0) (hs : s ∈ Ioo a b) (hp : v * s + z₀ ∈ K)
+    (hKb : IsBounded K) (hv : v ≠ 0) (hs : s ∈ Ioo a b)
     (hseg : ∀ t ∈ Icc a b, v * t + z₀ ∈ K → t = s)
     (hKp : IsPreconnected (K \ {v * s + z₀}))
     (hleft : v * s + z₀ ∈ closure (K ∩ {q | 0 < ((q - (v * s + z₀)) / v).im}))
@@ -159,7 +164,7 @@ theorem mem_filledHull_or_mem_filledHull_of_isPreconnected_sdiff_singleton (hK :
     rw [Complex.rank_real_complex]
     exact Cardinal.one_lt_two
   exact mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn hrank hKb
-    (notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton hK hv hs hp hseg
+    (notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton hK hv hs hseg
       hKp hleft hright)
 
 end TauCeti.Contour
