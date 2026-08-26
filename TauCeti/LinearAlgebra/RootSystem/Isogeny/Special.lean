@@ -150,8 +150,9 @@ noncomputable def b2SpecialIsogeny :
   simp
 
 /-- **The square of the special isogeny of `B₂` is scaling by two.** This is the root-datum form of
-the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`; its
-odd powers are the Steinberg endomorphisms whose fixed points are the Suzuki groups. -/
+the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`; the
+square relation is the root-datum input for constructing the exceptional Steinberg endomorphisms
+used to define the Suzuki groups. -/
 theorem b2SpecialIsogeny_comp_self :
     b2SpecialIsogeny.comp b2SpecialIsogeny =
       RootPairingIsogeny.smulId (typeBSimplyConnectedRootDatum 2) 2 := by
