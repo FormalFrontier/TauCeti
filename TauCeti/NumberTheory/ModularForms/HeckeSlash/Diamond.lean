@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.DiamondCosets
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.CuspRing
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Ring
 
 /-!
@@ -21,9 +22,10 @@ element of the Hecke ring `𝕋 Δ₀(N) Γ₁(N) ℤ`. This file identifies the
 
 and the same on cusp forms, and — through the `ℤ`-linear action of the Hecke ring — the
 unit-indexed form `heckeSlashGamma1RingModularFormLinearMap k (diamondHeckeElem N d) =
-diamondOp k d`. So the diamond operators are not a construction parallel to the Hecke
-operators: they are the Hecke operators of the double cosets `Γ₁(N) γ Γ₁(N)` with `γ ∈ Γ₀(N)`,
-and the identification is a theorem rather than a definition.
+diamondOp k d`, again on both modular and cusp forms. So the diamond operators are not a
+construction parallel to the Hecke operators: they are the Hecke operators of the double cosets
+`Γ₁(N) γ Γ₁(N)` with `γ ∈ Γ₀(N)`, and the identification is a theorem rather than a
+definition.
 
 ## Why it is a one-term sum
 
@@ -46,8 +48,9 @@ same representative `γ`, and their independence of it is `DiamondOperators.lean
 * `HeckeRing.GL2.heckeSlashGamma1ModularFormEnd_diamondCosetGamma1` and
   `HeckeRing.GL2.heckeSlashGamma1CuspFormEnd_diamondCosetGamma1`: **the identification**, on
   `M_k(Γ₁(N))` and on `S_k(Γ₁(N))`.
-* `HeckeRing.GL2.heckeSlashGamma1RingModularFormLinearMap_diamondHeckeElem`: the same statement
-  read on the Hecke ring, at the unit-indexed element `⟨d⟩`.
+* `HeckeRing.GL2.heckeSlashGamma1RingModularFormLinearMap_diamondHeckeElem` and
+  `HeckeRing.GL2.heckeSlashGamma1CuspRingLinearMap_diamondHeckeElem`: the same statement read on
+  the Hecke ring, at the unit-indexed element `⟨d⟩`.
 * `HeckeRing.GL2.heckeSlashGamma1ModularFormEnd_diamondCosetGamma1_apply_of_mem_modFormCharSpace`
   and its cusp-form counterpart: on a nebentypus space the diamond coset acts by the scalar
   `χ(d)`.
@@ -129,6 +132,15 @@ the element `⟨d⟩` of `HeckeRing/GL2/Gamma1/DiamondCosets.lean` is the operat
   obtain ⟨γ, hγ⟩ := Gamma0Map_toHomUnits_surjective (N := N) d
   rw [diamondHeckeElem_eq_single γ hγ, heckeSlashGamma1RingModularFormLinearMap_single,
     heckeSlashGamma1ModularFormEnd_diamondCosetGamma1, hγ, one_smul]
+
+/-- **The diamond element of the Hecke ring acts on cusp forms by the diamond operator**: the
+cusp-form counterpart of `heckeSlashGamma1RingModularFormLinearMap_diamondHeckeElem`, read
+through the `ℤ`-linear action `heckeSlashGamma1CuspRingLinearMap` on `S_k(Γ₁(N))`. -/
+@[simp] theorem heckeSlashGamma1CuspRingLinearMap_diamondHeckeElem (d : (ZMod N)ˣ) :
+    heckeSlashGamma1CuspRingLinearMap k (diamondHeckeElem N d) = diamondOpCusp k d := by
+  obtain ⟨γ, hγ⟩ := Gamma0Map_toHomUnits_surjective (N := N) d
+  rw [diamondHeckeElem_eq_single γ hγ, heckeSlashGamma1CuspRingLinearMap_single,
+    heckeSlashGamma1CuspFormEnd_diamondCosetGamma1, hγ, one_smul]
 
 end HeckeRing.GL2
 

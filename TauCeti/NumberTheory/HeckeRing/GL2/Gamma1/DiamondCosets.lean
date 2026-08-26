@@ -5,12 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.GroupTheory.DoubleCoset.Normalizer
 public import TauCeti.NumberTheory.HeckeRing.Associativity
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.Basic
+public import TauCeti.NumberTheory.HeckeRing.Normalizer
 public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
-
-import Mathlib.Tactic.Group
 
 /-!
 # The diamond double cosets of the `Γ₁(N)` Hecke ring
@@ -31,17 +29,17 @@ companion statement, proved in `ModularForms/HeckeSlash/Diamond.lean`.
 ## Why the double coset collapses, and what that buys
 
 `Γ₁(N)` is normal in `Γ₀(N)` (`CongruenceSubgroup.Gamma0_normalizes_Gamma1`), so `γ` lies in the
-normalizer of the image of `Γ₁(N)` in `GL₂(ℚ)` and
-`DoubleCoset.doubleCoset_eq_rightCoset_of_mem_normalizer` collapses `Γ₁(N) γ Γ₁(N)` to
-`Γ₁(N) γ`. Two consequences drive everything below.
+normalizer of the image of `Γ₁(N)` in `GL₂(ℚ)`. Everything below is then an instance of the
+general theory of `HeckeRing/Normalizer.lean`, which collapses a double coset at a normalizing
+element to a single right coset and draws the two consequences that drive this file.
 
 * The double coset has a **single** right coset, so the slash operator attached to it is a
   one-term sum. That is the shape `heckeSlashSum` consumes, through the decomposition
   `doubleCoset_out_diamondCosetGamma1_eq_iUnion_rightCosets` stated at the chosen representative.
 * Its decomposition quotients are subsingletons, so the structure constants of a product of two
-  diamond cosets are at most `1` and `HeckeCosetModule.mul_single_single_of_mulMap_eq` applies:
-  the product of two diamond basis elements is the diamond basis element of the product. No
-  counting is needed, which is exactly what distinguishes the diamonds from the `Tₚ`.
+  diamond cosets are at most `1`: the product of two diamond basis elements is the diamond basis
+  element of the product. No counting is needed, which is exactly what distinguishes the
+  diamonds from the `Tₚ`.
 
 ## Main definitions
 
@@ -51,12 +49,12 @@ normalizer of the image of `Γ₁(N)` in `GL₂(ℚ)` and
 
 ## Main results
 
-* `HeckeRing.GL2.diamondCosetGamma1_toSet` and
+* `HeckeRing.GL2.diamondCosetGamma1_toSet_eq_rightCoset` and
   `HeckeRing.GL2.doubleCoset_out_diamondCosetGamma1_eq_iUnion_rightCosets`: the double coset is
   the single right coset `Γ₁(N) γ`, in the two spellings the Hecke machinery uses.
 * `HeckeRing.GL2.diamondCosetGamma1_eq_iff`: the coset depends exactly on the lower-right entry.
-* `HeckeRing.GL2.single_diamondCosetGamma1_mul_single`: the basis elements multiply,
-  `[Γ₁(N) γ₁ Γ₁(N)] · [Γ₁(N) γ₂ Γ₁(N)] = [Γ₁(N) γ₁γ₂ Γ₁(N)]`.
+* `HeckeRing.GL2.single_diamondCosetGamma1_mul_single_diamondCosetGamma1`: the basis elements
+  multiply, `[Γ₁(N) γ₁ Γ₁(N)] · [Γ₁(N) γ₂ Γ₁(N)] = [Γ₁(N) γ₁γ₂ Γ₁(N)]`.
 * `HeckeRing.GL2.diamondHeckeElemHom_injective`: the diamonds form a faithful copy of
   `(ZMod N)ˣ` inside the Hecke ring.
 
@@ -91,8 +89,10 @@ lemma diamondCosetGamma1_def (g : ↥(Gamma0 N)) :
     diamondCosetGamma1 N g = HeckeCoset.mk ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
       ⟨mapGL ℚ (g : SL(2, ℤ)), mapGL_mem_Delta0 N g⟩ := (rfl)
 
-/-- The underlying set of a diamond coset is the double coset of `γ`. -/
-lemma diamondCosetGamma1_toSet_eq_doubleCoset (g : ↥(Gamma0 N)) :
+/-- The underlying set of a diamond coset is the double coset of `γ`: `HeckeCoset.toSet_mk`
+read at the sealed definition `diamondCosetGamma1`, whose body `simp` cannot unfold on its own.
+The collapsed form is `diamondCosetGamma1_toSet_eq_rightCoset`. -/
+lemma diamondCosetGamma1_toSet (g : ↥(Gamma0 N)) :
     (diamondCosetGamma1 N g).toSet =
       doubleCoset (mapGL ℚ (g : SL(2, ℤ))) ((Gamma1 N).map (mapGL ℚ))
         ((Gamma1 N).map (mapGL ℚ)) :=
@@ -100,26 +100,10 @@ lemma diamondCosetGamma1_toSet_eq_doubleCoset (g : ↥(Gamma0 N)) :
 
 /-- **The diamond double coset is a single right coset**, `Γ₁(N) γ Γ₁(N) = Γ₁(N) γ`, since `γ`
 normalizes `Γ₁(N)`. -/
-@[simp] lemma diamondCosetGamma1_toSet (g : ↥(Gamma0 N)) :
+@[simp] lemma diamondCosetGamma1_toSet_eq_rightCoset (g : ↥(Gamma0 N)) :
     (diamondCosetGamma1 N g).toSet =
       op (mapGL ℚ (g : SL(2, ℤ))) • ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) :=
-  (diamondCosetGamma1_toSet_eq_doubleCoset g).trans
-    (doubleCoset_eq_rightCoset_of_mem_normalizer (mapGL_mem_normalizer_Gamma1_map ℚ g))
-
-/-- The chosen representative of a diamond coset lies in the right coset `Γ₁(N) γ`. -/
-private lemma rep_diamondCosetGamma1_mem_rightCoset (g : ↥(Gamma0 N)) :
-    ((diamondCosetGamma1 N g).rep : GL (Fin 2) ℚ) ∈
-      op (mapGL ℚ (g : SL(2, ℤ))) • ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) :=
-  diamondCosetGamma1_toSet g ▸ (diamondCosetGamma1 N g).rep_mem
-
-/-- The chosen representative of a diamond coset again normalizes `Γ₁(N)`: it lies in
-`Γ₁(N) γ Γ₁(N)`, all of whose elements do. -/
-private lemma rep_diamondCosetGamma1_mem_normalizer (g : ↥(Gamma0 N)) :
-    ((diamondCosetGamma1 N g).rep : GL (Fin 2) ℚ) ∈
-      Subgroup.normalizer (((Gamma1 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) :
-        Set (GL (Fin 2) ℚ)) :=
-  mem_normalizer_of_mem_doubleCoset (mapGL_mem_normalizer_Gamma1_map ℚ g)
-    (diamondCosetGamma1_toSet_eq_doubleCoset g ▸ (diamondCosetGamma1 N g).rep_mem)
+  HeckeCoset.toSet_mk_eq_rightCoset_of_mem_normalizer (mapGL_mem_normalizer_Gamma1_map ℚ g)
 
 /-- The double coset of the chosen representative of `diamondCosetGamma1 N g`, presented as the
 one-term union of right cosets — the shape the slash sum of
@@ -129,15 +113,16 @@ theorem doubleCoset_out_diamondCosetGamma1_eq_iUnion_rightCosets (g : ↥(Gamma0
         ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ)) =
       ⋃ _ : Unit, op (mapGL ℚ (g : SL(2, ℤ))) •
         ((Gamma1 N).map (mapGL ℚ) : Set (GL (Fin 2) ℚ)) := by
-  have hout : HeckeCoset.mk ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
-      (diamondCosetGamma1 N g).out = diamondCosetGamma1 N g := Quotient.out_eq _
-  rw [Set.iUnion_const, HeckeCoset.eq_iff.mp (hout.trans (diamondCosetGamma1_def g))]
-  exact doubleCoset_eq_rightCoset_of_mem_normalizer (mapGL_mem_normalizer_Gamma1_map ℚ g)
+  rw [Set.iUnion_const]
+  exact HeckeCoset.doubleCoset_out_mk_eq_rightCoset_of_mem_normalizer
+    (mapGL_mem_normalizer_Gamma1_map ℚ g)
 
 /-- The diamond coset of the identity is the identity double coset `Γ₁(N) · 1 · Γ₁(N)`. -/
 @[simp] theorem diamondCosetGamma1_one : diamondCosetGamma1 N 1 = 1 := by
+  have hone : mapGL ℚ ((1 : ↥(Gamma0 N)) : SL(2, ℤ)) = 1 := by
+    rw [Subgroup.coe_one, map_one]
   rw [diamondCosetGamma1_def, HeckeCoset.one_def]
-  exact congrArg (HeckeCoset.mk _ _) (Subtype.ext (map_one (mapGL ℚ)))
+  exact congrArg (HeckeCoset.mk _ _) (Subtype.ext hone)
 
 /-- **The diamond coset sees exactly the lower-right entry.** Two elements of `Γ₀(N)` give the
 same double coset precisely when they have the same image in `(ZMod N)ˣ`; the forward direction
@@ -145,97 +130,47 @@ uses that `mapGL ℚ` is injective, so a rational coincidence is an integral one
 @[simp] theorem diamondCosetGamma1_eq_iff {g₁ g₂ : ↥(Gamma0 N)} :
     diamondCosetGamma1 N g₁ = diamondCosetGamma1 N g₂ ↔
       (Gamma0Map N).toHomUnits g₁ = (Gamma0Map N).toHomUnits g₂ := by
-  rw [← HeckeCoset.toSet_injective.eq_iff, diamondCosetGamma1_toSet, diamondCosetGamma1_toSet,
-    rightCoset_eq_iff]
+  rw [← HeckeCoset.toSet_injective.eq_iff, diamondCosetGamma1_toSet_eq_rightCoset,
+    diamondCosetGamma1_toSet_eq_rightCoset, rightCoset_eq_iff]
   constructor
   · intro hmem
     obtain ⟨σ, hσ, hσeq⟩ := Subgroup.mem_map.mp hmem
     have hσ' : σ = (g₂ : SL(2, ℤ)) * (g₁ : SL(2, ℤ))⁻¹ :=
       (mapGL_inj (S := ℚ) _ _).mp (by rw [hσeq, map_mul, map_inv])
-    have hker : (g₂ * g₁⁻¹ : ↥(Gamma0 N)) ∈ Gamma1' N :=
-      (Gamma1_to_Gamma0_mem _).mpr ((Gamma1_mem _ _).mp (by rwa [hσ'] at hσ))
-    have h1 : (Gamma0Map N).toHomUnits (g₂ * g₁⁻¹) = 1 :=
-      Units.ext ((MonoidHom.coe_toHomUnits _ _).trans (Gamma1_mem'.mp hker))
-    rw [map_mul, map_inv, mul_inv_eq_one] at h1
-    exact h1.symm
+    have heq := (mul_inv_mem_Gamma1_iff_Gamma0Map_eq g₂ g₁).mp (by rwa [hσ'] at hσ)
+    refine Units.ext ?_
+    rw [MonoidHom.coe_toHomUnits, MonoidHom.coe_toHomUnits]
+    exact heq.symm
   · intro heq
     refine Subgroup.mem_map.mpr ⟨(g₂ : SL(2, ℤ)) * (g₁ : SL(2, ℤ))⁻¹,
-      mul_inv_mem_Gamma1_of_Gamma0Map_eq g₂ g₁ (congrArg Units.val heq.symm), ?_⟩
+      (mul_inv_mem_Gamma1_iff_Gamma0Map_eq g₂ g₁).mpr (congrArg Units.val heq.symm), ?_⟩
     rw [map_mul, map_inv]
-
-/-- The decomposition quotient of a diamond coset is a subsingleton: its representative
-normalizes `Γ₁(N)`, so the stabilizer `Γ₁(N) ∩ γΓ₁(N)γ⁻¹` is all of `Γ₁(N)`. -/
-private lemma subsingleton_decompQuotient_diamondCosetGamma1 (g : ↥(Gamma0 N)) :
-    Subsingleton (DecompQuotient ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
-      ((diamondCosetGamma1 N g).rep : GL (Fin 2) ℚ)) :=
-  subsingleton_decompQuotient
-    (Subgroup.conjAct_pointwise_smul_eq_self (rep_diamondCosetGamma1_mem_normalizer g)).ge
 
 section Product
 
 variable [NeZero N] (g₁ g₂ : ↥(Gamma0 N))
 
-/-- Every value of `HeckeCoset.mulMap` on two diamond cosets is the diamond coset of the
-product: writing each chosen representative as `a · γ` with `a ∈ Γ₁(N)` and pushing the middle
-`Γ₁(N)` factor across `γ₁` — legitimate because `γ₁` normalizes `Γ₁(N)` — leaves
-`Γ₁(N) · γ₁γ₂`. -/
-private lemma mulMap_diamondCosetGamma1 (p : DecompQuotient ((Gamma1 N).map (mapGL ℚ))
-    ((Gamma1 N).map (mapGL ℚ)) ((diamondCosetGamma1 N g₁).rep : GL (Fin 2) ℚ) ×
-      DecompQuotient ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
-        ((diamondCosetGamma1 N g₂).rep : GL (Fin 2) ℚ)) :
-    HeckeCoset.mulMap ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
-        ((Gamma1 N).map (mapGL ℚ)) (diamondCosetGamma1 N g₁).rep
-        (diamondCosetGamma1 N g₂).rep p = diamondCosetGamma1 N (g₁ * g₂) := by
-  -- name the two representatives as `a γ₁` and `b γ₂`, so that the identity below is an
-  -- identity between short words in six atoms
-  obtain ⟨a, ha, hA⟩ : ∃ a ∈ (Gamma1 N).map (mapGL ℚ),
-      ((diamondCosetGamma1 N g₁).rep : GL (Fin 2) ℚ) = a * mapGL ℚ (g₁ : SL(2, ℤ)) :=
-    ⟨_, (mem_rightCoset_iff _).mp (rep_diamondCosetGamma1_mem_rightCoset g₁),
-      (inv_mul_cancel_right _ _).symm⟩
-  obtain ⟨b, hb, hB⟩ : ∃ b ∈ (Gamma1 N).map (mapGL ℚ),
-      ((diamondCosetGamma1 N g₂).rep : GL (Fin 2) ℚ) = b * mapGL ℚ (g₂ : SL(2, ℤ)) :=
-    ⟨_, (mem_rightCoset_iff _).mp (rep_diamondCosetGamma1_mem_rightCoset g₂),
-      (inv_mul_cancel_right _ _).symm⟩
-  -- the middle `Γ₁(N)` factor, conjugated across `γ₁`
-  have hc : mapGL ℚ (g₁ : SL(2, ℤ)) * ((p.2.out : GL (Fin 2) ℚ) * b) *
-      (mapGL ℚ (g₁ : SL(2, ℤ)))⁻¹ ∈ (Gamma1 N).map (mapGL ℚ) :=
-    (Subgroup.mem_normalizer_iff.mp (mapGL_mem_normalizer_Gamma1_map ℚ g₁) _).mp
-      (Subgroup.mul_mem _ p.2.out.2 hb)
-  have hprod : mapGL ℚ (g₁ : SL(2, ℤ)) * mapGL ℚ (g₂ : SL(2, ℤ)) =
-      mapGL ℚ ((g₁ * g₂ : ↥(Gamma0 N)) : SL(2, ℤ)) := by
-    rw [Subgroup.coe_mul, map_mul]
-  -- the word identity, in six free atoms: quantifying over `u` and `v` keeps `group` away from
-  -- the coset representatives, whose types are large
-  have key₀ : ∀ u v : GL (Fin 2) ℚ, u * (a * mapGL ℚ (g₁ : SL(2, ℤ))) *
-      (v * (b * mapGL ℚ (g₂ : SL(2, ℤ)))) =
-      u * a * (mapGL ℚ (g₁ : SL(2, ℤ)) * (v * b) * (mapGL ℚ (g₁ : SL(2, ℤ)))⁻¹) *
-        (mapGL ℚ (g₁ : SL(2, ℤ)) * mapGL ℚ (g₂ : SL(2, ℤ))) * 1 := fun u v ↦ by group
-  have key := key₀ (p.1.out : GL (Fin 2) ℚ) (p.2.out : GL (Fin 2) ℚ)
-  rw [← hA, ← hB, hprod] at key
-  rw [HeckeCoset.mulMap_eq_mk]
-  refine (HeckeCoset.mk_eq_mk_of_mem (g₂ := ⟨mapGL ℚ ((g₁ * g₂ : ↥(Gamma0 N)) : SL(2, ℤ)),
-    mapGL_mem_Delta0 N (g₁ * g₂)⟩) ?_).trans (diamondCosetGamma1_def (g₁ * g₂)).symm
-  exact mem_doubleCoset.mpr ⟨_, Subgroup.mul_mem _ (Subgroup.mul_mem _ p.1.out.2 ha) hc,
-    1, Subgroup.one_mem _, key⟩
-
 /-- **The diamond basis elements multiply**: `[Γ₁(N) γ₁ Γ₁(N)] · [Γ₁(N) γ₂ Γ₁(N)] =
 [Γ₁(N) γ₁γ₂ Γ₁(N)]` in the Hecke ring, over any coefficient semiring.
 
-There is no structure constant to compute: both decomposition quotients are subsingletons, so
-`multiplicity ≤ 1` is automatic, and every pair of representatives multiplies into the same
-double coset. -/
-@[simp] theorem single_diamondCosetGamma1_mul_single (R : Type*) [Semiring R] :
+This is `HeckeCosetModule.single_mul_single_of_mem_normalizer` at the two `Γ₀(N)` matrices,
+which normalize `Γ₁(N)`; only the identification of the two products of monoid elements is left
+to do here. -/
+@[simp] theorem single_diamondCosetGamma1_mul_single_diamondCosetGamma1 (R : Type*)
+    [Semiring R] :
     HeckeCosetModule.single R (diamondCosetGamma1 N g₁) 1 *
         HeckeCosetModule.single R (diamondCosetGamma1 N g₂) 1 =
       HeckeCosetModule.single R (diamondCosetGamma1 N (g₁ * g₂)) 1 := by
-  classical
-  rw [HeckeCosetModule.mul_def]
-  have := subsingleton_decompQuotient_diamondCosetGamma1 g₁
-  have := subsingleton_decompQuotient_diamondCosetGamma1 g₂
-  refine HeckeCosetModule.mul_single_single_of_mulMap_eq R _ _ _
-    (mulMap_diamondCosetGamma1 g₁ g₂) ?_
-  rw [multiplicity_def, Nat.card_eq_fintype_card]
-  exact Fintype.card_le_one_iff_subsingleton.mpr inferInstance
+  have hprod : mapGL ℚ (g₁ : SL(2, ℤ)) * mapGL ℚ (g₂ : SL(2, ℤ)) =
+      mapGL ℚ ((g₁ * g₂ : ↥(Gamma0 N)) : SL(2, ℤ)) := by
+    rw [Subgroup.coe_mul, map_mul]
+  have hcoset : HeckeCoset.mk ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      ((⟨mapGL ℚ (g₁ : SL(2, ℤ)), mapGL_mem_Delta0 N g₁⟩ : ↥(Delta0 N)) *
+        ⟨mapGL ℚ (g₂ : SL(2, ℤ)), mapGL_mem_Delta0 N g₂⟩) = diamondCosetGamma1 N (g₁ * g₂) :=
+    congrArg (HeckeCoset.mk _ _) (Subtype.ext hprod)
+  rw [← hcoset]
+  exact HeckeCosetModule.single_mul_single_of_mem_normalizer R
+    (mapGL_mem_normalizer_Gamma1_map ℚ g₁) (mapGL_mem_normalizer_Gamma1_map ℚ g₂)
 
 end Product
 
@@ -274,7 +209,7 @@ noncomputable def diamondHeckeElemHom (N : ℕ) [NeZero N] :
     obtain ⟨g₂, hg₂⟩ := Gamma0Map_toHomUnits_surjective (N := N) d₂
     rw [diamondHeckeElem_eq_single (g₁ * g₂) (by rw [map_mul, hg₁, hg₂]),
       diamondHeckeElem_eq_single g₁ hg₁, diamondHeckeElem_eq_single g₂ hg₂]
-    exact (single_diamondCosetGamma1_mul_single g₁ g₂ ℤ).symm
+    exact (single_diamondCosetGamma1_mul_single_diamondCosetGamma1 g₁ g₂ ℤ).symm
 
 @[simp] lemma diamondHeckeElemHom_apply (d : (ZMod N)ˣ) :
     diamondHeckeElemHom N d = diamondHeckeElem N d := (rfl)

@@ -211,6 +211,19 @@ lemma mul_inv_mem_Gamma1_of_Gamma0Map_eq (g₁ g₂ : ↥(Gamma0 N))
     exact (MonoidHom.div_mem_ker_iff (Gamma0Map N)).mpr heq
   exact (Gamma1_mem _ _).mpr <| (Gamma1_to_Gamma0_mem _).mp hker
 
+/-- **Two `Γ₀(N)` elements have the same lower-right entry exactly when their ratio lies in
+`Γ₁(N)`.** The `mpr` direction is `mul_inv_mem_Gamma1_of_Gamma0Map_eq`; the converse reads the
+membership back through `Gamma1_mem'`, which says that `Gamma0Map N` is trivial on `Γ₁(N)`. -/
+lemma mul_inv_mem_Gamma1_iff_Gamma0Map_eq (g₁ g₂ : ↥(Gamma0 N)) :
+    ((g₁ : SL(2, ℤ)) * (g₂ : SL(2, ℤ))⁻¹) ∈ Gamma1 N ↔ Gamma0Map N g₁ = Gamma0Map N g₂ := by
+  refine ⟨fun hmem ↦ ?_, mul_inv_mem_Gamma1_of_Gamma0Map_eq g₁ g₂⟩
+  have hcoe : ((g₁ * g₂⁻¹ : ↥(Gamma0 N)) : SL(2, ℤ)) ∈ Gamma1 N := by
+    rwa [Subgroup.coe_mul, Subgroup.coe_inv]
+  have hker : (g₁ * g₂⁻¹ : ↥(Gamma0 N)) ∈ (Gamma0Map N).ker :=
+    Gamma1_mem'.mp ((Gamma1_to_Gamma0_mem _).mpr ((Gamma1_mem _ _).mp hcoe))
+  rw [← div_eq_mul_inv] at hker
+  exact (MonoidHom.div_mem_ker_iff (Gamma0Map N)).mp hker
+
 /-- The diagonal matrix `!![u⁻¹, 0; 0, u]` as an element of `SL₂(ZMod N)`. -/
 private def diagUnit (u : (ZMod N)ˣ) : SpecialLinearGroup (Fin 2) (ZMod N) :=
   ⟨!![(↑u⁻¹ : ZMod N), 0; 0, ↑u], by simp [det_fin_two_of]⟩
