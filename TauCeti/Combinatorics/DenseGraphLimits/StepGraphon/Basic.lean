@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Basic
-public import Mathlib.Order.Partition.Finpartition
+public import TauCeti.Order.Partition.Finpartition
 import Mathlib.Data.Setoid.Partition
 
 /-!
@@ -28,9 +28,6 @@ measurability immediate and does not choose a distinguished index for each point
 
 ## Main results
 
-* `Finpartition.iUnion_parts` and
-  `Finpartition.inter_part_eq_self_or_empty_of_le` are the two covering facts about a
-  `Finpartition` of the carrier that the block constructions and their refinements run on;
 * `TauCeti.DenseGraphLimits.stepGraphon_apply` evaluates the graphon on a specified block;
 * `TauCeti.DenseGraphLimits.stepGraphon_inj` says that, for a fixed partition, two step graphons
   are equal exactly when their block values agree;
@@ -51,28 +48,6 @@ noncomputable section
 
 open Set
 
-namespace Finpartition
-
-/-- The parts of a finite partition of the carrier cover it. -/
-theorem iUnion_parts (P : Finpartition (Set.univ : Set Ω)) :
-    ⋃ p : P.parts, (p : Set Ω) = Set.univ := by
-  refine Set.eq_univ_of_forall fun x => ?_
-  obtain ⟨p, hp, hxp⟩ := Set.mem_sUnion.mp (P.isPartition_parts.sUnion_eq_univ ▸ Set.mem_univ x)
-  exact Set.mem_iUnion.2 ⟨⟨p, hp⟩, hxp⟩
-
-/-- Under refinement, a part of the finer partition is either contained in a given part of the
-coarser one or disjoint from it. -/
-theorem inter_part_eq_self_or_empty_of_le {P Q : Finpartition (Set.univ : Set Ω)} (href : Q ≤ P)
-    {r : Set Ω} (hr : r ∈ Q.parts) {p : Set Ω} (hp : p ∈ P.parts) :
-    r ∩ p = r ∨ r ∩ p = ∅ := by
-  obtain ⟨p', hp', hrp'⟩ := href hr
-  by_cases h : p' = p
-  · exact Or.inl (Set.inter_eq_self_of_subset_left (h ▸ hrp'))
-  · refine Or.inr (Set.eq_empty_of_subset_empty fun x hx => ?_)
-    exact absurd hx.2 (Set.disjoint_left.mp (P.disjoint hp' hp h) (hrp' hx.1))
-
-end Finpartition
-
 namespace TauCeti
 
 namespace DenseGraphLimits
@@ -87,9 +62,8 @@ variable (P : Finpartition (Set.univ : Set Ω))
 omit [MeasurableSpace Ω] in
 /-- Every point of the carrier belongs to one of the parts of a partition of `Set.univ`. -/
 private theorem exists_part (x : Ω) : ∃ p : P.parts, x ∈ (p : Set Ω) := by
-  refine Set.mem_iUnion.1 ?_
-  rw [Finpartition.iUnion_parts P]
-  exact Set.mem_univ x
+  obtain ⟨p, ⟨hp, hxp⟩, _⟩ := P.isPartition_parts.2 x
+  exact ⟨⟨p, hp⟩, hxp⟩
 
 /-- The finite rectangle-indicator sum underlying a step graphon. -/
 private def stepValue (val : P.parts → P.parts → Set.Icc (0 : ℝ) 1) (x y : Ω) : ℝ :=

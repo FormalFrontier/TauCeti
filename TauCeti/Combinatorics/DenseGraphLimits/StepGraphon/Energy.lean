@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.L2
 public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Average
+public import TauCeti.MeasureTheory.Integral.Finpartition
 
 /-!
 # The graphon partition energy
@@ -46,10 +47,6 @@ graph.
 
 ## Main results
 
-* `Finpartition.setIntegral_prod_eq_sum_parts` and
-  `Finpartition.integral_eq_sum_parts`: a measurable finite partition splits an
-  integral over a rectangle, respectively over the whole product carrier, into a finite sum over
-  its subrectangles;
 * `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le`: block averaging over a refinement
   preserves the coarse block integrals;
 * `TauCeti.DenseGraphLimits.l2inner_stepGraphonAvg_eq_sum`: the block computation everything else
@@ -92,55 +89,6 @@ noncomputable section
 
 open MeasureTheory Set
 
-namespace Finpartition
-
-variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
-
-/-- A finite measurable partition of the carrier cuts a rectangle into finitely many disjoint
-subrectangles, splitting any integral over it into a finite sum. -/
-theorem setIntegral_prod_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
-    (hR : ∀ r ∈ R.parts, MeasurableSet r) {S T : Set Ω} (hS : MeasurableSet S)
-    (hT : MeasurableSet T) {f : Ω × Ω → ℝ} (hf : IntegrableOn f (S ×ˢ T) (μ.prod μ)) :
-    ∫ z in S ×ˢ T, f z ∂(μ.prod μ)
-      = ∑ rs : R.parts × R.parts,
-          ∫ z in ((rs.1 : Set Ω) ∩ S) ×ˢ ((rs.2 : Set Ω) ∩ T), f z ∂(μ.prod μ) := by
-  have hmeas : ∀ rs : R.parts × R.parts,
-      MeasurableSet (((rs.1 : Set Ω) ∩ S) ×ˢ ((rs.2 : Set Ω) ∩ T)) := fun rs =>
-    ((hR _ rs.1.property).inter hS).prod ((hR _ rs.2.property).inter hT)
-  have hdisj : Pairwise (Function.onFun Disjoint fun rs : R.parts × R.parts =>
-      ((rs.1 : Set Ω) ∩ S) ×ˢ ((rs.2 : Set Ω) ∩ T)) := by
-    intro rs rs' hne
-    have key : ∀ {u v : R.parts} {A : Set Ω}, u ≠ v →
-        ((u : Set Ω) ∩ A) ∩ ((v : Set Ω) ∩ A) = ∅ := by
-      intro u v A huv
-      refine disjoint_iff_inter_eq_empty.mp ?_
-      exact (R.disjoint u.property v.property fun h => huv (Subtype.ext h)).mono
-        inter_subset_left inter_subset_left
-    simp only [Function.onFun, disjoint_iff_inter_eq_empty, prod_inter_prod, prod_eq_empty_iff]
-    by_cases h1 : rs.1 = rs'.1
-    · refine Or.inr (key ?_)
-      intro h2
-      exact hne (Prod.ext h1 h2)
-    · exact Or.inl (key h1)
-  have hunion : (⋃ rs : R.parts × R.parts, ((rs.1 : Set Ω) ∩ S) ×ˢ ((rs.2 : Set Ω) ∩ T))
-      = S ×ˢ T := by
-    rw [iUnion_prod (fun r : R.parts => (r : Set Ω) ∩ S) fun r : R.parts => (r : Set Ω) ∩ T,
-      ← iUnion_inter, ← iUnion_inter, Finpartition.iUnion_parts R, univ_inter, univ_inter]
-  rw [← hunion, integral_iUnion_fintype hmeas hdisj fun _ =>
-    hf.mono_set (prod_mono inter_subset_right inter_subset_right)]
-
-/-- A finite measurable partition of the carrier splits an integral over the whole product carrier
-into a finite sum over its rectangles. -/
-theorem integral_eq_sum_parts (R : Finpartition (Set.univ : Set Ω))
-    (hR : ∀ r ∈ R.parts, MeasurableSet r) {f : Ω × Ω → ℝ} (hf : Integrable f (μ.prod μ)) :
-    ∫ z, f z ∂(μ.prod μ)
-      = ∑ rs : R.parts × R.parts, ∫ z in (rs.1 : Set Ω) ×ˢ (rs.2 : Set Ω), f z ∂(μ.prod μ) := by
-  rw [← setIntegral_univ (μ := μ.prod μ), ← univ_prod_univ,
-    setIntegral_prod_eq_sum_parts μ R hR MeasurableSet.univ MeasurableSet.univ hf.integrableOn]
-  simp
-
-end Finpartition
-
 namespace TauCeti
 
 namespace DenseGraphLimits
@@ -163,8 +111,9 @@ private theorem rectIntegral_eq_of_le {P Q : Finpartition (Set.univ : Set Ω)}
     Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
       (SymmKernel.integrable_uncurry μ L).integrableOn]
   refine Finset.sum_congr rfl fun rs _ => ?_
-  rcases Finpartition.inter_part_eq_self_or_empty_of_le href rs.1.property p.property with h1 | h1
-  · rcases Finpartition.inter_part_eq_self_or_empty_of_le href rs.2.property q.property with
+  rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le href rs.1.property p.property with
+    h1 | h1
+  · rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le href rs.2.property q.property with
       h2 | h2
     · rw [h1, h2]
       simpa only [SymmKernel.rectIntegral_def] using h rs.1 rs.2
