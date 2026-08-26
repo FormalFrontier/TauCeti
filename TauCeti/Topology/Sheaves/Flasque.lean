@@ -60,6 +60,7 @@ public section
 
 open CategoryTheory Limits Opposite TopologicalSpace
 open TauCeti.CategoryTheory (freeYonedaSheafFunctor freeYonedaSheafSectionsEquiv
+  freeYonedaSheafFunctor_obj
   freeYonedaSheafSectionsEquiv_naturality_left
   freeYonedaSheafSectionsEquiv_naturality_right)
 
@@ -140,7 +141,10 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
     -- Mathlib defines `Sheaf.H' F m U` to be this `Ext` group; unfold it here to use the
     -- long exact sequence API, which is stated directly for `Abelian.Ext`.
     change Subsingleton
-      (Abelian.Ext.{u} ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).obj U) F 1)
+      (Abelian.Ext.{u}
+        ((presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
+          (yoneda.obj U ⋙ AddCommGrpCat.free)) F 1)
+    rw [← freeYonedaSheafFunctor_obj]
     apply subsingleton_ext_succ_of_comp_extClass_eq_zero
     intro x₃
     let S := injectiveCokernelSequence F
@@ -164,8 +168,10 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
     -- As in the base case, unfold Mathlib's definition of `Sheaf.H'` only at the boundary
     -- where the dimension-shifting argument invokes the `Abelian.Ext` API.
     change Subsingleton
-      (Abelian.Ext.{u} ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).obj U)
-        F (n + 1 + 1))
+      (Abelian.Ext.{u}
+        ((presheafToSheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}).obj
+          (yoneda.obj U ⋙ AddCommGrpCat.free)) F (n + 1 + 1))
+    rw [← freeYonedaSheafFunctor_obj]
     apply subsingleton_ext_succ_of_comp_extClass_eq_zero
     intro x₃
     let S := injectiveCokernelSequence F
@@ -177,12 +183,14 @@ private lemma subsingleton_H'_succ_of_isFlasque_aux (n : ℕ) :
     let _ : TopCat.Presheaf.IsFlasque S.X₃.obj :=
       TopCat.Sheaf.IsFlasque.of_shortExact_of_isFlasque₁₂ hS
     let _ : Subsingleton
+        (_root_.CategoryTheory.Sheaf.H'.{u} S.X₃ (n + 1) U) :=
+      ih S.X₃ inferInstance U
+    let _ : Subsingleton
         (Abelian.Ext.{u} ((freeYonedaSheafFunctor (Opens.grothendieckTopology X)).obj U)
           S.X₃ (n + 1)) := by
-      -- Restate this `Ext` group as its defining public `Sheaf.H'` wrapper so that the
-      -- induction hypothesis applies without exposing the wrapper elsewhere.
+      rw [freeYonedaSheafFunctor_obj]
       change Subsingleton (_root_.CategoryTheory.Sheaf.H'.{u} S.X₃ (n + 1) U)
-      exact ih S.X₃ inferInstance U
+      infer_instance
     rw [Subsingleton.elim x₃ 0, Abelian.Ext.zero_comp]
 
 /-- A flasque sheaf of abelian groups has vanishing cohomology in every positive degree over

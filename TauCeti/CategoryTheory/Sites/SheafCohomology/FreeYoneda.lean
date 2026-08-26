@@ -57,9 +57,16 @@ variable [HasWeakSheafify J AddCommGrpCat.{v}]
 
 This is the sheafification of the free abelian presheaf on the presheaf of sets `yoneda.obj U`,
 the object whose `Ext`-groups into `F` are the cohomology groups `Sheaf.H' F n U`. -/
-abbrev freeYonedaSheafFunctor : C ⥤ Sheaf J AddCommGrpCat.{v} :=
+def freeYonedaSheafFunctor : C ⥤ Sheaf J AddCommGrpCat.{v} :=
   yoneda ⋙ (Functor.whiskeringRight Cᵒᵖ (Type v) AddCommGrpCat.{v}).obj AddCommGrpCat.free ⋙
     presheafToSheaf J AddCommGrpCat.{v}
+
+/-- The objects of `freeYonedaSheafFunctor` are the sources used in Mathlib's definition of
+`Sheaf.H'`. -/
+lemma freeYonedaSheafFunctor_obj (U : C) :
+    (freeYonedaSheafFunctor J).obj U =
+      (presheafToSheaf J AddCommGrpCat.{v}).obj (yoneda.obj U ⋙ AddCommGrpCat.free) :=
+  (rfl)
 
 end WeakSheafify
 
@@ -75,13 +82,14 @@ def freeYonedaSheafSectionsEquiv (U : C) (F : Sheaf J AddCommGrpCat.{v}) :
       (((Adjunction.whiskerRight Cᵒᵖ AddCommGrpCat.adj.{v}).homEquiv _ _).trans yonedaEquiv) with
     map_add' := by
       intro f g
+      unfold freeYonedaSheafFunctor at f g ⊢
       dsimp
       rw [(sheafificationAdjunction J AddCommGrpCat.{v}).homAddEquiv_add]
       rfl }
 
 /-- The value of `freeYonedaSheafSectionsEquiv` is the composite of the sheafification,
 free-forgetful, and Yoneda adjunction equivalences. -/
-lemma freeYonedaSheafSectionsEquiv_apply (U : C) (F : Sheaf J AddCommGrpCat.{v})
+private lemma freeYonedaSheafSectionsEquiv_apply (U : C) (F : Sheaf J AddCommGrpCat.{v})
     (f : (freeYonedaSheafFunctor J).obj U ⟶ F) :
     freeYonedaSheafSectionsEquiv J U F f = yonedaEquiv
       ((Adjunction.whiskerRight Cᵒᵖ AddCommGrpCat.adj.{v}).homEquiv _ _
@@ -89,23 +97,27 @@ lemma freeYonedaSheafSectionsEquiv_apply (U : C) (F : Sheaf J AddCommGrpCat.{v})
   (rfl)
 
 /-- The equivalence `freeYonedaSheafSectionsEquiv` is natural in the coefficient sheaf. -/
+@[simp]
 lemma freeYonedaSheafSectionsEquiv_naturality_right {U : C}
     {F G : Sheaf J AddCommGrpCat.{v}}
     (f : (freeYonedaSheafFunctor J).obj U ⟶ F) (g : F ⟶ G) :
     freeYonedaSheafSectionsEquiv J U G (f ≫ g) =
       g.hom.app (op U) (freeYonedaSheafSectionsEquiv J U F f) := by
   rw [freeYonedaSheafSectionsEquiv_apply, freeYonedaSheafSectionsEquiv_apply]
+  unfold freeYonedaSheafFunctor at f ⊢
   rw [Adjunction.homEquiv_naturality_right, Adjunction.homEquiv_naturality_right,
     yonedaEquiv_comp]
   rfl
 
 /-- The equivalence `freeYonedaSheafSectionsEquiv` is natural in the object of the site:
 precomposing with the map induced by `i : U ⟶ V` is restricting sections along `i`. -/
+@[simp]
 lemma freeYonedaSheafSectionsEquiv_naturality_left {U V : C} (i : U ⟶ V)
     (F : Sheaf J AddCommGrpCat.{v}) (f : (freeYonedaSheafFunctor J).obj V ⟶ F) :
     freeYonedaSheafSectionsEquiv J U F ((freeYonedaSheafFunctor J).map i ≫ f) =
       F.obj.map i.op (freeYonedaSheafSectionsEquiv J V F f) := by
   rw [freeYonedaSheafSectionsEquiv_apply, freeYonedaSheafSectionsEquiv_apply]
+  unfold freeYonedaSheafFunctor at f ⊢
   dsimp only [Functor.comp_map]
   rw [Adjunction.homEquiv_naturality_left, Adjunction.homEquiv_naturality_left,
     ← yonedaEquiv_naturality]
@@ -120,8 +132,9 @@ variable [HasSheafify J AddCommGrpCat.{v}] [Quiver.IsThin C]
 /-- On a thin site, every morphism induces a monomorphism between the corresponding free abelian
 sheaves. -/
 instance mono_freeYonedaSheafFunctor_map {U V : C} (i : U ⟶ V) :
-    Mono ((freeYonedaSheafFunctor J).map i) :=
-  (freeYonedaSheafFunctor J).map_mono i
+    Mono ((freeYonedaSheafFunctor J).map i) := by
+  dsimp [freeYonedaSheafFunctor]
+  infer_instance
 
 end Thin
 
