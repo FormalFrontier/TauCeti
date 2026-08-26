@@ -102,19 +102,15 @@ theorem subsingleton_ext_of_isZero_right (X : C) (hY : IsZero Y) (n : ℕ) :
 
 section DimensionShift
 
-set_option backward.defeqAttrib.useBackward true in
 /-- The first map in the cokernel sequence of a monomorphism is a monomorphism. -/
 instance mono_cokernelSequence_f {X Y : C} (f : X ⟶ Y) [Mono f] :
-    Mono (ShortComplex.cokernelSequence f).f := by
-  dsimp
-  infer_instance
+    Mono (ShortComplex.cokernelSequence f).f :=
+  (inferInstance : Mono f)
 
-set_option backward.defeqAttrib.useBackward true in
 /-- The middle object in a cokernel sequence is injective when the target of its first map is. -/
 instance injective_cokernelSequence_X₂ {X Y : C} (f : X ⟶ Y) [Injective Y] :
-    Injective (ShortComplex.cokernelSequence f).X₂ := by
-  dsimp
-  infer_instance
+    Injective (ShortComplex.cokernelSequence f).X₂ :=
+  (inferInstance : Injective Y)
 
 omit [HasExt C] in
 /-- The cokernel sequence of a monomorphism is short exact. -/
