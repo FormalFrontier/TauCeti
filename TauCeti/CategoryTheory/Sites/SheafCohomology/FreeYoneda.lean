@@ -110,7 +110,10 @@ lemma freeYonedaSheafSectionsEquiv_naturality_right {U : C}
   rfl
 
 /-- The equivalence `freeYonedaSheafSectionsEquiv` is natural in the object of the site:
-precomposing with the map induced by `i : U ⟶ V` is restricting sections along `i`. -/
+precomposing with the map induced by `i : U ⟶ V` is restricting sections along `i`.
+
+Not `@[simp]`: its left-hand side already simplifies through
+`freeYonedaSheafSectionsEquiv_naturality_right`, so the `simpNF` linter rejects the attribute. -/
 lemma freeYonedaSheafSectionsEquiv_naturality_left {U V : C} (i : U ⟶ V)
     (F : Sheaf J AddCommGrpCat.{v}) (f : (freeYonedaSheafFunctor J).obj V ⟶ F) :
     freeYonedaSheafSectionsEquiv J U F ((freeYonedaSheafFunctor J).map i ≫ f) =
