@@ -17,7 +17,7 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.ScalarUnipotent
 -- `TauCeti.GL2NonSplitTorusHom` occurs in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.NonSplitTorus
--- `TauCeti.smul_quotientGroup_mk_eq_iff` is the fixed-coset criterion the counts below run on, and
+-- `TauCeti.stabilizer_quotientGroup_mk` is the fixed-coset criterion the counts below run on, and
 -- this module re-exports the action of a group on the cosets of a subgroup.
 public import TauCeti.GroupTheory.QuotientGroup.Basic
 -- `OnePoint F` with its `GL (Fin 2) F` action is the model of the projective line used here.
@@ -66,10 +66,10 @@ hold there too.
 * `TauCeti.GL2Borel.quotientEquivOnePoint_smul`: that identification is equivariant, whence
   `TauCeti.GL2Borel.natCard_fixedCosets_eq_ncard`, the fixed cosets of `g` are counted by its fixed
   points on `OnePoint F`.
-* `TauCeti.GL2Borel.natCard_fixedCosets_of_mem_of_ne` and
-  `TauCeti.GL2Borel.natCard_fixedCosets_of_mem_of_eq`: an upper-triangular element fixes exactly
-  `2` cosets when its diagonal entries differ, and exactly `1` when they agree and it is not
-  diagonal.
+* `TauCeti.GL2Borel.natCard_fixedCosets_of_mem_of_diagonal_ne` and
+  `TauCeti.GL2Borel.natCard_fixedCosets_of_mem_of_diagonal_eq_of_upperRight_ne_zero`: an
+  upper-triangular element fixes exactly `2` cosets when its diagonal entries differ, and exactly
+  `1` when they agree and it is not diagonal.
 * `TauCeti.GL2Borel.scalar_smul_quotient_eq_self` and
   `TauCeti.GL2Borel.natCard_fixedCosets_eq_zero`: a scalar matrix fixes every coset, and an element
   with no upper-triangular conjugate fixes none.
@@ -92,6 +92,7 @@ public section
 namespace TauCeti
 
 open Matrix OnePoint
+open scoped Pointwise
 
 universe u
 
@@ -102,17 +103,14 @@ section CommRing
 variable {R : Type u} [CommRing R]
 
 /-- **A scalar matrix fixes every coset** of the Borel subgroup: scalar matrices are central, so a
-conjugate of one is itself, and they are upper triangular.
-
-Not a `simp` lemma: it would rewrite the fixed-coset subtype of a scalar matrix to a trivial
-subtype, which `TauCeti.GL2Borel.natCard_fixedCosets_scalar` could then no longer count. -/
+conjugate of one is itself, and they are upper triangular. -/
+@[simp]
 theorem scalar_smul_quotient_eq_self (u : Rˣ) (c : GL (Fin 2) R ⧸ GL2Borel R) :
     Matrix.GeneralLinearGroup.scalar (Fin 2) u • c = c := by
   induction c using QuotientGroup.induction_on with
   | H y =>
-    rw [smul_quotientGroup_mk_eq_iff, ← Matrix.GeneralLinearGroup.scalar_commute, mul_assoc,
-      inv_mul_cancel, mul_one]
-    exact scalar_mem R u
+    rw [MulAction.Quotient.smul_coe, smul_eq_mul, Matrix.GeneralLinearGroup.scalar_commute]
+    exact QuotientGroup.mk_mul_of_mem y (scalar_mem R u)
 
 /-- **An element with no upper-triangular conjugate fixes no coset at all.** A fixed coset would
 exhibit such a conjugate. Over a field this is the elliptic case: the matrix has no eigenline. -/
@@ -121,7 +119,14 @@ theorem natCard_fixedCosets_eq_zero {g : GL (Fin 2) R}
     Nat.card {c : GL (Fin 2) R ⧸ GL2Borel R // g • c = c} = 0 := by
   have hnone : ∀ c : GL (Fin 2) R ⧸ GL2Borel R, ¬ g • c = c := by
     refine QuotientGroup.mk_surjective.forall.2 fun y hy => ?_
-    exact h y⁻¹ (by simpa using (smul_quotientGroup_mk_eq_iff g y).1 hy)
+    -- the stabilizer of the coset `yB` is the conjugate `yBy⁻¹`, so a fixed coset exhibits `y⁻¹gy`
+    -- in `B`
+    have hmem : g ∈ MulAut.conj y • GL2Borel R := by
+      rw [← stabilizer_quotientGroup_mk]
+      exact MulAction.mem_stabilizer_iff.2 hy
+    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← map_inv, MulAut.smul_def,
+      MulAut.conj_apply] at hmem
+    exact h y⁻¹ hmem
   have : IsEmpty {c : GL (Fin 2) R ⧸ GL2Borel R // g • c = c} := ⟨fun c => hnone c.1 c.2⟩
   exact Nat.card_of_isEmpty
 
@@ -220,7 +225,7 @@ variable {F : Type u} [Field F]
 
 /-- **An upper-triangular element with distinct diagonal entries fixes exactly two cosets**: the
 Borel subgroup itself, and the line spanned by the second eigenvector. -/
-theorem natCard_fixedCosets_of_mem_of_ne {g : GL (Fin 2) F} (hg : g ∈ GL2Borel F)
+theorem natCard_fixedCosets_of_mem_of_diagonal_ne {g : GL (Fin 2) F} (hg : g ∈ GL2Borel F)
     (h : (g : Matrix (Fin 2) (Fin 2) F) 0 0 ≠ (g : Matrix (Fin 2) (Fin 2) F) 1 1) :
     Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // g • c = c} = 2 := by
   classical
@@ -240,7 +245,8 @@ theorem natCard_fixedCosets_of_mem_of_ne {g : GL (Fin 2) F} (hg : g ∈ GL2Borel
 
 /-- **An upper-triangular element with equal diagonal entries but a nonzero upper-right entry fixes
 exactly one coset**: the Borel subgroup itself, the line of its single eigenvector. -/
-theorem natCard_fixedCosets_of_mem_of_eq {g : GL (Fin 2) F} (hg : g ∈ GL2Borel F)
+theorem natCard_fixedCosets_of_mem_of_diagonal_eq_of_upperRight_ne_zero {g : GL (Fin 2) F}
+    (hg : g ∈ GL2Borel F)
     (h : (g : Matrix (Fin 2) (Fin 2) F) 0 0 = (g : Matrix (Fin 2) (Fin 2) F) 1 1)
     (hb : (g : Matrix (Fin 2) (Fin 2) F) 0 1 ≠ 0) :
     Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // g • c = c} = 1 := by
@@ -259,14 +265,15 @@ axes. -/
 @[simp]
 theorem natCard_fixedCosets_diagGL {a b : Fˣ} (hab : a ≠ b) :
     Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // diagGL ![a, b] • c = c} = 2 :=
-  natCard_fixedCosets_of_mem_of_ne (mem_iff.2 (by simp))
+  natCard_fixedCosets_of_mem_of_diagonal_ne (mem_iff.2 (by simp))
     (by simpa using fun h => hab (Units.ext h))
 
 /-- **A Jordan block fixes exactly one coset**, the line of its single eigenvector. -/
 @[simp]
 theorem natCard_fixedCosets_jordanGL (a : Fˣ) {b : F} (hb : b ≠ 0) :
     Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // jordanGL a b • c = c} = 1 :=
-  natCard_fixedCosets_of_mem_of_eq (jordanGL_mem_gl2Borel a b) (by simp) (by simpa using hb)
+  natCard_fixedCosets_of_mem_of_diagonal_eq_of_upperRight_ne_zero (jordanGL_mem_gl2Borel a b)
+    (by simp) (by simpa using hb)
 
 section NonSplit
 

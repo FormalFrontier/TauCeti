@@ -47,6 +47,11 @@ here; the values below are stated at the normal forms themselves.
 * `TauCeti.character_GL2PrincipalSeries_one_one_scalar` and its three companions: the character of
   the boundary principal series takes the values `q + 1`, `2`, `1` and `0`.
 
+None of those eight values is a `simp` lemma. `TauCeti.character_GL2Steinberg` is itself `@[simp]`,
+so `simp` rewrites the left-hand side of each of them to a fixed-coset count, and then, `F` being
+finite, on to a `Fintype.card` by `Nat.card_eq_fintype_card`; so none of the eight is in
+`simp`-normal form, and tagging any of them fails the `simpNF` linter.
+
 ## References
 
 This supplies the Steinberg row of the character-value formulas of Layer 9 ("the representation
