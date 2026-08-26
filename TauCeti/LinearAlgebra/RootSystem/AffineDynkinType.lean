@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 public import Mathlib.Combinatorics.SimpleGraph.CycleGraph
 public import TauCeti.Combinatorics.SimpleGraph.AdditiveFunction
 public import TauCeti.Combinatorics.SimpleGraph.Connected
