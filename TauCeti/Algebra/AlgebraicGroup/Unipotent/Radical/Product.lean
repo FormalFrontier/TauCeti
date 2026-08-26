@@ -8,7 +8,9 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Basic
 import TauCeti.Algebra.AlgebraicGroup.Connected.Product
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Properties
 import TauCeti.Algebra.AlgebraicGroup.Smooth.Product
+import TauCeti.Algebra.AlgebraicGroup.Unipotent.NormalProduct
 
 /-!
 # Geometric properties of products of unipotent-radical candidates
@@ -18,14 +20,12 @@ affine group. Since `I` is normal, multiplication on the two subgroups is a homo
 their product is equipped with the conjugation semidirect-product law. Its scheme-theoretic image
 is the closed subgroup represented by `CommHopfAlgCat.productOfNormal`.
 
-This file proves two of the geometric properties needed to show that this image is again a
-unipotent-radical candidate. The semidirect-product source is geometrically connected, because
-its underlying scheme is the direct product of the two connected factors, and it is smooth.
-Geometric connectedness and smoothness then descend to the scheme-theoretic image.
-
-Normality and containment of the factors are separate coordinate calculations. Geometric
-unipotence of the image additionally needs faithful flatness of a homomorphism of affine groups
-onto its scheme-theoretic image; no such hypothesis is hidden in the results below.
+The semidirect-product source is geometrically connected, because its underlying scheme is the
+direct product of the two connected factors, and it is smooth. Geometric connectedness and
+smoothness then descend to the scheme-theoretic image. Its geometric points are unipotent because
+the source is reduced and the image coordinate algebra embeds into the source. Together with the
+normal-product coordinate calculation, these facts show that the multiplication image is again a
+unipotent-radical candidate.
 
 ## Main declarations
 
@@ -33,15 +33,17 @@ onto its scheme-theoretic image; no such hypothesis is hidden in the results bel
   the multiplication image of two candidates is geometrically connected.
 * `TauCeti.HopfIdeal.IsUnipotentRadicalCandidate.smooth_productOfNormal`: the multiplication
   image of two candidates is smooth.
+* `TauCeti.HopfIdeal.IsUnipotentRadicalCandidate.productOfNormal`: unipotent-radical candidates
+  are closed under scheme-theoretic multiplication images.
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), Proposition 6.42 and Sections 5.a, 6.a.
 * A. Borel, *Linear Algebraic Groups*, Proposition 14.4 and Section 11.21.
 
-This advances Layer 5, "The unipotent radical", of the ReductiveGroups roadmap. It supplies the
-connectedness and smoothness parts of binary-product closure for connected normal smooth
-unipotent closed subgroups.
+This advances Layer 5, "The unipotent radical", of the ReductiveGroups roadmap by proving
+binary-product closure for connected normal smooth unipotent closed subgroups. This is the
+closure input in the maximal-dimension construction of the unipotent radical.
 -/
 
 public section
@@ -93,6 +95,28 @@ theorem smooth_productOfNormal
       ((smoothUnipotentCommHopfAlgProperty_iff k
         (FiniteTypeCommHopfAlgCat.quotient H J)).mp hJ.smoothUnipotent |>.1)
   exact smoothCommHopfAlgProperty.productOfNormal H.obj I J hI.isNormal hIs hJs
+
+/-- The scheme-theoretic multiplication image of two unipotent-radical candidates is again a
+unipotent-radical candidate.
+
+Its defining Hopf ideal is the kernel of the multiplication map from the conjugation semidirect
+product. It is normal because both factors are normal. The quotient is geometrically connected,
+smooth, and geometrically unipotent, so it represents a connected normal smooth unipotent closed
+subgroup containing both factors. -/
+theorem productOfNormal
+    (hI : IsUnipotentRadicalCandidate H I)
+    (hJ : IsUnipotentRadicalCandidate H J) :
+    IsUnipotentRadicalCandidate H
+      (HopfIdeal.ker
+        (CommHopfAlgCat.productMapOfNormal H.obj I J hI.isNormal).hom) := by
+  refine .mk
+    (CommHopfAlgCat.isNormal_ker_productMapOfNormal H.obj I J hI.isNormal hJ.isNormal)
+    (hI.geometricallyConnected_productOfNormal hJ) ?_
+  rw [smoothUnipotentCommHopfAlgProperty_iff]
+  refine ⟨(smoothCommHopfAlgProperty_iff _).mp (hI.smooth_productOfNormal hJ), ?_⟩
+  exact (geometricallyUnipotentPointsCommHopfAlgProperty_iff k _).mp <|
+    geometricallyUnipotentPointsCommHopfAlgProperty.productOfNormal H I J hI.isNormal
+      hI.smoothUnipotent hJ.smoothUnipotent
 
 end HopfIdeal.IsUnipotentRadicalCandidate
 
