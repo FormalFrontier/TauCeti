@@ -68,7 +68,7 @@ always contains the scalars, so it needs no such hypothesis, and neither does th
 The odd-dimensional case is the opposite of all this, and the last section records it. There the
 even subalgebra is a *single* block rather than a product, so the Fock action already carries it
 onto all of `Module.End K S` (`TauCeti.evenSpinAction_surjective`), and the whole spinor module —
-not a half of it — is the irreducible object: `TauCeti.isIrreducible_spinRep`.
+not a half of it — is the irreducible object: `TauCeti.spinRep_isIrreducible_of_odd`.
 As soon as `P.W ≠ ⊥`, exterior parity still splits `S` as a vector space but no longer as a
 representation, which `TauCeti.not_forall_map_spinRep_spinPlus_le` and
 `TauCeti.not_forall_map_spinRep_spinMinus_le` record: neither half is `⊥` or everything, so
@@ -113,12 +113,14 @@ central summands, for which the results here are the even-dimensional half; it i
 * `TauCeti.isIrreducible_spinRep_of_span_of_surjective`: the spin representation is irreducible
   once the Spin group spans the even subalgebra and that subalgebra exhausts the endomorphisms of
   the spinor module.
-* `TauCeti.isIrreducible_spinRep_of_isSquare` and `TauCeti.isIrreducible_spinRep`: **the spin
-  representation is irreducible in odd dimension**, the type `Bₗ` half of Layer 4, under the square
-  normalization and over a separably closed field respectively.
-* `TauCeti.not_forall_map_spinRep_spinPlus_le` and
-  `TauCeti.not_forall_map_spinRep_spinMinus_le`: **in odd dimension the spinor module does not
-  split along exterior parity**, provided `P.W ≠ ⊥`, which rules out only dimension one.
+* `TauCeti.isIrreducible_spinRep_of_isSquare` and `TauCeti.spinRep_isIrreducible_of_odd`: **the
+  spin representation is irreducible in odd dimension**, the type `Bₗ` half of Layer 4, under the
+  square normalization and over a separably closed field respectively.
+* `TauCeti.not_forall_map_spinRep_spinPlus_le_of_isIrreducible` and
+  `TauCeti.not_forall_map_spinRep_spinMinus_le_of_isIrreducible`: **an irreducible spinor module
+  does not split along exterior parity**, provided `P.W ≠ ⊥`, which rules out only dimension one;
+  `TauCeti.not_forall_map_spinRep_spinPlus_le` and
+  `TauCeti.not_forall_map_spinRep_spinMinus_le` are their odd-dimensional specializations.
 
 ## References
 
@@ -572,6 +574,34 @@ private theorem not_forall_map_spinRep_le (hirr : (spinRep Q P).IsIrreducible)
   · exact hbot (congrArg Subrepresentation.toSubmodule h)
   · exact htop (congrArg Subrepresentation.toSubmodule h)
 
+/-- **An irreducible spinor module does not split along exterior parity.** The even part `S⁺` is
+not invariant under the Spin group, so it is not a subrepresentation of `spinRep`.
+
+Nothing about the anisotropic remainder is computed: the proof is by irreducibility, `S⁺` being
+neither `⊥` (it contains the scalars) nor everything (it misses the nonzero `S⁻`). The hypothesis
+`P.W ≠ ⊥` is what excludes `finrank K V = 1`, where `S = K` is entirely even, `S⁺ = S` is trivially
+invariant and there is nothing to split. In even dimension the same subspace *is* invariant, by
+`TauCeti.spinPlus_invariant`, and `spinRep` is correspondingly reducible. -/
+theorem not_forall_map_spinRep_spinPlus_le_of_isIrreducible (hirr : (spinRep Q P).IsIrreducible)
+    (hW : P.W ≠ ⊥) :
+    ¬ ∀ g : spinGroup Q, (spinPlus Q P).map (spinRep Q P g) ≤ spinPlus Q P :=
+  not_forall_map_spinRep_le P hirr
+    (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinPlus P))
+    ((isCompl_spinPlus_spinMinus P).symm.disjoint.ne_top_of_ne_bot
+      (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinMinus P hW)))
+
+/-- **The odd half of an irreducible spinor module is not invariant either.** The companion of
+`TauCeti.not_forall_map_spinRep_spinPlus_le_of_isIrreducible` for the other parity: `S⁻` is nonzero
+when `P.W ≠ ⊥` and is not everything, `S⁺` containing the scalars, so irreducibility forbids it
+from being a subrepresentation of `spinRep`. -/
+theorem not_forall_map_spinRep_spinMinus_le_of_isIrreducible (hirr : (spinRep Q P).IsIrreducible)
+    (hW : P.W ≠ ⊥) :
+    ¬ ∀ g : spinGroup Q, (spinMinus Q P).map (spinRep Q P g) ≤ spinMinus Q P :=
+  not_forall_map_spinRep_le P hirr
+    (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinMinus P hW))
+    ((isCompl_spinPlus_spinMinus P).disjoint.ne_top_of_ne_bot
+      (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinPlus P)))
+
 variable [NeZero (2 : K)] [FiniteDimensional K V]
 
 /-- **The spin representation is irreducible in odd dimension** when anisotropic pairs admit the
@@ -594,46 +624,37 @@ theorem isIrreducible_spinRep_of_isSquare
 variable [IsSepClosed K]
 
 /-- **The spin representation is irreducible in odd dimension.** For a polarized quadratic space of
-odd dimension over a separably closed field of characteristic not two, the Spin group acts
+dimension `2 * l + 1` over a separably closed field of characteristic not two, the Spin group acts
 irreducibly on the whole spinor module `S = ⋀·W`.
 
-This is the type `Bₗ` half of the Layer-4 irreducibility statement. Except in dimension one, where
-`W = ⊥` and `S = K` is entirely even, the exterior parity splitting `S = S⁺ ⊕ S⁻` is *not* a
-splitting of representations here: see `TauCeti.not_forall_map_spinRep_spinPlus_le`. The
-even-dimensional counterpart is the pair `TauCeti.isIrreducible_spinPlusSubrep`,
-`TauCeti.isIrreducible_spinMinusSubrep`, where `S` itself is reducible unless it is the
-zero-dimensional quadratic space. -/
-theorem isIrreducible_spinRep (hodd : Odd (finrank K V)) : (spinRep Q P).IsIrreducible :=
+This is the type `Bₗ` half of the Layer-4 irreducibility statement, in the shape the roadmap pins.
+Nondegeneracy of `Q` is not assumed: the polarization data already carries it, by
+`TauCeti.SpinPolarizationData.nondegenerate`. Except in dimension one, where `W = ⊥` and `S = K` is
+entirely even, the exterior parity splitting `S = S⁺ ⊕ S⁻` is *not* a splitting of representations
+here: see `TauCeti.not_forall_map_spinRep_spinPlus_le`. The even-dimensional counterpart is the
+pair `TauCeti.isIrreducible_spinPlusSubrep`, `TauCeti.isIrreducible_spinMinusSubrep`, where `S`
+itself is reducible unless it is the zero-dimensional quadratic space. -/
+theorem spinRep_isIrreducible_of_odd (l : ℕ) (hV : finrank K V = 2 * l + 1) :
+    (spinRep Q P).IsIrreducible :=
   isIrreducible_spinRep_of_isSquare P
-    (fun v w _ _ ↦ IsSepClosed.exists_eq_mul_self ((Q v)⁻¹ * (Q w)⁻¹)) hodd
+    (fun v w _ _ ↦ IsSepClosed.exists_eq_mul_self ((Q v)⁻¹ * (Q w)⁻¹)) ⟨l, hV⟩
 
-/-- **In odd dimension the spinor module does not split along exterior parity.** The even part
-`S⁺` is not invariant under the Spin group, so — unlike in positive even dimension — it is not a
-subrepresentation of `spinRep`.
-
-Nothing about the anisotropic remainder is computed: the proof is by irreducibility, `S⁺` being
-neither `⊥` (it contains the scalars) nor everything (it misses the nonzero `S⁻`). The hypothesis
-`P.W ≠ ⊥` is what excludes `finrank V = 1`, where `S = K` is entirely even, `S⁺ = S` is trivially
-invariant and there is nothing to split. In even dimension the same subspace *is* invariant, by
-`TauCeti.spinPlus_invariant`, whose hypothesis `P.line = ⊥` is what an odd-dimensional
-polarization cannot satisfy. -/
-theorem not_forall_map_spinRep_spinPlus_le (hodd : Odd (finrank K V)) (hW : P.W ≠ ⊥) :
+/-- **In odd dimension the spinor module does not split along exterior parity.** The
+separably closed specialization of
+`TauCeti.not_forall_map_spinRep_spinPlus_le_of_isIrreducible`, where
+`TauCeti.spinRep_isIrreducible_of_odd` supplies the irreducibility. Unlike in positive even
+dimension, `S⁺` is not a subrepresentation of `spinRep`; the hypothesis `P.line = ⊥` carried by
+`TauCeti.spinPlus_invariant` is what an odd-dimensional polarization cannot satisfy. -/
+theorem not_forall_map_spinRep_spinPlus_le (l : ℕ) (hV : finrank K V = 2 * l + 1) (hW : P.W ≠ ⊥) :
     ¬ ∀ g : spinGroup Q, (spinPlus Q P).map (spinRep Q P g) ≤ spinPlus Q P :=
-  not_forall_map_spinRep_le P (isIrreducible_spinRep P hodd)
-    (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinPlus P))
-    ((isCompl_spinPlus_spinMinus P).symm.disjoint.ne_top_of_ne_bot
-      (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinMinus P hW)))
+  not_forall_map_spinRep_spinPlus_le_of_isIrreducible P (spinRep_isIrreducible_of_odd P l hV) hW
 
 /-- **In odd dimension the odd half of the spinor module is not invariant either.** The companion
-of `TauCeti.not_forall_map_spinRep_spinPlus_le` for the other parity: `S⁻` is nonzero when
-`P.W ≠ ⊥` and is not everything, `S⁺` containing the scalars, so irreducibility forbids it from
-being a subrepresentation of `spinRep`. -/
-theorem not_forall_map_spinRep_spinMinus_le (hodd : Odd (finrank K V)) (hW : P.W ≠ ⊥) :
+of `TauCeti.not_forall_map_spinRep_spinPlus_le` for the other parity, the separably closed
+specialization of `TauCeti.not_forall_map_spinRep_spinMinus_le_of_isIrreducible`. -/
+theorem not_forall_map_spinRep_spinMinus_le (l : ℕ) (hV : finrank K V = 2 * l + 1) (hW : P.W ≠ ⊥) :
     ¬ ∀ g : spinGroup Q, (spinMinus Q P).map (spinRep Q P g) ≤ spinMinus Q P :=
-  not_forall_map_spinRep_le P (isIrreducible_spinRep P hodd)
-    (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinMinus P hW))
-    ((isCompl_spinPlus_spinMinus P).disjoint.ne_top_of_ne_bot
-      (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinPlus P)))
+  not_forall_map_spinRep_spinMinus_le_of_isIrreducible P (spinRep_isIrreducible_of_odd P l hV) hW
 
 end Odd
 

@@ -211,6 +211,16 @@ open CliffordAlgebra Module
 
 section OperatorForm
 
+/-- An element squaring to a nonzero scalar is right-invertible, with `c⁻¹ • ω` as the inverse:
+`x * ω * (c⁻¹ • ω) = x`. This is the algebraic content of the factorization
+`ι v = c⁻¹ (ι v * ω) * ω` by which the volume element pulls an odd generator into the even part. -/
+private theorem mul_mul_inv_smul_self_of_mul_self_eq {F : Type*} [Field F] {A : Type*}
+    [Semiring A] [Algebra F A] {ω : A} {c : F} (hc : c ≠ 0)
+    (hsq : ω * ω = algebraMap F A c) (x : A) : x * ω * (c⁻¹ • ω) = x :=
+  calc x * ω * (c⁻¹ • ω) = c⁻¹ • (x * (ω * ω)) := by rw [mul_smul_comm, mul_assoc]
+    _ = c⁻¹ • c • x := by rw [hsq, ← Algebra.commutes, ← Algebra.smul_def]
+    _ = x := inv_smul_smul₀ hc x
+
 variable {F : Type u} [Field F] [NeZero (2 : F)]
   {V : Type v} [AddCommGroup V] [Module F V] [FiniteDimensional F V] {Q : QuadraticForm F V}
   (P : SpinPolarizationData Q) (hodd : Odd (finrank F V))
@@ -240,6 +250,9 @@ theorem evenSpinAction_surjective : Function.Surjective (evenSpinAction Q P) := 
     obtain ⟨v, hv, hv0⟩ := List.mem_map.mp hmem
     exact hQl v hv hv0
   have hsq : ω * ω = algebraMap F (CliffordAlgebra Q) c := prod_map_ι_sq_scalar hl
+  have hsqEnd : spinAction Q P ω * spinAction Q P ω =
+      algebraMap F (Module.End F (ExteriorAlgebra F P.W)) c := by
+    rw [← map_mul, hsq, AlgHom.commutes]
   have hωodd : ω ∈ evenOdd Q 1 := prod_map_ι_mem_evenOdd_one_of_odd_length (hlen ▸ hodd)
   -- The image of the volume element is central, hence a scalar, hence already in the range.
   have hωrange : spinAction Q P ω ∈ (evenSpinAction Q P).range := by
@@ -260,8 +273,8 @@ theorem evenSpinAction_surjective : Function.Surjective (evenSpinAction Q P) := 
       have h := SetLike.mul_mem_graded (ι_mem_evenOdd_one Q v) hωodd
       rwa [CharTwo.add_self_eq_zero] at h
     have hrw : spinAction Q P (ι Q v * ω) * (c⁻¹ • spinAction Q P ω) = spinAction Q P (ι Q v) := by
-      rw [mul_smul_comm, ← map_mul, mul_assoc, hsq, ← Algebra.commutes, ← Algebra.smul_def,
-        map_smul, smul_smul, inv_mul_cancel₀ hc, one_smul]
+      rw [map_mul]
+      exact mul_mul_inv_smul_self_of_mul_self_eq hc hsqEnd _
     exact hrw ▸ Subalgebra.mul_mem _
       ((AlgHom.mem_range _).2 ⟨⟨_, hmem⟩, evenSpinAction_apply Q P _⟩)
       (Subalgebra.smul_mem _ hωrange _)
