@@ -20,11 +20,6 @@ in the unit `ℤ`-submodule.
 
 * `AddCircle.coe_eq_zero_iff_mem_one`: vanishing in `AddCircle (1 : ℚ)` is membership in
   `(1 : Submodule ℤ ℚ)`.
-* `AddCircle.coe_eq_zero_of_eq_intCast`: a rational equal to an integer reduces to zero.
-* `AddCircle.zsmul_coe_eq_zero_of_mul_eq_intCast`: a rational whose integer multiple is an
-  integer becomes torsion in `ℚ/ℤ`.
-* `AddCircle.four_zsmul_coe_div_eight_eq_zero_of_even`: the class of `n / 8` is four-torsion
-  when `n` is even.
 -/
 
 public section
@@ -41,26 +36,5 @@ theorem coe_eq_zero_iff_mem_one (q : ℚ) :
   · intro h
     obtain ⟨n, hn⟩ := Submodule.mem_one.mp h
     exact (coe_eq_zero_iff (1 : ℚ)).mpr ⟨n, by simpa using hn⟩
-
-/-- A rational number equal to an integer reduces to zero in `ℚ/ℤ`. -/
-theorem coe_eq_zero_of_eq_intCast {q : ℚ} (m : ℤ) (h : q = (m : ℚ)) :
-    (q : AddCircle (1 : ℚ)) = 0 := by
-  rw [coe_eq_zero_iff_mem_one]
-  exact Submodule.mem_one.mpr ⟨m, by simpa using h.symm⟩
-
-/-- A rational whose integer multiple is an integer becomes torsion in `ℚ/ℤ`. -/
-theorem zsmul_coe_eq_zero_of_mul_eq_intCast {q : ℚ} (n m : ℤ)
-    (h : (n : ℚ) * q = (m : ℚ)) : n • (q : AddCircle (1 : ℚ)) = 0 := by
-  rw [← coe_zsmul, zsmul_eq_mul]
-  exact coe_eq_zero_of_eq_intCast m h
-
-/-- The class of `n / 8` in `ℚ/ℤ` is four-torsion when `n` is even. -/
-theorem four_zsmul_coe_div_eight_eq_zero_of_even (n : ℕ) (hn : Even n) :
-    (4 : ℤ) • (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
-  obtain ⟨k, hk⟩ := hn
-  refine zsmul_coe_eq_zero_of_mul_eq_intCast 4 k ?_
-  rw [hk]
-  push_cast
-  ring
 
 end AddCircle

@@ -380,11 +380,18 @@ theorem checkerboardVector_mem_dualCarrier :
   simp only [checkerboardVector_apply]
   rcases eq_or_ne i (checkerboardLastIndex n) with h | h <;> simp [h]
 
+omit [NeZero n] in
 /-- The spinor representative lies in the dual lattice. -/
 theorem checkerboardSpinor_mem_dualCarrier :
     checkerboardSpinor n ∈ (checkerboardLattice n).dualCarrier := by
-  rw [mem_checkerboardLattice_dualCarrier_iff]
-  exact ⟨fun i ↦ ⟨0, by simp⟩, 1, by norm_num⟩
+  rw [IntegralLattice.dualCarrier, LinearMap.BilinForm.mem_dualSubmodule]
+  intro x hx
+  obtain ⟨-, m, hm⟩ := (mem_checkerboardLattice_carrier_iff x).mp hx
+  refine Submodule.mem_one.mpr ⟨m, ?_⟩
+  rw [(checkerboardLattice n).isSymm.eq, checkerboardLattice_form_apply]
+  simp only [checkerboardSpinor_apply, ← Finset.sum_mul, hm]
+  ring_nf
+  rfl
 
 /-- The cospinor representative lies in the dual lattice. -/
 theorem checkerboardCospinor_mem_dualCarrier :
@@ -486,6 +493,7 @@ noncomputable def checkerboardVectorClass : (checkerboardLattice n).Discriminant
 noncomputable def checkerboardSpinorClass : (checkerboardLattice n).DiscriminantGroup :=
   Submodule.Quotient.mk ⟨checkerboardSpinor n, checkerboardSpinor_mem_dualCarrier⟩
 
+omit [NeZero n] in
 /-- The spinor class is represented by the Conway--Sloane spinor vector. -/
 theorem checkerboardSpinorClass_def :
     checkerboardSpinorClass n =
@@ -711,6 +719,7 @@ theorem discriminantQuadraticMap_checkerboardVectorClass :
   rw [checkerboardVectorClass, discriminantQuadraticMap_mk,
     checkerboardLattice_form_checkerboardVector_self]
 
+omit [NeZero n] in
 /-- **The spinor class has quadratic value `n / 8`.** -/
 @[simp]
 theorem discriminantQuadraticMap_checkerboardSpinorClass :
@@ -760,6 +769,7 @@ theorem two_zsmul_checkerboardVectorClass : (2 : ℤ) • checkerboardVectorClas
     split_ifs <;> ring
   · simp
 
+omit [NeZero n] in
 /-- **For even `n` the spinor class has order two**: the all-ones vector `2 s` has even
 coordinate sum. -/
 theorem two_zsmul_checkerboardSpinorClass_of_even (hn : Even n) :
@@ -800,6 +810,7 @@ private theorem mem_zmultiples_iff_eq_zero_or_eq_of_two_zsmul_eq_zero
     · exact (AddSubgroup.zmultiples a).zero_mem
     · exact AddSubgroup.mem_zmultiples_iff.mpr ⟨1, by rw [one_zsmul]⟩
 
+omit [NeZero n] in
 /-- For even `n`, the multiples of the spinor class are exactly zero and the spinor class. -/
 theorem mem_zmultiples_checkerboardSpinorClass_iff (hn : Even n)
     (x : (checkerboardLattice n).DiscriminantGroup) :
@@ -948,8 +959,10 @@ theorem discriminantPairing_checkerboardVectorClass_self :
       (checkerboardVectorClass n) = 0 := by
   rw [checkerboardVectorClass, discriminantPairing_mk,
     checkerboardLattice_form_checkerboardVector_self]
-  exact AddCircle.coe_eq_zero_of_eq_intCast 1 (by norm_num)
+  rw [AddCircle.coe_eq_zero_iff]
+  exact ⟨1, by norm_num⟩
 
+omit [NeZero n] in
 /-- **The spinor class has self-pairing `b(s, s) = n / 4`.** -/
 @[simp]
 theorem discriminantPairing_checkerboardSpinorClass_self :
@@ -978,9 +991,20 @@ two spinor classes carry the quarter-integral values `n / 8`. -/
     FiniteQuadraticModule :=
   FiniteQuadraticModule.kleinFour (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
     ((((n : ℚ) / 8 : ℚ)) : AddCircle (1 : ℚ)) (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ))
-    (AddCircle.zsmul_coe_eq_zero_of_mul_eq_intCast 4 2 (by norm_num))
-    (AddCircle.four_zsmul_coe_div_eight_eq_zero_of_even n hn)
-    (AddCircle.zsmul_coe_eq_zero_of_mul_eq_intCast 2 1 (by norm_num))
+    (by
+      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
+      exact ⟨2, by norm_num⟩)
+    (by
+      obtain ⟨k, hk⟩ := hn
+      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
+      refine ⟨k, ?_⟩
+      rw [hk]
+      push_cast
+      ring_nf
+      norm_cast)
+    (by
+      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
+      exact ⟨1, by norm_num⟩)
 
 omit [NeZero n] in
 /-- The first standard generator has quadratic value `1 / 2`. -/
@@ -988,8 +1012,9 @@ omit [NeZero n] in
 theorem checkerboardStandardQuadraticModule_quadratic_one_zero (hn : Even n) :
     (checkerboardStandardQuadraticModule n hn).quadratic (1, 0) =
       (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) := by
-  change FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _ (1, 0) = _
-  rw [FiniteQuadraticModule.kleinFourMap_apply_one_zero]
+  unfold checkerboardStandardQuadraticModule
+  rw [FiniteQuadraticModule.kleinFour_quadratic,
+    FiniteQuadraticModule.kleinFourMap_apply_one_zero]
 
 omit [NeZero n] in
 /-- The second standard generator has quadratic value `n / 8`. -/
@@ -997,8 +1022,9 @@ omit [NeZero n] in
 theorem checkerboardStandardQuadraticModule_quadratic_zero_one (hn : Even n) :
     (checkerboardStandardQuadraticModule n hn).quadratic (0, 1) =
       (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) := by
-  change FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _ (0, 1) = _
-  rw [FiniteQuadraticModule.kleinFourMap_apply_zero_one]
+  unfold checkerboardStandardQuadraticModule
+  rw [FiniteQuadraticModule.kleinFour_quadratic,
+    FiniteQuadraticModule.kleinFourMap_apply_zero_one]
 
 omit [NeZero n] in
 /-- The diagonal standard generator has quadratic value `n / 8`. -/
@@ -1006,9 +1032,13 @@ omit [NeZero n] in
 theorem checkerboardStandardQuadraticModule_quadratic_one_one (hn : Even n) :
     (checkerboardStandardQuadraticModule n hn).quadratic (1, 1) =
       (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ)) := by
-  change FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _ (1, 1) = _
-  rw [FiniteQuadraticModule.kleinFourMap_apply_one_one, add_right_comm, ← AddCircle.coe_add]
-  rw [AddCircle.coe_eq_zero_of_eq_intCast 1 (by norm_num), zero_add]
+  unfold checkerboardStandardQuadraticModule
+  rw [FiniteQuadraticModule.kleinFour_quadratic,
+    FiniteQuadraticModule.kleinFourMap_apply_one_one, add_right_comm, ← AddCircle.coe_add]
+  have hhalf :
+      ((((1 : ℚ) / 2 : ℚ) + (1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 :=
+    (AddCircle.coe_eq_zero_iff (p := (1 : ℚ))).mpr ⟨1, by norm_num⟩
+  rw [hhalf, zero_add]
 
 omit [NeZero n] in
 /-- The two standard generators pair to `1 / 2`. -/
@@ -1016,8 +1046,9 @@ omit [NeZero n] in
 theorem checkerboardStandardQuadraticModule_pairing_one_zero_zero_one (hn : Even n) :
     (checkerboardStandardQuadraticModule n hn).toFiniteBilinearModule.pairing (1, 0) (0, 1) =
       (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) := by
-  change QuadraticMap.polar (FiniteQuadraticModule.kleinFourMap _ _ _ _ _ _) (1, 0) (0, 1) = _
-  rw [FiniteQuadraticModule.polar_kleinFourMap_one_zero_zero_one]
+  unfold checkerboardStandardQuadraticModule
+  rw [FiniteQuadraticModule.kleinFour_pairing,
+    FiniteQuadraticModule.polar_kleinFourMap_one_zero_zero_one]
 
 /-- **The standard model is isometric to the discriminant quadratic module of an even-rank
 checkerboard lattice**, by the identification carrying `(1, 0)` to the vector class and `(0, 1)`
@@ -1044,8 +1075,8 @@ noncomputable def checkerboardDiscriminantQuadraticIsometry (hn : Even n) :
       have hhalf :
           (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) +
               (((1 : ℚ) / 2 : ℚ) : AddCircle (1 : ℚ)) = 0 := by
-        rw [← AddCircle.coe_add]
-        exact AddCircle.coe_eq_zero_of_eq_intCast 1 (by norm_num)
+        rw [← AddCircle.coe_add, AddCircle.coe_eq_zero_iff]
+        exact ⟨1, by norm_num⟩
       rw [zmodTwoProdAddEquivCheckerboardDiscriminantGroup_apply_one_one,
         discriminantQuadraticMap_checkerboardCospinorClass,
         FiniteQuadraticModule.kleinFourMap_apply_one_one, add_right_comm, hhalf, zero_add])
