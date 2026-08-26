@@ -39,29 +39,34 @@ recording which basis vectors of `W` occur. Half-integrality is recorded literal
 `TauCeti.spinWeight_add_self_of_mem` and `TauCeti.spinWeight_add_self_of_notMem`: twice a weight
 is `±1`.
 
-Two facts make this a genuine weight-space decomposition. The simultaneous eigenspace at a weight
+Two facts pin the diagonalization down. The simultaneous eigenspace at the eigenvalue tuple
 `spinWeight K s` is exactly the *line* spanned by the corresponding exterior basis vector
-(`TauCeti.spinWeightSpace_spinWeight`), and, over a ring without zero divisors, every other
-character has zero eigenspace (`TauCeti.spinWeightSpace_eq_bot_of_notMem_range`). Hence, for a
-finite index type, the weights of `S` are exactly the `2 ^ l` sign vectors
-(`TauCeti.range_spinWeight`), and their lines exhaust `S`
-(`TauCeti.iSup_spinWeightSpace_eq_top`).
+(`TauCeti.spinWeightSpace_spinWeight`), and, over a ring without zero divisors, every other tuple
+of eigenvalues has zero simultaneous eigenspace
+(`TauCeti.spinWeightSpace_eq_bot_of_notMem_range`). Hence, for a finite index type, the tuples
+that do occur are exactly the sign vectors (`TauCeti.range_spinWeight`), there are `2 ^ l` of them
+on an index type of cardinality `l` (`TauCeti.ncard_range_spinWeight`), and their lines exhaust
+`S` (`TauCeti.iSup_spinWeightSpace_eq_top`).
 
 The cancellation behind the first of those needs no field: two distinct sign vectors differ in
 some coordinate by `±1`, a unit, so a coefficient annihilated by that difference vanishes over any
 commutative ring in which `2` is invertible.
 
-What is deliberately absent: no ordering of `ι` is used to single out a Borel, so no weight is
-called highest here; the Cartan elements are not compared with a matrix model of `𝔰𝔬(2l + 1)` or
-`𝔰𝔬(2l)`; and the abstract `Bₗ`/`Dₗ` root data are not mentioned. Those comparisons are the rest
-of the layer this file opens.
+What is deliberately absent: the elements `H i` are only shown to commute, and no Lie subalgebra
+of `CliffordAlgebra.quadraticLieSubalgebra Q` is exhibited as a Cartan subalgebra, so "weight"
+below always means a tuple of simultaneous eigenvalues for the indexed family `H`, not a linear
+character of a Cartan subalgebra. No ordering of `ι` is used to single out a Borel, so no weight
+is called highest here; the elements `H i` are not compared with a matrix model of `𝔰𝔬(2l + 1)`
+or `𝔰𝔬(2l)`; and the abstract `Bₗ`/`Dₗ` root data are not mentioned. Those comparisons are the
+rest of the layer this file opens.
 
 ## Main definitions
 
-* `TauCeti.SpinPolarizationData.dualVector`: the vector of `W'` dual to a basis vector of `W`.
-* `TauCeti.SpinPolarizationData.cartanElement`: the Clifford bivector `H i` of such a dual pair.
+* `TauCeti.SpinPolarizationData.cartanElement`: the Clifford bivector `H i` of a basis vector of
+  `W` and its dual vector in `W'`.
 * `TauCeti.spinWeight`: the sign vector `½(±1, …, ±1)` attached to a finite set of indices.
-* `TauCeti.spinWeightSpace`: the simultaneous eigenspace of the Cartan elements at a character.
+* `TauCeti.spinWeightSpace`: the simultaneous eigenspace of the elements `H i` at a prescribed
+  tuple of eigenvalues.
 
 ## Main results
 
@@ -71,10 +76,11 @@ of the layer this file opens.
 * `TauCeti.spinWeightSpace_spinWeight`: **each weight space is the line spanned by its exterior
   basis vector.**
 * `TauCeti.spinWeightSpace_eq_bot_of_notMem_range` and `TauCeti.spinWeightSpace_ne_bot_iff`: no
-  other character is a weight.
+  other tuple of eigenvalues occurs.
 * `TauCeti.iSup_spinWeightSpace_eq_top`: the weight spaces exhaust the spinor module.
-* `TauCeti.range_spinWeight`: for a finite index type those weights are exactly the `2 ^ l`
-  sign vectors.
+* `TauCeti.range_spinWeight`: for a finite index type the weights are exactly the sign vectors,
+  and `TauCeti.ncard_range_spinWeight` counts them: there are `2 ^ l` of them on an index type of
+  cardinality `l`.
 
 ## References
 
@@ -139,7 +145,7 @@ theorem spinWeight_add_self_of_notMem {s : Finset ι} {i : ι} (h : i ∉ s) :
 
 /-- Distinct index sets have weights that differ by a **unit** in some coordinate. This is the
 cancellation making the weight spaces one-dimensional over an arbitrary commutative ring. -/
-theorem exists_spinWeight_sub_eq {s t : Finset ι} (h : s ≠ t) :
+theorem exists_spinWeight_sub_eq_one_or_neg_one {s t : Finset ι} (h : s ≠ t) :
     ∃ i, spinWeight K s i - spinWeight K t i = 1 ∨ spinWeight K s i - spinWeight K t i = -1 := by
   obtain ⟨i, hi⟩ := not_forall.mp fun hall => h (Finset.ext hall)
   refine ⟨i, ?_⟩
@@ -160,15 +166,16 @@ theorem spinWeight_injective [Nontrivial K] :
     Function.Injective (spinWeight K (ι := ι)) := by
   intro s t hst
   by_contra h
-  obtain ⟨i, hi⟩ := exists_spinWeight_sub_eq (K := K) h
+  obtain ⟨i, hi⟩ := exists_spinWeight_sub_eq_one_or_neg_one (K := K) h
   rw [hst, sub_self] at hi
   rcases hi with hi | hi
   · exact one_ne_zero hi.symm
   · exact one_ne_zero (neg_eq_zero.mp hi.symm)
 
 /-- **The values of `TauCeti.spinWeight` are exactly the sign vectors** `½(±1, …, ±1)`, when the
-index type is finite. Together with `TauCeti.spinWeightSpace_ne_bot_iff` this says the weights of
-the spinor module are exactly those `2 ^ l` characters. -/
+index type is finite. Together with `TauCeti.spinWeightSpace_ne_bot_iff` this says the tuples of
+eigenvalues occurring in the spinor module are exactly those sign vectors;
+`TauCeti.ncard_range_spinWeight` counts them. -/
 theorem range_spinWeight [Finite ι] :
     Set.range (spinWeight K (ι := ι)) = {χ : ι → K | ∀ i, χ i = ⅟(2 : K) ∨ χ i = -⅟(2 : K)} := by
   classical
@@ -186,51 +193,21 @@ theorem range_spinWeight [Finite ι] :
     · rw [spinWeight_of_mem (by simp [h]), h]
     · rw [spinWeight_of_notMem (by simp [h]), (hχ i).resolve_left h]
 
+/-- **There are exactly `2 ^ l` sign vectors** on a finite index type of cardinality `l`: distinct
+index sets carry distinct weights, and there are `2 ^ l` index sets. -/
+theorem ncard_range_spinWeight [Finite ι] [Nontrivial K] :
+    (Set.range (spinWeight K (ι := ι))).ncard = 2 ^ Nat.card ι := by
+  have : Fintype ι := Fintype.ofFinite ι
+  rw [Set.ncard_range_of_injective spinWeight_injective, Nat.card_eq_fintype_card,
+    Nat.card_eq_fintype_card, Fintype.card_finset]
+
 end Weight
 
 namespace SpinPolarizationData
 
 variable {K : Type u} [CommRing K] {V : Type v} [AddCommGroup V] [Module K V]
   {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
-
-/-! ### The polar form vanishes on each isotropic summand -/
-
-/-- The polar form vanishes on the first isotropic summand of a polarization: that summand is
-isotropic and closed under addition. -/
-theorem polar_W_eq_zero (x y : P.W) : polar Q (x : V) (y : V) = 0 := by
-  have h : Q ((x : V) + (y : V)) = 0 := by simpa using P.isotropic_W (x + y)
-  simp [QuadraticMap.polar, h]
-
-/-- The polar form vanishes on the second isotropic summand of a polarization. -/
-theorem polar_W'_eq_zero (x y : P.W') : polar Q (x : V) (y : V) = 0 := by
-  have h : Q ((x : V) + (y : V)) = 0 := by simpa using P.isotropic_W' (x + y)
-  simp [QuadraticMap.polar, h]
-
-/-! ### The dual isotropic vectors of a basis -/
-
-variable {ι : Type w} [LinearOrder ι] (b : Module.Basis ι K P.W)
-
-/-- The vector of the second isotropic summand `W'` dual to the `i`-th basis vector of `W`: the
-polarization pairing identifies `W'` with the dual of `W`, and this is the vector matching the
-`i`-th coordinate functional. -/
-noncomputable def dualVector (i : ι) : P.W' :=
-  P.pairingEquiv.symm (b.coord i)
-
-omit [LinearOrder ι] in
-@[simp]
-theorem pairingEquiv_dualVector (i : ι) : P.pairingEquiv (P.dualVector b i) = b.coord i :=
-  P.pairingEquiv.apply_symm_apply _
-
-/-- The dual vectors pair with the basis of `W` by the Kronecker delta. -/
-@[simp]
-theorem polar_dualVector (i j : ι) :
-    polar Q (b j : V) (P.dualVector b i : V) = if j = i then 1 else 0 := by
-  rw [← P.pairingEquiv_apply (P.dualVector b i) (b j), pairingEquiv_dualVector]
-  simp [Module.Basis.coord_apply, Finsupp.single_apply, eq_comm]
-
-/-- A basis vector of `W` pairs with its own dual vector to `1`. -/
-theorem polar_dualVector_self (i : ι) : polar Q (b i : V) (P.dualVector b i : V) = 1 := by
-  simp
+  {ι : Type w} [LinearOrder ι] (b : Module.Basis ι K P.W)
 
 /-! ### The Cartan elements -/
 
@@ -305,6 +282,7 @@ theorem contract_dualVector_wedge_basis (i : ι) (s : Finset ι) :
 /-- **The Cartan elements act diagonally on the exterior basis** of the spinor module: the `i`-th
 one multiplies the basis vector indexed by `s` by `⅟2` when `i ∈ s` and by `-⅟2` otherwise, so
 that basis vector is a weight vector of weight `TauCeti.spinWeight K s`. -/
+@[simp]
 theorem spinAction_cartanElement_basis (i : ι) (s : Finset ι) :
     spinAction Q P (P.cartanElement b i) (b.ExteriorAlgebra s) =
       spinWeight K s i • b.ExteriorAlgebra s := by
@@ -328,8 +306,8 @@ variable {K : Type u} [CommRing K] [Invertible (2 : K)] {V : Type v} [AddCommGro
   {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
   {ι : Type w} [LinearOrder ι] (b : Module.Basis ι K P.W)
 
-/-- The **weight space** of the spinor module at a character `χ` of the Cartan elements: the
-simultaneous eigenspace of the operators `H i` with eigenvalues `χ i`. -/
+/-- The **weight space** of the spinor module at a tuple `χ` of prescribed eigenvalues: the
+simultaneous eigenspace of the operators `H i`, the `i`-th one acting with eigenvalue `χ i`. -/
 noncomputable def spinWeightSpace (Q : QuadraticForm K V) (P : SpinPolarizationData Q)
     (b : Module.Basis ι K P.W) (χ : ι → K) : Submodule K (ExteriorAlgebra K P.W) :=
   ⨅ i : ι, Module.End.eigenspace (spinAction Q P (P.cartanElement b i)) (χ i)
@@ -342,6 +320,9 @@ theorem spinWeightSpace_def (χ : ι → K) :
   (rfl)
 
 omit [LinearOrder ι] in
+/-- Membership in a weight space, unfolded: a spinor lies in it exactly when every `H i` scales
+it by the prescribed eigenvalue `χ i`. -/
+@[simp]
 theorem mem_spinWeightSpace_iff {χ : ι → K} {x : ExteriorAlgebra K P.W} :
     x ∈ spinWeightSpace Q P b χ ↔ ∀ i, spinAction Q P (P.cartanElement b i) x = χ i • x := by
   rw [spinWeightSpace_def, Submodule.mem_iInf]
@@ -373,13 +354,14 @@ theorem repr_spinAction_cartanElement (i : ι) (t : Finset ι) (x : ExteriorAlge
 /-- **Each weight space of the spinor module is a line**, spanned by the exterior basis vector
 carrying that weight. Distinct sign vectors differ somewhere by a unit, which is what forces every
 other coordinate of a weight vector to vanish. -/
+@[simp]
 theorem spinWeightSpace_spinWeight (s : Finset ι) :
     spinWeightSpace Q P b (spinWeight K s) = K ∙ b.ExteriorAlgebra s := by
   refine le_antisymm (fun x hx => ?_) ?_
   · rw [mem_spinWeightSpace_iff] at hx
     have hzero : ∀ t : Finset ι, t ≠ s → b.ExteriorAlgebra.repr x t = 0 := by
       intro t ht
-      obtain ⟨i, hi⟩ := exists_spinWeight_sub_eq (K := K) ht
+      obtain ⟨i, hi⟩ := exists_spinWeight_sub_eq_one_or_neg_one (K := K) ht
       have hcoord := repr_spinAction_cartanElement P b i t x
       rw [hx i, map_smul, Finsupp.smul_apply, smul_eq_mul] at hcoord
       have hsub : (spinWeight K t i - spinWeight K s i) * b.ExteriorAlgebra.repr x t = 0 := by
@@ -405,7 +387,7 @@ theorem spinWeightSpace_spinWeight (s : Finset ι) :
   · rw [Submodule.span_singleton_le_iff_mem]
     exact basis_mem_spinWeightSpace P b s
 
-/-- **No character other than a sign vector is a weight** of the spinor module, over a ring
+/-- **No tuple of eigenvalues other than a sign vector occurs** in the spinor module, over a ring
 without zero divisors. -/
 theorem spinWeightSpace_eq_bot_of_notMem_range [NoZeroDivisors K] {χ : ι → K}
     (hχ : χ ∉ Set.range (spinWeight K (ι := ι))) :
@@ -427,8 +409,9 @@ theorem spinWeightSpace_eq_bot_of_notMem_range [NoZeroDivisors K] {χ : ι → K
   · exact absurd (sub_eq_zero.mp h) hi
   · simpa using h
 
-/-- **The weights of the spinor module are exactly the sign vectors**: a character of the Cartan
-elements has a nonzero weight space precisely when it is one of the `TauCeti.spinWeight K s`. -/
+/-- **The weights of the spinor module are exactly the sign vectors**: a tuple of eigenvalues has
+a nonzero simultaneous eigenspace precisely when it is one of the `TauCeti.spinWeight K s`. -/
+@[simp]
 theorem spinWeightSpace_ne_bot_iff [Nontrivial K] [NoZeroDivisors K] {χ : ι → K} :
     spinWeightSpace Q P b χ ≠ ⊥ ↔ χ ∈ Set.range (spinWeight K (ι := ι)) := by
   constructor
