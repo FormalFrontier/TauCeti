@@ -84,16 +84,14 @@ theorem smooth_productOfNormal
     (hJ : IsUnipotentRadicalCandidate H J) :
     smoothCommHopfAlgProperty k
       (CommHopfAlgCat.productOfNormal H.obj I J hI.isNormal) := by
-  let QI := FiniteTypeCommHopfAlgCat.quotient H I
-  let QJ := FiniteTypeCommHopfAlgCat.quotient H J
-  -- Each finite-type quotient wrapper has `.obj` definitionally equal to the corresponding
-  -- `CommHopfAlgCat.quotient` used by `smoothCommHopfAlgProperty.productOfNormal`.
-  have hIs : smoothCommHopfAlgProperty k QI.obj :=
-    (smoothCommHopfAlgProperty_iff QI.obj).mpr
-      ((smoothUnipotentCommHopfAlgProperty_iff k QI).mp hI.smoothUnipotent |>.1)
-  have hJs : smoothCommHopfAlgProperty k QJ.obj :=
-    (smoothCommHopfAlgProperty_iff QJ.obj).mpr
-      ((smoothUnipotentCommHopfAlgProperty_iff k QJ).mp hJ.smoothUnipotent |>.1)
+  have hIs : smoothCommHopfAlgProperty k (CommHopfAlgCat.quotient H.obj I) :=
+    (smoothCommHopfAlgProperty_iff (CommHopfAlgCat.quotient H.obj I)).mpr
+      ((smoothUnipotentCommHopfAlgProperty_iff k
+        (FiniteTypeCommHopfAlgCat.quotient H I)).mp hI.smoothUnipotent |>.1)
+  have hJs : smoothCommHopfAlgProperty k (CommHopfAlgCat.quotient H.obj J) :=
+    (smoothCommHopfAlgProperty_iff (CommHopfAlgCat.quotient H.obj J)).mpr
+      ((smoothUnipotentCommHopfAlgProperty_iff k
+        (FiniteTypeCommHopfAlgCat.quotient H J)).mp hJ.smoothUnipotent |>.1)
   exact smoothCommHopfAlgProperty.productOfNormal H.obj I J hI.isNormal hIs hJs
 
 end HopfIdeal.IsUnipotentRadicalCandidate
