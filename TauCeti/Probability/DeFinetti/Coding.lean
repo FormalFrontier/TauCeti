@@ -161,11 +161,11 @@ Keeping the directing measure as a coordinate is what makes this a representatio
 and not merely of its path law. -/
 theorem ConditionallyIIDWith.jointPathLaw_eq_map_unitIntervalCoding {μ : Measure Ω}
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) :
+    (h : ConditionallyIIDWith μ X ν) :
     jointPathLaw μ X ν =
       ((μ.map ν).prod (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
         (fun p => (p.1, fun i => unitIntervalCoding α p.1 (p.2 i))) := by
-  rw [h.jointPathLaw_eq_iidMixtureLaw hX, map_prod_unitIntervalCoding_eq_iidMixtureLaw]
+  rw [h.jointPathLaw_eq_iidMixtureLaw, map_prod_unitIntervalCoding_eq_iidMixtureLaw]
 
 /-- **The coding representation of an exchangeable process.** An exchangeable sequence in a nonempty
 standard Borel space has a directing measure `ν` — it is conditionally i.i.d. `ν` — such that the
@@ -181,7 +181,7 @@ theorem deFinetti_coding {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω 
         ((μ.map ν).prod (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
           (fun p => (p.1, fun i => unitIntervalCoding α p.1 (p.2 i))) := by
   obtain ⟨ν, hν⟩ := conditionallyIID_iff.mp (deFinetti hX_meas hX)
-  exact ⟨ν, hν, hν.jointPathLaw_eq_map_unitIntervalCoding hX_meas⟩
+  exact ⟨ν, hν, hν.jointPathLaw_eq_map_unitIntervalCoding⟩
 
 /-- **The coding representation of an exchangeable path law.** An exchangeable probability measure
 on `ℕ → α` is the law of a coded i.i.d. uniform sequence, for a mixing law on

@@ -23,9 +23,10 @@ multiplication by the root.
   this only in the specialised form `WeierstrassCurve.Affine.CoordinateRing.map_mk`. Marked
   `@[simp]`, like its neighbours `AdjoinRoot.map_of` and `AdjoinRoot.map_root`.
 * `AdjoinRoot.map_surjective`: the map is surjective when `f` is.
-* `AdjoinRoot.exists_degree_lt_mk_eq`: for a monic relator, every class is represented by a
-  polynomial of degree less than that of the relator. Mathlib has division with remainder by a
-  monic polynomial but does not record what it says about `AdjoinRoot`.
+* `AdjoinRoot.exists_degree_lt_mk_eq`, `AdjoinRoot.mk_eq_mk_iff_of_degree_lt`: for a monic
+  relator, every class is represented by a polynomial of degree less than that of the relator, and
+  that representative is unique. Mathlib has division with remainder by a monic polynomial but
+  does not record what it says about `AdjoinRoot`.
 * `AdjoinRoot.eq_mulRight_of_root_mul`: an `R`-linear endomorphism of `AdjoinRoot g`, for `g`
   monic, that commutes with multiplication by the root is multiplication by its value at `1`. Its
   consumers are the truncated polynomial algebras of
@@ -48,12 +49,15 @@ that roadmap at `dev/hasse-weil @ 513e83879e2f`),
 There it is carried out for the coordinate ring of a Weierstrass curve and only for a base ring
 *equivalence*; here it is stated for `AdjoinRoot.map` along any surjective base homomorphism, with
 `map_mk` — which the source does not isolate — extracted as the step that makes it routine.
-`AdjoinRoot.exists_degree_lt_mk_eq` is adapted from Michael Stoll's `EllipticCurves` project
-(`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0, pinned by
-`TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`), `EllipticCurves/Mathlib/Basic.lean`,
-where the reduction step it uses is a separate lemma; here that step is Mathlib's
-`AdjoinRoot.mk_leftInverse`. It is harvested here rather than in the file that consumes it because
-nothing about elliptic curves enters the statement.
+`AdjoinRoot.exists_degree_lt_mk_eq` and `AdjoinRoot.mk_eq_mk_iff_of_degree_lt` are adapted from
+Michael Stoll's `EllipticCurves` project (`github.com/MichaelStollBayreuth/EllipticCurves`,
+Apache-2.0, pinned by `TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`),
+`EllipticCurves/Mathlib/Basic.lean`. There the reduction step the first one uses is a separate
+lemma; here that step is Mathlib's `AdjoinRoot.mk_leftInverse`. The source proves the second from a
+named helper `eq_zero_of_monic_dvd_of_degree_lt`; that helper is a one-line composition of
+Mathlib's `Polynomial.modByMonic_eq_self_iff` and `Polynomial.modByMonic_eq_zero_iff_dvd`, so it is
+inlined here rather than re-declared. They are harvested here rather than in the file that consumes
+them because nothing about elliptic curves enters either statement.
 -/
 
 public section
@@ -85,6 +89,15 @@ lemma exists_degree_lt_mk_eq [Nontrivial R] {g : R[X]} (hg : g.Monic) (a : Adjoi
     ∃ p, p.degree < g.degree ∧ a = mk g p := by
   obtain ⟨q, rfl⟩ := mk_surjective a
   exact ⟨q %ₘ g, degree_modByMonic_lt q hg, by simpa using (mk_leftInverse hg (mk g q)).symm⟩
+
+/-- **Two polynomials of degree less than that of a monic relator have the same class in
+`AdjoinRoot` only if they are equal.** Together with `AdjoinRoot.exists_degree_lt_mk_eq` this says
+that the polynomials of degree `< deg g` are a set of unique representatives. -/
+lemma mk_eq_mk_iff_of_degree_lt [Nontrivial R] {g : R[X]} (hg : g.Monic) {p q : R[X]}
+    (hp : p.degree < g.degree) (hq : q.degree < g.degree) : mk g p = mk g q ↔ p = q :=
+  ⟨fun h ↦ sub_eq_zero.mp <|
+    ((modByMonic_eq_self_iff hg).mpr <| (degree_sub_le p q).trans_lt (max_lt hp hq)).symm.trans <|
+      (modByMonic_eq_zero_iff_dvd hg).mpr (mk_eq_mk.mp h), fun h ↦ h ▸ rfl⟩
 
 /-- **An `R`-linear endomorphism of `AdjoinRoot g` commuting with multiplication by the root is
 multiplication by its value at `1`.** It commutes with multiplication by every power of the root,

@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.Data.Nat.Prime.Int
+import TauCeti.Data.ZMod.Divisibility
 public import Mathlib.Data.ZMod.Units
 public import Mathlib.NumberTheory.ModularForms.QExpansion
 public import Mathlib.RingTheory.PowerSeries.Expand
@@ -47,6 +49,12 @@ the lower level. The `q`-expansion results go up only.
 * `TauCeti.Gamma1_map_le_conjAct_scaleGL`, `TauCeti.Gamma0_map_le_conjAct_scaleGL`: the level
   transport, `Γ₁(dM) ≤ diag(d,1)⁻¹ Γ₁(M) diag(d,1)` and likewise for `Γ₀`, which is what makes
   `V_d` a map `M_k(Γ₁(M)) → M_k(Γ₁(dM))`.
+* `TauCeti.exists_eq_T_zpow_mul_conjScale_mul_T_zpow`: the `T`-factorisation, in the other
+  direction. For `l ∣ N`, every `γ' ∈ Γ₀(N / l)` is `T ^ i * conjScale l γ c * T ^ j` for some
+  `i, j, c : ℤ` and some `γ ∈ Γ₀(N)` whose lower-left entry factors as `γ 1 0 = l * c` — a level
+  can be raised back from `N / l` to `N` at the cost of two translations — together with the
+  bookkeeping `γ 1 1 = γ' 1 1 - γ' 1 0 * j` that pins the lower-right entry of `γ`, which is what
+  a nebentypus of level `N` reads off it.
 * `TauCeti.ModularForm.slash_levelRaise_eq_smul`, `TauCeti.CuspForm.slash_levelRaise_eq_smul`:
   the eigenvalue transport. Slashing `V_d f` by `γ` produces the same scalar that slashing `f`
   by the conjugate matrix `conjScale d γ` does.
@@ -76,6 +84,18 @@ and the conductor statement of Layer 4 is phrased with this normalization of `V_
 
 * Diamond–Shurman, *A first course in modular forms*, §5.6
 * Miyake, *Modular forms*, §4.6
+* The `T`-factorisation section is ported from the AINTLIB `LeanModularForms` project
+  (Chris Birkbeck),
+  [`HeckeRIngs/GL2/LevelRaise.lean`](https://github.com/CBirkbeck/AINTLIB), declarations
+  `exists_T_levelRaiseConj_T_factor` (:491) and its supports
+  `eq_T_zpow_mul_levelRaiseConj_mul_T_zpow` (:471), `primeProductCoprime` (:410),
+  `dvd_primeProductCoprime_of_not_dvd` (:413), `not_dvd_primeProductCoprime_of_dvd` (:419),
+  `exists_shift_isCoprime` (:430), `shiftJ` (:450), `shiftJ_spec` (:453) and
+  `natCast_dvd_levelRaiseConj_lower_left` (:465), all Apache-2.0 at commit
+  `2baa76f742bdb4fb8ee323fabba41203bd390e08`. The source's `levelRaiseConjOfDvd` (:98) is this
+  file's `conjScale`, so the statement is phrased with `conjScale` and TauCeti's `Gamma0` API
+  rather than porting a second conjugation; the source's `shiftJ`/`shiftJ_spec` pair is not
+  ported at all, its Bézout step being TauCeti's existing `ZMod.exists_dvd_sub_val_mul`.
 * The descent section adapts [AINTLIB](https://github.com/CBirkbeck/AINTLIB) commit
   `2baa76f74`, Apache-2.0, Chris Birkbeck,
   `projects/LeanModularForms/LeanModularForms/Eigenforms/ConductorTheorem.lean` lines 84-137 —
@@ -406,6 +426,99 @@ theorem Gamma0_map_le_conjAct_scaleGL (M d : ℕ) [NeZero d] :
   exact ⟨conjScale d γ _ hc, Gamma0_mem.mpr (by simp), (mapGL_conjScale γ _ hc).symm⟩
 
 end Transport
+
+/-! ### The `T`-factorisation of `Γ₀(N / l)` -/
+
+section TFactor
+
+/-- The product of those primes of `l` that do not divide `a`. Subtracting that multiple of `c`
+from `a` clears every prime of `l` out of `a` in one step; see `exists_sub_mul_isCoprime`. -/
+private def primeProductCoprime (a : ℤ) (l : ℕ) : ℕ :=
+  (l.primeFactors.filter fun p : ℕ ↦ ¬(p : ℤ) ∣ a).prod id
+
+/-- A prime of `l` that misses `a` divides `primeProductCoprime a l`. -/
+private lemma dvd_primeProductCoprime_of_not_dvd {a : ℤ} {l p : ℕ} (hp : p ∈ l.primeFactors)
+    (hpa : ¬(p : ℤ) ∣ a) : (p : ℤ) ∣ (primeProductCoprime a l : ℤ) :=
+  mod_cast Finset.dvd_prod_of_mem id (Finset.mem_filter.mpr ⟨hp, hpa⟩)
+
+/-- A prime dividing `a` does not divide `primeProductCoprime a l`, whose factors all miss `a`. -/
+private lemma not_dvd_primeProductCoprime_of_dvd {a : ℤ} {l p : ℕ} (hp : p.Prime)
+    (hpa : (p : ℤ) ∣ a) : ¬(p : ℤ) ∣ (primeProductCoprime a l : ℤ) := by
+  intro hdvd
+  rw [Int.natCast_dvd_natCast] at hdvd
+  obtain ⟨q, hq_mem, hq_dvd⟩ := (Prime.dvd_finsetProd_iff hp.prime id).mp hdvd
+  obtain ⟨hq_pf, hqa⟩ := Finset.mem_filter.mp hq_mem
+  exact hqa ((Nat.prime_dvd_prime_iff_eq hp (Nat.prime_of_mem_primeFactors hq_pf)).mp hq_dvd ▸ hpa)
+
+/-- **A coprime shift.** If `a` and `c` are coprime then some translate `a - i * c` is coprime to
+a prescribed nonzero modulus `l`: clear the primes of `l` that divide `a` by hand, and the primes
+that do not are already cleared because they would otherwise have to divide `c`. -/
+private lemma exists_sub_mul_isCoprime (a c : ℤ) (l : ℕ) [NeZero l] (hac : IsCoprime a c) :
+    ∃ i : ℤ, IsCoprime (a - i * c) (l : ℤ) := by
+  refine ⟨(primeProductCoprime a l : ℤ), ?_⟩
+  rw [Int.isCoprime_iff_gcd_eq_one, Int.gcd, Int.natAbs_natCast]
+  by_contra hne
+  obtain ⟨p, hp, hp_dvd⟩ := Nat.exists_prime_and_dvd hne
+  rw [Nat.dvd_gcd_iff] at hp_dvd
+  obtain ⟨hp_dvd_x, hp_dvd_l⟩ := hp_dvd
+  have hp_dvd_x_int : (p : ℤ) ∣ a - (primeProductCoprime a l : ℤ) * c := by
+    rwa [← Int.natAbs_dvd_natAbs, Int.natAbs_natCast]
+  have hp_int : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp
+  by_cases hpa : (p : ℤ) ∣ a
+  · rcases hp_int.dvd_mul.mp (by simpa using dvd_sub hpa hp_dvd_x_int) with h | h
+    · exact not_dvd_primeProductCoprime_of_dvd hp hpa h
+    · exact hp_int.not_isUnit (hac.isUnit_of_dvd' hpa h)
+  · exact hpa (by
+      simpa using dvd_add hp_dvd_x_int
+        ((dvd_primeProductCoprime_of_not_dvd
+          (Nat.mem_primeFactors.mpr ⟨hp, hp_dvd_l, NeZero.ne l⟩) hpa).mul_right c))
+
+/-- Membership in `Γ₀(N)` from a factored lower-left entry: if `l ∣ N` and `γ 1 0 = l * c` with
+`N / l ∣ c`, then `γ ∈ Γ₀(N)`. -/
+private lemma mem_Gamma0_of_eq_mul_of_dvd {l N : ℕ} (hlN : l ∣ N) {γ : SL(2, ℤ)} {c : ℤ}
+    (hc : γ 1 0 = l * c) (hdvd : ((N / l : ℕ) : ℤ) ∣ c) : γ ∈ Gamma0 N := by
+  refine Gamma0_mem.mpr ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr ?_)
+  rw [hc, ← Nat.mul_div_cancel' hlN, Nat.cast_mul]
+  exact mul_dvd_mul_left _ hdvd
+
+/-- **The `T`-factorisation of `Γ₀(N / l)`.** For `l ∣ N`, every `γ' ∈ Γ₀(N / l)` is a product
+`T ^ i * conjScale l γ c * T ^ j` for some `i, j, c : ℤ` and some `γ ∈ Γ₀(N)` whose lower-left
+entry factors as `γ 1 0 = l * c`: the level of `γ'` can be raised back from `N / l` to `N` at the
+cost of two translations. Since `conjScale` and the translations all fix the lower-right entry up
+to the recorded shift, the last conjunct `γ 1 1 = γ' 1 1 - γ' 1 0 * j` pins the lower-right entry
+of `γ`, which is what a nebentypus of level `N` reads off it. -/
+theorem exists_eq_T_zpow_mul_conjScale_mul_T_zpow (l N : ℕ) [NeZero l] (hlN : l ∣ N) (γ' : SL(2, ℤ))
+    (hγ' : γ' ∈ Gamma0 (N / l)) : ∃ (i j c : ℤ) (γ : SL(2, ℤ)) (hc : γ 1 0 = l * c),
+      γ ∈ Gamma0 N ∧ γ' = ModularGroup.T ^ i * conjScale l γ c hc * ModularGroup.T ^ j ∧
+        γ 1 1 = γ' 1 1 - γ' 1 0 * j := by
+  have hdet : γ' 0 0 * γ' 1 1 - γ' 0 1 * γ' 1 0 = 1 :=
+    Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one γ'
+  -- move the upper-left entry, along its own column, until it is coprime to `l`
+  obtain ⟨i, hi⟩ := exists_sub_mul_isCoprime (γ' 0 0) (γ' 1 0) l
+    ⟨γ' 1 1, -γ' 0 1, by linear_combination hdet⟩
+  -- then clear the upper-right entry modulo `l`, which the previous step made possible
+  have hunit : IsUnit ((γ' 0 0 - i * γ' 1 0 : ℤ) : ZMod l) :=
+    (ZMod.coe_int_isUnit_iff_isCoprime _ _).mpr (isCoprime_comm.mp hi)
+  obtain ⟨j₀, k, hk⟩ :=
+    ZMod.exists_dvd_sub_val_mul l (γ' 0 1 - i * γ' 1 1) (γ' 0 0 - i * γ' 1 0) hunit
+  set j : ℤ := (j₀.val : ℤ) with hj
+  have hdetM : (!![γ' 0 0 - i * γ' 1 0, k; (l : ℤ) * γ' 1 0, γ' 1 1 - γ' 1 0 * j]).det = 1 := by
+    rw [Matrix.det_fin_two_of]
+    linear_combination hdet + γ' 1 0 * hk
+  -- keep `γ` a variable of type `SL(2, ℤ)` until the coercion lemmas have fired
+  set γ : SL(2, ℤ) := ⟨_, hdetM⟩ with hγ
+  have hc : γ 1 0 = l * γ' 1 0 := by simp [hγ]
+  refine ⟨i, j, γ' 1 0, γ, hc, mem_Gamma0_of_eq_mul_of_dvd hlN hc
+    ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hγ')), ?_, by simp [hγ]⟩
+  refine Subtype.ext ?_
+  rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul, ModularGroup.coe_T_zpow,
+    ModularGroup.coe_T_zpow, coe_conjScale]
+  simp only [hγ, Matrix.SpecialLinearGroup.coe_mk, Matrix.mul_fin_two, Matrix.of_apply,
+    Matrix.cons_val_zero, Matrix.cons_val_one]
+  conv_lhs => rw [Matrix.eta_fin_two (γ' : Matrix (Fin 2) (Fin 2) ℤ)]
+  congrm !![?_, ?_; ?_, ?_] <;> first | linear_combination hk | ring
+
+end TFactor
 
 /-! ### Slashing a level-raise, and the transport of the nebentypus -/
 

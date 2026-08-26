@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.CategoryTheory.Limits.Shapes.IsTerminal
 public import Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
 public import Mathlib.Topology.Category.TopCat.Basic
 public import Mathlib.Topology.Covering.Basic
@@ -25,6 +26,8 @@ fundamental-group actions.
 
 ## Main declarations
 
+* `TauCeti.Over.isCoveringMap` and `TauCeti.Over.isCoveringMap_iff`: the property of an object
+  of `TopCat / X` that its structure morphism is a covering map, and its membership lemma.
 * `TauCeti.CoveringSpace X`: covering spaces over `X` and maps over `X`.
 * `TauCeti.CoveringSpace.mk`, `proj`, `homMk`, `isoMk`: constructors for covering spaces and
   their morphisms and isomorphisms.
@@ -33,6 +36,8 @@ fundamental-group actions.
 * `TauCeti.CoveringSpace.totalSpace`: the functor taking a cover to its total space.
 * `TauCeti.CoveringSpace.isIso_iff_isHomeomorph_hom_left`: a map of covers is an isomorphism
   exactly when its map of total spaces is a homeomorphism.
+* `TauCeti.CoveringSpace.isInitial_iff_isEmpty`: a cover is an initial object exactly when its
+  total space is empty.
 * `TauCeti.ConnectedCoveringSpace X`: connected covering spaces over `X`.
 * `TauCeti.ConnectedCoveringSpace.mk`, `proj`, `homMk`, `isoMk`: the connected-cover constructor
   API.
@@ -66,6 +71,15 @@ namespace Over
 /-- The property of an object of `TopCat / X` that its structure morphism is a covering map. -/
 def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
   fun p ↦ _root_.IsCoveringMap p.hom
+
+/-- Membership in the covering-map property of objects of `TopCat / X`.
+
+This is the lemma downstream modules use to build objects of the full subcategories that
+`TauCeti.Over.isCoveringMap` cuts out from a bare proof of `IsCoveringMap`. -/
+@[simp]
+theorem isCoveringMap_iff {X : TopCat.{u}} {p : CategoryTheory.Over X} :
+    isCoveringMap X p ↔ _root_.IsCoveringMap p.hom :=
+  Iff.rfl
 
 /-- A morphism in `TopCat / X` is an isomorphism exactly when its map on left objects is a
 homeomorphism. -/
@@ -197,6 +211,23 @@ homeomorphism. -/
 theorem isIso_iff_isHomeomorph_hom_left {p q : CoveringSpace X} (f : p ⟶ q) :
     IsIso f ↔ IsHomeomorph f.hom.left := by
   rw [← ObjectProperty.isIso_hom_iff, Over.isIso_iff_isHomeomorph_left]
+
+/-- **A covering space of `X` is an initial object of `TauCeti.CoveringSpace X` exactly when its
+total space is empty.** The empty space covers `X` — vacuously, by
+`IsCoveringMap.of_isEmpty` — and is the initial object, so a cover is "non-initial" exactly when
+it is nonempty. No hypothesis on `X` is needed. -/
+@[simp]
+theorem isInitial_iff_isEmpty (p : CoveringSpace X) :
+    Nonempty (Limits.IsInitial p) ↔ IsEmpty (p : TopCat) := by
+  constructor
+  · rintro ⟨h⟩
+    exact Function.isEmpty (β := PEmpty.{u + 1})
+      (h.to (mk (E := TopCat.of PEmpty.{u + 1})
+        (TopCat.ofHom ⟨PEmpty.elim, by fun_prop⟩) (IsCoveringMap.of_isEmpty _))).hom.left.hom
+  · intro h
+    exact ⟨Limits.IsInitial.ofUniqueHom
+      (fun q => homMk (TopCat.ofHom ⟨fun e => h.elim e, by fun_prop⟩) (by ext e; exact h.elim e))
+      (fun q f => by ext e; exact h.elim e)⟩
 
 end CoveringSpace
 

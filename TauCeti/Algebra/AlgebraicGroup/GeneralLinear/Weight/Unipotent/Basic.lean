@@ -79,7 +79,9 @@ theorem sub_one_apply_mem_weightUnipotentRelationSet (w : Fin N → ℤ) {i j : 
       weightUnipotentRelationSet R w :=
   ⟨i, j, hij, rfl⟩
 
-private theorem quotient_genericMatrix_apply (w : Fin N → ℤ) {i j : Fin N}
+/-- A matrix coordinate on or above the weight-block diagonal is fixed in the quotient by the
+explicit weight-unipotent relation ideal. -/
+theorem quotient_genericMatrix_apply_of_le (w : Fin N → ℤ) {i j : Fin N}
     (hij : w i ≤ w j) :
     Ideal.Quotient.mkₐ R (Ideal.span (weightUnipotentRelationSet R w))
         ((genericMatrix R N) i j) =
@@ -108,31 +110,31 @@ private theorem sum_quotient_genericMatrix_tmul (w : Fin N → ℤ) {i j : Fin N
   · subst j
     simp only [↓reduceIte]
     rw [Finset.sum_eq_single i]
-    · rw [quotient_genericMatrix_apply R w le_rfl]
+    · rw [quotient_genericMatrix_apply_of_le R w le_rfl]
       simpa only [Matrix.one_apply, ↓reduceIte] using
         (Algebra.TensorProduct.one_def (R := R)
           (A := coordinateHopfAlgebra R N ⧸ Ideal.span (weightUnipotentRelationSet R w))
           (B := coordinateHopfAlgebra R N ⧸ Ideal.span (weightUnipotentRelationSet R w))).symm
     · intro k _ hki
       by_cases hweight : w i ≤ w k
-      · rw [quotient_genericMatrix_apply R w hweight]
+      · rw [quotient_genericMatrix_apply_of_le R w hweight]
         simp [hki.symm]
       · have hkiw : w k ≤ w i := (lt_of_not_ge hweight).le
-        rw [quotient_genericMatrix_apply R w hkiw]
+        rw [quotient_genericMatrix_apply_of_le R w hkiw]
         simp [hki]
     · simp
   · simp only [hij', ↓reduceIte]
     apply Finset.sum_eq_zero
     intro k _
     by_cases hik : w i ≤ w k
-    · rw [quotient_genericMatrix_apply R w hik]
+    · rw [quotient_genericMatrix_apply_of_le R w hik]
       by_cases hEq : i = k
       · subst k
-        rw [quotient_genericMatrix_apply R w hij]
+        rw [quotient_genericMatrix_apply_of_le R w hij]
         simp [hij']
       · simp [hEq]
     · have hkj : w k ≤ w j := (lt_of_not_ge hik).le.trans hij
-      rw [quotient_genericMatrix_apply R w hkj]
+      rw [quotient_genericMatrix_apply_of_le R w hkj]
       have hne : k ≠ j := fun hEq ↦ hik (hEq ▸ hij)
       simp [hne]
 
@@ -235,7 +237,7 @@ private theorem antipode_sub_one_apply_mem (w : Fin N → ℤ) {i j : Fin N}
       Xq a b = (1 : Matrix (Fin N) (Fin N)
         (coordinateHopfAlgebra R N ⧸ J)) a b := by
     intro a b hab
-    exact quotient_genericMatrix_apply R w hab
+    exact quotient_genericMatrix_apply_of_le R w hab
   have hdetXq : IsUnit Xq.det := by
     simp only [Xq, ← AlgHom.mapMatrix_apply, ← AlgHom.map_det]
     exact (isUnit_det_genericMatrix R N).map q
