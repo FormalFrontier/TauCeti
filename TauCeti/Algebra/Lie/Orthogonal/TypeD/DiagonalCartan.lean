@@ -263,7 +263,6 @@ theorem typeDDiagonalMatrix_lie_apply (d : ι → K) (X : LieAlgebra.Orthogonal.
 
 /-- The adjoint action of the bundled Cartan element `diag(d, -d)` has the same entrywise normal
 form. -/
-@[simp]
 theorem typeDDiagonalEquiv_lie_apply (d : ι → K) (X : LieAlgebra.Orthogonal.typeD ι K)
     (a b : ι ⊕ ι) :
     ((⁅(typeDDiagonalEquiv (K := K) (ι := ι) d : typeDDiagonalCartan K ι), X⁆ :
@@ -292,7 +291,6 @@ theorem lie_typeDDiagonalMatrix_apply (X : LieAlgebra.Orthogonal.typeD ι K) (d 
 
 /-- Bracketing in the reverse order with the bundled Cartan element `diag(d, -d)` has the same
 entrywise normal form. -/
-@[simp]
 theorem lie_typeDDiagonalEquiv_apply (X : LieAlgebra.Orthogonal.typeD ι K) (d : ι → K)
     (a b : ι ⊕ ι) :
     ((⁅X, (typeDDiagonalEquiv (K := K) (ι := ι) d : typeDDiagonalCartan K ι)⁆ :
