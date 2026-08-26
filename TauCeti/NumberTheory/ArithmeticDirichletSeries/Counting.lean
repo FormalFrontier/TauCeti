@@ -34,6 +34,11 @@ weighted prime counts of the roadmap are the two named specializations
 unweighted one; both are restricted to a set `S` of height-one primes through `Set.indicator`,
 so no decidability hypothesis is needed on `S`.
 
+A prime-power ideal is `𝔭 ^ k` for a unique height-one prime `𝔭` and a unique `k ≥ 1`;
+`TauCeti.primePowerBase` and `TauCeti.primePowerExponent` name that pair, and
+`TauCeti.idealPrimePower_eq_of_base_eq_of_exponent_eq` records that it determines the ideal.  The
+exponent is `1` exactly on the primes themselves, which is `TauCeti.primePowerExponent_eq_one_iff`.
+
 For `0 ≤ x`, a real cutoff and its floor select the same indices, so
 `TauCeti.normLE_eq_normLE_natFloor` and `TauCeti.summatory_eq_summatory_natFloor` convert between
 the real and natural conventions. The small-cutoff cases are degenerate for a reason worth
@@ -51,7 +56,8 @@ show that finite changes do not affect a density.
 This is Layer **4** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`: the finite cutoff
 carriers of 4.1, the generic summatory functions on ideals, primes, and prime powers of 4.2, and the
 weighted prime counts `primeTheta` and `primeCount` of 4.3. Layer 5 supplies the actual size
-estimates for these counts.
+estimates for these counts, and consumes the prime base and exponent of a prime-power ideal to
+fibre those estimates over the primes.
 
 ## References
 
@@ -127,6 +133,82 @@ theorem two_le_absNorm_idealPrimePower_real (A : IdealPrimePower K) :
     A.property.not_isUnit (Ideal.isUnit_iff.mpr (Ideal.absNorm_eq_one_iff.mp h))
   have hnorm : 2 ≤ Ideal.absNorm (A.1 : Ideal (𝓞 K)) := by omega
   exact_mod_cast hnorm
+
+/-! ### The prime base and the exponent of a prime-power ideal -/
+
+/-- The **exponent** of a prime-power ideal `A`: the unique `k ≥ 1` with `A = 𝔭 ^ k`. -/
+noncomputable def primePowerExponent (A : IdealPrimePower K) : ℕ :=
+  A.2.choose_spec.choose
+
+/-- The **prime base** of a prime-power ideal `A`: the unique height-one prime `𝔭` with
+`A = 𝔭 ^ k` for some `k ≥ 1`. -/
+noncomputable def primePowerBase (A : IdealPrimePower K) : HeightOneSpectrum (𝓞 K) where
+  asIdeal := A.2.choose
+  isPrime := Ideal.isPrime_of_prime A.2.choose_spec.choose_spec.1
+  ne_bot := A.2.choose_spec.choose_spec.1.ne_zero
+
+/-- The ideal underlying the prime base of a prime-power ideal is prime. -/
+theorem prime_primePowerBase (A : IdealPrimePower K) : Prime (primePowerBase A).asIdeal :=
+  A.2.choose_spec.choose_spec.1
+
+omit [NumberField K] in
+/-- The exponent of a prime-power ideal is positive. -/
+theorem primePowerExponent_pos (A : IdealPrimePower K) : 0 < primePowerExponent A :=
+  A.2.choose_spec.choose_spec.2.1
+
+/-- The defining factorization of a prime-power ideal. -/
+theorem primePowerBase_pow_primePowerExponent (A : IdealPrimePower K) :
+    (primePowerBase A).asIdeal ^ primePowerExponent A = (A : Ideal (𝓞 K)) :=
+  A.2.choose_spec.choose_spec.2.2
+
+/-- The prime base is determined by any factorization of `A` as a power of a prime. -/
+theorem primePowerBase_asIdeal_eq {A : IdealPrimePower K} {P : Ideal (𝓞 K)} (hP : Prime P)
+    {k : ℕ} (hpow : P ^ k = (A : Ideal (𝓞 K))) :
+    (primePowerBase A).asIdeal = P :=
+  eq_of_prime_pow_eq (prime_primePowerBase A) hP (primePowerExponent_pos A)
+    ((primePowerBase_pow_primePowerExponent A).trans hpow.symm)
+
+/-- The absolute norm of a prime-power ideal is the corresponding power of the norm of its
+prime base. -/
+theorem absNorm_eq_absNorm_primePowerBase_pow (A : IdealPrimePower K) :
+    Ideal.absNorm (A : Ideal (𝓞 K)) =
+      Ideal.absNorm (primePowerBase A).asIdeal ^ primePowerExponent A := by
+  rw [← primePowerBase_pow_primePowerExponent A, map_pow]
+
+/-- The exponent is determined by any factorization of `A` as a power of a prime. -/
+theorem primePowerExponent_eq {A : IdealPrimePower K} {P : Ideal (𝓞 K)} (hP : Prime P)
+    {k : ℕ} (hpow : P ^ k = (A : Ideal (𝓞 K))) :
+    primePowerExponent A = k := by
+  have hbase : (primePowerBase A).asIdeal = P := primePowerBase_asIdeal_eq hP hpow
+  have hnorm : Ideal.absNorm P ^ primePowerExponent A = Ideal.absNorm P ^ k := by
+    rw [← map_pow, ← map_pow, hpow, ← hbase, primePowerBase_pow_primePowerExponent A]
+  refine Nat.pow_right_injective ?_ hnorm
+  have h2 : (2 : ℝ) ≤ Ideal.absNorm (primePowerBase A).asIdeal :=
+    two_le_absNorm_asIdeal_real _
+  rw [hbase] at h2
+  exact_mod_cast h2
+
+/-- A prime-power ideal is determined by its prime base and its exponent. -/
+theorem idealPrimePower_eq_of_base_eq_of_exponent_eq {A B : IdealPrimePower K}
+    (hbase : primePowerBase A = primePowerBase B)
+    (hexp : primePowerExponent A = primePowerExponent B) : A = B := by
+  refine Subtype.ext (Subtype.ext ?_)
+  rw [← primePowerBase_pow_primePowerExponent A, ← primePowerBase_pow_primePowerExponent B,
+    hbase, hexp]
+
+/-- A prime-power ideal has exponent one exactly when it is itself prime. -/
+theorem primePowerExponent_eq_one_iff (A : IdealPrimePower K) :
+    primePowerExponent A = 1 ↔ Prime (A : Ideal (𝓞 K)) := by
+  refine ⟨fun h ↦ ?_, fun h ↦ primePowerExponent_eq h (pow_one _)⟩
+  rw [← primePowerBase_pow_primePowerExponent A, h, pow_one]
+  exact prime_primePowerBase A
+
+/-- A prime-power ideal which is not prime has exponent at least two. -/
+theorem two_le_primePowerExponent {A : IdealPrimePower K} (hA : ¬ Prime (A : Ideal (𝓞 K))) :
+    2 ≤ primePowerExponent A := by
+  have h₁ := primePowerExponent_pos A
+  have h₂ : primePowerExponent A ≠ 1 := fun h ↦ hA ((primePowerExponent_eq_one_iff A).mp h)
+  omega
 
 /-- Below the cutoff `1` there is no nonzero integral ideal to count. -/
 theorem idealsLE_eq_empty_of_lt_one {x : ℝ} (hx : x < 1) : idealsLE K x = ∅ :=
