@@ -252,50 +252,12 @@ private theorem sum_Ioc_norm_normCoeff_one (n : ℕ) :
     simpa only [Nat.succ_eq_succ] using Finset.Icc_succ_left_eq_Ioc 0 n
   rw [← sum_norm_normCoeff_one, hinterval]
 
-/-- **The fixed-ratio block lower bound.** Once the block ratio `m` is at least
-`2 * upper / lower`, the terms of the Dirichlet series of the trivial ideal weight at `s = 1` over
-a block `N < k ≤ m N` add up to at least `lower / 2`, uniformly in `N ≥ 1`.
-
-Both linear ideal counts enter, as a difference of endpoint counts: the lower bound at the right
-endpoint `m N` and the upper bound at the left endpoint `N` leave the block at least
-`lower * m N - upper * N` of coefficient mass, and every term of the block is divided by at most
-`m N`. -/
-private theorem lower_div_two_le_sum_Ioc_norm_term (b : IdealCountingLinearBounds K) {m N : ℕ}
-    (hm : 2 * b.upper / b.lower ≤ (m : ℝ)) (hN : 1 ≤ N) :
-    b.lower / 2 ≤ ∑ k ∈ Finset.Ioc N (m * N),
-      ‖LSeries.term (normCoeff K (1 : IdealArithmeticFunction K)) 1 k‖ := by
-  set g : ℕ → ℝ := fun n ↦ ‖LSeries.term (normCoeff K (1 : IdealArithmeticFunction K)) 1 n‖
-    with hgdef
-  have hmpos : (0 : ℝ) < m :=
-    lt_of_lt_of_le (div_pos (by linarith [b.upper_pos]) b.lower_pos) hm
-  have hm1 : 1 ≤ m := by exact_mod_cast hmpos
-  have hupperm : b.upper / m ≤ b.lower / 2 := by
-    rw [div_le_div_iff₀ hmpos two_pos]
-    have := (div_le_iff₀ b.lower_pos).mp hm
-    linarith
-  have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
-  have hNM : N ≤ m * N := Nat.le_mul_of_pos_left N (lt_of_lt_of_le zero_lt_one hm1)
-  have hMpos : (0 : ℝ) < (m * N : ℕ) := by
-    exact_mod_cast Nat.lt_of_lt_of_le hN hNM
-  have hstep : ∀ k ∈ Finset.Ioc N (m * N),
-      ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ / ((m * N : ℕ) : ℝ) ≤ g k := by
-    intro k hk
-    obtain ⟨hk1, hk2⟩ := Finset.mem_Ioc.mp hk
-    have hk0 : k ≠ 0 := by omega
-    have hkpos : (0 : ℝ) < k := by
-      exact_mod_cast Nat.pos_of_ne_zero hk0
-    have hgk : g k = ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ / (k : ℝ) := by
-      rw [hgdef]
-      simp only [LSeries.norm_term_eq, Complex.one_re, ite_eq_right hk0, Real.rpow_one]
-    rw [hgk]
-    refine div_le_div_of_nonneg_left (norm_nonneg _) hkpos ?_
-    exact_mod_cast hk2
-  have h1 : (∑ k ∈ Finset.Ioc N (m * N),
-      ‖normCoeff K (1 : IdealArithmeticFunction K) k‖) / ((m * N : ℕ) : ℝ)
-      ≤ ∑ k ∈ Finset.Ioc N (m * N), g k := by
-    rw [Finset.sum_div]
-    exact Finset.sum_le_sum hstep
-  refine le_trans ?_ h1
+/-- The difference of the endpoint ideal-count bounds controls the coefficient mass in a block. -/
+private theorem lower_mul_sub_upper_mul_le_sum_Ioc_norm_normCoeff_one
+    (b : IdealCountingLinearBounds K) {m N : ℕ} (hm : 1 ≤ m) (hN : 1 ≤ N) :
+    b.lower * ((m * N : ℕ) : ℝ) - b.upper * (N : ℝ) ≤
+      ∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ := by
+  have hNM : N ≤ m * N := Nat.le_mul_of_pos_left N (lt_of_lt_of_le zero_lt_one hm)
   have hsplit : (∑ k ∈ Finset.Ioc 0 N, ‖normCoeff K (1 : IdealArithmeticFunction K) k‖)
       + ∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖
       = ∑ k ∈ Finset.Ioc 0 (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ :=
@@ -308,6 +270,47 @@ private theorem lower_div_two_le_sum_Ioc_norm_term (b : IdealCountingLinearBound
       ≤ b.upper * (N : ℝ) := by
     rw [sum_Ioc_norm_normCoeff_one]
     exact b.card_le _ (by exact_mod_cast hN)
+  linarith
+
+/-- Dividing all coefficients in a positive block by its right endpoint underestimates the
+corresponding Dirichlet-series terms at `s = 1`. -/
+private theorem sum_Ioc_norm_normCoeff_one_div_le_sum_Ioc_norm_term {m N : ℕ} (hN : 1 ≤ N) :
+    (∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖) /
+        ((m * N : ℕ) : ℝ) ≤
+      ∑ k ∈ Finset.Ioc N (m * N),
+        ‖LSeries.term (normCoeff K (1 : IdealArithmeticFunction K)) 1 k‖ := by
+  rw [Finset.sum_div]
+  refine Finset.sum_le_sum fun k hk ↦ ?_
+  obtain ⟨hk1, hk2⟩ := Finset.mem_Ioc.mp hk
+  have hk0 : k ≠ 0 := by omega
+  have hkpos : (0 : ℝ) < k := by exact_mod_cast Nat.pos_of_ne_zero hk0
+  rw [LSeries.norm_term_eq]
+  simp only [Complex.one_re, ite_eq_right hk0, Real.rpow_one]
+  refine div_le_div_of_nonneg_left (norm_nonneg _) hkpos ?_
+  exact_mod_cast hk2
+
+/-- **The fixed-ratio block lower bound.** Once the block ratio `m` is at least
+`2 * upper / lower`, the terms of the Dirichlet series of the trivial ideal weight at `s = 1` over
+a block `N < k ≤ m N` add up to at least `lower / 2`, uniformly in `N ≥ 1`.
+
+Both linear ideal counts enter, as a difference of endpoint counts: the lower bound at the right
+endpoint `m N` and the upper bound at the left endpoint `N` leave the block at least
+`lower * m N - upper * N` of coefficient mass, and every term of the block is divided by at most
+`m N`. -/
+private theorem lower_div_two_le_sum_Ioc_norm_term (b : IdealCountingLinearBounds K) {m N : ℕ}
+    (hm : 2 * b.upper / b.lower ≤ (m : ℝ)) (hN : 1 ≤ N) :
+    b.lower / 2 ≤ ∑ k ∈ Finset.Ioc N (m * N),
+      ‖LSeries.term (normCoeff K (1 : IdealArithmeticFunction K)) 1 k‖ := by
+  have hmpos : (0 : ℝ) < m :=
+    lt_of_lt_of_le (div_pos (by linarith [b.upper_pos]) b.lower_pos) hm
+  have hm1 : 1 ≤ m := by exact_mod_cast hmpos
+  have hupperm : b.upper / m ≤ b.lower / 2 := by
+    rw [div_le_div_iff₀ hmpos two_pos]
+    have := (div_le_iff₀ b.lower_pos).mp hm
+    linarith
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast hN
+  have hMpos : (0 : ℝ) < (m * N : ℕ) := by positivity
+  refine le_trans ?_ (sum_Ioc_norm_normCoeff_one_div_le_sum_Ioc_norm_term K hN)
   rw [le_div_iff₀ hMpos]
   have hcast : ((m * N : ℕ) : ℝ) = (m : ℝ) * (N : ℝ) := by push_cast; ring
   have hkey : b.lower / 2 * ((m : ℝ) * N) ≤ b.lower * ((m : ℝ) * N) - b.upper * N := by
@@ -319,8 +322,8 @@ private theorem lower_div_two_le_sum_Ioc_norm_term (b : IdealCountingLinearBound
   calc b.lower / 2 * ((m * N : ℕ) : ℝ) = b.lower / 2 * ((m : ℝ) * N) := by rw [hcast]
     _ ≤ b.lower * ((m : ℝ) * N) - b.upper * N := hkey
     _ = b.lower * ((m * N : ℕ) : ℝ) - b.upper * N := by rw [hcast]
-    _ ≤ ∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ := by
-        linarith
+    _ ≤ ∑ k ∈ Finset.Ioc N (m * N), ‖normCoeff K (1 : IdealArithmeticFunction K) k‖ :=
+      lower_mul_sub_upper_mul_le_sum_Ioc_norm_normCoeff_one K b hm1 hN
 
 /-- **Divergence at `s = 1`.** The Dirichlet series of the trivial ideal weight does not converge
 at `s = 1`.
