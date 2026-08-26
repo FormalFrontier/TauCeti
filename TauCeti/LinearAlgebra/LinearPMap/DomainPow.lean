@@ -28,7 +28,7 @@ differentiable, and where the density of every `D(Aⁿ)` is the standard regular
 
 * `TauCeti.domainPow`: the submodule `D(Aⁿ)`.
 * `TauCeti.mem_domainPow_succ`: the recursive membership criterion defining it.
-* `TauCeti.antitone_domainPow`: `D(Aⁿ)` decreases with `n`.
+* `TauCeti.domainPow_antitone`: `D(Aⁿ)` decreases with `n`.
 * `TauCeti.apply_mem_domainPow`: `A` maps `D(Aⁿ⁺¹)` into `D(Aⁿ)`.
 
 Tau Ceti puts every declaration under `namespace TauCeti`, so a name in the `LinearPMap`
@@ -56,6 +56,7 @@ theorem domainPow_succ (A : E →ₗ.[R] E) (n : ℕ) :
   (rfl)
 
 /-- Membership in `D(Aⁿ⁺¹)`: a vector of `D(A)` whose image under `A` lies in `D(Aⁿ)`. -/
+@[simp]
 theorem mem_domainPow_succ {A : E →ₗ.[R] E} {n : ℕ} {x : E} :
     x ∈ domainPow A (n + 1) ↔ ∃ hx : x ∈ A.domain, A ⟨x, hx⟩ ∈ domainPow A n := by
   rw [domainPow_succ]
@@ -78,12 +79,12 @@ theorem domainPow_succ_le (A : E →ₗ.[R] E) (n : ℕ) : domainPow A (n + 1) �
       obtain ⟨hxd, hAx⟩ := mem_domainPow_succ.mp hx
       exact mem_domainPow_succ.mpr ⟨hxd, ih hAx⟩
 
-theorem antitone_domainPow (A : E →ₗ.[R] E) : Antitone (domainPow A) :=
+theorem domainPow_antitone (A : E →ₗ.[R] E) : Antitone (domainPow A) :=
   antitone_nat_of_succ_le (domainPow_succ_le A)
 
 theorem domainPow_succ_le_domain (A : E →ₗ.[R] E) (n : ℕ) : domainPow A (n + 1) ≤ A.domain := by
   rw [← domainPow_one A]
-  exact antitone_domainPow A (Nat.succ_le_succ (Nat.zero_le n))
+  exact domainPow_antitone A (Nat.succ_le_succ (Nat.zero_le n))
 
 /-- `A` maps `D(Aⁿ⁺¹)` into `D(Aⁿ)`. -/
 theorem apply_mem_domainPow {A : E →ₗ.[R] E} {n : ℕ} {x : E} (hx : x ∈ domainPow A (n + 1)) :
