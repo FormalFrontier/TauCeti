@@ -51,7 +51,7 @@ lake env "$WATCHDOG_TOOLCHAIN/bin/lean" --run "$TRUSTED_SCRIPTS/ModuleSystem.lea
 # Environment lint: Mathlib's default `#lint` set minus docBlame, plus a
 # module-system-reliable docstring scan, compared against the grandfathered baseline in
 # scripts/lint-baseline.txt. Script, baseline, and the @[nolint <linter>] allowlist
-# (scripts/lint-nolints-allowlist.txt) are trusted base copies, and its report parsing
+# (scripts/lint-nolints-allowlist.txt) are workflow-pinned trusted copies, and its report parsing
 # is fail-closed (see the SECURITY MODEL in the script). Fails on new violations or
 # unaccounted nolints; fixed baseline entries print a ratchet reminder only.
 bash "$TRUSTED_SCRIPTS/lint-env.sh"
