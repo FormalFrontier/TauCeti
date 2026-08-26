@@ -43,6 +43,9 @@ as given.
 
 * `TauCeti.graphCartanMatrix_mulVec_eq_zero`: an additive function is a null vector.
 * `TauCeti.two_mul_dotProduct_graphCartanMatrix_mulVec`: the sum-of-squares identity.
+* `TauCeti.dotProduct_graphCartanMatrix_mulVec_eq_zero_iff_forall_adj` and
+  `TauCeti.graphCartanMatrix_mulVec_eq_zero_iff_forall_adj`: the vanishing criterion, in
+  quadratic-form and in null-vector shape.
 * `TauCeti.posSemidef_graphCartanMatrix`: `2I - A` is positive semidefinite.
 * `TauCeti.ker_mulVecLin_graphCartanMatrix`: on a connected graph the null space of `2I - A` is
   the line spanned by the additive function.
@@ -52,6 +55,18 @@ as given.
 This is the graph-theoretic half of the positive-semidefiniteness clause in Layer 0 of
 `TauCetiRoadmap/ZigzagPreprojective/README.md`. See V. Kac, *Infinite dimensional Lie algebras*,
 3rd ed., Chapter 4, where positive additive functions single out the affine diagrams.
+
+Adapted from `Mathlib/Combinatorics/SimpleGraph/LapMatrix.lean` (Adrian Wüthrich, Apache-2.0): the
+development of this file follows it declaration for declaration, with the additive-function weight
+`δ i * δ j` replacing `2`-regularity. In particular `TauCeti.graphCartanMatrix`,
+`TauCeti.graphCartanMatrix_mulVec_apply`, `TauCeti.isSymm_graphCartanMatrix` and
+`TauCeti.graphCartanMatrix_mulVec_eq_zero` mirror `SimpleGraph.lapMatrix`,
+`SimpleGraph.lapMatrix_mulVec_apply`, `SimpleGraph.isSymm_lapMatrix` and
+`SimpleGraph.lapMatrix_mulVec_const_eq_zero`, while the proofs of
+`TauCeti.posSemidef_graphCartanMatrix`, `TauCeti.graphCartanMatrix_mulVec_eq_zero_iff_forall_adj`
+and the private `eq_of_forall_adj` are adapted from `SimpleGraph.posSemidef_lapMatrix`,
+`SimpleGraph.lapMatrix_mulVec_eq_zero_iff_forall_adj` and the walk induction inside
+`SimpleGraph.lapMatrix_toLinearMap₂'_apply'_eq_zero_iff_forall_reachable`.
 -/
 
 public section
@@ -82,7 +97,7 @@ private theorem sum_sum_neighborFinset_comm [Fintype V] (G : SimpleGraph V) [Dec
     simp only [Finset.mem_univ, true_and, and_true, SimpleGraph.mem_neighborFinset]
     exact ⟨fun h ↦ h.symm, fun h ↦ h.symm⟩
 
-/-- Every vector is `δ * y` for a unique `y`, as soon as `δ` is nowhere zero. -/
+/-- Every vector is `δ * y` for `y i = x i / δ i`, as soon as `δ` is nowhere zero. -/
 private theorem mul_div_self_eq {R : Type*} [Field R] {δ : V → R} (hδ : ∀ i, δ i ≠ 0)
     (x : V → R) : δ * (fun i ↦ x i / δ i) = x :=
   funext fun i ↦ mul_div_cancel₀ (x i) (hδ i)
@@ -99,7 +114,13 @@ def graphCartanMatrix (R : Type*) [Ring R] : Matrix V V R := (2 : R) • 1 - G.a
 
 variable {R : Type*}
 
+/-- `2I - A` spelled out as a matrix, for a consumer outside this file: the body of
+`TauCeti.graphCartanMatrix` is not exposed. -/
+theorem graphCartanMatrix_eq_two_smul_one_sub_adjMatrix [Ring R] :
+    graphCartanMatrix G R = (2 : R) • 1 - G.adjMatrix R := by rw [graphCartanMatrix]
+
 /-- The entries of `2I - A`: `2` on the diagonal, `-1` at an edge and `0` elsewhere. -/
+@[simp]
 theorem graphCartanMatrix_apply [Ring R] (i j : V) :
     graphCartanMatrix G R i j = if i = j then 2 else if G.Adj i j then -1 else 0 := by
   rw [graphCartanMatrix]
@@ -109,6 +130,16 @@ theorem graphCartanMatrix_apply [Ring R] (i j : V) :
   · simp
   · rw [ite_eq_right hij, ite_eq_right hij]
     split_ifs <;> simp
+
+/-- `2I - A` is compatible with a change of coefficient ring. -/
+theorem graphCartanMatrix_map {S : Type*} [Ring R] [Ring S] (f : R →+* S) :
+    (graphCartanMatrix G R).map f = graphCartanMatrix G S := by
+  ext i j
+  rw [Matrix.map_apply, graphCartanMatrix_apply, graphCartanMatrix_apply]
+  split_ifs
+  · exact map_ofNat f 2
+  · rw [map_neg, map_one]
+  · exact map_zero f
 
 /-- `2I - A` is symmetric. -/
 theorem isSymm_graphCartanMatrix [Ring R] : (graphCartanMatrix G R).IsSymm := by
@@ -163,7 +194,9 @@ theorem two_mul_dotProduct_graphCartanMatrix_mulVec [CommRing R] {δ : V → R}
   have hdot : (δ * y) ⬝ᵥ (graphCartanMatrix G R *ᵥ (δ * y)) =
       ∑ i, δ i * y i * (2 * (δ i * y i) - ∑ j ∈ G.neighborFinset i, δ j * y j) := by
     rw [dotProduct]
-    exact Finset.sum_congr rfl fun i _ ↦ by rw [graphCartanMatrix_mulVec_apply]; rfl
+    exact Finset.sum_congr rfl fun i _ ↦ by
+      rw [graphCartanMatrix_mulVec_apply]
+      simp only [Pi.mul_apply]
   rw [expand, s₁, s₂, s₃, hdot, Finset.mul_sum, ← Finset.sum_add_distrib,
     ← Finset.sum_sub_distrib]
   exact Finset.sum_congr rfl fun i _ ↦ by ring
@@ -186,7 +219,7 @@ theorem dotProduct_graphCartanMatrix_mulVec_nonneg (hpos : ∀ i, 0 < δ i)
 
 /-- **The quadratic form of `2I - A` vanishes exactly on the vectors proportional to `δ` along
 every edge.** The stated condition is `x i / δ i = x j / δ j` cleared of denominators. -/
-theorem dotProduct_graphCartanMatrix_mulVec_eq_zero_iff (hpos : ∀ i, 0 < δ i)
+theorem dotProduct_graphCartanMatrix_mulVec_eq_zero_iff_forall_adj (hpos : ∀ i, 0 < δ i)
     (hδ : ∀ i, ∑ j ∈ G.neighborFinset i, δ j = 2 * δ i) (x : V → R) :
     x ⬝ᵥ (graphCartanMatrix G R *ᵥ x) = 0 ↔ ∀ i j, G.Adj i j → x i * δ j = x j * δ i := by
   have hx := two_mul_dotProduct_graphCartanMatrix_mulVec G hδ fun i ↦ x i / δ i
@@ -205,12 +238,9 @@ theorem dotProduct_graphCartanMatrix_mulVec_eq_zero_iff (hpos : ∀ i, 0 < δ i)
         mul_nonneg (mul_nonneg (hpos i).le (hpos j).le)
           (sq_nonneg (x i / δ i - x j / δ j))).1 (h i (Finset.mem_univ i)) j
       ((SimpleGraph.mem_neighborFinset ..).2 hij)
-    have hsq : (x i / δ i - x j / δ j) ^ 2 = 0 := by
-      rcases mul_eq_zero.1 hj with h' | h'
-      · exact absurd h' (mul_pos (hpos i) (hpos j)).ne'
-      · exact h'
-    have hzero : x i / δ i - x j / δ j = 0 := sq_eq_zero_iff.1 hsq
-    have hdiv : x i / δ i = x j / δ j := by linarith
+    have hdiv : x i / δ i = x j / δ j :=
+      sub_eq_zero.1 (sq_eq_zero_iff.1
+        ((mul_eq_zero.1 hj).resolve_left (mul_pos (hpos i) (hpos j)).ne'))
     rwa [div_eq_div_iff (hpos i).ne' (hpos j).ne'] at hdiv
   · intro h i _
     refine Finset.sum_eq_zero fun j hj ↦ ?_
@@ -221,28 +251,28 @@ theorem dotProduct_graphCartanMatrix_mulVec_eq_zero_iff (hpos : ∀ i, 0 < δ i)
     rw [hzero]
     ring
 
-end Ordered
-
-section Real
-
-variable {δ : V → ℝ}
-
 /-- **`2I - A` is positive semidefinite** on a graph with a positive additive function. -/
-theorem posSemidef_graphCartanMatrix (hpos : ∀ i, 0 < δ i)
+theorem posSemidef_graphCartanMatrix [StarRing R] [TrivialStar R] (hpos : ∀ i, 0 < δ i)
     (hδ : ∀ i, ∑ j ∈ G.neighborFinset i, δ j = 2 * δ i) :
-    (graphCartanMatrix G ℝ).PosSemidef := by
+    (graphCartanMatrix G R).PosSemidef := by
   refine .of_dotProduct_mulVec_nonneg ?_ fun x ↦ ?_
   · rw [Matrix.IsHermitian, Matrix.conjTranspose_eq_transpose_of_trivial,
       isSymm_graphCartanMatrix]
   · rw [star_trivial]
     exact dotProduct_graphCartanMatrix_mulVec_nonneg G hpos hδ x
 
+end Ordered
+
+section Real
+
+variable {δ : V → ℝ}
+
 /-- The null vectors of `2I - A`, in edge-local form. -/
-theorem mulVec_graphCartanMatrix_eq_zero_iff (hpos : ∀ i, 0 < δ i)
+theorem graphCartanMatrix_mulVec_eq_zero_iff_forall_adj (hpos : ∀ i, 0 < δ i)
     (hδ : ∀ i, ∑ j ∈ G.neighborFinset i, δ j = 2 * δ i) (x : V → ℝ) :
     graphCartanMatrix G ℝ *ᵥ x = 0 ↔ ∀ i j, G.Adj i j → x i * δ j = x j * δ i := by
   rw [← (posSemidef_graphCartanMatrix G hpos hδ).dotProduct_mulVec_zero_iff x, star_trivial,
-    dotProduct_graphCartanMatrix_mulVec_eq_zero_iff G hpos hδ]
+    dotProduct_graphCartanMatrix_mulVec_eq_zero_iff_forall_adj G hpos hδ]
 
 /-- **On a connected graph the null space of `2I - A` is the line spanned by the additive
 function.** Since `2I - A` is positive semidefinite, this is the radical of its bilinear form. -/
@@ -251,7 +281,7 @@ theorem ker_mulVecLin_graphCartanMatrix (hG : G.Connected) (hpos : ∀ i, 0 < δ
     LinearMap.ker (Matrix.mulVecLin (graphCartanMatrix G ℝ)) = Submodule.span ℝ {δ} := by
   refine le_antisymm (fun x hx ↦ ?_) ?_
   · rw [LinearMap.mem_ker, Matrix.mulVecLin_apply,
-      mulVec_graphCartanMatrix_eq_zero_iff G hpos hδ] at hx
+      graphCartanMatrix_mulVec_eq_zero_iff_forall_adj G hpos hδ] at hx
     obtain ⟨i₀⟩ := hG.nonempty
     refine Submodule.mem_span_singleton.2 ⟨x i₀ / δ i₀, ?_⟩
     funext i

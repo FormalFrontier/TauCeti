@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 public import Mathlib.Combinatorics.SimpleGraph.CycleGraph
+public import TauCeti.Combinatorics.SimpleGraph.AdditiveFunction
 public import TauCeti.Combinatorics.SimpleGraph.Connected
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Diagram
 
@@ -80,8 +81,8 @@ number, which reduces connectedness to a single induction. Explicitly:
   connected.
 * `TauCeti.AffineDynkinType.graph_D_adj`, `.graph_E6_adj`, `.graph_E7_adj`, `.graph_E8_adj`:
   adjacency in each diagram, as a condition on node numbers.
-* `TauCeti.AffineDynkinType.cartanMatrix_eq_two_smul_one_sub_adjMatrix`: outside `A₁` the Cartan
-  matrix is `2I - A`.
+* `TauCeti.AffineDynkinType.cartanMatrix_eq_graphCartanMatrix`: outside `A₁` the Cartan matrix is
+  the matrix `2I - A` of the underlying graph, `TauCeti.graphCartanMatrix`.
 * `TauCeti.AffineDynkinType.graph_eq_diagramGraph_cartanMatrix`: the graph is the diagram of the
   Cartan matrix in the sense of `TauCeti.diagramGraph`, at `A₁` too.
 * `TauCeti.AffineDynkinType.cartanMatrix_E8_eq_submatrix_cartanMatrix_E`: affine `E₈` is Mathlib's
@@ -329,8 +330,8 @@ theorem graph_connected {t : AffineDynkinType} (ht : t.Valid) : t.graph.Connecte
 matrix `A` of the underlying graph, except at `A₁`, whose two nodes carry a double edge and whose
 matrix is `!![2, -2; -2, 2]`. `E₈` is not spelled out either but taken from Mathlib, as the
 relabelling of the generalized `CartanMatrix.E 9` that exchanges the two trivalent nodes; this is
-the same matrix, and `TauCeti.AffineDynkinType.cartanMatrix_eq_two_smul_one_sub_adjMatrix` covers
-it like every other diagram. -/
+the same matrix, and `TauCeti.AffineDynkinType.cartanMatrix_eq_graphCartanMatrix` covers it like
+every other diagram. -/
 def cartanMatrix (t : AffineDynkinType) : Matrix (Fin t.nodes) (Fin t.nodes) ℤ :=
   match t with
   | .A 1 => !![2, -2; -2, 2]
@@ -340,17 +341,20 @@ def cartanMatrix (t : AffineDynkinType) : Matrix (Fin t.nodes) (Fin t.nodes) ℤ
 @[simp] lemma cartanMatrix_A_one : (A 1).cartanMatrix = !![2, -2; -2, 2] := (rfl)
 
 /-- The entries of the `A₁` Cartan matrix: `2` on the diagonal, and the multiplicity-two `-2` off
-it. The matrix literal of `TauCeti.AffineDynkinType.cartanMatrix_A_one` is awkward to read entry
-by entry outside this file, where `Fin (A 1).nodes` no longer reduces. -/
+it. Reading the matrix literal of `TauCeti.AffineDynkinType.cartanMatrix_A_one` entry by entry
+takes a `fin_cases` on both indices, and the body of `TauCeti.AffineDynkinType.cartanMatrix` is
+not exposed, so `decide` cannot do it outside this file. -/
 lemma cartanMatrix_A_one_apply (i j : Fin (A 1).nodes) :
     (A 1).cartanMatrix i j = if i = j then 2 else -2 := by
   fin_cases i <;> fin_cases j <;> decide
 
-/-- **Away from `A₁`, the generalized Cartan matrix is `2I - A`**, the degenerate diagrams outside
-`TauCeti.AffineDynkinType.Valid` included. At `E₈` this is where Mathlib's numbering of
-`CartanMatrix.E 9` is matched up with the numbering of this file. -/
-lemma cartanMatrix_eq_two_smul_one_sub_adjMatrix {t : AffineDynkinType} (ht : t.IsGraphical) :
-    t.cartanMatrix = (2 : ℤ) • 1 - t.graph.adjMatrix ℤ := by
+/-- **Away from `A₁`, the generalized Cartan matrix is the matrix `2I - A` of the underlying
+graph**, the degenerate diagrams outside `TauCeti.AffineDynkinType.Valid` included. This is what
+carries the general results about `TauCeti.graphCartanMatrix` over to the diagrams. At `E₈` it is
+where Mathlib's numbering of `CartanMatrix.E 9` is matched up with the numbering of this file. -/
+lemma cartanMatrix_eq_graphCartanMatrix {t : AffineDynkinType} (ht : t.IsGraphical) :
+    t.cartanMatrix = graphCartanMatrix t.graph ℤ := by
+  rw [graphCartanMatrix_eq_two_smul_one_sub_adjMatrix]
   cases t with
   | A n =>
       match n with
@@ -366,13 +370,7 @@ lemma cartanMatrix_eq_two_smul_one_sub_adjMatrix {t : AffineDynkinType} (ht : t.
 edge and `0` otherwise. -/
 lemma cartanMatrix_apply {t : AffineDynkinType} (ht : t.IsGraphical) (i j : Fin t.nodes) :
     t.cartanMatrix i j = if i = j then 2 else if t.graph.Adj i j then -1 else 0 := by
-  rw [cartanMatrix_eq_two_smul_one_sub_adjMatrix ht]
-  simp only [Matrix.sub_apply, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul,
-    SimpleGraph.adjMatrix_apply]
-  rcases eq_or_ne i j with rfl | hij
-  · simp
-  · rw [ite_eq_right hij, ite_eq_right hij]
-    split_ifs <;> norm_num
+  rw [cartanMatrix_eq_graphCartanMatrix ht, graphCartanMatrix_apply]
 
 /-- The diagonal entries of the generalized Cartan matrix are `2`, `A₁` included. -/
 @[simp] lemma cartanMatrix_apply_same (t : AffineDynkinType) (i : Fin t.nodes) :
@@ -381,8 +379,7 @@ lemma cartanMatrix_apply {t : AffineDynkinType} (ht : t.IsGraphical) (i j : Fin 
   · subst h
     revert i
     decide
-  · rw [cartanMatrix_eq_two_smul_one_sub_adjMatrix h, Matrix.sub_apply,
-      Matrix.smul_apply, Matrix.one_apply_eq, SimpleGraph.adjMatrix_apply]
+  · rw [cartanMatrix_apply h]
     simp
 
 /-- Away from `A₁`, an edge of the diagram contributes the entry `-1`. At `A₁` the single edge
@@ -401,15 +398,15 @@ lemma cartanMatrix_apply_of_not_adj {t : AffineDynkinType} {i j : Fin t.nodes} (
   · simp [cartanMatrix_apply ht, hij, h]
 
 /-- The generalized Cartan matrix of an affine simply-laced diagram is symmetric, `A₁` included:
-away from `A₁` the matrix is `2 • 1 - adjMatrix` and an adjacency matrix is symmetric, while at
-`A₁` the explicit multiplicity-two matrix `!![2, -2; -2, 2]` is symmetric outright. -/
+away from `A₁` the matrix is `2I - A` and an adjacency matrix is symmetric, while at `A₁` the
+explicit multiplicity-two matrix `!![2, -2; -2, 2]` is symmetric outright. -/
 lemma isSymm_cartanMatrix (t : AffineDynkinType) : t.cartanMatrix.IsSymm := by
   by_cases h : t = A 1
   · subst h
     refine Matrix.IsSymm.ext fun i j ↦ ?_
     fin_cases i <;> fin_cases j <;> decide
-  · rw [cartanMatrix_eq_two_smul_one_sub_adjMatrix h]
-    exact (Matrix.isSymm_one.smul (2 : ℤ)).sub (SimpleGraph.isSymm_adjMatrix _)
+  · rw [cartanMatrix_eq_graphCartanMatrix h]
+    exact isSymm_graphCartanMatrix _
 
 /-- **The graph of an affine simply-laced diagram is the diagram of its generalized Cartan
 matrix**, `A₁` included: the double edge there still shows up as a pair of nonzero entries. This is
@@ -627,12 +624,8 @@ theorem cartanMatrix_mulVec_marks_eq_zero {t : AffineDynkinType} (ht : t.Valid) 
     t.cartanMatrix *ᵥ t.marks = 0 := by
   by_cases h : t = A 1
   · subst h; decide
-  · funext i
-    have hbal := sum_marks_neighborFinset_eq_two_mul ht h i
-    simp only [cartanMatrix_eq_two_smul_one_sub_adjMatrix h, Matrix.sub_mulVec, Pi.sub_apply,
-      Matrix.smul_mulVec, Pi.smul_apply, Matrix.one_mulVec, smul_eq_mul,
-      SimpleGraph.adjMatrix_mulVec_apply, Pi.zero_apply]
-    omega
+  · rw [cartanMatrix_eq_graphCartanMatrix h]
+    exact graphCartanMatrix_mulVec_eq_zero _ (sum_marks_neighborFinset_eq_two_mul ht h)
 
 end AffineDynkinType
 
