@@ -294,20 +294,22 @@ theorem map_baseChangeHopfIdeal_of_toIdeal_eq_span
 
 /-- Pulling a target Hopf ideal back along an ambient isomorphism which is its image recovers
 the original ideal. -/
-private theorem comap_eq_baseChangeHopfIdeal_of_map_eq
+private theorem comapOfSurjective_eq_baseChangeHopfIdeal_of_map_eq
     {H' : _root_.CommHopfAlgCat.{max w v} K} (J : HopfIdeal k H) (J' : HopfIdeal K H')
     (e : baseChange (K := K) H ≅ H')
     (hJ : (baseChangeHopfIdeal (K := K) J).map e.hom.hom = J') :
-    J'.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2 =
+    J'.comapOfSurjective e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2 =
       baseChangeHopfIdeal (K := K) J := by
   let he : Function.Bijective e.hom.hom :=
     ⟨(ConcreteCategory.bijective_of_isIso e.hom).1,
       (ConcreteCategory.bijective_of_isIso e.hom).2⟩
   calc
-    J'.comap e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2 =
-        ((baseChangeHopfIdeal (K := K) J).map e.hom.hom).comap e.hom.hom he.2 := by
+    J'.comapOfSurjective e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2 =
+        ((baseChangeHopfIdeal (K := K) J).map e.hom.hom).comapOfSurjective
+          e.hom.hom he.2 := by
       rw [hJ]
-    _ = baseChangeHopfIdeal (K := K) J := HopfIdeal.comap_map_of_bijective _ _ he
+    _ = baseChangeHopfIdeal (K := K) J :=
+      HopfIdeal.comapOfSurjective_map_of_bijective _ _ he
 
 /-- Transport the base change of a Hopf-ideal quotient across an isomorphism of the ambient
 base-changed Hopf algebra which carries the base-changed ideal to a target Hopf ideal. -/
@@ -318,7 +320,7 @@ noncomputable def quotientBaseChangeIsoOfMapEq
     baseChange (K := K) (quotient H J) ≅ quotient H' J' :=
   (quotientBaseChangeIso (K := K) J).symm ≪≫
     eqToIso (congrArg (quotient (baseChange (K := K) H))
-      (comap_eq_baseChangeHopfIdeal_of_map_eq J J' e hJ).symm) ≪≫
+      (comapOfSurjective_eq_baseChangeHopfIdeal_of_map_eq J J' e hJ).symm) ≪≫
     quotientIsoOfIso e J'
 
 /-- The transported quotient base-change isomorphism commutes with the quotient morphisms. -/
@@ -330,7 +332,7 @@ theorem baseChangeMap_mkQuotient_comp_quotientBaseChangeIsoOfMapEq_hom
     baseChangeMap (K := K) (mkQuotient H J) ≫
         (quotientBaseChangeIsoOfMapEq J J' e hJ).hom =
       e.hom ≫ mkQuotient H' J' := by
-  let hcomap := comap_eq_baseChangeHopfIdeal_of_map_eq J J' e hJ
+  let hcomap := comapOfSurjective_eq_baseChangeHopfIdeal_of_map_eq J J' e hJ
   have hbase :
       baseChangeMap (K := K) (mkQuotient H J) ≫
           (quotientBaseChangeIso (K := K) J).symm.hom =
