@@ -478,12 +478,6 @@ private noncomputable def liftContinuousLinearMap (B : X →L[ℝ] X) :
     (x : GrowthRenorm S hb) :
     (liftContinuousLinearMap S hb B x).val = B x.val := rfl
 
-private theorem norm_liftContinuousLinearMap_le (B : X →L[ℝ] X) :
-    ‖liftContinuousLinearMap S hb B‖ ≤ M * ‖B‖ := by
-  unfold liftContinuousLinearMap
-  apply LinearMap.mkContinuous_norm_le _
-    (mul_nonneg (zero_le_one.trans hb.one_le) (norm_nonneg B))
-
 private theorem unliftPMap_vadd_liftContinuousLinearMap
     (B : X →L[ℝ] X) (A : GrowthRenorm S hb →ₗ.[ℝ] GrowthRenorm S hb) :
     unliftPMap S hb ((liftContinuousLinearMap S hb B :
@@ -566,7 +560,8 @@ theorem exists_generator_eq_vadd (S : StronglyContinuousSemigroup X)
   have hUbound : U.HasGrowthBound ‖B'‖ M :=
     GrowthRenorm.unliftSemigroup_hasGrowthBound S hb T' hT'bound
   have hUbound' : U.HasGrowthBound (M * ‖B‖) M :=
-    hUbound.mono_omega (GrowthRenorm.norm_liftContinuousLinearMap_le S hb B)
+    hUbound.mono_omega <| LinearMap.mkContinuous_norm_le _
+      (mul_nonneg (zero_le_one.trans hb.one_le) (norm_nonneg B)) _
   refine ⟨U.expShift (-omega), ?_, ?_⟩
   · rw [generator_expShift, hUgen, TauCeti.LinearPMap.vadd_subScalar,
       LinearPMap.subScalar_subScalar, add_neg_cancel, LinearPMap.subScalar_zero]
