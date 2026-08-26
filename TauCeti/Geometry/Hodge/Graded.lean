@@ -125,6 +125,19 @@ abbrev weightGradedRat (WQ : ℤ → Submodule ℚ Vℚ) (k : ℤ) : Type v :=
 abbrev weightGradedComplex (WC : ℤ → Submodule ℂ Vℂ) (k : ℤ) : Type w :=
   WC k ⧸ (WC (k - 1)).submoduleOf (WC k)
 
+/-- Two classes in the `k`-th complex graded piece agree exactly when their representatives differ
+by a vector of the step below. -/
+theorem weightGradedComplex_mk_eq_mk_iff (WC : ℤ → Submodule ℂ Vℂ) (k : ℤ) (x y : WC k) :
+    (Submodule.Quotient.mk x : weightGradedComplex WC k) = Submodule.Quotient.mk y ↔
+      (x : Vℂ) - (y : Vℂ) ∈ WC (k - 1) :=
+  Submodule.Quotient.eq ((WC (k - 1)).submoduleOf (WC k))
+
+/-- A class in the `k`-th complex graded piece vanishes exactly when its representative already
+lies in the step below. -/
+theorem weightGradedComplex_mk_eq_zero_iff (WC : ℤ → Submodule ℂ Vℂ) (k : ℤ) (x : WC k) :
+    (Submodule.Quotient.mk x : weightGradedComplex WC k) = 0 ↔ (x : Vℂ) ∈ WC (k - 1) :=
+  Submodule.Quotient.mk_eq_zero ((WC (k - 1)).submoduleOf (WC k))
+
 /-- **Complexification commutes with the weight-graded quotient**: the complexification of the
 rational graded piece `grᵂ_k` is the graded piece of the complexified filtration. -/
 noncomputable def gradedComplexEquiv (hℚ : IsBaseChange ℚ ιℚ) (hℂ : IsBaseChange ℂ ιℂ)

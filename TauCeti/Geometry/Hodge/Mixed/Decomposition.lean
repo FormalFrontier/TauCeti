@@ -35,15 +35,16 @@ it.
   representative into `I^{p,q}` without changing its class. Running this against the Hodge
   decomposition of `gr^W_k` and inducting upwards on `k` from a weight step where the filtration
   vanishes gives the recovery of `W`, and with it that the bigrading spans.
-* A weight step meets the pieces of larger total degree trivially. This is a descending induction
-  on the weight which peels off one total degree at a time, and independence follows: a vector of
-  `I^{p,q}` lying in the sum of all the other pieces first loses its part of larger total degree,
-  and what is left has a class in `gr^W_{p+q}` lying both in `H^{p,q}` and in the complementary
-  `conj F^{q+1} ⊔ F^{p+1}`, hence vanishing.
+* A weight step meets the supremum of the pieces of larger total degree trivially. This is a
+  descending induction on the weight which peels off one total degree at a time, and independence
+  follows: a vector of `I^{p,q}` lying in the sum of all the other pieces first loses its part of
+  larger total degree, and what is left has a class in `gr^W_{p+q}` lying both in `H^{p,q}` and in
+  the complementary `conj F^{q+1} ⊔ F^{p+1}`, hence vanishing.
 
-What remains of Deligne's theory after this file: the recovery `F^p = ⨆_{p' ≥ p} I^{p',q}` of the
-Hodge filtration, the conjugation symmetry `I^{p,q} ≡ conj I^{q,p}` modulo strictly lower
-bidegree, and the strictness of a morphism of mixed Hodge structures.
+What remains of Deligne's theory after this file: the recovery
+`F^p = ⨆_{p' ≥ p} ⨆_{q'} I^{p',q'}` of the Hodge filtration, the conjugation symmetry
+`I^{p,q} ≡ conj I^{q,p}` modulo strictly lower bidegree, and the strictness of a morphism of mixed
+Hodge structures.
 
 ## Main declarations
 
@@ -89,7 +90,7 @@ Its class in `gr^W_m` lies both in the `p`-th step of the induced Hodge filtrati
 `(m+1-p)`-th step of the conjugate one — the second because Deligne's formula puts `I^{p,q}` in
 `conj F^{m+1-p}` modulo `W_{m-1}` — and those two steps of a pure Hodge structure of weight `m`
 are complementary. -/
-theorem deligneSplitting_inf_WC_le (p q m : ℤ) (hm : m < p + q) :
+private theorem deligneSplitting_inf_WC_le_WC_sub_one (p q m : ℤ) (hm : m < p + q) :
     mhs.deligneSplitting p q ⊓ mhs.WC m ≤ mhs.WC (m - 1) := by
   rintro x ⟨hxI, hxW⟩
   have hF : x ∈ mhs.F p := mhs.deligneSplitting_le_F p q hxI
@@ -103,24 +104,16 @@ theorem deligneSplitting_inf_WC_le (p q m : ℤ) (hm : m < p + q) :
   have haW : a ∈ mhs.WC m := by
     have hxa : a = x - b := by rw [← hab]; abel
     exact hxa ▸ Submodule.sub_mem _ hxW (mhs.WC_monotone (by omega) hb)
+  have hsub : a - x ∈ mhs.WC (m - 1) := hax ▸ Submodule.neg_mem _ hb
   have hmk : (Submodule.Quotient.mk (⟨a, haW⟩ : mhs.WC m) : weightGradedComplex mhs.WC m) =
-      Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC m) := by
-    refine (Submodule.Quotient.eq _).2 (Submodule.mem_comap.2 ?_)
-    -- Unfold the subtype subtraction at the quotient boundary to ambient membership in `WC`.
-    change a - x ∈ mhs.WC (m - 1)
-    exact hax ▸ Submodule.neg_mem _ hb
-  have hu₁ : Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC m) ∈
-      (mhs.complexGradedHodgeStructure m).F p := by
-    rw [complexGradedHodgeStructure_F, mem_complexGradedF_iff]
-    exact ⟨⟨x, hxW⟩, hF, rfl⟩
-  have hu₂ : Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC m) ∈
-      (mhs.complexGradedHodgeStructure m).conjF (m + 1 - p) := by
-    rw [complexGradedHodgeStructure_conjF, mem_complexGradedF_iff]
-    exact ⟨⟨a, haW⟩, by rwa [← conjF_def], hmk⟩
+      Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC m) :=
+    (weightGradedComplex_mk_eq_mk_iff mhs.WC m ⟨a, haW⟩ ⟨x, hxW⟩).2 hsub
+  have hu₁ := mhs.mk_mem_complexGradedHodgeStructure_F m p ⟨x, hxW⟩ hF
+  have hu₂ := mhs.mk_mem_complexGradedHodgeStructure_conjF m (m + 1 - p) ⟨a, haW⟩ ha
+  rw [hmk] at hu₂
   have hzero := ((mhs.complexGradedHodgeStructure m).isCompl_F_conjF p).disjoint.le_bot ⟨hu₁, hu₂⟩
   rw [Submodule.mem_bot] at hzero
-  exact Submodule.mem_comap.1
-    ((Submodule.Quotient.mk_eq_zero ((mhs.WC (m - 1)).submoduleOf (mhs.WC m))).1 hzero)
+  exact (weightGradedComplex_mk_eq_zero_iff mhs.WC m ⟨x, hxW⟩).1 hzero
 
 /-- **A bigrading piece meets the weight step below its total degree trivially.** -/
 theorem deligneSplitting_disjoint_WC (p q : ℤ) :
@@ -135,15 +128,17 @@ theorem deligneSplitting_disjoint_WC (p q : ℤ) :
       have hstep : p + q - 1 - ((n + 1 : ℕ) : ℤ) = p + q - 1 - (n : ℤ) - 1 := by push_cast; ring
       rw [hstep]
       exact (le_inf inf_le_left ih).trans
-        (mhs.deligneSplitting_inf_WC_le p q (p + q - 1 - (n : ℤ)) (by omega))
+        (mhs.deligneSplitting_inf_WC_le_WC_sub_one p q (p + q - 1 - (n : ℤ)) (by omega))
   rw [disjoint_iff, ← le_bot_iff]
   refine (key (p + q - 1 - k₀).toNat).trans ?_
   rw [← hk₀]
   exact mhs.WC_monotone (by omega)
 
 /-- Where the Hodge filtration vanishes in the *second* index the bigrading vanishes: `I^{p,q}`
-then lies in `W_{p+q-1}`, which it meets trivially. -/
-theorem deligneSplitting_eq_bot_of_F_eq_bot_le {b : ℤ} (hb : mhs.F b = ⊥) {p q : ℤ} (hbq : b ≤ q) :
+then lies in `W_{p+q-1}`, which it meets trivially. The bound on the first index is
+`TauCeti.Hodge.MixedHodgeStructure.deligneSplitting_eq_bot_of_F_eq_bot_left`. -/
+theorem deligneSplitting_eq_bot_of_F_eq_bot_right {b : ℤ} (hb : mhs.F b = ⊥) {p q : ℤ}
+    (hbq : b ≤ q) :
     mhs.deligneSplitting p q = ⊥ := by
   refine (mhs.deligneSplitting_disjoint_WC p q).eq_bot_of_le ?_
   refine (mhs.deligneSplitting_le_conjF_sup_WC p q).trans (sup_le ?_ (mhs.WC_monotone (by omega)))
@@ -162,7 +157,7 @@ theorem deligneSplitting_eq_bot_of_WC_eq_top {k : ℤ} (hk : mhs.WC k = ⊤) {p 
 
 This is the bookkeeping that makes the correction step below work: the terms of the formula for
 `I^{p',q'}` all match, index for index, terms of the formula for `I^{p,q}` once `p' < p`. -/
-private theorem deligneSplitting_le_sup_of_lt {p q p' q' : ℤ} (hp : p' < p)
+private theorem deligneSplitting_le_conjF_inf_WC_sup_iSup_of_lt {p q p' q' : ℤ} (hp : p' < p)
     (hd : p' + q' < p + q) :
     mhs.deligneSplitting p' q' ≤
       (mhs.conjF q ⊓ mhs.WC (p + q)) ⊔
@@ -208,7 +203,8 @@ private theorem piece_le_map_deligneSplitting {k : ℤ}
     rcases le_or_gt p rs.1 with h | h
     · exact le_sup_of_le_left (le_inf ((mhs.deligneSplitting_le_F _ _).trans (mhs.F_antitone h))
         ((mhs.deligneSplitting_le_WC _ _).trans (mhs.WC_monotone hrs)))
-    · exact le_sup_of_le_right (mhs.deligneSplitting_le_sup_of_lt h (by omega))
+    · exact le_sup_of_le_right
+        (mhs.deligneSplitting_le_conjF_inf_WC_sup_iSup_of_lt h (by omega))
   obtain ⟨c, hc, e, he, hce⟩ := Submodule.mem_sup.1 (hsplit hb)
   have hkp : p + (k - p) = k := by ring
   have haW : a ∈ mhs.WC (p + (k - p)) := by
@@ -227,11 +223,11 @@ private theorem piece_le_map_deligneSplitting {k : ℤ}
       (Submodule.mem_sup_left ⟨by rwa [← conjF_def] at ha, haW⟩) he
   refine ⟨⟨(y : Vℂ) - c, hxW⟩, hx, ?_⟩
   rw [Submodule.mkQ_apply, ← hyu]
-  refine (Submodule.Quotient.eq _).2 (Submodule.mem_comap.2 ?_)
-  -- Unfold the quotient representatives and `submoduleOf` membership back in the ambient space.
-  change (y : Vℂ) - c - (y : Vℂ) ∈ mhs.WC (k - 1)
-  have hneg : (y : Vℂ) - c - (y : Vℂ) = -c := by abel
-  exact hneg ▸ Submodule.neg_mem _ hc.2
+  have hneg : (y : Vℂ) - c - (y : Vℂ) ∈ mhs.WC (k - 1) := by
+    have hc' : (y : Vℂ) - c - (y : Vℂ) = -c := by abel
+    rw [hc']
+    exact Submodule.neg_mem _ hc.2
+  exact (weightGradedComplex_mk_eq_mk_iff mhs.WC k ⟨(y : Vℂ) - c, hxW⟩ y).2 hneg
 
 /-! ### The recovery of the weight filtration -/
 
@@ -273,15 +269,16 @@ theorem WC_eq_iSup_deligneSplitting (k : ℤ) :
   · exact key k h
   · exact (mhs.WC_monotone h.le).trans (by rw [hk₀]; exact bot_le)
 
-private theorem map_deligneSplitting_le_piece (p q : ℤ) :
-    ((mhs.deligneSplitting p q).submoduleOf (mhs.WC (p + q))).map
-        ((mhs.WC (p + q - 1)).submoduleOf (mhs.WC (p + q))).mkQ ≤
-      (mhs.complexGradedHodgeStructure (p + q)).piece p := by
-  rintro _ ⟨x, hx, rfl⟩
-  have hxI : (x : Vℂ) ∈ mhs.deligneSplitting p q := hx
+/-- The class in `gr^W_k` of a vector of the bigrading piece `I^{p,q}` of total degree `k` lies in
+the Hodge component `H^{p,q}` of that graded piece: the vector lies in `F^p`, and Deligne's formula
+puts it in `conj F^q` modulo `W_{k-2}`, hence a fortiori modulo `W_{k-1}`. -/
+private theorem mk_mem_piece_of_mem_deligneSplitting {k p q : ℤ} (hk : p + q = k) (x : mhs.WC k)
+    (hx : (x : Vℂ) ∈ mhs.deligneSplitting p q) :
+    Submodule.Quotient.mk x ∈ (mhs.complexGradedHodgeStructure k).piece p := by
+  subst hk
   refine mhs.mk_mem_complexGradedHodgeStructure_piece (p + q) p x
-    (mhs.deligneSplitting_le_F p q hxI) ?_
-  have hconj := mhs.deligneSplitting_le_conjF_sup_WC p q hxI
+    (mhs.deligneSplitting_le_F p q hx) ?_
+  have hconj := mhs.deligneSplitting_le_conjF_sup_WC p q hx
   have hmono : mhs.conjF q ⊔ mhs.WC (p + q - 2) ≤
       mhs.conjF q ⊔ mhs.WC (p + q - 1) :=
     sup_le le_sup_left (le_sup_of_le_right (mhs.WC_monotone (by omega)))
@@ -294,7 +291,8 @@ theorem map_deligneSplitting_eq_piece (p q : ℤ) :
         ((mhs.WC (p + q - 1)).submoduleOf (mhs.WC (p + q))).mkQ =
       (mhs.complexGradedHodgeStructure (p + q)).piece p := by
   apply le_antisymm
-  · exact mhs.map_deligneSplitting_le_piece p q
+  · rintro _ ⟨x, hx, rfl⟩
+    exact mhs.mk_mem_piece_of_mem_deligneSplitting rfl x hx
   · have hW := (mhs.WC_eq_iSup_deligneSplitting (p + q - 1)).le
     simpa only [add_sub_cancel_left] using mhs.piece_le_map_deligneSplitting hW p
 
@@ -309,101 +307,138 @@ theorem iSup_deligneSplittingFamily_eq_top :
 
 /-! ### Independence of the bigrading pieces -/
 
-/-- The bigrading pieces of a fixed total degree `m` meet the weight step `W_{m-1}` trivially.
+/-- The bigrading pieces of total degree `p + q` other than `I^{p,q}` lie in the sum of the two
+filtration steps complementary to the Hodge component `H^{p,q}` and of the weight step below: a
+piece of larger first index lies in `F^{p+1}`, and one of smaller first index lies in
+`conj F^{q+1}` modulo `W_{p+q-1}`, by the index bookkeeping of Deligne's formula. -/
+private theorem iSup_ne_deligneSplitting_le_F_inf_WC_sup_conjF_inf_WC_sup_WC (p q : ℤ) :
+    (⨆ r, ⨆ (_ : r ≠ p), mhs.deligneSplitting r (p + q - r)) ≤
+      (mhs.F (p + 1) ⊓ mhs.WC (p + q)) ⊔
+        ((mhs.conjF (q + 1) ⊓ mhs.WC (p + q)) ⊔ mhs.WC (p + q - 1)) := by
+  refine iSup₂_le fun r hr ↦ ?_
+  rcases lt_or_gt_of_ne hr with h | h
+  · rw [deligneSplitting_def]
+    refine inf_le_right.trans (sup_le ?_ (iSup_le fun j ↦ ?_))
+    · exact le_sup_of_le_right (le_sup_of_le_left
+        (inf_le_inf (mhs.conjF_antitone (by omega)) (mhs.WC_monotone (by omega))))
+    · exact le_sup_of_le_right
+        (le_sup_of_le_right (inf_le_right.trans (mhs.WC_monotone (by omega))))
+  · exact le_sup_of_le_left (le_inf
+      ((mhs.deligneSplitting_le_F r _).trans (mhs.F_antitone (by omega)))
+      ((mhs.deligneSplitting_le_WC r _).trans (mhs.WC_monotone (by omega))))
 
-Descending induction on the first index: a vector of the sum lying in `W_{m-1}` splits as `u + v`
-with `u ∈ I^{p,m-p}` and `v` in the pieces of larger first index, hence in `F^{p+1}`; the class of
-`u` in `gr^W_m` then lies in the Hodge component `H^{p,m-p}` and in `F^{p+1}`, which are disjoint,
-so `u` lies in `W_{m-1}` and therefore vanishes. -/
-theorem iSup_deligneSplitting_disjoint_WC (m : ℤ) :
+/-- **A vector of `I^{p,q}` complementary to the Hodge component `H^{p,q}` vanishes.** The
+hypothesis is that it lies in the two filtration steps cutting out the complement of `H^{p,q}` in
+`gr^W_{p+q}`, cut down to `W_{p+q}`, and in the weight step below; its class in `gr^W_{p+q}` then
+lies both in `H^{p,q}` and in the complementary `conj F^{q+1} ⊔ F^{p+1}`, so the vector drops to
+`W_{p+q-1}`, which `I^{p,q}` meets trivially.
+
+The three index equations let the caller present the filtration steps in whatever normal form the
+surrounding induction produces them. -/
+private theorem eq_zero_of_mem_deligneSplitting {p q p' q' k : ℤ} (hp : p + 1 = p')
+    (hq : q + 1 = q') (hk : p + q = k) {x : Vℂ} (hx : x ∈ mhs.deligneSplitting p q)
+    (hx' : x ∈ (mhs.F p' ⊓ mhs.WC k) ⊔ ((mhs.conjF q' ⊓ mhs.WC k) ⊔ mhs.WC (k - 1))) :
+    x = 0 := by
+  subst hp
+  subst hq
+  subst hk
+  have hxW : x ∈ mhs.WC (p + q) := mhs.deligneSplitting_le_WC p q hx
+  obtain ⟨z₁, hz₁, z', hz', hz⟩ := Submodule.mem_sup.1 hx'
+  obtain ⟨z₂, hz₂, z₃, hz₃, hz'eq⟩ := Submodule.mem_sup.1 hz'
+  have hclassx := mhs.mk_mem_piece_of_mem_deligneSplitting (k := p + q) rfl ⟨x, hxW⟩ hx
+  have hmk : (Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC (p + q)) :
+        weightGradedComplex mhs.WC (p + q)) =
+      Submodule.Quotient.mk (⟨z₁, hz₁.2⟩ : mhs.WC (p + q)) +
+        Submodule.Quotient.mk (⟨z₂, hz₂.2⟩ : mhs.WC (p + q)) := by
+    have hrest : x - (z₁ + z₂) ∈ mhs.WC (p + q - 1) := by
+      have hz₃eq : x - (z₁ + z₂) = z₃ := by rw [← hz, ← hz'eq]; abel
+      rw [hz₃eq]
+      exact hz₃
+    rw [← Submodule.Quotient.mk_add]
+    exact (weightGradedComplex_mk_eq_mk_iff mhs.WC (p + q) _ _).2 hrest
+  have hclass₁ := mhs.mk_mem_complexGradedHodgeStructure_F (p + q) (p + 1) ⟨z₁, hz₁.2⟩ hz₁.1
+  have hclass₂ := mhs.mk_mem_complexGradedHodgeStructure_conjF (p + q) (p + q + 1 - p)
+    ⟨z₂, hz₂.2⟩ (mhs.conjF_antitone (by omega) hz₂.1)
+  have hzero := ((mhs.complexGradedHodgeStructure (p + q)).isCompl_piece_conjF_sup_F
+    p).disjoint.le_bot ⟨hclassx, by
+      rw [hmk]
+      exact Submodule.add_mem _ (Submodule.mem_sup_right hclass₁)
+        (Submodule.mem_sup_left hclass₂)⟩
+  rw [Submodule.mem_bot] at hzero
+  exact (Submodule.mem_bot ℂ).1 ((mhs.deligneSplitting_disjoint_WC p q).le_bot
+    ⟨hx, (weightGradedComplex_mk_eq_zero_iff mhs.WC (p + q) ⟨x, hxW⟩).1 hzero⟩)
+
+/-- Peeling the smallest first index off the bigrading pieces of a fixed total degree `m`. -/
+private theorem iSup_le_deligneSplitting_sup_iSup {p p' : ℤ} (hp : p + 1 = p') (m : ℤ) :
+    (⨆ r, ⨆ (_ : p ≤ r), mhs.deligneSplitting r (m - r)) ≤
+      mhs.deligneSplitting p (m - p) ⊔ ⨆ r, ⨆ (_ : p' ≤ r), mhs.deligneSplitting r (m - r) := by
+  refine iSup₂_le fun r hr ↦ ?_
+  rcases eq_or_lt_of_le hr with h | h
+  · exact h ▸ le_sup_left
+  · exact le_sup_of_le_right (le_iSup₂_of_le r (by omega) le_rfl)
+
+/-- The supremum of the bigrading pieces of a fixed total degree `m` meets the weight step
+`W_{m-1}` trivially.
+
+Descending induction on the first index: a vector of the supremum lying in `W_{m-1}` splits as
+`u + v` with `u ∈ I^{p,m-p}` and `v` in the pieces of larger first index, hence in `F^{p+1}`; then
+`u = -v + x` lies in `F^{p+1} ⊓ W_m` plus `W_{m-1}`, so `u` vanishes and the vector is `v`. -/
+private theorem iSup_deligneSplitting_add_eq_disjoint_WC (m : ℤ) :
     Disjoint (⨆ p : ℤ, mhs.deligneSplitting p (m - p)) (mhs.WC (m - 1)) := by
   obtain ⟨b, hb⟩ := mhs.F_bot
   have key : ∀ p : ℤ, p ≤ b → Disjoint
       (⨆ r, ⨆ (_ : p ≤ r), mhs.deligneSplitting r (m - r)) (mhs.WC (m - 1)) := by
     refine Int.leInductionDown ?_ ?_
     · refine disjoint_bot_left.mono_left (iSup₂_le fun r hr ↦ ?_)
-      exact le_of_eq (mhs.deligneSplitting_eq_bot_of_F_eq_bot hb hr)
+      exact le_of_eq (mhs.deligneSplitting_eq_bot_of_F_eq_bot_left hb hr)
     · intro p _ ih
       rw [disjoint_iff, ← le_bot_iff]
       rintro x ⟨hx1, hx2⟩
-      have hsplit : (⨆ r, ⨆ (_ : p - 1 ≤ r), mhs.deligneSplitting r (m - r)) ≤
-          mhs.deligneSplitting (p - 1) (m - (p - 1)) ⊔
-            ⨆ r, ⨆ (_ : p ≤ r), mhs.deligneSplitting r (m - r) := by
-        refine iSup₂_le fun r hr ↦ ?_
-        rcases eq_or_lt_of_le hr with h | h
-        · exact h ▸ le_sup_left
-        · exact le_sup_of_le_right (le_iSup₂_of_le r (by omega) le_rfl)
-      obtain ⟨u, hu, v, hv, huv⟩ := Submodule.mem_sup.1 (hsplit hx1)
-      have huW : u ∈ mhs.WC m := by
-        have hle := mhs.deligneSplitting_le_WC (p - 1) (m - (p - 1)) hu
-        -- Normalize the total degree of `I^{p-1,m-(p-1)}` to the ambient weight `m`.
-        rwa [show p - 1 + (m - (p - 1)) = m by ring] at hle
+      obtain ⟨u, hu, v, hv, huv⟩ := Submodule.mem_sup.1
+        (mhs.iSup_le_deligneSplitting_sup_iSup (p := p - 1) (by ring) m hx1)
+      have huW : u ∈ mhs.WC m :=
+        mhs.WC_monotone (by omega) (mhs.deligneSplitting_le_WC (p - 1) (m - (p - 1)) hu)
       have hvW : v ∈ mhs.WC m := by
         have hvu : v = x - u := by rw [← huv]; abel
         rw [hvu]
         exact Submodule.sub_mem _ (mhs.WC_monotone (by omega) hx2) huW
       have hvF : v ∈ mhs.F p :=
         (iSup₂_le fun r hr ↦ (mhs.deligneSplitting_le_F r (m - r)).trans (mhs.F_antitone hr)) hv
-      have hclassu : Submodule.Quotient.mk (⟨u, huW⟩ : mhs.WC m) ∈
-          (mhs.complexGradedHodgeStructure m).piece (p - 1) := by
-        refine mhs.mk_mem_complexGradedHodgeStructure_piece m (p - 1) ⟨u, huW⟩
-          (mhs.deligneSplitting_le_F _ _ hu) ?_
-        have hle := mhs.deligneSplitting_le_conjF_sup_WC (p - 1) (m - (p - 1)) hu
-        rw [conjF_def] at hle
-        refine (sup_le le_sup_left (le_sup_of_le_right (mhs.WC_monotone ?_))) hle
-        omega
-      have hclassv : Submodule.Quotient.mk (⟨v, hvW⟩ : mhs.WC m) ∈
-          (mhs.complexGradedHodgeStructure m).F (p - 1 + 1) := by
-        rw [complexGradedHodgeStructure_F, mem_complexGradedF_iff]
-        -- Normalize the successor filtration index before using `hvF : v ∈ F p`.
-        exact ⟨⟨v, hvW⟩, by rwa [show p - 1 + 1 = p by ring], rfl⟩
-      have huv' : (Submodule.Quotient.mk (⟨u, huW⟩ : mhs.WC m) :
-            weightGradedComplex mhs.WC m) =
-          -Submodule.Quotient.mk (⟨v, hvW⟩ : mhs.WC m) := by
-        rw [eq_neg_iff_add_eq_zero, ← Submodule.Quotient.mk_add]
-        refine (Submodule.Quotient.mk_eq_zero _).2 (Submodule.mem_comap.2 ?_)
-        -- Unfold addition of quotient representatives to ambient membership in the lower step.
-        change u + v ∈ mhs.WC (m - 1)
-        rw [huv]
-        exact hx2
-      have hzero := ((mhs.complexGradedHodgeStructure m).isCompl_piece_conjF_sup_F
-        (p - 1)).disjoint.le_bot ⟨hclassu, huv' ▸ Submodule.neg_mem _
-          (Submodule.mem_sup_right hclassv)⟩
-      rw [Submodule.mem_bot] at hzero
-      have huWlow : u ∈ mhs.WC (m - 1) := Submodule.mem_comap.1
-        ((Submodule.Quotient.mk_eq_zero ((mhs.WC (m - 1)).submoduleOf (mhs.WC m))).1 hzero)
       have hu0 : u = 0 := by
-        have := (mhs.deligneSplitting_disjoint_WC (p - 1) (m - (p - 1))).le_bot
-          -- Normalize the lower weight step for the total degree of the selected piece.
-          ⟨hu, by rwa [show p - 1 + (m - (p - 1)) - 1 = m - 1 by ring]⟩
-        simpa using this
+        refine mhs.eq_zero_of_mem_deligneSplitting (p' := p) (q' := m - (p - 1) + 1) (k := m)
+          (by ring) rfl (by omega) hu ?_
+        have hune : u = -v + x := by rw [← huv]; abel
+        rw [hune]
+        exact Submodule.add_mem _
+          (Submodule.mem_sup_left ⟨Submodule.neg_mem _ hvF, Submodule.neg_mem _ hvW⟩)
+          (Submodule.mem_sup_right (Submodule.mem_sup_right hx2))
       have hxv : x = v := by rw [← huv, hu0, zero_add]
       exact ih.le_bot ⟨hxv ▸ hv, hx2⟩
   refine (key (min b (m - b)) (min_le_left _ _)).mono_left (iSup_le fun p ↦ ?_)
   rcases le_or_gt (min b (m - b)) p with h | h
   · exact le_iSup₂_of_le p h le_rfl
-  · rw [mhs.deligneSplitting_eq_bot_of_F_eq_bot_le hb (by omega : b ≤ m - p)]
+  · rw [mhs.deligneSplitting_eq_bot_of_F_eq_bot_right hb (by omega : b ≤ m - p)]
     exact bot_le
 
-/-- Above a weight index at which the weight filtration is everything, all bigrading pieces of
-larger total degree vanish. -/
-theorem iSup_deligneSplitting_eq_bot_of_WC_eq_top {M : ℤ} (hM : mhs.WC M = ⊤) {k : ℤ}
-    (hk : M ≤ k) :
+/-- Above a weight index at which the weight filtration is everything, the supremum of the
+bigrading pieces of larger total degree vanishes. -/
+private theorem iSup_deligneSplitting_of_add_lt_eq_bot_of_WC_eq_top {M : ℤ} (hM : mhs.WC M = ⊤)
+    {k : ℤ} (hk : M ≤ k) :
     (⨆ (rs : ℤ × ℤ) (_ : k < rs.1 + rs.2), mhs.deligneSplitting rs.1 rs.2) = ⊥ :=
   le_bot_iff.1 (iSup₂_le fun _ hrs ↦
     le_of_eq (mhs.deligneSplitting_eq_bot_of_WC_eq_top hM (by omega)))
 
-/-- **A weight step meets the bigrading pieces of larger total degree trivially.** Descending
-induction on the weight peels off one total degree at a time, using that the pieces of total
-degree `k` meet `W_{k-1}` trivially. -/
-theorem WC_disjoint_iSup_deligneSplitting (k : ℤ) :
+/-- **A weight step meets the supremum of the bigrading pieces of larger total degree trivially.**
+Descending induction on the weight peels off one total degree at a time, using that the supremum
+of the pieces of total degree `k` meets `W_{k-1}` trivially. -/
+theorem WC_disjoint_iSup_deligneSplitting_of_add_lt (k : ℤ) :
     Disjoint (mhs.WC k)
       (⨆ (rs : ℤ × ℤ) (_ : k < rs.1 + rs.2), mhs.deligneSplitting rs.1 rs.2) := by
   obtain ⟨M, hM⟩ := mhs.WC_top
   have key : ∀ n : ℤ, n ≤ M → Disjoint (mhs.WC n)
       (⨆ (rs : ℤ × ℤ) (_ : n < rs.1 + rs.2), mhs.deligneSplitting rs.1 rs.2) := by
     refine Int.leInductionDown ?_ ?_
-    · rw [mhs.iSup_deligneSplitting_eq_bot_of_WC_eq_top hM le_rfl]
+    · rw [mhs.iSup_deligneSplitting_of_add_lt_eq_bot_of_WC_eq_top hM le_rfl]
       exact disjoint_bot_right
     · intro n _ ih
       rw [disjoint_iff, ← le_bot_iff]
@@ -427,20 +462,37 @@ theorem WC_disjoint_iSup_deligneSplitting (k : ℤ) :
         exact Submodule.sub_mem _ (mhs.WC_monotone (by omega) hx1) hgW
       have hy0 : y = 0 := by simpa using ih.le_bot ⟨hyW, hy⟩
       have hxg : x = g := by rw [← hgy, hy0, add_zero]
-      exact (mhs.iSup_deligneSplitting_disjoint_WC n).le_bot ⟨by rw [hxg]; exact hg, hx1⟩
+      exact (mhs.iSup_deligneSplitting_add_eq_disjoint_WC n).le_bot ⟨by rw [hxg]; exact hg, hx1⟩
   rcases le_or_gt k M with h | h
   · exact key k h
-  · rw [mhs.iSup_deligneSplitting_eq_bot_of_WC_eq_top hM h.le]
+  · rw [mhs.iSup_deligneSplitting_of_add_lt_eq_bot_of_WC_eq_top hM h.le]
     exact disjoint_bot_right
+
+/-- The bigrading pieces other than `I^{p,q}` split by total degree: those of smaller total
+degree lie in `W_{p+q-1}`, those of the same total degree are the pieces of a different first
+index, and the remaining ones have larger total degree. -/
+private theorem iSup_ne_deligneSplittingFamily_le_iSup_ne_sup_WC_sup_iSup (p q : ℤ) :
+    (⨆ rs : ℤ × ℤ, ⨆ (_ : rs ≠ (p, q)), mhs.deligneSplitting rs.1 rs.2) ≤
+      ((⨆ r, ⨆ (_ : r ≠ p), mhs.deligneSplitting r (p + q - r)) ⊔ mhs.WC (p + q - 1)) ⊔
+        ⨆ (rs : ℤ × ℤ) (_ : p + q < rs.1 + rs.2), mhs.deligneSplitting rs.1 rs.2 := by
+  refine iSup₂_le fun rs hrs ↦ ?_
+  rcases lt_trichotomy (rs.1 + rs.2) (p + q) with h | h | h
+  · exact le_sup_of_le_left (le_sup_of_le_right
+      ((mhs.deligneSplitting_le_WC rs.1 rs.2).trans (mhs.WC_monotone (by omega))))
+  · refine le_sup_of_le_left (le_sup_of_le_left (le_iSup₂_of_le rs.1 ?_ (le_of_eq ?_)))
+    · intro hr
+      exact hrs (Prod.ext hr (by omega))
+    · congr 1
+      omega
+  · exact le_sup_of_le_right (le_iSup₂_of_le rs h le_rfl)
 
 /-- **The pieces of Deligne's bigrading are independent.**
 
 A vector of `I^{p,q}` lying in the sum of the other pieces first loses its part of larger total
-degree, which the previous lemma kills; what is left lies in `W_{p+q}` and splits into `W_{p+q-1}`
-and pieces of the same total degree but different first index, the latter lying in `F^{p+1}` and
-in `conj F^{q+1}` modulo `W_{p+q-1}`. Its class in `gr^W_{p+q}` therefore lies both in the Hodge
-component `H^{p,q}` and in the complementary `conj F^{q+1} ⊔ F^{p+1}`, so it vanishes and the
-vector falls into `W_{p+q-1}`, which `I^{p,q}` meets trivially. -/
+degree, which the previous theorem kills; what is left lies in `W_{p+q}` and splits into
+`W_{p+q-1}` and pieces of the same total degree but different first index, which together lie in
+the two filtration steps complementary to the Hodge component `H^{p,q}`. The vector therefore
+vanishes. -/
 theorem iSupIndep_deligneSplittingFamily : iSupIndep mhs.deligneSplittingFamily := by
   intro pq
   obtain ⟨p, q⟩ := pq
@@ -448,20 +500,9 @@ theorem iSupIndep_deligneSplittingFamily : iSupIndep mhs.deligneSplittingFamily 
   rw [disjoint_iff, ← le_bot_iff]
   rintro x ⟨hx1, hx2⟩
   have hxW : x ∈ mhs.WC (p + q) := mhs.deligneSplitting_le_WC p q hx1
-  have hbound : (⨆ rs : ℤ × ℤ, ⨆ (_ : rs ≠ (p, q)), mhs.deligneSplitting rs.1 rs.2) ≤
-      ((⨆ r, ⨆ (_ : r ≠ p), mhs.deligneSplitting r (p + q - r)) ⊔ mhs.WC (p + q - 1)) ⊔
-        ⨆ (rs : ℤ × ℤ) (_ : p + q < rs.1 + rs.2), mhs.deligneSplitting rs.1 rs.2 := by
-    refine iSup₂_le fun rs hrs ↦ ?_
-    rcases lt_trichotomy (rs.1 + rs.2) (p + q) with h | h | h
-    · exact le_sup_of_le_left (le_sup_of_le_right
-        ((mhs.deligneSplitting_le_WC rs.1 rs.2).trans (mhs.WC_monotone (by omega))))
-    · refine le_sup_of_le_left (le_sup_of_le_left (le_iSup₂_of_le rs.1 ?_ (le_of_eq ?_)))
-      · intro hr
-        exact hrs (Prod.ext hr (by omega))
-      · congr 1
-        omega
-    · exact le_sup_of_le_right (le_iSup₂_of_le rs h le_rfl)
-  obtain ⟨w, hw, y, hy, hwy⟩ := Submodule.mem_sup.1 (hbound hx2)
+  obtain ⟨w, hw, y, hy, hwy⟩ :=
+    Submodule.mem_sup.1
+      (mhs.iSup_ne_deligneSplittingFamily_le_iSup_ne_sup_WC_sup_iSup p q hx2)
   have hwW : w ∈ mhs.WC (p + q) :=
     (sup_le (iSup₂_le fun r _ ↦ (mhs.deligneSplitting_le_WC r (p + q - r)).trans
       (mhs.WC_monotone (by omega))) (mhs.WC_monotone (by omega))) hw
@@ -470,66 +511,17 @@ theorem iSupIndep_deligneSplittingFamily : iSupIndep mhs.deligneSplittingFamily 
       have hyx : y = x - w := by rw [← hwy]; abel
       rw [hyx]
       exact Submodule.sub_mem _ hxW hwW
-    simpa using (mhs.WC_disjoint_iSup_deligneSplitting (p + q)).le_bot ⟨hyW, hy⟩
+    simpa using (mhs.WC_disjoint_iSup_deligneSplitting_of_add_lt (p + q)).le_bot ⟨hyW, hy⟩
   have hxw : x = w := by rw [← hwy, hy0, add_zero]
   obtain ⟨z, hz, w', hw', hzw⟩ := Submodule.mem_sup.1 hw
-  have hzle : (⨆ r, ⨆ (_ : r ≠ p), mhs.deligneSplitting r (p + q - r)) ≤
-      ((mhs.F (p + 1) ⊓ mhs.WC (p + q)) ⊔
-        (mhs.conjF (q + 1) ⊓ mhs.WC (p + q))) ⊔ mhs.WC (p + q - 1) := by
-    refine iSup₂_le fun r hr ↦ ?_
-    rcases lt_or_gt_of_ne hr with h | h
-    · rw [deligneSplitting_def]
-      refine inf_le_right.trans (sup_le ?_ (iSup_le fun j ↦ ?_))
-      · exact le_sup_of_le_left (le_sup_of_le_right
-          (inf_le_inf (mhs.conjF_antitone (by omega)) (mhs.WC_monotone (by omega))))
-      · exact le_sup_of_le_right (inf_le_right.trans (mhs.WC_monotone (by omega)))
-    · exact le_sup_of_le_left (le_sup_of_le_left (le_inf
-        ((mhs.deligneSplitting_le_F r _).trans (mhs.F_antitone (by omega)))
-        ((mhs.deligneSplitting_le_WC r _).trans (mhs.WC_monotone (by omega)))))
-  obtain ⟨zz, hzz, z₃, hz₃, hzzz⟩ := Submodule.mem_sup.1 (hzle hz)
-  obtain ⟨z₁, hz₁, z₂, hz₂, hz₁₂⟩ := Submodule.mem_sup.1 hzz
-  have hz₃W : z₃ ∈ mhs.WC (p + q) := mhs.WC_monotone (by omega) hz₃
-  have hw'W : w' ∈ mhs.WC (p + q) := mhs.WC_monotone (by omega) hw'
-  have hxeq : x = z₁ + z₂ + z₃ + w' := by rw [hxw, ← hzw, ← hzzz, ← hz₁₂]
-  have hclassx : Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC (p + q)) ∈
-      (mhs.complexGradedHodgeStructure (p + q)).piece p := by
-    refine mhs.mk_mem_complexGradedHodgeStructure_piece (p + q) p ⟨x, hxW⟩
-      (mhs.deligneSplitting_le_F p q hx1) ?_
-    have hle := mhs.deligneSplitting_le_conjF_sup_WC p q hx1
-    -- Express the second bidegree `q` in the graded-piece convention `(p + q) - p`.
-    rw [conjF_def, show q = p + q - p by ring] at hle
-    exact (sup_le le_sup_left (le_sup_of_le_right (mhs.WC_monotone (by omega)))) hle
-  have hmk : (Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC (p + q)) :
-        weightGradedComplex mhs.WC (p + q)) =
-      Submodule.Quotient.mk (⟨z₁, hz₁.2⟩ : mhs.WC (p + q)) +
-        Submodule.Quotient.mk (⟨z₂, hz₂.2⟩ : mhs.WC (p + q)) := by
-    rw [← Submodule.Quotient.mk_add]
-    refine (Submodule.Quotient.eq _).2 (Submodule.mem_comap.2 ?_)
-    -- Unfold subtraction of quotient representatives to membership in the lower weight step.
-    change x - (z₁ + z₂) ∈ mhs.WC (p + q - 1)
-    have hrest : x - (z₁ + z₂) = z₃ + w' := by rw [hxeq]; abel
-    rw [hrest]
-    exact Submodule.add_mem _ hz₃ hw'
-  have hclass₁ : Submodule.Quotient.mk (⟨z₁, hz₁.2⟩ : mhs.WC (p + q)) ∈
-      (mhs.complexGradedHodgeStructure (p + q)).F (p + 1) := by
-    rw [complexGradedHodgeStructure_F, mem_complexGradedF_iff]
-    exact ⟨⟨z₁, hz₁.2⟩, hz₁.1, rfl⟩
-  have hclass₂ : Submodule.Quotient.mk (⟨z₂, hz₂.2⟩ : mhs.WC (p + q)) ∈
-      (mhs.complexGradedHodgeStructure (p + q)).conjF (p + q + 1 - p) := by
-    rw [complexGradedHodgeStructure_conjF, mem_complexGradedF_iff]
-    refine ⟨⟨z₂, hz₂.2⟩, ?_, rfl⟩
-    rw [← conjF_def]
-    exact mhs.conjF_antitone (by omega) hz₂.1
-  have hzero := ((mhs.complexGradedHodgeStructure (p + q)).isCompl_piece_conjF_sup_F
-    p).disjoint.le_bot ⟨hclassx, by
-      rw [hmk]
-      exact Submodule.add_mem _ (Submodule.mem_sup_right hclass₁)
-        (Submodule.mem_sup_left hclass₂)⟩
-  rw [Submodule.mem_bot] at hzero
-  have hxlow : x ∈ mhs.WC (p + q - 1) := Submodule.mem_comap.1
-    ((Submodule.Quotient.mk_eq_zero
-      ((mhs.WC (p + q - 1)).submoduleOf (mhs.WC (p + q)))).1 hzero)
-  exact (mhs.deligneSplitting_disjoint_WC p q).le_bot ⟨hx1, hxlow⟩
+  have hxmem : x ∈ (mhs.F (p + 1) ⊓ mhs.WC (p + q)) ⊔
+      ((mhs.conjF (q + 1) ⊓ mhs.WC (p + q)) ⊔ mhs.WC (p + q - 1)) := by
+    rw [hxw, ← hzw]
+    exact Submodule.add_mem _
+      (mhs.iSup_ne_deligneSplitting_le_F_inf_WC_sup_conjF_inf_WC_sup_WC p q hz)
+      (Submodule.mem_sup_right (Submodule.mem_sup_right hw'))
+  exact (Submodule.mem_bot ℂ).2
+    (mhs.eq_zero_of_mem_deligneSplitting rfl rfl rfl hx1 hxmem)
 
 /-- **Deligne's theorem.** The pieces `I^{p,q}` of Deligne's bigrading form an internal direct sum
 of the complex vector space underlying a mixed Hodge structure. -/
