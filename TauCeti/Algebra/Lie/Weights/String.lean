@@ -22,7 +22,7 @@ the degenerate direction `α = 0`, where it is all of `ℕ` as soon as `μ` is a
 
 ## Main definitions
 
-* `TauCeti.weightString M μ α hα`: the `α`-string above `μ`, as a `Finset ℕ`.
+* `TauCeti.weightString M hα μ`: the `α`-string above `μ`, as a `Finset ℕ`.
 
 ## Main results
 
@@ -79,9 +79,10 @@ universe u v w w₁
 
 section Distinct
 
-variable {K : Type u} {H : Type v} [Field K] [CharZero K] [LieRing H] [LieAlgebra K H]
+variable {K : Type u} {H : Type v} [Field K] [CharZero K] [AddCommMonoid H] [Module K H]
 
-/-- Translating `μ` by the multiples of a nonzero `α` gives pairwise distinct linear forms. -/
+/-- Translating `μ` by the multiples of a nonzero `α` gives pairwise distinct linear forms.  Only
+the `K`-module structure of `H` is involved, so no Lie bracket is assumed here. -/
 theorem injective_add_nsmul {alpha : Dual K H} (halpha : alpha ≠ 0) (mu : Dual K H) :
     Function.Injective fun j : ℕ ↦ ((mu + j • alpha : Dual K H) : H → K) := by
   intro a b hab
@@ -137,13 +138,14 @@ theorem mem_weightString_iff_formalCharacter_coeff_ne_zero [LinearWeights K H M]
 /-- **The string is an isomorphism invariant**: an equivalence of Lie modules carries the
 `χ`-weight space of one onto the `χ`-weight space of the other, so the two modules have the same
 `α`-string above any `μ`. -/
-theorem weightString_congr [LinearWeights K H M] {N : Type w₁} [AddCommGroup N] [Module K N]
-    [LieRingModule H N] [LieModule K H N] [LinearWeights K H N] [FiniteDimensional K N]
+theorem weightString_congr {N : Type w₁} [AddCommGroup N] [Module K N]
+    [LieRingModule H N] [LieModule K H N] [FiniteDimensional K N]
     (e : M ≃ₗ⁅K,H⁆ N) {alpha : Dual K H} (halpha : alpha ≠ 0) (mu : Dual K H) :
     weightString M halpha mu = weightString N halpha mu := by
+  have hker : (e : M →ₗ⁅K,H⁆ N).ker = ⊥ := (LieModuleHom.ker_eq_bot _).mpr e.injective
   ext j
-  rw [mem_weightString_iff_formalCharacter_coeff_ne_zero,
-    mem_weightString_iff_formalCharacter_coeff_ne_zero, formalCharacter_congr e]
+  rw [mem_weightString_iff, mem_weightString_iff, ← map_genWeightSpace_eq e, Ne, Ne,
+    ← LieModuleHom.le_ker_iff_map, hker, le_bot_iff]
 
 /-- **The string terminates**: past some `N`, no `μ + j • α` is a weight.  This is the bound that
 turns the Freudenthal inner sum into a finite one. -/
@@ -176,34 +178,27 @@ theorem weightString_eq_empty_iff {alpha : Dual K H} (halpha : alpha ≠ 0) (mu 
   rw [mem_weightString_iff, not_ne_iff]
 
 /-- **The multiplicities along the string add up to at most the dimension of `M`.** The forms
-`μ + j • α` for `j` in the string are pairwise distinct weights of `M`, and the weight spaces of a
-finite-dimensional triangularizable module are the summands of an internal direct sum. -/
-theorem sum_finrank_genWeightSpace_weightString_le [LinearWeights K H M]
-    [IsTriangularizable K H M] {alpha : Dual K H} (halpha : alpha ≠ 0) (mu : Dual K H) :
+`μ + j • α` for `j` in the string are pairwise distinct, so the corresponding weight spaces are an
+independent family of subspaces of `M`; their span therefore has the sum of their dimensions, and
+that span sits inside `M`. -/
+theorem sum_finrank_genWeightSpace_weightString_le {alpha : Dual K H} (halpha : alpha ≠ 0)
+    (mu : Dual K H) :
     ∑ j ∈ weightString M halpha mu,
         (finrank K (genWeightSpace M ((mu + j • alpha : Dual K H) : H → K)) : ℤ)
       ≤ (finrank K M : ℤ) := by
   classical
-  have hinj : ∀ a ∈ weightString M halpha mu, ∀ b ∈ weightString M halpha mu,
-      (mu + a • alpha : Dual K H) = mu + b • alpha → a = b :=
-    fun a _ b _ hab ↦ injective_add_nsmul halpha mu (congrArg DFunLike.coe hab)
-  have himage : (weightString M halpha mu).image (fun j : ℕ ↦ (mu + j • alpha : Dual K H))
-      ⊆ (formalCharacter K H M).coeff.support := by
-    intro chi hchi
-    obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp hchi
-    exact Finsupp.mem_support_iff.mpr
-      ((mem_weightString_iff_formalCharacter_coeff_ne_zero halpha mu).mp hj)
-  calc ∑ j ∈ weightString M halpha mu,
-        (finrank K (genWeightSpace M ((mu + j • alpha : Dual K H) : H → K)) : ℤ)
-      = ∑ j ∈ weightString M halpha mu, (formalCharacter K H M).coeff (mu + j • alpha) := by
-        exact Finset.sum_congr rfl fun j _ ↦ (formalCharacter_coeff _).symm
-    _ = ∑ chi ∈ (weightString M halpha mu).image fun j : ℕ ↦ (mu + j • alpha : Dual K H),
-          (formalCharacter K H M).coeff chi := (Finset.sum_image hinj).symm
-    _ ≤ ∑ chi ∈ (formalCharacter K H M).coeff.support, (formalCharacter K H M).coeff chi :=
-        Finset.sum_le_sum_of_subset_of_nonneg himage
-          fun chi _ _ ↦ formalCharacter_coeff_nonneg chi
-    _ = (finrank K M : ℤ) := by
-        rw [← sum_formalCharacter_coeff_eq_finrank K H M, Finsupp.sum]
+  have hindep : iSupIndep fun j : {j // j ∈ weightString M halpha mu} ↦
+      (genWeightSpace M ((mu + (j : ℕ) • alpha : Dual K H) : H → K) : Submodule K M) :=
+    (LieSubmodule.iSupIndep_toSubmodule.mpr (iSupIndep_genWeightSpace K H M)).comp
+      fun a b hab ↦ Subtype.ext (injective_add_nsmul halpha mu hab)
+  have hle : ∑ j : {j // j ∈ weightString M halpha mu},
+      finrank K ((genWeightSpace M ((mu + (j : ℕ) • alpha : Dual K H) : H → K) : Submodule K M))
+        ≤ finrank K M := by
+    rw [← finrank_iSup_eq_sum_finrank_of_iSupIndep hindep]
+    exact Submodule.finrank_le _
+  simp only [finrank_toSubmodule] at hle
+  rw [← Finset.sum_coe_sort (weightString M halpha mu)]
+  exact_mod_cast hle
 
 /-- A sum over the string is a sum over any finite superset of it, the terms off the string
 vanishing.  This is how a Freudenthal-style double sum is compared with a sum over a common
