@@ -14,7 +14,7 @@ public import TauCeti.RepresentationTheory.Quiver.Zigzag.Projective
 
 For a finite simple graph without isolated vertices, the vertex idempotents `e_i` of the zigzag
 relation quotient `Z` are primitive, so `Z e_i` is the indecomposable projective at `i` and the
-corner `e_i Z e_j` records the homomorphisms between two of them.  This file computes those
+corner `e_i Z e_j` records the homomorphisms from `Z e_i` to `Z e_j`.  This file computes those
 corners degree by degree for the path-length grading and assembles the resulting graded Cartan
 matrix.
 
@@ -62,7 +62,7 @@ than as a sum over all degrees.  The truncation loses nothing:
 vanishes, because the whole degree-`n` piece of the zigzag quotient does.
 
 The corners here are the graded homomorphism spaces of the vertex projectives only through the
-standard dictionary `Hom_Z(Z e_j, Z e_i) ≅ e_i Z e_j`, which this file does not construct; what it
+standard dictionary `Hom_Z(Z e_i, Z e_j) ≅ e_i Z e_j`, which this file does not construct; what it
 does prove about the projectives themselves is
 `TauCeti.restrictScalars_zigzagProjective_eq_iSup_zigzagCorner`, that `Z e_j` is the sum of the
 corners `e_i Z e_j` over `i`, together with the resulting numerical comparison
