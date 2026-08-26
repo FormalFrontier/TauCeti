@@ -39,6 +39,10 @@ the two marking permutations, hence the sign of the component permutation `𝕏�
 * `TauCeti.OddComponentGridDiagram`: a grid diagram with an odd number of link components.
 * `TauCeti.OddComponentGridDiagram.alexanderℤ`: the integer Alexander grading.
 * `TauCeti.OddComponentGridDiagram.bidegree`: the (`O`-Maslov, Alexander) degree of a grid state.
+* `TauCeti.OddComponentGridDiagram.alexanderSupport`: the Alexander degrees occupied by grid
+  states.
+* `TauCeti.OddComponentGridDiagram.maslovSupport`: the Maslov degrees occupied in a fixed
+  Alexander degree.
 
 ## Main results
 
@@ -361,6 +365,37 @@ noncomputable def bidegreeSupport : Finset (ℤ × ℤ) :=
 theorem mem_bidegreeSupport_iff (g : ℤ × ℤ) :
     g ∈ G.bidegreeSupport ↔ ∃ x : GridState n, G.bidegree x = g := by
   simp [bidegreeSupport]
+
+/-- The Alexander degrees occupied by the grid states of a diagram. -/
+noncomputable def alexanderSupport : Finset ℤ :=
+  G.bidegreeSupport.image Prod.snd
+
+/-- An Alexander degree is occupied exactly when some grid state has it. -/
+@[simp]
+theorem mem_alexanderSupport_iff (a : ℤ) :
+    a ∈ G.alexanderSupport ↔ ∃ x : GridState n, G.alexanderℤ x = a := by
+  simp only [alexanderSupport, Finset.mem_image, mem_bidegreeSupport_iff]
+  constructor
+  · rintro ⟨g, ⟨x, rfl⟩, rfl⟩
+    exact ⟨x, (G.bidegree_snd x).symm⟩
+  · rintro ⟨x, rfl⟩
+    exact ⟨G.bidegree x, ⟨x, rfl⟩, G.bidegree_snd x⟩
+
+/-- The `O`-Maslov degrees occupied by the grid states of a fixed Alexander degree. -/
+noncomputable def maslovSupport (a : ℤ) : Finset ℤ :=
+  (G.bidegreeSupport.filter fun g => g.2 = a).image Prod.fst
+
+/-- A Maslov degree is occupied in Alexander degree `a` exactly when some grid state has
+bidegree `(m, a)`. -/
+@[simp]
+theorem mem_maslovSupport_iff (a m : ℤ) :
+    m ∈ G.maslovSupport a ↔ ∃ x : GridState n, G.bidegree x = (m, a) := by
+  simp only [maslovSupport, Finset.mem_image, Finset.mem_filter, mem_bidegreeSupport_iff]
+  constructor
+  · rintro ⟨g, ⟨⟨x, rfl⟩, hg⟩, rfl⟩
+    exact ⟨x, Prod.ext rfl hg⟩
+  · rintro ⟨x, hx⟩
+    exact ⟨(m, a), ⟨⟨x, hx⟩, rfl⟩, rfl⟩
 
 end OddComponentGridDiagram
 

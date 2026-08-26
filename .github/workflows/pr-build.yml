@@ -123,7 +123,12 @@ jobs:
           OWNER="${REPO%%/*}"
           MB=$(gh api "repos/${{ github.repository }}/compare/${BASE_SHA}...${OWNER}:${SHA}" \
                  --jq '.merge_base_commit.sha' 2>/dev/null || true)
-          [ -n "$MB" ] || { MB="$BASE_SHA"; echo "::warning::merge-base unresolved; falling back to the base commit $BASE_SHA"; }
+          if [ -n "$MB" ]; then
+            echo "MERGEBASE_EXACT=1" >> "$GITHUB_ENV"
+          else
+            MB="$BASE_SHA"
+            echo "::warning::merge-base unresolved; falling back to the base commit $BASE_SHA"
+          fi
           {
             echo "num=$NUM"
             echo "base_sha=$BASE_SHA"
@@ -164,18 +169,78 @@ jobs:
           # runs the trusted base scripts/check-bump.sh and routes to a human if it is
           # anything other than a forward move (mathlib forward on its nominated branch,
           # transitive pins derived from mathlib, toolchain monotonic).
+          # Two independent questions: does this reach outside TauCeti/, and does it change the
+          # Lake pins. They used to share an `elif`, so a PR doing both was only ever answered as
+          # out-of-scope: BUMP stayed unset, check-bump.sh never ran, and the report step could
+          # not tell that apart from a PR with no pin change at all — so it posted the required
+          # bump-guard status green, asserting a validation that had not happened, to the human
+          # being asked to merge exactly that kind of PR by hand.
           if [ -z "$files" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine the overlay, routing to human"
-          elif echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
-            if echo "$files" | grep -qE '^lakefile\.toml$'; then
-              echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
+          else
+            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
+              if echo "$files" | grep -qE '^lakefile\.toml$'; then
+                echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
+              fi
+              echo "OUT_OF_SCOPE=1" >> "$GITHUB_ENV"
+              echo "::warning::PR changes paths outside TauCeti/ + Lake pins — its TauCeti/ is still sandbox-built against the trusted base (so the build result is visible), but merging needs human review"
             fi
-            echo "OUT_OF_SCOPE=1" >> "$GITHUB_ENV"
-            echo "::warning::PR changes paths outside TauCeti/ + Lake pins — its TauCeti/ is still sandbox-built against the trusted base (so the build result is visible), but merging needs human review"
-          elif echo "$files" | grep -qE '^lake-manifest\.json$|^lean-toolchain$'; then
+          fi
+          # Whether THIS pull request changes the Lake pins, asked of the immutable commit this
+          # run will post its statuses to, and of that commit's merge base.
+          #
+          # Not from the file list above, for two reasons. That list describes the pull request's
+          # CURRENT head, while the statuses describe the head named by the event: a branch that
+          # advances between the two makes the answer describe a different commit, and a branch
+          # that advances and then comes back defeats the final head re-check as well. And the
+          # list is capped — 300 entries for a merge group, 3000 for a pull request — so a pin
+          # file sitting past the end of it would read as no pin change at all.
+          #
+          # Comparing blob SHAs at two immutable commits has neither problem, and asking the
+          # merge base rather than the branch tip keeps the question "did this pull request
+          # change the pins" rather than "have the pins moved since this branch was cut".
+          # A merge group's head descends from its base_sha, so the fallback below is exact
+          # there. For an ordinary pull request it is a guess, and the pin question cannot be
+          # answered against a guess.
+          if [ "${{ github.event_name }}" != "merge_group" ] && [ "${{ env.MERGEBASE_EXACT }}" != "1" ]; then
+            pins_known=0
+            echo "::warning::merge base unresolved — pin state unknown"
+          else
+            pins_known=1
+          fi
+          pins_changed=0
+          # Whole tree entries, not just blob IDs. Git keeps the mode beside the object, and a
+          # symlink is a blob holding its target path — so `lean-toolchain` can be re-pointed at
+          # mode 120000 while REUSING the existing blob. Its ID would be unchanged, this would
+          # conclude no pin change, the validator would not run, and main would end up with a
+          # dangling symlink where its toolchain should be. Requiring an ordinary file at the head
+          # closes that separately from the comparison.
+          tree_entry() {
+            gh api "repos/${{ github.repository }}/git/trees/$1" \
+              --jq ".tree[] | select(.path==\"$2\") | [.mode, .type, .sha] | join(\" \")" 2>/dev/null
+          }
+          for f in lake-manifest.json lean-toolchain; do
+            mb_entry=$(tree_entry "${{ steps.pr.outputs.mergebase }}" "$f") || mb_entry=""
+            head_entry=$(tree_entry "${{ steps.pr.outputs.sha }}" "$f") || head_entry=""
+            if [ -z "$mb_entry" ] || [ -z "$head_entry" ]; then
+              pins_known=0
+              echo "::warning::could not read the tree entry for $f — pin state unknown"
+              continue
+            fi
+            case "$head_entry" in
+              "100644 blob "*) ;;
+              *) pins_known=0
+                 echo "::error::$f is not an ordinary file at the head ($head_entry)"
+                 continue ;;
+            esac
+            if [ "$mb_entry" != "$head_entry" ]; then pins_changed=1; fi
+          done
+          if [ "$pins_known" = "1" ]; then echo "PINS_KNOWN=1" >> "$GITHUB_ENV"; fi
+          if [ "$pins_changed" = "1" ]; then
             echo "BUMP=1" >> "$GITHUB_ENV"
             echo "::notice::PR changes Lake pins — validating as a forward bump before building"
           fi
+
           # The report step runs under `if: always()`. Mark successful completion explicitly so an
           # API or shell failure above cannot be misreported as a green scope decision.
           echo "SCOPE_OK=1" >> "$GITHUB_ENV"
@@ -391,6 +456,11 @@ jobs:
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
           if bash base/scripts/check-bump.sh base mergebase pr; then
+            # Proof the validator ran to completion and passed. The report step requires this
+            # rather than inferring it from the absence of BUMP_BAD: this step is skipped
+            # whenever INFRA is set, and INFRA has several causes that have nothing to do with
+            # the pins, so "not marked bad" and "validated" are different facts.
+            echo "BUMP_VALIDATED=1" >> "$GITHUB_ENV"
             echo "Lake-pin bump validated — building with the PR's pins."
           else
             echo "BUMP_BAD=1" >> "$GITHUB_ENV"
@@ -688,6 +758,19 @@ jobs:
           # both required statuses land together, before the auto-merge workflow_run fires.
           if [ "${{ env.BUMP_BAD }}" = "1" ]; then
             bg_state=failure; bg_desc="Lake pin change is not a validated forward bump — needs human review"
+          elif [ "${{ env.BUMP }}" = "1" ] && [ "${{ env.BUMP_VALIDATED }}" != "1" ]; then
+            # The pins changed and the validator never got to run — the build was abandoned
+            # earlier for some unrelated reason. Knowing a bump is present is not knowing it is
+            # a safe one, so do not say it is.
+            bg_state=failure; bg_desc="Lake pin change was not validated — the build did not get that far; re-run pr-build"
+          elif [ "${{ env.PINS_KNOWN }}" != "1" ]; then
+            # The pin state could not be established: an unresolved merge base, an unreadable
+            # tree entry, or a pin path that is not an ordinary file. Neither "validated" nor
+            # "no pin change" is something this run knows, so assert neither. Kept separate from
+            # INFRA deliberately, since INFRA is set by several things that say nothing about the
+            # pins — a conflict, a moved head — and keying off it would tell a merely conflicting
+            # pull request that its pin state was unknown when it is perfectly well known.
+            bg_state=failure; bg_desc="could not determine whether the Lake pins changed — re-run pr-build"
           elif [ "${{ env.HUMAN_LAKEFILE }}" = "1" ]; then
             bg_state=success; bg_desc="lakefile not auto-validated; trusted base config built — human merge required"
           else

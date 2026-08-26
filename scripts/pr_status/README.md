@@ -9,7 +9,7 @@ source of truth:
   carrying emoji that track the same states at a glance.
 
 [`core.py`](core.py) is that source of truth. It derives a PR's status from
-GitHub (PR state, the `build` commit status, the canonical
+GitHub (PR state, the `build` commit status, the newest repo-associated
 `<!--tauceti-scoreboard-->` comment's meta JSON, and the review engine's
 `<!--tauceti-review-in-progress-->` marker) and returns a neutral
 `{lifecycle, ci, review, review_inprogress}`. It writes nothing. The two *sinks*
@@ -29,7 +29,9 @@ reactions can never disagree:
 
 Both review signals (the scoreboard meta and the in-progress marker) are read
 only from comments by a repo-associated author (OWNER/MEMBER/COLLABORATOR), from
-one comment fetch, so a fork PR author cannot forge review state. Every reconcile
+one comment fetch, so a fork PR author cannot forge status labels or housekeeping
+state. This status-sink policy is deliberately narrower than auto-merge's
+newest-scoreboard policy. Every reconcile
 reads GitHub afresh and drives the sink to the correct state, so the same command
 powers the event-driven workflows and a one-shot backfill, and a transient hiccup
 self-heals on the next event. The only dependencies are python3's standard library
@@ -57,9 +59,9 @@ clears the label once the marker expires even if no other event fires.
 The review verdict itself comes from the scoreboard's durable per-rubric `states`
 map, not the latest round's `runs`: a reply/partial round re-runs only some
 rubrics, so `runs` alone can show a green latest round while another rubric still
-blocks. This mirrors the worker's `ledger_blocking` and the signal CI's merge
-close reads (see [`core.review_state`](core.py)), and falls back to `runs` only
-for a legacy scoreboard without a `states` map.
+blocks. This mirrors the worker's `ledger_blocking` and the per-rubric state map
+auto-merge reads (see [`core.review_state`](core.py)), and falls back to `runs`
+only for a legacy scoreboard without a `states` map.
 
 [`pr-labels.yml`](../../.github/workflows/pr-labels.yml) drives it. A first
 `resolve` job resolves the PR number once; the `label` job then keys its
