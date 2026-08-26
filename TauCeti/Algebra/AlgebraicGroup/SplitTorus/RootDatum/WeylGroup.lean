@@ -250,20 +250,25 @@ theorem coordinateRootDatumWeylGroupMulEquiv_coweightMap_apply
   rw [coordinateRootDatumWeylGroupMulEquiv_val, coordinatePermRootDatumAut]
   rfl
 
+/-- The Weyl-group action is the restriction of Mathlib's root-datum automorphism action, which
+is implemented by `RootPairing.Equiv.weightHom`. -/
+private theorem coordinateRootDatumWeylGroup_smul_eq_weightMap
+    (w : (coordinateRootDatum σ).weylGroup) (x : σ →₀ ℤ) :
+    w • x = w.1.weightMap x := by
+  rw [Subgroup.smul_def]
+  change (RootPairing.Equiv.weightHom (coordinateRootDatum σ) w.1) x = _
+  rw [RootPairing.Equiv.weightHom_apply, RootPairing.Equiv.weightEquiv_apply]
+
 /-- A coordinate permutation acts on the character lattice by moving each coordinate through
 that permutation. -/
 @[simp]
 theorem coordinateRootDatumWeylGroupMulEquiv_smul_apply
     (e : Equiv.Perm σ) (x : σ →₀ ℤ) (a : σ) :
     (coordinateRootDatumWeylGroupMulEquiv e • x) a = x (e.symm a) := by
-  rw [Subgroup.smul_def]
-  rw [show ((coordinateRootDatumWeylGroupMulEquiv e).1 :
-      RootPairing.Aut (coordinateRootDatum σ)) • x =
-        (coordinateRootDatumWeylGroupMulEquiv e).1.weightMap x from rfl]
-  simpa only [Finsupp.domLCongr_apply, Finsupp.domCongr_apply,
-    Finsupp.equivMapDomain_apply] using
-    congrArg (fun y : σ →₀ ℤ ↦ y a)
-      (coordinateRootDatumWeylGroupMulEquiv_weightMap_apply (σ := σ) e x)
+  rw [coordinateRootDatumWeylGroup_smul_eq_weightMap,
+    coordinateRootDatumWeylGroupMulEquiv_weightMap_apply,
+    Finsupp.domLCongr_apply, Finsupp.domCongr_apply,
+    Finsupp.equivMapDomain_apply]
 
 /-- The Weyl element attached to a coordinate permutation applies that permutation to both
 entries of every root index. -/
