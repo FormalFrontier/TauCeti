@@ -7,8 +7,8 @@ module
 
 public import Mathlib.Algebra.Category.ModuleCat.Projective
 public import Mathlib.Algebra.Homology.ShortComplex.ModuleCat
+public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import TauCeti.CategoryTheory.GrothendieckGroup.ProjectiveResolution
-public import TauCeti.LinearAlgebra.Dimension.Finite
 
 /-!
 # The Cartan map of a ring
