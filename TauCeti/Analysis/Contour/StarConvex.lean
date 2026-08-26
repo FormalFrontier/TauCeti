@@ -18,9 +18,9 @@ public import TauCeti.Analysis.Contour.Winding.StarConvex
 Layer 3 of the contour integration roadmap proves the homology Cauchy theorem, and Layers 2 and 4
 state the residue theorems, for a cycle that is **null-homologous** in the domain of holomorphy.
 That hypothesis is the right one — it is exactly what the proofs need — but it is not the one an
-application arrives with. An application arrives with an open disc, half-plane, strip, rectangle or
-slit plane, or with a convex open neighborhood of a rectangle or triangle, and a contour drawn
-inside it.
+application arrives with. An application arrives with an open disc, half-plane, strip, open
+rectangle or slit plane, or with a convex open neighborhood of a rectangle or triangle, and a
+contour drawn inside it.
 
 `TauCeti.Contour.isNullHomologous_of_starConvex` closes that gap: a closed curve in a set that is
 star-shaped about some point is null-homologous there. This file records the resulting
@@ -111,7 +111,7 @@ every closed piecewise-`C¹` curve contained in an open set that is star-shaped 
 
 This is the homology Cauchy theorem `TauCeti.Contour.homologyCauchyTheorem` with its
 null-homology hypothesis discharged by star-shapedness, and it is the form in which Cauchy's
-theorem is usually applied: on an open disc, half-plane, strip, rectangle, or slit plane. -/
+theorem is usually applied: on an open disc, half-plane, strip, open rectangle, or slit plane. -/
 theorem cauchyTheorem_starConvex (hstar : StarConvex ℝ x Ω) (hopen : IsOpen Ω)
     (hf : DifferentiableOn ℂ f Ω) (hγ : IsPiecewiseC1On γ a b)
     (hγΩ : ∀ t ∈ uIcc a b, γ t ∈ Ω) (hclosed : γ a = γ b) :
