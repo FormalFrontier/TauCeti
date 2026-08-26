@@ -17,8 +17,9 @@ import TauCeti.Data.ZMod.Divisibility
 
 Foundational results about the pair `Γ₁(N) ≤ Γ₀(N)` beyond Mathlib's
 `Mathlib.NumberTheory.ModularForms.CongruenceSubgroups`: `Γ₀(N)` normalizes `Γ₁(N)` (also
-after mapping to `GL₂(ℝ)`), the ratio of two `Γ₀(N)`-elements with equal lower-right entry
-lies in `Γ₁(N)`, the lower-right-entry map `Γ₀(N) →* (ZMod N)ˣ` is surjective, and the
+after mapping to `GL₂(S)`, over any commutative ring `S`), the ratio of two `Γ₀(N)`-elements
+with equal lower-right entry lies in `Γ₁(N)`, the lower-right-entry map `Γ₀(N) →* (ZMod N)ˣ`
+is surjective, and the
 location of `-I`: it always lies in `Γ₀(N)`, with lower-right entry the unit `-1`, and it
 lies in `Γ₁(N)` exactly when `N ∣ 2`; and every power of the translation matrix `T` lies in
 `Γ₁(N)`, at every level.  The file then computes the index of `Γ₀` at
@@ -55,8 +56,10 @@ infrastructure independent of the diamond operators.
   `CongruenceSubgroup.Gamma0_le_normalizer_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
 * `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
   `GL₂(ℝ)`.
-* `CongruenceSubgroup.Gamma1_map_inv_conjAct_eq`: `(Gamma1 N).map (mapGL ℝ)` is invariant
-  under conjugation by `Γ₀(N)` elements in `GL₂(ℝ)`.
+* `CongruenceSubgroup.mapGL_mem_normalizer_Gamma1_map` and
+  `CongruenceSubgroup.Gamma1_map_inv_conjAct_eq`: `(Gamma1 N).map (mapGL S)` is invariant
+  under conjugation by `Γ₀(N)` elements in `GL₂(S)`, over any commutative ring `S`, stated as
+  normalizer membership and — over `ℝ` — as a pointwise conjugation.
 * `CongruenceSubgroup.Gamma0Map_toHomUnits_surjective`: every unit of `ZMod N` is the
   lower-right entry of a matrix in `Γ₀(N)` (via strong approximation for `SL₂`).
 * `CongruenceSubgroup.gamma0Twist`: an explicit `Γ₀(N)` element whose lower-right entry is any
@@ -177,25 +180,26 @@ theorem Gamma1_map_le_Gamma0_map (N : ℕ) :
     (Gamma1 N).map (mapGL ℝ) ≤ (Gamma0 N).map (mapGL ℝ) :=
   Subgroup.map_mono (Gamma1_in_Gamma0 N)
 
+/-- **`Γ₀(N)` normalizes `Γ₁(N)` after mapping to `GL₂(S)`**, for any commutative ring `S`.
+This is `Gamma0_normalizes_Gamma1` transported along the monoid homomorphism `mapGL S`: the
+conjugate of an integral witness is again one.
+
+The ring is arbitrary because both rings occur: the slash action of a modular form lives over
+`ℝ`, while the Hecke triples of `Γ₀(N)` and `Γ₁(N)` live over `ℚ`. -/
+theorem mapGL_mem_normalizer_Gamma1_map (S : Type*) [CommRing S] (g : ↥(Gamma0 N)) :
+    mapGL S (g : SL(2, ℤ)) ∈
+      Subgroup.normalizer (((Gamma1 N).map (mapGL S) : Subgroup (GL (Fin 2) S)) :
+        Set (GL (Fin 2) S)) := by
+  exact Subgroup.le_normalizer_map (H := Gamma1 N) (mapGL S)
+    (Subgroup.mem_map.mpr ⟨g, Gamma0_le_normalizer_Gamma1 N g.property, rfl⟩)
+
 /-- `(Gamma1 N).map (mapGL ℝ)` is invariant under conjugation by `Gamma0 N` elements
-in `GL₂(ℝ)`. -/
+in `GL₂(ℝ)`: the pointwise-conjugation form of `mapGL_mem_normalizer_Gamma1_map`. -/
 theorem Gamma1_map_inv_conjAct_eq (g : ↥(Gamma0 N)) :
     ConjAct.toConjAct (mapGL ℝ (g : SL(2, ℤ)))⁻¹ •
-    (Gamma1 N).map (mapGL ℝ) = (Gamma1 N).map (mapGL ℝ) := by
-  ext y
-  simp only [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-    ConjAct.ofConjAct_toConjAct, map_inv, inv_inv, Subgroup.mem_map]
-  constructor
-  · rintro ⟨σ, hσ, hσy⟩
-    have hmem : (g : SL(2, ℤ))⁻¹ * σ * (g : SL(2, ℤ)) ∈ Gamma1 N := by
-      simpa [inv_inv] using Gamma0_normalizes_Gamma1
-        ⟨(g : SL(2, ℤ))⁻¹, (Gamma0 N).inv_mem g.property⟩ σ hσ
-    exact ⟨_, hmem, by
-      simp only [map_mul, map_inv, hσy]
-      group⟩
-  · rintro ⟨σ, hσ, rfl⟩
-    exact ⟨(g : SL(2, ℤ)) * σ * (g : SL(2, ℤ))⁻¹,
-      Gamma0_normalizes_Gamma1 g σ hσ, by simp [map_mul, map_inv]⟩
+    (Gamma1 N).map (mapGL ℝ) = (Gamma1 N).map (mapGL ℝ) :=
+  Subgroup.conjAct_pointwise_smul_eq_self
+    (Subgroup.inv_mem _ (mapGL_mem_normalizer_Gamma1_map ℝ g))
 
 /-- If two `Γ₀(N)` elements have equal image under `Gamma0Map`, their ratio
 `g₁ · g₂⁻¹` lies in `Γ₁(N)` (as an `SL₂(ℤ)` element). -/
@@ -206,6 +210,19 @@ lemma mul_inv_mem_Gamma1_of_Gamma0Map_eq (g₁ g₂ : ↥(Gamma0 N))
     rw [← div_eq_mul_inv]
     exact (MonoidHom.div_mem_ker_iff (Gamma0Map N)).mpr heq
   exact (Gamma1_mem _ _).mpr <| (Gamma1_to_Gamma0_mem _).mp hker
+
+/-- **Two `Γ₀(N)` elements have the same lower-right entry exactly when their ratio lies in
+`Γ₁(N)`.** The `mpr` direction is `mul_inv_mem_Gamma1_of_Gamma0Map_eq`; the converse reads the
+membership back through `Gamma1_mem'`, which says that `Gamma0Map N` is trivial on `Γ₁(N)`. -/
+lemma mul_inv_mem_Gamma1_iff_Gamma0Map_eq (g₁ g₂ : ↥(Gamma0 N)) :
+    ((g₁ : SL(2, ℤ)) * (g₂ : SL(2, ℤ))⁻¹) ∈ Gamma1 N ↔ Gamma0Map N g₁ = Gamma0Map N g₂ := by
+  refine ⟨fun hmem ↦ ?_, mul_inv_mem_Gamma1_of_Gamma0Map_eq g₁ g₂⟩
+  have hcoe : ((g₁ * g₂⁻¹ : ↥(Gamma0 N)) : SL(2, ℤ)) ∈ Gamma1 N := by
+    rwa [Subgroup.coe_mul, Subgroup.coe_inv]
+  have hker : (g₁ * g₂⁻¹ : ↥(Gamma0 N)) ∈ (Gamma0Map N).ker :=
+    Gamma1_mem'.mp ((Gamma1_to_Gamma0_mem _).mpr ((Gamma1_mem _ _).mp hcoe))
+  rw [← div_eq_mul_inv] at hker
+  exact (MonoidHom.div_mem_ker_iff (Gamma0Map N)).mp hker
 
 /-- The diagonal matrix `!![u⁻¹, 0; 0, u]` as an element of `SL₂(ZMod N)`. -/
 private def diagUnit (u : (ZMod N)ˣ) : SpecialLinearGroup (Fin 2) (ZMod N) :=

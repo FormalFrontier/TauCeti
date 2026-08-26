@@ -7,6 +7,8 @@ module
 
 -- `GL` and `Matrix.GeneralLinearGroup.det` occur in the statements below.
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
+-- Permutation matrices provide the canonical normalizer action on diagonal matrices.
+public import Mathlib.LinearAlgebra.Matrix.Permutation
 -- `MulEquiv.piUnits` identifies the units of a product with the product of the units, and is what
 -- makes the diagonal embedding a homomorphism.
 public import Mathlib.Algebra.Group.Pi.Units
@@ -93,6 +95,8 @@ The action of the torus on the coordinate lines of the standard representation i
 * `TauCeti.isDiag_of_commute_diagonal`: a matrix commuting with a diagonal matrix of pairwise
   distinct entries is itself diagonal.
 * `TauCeti.mem_diagonalTorus_iff`: membership in the torus is diagonality of the matrix.
+* `TauCeti.mul_diagGL_of_coe_eq_permMatrix`: a permutation matrix moves past a diagonal by
+  relabelling its entries.
 * `TauCeti.natCard_diagonalTorus`: the torus has `(q - 1)ⁿ` elements over a division ring with `q`
   elements.
 * `TauCeti.centralizer_diagonalTorus`: the diagonal torus is its own centralizer.
@@ -149,6 +153,20 @@ theorem diagGL_injective {ι : Type*} [Fintype ι] [DecidableEq ι] :
   apply Units.ext
   have := congrArg (fun g : GL ι k ↦ (g : Matrix ι ι k) i i) h
   simpa using this
+
+/-- A general-linear element whose underlying matrix is the permutation matrix of `π` moves
+past a diagonal matrix by relabelling its diagonal entries along `π`. -/
+theorem mul_diagGL_of_coe_eq_permMatrix {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (g : GL ι k) (π : Equiv.Perm ι) (hg : (g : Matrix ι ι k) = π.permMatrix k)
+    (d : ι → kˣ) :
+    g * diagGL d = diagGL (d ∘ π) * g := by
+  apply Units.ext
+  simp only [Units.val_mul, diagGL_coe, hg]
+  rw [PEquiv.toMatrix_toPEquiv_mul, PEquiv.mul_toMatrix_toPEquiv]
+  ext i j
+  rw [Matrix.submatrix_apply, Matrix.submatrix_apply, id_eq, id_eq,
+    Matrix.diagonal_apply, Matrix.diagonal_apply]
+  exact if_congr π.eq_symm_apply.symm rfl rfl
 
 /-- The diagonal entries of an invertible diagonal matrix are units: the inverse matrix supplies
 the inverse entry, because for a diagonal matrix each of the two products defining invertibility

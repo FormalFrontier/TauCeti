@@ -256,43 +256,37 @@ theorem sum_apply {ι : Type*} {M N : ComoduleCat.{u, v, w} R C} (s : Finset ι)
 /-- Composition in `ComoduleCat` is additive in the left morphism. -/
 @[simp]
 theorem add_comp {M N P : ComoduleCat.{u, v, w} R C} (f g : M ⟶ N) (h : N ⟶ P) :
-    (f + g) ≫ h = f ≫ h + g ≫ h := by
-  ext m
-  exact map_add h.toLinearMap (f m) (g m)
+    (f + g) ≫ h = f ≫ h + g ≫ h :=
+  Comodule.Hom.comp_add h f g
 
 /-- Composition in `ComoduleCat` is additive in the right morphism. -/
 @[simp]
 theorem comp_add {M N P : ComoduleCat.{u, v, w} R C} (f : M ⟶ N) (g h : N ⟶ P) :
-    f ≫ (g + h) = f ≫ g + f ≫ h := by
-  ext m
-  rfl
+    f ≫ (g + h) = f ≫ g + f ≫ h :=
+  Comodule.Hom.add_comp g h f
 
 /-- Composition in `ComoduleCat` is compatible with scalar multiplication in the left
 morphism. -/
 @[simp]
 theorem smul_comp {M N P : ComoduleCat.{u, v, w} R C} (r : R) (f : M ⟶ N) (g : N ⟶ P) :
-    (r • f) ≫ g = r • (f ≫ g) := by
-  ext m
-  exact map_smul g.toLinearMap r (f m)
+    (r • f) ≫ g = r • (f ≫ g) :=
+  Comodule.Hom.comp_smul r g f
 
 /-- Composition in `ComoduleCat` is compatible with scalar multiplication in the right
 morphism. -/
 @[simp]
 theorem comp_smul {M N P : ComoduleCat.{u, v, w} R C} (r : R) (f : M ⟶ N) (g : N ⟶ P) :
-    f ≫ (r • g) = r • (f ≫ g) := by
-  ext m
-  rfl
+    f ≫ (r • g) = r • (f ≫ g) :=
+  Comodule.Hom.smul_comp r g f
 
 /-- Composing the zero morphism on the left gives the zero morphism. -/
-theorem zero_comp {M N P : ComoduleCat.{u, v, w} R C} (f : N ⟶ P) : (0 : M ⟶ N) ≫ f = 0 := by
-  ext m
-  exact map_zero f.toLinearMap
+theorem zero_comp {M N P : ComoduleCat.{u, v, w} R C} (f : N ⟶ P) : (0 : M ⟶ N) ≫ f = 0 :=
+  Comodule.Hom.comp_zero f
 
 /-- Composing the zero morphism on the right gives the zero morphism. -/
 theorem comp_zero {M N P : ComoduleCat.{u, v, w} R C} (f : M ⟶ N) :
-    f ≫ (0 : N ⟶ P) = 0 := by
-  ext m
-  rfl
+    f ≫ (0 : N ⟶ P) = 0 :=
+  Comodule.Hom.zero_comp f
 
 /-- `ComoduleCat` has the standard categorical zero morphisms. -/
 instance hasZeroMorphisms :

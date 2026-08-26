@@ -203,6 +203,14 @@ theorem DualFeasible.ofReal_kantorovichDualValue_le_transportCost (h : DualFeasi
   ENNReal.ofReal (kantorovichDualValue μ ν φ ψ) ≤ transportCost c μ ν :=
   le_transportCost fun _π hπ ↦ h.ofReal_kantorovichDualValue_le_lintegral hφ hψ hπ
 
+/-- **Kantorovich weak duality in finite real form.** If the primal value is finite, every
+integrable feasible dual value is at most its real representative. -/
+theorem DualFeasible.kantorovichDualValue_le_toReal_transportCost (h : DualFeasible c φ ψ)
+    (hne : transportCost c μ ν ≠ ⊤) (hφ : Integrable φ μ) (hψ : Integrable ψ ν) :
+    kantorovichDualValue μ ν φ ψ ≤ (transportCost c μ ν).toReal :=
+  (ENNReal.ofReal_le_iff_le_toReal hne).1
+    (h.ofReal_kantorovichDualValue_le_transportCost hφ hψ)
+
 /-- **Kantorovich weak duality.** Every integrable feasible dual value is at most the primal
 transport cost. The comparison in `EReal` remains meaningful when the primal value is `∞`. -/
 theorem DualFeasible.kantorovichDualValue_le_transportCost (h : DualFeasible c φ ψ)
