@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.MonoidAlgebra.Defs
+public import TauCeti.Algebra.Lie.Weights.Exact
 public import TauCeti.Algebra.Lie.Weights.Integrality
 public import TauCeti.Algebra.Lie.Weights.Prod
 public import TauCeti.Algebra.Lie.Weights.TensorProduct
@@ -58,6 +59,8 @@ multiplicativity on tensor products expressible.
   `TauCeti.genWeightSpace_prod_eq_bot_iff` and
   `TauCeti.instLinearWeightsProd` the consequences a product of modules needs to have a character
   at all.
+* `TauCeti.formalCharacter_eq_add_of_exact`: **additivity on short exact sequences.** The
+  character of the middle module is the sum of the characters of the submodule and quotient.
 * `TauCeti.finrank_genWeightSpace_tensorProduct`: the multiplicity of a tensor-product weight is
   the convolution of the multiplicities in the two factors.
 * `TauCeti.formalCharacter_tensor`: **multiplicativity.** The character of a tensor product is the
@@ -75,9 +78,9 @@ The support of the coefficient function is finite because it is contained in the
 finite type `LieModule.Weight K L M` under `LieModule.Weight.toLinear`, so the coefficients are
 assembled with `Finsupp.ofSupportFinite`.
 
-Additivity is stated for the binary product `M × N` of `TauCeti/Algebra/Lie/Prod.lean` rather than
-for a short exact sequence: splitting an extension is Weyl's complete reducibility theorem, which
-is not available at this point of the development and whose usual proof consumes the weight theory.
+Additivity for a short exact sequence is proved directly, without choosing a splitting: a
+surjective Lie-module map is surjective on each generalized weight space by
+`TauCeti.genWeightSpaceMap_surjective`, and rank-nullity gives the coefficient identity.
 
 ## References
 
@@ -281,6 +284,32 @@ theorem formalCharacter_prod :
   simp
 
 end Prod
+
+/-! ### Additivity on short exact sequences -/
+
+section Exact
+
+variable {K : Type u} {L : Type v} {M : Type w} {N : Type w₁} {P : Type*}
+  [Field K] [LieRing L] [LieAlgebra K L] [LieRing.IsNilpotent L]
+  [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+  [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
+  [AddCommGroup P] [Module K P] [LieRingModule L P] [LieModule K L P]
+  [LinearWeights K L M] [LinearWeights K L N] [LinearWeights K L P]
+  [FiniteDimensional K M] [FiniteDimensional K N] [FiniteDimensional K P]
+  [IsTriangularizable K L N] [IsTriangularizable K L P]
+
+/-- **Formal characters are additive on short exact sequences.** If `M → N → P` is exact, the
+first map is injective and the second is surjective, then the character of `N` is the sum of the
+characters of `M` and `P`. -/
+theorem formalCharacter_eq_add_of_exact (f : M →ₗ⁅K,L⁆ N) (g : N →ₗ⁅K,L⁆ P)
+    (h : Function.Exact f g) (hf : Function.Injective f) (hg : Function.Surjective g) :
+    formalCharacter K L N = formalCharacter K L M + formalCharacter K L P := by
+  refine AddMonoidAlgebra.ext (Finsupp.ext fun χ ↦ ?_)
+  simp only [formalCharacter_coeff, AddMonoidAlgebra.coeff_add, Finsupp.add_apply]
+  exact_mod_cast (finrank_genWeightSpace_add_finrank_genWeightSpace_eq f g h hf hg
+    (χ : L → K)).symm
+
+end Exact
 
 /-! ### Multiplicativity -/
 
