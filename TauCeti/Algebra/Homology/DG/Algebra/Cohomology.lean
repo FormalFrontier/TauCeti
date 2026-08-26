@@ -40,7 +40,7 @@ cycles and the cohomology algebra is the associated `RingCon` quotient.
   and the map taking a cycle to its class.
 * `TauCeti.IsDGAlgebra.cohomologyGrading`: the grading of the cohomology algebra by the classes of
   homogeneous cycles.
-* `TauCeti.cyclesAlgEquivCohomologyOfZero`: a graded algebra with zero differential is its own
+* `TauCeti.algEquivCohomologyOfZero`: a graded algebra with zero differential is its own
   cohomology.
 
 ## Main results
@@ -51,6 +51,8 @@ cycles and the cohomology algebra is the associated `RingCon` quotient.
   degrees are independent.
 * `TauCeti.IsDGAlgebra.instGradedAlgebraCohomologyGrading`: **the cohomology of a differential
   graded algebra is a graded algebra.**
+* `TauCeti.map_algEquivCohomologyOfZero`: the identification of a graded algebra carrying the zero
+  differential with its own cohomology matches the two gradings degreewise.
 
 This advances `TauCetiRoadmap/DGAInfinity/README.md`, Layer 1, item "DG algebras, categories,
 modules, and bimodules", specifically its first request for "cycles, boundaries, and the induced
@@ -266,15 +268,31 @@ theorem toCohomology_bijective_isDGAlgebra_zero :
 
 /-- **A graded algebra with zero differential is its own cohomology.**  Every element is a cycle by
 `TauCeti.cycles_isDGAlgebra_zero` and the only boundary is zero, so passing to cohomology changes
-nothing. -/
-noncomputable def cyclesAlgEquivCohomologyOfZero :
-    (isDGAlgebra_zero 𝒜).cycles ≃ₐ[R] (isDGAlgebra_zero 𝒜).cohomology :=
-  AlgEquiv.ofBijective _ (toCohomology_bijective_isDGAlgebra_zero 𝒜)
+nothing.  That this identification is one of *graded* algebras is
+`TauCeti.map_algEquivCohomologyOfZero`. -/
+noncomputable def algEquivCohomologyOfZero : A ≃ₐ[R] (isDGAlgebra_zero 𝒜).cohomology :=
+  (Subalgebra.topEquiv.symm.trans
+      (Subalgebra.equivOfEq _ _ (cycles_isDGAlgebra_zero 𝒜).symm)).trans
+    (AlgEquiv.ofBijective _ (toCohomology_bijective_isDGAlgebra_zero 𝒜))
 
 @[simp]
-theorem cyclesAlgEquivCohomologyOfZero_apply (z : (isDGAlgebra_zero 𝒜).cycles) :
-    cyclesAlgEquivCohomologyOfZero 𝒜 z = (isDGAlgebra_zero 𝒜).toCohomology z :=
-  AlgEquiv.ofBijective_apply _ _ z
+theorem algEquivCohomologyOfZero_apply (a : A) :
+    algEquivCohomologyOfZero 𝒜 a =
+      (isDGAlgebra_zero 𝒜).toCohomology ⟨a, (isDGAlgebra_zero 𝒜).mem_cycles.mpr rfl⟩ :=
+  (rfl)
+
+/-- The identification of a graded algebra with zero differential with its own cohomology respects
+the gradings: it carries the degree-`p` piece of `𝒜` onto the degree-`p` piece of the cohomology. -/
+theorem map_algEquivCohomologyOfZero (p : ℤ) :
+    (𝒜 p).map (algEquivCohomologyOfZero 𝒜).toLinearMap =
+      (isDGAlgebra_zero 𝒜).cohomologyGrading p := by
+  ext x
+  rw [Submodule.mem_map, IsDGAlgebra.mem_cohomologyGrading]
+  constructor
+  · rintro ⟨a, ha, rfl⟩
+    exact ⟨⟨a, (isDGAlgebra_zero 𝒜).mem_cycles.mpr rfl⟩, ha, rfl⟩
+  · rintro ⟨z, hz, rfl⟩
+    exact ⟨(z : A), hz, rfl⟩
 
 end ZeroDifferential
 
