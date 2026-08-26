@@ -21,7 +21,8 @@ codimension one, this file builds the sheaf of `𝒪_X`-modules
 as an `𝒪_X`-submodule of the sheaf `𝒦_X` of rational functions of
 `TauCeti/AlgebraicGeometry/Modules/RationalFunctions.lean`. Regularity in codimension one enters
 as the hypothesis that the local ring at every codimension-one point is a discrete valuation
-ring: it is exactly what makes `ord_x` subadditive, hence the displayed set a submodule.
+ring. Under this hypothesis, the nonarchimedean order inequality makes the displayed set a
+submodule.
 
 ## Main declarations
 
@@ -77,9 +78,9 @@ open Scheme in
 /-- The sections of `𝒪_X(D)` over an open subset `U`: the rational functions vanishing, or with
 order at least `-D(x)`, at every codimension-one point `x` of `U`.
 
-Closure under addition is subadditivity of the order of vanishing, which needs the
-codimension-one local rings to be discrete valuation rings; closure under multiplication by a
-regular function is `Scheme.ord_le_smul`. -/
+Closure under addition uses the nonarchimedean order inequality available when the codimension-one
+local rings are discrete valuation rings; closure under multiplication by a regular function is
+`Scheme.ord_le_smul`. -/
 def sections (D : SchemeWeilDivisor X) (U : X.Opens) :
     Submodule Γ(X, U) Γ(rationalFunctions X, U) where
   carrier := {s | ∀ (x : CodimensionOnePoint X) (hx : (x : X) ∈ U),

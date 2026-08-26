@@ -55,8 +55,10 @@ lemma ord_germToFunctionField_nonneg {U : X.Opens} [Nonempty U] (a : Γ(X, U)) {
   · simp
   · have h := Scheme.ord_le_smul hx ha (1 : X.functionField)
     let _ : Nonempty (⊤ : X.Opens) := ⟨⟨x, trivial⟩⟩
+    -- Naming this proof fixes the open set before elaborating `ord_of_isUnit`.
+    have hx_top : x ∈ (⊤ : X.Opens) := by simp
     have h_one : X.ord (1 : X.functionField) x = 0 := by
-      simpa using X.ord_of_isUnit (U := ⊤) isUnit_one (show x ∈ (⊤ : X.Opens) by trivial)
+      simpa using X.ord_of_isUnit (U := ⊤) isUnit_one hx_top
     rwa [Algebra.smul_def, mul_one, RingHom.algebraMap_toAlgebra, h_one] at h
 
 end Scheme
