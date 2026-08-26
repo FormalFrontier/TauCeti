@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.MeasureTheory.Function.Lp.BallAverage
-public import TauCeti.Topology.MetricSpace.Equicontinuity
 public import Mathlib.MeasureTheory.Function.LpSpace.Basic
+public import Mathlib.Topology.ContinuousMap.Bounded.ArzelaAscoli
 
 /-!
 # The Fréchet--Kolmogorov compactness criterion in `Lᵖ`
@@ -31,11 +31,11 @@ bounded and has a translation-invariant modulus but is not tight; neither is tot
 `Lᵖ` bound is carried explicitly, as in the classical statements.
 
 The tightness hypothesis is automatic for a family supported in a fixed bounded set, which is the
-form `TauCeti.totallyBounded_of_translation_of_support` records and the form that
-Rellich--Kondrachov — Lane A.6 of `TauCetiRoadmap/PDE/README.md`, the compactness of
-`W^{1,p}(Ω) ↪ L^p(Ω)` for bounded `Ω` — consumes: a `W^{1,p}_0(Ω)` function extended by zero
-vanishes off `Ω`, and its translation increments are controlled by `‖h‖ ‖∇u‖_p` through
-`TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient`.
+form `TauCeti.totallyBounded_of_translation_of_isBounded_support` records. This is the form that
+Rellich--Kondrachov for `W^{1,p}_0(Ω)` consumes: extending by zero makes a function vanish off `Ω`,
+and its translation increments are controlled by `‖h‖ ‖∇u‖_p` through
+`TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient`. The `W^{1,p}(Ω)` clause of
+Lane A.6 additionally needs an extension operator and boundary regularity.
 
 ## The proof
 
@@ -43,13 +43,12 @@ The two halves of the argument are already available. Smoothing is done by the *
 `TauCeti.ballAverage`, whose four estimates are in
 `TauCeti/MeasureTheory/Function/Lp/BallAverage.lean`: at a fixed scale `r` the ball averages of
 the family are uniformly bounded (`TauCeti.enorm_ballAverage_le`), uniformly equicontinuous
-(`TauCeti.enorm_ballAverage_add_sub_ballAverage_le`, packaged for a family here as
+(`TauCeti.enorm_ballAverage_add_sub_ballAverage_le`, packaged for a family as
 `TauCeti.uniformEquicontinuous_ballAverage`) and, once `r` is smaller than the translation modulus
 of the family at `ε`, uniformly within `ε` of the family itself
 (`TauCeti.eLpNorm_ballAverage_sub_le`). Compactness of that smoothed family is
-Arzelà--Ascoli in the finite-net form `TauCeti.exists_finite_approx_of_uniformEquicontinuousOn`,
-which returns finitely many *indices* whose ball averages approximate all the others uniformly on
-a large closed ball `K`.
+Mathlib's `BoundedContinuousFunction.arzela_ascoli`, applied after restricting the ball averages
+to a large compact closed ball `K`.
 
 Putting the two together, `‖f - f'‖_p` for `f'` the chosen approximant is split as the `Lᵖ`
 seminorm over `K` plus the one over its complement. Off `K` tightness bounds each of `f` and `f'`
@@ -58,14 +57,12 @@ is uniformly at most `η` there, and `μ K ^ (1/p) η` is made small by the choi
 
 ## Main declarations
 
-* `TauCeti.uniformEquicontinuous_ballAverage`: the ball averages, at a fixed positive scale, of a
-  family with uniformly small `Lᵖ` translation increments are uniformly equicontinuous.
 * `TauCeti.totallyBounded_of_translation_of_tight`,
   `TauCeti.isCompact_closure_of_translation_of_tight`: the Fréchet--Kolmogorov criterion, in
   totally bounded and in relatively compact form.
-* `TauCeti.totallyBounded_of_translation_of_support`,
-  `TauCeti.isCompact_closure_of_translation_of_support`: the criterion for a family supported in
-  a fixed bounded set, in totally bounded and in relatively compact form.
+* `TauCeti.totallyBounded_of_translation_of_isBounded_support`,
+  `TauCeti.isCompact_closure_of_translation_of_isBounded_support`: the criterion for a family
+  supported in a fixed bounded set, in totally bounded and in relatively compact form.
 
 ## References
 
@@ -83,44 +80,63 @@ namespace TauCeti
 open MeasureTheory Metric Set
 open scoped ENNReal
 
+section LpApproximation
+
+variable {α F : Type*} [MeasurableSpace α] [NormedAddCommGroup F]
+  {mu : Measure α} {p : ℝ≥0∞}
+
+/-- An `Lᵖ` comparison estimate obtained by approximating two functions uniformly on a measurable
+set and controlling their tails off that set. This is the three-term-plus-tail estimate used in
+the Fréchet--Kolmogorov argument. -/
+theorem eLpNorm_sub_le_of_approxOn_of_tails {K : Set α} (hp : 1 ≤ p) (hp' : p ≠ ∞)
+    (hK : MeasurableSet K) {f f' A A' : α → F} {a b : ℝ≥0∞} {η : ℝ}
+    (hf : AEStronglyMeasurable f mu) (hf' : AEStronglyMeasurable f' mu)
+    (hA : AEStronglyMeasurable A mu) (hA' : AEStronglyMeasurable A' mu)
+    (hη : 0 ≤ η) (hAf : eLpNorm (A - f) p mu ≤ a)
+    (hA'f' : eLpNorm (A' - f') p mu ≤ a)
+    (hmid : ∀ x ∈ K, dist (A x) (A' x) ≤ η)
+    (htail : eLpNorm (Kᶜ.indicator f) p mu ≤ b)
+    (htail' : eLpNorm (Kᶜ.indicator f') p mu ≤ b) :
+    eLpNorm (f - f') p mu ≤
+      a + (ENNReal.ofReal η * mu K ^ (1 / p.toReal) + a) + (b + b) := by
+  have hsplit : (f - f' : α → F) = K.indicator (f - f') + Kᶜ.indicator (f - f') :=
+    (Set.indicator_self_add_compl K _).symm
+  have htail_sub : eLpNorm (Kᶜ.indicator (f - f')) p mu ≤ b + b := by
+    rw [Set.indicator_sub']
+    exact (eLpNorm_sub_le (hf.indicator hK.compl) (hf'.indicator hK.compl) hp).trans
+      (add_le_add htail htail')
+  have hnear : eLpNorm (K.indicator (f - f')) p mu ≤
+      a + (ENNReal.ofReal η * mu K ^ (1 / p.toReal) + a) := by
+    have hdecomp : K.indicator (f - f' : α → F) =
+        K.indicator (f - A) + (K.indicator (A - A') + K.indicator (A' - f')) := by
+      rw [← Set.indicator_add', ← Set.indicator_add']
+      congr 1
+      abel
+    rw [hdecomp]
+    refine (eLpNorm_add_le ((hf.sub hA).indicator hK)
+      (((hA.sub hA').indicator hK).add ((hA'.sub hf').indicator hK)) hp).trans ?_
+    refine add_le_add ?_ ((eLpNorm_add_le ((hA.sub hA').indicator hK)
+      ((hA'.sub hf').indicator hK) hp).trans (add_le_add ?_ ?_))
+    · refine (eLpNorm_indicator_le _).trans ?_
+      rw [← neg_sub A f, eLpNorm_neg]
+      exact hAf
+    · exact eLpNorm_indicator_sub_le_of_dist_bdd mu hp' hK hη hmid
+    · exact (eLpNorm_indicator_le _).trans hA'f'
+  calc
+    eLpNorm (f - f') p mu
+        ≤ eLpNorm (K.indicator (f - f')) p mu + eLpNorm (Kᶜ.indicator (f - f')) p mu := by
+          conv_lhs => rw [hsplit]
+          exact eLpNorm_add_le ((hf.sub hf').indicator hK) ((hf.sub hf').indicator hK.compl) hp
+    _ ≤ a + (ENNReal.ofReal η * mu K ^ (1 / p.toReal) + a) + (b + b) :=
+      add_le_add hnear htail_sub
+
+end LpApproximation
+
 section FrechetKolmogorov
 
 variable {E F : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E] [ProperSpace E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
   {mu : Measure E} [mu.IsAddHaarMeasure] {p : ℝ≥0∞} [Fact (1 ≤ p)]
-
-omit [FiniteDimensional ℝ F] [Fact (1 ≤ p)] in
-/-- At a fixed positive scale, the ball averages of a family of `Lᵖ` functions whose translation
-increments are uniformly small in `Lᵖ` form a uniformly equicontinuous family. The scale enters
-only through the volume factor `μ (ball 0 r) ^ (-1/p)`; the modulus of the ball averages is the
-`Lᵖ` translation modulus of the family itself. -/
-theorem uniformEquicontinuous_ballAverage {iota : Type*} {u : iota → E → F} {r : ℝ}
-    (hp : 1 ≤ p) (hp' : p ≠ ∞) (hu : ∀ i, MemLp (u i) p mu) (hr : 0 < r)
-    (htrans : ∀ ε : ℝ≥0∞, 0 < ε → ∃ δ > 0, ∀ i, ∀ h : E, ‖h‖ < δ →
-      eLpNorm (fun x => u i (x + h) - u i x) p mu ≤ ε) :
-    UniformEquicontinuous fun i => ballAverage mu r (u i) := by
-  set V : ℝ≥0∞ := mu (ball (0 : E) r)
-  have hV0 : V ≠ 0 := (measure_ball_pos mu 0 hr).ne'
-  have hVt : V ≠ ∞ := measure_ball_lt_top.ne
-  have hVinv : V ^ (p.toReal)⁻¹ ≠ 0 := (ENNReal.rpow_pos (pos_iff_ne_zero.2 hV0) hVt).ne'
-  have hVinvt : V ^ (p.toReal)⁻¹ ≠ ∞ := ENNReal.rpow_ne_top_of_ne_zero hV0 hVt
-  have hcancel : ∀ c : ℝ≥0∞, V ^ (-(p.toReal)⁻¹) * (c * V ^ (p.toReal)⁻¹) = c := fun c => by
-    rw [ENNReal.rpow_neg, mul_comm c, ← mul_assoc, ENNReal.inv_mul_cancel hVinv hVinvt, one_mul]
-  rw [Metric.uniformEquicontinuous_iff]
-  intro c hc
-  obtain ⟨δ, hδ, hδS⟩ := htrans (ENNReal.ofReal (c / 2) * V ^ (p.toReal)⁻¹)
-    (ENNReal.mul_pos (ENNReal.ofReal_pos.2 (by linarith)).ne' hVinv)
-  refine ⟨δ, hδ, fun x y hxy i => ?_⟩
-  have hyx : ‖y - x‖ < δ := by rwa [← dist_eq_norm, dist_comm]
-  have hbound := enorm_ballAverage_add_sub_ballAverage_le (mu := mu) (r := r) hp hp' (hu i) hr
-    (y - x) x
-  rw [add_sub_cancel] at hbound
-  have hb2 := hbound.trans (mul_le_mul' (le_refl (V ^ (-(p.toReal)⁻¹))) (hδS i _ hyx))
-  rw [hcancel] at hb2
-  have hb3 : ‖ballAverage mu r (u i) y - ballAverage mu r (u i) x‖ ≤ c / 2 := by
-    rwa [← ofReal_norm, ENNReal.ofReal_le_ofReal_iff (by linarith)] at hb2
-  rw [dist_eq_norm, ← norm_neg, neg_sub]
-  linarith
 
 /-- **The Fréchet--Kolmogorov compactness criterion.** For `1 ≤ p < ∞`, a family `S` of `Lᵖ`
 functions is totally bounded as soon as it is bounded in `Lᵖ`, its translation increments are
@@ -147,18 +163,13 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
   obtain ⟨R, hRS⟩ := htight ε₁ hε₁
   set K : Set E := closedBall (0 : E) R
   set V : ℝ≥0∞ := mu (ball (0 : E) r)
-  have hV0 : V ≠ 0 := (measure_ball_pos mu 0 hr).ne'
-  have hVt : V ≠ ∞ := measure_ball_lt_top.ne
   -- The uniform `L^∞` bound on the ball averages of the family.
   set Bₑ : ℝ≥0∞ := V ^ (-(p.toReal)⁻¹) * M
-  have hBₑt : Bₑ ≠ ∞ := ENNReal.mul_ne_top (ENNReal.rpow_ne_top_of_ne_zero hV0 hVt) hM
   have hgB : ∀ i : S, ∀ x : E,
-      ballAverage mu r ⇑(i : Lp F p mu) x ∈ closedBall (0 : F) Bₑ.toReal := by
-    intro i x
-    rw [mem_closedBall, dist_zero_right]
-    have h := (enorm_ballAverage_le hp hp' (Lp.aestronglyMeasurable (i : Lp F p mu)) hr x).trans
-      (mul_le_mul' (le_refl (V ^ (-(p.toReal)⁻¹))) (hbdd _ i.2))
-    simpa using ENNReal.toReal_mono hBₑt h
+      ballAverage mu r ⇑(i : Lp F p mu) x ∈ closedBall (0 : F) Bₑ.toReal := fun i x => by
+    simpa only [Bₑ, V] using ballAverage_mem_closedBall_of_eLpNorm_le hp hp'
+      (fun j : S => Lp.aestronglyMeasurable (j : Lp F p mu)) hr hM
+      (fun j => hbdd _ j.2) i x
   -- The uniform equicontinuity of the ball averages, at the fixed scale `r`.
   have hequi : UniformEquicontinuous fun i : S => ballAverage mu r ⇑(i : Lp F p mu) :=
     uniformEquicontinuous_ballAverage hp hp' (fun i => Lp.memLp (i : Lp F p mu)) hr
@@ -182,15 +193,48 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
     calc ENNReal.ofReal η * W = ENNReal.ofReal (W.toReal * η) := by
           rw [ENNReal.ofReal_mul hWnn, ENNReal.ofReal_toReal hWt, mul_comm]
       _ ≤ ENNReal.ofReal (ε / 4) := ENNReal.ofReal_le_ofReal hkey
-  -- Arzelà--Ascoli: finitely many members of the family approximate all of it uniformly on `K`.
-  obtain ⟨t, htfin, ht⟩ := exists_finite_approx_of_uniformEquicontinuousOn
-    (isCompact_closedBall (0 : E) R).totallyBounded
-    (fun x _ => TotallyBounded.subset (Set.range_subset_iff.2 fun i => hgB i x)
-      (isCompact_closedBall (0 : F) Bₑ.toReal).totallyBounded)
-    (hequi.uniformEquicontinuousOn K) hη
-  refine ⟨Subtype.val '' t, htfin.image _, fun f hf => ?_⟩
-  obtain ⟨j, hjt, hj⟩ := ht ⟨f, hf⟩
-  refine mem_iUnion₂.2 ⟨(j : Lp F p mu), ⟨j, hjt, rfl⟩, ?_⟩
+  -- Arzelà--Ascoli on the restricted ball averages, bundled as bounded continuous functions.
+  let _ : CompactSpace K :=
+    isCompact_iff_compactSpace.mp (isCompact_closedBall (0 : E) R)
+  let φ : S → BoundedContinuousFunction K F := fun i =>
+    BoundedContinuousFunction.mkOfCompact
+    ⟨fun x : K => ballAverage mu r ⇑(i : Lp F p mu) (x : E),
+      (continuous_ballAverage hp hp' (Lp.memLp (i : Lp F p mu)) hr).comp continuous_subtype_val⟩
+  let 𝒜 : Set (BoundedContinuousFunction K F) := Set.range φ
+  have hφequi : Equicontinuous fun i : S => (φ i : K → F) := by
+    intro x U hU
+    filter_upwards [continuous_subtype_val.continuousAt.eventually
+      (hequi.equicontinuous (x : E) U hU)] with y hy
+    intro i
+    simpa only [φ, BoundedContinuousFunction.mkOfCompact_apply, ContinuousMap.coe_mk] using hy i
+  have hAequi : Equicontinuous ((↑) : 𝒜 → K → F) := by
+    intro x U hU
+    filter_upwards [hφequi x U hU] with y hy
+    intro a
+    obtain ⟨i, hi⟩ := a.2
+    rw [← hi]
+    exact hy i
+  have hAcompact : IsCompact (closure 𝒜) :=
+    BoundedContinuousFunction.arzela_ascoli (closedBall (0 : F) Bₑ.toReal)
+      (isCompact_closedBall _ _) 𝒜 (by
+        intro q x hq
+        obtain ⟨i, rfl⟩ := hq
+        simpa only [φ, BoundedContinuousFunction.mkOfCompact_apply, ContinuousMap.coe_mk] using
+          hgB i x) hAequi
+  have hAtb : TotallyBounded 𝒜 := hAcompact.totallyBounded.subset subset_closure
+  obtain ⟨t, htA, htfin, htcover⟩ := hAtb.exists_subset (dist_mem_uniformity hη)
+  let _ : Finite t := htfin.to_subtype
+  choose idx hidx using fun q : t => htA q.2
+  refine ⟨Subtype.val '' Set.range idx, Set.finite_range idx |>.image _, fun f hf => ?_⟩
+  obtain ⟨q, hqt, hfq⟩ : ∃ q ∈ t, dist (φ ⟨f, hf⟩) q < η := by
+    simpa only [mem_iUnion, mem_ofPred_eq, exists_prop] using
+      htcover (Set.mem_range_self ⟨f, hf⟩)
+  let q' : t := ⟨q, hqt⟩
+  let j : S := idx q'
+  have hφdist : dist (φ ⟨f, hf⟩) (φ j) < η := by
+    rw [hidx q']
+    exact hfq
+  refine mem_iUnion₂.2 ⟨(j : Lp F p mu), ⟨j, ⟨q', rfl⟩, rfl⟩, ?_⟩
   set f' : Lp F p mu := (j : Lp F p mu)
   set A : E → F := ballAverage mu r ⇑f
   set A' : E → F := ballAverage mu r ⇑f'
@@ -205,38 +249,17 @@ theorem totallyBounded_of_translation_of_tight (hp' : p ≠ ∞)
     intro g hg
     exact eLpNorm_ballAverage_sub_le hp hp' (Lp.memLp g) hr
       (fun e he => hrS g hg e (by simpa [dist_eq_norm] using he))
-  have hmid : ∀ x ∈ K, dist (A x) (A' x) ≤ η := fun x hx => hj x hx
-  -- The `Lᵖ` distance of `f` to the chosen approximant, split over `K` and its complement.
-  have hsplit : (⇑f - ⇑f' : E → F) = K.indicator (⇑f - ⇑f') + Kᶜ.indicator (⇑f - ⇑f') :=
-    (Set.indicator_self_add_compl K _).symm
-  have htail : eLpNorm (Kᶜ.indicator (⇑f - ⇑f')) p mu ≤ ε₁ + ε₁ := by
-    rw [Set.indicator_sub']
-    exact (eLpNorm_sub_le (hfm.indicator hmeasK.compl) (hf'm.indicator hmeasK.compl) hp).trans
-      (add_le_add (hRS f hf) (hRS f' j.2))
-  have hnear : eLpNorm (K.indicator (⇑f - ⇑f')) p mu ≤
-      ε₁ + (ENNReal.ofReal η * W + ε₁) := by
-    have hdecomp : K.indicator (⇑f - ⇑f' : E → F) =
-        K.indicator (⇑f - A) + (K.indicator (A - A') + K.indicator (A' - ⇑f')) := by
-      rw [← Set.indicator_add', ← Set.indicator_add']
-      congr 1
-      abel
-    rw [hdecomp]
-    refine (eLpNorm_add_le ((hfm.sub hAm).indicator hmeasK)
-      (((hAm.sub hA'm).indicator hmeasK).add ((hA'm.sub hf'm).indicator hmeasK)) hp).trans ?_
-    refine add_le_add ?_ ((eLpNorm_add_le ((hAm.sub hA'm).indicator hmeasK)
-      ((hA'm.sub hf'm).indicator hmeasK) hp).trans (add_le_add ?_ ?_))
-    · refine (eLpNorm_indicator_le _).trans ?_
-      rw [← neg_sub A (⇑f : E → F), eLpNorm_neg]
-      exact hsmooth f hf
-    · exact eLpNorm_indicator_sub_le_of_dist_bdd mu hp' hmeasK hη.le hmid
-    · exact (eLpNorm_indicator_le _).trans (hsmooth f' j.2)
+  have hmid : ∀ x ∈ K, dist (A x) (A' x) ≤ η := by
+    intro x hx
+    simpa only [A, A', f', φ, BoundedContinuousFunction.mkOfCompact_apply,
+      ContinuousMap.coe_mk] using
+        (BoundedContinuousFunction.dist_coe_le_dist (f := φ ⟨f, hf⟩) (g := φ j) ⟨x, hx⟩).trans
+          hφdist.le
   have hmain : eLpNorm (⇑f - ⇑f') p mu ≤ ENNReal.ofReal (3 * ε / 4) := by
     calc eLpNorm (⇑f - ⇑f') p mu
-        ≤ eLpNorm (K.indicator (⇑f - ⇑f')) p mu + eLpNorm (Kᶜ.indicator (⇑f - ⇑f')) p mu := by
-          conv_lhs => rw [hsplit]
-          exact eLpNorm_add_le ((hfm.sub hf'm).indicator hmeasK)
-            ((hfm.sub hf'm).indicator hmeasK.compl) hp
-      _ ≤ ε₁ + (ENNReal.ofReal η * W + ε₁) + (ε₁ + ε₁) := add_le_add hnear htail
+        ≤ ε₁ + (ENNReal.ofReal η * W + ε₁) + (ε₁ + ε₁) := by
+          exact eLpNorm_sub_le_of_approxOn_of_tails hp hp' hmeasK hfm hf'm hAm hA'm hη.le
+            (hsmooth f hf) (hsmooth f' j.2) hmid (hRS f hf) (hRS f' j.2)
       _ ≤ ENNReal.ofReal (ε / 8) + (ENNReal.ofReal (ε / 4) + ENNReal.ofReal (ε / 8)) +
             (ENNReal.ofReal (ε / 8) + ENNReal.ofReal (ε / 8)) := by
           gcongr
@@ -266,10 +289,11 @@ theorem isCompact_closure_of_translation_of_tight (hp' : p ≠ ∞)
     htight).closure).isCompact_of_isClosed isClosed_closure
 
 /-- **The Fréchet--Kolmogorov criterion for a family supported in a fixed bounded set**, the form
-the Rellich--Kondrachov theorem consumes: for functions vanishing off a bounded set the tightness
-hypothesis is automatic, so an `Lᵖ`-bounded family whose translation increments are uniformly
-small in `Lᵖ` is totally bounded. -/
-theorem totallyBounded_of_translation_of_support (hp' : p ≠ ∞) {S : Set (Lp F p mu)}
+that Rellich--Kondrachov for `W^{1,p}_0(Ω)` consumes. For functions vanishing off a bounded set the
+tightness hypothesis is automatic, so an `Lᵖ`-bounded family whose translation increments are
+uniformly small in `Lᵖ` is totally bounded. -/
+theorem totallyBounded_of_translation_of_isBounded_support (hp' : p ≠ ∞)
+    {S : Set (Lp F p mu)}
     {s : Set E} (hs : Bornology.IsBounded s) (hsupp : ∀ f ∈ S, ∀ᵐ x ∂mu, x ∉ s → f x = 0)
     {M : ℝ≥0∞} (hM : M ≠ ∞) (hbdd : ∀ f ∈ S, eLpNorm f p mu ≤ M)
     (htrans : ∀ ε : ℝ≥0∞, 0 < ε → ∃ δ > 0, ∀ f ∈ S, ∀ h : E, ‖h‖ < δ →
@@ -288,13 +312,14 @@ theorem totallyBounded_of_translation_of_support (hp' : p ≠ ∞) {S : Set (Lp 
 /-- **Relative compactness in `Lᵖ` of a family supported in a fixed bounded set** whose
 translation increments are uniformly small: the closure of such an `Lᵖ`-bounded family is
 compact. This is the shape in which a compact embedding theorem is stated. -/
-theorem isCompact_closure_of_translation_of_support (hp' : p ≠ ∞) {S : Set (Lp F p mu)}
+theorem isCompact_closure_of_translation_of_isBounded_support (hp' : p ≠ ∞)
+    {S : Set (Lp F p mu)}
     {s : Set E} (hs : Bornology.IsBounded s) (hsupp : ∀ f ∈ S, ∀ᵐ x ∂mu, x ∉ s → f x = 0)
     {M : ℝ≥0∞} (hM : M ≠ ∞) (hbdd : ∀ f ∈ S, eLpNorm f p mu ≤ M)
     (htrans : ∀ ε : ℝ≥0∞, 0 < ε → ∃ δ > 0, ∀ f ∈ S, ∀ h : E, ‖h‖ < δ →
       eLpNorm (fun x => f (x + h) - f x) p mu ≤ ε) :
     IsCompact (closure S) :=
-  ((totallyBounded_of_translation_of_support hp' hs hsupp hM hbdd
+  ((totallyBounded_of_translation_of_isBounded_support hp' hs hsupp hM hbdd
     htrans).closure).isCompact_of_isClosed isClosed_closure
 
 end FrechetKolmogorov
