@@ -44,12 +44,13 @@ namespace TauCeti
 
 variable {X : Type*} [TopologicalSpace X] (x₀ : X)
 
-/-- A loop in a path component which is null-homotopic in the ambient space is already
-null-homotopic in the path component. -/
-theorem homotopic_refl_of_map_subtypeVal_homotopic_refl_pathComponent
-    {a : pathComponent x₀} {γ : Path a a}
-    (h : (γ.map continuous_subtype_val).Homotopic (Path.refl (a : X))) :
-    γ.Homotopic (Path.refl a) := by
+/-- Two paths in a path component which are homotopic in the ambient space are already
+homotopic in the path component. -/
+theorem homotopic_of_map_subtypeVal_homotopic_pathComponent
+    {a b : pathComponent x₀} {γ δ : Path a b}
+    (h : (γ.map continuous_subtype_val).Homotopic
+      (δ.map continuous_subtype_val)) :
+    γ.Homotopic δ := by
   obtain ⟨H⟩ := h
   have hγmem : ∀ t, (γ.map continuous_subtype_val) t ∈ pathComponent x₀ := fun t =>
     (γ t).2
@@ -82,8 +83,9 @@ instance instSemilocallySimplyConnectedSpaceSubtypePathComponent
     obtain ⟨U, hU, hloop⟩ :=
       SemilocallySimplyConnectedSpace.exists_mem_nhds_loops_nullhomotopic (a : X)
     refine ⟨Subtype.val ⁻¹' U, continuous_subtype_val.tendsto a hU, fun γ hγ => ?_⟩
-    exact homotopic_refl_of_map_subtypeVal_homotopic_refl_pathComponent x₀
-      (hloop (γ.map continuous_subtype_val) (by simpa using hγ))⟩
+    apply homotopic_of_map_subtypeVal_homotopic_pathComponent x₀
+    rw [show (Path.refl a).map continuous_subtype_val = Path.refl (a : X) by rfl]
+    exact hloop (γ.map continuous_subtype_val) (by simpa using hγ)⟩
 
 /-- The basepoint of `X`, viewed as a point of its own path component. -/
 abbrev pathComponentSelf : (pathComponent x₀ : Set X) :=
@@ -110,7 +112,10 @@ noncomputable def fundamentalGroupMulEquivPathComponent :
             (pathComponentSelf x₀) γ).symm.trans
           (hg.trans (FundamentalGroupoid.id_eq_path_refl (FundamentalGroupoid.mk x₀)))
       refine (FundamentalGroupoid.fromPath_eq_iff_homotopic _ _).mpr ?_
-      exact homotopic_refl_of_map_subtypeVal_homotopic_refl_pathComponent x₀ hnull
+      apply homotopic_of_map_subtypeVal_homotopic_pathComponent x₀
+      rw [show (Path.refl (pathComponentSelf x₀)).map continuous_subtype_val =
+        Path.refl x₀ by rfl]
+      exact hnull
     · intro g
       obtain ⟨γ, rfl⟩ := Quotient.exists_rep (FundamentalGroup.toPath g)
       let hmem : ∀ t, γ t ∈ pathComponent x₀ := fun t => ⟨Path.initialSegmentFamily γ t⟩
