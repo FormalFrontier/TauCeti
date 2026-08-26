@@ -65,6 +65,8 @@ writes down directly.
   representations from the complexification of `σ` to `ρ`.
 * `Representation.IsRealStructure.isRealForm`: **the real points of a real structure are a real
   form**, and `Representation.IsRealForm.exists_isRealStructure` is the converse.
+* `Representation.IsRealStructure.isRealizableOverReal`: a real structure on a finite-dimensional
+  `ρ` realizes it over `ℝ` in the pinned sense.
 * `Representation.isRealizableOverReal_iff_exists_isRealStructure`: over a finite-dimensional `V`,
   realizability over `ℝ` is exactly the existence of a real structure.
 * `Representation.IsRealStructure.finrank_realPoints`: the real points of a real structure have
@@ -287,7 +289,7 @@ structure IsRealStructure (K : V →ₛₗ[starRingEnd ℂ] V) : Prop where
   /-- The conjugation is an involution. -/
   involutive : Function.Involutive ⇑K
   /-- The conjugation intertwines the action with itself. -/
-  intertwines (g : G) (v : V) : K (ρ g v) = ρ g (K v)
+  isIntertwining (g : G) (v : V) : K (ρ g v) = ρ g (K v)
 
 namespace IsRealStructure
 
@@ -297,24 +299,23 @@ include h
 
 /-- The action preserves the real points of a real structure: that is exactly the commutation
 `K (ρ g v) = ρ g (K v)` read on a fixed vector.  It is stated for the `ℝ`-linear restriction
-`(ρ g).restrictScalars ℝ` of the action, which is the shape `LinearMap.restrict` consumes in
-`Representation.IsRealStructure.rep`. -/
+`(ρ g).restrictScalars ℝ` of the action, which is the shape `Representation.subrepresentation`
+consumes in `Representation.IsRealStructure.rep`. -/
 theorem apply_mem_realPoints (g : G) :
     ∀ v ∈ realPoints K, ((ρ g).restrictScalars ℝ) v ∈ realPoints K := by
   intro v hv
   rw [mem_realPoints] at hv
-  rw [LinearMap.coe_restrictScalars, mem_realPoints, h.intertwines, hv]
+  rw [LinearMap.coe_restrictScalars, mem_realPoints, h.isIntertwining, hv]
 
-/-- **The real representation carried by the real points** of a real structure: each `ρ g`
-restricts to the real points, where only its `ℝ`-linearity survives. -/
-def rep : Representation ℝ G (realPoints K) where
-  toFun g := LinearMap.restrict ((ρ g).restrictScalars ℝ) (h.apply_mem_realPoints g)
-  map_one' := LinearMap.ext fun w => Subtype.ext <| by
-    simp only [LinearMap.coe_restrict_apply, LinearMap.coe_restrictScalars, map_one,
-      Module.End.one_apply]
-  map_mul' g g' := LinearMap.ext fun w => Subtype.ext <| by
-    simp only [LinearMap.coe_restrict_apply, LinearMap.coe_restrictScalars, map_mul,
-      Module.End.mul_apply]
+/-- **The real representation carried by the real points** of a real structure: reading `ρ` with
+only its `ℝ`-linearity, the real points are an invariant subspace, and
+`Representation.subrepresentation` restricts the action to them. -/
+def rep : Representation ℝ G (realPoints K) :=
+  Representation.subrepresentation
+    { toFun := fun g => (ρ g).restrictScalars ℝ
+      map_one' := LinearMap.ext fun _ => by simp
+      map_mul' := fun _ _ => LinearMap.ext fun _ => by simp }
+    (realPoints K) h.apply_mem_realPoints
 
 -- `(rfl)`, not `rfl`: the body of `rep` is not `@[expose]`d, so a bare `rfl` proof would be
 -- rechecked against the exported environment, where the restriction is opaque.
@@ -334,10 +335,11 @@ theorem isRealizableOverReal [FiniteDimensional ℂ V] : IsRealizableOverReal ρ
   h.isRealForm.isRealizableOverReal
 
 /-- The real points of a real structure have the `ℝ`-dimension that `V` has over `ℂ`; with
-`TauCeti.finrank_real_eq_two_mul_finrank_complex` this says they halve the real dimension of `V`.
-No finiteness is assumed: in the infinite-dimensional case both sides are the junk value `0`. -/
+Mathlib's `finrank_real_of_complex` this says they halve the real dimension of `V`.  Equivariance
+plays no part, so this is the conjugation-level `TauCeti.finrank_realPoints` read on a real
+structure. -/
 theorem finrank_realPoints : finrank ℝ (realPoints K) = finrank ℂ V :=
-  h.isRealForm.finrank_eq
+  TauCeti.finrank_realPoints h.involutive
 
 end IsRealStructure
 
@@ -351,12 +353,10 @@ theorem IsRealForm.exists_isRealStructure (h : IsRealForm ρ σ) :
   set e : (ℂ ⊗[ℝ] W) ≃ₗ[ℂ] V := φ.toLinearEquiv with he
   have hφ : ∀ (g : G) (u : ℂ ⊗[ℝ] W), e (baseChange ℂ σ g u) = ρ g (e u) := fun g u => by
     simpa [he, Equiv.toLinearEquiv_apply] using φ.isIntertwining (g := g) (v := u)
-  refine ⟨{ toFun := fun v => e (tmulConj W (e.symm v))
-            map_add' := fun v v' => by simp
-            map_smul' := fun c v => by simp }, ?_, ?_⟩
+  -- The witness is a composition of semilinear maps; `LinearMap.comp` supplies its map laws.
+  refine ⟨e.toLinearMap ∘ₛₗ (tmulConj W ∘ₛₗ e.symm.toLinearMap), ?_, ?_⟩
   · intro v
-    have hinv : tmulConj W (tmulConj W (e.symm v)) = e.symm v := tmulConj_involutive W (e.symm v)
-    simp [hinv]
+    simp
   · intro g v
     have hu : tmulConj W (baseChange ℂ σ g (e.symm v))
         = baseChange ℂ σ g (tmulConj W (e.symm v)) := by
@@ -364,7 +364,7 @@ theorem IsRealForm.exists_isRealStructure (h : IsRealForm ρ σ) :
       exact tmulConj_baseChange (σ g) (e.symm v)
     have hsymm : e.symm (ρ g v) = baseChange ℂ σ g (e.symm v) := by
       rw [e.symm_apply_eq, hφ, e.apply_symm_apply]
-    simp only [LinearMap.coe_mk, AddHom.coe_mk]
+    simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe]
     rw [hsymm, hu, hφ]
 
 /-- **Realizability over `ℝ` is the existence of a real structure.**  This is the working form of

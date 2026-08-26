@@ -41,7 +41,12 @@ is not proved here.  It is a strictly stronger statement than the existence of a
 symmetric form supplied by
 `TauCeti.Representation.frobeniusSchurIndicator_eq_one_iff`: passing from the form to a real
 structure needs an invariant Hermitian inner product as well, and the antilinear involution built
-from the two of them, whose fixed points are the real form.  That construction is separate work.
+from the two of them.  The second half of that route is already available:
+`Representation.IsRealStructure` is such an involution, its fixed points are a real form
+(`Representation.IsRealStructure.isRealForm`), and
+`Representation.isRealizableOverReal_iff_exists_isRealStructure` turns one into realizability over
+`ℝ`.  What remains is building the involution itself out of the invariant symmetric and Hermitian
+forms.
 
 ## Main results
 
