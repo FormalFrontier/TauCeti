@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.NumberedSymmetry
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Rigidity
+import TauCeti.CategoryTheory.Aut.Basic
 
 /-!
 # Numbered symmetries of the generated Kostant group scheme

@@ -76,33 +76,19 @@ variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
 
 /-- The coordinate Hopf algebra receiving a root-subgroup or weight-torus generator map. -/
-@[expose] noncomputable def kostantToralGeneratorCodomain (j : Sum I Unit) :
+private noncomputable def kostantToralGeneratorCodomain (j : Sum I Unit) :
     _root_.CommHopfAlgCat ℤ :=
   match j with
   | .inl _ => AdditiveGroup.coordinateHopfAlgebra ℤ
   | .inr _ => (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj
 
 /-- The family consisting of every root-subgroup coordinate map and the weight-torus map. -/
-noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
+private noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
     GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
       kostantToralGeneratorCodomain (I := I) (κ := κ) j :=
   match j with
   | .inl i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b
   | .inr _ => GeneralLinear.weightTorusCoordinateMap wt
-
-/-- At a root index the generator family is the corresponding root-subgroup coordinate map. -/
-@[simp]
-theorem kostantToralGeneratorMap_inl (i : I) :
-    kostantToralGeneratorMap e h ρ M hM hnil b wt (.inl i) =
-      kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b :=
-  (rfl)
-
-/-- At the torus index the generator family is the weight-torus coordinate map. -/
-@[simp]
-theorem kostantToralGeneratorMap_inr (u : Unit) :
-    kostantToralGeneratorMap e h ρ M hM hnil b wt (.inr u) =
-      GeneralLinear.weightTorusCoordinateMap wt :=
-  (rfl)
 
 /-- The defining Hopf ideal of the closed subgroup scheme generated jointly by the represented
 Kostant root subgroups and the represented weight torus. It is the largest Hopf ideal killed by
@@ -111,16 +97,6 @@ noncomputable def kostantToralDefiningIdeal :
     HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ n) :=
   CommHopfAlgCat.commonKernelHopfIdeal
     (kostantToralGeneratorMap e h ρ M hM hnil b wt)
-
-/-- The toral defining ideal is the common-kernel ideal of its root-subgroup and weight-torus
-generator family. -/
-theorem kostantToralDefiningIdeal_def :
-    kostantToralDefiningIdeal e h ρ M hM hnil b wt =
-      CommHopfAlgCat.commonKernelHopfIdeal
-        (kostantToralGeneratorMap e h ρ M hM hnil b wt) :=
-  by
-    unfold kostantToralDefiningIdeal
-    rfl
 
 /-- A Hopf ideal lies in the toral defining ideal exactly when every root-subgroup coordinate map
 and the weight-torus coordinate map kill it. -/
@@ -138,6 +114,36 @@ theorem le_kostantToralDefiningIdeal_iff
   · rintro ⟨hroot, htorus⟩ (i | _)
     · exact hroot i
     · exact htorus
+
+/-- **A surjective endomorphism of the ambient coordinate Hopf algebra which reindexes the
+root-subgroup coordinate maps and carries the weight-torus coordinate map to itself up to an
+injective postcomposition pulls the toral defining ideal into itself.**
+
+The conclusion is one containment, not invariance: an automorphism fixing the ideal needs this
+lemma once for itself and once for its inverse. -/
+theorem kostantToralDefiningIdeal_comap_le_of_comp_eq
+    (φ : GeneralLinear.coordinateHopfAlgebra ℤ n ⟶ GeneralLinear.coordinateHopfAlgebra ℤ n)
+    (hφ : Function.Surjective φ.hom) (s : I → I)
+    (t : (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj ⟶
+      (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj)
+    (ht : Function.Injective t.hom)
+    (hroot : ∀ i, φ ≫ kostantRootSubgroupCoordinateMap e h ρ M hM (s i) (hnil (s i)) b =
+      kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
+    (htorus : φ ≫ GeneralLinear.weightTorusCoordinateMap wt =
+      GeneralLinear.weightTorusCoordinateMap wt ≫ t) :
+    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comap φ.hom hφ ≤
+      kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
+  refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq_comp
+    (kostantToralGeneratorMap e h ρ M hM hnil b wt) φ hφ
+    (fun j => match j with | .inl i => .inl (s i) | .inr _ => .inr ())
+    (fun j => match j with | .inl _ => 𝟙 _ | .inr _ => t) ?_ ?_
+  · rintro (i | u)
+    · exact fun _ _ hxy => hxy
+    · exact ht
+  · rintro (i | u)
+    · simpa only [kostantToralGeneratorMap, kostantToralGeneratorCodomain, Category.comp_id]
+        using hroot i
+    · simpa only [kostantToralGeneratorMap, kostantToralGeneratorCodomain] using htorus
 
 /-- Every represented root-subgroup coordinate map kills the toral defining ideal. -/
 theorem kostantToralDefiningIdeal_toIdeal_le_root_ker (i : I) :

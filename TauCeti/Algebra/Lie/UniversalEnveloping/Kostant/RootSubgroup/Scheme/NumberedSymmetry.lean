@@ -10,7 +10,6 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Torus
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.NumberedSymmetry
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Basic
-public import TauCeti.CategoryTheory.Aut.Basic
 
 /-!
 # The ambient coordinate automorphism of a numbered Kostant symmetry

@@ -32,6 +32,14 @@ with no further computation.
 * `TauCeti.SplitTorus.relabelIso`: the same automorphism as a bundled isomorphism.
 * `TauCeti.SplitTorus.schemePointsMulEquiv_relabel`: its action on coordinate tuples.
 
+## Universes
+
+The character lattice and the coordinate Hopf algebra are relabelled for a base ring in an
+arbitrary universe. From `relabel` onwards the base ring and the index set must share a universe:
+`TauCeti.SplitTorus.groupScheme` takes `(R sigma : Type u)`, and its scheme-valued points take the
+value algebra in that same universe, because Mathlib's `hopfSpec` and `Spec.mapMulEquiv` are
+same-universe.
+
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §12.
@@ -43,7 +51,7 @@ open CategoryTheory
 
 namespace TauCeti.SplitTorus
 
-universe u
+universe u v
 
 variable {sigma : Type u}
 
@@ -125,7 +133,9 @@ theorem characterRelabelHom_one :
   rw [toMonoidHom_characterRelabelHom, characterRelabel_one,
     FGCommGrpCat.toMonoidHom_id]
 
-variable (R : Type u) [CommRing R]
+section CoordinateRing
+
+variable (R : Type v) [CommRing R]
 
 /-- **The relabelling automorphism of the coordinate Hopf algebra of the split torus.** -/
 noncomputable def relabelCoordinateMap (τ : Equiv.Perm sigma) :
@@ -168,6 +178,12 @@ theorem relabelCoordinateMap_injective (τ : Equiv.Perm sigma) :
     Function.Injective (relabelCoordinateMap (sigma := sigma) R τ).hom :=
   (ConcreteCategory.bijective_of_isIso
     (relabelCoordinateMap (sigma := sigma) R τ)).1
+
+end CoordinateRing
+
+section GroupScheme
+
+variable (R : Type u) [CommRing R]
 
 /-- **The relabelling automorphism of the split-torus group scheme.** On points a character is
 precomposed with `characterRelabel τ`, so the coordinate tuple `d` becomes `d ∘ τ`. -/
@@ -275,5 +291,7 @@ theorem relabel_def (τ : Equiv.Perm sigma) :
         (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (relabelCoordinateMap R τ).op ≫
         eqToHom (DiagonalizableGroup.groupScheme_def R (characterGroup sigma)).symm :=
   DiagonalizableGroup.groupSchemeMap_def R (characterRelabelHom τ)
+
+end GroupScheme
 
 end TauCeti.SplitTorus

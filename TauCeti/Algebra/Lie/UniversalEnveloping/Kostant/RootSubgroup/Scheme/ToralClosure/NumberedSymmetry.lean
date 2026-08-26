@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.NumberedSymmetry
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Rigidity
+import TauCeti.CategoryTheory.Aut.Basic
 
 /-!
 # Numbered symmetries of the Kostant toral-closure group scheme
@@ -128,33 +129,13 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_ho
         (ConcreteCategory.bijective_of_isIso
           (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).2 ≤
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
-  rw [kostantToralDefiningIdeal_def]
-  let s : I ⊕ Unit → I ⊕ Unit := fun j => match j with
-    | .inl i => .inl (Function.surjInv hσ i)
-    | .inr _ => .inr ()
-  let m : ∀ j, kostantToralGeneratorCodomain (I := I) (κ := κ) j ⟶
-      kostantToralGeneratorCodomain (I := I) (κ := κ) (s j) := fun j => match j with
-    | .inl _ => 𝟙 _
-    | .inr _ => SplitTorus.relabelCoordinateMap ℤ torusPerm⁻¹
-  refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq_comp
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt)
-    (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom _ s m ?_ ?_
-  · intro j
-    cases j with
-    | inl i => exact fun _ _ hxy => hxy
-    | inr u => exact SplitTorus.relabelCoordinateMap_injective ℤ torusPerm⁻¹
-  · intro j
-    cases j with
-    | inl i =>
-        dsimp only [kostantToralGeneratorCodomain, s, m]
-        rw [kostantToralGeneratorMap_inl, kostantToralGeneratorMap_inl, Category.comp_id,
-          kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
-            e h ρ M hM hnil b σ θ hθM hθe (Function.surjInv hσ i),
-          Function.surjInv_eq hσ]
-    | inr u =>
-        simpa only [kostantToralGeneratorMap_inr, kostantToralGeneratorCodomain, s, m] using
-          kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorus
-            M b wt θ hθM basisPerm hbasis torusPerm hwt
+  refine kostantToralDefiningIdeal_comap_le_of_comp_eq e h ρ M hM hnil b wt _ _
+    (Function.surjInv hσ) (SplitTorus.relabelCoordinateMap ℤ torusPerm⁻¹)
+    (SplitTorus.relabelCoordinateMap_injective ℤ torusPerm⁻¹) (fun i => ?_) ?_
+  · rw [kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
+      e h ρ M hM hnil b σ θ hθM hθe (Function.surjInv hσ i), Function.surjInv_eq hσ]
+  · exact kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorus
+      M b wt θ hθM basisPerm hbasis torusPerm hwt
 
 include hθe hbasis hwt in
 /-- The inverse ambient symmetry pulls the toral defining ideal into itself. -/
@@ -164,41 +145,18 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_in
         (ConcreteCategory.bijective_of_isIso
           (kostantNumberedSymmetryCoordinateIso M b θ hθM).inv).2 ≤
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
-  rw [kostantToralDefiningIdeal_def]
   let c := kostantNumberedSymmetryCoordinateIso M b θ hθM
-  have htorusInv : c.inv ≫ GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt =
-      GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt ≫
-        SplitTorus.relabelCoordinateMap ℤ torusPerm := by
-    rw [← cancel_epi c.hom]
+  refine kostantToralDefiningIdeal_comap_le_of_comp_eq e h ρ M hM hnil b wt c.inv _ σ
+    (SplitTorus.relabelCoordinateMap ℤ torusPerm)
+    (SplitTorus.relabelCoordinateMap_injective ℤ torusPerm) (fun i => ?_) ?_
+  · rw [← kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
+      e h ρ M hM hnil b σ θ hθM hθe i, Iso.inv_hom_id_assoc]
+  · rw [← cancel_epi c.hom]
     simp only [← Category.assoc, c.hom_inv_id, Category.id_comp]
     rw [kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorus
         M b wt θ hθM basisPerm hbasis torusPerm hwt,
       Category.assoc, SplitTorus.relabelCoordinateMap_comp, mul_inv_cancel,
       SplitTorus.relabelCoordinateMap_one, Category.comp_id]
-  let s : I ⊕ Unit → I ⊕ Unit := fun j => match j with
-    | .inl i => .inl (σ i)
-    | .inr _ => .inr ()
-  let m : ∀ j, kostantToralGeneratorCodomain (I := I) (κ := κ) j ⟶
-      kostantToralGeneratorCodomain (I := I) (κ := κ) (s j) := fun j => match j with
-    | .inl _ => 𝟙 _
-    | .inr _ => SplitTorus.relabelCoordinateMap ℤ torusPerm
-  refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq_comp
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt) c.inv _ s m ?_ ?_
-  · intro j
-    cases j with
-    | inl i => exact fun _ _ hxy => hxy
-    | inr u => exact SplitTorus.relabelCoordinateMap_injective ℤ torusPerm
-  · intro j
-    cases j with
-    | inl i =>
-        dsimp only [kostantToralGeneratorCodomain, s, m]
-        rw [kostantToralGeneratorMap_inl, kostantToralGeneratorMap_inl, Category.comp_id,
-          ← kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
-            e h ρ M hM hnil b σ θ hθM hθe i,
-          Iso.inv_hom_id_assoc]
-    | inr u =>
-        simpa only [kostantToralGeneratorMap_inr, kostantToralGeneratorCodomain, s, m]
-          using htorusInv
 
 include hθe hσ hbasis hwt in
 /-- **The numbered-symmetry coordinate automorphism preserves the toral defining ideal.** The root
