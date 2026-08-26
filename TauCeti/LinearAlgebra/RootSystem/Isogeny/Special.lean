@@ -172,7 +172,12 @@ theorem b2SpecialIsogeny_comp_self :
 /-- **The defining relation of the special isogeny of `B₂` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
 the squared length of that other node. This is the root-datum form of
-`τ (x_α (t)) = x_{σ(α)} (t ^ q)` with `q = 1` at a long simple root and `q = 2` at a short one. -/
+`τ (x_α (t)) = x_{σ(α)} (t ^ q)` for `α` the simple root at `i`: the character map is the
+pullback along `τ`, so the coefficient `(B 2).rootLength (lengthPermRankTwo i)` here is `q`,
+indexed by `α` and not by `σ(α)`. Since `σ` exchanges the two lengths, `q` is `1` when `α` is long
+and `2` when `α` is short. Read instead at the pullback index `σ(α)`, which is how the isogeny's
+`exponent` field is indexed, the same table takes the value `1` at the short node; that is
+`TauCeti.DynkinType.b2SpecialIsogeny_exponent_typeBSimpleIndex_eq_one_iff`. -/
 theorem b2SpecialIsogeny_weightMap_root_typeBSimpleIndex (i : Fin 2) :
     b2SpecialIsogeny.weightMap
         ((typeBSimplyConnectedRootDatum 2).root (typeBSimpleIndex 2 (lengthPermRankTwo i))) =
@@ -184,9 +189,12 @@ theorem b2SpecialIsogeny_weightMap_root_typeBSimpleIndex (i : Fin 2) :
     lengthPermRankTwo_lengthPermRankTwo]
   simp only [Int.cast_id]
 
-/-- The exponent of the special isogeny of `B₂` at a simple root is `1` exactly at the short node,
-which is the convention that the exceptional isogeny raises a long root parameter to the first
-power and a short one to the characteristic. -/
+/-- The exponent of the special isogeny of `B₂` at a simple root is `1` exactly at the short node.
+The `exponent` field is indexed by the source of the character map, which is `σ(α)` and not `α` in
+`τ (x_α (t)) = x_{σ(α)} (t ^ q)`; as `σ` exchanges the two lengths, the value `1` at the short node
+`σ(α)` is the exponent `q = 1` at the long simple root `α`. So this is the convention that the
+exceptional isogeny raises a long root parameter to the first power and a short one to the
+characteristic. -/
 theorem b2SpecialIsogeny_exponent_typeBSimpleIndex_eq_one_iff (i : Fin 2) :
     b2SpecialIsogeny.exponent (typeBSimpleIndex 2 i) = 1 ↔ ¬ (B 2).IsLongSimpleRoot i := by
   rw [b2SpecialIsogeny_exponent]
