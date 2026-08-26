@@ -92,6 +92,14 @@ noncomputable def localArithmeticFactor (f : IdealArithmeticFunction K)
     (P : HeightOneSpectrum (𝓞 K)) : ArithmeticFunction ℂ :=
   ArithmeticFunction.ofPowerSeries (Ideal.absNorm P.asIdeal) (localPowerSeries f P)
 
+/-- The canonical local arithmetic factor is Mathlib's arithmetic function associated to the
+local power series at `P`. -/
+theorem localArithmeticFactor_def (f : IdealArithmeticFunction K)
+    (P : HeightOneSpectrum (𝓞 K)) :
+    localArithmeticFactor f P =
+      ArithmeticFunction.ofPowerSeries (Ideal.absNorm P.asIdeal) (localPowerSeries f P) := by
+  rw [localArithmeticFactor]
+
 /-- At a power of `N(P)`, the local arithmetic factor is the corresponding value at `P ^ n`. -/
 @[simp]
 theorem localArithmeticFactor_apply_pow (f : IdealArithmeticFunction K)
