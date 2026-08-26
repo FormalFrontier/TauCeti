@@ -40,7 +40,8 @@ argument — gives the **ergodic form** of the representation, and the arrays it
 *dissociated* as well as exchangeable: two blocks over disjoint row sets and disjoint column sets
 read disjoint sets of noise coordinates once the global one is out of the way, and the noise
 coordinates are independent.  This is the easy direction of the ergodic form of the theorem.  The
-global variable is exactly what dissociation forbids, by
+shared global coordinate obstructs this disjoint-noise proof, and a nontrivial array built from
+global noise alone is not dissociated, by
 `JointlyDissociated.measure_preimage_eq_zero_or_one_of_const`.
 
 These results advance the exchangeable-arrays milestone in
@@ -321,7 +322,7 @@ theorem separatelyDissociated_separateArray_of_snd (g : I × I × I → α) (hg 
     SeparatelyDissociated (noiseMeasure Axis (ℕ × ℕ)) (separateArray fun q => g q.2) :=
   separatelyDissociated_iff.mpr fun e f e' f' he hf =>
     indepFun_of_measurable_blockSigma (iIndepFun_eval_noiseMeasure Axis (ℕ × ℕ))
-      (fun q => measurable_pi_apply q) (disjoint_separateBlockNoise he hf)
+      (fun q _ => measurable_pi_apply q) (disjoint_separateBlockNoise he hf)
       (measurable_separateBlockNoise g hg e f) (measurable_separateBlockNoise g hg e' f')
 
 /-- Every unordered pair has a member. -/
@@ -381,7 +382,7 @@ theorem jointlyDissociated_jointArray_of_snd (g : I × I × I → α) (hg : Meas
     JointlyDissociated (noiseMeasure Unit (Sym2 ℕ)) (jointArray fun q => g q.2) :=
   jointlyDissociated_iff.mpr fun e e' he =>
     indepFun_of_measurable_blockSigma (iIndepFun_eval_noiseMeasure Unit (Sym2 ℕ))
-      (fun q => measurable_pi_apply q) (disjoint_jointBlockNoise he)
+      (fun q _ => measurable_pi_apply q) (disjoint_jointBlockNoise he)
       (measurable_jointBlockNoise g hg e) (measurable_jointBlockNoise g hg e')
 
 end Dissociation

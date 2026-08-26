@@ -40,9 +40,9 @@ indices, and a block over an empty set of indices carries no information, so not
 Dissociation is a restriction on the array and not a consequence of any exchangeability: an array
 all of whose entries are one common random variable is separately exchangeable, but dissociating it
 forces that variable to be almost surely trivial
-(`JointlyDissociated.measure_preimage_eq_zero_or_one_of_const`). That is exactly the global
-variable of an Aldous--Hoover coding, and it is why the ergodic form of the representation drops
-it.
+(`JointlyDissociated.measure_preimage_eq_zero_or_one_of_const`). Thus nontrivial randomness shared
+unchanged by every entry is incompatible with dissociation; the ergodic Aldous--Hoover coding drops
+the global noise coordinate entirely.
 
 These results advance the exchangeable-arrays milestone of
 `TauCetiRoadmap/Exchangeability/README.md`, Layer 8. The dissociated codings themselves are in
@@ -60,7 +60,7 @@ These results advance the exchangeable-arrays milestone of
 * `TauCeti.Probability.separatelyDissociated_of_iIndepFun` — an array of independent entries is
   separately dissociated;
 * `TauCeti.Probability.SeparatelyDissociated.arrayBlock` and
-  `TauCeti.Probability.JointlyDissociated.arrayBlock` — dissociation passes to blocks along
+  `TauCeti.Probability.JointlyDissociated.arrayBlock_diag` — dissociation passes to blocks along
   injective index maps;
 * `TauCeti.Probability.SeparatelyDissociated.map_values` and
   `TauCeti.Probability.JointlyDissociated.map_values` — dissociation is preserved by a measurable
@@ -168,9 +168,8 @@ private theorem measure_preimage_eq_zero_or_one_of_indepFun_self [IsProbabilityM
 /-- **Dissociation makes a constant array trivial.** If every entry of a jointly dissociated array
 is one and the same random variable `Y`, then `Y` generates an almost surely trivial σ-algebra.
 
-This is what forbids the global variable of an Aldous--Hoover coding: the array `X (i, j) = U`
-built from the global variable alone is separately exchangeable, and dissociating it would make `U`
-degenerate. -/
+In particular, the array `X (i, j) = U` built from global noise alone is separately exchangeable,
+but dissociating it would make `U` degenerate. -/
 theorem JointlyDissociated.measure_preimage_eq_zero_or_one_of_const [IsProbabilityMeasure μ]
     {Y : Ω → α} (hY : Measurable Y) (h : JointlyDissociated μ fun _ => Y) {s : Set α}
     (hs : MeasurableSet s) : μ (Y ⁻¹' s) = 0 ∨ μ (Y ⁻¹' s) = 1 :=
@@ -178,16 +177,16 @@ theorem JointlyDissociated.measure_preimage_eq_zero_or_one_of_const [IsProbabili
     ((jointlyDissociated_iff.mp h (fun _ => 0) (fun _ => 1) (by simp)).comp
       (measurable_pi_apply (0, 0)) (measurable_pi_apply (0, 0))) hs
 
-/-- **A symmetric array is separately dissociated only if it is trivial off the diagonal.**
-Separate dissociation asks `X (i, j)` and `X (j, i)` to be independent, and for a symmetric array
-they are equal. This is why joint dissociation, and not separate dissociation, is the notion a
-symmetric array — the adjacency array of a random graph, say — is asked to have. -/
+/-- **Equal transposed entries of a separately dissociated array are trivial off the diagonal.**
+Separate dissociation asks `X (i, j)` and `X (j, i)` to be independent, so if those two entries
+are equal, they are self-independent. This applies in particular to symmetric arrays. -/
 theorem SeparatelyDissociated.measure_preimage_eq_zero_or_one_of_symm [IsProbabilityMeasure μ]
-    (h : SeparatelyDissociated μ X) (hsymm : ∀ i j, X (j, i) = X (i, j))
-    {i j : ℕ} (hij : i ≠ j) (hX : Measurable (X (i, j))) {s : Set α} (hs : MeasurableSet s) :
+    (h : SeparatelyDissociated μ X) {i j : ℕ} (hij : i ≠ j)
+    (hsymm : X (j, i) = X (i, j)) (hX : Measurable (X (i, j)))
+    {s : Set α} (hs : MeasurableSet s) :
     μ (X (i, j) ⁻¹' s) = 0 ∨ μ (X (i, j) ⁻¹' s) = 1 := by
   have hindep := h.indepFun_apply hij hij.symm
-  rw [hsymm i j] at hindep
+  rw [hsymm] at hindep
   exact measure_preimage_eq_zero_or_one_of_indepFun_self hX hindep hs
 
 end Consequences
@@ -222,7 +221,7 @@ theorem SeparatelyDissociated.arrayBlock (h : SeparatelyDissociated μ X) {e f :
   · simpa only [Set.range_comp] using Set.disjoint_image_of_injective hf h₂
 
 /-- **Joint dissociation passes to the diagonal blocks** along an injective index map. -/
-theorem JointlyDissociated.arrayBlock (h : JointlyDissociated μ X) {e : ℕ → ℕ}
+theorem JointlyDissociated.arrayBlock_diag (h : JointlyDissociated μ X) {e : ℕ → ℕ}
     (he : Function.Injective e) :
     JointlyDissociated μ (TauCeti.Probability.arrayBlock X e e) := by
   refine jointlyDissociated_iff.mpr fun e₁ e₂ h₁ => ?_
@@ -244,7 +243,7 @@ theorem separatelyDissociated_of_iIndepFun (hX : iIndepFun X μ) (hX_meas : ∀ 
     @measurable_pi_lambda _ _ _ (blockSigma X (Set.range a ×ˢ Set.range b)) _ _ fun p =>
       measurable_blockSigma_of_mem (Z := X) (S := Set.range a ×ˢ Set.range b)
         ⟨⟨p.1, rfl⟩, ⟨p.2, rfl⟩⟩
-  exact indepFun_of_measurable_blockSigma hX hX_meas
+  exact indepFun_of_measurable_blockSigma hX (fun p _ => hX_meas p)
     (Set.disjoint_left.mpr fun p hp hp' => Set.disjoint_left.mp he hp.1 hp'.1)
     (key e f) (key e' f')
 
