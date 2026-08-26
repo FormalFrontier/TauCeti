@@ -44,50 +44,42 @@ The list is exact, not merely exhaustive: the three dimension vectors are distin
 representations are pairwise non-isomorphic, and the skeleton of the finite-dimensional
 indecomposables is counted by `Fin 3`.
 
-## Main definitions
-
-* `TauCeti.kroneckerRepSelfIso`: every representation of the generalized Kronecker quiver is the
-  one that `TauCeti.kroneckerRep` builds from its own vertex spaces and arrow actions.
-* `TauCeti.kroneckerRepIso` and `TauCeti.kroneckerIso`: an isomorphism of representations of the
-  generalized Kronecker quiver from a commuting square of isomorphisms, for representations
-  presented by `TauCeti.kroneckerRep` and for arbitrary ones.
-* `TauCeti.kroneckerEnd`: the endomorphism of an arbitrary representation of the generalized
-  Kronecker quiver attached to an endomorphism of each vertex space intertwining every arrow.
-
 ## Main results
 
 * `TauCeti.eq_zero_or_eq_id_of_indecomposable_kronecker`: an indecomposable representation of the
   generalized Kronecker quiver admits no nontrivial intertwining pair of idempotents.
 * `TauCeti.ker_map_arrowPath_eq_bot`, `TauCeti.range_map_arrowPath_eq_top` and
   `TauCeti.isIso_map_arrowPath`: over the `A₂` quiver the arrow of an indecomposable
-  representation with two nonzero vertex spaces is an isomorphism.
+  representation is injective as soon as its target is nonzero and surjective as soon as its
+  source is, hence an isomorphism when neither vertex space vanishes.
 * `TauCeti.finrank_src_eq_one_of_isZero_tgt`, `TauCeti.finrank_tgt_eq_one_of_isZero_src`,
   `TauCeti.finrank_src_eq_one_of_not_isZero` and `TauCeti.finrank_tgt_eq_one_of_not_isZero`: the
   nonzero vertex spaces of an indecomposable representation are lines.
-* `TauCeti.nonempty_iso_of_indecomposable_kronecker`: **every indecomposable representation of the
-  `A₂` quiver is `S₁`, `S₂` or `P₁`.**
+* `TauCeti.nonempty_iso_simpleRep_src_or_simpleRep_tgt_or_indecProjRep_of_indecomposable_kronecker`:
+  **every indecomposable representation of the `A₂` quiver is `S₁`, `S₂` or `P₁`.**
 * `TauCeti.not_nonempty_simpleRep_indecProjRep_iso`: a vertex simple of the `A₂` quiver is not
   `P₁`, which with `TauCeti.not_nonempty_simpleRep_iso` makes the three pairwise non-isomorphic.
 * `TauCeti.card_skeleton_indecomposable_kronecker`: **the `A₂` quiver has exactly three
   finite-dimensional indecomposable representations up to isomorphism.**
-* `TauCeti.isFiniteRepType_kronecker`: **the `A₂` quiver has finite representation type.**
+
+The finite representation type read off that count is
+`TauCeti.isFiniteRepType_kronecker`, in
+`TauCeti.RepresentationTheory.Quiver.Kronecker.FiniteRepType` beside its negative counterpart.
 
 ## Implementation notes
 
-`TauCeti.kroneckerEnd` builds a natural transformation of an arbitrary representation directly from
-its two components, rather than transporting `TauCeti.kroneckerRepHom` along
-`TauCeti.kroneckerRepSelfIso`: the latter is the same morphism, but reading off its components asks
-`simp` to rewrite `NatTrans.comp_app` at a vertex of `CategoryTheory.Paths`, where the motive is
-not type-correct at the transparency `simp` uses. `TauCeti.kroneckerRepHom` remains the constructor
-for morphisms *between* two representations, which `TauCeti.kroneckerEnd` does not supply.
+The pair of a linear map at each vertex intertwining every arrow is turned into a morphism of
+representations by `TauCeti.kroneckerHom`, in
+`TauCeti.RepresentationTheory.Quiver.Kronecker.Representation`, and into an isomorphism by
+`TauCeti.kroneckerIso` there: neither needs indecomposability, so neither lives here.
 
 The classification is stated for an arrow type in `Type`, not in an arbitrary universe. That is
 what puts the three comparison objects in the same universe as the representation: the vertex
 simple `TauCeti.simpleRep` puts the base field itself at its vertex, while `TauCeti.indecProjRep`
 puts the paths of the quiver into a `Finsupp`, and only for a `Type`-valued arrow type do the two
-land in one universe. The supporting layers -- the reconstruction isomorphism, the endomorphism
-constructor, and the idempotent dichotomy -- carry an arbitrary arrow universe, and the
-`[Unique A]` hypothesis is spelled only where a single arrow is genuinely used.
+land in one universe. The idempotent dichotomy and the structure results below carry an arbitrary
+arrow universe, and the `[Unique A]` hypothesis is spelled only where a single arrow is genuinely
+used.
 
 ## References
 
@@ -113,197 +105,13 @@ section GeneralizedKronecker
 
 variable {A : Type v}
 
-/-- Every representation of the generalized Kronecker quiver is the one built from its own data. -/
-def kroneckerRepSelfIso (ρ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)) :
-    ρ ≅ kroneckerRep k (ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
-      (ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))
-      (fun a ↦ ρ.map (Quiver.Kronecker.arrowPath a)) :=
-  NatIso.ofComponents
-    (fun v ↦ match v with
-      | Quiver.Kronecker.src => Iso.refl _
-      | Quiver.Kronecker.tgt => Iso.refl _)
-    (by
-      rintro (_ | _) (_ | _) p
-      · rw [Quiver.Kronecker.path_src_src_eq_nil p]
-        simp
-      · obtain ⟨a, rfl⟩ := Quiver.Kronecker.arrowPath_surjective p
-        simp
-      · exact isEmptyElim
-          (α := Quiver.Path (Quiver.Kronecker.tgt : Quiver.Kronecker A) Quiver.Kronecker.src) p
-      · rw [Quiver.Kronecker.path_tgt_tgt_eq_nil p]
-        simp)
-
-/-- The reconstruction isomorphism is the identity at the source. -/
-@[simp]
-theorem kroneckerRepSelfIso_hom_app_src (ρ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)) :
-    (kroneckerRepSelfIso ρ).hom.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))
-      = 𝟙 _ := (rfl)
-
-/-- The reconstruction isomorphism is the identity at the target. -/
-@[simp]
-theorem kroneckerRepSelfIso_hom_app_tgt (ρ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)) :
-    (kroneckerRepSelfIso ρ).hom.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))
-      = 𝟙 _ := (rfl)
-
-/-- The inverse of the reconstruction isomorphism is the identity at the source. -/
-@[simp]
-theorem kroneckerRepSelfIso_inv_app_src (ρ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)) :
-    (kroneckerRepSelfIso ρ).inv.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))
-      = 𝟙 _ := (rfl)
-
-/-- The inverse of the reconstruction isomorphism is the identity at the target. -/
-@[simp]
-theorem kroneckerRepSelfIso_inv_app_tgt (ρ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)) :
-    (kroneckerRepSelfIso ρ).inv.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))
-      = 𝟙 _ := (rfl)
-
-section Iso
-
-variable {M N M' N' : ModuleCat.{t} k} {f : A → (M ⟶ N)} {f' : A → (M' ⟶ N')}
-
-/-- An isomorphism of representations of the generalized Kronecker quiver from a commuting square
-of isomorphisms. -/
-def kroneckerRepIso (g : M ≅ M') (h : N ≅ N') (w : ∀ a, f a ≫ h.hom = g.hom ≫ f' a) :
-    kroneckerRep k M N f ≅ kroneckerRep k M' N' f' :=
-  NatIso.ofComponents
-    (fun v ↦ match v with
-      | Quiver.Kronecker.src => g
-      | Quiver.Kronecker.tgt => h)
-    (by
-      rintro (_ | _) (_ | _) p
-      · rw [Quiver.Kronecker.path_src_src_eq_nil p]
-        simp
-      · obtain ⟨a, rfl⟩ := Quiver.Kronecker.arrowPath_surjective p
-        simpa using w a
-      · exact isEmptyElim
-          (α := Quiver.Path (Quiver.Kronecker.tgt : Quiver.Kronecker A) Quiver.Kronecker.src) p
-      · rw [Quiver.Kronecker.path_tgt_tgt_eq_nil p]
-        simp)
-
-/-- At the source, `TauCeti.kroneckerRepIso` is the prescribed isomorphism. -/
-@[simp]
-theorem kroneckerRepIso_hom_app_src (g : M ≅ M') (h : N ≅ N')
-    (w : ∀ a, f a ≫ h.hom = g.hom ≫ f' a) :
-    (kroneckerRepIso g h w).hom.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))
-      = g.hom := (rfl)
-
-/-- At the target, `TauCeti.kroneckerRepIso` is the prescribed isomorphism. -/
-@[simp]
-theorem kroneckerRepIso_hom_app_tgt (g : M ≅ M') (h : N ≅ N')
-    (w : ∀ a, f a ≫ h.hom = g.hom ≫ f' a) :
-    (kroneckerRepIso g h w).hom.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))
-      = h.hom := (rfl)
-
-/-- At the source, the inverse of `TauCeti.kroneckerRepIso` is the prescribed inverse. -/
-@[simp]
-theorem kroneckerRepIso_inv_app_src (g : M ≅ M') (h : N ≅ N')
-    (w : ∀ a, f a ≫ h.hom = g.hom ≫ f' a) :
-    (kroneckerRepIso g h w).inv.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))
-      = g.inv := (rfl)
-
-/-- At the target, the inverse of `TauCeti.kroneckerRepIso` is the prescribed inverse. -/
-@[simp]
-theorem kroneckerRepIso_inv_app_tgt (g : M ≅ M') (h : N ≅ N')
-    (w : ∀ a, f a ≫ h.hom = g.hom ≫ f' a) :
-    (kroneckerRepIso g h w).inv.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))
-      = h.inv := (rfl)
-
-end Iso
-
-section IsoOfComponents
-
-variable {ρ σ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)}
-
-/-- **Two representations of the generalized Kronecker quiver with isomorphic vertex spaces
-intertwining every arrow are isomorphic**, the isomorphism version of `TauCeti.kroneckerRepHom`
-for representations that are not presented by `TauCeti.kroneckerRep`. -/
-def kroneckerIso
-    (g : ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))
-      ≅ σ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
-    (h : ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))
-      ≅ σ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))
-    (w : ∀ a, ρ.map (Quiver.Kronecker.arrowPath a) ≫ h.hom
-      = g.hom ≫ σ.map (Quiver.Kronecker.arrowPath a)) : ρ ≅ σ :=
-  kroneckerRepSelfIso ρ ≪≫ kroneckerRepIso g h w ≪≫ (kroneckerRepSelfIso σ).symm
-
-variable (g : ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))
-    ≅ σ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
-  (h : ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))
-    ≅ σ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))
-  (w : ∀ a, ρ.map (Quiver.Kronecker.arrowPath a) ≫ h.hom
-    = g.hom ≫ σ.map (Quiver.Kronecker.arrowPath a))
-
-/-- At the source, `TauCeti.kroneckerIso` is the prescribed isomorphism. -/
-@[simp]
-theorem kroneckerIso_hom_app_src :
-    (kroneckerIso g h w).hom.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))
-      = g.hom := (rfl)
-
-/-- At the target, `TauCeti.kroneckerIso` is the prescribed isomorphism. -/
-@[simp]
-theorem kroneckerIso_hom_app_tgt :
-    (kroneckerIso g h w).hom.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))
-      = h.hom := (rfl)
-
-/-- At the source, the inverse of `TauCeti.kroneckerIso` is the prescribed inverse. -/
-@[simp]
-theorem kroneckerIso_inv_app_src :
-    (kroneckerIso g h w).inv.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))
-      = g.inv := (rfl)
-
-/-- At the target, the inverse of `TauCeti.kroneckerIso` is the prescribed inverse. -/
-@[simp]
-theorem kroneckerIso_inv_app_tgt :
-    (kroneckerIso g h w).inv.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))
-      = h.inv := (rfl)
-
-end IsoOfComponents
-
 section Endomorphism
 
 variable {ρ : QuiverRep.{u, 0, v, t} k (Quiver.Kronecker A)}
-
-/-- **The endomorphism of a representation of the generalized Kronecker quiver attached to an
-endomorphism of each vertex space intertwining the action of every arrow.** -/
-def kroneckerEnd
-    (p : ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) ⟶
-      ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
-    (q : ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) ⟶
-      ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))
-    (w : ∀ a, ρ.map (Quiver.Kronecker.arrowPath a) ≫ q
-      = p ≫ ρ.map (Quiver.Kronecker.arrowPath a)) : ρ ⟶ ρ where
-  app v := match v with
-    | Quiver.Kronecker.src => p
-    | Quiver.Kronecker.tgt => q
-  naturality := by
-    rintro (_ | _) (_ | _) e
-    · rw [Quiver.Kronecker.path_src_src_eq_nil e]
-      simp
-    · obtain ⟨a, rfl⟩ := Quiver.Kronecker.arrowPath_surjective e
-      exact w a
-    · exact isEmptyElim
-        (α := Quiver.Path (Quiver.Kronecker.tgt : Quiver.Kronecker A) Quiver.Kronecker.src) e
-    · rw [Quiver.Kronecker.path_tgt_tgt_eq_nil e]
-      simp
-
-variable {p : ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) ⟶
+  {p : ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) ⟶
     ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))}
   {q : ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) ⟶
     ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))}
-  {w : ∀ a, ρ.map (Quiver.Kronecker.arrowPath a) ≫ q
-    = p ≫ ρ.map (Quiver.Kronecker.arrowPath a)}
-
-include w in
-/-- At the source, `TauCeti.kroneckerEnd` is the prescribed endomorphism of the source space. -/
-@[simp]
-theorem kroneckerEnd_app_src :
-    (kroneckerEnd p q w).app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) = p := (rfl)
-
-include w in
-/-- At the target, `TauCeti.kroneckerEnd` is the prescribed endomorphism of the target space. -/
-@[simp]
-theorem kroneckerEnd_app_tgt :
-    (kroneckerEnd p q w).app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) = q := (rfl)
 
 /-- **An indecomposable representation of the generalized Kronecker quiver admits no nontrivial
 pair of intertwining idempotents.** The intertwining hypothesis is explicit: it is not determined
@@ -313,20 +121,25 @@ theorem eq_zero_or_eq_id_of_indecomposable_kronecker (hind : Indecomposable ρ)
       = p ≫ ρ.map (Quiver.Kronecker.arrowPath a))
     (hp : p ≫ p = p) (hq : q ≫ q = q) :
     (p = 0 ∧ q = 0) ∨ (p = 𝟙 _ ∧ q = 𝟙 _) := by
-  have hidem : kroneckerEnd p q w ≫ kroneckerEnd p q w = kroneckerEnd p q w := by
-    refine NatTrans.ext (funext fun x ↦ ?_)
-    cases x
-    · exact hp
-    · exact hq
+  -- `CategoryTheory.NatTrans.comp_app`, `CategoryTheory.NatTrans.app_zero` and
+  -- `CategoryTheory.NatTrans.id_app` are applied as terms rather than rewritten: at a vertex of
+  -- `CategoryTheory.Paths` the motive of such a rewrite is not type-correct at the transparency
+  -- `rw` and `simp` use.
+  have hidem : kroneckerHom p q w ≫ kroneckerHom p q w = kroneckerHom p q w :=
+    kroneckerRep_hom_ext
+      ((NatTrans.comp_app _ _ _).trans (by rw [kroneckerHom_app_src]; exact hp))
+      ((NatTrans.comp_app _ _ _).trans (by rw [kroneckerHom_app_tgt]; exact hq))
+  have hsrc : ∀ e : ρ ⟶ ρ, kroneckerHom p q w = e →
+      p = e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)) :=
+    fun _ h ↦ (kroneckerHom_app_src p q w).symm.trans (congrArg (fun e : ρ ⟶ ρ ↦
+      e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))) h)
+  have htgt : ∀ e : ρ ⟶ ρ, kroneckerHom p q w = e →
+      q = e.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)) :=
+    fun _ h ↦ (kroneckerHom_app_tgt p q w).symm.trans (congrArg (fun e : ρ ⟶ ρ ↦
+      e.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))) h)
   rcases idempotent_eq_zero_or_id_of_indecomposable hind hidem with h | h
-  · exact Or.inl ⟨congrArg (fun e : ρ ⟶ ρ ↦
-        e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))) h,
-      congrArg (fun e : ρ ⟶ ρ ↦
-        e.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))) h⟩
-  · exact Or.inr ⟨congrArg (fun e : ρ ⟶ ρ ↦
-        e.app (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))) h,
-      congrArg (fun e : ρ ⟶ ρ ↦
-        e.app (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))) h⟩
+  · exact Or.inl ⟨(hsrc _ h).trans (NatTrans.app_zero _), (htgt _ h).trans (NatTrans.app_zero _)⟩
+  · exact Or.inr ⟨(hsrc _ h).trans (NatTrans.id_app _ _), (htgt _ h).trans (NatTrans.id_app _ _)⟩
 
 end Endomorphism
 
@@ -353,11 +166,8 @@ omit [Unique A] in
 zero object. -/
 private theorem isZero_of_isZero_obj
     (hsrc : IsZero (ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))))
-    (htgt : IsZero (ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))) : IsZero ρ := by
-  refine (IsZero.iff_id_eq_zero ρ).mpr (NatTrans.ext (funext fun x ↦ ?_))
-  cases x
-  · exact (IsZero.iff_id_eq_zero _).mp hsrc
-  · exact (IsZero.iff_id_eq_zero _).mp htgt
+    (htgt : IsZero (ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))) : IsZero ρ :=
+  Functor.isZero ρ fun x ↦ by cases x; exacts [hsrc, htgt]
 
 omit [Unique A] in
 /-- **A vertex space of an indecomposable representation of the generalized Kronecker quiver whose
@@ -396,9 +206,10 @@ theorem finrank_tgt_eq_one_of_isZero_src (hind : Indecomposable ρ)
   · exact Or.inl (by simpa using congrArg ModuleCat.Hom.hom h0)
   · exact Or.inr (by simpa using congrArg ModuleCat.Hom.hom h1)
 
-/-- **The arrow of an indecomposable representation of the `A₂` quiver with both vertex spaces
+/-- **The arrow of an indecomposable representation of the `A₂` quiver whose target vertex space is
 nonzero is injective.** The projection onto its kernel, paired with `0` at the target, is an
-idempotent pair; the identity is excluded because the target does not vanish. -/
+idempotent pair; the identity is excluded because the target does not vanish. Nothing is assumed at
+the source, so this is stronger than the case of two nonzero vertex spaces. -/
 theorem ker_map_arrowPath_eq_bot (hind : Indecomposable ρ)
     (htgt : ¬ IsZero (ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))) :
     LinearMap.ker (ρ.map (Quiver.Kronecker.arrowPath (default : A))).hom = ⊥ := by
@@ -422,9 +233,11 @@ theorem ker_map_arrowPath_eq_bot (hind : Indecomposable ρ)
     rw [← Submodule.range_projection hC, hpr, LinearMap.range_zero]
   · exact absurd ((IsZero.iff_id_eq_zero _).mpr h1.symm) htgt
 
-/-- **The arrow of an indecomposable representation of the `A₂` quiver with both vertex spaces
+/-- **The arrow of an indecomposable representation of the `A₂` quiver whose source vertex space is
 nonzero is surjective**, the mirror of `TauCeti.ker_map_arrowPath_eq_bot`: the projection onto a
-complement of its range, paired with `0` at the source, is an idempotent pair. -/
+complement of its range, paired with `0` at the source, is an idempotent pair, and the identity is
+excluded because the source does not vanish. Nothing is assumed at the target, so this too is
+stronger than the case of two nonzero vertex spaces. -/
 theorem range_map_arrowPath_eq_top (hind : Indecomposable ρ)
     (hsrc : ¬ IsZero (ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))) :
     LinearMap.range (ρ.map (Quiver.Kronecker.arrowPath (default : A))).hom = ⊤ := by
@@ -462,13 +275,16 @@ theorem isIso_map_arrowPath (hind : Indecomposable ρ)
   exact ⟨LinearMap.ker_eq_bot.mp (ker_map_arrowPath_eq_bot hind htgt),
     LinearMap.range_eq_top.mp (range_map_arrowPath_eq_top hind hsrc)⟩
 
-/-- **Both vertex spaces of an indecomposable representation of the `A₂` quiver with neither of
-them zero are lines.** Conjugating an idempotent of the source through the arrow -- an isomorphism
-by `TauCeti.isIso_map_arrowPath` -- produces an intertwining idempotent pair. -/
+/-- **A nonzero source vertex space of an indecomposable representation of the `A₂` quiver is a
+line**; for the target vertex space see `TauCeti.finrank_tgt_eq_one_of_not_isZero`. With the target
+zero this is `TauCeti.finrank_src_eq_one_of_isZero_tgt`; otherwise the arrow is an isomorphism by
+`TauCeti.isIso_map_arrowPath`, and conjugating an idempotent of the source through it produces an
+intertwining idempotent pair. -/
 theorem finrank_src_eq_one_of_not_isZero (hind : Indecomposable ρ)
-    (hsrc : ¬ IsZero (ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))))
-    (htgt : ¬ IsZero (ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))) :
+    (hsrc : ¬ IsZero (ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))) :
     Module.finrank k (ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))) = 1 := by
+  by_cases htgt : IsZero (ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))
+  · exact finrank_src_eq_one_of_isZero_tgt hind htgt
   have harr := isIso_map_arrowPath hind hsrc htgt
   refine finrank_eq_one_of_trivial_idempotent _ hsrc fun pr hpr ↦ ?_
   have h2 : ModuleCat.ofHom pr ≫ ModuleCat.ofHom pr = ModuleCat.ofHom pr := ModuleCat.hom_ext hpr
@@ -486,15 +302,18 @@ theorem finrank_src_eq_one_of_not_isZero (hind : Indecomposable ρ)
   · exact Or.inl (by simpa using congrArg ModuleCat.Hom.hom h0)
   · exact Or.inr (by simpa using congrArg ModuleCat.Hom.hom h1)
 
-/-- The companion of `TauCeti.finrank_src_eq_one_of_not_isZero` at the target vertex: the arrow is
-an isomorphism, so it carries the dimension of the source to the dimension of the target. -/
+/-- **A nonzero target vertex space of an indecomposable representation of the `A₂` quiver is a
+line**, the companion of `TauCeti.finrank_src_eq_one_of_not_isZero`. With the source zero this is
+`TauCeti.finrank_tgt_eq_one_of_isZero_src`; otherwise the arrow is an isomorphism, so it carries
+the dimension of the source to the dimension of the target. -/
 theorem finrank_tgt_eq_one_of_not_isZero (hind : Indecomposable ρ)
-    (hsrc : ¬ IsZero (ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A))))
     (htgt : ¬ IsZero (ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A)))) :
     Module.finrank k (ρ.obj (Quiver.Kronecker.tgt : Paths (Quiver.Kronecker A))) = 1 := by
+  by_cases hsrc : IsZero (ρ.obj (Quiver.Kronecker.src : Paths (Quiver.Kronecker A)))
+  · exact finrank_tgt_eq_one_of_isZero_src hind hsrc
   have harr := isIso_map_arrowPath hind hsrc htgt
   rw [← (asIso (ρ.map (Quiver.Kronecker.arrowPath (default : A)))).toLinearEquiv.finrank_eq]
-  exact finrank_src_eq_one_of_not_isZero hind hsrc htgt
+  exact finrank_src_eq_one_of_not_isZero hind hsrc
 
 end Structure
 
@@ -562,8 +381,8 @@ mirror-image if the source vanishes. Otherwise the arrow is injective and surjec
 projections onto its kernel and onto a complement of its range extend to idempotent endomorphisms,
 so conjugation through it turns an idempotent of the source into an intertwining pair and both
 vertex spaces are lines. -/
-theorem nonempty_iso_of_indecomposable_kronecker (ρ : QuiverRep k (Quiver.Kronecker A))
-    (hind : Indecomposable ρ) :
+theorem nonempty_iso_simpleRep_src_or_simpleRep_tgt_or_indecProjRep_of_indecomposable_kronecker
+    (ρ : QuiverRep k (Quiver.Kronecker A)) (hind : Indecomposable ρ) :
     Nonempty (ρ ≅ simpleRep k (Quiver.Kronecker A) Quiver.Kronecker.src) ∨
       Nonempty (ρ ≅ simpleRep k (Quiver.Kronecker A) Quiver.Kronecker.tgt) ∨
       Nonempty (ρ ≅ indecProjRep k (Quiver.Kronecker A) Quiver.Kronecker.src) := by
@@ -587,7 +406,7 @@ theorem nonempty_iso_of_indecomposable_kronecker (ρ : QuiverRep k (Quiver.Krone
     isIso_map_arrowPath (indecomposable_indecProjRep_of_isAcyclic Quiver.Kronecker.isAcyclic _)
       (not_isZero_of_finrank_eq_one finrank_indecProjRep_obj_src)
       (not_isZero_of_finrank_eq_one finrank_indecProjRep_obj_tgt)
-  set g := isoOfFinrankEqOne (finrank_src_eq_one_of_not_isZero hind hsrc htgt)
+  set g := isoOfFinrankEqOne (finrank_src_eq_one_of_not_isZero hind hsrc)
     finrank_indecProjRep_obj_src
   refine kroneckerIso g
     ((asIso (ρ.map (Quiver.Kronecker.arrowPath (default : A)))).symm ≪≫ g ≪≫
@@ -598,8 +417,9 @@ theorem nonempty_iso_of_indecomposable_kronecker (ρ : QuiverRep k (Quiver.Krone
 
 /-- **A vertex simple of the `A₂` quiver is not the projective `P₁`**: the vertex where `Sᵢ`
 vanishes is one where `P₁` is a line, `P₁` having dimension vector `(1,1)`. With
-`TauCeti.not_nonempty_simpleRep_iso` this makes the three representations of
-`TauCeti.nonempty_iso_of_indecomposable_kronecker` pairwise non-isomorphic. -/
+`TauCeti.not_nonempty_simpleRep_iso` this makes the three representations of the classification
+`TauCeti.nonempty_iso_simpleRep_src_or_simpleRep_tgt_or_indecProjRep_of_indecomposable_kronecker`
+pairwise non-isomorphic. -/
 theorem not_nonempty_simpleRep_indecProjRep_iso (i : Quiver.Kronecker A) :
     ¬ Nonempty (simpleRep k (Quiver.Kronecker A) i ≅
       indecProjRep k (Quiver.Kronecker A) Quiver.Kronecker.src) := by
@@ -660,8 +480,8 @@ private theorem indecClass_surjective : Function.Surjective (indecClass k A) := 
     rintro i ⟨e⟩
     rw [← toSkeleton_fromSkeleton_obj x]
     exact toSkeleton_eq_toSkeleton_iff.mpr ⟨ObjectProperty.isoMk _ e.symm⟩
-  rcases nonempty_iso_of_indecomposable_kronecker ((fromSkeleton _).obj x).obj
-    ((fromSkeleton _).obj x).property.2 with h | h | h
+  rcases nonempty_iso_simpleRep_src_or_simpleRep_tgt_or_indecProjRep_of_indecomposable_kronecker
+    ((fromSkeleton _).obj x).obj ((fromSkeleton _).obj x).property.2 with h | h | h
   · exact ⟨0, key 0 h⟩
   · exact ⟨1, key 1 h⟩
   · exact ⟨2, key 2 h⟩
@@ -684,28 +504,16 @@ private theorem indecClass_injective : Function.Injective (indecClass k A) := by
       | exact absurd (hiso.map Iso.symm) (hSP _)
 
 /-- **The `A₂` quiver has exactly three finite-dimensional indecomposable representations up to
-isomorphism**: `TauCeti.nonempty_iso_of_indecomposable_kronecker` exhibits `S₁`, `S₂` and `P₁` as
-an exhaustive list, and their dimension vectors `(1,0)`, `(0,1)` and `(1,1)` keep them pairwise
-non-isomorphic, so the skeleton is counted by `Fin 3`. -/
+isomorphism**: the classification
+`TauCeti.nonempty_iso_simpleRep_src_or_simpleRep_tgt_or_indecProjRep_of_indecomposable_kronecker`
+exhibits `S₁`, `S₂` and `P₁` as an exhaustive list, and their dimension vectors `(1,0)`, `(0,1)` and
+`(1,1)` keep them pairwise non-isomorphic, so the skeleton is counted by `Fin 3`. -/
 theorem card_skeleton_indecomposable_kronecker (k : Type u) [Field k] (A : Type) [Unique A] :
     Nat.card (Skeleton (ObjectProperty.FullSubcategory
       (fun M : QuiverRep.{u, 0, 0, u} k (Quiver.Kronecker A) ↦
         IsFinDim k (Quiver.Kronecker A) M ∧ Indecomposable M))) = 3 := by
   rw [← Nat.card_eq_of_bijective (indecClass k A) ⟨indecClass_injective, indecClass_surjective⟩,
     Nat.card_eq_fintype_card, Fintype.card_fin]
-
-/-- **The `A₂` quiver has finite representation type**, the positive half of Gabriel's dichotomy
-for the smallest Dynkin quiver: by `TauCeti.card_skeleton_indecomposable_kronecker` its
-finite-dimensional indecomposables fall into exactly three isomorphism classes.
-
-Contrast `TauCeti.not_isFiniteRepType_kronecker`: as soon as a second arrow is added the Kronecker
-quiver leaves Dynkin type and acquires infinitely many indecomposables. -/
-theorem isFiniteRepType_kronecker (k : Type u) [Field k] (A : Type) [Unique A] :
-    IsFiniteRepType.{u, 0, 0, u} k (Quiver.Kronecker A) := by
-  rw [isFiniteRepType_iff]
-  refine Nat.finite_of_card_ne_zero ?_
-  rw [card_skeleton_indecomposable_kronecker]
-  exact three_ne_zero
 
 end A2
 
