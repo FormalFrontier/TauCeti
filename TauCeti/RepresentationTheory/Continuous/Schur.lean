@@ -61,7 +61,8 @@ variable {π : ContRepresentation 𝕜 G V} {ρ : ContRepresentation 𝕜 G W}
 /-- **Schur's lemma, vanishing half.** A continuous intertwiner between inequivalent irreducible
 finite-dimensional continuous representations is zero.
 
-Inequivalence is asked of the continuous representations, which by `nonempty_equiv_iff` is the same
+Inequivalence is asked of the continuous representations, which by
+`_root_.ContRepresentation.nonempty_equiv_iff` is the same
 condition as inequivalence of the underlying abstract representations. No hypothesis on the field
 beyond completeness is needed: this half of Schur's lemma does not need eigenvalues, so it does not
 need algebraic closedness. -/
