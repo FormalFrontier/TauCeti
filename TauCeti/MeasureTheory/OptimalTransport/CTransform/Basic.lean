@@ -20,8 +20,10 @@ fixed, the largest `ψ` satisfying it is the *infimal `c`-transform*
 `cTransform c φ y = ⨅ x, (c (x, y) - φ x)`, and symmetrically with `ψ` fixed. This file builds
 that transform, the two closure operations it generates, the `c`-concave potentials they fix,
 and the contact set on which the dual constraint is an equality. It is the finite-real slice of
-the roadmap's broader transform interface; the extended-cost, analytic-sublevel, and compact
-attainment/lower-semicontinuity interfaces are separate follow-up slices. The elementary
+the roadmap's broader transform interface; the analytic-sublevel interface lives in
+`TauCeti.MeasureTheory.OptimalTransport.CTransform.Analytic`, and the compact attainment and
+lower-semicontinuity interface in `TauCeti.MeasureTheory.OptimalTransport.CTransform.Compact`.
+The extended-cost interface is a follow-up slice. The elementary
 upper-semicontinuity result for infimal transforms, the Borel measurability it gives with no
 hypothesis on the opposite factor, and a metric continuity result for real-valued transforms are
 included here.
