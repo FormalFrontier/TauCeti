@@ -241,7 +241,7 @@ theorem separatelyDissociated_of_iIndepFun (hX : iIndepFun X μ) (hX_meas : ∀ 
   refine separatelyDissociated_iff.mpr fun e f e' f' he _ => ?_
   have key : ∀ a b : ℕ → ℕ, Measurable[blockSigma X (Set.range a ×ˢ Set.range b)]
       fun ω (p : ℕ × ℕ) => X (a p.1, b p.2) ω := fun a b =>
-    measurable_pi_blockSigma _ fun p =>
+    @measurable_pi_lambda _ _ _ (blockSigma X (Set.range a ×ˢ Set.range b)) _ _ fun p =>
       measurable_blockSigma_of_mem (Z := X) (S := Set.range a ×ˢ Set.range b)
         ⟨⟨p.1, rfl⟩, ⟨p.2, rfl⟩⟩
   exact indepFun_of_measurable_blockSigma hX hX_meas
