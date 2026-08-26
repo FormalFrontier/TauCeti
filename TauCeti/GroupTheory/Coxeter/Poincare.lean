@@ -6,8 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Polynomial.Degree.Lemmas
-public import Mathlib.Algebra.Polynomial.Eval.Defs
-public import Mathlib.GroupTheory.Coxeter.Length
+public import TauCeti.GroupTheory.Coxeter.Length
 
 /-!
 # The Poincaré polynomial of a finite Coxeter system
@@ -19,12 +18,10 @@ function: its coefficient at `k` counts the elements of length `k`, its value at
 of `W`, its constant term is `1`, and its degree is the largest length occurring in `W`.
 
 The theorem with content beyond bookkeeping is the value at `-1`. Left multiplication by a fixed
-simple reflection is a bijection of `W` that flips the parity of the length
-(`CoxeterSystem.length_mul_mod_two`), so it pairs the elements of even length with those of odd
-length. Hence the alternating sum `∑_{w ∈ W} (-1)^{ℓ(w)}` vanishes as soon as there is at least one
-simple reflection. That pairing is packaged as an explicit equivalence, so it also gives the
-parity count with no finiteness hypothesis at all, and the evenness of the order of a Coxeter group
-of positive rank.
+simple reflection is a sign-reversing involution of `W`
+(`TauCeti.length_simple_mul_mod_two`), so the alternating sum `∑_{w ∈ W} (-1)^{ℓ(w)}` vanishes as
+soon as there is at least one simple reflection. The parity bookkeeping itself, together with the
+equivalence between the two parity classes, lives in `TauCeti/GroupTheory/Coxeter/Length.lean`.
 
 At the other extreme, a Coxeter system indexed by an empty type has a trivial group -- every
 element is the product of a word in the generators, and there are no generators -- so its Poincaré
@@ -33,16 +30,11 @@ normalisation of the constant term.
 
 ## Main definitions
 
-* `TauCeti.lengthParityEquiv`: left multiplication by a simple reflection, as an equivalence
-  between the even-length and the odd-length elements.
 * `TauCeti.poincarePolynomial`: the Poincaré polynomial `∑_{w ∈ W} q^{ℓ(w)} ∈ ℤ[q]` of a Coxeter
   system on a finite group.
 
 ## Main results
 
-* `TauCeti.natCard_length_even_eq_natCard_length_odd`: as many elements have even length as odd
-  length, provided there is at least one simple reflection.
-* `TauCeti.even_card_of_nonempty_index`: hence a Coxeter group of positive rank has even order.
 * `TauCeti.coeff_poincarePolynomial`: the coefficient of `q^k` counts the elements of length `k`.
 * `TauCeti.eval_one_poincarePolynomial`: the value at `1` is `|W|`.
 * `TauCeti.eval_neg_one_poincarePolynomial`: the value at `-1` is `0` when the simple reflections
@@ -54,11 +46,11 @@ normalisation of the constant term.
 
 ## Implementation notes
 
-The polynomial is defined by an honest `Finset` sum over `W`, so it needs `[Fintype W]` rather than
-`[Finite W]`; the intended instances (Weyl groups of finite root systems, finite reflection groups)
-carry one, and `Fintype.ofFinite` supplies it otherwise. Counts are stated with `Nat.card` on a
-subtype rather than with a `Finset.filter`, so that no `DecidableEq` or `DecidablePred` argument
-leaks into the statements.
+The polynomial is defined and its intrinsic properties are stated under `[Finite W]`, the
+enumeration being supplied internally by `Fintype.ofFinite`; only the lemmas whose right-hand side
+is itself a `Finset.univ` expression (the unfolding lemmas and the degree lemmas) ask for
+`[Fintype W]`. Counts are stated with `Nat.card` on a subtype rather than with a `Finset.filter`,
+so that no `DecidableEq` or `DecidablePred` argument leaks into the statements.
 
 Nothing here needs the group to be finitely generated, crystallographic, or attached to a root
 system: the statements are about an arbitrary Coxeter system, which is where the roadmap places
@@ -81,115 +73,31 @@ namespace TauCeti
 
 variable {B W : Type*} [Group W] {M : CoxeterMatrix B} (cs : CoxeterSystem M W)
 
-/-! ### Rank zero -/
-
-include cs in
-/-- A Coxeter system whose simple reflections are indexed by an empty type has a trivial group:
-every element is the product of a word in the generators, and the only such word is empty. -/
-theorem subsingleton_of_isEmpty_index [IsEmpty B] : Subsingleton W := by
-  constructor
-  have hone : ∀ w : W, w = 1 := by
-    intro w
-    obtain ⟨ω, -, rfl⟩ := cs.exists_isReduced w
-    cases ω with
-    | nil => simp
-    | cons i _ => exact (IsEmpty.false i).elim
-  intro u v
-  rw [hone u, hone v]
-
-/-! ### Left multiplication by a simple reflection flips the parity of the length -/
-
-/-- Multiplying on the left by a simple reflection changes the length by one, hence changes its
-residue modulo two. -/
-private theorem length_simple_mul_mod_two (i : B) (w : W) :
-    cs.length (cs.simple i * w) % 2 = (cs.length w + 1) % 2 := by
-  rw [cs.length_mul_mod_two, cs.length_simple, Nat.add_comm]
-
-/-- Left multiplication by a simple reflection turns an element of even length into one of odd
-length, and only those. -/
-@[simp]
-theorem odd_length_simple_mul_iff (i : B) (w : W) :
-    Odd (cs.length (cs.simple i * w)) ↔ Even (cs.length w) := by
-  rw [Nat.odd_iff, Nat.even_iff, length_simple_mul_mod_two]
-  omega
-
-/-- Left multiplication by a simple reflection turns an element of odd length into one of even
-length, and only those. -/
-@[simp]
-theorem even_length_simple_mul_iff (i : B) (w : W) :
-    Even (cs.length (cs.simple i * w)) ↔ Odd (cs.length w) := by
-  rw [Nat.even_iff, Nat.odd_iff, length_simple_mul_mod_two]
-  omega
-
-/-- **Left multiplication by a simple reflection matches the two parity classes.** It is an
-involution of `W` exchanging the elements of even length with those of odd length. -/
-def lengthParityEquiv (i : B) :
-    {w : W // Even (cs.length w)} ≃ {w : W // Odd (cs.length w)} where
-  toFun w := ⟨cs.simple i * (w : W), (odd_length_simple_mul_iff cs i _).mpr w.2⟩
-  invFun w := ⟨cs.simple i * (w : W), (even_length_simple_mul_iff cs i _).mpr w.2⟩
-  left_inv _ := Subtype.ext (cs.simple_mul_simple_cancel_left i)
-  right_inv _ := Subtype.ext (cs.simple_mul_simple_cancel_left i)
-
-/-- `lengthParityEquiv` is left multiplication by the simple reflection. -/
-@[simp]
-theorem lengthParityEquiv_apply_coe (i : B) (x : {w : W // Even (cs.length w)}) :
-    (lengthParityEquiv cs i x : W) = cs.simple i * (x : W) := (rfl)
-
-/-- The inverse of `lengthParityEquiv` is again left multiplication by the simple reflection. -/
-@[simp]
-theorem lengthParityEquiv_symm_apply_coe (i : B) (x : {w : W // Odd (cs.length w)}) :
-    ((lengthParityEquiv cs i).symm x : W) = cs.simple i * (x : W) := (rfl)
-
-/-- **The two parity classes of a Coxeter group of positive rank are equinumerous**: there are as
-many elements of even length as of odd length. No finiteness is needed, since the two classes are
-matched by an explicit bijection. -/
-theorem natCard_length_even_eq_natCard_length_odd [Nonempty B] :
-    Nat.card {w : W // Even (cs.length w)} = Nat.card {w : W // Odd (cs.length w)} :=
-  Nat.card_congr (lengthParityEquiv cs (Classical.arbitrary B))
-
-include cs in
-/-- **A Coxeter group of positive rank has even order**, the two parity classes of the length
-splitting it in half. -/
-theorem even_card_of_nonempty_index [Fintype W] [Nonempty B] : Even (Fintype.card W) := by
-  classical
-  obtain ⟨i⟩ := ‹Nonempty B›
-  have hsplit : Fintype.card {w : W // Even (cs.length w)}
-      + Fintype.card {w : W // ¬ Even (cs.length w)} = Fintype.card W := by
-    rw [← Fintype.card_sum]
-    exact Fintype.card_congr (Equiv.sumCompl fun w : W => Even (cs.length w))
-  have hmatch : Fintype.card {w : W // ¬ Even (cs.length w)}
-      = Fintype.card {w : W // Even (cs.length w)} :=
-    Fintype.card_congr
-      ((Equiv.subtypeEquivRight fun w : W => Nat.not_even_iff_odd).trans
-        (lengthParityEquiv cs i).symm)
-  exact ⟨Fintype.card {w : W // Even (cs.length w)}, by omega⟩
-
-/-! ### The Poincaré polynomial -/
-
-section Fintype
-
-variable [Fintype W]
-
 /-- The **Poincaré polynomial** of a Coxeter system on a finite group: the length generating
 function `∑_{w ∈ W} q^{ℓ(w)}`, viewed as an element of `ℤ[q]`. -/
-noncomputable def poincarePolynomial : Polynomial ℤ :=
+noncomputable def poincarePolynomial [Finite W] : Polynomial ℤ :=
+  letI := Fintype.ofFinite W
   ∑ w : W, Polynomial.X ^ cs.length w
 
 /-- The Poincaré polynomial, unfolded. -/
-theorem poincarePolynomial_eq_sum :
-    poincarePolynomial cs = ∑ w : W, Polynomial.X ^ cs.length w := (rfl)
+theorem poincarePolynomial_eq_sum [Fintype W] :
+    poincarePolynomial cs = ∑ w : W, Polynomial.X ^ cs.length w := by
+  -- the enumeration used in the definition and the ambient one agree, `Fintype W` being a
+  -- subsingleton
+  rw [poincarePolynomial, Subsingleton.elim (Fintype.ofFinite W) ‹Fintype W›]
 
 /-- Evaluating the Poincaré polynomial at `q` gives the length generating function `∑ q^{ℓ(w)}`. -/
-theorem eval_poincarePolynomial (q : ℤ) :
+theorem eval_poincarePolynomial [Fintype W] (q : ℤ) :
     (poincarePolynomial cs).eval q = ∑ w : W, q ^ cs.length w := by
   rw [poincarePolynomial_eq_sum, Polynomial.eval_finsetSum]
   exact Finset.sum_congr rfl fun w _ => by rw [Polynomial.eval_pow, Polynomial.eval_X]
 
 /-- **The Poincaré polynomial is the length generating function**: its coefficient at `q^k` is the
 number of elements of `W` of length `k`. -/
-theorem coeff_poincarePolynomial (k : ℕ) :
+theorem coeff_poincarePolynomial [Finite W] (k : ℕ) :
     (poincarePolynomial cs).coeff k = (Nat.card {w : W // cs.length w = k} : ℤ) := by
   classical
+  have : Fintype W := Fintype.ofFinite W
   rw [poincarePolynomial_eq_sum, Polynomial.finsetSum_coeff, Nat.card_eq_fintype_card,
     Fintype.card_subtype, ← Finset.sum_boole]
   refine Finset.sum_congr rfl fun w _ => ?_
@@ -199,14 +107,15 @@ theorem coeff_poincarePolynomial (k : ℕ) :
   · simp [h, Ne.symm h]
 
 /-- The coefficients of the Poincaré polynomial are nonnegative, being cardinalities. -/
-theorem coeff_poincarePolynomial_nonneg (k : ℕ) : 0 ≤ (poincarePolynomial cs).coeff k := by
+theorem coeff_poincarePolynomial_nonneg [Finite W] (k : ℕ) :
+    0 ≤ (poincarePolynomial cs).coeff k := by
   rw [coeff_poincarePolynomial]
   exact Int.natCast_nonneg _
 
 /-- The constant term of the Poincaré polynomial is `1`: the identity is the unique element of
 length `0`. -/
 @[simp]
-theorem coeff_poincarePolynomial_zero : (poincarePolynomial cs).coeff 0 = 1 := by
+theorem coeff_poincarePolynomial_zero [Finite W] : (poincarePolynomial cs).coeff 0 = 1 := by
   rw [coeff_poincarePolynomial]
   norm_cast
   rw [Nat.card_eq_one_iff_unique]
@@ -216,7 +125,7 @@ theorem coeff_poincarePolynomial_zero : (poincarePolynomial cs).coeff 0 = 1 := b
   rw [cs.length_eq_zero_iff.mp hu, cs.length_eq_zero_iff.mp hv]
 
 /-- The Poincaré polynomial is nonzero. -/
-theorem poincarePolynomial_ne_zero : poincarePolynomial cs ≠ 0 := by
+theorem poincarePolynomial_ne_zero [Finite W] : poincarePolynomial cs ≠ 0 := by
   intro h
   have h0 := coeff_poincarePolynomial_zero cs
   rw [h] at h0
@@ -224,41 +133,39 @@ theorem poincarePolynomial_ne_zero : poincarePolynomial cs ≠ 0 := by
 
 /-- **The value at `1` is the order of the group**: every element contributes `1`. -/
 @[simp]
-theorem eval_one_poincarePolynomial :
-    (poincarePolynomial cs).eval 1 = (Fintype.card W : ℤ) := by
-  rw [eval_poincarePolynomial]
+theorem eval_one_poincarePolynomial [Finite W] :
+    (poincarePolynomial cs).eval 1 = (Nat.card W : ℤ) := by
+  have : Fintype W := Fintype.ofFinite W
+  rw [eval_poincarePolynomial, Nat.card_eq_fintype_card]
   simp
 
-/-- **The Poincaré polynomial vanishes at `-1`** as soon as there is at least one simple
-reflection: left multiplication by it is a bijection of `W` reversing the sign of every term of the
+/-- Left multiplication by a simple reflection reverses the sign of the term `(-1)^{ℓ(w)}` of the
 alternating sum. -/
+private theorem neg_one_pow_length_simple_mul (i : B) (w : W) :
+    (-1 : ℤ) ^ cs.length (cs.simple i * w) = -((-1 : ℤ) ^ cs.length w) := by
+  rw [neg_one_pow_eq_pow_mod_two, length_simple_mul_mod_two, ← neg_one_pow_eq_pow_mod_two,
+    pow_succ]
+  ring
+
+/-- **The Poincaré polynomial vanishes at `-1`** as soon as there is at least one simple
+reflection: left multiplication by it is a sign-reversing involution of `W`, so the terms of the
+alternating sum cancel in pairs. -/
 @[simp]
-theorem eval_neg_one_poincarePolynomial [Nonempty B] :
+theorem eval_neg_one_poincarePolynomial [Finite W] [Nonempty B] :
     (poincarePolynomial cs).eval (-1) = 0 := by
   obtain ⟨i⟩ := ‹Nonempty B›
+  have : Fintype W := Fintype.ofFinite W
+  have hne : cs.simple i ≠ 1 := fun h => by simpa [h] using cs.length_simple i
   rw [eval_poincarePolynomial]
-  have hshift : ∑ w : W, (-1 : ℤ) ^ cs.length (cs.simple i * w)
-      = ∑ w : W, (-1 : ℤ) ^ cs.length w :=
-    Fintype.sum_equiv (Equiv.mulLeft (cs.simple i))
-      (fun w => (-1 : ℤ) ^ cs.length (cs.simple i * w)) (fun w => (-1 : ℤ) ^ cs.length w)
-      fun w => by rw [Equiv.coe_mulLeft]
-  have hsign : ∀ w : W,
-      (-1 : ℤ) ^ cs.length (cs.simple i * w) = -((-1 : ℤ) ^ cs.length w) := by
-    intro w
-    rw [neg_one_pow_eq_pow_mod_two, length_simple_mul_mod_two, ← neg_one_pow_eq_pow_mod_two,
-      pow_succ]
-    ring
-  have hneg : ∑ w : W, (-1 : ℤ) ^ cs.length w = -∑ w : W, (-1 : ℤ) ^ cs.length w :=
-    calc ∑ w : W, (-1 : ℤ) ^ cs.length w
-        = ∑ w : W, (-1 : ℤ) ^ cs.length (cs.simple i * w) := hshift.symm
-      _ = ∑ w : W, -((-1 : ℤ) ^ cs.length w) := Finset.sum_congr rfl fun w _ => hsign w
-      _ = -∑ w : W, (-1 : ℤ) ^ cs.length w := Finset.sum_neg_distrib _
-  linarith
+  refine Finset.sum_ninvolution (fun w => cs.simple i * w)
+    (fun w => by rw [neg_one_pow_length_simple_mul]; ring) (fun w _ hw => hne ?_)
+    (fun w => Finset.mem_univ _) fun w => cs.simple_mul_simple_cancel_left i
+  simpa using hw
 
 /-! ### Degree -/
 
 /-- **The degree of the Poincaré polynomial is the largest length occurring in `W`.** -/
-theorem natDegree_poincarePolynomial :
+theorem natDegree_poincarePolynomial [Fintype W] :
     (poincarePolynomial cs).natDegree = Finset.univ.sup fun w : W => cs.length w := by
   refine le_antisymm ?_ ?_
   · rw [Polynomial.natDegree_le_iff_coeff_eq_zero]
@@ -280,7 +187,7 @@ theorem natDegree_poincarePolynomial :
     exact_mod_cast Nat.card_pos.ne'
 
 /-- **The leading coefficient counts the elements of maximal length.** -/
-theorem leadingCoeff_poincarePolynomial :
+theorem leadingCoeff_poincarePolynomial [Fintype W] :
     (poincarePolynomial cs).leadingCoeff
       = (Nat.card {w : W // cs.length w = Finset.univ.sup fun v : W => cs.length v} : ℤ) := by
   rw [← Polynomial.coeff_natDegree, natDegree_poincarePolynomial, coeff_poincarePolynomial]
@@ -290,7 +197,8 @@ theorem leadingCoeff_poincarePolynomial :
 /-- **The rank-zero case**: with no simple reflections the group is trivial and the Poincaré
 polynomial is `1`. -/
 @[simp]
-theorem poincarePolynomial_of_isEmpty [IsEmpty B] : poincarePolynomial cs = 1 := by
+theorem poincarePolynomial_of_isEmpty [Finite W] [IsEmpty B] : poincarePolynomial cs = 1 := by
+  have : Fintype W := Fintype.ofFinite W
   rw [poincarePolynomial_eq_sum, Finset.sum_eq_single (1 : W)]
   · simp
   · exact fun w _ hw => absurd ((subsingleton_of_isEmpty_index cs).allEq w 1) hw
@@ -299,9 +207,10 @@ theorem poincarePolynomial_of_isEmpty [IsEmpty B] : poincarePolynomial cs = 1 :=
 /-- **The rank-one case**: a Coxeter system with a single simple reflection has Poincaré
 polynomial `1 + q`, its group being the two-element group generated by that reflection. -/
 @[simp]
-theorem poincarePolynomial_of_unique_index [Unique B] :
+theorem poincarePolynomial_of_unique_index [Finite W] [Unique B] :
     poincarePolynomial cs = 1 + Polynomial.X := by
   classical
+  have : Fintype W := Fintype.ofFinite W
   have hword : ∀ ω : List B,
       cs.wordProd ω = 1 ∨ cs.wordProd ω = cs.simple (default : B) := by
     intro ω
@@ -326,7 +235,5 @@ theorem poincarePolynomial_of_unique_index [Unique B] :
     simpa using hmem w
   rw [poincarePolynomial_eq_sum, huniv, Finset.sum_insert (by simpa using hne),
     Finset.sum_singleton, cs.length_one, cs.length_simple, pow_zero, pow_one]
-
-end Fintype
 
 end TauCeti
