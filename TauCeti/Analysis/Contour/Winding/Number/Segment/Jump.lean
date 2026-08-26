@@ -29,7 +29,6 @@ sides of the segment near `p`: it is one larger on the side to the left of the d
 
 ## Main results
 
-* `TauCeti.Contour.hasDerivAt_segment` — the derivative of the straight segment map.
 * `TauCeti.Contour.segment_ne_of_im_ne_zero` — the straight segment avoids points off its
   carrying line.
 * `TauCeti.Contour.tendsto_windingNumber_segment_add_mul_I` and
@@ -54,11 +53,6 @@ open scoped Topology
 namespace TauCeti.Contour
 
 variable {v z₀ q : ℂ} {a b c s : ℝ}
-
-/-- The straight segment `t ↦ v · t + z₀` has derivative `v` everywhere. -/
-theorem hasDerivAt_segment (v z₀ : ℂ) (t : ℝ) :
-    HasDerivAt (fun t : ℝ => v * (t : ℂ) + z₀) v t := by
-  simpa using ((hasDerivAt_id t).ofReal_comp.const_mul v).add_const z₀
 
 /-- The straight segment `t ↦ v · t + z₀` avoids `v · q + z₀` when `q` is not real. -/
 theorem segment_ne_of_im_ne_zero (hv : v ≠ 0) (hq : q.im ≠ 0) (t : ℝ) :
