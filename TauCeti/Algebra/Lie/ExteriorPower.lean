@@ -27,8 +27,7 @@ commutators to commutators, hence defines a Lie algebra representation.
 ## References
 
 * [Highest-weight roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md),
-  Layer 9, where exterior powers of the standard representation supply the fundamental
-  representations used to construct the irreducible `gl_n` modules.
+  Layer 8, where the Vinberg model of `E₈` uses the `sl₉` action on `⋀³(K⁹)`.
 -/
 
 public section
@@ -63,43 +62,33 @@ private theorem actionMultilinear_map_eq_zero_of_eq (d : ℕ) (f : Module.End K 
     actionMultilinear d f v = 0 := by
   rw [actionMultilinear_apply]
   let term : Fin d → ⋀[K]^d V := fun k => ιMulti K d (Function.update v k (f (v k)))
+  have hpair : term i + term j = 0 := by
+    dsimp only [term]
+    have hfun : Function.update v j (f (v j)) =
+        Function.update v i (f (v i)) ∘ Equiv.swap i j := by
+      funext k
+      by_cases hki : k = i
+      · subst k
+        simpa [Function.update_apply, hij, Ne.symm hij] using hv
+      · by_cases hkj : k = j
+        · subst k
+          simpa [Function.update_apply, hij, Ne.symm hij] using congrArg f hv.symm
+        · simp [Equiv.swap_apply_of_ne_of_ne hki hkj, hki, hkj]
+    rw [hfun]
+    exact (ιMulti K d).map_add_swap _ hij
+  -- The swap pairs the `i` and `j` terms; every remaining term vanishes by alternation.
   apply Finset.sum_involution (s := Finset.univ) (f := term)
       (fun k _ => Equiv.swap i j k)
   · intro k _
     by_cases hki : k = i
     · subst k
       rw [Equiv.swap_apply_left]
-      have hfun : Function.update v j (f (v j)) =
-          Function.update v i (f (v i)) ∘ Equiv.swap i j := by
-        funext k
-        by_cases hki : k = i
-        · subst k
-          simpa [Function.update_apply, hij, Ne.symm hij] using hv
-        · by_cases hkj : k = j
-          · subst k
-            simpa [Function.update_apply, hij, Ne.symm hij] using congrArg f hv.symm
-          · simp [Equiv.swap_apply_of_ne_of_ne hki hkj, hki, hkj]
-      change ιMulti K d (Function.update v i (f (v i))) +
-        ιMulti K d (Function.update v j (f (v j))) = 0
-      rw [hfun]
-      exact (ιMulti K d).map_add_swap _ hij
+      exact hpair
     · by_cases hkj : k = j
       · subst k
         rw [Equiv.swap_apply_right]
-        have hfun : Function.update v i (f (v i)) =
-            Function.update v j (f (v j)) ∘ Equiv.swap i j := by
-          funext k
-          by_cases hkj : k = j
-          · subst k
-            simpa [Function.update_apply, hij, Ne.symm hij] using hv.symm
-          · by_cases hki : k = i
-            · subst k
-              simpa [Function.update_apply, hij, Ne.symm hij] using congrArg f hv
-            · simp [Equiv.swap_apply_of_ne_of_ne hki hkj, hki, hkj]
-        change ιMulti K d (Function.update v j (f (v j))) +
-          ιMulti K d (Function.update v i (f (v i))) = 0
-        rw [hfun]
-        exact (ιMulti K d).map_add_swap _ hij
+        rw [add_comm]
+        exact hpair
       · rw [Equiv.swap_apply_of_ne_of_ne hki hkj]
         have hzero : term k = 0 := by
           apply (ιMulti K d).map_eq_zero_of_eq _ _ hij
@@ -131,7 +120,10 @@ private noncomputable def actionAlternating (d : ℕ) (f : Module.End K V) :
 private theorem actionAlternating_apply (d : ℕ) (f : Module.End K V) (v : Fin d → V) :
     actionAlternating d f v =
       ∑ i : Fin d, ιMulti K d (Function.update v i (f (v i))) :=
-  actionMultilinear_apply d f v
+  by
+    -- The alternating-map constructor has no application lemma for its multilinear projection.
+    rw [show actionAlternating d f v = actionMultilinear d f v from rfl]
+    exact actionMultilinear_apply d f v
 
 private noncomputable def actionLinear (d : ℕ) :
     Module.End K V →ₗ[K] Module.End K (⋀[K]^d V) where
@@ -177,7 +169,7 @@ private theorem actionLinear_comp_apply_ιMulti (d : ℕ) (f g : Module.End K V)
         ∑ i : Fin d, ∑ j ∈ Finset.univ.erase i, actionTerm d f g v i j := by
   rw [actionLinear_apply_ιMulti]
   simp only [map_sum, actionLinear_apply_ιMulti]
-  change (∑ i : Fin d, ∑ j : Fin d, actionTerm d f g v i j) = _
+  simp only [actionTerm]
   rw [← Finset.sum_add_distrib]
   apply Finset.sum_congr rfl
   intro i _
@@ -200,6 +192,8 @@ private theorem actionLinear_map_lie (d : ℕ) (f g : Module.End K V) :
   apply linearMap_ext
   apply AlternatingMap.ext
   intro v
+  -- Extensionality leaves reducible alternating-map and endomorphism-bracket wrappers; this
+  -- reshaping exposes the associative commutators used by the explicit calculation below.
   change actionLinear d (f * g - g * f) (ιMulti K d v) =
     actionLinear d f (actionLinear d g (ιMulti K d v)) -
       actionLinear d g (actionLinear d f (ιMulti K d v))
@@ -220,6 +214,9 @@ noncomputable def lieMap (d : ℕ) :
 theorem lieMap_apply_ιMulti (d : ℕ) (f : Module.End K V) (v : Fin d → V) :
     lieMap d f (ιMulti K d v) =
       ∑ i : Fin d, ιMulti K d (Function.update v i (f (v i))) :=
-  actionLinear_apply_ιMulti d f v
+  by
+    -- The Lie-hom constructor has no application lemma for its underlying linear map.
+    rw [show lieMap d f = actionLinear d f from rfl]
+    exact actionLinear_apply_ιMulti d f v
 
 end exteriorPower
