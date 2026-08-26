@@ -391,11 +391,9 @@ noncomputable def finiteTypeCoordinateHopfAlgebraBaseChangeIso
     (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K] (n : Nat) :
     FiniteTypeCommHopfAlgCat.baseChange (K := K) (finiteTypeCoordinateHopfAlgebra R n) ≅
       finiteTypeCoordinateHopfAlgebra K n :=
-  ObjectProperty.isoMk _ <|
-    eqToIso (congrArg (CommHopfAlgCat.baseChange (K := K))
-      (finiteTypeCoordinateHopfAlgebra_obj R n)) ≪≫
-    coordinateHopfAlgebraBaseChangeIso R K n ≪≫
-    eqToIso (finiteTypeCoordinateHopfAlgebra_obj K n).symm
+  FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso
+    (finiteTypeCoordinateHopfAlgebra_obj R n) (finiteTypeCoordinateHopfAlgebra_obj K n)
+    (coordinateHopfAlgebraBaseChangeIso R K n)
 
 /-- The underlying commutative-Hopf-algebra morphism of the finite-type base-change isomorphism
 is the canonical coordinate-Hopf-algebra base-change isomorphism, with the definitional object
@@ -409,8 +407,8 @@ theorem finiteTypeCoordinateHopfAlgebraBaseChangeIso_hom
           (finiteTypeCoordinateHopfAlgebra_obj R n)) ≪≫
         coordinateHopfAlgebraBaseChangeIso R K n ≪≫
         eqToIso (finiteTypeCoordinateHopfAlgebra_obj K n).symm).hom :=
-  by
-    simp only [finiteTypeCoordinateHopfAlgebraBaseChangeIso,
-      CategoryTheory.ObjectProperty.isoMk_hom, CategoryTheory.ObjectProperty.homMk_hom]
+  FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso_hom
+    (finiteTypeCoordinateHopfAlgebra_obj R n) (finiteTypeCoordinateHopfAlgebra_obj K n)
+    (coordinateHopfAlgebraBaseChangeIso R K n)
 
 end TauCeti.GeneralLinear
