@@ -40,8 +40,8 @@ constructed directly on the set of squared-length-two vectors and proved involut
   `TauCeti.DynkinType.typeDSimpleRootCoordinates_nonneg_or_nonpos` says the expansion has
   coefficients of one sign.
 * `TauCeti.DynkinType.sum_typeDSimpleRoot` gives their coordinate sums and
-  `TauCeti.DynkinType.typeDSimpleRoot_dotProduct` their Gram matrix, the Cartan matrix
-  `CartanMatrix.D n`.
+  `TauCeti.DynkinType.typeDSimpleRoot_dotProduct_typeDSimpleRoot` their Gram matrix, the Cartan
+  matrix `CartanMatrix.D n`.
 * `TauCeti.DynkinType.linearIndependent_typeDSimpleRoot` says that basis is linearly independent.
 * `TauCeti.DynkinType.typeDRootReflectionEquiv` is reflection in a root, acting on the coordinates
   by `TauCeti.DynkinType.typeDSimpleRootCoordinates_typeDRootReflection`.
@@ -529,7 +529,7 @@ private lemma typeDSimpleRoot_dotProduct_of_not_add_one_lt (hn : 4 ≤ n) {i : F
 laced and its roots have squared length two, so the coroot of a root is the root itself and the
 Cartan integer `⟨αᵢ, αⱼ^∨⟩` is the classical dot product. -/
 @[simp]
-theorem typeDSimpleRoot_dotProduct (hn : 4 ≤ n) (i j : Fin n) :
+theorem typeDSimpleRoot_dotProduct_typeDSimpleRoot (hn : 4 ≤ n) (i j : Fin n) :
     typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
   by_cases hi : (i : ℕ) + 1 < n
   · exact typeDSimpleRoot_dotProduct_of_add_one_lt hn hi j

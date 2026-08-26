@@ -50,10 +50,8 @@ available: this deduces it from the lattice, rather than the other way round.
 
 * `TauCeti.IntegralLattice.checkerboardSimpleRoot`: the Bourbaki simple roots of type `Dₙ`, as
   vectors of the rational ambient space of the checkerboard lattice.
-* `TauCeti.IntegralLattice.checkerboardLattice_form_checkerboardSimpleRoot`: **their Gram matrix
-  is `CartanMatrix.D n`.**
-* `TauCeti.IntegralLattice.checkerboardLattice_form_checkerboardSimpleRoot_self`: each simple
-  root has norm two.
+* `TauCeti.IntegralLattice.checkerboardLattice_form_checkerboardSimpleRoot_checkerboardSimpleRoot`:
+  **their Gram matrix is `CartanMatrix.D n`.**
 * `TauCeti.IntegralLattice.span_range_checkerboardSimpleRoot` and
   `TauCeti.IntegralLattice.linearIndependent_checkerboardSimpleRoot`: they span the checkerboard
   carrier over `ℤ`, and are `ℤ`-linearly independent.
@@ -62,8 +60,8 @@ available: this deduces it from the lattice, rather than the other way round.
 * `TauCeti.IntegralLattice.gramMatrix_checkerboardSimpleRootBasis`: the Gram matrix of that basis
   is `CartanMatrix.D n`.
 * `TauCeti.IntegralLattice.determinant_checkerboardLattice`: the signed determinant of the
-  checkerboard lattice is `(CartanMatrix.D n).det`.
-* `CartanMatrix.D_det`: `(CartanMatrix.D n).det = 4`.
+  checkerboard lattice is `4`.
+* `CartanMatrix.D_det`: `(CartanMatrix.D n).det = 4` for `2 ≤ n`.
 
 ## References
 
@@ -114,15 +112,14 @@ private theorem ratOfIntVec_typeDSimpleRoot (hn : 4 ≤ n) (i : Fin n) :
 private theorem ratOfIntVec_injective : Function.Injective (ratOfIntVec n) := by
   intro u v huv
   funext j
-  have h : (u j : ℚ) = (v j : ℚ) := by
-    rw [← ratOfIntVec_apply u j, ← ratOfIntVec_apply v j, huv]
-  exact_mod_cast h
+  exact Int.cast_injective (congrFun huv j)
 
 /-- Every simple root lies in the checkerboard carrier: its coordinates are integers and their
 sum is `0` or `2`. -/
 theorem checkerboardSimpleRoot_mem_checkerboardCarrier (hn : 4 ≤ n) (i : Fin n) :
     checkerboardSimpleRoot n hn i ∈ checkerboardCarrier n := by
-  refine mem_checkerboardCarrier_of (DynkinType.typeDSimpleRoot n hn i) (fun j ↦ rfl) ?_
+  refine mem_checkerboardCarrier_of (DynkinType.typeDSimpleRoot n hn i)
+    (checkerboardSimpleRoot_apply hn i) ?_
   rw [DynkinType.sum_typeDSimpleRoot hn i]
   split_ifs
   · exact ⟨0, by ring⟩
@@ -136,12 +133,14 @@ matrix of type `Dₙ`.**
 Not a `simp` lemma: `checkerboardLattice_form` is `@[simp]`, so `simp` rewrites the head of the
 left-hand side to `Matrix.toBilin' 1` before this equation can fire.  Every sibling
 `checkerboardLattice_form_*` lemma is untagged for the same reason. -/
-theorem checkerboardLattice_form_checkerboardSimpleRoot (hn : 4 ≤ n) (i j : Fin n) :
+theorem checkerboardLattice_form_checkerboardSimpleRoot_checkerboardSimpleRoot
+    (hn : 4 ≤ n) (i j : Fin n) :
     (checkerboardLattice n).form (checkerboardSimpleRoot n hn i) (checkerboardSimpleRoot n hn j) =
       ((CartanMatrix.D n i j : ℤ) : ℚ) := by
-  rw [checkerboardLattice_form_apply, ← DynkinType.typeDSimpleRoot_dotProduct hn i j]
+  rw [checkerboardLattice_form_apply,
+    ← DynkinType.typeDSimpleRoot_dotProduct_typeDSimpleRoot hn i j]
   push_cast [dotProduct]
-  rfl
+  simp only [checkerboardSimpleRoot_apply]
 
 /-! ## Spanning the checkerboard carrier
 
@@ -205,9 +204,8 @@ private theorem mem_span_typeDSimpleRoot (hn : 4 ≤ n) (w : Fin n → ℤ) (m :
     (hw : ∑ j, w j = 2 * m) :
     w ∈ Submodule.span ℤ (Set.range (DynkinType.typeDSimpleRoot n hn)) := by
   have hbasis : ∑ i, w i • Pi.single i (1 : ℤ) = w := by
-    funext j
-    rw [Finset.sum_apply]
-    simp [Pi.single_apply, mul_ite, Finset.sum_ite_eq]
+    simp_rw [← Pi.single_smul', smul_eq_mul, mul_one]
+    exact Finset.univ_sum_single w
   have hdecomp : w = (∑ i, w i • (Pi.single i (1 : ℤ) - Pi.single (checkerboardLastIndex n) 1)) +
       m • ((2 : ℤ) • Pi.single (checkerboardLastIndex n) (1 : ℤ)) := by
     simp_rw [smul_sub]
@@ -254,15 +252,9 @@ theorem span_range_checkerboardSimpleRoot (hn : 4 ≤ n) :
 ambient space of the checkerboard lattice. -/
 theorem linearIndependent_checkerboardSimpleRoot (hn : 4 ≤ n) :
     LinearIndependent ℤ (checkerboardSimpleRoot n hn) := by
-  rw [Fintype.linearIndependent_iff]
-  intro g hg k
-  have hz : ∑ i, g i • DynkinType.typeDSimpleRoot n hn i = 0 := by
-    refine ratOfIntVec_injective ?_
-    rw [map_sum, map_zero, ← hg]
-    exact Finset.sum_congr rfl fun i _ ↦ by
-      rw [map_smul, ratOfIntVec_typeDSimpleRoot]
-  exact Fintype.linearIndependent_iff.mp
-    (DynkinType.linearIndependent_typeDSimpleRoot hn) g hz k
+  rw [← funext (ratOfIntVec_typeDSimpleRoot hn)]
+  exact (DynkinType.linearIndependent_typeDSimpleRoot hn).map' _
+    (LinearMap.ker_eq_bot.mpr ratOfIntVec_injective)
 
 /-- **The Bourbaki simple roots of type `Dₙ` are a `ℤ`-basis of the checkerboard lattice.**  This
 is what identifies the Conway--Sloane checkerboard model with the root lattice of type `Dₙ`. -/
@@ -273,7 +265,7 @@ noncomputable def checkerboardSimpleRootBasis (n : ℕ) (hn : 4 ≤ n) :
       rw [span_range_checkerboardSimpleRoot hn, checkerboardLattice_carrier]))
 
 @[simp]
-theorem checkerboardSimpleRootBasis_apply (hn : 4 ≤ n) (i : Fin n) :
+theorem coe_checkerboardSimpleRootBasis_apply (hn : 4 ≤ n) (i : Fin n) :
     (checkerboardSimpleRootBasis n hn i : Fin n → ℚ) = checkerboardSimpleRoot n hn i := by
   simp [checkerboardSimpleRootBasis]
 
@@ -281,30 +273,22 @@ theorem checkerboardSimpleRootBasis_apply (hn : 4 ≤ n) (i : Fin n) :
 
 /-- **The Gram matrix of the checkerboard lattice in the simple-root basis is the Cartan matrix
 of type `Dₙ`.** -/
+@[simp]
 theorem gramMatrix_checkerboardSimpleRootBasis (hn : 4 ≤ n) :
     (checkerboardLattice n).gramMatrix (checkerboardSimpleRootBasis n hn) = CartanMatrix.D n := by
   ext i j
   have h :=
     intCast_gramMatrix_apply (checkerboardLattice n) (checkerboardSimpleRootBasis n hn) i j
-  rw [checkerboardSimpleRootBasis_apply, checkerboardSimpleRootBasis_apply,
-    checkerboardLattice_form_checkerboardSimpleRoot hn] at h
+  rw [coe_checkerboardSimpleRootBasis_apply, coe_checkerboardSimpleRootBasis_apply,
+    checkerboardLattice_form_checkerboardSimpleRoot_checkerboardSimpleRoot hn] at h
   exact_mod_cast h
 
 /-- **The signed determinant of the checkerboard lattice is the determinant of the Cartan matrix
 of type `Dₙ`.** -/
-theorem determinant_checkerboardLattice (hn : 4 ≤ n) :
+theorem determinant_checkerboardLattice_eq_det_cartanMatrixD (hn : 4 ≤ n) :
     (checkerboardLattice n).determinant = (CartanMatrix.D n).det := by
   rw [determinant_eq_gramDet _ (checkerboardSimpleRootBasis n hn), gramDet_def,
     gramMatrix_checkerboardSimpleRootBasis hn]
-
-/-- Each simple root has norm two, the diagonal entry of the Cartan matrix.
-
-Untagged for the reason recorded on `checkerboardLattice_form_checkerboardSimpleRoot`. -/
-theorem checkerboardLattice_form_checkerboardSimpleRoot_self (hn : 4 ≤ n) (i : Fin n) :
-    (checkerboardLattice n).form (checkerboardSimpleRoot n hn i) (checkerboardSimpleRoot n hn i) =
-      2 := by
-  rw [checkerboardLattice_form_checkerboardSimpleRoot hn, CartanMatrix.D_diag]
-  norm_num
 
 end IntegralLattice
 
@@ -314,25 +298,50 @@ namespace CartanMatrix
 
 /-- **The determinant of the Cartan matrix of type `Dₙ` is `4`.**
 
-The argument is lattice-theoretic rather than a direct expansion: the Cartan matrix is the Gram
-matrix of the checkerboard lattice in its simple-root basis, so its determinant is a square, and
-its absolute value is the order of the checkerboard discriminant group, which is four. -/
-theorem D_det (hn : 4 ≤ n) : (D n).det = 4 := by
+For `4 ≤ n` the argument is lattice-theoretic rather than a direct expansion: the Cartan matrix is
+the Gram matrix of the checkerboard lattice in its simple-root basis, so its determinant is a
+square, and its absolute value is the order of the checkerboard discriminant group, which is four.
+The two smaller ranks follow from Mathlib's explicit matrices. -/
+theorem D_det (hn : 2 ≤ n) : (D n).det = 4 := by
+  by_cases hn4 : 4 ≤ n
+  swap
+  · have hn_small : n = 2 ∨ n = 3 := by omega
+    rcases hn_small with rfl | rfl
+    · rw [D_two, Matrix.det_fin_two_of]
+      norm_num
+    · rw [D_three, Matrix.det_fin_three]
+      norm_num [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
+        Matrix.cons_val_fin_one]
   have : NeZero n := ⟨by omega⟩
-  have hmul : Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn) *
-      Matrix.transpose (Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn)) = D n := by
+  have hmul : Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn4) *
+      Matrix.transpose (Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn4)) = D n := by
     ext i j
-    rw [Matrix.mul_apply, ← TauCeti.DynkinType.typeDSimpleRoot_dotProduct hn i j]
+    rw [Matrix.mul_apply,
+      ← TauCeti.DynkinType.typeDSimpleRoot_dotProduct_typeDSimpleRoot hn4 i j]
     simp [dotProduct]
-  have hsq : (D n).det = (Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn)).det ^ 2 := by
+  have hsq : (D n).det = (Matrix.of (TauCeti.DynkinType.typeDSimpleRoot n hn4)).det ^ 2 := by
     rw [← hmul, Matrix.det_mul, Matrix.det_transpose, sq]
   have hnonneg : 0 ≤ (D n).det := by
     rw [hsq]
     exact sq_nonneg _
   have habs : ((D n).det).natAbs = 4 := by
-    rw [← TauCeti.IntegralLattice.determinant_checkerboardLattice hn,
+    rw [← TauCeti.IntegralLattice.determinant_checkerboardLattice_eq_det_cartanMatrixD hn4,
       ← TauCeti.IntegralLattice.discriminant_def]
     exact TauCeti.IntegralLattice.discriminant_checkerboardLattice n
   omega
 
 end CartanMatrix
+
+namespace TauCeti
+
+namespace IntegralLattice
+
+/-- **The signed determinant of the checkerboard lattice is `4`.** -/
+@[simp]
+theorem determinant_checkerboardLattice (hn : 4 ≤ n) :
+    (checkerboardLattice n).determinant = 4 := by
+  rw [determinant_checkerboardLattice_eq_det_cartanMatrixD hn, CartanMatrix.D_det (by omega)]
+
+end IntegralLattice
+
+end TauCeti

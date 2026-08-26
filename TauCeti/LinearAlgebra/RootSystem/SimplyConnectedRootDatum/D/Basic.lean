@@ -282,7 +282,7 @@ what pins the character lattice as the weight lattice. -/
       fun k => CartanMatrix.D n i k := by
   funext k
   rw [root_typeDSimplyConnectedRootDatum, typeDRootEquiv_apply_typeDSimpleIndex]
-  exact typeDSimpleRoot_dotProduct hn i k
+  exact typeDSimpleRoot_dotProduct_typeDSimpleRoot hn i k
 
 /-- **The simple coroots are the standard basis.** This is what pins the cocharacter lattice as the
 coroot lattice, so that the datum is the simply connected one. -/
