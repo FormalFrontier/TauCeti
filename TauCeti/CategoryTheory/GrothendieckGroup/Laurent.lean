@@ -191,8 +191,8 @@ theorem T_neg_one_smul_of (X : C) :
 
 /-- **The Laurent action restricts along the constants to the underlying integer action**: an
 integer scalar may be pushed through a Laurent scalar.  This is the content of
-`TauCeti.laurentC_smul` in the form `Module` consumers need, and it is what lets `ℤ`-linear
-arguments about the underlying group be reused verbatim over `ℤ[q,q⁻¹]`. -/
+`TauCeti.laurentPolynomialC_smul` in the form `Module` consumers need, and it is what lets
+`ℤ`-linear arguments about the underlying group be reused verbatim over `ℤ[q,q⁻¹]`. -/
 instance : IsScalarTower ℤ (LaurentPolynomial ℤ) (LaurentK0 E) where
   smul_assoc a p x := by
     rw [zsmul_eq_mul, mul_smul, Int.cast_smul_eq_zsmul]
@@ -215,7 +215,7 @@ variable {N : Type*} [AddCommGroup N] [Module (LaurentPolynomial ℤ) N]
 
 /-- An additive map out of the exact Grothendieck group which turns the grading shift into
 multiplication by `q` turns the whole `ℤ`-action into multiplication by `qⁿ`. -/
-theorem apply_shiftZPow (f : ExactK0 E.toExactStructure →+ N)
+theorem map_shiftZPow (f : ExactK0 E.toExactStructure →+ N)
     (hf : ∀ x, f (E.shiftEquiv x) = (T 1 : LaurentPolynomial ℤ) • f x) (n : ℤ)
     (x : ExactK0 E.toExactStructure) :
     f (E.shiftZPow n x) = (T n : LaurentPolynomial ℤ) • f x := by
@@ -249,9 +249,9 @@ private noncomputable def liftAux (f : ExactK0 E.toExactStructure →+ N)
     | add p q hp hq =>
         rw [add_smul, map_add, map_add, hp, hq, add_smul]
     | C_mul_T n a =>
-        rw [mul_smul, T_smul, laurentC_smul, ← map_zsmul (ofExactK0 E),
-          AddEquiv.symm_apply_apply, map_zsmul f, apply_shiftZPow f hf, mul_smul,
-          laurentC_smul]
+        rw [mul_smul, T_smul, laurentPolynomialC_smul, ← map_zsmul (ofExactK0 E),
+          AddEquiv.symm_apply_apply, map_zsmul f, map_shiftZPow f hf, mul_smul,
+          laurentPolynomialC_smul]
 
 @[simp]
 private lemma liftAux_of (f : ExactK0 E.toExactStructure →+ N)
@@ -327,6 +327,7 @@ variable {K : Type u''} [Category.{v''} K] [Preadditive K] [HasZeroObject K]
 
 /-- **`LaurentK0.map` is functorial**: a composite of graded conflation-exact functors induces the
 composite `ℤ[q,q⁻¹]`-linear map. -/
+@[simp]
 theorem map_comp {E'' : GradedExactStructure K} {H : D ⥤ K} [H.Additive]
     (h : GradedConflationExact E E' F) (h' : GradedConflationExact E' E'' H) :
     map (h.comp h') = (map h').comp (map h) :=

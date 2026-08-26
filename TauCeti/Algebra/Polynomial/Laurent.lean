@@ -40,7 +40,8 @@ monoid, and that automorphism is what a shift-compatible invariant is compared a
 * `TauCeti.laurentEval_unique`: an algebra map out of `R[T;T⁻¹]` is determined by its value at `T`.
 * `TauCeti.laurentEval_eq_eval₂`: over a commutative target, this evaluation is Mathlib's
   `LaurentPolynomial.eval₂`.
-* `TauCeti.laurentC_smul`: a constant Laurent polynomial acts by integer scalar multiplication.
+* `TauCeti.laurentPolynomialC_smul`: a constant Laurent polynomial acts by integer scalar
+  multiplication.
 
 ## References
 
@@ -67,16 +68,9 @@ targets are endomorphism rings.  The construction is the universal property of t
 noncomputable def laurentEval (u : Aˣ) : R[T;T⁻¹] →ₐ[R] A :=
   AddMonoidAlgebra.lift R A ℤ ((Units.coeHom A).comp (zpowersHom Aˣ u))
 
-/-- The defining formula for evaluation at a unit, as the lift of the integer-power monoid
-homomorphism through the universal property of the group algebra. -/
-lemma laurentEval_def (u : Aˣ) :
-    laurentEval (R := R) u =
-      AddMonoidAlgebra.lift R A ℤ ((Units.coeHom A).comp (zpowersHom Aˣ u)) :=
-  (rfl)
-
 @[simp]
 lemma laurentEval_T (u : Aˣ) (n : ℤ) : laurentEval (R := R) u (T n) = ((u ^ n : Aˣ) : A) := by
-  rw [laurentEval_def]
+  rw [laurentEval]
   simp only [LaurentPolynomial.T, AddMonoidAlgebra.lift_single, one_smul]
   rfl
 
@@ -119,6 +113,7 @@ lemma laurentEvalEquiv_symm_apply (f : R[T;T⁻¹] →ₐ[R] A) :
   (rfl)
 
 /-- Evaluation at a unit is natural in the target algebra. -/
+@[simp]
 theorem comp_laurentEval {B : Type*} [Semiring B] [Algebra R B] (g : A →ₐ[R] B) (u : Aˣ) :
     g.comp (laurentEval u) = laurentEval (Units.map (g : A →* B) u) :=
   laurentEval_unique _ _ <| by simp
@@ -172,7 +167,8 @@ abelian group of a `ℤ[T;T⁻¹]`-module.
 Not `@[simp]`: `LaurentPolynomial.C a` is not in simp-normal form, because `eq_intCast` rewrites
 the ring homomorphism `C : ℤ →+* ℤ[T;T⁻¹]` to the integer cast; the normal form of the statement
 is Mathlib's own `Int.cast_smul_eq_zsmul`. -/
-lemma laurentC_smul (a : ℤ) (x : N) : (C a : LaurentPolynomial ℤ) • x = a • x := by
+lemma laurentPolynomialC_smul (a : ℤ) (x : N) :
+    (C a : LaurentPolynomial ℤ) • x = a • x := by
   rw [C_eq_algebraMap, ← Int.cast_smul_eq_zsmul (LaurentPolynomial ℤ) a x]
   congr 1
 
