@@ -278,18 +278,10 @@ open RootPairingIsogeny
 
 /-! ## Odd powers of the special isogeny of `G₂` -/
 
-/-- The special isogeny of `G₂` squares to scaling by three, restated in the multiplicative
-notation of the monoid of self-isogenies. This is the form the generic power lemmas above consume;
-`TauCeti.RootPairingIsogeny.mul_def` is what makes it the same statement as
-`TauCeti.DynkinType.g2SpecialIsogeny_comp_self`. -/
-theorem g2SpecialIsogeny_mul_self :
-    g2SpecialIsogeny * g2SpecialIsogeny = smulId g2SimplyConnectedRootDatum 3 :=
-  g2SpecialIsogeny_comp_self
-
 /-- **The even powers of the special isogeny of `G₂` are Frobenius scalings.** -/
 theorem g2SpecialIsogeny_pow_two_mul (m : ℕ) :
     g2SpecialIsogeny ^ (2 * m) = smulId g2SimplyConnectedRootDatum (3 ^ m) :=
-  pow_two_mul_of_mul_self g2SpecialIsogeny_mul_self m
+  pow_two_mul_of_mul_self g2SpecialIsogeny_comp_self m
 
 /-- **Every power of the special isogeny of `G₂` squares to a Frobenius scaling.** At
 `k = 2 * m + 1` this is the root-datum form of `steinberg(m) ^ 2 = Frob_(3 ^ (2m+1))`, the relation
@@ -298,7 +290,7 @@ proved here. -/
 theorem g2SpecialIsogeny_pow_mul_pow (k : ℕ) :
     g2SpecialIsogeny ^ k * g2SpecialIsogeny ^ k =
       smulId g2SimplyConnectedRootDatum (3 ^ k) :=
-  pow_mul_pow_of_mul_self g2SpecialIsogeny_mul_self k
+  pow_mul_pow_of_mul_self g2SpecialIsogeny_comp_self k
 
 /-- An odd power of the special isogeny of `G₂` permutes the twelve roots exactly as the isogeny
 itself does.
@@ -307,13 +299,14 @@ This is deliberately not `@[simp]`: `TauCeti.RootPairingIsogeny.pow_indexEquiv` 
 power inside, so the left-hand side is not in simp normal form. -/
 theorem g2SpecialIsogeny_pow_odd_indexEquiv_apply (m : ℕ) (i : Fin 12) :
     (g2SpecialIsogeny ^ (2 * m + 1)).indexEquiv i = g2SpecialIsogenyIndex i := by
-  rw [indexEquiv_pow_odd_of_mul_self g2SpecialIsogeny_mul_self, g2SpecialIsogeny_indexEquiv_apply]
+  rw [indexEquiv_pow_odd_of_mul_self g2SpecialIsogeny_comp_self,
+    g2SpecialIsogeny_indexEquiv_apply]
 
 /-- **The exponent of an odd power of the special isogeny of `G₂`** is the squared length of the
 root, times `3 ^ m`. -/
 @[simp] theorem g2SpecialIsogeny_pow_odd_exponent (m : ℕ) (i : Fin 12) :
     (g2SpecialIsogeny ^ (2 * m + 1)).exponent i = g2Length i * 3 ^ m := by
-  rw [exponent_pow_odd_of_mul_self g2SpecialIsogeny_mul_self, g2SpecialIsogeny_exponent]
+  rw [exponent_pow_odd_of_mul_self g2SpecialIsogeny_comp_self, g2SpecialIsogeny_exponent]
   norm_num
 
 /-- **The defining relation of an odd power of the special isogeny of `G₂` on the roots.** This is
@@ -348,23 +341,15 @@ multiply to `3 ^ k`.** At `k = 2 * m + 1` that is the order of the field of defi
 theorem g2SpecialIsogeny_pow_exponent_mul_exponent (k : ℕ) (i : Fin 12) :
     (g2SpecialIsogeny ^ k).exponent i *
         (g2SpecialIsogeny ^ k).exponent ((g2SpecialIsogeny ^ k).indexEquiv i) = 3 ^ k := by
-  rw [exponent_mul_exponent_indexEquiv_pow_of_mul_self g2SpecialIsogeny_mul_self]
+  rw [exponent_mul_exponent_indexEquiv_pow_of_mul_self g2SpecialIsogeny_comp_self]
   norm_num
 
 /-! ## Odd powers of the special isogeny of `F₄` -/
 
-/-- The special isogeny of `F₄` squares to scaling by two, restated in the multiplicative notation
-of the monoid of self-isogenies. This is the form the generic power lemmas above consume;
-`TauCeti.RootPairingIsogeny.mul_def` is what makes it the same statement as
-`TauCeti.DynkinType.f4SpecialIsogeny_comp_self`. -/
-theorem f4SpecialIsogeny_mul_self :
-    f4SpecialIsogeny * f4SpecialIsogeny = smulId f4SimplyConnectedRootDatum 2 :=
-  f4SpecialIsogeny_comp_self
-
 /-- **The even powers of the special isogeny of `F₄` are Frobenius scalings.** -/
 theorem f4SpecialIsogeny_pow_two_mul (m : ℕ) :
     f4SpecialIsogeny ^ (2 * m) = smulId f4SimplyConnectedRootDatum (2 ^ m) :=
-  pow_two_mul_of_mul_self f4SpecialIsogeny_mul_self m
+  pow_two_mul_of_mul_self f4SpecialIsogeny_comp_self m
 
 /-- **Every power of the special isogeny of `F₄` squares to a Frobenius scaling.** At
 `k = 2 * m + 1` this is the root-datum form of `steinberg(m) ^ 2 = Frob_(2 ^ (2m+1))`, the relation
@@ -373,7 +358,7 @@ whose derived subgroup is the Tits group. Nothing about a group is proved here. 
 theorem f4SpecialIsogeny_pow_mul_pow (k : ℕ) :
     f4SpecialIsogeny ^ k * f4SpecialIsogeny ^ k =
       smulId f4SimplyConnectedRootDatum (2 ^ k) :=
-  pow_mul_pow_of_mul_self f4SpecialIsogeny_mul_self k
+  pow_mul_pow_of_mul_self f4SpecialIsogeny_comp_self k
 
 /-- An odd power of the special isogeny of `F₄` permutes the forty-eight roots exactly as the
 isogeny itself does.
@@ -382,13 +367,14 @@ This is deliberately not `@[simp]`: `TauCeti.RootPairingIsogeny.pow_indexEquiv` 
 power inside, so the left-hand side is not in simp normal form. -/
 theorem f4SpecialIsogeny_pow_odd_indexEquiv_apply (m : ℕ) (i : Fin 48) :
     (f4SpecialIsogeny ^ (2 * m + 1)).indexEquiv i = f4SpecialIsogenyIndex i := by
-  rw [indexEquiv_pow_odd_of_mul_self f4SpecialIsogeny_mul_self, f4SpecialIsogeny_indexEquiv_apply]
+  rw [indexEquiv_pow_odd_of_mul_self f4SpecialIsogeny_comp_self,
+    f4SpecialIsogeny_indexEquiv_apply]
 
 /-- **The exponent of an odd power of the special isogeny of `F₄`** is the squared length of the
 root, times `2 ^ m`. -/
 @[simp] theorem f4SpecialIsogeny_pow_odd_exponent (m : ℕ) (i : Fin 48) :
     (f4SpecialIsogeny ^ (2 * m + 1)).exponent i = f4Length i * 2 ^ m := by
-  rw [exponent_pow_odd_of_mul_self f4SpecialIsogeny_mul_self, f4SpecialIsogeny_exponent]
+  rw [exponent_pow_odd_of_mul_self f4SpecialIsogeny_comp_self, f4SpecialIsogeny_exponent]
   norm_num
 
 /-- **The defining relation of an odd power of the special isogeny of `F₄` on the roots.** This is
@@ -422,7 +408,7 @@ multiply to `2 ^ k`.** At `k = 2 * m + 1` that is the order of the field of defi
 theorem f4SpecialIsogeny_pow_exponent_mul_exponent (k : ℕ) (i : Fin 48) :
     (f4SpecialIsogeny ^ k).exponent i *
         (f4SpecialIsogeny ^ k).exponent ((f4SpecialIsogeny ^ k).indexEquiv i) = 2 ^ k := by
-  rw [exponent_mul_exponent_indexEquiv_pow_of_mul_self f4SpecialIsogeny_mul_self]
+  rw [exponent_mul_exponent_indexEquiv_pow_of_mul_self f4SpecialIsogeny_comp_self]
   norm_num
 
 end DynkinType
