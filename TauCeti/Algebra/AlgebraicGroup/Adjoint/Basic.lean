@@ -74,62 +74,17 @@ namespace adjointSemisimpleCommHopfAlgProperty
 
 variable {H : SemisimpleCommHopfAlgCat.{u} k}
 
-/-- The represented center of an adjoint semisimple affine group is cut out by the augmentation
-ideal. -/
-theorem centerDefiningIdeal_eq_augmentation
-    (hH : adjointSemisimpleCommHopfAlgProperty k H) :
-    CommHopfAlgCat.centerDefiningIdeal H.obj.obj = HopfIdeal.augmentation k H.obj.obj :=
-  hH
-
 /-- Every universally central point of an adjoint semisimple affine group is the identity. -/
 theorem isCentralPoint_eq_one
     (hH : adjointSemisimpleCommHopfAlgProperty k H)
     (A : CommAlgCat.{u} k)
     (g : HopfAlgebra.points (R := k) (H := H.obj.obj) A)
     (hg : HopfAlgebra.IsCentralPoint g) : g = 1 := by
-  apply CommHopfAlgCat.eq_one_of_mem_quotientPointsSubgroup_augmentation H.obj.obj A
-  rw [← hH.centerDefiningIdeal_eq_augmentation,
-    CommHopfAlgCat.mem_centerPointsSubgroup_iff]
-  exact hg
+  exact
+    (CommHopfAlgCat.centerDefiningIdeal_eq_augmentation_iff_forall_isCentralPoint_eq_one
+      H.obj.obj).1 hH A g hg
 
 end adjointSemisimpleCommHopfAlgProperty
-
-/-- Triviality of the represented center can be tested on all algebra-valued points. -/
-theorem centerDefiningIdeal_eq_augmentation_iff_forall_isCentralPoint_eq_one
-    (H : _root_.CommHopfAlgCat.{u} k) :
-    CommHopfAlgCat.centerDefiningIdeal H = HopfIdeal.augmentation k H ↔
-      ∀ (A : CommAlgCat.{u} k)
-        (g : HopfAlgebra.points (R := k) (H := H) A),
-        HopfAlgebra.IsCentralPoint g → g = 1 := by
-  constructor
-  · intro h A g hg
-    apply CommHopfAlgCat.eq_one_of_mem_quotientPointsSubgroup_augmentation H A
-    rw [← h, CommHopfAlgCat.mem_centerPointsSubgroup_iff]
-    exact hg
-  · intro h
-    apply le_antisymm
-    · exact HopfIdeal.le_augmentation k H (CommHopfAlgCat.centerDefiningIdeal H)
-    intro x hx
-    let A : CommAlgCat.{u} k :=
-      CommAlgCat.of k (H ⧸ (CommHopfAlgCat.centerDefiningIdeal H).toIdeal)
-    let q : HopfAlgebra.points (R := k) (H := H) A :=
-      toConv (Ideal.Quotient.mkₐ k (CommHopfAlgCat.centerDefiningIdeal H).toIdeal)
-    have hqcentral : HopfAlgebra.IsCentralPoint q := by
-      rw [← CommHopfAlgCat.mem_centerPointsSubgroup_iff]
-      rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
-      intro y hy
-      exact Ideal.Quotient.eq_zero_iff_mem.mpr (HopfIdeal.mem_toIdeal.mpr hy)
-    have hq : q = 1 := h A q hqcentral
-    apply HopfIdeal.mem_toIdeal.mp
-    apply Ideal.Quotient.eq_zero_iff_mem.mp
-    have hxzero : Coalgebra.counit (R := k) x = 0 :=
-      (HopfIdeal.mem_augmentation k H).mp hx
-    calc
-      Ideal.Quotient.mkₐ k (CommHopfAlgCat.centerDefiningIdeal H).toIdeal x =
-          q.ofConv x := rfl
-      _ = (1 : HopfAlgebra.points (R := k) (H := H) A).ofConv x :=
-        congrArg (fun f : HopfAlgebra.points (R := k) (H := H) A => f.ofConv x) hq
-      _ = 0 := by simp [AlgHom.convOne_apply, hxzero]
 
 /-- A semisimple affine group is adjoint exactly when every universally central point over every
 commutative value algebra is the identity. -/
@@ -139,7 +94,7 @@ theorem adjointSemisimpleCommHopfAlgProperty_iff_forall_isCentralPoint_eq_one
       ∀ (A : CommAlgCat.{u} k)
         (g : HopfAlgebra.points (R := k) (H := H.obj.obj) A),
         HopfAlgebra.IsCentralPoint g → g = 1 :=
-  centerDefiningIdeal_eq_augmentation_iff_forall_isCentralPoint_eq_one H.obj.obj
+  CommHopfAlgCat.centerDefiningIdeal_eq_augmentation_iff_forall_isCentralPoint_eq_one H.obj.obj
 
 /-- Adjointness of semisimple commutative Hopf algebras is invariant under isomorphism. -/
 instance (k : Type u) [Field k] :

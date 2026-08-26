@@ -74,28 +74,6 @@ theorem adjointSemisimpleAffineGroupSchemeProperty_iff
         ((semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).inverse.obj G).unop :=
   Iff.rfl
 
-namespace adjointSemisimpleAffineGroupSchemeProperty
-
-variable {G : SemisimpleAffineGroupSchemeCat k}
-
-/-- The coordinate Hopf algebra of an adjoint semisimple affine group has trivial represented
-center. -/
-theorem coordinate
-    (hG : adjointSemisimpleAffineGroupSchemeProperty k G) :
-    adjointSemisimpleCommHopfAlgProperty k
-      ((semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).inverse.obj G).unop :=
-  (adjointSemisimpleAffineGroupSchemeProperty_iff G).1 hG
-
-/-- Establish adjointness of a semisimple affine group scheme by proving that its coordinate Hopf
-algebra has trivial represented center. -/
-theorem mk
-    (hG : adjointSemisimpleCommHopfAlgProperty k
-      ((semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).inverse.obj G).unop) :
-    adjointSemisimpleAffineGroupSchemeProperty k G :=
-  (adjointSemisimpleAffineGroupSchemeProperty_iff G).2 hG
-
-end adjointSemisimpleAffineGroupSchemeProperty
-
 /-- Adjointness of semisimple affine group schemes is invariant under isomorphism. -/
 instance (k : Type u) [Field k] :
     (adjointSemisimpleAffineGroupSchemeProperty k).IsClosedUnderIsomorphisms := by
@@ -135,7 +113,18 @@ noncomputable def
         (adjointSemisimpleAffineGroupSchemeProperty k).ι ≅
       (forget₂ (AdjointSemisimpleCommHopfAlgCat.{u} k)
           (SemisimpleCommHopfAlgCat.{u} k)).op ⋙
-        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).functor :=
-  Iso.refl _
+        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).functor := by
+  let P := adjointSemisimpleCommHopfAlgProperty k
+  let Q := adjointSemisimpleAffineGroupSchemeProperty k
+  let e := semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k
+  let h := adjointSemisimpleAffineGroupSchemeProperty_inverseImage k
+  exact
+    Functor.associator _ _ _ ≪≫
+      Functor.isoWhiskerLeft (ObjectProperty.opEquivalence P).symm.functor
+        (Q.liftCompιIso (P.op.ι ⋙ e.functor) (fun X ↦
+          (congrFun h X.obj).symm.mp X.property)) ≪≫
+      (Functor.associator _ _ _).symm ≪≫
+      Functor.isoWhiskerRight
+        (P.op.liftCompιIso P.ι.op (fun X ↦ X.unop.property)) e.functor
 
 end TauCeti
