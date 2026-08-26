@@ -197,11 +197,10 @@ as `2` is a regular scalar and the base ring is reduced.
 A vector orthogonal to everything lies in the remainder, where the polar form is `2 Q` and `Q` is
 the square of the injective coordinate `SpinPolarizationData.lineCoordinate`; both hypotheses are
 needed to run that back — cancelling the `2` only asks it to be regular, not invertible, and the
-square only has to vanish for a square-zero scalar, which is all a reduced ring is asked for. Over a
-reduced ring with regular `2` this specializes to
-`TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot`, which needs neither hypothesis but
-covers only the case of no remainder; it is what makes nondegeneracy redundant as a hypothesis
-alongside polarization data. -/
+square only has to vanish for a square-zero scalar, which is all a reduced ring is asked for. When
+the remainder vanishes the same conclusion is available with neither hypothesis, from the separate
+`TauCeti.SpinPolarizationData.nondegenerate_of_line_eq_bot`; this theorem is what makes
+nondegeneracy redundant as a hypothesis alongside polarization data in general. -/
 theorem nondegenerate {K : Type u} [CommRing K] [IsReduced K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
     (P : SpinPolarizationData Q) (h2 : IsSMulRegular K (2 : K)) : Q.Nondegenerate := by

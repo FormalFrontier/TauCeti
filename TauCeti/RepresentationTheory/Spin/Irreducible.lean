@@ -572,7 +572,8 @@ square normalization needed to span the even Clifford algebra.
 This is the generality of the even-dimensional `TauCeti.isIrreducible_spinPlusSubrep_of_isSquare`:
 no separably closed field, and no nondegeneracy hypothesis, the polarization data already carrying
 it by `TauCeti.SpinPolarizationData.nondegenerate`. The square normalization is only what lifts a
-product of two reflections to the Spin group, and it is the sole remaining obstruction. -/
+product of two reflections to the Spin group, and it is the sole remaining hypothesis of this
+argument. -/
 theorem isIrreducible_spinRep_of_isSquare
     (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
     (hodd : Odd (finrank K V)) : (spinRep Q P).IsIrreducible := by
