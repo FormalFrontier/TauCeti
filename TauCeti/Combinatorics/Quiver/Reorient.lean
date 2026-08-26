@@ -268,8 +268,9 @@ theorem reorientSymmetrifyInv_map_reverse_of_flip {i j : Q} (a : i ⟶ j) (h : �
       Symmetrify.of.map (reorientFlip σ a h) := by
   rw [reorientSymmetrifyInv_map_reverse_of, dite_eq_left h]
 
-/-- An arrow of `Q` which `σ` leaves alone stays an arrow of the doubled quiver. -/
-@[simp]
+/-- An arrow of `Q` which `σ` leaves alone stays an arrow of the doubled quiver. Deliberately not a
+`simp` lemma: `Quiver.Symmetrify.of_map` rewrites `Symmetrify.of.map ...` to `Sum.inl ...` on the
+left-hand side, and `simpNF` rejects it. -/
 theorem reorientSymmetrify_map_of_keep {i j : Q} (a : i ⟶ j) (h : ¬ σ a) :
     (reorientSymmetrify σ).map (Symmetrify.of.map (reorientKeep σ a h)) =
       Symmetrify.of.map a :=
@@ -283,8 +284,8 @@ theorem reorientSymmetrify_map_reverse_of_keep {i j : Q} (a : i ⟶ j) (h : ¬ �
       Quiver.reverse (Symmetrify.of.map a) :=
   (rfl)
 
-/-- An arrow of `Q` which `σ` turns around becomes the formal reverse of itself. -/
-@[simp]
+/-- An arrow of `Q` which `σ` turns around becomes the formal reverse of itself. Deliberately not a
+`simp` lemma, for the reason recorded on `TauCeti.reorientSymmetrify_map_of_keep`. -/
 theorem reorientSymmetrify_map_of_flip {i j : Q} (a : j ⟶ i) (h : σ a) :
     (reorientSymmetrify σ).map (Symmetrify.of.map (reorientFlip σ a h)) =
       Quiver.reverse (Symmetrify.of.map a) :=
