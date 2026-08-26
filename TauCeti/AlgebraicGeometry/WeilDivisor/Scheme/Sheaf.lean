@@ -343,6 +343,21 @@ def sheafMulIso (D : SchemeWeilDivisor X) :
         eqToHom_sheafι_assoc hg, sheafMul_ι_assoc, rationalFunctionsMul_neg_comp,
         Category.comp_id, Category.id_comp] }
 
+/-- The forward morphism of `sheafMulIso` is multiplication by `g`. -/
+@[simp]
+lemma sheafMulIso_hom (D : SchemeWeilDivisor X) :
+    (sheafMulIso g D).hom = sheafMul g D := by
+  rw [sheafMulIso]
+
+/-- The inverse morphism of `sheafMulIso` is multiplication by `g⁻¹`, followed by transport
+along the resulting equality of divisors. -/
+@[simp]
+lemma sheafMulIso_inv (D : SchemeWeilDivisor X) :
+    (sheafMulIso g D).inv =
+      sheafMul (-g) (D - (WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) ≫
+        eqToHom (congrArg sheaf (sub_principalDivisor_sub_principalDivisor_neg g D)) := by
+  rw [sheafMulIso]
+
 variable {g}
 
 /-- **Linearly equivalent Weil divisors have isomorphic sheaves.** This is the sheaf-level form
