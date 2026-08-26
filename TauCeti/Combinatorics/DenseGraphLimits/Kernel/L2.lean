@@ -6,7 +6,6 @@ Authors: Claude
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Basic
-public import Mathlib.MeasureTheory.Integral.Prod
 
 /-!
 # The `L²` pairing of symmetric kernels
