@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.Basic
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Relabel
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic
