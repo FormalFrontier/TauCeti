@@ -101,9 +101,10 @@ def fromSpecFunctionField : Spec X.functionField ⟶ X :=
 
 variable {X}
 
-/-- The whole space is a nonempty open subset of an irreducible scheme. -/
-instance {X : Scheme.{u}} [IrreducibleSpace X] : Nonempty ((⊤ : X.Opens) : Type u) :=
-  ⟨⟨genericPoint X, trivial⟩⟩
+/-- The whole space is a nonempty open subset of a nonempty scheme. -/
+instance {X : Scheme.{u}} [Nonempty X] : Nonempty ((⊤ : X.Opens) : Type u) :=
+  let ⟨x⟩ := ‹Nonempty X›
+  ⟨⟨x, trivial⟩⟩
 
 /-- The generic point of an irreducible scheme lies in every nonempty open subset. -/
 theorem genericPoint_mem (U : X.Opens) [Nonempty U] : genericPoint X ∈ U :=
