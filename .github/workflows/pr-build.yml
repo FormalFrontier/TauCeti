@@ -148,9 +148,6 @@ jobs:
             # batch into smaller groups that fit under the cap. (Realistic batches are far under 300.)
             if [ "$(printf '%s\n' "$files" | grep -c .)" -ge 300 ]; then
               echo "INFRA=1" >> "$GITHUB_ENV"
-              # A capped list is truncated, so a pin file could be sitting past the end of it.
-              # "No pin change" is then not something this run may conclude.
-              files_truncated=1
               echo "::warning::merge-group combined diff hit the compare 300-file cap — failing closed so the queue bisects"
             fi
           else
@@ -173,7 +170,6 @@ jobs:
           # not tell that apart from a PR with no pin change at all — so it posted the required
           # bump-guard status green, asserting a validation that had not happened, to the human
           # being asked to merge exactly that kind of PR by hand.
-          files_truncated="${files_truncated:-0}"
           if [ -z "$files" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine the overlay, routing to human"
           else
@@ -183,7 +179,6 @@ jobs:
             # not apply — and only one of them is "could not list the files". Keying the bump
             # report off INFRA would tell a PR that merely conflicts that its changed files could
             # not be determined, which is both false and unhelpful.
-            [ "$files_truncated" = "1" ] || echo "PINS_KNOWN=1" >> "$GITHUB_ENV"
             if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
               if echo "$files" | grep -qE '^lakefile\.toml$'; then
                 echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
@@ -191,15 +186,37 @@ jobs:
               echo "OUT_OF_SCOPE=1" >> "$GITHUB_ENV"
               echo "::warning::PR changes paths outside TauCeti/ + Lake pins — its TauCeti/ is still sandbox-built against the trusted base (so the build result is visible), but merging needs human review"
             fi
-            # Asked whatever the answer above was, so a pin change is always validated and the
-            # bump-guard status always reports something that happened. A PR that legitimately
-            # needs an infrastructure change alongside a bump still gets a truthful green here
-            # and merges on its human review, rather than being blocked by a required check.
-            if echo "$files" | grep -qE '^lake-manifest\.json$|^lean-toolchain$'; then
-              echo "BUMP=1" >> "$GITHUB_ENV"
-              echo "::notice::PR changes Lake pins — validating as a forward bump before building"
-            fi
           fi
+          # Whether THIS pull request changes the Lake pins, asked of the immutable commit this
+          # run will post its statuses to, and of that commit's merge base.
+          #
+          # Not from the file list above, for two reasons. That list describes the pull request's
+          # CURRENT head, while the statuses describe the head named by the event: a branch that
+          # advances between the two makes the answer describe a different commit, and a branch
+          # that advances and then comes back defeats the final head re-check as well. And the
+          # list is capped — 300 entries for a merge group, 3000 for a pull request — so a pin
+          # file sitting past the end of it would read as no pin change at all.
+          #
+          # Comparing blob SHAs at two immutable commits has neither problem, and asking the
+          # merge base rather than the branch tip keeps the question "did this pull request
+          # change the pins" rather than "have the pins moved since this branch was cut".
+          pins_known=1; pins_changed=0
+          for f in lake-manifest.json lean-toolchain; do
+            mb_blob=$(gh api "repos/${{ github.repository }}/contents/$f?ref=${{ steps.pr.outputs.mergebase }}" --jq .sha 2>/dev/null) || mb_blob=""
+            head_blob=$(gh api "repos/${{ github.repository }}/contents/$f?ref=${{ steps.pr.outputs.sha }}" --jq .sha 2>/dev/null) || head_blob=""
+            if [ -z "$mb_blob" ] || [ -z "$head_blob" ]; then
+              pins_known=0
+              echo "::warning::could not read $f at the merge base or at the head — pin state unknown"
+              continue
+            fi
+            if [ "$mb_blob" != "$head_blob" ]; then pins_changed=1; fi
+          done
+          if [ "$pins_known" = "1" ]; then echo "PINS_KNOWN=1" >> "$GITHUB_ENV"; fi
+          if [ "$pins_changed" = "1" ]; then
+            echo "BUMP=1" >> "$GITHUB_ENV"
+            echo "::notice::PR changes Lake pins — validating as a forward bump before building"
+          fi
+
           # The report step runs under `if: always()`. Mark successful completion explicitly so an
           # API or shell failure above cannot be misreported as a green scope decision.
           echo "SCOPE_OK=1" >> "$GITHUB_ENV"
