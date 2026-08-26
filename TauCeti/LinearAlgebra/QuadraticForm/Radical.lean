@@ -25,7 +25,7 @@ its polar form is `2 • B`, and nondegeneracy passes from `B` to it as soon as 
 * `QuadraticMap.radical_prod`: the radical of an orthogonal product is the product of the radicals.
 * `QuadraticMap.Nondegenerate.ne_zero`: a nondegenerate quadratic form on a nontrivial module is
   nonzero.
-* `QuadraticMap.PosDef.nondegenerate`: a positive-definite quadratic form is nondegenerate when
+* `QuadraticMap.Anisotropic.nondegenerate`: an anisotropic quadratic form is nondegenerate when
   `2` is invertible.
 * `LinearMap.BilinMap.polarBilin_toQuadraticMap_of_flip`: the polar form of the quadratic form of a
   symmetric bilinear form `B` is `2 • B`.
@@ -83,18 +83,18 @@ theorem ne_zero [Nontrivial M] {Q : QuadraticForm R M} (hQ : Q.Nondegenerate) : 
 
 end QuadraticMap.Nondegenerate
 
-namespace QuadraticMap.PosDef
+namespace QuadraticMap.Anisotropic
 
-variable {R M : Type*} [CommRing R] [PartialOrder R] [AddCommGroup M] [Module R M]
+variable {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
   [Invertible (2 : R)]
 
-/-- A positive-definite quadratic form is nondegenerate when `2` is invertible. -/
-theorem nondegenerate {Q : QuadraticForm R M} (hQ : Q.PosDef) : Q.Nondegenerate := by
+/-- An anisotropic quadratic form is nondegenerate when `2` is invertible. -/
+theorem nondegenerate {Q : QuadraticForm R M} (hQ : Q.Anisotropic) : Q.Nondegenerate := by
   rw [QuadraticMap.nondegenerate_iff_radical_eq_bot, Submodule.eq_bot_iff]
   intro v hv
-  exact hQ.anisotropic v (QuadraticMap.mem_radical_iff'.mp hv).1
+  exact hQ v (QuadraticMap.mem_radical_iff'.mp hv).1
 
-end QuadraticMap.PosDef
+end QuadraticMap.Anisotropic
 
 namespace LinearMap
 

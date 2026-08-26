@@ -25,6 +25,10 @@ Spin group.
 * `CliffordAlgebra.orthogonalDetSquareClass`: the determinant modulo squares on `O(Q)`.
 * `CliffordAlgebra.orthogonalSpinorNorm`: the square-class-valued spinor norm on `O(Q)`.
 * `CliffordAlgebra.spinorNorm`: its restriction to `SO(Q)`.
+* `CliffordAlgebra.orthogonalSpinorNorm_eq_detSquareClass_of_isSquare`: when every nonzero value
+  of the form is a square, the orthogonal spinor norm is the determinant square class.
+* `CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_unit_isSquare`: the same square-value
+  hypothesis makes the Spin action surjective.
 * `CliffordAlgebra.range_spinToSpecialOrthogonal_eq_ker_spinorNorm`: the Spin image is
   the kernel of the spinor norm.
 
@@ -182,6 +186,35 @@ theorem orthogonalSpinorNorm_reflectionOrthogonal (Q : QuadraticForm K V)
   rw [← lipschitzToOrthogonal_unitι Q v, orthogonalSpinorNorm_lipschitzToOrthogonal,
     lipschitzNorm_unitι]
 
+/-- If every nonzero value of a finite-dimensional nondegenerate quadratic form is a square, its
+orthogonal spinor norm is the square class of the determinant. -/
+theorem orthogonalSpinorNorm_eq_detSquareClass_of_isSquare
+    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    (hsq : ∀ v [Invertible (Q v)], IsSquare (unitOfInvertible (Q v))) :
+    orthogonalSpinorNorm Q hQ = orthogonalDetSquareClass Q := by
+  let f : QuadraticMap.orthogonalGroup Q →* Multiplicative (SquareClassGroup K) :=
+    orthogonalSpinorNorm Q hQ
+  let g : QuadraticMap.orthogonalGroup Q →* Multiplicative (SquareClassGroup K) :=
+    orthogonalDetSquareClass Q
+  let H : Subgroup (QuadraticMap.orthogonalGroup Q) :=
+    @MonoidHom.eqLocus (QuadraticMap.orthogonalGroup Q) _
+      (Multiplicative (SquareClassGroup K)) _ f g
+  have hH : H = ⊤ := QuadraticMap.subgroup_eq_top_of_reflection_mem Q hQ H fun v _ => by
+    refine MonoidHom.mem_eqLocusM.mpr ?_
+    dsimp only [f, g]
+    rw [orthogonalSpinorNorm_reflectionOrthogonal, orthogonalDetSquareClass_apply]
+    rw [QuadraticMap.coe_reflectionOrthogonal, QuadraticMap.det_reflection]
+    have hsquare : squareClassHom (unitOfInvertible (Q v)) = 1 := by
+      rw [squareClassHom_apply]
+      simpa only [ofAdd_zero] using congrArg Multiplicative.ofAdd
+        ((squareClass_eq_zero_iff _).2 (hsq v))
+    rw [neg_eq_neg_one_mul, map_mul, hsquare]
+    exact mul_one (squareClassHom (-1 : Kˣ))
+  apply MonoidHom.ext
+  intro x
+  have hx : x ∈ H := by rw [hH]; trivial
+  exact MonoidHom.mem_eqLocusM.mp hx
+
 /-- The spinor norm on `SO(Q)`, obtained by restricting the orthogonal spinor norm. -/
 noncomputable def spinorNorm (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
     QuadraticMap.specialOrthogonalGroup Q →* Multiplicative (SquareClassGroup K) :=
@@ -333,5 +366,25 @@ theorem range_spinToSpecialOrthogonal_eq_ker_spinorNorm
     have hv := congrArg (fun z : QuadraticMap.orthogonalGroup Q => ((z : V ≃ₗ[K] V) v)) horth
     rw [coe_spinToOrthogonal_apply] at hv
     exact hv
+
+/-- If every nonzero value of a finite-dimensional nondegenerate quadratic form is a square, the
+Spin action on its special orthogonal group is surjective. -/
+theorem spinToSpecialOrthogonal_surjective_of_unit_isSquare
+    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    (hsq : ∀ v [Invertible (Q v)], IsSquare (unitOfInvertible (Q v))) :
+    Function.Surjective (spinToSpecialOrthogonal Q) := by
+  rw [← MonoidHom.range_eq_top]
+  rw [range_spinToSpecialOrthogonal_eq_ker_spinorNorm Q hQ]
+  rw [Subgroup.eq_top_iff']
+  intro g
+  rw [MonoidHom.mem_ker, spinorNorm_apply,
+    orthogonalSpinorNorm_eq_detSquareClass_of_isSquare Q hQ hsq]
+  rw [orthogonalDetSquareClass_apply]
+  have hgdet := (QuadraticMap.mem_specialOrthogonalGroup_iff.mp g.2).2
+  have hgdet' : LinearEquiv.det
+      ((Subgroup.inclusion (QuadraticMap.specialOrthogonalGroup_le_orthogonalGroup Q) g :
+        QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) = 1 := by
+    simpa only [Subgroup.coe_inclusion] using hgdet
+  rw [hgdet', map_one]
 
 end CliffordAlgebra

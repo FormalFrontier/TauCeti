@@ -27,6 +27,8 @@ square. So linear independence of the classes is the **Finset form** of square-c
 * `TauCeti.squareClass`, `TauCeti.squareClassHom`: the class of a unit, as a function and a
   multiplicative homomorphism, with `squareClass_eq_zero_iff` characterising the trivial class as
   the squares.
+* `TauCeti.isSquare_units_val_iff`: a unit is a square exactly when its underlying field element
+  is a square.
 * `TauCeti.linearIndependent_squareClass_iff`: the classes of `d : ι → Kˣ` are `ZMod 2`-linearly
   independent iff no nonempty subset product is a square.
 -/
@@ -56,6 +58,15 @@ def squareClass (u : Kˣ) : SquareClassGroup K :=
 multiplicative form of the additive square-class group. -/
 def squareClassHom : Kˣ →* Multiplicative (SquareClassGroup K) :=
   (QuotientAddGroup.mk' (Subgroup.square Kˣ).toAddSubgroup).toMultiplicativeRight
+
+/-- A unit is a square exactly when its underlying field element is a square. -/
+theorem isSquare_units_val_iff {u : Kˣ} : IsSquare (u : K) ↔ IsSquare u := by
+  constructor
+  · rintro ⟨x, hx⟩
+    have hx0 : x ≠ 0 := fun h => u.ne_zero (by rw [hx, h, mul_zero])
+    exact ⟨Units.mk0 x hx0, Units.ext (by simpa using hx)⟩
+  · rintro ⟨v, rfl⟩
+    exact ⟨(v : K), by simp⟩
 
 @[simp]
 theorem squareClassHom_apply (u : Kˣ) :
