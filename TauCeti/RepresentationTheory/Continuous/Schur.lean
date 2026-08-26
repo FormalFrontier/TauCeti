@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Normed.Module.Basic
 public import Mathlib.LinearAlgebra.Trace
 public import Mathlib.RepresentationTheory.Irreducible
 public import TauCeti.RepresentationTheory.Continuous.Intertwining
