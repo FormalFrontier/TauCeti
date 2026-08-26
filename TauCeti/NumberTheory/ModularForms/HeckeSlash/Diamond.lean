@@ -72,7 +72,7 @@ variable {N : ℕ} [NeZero N] (k : ℤ) (g : ↥(Gamma0 N))
 /-- **The slash sum of a diamond coset is a single slash.** The double coset `Γ₁(N) γ Γ₁(N)`
 decomposes into the one right coset `Γ₁(N) γ`, so the Hecke sum attached to it has one
 summand. -/
-theorem heckeSlashSum_diamondCosetGamma1 {F : Type*} [FunLike F ℍ ℂ]
+@[simp] theorem heckeSlashSum_diamondCosetGamma1 {F : Type*} [FunLike F ℍ ℂ]
     [SlashInvariantFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) :
     heckeSlashSum k (diamondCosetGamma1 N g) ⇑f = ⇑f ∣[k] (mapGL ℚ (g : SL(2, ℤ))) := by
   refine (heckeSlashSum_coe_eq_sum_of_rightCosets k (diamondCosetGamma1 N g)

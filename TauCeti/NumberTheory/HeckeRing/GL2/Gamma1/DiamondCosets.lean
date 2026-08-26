@@ -142,7 +142,7 @@ theorem doubleCoset_out_diamondCosetGamma1_eq_iUnion_rightCosets (g : ↥(Gamma0
 /-- **The diamond coset sees exactly the lower-right entry.** Two elements of `Γ₀(N)` give the
 same double coset precisely when they have the same image in `(ZMod N)ˣ`; the forward direction
 uses that `mapGL ℚ` is injective, so a rational coincidence is an integral one. -/
-theorem diamondCosetGamma1_eq_iff {g₁ g₂ : ↥(Gamma0 N)} :
+@[simp] theorem diamondCosetGamma1_eq_iff {g₁ g₂ : ↥(Gamma0 N)} :
     diamondCosetGamma1 N g₁ = diamondCosetGamma1 N g₂ ↔
       (Gamma0Map N).toHomUnits g₁ = (Gamma0Map N).toHomUnits g₂ := by
   rw [← HeckeCoset.toSet_injective.eq_iff, diamondCosetGamma1_toSet, diamondCosetGamma1_toSet,
@@ -224,7 +224,7 @@ private lemma mulMap_diamondCosetGamma1 (p : DecompQuotient ((Gamma1 N).map (map
 There is no structure constant to compute: both decomposition quotients are subsingletons, so
 `multiplicity ≤ 1` is automatic, and every pair of representatives multiplies into the same
 double coset. -/
-theorem single_diamondCosetGamma1_mul_single (R : Type*) [Semiring R] :
+@[simp] theorem single_diamondCosetGamma1_mul_single (R : Type*) [Semiring R] :
     HeckeCosetModule.single R (diamondCosetGamma1 N g₁) 1 *
         HeckeCosetModule.single R (diamondCosetGamma1 N g₂) 1 =
       HeckeCosetModule.single R (diamondCosetGamma1 N (g₁ * g₂)) 1 := by
