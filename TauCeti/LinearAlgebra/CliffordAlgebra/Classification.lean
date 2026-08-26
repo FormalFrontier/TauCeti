@@ -9,6 +9,8 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.EightPeriodicity
 
 import Mathlib.RingTheory.TensorProduct.Pi
 import Mathlib.LinearAlgebra.Matrix.Unique
+import Mathlib.LinearAlgebra.CliffordAlgebra.Equivs
+import Mathlib.Algebra.Module.Equiv.Basic
 import Mathlib.Analysis.Complex.Polynomial.Basic
 import TauCeti.Algebra.CentralSimple.Quaternion
 import TauCeti.Algebra.CentralSimple.Splitting
@@ -46,24 +48,20 @@ private abbrev C (p q : ℕ) :=
 def realCliffordResidue (p q : ℕ) : ℕ :=
   (q + 8 - p % 8) % 8
 
-private theorem realCliffordResidue_eq_proof (p q : ℕ) :
-    realCliffordResidue p q = (q + 8 - p % 8) % 8 :=
-  rfl
-
 /-- The defining formula for `realCliffordResidue`. -/
-theorem realCliffordResidue_eq (p q : ℕ) :
+theorem realCliffordResidue_def (p q : ℕ) :
     realCliffordResidue p q = (q + 8 - p % 8) % 8 :=
-  realCliffordResidue_eq_proof p q
+  (rfl)
 
 /-- The real Clifford residue is one of the eight table indices. -/
 theorem realCliffordResidue_lt_eight (p q : ℕ) : realCliffordResidue p q < 8 := by
-  rw [realCliffordResidue_eq]
+  rw [realCliffordResidue_def]
   exact Nat.mod_lt _ (by norm_num)
 
 @[simp]
-theorem realCliffordResidue_add_both (p q n : ℕ) :
+theorem realCliffordResidue_add_add_right (p q n : ℕ) :
     realCliffordResidue (p + n) (q + n) = realCliffordResidue p q := by
-  simp only [realCliffordResidue_eq]
+  simp only [realCliffordResidue_def]
   omega
 
 /-- The exact real algebra classification of the standard Clifford algebra of signature `(p,q)`.
@@ -121,16 +119,18 @@ theorem isRealCliffordClassified_iff (p q : ℕ) :
   · exact IsRealCliffordClassified.intro
 
 private noncomputable def realCliffordZeroZeroEquiv :
-    _root_.CliffordAlgebra (realCliffordForm 0 0) ≃ₐ[ℝ] ℝ :=
-  AlgEquiv.ofAlgHom
-    (_root_.CliffordAlgebra.lift (realCliffordForm 0 0)
-      ⟨0, fun v ↦ by
+    _root_.CliffordAlgebra (realCliffordForm 0 0) ≃ₐ[ℝ] ℝ := by
+  letI : Subsingleton (Fin (0 + 0) → ℝ) :=
+    ⟨fun f g ↦ funext fun i ↦ Fin.elim0 i⟩
+  exact (CliffordAlgebra.equivOfIsometry
+    (QuadraticMap.IsometryEquiv.mk
+      (LinearEquiv.ofSubsingleton (Fin (0 + 0) → ℝ) Unit)
+      (by
+        intro v
         have hv : v = 0 := funext fun i ↦ Fin.elim0 i
         subst v
-        simp⟩)
-    (Algebra.ofId ℝ _)
-    (by ext)
-    (by ext v; exact Fin.elim0 v)
+        simp))).trans
+    CliffordAlgebraRing.equiv
 
 private def prodTensorAlgebraEquiv (R A B : Type*) [CommSemiring R]
     [Semiring A] [Semiring B] [Algebra R A] [Algebra R B] :
@@ -223,7 +223,7 @@ private theorem pow_half_sub_add_eight (n d : ℕ) (h : d ≤ n) :
   rw [hdiv, pow_add]
   norm_num
 
-private theorem pow_half_sub_add_both (p q n d : ℕ) (h : d ≤ p + q) :
+private theorem pow_half_sub_add_add_right (p q n d : ℕ) (h : d ≤ p + q) :
     2 ^ ((p + q - d) / 2) * 2 ^ n =
       2 ^ (((p + n) + (q + n) - d) / 2) := by
   rw [← pow_add]
@@ -406,10 +406,10 @@ private theorem realClifford_negativeAxis_classification (q : ℕ) :
         (by simpa only [Nat.reducePow, Nat.zero_add] using
           pow_half_sub_mul_pow n 1 1 (n + 1) (by omega))⟩
 
-private theorem realCliffordClassification_add_both (p q n : ℕ)
+private theorem isRealCliffordClassified_add_add_right (p q n : ℕ)
     (h : IsRealCliffordClassified p q) :
     IsRealCliffordClassified (p + n) (q + n) := by
-  rw [isRealCliffordClassified_iff, realCliffordResidue_add_both]
+  rw [isRealCliffordClassified_iff, realCliffordResidue_add_add_right]
   rw [isRealCliffordClassified_iff] at h
   generalize hr : realCliffordResidue p q = r at h
   have hrlt : r < 8 := by
@@ -419,38 +419,38 @@ private theorem realCliffordClassification_add_both (p q n : ℕ)
   all_goals obtain ⟨e⟩ := h
   · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
       (matrixEquivTensor (Fin (2 ^ n)) ℝ ℝ).symm
-      (pow_half_sub_add_both p q n 0 (by omega))⟩
+      (pow_half_sub_add_add_right p q n 0 (by omega))⟩
   · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
       (matrixEquivTensor (Fin (2 ^ n)) ℝ ℂ).symm
-      (pow_half_sub_add_both p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
+      (pow_half_sub_add_add_right p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
   · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
       (matrixEquivTensor (Fin (2 ^ n)) ℝ ℍ[ℝ]).symm
-      (pow_half_sub_add_both p q n 2 (by simp [realCliffordResidue] at hr; omega))⟩
+      (pow_half_sub_add_add_right p q n 2 (by simp [realCliffordResidue] at hr; omega))⟩
   · exact ⟨matrixProdModelTensorEquiv (realCliffordBottIterEquiv p q n) e
       (matrixEquivTensor (Fin (2 ^ n)) ℝ ℍ[ℝ]).symm
-      (pow_half_sub_add_both p q n 3 (by simp [realCliffordResidue] at hr; omega))⟩
+      (pow_half_sub_add_add_right p q n 3 (by simp [realCliffordResidue] at hr; omega))⟩
   · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
       (matrixEquivTensor (Fin (2 ^ n)) ℝ ℍ[ℝ]).symm
-      (pow_half_sub_add_both p q n 2 (by simp [realCliffordResidue] at hr; omega))⟩
+      (pow_half_sub_add_add_right p q n 2 (by simp [realCliffordResidue] at hr; omega))⟩
   · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
       (matrixEquivTensor (Fin (2 ^ n)) ℝ ℂ).symm
-      (pow_half_sub_add_both p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
+      (pow_half_sub_add_add_right p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
   · exact ⟨matrixModelTensorEquiv (realCliffordBottIterEquiv p q n) e
       (matrixEquivTensor (Fin (2 ^ n)) ℝ ℝ).symm
-      (pow_half_sub_add_both p q n 0 (by omega))⟩
+      (pow_half_sub_add_add_right p q n 0 (by omega))⟩
   · exact ⟨matrixProdModelTensorEquiv (realCliffordBottIterEquiv p q n) e
       (matrixEquivTensor (Fin (2 ^ n)) ℝ ℝ).symm
-      (pow_half_sub_add_both p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
+      (pow_half_sub_add_add_right p q n 1 (by simp [realCliffordResidue] at hr; omega))⟩
 
 /-- The real Clifford algebra of every finite signature is the full matrix algebra, complex
 matrix algebra, quaternionic matrix algebra, or split algebra prescribed by `(q - p) mod 8`. -/
 theorem realClifford_classification (p q : ℕ) :
     IsRealCliffordClassified p q := by
   rcases le_total p q with hpq | hqp
-  · have h := realCliffordClassification_add_both 0 (q - p) p
+  · have h := isRealCliffordClassified_add_add_right 0 (q - p) p
       (realClifford_negativeAxis_classification (q - p))
     simpa [Nat.sub_add_cancel hpq] using h
-  · have h := realCliffordClassification_add_both (p - q) 0 q
+  · have h := isRealCliffordClassified_add_add_right (p - q) 0 q
       (realClifford_positiveAxis_classification (p - q))
     simpa [Nat.sub_add_cancel hqp] using h
 

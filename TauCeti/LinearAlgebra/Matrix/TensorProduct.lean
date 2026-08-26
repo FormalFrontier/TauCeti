@@ -22,7 +22,7 @@ matrix algebras.
 
 public section
 
-open scoped TensorProduct
+open scoped Kronecker TensorProduct
 
 namespace TauCeti
 
@@ -34,5 +34,28 @@ def Matrix.kroneckerTMulFinAlgEquiv (m n : ℕ) (R : Type*) [CommSemiring R] (A 
       Matrix (Fin (m * n)) (Fin (m * n)) (A ⊗[R] B) :=
   (Matrix.kroneckerTMulAlgEquiv (Fin m) (Fin n) R R A B).trans
     (Matrix.reindexAlgEquiv R _ finProdFinEquiv)
+
+/-- The finite-index matrix absorption equivalence sends a pure tensor to the reindexed
+Kronecker tensor product. -/
+@[simp]
+theorem Matrix.kroneckerTMulFinAlgEquiv_tmul (m n : ℕ) (R : Type*) [CommSemiring R]
+    (A : Type*) [Semiring A] [Algebra R A] (B : Type*) [Semiring B] [Algebra R B]
+    (a : Matrix (Fin m) (Fin m) A) (b : Matrix (Fin n) (Fin n) B) :
+    Matrix.kroneckerTMulFinAlgEquiv m n R A B (a ⊗ₜ[R] b) =
+      Matrix.reindex finProdFinEquiv finProdFinEquiv (a ⊗ₖₜ b) := by
+  rfl
+
+/-- The inverse finite-index matrix absorption equivalence sends a matrix unit at paired finite
+indices with a pure-tensor coefficient to the tensor of the two corresponding matrix units. -/
+@[simp]
+theorem Matrix.kroneckerTMulFinAlgEquiv_symm_single_tmul (m n : ℕ) (R : Type*)
+    [CommSemiring R] (A : Type*) [Semiring A] [Algebra R A] (B : Type*) [Semiring B]
+    [Algebra R B] (ia ja : Fin m) (ib jb : Fin n) (a : A) (b : B) :
+    (Matrix.kroneckerTMulFinAlgEquiv m n R A B).symm
+        (Matrix.single (finProdFinEquiv (ia, ib)) (finProdFinEquiv (ja, jb)) (a ⊗ₜ[R] b)) =
+      Matrix.single ia ja a ⊗ₜ[R] Matrix.single ib jb b := by
+  rw [AlgEquiv.symm_apply_eq]
+  rw [Matrix.kroneckerTMulFinAlgEquiv_tmul, Matrix.single_kroneckerTMul_single]
+  simp
 
 end TauCeti
