@@ -163,17 +163,21 @@ theorem IsCombinatorialSphere.finite_faces (h : IsCombinatorialSphere K n) : K.f
 
 /-- A combinatorial ball has a face; in particular it is not the void complex. -/
 theorem IsCombinatorialBall.ne_bot (h : IsCombinatorialBall K n) : K ≠ ⊥ := by
+  obtain ⟨V, hV, he⟩ := h
+  apply he.ne_bot
   intro hbot
-  have hdim := h.dimension_eq
-  rw [hbot, dimension_bot] at hdim
-  exact (WithBot.natCast_ne_bot n) hdim.symm
+  have hdim := dimension_eq_bot_iff.mpr hbot
+  rw [dimension_simplex (Finset.card_pos.mp (by omega)), hV] at hdim
+  norm_num at hdim
 
 /-- A combinatorial sphere has a face; in particular it is not the void complex. -/
 theorem IsCombinatorialSphere.ne_bot (h : IsCombinatorialSphere K n) : K ≠ ⊥ := by
+  obtain ⟨V, hV, he⟩ := h
+  apply he.ne_bot
   intro hbot
-  have hdim := h.dimension_eq
-  rw [hbot, dimension_bot] at hdim
-  exact (WithBot.natCast_ne_bot n) hdim.symm
+  have hdim := dimension_eq_bot_iff.mpr hbot
+  rw [dimension_simplexBoundary (by omega), hV] at hdim
+  norm_num at hdim
 
 /-! ### Combinatorial manifolds -/
 
