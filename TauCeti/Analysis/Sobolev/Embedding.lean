@@ -300,8 +300,6 @@ private theorem W1p0.norm_sobolevEmbeddingₗ_le (hpstar : pstar ≠ ∞)
     ((ClosedSubmodule.mem_toSubmodule_iff _ _).1 u.2)).trans_eq ?_
   rw [ENNReal.ofReal_mul (by positivity), ENNReal.ofReal_coe_nnreal, ofReal_norm]
 
-variable [Fact (1 ≤ pstar)]
-
 /-- **The Sobolev embedding `W^{1,p}_0(Ω) ↪ L^{p⋆}(Ω)`.** For `1 ≤ p` and `1/p⋆ + 1/n = 1/p`,
 inclusion is a continuous linear map, bounded by Mathlib's Gagliardo--Nirenberg--Sobolev constant
 times the graph norm.  The sharper bound by the gradient alone is
@@ -311,11 +309,13 @@ This is an embedding in the honest sense: `TauCeti.W1p0.coeFn_sobolevEmbeddingL`
 `u` is the function `u` itself, so nothing is being reinterpreted. -/
 def W1p0.sobolevEmbeddingL (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) :
-    W1p0 mu Omega p →L[ℝ] Lp ℝ pstar (mu.restrict Omega) :=
-  (W1p0.sobolevEmbeddingₗ hpstar hexp).mkContinuous
+    letI := Fact.mk (one_le_of_inv_add_inv_natCast_eq_inv (finrank ℝ E) hexp)
+    W1p0 mu Omega p →L[ℝ] Lp ℝ pstar (mu.restrict Omega) := by
+  letI := Fact.mk (one_le_of_inv_add_inv_natCast_eq_inv (finrank ℝ E) hexp)
+  exact (W1p0.sobolevEmbeddingₗ hpstar hexp).mkContinuous
     (SNormLESNormFDerivOfEqConst ℝ mu p.toReal) fun u =>
-      (W1p0.norm_sobolevEmbeddingₗ_le hpstar hexp u).trans
-        (mul_le_mul_of_nonneg_left (W1p.norm_gradient_le _) (NNReal.coe_nonneg _))
+    (W1p0.norm_sobolevEmbeddingₗ_le hpstar hexp u).trans
+      (mul_le_mul_of_nonneg_left (W1p.norm_gradient_le _) (NNReal.coe_nonneg _))
 
 /-- The Sobolev embedding does not change the function: the image of `u` in `L^{p⋆}(Ω)` is `u`
 itself. -/
@@ -324,6 +324,7 @@ theorem W1p0.coeFn_sobolevEmbeddingL (hpstar : pstar ≠ ∞)
     W1p0.sobolevEmbeddingL hpstar hexp u =ᵐ[mu.restrict Omega]
       (W1p.value (u : W1p mu Omega p) : E → ℝ) :=
   by
+    let _ := Fact.mk (one_le_of_inv_add_inv_natCast_eq_inv (finrank ℝ E) hexp)
     rw [W1p0.sobolevEmbeddingL, LinearMap.mkContinuous_apply]
     exact W1p0.coeFn_sobolevEmbeddingₗ hpstar hexp u
 
@@ -347,6 +348,7 @@ theorem W1p0.norm_sobolevEmbeddingL_le (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) (u : W1p0 mu Omega p) :
     ‖W1p0.sobolevEmbeddingL hpstar hexp u‖ ≤
       SNormLESNormFDerivOfEqConst ℝ mu p.toReal * ‖W1p.gradient (u : W1p mu Omega p)‖ := by
+  let _ := Fact.mk (one_le_of_inv_add_inv_natCast_eq_inv (finrank ℝ E) hexp)
   rw [W1p0.sobolevEmbeddingL, LinearMap.mkContinuous_apply]
   exact W1p0.norm_sobolevEmbeddingₗ_le hpstar hexp u
 
