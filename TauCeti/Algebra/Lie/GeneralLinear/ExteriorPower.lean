@@ -129,14 +129,13 @@ variable {K : Type*} [CommRing K]
 /-- The first-coordinates weight is dominant integral in characteristic zero. -/
 theorem isGlDominantIntegral_firstCoordinatesWeight [CharZero K] (d n : ℕ) :
     TauCeti.IsGlDominantIntegral (firstCoordinatesWeight (K := K) d n) := by
-  rw [TauCeti.isGlDominantIntegral_iff]
-  intro i j hij
-  by_cases hi : i.val < d
-  · by_cases hj : j.val < d
-    · exact ⟨0, by simp [hi, hj]⟩
-    · exact ⟨1, by simp [hi, hj]⟩
-  · have hj : ¬j.val < d := by omega
-    exact ⟨0, by simp [hi, hj]⟩
+  convert TauCeti.isGlDominantIntegral_intCast (R := K)
+    (a := fun j : Fin n => if j.val < d then 1 else 0) (by
+      intro i j hij
+      dsimp
+      split_ifs <;> omega) using 1
+  ext j
+  simp
 
 /-- The first basis wedge is nonzero. -/
 theorem firstBasisWedge_ne_zero [Nontrivial K] (d n : ℕ) (h : d ≤ n) :
