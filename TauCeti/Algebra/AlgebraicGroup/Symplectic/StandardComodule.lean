@@ -55,7 +55,7 @@ variable (R : Type u) [CommRing R] (m : ℕ)
 
 /-- The standard right comodule of the symplectic coordinate Hopf algebra, obtained by
 corestricting the standard `GL₂ₘ`-comodule along the symplectic quotient map. -/
-@[instance_reducible]
+@[expose, instance_reducible]
 noncomputable def standardComodule :
     Comodule R (coordinateHopfAlgebra R m) (Fin (m + m) → R) :=
   let _ := GeneralLinear.standardComodule R (m + m)
@@ -83,7 +83,8 @@ theorem standardComodule_coact :
     GeneralLinear.standardComodule_coact]
 
 /-- The coaction bundled by `standardComodule` is its defining corestriction. -/
-private theorem standardComodule_coact_eq_corestrictCoact :
+@[simp]
+theorem standardComodule_coact_eq_corestrictCoact :
     (standardComodule R m).coact =
       Comodule.corestrictCoact (coordinateMap R m).hom.toCoalgHom :=
   rfl
@@ -195,6 +196,94 @@ private theorem transvectionUnit_mulVec_sub (i j : Fin (m + m)) (hij : i ≠ j) 
   simp [coe_transvectionUnit, Matrix.transvection, Matrix.add_mulVec,
     Matrix.single_mulVec_eq, Pi.single_apply]
 
+/-- A transvection extracts a standard basis vector from a nonzero coordinate of an invariant
+subspace element. -/
+private theorem single_one_mem_of_transvection
+    (N : Subcomodule k (coordinateHopfAlgebra k m) (Fin (m + m) → k))
+    {w : Fin (m + m) → k} (hw : w ∈ N) (i j : Fin (m + m)) (hij : i ≠ j)
+    (g : GLSymplecticFin m k)
+    (hg : (g : GL (Fin (m + m)) k) = transvectionUnit hij 1) (hj : w j ≠ 0) :
+    Pi.single i 1 ∈ N := by
+  have hgw := mulVec_mem k m N g hw
+  have hsub :
+      ((transvectionUnit hij 1 : GL (Fin (m + m)) k) :
+          Matrix (Fin (m + m)) (Fin (m + m)) k) *ᵥ w - w ∈ N := by
+    rw [← hg]
+    exact N.toSubmodule.sub_mem hgw hw
+  rw [transvectionUnit_mulVec_sub k m i j hij 1 w, one_mul] at hsub
+  have hscaled := N.toSubmodule.smul_mem (w j)⁻¹ hsub
+  have heq : (w j)⁻¹ • Pi.single i (w j) = Pi.single i 1 := by
+    ext x
+    simp [Pi.single_apply, hj]
+  rwa [heq] at hscaled
+
+/-- A long-root element moves a standard basis vector to its symplectic partner. -/
+private theorem single_swap_mem_of_longRoot
+    (N : Subcomodule k (coordinateHopfAlgebra k m) (Fin (m + m) → k)) (i : Fin m)
+    (upper : Bool)
+    (hmem : Pi.single (finSumFinEquiv (if upper then Sum.inl i else Sum.inr i)) 1 ∈ N) :
+    Pi.single (finSumFinEquiv (if upper then Sum.inr i else Sum.inl i)) 1 ∈ N := by
+  cases upper with
+  | false =>
+      let g := GLSymplecticFin.positiveLongRootTransvectionUnit (R := k) i 1
+      have hgw := mulVec_mem k m N g hmem
+      have hsub := N.toSubmodule.sub_mem hgw hmem
+      rw [GLSymplecticFin.coe_positiveLongRootTransvectionUnit] at hsub
+      rw [transvectionUnit_mulVec_sub k m _ _
+        (GLSymplecticFin.finSumFinEquiv_inl_ne_inr i i) 1 _] at hsub
+      simpa [Pi.single_apply] using hsub
+  | true =>
+      let g := GLSymplecticFin.negativeLongRootTransvectionUnit (R := k) i 1
+      have hgw := mulVec_mem k m N g hmem
+      have hsub := N.toSubmodule.sub_mem hgw hmem
+      rw [GLSymplecticFin.coe_negativeLongRootTransvectionUnit] at hsub
+      rw [transvectionUnit_mulVec_sub k m _ _
+        (GLSymplecticFin.finSumFinEquiv_inr_ne_inl i i) 1 _] at hsub
+      simpa [Pi.single_apply] using hsub
+
+/-- A difference-root element moves an upper standard basis vector between indices. -/
+private theorem differenceShortRootUnit_mulVec_single_sub (i j : Fin m) (hji : j ≠ i) :
+    let g := GLSymplecticFin.differenceShortRootUnit (R := k) hji 1
+    (g.1 : Matrix (Fin (m + m)) (Fin (m + m)) k) *ᵥ
+          Pi.single (finSumFinEquiv (Sum.inl i)) 1 -
+        Pi.single (finSumFinEquiv (Sum.inl i)) 1 =
+      Pi.single (finSumFinEquiv (Sum.inl j)) 1 := by
+  dsimp only
+  have addNat_eq_natAdd (r : Fin m) : r.addNat m = Fin.natAdd m r := by
+    apply Fin.ext
+    simp
+  have hcoli : i.addNat m ≠ Fin.castAdd m i := by
+    intro h
+    apply GLSymplecticFin.finSumFinEquiv_inr_ne_inl i i
+    rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_left]
+    rw [← addNat_eq_natAdd]
+    exact h
+  have hcolj : j.addNat m ≠ Fin.castAdd m i := by
+    intro h
+    apply GLSymplecticFin.finSumFinEquiv_inr_ne_inl j i
+    rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_left]
+    rw [← addNat_eq_natAdd]
+    exact h
+  rw [GLSymplecticFin.coe_differenceShortRootUnit, Units.val_mul]
+  rw [← Matrix.mulVec_mulVec]
+  ext x
+  simp [coe_transvectionUnit, Matrix.transvection, Matrix.add_mulVec,
+    Matrix.single_mulVec_eq, Pi.single_apply, Matrix.one_apply, hcoli, hcolj]
+
+/-- Short-root elements move an upper standard basis vector to every upper index. -/
+private theorem single_inl_mem_of_shortRoot
+    (N : Subcomodule k (coordinateHopfAlgebra k m) (Fin (m + m) → k)) (i : Fin m)
+    (hmem : Pi.single (finSumFinEquiv (Sum.inl i)) 1 ∈ N) (j : Fin m) :
+    Pi.single (finSumFinEquiv (Sum.inl j)) 1 ∈ N := by
+  by_cases hji : j = i
+  · subst j
+    exact hmem
+  · let g := GLSymplecticFin.differenceShortRootUnit (R := k) hji 1
+    have hgw := mulVec_mem k m N g hmem
+    have hsub := N.toSubmodule.sub_mem hgw hmem
+    rw [differenceShortRootUnit_mulVec_single_sub k m i j hji] at hsub
+    exact hsub
+
 /-- Every standard basis vector belongs to a nonzero invariant subspace of the standard
 symplectic representation. -/
 private theorem single_one_mem_of_ne_bot
@@ -204,26 +293,10 @@ private theorem single_one_mem_of_ne_bot
   obtain ⟨b, hb⟩ := Function.ne_iff.mp hw0
   let b' := finSumFinEquiv.symm b
   have hb_eq : finSumFinEquiv b' = b := Equiv.apply_symm_apply finSumFinEquiv b
-  have extract (i j : Fin (m + m)) (hij : i ≠ j)
-      (g : GLSymplecticFin m k)
-      (hg : (g : GL (Fin (m + m)) k) = transvectionUnit hij 1) (hj : w j ≠ 0) :
-      Pi.single i 1 ∈ N := by
-    have hgw := mulVec_mem k m N g hw
-    have hsub :
-        ((transvectionUnit hij 1 : GL (Fin (m + m)) k) :
-            Matrix (Fin (m + m)) (Fin (m + m)) k) *ᵥ w - w ∈ N := by
-      rw [← hg]
-      exact N.toSubmodule.sub_mem hgw hw
-    rw [transvectionUnit_mulVec_sub k m i j hij 1 w, one_mul] at hsub
-    have hscaled := N.toSubmodule.smul_mem (w j)⁻¹ hsub
-    have heq : (w j)⁻¹ • Pi.single i (w j) = Pi.single i 1 := by
-      ext x
-      simp [Pi.single_apply, hj]
-    rw [heq] at hscaled
-    exact hscaled
   have hseed : Pi.single (finSumFinEquiv b'.swap) 1 ∈ N := by
     rcases b' with i | i
-    · apply extract (finSumFinEquiv (Sum.inr i)) (finSumFinEquiv (Sum.inl i))
+    · apply single_one_mem_of_transvection k m N hw
+        (finSumFinEquiv (Sum.inr i)) (finSumFinEquiv (Sum.inl i))
         (GLSymplecticFin.finSumFinEquiv_inr_ne_inl i i)
         (GLSymplecticFin.negativeLongRootTransvectionUnit i 1)
         (GLSymplecticFin.coe_negativeLongRootTransvectionUnit i 1)
@@ -231,7 +304,8 @@ private theorem single_one_mem_of_ne_bot
         rw [hb_eq]
         simpa only [Pi.zero_apply] using hb
       exact this
-    · apply extract (finSumFinEquiv (Sum.inl i)) (finSumFinEquiv (Sum.inr i))
+    · apply single_one_mem_of_transvection k m N hw
+        (finSumFinEquiv (Sum.inl i)) (finSumFinEquiv (Sum.inr i))
         (GLSymplecticFin.finSumFinEquiv_inl_ne_inr i i)
         (GLSymplecticFin.positiveLongRootTransvectionUnit i 1)
         (GLSymplecticFin.coe_positiveLongRootTransvectionUnit i 1)
@@ -239,79 +313,25 @@ private theorem single_one_mem_of_ne_bot
         rw [hb_eq]
         simpa only [Pi.zero_apply] using hb
       exact this
-  have long_move (i : Fin m) (upper : Bool)
-      (hmem : Pi.single (finSumFinEquiv (if upper then Sum.inl i else Sum.inr i)) 1 ∈ N) :
-      Pi.single (finSumFinEquiv (if upper then Sum.inr i else Sum.inl i)) 1 ∈ N := by
-    cases upper with
-    | false =>
-        let g := GLSymplecticFin.positiveLongRootTransvectionUnit (R := k) i 1
-        have hgw := mulVec_mem k m N g hmem
-        have hsub := N.toSubmodule.sub_mem hgw hmem
-        rw [GLSymplecticFin.coe_positiveLongRootTransvectionUnit] at hsub
-        rw [transvectionUnit_mulVec_sub k m _ _
-          (GLSymplecticFin.finSumFinEquiv_inl_ne_inr i i) 1 _] at hsub
-        simpa [Pi.single_apply] using hsub
-    | true =>
-        let g := GLSymplecticFin.negativeLongRootTransvectionUnit (R := k) i 1
-        have hgw := mulVec_mem k m N g hmem
-        have hsub := N.toSubmodule.sub_mem hgw hmem
-        rw [GLSymplecticFin.coe_negativeLongRootTransvectionUnit] at hsub
-        rw [transvectionUnit_mulVec_sub k m _ _
-          (GLSymplecticFin.finSumFinEquiv_inr_ne_inl i i) 1 _] at hsub
-        simpa [Pi.single_apply] using hsub
   obtain ⟨i, hupper⟩ :
       ∃ i : Fin m, Pi.single (finSumFinEquiv (Sum.inl i)) 1 ∈ N := by
     rcases hb' : b' with i | i
     · have hlower : Pi.single (finSumFinEquiv (Sum.inr i)) 1 ∈ N := by
         simpa [hb'] using hseed
-      exact ⟨i, by simpa using long_move i false hlower⟩
+      exact ⟨i, by simpa using single_swap_mem_of_longRoot k m N i false hlower⟩
     · exact ⟨i, by simpa [hb'] using hseed⟩
-  have move_upper (j : Fin m) : Pi.single (finSumFinEquiv (Sum.inl j)) 1 ∈ N := by
-    by_cases hji : j = i
-    · subst j
-      exact hupper
-    · let g := GLSymplecticFin.differenceShortRootUnit (R := k) hji 1
-      have hgw := mulVec_mem k m N g hupper
-      have hsub := N.toSubmodule.sub_mem hgw hupper
-      have hcalc :
-          (g.1 : Matrix (Fin (m + m)) (Fin (m + m)) k) *ᵥ
-              Pi.single (finSumFinEquiv (Sum.inl i)) 1 -
-            Pi.single (finSumFinEquiv (Sum.inl i)) 1 =
-              Pi.single (finSumFinEquiv (Sum.inl j)) 1 := by
-        have addNat_eq_natAdd (r : Fin m) : r.addNat m = Fin.natAdd m r := by
-          apply Fin.ext
-          simp
-        have hcoli : i.addNat m ≠ Fin.castAdd m i := by
-          intro h
-          apply GLSymplecticFin.finSumFinEquiv_inr_ne_inl i i
-          rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_left]
-          rw [← addNat_eq_natAdd]
-          exact h
-        have hcolj : j.addNat m ≠ Fin.castAdd m i := by
-          intro h
-          apply GLSymplecticFin.finSumFinEquiv_inr_ne_inl j i
-          rw [finSumFinEquiv_apply_right, finSumFinEquiv_apply_left]
-          rw [← addNat_eq_natAdd]
-          exact h
-        rw [GLSymplecticFin.coe_differenceShortRootUnit, Units.val_mul]
-        rw [← Matrix.mulVec_mulVec]
-        ext x
-        simp [coe_transvectionUnit, Matrix.transvection, Matrix.add_mulVec,
-          Matrix.single_mulVec_eq, Pi.single_apply, Matrix.one_apply,
-          hcoli, hcolj]
-      rw [hcalc] at hsub
-      exact hsub
   rcases ha' : finSumFinEquiv.symm a with j | j
   · have ha_eq : finSumFinEquiv (Sum.inl j) = a := by
       rw [← ha']
       exact Equiv.apply_symm_apply finSumFinEquiv a
     rw [← ha_eq]
-    exact move_upper j
+    exact single_inl_mem_of_shortRoot k m N i hupper j
   · have ha_eq : finSumFinEquiv (Sum.inr j) = a := by
       rw [← ha']
       exact Equiv.apply_symm_apply finSumFinEquiv a
     rw [← ha_eq]
-    simpa using long_move j true (move_upper j)
+    simpa using single_swap_mem_of_longRoot k m N j true
+      (single_inl_mem_of_shortRoot k m N i hupper j)
 
 variable [NeZero m]
 
