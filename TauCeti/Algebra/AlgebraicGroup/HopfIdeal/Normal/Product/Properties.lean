@@ -67,13 +67,15 @@ closed-subgroup quotient morphism. -/
 @[reassoc (attr := simp)]
 theorem productMapOfNormal_comp_coordinateInl
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H) (hI : I.IsNormal) :
-    productMapOfNormal H I J hI ≫ (quotientNormalConjugation H I J hI).coordinateInl =
+    productMapOfNormal H I J hI ≫ normalSemidirectProductCoordinateInl H I J hI =
       mkQuotient H I := by
   have _ : IsMonHom.Normal (quotientGrpObjInclusion H I) :=
     (quotientGrpObjInclusion_normal_iff H I).2 hI
+  rw [normalSemidirectProductCoordinateInl_eq, ← Category.assoc,
+    productMapOfNormal_comp_normalSemidirectProductIso_hom]
   apply grpObjMap_injective
   rw [grpObjMap_comp, GrpObj.Action.grpObjMap_coordinateInl]
-  rw [grpObjMap_productMapOfNormal]
+  rw [grpObjMap_normalSemidirectMultiplicationCoordinateMap]
   rw [← quotientGrpObjInclusion_def]
   have hrestriction :
       let A := GrpObj.Action.normalConjugation
@@ -92,13 +94,15 @@ closed-subgroup quotient morphism. -/
 @[reassoc (attr := simp)]
 theorem productMapOfNormal_comp_coordinateInr
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H) (hI : I.IsNormal) :
-    productMapOfNormal H I J hI ≫ (quotientNormalConjugation H I J hI).coordinateInr =
+    productMapOfNormal H I J hI ≫ normalSemidirectProductCoordinateInr H I J hI =
       mkQuotient H J := by
   have _ : IsMonHom.Normal (quotientGrpObjInclusion H I) :=
     (quotientGrpObjInclusion_normal_iff H I).2 hI
+  rw [normalSemidirectProductCoordinateInr_eq, ← Category.assoc,
+    productMapOfNormal_comp_normalSemidirectProductIso_hom]
   apply grpObjMap_injective
   rw [grpObjMap_comp, GrpObj.Action.grpObjMap_coordinateInr]
-  rw [grpObjMap_productMapOfNormal]
+  rw [grpObjMap_normalSemidirectMultiplicationCoordinateMap]
   rw [← quotientGrpObjInclusion_def]
   have hrestriction :
       let A := GrpObj.Action.normalConjugation
@@ -123,7 +127,7 @@ theorem ker_productMapOfNormal_le_left
     HopfIdeal.ker (productMapOfNormal H I J hI).hom ≤ I := by
   calc
     HopfIdeal.ker (productMapOfNormal H I J hI).hom ≤
-        HopfIdeal.ker ((quotientNormalConjugation H I J hI).coordinateInl.hom.comp
+        HopfIdeal.ker ((normalSemidirectProductCoordinateInl H I J hI).hom.comp
           (productMapOfNormal H I J hI).hom) :=
       HopfIdeal.ker_le_ker_comp _ _
     _ = HopfIdeal.ker (mkQuotient H I).hom := by
@@ -138,7 +142,7 @@ theorem ker_productMapOfNormal_le_right
     HopfIdeal.ker (productMapOfNormal H I J hI).hom ≤ J := by
   calc
     HopfIdeal.ker (productMapOfNormal H I J hI).hom ≤
-        HopfIdeal.ker ((quotientNormalConjugation H I J hI).coordinateInr.hom.comp
+        HopfIdeal.ker ((normalSemidirectProductCoordinateInr H I J hI).hom.comp
           (productMapOfNormal H I J hI).hom) :=
       HopfIdeal.ker_le_ker_comp _ _
     _ = HopfIdeal.ker (mkQuotient H J).hom := by
@@ -151,8 +155,8 @@ product. -/
 private noncomputable def normalSemidirectConjugationAlgHom
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
     (hI : I.IsNormal) (hJ : J.IsNormal) :
-    normalSemidirectProduct H I J hI →ₐ[k]
-      (H ⊗[k] normalSemidirectProduct H I J hI) :=
+    (quotientNormalConjugation H I J hI).coordinateHopfAlgebra →ₐ[k]
+      (H ⊗[k] (quotientNormalConjugation H I J hI).coordinateHopfAlgebra) :=
   let i := quotientGrpObjInclusion H I
   let j := quotientGrpObjInclusion H J
   let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
@@ -165,10 +169,12 @@ private theorem productMapOfNormal_conjugation_equivariant
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
     (hI : I.IsNormal) (hJ : J.IsNormal) :
     (Algebra.TensorProduct.map (AlgHom.id k H)
-        (productMapOfNormal H I J hI).hom.toAlgHom).comp
+        ((productMapOfNormal H I J hI ≫
+          (normalSemidirectProductIso H I J hI).hom).hom.toAlgHom)).comp
         (HopfAlgebra.conjugationAlgHom (R := k) (H := H)) =
       (normalSemidirectConjugationAlgHom H I J hI hJ).comp
-        (productMapOfNormal H I J hI).hom.toAlgHom := by
+        ((productMapOfNormal H I J hI ≫
+          (normalSemidirectProductIso H I J hI).hom).hom.toAlgHom) := by
   let i := quotientGrpObjInclusion H I
   let j := quotientGrpObjInclusion H J
   let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
@@ -176,26 +182,34 @@ private theorem productMapOfNormal_conjugation_equivariant
   let A := GrpObj.Action.normalConjugation i j
   let _ := A.semidirectProductGrpObj
   have hequiv := GrpObj.Action.normalSemidirectMul_equivariant i j
-  have hproduct : grpObjMap (productMapOfNormal H I J hI) =
+  have hproduct : grpObjMap (productMapOfNormal H I J hI ≫
+      (normalSemidirectProductIso H I J hI).hom) =
       (GrpObj.Action.normalSemidirectMul i j).hom.hom :=
-    grpObjMap_productMapOfNormal H I J hI
+    by
+      rw [grpObjMap_comp]
+      exact grpObjMap_productMapOfNormal H I J hI
   rw [← hproduct] at hequiv
   have hunop := congrArg (fun q ↦ q.unop.hom) hequiv.symm
   have hleft :
       (MonoidalCategoryStruct.whiskerLeft (grpObj H)
-          (grpObjMap (productMapOfNormal H I J hI)) ≫
+          (grpObjMap (productMapOfNormal H I J hI ≫
+            (normalSemidirectProductIso H I J hI).hom)) ≫
         GrpObj.conj (grpObj H)).unop.hom =
         (Algebra.TensorProduct.map (AlgHom.id k H)
-          (productMapOfNormal H I J hI).hom.toAlgHom).comp
+          ((productMapOfNormal H I J hI ≫
+            (normalSemidirectProductIso H I J hI).hom).hom.toAlgHom)).comp
             (HopfAlgebra.conjugationAlgHom (R := k) (H := H)) := by
     rw [unop_comp, CommAlgCat.hom_comp, whiskerLeft_grpObjMap_unop_hom,
       grpObj_conj_unop_hom]
   have hright :
       ((GrpObj.Action.normalSemidirectConjugation i j).hom ≫
-          grpObjMap (productMapOfNormal H I J hI)).unop.hom =
+          grpObjMap (productMapOfNormal H I J hI ≫
+            (normalSemidirectProductIso H I J hI).hom)).unop.hom =
         (normalSemidirectConjugationAlgHom H I J hI hJ).comp
-          (productMapOfNormal H I J hI).hom.toAlgHom := by
-    rw [hproduct, productMapOfNormal_hom_toAlgHom]
+          ((productMapOfNormal H I J hI ≫
+            (normalSemidirectProductIso H I J hI).hom).hom.toAlgHom) := by
+    rw [hproduct, productMapOfNormal_comp_normalSemidirectProductIso_hom,
+      normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom]
     -- Expanding the local action instances identifies the named coordinate map with the unop of
     -- categorical semidirect conjugation, and composition in the opposite category reverses.
     rfl
@@ -206,11 +220,26 @@ image is normal. Thus the product image is a normal closed affine subgroup of th
 theorem isNormal_ker_productMapOfNormal
     (H : _root_.CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
     (hI : I.IsNormal) (hJ : J.IsNormal) :
-    (HopfIdeal.ker (productMapOfNormal H I J hI).hom).IsNormal :=
-  HopfIdeal.isNormal_ker_of_conjugation_equivariant
-    (productMapOfNormal H I J hI).hom
-    (normalSemidirectConjugationAlgHom H I J hI hJ)
-    (productMapOfNormal_conjugation_equivariant H I J hI hJ)
+    (HopfIdeal.ker (productMapOfNormal H I J hI).hom).IsNormal := by
+  let e := normalSemidirectProductIso H I J hI
+  let f := productMapOfNormal H I J hI
+  have hnormal : (HopfIdeal.ker (f ≫ e.hom).hom).IsNormal :=
+    HopfIdeal.isNormal_ker_of_conjugation_equivariant
+      (f ≫ e.hom).hom
+      (normalSemidirectConjugationAlgHom H I J hI hJ)
+      (productMapOfNormal_conjugation_equivariant H I J hI hJ)
+  have hker : HopfIdeal.ker f.hom = HopfIdeal.ker (f ≫ e.hom).hom := by
+    apply HopfIdeal.ext
+    intro x
+    rw [HopfIdeal.mem_ker, HopfIdeal.mem_ker]
+    constructor
+    · intro hx
+      simp [hx]
+    · intro hx
+      have hinv := congrArg (fun y ↦ e.inv.hom y) hx
+      simpa using hinv
+  rw [hker]
+  exact hnormal
 
 end
 

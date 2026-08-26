@@ -71,16 +71,59 @@ an action of affine group objects. -/
 and another closed affine subgroup. Its underlying commutative algebra is
 `(H / I) ⊗[ R ] (H / J)`, and its Hopf structure records conjugation of the second subgroup
 on the first. -/
-noncomputable abbrev normalSemidirectProduct
+noncomputable def normalSemidirectProduct
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) : _root_.CommHopfAlgCat.{u} R :=
   (quotientNormalConjugation H I J hI).coordinateHopfAlgebra
 
-/-- The coordinate Hopf-algebra morphism dual to multiplication from the semidirect product of
-a normal closed subgroup and another closed subgroup into the ambient affine group. -/
-noncomputable def productMapOfNormal
+/-- The canonical comparison between the named normal semidirect product and the coordinate
+Hopf algebra supplied by the categorical semidirect-product construction. -/
+noncomputable def normalSemidirectProductIso
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
-    (hI : I.IsNormal) : H ⟶ normalSemidirectProduct H I J hI := by
+    (hI : I.IsNormal) :
+    normalSemidirectProduct H I J hI ≅
+      (quotientNormalConjugation H I J hI).coordinateHopfAlgebra := by
+  rw [normalSemidirectProduct]
+
+/-- The coordinate morphism representing inclusion of the normal factor in the named normal
+semidirect product. -/
+noncomputable def normalSemidirectProductCoordinateInl
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) : normalSemidirectProduct H I J hI ⟶ quotient H I :=
+  (normalSemidirectProductIso H I J hI).hom ≫
+    (quotientNormalConjugation H I J hI).coordinateInl
+
+/-- The coordinate morphism representing inclusion of the acting factor in the named normal
+semidirect product. -/
+noncomputable def normalSemidirectProductCoordinateInr
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) : normalSemidirectProduct H I J hI ⟶ quotient H J :=
+  (normalSemidirectProductIso H I J hI).hom ≫
+    (quotientNormalConjugation H I J hI).coordinateInr
+
+/-- The normal-factor coordinate morphism is transported by the canonical comparison. -/
+theorem normalSemidirectProductCoordinateInl_eq
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) :
+    normalSemidirectProductCoordinateInl H I J hI =
+      (normalSemidirectProductIso H I J hI).hom ≫
+        (quotientNormalConjugation H I J hI).coordinateInl := by
+  rw [normalSemidirectProductCoordinateInl]
+
+/-- The acting-factor coordinate morphism is transported by the canonical comparison. -/
+theorem normalSemidirectProductCoordinateInr_eq
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) :
+    normalSemidirectProductCoordinateInr H I J hI =
+      (normalSemidirectProductIso H I J hI).hom ≫
+        (quotientNormalConjugation H I J hI).coordinateInr := by
+  rw [normalSemidirectProductCoordinateInr]
+
+/-- The coordinate map obtained directly from categorical normal semidirect multiplication. -/
+noncomputable def normalSemidirectMultiplicationCoordinateMap
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) :
+    H ⟶ (quotientNormalConjugation H I J hI).coordinateHopfAlgebra := by
   let i := quotientGrpObjInclusion H I
   let j := quotientGrpObjInclusion H J
   letI : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
@@ -88,49 +131,71 @@ noncomputable def productMapOfNormal
     (commHopfAlgCatEquivCogrpCommAlgCat R).inverse.map
       (op (GrpObj.Action.normalSemidirectMul i j))
 
-/-- The product coordinate morphism is the transport of categorical normal semidirect
-multiplication. -/
-theorem productMapOfNormal_def
+/-- The coordinate Hopf-algebra morphism dual to multiplication from the semidirect product of
+a normal closed subgroup and another closed subgroup into the ambient affine group. -/
+noncomputable def productMapOfNormal
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) : H ⟶ normalSemidirectProduct H I J hI :=
+  normalSemidirectMultiplicationCoordinateMap H I J hI ≫
+    (normalSemidirectProductIso H I J hI).inv
+
+/-- After the canonical comparison, the product coordinate morphism is the transport of
+categorical normal semidirect multiplication. -/
+@[reassoc (attr := simp)]
+theorem productMapOfNormal_comp_normalSemidirectProductIso_hom
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
-    let i := quotientGrpObjInclusion H I
-    let j := quotientGrpObjInclusion H J
-    letI : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
-    productMapOfNormal H I J hI =
-      (commHopfAlgCatEquivCogrpCommAlgCat R).unitIso.hom.app H ≫
-        (commHopfAlgCatEquivCogrpCommAlgCat R).inverse.map
-          (op (GrpObj.Action.normalSemidirectMul i j)) :=
-  (rfl)
+    productMapOfNormal H I J hI ≫ (normalSemidirectProductIso H I J hI).hom =
+      normalSemidirectMultiplicationCoordinateMap H I J hI := by
+  rw [productMapOfNormal, Category.assoc, Iso.inv_hom_id, Category.comp_id]
 
-/-- The underlying coordinate algebra map of `productMapOfNormal` is the algebra map obtained by
+/-- The underlying algebra map of the direct categorical coordinate map is obtained by
 unopping normal semidirect multiplication. -/
-theorem productMapOfNormal_hom_toAlgHom
+theorem normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     let i := quotientGrpObjInclusion H I
     let j := quotientGrpObjInclusion H J
     let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
-    (productMapOfNormal H I J hI).hom.toAlgHom =
+    (normalSemidirectMultiplicationCoordinateMap H I J hI).hom.toAlgHom =
       (GrpObj.Action.normalSemidirectMul i j).hom.hom.unop.hom := by
-  rw [productMapOfNormal_def]
+  rw [normalSemidirectMultiplicationCoordinateMap]
   -- The unit of Mathlib's Hopf/cogroup equivalence is definitionally the identity on the
   -- underlying algebra map, leaving exactly the unop of semidirect multiplication.
   rfl
 
-/-- The represented group-object map of `productMapOfNormal` is normal semidirect
-multiplication. -/
+/-- The represented group-object map of the direct categorical coordinate map is normal
+semidirect multiplication. -/
+theorem grpObjMap_normalSemidirectMultiplicationCoordinateMap
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
+    (hI : I.IsNormal) :
+    let i := quotientGrpObjInclusion H I
+    let j := quotientGrpObjInclusion H J
+    let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
+    grpObjMap (normalSemidirectMultiplicationCoordinateMap H I J hI) =
+      (GrpObj.Action.normalSemidirectMul i j).hom.hom := by
+  apply Quiver.Hom.unop_inj
+  apply CommAlgCat.hom_ext
+  rw [grpObjMap_unop_hom]
+  exact normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom H I J hI
+
+/-- After the canonical comparison, the represented group-object map of `productMapOfNormal`
+is normal semidirect multiplication. -/
 theorem grpObjMap_productMapOfNormal
     (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H)
     (hI : I.IsNormal) :
     let i := quotientGrpObjInclusion H I
     let j := quotientGrpObjInclusion H J
     let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
-    grpObjMap (productMapOfNormal H I J hI) =
+    grpObjMap (normalSemidirectProductIso H I J hI).hom ≫
+      grpObjMap (productMapOfNormal H I J hI) =
       (GrpObj.Action.normalSemidirectMul i j).hom.hom := by
+  rw [← grpObjMap_comp]
+  rw [productMapOfNormal_comp_normalSemidirectProductIso_hom]
   apply Quiver.Hom.unop_inj
   apply CommAlgCat.hom_ext
   rw [grpObjMap_unop_hom]
-  exact productMapOfNormal_hom_toAlgHom H I J hI
+  exact normalSemidirectMultiplicationCoordinateMap_hom_toAlgHom H I J hI
 
 variable {k : Type u} [Field k]
 
