@@ -227,6 +227,15 @@ noncomputable def fixedCosetsEquiv (g : GL (Fin 2) F) :
   (cosetRepEquiv F).subtypeEquiv fun x => by
     rw [cosetRepEquiv_apply, smul_quotientMk_eq_iff]
 
+/-- The coset that `TauCeti.GL2Borel.fixedCosetsEquiv` attaches to a parameter `x` is the coset of
+the representative `TauCeti.GL2Borel.cosetRep x`. -/
+@[simp]
+theorem coe_fixedCosetsEquiv_apply (g : GL (Fin 2) F)
+    (x : {x : Option F // (cosetRep x)⁻¹ * g * cosetRep x ∈ GL2Borel F}) :
+    (fixedCosetsEquiv F g x : GL (Fin 2) F ⧸ GL2Borel F) =
+      QuotientGroup.mk (cosetRep (x : Option F)) :=
+  (rfl)
+
 /-- **The fixed-coset count** is the number of parameters whose representative conjugates `g` into
 the Borel subgroup. -/
 theorem natCard_fixedCosets_eq_ncard (g : GL (Fin 2) F) :
@@ -292,8 +301,8 @@ variable {E : Type u} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
 
 /-- **An element of the non-split torus outside `F` fixes no coset at all.** A fixed coset would
 exhibit an upper-triangular conjugate, which is exactly what
-`TauCeti.GL2NonSplitTorus.conj_notMem_gl2Borel` forbids. This is the elliptic case: the eigenvalues
-of such a matrix are a conjugate pair in `E ∖ F`, so it has no eigenline over `F`. -/
+`TauCeti.GL2NonSplitTorus.conj_notMem_gl2Borel` forbids. This is the elliptic case: no eigenvalue of
+such a matrix lies in `F`, so it has no eigenline over `F`. -/
 theorem natCard_fixedCosets_gl2NonSplitTorusHom {x : Eˣ}
     (hx : (x : E) ∉ Set.range (algebraMap F E)) :
     Nat.card {c : GL (Fin 2) F ⧸ GL2Borel F // GL2NonSplitTorusHom F E hE x • c = c} = 0 := by
