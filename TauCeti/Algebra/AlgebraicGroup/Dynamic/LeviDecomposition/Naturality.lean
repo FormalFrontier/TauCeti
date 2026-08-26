@@ -129,7 +129,6 @@ theorem leviSemidirectMap_apply_right {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
   by unfold leviSemidirectMap; rfl
 
 /-- Extension of the value algebra commutes with the dynamic Levi decomposition equivalence. -/
-@[simp]
 theorem mapParabolic_leviDecompositionMulEquiv_apply
     {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
     (g : (unipotent A l) ⋊[leviConjugation A l] (levi A l)) :
