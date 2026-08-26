@@ -277,15 +277,16 @@ theorem exists_isRealStructure_of_isInvariantForm_of_isInvariantSesqForm {B : Bi
     ∃ K : V →ₛₗ[starRingEnd ℂ] V, IsRealStructure ρ K := by
   obtain ⟨t, htpos, ht⟩ :=
     exists_compareFormsSq_eq_real_smul hBinv hBsymm hBnd hHinv hHnonneg hdef
-  have hsq : (Real.sqrt t)⁻¹ * (Real.sqrt t)⁻¹ * t = 1 := by
-    calc (Real.sqrt t)⁻¹ * (Real.sqrt t)⁻¹ * t = (Real.sqrt t * Real.sqrt t)⁻¹ * t := by
-          rw [mul_inv]
-      _ = t⁻¹ * t := by rw [Real.mul_self_sqrt htpos.le]
-      _ = 1 := inv_mul_cancel₀ htpos.ne'
+  -- The scaling factor, stated once over `ℂ`: this is the only place the proof crosses the
+  -- `ℝ`-to-`ℂ` coercion, so the map equality below stays a plain scalar computation.
+  have hsq : (((Real.sqrt t)⁻¹ : ℝ) : ℂ) * (((Real.sqrt t)⁻¹ : ℝ) : ℂ) * (t : ℂ) = 1 := by
+    have hreal : (Real.sqrt t)⁻¹ * (Real.sqrt t)⁻¹ * t = 1 := by
+      rw [← mul_inv, Real.mul_self_sqrt htpos.le, inv_mul_cancel₀ htpos.ne']
+    exact_mod_cast hreal
   refine ⟨(((Real.sqrt t)⁻¹ : ℝ) : ℂ) • compareForms B H hdef, fun x => ?_, fun g v => ?_⟩
-  · simp only [LinearMap.smul_apply, map_smulₛₗ, Complex.conj_ofReal, smul_smul]
-    rw [← compareFormsSq_apply, ht x, smul_smul, ← Complex.ofReal_mul, ← Complex.ofReal_mul, hsq,
-      Complex.ofReal_one, one_smul]
+  · simp only [LinearMap.smul_apply, map_smulₛₗ, Complex.conj_ofReal, smul_smul,
+      ← compareFormsSq_apply]
+    rw [ht x, smul_smul, hsq, one_smul]
   · simp only [LinearMap.smul_apply, compareForms_apply_rep hBinv hHinv hdef, map_smul]
 
 end RealStructure
