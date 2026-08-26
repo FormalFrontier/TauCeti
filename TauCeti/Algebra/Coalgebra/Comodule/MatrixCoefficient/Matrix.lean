@@ -5,8 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.RingTheory.Coalgebra.CoassocSimps
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 public import Mathlib.RingTheory.HopfAlgebra.Basic
+public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Comul
 
 /-!
@@ -24,6 +26,8 @@ therefore a unit.
 ## Main declarations
 
 * `TauCeti.Comodule.coefficientMatrix`: the matrix of basis matrix coefficients.
+* `TauCeti.Comodule.coefficientMatrix_corestrict`: corestriction maps every coefficient entry
+  along the coalgebra morphism.
 * `TauCeti.Comodule.coact_basis_eq_sum_coefficientMatrix`: the coaction of a basis vector is the
   corresponding column of the coefficient matrix.
 * `TauCeti.Comodule.comul_coefficientMatrix_eq_sum` and
@@ -72,6 +76,24 @@ theorem coefficientMatrix_apply (b : Basis ι R M) (i j : ι) :
     coefficientMatrix (C := C) b i j =
       matrixCoefficient (R := R) (C := C) (b.coord i) (b j) := by
   rw [coefficientMatrix]
+
+variable {D : Type*} [AddCommMonoid D] [Module R D] [Coalgebra R D]
+
+/-- Corestricting a comodule along a coalgebra morphism maps that morphism over every entry of
+the coefficient matrix. -/
+@[simp]
+theorem coefficientMatrix_corestrict (b : Basis ι R M) (f : C →ₗc[R] D) :
+    letI : Comodule R D M := Corestrict f
+    coefficientMatrix (C := D) b = (coefficientMatrix (C := C) b).map f := by
+  let _ : Comodule R D M := Corestrict f
+  ext i j
+  rw [coefficientMatrix_apply, Matrix.map_apply, coefficientMatrix_apply,
+    matrixCoefficient_def, matrixCoefficient_def, corestrict_coact_apply]
+  have h := LinearMap.congr_fun
+    (CoassocSimps.lid_comp_map (b.coord i) f.toLinearMap)
+    (coact (R := R) (C := C) (M := M) (b j))
+  rw [TensorProduct.map_map, LinearMap.id_comp, LinearMap.comp_id]
+  exact h
 
 /-- The counit of a coefficient entry is the corresponding identity-matrix entry. -/
 @[simp]

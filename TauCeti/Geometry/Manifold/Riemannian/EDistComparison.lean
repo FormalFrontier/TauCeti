@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors, Archon Horizon (claude+codex), Axel Delaval,
 -/
 module
 
+public import Mathlib.Geometry.Manifold.Riemannian.Basic
 public import TauCeti.Geometry.Manifold.Riemannian.PathELength
 public import TauCeti.Geometry.Manifold.Riemannian.PiecewisePath
 
@@ -34,7 +35,9 @@ Apache-2.0 do Carmo formalization at revision `24f32e4d600878bfaac6bc2f2f9324175
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.riemannianEDist_le_pathELength`: a piecewise `C¹` path
   bounds the Riemannian extended distance between its endpoints.
 * `TauCeti.Manifold.IsPiecewiseContMDiffOn.riemannianEDist_le_pathELength_of_subset`: the same
-  bound between any two ordered parameters in the path's interval.
+  bound between any two ordered parameters in the path's interval, and
+  `TauCeti.Manifold.IsPiecewiseContMDiffOn.edist_le_pathELength_of_subset`, its form for the
+  ambient extended distance of a Riemannian manifold.
 * `TauCeti.Manifold.riemannianEDist_eq_iInf_pathELength_piecewise` and
   `TauCeti.Manifold.riemannianEDist_eq_iInf_pathELength_piecewise_zero_one`: the piecewise `C¹`
   infimum, over arbitrary parameter intervals and over `[0, 1]`, is `Manifold.riemannianEDist`.
@@ -231,5 +234,26 @@ theorem riemannianEDist_eq_iInf_pathELength_piecewise_zero_one (x y : M) :
     refine le_trans (iInf_le_of_le η (iInf_le_of_le
       (IsPiecewiseContMDiffOn.of_contMDiffOn zero_lt_one hη.contMDiffOn)
       (iInf_le_of_le (hη₀.trans hx) (iInf_le_of_le (hη₁.trans hy) le_rfl)))) hlen.le
+
+section Riemannian
+
+open scoped Bundle
+
+variable {M : Type*} [PseudoEMetricSpace M] [ChartedSpace H M]
+  [Bundle.RiemannianBundle (fun x : M ↦ TangentSpace I x)] [IsRiemannianManifold I M]
+  {γ : ℝ → M} {a b : ℝ}
+
+/-- In a Riemannian manifold, the ambient extended distance between two ordered parameters of a
+piecewise `C¹` path is at most the length of the path between them. This is
+`TauCeti.Manifold.IsPiecewiseContMDiffOn.riemannianEDist_le_pathELength_of_subset` read through
+`IsRiemannianManifold.out`. -/
+theorem IsPiecewiseContMDiffOn.edist_le_pathELength_of_subset
+    (h : IsPiecewiseContMDiffOn I 1 γ a b) {s t : ℝ}
+    (has : a ≤ s) (hst : s ≤ t) (htb : t ≤ b) :
+    edist (γ s) (γ t) ≤ Manifold.pathELength I γ s t := by
+  rw [IsRiemannianManifold.out (I := I) (γ s) (γ t)]
+  exact h.riemannianEDist_le_pathELength_of_subset has hst htb
+
+end Riemannian
 
 end TauCeti.Manifold

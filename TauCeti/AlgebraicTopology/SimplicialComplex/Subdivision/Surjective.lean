@@ -145,8 +145,7 @@ private theorem orderedCoord_succ_le {K : AbstractSimplicialComplex ι} (x : Rea
     exact orderedVertex_antitone x (Fin.mk_le_mk.mpr (Nat.le_succ k))
   · rw [orderedCoord]
     simp only [hks, ↓reduceDIte]
-    let x' : StandardSimplex (carrier K x).1 := ⟨x.1, mem_convexHull_carrier K x⟩
-    exact StandardSimplex.nonneg x' _
+    exact Realization.nonneg K x _
 
 /-- The barycentric coefficient of the `i`th initial face. -/
 private noncomputable def subdivisionWeight {K : AbstractSimplicialComplex ι} (x : Realization K)
@@ -314,11 +313,7 @@ private theorem barycentricSubdivisionLinearMap_subdivisionCoordinates
   rw [subdivisionCoordinates, map_sum]
   apply Finset.sum_congr rfl
   intro i _
-  have hs : Finsupp.single (prefixFace x i) (subdivisionWeight x i) =
-      subdivisionWeight x i • Finsupp.single (prefixFace x i) (1 : ℝ) := by
-    rw [Finsupp.smul_single]
-    simp
-  rw [hs, map_smul, barycentricSubdivisionLinearMap_single]
+  rw [← Finsupp.smul_single_one, map_smul, barycentricSubdivisionLinearMap_single]
 
 private theorem mem_prefixVertices_iff {K : AbstractSimplicialComplex ι} (x : Realization K)
     {v : ι} (hv : v ∈ (carrier K x).1) (i : Fin (carrier K x).1.card) :

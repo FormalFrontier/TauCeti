@@ -2,15 +2,14 @@ name: Auto-merge
 
 # Merge a PR automatically once it is genuinely ready, WITHOUT generating any reviews here (that is
 # expensive — it spends API budget — and is gated off in review.yml). Reviews are produced by people
-# running tauceti-review / tauceti locally, which push the verdict ledger to the reviews branch and
-# post the scoreboard comment. This workflow just reads that ledger and merges when ready.
+# running tauceti-review / tauceti locally and posting a head-pinned scoreboard comment. This workflow
+# reads the newest such scoreboard and merges when ready; TauCetiData is a separate analytics archive.
 #
 # It calls the lightweight TauCetiReview merge-only workflow, which mints no provider keys, runs no
 # reviewer, and merges only when the engine's own rule says so: build green on HEAD, every blocking
 # rubric green on HEAD, every changed path under TauCeti/ (plus the allowed root files), and bump-guard
-# green for any Lake-pin change. The decision is read from the real ledger, so a forged scoreboard
-# comment can only TRIGGER a re-check, never supply a verdict — which is why the triggers below can be
-# loose: an over-trigger is a cheap no-op, never a wrong merge.
+# green for any Lake-pin change. The scoreboard supplies the review verdict with no author-association
+# gate; trusted CI supplies the build, scope, axiom, path, and bump-guard boundaries.
 
 on:
   # Head is freshly green: re-check whether this PR is now mergeable.

@@ -24,9 +24,10 @@ is the **principal series**. Over a finite field with `q` elements the Borel sub
 `q + 1`, so the principal series has dimension `q + 1`.
 
 This file builds the characters of `B`, the one-dimensional representations carrying them, the
-principal series itself, and its dimension. The irreducibility criterion `α ≠ β` and the
+principal series itself, and its dimension. The irreducibility criterion `α ≠ β` is proved in
+`TauCeti/RepresentationTheory/CharacterTable/GL2/PrincipalSeries/Irreducible.lean`; the
 decomposition of the boundary case `α = β` into a linear character and the Steinberg
-representation are not proved here.
+representation is not proved here.
 
 ## Main definitions
 
@@ -46,6 +47,8 @@ representation are not proved here.
   `α`; this is the boundary case whose principal series is reducible.
 * `TauCeti.GL2Borel.character_linearRep`: the character of a one-dimensional representation is the
   scalar it acts by.
+* `TauCeti.GL2BorelRep_def`: the bundled Borel representation is `TauCeti.GL2Borel.linearRep`, the
+  form to reason from when the action itself, and not only its character, is needed.
 * `TauCeti.finrank_GL2PrincipalSeries` and `TauCeti.character_one_GL2PrincipalSeries`: the
   principal series has dimension `q + 1`.
 
@@ -200,6 +203,14 @@ noncomputable def GL2BorelRep (α β : Fˣ →* ℂˣ) : FDRep ℂ (GL2Borel F) 
 theorem finrank_GL2BorelRep (α β : Fˣ →* ℂˣ) :
     Module.finrank ℂ (GL2BorelRep F α β) = 1 :=
   Module.finrank_self ℂ
+
+/-- **`TauCeti.GL2BorelRep` is `TauCeti.GL2Borel.linearRep` bundled into `FDRep ℂ B`.** Bundling
+changes the packaging, not the representation. This is the characterization downstream results
+that need the action itself — rather than its character — reason from, so none of them unfolds the
+definition. -/
+theorem GL2BorelRep_def (α β : Fˣ →* ℂˣ) :
+    GL2BorelRep F α β = FDRep.of (GL2Borel.linearRep (R := F) (k := ℂ) α β) :=
+  (rfl)
 
 /-- The character of `TauCeti.GL2BorelRep` is `TauCeti.GL2Borel.linearChar`. -/
 @[simp]

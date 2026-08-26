@@ -57,12 +57,16 @@ its upper-left entry is coprime to `c` as well as to `N`, hence to the whole det
 entrywise criterion applies to the translate. The degenerate splits fall under that same
 argument rather than under the two determinant criteria above.
 Passing from a primitive witness to a general one only costs a central scalar, which the bar
-fixes. What remains before `R(Γ₀(N), Δ₀(N))` is commutative is to run those two steps on an
-arbitrary `x ∈ Δ₀(N)`, which is not done here.
+fixes. Running those two steps on an arbitrary `x ∈ Δ₀(N)` — divide an integral witness by the
+gcd of its entries, then put the scalar back — leaves no double coset unfixed, so Shimura's
+Proposition 3.8 applies: for nonzero level `N`, `R(Γ₀(N), Δ₀(N))` is commutative over any
+commutative semiring.
 
 ## Main definitions
 
 * `HeckeRing.GL2.atkinLehnerAntiInvolution`: the anti-involution of the `Γ₀(N)` Hecke pair.
+* `HeckeRing.GL2.commSemiringHeckeRingGamma0`: for nonzero level `N`, the resulting
+  commutative-semiring structure on the Hecke ring `R(Γ₀(N), Δ₀(N))`.
 
 ## Main results
 
@@ -82,6 +86,10 @@ arbitrary `x ∈ Δ₀(N)`, which is not done here.
   scaling, the scalar's positivity and coprimality to the level being automatic.
 * `HeckeRing.GL2.atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_primitive`: it fixes the
   double coset of a witness no prime divides entrywise, with no hypothesis on the determinant.
+* `HeckeRing.GL2.atkinLehnerAntiInvolution_bar_mem_doubleCoset`: for nonzero level `N`, it fixes
+  the double coset of every `x ∈ Δ₀(N)`, with no further hypothesis on `x`.
+* `HeckeRing.GL2.atkinLehnerAntiInvolution_onHeckeCoset_eq_self`: equivalently, for nonzero
+  level `N`, it acts as the identity on `Γ₀(N) \ Δ₀(N) / Γ₀(N)`.
 
 ## References
 
@@ -92,8 +100,9 @@ arbitrary `x ∈ Δ₀(N)`, which is not done here.
   declarations `wN`, `Gamma0_AL_hom`, `Gamma0_AL_involutive`, `Gamma0_AL_map_H`,
   `Gamma0_AL_map_Δ` and `Gamma0_antiInvolution`, and — for the results added here —
   `Gamma0_AL_bar_det`, `bar_eq_SL2_conj`, `Gamma0_AL_in_DC_coprime`, `Gamma0_AL_in_DC_bad`,
-  `Gamma0_AL_in_DC_of_gcd_a00_m_coprime`, `Gamma0_AL_in_DC_of_smul` and
-  `Gamma0_AL_in_DC_primitive`, all Apache-2.0 at commit
+  `Gamma0_AL_in_DC_of_gcd_a00_m_coprime`, `Gamma0_AL_in_DC_of_smul`,
+  `Gamma0_AL_in_DC_primitive`, `Gamma0_AL_in_doubleCoset`, `Gamma0_onHeckeCoset_eq` and
+  `instCommRing_Gamma0`, all Apache-2.0 at commit
   `2baa76f742bdb4fb8ee323fabba41203bd390e08`. The source states its own transpose equivalence
   and diagonal-matrix API; here those come from `GLn/TransposeAntiInvolution.lean` and
   `GLn/DiagonalCosets.lean` instead, and the four-field bundle is assembled by
@@ -103,14 +112,21 @@ arbitrary `x ∈ Δ₀(N)`, which is not done here.
   central scalar by hand and proves centrality entrywise; here it is `natDiagGL` at a constant
   family, and centrality is read off `natDiagGL_const_comm`. The source's two reductions
   `Gamma0_AL_scalar_reduce` and `bar_mem_DC_of_bar_conj_mem` are used in the general form
-  `HeckeRing.Commutativity` gives them, not re-proved for `Γ₀(N)`.
+  `HeckeRing.Commutativity` gives them, not re-proved for `Γ₀(N)`. The source builds the content
+  quotient of a witness inline; here that is `exists_primitive_content_quotient`. Its
+  `instCommRing_Gamma0` is a `CommRing` on the integral Hecke ring; the structure available
+  here is the `CommSemiring` of `HeckeCosetModule.commSemiringOfAntiInvolution` over an
+  arbitrary commutative semiring, exactly as at level one. The source's
+  `Gamma0_pair_HeckeAlgebra_mul_comm` restates that instance's `mul_comm`, which
+  `HeckeCosetModule.mul_comm_of_antiInvolution` already provides directly, so it is not
+  reproduced.
 -/
 
 public section
 
 open Matrix Matrix.SpecialLinearGroup CongruenceSubgroup Subgroup HeckeRing.GLn
 
-open scoped MatrixGroups
+open scoped MatrixGroups HeckeCosetModule
 
 namespace HeckeRing.GL2
 
@@ -657,5 +673,75 @@ theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_primitive [NeZero N]
     ((det_eq_of_mem_doubleCoset_of_le_SLnZ 2 (Gamma0_map_le_SLnZ N) (Gamma0_map_le_SLnZ N)
       hdc).trans hdet_m)
     (gcd_eq_one_of_eq_mul_of_dvd_pow hbc (Nat.gcd_dvd_right _ _) hA'Nco hA'c)
+
+/-- **The Atkin-Lehner bar fixes every `Γ₀(N)`-double coset in `Δ₀(N)`**, for nonzero level `N`
+and with no further hypothesis on `x`. This is exactly the hypothesis Shimura's commutativity
+criterion takes, in the pointwise form `HeckeAntiInvolution.bar_mem_doubleCoset_self` reads it.
+
+Dividing an integral witness by the gcd `d` of its four entries leaves a primitive one, which
+`atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_primitive` settles with no hypothesis on the
+determinant. Putting the scalar back is
+`atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_smul`, which asks nothing further of `d`: the
+positivity and the coprimality to the level it needs are read off `x ∈ Δ₀(N)` inside it. -/
+theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset [NeZero N] (x : GL (Fin 2) ℚ)
+    (hx : x ∈ Delta0 N) : (atkinLehnerAntiInvolution N).bar x hx ∈
+      DoubleCoset.doubleCoset x ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) := by
+  obtain ⟨A, hA, hxdet, hAN, hAunit⟩ := (mem_Delta0_iff N).mp hx
+  have hAco : Int.gcd (A 0 0) N = 1 :=
+    Int.isCoprime_iff_gcd_eq_one.mp
+      (isCoprime_comm.mp ((ZMod.coe_int_isUnit_iff_isCoprime _ _).mp hAunit))
+  have hA_det_pos : 0 < A.det := by
+    rw [← Int.cast_pos (R := ℚ), Int.cast_det, ← hA]
+    exact hxdet
+  -- divide the witness by the gcd `d` of its four entries
+  set d : ℕ := Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs)
+    (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs) with hd_def
+  obtain ⟨A₀, hA₀_eq, hA₀_det_pos, hA₀N, hA₀co, hA₀_prim⟩ :=
+    exists_primitive_content_quotient N A hA_det_pos hAN hAco d hd_def
+  have hA₀_det_ne : (A₀.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
+    rw [← Int.cast_det]
+    exact_mod_cast hA₀_det_pos.ne'
+  set x₀ : GL (Fin 2) ℚ := Matrix.GeneralLinearGroup.mkOfDetNeZero _ hA₀_det_ne
+  have hx₀_val : (x₀ : Matrix (Fin 2) (Fin 2) ℚ) = A₀.map (Int.cast : ℤ → ℚ) := by simp [x₀]
+  have hx₀_det : 0 < (x₀ : Matrix (Fin 2) (Fin 2) ℚ).det := by
+    rw [hx₀_val, ← Int.cast_det]
+    exact_mod_cast hA₀_det_pos
+  have hx₀ : x₀ ∈ Delta0 N := (mem_Delta0_iff N).mpr ⟨A₀, hx₀_val, hx₀_det, hA₀N,
+    (ZMod.coe_int_isUnit_iff_isCoprime _ _).mpr
+      (isCoprime_comm.mp (Int.isCoprime_iff_gcd_eq_one.mpr hA₀co))⟩
+  have hsmul : (x : Matrix (Fin 2) (Fin 2) ℚ) = (d : ℚ) • (x₀ : Matrix (Fin 2) (Fin 2) ℚ) := by
+    rw [hA, hx₀_val]
+    ext i j
+    simp only [Matrix.smul_apply, Matrix.map_apply, smul_eq_mul]
+    exact_mod_cast congrArg (Int.cast : ℤ → ℚ) (hA₀_eq i j)
+  exact atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_smul N d x x₀ hx hx₀ hsmul
+    (atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_primitive N x₀ hx₀ A₀ hx₀_val hA₀_prim)
+
+/-- **The Atkin-Lehner bar acts trivially on `Γ₀(N) \ Δ₀(N) / Γ₀(N)`**, for nonzero level `N`.
+Each double coset is fixed, by `atkinLehnerAntiInvolution_bar_mem_doubleCoset` at any
+representative. -/
+@[simp] lemma atkinLehnerAntiInvolution_onHeckeCoset_eq_self [NeZero N]
+    (D : HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))) :
+    (atkinLehnerAntiInvolution N).onHeckeCoset D = D := by
+  induction D using HeckeCoset.induction with
+  | h g =>
+    rw [(atkinLehnerAntiInvolution N).onHeckeCoset_mk]
+    exact HeckeCoset.mk_eq_mk_of_mem
+      (atkinLehnerAntiInvolution_bar_mem_doubleCoset N (g : GL (Fin 2) ℚ) g.2)
+
+/-- **Shimura's Proposition 3.8 for `Γ₀(N)`**: for nonzero level `N`, the Hecke ring
+`R(Γ₀(N), Δ₀(N))` over any commutative semiring is commutative, the Atkin-Lehner bar being an
+anti-involution that fixes every double coset.
+
+This is the level-`N` counterpart of `HeckeRing.GLn.commSemiringHeckeRing`, where transposition
+alone does the same job. Not an instance, for the reason given there: the anti-involution is
+data. The `@[instance_reducible]` attribute is required by Lean's class-definition
+reducibility linter for any `def` of class type; it governs unfolding during instance search
+and registers nothing on its own. -/
+@[instance_reducible]
+noncomputable def commSemiringHeckeRingGamma0 [NeZero N] (R : Type*) [CommSemiring R] :
+    CommSemiring (𝕋 (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) R) :=
+  HeckeCosetModule.commSemiringOfAntiInvolution R (atkinLehnerAntiInvolution N)
+    (atkinLehnerAntiInvolution_onHeckeCoset_eq_self N)
 
 end HeckeRing.GL2

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Hopf.Conjugation
 
 /-!
 # Yoneda theory for the functor of points
@@ -45,6 +46,8 @@ shrinking part.
   group-Yoneda model to algebra morphisms.
 * `TauCeti.CommHopfAlgCat.grpObjPointsMulEquiv`: generalized points of the represented group
   object are its convolution points.
+* `TauCeti.CommHopfAlgCat.grpObj_conj_unop_hom`: categorical conjugation unops to the coordinate
+  conjugation algebra map.
 * `TauCeti.CommHopfAlgCat.groupYonedaPointsFunctorIso`: the group-valued Yoneda model is
   naturally isomorphic to the existing points functor.
 * `TauCeti.CommHopfAlgCat.pointsFunctor_faithful` and
@@ -66,7 +69,7 @@ Hopf-algebra/cogroup equivalence, `CategoryTheory.yonedaGrp`, and its essential-
 
 public section
 
-open CategoryTheory Opposite WithConv
+open CategoryTheory MonoidalCategory CartesianMonoidalCategory Opposite WithConv
 open scoped CategoryTheory.MonObj
 
 namespace TauCeti
@@ -331,6 +334,28 @@ theorem grpObjPointsMulEquiv_apply (H : _root_.CommHopfAlgCat.{u} R)
     (X : (CommAlgCat.{u} R)ᵒᵖ) (g : X ⟶ grpObj H) :
     grpObjPointsMulEquiv H X g = toConv g.unop.hom := by
   exact HopfAlgebra.pointsHomEquiv_apply H g.unop
+
+/-- Unopping categorical conjugation on the represented group object gives the coordinate
+conjugation algebra map. -/
+theorem grpObj_conj_unop_hom (H : _root_.CommHopfAlgCat.{u} R) :
+    (GrpObj.conj (grpObj H)).unop.hom =
+      HopfAlgebra.conjugationAlgHom (R := R) (H := H) := by
+  apply WithConv.toConv_injective
+  calc
+    WithConv.toConv (GrpObj.conj (grpObj H)).unop.hom =
+        grpObjPointsMulEquiv H (grpObj H ⊗ grpObj H) (GrpObj.conj (grpObj H)) := by
+      rw [grpObjPointsMulEquiv_apply]
+    _ = grpObjPointsMulEquiv H (grpObj H ⊗ grpObj H) (fst (grpObj H) (grpObj H)) *
+        grpObjPointsMulEquiv H (grpObj H ⊗ grpObj H) (snd (grpObj H) (grpObj H)) *
+        (grpObjPointsMulEquiv H (grpObj H ⊗ grpObj H) (fst (grpObj H) (grpObj H)))⁻¹ := by
+      rw [GrpObj.conj, map_mul, map_mul, map_inv]
+    _ = WithConv.toConv (HopfAlgebra.conjugationAlgHom (R := R) (H := H)) := by
+      rw [grpObjPointsMulEquiv_apply,
+        grpObjPointsMulEquiv_apply H (grpObj H ⊗ grpObj H) (snd (grpObj H) (grpObj H))]
+      simpa only [CommAlgCat.fst_unop_hom, CommAlgCat.snd_unop_hom,
+        Bialgebra.TensorProduct.includeLeft_toAlgHom,
+        Bialgebra.TensorProduct.includeRight_toAlgHom] using
+        (HopfAlgebra.toConv_conjugationAlgHom (R := R) (H := H)).symm
 
 /-- The inverse point equivalence bundles a convolution point as a morphism in the opposite
 category of commutative algebras. -/

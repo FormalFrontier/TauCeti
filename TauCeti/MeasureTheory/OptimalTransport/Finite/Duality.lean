@@ -91,11 +91,6 @@ universe u v
 variable {ι : Type u} {κ : Type v} [Fintype ι] [Fintype κ] {μ : PMF ι} {ν : PMF κ}
   {c : ι × κ → ℝ} {φ : ι → ℝ} {ψ : κ → ℝ} {f : ι × κ → ℝ}
 
-/-- The masses of a probability mass function on a finite type sum to one. -/
-private theorem sum_toReal_pmf (μ : PMF ι) : ∑ i, (μ i).toReal = 1 := by
-  have h : ∑ i, μ i = 1 := (tsum_fintype fun i ↦ μ i).symm.trans μ.tsum_coe
-  rw [← ENNReal.toReal_sum fun i _ ↦ μ.apply_ne_top i, h, ENNReal.toReal_one]
-
 /-- The value of a pair of Kantorovich potentials against two probability mass functions on
 finite types: the sum of the two marginal expectations. -/
 def finiteDualValue (μ : PMF ι) (ν : PMF κ) (φ : ι → ℝ) (ψ : κ → ℝ) : ℝ :=
@@ -113,7 +108,7 @@ theorem finiteDualValue_add_const_add_const (μ : PMF ι) (ν : PMF κ) (φ : ι
     finiteDualValue μ ν (fun i ↦ φ i + a) (fun j ↦ ψ j + b)
       = finiteDualValue μ ν φ ψ + a + b := by
   simp only [finiteDualValue_def, mul_add, Finset.sum_add_distrib, ← Finset.sum_mul,
-    sum_toReal_pmf, one_mul]
+    PMF.sum_toReal_eq_one, one_mul]
   ring
 
 /-- Adding a constant to the first potential adds it to the dual value: the first marginal has
@@ -264,7 +259,7 @@ private theorem realPlans_subset_stdSimplex : RealPlans μ ν ⊆ stdSimplex ℝ
   refine ⟨hf.1, ?_⟩
   rw [Fintype.sum_prod_type]
   simp only [hf.2.1]
-  exact sum_toReal_pmf μ
+  exact PMF.sum_toReal_eq_one μ
 
 private theorem isClosed_realPlans : IsClosed (RealPlans μ ν) := by
   have h1 : IsClosed {f : ι × κ → ℝ | ∀ q, 0 ≤ f q} := by

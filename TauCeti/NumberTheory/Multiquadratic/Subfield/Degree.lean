@@ -104,9 +104,7 @@ theorem finrank_mul_card_intermediateFieldEquivSubmodule [Finite ι] [NeZero (2 
     Module.finrank K F
         * Nat.card (intermediateFieldEquivSubmodule hroot hindep F).ofDual
       = 2 ^ Nat.card ι := by
-  have := isSplittingField hroot
-  have : FiniteDimensional K (adjoin K (Set.range root)) :=
-    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  have := finiteDimensional_adjoin_range hroot
   have := isGalois hroot
   rw [card_intermediateFieldEquivSubmodule_ofDual hroot hindep F,
     IntermediateField.finrank_eq_fixingSubgroup_index (adjoin K (Set.range root)) F,

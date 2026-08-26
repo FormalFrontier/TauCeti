@@ -472,11 +472,10 @@ def detect_stranded_prs():
         ready_since = min(hours_since(updated), hours_since(applied))
         if ready_since < STRANDED_HOURS:
             continue
-        # NOTE: scoreboard_meta is the trusted scoreboard comment auto-merge reads
-        # to TRIGGER a re-check; it is not the authoritative merge ledger, so this
-        # is best-effort and can lag. The mergeable + in-scope + quiet-window guards
-        # below keep the false-emergency rate low; a fully authoritative read of the
-        # TauCetiReview ledger is a possible future hardening.
+        # This detector deliberately uses the repo-associated scoreboard selected by the status
+        # sinks. Auto-merge instead reads the newest marked scoreboard from any author, so an
+        # external review may merge without this detector ever considering it approved. That makes
+        # the alert best-effort but cannot cause a wrong merge or close.
         if core.review_state(core.scoreboard_meta(pr["number"]), head) != "approved":
             continue
         # Filenames are bare strings, not JSON -- gh_lines, not gh_stream.

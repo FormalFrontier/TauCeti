@@ -1,0 +1,208 @@
+name: publish-lake-cache
+
+# Secret-isolated Lake cache publisher shared by main CI and merge-group CI. The caller may
+# execute arbitrary Lean code while producing the staging artifact, so this workflow treats the
+# entire artifact and every reported value as hostile. It checks out only the toolchain pin at the
+# immutable revision being published; no project or dependency code runs in the job that receives
+# LAKE_CACHE_KEY.
+
+on:
+  workflow_call:
+    inputs:
+      revision:
+        description: Immutable TauCeti revision whose output map is being published
+        required: true
+        type: string
+      artifact-name:
+        description: Name of the staging artifact produced by the caller
+        required: true
+        type: string
+      reported-toolchain:
+        description: Toolchain used by the staging build (cross-checked against the revision)
+        required: true
+        type: string
+      publication-required:
+        description: Fail rather than skip if cache upload configuration is absent
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      published:
+        description: Whether the revision map was uploaded and observed on the public endpoint
+        value: ${{ jobs.publish.outputs.published }}
+    secrets:
+      LAKE_CACHE_KEY:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.upload.outputs.published }}
+    steps:
+      # Exactly one repository file is admitted to the secret-bearing job. Which toolchain this
+      # job installs decides which `lake` handles the upload key, so the pin is read independently
+      # from the immutable revision rather than trusted from the staging build.
+      - name: Check out the toolchain pin, and nothing else
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.revision }}
+          sparse-checkout: lean-toolchain
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Download the staged oleans
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ runner.temp }}/lake-cache-staging
+
+      - name: Check the staged tree before pointing Lake at it
+        env:
+          STAGING: ${{ runner.temp }}/lake-cache-staging
+        run: |
+          set -euo pipefail
+          # `lake cache put-staged` joins artifact names from outputs.jsonl to STAGING. The
+          # producer ran arbitrary Lean code, so reject nesting, symlinks, path components, and
+          # every other name that could make Lake read outside this flat data-only directory.
+          if find "$STAGING" -mindepth 2 -print -quit | grep -q .; then
+            echo "::error::the staged tree is nested; expected a flat directory of artifacts"
+            exit 1
+          fi
+          if find "$STAGING" -mindepth 1 ! -type f -print -quit | grep -q .; then
+            echo "::error::the staged tree holds an entry that is not a regular file"
+            exit 1
+          fi
+          python3 - "$STAGING/outputs.jsonl" <<'PY'
+          import json, re, sys
+
+          NAME = re.compile(r"\A[0-9A-Za-z]+(\.[0-9A-Za-z]+)*\Z")
+
+          def check(value, lineno):
+              if isinstance(value, str):
+                  if not NAME.match(value):
+                      sys.exit(
+                          f"::error::{path} line {lineno}: {value!r} is not a plain artifact name"
+                      )
+              elif isinstance(value, list):
+                  for item in value:
+                      check(item, lineno)
+              elif isinstance(value, dict):
+                  for key, item in value.items():
+                      check(key, lineno)
+                      check(item, lineno)
+
+          path = sys.argv[1]
+          with open(path, encoding="utf-8") as handle:
+              lines = 0
+              for lineno, line in enumerate(handle, start=1):
+                  lines = lineno
+                  if lineno > 1:
+                      check(json.loads(line), lineno)
+          if lines < 2:
+              sys.exit(f"::error::{path} contains no root-package output mappings")
+          PY
+
+      - name: Install elan (pinned + checksum) and the pinned toolchain
+        id: toolchain
+        env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
+          REPORTED: ${{ inputs.reported-toolchain }}
+        run: |
+          set -euo pipefail
+          TOOLCHAIN="$(cat lean-toolchain)"
+          case "$TOOLCHAIN" in
+            leanprover/lean4:[A-Za-z0-9]*) ;;
+            *) echo "::error::lean-toolchain names '$TOOLCHAIN', which is not a leanprover/lean4 release"; exit 1 ;;
+          esac
+          if [ "$TOOLCHAIN" != "$REPORTED" ]; then
+            echo "::error::the staging build used '$REPORTED' but the revision pins '$TOOLCHAIN'"
+            exit 1
+          fi
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          "$HOME/.elan/bin/elan" toolchain install "$TOOLCHAIN"
+          printf 'name=%s\n' "$TOOLCHAIN" >> "$GITHUB_OUTPUT"
+
+      - name: Publish and confirm the revision map is publicly readable
+        id: upload
+        env:
+          S3_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT }}
+          S3_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+          LAKE_CACHE_KEY_RAW: ${{ secrets.LAKE_CACHE_KEY }}
+          ELAN_TOOLCHAIN: ${{ steps.toolchain.outputs.name }}
+          STAGING: ${{ runner.temp }}/lake-cache-staging
+          REVISION: ${{ inputs.revision }}
+          PUBLICATION_REQUIRED: ${{ inputs.publication-required }}
+        run: |
+          set -euo pipefail
+          skip_or_fail() {
+            if [ "$PUBLICATION_REQUIRED" = true ]; then
+              echo "::error::$1"
+              exit 1
+            fi
+            echo "::notice::$1"
+            echo 'published=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          case "$REVISION" in
+            *[!0-9a-f]*|'') echo "::error::revision is not a lowercase hexadecimal Git object ID"; exit 1 ;;
+          esac
+          [ "${#REVISION}" = 40 ] || { echo "::error::revision is not a 40-character Git object ID"; exit 1; }
+          [ -n "$S3_ARTIFACT_ENDPOINT" ] && [ -n "$S3_REVISION_ENDPOINT" ] \
+            || skip_or_fail 'the Lake cache upload endpoints are not configured'
+          [ -n "$PUBLIC_REVISION_ENDPOINT" ] \
+            || skip_or_fail 'the public Lake revision endpoint is not configured'
+          [ -n "$LAKE_CACHE_KEY_RAW" ] \
+            || skip_or_fail 'the LAKE_CACHE_KEY secret is not configured'
+
+          KEY="$LAKE_CACHE_KEY_RAW"
+          KEY="${KEY%"${KEY##*[![:space:]]}"}"
+          [ -n "$KEY" ] || skip_or_fail 'the LAKE_CACHE_KEY secret is empty after trimming'
+          echo "::add-mask::$KEY"
+          export LAKE_CACHE_KEY="$KEY"
+
+          CFG="$RUNNER_TEMP/lake-cache.toml"
+          cat > "$CFG" <<TOML
+          cache.defaultUploadService = "tauceti-r2"
+          [[cache.service]]
+          name = "tauceti-r2"
+          kind = "s3"
+          artifactEndpoint = "$S3_ARTIFACT_ENDPOINT"
+          revisionEndpoint = "$S3_REVISION_ENDPOINT"
+          TOML
+          export LAKE_CONFIG="$CFG"
+
+          lake cache put-staged "$STAGING" --service tauceti-r2 \
+            --repo TauCetiProject/TauCeti --rev "$REVISION" --toolchain "$ELAN_TOOLCHAIN"
+
+          # Lake maps elan toolchain names to scope directories by replacing `/` with `--` and
+          # `:` with `---`. Confirm the exact bytes just uploaded have propagated to the public
+          # read endpoint before allowing a merge-group build to turn green.
+          TOOLCHAIN_DIR="${ELAN_TOOLCHAIN//\//--}"
+          TOOLCHAIN_DIR="${TOOLCHAIN_DIR//:/---}"
+          PUBLIC_URL="${PUBLIC_REVISION_ENDPOINT%/}/TauCetiProject/TauCeti/tc/$TOOLCHAIN_DIR/$REVISION.jsonl"
+          observed=0
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error "$PUBLIC_URL" -o "$RUNNER_TEMP/public-outputs.jsonl" \
+                 && cmp "$STAGING/outputs.jsonl" "$RUNNER_TEMP/public-outputs.jsonl"; then
+              observed=1
+              break
+            fi
+            echo "::warning::published revision map is not publicly readable yet (attempt $attempt/6)"
+            [ "$attempt" = 6 ] || sleep 10
+          done
+          [ "$observed" = 1 ] || { echo "::error::the published revision map did not become publicly readable"; exit 1; }
+          echo 'published=true' >> "$GITHUB_OUTPUT"
+          echo "::notice::published and confirmed the Lake cache for $REVISION"

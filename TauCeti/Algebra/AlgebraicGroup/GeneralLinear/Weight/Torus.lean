@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
+public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Relabel
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.Basic
 import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.GeneralLinear
@@ -55,6 +56,10 @@ No faithfulness is asserted: an arbitrary weight family may have a common kernel
   algebra-valued points.
 * `TauCeti.GeneralLinear.diagonalTorusCoordinates_pointsMap_weightCharacterMap`: the diagonal
   coordinates of that point map are the prescribed characters.
+* `TauCeti.GeneralLinear.weightTorusCoordinateMap_reindex`: composing every weight with a
+  permutation of the torus index relabels the weight-torus coordinate map.
+* `TauCeti.GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap`: the diagonal
+  matrix the weight torus produces on algebra-valued points.
 * `TauCeti.GeneralLinear.weightCocharacter`: the cocharacter attached to integer coordinate
   weights.
 * `TauCeti.GeneralLinear.mapDomain_weightCocharacter`: its concrete action on algebra-valued
@@ -319,7 +324,61 @@ theorem diagonalTorusCoordinates_pointsMap_weightCharacterMap [Fintype κ]
   rw [hweight, SplitTorus.apply_weightCharacter,
     ← SplitTorus.pointsMulEquiv_eq_freeAbelianCharEquiv]
 
+/-- On algebra-valued points, the weight-torus coordinate morphism is the diagonal matrix whose
+`i`-th entry is the value of the character `wt i`. -/
+theorem pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap [Fintype κ]
+    (wt : Fin N → κ → ℤ) (A : CommAlgCat.{v} R)
+    (p : HopfAlgebra.points
+      (R := R) (H := MonoidAlgebra R (SplitTorus.characterGroup κ)) A) :
+    pointsMulEquiv N
+        ((CommHopfAlgCat.mapPointsFunctor (weightTorusCoordinateMap (R := R) wt)).app A p) =
+      diagGL fun i => torusCharacter (SplitTorus.pointsMulEquiv p) (wt i) := by
+  rw [mapPointsFunctor_weightTorusCoordinateMap_app, pointsMulEquiv_diagonalTorusPoints]
+  congr 1
+  funext i
+  exact diagonalTorusCoordinates_pointsMap_weightCharacterMap wt A p i
+
 end PointsFunctor
+
+section Symmetry
+
+variable [Finite κ]
+
+/-- Composing every weight with a permutation `τ` of the torus index relabels the underlying
+bialgebra morphism of the weight-torus coordinate map by `τ⁻¹`. -/
+theorem hom_weightTorusCoordinateMap_reindex (τ : Equiv.Perm κ) (wt : Fin N → κ → ℤ) :
+    (weightTorusCoordinateMap (R := R) fun i => wt i ∘ τ).hom =
+      (MonoidAlgebra.mapDomainBialgHom R
+        (SplitTorus.characterRelabel τ⁻¹).toMonoidHom).comp
+        (weightTorusCoordinateMap (R := R) wt).hom := by
+  apply coordinateHopfAlgebra_bialgHom_ext R N
+  intro i j
+  rw [BialgHom.comp_apply, weightTorusCoordinateMap_X, weightTorusCoordinateMap_X]
+  split_ifs with hij
+  · rw [MonoidAlgebra.mapDomainBialgHom_single]
+    congr 1
+    -- The bundled character maps reduce to their `Finsupp` representatives only by definitional
+    -- equality; the named relabelling lemma applies after exposing that layer.
+    change Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i ∘ τ)) =
+      SplitTorus.characterRelabel τ⁻¹
+        (Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (wt i)))
+    rw [SplitTorus.characterRelabel_ofAdd]
+    congr 1
+    ext k
+    simp [Finsupp.equivMapDomain_apply, Equiv.Perm.inv_def]
+  · simp
+
+/-- **Composing every weight with a permutation `τ` of the torus index relabels the represented
+weight torus by `τ⁻¹`.** The two weight families present the same subgroup of `GL_N`, differing only
+by the automorphism of the split torus which `τ` induces. -/
+theorem weightTorusCoordinateMap_reindex (τ : Equiv.Perm κ) (wt : Fin N → κ → ℤ) :
+    (weightTorusCoordinateMap (R := R) fun i => wt i ∘ τ) =
+      weightTorusCoordinateMap (R := R) wt ≫ SplitTorus.relabelCoordinateMap R τ⁻¹ := by
+  apply _root_.CommHopfAlgCat.hom_ext
+  rw [_root_.CommHopfAlgCat.hom_comp, SplitTorus.hom_relabelCoordinateMap]
+  exact hom_weightTorusCoordinateMap_reindex τ wt
+
+end Symmetry
 
 section WeightCocharacter
 
