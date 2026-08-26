@@ -67,10 +67,13 @@ The universe of `F` is pinned to `Type` in the representation-theoretic statemen
 `TauCeti/RepresentationTheory/CharacterTable/GL2/PrincipalSeries/Basic.lean`, where the principal
 series is defined for `F : Type u`. The Mackey criterion `TauCeti.simple_indFDRep_iff` asks for
 the coefficient field and the group to lie in the *same* universe, and the coefficient field here
-is `ℂ : Type`; pinning `F : Type` is what puts `GL (Fin 2) F` there too. Every finite field is of
-course in `Type`, so nothing of the intended application is lost. The purely group-theoretic
-lemmas about the Weyl conjugation keep both an arbitrary universe and an arbitrary commutative
-ring.
+is `ℂ : Type`; pinning `F : Type` is what puts `GL (Fin 2) F` there too. The criterion therefore
+covers finite fields presented by a `Type`-valued representative — every finite field has one, up
+to a ring isomorphism, namely `GaloisField p n` — but it does not apply *directly* to a finite
+field declared in some `Type u` with `u ≠ 0`; such a presentation first has to be transported
+along a ring isomorphism with a small model, or wait for the upstream generalization described
+next. The purely group-theoretic lemmas about the Weyl conjugation keep both an arbitrary universe
+and an arbitrary commutative ring.
 
 That pin is not a choice this file could make differently. The predicate
 `TauCeti.MackeyDisjoint` is itself declared for a field and a group in one universe, so the very
@@ -229,6 +232,7 @@ theorem nonempty_iso_mackey_weyl_iff (α β : Fˣ →* ℂˣ) :
 `α ⊗ β` and of its `w`-conjugate to `B ⊓ wBw⁻¹` are disjoint exactly when `α ≠ β`. Together with
 the Bruhat decomposition this is the whole content of
 `TauCeti.simple_GL2PrincipalSeries_iff`. -/
+@[simp]
 theorem mackeyDisjoint_weyl_iff (α β : Fˣ →* ℂˣ) :
     MackeyDisjoint (GL2BorelRep F α β) (GL2WeylElement F) ↔ α ≠ β := by
   classical
@@ -261,6 +265,7 @@ Together with `TauCeti.finrank_GL2PrincipalSeries` this produces the `(q + 1)`-d
 of the character table of `GL₂(𝔽_q)`; at `α = β` the induced representation is the reducible one
 whose two constituents are the linear character `α ∘ det` and a twist of the Steinberg
 representation. -/
+@[simp]
 theorem simple_GL2PrincipalSeries_iff (α β : Fˣ →* ℂˣ) :
     Simple (GL2PrincipalSeries F α β) ↔ α ≠ β := by
   rw [GL2PrincipalSeries_def, simple_indFDRep_iff (GL2BorelRep F α β)]
