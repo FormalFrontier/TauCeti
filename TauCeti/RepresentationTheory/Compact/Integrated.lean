@@ -8,7 +8,7 @@ module
 public import TauCeti.RepresentationTheory.Compact.Averaging
 public import TauCeti.RepresentationTheory.Continuous.Character
 public import TauCeti.RepresentationTheory.Continuous.Schur
-public import TauCeti.RepresentationTheory.Irreducible
+import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # A class function acts on an irreducible representation by a scalar
@@ -322,20 +322,11 @@ theorem integratedOperator_eq_smul_id
     integratedOperator π hπ f
       = ((Module.finrank 𝕜 V : 𝕜)⁻¹ * ∫ g, f g * character π hπ g ∂haarProb G) •
         ContinuousLinearMap.id 𝕜 V := by
-  let : Representation.IsIrreducible π.toRepresentation := hirr
-  obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr (integratedIntertwiner π hπ hf)
-  have hc := congrArg ContIntertwiningMap.toContinuousLinearMap hc
-  simp only [toContinuousLinearMap_integratedIntertwiner,
-    ContIntertwiningMap.toContinuousLinearMap_smul,
-    ContIntertwiningMap.toContinuousLinearMap_one, ContinuousLinearMap.one_def] at hc
-  have htrace := trace_integratedOperator π hπ f
-  rw [hc] at htrace
   have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 :=
     Representation.IsIrreducible.natCast_finrank_ne_zero hirr
-  have hc' : c = (Module.finrank 𝕜 V : 𝕜)⁻¹ * ∫ g, f g * character π hπ g ∂haarProb G := by
-    apply (eq_inv_mul_iff_mul_eq₀ hdim).2
-    simpa [mul_comm] using htrace
-  rw [hc, hc']
+  have h := π.eq_finrank_inv_mul_trace_smul_id_of_irreducible hdim hirr
+    (integratedIntertwiner π hπ hf)
+  rwa [toContinuousLinearMap_integratedIntertwiner, trace_integratedOperator] at h
 
 /-- A class function whose Haar integral against the character vanishes acts as zero on an
 irreducible representation. -/

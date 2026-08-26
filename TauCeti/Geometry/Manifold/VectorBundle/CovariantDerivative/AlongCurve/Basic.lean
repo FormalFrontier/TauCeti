@@ -28,9 +28,9 @@ set `s`, so that the construction applies on a closed interval as well as on all
 unrestricted operator is the `s = Set.univ` case, exactly as Mathlib's `fderiv` is the
 `Set.univ` case of `fderivWithin`.  This first part of the along-curve API proves the
 characteristic additive and scalar Leibniz laws, locality in the field and parameter set, and
-naturality under differentiable reparametrization.  A subsequent file will identify the formula
-in an arbitrary fixed chart and compare it with the ambient covariant derivative of a pulled-back
-vector field.
+naturality under differentiable reparametrization.  For a field pulled back from an ambient vector
+field, `AlongCurve/Pullback.lean` identifies the formula in an arbitrary fixed chart and with the
+ambient covariant derivative.
 
 ## Main definitions and results
 
@@ -92,9 +92,11 @@ variable (cov : _root_.CovariantDerivative I E (fun x : M ↦ TangentSpace I x))
 within the parameter set `s`: `v' + Γ(v, u')`, where `u = extChartAt I x ∘ γ` and
 `v = sectionCoord γ V x` are the coordinate readings of the curve and the field, their
 derivatives are taken within `s`, and `Γ` is the Christoffel map of `cov` in the local frame of
-the fixed basis `Module.finBasis 𝕜 E`.  This is only a candidate for the covariant derivative until
-its chart independence and agreement with an ambient derivative are established.  When the
-coordinate readings are not differentiable within `s` at `t`, `UniqueDiffWithinAt 𝕜 s t` fails,
+the fixed basis `Module.finBasis 𝕜 E`.  Its chart independence and agreement with an ambient
+derivative are established for fields pulled back from ambient vector fields by
+`CovariantDerivative.symmL_alongCurveInChartWithin_pullback`; they remain open here for a general
+section along the curve.  When the coordinate readings are not differentiable within `s` at `t`,
+`UniqueDiffWithinAt 𝕜 s t` fails,
 or `γ` does not stay in `(trivializationAt E (TangentSpace I) x).baseSet` near `t` within `s`, its
 components may carry their junk value `0`. -/
 def alongCurveInChartWithin (s : Set 𝕜) (x : M) (t : 𝕜) : E :=
@@ -113,10 +115,11 @@ theorem alongCurveInChartWithin_apply (s : Set 𝕜) (x : M) (t : 𝕜) :
   (rfl)
 
 /-- The moving-chart candidate for the covariant derivative of `V` along `γ` within the parameter
-set `s`, transported from the model space to `TangentSpace I (γ t)`.  Its identification with a
-chart-independent covariant derivative is deferred; it inherits the junk values of
-`alongCurveInChartWithin`.  The Christoffel map is read in the local frame of the fixed basis
-`Module.finBasis 𝕜 E`. -/
+set `s`, transported from the model space to `TangentSpace I (γ t)`.  Its identification with the
+ambient covariant derivative is established for pulled-back fields by
+`CovariantDerivative.alongCurveWithin_pullback`; it remains open here for a general section along
+the curve.  It inherits the junk values of `alongCurveInChartWithin`.  The Christoffel map is read
+in the local frame of the fixed basis `Module.finBasis 𝕜 E`. -/
 def alongCurveWithin (s : Set 𝕜) (t : 𝕜) : TangentSpace I (γ t) :=
   (trivializationAt E (TangentSpace I) (γ t)).symmL 𝕜 (γ t)
     (alongCurveInChartWithin cov γ V s (γ t) t)

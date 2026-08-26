@@ -9,6 +9,7 @@ public import Mathlib.Algebra.BigOperators.Associated
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 public import Mathlib.RingTheory.Ideal.Maps
 import Mathlib.Tactic
+import TauCeti.RingTheory.DedekindDomain.Ideal
 
 /-!
 # Conjugate-transversal ideal families in a Dedekind domain
@@ -80,18 +81,6 @@ private theorem notMem_pair_of_apply_involutive {α : Type*} [DecidableEq α] {f
       _ = f q := by rw [h]
       _ = f (f p) := by rw [hqdef]
       _ = p := hinvolp
-
-omit [IsDedekindDomain R] in
-/-- Transporting a height-one prime along a ring equivalence `σ` maps its ideal to the image
-ideal: `(equivOfRingEquiv σ p).asIdeal = Ideal.map σ p.asIdeal`. -/
-private lemma asIdeal_equivOfRingEquiv (σ : R ≃+* R) (p : IsDedekindDomain.HeightOneSpectrum R) :
-    (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p).asIdeal =
-      Ideal.map σ p.asIdeal := by
-  ext x
-  -- `equivOfRingEquiv` transports a prime by comapping along `σ.symm`, so membership in its
-  -- ideal is by definition membership of `σ.symm x`; there is no lemma stating this.
-  change σ.symm x ∈ p.asIdeal ↔ x ∈ Ideal.map σ p.asIdeal
-  exact Ideal.symm_apply_mem_of_equiv_iff
 
 /-- For a distinct prime `q ≠ p` and a family `G'` no member of which is divisible by `p.asIdeal`,
 multiplying `G'` by `p.asIdeal` and by `q.asIdeal` gives disjoint images. -/
@@ -193,7 +182,7 @@ private theorem exists_transversal_family_of_sdiff_pair (σ : R ≃+* R)
   have hpair : ({p, q} : Finset (IsDedekindDomain.HeightOneSpectrum R)) ⊆ S :=
     Finset.insert_subset_iff.mpr ⟨hpS, Finset.singleton_subset_iff.mpr hqS⟩
   have hqIdeal : q.asIdeal = Ideal.map σ p.asIdeal := by
-    rw [hqdef]; exact asIdeal_equivOfRingEquiv σ p
+    rw [hqdef]; exact IsDedekindDomain.HeightOneSpectrum.asIdeal_equivOfRingEquiv σ p
   -- The product over `S` factors through the conjugate pair we removed.
   have hprodS : ∏ x ∈ S, x.asIdeal
       = (∏ x ∈ S \ {p, q}, x.asIdeal) * p.asIdeal * q.asIdeal := by
@@ -210,7 +199,7 @@ private theorem exists_transversal_family_of_sdiff_pair (σ : R ≃+* R)
         isPrime_not_dvd_prod p hpS' (hprod' A hA ▸ dvd_mul_of_dvd_left hpA (Ideal.map σ A)))
     exact two_pow_le_card_union_image_mul hdisj hcard' (by omega)
   · have hmapq : Ideal.map σ q.asIdeal = p.asIdeal := by
-      rw [← asIdeal_equivOfRingEquiv σ q]
+      rw [← IsDedekindDomain.HeightOneSpectrum.asIdeal_equivOfRingEquiv σ q]
       exact congr_arg IsDedekindDomain.HeightOneSpectrum.asIdeal hinvol
     exact fun A hA =>
       mul_map_eq_prod_of_mem_image_union (σ := (σ : R →+* R)) hqIdeal hmapq hprodS hprod' hA

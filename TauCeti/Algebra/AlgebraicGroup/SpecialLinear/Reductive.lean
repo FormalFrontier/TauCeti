@@ -9,38 +9,49 @@ public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.StandardComodule
 public import TauCeti.Algebra.AlgebraicGroup.Reductive.Basic
 import TauCeti.Algebra.AlgebraicGroup.Reductive.LinearlyReductive
 import TauCeti.Algebra.AlgebraicGroup.Representation.ClosedSubgroup
+import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.BaseChange
+import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Connected
 import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Smooth
 import TauCeti.Algebra.AlgebraicGroup.Unipotent.Embedding
 import TauCeti.RingTheory.Smooth.GeometricallyReduced
 
 /-!
-# Normal unipotent subgroups of the special linear group
+# The special linear group is reductive
 
-A normal smooth unipotent closed subgroup of `SL_n` over an algebraically closed field is
-trivial. The proof uses the faithful simple standard representation.
+The coordinate Hopf algebra of `SL_n` is reductive over every field and in every natural rank.
+The proof uses the geometric definition, so it works in arbitrary characteristic.
 
-Smoothness makes the subgroup coordinate ring reduced, while geometric unipotence says that all
-of its points act unipotently. The general normal-invariants theorem then makes the subgroup act
-trivially on every completely reducible ambient representation. The standard representation of
-`SL_n` is simple in positive rank, hence completely reducible, and it is faithful in every rank.
-Faithfulness therefore identifies the subgroup's defining ideal with the augmentation ideal. The
-zero-rank case is handled directly using the zero-dimensional standard representation.
+Smoothness and geometric connectedness are established directly for the special-linear
+coordinate algebra. Over an algebraically closed field, smoothness makes a subgroup coordinate
+ring reduced, while geometric unipotence says that all of its points act unipotently. The general
+normal-invariants theorem then makes the subgroup act trivially on every completely reducible
+ambient representation. The standard representation of `SL_n` is simple in positive rank, hence
+completely reducible, and it is faithful in every rank. Faithfulness therefore identifies the
+subgroup's defining ideal with the augmentation ideal. The zero-rank case is handled directly
+using the zero-dimensional standard representation.
 
-Geometric connectedness of `SL_n`, and hence the assembly of this theorem into reductivity over an
-arbitrary field, is developed separately.
+The final theorem transports the normal-subgroup argument across the canonical identification
+
+`AlgebraicClosure k ⊗[k] O(SL_n) ≃ O(SL_n, AlgebraicClosure k)`.
+
+Its final reductivity assembly is adapted from
+`TauCeti.GeneralLinear.reductiveCommHopfAlgProperty_finiteTypeCoordinateHopfAlgebra`, with the
+common geometric-fibre transport factored through the generic reductivity API.
 
 ## Main declaration
 
 * `TauCeti.SpecialLinear.eq_augmentation_of_isNormal_of_smoothUnipotent`: a normal smooth
   unipotent closed subgroup of `SL_n` over an algebraically closed field is the identity subgroup.
+* `TauCeti.SpecialLinear.reductiveCommHopfAlgProperty_finiteTypeCoordinateHopfAlgebra`:
+  **`SL_n` is reductive.**
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §§4.a, 5, 19.b, and Chapter 14.
 * T. A. Springer, *Linear Algebraic Groups*, §§2.2 and 2.4.
 
-This supplies the normal-subgroup elimination step for the `SL_n` worked example in Layer 6,
-"Reductive and semisimple groups", of the ReductiveGroups roadmap.
+This completes the `SL_n` worked example in Layer 6, "Reductive and semisimple groups", of the
+ReductiveGroups roadmap.
 -/
 
 public section
@@ -111,6 +122,23 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
   rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hf.2,
     HopfIdeal.comap_augmentation]
   exact hJ
+
+/-- **The special linear group is reductive over every field.** -/
+theorem reductiveCommHopfAlgProperty_finiteTypeCoordinateHopfAlgebra
+    (k : Type u) [Field k] (n : Nat) :
+    reductiveCommHopfAlgProperty k (finiteTypeCoordinateHopfAlgebra k n) := by
+  let e₀ := coordinateHopfAlgebraFiniteTypeObjIso k n
+  apply reductiveCommHopfAlgProperty_of_geometricFiber_iso k _
+    (finiteTypeCoordinateHopfAlgebra (AlgebraicClosure k) n)
+    ((smoothCommHopfAlgProperty_iff _).mp <|
+      (smoothCommHopfAlgProperty k).prop_of_iso e₀
+        ((smoothCommHopfAlgProperty_iff _).mpr inferInstance))
+    ((geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e₀
+      (geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra k n))
+    (finiteTypeCoordinateHopfAlgebraBaseChangeIso k (AlgebraicClosure k) n)
+  intro I hI hU
+  exact eq_augmentation_of_isNormal_of_smoothUnipotent
+    (AlgebraicClosure k) n I hI hU
 
 end
 

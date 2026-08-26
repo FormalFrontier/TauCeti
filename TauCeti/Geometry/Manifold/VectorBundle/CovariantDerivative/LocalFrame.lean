@@ -49,7 +49,8 @@ derivative, and they give the classical coordinate formula for `∇ σ` along a 
   `TauCeti.Manifold.christoffelForm_localFrame_apply` identifying them with the frame components
   of the Christoffel form.
 * `TauCeti.Manifold.christoffelMap`: the Christoffel form transported to a continuous bilinear map
-  on the model space, with `TauCeti.Manifold.contMDiffOn_christoffelMap` proving its smoothness.
+  on the model space, with `TauCeti.Manifold.christoffelMap_apply` reading it back as the
+  Christoffel form and `TauCeti.Manifold.contMDiffOn_christoffelMap` proving its smoothness.
 * `TauCeti.Manifold.covariantDerivative_apply_localFrame_eq_sum`: the classical coordinate
   formula `(∇_{eᵢ} σ)ᵏ = dσᵏ(eᵢ) + ∑ j, σʲ Γᵏᵢⱼ`.
 
@@ -308,6 +309,22 @@ def christoffelMap [Fintype ι] (hcov : IsCovariantDerivativeOn E cov e.baseSet)
       (e.continuousLinearMap (RingHom.id 𝕜) e))
     ⟨x, christoffelForm b hcov x⟩).2
 
+/-- The model-space Christoffel map is the Christoffel form read in the trivialization: it acts
+on the coordinates of a fibre vector and of a tangent direction, and returns the coordinates of
+the value of the Christoffel form on them. -/
+theorem christoffelMap_apply [Fintype ι] (hcov : IsCovariantDerivativeOn E cov e.baseSet)
+    (hx : x ∈ e.baseSet) (v w : E) :
+    christoffelMap b hcov x v w =
+      e.continuousLinearMapAt 𝕜 x
+        (christoffelForm b hcov x (e.symmL 𝕜 x v) (e.symmL 𝕜 x w)) := by
+  have hxe : x ∈ (e.continuousLinearMap (RingHom.id 𝕜) e).baseSet := by simp [hx]
+  simp only [christoffelMap, Bundle.Trivialization.continuousLinearMap_apply,
+    ContinuousLinearMap.comp_apply]
+  rw [Bundle.Trivialization.continuousLinearMapAt_apply_of_mem
+    (R := 𝕜) (e.continuousLinearMap (RingHom.id 𝕜) e) hxe]
+  simp only [Bundle.Trivialization.continuousLinearMap_apply,
+    ContinuousLinearMap.comp_apply]
+
 /-- The Christoffel symbols of a `C^n` covariant derivative are `C^n` on the base set of the
 trivialization defining the frame. -/
 theorem contMDiffOn_christoffelSymbol {n : ℕ∞ω}
@@ -352,22 +369,12 @@ theorem christoffelMap_apply_basis [Fintype ι]
     christoffelMap b hcov x (b j) (b i) =
       ∑ k, christoffelSymbol I b e cov i j k x • b k := by
   classical
-  simp only [christoffelMap, Bundle.Trivialization.continuousLinearMap_apply,
-    ContinuousLinearMap.comp_apply]
-  rw [e.symmL_apply hx]
-  have hxe : x ∈ (e.continuousLinearMap (RingHom.id 𝕜) e).baseSet := by simp [hx]
-  rw [Bundle.Trivialization.continuousLinearMapAt_apply_of_mem
-    (R := 𝕜) (e.continuousLinearMap (RingHom.id 𝕜) e) hxe]
-  simp only [Bundle.Trivialization.continuousLinearMap_apply,
-    ContinuousLinearMap.comp_apply]
-  rw [e.symmL_apply hx]
-  have hframe (l : ι) : e.symm x (b l) = e.localFrame b l x := by
-    simp [Bundle.Trivialization.localFrame_apply_of_mem_baseSet,
-      Bundle.Trivialization.basisAt, hx]
-  rw [hframe j, hframe i]
-  rw [christoffelForm_localFrame_apply b hcov hx i j]
-  simp [Bundle.Trivialization.continuousLinearMapAt_apply_of_mem, hx,
-    Bundle.Trivialization.localFrame_apply_of_mem_baseSet, Bundle.Trivialization.basisAt]
+  rw [christoffelMap_apply b hcov hx, symmL_basis_eq_localFrame b hx j,
+    symmL_basis_eq_localFrame b hx i,
+    christoffelForm_localFrame_apply b hcov hx i j]
+  rw [map_sum]
+  exact Finset.sum_congr rfl fun k _ ↦ by
+    rw [map_smul, continuousLinearMapAt_localFrame b hx k]
 
 /-- The scalar basis coefficients of the model-space Christoffel map are precisely the
 Christoffel symbols. -/

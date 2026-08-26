@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.Compact.Character.Basic
 public import TauCeti.RepresentationTheory.Compact.Integrated
+import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # The character projections

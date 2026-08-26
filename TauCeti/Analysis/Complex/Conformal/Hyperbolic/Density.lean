@@ -160,7 +160,7 @@ theorem tendsto_hyperbolicDist_div_norm_sub {z : ℂ} (hz : ‖z‖ < 1) :
   have hzB : z ∈ ball (0 : ℂ) 1 := mem_ball_zero_iff.2 hz
   have hdenval : ‖1 - (starRingEnd ℂ) z * z‖ = 1 - ‖z‖ ^ 2 :=
     norm_one_sub_conj_mul_self_of_norm_le_one hz.le
-  have hdenpos : (0 : ℝ) < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
+  have hdenpos : (0 : ℝ) < 1 - ‖z‖ ^ 2 := one_sub_sq_norm_pos_of_norm_lt_one hz
   -- the first factor of the product decomposition
   have hquot : Tendsto
       (fun w => Real.artanh (pseudoHyperbolicExpr z w) / pseudoHyperbolicExpr z w)

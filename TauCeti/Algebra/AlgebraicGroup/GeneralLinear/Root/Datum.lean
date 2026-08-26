@@ -17,9 +17,8 @@ two coordinates indexed by the reflecting root.
 
 The construction supplies the expected coordinate root datum and proves that each of its roots,
 viewed as a multiplicative character, occurs among the nontrivial adjoint weights of `GL_n`.
-Only this inclusion into `Derivation.nontrivialAdjointWeights` is proved here; identifying those
-adjoint weights exhaustively with the packaged root set, and hence identifying this package with
-the full root datum extracted from the pair `(GL_n, T)`, remains to be formalized.
+Only this inclusion into `Derivation.nontrivialAdjointWeights` is proved here; the converse
+identification with the packaged root set is proved in `GeneralLinear.Root.Adjoint`.
 
 The character and cocharacter lattices are the established split-torus coordinate models
 
@@ -101,7 +100,8 @@ theorem coe_diagonalRoot {n : ℕ} (i j : Fin n) :
 
 This package is constructed directly from the coordinate differences. The theorem
 `ofAdd_root_mem_nontrivialAdjointWeights` proves that its roots are adjoint weights; the converse
-classification of all nontrivial adjoint weights is not part of this file. -/
+classification is `mem_nontrivialAdjointWeights_iff_exists_diagonalRoot` in
+`GeneralLinear.Root.Adjoint`. -/
 noncomputable def diagonalRootDatum (n : ℕ) :
     RootDatum (DiagonalRootIndex n) (ULift.{u} (Fin n) →₀ ℤ) (ULift.{u} (Fin n) → ℤ) :=
   SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))
