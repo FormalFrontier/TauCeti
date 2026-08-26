@@ -102,8 +102,8 @@ instance isClosedImmersion_diagonalTorus :
     IsClosedImmersion (diagonalTorus (R := R) (N := N)).hom.hom.left := by
   rw [diagonalTorus_eq_weightTorus]
   apply isClosedImmersion_weightTorus
-  change Submodule.span ℤ
-    (Set.range ((Pi.basisFun ℤ (ULift.{u} (Fin N))) ∘ ULift.up)) = ⊤
+  rw [show (fun i => Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i)) =
+      (Pi.basisFun ℤ (ULift.{u} (Fin N))) ∘ ULift.up from rfl]
   rw [ULift.up_surjective.range_comp (Pi.basisFun ℤ (ULift.{u} (Fin N))),
     (Pi.basisFun ℤ (ULift.{u} (Fin N))).span_eq]
 
