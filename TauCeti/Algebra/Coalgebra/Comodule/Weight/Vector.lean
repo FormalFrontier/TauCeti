@@ -58,9 +58,11 @@ universe u v w
 
 noncomputable section
 
+section Semiring
+
 variable {k : Type u} {C : Type v} {M : Type w}
-variable [Field k] [AddCommMonoid C] [Module k C] [Coalgebra k C]
-variable [AddCommGroup M] [Module k M] [Comodule k C M]
+variable [CommSemiring k] [AddCommMonoid C] [Module k C] [Coalgebra k C]
+variable [AddCommMonoid M] [Module k M] [Comodule k C M]
 
 /-- A comodule has a nonzero weight vector if some nonzero `v` has coaction `v ⊗ c` for a
 group-like `c`.
@@ -68,8 +70,8 @@ group-like `c`.
 When `C` is the coordinate Hopf algebra of an affine group, this says that the group acts on the
 line spanned by `v` through the character corresponding to `c`. -/
 def HasNonzeroWeightVector (k : Type u) (C : Type v) (M : Type w)
-    [Field k] [AddCommMonoid C] [Module k C] [Coalgebra k C]
-    [AddCommGroup M] [Module k M] [Comodule k C M] : Prop :=
+    [CommSemiring k] [AddCommMonoid C] [Module k C] [Coalgebra k C]
+    [AddCommMonoid M] [Module k M] [Comodule k C M] : Prop :=
   ∃ (v : M) (c : C), v ≠ 0 ∧ IsGroupLikeElem k c ∧
     coact (R := k) (C := C) (M := M) v = v ⊗ₜ[k] c
 
@@ -80,6 +82,12 @@ theorem hasNonzeroWeightVector_iff :
       ∃ (v : M) (c : C), v ≠ 0 ∧ IsGroupLikeElem k c ∧
         coact (R := k) (C := C) (M := M) v = v ⊗ₜ[k] c :=
   Iff.rfl
+
+end Semiring
+
+variable {k : Type u} {C : Type v} {M : Type w}
+variable [Field k] [AddCommMonoid C] [Module k C] [Coalgebra k C]
+variable [AddCommGroup M] [Module k M] [Comodule k C M]
 
 /-- The weight of a nonzero weight vector is a group-like element. -/
 theorem isGroupLikeElem_of_coact_eq_tmul {v : M} (hv : v ≠ 0) {c : C}

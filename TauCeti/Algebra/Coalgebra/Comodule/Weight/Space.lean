@@ -101,6 +101,21 @@ theorem Hom.map_groupLikeWeightSpace_le (f : Hom R C M N) (c : GroupLike R C) :
   rintro _ ⟨m, hm, rfl⟩
   exact f.map_mem_groupLikeWeightSpace hm
 
+/-- A comodule has a nonzero weight vector exactly when one of its group-like weight spaces is
+nonzero. -/
+theorem hasNonzeroWeightVector_iff_exists_groupLikeWeightSpace_ne_bot :
+    HasNonzeroWeightVector R C M ↔
+      ∃ c : GroupLike R C, groupLikeWeightSpace (M := M) c ≠ ⊥ := by
+  rw [hasNonzeroWeightVector_iff]
+  constructor
+  · rintro ⟨m, c, hm, hc, hcoact⟩
+    refine ⟨⟨c, hc⟩, ?_⟩
+    exact (groupLikeWeightSpace (M := M) ⟨c, hc⟩).ne_bot_iff.mpr
+      ⟨m, mem_groupLikeWeightSpace.mpr hcoact, hm⟩
+  · rintro ⟨c, hc⟩
+    obtain ⟨m, hm, hm0⟩ := (groupLikeWeightSpace (M := M) c).ne_bot_iff.mp hc
+    exact ⟨m, c.val, hm0, c.isGroupLikeElem_val, mem_groupLikeWeightSpace.mp hm⟩
+
 end Semiring
 
 variable {k : Type u} {C : Type v} {M : Type w}
@@ -194,21 +209,6 @@ theorem natCard_nonzeroGroupLikeWeights_le_finrank [FiniteDimensional k M] :
   rw [Nat.card_eq_fintype_card]
   exact iSupIndep.subtype_ne_bot_le_finrank (R := k) (M := M)
     iSupIndep_groupLikeWeightSpace
-
-/-- A comodule has a nonzero weight vector exactly when one of its group-like weight spaces is
-nonzero. -/
-theorem hasNonzeroWeightVector_iff_exists_groupLikeWeightSpace_ne_bot :
-    HasNonzeroWeightVector k C M ↔
-      ∃ c : GroupLike k C, groupLikeWeightSpace (M := M) c ≠ ⊥ := by
-  rw [hasNonzeroWeightVector_iff]
-  constructor
-  · rintro ⟨m, c, hm, hc, hcoact⟩
-    refine ⟨⟨c, hc⟩, ?_⟩
-    exact (groupLikeWeightSpace (M := M) ⟨c, hc⟩).ne_bot_iff.mpr
-      ⟨m, mem_groupLikeWeightSpace.mpr hcoact, hm⟩
-  · rintro ⟨c, hc⟩
-    obtain ⟨m, hm, hm0⟩ := (groupLikeWeightSpace (M := M) c).ne_bot_iff.mp hc
-    exact ⟨m, c.val, hm0, c.isGroupLikeElem_val, mem_groupLikeWeightSpace.mp hm⟩
 
 end
 
