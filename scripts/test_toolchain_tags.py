@@ -326,7 +326,7 @@ class PostContent(unittest.TestCase):
 
     def test_it_carries_the_command_and_the_output(self):
         content = tt.post_content(self.ROWS, "0" * 16)
-        self.assertIn("python3 scripts/toolchain_tags.py", content)
+        self.assertIn("```shell\npython3 scripts/toolchain_tags.py", content)
         self.assertIn("v4.34.0", content)
         self.assertEqual(content.count("```"), 4, "two fenced blocks")
 
@@ -347,7 +347,7 @@ class PostContent(unittest.TestCase):
         # command while displaying output with the policy stripped and rows collapsed,
         # which no run of that command would produce.
         content = tt.post_content(self.ROWS, "0" * 16)
-        command = content.split("```")[1].strip()
+        command = content.split("```shell\n")[1].split("\n```")[0].strip()
         self.assertEqual(command, "python3 scripts/toolchain_tags.py --brief")
         shown = content.split("```text")[1].split("```")[0].strip()
         produced = tt.render(self.ROWS, include_policy=False, collapse_old=True).strip()
@@ -359,6 +359,7 @@ class FakeZulip:
         self.messages = list(messages or [])
         self.bot_id = bot_id
         self.sent = []
+        self.updated = []
 
     def my_user_id(self):
         return self.bot_id
@@ -368,6 +369,9 @@ class FakeZulip:
 
     def send_message(self, content):
         self.sent.append(content)
+
+    def update_message(self, message_id, content):
+        self.updated.append((message_id, content))
 
 
 class PostIfChanged(unittest.TestCase):
@@ -385,10 +389,9 @@ class PostIfChanged(unittest.TestCase):
             self.addCleanup(lambda n=name, o=old:
                             os.environ.__setitem__(n, o) if o else os.environ.pop(n, None))
 
-    def _message(self, digest, sender=7):
+    def _message(self, digest, sender=7, content=None):
         return {"id": 1, "sender_id": sender,
-                "content": ("whatever\n"
-                            f"<!--toolchain-tags:v1 {digest}-->")}
+                "content": content or tt.post_content(self.ROWS, digest)}
 
     def test_it_posts_when_nothing_has_been_posted(self):
         fake = FakeZulip()
@@ -402,6 +405,16 @@ class PostIfChanged(unittest.TestCase):
         self._zulip(fake)
         self.assertFalse(tt.post_if_changed(self.ROWS))
         self.assertEqual(fake.sent, [])
+        self.assertEqual(fake.updated, [])
+
+    def test_it_updates_formatting_when_the_state_is_unchanged(self):
+        digest = tt.state_digest(self.ROWS)
+        old = tt.post_content(self.ROWS, digest).replace("```shell", "```", 1)
+        fake = FakeZulip([self._message(digest, content=old)])
+        self._zulip(fake)
+        self.assertTrue(tt.post_if_changed(self.ROWS))
+        self.assertEqual(fake.sent, [])
+        self.assertEqual(fake.updated, [(1, tt.post_content(self.ROWS, digest))])
 
     def test_it_posts_when_the_state_changed(self):
         fake = FakeZulip([self._message("0" * 16)])

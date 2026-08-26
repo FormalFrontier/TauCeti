@@ -523,8 +523,8 @@ def log(message):
     print(message, flush=True)
 
 
-def last_posted_digest(z, bot_id):
-    """The digest carried by this account's newest message in the topic, or None.
+def last_posted_report(z, bot_id):
+    """This account's newest marked message and its digest, or (None, None).
 
     The previous state lives in the topic rather than in a file, so the poster keeps no
     state of its own and a wiped topic simply reposts."""
@@ -537,8 +537,8 @@ def last_posted_digest(z, bot_id):
             continue
         match = MARKER_RE.search(message["content"])
         if match:
-            return match.group(1)
-    return None
+            return message, match.group(1)
+    return None, None
 
 
 def post_content(rows, digest):
@@ -546,14 +546,15 @@ def post_content(rows, digest):
     body = render(rows, include_policy=False, collapse_old=True).rstrip()
     # The command shown must be the one that produced what is shown. --brief is exactly
     # this transformation, so someone can paste it and get the same thing back.
-    return (f"```\npython3 scripts/toolchain_tags.py --brief\n```\n"
+    return (f"```shell\npython3 scripts/toolchain_tags.py --brief\n```\n"
             f"```text\n{body}\n```\n"
             f"<!--toolchain-tags:v1 {digest}-->")
 
 
 def post_if_changed(rows, dry_run=False):
-    """Post the report when the state has changed since the last message. Returns True if
-    a message was posted."""
+    """Post when the state changed, or update formatting in the current report.
+
+    Returns True if a message was posted or updated."""
     digest = state_digest(rows)
     content = post_content(rows, digest)
     if dry_run:
@@ -567,10 +568,14 @@ def post_if_changed(rows, dry_run=False):
         raise RuntimeError("ZULIP_EMAIL / ZULIP_API_KEY are not set")
     z = zp.Zulip(email, api_key, site)
     zp.check(z)
-    previous = last_posted_digest(z, z.my_user_id())
-    if previous == digest:
+    message, previous = last_posted_report(z, z.my_user_id())
+    if previous == digest and message["content"] == content:
         log(f"state unchanged since the last post ({digest}); saying nothing")
         return False
+    if previous == digest:
+        log(f"state unchanged ({digest}), but report formatting changed; updating")
+        z.update_message(message["id"], content)
+        return True
     log(f"state changed ({previous or 'nothing posted yet'} -> {digest}); posting")
     z.send_message(content)
     return True
