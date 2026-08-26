@@ -57,8 +57,8 @@ and Voisin, *Hodge Theory and Complex Algebraic Geometry I*, §7.1.2.
   to the image of a morphism it is the cokernel.
 * `TauCeti.Hodge.HodgeStructureOn.IsMorphism.proj_comp`: a morphism of pure Hodge structures
   intertwines the Hodge projections.
-* `TauCeti.Hodge.HodgeStructureOn.IsMorphism.ker_isSubstructure` and
-  `…range_isSubstructure`: the kernel and the image of a morphism are sub-Hodge structures.
+* `TauCeti.Hodge.HodgeStructureOn.IsMorphism.isSubstructure_ker` and
+  `…isSubstructure_range`: the kernel and the image of a morphism are sub-Hodge structures.
 * `TauCeti.Hodge.HodgeStructureOn.IsMorphism.range_inf_F`: **strictness**, `range f ⊓ F'^p`
   is the image of `F^p`; `…range_inf_piece` and `…range_inf_conjF` are the componentwise and
   conjugate forms.
@@ -294,14 +294,14 @@ theorem proj_apply (h : IsMorphism hs hs' g) (p : ℤ) (x : W) :
   congrFun (congrArg DFunLike.coe (h.proj_comp p)) x
 
 /-- **The kernel of a morphism of pure Hodge structures is a sub-Hodge structure.** -/
-theorem ker_isSubstructure (h : IsMorphism hs hs' g) : hs.IsSubstructure (LinearMap.ker g) := by
+theorem isSubstructure_ker (h : IsMorphism hs hs' g) : hs.IsSubstructure (LinearMap.ker g) := by
   refine isSubstructure_of_proj_mem (fun x hx ↦ ?_) (fun p x hx ↦ ?_) <;>
     rw [LinearMap.mem_ker] at hx ⊢
   · rw [h.commutes_conj, hx, map_zero]
   · rw [← h.proj_apply, hx, map_zero]
 
 /-- **The image of a morphism of pure Hodge structures is a sub-Hodge structure.** -/
-theorem range_isSubstructure (h : IsMorphism hs hs' g) :
+theorem isSubstructure_range (h : IsMorphism hs hs' g) :
     hs'.IsSubstructure (LinearMap.range g) := by
   refine ⟨?_, ?_⟩
   · rintro _ ⟨x, rfl⟩
@@ -353,7 +353,7 @@ theorem range_inf_conjF (h : IsMorphism hs hs' g) (p : ℤ) :
     LinearMap.range g ⊓ hs'.conjF p
         = (LinearMap.range g).map ω'.toEquiv.toLinearMap ⊓
             (hs'.F p).map ω'.toEquiv.toLinearMap := by
-          rw [h.range_isSubstructure.map_conj, hs'.conjF_def]
+          rw [h.isSubstructure_range.map_conj, hs'.conjF_def]
     _ = (LinearMap.range g ⊓ hs'.F p).map ω'.toEquiv.toLinearMap :=
           (Submodule.map_inf _ ω'.toEquiv.injective).symm
     _ = ((hs.F p).map g).map ω'.toEquiv.toLinearMap := by rw [h.range_inf_F p]
@@ -390,14 +390,14 @@ variable {h₁ : IsBaseChange ℂ ι₁} {h₂ : IsBaseChange ℂ ι₂} {n : �
 variable {source : HodgeStructure h₁ n} {target : HodgeStructure h₂ n}
 
 /-- The kernel of an integral Hodge morphism is a sub-Hodge structure of the source. -/
-theorem ker_isSubstructure (f : Hom source target) :
+theorem isSubstructure_ker (f : Hom source target) :
     source.IsSubstructure (LinearMap.ker f.toLinearMap) :=
-  f.isMorphism.ker_isSubstructure
+  f.isMorphism.isSubstructure_ker
 
 /-- The image of an integral Hodge morphism is a sub-Hodge structure of the target. -/
-theorem range_isSubstructure (f : Hom source target) :
+theorem isSubstructure_range (f : Hom source target) :
     target.IsSubstructure (LinearMap.range f.toLinearMap) :=
-  f.isMorphism.range_isSubstructure
+  f.isMorphism.isSubstructure_range
 
 /-- **Strictness of an integral Hodge morphism.** -/
 theorem range_inf_F (f : Hom source target) (p : ℤ) :
@@ -408,6 +408,11 @@ theorem range_inf_F (f : Hom source target) (p : ℤ) :
 theorem range_inf_piece (f : Hom source target) (p : ℤ) :
     LinearMap.range f.toLinearMap ⊓ target.piece p = (source.piece p).map f.toLinearMap :=
   f.isMorphism.range_inf_piece p
+
+/-- Conjugate strictness of an integral Hodge morphism. -/
+theorem range_inf_conjF (f : Hom source target) (p : ℤ) :
+    LinearMap.range f.toLinearMap ⊓ target.conjF p = (source.conjF p).map f.toLinearMap :=
+  f.isMorphism.range_inf_conjF p
 
 end HodgeStructure.Hom
 

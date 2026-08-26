@@ -75,6 +75,36 @@ structure IsMorphism (hs₁ : HodgeStructureOn W₁ ω₁ n) (hs₂ : HodgeStruc
 
 namespace IsMorphism
 
+/-- The identity map is a morphism of pure Hodge structures. -/
+theorem id (hs : HodgeStructureOn W₁ ω₁ n) : IsMorphism hs hs LinearMap.id where
+  commutes_conj x := by simp
+  map_F_le p := by simp
+
+/-- The composite of two morphisms of pure Hodge structures is a morphism. -/
+theorem comp {ω₃ : Conjugation W₃} {hs₃ : HodgeStructureOn W₃ ω₃ n}
+    {g' : W₂ →ₗ[ℂ] W₃} (h' : IsMorphism hs₂ hs₃ g') (h : IsMorphism hs₁ hs₂ g) :
+    IsMorphism hs₁ hs₃ (g' ∘ₗ g) where
+  commutes_conj x := by rw [LinearMap.comp_apply, h.commutes_conj, h'.commutes_conj,
+    LinearMap.comp_apply]
+  map_F_le p := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact h'.map_F_le p ⟨g x, h.map_F_le p ⟨x, hx, rfl⟩, rfl⟩
+
+/-- The zero map is a morphism of pure Hodge structures. -/
+theorem zero : IsMorphism hs₁ hs₂ 0 where
+  commutes_conj x := by simp
+  map_F_le p := by simp
+
+/-- The sum of two morphisms of pure Hodge structures is a morphism. -/
+theorem add {g' : W₁ →ₗ[ℂ] W₂} (h : IsMorphism hs₁ hs₂ g)
+    (h' : IsMorphism hs₁ hs₂ g') : IsMorphism hs₁ hs₂ (g + g') where
+  commutes_conj x := by
+    simp only [LinearMap.add_apply, map_add]
+    rw [h.commutes_conj, h'.commutes_conj]
+  map_F_le p := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact Submodule.add_mem _ (h.map_F_le p ⟨x, hx, rfl⟩) (h'.map_F_le p ⟨x, hx, rfl⟩)
+
 /-- A morphism of pure Hodge structures preserves the conjugate Hodge filtration. -/
 theorem map_conjF_le (h : IsMorphism hs₁ hs₂ g) (p : ℤ) : (hs₁.conjF p).map g ≤ hs₂.conjF p := by
   rw [hs₁.conjF_def, hs₂.conjF_def, ← ω₁.conjFiltration_def hs₁.F p,
