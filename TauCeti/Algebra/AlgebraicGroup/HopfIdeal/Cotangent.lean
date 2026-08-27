@@ -234,6 +234,7 @@ theorem ker_quotientCotangentMap (I : HopfIdeal k H) :
 
 /-- A closed subgroup has zero conormal space at the identity exactly when every element of its
 defining ideal vanishes to second order there. -/
+@[simp]
 theorem conormalSubspace_eq_bot_iff_toIdeal_le_sq_augmentationIdeal
     (I : HopfIdeal k H) :
     conormalSubspace I = ⊥ ↔
@@ -254,8 +255,8 @@ theorem conormalSubspace_eq_bot_iff_toIdeal_le_sq_augmentationIdeal
     obtain ⟨x, hx, rfl⟩ := (mem_conormalSubspace_iff I y).1 hy
     let x' : Bialgebra.AugmentationIdeal k H :=
       ⟨x, toIdeal_le_augmentationIdeal I hx⟩
-    change Bialgebra.cotangentMap k H (x' : H) = 0
-    rw [Bialgebra.cotangentMap_augmentation, Ideal.toCotangent_eq_zero]
+    rw [Bialgebra.cotangentMap_augmentation (x := x'), Submodule.mem_bot,
+      Ideal.toCotangent_eq_zero]
     exact hsquare hx
 
 end Ring
@@ -315,7 +316,17 @@ theorem conormalSubspace_ker_eq_bot_of_surjective_of_derivationCompLieHom_surjec
     intro d
     obtain ⟨e, he⟩ := hdf d
     refine ⟨derivationCompLieHom (B := k) (kerLiftBialgHom f hf) e, ?_⟩
-    rw [quotientLieHom_def]
+    -- `quotientLieHom` is not exposed, so rewrite it through its public application lemma.
+    have hquotient :
+        quotientLieHom (B := k) (kerOfSurjective f hf) =
+          derivationCompLieHom (B := k)
+            (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal) := by
+      ext d x
+      rw [quotientLieHom_apply_apply, derivationCompLieHom_apply, derivationComp_apply]
+      exact Bialgebra.CounitAlgebra.algEquivSelf_apply
+        k (H ⧸ (kerOfSurjective f hf).toIdeal) k
+        (d (Ideal.Quotient.mkₐ k (kerOfSurjective f hf).toIdeal x))
+    rw [hquotient]
     calc
       derivationCompLieHom (B := k)
           (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal)
