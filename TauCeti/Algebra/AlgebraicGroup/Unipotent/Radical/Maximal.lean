@@ -26,7 +26,7 @@ algebra and is therefore trivial, proving that `U` contains every candidate.
 
 * `TauCeti.HopfIdeal.IsUnipotentRadicalCandidate.finrank_quotientLie_productOfNormal_eq_of_maximal`:
   multiplying a maximal-dimensional candidate by any candidate preserves its Lie dimension.
-* `bijective_derivationCompLieHom_productOfNormal_of_maximal`:
+* `derivationCompLieHom_productOfNormal_bijective_of_maximal`:
   the inclusion of a maximal candidate into its product with another candidate induces a
   bijection on tangent Lie algebras.
 
@@ -92,7 +92,7 @@ its product with another candidate induces a bijection on tangent Lie algebras.
 
 Injectivity is the tangent-space consequence of surjectivity of the coordinate quotient map;
 surjectivity then follows because the source and target have equal finite dimension. -/
-theorem bijective_derivationCompLieHom_productOfNormal_of_maximal
+theorem derivationCompLieHom_productOfNormal_bijective_of_maximal
     (hI : IsUnipotentRadicalCandidate H I)
     (hmax : ∀ K : HopfIdeal k H, IsUnipotentRadicalCandidate H K →
       Module.finrank k
@@ -104,13 +104,16 @@ theorem bijective_derivationCompLieHom_productOfNormal_of_maximal
     (hJ : IsUnipotentRadicalCandidate H J) :
     Function.Bijective
       (derivationCompLieHom (B := k)
-        (CommHopfAlgCat.quotientMapOfLe H.obj
-          (CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal)).hom) := by
+        (FiniteTypeCommHopfAlgCat.toBialgHom
+          (FiniteTypeCommHopfAlgCat.quotientMapOfLe H
+            (CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal)))) := by
   let hPI := CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal
-  let f := CommHopfAlgCat.quotientMapOfLe H.obj hPI
-  have hf : Function.Surjective f.hom := CommHopfAlgCat.quotientMapOfLe_surjective H.obj hPI
-  have hinjective : Function.Injective (derivationCompLieHom (B := k) f.hom) :=
-    derivationCompLieHom_injective_of_surjective f.hom hf
+  let f := FiniteTypeCommHopfAlgCat.quotientMapOfLe H hPI
+  have hf : Function.Surjective (FiniteTypeCommHopfAlgCat.toBialgHom f) :=
+    FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective H hPI
+  have hinjective : Function.Injective
+      (derivationCompLieHom (B := k) (FiniteTypeCommHopfAlgCat.toBialgHom f)) :=
+    derivationCompLieHom_injective_of_surjective (FiniteTypeCommHopfAlgCat.toBialgHom f) hf
   have hfinrank := hI.finrank_quotientLie_productOfNormal_eq_of_maximal hmax hJ
   refine ⟨hinjective, ?_⟩
   exact (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hfinrank.symm).mp hinjective

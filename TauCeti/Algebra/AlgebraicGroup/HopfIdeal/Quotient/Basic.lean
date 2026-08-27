@@ -42,6 +42,8 @@ the finite-type coordinate-Hopf-algebra category.
   `I ≤ J`.
 * `TauCeti.CommHopfAlgCat.quotientMapOfLe_surjective`: quotient-to-quotient coordinate maps are
   surjective.
+* `TauCeti.FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective`: the finite-type form of
+  quotient-to-quotient surjectivity.
 * `TauCeti.CommHopfAlgCat.quotientBotIso`: quotienting by the zero Hopf ideal does not
   change a commutative Hopf algebra.
 * `TauCeti.CommHopfAlgCat.quotientIsoOfSurjective`: a surjective ambient morphism identifies
@@ -616,6 +618,13 @@ lemma quotientMapOfLe_mk (H : FiniteTypeCommHopfAlgCat.{u, v} R)
     (toBialgHom (quotientMapOfLe H hIJ)) (Ideal.Quotient.mkₐ R I.toIdeal h) =
       Ideal.Quotient.mkₐ R J.toIdeal h :=
   CommHopfAlgCat.quotientMapOfLe_mk H.obj hIJ h
+
+/-- A finite-type quotient-to-quotient coordinate morphism induced by an inclusion of Hopf
+ideals is surjective. -/
+theorem quotientMapOfLe_surjective (H : FiniteTypeCommHopfAlgCat.{u, v} R)
+    {I J : HopfIdeal R H} (hIJ : I ≤ J) :
+    Function.Surjective (toBialgHom (quotientMapOfLe H hIJ)) :=
+  CommHopfAlgCat.quotientMapOfLe_surjective H.obj hIJ
 
 /-- Composing the finite-type quotient map `H ⟶ H ⧸ I` with the quotient-to-quotient
 morphism for `I ≤ J` gives the quotient map `H ⟶ H ⧸ J`. -/
