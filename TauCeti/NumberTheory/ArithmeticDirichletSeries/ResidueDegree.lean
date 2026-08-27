@@ -97,10 +97,11 @@ variable {K : Type*} [Field K] [NumberField K]
 
 /-- The height-one primes of `𝓞 K` whose residue degree over `ℚ` is greater than one, that is,
 whose absolute norm is a proper power of the rational prime below them. -/
-def higherDegreePrimes (K : Type*) [Field K] [NumberField K] :
+def higherDegreePrimes (K : Type*) [Field K] :
     Set (HeightOneSpectrum (𝓞 K)) :=
   {𝔭 | 1 < Ideal.inertiaDeg 𝔭.asIdeal ℤ}
 
+omit [NumberField K] in
 @[simp]
 theorem mem_higherDegreePrimes {𝔭 : HeightOneSpectrum (𝓞 K)} :
     𝔭 ∈ higherDegreePrimes K ↔ 1 < Ideal.inertiaDeg 𝔭.asIdeal ℤ :=
