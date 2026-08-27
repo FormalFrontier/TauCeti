@@ -118,6 +118,12 @@ at `P` (Stichtenoth, Definition 3.1.5). -/
 noncomputable def ramificationIdx : ℕ :=
   Valuation.ordIndex (P'.valuation.comap (algebraMap F F'))
 
+omit [Algebra.IsIntegral F F'] in
+/-- The ramification index is the order index of the restricted valuation. -/
+lemma ramificationIdx_def :
+    ramificationIdx F P' = Valuation.ordIndex (P'.valuation.comap (algebraMap F F')) := by
+  rw [ramificationIdx]
+
 /-- The ramification index of a restricted place is positive. -/
 theorem ramificationIdx_pos : 0 < ramificationIdx F P' :=
   Nat.pos_of_ne_zero (ordIndex_comap_ne_zero F P')

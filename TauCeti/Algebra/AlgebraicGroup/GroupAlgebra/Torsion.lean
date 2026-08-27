@@ -8,6 +8,7 @@ module
 import Mathlib.GroupTheory.FiniteAbelian.Basic
 import Mathlib.GroupTheory.OrderOfElement
 public import TauCeti.Algebra.AlgebraicGroup.GroupAlgebra.NotReduced
+public import TauCeti.Algebra.MonoidAlgebra.SubgroupCharSum
 public import TauCeti.RingTheory.Idempotents.Connected.Spectrum
 
 /-!
@@ -46,43 +47,12 @@ namespace TauCeti
 
 variable {G : Type*} [Group G]
 
-section
-
-variable (k : Type*) [Semiring k]
-
-/-- The sum of the basis elements indexed by a finite subgroup. -/
-private noncomputable def groupAlgebraSubgroupSum (P : Subgroup G) [Fintype P] : k[G] :=
-  ∑ x : P, MonoidAlgebra.single (x : G) 1
-
-/-- Left multiplication by a member of a finite subgroup fixes its subgroup sum. -/
-private theorem single_mul_groupAlgebraSubgroupSum (P : Subgroup G) [Fintype P] (x : P) :
-    MonoidAlgebra.single (x : G) (1 : k) * groupAlgebraSubgroupSum k P =
-      groupAlgebraSubgroupSum k P := by
-  rw [groupAlgebraSubgroupSum, Finset.mul_sum]
-  simp_rw [MonoidAlgebra.single_mul_single, one_mul]
-  exact Fintype.sum_equiv (Equiv.mulLeft x) _ _ fun _y ↦ rfl
-
-/-- The square of a finite subgroup sum is its cardinality times that sum. -/
-private theorem groupAlgebraSubgroupSum_mul_self (P : Subgroup G) [Fintype P] :
-    groupAlgebraSubgroupSum k P * groupAlgebraSubgroupSum k P =
-      Fintype.card P • groupAlgebraSubgroupSum k P := by
-  calc
-    groupAlgebraSubgroupSum k P * groupAlgebraSubgroupSum k P =
-        ∑ x : P, MonoidAlgebra.single (x : G) 1 * groupAlgebraSubgroupSum k P := by
-      rw [groupAlgebraSubgroupSum, Finset.sum_mul]
-    _ = ∑ _x : P, groupAlgebraSubgroupSum k P := by
-      apply Finset.sum_congr rfl
-      intro x _
-      exact single_mul_groupAlgebraSubgroupSum k P x
-    _ = Fintype.card P • groupAlgebraSubgroupSum k P := Finset.sum_const _
-
-end
-
 variable (k : Type*) [Field k]
 
-/-- The normalized sum of a finite subgroup. -/
+/-- The normalized sum of a finite subgroup: the character sum of the trivial character,
+scaled by the inverse of the subgroup order. -/
 noncomputable def groupAlgebraSubgroupAverage (P : Subgroup G) [Fintype P] : k[G] :=
-  (Fintype.card P : k)⁻¹ • groupAlgebraSubgroupSum k P
+  (Fintype.card P : k)⁻¹ • subgroupCharSum (1 : G →* k) P
 
 /-- Left multiplication by a member of a finite subgroup fixes its normalized subgroup
 average. -/
@@ -90,8 +60,8 @@ average. -/
 theorem single_mul_groupAlgebraSubgroupAverage (P : Subgroup G) [Fintype P] (x : P) :
     MonoidAlgebra.single (x : G) (1 : k) * groupAlgebraSubgroupAverage k P =
       groupAlgebraSubgroupAverage k P := by
-  rw [groupAlgebraSubgroupAverage, mul_smul_comm,
-    single_mul_groupAlgebraSubgroupSum]
+  rw [groupAlgebraSubgroupAverage, mul_smul_comm, single_mul_subgroupCharSum]
+  simp
 
 /-- The normalized sum of a finite subgroup is idempotent when its cardinality is nonzero in the
 base field. -/
@@ -99,7 +69,7 @@ theorem isIdempotentElem_groupAlgebraSubgroupAverage (P : Subgroup G) [Fintype P
     (hP : (Fintype.card P : k) ≠ 0) :
     IsIdempotentElem (groupAlgebraSubgroupAverage k P) := by
   rw [IsIdempotentElem, groupAlgebraSubgroupAverage, smul_mul_smul,
-    groupAlgebraSubgroupSum_mul_self, ← Nat.cast_smul_eq_nsmul k, smul_smul]
+    subgroupCharSum_mul_self, Nat.card_eq_fintype_card, ← Nat.cast_smul_eq_nsmul k, smul_smul]
   simp [hP]
 
 /-- A finite subgroup average is nonzero when the subgroup cardinality is nonzero in the base
@@ -109,7 +79,7 @@ theorem groupAlgebraSubgroupAverage_ne_zero (P : Subgroup G) [Fintype P]
     groupAlgebraSubgroupAverage k P ≠ 0 := by
   intro hzero
   have h := congrArg (Coalgebra.counit (R := k)) hzero
-  simp [groupAlgebraSubgroupAverage, groupAlgebraSubgroupSum, hP] at h
+  simp [groupAlgebraSubgroupAverage, subgroupCharSum_def, hP] at h
 
 /-- The average over a nontrivial finite subgroup is not one. -/
 theorem groupAlgebraSubgroupAverage_ne_one (P : Subgroup G) [Fintype P]

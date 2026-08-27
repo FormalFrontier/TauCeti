@@ -8,6 +8,7 @@ module
 public import Mathlib.CategoryTheory.Monoidal.Internal.Types.Grp
 public import Mathlib.CategoryTheory.Sites.LeftExact
 public import Mathlib.Algebra.Category.Grp.Ulift
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
 public import TauCeti.Algebra.AlgebraicGroup.Fppf.Basic
 
 /-!
@@ -26,9 +27,19 @@ the ReductiveGroups roadmap.
 open CategoryTheory Opposite
 open scoped CategoryTheory.MonObj
 
-namespace TauCeti.CommHopfAlgCat
-
 universe u v
+
+namespace GrpCat
+
+/-- Forgetting a universe-lifted group agrees with universe-lifting its underlying type. -/
+theorem uliftFunctor_comp_forget_eq_forget_comp_uliftFunctor :
+    uliftFunctor.{u + 1, u} ⋙ forget GrpCat.{u + 1} =
+      forget GrpCat.{u} ⋙ CategoryTheory.uliftFunctor.{u + 1, u} := by
+  rfl
+
+end GrpCat
+
+namespace TauCeti.CommHopfAlgCat
 
 variable {R : Type u} [CommRing R]
 
@@ -115,12 +126,42 @@ theorem groupFunctorGrpIso_hom {C : Type u} [Category.{v} C]
     (groupFunctorGrpIso e).hom = groupFunctorGrpMap e.hom := by
   rw [groupFunctorGrpIso.eq_1]
 
+/-- Forgetting the universe lift of the group-valued points presheaf agrees with universe-lifting
+its underlying type-valued points presheaf. -/
+theorem pointsGroupPresheaf_ulift_forget_eq_pointsPresheaf_ulift
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    HopfAlgebra.pointsGroupPresheaf H ⋙ GrpCat.uliftFunctor.{u + 1, u} ⋙
+        forget GrpCat.{u + 1} =
+      HopfAlgebra.pointsPresheaf H ⋙ CategoryTheory.uliftFunctor.{u + 1, u} := by
+  rw [GrpCat.uliftFunctor_comp_forget_eq_forget_comp_uliftFunctor]
+  rfl
+
 /-- The convolution-points presheaf as a group object in type-valued presheaves, with values
 lifted to the universe in which the affine-site sheafification lives. -/
 noncomputable def pointsPresheafGrp (H : _root_.CommHopfAlgCat.{u} R) :
     Grp (((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ ⥤ Type (u + 1)) :=
   groupFunctorGrp
     (HopfAlgebra.pointsGroupPresheaf H ⋙ GrpCat.uliftFunctor.{u + 1, u})
+
+/-- The carrier of the points presheaf group object is the universe lift of the underlying
+group-valued points presheaf. -/
+theorem pointsPresheafGrp_X_eq (H : _root_.CommHopfAlgCat.{u} R) :
+    (pointsPresheafGrp H).X =
+      HopfAlgebra.pointsGroupPresheaf H ⋙ GrpCat.uliftFunctor.{u + 1, u} ⋙
+        forget GrpCat.{u + 1} := by
+  rfl
+
+/-- The carrier of the group-valued points presheaf is naturally isomorphic to the universe lift
+of the scheme-valued points presheaf. -/
+noncomputable def pointsPresheafGrpXIsoSchemePointsPresheaf
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    (pointsPresheafGrp H).X ≅
+      schemePointsPresheaf H ⋙ CategoryTheory.uliftFunctor.{u + 1, u} :=
+  eqToIso (pointsPresheafGrp_X_eq H) ≪≫
+    eqToIso (pointsGroupPresheaf_ulift_forget_eq_pointsPresheaf_ulift H) ≪≫
+      Functor.isoWhiskerRight
+        (pointsPresheafIsoSchemePointsPresheaf H)
+        CategoryTheory.uliftFunctor.{u + 1, u}
 
 /-- The fppf sheaf of points, regarded as a group object in type-valued sheaves.
 
@@ -133,6 +174,30 @@ noncomputable def pointsFppfGroupObject (H : _root_.CommHopfAlgCat.{u} R) :
     Functor.Monoidal.ofChosenFiniteProducts _
   exact (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.obj
     (pointsPresheafGrp H)
+
+/-- The carrier of the fppf points group object is the sheafification of the carrier of its
+presheaf group object. -/
+theorem pointsFppfGroupObject_X_eq
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    (pointsFppfGroupObject H).X =
+      (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
+        (pointsPresheafGrp H).X := by
+  rfl
+
+/-- The fppf sheafification of the universe-lifted scheme-valued points presheaf. -/
+noncomputable def schemePointsFppfSheaf (H : _root_.CommHopfAlgCat.{u} R) :
+    Sheaf (CommAlgCat.fppfTopology R) (Type (u + 1)) :=
+  (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
+    (schemePointsPresheaf H ⋙ CategoryTheory.uliftFunctor.{u + 1, u})
+
+/-- The carrier of the fppf points group object is naturally isomorphic to the sheafification of
+the universe-lifted scheme-valued points presheaf. -/
+noncomputable def pointsFppfGroupObjectXIsoSchemePointsFppfSheaf
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    (pointsFppfGroupObject H).X ≅ schemePointsFppfSheaf H :=
+  eqToIso (pointsFppfGroupObject_X_eq H) ≪≫
+    (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapIso
+      (pointsPresheafGrpXIsoSchemePointsPresheaf H)
 
 /-- The underlying sheaf of `pointsFppfGroupObject` is canonically the universe lift of the
 existing group-valued points sheaf `HopfAlgebra.pointsFppfSheaf`. -/

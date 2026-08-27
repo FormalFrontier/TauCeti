@@ -16,6 +16,7 @@ public import Mathlib.Tactic.LinearCombination
 public import TauCeti.Algebra.Group.MapMulMulEqOne
 public import TauCeti.Algebra.Polynomial.LinearFactor
 public import TauCeti.RingTheory.AdjoinRoot
+import TauCeti.Algebra.Group.PowMonoidHom
 
 /-!
 # The `x - T` map of an elliptic curve into its étale algebra
@@ -83,10 +84,10 @@ a forward port.
 Two changes were made against the source. Stoll defines the square classes through a local
 abbreviation `Units.modPow`; here they are the quotient by `(powMonoidHom 2).range` directly, so
 that TauCeti carries a single spelling of square classes. In the kernel proofs this replaces the
-source's `Units.modPow.unit_eq_one_iff` step by `WeierstrassCurve.Affine.M.mk_eq_one_iff`, which
-says the same thing about this spelling. And the two lemmas computing the norm of
-`x - T` are not part of this file: they belong to the source's Step 5, which the finiteness result
-does not use.
+source's `Units.modPow.unit_eq_one_iff` step by `TauCeti.mk_eq_one_iff_exists_pow`, which says
+the same thing about this spelling, for any commutative monoid. And the two lemmas computing the
+norm of `x - T` are not part of this file: they belong to the source's Step 5, which the
+finiteness result does not use.
 
 This advances `TauCetiRoadmap/EllipticCurves/README.md`, Layer 6 (README:790-838), whose
 description of this route is "the `x - θ` map into the étale algebra `A = K[X]/(f)`".
@@ -147,6 +148,25 @@ namespace WeierstrassCurve
 
 namespace Affine
 
+section CommRingCurve
+
+variable {R : Type*} [CommRing R] (W : Affine R)
+
+/-- The polynomial on the right hand side of a Weierstrass equation with `a₁ = a₃ = 0`.
+
+Defined over a commutative ring: it is a polynomial in the coefficients and uses nothing about
+`R` beyond its ring structure. The descent constructions below specialise it to a field. -/
+noncomputable abbrev f : R[X] := X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆
+
+/-- The synthetic cofactor of `f` at `x`, defined for every `x` by the coefficients of synthetic
+division: it satisfies `fCofactor x * (X - C x) = f - C (f.eval x)` (`fCofactor_mul_eq`). It is
+the quotient of `f` by `X - x` exactly when `x` is a root of `f`, which is the case
+`f_eq_mul_of_eval_eq_zero` records. -/
+noncomputable abbrev fCofactor (x : R) : R[X] :=
+  X ^ 2 + C (x + W.a₂) * X + C (x ^ 2 + W.a₂ * x + W.a₄)
+
+end CommRingCurve
+
 variable {K : Type*} [Field K] (W : Affine K)
 
 lemma ringChar_ne_two [W.IsElliptic] [W.IsCharNeTwoNF] : ringChar K ≠ 2 := by
@@ -163,9 +183,6 @@ lemma ringChar_ne_two [W.IsElliptic] [W.IsCharNeTwoNF] : ringChar K ≠ 2 := by
 /-!
 ### The étale algebra `A`
 -/
-
-/-- The polynomial on the right hand side of a Weierstrass equation with `a₁ = a₃ = 0`. -/
-noncomputable abbrev f : K[X] := X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆
 
 lemma natDegree_f : W.f.natDegree = 3 := by
   simp only [f]
@@ -232,13 +249,6 @@ lemma negY_of_isCharNeTwoNF [W.IsCharNeTwoNF] (x y : K) : W.negY x y = -y := by
 lemma y_ne_zero_of_eval_f_ne_zero [W.IsCharNeTwoNF] {x y : K} (h : W.Equation x y)
     (hx : W.f.eval x ≠ 0) : y ≠ 0 :=
   fun h0 ↦ hx <| by simp [(equation_iff_eval_f_eq_sq W x y).mp h, h0]
-
-/-- The synthetic cofactor of `f` at `x`, defined for every `x` by the coefficients of synthetic
-division: it satisfies `fCofactor x * (X - C x) = f - C (f.eval x)` (`fCofactor_mul_eq`). It is
-the quotient of `f` by `X - x` exactly when `x` is a root of `f`, which is the case
-`f_eq_mul_of_eval_eq_zero` records. -/
-noncomputable abbrev fCofactor (x : K) : K[X] :=
-  X ^ 2 + C (x + W.a₂) * X + C (x ^ 2 + W.a₂ * x + W.a₄)
 
 lemma natDegree_fCofactor (x : K) : (W.fCofactor x).natDegree = 2 := by
   simp only [fCofactor]
@@ -483,19 +493,6 @@ instance search does not find it at the use sites below (e.g. for `mul_right_com
 `μX_mul_mul_eq_one`) unless it is declared here. -/
 noncomputable instance M.instCommGroup : CommGroup W.M := inferInstance
 
-/-- The class of a unit of `W.A` is trivial exactly when the unit is a square in `W.A`. -/
-lemma M.mk_eq_one_iff {a : W.A} (ha : IsUnit a) :
-    (ha.unit : W.M) = 1 ↔ ∃ z, z ^ 2 = a := by
-  rw [QuotientGroup.eq_one_iff]
-  simp only [MonoidHom.mem_range, powMonoidHom_apply]
-  refine ⟨fun ⟨u, hu⟩ ↦ ⟨u, ?_⟩, fun ⟨z, hz⟩ ↦ ?_⟩
-  · rw [← ha.unit_spec, ← hu]
-    push_cast
-    ring
-  · have hzz : IsUnit (z * z) := by rw [← sq, hz]; exact ha
-    have hz' : IsUnit z := isUnit_of_mul_isUnit_left hzz
-    exact ⟨hz'.unit, Units.ext (by rw [Units.val_pow_eq_pow_val, hz'.unit_spec, hz, ha.unit_spec])⟩
-
 /-- The product of the classes of three units of `W.A` is trivial exactly when their product is a
 square in `W.A`. This is the shape in which multiplicativity of the `x - T` map is proved: each
 case exhibits an explicit square root of the product of the three representatives. -/
@@ -503,7 +500,8 @@ lemma M.mk_mul_mk_mul_mk_eq_one_iff {a b c : W.A} (ha : IsUnit a) (hb : IsUnit b
     (hc : IsUnit c) :
     (ha.unit : W.M) * hb.unit * hc.unit = 1 ↔ ∃ z, z ^ 2 = a * b * c := by
   simp only [← QuotientGroup.mk_mul, ← IsUnit.unit_mul]
-  exact M.mk_eq_one_iff ((ha.mul hb).mul hc)
+  simpa only [IsUnit.unit_spec] using
+    TauCeti.mk_eq_one_iff_exists_pow 2 ((ha.mul hb).mul hc).unit
 
 @[simp]
 lemma M.sq_eq_one (m : W.M) : m ^ 2 = 1 := by
@@ -881,7 +879,8 @@ include h
 private lemma eq_two_smul_of_μ_eq_one_of_ne (hμ : (μ <| .ofAdd <| .some x y h) = 1)
     (hx : W.f.eval x ≠ 0) : ∃ P : W.Point, .some x y h = 2 • P := by
   rw [exists_eq_two_smul_iff']
-  rw [μ_apply, μ₀_some, μX_of_eval_f_ne_zero hx, M.mk_eq_one_iff] at hμ
+  rw [μ_apply, μ₀_some, μX_of_eval_f_ne_zero hx, TauCeti.mk_eq_one_iff_exists_pow,
+    IsUnit.unit_spec] at hμ
   obtain ⟨z, hz⟩ := hμ
   obtain ⟨r, s, t, hrst⟩ := W.exists_mk_quadratic_eq z
   rw [hrst] at hz
@@ -907,7 +906,8 @@ private lemma eq_two_smul_of_μ_eq_one_of_ne (hμ : (μ <| .ofAdd <| .some x y h
 private lemma eq_two_smul_of_μ_eq_one_of_eq (hμ : (μ <| .ofAdd <| .some x y h) = 1)
     (hx : W.f.eval x = 0) : ∃ P : W.Point, .some x y h = 2 • P := by
   rw [exists_eq_two_smul_iff']
-  rw [μ_apply, μ₀_some, μX_of_eval_f_eq_zero hx, M.mk_eq_one_iff] at hμ
+  rw [μ_apply, μ₀_some, μX_of_eval_f_eq_zero hx, TauCeti.mk_eq_one_iff_exists_pow,
+    IsUnit.unit_spec] at hμ
   obtain ⟨z, hz⟩ := hμ
   obtain ⟨p, hp⟩ := AdjoinRoot.mk_surjective z
   obtain ⟨r, s, hrs⟩ := W.exists_mk_linear_eq (AdjoinRoot.mk (W.fCofactor x) p)

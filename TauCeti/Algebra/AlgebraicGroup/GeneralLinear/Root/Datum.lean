@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Adjoint.RootSpace
-public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.RootDatum
+public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.RootDatum.Basic
 
 /-!
 # Coordinate roots for the diagonal torus in the general linear group
@@ -159,7 +159,7 @@ theorem diagonalRootDatum_pairing_apply {n : ℕ} (p q : DiagonalRootIndex n) :
 root indexed by `q`: both entries of `q` are transposed by `Equiv.swap p.1.1 p.1.2`. -/
 noncomputable def diagonalReflectionIndex {n : ℕ} (p q : DiagonalRootIndex n) :
     DiagonalRootIndex n :=
-  SplitTorus.coordinateReflectionIndex p q
+  SplitTorus.coordinatePermRootIndex (Equiv.swap p.1.1 p.1.2) q
 
 open Classical in
 /-- The two entries of `diagonalReflectionIndex p q` are the corresponding coordinate swaps. -/
@@ -167,9 +167,7 @@ open Classical in
 theorem diagonalReflectionIndex_coe {n : ℕ} (p q : DiagonalRootIndex n) :
     (diagonalReflectionIndex p q).1 =
       ((Equiv.swap p.1.1 p.1.2) q.1.1, (Equiv.swap p.1.1 p.1.2) q.1.2) := by
-  rw [diagonalReflectionIndex, SplitTorus.coordinateReflectionIndex_coe]
-  simp only [Equiv.swap_apply_def]
-  split_ifs <;> rfl
+  rw [diagonalReflectionIndex, SplitTorus.coordinatePermRootIndex_coe]
 
 /-- The reflection associated to a root acts on indices by transposing both coordinates. -/
 @[simp]

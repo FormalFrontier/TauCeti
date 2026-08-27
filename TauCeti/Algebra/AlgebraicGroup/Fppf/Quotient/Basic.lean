@@ -93,14 +93,6 @@ noncomputable def pointwiseQuotientPresheafGrpProjection
   groupFunctorGrpMap <| Functor.whiskerRight
     (pointwiseQuotientPresheafProjection H I hI) GrpCat.uliftFunctor.{u + 1, u}
 
-/-- The carrier of the points presheaf group object is the universe lift of the underlying
-group-valued points presheaf. -/
-theorem pointsPresheafGrp_X_eq (H : _root_.CommHopfAlgCat.{u} R) :
-    (pointsPresheafGrp H).X =
-      HopfAlgebra.pointsGroupPresheaf H ⋙ GrpCat.uliftFunctor.{u + 1, u} ⋙
-        forget GrpCat.{u + 1} := by
-  rfl
-
 /-- The carrier of the pointwise quotient presheaf group object is the universe lift of the
 underlying group-valued quotient presheaf. -/
 theorem pointwiseQuotientPresheafGrp_X_eq
@@ -168,15 +160,6 @@ noncomputable def fppfQuotientProjection (H : _root_.CommHopfAlgCat.{u} R)
     Functor.Monoidal.ofChosenFiniteProducts _
   exact (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).mapGrp.map
     (pointwiseQuotientPresheafGrpProjection H I hI)
-
-/-- The carrier of the fppf points group object is the sheafification of the carrier of its
-presheaf group object. -/
-theorem pointsFppfGroupObject_X_eq
-    (H : _root_.CommHopfAlgCat.{u} R) :
-    (pointsFppfGroupObject H).X =
-      (presheafToSheaf (CommAlgCat.fppfTopology R) (Type (u + 1))).obj
-        (pointsPresheafGrp H).X := by
-  rfl
 
 /-- The carrier of the fppf quotient group object is the sheafification of the pointwise
 quotient presheaf's carrier. -/

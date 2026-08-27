@@ -11,7 +11,6 @@ public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import TauCeti.Analysis.Contour.PiecewiseC1On
 public import TauCeti.Analysis.Contour.RegularityConditions
 import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
-import TauCeti.Analysis.Contour.Curve.Distance
 import TauCeti.Analysis.Calculus.OneSidedDerivLimit
 import TauCeti.Analysis.Contour.HigherOrder.Asymptotics
 import TauCeti.Analysis.Contour.SectorCancellation
@@ -48,16 +47,17 @@ coefficient in a residue theorem.
   order-`k` polar term along the curve, on an interval avoiding the pole.
 * `Contour.integral_pow_inv_mul_deriv_eq_zero_of_closed` — the same term integrates to zero
   around a *closed* piecewise-`C¹` curve missing the pole, the endpoint difference cancelling.
-* `Contour.intervalIntegrable_pow_inv_mul_deriv_truncated` — the truncated order-`k` polar
-  integrand is interval-integrable at every truncation level `ε > 0`.
 
 ## Provenance
 
 Migrated from `perCrossing_higherOrder_window_integral_tendsto_corner` and its supporting
-lemmas (`pow_inv_mul_deriv_intervalIntegrable`, `cpvIntegrand_higherOrder_intervalIntegrable`,
-`antiderivPow_FTC_on_avoiding`) of `MultiCrossingCPV.lean` in the AINTLIB `LeanModularForms`
-development, restated for a raw curve on its crossing window. See N. Hungerbühler, M. Wasem,
-*Non-integer valued winding numbers and a generalized Residue Theorem*, arXiv:1808.00997, §3.
+lemmas (`pow_inv_mul_deriv_intervalIntegrable`, `antiderivPow_FTC_on_avoiding`) of
+`MultiCrossingCPV.lean` in the AINTLIB `LeanModularForms` development, restated for a raw curve
+on its crossing window. The truncated-integrability lemma migrated alongside them,
+`cpvIntegrand_higherOrder_intervalIntegrable`, lives with the rest of the truncation API in
+`Contour.Cauchy.PrincipalValue.Basic` as `intervalIntegrable_pow_inv_mul_deriv_truncated`.
+See N. Hungerbühler, M. Wasem, *Non-integer valued winding numbers and a generalized Residue
+Theorem*, arXiv:1808.00997, §3.
 -/
 
 public section
@@ -80,46 +80,6 @@ private theorem intervalIntegrable_pow_inv_mul_deriv {γ : ℝ → ℂ} {s : ℂ
   rw [uIcc_of_le hlu]
   exact continuousOn_const.div ((hγ_cont.sub continuousOn_const).pow k)
     fun t ht => pow_ne_zero k (sub_ne_zero.mpr (h_ne t ht))
-
-/-- The `ε`-truncated order-`k` polar integrand is interval-integrable: off the `ε`-ball it is
-dominated by `(‖c‖ / ε^k) · ‖deriv γ‖`. -/
-theorem intervalIntegrable_pow_inv_mul_deriv_truncated {γ : ℝ → ℂ} {s : ℂ} {a b : ℝ}
-    (c : ℂ) (k : ℕ) (hγ_cont : ContinuousOn γ (uIcc a b))
-    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume a b)
-    {ε : ℝ} (hε : 0 < ε) :
-    IntervalIntegrable
-      (fun t => if ‖γ t - s‖ > ε then c / (γ t - s) ^ k * deriv γ t else 0)
-      MeasureTheory.volume a b := by
-  have hK_closed : IsClosed {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε} :=
-    isClosed_setOfPred_mem_uIcc_norm_sub_le hγ_cont s ε
-  have h_fn_aesm : AEStronglyMeasurable (fun t => c / (γ t - s) ^ k * deriv γ t)
-      (MeasureTheory.volume.restrict (Set.uIoc a b)) := by
-    have hγ_aem : AEMeasurable γ (MeasureTheory.volume.restrict (Set.uIoc a b)) :=
-      ((hγ_cont.aestronglyMeasurable (by rw [← Icc_min_max]; exact measurableSet_Icc)
-        ).mono_measure (Measure.restrict_mono Set.uIoc_subset_uIcc le_rfl)).aemeasurable
-    have h1 : AEMeasurable (fun t => c / (γ t - s) ^ k)
-        (MeasureTheory.volume.restrict (Set.uIoc a b)) :=
-      (((hγ_aem.sub_const s).pow_const k).inv.const_mul c).congr
-        (Eventually.of_forall fun t => (div_eq_mul_inv c _).symm)
-    exact (h1.mul
-      (intervalIntegrable_iff.mp hderiv_int).aestronglyMeasurable.aemeasurable
-      ).aestronglyMeasurable
-  have h_aesm : AEStronglyMeasurable
-      (fun t => if ‖γ t - s‖ > ε then c / (γ t - s) ^ k * deriv γ t else 0)
-      (MeasureTheory.volume.restrict (Set.uIoc a b)) := by
-    refine (h_fn_aesm.indicator hK_closed.measurableSet.compl).congr ?_
-    filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t ht
-    by_cases h_far : ‖γ t - s‖ > ε
-    · have h_mem : t ∈ {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε}ᶜ :=
-        fun hK => absurd hK.2 (not_le.mpr h_far)
-      rw [Set.indicator_of_mem h_mem, ite_eq_left h_far]
-    · have h_notMem : t ∉ {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε}ᶜ := fun hKc =>
-        hKc ⟨Set.uIoc_subset_uIcc ht, not_lt.mp h_far⟩
-      rw [Set.indicator_of_notMem h_notMem, ite_eq_right h_far]
-  refine intervalIntegrable_truncated_mul_deriv (f := fun z => c / (z - s) ^ k)
-    (M := ‖c‖ / ε ^ k) hderiv_int h_aesm fun t h_far => ?_
-  rw [norm_div, norm_pow]
-  gcongr
 
 /-- The fundamental theorem of calculus for the order-`k` polar term along the curve, on an
 interval avoiding the pole: the integral is the boundary difference of the antiderivative

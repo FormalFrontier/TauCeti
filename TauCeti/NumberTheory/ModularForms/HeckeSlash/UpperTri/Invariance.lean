@@ -9,13 +9,13 @@ public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Sum
 
 /-!
-# The upper-triangular Hecke sum is `Γ₀(N)`-equivariant when `p ∣ N`
+# Equivariance of the upper-triangular Hecke sum at level-supported indices
 
 `UpperTri/Sum.lean` defines `heckeSlashUpperTri k p f = ∑_{b < p} f ∣[k] !![1, b; 0, p]`, and
 `UpperTri/Periodic.lean` shows it preserves invariance under the single matrix `T`. That is far
 short of an operator: to act on `M_k(Γ₁(N))` the sum has to preserve invariance under the whole
-group. This file proves that it does, **provided `p` divides the level** — the case in which the
-factorisation below closes on the `p` upper-triangular representatives.
+group. This file proves the basic case when `p` divides the level, then obtains every index
+supported on the level by composing those basic sums.
 
 ## The permutation
 
@@ -40,8 +40,9 @@ has the *same* `Gamma0Map` value as `γ`; and if `γ ∈ Γ₁(N)` then `γ' ∈
 on `f` is only ever used at matrices congruent to `γ` in the relevant sense, which is what lets
 the nebentypus version below carry a fixed character.
 
-⚠ `p ∣ N` is essential to the equivariance proved here, not a convenience. When `p` is prime and
-`p ∤ N`, the classical double coset has one further left coset, represented by
+⚠ `p ∣ N` is essential to the direct permutation argument, not a convenience. The general
+level-supported theorem below instead composes sums at prime divisors of `N`. When `p` is prime
+and `p ∤ N`, the classical double coset has one further left coset, represented by
 `!![p, 0; 0, 1]` up to a `Γ₀(N)` twist, and the sum over the upper-triangular representatives
 alone is *not* invariant.
 
@@ -60,6 +61,8 @@ alone is *not* invariant.
   function is `Γ₁(N)`-invariant.
 * `HeckeRing.GL2.heckeSlashUpperTri_slash_mapGL_of_nebentypus`: the sum of a function with
   nebentypus `χ` has nebentypus `χ`.
+* `HeckeRing.GL2.heckeSlashUpperTri_slash_mapGL_of_nebentypus_of_primeFactors_subset`: the same
+  conclusion for every index whose prime factors divide `N`.
 
 ## References
 
@@ -217,6 +220,42 @@ theorem heckeSlashUpperTri_slash_mapGL_of_nebentypus (k : ℤ) [NeZero p] (hpN :
   intro δ hδ hd
   have hmap : (Gamma0Map N).toHomUnits ⟨δ, hδ⟩ = (Gamma0Map N).toHomUnits γ := Units.ext hd
   rw [hf ⟨δ, hδ⟩, hmap]
+
+/-- **The upper-triangular sum preserves the nebentypus at every index supported on the level.**
+If `f` transforms under `Γ₀(N)` by the character `χ`, so does `heckeSlashUpperTri k n f`.
+
+The divisor case above does not apply directly at `n = q ^ 2`, since `Γ₀(N)` need not lie in
+`Γ₀(q ^ 2)`. Instead the index is peeled apart one prime at a time, and the composition law for
+upper-triangular sums reduces to the divisor case. -/
+theorem heckeSlashUpperTri_slash_mapGL_of_nebentypus_of_primeFactors_subset (k : ℤ)
+    (χ : (ZMod N)ˣ →* ℂˣ) (n : ℕ) (hn0 : n ≠ 0)
+    (hn : n.primeFactors ⊆ N.primeFactors) (γ : ↥(Gamma0 N)) {f : ℍ → ℂ}
+    (hf : ∀ δ : ↥(Gamma0 N), f ∣[k] (mapGL ℚ (δ : SL(2, ℤ)) : GL (Fin 2) ℚ)
+      = (↑(χ ((Gamma0Map N).toHomUnits δ)) : ℂ) • f) :
+    heckeSlashUpperTri k n f ∣[k] (mapGL ℚ (γ : SL(2, ℤ)) : GL (Fin 2) ℚ)
+      = (↑(χ ((Gamma0Map N).toHomUnits γ)) : ℂ) • heckeSlashUpperTri k n f := by
+  induction n using Nat.strong_induction_on generalizing γ with
+  | _ n ih =>
+    rcases eq_or_ne n 1 with rfl | hn1
+    · rw [heckeSlashUpperTri_one]
+      exact hf γ
+    · have hq : n.minFac.Prime := Nat.minFac_prime hn1
+      have hqn : n.minFac ∣ n := Nat.minFac_dvd n
+      have hqN : n.minFac ∣ N :=
+        (Nat.mem_primeFactors.mp (hn (Nat.mem_primeFactors.mpr ⟨hq, hqn, hn0⟩))).2.1
+      have hm0 : n / n.minFac ≠ 0 :=
+        (Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero hn0) hqn) hq.pos).ne'
+      have hmlt : n / n.minFac < n := Nat.div_lt_self (Nat.pos_of_ne_zero hn0) hq.one_lt
+      have hmn : (n / n.minFac).primeFactors ⊆ N.primeFactors :=
+        (Nat.primeFactors_mono (Nat.div_dvd_of_dvd hqn) hn0).trans hn
+      have _ : NeZero n.minFac := ⟨hq.ne_zero⟩
+      have key : heckeSlashUpperTri k n f
+          = heckeSlashUpperTri k n.minFac (heckeSlashUpperTri k (n / n.minFac) f) := by
+        rw [heckeSlashUpperTri_heckeSlashUpperTri k n.minFac (n / n.minFac) f,
+          Nat.div_mul_cancel hqn]
+      rw [key]
+      exact heckeSlashUpperTri_slash_mapGL_of_nebentypus k hqN χ γ
+        fun δ ↦ ih _ hmlt hm0 hmn δ
 
 end HeckeRing.GL2
 

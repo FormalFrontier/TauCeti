@@ -7,9 +7,10 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.FaithfullyFlat
+public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Reduced
 
 /-!
-# Unipotence of faithfully flat affine group images
+# Unipotence of affine group images
 
 For a morphism `f : H ⟶ K` of commutative Hopf algebras, its scheme-theoretic image has coordinate
 algebra
@@ -17,14 +18,15 @@ algebra
 `CommHopfAlgCat.image f ⟶ K` finite type. If this inclusion is faithfully flat, every
 algebraically closed point of the image lifts to a point of `Spec K`.
 
-Unipotence is preserved when a point is precomposed with a Hopf-algebra morphism. It therefore
-descends from `Spec K` to the scheme-theoretic image. This supplies the geometric-point step in
-forming the product of two normal smooth unipotent closed subgroup schemes: after multiplication
-is realized as a faithfully flat morphism onto its image, the image is again geometrically
-unipotent.
+There are two ways to descend unipotence from `Spec K` to the image. A faithfully flat inclusion
+lifts every geometric point of the image to the source. More directly, when `K` is reduced and
+finite type, injectivity of the canonical inclusion lets the general reduced descent theorem
+apply to every scheme-theoretic image of a smooth unipotent affine group.
 
 ## Main declaration
 
+* `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.image_of_reduced`: the image of a
+  reduced finite-type geometrically unipotent affine group is geometrically unipotent.
 * `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.image_of_faithfullyFlat`: a
   faithfully flat finite-type affine group image has only unipotent geometric points when its
   source does.
@@ -33,10 +35,9 @@ unipotent.
 
 * A. Borel, *Linear Algebraic Groups*, Proposition 14.4, for the unipotent-radical application.
 
-This is the image specialization of the algebraically-closed-point bridge for Layer 5, "The
-unipotent radical", of the ReductiveGroups roadmap. The separate theorem that a homomorphism of
-affine groups is faithfully flat onto its scheme-theoretic image remains the input that discharges
-the hypothesis below.
+This is the image-unipotence step for Layer 5, "The unipotent radical", of the ReductiveGroups
+roadmap. In particular, it supplies the remaining geometric-unipotence input in the binary-product
+closure of connected normal smooth unipotent subgroup schemes.
 -/
 
 public section
@@ -51,6 +52,14 @@ namespace geometricallyUnipotentPointsCommHopfAlgProperty
 
 variable {k : Type u} [Field k]
 variable {H K : _root_.CommHopfAlgCat.{v} k}
+
+/-- The scheme-theoretic image of a reduced finite-type geometrically unipotent affine group is
+geometrically unipotent. -/
+theorem image_of_reduced (f : H ⟶ K) [Algebra.FiniteType k K] [IsReduced K]
+    (hK : geometricallyUnipotentPointsCommHopfAlgProperty k K) :
+    geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.image f) :=
+  of_injective_of_reduced (CommHopfAlgCat.imageι f)
+    (CommHopfAlgCat.imageι_injective f) hK
 
 /-- The scheme-theoretic image of a finite-type geometrically unipotent affine group is
 geometrically unipotent when the source-to-image morphism is faithfully flat.

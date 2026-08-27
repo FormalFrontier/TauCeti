@@ -59,7 +59,8 @@ fails under cancellation, as the rejection test
 This is Layer **1.2** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`; the required worked
 example 9 accompanies it in `TauCeti/NumberTheory/ArithmeticDirichletSeries/NormCoeff.lean`. The
 exact value of the abscissa for the trivial weight is deliberately not proved here: its divergence
-input is a Layer 5 ideal count.
+input is the Layer 5 ideal count of
+`TauCeti/NumberTheory/ArithmeticDirichletSeries/Estimates.lean`.
 
 ## References
 

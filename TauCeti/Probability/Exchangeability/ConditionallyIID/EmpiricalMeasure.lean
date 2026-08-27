@@ -42,7 +42,6 @@ measure this reads as the mean-square error, with the Bernoulli variance of the 
 mass on `B` on the right; at a general finite measure both sides scale with the total mass. -/
 theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) (n : ℕ)
-    (hX : ∀ i ∈ Finset.range (n + 1), AEMeasurable (X i) μ)
     (hB : MeasurableSet B) :
     ∫ ω, ((((empiricalMeasure (fun i => X i ω) n : ProbabilityMeasure α) : Measure α) B).toReal
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ =
@@ -50,7 +49,7 @@ theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq [IsFiniteMea
         (∫ ω, ((ν ω : Measure α) B).toReal ∂μ -
           ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ) := by
   simpa only [empiricalMeasure_process_apply_toReal hB] using
-    h.integral_empiricalFrequency_sub_sq hX hB (n := n + 1) (Nat.succ_ne_zero n)
+    h.integral_empiricalFrequency_sub_sq hB (n := n + 1) (Nat.succ_ne_zero n)
 
 /-- Empirical-measure evaluation has mean-square error at most `1 / (n + 1)`.
 
@@ -59,24 +58,23 @@ above, this bound uses `μ univ = 1`, so it asks for a probability measure rathe
 one. -/
 theorem ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq_le
     [IsProbabilityMeasure μ] (h : ConditionallyIIDWith μ X ν) (n : ℕ)
-    (hX : ∀ i ∈ Finset.range (n + 1), AEMeasurable (X i) μ)
     (hB : MeasurableSet B) :
     ∫ ω, ((((empiricalMeasure (fun i => X i ω) n : ProbabilityMeasure α) : Measure α) B).toReal
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ ≤ ((n + 1 : ℕ) : ℝ)⁻¹ := by
   simpa only [empiricalMeasure_process_apply_toReal hB] using
-    h.integral_empiricalFrequency_sub_sq_le hX hB (n := n + 1) (Nat.succ_ne_zero n)
+    h.integral_empiricalFrequency_sub_sq_le hB (n := n + 1) (Nat.succ_ne_zero n)
 
 /-- For every measurable set, evaluation of the empirical measure of a conditionally i.i.d.
 process converges in `L² μ` to evaluation of its directing measure: the integrated squared error
 tends to `0`.  At a probability measure this is convergence in mean square. -/
 theorem ConditionallyIIDWith.tendsto_integral_empiricalMeasure_apply_sub_sq
     [IsFiniteMeasure μ] (h : ConditionallyIIDWith μ X ν)
-    (hX : ∀ i, AEMeasurable (X i) μ) (hB : MeasurableSet B) :
+    (hB : MeasurableSet B) :
     Tendsto (fun n : ℕ =>
       ∫ ω, ((((empiricalMeasure (fun i => X i ω) n : ProbabilityMeasure α) : Measure α) B).toReal
             - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ) atTop (nhds 0) := by
   simpa only [empiricalMeasure_process_apply_toReal hB] using
-    h.tendsto_integral_empiricalFrequency_sub_sq hX hB
+    h.tendsto_integral_empiricalFrequency_sub_sq hB
 
 end Probability
 

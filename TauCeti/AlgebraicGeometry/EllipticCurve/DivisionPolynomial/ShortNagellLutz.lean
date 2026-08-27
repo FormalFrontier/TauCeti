@@ -40,8 +40,6 @@ is elliptic. See the Provenance note.
 * `WeierstrassCurve.isInteger_of_torsion`: the integrality half, with no order-two exception, for
   any integral model in characteristic-≠-2 normal form.
 * `WeierstrassCurve.y_eq_zero_or_sq_dvd_Δ_of_torsion`: the discriminant half, likewise.
-* `WeierstrassCurve.y_eq_zero_of_order_two`: the collapse — order two forces `y = 0` — over any
-  field in which `2` is invertible.
 
 The three results above `lutz_nagell` are stated at `[W.IsCharNeTwoNF]`, i.e. `a₁ = a₃ = 0`, not
 at `shortCurve`: no step uses `a₂ = 0`, and the cubic `X³ + a₂X² + a₄X + a₆` is monic either way.
@@ -92,20 +90,6 @@ open TauCeti.WeierstrassCurve
 
 variable {W : WeierstrassCurve ℤ} [W.IsCharNeTwoNF]
 
-/-- **In characteristic-≠-2 normal form, a two-torsion point has `y = 0`.** Order two makes `ψ₂`
-vanish, and `a₁ = a₃ = 0` makes `ψ₂` equal `2y`; cancelling `2` finishes it.
-
-Nothing here sees `ℤ` or `ℚ`, and nothing needs `a₂ = 0`: the argument is the normal-form identity
-plus the ability to cancel `2` in the point's own field, so those are exactly the hypotheses. -/
-lemma y_eq_zero_of_order_two {F : Type*} [Field F] [DecidableEq F]
-    {E : WeierstrassCurve F} [E.IsCharNeTwoNF] (h2F : (2 : F) ≠ 0)
-    {x y : F} (hns : E.toAffine.Nonsingular x y)
-    (h2 : addOrderOf (Affine.Point.some _ _ hns) = 2) : y = 0 := by
-  have hψ : E.ψ₂.evalEval x y = 0 :=
-    (addOrderOf_eq_two_iff_evalEval_ψ₂_eq_zero _ hns).mp h2
-  rw [evalEval_ψ₂_of_isCharNeTwoNF] at hψ
-  exact (mul_eq_zero.mp hψ).resolve_left h2F
-
 /-- **Nagell–Lutz, discriminant half.** For a torsion point with integral coordinates on an
 integral model in characteristic-≠-2 normal form, either `y₀ = 0` or `y₀²` divides the
 discriminant.
@@ -138,7 +122,7 @@ theorem isInteger_of_torsion {x y : ℚ}
     IsLocalization.IsInteger ℤ x ∧ IsLocalization.IsInteger ℤ y := by
   rcases isInteger_or_order_two_of_torsion_rat hns htor with h | ⟨h2, -, -⟩
   · exact h
-  · have hy : y = 0 := y_eq_zero_of_order_two two_ne_zero hns h2
+  · have hy : y = 0 := y_eq_zero_of_order_two two_ne_zero hns (h2 ▸ addOrderOf_nsmul_eq_zero _)
     refine ⟨?_, hy ▸ ⟨0, by simp⟩⟩
     have hmonic : (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆ : ℤ[X]).Monic := by
       simpa [add_assoc] using monic_X_pow_add (n := 3) (by compute_degree!)

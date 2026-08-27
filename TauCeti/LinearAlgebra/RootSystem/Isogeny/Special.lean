@@ -6,11 +6,12 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Basic
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.SpecialMap
 
 /-!
-# The special isogenies of `G₂` in characteristic three and of `F₄` in characteristic two
+# The special isogenies of the pinned `B₂`, `G₂` and `F₄` root data
 
 The root data of `B₂` and `F₄` over a field of characteristic two, and that of `G₂` over a
 field of characteristic three, admit an isogeny with themselves which exchanges the two root
@@ -18,13 +19,14 @@ lengths. These three types are the only ones: exchanging the two lengths identif
 system with its dual, and among the non-simply-laced irreducible types only `B₂`, `F₄` and `G₂`
 are self-dual, the ratio of the two lengths then fixing the characteristic. The resulting
 *special isogenies* of the pinned Chevalley groups are the ones whose odd powers cut out the
-Suzuki and Ree groups. This file constructs the two whose underlying pinned root data
-`TauCeti.DynkinType.g2SimplyConnectedRootDatum` and `TauCeti.DynkinType.f4SimplyConnectedRootDatum`
-are already available in explicit coordinates.
+Suzuki and Ree groups. This file constructs all three, on the pinned root data
+`TauCeti.DynkinType.typeBSimplyConnectedRootDatum` at rank two,
+`TauCeti.DynkinType.g2SimplyConnectedRootDatum` and
+`TauCeti.DynkinType.f4SimplyConnectedRootDatum`.
 
 ## The construction
 
-Both are instances of `TauCeti.RootPairingIsogeny.ofMatrix`, so all four pieces of data are
+All three are instances of `TauCeti.RootPairingIsogeny.ofMatrix`, so all four pieces of data are
 explicit integer tables and no carrier is chosen from an existence theorem. The character and
 cocharacter lattices are `Fin t.rank → ℤ` in the fundamental-weight and simple-coroot bases, and
 the whole isogeny is determined by the single matrix acting on the character lattice: the
@@ -38,29 +40,33 @@ simple roots and by the normalised squared lengths `ℓ` of `TauCeti.DynkinType.
 (A x) i = ℓ (σ i) * x (σ i),
 ```
 
-with `σ` the pinned `TauCeti.lengthPermRankTwo` for `G₂` and `TauCeti.lengthPermF4` for `F₄`. On
-the simple roots this reads `A (α (σ i)) = ℓ (σ i) • α i`, which is the defining relation
+with `σ` the pinned `TauCeti.lengthPermRankTwo` for `B₂` and `G₂` and `TauCeti.lengthPermF4` for
+`F₄`. On the simple roots this reads `A (α (σ i)) = ℓ (σ i) • α i`, which is the defining relation
 `f (b α) = q α · α` of a special isogeny of root data, with the isogeny exponent `q` at a simple
 root the *other* length; squaring it gives `A ^ 2 = p`, since `ℓ` takes the two values `1` and `p`
-and `σ` exchanges them. `TauCeti.DynkinType.g2SpecialIsogeny_comp_self` and its `F₄` counterpart
-are that square relation, in the form `τ ∘ τ = Frob_p` on root data.
+and `σ` exchanges them. `TauCeti.DynkinType.b2SpecialIsogeny_comp_self` and its `G₂` and `F₄`
+counterparts are that square relation, in the form `τ ∘ τ = Frob_p` on root data.
 
-The tables of `TauCeti.DynkinType.g2SpecialIsogenyIndex` and its `F₄` counterpart extend `σ` from
-the simple roots to all twelve, respectively forty-eight, roots. They are not free choices either:
-`A` is invertible over `ℚ`, so the index bijection and the exponents are determined by the matrix,
-and the tables merely record the resulting values so that the defining equations reduce.
+The index tables extend `σ` from the simple roots to all eight, twelve, respectively forty-eight,
+roots. They are not free choices either: `A` is invertible over `ℚ`, so the index bijection and
+the exponents are determined by the matrix, and the tables merely record the resulting values so
+that the defining equations reduce.
 
-Both sets of tables and their matrix equations already exist:
+All three sets of tables and their matrix equations already exist, in
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/B/SpecialMap.lean`,
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/G2/SpecialMap.lean` and
-`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/F4/SpecialMap.lean` supply the matrices
-`TauCeti.DynkinType.g2SpecialIsogenyMatrix` and `TauCeti.DynkinType.f4SpecialIsogenyMatrix`, the
-index bijections `TauCeti.DynkinType.g2SpecialIsogenyIndexEquiv` and
-`TauCeti.DynkinType.f4SpecialIsogenyIndexEquiv`, and the squared-length tables
-`TauCeti.DynkinType.g2Length` and `TauCeti.DynkinType.f4Length` that are the exponents. All this
-file adds is the bundled isogeny in each case, and the relations that are statements about it.
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/F4/SpecialMap.lean`: they supply the
+matrices, the index bijections, and the exponents. The `G₂` and `F₄` data are tabulated on the
+root indices of their own pinned datum, so the squared-length tables
+`TauCeti.DynkinType.g2Length` and `TauCeti.DynkinType.f4Length` are the exponents outright, while
+the rank-two specialisation of the uniform type `Bₙ` enumeration carries its own transported
+exponent `TauCeti.DynkinType.b2SpecialIsogenyExponent`. All this file adds is the bundled isogeny
+in each case, and the relations that are statements about it.
 
 ## Main definitions
 
+* `TauCeti.DynkinType.b2SpecialIsogeny`: the special isogeny of the pinned `B₂` root datum,
+  belonging to characteristic two.
 * `TauCeti.DynkinType.g2SpecialIsogeny`: the special isogeny of the pinned `G₂` root datum,
   belonging to characteristic three.
 * `TauCeti.DynkinType.f4SpecialIsogeny`: the special isogeny of the pinned `F₄` root datum,
@@ -68,13 +74,16 @@ file adds is the bundled isogeny in each case, and the relations that are statem
 
 ## Main results
 
-* `TauCeti.DynkinType.g2SpecialIsogeny_comp_self` and
+* `TauCeti.DynkinType.b2SpecialIsogeny_comp_self`,
+  `TauCeti.DynkinType.g2SpecialIsogeny_comp_self` and
   `TauCeti.DynkinType.f4SpecialIsogeny_comp_self`: composing the special isogeny with itself gives
   scaling by the characteristic, which is the root-datum form of `τ ^ 2 = Frob_p`.
-* `TauCeti.DynkinType.g2SpecialIsogeny_weightMap_root_castLE` and
+* `TauCeti.DynkinType.b2SpecialIsogeny_weightMap_root_typeBSimpleIndex`,
+  `TauCeti.DynkinType.g2SpecialIsogeny_weightMap_root_castLE` and
   `TauCeti.DynkinType.f4SpecialIsogeny_weightMap_root_castAdd`: the defining relation on the simple
   roots, in the form the group-scheme isogeny is pinned by.
-* `TauCeti.DynkinType.g2SpecialIsogeny_exponent_castLE_eq_one_iff` and its `F₄` counterpart:
+* `TauCeti.DynkinType.b2SpecialIsogeny_exponent_typeBSimpleIndex_eq_one_iff`,
+  `TauCeti.DynkinType.g2SpecialIsogeny_exponent_castLE_eq_one_iff` and its `F₄` counterpart:
   on the simple roots the exponent is `1` exactly at a short node, read off as
   `TauCeti.DynkinType.IsLongSimpleRoot`.
 
@@ -85,9 +94,11 @@ This is the target "Special isogenies in characteristics two and three" of Layer
 `τ` is built from it. Its consumer is milestone L2 of `TauCetiRoadmap/CFSGStatement/README.md`,
 which selects `τ_X` for a `TauCeti.SuzukiReeIndex` and takes odd powers of it, and whose exponent
 convention is stated against `TauCeti.DynkinType.IsLongSimpleRoot` and the length permutations
-pinned in `TauCeti/LinearAlgebra/RootSystem/DiagramPermutations.lean`. The remaining case `B₂` is
-not here: its pinned datum `TauCeti.DynkinType.typeBSimplyConnectedRootDatum` is built uniformly in
-the rank through an enumeration whose rank-two specialisation needs its own coordinate work.
+pinned in `TauCeti/LinearAlgebra/RootSystem/DiagramPermutations.lean`. With `B₂` here the
+root-datum half of that target is complete, since
+`TauCeti.DynkinType.exists_isSpecialNodePerm_iff` shows that no other valid Dynkin type admits a
+length-exchanging node permutation at all; what the target still asks for is the lift of these
+three to morphisms of the pinned group schemes, and their action on the root subgroups.
 
 * R. Steinberg, *Endomorphisms of linear algebraic groups*, Memoirs AMS 80 (1968), §11.
 * Schémas en groupes (SGA 3), Exposé XXI, 6.8, and Exposé XXII.
@@ -99,6 +110,96 @@ public section
 namespace TauCeti.DynkinType
 
 open _root_.Matrix
+
+/-! ## `B₂` in characteristic two -/
+
+/-- **The special isogeny of the pinned `B₂` root datum**, belonging to characteristic two. Its
+character-lattice map is `TauCeti.DynkinType.b2SpecialIsogenyMatrix`; the map on cocharacters is
+the transposed matrix, and the two are related by the dot-product pairing of the datum. Unlike the
+`G₂` and `F₄` cases the rescaling exponent is not a squared-length table read off the coordinate
+enumeration, because the pinned type `Bₙ` datum indexes its roots uniformly in the rank: it is the
+transported table `TauCeti.DynkinType.b2SpecialIsogenyExponent`, still `1` on a short root and `2`
+on a long one. -/
+noncomputable def b2SpecialIsogeny :
+    RootPairingIsogeny (typeBSimplyConnectedRootDatum 2) (typeBSimplyConnectedRootDatum 2) :=
+  RootPairingIsogeny.ofMatrix _ _ toLinearMap_typeBSimplyConnectedRootDatum
+    toLinearMap_typeBSimplyConnectedRootDatum b2SpecialIsogenyMatrix b2SpecialIsogenyIndexEquiv
+    b2SpecialIsogenyExponent b2SpecialIsogenyExponent_pos
+    (by rw [det_b2SpecialIsogenyMatrix]; norm_num)
+    b2SpecialIsogenyMatrix_mulVec_root
+    b2SpecialIsogenyMatrix_transpose_mulVec_coroot
+
+@[simp] lemma b2SpecialIsogeny_weightMap :
+    b2SpecialIsogeny.weightMap = b2SpecialIsogenyMatrix.mulVecLin := by
+  rw [b2SpecialIsogeny]
+  simp
+
+@[simp] lemma b2SpecialIsogeny_coweightMap :
+    b2SpecialIsogeny.coweightMap = b2SpecialIsogenyMatrixᵀ.mulVecLin := by
+  rw [b2SpecialIsogeny]
+  simp
+
+@[simp] lemma b2SpecialIsogeny_indexEquiv_apply (i : Fin (2 * 2 ^ 2)) :
+    b2SpecialIsogeny.indexEquiv i = b2SpecialIsogenyIndexEquiv i := by
+  rw [b2SpecialIsogeny]
+  simp
+
+@[simp] lemma b2SpecialIsogeny_exponent (i : Fin (2 * 2 ^ 2)) :
+    b2SpecialIsogeny.exponent i = b2SpecialIsogenyExponent i := by
+  rw [b2SpecialIsogeny]
+  simp
+
+/-- **The square of the special isogeny of `B₂` is scaling by two.** This is the root-datum form of
+the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`; the
+square relation is the root-datum input for constructing the exceptional Steinberg endomorphisms
+used to define the Suzuki groups. -/
+theorem b2SpecialIsogeny_comp_self :
+    b2SpecialIsogeny.comp b2SpecialIsogeny =
+      RootPairingIsogeny.smulId (typeBSimplyConnectedRootDatum 2) 2 := by
+  refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
+  · simpa using b2SpecialIsogenyMatrix_mulVecLin_comp_self
+  · simpa using b2SpecialIsogenyMatrix_transpose_mulVecLin_comp_self
+  · ext i
+    simpa only [RootPairingIsogeny.comp_indexEquiv, RootPairingIsogeny.smulId_indexEquiv,
+      Equiv.trans_apply, Equiv.refl_apply, b2SpecialIsogeny_indexEquiv_apply] using
+      congrArg Fin.val (b2SpecialIsogenyIndexEquiv_apply_apply i)
+  · funext i
+    simp only [RootPairingIsogeny.comp_exponent, RootPairingIsogeny.smulId_exponent]
+    have htwo : ((2 : ℕ+) : ℤ) = 2 := by norm_num
+    rw [htwo]
+    simpa only [b2SpecialIsogeny_exponent, b2SpecialIsogeny_indexEquiv_apply] using
+      b2SpecialIsogenyExponent_mul_exponent i
+
+/-- **The defining relation of the special isogeny of `B₂` on the simple roots.** The character
+map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
+the squared length of that other node. This is the root-datum form of
+`τ (x_α (t)) = x_{σ(α)} (t ^ q)` for `α` the simple root at `i`: the character map is the
+pullback along `τ`, so the coefficient `(B 2).rootLength (lengthPermRankTwo i)` here is `q`,
+indexed by `α` and not by `σ(α)`. Since `σ` exchanges the two lengths, `q` is `1` when `α` is long
+and `2` when `α` is short. Read instead at the pullback index `σ(α)`, which is how the isogeny's
+`exponent` field is indexed, the same table takes the value `1` at the short node; that is
+`TauCeti.DynkinType.b2SpecialIsogeny_exponent_typeBSimpleIndex_eq_one_iff`. -/
+theorem b2SpecialIsogeny_weightMap_root_typeBSimpleIndex (i : Fin 2) :
+    b2SpecialIsogeny.weightMap
+        ((typeBSimplyConnectedRootDatum 2).root (typeBSimpleIndex 2 (lengthPermRankTwo i))) =
+      (B 2).rootLength (lengthPermRankTwo i) •
+        (typeBSimplyConnectedRootDatum 2).root (typeBSimpleIndex 2 i) := by
+  rw [b2SpecialIsogeny.root_weightMap]
+  simp only [b2SpecialIsogeny_exponent, b2SpecialIsogeny_indexEquiv_apply,
+    b2SpecialIsogenyExponent_typeBSimpleIndex, b2SpecialIsogenyIndexEquiv_typeBSimpleIndex,
+    lengthPermRankTwo_lengthPermRankTwo]
+  simp only [Int.cast_id]
+
+/-- The exponent of the special isogeny of `B₂` at a simple root is `1` exactly at the short node.
+The `exponent` field is indexed by the source of the character map, which is `σ(α)` and not `α` in
+`τ (x_α (t)) = x_{σ(α)} (t ^ q)`; as `σ` exchanges the two lengths, the value `1` at the short node
+`σ(α)` is the exponent `q = 1` at the long simple root `α`. So this is the convention that the
+exceptional isogeny raises a long root parameter to the first power and a short one to the
+characteristic. -/
+theorem b2SpecialIsogeny_exponent_typeBSimpleIndex_eq_one_iff (i : Fin 2) :
+    b2SpecialIsogeny.exponent (typeBSimpleIndex 2 i) = 1 ↔ ¬ (B 2).IsLongSimpleRoot i := by
+  rw [b2SpecialIsogeny_exponent]
+  exact b2SpecialIsogenyExponent_typeBSimpleIndex_eq_one_iff i
 
 /-! ## `G₂` in characteristic three -/
 

@@ -88,7 +88,7 @@ theorem kostantToralCoordinate_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
       v ≫ kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt) :
     u = v := by
   refine (CommHopfAlgCat.equalizerHopfIdeal_eq_bot_iff u v).1
-    (CommHopfAlgCat.eq_bot_of_comap_le _ ?_)
+    (CommHopfAlgCat.eq_bot_of_comapOfSurjective_le _ ?_)
   rw [le_kostantToralDefiningIdeal_iff]
   -- The equalizer pulls back to an ideal killed by each original generator. The two branches
   -- differ only in whether that generator is a root subgroup or the weight torus.
@@ -98,7 +98,7 @@ theorem kostantToralCoordinate_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
         (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
             (kostantToralDefiningIdeal e h ρ M hM hnil b wt)).hom x ∈
           CommHopfAlgCat.equalizerHopfIdeal u v :=
-      HopfIdeal.mem_comap.1 hx
+      HopfIdeal.mem_comapOfSurjective.1 hx
     have hzero :
         (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).hom
             ((CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
@@ -121,7 +121,7 @@ theorem kostantToralCoordinate_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
         (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
             (kostantToralDefiningIdeal e h ρ M hM hnil b wt)).hom x ∈
           CommHopfAlgCat.equalizerHopfIdeal u v :=
-      HopfIdeal.mem_comap.1 hx
+      HopfIdeal.mem_comapOfSurjective.1 hx
     have hzero :
         (kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt).hom
             ((CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)

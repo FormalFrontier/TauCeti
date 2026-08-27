@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Dynamics.Flow
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 public import Mathlib.Analysis.ODE.Basic
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
@@ -48,9 +49,16 @@ route to Morse homology.
   descent away from critical points.
 * `TauCeti.IsIntegralCurveOn.integral_norm_gradient_sq_eq_sub` and
   `TauCeti.IsIntegralCurve.integral_norm_gradient_sq_eq_sub`: the energy identity.
+* `TauCeti.IsIntegralCurve.gradient_eq_zero_of_eventually_const_value`: a trajectory on which
+  `f` is eventually constant passes through critical points.
 * `TauCeti.IsIntegralCurve.gradient_eq_zero_of_periodic` and
   `TauCeti.IsIntegralCurve.eq_of_periodic_neg_gradient`: a periodic negative gradient trajectory
   consists entirely of critical points and is constant.
+* `Flow.IsNegativeGradient`: every orbit of a flow solves the negative gradient equation.
+* `Flow.IsNegativeGradient.isIntegralCurve`: the orbit curve through a point, as an integral
+  curve of the negative gradient field.
+* `Flow.IsNegativeGradient.orbit_antitone`: the defining function is antitone along every orbit
+  of its negative gradient flow.
 
 ## References
 
@@ -185,6 +193,18 @@ theorem integral_norm_gradient_sq_eq_sub
   IsIntegralCurveOn.integral_norm_gradient_sq_eq_sub (hγ.isIntegralCurveOn univ)
     (subset_univ _) (fun t _ ↦ hf t) hint
 
+/-- If the value of `f` is eventually constant along a global negative gradient trajectory, then
+the gradient of `f` vanishes at the corresponding point. -/
+theorem gradient_eq_zero_of_eventually_const_value
+    (hγ : IsIntegralCurve γ (fun _ x ↦ -∇ f x)) (hf : DifferentiableAt ℝ f (γ t))
+    {c : ℝ} (hval : ∀ᶠ u in 𝓝 t, f (γ u) = c) :
+    ∇ f (γ t) = 0 := by
+  have hzero : deriv (f ∘ γ) t = 0 := by
+    have heq : (f ∘ γ) =ᶠ[𝓝 t] fun _ ↦ c := hval
+    rw [heq.deriv_eq, deriv_const]
+  rw [(hasDerivAt_comp_neg_gradient hγ hf).deriv] at hzero
+  simpa only [neg_eq_zero, sq_eq_zero_iff, norm_eq_zero] using hzero
+
 /-- A periodic negative gradient trajectory consists entirely of critical points.  Thus negative
 gradient dynamics has no nonconstant periodic orbit. -/
 theorem gradient_eq_zero_of_periodic
@@ -206,15 +226,12 @@ theorem gradient_eq_zero_of_periodic
         _ = (f ∘ γ) t := by
           simpa only [Function.comp_apply, sub_add_cancel] using (congrArg f (hper (t - T))).symm
     · exact hanti hu.2
-  have hlocal : (f ∘ γ) =ᶠ[𝓝 t] fun _ ↦ (f ∘ γ) t := by
+  have hconst : ∀ᶠ u in 𝓝 t, f (γ u) = (f ∘ γ) t := by
     filter_upwards [Ioo_mem_nhds (sub_lt_self t hT) (lt_add_of_pos_right t hT)] with u hu
     rcases le_total u t with hut | htu
     · exact hleft u ⟨hu.1.le, hut⟩
     · exact hright u ⟨htu, hu.2.le⟩
-  have hzero : deriv (f ∘ γ) t = 0 := by
-    rw [hlocal.deriv_eq, deriv_const]
-  rw [(hasDerivAt_comp_neg_gradient hγ (hf t)).deriv] at hzero
-  simpa only [neg_eq_zero, sq_eq_zero_iff, norm_eq_zero] using hzero
+  exact gradient_eq_zero_of_eventually_const_value hγ (hf t) hconst
 
 /-- A periodic negative gradient trajectory is constant. -/
 theorem eq_of_periodic_neg_gradient
@@ -229,3 +246,29 @@ theorem eq_of_periodic_neg_gradient
 end IsIntegralCurve
 
 end TauCeti
+
+namespace Flow
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+  {φ : _root_.Flow ℝ E}
+
+/-- A real flow is the **negative gradient flow** of `f` when each of its orbit curves solves
+`γ' = -∇f(γ)`.  Regularity and uniqueness assumptions used to construct the flow remain
+separate; this predicate records precisely the differential equation needed by its dynamical
+consequences. -/
+def IsNegativeGradient (φ : _root_.Flow ℝ E) (f : E → ℝ) : Prop :=
+  ∀ x, IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y)
+
+/-- Each orbit curve of a negative gradient flow solves the negative gradient equation. -/
+theorem IsNegativeGradient.isIntegralCurve (hφ : IsNegativeGradient φ f) (x : E) :
+    IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y) :=
+  hφ x
+
+/-- The defining function is antitone along every orbit of its negative gradient flow. -/
+theorem IsNegativeGradient.orbit_antitone (hφ : IsNegativeGradient φ f) (x : E)
+    (hf : ∀ t, DifferentiableAt ℝ f (φ t x)) :
+    Antitone (fun t ↦ f (φ t x)) := by
+  simpa only [Function.comp_def] using
+    TauCeti.IsIntegralCurve.antitone_comp_neg_gradient (hφ x) hf
+
+end Flow

@@ -55,9 +55,10 @@ The hypothesis `[MeasurableSpace.CountablyGenerated α]` is what the final promo
 all it needs: no measure on `α` is constructed here, so no standard-Borel or non-empty structure
 is required.
 
-The coordinates are only assumed a.e. measurable (`∀ i, AEMeasurable (X i) μ`), as elsewhere in the
-measure-theoretic exchangeability API: every statement here sees `X` through integrals, hence only
-modulo `μ`-a.e. equality.
+Coordinatewise a.e. measurability is not assumed: it comes from the `ConditionallyIIDWith` witness
+through `ConditionallyIIDWith.aemeasurable`.  A.e. measurability is all that is ever needed, as
+elsewhere in the measure-theoretic exchangeability API, since every statement here sees `X` through
+integrals and hence only modulo `μ`-a.e. equality.
 -/
 
 public section
@@ -153,7 +154,7 @@ that theorem has the same hypotheses and makes the integrand a.e. zero, so once 
 this bound is a trivial consequence and carries no independent content. -/
 private theorem ConditionallyIIDWith.integral_directing_sub_sq_le_four_div
     [IsProbabilityMeasure μ]
-    (hX : ∀ i, AEMeasurable (X i) μ) (h : ConditionallyIIDWith μ X ν)
+    (h : ConditionallyIIDWith μ X ν)
     (h' : ConditionallyIIDWith μ X ν') (hB : MeasurableSet B) {n : ℕ} (hn : n ≠ 0) :
     ∫ ω, (((ν ω : Measure α) B).toReal - ((ν' ω : Measure α) B).toReal) ^ 2 ∂μ ≤ 4 / n := by
   have hqm : ∀ ρ : Ω → ProbabilityMeasure α, Measurable ρ →
@@ -167,7 +168,7 @@ private theorem ConditionallyIIDWith.integral_directing_sub_sq_le_four_div
   have hem : ∀ m : ℕ, AEMeasurable (fun ω =>
       (m : ℝ)⁻¹ * ∑ i ∈ Finset.range m, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω) μ := fun m =>
     aemeasurable_const.mul (Finset.aemeasurable_fun_sum _ fun i _ =>
-      measurable_one.aemeasurable.indicator₀ ((hX i).nullMeasurableSet_preimage hB))
+      measurable_one.aemeasurable.indicator₀ ((h.aemeasurable i).nullMeasurableSet_preimage hB))
   have heb : ∀ (m : ℕ) (ω : Ω),
       |(m : ℝ)⁻¹ * ∑ i ∈ Finset.range m, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω| ≤ 1 :=
     fun m ω => abs_average_indicator_le_one (fun i => X i ⁻¹' B) m ω
@@ -182,8 +183,8 @@ private theorem ConditionallyIIDWith.integral_directing_sub_sq_le_four_div
         (ae_of_all _ (heb n)) (ae_of_all _ (habs ν)))
       (integrable_sub_sq_of_abs_le_one (hem n) (hqm ν' h'.measurable_directing).aemeasurable
         (ae_of_all _ (heb n)) (ae_of_all _ (habs ν')))
-      (h.integral_empiricalFrequency_sub_sq_le (fun i _ => hX i) hB hn)
-      (h'.integral_empiricalFrequency_sub_sq_le (fun i _ => hX i) hB hn)
+      (h.integral_empiricalFrequency_sub_sq_le hB hn)
+      (h'.integral_empiricalFrequency_sub_sq_le hB hn)
   rw [div_eq_mul_inv]
   linarith
 
@@ -193,7 +194,7 @@ almost everywhere.
 Both are approximated in `L²` by the *same* empirical frequencies, at a rate that does not depend
 on the witness, so the triangle inequality forces their difference to vanish in `L²`. -/
 theorem ConditionallyIIDWith.ae_measure_apply_eq [IsProbabilityMeasure μ]
-    (hX : ∀ i, AEMeasurable (X i) μ) (h : ConditionallyIIDWith μ X ν)
+    (h : ConditionallyIIDWith μ X ν)
     (h' : ConditionallyIIDWith μ X ν') (hB : MeasurableSet B) :
     (fun ω => (ν ω : Measure α) B) =ᵐ[μ] fun ω => (ν' ω : Measure α) B := by
   set d : Ω → ℝ := fun ω =>
@@ -203,7 +204,8 @@ theorem ConditionallyIIDWith.ae_measure_apply_eq [IsProbabilityMeasure μ]
       integrable_toReal_directing_sub_sq h.measurable_directing h'.measurable_directing hB
   -- `hd_def` turns the `set` wrapper `d` into the explicit difference the rate lemma is stated for.
   have hbound : ∀ n : ℕ, 1 ≤ n → ∫ ω, d ω ^ 2 ∂μ ≤ 4 / n := fun n hn => by
-    simpa only [hd_def] using h.integral_directing_sub_sq_le_four_div hX h' hB (n := n) (by omega)
+    simpa only [hd_def] using
+      h.integral_directing_sub_sq_le_four_div h' hB (n := n) (by omega)
   have hle : ∫ ω, d ω ^ 2 ∂μ ≤ 0 :=
     ge_of_tendsto (tendsto_const_div_atTop_nhds_zero_nat (4 : ℝ))
       (eventually_atTop.2 ⟨1, fun n hn => hbound n hn⟩)
@@ -253,9 +255,9 @@ directing measure is another mixing representative, and only the mixing law `μ.
 directing measures on a countable generating algebra and never constructs a measure, so neither
 standard-Borel structure nor non-emptiness is needed. -/
 theorem conditionallyIID_ae_unique [IsProbabilityMeasure μ] [CountablyGenerated α]
-    (hX : ∀ i, AEMeasurable (X i) μ) (h : ConditionallyIIDWith μ X ν)
+    (h : ConditionallyIIDWith μ X ν)
     (h' : ConditionallyIIDWith μ X ν') : ν =ᵐ[μ] ν' :=
-  ae_eq_of_forall_apply_ae_eq fun _ hs => h.ae_measure_apply_eq hX h' hs
+  ae_eq_of_forall_apply_ae_eq fun _ hs => h.ae_measure_apply_eq h' hs
 
 end Probability
 

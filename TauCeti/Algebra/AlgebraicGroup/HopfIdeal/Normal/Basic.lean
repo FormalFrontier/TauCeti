@@ -36,8 +36,8 @@ cut out by `J`, namely its normal closure.
 * `TauCeti.HopfIdeal.isNormal_bot`: the zero Hopf ideal is normal.
 * `TauCeti.HopfIdeal.isNormal_iSup`: arbitrary suprema of normal Hopf ideals are normal.
 * `TauCeti.HopfIdeal.normalCore`: the largest normal Hopf ideal below a given Hopf ideal.
-* `TauCeti.HopfIdeal.IsNormal.comap_of_bijective`: normality is preserved by pullback along a
-  bijective bialgebra morphism.
+* `TauCeti.HopfIdeal.IsNormal.comapOfSurjective_of_bijective`: normality is preserved by
+  pullback along a bijective bialgebra morphism.
 * `TauCeti.CommHopfAlgCat.quotientPointsSubgroup_normal`: a normal Hopf ideal cuts out a normal
   subgroup on points over every commutative value algebra.
 
@@ -237,15 +237,16 @@ variable {H K : Type v} [CommRing H] [CommRing K]
 variable [HopfAlgebra R H] [HopfAlgebra R K]
 
 /-- Pulling a normal Hopf ideal back along a bijective bialgebra morphism preserves normality. -/
-theorem IsNormal.comap_of_bijective {I : HopfIdeal R K} (hI : I.IsNormal) (f : H →ₐc[R] K)
+theorem IsNormal.comapOfSurjective_of_bijective {I : HopfIdeal R K} (hI : I.IsNormal)
+    (f : H →ₐc[R] K)
     (hinj : Function.Injective f) (hsurj : Function.Surjective f) :
-    (I.comap f hsurj).IsNormal := by
+    (I.comapOfSurjective f hsurj).IsNormal := by
   apply (CommHopfAlgCat.isNormal_iff_quotientPointsSubgroup_normal
-    (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj)).mpr
+    (_root_.CommHopfAlgCat.of R H) (I.comapOfSurjective f hsurj)).mpr
   intro A
   let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
   let E := AlgHom.mapDomainMulEquiv (A := A) e
-  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff
     f hinj hsurj I A
   constructor
   intro n hn g
