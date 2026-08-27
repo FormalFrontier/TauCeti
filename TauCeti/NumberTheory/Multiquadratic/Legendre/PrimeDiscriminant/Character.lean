@@ -133,9 +133,9 @@ theorem primeDiscriminantCharFun_mod_right' {P m n : ℤ}
     rw [ZMod.χ₈_int_mod_eight m, ZMod.χ₈_int_mod_eight n, h]
   · subst P
     norm_num at h
+    have h4 : m % 4 = n % 4 := by omega
     rw [ZMod.χ₈'_int_eq_χ₄_mul_χ₈, ZMod.χ₈'_int_eq_χ₄_mul_χ₈, ZMod.χ₄_int_mod_four m,
-      ZMod.χ₄_int_mod_four n, ZMod.χ₈_int_mod_eight m, ZMod.χ₈_int_mod_eight n, h,
-      show m % 4 = n % 4 by omega]
+      ZMod.χ₄_int_mod_four n, ZMod.χ₈_int_mod_eight m, ZMod.χ₈_int_mod_eight n, h, h4]
   · exact jacobiSym.mod_left' h
 
 /-- An integer is coprime to an even prime discriminant exactly when it is odd: the only prime

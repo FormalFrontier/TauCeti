@@ -53,6 +53,8 @@ The genus characters and this relation are classical; see D. A. Cox, *Primes of 
 * `TauCeti.Multiquadratic.primeDiscriminantCharFun_eq_one_of_mem_of_four_mul_eq_sq_sub_mul_sq` and
   `TauCeti.Multiquadratic.genusCharFun_eq_one_of_four_mul_eq_sq_sub_mul_sq`: the same relation for
   a prime discriminant, and for a genus character, of a prime-discriminant factorization of `D`.
+* `TauCeti.Multiquadratic.genusCharFun_mod_right'`: a genus character is a character modulo the
+  absolute value of the product of its indices.
 * `TauCeti.Multiquadratic.genusCharFun_norm_eq_one`: a genus character of `D` is trivial at the
   norm of an algebraic integer of `ℚ(√d)` coprime to the product of its indices, and
   `TauCeti.Multiquadratic.norm_ne_of_genusCharFun_eq_neg_one` is the resulting obstruction;
@@ -117,8 +119,8 @@ theorem primeDiscriminantCharFun_eq_one_of_isEvenPrimeDiscriminant_of_four_mul_e
   obtain ⟨R, hR⟩ : (4 : ℤ) ∣ P := by rcases hP with rfl | rfl | rfl <;> norm_num
   rw [hR] at h
   have hx4 : (4 : ℤ) ∣ x ^ 2 := ⟨n + R * (Q * y ^ 2), by linear_combination -h⟩
-  obtain ⟨u, rfl⟩ :=
-    Int.prime_two.dvd_of_dvd_pow ((show (2 : ℤ) ∣ 4 by norm_num).trans hx4)
+  have h24 : (2 : ℤ) ∣ 4 := by norm_num
+  obtain ⟨u, rfl⟩ := Int.prime_two.dvd_of_dvd_pow (h24.trans hx4)
   have hn' : n = u ^ 2 - R * (Q * y ^ 2) :=
     mul_left_cancel₀ (a := (4 : ℤ)) (by norm_num) (by linear_combination h)
   have hQ8 : Q % 8 = 1 ∨ Q % 8 = 5 := by omega
@@ -229,6 +231,18 @@ theorem genusCharFun_def (s : Finset ℤ) (n : ℤ) :
 /-- A genus character takes the value `1` at `1`. -/
 @[simp] theorem genusCharFun_at_one (s : Finset ℤ) : genusCharFun s 1 = 1 := by
   simp [genusCharFun_def]
+
+/-- A genus character depends only on the residue class modulo the absolute value of the product
+of its prime-discriminant indices: each factor is a character modulo `|P|`
+(`primeDiscriminantCharFun_mod_right'`), and `P` divides that product. -/
+theorem genusCharFun_mod_right' {s : Finset ℤ} {m n : ℤ}
+    (h : m % (∏ P ∈ s, P).natAbs = n % (∏ P ∈ s, P).natAbs) :
+    genusCharFun s m = genusCharFun s n := by
+  rw [genusCharFun_def, genusCharFun_def]
+  refine Finset.prod_congr rfl fun P hP => primeDiscriminantCharFun_mod_right' ?_
+  have hdvd : (P.natAbs : ℤ) ∣ ((∏ P ∈ s, P).natAbs : ℤ) :=
+    Int.natCast_dvd_natCast.mpr (Int.natAbs_dvd_natAbs.mpr (Finset.dvd_prod_of_mem _ hP))
+  rw [← Int.emod_emod_of_dvd m hdvd, ← Int.emod_emod_of_dvd n hdvd, h]
 
 /-- A genus character vanishes exactly when its argument is not coprime to the product of its
 prime-discriminant indices. -/
