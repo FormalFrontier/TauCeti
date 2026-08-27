@@ -319,11 +319,8 @@ theorem discriminantPairing_typeE₆MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`.
-
-The two descent hypotheses are the numeric torsion facts `9 • (2/3) = 0` and `6 • (2/3) = 0` in
-`ℚ/ℤ`; they are discharged inline because they have no independent interest and this definition
-is `@[expose]`d, so its body may mention only public declarations. -/
+/-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`, whose generator has
+quadratic value `2/3`. -/
 @[expose] noncomputable def typeE₆StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
     (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
@@ -599,10 +596,8 @@ theorem discriminantPairing_typeE₇MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`.
-
-Both descent hypotheses are the numeric torsion fact `4 • (3/4) = 0` in `ℚ/ℤ`, discharged inline
-as for `typeE₆StandardQuadraticModule`. -/
+/-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`, whose generator has
+quadratic value `3/4`. -/
 @[expose] noncomputable def typeE₇StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
     (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
