@@ -119,7 +119,6 @@ theorem ord_smul_apply (x : F') : (σ • P).ord (σ x) = P.ord x := by
   simp
 
 /-- Membership in the valuation ring of `σ • P`, read off at `P`. -/
-@[simp]
 theorem mem_integers_smul_iff {x : F'} : x ∈ (σ • P).integers ↔ σ.symm x ∈ P.integers := by
   simp
 
