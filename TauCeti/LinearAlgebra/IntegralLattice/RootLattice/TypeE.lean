@@ -327,18 +327,8 @@ discriminant value `2/3` of the minuscule weight.  The two torsion conditions de
 cyclic construction are `9 · (2/3) = 6` and `6 · (2/3) = 4`, both integers. -/
 @[expose] noncomputable def typeE₆StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
-    (by
-      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
-      refine ⟨6, ?_⟩
-      rw [zsmul_eq_mul, zsmul_eq_mul]
-      push_cast
-      ring)
-    (by
-      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
-      refine ⟨4, ?_⟩
-      rw [zsmul_eq_mul, zsmul_eq_mul]
-      push_cast
-      ring)
+    (AddCircle.zsmul_coe_eq_zero (c := 6) (by push_cast; ring))
+    (AddCircle.zsmul_coe_eq_zero (c := 4) (by push_cast; ring))
 
 /-- The generator of the standard type-`E₆` quadratic module has value `2/3`. -/
 @[simp]
@@ -607,19 +597,10 @@ theorem discriminantPairing_typeE₇MinusculeWeightClass :
 discriminant value `3/4` of the minuscule weight.  Here `4` is at once the square and the twice
 condition demanded by the cyclic construction, and `4 · (3/4) = 3` is an integer. -/
 @[expose] noncomputable def typeE₇StandardQuadraticModule : FiniteQuadraticModule :=
-  FiniteQuadraticModule.cyclic 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
-    (by
-      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
-      refine ⟨3, ?_⟩
-      rw [zsmul_eq_mul, zsmul_eq_mul]
-      push_cast
-      ring)
-    (by
-      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
-      refine ⟨3, ?_⟩
-      rw [zsmul_eq_mul, zsmul_eq_mul]
-      push_cast
-      ring)
+  -- both conditions read `4 · (3/4) = 3`, so one proof term serves twice
+  have h : (4 : ℤ) • (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) = 0 :=
+    AddCircle.zsmul_coe_eq_zero (c := 3) (by push_cast; ring)
+  FiniteQuadraticModule.cyclic 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) h h
 
 /-- The generator of the standard type-`E₇` quadratic module has value `3/4`. -/
 @[simp]

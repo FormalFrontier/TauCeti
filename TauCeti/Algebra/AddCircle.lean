@@ -20,6 +20,8 @@ in the unit `ℤ`-submodule.
 
 * `AddCircle.coe_eq_zero_iff_mem_one`: vanishing in `AddCircle (1 : ℚ)` is membership in
   `(1 : Submodule ℤ ℚ)`.
+* `AddCircle.zsmul_coe_eq_zero`: an integer multiple of a rational number vanishes in
+  `AddCircle (1 : ℚ)` once that multiple is an integer.
 -/
 
 public section
@@ -36,5 +38,17 @@ theorem coe_eq_zero_iff_mem_one (q : ℚ) :
   · intro h
     obtain ⟨n, hn⟩ := Submodule.mem_one.mp h
     exact (coe_eq_zero_iff (1 : ℚ)).mpr ⟨n, by simpa using hn⟩
+
+/-- The multiple `k • x` of a rational number vanishes in `ℚ/ℤ` as soon as it is the integer `c`.
+
+This is the shape in which the torsion side conditions of the cyclic and Klein four presentations
+of a finite quadratic module arise: the witness `c` is supplied explicitly and the remaining
+arithmetic identity is a computation in `ℚ`. -/
+theorem zsmul_coe_eq_zero {k c : ℤ} {x : ℚ} (h : (k : ℚ) * x = c) :
+    k • ((x : ℚ) : AddCircle (1 : ℚ)) = 0 := by
+  rw [← coe_zsmul, coe_eq_zero_iff_mem_one]
+  refine Submodule.mem_one.mpr ⟨c, ?_⟩
+  rw [zsmul_eq_mul, h]
+  exact eq_intCast (algebraMap ℤ ℚ) c
 
 end AddCircle

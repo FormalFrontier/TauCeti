@@ -1124,18 +1124,8 @@ form of the checkerboard lattice exactly when `n` is odd, since only then does t
 generate. -/
 @[expose] noncomputable def checkerboardCyclicQuadraticModule (n : ℕ) : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 4 (((n : ℚ) / 8 : ℚ) : AddCircle (1 : ℚ))
-    (by
-      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
-      refine ⟨2 * n, ?_⟩
-      rw [zsmul_eq_mul, zsmul_eq_mul]
-      push_cast
-      ring)
-    (by
-      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
-      refine ⟨n, ?_⟩
-      rw [zsmul_eq_mul, zsmul_eq_mul]
-      push_cast
-      ring)
+    (AddCircle.zsmul_coe_eq_zero (c := 2 * n) (by push_cast; ring))
+    (AddCircle.zsmul_coe_eq_zero (c := n) (by push_cast; ring))
 
 omit [NeZero n] in
 /-- The generator of the cyclic model has quadratic value `n / 8`. -/
