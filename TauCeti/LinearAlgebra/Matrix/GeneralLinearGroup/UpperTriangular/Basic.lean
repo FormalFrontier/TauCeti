@@ -77,14 +77,9 @@ theorem isUpperTriangular (g : upperTriangularGroup m R) :
 
 /-- Apply a ring homomorphism entrywise to an invertible upper-triangular matrix. -/
 def map {S : Type v} [CommRing S] (phi : R →+* S) :
-    upperTriangularGroup m R →* upperTriangularGroup m S where
-  toFun g := ⟨Matrix.GeneralLinearGroup.map phi g.1,
-    mem_iff.mpr <| by
-      intro i j hji
-      simpa only [Matrix.GeneralLinearGroup.map_apply, Matrix.map_apply] using
-        (isUpperTriangular g).map phi hji⟩
-  map_one' := Subtype.ext (map_one _)
-  map_mul' x y := Subtype.ext (map_mul _ x.1 y.1)
+    upperTriangularGroup m R →* upperTriangularGroup m S :=
+  ((Matrix.GeneralLinearGroup.map phi).domRestrict (upperTriangularGroup m R)).codRestrict
+    (upperTriangularGroup m S) fun g ↦ mem_iff.mpr ((isUpperTriangular g).map phi)
 
 /-- The matrix underlying an entrywise-mapped upper-triangular element is the entrywise map of
 its underlying matrix. -/

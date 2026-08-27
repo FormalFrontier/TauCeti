@@ -16,8 +16,9 @@ Over a field, the geometric points of the upper-triangular subgroup scheme are s
 points are identified with the abstract upper-triangular matrix group, whose diagonal quotient is
 abelian and whose upper-unitriangular kernel is nilpotent.
 
-## Main declaration
+## Main declarations
 
+* `isSolvable_points`: every algebra-valued point group is solvable.
 * `geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra`: the upper-triangular
   affine group has solvable geometric points.
 
@@ -37,12 +38,18 @@ namespace TauCeti.GeneralLinear.UpperTriangular
 
 universe u
 
+/-- Every algebra-valued point group of the upper-triangular affine group is solvable. -/
+theorem isSolvable_points (R : Type u) [CommRing R] (A : Type*) [CommRing A] [Algebra R A]
+    (n : ℕ) : Group.IsSolvable
+      (HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n) (CommAlgCat.of R A)) := by
+  let e := pointsMulEquiv (R := R) (n := n) (A := A)
+  exact Group.isSolvable_of_isSolvable_injective (f := e.toMonoidHom) e.injective
+
 /-- The upper-triangular affine group has a solvable group of geometric points. -/
 theorem geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra
     (k : Type u) [Field k] (n : ℕ) :
     geometricallySolvablePointsCommHopfAlgProperty k (coordinateHopfAlgebra k n) := by
   rw [geometricallySolvablePointsCommHopfAlgProperty_iff]
-  let e := pointsMulEquiv (R := k) (n := n) (A := AlgebraicClosure k)
-  exact Group.isSolvable_of_isSolvable_injective (f := e.toMonoidHom) e.injective
+  exact isSolvable_points k (AlgebraicClosure k) n
 
 end TauCeti.GeneralLinear.UpperTriangular

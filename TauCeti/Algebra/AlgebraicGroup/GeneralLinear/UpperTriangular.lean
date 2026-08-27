@@ -80,6 +80,7 @@ theorem mem_definingRelationSet_iff (x : GeneralLinear.coordinateHopfAlgebra R n
 
 /-- For the standard decreasing weights, the weight-parabolic relations are exactly the
 coordinates strictly below the diagonal. -/
+@[simp]
 theorem weightParabolicRelationSet_weights :
     GeneralLinear.weightParabolicRelationSet R (weights n) = definingRelationSet R n := by
   ext x
@@ -187,17 +188,14 @@ generic Hopf-ideal point subgroup with the upper-triangular matrix group. -/
 private noncomputable def hopfIdealPointsSubgroupMulEquiv :
     GeneralLinear.hopfIdealPointsSubgroup n (definingHopfIdeal R n) A ≃*
       upperTriangularGroup (Fin n) A :=
-  Subgroup.congrOfMapEq (MulEquiv.refl (GL (Fin n) A)) (by
-    change (GeneralLinear.hopfIdealPointsSubgroup n (definingHopfIdeal R n) A).map
-      (MonoidHom.id _) = upperTriangularGroup (Fin n) A
-    rw [Subgroup.map_id, hopfIdealPointsSubgroup_eq])
+  MulEquiv.subgroupCongr (hopfIdealPointsSubgroup_eq R n)
 
 /-- The subgroup transport does not change the underlying general-linear matrix. -/
 @[simp]
 private theorem coe_hopfIdealPointsSubgroupMulEquiv
     (g : GeneralLinear.hopfIdealPointsSubgroup n (definingHopfIdeal R n) A) :
     (hopfIdealPointsSubgroupMulEquiv R n g : GL (Fin n) A) = g := by
-  exact Subgroup.coe_congrOfMapEq_apply (MulEquiv.refl (GL (Fin n) A)) _ g
+  exact MulEquiv.subgroupCongr_apply _ g
 
 /-- The group of algebra-valued points of the upper-triangular coordinate Hopf algebra is the
 group of invertible upper-triangular matrices. -/
@@ -285,12 +283,8 @@ private noncomputable abbrev upperTriangularFunctorUnlifted :
     CommAlgCat.{w} R ⥤ GrpCat.{w} where
   obj A := GrpCat.of (upperTriangularGroup (Fin n) A)
   map phi := GrpCat.ofHom (UpperTriangularGroup.map phi.hom.toRingHom)
-  map_id _ := by
-    ext g i j
-    simp
-  map_comp _ _ := by
-    ext g i j
-    simp
+  map_id _ := congrArg GrpCat.ofHom UpperTriangularGroup.map_id
+  map_comp _ _ := congrArg GrpCat.ofHom (UpperTriangularGroup.map_comp _ _)
 
 /-- The group-valued functor sending an `R`-algebra to its invertible upper-triangular matrices. -/
 noncomputable def upperTriangularFunctor :
@@ -315,6 +309,9 @@ theorem upperTriangularFunctor_map {A B : CommAlgCat.{w} R} (phi : A ⟶ B) :
             ((UpperTriangularGroup.map phi.hom.toRingHom).comp
               MulEquiv.ulift.toMonoidHom)) ≫
         eqToHom (upperTriangularFunctor_obj (R := R) n B).symm := by
+  apply (conj_eqToHom_iff_heq _ _
+    (upperTriangularFunctor_obj (R := R) n A)
+    (upperTriangularFunctor_obj (R := R) n B)).2
   unfold upperTriangularFunctor upperTriangularFunctorUnlifted
   rfl
 
@@ -371,6 +368,8 @@ private noncomputable def hopfIdealPointsSubgroupNatIso :
                   ((UpperTriangularGroup.map phi.hom.toRingHom).comp
                     MulEquiv.ulift.toMonoidHom)) := by
         ext g i j
+        -- No component lemma exposes all four nested universe-lift and subgroup coercions at
+        -- once; this reduction leaves only the underlying matrix equality proved below.
         change ((hopfIdealPointsSubgroupMulEquiv R n
               (GeneralLinear.mapHopfIdealPointsSubgroup n (definingHopfIdeal R n)
                 phi.hom g.down) : GL (Fin n) B) i j) =
@@ -428,6 +427,8 @@ theorem pointsNatIso_hom_app_apply (A : CommAlgCat.{w} R)
     (eqToHom (upperTriangularFunctor_obj (R := R) n A)
       ((pointsNatIso (R := R) n).hom.app A f)).down =
       pointsMulEquiv (R := R) (n := n) (A := A) f := by
+  -- `Iso.trans` has no component lemma that rewrites through both universe transports, so expose
+  -- its two named natural-isomorphism components before using their computation rules.
   change (eqToHom (upperTriangularFunctor_obj (R := R) n A)
     ((hopfIdealPointsSubgroupNatIso R n).hom.app A
       ((GeneralLinear.hopfIdealPointsSubgroupNatIso n
@@ -444,6 +445,8 @@ theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
     (pointsNatIso (R := R) n).inv.app A
         (eqToHom (upperTriangularFunctor_obj (R := R) n A).symm g) =
       (pointsMulEquiv (R := R) (n := n) (A := A)).symm g.down := by
+  -- As above, this only exposes the two inverse components hidden by `Iso.trans`; the following
+  -- rewrites are the public computation lemmas for those components.
   change (GeneralLinear.hopfIdealPointsSubgroupNatIso n
       (definingHopfIdeal R n)).inv.app A
     ((hopfIdealPointsSubgroupNatIso R n).inv.app A
