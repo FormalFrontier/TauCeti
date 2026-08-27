@@ -15,8 +15,9 @@ public import TauCeti.Analysis.Normed.Algebra.LogOneAdd.Inverse
 This file defines the germ at `(0, 0)` represented by
 `logOneAdd (exp x * exp y - 1)` in a real normed algebra. Using a germ records
 that this expression is a local logarithm; its values away from the origin
-have no mathematical role. Completeness is required only for the axis,
-exponential, and analyticity equations.
+have no mathematical role. The definition, representative equation, and value
+at the origin need only a normed algebra; all subsequent results also assume
+completeness.
 
 The exponential of this germ is the product of the two exponentials. Its
 restrictions to either coordinate axis are the identity germ, and its chosen
@@ -31,6 +32,9 @@ representative is analytic at the origin.
 * `NormedSpace.localBCH_map_exp`: the local exponential equation.
 * `NormedSpace.analyticAt_localBCH_representative`: the defining representative
   is analytic at the origin.
+* `NormedSpace.localBCH_tendsto`: the germ tends to zero at the origin.
+* `NormedSpace.eq_localBCH_of_tendsto_of_map_exp_eq`: uniqueness among germs
+  tending to zero with the same exponential image.
 
 ## References
 
@@ -112,5 +116,27 @@ theorem analyticAt_localBCH_representative :
     AnalyticAt ℝ (fun p : A × A ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1)) (0, 0) := by
   simpa [Function.comp_def] using (analyticAt_logOneAdd (𝕂 := ℝ) (A := A)).comp_of_eq
     (analyticAt_exp_mul_exp_sub_one A) (by simp)
+
+/-- The local Baker--Campbell--Hausdorff germ tends to zero at the origin. -/
+theorem localBCH_tendsto : (localBCH A).Tendsto (𝓝 0) := by
+  rw [localBCH_def, Germ.coe_tendsto]
+  simpa only [exp_zero, mul_one, sub_self, logOneAdd_zero] using
+    (analyticAt_localBCH_representative A).continuousAt.tendsto
+
+/-- A germ tending to zero with the same exponential image as `localBCH` equals `localBCH`. -/
+theorem eq_localBCH_of_tendsto_of_map_exp_eq (f : Germ (𝓝 ((0, 0) : A × A)) A)
+    (hf : f.Tendsto (𝓝 0)) (hmap : f.map exp = (localBCH A).map exp) : f = localBCH A := by
+  induction f using Germ.inductionOn with
+  | _ g =>
+      rw [Germ.coe_tendsto] at hf
+      rw [localBCH_def, Germ.coe_eq]
+      have hmap' :
+          (fun p : A × A => exp (g p)) =ᶠ[𝓝 ((0, 0) : A × A)]
+            (fun p => exp p.1 * exp p.2) := by
+        rw [Germ.map_coe, localBCH_map_exp, Germ.coe_eq] at hmap
+        simpa only [Function.comp_def] using hmap
+      filter_upwards [hf.eventually (eventually_logOneAdd_exp_sub_one A), hmap'] with p hp hmap_p
+      rw [← hmap_p]
+      exact hp.symm
 
 end NormedSpace
