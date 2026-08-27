@@ -97,7 +97,6 @@ theorem coe_diagonalRoot {n : ℕ} (i j : Fin n) :
   by rw [diagonalCoroot]
 
 /-- A diagonal root is the corresponding root of the coordinate root datum. -/
-@[simp]
 theorem diagonalRoot_eq_coordinateRoot {n : ℕ} (i j : Fin n) :
     diagonalRoot i j = SplitTorus.coordinateRoot (ULift.up i) (ULift.up j) := by
   ext x
@@ -105,7 +104,6 @@ theorem diagonalRoot_eq_coordinateRoot {n : ℕ} (i j : Fin n) :
   split_ifs <;> rfl
 
 /-- A diagonal coroot is the corresponding coroot of the coordinate root datum. -/
-@[simp]
 theorem diagonalCoroot_eq_coordinateCoroot {n : ℕ} (i j : Fin n) :
     diagonalCoroot i j = SplitTorus.coordinateCoroot (ULift.up i) (ULift.up j) := by
   ext x
