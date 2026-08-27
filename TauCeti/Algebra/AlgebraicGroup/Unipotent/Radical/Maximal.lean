@@ -24,7 +24,9 @@ algebra and is therefore trivial, proving that `U` contains every candidate.
 
 ## Main declarations
 
-* `TauCeti.HopfIdeal.IsUnipotentRadicalCandidate.finrank_quotientLie_productOfNormal_eq_of_maximal`:
+The declarations are in `TauCeti.HopfIdeal.IsUnipotentRadicalCandidate`.
+
+* `finrank_quotientLie_productOfNormal_eq_of_maximal`:
   multiplying a maximal-dimensional candidate by any candidate preserves its Lie dimension.
 * `derivationCompLieHom_productOfNormal_bijective_of_maximal`:
   the inclusion of a maximal candidate into its product with another candidate induces a
@@ -54,11 +56,7 @@ variable {k : Type u} [Field k]
 variable {H : FiniteTypeCommHopfAlgCat.{u, u} k} {I J : HopfIdeal k H}
 
 /-- Multiplying a maximal-dimensional unipotent-radical candidate by any other candidate does
-not change its Lie dimension.
-
-The product contains the maximal candidate, so antitonicity of Lie dimension in the defining
-Hopf ideal gives one inequality. The product is itself a candidate, so maximality gives the
-other. -/
+not change its Lie dimension. -/
 theorem finrank_quotientLie_productOfNormal_eq_of_maximal
     (hI : IsUnipotentRadicalCandidate H I)
     (hmax : ∀ K : HopfIdeal k H, IsUnipotentRadicalCandidate H K →
@@ -88,10 +86,7 @@ theorem finrank_quotientLie_productOfNormal_eq_of_maximal
       (CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal)
 
 /-- The closed-subgroup inclusion from a maximal-dimensional unipotent-radical candidate into
-its product with another candidate induces a bijection on tangent Lie algebras.
-
-Injectivity is the tangent-space consequence of surjectivity of the coordinate quotient map;
-surjectivity then follows because the source and target have equal finite dimension. -/
+its product with another candidate induces a bijection on tangent Lie algebras. -/
 theorem derivationCompLieHom_productOfNormal_bijective_of_maximal
     (hI : IsUnipotentRadicalCandidate H I)
     (hmax : ∀ K : HopfIdeal k H, IsUnipotentRadicalCandidate H K →
@@ -108,15 +103,9 @@ theorem derivationCompLieHom_productOfNormal_bijective_of_maximal
           (FiniteTypeCommHopfAlgCat.quotientMapOfLe H
             (CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal)))) := by
   let hPI := CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal
-  let f := FiniteTypeCommHopfAlgCat.quotientMapOfLe H hPI
-  have hf : Function.Surjective (FiniteTypeCommHopfAlgCat.toBialgHom f) :=
-    FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective H hPI
-  have hinjective : Function.Injective
-      (derivationCompLieHom (B := k) (FiniteTypeCommHopfAlgCat.toBialgHom f)) :=
-    derivationCompLieHom_injective_of_surjective (FiniteTypeCommHopfAlgCat.toBialgHom f) hf
   have hfinrank := hI.finrank_quotientLie_productOfNormal_eq_of_maximal hmax hJ
-  refine ⟨hinjective, ?_⟩
-  exact (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hfinrank.symm).mp hinjective
+  exact HopfIdeal.derivationCompLieHom_quotientMapOfLe_bijective_of_finrank_eq
+    H hPI hfinrank.symm
 
 end HopfIdeal.IsUnipotentRadicalCandidate
 
