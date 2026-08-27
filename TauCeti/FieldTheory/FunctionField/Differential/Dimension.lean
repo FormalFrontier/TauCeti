@@ -149,18 +149,10 @@ theorem repartitionDualMul_mem_weilDifferentialFiltration_neg (hF : IsFunctionFi
   have hle : -B ≤ D + Divisor.principal hF z := by
     refine sub_nonneg.mp ?_
     have h := (mem_riemannRochSpace_units_iff hF).mp hx
-    rwa [show Divisor.principal hF z + (D + B) = D + Divisor.principal hF z - -B from by abel] at h
+    have key : Divisor.principal hF z + (D + B) = D + Divisor.principal hF z - -B := by abel
+    rwa [key] at h
   exact weilDifferentialFiltration_antitone hle
     ((repartitionDualMul_mem_weilDifferentialFiltration_iff hF z).mpr hω)
-
-/-- Multiplication of a fixed `k`-linear form on `A_F` by a function, as a `k`-linear map in the
-function. -/
-private noncomputable def repartitionDualMulRight (hF : IsFunctionField k F)
-    (ω : Module.Dual k ↥(repartitionSpace k F)) :
-    F →ₗ[k] Module.Dual k ↥(repartitionSpace k F) where
-  toFun x := repartitionDualMul hF x ω
-  map_add' x y := by simp
-  map_smul' c x := by simp
 
 /-- The dimension estimate behind Proposition 1.5.9: if no nonzero pair of functions annihilates
 the two Weil differentials `ω₁` and `ω₂`, then `(x₁, x₂) ↦ x₁ · ω₁ + x₂ · ω₂` embeds
@@ -177,8 +169,10 @@ private theorem dim_add_dim_le_indexOfSpecialty_neg (hF : IsFunctionField k F)
   have hfd₂ := finiteDimensional_riemannRochSpace hF (D₂ + B)
   have hfdΩ := finiteDimensional_weilDifferentialFiltration hF hex (-B)
   set ψ := LinearMap.coprod
-    ((repartitionDualMulRight hF ω₁).comp (riemannRochSpace (D₁ + B)).subtype)
-    ((repartitionDualMulRight hF ω₂).comp (riemannRochSpace (D₂ + B)).subtype)
+    (((LinearMap.applyₗ ω₁).comp (repartitionDualMul hF).toLinearMap).comp
+      (riemannRochSpace (D₁ + B)).subtype)
+    (((LinearMap.applyₗ ω₂).comp (repartitionDualMul hF).toLinearMap).comp
+      (riemannRochSpace (D₂ + B)).subtype)
   have hψ : ∀ p : ↥(riemannRochSpace (D₁ + B)) × ↥(riemannRochSpace (D₂ + B)),
       ψ p = repartitionDualMul hF (p.1 : F) ω₁ + repartitionDualMul hF (p.2 : F) ω₂ :=
     fun _ ↦ rfl
