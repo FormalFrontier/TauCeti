@@ -30,7 +30,7 @@ sides of the segment near `p`: it is one larger on the side to the left of the d
 * `TauCeti.Contour.tendsto_windingNumber_segment_add_mul_I` and
   `TauCeti.Contour.tendsto_windingNumber_segment_sub_mul_I` — one-sided limits of the winding
   number at an interior point, from the left and from the right.
-* `TauCeti.Contour.tendsto_windingNumber_segment_sub_windingNumber_segment` — the difference of
+* `TauCeti.Contour.tendsto_windingNumber_segment_jump` — the difference of
   the winding numbers tends to `1`.
 * `TauCeti.Contour.exists_forall_windingNumber_eq_add_one_of_eqOn_segment` — **a closed curve
   jumps by one across a straight piece**.
@@ -132,7 +132,7 @@ theorem tendsto_windingNumber_segment_sub_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
 /-- **The jump of the winding number across a straight segment is `1`.** As `h → 0⁺`, the winding
 numbers about the two points `v (s ± h i) + z₀` on either side of the interior point `v s + z₀`
 differ by a quantity tending to `1`: the left side minus the right side. -/
-theorem tendsto_windingNumber_segment_sub_windingNumber_segment (hv : v ≠ 0) (hs : s ∈ Ioo a b) :
+theorem tendsto_windingNumber_segment_jump (hv : v ≠ 0) (hs : s ∈ Ioo a b) :
     Tendsto (fun h : ℝ =>
         windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s + h * I) + z₀) -
           windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s - h * I) + z₀))
@@ -304,7 +304,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
       ring
     refine Tendsto.congr' h_eq ?_
     simpa using
-      (tendsto_windingNumber_segment_sub_windingNumber_segment (z₀ := z₀) hv hs).add h_rest
+      (tendsto_windingNumber_segment_jump (z₀ := z₀) hv hs).add h_rest
   -- Stage 5: integrality forces the limit to be exactly 1, propagate to the half-discs
   have h_near : ∀ᶠ h : ℝ in 𝓝[>] 0,
       dist (windingNumber Γ a c (v * (s + h * I) + z₀) - windingNumber Γ a c (v * (s - h * I) + z₀))
