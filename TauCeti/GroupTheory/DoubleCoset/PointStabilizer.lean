@@ -56,18 +56,18 @@ theorem doubleCoset_rel_stabilizer_of_ne {σ τ : Equiv.Perm α} (hσ : σ x₀ 
   classical
   have hax₀ : Equiv.swap (σ x₀) (τ x₀) x₀ = x₀ :=
     Equiv.swap_apply_of_ne_of_ne (Ne.symm hσ) (Ne.symm hτ)
-  have hinv : (Equiv.swap (σ x₀) (τ x₀))⁻¹ (τ x₀) = σ x₀ := by
-    rw [Equiv.swap_inv]
-    exact Equiv.swap_apply_right _ _
   rw [DoubleCoset.rel_iff]
   refine ⟨Equiv.swap (σ x₀) (τ x₀), mem_stabilizer_iff.mpr hax₀,
     σ⁻¹ * (Equiv.swap (σ x₀) (τ x₀))⁻¹ * τ, mem_stabilizer_iff.mpr ?_, by group⟩
-  rw [Equiv.Perm.smul_def, Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, hinv,
-    Equiv.Perm.inv_def, Equiv.symm_apply_apply]
+  simp
 
 /-- A double coset of the stabilizer of `x₀` is the identity one exactly when its permutations fix
 `x₀`.  This is `TauCeti.doubleCosetMk_eq_mk_one_iff_mem` for the stabilizer, whose membership
-condition is fixing `x₀`. -/
+condition is fixing `x₀`.
+
+Not a `simp` lemma: `TauCeti.doubleCosetMk_eq_mk_one_iff_mem` and `MulAction.mem_stabilizer_iff`
+are both `simp` lemmas and between them already rewrite this left-hand side to this right-hand
+side, so tagging this specialisation fails the `simpNF` linter with "simp can prove this". -/
 theorem doubleCosetMk_stabilizer_eq_one_iff {σ : Equiv.Perm α} :
     DoubleCoset.mk (stabilizer (Equiv.Perm α) x₀) (stabilizer (Equiv.Perm α) x₀) σ =
         DoubleCoset.mk (stabilizer (Equiv.Perm α) x₀) (stabilizer (Equiv.Perm α) x₀) 1 ↔

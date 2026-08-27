@@ -52,12 +52,15 @@ noncomputable def quotientStabilizerEquiv (b : X) : G ⧸ stabilizer G b ≃ X :
       obtain ⟨g, hg⟩ := exists_smul_eq G b x
       exact ⟨QuotientGroup.mk g, (ofQuotientStabilizer_mk G b g).trans hg⟩⟩
 
+/-- The computation rule for `TauCeti.quotientStabilizerEquiv`: on the coset represented by `g` it
+takes the value `g • b`. -/
 @[simp]
 theorem quotientStabilizerEquiv_mk (b : X) (g : G) :
     quotientStabilizerEquiv G b (QuotientGroup.mk g) = g • b :=
   ofQuotientStabilizer_mk G b g
 
 /-- The identification of the coset space with the set acted on is equivariant. -/
+@[simp]
 theorem quotientStabilizerEquiv_smul (b : X) (g : G) (q : G ⧸ stabilizer G b) :
     quotientStabilizerEquiv G b (g • q) = g • quotientStabilizerEquiv G b q :=
   ofQuotientStabilizer_smul G b g q

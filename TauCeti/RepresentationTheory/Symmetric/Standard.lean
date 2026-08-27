@@ -145,12 +145,13 @@ section Character
 variable {k : Type*} [Field k] {α : Type*} [Finite α] [Nonempty α]
 
 /-- **The character of the standard representation** is the character of the permutation
-representation `k[α]` less `1`.  The subtracted `1` is the character of the trivial quotient of
-`k[α]` by the standard subrepresentation, and no hypothesis on `|α|` in `k` is needed: it is the
-trace on a line transverse to the standard subrepresentation, which exists whether or not the
-*invariant* line is one.  Only when `(Fintype.card α : k) ≠ 0` is that quotient realised inside
-`k[α]` as the invariant line, splitting a trivial constituent off the standard representation;
-when `(Fintype.card α : k) = 0` and `3 ≤ |α|` the invariant line lies *inside* the standard
+representation `k[α]` less `1`.  The subtracted `1` is the character of the one-dimensional
+quotient of `k[α]` by the standard subrepresentation, which is trivial in every characteristic --
+the quotient map is the augmentation `k[α] → k` -- so no hypothesis on `|α|` in `k` is needed.
+Only when
+`(Fintype.card α : k) ≠ 0` is that quotient realised inside `k[α]`, as the invariant line
+complementing the standard subrepresentation and splitting a trivial constituent off it; when
+`(Fintype.card α : k) = 0` and `3 ≤ |α|` the invariant line lies *inside* the standard
 subrepresentation instead. -/
 @[simp]
 theorem char_standardRepresentation (g : Equiv.Perm α) :
