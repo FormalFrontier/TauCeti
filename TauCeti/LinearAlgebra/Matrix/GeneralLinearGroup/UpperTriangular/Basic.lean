@@ -81,7 +81,8 @@ def map {S : Type v} [CommRing S] (phi : R →+* S) :
   toFun g := ⟨Matrix.GeneralLinearGroup.map phi g.1,
     mem_iff.mpr <| by
       intro i j hji
-      rw [Matrix.GeneralLinearGroup.map_apply, isUpperTriangular g hji, map_zero]⟩
+      simpa only [Matrix.GeneralLinearGroup.map_apply, Matrix.map_apply] using
+        (isUpperTriangular g).map phi hji⟩
   map_one' := Subtype.ext (map_one _)
   map_mul' x y := Subtype.ext (map_mul _ x.1 y.1)
 

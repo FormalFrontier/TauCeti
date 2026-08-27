@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.Functor
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Basic
-import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 
 /-!
 # The upper-triangular subgroup scheme of the general linear group
@@ -45,7 +45,7 @@ open CategoryTheory WithConv
 
 namespace TauCeti.GeneralLinear.UpperTriangular
 
-universe u w
+universe u w w'
 
 variable (R : Type u) [CommRing R] (n : ℕ)
 
@@ -170,64 +170,43 @@ theorem mem_definingPointsSubgroup_iff
     weights_lt_weights_iff]
   rfl
 
-/-- Read a cut-out ambient point as an invertible upper-triangular matrix. -/
-private noncomputable def pointsSubgroupToUpperTriangular
-    (g : CommHopfAlgCat.quotientPointsSubgroup
-      (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-      (CommAlgCat.of R A)) : upperTriangularGroup (Fin n) A :=
-  ⟨GeneralLinear.pointsMulEquiv n g.1,
-    (mem_definingPointsSubgroup_iff R n g.1).mp g.2⟩
+/-- The matrix subgroup cut out by the upper-triangular Hopf ideal is exactly the group of
+invertible upper-triangular matrices. -/
+theorem hopfIdealPointsSubgroup_eq :
+    GeneralLinear.hopfIdealPointsSubgroup n (definingHopfIdeal R n) A =
+      upperTriangularGroup (Fin n) A := by
+  ext g
+  rw [GeneralLinear.mem_hopfIdealPointsSubgroup_iff]
+  have h := mem_definingPointsSubgroup_iff R n
+    ((GeneralLinear.pointsMulEquiv (R := R) (A := A) n).symm g)
+  rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff] at h
+  simpa only [MulEquiv.apply_symm_apply] using h
 
-/-- Regard an invertible upper-triangular matrix as a point of the cut-out ambient subgroup. -/
-private noncomputable def upperTriangularToPointsSubgroup
-    (g : upperTriangularGroup (Fin n) A) :
-    CommHopfAlgCat.quotientPointsSubgroup
-      (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-      (CommAlgCat.of R A) :=
-  ⟨(GeneralLinear.pointsMulEquiv (R := R) (A := A) n).symm g.1,
-    (mem_definingPointsSubgroup_iff R n _).mpr (by
-      rw [MulEquiv.apply_symm_apply]
-      exact g.2)⟩
+/-- Restricting the identity on `GL_n(A)` along the cut-out subgroup equality identifies the
+generic Hopf-ideal point subgroup with the upper-triangular matrix group. -/
+private noncomputable def hopfIdealPointsSubgroupMulEquiv :
+    GeneralLinear.hopfIdealPointsSubgroup n (definingHopfIdeal R n) A ≃*
+      upperTriangularGroup (Fin n) A :=
+  Subgroup.congrOfMapEq (MulEquiv.refl (GL (Fin n) A)) (by
+    change (GeneralLinear.hopfIdealPointsSubgroup n (definingHopfIdeal R n) A).map
+      (MonoidHom.id _) = upperTriangularGroup (Fin n) A
+    rw [Subgroup.map_id, hopfIdealPointsSubgroup_eq])
 
-/-- The cut-out subgroup of `GL_n(A)` is the upper-triangular matrix group. -/
-private noncomputable def definingPointsSubgroupMulEquiv :
-    CommHopfAlgCat.quotientPointsSubgroup
-        (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-        (CommAlgCat.of R A) ≃*
-      upperTriangularGroup (Fin n) A where
-  toFun := pointsSubgroupToUpperTriangular R n
-  invFun := upperTriangularToPointsSubgroup R n
-  left_inv g := by
-    apply Subtype.ext
-    exact (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).symm_apply_apply g.1
-  right_inv g := by
-    apply Subtype.ext
-    exact (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).apply_symm_apply g.1
-  map_mul' g h := by
-    apply Subtype.ext
-    exact map_mul (GeneralLinear.pointsMulEquiv (R := R) (A := A) n) g.1 h.1
+/-- The subgroup transport does not change the underlying general-linear matrix. -/
+@[simp]
+private theorem coe_hopfIdealPointsSubgroupMulEquiv
+    (g : GeneralLinear.hopfIdealPointsSubgroup n (definingHopfIdeal R n) A) :
+    (hopfIdealPointsSubgroupMulEquiv R n g : GL (Fin n) A) = g := by
+  exact Subgroup.coe_congrOfMapEq_apply (MulEquiv.refl (GL (Fin n) A)) _ g
 
 /-- The group of algebra-valued points of the upper-triangular coordinate Hopf algebra is the
 group of invertible upper-triangular matrices. -/
 noncomputable def pointsMulEquiv :
     HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n) (CommAlgCat.of R A) ≃*
       upperTriangularGroup (Fin n) A :=
-  ((CommHopfAlgCat.quotientPointsSubgroupNatIso
-      (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)).app
-      (CommAlgCat.of R A)).groupIsoToMulEquiv.trans
-    (definingPointsSubgroupMulEquiv R n)
-
-/-- Internally, the upper-triangular point equivalence first forms the cut-out ambient subgroup
-point and then reads it as an upper-triangular matrix. -/
-private theorem pointsMulEquiv_apply_eq
-    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
-      (CommAlgCat.of R A)) :
-    pointsMulEquiv (R := R) (n := n) (A := A) f =
-      pointsSubgroupToUpperTriangular R n
-        (((CommHopfAlgCat.quotientPointsSubgroupNatIso
-          (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)).app
-          (CommAlgCat.of R A)).hom f) :=
-  rfl
+  (GeneralLinear.hopfIdealPointsSubgroupMulEquiv n (definingHopfIdeal R n)
+      (CommAlgCat.of R A)).trans
+    (hopfIdealPointsSubgroupMulEquiv R n)
 
 /-- Under the upper-triangular and general-linear point equivalences, the quotient-point
 inclusion is the ordinary inclusion of upper-triangular matrices into `GL_n`. -/
@@ -240,14 +219,10 @@ theorem pointsMulEquiv_coe
           (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
           (CommAlgCat.of R A) f) =
       (pointsMulEquiv (R := R) (n := n) (A := A) f : GL (Fin n) A) := by
-  have hcomponent := CommHopfAlgCat.quotientPointsSubgroupNatIso_hom_app_apply
-    (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
-    (CommAlgCat.of R A) f
-  rw [pointsMulEquiv_apply_eq]
-  rw [← GeneralLinear.pointsMulEquiv_apply]
-  exact congrArg
-    (fun g => (pointsSubgroupToUpperTriangular R n g : upperTriangularGroup (Fin n) A).1)
-    hcomponent.symm
+  simpa only [pointsMulEquiv, MulEquiv.trans_apply,
+    coe_hopfIdealPointsSubgroupMulEquiv, GeneralLinear.pointsMulEquiv_apply] using
+      (GeneralLinear.coe_hopfIdealPointsSubgroupMulEquiv_apply n
+        (definingHopfIdeal R n) (CommAlgCat.of R A) f).symm
 
 /-- The ambient point attached to an upper-triangular matrix is the general-linear point
 attached to its ordinary inclusion. -/
@@ -261,7 +236,7 @@ theorem quotientPointsHom_pointsMulEquiv_symm (g : upperTriangularGroup (Fin n) 
   rw [GeneralLinear.pointsMulEquiv_apply, pointsMulEquiv_coe,
     MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
 
-variable {B : Type w} [CommRing B] [Algebra R B]
+variable {B : Type w'} [CommRing B] [Algebra R B]
 
 /-- The upper-triangular point equivalence is natural in the value algebra. -/
 @[simp]
@@ -269,18 +244,37 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
       (CommAlgCat.of R A)) :
     pointsMulEquiv (R := R) (n := n) (A := B)
-        (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R n)
-          (CommAlgCat.ofHom phi) f) =
+        (WithConv.toConv (phi.comp f.ofConv)) =
       UpperTriangularGroup.map phi.toRingHom
         (pointsMulEquiv (R := R) (n := n) (A := A) f) := by
+  rw [← AlgHom.mapValue_apply]
   apply Subtype.ext
-  have hcoe_lhs := pointsMulEquiv_coe (R := R) (n := n) (A := B)
-    (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R n) (CommAlgCat.ofHom phi) f)
-  have hcoe_rhs := pointsMulEquiv_coe (R := R) (n := n) (A := A) f
-  rw [← hcoe_lhs, ← CommHopfAlgCat.mapPoints_quotientPointsHom,
-    HopfAlgebra.mapPoints_apply, CommAlgCat.hom_ofHom, ← AlgHom.mapValue_apply,
-    GeneralLinear.pointToGeneralLinear_mapValue, hcoe_rhs]
-  exact (UpperTriangularGroup.coe_map phi.toRingHom _).symm
+  calc
+    ((pointsMulEquiv (R := R) (n := n) (A := B) (AlgHom.mapValue phi f) :
+        upperTriangularGroup (Fin n) B) : GL (Fin n) B) =
+        GeneralLinear.pointToGeneralLinear n
+          (CommHopfAlgCat.quotientPointsHom
+            (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
+            (CommAlgCat.of R B) (AlgHom.mapValue phi f)) :=
+      (pointsMulEquiv_coe (R := R) (n := n) (A := B) _).symm
+    _ = GeneralLinear.pointToGeneralLinear n
+          (AlgHom.mapValue phi
+            (CommHopfAlgCat.quotientPointsHom
+              (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
+              (CommAlgCat.of R A) f)) := by
+      rw [CommHopfAlgCat.mapValue_quotientPointsHom]
+    _ = Matrix.GeneralLinearGroup.map phi.toRingHom
+          (GeneralLinear.pointToGeneralLinear n
+            (CommHopfAlgCat.quotientPointsHom
+              (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
+              (CommAlgCat.of R A) f)) :=
+      GeneralLinear.pointToGeneralLinear_mapValue n phi _
+    _ = Matrix.GeneralLinearGroup.map phi.toRingHom
+          (pointsMulEquiv (R := R) (n := n) (A := A) f : GL (Fin n) A) := by
+      rw [pointsMulEquiv_coe]
+    _ = (UpperTriangularGroup.map phi.toRingHom
+          (pointsMulEquiv (R := R) (n := n) (A := A) f) : GL (Fin n) B) :=
+      (UpperTriangularGroup.coe_map phi.toRingHom _).symm
 
 end Points
 
@@ -336,37 +330,96 @@ theorem upperTriangularFunctor_map_apply_apply {A B : CommAlgCat.{w} R} (phi : A
   rw [upperTriangularFunctor_map]
   exact UpperTriangularGroup.map_apply phi.hom.toRingHom g.down i j
 
+/-- Transporting the generic Hopf-ideal matrix-point functor along the subgroup equality gives
+the upper-triangular matrix-group functor. -/
+private noncomputable def hopfIdealPointsSubgroupNatIso :
+    GeneralLinear.hopfIdealPointsSubgroupFunctor n (definingHopfIdeal R n) ≅
+      upperTriangularFunctor (R := R) n :=
+  NatIso.ofComponents
+    (fun A ↦
+      eqToIso (GeneralLinear.hopfIdealPointsSubgroupFunctor_obj n
+          (definingHopfIdeal R n) A) ≪≫
+        (((MulEquiv.ulift :
+            ULift.{u, w} (GeneralLinear.hopfIdealPointsSubgroup n
+              (definingHopfIdeal R n) A) ≃* _).trans
+          (hopfIdealPointsSubgroupMulEquiv R n)).trans
+            (MulEquiv.ulift.symm :
+              _ ≃* ULift.{u, w} (upperTriangularGroup (Fin n) A))).toGrpIso ≪≫
+        eqToIso (upperTriangularFunctor_obj (R := R) n A).symm)
+    (by
+      intro A B phi
+      rw [GeneralLinear.hopfIdealPointsSubgroupFunctor_map, upperTriangularFunctor_map]
+      have hcore :
+          GrpCat.ofHom
+              (MulEquiv.ulift.symm.toMonoidHom.comp
+                ((GeneralLinear.mapHopfIdealPointsSubgroup n (definingHopfIdeal R n)
+                  phi.hom).comp MulEquiv.ulift.toMonoidHom)) ≫
+              ((((MulEquiv.ulift :
+                  ULift.{u, w} (GeneralLinear.hopfIdealPointsSubgroup n
+                    (definingHopfIdeal R n) B) ≃* _).trans
+                (hopfIdealPointsSubgroupMulEquiv R n)).trans
+                  (MulEquiv.ulift.symm :
+                    _ ≃* ULift.{u, w} (upperTriangularGroup (Fin n) B))).toGrpIso).hom =
+            ((((MulEquiv.ulift :
+                  ULift.{u, w} (GeneralLinear.hopfIdealPointsSubgroup n
+                    (definingHopfIdeal R n) A) ≃* _).trans
+                (hopfIdealPointsSubgroupMulEquiv R n)).trans
+                  (MulEquiv.ulift.symm :
+                    _ ≃* ULift.{u, w} (upperTriangularGroup (Fin n) A))).toGrpIso).hom ≫
+              GrpCat.ofHom
+                (MulEquiv.ulift.symm.toMonoidHom.comp
+                  ((UpperTriangularGroup.map phi.hom.toRingHom).comp
+                    MulEquiv.ulift.toMonoidHom)) := by
+        ext g i j
+        change ((hopfIdealPointsSubgroupMulEquiv R n
+              (GeneralLinear.mapHopfIdealPointsSubgroup n (definingHopfIdeal R n)
+                phi.hom g.down) : GL (Fin n) B) i j) =
+          ((UpperTriangularGroup.map phi.hom.toRingHom
+              (hopfIdealPointsSubgroupMulEquiv R n g.down) : GL (Fin n) B) i j)
+        rw [coe_hopfIdealPointsSubgroupMulEquiv,
+          GeneralLinear.coe_mapHopfIdealPointsSubgroup,
+          UpperTriangularGroup.coe_map, coe_hopfIdealPointsSubgroupMulEquiv]
+      have h := congrArg
+        (fun f ↦ eqToHom
+            (GeneralLinear.hopfIdealPointsSubgroupFunctor_obj n
+              (definingHopfIdeal R n) A) ≫ f ≫
+            eqToHom (upperTriangularFunctor_obj (R := R) n B).symm) hcore
+      simpa [Category.assoc] using h)
+
+/-- The forward component of subgroup-functor transport applies the subgroup equivalence after
+removing the universe lift. -/
+private theorem hopfIdealPointsSubgroupNatIso_hom_app_apply
+    (A : CommAlgCat.{w} R)
+    (g : (GeneralLinear.hopfIdealPointsSubgroupFunctor n
+      (definingHopfIdeal R n)).obj A) :
+    (eqToHom (upperTriangularFunctor_obj (R := R) n A)
+      ((hopfIdealPointsSubgroupNatIso R n).hom.app A g)).down =
+        hopfIdealPointsSubgroupMulEquiv R n
+          (eqToHom (GeneralLinear.hopfIdealPointsSubgroupFunctor_obj n
+            (definingHopfIdeal R n) A) g).down := by
+  unfold hopfIdealPointsSubgroupNatIso
+  rfl
+
+/-- The inverse component of subgroup-functor transport applies the inverse subgroup equivalence
+before restoring the universe lift. -/
+private theorem hopfIdealPointsSubgroupNatIso_inv_app_apply
+    (A : CommAlgCat.{w} R)
+    (g : ULift.{u, w} (upperTriangularGroup (Fin n) A)) :
+    (hopfIdealPointsSubgroupNatIso R n).inv.app A
+        (eqToHom (upperTriangularFunctor_obj (R := R) n A).symm g) =
+      eqToHom (GeneralLinear.hopfIdealPointsSubgroupFunctor_obj n
+        (definingHopfIdeal R n) A).symm
+        (MulEquiv.ulift.symm ((hopfIdealPointsSubgroupMulEquiv R n).symm g.down)) := by
+  unfold hopfIdealPointsSubgroupNatIso
+  rfl
+
 /-- The functor of points of the upper-triangular coordinate Hopf algebra is naturally
 isomorphic to the upper-triangular matrix-group functor. -/
 noncomputable def pointsNatIso :
     HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R n) ≅
       upperTriangularFunctor (R := R) n :=
-  NatIso.ofComponents
-    (fun A ↦ ((pointsMulEquiv (R := R) (n := n) (A := A)).trans
-      MulEquiv.ulift.symm).toGrpIso)
-    (by
-      intro A B phi
-      ext f
-      apply ULift.ext
-      exact pointsMulEquiv_mapValue (R := R) (n := n) (A := A) (B := B) phi.hom f)
-
-/-- The forward component of `pointsNatIso` is definitionally the pointwise equivalence followed
-by universe lifting. -/
-private theorem pointsNatIso_hom_app (A : CommAlgCat.{w} R) :
-    (pointsNatIso (R := R) n).hom.app A =
-      (((pointsMulEquiv (R := R) (n := n) (A := A)).trans
-        MulEquiv.ulift.symm).toGrpIso).hom := by
-  unfold pointsNatIso
-  rfl
-
-/-- The inverse component of `pointsNatIso` is definitionally inverse universe lifting followed
-by the inverse pointwise equivalence. -/
-private theorem pointsNatIso_inv_app (A : CommAlgCat.{w} R) :
-    (pointsNatIso (R := R) n).inv.app A =
-      (((pointsMulEquiv (R := R) (n := n) (A := A)).trans
-        MulEquiv.ulift.symm).toGrpIso).inv := by
-  unfold pointsNatIso
-  rfl
+  (GeneralLinear.hopfIdealPointsSubgroupNatIso n (definingHopfIdeal R n)).trans
+    (hopfIdealPointsSubgroupNatIso R n)
 
 /-- The forward component of `pointsNatIso` is the pointwise upper-triangular equivalence. -/
 @[simp]
@@ -375,7 +428,12 @@ theorem pointsNatIso_hom_app_apply (A : CommAlgCat.{w} R)
     (eqToHom (upperTriangularFunctor_obj (R := R) n A)
       ((pointsNatIso (R := R) n).hom.app A f)).down =
       pointsMulEquiv (R := R) (n := n) (A := A) f := by
-  rw [pointsNatIso_hom_app]
+  change (eqToHom (upperTriangularFunctor_obj (R := R) n A)
+    ((hopfIdealPointsSubgroupNatIso R n).hom.app A
+      ((GeneralLinear.hopfIdealPointsSubgroupNatIso n
+        (definingHopfIdeal R n)).hom.app A f))).down = _
+  rw [hopfIdealPointsSubgroupNatIso_hom_app_apply,
+    GeneralLinear.hopfIdealPointsSubgroupNatIso_hom_app_apply]
   rfl
 
 /-- The inverse component of `pointsNatIso` is the inverse pointwise upper-triangular
@@ -386,7 +444,12 @@ theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
     (pointsNatIso (R := R) n).inv.app A
         (eqToHom (upperTriangularFunctor_obj (R := R) n A).symm g) =
       (pointsMulEquiv (R := R) (n := n) (A := A)).symm g.down := by
-  rw [pointsNatIso_inv_app]
+  change (GeneralLinear.hopfIdealPointsSubgroupNatIso n
+      (definingHopfIdeal R n)).inv.app A
+    ((hopfIdealPointsSubgroupNatIso R n).inv.app A
+      (eqToHom (upperTriangularFunctor_obj (R := R) n A).symm g)) = _
+  rw [hopfIdealPointsSubgroupNatIso_inv_app_apply,
+    GeneralLinear.hopfIdealPointsSubgroupNatIso_inv_app_apply]
   rfl
 
 end Functor

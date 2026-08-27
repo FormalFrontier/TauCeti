@@ -7,8 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 import TauCeti.CategoryTheory.Comma.Over
 
