@@ -89,18 +89,24 @@ namespace TauCeti.ContCohomology
 
 universe uG uM
 
-variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
-  (M : Type uM) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DistribMulAction G M] [ContinuousSMul G M]
-  (N : Subgroup G) [N.Normal]
+section CompatiblePair
 
-omit [TopologicalSpace M] [IsTopologicalAddGroup M] [ContinuousSMul G M] in
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (M : Type uM) [MulAction G M] (N : Subgroup G) [N.Normal]
+
 /-- The compatibility identity of the conjugation pair: conjugation `n ↦ g⁻¹ * n * g` on `N`
 together with the action of `g` on `M` is a compatible pair in the sense of `explicitMap1`. -/
 theorem smul_conjNormal_inv_smul (g : G) (n : N) (m : M) :
     g • ((ContinuousMonoidHom.conjNormal N g⁻¹ n : N) • m) = (n : N) • (g • m) := by
   simp only [Subgroup.smul_def, ContinuousMonoidHom.coe_conjNormal_apply, inv_inv, ← mul_smul]
   group
+
+end CompatiblePair
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (M : Type uM) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M] [ContinuousSMul G M]
+  (N : Subgroup G) [N.Normal]
 
 section Degree1
 
@@ -125,20 +131,17 @@ variable (G M N)
 @[simp]
 theorem conjCocycles1_one : conjCocycles1 G M N 1 = AddMonoidHom.id (Z1 N M) := by
   refine AddMonoidHom.ext fun c => Subtype.ext (funext fun n => ?_)
-  simp
+  simp only [conjCocycles1_apply, inv_one, ContinuousMonoidHom.conjNormal_one,
+    ContinuousMonoidHom.coe_id, id_eq, one_smul, AddMonoidHom.id_apply]
 
 /-- Conjugation on continuous `1`-cocycles is a left action of `G`. -/
 @[simp]
 theorem conjCocycles1_mul (g g' : G) :
     conjCocycles1 G M N (g * g') = (conjCocycles1 G M N g).comp (conjCocycles1 G M N g') := by
   refine AddMonoidHom.ext fun c => Subtype.ext (funext fun n => ?_)
-  have key : ContinuousMonoidHom.conjNormal N (g * g')⁻¹ n =
-      ContinuousMonoidHom.conjNormal N g'⁻¹ (ContinuousMonoidHom.conjNormal N g⁻¹ n) := by
-    ext
-    simp only [ContinuousMonoidHom.coe_conjNormal_apply, inv_inv, mul_inv_rev]
-    group
   rw [AddMonoidHom.comp_apply, conjCocycles1_apply, conjCocycles1_apply, conjCocycles1_apply,
-    key, mul_smul]
+    mul_inv_rev, ContinuousMonoidHom.conjNormal_mul, ContinuousMonoidHom.coe_comp,
+    Function.comp_apply, mul_smul]
 
 /-- **Conjugation on the explicit first cohomology group.** For a normal subgroup `N` of `G`, the
 compatible pair `(n ↦ g⁻¹ * n * g, m ↦ g • m)` pulls a class of `H¹(N, M)` back to a class of
@@ -166,9 +169,7 @@ theorem explicitConj1_one : explicitConj1 G M N 1 = AddMonoidHom.id (H1 N M) := 
   refine AddMonoidHom.ext fun x => ?_
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-    rw [explicitConj1_mk, AddMonoidHom.id_apply]
-    exact congrArg (fun z : Z1 N M => (z : H1 N M))
-      (DFunLike.congr_fun (conjCocycles1_one G M N) c)
+    rw [explicitConj1_mk, conjCocycles1_one, AddMonoidHom.id_apply, AddMonoidHom.id_apply]
 
 /-- Conjugation on `H¹(N, M)` is a left action of `G`. -/
 @[simp]
@@ -177,9 +178,8 @@ theorem explicitConj1_mul (g g' : G) :
   refine AddMonoidHom.ext fun x => ?_
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-    rw [explicitConj1_mk, AddMonoidHom.comp_apply, explicitConj1_mk, explicitConj1_mk]
-    exact congrArg (fun z : Z1 N M => (z : H1 N M))
-      (DFunLike.congr_fun (conjCocycles1_mul G M N g g') c)
+    rw [explicitConj1_mk, conjCocycles1_mul, AddMonoidHom.comp_apply, AddMonoidHom.comp_apply,
+      explicitConj1_mk, explicitConj1_mk]
 
 variable {G M N}
 
@@ -188,16 +188,13 @@ variable {G M N}
 theorem conjCocycles1_sub_eq_d0 (γ : N) (c : Z1 N M) :
     (conjCocycles1 G M N (γ : G) c : N → M) - (c : N → M) = d0 N M ((c : N → M) γ) := by
   have hc : groupCohomology.IsCocycle₁ (c : N → M) := (mem_Z1_iff.1 c.2).2
-  have hsmul : ∀ y : M, (γ : G) • y = γ • y := fun y => (Subgroup.smul_def γ y).symm
   ext n
-  have hconj : ContinuousMonoidHom.conjNormal N (γ : G)⁻¹ n = γ⁻¹ * n * γ := by
-    ext
-    simp
   -- Expand `c (γ⁻¹ * n * γ)` by two applications of the `1`-cocycle law.
-  have hstep : (c : N → M) (ContinuousMonoidHom.conjNormal N (γ : G)⁻¹ n) =
+  have hstep : (c : N → M) (γ⁻¹ * n * γ) =
       (γ⁻¹ * n) • (c : N → M) γ + (γ⁻¹ • (c : N → M) n + (c : N → M) γ⁻¹) := by
-    rw [hconj, hc, hc]
-  rw [Pi.sub_apply, conjCocycles1_apply, hstep, hsmul, d0_apply, smul_add, smul_add, ← mul_smul,
+    rw [hc, hc]
+  rw [Pi.sub_apply, conjCocycles1_apply, ContinuousMonoidHom.conjNormal_inv_coe, hstep,
+    ← Subgroup.smul_def, d0_apply, smul_add, smul_add, ← mul_smul,
     ← mul_smul, mul_inv_cancel_left, mul_inv_cancel, one_smul, map_inv_of_mem_Z1 c.2 γ]
   abel
 
@@ -212,8 +209,8 @@ theorem explicitConj1_eq_id_of_mem (g : G) (hg : g ∈ N) :
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
     rw [explicitConj1_mk, AddMonoidHom.id_apply]
-    refine QuotientAddGroup.eq_iff_sub_mem.2 (AddSubgroup.mem_addSubgroupOf.2 ?_)
-    rw [AddSubgroup.coe_sub, conjCocycles1_sub_eq_d0 γ c]
+    refine H1pi_eq_iff.2 ?_
+    rw [conjCocycles1_sub_eq_d0 γ c]
     exact mem_B1_iff.2 ⟨(c : N → M) γ, fun n => (d0_apply ((c : N → M) γ) n).symm⟩
 
 end Degree1
@@ -244,7 +241,8 @@ variable (G M N)
 theorem conjCocycles2_one : conjCocycles2 G M N 1 = AddMonoidHom.id (Z2 N M) := by
   refine AddMonoidHom.ext fun c => Subtype.ext (funext fun p => ?_)
   obtain ⟨n, k⟩ := p
-  simp
+  simp only [conjCocycles2_apply, inv_one, ContinuousMonoidHom.conjNormal_one,
+    ContinuousMonoidHom.coe_id, id_eq, one_smul, AddMonoidHom.id_apply]
 
 /-- Conjugation on continuous `2`-cocycles is a left action of `G`. -/
 @[simp]
@@ -252,37 +250,34 @@ theorem conjCocycles2_mul (g g' : G) :
     conjCocycles2 G M N (g * g') = (conjCocycles2 G M N g).comp (conjCocycles2 G M N g') := by
   refine AddMonoidHom.ext fun c => Subtype.ext (funext fun p => ?_)
   obtain ⟨n, k⟩ := p
-  have key : ∀ x : N, ContinuousMonoidHom.conjNormal N (g * g')⁻¹ x =
-      ContinuousMonoidHom.conjNormal N g'⁻¹ (ContinuousMonoidHom.conjNormal N g⁻¹ x) := by
-    intro x
-    ext
-    simp only [ContinuousMonoidHom.coe_conjNormal_apply, inv_inv, mul_inv_rev]
-    group
   rw [AddMonoidHom.comp_apply, conjCocycles2_apply, conjCocycles2_apply, conjCocycles2_apply,
-    key, key, mul_smul]
+    mul_inv_rev, ContinuousMonoidHom.conjNormal_mul, ContinuousMonoidHom.coe_comp,
+    Function.comp_apply, Function.comp_apply, mul_smul]
 
-/-- The degree-two chain homotopy `b n = c (γ, γ⁻¹ * n * γ) - c (n, γ)`. Conjugating a continuous
-`2`-cocycle `c` by `γ ∈ N` moves it by `d¹ b`. -/
+omit [TopologicalSpace G] [ContinuousMul G] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M] [ContinuousSMul G M] [N.Normal] in
+/-- The degree-two chain homotopy `b n = c (γ, γ⁻¹ * n * γ) - c (n, γ)`, with the conjugate formed
+in `N` itself. Conjugating a continuous `2`-cocycle `c` by `γ ∈ N` moves it by `d¹ b`. -/
 def conjHomotopy2 (γ : N) (c : N × N → M) : N → M := fun n =>
-  c (γ, ContinuousMonoidHom.conjNormal N (γ : G)⁻¹ n) - c (n, γ)
+  c (γ, γ⁻¹ * n * γ) - c (n, γ)
 
 variable {G M N}
 
-omit [TopologicalSpace M] [IsTopologicalAddGroup M] [DistribMulAction G M] [ContinuousSMul G M] in
+omit [TopologicalSpace G] [ContinuousMul G] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DistribMulAction G M] [ContinuousSMul G M] [N.Normal] in
 /-- The defining formula for the degree-two chain homotopy. -/
 @[simp]
 theorem conjHomotopy2_apply (γ : N) (c : N × N → M) (n : N) :
-    conjHomotopy2 G M N γ c n =
-      c (γ, ContinuousMonoidHom.conjNormal N (γ : G)⁻¹ n) - c (n, γ) :=
+    conjHomotopy2 G M N γ c n = c (γ, γ⁻¹ * n * γ) - c (n, γ) :=
   (rfl)
 
-omit [DistribMulAction G M] [ContinuousSMul G M] in
+omit [ContinuousMul G] [DistribMulAction G M] [ContinuousSMul G M] [N.Normal] in
 /-- The degree-two chain homotopy is a *continuous* `1`-cochain, which is what membership in `B²`
 requires of a primitive. -/
-theorem continuous_conjHomotopy2 (γ : N) {c : N × N → M} (hc : Continuous c) :
+theorem continuous_conjHomotopy2 [ContinuousMul N] (γ : N) {c : N × N → M} (hc : Continuous c) :
     Continuous (conjHomotopy2 G M N γ c) :=
   (hc.comp (continuous_const.prodMk
-      (ContinuousMonoidHom.conjNormal N (γ : G)⁻¹).continuous)).sub
+      ((continuous_const.mul continuous_id).mul continuous_const))).sub
     (hc.comp (continuous_id.prodMk continuous_const))
 
 /-- **The degree-two homotopy.** Conjugating a continuous `2`-cocycle of `N` by an element `γ` of
@@ -291,11 +286,6 @@ theorem conjCocycles2_sub_eq_d1 (γ : N) (c : Z2 N M) :
     (conjCocycles2 G M N (γ : G) c : N × N → M) - (c : N × N → M) =
       d1 N M (conjHomotopy2 G M N γ (c : N × N → M)) := by
   have hc : groupCohomology.IsCocycle₂ (c : N × N → M) := (mem_Z2_iff.1 c.2).2
-  have hsmul : ∀ y : M, (γ : G) • y = γ • y := fun y => (Subgroup.smul_def γ y).symm
-  have hconj : ∀ x : N, ContinuousMonoidHom.conjNormal N (γ : G)⁻¹ x = γ⁻¹ * x * γ := by
-    intro x
-    ext
-    simp
   ext p
   obtain ⟨n, k⟩ := p
   -- Instantiating the `2`-cocycle law leaves the products it forms in their literal shapes
@@ -324,9 +314,10 @@ theorem conjCocycles2_sub_eq_d1 (γ : N) (c : Z2 N M) :
       (c : N × N → M) (n * k, γ) + (c : N × N → M) (n, k) -
         n • (c : N × N → M) (k, γ) :=
     eq_sub_of_add_eq' (hc n k γ).symm
-  rw [Pi.sub_apply, conjCocycles2_apply, hconj, hconj, hsmul, hA, hB, hC, d1_apply,
-    conjHomotopy2_apply, conjHomotopy2_apply, conjHomotopy2_apply, hconj, hconj, hconj,
-    smul_sub]
+  rw [Pi.sub_apply, conjCocycles2_apply]
+  simp only [ContinuousMonoidHom.conjNormal_inv_coe]
+  rw [← Subgroup.smul_def, hA, hB, hC, d1_apply, conjHomotopy2_apply, conjHomotopy2_apply,
+    conjHomotopy2_apply, smul_sub]
   abel
 
 variable (G M N)
@@ -356,9 +347,7 @@ theorem explicitConj2_one : explicitConj2 G M N 1 = AddMonoidHom.id (H2 N M) := 
   refine AddMonoidHom.ext fun x => ?_
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-    rw [explicitConj2_mk, AddMonoidHom.id_apply]
-    exact congrArg (fun z : Z2 N M => (z : H2 N M))
-      (DFunLike.congr_fun (conjCocycles2_one G M N) c)
+    rw [explicitConj2_mk, conjCocycles2_one, AddMonoidHom.id_apply, AddMonoidHom.id_apply]
 
 /-- Conjugation on `H²(N, M)` is a left action of `G`. -/
 @[simp]
@@ -367,9 +356,8 @@ theorem explicitConj2_mul (g g' : G) :
   refine AddMonoidHom.ext fun x => ?_
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-    rw [explicitConj2_mk, AddMonoidHom.comp_apply, explicitConj2_mk, explicitConj2_mk]
-    exact congrArg (fun z : Z2 N M => (z : H2 N M))
-      (DFunLike.congr_fun (conjCocycles2_mul G M N g g') c)
+    rw [explicitConj2_mk, conjCocycles2_mul, AddMonoidHom.comp_apply, AddMonoidHom.comp_apply,
+      explicitConj2_mk, explicitConj2_mk]
 
 /-- **Inner automorphisms act trivially on `H²`** (Milne, *Arithmetic Duality Theorems*,
 Prop. 0.15). -/
@@ -380,8 +368,8 @@ theorem explicitConj2_eq_id_of_mem (g : G) (hg : g ∈ N) :
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
     rw [explicitConj2_mk, AddMonoidHom.id_apply]
-    refine QuotientAddGroup.eq_iff_sub_mem.2 (AddSubgroup.mem_addSubgroupOf.2 ?_)
-    rw [AddSubgroup.coe_sub, conjCocycles2_sub_eq_d1 γ c]
+    refine H2pi_eq_iff.2 ?_
+    rw [conjCocycles2_sub_eq_d1 γ c]
     exact mem_B2_iff.2 ⟨_, continuous_conjHomotopy2 γ (mem_Z2_iff.1 c.2).1, rfl⟩
 
 end Degree2

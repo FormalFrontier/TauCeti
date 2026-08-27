@@ -61,9 +61,25 @@ def conjNormal (g : G) : N →ₜ* N where
   continuous_toFun := continuous_induced_rng.2 <|
     (continuous_const.mul continuous_subtype_val).mul continuous_const
 
+theorem coe_conjNormal (g : G) :
+    (conjNormal N g : N →* N) = (MulAut.conjNormal g : N ≃* N).toMonoidHom :=
+  (rfl)
+
 @[simp]
 theorem coe_conjNormal_apply (g : G) (n : N) : (conjNormal N g n : G) = g * n * g⁻¹ :=
   MulAut.conjNormal_apply g n
+
+/-- Conjugation by an element of `N` itself, as an identity in `N` rather than in `G`. -/
+@[simp]
+theorem conjNormal_coe (γ n : N) : conjNormal N (γ : G) n = γ * n * γ⁻¹ := by
+  ext
+  simp
+
+/-- Conjugation by the inverse of an element of `N`, the form in which the conjugation action on
+cochains of `N` is written. -/
+@[simp]
+theorem conjNormal_inv_coe (γ n : N) : conjNormal N (γ : G)⁻¹ n = γ⁻¹ * n * γ := by
+  rw [← Subgroup.coe_inv, conjNormal_coe, inv_inv]
 
 @[simp]
 theorem conjNormal_one : conjNormal N (1 : G) = ContinuousMonoidHom.id N := by
