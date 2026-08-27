@@ -10,10 +10,11 @@ public import Mathlib.GroupTheory.GroupAction.Quotient
 /-!
 # Orbit-stabiliser for a transitive action
 
-Mathlib's orbit-stabiliser theorem `MulAction.orbitEquivQuotientStabilizer` identifies the orbit
-of a point with the coset space of its stabiliser. When the action is transitive there is only
-one orbit, so that identification is between the coset space and the acted-on set itself. This
-file records that specialisation, together with the equivariance that makes it an isomorphism of
+Mathlib's `MulAction.ofQuotientStabilizer` sends the coset of `g` in `G ⧸ stabilizer G b` to
+`g • b`; it is injective by `MulAction.injective_ofQuotientStabilizer`, and its image is the orbit
+of `b`, which is the orbit-stabiliser theorem. When the action is transitive that orbit is all of
+`X`, so the map is a bijection. This file records that specialisation, together with the
+equivariance -- Mathlib's `MulAction.ofQuotientStabilizer_smul` -- that makes it an isomorphism of
 `G`-sets rather than a bare bijection.
 
 ## Main definitions
@@ -43,22 +44,22 @@ namespace TauCeti
 variable (G : Type*) {X : Type*} [Group G] [MulAction G X] [IsPretransitive G X]
 
 /-- **Orbit-stabiliser for a transitive action**: the coset space of the stabiliser of a point is
-the set acted on, the coset of `g` corresponding to `g • b`. -/
+the set acted on, the coset of `g` corresponding to `g • b`.  This is
+`MulAction.ofQuotientStabilizer`, which transitivity makes surjective. -/
 noncomputable def quotientStabilizerEquiv (b : X) : G ⧸ stabilizer G b ≃ X :=
-  (orbitEquivQuotientStabilizer G b).symm.trans
-    ((Equiv.setCongr (orbit_eq_univ G b)).trans (Equiv.Set.univ X))
+  Equiv.ofBijective (ofQuotientStabilizer G b)
+    ⟨injective_ofQuotientStabilizer G b, fun x => by
+      obtain ⟨g, hg⟩ := exists_smul_eq G b x
+      exact ⟨QuotientGroup.mk g, (ofQuotientStabilizer_mk G b g).trans hg⟩⟩
 
 @[simp]
 theorem quotientStabilizerEquiv_mk (b : X) (g : G) :
     quotientStabilizerEquiv G b (QuotientGroup.mk g) = g • b :=
-  (rfl)
+  ofQuotientStabilizer_mk G b g
 
 /-- The identification of the coset space with the set acted on is equivariant. -/
 theorem quotientStabilizerEquiv_smul (b : X) (g : G) (q : G ⧸ stabilizer G b) :
-    quotientStabilizerEquiv G b (g • q) = g • quotientStabilizerEquiv G b q := by
-  induction q using QuotientGroup.induction_on with
-  | H x =>
-    rw [Quotient.smul_mk, quotientStabilizerEquiv_mk, quotientStabilizerEquiv_mk, smul_eq_mul,
-      mul_smul]
+    quotientStabilizerEquiv G b (g • q) = g • quotientStabilizerEquiv G b q :=
+  ofQuotientStabilizer_smul G b g q
 
 end TauCeti

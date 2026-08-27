@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.GroupTheory.DoubleCoset.PointStabilizer
 public import TauCeti.GroupTheory.GroupAction.Transitive
 public import TauCeti.RepresentationTheory.Induction.DoubleCosetPairing
 public import TauCeti.RepresentationTheory.Rep.OfMulAction
@@ -21,47 +22,51 @@ computes the invariant the permutation representation is pinned down by: the dou
 stabilizer, of which there are exactly two, and hence the self-pairing of the induced character.
 
 The two double cosets are the source of everything else.  A permutation either fixes `x₀` or does
-not, and each of the two possibilities is a single double coset: a permutation moving `x₀` to `y`
-and one moving it to `y'` differ by the transposition of `y` and `y'`, which fixes `x₀`.  So
-`⟨Ind 1, Ind 1⟩ = 2`, and the permutation representation has exactly two constituents, each with
-multiplicity one: the trivial representation on the invariant line, and the standard
-representation of `TauCeti.RepresentationTheory.Symmetric.Standard`, whose irreducibility is
-proved there.
+not, and each of the two possibilities is a single double coset, by
+`TauCeti.card_doubleCosetQuotient_stabilizer`.  So `⟨Ind 1, Ind 1⟩ = 2` whenever `|Equiv.Perm α|`
+is invertible in `k`, and the permutation representation then has exactly two constituents, each
+with multiplicity one.  When moreover `(|α| : k) ≠ 0` those two constituents are named: the
+trivial representation on the invariant line, split off by
+`TauCeti.isCompl_invariantLine_augmentationSubrepresentation`, and the standard representation of
+`TauCeti.RepresentationTheory.Symmetric.Standard`, which is irreducible under that same
+hypothesis.  In the excluded characteristics the character identity
+`TauCeti.char_ind_trivial_stabilizer_eq_one_add_char_standardRepresentation` still holds, but the
+invariant line lies inside the standard representation instead of complementing it, so there is no
+such splitting.
 
 ## Main definitions
 
 * `TauCeti.indTrivialStabilizerEquiv` and `TauCeti.indTrivialStabilizerIso`: inducing the trivial
   representation of the stabilizer of `x₀` gives the permutation representation on `α`, as an
-  equivalence of representations and as an isomorphism in `Rep k (Equiv.Perm α)`.
+  equivalence of representations and as an isomorphism in `Rep k (Equiv.Perm α)`.  Both are read
+  on generators by `TauCeti.indTrivialStabilizerEquiv_apply_mk` and
+  `TauCeti.indTrivialStabilizerIso_hom_hom_mk`.
 
 ## Main statements
 
-* `TauCeti.card_doubleCosetQuotient_stabilizer`: the stabilizer of a point of a nontrivial `α` has
-  exactly two double cosets in `Equiv.Perm α`.
 * `TauCeti.char_ind_trivial_stabilizer`: the character of the induced trivial representation at `σ`
   is the number of points fixed by `σ`, and `TauCeti.finrank_ind_trivial_stabilizer` says the
   representation has dimension `|α|`.
-* `TauCeti.characterPairing_ind_trivial_stabilizer`: its self-pairing is `2`, the number of double
-  cosets.
+* `TauCeti.characterPairing_ind_trivial_stabilizer`: for `|Equiv.Perm α|` invertible in `k`, its
+  self-pairing is `2`, the number of double cosets.
 * `TauCeti.char_ind_trivial_stabilizer_eq_one_add_char_standardRepresentation`: the induced
-  character is the trivial character plus the character of the standard representation.
+  character is the trivial character plus the character of the standard representation.  This is
+  an identity of characters and holds in every characteristic; it is a decomposition of
+  representations only under the hypotheses of
+  `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`.
 * `TauCeti.card_doubleCosetQuotient_stabilizer_fin_four`,
   `TauCeti.finrank_ind_trivial_stabilizer_fin_four`,
   `TauCeti.finrank_augmentationSubrepresentation_fin_four` and
   `TauCeti.isIrreducible_standardRepresentation_fin_four`: the `S₄` instance -- two double cosets,
-  a `4`-dimensional induced representation, and a `3`-dimensional irreducible complement.
+  a `4`-dimensional induced representation, and a `3`-dimensional complement, irreducible when
+  `4 ≠ 0` in `k`.
 
 ## Implementation notes
 
-The double-coset statements are proved on the relation `DoubleCoset.setoid` first and transported
-to the quotient with `Quotient.sound'` and `Quotient.exact'`, because `DoubleCoset.Quotient` is a
-plain definition that `rw` will not see through. They are proved by hand rather than through
-`TauCeti.doubleCosetEquivOrbitQuotient`, which reads the same two classes as the two orbits of
-`Equiv.Perm α` on ordered pairs of points: the transposition exhibiting the second class is
-shorter than the transport.
-
-The identification of the coset space with `α` is
-`TauCeti.quotientStabilizerEquiv`, in `TauCeti.GroupTheory.GroupAction.Transitive`.
+The two double cosets of the point stabilizer are counted in
+`TauCeti.GroupTheory.DoubleCoset.PointStabilizer`, which is pure group theory, and the
+identification of the coset space with `α` is `TauCeti.quotientStabilizerEquiv`, in
+`TauCeti.GroupTheory.GroupAction.Transitive`.
 
 The coefficient field and the acted-on set share a universe in the `Rep`-level isomorphism, since
 that compares two objects of one category; the `Representation`-level statements, which is where
@@ -89,84 +94,11 @@ open ClassFunction
 
 universe u v
 
-/-! ### The double cosets of a point stabilizer
-
-A permutation either fixes `x₀` or does not, and each of the two possibilities is a single double
-coset of the stabilizer. -/
-
-section DoubleCosets
-
-variable {α : Type v} (x₀ : α)
-
-/-- A permutation is related to the identity by the double-coset relation of the stabilizer of `x₀`
-exactly when it fixes `x₀`. -/
-theorem doubleCoset_rel_stabilizer_one_iff {σ : Equiv.Perm α} :
-    DoubleCoset.setoid (↑(stabilizer (Equiv.Perm α) x₀)) (↑(stabilizer (Equiv.Perm α) x₀)) σ 1 ↔
-      σ x₀ = x₀ := by
-  rw [DoubleCoset.rel_iff]
-  constructor
-  · rintro ⟨a, ha, b, hb, hab⟩
-    have hax₀ : a x₀ = x₀ := mem_stabilizer_iff.mp ha
-    have hbx₀ : b x₀ = x₀ := mem_stabilizer_iff.mp hb
-    have happ := Equiv.Perm.ext_iff.mp hab.symm x₀
-    rw [Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, hbx₀, Equiv.Perm.one_apply] at happ
-    exact a.injective (happ.trans hax₀.symm)
-  · intro hσ
-    exact ⟨σ⁻¹, (stabilizer (Equiv.Perm α) x₀).inv_mem (mem_stabilizer_iff.mpr hσ), 1,
-      (stabilizer (Equiv.Perm α) x₀).one_mem, by group⟩
-
-/-- **The permutations moving `x₀` form a single double coset.**  If `σ` and `τ` both move `x₀`
-then the transposition of `σ x₀` and `τ x₀` fixes `x₀` and carries the one onto the other. -/
-theorem doubleCoset_rel_stabilizer_of_ne {σ τ : Equiv.Perm α} (hσ : σ x₀ ≠ x₀) (hτ : τ x₀ ≠ x₀) :
-    DoubleCoset.setoid (↑(stabilizer (Equiv.Perm α) x₀)) (↑(stabilizer (Equiv.Perm α) x₀)) σ τ :=
-    by
-  classical
-  have hax₀ : Equiv.swap (σ x₀) (τ x₀) x₀ = x₀ :=
-    Equiv.swap_apply_of_ne_of_ne (Ne.symm hσ) (Ne.symm hτ)
-  have hinv : (Equiv.swap (σ x₀) (τ x₀))⁻¹ (τ x₀) = σ x₀ := by
-    rw [Equiv.swap_inv]
-    exact Equiv.swap_apply_right _ _
-  rw [DoubleCoset.rel_iff]
-  refine ⟨Equiv.swap (σ x₀) (τ x₀), mem_stabilizer_iff.mpr hax₀,
-    σ⁻¹ * (Equiv.swap (σ x₀) (τ x₀))⁻¹ * τ, mem_stabilizer_iff.mpr ?_, by group⟩
-  rw [Equiv.Perm.smul_def, Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, hinv,
-    Equiv.Perm.inv_def, Equiv.symm_apply_apply]
-
-/-- A double coset of the stabilizer of `x₀` is the identity one exactly when its permutations fix
-`x₀`. -/
-theorem doubleCoset_mk_stabilizer_eq_one_iff {σ : Equiv.Perm α} :
-    DoubleCoset.mk (stabilizer (Equiv.Perm α) x₀) (stabilizer (Equiv.Perm α) x₀) σ =
-        DoubleCoset.mk (stabilizer (Equiv.Perm α) x₀) (stabilizer (Equiv.Perm α) x₀) 1 ↔
-      σ x₀ = x₀ :=
-  ⟨fun h => (doubleCoset_rel_stabilizer_one_iff x₀).mp (Quotient.exact' h),
-    fun h => Quotient.sound' ((doubleCoset_rel_stabilizer_one_iff x₀).mpr h)⟩
-
-/-- **A point stabilizer has exactly two double cosets.**  The identity double coset is the
-stabilizer itself, and every permutation moving `x₀` lies in the other one; a nontrivial `α`
-supplies such a permutation. -/
-theorem card_doubleCosetQuotient_stabilizer [Nontrivial α] :
-    Nat.card (DoubleCoset.Quotient (↑(stabilizer (Equiv.Perm α) x₀))
-      (↑(stabilizer (Equiv.Perm α) x₀) : Set (Equiv.Perm α))) = 2 := by
-  classical
-  obtain ⟨y, hy⟩ := exists_ne x₀
-  have hswap : Equiv.swap x₀ y x₀ ≠ x₀ := by
-    rw [Equiv.swap_apply_left]
-    exact hy
-  rw [Nat.card_eq_two_iff' (DoubleCoset.mk _ _ 1)]
-  refine ⟨DoubleCoset.mk _ _ (Equiv.swap x₀ y),
-    fun h => hswap ((doubleCoset_mk_stabilizer_eq_one_iff x₀).mp h), fun q hq => ?_⟩
-  induction q using Quotient.inductionOn with
-  | h σ =>
-    exact Quotient.sound' (doubleCoset_rel_stabilizer_of_ne x₀
-      (fun h => hq ((doubleCoset_mk_stabilizer_eq_one_iff x₀).mpr h)) hswap)
-
-end DoubleCosets
-
 /-! ### The induced representation is the permutation representation on the points -/
 
-section Induced
+section Equivalence
 
-variable (k : Type u) [Field k] {α : Type v} (x₀ : α)
+variable (k : Type u) [CommRing k] {α : Type v} (x₀ : α)
 
 /-- **Inducing the trivial representation of a point stabilizer.**  Because `Equiv.Perm α` acts
 transitively on `α`, inducing the trivial representation of the stabilizer of `x₀` gives the
@@ -179,13 +111,31 @@ noncomputable def indTrivialStabilizerEquiv :
     (ofMulActionEquivCongr k (quotientStabilizerEquiv (Equiv.Perm α) x₀)
       (quotientStabilizerEquiv_smul (Equiv.Perm α) x₀))
 
+/-- The generator computation rule for `TauCeti.indTrivialStabilizerEquiv`: the generator carried
+by `σ` goes to the basis vector of the point `σ⁻¹ x₀`.  Not a `simp` lemma, for the reason
+`TauCeti.indTrivialEquiv_apply_mk` is not: `simp` unfolds the reducible
+`Representation.IndV.mk`. -/
+theorem indTrivialStabilizerEquiv_apply_mk (σ : Equiv.Perm α) (a : k) :
+    indTrivialStabilizerEquiv k x₀
+        (Representation.IndV.mk (stabilizer (Equiv.Perm α) x₀).subtype
+          (Representation.trivial k (stabilizer (Equiv.Perm α) x₀) k) σ a) =
+      MonoidAlgebra.single (σ⁻¹ x₀) a := by
+  rw [indTrivialStabilizerEquiv, Representation.Equiv.trans_apply, indTrivialEquiv_apply_mk,
+    ofMulActionEquivCongr_apply_single, quotientStabilizerEquiv_mk, Equiv.Perm.smul_def]
+
+end Equivalence
+
+section Induced
+
+variable (k : Type u) [Field k] {α : Type v} (x₀ : α)
+
 /-- **The permutation character.**  The character at `σ` of the trivial representation of the
 stabilizer of `x₀` induced up to `Equiv.Perm α` is the number of points of `α` fixed by `σ`. -/
 theorem char_ind_trivial_stabilizer [Finite α] (σ : Equiv.Perm α) :
     ((Representation.trivial k (stabilizer (Equiv.Perm α) x₀) k).ind
         (stabilizer (Equiv.Perm α) x₀).subtype).character σ = Nat.card {x : α // σ x = x} := by
   rw [Representation.char_iso (indTrivialStabilizerEquiv k x₀), char_ofMulAction]
-  rfl
+  simp only [Equiv.Perm.smul_def]
 
 /-- The induced representation has dimension the number of points. -/
 theorem finrank_ind_trivial_stabilizer [Fintype α] :
@@ -209,11 +159,14 @@ theorem characterPairing_ind_trivial_stabilizer [Fintype α] [DecidableEq α] [N
     card_doubleCosetQuotient_stabilizer x₀]
   norm_num
 
-/-- **The permutation representation is the trivial one plus the standard one**, read on
-characters.  Together with `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`, which
-splits the invariant line off the permutation representation, and
-`TauCeti.isIrreducible_standardRepresentation`, which says the remaining constituent is
-irreducible, this is the decomposition `Ind_H^G 1 ≅ trivial ⊕ standard`. -/
+/-- **The permutation character is the trivial character plus the standard one.**  This is an
+identity of characters, and it needs no hypothesis on the characteristic of `k`.  It becomes the
+decomposition `Ind_H^G 1 ≅ trivial ⊕ standard` when `(Fintype.card α : k) ≠ 0`: that is the
+hypothesis under which `TauCeti.isCompl_invariantLine_augmentationSubrepresentation` splits the
+invariant line off the permutation representation and
+`TauCeti.isIrreducible_standardRepresentation` makes the remaining constituent irreducible.  When
+`(Fintype.card α : k) = 0` and `3 ≤ |α|` the invariant line instead lies inside the standard
+representation, and there is no such splitting. -/
 theorem char_ind_trivial_stabilizer_eq_one_add_char_standardRepresentation [Finite α]
     [Nonempty α] (σ : Equiv.Perm α) :
     ((Representation.trivial k (stabilizer (Equiv.Perm α) x₀) k).ind
@@ -239,9 +192,17 @@ noncomputable def indTrivialStabilizerIso :
     Rep.ind (stabilizer (Equiv.Perm α) x₀).subtype
         (Rep.trivial k (stabilizer (Equiv.Perm α) x₀) k) ≅
       Rep.ofMulAction k (Equiv.Perm α) α :=
-  indTrivialIso k (stabilizer (Equiv.Perm α) x₀) ≪≫
-    ofMulActionIsoCongr k (quotientStabilizerEquiv (Equiv.Perm α) x₀)
-      (quotientStabilizerEquiv_smul (Equiv.Perm α) x₀)
+  Rep.mkIso (indTrivialStabilizerEquiv k x₀)
+
+/-- The generator computation rule for `TauCeti.indTrivialStabilizerIso`: it is
+`TauCeti.indTrivialStabilizerEquiv_apply_mk` read in `Rep k (Equiv.Perm α)`. -/
+theorem indTrivialStabilizerIso_hom_hom_mk (σ : Equiv.Perm α) (a : k) :
+    (indTrivialStabilizerIso k x₀).hom.hom
+        (Representation.IndV.mk (stabilizer (Equiv.Perm α) x₀).subtype
+          (Representation.trivial k (stabilizer (Equiv.Perm α) x₀) k) σ a) =
+      MonoidAlgebra.single (σ⁻¹ x₀) a := by
+  rw [indTrivialStabilizerIso, Rep.mkIso_hom_hom_apply]
+  exact indTrivialStabilizerEquiv_apply_mk k x₀ σ a
 
 end RepIso
 
@@ -249,7 +210,8 @@ end RepIso
 
 `G = S₄` with `H` the stabilizer of a point is the worked example: the induced trivial
 representation is the natural permutation representation on four points, there are two double
-cosets, and the representation splits as the trivial one plus a three-dimensional irreducible. -/
+cosets, and over a field in which `4 ≠ 0` the representation splits as the trivial one plus a
+three-dimensional irreducible. -/
 
 section SymmetricFour
 
