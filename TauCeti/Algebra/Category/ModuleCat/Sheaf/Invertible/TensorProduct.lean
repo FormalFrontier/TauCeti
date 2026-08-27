@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.Basic
-public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct.Basic
 
 /-!
 # Tensor products with trivial invertible sheaves
