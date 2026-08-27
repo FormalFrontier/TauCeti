@@ -161,6 +161,12 @@ noncomputable def leviGroupExtensionSplitting :
 theorem leviGroupExtensionSplitting_apply (z : levi A l) :
     leviGroupExtensionSplitting A l z = leviToParabolic A l z := (rfl)
 
+/-- The dynamic limit retracts the inclusion of the Levi subgroup into the parabolic subgroup. -/
+@[simp]
+theorem limitToLevi_leviToParabolic (z : levi A l) :
+    limitToLevi A l (leviToParabolic A l z) = z :=
+  (leviGroupExtensionSplitting A l).rightInverse_rightHom z
+
 /-- The action of the dynamic Levi subgroup on the dynamic unipotent subgroup by conjugation. -/
 noncomputable def leviConjugation : levi A l →* MulAut (unipotent A l) :=
   (leviGroupExtensionSplitting A l).conjAct

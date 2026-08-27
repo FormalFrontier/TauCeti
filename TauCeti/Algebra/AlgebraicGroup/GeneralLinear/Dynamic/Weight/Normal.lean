@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Unipotent.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
@@ -271,7 +271,7 @@ noncomputable def weightLeviInParabolicGroupSchemeIso (w : Fin N → ℤ) :
 
 /-- The closed immersion of the weight-Levi group scheme into the weight-parabolic group scheme
 induced by inclusion of their defining Hopf ideals. -/
-noncomputable def weightLeviToParabolic (w : Fin N → ℤ) :
+@[expose] noncomputable def weightLeviToParabolic (w : Fin N → ℤ) :
     weightLeviGroupScheme R w ⟶ weightParabolicGroupScheme R w :=
   CommHopfAlgCat.quotientSpecMapOfLe (coordinateHopfAlgebra R N)
     (weightParabolicDefiningHopfIdeal_le_weightLevi R w)
