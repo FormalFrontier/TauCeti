@@ -53,7 +53,9 @@ column permutation cannot simply be dropped.
 * `TauCeti.Probability.SeparatelyExchangeable.exists_directing_arrayRow_jointLaw_equivariant` —
   de Finetti supplies a directing measure with this symmetry;
 * `TauCeti.Probability.SeparatelyExchangeable.jointLaw_arrayCol_pairReindex_eq` — the transposed
-  statement for the column directing measure.
+  statement for the column directing measure, again with its two axes separately as
+  `TauCeti.Probability.SeparatelyExchangeable.jointLaw_arrayCol_rowReindex_eq` and
+  `TauCeti.Probability.SeparatelyExchangeable.jointLaw_arrayCol_colReindex_eq`.
 
 ## Implementation
 
@@ -128,6 +130,13 @@ private theorem measurable_uncurrySwap :
     Measurable fun x : ℕ → ℕ → α => fun p : ℕ × ℕ => x p.2 p.1 :=
   measurable_pi_lambda _ fun p => (measurable_pi_apply p.1).comp (measurable_pi_apply p.2)
 
+omit [MeasurableSpace Ω] in
+/-- Pushing a probability measure on path space forward by the identity permutation of time does
+nothing. This is what specialises the pair-reindexing laws below to a single axis. -/
+private theorem map_permReindex_one (P : ProbabilityMeasure (ℕ → α)) :
+    P.map (measurable_reindex (α := α) (1 : Equiv.Perm ℕ)).aemeasurable = P :=
+  ProbabilityMeasure.toMeasure_injective (by simp)
+
 /-- Reassembling the array from its row process turns the joint law of a random measure and the row
 process into the joint law of that random measure and the array. -/
 private theorem map_prod_jointPathLaw_arrayRow (hX : ∀ p, AEMeasurable (X p) μ)
@@ -191,20 +200,18 @@ theorem SeparatelyExchangeable.jointLaw_arrayRow_pairReindex_eq [IsFiniteMeasure
     h.jointPathLaw_arrayRow_pairReindex_eq hX hν σ τ]
 
 /-- **Row permutations leave the row directing measure alone.** The rows are the coordinates of the
-process that `ν` directs, so a permutation of them is absorbed by conditional i.i.d.-ness. -/
+process that `ν` directs, so a permutation of them is absorbed by conditional i.i.d.-ness.
+
+This is `SeparatelyExchangeable.jointLaw_arrayRow_pairReindex_eq` at the identity column
+permutation, whose pushforward of `ν` is the identity. -/
 theorem SeparatelyExchangeable.jointLaw_arrayRow_rowReindex_eq [IsFiniteMeasure μ]
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : ConditionallyIIDWith μ (arrayRow X) ν) (σ : Equiv.Perm ℕ) :
     (μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X (σ p.1, p.2) ω))
       = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
-  have key : jointPathLaw μ (arrayRow fun p => X (σ p.1, p.2)) ν
-      = jointPathLaw μ (arrayRow X) ν := by
-    simp only [arrayRow_eq_entries] at hν ⊢
-    exact (hν.comp_injective σ.injective).jointPathLaw_eq_of_pathLaw_eq hν
-      (h.map_comp hX σ 1 measurable_rowsOf)
-  rw [← map_prod_jointPathLaw_arrayRow (X := fun p => X (σ p.1, p.2)) (fun p => hX _)
-      hν.measurable_directing,
-    ← map_prod_jointPathLaw_arrayRow hX hν.measurable_directing, key]
+  have key := h.jointLaw_arrayRow_pairReindex_eq hX hν σ 1
+  simp only [map_permReindex_one] at key
+  simpa only [Equiv.Perm.coe_one, id_eq] using key
 
 /-- **Column permutations push the row directing measure forward.** This is the half of
 `SeparatelyExchangeable.jointLaw_arrayRow_pairReindex_eq` that carries information about `ν`. -/
@@ -263,6 +270,28 @@ theorem SeparatelyExchangeable.jointLaw_arrayCol_pairReindex_eq [IsFiniteMeasure
   rw [← map_prod_jointPathLaw_arrayCol (X := fun p => X (σ p.1, τ p.2)) (fun p => hX _) hν',
     ← map_prod_jointPathLaw_arrayCol hX hν.measurable_directing,
     h.jointPathLaw_arrayCol_pairReindex_eq hX hν σ τ]
+
+/-- **Row permutations push the column directing measure forward.** This is the half of
+`SeparatelyExchangeable.jointLaw_arrayCol_pairReindex_eq` that carries information about `ν`. -/
+theorem SeparatelyExchangeable.jointLaw_arrayCol_rowReindex_eq [IsFiniteMeasure μ]
+    (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
+    (hν : ConditionallyIIDWith μ (arrayCol X) ν) (σ : Equiv.Perm ℕ) :
+    (μ.map fun ω => ((ν ω).map (measurable_reindex σ).aemeasurable,
+        fun p : ℕ × ℕ => X (σ p.1, p.2) ω))
+      = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) :=
+  h.jointLaw_arrayCol_pairReindex_eq hX hν σ 1
+
+/-- **Column permutations leave the column directing measure alone.** The columns are the
+coordinates of the process that `ν` directs, so a permutation of them is absorbed by conditional
+i.i.d.-ness. -/
+theorem SeparatelyExchangeable.jointLaw_arrayCol_colReindex_eq [IsFiniteMeasure μ]
+    (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
+    (hν : ConditionallyIIDWith μ (arrayCol X) ν) (τ : Equiv.Perm ℕ) :
+    (μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X (p.1, τ p.2) ω))
+      = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
+  have key := h.jointLaw_arrayCol_pairReindex_eq hX hν 1 τ
+  simp only [map_permReindex_one] at key
+  simpa only [Equiv.Perm.coe_one, id_eq] using key
 
 /-- **De Finetti for the columns, with the inherited joint symmetry.** -/
 theorem SeparatelyExchangeable.exists_directing_arrayCol_jointLaw_equivariant

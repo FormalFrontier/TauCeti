@@ -87,7 +87,7 @@ theorem ConditionallyIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
       = (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).map
           (Prod.map (fun Q : ProbabilityMeasure α => Q.map hf.aemeasurable) F) := by
         rw [AEMeasurable.map_map_of_aemeasurable hΦ.aemeasurable hinner]
-        rfl
+        exact congrArg (μ.map ·) (funext fun ω => by simp [hF, Prod.map])
     _ = (μ.bind fun ω => (Measure.dirac (ν ω)).prod
           (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
           (Prod.map (fun Q : ProbabilityMeasure α => Q.map hf.aemeasurable) F) := by
