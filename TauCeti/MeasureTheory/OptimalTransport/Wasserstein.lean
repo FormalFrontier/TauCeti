@@ -206,6 +206,12 @@ theorem wassersteinEDist_comm (hd : Measurable fun z : X × X ↦ edist z.1 z.2)
           exact eLpNorm_congr_ae (.of_forall fun z ↦ edist_comm z.2 z.1)
   exact le_antisymm (key ν μ) (key μ ν)
 
+end Measurable
+
+section MeasurableEDist
+
+variable [EDist X]
+
 /-- **Monotonicity in the exponent.** A coupling of two probability measures is a probability
 measure, so Mathlib's `MeasureTheory.eLpNorm_le_eLpNorm_of_exponent_le` applies plan by plan. -/
 theorem wassersteinEDist_mono_exponent (hd : Measurable fun z : X × X ↦ edist z.1 z.2)
@@ -233,15 +239,6 @@ theorem wassersteinEDist_dirac_left (hd : Measurable fun z : X × X ↦ edist z.
   · exact hmap ▸ wassersteinEDist_le (isCoupling_map_prodMk x ν) p
   · rw [hπ.eq_map_prodMk, hmap]
 
-/-- The mirror image of `TauCeti.wassersteinEDist_dirac_left`: the Wasserstein distance to a Dirac
-target is the `L^p (μ)` seminorm of the ground distance to the atom. -/
-@[simp]
-theorem wassersteinEDist_dirac_right (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (p : ℝ≥0∞)
-    (μ : Measure X) [IsProbabilityMeasure μ] (y : X) :
-    wassersteinEDist p μ (Measure.dirac y) = eLpNorm (fun x ↦ edist x y) p μ := by
-  rw [wassersteinEDist_comm hd, wassersteinEDist_dirac_left hd]
-  exact eLpNorm_congr_ae (.of_forall fun x ↦ edist_comm y x)
-
 /-- **The two-Dirac value.** The only coupling of `δ x` with `δ y` is `δ (x, y)`, so the
 Wasserstein distance of two Dirac measures is the ground distance of their atoms, for every
 nonzero exponent. This is the acceptance check `W_p (δ_x, δ_y) = d (x, y)`.
@@ -253,6 +250,25 @@ theorem wassersteinEDist_dirac_dirac [MeasurableSingletonClass X]
     (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (hp : p ≠ 0) (x y : X) :
     wassersteinEDist p (Measure.dirac x) (Measure.dirac y) = edist x y := by
   rw [wassersteinEDist_dirac_left hd, eLpNorm_dirac _ y hp, enorm_eq_self]
+
+end Dirac
+
+end MeasurableEDist
+
+section Measurable
+
+variable [PseudoEMetricSpace X]
+
+section Dirac
+
+/-- The mirror image of `TauCeti.wassersteinEDist_dirac_left`: the Wasserstein distance to a Dirac
+target is the `L^p (μ)` seminorm of the ground distance to the atom. -/
+@[simp]
+theorem wassersteinEDist_dirac_right (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (p : ℝ≥0∞)
+    (μ : Measure X) [IsProbabilityMeasure μ] (y : X) :
+    wassersteinEDist p μ (Measure.dirac y) = eLpNorm (fun x ↦ edist x y) p μ := by
+  rw [wassersteinEDist_comm hd, wassersteinEDist_dirac_left hd]
+  exact eLpNorm_congr_ae (.of_forall fun x ↦ edist_comm y x)
 
 /-- **Basepoint independence of the `p`-moment.** By `TauCeti.wassersteinEDist_dirac_left` the
 Wasserstein distance from a Dirac law is the `p`-th moment of `ν` about its atom, and moving the
@@ -343,7 +359,7 @@ end Measurable
 
 section Bridge
 
-variable [PseudoEMetricSpace X]
+variable [EDist X]
 
 /-- The objective of a fixed plan, raised to the power `p`, is the integral of `edist ^ p`: this
 is the pointwise form of the bridge between the `L^p` seminorm and the primal cost, valid for
