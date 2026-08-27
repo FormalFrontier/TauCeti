@@ -85,16 +85,6 @@ theorem lowerLeftCoordinate_def :
 abbrev weights : Fin 2 → ℤ :=
   UpperTriangular.weights 2
 
-/-- The first standard Borel weight is one. -/
-@[simp]
-theorem weights_zero : weights 0 = 1 := by
-  simp [weights, UpperTriangular.weights_apply]
-
-/-- The second standard Borel weight is zero. -/
-@[simp]
-theorem weights_one : weights 1 = 0 := by
-  simp [weights, UpperTriangular.weights_apply]
-
 /-- For the weights `(1, 0)`, the weight-parabolic relation set is the singleton containing the
 lower-left coordinate. -/
 theorem weightParabolicRelationSet_borelWeights :

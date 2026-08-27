@@ -60,7 +60,6 @@ theorem weights_apply (i : Fin n) : weights n i = (n : ℤ) - 1 - (i : ℤ) :=
   (rfl)
 
 /-- The standard weights decrease precisely when the row index increases. -/
-@[simp]
 theorem weights_lt_weights_iff (i j : Fin n) : weights n i < weights n j ↔ j < i := by
   simp [weights]
 
