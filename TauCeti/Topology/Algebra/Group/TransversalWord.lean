@@ -18,7 +18,7 @@ This file adds the one statement about it that needs a topology: if `G` is a top
 `(t u)⁻¹` is constant and `γ ↦ γ` is the continuous identity; the only one whose continuity is not
 immediate is `γ ↦ t (γ⁻¹ • u)`, and openness of `U` makes `G ⧸ U` discrete, so that factor is
 locally constant and no continuity is required of `t` itself. The variant
-`TauCeti.continuous_lWord_smul_inv` lets the coset index itself be translated by a second group
+`TauCeti.continuous_lWord_inv_smul` lets the coset index itself be translated by a second group
 variable, which is the shape the degree-two corestriction sum is indexed by.
 
 This is the continuity clause of the transversal calculus of the Layer 6 milestone of the
@@ -47,7 +47,7 @@ theorem continuous_lWord (hU : IsOpen (U : Set G)) (u : G ⧸ U) : Continuous (l
 and in a coset index translated by a second group variable: `(γ, η) ↦ ℓᵗ_{γ⁻¹ • u}(η)`. Here both
 `γ ↦ t (γ⁻¹ • u)` and `(γ, η) ↦ t (η⁻¹ • γ⁻¹ • u)` are locally constant, again because `G ⧸ U` is
 discrete, so no continuity is required of `t` itself. -/
-theorem continuous_lWord_smul_inv (hU : IsOpen (U : Set G)) (u : G ⧸ U) :
+theorem continuous_lWord_inv_smul (hU : IsOpen (U : Set G)) (u : G ⧸ U) :
     Continuous fun q : G × G => lWord U t (q.1⁻¹ • u) q.2 := by
   have : DiscreteTopology (G ⧸ U) := QuotientGroup.discreteTopology hU
   have h : (fun q : G × G => lWord U t (q.1⁻¹ • u) q.2) =

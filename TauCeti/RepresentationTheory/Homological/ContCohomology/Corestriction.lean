@@ -48,7 +48,7 @@ by the coboundary of `γ ↦ ∑ u, t u • (f (d_u, ℓᵗ'_u γ) - f (ℓᵗ_u
 
 Continuity is needed only for the passage from cochains to `H¹` and `H²`, and only through
 openness of `U`: `TauCeti.continuous_lWord` makes `γ ↦ ℓᵗ_u(γ)` continuous for an open `U` and
-*any* map `t`, and `TauCeti.continuous_lWord_smul_inv` does the same for the second transversal
+*any* map `t`, and `TauCeti.continuous_lWord_inv_smul` does the same for the second transversal
 word of the degree-two sum, whose coset index moves with the first variable.  So no continuity is
 required of the transversal itself.
 
@@ -756,7 +756,7 @@ section DegreeTwo
 /-! ### Corestriction on `H²`
 
 Openness of `U` makes every degree-two corestriction cochain continuous — through
-`TauCeti.continuous_lWord` and `TauCeti.continuous_lWord_smul_inv`, one for each of the two
+`TauCeti.continuous_lWord` and `TauCeti.continuous_lWord_inv_smul`, one for each of the two
 transversal words — so the cochain layer above descends to `H² = Z²/B²`.
 
 Unlike degree one, this section takes the bundled `IsTopologicalGroup G` rather than
@@ -783,7 +783,7 @@ theorem continuous_cochainsCor2 {f : U × U → M} (hf : Continuous f) :
   rw [h]
   refine continuous_finsetSum _ fun u _ => Continuous.const_smul ?_ (t u)
   exact hf.comp ((((continuous_lWord U t hU u).comp continuous_fst).subtype_mk _).prodMk
-    ((continuous_lWord_smul_inv U t hU u).subtype_mk _))
+    ((continuous_lWord_inv_smul U t hU u).subtype_mk _))
 
 /-- The degree-two corestriction cochain preserves continuous `2`-cocycles. -/
 theorem cochainsCor2_mem_Z2 {f : U × U → M} (hf : f ∈ Z2 U M) :
