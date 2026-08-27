@@ -128,23 +128,18 @@ theorem chiSquaredPDFReal_of_nonneg (hx : 0 ≤ x) :
 theorem chiSquaredPDFReal_of_neg (hx : x < 0) : chiSquaredPDFReal k x = 0 := by
   rw [chiSquaredPDFReal, ite_eq_right (not_le.mpr hx)]
 
-/-- The `ℝ≥0∞`-valued candidate chi-squared density is the coercion of the real-valued one. -/
-theorem chiSquaredPDF_eq_ofReal (k x : ℝ) :
-    chiSquaredPDF k x = ENNReal.ofReal (chiSquaredPDFReal k x) := by
-  rw [chiSquaredPDF]
-
 /-- On the nonnegative half-line, the `ℝ≥0∞`-valued candidate chi-squared density is given by its
 textbook formula. -/
 @[simp]
 theorem chiSquaredPDF_of_nonneg (hx : 0 ≤ x) :
     chiSquaredPDF k x = ENNReal.ofReal
       (x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Real.Gamma (k / 2))) := by
-  rw [chiSquaredPDF_eq_ofReal, chiSquaredPDFReal_of_nonneg hx]
+  rw [chiSquaredPDF, chiSquaredPDFReal_of_nonneg hx]
 
 /-- Below zero, the `ℝ≥0∞`-valued candidate chi-squared density vanishes. -/
 @[simp]
 theorem chiSquaredPDF_of_neg (hx : x < 0) : chiSquaredPDF k x = 0 := by
-  rw [chiSquaredPDF_eq_ofReal, chiSquaredPDFReal_of_neg hx, ENNReal.ofReal_zero]
+  rw [chiSquaredPDF, chiSquaredPDFReal_of_neg hx, ENNReal.ofReal_zero]
 
 /-- The chi-squared density is the gamma density of shape `k / 2` and rate `1 / 2`. -/
 theorem chiSquaredPDFReal_eq_gammaPDFReal (k x : ℝ) :
