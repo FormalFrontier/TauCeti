@@ -1170,10 +1170,10 @@ theorem checkerboardCyclicQuadraticModule_pairing_one_one :
     (checkerboardCyclicQuadraticModule n).toFiniteBilinearModule.pairing
         (1 : ZMod 4) (1 : ZMod 4) = (((n : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) := by
   unfold checkerboardCyclicQuadraticModule
-  rw [FiniteQuadraticModule.cyclic_pairing, FiniteQuadraticModule.polar_cyclicMap_one_one,
-    ← AddCircle.coe_zsmul]
+  rw [FiniteQuadraticModule.cyclic_pairing, QuadraticMap.polar_self,
+    FiniteQuadraticModule.cyclicMap_one, ← AddCircle.coe_nsmul]
   congr 1
-  rw [zsmul_eq_mul]
+  rw [nsmul_eq_mul]
   push_cast
   ring
 
@@ -1209,9 +1209,7 @@ theorem checkerboardCyclicQuadraticIsometry_apply (hn : Odd n) (x : ZMod 4) :
   exact FiniteQuadraticModule.cyclicIsometryOfGenerator_apply 4 _ _ _ _ x
 
 omit [NeZero n] in
-/-- The odd-rank quadratic isometry carries the generator of `ℤ/4` to the spinor class.  This is
-not a `simp` lemma: `checkerboardCyclicQuadraticIsometry_apply` already rewrites the left-hand side
-into the shape settled by `zmodFourAddEquivCheckerboardDiscriminantGroup_apply_one`. -/
+/-- The odd-rank quadratic isometry carries the generator of `ℤ/4` to the spinor class. -/
 theorem checkerboardCyclicQuadraticIsometry_one (hn : Odd n) :
     letI : NeZero n := NeZero.of_pos hn.pos
     checkerboardCyclicQuadraticIsometry n hn (1 : ZMod 4) = checkerboardSpinorClass n := by
@@ -1222,8 +1220,7 @@ theorem checkerboardCyclicQuadraticIsometry_one (hn : Odd n) :
 omit [NeZero n] in
 /-- **The odd-rank quadratic isometry carries the element `2` of `ℤ/4` to the vector class.**
 Together with `checkerboardCyclicQuadraticModule_quadratic_two` this reads the vector value
-`q(v) = 1 / 2` of the table row off the model.  This is not a `simp` lemma, for the same reason as
-`checkerboardCyclicQuadraticIsometry_one`. -/
+`q(v) = 1 / 2` of the table row off the model. -/
 theorem checkerboardCyclicQuadraticIsometry_two (hn : Odd n) :
     letI : NeZero n := NeZero.of_pos hn.pos
     checkerboardCyclicQuadraticIsometry n hn (2 : ZMod 4) = checkerboardVectorClass n := by

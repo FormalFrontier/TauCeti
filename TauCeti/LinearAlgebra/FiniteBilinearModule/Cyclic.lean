@@ -147,12 +147,6 @@ theorem polar_cyclicMap_intCast (j k : ℤ) :
   rw [e, add_smul, add_smul]
   abel
 
-/-- The generator has self-pairing `2a`.  This is not a `simp` lemma: `QuadraticMap.polar_self`
-together with `cyclicMap_one` already rewrites the left-hand side to the right-hand side. -/
-theorem polar_cyclicMap_one_one :
-    QuadraticMap.polar (cyclicMap m a hq hp) 1 1 = (2 : ℤ) • a := by
-  simpa using polar_cyclicMap_intCast m a hq hp 1 1
-
 /-- **The finite quadratic module on `ℤ/m` whose generator has value `a`.** -/
 @[expose] noncomputable def cyclic [NeZero m] : FiniteQuadraticModule :=
   ofQuadraticMap (cyclicMap m a hq hp)
