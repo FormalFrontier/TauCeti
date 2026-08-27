@@ -265,12 +265,9 @@ theorem JointlyDissociated.exists_mixedIIDWith_const_arrayDiag [IsProbabilityMea
     ∃ P : ProbabilityMeasure α, MixedIIDWith μ (arrayDiag X) fun _ => P := by
   have hdiag : ∀ i, AEMeasurable (arrayDiag X i) μ := fun i => by
     simpa only [arrayDiag_apply] using hX (i, i)
-  let P : ProbabilityMeasure α :=
-    ⟨μ.map (arrayDiag X 0), Measure.isProbabilityMeasure_map (hdiag 0)⟩
-  refine ⟨P, MixedIIDWith.of_iIndepFun_map_eq h.iIndepFun_arrayDiag fun i => ?_⟩
-  change μ.map (arrayDiag X i) = μ.map (arrayDiag X 0)
-  exact ((hexch.exchangeable_arrayDiag hX).contractable hdiag).identDistrib_coord
-    (hdiag i) (hdiag 0) |>.map_eq
+  have hident : ∀ i, IdentDistrib (arrayDiag X i) (arrayDiag X 0) μ μ := fun i =>
+    ((hexch.exchangeable_arrayDiag hX).contractable hdiag).identDistrib_coord (hdiag i) (hdiag 0)
+  exact ⟨_, MixedIIDWith.of_iIndepFun_identDistrib h.iIndepFun_arrayDiag hident⟩
 
 end Probability
 
