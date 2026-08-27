@@ -479,8 +479,12 @@ theorem kerOfSurjective_quotientMapOfLe (H : _root_.CommHopfAlgCat.{v} R)
         Ideal.Quotient.lift I.toIdeal (mkQuotient H J).hom.toAlgHom.toRingHom
           hkill := by
       ext q
+      -- Quotient extensionality presents the left side through the underlying `RingHom`
+      -- composition; no lemma rewrites this whole coercion chain to morphism application.
       change (quotientMapOfLe H hIJ).hom (Ideal.Quotient.mk I.toIdeal q) = _
       rw [RingHom.comp_apply, Ideal.Quotient.lift_mk]
+      -- The rewrites leave `RingHom`/`AlgHom` coercions, while the available computation
+      -- lemmas are stated for the bundled bialgebra morphisms.
       change (quotientMapOfLe H hIJ).hom (Ideal.Quotient.mk I.toIdeal q) =
         (mkQuotient H J).hom q
       calc
@@ -501,6 +505,8 @@ theorem kerOfSurjective_quotientMapOfLe (H : _root_.CommHopfAlgCat.{v} R)
   intro x
   rw [← HopfIdeal.mem_toIdeal, ← HopfIdeal.mem_toIdeal,
     HopfIdeal.kerOfSurjective_toIdeal, HopfIdeal.map_toIdeal]
+  -- These carrier ideals contain the raw bialgebra maps from the simp-normal theorem
+  -- statement; `hker` uses the definitionally equal categorical quotient morphisms.
   change x ∈ RingHom.ker (quotientMapOfLe H hIJ).hom.toAlgHom.toRingHom ↔
     x ∈ Ideal.map (mkQuotient H I).hom.toAlgHom.toRingHom J.toIdeal
   rw [hker]
