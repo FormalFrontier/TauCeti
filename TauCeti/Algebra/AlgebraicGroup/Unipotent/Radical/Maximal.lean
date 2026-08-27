@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Product
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Properties
-import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
 
 /-!
 # Maximal-dimensional unipotent-radical candidates
@@ -104,8 +103,8 @@ theorem derivationCompLieHom_productOfNormal_bijective_of_maximal
             (CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal)))) := by
   let hPI := CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal
   have hfinrank := hI.finrank_quotientLie_productOfNormal_eq_of_maximal hmax hJ
-  exact HopfIdeal.derivationCompLieHom_quotientMapOfLe_bijective_of_finrank_eq
-    H hPI hfinrank.symm
+  exact derivationCompLieHom_bijective_of_surjective_of_finrank_eq _
+    (FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective H hPI) hfinrank.symm
 
 end HopfIdeal.IsUnipotentRadicalCandidate
 

@@ -6,11 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Dual.Lemmas
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
-import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
 import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
@@ -43,9 +41,6 @@ needed in Layer 2 of the ReductiveGroups roadmap.
 * `TauCeti.HopfIdeal.finrank_quotientLie_le`: the resulting closed-subgroup dimension bound.
 * `TauCeti.HopfIdeal.finrank_quotientLie_antitone`: inclusion of closed subgroups cannot increase
   Lie dimension.
-* `TauCeti.HopfIdeal.derivationCompLieHom_quotientMapOfLe_bijective_of_finrank_eq`: equal Lie
-  dimensions make the tangent map induced by an inclusion of finite-type closed subgroups
-  bijective.
 
 ## References
 
@@ -305,44 +300,6 @@ theorem finrank_quotientLie_antitone
   omega
 
 end Field
-
-section FiniteType
-
-variable [Field k] (H : FiniteTypeCommHopfAlgCat.{u, v} k)
-
-/-- The tangent map induced by an inclusion of finite-type closed subgroups is bijective when
-their Lie algebras have equal dimension. -/
-theorem derivationCompLieHom_quotientMapOfLe_bijective_of_finrank_eq
-    {I J : HopfIdeal k H} (hIJ : I ≤ J)
-    (hfinrank :
-      Module.finrank k
-          (Derivation k (H ⧸ J.toIdeal)
-            (Bialgebra.CounitAlgebra k (H ⧸ J.toIdeal) k)) =
-        Module.finrank k
-          (Derivation k (H ⧸ I.toIdeal)
-            (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k))) :
-    Function.Bijective
-      (derivationCompLieHom (B := k)
-        (FiniteTypeCommHopfAlgCat.toBialgHom
-          (FiniteTypeCommHopfAlgCat.quotientMapOfLe H hIJ))) := by
-  let : Algebra.FiniteType k (H ⧸ I.toIdeal) :=
-    (FiniteTypeCommHopfAlgCat.quotient H I).property
-  let : Algebra.FiniteType k (H ⧸ J.toIdeal) :=
-    (FiniteTypeCommHopfAlgCat.quotient H J).property
-  let f := FiniteTypeCommHopfAlgCat.toBialgHom
-    (FiniteTypeCommHopfAlgCat.quotientMapOfLe H hIJ)
-  have hinjective : Function.Injective (derivationCompLieHom (B := k) f) := by
-    intro d e hde
-    apply derivationComp_injective_of_surjective f
-      (FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective H hIJ)
-    simpa only [derivationCompLieHom_apply] using hde
-  refine ⟨hinjective, ?_⟩
-  simpa only [LieHom.coe_toLinearMap] using
-    (LinearMap.injective_iff_surjective_of_finrank_eq_finrank
-      (f := (derivationCompLieHom (B := k) f : _ →ₗ[k] _)) hfinrank).mp
-      (by simpa only [LieHom.coe_toLinearMap] using hinjective)
-
-end FiniteType
 
 end HopfIdeal
 
