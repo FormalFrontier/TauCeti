@@ -12,24 +12,32 @@ public import TauCeti.Combinatorics.Enumerative.SuccessorArray
 
 This file proves the finite combinatorial lemma behind the successor-array proof of the
 Diaconis--Freedman theorem.  Fix a finite prefix of a path and reorder the successor entries used
-by that prefix, separately within each row.  If each reordering preserves the used part of its row
-and fixes its last entry, following the reordered successor rows produces another prefix with the
-same endpoint and the same transition counts.
+by that prefix, separately within each row.  If each reordering permutes the used part of its row
+among itself and fixes its last entry, following the reordered successor rows produces another
+prefix with the same endpoint and the same transition counts.
 
 The fixed-last hypothesis is essential: it is the last-exit condition which prevents the
 reconstructed path from closing a proper subtrail before all prescribed successor entries have
-been used.  The proof follows Lemma 1(b) of Fortini, Ladelli, Petris, and Regazzini, *On mixtures
-of distributions of Markov chains*, Stochastic Processes and their Applications 100 (2002),
-147--165.
+been used.  It enters exactly once, in
+`TauCeti.visitCount_pathOfReindexedSuccessors_lt_visitCount`, where it rules out the maximal
+deficient index being skipped.  The proof follows Lemma 1(b) of Fortini, Ladelli, Petris, and
+Regazzini, *On mixtures of distributions of Markov chains*, Stochastic Processes and their
+Applications 100 (2002), 147--165.
 
 ## Main definitions
 
-* `TauCeti.reindexSuccessors`: rebuild a path after reindexing each row of its successor array.
+* `TauCeti.pathOfReindexedSuccessors`: the path rebuilt after reindexing each row of the successor
+  array of the original path.
 
 ## Main results
 
-* `TauCeti.reindexSuccessors_endpoint` and `TauCeti.reindexSuccessors_transitionCount`: the
-  last-exit reconstruction has the same endpoint and transition counts as the original prefix.
+* `TauCeti.visitCount_pathOfReindexedSuccessors_lt_visitCount`: the last-exit lemma — the
+  reconstruction only ever consumes successor entries that the original prefix consumes too.
+* `TauCeti.successorArray_pathOfReindexedSuccessors_of_lt_visitCount`: the entries it consumes are
+  the prescribed reindexed ones.
+* `TauCeti.visitCount_pathOfReindexedSuccessors`, `TauCeti.pathOfReindexedSuccessors_endpoint` and
+  `TauCeti.transitionCount_pathOfReindexedSuccessors`: the last-exit reconstruction has the same
+  visit counts, the same endpoint, and the same transition counts as the original prefix.
 
 ## References
 
@@ -50,530 +58,456 @@ variable {α : Type*}
 
 attribute [local instance] Classical.decEq
 
-/-- A visit index below the visit count at time `n` is realised strictly before `n`. -/
-theorem visitTime_lt_of_lt_visitCount {x : ℕ → α} {a : α} {k n : ℕ}
-    (h : k < visitCount x a n) : visitTime x a k < n := by
-  classical
-  rw [visitTime_def]
-  apply Nat.nth_lt_of_lt_count
-  simpa only [visitCount_eq_count] using h
-
-/-- A visit index below the visit count at time `n` names a genuine visit. -/
-theorem apply_visitTime_of_lt_visitCount {x : ℕ → α} {a : α} {k n : ℕ}
-    (h : k < visitCount x a n) : x (visitTime x a k) = a := by
-  classical
-  have hcard : ∀ hf : {i | x i = a}.Finite, k < hf.toFinset.card := by
-    intro hf
-    exact h.trans_le (by rw [visitCount_eq_count]; exact Nat.count_le_card hf n)
-  simpa only [visitTime_def] using Nat.nth_mem k hcard
-
-/-- Before a realised visit indexed by `k`, there are exactly `k` earlier visits. -/
-theorem visitCount_visitTime_of_lt_visitCount {x : ℕ → α} {a : α} {k n : ℕ}
-    (h : k < visitCount x a n) : visitCount x a (visitTime x a k) = k := by
-  classical
-  have hcard : ∀ hf : {i | x i = a}.Finite, k < hf.toFinset.card := by
-    intro hf
-    exact h.trans_le (by rw [visitCount_eq_count]; exact Nat.count_le_card hf n)
-  simpa only [visitCount_eq_count, visitTime_def] using Nat.count_nth hcard
-
-/-- Rebuild `x` after reindexing the entries in each row of its successor array by `π`. -/
-def reindexSuccessors (π : α → Equiv.Perm ℕ) (x : ℕ → α) : ℕ → α :=
-  pathOfSuccessors (x 0) fun a k => successorArray x a (π a k)
-
--- The parentheses in `(rfl)` keep the definition sealed while exposing its computational API.
-@[simp]
-theorem reindexSuccessors_zero (π : α → Equiv.Perm ℕ) (x : ℕ → α) :
-    reindexSuccessors π x 0 = x 0 := by
-  rw [reindexSuccessors, pathOfSuccessors_zero]
-
-/-- The recursion equation for a path rebuilt from reindexed successor rows. -/
-theorem reindexSuccessors_succ (π : α → Equiv.Perm ℕ) (x : ℕ → α) (n : ℕ) :
-    reindexSuccessors π x (n + 1) =
-      successorArray x (reindexSuccessors π x n)
-        (π (reindexSuccessors π x n)
-          (visitCount (reindexSuccessors π x) (reindexSuccessors π x n) n)) := by
-  rw [reindexSuccessors, pathOfSuccessors_succ]
-
-/-- Reindexing every successor row by the identity leaves the path unchanged. -/
-@[simp]
-theorem reindexSuccessors_one (x : ℕ → α) :
-    reindexSuccessors (fun _ => 1) x = x := by
-  rw [reindexSuccessors]
-  exact pathOfSuccessors_successorArray x
-
-/-- Every entry already consumed by a rebuilt path is the corresponding entry of the supplied
-successor rows. -/
-theorem successorArray_pathOfSuccessors_of_lt_visitCount (a₀ : α) (s : α → ℕ → α)
-    (a : α) (k n : ℕ) (hk : k < visitCount (pathOfSuccessors a₀ s) a n) :
-    successorArray (pathOfSuccessors a₀ s) a k = s a k := by
-  let y := pathOfSuccessors a₀ s
-  have hy : y (visitTime y a k) = a := apply_visitTime_of_lt_visitCount hk
-  have hcount : visitCount y a (visitTime y a k) = k :=
-    visitCount_visitTime_of_lt_visitCount hk
-  rw [successorArray_def]
-  change y (visitTime y a k + 1) = s a k
-  rw [show y (visitTime y a k + 1) =
-      s (y (visitTime y a k))
-        (visitCount y (y (visitTime y a k)) (visitTime y a k)) by
-      exact pathOfSuccessors_succ a₀ s (visitTime y a k), hy, hcount]
-
-/-- Every successor entry consumed by a reindexed reconstruction is the corresponding reindexed
-entry of the original successor array. -/
-theorem successorArray_reindexSuccessors_of_lt_visitCount (π : α → Equiv.Perm ℕ)
-    (x : ℕ → α) (a : α) (k n : ℕ) (hk : k < visitCount (reindexSuccessors π x) a n) :
-    successorArray (reindexSuccessors π x) a k = successorArray x a (π a k) := by
-  exact successorArray_pathOfSuccessors_of_lt_visitCount (x 0)
-    (fun b l => successorArray x b (π b l)) a k n hk
-
-private theorem perm_apply_lt_of_fixed_of_lt (σ : Equiv.Perm ℕ) (q : ℕ)
-    (hfix : ∀ k, q ≤ k → σ k = k) {k : ℕ} (hk : k < q) : σ k < q := by
+/-- **A permutation fixing every index from `q` on permutes the indices below `q`.** This is the
+bridge from the "fixes all unused entries" form of a row reindexing to the weaker hypothesis the
+reconstruction theorems below ask for, namely that each row permutes its used prefix among
+itself. -/
+theorem perm_apply_lt_of_fixed_of_lt (σ : Equiv.Perm ℕ) {q k : ℕ} (hfix : ∀ l, q ≤ l → σ l = l)
+    (hk : k < q) : σ k < q := by
   by_contra h
   have hsfix : σ (σ k) = σ k := hfix (σ k) (not_lt.mp h)
   have hsk : σ k = k := σ.injective hsfix
   exact (not_lt_of_ge ((not_lt.mp h).trans_eq hsk)) hk
 
+/-- Rebuild `x` after reindexing the entries in each row of its successor array by `π`. -/
+def pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : ℕ → α) : ℕ → α :=
+  pathOfSuccessors (x 0) fun a k => successorArray x a (π a k)
+
+/-- A rebuilt path starts where the original does. -/
+@[simp]
+theorem pathOfReindexedSuccessors_zero (π : α → Equiv.Perm ℕ) (x : ℕ → α) :
+    pathOfReindexedSuccessors π x 0 = x 0 := by
+  rw [pathOfReindexedSuccessors, pathOfSuccessors_zero]
+
+/-- The recursion equation for a path rebuilt from reindexed successor rows. -/
+@[simp]
+theorem pathOfReindexedSuccessors_succ (π : α → Equiv.Perm ℕ) (x : ℕ → α) (n : ℕ) :
+    pathOfReindexedSuccessors π x (n + 1) =
+      successorArray x (pathOfReindexedSuccessors π x n)
+        (π (pathOfReindexedSuccessors π x n)
+          (visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x n) n)) := by
+  rw [pathOfReindexedSuccessors, pathOfSuccessors_succ]
+
+/-- Reindexing every successor row by the identity leaves the path unchanged. -/
+@[simp]
+theorem pathOfReindexedSuccessors_one (x : ℕ → α) :
+    pathOfReindexedSuccessors (fun _ => 1) x = x := by
+  rw [pathOfReindexedSuccessors]
+  exact pathOfSuccessors_successorArray x
+
+/-- Every successor entry consumed by a reindexed reconstruction is the corresponding reindexed
+entry of the original successor array. -/
+theorem successorArray_pathOfReindexedSuccessors_of_lt_visitCount (π : α → Equiv.Perm ℕ)
+    (x : ℕ → α) (a : α) {k n : ℕ}
+    (hk : k < visitCount (pathOfReindexedSuccessors π x) a n) :
+    successorArray (pathOfReindexedSuccessors π x) a k = successorArray x a (π a k) :=
+  successorArray_pathOfSuccessors_of_lt_visitCount (a₀ := x 0)
+    (s := fun b l => successorArray x b (π b l)) hk
+
+/-- The time at which the original prefix consumes the successor entry that the reconstruction
+consumes at time `i`: the visit of `x` to the state `pathOfReindexedSuccessors π x i` indexed by
+the reindexed visit count. The hypothesis `hmaps` keeps that index below the number of visits `x`
+makes before `m`, so the time is one of the first `m`. -/
 private def reindexStepIndex (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m i : ℕ)
-    (hki : visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-      visitCount x (reindexSuccessors π x i) m)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k) : Fin m :=
-  let y := reindexSuccessors π x
-  let k := visitCount y (y i) i
-  ⟨visitTime x (y i) (π (y i) k),
-    visitTime_lt_of_lt_visitCount
-      (perm_apply_lt_of_fixed_of_lt (π (y i)) _ (hfix (y i)) hki)⟩
+    (hki : visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i <
+      visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) : Fin m :=
+  ⟨visitTime x (pathOfReindexedSuccessors π x i)
+      (π (pathOfReindexedSuccessors π x i)
+        (visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i)),
+    visitTime_lt_of_lt_visitCount (hmaps _ _ hki)⟩
 
+/-- The value of `TauCeti.reindexStepIndex`. This is the only place its body is unfolded. -/
+private theorem reindexStepIndex_val (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m i : ℕ)
+    (hki : visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i <
+      visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) :
+    (reindexStepIndex π x m i hki hmaps).val =
+      visitTime x (pathOfReindexedSuccessors π x i)
+        (π (pathOfReindexedSuccessors π x i)
+          (visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i)) :=
+  rfl
+
+/-- The original prefix is at the reconstruction's current state at the paired time. -/
 private theorem reindexStepIndex_source (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m i : ℕ)
-    (hki : visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-      visitCount x (reindexSuccessors π x i) m)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k) :
-    x (reindexStepIndex π x m i hki hfix) = reindexSuccessors π x i := by
-  let y := reindexSuccessors π x
-  let k := visitCount y (y i) i
-  have hp : π (y i) k < visitCount x (y i) m :=
-    perm_apply_lt_of_fixed_of_lt (π (y i)) _ (hfix (y i)) hki
-  exact apply_visitTime_of_lt_visitCount hp
+    (hki : visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i <
+      visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) :
+    x (reindexStepIndex π x m i hki hmaps) = pathOfReindexedSuccessors π x i := by
+  rw [reindexStepIndex_val]
+  exact apply_visitTime_of_lt_visitCount (hmaps _ _ hki)
 
+/-- The original prefix moves to the reconstruction's next state at the paired time. -/
 private theorem reindexStepIndex_target (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m i : ℕ)
-    (hki : visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-      visitCount x (reindexSuccessors π x i) m)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k) :
-    x (reindexStepIndex π x m i hki hfix + 1) = reindexSuccessors π x (i + 1) := by
-  let y := reindexSuccessors π x
-  let k := visitCount y (y i) i
-  change x (visitTime x (y i) (π (y i) k) + 1) = y (i + 1)
-  calc
-    x (visitTime x (y i) (π (y i) k) + 1) = successorArray x (y i) (π (y i) k) :=
-      (successorArray_def x (y i) (π (y i) k)).symm
-    _ = y (i + 1) := (reindexSuccessors_succ π x i).symm
+    (hki : visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i <
+      visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) :
+    x (reindexStepIndex π x m i hki hmaps + 1) = pathOfReindexedSuccessors π x (i + 1) := by
+  rw [reindexStepIndex_val, ← successorArray_def x, ← pathOfReindexedSuccessors_succ]
 
+/-- By the paired time the original prefix has made exactly the reindexed number of visits. -/
+private theorem visitCount_reindexStepIndex (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m i : ℕ)
+    (hki : visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i <
+      visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) :
+    visitCount x (pathOfReindexedSuccessors π x i) (reindexStepIndex π x m i hki hmaps).val =
+      π (pathOfReindexedSuccessors π x i)
+        (visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i) := by
+  rw [reindexStepIndex_val]
+  exact visitCount_visitTime_of_lt_visitCount (hmaps _ _ hki)
+
+/-- The pairing of reconstruction times with original times, as an embedding. It is injective
+because distinct reconstruction times use distinct cells of the successor array, and the paired
+time determines both the state and the number of earlier visits to it. -/
 private def reindexStepEmbedding (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t : ℕ)
-    (hused : ∀ i < t,
-      visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-        visitCount x (reindexSuccessors π x i) m)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k) : Fin t ↪ Fin m where
-  toFun i := reindexStepIndex π x m i (hused i i.isLt) hfix
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) : Fin t ↪ Fin m where
+  toFun i := reindexStepIndex π x m i (hused i i.isLt) hmaps
   inj' := by
     intro i j hij
     apply Fin.ext
-    apply (visitCell_injective (reindexSuccessors π x))
+    apply visitCell_injective (pathOfReindexedSuccessors π x)
     rw [visitCell_def, visitCell_def, Prod.mk.injEq]
-    have hsource : reindexSuccessors π x i = reindexSuccessors π x j := by
-      rw [← reindexStepIndex_source π x m i (hused i i.isLt) hfix,
-        ← reindexStepIndex_source π x m j (hused j j.isLt) hfix]
-      exact congrArg x (congrArg Fin.val hij)
+    have hidx : (reindexStepIndex π x m i (hused i i.isLt) hmaps).val =
+        (reindexStepIndex π x m j (hused j j.isLt) hmaps).val := congrArg Fin.val hij
+    have hsource : pathOfReindexedSuccessors π x i = pathOfReindexedSuccessors π x j := by
+      rw [← reindexStepIndex_source π x m i (hused i i.isLt) hmaps,
+        ← reindexStepIndex_source π x m j (hused j j.isLt) hmaps, hidx]
     refine ⟨hsource, ?_⟩
-    have hcounti := visitCount_visitTime_of_lt_visitCount
-      (perm_apply_lt_of_fixed_of_lt (π (reindexSuccessors π x i)) _
-        (hfix (reindexSuccessors π x i)) (hused i i.isLt))
-    have hcountj := visitCount_visitTime_of_lt_visitCount
-      (perm_apply_lt_of_fixed_of_lt (π (reindexSuccessors π x j)) _
-        (hfix (reindexSuccessors π x j)) (hused j j.isLt))
-    have hidx : (reindexStepIndex π x m i (hused i i.isLt) hfix).val =
-        (reindexStepIndex π x m j (hused j j.isLt) hfix).val := congrArg Fin.val hij
-    have hc : visitCount x (reindexSuccessors π x i)
-          (reindexStepIndex π x m i (hused i i.isLt) hfix).val =
-        visitCount x (reindexSuccessors π x j)
-          (reindexStepIndex π x m j (hused j j.isLt) hfix).val := by
-      rw [hsource, hidx]
-    have hcounti' : visitCount x (reindexSuccessors π x i)
-          (reindexStepIndex π x m i (hused i i.isLt) hfix).val =
-        π (reindexSuccessors π x i)
-          (visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i) := by
-      change visitCount x (reindexSuccessors π x i)
-          (visitTime x (reindexSuccessors π x i)
-            (π (reindexSuccessors π x i)
-              (visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i))) = _
-      exact hcounti
-    have hcountj' : visitCount x (reindexSuccessors π x j)
-          (reindexStepIndex π x m j (hused j j.isLt) hfix).val =
-        π (reindexSuccessors π x j)
-          (visitCount (reindexSuccessors π x) (reindexSuccessors π x j) j) := by
-      change visitCount x (reindexSuccessors π x j)
-          (visitTime x (reindexSuccessors π x j)
-            (π (reindexSuccessors π x j)
-              (visitCount (reindexSuccessors π x) (reindexSuccessors π x j) j))) = _
-      exact hcountj
-    rw [hcounti', hcountj', hsource] at hc
-    have hcounts := (π (reindexSuccessors π x j)).injective hc
+    have hi := visitCount_reindexStepIndex π x m i (hused i i.isLt) hmaps
+    have hj := visitCount_reindexStepIndex π x m j (hused j j.isLt) hmaps
+    rw [hsource, hidx] at hi
     rw [hsource]
-    exact hcounts
+    exact (π (pathOfReindexedSuccessors π x j)).injective (hi.symm.trans hj)
 
-private theorem arrivalCount_add_start (z : ℕ → α) (b : α) (t : ℕ) :
-    occCount (fun i : Fin t => z (i.val + 1)) b + (if z 0 = b then 1 else 0) =
-      visitCount z b t + (if z t = b then 1 else 0) := by
-  classical
-  let w : Fin (t + 1) → α := fun i => z i.val
-  have hfirst := occCount_comp_succ_add_zero w b
-  have hlast := occCount_comp_castSucc_add_last w b
-  have hbalance := hfirst.trans hlast.symm
-  change occCount (fun i : Fin t => z (i.val + 1)) b + (if z 0 = b then 1 else 0) =
-    occCount (fun i : Fin t => z i.val) b + (if z t = b then 1 else 0) at hbalance
-  rw [visitCount_def]
-  exact hbalance
+/-- The value of `TauCeti.reindexStepEmbedding`. This is the only place its body is unfolded. -/
+private theorem reindexStepEmbedding_apply (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t : ℕ)
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) (i : Fin t) :
+    reindexStepEmbedding π x m t hused hmaps i =
+      reindexStepIndex π x m i (hused i i.isLt) hmaps :=
+  rfl
 
-private theorem arrivalCount_reindex_le (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t : ℕ)
-    (hused : ∀ i < t,
-      visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-        visitCount x (reindexSuccessors π x i) m)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k) (b : α) :
-    occCount (fun i : Fin t => reindexSuccessors π x (i.val + 1)) b ≤
-      occCount (fun i : Fin m => x (i.val + 1)) b := by
-  classical
-  rw [occCount_eq_card_filter, occCount_eq_card_filter]
-  let e := reindexStepEmbedding π x m t hused hfix
-  apply Finset.card_le_card_of_injOn e
-  · intro i hi
-    rw [Finset.mem_coe, Finset.mem_filter] at hi ⊢
-    refine ⟨Finset.mem_univ _, ?_⟩
-    change x ((reindexStepIndex π x m i (hused i i.isLt) hfix).val + 1) = b
-    rw [reindexStepIndex_target π x m i (hused i i.isLt) hfix]
-    exact hi.2
-  · exact e.injective.injOn
+/-- `TauCeti.reindexStepIndex_source`, read off the embedding. -/
+private theorem reindexStepEmbedding_source (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t : ℕ)
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) (i : Fin t) :
+    x (reindexStepEmbedding π x m t hused hmaps i).val =
+      pathOfReindexedSuccessors π x i.val := by
+  rw [reindexStepEmbedding_apply]
+  exact reindexStepIndex_source π x m i (hused i i.isLt) hmaps
 
-private theorem departureCount_reindex_le (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t : ℕ)
-    (hused : ∀ i < t,
-      visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-        visitCount x (reindexSuccessors π x i) m)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k) (a : α) :
-    visitCount (reindexSuccessors π x) a t ≤ visitCount x a m := by
-  classical
-  rw [visitCount_def, visitCount_def, occCount_eq_card_filter, occCount_eq_card_filter]
-  let e := reindexStepEmbedding π x m t hused hfix
-  apply Finset.card_le_card_of_injOn e
-  · intro i hi
-    rw [Finset.mem_coe, Finset.mem_filter] at hi ⊢
-    refine ⟨Finset.mem_univ _, ?_⟩
-    rw [show e i = reindexStepIndex π x m i (hused i i.isLt) hfix from rfl,
-      reindexStepIndex_source π x m i (hused i i.isLt) hfix]
-    exact hi.2
-  · exact e.injective.injOn
+/-- `TauCeti.reindexStepIndex_target`, read off the embedding. -/
+private theorem reindexStepEmbedding_target (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t : ℕ)
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) (i : Fin t) :
+    x ((reindexStepEmbedding π x m t hused hmaps i).val + 1) =
+      pathOfReindexedSuccessors π x (i.val + 1) := by
+  rw [reindexStepEmbedding_apply]
+  exact reindexStepIndex_target π x m i (hused i i.isLt) hmaps
 
-private theorem endpoint_eq_of_departureCount_eq (π : α → Equiv.Perm ℕ) (x : ℕ → α)
+/-- A reconstruction of length `t` arrives at each state at most as often as the original prefix
+does over its whole length. -/
+private theorem occCount_pathOfReindexedSuccessors_le (π : α → Equiv.Perm ℕ) (x : ℕ → α)
     (m t : ℕ)
-    (hused : ∀ i < t,
-      visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-        visitCount x (reindexSuccessors π x i) m)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
-    (hcount : visitCount (reindexSuccessors π x) (reindexSuccessors π x t) t =
-      visitCount x (reindexSuccessors π x t) m) :
-    reindexSuccessors π x t = x m := by
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) (b : α) :
+    occCount (fun i : Fin t => pathOfReindexedSuccessors π x (i.val + 1)) b ≤
+      occCount (fun i : Fin m => x (i.val + 1)) b :=
+  occCount_le_occCount_of_comp_eq (reindexStepEmbedding π x m t hused hmaps)
+    (reindexStepEmbedding_target π x m t hused hmaps) b
+
+/-- A reconstruction of length `t` departs from each state at most as often as the original prefix
+does over its whole length. -/
+private theorem visitCount_pathOfReindexedSuccessors_le (π : α → Equiv.Perm ℕ) (x : ℕ → α)
+    (m t : ℕ)
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) (a : α) :
+    visitCount (pathOfReindexedSuccessors π x) a t ≤ visitCount x a m := by
+  rw [visitCount_def, visitCount_def]
+  exact occCount_le_occCount_of_comp_eq (reindexStepEmbedding π x m t hused hmaps)
+    (reindexStepEmbedding_source π x m t hused hmaps) a
+
+/-- A reconstruction of length `t` that skips the original's step at time `r` arrives at
+`x (r + 1)` strictly less often than the original prefix does. -/
+private theorem occCount_pathOfReindexedSuccessors_lt (π : α → Equiv.Perm ℕ) (x : ℕ → α)
+    (m t r : ℕ) (hr : r < m)
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
+    (homit : ∀ i : Fin t, (reindexStepEmbedding π x m t hused hmaps i).val ≠ r) :
+    occCount (fun i : Fin t => pathOfReindexedSuccessors π x (i.val + 1)) (x (r + 1)) <
+      occCount (fun i : Fin m => x (i.val + 1)) (x (r + 1)) :=
+  occCount_lt_occCount_of_comp_eq (j := ⟨r, hr⟩) (reindexStepEmbedding π x m t hused hmaps)
+    (reindexStepEmbedding_target π x m t hused hmaps) rfl fun i => Fin.ne_of_val_ne (homit i)
+
+/-- **A reconstruction that has exhausted its current row ends where the original prefix does.**
+The arrival/departure balance at the reconstruction's own endpoint forces it to coincide with the
+original endpoint, because the reconstruction never arrives anywhere more often. -/
+private theorem pathOfReindexedSuccessors_eq_of_visitCount_eq (π : α → Equiv.Perm ℕ) (x : ℕ → α)
+    (m t : ℕ)
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
+    (hcount : visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x t) t =
+      visitCount x (pathOfReindexedSuccessors π x t) m) :
+    pathOfReindexedSuccessors π x t = x m := by
   classical
-  let y := reindexSuccessors π x
-  let b := y t
-  have harr := arrivalCount_reindex_le π x m t hused hfix b
-  have hy := arrivalCount_add_start y b t
-  have hx := arrivalCount_add_start x b m
-  have hy0 : y 0 = x 0 := reindexSuccessors_zero π x
-  change occCount (fun i : Fin t => y (i.val + 1)) b ≤
-    occCount (fun i : Fin m => x (i.val + 1)) b at harr
+  have harr := occCount_pathOfReindexedSuccessors_le π x m t hused hmaps
+    (pathOfReindexedSuccessors π x t)
+  have hy := occCount_succ_add_zero_eq_visitCount_add_last (pathOfReindexedSuccessors π x)
+    (pathOfReindexedSuccessors π x t) t
+  have hx := occCount_succ_add_zero_eq_visitCount_add_last x (pathOfReindexedSuccessors π x t) m
+  rw [pathOfReindexedSuccessors_zero, ite_eq_left rfl, hcount] at hy
   by_contra hend
-  change b ≠ x m at hend
-  change visitCount y b t = visitCount x b m at hcount
-  have hyt : y t = b := rfl
-  have hxm : x m ≠ b := Ne.symm hend
-  simp [hy0, hyt, hcount] at hy
-  simp [hxm] at hx
+  have hxm : ¬x m = pathOfReindexedSuccessors π x t := fun h => hend h.symm
+  rw [ite_eq_right hxm] at hx
   omega
 
-private theorem arrivalCount_reindex_eq_of_departureCount_eq
-    (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t : ℕ) (b : α)
-    (hcount : visitCount (reindexSuccessors π x) b t = visitCount x b m)
-    (hend : reindexSuccessors π x t = x m) :
-    occCount (fun i : Fin t => reindexSuccessors π x (i.val + 1)) b =
+/-- **Matching departure counts at a common endpoint match the arrival counts too.** -/
+private theorem occCount_pathOfReindexedSuccessors_eq_of_visitCount_eq (π : α → Equiv.Perm ℕ)
+    (x : ℕ → α) (m t : ℕ) (b : α)
+    (hcount : visitCount (pathOfReindexedSuccessors π x) b t = visitCount x b m)
+    (hend : pathOfReindexedSuccessors π x t = x m) :
+    occCount (fun i : Fin t => pathOfReindexedSuccessors π x (i.val + 1)) b =
       occCount (fun i : Fin m => x (i.val + 1)) b := by
   classical
-  let y := reindexSuccessors π x
-  have hy := arrivalCount_add_start y b t
-  have hx := arrivalCount_add_start x b m
-  have hy0 : y 0 = x 0 := reindexSuccessors_zero π x
-  change occCount (fun i : Fin t => y (i.val + 1)) b =
-    occCount (fun i : Fin m => x (i.val + 1)) b
-  change y t = x m at hend
-  change visitCount y b t = visitCount x b m at hcount
-  simp [hy0, hend, hcount] at hy
+  have hy := occCount_succ_add_zero_eq_visitCount_add_last (pathOfReindexedSuccessors π x) b t
+  have hx := occCount_succ_add_zero_eq_visitCount_add_last x b m
+  rw [pathOfReindexedSuccessors_zero, hend, hcount] at hy
   omega
 
-private theorem sum_occCount_eq_card {N : ℕ} (w : Fin N → α) (S : Finset α)
-    (hS : ∀ i, w i ∈ S) : ∑ a ∈ S, occCount w a = N := by
+/-- **A strictly shorter reconstruction is still deficient somewhere, and there is a last such
+index.** If the reconstruction had already matched the original's visit count at every state the
+original visits, summing the visit counts over the states used would force the two prefixes to have
+the same length. -/
+private theorem exists_maximal_visitCount_lt (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t : ℕ)
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m) (htm : t < m) :
+    ∃ r < m, visitCount (pathOfReindexedSuccessors π x) (x r) t < visitCount x (x r) m ∧
+      ∀ j, r < j → j < m →
+        visitCount (pathOfReindexedSuccessors π x) (x j) t = visitCount x (x j) m := by
   classical
-  have h := Finset.card_eq_sum_card_fiberwise (s := Finset.univ) (f := w) (t := S)
-    fun i _ => hS i
-  simpa only [Finset.card_univ, Fintype.card_fin, occCount_eq_card_filter] using h.symm
+  have hnonempty : ((Finset.range m).filter fun r =>
+      visitCount (pathOfReindexedSuccessors π x) (x r) t < visitCount x (x r) m).Nonempty := by
+    by_contra hempty
+    rw [Finset.not_nonempty_iff_eq_empty] at hempty
+    obtain ⟨S, hxS, hall⟩ : ∃ S : Finset α, (∀ j : Fin m, x j.val ∈ S) ∧
+        ∀ a ∈ S, visitCount (pathOfReindexedSuccessors π x) a t = visitCount x a m := by
+      refine ⟨Finset.image (fun j : Fin m => x j.val) Finset.univ,
+        fun j => Finset.mem_image_of_mem _ (Finset.mem_univ j), ?_⟩
+      intro a ha
+      obtain ⟨j, _, rfl⟩ := Finset.mem_image.1 ha
+      refine Nat.le_antisymm
+        (visitCount_pathOfReindexedSuccessors_le π x m t hused hmaps _) (not_lt.mp fun hlt => ?_)
+      exact Finset.ne_empty_of_mem
+        (Finset.mem_filter.2 ⟨Finset.mem_range.2 j.isLt, hlt⟩) hempty
+    have hyS : ∀ j : Fin t, pathOfReindexedSuccessors π x j.val ∈ S := by
+      intro j
+      rw [← reindexStepEmbedding_source π x m t hused hmaps j]
+      exact hxS _
+    have hsumy : ∑ a ∈ S, visitCount (pathOfReindexedSuccessors π x) a t = t := by
+      simpa only [visitCount_def] using
+        sum_occCount_eq_card (fun j : Fin t => pathOfReindexedSuccessors π x j.val) hyS
+    have hsumx : ∑ a ∈ S, visitCount x a m = m := by
+      simpa only [visitCount_def] using sum_occCount_eq_card (fun j : Fin m => x j.val) hxS
+    have hsumEq : ∑ a ∈ S, visitCount (pathOfReindexedSuccessors π x) a t =
+        ∑ a ∈ S, visitCount x a m := Finset.sum_congr rfl hall
+    omega
+  obtain ⟨r, hrmem, hrmax⟩ :
+      ∃ r ∈ (Finset.range m).filter fun q =>
+          visitCount (pathOfReindexedSuccessors π x) (x q) t < visitCount x (x q) m,
+        ∀ j ∈ (Finset.range m).filter fun q =>
+          visitCount (pathOfReindexedSuccessors π x) (x q) t < visitCount x (x q) m, j ≤ r :=
+    ⟨_, Finset.max'_mem _ hnonempty, fun j hj => Finset.le_max' _ j hj⟩
+  rw [Finset.mem_filter, Finset.mem_range] at hrmem
+  refine ⟨r, hrmem.1, hrmem.2, fun j hrj hjm => ?_⟩
+  refine Nat.le_antisymm (visitCount_pathOfReindexedSuccessors_le π x m t hused hmaps (x j))
+    (not_lt.mp fun hlt => ?_)
+  have hle := hrmax j (Finset.mem_filter.2 ⟨Finset.mem_range.2 hjm, hlt⟩)
+  omega
 
-private theorem arrivalCount_reindex_lt_of_omitted (π : α → Equiv.Perm ℕ) (x : ℕ → α)
+/-- **The last-exit identity at the maximal deficient index.** If the original prefix has already
+been matched at every index after `r` but not at `r`, then it never returns to `x r` after time
+`r`, so time `r` carries its last visit to that state. -/
+private theorem visitCount_eq_visitCount_add_one_of_maximal (π : α → Equiv.Perm ℕ) (x : ℕ → α)
     (m t r : ℕ) (hr : r < m)
-    (hused : ∀ i < t,
-      visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-        visitCount x (reindexSuccessors π x i) m)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
-    (homit : ∀ i : Fin t,
-      (reindexStepEmbedding π x m t hused hfix i).val ≠ r) :
-    occCount (fun i : Fin t => reindexSuccessors π x (i.val + 1)) (x (r + 1)) <
-      occCount (fun i : Fin m => x (i.val + 1)) (x (r + 1)) := by
-  classical
-  rw [occCount_eq_card_filter, occCount_eq_card_filter]
-  let e := reindexStepEmbedding π x m t hused hfix
-  let A := Finset.univ.filter fun i : Fin t =>
-    reindexSuccessors π x (i.val + 1) = x (r + 1)
-  let B := Finset.univ.filter fun j : Fin m => x (j.val + 1) = x (r + 1)
-  have himage : A.image e ⊆ B := by
+    (hmax : ∀ j, r < j → j < m →
+      visitCount (pathOfReindexedSuccessors π x) (x j) t = visitCount x (x j) m)
+    (hrinc : visitCount (pathOfReindexedSuccessors π x) (x r) t < visitCount x (x r) m) :
+    visitCount x (x r) m = visitCount x (x r) r + 1 := by
+  have hne : ∀ j, r < j → j < m → x j ≠ x r := by
+    intro j hrj hjm hja
+    have h := hmax j hrj hjm
+    rw [hja] at h
+    omega
+  have hzero : visitCount (fun j => x (r + 1 + j)) (x r) (m - (r + 1)) = 0 := by
+    apply visitCount_eq_zero_of_forall_ne
     intro j hj
-    rw [Finset.mem_image] at hj
-    obtain ⟨i, hi, rfl⟩ := hj
-    simp only [B, Finset.mem_filter, Finset.mem_univ, true_and]
-    rw [show e i = reindexStepIndex π x m i (hused i i.isLt) hfix from rfl,
-      reindexStepIndex_target π x m i (hused i i.isLt) hfix]
-    simpa only [A, Finset.mem_filter, Finset.mem_univ, true_and] using hi
-  have hrB : (⟨r, hr⟩ : Fin m) ∈ B := by simp [B]
-  have hrnot : (⟨r, hr⟩ : Fin m) ∉ A.image e := by
-    intro hmem
-    rw [Finset.mem_image] at hmem
-    obtain ⟨i, _, hi⟩ := hmem
-    exact homit i (congrArg Fin.val hi)
-  have hstrict : A.image e ⊂ B := (Finset.ssubset_iff_of_subset himage).2
-    ⟨⟨r, hr⟩, hrB, hrnot⟩
-  calc
-    A.card = (A.image e).card := (Finset.card_image_of_injective A e.injective).symm
-    _ < B.card := Finset.card_lt_card hstrict
+    exact hne (r + 1 + j) (by omega) (by omega)
+  calc visitCount x (x r) m = visitCount x (x r) (r + 1 + (m - (r + 1))) := by
+        rw [Nat.add_sub_of_le hr]
+    _ = visitCount x (x r) (r + 1) + visitCount (fun j => x (r + 1 + j)) (x r) (m - (r + 1)) :=
+        visitCount_add x (x r) (r + 1) (m - (r + 1))
+    _ = visitCount x (x r) r + 1 := by rw [hzero, Nat.add_zero, visitCount_succ_of_eq rfl]
 
-private theorem reindexSuccessors_uses_used_entries (π : α → Equiv.Perm ℕ) (x : ℕ → α)
-    (m : ℕ) (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
+/-- **The reconstruction cannot consume a fixed last exit.** If `π` fixes the index of the last
+visit of `x` to `x r` and the reconstruction has not yet used up that state's row, then no step of
+the reconstruction is paired with time `r`. -/
+private theorem reindexStepEmbedding_val_ne (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m t r : ℕ)
+    (hused : ∀ i < t, visitCount (pathOfReindexedSuccessors π x)
+      (pathOfReindexedSuccessors π x i) i < visitCount x (pathOfReindexedSuccessors π x i) m)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
+    (hfixed : π (x r) (visitCount x (x r) r) = visitCount x (x r) r)
+    (hbound : visitCount (pathOfReindexedSuccessors π x) (x r) t ≤ visitCount x (x r) r)
+    (j : Fin t) : (reindexStepEmbedding π x m t hused hmaps j).val ≠ r := by
+  intro hej
+  have hsource : pathOfReindexedSuccessors π x j.val = x r := by
+    rw [← reindexStepEmbedding_source π x m t hused hmaps j, hej]
+  have hklt : visitCount (pathOfReindexedSuccessors π x) (x r) j.val <
+      visitCount (pathOfReindexedSuccessors π x) (x r) t := by
+    have hsucc : visitCount (pathOfReindexedSuccessors π x) (x r) (j.val + 1) =
+        visitCount (pathOfReindexedSuccessors π x) (x r) j.val + 1 :=
+      visitCount_succ_of_eq hsource
+    have hmono := visitCount_monotone (pathOfReindexedSuccessors π x) (x r)
+      (show j.val + 1 ≤ t from j.isLt)
+    omega
+  have hp := visitCount_reindexStepIndex π x m j.val (hused j.val j.isLt) hmaps
+  rw [reindexStepEmbedding_apply] at hej
+  rw [hej, hsource] at hp
+  have hk : visitCount (pathOfReindexedSuccessors π x) (x r) j.val = visitCount x (x r) r :=
+    (π (x r)).injective (hp.symm.trans hfixed.symm)
+  omega
+
+/-- **The last-exit lemma.** Under a last-exit reindexing, every step of the reconstruction
+consumes a successor entry that the original prefix consumes too: at each time `i < m` the
+reconstruction has visited its current state strictly fewer times than the original prefix visits
+it before `m`.
+
+This is Lemma 1(b) of Fortini, Ladelli, Petris, and Regazzini. The proof is by strong induction on
+`i`. Were the two counts equal at `i`, the reconstruction would have used up the row of its current
+state, hence end where the original prefix does; the maximal index `r < m` at which the original
+prefix is still ahead then carries the *last* visit of `x` to `x r`, whose entry `hlast` fixes — so
+the reconstruction cannot have consumed it, contradicting the arrival balance at `x (r + 1)`. This
+is the only place the fixed-last hypothesis is used. -/
+theorem visitCount_pathOfReindexedSuccessors_lt_visitCount (π : α → Equiv.Perm ℕ) (x : ℕ → α)
+    (m : ℕ) (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) :
-    ∀ i < m, visitCount (reindexSuccessors π x) (reindexSuccessors π x i) i <
-      visitCount x (reindexSuccessors π x i) m := by
+    ∀ i < m, visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i <
+      visitCount x (pathOfReindexedSuccessors π x i) m := by
   intro i hi
   induction i using Nat.strong_induction_on with
   | h t ih =>
-      let y := reindexSuccessors π x
-      have hused : ∀ j < t, visitCount y (y j) j < visitCount x (y j) m := by
-        intro j hj
-        exact ih j hj (hj.trans hi)
-      have hle := departureCount_reindex_le π x m t hused hfix (y t)
-      apply lt_of_le_of_ne hle
-      intro heq
-      have hcount : visitCount y (y t) t = visitCount x (y t) m := by
-        change visitCount y (y t) t = visitCount x (y t) m at heq
-        exact heq
-      have hend : y t = x m := endpoint_eq_of_departureCount_eq π x m t hused hfix hcount
-      let S := Finset.univ.image fun j : Fin m => x j
-      have hyS : ∀ j : Fin t, y j ∈ S := by
-        intro j
-        let e := reindexStepEmbedding π x m t hused hfix
-        rw [show y j = x (e j) by
-          rw [show e j = reindexStepIndex π x m j (hused j j.isLt) hfix from rfl,
-            reindexStepIndex_source π x m j (hused j j.isLt) hfix]]
-        exact Finset.mem_image_of_mem _ (Finset.mem_univ _)
-      have hxS : ∀ j : Fin m, x j ∈ S := fun j =>
-        Finset.mem_image_of_mem _ (Finset.mem_univ j)
-      have hsumy : ∑ a ∈ S, visitCount y a t = t := by
-        simpa only [visitCount_def] using
-          sum_occCount_eq_card (fun j : Fin t => y j) S hyS
-      have hsumx : ∑ a ∈ S, visitCount x a m = m := by
-        simpa only [visitCount_def] using
-          sum_occCount_eq_card (fun j : Fin m => x j) S hxS
-      let I := (Finset.range m).filter fun r => visitCount y (x r) t < visitCount x (x r) m
-      have hI : I.Nonempty := by
-        by_contra hempty
-        rw [Finset.not_nonempty_iff_eq_empty] at hempty
-        have hall : ∀ a ∈ S, visitCount y a t = visitCount x a m := by
-          intro a ha
-          rw [Finset.mem_image] at ha
-          obtain ⟨j, _, rfl⟩ := ha
-          apply Nat.le_antisymm (departureCount_reindex_le π x m t hused hfix (x j))
-          apply not_lt.mp
-          intro hlt
-          change visitCount y (x j) t < visitCount x (x j) m at hlt
-          have hjI : j.val ∈ I := by
-            change j.val ∈ (Finset.range m).filter fun r =>
-              visitCount y (x r) t < visitCount x (x r) m
-            rw [Finset.mem_filter]
-            exact ⟨Finset.mem_range.mpr j.isLt, hlt⟩
-          exact (Finset.ne_empty_of_mem hjI) hempty
-        have : t = m := by
-          have hsumEq : ∑ a ∈ S, visitCount y a t = ∑ a ∈ S, visitCount x a m :=
-            Finset.sum_congr rfl fun a ha => hall a ha
-          omega
-        omega
-      let r := I.max' hI
-      have hrI : r ∈ I := I.max'_mem hI
-      have hr : r < m := (Finset.mem_filter.mp hrI).1 |> Finset.mem_range.mp
-      have hrinc : visitCount y (x r) t < visitCount x (x r) m :=
-        (Finset.mem_filter.mp hrI).2
-      have hlater : ∀ j, r < j → j < m →
-          visitCount y (x j) t = visitCount x (x j) m := by
-        intro j hrj hjm
-        apply Nat.le_antisymm (departureCount_reindex_le π x m t hused hfix (x j))
-        apply not_lt.mp
-        intro hjinc
-        change visitCount y (x j) t < visitCount x (x j) m at hjinc
-        have hjI : j ∈ I := by
-          change j ∈ (Finset.range m).filter fun q =>
-            visitCount y (x q) t < visitCount x (x q) m
-          rw [Finset.mem_filter]
-          exact ⟨Finset.mem_range.mpr hjm, hjinc⟩
-        have := I.le_max' j hjI
-        omega
-      have hrle : r + 1 ≤ m := by omega
-      let b := x (r + 1)
-      have hbcount : visitCount y b t = visitCount x b m := by
-        rcases hrle.eq_or_lt with hlastIndex | hbefore
-        · change visitCount y (x (r + 1)) t = visitCount x (x (r + 1)) m
-          rw [hlastIndex, ← hend]
-          exact hcount
-        · exact hlater (r + 1) (by omega) hbefore
-      have hbarrival := arrivalCount_reindex_eq_of_departureCount_eq π x m t b hbcount hend
-      have hnoLater : ∀ j, r < j → j < m → x j ≠ x r := by
-        intro j hrj hjm hja
-        have := hlater j hrj hjm
-        rw [hja] at this
-        omega
-      have hq : visitCount x (x r) m = visitCount x (x r) r + 1 := by
-        have hzero : visitCount (fun j => x (r + 1 + j)) (x r) (m - (r + 1)) = 0 := by
-          apply visitCount_eq_zero_of_forall_ne
-          intro j hj
-          apply hnoLater (r + 1 + j) (by omega)
-          omega
-        calc
-          visitCount x (x r) m = visitCount x (x r) ((r + 1) + (m - (r + 1))) := by
-            rw [Nat.add_sub_of_le hrle]
-          _ = visitCount x (x r) (r + 1) +
-              visitCount (fun j => x (r + 1 + j)) (x r) (m - (r + 1)) :=
-            visitCount_add x (x r) (r + 1) (m - (r + 1))
-          _ = visitCount x (x r) r + 1 := by
-            rw [hzero, Nat.add_zero, visitCount_succ_of_eq rfl]
-      have hpositive : 0 < visitCount x (x r) m := by omega
-      have homit : ∀ j : Fin t,
-          (reindexStepEmbedding π x m t hused hfix j).val ≠ r := by
-        intro j hej
-        have hsource := reindexStepIndex_source π x m j (hused j j.isLt) hfix
-        have hsource' : y j = x r := by
-          change x (reindexStepIndex π x m j (hused j j.isLt) hfix) = y j at hsource
-          rw [← hsource]
-          exact congrArg x hej
-        let k := visitCount y (y j) j
-        have hklt : k < visitCount y (x r) t := by
-          have hsucc : visitCount y (y j) (j.val + 1) = k + 1 :=
-            visitCount_succ_of_eq rfl
-          have hmono := visitCount_monotone y (y j) (show j.val + 1 ≤ t by omega)
-          rw [hsource'] at hsucc hmono
-          omega
-        have hpcount := visitCount_visitTime_of_lt_visitCount
-          (perm_apply_lt_of_fixed_of_lt (π (y j)) _ (hfix (y j)) (hused j j.isLt))
-        have hp : π (x r) k = visitCount x (x r) r := by
-          have hpcount' : visitCount x (y j)
-                (reindexStepIndex π x m j (hused j j.isLt) hfix).val =
-              π (y j) (visitCount y (y j) j) := by
-            exact hpcount
-          change (reindexStepIndex π x m j (hused j j.isLt) hfix).val = r at hej
-          rw [hej, hsource'] at hpcount'
-          have hkdef : k = visitCount y (x r) j := by
-            change visitCount y (y j) j = visitCount y (x r) j
-            rw [hsource']
-          rw [hkdef]
-          exact hpcount'.symm
-        have hfixed : π (x r) (visitCount x (x r) r) = visitCount x (x r) r := by
-          have hsub : visitCount x (x r) m - 1 = visitCount x (x r) r := by omega
-          simpa only [hsub] using hlast (x r) hpositive
-        have hk : k = visitCount x (x r) r := (π (x r)).injective (hp.trans hfixed.symm)
-        omega
-      have hblt := arrivalCount_reindex_lt_of_omitted π x m t r hr hused hfix homit
-      change occCount (fun j : Fin t => y (j.val + 1)) b <
-        occCount (fun j : Fin m => x (j.val + 1)) b at hblt
-      exact (Nat.ne_of_lt hblt) hbarrival
+    have hused : ∀ j < t, visitCount (pathOfReindexedSuccessors π x)
+        (pathOfReindexedSuccessors π x j) j <
+        visitCount x (pathOfReindexedSuccessors π x j) m := fun j hj => ih j hj (hj.trans hi)
+    refine lt_of_le_of_ne
+      (visitCount_pathOfReindexedSuccessors_le π x m t hused hmaps _) fun hcount => ?_
+    -- The reconstruction has used up the row of its current state, so it ends at `x m`.
+    have hend : pathOfReindexedSuccessors π x t = x m :=
+      pathOfReindexedSuccessors_eq_of_visitCount_eq π x m t hused hmaps hcount
+    -- Take the last index at which the original prefix is still ahead.
+    obtain ⟨r, hr, hrinc, hmax⟩ := exists_maximal_visitCount_lt π x m t hused hmaps hi
+    have hq := visitCount_eq_visitCount_add_one_of_maximal π x m t r hr hmax hrinc
+    -- Time `r` is the last visit of `x` to `x r`, so `hlast` fixes the entry it consumes.
+    have hfixed : π (x r) (visitCount x (x r) r) = visitCount x (x r) r := by
+      have hsub : visitCount x (x r) m - 1 = visitCount x (x r) r := by omega
+      simpa only [hsub] using hlast (x r) (by omega)
+    have hblt := occCount_pathOfReindexedSuccessors_lt π x m t r hr hused hmaps
+      (reindexStepEmbedding_val_ne π x m t r hused hmaps hfixed (by omega))
+    -- Yet the arrival counts at `x (r + 1)` have to agree, since both prefixes end at `x m`.
+    have hbcount : visitCount (pathOfReindexedSuccessors π x) (x (r + 1)) t =
+        visitCount x (x (r + 1)) m := by
+      rcases eq_or_lt_of_le (show r + 1 ≤ m from hr) with hlastIndex | hbefore
+      · rw [hlastIndex, ← hend]
+        exact hcount
+      · exact hmax (r + 1) (by omega) hbefore
+    exact absurd (occCount_pathOfReindexedSuccessors_eq_of_visitCount_eq π x m t (x (r + 1))
+      hbcount hend) (Nat.ne_of_lt hblt)
 
+/-- The pairing of times at the full horizon `m`, promoted to a permutation of `Fin m`: an
+injective self-map of a finite type is a bijection. -/
 private def reindexStepEquiv (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) : Fin m ≃ Fin m :=
-  let hused := reindexSuccessors_uses_used_entries π x m hfix hlast
-  let e := reindexStepEmbedding π x m m hused hfix
-  Equiv.ofBijective e ⟨e.injective, Finite.injective_iff_surjective.mp e.injective⟩
+  (reindexStepEmbedding π x m m
+    (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m hmaps hlast)
+    hmaps).equivOfFiniteSelfEmbedding
 
+/-- The value of `TauCeti.reindexStepEquiv`. This is the only place its body is unfolded. -/
+private theorem reindexStepEquiv_apply (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
+    (hlast : ∀ a, 0 < visitCount x a m →
+      π a (visitCount x a m - 1) = visitCount x a m - 1) (i : Fin m) :
+    reindexStepEquiv π x m hmaps hlast i =
+      reindexStepEmbedding π x m m
+        (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m hmaps hlast) hmaps i :=
+  rfl
+
+/-- `TauCeti.reindexStepIndex_source`, read off the permutation. -/
 private theorem reindexStepEquiv_source (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) (i : Fin m) :
-    x (reindexStepEquiv π x m hfix hlast i) = reindexSuccessors π x i := by
-  let hused := reindexSuccessors_uses_used_entries π x m hfix hlast
-  exact reindexStepIndex_source π x m i (hused i i.isLt) hfix
+    x (reindexStepEquiv π x m hmaps hlast i) = pathOfReindexedSuccessors π x i := by
+  rw [reindexStepEquiv_apply]
+  exact reindexStepEmbedding_source π x m m _ hmaps i
 
+/-- `TauCeti.reindexStepIndex_target`, read off the permutation. -/
 private theorem reindexStepEquiv_target (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) (i : Fin m) :
-    x (reindexStepEquiv π x m hfix hlast i + 1) = reindexSuccessors π x (i + 1) := by
-  let hused := reindexSuccessors_uses_used_entries π x m hfix hlast
-  exact reindexStepIndex_target π x m i (hused i i.isLt) hfix
+    x (reindexStepEquiv π x m hmaps hlast i + 1) = pathOfReindexedSuccessors π x (i + 1) := by
+  rw [reindexStepEquiv_apply]
+  exact reindexStepEmbedding_target π x m m _ hmaps i
 
 /-- A last-exit reindexing uses each prescribed successor row exactly as often as the original
 finite prefix. -/
-theorem reindexSuccessors_visitCount (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
+theorem visitCount_pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) (a : α) :
-    visitCount (reindexSuccessors π x) a m = visitCount x a m := by
-  rw [visitCount_def, visitCount_def]
-  rw [occCount_eq_card_filter, occCount_eq_card_filter,
+    visitCount (pathOfReindexedSuccessors π x) a m = visitCount x a m := by
+  rw [visitCount_def, visitCount_def, occCount_eq_card_filter, occCount_eq_card_filter,
     ← Fintype.card_coe, ← Fintype.card_coe]
-  let e := reindexStepEquiv π x m hfix hlast
-  apply Fintype.card_congr
-  apply e.subtypeEquiv
-  intro i
+  refine Fintype.card_congr ((reindexStepEquiv π x m hmaps hlast).subtypeEquiv fun i => ?_)
   simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-  rw [reindexStepEquiv_source π x m hfix hlast i]
+  rw [reindexStepEquiv_source π x m hmaps hlast i]
 
 /-- A finite path reconstructed after last-exit reindexing has the same endpoint as the original
 prefix. -/
-theorem reindexSuccessors_endpoint (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
+theorem pathOfReindexedSuccessors_endpoint (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) :
-    reindexSuccessors π x m = x m := by
-  let y := reindexSuccessors π x
-  have hused := reindexSuccessors_uses_used_entries π x m hfix hlast
-  apply endpoint_eq_of_departureCount_eq π x m m hused hfix
-  exact reindexSuccessors_visitCount π x m hfix hlast (y m)
+    pathOfReindexedSuccessors π x m = x m :=
+  pathOfReindexedSuccessors_eq_of_visitCount_eq π x m m
+    (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m hmaps hlast) hmaps
+    (visitCount_pathOfReindexedSuccessors π x m hmaps hlast (pathOfReindexedSuccessors π x m))
 
 /-- A finite path reconstructed after last-exit reindexing has the same transition counts as the
 original prefix. -/
-theorem reindexSuccessors_transitionCount (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hfix : ∀ a k, visitCount x a m ≤ k → π a k = k)
+theorem transitionCount_pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
+    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) (a b : α) :
-    transitionCount (fun i : Fin (m + 1) => reindexSuccessors π x i) a b =
+    transitionCount (fun i : Fin (m + 1) => pathOfReindexedSuccessors π x i) a b =
       transitionCount (fun i : Fin (m + 1) => x i) a b := by
   rw [transitionCount_eq_card_filter, transitionCount_eq_card_filter,
     ← Fintype.card_coe, ← Fintype.card_coe]
-  let e := reindexStepEquiv π x m hfix hlast
-  apply Fintype.card_congr
-  apply e.subtypeEquiv
-  intro i
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-  change reindexSuccessors π x i = a ∧ reindexSuccessors π x (i + 1) = b ↔
-    x (e i) = a ∧ x (e i + 1) = b
-  rw [reindexStepEquiv_source π x m hfix hlast i,
-    reindexStepEquiv_target π x m hfix hlast i]
+  refine Fintype.card_congr ((reindexStepEquiv π x m hmaps hlast).subtypeEquiv fun i => ?_)
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, Fin.val_castSucc, Fin.val_succ]
+  rw [reindexStepEquiv_source π x m hmaps hlast i, reindexStepEquiv_target π x m hmaps hlast i]
 
 end TauCeti
 
