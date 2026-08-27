@@ -1,0 +1,214 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.Algebra.Module.GradedModule.Internal
+public import TauCeti.LinearAlgebra.Graded.Multilinear
+public import TauCeti.LinearAlgebra.TensorProduct.Decomposition
+
+import Mathlib.Order.CompactlyGenerated.Basic
+
+/-!
+# Tensor products of internally graded modules
+
+The tensor product of internally `ℤ`-graded modules is graded by total degree. Its degree-`n`
+piece is the sum of the images of
+
+`G.piece p ⊗ H.piece (n - p)`
+
+inside the ambient tensor product. These pieces form an internal direct sum: first use
+`DirectSum.IsInternal.tensorProduct` for the bidegree decomposition, then collect bidegrees with
+the same sum.
+
+The resulting grading has the expected API on pure tensors. In particular, a tensor of elements
+of degrees `p` and `q` has degree `p + q`, and tensoring homogeneous linear maps adds their
+degrees. This is the tensor-product compatibility requested in Layer 0 of the `DGAInfinity`
+roadmap and supplies the grading used by tensor products of DG objects.
+
+## Main definitions
+
+* `TauCeti.InternalGrading.tensorProductPiece`: the submodule of tensors of a fixed total degree.
+* `TauCeti.InternalGrading.tensorProduct`: the internal total-degree grading.
+
+## Main results
+
+* `TauCeti.InternalGrading.tensorProductPiece_eq_iSup`: the degree-`n` piece is the sum over
+  `G.piece p ⊗ H.piece (n - p)`.
+* `TauCeti.InternalGrading.tmul_mem_tensorProductPiece`: degrees add on pure tensors.
+* `TauCeti.LinearMap.IsHomogeneous.tensorProduct`: tensoring homogeneous maps adds their degrees.
+
+The proof reuses Tau Ceti's two-factor internal decomposition theorem
+`DirectSum.IsInternal.tensorProduct`; no formalization is vendored.
+-/
+
+public section
+
+open scoped TensorProduct
+
+namespace TauCeti
+
+universe u v w v' w'
+
+namespace InternalGrading
+
+section Pieces
+
+variable {R : Type u} [CommSemiring R]
+variable {M : Type v} {N : Type w}
+variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
+
+/-- The bidegree-`(p, q)` submodule in a tensor product of internally graded modules. -/
+private def tensorProductBidegreePiece (G : InternalGrading R M) (H : InternalGrading R N)
+    (d : ℤ × ℤ) : Submodule R (M ⊗[R] N) :=
+  Submodule.map₂ (TensorProduct.mk R M N) (G.piece d.1) (H.piece d.2)
+
+/-- The degree-`n` submodule in the tensor product of internally graded modules: the sum of the
+bidegree pieces whose two degrees add to `n`. -/
+def tensorProductPiece (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
+    Submodule R (M ⊗[R] N) :=
+  ⨆ d : ℤ × ℤ, ⨆ _ : d.1 + d.2 = n, tensorProductBidegreePiece G H d
+
+/-- The total-degree piece can be indexed by the degree in the first tensor factor; the degree in
+the second factor is then uniquely `n - p`. -/
+theorem tensorProductPiece_eq_iSup (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
+    tensorProductPiece G H n =
+      ⨆ p : ℤ, Submodule.map₂ (TensorProduct.mk R M N) (G.piece p) (H.piece (n - p)) := by
+  apply le_antisymm
+  · refine iSup_le fun d ↦ iSup_le fun hd ↦ ?_
+    refine le_iSup_of_le d.1 ?_
+    have hdeg : d.2 = n - d.1 := by omega
+    simpa only [tensorProductBidegreePiece, hdeg] using
+      (le_rfl : Submodule.map₂ (TensorProduct.mk R M N) (G.piece d.1)
+        (H.piece (n - d.1)) ≤ _)
+  · refine iSup_le fun p ↦ ?_
+    refine le_iSup_of_le (p, n - p) ?_
+    refine le_iSup_of_le (by omega) ?_
+    rfl
+
+/-- A pure tensor of elements of degrees `p` and `q` belongs to total degree `p + q`. -/
+theorem tmul_mem_tensorProductPiece (G : InternalGrading R M) (H : InternalGrading R N)
+    {p q : ℤ} {x : M} {y : N} (hx : x ∈ G.piece p) (hy : y ∈ H.piece q) :
+    x ⊗ₜ[R] y ∈ tensorProductPiece G H (p + q) := by
+  rw [tensorProductPiece_eq_iSup]
+  refine Submodule.mem_iSup_of_mem p ?_
+  simpa only [add_sub_cancel_left, TensorProduct.mk_apply] using
+    Submodule.apply_mem_map₂ (TensorProduct.mk R M N) hx hy
+
+end Pieces
+
+section Internal
+
+variable {R : Type u} [CommRing R]
+variable {M : Type v} {N : Type w}
+variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+
+/-- Collecting an internal decomposition along an arbitrary degree map again gives an internal
+decomposition. This local form is used to collect tensor bidegrees by their sum. -/
+private theorem isInternal_iSup_fiber {I J : Type*} [DecidableEq I] [DecidableEq J]
+    {P : I → Submodule R M} (hP : DirectSum.IsInternal P) (degree : I → J) :
+    DirectSum.IsInternal fun j ↦ ⨆ i, ⨆ _ : degree i = j, P i := by
+  apply DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
+  · rw [iSupIndep_def]
+    intro j
+    let same : Set I := {i | degree i = j}
+    let other : Set I := {i | degree i ≠ j}
+    have hdisjoint : Disjoint same other := Set.disjoint_left.2 fun _ hi hi' ↦ hi' hi
+    have h := hP.submodule_iSupIndep.disjoint_biSup_biSup hdisjoint
+    refine h.mono ?_ ?_
+    · refine iSup_le fun i ↦ iSup_le fun hi ↦ ?_
+      exact le_iSup_of_le i (le_iSup_of_le hi le_rfl)
+    · refine iSup_le fun j' ↦ iSup_le fun hj' ↦ iSup_le fun i ↦ iSup_le fun hi ↦ ?_
+      have hi' : degree i ≠ j := by simpa only [hi] using hj'
+      exact le_iSup_of_le i (le_iSup_of_le hi' le_rfl)
+  · rw [show (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⨆ i, P i by
+        apply le_antisymm
+        · exact iSup_le fun _ ↦ iSup_le fun i ↦ iSup_le fun _ ↦ le_iSup P i
+        · exact iSup_le fun i ↦
+            le_iSup_of_le (degree i) (le_iSup_of_le i (le_iSup_of_le rfl le_rfl))]
+    exact hP.submodule_iSup_eq_top
+
+/-- The tensor product of internally graded modules, graded by total degree. -/
+noncomputable def tensorProduct (G : InternalGrading R M) (H : InternalGrading R N) :
+    InternalGrading R (M ⊗[R] N) where
+  piece := tensorProductPiece G H
+  isInternal := by
+    -- The reused theorem is declared in a `Classical` scope, whereas `InternalGrading` fixes the
+    -- canonical decidable equality on `ℤ`; transport the two input decompositions across that
+    -- implementation-only difference before applying it.
+    classical
+    have hG : @DirectSum.IsInternal ℤ M (Submodule R M) (Classical.decEq ℤ)
+        _ _ _ G.piece := by
+      have hdec : (Int.instDecidableEq : DecidableEq ℤ) = Classical.decEq ℤ :=
+        Subsingleton.elim _ _
+      exact hdec ▸ G.isInternal
+    have hH : @DirectSum.IsInternal ℤ N (Submodule R N) (Classical.decEq ℤ)
+        _ _ _ H.piece := by
+      have hdec : (Int.instDecidableEq : DecidableEq ℤ) = Classical.decEq ℤ :=
+        Subsingleton.elim _ _
+      exact hdec ▸ H.isInternal
+    apply isInternal_iSup_fiber
+    have hPair := DirectSum.IsInternal.tensorProduct G.piece H.piece hG hH
+    convert hPair using 1 <;> rfl
+
+@[simp]
+theorem tensorProduct_piece (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
+    (G.tensorProduct H).piece n = tensorProductPiece G H n :=
+  (rfl)
+
+/-- A pure tensor of elements of degrees `p` and `q` is homogeneous of degree `p + q` in the
+tensor-product grading. -/
+theorem tmul_mem_tensorProduct (G : InternalGrading R M) (H : InternalGrading R N)
+    {p q : ℤ} {x : M} {y : N} (hx : x ∈ G.piece p) (hy : y ∈ H.piece q) :
+    x ⊗ₜ[R] y ∈ (G.tensorProduct H).piece (p + q) :=
+  tmul_mem_tensorProductPiece G H hx hy
+
+end Internal
+
+end InternalGrading
+
+namespace LinearMap.IsHomogeneous
+
+variable {R : Type u} [CommRing R]
+variable {M : Type v} {N : Type w} {M' : Type v'} {N' : Type w'}
+variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+variable [AddCommGroup M'] [Module R M'] [AddCommGroup N'] [Module R N']
+
+/-- Tensoring homogeneous linear maps adds their degrees for the total tensor-product gradings. -/
+@[grind →]
+theorem tensorProduct {G : InternalGrading R M} {H : InternalGrading R N}
+    {G' : InternalGrading R M'} {H' : InternalGrading R N'} {f : M →ₗ[R] M'} {g : N →ₗ[R] N'}
+    {a b : ℤ} (hf : LinearMap.IsHomogeneous f G.piece G'.piece a)
+    (hg : LinearMap.IsHomogeneous g H.piece H'.piece b) :
+    LinearMap.IsHomogeneous (TensorProduct.map f g) (G.tensorProduct H).piece
+      (G'.tensorProduct H').piece (a + b) := by
+  rw [LinearMap.isHomogeneous_def]
+  intro n z hz
+  rw [InternalGrading.tensorProduct_piece,
+    InternalGrading.tensorProductPiece_eq_iSup] at hz
+  rw [InternalGrading.tensorProduct_piece,
+    InternalGrading.tensorProductPiece_eq_iSup]
+  let target := ⨆ p : ℤ,
+    Submodule.map₂ (TensorProduct.mk R M' N') (G'.piece p)
+      (H'.piece (n + (a + b) - p))
+  suffices hmap : z ∈ (target.comap (TensorProduct.map f g)) by
+    exact hmap
+  have hle :
+      (⨆ p : ℤ, Submodule.map₂ (TensorProduct.mk R M N) (G.piece p) (H.piece (n - p))) ≤
+        target.comap (TensorProduct.map f g) := by
+    refine iSup_le fun p ↦ Submodule.map₂_le.mpr fun x hx y hy ↦ ?_
+    rw [Submodule.mem_comap, TensorProduct.mk_apply, TensorProduct.map_tmul]
+    refine Submodule.mem_iSup_of_mem (p + a) ?_
+    have hfx := hf.map_mem hx
+    have hgy := hg.map_mem hy
+    have hxy := Submodule.apply_mem_map₂ (TensorProduct.mk R M' N') hfx hgy
+    have hdeg : n + (a + b) - (p + a) = n - p + b := by ring
+    rw [hdeg]
+    simpa only [TensorProduct.mk_apply] using hxy
+  exact hle hz
+
+end LinearMap.IsHomogeneous
+
+end TauCeti
