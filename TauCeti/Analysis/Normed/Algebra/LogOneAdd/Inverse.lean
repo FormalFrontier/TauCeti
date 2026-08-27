@@ -18,7 +18,7 @@ The proof first computes the corresponding formal series compositions over the r
 transports their scalar coefficients to an arbitrary real Banach algebra.
 -/
 
-@[expose] public section
+public section
 
 open Filter
 open scoped Topology

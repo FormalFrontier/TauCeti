@@ -16,7 +16,7 @@ algebra need not be commutative: variables retain their original order inside ev
 block.
 -/
 
-@[expose] public section
+public section
 
 open scoped BigOperators
 
