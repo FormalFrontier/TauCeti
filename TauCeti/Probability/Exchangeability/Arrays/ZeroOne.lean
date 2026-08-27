@@ -7,8 +7,6 @@ module
 
 -- Public: dissociation is the hypothesis of every zero-one statement here.
 public import TauCeti.Probability.Exchangeability.Arrays.Dissociated
--- Public: the zero-one criterion for i.i.d.-ness, of which the diagonal theorem is an instance.
-public import TauCeti.Probability.DeFinetti.ZeroOne
 -- Non-public: the zero-one law for a self-independent event is used only inside a proof.
 import Mathlib.Probability.Independence.ZeroOne
 

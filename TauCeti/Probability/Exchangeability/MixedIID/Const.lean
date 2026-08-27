@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.IID
-import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # Constant mixing measures
@@ -23,8 +22,6 @@ plain independence with common marginal law.
   `MixedIIDWith.aemeasurable` in `MixedIID/Basic.lean`.
 * `mixedIIDWith_const_iff_iIndepFun_and_map_eq` — a constant `p` is a mixing representative exactly
   when the coordinates are independent with common law `p`.
-* `mixedIIDWith_const_of_pathLaw_eq_infinitePi` — a process whose path law is an infinite product
-  has the product factor as a constant mixing representative.
 -/
 
 public section
@@ -114,27 +111,6 @@ theorem mixedIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω} [IsProbabi
     (MixedIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
   ⟨fun h => ⟨h.iIndepFun_of_const, h.map_eq_of_const⟩,
     fun ⟨hindep, hlaw⟩ => MixedIIDWith.of_iIndepFun_map_eq hindep hlaw⟩
-
-/-- **A process with a product path law is i.i.d.**, with the product factor as its constant mixing
-representative.
-
-This is the converse of the mixture representation `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` at a
-Dirac mixing law: there the path law is the mixture of the powers `Q^{⊗ℕ}` along the law of the
-mixing representative, and a single power is the mixture along a point mass. -/
-theorem mixedIIDWith_const_of_pathLaw_eq_infinitePi {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} (hX_meas : ∀ n, AEMeasurable (X n) μ) {P : ProbabilityMeasure α}
-    (hpath : pathLaw μ X = Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
-    MixedIIDWith μ X fun _ => P := by
-  have hφ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ :=
-    aemeasurable_pi_lambda _ hX_meas
-  have hmap (n : ℕ) : μ.map (X n) = P := by
-    rw [← Measure.infinitePi_map_eval (μ := fun _ : ℕ => (P : Measure α)) n, ← hpath,
-      pathLaw_def, (measurable_pi_apply n).aemeasurable.map_map_of_aemeasurable hφ]
-    rfl
-  exact MixedIIDWith.of_iIndepFun_map_eq
-    ((iIndepFun_iff_map_fun_eq_infinitePi_map₀ hφ).mpr (by
-      rw [← pathLaw_def, hpath]
-      simp only [hmap])) hmap
 
 end Probability
 

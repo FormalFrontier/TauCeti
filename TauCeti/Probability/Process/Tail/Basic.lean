@@ -151,24 +151,6 @@ theorem pathTail_le_tailFamily (n : ℕ) :
     pathTail α ≤ tailFamily (fun k (x : ℕ → α) => x k) n :=
   tailProcess_le_tailFamily _ n
 
-omit [MeasurableSpace Ω] in
-/-- **Tail events on path space pull back to tail events of a process.** The path map sends the
-coordinate `x ↦ x k` to `X k`, so it carries every future path σ-algebra into the corresponding
-future σ-algebra of the process, and hence carries their infima into one another. -/
-theorem comap_pathTail_le_tailProcess (X : ℕ → Ω → α) :
-    MeasurableSpace.comap (fun ω i => X i ω) (pathTail α) ≤ tailProcess X := by
-  simp only [tailProcess_eq_iInf_tailFamily]
-  refine le_iInf fun n => ?_
-  calc MeasurableSpace.comap (fun ω i => X i ω)
-          (⨅ j, tailFamily (fun k (x : ℕ → α) => x k) j)
-      ≤ MeasurableSpace.comap (fun ω i => X i ω)
-          (tailFamily (fun k (x : ℕ → α) => x k) n) :=
-        MeasurableSpace.comap_mono (iInf_le _ n)
-    _ = tailFamily X n := by
-        simp only [tailFamily_eq_iSup_comap, MeasurableSpace.comap_iSup,
-          MeasurableSpace.comap_comp]
-        rfl
-
 /-! ## Cons and tail of sequence-valued random variables
 
 `processCons` / `processTail` prepend / drop the leading coordinate of a sequence-valued random

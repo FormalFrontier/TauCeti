@@ -25,20 +25,12 @@ The product-to-zero-one direction is Hewitt–Savage, packaged for the product l
 `exchangeableSigma_trivial_of_infinitePi`.
 
 The converse is the substantive half, and it runs at the level of the *mixing law* rather than the
-directing map. The canonical witness `directingProbabilityMeasure` is `tailProcess`-measurable, so
-every preimage `ν ⁻¹' A` is already a **tail** event. Triviality therefore makes `ρ.map ν` a
-zero-one measure on `ProbabilityMeasure α`, hence a Dirac measure by
+directing map. The canonical witness `directingProbabilityMeasure` is `tailProcess`-measurable, and
+`pathTail_le_exchangeableSigma` puts the path tail inside `exchangeableSigma`, so every preimage
+`ν ⁻¹' A` is an exchangeable event. Triviality therefore makes `ρ.map ν` a zero-one measure on
+`ProbabilityMeasure α`, hence a Dirac measure by
 `IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure`, and the de Finetti mixture representation
 `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` collapses to a single product.
-
-That argument never inspects a non-tail exchangeable event, so it proves the sharper
-`infinitePi_of_pathTail_trivial`, which asks for triviality only on the path tail. Since
-`pathTail_le_exchangeableSigma` puts the path tail inside the exchangeable σ-algebra, triviality on
-the larger σ-algebra is the stronger hypothesis, and `infinitePi_of_exchangeableSigma_trivial` is
-the corollary. The sharper form is what a process-level criterion consumes: the path tail pulls
-back into the canonical process σ-algebra `tailProcess X`, whereas the exchangeable σ-algebra has
-only its pullback along the path map, a stronger and less directly checkable process-level
-assumption.
 
 Working at the mixing-law level avoids needing a general "measurable into `ProbabilityMeasure α`
 implies almost everywhere constant" interface: the Giry-specific Dirac theorem is exactly the tool
@@ -64,15 +56,11 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- **A trivial path tail forces an i.i.d. law.** If every tail event has probability `0` or `1`
-under an exchangeable law `ρ`, then `ρ` is an infinite product `P^{⊗ℕ}`.
-
-This is the sharp form: the canonical directing measure is tail-measurable, so only tail events are
-tested. `infinitePi_of_exchangeableSigma_trivial` is the corollary for the larger exchangeable
-σ-algebra. -/
-theorem infinitePi_of_pathTail_trivial [StandardBorelSpace α]
+/-- **A trivial exchangeable σ-algebra forces an i.i.d. law.** If every exchangeable event has
+probability `0` or `1` under an exchangeable law `ρ`, then `ρ` is an infinite product `P^{⊗ℕ}`. -/
+theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ExchangeableLaw ρ)
-    (htriv : ∀ s, MeasurableSet[pathTail α] s → ρ s = 0 ∨ ρ s = 1) :
+    (htriv : ∀ s, MeasurableSet[exchangeableSigma α] s → ρ s = 0 ∨ ρ s = 1) :
     ∃ P : ProbabilityMeasure α, ρ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
   have : Nonempty α := (nonempty_of_isProbabilityMeasure ρ).map fun x => x 0
   have hcoord : ∀ n, Measurable (fun x : ℕ → α => x n) := fun n => measurable_pi_apply n
@@ -85,12 +73,13 @@ theorem infinitePi_of_pathTail_trivial [StandardBorelSpace α]
     mixedIIDWith_of_contractable (hexch.contractable fun n => (hcoord n).aemeasurable) hcoord
   set ν := directingProbabilityMeasure ρ fun n (x : ℕ → α) => x n with hν
   have hν_meas : Measurable ν := hmix.measurable_mixingRepresentative
-  -- Preimages under the canonical witness are tail events.
+  -- Preimages under the canonical witness are exchangeable events.
   have hpre : ∀ {A : Set (ProbabilityMeasure α)}, MeasurableSet A →
-      MeasurableSet[pathTail α] (ν ⁻¹' A) := fun {A} hA => by
-    have htail : MeasurableSet[tailProcess (fun n (x : ℕ → α) => x n)] (ν ⁻¹' A) :=
+      MeasurableSet[exchangeableSigma α] (ν ⁻¹' A) := by
+    intro A hA
+    have htail : MeasurableSet[tailProcess fun n (x : ℕ → α) => x n] (ν ⁻¹' A) :=
       measurable_tailProcess_directingProbabilityMeasure hA
-    simpa only [pathTail_eq_tailProcess] using htail
+    exact pathTail_le_exchangeableSigma _ (by rwa [pathTail_eq_tailProcess])
   have hprob : IsProbabilityMeasure (ρ.map ν) :=
     Measure.isProbabilityMeasure_map hν_meas.aemeasurable
   have hzo : IsZeroOneMeasure (ρ.map ν) :=
@@ -103,18 +92,6 @@ theorem infinitePi_of_pathTail_trivial [StandardBorelSpace α]
         pathLaw_eq_bind_infinitePi_of_mixedIIDWith hmix
     _ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
         rw [hP, Measure.dirac_bind TauCeti.MeasureTheory.measurable_infinitePi_const]
-
-/-- **A trivial exchangeable σ-algebra forces an i.i.d. law.** If every exchangeable event has
-probability `0` or `1` under an exchangeable law `ρ`, then `ρ` is an infinite product `P^{⊗ℕ}`.
-
-The exchangeable σ-algebra contains the path tail (`pathTail_le_exchangeableSigma`), so this is the
-corollary of the tail form `infinitePi_of_pathTail_trivial` at a larger σ-algebra of tested
-events. -/
-theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α]
-    {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ExchangeableLaw ρ)
-    (htriv : ∀ s, MeasurableSet[exchangeableSigma α] s → ρ s = 0 ∨ ρ s = 1) :
-    ∃ P : ProbabilityMeasure α, ρ = Measure.infinitePi fun _ : ℕ => (P : Measure α) :=
-  infinitePi_of_pathTail_trivial hρ fun s hs => htriv s (pathTail_le_exchangeableSigma s hs)
 
 /-- **The zero-one characterization of product laws.** For a standard Borel state space, an
 exchangeable probability law on `ℕ → α` has trivial exchangeable σ-algebra exactly when it is an
