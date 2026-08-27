@@ -72,6 +72,8 @@ assignment, a later stage of the roadmap.
   of bidegree `(-1, 0)` once `V_c` is given bidegree `(-2, -1)`.
 * `TauCeti.GridDiagram.constantCoeff_unblockedCoefficient`: the constant term of a matrix
   coefficient counts the contributing rectangles that carry no `O`-marking either.
+* `TauCeti.GridDiagram.exists_mem_unblockedRectangles_of_mem_support_unblockedCoefficient`: every
+  monomial of a matrix coefficient is the weight of a contributing rectangle.
 
 ## References
 
@@ -271,6 +273,19 @@ theorem constantCoeff_unblockedCoefficient (x y : GridState n) :
     exact Finset.prod_eq_zero hc (by simp)
   rw [Finset.sum_congr rfl h₁, Finset.sum_congr rfl h₂, Finset.sum_const, Finset.sum_const_zero,
     nsmul_eq_mul, mul_one, add_zero]
+
+/-- Every monomial occurring in a matrix coefficient of the unblocked differential is the weight of
+one of the rectangles that coefficient counts. -/
+theorem exists_mem_unblockedRectangles_of_mem_support_unblockedCoefficient {x y : GridState n}
+    {d : Fin n →₀ ℕ} (hd : d ∈ (G.unblockedCoefficient R x y).support) :
+    ∃ r ∈ G.unblockedRectangles x y,
+      d = ∑ c ∈ G.OColumns r.toGridRectangle, Finsupp.single c 1 := by
+  classical
+  rw [unblockedCoefficient_def] at hd
+  obtain ⟨r, hr, hdr⟩ := Finset.mem_biUnion.mp (MvPolynomial.support_sum hd)
+  refine ⟨r, hr, Finset.mem_singleton.mp ?_⟩
+  rw [G.OMonomial_eq_monomial R] at hdr
+  exact MvPolynomial.support_monomial_subset hdr
 
 /-- The value of the unblocked differential on a single grid-state generator. -/
 noncomputable def unblockedDifferentialOnGenerator (x : GridState n) :
