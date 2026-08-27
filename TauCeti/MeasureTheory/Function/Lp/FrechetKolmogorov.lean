@@ -7,9 +7,9 @@ module
 
 public import TauCeti.MeasureTheory.Function.Lp.BallAverage
 public import Mathlib.MeasureTheory.Function.UnifTight
-public import Mathlib.Topology.ContinuousMap.Bounded.ArzelaAscoli
 
 import Mathlib.MeasureTheory.Measure.TightNormed
+import Mathlib.Topology.ContinuousMap.Bounded.ArzelaAscoli
 
 /-!
 # The Fréchet--Kolmogorov compactness criterion in `Lᵖ`
