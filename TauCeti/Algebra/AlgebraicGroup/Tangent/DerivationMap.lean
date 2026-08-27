@@ -164,6 +164,8 @@ lemma algEquivSelf_derivationComp_apply (φ : A' →ₐc[R] A)
   rw [derivationComp_apply]
   exact
     (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B
+      -- Both counit algebras are definitionally copies of `B`; this `show` transports
+      -- the value to the indexing expected by the `A'`-side equivalence.
       (show Bialgebra.CounitAlgebra R A' B from
         d ((φ : A' →ₐ[R] A) a))).trans
       (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B
