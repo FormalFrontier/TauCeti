@@ -19,9 +19,9 @@ together with the constants fall short of all repartitions:
 `i(D) = dim_k (A_F ⧸ (A_F(D) + F))`.
 
 This is Stichtenoth's Theorem 1.5.4, the linear-algebra summit that turns the index of specialty
-into a `k`-dimension, and with it Corollary 1.5.5, `g = dim_k (A_F ⧸ (A_F(0) + F))`.  Both are the
-inputs to Lemma 1.5.7, `dim_k Ω_F(D) = i(D)`, which is what makes the space of Weil differentials
-nonzero and eventually one-dimensional over `F`.
+into a `k`-dimension.  It is the input to Lemma 1.5.7, `dim_k Ω_F(D) = i(D)`, which is what makes
+the space of Weil differentials nonzero and eventually one-dimensional over `F`.  Its case `D = 0`
+is Corollary 1.5.5, `g = dim_k (A_F ⧸ (A_F(0) + F))`, which reads the genus off the same quotient.
 
 The two ingredients are already on `main`: the exact sequence of one step of the filtration
 (`TauCeti.rank_quotient_adeleFiltration_add_dim`, in `Repartition/Cokernel.lean`) and the degree
@@ -36,8 +36,9 @@ repartition is bounded by some divisor.
 
 * `TauCeti.finrank_quotient_adeleFiltration_sup_diagonalRepartitions`: one step of the filtration
   of cokernels, `dim_k ((A_F(E) + F)/(A_F(D) + F)) = i(D) - i(E)` for `D ≤ E`.
-* `TauCeti.exists_adeleFiltration_sup_diagonalRepartitions_eq_repartitionSpace`: every divisor is
-  dominated by one with `A_F(D) + F = A_F` (Stichtenoth, in the proof of Theorem 1.5.4).
+* `TauCeti.exists_adeleFiltration_sup_diagonalRepartitions_eq_repartitionSpace`: every divisor `D`
+  is dominated by a divisor `E` with `A_F(E) + F = A_F` (Stichtenoth, in the proof of
+  Theorem 1.5.4).
 * `TauCeti.finrank_quotient_repartitionSpace`: **Stichtenoth, Theorem 1.5.4**,
   `i(D) = dim_k (A_F ⧸ (A_F(D) + F))`.
 * `TauCeti.finrank_quotient_repartitionSpace_zero`: **Stichtenoth, Corollary 1.5.5**,
