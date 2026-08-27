@@ -80,7 +80,7 @@ open CategoryTheory
 
 namespace TauCeti.ContCohomology
 
-universe u
+universe u v
 
 section Carriers
 
@@ -88,7 +88,7 @@ section Carriers
 topology on it. -/
 
 variable (G : Type u) [Monoid G]
-  (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DiscreteTopology M] [DistribMulAction G M]
 
 /-- An element of a discrete `G`-module is invariant for the canonical object it names exactly
@@ -218,7 +218,13 @@ theorem explicitH0Iso_res (S : Subgroup G) (x : H0 G M) :
     TauCeti.ContinuousCohomology.res S (ofDiscreteModule ℤ G M) 0
         ((explicitH0IsoContinuousCohomology G M).hom x) =
       (explicitH0IsoContinuousCohomology S M).hom (explicitRes0 G M S x) := by
-  rw [TauCeti.ContinuousCohomology.res_def, explicitRes0_eq_explicitMap0]
+  -- The coefficient datum of the restriction pair is the identity morphism, which the general
+  -- transport square sees as the compatible pair on the identity map of `M`.
+  have hpair : ofDiscreteModulePair (ContinuousMonoidHom.subgroupSubtype S : S →* G)
+      (AddMonoidHom.id M).toIntLinearMap (fun _ _ => rfl) =
+      𝟙 (TopRep.res (S.subtype : S →* G) (ofDiscreteModule ℤ G M)) :=
+    ofDiscreteModulePair_eq_of_hom_apply _ _ _ _ fun _ => rfl
+  rw [TauCeti.ContinuousCohomology.res_def, explicitRes0_eq_explicitMap0, ← hpair]
   exact explicitH0Iso_map G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
     (fun _ _ => rfl) x
 
@@ -233,7 +239,13 @@ theorem explicitH0Iso_coeffMap (N : Type u) [AddCommGroup N] [TopologicalSpace N
         (ofDiscreteModuleMap f.toAddMonoidHom.toIntLinearMap fun g m => map_smul f g m) 0
         ((explicitH0IsoContinuousCohomology G M).hom x) =
       (explicitH0IsoContinuousCohomology G N).hom (explicitCoeff0 G M f x) := by
-  rw [TauCeti.ContinuousCohomology.coeffMap_def, explicitCoeff0_eq_explicitMap0]
+  -- At the identity homomorphism the compatible pair is the coefficient morphism itself; this is
+  -- `TauCeti.ofDiscreteModulePair_id`, restated at the coerced identity `ContinuousMonoidHom`.
+  have hpair : ofDiscreteModulePair (ContinuousMonoidHom.id G : G →* G)
+      f.toAddMonoidHom.toIntLinearMap (fun g m => map_smul f g m) =
+      ofDiscreteModuleMap f.toAddMonoidHom.toIntLinearMap fun g m => map_smul f g m :=
+    ofDiscreteModulePair_eq_of_hom_apply _ _ _ _ fun _ => rfl
+  rw [TauCeti.ContinuousCohomology.coeffMap_def, explicitCoeff0_eq_explicitMap0, ← hpair]
   exact explicitH0Iso_map G M G N (ContinuousMonoidHom.id G) f.toAddMonoidHom
     (fun g m => map_smul f g m) x
 

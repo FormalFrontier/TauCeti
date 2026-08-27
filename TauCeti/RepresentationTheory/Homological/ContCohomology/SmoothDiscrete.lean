@@ -67,6 +67,8 @@ unrestricted construction is larger than the smooth discrete subcategory.
   underlying module.
 * `TauCeti.ofDiscreteModuleHomAddEquiv`: morphisms between objects in the image are exactly the
   `G`-equivariant `R`-linear maps.
+* `TauCeti.ofDiscreteModulePair_eq_of_hom_apply`: the compatible pair is the only morphism with its
+  underlying map, which is how statements phrased with it are specialised.
 * `TauCeti.res_ofDiscreteModule`: the dictionary commutes with restriction to a subgroup, on the
   nose.
 * `TauCeti.IsSmoothDiscrete.res`: smoothness is inherited by restriction along a continuous
@@ -456,7 +458,7 @@ end Dictionary
 section DictionaryPair
 
 variable {R : Type u} [Ring R] [TopologicalSpace R] {G : Type v} [Group G]
-  {H : Type v} [Monoid H]
+  {H : Type*} [Monoid H]
   {M : Type w} [AddCommGroup M] [Module R M] [TopologicalSpace M] [DiscreteTopology M]
   [DistribMulAction G M] [SMulCommClass G R M] [ContinuousSMul R M]
   {N : Type w} [AddCommGroup N] [Module R N] [TopologicalSpace N] [DiscreteTopology N]
@@ -467,13 +469,8 @@ variable {R : Type u} [Ring R] [TopologicalSpace R] {G : Type v} [Group G]
 morphism `TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N`, which is what
 `ContinuousCohomology.map` consumes. Continuity of `f` is automatic, the source being discrete.
 `TauCeti.ofDiscreteModuleMap` is the case `φ = MonoidHom.id G`, by
-`TauCeti.ofDiscreteModulePair_id`.
-
-Exposed because the degree-zero transport squares of
-`TauCeti/RepresentationTheory/Homological/ContCohomology/ContinuousCohomologyIso.lean` specialise
-it at the subgroup inclusion and at the identity, where it has to be recognised as `𝟙` and as
-`TauCeti.ofDiscreteModuleMap` on the nose. -/
-@[expose] def ofDiscreteModulePair (φ : H →* G) (f : M →ₗ[R] N)
+`TauCeti.ofDiscreteModulePair_id`. -/
+def ofDiscreteModulePair (φ : H →* G) (f : M →ₗ[R] N)
     (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m) :
     TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N :=
   TopRep.ofHom
@@ -483,6 +480,19 @@ it at the subgroup inclusion and at the identity, where it has to be recognised 
 @[simp] lemma ofDiscreteModulePair_hom_apply (φ : H →* G) (f : M →ₗ[R] N)
     (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (m : M) :
     (ofDiscreteModulePair φ f hf).hom m = f m := (rfl)
+
+/-- **The compatible pair is determined by its underlying map**: any morphism
+`TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N` whose underlying function is `f`
+*is* the compatible pair, morphisms of `TopRep` being determined by their underlying functions.
+This is how a statement phrased with `TauCeti.ofDiscreteModulePair` is specialised to a morphism
+presented some other way — as an identity morphism, or as `TauCeti.ofDiscreteModuleMap` — without
+its body having to be unfolded at the use site. -/
+lemma ofDiscreteModulePair_eq_of_hom_apply (φ : H →* G) (f : M →ₗ[R] N)
+    (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
+    (ψ : TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N)
+    (hψ : ∀ m : M, ψ.hom m = f m) :
+    ofDiscreteModulePair φ f hf = ψ := by
+  ext (m : M); exact (hψ m).symm
 
 end DictionaryPair
 
