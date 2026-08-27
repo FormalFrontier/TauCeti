@@ -190,13 +190,6 @@ private noncomputable def hopfIdealPointsSubgroupMulEquiv :
       upperTriangularGroup (Fin n) A :=
   MulEquiv.subgroupCongr (hopfIdealPointsSubgroup_eq R n)
 
-/-- The subgroup transport does not change the underlying general-linear matrix. -/
-@[simp]
-private theorem coe_hopfIdealPointsSubgroupMulEquiv
-    (g : GeneralLinear.hopfIdealPointsSubgroup n (definingHopfIdeal R n) A) :
-    (hopfIdealPointsSubgroupMulEquiv R n g : GL (Fin n) A) = g := by
-  exact MulEquiv.subgroupCongr_apply _ g
-
 /-- The group of algebra-valued points of the upper-triangular coordinate Hopf algebra is the
 group of invertible upper-triangular matrices. -/
 noncomputable def pointsMulEquiv :
@@ -217,8 +210,8 @@ theorem pointsMulEquiv_coe
           (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
           (CommAlgCat.of R A) f) =
       (pointsMulEquiv (R := R) (n := n) (A := A) f : GL (Fin n) A) := by
-  simpa only [pointsMulEquiv, MulEquiv.trans_apply,
-    coe_hopfIdealPointsSubgroupMulEquiv, GeneralLinear.pointsMulEquiv_apply] using
+  simpa only [pointsMulEquiv, MulEquiv.trans_apply, hopfIdealPointsSubgroupMulEquiv,
+    MulEquiv.subgroupCongr_apply, GeneralLinear.pointsMulEquiv_apply] using
       (GeneralLinear.coe_hopfIdealPointsSubgroupMulEquiv_apply n
         (definingHopfIdeal R n) (CommAlgCat.of R A) f).symm
 
@@ -375,9 +368,12 @@ private noncomputable def hopfIdealPointsSubgroupNatIso :
                 phi.hom g.down) : GL (Fin n) B) i j) =
           ((UpperTriangularGroup.map phi.hom.toRingHom
               (hopfIdealPointsSubgroupMulEquiv R n g.down) : GL (Fin n) B) i j)
-        rw [coe_hopfIdealPointsSubgroupMulEquiv,
+        rw [hopfIdealPointsSubgroupMulEquiv,
+          MulEquiv.subgroupCongr_apply (hopfIdealPointsSubgroup_eq R n),
           GeneralLinear.coe_mapHopfIdealPointsSubgroup,
-          UpperTriangularGroup.coe_map, coe_hopfIdealPointsSubgroupMulEquiv]
+          UpperTriangularGroup.coe_map,
+          hopfIdealPointsSubgroupMulEquiv,
+          MulEquiv.subgroupCongr_apply (hopfIdealPointsSubgroup_eq R n)]
       have h := congrArg
         (fun f ↦ eqToHom
             (GeneralLinear.hopfIdealPointsSubgroupFunctor_obj n
