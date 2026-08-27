@@ -144,13 +144,14 @@ theorem W1p.eLpNorm_value_le_of_forall_testFunction {q : ENNReal} {C : ℝ≥0}
 variable {pstar : ENNReal}
 
 omit [MeasurableSpace E] [FiniteDimensional ℝ E] [BorelSpace E] in
-/-- If `1 ≤ p` and `1/p⋆ + 1/n = 1/p`, then `1 ≤ p⋆`. This discharges the
-`Fact (1 ≤ p⋆)` instance that `L^{p⋆}` needs to be a normed space. -/
-theorem one_le_of_inv_add_inv_natCast_eq_inv (n : ℕ)
-    (hexp : pstar⁻¹ + (n : ℝ≥0∞)⁻¹ = p⁻¹) : 1 ≤ pstar := by
+/-- If `1 ≤ p` and `p⋆⁻¹ + r = p⁻¹` for some `r`, then `1 ≤ p⋆`; nothing about the summand `r`
+is used beyond its being an element of `ℝ≥0∞`. Instantiated at `r = (finrank ℝ E : ℝ≥0∞)⁻¹`, it
+discharges the `Fact (1 ≤ p⋆)` instance that `L^{p⋆}` needs in order to be a normed space, and so
+it occurs in the *type* of `TauCeti.W1p0.sobolevEmbeddingL`. -/
+theorem one_le_of_inv_add_eq_inv {r : ENNReal} (hexp : pstar⁻¹ + r = p⁻¹) : 1 ≤ pstar := by
   have hp1 : (1 : ℝ≥0∞) ≤ p := Fact.out
   rw [← ENNReal.inv_le_one]
-  calc pstar⁻¹ ≤ pstar⁻¹ + (n : ℝ≥0∞)⁻¹ := le_self_add
+  calc pstar⁻¹ ≤ pstar⁻¹ + r := le_self_add
     _ = p⁻¹ := hexp
     _ ≤ 1 := ENNReal.inv_le_one.2 hp1
 
@@ -308,9 +309,9 @@ This is an embedding in the honest sense: `TauCeti.W1p0.coeFn_sobolevEmbeddingL`
 `u` is the function `u` itself, so nothing is being reinterpreted. -/
 def W1p0.sobolevEmbeddingL (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) :
-    letI := Fact.mk (one_le_of_inv_add_inv_natCast_eq_inv (finrank ℝ E) hexp)
+    letI := Fact.mk (one_le_of_inv_add_eq_inv hexp)
     W1p0 mu Omega p →L[ℝ] Lp ℝ pstar (mu.restrict Omega) := by
-  letI := Fact.mk (one_le_of_inv_add_inv_natCast_eq_inv (finrank ℝ E) hexp)
+  letI := Fact.mk (one_le_of_inv_add_eq_inv hexp)
   exact (W1p0.sobolevEmbeddingₗ hpstar hexp).mkContinuous
     (SNormLESNormFDerivOfEqConst ℝ mu p.toReal) fun u =>
     (W1p0.norm_sobolevEmbeddingₗ_le hpstar hexp u).trans
@@ -323,7 +324,7 @@ theorem W1p0.coeFn_sobolevEmbeddingL (hpstar : pstar ≠ ∞)
     W1p0.sobolevEmbeddingL hpstar hexp u =ᵐ[mu.restrict Omega]
       (W1p.value (u : W1p mu Omega p) : E → ℝ) :=
   by
-    let _ := Fact.mk (one_le_of_inv_add_inv_natCast_eq_inv (finrank ℝ E) hexp)
+    let _ := Fact.mk (one_le_of_inv_add_eq_inv hexp)
     rw [W1p0.sobolevEmbeddingL, LinearMap.mkContinuous_apply]
     exact W1p0.coeFn_sobolevEmbeddingₗ hpstar hexp u
 
@@ -347,7 +348,7 @@ theorem W1p0.norm_sobolevEmbeddingL_le (hpstar : pstar ≠ ∞)
     (hexp : pstar⁻¹ + (finrank ℝ E : ℝ≥0∞)⁻¹ = p⁻¹) (u : W1p0 mu Omega p) :
     ‖W1p0.sobolevEmbeddingL hpstar hexp u‖ ≤
       SNormLESNormFDerivOfEqConst ℝ mu p.toReal * ‖W1p.gradient (u : W1p mu Omega p)‖ := by
-  let _ := Fact.mk (one_le_of_inv_add_inv_natCast_eq_inv (finrank ℝ E) hexp)
+  let _ := Fact.mk (one_le_of_inv_add_eq_inv hexp)
   rw [W1p0.sobolevEmbeddingL, LinearMap.mkContinuous_apply]
   exact W1p0.norm_sobolevEmbeddingₗ_le hpstar hexp u
 
