@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.FieldTheory.FunctionField.Repartition.Basic
-public import TauCeti.LinearAlgebra.Dimension.Tower
 
 /-!
 # The quotients of the divisor filtration of the repartition space
@@ -32,9 +31,16 @@ reading a repartition off at `P` is an isomorphism
 
 (`TauCeti.adeleFiltrationQuotientEquiv`): its kernel is `A_F(D)` because away from `P` the two
 bounds agree, and it is surjective because a function prescribed at `P` and extended by zero
-elsewhere is a repartition bounded by `E`.  A general pair `D ≤ E` is reached from that case by
-walking up the finitely many places in the support of `E - D`, rank being additive along a tower
-of submodules (`TauCeti.rank_quotient_submoduleOf_tower`).
+elsewhere is a repartition bounded by `E`.  Running the same two arguments over a whole finite
+set `s` of places, one containing `supp (E - D)`, identifies
+
+`A_F(E) / A_F(D) ≃ₗ[k] ⨁_{P ∈ s} 𝔪_P^(-E P) / 𝔪_P^(-D P)`
+
+(`TauCeti.adeleFiltrationQuotientEquivPi`); at `s = supp (E - D)` this is the local-to-global
+identification of Section I.5.  The dimension count for a general pair `D ≤ E` is instead reached
+from the one-place case by walking up the finitely many places in the support of `E - D`, rank
+being additive along a tower of submodules (`TauCeti.rank_quotient_submoduleOf_tower`), which
+avoids having to sum the local dimensions.
 
 ## Main definitions
 
@@ -44,12 +50,20 @@ of submodules (`TauCeti.rank_quotient_submoduleOf_tower`).
 * `TauCeti.adeleFiltrationLocalMap`: that evaluation, read modulo `𝔪_P^(-D P)`.
 * `TauCeti.adeleFiltrationQuotientEquiv`: the isomorphism
   `A_F(E) / A_F(D) ≃ₗ[k] 𝔪_P^(-E P) / 𝔪_P^(-D P)` for `D` and `E` agreeing away from `P`.
+* `TauCeti.adeleFiltrationLocalMapPi`: the reduction read at every place of a finite set `s` at
+  once, and `TauCeti.adeleFiltrationQuotientLocalMapPi`: the same map descended to
+  `A_F(E) / A_F(D)`.
+* `TauCeti.adeleFiltrationQuotientEquivPi`: the isomorphism of `A_F(E) / A_F(D)` with the finite
+  direct sum of the local quotients over `s`, for any `s` containing `supp (E - D)`.
 
 ## Main results
 
 * `TauCeti.ker_adeleFiltrationLocalMap` and `TauCeti.adeleFiltrationLocalMap_surjective`: the
   local map has kernel `A_F(D)` — when the two divisors agree away from `P` — and is always
   surjective.
+* `TauCeti.ker_adeleFiltrationLocalMapPi` and `TauCeti.adeleFiltrationLocalMapPi_surjective`: the
+  same two facts for the reduction over `s` — the kernel as soon as `s` contains
+  `supp (E - D)`, the surjectivity for any `s`.
 * `TauCeti.rank_quotient_adeleFiltration`: the rank form of the dimension formula, whose
   natural-number right-hand side carries the finiteness with it.
 * `TauCeti.finiteDimensional_quotient_adeleFiltration`: the quotient is finite-dimensional.
@@ -67,6 +81,14 @@ divisors agree away from `P`, and not that `D ≤ E`; the dimension count does n
 Mathlib has no `mem_submoduleOf` lemma.  Since `Submodule.submoduleOf` is by definition a comap
 along the inclusion, membership in it *is* `Submodule.mem_comap`, which the proofs below cite in
 a `show`.
+
+`TauCeti.adeleFiltrationQuotientEquivPi` descends to the quotient one factor at a time, as a
+`LinearMap.pi` of `Submodule.liftQ`s, and is then turned into an equivalence by
+`LinearEquiv.ofBijective`.  The direct route — `Submodule.liftQ` or
+`LinearMap.quotKerEquivOfSurjective` applied to `TauCeti.adeleFiltrationLocalMapPi` itself —
+elaborates a `LinearMap` whose codomain is a product of quotients, and the unifier does not
+finish that within the heartbeat limit; descending factorwise keeps every quotient it meets a
+single one.
 
 ## References
 
@@ -180,8 +202,131 @@ noncomputable def adeleFiltrationQuotientEquiv {D E : Divisor k F} {P : Place k 
 theorem adeleFiltrationQuotientEquiv_mk {D E : Divisor k F} {P : Place k F}
     (hoff : ∀ Q, Q ≠ P → D.coeff Q = E.coeff Q) (a : adeleFiltration E) :
     adeleFiltrationQuotientEquiv hoff (Submodule.Quotient.mk a) =
-      adeleFiltrationLocalMap D E P a :=
-  (rfl)
+      adeleFiltrationLocalMap D E P a := by
+  simp only [adeleFiltrationQuotientEquiv, LinearEquiv.trans_apply, Submodule.quotEquivOfEq_mk,
+    LinearMap.quotKerEquivOfSurjective_apply_mk]
+
+/-- Reading a repartition of `A_F(E)` at each place of a finite set `s` of places, each entry
+taken modulo the bound that `A_F(D)` imposes there.  The index set being finite, the target is
+the direct sum of the local quotients over `s`. -/
+noncomputable def adeleFiltrationLocalMapPi (D E : Divisor k F) (s : Finset (Place k F)) :
+    adeleFiltration E →ₗ[k] ∀ P : ↥s, localFiltrationQuotient D E ↑P :=
+  LinearMap.pi fun P ↦ adeleFiltrationLocalMap D E ↑P
+
+@[simp]
+theorem adeleFiltrationLocalMapPi_apply (D E : Divisor k F) (s : Finset (Place k F))
+    (a : adeleFiltration E) (P : ↥s) :
+    adeleFiltrationLocalMapPi D E s a P = adeleFiltrationLocalMap D E ↑P a :=
+  LinearMap.pi_apply _ _ _
+
+/-- **The kernel of the place-by-place reduction over `s`** is the trace of `A_F(D)` on `A_F(E)`,
+as soon as `s` contains the support of `E - D`: at every place outside that support the bound
+imposed by `D` is the bound imposed by `E`, which every element of `A_F(E)` satisfies already. -/
+theorem ker_adeleFiltrationLocalMapPi {D E : Divisor k F} {s : Finset (Place k F)}
+    (hs : (E - D).support ⊆ s) :
+    LinearMap.ker (adeleFiltrationLocalMapPi D E s) =
+      (adeleFiltration D).submoduleOf (adeleFiltration E) := by
+  ext a
+  rw [LinearMap.mem_ker, funext_iff,
+    show (a ∈ (adeleFiltration D).submoduleOf (adeleFiltration E)) ↔
+      ((a : Place k F → F) ∈ adeleFiltration D) from Submodule.mem_comap,
+    mem_adeleFiltration_iff]
+  simp only [adeleFiltrationLocalMapPi_apply, Pi.zero_apply, adeleFiltrationLocalMap_eq_zero_iff,
+    Subtype.forall]
+  refine ⟨fun h Q ↦ ?_, fun h Q _ ↦ h Q⟩
+  by_cases hQ : Q ∈ s
+  · exact h Q hQ
+  · have hQD : D.coeff Q = E.coeff Q := by
+      have h0 : (E - D).coeff Q = 0 := by
+        by_contra h0
+        exact hQ (hs (WeilDivisor.mem_support_iff.mpr h0))
+      rw [WeilDivisor.coeff_sub] at h0
+      omega
+    rw [hQD]
+    exact mem_adeleFiltration_iff.mp a.2 Q
+
+/-- **The place-by-place reduction over `s` is surjective**: entries prescribed at the finitely
+many places of `s`, extended by zero elsewhere, form a repartition bounded by `E`. -/
+theorem adeleFiltrationLocalMapPi_surjective (D E : Divisor k F) (s : Finset (Place k F)) :
+    Function.Surjective (adeleFiltrationLocalMapPi D E s) := by
+  classical
+  intro y
+  choose z hz using fun P : ↥s ↦ Submodule.Quotient.mk_surjective _ (y P)
+  refine ⟨⟨fun Q ↦ if h : Q ∈ s then (z ⟨Q, h⟩ : F) else 0,
+    mem_adeleFiltration_iff.mpr fun Q ↦ ?_⟩, funext fun P ↦ ?_⟩
+  · rcases em (Q ∈ s) with h | h
+    · rw [dite_eq_left h]
+      simpa only [Place.mem_filtration_iff, neg_neg] using (z ⟨Q, h⟩).2
+    · simp [dite_eq_right h]
+  · rw [adeleFiltrationLocalMapPi_apply, adeleFiltrationLocalMap_apply, ← hz P]
+    refine congrArg _ (Subtype.ext ?_)
+    rw [coe_adeleFiltrationEval]
+    exact dite_eq_left P.2
+
+/-- The place-by-place reduction over `s`, descended to the quotient `A_F(E) / A_F(D)`: it is
+well defined because a repartition bounded by `D` satisfies the bound `D` imposes at every place,
+so reduces to zero there. -/
+noncomputable def adeleFiltrationQuotientLocalMapPi (D E : Divisor k F)
+    (s : Finset (Place k F)) :
+    (↥(adeleFiltration E) ⧸ (adeleFiltration D).submoduleOf (adeleFiltration E)) →ₗ[k]
+      ∀ P : ↥s, localFiltrationQuotient D E ↑P :=
+  LinearMap.pi fun P ↦
+    Submodule.liftQ ((adeleFiltration D).submoduleOf (adeleFiltration E))
+      (adeleFiltrationLocalMap D E ↑P) fun a ha ↦ by
+        rw [LinearMap.mem_ker, adeleFiltrationLocalMap_eq_zero_iff]
+        exact mem_adeleFiltration_iff.mp (Submodule.mem_comap.mp ha) ↑P
+
+@[simp]
+theorem adeleFiltrationQuotientLocalMapPi_mk (D E : Divisor k F) (s : Finset (Place k F))
+    (a : adeleFiltration E) (P : ↥s) :
+    adeleFiltrationQuotientLocalMapPi D E s (Submodule.Quotient.mk a) P =
+      adeleFiltrationLocalMap D E ↑P a := by
+  simp only [adeleFiltrationQuotientLocalMapPi, LinearMap.pi_apply, Submodule.liftQ_apply]
+
+/-- The descended place-by-place reduction is bijective as soon as `s` contains the support of
+`E - D`: injective by `TauCeti.ker_adeleFiltrationLocalMapPi`, surjective by
+`TauCeti.adeleFiltrationLocalMapPi_surjective`. -/
+theorem adeleFiltrationQuotientLocalMapPi_bijective {D E : Divisor k F} {s : Finset (Place k F)}
+    (hs : (E - D).support ⊆ s) :
+    Function.Bijective (adeleFiltrationQuotientLocalMapPi D E s) := by
+  constructor
+  · intro x y hxy
+    obtain ⟨a, rfl⟩ := Submodule.Quotient.mk_surjective _ x
+    obtain ⟨b, rfl⟩ := Submodule.Quotient.mk_surjective _ y
+    rw [Submodule.Quotient.eq, ← ker_adeleFiltrationLocalMapPi hs, LinearMap.mem_ker]
+    refine funext fun P ↦ ?_
+    rw [map_sub, Pi.sub_apply, Pi.zero_apply, sub_eq_zero, adeleFiltrationLocalMapPi_apply,
+      adeleFiltrationLocalMapPi_apply, ← adeleFiltrationQuotientLocalMapPi_mk D E s a P,
+      ← adeleFiltrationQuotientLocalMapPi_mk D E s b P, hxy]
+  · intro y
+    obtain ⟨a, ha⟩ := adeleFiltrationLocalMapPi_surjective D E s y
+    exact ⟨Submodule.Quotient.mk a, funext fun P ↦ by
+      rw [adeleFiltrationQuotientLocalMapPi_mk, ← adeleFiltrationLocalMapPi_apply, ha]⟩
+
+/-- **The local-to-global identification** (Stichtenoth, Section I.5): whenever a finite set `s`
+of places contains the support of `E - D`, reading a repartition of `A_F(E)` off at each place of
+`s` identifies
+
+`A_F(E) / A_F(D) ≃ₗ[k] ⨁_{P ∈ s} 𝔪_P^(-E P) / 𝔪_P^(-D P)`,
+
+the index set `s` being finite, so that the product below *is* that direct sum.  The smallest
+choice, and the one the local-to-global engine is usually stated with, is `s = supp (E - D)`; its
+`P`-th component is `TauCeti.adeleFiltrationLocalMap`
+(`TauCeti.adeleFiltrationQuotientEquivPi_mk`). -/
+noncomputable def adeleFiltrationQuotientEquivPi {D E : Divisor k F} {s : Finset (Place k F)}
+    (hs : (E - D).support ⊆ s) :
+    (↥(adeleFiltration E) ⧸ (adeleFiltration D).submoduleOf (adeleFiltration E)) ≃ₗ[k]
+      ∀ P : ↥s, localFiltrationQuotient D E ↑P :=
+  LinearEquiv.ofBijective (adeleFiltrationQuotientLocalMapPi D E s)
+    (adeleFiltrationQuotientLocalMapPi_bijective hs)
+
+@[simp]
+theorem adeleFiltrationQuotientEquivPi_mk {D E : Divisor k F} {s : Finset (Place k F)}
+    (hs : (E - D).support ⊆ s) (a : adeleFiltration E) (P : ↥s) :
+    adeleFiltrationQuotientEquivPi hs (Submodule.Quotient.mk a) P =
+      adeleFiltrationLocalMap D E ↑P a := by
+  rw [adeleFiltrationQuotientEquivPi, LinearEquiv.ofBijective_apply,
+    adeleFiltrationQuotientLocalMapPi_mk]
 
 section Rank
 
@@ -297,9 +442,11 @@ theorem finiteDimensional_quotient_adeleFiltration {D E : Divisor k F} (h : D �
 
 `dim_k (A_F(E) / A_F(D)) = deg E - deg D`.
 
-Together with the diagonal-intersection lemma `F ∩ A_F(D) = L(D)`
-(`TauCeti.diagonalRepartitions_inf_adeleFiltration`) this is what computes the index of
-specialty. -/
+This is one of the two linear-algebra inputs to the later computation of the index of specialty,
+the other being the diagonal-intersection lemma `F ∩ A_F(D) = L(D)`
+(`TauCeti.diagonalRepartitions_inf_adeleFiltration`).  Turning the two into
+`i(D) = dim_k (A_F / (A_F(D) + F))` still needs the exact sequence relating `L(E)/L(D)`,
+`A_F(E)/A_F(D)` and the cokernels of `A_F(D) + F → A_F`, which is not established here. -/
 theorem finrank_quotient_adeleFiltration {D E : Divisor k F} (h : D ≤ E) :
     (Module.finrank k
         (↥(adeleFiltration E) ⧸ (adeleFiltration D).submoduleOf (adeleFiltration E)) : ℤ) =
