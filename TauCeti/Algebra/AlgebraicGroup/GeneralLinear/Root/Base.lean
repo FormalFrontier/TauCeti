@@ -244,10 +244,7 @@ private lemma image_root_diagonalSimpleSupport (n : ℕ) :
         SplitTorus.coordinateRoot (ULift.up i.castSucc) (ULift.up i.succ) := by
   rw [diagonalSimpleSupport, image_simpleSupport]
   apply congrArg range
-  funext i
-  rw [Function.comp_apply, diagonalRootDatum_root]
-  simp only [diagonalSimpleRootIndex_fst, diagonalSimpleRootIndex_snd, ULift.down_up]
-  exact diagonalRoot_eq_coordinateRoot n i.castSucc i.succ
+  exact funext (diagonalRootDatum_root_diagonalSimpleRootIndex n)
 
 private lemma image_coroot_diagonalSimpleSupport (n : ℕ) :
     (diagonalRootDatum (n + 1)).coroot ''
@@ -256,10 +253,7 @@ private lemma image_coroot_diagonalSimpleSupport (n : ℕ) :
         SplitTorus.coordinateCoroot (ULift.up i.castSucc) (ULift.up i.succ) := by
   rw [diagonalSimpleSupport, image_simpleSupport]
   apply congrArg range
-  funext i
-  rw [Function.comp_apply, diagonalRootDatum_coroot]
-  simp only [diagonalSimpleRootIndex_fst, diagonalSimpleRootIndex_snd, ULift.down_up]
-  exact diagonalCoroot_eq_coordinateCoroot n i.castSucc i.succ
+  exact funext (diagonalRootDatum_coroot_diagonalSimpleRootIndex n)
 
 /-- The Bourbaki-numbered base of the diagonal root datum of `GL_(n+1)`, supported on the
 consecutive coordinate roots `e_i - e_(i+1)`. -/
@@ -267,20 +261,14 @@ noncomputable def diagonalRootBase (n : ℕ) : (diagonalRootDatum.{u} (n + 1)).B
   support := diagonalSimpleSupport n
   linearIndepOn_root := linearIndepOn_simpleSupport _ _ <| by
     have hroot : (diagonalRootDatum (n + 1)).root ∘ diagonalSimpleRootIndex n =
-        fun i : Fin n => SplitTorus.coordinateRoot (ULift.up i.castSucc) (ULift.up i.succ) := by
-      funext i
-      rw [Function.comp_apply, diagonalRootDatum_root]
-      simp only [diagonalSimpleRootIndex_fst, diagonalSimpleRootIndex_snd, ULift.down_up]
-      exact diagonalRoot_eq_coordinateRoot n i.castSucc i.succ
+        fun i : Fin n => SplitTorus.coordinateRoot (ULift.up i.castSucc) (ULift.up i.succ) :=
+      funext (diagonalRootDatum_root_diagonalSimpleRootIndex n)
     rw [hroot]
     exact linearIndependent_diagonalSimpleRoot n
   linearIndepOn_coroot := linearIndepOn_simpleSupport _ _ <| by
     have hcoroot : (diagonalRootDatum (n + 1)).coroot ∘ diagonalSimpleRootIndex n =
-        fun i : Fin n => SplitTorus.coordinateCoroot (ULift.up i.castSucc) (ULift.up i.succ) := by
-      funext i
-      rw [Function.comp_apply, diagonalRootDatum_coroot]
-      simp only [diagonalSimpleRootIndex_fst, diagonalSimpleRootIndex_snd, ULift.down_up]
-      exact diagonalCoroot_eq_coordinateCoroot n i.castSucc i.succ
+        fun i : Fin n => SplitTorus.coordinateCoroot (ULift.up i.castSucc) (ULift.up i.succ) :=
+      funext (diagonalRootDatum_coroot_diagonalSimpleRootIndex n)
     rw [hcoroot]
     exact linearIndependent_diagonalSimpleCoroot n
   root_mem_or_neg_mem p := by
