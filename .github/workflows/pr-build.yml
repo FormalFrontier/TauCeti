@@ -385,8 +385,18 @@ jobs:
       - name: Prepare inherited Mathlib shim obligations
         if: ${{ env.INFRA != '1' }}
         run: |
+          set -euo pipefail
           # Compare with the inherited registry (not today's base tip), so unrelated source
-          # PRs from inheriting registry edits that landed after they branched.
+          # PRs do not inherit registry edits that landed after they branched.
+          #
+          # The checker is workflow-pinned tooling from gate/. A run whose workflow commit
+          # predates it — a manual dispatch against an older base — has no script to invoke,
+          # so leave the mechanism inert there rather than reddening the required build on a
+          # missing file.
+          if [ ! -f gate/scripts/check-expired-mathlib-shims.py ]; then
+            echo "SHIM_CHECK=0" >> "$GITHUB_ENV"
+            exit 0
+          fi
           base_shims="$RUNNER_TEMP/base-mathlib-shims.json"
           if [ -f mergebase/TauCeti/mathlib-shims.json ]; then
             cp mergebase/TauCeti/mathlib-shims.json "$base_shims"
