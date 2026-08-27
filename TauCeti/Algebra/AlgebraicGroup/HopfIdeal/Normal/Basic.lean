@@ -98,8 +98,11 @@ again gives a normal closed subgroup. -/
 theorem IsNormal.map {K : Type w} [CommSemiring K] [HopfAlgebra R K]
     {I : HopfIdeal R H} (hI : I.IsNormal) (f : H →ₐc[R] K) :
     (I.map f).IsNormal := by
-  rw [isNormal_def, map_toIdeal, Ideal.map_map,
-    ← map_tensor_rightTensorIdeal f I.toIdeal]
+  rw [isNormal_def, map_toIdeal, Ideal.map_map]
+  have hmap : f.toAlgHom.toRingHom = (f : H →+* K) := by
+    ext
+    rfl
+  rw [← hmap, ← map_tensor_rightTensorIdeal f.toAlgHom I.toIdeal]
   rw [Ideal.map_le_iff_le_comap]
   intro x hx
   rw [Ideal.mem_comap]
