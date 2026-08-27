@@ -71,6 +71,7 @@ theorem conjNormal_one : conjNormal N (1 : G) = ContinuousMonoidHom.id N := by
   simp
 
 /-- Conjugation is an action: conjugating by `g * g'` is conjugating by `g'` and then by `g`. -/
+@[simp]
 theorem conjNormal_mul (g g' : G) :
     conjNormal N (g * g') = (conjNormal N g).comp (conjNormal N g') := by
   ext n

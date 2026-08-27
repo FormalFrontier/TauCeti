@@ -128,6 +128,7 @@ theorem conjCocycles1_one : conjCocycles1 G M N 1 = AddMonoidHom.id (Z1 N M) := 
   simp
 
 /-- Conjugation on continuous `1`-cocycles is a left action of `G`. -/
+@[simp]
 theorem conjCocycles1_mul (g g' : G) :
     conjCocycles1 G M N (g * g') = (conjCocycles1 G M N g).comp (conjCocycles1 G M N g') := by
   refine AddMonoidHom.ext fun c => Subtype.ext (funext fun n => ?_)
@@ -170,6 +171,7 @@ theorem explicitConj1_one : explicitConj1 G M N 1 = AddMonoidHom.id (H1 N M) := 
       (DFunLike.congr_fun (conjCocycles1_one G M N) c)
 
 /-- Conjugation on `H¹(N, M)` is a left action of `G`. -/
+@[simp]
 theorem explicitConj1_mul (g g' : G) :
     explicitConj1 G M N (g * g') = (explicitConj1 G M N g).comp (explicitConj1 G M N g') := by
   refine AddMonoidHom.ext fun x => ?_
@@ -245,6 +247,7 @@ theorem conjCocycles2_one : conjCocycles2 G M N 1 = AddMonoidHom.id (Z2 N M) := 
   simp
 
 /-- Conjugation on continuous `2`-cocycles is a left action of `G`. -/
+@[simp]
 theorem conjCocycles2_mul (g g' : G) :
     conjCocycles2 G M N (g * g') = (conjCocycles2 G M N g).comp (conjCocycles2 G M N g') := by
   refine AddMonoidHom.ext fun c => Subtype.ext (funext fun p => ?_)
@@ -295,20 +298,27 @@ theorem conjCocycles2_sub_eq_d1 (γ : N) (c : Z2 N M) :
     simp
   ext p
   obtain ⟨n, k⟩ := p
+  -- Instantiating the `2`-cocycle law leaves the products it forms in their literal shapes
+  -- `γ * (γ⁻¹ * n * γ)` and `γ⁻¹ * n * γ * (γ⁻¹ * k * γ)`, whereas the goal and the remaining
+  -- instances of the law use the cancelled shapes below. Both shapes occur only as *arguments of*
+  -- `c`, where no cocycle or module lemma applies, so they can be exchanged only by rewriting with
+  -- these group identities, each of which `group` discharges.
+  have hnγ : γ * (γ⁻¹ * n * γ) = n * γ := by group
+  have hkγ : γ * (γ⁻¹ * k * γ) = k * γ := by group
+  have hnkγ : γ⁻¹ * n * γ * (γ⁻¹ * k * γ) = γ⁻¹ * (n * k) * γ := by group
   -- The `2`-cocycle law at `(γ, γ⁻¹nγ, γ⁻¹kγ)`, at `(n, γ, γ⁻¹kγ)` and at `(n, k, γ)`, each
   -- solved for the term the goal has to eliminate.
   have hA : γ • (c : N × N → M) (γ⁻¹ * n * γ, γ⁻¹ * k * γ) =
       (c : N × N → M) (n * γ, γ⁻¹ * k * γ) + (c : N × N → M) (γ, γ⁻¹ * n * γ) -
         (c : N × N → M) (γ, γ⁻¹ * (n * k) * γ) := by
     have h := hc γ (γ⁻¹ * n * γ) (γ⁻¹ * k * γ)
-    rw [show γ * (γ⁻¹ * n * γ) = n * γ by group,
-      show γ⁻¹ * n * γ * (γ⁻¹ * k * γ) = γ⁻¹ * (n * k) * γ by group] at h
+    rw [hnγ, hnkγ] at h
     exact eq_sub_of_add_eq h.symm
   have hB : (c : N × N → M) (n * γ, γ⁻¹ * k * γ) =
       n • (c : N × N → M) (γ, γ⁻¹ * k * γ) + (c : N × N → M) (n, k * γ) -
         (c : N × N → M) (n, γ) := by
     have h := hc n γ (γ⁻¹ * k * γ)
-    rw [show γ * (γ⁻¹ * k * γ) = k * γ by group] at h
+    rw [hkγ] at h
     exact eq_sub_of_add_eq h
   have hC : (c : N × N → M) (n, k * γ) =
       (c : N × N → M) (n * k, γ) + (c : N × N → M) (n, k) -
@@ -351,6 +361,7 @@ theorem explicitConj2_one : explicitConj2 G M N 1 = AddMonoidHom.id (H2 N M) := 
       (DFunLike.congr_fun (conjCocycles2_one G M N) c)
 
 /-- Conjugation on `H²(N, M)` is a left action of `G`. -/
+@[simp]
 theorem explicitConj2_mul (g g' : G) :
     explicitConj2 G M N (g * g') = (explicitConj2 G M N g).comp (explicitConj2 G M N g') := by
   refine AddMonoidHom.ext fun x => ?_
