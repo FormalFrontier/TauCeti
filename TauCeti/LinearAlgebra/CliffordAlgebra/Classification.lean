@@ -57,6 +57,18 @@ theorem realCliffordResidue_add_add_right (p q n : ℕ) :
   simp only [realCliffordResidue]
   omega
 
+@[simp]
+theorem realCliffordResidue_add_eight_left (p q : ℕ) :
+    realCliffordResidue (p + 8) q = realCliffordResidue p q := by
+  simp only [realCliffordResidue]
+  omega
+
+@[simp]
+theorem realCliffordResidue_add_eight_right (p q : ℕ) :
+    realCliffordResidue p (q + 8) = realCliffordResidue p q := by
+  simp only [realCliffordResidue]
+  omega
+
 /-- The exact real algebra classification of the standard Clifford algebra of signature `(p,q)`.
 The matrix size is stated uniformly in terms of the total dimension. -/
 def IsRealCliffordClassified (p q : ℕ) : Prop :=
