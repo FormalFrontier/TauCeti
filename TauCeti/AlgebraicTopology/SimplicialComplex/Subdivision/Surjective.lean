@@ -17,8 +17,8 @@ take the nested initial segments in that order, and express the point as a conve
 their barycenters.
 
 This is the first bijectivity step in the subdivision-realization milestone in Layer 11 of the
-geometric topology roadmap. Injectivity and continuity of the inverse remain separate steps toward
-the homeomorphism between a complex and its barycentric subdivision.
+geometric topology roadmap. `Subdivision.Injective` proves injectivity, and
+`Subdivision.Homeomorph` proves continuity of the inverse.
 
 The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter 2,
 "Derived Subdivisions".
