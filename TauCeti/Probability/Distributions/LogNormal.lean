@@ -415,7 +415,6 @@ theorem integrableExpSet_id_logNormalMeasure (m : ℝ) (hv : v ≠ 0) :
 /-! ### Boundary transforms -/
 
 /-- Every exponential moment exists at the singular boundary `v = 0`. -/
-@[simp]
 theorem integrableExpSet_id_logNormalMeasure_zero_var (m : ℝ) :
     integrableExpSet id (logNormalMeasure m 0) = univ := by
   rw [logNormalMeasure_zero_var]
