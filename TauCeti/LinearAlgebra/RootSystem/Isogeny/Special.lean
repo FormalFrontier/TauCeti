@@ -160,8 +160,9 @@ def g2SpecialIsogeny :
 /-- **The square of the special isogeny of `G₂` is scaling by three.** This is the root-datum form
 of the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
 theorem g2SpecialIsogeny_comp_self :
-    g2SpecialIsogeny.comp g2SpecialIsogeny =
+    g2SpecialIsogeny * g2SpecialIsogeny =
       RootPairingIsogeny.smulId g2SimplyConnectedRootDatum 3 := by
+  rw [RootPairingIsogeny.mul_def]
   refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
   · simpa using g2SpecialIsogenyMatrix_mulVecLin_comp_self
   · simpa using g2SpecialIsogenyMatrix_transpose_mulVecLin_comp_self
@@ -237,8 +238,9 @@ noncomputable def f4SpecialIsogeny :
 /-- **The square of the special isogeny of `F₄` is scaling by two.** This is the root-datum form of
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
 theorem f4SpecialIsogeny_comp_self :
-    f4SpecialIsogeny.comp f4SpecialIsogeny =
+    f4SpecialIsogeny * f4SpecialIsogeny =
       RootPairingIsogeny.smulId f4SimplyConnectedRootDatum 2 := by
+  rw [RootPairingIsogeny.mul_def]
   refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
   · simpa using f4SpecialIsogenyMatrix_mulVecLin_comp_self
   · simpa using f4SpecialIsogenyMatrix_transpose_mulVecLin_comp_self
