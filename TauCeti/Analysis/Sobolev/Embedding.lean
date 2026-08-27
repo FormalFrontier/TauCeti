@@ -8,7 +8,6 @@ module
 public import TauCeti.Analysis.Sobolev.W1p.Zero
 public import Mathlib.Analysis.FunctionalSpaces.SobolevInequality
 import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
-import Mathlib.MeasureTheory.Function.LpSpace.Complete
 
 /-!
 # The Sobolev embedding `W^{1,p}_0(Ω) ↪ L^{p⋆}(Ω)`
