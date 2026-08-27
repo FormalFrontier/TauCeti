@@ -11,7 +11,8 @@ public import TauCeti.FieldTheory.FunctionField.AffineModel.Extension
 /-!
 # The fundamental identity at an arbitrary place
 
-Let `F' / k'` be a finite separable extension of the field extension `F / k`.  This file proves
+Let `F' / k'` be an extension of the field extension `F / k` in which `F' / F` is finite and
+separable; of the constant fields only integrality of `k' / k` is asked.  This file proves
 **the fundamental identity**
 
 `∑_{P' ∣ P} e(P' ∣ P) · f(P' ∣ P) = [F' : F]`
@@ -59,9 +60,9 @@ variable [FiniteDimensional F F'] [Algebra.IsSeparable F F'] [Algebra.IsIntegral
 variable (k F)
 
 /-- **The fundamental identity** (Stichtenoth, Theorem 3.1.11) at an arbitrary place `P` of
-`F / k`, for a finite **separable** extension `F' / k'`: the ramification indices and relative
-degrees of the places of `F' / k'` lying over `P` satisfy `∑_{P' ∣ P} e(P' ∣ P) · f(P' ∣ P)
-= [F' : F]`.
+`F / k`, for an extension `F' / k'` whose extension of function fields `F' / F` is finite and
+**separable**: the ramification indices and relative degrees of the places of `F' / k'` lying
+over `P` satisfy `∑_{P' ∣ P} e(P' ∣ P) · f(P' ∣ P) = [F' : F]`.
 
 The finite set `s` is the fibre of `TauCeti.Place.restrict` over `P`, which is finite by
 `TauCeti.Place.finite_setOf_restrict_eq`.
