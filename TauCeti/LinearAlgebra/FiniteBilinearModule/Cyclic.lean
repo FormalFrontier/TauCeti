@@ -145,15 +145,6 @@ theorem polar_cyclicMap_intCast (k l : ℤ) :
   congr 1
   ring
 
-/-- The standard generator of `cyclicMap` pairs with itself to `2a`.
-
-This is deliberately not a `simp` lemma: `QuadraticMap.polar_self` and `cyclicMap_one` already
-rewrite the left-hand side, so it is stated only for the `ℤ`-scalar form shared with
-`polar_cyclicMap_intCast`. -/
-theorem polar_cyclicMap_one_one :
-    QuadraticMap.polar (cyclicMap n a hquad hpolar) 1 1 = (2 : ℤ) • a := by
-  simpa using polar_cyclicMap_intCast n a hquad hpolar 1 1
-
 variable [NeZero n]
 
 /-- **The finite quadratic module on `ZMod n` whose standard generator has value `a`.**
