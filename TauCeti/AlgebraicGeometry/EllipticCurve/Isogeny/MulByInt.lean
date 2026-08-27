@@ -246,31 +246,16 @@ theorem psiFunctionField_ne_zero {n : ℤ} (hn : (n : F) ≠ 0) : psiFunctionFie
     ((FaithfulSMul.algebraMap_injective W.CoordinateRing W.FunctionField
       (hzero.trans (map_zero _).symm)).trans (map_zero _).symm)
 
-/-- **The coordinate pullback of `[n]`.** The coordinate ring is `F[X]` with a root of the
-Weierstrass polynomial adjoined, so a map out of it is exactly a value for `X` together with a
-value for `Y` satisfying that polynomial — here `φₙ/ψₙ²` and `ωₙ/ψₙ³`, which satisfy it by
-`equation_mulByInt`.
-
-`CoordinatePullback` asks for an `F`-algebra hom, which is what `AdjoinRoot.liftAlgHom` produces
-from the `F`-algebra map `F[X] → W.FunctionField` sending `X` to `φₙ/ψₙ²`.
+/-- **The coordinate pullback of `[n]`.** A coordinate pullback out of `W.CoordinateRing` is a
+point of `W` over `W.FunctionField` — `TauCeti.CoordinatePullback.ofEquation` — and the point here
+is `(φₙ/ψₙ², ωₙ/ψₙ³)`, which `equation_mulByInt` says is one.
 
 The hypothesis is the weakest one the construction uses: `ψₙ` must not vanish at the generic
 point, which is what makes `φₙ/ψₙ²` and `ωₙ/ψₙ³` defined. It is *proved* only for `(n : F) ≠ 0`
 — see `mulByIntPullbackOfNeZero`, and the file header for the characteristic-`p` gap. -/
 noncomputable def mulByIntPullback [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     CoordinatePullback W W :=
-  AdjoinRoot.liftAlgHom W.polynomial (aeval (mulByIntX W n)) (mulByIntY W n) <| by
-    -- `liftAlgHom` wants the equation in `eval₂` form against the coerced `aeval`, and
-    -- `equation_mulByInt` is the same fact with the base change written out.
-    have hcoe : ((aeval (mulByIntX W n) : F[X] →ₐ[F] W.FunctionField) :
-        F[X] →+* W.FunctionField) =
-        eval₂RingHom (algebraMap F W.FunctionField) (mulByIntX W n) :=
-      RingHom.ext fun _ ↦ rfl
-    have h := equation_mulByInt W hn
-    dsimp only [Affine.Equation, Affine.functionFieldCurve] at h
-    rw [Affine.map_polynomial, ← eval₂_eval₂RingHom_apply] at h
-    rw [hcoe]
-    exact h
+  CoordinatePullback.ofEquation (equation_mulByInt W hn)
 
 /-- **The coordinate pullback of `[n]` when `(n : F) ≠ 0`**, the case in which the non-vanishing
 hypothesis of `mulByIntPullback` is available: `psiFunctionField_ne_zero` discharges it. This is
@@ -290,8 +275,7 @@ theorem mulByIntPullback_mk [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n 
     mulByIntPullback W hn (Affine.CoordinateRing.mk W p) =
       (p.map (mapRingHom (algebraMap F W.FunctionField))).evalEval (mulByIntX W n)
         (mulByIntY W n) := by
-  rw [mulByIntPullback, AdjoinRoot.liftAlgHom_mk]
-  exact eval₂_eval₂RingHom_apply (algebraMap F W.FunctionField) _ _ p
+  rw [mulByIntPullback, CoordinatePullback.ofEquation_mk]
 
 /-- The pullback of `[n]` sends the class of `X` to `φₙ/ψₙ²`.
 
@@ -301,13 +285,13 @@ already normalised this way by the time this fires. -/
 @[simp]
 theorem mulByIntPullback_X [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     mulByIntPullback W hn (AdjoinRoot.of W.polynomial X) = mulByIntX W n := by
-  rw [mulByIntPullback, AdjoinRoot.liftAlgHom_of, aeval_X]
+  rw [mulByIntPullback, CoordinatePullback.ofEquation_of_X]
 
 /-- The pullback of `[n]` sends the class of `Y` to `ωₙ/ψₙ³`. -/
 @[simp]
 theorem mulByIntPullback_Y [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     mulByIntPullback W hn (AdjoinRoot.root W.polynomial) = mulByIntY W n := by
-  rw [mulByIntPullback, AdjoinRoot.liftAlgHom_root]
+  rw [mulByIntPullback, CoordinatePullback.ofEquation_root]
 
 end Isogeny
 
