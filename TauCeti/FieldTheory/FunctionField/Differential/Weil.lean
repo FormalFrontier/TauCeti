@@ -183,8 +183,8 @@ theorem weilDifferentialFiltration_le_weilDifferentialSpace (D : Divisor k F) :
     weilDifferentialFiltration D ≤ weilDifferentialSpace k F :=
   le_iSup (fun D : Divisor k F ↦ weilDifferentialFiltration D) D
 
-/-- The filtration is directed downwards: two of its members both contain the one attached to the
-pointwise minimum of the two divisors. -/
+/-- The filtration is directed: any two of its members are both contained in the one attached to
+the pointwise minimum of the two divisors. -/
 theorem directed_weilDifferentialFiltration :
     Directed (· ≤ ·) (weilDifferentialFiltration : Divisor k F →
       Submodule k (Module.Dual k ↥(repartitionSpace k F))) := fun D E ↦
