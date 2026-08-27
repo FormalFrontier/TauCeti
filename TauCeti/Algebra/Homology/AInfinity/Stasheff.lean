@@ -142,6 +142,18 @@ private theorem Icc_one_three : (Finset.Icc 1 3 : Finset ℕ) = {1, 2, 3} := by 
 
 private theorem Icc_one_four : (Finset.Icc 1 4 : Finset ℕ) = {1, 2, 3, 4} := by decide
 
+private theorem sum_Icc_one_two {M : Type*} [AddCommMonoid M] (f : ℕ → M) :
+    ∑ i ∈ Finset.Icc 1 2, f i = f 1 + f 2 := by
+  simp [Icc_one_two]
+
+private theorem sum_Icc_one_three {M : Type*} [AddCommMonoid M] (f : ℕ → M) :
+    ∑ i ∈ Finset.Icc 1 3, f i = f 1 + f 2 + f 3 := by
+  simp [Icc_one_three, add_assoc]
+
+private theorem sum_Icc_one_four {M : Type*} [AddCommMonoid M] (f : ℕ → M) :
+    ∑ i ∈ Finset.Icc 1 4, f i = f 1 + f 2 + f 3 + f 4 := by
+  simp [Icc_one_four, add_assoc]
+
 end Finset
 
 namespace TauCeti
@@ -151,13 +163,13 @@ namespace AInfinity
 open TauCeti
 open _root_.MultilinearMap
 
-variable {R : Type uR} {A : Type uA} [CommRing R]
+variable {R : Type uR} {A : Type uA}
 
 /-! ### Evaluation of suspended operations -/
 
 section Evaluation
 
-variable [AddCommMonoid A] [Module R A]
+variable [CommRing R] [AddCommMonoid A] [Module R A]
 
 @[simp]
 theorem evalNat_suspend {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
@@ -255,7 +267,7 @@ end Degrees
 
 section Stasheff
 
-variable [AddCommMonoid A] [Module R A]
+variable [CommRing R] [AddCommMonoid A] [Module R A]
 variable (m : ∀ k : ℕ, MultilinearMap R (fun _ : Fin k ↦ A) A) (d : ℕ → ℤ) (x : ℕ → A)
 
 /-- The `(p, s, t)` term of the unsuspended Stasheff identity in arity `p + s + t`: the arity-`s`
@@ -443,31 +455,68 @@ end Stasheff
 
 section LowArity
 
-variable [AddCommGroup A] [Module R A]
+variable [CommRing R] [AddCommGroup A] [Module R A]
 variable (m : ∀ k : ℕ, MultilinearMap R (fun _ : Fin k ↦ A) A) (d : ℕ → ℤ) (x : ℕ → A)
+
+/- These expansions isolate the finite indexing arithmetic from the element-level sign audit
+below.  Keeping them private avoids adding arity-specific combinatorics to the public API. -/
+private theorem stasheffSum_one_terms :
+    stasheffSum m d x 1 = stasheffTerm m d x 0 1 0 := by
+  simp only [stasheffSum_def, Nat.reduceAdd, Finset.sum_range_succ, Finset.range_one,
+    Finset.sum_singleton, tsub_zero, Finset.Icc_self, Nat.add_one_sub_one,
+    Order.lt_one_iff, Finset.Icc_eq_empty_of_lt, Finset.sum_empty, add_zero, zero_tsub]
+
+private theorem stasheffSum_two_terms :
+    stasheffSum m d x 2 = stasheffTerm m d x 0 1 1 + stasheffTerm m d x 0 2 0
+      + stasheffTerm m d x 1 1 0 := by
+  simp only [stasheffSum_def, Nat.reduceAdd, Finset.sum_range_succ, Finset.range_one,
+    Finset.sum_singleton, tsub_zero, Finset.sum_Icc_one_two, Nat.add_one_sub_one,
+    Nat.reduceSub, Finset.Icc_self, Order.lt_one_iff,
+    Finset.Icc_eq_empty_of_lt, Finset.sum_empty, add_zero, zero_tsub]
+
+private theorem stasheffSum_three_terms :
+    stasheffSum m d x 3 = stasheffTerm m d x 0 1 2 + stasheffTerm m d x 0 2 1
+      + stasheffTerm m d x 0 3 0 + stasheffTerm m d x 1 1 1
+      + stasheffTerm m d x 1 2 0 + stasheffTerm m d x 2 1 0 := by
+  simp only [stasheffSum_def, Nat.reduceAdd, Finset.sum_range_succ, Finset.range_one,
+    Finset.sum_singleton, tsub_zero, Finset.sum_Icc_one_three, Nat.add_one_sub_one,
+    Nat.reduceSub, Finset.sum_Icc_one_two, Finset.Icc_self,
+    Order.lt_one_iff, Finset.Icc_eq_empty_of_lt, Finset.sum_empty, add_zero, zero_tsub]
+  ac_rfl
+
+private theorem stasheffSum_four_terms :
+    stasheffSum m d x 4 = stasheffTerm m d x 0 1 3 + stasheffTerm m d x 0 2 2
+      + stasheffTerm m d x 0 3 1 + stasheffTerm m d x 0 4 0
+      + stasheffTerm m d x 1 1 2 + stasheffTerm m d x 1 2 1
+      + stasheffTerm m d x 1 3 0 + stasheffTerm m d x 2 1 1
+      + stasheffTerm m d x 2 2 0 + stasheffTerm m d x 3 1 0 := by
+  simp only [stasheffSum_def, Nat.reduceAdd, Finset.sum_range_succ, Finset.range_one,
+    Finset.sum_singleton, tsub_zero, Finset.sum_Icc_one_four, Nat.add_one_sub_one,
+    Nat.reduceSub, Finset.sum_Icc_one_three, Finset.sum_Icc_one_two,
+    Finset.Icc_self, Order.lt_one_iff, Finset.Icc_eq_empty_of_lt, Finset.sum_empty,
+    add_zero, zero_tsub]
+  ac_rfl
 
 /-- The arity-one identity is `m₁ m₁ = 0`. -/
 theorem stasheffSum_one : stasheffSum m d x 1 = m 1 ![m 1 ![x 0]] := by
-  simp only [stasheffSum_def, Nat.reduceAdd, stasheffTerm_def, Finset.sum_range_succ,
-    Finset.range_one, Finset.sum_singleton, tsub_zero, Finset.Icc_self, CharP.cast_eq_zero,
-    zero_add, Finset.range_zero, Finset.sum_empty, mul_zero, add_zero, Nat.sub_zero, Nat.cast_one,
-    tsub_self, negOnePowCast_zero, Nat.add_one_sub_one, Nat.add_zero, evalNat_one,
-    replaceBlock_self, one_smul, Order.lt_one_iff, Finset.Icc_eq_empty_of_lt, zero_tsub]
+  rw [stasheffSum_one_terms]
+  simp only [stasheffTerm_def, Nat.reduceAdd, CharP.cast_eq_zero, zero_add,
+    Finset.range_zero, Finset.sum_empty, mul_zero, add_zero, Nat.cast_one,
+    negOnePowCast_zero, evalNat_one, replaceBlock_self, one_smul]
 
 /-- The arity-two identity, evaluated: `m₁ m₂ - m₂ (m₁ ⊗ 1) - m₂ (1 ⊗ m₁)`, where the Koszul rule
 turns the last term into `(-1) ^ (d 0)` times `m₂ (a, m₁ b)`. -/
 theorem stasheffSum_two : stasheffSum m d x 2
     = m 1 ![m 2 ![x 0, x 1]] - m 2 ![m 1 ![x 0], x 1]
       - negOnePowCast R (d 0) • m 2 ![x 0, m 1 ![x 1]] := by
-  simp only [stasheffSum_def, Nat.reduceAdd, stasheffTerm_def, negOnePowCast_add,
-    Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton, tsub_zero,
-    Finset.Icc_one_two, CharP.cast_eq_zero, negOnePowCast_zero, one_mul, Finset.range_zero,
-    Finset.sum_empty, mul_zero, mul_one, Nat.sub_zero, zero_add, Finset.mem_singleton,
-    OfNat.one_ne_ofNat, not_false_eq_true, Finset.sum_insert, Nat.cast_one,
-    Nat.add_one_sub_one, negOnePowCast_one, evalNat_one, evalNat_two, replaceBlock_self,
-    Order.lt_one_iff, replaceBlock_of_gt, neg_smul, one_smul, Nat.cast_ofNat, tsub_self,
-    Nat.reduceSub, Nat.add_zero, Finset.Icc_self, neg_mul, Finset.sum_neg_distrib,
-    Int.reduceSub, add_zero, replaceBlock_of_lt, Finset.Icc_eq_empty_of_lt, zero_tsub]
+  rw [stasheffSum_two_terms]
+  simp only [stasheffTerm_def, Nat.reduceAdd, negOnePowCast_add, CharP.cast_eq_zero,
+    negOnePowCast_zero, one_mul, Finset.range_one,
+    Finset.sum_singleton, Finset.range_zero, Finset.sum_empty, mul_zero, mul_one,
+    zero_add, Nat.cast_one, negOnePowCast_one, evalNat_one, evalNat_two,
+    replaceBlock_self, Order.lt_one_iff, replaceBlock_of_gt, neg_smul, one_smul,
+    Nat.cast_ofNat, Nat.reduceSub, Nat.add_zero, neg_mul, Int.reduceSub, add_zero,
+    replaceBlock_of_lt]
   abel
 
 /-- The arity-three identity, evaluated using the supplied degrees `d 0, d 1, d 2` (without a
@@ -481,17 +530,15 @@ theorem stasheffSum_three : stasheffSum m d x 3
       + negOnePowCast R (d 0) • m 3 ![x 0, m 1 ![x 1], x 2]
       + negOnePowCast R (d 0 + d 1) • m 3 ![x 0, x 1, m 1 ![x 2]] := by
   have h2 : negOnePowCast R 2 = 1 := negOnePowCast_even (by norm_num)
-  simp only [stasheffSum_def, Nat.reduceAdd, stasheffTerm_def, negOnePowCast_add,
-    Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton, tsub_zero,
-    Finset.Icc_one_three, CharP.cast_eq_zero, negOnePowCast_zero, one_mul, Finset.range_zero,
-    Finset.sum_empty, mul_zero, mul_one, Nat.sub_zero, zero_add, Finset.mem_insert,
-    OfNat.one_ne_ofNat, Finset.mem_singleton, or_self, not_false_eq_true, Finset.sum_insert,
-    Nat.cast_one, Nat.add_one_sub_one, Nat.cast_ofNat, h2, evalNat_one, evalNat_three,
+  rw [stasheffSum_three_terms]
+  simp only [stasheffTerm_def, Nat.reduceAdd, negOnePowCast_add, CharP.cast_eq_zero,
+    negOnePowCast_zero, one_mul, Finset.sum_range_succ, Finset.range_one,
+    Finset.sum_singleton, Finset.range_zero, Finset.sum_empty, mul_zero, mul_one,
+    zero_add, Nat.cast_one, Nat.cast_ofNat, h2, evalNat_one, evalNat_three,
     replaceBlock_self, Order.lt_one_iff, replaceBlock_of_gt, Order.lt_two_iff, zero_le,
-    one_smul, Nat.reduceEqDiff, Nat.reduceSub, evalNat_two, tsub_self, Nat.add_zero,
-    Finset.Icc_one_two, negOnePowCast_one, neg_mul, neg_smul, Finset.sum_neg_distrib,
-    Int.reduceSub, add_zero, replaceBlock_of_lt, Std.le_refl, sub_self, zero_mul,
-    neg_add_rev, neg_neg, Finset.Icc_self, Finset.Icc_eq_empty_of_lt, zero_tsub, add_left_inj]
+    one_smul, Nat.reduceSub, evalNat_two, Nat.add_zero, negOnePowCast_one, neg_mul,
+    neg_smul, Int.reduceSub, add_zero, replaceBlock_of_lt, Std.le_refl, sub_self,
+    zero_mul, neg_neg]
   abel
 
 /-- The arity-four identity, evaluated using the supplied degrees `d 0, d 1, d 2, d 3` (without a
@@ -512,19 +559,16 @@ theorem stasheffSum_four : stasheffSum m d x 4
   have h2 : negOnePowCast R 2 = 1 := negOnePowCast_even (by norm_num)
   have h3 : negOnePowCast R 3 = -1 := negOnePowCast_odd (by use 1; norm_num)
   have h4 : negOnePowCast R 4 = 1 := negOnePowCast_even (by use 2; norm_num)
-  simp only [stasheffSum_def, Nat.reduceAdd, stasheffTerm_def, negOnePowCast_add,
-    Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton, tsub_zero,
-    Finset.Icc_one_four, CharP.cast_eq_zero, negOnePowCast_zero, one_mul, Finset.range_zero,
-    Finset.sum_empty, mul_zero, mul_one, Nat.sub_zero, zero_add, Finset.mem_insert,
-    OfNat.one_ne_ofNat, Finset.mem_singleton, or_self, not_false_eq_true, Finset.sum_insert,
-    Nat.cast_one, Nat.add_one_sub_one, Nat.cast_ofNat, h3, evalNat_one, evalNat_four,
+  rw [stasheffSum_four_terms]
+  simp only [stasheffTerm_def, Nat.reduceAdd, negOnePowCast_add, CharP.cast_eq_zero,
+    negOnePowCast_zero, one_mul, Finset.sum_range_succ, Finset.range_one,
+    Finset.sum_singleton, Finset.range_zero, Finset.sum_empty, mul_zero, mul_one,
+    zero_add, Nat.cast_one, Nat.cast_ofNat, h3, evalNat_one, evalNat_four,
     replaceBlock_self, Order.lt_one_iff, replaceBlock_of_gt, Order.lt_two_iff, zero_le,
-    Nat.ofNat_pos, neg_smul, one_smul, Nat.reduceEqDiff, Nat.reduceSub, Int.reduceMul, h4,
-    evalNat_two, evalNat_three, tsub_self, Nat.add_zero, Finset.Icc_one_three,
-    negOnePowCast_one, neg_mul, Finset.sum_neg_distrib, h2, Int.reduceSub, add_zero,
+    Nat.ofNat_pos, neg_smul, one_smul, Nat.reduceSub, Int.reduceMul, h4, evalNat_two,
+    evalNat_three, Nat.add_zero, negOnePowCast_one, neg_mul, h2, Int.reduceSub, add_zero,
     replaceBlock_of_lt, Std.le_refl, Nat.one_lt_ofNat, sub_self, zero_mul,
-    negOnePowCast_neg, neg_add_rev, Finset.Icc_one_two, Nat.lt_add_one, Finset.Icc_self,
-    Finset.Icc_eq_empty_of_lt, zero_tsub]
+    negOnePowCast_neg, Nat.lt_add_one]
   abel
 
 /-- The arity-two identity is the Leibniz rule for `m₁` and `m₂`, with the Koszul sign
@@ -558,7 +602,7 @@ end LowArity
 
 section Comparison
 
-variable [AddCommMonoid A] [Module R A]
+variable [Semiring R] [AddCommMonoid A] [Module R A]
 variable {σ : Type*} [SetLike σ A] (𝒜 : ℤ → σ)
 
 /-- `TauCeti.AInfinity.blockDeg` is the degree of the value of an operation of degree `2 - s` on a
