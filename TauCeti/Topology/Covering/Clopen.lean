@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Connected.Clopen
+public import Mathlib.Topology.Clopen
 public import Mathlib.Topology.Covering.Basic
 
 /-!
@@ -24,8 +24,8 @@ work without assuming `p` surjective or `s = X`.
 
 ## Main declarations
 
-* `TauCeti.isCoveringMap_subtypeVal_comp`: the composite of a covering map onto a clopen subspace
-  with the subspace inclusion is a covering map.
+* `TauCeti.IsCoveringMap.subtypeVal_comp`: the composite of a covering map onto a clopen
+  subspace with the subspace inclusion is a covering map.
 -/
 
 public section
@@ -34,10 +34,12 @@ namespace TauCeti
 
 variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X] {s : Set X}
 
+namespace IsCoveringMap
+
 /-- **A covering map onto a clopen subspace is a covering map into the ambient space.** Points of
 `s` inherit their evenly covered neighbourhoods through the open inclusion, and points outside
 `s` are evenly covered by `sᶜ` with empty fibre. -/
-theorem isCoveringMap_subtypeVal_comp (hs : IsClopen s) {p : E → s} (hp : IsCoveringMap p) :
+theorem subtypeVal_comp {p : E → s} (hp : IsCoveringMap p) (hs : IsClopen s) :
     IsCoveringMap (Subtype.val ∘ p) := by
   intro x
   by_cases hx : x ∈ s
@@ -46,4 +48,5 @@ theorem isCoveringMap_subtypeVal_comp (hs : IsClopen s) {p : E → s} (hp : IsCo
       (IsEvenlyCovered.of_preimage_eq_empty Empty (hs.isClosed.isOpen_compl.mem_nhds hx) ?_)
     exact Set.eq_empty_of_forall_notMem fun e he => he (p e).2
 
+end IsCoveringMap
 end TauCeti

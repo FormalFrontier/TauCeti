@@ -21,8 +21,8 @@ tautological action of the ambient homeomorphism group `E ≃ₜ E` on `E`
 (`TauCeti.Homeomorph.applyMulAction`). Each deck transformation preserves `p`, hence
 preserves every fibre of `p`.
 
-The deck group only sees `p` through the equalities `p (φ e) = p e`, so corestricting `p` to a
-subspace of its target leaves it unchanged (`TauCeti.deck_subtypeVal_comp`).
+The deck group only sees `p` through the equalities `p (φ e) = p e`, so postcomposition by an
+injective map leaves it unchanged (`TauCeti.deck_comp_of_injective`).
 
 ## References
 
@@ -111,17 +111,16 @@ lemma inv_smul_eq_symm_apply (φ : Deck p) (e : E) : (φ⁻¹ : Deck p) • e = 
 
 end Deck
 
-section Corestrict
+section Injective
 
-variable {E B : Type*} [TopologicalSpace E] {s : Set B}
+variable {E B B' : Type*} [TopologicalSpace E]
 
-/-- Corestricting the target of a map to a subspace does not change its deck group: the subspace
-inclusion is injective, so a homeomorphism commutes with the corestriction exactly when it
-commutes with the original map. -/
-theorem deck_subtypeVal_comp (p : E → s) : Deck (Subtype.val ∘ p) = Deck p := by
+/-- Postcomposing a map with an injection does not change its deck group. -/
+theorem deck_comp_of_injective {f : B → B'} (hf : Function.Injective f) (p : E → B) :
+    Deck (f ∘ p) = Deck p := by
   ext φ
-  simp only [Deck.mem_iff, Function.comp_apply, Subtype.val_inj]
+  simp only [Deck.mem_iff, Function.comp_apply, hf.eq_iff]
 
-end Corestrict
+end Injective
 
 end TauCeti

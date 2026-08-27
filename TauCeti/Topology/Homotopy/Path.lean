@@ -65,6 +65,12 @@ theorem map_codRestrict {s : Set X} {x y : s} (γ : Path x.val y.val) (hmem : �
   ext t
   simp
 
+/-- Mapping a constant path gives the constant path at the image point. -/
+@[simp]
+theorem map_refl {Y : Type*} [TopologicalSpace Y] {f : X → Y} (hf : Continuous f) (a : X) :
+    (Path.refl a).map hf = Path.refl (f a) :=
+  rfl
+
 /-- If the extended path stays inside `U` throughout `[t₀, t₁]`, then the truncated subpath has
 range in `U`. -/
 theorem truncateOfLE_range_subset {a b : X} (γ : Path a b) {t₀ t₁ : ℝ}
@@ -85,6 +91,15 @@ is joint continuity in `(t, s)`, recorded as `continuous_initialSegmentFamily_un
 noncomputable def initialSegmentFamily {a b : X} (γ : Path a b) (t : I) :
     Path a (γ t) :=
   (γ.truncate 0 t).cast (by rw [min_eq_left t.2.1, γ.extend_zero]) (γ.extend_apply t.2).symm
+
+/-- Every point on a path lies in the path component of its source. -/
+theorem mem_pathComponent {a b : X} (γ : Path a b) (t : I) : γ t ∈ pathComponent a :=
+  ⟨γ.initialSegmentFamily t⟩
+
+/-- A path whose source lies in a path component remains in that path component. -/
+theorem mem_pathComponent_of_mem {a b x₀ : X} (γ : Path a b) (ha : a ∈ pathComponent x₀)
+    (t : I) : γ t ∈ pathComponent x₀ :=
+  Joined.mem_pathComponent (γ.mem_pathComponent t) ha
 
 theorem continuous_initialSegmentFamily_uncurry {a b : X} (γ : Path a b) :
     Continuous ↿(initialSegmentFamily γ) := by
