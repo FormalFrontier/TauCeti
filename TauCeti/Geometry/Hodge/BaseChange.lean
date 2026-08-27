@@ -51,6 +51,8 @@ imposed later as structure data.
   subspaces.
 * `TauCeti.Hodge.rationalToComplexSubmodule_eq_bot_iff`: only the zero subspace has trivial
   complexification.
+* `TauCeti.Hodge.rationalToComplexSubmodule_le_iff`: an inclusion of rational subspaces can be
+  tested on their complexifications.
 
 The design follows the base-change interface specified in the Hodge structures roadmap. Its only
 nontrivial comparison map is Mathlib's
@@ -155,6 +157,17 @@ theorem rationalToComplexSubmodule_mono (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) :
     Monotone (rationalToComplexSubmodule hℚ hℂ) := fun _ _ h ↦
   Submodule.map_mono (Submodule.baseChange_mono ℂ h)
+
+/-- Complexification of rational subspaces reflects inclusions: `ℂ` is faithfully flat over `ℚ`,
+so an inclusion of rational subspaces may be tested on the complexifications. -/
+theorem rationalToComplexSubmodule_le_iff (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (W₁ W₂ : Submodule ℚ Vℚ) :
+    rationalToComplexSubmodule hℚ hℂ W₁ ≤ rationalToComplexSubmodule hℚ hℂ W₂ ↔ W₁ ≤ W₂ := by
+  rw [rationalToComplexSubmodule, rationalToComplexSubmodule,
+    Submodule.map_le_map_iff_of_injective
+      (f := (rationalToComplexLinearEquiv hℚ hℂ).toLinearMap)
+      (rationalToComplexLinearEquiv hℚ hℂ).injective,
+    Submodule.baseChange_le_iff]
 
 @[simp]
 theorem rationalToComplexSubmodule_bot (hℚ : IsBaseChange ℚ ιℚ)
