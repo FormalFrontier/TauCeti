@@ -132,6 +132,29 @@ particular it depends only on `p`, not on the sign normalization `p* = (-1) ^ ((
   unfold primeDiscriminantChar
   split_ifs <;> simp
 
+/-- The character attached to `P` depends only on the residue class modulo `|P|`. -/
+theorem primeDiscriminantChar_congr {P m n : ℤ}
+    (h : m % P.natAbs = n % P.natAbs) :
+    primeDiscriminantChar P m = primeDiscriminantChar P n := by
+  unfold primeDiscriminantChar
+  split_ifs with hP4 hP8 hPneg8
+  · subst P
+    norm_num at h
+    congr 1
+    rw [← ZMod.intCast_mod m 4, ← ZMod.intCast_mod n 4]
+    exact congrArg (fun z : ℤ => (z : ZMod 4)) h
+  · subst P
+    norm_num at h
+    congr 1
+    rw [← ZMod.intCast_mod m 8, ← ZMod.intCast_mod n 8]
+    exact congrArg (fun z : ℤ => (z : ZMod 8)) h
+  · subst P
+    norm_num at h
+    congr 1
+    rw [← ZMod.intCast_mod m 8, ← ZMod.intCast_mod n 8]
+    exact congrArg (fun z : ℤ => (z : ZMod 8)) h
+  · exact jacobiSym.mod_left' h
+
 /-- An integer coprime to an even prime discriminant is odd. -/
 private theorem not_two_dvd_of_isCoprime {P n : ℤ} (hP : IsEvenPrimeDiscriminant P)
     (hcop : IsCoprime n P) : ¬ (2 ∣ n) := by
