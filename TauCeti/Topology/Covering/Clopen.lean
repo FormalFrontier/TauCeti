@@ -24,7 +24,7 @@ work without assuming `p` surjective or `s = X`.
 
 ## Main declarations
 
-* `TauCeti.IsCoveringMap.subtypeVal_comp`: the composite of a covering map onto a clopen
+* `IsCoveringMap.subtypeVal_comp`: the composite of a covering map onto a clopen
   subspace with the subspace inclusion is a covering map.
 -/
 
@@ -34,12 +34,10 @@ namespace TauCeti
 
 variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X] {s : Set X}
 
-namespace IsCoveringMap
-
 /-- **A covering map onto a clopen subspace is a covering map into the ambient space.** Points of
 `s` inherit their evenly covered neighbourhoods through the open inclusion, and points outside
 `s` are evenly covered by `sᶜ` with empty fibre. -/
-theorem subtypeVal_comp {p : E → s} (hp : IsCoveringMap p) (hs : IsClopen s) :
+theorem _root_.IsCoveringMap.subtypeVal_comp {p : E → s} (hp : IsCoveringMap p) (hs : IsClopen s) :
     IsCoveringMap (Subtype.val ∘ p) := by
   intro x
   by_cases hx : x ∈ s
@@ -48,5 +46,4 @@ theorem subtypeVal_comp {p : E → s} (hp : IsCoveringMap p) (hs : IsClopen s) :
       (IsEvenlyCovered.of_preimage_eq_empty Empty (hs.isClosed.isOpen_compl.mem_nhds hx) ?_)
     exact Set.eq_empty_of_forall_notMem fun e he => he (p e).2
 
-end IsCoveringMap
 end TauCeti

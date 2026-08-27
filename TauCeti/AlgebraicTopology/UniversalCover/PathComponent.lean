@@ -27,7 +27,7 @@ connectedness and simple connectivity are inherited from the universal cover, be
 about the same topological space.
 
 The deck group is unchanged by the inclusion, and
-`TauCeti.FundamentalGroup.pathComponentMulEquiv` identifies the fundamental group of the path
+`FundamentalGroup.pathComponentMulEquiv` identifies the fundamental group of the path
 component with that of `X` at the same point. Thus the deck group of the path-component cover is
 `(π₁(X, x₀))ᵐᵒᵖ`, with the same opposite-group convention pinned in
 `TauCeti.UniversalCover.deckFundamentalGroupEquiv`.
@@ -75,8 +75,7 @@ abbrev pathComponentCoverProj : PathComponentCover x₀ → X :=
 component is clopen, so fibres over the other path components are empty and evenly covered by
 empty trivialisations. -/
 theorem isCoveringMap_pathComponentCoverProj : IsCoveringMap (pathComponentCoverProj x₀) :=
-  TauCeti.IsCoveringMap.subtypeVal_comp
-    (UniversalCover.isCoveringMap (pathComponentSelf x₀)) (IsClopen.pathComponent x₀)
+  (UniversalCover.isCoveringMap (pathComponentSelf x₀)).subtypeVal_comp (IsClopen.pathComponent x₀)
 
 omit [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
 /-- The image of the path-component cover is exactly the path component of `x₀`. -/
