@@ -198,6 +198,42 @@ theorem primeDiscriminantChar_eq_one_or_eq_neg_one {P n : ℤ} (hP : IsPrimeDisc
     rw [Ne, ZMod.intCast_zmod_eq_zero_iff_dvd]
     exact not_dvd_of_isCoprime hp hcop
 
+/-- The character attached to a prime discriminant vanishes exactly on the integers that are not
+coprime to it. -/
+@[simp] theorem primeDiscriminantChar_eq_zero_iff {P n : ℤ} (hP : IsPrimeDiscriminant P) :
+    primeDiscriminantChar P n = 0 ↔ ¬ IsCoprime n P := by
+  constructor
+  · intro hz hcop
+    rcases primeDiscriminantChar_eq_one_or_eq_neg_one hP hcop with h | h <;> omega
+  · intro hcop
+    rcases isPrimeDiscriminant_iff.mp hP with hev | ⟨p, hp, hodd, rfl⟩
+    · rcases hev with rfl | rfl | rfl
+      · have hdvd : (2 : ℤ) ∣ n := by
+          by_contra hn
+          apply hcop
+          simpa using
+            ((Int.prime_two.coprime_iff_not_dvd.mpr hn).symm.pow_right (n := 2)).neg_right
+        rw [primeDiscriminantChar_neg_four, ZMod.χ₄_int_eq_if_mod_four]
+        simp only [Int.dvd_iff_emod_eq_zero.mp hdvd, ↓reduceIte]
+      · have hdvd : (2 : ℤ) ∣ n := by
+          by_contra hn
+          apply hcop
+          simpa using (Int.prime_two.coprime_iff_not_dvd.mpr hn).symm.pow_right (n := 3)
+        rw [primeDiscriminantChar_eight, ZMod.χ₈_int_eq_if_mod_eight]
+        simp only [Int.dvd_iff_emod_eq_zero.mp hdvd, ↓reduceIte]
+      · have hdvd : (2 : ℤ) ∣ n := by
+          by_contra hn
+          apply hcop
+          simpa using
+            ((Int.prime_two.coprime_iff_not_dvd.mpr hn).symm.pow_right (n := 3)).neg_right
+        rw [primeDiscriminantChar_neg_eight, ZMod.χ₈'_int_eq_if_mod_eight]
+        simp only [Int.dvd_iff_emod_eq_zero.mp hdvd, ↓reduceIte]
+    · have : Fact p.Prime := ⟨hp⟩
+      rw [Int.isCoprime_iff_nat_coprime, oddPrimeDiscriminant_natAbs] at hcop
+      rw [primeDiscriminantChar_oddPrimeDiscriminant hodd,
+        jacobiSym.eq_zero_iff_not_coprime]
+      simpa [Int.gcd_eq_natAbs, Nat.coprime_iff_gcd_eq_one] using hcop
+
 /-! ### Values of the character on the principal form -/
 
 /-- Squares may be reduced modulo `m` before squaring. -/
@@ -209,11 +245,6 @@ private theorem sq_emod_eight (a : ℤ) : a ^ 2 % 8 = 0 ∨ a ^ 2 % 8 = 1 ∨ a 
   have h : a % 8 = 0 ∨ a % 8 = 1 ∨ a % 8 = 2 ∨ a % 8 = 3 ∨ a % 8 = 4 ∨ a % 8 = 5 ∨
       a % 8 = 6 ∨ a % 8 = 7 := by omega
   rcases h with h | h | h | h | h | h | h | h <;> rw [sq_emod a 8, h] <;> norm_num
-
-/-- An integer whose square is divisible by `4` is even. -/
-private theorem two_dvd_of_four_dvd_sq {x : ℤ} (h : (4 : ℤ) ∣ x ^ 2) : 2 ∣ x := by
-  rw [← even_iff_two_dvd, ← Int.even_pow' (m := x) (n := 2) (by norm_num), even_iff_two_dvd]
-  exact dvd_trans (by norm_num) h
 
 /-- **The odd half of the genus-character relation.** If an odd prime `p` divides `D` but not `n`,
 and `4n = x² - D y²`, then `n` is a nonzero quadratic residue modulo `p`: reducing the hypothesis
@@ -239,9 +270,8 @@ theorem jacobiSym_eq_one_of_dvd_of_four_mul_eq_sq_sub_mul_sq {p : ℕ} (hp : p.P
   linear_combination h4
 
 /-- **The even half of the genus-character relation.** Let `P` be an even prime discriminant and
-`Q ≡ 1 (mod 4)`, so that `P * Q` is the prime-discriminant factorization of a discriminant with `P`
-as its even factor. If an odd integer `n` satisfies `4n = x² - P * Q * y²`, then the character of
-`P` is trivial at `n`.
+`Q ≡ 1 (mod 4)`. If an odd integer `n` satisfies `4n = x² - P * Q * y²`, then the character of `P`
+is trivial at `n`.
 
 Halving `x` — which is even, because `4 ∣ P` — rewrites the hypothesis as
 `n = u² - (P / 4) * Q * y²`, and the value of `n` modulo `8` is then forced into the kernel of the
@@ -252,7 +282,8 @@ theorem primeDiscriminantChar_eq_one_of_isEvenPrimeDiscriminant {P Q n x y : ℤ
   obtain ⟨R, hR⟩ : (4 : ℤ) ∣ P := by rcases hP with rfl | rfl | rfl <;> norm_num
   rw [hR] at h
   have hx4 : (4 : ℤ) ∣ x ^ 2 := ⟨n + R * (Q * y ^ 2), by linear_combination -h⟩
-  obtain ⟨u, rfl⟩ := two_dvd_of_four_dvd_sq hx4
+  obtain ⟨u, rfl⟩ :=
+    Int.prime_two.dvd_of_dvd_pow ((show (2 : ℤ) ∣ 4 by norm_num).trans hx4)
   have hn' : n = u ^ 2 - R * (Q * y ^ 2) :=
     mul_left_cancel₀ (a := (4 : ℤ)) (by norm_num) (by linear_combination h)
   have hQ8 : Q % 8 = 1 ∨ Q % 8 = 5 := by omega
@@ -281,10 +312,10 @@ theorem primeDiscriminantChar_eq_one_of_isEvenPrimeDiscriminant {P Q n x y : ℤ
     rw [ite_eq_right (by omega), ite_eq_left hn8]
 
 /-- **The genus-character relation for a single prime discriminant.** Let `P` be a prime
-discriminant and `Q` an integer, congruent to `1` modulo `4` when `P` is even, so that `P * Q` is a
-discriminant with `P` among its prime-discriminant factors. An integer `n` coprime to `P` and
-represented in the form `4n = x² - P * Q * y²` — that is, represented by the principal form of
-discriminant `P * Q` — has trivial character at `P`. -/
+discriminant and `Q` an integer, congruent to `1` modulo `4` when `P` is even. An integer `n`
+coprime to `P` and satisfying `4n = x² - P * Q * y²` has trivial character at `P`. When `P * Q`
+is supplied as an actual discriminant factorization, this equation says that `n` is represented by
+the principal form of discriminant `P * Q`. -/
 theorem primeDiscriminantChar_eq_one_of_four_mul_eq_sq_sub_mul_sq {P Q n x y : ℤ}
     (hP : IsPrimeDiscriminant P) (hQ : IsEvenPrimeDiscriminant P → Q % 4 = 1)
     (hcop : IsCoprime n P) (h : 4 * n = x ^ 2 - P * Q * y ^ 2) :
@@ -361,6 +392,36 @@ theorem genusChar_def (s : Finset ℤ) (n : ℤ) :
 
 /-- A genus character takes the value `1` at `1`. -/
 @[simp] theorem genusChar_one (s : Finset ℤ) : genusChar s 1 = 1 := by simp [genusChar]
+
+/-- A genus character vanishes exactly when its argument is not coprime to the product of its
+prime-discriminant indices. -/
+@[simp] theorem genusChar_eq_zero_iff {s : Finset ℤ}
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P) {n : ℤ} :
+    genusChar s n = 0 ↔ ¬ IsCoprime n (∏ P ∈ s, P) := by
+  rw [genusChar, Finset.prod_eq_zero_iff, IsCoprime.prod_right_iff]
+  push Not
+  constructor
+  · rintro ⟨P, hP, hzero⟩
+    exact ⟨P, hP, (primeDiscriminantChar_eq_zero_iff (hs P hP)).mp hzero⟩
+  · rintro ⟨P, hP, hnotcop⟩
+    exact ⟨P, hP, (primeDiscriminantChar_eq_zero_iff (hs P hP)).mpr hnotcop⟩
+
+/-- A genus character takes the values `±1` on integers coprime to the product of its
+prime-discriminant indices. -/
+theorem genusChar_eq_one_or_eq_neg_one {s : Finset ℤ}
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P) {n : ℤ}
+    (hcop : IsCoprime n (∏ P ∈ s, P)) : genusChar s n = 1 ∨ genusChar s n = -1 := by
+  rw [IsCoprime.prod_right_iff] at hcop
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | @insert P s hP ih =>
+      rw [genusChar_insert hP]
+      rcases primeDiscriminantChar_eq_one_or_eq_neg_one (hs P (Finset.mem_insert_self P s))
+          (hcop P (Finset.mem_insert_self P s)) with hchar | hchar <;>
+        rcases ih (fun Q hQ => hs Q (Finset.mem_insert_of_mem hQ))
+          (fun Q hQ => hcop Q (Finset.mem_insert_of_mem hQ)) with hgenus | hgenus <;>
+        rw [hchar, hgenus] <;> norm_num
 
 /-- **The genus characters are trivial on the values of the principal form.** For a
 prime-discriminant factorization `D = ∏ P ∈ s, P` and any subset `t ⊆ s`, the genus character
