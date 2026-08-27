@@ -49,6 +49,8 @@ graph.
 
 * `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le`: block averaging over a refinement
   preserves the coarse block integrals;
+* `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le_left_right`: the corresponding
+  statement when the two rectangle sides come from different coarser partitions;
 * `TauCeti.DenseGraphLimits.l2inner_stepGraphonAvg_eq_sum`: the block computation everything else
   is read off from — pairing any kernel against a block-average step graphon;
 * `TauCeti.DenseGraphLimits.graphonPartitionEnergy_eq_sum`: the energy as a finite block sum;
@@ -98,22 +100,23 @@ variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasu
 section Decomposition
 
 /-- Two kernels with the same integral over every rectangle of a partition `Q` have the same
-integral over every rectangle of any coarser partition `P`. -/
-private theorem rectIntegral_eq_of_le {P Q : Finpartition (Set.univ : Set Ω)}
-    (hP : ∀ p ∈ P.parts, MeasurableSet p) (hQ : ∀ r ∈ Q.parts, MeasurableSet r) (href : Q ≤ P)
+integral over a rectangle whose sides are parts of two partitions coarser than `Q`. -/
+theorem rectIntegral_eq_of_le_left_right {P R Q : Finpartition (Set.univ : Set Ω)}
+    (hP : ∀ p ∈ P.parts, MeasurableSet p) (hR : ∀ r ∈ R.parts, MeasurableSet r)
+    (hQ : ∀ q ∈ Q.parts, MeasurableSet q) (hQP : Q ≤ P) (hQR : Q ≤ R)
     {K L : SymmKernel Ω μ}
     (h : ∀ r s : Q.parts, K.rectIntegral μ (r : Set Ω) (s : Set Ω)
-      = L.rectIntegral μ (r : Set Ω) (s : Set Ω)) (p q : P.parts) :
-    K.rectIntegral μ (p : Set Ω) (q : Set Ω) = L.rectIntegral μ (p : Set Ω) (q : Set Ω) := by
+      = L.rectIntegral μ (r : Set Ω) (s : Set Ω)) (p : P.parts) (r : R.parts) :
+    K.rectIntegral μ (p : Set Ω) (r : Set Ω) = L.rectIntegral μ (p : Set Ω) (r : Set Ω) := by
   rw [SymmKernel.rectIntegral_def, SymmKernel.rectIntegral_def,
-    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
+    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hR _ r.property)
       (SymmKernel.integrable_uncurry μ K).integrableOn,
-    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
+    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hR _ r.property)
       (SymmKernel.integrable_uncurry μ L).integrableOn]
   refine Finset.sum_congr rfl fun rs _ => ?_
-  rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le href rs.1.property p.property with
+  rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le hQP rs.1.property p.property with
     h1 | h1
-  · rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le href rs.2.property q.property with
+  · rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le hQR rs.2.property r.property with
       h2 | h2
     · rw [h1, h2]
       simpa only [SymmKernel.rectIntegral_def] using h rs.1 rs.2
@@ -134,7 +137,20 @@ theorem stepGraphonAvg_rectIntegral_of_le (hP : ∀ p ∈ P.parts, MeasurableSet
     (hQ : ∀ r ∈ Q.parts, MeasurableSet r) (href : Q ≤ P) (W : Graphon Ω μ) (p q : P.parts) :
     (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ (p : Set Ω) (q : Set Ω)
       = W.toSymmKernel.rectIntegral μ (p : Set Ω) (q : Set Ω) :=
-  rectIntegral_eq_of_le μ hP hQ href (fun r s => stepGraphonAvg_rectIntegral Q hQ W r s) p q
+  rectIntegral_eq_of_le_left_right μ hP hP hQ href href
+    (fun r s => stepGraphonAvg_rectIntegral Q hQ W r s) p q
+
+/-- Block averaging over `Q` reproduces the integral over any rectangle whose two sides are parts
+of (possibly different) measurable partitions coarser than `Q`. -/
+theorem stepGraphonAvg_rectIntegral_of_le_left_right
+    {P R Q : Finpartition (Set.univ : Set Ω)}
+    (hP : ∀ p ∈ P.parts, MeasurableSet p) (hR : ∀ r ∈ R.parts, MeasurableSet r)
+    (hQ : ∀ q ∈ Q.parts, MeasurableSet q) (hQP : Q ≤ P) (hQR : Q ≤ R)
+    (W : Graphon Ω μ) (p : P.parts) (r : R.parts) :
+    (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ (p : Set Ω) (r : Set Ω)
+      = W.toSymmKernel.rectIntegral μ (p : Set Ω) (r : Set Ω) :=
+  rectIntegral_eq_of_le_left_right μ hP hR hQ hQP hQR
+    (fun q q' => stepGraphonAvg_rectIntegral Q hQ W q q') p r
 
 /-- On a single block, pairing any kernel against the block-average step graphon multiplies the
 block integral of the kernel by the block average of `W`. -/

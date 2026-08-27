@@ -5,7 +5,9 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Basic
+public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.Analysis.Convex.SpecificFunctions.Deriv
 
 /-!
 # The `L²` pairing of symmetric kernels
@@ -36,6 +38,8 @@ the expansion `l2sq_sub` needs no additional side conditions.
 * `TauCeti.DenseGraphLimits.SymmKernel.integrable_mul` is the integrability behind both;
 * `TauCeti.DenseGraphLimits.l2sq_sub` expands the squared seminorm of a difference — the identity
   the Pythagoras energy increment is read off from;
+* `TauCeti.DenseGraphLimits.sq_rectIntegral_le_l2sq` is the Cauchy--Schwarz bound that converts a
+  cut-norm witness into an energy increment;
 * `TauCeti.DenseGraphLimits.l2sq_le_one_of_abs_le_one` bounds the squared seminorm of a kernel
   with values in `[-1, 1]` over a probability carrier.
 
@@ -46,6 +50,9 @@ the expansion `l2sq_sub` needs no additional side conditions.
   stack.  The `l2sq` signature and the `l2sq_nonneg` proof are taken from
   `TauCetiRoadmap/DenseGraphLimits/Suggested.lean` (Layer 1/2); the pairing `l2inner` and its
   bilinear API are developed here.
+* The set-integral Cauchy--Schwarz argument follows `Graphon/Regularity.lean` in
+  `cameronfreer/graphon` (Apache 2.0) at commit
+  `6eccca5bbe5c9df46d7129bf59575b8b9b1d6699`.
 -/
 
 public section
@@ -191,6 +198,53 @@ theorem l2sq_sub (K L : SymmKernel Ω μ) :
   simp only [l2sq_eq_l2inner_self, l2inner_sub_left, l2inner_sub_right]
   rw [l2inner_comm μ L K]
   ring
+
+/-- Cauchy--Schwarz for a set integral, in the squared form used by graphon regularity. -/
+private theorem sq_setIntegral_le_measureReal_mul_setIntegral_sq (f : Ω → ℝ) (S : Set Ω)
+    (hf : IntegrableOn f S μ) (hf_sq : IntegrableOn (fun x => f x ^ 2) S μ) :
+    (∫ x in S, f x ∂μ) ^ 2 ≤ μ.real S * ∫ x in S, f x ^ 2 ∂μ := by
+  by_cases hS : μ S = 0
+  · rw [Measure.restrict_eq_zero.mpr hS]
+    simp
+  · have hS_top : μ S ≠ ⊤ := (measure_lt_top μ S).ne
+    have hS_pos : 0 < μ.real S := ENNReal.toReal_pos hS hS_top
+    have hconv : ConvexOn ℝ Set.univ (fun x : ℝ => x ^ 2) :=
+      (Even.strictConvexOn_pow (by norm_num : Even 2) (by norm_num : (2 : ℕ) ≠ 0)).convexOn
+    have hjensen := hconv.map_set_average_le (continuous_pow 2).continuousOn isClosed_univ
+      hS hS_top (ae_of_all _ fun _ => Set.mem_univ _) hf hf_sq
+    rw [setAverage_eq, setAverage_eq] at hjensen
+    simp only [smul_eq_mul, Measure.real] at hjensen
+    have hkey : (μ.real S)⁻¹ ^ 2 * (∫ x in S, f x ∂μ) ^ 2
+        ≤ (μ.real S)⁻¹ * ∫ x in S, f x ^ 2 ∂μ := by
+      calc
+        (μ.real S)⁻¹ ^ 2 * (∫ x in S, f x ∂μ) ^ 2 =
+            ((μ.real S)⁻¹ * ∫ x in S, f x ∂μ) ^ 2 := by ring
+        _ ≤ _ := hjensen
+    calc
+      (∫ x in S, f x ∂μ) ^ 2 =
+          μ.real S ^ 2 * ((μ.real S)⁻¹ ^ 2 * (∫ x in S, f x ∂μ) ^ 2) := by
+            field_simp
+      _ ≤ μ.real S ^ 2 * ((μ.real S)⁻¹ * ∫ x in S, f x ^ 2 ∂μ) :=
+        mul_le_mul_of_nonneg_left hkey (sq_nonneg _)
+      _ = μ.real S * ∫ x in S, f x ^ 2 ∂μ := by field_simp
+
+/-- The square of a kernel's integral over any rectangle is at most its squared `L²` seminorm
+on a probability carrier. -/
+theorem sq_rectIntegral_le_l2sq [IsProbabilityMeasure μ] (K : SymmKernel Ω μ) (S T : Set Ω) :
+    (K.rectIntegral μ S T) ^ 2 ≤ l2sq μ K := by
+  rw [SymmKernel.rectIntegral_def, l2sq_def]
+  calc
+    (∫ p in S ×ˢ T, K p.1 p.2 ∂(μ.prod μ)) ^ 2
+        ≤ (μ.prod μ).real (S ×ˢ T) *
+            ∫ p in S ×ˢ T, K p.1 p.2 ^ 2 ∂(μ.prod μ) :=
+      sq_setIntegral_le_measureReal_mul_setIntegral_sq (μ.prod μ) _ _
+        (K.integrable_uncurry μ).integrableOn (K.integrable_sq μ).integrableOn
+    _ ≤ 1 * ∫ p in S ×ˢ T, K p.1 p.2 ^ 2 ∂(μ.prod μ) := by
+      exact mul_le_mul_of_nonneg_right measureReal_le_one
+        (setIntegral_nonneg_of_ae_restrict (ae_of_all _ fun _ => sq_nonneg _))
+    _ ≤ ∫ p, K p.1 p.2 ^ 2 ∂(μ.prod μ) := by
+      rw [one_mul]
+      exact setIntegral_le_integral (K.integrable_sq μ) (ae_of_all _ fun _ => sq_nonneg _)
 
 omit [IsFiniteMeasure μ] in
 /-- A kernel with values in `[-1, 1]` has squared `L²` seminorm at most `1` over a probability

@@ -14,7 +14,8 @@ import Mathlib.Data.Setoid.Partition
 # Integrals split by finite measurable partitions
 
 A measurable finite partition of a measure space decomposes integrals on the product space into
-finite sums over partition rectangles.
+finite sums over partition rectangles.  This file also records that measurable bipartitions and
+common refinements have measurable parts.
 -/
 
 public section
@@ -26,6 +27,23 @@ open MeasureTheory Set
 namespace Finpartition
 
 variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+
+/-- Every part of a bipartition along a measurable set is measurable. -/
+theorem measurableSet_of_mem_bipartition {s p : Set Ω} (hs : MeasurableSet s)
+    (hp : p ∈ (bipartition s).parts) : MeasurableSet p := by
+  rw [parts_bipartition, Finset.mem_erase, Finset.mem_insert, Finset.mem_singleton] at hp
+  rcases hp.2 with rfl | rfl
+  · exact hs
+  · exact hs.compl
+
+/-- The common refinement of two measurable finite partitions is measurable. -/
+theorem measurableSet_of_mem_inf {u : Set Ω} {P Q : Finpartition u}
+    (hP : ∀ p ∈ P.parts, MeasurableSet p) (hQ : ∀ q ∈ Q.parts, MeasurableSet q)
+    {r : Set Ω} (hr : r ∈ (P ⊓ Q).parts) : MeasurableSet r := by
+  rw [Finpartition.parts_inf, Finset.mem_erase, Finset.mem_image] at hr
+  obtain ⟨_, pq, hpq, rfl⟩ := hr
+  rw [Finset.mem_product] at hpq
+  exact (hP pq.1 hpq.1).inter (hQ pq.2 hpq.2)
 
 /-- A finite measurable partition of the carrier cuts a rectangle into finitely many disjoint
 subrectangles, splitting any integral over it into a finite sum. -/
