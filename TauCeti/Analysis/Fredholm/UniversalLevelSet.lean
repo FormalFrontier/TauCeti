@@ -14,8 +14,8 @@ public import TauCeti.Analysis.Fredholm.Parametric
 
 Let `f : E × Λ → F` be a parametrized equation. At a zero `(x, l)`, write its derivative as
 `D₁.coprod D₂`, where `D₁` differentiates in the `E` direction and `D₂` in the parameter
-direction. The implicit function theorem makes the universal zero set into a manifold near
-`(x, l)` once the total derivative is surjective and its kernel is topologically complemented.
+direction. The implicit function theorem locally parametrizes the universal zero set near `(x, l)`
+once the total derivative is surjective and its kernel is topologically complemented.
 
 The main result of this file obtains that complemented-kernel hypothesis from the condition used
 in Fredholm transversality: `D₁` is Fredholm and `D₁.coprod D₂` is surjective. The proof splits the
@@ -39,6 +39,8 @@ the parameter space.
   set by the kernel of the total derivative.
 * `TauCeti.eventually_mem_image_universalImplicitFunction`: that parametrization covers the level
   set through the base point locally.
+* `TauCeti.exists_injOn_universalImplicitFunction`: that parametrization is injective on a
+  neighbourhood of zero.
 * `TauCeti.hasStrictFDerivAt_snd_universalImplicitFunction`: in these coordinates, projection to
   the parameter space differentiates to `TauCeti.parameterProj`.
 
@@ -228,6 +230,31 @@ theorem hasStrictFDerivAt_universalImplicitFunction
   unfold universalImplicitFunction
   exact hf.to_implicitFunctionOfComplemented (LinearMap.range_eq_top.mpr hD)
     (hD₁.closedComplemented_ker_coprod hD)
+
+/-- The universal implicit function is injective on a neighbourhood of zero in the kernel of the
+total derivative. Thus nearby points in the universal level set have unique kernel coordinates. -/
+theorem exists_injOn_universalImplicitFunction
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) a)
+    (hD₁ : ContinuousLinearMap.IsFredholm D₁)
+    (hD : Function.Surjective (D₁.coprod D₂)) :
+    ∃ s ∈ 𝓝 (0 : (D₁.coprod D₂).ker),
+      Set.InjOn (universalImplicitFunction hf hD₁ hD) s := by
+  have hker : (D₁.coprod D₂).ker.ClosedComplemented := hD₁.closedComplemented_ker_coprod hD
+  let p : E × Λ →L[𝕜] (D₁.coprod D₂).ker := Classical.choose hker
+  have hp : HasStrictFDerivAt
+      (fun v ↦ p (universalImplicitFunction hf hD₁ hD v))
+      ((ContinuousLinearEquiv.refl 𝕜 (D₁.coprod D₂).ker) :
+        (D₁.coprod D₂).ker →L[𝕜] (D₁.coprod D₂).ker) 0 := by
+    have hcomp := p.hasStrictFDerivAt.comp 0
+      (hasStrictFDerivAt_universalImplicitFunction hf hD₁ hD)
+    apply hcomp.congr_fderiv
+    exact ContinuousLinearMap.ext fun v ↦ Classical.choose_spec hker v
+  let e := hp.toOpenPartialHomeomorph _
+  refine ⟨e.source, e.open_source.mem_nhds hp.mem_toOpenPartialHomeomorph_source,
+    fun v hv w hw hvw ↦ ?_⟩
+  apply e.injOn hv hw
+  rw [hp.toOpenPartialHomeomorph_coe]
+  exact congrArg p hvw
 
 /-- In universal implicit-function coordinates, the derivative of “remember the parameter” is
 the parameter projection `TauCeti.parameterProj D₁ D₂`.
