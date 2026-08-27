@@ -204,7 +204,7 @@ theorem exists_analyticAt_coeffEquiv_symm {c₀ z : Fin n → 𝕜} (hz : Functi
       (toMonic ((coeffEquiv 𝕜 n).symm c) : 𝕜[X]) = monicOfCoeff c := by
     intro c
     conv_rhs => rw [← Equiv.apply_symm_apply (coeffEquiv 𝕜 n) c]
-    rw [monicOfCoeff_coeffEquiv]
+    rw [TauCeti.monicOfCoeff_coeffEquiv]
   obtain ⟨Ψ, hΨ₀, hΨa, hΨ⟩ :=
     exists_analyticAt_prod_X_sub_C hz (((hmonic c₀).symm.trans (by rw [hc₀])).trans
       (toMonic_ofFn z))

@@ -46,7 +46,7 @@ are separate later steps.
 * `TauCeti.Sym.monicOfCoeff`: the monic polynomial of degree `n` with prescribed lower
   coefficients, with `TauCeti.Sym.monic_monicOfCoeff`, `TauCeti.Sym.natDegree_monicOfCoeff` and
   `TauCeti.Sym.eval_monicOfCoeff`; it inverts the chart by
-  `TauCeti.Sym.monicOfCoeff_coeffEquiv`.
+  `TauCeti.monicOfCoeff_coeffEquiv`.
 * `TauCeti.Sym.monicEquiv`: over an algebraically closed field, taking roots with multiplicity
   inverts `toMonic`, so `Sym K n` is equivalent to the monic polynomials of degree `n`.
 * `TauCeti.Sym.coeffEquiv`: the resulting chart `Sym K n ≃ (Fin n → K)`, with
@@ -364,16 +364,24 @@ theorem coeffEquiv_symm_apply (f : Fin n → K) : (((coeffEquiv K n).symm f : Sy
     coe_monicEquivDegreeLT_symm_apply, coe_degreeLTEquiv_toEquiv_symm_apply]
   rfl
 
+end AlgClosed
+
+end Sym
+
+variable {K : Type*} [Field K] [IsAlgClosed K] {n : ℕ}
+
 /-- The chart and `TauCeti.Sym.monicOfCoeff` are inverse: the monic polynomial rebuilt from the
 coordinates of a tuple is the monic polynomial of that tuple. -/
 @[simp]
 theorem monicOfCoeff_coeffEquiv (s : Sym K n) :
-    monicOfCoeff (coeffEquiv K n s) = (toMonic s : K[X]) := by
-  have hroots : (monicOfCoeff (coeffEquiv K n s)).roots = (s : Multiset K) := by
-    rw [← coeffEquiv_symm_apply, Equiv.symm_apply_apply]
-  rw [coe_toMonic, ofMultiset_apply, ← hroots]
-  exact (prod_multiset_X_sub_C_of_monic_of_roots_card_eq (monic_monicOfCoeff _)
-    (by rw [hroots, Sym.card_coe, natDegree_monicOfCoeff])).symm
+    Sym.monicOfCoeff (Sym.coeffEquiv K n s) = (Sym.toMonic s : K[X]) := by
+  have hroots : (Sym.monicOfCoeff (Sym.coeffEquiv K n s)).roots = (s : Multiset K) := by
+    rw [← Sym.coeffEquiv_symm_apply, Equiv.symm_apply_apply]
+  rw [Sym.coe_toMonic, ofMultiset_apply, ← hroots]
+  exact (prod_multiset_X_sub_C_of_monic_of_roots_card_eq (Sym.monic_monicOfCoeff _)
+    (by rw [hroots, Sym.card_coe, Sym.natDegree_monicOfCoeff])).symm
+
+namespace Sym
 
 /-- In degree one the chart is negation: the single coordinate of a one-point tuple is minus that
 point. -/
@@ -388,8 +396,6 @@ theorem coeffEquiv_two_apply {s : Sym K 2} {a b : K} (hs : (s : Multiset K) = {a
     coeffEquiv K 2 s = ![a * b, -(a + b)] := by
   ext i
   fin_cases i <;> rw [coeffEquiv_apply, hs] <;> simp
-
-end AlgClosed
 
 end Sym
 
