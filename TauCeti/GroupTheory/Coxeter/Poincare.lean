@@ -41,6 +41,8 @@ normalisation of the constant term.
   are indexed by a nonempty type.
 * `TauCeti.natDegree_poincarePolynomial` and `TauCeti.leadingCoeff_poincarePolynomial`: the degree
   is the maximal length, and the leading coefficient counts the elements attaining it.
+* `TauCeti.poincarePolynomial_reindex` and `TauCeti.poincarePolynomial_map`: the polynomial is
+  invariant under the two canonical transports of a Coxeter system.
 * `TauCeti.poincarePolynomial_of_isEmpty` and `TauCeti.poincarePolynomial_of_unique_index`: the two
   smallest cases, `1` in rank `0` and `1 + q` in rank `1`.
 
@@ -48,9 +50,15 @@ normalisation of the constant term.
 
 The polynomial is defined and its intrinsic properties are stated under `[Finite W]`, the
 enumeration being supplied internally by `Fintype.ofFinite`; only the lemmas whose right-hand side
-is itself a `Finset.univ` expression (the unfolding lemmas and the degree lemmas) ask for
-`[Fintype W]`. Counts are stated with `Nat.card` on a subtype rather than with a `Finset.filter`,
-so that no `DecidableEq` or `DecidablePred` argument leaks into the statements.
+is itself a `Finset.univ` expression (the two unfolding lemmas) ask for `[Fintype W]`. Counts are
+stated with `Nat.card` on a subtype rather than with a `Finset.filter`, so that no `DecidableEq` or
+`DecidablePred` argument leaks into the statements, and the degree is characterised by
+`IsGreatest` on the range of the length function rather than by a `Finset.sup`.
+
+`coeff_poincarePolynomial` carries `@[simp low]` rather than a plain `@[simp]`: the specialised
+`coeff_poincarePolynomial_zero` must fire first, since at equal priority the general lemma rewrites
+its left-hand side and the `simpNF` linter then reports the constant-term lemma as not being in
+simp-normal form.
 
 Nothing here needs the group to be finitely generated, crystallographic, or attached to a root
 system: the statements are about an arbitrary Coxeter system, which is where the roadmap places
@@ -94,6 +102,7 @@ theorem eval_poincarePolynomial [Fintype W] (q : ℤ) :
 
 /-- **The Poincaré polynomial is the length generating function**: its coefficient at `q^k` is the
 number of elements of `W` of length `k`. -/
+@[simp low]
 theorem coeff_poincarePolynomial [Finite W] (k : ℕ) :
     (poincarePolynomial cs).coeff k = (Nat.card {w : W // cs.length w = k} : ℤ) := by
   classical
@@ -164,33 +173,57 @@ theorem eval_neg_one_poincarePolynomial [Finite W] [Nonempty B] :
 
 /-! ### Degree -/
 
-/-- **The degree of the Poincaré polynomial is the largest length occurring in `W`.** -/
-theorem natDegree_poincarePolynomial [Fintype W] :
-    (poincarePolynomial cs).natDegree = Finset.univ.sup fun w : W => cs.length w := by
-  refine le_antisymm ?_ ?_
-  · rw [Polynomial.natDegree_le_iff_coeff_eq_zero]
-    intro m hm
-    rw [coeff_poincarePolynomial]
-    have hempty : IsEmpty {w : W // cs.length w = m} := by
-      constructor
-      rintro ⟨w, hw⟩
-      have hle : cs.length w ≤ Finset.univ.sup fun v : W => cs.length v :=
-        Finset.le_sup (f := fun v : W => cs.length v) (Finset.mem_univ w)
-      omega
-    rw [Nat.card_of_isEmpty]
-    simp
-  · obtain ⟨w, -, hw⟩ :=
-      Finset.exists_mem_eq_sup Finset.univ Finset.univ_nonempty fun v : W => cs.length v
+/-- **The degree of the Poincaré polynomial is the largest length occurring in `W`**: it is attained
+by some element, and no element is longer. -/
+theorem natDegree_poincarePolynomial [Finite W] :
+    IsGreatest (Set.range cs.length) (poincarePolynomial cs).natDegree := by
+  constructor
+  · have hne : (poincarePolynomial cs).coeff (poincarePolynomial cs).natDegree ≠ 0 := by
+      rw [Polynomial.coeff_natDegree]
+      exact Polynomial.leadingCoeff_ne_zero.mpr (poincarePolynomial_ne_zero cs)
+    rw [coeff_poincarePolynomial] at hne
+    have hcard : Nat.card {w : W // cs.length w = (poincarePolynomial cs).natDegree} ≠ 0 := by
+      exact_mod_cast hne
+    obtain ⟨w, hw⟩ := (Nat.card_ne_zero.mp hcard).1
+    exact ⟨w, hw⟩
+  · rintro n ⟨w, rfl⟩
     refine Polynomial.le_natDegree_of_ne_zero ?_
-    rw [hw, coeff_poincarePolynomial]
+    rw [coeff_poincarePolynomial]
     have hne : Nonempty {v : W // cs.length v = cs.length w} := ⟨⟨w, rfl⟩⟩
     exact_mod_cast Nat.card_pos.ne'
 
 /-- **The leading coefficient counts the elements of maximal length.** -/
-theorem leadingCoeff_poincarePolynomial [Fintype W] :
+theorem leadingCoeff_poincarePolynomial [Finite W] :
     (poincarePolynomial cs).leadingCoeff
-      = (Nat.card {w : W // cs.length w = Finset.univ.sup fun v : W => cs.length v} : ℤ) := by
-  rw [← Polynomial.coeff_natDegree, natDegree_poincarePolynomial, coeff_poincarePolynomial]
+      = (Nat.card {w : W // cs.length w = (poincarePolynomial cs).natDegree} : ℤ) := by
+  rw [← Polynomial.coeff_natDegree, coeff_poincarePolynomial]
+
+/-! ### Transport along a reindexing or a group isomorphism -/
+
+section Transport
+
+variable {B' H : Type*} [Group H]
+
+/-- **The Poincaré polynomial only depends on the Coxeter system up to relabelling the simple
+reflections**, since the length function does (`TauCeti.length_reindex`). -/
+theorem poincarePolynomial_reindex [Finite W] (e : B ≃ B') :
+    poincarePolynomial (cs.reindex e) = poincarePolynomial cs := by
+  have : Fintype W := Fintype.ofFinite W
+  rw [poincarePolynomial_eq_sum, poincarePolynomial_eq_sum]
+  exact Finset.sum_congr rfl fun w _ => by rw [length_reindex]
+
+/-- **The Poincaré polynomial is invariant under transporting the Coxeter system along a group
+isomorphism**, since the length function is (`TauCeti.length_map`). The hypothesis `[Finite H]`
+follows from `[Finite W]`, but is needed to state the left-hand side. -/
+theorem poincarePolynomial_map [Finite W] [Finite H] (e : W ≃* H) :
+    poincarePolynomial (cs.map e) = poincarePolynomial cs := by
+  have : Fintype W := Fintype.ofFinite W
+  have : Fintype H := Fintype.ofFinite H
+  rw [poincarePolynomial_eq_sum, poincarePolynomial_eq_sum]
+  exact (Fintype.sum_bijective e e.bijective (fun w => Polynomial.X ^ cs.length w)
+    (fun h => Polynomial.X ^ (cs.map e).length h) fun w => by rw [length_map]).symm
+
+end Transport
 
 /-! ### The two smallest cases -/
 
@@ -211,20 +244,13 @@ theorem poincarePolynomial_of_unique_index [Finite W] [Unique B] :
     poincarePolynomial cs = 1 + Polynomial.X := by
   classical
   have : Fintype W := Fintype.ofFinite W
-  have hword : ∀ ω : List B,
-      cs.wordProd ω = 1 ∨ cs.wordProd ω = cs.simple (default : B) := by
-    intro ω
-    induction ω with
-    | nil => exact Or.inl (by simp)
-    | cons i ω ih =>
-      rw [CoxeterSystem.wordProd_cons, Subsingleton.elim i (default : B)]
-      rcases ih with h | h
-      · exact Or.inr (by rw [h, mul_one])
-      · exact Or.inl (by rw [h, cs.simple_mul_simple_self])
-  have hmem : ∀ w : W, w = 1 ∨ w = cs.simple (default : B) := by
-    intro w
-    obtain ⟨ω, -, rfl⟩ := cs.exists_isReduced w
-    exact hword ω
+  have hmem : ∀ w : W, w = 1 ∨ w = cs.simple (default : B) := fun w =>
+    cs.simple_induction_left (p := fun v => v = 1 ∨ v = cs.simple (default : B)) w (Or.inl rfl)
+      fun v i hv => by
+        rw [Subsingleton.elim i (default : B)]
+        rcases hv with h | h
+        · exact Or.inr (by rw [h, mul_one])
+        · exact Or.inl (by rw [h, cs.simple_mul_simple_self])
   have hne : (1 : W) ≠ cs.simple (default : B) := by
     intro h
     have hlen := cs.length_simple (default : B)
