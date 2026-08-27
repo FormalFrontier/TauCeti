@@ -58,7 +58,7 @@ private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
     fun_prop
   simpa using this.mono_left nhdsWithin_le_nhds
 
-private theorem tendsto_log_far (hs : s < b) (σ : ℝ) :
+private theorem tendsto_log_ofReal_sub_add_mul_I (hs : s < b) (σ : ℝ) :
     Tendsto (fun h : ℝ => log ((b : ℂ) - (s + (σ * h : ℝ) * I))) (𝓝[>] 0)
       (𝓝 (log ((b : ℂ) - s))) := by
   have hmem : (b : ℂ) - s ∈ slitPlane :=
@@ -83,7 +83,8 @@ theorem tendsto_windingNumber_segment_add_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
     have him : ((s : ℂ) + h * I).im ≠ 0 := by simpa using hh.ne'
     rw [windingNumber_segment_of_im_ne_zero hv him]
     simp only [one_mul]
-  refine Tendsto.congr' h_eq (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_far hs.2 1) ?_))
+  refine Tendsto.congr' h_eq
+    (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_ofReal_sub_add_mul_I hs.2 1) ?_))
   have h1 : Tendsto (fun h : ℝ => (a : ℂ) - (s + ((1 : ℝ) * h : ℝ) * I)) (𝓝[>] 0)
       (𝓝[{z : ℂ | z.im < 0}] ((a : ℂ) - s)) := by
     rw [tendsto_nhdsWithin_iff]
@@ -114,7 +115,8 @@ theorem tendsto_windingNumber_segment_sub_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
     have him : ((s : ℂ) - h * I).im ≠ 0 := by simpa using hh.ne'
     rw [windingNumber_segment_of_im_ne_zero hv him]
     simp only [neg_mul, one_mul, sub_eq_add_neg, ofReal_neg]
-  refine Tendsto.congr' h_eq (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_far hs.2 (-1)) ?_))
+  refine Tendsto.congr' h_eq
+    (Tendsto.const_mul _ (Tendsto.sub (tendsto_log_ofReal_sub_add_mul_I hs.2 (-1)) ?_))
   have h1 : Tendsto (fun h : ℝ => (a : ℂ) - (s + ((-1 : ℝ) * h : ℝ) * I)) (𝓝[>] 0)
       (𝓝[{z : ℂ | 0 ≤ z.im}] ((a : ℂ) - s)) := by
     rw [tendsto_nhdsWithin_iff]
@@ -145,7 +147,7 @@ theorem tendsto_windingNumber_segment_sub_windingNumber_segment (hv : v ≠ 0) (
 
 /-! ## The jump of a closed curve across a straight piece -/
 
-private theorem convex_halfDisc (p v : ℂ) (r σ : ℝ) :
+private theorem convex_ball_inter_halfSpace_gt (p v : ℂ) (r σ : ℝ) :
     Convex ℝ (ball p r ∩ {w : ℂ | 0 < σ * ((w - p) / v).im}) := by
   have hlin : IsLinearMap ℝ fun w : ℂ => σ * (w / v).im :=
     { map_add := by intro x y; simp only [add_div, Complex.add_im]; ring
@@ -205,8 +207,8 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
       rw [h0, mul_zero] at hw2
       exact lt_irrefl _ hw2
     exact hΓ.windingNumber_eq_of_mem_connectedComponentIn hclosed
-      ((convex_halfDisc p v r σ).isPreconnected.subset_connectedComponentIn ⟨hw₂, h₂⟩ hDsub
-        ⟨hw₁, h₁⟩)
+      ((convex_ball_inter_halfSpace_gt p v r σ).isPreconnected.subset_connectedComponentIn
+        ⟨hw₂, h₂⟩ hDsub ⟨hw₁, h₁⟩)
   -- Stage 2: coordinate identities for test points v·(s ± h·i) + z₀
   have h_im_add : ∀ h : ℝ, ((v * (s + h * I) + z₀ - p) / v).im = h := by
     intro h
