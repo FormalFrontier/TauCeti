@@ -227,14 +227,24 @@ private def descendZ1 (z : Z1 G M) (hz : ∀ n : N, (z : G → M) (n : G) = 0) :
             coe_smul_fixedPoints_addSubgroup]
           exact (mem_Z1_iff.1 z.2).2 a b⟩⟩
 
+omit [ContinuousSMul G M] [ContinuousSMul (G ⧸ N) (FixedPoints.addSubgroup N M)] in
+/-- The descent takes on the coset of `g` the value the original cocycle takes at `g`. This is the
+computation rule of `Quotient.liftOn'` at a representative, so it is a `rfl`; isolating it here is
+what lets `explicitInfl1_descendZ1` below be a rewrite rather than a definitional unfolding. -/
+private theorem coe_descendZ1_apply_mk (z : Z1 G M) (hz : ∀ n : N, (z : G → M) (n : G) = 0)
+    (g : G) :
+    ((descendZ1 z hz : (G ⧸ N) → FixedPoints.addSubgroup N M) (g : G ⧸ N) : M) =
+      (z : G → M) g :=
+  rfl
+
 /-- Inflating the descent of a continuous `1`-cocycle vanishing on `N` returns its class. -/
 private theorem explicitInfl1_descendZ1 (z : Z1 G M) (hz : ∀ n : N, (z : G → M) (n : G) = 0) :
     explicitInfl1 G M N (descendZ1 z hz : H1 (G ⧸ N) (FixedPoints.addSubgroup N M)) =
       (z : H1 G M) := by
   rw [explicitInfl1_mk]
   refine congrArg (fun w : Z1 G M => (w : H1 G M)) (Subtype.ext (funext fun g => ?_))
-  rw [cocyclesMap1_apply]
-  rfl
+  rw [cocyclesMap1_apply, ContinuousMonoidHom.quotientMk_apply, AddSubgroup.coe_subtype,
+    coe_descendZ1_apply_mk]
 
 variable (G M N)
 

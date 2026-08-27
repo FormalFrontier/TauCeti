@@ -23,8 +23,11 @@ inflation, and it is again continuous as soon as the `G`-action on the discrete 
 The invariant subgroup `M ^ H` is Mathlib's `FixedPoints.addSubgroup H M`; no second name for it is
 introduced here, and its distributive `G`- and `G ⧸ H`-actions are the generic ones supplied by
 `TauCeti/GroupTheory/GroupAction/FixedPoints.lean`, together with the generic transition
-inclusions and coefficient-map functoriality. This file adds the two finite-level facts the tower
-needs: directedness over the open normal subgroups and continuity of the quotient action.
+inclusions and coefficient-map functoriality. What this file adds is the topology: the two
+finite-level facts the tower needs — directedness over the open normal subgroups and continuity of
+the discrete quotient action — together with the two facts inflation needs, namely continuity of
+the `G ⧸ H`-action for an *arbitrary* normal `H` over a continuously acting `G`, and continuity of
+the inclusion `M ^ H ↪ M`.
 
 The fixed-point functoriality and finite-level facts are first stated for an additive monoid with a
 distributive `G`-action, then specialized to `FixedPoints.addSubgroup` for additive groups; an
@@ -39,9 +42,12 @@ unbundled classes freely.
   `TauCeti.directed_fixedPoints_addSubgroup` and `TauCeti.continuousSMulQuotientFixedPoints`:
   the fixed points over the open normal subgroups form a directed family, and each carries a
   continuous action of the discrete quotient group.
+* `TauCeti.continuous_fixedPoints_addSubgroup_subtype`: the inclusion `M ^ H ↪ M` is continuous,
+  in the `AddSubgroup.subtype` spelling that the compatible pairs of inflation need.
 * `TauCeti.continuousSMulQuotientFixedPointsOfContinuousSMul`: for an *arbitrary* normal subgroup
-  `H` of a topological group acting continuously on a discrete module, the quotient `G ⧸ H` acts
-  continuously on `M ^ H`.
+  `H` of a group with a topology acting continuously on a discrete module, the quotient `G ⧸ H`
+  acts continuously on `M ^ H`; no compatibility of the topology of `G` with its group structure
+  is used.
 
 ## Roadmap
 
@@ -130,7 +136,7 @@ end Subtype
 
 section ArbitraryNormalSubgroup
 
-variable (G : Type*) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+variable (G : Type*) [Group G] [TopologicalSpace G]
 variable (M : Type*) [AddGroup M] [DistribMulAction G M]
 variable [TopologicalSpace M] [DiscreteTopology M] [ContinuousSMul G M]
 
@@ -138,16 +144,18 @@ variable [TopologicalSpace M] [DiscreteTopology M] [ContinuousSMul G M]
 discrete module is continuous. Unlike
 `TauCeti.continuousSMulQuotientFixedPoints`, which reads the continuity off the discreteness of
 `G ⧸ H` for open `H` and needs no continuity of the `G`-action, this deduces it from continuity of
-the `G`-action: the stabiliser of an invariant element in `G ⧸ H` has the stabiliser in `G` as its
-preimage, and that one is open. -/
+the `G`-action: the invariants are discrete, so continuity is continuity in the group variable
+alone, and there it is the continuity of the `G`-action read through the quotient map. No
+compatibility of the topology of `G` with its group structure is needed, since `G ⧸ H` carries the
+quotient topology. -/
 instance continuousSMulQuotientFixedPointsOfContinuousSMul (H : Subgroup G) [H.Normal] :
-    ContinuousSMul (G ⧸ H) (FixedPoints.addSubgroup H M) := by
-  rw [continuousSMul_iff_stabilizer_isOpen]
-  intro x
-  rw [← (QuotientGroup.isQuotientMap_mk H).isOpen_preimage]
-  convert stabilizer_isOpen G (x : M) using 1
-  ext g
-  simp [MulAction.mem_stabilizer_iff, Subtype.ext_iff]
+    ContinuousSMul (G ⧸ H) (FixedPoints.addSubgroup H M) where
+  continuous_smul := by
+    rw [continuous_prod_of_discrete_right]
+    intro m
+    refine (QuotientGroup.isQuotientMap_mk H).continuous_iff.2 ?_
+    refine Topology.IsInducing.subtypeVal.continuous_iff.2 ?_
+    exact (continuous_id.smul continuous_const : Continuous fun g : G => g • (m : M))
 
 end ArbitraryNormalSubgroup
 
