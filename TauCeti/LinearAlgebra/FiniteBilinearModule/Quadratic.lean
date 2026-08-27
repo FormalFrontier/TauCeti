@@ -28,6 +28,8 @@ the polar pairing is therefore `B(x, y)` modulo `ℤ`.
 * `TauCeti.FiniteQuadraticModule`: a finite abelian group with an `AddCircle (1 : ℚ)`-valued
   quadratic map.
 * `TauCeti.FiniteQuadraticModule.toFiniteBilinearModule`: the canonical polar bilinear module.
+* `TauCeti.FiniteQuadraticModule.ofQuadraticMap`: the finite quadratic module presented by a
+  quadratic map on a finite abelian group.
 * `TauCeti.FiniteQuadraticModule.Hom`: a quadratic-map-preserving additive homomorphism.
 * `TauCeti.FiniteQuadraticModule.Isometry`: a quadratic-map isometric equivalence.
 * `TauCeti.FiniteQuadraticModule.IsIsotropic`: quadratic isotropy of an additive subgroup.
@@ -86,6 +88,33 @@ theorem toFiniteBilinearModule_toBilin :
   ext x y
   rw [FiniteBilinearModule.toBilin_apply, QuadraticMap.polarBilin_apply_apply,
     A.polar_eq_pairing]
+
+/-! ## Presentation by a quadratic map -/
+
+/-- The finite quadratic module presented by a `ℚ/ℤ`-valued quadratic map on a finite abelian
+group.
+
+The stored pairing is the polar form of `q`, which is the only choice the structure allows.  This
+is the packaging shared by the presented modules, such as
+`TauCeti.FiniteQuadraticModule.cyclic` and `TauCeti.FiniteQuadraticModule.kleinFour`. -/
+@[expose] def ofQuadraticMap (M : Type u) [AddCommGroup M] [Finite M]
+    (q : QuadraticMap ℤ M (AddCircle (1 : ℚ))) : FiniteQuadraticModule where
+  toFiniteBilinearModule := {
+    carrier := M
+    pairing := LinearMap.toAddMonoidHom'.comp q.polarBilin.toAddMonoidHom
+    pairing_comm := fun x y ↦ QuadraticMap.polar_comm q x y }
+  quadratic := q
+  polar_eq_pairing' := fun _ _ ↦ (rfl)
+
+@[simp]
+theorem ofQuadraticMap_quadratic (M : Type u) [AddCommGroup M] [Finite M]
+    (q : QuadraticMap ℤ M (AddCircle (1 : ℚ))) (x : M) :
+    (ofQuadraticMap M q).quadratic x = q x := (rfl)
+
+@[simp]
+theorem ofQuadraticMap_pairing (M : Type u) [AddCommGroup M] [Finite M]
+    (q : QuadraticMap ℤ M (AddCircle (1 : ℚ))) (x y : M) :
+    (ofQuadraticMap M q).toFiniteBilinearModule.pairing x y = QuadraticMap.polar q x y := (rfl)
 
 /-- A finite quadratic module is nondegenerate when its polar pairing is nondegenerate. -/
 abbrev IsNondegenerate : Prop := A.toFiniteBilinearModule.IsNondegenerate

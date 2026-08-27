@@ -32,9 +32,8 @@ The companion `TauCeti.FiniteQuadraticModule.kleinFourIsometryOfGenerators` turn
 equivalence `(ℤ/2)² ≃+ A` matching the three displayed values into an isometry onto `A`, which is
 how a discriminant form of order four and exponent two is identified.
 
-The quotient construction is a rank-two adaptation of the private cyclic construction in
-`TauCeti/LinearAlgebra/IntegralLattice/RootLattice/TypeE.lean`; the two can be unified when that
-construction is promoted to shared API.
+This is the rank-two companion to `TauCeti.FiniteQuadraticModule.cyclic`, which carries out the
+same quotient construction for a cyclic carrier.
 
 ## Main declarations
 
@@ -196,23 +195,19 @@ theorem polar_kleinFourMap_one_zero_zero_one :
   abel
 
 /-- **The finite quadratic module on `(ℤ/2)²` with generator values `α`, `β` and `α + β + γ`.** -/
-@[expose] noncomputable def kleinFour : FiniteQuadraticModule where
-  toFiniteBilinearModule := {
-    carrier := ZMod 2 × ZMod 2
-    pairing := LinearMap.toAddMonoidHom'.comp
-      (kleinFourMap α β γ h₄α h₄β h₂γ).polarBilin.toAddMonoidHom
-    pairing_comm := fun x y ↦ QuadraticMap.polar_comm (kleinFourMap α β γ h₄α h₄β h₂γ) x y }
-  quadratic := kleinFourMap α β γ h₄α h₄β h₂γ
-  polar_eq_pairing' := fun _ _ ↦ (rfl)
+@[expose] noncomputable def kleinFour : FiniteQuadraticModule :=
+  ofQuadraticMap (ZMod 2 × ZMod 2) (kleinFourMap α β γ h₄α h₄β h₂γ)
 
 @[simp]
 theorem kleinFour_quadratic (x : ZMod 2 × ZMod 2) :
-    (kleinFour α β γ h₄α h₄β h₂γ).quadratic x = kleinFourMap α β γ h₄α h₄β h₂γ x := (rfl)
+    (kleinFour α β γ h₄α h₄β h₂γ).quadratic x = kleinFourMap α β γ h₄α h₄β h₂γ x :=
+  ofQuadraticMap_quadratic _ _ x
 
 @[simp]
 theorem kleinFour_pairing (x y : ZMod 2 × ZMod 2) :
     (kleinFour α β γ h₄α h₄β h₂γ).toFiniteBilinearModule.pairing x y =
-      QuadraticMap.polar (kleinFourMap α β γ h₄α h₄β h₂γ) x y := (rfl)
+      QuadraticMap.polar (kleinFourMap α β γ h₄α h₄β h₂γ) x y :=
+  ofQuadraticMap_pairing _ _ x y
 
 omit h₄α h₄β h₂γ in
 /-- **An additive equivalence from `(ℤ/2)²` matching all three nonzero values is an isometry.**

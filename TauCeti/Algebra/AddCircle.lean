@@ -20,6 +20,8 @@ in the unit `ℤ`-submodule.
 
 * `AddCircle.coe_eq_zero_iff_mem_one`: vanishing in `AddCircle (1 : ℚ)` is membership in
   `(1 : Submodule ℤ ℚ)`.
+* `AddCircle.zsmul_coe_eq_zero_iff_mem_one`: the same criterion for an integer multiple of a
+  rational class, which is how the torsion of a discriminant value is checked.
 -/
 
 public section
@@ -36,5 +38,11 @@ theorem coe_eq_zero_iff_mem_one (q : ℚ) :
   · intro h
     obtain ⟨n, hn⟩ := Submodule.mem_one.mp h
     exact (coe_eq_zero_iff (1 : ℚ)).mpr ⟨n, by simpa using hn⟩
+
+/-- An integer multiple of a rational class vanishes in `ℚ/ℤ` exactly when the corresponding
+rational multiple is an integer. -/
+theorem zsmul_coe_eq_zero_iff_mem_one (m : ℤ) (q : ℚ) :
+    m • ((q : ℚ) : AddCircle (1 : ℚ)) = 0 ↔ (m : ℚ) * q ∈ (1 : Submodule ℤ ℚ) := by
+  rw [← coe_zsmul, zsmul_eq_mul, coe_eq_zero_iff_mem_one]
 
 end AddCircle
