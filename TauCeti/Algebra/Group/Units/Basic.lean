@@ -26,6 +26,7 @@ public section
 namespace TauCeti
 
 /-- A unit is a square exactly when its underlying monoid element is a square. -/
+@[simp]
 theorem isSquare_units_val_iff {M : Type*} [Monoid M] {u : Mˣ} :
     IsSquare (u : M) ↔ IsSquare u := by
   constructor

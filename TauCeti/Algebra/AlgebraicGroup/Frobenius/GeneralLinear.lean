@@ -212,9 +212,9 @@ theorem coe_iterateFrobeniusHopfIdealPoints_apply
     iterateFrobenius_def]
 
 /-- A matrix point of a closed subgroup scheme is fixed by the Frobenius endomorphism exactly when
-every one of its entries lies in the Frobenius-fixed subring. Since `TauCeti.mem_fixedSubgroup`
-rewrites membership in `fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A)` to the equation
-below, this is the membership criterion for the group of rational points. -/
+every one of its entries lies in the Frobenius-fixed subring. The generic equality-locus
+simplifier rewrites membership in `fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A)` to
+the equation below, so this is the membership criterion for the group of rational points. -/
 @[simp]
 theorem iterateFrobeniusHopfIdealPoints_eq_self_iff (x : hopfIdealPointsSubgroup n I A) :
     iterateFrobeniusHopfIdealPoints n p k I A x = x ↔

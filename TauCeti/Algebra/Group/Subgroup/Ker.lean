@@ -20,6 +20,7 @@ namespace MonoidHom
 variable {G M : Type*} [Group G] [Monoid M]
 
 /-- Membership in the equality locus of two group homomorphisms is pointwise equality. -/
+@[to_additive (attr := simp)]
 theorem mem_eqLocus {f g : G →* M} {x : G} : x ∈ f.eqLocus g ↔ f x = g x :=
   Iff.rfl
 
