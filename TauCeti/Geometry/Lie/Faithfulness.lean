@@ -6,16 +6,16 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Geometry.Lie.Functor
+import TauCeti.Topology.Algebra.Group.Preconnected
 import TauCeti.Geometry.Lie.Exponential.LocalInverse
-import Mathlib.Topology.Algebra.OpenSubgroup
 
 /-!
-# Faithfulness of the Lie functor on connected groups
+# Faithfulness of the Lie functor on preconnected groups
 
-A smooth homomorphism out of a connected finite-dimensional real Lie group is determined by its
+A smooth homomorphism out of a preconnected finite-dimensional real Lie group is determined by its
 induced Lie-algebra homomorphism. Naturality of the Lie-group exponential first gives equality on
 the exponential image. The local inverse to the exponential promotes this to equality near the
-identity, and the equality locus is then an open and closed subgroup of the connected source.
+identity, and the equality locus is then an open and closed subgroup of the preconnected source.
 
 ## References
 
@@ -24,7 +24,7 @@ identity, and the equality locus is then an open and closed subgroup of the conn
 
 ## Main results
 
-* `lieMap_injective`: a smooth homomorphism out of a connected Lie group is determined by its Lie
+* `lieMap_injective`: a smooth homomorphism out of a preconnected Lie group is determined by its Lie
   map.
 -/
 
@@ -38,23 +38,6 @@ open scoped ContDiff Topology
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
-private theorem monoidHom_eq_of_eventuallyEq_one
-    {G M : Type*} [Group G] [TopologicalSpace G] [SeparatelyContinuousMul G]
-    [PreconnectedSpace G] [Monoid M]
-    (φ ψ : G →* M) (h : φ =ᶠ[𝓝 (1 : G)] ψ) : φ = ψ := by
-  let S := φ.eqLocus ψ
-  have hS : (S : Set G) ∈ 𝓝 (1 : G) := h
-  have hopen : IsOpen (S : Set G) := S.isOpen_of_mem_nhds hS
-  have hclosed : IsClosed (S : Set G) := S.isClosed_of_isOpen hopen
-  have huniv : (S : Set G) = Set.univ :=
-    IsClopen.eq_univ ⟨hclosed, hopen⟩ ⟨1, S.one_mem⟩
-  apply MonoidHom.ext
-  intro g
-  have hg : g ∈ (S : Set G) := by
-    rw [huniv]
-    trivial
-  exact hg
-
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
@@ -62,9 +45,10 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners ℝ E' H'}
   {G' : Type*} [TopologicalSpace G'] [ChartedSpace H' G'] [Group G']
 
-/-- The Lie map is injective on smooth homomorphisms out of a connected Lie group. -/
+/-- The Lie map is injective on smooth homomorphisms out of a preconnected Lie group. -/
+@[grind inj]
 theorem lieMap_injective
-    [LieGroup I ∞ G] [LieGroup I' ∞ G'] [ConnectedSpace G]
+    [LieGroup I ∞ G] [LieGroup I' ∞ G'] [PreconnectedSpace G]
     [FiniteDimensional ℝ E] [FiniteDimensional ℝ E'] :
     Function.Injective
       (lieMap : ContMDiffMonoidMorphism I I' ∞ G G' →
@@ -77,4 +61,4 @@ theorem lieMap_injective
       rw [← hg, map_lieExp, map_lieExp, h]
   apply DFunLike.coe_injective
   exact congrArg (fun f : G →* G' => (f : G → G'))
-    (monoidHom_eq_of_eventuallyEq_one φ.toMonoidHom ψ.toMonoidHom hnear)
+    (MonoidHom.eq_of_eventuallyEq_one hnear)
