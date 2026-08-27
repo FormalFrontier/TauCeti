@@ -70,6 +70,7 @@ theorem isMultiCoupling_piFinTwo (hπ : IsCoupling π (μ 0) (μ 1)) :
 
 /-- Pulling a measure back along `MeasurableEquiv.piFinTwo` is a multi-marginal coupling exactly
 when the original measure is a two-marginal coupling. -/
+@[simp]
 theorem isMultiCoupling_piFinTwo_iff :
     Measure.IsMultiCoupling (π.map (MeasurableEquiv.piFinTwo X).symm) μ ↔
       IsCoupling π (μ 0) (μ 1) := by
@@ -106,10 +107,7 @@ def projectPairCoupling (π : MultiCoupling μ) (i j : ι) : Coupling (μ i) (μ
 @[simp]
 theorem coe_projectPairCoupling (π : MultiCoupling μ) (i j : ι) :
     (π.projectPairCoupling i j : ProbabilityMeasure (X i × X j)) = π.projectPair i j :=
-  by
-    apply ProbabilityMeasure.toMeasure_injective
-    change (π.projectPair i j).toMeasure = (π.projectPair i j).toMeasure
-    rfl
+  (rfl)
 
 variable {X : Fin 2 → Type v} [∀ i, MeasurableSpace (X i)]
   {μ : ∀ i, ProbabilityMeasure (X i)}
@@ -143,9 +141,7 @@ explicit measurable equivalence between a `Fin 2` product and an ordinary produc
 theorem coe_toMultiCouplingFinTwo (π : Coupling (μ 0) (μ 1)) :
     (π.toMultiCouplingFinTwo : ProbabilityMeasure (∀ i, X i)) =
       π.1.map (MeasurableEquiv.piFinTwo X).symm.measurable.aemeasurable :=
-  by
-    apply ProbabilityMeasure.toMeasure_injective
-    rfl
+  (rfl)
 
 end Coupling
 
@@ -155,7 +151,7 @@ variable {X : Fin 2 → Type v} [∀ i, MeasurableSpace (X i)]
 /-- Converting a two-marginal coupling to a `Fin 2` multi-marginal coupling and back is the
 identity. -/
 @[simp]
-theorem Coupling.toCouplingFinTwo_toMultiCouplingFinTwo (π : Coupling (μ 0) (μ 1)) :
+theorem Coupling.toMultiCouplingFinTwo_toCouplingFinTwo (π : Coupling (μ 0) (μ 1)) :
     π.toMultiCouplingFinTwo.toCouplingFinTwo = π := by
   apply Coupling.ext
   calc
@@ -182,7 +178,7 @@ theorem Coupling.toCouplingFinTwo_toMultiCouplingFinTwo (π : Coupling (μ 0) (�
 /-- Converting a `Fin 2` multi-marginal coupling to a two-marginal coupling and back is the
 identity. -/
 @[simp]
-theorem MultiCoupling.toMultiCouplingFinTwo_toCouplingFinTwo (π : MultiCoupling μ) :
+theorem MultiCoupling.toCouplingFinTwo_toMultiCouplingFinTwo (π : MultiCoupling μ) :
     π.toCouplingFinTwo.toMultiCouplingFinTwo = π := by
   apply MultiCoupling.ext
   calc
@@ -212,7 +208,23 @@ theorem MultiCoupling.toMultiCouplingFinTwo_toCouplingFinTwo (π : MultiCoupling
 def couplingEquivMultiCouplingFinTwo : Coupling (μ 0) (μ 1) ≃ MultiCoupling μ where
   toFun := Coupling.toMultiCouplingFinTwo
   invFun := MultiCoupling.toCouplingFinTwo
-  left_inv := Coupling.toCouplingFinTwo_toMultiCouplingFinTwo
-  right_inv := MultiCoupling.toMultiCouplingFinTwo_toCouplingFinTwo
+  left_inv := Coupling.toMultiCouplingFinTwo_toCouplingFinTwo
+  right_inv := MultiCoupling.toCouplingFinTwo_toMultiCouplingFinTwo
+
+/-- Applying the coupling equivalence to a two-marginal coupling gives its corresponding
+`Fin 2`-indexed multi-marginal coupling. -/
+@[simp]
+theorem couplingEquivMultiCouplingFinTwo_apply (π : Coupling (μ 0) (μ 1)) :
+    couplingEquivMultiCouplingFinTwo π = π.toMultiCouplingFinTwo := by
+  unfold couplingEquivMultiCouplingFinTwo
+  rfl
+
+/-- Applying the inverse coupling equivalence to a `Fin 2`-indexed multi-marginal coupling gives
+its corresponding two-marginal coupling. -/
+@[simp]
+theorem couplingEquivMultiCouplingFinTwo_symm_apply (π : MultiCoupling μ) :
+    couplingEquivMultiCouplingFinTwo.symm π = π.toCouplingFinTwo := by
+  unfold couplingEquivMultiCouplingFinTwo
+  rfl
 
 end TauCeti
