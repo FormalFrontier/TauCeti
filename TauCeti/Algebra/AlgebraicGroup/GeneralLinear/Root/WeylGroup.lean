@@ -52,43 +52,64 @@ noncomputable section
 
 variable {k : Type u} [Field k] [Nontrivial kˣ] {n : ℕ}
 
-private theorem diagonalRootDatum_eq_coordinateRootDatum (n : ℕ) :
-    diagonalRootDatum.{u} n = SplitTorus.coordinateRootDatum (ULift.{u} (Fin n)) := by
-  rw [diagonalRootDatum]
+/-- Transport Weyl groups along an equality of root data. -/
+private noncomputable def weylGroupMulEquivOfEq
+    (D E : RootDatum (DiagonalRootIndex n) (ULift.{u} (Fin n) →₀ ℤ)
+      (ULift.{u} (Fin n) → ℤ)) (h : D = E) : D.weylGroup ≃* E.weylGroup := by
+  subst E
+  exact MulEquiv.refl _
+
+private theorem weylGroupMulEquivOfEq_symm_smul_apply
+    (D E : RootDatum (DiagonalRootIndex n) (ULift.{u} (Fin n) →₀ ℤ)
+      (ULift.{u} (Fin n) → ℤ)) (h : D = E) (w : E.weylGroup)
+    (x : ULift.{u} (Fin n) →₀ ℤ) (a : ULift.{u} (Fin n)) :
+    ((weylGroupMulEquivOfEq D E h).symm w • x) a = (w • x) a := by
+  subst E
+  rfl
+
+private theorem weylGroupMulEquivOfEq_symm_indexEquiv_apply
+    (D E : RootDatum (DiagonalRootIndex n) (ULift.{u} (Fin n) →₀ ℤ)
+      (ULift.{u} (Fin n) → ℤ)) (h : D = E) (w : E.weylGroup)
+    (p : DiagonalRootIndex n) :
+    ((weylGroupMulEquivOfEq D E h).symm w).1.indexEquiv p = w.1.indexEquiv p := by
+  subst E
+  rfl
+
+private theorem weylGroupMulEquivOfEq_symm_ofIdx
+    (D E : RootDatum (DiagonalRootIndex n) (ULift.{u} (Fin n) →₀ ℤ)
+      (ULift.{u} (Fin n) → ℤ)) (h : D = E) (p : DiagonalRootIndex n) :
+    (weylGroupMulEquivOfEq D E h).symm (RootPairing.weylGroup.ofIdx E p) =
+      RootPairing.weylGroup.ofIdx D p := by
+  subst E
+  rfl
 
 /-- Transport between the Weyl groups across the opaque `diagonalRootDatum` wrapper. -/
 noncomputable def diagonalWeylGroupMulEquivCoordinateWeylGroup (n : ℕ) :
     (diagonalRootDatum.{u} n).weylGroup ≃*
-      (SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))).weylGroup := by
-  rw [diagonalRootDatum_eq_coordinateRootDatum]
+      (SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))).weylGroup :=
+  weylGroupMulEquivOfEq _ _ (diagonalRootDatum_eq_coordinateRootDatum n)
 
 private theorem diagonalWeylGroupMulEquivCoordinateWeylGroup_symm_smul_apply
     (w : (SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))).weylGroup)
     (x : ULift.{u} (Fin n) →₀ ℤ) (a : ULift.{u} (Fin n)) :
     ((diagonalWeylGroupMulEquivCoordinateWeylGroup.{u} n).symm w • x) a =
-      (w • x) a := by
-  have h := diagonalRootDatum_eq_coordinateRootDatum.{u} n
-  cases h
-  rfl
+      (w • x) a :=
+  weylGroupMulEquivOfEq_symm_smul_apply _ _ _ w x a
 
 private theorem diagonalWeylGroupMulEquivCoordinateWeylGroup_symm_indexEquiv_apply
     (w : (SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))).weylGroup)
     (p : DiagonalRootIndex n) :
     ((diagonalWeylGroupMulEquivCoordinateWeylGroup.{u} n).symm w).1.indexEquiv p =
-      w.1.indexEquiv p := by
-  have h := diagonalRootDatum_eq_coordinateRootDatum.{u} n
-  cases h
-  rfl
+      w.1.indexEquiv p :=
+  weylGroupMulEquivOfEq_symm_indexEquiv_apply _ _ _ w p
 
 private theorem diagonalWeylGroupMulEquivCoordinateWeylGroup_symm_ofIdx
     (p : DiagonalRootIndex n) :
     (diagonalWeylGroupMulEquivCoordinateWeylGroup.{u} n).symm
         (RootPairing.weylGroup.ofIdx
           (SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))) p) =
-      RootPairing.weylGroup.ofIdx (diagonalRootDatum.{u} n) p := by
-  have h := diagonalRootDatum_eq_coordinateRootDatum.{u} n
-  cases h
-  rfl
+      RootPairing.weylGroup.ofIdx (diagonalRootDatum.{u} n) p :=
+  weylGroupMulEquivOfEq_symm_ofIdx _ _ _ p
 
 /-- **The normalizer quotient of the diagonal torus is the Weyl group of its coordinate root
 datum.** The intermediate permutation is transported from `Fin n` to the universe-lifted
