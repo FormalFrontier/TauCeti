@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Degree
 public import TauCeti.FieldTheory.SquareClassGroup
+import TauCeti.Algebra.Group.Units.Basic
 
 /-!
 # Square-class independence as `ZMod 2`-linear independence

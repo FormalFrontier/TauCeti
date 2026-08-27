@@ -9,6 +9,7 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.Lipschitz.Norm
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Spin.SpecialOrthogonal
 public import TauCeti.LinearAlgebra.QuadraticForm.DetSquareClass
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
+import TauCeti.Algebra.Group.Units.Basic
 import TauCeti.Algebra.Group.Subgroup.Ker
 import TauCeti.LinearAlgebra.CliffordAlgebra.CartanDieudonne
 import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
