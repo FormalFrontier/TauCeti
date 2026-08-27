@@ -46,16 +46,15 @@ namespace DiscreteShortExact
 section
 
 variable {G : Type u} [Group G] [TopologicalSpace G]
-  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [IsTopologicalAddGroup A]
-    [DiscreteTopology A] [DistribMulAction G A] [ContinuousSMul G A]
-  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [IsTopologicalAddGroup B]
-    [DiscreteTopology B] [DistribMulAction G B] [ContinuousSMul G B]
+  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A]
+    [DistribMulAction G A] [ContinuousSMul G A]
+  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B]
+    [DistribMulAction G B] [ContinuousSMul G B]
   {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C]
     [DistribMulAction G C]
   (S : DiscreteShortExact G A B C)
 
-omit [TopologicalSpace G] [IsTopologicalAddGroup A] [ContinuousSMul G A]
-  [IsTopologicalAddGroup B] [ContinuousSMul G B] in
+omit [TopologicalSpace G] [ContinuousSMul G A] [ContinuousSMul G B] in
 /-- Exactness at `H⁰(G, A)`: the coefficient inclusion remains injective on invariants. -/
 theorem explicitLongExact_H0A :
     Function.Injective (explicitCoeff0 G A S.inclHom) := by
@@ -64,8 +63,7 @@ theorem explicitLongExact_H0A :
   apply S.incl_injective
   simpa only [coe_explicitCoeff0, inclHom_apply] using congrArg Subtype.val h
 
-omit [TopologicalSpace G] [IsTopologicalAddGroup A] [ContinuousSMul G A]
-  [IsTopologicalAddGroup B] [ContinuousSMul G B] in
+omit [TopologicalSpace G] [ContinuousSMul G A] [ContinuousSMul G B] in
 /-- Exactness at `H⁰(G, B)`: the invariant elements killed by the projection are precisely
 the invariant elements coming from `A`. -/
 theorem explicitLongExact_H0B :
@@ -88,7 +86,6 @@ theorem explicitLongExact_H0B :
     refine ⟨⟨a, ha_fixed⟩, Subtype.ext ?_⟩
     simpa only [coe_explicitCoeff0, inclHom_apply] using ha
 
-omit [IsTopologicalAddGroup B] in
 /-- The image of `H⁰(G, B)` lies in the kernel of the connecting map. -/
 private theorem range_coeff0_le_ker_delta0 :
     (explicitCoeff0 G B S.projHom).range ≤ S.explicitDelta0.ker := by
