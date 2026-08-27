@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.MeasureTheory.Constructions.Pi
-public import Mathlib.Probability.Independence.Basic
+import Mathlib.Probability.Independence.Basic
 
 /-!
 # Two distinct coordinates of a finite product measure
