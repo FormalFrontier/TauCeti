@@ -61,13 +61,6 @@ noncomputable def freeYonedaSheafFunctor :
   yoneda ⋙ (Functor.whiskeringRight _ _ _).obj AddCommGrpCat.free ⋙
     presheafToSheaf J AddCommGrpCat.{v}
 
-/-- `freeYonedaSheafFunctor` is the composite of Yoneda, the free abelian group functor, and
-sheafification. -/
-lemma freeYonedaSheafFunctor_def : freeYonedaSheafFunctor J =
-    yoneda ⋙ (Functor.whiskeringRight _ _ _).obj AddCommGrpCat.free ⋙
-      presheafToSheaf J AddCommGrpCat.{v} :=
-  (rfl)
-
 /-- Mathlib's sheaf cohomology over an object of a site is `Ext` from the corresponding free
 abelian sheaf. -/
 lemma sheafH'_eq [HasExt.{v} (_root_.CategoryTheory.Sheaf J AddCommGrpCat.{v})]
