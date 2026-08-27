@@ -33,10 +33,12 @@ Section I.7 — that no local component of a nonzero Weil differential vanishes,
 the largest bound its local component respects, and the explicit generator of `Ω_{k(x)}` — need
 the divisor of a Weil differential, and are not proved here.
 
+The repartitions `ι_P x` themselves are built in
+`TauCeti.FieldTheory.FunctionField.Repartition.Basic`, next to the repartition space and its
+filtration, which are all they depend on.
+
 ## Main definitions
 
-* `TauCeti.singleRepartition`: the repartition `ι_P x` supported at one place, as a `k`-linear map
-  `F →ₗ[k] A_F` (Stichtenoth, Definition 1.7.1).
 * `TauCeti.repartitionDualComponent`: the local component `ω_P` of a `k`-linear form on `A_F`
   (Stichtenoth, Definition 1.7.1).
 
@@ -55,14 +57,6 @@ the divisor of a Weil differential, and are not proved here.
 * `TauCeti.eq_zero_iff_repartitionDualComponent_eq_zero`: a Weil differential all of whose local
   components vanish is zero.
 
-## Implementation notes
-
-`ι_P x` is built with `Set.indicator` on the singleton `{P}` rather than with `Pi.single` or
-`LinearMap.single`: the latter two carry a `DecidableEq` argument, and no instance supplies a
-decidable equality of places, whereas `Set.indicator` is deliberately noncomputable and needs
-none.  `TauCeti.coe_singleRepartition` together with `Set.indicator_singleton` recovers the
-`Pi.single` form wherever a decidable equality is at hand.
-
 ## References
 
 * H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., GTM 254, Springer, 2009,
@@ -78,69 +72,6 @@ namespace TauCeti
 open AlgebraicGeometry
 
 variable {k F : Type*} [Field k] [Field F] [Algebra k F]
-
-/-! ### Repartitions supported at a single place -/
-
-/-- A family with a single nonzero entry is a repartition: its exceptional set is contained in
-the singleton carrying that entry. -/
-private theorem indicator_singleton_mem_repartitionSpace (P : Place k F) (x : F) :
-    Set.indicator {P} (fun _ ↦ x) ∈ repartitionSpace k F := by
-  rw [mem_repartitionSpace_iff_finite]
-  refine (Set.finite_singleton P).subset fun Q hQ ↦ ?_
-  by_contra hne
-  exact hQ (by simp [Set.indicator_of_notMem hne])
-
-/-- The repartition `ι_P x` with the entry `x` at the place `P` and `0` at every other place
-(Stichtenoth, Definition 1.7.1), as a `k`-linear map `F →ₗ[k] A_F`. -/
-noncomputable def singleRepartition (P : Place k F) : F →ₗ[k] ↥(repartitionSpace k F) where
-  toFun x := ⟨Set.indicator {P} (fun _ ↦ x), indicator_singleton_mem_repartitionSpace P x⟩
-  map_add' x y := Subtype.ext <| funext fun Q ↦ by
-    rcases eq_or_ne Q P with rfl | hQ
-    · simp
-    · simp [Set.indicator_of_notMem (fun h ↦ hQ (Set.mem_singleton_iff.mp h))]
-  map_smul' c x := Subtype.ext <| funext fun Q ↦ by
-    rcases eq_or_ne Q P with rfl | hQ
-    · simp
-    · simp [Set.indicator_of_notMem (fun h ↦ hQ (Set.mem_singleton_iff.mp h))]
-
-/-- The entries of `ι_P x`: the definition of `TauCeti.singleRepartition`, unfolded. -/
-theorem coe_singleRepartition (P : Place k F) (x : F) :
-    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) =
-      Set.indicator {P} (fun _ ↦ x) :=
-  (rfl)
-
-/-- The entry of `ι_P x` at `P` is `x`. -/
-@[simp]
-theorem singleRepartition_self (P : Place k F) (x : F) :
-    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) P = x := by
-  rw [coe_singleRepartition, Set.indicator_of_mem (Set.mem_singleton_iff.mpr rfl)]
-
-/-- The entries of `ι_P x` away from `P` vanish. -/
-@[simp]
-theorem singleRepartition_of_ne {P Q : Place k F} (h : Q ≠ P) (x : F) :
-    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) Q = 0 := by
-  rw [coe_singleRepartition,
-    Set.indicator_of_notMem (fun hQ ↦ h (Set.mem_singleton_iff.mp hQ))]
-
-/-- `ι_P x` is bounded by `D` exactly when the pole of `x` at `P` is: at every other place its
-entry is `0`, which every divisor bounds. -/
-theorem singleRepartition_mem_adeleFiltration_iff {D : Divisor k F} {P : Place k F} {x : F} :
-    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) ∈ adeleFiltration D ↔
-      P.valuation x ≤ WithZero.exp (D.coeff P) := by
-  rw [mem_adeleFiltration_iff]
-  refine ⟨fun h ↦ by simpa using h P, fun h Q ↦ ?_⟩
-  rcases eq_or_ne Q P with rfl | hQ
-  · simpa using h
-  · simp [singleRepartition_of_ne hQ]
-
-/-- Multiplying `ι_P x` by a function multiplies its entry: `f · ι_P x = ι_P (f x)`. -/
-@[simp]
-theorem repartitionMul_singleRepartition (hF : IsFunctionField k F) (f : F) (P : Place k F)
-    (x : F) : repartitionMul hF f (singleRepartition P x) = singleRepartition P (f * x) :=
-  Subtype.ext <| funext fun Q ↦ by
-    rcases eq_or_ne Q P with rfl | hQ
-    · simp [coe_repartitionMul_apply]
-    · simp [coe_repartitionMul_apply, singleRepartition_of_ne hQ]
 
 /-! ### The local components -/
 
@@ -207,8 +138,11 @@ private theorem exists_finset_repartitionDualComponent {D : Divisor k F}
         ↥(repartitionSpace k F)) : Place k F → F) Q =
         if Q ∈ (E - D).support then 0 else (a : Place k F → F) Q := by
       rw [Submodule.coe_sub, Pi.sub_apply, AddSubmonoidClass.coe_finsetSum, Finset.sum_apply]
-      simp only [coe_singleRepartition, Set.indicator_singleton, Finset.sum_pi_single]
-      split_ifs <;> simp
+      split_ifs with h
+      · rw [Finset.sum_eq_single_of_mem Q h fun P _ hP ↦ singleRepartition_of_ne (Ne.symm hP) _,
+          singleRepartition_self, sub_self]
+      · rw [Finset.sum_eq_zero fun P hP ↦ singleRepartition_of_ne (by rintro rfl; exact h hP) _,
+          sub_zero]
     rw [hcoe]
     split_ifs with h
     · simp
@@ -217,8 +151,10 @@ private theorem exists_finset_repartitionDualComponent {D : Divisor k F}
   rw [map_sub, map_sum, sub_eq_zero] at hzero
   simpa using hzero
 
-/-- **The local components of a Weil differential vanish at all but finitely many places**
-(Stichtenoth, Proposition 1.7.2). -/
+/-- **The sum `∑_P ω_P (a P)` has finitely many nonzero terms**: for every repartition `a`, the
+values `ω_P (a P)` of the local components of a Weil differential vanish at all but finitely many
+places `P` (Stichtenoth, Proposition 1.7.2).  It says nothing about a single local component
+`ω_P`, which is a linear form on all of `F` and need not vanish anywhere. -/
 theorem finite_support_repartitionDualComponent {ω : Module.Dual k ↥(repartitionSpace k F)}
     (hω : ω ∈ weilDifferentialSpace k F) (a : ↥(repartitionSpace k F)) :
     (Function.support fun P ↦ repartitionDualComponent ω P ((a : Place k F → F) P)).Finite := by
