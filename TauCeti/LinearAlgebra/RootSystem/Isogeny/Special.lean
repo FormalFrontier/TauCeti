@@ -42,7 +42,7 @@ with `σ` the pinned `TauCeti.lengthPermRankTwo` for `G₂` and `TauCeti.lengthP
 the simple roots this reads `A (α (σ i)) = ℓ (σ i) • α i`, which is the defining relation
 `f (b α) = q α · α` of a special isogeny of root data, with the isogeny exponent `q` at a simple
 root the *other* length; squaring it gives `A ^ 2 = p`, since `ℓ` takes the two values `1` and `p`
-and `σ` exchanges them. `TauCeti.DynkinType.g2SpecialIsogeny_comp_self` and its `F₄` counterpart
+and `σ` exchanges them. `TauCeti.DynkinType.g2SpecialIsogeny_mul_self` and its `F₄` counterpart
 are that square relation, in the form `τ ∘ τ = Frob_p` on root data.
 
 The tables of `TauCeti.DynkinType.g2SpecialIsogenyIndex` and its `F₄` counterpart extend `σ` from
@@ -68,8 +68,8 @@ file adds is the bundled isogeny in each case, and the relations that are statem
 
 ## Main results
 
-* `TauCeti.DynkinType.g2SpecialIsogeny_comp_self` and
-  `TauCeti.DynkinType.f4SpecialIsogeny_comp_self`: composing the special isogeny with itself gives
+* `TauCeti.DynkinType.g2SpecialIsogeny_mul_self` and
+  `TauCeti.DynkinType.f4SpecialIsogeny_mul_self`: multiplying the special isogeny by itself gives
   scaling by the characteristic, which is the root-datum form of `τ ^ 2 = Frob_p`.
 * `TauCeti.DynkinType.g2SpecialIsogeny_weightMap_root_castLE` and
   `TauCeti.DynkinType.f4SpecialIsogeny_weightMap_root_castAdd`: the defining relation on the simple
@@ -159,7 +159,7 @@ def g2SpecialIsogeny :
 
 /-- **The square of the special isogeny of `G₂` is scaling by three.** This is the root-datum form
 of the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
-theorem g2SpecialIsogeny_comp_self :
+theorem g2SpecialIsogeny_mul_self :
     g2SpecialIsogeny * g2SpecialIsogeny =
       RootPairingIsogeny.smulId g2SimplyConnectedRootDatum 3 := by
   rw [RootPairingIsogeny.mul_def]
@@ -237,7 +237,7 @@ noncomputable def f4SpecialIsogeny :
 
 /-- **The square of the special isogeny of `F₄` is scaling by two.** This is the root-datum form of
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
-theorem f4SpecialIsogeny_comp_self :
+theorem f4SpecialIsogeny_mul_self :
     f4SpecialIsogeny * f4SpecialIsogeny =
       RootPairingIsogeny.smulId f4SimplyConnectedRootDatum 2 := by
   rw [RootPairingIsogeny.mul_def]

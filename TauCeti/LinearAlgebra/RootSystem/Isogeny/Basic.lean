@@ -576,7 +576,7 @@ the order, but a power of an endomorphism commutes with itself, so no reversal i
   | succ k ih => rw [pow_succ, mul_coweightMap, ih, pow_succ', Module.End.mul_eq_comp]
 
 /-- The index bijection of an iterate is the iterate of the index bijection. -/
-theorem pow_indexEquiv (f : RootPairingIsogeny P P) (k : ℕ) :
+@[simp] theorem pow_indexEquiv (f : RootPairingIsogeny P P) (k : ℕ) :
     (f ^ k).indexEquiv = f.indexEquiv ^ k := by
   induction k with
   | zero => simp [Equiv.Perm.one_def]
