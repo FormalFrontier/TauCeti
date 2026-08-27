@@ -31,6 +31,8 @@ The declarations are in `TauCeti.HopfIdeal.IsUnipotentRadicalCandidate`.
 * `derivationCompLieHom_productOfNormal_bijective_of_maximal`:
   the inclusion of a maximal candidate into its product with another candidate induces a
   bijection on tangent Lie algebras.
+* `conormalSubspace_productOfNormal_le_left_eq_bot_of_maximal`:
+  the relative defining ideal of the maximal candidate in that product has zero conormal space.
 
 ## References
 
@@ -106,6 +108,46 @@ theorem derivationCompLieHom_productOfNormal_bijective_of_maximal
   have hfinrank := hI.finrank_quotientLie_productOfNormal_eq_of_maximal hmax hJ
   exact derivationCompLieHom_bijective_of_surjective_of_finrank_eq _
     (FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective H hPI) hfinrank.symm
+
+/-- The relative defining ideal of a maximal-dimensional unipotent-radical candidate inside its
+product with any other candidate has zero conormal space at the identity.
+
+Thus the maximal candidate and the product candidate agree to first order. The remaining
+maximality step is global: smoothness and connectedness must upgrade this infinitesimal equality
+to equality of the two closed subgroups. -/
+theorem conormalSubspace_productOfNormal_le_left_eq_bot_of_maximal
+    (hI : IsUnipotentRadicalCandidate H I)
+    (hmax : ∀ K : HopfIdeal k H, IsUnipotentRadicalCandidate H K →
+      Module.finrank k
+          (Derivation k (H ⧸ K.toIdeal)
+            (Bialgebra.CounitAlgebra k (H ⧸ K.toIdeal) k)) ≤
+        Module.finrank k
+          (Derivation k (H ⧸ I.toIdeal)
+            (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)))
+    (hJ : IsUnipotentRadicalCandidate H J) :
+    HopfIdeal.conormalSubspace
+      (I.map (Bialgebra.Quotient.mkBialgHom
+        (HopfIdeal.ker
+          (CommHopfAlgCat.productMapOfNormal H.obj I J hI.isNormal).hom).toIdeal)) =
+      ⊥ := by
+  let P : HopfIdeal k H :=
+    HopfIdeal.ker (CommHopfAlgCat.productMapOfNormal H.obj I J hI.isNormal).hom
+  let hPI : P ≤ I :=
+    CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal
+  let q := FiniteTypeCommHopfAlgCat.toBialgHom
+    (FiniteTypeCommHopfAlgCat.quotientMapOfLe H hPI)
+  have hq_surjective : Function.Surjective q :=
+    FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective H hPI
+  have hdq_surjective :
+      Function.Surjective (derivationCompLieHom (B := k) q) :=
+    (hI.derivationCompLieHom_productOfNormal_bijective_of_maximal hmax hJ).2
+  have hconormal : HopfIdeal.conormalSubspace (HopfIdeal.ker q) = ⊥ :=
+    HopfIdeal.conormalSubspace_ker_eq_bot_of_surjective_of_derivationCompLieHom_surjective
+      q hq_surjective hdq_surjective
+  have hker : HopfIdeal.ker q =
+      I.map (Bialgebra.Quotient.mkBialgHom P.toIdeal) :=
+    CommHopfAlgCat.ker_quotientMapOfLe H.obj hPI
+  simpa only [P] using hker ▸ hconormal
 
 end HopfIdeal.IsUnipotentRadicalCandidate
 

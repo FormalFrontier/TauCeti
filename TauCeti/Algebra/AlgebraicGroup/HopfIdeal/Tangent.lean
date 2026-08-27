@@ -77,6 +77,15 @@ lemma quotientLieHom_apply_apply (I : HopfIdeal R H)
   simp [quotientLieHom]
   rfl
 
+/-- The closed-subgroup differential is precomposition along the quotient morphism. -/
+theorem quotientLieHom_def (I : HopfIdeal R H) :
+    quotientLieHom (B := B) I =
+      derivationCompLieHom (B := B) (Bialgebra.Quotient.mkBialgHom I.toIdeal) := by
+  ext d x
+  rw [quotientLieHom_apply_apply, derivationCompLieHom_apply, derivationComp_apply]
+  exact Bialgebra.CounitAlgebra.algEquivSelf_apply
+    R (H ⧸ I.toIdeal) B (d (Ideal.Quotient.mkₐ R I.toIdeal x))
+
 /-- The differential of a closed-subgroup inclusion is injective. -/
 theorem quotientLieHom_injective (I : HopfIdeal R H) :
     Function.Injective (quotientLieHom (B := B) I) :=
