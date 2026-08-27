@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.AffineDynkinType
+public import TauCeti.LinearAlgebra.RootSystem.AffineDynkinType.Basic
 
 /-!
 # The form of an affine simply-laced diagram is positive semidefinite
