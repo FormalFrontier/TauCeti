@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.NegativePlane
-public import TauCeti.LinearAlgebra.Matrix.TensorProduct
 
 import TauCeti.Algebra.CentralSimple.Quaternion
 
@@ -43,8 +42,8 @@ private abbrev M16 := Matrix (Fin 16) (Fin 16) ℝ
 private def matrixTensorSelf (n : ℕ) :
     Matrix (Fin n) (Fin n) ℝ ⊗[ℝ] Matrix (Fin n) (Fin n) ℝ ≃ₐ[ℝ]
       Matrix (Fin (n * n)) (Fin (n * n)) ℝ :=
-  (Matrix.kroneckerTMulFinAlgEquiv n n ℝ ℝ ℝ).trans
-    (Algebra.TensorProduct.lid ℝ ℝ).mapMatrix
+  (Matrix.kroneckerAlgEquiv (Fin n) (Fin n) ℝ).trans
+    (Matrix.reindexAlgEquiv ℝ ℝ finProdFinEquiv)
 
 private noncomputable def realCliffordEightPeriodicityEquivImpl (p q : ℕ) :
     _root_.CliffordAlgebra (realCliffordForm (p + 8) q) ≃ₐ[ℝ]

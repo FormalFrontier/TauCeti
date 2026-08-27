@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RingTheory.MatrixAlgebra
 public import Mathlib.LinearAlgebra.Matrix.Reindex
+public import Mathlib.LinearAlgebra.Matrix.Unique
 
 /-!
 # Tensor products of matrix algebras
@@ -16,6 +17,7 @@ matrix algebras.
 
 ## Main result
 
+* `Matrix.finOneAlgEquiv`: the canonical equivalence `A ≃ₐ[R] M₁(A)` using `Fin 1` indices.
 * `Matrix.kroneckerTMulFinAlgEquiv`: matrix absorption
   `M_m(A) ⊗[R] M_n(B) ≃ₐ[R] M_(mn)(A ⊗[R] B)`.
 -/
@@ -25,6 +27,24 @@ public section
 open scoped Kronecker TensorProduct
 
 namespace Matrix
+
+/-- The canonical one-by-one matrix equivalence with `Fin 1` indices. -/
+def finOneAlgEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A] :
+    A ≃ₐ[R] Matrix (Fin 1) (Fin 1) A :=
+  (Matrix.uniqueAlgEquiv (R := R) (A := A) (m := Unit)).symm.trans
+    (Matrix.reindexAlgEquiv R A (Equiv.ofUnique Unit (Fin 1)))
+
+/-- The one-by-one matrix equivalence sends a scalar to the constant one-by-one matrix. -/
+@[simp]
+theorem finOneAlgEquiv_apply (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A]
+    (a : A) (i j : Fin 1) : Matrix.finOneAlgEquiv R A a i j = a := by
+  simp [finOneAlgEquiv]
+
+/-- The inverse one-by-one matrix equivalence extracts the unique entry. -/
+@[simp]
+theorem finOneAlgEquiv_symm_apply (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A]
+    (M : Matrix (Fin 1) (Fin 1) A) : (Matrix.finOneAlgEquiv R A).symm M = M 0 0 := by
+  simp [finOneAlgEquiv]
 
 /-- **Matrix absorption**: `M_m(A) ⊗[R] M_n(B) ≃ₐ[R] M_(mn)(A ⊗[R] B)`, over any commutative
 semiring `R` and any two `R`-algebras, in any two sizes. -/
