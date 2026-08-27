@@ -50,6 +50,10 @@ differentials are the work that consumes this file.
 * `TauCeti.adeleFiltration_le_repartitionSpace`, `TauCeti.adeleFiltration_mono` and
   `TauCeti.directed_adeleFiltration`: the filtration lands in `A_F`, and is monotone and
   directed.
+* `TauCeti.adeleFiltration_sup` and
+  `TauCeti.submoduleOfAdeleFiltrationSupDiagonalRepartitions_sup`:
+  `A_F(D ⊔ E) = A_F(D) + A_F(E)`, and the same splitting after adding the constants — the
+  place-by-place statement that directedness only records qualitatively.
 * `TauCeti.repartitionSpace_eq_iSup` and `TauCeti.coe_repartitionSpace_eq_iUnion`:
   `A_F = ⋃_D A_F(D)`, the exhaustion.
 * `TauCeti.diagonalRepartitions_le_repartitionSpace`: the diagonal `F ↪ A_F`, which is where
@@ -205,6 +209,36 @@ attached to the pointwise maximum of the two divisors. -/
 theorem directed_adeleFiltration :
     Directed (· ≤ ·) (adeleFiltration : Divisor k F → Submodule k (Place k F → F)) :=
   fun D E ↦ ⟨D ⊔ E, adeleFiltration_mono le_sup_left, adeleFiltration_mono le_sup_right⟩
+
+/-- **The filtration turns the pointwise maximum of two divisors into a sum of subspaces**:
+`A_F(D ⊔ E) = A_F(D) + A_F(E)`.  Only `≤` has content, and it holds because the defining bound is
+a *pointwise* one: splitting a repartition bounded by `D ⊔ E` into the places where it already
+satisfies the bound of `D` and the places where it does not writes it as a sum of one repartition
+bounded by `D` and one bounded by `E`.  The corresponding statement for `TauCeti.riemannRochSpace`
+is false, since a single function cannot be truncated place by place. -/
+theorem adeleFiltration_sup (D E : Divisor k F) :
+    adeleFiltration (D ⊔ E) = adeleFiltration D ⊔ adeleFiltration E := by
+  classical
+  refine le_antisymm (fun a ha ↦ ?_)
+    (sup_le (adeleFiltration_mono le_sup_left) (adeleFiltration_mono le_sup_right))
+  -- at each place the bound of `D ⊔ E` is the bound of `D` or the bound of `E`
+  have hsplit : ∀ P : Place k F, ¬ P.valuation (a P) ≤ WithZero.exp (D.coeff P) →
+      P.valuation (a P) ≤ WithZero.exp (E.coeff P) := by
+    intro P hP
+    have h := ha P
+    rw [WeilDivisor.coeff_sup] at h
+    rcases le_total (E.coeff P) (D.coeff P) with hle | hle
+    · exact absurd (by rwa [sup_eq_left.mpr hle] at h) hP
+    · rwa [sup_eq_right.mpr hle] at h
+  refine Submodule.mem_sup.mpr
+    ⟨fun P ↦ if P.valuation (a P) ≤ WithZero.exp (D.coeff P) then a P else 0, fun P ↦ ?_,
+      fun P ↦ if P.valuation (a P) ≤ WithZero.exp (D.coeff P) then 0 else a P, fun P ↦ ?_,
+      funext fun P ↦ ?_⟩
+  · by_cases h : P.valuation (a P) ≤ WithZero.exp (D.coeff P) <;> simp [h]
+  · by_cases h : P.valuation (a P) ≤ WithZero.exp (D.coeff P)
+    · simp [h]
+    · simpa [h] using hsplit P h
+  · by_cases h : P.valuation (a P) ≤ WithZero.exp (D.coeff P) <;> simp [h]
 
 /-- Every `A_F(D)` consists of repartitions: outside the support of `D` its defining bound reads
 `v_P (a P) ≤ exp 0 = 1`. -/
@@ -399,6 +433,29 @@ theorem submoduleOfAdeleFiltrationSupDiagonalRepartitions_mono {D E : Divisor k 
     submoduleOfAdeleFiltrationSupDiagonalRepartitions D ≤
       submoduleOfAdeleFiltrationSupDiagonalRepartitions E :=
   Submodule.comap_mono (sup_le_sup_right (adeleFiltration_mono h) _)
+
+/-- **`(A_F(D ⊔ E) + F) ∩ A_F` is the sum of the subspaces of `D` and of `E`**: the pointwise
+splitting `TauCeti.adeleFiltration_sup` survives adding the constants and cutting down to `A_F`,
+because the `A_F(E)`-half of the splitting already lies in `A_F`, hence so does the rest. -/
+theorem submoduleOfAdeleFiltrationSupDiagonalRepartitions_sup (D E : Divisor k F) :
+    submoduleOfAdeleFiltrationSupDiagonalRepartitions (D ⊔ E) =
+      submoduleOfAdeleFiltrationSupDiagonalRepartitions D ⊔
+        submoduleOfAdeleFiltrationSupDiagonalRepartitions E := by
+  refine le_antisymm (fun a ha ↦ ?_) (sup_le
+    (submoduleOfAdeleFiltrationSupDiagonalRepartitions_mono le_sup_left)
+    (submoduleOfAdeleFiltrationSupDiagonalRepartitions_mono le_sup_right))
+  obtain ⟨u, hu, f, hf, huf⟩ := Submodule.mem_sup.mp
+    (mem_submoduleOfAdeleFiltrationSupDiagonalRepartitions_iff.mp ha)
+  rw [adeleFiltration_sup] at hu
+  obtain ⟨x, hx, y, hy, hxy⟩ := Submodule.mem_sup.mp hu
+  have hyA : y ∈ repartitionSpace k F := adeleFiltration_le_repartitionSpace E hy
+  have hxf : x + f = (a : Place k F → F) - y := by rw [← huf, ← hxy]; abel
+  refine Submodule.mem_sup.mpr ⟨a - ⟨y, hyA⟩,
+    mem_submoduleOfAdeleFiltrationSupDiagonalRepartitions_iff.mpr ?_, ⟨y, hyA⟩,
+    mem_submoduleOfAdeleFiltrationSupDiagonalRepartitions_iff.mpr (Submodule.mem_sup_left hy),
+    sub_add_cancel a _⟩
+  simp only [Submodule.coe_sub, ← hxf]
+  exact Submodule.add_mem_sup hx hf
 
 /-! ### Translating the filtration by a principal divisor -/
 
