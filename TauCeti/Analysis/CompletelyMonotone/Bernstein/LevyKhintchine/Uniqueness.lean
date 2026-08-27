@@ -78,8 +78,8 @@ private lemma laplaceTransform_bernsteinLevyKhintchineDerivativeMeasure
   rw [bernsteinLevyKhintchineDerivativeMeasure,
     laplaceTransform_add_measure _ _ hatom hjump,
     laplaceTransform_smul_measure, laplaceTransform_dirac,
-    ENNReal.toReal_ofReal hb, laplaceTransform_bernsteinLevyDerivativeMeasure]
-  simp only [NNReal.coe_zero, mul_zero, neg_zero, Real.exp_zero, mul_one]
+    laplaceTransform_bernsteinLevyDerivativeMeasure]
+  simp [ENNReal.toReal_ofReal hb]
 
 private lemma representsLaplaceOnIoi_bernsteinLevyKhintchineDerivativeMeasure
     {μ : Measure ℝ≥0} (hμ : IsBernsteinLevyMeasure μ) {b : ℝ} (hb : 0 ≤ b) :
@@ -91,27 +91,9 @@ private lemma representsLaplaceOnIoi_bernsteinLevyKhintchineDerivativeMeasure
       (laplaceTransform_bernsteinLevyKhintchineDerivativeMeasure hμ hb ht).symm
 
 private lemma bernsteinLevyKhintchineDerivativeMeasure_singleton_zero
-    {μ : Measure ℝ≥0} (hμ : IsBernsteinLevyMeasure μ) (b : ℝ) :
+    (b : ℝ) (μ : Measure ℝ≥0) :
     bernsteinLevyKhintchineDerivativeMeasure b μ {0} = ENNReal.ofReal b := by
-  rw [bernsteinLevyKhintchineDerivativeMeasure,
-    bernsteinLevyDerivativeMeasure_eq_withDensity,
-    Measure.add_apply, Measure.smul_apply,
-    Measure.dirac_apply, Set.indicator_of_mem (Set.mem_singleton 0), Pi.one_apply,
-    smul_eq_mul, mul_one, withDensity_apply _ (measurableSet_singleton 0)]
-  rw [Measure.restrict_eq_zero.mpr hμ.measure_singleton_zero]
-  simp
-
-private lemma withDensity_coordinate_inv
-    {μ : Measure ℝ≥0} (hμ : IsBernsteinLevyMeasure μ) :
-    (bernsteinLevyDerivativeMeasure μ).withDensity
-        (fun x => (x : ℝ≥0∞)⁻¹) = μ := by
-  rw [bernsteinLevyDerivativeMeasure_eq_withDensity]
-  apply withDensity_inv_same (by fun_prop)
-  · rw [ae_iff]
-    simpa only [ENNReal.coe_eq_zero, not_ne_iff, ofPred_eq_eq_singleton] using
-      hμ.measure_singleton_zero
-  · filter_upwards with x
-    simp
+  simp [bernsteinLevyKhintchineDerivativeMeasure]
 
 /-- **Uniqueness of Levy--Khintchine triplets.** If two triplets give the same function on the
 nonnegative half-line, then their killing coefficients, drift coefficients, and Levy measures
@@ -139,8 +121,8 @@ theorem eq_of_eqOn_bernsteinLevyKhintchineExponent
       ((representsLaplaceOnIoi_bernsteinLevyKhintchineDerivativeMeasure hν hb').congr hlaplace)
   have hb_eq : b = b' := by
     have hmass := congrArg (fun ρ : Measure ℝ≥0 => ρ {0}) hderivativeMeasure
-    rw [bernsteinLevyKhintchineDerivativeMeasure_singleton_zero hμ,
-      bernsteinLevyKhintchineDerivativeMeasure_singleton_zero hν,
+    rw [bernsteinLevyKhintchineDerivativeMeasure_singleton_zero,
+      bernsteinLevyKhintchineDerivativeMeasure_singleton_zero,
       ENNReal.ofReal_eq_ofReal_iff hb hb'] at hmass
     exact hmass
   have hweighted : bernsteinLevyDerivativeMeasure μ = bernsteinLevyDerivativeMeasure ν := by
@@ -153,10 +135,11 @@ theorem eq_of_eqOn_bernsteinLevyKhintchineExponent
   have hmeasure : μ = ν := by
     calc
       μ = (bernsteinLevyDerivativeMeasure μ).withDensity
-          (fun x => (x : ℝ≥0∞)⁻¹) := (withDensity_coordinate_inv hμ).symm
+          (fun x => (x : ℝ≥0∞)⁻¹) :=
+        (withDensity_inv_bernsteinLevyDerivativeMeasure hμ.measure_singleton_zero).symm
       _ = (bernsteinLevyDerivativeMeasure ν).withDensity
           (fun x => (x : ℝ≥0∞)⁻¹) := by rw [hweighted]
-      _ = ν := withDensity_coordinate_inv hν
+      _ = ν := withDensity_inv_bernsteinLevyDerivativeMeasure hν.measure_singleton_zero
   exact ⟨ha, hb_eq, hmeasure⟩
 
 /-- **Every Bernstein function has a unique Levy--Khintchine triplet.** The components of the

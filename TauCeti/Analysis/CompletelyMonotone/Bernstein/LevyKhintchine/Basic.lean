@@ -32,7 +32,8 @@ terms, is a Bernstein function.
 * `TauCeti.bernsteinLevyJumpExponent`: the jump part of a Bernstein function's
   Levy--Khintchine representation.
 * `TauCeti.bernsteinLevyDerivativeMeasure`: coordinate-weighting of a Levy measure, whose
-  Laplace transform is the derivative of the jump exponent.
+  Laplace transform is the derivative of the jump exponent; it is inverted by
+  `TauCeti.withDensity_inv_bernsteinLevyDerivativeMeasure`.
 * `TauCeti.isBernsteinFunction_bernsteinLevyJumpExponent`: an integrable Levy jump exponent is
   a Bernstein function.
 * `TauCeti.isBernsteinFunction_bernsteinLevyKhintchineExponent`: adding
@@ -204,11 +205,26 @@ transform is the derivative of its jump exponent. -/
 noncomputable def bernsteinLevyDerivativeMeasure (μ : Measure ℝ≥0) : Measure ℝ≥0 :=
   μ.withDensity fun x : ℝ≥0 => (x : ℝ≥0∞)
 
-/-- The coordinate-weighted Levy measure is a `withDensity` measure. -/
+/-- The coordinate-weighted Levy measure has no atom at zero: the weight vanishes there. -/
 @[simp]
-theorem bernsteinLevyDerivativeMeasure_eq_withDensity (μ : Measure ℝ≥0) :
-    bernsteinLevyDerivativeMeasure μ = μ.withDensity fun x : ℝ≥0 => (x : ℝ≥0∞) := by
+theorem bernsteinLevyDerivativeMeasure_singleton_zero (μ : Measure ℝ≥0) :
+    bernsteinLevyDerivativeMeasure μ {0} = 0 := by
+  rw [bernsteinLevyDerivativeMeasure, withDensity_apply _ (measurableSet_singleton 0),
+    lintegral_eq_zero_iff (by fun_prop)]
+  filter_upwards [ae_restrict_mem (measurableSet_singleton 0)] with x hx
+  rw [Set.mem_singleton_iff] at hx
+  simp [hx]
+
+/-- Dividing out the coordinate weight recovers a Levy measure from its coordinate-weighted
+counterpart, since the weight is invertible away from the zero-mass point `0`. -/
+theorem withDensity_inv_bernsteinLevyDerivativeMeasure {μ : Measure ℝ≥0} (hμ : μ {0} = 0) :
+    (bernsteinLevyDerivativeMeasure μ).withDensity (fun x : ℝ≥0 => (x : ℝ≥0∞)⁻¹) = μ := by
   rw [bernsteinLevyDerivativeMeasure]
+  refine withDensity_inv_same (by fun_prop) ?_ ?_
+  · rw [ae_iff]
+    simpa only [ENNReal.coe_eq_zero, not_ne_iff, ofPred_eq_eq_singleton] using hμ
+  · filter_upwards with x
+    simp
 
 /-- The exponential kernel is integrable against a coordinate-weighted Levy measure at every
 positive parameter. -/
@@ -217,7 +233,7 @@ theorem integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure
     {t : ℝ} (ht : 0 < t) :
     Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
       (bernsteinLevyDerivativeMeasure μ) := by
-  rw [bernsteinLevyDerivativeMeasure_eq_withDensity,
+  rw [bernsteinLevyDerivativeMeasure,
     integrable_withDensity_iff (by fun_prop) (by simp)]
   simpa only [ENNReal.coe_toReal, mul_comm] using
     integrable_mul_exp_neg_mul_of_integrable_min_one hμ ht
@@ -228,7 +244,7 @@ theorem laplaceTransform_bernsteinLevyDerivativeMeasure
     (μ : Measure ℝ≥0) (t : ℝ) :
     laplaceTransform (bernsteinLevyDerivativeMeasure μ) t =
       ∫ x : ℝ≥0, (x : ℝ) * Real.exp (-(t * (x : ℝ))) ∂μ := by
-  rw [laplaceTransform_apply, bernsteinLevyDerivativeMeasure_eq_withDensity,
+  rw [laplaceTransform_apply, bernsteinLevyDerivativeMeasure,
     integral_withDensity_eq_integral_toReal_smul (by fun_prop) (by simp)]
   simp only [ENNReal.coe_toReal, smul_eq_mul]
 
