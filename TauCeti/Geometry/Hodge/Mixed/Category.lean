@@ -148,7 +148,8 @@ noncomputable instance : Linear ℚ MixedHodgeStructureCat.{u} where
   comp_smul _ _ _ f q g := MixedHodgeStructure.Hom.smul_comp q g f
 
 /-- The rational realization of a mixed Hodge structure and its morphisms. -/
-noncomputable abbrev rational : MixedHodgeStructureCat.{u} ⥤ ModuleCat.{u} ℚ where
+@[expose]
+noncomputable def rational : MixedHodgeStructureCat.{u} ⥤ ModuleCat.{u} ℚ where
   obj X := X.rat
   map f := ModuleCat.ofHom f.toRatLinearMap
   map_id X := by
@@ -157,6 +158,11 @@ noncomputable abbrev rational : MixedHodgeStructureCat.{u} ⥤ ModuleCat.{u} ℚ
   map_comp f g := by
     apply ModuleCat.hom_ext
     exact comp_toRatLinearMap f g
+
+/-- The rational realization sends a mixed Hodge structure to its rational vector space. -/
+@[simp]
+theorem rational_obj (X : MixedHodgeStructureCat.{u}) : rational.obj X = X.rat :=
+  rfl
 
 /-- The rational realization sends a morphism to its underlying rational linear map. -/
 @[simp]
@@ -183,7 +189,8 @@ noncomputable instance : rational.Linear ℚ where
 
 /-- The complex realization of a mixed Hodge structure and the complexification of its
 morphisms. -/
-noncomputable abbrev complex : MixedHodgeStructureCat.{u} ⥤ ModuleCat.{u} ℂ where
+@[expose]
+noncomputable def complex : MixedHodgeStructureCat.{u} ⥤ ModuleCat.{u} ℂ where
   obj X := X.complexSpace
   map f := ModuleCat.ofHom f.toLinearMap
   map_id X := by
@@ -192,6 +199,11 @@ noncomputable abbrev complex : MixedHodgeStructureCat.{u} ⥤ ModuleCat.{u} ℂ 
   map_comp f g := by
     apply ModuleCat.hom_ext
     exact comp_toComplexLinearMap f g
+
+/-- The complex realization sends a mixed Hodge structure to its complex vector space. -/
+@[simp]
+theorem complex_obj (X : MixedHodgeStructureCat.{u}) : complex.obj X = X.complexSpace :=
+  rfl
 
 /-- The complex realization sends a morphism to its derived complex linear map. -/
 @[simp]
