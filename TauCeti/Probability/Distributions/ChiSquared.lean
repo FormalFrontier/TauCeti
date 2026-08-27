@@ -329,6 +329,7 @@ theorem cgf_id_chiSquaredMeasure (hk : 0 ≤ k) {t : ℝ} (ht : t < 2⁻¹) :
 
 /-- The characteristic function of a chi-squared law with nonnegative degrees of freedom, at every
 real `t`. The base has real part `1`, so the principal power does not meet the branch cut. -/
+@[simp]
 theorem charFun_chiSquaredMeasure (hk : 0 ≤ k) (t : ℝ) :
     charFun (chiSquaredMeasure k) t = (1 - 2 * Complex.I * t) ^ (-(k : ℂ) / 2) := by
   rcases hk.eq_or_lt' with rfl | hk
