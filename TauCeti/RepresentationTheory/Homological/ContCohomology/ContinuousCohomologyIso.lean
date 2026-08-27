@@ -20,9 +20,13 @@ operations that exist in that degree across the identification.
 
 The comparison is an isomorphism in `TopModuleCat ℤ`, not merely an additive one: `H⁰(G, M)` is a
 subgroup of the discrete `M`, so it is discrete already and needs no separate discrete synonym,
-and Mathlib's `ContinuousCohomology.zeroIso` presents the canonical side as the invariants of the
-same module. Both sides therefore carry the subspace topology of `M`, and the comparison
-`TauCeti.ContCohomology.explicitH0IsoContinuousCohomology` is the identity on underlying elements.
+and Mathlib's `ContinuousCohomology.zeroIso` exhibits the canonical carrier as homeomorphic to the
+invariant subspace of the same module. The identity on underlying elements of `M` is therefore
+already an isomorphism of topological `ℤ`-modules between `H⁰(G, M)` and those invariants, which is
+`TauCeti.ContCohomology.H0ContinuousLinearEquivInvariants`; composing it with the inverse of
+`zeroIso` gives `TauCeti.ContCohomology.explicitH0IsoContinuousCohomology`, whose value at an
+invariant `m` is the degree-zero cohomology class of `m` in the sense of
+`TauCeti.ContinuousCohomology.degreeZeroClass`.
 
 Degree zero needs no hypothesis beyond the ones that make the two sides exist. In particular it
 needs neither profiniteness of `G` nor continuity of the action `G × M → M`: a `0`-cochain is a
@@ -61,6 +65,13 @@ and profiniteness of `G`, and are not in this file.
 The sibling file `GroupCohomologyIso.lean` compares the same explicit model with Mathlib's
 *discrete* `groupCohomology`; this file compares it with the *continuous* carrier, which is the
 canonical object the roadmap fixes.
+
+## References
+
+* J. Neukirch, A. Schmidt, K. Wingberg, *Cohomology of Number Fields*, 2nd ed., Ch. I, §2: the
+  identification of the inhomogeneous description of continuous cohomology, which the explicit
+  model here follows, with the homogeneous one computing the canonical object. The isomorphism
+  built in this file is the degree-zero case of that identification.
 -/
 
 public section
@@ -73,7 +84,10 @@ universe u
 
 section Carriers
 
-variable (G : Type u) [Group G]
+/-! The carriers are the invariants of a single element, so they need no inverses in `G` and no
+topology on it. -/
+
+variable (G : Type u) [Monoid G]
   (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DiscreteTopology M] [DistribMulAction G M]
 

@@ -463,11 +463,16 @@ variable {R : Type u} [Ring R] [TopologicalSpace R] {G : Type v} [Group G]
   [DistribMulAction H N] [SMulCommClass H R N] [ContinuousSMul R N]
 
 /-- The canonical-side coefficient morphism of a **compatible pair**: a monoid homomorphism
-`φ : H →* G` together with an `R`-linear `f : M →+ N` satisfying `f (φ h • m) = h • f m` becomes a
+`φ : H →* G` together with an `f : M →ₗ[R] N` satisfying `f (φ h • m) = h • f m` becomes a
 morphism `TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N`, which is what
 `ContinuousCohomology.map` consumes. Continuity of `f` is automatic, the source being discrete.
 `TauCeti.ofDiscreteModuleMap` is the case `φ = MonoidHom.id G`, by
-`TauCeti.ofDiscreteModulePair_id`. -/
+`TauCeti.ofDiscreteModulePair_id`.
+
+Exposed because the degree-zero transport squares of
+`TauCeti/RepresentationTheory/Homological/ContCohomology/ContinuousCohomologyIso.lean` specialise
+it at the subgroup inclusion and at the identity, where it has to be recognised as `𝟙` and as
+`TauCeti.ofDiscreteModuleMap` on the nose. -/
 @[expose] def ofDiscreteModulePair (φ : H →* G) (f : M →ₗ[R] N)
     (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m) :
     TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N :=
