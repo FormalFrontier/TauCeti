@@ -70,6 +70,9 @@ local notation "b" => integralLatticeAddSubgroupBasis 1
 local notation "hnil" => isNilpotent_repEnveloping_root ℚ 1
 local notation "hM" => kostantForm_apply_mem_integralLattice 1
 
+-- Match tensor products to the `ℤ`-algebra instance stored by `CommAlgCat` objects.
+attribute [local instance high] Algebra.toModule
+
 /-! ## The full rank-one weight lattice -/
 
 /-- The integral weight of the `i`th standard basis vector of the two-dimensional `sl₂` module:
@@ -166,15 +169,34 @@ noncomputable def rankOneGroupScheme :
     Grp (Over (Spec (CommRingCat.of ℤ))) :=
   kostantToralGroupScheme e h ρ M hM hnil b rankOneWeight
 
-private theorem rankOneGroupScheme_eq :
+private theorem rankOneGroupScheme_eq_def :
     rankOneGroupScheme = kostantToralGroupScheme e h ρ M hM hnil b rankOneWeight :=
   rfl
+
+/-- The rank-one carrier is the toral Kostant group scheme for the standard integral lattice. -/
+theorem rankOneGroupScheme_def :
+    rankOneGroupScheme = kostantToralGroupScheme e h ρ M hM hnil b rankOneWeight :=
+  rankOneGroupScheme_eq_def
 
 /-- The closed immersion of the rank-one carrier into `GL₂`. -/
 noncomputable def rankOneGroupSchemeι :
     rankOneGroupScheme ⟶ GeneralLinear.groupScheme ℤ 2 :=
-  eqToHom rankOneGroupScheme_eq ≫
+  eqToHom rankOneGroupScheme_def ≫
     kostantToralGroupSchemeι e h ρ M hM hnil b rankOneWeight
+
+private theorem rankOneGroupSchemeι_eq_def :
+    rankOneGroupSchemeι =
+      eqToHom rankOneGroupScheme_def ≫
+        kostantToralGroupSchemeι e h ρ M hM hnil b rankOneWeight :=
+  rfl
+
+/-- The inclusion of the rank-one carrier is the generic toral Kostant inclusion, transported
+along its defining equality. -/
+theorem rankOneGroupSchemeι_def :
+    rankOneGroupSchemeι =
+      eqToHom rankOneGroupScheme_def ≫
+        kostantToralGroupSchemeι e h ρ M hM hnil b rankOneWeight :=
+  rankOneGroupSchemeι_eq_def
 
 /-- The inclusion of the rank-one carrier into `GL₂` is a closed immersion. -/
 instance isClosedImmersion_rankOneGroupSchemeι :
@@ -185,13 +207,41 @@ instance isClosedImmersion_rankOneGroupSchemeι :
 noncomputable def rankOneRootSubgroup (i : Fin 2) :
     AdditiveGroup.groupScheme ℤ ⟶ rankOneGroupScheme :=
   kostantRootSubgroupToToral e h ρ M hM hnil b rankOneWeight i ≫
-    eqToHom rankOneGroupScheme_eq.symm
+    eqToHom rankOneGroupScheme_def.symm
+
+private theorem rankOneRootSubgroup_eq_def (i : Fin 2) :
+    rankOneRootSubgroup i =
+      kostantRootSubgroupToToral e h ρ M hM hnil b rankOneWeight i ≫
+        eqToHom rankOneGroupScheme_def.symm :=
+  rfl
+
+/-- A rank-one root subgroup is the generic toral Kostant root subgroup, transported into the
+named carrier. -/
+theorem rankOneRootSubgroup_def (i : Fin 2) :
+    rankOneRootSubgroup i =
+      kostantRootSubgroupToToral e h ρ M hM hnil b rankOneWeight i ≫
+        eqToHom rankOneGroupScheme_def.symm :=
+  rankOneRootSubgroup_eq_def i
 
 /-- The represented split torus in the rank-one carrier. -/
 noncomputable def rankOneWeightTorus :
     SplitTorus.groupScheme ℤ (Fin 1) ⟶ rankOneGroupScheme :=
   kostantWeightTorusToToral e h ρ M hM hnil b rankOneWeight ≫
-    eqToHom rankOneGroupScheme_eq.symm
+    eqToHom rankOneGroupScheme_def.symm
+
+private theorem rankOneWeightTorus_eq_def :
+    rankOneWeightTorus =
+      kostantWeightTorusToToral e h ρ M hM hnil b rankOneWeight ≫
+        eqToHom rankOneGroupScheme_def.symm :=
+  rfl
+
+/-- The rank-one weight torus is the generic toral Kostant weight torus, transported into the
+named carrier. -/
+theorem rankOneWeightTorus_def :
+    rankOneWeightTorus =
+      kostantWeightTorusToToral e h ρ M hM hnil b rankOneWeight ≫
+        eqToHom rankOneGroupScheme_def.symm :=
+  rankOneWeightTorus_eq_def
 
 /-- Including a root subgroup into `GL₂` recovers its represented Kostant root subgroup. -/
 @[simp]
@@ -219,6 +269,13 @@ instance isClosedImmersion_rankOneWeightTorus :
 noncomputable def rankOneWeightTorusInGroupScheme :
     ClosedSubgroupScheme rankOneGroupScheme :=
   ClosedSubgroupScheme.mk rankOneWeightTorus
+
+/-- The subobject underlying the closed rank-one weight torus is represented by its inclusion. -/
+@[simp]
+theorem coe_rankOneWeightTorusInGroupScheme :
+    (rankOneWeightTorusInGroupScheme).1 = Subobject.mk rankOneWeightTorus := by
+  rw [rankOneWeightTorusInGroupScheme]
+  exact ClosedSubgroupScheme.coe_mk _
 
 /-- Each root subgroup is a closed immersion into the rank-one carrier. -/
 instance isClosedImmersion_rankOneRootSubgroup (i : Fin 2) :
@@ -248,12 +305,24 @@ theorem rankOneTorusMatrix_apply {A : Type*} [CommRing A] (s : Fin 1 → Aˣ) :
     simp [rankOneWeight, torusCharacter_def]
 
 /-- The represented rank-one weight torus on points of a value algebra. -/
-noncomputable def rankOneTorusPoints (A : CommAlgCat.{u} ℤ) :=
+noncomputable def rankOneTorusPoints (A : CommAlgCat.{u} ℤ) :
+    (Fin 1 → Aˣ) →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
   kostantTorusPoints M b rankOneWeight A
 
 /-- The parametrized root subgroup for one of the two rank-one root generators. -/
-noncomputable def rankOneRootSubgroupParam (i : Fin 2) (A : CommAlgCat.{u} ℤ) :=
+noncomputable def rankOneRootSubgroupParam (i : Fin 2) (A : CommAlgCat.{u} ℤ) :
+    Multiplicative A →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M) :=
   kostantRootSubgroupParam e h ρ M hM i (hnil i) A
+
+/-- A rank-one torus point scales each base-changed basis vector by its recorded weight
+character. -/
+@[simp]
+theorem rankOneTorusPoints_apply_baseChange_basis
+    {A : Type u} [CommRing A] (s : Fin 1 → Aˣ) (i : Fin 2) :
+    (rankOneTorusPoints (CommAlgCat.of ℤ A) s).val ((b).baseChange A i) =
+      (torusCharacter s (rankOneWeight i) : A) • (b).baseChange A i := by
+  rw [Module.Basis.baseChange_apply, rankOneTorusPoints, kostantTorusPoints_tmul_basis]
+  simp [smul_tmul']
 
 /-- A parametrized rank-one root element adds `t` times the `i`th basis vector to the opposite
 basis vector and fixes the other basis vector. -/
