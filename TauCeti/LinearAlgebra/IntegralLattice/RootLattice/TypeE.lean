@@ -328,29 +328,25 @@ quadratic value `2/3`. -/
     (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
         exact Submodule.mem_one.mpr ⟨4, by norm_num⟩)
 
-/-- The quadratic map on `ZMod 3` whose generator has value `2/3`, namely the one carried by
-`typeE₆StandardQuadraticModule`. -/
-noncomputable def typeE₆StandardQuadraticMap :
-    QuadraticMap ℤ (ZMod 3) (AddCircle (1 : ℚ)) :=
-  typeE₆StandardQuadraticModule.quadratic
-
-/-- The generator of the standard type-`E₆` quadratic map has value `2/3`. -/
+/-- The generator of the standard type-`E₆` quadratic module has value `2/3`. -/
 @[simp]
-theorem typeE₆StandardQuadraticMap_one :
-    typeE₆StandardQuadraticMap 1 =
-      (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ)) :=
-  FiniteQuadraticModule.cyclicMap_one 3 _ _ _
+theorem typeE₆StandardQuadraticModule_quadratic_one :
+    typeE₆StandardQuadraticModule.quadratic (1 : ZMod 3) =
+      (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ)) := by
+  unfold typeE₆StandardQuadraticModule
+  rw [FiniteQuadraticModule.cyclic_quadratic, FiniteQuadraticModule.cyclicMap_one]
 
 /-- The standard cyclic quadratic module of type `E₆` is isometric to the discriminant
 quadratic module of the `E₆` root lattice. -/
 noncomputable def typeE₆DiscriminantQuadraticIsometry :
     FiniteQuadraticModule.Isometry typeE₆StandardQuadraticModule
       (typeE₆RootLattice.discriminantQuadraticModule isEven_typeE₆RootLattice) :=
-  FiniteQuadraticModule.cyclicIsometryOfGenerator 3 typeE₆StandardQuadraticMap
+  FiniteQuadraticModule.cyclicIsometryOfGenerator 3 typeE₆StandardQuadraticModule.quadratic
     (typeE₆RootLattice.discriminantQuadraticMap isEven_typeE₆RootLattice)
     typeE₆DiscriminantGroupEquiv (by
       rw [typeE₆DiscriminantGroupEquiv_apply_one,
-        discriminantQuadraticMap_typeE₆MinusculeWeightClass, typeE₆StandardQuadraticMap_one])
+        discriminantQuadraticMap_typeE₆MinusculeWeightClass]
+      exact typeE₆StandardQuadraticModule_quadratic_one.symm)
 
 /-- The underlying additive equivalence of the type-`E₆` quadratic isometry. -/
 @[simp]
@@ -605,29 +601,25 @@ quadratic value `3/4`. -/
     (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
         exact Submodule.mem_one.mpr ⟨3, by norm_num⟩)
 
-/-- The quadratic map on `ZMod 2` whose generator has value `3/4`, namely the one carried by
-`typeE₇StandardQuadraticModule`. -/
-noncomputable def typeE₇StandardQuadraticMap :
-    QuadraticMap ℤ (ZMod 2) (AddCircle (1 : ℚ)) :=
-  typeE₇StandardQuadraticModule.quadratic
-
-/-- The generator of the standard type-`E₇` quadratic map has value `3/4`. -/
+/-- The generator of the standard type-`E₇` quadratic module has value `3/4`. -/
 @[simp]
-theorem typeE₇StandardQuadraticMap_one :
-    typeE₇StandardQuadraticMap 1 =
-      (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) :=
-  FiniteQuadraticModule.cyclicMap_one 2 _ _ _
+theorem typeE₇StandardQuadraticModule_quadratic_one :
+    typeE₇StandardQuadraticModule.quadratic (1 : ZMod 2) =
+      (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) := by
+  unfold typeE₇StandardQuadraticModule
+  rw [FiniteQuadraticModule.cyclic_quadratic, FiniteQuadraticModule.cyclicMap_one]
 
 /-- The standard cyclic quadratic module of type `E₇` is isometric to the discriminant
 quadratic module of the `E₇` root lattice. -/
 noncomputable def typeE₇DiscriminantQuadraticIsometry :
     FiniteQuadraticModule.Isometry typeE₇StandardQuadraticModule
       (typeE₇RootLattice.discriminantQuadraticModule isEven_typeE₇RootLattice) :=
-  FiniteQuadraticModule.cyclicIsometryOfGenerator 2 typeE₇StandardQuadraticMap
+  FiniteQuadraticModule.cyclicIsometryOfGenerator 2 typeE₇StandardQuadraticModule.quadratic
     (typeE₇RootLattice.discriminantQuadraticMap isEven_typeE₇RootLattice)
     typeE₇DiscriminantGroupEquiv (by
       rw [typeE₇DiscriminantGroupEquiv_apply_one,
-        discriminantQuadraticMap_typeE₇MinusculeWeightClass, typeE₇StandardQuadraticMap_one])
+        discriminantQuadraticMap_typeE₇MinusculeWeightClass]
+      exact typeE₇StandardQuadraticModule_quadratic_one.symm)
 
 /-- The underlying additive equivalence of the type-`E₇` quadratic isometry. -/
 @[simp]
