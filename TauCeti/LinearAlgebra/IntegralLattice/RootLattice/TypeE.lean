@@ -319,35 +319,23 @@ theorem discriminantPairing_typeE₆MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- Nine times `2/3`, the type-`E₆` discriminant quadratic value, vanishes in `ℚ/ℤ`. -/
-private theorem nine_zsmul_two_div_three_eq_zero :
-    (9 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
-  exact Submodule.mem_one.mpr ⟨6, by norm_num⟩
-
-/-- Six times `2/3`, the type-`E₆` discriminant quadratic value, vanishes in `ℚ/ℤ`. -/
-private theorem six_zsmul_two_div_three_eq_zero :
-    (6 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
-  exact Submodule.mem_one.mpr ⟨4, by norm_num⟩
-
-/-- The quadratic map on `ZMod 3` whose generator has value `2/3`. -/
-noncomputable def typeE₆StandardQuadraticMap :
-    QuadraticMap ℤ (ZMod 3) (AddCircle (1 : ℚ)) :=
-  FiniteQuadraticModule.cyclicMap 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
-    nine_zsmul_two_div_three_eq_zero six_zsmul_two_div_three_eq_zero
-
 /-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`.
 
-The two descent hypotheses are discharged inline rather than by named lemmas: they are numeric
-torsion facts of no independent interest, and this definition is `@[expose]`d, so its body must
-mention only public declarations. -/
+The two descent hypotheses are the numeric torsion facts `9 • (2/3) = 0` and `6 • (2/3) = 0` in
+`ℚ/ℤ`; they are discharged inline because they have no independent interest and this definition
+is `@[expose]`d, so its body may mention only public declarations. -/
 @[expose] noncomputable def typeE₆StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
     (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
         exact Submodule.mem_one.mpr ⟨6, by norm_num⟩)
     (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
         exact Submodule.mem_one.mpr ⟨4, by norm_num⟩)
+
+/-- The quadratic map on `ZMod 3` whose generator has value `2/3`, namely the one carried by
+`typeE₆StandardQuadraticModule`. -/
+noncomputable def typeE₆StandardQuadraticMap :
+    QuadraticMap ℤ (ZMod 3) (AddCircle (1 : ℚ)) :=
+  typeE₆StandardQuadraticModule.quadratic
 
 /-- The generator of the standard type-`E₆` quadratic map has value `2/3`. -/
 @[simp]
@@ -611,28 +599,22 @@ theorem discriminantPairing_typeE₇MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- Four times `3/4`, the type-`E₇` discriminant quadratic value, vanishes in `ℚ/ℤ`. -/
-private theorem four_zsmul_three_div_four_eq_zero :
-    (4 : ℤ) • ((((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
-  exact Submodule.mem_one.mpr ⟨3, by norm_num⟩
-
-/-- The quadratic map on `ZMod 2` whose generator has value `3/4`. -/
-noncomputable def typeE₇StandardQuadraticMap :
-    QuadraticMap ℤ (ZMod 2) (AddCircle (1 : ℚ)) :=
-  FiniteQuadraticModule.cyclicMap 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
-    four_zsmul_three_div_four_eq_zero four_zsmul_three_div_four_eq_zero
-
 /-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`.
 
-As for `typeE₆StandardQuadraticModule`, the descent hypotheses are discharged inline because this
-definition is `@[expose]`d. -/
+Both descent hypotheses are the numeric torsion fact `4 • (3/4) = 0` in `ℚ/ℤ`, discharged inline
+as for `typeE₆StandardQuadraticModule`. -/
 @[expose] noncomputable def typeE₇StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
     (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
         exact Submodule.mem_one.mpr ⟨3, by norm_num⟩)
     (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
         exact Submodule.mem_one.mpr ⟨3, by norm_num⟩)
+
+/-- The quadratic map on `ZMod 2` whose generator has value `3/4`, namely the one carried by
+`typeE₇StandardQuadraticModule`. -/
+noncomputable def typeE₇StandardQuadraticMap :
+    QuadraticMap ℤ (ZMod 2) (AddCircle (1 : ℚ)) :=
+  typeE₇StandardQuadraticModule.quadratic
 
 /-- The generator of the standard type-`E₇` quadratic map has value `3/4`. -/
 @[simp]
