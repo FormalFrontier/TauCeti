@@ -23,7 +23,7 @@ q(k) = k²a,   b(j, k) = 2jk·a.
 The construction is a quotient, not a formula in `ZMod.val`: the parameter defines the honest
 `ℤ`-bilinear map `(x, y) ↦ xy·a` on `ℤ`, its associated quadratic map `x ↦ x²a` has the kernel of
 the reduction `ℤ → ℤ/m` inside its radical exactly under the two torsion hypotheses, and
-`TauCeti.QuadraticMap.liftOfSurjective` descends it.  The hypotheses are therefore not technical:
+`QuadraticMap.liftOfSurjective` descends it.  The hypotheses are therefore not technical:
 `m²a = 0` is the statement that the quadratic value of the generator is well defined modulo `m`,
 and `2ma = 0` the corresponding statement for the pairing.  Neither implies the other: for `m = 1`
 and `a = 1/2` the second holds (`2a = 0`) and the first fails (`a = 1/2`), while for `m = 3` and

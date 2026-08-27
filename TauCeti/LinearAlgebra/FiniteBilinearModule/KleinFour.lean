@@ -23,7 +23,7 @@ q(1, 0) = α,   q(0, 1) = β,   q(1, 1) = α + β + γ,   b((1, 0), (0, 1)) = γ
 The construction is a quotient, not a formula in `ZMod.val`: the parameters define an honest
 `ℤ`-bilinear map on `ℤ × ℤ`, its associated quadratic map `(m, k) ↦ m²α + k²β + mkγ` has the
 kernel of the reduction `ℤ × ℤ → (ℤ/2)²` inside its radical exactly under the three torsion
-hypotheses, and `TauCeti.QuadraticMap.liftOfSurjective` descends it.  The torsion hypotheses are
+hypotheses, and `QuadraticMap.liftOfSurjective` descends it.  The torsion hypotheses are
 therefore not technical: `4α = 0` is the statement that `q` is well defined on a two-torsion
 generator, and `2γ = 0` the corresponding statement for the pairing.
 

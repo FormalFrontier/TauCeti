@@ -26,7 +26,7 @@ the polar pairing is therefore `B(x, y)` modulo `ℤ`.
 
 ## Main definitions
 
-* `TauCeti.QuadraticMap.liftOfSurjective`: descent of a quadratic map along a surjection whose
+* `QuadraticMap.liftOfSurjective`: descent of a quadratic map along a surjection whose
   kernel lies in the radical.
 * `TauCeti.FiniteQuadraticModule`: a finite abelian group with an `AddCircle (1 : ℚ)`-valued
   quadratic map.
@@ -56,8 +56,6 @@ This is the finite-quadratic-module part of Layer 3 of
 
 public section
 
-namespace TauCeti
-
 universe u v
 
 /-! ## Descent of a quadratic map along a surjection -/
@@ -85,6 +83,8 @@ theorem liftOfSurjective_apply (Q : QuadraticMap R M P) (f : M →ₗ[R] N)
     LinearMap.quotKerEquivOfSurjective_symm_apply, QuadraticMap.lift_mk]
 
 end QuadraticMap
+
+namespace TauCeti
 
 /-- A finite abelian group equipped with a quadratic map to `ℚ/ℤ`.
 
