@@ -271,8 +271,8 @@ private theorem mapValue_weightParabolicGenericPoint (w : Fin N → ℤ)
     _ = AlgHom.mapValue g.ofConv
           (CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R N)
             (weightParabolicDefiningHopfIdeal R w) PAlg q) := by
-      congr 1
-      exact coe_weightParabolicPointsIso_hom_app_apply R w q
+      exact congrArg (AlgHom.mapValue g.ofConv)
+        (coe_weightParabolicPointsIso_hom_app_apply R w q)
     _ = CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R N)
           (weightParabolicDefiningHopfIdeal R w) (CommAlgCat.of R A)
           (AlgHom.mapValue g.ofConv q) :=
@@ -281,10 +281,6 @@ private theorem mapValue_weightParabolicGenericPoint (w : Fin N → ℤ)
     _ = CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R N)
           (weightParabolicDefiningHopfIdeal R w) (CommAlgCat.of R A) g := by
       congr 1
-      apply WithConv.ofConv_injective
-      ext h
-      change g.ofConv ((AlgHom.id R P) h) = g.ofConv h
-      rw [AlgHom.id_apply]
     _ = _ := (coe_weightParabolicPointsIso_hom_app_apply R w g).symm
 
 /-- The limit coordinate morphism is a section of the coordinate morphism representing the
@@ -378,11 +374,9 @@ theorem mapPointsFunctor_weightParabolicLimitCoordinateMap_app (w : Fin N → �
               (AlgHom.mapValue g.ofConv
                 ((CommHopfAlgCat.mapPointsFunctor
                   (weightParabolicLimitCoordinateMap R w)).app PAlg q)) :=
-          congrArg (CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R N)
-            (weightLeviDefiningHopfIdeal R w) (CommAlgCat.of R A)) (by
-              simpa only [P, PAlg, q] using
-                mapPointsFunctor_apply_eq_mapValue_generic R
-                  (weightParabolicLimitCoordinateMap R w) g)
+          by
+            rw [mapPointsFunctor_apply_eq_mapValue_generic R
+              (weightParabolicLimitCoordinateMap R w) g]
         _ = _ := by
           simpa only [P, PAlg] using
             (CommHopfAlgCat.mapValue_quotientPointsHom (coordinateHopfAlgebra R N)
