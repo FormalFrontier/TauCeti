@@ -6,10 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
-public import TauCeti.Algebra.AlgebraicGroup.Solvable.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Basic
 import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
-import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Solvable
 
 /-!
 # The upper-triangular subgroup scheme of the general linear group
@@ -19,10 +17,6 @@ strictly decreasing weights `i ↦ n - 1 - i`. The resulting finite-type closed 
 represents the group of invertible upper-triangular matrices over every commutative `R`-algebra.
 The pointwise identifications are assembled into a natural isomorphism of group-valued functors.
 
-Over a field, the geometric points of this group are solvable: its diagonal quotient is abelian
-and its upper-unitriangular kernel is nilpotent. This supplies the general-rank affine-group
-example needed by the Lie--Kolchin and solvable-groups milestone.
-
 ## Main declarations
 
 * `TauCeti.GeneralLinear.UpperTriangular.groupScheme`: the finite-type closed subgroup scheme of
@@ -31,14 +25,15 @@ example needed by the Lie--Kolchin and solvable-groups milestone.
   the group `TauCeti.upperTriangularGroup (Fin n) A`.
 * `TauCeti.GeneralLinear.UpperTriangular.pointsNatIso`: the corresponding natural isomorphism of
   group-valued functors.
-* `geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra`: the upper-triangular
-  affine group has solvable geometric points.
 
 ## References
 
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2.
 * T. A. Springer, *Linear Algebraic Groups*, Sections 2.4 and 6.3.
 * J. S. Milne, *Algebraic Groups* (2017), Chapters 12--13.
+* The quotient-points equivalence, entrywise map, and functor proofs generalize the formalization
+  in `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel`, which follows the pattern of
+  `TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic`.
 
 This advances Layer 5, "Lie--Kolchin; solvable groups", of the ReductiveGroups roadmap. It
 constructs the general-rank group scheme whose abstract point groups were already proved solvable.
@@ -160,6 +155,7 @@ variable {A : Type w} [CommRing A] [Algebra R A]
 
 /-- An ambient `GL_n`-point belongs to the upper-triangular closed subgroup exactly when its
 matrix is upper triangular. -/
+@[simp]
 theorem mem_definingPointsSubgroup_iff
     (g : HopfAlgebra.points (R := R)
       (H := GeneralLinear.coordinateHopfAlgebra R n) (CommAlgCat.of R A)) :
@@ -237,6 +233,17 @@ theorem pointsMulEquiv_coe
   exact congrArg
     (fun g => (pointsSubgroupToUpperTriangular R n g : upperTriangularGroup (Fin n) A).1)
     hcomponent.symm
+
+/-- The ambient point attached to an upper-triangular matrix is the general-linear point
+attached to its ordinary inclusion. -/
+@[simp]
+theorem quotientPointsHom_pointsMulEquiv_symm (g : upperTriangularGroup (Fin n) A) :
+    CommHopfAlgCat.quotientPointsHom
+        (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
+        (CommAlgCat.of R A) ((pointsMulEquiv (R := R) (n := n) (A := A)).symm g) =
+      (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).symm g.1 := by
+  apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).injective
+  rw [pointsMulEquiv_coe, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
 
 variable {B : Type w} [CommRing B] [Algebra R B]
 
@@ -360,13 +367,5 @@ theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
   rfl
 
 end Functor
-
-/-- The upper-triangular affine group has a solvable group of geometric points. -/
-theorem geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra
-    (k : Type u) [Field k] (n : ℕ) :
-    geometricallySolvablePointsCommHopfAlgProperty k (coordinateHopfAlgebra k n) := by
-  rw [geometricallySolvablePointsCommHopfAlgProperty_iff]
-  let e := pointsMulEquiv (R := k) (n := n) (A := AlgebraicClosure k)
-  exact Group.isSolvable_of_isSolvable_injective (f := e.toMonoidHom) e.injective
 
 end TauCeti.GeneralLinear.UpperTriangular
