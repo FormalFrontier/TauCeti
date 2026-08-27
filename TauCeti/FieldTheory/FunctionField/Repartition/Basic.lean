@@ -216,6 +216,7 @@ a *pointwise* one: splitting a repartition bounded by `D ⊔ E` into the places 
 satisfies the bound of `D` and the places where it does not writes it as a sum of one repartition
 bounded by `D` and one bounded by `E`.  The corresponding statement for `TauCeti.riemannRochSpace`
 is false, since a single function cannot be truncated place by place. -/
+@[simp]
 theorem adeleFiltration_sup (D E : Divisor k F) :
     adeleFiltration (D ⊔ E) = adeleFiltration D ⊔ adeleFiltration E := by
   classical
@@ -437,6 +438,7 @@ theorem submoduleOfAdeleFiltrationSupDiagonalRepartitions_mono {D E : Divisor k 
 /-- **`(A_F(D ⊔ E) + F) ∩ A_F` is the sum of the subspaces of `D` and of `E`**: the pointwise
 splitting `TauCeti.adeleFiltration_sup` survives adding the constants and cutting down to `A_F`,
 because the `A_F(E)`-half of the splitting already lies in `A_F`, hence so does the rest. -/
+@[simp]
 theorem submoduleOfAdeleFiltrationSupDiagonalRepartitions_sup (D E : Divisor k F) :
     submoduleOfAdeleFiltrationSupDiagonalRepartitions (D ⊔ E) =
       submoduleOfAdeleFiltrationSupDiagonalRepartitions D ⊔

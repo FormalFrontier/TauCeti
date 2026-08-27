@@ -152,6 +152,7 @@ theorem weilDifferentialFiltration_antitone :
 divisors into a lattice operation — `TauCeti.submoduleOfAdeleFiltrationSupDiagonalRepartitions_sup`
 — and annihilators take the resulting sum to an intersection.  This is what makes the set of
 divisors bounding a nonzero Weil differential have a greatest element. -/
+@[simp]
 theorem weilDifferentialFiltration_sup (D E : Divisor k F) :
     weilDifferentialFiltration (D ⊔ E) =
       weilDifferentialFiltration D ⊓ weilDifferentialFiltration E := by
@@ -222,8 +223,8 @@ by the inverse function recovers the form. -/
 theorem repartitionDualMul_inv_repartitionDualMul (hF : IsFunctionField k F) (z : Fˣ)
     (ω : Module.Dual k ↥(repartitionSpace k F)) :
     repartitionDualMul hF ((z⁻¹ : Fˣ) : F) (repartitionDualMul hF (z : F) ω) = ω := by
-  rw [← Module.End.mul_apply, ← map_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
-    map_one, Module.End.one_apply]
+  rw [← Module.End.mul_apply, ← map_mul]
+  simp
 
 /-- Multiplying a nonzero linear form on `A_F` by a nonzero function leaves it nonzero. -/
 theorem repartitionDualMul_ne_zero (hF : IsFunctionField k F) (z : Fˣ)

@@ -31,8 +31,8 @@ a function field has a strictly larger degree.
 ## Main definitions
 
 * `TauCeti.Divisor.ofWeilDifferential`: the divisor `(ω)` of a Weil differential (Stichtenoth,
-  Definition 1.5.11), the greatest divisor bounding it, with the junk value `0` when there is
-  none — that is, for `ω = 0` and for the linear forms that are not Weil differentials.
+  Definition 1.5.11), the greatest divisor bounding it, with the junk value `0` whenever the
+  divisors bounding `ω` have no greatest element.
 
 ## Main results
 
@@ -107,11 +107,13 @@ open scoped Classical in
 /-- **The divisor `(ω)` of a Weil differential** (Stichtenoth, Definition 1.5.11): the greatest
 divisor `D` with `ω ∈ Ω_F(D)`.
 
-For a nonzero Weil differential of a function field with exact constant field such a divisor
-exists, by `TauCeti.exists_isGreatest_setOf_mem_weilDifferentialFiltration`, and
+Under `IsFunctionField k F` and `IsIntegrallyClosedIn k F`, such a divisor exists for every
+nonzero Weil differential `ω`, by
+`TauCeti.exists_isGreatest_setOf_mem_weilDifferentialFiltration`, and
 `TauCeti.mem_weilDifferentialFiltration_iff_le_ofWeilDifferential` is the resulting
-characterization.  Otherwise — for `ω = 0`, which every divisor bounds, and for a linear form no
-divisor bounds — this is the junk value `0`. -/
+characterization.  Whenever the divisors bounding `ω` have no greatest element this is instead the
+junk value `0` — always so for a linear form no divisor bounds, and, unless the divisor group is
+trivial, also for `ω = 0`, which every divisor bounds. -/
 noncomputable def Divisor.ofWeilDifferential (ω : Module.Dual k ↥(repartitionSpace k F)) :
     Divisor k F :=
   if h : ∃ W : Divisor k F, IsGreatest {D : Divisor k F | ω ∈ weilDifferentialFiltration D} W then
@@ -173,15 +175,18 @@ theorem Divisor.ofWeilDifferential_repartitionDualMul (hF : IsFunctionField k F)
     ((repartitionDualMul_mem_weilDifferentialFiltration_iff hF z).mp ?_)
   rwa [sub_add_cancel]
 
-/-- **The elementwise Duality map** (Stichtenoth, in the proof of Theorem 1.5.14): a nonzero
-function lies in `L((ω) - D)` exactly when multiplying `ω` by it gives a Weil differential bounded
-by `D`.  The remaining content of the Duality Theorem is that `x ↦ x · ω` is onto `Ω_F(D)`, which
-needs the one-dimensionality of `Ω_F` over `F`. -/
+/-- **The elementwise Duality map** (Stichtenoth, in the proof of Theorem 1.5.14): a function lies
+in `L((ω) - D)` exactly when multiplying `ω` by it gives a Weil differential bounded by `D`.  The
+remaining content of the Duality Theorem is that `x ↦ x · ω` is onto `Ω_F(D)`, which needs the
+one-dimensionality of `Ω_F` over `F`. -/
 theorem mem_riemannRochSpace_ofWeilDifferential_sub_iff (hF : IsFunctionField k F)
     (hex : IsIntegrallyClosedIn k F) (hωΩ : ω ∈ weilDifferentialSpace k F) (hω : ω ≠ 0)
-    (z : Fˣ) (D : Divisor k F) :
-    (z : F) ∈ riemannRochSpace (Divisor.ofWeilDifferential ω - D) ↔
-      repartitionDualMul hF (z : F) ω ∈ weilDifferentialFiltration D := by
+    (x : F) (D : Divisor k F) :
+    x ∈ riemannRochSpace (Divisor.ofWeilDifferential ω - D) ↔
+      repartitionDualMul hF x ω ∈ weilDifferentialFiltration D := by
+  rcases eq_or_ne x 0 with rfl | hx
+  · simp
+  obtain ⟨z, rfl⟩ : ∃ z : Fˣ, (z : F) = x := ⟨Units.mk0 x hx, rfl⟩
   have hrearrange : Divisor.principal hF z + (Divisor.ofWeilDifferential ω - D) =
       Divisor.ofWeilDifferential ω + Divisor.principal hF z - D := by abel
   rw [mem_riemannRochSpace_units_iff hF,
