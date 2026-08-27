@@ -215,6 +215,24 @@ private lemma diagonalCoroot_eq_coordinateCoroot (n : ℕ) (a b : Fin (n + 1)) :
   rw [diagonalCoroot_apply, SplitTorus.coordinateCoroot_apply]
   split_ifs <;> rfl
 
+/-- The root at the `i`-th diagonal simple-root index is the consecutive coordinate root
+`e_i - e_(i+1)`. -/
+theorem diagonalRootDatum_root_diagonalSimpleRootIndex (n : ℕ) (i : Fin n) :
+    (diagonalRootDatum (n + 1)).root (diagonalSimpleRootIndex n i) =
+      SplitTorus.coordinateRoot (ULift.up i.castSucc) (ULift.up i.succ) := by
+  rw [diagonalRootDatum_root]
+  simp only [diagonalSimpleRootIndex_fst, diagonalSimpleRootIndex_snd, ULift.down_up]
+  exact diagonalRoot_eq_coordinateRoot n i.castSucc i.succ
+
+/-- The coroot at the `i`-th diagonal simple-root index is the consecutive coordinate coroot
+`e_i - e_(i+1)`. -/
+theorem diagonalRootDatum_coroot_diagonalSimpleRootIndex (n : ℕ) (i : Fin n) :
+    (diagonalRootDatum (n + 1)).coroot (diagonalSimpleRootIndex n i) =
+      SplitTorus.coordinateCoroot (ULift.up i.castSucc) (ULift.up i.succ) := by
+  rw [diagonalRootDatum_coroot]
+  simp only [diagonalSimpleRootIndex_fst, diagonalSimpleRootIndex_snd, ULift.down_up]
+  exact diagonalCoroot_eq_coordinateCoroot n i.castSucc i.succ
+
 /-- The support consisting of consecutive coordinate-root indices. -/
 private abbrev diagonalSimpleSupport (n : ℕ) : Finset (DiagonalRootIndex (n + 1)) :=
   simpleSupport (diagonalSimpleRootIndex_injective n)
