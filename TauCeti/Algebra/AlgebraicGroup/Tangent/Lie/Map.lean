@@ -23,6 +23,8 @@ termwise; the algebra half already entered in `derivationComp`, which needs
 
 * `TauCeti.derivationComp_bracket`: the differential preserves the bracket.
 * `TauCeti.derivationCompLieHom`: the differential as a morphism of Lie algebras.
+* `TauCeti.derivationCompLieHom_injective_of_surjective`: a surjective coordinate morphism
+  induces an injective tangent map.
 -/
 
 public section
@@ -156,6 +158,31 @@ lemma derivationCompLieHom_apply (φ : A' →ₐc[R] A)
   -- its definitional unfolding once, explicitly.
   change derivationComp (B := B) φ d = _
   rfl
+
+/-- A surjective morphism of coordinate bialgebras induces an injective map on tangent Lie
+algebras. -/
+theorem derivationCompLieHom_injective_of_surjective (φ : A' →ₐc[R] A)
+    (hφ : Function.Surjective φ) :
+    Function.Injective (derivationCompLieHom (B := B) φ) := by
+  intro d e hde
+  apply Derivation.ext
+  intro a
+  obtain ⟨a', rfl⟩ := hφ a
+  have hvalue := DFunLike.congr_fun hde a'
+  apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
+  calc
+    Bialgebra.CounitAlgebra.algEquivSelf R A B (d (φ a')) =
+        Bialgebra.CounitAlgebra.algEquivSelf R A' B
+          (derivationCompLieHom (B := B) φ d a') := by
+      rw [derivationCompLieHom_apply, derivationComp_apply]
+      exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B _).trans
+        (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B _).symm
+    _ = Bialgebra.CounitAlgebra.algEquivSelf R A' B
+          (derivationCompLieHom (B := B) φ e a') := congrArg _ hvalue
+    _ = Bialgebra.CounitAlgebra.algEquivSelf R A B (e (φ a')) := by
+      rw [derivationCompLieHom_apply, derivationComp_apply]
+      exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B _).trans
+        (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B _).symm
 
 /-- The bundled differential along the identity is the identity Lie morphism. -/
 @[simp]
