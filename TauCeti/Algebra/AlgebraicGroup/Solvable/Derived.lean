@@ -14,8 +14,8 @@ public import TauCeti.Algebra.AlgebraicGroup.Solvable.Basic
 Let `H` be a commutative Hopf algebra. Its derived closed subgroup has coordinate algebra
 `H / CommHopfAlgCat.derivedDefiningIdeal H`. This file proves, over any commutative base and at
 every commutative value algebra, that the point group of `H` is solvable exactly when the point
-group of this derived subgroup is solvable. The geometric-points statement over a field is then an
-immediate specialization.
+group of any closed subgroup containing the derived subgroup is solvable. The derived-subgroup
+and geometric-points statements are immediate specializations.
 
 One implication is closure of solvability under closed subgroups. Conversely, the derived closed
 subgroup contains every pointwise commutator, so the corresponding point-group quotient is
@@ -23,10 +23,12 @@ commutative. Solvability of the derived subgroup and of this commutative quotien
 solvability of the ambient point group by extension closure. No equality between the abstract
 pointwise commutator subgroup and the points of the derived group is needed.
 
-## Main declaration
+## Main declarations
 
-* `TauCeti.CommHopfAlgCat.isSolvable_points_iff_derived`: over any commutative base and value
-  algebra, the point group is solvable exactly when the derived closed subgroup's point group is.
+* `TauCeti.CommHopfAlgCat.isSolvable_points_iff_of_le_derivedDefiningIdeal`: over any
+  commutative base and value algebra, the point group is solvable exactly when any closed subgroup
+  containing the derived subgroup has a solvable point group.
+* `TauCeti.CommHopfAlgCat.isSolvable_points_iff_derived`: the derived-subgroup specialization.
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty_iff_derived`: geometric-point
   solvability is equivalent to geometric-point solvability of the derived closed subgroup.
 
@@ -53,61 +55,91 @@ namespace CommHopfAlgCat
 
 variable {R : Type u} [CommRing R]
 
-/-- The group of points of an affine group is solvable if and only if the group of points of its
-derived closed subgroup is solvable.
-
-The forward implication uses the injection from quotient-coordinate points into ambient points.
-For the reverse implication, their image is a normal solvable subgroup containing the abstract
-commutator subgroup. The ambient point group is therefore an extension of a commutative group by
-a solvable group. This statement holds over an arbitrary commutative base ring and at every
+/-- The point group of a closed subgroup of an affine group is solvable whenever the ambient
+point group is solvable. This holds over an arbitrary commutative base ring and at every
 commutative value algebra. -/
+theorem isSolvable_points_quotient (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (A : CommAlgCat.{w} R) :
+    Group.IsSolvable (HopfAlgebra.points (R := R) (H := H) A) →
+      Group.IsSolvable
+        (HopfAlgebra.points (R := R) (H := quotient H I) A) := by
+  intro hH
+  let _ : Group.IsSolvable (HopfAlgebra.points (R := R) (H := H) A) := hH
+  exact Group.isSolvable_of_isSolvable_injective
+    (f := (quotientPointsHom H I A).hom)
+    (quotientPointsHom_injective H I A)
+
+/-- If a closed subgroup contains the derived subgroup and its point group is solvable, then the
+ambient point group is solvable. This holds over an arbitrary commutative base ring and at every
+commutative value algebra. -/
+theorem isSolvable_points_of_le_derivedDefiningIdeal
+    (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H)
+    (hID : I ≤ derivedDefiningIdeal (R := R) H) (A : CommAlgCat.{w} R) :
+    Group.IsSolvable (HopfAlgebra.points (R := R) (H := quotient H I) A) →
+      Group.IsSolvable (HopfAlgebra.points (R := R) (H := H) A) := by
+  let G := HopfAlgebra.points (R := R) (H := H) A
+  let D := quotientPointsSubgroup H I A
+  intro hsubgroup
+  let q := (quotientPointsHom H I A).hom
+  let _ : Group.IsSolvable
+      (HopfAlgebra.points (R := R) (H := quotient H I) A) := hsubgroup
+  have hD : Group.IsSolvable D :=
+    Group.isSolvable_of_surjective q.rangeRestrict_surjective
+  let _ : D.Normal := quotientPointsSubgroup_normal H I
+    (isNormal_of_le_derivedDefiningIdeal H I hID) A
+  have hcommutative : IsMulCommutative (G ⧸ D) :=
+    isMulCommutative_pointQuotient_of_le_derivedDefiningIdeal H I hID A
+  have hquotient : Group.IsSolvable (G ⧸ D) :=
+    Group.isSolvable_of_comm (isMulCommutative_iff.mp hcommutative)
+  exact (Group.isSolvable_iff_subgroup_quotient D).mpr ⟨hD, hquotient⟩
+
+/-- The point group of an affine group is solvable if and only if the point group of any closed
+subgroup containing its derived subgroup is solvable. This holds over an arbitrary commutative
+base ring and at every commutative value algebra. -/
+theorem isSolvable_points_iff_of_le_derivedDefiningIdeal
+    (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H)
+    (hID : I ≤ derivedDefiningIdeal (R := R) H) (A : CommAlgCat.{w} R) :
+    Group.IsSolvable (HopfAlgebra.points (R := R) (H := H) A) ↔
+      Group.IsSolvable
+        (HopfAlgebra.points (R := R) (H := quotient H I) A) :=
+  ⟨isSolvable_points_quotient H I A,
+    isSolvable_points_of_le_derivedDefiningIdeal H I hID A⟩
+
+/-- The group of points of an affine group is solvable if and only if the group of points of its
+derived closed subgroup is solvable, over any commutative base and value algebra. -/
 theorem isSolvable_points_iff_derived (H : _root_.CommHopfAlgCat.{v} R)
     (A : CommAlgCat.{w} R) :
     Group.IsSolvable (HopfAlgebra.points (R := R) (H := H) A) ↔
       Group.IsSolvable
         (HopfAlgebra.points (R := R)
-          (H := quotient H (derivedDefiningIdeal H)) A) := by
-  let G := HopfAlgebra.points (R := R) (H := H) A
-  let I := derivedDefiningIdeal (R := R) H
-  let D := quotientPointsSubgroup H I A
-  constructor
-  · intro hG
-    let _ : Group.IsSolvable G := hG
-    exact Group.isSolvable_of_isSolvable_injective
-      (f := (quotientPointsHom H I A).hom)
-      (quotientPointsHom_injective H I A)
-  · intro hderived
-    let q := (quotientPointsHom H I A).hom
-    let _ : Group.IsSolvable
-        (HopfAlgebra.points (R := R) (H := quotient H I) A) := hderived
-    have hD : Group.IsSolvable D :=
-      Group.isSolvable_of_surjective q.rangeRestrict_surjective
-    let _ : Group.IsSolvable D := hD
-    let _ : D.Normal := quotientPointsSubgroup_normal H I
-      (isNormal_derivedDefiningIdeal H) A
-    have hcommutator : commutator G ≤ D :=
-      commutator_le_quotientPointsSubgroup_of_le_derivedDefiningIdeal H I le_rfl A
-    have hcommutative : IsMulCommutative (G ⧸ D) :=
-      (Subgroup.Normal.quotient_commutative_iff_commutator_le).mpr hcommutator
-    have hquotient : Group.IsSolvable (G ⧸ D) :=
-      Group.isSolvable_of_comm (isMulCommutative_iff.mp hcommutative)
-    exact (Group.isSolvable_iff_subgroup_quotient D).mpr ⟨hD, hquotient⟩
+          (H := quotient H (derivedDefiningIdeal H)) A) :=
+  isSolvable_points_iff_of_le_derivedDefiningIdeal H (derivedDefiningIdeal H) le_rfl A
 
 end CommHopfAlgCat
 
-/-- An affine group has solvable geometric points if and only if its derived closed subgroup does.
+/-- An affine group has solvable geometric points if and only if any closed subgroup containing
+its derived subgroup does. This is the point-group result specialized to algebraic-closure-valued
+points. -/
+theorem geometricallySolvablePointsCommHopfAlgProperty_iff_of_le_derivedDefiningIdeal
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k) (I : HopfIdeal k H)
+    (hID : I ≤ CommHopfAlgCat.derivedDefiningIdeal H) :
+    geometricallySolvablePointsCommHopfAlgProperty k H ↔
+      geometricallySolvablePointsCommHopfAlgProperty k
+        (CommHopfAlgCat.quotient H I) := by
+  rw [geometricallySolvablePointsCommHopfAlgProperty_iff,
+    geometricallySolvablePointsCommHopfAlgProperty_iff]
+  exact CommHopfAlgCat.isSolvable_points_iff_of_le_derivedDefiningIdeal H I hID
+    (CommAlgCat.of k (AlgebraicClosure k))
 
-The forward implication uses that the derived closed subgroup embeds in the ambient group on
-points. For the reverse implication, its image is a normal solvable subgroup containing the
-abstract commutator subgroup, so the quotient is commutative and hence solvable. -/
+/-- An affine group has solvable geometric points if and only if its derived closed subgroup does.
+This is `CommHopfAlgCat.isSolvable_points_iff_derived` specialized to
+algebraic-closure-valued points. -/
 theorem geometricallySolvablePointsCommHopfAlgProperty_iff_derived
     (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k) :
     geometricallySolvablePointsCommHopfAlgProperty k H ↔
       geometricallySolvablePointsCommHopfAlgProperty k
-        (CommHopfAlgCat.quotient H (CommHopfAlgCat.derivedDefiningIdeal H)) := by
-  rw [geometricallySolvablePointsCommHopfAlgProperty_iff,
-    geometricallySolvablePointsCommHopfAlgProperty_iff]
-  exact CommHopfAlgCat.isSolvable_points_iff_derived H
-    (CommAlgCat.of k (AlgebraicClosure k))
+        (CommHopfAlgCat.quotient H (CommHopfAlgCat.derivedDefiningIdeal H)) :=
+  geometricallySolvablePointsCommHopfAlgProperty_iff_of_le_derivedDefiningIdeal
+    k H (CommHopfAlgCat.derivedDefiningIdeal H) le_rfl
 
 end TauCeti
