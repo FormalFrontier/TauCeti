@@ -6,9 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
-public import TauCeti.Algebra.AlgebraicGroup.Solvable.Basic
--- Solvability of the abstract upper-triangular matrix group supplies the instance used below.
-import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Solvable
 
 /-!
 # Geometric solvability of the upper-triangular Borel of `GL₂`
@@ -35,18 +32,16 @@ of the ReductiveGroups roadmap.
 
 public section
 
-open WithConv
-
 namespace TauCeti.GeneralLinear.Borel
 
 universe u
+
+open TauCeti.GeneralLinear
 
 /-- The upper-triangular Borel subgroup of `GL₂` has a solvable group of geometric points. -/
 theorem geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra
     (k : Type u) [Field k] :
     geometricallySolvablePointsCommHopfAlgProperty k (coordinateHopfAlgebra k) := by
-  rw [geometricallySolvablePointsCommHopfAlgProperty_iff]
-  let e := pointsMulEquiv (R := k) (A := AlgebraicClosure k)
-  exact Group.isSolvable_of_isSolvable_injective (f := e.toMonoidHom) e.injective
+  exact UpperTriangular.geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra k 2
 
 end TauCeti.GeneralLinear.Borel
