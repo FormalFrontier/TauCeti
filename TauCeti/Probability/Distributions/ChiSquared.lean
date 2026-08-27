@@ -262,6 +262,7 @@ theorem cdf_chiSquaredMeasure_eq (hk : 0 < k) (x : ℝ) :
 
 /-- At zero degrees of freedom the cumulative distribution function is the unit step at the
 origin. -/
+@[simp]
 theorem cdf_chiSquaredMeasure_zero (x : ℝ) :
     cdf (chiSquaredMeasure 0) x = if 0 ≤ x then 1 else 0 := by
   rw [chiSquaredMeasure_zero, cdf_dirac]
@@ -289,14 +290,6 @@ theorem variance_id_chiSquaredMeasure (hk : 0 ≤ k) :
   · rw [chiSquaredMeasure_eq_gammaMeasure hk,
       variance_id_gammaMeasure (by positivity) one_half_pos]
     ring
-
-/-- At zero degrees of freedom the mean is `0`. -/
-theorem integral_id_chiSquaredMeasure_zero : ∫ x, x ∂chiSquaredMeasure 0 = 0 := by
-  exact integral_id_chiSquaredMeasure (k := 0) le_rfl
-
-/-- At zero degrees of freedom the variance is `0`. -/
-theorem variance_id_chiSquaredMeasure_zero : variance id (chiSquaredMeasure 0) = 0 := by
-  simpa only [mul_zero] using variance_id_chiSquaredMeasure (k := 0) le_rfl
 
 /-! ### Exponential moments and transforms -/
 
@@ -347,24 +340,22 @@ theorem charFun_chiSquaredMeasure (hk : 0 ≤ k) (t : ℝ) :
     congr 1 <;> ring
 
 /-- At zero degrees of freedom every exponential moment exists. -/
+@[simp]
 theorem integrableExpSet_id_chiSquaredMeasure_zero :
     integrableExpSet id (chiSquaredMeasure 0) = univ := by
   rw [chiSquaredMeasure_zero, integrableExpSet_dirac]
 
 /-- At zero degrees of freedom the moment-generating function is identically `1`. -/
+@[simp]
 theorem mgf_id_chiSquaredMeasure_zero (t : ℝ) : mgf id (chiSquaredMeasure 0) t = 1 := by
   rw [chiSquaredMeasure_zero, mgf_dirac']
   simp
 
 /-- At zero degrees of freedom the cumulant-generating function is identically `0`. -/
+@[simp]
 theorem cgf_id_chiSquaredMeasure_zero (t : ℝ) : cgf id (chiSquaredMeasure 0) t = 0 := by
   rw [chiSquaredMeasure_zero, cgf_dirac']
   simp
-
-/-- At zero degrees of freedom the characteristic function is identically `1`. -/
-theorem charFun_chiSquaredMeasure_zero (t : ℝ) : charFun (chiSquaredMeasure 0) t = 1 := by
-  simpa only [Complex.ofReal_zero, neg_zero, zero_div, Complex.cpow_zero] using
-    charFun_chiSquaredMeasure (k := 0) le_rfl t
 
 /-! ### Additivity and the exponential law -/
 
