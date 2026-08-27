@@ -55,6 +55,7 @@ def weights : Fin n → ℤ :=
   fun i ↦ (n : ℤ) - 1 - (i : ℤ)
 
 /-- Formula for a standard upper-triangular weight. -/
+@[simp]
 theorem weights_apply (i : Fin n) : weights n i = (n : ℤ) - 1 - (i : ℤ) :=
   (rfl)
 
