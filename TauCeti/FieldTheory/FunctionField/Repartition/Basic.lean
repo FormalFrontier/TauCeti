@@ -51,7 +51,9 @@ differentials are the work that consumes this file.
 * `TauCeti.diagonalRepartitions_le_repartitionSpace`: the diagonal `F ↪ A_F`, which is where
   the finiteness of the zeros and poles of a function enters.
 * `TauCeti.diagonalRepartitions_inf_adeleFiltration`: `F ∩ A_F(D) = L(D)`, the lemma that ties
-  the filtration to the Riemann–Roch spaces.
+  the filtration to the Riemann–Roch spaces, and its relative form
+  `TauCeti.adeleFiltration_inf_sup_diagonalRepartitions`:
+  `A_F(E) ∩ (A_F(D) + F) = A_F(D) + L(E)` for `D ≤ E`.
 * `TauCeti.smul_mem_adeleFiltration_iff` and
   `TauCeti.smul_mem_adeleFiltration_sub_principal`: multiplying by a function `z` translates the
   filtration by `div z`, exactly as it does for Riemann–Roch spaces.
@@ -310,6 +312,30 @@ theorem diagonalRepartitions_inf_adeleFiltration (D : Divisor k F) :
     exact ⟨f, const_mem_adeleFiltration_iff.mp hfilt, rfl⟩
   · rintro ⟨f, hf, rfl⟩
     exact ⟨const_mem_diagonalRepartitions f, const_mem_adeleFiltration_iff.mpr hf⟩
+
+/-- **The relative form of `F ∩ A_F(D) = L(D)`** (Stichtenoth, in the proof of Theorem 1.5.4):
+for `D ≤ E`, a repartition bounded by `E` that differs from a constant by a repartition bounded
+by `D` differs from a constant of `L(E)`, so that
+
+`A_F(E) ∩ (A_F(D) + F) = A_F(D) + L(E)`.
+
+Given `A_F(D) ≤ A_F(E)` this is the modular law for the lattice of subspaces followed by
+`TauCeti.diagonalRepartitions_inf_adeleFiltration`. -/
+theorem adeleFiltration_inf_sup_diagonalRepartitions {D E : Divisor k F} (h : D ≤ E) :
+    adeleFiltration E ⊓ (adeleFiltration D ⊔ diagonalRepartitions k F) =
+      adeleFiltration D ⊔
+        (riemannRochSpace E).map (Pi.constAlgHom k (Place k F) F).toLinearMap := by
+  rw [inf_comm, sup_inf_assoc_of_le _ (adeleFiltration_mono h),
+    diagonalRepartitions_inf_adeleFiltration]
+
+/-- The constant repartition of a function of `L(E)` is bounded by `E`, and is a constant, so it
+lies in `A_F(E) ∩ (A_F(D) + F)`. -/
+theorem const_mem_adeleFiltration_inf_sup_diagonalRepartitions (D : Divisor k F)
+    {E : Divisor k F} {f : F} (hf : f ∈ riemannRochSpace E) :
+    Function.const (Place k F) f ∈
+      adeleFiltration E ⊓ (adeleFiltration D ⊔ diagonalRepartitions k F) :=
+  ⟨const_mem_adeleFiltration_iff.mpr hf,
+    Submodule.mem_sup_right (const_mem_diagonalRepartitions f)⟩
 
 /-- Membership in `A_F(D) + F`, the subspace whose cokernel in `A_F` computes the index of
 specialty: a repartition lies in it exactly when subtracting a single constant brings it into
