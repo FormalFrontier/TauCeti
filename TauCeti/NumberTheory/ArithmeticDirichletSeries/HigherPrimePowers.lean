@@ -188,32 +188,34 @@ power, and `ϑ`, which weights only the primes; Layer 10 defines `ψ` itself. -/
 noncomputable def higherPrimePowerWeight (A : IdealPrimePower K) : ℝ :=
   if 2 ≤ primePowerExponent A then Real.log (Ideal.absNorm (primePowerBase A).asIdeal) else 0
 
+/-- On a higher prime power, the standard weight is the logarithm of the norm of the base. -/
+@[simp] theorem higherPrimePowerWeight_of_two_le_primePowerExponent {A : IdealPrimePower K}
+    (hA : 2 ≤ primePowerExponent A) :
+    higherPrimePowerWeight A = Real.log (Ideal.absNorm (primePowerBase A).asIdeal) :=
+  ite_eq_left hA
+
+/-- On a prime, the standard weight vanishes. -/
+@[simp] theorem higherPrimePowerWeight_of_prime {A : IdealPrimePower K}
+    (hA : Prime (A : Ideal (𝓞 K))) : higherPrimePowerWeight A = 0 := by
+  have hexp : primePowerExponent A = 1 := (primePowerExponent_eq_one_iff A).mpr hA
+  exact ite_eq_right (by omega)
+
 /-- The higher-prime-power weight is nonnegative. -/
 theorem higherPrimePowerWeight_nonneg (A : IdealPrimePower K) : 0 ≤ higherPrimePowerWeight A := by
-  rw [higherPrimePowerWeight]
-  split
-  · exact Real.log_nonneg (by linarith [two_le_absNorm_asIdeal_real (primePowerBase A)])
-  · exact le_rfl
+  by_cases hA : Prime (A : Ideal (𝓞 K))
+  · exact (higherPrimePowerWeight_of_prime hA).ge
+  · rw [higherPrimePowerWeight_of_two_le_primePowerExponent (two_le_primePowerExponent hA)]
+    exact Real.log_nonneg (by linarith [two_le_absNorm_asIdeal_real (primePowerBase A)])
 
 /-- The higher-prime-power weight vanishes exactly on the primes. -/
 @[simp] theorem higherPrimePowerWeight_eq_zero_iff (A : IdealPrimePower K) :
     higherPrimePowerWeight A = 0 ↔ Prime (A : Ideal (𝓞 K)) := by
-  rw [higherPrimePowerWeight]
-  split_ifs with h
-  · constructor
-    · intro hzero
-      have hlog : 0 < Real.log (Ideal.absNorm (primePowerBase A).asIdeal) :=
-        Real.log_pos (by linarith [two_le_absNorm_asIdeal_real (primePowerBase A)])
-      linarith
-    · intro hprime
-      have hexp : primePowerExponent A = 1 := (primePowerExponent_eq_one_iff A).mpr hprime
-      omega
-  · constructor
-    · intro _
-      have hpos := primePowerExponent_pos A
-      exact (primePowerExponent_eq_one_iff A).mp (by omega)
-    · intro _
-      rfl
+  refine ⟨fun hzero ↦ ?_, higherPrimePowerWeight_of_prime⟩
+  by_contra hA
+  rw [higherPrimePowerWeight_of_two_le_primePowerExponent (two_le_primePowerExponent hA)] at hzero
+  have hlog : 0 < Real.log (Ideal.absNorm (primePowerBase A).asIdeal) :=
+    Real.log_pos (by linarith [two_le_absNorm_asIdeal_real (primePowerBase A)])
+  linarith
 
 /-- Away from the primes, the higher-prime-power weight is the ideal von Mangoldt function of
 Layer 2, whose values are real. -/
@@ -221,7 +223,7 @@ theorem higherPrimePowerWeight_eq_vonMangoldt_re {A : IdealPrimePower K}
     (hA : ¬ Prime (A : Ideal (𝓞 K))) :
     higherPrimePowerWeight A =
       (IdealArithmeticFunction.vonMangoldt (A : (Ideal (𝓞 K))⁰)).re := by
-  rw [higherPrimePowerWeight, ite_eq_left (two_le_primePowerExponent hA),
+  rw [higherPrimePowerWeight_of_two_le_primePowerExponent (two_le_primePowerExponent hA),
     IdealArithmeticFunction.vonMangoldt_apply_of_eq_prime_pow (prime_primePowerBase A)
       (primePowerExponent_pos A) (primePowerBase_pow_primePowerExponent A), Complex.ofReal_re]
 
@@ -268,13 +270,14 @@ theorem higherPrimePowerTheta_le_card_primesLE_mul_log
   have hsub : T ⊆ primePowersLE K x := Finset.filter_subset _ _
   have hzero : ∀ A ∈ primePowersLE K x, A ∉ T → higherPrimePowerWeight A = 0 := by
     intro A hA hAT
-    rw [higherPrimePowerWeight,
-      ite_eq_right fun h ↦ hAT (Finset.mem_filter.mpr ⟨hA, h⟩)]
+    refine higherPrimePowerWeight_of_prime ?_
+    by_contra hprime
+    exact hAT (Finset.mem_filter.mpr ⟨hA, two_le_primePowerExponent hprime⟩)
   have hsum : higherPrimePowerTheta K x
       = ∑ A ∈ T, Real.log (Ideal.absNorm (primePowerBase A).asIdeal) := by
     rw [higherPrimePowerTheta_apply, primePowerSummatory_apply, ← Finset.sum_subset hsub hzero]
-    exact Finset.sum_congr rfl fun A hA ↦ by
-      rw [higherPrimePowerWeight, ite_eq_left (hmemT A hA).2]
+    exact Finset.sum_congr rfl fun A hA ↦
+      higherPrimePowerWeight_of_two_le_primePowerExponent (hmemT A hA).2
   have hmaps : ∀ A ∈ T, primePowerBase A ∈ primesLE K (Real.sqrt x) := by
     intro A hA
     obtain ⟨hle, hexp⟩ := hmemT A hA
