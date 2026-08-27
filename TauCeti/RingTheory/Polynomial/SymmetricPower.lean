@@ -9,6 +9,7 @@ public import Mathlib.RingTheory.Polynomial.Basic
 public import Mathlib.RingTheory.Polynomial.Vieta
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import TauCeti.Data.Sym.Basic
+public import TauCeti.RingTheory.Polynomial.MonicOfCoeff
 import Mathlib.Data.Fin.VecNotation
 
 /-!
@@ -43,14 +44,9 @@ are separate later steps.
   an integral domain the tuple is recovered from the polynomial as its root multiset, and
   `TauCeti.Sym.toMonic_ofFn_eq_of_forall_isRoot`, that a monic polynomial of degree `n` with `n`
   distinct roots is the monic polynomial of the unordered tuple of those roots.
-* `TauCeti.Polynomial.monicOfCoeff`: the monic polynomial of degree `n` with prescribed lower
-  coefficients — the specialization of Mathlib's `Polynomial.freeMonic` at a concrete coefficient
-  tuple. `TauCeti.Polynomial.coeff_monicOfCoeff` reads those coefficients back and
-  `TauCeti.Polynomial.monicOfCoeff_coeff` recognises every monic polynomial of degree `n` as one of
-  them, so the two are inverse; `TauCeti.Polynomial.monic_monicOfCoeff`,
-  `TauCeti.Polynomial.natDegree_monicOfCoeff` and `TauCeti.Polynomial.eval_monicOfCoeff` record its
-  monicity, degree and values. It inverts the chart by `Sym.monicOfCoeff_coeffEquiv` and
-  `TauCeti.Sym.toMonic_coeffEquiv_symm`.
+* `TauCeti.Sym.toMonic_coeffEquiv_symm`: the inverse chart, read as a polynomial rather than as a
+  root multiset, is `TauCeti.Polynomial.monicOfCoeff`, the monic polynomial with prescribed lower
+  coefficients of `TauCeti/RingTheory/Polynomial/MonicOfCoeff.lean`.
 * `TauCeti.Sym.monicEquiv`: over an algebraically closed field, taking roots with multiplicity
   inverts `toMonic`, so `Sym K n` is equivalent to the monic polynomials of degree `n`.
 * `TauCeti.Sym.coeffEquiv`: the resulting chart `Sym K n ≃ (Fin n → K)`, with
@@ -74,85 +70,13 @@ equivalence between monic polynomials of degree `n` and polynomials of degree `<
 Mathlib's (`Multiset.prod_X_sub_C_coeff`,
 `Polynomial.prod_multiset_X_sub_C_of_monic_of_roots_card_eq`, `Polynomial.ofMultiset`,
 `Polynomial.monicEquivDegreeLT`); nothing is vendored here.
-
-Most declarations about symmetric powers below live in `TauCeti.Sym`. The dot-notation extension
-`Sym.monicOfCoeff_coeffEquiv` lives in Mathlib's root `Sym` namespace, while the one piece of the
-file that mentions no symmetric power, the `TauCeti.Polynomial.monicOfCoeff` API, lives in
-`TauCeti.Polynomial`.
 -/
 
 public section
 
-namespace TauCeti
-
 open Multiset Polynomial
 
-/-! ### The monic polynomial with prescribed lower coefficients -/
-
-namespace Polynomial
-
-section OfCoeff
-
-variable {R : Type*} [CommSemiring R] {n : ℕ}
-
-/-- The monic polynomial of degree `n` whose `n` lower coefficients are `c`, that is, the
-specialization of Mathlib's `Polynomial.freeMonic` at the coefficient tuple `c`. It is the inverse
-of the coefficient-reading half of `TauCeti.Sym.coeffEquiv`, and is the natural object to state
-analytic dependence on the coefficients against: `TauCeti.Sym.coeffEquiv_symm_apply` describes the
-inverse chart as its root multiset. -/
-noncomputable def monicOfCoeff (c : Fin n → R) : R[X] :=
-  X ^ n + ∑ i : Fin n, monomial (i : ℕ) (c i)
-
-/-- The lower part of `TauCeti.Polynomial.monicOfCoeff` has degree less than `n`, which is where its
-monicity and its degree come from. -/
-private theorem degree_sum_monomial_lt (c : Fin n → R) :
-    degree (∑ i : Fin n, monomial (i : ℕ) (c i)) < n := by
-  simpa only [C_mul_X_pow_eq_monomial] using degree_sum_fin_lt c
-
-@[simp]
-theorem monic_monicOfCoeff (c : Fin n → R) : (monicOfCoeff c).Monic :=
-  monic_X_pow_add (degree_sum_monomial_lt c)
-
-/-- The prescribed coefficients are read back off: this is the defining property of
-`TauCeti.Polynomial.monicOfCoeff`. -/
-@[simp]
-theorem coeff_monicOfCoeff (c : Fin n → R) (i : Fin n) : (monicOfCoeff c).coeff (i : ℕ) = c i := by
-  have hne : (i : ℕ) ≠ n := i.2.ne
-  simp [monicOfCoeff, coeff_X_pow, coeff_monomial, hne, Fin.val_eq_val]
-
-/-- Evaluating the monic polynomial attached to a coefficient tuple: the leading power plus the
-prescribed lower part. -/
-theorem eval_monicOfCoeff (c : Fin n → R) (z : R) :
-    (monicOfCoeff c).eval z = z ^ n + ∑ i : Fin n, c i * z ^ (i : ℕ) := by
-  simp [monicOfCoeff, eval_finsetSum]
-
-variable [Nontrivial R]
-
-@[simp]
-theorem natDegree_monicOfCoeff (c : Fin n → R) : (monicOfCoeff c).natDegree = n := by
-  have hlt : degree (∑ i : Fin n, monomial (i : ℕ) (c i)) < degree (X ^ n : R[X]) := by
-    rw [degree_X_pow]
-    exact degree_sum_monomial_lt c
-  rw [monicOfCoeff, natDegree_add_eq_left_of_degree_lt hlt, natDegree_X_pow]
-
-/-- Every monic polynomial of degree `n` is the monic polynomial attached to its own lower
-coefficients: together with `TauCeti.Polynomial.coeff_monicOfCoeff` this identifies the monic
-polynomials of degree `n` with the coefficient tuples. -/
-theorem monicOfCoeff_coeff {p : R[X]} (hp : p.Monic) (hdeg : p.natDegree = n) :
-    monicOfCoeff (fun i : Fin n => p.coeff (i : ℕ)) = p := by
-  refine Polynomial.ext fun k => ?_
-  rcases lt_trichotomy k n with hk | hk | hk
-  · exact coeff_monicOfCoeff _ ⟨k, hk⟩
-  · have hlead : (monicOfCoeff fun i : Fin n => p.coeff (i : ℕ)).coeff n = 1 := by
-      simpa [natDegree_monicOfCoeff] using
-        (monic_monicOfCoeff fun i : Fin n => p.coeff (i : ℕ)).coeff_natDegree
-    rw [hk, hlead, ← hdeg, hp.coeff_natDegree]
-  · rw [coeff_eq_zero_of_natDegree_lt (by rwa [natDegree_monicOfCoeff]),
-      coeff_eq_zero_of_natDegree_lt (by rwa [hdeg])]
-
-end OfCoeff
-
-end Polynomial
+namespace TauCeti
 
 namespace Sym
 
@@ -396,52 +320,16 @@ theorem coeffEquiv_symm_apply (f : Fin n → K) : (((coeffEquiv K n).symm f : Sy
     coe_monicEquivDegreeLT_symm_apply, coe_degreeLTEquiv_toEquiv_symm_apply]
   rfl
 
-end AlgClosed
-
-end Sym
-
-end TauCeti
-
-namespace Sym
-
-variable {K : Type*} [Field K] [IsAlgClosed K] {n : ℕ}
-
-/-- The chart and `TauCeti.Polynomial.monicOfCoeff` are inverse: the monic polynomial rebuilt from
-the coordinates of a tuple is the monic polynomial of that tuple. -/
-@[simp]
-theorem monicOfCoeff_coeffEquiv (s : Sym K n) :
-    TauCeti.Polynomial.monicOfCoeff (TauCeti.Sym.coeffEquiv K n s) =
-      (TauCeti.Sym.toMonic s : _root_.Polynomial K) := by
-  have hroots :
-      (TauCeti.Polynomial.monicOfCoeff (TauCeti.Sym.coeffEquiv K n s)).roots =
-        (s : Multiset K) := by
-    rw [← TauCeti.Sym.coeffEquiv_symm_apply, Equiv.symm_apply_apply]
-  rw [TauCeti.Sym.coe_toMonic, _root_.Polynomial.ofMultiset_apply, ← hroots]
-  exact (_root_.Polynomial.prod_multiset_X_sub_C_of_monic_of_roots_card_eq
-    (TauCeti.Polynomial.monic_monicOfCoeff _)
-    (by rw [hroots, Sym.card_coe, TauCeti.Polynomial.natDegree_monicOfCoeff])).symm
-
-end Sym
-
-namespace TauCeti
-
-open Multiset
-
-namespace Sym
-
-section AlgClosed
-
-variable {K : Type*} [Field K] [IsAlgClosed K] {n : ℕ}
-
 /-- The inverse chart, read as a polynomial rather than as a root multiset, is
-`TauCeti.Polynomial.monicOfCoeff`: this is the `symm` companion of
-`Sym.monicOfCoeff_coeffEquiv`. -/
+`TauCeti.Polynomial.monicOfCoeff`: the monic polynomial of the tuple with prescribed coordinates is
+the monic polynomial with those lower coefficients. Equivalently, the chart itself reads off the
+lower coefficients of `TauCeti.Sym.toMonic`, which is `TauCeti.Sym.coeffEquiv_apply_eq_coeff`. -/
 @[simp]
 theorem toMonic_coeffEquiv_symm (c : Fin n → K) :
-    (toMonic ((coeffEquiv K n).symm c) : _root_.Polynomial K) =
-      TauCeti.Polynomial.monicOfCoeff c := by
-  conv_rhs => rw [← Equiv.apply_symm_apply (coeffEquiv K n) c]
-  rw [_root_.Sym.monicOfCoeff_coeffEquiv]
+    (toMonic ((coeffEquiv K n).symm c) : K[X]) = Polynomial.monicOfCoeff c := by
+  rw [coe_toMonic, coeffEquiv_symm_apply, ofMultiset_apply]
+  exact prod_multiset_X_sub_C_of_monic_of_roots_card_eq (Polynomial.monic_monicOfCoeff c)
+    (splits_iff_card_roots.mp (IsAlgClosed.splits _))
 
 /-- In degree one the chart is negation: the single coordinate of a one-point tuple is minus that
 point. -/
