@@ -130,7 +130,11 @@ section Induced
 variable (k : Type u) [Field k] {α : Type v} (x₀ : α)
 
 /-- **The permutation character.**  The character at `σ` of the trivial representation of the
-stabilizer of `x₀` induced up to `Equiv.Perm α` is the number of points of `α` fixed by `σ`. -/
+stabilizer of `x₀` induced up to `Equiv.Perm α` is the number of points of `α` fixed by `σ`.
+
+Not a `simp` lemma: the general `TauCeti.char_ind_trivial` is one, and it already rewrites this
+left-hand side -- to the number of fixed *cosets* -- so tagging this specialisation fails the
+`simpNF` linter. -/
 theorem char_ind_trivial_stabilizer [Finite α] (σ : Equiv.Perm α) :
     ((Representation.trivial k (stabilizer (Equiv.Perm α) x₀) k).ind
         (stabilizer (Equiv.Perm α) x₀).subtype).character σ = Nat.card {x : α // σ x = x} := by
@@ -168,10 +172,11 @@ invariant line off the permutation representation and
 `(Fintype.card α : k) = 0` and `3 ≤ |α|` the invariant line instead lies inside the standard
 representation, and there is no such splitting. -/
 theorem char_ind_trivial_stabilizer_eq_one_add_char_standardRepresentation [Finite α]
-    [Nonempty α] (σ : Equiv.Perm α) :
+    (σ : Equiv.Perm α) :
     ((Representation.trivial k (stabilizer (Equiv.Perm α) x₀) k).ind
         (stabilizer (Equiv.Perm α) x₀).subtype).character σ =
       1 + (standardRepresentation k α).character σ := by
+  have : Nonempty α := ⟨x₀⟩
   rw [char_standardRepresentation σ, char_ofMulAction, char_ind_trivial_stabilizer k x₀]
   simp only [Equiv.Perm.smul_def]
   ring
