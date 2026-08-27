@@ -376,10 +376,15 @@ theorem absNorm_asIdeal_real_pos (v : HeightOneSpectrum (𝓞 K)) :
     0 < (Ideal.absNorm v.asIdeal : ℝ) :=
   lt_of_lt_of_le zero_lt_two (two_le_absNorm_asIdeal_real v)
 
+/-- The logarithm of the absolute norm of a height-one prime is positive. -/
+theorem log_absNorm_asIdeal_pos (v : HeightOneSpectrum (𝓞 K)) :
+    0 < Real.log (Ideal.absNorm v.asIdeal : ℝ) :=
+  Real.log_pos (by linarith [two_le_absNorm_asIdeal_real v])
+
 /-- The logarithm of the absolute norm of a height-one prime is nonnegative. -/
 theorem log_absNorm_asIdeal_nonneg (v : HeightOneSpectrum (𝓞 K)) :
     0 ≤ Real.log (Ideal.absNorm v.asIdeal : ℝ) :=
-  Real.log_nonneg (by linarith [two_le_absNorm_asIdeal_real v])
+  (log_absNorm_asIdeal_pos v).le
 
 /-- The logarithmically weighted prime count is nonnegative. -/
 theorem primeTheta_nonneg (S : Set (HeightOneSpectrum (𝓞 K))) (x : ℝ) : 0 ≤ primeTheta K S x :=
