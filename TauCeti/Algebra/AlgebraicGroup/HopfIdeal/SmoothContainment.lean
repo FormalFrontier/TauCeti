@@ -83,9 +83,14 @@ theorem ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot
     simpa only [P] using (inferInstance : Algebra.Smooth k H)
   let _ : IsNoetherianRing P.Ring := by
     simpa only [P] using (Algebra.FiniteType.isNoetherianRing k H)
+  have hf_algebraMap : algebraMap H K = f.toAlgHom.toRingHom := by
+    ext x
+    rfl
+  have hPmap : algebraMap P.Ring K = f.toAlgHom.toRingHom := by
+    simpa only [P] using hf_algebraMap
   have hPker : P.ker = (HopfIdeal.ker f).toIdeal := by
     rw [HopfIdeal.ker_toIdeal]
-    rfl
+    exact congrArg RingHom.ker hPmap
   have hker_aug : (HopfIdeal.ker f).toIdeal ≤
       Bialgebra.AugmentationIdeal k H := by
     intro x hx
@@ -145,10 +150,14 @@ theorem ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot
         exact (conormalSubspace_eq_bot_iff_toIdeal_le_sq_augmentationIdeal _).mp
           hconormal (hPker ▸ x.property)
       have hdx : (1 : κ) ⊗ₜ[H] KaehlerDifferential.D k H (x : H) = 0 := by
-        have hker_eq : RingHom.ker (algebraMap H κ) = RingHom.ker g := by
-          apply congrArg RingHom.ker
+        have hgMap : algebraMap H κ = g.toRingHom := by
           ext y
-          rfl
+          rw [IsScalarTower.algebraMap_apply H K κ]
+          simp only [g]
+          exact congrArg (algebraMap K κ)
+            (congrArg (fun φ : H →+* K => φ y) hf_algebraMap)
+        have hker_eq : RingHom.ker (algebraMap H κ) = RingHom.ker g :=
+          congrArg RingHom.ker hgMap
         let xg : RingHom.ker (algebraMap H κ) :=
           ⟨x, hker_eq.symm ▸ hxker⟩
         have hxsq' : (x : H) ∈ RingHom.ker (algebraMap H κ) ^ 2 := by
