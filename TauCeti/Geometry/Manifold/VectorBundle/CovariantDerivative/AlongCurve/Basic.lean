@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Geometry.Manifold.MFDeriv.Curve
 public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.LocalFrame
 public import TauCeti.Geometry.Manifold.VectorBundle.SectionAlongCurve
 public import Mathlib.Analysis.Calculus.Deriv.Add
@@ -52,6 +53,9 @@ ambient covariant derivative.
   reparametrization, with
   `CovariantDerivative.alongCurve_congr` and `CovariantDerivative.alongCurve_comp` their
   unrestricted cases.
+* `CovariantDerivative.alongCurveWithin_curveVelocityWithin_of_isOpen`: on an open parameter set
+  the moving-chart candidate for the velocity field of the curve is the unrestricted one of the
+  unrestricted velocity field.
 
 ## References
 
@@ -309,6 +313,20 @@ theorem alongCurve_congr {W : ∀ t, TangentSpace I (γ t)} {t : 𝕜}
     (h : ∀ᶠ r in 𝓝 t, V r = W r) : alongCurve cov γ V t = alongCurve cov γ W t := by
   rw [← alongCurveWithin_univ, ← alongCurveWithin_univ]
   exact alongCurveWithin_congr cov γ V (by rwa [nhdsWithin_univ]) h.self_of_nhds
+
+/-- On an open parameter set, the moving-chart candidate for the velocity field within that set is
+the unrestricted candidate for the unrestricted velocity field: both the velocity and the
+derivatives along the curve are then the unrestricted ones. -/
+theorem alongCurveWithin_curveVelocityWithin_of_isOpen {s : Set 𝕜} {t : 𝕜} (hs : IsOpen s)
+    (ht : t ∈ s) :
+    alongCurveWithin cov γ (curveVelocityWithin I γ s) s t =
+      alongCurve cov γ (curveVelocity I γ) t := by
+  have hcongr : ∀ᶠ r in 𝓝[s] t, curveVelocityWithin I γ s r = curveVelocity I γ r := by
+    filter_upwards [self_mem_nhdsWithin] with r hr
+    exact curveVelocityWithin_of_mem_nhds (hs.mem_nhds hr)
+  rw [alongCurveWithin_congr cov γ (curveVelocityWithin I γ s) hcongr
+      (curveVelocityWithin_of_mem_nhds (hs.mem_nhds ht)),
+    alongCurveWithin_of_mem_nhds cov γ (curveVelocity I γ) (hs.mem_nhds ht)]
 
 /-- The moving-chart candidate within a parameter set is natural under differentiable
 reparametrization mapping that set into the parameter set of the original curve. The curve and the
