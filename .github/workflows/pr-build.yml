@@ -772,7 +772,8 @@ jobs:
           [ "$state" = "success" ]
 
   # Only an already-audited merge-group commit may publish. The reusable workflow runs on a
-  # fresh runner, checks out only that commit's toolchain pin, and is the sole holder of the key.
+  # fresh runner, sparsely checks out that commit's toolchain pin and key-free confirmation
+  # helper, and is the sole holder of the key. The helper runs only after the key-bearing step.
   publish-merge-group-cache:
     needs: sandboxed-build
     if: ${{ always() && needs.sandboxed-build.result == 'success' && needs.sandboxed-build.outputs.publication-required == 'true' }}

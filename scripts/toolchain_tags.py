@@ -74,6 +74,8 @@ import subprocess
 import sys
 import time
 
+from lake_cache_probe import exact_map_url
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pr_status"))
 import zulip as zp  # noqa: E402
 
@@ -221,8 +223,7 @@ def cache_published(toolchain, sha):
     host answers python's default user agent with 403 while answering curl with 200, so a
     urllib probe reports every commit as uncached and the whole report becomes noise.
     Found by running the tool, not by reading it."""
-    scope = toolchain.replace("/", "--").replace(":", "---")
-    url = f"{REVISIONS}/{REPO}/tc/{scope}/{sha}.jsonl"
+    url = exact_map_url(REVISIONS, toolchain, sha, REPO)
     out = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
                           "--max-time", "30", url], capture_output=True, text=True)
     if out.returncode != 0:

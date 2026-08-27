@@ -4,6 +4,7 @@
 import pathlib
 import subprocess
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -13,6 +14,8 @@ import lake_cache_probe as cache_probe  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CI = ROOT / ".github/workflows/ci.yml"
+PUBLISHER = ROOT / ".github/workflows/publish-lake-cache.yml"
+TOOLCHAIN_TAGS = ROOT / "scripts/toolchain_tags.py"
 SHA = "a" * 40
 TOOLCHAIN = "leanprover/lean4:v4.34.0-rc1"
 ENDPOINT = "https://cache.taucetiproject.org/revisions"
@@ -68,6 +71,28 @@ class ExactMapProbe(unittest.TestCase):
                 self.assertFalse(found)
                 self.assertEqual(url, "")
 
+        found, url, _reason = cache_probe.probe(
+            ENDPOINT, TOOLCHAIN, SHA, response(""), repository="../TauCeti",
+        )
+        self.assertFalse(found)
+        self.assertEqual(url, "")
+
+    def test_expected_map_must_match_the_public_bytes(self):
+        body = '"2026-03-17"\n["44b76000326a96d8","40b5fb725e1abfb8.ltar"]\n'
+        with tempfile.TemporaryDirectory() as directory:
+            expected = pathlib.Path(directory) / "outputs.jsonl"
+            expected.write_text(body)
+            found, _url, reason = cache_probe.probe(
+                ENDPOINT, TOOLCHAIN, SHA, response(body), expected=expected,
+            )
+            self.assertTrue(found, reason)
+            expected.write_text(body.replace("40b5", "ffff"))
+            found, _url, reason = cache_probe.probe(
+                ENDPOINT, TOOLCHAIN, SHA, response(body), expected=expected,
+            )
+            self.assertFalse(found)
+            self.assertIn("does not match", reason)
+
 
 def step(workflow: str, name: str) -> str:
     marker = f"      - name: {name}\n"
@@ -99,6 +124,41 @@ class MainWorkflowFallback(unittest.TestCase):
         self.assertIn("steps.exact_cache.outputs.exists != 'true'", block)
         self.assertIn('echo "staged=true"', block)
         self.assertIn("if: ${{ needs.build.outputs.staged == 'true' }}", self.workflow)
+
+
+class SharedPublicationContract(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.publisher = PUBLISHER.read_text()
+
+    def test_publisher_uses_the_shared_helper_not_a_shell_url_copy(self):
+        confirm = step(self.publisher, "Confirm the exact revision map on the public endpoint")
+        self.assertIn("python3 scripts/lake_cache_probe.py", confirm)
+        self.assertIn('--expected "$STAGING/outputs.jsonl"', confirm)
+        self.assertNotIn("TOOLCHAIN_DIR=", self.publisher)
+        self.assertNotIn("PUBLIC_URL=", self.publisher)
+
+    def test_shared_helper_runs_only_after_the_key_bearing_step(self):
+        checkout = step(
+            self.publisher, "Check out the toolchain pin and key-free confirmation helper",
+        )
+        upload = step(self.publisher, "Publish the staged Lake cache")
+        confirm = step(self.publisher, "Confirm the exact revision map on the public endpoint")
+        self.assertIn("scripts/lake_cache_probe.py", checkout)
+        self.assertIn("LAKE_CACHE_KEY_RAW", upload)
+        self.assertNotIn("lake_cache_probe.py", upload)
+        self.assertNotIn("LAKE_CACHE_KEY", confirm)
+        result = step(self.publisher, "Report whether publication was confirmed")
+        self.assertIn("steps.confirm.outputs.published", result)
+        self.assertIn("published=false", result)
+        self.assertLess(self.publisher.index("- name: Publish the staged Lake cache"),
+                        self.publisher.index("- name: Confirm the exact revision map"))
+
+    def test_toolchain_tag_audit_uses_the_same_url_function(self):
+        source = TOOLCHAIN_TAGS.read_text()
+        probe = source[source.index("def cache_published"):source.index("def mathlib_releases")]
+        self.assertIn("exact_map_url(", probe)
+        self.assertNotIn('.replace("/", "--")', probe)
 
 
 if __name__ == "__main__":

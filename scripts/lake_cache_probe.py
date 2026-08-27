@@ -23,9 +23,12 @@ REVISION = re.compile(r"\A[0-9a-f]{40}\Z")
 TOOLCHAIN = re.compile(r"\Aleanprover/lean4:[0-9A-Za-z][0-9A-Za-z._+-]*\Z")
 INPUT_HASH = re.compile(r"\A[0-9a-f]{16}\Z")
 ARTIFACT = re.compile(r"\A[0-9a-f]{16}\.ltar\Z")
+REPOSITORY = re.compile(r"\A[0-9A-Za-z_.-]+/[0-9A-Za-z_.-]+\Z")
+DEFAULT_REPOSITORY = "TauCetiProject/TauCeti"
 
 
-def exact_map_url(endpoint: str, toolchain: str, revision: str) -> str:
+def exact_map_url(endpoint: str, toolchain: str, revision: str,
+                  repository: str = DEFAULT_REPOSITORY) -> str:
     """Return the public revision-map URL written by ``lake cache put-staged``."""
     endpoint = endpoint.strip().rstrip("/")
     parsed = urllib.parse.urlsplit(endpoint)
@@ -36,11 +39,15 @@ def exact_map_url(endpoint: str, toolchain: str, revision: str) -> str:
         raise ValueError("the revision is not a lowercase 40-character Git object ID")
     if not TOOLCHAIN.fullmatch(toolchain):
         raise ValueError("the toolchain is not a leanprover/lean4 release")
+    if not REPOSITORY.fullmatch(repository):
+        raise ValueError("the repository is not an owner/name pair")
+    if any(component in {".", ".."} for component in repository.split("/")):
+        raise ValueError("the repository contains a relative path component")
 
-    # Lake scopes toolchain-dependent caches by this escaped elan toolchain name.  Keep this in
-    # sync with the confirmation URL in publish-lake-cache.yml.
+    # Lake scopes toolchain-dependent caches by this escaped elan toolchain name.  This function
+    # is the repository's single source for the corresponding public revision-map URL.
     scope = toolchain.replace("/", "--").replace(":", "---")
-    return (f"{endpoint}/TauCetiProject/TauCeti/tc/{scope}/{revision}.jsonl")
+    return f"{endpoint}/{repository}/tc/{scope}/{revision}.jsonl"
 
 
 def valid_map(path: pathlib.Path) -> tuple[bool, str]:
@@ -64,10 +71,12 @@ def valid_map(path: pathlib.Path) -> tuple[bool, str]:
     return True, ""
 
 
-def probe(endpoint: str, toolchain: str, revision: str, runner=None) -> tuple[bool, str, str]:
+def probe(endpoint: str, toolchain: str, revision: str, runner=None,
+          expected: pathlib.Path | None = None,
+          repository: str = DEFAULT_REPOSITORY) -> tuple[bool, str, str]:
     """Return ``(found, url, reason)`` without turning an inconclusive probe into an error."""
     try:
-        url = exact_map_url(endpoint, toolchain, revision)
+        url = exact_map_url(endpoint, toolchain, revision, repository)
     except ValueError as exc:
         return False, "", str(exc)
 
@@ -89,17 +98,29 @@ def probe(endpoint: str, toolchain: str, revision: str, runner=None) -> tuple[bo
             return False, url, f"{reason}: {detail}" if detail else reason
 
         found, reason = valid_map(destination)
+        if found and expected is not None:
+            try:
+                matches = destination.read_bytes() == expected.read_bytes()
+            except OSError as exc:
+                return False, url, f"could not compare the expected Lake map: {exc}"
+            if not matches:
+                return False, url, "the public Lake map does not match the expected bytes"
         return found, url, reason
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repo", default=DEFAULT_REPOSITORY,
+                        help=f"GitHub owner/name cache scope (default: {DEFAULT_REPOSITORY})")
+    parser.add_argument("--expected", type=pathlib.Path,
+                        help="require the public map to match this file byte for byte")
     parser.add_argument("endpoint", help="public Lake revision endpoint")
     parser.add_argument("toolchain", help="contents of lean-toolchain")
     parser.add_argument("revision", help="exact Tau Ceti Git revision")
     args = parser.parse_args(argv)
 
-    found, url, reason = probe(args.endpoint, args.toolchain, args.revision)
+    found, url, reason = probe(args.endpoint, args.toolchain, args.revision,
+                               expected=args.expected, repository=args.repo)
     if found:
         print(f"found valid public Lake cache map: {url}")
         return 0

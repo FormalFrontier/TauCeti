@@ -277,8 +277,9 @@ jobs:
       # through `$GITHUB_PATH`, or set LD_PRELOAD or BASH_ENV for every later step through
       # `$GITHUB_ENV`. A secret given to any later step of this job is a secret given to code
       # that landed on main, whatever that step does with it. So this job only stages the
-      # artifacts, and publish-lake-cache below, a fresh runner with no checkout, no
-      # workspace and no project code, is the only place the key exists.
+      # artifacts, and publish-lake-cache below, a fresh runner with only a sparse pin/helper
+      # checkout and no project workspace, is the only place the key exists. The helper stays
+      # inert until the key-bearing step has exited.
       - name: Configure the Lake cache staging (no-op unless the S3 endpoints are set)
         id: cachecfg
         env:
@@ -343,8 +344,8 @@ jobs:
           echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"
           lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"
           # `lake cache put-staged` does not configure the workspace, which is precisely what
-          # keeps project code out of the publish job, so it cannot derive the toolchain and
-          # platform halves of the upload scope. The publish job supplies them from the pin
+          # keeps project build code out of the publisher, so it cannot derive the toolchain and
+          # platform halves of the upload scope. The publisher supplies them from the sparse pin
           # instead, which is right only while the package config keeps the two assumptions
           # below. Check them here, where the workspace does exist: `platformIndependent` is
           # what makes Lake leave the platform out of the scope (put-staged's default), while
