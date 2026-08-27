@@ -24,7 +24,7 @@ of `σ x₀` and `τ x₀` fixes `x₀` and carries the one onto the other.
 
 * `TauCeti.doubleCoset_rel_stabilizer_of_ne`: the permutations moving `x₀` form a single double
   coset.
-* `TauCeti.doubleCoset_mk_stabilizer_eq_one_iff`: a double coset of the stabilizer of `x₀` is the
+* `TauCeti.doubleCosetMk_stabilizer_eq_one_iff`: a double coset of the stabilizer of `x₀` is the
   identity one exactly when its permutations fix `x₀`.
 * `TauCeti.card_doubleCosetQuotient_stabilizer`: a point stabilizer of a nontrivial `α` has
   exactly two double cosets in `Equiv.Perm α`.
@@ -68,7 +68,7 @@ theorem doubleCoset_rel_stabilizer_of_ne {σ τ : Equiv.Perm α} (hσ : σ x₀ 
 /-- A double coset of the stabilizer of `x₀` is the identity one exactly when its permutations fix
 `x₀`.  This is `TauCeti.doubleCosetMk_eq_mk_one_iff_mem` for the stabilizer, whose membership
 condition is fixing `x₀`. -/
-theorem doubleCoset_mk_stabilizer_eq_one_iff {σ : Equiv.Perm α} :
+theorem doubleCosetMk_stabilizer_eq_one_iff {σ : Equiv.Perm α} :
     DoubleCoset.mk (stabilizer (Equiv.Perm α) x₀) (stabilizer (Equiv.Perm α) x₀) σ =
         DoubleCoset.mk (stabilizer (Equiv.Perm α) x₀) (stabilizer (Equiv.Perm α) x₀) 1 ↔
       σ x₀ = x₀ :=
@@ -87,10 +87,10 @@ theorem card_doubleCosetQuotient_stabilizer [Nontrivial α] :
     exact hy
   rw [Nat.card_eq_two_iff' (DoubleCoset.mk _ _ 1)]
   refine ⟨DoubleCoset.mk _ _ (Equiv.swap x₀ y),
-    fun h => hswap ((doubleCoset_mk_stabilizer_eq_one_iff x₀).mp h), fun q hq => ?_⟩
+    fun h => hswap ((doubleCosetMk_stabilizer_eq_one_iff x₀).mp h), fun q hq => ?_⟩
   induction q using Quotient.inductionOn with
   | h σ =>
     exact Quotient.sound' (doubleCoset_rel_stabilizer_of_ne x₀
-      (fun h => hq ((doubleCoset_mk_stabilizer_eq_one_iff x₀).mpr h)) hswap)
+      (fun h => hq ((doubleCosetMk_stabilizer_eq_one_iff x₀).mpr h)) hswap)
 
 end TauCeti
