@@ -34,7 +34,7 @@ computation.
 
 ## References
 
-This supplies the simply blocked `GĤ` part of
+This supplies the simply blocked `GĤ` part of
 `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`".
 The specialization and rectangle formula follow Ozsváth--Stipsicz--Szabó,
 *Grid Homology for Knots and Links*, Chapter 4.6.
