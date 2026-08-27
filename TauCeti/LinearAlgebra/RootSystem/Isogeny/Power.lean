@@ -71,8 +71,11 @@ theorem g2SpecialIsogeny_pow_mul_pow (k : ℕ) :
   pow_mul_pow_of_mul_self g2SpecialIsogeny_mul_self k
 
 /-- An odd power of the special isogeny of `G₂` permutes the twelve roots exactly as the isogeny
-itself does. -/
-@[simp] theorem g2SpecialIsogeny_pow_odd_indexEquiv_apply (m : ℕ) (i : Fin 12) :
+itself does.
+
+This is deliberately not `@[simp]`: `TauCeti.RootPairingIsogeny.pow_indexEquiv` already pushes the
+power inside, so the left-hand side is not in simp normal form. -/
+theorem g2SpecialIsogeny_pow_odd_indexEquiv_apply (m : ℕ) (i : Fin 12) :
     (g2SpecialIsogeny ^ (2 * m + 1)).indexEquiv i = g2SpecialIsogenyIndex i := by
   rw [pow_odd_indexEquiv_of_mul_self_eq_smulId g2SpecialIsogeny_mul_self,
     g2SpecialIsogeny_indexEquiv_apply]
@@ -151,8 +154,11 @@ theorem f4SpecialIsogeny_pow_mul_pow (k : ℕ) :
   pow_mul_pow_of_mul_self f4SpecialIsogeny_mul_self k
 
 /-- An odd power of the special isogeny of `F₄` permutes the forty-eight roots exactly as the
-isogeny itself does. -/
-@[simp] theorem f4SpecialIsogeny_pow_odd_indexEquiv_apply (m : ℕ) (i : Fin 48) :
+isogeny itself does.
+
+This is deliberately not `@[simp]`: `TauCeti.RootPairingIsogeny.pow_indexEquiv` already pushes the
+power inside, so the left-hand side is not in simp normal form. -/
+theorem f4SpecialIsogeny_pow_odd_indexEquiv_apply (m : ℕ) (i : Fin 48) :
     (f4SpecialIsogeny ^ (2 * m + 1)).indexEquiv i = f4SpecialIsogenyIndex i := by
   rw [pow_odd_indexEquiv_of_mul_self_eq_smulId f4SpecialIsogeny_mul_self,
     f4SpecialIsogeny_indexEquiv_apply]
