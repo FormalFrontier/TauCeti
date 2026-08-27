@@ -74,6 +74,8 @@ private theorem zmultiples_le_radical_intQuadratic
   intro x hx
   obtain ⟨k, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hx
   constructor
+  -- The first radical condition unfolds `toQuadraticMap` and `intBilin` to the explicit
+  -- quadratic value of this representative; there is no rewriting lemma for this reduction.
   · change (((k * (n : ℤ)) * (k * n)) • a) = 0
     have hcoeff : (k * (n : ℤ)) * (k * n) = (k * k) * (n * n) := by ring
     rw [hcoeff, mul_smul, hquad, smul_zero]
@@ -83,6 +85,8 @@ private theorem zmultiples_le_radical_intQuadratic
     change QuadraticMap.polar (intQuadratic a) (k • (n : ℤ)) y = 0
     rw [intQuadratic, LinearMap.BilinMap.polar_toQuadraticMap]
     simp only [intBilin, LinearMap.mk₂_apply, smul_eq_mul]
+    -- The preceding rewrite exposes the two `intBilin` evaluations, whose integer actions on
+    -- `a` reduce definitionally to these two explicit scalar multiples.
     change ((k * (n : ℤ) * y) • a) + ((y * (k * n)) • a) = 0
     rw [← add_smul]
     have hcoeff : k * (n : ℤ) * y + y * (k * n) = (k * y) * (2 * n) := by ring
@@ -96,6 +100,19 @@ private def intQuotientEquivZMod :
     map_smul' := by
       intro k x
       convert! (Int.quotientZMultiplesNatEquivZMod n).toAddMonoidHom.map_zsmul k x using 1 }
+
+/-- The inverse quotient equivalence sends an integer class to its quotient representative. -/
+private theorem intQuotientEquivZMod_symm_intCast (k : ℤ) :
+    (intQuotientEquivZMod n).symm (k : ZMod n) = Submodule.Quotient.mk k := by
+  apply (intQuotientEquivZMod n).injective
+  rw [LinearEquiv.apply_symm_apply]
+  have hs : (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).symm
+      (QuotientAddGroup.mk k) = QuotientAddGroup.mk k := by
+    apply (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).injective
+    rw [AddEquiv.apply_symm_apply, QuotientAddGroup.quotientAddEquivOfEq_mk]
+  change (k : ZMod n) = Int.quotientZMultiplesNatEquivZMod n (QuotientAddGroup.mk k)
+  rw [Int.quotientZMultiplesNatEquivZMod, AddEquiv.trans_apply, hs]
+  rfl
 
 /-! ## The cyclic quadratic module -/
 
@@ -116,26 +133,12 @@ noncomputable def cyclicMap : QuadraticMap ℤ (ZMod n) (AddCircle (1 : ℚ)) :=
 @[simp]
 theorem cyclicMap_intCast (k : ℤ) :
     cyclicMap n a hquad hpolar (k : ZMod n) = (k * k) • a := by
-  rw [← zsmul_one, (cyclicMap n a hquad hpolar).map_smul]
-  congr 1
   unfold cyclicMap
   rw [QuadraticMap.comp_apply]
-  have he : (intQuotientEquivZMod n).symm 1 = Submodule.Quotient.mk (1 : ℤ) := by
-    apply (intQuotientEquivZMod n).injective
-    rw [LinearEquiv.apply_symm_apply]
-    have hs : (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).symm
-        (QuotientAddGroup.mk 1) = QuotientAddGroup.mk 1 := by
-      apply (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).injective
-      rw [AddEquiv.apply_symm_apply, QuotientAddGroup.quotientAddEquivOfEq_mk]
-    -- Expose the composition defining the quotient-to-`ZMod` equivalence.
-    change (1 : ZMod n) = Int.quotientZMultiplesNatEquivZMod n (QuotientAddGroup.mk 1)
-    rw [Int.quotientZMultiplesNatEquivZMod, AddEquiv.trans_apply, hs]
-    change (1 : ZMod n) = ((1 : ℤ) : ZMod n)
-    simp
   -- Expose the lifted quadratic map at the quotient representative.
   change (intQuadratic a).lift (AddSubgroup.zmultiples (n : ℤ)).toIntSubmodule _
-    ((intQuotientEquivZMod n).symm 1) = a
-  rw [he, QuadraticMap.lift_mk]
+    ((intQuotientEquivZMod n).symm (k : ZMod n)) = (k * k) • a
+  rw [intQuotientEquivZMod_symm_intCast, QuadraticMap.lift_mk]
   simp [intQuadratic, intBilin]
 
 /-- The standard generator of `cyclicMap` has value `a`. -/

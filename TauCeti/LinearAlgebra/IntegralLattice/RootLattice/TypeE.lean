@@ -319,16 +319,16 @@ theorem discriminantPairing_typeE₆MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- The type-`E₆` generator value `2/3` satisfies the quadratic-value descent condition. -/
-theorem typeE₆QuadraticValue_sq_torsion :
+/-- Nine times the type-`E₆` quadratic value `2/3` vanishes in `ℚ/ℤ`. -/
+theorem nine_zsmul_typeE₆QuadraticValue_eq_zero :
     (9 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
   -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
   change ((((9 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
   rw [QuotientAddGroup.eq_zero_iff]
   exact ⟨6, by norm_num⟩
 
-/-- The type-`E₆` generator value `2/3` satisfies the polar-pairing descent condition. -/
-theorem typeE₆QuadraticValue_polar_torsion :
+/-- Six times the type-`E₆` quadratic value `2/3` vanishes in `ℚ/ℤ`. -/
+theorem six_zsmul_typeE₆QuadraticValue_eq_zero :
     (6 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
   -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
   change ((((6 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
@@ -339,12 +339,12 @@ theorem typeE₆QuadraticValue_polar_torsion :
 noncomputable def typeE₆StandardQuadraticMap :
     QuadraticMap ℤ (ZMod 3) (AddCircle (1 : ℚ)) :=
   FiniteQuadraticModule.cyclicMap 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
-    typeE₆QuadraticValue_sq_torsion typeE₆QuadraticValue_polar_torsion
+    nine_zsmul_typeE₆QuadraticValue_eq_zero six_zsmul_typeE₆QuadraticValue_eq_zero
 
 /-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`. -/
 @[expose] noncomputable def typeE₆StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
-    typeE₆QuadraticValue_sq_torsion typeE₆QuadraticValue_polar_torsion
+    nine_zsmul_typeE₆QuadraticValue_eq_zero six_zsmul_typeE₆QuadraticValue_eq_zero
 
 /-- The generator of the standard type-`E₆` quadratic map has value `2/3`. -/
 @[simp]
@@ -608,8 +608,8 @@ theorem discriminantPairing_typeE₇MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- The type-`E₇` generator value `3/4` satisfies both cyclic descent conditions. -/
-theorem typeE₇QuadraticValue_torsion :
+/-- Four times the type-`E₇` quadratic value `3/4` vanishes in `ℚ/ℤ`. -/
+theorem four_zsmul_typeE₇QuadraticValue_eq_zero :
     (4 : ℤ) • ((((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
   -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
   change ((((4 : ℚ) * (3 / 4)) : ℚ) : AddCircle (1 : ℚ)) = 0
@@ -620,12 +620,12 @@ theorem typeE₇QuadraticValue_torsion :
 noncomputable def typeE₇StandardQuadraticMap :
     QuadraticMap ℤ (ZMod 2) (AddCircle (1 : ℚ)) :=
   FiniteQuadraticModule.cyclicMap 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
-    typeE₇QuadraticValue_torsion typeE₇QuadraticValue_torsion
+    four_zsmul_typeE₇QuadraticValue_eq_zero four_zsmul_typeE₇QuadraticValue_eq_zero
 
 /-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`. -/
 @[expose] noncomputable def typeE₇StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
-    typeE₇QuadraticValue_torsion typeE₇QuadraticValue_torsion
+    four_zsmul_typeE₇QuadraticValue_eq_zero four_zsmul_typeE₇QuadraticValue_eq_zero
 
 /-- The generator of the standard type-`E₇` quadratic map has value `3/4`. -/
 @[simp]
