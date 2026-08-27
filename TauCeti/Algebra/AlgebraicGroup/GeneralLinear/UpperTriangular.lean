@@ -108,6 +108,14 @@ noncomputable abbrev coordinateMap :
     GeneralLinear.coordinateHopfAlgebra R n ⟶ coordinateHopfAlgebra R n :=
   GeneralLinear.weightParabolicCoordinateMap R (weights n)
 
+/-- The upper-triangular coordinate morphism is the canonical quotient morphism. -/
+theorem coordinateMap_def :
+    coordinateMap R n =
+      CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R n)
+        (definingHopfIdeal R n) := by
+  ext h
+  exact GeneralLinear.weightParabolicCoordinateMap_apply R (weights n) h
+
 /-- The upper-triangular coordinate morphism sends an ambient coordinate to its quotient
 class. -/
 theorem coordinateMap_apply (h : GeneralLinear.coordinateHopfAlgebra R n) :
