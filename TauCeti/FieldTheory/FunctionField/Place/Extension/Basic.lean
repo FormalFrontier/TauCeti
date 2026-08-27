@@ -52,6 +52,9 @@ distinct modulo `e`.
 * `TauCeti.Place.finiteDimensional_residueField_restrict`: the relative degree is finite, so it
   is not the junk value of `Module.finrank`; `TauCeti.Place.one_le_relativeDegree` and
   `TauCeti.Place.ramificationIdx_pos` are the matching lower bounds.
+* `TauCeti.Place.finrank_mul_degree_eq_relativeDegree_mul_degree_restrict`:
+  `[k' : k] · deg P' = f(P' ∣ P) · deg P`, the comparison of the degrees of `P'` and of the place
+  it lies over.
 
 ## References
 
@@ -276,6 +279,29 @@ noncomputable def relativeDegree : ℕ :=
 theorem relativeDegree_def :
     relativeDegree k F P' = Module.finrank (P'.restrict k F).ResidueField P'.ResidueField := by
   rw [relativeDegree]
+
+/-- **The degree of a place and the degree of the place below it** (Stichtenoth, Section III.1):
+the residue field `F'_{P'}` sits in the two towers `k ⊆ k' ⊆ F'_{P'}` and `k ⊆ F_P ⊆ F'_{P'}`,
+whose successive degrees are `[k' : k]`, `deg P'` and `deg P`, `f(P' ∣ P)`.  Comparing them gives
+`[k' : k] · deg P' = f(P' ∣ P) · deg P`.
+
+The factor `[k' : k]` is mandatory and the identity is stated cross-multiplied: when the constant
+field grows, `deg P'` falls short of `f(P' ∣ P) · deg P` by exactly that factor. -/
+theorem finrank_mul_degree_eq_relativeDegree_mul_degree_restrict :
+    Module.finrank k k' * P'.degree = relativeDegree k F P' * (P'.restrict k F).degree := by
+  -- The residue field of `P'` is a `k`-algebra through the constants `k'` of `F'`.  This is a
+  -- local instance: for `k = k'` it would compete with the constant-field algebra of `P'`.
+  let _ : Algebra k P'.integers := ((algebraMap k' P'.integers).comp (algebraMap k k')).toAlgebra
+  have : IsScalarTower k k' P'.integers := .of_algebraMap_eq fun _ ↦ rfl
+  have : IsScalarTower k (P'.restrict k F).integers P'.integers := by
+    refine .of_algebraMap_eq fun c ↦ Subtype.ext ?_
+    rw [coe_algebraMap_integers, coe_algebraMap_constants, ← IsScalarTower.algebraMap_apply k F F']
+    exact (P'.coe_algebraMap_constants (algebraMap k k' c)).trans
+      (IsScalarTower.algebraMap_apply k k' F' c).symm
+  rw [degree_eq_finrank, degree_eq_finrank, relativeDegree_def,
+    Module.finrank_mul_finrank k k' P'.ResidueField,
+    mul_comm (Module.finrank (P'.restrict k F).ResidueField P'.ResidueField),
+    Module.finrank_mul_finrank k (P'.restrict k F).ResidueField P'.ResidueField]
 
 end ResidueField
 
