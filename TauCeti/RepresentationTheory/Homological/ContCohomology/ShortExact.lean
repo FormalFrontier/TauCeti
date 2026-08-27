@@ -218,6 +218,22 @@ theorem ext {S T : DiscreteShortExact G A B C} (hincl : S.incl = T.incl)
 @[simp]
 theorem proj_incl (a : A) : S.proj (S.incl a) = 0 := S.exact.apply_apply_eq_zero a
 
+/-- The inclusion of a short exact sequence, bundled as an equivariant additive homomorphism. -/
+def inclHom : A →+[G] B where
+  toAddMonoidHom := S.incl
+  map_smul' := S.incl_equivariant
+
+/-- The projection of a short exact sequence, bundled as an equivariant additive homomorphism. -/
+def projHom : B →+[G] C where
+  toAddMonoidHom := S.proj
+  map_smul' := S.proj_equivariant
+
+@[simp]
+theorem inclHom_apply (a : A) : S.inclHom a = S.incl a := (rfl)
+
+@[simp]
+theorem projHom_apply (b : B) : S.projHom b = S.proj b := (rfl)
+
 /-- An element of `B` killed by the projection comes from `A`. -/
 theorem exists_incl_eq {b : B} (hb : S.proj b = 0) : ∃ a : A, S.incl a = b := S.exact b |>.1 hb
 
