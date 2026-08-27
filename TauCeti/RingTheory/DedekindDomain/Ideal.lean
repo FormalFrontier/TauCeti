@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
+public import Mathlib.RingTheory.Multiplicity
 
 /-!
 # Complements on ideals of a Dedekind domain
@@ -15,6 +16,17 @@ complementing `Mathlib/RingTheory/DedekindDomain/Ideal/Lemmas.lean`. In particul
 the predicate `Ideal.IsPrimeTo I S`, saying that `I` is nonzero and divisible by no prime in `S`,
 together with its induction principle `Ideal.IsPrimeTo.induction_on` and its transport
 `Ideal.isPrimeTo_comap_iff` along a ring isomorphism.
+
+The predicate is closed under products (`Ideal.isPrimeTo_mul_iff`, its finite form
+`Ideal.isPrimeTo_prod`) and powers (`Ideal.IsPrimeTo.pow`). Complementing a set of primes turns it
+into a *support* condition: `IsPrimeTo I Sᶜ` says that every prime factor of `I` lies in `S`. The
+two extreme cases are `Ideal.isPrimeTo_univ_iff` (no prime factor at all, so `I = ⊤`) and
+`Ideal.isPrimeTo_compl_singleton_iff` (a single allowed prime, so `I` is a prime power), and
+`Ideal.IsPrimeTo.exists_pow_mul` splits off one allowed prime at a time. Together with the
+uniqueness statement `Ideal.eq_of_pow_mul_eq_pow_mul` and the relative primality
+`Ideal.IsPrimeTo.isRelPrime` of ideals supported on complementary sets, these are what turn a
+finite set of primes into a finite Euler product in
+`TauCeti/NumberTheory/ArithmeticDirichletSeries/EulerProduct.lean`.
 
 It also collects how an isomorphism `e : R ≃+* R'` moves ideals: `Ideal.map e` preserves
 divisibility (`Ideal.map_dvd_map_iff_of_ringEquiv`, `Ideal.map_pow_dvd_map_iff_of_ringEquiv`,
@@ -254,6 +266,81 @@ theorem IsPrimeTo.induction_on {motive : Ideal R → Prop} (h : IsPrimeTo I S)
       have hbad : HeightOneSpectrum.ofPrime hp ∉ S :=
         fun h ↦ hprime.2 _ h (dvd_mul_right p J)
       exact mul_prime (HeightOneSpectrum.ofPrime hp) J hbad hJ (ih hJ)
+
+/-- Powers of an ideal prime to `S` are again prime to `S`. -/
+theorem IsPrimeTo.pow (h : IsPrimeTo I S) (n : ℕ) : IsPrimeTo (I ^ n) S := by
+  induction n with
+  | zero => simp
+  | succ n ih => rw [pow_succ]; exact isPrimeTo_mul_iff.mpr ⟨ih, h⟩
+
+/-- A finite product of ideals prime to `S` is prime to `S`. -/
+theorem isPrimeTo_prod {ι : Type*} {t : Finset ι} {I : ι → Ideal R}
+    (h : ∀ i ∈ t, IsPrimeTo (I i) S) : IsPrimeTo (∏ i ∈ t, I i) S := by
+  classical
+  induction t using Finset.induction_on with
+  | empty => simp
+  | insert i t hi ih =>
+      rw [Finset.prod_insert hi]
+      exact isPrimeTo_mul_iff.mpr ⟨h i (Finset.mem_insert_self i t),
+        ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj)⟩
+
+/-- An ideal divisible by no height-one prime at all is the unit ideal. -/
+@[simp]
+theorem isPrimeTo_univ_iff : IsPrimeTo I Set.univ ↔ I = ⊤ := by
+  refine ⟨fun h ↦ h.induction_on rfl fun 𝔭 _ h𝔭 _ _ ↦ absurd (Set.mem_univ 𝔭) h𝔭, ?_⟩
+  rintro rfl
+  exact isPrimeTo_top
+
+/-- An ideal divisible by no height-one prime other than `𝔭` is a power of `𝔭`. -/
+theorem isPrimeTo_compl_singleton_iff {𝔭 : HeightOneSpectrum R} :
+    IsPrimeTo I {𝔭}ᶜ ↔ ∃ n : ℕ, I = 𝔭.asIdeal ^ n := by
+  constructor
+  · intro h
+    refine h.induction_on ⟨0, by simp⟩ ?_
+    rintro 𝔮 J h𝔮 - ⟨n, rfl⟩
+    rw [Set.notMem_compl_iff, Set.mem_singleton_iff] at h𝔮
+    exact ⟨n + 1, by rw [h𝔮, pow_succ']⟩
+  · rintro ⟨n, rfl⟩
+    exact (isPrimeTo_asIdeal_iff.mpr (by simp)).pow n
+
+/-- **Ideals supported on complementary sets of primes are relatively prime.** -/
+theorem IsPrimeTo.isRelPrime (hI : IsPrimeTo I S) (hJ : IsPrimeTo J Sᶜ) : IsRelPrime I J := by
+  refine (UniqueFactorizationMonoid.isRelPrime_iff_no_prime_factors
+    (by simpa using hI.ne_bot)).mpr fun d hdI hdJ hd ↦ ?_
+  have h𝔭 : HeightOneSpectrum.ofPrime hd ∉ Sᶜ := fun h ↦ hJ.not_dvd h hdJ
+  exact hI.not_dvd (Set.notMem_compl_iff.mp h𝔭) hdI
+
+/-- **Splitting off one allowed prime.** An ideal all of whose prime factors lie in `insert 𝔭 S`
+is a power of `𝔭` times an ideal all of whose prime factors lie in `S`. -/
+theorem IsPrimeTo.exists_pow_mul {𝔭 : HeightOneSpectrum R} (h : IsPrimeTo I (insert 𝔭 S)ᶜ) :
+    ∃ (n : ℕ) (J : Ideal R), IsPrimeTo J Sᶜ ∧ I = 𝔭.asIdeal ^ n * J := by
+  refine h.induction_on ⟨0, ⊤, isPrimeTo_top, by simp⟩ ?_
+  rintro 𝔮 J h𝔮 - ⟨n, J', hJ', rfl⟩
+  rw [Set.notMem_compl_iff, Set.mem_insert_iff] at h𝔮
+  rcases h𝔮 with rfl | h𝔮
+  · exact ⟨n + 1, J', hJ', by rw [pow_succ']; ring⟩
+  · exact ⟨n, 𝔮.asIdeal * J', isPrimeTo_mul_iff.mpr
+      ⟨isPrimeTo_asIdeal_iff.mpr (by simpa using h𝔮), hJ'⟩, by ring⟩
+
+private theorem multiplicity_pow_mul {𝔭 : HeightOneSpectrum R} {J : Ideal R}
+    (hJ : ¬ 𝔭.asIdeal ∣ J) (n : ℕ) :
+    multiplicity 𝔭.asIdeal (𝔭.asIdeal ^ n * J) = n := by
+  refine multiplicity_eq_of_dvd_of_not_dvd (Dvd.intro _ rfl) fun hdvd ↦ hJ ?_
+  rw [pow_succ] at hdvd
+  exact (mul_dvd_mul_iff_left (pow_ne_zero n (by simpa using 𝔭.ne_bot))).mp hdvd
+
+/-- **Uniqueness of the splitting.** The exponent and the prime-to-`𝔭` cofactor of a nonzero
+ideal are determined by it. -/
+theorem eq_of_pow_mul_eq_pow_mul {𝔭 : HeightOneSpectrum R} {m n : ℕ} {I J : Ideal R}
+    (hI : ¬ 𝔭.asIdeal ∣ I) (hJ : ¬ 𝔭.asIdeal ∣ J)
+    (h : 𝔭.asIdeal ^ m * I = 𝔭.asIdeal ^ n * J) : m = n ∧ I = J := by
+  have hmn : m = n := by
+    have hm := multiplicity_pow_mul hI m
+    rw [h, multiplicity_pow_mul hJ n] at hm
+    exact hm.symm
+  refine ⟨hmn, ?_⟩
+  subst hmn
+  exact mul_left_cancel₀ (pow_ne_zero _ (by simpa using 𝔭.ne_bot)) h
 
 end Ideal
 
