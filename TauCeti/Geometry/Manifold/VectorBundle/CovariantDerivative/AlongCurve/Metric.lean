@@ -99,9 +99,7 @@ private theorem IsMetricCompatible.hasMetricProductRuleWithinAt_pullback
           inner ℝ (X (γ t)) (cov Y (γ t) (curveVelocityWithin I γ s t)) := by
     simpa only [Function.comp_apply, hZ] using hmetric
   rw [hmetric'] at hchain
-  change HasDerivWithinAt (fun r ↦ inner ℝ (X (γ r)) (Y (γ r)))
-    (inner ℝ (alongCurveWithin cov γ (fun r ↦ X (γ r)) s t) (Y (γ t)) +
-      inner ℝ (X (γ t)) (alongCurveWithin cov γ (fun r ↦ Y (γ r)) s t)) s t
+  dsimp only [HasMetricProductRuleWithinAt]
   rw [alongCurveWithin_pullback_curveVelocityWithin cov γ X hu hγ hX,
     alongCurveWithin_pullback_curveVelocityWithin cov γ Y hu hγ hY]
   -- The chain-rule result uses a definitionally equal real normed-space instance.
@@ -113,8 +111,7 @@ private lemma HasMetricProductRuleWithinAt.symm
     {V W : ∀ r, TangentSpace I (γ r)}
     (h : HasMetricProductRuleWithinAt (cov := cov) (s := s) (t := t) V W) :
     HasMetricProductRuleWithinAt (cov := cov) (s := s) (t := t) W V := by
-  change HasDerivWithinAt (fun r ↦ inner ℝ (V r) (W r)) _ s t at h
-  change HasDerivWithinAt (fun r ↦ inner ℝ (W r) (V r)) _ s t
+  dsimp only [HasMetricProductRuleWithinAt] at h ⊢
   have hfun : (fun r ↦ inner ℝ (W r) (V r)) = fun r ↦ inner ℝ (V r) (W r) := by
     funext r
     exact real_inner_comm _ _
@@ -133,9 +130,7 @@ private lemma HasMetricProductRuleWithinAt.add_left
     (hcoordV' : DifferentiableWithinAt ℝ (sectionCoord (F := E) γ V' (γ t)) s t) :
     HasMetricProductRuleWithinAt (cov := cov) (s := s) (t := t)
       (fun r ↦ V r + V' r) W := by
-  change HasDerivWithinAt (fun r ↦ inner ℝ (V r) (W r)) _ s t at hV
-  change HasDerivWithinAt (fun r ↦ inner ℝ (V' r) (W r)) _ s t at hV'
-  change HasDerivWithinAt (fun r ↦ inner ℝ (V r + V' r) (W r)) _ s t
+  dsimp only [HasMetricProductRuleWithinAt] at hV hV' ⊢
   have hfun : (fun r ↦ inner ℝ (V r + V' r) (W r)) =
       fun r ↦ inner ℝ (V r) (W r) + inner ℝ (V' r) (W r) := by
     funext r
@@ -167,8 +162,7 @@ private lemma HasMetricProductRuleWithinAt.smul_left
     (hcoordV : DifferentiableWithinAt ℝ (sectionCoord (F := E) γ V (γ t)) s t) :
     HasMetricProductRuleWithinAt (cov := cov) (s := s) (t := t)
       (fun r ↦ f r • V r) W := by
-  change HasDerivWithinAt (fun r ↦ inner ℝ (V r) (W r)) _ s t at hV
-  change HasDerivWithinAt (fun r ↦ inner ℝ (f r • V r) (W r)) _ s t
+  dsimp only [HasMetricProductRuleWithinAt] at hV ⊢
   have hfun : (fun r ↦ inner ℝ (f r • V r) (W r)) =
       fun r ↦ f r * inner ℝ (V r) (W r) := by
     funext r
@@ -219,8 +213,8 @@ private lemma HasMetricProductRuleWithinAt.finsetSum_left
   classical
   induction A using Finset.induction_on with
   | empty =>
-      change HasDerivWithinAt (fun r ↦ inner ℝ (0 : TangentSpace I (γ r)) (W r)) _ s t
-      simpa using (hasDerivWithinAt_const (x := t) (s := s) (c := (0 : ℝ)))
+      simpa [HasMetricProductRuleWithinAt] using
+        (hasDerivWithinAt_const (x := t) (s := s) (c := (0 : ℝ)))
   | @insert a A ha ih =>
       have ha_rule := hU a (Finset.mem_insert_self a A)
       have hA_rule := ih (fun i hi ↦ hU i (Finset.mem_insert_of_mem hi))
