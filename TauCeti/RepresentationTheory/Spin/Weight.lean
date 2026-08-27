@@ -26,8 +26,8 @@ H i = bivector Q (w i) (w' i) = ⅟2 (ι (w i) * ι (w' i) - ι (w' i) * ι (w i
 
 is a quadratic element of the Clifford algebra, so it lies in the Lie subalgebra
 `CliffordAlgebra.quadraticLieSubalgebra Q` that realizes `𝔰𝔬(V, Q)`. These elements commute
-(`TauCeti.SpinPolarizationData.lie_cartanElement_cartanElement`), so they span a candidate Cartan
-subalgebra, and they act *diagonally* on the exterior basis of `S`: on the basis vector indexed by
+(`TauCeti.SpinPolarizationData.lie_diagonalBivector_diagonalBivector`), and they act *diagonally*
+on the exterior basis of `S`: on the basis vector indexed by
 a finite set `s` of indices — the wedge of the `w i` for `i ∈ s` — the element `H i` acts by
 
 ```text
@@ -44,8 +44,9 @@ Two facts pin the diagonalization down. The simultaneous eigenspace at the eigen
 (`TauCeti.spinWeightSpace_spinWeight`), and, over a ring without zero divisors, every other tuple
 of eigenvalues has zero simultaneous eigenspace
 (`TauCeti.spinWeightSpace_eq_bot_of_notMem_range`). Hence, for a finite index type, the tuples
-that do occur are exactly the sign vectors (`TauCeti.range_spinWeight`), there are `2 ^ l` of them
-on an index type of cardinality `l` (`TauCeti.ncard_range_spinWeight`), and their lines exhaust
+that do occur are exactly the sign vectors (`TauCeti.range_spinWeight`), and, when `K` is
+nontrivial, there are `2 ^ l` of them on an index type of cardinality `l`
+(`TauCeti.ncard_range_spinWeight`); their lines exhaust
 `S` (`TauCeti.iSup_spinWeightSpace_eq_top`).
 
 The cancellation behind the first of those needs no field: two distinct sign vectors differ in
@@ -62,7 +63,7 @@ rest of the layer this file opens.
 
 ## Main definitions
 
-* `TauCeti.SpinPolarizationData.cartanElement`: the Clifford bivector `H i` of a basis vector of
+* `TauCeti.SpinPolarizationData.diagonalBivector`: the Clifford bivector `H i` of a basis vector of
   `W` and its dual vector in `W'`.
 * `TauCeti.spinWeight`: the sign vector `½(±1, …, ±1)` attached to a finite set of indices.
 * `TauCeti.spinWeightSpace`: the simultaneous eigenspace of the elements `H i` at a prescribed
@@ -70,8 +71,9 @@ rest of the layer this file opens.
 
 ## Main results
 
-* `TauCeti.SpinPolarizationData.lie_cartanElement_cartanElement`: **the Cartan elements commute.**
-* `TauCeti.SpinPolarizationData.spinAction_cartanElement_basis`: **the Cartan elements act
+* `TauCeti.SpinPolarizationData.lie_diagonalBivector_diagonalBivector`: **the diagonal bivectors
+  commute.**
+* `TauCeti.SpinPolarizationData.spinAction_diagonalBivector_basis`: **the diagonal bivectors act
   diagonally on the exterior basis**, by `⅟2` or `-⅟2`.
 * `TauCeti.spinWeightSpace_spinWeight`: **each weight space is the line spanned by its exterior
   basis vector.**
@@ -79,8 +81,8 @@ rest of the layer this file opens.
   other tuple of eigenvalues occurs.
 * `TauCeti.iSup_spinWeightSpace_eq_top`: the weight spaces exhaust the spinor module.
 * `TauCeti.range_spinWeight`: for a finite index type the weights are exactly the sign vectors,
-  and `TauCeti.ncard_range_spinWeight` counts them: there are `2 ^ l` of them on an index type of
-  cardinality `l`.
+  and, when `K` is nontrivial, `TauCeti.ncard_range_spinWeight` counts them: there are `2 ^ l` of
+  them on an index type of cardinality `l`.
 
 ## References
 
@@ -209,34 +211,34 @@ variable {K : Type u} [CommRing K] {V : Type v} [AddCommGroup V] [Module K V]
   {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
   {ι : Type w} [LinearOrder ι] (b : Module.Basis ι K P.W)
 
-/-! ### The Cartan elements -/
+/-! ### The diagonal bivectors -/
 
 variable [Invertible (2 : K)]
 
-/-- The `i`-th **Cartan element** of a polarization with a chosen basis of its isotropic summand:
-the Clifford bivector of the `i`-th basis vector and its dual. -/
-noncomputable def cartanElement (i : ι) : CliffordAlgebra Q :=
+/-- The `i`-th **diagonal bivector** of a polarization with a chosen basis of its isotropic
+summand: the Clifford bivector of the `i`-th basis vector and its dual. -/
+noncomputable def diagonalBivector (i : ι) : CliffordAlgebra Q :=
   bivector Q (b i : V) (P.dualVector b i : V)
 
 omit [LinearOrder ι] in
-theorem cartanElement_def (i : ι) :
-    P.cartanElement b i = bivector Q (b i : V) (P.dualVector b i : V) :=
-  -- `(rfl)`, not `rfl`: the body of `cartanElement` is not `@[expose]`d.
+theorem diagonalBivector_def (i : ι) :
+    P.diagonalBivector b i = bivector Q (b i : V) (P.dualVector b i : V) :=
+  -- `(rfl)`, not `rfl`: the body of `diagonalBivector` is not `@[expose]`d.
   (rfl)
 
 omit [LinearOrder ι] in
-/-- The Cartan elements are quadratic elements of the Clifford algebra, so they lie in the Lie
+/-- The diagonal bivectors are quadratic elements of the Clifford algebra, so they lie in the Lie
 subalgebra that realizes `𝔰𝔬(V, Q)`. -/
-theorem cartanElement_mem_quadraticLieSubalgebra (i : ι) :
-    P.cartanElement b i ∈ quadraticLieSubalgebra Q := by
-  rw [cartanElement_def]
+theorem diagonalBivector_mem_quadraticLieSubalgebra (i : ι) :
+    P.diagonalBivector b i ∈ quadraticLieSubalgebra Q := by
+  rw [diagonalBivector_def]
   exact bivector_mem_quadraticLieSubalgebra Q _ _
 
-/-- **The Cartan elements commute.** Of the four polar values entering the bracket of two Clifford
-bivectors only the two Kronecker pairings survive, and off the diagonal they vanish too; on the
-diagonal the two surviving contributions cancel. -/
-theorem lie_cartanElement_cartanElement (i j : ι) :
-    ⁅P.cartanElement b i, P.cartanElement b j⁆ = 0 := by
+/-- **The diagonal bivectors commute.** Of the four polar values entering the bracket of two
+Clifford bivectors only the two Kronecker pairings survive, and off the diagonal they vanish too;
+on the diagonal the two surviving contributions cancel. -/
+theorem lie_diagonalBivector_diagonalBivector (i j : ι) :
+    ⁅P.diagonalBivector b i, P.diagonalBivector b j⁆ = 0 := by
   have h2 : polar Q (b i : V) (b j : V) = 0 := P.polar_W_eq_zero (b i) (b j)
   have h3 : polar Q (P.dualVector b i : V) (P.dualVector b j : V) = 0 :=
     P.polar_W'_eq_zero _ _
@@ -246,7 +248,7 @@ theorem lie_cartanElement_cartanElement (i j : ι) :
       rw [QuadraticMap.polar_comm]
       exact P.polar_dualVector_self b i
     have h4 : polar Q (b i : V) (P.dualVector b i : V) = 1 := P.polar_dualVector_self b i
-    rw [cartanElement_def, lie_bivector_bivector, h1, h2, h3, h4]
+    rw [diagonalBivector_def, lie_bivector_bivector, h1, h2, h3, h4]
     simp only [one_smul, zero_smul, sub_zero, zero_sub, bivector_def, map_neg, mul_neg, neg_mul]
     module
   · have hji : ¬ j = i := fun hji => h hji.symm
@@ -256,7 +258,7 @@ theorem lie_cartanElement_cartanElement (i j : ι) :
     have h4 : polar Q (b i : V) (P.dualVector b j : V) = 0 := by
       rw [P.polar_dualVector b j i]
       simp [h]
-    rw [cartanElement_def, cartanElement_def, lie_bivector_bivector, h1, h2, h3, h4]
+    rw [diagonalBivector_def, diagonalBivector_def, lie_bivector_bivector, h1, h2, h3, h4]
     simp [bivector_def]
 
 /-! ### The diagonal action on the exterior basis -/
@@ -279,14 +281,14 @@ theorem contract_dualVector_wedge_basis (i : ι) (s : Finset ι) :
   rw [P.contract_wedge (b i) (P.dualVector b i), P.polar_dualVector_self b i, one_smul,
     wedge_contract_dualVector_basis]
 
-/-- **The Cartan elements act diagonally on the exterior basis** of the spinor module: the `i`-th
+/-- **The diagonal bivectors act diagonally on the exterior basis** of the spinor module: the `i`-th
 one multiplies the basis vector indexed by `s` by `⅟2` when `i ∈ s` and by `-⅟2` otherwise, so
 that basis vector is a weight vector of weight `TauCeti.spinWeight K s`. -/
 @[simp]
-theorem spinAction_cartanElement_basis (i : ι) (s : Finset ι) :
-    spinAction Q P (P.cartanElement b i) (b.ExteriorAlgebra s) =
+theorem spinAction_diagonalBivector_basis (i : ι) (s : Finset ι) :
+    spinAction Q P (P.diagonalBivector b i) (b.ExteriorAlgebra s) =
       spinWeight K s i • b.ExteriorAlgebra s := by
-  rw [cartanElement_def, bivector_def, map_smul, map_sub, map_mul, map_mul, spinAction_ι,
+  rw [diagonalBivector_def, bivector_def, map_smul, map_sub, map_mul, map_mul, spinAction_ι,
     spinAction_ι, P.cliffordOperator_coe_W, P.cliffordOperator_coe_W']
   simp only [LinearMap.smul_apply, LinearMap.sub_apply, Module.End.mul_apply]
   rw [wedge_contract_dualVector_basis, contract_dualVector_wedge_basis]
@@ -310,12 +312,12 @@ variable {K : Type u} [CommRing K] [Invertible (2 : K)] {V : Type v} [AddCommGro
 simultaneous eigenspace of the operators `H i`, the `i`-th one acting with eigenvalue `χ i`. -/
 noncomputable def spinWeightSpace (Q : QuadraticForm K V) (P : SpinPolarizationData Q)
     (b : Module.Basis ι K P.W) (χ : ι → K) : Submodule K (ExteriorAlgebra K P.W) :=
-  ⨅ i : ι, Module.End.eigenspace (spinAction Q P (P.cartanElement b i)) (χ i)
+  ⨅ i : ι, Module.End.eigenspace (spinAction Q P (P.diagonalBivector b i)) (χ i)
 
 omit [LinearOrder ι] in
 theorem spinWeightSpace_def (χ : ι → K) :
     spinWeightSpace Q P b χ =
-      ⨅ i : ι, Module.End.eigenspace (spinAction Q P (P.cartanElement b i)) (χ i) :=
+      ⨅ i : ι, Module.End.eigenspace (spinAction Q P (P.diagonalBivector b i)) (χ i) :=
   -- `(rfl)`, not `rfl`: the body of `spinWeightSpace` is not `@[expose]`d.
   (rfl)
 
@@ -324,31 +326,31 @@ omit [LinearOrder ι] in
 it by the prescribed eigenvalue `χ i`. -/
 @[simp]
 theorem mem_spinWeightSpace_iff {χ : ι → K} {x : ExteriorAlgebra K P.W} :
-    x ∈ spinWeightSpace Q P b χ ↔ ∀ i, spinAction Q P (P.cartanElement b i) x = χ i • x := by
+    x ∈ spinWeightSpace Q P b χ ↔ ∀ i, spinAction Q P (P.diagonalBivector b i) x = χ i • x := by
   rw [spinWeightSpace_def, Submodule.mem_iInf]
   exact forall_congr' fun _ => Module.End.mem_eigenspace_iff
 
 /-- The exterior basis vector indexed by `s` lies in the weight space at `spinWeight K s`. -/
 theorem basis_mem_spinWeightSpace (s : Finset ι) :
     b.ExteriorAlgebra s ∈ spinWeightSpace Q P b (spinWeight K s) :=
-  (mem_spinWeightSpace_iff P b).mpr fun i => P.spinAction_cartanElement_basis b i s
+  (mem_spinWeightSpace_iff P b).mpr fun i => P.spinAction_diagonalBivector_basis b i s
 
-/-- The Cartan elements are diagonal in the exterior basis, read on coordinates: applying `H i`
+/-- The diagonal bivectors are diagonal in the exterior basis, read on coordinates: applying `H i`
 scales the `t`-th coordinate of any spinor by the `i`-th entry of the weight of `t`. -/
-theorem repr_spinAction_cartanElement (i : ι) (t : Finset ι) (x : ExteriorAlgebra K P.W) :
-    b.ExteriorAlgebra.repr (spinAction Q P (P.cartanElement b i) x) t =
+theorem repr_spinAction_diagonalBivector (i : ι) (t : Finset ι) (x : ExteriorAlgebra K P.W) :
+    b.ExteriorAlgebra.repr (spinAction Q P (P.diagonalBivector b i) x) t =
       spinWeight K t i * b.ExteriorAlgebra.repr x t := by
   have key :
       (Finsupp.lapply t).comp (b.ExteriorAlgebra.repr.toLinearMap.comp
-          (spinAction Q P (P.cartanElement b i) : Module.End K (ExteriorAlgebra K P.W))) =
+          (spinAction Q P (P.diagonalBivector b i) : Module.End K (ExteriorAlgebra K P.W))) =
         spinWeight K t i •
           (Finsupp.lapply t).comp b.ExteriorAlgebra.repr.toLinearMap := by
     apply b.ExteriorAlgebra.ext
     intro s
     by_cases hst : s = t
     · subst hst
-      simp [SpinPolarizationData.spinAction_cartanElement_basis]
-    · simp [SpinPolarizationData.spinAction_cartanElement_basis, hst]
+      simp [SpinPolarizationData.spinAction_diagonalBivector_basis]
+    · simp [SpinPolarizationData.spinAction_diagonalBivector_basis, hst]
   simpa using LinearMap.congr_fun key x
 
 /-- **Each weight space of the spinor module is a line**, spanned by the exterior basis vector
@@ -362,7 +364,7 @@ theorem spinWeightSpace_spinWeight (s : Finset ι) :
     have hzero : ∀ t : Finset ι, t ≠ s → b.ExteriorAlgebra.repr x t = 0 := by
       intro t ht
       obtain ⟨i, hi⟩ := exists_spinWeight_sub_eq_one_or_neg_one (K := K) ht
-      have hcoord := repr_spinAction_cartanElement P b i t x
+      have hcoord := repr_spinAction_diagonalBivector P b i t x
       rw [hx i, map_smul, Finsupp.smul_apply, smul_eq_mul] at hcoord
       have hsub : (spinWeight K t i - spinWeight K s i) * b.ExteriorAlgebra.repr x t = 0 := by
         rw [sub_mul, ← hcoord, sub_self]
@@ -401,7 +403,7 @@ theorem spinWeightSpace_eq_bot_of_notMem_range [NoZeroDivisors K] {χ : ι → K
   ext t
   have hne : spinWeight K t ≠ χ := fun h => hχ ⟨t, h⟩
   obtain ⟨i, hi⟩ := Function.ne_iff.mp hne
-  have hcoord := repr_spinAction_cartanElement P b i t x
+  have hcoord := repr_spinAction_diagonalBivector P b i t x
   rw [hx i, map_smul, Finsupp.smul_apply, smul_eq_mul] at hcoord
   have hsub : (spinWeight K t i - χ i) * b.ExteriorAlgebra.repr x t = 0 := by
     rw [sub_mul, ← hcoord, sub_self]
