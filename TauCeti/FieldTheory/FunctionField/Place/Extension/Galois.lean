@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.FieldTheory.Galois.Basic
 public import Mathlib.RingTheory.Norm.Transitivity
 public import Mathlib.RingTheory.Valuation.RamificationGroup
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Fibre

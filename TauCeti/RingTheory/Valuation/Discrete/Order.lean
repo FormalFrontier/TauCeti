@@ -63,6 +63,7 @@ theorem ord_mul (v : _root_.Valuation F ℤᵐ⁰) {f g : F} (hf : f ≠ 0) (hg 
     WithZero.log_mul (v.ne_zero_iff.mpr hf) (v.ne_zero_iff.mpr hg)]
   ring
 
+/-- The order of a finite product of nonzero elements is the sum of their orders. -/
 theorem ord_prod (v : _root_.Valuation F ℤᵐ⁰) {ι : Type*} (s : Finset ι) {f : ι → F}
     (hf : ∀ i ∈ s, f i ≠ 0) : ord v (∏ i ∈ s, f i) = ∑ i ∈ s, ord v (f i) := by
   classical
