@@ -116,7 +116,7 @@ theorem centerPointwiseQuotientIsoPGL_hom_mk (A : CommAlgCat.{u} k)
     (map_centerPointsSubgroup_pointsMulEquiv n A) q
 
 /-- The group-valued point functor `A ↦ PGL(n, A)`. -/
-noncomputable def projectivePointsFunctor {R : Type u} [CommRing R] :
+@[expose] noncomputable def projectivePointsFunctor {R : Type u} [CommRing R] :
     CommAlgCat.{u} R ⥤ GrpCat.{u} where
   obj A := GrpCat.of (Matrix.ProjGenLinGroup (Fin n) A)
   map φ := GrpCat.ofHom (Matrix.ProjGenLinGroup.map φ.hom.toRingHom)
