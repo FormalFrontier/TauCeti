@@ -20,6 +20,8 @@ primes and packaging them as non-zero-divisors so that their classes can be take
 
 ## Main results
 
+* the `Nonempty` instance for `IsDedekindDomain.HeightOneSpectrum (𝓞 K)`: a number field has at
+  least one nonzero prime ideal.
 * `NumberField.mem_nonZeroDivisors_of_prime_of_liesOver`: a prime ideal above a rational prime is
   a non-zero-divisor in the ideal monoid.
 * `NumberField.exists_primeIdealFamily`: a finite set of rational primes admits a family of prime
@@ -36,6 +38,12 @@ open scoped NumberField nonZeroDivisors
 namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
+
+/-- A number field has at least one nonzero prime ideal: its ring of integers is nontrivial, so it
+has a maximal ideal, which is nonzero because the ring of integers is not a field. -/
+instance : Nonempty (IsDedekindDomain.HeightOneSpectrum (𝓞 K)) := by
+  obtain ⟨M, hM⟩ := Ideal.exists_maximal (𝓞 K)
+  exact ⟨⟨M, hM.isPrime, by simpa using NeZero.ne M⟩⟩
 
 /-- An ideal lying over a rational prime is a non-zero-divisor in the ideal monoid, so it can be
 passed to `ClassGroup.mk0`. -/
