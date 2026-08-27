@@ -51,10 +51,10 @@ For a proper domain `Ω`, the translation estimate is applied after extending by
 space. `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient` records the
 result directly in terms of the original gradient:
 
-`‖ũ(· + h) - ũ‖_p ≤ ‖h‖ ‖∇u‖_p`,
+`‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ‖h‖ ‖∇u‖_p`,
 
-where `ũ` is the zero extension of `u`. The zero extension vanishes almost everywhere off `Ω`,
-as recorded by `TauCeti.W1p0.value_extendByZeroL_eq_zero_ae_compl`. These are precisely the
+where `\tilde{u}` is the zero extension of `u`. The zero extension vanishes almost everywhere
+off `Ω`, as recorded by `TauCeti.W1p0.value_extendByZeroL_eq_zero_ae_compl`. These are precisely the
 translation and fixed-support inputs used to apply the Fréchet--Kolmogorov compactness criterion
 to a norm-bounded family in `W^{1,p}_0(Ω)`.
 
@@ -199,7 +199,7 @@ theorem W1p0.value_extendByZeroL_eq_zero_ae_compl {Omega : Opens E}
 /-- **The translation estimate for the zero extension of a Sobolev function.** For
 `u ∈ W^{1,p}_0(Ω)` and `1 ≤ p < ∞`, extend `u` by zero to the whole space. Then
 
-`‖ũ(· + h) - ũ‖_p ≤ ‖h‖ ‖∇u‖_p`.
+`‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ‖h‖ ‖∇u‖_p`.
 
 No boundary regularity or boundedness of `Ω` is needed. Membership in `W^{1,p}_0(Ω)` is the
 load-bearing condition that makes the zero extension weakly differentiable across `∂Ω`. -/
@@ -218,8 +218,8 @@ theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient
   exact hmain
 
 /-- The graph-norm form of the zero-extension translation estimate. The `W^{1,p}` norm controls
-the gradient component, so `‖ũ(· + h) - ũ‖_p ≤ ‖h‖ ‖u‖_{W^{1,p}}`. This is the uniform estimate
-used for norm-bounded families in Rellich--Kondrachov. -/
+the gradient component, so `‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ‖h‖ ‖u‖_{W^{1,p}}`. This is the
+uniform estimate used for norm-bounded families in Rellich--Kondrachov. -/
 theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm
     {Omega : Opens E} (hp : p ≠ ∞) (h : E) (u : W1p0 mu Omega p) :
     eLpNorm (fun x =>
@@ -235,9 +235,9 @@ theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm
 
 /-- **Uniform smallness of translation increments for a norm-bounded Sobolev family.** If every
 `u ∈ S ⊆ W^{1,p}_0(Ω)` has graph norm at most `C`, then for every `ε > 0` there is a common
-`δ > 0` such that every zero extension `ũ` satisfies
+`δ > 0` such that every zero extension `\tilde{u}` satisfies
 
-`‖ũ(· + h) - ũ‖_p ≤ ε` whenever `‖h‖ < δ`.
+`‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ε` whenever `‖h‖ < δ`.
 
 Together with `TauCeti.W1p0.value_extendByZeroL_eq_zero_ae_compl`, this supplies the two
 family-level hypotheses of the fixed-bounded-support Fréchet--Kolmogorov criterion. -/
