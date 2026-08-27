@@ -65,8 +65,8 @@ one that makes `g ↦ (g · -)` a *left* action.
 The two degrees share the compatible-pair machinery of
 `TauCeti/RepresentationTheory/Homological/ContCohomology/ExplicitFunctoriality.lean`, so the only
 inputs proved here are the compatibility identity `smul_conjNormal_inv_smul` of the conjugation
-pair and the two homotopies. Continuity of conjugation is
-`TauCeti.ContinuousMonoidHom.conjNormal`.
+pair, the multiplicativity `toAddMonoidHom_one` and `toAddMonoidHom_mul` of its coefficient half,
+and the two homotopies. Continuity of conjugation is `TauCeti.ContinuousMonoidHom.conjNormal`.
 
 This implements the "conjugation" milestone of Layer 2 of the human-authored roadmap at
 `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose `Suggested.lean` fixes the names
@@ -103,6 +103,27 @@ theorem smul_conjNormal_inv_smul (g : G) (n : N) (m : M) :
 
 end CompatiblePair
 
+section Coefficients
+
+variable (G : Type uG) [Monoid G] (M : Type uM) [AddMonoid M] [DistribMulAction G M]
+
+-- The coefficient half of the conjugation pair is `DistribSMul.toAddMonoidHom M g`; the two
+-- lemmas below are the unbundled `map_one` and `map_mul` of `DistribMulAction.toAddMonoidEnd`,
+-- in the `M →+ M` form in which `cocyclesMap1` and friends take their coefficient map.
+/-- The identity acts on the coefficients by the identity homomorphism. -/
+@[simp]
+theorem toAddMonoidHom_one : DistribSMul.toAddMonoidHom M (1 : G) = AddMonoidHom.id M :=
+  map_one (DistribMulAction.toAddMonoidEnd G M)
+
+/-- Acting on the coefficients by a product is acting by the two factors in turn. -/
+@[simp]
+theorem toAddMonoidHom_mul (g g' : G) :
+    DistribSMul.toAddMonoidHom M (g * g') =
+      (DistribSMul.toAddMonoidHom M g).comp (DistribSMul.toAddMonoidHom M g') :=
+  map_mul (DistribMulAction.toAddMonoidEnd G M) g g'
+
+end Coefficients
+
 variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
   (M : Type uM) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] [ContinuousSMul G M]
@@ -130,18 +151,20 @@ variable (G M N)
 /-- The identity of `G` acts trivially on continuous `1`-cocycles. -/
 @[simp]
 theorem conjCocycles1_one : conjCocycles1 G M N 1 = AddMonoidHom.id (Z1 N M) := by
-  refine AddMonoidHom.ext fun c => Subtype.ext (funext fun n => ?_)
-  simp only [conjCocycles1_apply, inv_one, ContinuousMonoidHom.conjNormal_one,
-    ContinuousMonoidHom.coe_id, id_eq, one_smul, AddMonoidHom.id_apply]
+  unfold conjCocycles1
+  simp only [inv_one, ContinuousMonoidHom.conjNormal_one, toAddMonoidHom_one]
+  exact cocyclesMap1_id N M _
 
 /-- Conjugation on continuous `1`-cocycles is a left action of `G`. -/
 @[simp]
 theorem conjCocycles1_mul (g g' : G) :
     conjCocycles1 G M N (g * g') = (conjCocycles1 G M N g).comp (conjCocycles1 G M N g') := by
-  refine AddMonoidHom.ext fun c => Subtype.ext (funext fun n => ?_)
-  rw [AddMonoidHom.comp_apply, conjCocycles1_apply, conjCocycles1_apply, conjCocycles1_apply,
-    mul_inv_rev, ContinuousMonoidHom.conjNormal_mul, ContinuousMonoidHom.coe_comp,
-    Function.comp_apply, mul_smul]
+  unfold conjCocycles1
+  simp only [mul_inv_rev, ContinuousMonoidHom.conjNormal_mul, toAddMonoidHom_mul]
+  exact cocyclesMap1_comp N M N M (ContinuousMonoidHom.conjNormal N g'⁻¹)
+    (DistribSMul.toAddMonoidHom M g') _ (smul_conjNormal_inv_smul G M N g')
+    N M (ContinuousMonoidHom.conjNormal N g⁻¹) (DistribSMul.toAddMonoidHom M g) _
+    (smul_conjNormal_inv_smul G M N g) _
 
 /-- **Conjugation on the explicit first cohomology group.** For a normal subgroup `N` of `G`, the
 compatible pair `(n ↦ g⁻¹ * n * g, m ↦ g • m)` pulls a class of `H¹(N, M)` back to a class of
@@ -166,20 +189,20 @@ variable (G M N)
 /-- The identity of `G` acts trivially on `H¹(N, M)`. -/
 @[simp]
 theorem explicitConj1_one : explicitConj1 G M N 1 = AddMonoidHom.id (H1 N M) := by
-  refine AddMonoidHom.ext fun x => ?_
-  induction x using QuotientAddGroup.induction_on with
-  | _ c =>
-    rw [explicitConj1_mk, conjCocycles1_one, AddMonoidHom.id_apply, AddMonoidHom.id_apply]
+  unfold explicitConj1
+  simp only [inv_one, ContinuousMonoidHom.conjNormal_one, toAddMonoidHom_one]
+  exact explicitMap1_id N M _
 
 /-- Conjugation on `H¹(N, M)` is a left action of `G`. -/
 @[simp]
 theorem explicitConj1_mul (g g' : G) :
     explicitConj1 G M N (g * g') = (explicitConj1 G M N g).comp (explicitConj1 G M N g') := by
-  refine AddMonoidHom.ext fun x => ?_
-  induction x using QuotientAddGroup.induction_on with
-  | _ c =>
-    rw [explicitConj1_mk, conjCocycles1_mul, AddMonoidHom.comp_apply, AddMonoidHom.comp_apply,
-      explicitConj1_mk, explicitConj1_mk]
+  unfold explicitConj1
+  simp only [mul_inv_rev, ContinuousMonoidHom.conjNormal_mul, toAddMonoidHom_mul]
+  exact explicitMap1_comp N M N M (ContinuousMonoidHom.conjNormal N g'⁻¹)
+    (DistribSMul.toAddMonoidHom M g') _ (smul_conjNormal_inv_smul G M N g')
+    N M (ContinuousMonoidHom.conjNormal N g⁻¹) (DistribSMul.toAddMonoidHom M g) _
+    (smul_conjNormal_inv_smul G M N g) _
 
 variable {G M N}
 
@@ -239,20 +262,20 @@ variable (G M N)
 /-- The identity of `G` acts trivially on continuous `2`-cocycles. -/
 @[simp]
 theorem conjCocycles2_one : conjCocycles2 G M N 1 = AddMonoidHom.id (Z2 N M) := by
-  refine AddMonoidHom.ext fun c => Subtype.ext (funext fun p => ?_)
-  obtain ⟨n, k⟩ := p
-  simp only [conjCocycles2_apply, inv_one, ContinuousMonoidHom.conjNormal_one,
-    ContinuousMonoidHom.coe_id, id_eq, one_smul, AddMonoidHom.id_apply]
+  unfold conjCocycles2
+  simp only [inv_one, ContinuousMonoidHom.conjNormal_one, toAddMonoidHom_one]
+  exact cocyclesMap2_id N M
 
 /-- Conjugation on continuous `2`-cocycles is a left action of `G`. -/
 @[simp]
 theorem conjCocycles2_mul (g g' : G) :
     conjCocycles2 G M N (g * g') = (conjCocycles2 G M N g).comp (conjCocycles2 G M N g') := by
-  refine AddMonoidHom.ext fun c => Subtype.ext (funext fun p => ?_)
-  obtain ⟨n, k⟩ := p
-  rw [AddMonoidHom.comp_apply, conjCocycles2_apply, conjCocycles2_apply, conjCocycles2_apply,
-    mul_inv_rev, ContinuousMonoidHom.conjNormal_mul, ContinuousMonoidHom.coe_comp,
-    Function.comp_apply, Function.comp_apply, mul_smul]
+  unfold conjCocycles2
+  simp only [mul_inv_rev, ContinuousMonoidHom.conjNormal_mul, toAddMonoidHom_mul]
+  exact cocyclesMap2_comp N M N M (ContinuousMonoidHom.conjNormal N g'⁻¹)
+    (DistribSMul.toAddMonoidHom M g') _ (smul_conjNormal_inv_smul G M N g')
+    N M (ContinuousMonoidHom.conjNormal N g⁻¹) (DistribSMul.toAddMonoidHom M g) _
+    (smul_conjNormal_inv_smul G M N g)
 
 omit [TopologicalSpace G] [ContinuousMul G] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] [ContinuousSMul G M] [N.Normal] in
@@ -344,20 +367,20 @@ variable (G M N)
 /-- The identity of `G` acts trivially on `H²(N, M)`. -/
 @[simp]
 theorem explicitConj2_one : explicitConj2 G M N 1 = AddMonoidHom.id (H2 N M) := by
-  refine AddMonoidHom.ext fun x => ?_
-  induction x using QuotientAddGroup.induction_on with
-  | _ c =>
-    rw [explicitConj2_mk, conjCocycles2_one, AddMonoidHom.id_apply, AddMonoidHom.id_apply]
+  unfold explicitConj2
+  simp only [inv_one, ContinuousMonoidHom.conjNormal_one, toAddMonoidHom_one]
+  exact explicitMap2_id N M
 
 /-- Conjugation on `H²(N, M)` is a left action of `G`. -/
 @[simp]
 theorem explicitConj2_mul (g g' : G) :
     explicitConj2 G M N (g * g') = (explicitConj2 G M N g).comp (explicitConj2 G M N g') := by
-  refine AddMonoidHom.ext fun x => ?_
-  induction x using QuotientAddGroup.induction_on with
-  | _ c =>
-    rw [explicitConj2_mk, conjCocycles2_mul, AddMonoidHom.comp_apply, AddMonoidHom.comp_apply,
-      explicitConj2_mk, explicitConj2_mk]
+  unfold explicitConj2
+  simp only [mul_inv_rev, ContinuousMonoidHom.conjNormal_mul, toAddMonoidHom_mul]
+  exact explicitMap2_comp N M N M (ContinuousMonoidHom.conjNormal N g'⁻¹)
+    (DistribSMul.toAddMonoidHom M g') _ (smul_conjNormal_inv_smul G M N g')
+    N M (ContinuousMonoidHom.conjNormal N g⁻¹) (DistribSMul.toAddMonoidHom M g) _
+    (smul_conjNormal_inv_smul G M N g)
 
 /-- **Inner automorphisms act trivially on `H²`** (Milne, *Arithmetic Duality Theorems*,
 Prop. 0.15). -/
