@@ -17,9 +17,6 @@ the parity of the length. This file packages that pairing as an explicit equival
 records its two immediate consequences: the two parity classes are equinumerous, and a Coxeter
 group with at least one simple reflection has even order.
 
-The opposite degenerate case is recorded here as well: a Coxeter system whose simple reflections
-are indexed by an empty type has a trivial group.
-
 Finally, the length function is transported along the two canonical constructions on Coxeter
 systems, `CoxeterSystem.reindex` and `CoxeterSystem.map`: relabelling the simple reflections or
 pushing the system through a group isomorphism leaves lengths unchanged.
@@ -31,7 +28,6 @@ pushing the system through a group isomorphism leaves lengths unchanged.
 
 ## Main results
 
-* `TauCeti.subsingleton_of_isEmpty_index`: a Coxeter system of rank zero has a trivial group.
 * `TauCeti.natCard_length_even_eq_natCard_length_odd`: as many elements have even length as odd
   length, provided there is at least one simple reflection.
 * `TauCeti.even_natCard_of_nonempty_index`: hence a Coxeter group of positive rank has even order.
@@ -55,14 +51,6 @@ public section
 namespace TauCeti
 
 variable {B W : Type*} [Group W] {M : CoxeterMatrix B} (cs : CoxeterSystem M W)
-
-/-! ### Rank zero -/
-
-include cs in
-/-- A Coxeter system whose simple reflections are indexed by an empty type has a trivial group:
-every element is the product of a word in the generators, and the only such word is empty. -/
-theorem subsingleton_of_isEmpty_index [IsEmpty B] : Subsingleton W :=
-  cs.wordProd_surjective.subsingleton
 
 /-! ### Left multiplication by a simple reflection flips the parity of the length -/
 
@@ -152,6 +140,7 @@ private theorem wordProd_map (e : W ≃* H) (ω : List B) :
 
 /-- **The length function is unchanged by reindexing the simple reflections**: a bijection of the
 indexing set carries words to words of the same length. -/
+@[simp]
 theorem length_reindex (e : B ≃ B') (w : W) : (cs.reindex e).length w = cs.length w := by
   refine le_antisymm ?_ ?_
   · obtain ⟨ω, hω, rfl⟩ := cs.exists_isReduced w
@@ -169,6 +158,7 @@ theorem length_reindex (e : B ≃ B') (w : W) : (cs.reindex e).length w = cs.len
 
 /-- **The length function is transported by a group isomorphism**: an isomorphism `e : W ≃* H`
 matches the simple reflections of `cs` with those of `cs.map e`, hence their lengths. -/
+@[simp]
 theorem length_map (e : W ≃* H) (w : W) : (cs.map e).length (e w) = cs.length w := by
   refine le_antisymm ?_ ?_
   · obtain ⟨ω, hω, rfl⟩ := cs.exists_isReduced w

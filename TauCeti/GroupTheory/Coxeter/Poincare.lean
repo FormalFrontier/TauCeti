@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Polynomial.Degree.Lemmas
+public import TauCeti.GroupTheory.Coxeter.Basic
 public import TauCeti.GroupTheory.Coxeter.Length
 
 /-!
@@ -206,6 +207,7 @@ variable {B' H : Type*} [Group H]
 
 /-- **The Poincaré polynomial only depends on the Coxeter system up to relabelling the simple
 reflections**, since the length function does (`TauCeti.length_reindex`). -/
+@[simp]
 theorem poincarePolynomial_reindex [Finite W] (e : B ≃ B') :
     poincarePolynomial (cs.reindex e) = poincarePolynomial cs := by
   have : Fintype W := Fintype.ofFinite W
@@ -215,6 +217,7 @@ theorem poincarePolynomial_reindex [Finite W] (e : B ≃ B') :
 /-- **The Poincaré polynomial is invariant under transporting the Coxeter system along a group
 isomorphism**, since the length function is (`TauCeti.length_map`). The hypothesis `[Finite H]`
 follows from `[Finite W]`, but is needed to state the left-hand side. -/
+@[simp]
 theorem poincarePolynomial_map [Finite W] [Finite H] (e : W ≃* H) :
     poincarePolynomial (cs.map e) = poincarePolynomial cs := by
   have : Fintype W := Fintype.ofFinite W
