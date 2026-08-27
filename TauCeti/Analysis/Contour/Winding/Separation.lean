@@ -8,7 +8,6 @@ module
 public import TauCeti.Analysis.Contour.Winding.Number.Segment.Jump
 public import TauCeti.Analysis.Normed.Module.FilledHull
 import Mathlib.Analysis.Calculus.ContDiff.Operations
-import Mathlib.Analysis.Normed.Module.Connected
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 import Mathlib.Topology.Connected.LocallyPathConnected
 import Mathlib.Topology.MetricSpace.Thickening
