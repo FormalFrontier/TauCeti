@@ -13,9 +13,10 @@ public import TauCeti.Analysis.Normed.Algebra.LogOneAdd.Inverse
 # The local Baker--Campbell--Hausdorff map
 
 This file defines the germ at `(0, 0)` represented by
-`logOneAdd (exp x * exp y - 1)` in a complete real normed algebra. Using a
-germ records that this expression is a local logarithm; its values away from
-the origin have no mathematical role.
+`logOneAdd (exp x * exp y - 1)` in a real normed algebra. Using a germ records
+that this expression is a local logarithm; its values away from the origin
+have no mathematical role. Completeness is required only for the axis,
+exponential, and analyticity equations.
 
 The exponential of this germ is the product of the two exponentials. Its
 restrictions to either coordinate axis are the identity germ, and its chosen
@@ -23,13 +24,13 @@ representative is analytic at the origin.
 
 ## Main declarations
 
-* `NormedSpace.localBCH` and `NormedSpace.localBCH_def`: the local
-  Baker--Campbell--Hausdorff germ and its representative.
+* `NormedSpace.localBCH`: the local Baker--Campbell--Hausdorff germ.
+* `NormedSpace.localBCH_def`: its defining representative equation.
 * `NormedSpace.localBCH_sliceLeft` and `NormedSpace.localBCH_sliceRight`: the
   endpoint equations.
 * `NormedSpace.localBCH_map_exp`: the local exponential equation.
-* `NormedSpace.exists_analyticAt_localBCH_representation`: an analytic
-  representative of the germ.
+* `NormedSpace.analyticAt_localBCH_representative`: the defining representative
+  is analytic at the origin.
 
 ## References
 
@@ -47,11 +48,12 @@ namespace NormedSpace
 
 variable (A : Type*) [NormedRing A] [NormedAlgebra ℝ A]
 
-/-- The germ at `(0, 0)` of the local Baker--Campbell--Hausdorff map. -/
+/-- The germ at `(0, 0)` represented by the local logarithm
+`fun p ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1)` of `exp p.1 * exp p.2`. -/
 def localBCH : Germ (𝓝 ((0, 0) : A × A)) A :=
   (fun p : A × A ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1) : A × A → A)
 
-/-- The representative defining the local Baker--Campbell--Hausdorff germ. -/
+/-- `localBCH` is the germ of `fun p ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1)`. -/
 theorem localBCH_def :
     localBCH A =
       (↑(fun p : A × A ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1)) :
@@ -75,24 +77,24 @@ identity germ. -/
 @[simp]
 theorem localBCH_sliceLeft :
     (localBCH A).sliceLeft = (↑(fun x : A ↦ x) : Germ (𝓝 (0 : A)) A) := by
-  apply Germ.coe_eq.mpr
+  rw [localBCH_def, Germ.sliceLeft_coe, Germ.coe_eq]
   filter_upwards [eventually_logOneAdd_exp_sub_one A] with x hx
-  simpa [localBCH] using hx
+  simpa using hx
 
 /-- Restricting the local Baker--Campbell--Hausdorff germ to the second coordinate axis gives the
 identity germ. -/
 @[simp]
 theorem localBCH_sliceRight :
     (localBCH A).sliceRight = (↑(fun y : A ↦ y) : Germ (𝓝 (0 : A)) A) := by
-  apply Germ.coe_eq.mpr
+  rw [localBCH_def, Germ.sliceRight_coe, Germ.coe_eq]
   filter_upwards [eventually_logOneAdd_exp_sub_one A] with y hy
-  simpa [localBCH] using hy
+  simpa using hy
 
 private theorem tendsto_exp_mul_exp_sub_one :
     Tendsto (fun p : A × A ↦ exp p.1 * exp p.2 - 1)
       (𝓝 ((0, 0) : A × A)) (𝓝 (0 : A)) := by
-  simpa only [ContinuousAt, exp_zero, mul_one, sub_self] using
-    (analyticAt_exp_mul_exp_sub_one A).continuousAt
+  simpa only [exp_zero, mul_one, sub_self] using
+    (analyticAt_exp_mul_exp_sub_one A).continuousAt.tendsto
 
 /-- Applying exponential to the local Baker--Campbell--Hausdorff germ gives the germ of the product
 of the two exponentials. -/
@@ -100,16 +102,14 @@ of the two exponentials. -/
 theorem localBCH_map_exp :
     (localBCH A).map exp =
       (↑(fun p : A × A ↦ exp p.1 * exp p.2) : Germ (𝓝 ((0, 0) : A × A)) A) := by
-  apply Germ.coe_eq.mpr
+  rw [localBCH_def, Germ.map_coe, Germ.coe_eq]
   filter_upwards [(tendsto_exp_mul_exp_sub_one A).eventually
     (eventually_exp_logOneAdd A)] with p hp
-  simpa [localBCH] using hp
+  simpa [Function.comp_def] using hp
 
-/-- The local Baker--Campbell--Hausdorff germ has a representative analytic at the origin. -/
-theorem exists_analyticAt_localBCH_representation :
-    ∃ f : A × A → A,
-      localBCH A = (↑f : Germ (𝓝 ((0, 0) : A × A)) A) ∧ AnalyticAt ℝ f (0, 0) := by
-  refine ⟨fun p ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1), localBCH_def A, ?_⟩
+/-- The representative defining `localBCH` is analytic at the origin. -/
+theorem analyticAt_localBCH_representative :
+    AnalyticAt ℝ (fun p : A × A ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1)) (0, 0) := by
   simpa [Function.comp_def] using (analyticAt_logOneAdd (𝕂 := ℝ) (A := A)).comp_of_eq
     (analyticAt_exp_mul_exp_sub_one A) (by simp)
 
