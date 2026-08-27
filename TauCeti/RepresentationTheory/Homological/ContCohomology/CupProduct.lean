@@ -46,6 +46,15 @@ of the general inhomogeneous formula
   through coboundaries in each variable. These are the only descent statements proved by hand:
   the other five shapes descend because they *are* coefficient maps, whose descent is
   `TauCeti.ContCohomology.cochainsMap1_mem_B1` and `cochainsMap2_mem_B2`.
+* `TauCeti.ContCohomology.explicitCup00_comm`, `explicitCup01_eq_cup10_flip`,
+  `explicitCup02_eq_cup20_flip` and `explicitCup11_eq_neg_flip`: **graded commutativity**
+  `a ⌣_μ b = (-1)^{pq} (b ⌣_{μᵒᵖ} a)` in each bidegree with `p + q ≤ 2`, where `μᵒᵖ n m = μ m n`
+  is Mathlib's `AddMonoidHom.flip`. With the sign `1` in the three shapes that have a degree-`0`
+  factor the identity already holds on cochains, and those three are stated at cochain level as
+  well (`cup01_eq_cup10_flip`, `cup02_eq_cup20_flip`), a degree-`0` class being invariant. In
+  bidegree `(1,1)` it holds only on classes, with the sign `-1`.
+* `TauCeti.ContCohomology.explicitCup11_comm_of_neg_eq_self`: the `2`-torsion specialization, in
+  which the `(1,1)` cup is symmetric.
 
 ## Implementation notes
 
@@ -65,6 +74,15 @@ b ∈ B¹, b = d⁰ n :  (a ⌣ b) = d¹ (x ↦ -μ (a x) (x • n)),
 
 recorded here because the graded-commutativity statement refers to them.
 
+The `(1,1)` graded-commutativity homotopy is fixed once, here, and every sign below is read off
+it: for continuous `1`-cocycles `a` and `b`,
+
+```text
+(a ⌣_μ b) + (b ⌣_{μᵒᵖ} a) = d¹ (g ↦ -μ (a g) (b g)),
+```
+
+which is `TauCeti.ContCohomology.cup11_add_cup11_flip_eq_d1`.
+
 Each cocycle proof opens with a `change`. It only beta-reduces: `groupCohomology.IsCocycle₁` and
 `IsCocycle₂` are predicates on a function, so with the cup cochain supplied as a lambda the goal
 is stated with a redex and the identity to be proved is unreadable until it is contracted. No
@@ -75,7 +93,8 @@ and `N` are discrete, which is the case in every arithmetic application, but it 
 hypothesis rather than derived so that the shapes are available at the general topological
 coefficients the explicit complex is built for.
 
-This implements the "six low-degree shapes" milestone of Layer 8 of the human-authored roadmap at
+This implements the "six low-degree shapes" and "graded commutativity" milestones of Layer 8 of
+the human-authored roadmap at
 `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose §3 fixes the six formulas and whose
 `Suggested.lean` fixes the names `explicitCup00`, `explicitCup01`, `explicitCup10`,
 `explicitCup02`, `explicitCup11` and `explicitCup20`.
@@ -83,8 +102,10 @@ This implements the "six low-degree shapes" milestone of Layer 8 of the human-au
 ## References
 
 * J. Neukirch, A. Schmidt, K. Wingberg, *Cohomology of Number Fields*, 2nd ed., I §4: the cup
-  product on inhomogeneous cochains and its low-degree formulas.
-* K. Brown, *Cohomology of Groups*, V §3: the cochain-level cup product.
+  product on inhomogeneous cochains and its low-degree formulas, and (1.4.4) for graded
+  commutativity.
+* K. Brown, *Cohomology of Groups*, V §3: the cochain-level cup product, and (3.6) for graded
+  commutativity.
 -/
 
 public section
@@ -154,6 +175,15 @@ theorem pairingRight_smul (n : H0 G N) (g : G) (m : M) :
     μ (g • m) (n : N) = g • μ m (n : N) :=
   (pairingRight μ hequiv n).map_smul g m
 
+include hequiv in
+/-- **The opposite pairing `μᵒᵖ n m = μ m n` is equivariant.** Mathlib's `AddMonoidHom.flip` is
+the `μᵒᵖ` of the graded-commutativity statements below, and this is the hypothesis it has to be
+fed to be cupped against. -/
+theorem equivariant_flip (g : G) (x : N) (m : M) :
+    μ.flip (g • x) (g • m) = g • μ.flip x m := by
+  simp only [AddMonoidHom.flip_apply]
+  exact hequiv g m x
+
 variable [TopologicalSpace M] [TopologicalSpace N] [TopologicalSpace P]
   (hμ : Continuous fun p : M × N => μ p.1 p.2)
 
@@ -166,6 +196,11 @@ theorem continuous_pairingLeft (m : H0 G M) : Continuous (pairingLeft μ hequiv 
 /-- A jointly continuous pairing is continuous in the first variable. -/
 theorem continuous_pairingRight (n : H0 G N) : Continuous (pairingRight μ hequiv n) :=
   hμ.comp (continuous_id.prodMk continuous_const)
+
+/-- **The opposite pairing of a jointly continuous pairing is jointly continuous**, being its
+composite with the swap homeomorphism. -/
+theorem continuous_flip : Continuous fun p : N × M => μ.flip p.1 p.2 :=
+  hμ.comp continuous_swap
 
 end Pairing
 
@@ -560,5 +595,180 @@ theorem explicitCup11_mk (a : Z1 G M) (b : Z1 G N) :
   (rfl)
 
 end CupOneOne
+
+section CommZeroZero
+
+variable (G : Type uG) [Group G]
+  (M : Type uM) [AddCommGroup M] [DistribMulAction G M]
+  (N : Type uN) [AddCommGroup N] [DistribMulAction G N]
+  (P : Type uP) [AddCommGroup P] [DistribMulAction G P]
+  (μ : M →+ N →+ P)
+  (hequiv : ∀ (g : G) (m : M) (x : N), μ (g • m) (g • x) = g • μ m x)
+
+/-- **Graded commutativity in bidegree `(0,0)`.** The sign `(-1)^{pq}` is `1`, and the two
+cochains, here two elements of `P`, are literally equal. -/
+theorem explicitCup00_comm (m : H0 G M) (n : H0 G N) :
+    explicitCup00 G M N P μ hequiv m n =
+      explicitCup00 G N M P μ.flip (equivariant_flip μ hequiv) n m :=
+  Subtype.ext (by simp)
+
+end CommZeroZero
+
+section CommCochain
+
+/-! The three shapes with a degree-`0` factor commute already on cochains, because a degree-`0`
+class is invariant. Neither statement mentions a topology or an action on the second factor. -/
+
+variable (G : Type uG) [Group G]
+  (M : Type uM) [AddCommGroup M] [DistribMulAction G M]
+  (N : Type uN) [AddCommGroup N]
+  (P : Type uP) [AddCommGroup P]
+  (μ : M →+ N →+ P)
+
+/-- **Graded commutativity in bidegree `(0,1)`, at cochain level.** The `(1,0)` cup of a cochain
+`b` with the invariant `m` along the opposite pairing is the `(0,1)` cup of `m` with `b`: the
+translation factor `g •` the `(1,0)` formula carries acts on `m`, which is invariant. -/
+theorem cup01_eq_cup10_flip (m : H0 G M) (b : G → N) :
+    (fun g => μ (m : M) (b g)) = fun g => μ.flip (b g) (g • (m : M)) := by
+  have hm : ∀ g : G, g • (m : M) = (m : M) := m.2
+  funext g
+  rw [AddMonoidHom.flip_apply, hm g]
+
+/-- **Graded commutativity in bidegree `(0,2)`, at cochain level**, the degree-`2` counterpart of
+`TauCeti.ContCohomology.cup01_eq_cup10_flip`. -/
+theorem cup02_eq_cup20_flip (m : H0 G M) (b : G × G → N) :
+    (fun q : G × G => μ (m : M) (b q)) =
+      fun q : G × G => μ.flip (b q) ((q.1 * q.2) • (m : M)) := by
+  have hm : ∀ g : G, g • (m : M) = (m : M) := m.2
+  funext q
+  rw [AddMonoidHom.flip_apply, hm (q.1 * q.2)]
+
+end CommCochain
+
+section CommZeroOne
+
+variable (G : Type uG) [Group G] [TopologicalSpace G]
+  (M : Type uM) [AddCommGroup M] [TopologicalSpace M] [DistribMulAction G M]
+  (N : Type uN) [AddCommGroup N] [TopologicalSpace N] [IsTopologicalAddGroup N]
+    [DistribMulAction G N] [ContinuousSMul G N]
+  (P : Type uP) [AddCommGroup P] [TopologicalSpace P] [IsTopologicalAddGroup P]
+    [DistribMulAction G P] [ContinuousSMul G P]
+  (μ : M →+ N →+ P) (hμ : Continuous fun p : M × N => μ p.1 p.2)
+  (hequiv : ∀ (g : G) (m : M) (x : N), μ (g • m) (g • x) = g • μ m x)
+
+include hμ hequiv in
+/-- **Graded commutativity in bidegree `(0,1)`.** The sign `(-1)^{pq}` is `1`, and by
+`TauCeti.ContCohomology.cup01_eq_cup10_flip` the identity already holds on cochains. -/
+theorem explicitCup01_eq_cup10_flip (m : H0 G M) (b : H1 G N) :
+    explicitCup01 G M N P μ hμ hequiv m b =
+      explicitCup10 G N M P μ.flip (continuous_flip μ hμ) (equivariant_flip μ hequiv) b m := by
+  induction b using QuotientAddGroup.induction_on with
+  | _ c =>
+    rw [explicitCup01_mk, explicitCup10_mk]
+    exact congrArg (fun z : Z1 G P => (z : H1 G P))
+      (Subtype.ext (cup01_eq_cup10_flip G M N P μ m (c : G → N)))
+
+end CommZeroOne
+
+section CommZeroTwo
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (M : Type uM) [AddCommGroup M] [TopologicalSpace M] [DistribMulAction G M]
+  (N : Type uN) [AddCommGroup N] [TopologicalSpace N] [IsTopologicalAddGroup N]
+    [DistribMulAction G N] [ContinuousSMul G N]
+  (P : Type uP) [AddCommGroup P] [TopologicalSpace P] [IsTopologicalAddGroup P]
+    [DistribMulAction G P] [ContinuousSMul G P]
+  (μ : M →+ N →+ P) (hμ : Continuous fun p : M × N => μ p.1 p.2)
+  (hequiv : ∀ (g : G) (m : M) (x : N), μ (g • m) (g • x) = g • μ m x)
+
+include hμ hequiv in
+/-- **Graded commutativity in bidegree `(0,2)`.** The sign `(-1)^{pq}` is `1`, and by
+`TauCeti.ContCohomology.cup02_eq_cup20_flip` the identity already holds on cochains. -/
+theorem explicitCup02_eq_cup20_flip (m : H0 G M) (b : H2 G N) :
+    explicitCup02 G M N P μ hμ hequiv m b =
+      explicitCup20 G N M P μ.flip (continuous_flip μ hμ) (equivariant_flip μ hequiv) b m := by
+  induction b using QuotientAddGroup.induction_on with
+  | _ c =>
+    rw [explicitCup02_mk, explicitCup20_mk]
+    exact congrArg (fun z : Z2 G P => (z : H2 G P))
+      (Subtype.ext (cup02_eq_cup20_flip G M N P μ m (c : G × G → N)))
+
+end CommZeroTwo
+
+section CommOneOne
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (M : Type uM) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+    [DistribMulAction G M] [ContinuousSMul G M]
+  (N : Type uN) [AddCommGroup N] [TopologicalSpace N] [IsTopologicalAddGroup N]
+    [DistribMulAction G N] [ContinuousSMul G N]
+  (P : Type uP) [AddCommGroup P] [TopologicalSpace P] [IsTopologicalAddGroup P]
+    [DistribMulAction G P] [ContinuousSMul G P]
+  (μ : M →+ N →+ P) (hμ : Continuous fun p : M × N => μ p.1 p.2)
+  (hequiv : ∀ (g : G) (m : M) (x : N), μ (g • m) (g • x) = g • μ m x)
+
+include hequiv in
+omit [ContinuousMul G] [ContinuousSMul G M] [ContinuousSMul G N] [TopologicalSpace P]
+  [IsTopologicalAddGroup P] [ContinuousSMul G P] in
+/-- **The homotopy behind graded commutativity in bidegree `(1,1)`.** The two cochains
+`a ⌣_μ b` and `b ⌣_{μᵒᵖ} a` are *not* equal; their sum is the coboundary of the `1`-cochain
+`g ↦ -μ (a g) (b g)`. -/
+theorem cup11_add_cup11_flip_eq_d1 {a : G → M} (ha : a ∈ Z1 G M) {b : G → N} (hb : b ∈ Z1 G N) :
+    ((fun q : G × G => μ (a q.1) (q.1 • b q.2)) +
+        fun q : G × G => μ.flip (b q.1) (q.1 • a q.2)) =
+      d1 G P fun g => -μ (a g) (b g) := by
+  obtain ⟨-, ha1⟩ := mem_Z1_iff.1 ha
+  obtain ⟨-, hb1⟩ := mem_Z1_iff.1 hb
+  funext q
+  obtain ⟨g, h⟩ := q
+  simp only [Pi.add_apply, AddMonoidHom.flip_apply, d1_apply, ha1 g h, hb1 g h, map_add,
+    AddMonoidHom.add_apply, smul_neg, hequiv]
+  abel
+
+include hμ hequiv in
+omit [ContinuousMul G] [ContinuousSMul G M] [ContinuousSMul G N] [ContinuousSMul G P] in
+/-- **The sum of the two `(1,1)` cup cochains is a coboundary**, by
+`TauCeti.ContCohomology.cup11_add_cup11_flip_eq_d1`; its primitive is continuous because `μ` is
+jointly continuous. -/
+theorem cup11_add_cup11_flip_mem_B2 {a : G → M} (ha : a ∈ Z1 G M) {b : G → N}
+    (hb : b ∈ Z1 G N) :
+    ((fun q : G × G => μ (a q.1) (q.1 • b q.2)) +
+      fun q : G × G => μ.flip (b q.1) (q.1 • a q.2)) ∈ B2 G P :=
+  mem_B2_iff.2 ⟨fun g => -μ (a g) (b g),
+    (hμ.comp ((mem_Z1_iff.1 ha).1.prodMk (mem_Z1_iff.1 hb).1)).neg,
+    (cup11_add_cup11_flip_eq_d1 G M N P μ hequiv ha hb).symm⟩
+
+include hμ hequiv in
+/-- **Graded commutativity in bidegree `(1,1)`**, `a ⌣_μ b = -(b ⌣_{μᵒᵖ} a)`, the sign
+`(-1)^{pq}` now being `-1`. This is an identity of classes and not of cochains: the two cochains
+differ by the coboundary exhibited in
+`TauCeti.ContCohomology.cup11_add_cup11_flip_eq_d1`. -/
+theorem explicitCup11_eq_neg_flip (a : H1 G M) (b : H1 G N) :
+    explicitCup11 G M N P μ hμ hequiv a b =
+      -explicitCup11 G N M P μ.flip (continuous_flip μ hμ) (equivariant_flip μ hequiv) b a := by
+  induction a using QuotientAddGroup.induction_on with
+  | _ x =>
+    induction b using QuotientAddGroup.induction_on with
+    | _ y =>
+      rw [explicitCup11_mk, explicitCup11_mk, eq_neg_iff_add_eq_zero, ← QuotientAddGroup.mk_add,
+        H2pi_eq_zero_iff]
+      exact cup11_add_cup11_flip_mem_B2 G M N P μ hμ hequiv x.2 y.2
+
+include hμ hequiv in
+/-- **Graded commutativity in bidegree `(1,1)` for `2`-torsion coefficients**: when every element
+of `P` is its own negative the `(1,1)` cup is symmetric on classes. This is the form the
+`𝔽₂`-valued arithmetic applications use, where every sign is `1`. -/
+theorem explicitCup11_comm_of_neg_eq_self (hP : ∀ x : P, -x = x) (a : H1 G M) (b : H1 G N) :
+    explicitCup11 G M N P μ hμ hequiv a b =
+      explicitCup11 G N M P μ.flip (continuous_flip μ hμ) (equivariant_flip μ hequiv) b a := by
+  have hneg : ∀ y : H2 G P, -y = y := fun y => by
+    induction y using QuotientAddGroup.induction_on with
+    | _ z =>
+      rw [← QuotientAddGroup.mk_neg]
+      exact congrArg (fun w : Z2 G P => (w : H2 G P))
+        (Subtype.ext (funext fun q => hP ((z : G × G → P) q)))
+  rw [explicitCup11_eq_neg_flip G M N P μ hμ hequiv a b, hneg]
+
+end CommOneOne
 
 end TauCeti.ContCohomology
