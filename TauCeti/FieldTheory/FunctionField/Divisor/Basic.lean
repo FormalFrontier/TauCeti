@@ -161,6 +161,21 @@ lemma strictMono_degree (hF : IsFunctionField k F) :
   simpa only [degree] using
     WeilDivisor.strictMono_weightedDegree (degree_pos_of_isFunctionField hF)
 
+/-- **Degrees grow without bound along a single place**: since every place of an algebraic
+function field has degree at least one, adding enough copies of a fixed place `P` to `D` carries
+the degree past any prescribed bound `c`.  This is how a divisor is made to satisfy a
+large-degree hypothesis while its coefficients away from `P` are left untouched. -/
+lemma exists_le_degree_add_nsmul_ofPoint (hF : IsFunctionField k F) (D : Divisor k F)
+    (P : Place k F) (c : ℤ) : ∃ n : ℕ, c ≤ degree (D + n • WeilDivisor.ofPoint P) := by
+  refine ⟨(c - degree D).toNat, ?_⟩
+  have hP : (1 : ℤ) ≤ P.degree := by
+    have := degree_pos_of_isFunctionField hF P
+    omega
+  have hmul : ((c - degree D).toNat : ℤ) ≤ ((c - degree D).toNat : ℤ) * P.degree :=
+    le_mul_of_one_le_right (Int.natCast_nonneg _) hP
+  rw [degree_add, map_nsmul, degree_ofPoint, nsmul_eq_mul]
+  omega
+
 /-- Degree splits over the positive and negative parts of a divisor. -/
 lemma degree_posPart_sub_degree_negPart (D : Divisor k F) :
     degree D⁺ - degree D⁻ = degree D := by

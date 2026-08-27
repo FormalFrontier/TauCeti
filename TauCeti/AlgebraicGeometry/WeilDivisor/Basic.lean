@@ -73,6 +73,11 @@ lemma coeff_sub (D E : WeilDivisor X) (x : X) :
     coeff (D - E) x = coeff D x - coeff E x :=
   rfl
 
+@[simp]
+lemma coeff_nsmul (n : ℕ) (D : WeilDivisor X) (x : X) :
+    coeff (n • D) x = n * coeff D x := by
+  simp [coeff]
+
 @[ext]
 lemma ext {D E : WeilDivisor X} (h : ∀ x, coeff D x = coeff E x) : D = E :=
   Finsupp.ext h
