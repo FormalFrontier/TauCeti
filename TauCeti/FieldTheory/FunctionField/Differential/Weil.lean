@@ -27,37 +27,39 @@ specialty, and are not proved here.
 
 ## Main definitions
 
-* `TauCeti.adeleFiltrationSupDiagonal`: the subspace `(A_F(D) + F) ∩ A_F` of the repartition
-  space, on which the Weil differentials bounded by `D` vanish.
 * `TauCeti.weilDifferentialFiltration`: the space `Ω_F(D)` of Weil differentials bounded by a
   divisor (Definition 1.5.6), as a `k`-subspace of the dual of `A_F`.
 * `TauCeti.weilDifferentialSpace`: the space `Ω_F` of all Weil differentials.
-* `TauCeti.repartitionMul` and `TauCeti.weilDifferentialMul`: multiplication of a repartition by
-  a function, and the induced action of `F` on the `k`-linear forms on `A_F` (Definition 1.5.8).
-* `TauCeti.weilDifferentialSpaceModule`: the `F`-vector space structure on `Ω_F`.
+* `TauCeti.repartitionDualMul`: the action of `F` on the `k`-linear forms on `A_F`, induced by
+  multiplication of repartitions by a function (Definition 1.5.8).
+* `TauCeti.weilDifferentialSpaceMul` and `TauCeti.weilDifferentialSpaceModule`: its restriction
+  to `Ω_F`, and the resulting `F`-vector space structure.
 
 ## Main results
 
 * `TauCeti.mem_weilDifferentialFiltration_of_apply_eq_zero` with
-  `TauCeti.weilDifferential_apply_eq_zero_of_mem_adeleFiltration` and
-  `TauCeti.weilDifferential_apply_eq_zero_of_mem_diagonalRepartitions`: membership in `Ω_F(D)`
-  is vanishing on the repartitions bounded by `D` together with vanishing on the constants.
+  `TauCeti.weilDifferentialFiltration_apply_eq_zero_of_mem_adeleFiltration` and
+  `TauCeti.weilDifferentialFiltration_apply_eq_zero_of_mem_diagonalRepartitions`: membership in
+  `Ω_F(D)` is vanishing on the repartitions bounded by `D` together with vanishing on the
+  constants.
 * `TauCeti.weilDifferentialFiltration_antitone` and `TauCeti.mem_weilDifferentialSpace_iff`: the
   filtration is antitone and directed, so a `k`-linear form is a Weil differential exactly when
   some single divisor bounds it.
 * `TauCeti.weilDifferentialFiltration_eq_bot_iff`: `Ω_F(D) = 0` exactly when every repartition
   differs from a constant by one bounded by `D`.
-* `TauCeti.weilDifferentialMul_mem_weilDifferentialFiltration`: multiplying by `z ∈ Fˣ` carries
-  `Ω_F(D)` into `Ω_F(D + div z)`, so `Ω_F` is stable under the action
-  (`TauCeti.weilDifferentialMul_mem_weilDifferentialSpace`).
+* `TauCeti.repartitionDualMul_mem_weilDifferentialFiltration_iff`: for `z ∈ Fˣ`, a linear form
+  lies in `Ω_F(D)` exactly when `z · ω` lies in `Ω_F(D + div z)`, so `Ω_F` is stable under the
+  action (`TauCeti.repartitionDualMul_mem_weilDifferentialSpace`).
 
 ## Implementation notes
 
 `Ω_F(D)` is the annihilator, in the sense of `Submodule.dualAnnihilator`, of the subspace
-`(A_F(D) + F) ∩ A_F` of `A_F`.  The intersection with `A_F` is not a restriction: the constants
-are repartitions as soon as `F / k` is a function field
+`(A_F(D) + F) ∩ A_F` of `A_F`, which is
+`TauCeti.submoduleOfAdeleFiltrationSupDiagonalRepartitions`.  The intersection with `A_F` is not
+a restriction: the constants are repartitions as soon as `F / k` is a function field
 (`TauCeti.diagonalRepartitions_le_repartitionSpace`), and taking it means the definition of
-`Ω_F(D)` itself needs no such hypothesis.  Because the definition is an annihilator,
+`Ω_F(D)` itself needs no such hypothesis.  Because the definition is an annihilator —
+`TauCeti.weilDifferentialFiltration_eq_dualAnnihilator` —
 `Submodule.dualQuotEquivDualAnnihilator` identifies `Ω_F(D)` with the dual of the cokernel
 `A_F ⧸ (A_F(D) + F)` with no further work, which is how Lemma 1.5.7 will read `dim_k Ω_F(D)` off
 the index of specialty.
@@ -65,7 +67,7 @@ the index of specialty.
 The `F`-vector space structure `TauCeti.weilDifferentialSpaceModule` is a `def`, not an instance:
 it exists only when `F / k` is a function field, and `IsFunctionField k F` is a hypothesis passed
 explicitly rather than a class.  Consumers introduce it with `letI`, as
-`TauCeti.weilDifferentialSpaceModule_smul` and
+`TauCeti.coe_weilDifferentialSpaceModule_smul` and
 `TauCeti.isScalarTower_weilDifferentialSpace` do.
 
 ## References
@@ -80,55 +82,43 @@ namespace TauCeti
 
 variable {k F : Type*} [Field k] [Field F] [Algebra k F]
 
-/-! ### The subspace `A_F(D) + F` -/
-
-/-- The subspace `(A_F(D) + F) ∩ A_F` of the repartition space: the repartitions that differ
-from a constant by one whose poles are bounded by `D`.  A Weil differential bounded by `D` is by
-definition a `k`-linear form on `A_F` killing it. -/
-noncomputable def adeleFiltrationSupDiagonal (D : Divisor k F) :
-    Submodule k ↥(repartitionSpace k F) :=
-  (adeleFiltration D ⊔ diagonalRepartitions k F).comap (repartitionSpace k F).subtype
-
-/-- Membership in `(A_F(D) + F) ∩ A_F` is membership in `A_F(D) + F` of the underlying family. -/
-@[simp]
-theorem mem_adeleFiltrationSupDiagonal_iff {D : Divisor k F} {a : ↥(repartitionSpace k F)} :
-    a ∈ adeleFiltrationSupDiagonal D ↔
-      (a : Place k F → F) ∈ adeleFiltration D ⊔ diagonalRepartitions k F :=
-  (Iff.rfl)
-
-/-- Enlarging the divisor enlarges `(A_F(D) + F) ∩ A_F`. -/
-theorem adeleFiltrationSupDiagonal_mono {D E : Divisor k F} (h : D ≤ E) :
-    adeleFiltrationSupDiagonal D ≤ adeleFiltrationSupDiagonal E :=
-  Submodule.comap_mono (sup_le_sup_right (adeleFiltration_mono h) _)
-
 /-! ### Weil differentials bounded by a divisor -/
 
 /-- The space `Ω_F(D)` of **Weil differentials bounded by `D`** (Stichtenoth, Definition 1.5.6):
 the `k`-linear forms on the repartition space that vanish on `A_F(D) + F`. -/
 noncomputable def weilDifferentialFiltration (D : Divisor k F) :
     Submodule k (Module.Dual k ↥(repartitionSpace k F)) :=
-  (adeleFiltrationSupDiagonal D).dualAnnihilator
+  (submoduleOfAdeleFiltrationSupDiagonalRepartitions D).dualAnnihilator
+
+/-- `Ω_F(D)` is the annihilator of `(A_F(D) + F) ∩ A_F`, which is how
+`Submodule.dualQuotEquivDualAnnihilator` identifies it with the dual of the cokernel
+`A_F ⧸ (A_F(D) + F)`. -/
+theorem weilDifferentialFiltration_eq_dualAnnihilator (D : Divisor k F) :
+    weilDifferentialFiltration D =
+      (submoduleOfAdeleFiltrationSupDiagonalRepartitions D).dualAnnihilator := by
+  rfl
 
 /-- Membership in `Ω_F(D)`, unfolded: the form kills every repartition in `A_F(D) + F`. -/
 theorem mem_weilDifferentialFiltration_iff {D : Divisor k F}
     {ω : Module.Dual k ↥(repartitionSpace k F)} :
-    ω ∈ weilDifferentialFiltration D ↔ ∀ a ∈ adeleFiltrationSupDiagonal D, ω a = 0 :=
+    ω ∈ weilDifferentialFiltration D ↔
+      ∀ a ∈ submoduleOfAdeleFiltrationSupDiagonalRepartitions D, ω a = 0 :=
   Submodule.mem_dualAnnihilator ω
 
 /-- A Weil differential bounded by `D` kills every repartition whose poles are bounded by `D`. -/
-theorem weilDifferential_apply_eq_zero_of_mem_adeleFiltration {D : Divisor k F}
+theorem weilDifferentialFiltration_apply_eq_zero_of_mem_adeleFiltration {D : Divisor k F}
     {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ∈ weilDifferentialFiltration D)
     (a : ↥(repartitionSpace k F)) (ha : (a : Place k F → F) ∈ adeleFiltration D) : ω a = 0 :=
   mem_weilDifferentialFiltration_iff.mp hω a
-    (mem_adeleFiltrationSupDiagonal_iff.mpr (Submodule.mem_sup_left ha))
+    (mem_submoduleOfAdeleFiltrationSupDiagonalRepartitions_iff.mpr (Submodule.mem_sup_left ha))
 
 /-- A Weil differential bounded by `D` kills every constant repartition. -/
-theorem weilDifferential_apply_eq_zero_of_mem_diagonalRepartitions {D : Divisor k F}
+theorem weilDifferentialFiltration_apply_eq_zero_of_mem_diagonalRepartitions {D : Divisor k F}
     {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ∈ weilDifferentialFiltration D)
     (a : ↥(repartitionSpace k F)) (ha : (a : Place k F → F) ∈ diagonalRepartitions k F) :
     ω a = 0 :=
   mem_weilDifferentialFiltration_iff.mp hω a
-    (mem_adeleFiltrationSupDiagonal_iff.mpr (Submodule.mem_sup_right ha))
+    (mem_submoduleOfAdeleFiltrationSupDiagonalRepartitions_iff.mpr (Submodule.mem_sup_right ha))
 
 /-- **The two vanishing conditions defining `Ω_F(D)`**: a `k`-linear form on `A_F` that kills the
 repartitions bounded by `D` and kills the constants is a Weil differential bounded by `D`. -/
@@ -139,7 +129,8 @@ theorem mem_weilDifferentialFiltration_of_apply_eq_zero {D : Divisor k F}
       ω a = 0) :
     ω ∈ weilDifferentialFiltration D := by
   refine mem_weilDifferentialFiltration_iff.mpr fun a ha ↦ ?_
-  obtain ⟨x, hx, y, hy, hxy⟩ := Submodule.mem_sup.mp (mem_adeleFiltrationSupDiagonal_iff.mp ha)
+  obtain ⟨x, hx, y, hy, hxy⟩ := Submodule.mem_sup.mp
+    (mem_submoduleOfAdeleFiltrationSupDiagonalRepartitions_iff.mp ha)
   have hxA : x ∈ repartitionSpace k F := adeleFiltration_le_repartitionSpace D hx
   have hyA : y ∈ repartitionSpace k F := by
     have : (a : Place k F → F) - x ∈ repartitionSpace k F :=
@@ -152,7 +143,7 @@ theorem mem_weilDifferentialFiltration_of_apply_eq_zero {D : Divisor k F}
 theorem weilDifferentialFiltration_antitone :
     Antitone (weilDifferentialFiltration : Divisor k F →
       Submodule k (Module.Dual k ↥(repartitionSpace k F))) := fun _ _ h ↦
-  Submodule.dualAnnihilator_anti (adeleFiltrationSupDiagonal_mono h)
+  Submodule.dualAnnihilator_anti (submoduleOfAdeleFiltrationSupDiagonalRepartitions_mono h)
 
 /-- **`Ω_F(D)` vanishes exactly when `A_F(D) + F` is everything**: the only `k`-linear form on
 `A_F` vanishing on `A_F(D) + F` is `0` precisely when every repartition already differs from a
@@ -160,15 +151,10 @@ constant by one whose poles are bounded by `D`. -/
 theorem weilDifferentialFiltration_eq_bot_iff (hF : IsFunctionField k F) (D : Divisor k F) :
     weilDifferentialFiltration D = ⊥ ↔
       adeleFiltration D ⊔ diagonalRepartitions k F = repartitionSpace k F := by
-  rw [weilDifferentialFiltration, Submodule.dualAnnihilator_eq_bot_iff]
-  constructor
-  · intro h
-    refine le_antisymm (adeleFiltration_sup_diagonalRepartitions_le hF D) fun a ha ↦ ?_
-    exact mem_adeleFiltrationSupDiagonal_iff.mp (Submodule.eq_top_iff'.mp h ⟨a, ha⟩)
-  · intro h
-    refine Submodule.eq_top_iff'.mpr fun a ↦ ?_
-    rw [mem_adeleFiltrationSupDiagonal_iff, h]
-    exact a.2
+  rw [weilDifferentialFiltration_eq_dualAnnihilator, Submodule.dualAnnihilator_eq_bot_iff,
+    submoduleOfAdeleFiltrationSupDiagonalRepartitions_eq_submoduleOf,
+    Submodule.submoduleOf_eq_top]
+  exact ⟨fun h ↦ le_antisymm (adeleFiltration_sup_diagonalRepartitions_le hF D) h, fun h ↦ h.ge⟩
 
 /-! ### The space of all Weil differentials -/
 
@@ -183,13 +169,12 @@ theorem weilDifferentialFiltration_le_weilDifferentialSpace (D : Divisor k F) :
     weilDifferentialFiltration D ≤ weilDifferentialSpace k F :=
   le_iSup (fun D : Divisor k F ↦ weilDifferentialFiltration D) D
 
-/-- The filtration is directed: any two of its members are both contained in the one attached to
-the pointwise minimum of the two divisors. -/
+/-- The filtration is directed: it is antitone, and any two divisors have a lower bound, namely
+their pointwise minimum, whose member then contains both. -/
 theorem directed_weilDifferentialFiltration :
     Directed (· ≤ ·) (weilDifferentialFiltration : Divisor k F →
-      Submodule k (Module.Dual k ↥(repartitionSpace k F))) := fun D E ↦
-  ⟨D ⊓ E, weilDifferentialFiltration_antitone inf_le_left,
-    weilDifferentialFiltration_antitone inf_le_right⟩
+      Submodule k (Module.Dual k ↥(repartitionSpace k F))) :=
+  weilDifferentialFiltration_antitone.directed_le
 
 /-- **A `k`-linear form on `A_F` is a Weil differential exactly when a single divisor bounds
 it**: the supremum defining `Ω_F` is the union of the `Ω_F(D)`, because they are directed. -/
@@ -199,33 +184,10 @@ theorem mem_weilDifferentialSpace_iff {ω : Module.Dual k ↥(repartitionSpace k
 
 /-! ### Multiplication by a function -/
 
-/-- Multiplication of repartitions by a function, as a `k`-algebra map to the `k`-linear
-endomorphisms of the repartition space.  It lands in the repartition space because a function of
-an algebraic function field has only finitely many poles. -/
-noncomputable def repartitionMul (hF : IsFunctionField k F) :
-    F →ₐ[k] Module.End k ↥(repartitionSpace k F) where
-  toFun f :=
-    { toFun a := ⟨f • (a : Place k F → F), smul_mem_repartitionSpace hF f a.2⟩
-      map_add' a b := Subtype.ext (by simp [smul_add])
-      map_smul' c a := Subtype.ext (by simp [smul_comm f c]) }
-  map_one' := LinearMap.ext fun a ↦ Subtype.ext (by simp)
-  map_mul' f g := LinearMap.ext fun a ↦ Subtype.ext (by simp [mul_smul])
-  map_zero' := LinearMap.ext fun a ↦ Subtype.ext (by simp)
-  map_add' f g := LinearMap.ext fun a ↦ Subtype.ext (by simp [add_smul])
-  commutes' c := LinearMap.ext fun a ↦ Subtype.ext (by simp [algebraMap_smul])
-
-/-- Multiplying a repartition by `f` multiplies each of its entries by `f`. -/
-@[simp]
-theorem coe_repartitionMul_apply (hF : IsFunctionField k F) (f : F)
-    (a : ↥(repartitionSpace k F)) :
-    ((repartitionMul hF f a : ↥(repartitionSpace k F)) : Place k F → F) =
-      f • (a : Place k F → F) :=
-  (rfl)
-
 /-- The multiplication action of `F` on the `k`-linear forms on the repartition space
 (Stichtenoth, Definition 1.5.8): `(f · ω) a = ω (f · a)`.  It is a `k`-algebra map because `F` is
 commutative, so the transposes of the multiplication maps compose in either order. -/
-noncomputable def weilDifferentialMul (hF : IsFunctionField k F) :
+noncomputable def repartitionDualMul (hF : IsFunctionField k F) :
     F →ₐ[k] Module.End k (Module.Dual k ↥(repartitionSpace k F)) where
   toFun f := (repartitionMul hF f).dualMap
   map_one' := LinearMap.ext fun ω ↦ LinearMap.ext fun a ↦ by simp
@@ -237,47 +199,58 @@ noncomputable def weilDifferentialMul (hF : IsFunctionField k F) :
 
 /-- The defining formula `(f · ω) a = ω (f · a)` of the action of `F` on the linear forms. -/
 @[simp]
-theorem weilDifferentialMul_apply_apply (hF : IsFunctionField k F) (f : F)
+theorem repartitionDualMul_apply_apply (hF : IsFunctionField k F) (f : F)
     (ω : Module.Dual k ↥(repartitionSpace k F)) (a : ↥(repartitionSpace k F)) :
-    weilDifferentialMul hF f ω a = ω (repartitionMul hF f a) :=
+    repartitionDualMul hF f ω a = ω (repartitionMul hF f a) :=
   (rfl)
 
-/-- **Multiplication translates the filtration by a principal divisor**: multiplying by a nonzero
-function `z` carries `Ω_F(D)` into `Ω_F(D + div z)`, exactly as it carries `A_F(D + div z)` into
-`A_F(D)`. -/
-theorem weilDifferentialMul_mem_weilDifferentialFiltration (hF : IsFunctionField k F) (z : Fˣ)
-    {D : Divisor k F} {ω : Module.Dual k ↥(repartitionSpace k F)}
-    (hω : ω ∈ weilDifferentialFiltration D) :
-    weilDifferentialMul hF (z : F) ω ∈
-      weilDifferentialFiltration (D + Divisor.principal hF z) := by
-  refine mem_weilDifferentialFiltration_of_apply_eq_zero (fun a ha ↦ ?_) (fun a ha ↦ ?_)
-  · rw [weilDifferentialMul_apply_apply]
-    refine weilDifferential_apply_eq_zero_of_mem_adeleFiltration hω _ ?_
-    rw [coe_repartitionMul_apply]
-    exact (smul_mem_adeleFiltration_iff hF z D _).mpr ha
-  · rw [weilDifferentialMul_apply_apply]
-    obtain ⟨g, hg⟩ := mem_diagonalRepartitions_iff.mp ha
-    refine weilDifferential_apply_eq_zero_of_mem_diagonalRepartitions hω _ ?_
-    rw [coe_repartitionMul_apply, ← hg]
-    exact const_mem_diagonalRepartitions ((z : F) * g)
+/-- **Multiplication translates the filtration by a principal divisor**: for a nonzero function
+`z`, a linear form is bounded by `D` exactly when `z · ω` is bounded by `D + div z`, exactly as
+multiplication by `z` carries `A_F(D + div z)` into `A_F(D)`. -/
+theorem repartitionDualMul_mem_weilDifferentialFiltration_iff (hF : IsFunctionField k F) (z : Fˣ)
+    {D : Divisor k F} {ω : Module.Dual k ↥(repartitionSpace k F)} :
+    repartitionDualMul hF (z : F) ω ∈ weilDifferentialFiltration (D + Divisor.principal hF z) ↔
+      ω ∈ weilDifferentialFiltration D := by
+  have key : ∀ (y : Fˣ) (E : Divisor k F) (η : Module.Dual k ↥(repartitionSpace k F)),
+      η ∈ weilDifferentialFiltration E →
+      repartitionDualMul hF (y : F) η ∈
+        weilDifferentialFiltration (E + Divisor.principal hF y) := by
+    refine fun y E η hη ↦ mem_weilDifferentialFiltration_of_apply_eq_zero
+      (fun a ha ↦ ?_) (fun a ha ↦ ?_)
+    · rw [repartitionDualMul_apply_apply]
+      refine weilDifferentialFiltration_apply_eq_zero_of_mem_adeleFiltration hη _ ?_
+      rw [coe_repartitionMul_apply]
+      exact (smul_mem_adeleFiltration_iff hF y E _).mpr ha
+    · rw [repartitionDualMul_apply_apply]
+      refine weilDifferentialFiltration_apply_eq_zero_of_mem_diagonalRepartitions hη _ ?_
+      rw [coe_repartitionMul_apply]
+      exact smul_mem_diagonalRepartitions (y : F) ha
+  refine ⟨fun h ↦ ?_, key z D ω⟩
+  have hzz : repartitionDualMul hF ((z⁻¹ : Fˣ) : F) (repartitionDualMul hF (z : F) ω) = ω := by
+    rw [← Module.End.mul_apply, ← map_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
+      map_one, Module.End.one_apply]
+  have hD : D + Divisor.principal hF z + Divisor.principal hF z⁻¹ = D := by
+    rw [Divisor.principal_inv, add_neg_cancel_right]
+  have h' := key z⁻¹ _ _ h
+  rwa [hzz, hD] at h'
 
 /-- **`Ω_F` is stable under multiplication by a function**, which is what makes it a vector space
 over `F` and not merely over `k`. -/
-theorem weilDifferentialMul_mem_weilDifferentialSpace (hF : IsFunctionField k F) (f : F)
+theorem repartitionDualMul_mem_weilDifferentialSpace (hF : IsFunctionField k F) (f : F)
     {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ∈ weilDifferentialSpace k F) :
-    weilDifferentialMul hF f ω ∈ weilDifferentialSpace k F := by
+    repartitionDualMul hF f ω ∈ weilDifferentialSpace k F := by
   rcases eq_or_ne f 0 with rfl | hf
   · simp
   · obtain ⟨D, hD⟩ := mem_weilDifferentialSpace_iff.mp hω
     exact weilDifferentialFiltration_le_weilDifferentialSpace _
-      (weilDifferentialMul_mem_weilDifferentialFiltration hF (Units.mk0 f hf) hD)
+      ((repartitionDualMul_mem_weilDifferentialFiltration_iff hF (Units.mk0 f hf)).mpr hD)
 
 /-- The multiplication action of `F` on `Ω_F` itself, the restriction of
-`TauCeti.weilDifferentialMul` to the stable subspace of Weil differentials. -/
+`TauCeti.repartitionDualMul` to the stable subspace of Weil differentials. -/
 noncomputable def weilDifferentialSpaceMul (hF : IsFunctionField k F) :
     F →ₐ[k] Module.End k ↥(weilDifferentialSpace k F) where
-  toFun f := LinearMap.restrict (weilDifferentialMul hF f)
-    fun _ hω ↦ weilDifferentialMul_mem_weilDifferentialSpace hF f hω
+  toFun f := LinearMap.restrict (repartitionDualMul hF f)
+    fun _ hω ↦ repartitionDualMul_mem_weilDifferentialSpace hF f hω
   map_one' := LinearMap.ext fun ω ↦ Subtype.ext (by simp)
   map_mul' f g := LinearMap.ext fun ω ↦ Subtype.ext (by simp)
   map_zero' := LinearMap.ext fun ω ↦ Subtype.ext (by simp)
@@ -289,7 +262,7 @@ noncomputable def weilDifferentialSpaceMul (hF : IsFunctionField k F) :
 theorem coe_weilDifferentialSpaceMul_apply (hF : IsFunctionField k F) (f : F)
     (ω : ↥(weilDifferentialSpace k F)) :
     ((weilDifferentialSpaceMul hF f ω : ↥(weilDifferentialSpace k F)) :
-      Module.Dual k ↥(repartitionSpace k F)) = weilDifferentialMul hF f ω :=
+      Module.Dual k ↥(repartitionSpace k F)) = repartitionDualMul hF f ω :=
   (rfl)
 
 /-- **The `F`-vector space structure on `Ω_F`** (Stichtenoth, Definition 1.5.8): `(f · ω) a` is
@@ -302,12 +275,12 @@ noncomputable def weilDifferentialSpaceModule (hF : IsFunctionField k F) :
   Module.compHom _ (weilDifferentialSpaceMul hF).toRingHom
 
 /-- The scalar multiplication of `TauCeti.weilDifferentialSpaceModule` is the multiplication
-action `TauCeti.weilDifferentialMul`. -/
-theorem weilDifferentialSpaceModule_smul (hF : IsFunctionField k F) (f : F)
+action `TauCeti.repartitionDualMul`. -/
+theorem coe_weilDifferentialSpaceModule_smul (hF : IsFunctionField k F) (f : F)
     (ω : ↥(weilDifferentialSpace k F)) :
     letI := weilDifferentialSpaceModule hF
     ((f • ω : ↥(weilDifferentialSpace k F)) :
-      Module.Dual k ↥(repartitionSpace k F)) = weilDifferentialMul hF f ω :=
+      Module.Dual k ↥(repartitionSpace k F)) = repartitionDualMul hF f ω :=
   (rfl)
 
 /-- The `F`-vector space structure on `Ω_F` extends its `k`-vector space structure. -/
@@ -316,7 +289,7 @@ theorem isScalarTower_weilDifferentialSpace (hF : IsFunctionField k F) :
     IsScalarTower k F ↥(weilDifferentialSpace k F) := by
   let := weilDifferentialSpaceModule hF
   refine ⟨fun c f ω ↦ Subtype.ext ?_⟩
-  rw [weilDifferentialSpaceModule_smul, Submodule.coe_smul, weilDifferentialSpaceModule_smul,
-    map_smul, LinearMap.smul_apply]
+  rw [coe_weilDifferentialSpaceModule_smul, Submodule.coe_smul,
+    coe_weilDifferentialSpaceModule_smul, map_smul, LinearMap.smul_apply]
 
 end TauCeti
