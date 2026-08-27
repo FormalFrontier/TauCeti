@@ -260,7 +260,7 @@ basis vector and fixes the other basis vector. -/
 @[simp]
 theorem rankOneRootSubgroupParam_apply_baseChange_basis
     {A : Type u} [CommRing A] (i s : Fin 2) (t : Multiplicative A) :
-    (rankOneRootSubgroupParam i (CommAlgCat.of ℤ A) t).val ((b).baseChange A s) =
+    (rankOneRootSubgroupParam i (CommAlgCat.of ℤ A) t).val (1 ⊗ₜ[ℤ] b s) =
       (b).baseChange A s +
         if s = i.rev then Multiplicative.toAdd t • (b).baseChange A i else 0 := by
   rw [rankOneRootSubgroupParam, kostantRootSubgroupParam_apply]
