@@ -63,6 +63,17 @@ theorem ord_mul (v : _root_.Valuation F ℤᵐ⁰) {f g : F} (hf : f ≠ 0) (hg 
     WithZero.log_mul (v.ne_zero_iff.mpr hf) (v.ne_zero_iff.mpr hg)]
   ring
 
+theorem ord_prod (v : _root_.Valuation F ℤᵐ⁰) {ι : Type*} (s : Finset ι) {f : ι → F}
+    (hf : ∀ i ∈ s, f i ≠ 0) : ord v (∏ i ∈ s, f i) = ∑ i ∈ s, ord v (f i) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s ha ih =>
+    rw [Finset.prod_insert ha, Finset.sum_insert ha,
+      ord_mul v (hf a (Finset.mem_insert_self a s))
+        (Finset.prod_ne_zero_iff.mpr fun i hi ↦ hf i (Finset.mem_insert_of_mem hi)),
+      ih fun i hi ↦ hf i (Finset.mem_insert_of_mem hi)]
+
 @[simp]
 theorem ord_inv (v : _root_.Valuation F ℤᵐ⁰) (f : F) : ord v f⁻¹ = -ord v f := by
   simp [ord_def, map_inv₀, WithZero.log_inv]

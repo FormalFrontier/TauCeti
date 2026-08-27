@@ -5,10 +5,12 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Unipotent.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Dynamic.LeviDecomposition.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Order
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Map
 
@@ -46,6 +48,8 @@ the existing dynamic statement that the weight parabolic normalizes its unipoten
   out the weight Levi inside the weight parabolic.
 * `TauCeti.GeneralLinear.Dynamic.weightLeviInParabolicGroupSchemeIso`: its quotient spectrum is
   canonically the weight-Levi group scheme.
+* `TauCeti.GeneralLinear.Dynamic.weightLeviToParabolicCoordinateMap`: the quotient coordinate
+  map representing the weight-Levi inclusion.
 * `TauCeti.GeneralLinear.Dynamic.weightLeviToParabolic`: the compatible closed immersion of the
   weight Levi into the weight parabolic.
 
@@ -269,6 +273,56 @@ noncomputable def weightLeviInParabolicGroupSchemeIso (w : Fin N → ℤ) :
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).mapIso
     (weightLeviInParabolicCoordinateIso R w).op
 
+/-- The coordinate morphism representing the inclusion `L(w) → P(w)`. It is the canonical
+map between the two quotient coordinate Hopf algebras induced by containment of their defining
+Hopf ideals. -/
+noncomputable def weightLeviToParabolicCoordinateMap (w : Fin N → ℤ) :
+    weightParabolicCoordinateHopfAlgebra R w ⟶ weightLeviCoordinateHopfAlgebra R w :=
+  CommHopfAlgCat.quotientMapOfLe (coordinateHopfAlgebra R N)
+    (weightParabolicDefiningHopfIdeal_le_weightLevi R w)
+
+/-- The coordinate map of the weight-Levi inclusion is the quotient map induced by containment
+of the defining Hopf ideals. -/
+theorem weightLeviToParabolicCoordinateMap_def (w : Fin N → ℤ) :
+    weightLeviToParabolicCoordinateMap R w =
+      CommHopfAlgCat.quotientMapOfLe (coordinateHopfAlgebra R N)
+        (weightParabolicDefiningHopfIdeal_le_weightLevi R w) := (rfl)
+
+/-- On points over every commutative value algebra, the canonical quotient coordinate map is the
+dynamic Levi inclusion transported through the representing isomorphisms. -/
+@[simp]
+theorem mapPointsFunctor_weightLeviToParabolicCoordinateMap_app (w : Fin N → ℤ)
+    (A : CommAlgCat.{v} R)
+    (z : HopfAlgebra.points (R := R) (H := weightLeviCoordinateHopfAlgebra R w) A) :
+    (CommHopfAlgCat.mapPointsFunctor (weightLeviToParabolicCoordinateMap R w)).app A z =
+      (weightParabolicPointsIso R w).inv.app A
+        (Cocharacter.leviToParabolic A (weightCocharacter (R := R) w)
+          ((weightLeviPointsIso R w).hom.app A z)) := by
+  rcases A with ⟨A⟩
+  apply CommHopfAlgCat.quotientPointsHom_injective
+    (coordinateHopfAlgebra R N) (weightParabolicDefiningHopfIdeal R w)
+    (CommAlgCat.of R A)
+  rw [weightLeviToParabolicCoordinateMap_def,
+    CommHopfAlgCat.quotientPointsHom_mapPointsFunctor_quotientMapOfLe_app,
+    quotientPointsHom_weightParabolicPointsIso_inv_app_apply]
+  let zDynamic : Cocharacter.levi (CommAlgCat.of R A)
+      (weightCocharacter (R := R) w) :=
+    eqToHom (Cocharacter.leviFunctor_obj
+      (weightCocharacter (R := R) w) (CommAlgCat.of R A))
+      ((weightLeviPointsIso R w).hom.app (CommAlgCat.of R A) z)
+  calc
+    CommHopfAlgCat.quotientPointsHom (coordinateHopfAlgebra R N)
+        (weightLeviDefiningHopfIdeal R w) (CommAlgCat.of R A) z =
+        (zDynamic : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N)
+          (CommAlgCat.of R A)) :=
+      (coe_weightLeviPointsIso_hom_app_apply R w z).symm
+    _ = (Cocharacter.leviToParabolic (CommAlgCat.of R A)
+          (weightCocharacter (R := R) w) zDynamic :
+          HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N)
+            (CommAlgCat.of R A)) :=
+      (Cocharacter.coe_leviToParabolic_apply (CommAlgCat.of R A)
+        (weightCocharacter (R := R) w) zDynamic).symm
+
 /-- The closed immersion of the weight-Levi group scheme into the weight-parabolic group scheme
 induced by inclusion of their defining Hopf ideals. -/
 noncomputable def weightLeviToParabolic (w : Fin N → ℤ) :
@@ -276,10 +330,17 @@ noncomputable def weightLeviToParabolic (w : Fin N → ℤ) :
   CommHopfAlgCat.quotientSpecMapOfLe (coordinateHopfAlgebra R N)
     (weightParabolicDefiningHopfIdeal_le_weightLevi R w)
 
+/-- The weight-Levi inclusion is the quotient-spectrum map induced by containment of the
+defining Hopf ideals. -/
+theorem weightLeviToParabolic_def (w : Fin N → ℤ) :
+    weightLeviToParabolic R w =
+      CommHopfAlgCat.quotientSpecMapOfLe (coordinateHopfAlgebra R N)
+        (weightParabolicDefiningHopfIdeal_le_weightLevi R w) := (rfl)
+
 /-- The weight-Levi-to-parabolic morphism is a closed immersion. -/
 instance isClosedImmersion_weightLeviToParabolic (w : Fin N → ℤ) :
     IsClosedImmersion (weightLeviToParabolic R w).hom.hom.left := by
-  rw [weightLeviToParabolic]
+  rw [weightLeviToParabolic_def]
   infer_instance
 
 /-- Including the weight-Levi group scheme through the weight parabolic agrees with its direct
@@ -288,7 +349,7 @@ inclusion into the general linear group scheme. -/
 theorem weightLeviToParabolic_comp_inclusion (w : Fin N → ℤ) :
     weightLeviToParabolic R w ≫ weightParabolicInclusion R w =
       weightLeviInclusion R w := by
-  rw [weightLeviToParabolic, weightParabolicInclusion_def,
+  rw [weightLeviToParabolic_def, weightParabolicInclusion_def,
     weightLeviInclusion_def, ← Category.assoc,
     CommHopfAlgCat.quotientSpecMapOfLe_comp_quotientSpecι]
 

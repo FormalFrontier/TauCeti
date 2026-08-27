@@ -44,7 +44,7 @@ already carried by `HasEval`. Taking `I` to be `IsLocalRing.maximalIdeal S` and 
 ## Provenance
 
 Adapted from Michael Stoll's `EllipticCurves` (`github.com/MichaelStollBayreuth/EllipticCurves`,
-Apache-2.0) at commit `66889eada51ac1eb2a1c98b3c1ba5b0bbe64a8d0`, file
+Apache-2.0) at commit `66889eada51a74c2f5dfb7fb5909b0b5a0a2d96e`, file
 `EllipticCurves/WeierstrassFormalGroup/Eval.lean`, where these are
 `ChabautyColeman.MvPSeries.eval_mem_maximalIdeal_pow`, `..._pow_mul` and `..._pow_add_mul`. That
 development evaluates through its own `ChabautyColeman.MvPSeries.eval`, which is by definition

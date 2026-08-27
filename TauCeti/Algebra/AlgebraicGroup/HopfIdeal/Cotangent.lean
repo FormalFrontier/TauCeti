@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
+public import TauCeti.Algebra.HopfAlgebra.Kernel
 import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
 import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
@@ -37,6 +38,10 @@ needed in Layer 2 of the ReductiveGroups roadmap.
   gives the differential of the closed-subgroup inclusion.
 * `TauCeti.HopfIdeal.quotientCotangentMap_surjective`: right exactness of the conormal sequence.
 * `TauCeti.HopfIdeal.ker_quotientCotangentMap`: its kernel is the conormal subspace.
+* `TauCeti.HopfIdeal.quotientLieHom_surjective_iff_conormalSubspace_eq_bot`: the
+  closed-subgroup differential is onto exactly when its conormal space vanishes.
+* `TauCeti.HopfIdeal.conormalSubspace_eq_bot_iff_toIdeal_le_sq_augmentationIdeal`: conormal
+  vanishing means that the defining ideal has no linear term at the identity.
 * `TauCeti.HopfIdeal.finrank_quotientLie_add_finrank_conormal`: the resulting dimension formula.
 * `TauCeti.HopfIdeal.finrank_quotientLie_le`: the resulting closed-subgroup dimension bound.
 * `TauCeti.HopfIdeal.finrank_quotientLie_antitone`: inclusion of closed subgroups cannot increase
@@ -227,11 +232,116 @@ theorem ker_quotientCotangentMap (I : HopfIdeal k H) :
     · exact (Bialgebra.cotangentMap_augmentation
         (R := k) (A := H) ⟨x, toIdeal_le_augmentationIdeal I hx'⟩).symm
 
+/-- A closed subgroup has zero conormal space at the identity exactly when every element of its
+defining ideal vanishes to second order there. -/
+@[simp]
+theorem conormalSubspace_eq_bot_iff_toIdeal_le_sq_augmentationIdeal
+    (I : HopfIdeal k H) :
+    conormalSubspace I = ⊥ ↔
+      I.toIdeal ≤ Bialgebra.AugmentationIdeal k H ^ 2 := by
+  constructor
+  · intro hconormal x hx
+    have hxconormal : Bialgebra.cotangentMap k H x ∈ conormalSubspace I :=
+      (mem_conormalSubspace_iff I _).2 ⟨x, hx, rfl⟩
+    rw [hconormal, Submodule.mem_bot] at hxconormal
+    let x' : Bialgebra.AugmentationIdeal k H :=
+      ⟨x, toIdeal_le_augmentationIdeal I hx⟩
+    rw [Bialgebra.cotangentMap_augmentation (x := x')] at hxconormal
+    exact
+      ((Bialgebra.AugmentationIdeal k H).toCotangent_eq_zero x').1 hxconormal
+  · intro hsquare
+    apply le_bot_iff.1
+    intro y hy
+    obtain ⟨x, hx, rfl⟩ := (mem_conormalSubspace_iff I y).1 hy
+    let x' : Bialgebra.AugmentationIdeal k H :=
+      ⟨x, toIdeal_le_augmentationIdeal I hx⟩
+    rw [Bialgebra.cotangentMap_augmentation (x := x'), Submodule.mem_bot,
+      Ideal.toCotangent_eq_zero]
+    exact hsquare hx
+
 end Ring
 
 section Field
 
 variable [Field k] [CommRing H] [HopfAlgebra k H]
+
+/-- The differential of a closed-subgroup inclusion is surjective exactly when the subgroup has
+zero conormal space at the identity. Equivalently, the inclusion is an infinitesimal equality at
+the identity. -/
+theorem quotientLieHom_surjective_iff_conormalSubspace_eq_bot
+    (I : HopfIdeal k H) :
+    Function.Surjective (quotientLieHom (B := k) I) ↔
+      conormalSubspace I = ⊥ := by
+  constructor
+  · intro hsurjective
+    rw [← ker_quotientCotangentMap, LinearMap.ker_eq_bot,
+      ← LinearMap.dualMap_surjective_iff]
+    intro f
+    obtain ⟨d, hd⟩ := hsurjective
+      (Derivation.cotangentLinearEquiv (R := k) (A := H) (B := k) f)
+    refine ⟨(Derivation.cotangentLinearEquiv
+      (R := k) (A := H ⧸ I.toIdeal) (B := k)).symm d, ?_⟩
+    apply (Derivation.cotangentLinearEquiv (R := k) (A := H) (B := k)).injective
+    rw [LinearMap.dualMap_apply',
+      ← cotangentLinearEquiv_comp_quotientCotangentMap,
+      (Derivation.cotangentLinearEquiv
+        (R := k) (A := H ⧸ I.toIdeal) (B := k)).apply_symm_apply]
+    exact hd
+  · intro hconormal
+    have hinjective : Function.Injective (quotientCotangentMap I) := by
+      rw [← LinearMap.ker_eq_bot, ker_quotientCotangentMap]
+      exact hconormal
+    have hdual : Function.Surjective (quotientCotangentMap I).dualMap :=
+      LinearMap.dualMap_surjective_of_injective hinjective
+    intro d
+    obtain ⟨f, hf⟩ := hdual
+      ((Derivation.cotangentLinearEquiv (R := k) (A := H) (B := k)).symm d)
+    refine ⟨Derivation.cotangentLinearEquiv
+      (R := k) (A := H ⧸ I.toIdeal) (B := k) f, ?_⟩
+    rw [cotangentLinearEquiv_comp_quotientCotangentMap,
+      ← LinearMap.dualMap_apply', hf,
+      (Derivation.cotangentLinearEquiv (R := k) (A := H) (B := k)).apply_symm_apply]
+
+/-- The kernel of a surjective Hopf-algebra morphism has zero conormal space when the
+differential of the morphism is surjective. -/
+theorem conormalSubspace_ker_eq_bot_of_surjective_of_derivationCompLieHom_surjective
+    {K : Type w} [CommRing K] [HopfAlgebra k K] (f : H →ₐc[k] K)
+    (hf : Function.Surjective f)
+    (hdf : Function.Surjective (derivationCompLieHom (B := k) f)) :
+    conormalSubspace (ker f) = ⊥ := by
+  have hkerOf : conormalSubspace (kerOfSurjective f hf) = ⊥ := by
+    apply
+      (quotientLieHom_surjective_iff_conormalSubspace_eq_bot
+        (kerOfSurjective f hf)).1
+    intro d
+    obtain ⟨e, he⟩ := hdf d
+    refine ⟨derivationCompLieHom (B := k) (kerLiftBialgHom f hf) e, ?_⟩
+    -- `quotientLieHom` is not exposed, so rewrite it through its public application lemma.
+    have hquotient :
+        quotientLieHom (B := k) (kerOfSurjective f hf) =
+          derivationCompLieHom (B := k)
+            (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal) := by
+      ext d x
+      rw [quotientLieHom_apply_apply, derivationCompLieHom_apply, derivationComp_apply]
+      exact Bialgebra.CounitAlgebra.algEquivSelf_apply
+        k (H ⧸ (kerOfSurjective f hf).toIdeal) k
+        (d (Ideal.Quotient.mkₐ k (kerOfSurjective f hf).toIdeal x))
+    rw [hquotient]
+    calc
+      derivationCompLieHom (B := k)
+          (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal)
+          (derivationCompLieHom (B := k) (kerLiftBialgHom f hf) e) =
+        ((derivationCompLieHom (B := k)
+            (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal)).comp
+          (derivationCompLieHom (B := k) (kerLiftBialgHom f hf))) e := rfl
+      _ = derivationCompLieHom (B := k)
+          ((kerLiftBialgHom f hf).comp
+            (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal)) e := by
+        rw [derivationCompLieHom_comp]
+      _ = derivationCompLieHom (B := k) f e := by
+        rw [kerLiftBialgHom_comp_mkBialgHom]
+      _ = d := he
+  simpa only [kerOfSurjective_eq_ker] using hkerOf
 
 /-- In finite dimension, the dimension of the closed subgroup's cotangent space plus its
 conormal dimension is the dimension of the ambient cotangent space. -/

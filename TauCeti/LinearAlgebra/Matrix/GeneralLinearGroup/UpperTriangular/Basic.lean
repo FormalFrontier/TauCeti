@@ -43,7 +43,7 @@ namespace TauCeti
 
 open Matrix
 
-universe u
+universe u v
 
 variable (m : Type*) [Fintype m] [LinearOrder m] (R : Type u) [CommRing R]
 
@@ -74,6 +74,46 @@ theorem mem_iff {g : GL m R} :
 theorem isUpperTriangular (g : upperTriangularGroup m R) :
     ((g : GL m R) : Matrix m m R).IsUpperTriangular :=
   g.2
+
+/-- Apply a ring homomorphism entrywise to an invertible upper-triangular matrix. -/
+def map {S : Type v} [CommRing S] (phi : R →+* S) :
+    upperTriangularGroup m R →* upperTriangularGroup m S :=
+  ((Matrix.GeneralLinearGroup.map phi).domRestrict (upperTriangularGroup m R)).codRestrict
+    (upperTriangularGroup m S) fun g ↦ mem_iff.mpr ((isUpperTriangular g).map phi)
+
+/-- The matrix underlying an entrywise-mapped upper-triangular element is the entrywise map of
+its underlying matrix. -/
+@[simp]
+theorem coe_map {S : Type v} [CommRing S] (phi : R →+* S)
+    (g : upperTriangularGroup m R) :
+    ((map phi g : upperTriangularGroup m S) : GL m S) =
+      Matrix.GeneralLinearGroup.map phi (g : GL m R) :=
+  by simp [map]
+
+/-- Entrywise application of a ring homomorphism to an upper-triangular matrix. -/
+theorem map_apply {S : Type v} [CommRing S] (phi : R →+* S)
+    (g : upperTriangularGroup m R) (i j : m) :
+    ((map phi g : upperTriangularGroup m S) : GL m S) i j =
+      phi (((g : upperTriangularGroup m R) : GL m R) i j) := by
+  rw [coe_map, Matrix.GeneralLinearGroup.map_apply]
+
+/-- Entrywise mapping along the identity ring homomorphism is the identity. -/
+@[simp]
+theorem map_id :
+    map (m := m) (RingHom.id R) = MonoidHom.id (upperTriangularGroup m R) := by
+  ext g i j
+  simp only [map_apply, RingHom.id_apply, MonoidHom.id_apply]
+
+/-- Successive entrywise maps agree with mapping along the composite ring homomorphism. -/
+@[simp]
+theorem map_comp {S T : Type*} [CommRing S] [CommRing T]
+    (f : R →+* S) (g : S →+* T) :
+    map (m := m) (g.comp f) = (map (m := m) g).comp (map (m := m) f) := by
+  apply MonoidHom.ext
+  intro x
+  apply Subtype.ext
+  ext i j
+  simp only [map_apply, RingHom.coe_comp, Function.comp_apply, MonoidHom.coe_comp]
 
 /-- The diagonal projection from the upper-triangular group to the coordinatewise unit group.
 

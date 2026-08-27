@@ -7,7 +7,7 @@ module
 
 import TauCeti.CategoryTheory.ObjectProperty
 public import TauCeti.Algebra.AlgebraicGroup.Adjoint.Basic
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Semisimple
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Semisimple.Basic
 
 /-!
 # Adjoint semisimple affine group schemes

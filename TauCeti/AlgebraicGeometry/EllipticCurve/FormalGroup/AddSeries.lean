@@ -28,7 +28,8 @@ That series is `formalAdd`, and it is the series underlying the elliptic formal 
 ## Main results
 
 * `WeierstrassCurve.constantCoeff_formalAdd`: `F(0, 0) = 0`, so `F` may itself be substituted
-  into a power series. This is the first of the formal-group-law axioms.
+  into a power series, which every later statement about the group law needs. Mathlib's
+  `FormalGroup` carries this as its `zero_constantCoeff` field.
 * `WeierstrassCurve.rename_swap_formalAdd`: `F(z₂, z₁) = F(z₁, z₂)`. The chord does not depend
   on the order of its two points, so the group law is commutative.
 

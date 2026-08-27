@@ -40,6 +40,9 @@ curve need not carry a `HasMFDerivWithinAt` witness for it.
 * `TauCeti.Manifold.hasMFDerivWithinAt_curveVelocityWithin` and
   `TauCeti.Manifold.curveVelocityWithin_eq_of_hasMFDerivWithinAt`: the two directions relating the
   named velocity to a `HasMFDerivWithinAt` witness.
+* `TauCeti.Manifold.curveVelocityWithin_subset` and
+  `TauCeti.Manifold.curveVelocityWithin_comp`: velocity is unchanged by restriction and obeys the
+  chain rule under reparametrization.
 * `TauCeti.Manifold.hasDerivWithinAt_extChartAt_comp_curve`: reading the curve in the chart
   centred at the current point differentiates it to the velocity itself, with
   `TauCeti.Manifold.hasDerivAt_extChartAt_comp_curve` its unrestricted case and
@@ -154,6 +157,33 @@ theorem curveVelocityWithin_eq_of_hasMFDerivWithinAt
   rw [curveVelocityWithin_apply,
     hγ.mfderivWithin (uniqueMDiffWithinAt_iff_uniqueDiffWithinAt.mpr hs)]
   exact smulRight_one_apply_one w
+
+/-- Restricting the parameter set does not change the velocity of a differentiable curve when
+the smaller set has a unique derivative at the parameter. -/
+theorem curveVelocityWithin_subset {u : Set 𝕜} (hus : u ⊆ s)
+    (hu : UniqueDiffWithinAt 𝕜 u t) (hγ : MDifferentiableWithinAt 𝓘(𝕜, 𝕜) I γ s t) :
+    curveVelocityWithin I γ u t = curveVelocityWithin I γ s t := by
+  rw [curveVelocityWithin_apply, curveVelocityWithin_apply,
+    mfderivWithin_subset hus hu.uniqueMDiffWithinAt hγ]
+
+/-- The velocity of a reparametrized curve is the velocity of the original curve multiplied by
+the derivative of the reparametrization. -/
+theorem curveVelocityWithin_comp {φ : 𝕜 → 𝕜} {u : Set 𝕜} {c : 𝕜}
+    (hφ : HasDerivWithinAt φ c u t) (hmaps : Set.MapsTo φ u s)
+    (hγ : MDifferentiableWithinAt 𝓘(𝕜, 𝕜) I γ s (φ t))
+    (hu : UniqueDiffWithinAt 𝕜 u t) :
+    curveVelocityWithin I (γ ∘ φ) u t = c • curveVelocityWithin I γ s (φ t) := by
+  apply curveVelocityWithin_eq_of_hasMFDerivWithinAt _ hu
+  have hcomp := (hasMFDerivWithinAt_curveVelocityWithin hγ).comp t
+    hφ.hasFDerivWithinAt.hasMFDerivWithinAt hmaps
+  apply hcomp.congr_mfderiv
+  apply ContinuousLinearMap.ext
+  intro z
+  -- The tangent space of the scalar model is definitionally `𝕜`, but exposing that
+  -- identification is needed before the two `smulRight` applications can reduce.
+  change ((show 𝕜 from z) * c) • curveVelocityWithin I γ s (φ t) =
+    (show 𝕜 from z) • (c • curveVelocityWithin I γ s (φ t))
+  rw [mul_smul]
 
 /-- On a parameter set which is a neighbourhood of `t`, the restricted velocity is the
 unrestricted one. -/

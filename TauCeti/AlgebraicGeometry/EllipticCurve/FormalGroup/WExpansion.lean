@@ -445,6 +445,39 @@ theorem eq_subst_formalW_of_wEquation {q v : PowerSeries R}
   refine eq_of_wEquation W hq hv ?_ h (subst_formalW_wEquation W ha)
   exact PowerSeries.constantCoeff_subst_eq_zero hq (formalW W) (constantCoeff_formalW W)
 
+/-! ### Base change
+
+Every coefficient of the `w`-expansion is a polynomial in `a₁, …, a₆`, so it commutes with base
+change along a ring homomorphism. This is what lets an identity between `w`-expansions be proved
+once over the universal Weierstrass curve and specialised to any curve.
+-/
+
+section BaseChange
+
+variable {S : Type*} [CommRing S] (φ : R →+* S)
+
+/-- Base change passes through the right-hand side of the `w`-equation, carrying the parameter
+and the unknown with it. -/
+@[simp]
+theorem map_wEquationRHS (q v : PowerSeries R) :
+    wEquationRHS (W.map φ) (PowerSeries.map φ q) (PowerSeries.map φ v) =
+      PowerSeries.map φ (wEquationRHS W q v) := by
+  simp only [wEquationRHS_powerSeries, map_add, map_mul, map_pow, PowerSeries.map_C,
+    WeierstrassCurve.map_a₁, WeierstrassCurve.map_a₂, WeierstrassCurve.map_a₃,
+    WeierstrassCurve.map_a₄, WeierstrassCurve.map_a₆]
+
+/-- **The `w`-expansion commutes with base change.** Both sides have vanishing constant
+coefficient and solve the `w`-equation of `W.map φ`, and that solution is unique. -/
+@[simp]
+theorem map_formalW : formalW (W.map φ) = PowerSeries.map φ (formalW W) := by
+  refine (eq_formalW_of_wEquation (W.map φ) _ ?_ ?_).symm
+  · rw [← PowerSeries.coeff_zero_eq_constantCoeff_apply, PowerSeries.coeff_map,
+      PowerSeries.coeff_zero_eq_constantCoeff_apply, constantCoeff_formalW, map_zero]
+  · conv_lhs => rw [formalW_wEquation W]
+    rw [← map_wEquationRHS W φ, PowerSeries.map_X]
+
+end BaseChange
+
 end CommRing
 
 end WeierstrassCurve

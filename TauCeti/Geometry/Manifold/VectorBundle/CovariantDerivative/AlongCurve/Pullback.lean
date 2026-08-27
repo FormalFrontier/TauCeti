@@ -8,6 +8,7 @@ module
 public import TauCeti.Geometry.Manifold.MFDeriv.Curve
 public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.AlongCurve.Basic
 public import Mathlib.Geometry.Manifold.MFDeriv.Atlas
+import Mathlib.Analysis.Calculus.ContDiff.Deriv
 
 /-!
 # The along-curve derivative of a pulled-back vector field
@@ -45,6 +46,8 @@ for the Levi-Civita connection.
   `x` is the reading of its velocity in the tangent-bundle trivialization at `x`, with
   `TauCeti.Manifold.sectionCoord_curveVelocityWithin_eventuallyEq` its eventual-equality form for
   the velocity field.
+* `TauCeti.Manifold.contDiffWithinAt_sectionCoord_curveVelocityWithin`: a `C^(n + 1)` curve has a
+  `C^n` coordinate velocity field.
 * `TauCeti.Manifold.derivWithin_sectionCoord_pullback`: the derivative of the coordinate reading
   of a pulled-back field is the reading of the flat frame derivative in the direction of the
   velocity.
@@ -78,7 +81,7 @@ for the Levi-Civita connection.
 public section
 
 open Bundle Filter Module Set
-open scoped Manifold Topology
+open scoped ContDiff Manifold Topology
 
 noncomputable section
 
@@ -126,6 +129,27 @@ theorem sectionCoord_curveVelocityWithin_eventuallyEq {x : M} {s : Set 𝕜} {t 
   filter_upwards [hbase, self_mem_nhdsWithin] with r hr hrs
   rw [sectionCoord_apply, derivWithin_extChartAt_comp γ hr (hs r hrs)
     (hasMFDerivWithinAt_curveVelocityWithin (hγ r hrs))]
+
+omit [CompleteSpace 𝕜] [FiniteDimensional 𝕜 E]
+  [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I] in
+/-- If a curve is `C^(n + 1)` on a parameter set with unique derivatives, then the coordinate
+reading of its velocity in any tangent-bundle chart containing the current point is `C^n` there.
+This is the regularity step which makes the derivative in the along-curve formula an honest
+second derivative when the curve is `C²`. -/
+theorem contDiffWithinAt_sectionCoord_curveVelocityWithin {n : ℕ∞ω} [IsManifold I (n + 1) M]
+    {x : M} {s : Set 𝕜}
+    {t : 𝕜} (hs : UniqueDiffOn 𝕜 s) (hγ : ContMDiffOn 𝓘(𝕜, 𝕜) I (n + 1) γ s)
+    (ht : t ∈ s) (hx : γ t ∈ (trivializationAt E (TangentSpace I) x).baseSet) :
+    ContDiffWithinAt 𝕜 n (sectionCoord (F := E) γ (curveVelocityWithin I γ s) x) s t := by
+  have hchart : ContDiffWithinAt 𝕜 (n + 1) (extChartAt I x ∘ γ) s t :=
+    ((contMDiffWithinAt_iff_target_of_mem_source
+      (by simpa only [TangentBundle.trivializationAt_baseSet] using hx)).mp (hγ t ht)).2
+      |>.contDiffWithinAt
+  have hderiv : ContDiffWithinAt 𝕜 n (derivWithin (extChartAt I x ∘ γ) s) s t :=
+    hchart.derivWithin hs le_rfl ht
+  exact hderiv.congr_of_eventuallyEq_of_mem
+    (sectionCoord_curveVelocityWithin_eventuallyEq γ hs
+      (hγ.mdifferentiableOn (by simp)) ht hx) ht
 
 omit [FiniteDimensional 𝕜 E]
   [IsManifold I 1 M]

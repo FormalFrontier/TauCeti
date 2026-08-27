@@ -8,23 +8,25 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.GenericPoint
 public import TauCeti.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.ZSMul
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Basic
--- `ΨSq_ne_zero` is used only inside the proof of `psiFunctionField_ne_zero` below, so private.
+-- Both `ΨSq ≠ 0` lemmas are used only inside proofs below, so both imports are private:
+-- Mathlib's `ΨSq_ne_zero` for the characteristic-conditional discharge, and this repository's
+-- `ΨSq_ne_zero_of_Δ_ne_zero` for the characteristic-free one.
 import Mathlib.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.Degree
+import TauCeti.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.Coprimality
 
 /-!
-# The coordinate pullback of multiplication by `n`, for `n` nonzero in the base field
+# The coordinate pullback of multiplication by `n`, for every nonzero `n`
 
 `Isogeny/Basic.lean` gives the identity coordinate pullback and `Isogeny/Frobenius.lean` gives
 the Frobenius one. This file gives `[n]`: multiplication by `n` pulls back to a map
 `W.CoordinateRing →ₐ[F] W.FunctionField` wherever `ψₙ` does not vanish at the generic point.
 
-**That non-vanishing is proved here only for `(n : F) ≠ 0`, not for `n ≠ 0`**, so in
-characteristic `p` this file does not construct `[p]`. That is a genuine limitation and not a
-convention: see "What is not here". The restriction is confined to two declarations —
-`psiFunctionField_ne_zero`, which supplies the non-vanishing, and `mulByIntPullbackOfNeZero`,
-the specialisation that consumes it. `mulByIntPullback` itself, and everything it is built
-from, carry no hypothesis on the characteristic: they ask for `psiFunctionField W n ≠ 0`
-directly.
+**That non-vanishing is available for every `n ≠ 0` once the curve is nonsingular**, so this
+file constructs `[n]` in every characteristic, `[p]` in characteristic `p` included. Two lemmas
+discharge it and neither subsumes the other: `psiFunctionField_ne_zero` from `(n : F) ≠ 0`,
+which needs no nonsingularity, and `psiFunctionField_ne_zero_of_Δ_ne_zero` from `W.Δ ≠ 0` and
+`n ≠ 0`, which needs no hypothesis on the characteristic. `mulByIntPullback` itself, and
+everything it is built from, carry neither: they ask for `psiFunctionField W n ≠ 0` directly.
 
 The construction is the division-polynomial formula read at the *generic* point. The coordinate
 ring `W.CoordinateRing` is `F[X][Y]` modulo the Weierstrass relation, so the pair `(X, Y)` is
@@ -33,17 +35,6 @@ it has coordinates `φₙ / ψₙ²` and `ωₙ / ψₙ³` by the division-polyn
 `X` and `Y` there is exactly a coordinate pullback.
 
 ## What is not here
-
-`[p]` in characteristic `p`. Not because the construction excludes it — `mulByIntPullback` asks
-only that `ψₙ` not vanish at the generic point — but because the one proof of that
-non-vanishing available here, `psiFunctionField_ne_zero`, goes through `Mathlib.ΨSq_ne_zero`,
-which reads the degree off the leading coefficient `n ^ 2`: exactly what vanishes when `p ∣ n`.
-Every non-vanishing lemma in Mathlib's division-polynomial development is conditional in the
-same way (`preΨ_ne_zero`, `ΨSq_ne_zero`, `Ψ₃_ne_zero`, `preΨ₄_ne_zero`). The
-characteristic-free route needs `IsCoprime (W.Φ n) (W.ΨSq n)` (Silverman, Exercise III.3.7),
-which is in neither Mathlib nor `main` and which belongs beside the division polynomials rather
-than here. When it lands it enters as a second discharge lemma beside
-`psiFunctionField_ne_zero`; no definition or statement below changes shape.
 
 The `MapsInfinity` condition, and so `[n]` as an `Isogeny W W`, are not proved here. Neither
 criterion `Isogeny/Basic.lean` offers applies directly: `mapsInfinity_of_pow` wants a fixed
@@ -74,8 +65,8 @@ since it is about `W` and not about `[n]`.
 * `TauCeti.Isogeny.mulByIntX`, `TauCeti.Isogeny.mulByIntY`: the rational expressions
   `φₙ/ψₙ²` and `ωₙ/ψₙ³`, the coordinates of `[n]` at the generic point where `ψₙ ≠ 0`.
 * `TauCeti.Isogeny.mulByIntPullback`: the coordinate pullback of `[n]`, given `ψₙ ≠ 0`.
-* `TauCeti.Isogeny.mulByIntPullbackOfNeZero`: its specialisation to `(n : F) ≠ 0`, where that
-  hypothesis is discharged.
+* `TauCeti.Isogeny.mulByIntPullbackOfNeZero`: its specialisation to `n ≠ 0` on an elliptic
+  curve, where the non-vanishing is discharged.
 
 The generic point itself (`genericX`, `genericY`, `functionFieldCurve`) is not defined here; it
 is `WeierstrassCurve.Affine`'s, in `Affine/FunctionField/GenericPoint.lean`.
@@ -85,7 +76,10 @@ is `WeierstrassCurve.Affine`'s, in `Affine/FunctionField/GenericPoint.lean`.
 * `TauCeti.Isogeny.equation_mulByInt`: the coordinates of `[n]` satisfy the equation of `W` over
   its function field.
 * `TauCeti.Isogeny.psiFunctionField_ne_zero`: `ψₙ` does not vanish at the generic point when
-  `(n : F) ≠ 0`, which is what discharges the hypothesis above.
+  `(n : F) ≠ 0`, needing no nonsingularity.
+* `TauCeti.Isogeny.psiFunctionField_ne_zero_of_Δ_ne_zero`: the same conclusion from `W.Δ ≠ 0`
+  and `n ≠ 0`, with no hypothesis on the characteristic. These are the two discharges of
+  `mulByIntPullback`'s hypothesis; neither subsumes the other.
 * `TauCeti.Isogeny.mulByIntPullback_mk`: the pullback of an arbitrary class, as evaluation of a
   bivariate polynomial at `(φₙ/ψₙ², ωₙ/ψₙ³)`, with `TauCeti.Isogeny.mulByIntPullback_X` and
   `TauCeti.Isogeny.mulByIntPullback_Y` its values on the two coordinates.
@@ -218,26 +212,11 @@ theorem equation_mulByInt [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n �
   rwa [smulEval_genericPoint_X, smulEval_genericPoint_Y, smulEval_genericPoint_Z,
     ← mulByIntX_def, ← mulByIntY_def] at hJ
 
-/-- **`ψₙ` does not vanish at the generic point** when the image of `n` in `F` is nonzero.
-
-The hypothesis is on `n` in `F`, not on `n` in `ℤ`: in characteristic `p` it excludes `n = p`.
-That case is true too, but it is not reachable from what is currently available. Every
-non-vanishing lemma in Mathlib's division-polynomial development is characteristic-conditional
-in the same way — `preΨ_ne_zero`, `ΨSq_ne_zero`, `Ψ₃_ne_zero`, `preΨ₄_ne_zero` — because each
-is proved from a leading coefficient (`(W.ΨSq n).coeff (n.natAbs ^ 2 - 1) = n ^ 2`), and that
-is exactly what vanishes when `p ∣ n`. The char-free route instead needs
-`IsCoprime (W.Φ n) (W.ΨSq n)` (Silverman, Exercise III.3.7), which is in neither Mathlib nor
-`main`; proving it goes through an algebraically closed base change and belongs beside the
-division polynomials rather than here.
-
-So `mulByIntPullback` takes the non-vanishing as a *hypothesis* rather than deriving it, and
-this lemma discharges that hypothesis in the case that is available. The construction itself
-carries no characteristic restriction, so when the coprimality lands the general case follows
-with nothing here restated — only a second discharge lemma beside this one. -/
-theorem psiFunctionField_ne_zero {n : ℤ} (hn : (n : F) ≠ 0) : psiFunctionField W n ≠ 0 := by
-  intro h
-  have hΨ : W.ΨSq n ≠ 0 := WeierstrassCurve.ΨSq_ne_zero W hn
-  refine hΨ ?_
+/-- If `ψₙ` vanishes at the generic point then `ΨSqₙ` is the zero polynomial. Both discharge
+lemmas below reduce to this and then cite a non-vanishing of `ΨSqₙ`; they differ only in which
+one, so the transport through the coordinate ring lives here once. -/
+private theorem ΨSq_eq_zero_of_psiFunctionField_eq_zero {n : ℤ}
+    (h : psiFunctionField W n = 0) : W.ΨSq n = 0 := by
   have hzero : algebraMap W.CoordinateRing W.FunctionField
       (Affine.CoordinateRing.mk W (C (W.ΨSq n))) = 0 := by
     rw [← psiFunctionField_sq, h, zero_pow two_ne_zero]
@@ -246,26 +225,55 @@ theorem psiFunctionField_ne_zero {n : ℤ} (hn : (n : F) ≠ 0) : psiFunctionFie
     ((FaithfulSMul.algebraMap_injective W.CoordinateRing W.FunctionField
       (hzero.trans (map_zero _).symm)).trans (map_zero _).symm)
 
+/-- **`ψₙ` does not vanish at the generic point** when the image of `n` in `F` is nonzero.
+
+The hypothesis is on `n` in `F`, not on `n` in `ℤ`: in characteristic `p` it excludes `n = p`.
+It asks nothing about nonsingularity, which is what keeps it useful where
+`psiFunctionField_ne_zero_of_Δ_ne_zero` does not apply; neither of the two subsumes the other.
+The restriction is inherited from `Mathlib.ΨSq_ne_zero`, and every non-vanishing lemma in
+Mathlib's division-polynomial development is conditional the same way — `preΨ_ne_zero`,
+`ΨSq_ne_zero`, `Ψ₃_ne_zero`, `preΨ₄_ne_zero` — because each is proved from a leading coefficient
+(`(W.ΨSq n).coeff (n.natAbs ^ 2 - 1) = n ^ 2`), exactly what vanishes when `p ∣ n`. -/
+theorem psiFunctionField_ne_zero {n : ℤ} (hn : (n : F) ≠ 0) : psiFunctionField W n ≠ 0 :=
+  fun h ↦ WeierstrassCurve.ΨSq_ne_zero W hn (ΨSq_eq_zero_of_psiFunctionField_eq_zero W h)
+
+/-- **`ψₙ` does not vanish at the generic point of a nonsingular curve, for every `n ≠ 0`** — in
+every characteristic, `p ∣ n` included.
+
+This is the characteristic-free discharge of `mulByIntPullback`'s hypothesis, and it is what lets
+this file construct `[p]` in characteristic `p`. It trades the condition on the characteristic for
+nonsingularity: `ΨSq_ne_zero_of_Δ_ne_zero` gets `ΨSqₙ ≠ 0` from `W.Δ ≠ 0` by way of
+`IsCoprime (W.Φ n) (W.ΨSq n)` (Silverman, Exercise III.3.7), which reads the non-vanishing off
+coprimality rather than off a leading coefficient. `Δ ≠ 0` is stated as a hypothesis rather than
+taken as `[W.IsElliptic]` so that the lemma matches its supplier; `mulByIntPullbackOfNeZero`
+supplies it from the instance. -/
+theorem psiFunctionField_ne_zero_of_Δ_ne_zero (hΔ : W.Δ ≠ 0) {n : ℤ} (hn : n ≠ 0) :
+    psiFunctionField W n ≠ 0 :=
+  fun h ↦ WeierstrassCurve.ΨSq_ne_zero_of_Δ_ne_zero W hΔ hn
+    (ΨSq_eq_zero_of_psiFunctionField_eq_zero W h)
+
 /-- **The coordinate pullback of `[n]`.** A coordinate pullback out of `W.CoordinateRing` is a
 point of `W` over `W.FunctionField` — `TauCeti.CoordinatePullback.ofEquation` — and the point here
 is `(φₙ/ψₙ², ωₙ/ψₙ³)`, which `equation_mulByInt` says is one.
 
 The hypothesis is the weakest one the construction uses: `ψₙ` must not vanish at the generic
-point, which is what makes `φₙ/ψₙ²` and `ωₙ/ψₙ³` defined. It is *proved* only for `(n : F) ≠ 0`
-— see `mulByIntPullbackOfNeZero`, and the file header for the characteristic-`p` gap. -/
+point, which is what makes `φₙ/ψₙ²` and `ωₙ/ψₙ³` defined. Two lemmas discharge it —
+`psiFunctionField_ne_zero` and `psiFunctionField_ne_zero_of_Δ_ne_zero` — and
+`mulByIntPullbackOfNeZero` is the packaged form. -/
 noncomputable def mulByIntPullback [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     CoordinatePullback W W :=
   CoordinatePullback.ofEquation (equation_mulByInt W hn)
 
-/-- **The coordinate pullback of `[n]` when `(n : F) ≠ 0`**, the case in which the non-vanishing
-hypothesis of `mulByIntPullback` is available: `psiFunctionField_ne_zero` discharges it. This is
-the specialisation to use unless you can supply `ψₙ ≠ 0` yourself.
+/-- **The coordinate pullback of `[n]` for every `n ≠ 0`**, the non-vanishing hypothesis of
+`mulByIntPullback` being discharged by `psiFunctionField_ne_zero_of_Δ_ne_zero`. This is the
+specialisation to use unless you can supply `ψₙ ≠ 0` yourself.
 
-The hypothesis is on the image of `n` in `F`, not on `n` in `ℤ`, so in characteristic `p` this
-does not give `[p]`; the file header says what closing that needs. -/
-noncomputable abbrev mulByIntPullbackOfNeZero [W.IsElliptic] {n : ℤ} (hnF : (n : F) ≠ 0) :
+The hypothesis is on `n` in `ℤ`, so this does give `[p]` in characteristic `p`. Nonsingularity
+comes from the `[W.IsElliptic]` instance the definition already carried, which is why taking
+`n ≠ 0` here is a strict weakening of the earlier `(n : F) ≠ 0` and costs nothing. -/
+noncomputable abbrev mulByIntPullbackOfNeZero [W.IsElliptic] {n : ℤ} (hn : n ≠ 0) :
     CoordinatePullback W W :=
-  mulByIntPullback W (psiFunctionField_ne_zero W hnF)
+  mulByIntPullback W (psiFunctionField_ne_zero_of_Δ_ne_zero W W.isUnit_Δ.ne_zero hn)
 
 /-- **The pullback of `[n]` on an arbitrary class**: the class of a bivariate polynomial `p` goes
 to `p` evaluated at `(φₙ/ψₙ², ωₙ/ψₙ³)` over the function field. This is the general evaluation

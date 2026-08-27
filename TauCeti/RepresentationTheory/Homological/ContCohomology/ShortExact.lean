@@ -63,6 +63,9 @@ sequence and has to name the same two coefficient maps.
   `C1_map_incl_eq_inf_ker` and `C1_map_proj_eq_C1`: exactness of
   `0 → C¹(X, A) → C¹(X, B) → C¹(X, C) → 0` at its left, middle and right nodes, with
   `C2_map_incl_eq_inf_ker` and `C2_map_proj_eq_C2` the degree-`2` instances of the last two.
+* `TauCeti.ContCohomology.DiscreteShortExact.mem_Z1_of_incl_comp_mem_Z1` and
+  `mem_Z2_of_incl_comp_mem_Z2`: the continuous cocycles descend along the inclusion, which is what
+  turns a cochain produced by a diagram chase back into a cocycle on `A`.
 * `TauCeti.ContCohomology.DiscreteShortExact.explicitDelta0_apply` and
   `explicitDelta1_apply`: the two connecting maps evaluated on representatives, in the shape of
   Mathlib's discrete `groupCohomology.δ₀_apply` and `δ₁_apply`. They hold for an *arbitrary*
@@ -383,6 +386,31 @@ theorem C2_map_proj_eq_C2 : AddSubgroup.map (S.proj.compLeft (G × G)) (C2 G B) 
   simp only [C2_eq_C1]
   exact S.C1_map_proj_eq_C1 (G × G)
 
+variable {S}
+
+/-- **A `1`-cochain on `A` lying over a continuous `1`-cocycle on `B` is one.** Both halves of
+membership in `Z¹` descend along the inclusion: it reflects continuity, the two modules being
+discrete, and it is injective, so the cocycle identity descends as well. -/
+theorem mem_Z1_of_incl_comp_mem_Z1 {a : G → A} {e : G → B}
+    (hae : ∀ g : G, S.incl (a g) = e g) (he : e ∈ Z1 G B) : a ∈ Z1 G A := by
+  obtain ⟨hcont, hcocycle⟩ := mem_Z1_iff.1 he
+  refine mem_Z1_iff.2 ⟨continuous_of_injective_comp S.incl_injective ?_, fun g h => ?_⟩
+  · simpa only [hae] using hcont
+  · refine S.incl_injective ?_
+    simp only [map_add, S.incl_equivariant, hae]
+    exact hcocycle g h
+
+/-- **A `2`-cochain on `A` lying over a continuous `2`-cocycle on `B` is one**, the degree-`2`
+counterpart of `TauCeti.ContCohomology.DiscreteShortExact.mem_Z1_of_incl_comp_mem_Z1`. -/
+theorem mem_Z2_of_incl_comp_mem_Z2 {a : G × G → A} {z : G × G → B}
+    (haz : ∀ p : G × G, S.incl (a p) = z p) (hz : z ∈ Z2 G B) : a ∈ Z2 G A := by
+  obtain ⟨hcont, hcocycle⟩ := mem_Z2_iff.1 hz
+  refine mem_Z2_iff.2 ⟨continuous_of_injective_comp S.incl_injective ?_, fun g h j => ?_⟩
+  · simpa only [haz] using hcont
+  · refine S.incl_injective ?_
+    simp only [map_add, S.incl_equivariant, haz]
+    exact hcocycle g h j
+
 end LowDegreeCochains
 
 section Delta0Cochain
@@ -448,24 +476,14 @@ variable {G : Type u} [Monoid G] [TopologicalSpace G]
 omit [ContinuousSMul G A] in
 variable (S) in
 /-- **A cochain on `A` lying over a coboundary of `B` is a continuous `1`-cocycle.** No cocycle
-hypothesis is needed: `d¹ ∘ d⁰ = 0` gives the identity and the injection reflects continuity. This
-is what discharges the hypothesis `ha` of
+hypothesis is needed, a coboundary being a continuous cocycle already; this is the case
+`e = d⁰ b` of `TauCeti.ContCohomology.DiscreteShortExact.mem_Z1_of_incl_comp_mem_Z1`. It is what
+discharges the hypothesis `ha` of
 `TauCeti.ContCohomology.DiscreteShortExact.explicitDelta0_apply`, whose `hab` it takes verbatim. -/
 theorem mem_Z1_of_incl_comp_eq_d0 {b : B} {a : G → A}
-    (hab : ∀ g : G, S.incl (a g) = g • b - b) : a ∈ Z1 G A := by
-  have hd : (fun g => S.incl (a g)) = d0 G B b := by
-    funext g
-    rw [hab, d0_apply]
-  have hcont : Continuous fun g => S.incl (a g) := by
-    rw [hd]
-    exact continuous_d0_apply b
-  refine mem_Z1_iff.2
-    ⟨continuous_of_injective_comp S.incl_injective hcont, fun g h => S.incl_injective ?_⟩
-  have hcocycle : d0 G B b (g * h) = g • d0 G B b h + d0 G B b g :=
-    d1_apply_eq_zero_iff.1 (d1_comp_d0_apply (G := G) b) g h
-  simp only [d0_apply] at hcocycle
-  rw [hab, map_add, S.incl_equivariant, hab, hab]
-  exact hcocycle
+    (hab : ∀ g : G, S.incl (a g) = g • b - b) : a ∈ Z1 G A :=
+  mem_Z1_of_incl_comp_mem_Z1 (e := d0 G B b) (fun g => (hab g).trans (d0_apply b g).symm)
+    (B1_le_Z1 G B (mem_B1_iff.2 ⟨b, fun g => (d0_apply b g).symm⟩))
 
 omit [ContinuousSMul G A] in
 /-- The cochain attached to a preimage of an invariant is a continuous `1`-cocycle. -/
@@ -596,26 +614,16 @@ variable {G : Type u} [Monoid G] [TopologicalSpace G] [ContinuousMul G]
 omit [ContinuousSMul G A] in
 variable (S) in
 /-- **A cochain on `A` lying over a coboundary of `B` is a continuous `2`-cocycle.** No cocycle
-hypothesis on `e` is needed: `d² ∘ d¹ = 0` gives the identity and the injection reflects
-continuity. This is what discharges the hypothesis `ha` of
+hypothesis on `e` is needed, a continuous coboundary being a continuous cocycle already; this is
+the case `z = d¹ e` of
+`TauCeti.ContCohomology.DiscreteShortExact.mem_Z2_of_incl_comp_mem_Z2`. It is what discharges the
+hypothesis `ha` of
 `TauCeti.ContCohomology.DiscreteShortExact.explicitDelta1_apply`, whose `hae` it takes verbatim. -/
 theorem mem_Z2_of_incl_comp_eq_d1 {e : G → B} (hc : Continuous e) {a : G × G → A}
-    (hae : ∀ g h : G, S.incl (a (g, h)) = g • e h - e (g * h) + e g) : a ∈ Z2 G A := by
-  have hd : (fun p => S.incl (a p)) = d1 G B e := by
-    funext p
-    obtain ⟨g, h⟩ := p
-    rw [hae, d1_apply]
-  have hcont : Continuous fun p => S.incl (a p) := by
-    rw [hd]
-    exact continuous_d1_apply hc
-  refine mem_Z2_iff.2
-    ⟨continuous_of_injective_comp S.incl_injective hcont, fun g h j => S.incl_injective ?_⟩
-  have hcocycle : d1 G B e (g * h, j) + d1 G B e (g, h) =
-      g • d1 G B e (h, j) + d1 G B e (g, h * j) :=
-    d2_apply_eq_zero_iff.1 (d2_comp_d1_apply e) g h j
-  simp only [d1_apply] at hcocycle
-  rw [map_add, map_add, S.incl_equivariant, hae, hae, hae, hae]
-  exact hcocycle
+    (hae : ∀ g h : G, S.incl (a (g, h)) = g • e h - e (g * h) + e g) : a ∈ Z2 G A :=
+  mem_Z2_of_incl_comp_mem_Z2 (z := d1 G B e)
+    (fun p => (hae p.1 p.2).trans (d1_apply e p.1 p.2).symm)
+    (B2_le_Z2 G B (mem_B2_iff.2 ⟨e, hc, rfl⟩))
 
 omit [ContinuousSMul G A] in
 /-- The cochain attached to a lift of a continuous `1`-cocycle is a continuous `2`-cocycle. -/

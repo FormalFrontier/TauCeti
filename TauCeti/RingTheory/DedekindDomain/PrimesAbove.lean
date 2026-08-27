@@ -27,6 +27,8 @@ relative to when the "bad" primes are given downstairs:
 
 ## Main results
 
+* `IsDedekindDomain.HeightOneSpectrum.liesOver_under`: the `LiesOver` instance relating a prime
+  to its contraction, which the `under`-indexed results downstream need.
 * `IsDedekindDomain.HeightOneSpectrum.mem_primesAbove_iff`: `w` lies above `S` iff
   `HeightOneSpectrum.under R w ∈ S`.
 * `IsDedekindDomain.HeightOneSpectrum.primesAbove_finite`: finitely many primes lie above a
@@ -58,6 +60,16 @@ variable (R : Type*) [CommRing R] [IsDedekindDomain R]
   (B : Type*) [CommRing B] [IsDedekindDomain B] [Algebra R B] [Algebra.IsIntegral R B]
 
 namespace HeightOneSpectrum
+
+/-- A height one prime of `B` lies over its own contraction to `R`.
+
+Mathlib's `Ideal.over_under` is this statement for `Ideal.under`, but instance search does not see
+through the `HeightOneSpectrum.asIdeal` projection to reach it, so it is registered here. Results
+stated at `under R w` and consuming a `LiesOver` hypothesis — `HeightOneSpectrum.valuation_liesOver`
+is the one this file exists to feed — do not fire without it. -/
+instance liesOver_under (w : HeightOneSpectrum B) :
+    w.asIdeal.LiesOver (under R w).asIdeal :=
+  ⟨rfl⟩
 
 /-- The primes of `B` lying above a set `S` of primes of `R`: the preimage of `S` under the
 contraction `HeightOneSpectrum.under R`. -/
@@ -97,6 +109,21 @@ by `n` at every prime of `B` not lying above `S`. -/
 def selmerGroupAbove (L : Type*) [Field L] [Algebra B L] [IsFractionRing B L]
     (S : Set (HeightOneSpectrum R)) (n : ℕ) : Subgroup (Lˣ ⧸ (powMonoidHom n : Lˣ →* Lˣ).range) :=
   selmerGroup (R := B) (K := L) (S := HeightOneSpectrum.primesAbove R B S) (n := n)
+
+/-- `selmerGroupAbove` is the ordinary Selmer group taken over the primes above `S`.
+
+The definition says exactly this, but `selmerGroupAbove` is not `@[expose]`, so a downstream
+module cannot see it; this lemma is how such a module rewrites between the two spellings — in
+particular to reach `IsDedekindDomain.selmerGroupPi` and `selmerGroupOfEquiv`, which are stated
+in terms of `selmerGroup`.
+
+Proved by the parenthesised `(rfl)`: the definition is visible here, whereas a bare `rfl` proof of
+an exported statement would ask for `selmerGroupAbove` to be exposed downstream. -/
+lemma selmerGroupAbove_def (L : Type*) [Field L] [Algebra B L] [IsFractionRing B L]
+    (S : Set (HeightOneSpectrum R)) (n : ℕ) :
+    selmerGroupAbove R B L S n =
+      selmerGroup (R := B) (K := L) (S := HeightOneSpectrum.primesAbove R B S) (n := n) :=
+  (rfl)
 
 /-- A class of units lies in the Selmer group relative to `S` exactly when its
 `valuationOfNeZeroMod n` is trivial at every prime of `B` not lying above `S`, i.e. `n` divides

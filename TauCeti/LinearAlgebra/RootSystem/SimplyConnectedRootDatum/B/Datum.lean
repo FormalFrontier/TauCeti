@@ -192,9 +192,12 @@ private lemma corootIdx_injective : Injective (corootIdx : Fin (2 * n) × Fin n 
 
 /-! ## The enumeration of the roots -/
 
+/-- There is room for the first `n` indices in the type `Bₙ` enumeration of `2 * n ^ 2` roots. -/
+private lemma typeB_le_two_mul_sq (n : ℕ) : n ≤ 2 * n ^ 2 :=
+  le_trans (Nat.le_self_pow (by norm_num) n) (Nat.le_mul_of_pos_left (n ^ 2) (by norm_num))
+
 private lemma typeB_lt_two_mul_sq {i : ℕ} (hi : i < n) : i < 2 * n ^ 2 :=
-  lt_of_lt_of_le hi (le_trans (Nat.le_self_pow (by norm_num) n)
-    (Nat.le_mul_of_pos_left (n ^ 2) (by norm_num)))
+  lt_of_lt_of_le hi (typeB_le_two_mul_sq n)
 
 /-- The rotation of the signed basis vectors by `n - 1` steps. Composed with the reversal of the
 offsets it moves the long simple roots to the front of the enumeration. -/
@@ -251,12 +254,13 @@ private def typeBSimplePair (i : Fin n) : Fin (2 * n) × Fin n :=
 
 /-- The `i`-th simple root of type `Bₙ` sits at root index `i`, the Bourbaki node `i + 1`. -/
 def typeBSimpleIndex (n : ℕ) (i : Fin n) : Fin (2 * n ^ 2) :=
-  ⟨i, typeB_lt_two_mul_sq i.isLt⟩
+  Fin.castLE (typeB_le_two_mul_sq n) i
 
-@[simp] lemma typeBSimpleIndex_val (i : Fin n) : (typeBSimpleIndex n i : ℕ) = i := (rfl)
+@[simp] lemma typeBSimpleIndex_val (i : Fin n) : (typeBSimpleIndex n i : ℕ) = i := by
+  simp [typeBSimpleIndex]
 
-lemma typeBSimpleIndex_injective : Injective (typeBSimpleIndex n) := fun i j h =>
-  Fin.ext (by simpa using congrArg Fin.val h)
+lemma typeBSimpleIndex_injective : Injective (typeBSimpleIndex n) :=
+  Fin.castLE_injective (typeB_le_two_mul_sq n)
 
 private lemma typeBEnum_typeBSimplePair (i : Fin n) :
     typeBEnum n (typeBSimplePair i) = typeBSimpleIndex n i := by
