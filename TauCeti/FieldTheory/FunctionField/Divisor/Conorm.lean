@@ -125,7 +125,6 @@ theorem coeff_conorm (D : Divisor k F) (P' : Place k' F') :
 
 /-- A place of `F' / k'` lies in the support of `Con D` exactly when the place below it lies in
 the support of `D`: the ramification indices are positive, so nothing cancels. -/
-@[simp]
 theorem mem_support_conorm_iff {D : Divisor k F} {P' : Place k' F'} :
     P' ∈ (conorm k' F' D).support ↔ P'.restrict k F ∈ D.support := by
   have he : Place.ramificationIdx F P' ≠ 0 := (Place.ramificationIdx_pos F P').ne'
