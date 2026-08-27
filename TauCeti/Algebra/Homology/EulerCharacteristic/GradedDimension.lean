@@ -157,8 +157,7 @@ variable {k V}
 @[simp]
 theorem coeff_gradedDimension (h : HasFiniteLaurentSupport k V) (j : ℤ) :
     (gradedDimension k V h).coeff j = Module.finrank k (V j) := by
-  change (Finsupp.ofSupportFinite (fun i => (Module.finrank k (V i) : ℤ)) _) j = _
-  rw [Finsupp.ofSupportFinite_coe]
+  rw [gradedDimension, AddMonoidAlgebra.coeff_ofCoeff, Finsupp.ofSupportFinite_coe]
 
 /-- The support of the graded dimension is exactly the set of degrees with nonzero dimension. -/
 theorem support_gradedDimension (h : HasFiniteLaurentSupport k V) :
@@ -262,6 +261,47 @@ piece indexed by `-j`. -/
 @[simp]
 theorem coeff_targetShiftGradedDimension (h : HasFiniteLaurentSupport k V) (j : ℤ) :
     (targetShiftGradedDimension k V h).coeff j = Module.finrank k (V (-j)) := by
+  simp [targetShiftGradedDimension]
+
+/-- The support of the target-shift graded dimension is the negation of the set of degrees with
+nonzero dimension. -/
+theorem support_targetShiftGradedDimension (h : HasFiniteLaurentSupport k V) :
+    (targetShiftGradedDimension k V h).coeff.support =
+      h.finite_finrankSupport.toFinset.image fun j => -j := by
+  classical
+  ext j
+  simp only [Finsupp.mem_support_iff, coeff_targetShiftGradedDimension, Finset.mem_image,
+    Set.Finite.mem_toFinset, Function.mem_support]
+  norm_cast
+  constructor
+  · intro hj
+    exact ⟨-j, by simpa using hj, by simp⟩
+  · rintro ⟨i, hi, rfl⟩
+    rw [neg_neg]
+    exact hi
+
+/-- Pointwise equality of dimensions determines the target-shift graded dimension. -/
+theorem targetShiftGradedDimension_congr
+    {W : ℤ → Type v'} [∀ j, AddCommGroup (W j)] [∀ j, Module k (W j)]
+    (hV : HasFiniteLaurentSupport k V) (hW : HasFiniteLaurentSupport k W)
+    (hdim : ∀ j, Module.finrank k (V j) = Module.finrank k (W j)) :
+    targetShiftGradedDimension k V hV = targetShiftGradedDimension k W hW := by
+  simp only [targetShiftGradedDimension]
+  rw [gradedDimension_congr hV hW hdim]
+
+/-- Pointwise linear equivalences preserve target-shift graded dimension. -/
+theorem targetShiftGradedDimension_equiv
+    {W : ℤ → Type v'} [∀ j, AddCommGroup (W j)] [∀ j, Module k (W j)]
+    (hV : HasFiniteLaurentSupport k V) (e : ∀ j, V j ≃ₗ[k] W j) :
+    targetShiftGradedDimension k V hV =
+      targetShiftGradedDimension k W (hV.of_equiv e) :=
+  targetShiftGradedDimension_congr hV (hV.of_equiv e) fun j =>
+    LinearEquiv.finrank_eq (e j)
+
+/-- The target-shift graded dimension vanishes exactly when every homogeneous piece is zero. -/
+@[simp]
+theorem targetShiftGradedDimension_eq_zero_iff (h : HasFiniteLaurentSupport k V) :
+    targetShiftGradedDimension k V h = 0 ↔ ∀ j, Subsingleton (V j) := by
   simp [targetShiftGradedDimension]
 
 /-- An explicit support bound computes the target-shift graded dimension as
