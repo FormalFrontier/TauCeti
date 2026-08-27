@@ -237,7 +237,7 @@ variable [Algebra k₀ F₁] [Algebra k₁ F₂] [Algebra k₀ F₂]
 variable [IsScalarTower k₀ k₁ F₁] [IsScalarTower k₁ k₂ F₂]
 variable [IsScalarTower k₀ F₀ F₁] [IsScalarTower k₁ F₁ F₂]
 variable [IsScalarTower k₀ k₂ F₂] [IsScalarTower k₀ F₀ F₂]
-variable [FiniteDimensional F₀ F₁] [FiniteDimensional F₁ F₂] [FiniteDimensional F₀ F₂]
+variable [FiniteDimensional F₀ F₁] [FiniteDimensional F₁ F₂]
 
 variable (k₁ F₁ k₂ F₂)
 
@@ -245,11 +245,14 @@ variable (k₁ F₁ k₂ F₂)
 `F₀ / k₀` to `F₂ / k₂` factors through `F₁ / k₁`.  This is the divisor form of the
 multiplicativity of the ramification indices in a tower.
 
-The finiteness of `F₂ / F₀` is an instance argument although it follows from the other two:
-`FiniteDimensional.trans` is not an instance, and assuming it keeps the statement free of explicit
-instance arguments. -/
+The finiteness of `F₂ / F₀`, which the direct conorm needs, is supplied by `FiniteDimensional.trans`
+rather than assumed: `FiniteDimensional.trans` is not an instance, so it has to be installed by hand
+in the statement. -/
+@[simp]
 theorem conorm_conorm (D : Divisor k₀ F₀) :
+    haveI : FiniteDimensional F₀ F₂ := FiniteDimensional.trans F₀ F₁ F₂
     conorm k₂ F₂ (conorm k₁ F₁ D) = conorm k₂ F₂ D := by
+  have : FiniteDimensional F₀ F₂ := FiniteDimensional.trans F₀ F₁ F₂
   refine WeilDivisor.ext fun P ↦ ?_
   have hres : (P.restrict k₁ F₁).restrict k₀ F₀ = P.restrict k₀ F₀ := Place.restrict_restrict P
   rw [coeff_conorm, coeff_conorm, coeff_conorm, hres,
