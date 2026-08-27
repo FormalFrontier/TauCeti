@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Sl2.Classification
+import TauCeti.Algebra.Lie.Basic
+import TauCeti.Algebra.Lie.Submodule.Atom
 
 /-!
 # The Casimir operator of an `sl₂` triple
@@ -242,6 +244,19 @@ theorem sl2CasimirScalar_ne_zero {K : Type*} [Field K] [CharZero K] {n : ℕ} (h
     exact this
   exact div_ne_zero (mul_ne_zero hn' h₂) (by norm_num)
 
+/-- The Casimir scalar `n (n + 2) / 2` determines the natural number `n`: the scalar is
+`((n + 1)² - 1)/2` and `n + 1` is positive. -/
+theorem sl2CasimirScalar_injective {K : Type*} [Field K] [CharZero K] :
+    Function.Injective fun q : ℕ ↦ (q : K) * ((q : K) + 2) / 2 := by
+  intro p q hpq
+  simp only at hpq
+  rw [div_eq_div_iff two_ne_zero two_ne_zero] at hpq
+  have hfac : ((p : K) - q) * ((p : K) + q + 2) = 0 := by linear_combination hpq / 2
+  refine Nat.cast_injective (R := K)
+    (sub_eq_zero.1 ((mul_eq_zero.1 hfac).resolve_right fun hc ↦ ?_))
+  have hz : ((p + q + 2 : ℕ) : K) = 0 := by push_cast; linear_combination hc
+  exact absurd (Nat.cast_eq_zero.1 hz) (by omega)
+
 end Scalar
 
 /-! ### Injectivity on a nontrivial irreducible -/
@@ -268,15 +283,8 @@ theorem lie_eq_zero_of_hasPrimitiveVectorWith_zero (htop : t.toLieSubalgebra K =
       IsSl2Triple.mem_toLieSubalgebra_iff.1 (htop ▸ LieSubalgebra.mem_top y)
     rw [t.lie_e_f]
     simp [P.lie_e, hfm, P.lie_h]
-  have hne : maxTrivSubmodule K L M ≠ ⊥ := by
-    intro hcon
-    refine P.ne_zero ?_
-    have hmem : m ∈ maxTrivSubmodule K L M := (mem_maxTrivSubmodule K L M m).2 hgen
-    rw [hcon] at hmem
-    simpa using hmem
-  have htop' : maxTrivSubmodule K L M = ⊤ :=
-    (IsSimpleOrder.eq_bot_or_eq_top _).resolve_left hne
-  exact (mem_maxTrivSubmodule K L M v).1 (htop' ▸ LieSubmodule.mem_top v) x
+  exact (isTrivial_of_forall_lie_eq_zero_of_lieSpan_eq_top hgen
+    (lieSpan_singleton_eq_top_of_ne_zero (R := K) (L := L) (M := M) P.ne_zero)).trivial x v
 
 /-- **The Casimir operator of a nontrivial irreducible module is injective.** An irreducible module
 has a primitive vector of some weight `n : ℕ`, on which the Casimir operator acts by

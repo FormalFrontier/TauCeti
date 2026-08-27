@@ -8,6 +8,7 @@ module
 public import TauCeti.CategoryTheory.Exact.Abelian
 public import TauCeti.CategoryTheory.Exact.BaseChange
 public import TauCeti.CategoryTheory.Exact.Functor
+public import TauCeti.CategoryTheory.ObjectProperty
 public import Mathlib.CategoryTheory.ObjectProperty.Extensions
 public import Mathlib.CategoryTheory.ObjectProperty.FiniteProducts
 
@@ -41,7 +42,8 @@ finite projective resolution, be treated as an exact category in its own right.
   closure is closure under binary biproducts, and for the canonical exact structure of an abelian
   category it agrees with Mathlib's
   `CategoryTheory.ObjectProperty.IsClosedUnderExtensions`.
-* `TauCeti.ExactStructure.isConflationExact_ι` and
+* `TauCeti.ExactStructure.isConflationExact_ι`,
+  `TauCeti.ExactStructure.isConflationExact_ιOfLE`, and
   `TauCeti.ExactStructure.reflectsConflations_ι`: the inclusion of the subcategory is
   conflation-exact and reflects conflations.
 
@@ -95,11 +97,8 @@ theorem prop_biprod (hP : E.IsExtensionClosed P) {X Y : C} (hX : P X) (hY : P Y)
 `CategoryTheory.ObjectProperty.ContainsZero` this is exactly the additivity of the full
 subcategory, so no separate closure hypothesis on biproducts is needed. -/
 theorem isClosedUnderBinaryProducts (hP : E.IsExtensionClosed P) [P.IsClosedUnderIsomorphisms] :
-    P.IsClosedUnderBinaryProducts := by
-  refine IsClosedUnderLimitsOfShape.mk' ?_
-  rintro _ ⟨F, hF⟩
-  refine P.prop_of_iso ?_ (hP.prop_biprod (hF ⟨WalkingPair.left⟩) (hF ⟨WalkingPair.right⟩))
-  exact (biprod.isoProd _ _).trans (HasLimit.isoOfNatIso (diagramIsoPair F)).symm
+    P.IsClosedUnderBinaryProducts :=
+  P.isClosedUnderBinaryProducts_of_prop_biprod fun _ _ hX hY => hP.prop_biprod hX hY
 
 end IsExtensionClosed
 
@@ -297,6 +296,16 @@ theorem fullSubcategory_conflation_iff (S : ShortComplex P.FullSubcategory) :
 /-- The inclusion of an extension-closed full subcategory is conflation-exact. -/
 theorem isConflationExact_ι : (E.fullSubcategory P hP).IsConflationExact E P.ι where
   map_conflation hS := hS
+
+/-- The inclusion associated to an implication between two extension-closed object properties is
+conflation-exact for their induced exact structures. -/
+theorem isConflationExact_ιOfLE {Q : ObjectProperty C} [Q.ContainsZero]
+    [Q.IsClosedUnderBinaryProducts] (hQ : E.IsExtensionClosed Q) (h : P ≤ Q) :
+    (E.fullSubcategory P hP).IsConflationExact (E.fullSubcategory Q hQ)
+      (ObjectProperty.ιOfLE h) where
+  map_conflation {S} hS := by
+    rw [fullSubcategory_conflation_iff] at hS ⊢
+    exact hS
 
 /-- The inclusion of an extension-closed full subcategory reflects conflations: a short complex
 of the subcategory whose image is a conflation of `E` is a conflation of the induced structure. -/

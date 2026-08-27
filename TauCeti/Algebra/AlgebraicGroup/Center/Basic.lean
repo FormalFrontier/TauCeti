@@ -34,6 +34,9 @@ ideal, so the represented closed subgroup is canonical.
 * `TauCeti.CommHopfAlgCat.centerGroupScheme`: the center as a closed affine group scheme.
 * `TauCeti.CommHopfAlgCat.mem_centerPointsSubgroup_iff`: its points are exactly the universally
   central points.
+* `TauCeti.CommHopfAlgCat.centerDefiningIdeal_eq_augmentation_iff_forall_isCentralPoint_eq_one`:
+  the center is trivial exactly when every universally central algebra-valued point is the
+  identity.
 * `TauCeti.CommHopfAlgCat.centerDefiningIdeal_le_iff`: the center contains every central closed
   subgroup scheme.
 
@@ -388,6 +391,41 @@ theorem mem_centerPointsSubgroup_iff (H : _root_.CommHopfAlgCat.{v} k)
     exact h x ((mem_centerDefiningIdeal_iff H).2 hx)
   · intro h x hx
     exact RingHom.mem_ker.mp (h ((mem_centerDefiningIdeal_iff H).1 hx))
+
+/-- Triviality of the represented center can be tested on all algebra-valued points. -/
+theorem centerDefiningIdeal_eq_augmentation_iff_forall_isCentralPoint_eq_one
+    (H : _root_.CommHopfAlgCat.{v} k) :
+    centerDefiningIdeal H = HopfIdeal.augmentation k H ↔
+      ∀ (A : CommAlgCat.{v} k)
+        (g : HopfAlgebra.points (R := k) (H := H) A),
+        HopfAlgebra.IsCentralPoint g → g = 1 := by
+  constructor
+  · intro h A g hg
+    apply eq_one_of_mem_quotientPointsSubgroup_augmentation H A
+    rw [← h, mem_centerPointsSubgroup_iff]
+    exact hg
+  · intro h
+    apply le_antisymm
+    · exact HopfIdeal.le_augmentation k H (centerDefiningIdeal H)
+    intro x hx
+    let A : CommAlgCat.{v} k := CommAlgCat.of k (H ⧸ (centerDefiningIdeal H).toIdeal)
+    let q : HopfAlgebra.points (R := k) (H := H) A :=
+      toConv (Ideal.Quotient.mkₐ k (centerDefiningIdeal H).toIdeal)
+    have hqcentral : HopfAlgebra.IsCentralPoint q := by
+      rw [← mem_centerPointsSubgroup_iff]
+      rw [mem_quotientPointsSubgroup_iff]
+      intro y hy
+      exact Ideal.Quotient.eq_zero_iff_mem.mpr (HopfIdeal.mem_toIdeal.mpr hy)
+    have hq : q = 1 := h A q hqcentral
+    apply HopfIdeal.mem_toIdeal.mp
+    apply Ideal.Quotient.eq_zero_iff_mem.mp
+    have hxzero : Coalgebra.counit (R := k) x = 0 :=
+      (HopfIdeal.mem_augmentation k H).mp hx
+    calc
+      Ideal.Quotient.mkₐ k (centerDefiningIdeal H).toIdeal x = q.ofConv x := rfl
+      _ = (1 : HopfAlgebra.points (R := k) (H := H) A).ofConv x :=
+        congrArg (fun f : HopfAlgebra.points (R := k) (H := H) A => f.ofConv x) hq
+      _ = 0 := by simp [AlgHom.convOne_apply, hxzero]
 
 /-- The represented center agrees with the center previously defined directly on the functor of
 points. -/

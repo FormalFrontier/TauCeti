@@ -63,8 +63,7 @@ does spend is the finiteness of the *function-field* extension, which every isog
 (`Isogeny.finiteDimensional_functionField`) — purely inseparable ones, Frobenius among them,
 included. So `finrank_intermediateRing_eq_degree` is
 available exactly where `Isogeny.degree` is, and in particular it is not blocked by the
-separability limitation that `IntermediateRing/Finite.lean` and `IntermediateRing/Dedekind.lean`
-record for their own conclusions.
+separability limitation that `IntermediateRing/Finite.lean` records for its own conclusion.
 
 **Why not `IsIntegralClosure.rank`.** Mathlib states the same comparison for an integral closure,
 but only over a *principal ideal* base (`Mathlib/RingTheory/DedekindDomain/IntegralClosure.lean`),

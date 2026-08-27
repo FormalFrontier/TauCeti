@@ -45,7 +45,9 @@ never lower it.
 release becomes taggable or turns out not to be taggable. It runs on a push to `main` that
 changes `lean-toolchain`, waits for `ci.yml` to conclude on that commit, and then posts only
 if the state has changed since its last message. It reads that state from a marker in the
-message, so it stores nothing, and it never creates a tag.
+message, so it stores nothing, and it never creates a tag. Before comparing that marker,
+the bot repairs the missing `shell` language on its own newest old-style command fence;
+that one-time edit leaves the report body unchanged.
 
 The wait matters: the push lands 40 to 70 minutes before the release is taggable, because
 `ci.yml` coalesces bursts of `main` pushes and then takes 20 to 30 minutes, publishing the

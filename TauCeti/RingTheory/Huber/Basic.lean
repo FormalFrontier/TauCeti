@@ -40,6 +40,8 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
   continue to generate its extension to `A`.
 * `TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`: the images of `Iⁿ` are a neighbourhood
   basis of zero.
+* `TauCeti.Huber.PairOfDefinition.exists_pow_idealOfDefinition_mul_mem`: some `Iⁿ`
+  multiplies a given element into a given open subring.
 * `TauCeti.Huber.IsAdic.comap`: an adic topology transports along a ring equivalence that is an
   inducing map. This is what lets a ring of definition carry an ideal of definition that natively
   lives in a merely equivalent ring, which is what `TauCeti.Huber.PairOfDefinition` needs.
@@ -341,6 +343,18 @@ theorem hasBasis_nhds_zero (P : PairOfDefinition A) :
     P.isOpen_ringOfDefinition.isOpenEmbedding_subtypeVal.map_nhds_eq 0
   rw [← hmap]
   exact P.isAdic_idealOfDefinition.hasBasis_nhds_zero.map _
+
+/-- **A power of the ideal of definition multiplies any element into any open subring.**
+Multiplication by `x` is continuous, so the preimage of `B` is a neighbourhood of `0`, and the
+images of the powers of `I` are a neighbourhood basis there
+(`TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`). -/
+theorem exists_pow_idealOfDefinition_mul_mem [IsTopologicalRing A] (P : PairOfDefinition A)
+    {B : Subring A} (hB : IsOpen (B : Set A)) (x : A) :
+    ∃ n : ℕ, ∀ a ∈ P.idealOfDefinition ^ n, x * (a : A) ∈ B := by
+  have h0 : (0 : A) ∈ (x * ·) ⁻¹' (B : Set A) := by simp
+  obtain ⟨n, -, hn⟩ :=
+    P.hasBasis_nhds_zero.mem_iff.mp ((hB.preimage (continuous_const_mul x)).mem_nhds h0)
+  exact ⟨n, fun a ha ↦ hn ((P.mem_idealImage n).mpr ⟨a, ha, rfl⟩)⟩
 
 /-- **An element of the ideal of definition is topologically nilpotent.** Its powers lie in the
 successive `Iⁿ`, whose images are a neighbourhood basis of zero

@@ -10,9 +10,11 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.VolumeElement
 public import TauCeti.RingTheory.Idempotents.SquareRootOne
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
 public import Mathlib.FieldTheory.IsSepClosed
+public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 
--- Private: the grade involution is used only inside proofs.
+-- Private: the grade involution and the anisotropic orthogonal basis are used only inside proofs.
 import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
+import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 
 /-!
 # Splitting a Clifford algebra along a central odd square root of one
@@ -95,6 +97,9 @@ Clifford algebra of an even-dimensional one is a separate step and is not carrie
   normalizes, so the Clifford algebra is a product of two copies of its even subalgebra. The
   scalar rescaling comes from an existential there, which is why this one is a `Nonempty`
   statement rather than a definition.
+* `CliffordAlgebra.nonempty_algEquiv_even_prod_of_odd_finrank`: the same conclusion for a
+  nondegenerate form on a finite-dimensional space of odd dimension, the orthogonal spanning list
+  being supplied by `QuadraticMap.Nondegenerate.exists_list_pairwise_isOrtho`.
 
 ## Implementation notes
 
@@ -418,5 +423,19 @@ theorem nonempty_algEquiv_even_prod_of_isSepClosed {K V : Type*} [Field K] [IsSe
   obtain ⟨s, hsz⟩ := IsSepClosed.exists_eq_mul_self (k := K) c⁻¹
   exact ⟨equivEvenProdOfOddLength hl hlen hspan
     (s := s) (by rw [← hsz, inv_mul_cancel₀ hcne])⟩
+
+/-- **A nondegenerate odd-dimensional Clifford algebra splits into two copies of its even
+subalgebra**, over a separably closed field of characteristic not two. An orthogonal basis of a
+nondegenerate form has no isotropic member
+(`QuadraticMap.Nondegenerate.exists_list_pairwise_isOrtho`), so its volume element is a central odd
+element with invertible square, which is what
+`CliffordAlgebra.nonempty_algEquiv_even_prod_of_isSepClosed` asks for. -/
+theorem nonempty_algEquiv_even_prod_of_odd_finrank {K V : Type*} [Field K] [IsSepClosed K]
+    [AddCommGroup V] [Module K V] [NeZero (2 : K)] [FiniteDimensional K V]
+    {Q : QuadraticForm K V} (hQ : Q.Nondegenerate) (hV : Odd (Module.finrank K V)) :
+    Nonempty (CliffordAlgebra Q ≃ₐ[K] (↥(even Q) × ↥(even Q))) := by
+  have _ : Invertible (2 : K) := invertibleOfNonzero (NeZero.ne (2 : K))
+  obtain ⟨l, hl, hlen, hspan, hQl⟩ := hQ.exists_list_pairwise_isOrtho
+  exact nonempty_algEquiv_even_prod_of_isSepClosed hl (hlen ▸ hV) hspan hQl
 
 end CliffordAlgebra

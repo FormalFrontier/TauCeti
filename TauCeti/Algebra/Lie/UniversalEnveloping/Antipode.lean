@@ -185,10 +185,7 @@ private theorem opComm_antipodeOp_comp_antipodeOp :
   apply LieHom.ext
   intro x
   simp only [AlgHom.coe_toLieHom, LieHom.comp_apply, AlgHom.comp_apply, antipodeOp_ι,
-    AlgHom.id_apply]
-  -- `AlgHom.opComm` has no application lemma, so expose its value before rewriting.
-  change (antipodeOp R (-_root_.UniversalEnvelopingAlgebra.ι R x)).unop =
-    _root_.UniversalEnvelopingAlgebra.ι R x
+    AlgHom.id_apply, AlgHom.opComm_apply_apply, MulOpposite.unop_op]
   rw [map_neg, antipodeOp_ι]
   simp
 
@@ -200,10 +197,10 @@ private theorem antipodeOp_comp_opComm_antipodeOp :
   intro a
   induction a using MulOpposite.rec' with
   | _ a =>
-      -- `AlgHom.opComm` has no application lemma, so expose its value on `op a`.
-      change antipodeOp R (antipodeOp R a).unop = MulOpposite.op a
-      have h := AlgHom.congr_fun (opComm_antipodeOp_comp_antipodeOp R) a
-      exact congrArg MulOpposite.op h
+      simp only [AlgHom.comp_apply, AlgHom.opComm_apply_apply, MulOpposite.unop_op,
+        AlgHom.id_apply]
+      exact congrArg MulOpposite.op
+        (AlgHom.congr_fun (opComm_antipodeOp_comp_antipodeOp R) a)
 
 /-- A universal enveloping algebra is canonically equivalent to its opposite algebra by negating
 the Lie generators. -/
@@ -242,19 +239,15 @@ theorem antipodeEquiv_symm_toAlgHom :
 theorem antipodeEquiv_symm_apply
     (a : (_root_.UniversalEnvelopingAlgebra R L)ᵐᵒᵖ) :
     (antipodeEquiv (L := L) R).symm a = antipode R a.unop := by
-  rw [← AlgEquiv.toAlgHom_apply, antipodeEquiv_symm_toAlgHom, antipode_apply]
-  -- `AlgHom.opComm` has no application lemma, so expose its value before closing.
-  change (antipodeOp R a.unop).unop = (antipodeOp R a.unop).unop
-  rfl
+  rw [← AlgEquiv.toAlgHom_apply, antipodeEquiv_symm_toAlgHom, antipode_apply,
+    AlgHom.opComm_apply_apply]
 
 /-- The antipode is involutive. -/
 @[simp]
 theorem antipode_antipode (a : _root_.UniversalEnvelopingAlgebra R L) :
     antipode R (antipode R a) = a := by
-  have h := AlgHom.congr_fun (opComm_antipodeOp_comp_antipodeOp R) a
-  -- `AlgHom.opComm` has no application lemma, so expose the composite's underlying function.
-  change (antipodeOp R (antipodeOp R a).unop).unop = a
-  exact h
+  rw [antipode_apply, antipode_apply]
+  exact AlgHom.congr_fun (opComm_antipodeOp_comp_antipodeOp R) a
 
 /-- The preimage of a subring under the antipode.
 

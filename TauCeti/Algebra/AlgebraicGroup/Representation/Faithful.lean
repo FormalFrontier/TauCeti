@@ -40,6 +40,8 @@ equivalent to generation of the coordinate ring by matrix coefficients and their
 * `TauCeti.Comodule.IsFaithful`: the basis-independent predicate for a faithful comodule.
 * `TauCeti.Comodule.isFaithful_iff_matrixCoefficientSubalgebra_sup_antipode_eq_top`: the
   matrix-coefficient criterion for faithfulness.
+* `TauCeti.Comodule.isFaithful_corestrict_of_surjective`: corestriction along a surjective
+  bialgebra morphism preserves faithfulness.
 * `TauCeti.Comodule.pointsAction_injective_of_isFaithful`: a faithful comodule separates
   algebra-valued points.
 * `TauCeti.Comodule.isClosedImmersion_coordinateGroupSchemeHom_iff_of_bases`: faithfulness is
@@ -220,6 +222,14 @@ def IsFaithful : Prop :=
   ∃ (d : ℕ) (b : Basis (Fin d) k V),
     IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left
 
+/-- Faithfulness restated as the existence of a finite basis whose representation morphism is a
+closed immersion. -/
+theorem isFaithful_def :
+    IsFaithful (k := k) (H := H) (V := V) ↔
+      ∃ (d : ℕ) (b : Basis (Fin d) k V),
+        IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left :=
+  Iff.rfl
+
 /-- **Faithfulness is generation by matrix coefficients.** The affine group-scheme morphism
 associated to a finite free comodule is a closed immersion if and only if the coefficients of
 the comodule together with their antipode images generate the coordinate Hopf algebra. -/
@@ -255,6 +265,24 @@ theorem isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom
     exact (isClosedImmersion_coordinateGroupSchemeHom_iff_of_bases c b).mp hc
   · intro hb
     exact ⟨d, b, hb⟩
+
+/-- Corestricting a faithful finite free comodule along a surjective bialgebra morphism gives a
+faithful comodule over the codomain. Geometrically, restricting a faithful representation to a
+closed subgroup remains faithful. -/
+theorem isFaithful_corestrict_of_surjective
+    {K : Type u} [CommRing K] [HopfAlgebra k K]
+    (f : H →ₐc[k] K) (hf : Function.Surjective f)
+    (hV : IsFaithful (k := k) (H := H) (V := V)) :
+    letI : Comodule k K V := Corestrict f.toCoalgHom
+    IsFaithful (k := k) (H := K) (V := V) := by
+  rcases isFaithful_def.mp hV with ⟨d, b, hb⟩
+  let _ : Comodule k K V := Corestrict f.toCoalgHom
+  have hsurj : Function.Surjective (coordinateBialgHom (H := H) b) := by
+    rw [← isClosedImmersion_coordinateGroupSchemeHom_iff]
+    exact hb
+  rw [isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b),
+    isClosedImmersion_coordinateGroupSchemeHom_iff, coordinateBialgHom_corestrict f b]
+  exact hf.comp hsurj
 
 /-- A finite free comodule is faithful exactly when its matrix coefficients together with their
 antipode images generate the coordinate Hopf algebra. -/

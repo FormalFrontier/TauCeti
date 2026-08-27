@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.Charpoly.Coeff
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Determinant
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
 
 /-!
@@ -28,6 +29,8 @@ and surjectivity without choosing a presentation of derivations on the determina
 * `TauCeti.GeneralLinear.trace_tangentMatrix`: the derivative of the determinant is matrix trace.
 * `TauCeti.GeneralLinear.tangentLinearEquivMatrix`: the tangent space of `GLₙ` is linearly
   equivalent to `n × n` matrices.
+* `TauCeti.GeneralLinear.cotangentDualMatrixEquiv`: the cotangent-dual Lie algebra of `GLₙ`
+  identified with matrices.
 * `TauCeti.GeneralLinear.tangentLieEquivMatrix`: the same equivalence as an equivalence of Lie
   algebras, carrying the tangent bracket to the matrix commutator.
 
@@ -53,6 +56,7 @@ universe u w
 
 noncomputable section
 
+/-- The first-order matrix `1 + εX` over the dual numbers. -/
 private noncomputable def dualMatrix {C : Type*} [CommRing C] {n : ℕ}
     (X : Matrix (Fin n) (Fin n) C) : Matrix (Fin n) (Fin n) (DualNumber C) :=
   fun i j ↦ inl ((1 : Matrix (Fin n) (Fin n) C) i j) + inr (X i j)
@@ -77,6 +81,7 @@ private theorem dualMatrix_neg_mul {C : Type*} [CommRing C] {n : ℕ}
     (X : Matrix (Fin n) (Fin n) C) : dualMatrix (-X) * dualMatrix X = 1 := by
   simpa only [neg_neg] using dualMatrix_mul_neg (-X)
 
+/-- The invertible dual-number matrix with value `1 + εX` and inverse `1 - εX`. -/
 private noncomputable def dualMatrixGeneralLinear {C : Type*} [CommRing C] {n : ℕ}
     (X : Matrix (Fin n) (Fin n) C) : Matrix.GeneralLinearGroup (Fin n) (DualNumber C) where
   val := dualMatrix X
@@ -94,6 +99,7 @@ private theorem dualMatrixGeneralLinear_apply {C : Type*} [CommRing C] {n : ℕ}
 variable {R : Type u} [CommRing R] {B : Type w} [CommRing B] [Algebra R B]
 variable (n : ℕ)
 
+/-- A local abbreviation for the coordinate Hopf algebra of `GLₙ`. -/
 local notation "H" => coordinateHopfAlgebra
 
 /-- The matrix of a tangent vector to `GLₙ`, obtained by evaluating the derivation on the
@@ -354,6 +360,54 @@ theorem tangentLieEquivMatrix_apply (d : Derivation R (H (R := R) n)
   -- theorem itself.
   change tangentMatrix n d = tangentMatrix n d
   rfl
+
+variable {k : Type u} [Field k] {n : ℕ}
+
+/-- The cotangent-dual Lie algebra of `GL_n` identified linearly with `n × n` matrices. -/
+def cotangentDualMatrixEquiv :
+    Module.Dual k (Bialgebra.CotangentSpace k (coordinateHopfAlgebra k n)) ≃ₗ[k]
+      Matrix (Fin n) (Fin n) k :=
+  Derivation.cotangentLinearEquiv (R := k) (A := coordinateHopfAlgebra k n) (B := k) ≪≫ₗ
+    tangentLinearEquivMatrix n
+
+/-- Scalar extension of a cotangent-dual tangent vector applies the scalar map entrywise to its
+matrix.  This is the compatibility that lets computations on coefficient-valued derivations be
+read back in the fixed cotangent-dual Lie algebra. -/
+theorem tangentMatrix_tangentScalarExtensionEquiv_one_tmul
+    {A : Type u} [CommRing A] [Algebra k A]
+    (x : Module.Dual k (Bialgebra.CotangentSpace k (coordinateHopfAlgebra k n))) :
+    tangentMatrix n
+        (Derivation.tangentScalarExtensionEquiv
+          (R := k) (A := coordinateHopfAlgebra k n) (B := A) (1 ⊗ₜ[k] x)) =
+      (cotangentDualMatrixEquiv x).map (algebraMap k A) := by
+  ext i j
+  rw [tangentMatrix_apply, Derivation.tangentScalarExtensionEquiv_tmul_apply,
+    Matrix.map_apply]
+  simp only [one_mul, cotangentDualMatrixEquiv, LinearEquiv.trans_apply,
+    tangentLinearEquivMatrix_apply, tangentMatrix_apply,
+    Derivation.cotangentLinearEquiv_apply_apply]
+  let r := x (Bialgebra.cotangentMap k (coordinateHopfAlgebra k n)
+    (coordinateHopfAlgebraAlgEquiv k n
+      (coordinateRingMap k n (MvPolynomial.X (i, j)))))
+  trans algebraMap k A r
+  · exact Bialgebra.CounitAlgebra.algEquivSelf_apply
+      (R := k) (A := coordinateHopfAlgebra k n) (B := A) _
+  · exact congrArg (algebraMap k A)
+      (Bialgebra.CounitAlgebra.algEquivSelf_apply
+        (R := k) (A := coordinateHopfAlgebra k n) (B := k) _).symm
+
+/-- The matrix form of scalar extension on a pure tensor. -/
+theorem tangentMatrix_tangentScalarExtensionEquiv_tmul
+    {A : Type u} [CommRing A] [Algebra k A] (a : A)
+    (x : Module.Dual k (Bialgebra.CotangentSpace k (coordinateHopfAlgebra k n))) :
+    tangentMatrix n
+        (Derivation.tangentScalarExtensionEquiv
+          (R := k) (A := coordinateHopfAlgebra k n) (B := A) (a ⊗ₜ[k] x)) =
+      a • (cotangentDualMatrixEquiv x).map (algebraMap k A) := by
+  have htmul : a ⊗ₜ[k] x = a • (1 ⊗ₜ[k] x) := by
+    rw [TensorProduct.smul_tmul', smul_eq_mul, mul_one]
+  rw [htmul]
+  rw [map_smul, map_smul, tangentMatrix_tangentScalarExtensionEquiv_one_tmul]
 
 end
 

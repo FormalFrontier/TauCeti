@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.MonoidAlgebra.Conjugation
-public import TauCeti.RepresentationTheory.Induction.Clifford.Orbit
+public import TauCeti.RepresentationTheory.Induction.Clifford.Orbit.Basic
 public import TauCeti.RingTheory.Semisimple.Multiplicity
 
 /-!
@@ -14,10 +14,10 @@ public import TauCeti.RingTheory.Semisimple.Multiplicity
 
 Let `N` be a normal subgroup of `G` and let `ρ` be an irreducible representation of `G` on `V`.
 Restricting `ρ` to `N` breaks it into irreducible constituents, and
-`TauCeti/RepresentationTheory/Induction/Clifford/Orbit.lean` identifies *which* constituents occur:
-they are the translates `TauCeti.Representation.conjSubrep ρ g σ` of any one of them, so they form a
-single `G`-orbit.  This file supplies the other half of Clifford's theorem: they all have hom spaces
-of **one common dimension**, which over a splitting field is their common multiplicity.
+`TauCeti/RepresentationTheory/Induction/Clifford/Orbit/Basic.lean` identifies *which* constituents
+occur: they are the translates `TauCeti.Representation.conjSubrep ρ g σ` of any one of them, so they
+form a single `G`-orbit.  This file supplies the other half of Clifford's theorem: they all have hom
+spaces of **one common dimension**, which over a splitting field is their common multiplicity.
 
 The quantity compared throughout is `Module.finrank k (S →ₗ[k[N]] M)`.  It is the classical
 multiplicity of a simple `k[N]`-module `S` in `M` only when `k` splits `S`: in general it is the
@@ -83,15 +83,17 @@ there it is `TauCeti.Representation.conjSubrepEquiv` from `Clifford/Basic.lean` 
 
 The `k[N]`-module carrying the restriction is `Representation.asModule (ρ.comp N.subtype)`, a type
 synonym for `V`, and its constituents are presented as `Subrepresentation.asSubmodule` of atoms of
-the lattice of `N`-subrepresentations, exactly as in `Orbit.lean`; the two presentations are matched
-by `Subrepresentation.isSimpleModule_asSubmodule_iff`.  Because the synonym is not syntactically
-`V`, translation is packaged as the bundled `asModuleConjEquiv` and not used as the bare `ρ g`: that
-is what puts the `k[N]`-scalar actions in the statements below on the type where they are found.
+the lattice of `N`-subrepresentations, exactly as in `Orbit/Basic.lean`; the two presentations are
+matched by `Subrepresentation.isSimpleModule_asSubmodule_iff`.  Because the synonym is not
+syntactically `V`, translation is packaged as the bundled `asModuleConjEquiv` and not used as the
+bare `ρ g`: that is what puts the `k[N]`-scalar actions in the statements below on the type where
+they are found.
 
 The declarations here extend Mathlib's `Representation` namespace, so they are declared into it
 directly rather than into `TauCeti.Representation`, which would lose dot notation and be rejected by
 `scripts/lint-dot-notation.py`.  The transport itself asks only for a commutative base semiring and
-an additive commutative monoid; a field enters only where `Orbit.lean`'s single-orbit theorem does.
+an additive commutative monoid; a field enters only where the single-orbit theorem of
+`Orbit/Basic.lean` does.
 
 ## References
 

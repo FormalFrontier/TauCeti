@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Group.MulOpposite
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.Quotient.Covering
 public import Mathlib.Topology.Homotopy.Lifting
 
@@ -50,6 +51,8 @@ identifies `π₁(X, x)` with that fibre via monodromy.
   inverse equivalence by the monodromy translate of the chosen lift.
 * `TauCeti.Deck.IsRegular.fundamentalGroupEquiv_eq_one_iff`: `γ` maps to the
   identity exactly when its monodromy fixes `e`.
+* `TauCeti.Deck.IsRegular.fundamentalGroupDeckEquiv`: when the deck group is commutative,
+  the opposite drops out and the fundamental group of the base is the deck group itself.
 
 ## References
 
@@ -121,6 +124,67 @@ lemma IsRegular.fundamentalGroupEquiv_eq_one_iff [SimplyConnectedSpace E]
     (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x}) (γ : FundamentalGroup X x) :
     hreg.fundamentalGroupEquiv hp e γ = 1 ↔ hp.monodromy γ e = e :=
   (hreg.isQuotientCoveringMap hp).fundamentalGroupToMulOpposite_eq_one_iff
+
+/-- When the deck group of a regular covering map with simply connected total space is
+**commutative**, the fundamental group of the base is the deck group itself: the opposite in
+`IsRegular.fundamentalGroupEquiv` disappears because multiplication in the deck group
+commutes. This is the form in which the comparison computes fundamental groups from deck
+groups, e.g. `π₁(S¹) ≅ ℤ` (`TauCeti.AddCircle.fundamentalGroupMulEquiv`) and
+`π₁(RPⁿ) ≅ ℤˣ` (`TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv`). -/
+noncomputable def IsRegular.fundamentalGroupDeckEquiv [SimplyConnectedSpace E]
+    (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
+    (hcomm : ∀ a b : Deck p, a * b = b * a) :
+    FundamentalGroup X x ≃* Deck p :=
+  (hreg.fundamentalGroupEquiv hp e).trans (MulOpposite.unopMulEquivOfComm hcomm)
+
+/-- The deck transformation assigned to a loop class `γ`, in the commutative-deck-group form
+of the comparison: it is the unopposite of `IsRegular.fundamentalGroupEquiv γ`. -/
+@[simp]
+lemma IsRegular.fundamentalGroupDeckEquiv_apply [SimplyConnectedSpace E]
+    (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
+    (hcomm : ∀ a b : Deck p, a * b = b * a) (γ : FundamentalGroup X x) :
+    hreg.fundamentalGroupDeckEquiv hp e hcomm γ =
+      (hreg.fundamentalGroupEquiv hp e γ).unop := by
+  simp [fundamentalGroupDeckEquiv]
+
+/-- A loop class corresponds to the deck transformation `d`, in the commutative-deck-group
+form of the comparison, exactly when `d` moves the chosen lift `e` to the monodromy translate
+of `e` along `γ`. -/
+lemma IsRegular.fundamentalGroupDeckEquiv_apply_eq_iff [SimplyConnectedSpace E]
+    (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
+    (hcomm : ∀ a b : Deck p, a * b = b * a)
+    (γ : FundamentalGroup X x) (d : Deck p) :
+    hreg.fundamentalGroupDeckEquiv hp e hcomm γ = d ↔ d • (e : E) = hp.monodromy γ e := by
+  constructor
+  · intro h
+    subst h
+    have key := (hreg.fundamentalGroupEquiv_apply_eq_iff hp e γ
+      (hreg.fundamentalGroupEquiv hp e γ)).1 rfl
+    rw [fundamentalGroupDeckEquiv_apply]
+    exact key
+  · intro h
+    rw [fundamentalGroupDeckEquiv_apply]
+    exact congrArg MulOpposite.unop
+      ((hreg.fundamentalGroupEquiv_apply_eq_iff hp e γ (MulOpposite.op d)).2 h)
+
+/-- The inverse equivalence sends a deck transformation to the unique loop class whose
+monodromy moves the chosen lift by that transformation. -/
+lemma IsRegular.fundamentalGroupDeckEquiv_symm_monodromy [SimplyConnectedSpace E]
+    (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
+    (hcomm : ∀ a b : Deck p, a * b = b * a) (d : Deck p) :
+    (hp.monodromy ((hreg.fundamentalGroupDeckEquiv hp e hcomm).symm d) e : E) = d • (e : E) :=
+  ((hreg.fundamentalGroupDeckEquiv_apply_eq_iff hp e hcomm
+    ((hreg.fundamentalGroupDeckEquiv hp e hcomm).symm d) d).1
+      ((hreg.fundamentalGroupDeckEquiv hp e hcomm).apply_symm_apply d)).symm
+
+/-- A loop class maps to the identity deck transformation exactly when its monodromy fixes
+the chosen basepoint lift `e`. -/
+lemma IsRegular.fundamentalGroupDeckEquiv_eq_one_iff [SimplyConnectedSpace E]
+    (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
+    (hcomm : ∀ a b : Deck p, a * b = b * a) (γ : FundamentalGroup X x) :
+    hreg.fundamentalGroupDeckEquiv hp e hcomm γ = 1 ↔ hp.monodromy γ e = e := by
+  rw [fundamentalGroupDeckEquiv_apply_eq_iff, one_smul]
+  exact ⟨fun h => (Subtype.ext h).symm, fun h => (congrArg Subtype.val h).symm⟩
 
 end Deck
 

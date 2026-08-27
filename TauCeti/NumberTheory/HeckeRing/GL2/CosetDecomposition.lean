@@ -51,6 +51,8 @@ these representatives are in `GL2/UpperTriangularDelta0.lean`.
   `!![1, b; 0, p]`.
 * `HeckeRing.GL2.upperTriRep_apply_one_zero`: the representatives are upper triangular — the
   hypothesis mathlib's `IsBoundedAtImInfty.slash` asks for.
+* `HeckeRing.GL2.upperTriRep_mul_upperTriRep`: the families at indices `n` and `m` multiply into
+  the family at index `n · m`, along `finProdFinEquiv`.
 * `HeckeRing.GL2.det_upperTriRep_pos`: they have determinant `p > 0`, which is what lets scalars
   pass through a slash by them without the `σ` twist.
 
@@ -155,12 +157,37 @@ noncomputable def upperTriRep (b : Fin p) : GL (Fin 2) ℚ :=
   · simp [upperTriRep, ha]
   · simp [upperTriRep, ha]
 
+/-- The unique upper-triangular representative at index one is the identity matrix. -/
+@[simp] lemma upperTriRep_one (b : Fin 1) : upperTriRep 1 b = 1 := by
+  apply Units.ext
+  rw [coe_upperTriRep]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
 /-- **The representatives are upper triangular** — the hypothesis mathlib's
 `IsBoundedAtImInfty.slash` asks for. At `n = 2` this is the `(1, 0)` entry of
 `upperTriGL_apply_eq_zero_of_lt`. -/
 @[simp] lemma upperTriRep_apply_one_zero (b : Fin p) :
     (↑(upperTriRep p b) : Matrix (Fin 2) (Fin 2) ℚ) 1 0 = 0 :=
   upperTriGL_apply_eq_zero_of_lt (fun i ↦ by fin_cases i <;> simp [b.pos]) _ (by decide)
+
+/-- **The upper-triangular representatives compose.** The product of the representative at
+offset `b'` of index `n` with the one at offset `b` of index `m` is again a representative,
+
+`!![1, b'; 0, n] * !![1, b; 0, m] = !![1, b + m·b'; 0, n·m]`,
+
+at index `n · m` and at the offset `finProdFinEquiv (b', b)`, which is exactly `b + m · b'`.
+
+Since `finProdFinEquiv` is a bijection, the `n · m` representatives are enumerated once each by
+the pairs, which is what makes the slash sums over these families multiply. -/
+lemma upperTriRep_mul_upperTriRep {n m : ℕ} (b' : Fin n) (b : Fin m) :
+    upperTriRep n b' * upperTriRep m b = upperTriRep (n * m) (finProdFinEquiv (b', b)) := by
+  refine Units.ext ?_
+  rw [Units.val_mul, coe_upperTriRep, coe_upperTriRep, coe_upperTriRep, Matrix.mul_fin_two]
+  have hval : ((finProdFinEquiv (b', b) : Fin (n * m)) : ℕ) = (b : ℕ) + m * (b' : ℕ) :=
+    finProdFinEquiv_apply_val (b', b)
+  rw [hval]
+  congrm !![?_, ?_; ?_, ?_] <;> push_cast <;> ring1
 
 /-- The representatives have positive determinant: `det !![1, b; 0, p] = p > 0`. -/
 lemma det_upperTriRep_pos (b : Fin p) :

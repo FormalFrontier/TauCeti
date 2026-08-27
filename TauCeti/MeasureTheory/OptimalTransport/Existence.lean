@@ -7,7 +7,7 @@ module
 
 public import TauCeti.MeasureTheory.Measure.LowerSemicontinuousLintegral
 public import TauCeti.MeasureTheory.OptimalTransport.Compactness
-public import TauCeti.MeasureTheory.OptimalTransport.Cost
+public import TauCeti.MeasureTheory.OptimalTransport.Cost.Basic
 -- Proof-only: continuity of `ENNReal.rpow` in its base, for the `p`-Wasserstein cost.
 import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 

@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.NumberField.PrimeIdeal
 public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.Basic
 public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
+import Mathlib.NumberTheory.NumberField.ClassNumber
 
 /-!
 # The class of a ramified prime is 2-torsion
@@ -25,6 +26,10 @@ explicit ambiguous 2-torsion classes. Determining all of `Cl(𝓞 K)[2]` (the am
 2-rank theorem of genus theory, which for real fields carries a unit-index correction relating these
 strongly ambiguous classes to the ambiguous ones) is left to later work.
 
+A ramified prime also *exhausts* the class group when the Minkowski bound is small enough: if that
+bound is below `3` and `2` is ramified, then every ideal class is trivial or the class of the prime
+above `2`, so `Cl(𝓞 K)` has at most two elements.
+
 See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, for the
 classical genus theory this result underlies.
 
@@ -33,6 +38,9 @@ classical genus theory this result underlies.
 * `NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified prime
   is 2-torsion.
 * `NumberField.NarrowClassGroup.mk0_sq_eq_one_of_mem_ramifiedPrimes`: so is its narrow class.
+* `TauCeti.NumberField.class_eq_one_or_eq_classGroupMk0_primeAboveTwo_of_minkowskiBound_lt_three`:
+  with Minkowski bound below `3` and `2` ramified, every ideal class is trivial or the class of a
+  prime above `2`.
 -/
 
 public section
@@ -84,3 +92,42 @@ theorem NarrowClassGroup.mk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K
   simpa using isTotallyPositive_intCast (K := K) (n := (p : ℤ)) (by exact_mod_cast hprime.pos)
 
 end NumberField
+
+namespace TauCeti.NumberField
+
+open NumberField
+
+variable {K : Type*} [Field K] [NumberField K]
+
+/-- With Minkowski bound below `3` and `2` ramified in a quadratic field, every ideal class is
+trivial or the class of a prime `P` above `2`. -/
+theorem class_eq_one_or_eq_classGroupMk0_primeAboveTwo_of_minkowskiBound_lt_three
+    (hfin : finrank ℚ K = 2) (hram : 2 ∈ ramifiedPrimes K)
+    (hM : (4 / Real.pi) ^ InfinitePlace.nrComplexPlaces K *
+        ((finrank ℚ K).factorial / (finrank ℚ K) ^ (finrank ℚ K) *
+          Real.sqrt |(NumberField.discr K : ℝ)|) < 3)
+    (P : Ideal (𝓞 K)) [P.IsPrime] [P.LiesOver (span {(2 : ℤ)})]
+    (C : ClassGroup (𝓞 K)) :
+    C = 1 ∨ C = ClassGroup.mk0 ⟨P, mem_nonZeroDivisors_of_prime_of_liesOver Nat.prime_two P⟩ := by
+  classical
+  -- Minkowski gives a representative of norm at most `2`; norm `1` is principal and norm `2`
+  -- must be the ramified prime.
+  obtain ⟨I, hIC, hIle⟩ := NumberField.exists_ideal_in_class_of_norm_le C
+  have hIlt : (I.1.absNorm : ℝ) < 3 := hIle.trans_lt hM
+  have hIleTwo : I.1.absNorm ≤ 2 := by
+    exact_mod_cast (Nat.lt_succ_iff.mp (by exact_mod_cast hIlt))
+  have hIpos : 0 < I.1.absNorm := absNorm_pos_of_nonZeroDivisors I
+  rcases (by omega : I.1.absNorm = 1 ∨ I.1.absNorm = 2) with hnorm | hnorm
+  · left
+    rw [← hIC]
+    exact (ClassGroup.mk0_eq_one_iff I.2).mpr <| by
+      rw [Ideal.absNorm_eq_one_iff.mp hnorm]
+      exact top_isPrincipal
+  · right
+    rw [← hIC]
+    have hIP : I.1 = P :=
+      eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram P I.1 hnorm
+    apply congrArg ClassGroup.mk0
+    exact Subtype.ext hIP
+
+end TauCeti.NumberField

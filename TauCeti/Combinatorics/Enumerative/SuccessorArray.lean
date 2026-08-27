@@ -27,6 +27,9 @@ The reconstruction is total: entries after the last genuine visit use the junk v
 ## Main results
 
 * `TauCeti.visitCount_monotone`: visit counts are monotone in the horizon.
+* `TauCeti.visitCount_add`: a visit count splits at any intermediate index.
+* `TauCeti.visitTime_eq_of_eqOn`: a visit time is read off any sequence agreeing with the original
+  up to that time.
 * `TauCeti.successorArray_visitCount`: the defining step relation of the successor array.
 * `TauCeti.visitTime_eq_iff`: the fibres of the visit times, including the junk-value branch.
 * `TauCeti.apply_visitTime_of_infinite` and `TauCeti.visitTime_strictMono_of_infinite`: visit
@@ -175,11 +178,36 @@ theorem visitCount_succ_of_ne (h : x n ≠ a) : visitCount x a (n + 1) = visitCo
   classical
   rw [visitCount_succ, ite_eq_right h]
 
+/-- **Splitting a visit count at an intermediate index.** The visits before `m + n` are the visits
+before `m` together with the visits the sequence shifted by `m` makes before `n`. -/
+theorem visitCount_add (x : ℕ → α) (a : α) (m n : ℕ) :
+    visitCount x a (m + n) = visitCount x a m + visitCount (fun i => x (m + i)) a n := by
+  classical
+  simpa only [visitCount_eq_count] using Nat.count_add (p := fun i => x i = a) m n
+
+/-- A stretch of a sequence that avoids `a` contributes nothing to its visit count. -/
+theorem visitCount_eq_zero_of_forall_ne (h : ∀ i < n, x i ≠ a) : visitCount x a n = 0 := by
+  classical
+  simpa only [visitCount_eq_count] using Nat.count_iff_forall_not.2 h
+
 /-- A time at which `x` has value `a` is the visit indexed by the number of earlier visits. -/
 @[simp]
 theorem visitTime_visitCount (h : x n = a) : visitTime x a (visitCount x a n) = n := by
   classical
   rw [visitTime, visitCount_eq_count, Nat.nth_count h]
+
+/-- **A visit time is read off any sequence agreeing with the original up to that time.** If `x`
+and `y` agree through index `n`, and `n` is a visit of `y` to `a` preceded by exactly `k` earlier
+visits, then `n` is the `k`-th visit of `x` as well.
+
+This is what transfers the visit structure of a reference path to a process known only to spell
+that path out over a finite horizon. -/
+theorem visitTime_eq_of_eqOn (hxy : ∀ i ≤ n, x i = y i) (hy : y n = a)
+    (hcount : visitCount y a n = k) : visitTime x a k = n := by
+  have hxc : visitCount x a n = k := by
+    rw [visitCount_congr fun i hi => hxy i hi.le, hcount]
+  rw [← hxc]
+  exact visitTime_visitCount ((hxy n le_rfl).trans hy)
 
 /-- The fibres of `visitTime`, including the junk-value branch. -/
 theorem visitTime_eq_iff :

@@ -47,23 +47,17 @@ variable [AddCommMonoid E] [Module R E] [Coalgebra R E]
 
 namespace Subcoalgebra
 
-private def mapSubtype (f : C →ₗc[R] D) (A : Subcoalgebra R C) :
-    A.carrier →ₗ[R] A.carrier.map f.toLinearMap where
-  toFun a := ⟨f a, Submodule.mem_map_of_mem a.2⟩
-  map_add' a b := Subtype.ext (map_add f.toLinearMap (a : C) (b : C))
-  map_smul' r a := Subtype.ext (map_smul f.toLinearMap r (a : C))
-
 private theorem image_tensorSquare_apply (f : C →ₗc[R] D) (A : Subcoalgebra R C)
     (t : A.carrier ⊗[R] A.carrier) :
     TensorProduct.map (A.carrier.map f.toLinearMap).subtype
         (A.carrier.map f.toLinearMap).subtype
-        (TensorProduct.map (mapSubtype f A) (mapSubtype f A) t) =
+        (TensorProduct.map (f.toLinearMap.submoduleMap A.carrier)
+          (f.toLinearMap.submoduleMap A.carrier) t) =
       TensorProduct.map f.toLinearMap f.toLinearMap
         (TensorProduct.map A.carrier.subtype A.carrier.subtype t) := by
-  induction t with
-  | zero => simp only [map_zero]
-  | tmul a b => rfl
-  | add x y hx hy => simp only [map_add, hx, hy]
+  have h : (A.carrier.map f.toLinearMap).subtype ∘ₗ f.toLinearMap.submoduleMap A.carrier =
+      f.toLinearMap ∘ₗ A.carrier.subtype := by ext a; simp
+  rw [TensorProduct.map_map, TensorProduct.map_map, h]
 
 /-- The image of a subcoalgebra under a coalgebra morphism. -/
 @[expose] def map (f : C →ₗc[R] D) (A : Subcoalgebra R C) : Subcoalgebra R D where
@@ -72,7 +66,8 @@ private theorem image_tensorSquare_apply (f : C →ₗc[R] D) (A : Subcoalgebra 
     rintro d hd
     rcases Submodule.mem_map.mp hd with ⟨c, hc, rfl⟩
     rcases A.comul_mem hc with ⟨t, ht⟩
-    refine ⟨TensorProduct.map (mapSubtype f A) (mapSubtype f A) t, ?_⟩
+    refine ⟨TensorProduct.map (f.toLinearMap.submoduleMap A.carrier)
+      (f.toLinearMap.submoduleMap A.carrier) t, ?_⟩
     rw [image_tensorSquare_apply, ht]
     exact CoalgHomClass.map_comp_comul_apply f c
 

@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import Mathlib.Topology.Category.TopCommRingCat
+public import Mathlib.Algebra.Ring.Subring.Basic
 public import Mathlib.CategoryTheory.Limits.Shapes.Products
 public import Mathlib.CategoryTheory.Limits.Shapes.Equalizers
 

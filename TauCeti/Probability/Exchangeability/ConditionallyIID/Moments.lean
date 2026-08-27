@@ -50,8 +50,10 @@ exactly the stated rate; at a probability measure that reads as uncorrelated wit
 `∫ q - ∫ q²`.
 
 The identities are stated in `ℝ≥0∞` first, where the disintegration lives, and converted to Bochner
-integrals by the private machinery below; the coordinates are only assumed a.e. measurable, as
-elsewhere in the measure-theoretic exchangeability API.
+integrals by the private machinery below.  Coordinatewise a.e. measurability is not assumed: it is
+supplied by the `ConditionallyIIDWith` witness through `ConditionallyIIDWith.aemeasurable`, and
+a.e. measurability is all that is ever needed, as elsewhere in the measure-theoretic
+exchangeability API.
 
 These estimates are consumed by `ConditionallyIID.Unique` for a.e. uniqueness of the directing
 measure.
@@ -89,7 +91,6 @@ of the conditional predicate is that an arbitrary weight in the directing measur
 along. -/
 theorem ConditionallyIIDWith.lintegral_mul_indicator_iInter
     (h : ConditionallyIIDWith μ X ν) {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k)
-    (hX : ∀ i, AEMeasurable (X (k i)) μ)
     {g : ProbabilityMeasure α → ℝ≥0∞} (hg : Measurable g) (hB : MeasurableSet B) :
     ∫⁻ ω, g (ν ω) * (⋂ i : Fin m, X (k i) ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, g (ν ω) * (ν ω : Measure α) B ^ m ∂μ := by
@@ -101,7 +102,7 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_iInter
   have hF : Measurable F :=
     (hg.comp measurable_fst).mul ((measurable_one.indicator hR).comp measurable_snd)
   have hΦ : AEMeasurable (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) μ :=
-    hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ hX)
+    hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => h.aemeasurable (k i))
   have hκ : AEMeasurable (fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν
@@ -139,18 +140,17 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_iInter
 
 /-- One-coordinate form of the weighted block identity. -/
 theorem ConditionallyIIDWith.lintegral_mul_indicator_single
-    (h : ConditionallyIIDWith μ X ν) (i : ℕ) (hXi : AEMeasurable (X i) μ)
+    (h : ConditionallyIIDWith μ X ν) (i : ℕ)
     {g : ProbabilityMeasure α → ℝ≥0∞} (hg : Measurable g) (hB : MeasurableSet B) :
     ∫⁻ ω, g (ν ω) * (X i ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, g (ν ω) * (ν ω : Measure α) B ∂μ := by
   have hinj : Function.Injective (fun _ : Fin 1 => i) := fun a b _ => Subsingleton.elim a b
   simpa [Set.iInter_const] using
-    h.lintegral_mul_indicator_iInter hinj (fun _ => hXi) hg hB
+    h.lintegral_mul_indicator_iInter hinj hg hB
 
 /-- Two-coordinate form of the weighted block identity, at distinct indices. -/
 theorem ConditionallyIIDWith.lintegral_mul_indicator_pair
-    (h : ConditionallyIIDWith μ X ν) {i j : ℕ} (hXi : AEMeasurable (X i) μ)
-    (hXj : AEMeasurable (X j) μ) (hij : i ≠ j)
+    (h : ConditionallyIIDWith μ X ν) {i j : ℕ} (hij : i ≠ j)
     {g : ProbabilityMeasure α → ℝ≥0∞} (hg : Measurable g) (hB : MeasurableSet B) :
     ∫⁻ ω, g (ν ω) * (X i ⁻¹' B ∩ X j ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, g (ν ω) * (ν ω : Measure α) B ^ 2 ∂μ := by
@@ -161,7 +161,7 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_pair
     ext ω
     simp [Fin.forall_fin_two]
   rw [← hset]
-  exact h.lintegral_mul_indicator_iInter hinj (fun l => by fin_cases l <;> assumption) hg hB
+  exact h.lintegral_mul_indicator_iInter hinj hg hB
 
 /-! ### The `L²` rate for empirical frequencies -/
 
@@ -268,7 +268,7 @@ variable {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} {B : Set α
 directing measure's mass on `B`. (`μ` is an arbitrary measure here; under a probability measure
 this reads as the two having the same probability.) -/
 private theorem ConditionallyIIDWith.integral_indicator_single
-    (h : ConditionallyIIDWith μ X ν) (i : ℕ) (hXi : AEMeasurable (X i) μ)
+    (h : ConditionallyIIDWith μ X ν) (i : ℕ)
     (hB : MeasurableSet B) :
     ∫ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω ∂μ
       = ∫ ω, ((ν ω : Measure α) B).toReal ∂μ := by
@@ -277,17 +277,16 @@ private theorem ConditionallyIIDWith.integral_indicator_single
       h.measurable_directing
   have hlin : ∫⁻ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, (ν ω : Measure α) B ∂μ := by
-    simpa using h.lintegral_mul_indicator_single (g := fun _ => 1) i hXi measurable_const hB
+    simpa using h.lintegral_mul_indicator_single (g := fun _ => 1) i measurable_const hB
   have := integral_toReal_eq_of_lintegral_eq
-    (measurable_one.aemeasurable.indicator₀ (hXi.nullMeasurableSet_preimage hB))
+    (measurable_one.aemeasurable.indicator₀ ((h.aemeasurable i).nullMeasurableSet_preimage hB))
     hu.aemeasurable (indicator_one_ne_top _) (fun ω => measure_ne_top _ _) hlin
   simpa [toReal_indicator_one] using this
 
 /-- **Pair moment.** For distinct indices the integral of the product of the two indicators
 equals the integral of the squared mass — conditional independence, read at two indices. -/
 private theorem ConditionallyIIDWith.integral_indicator_pair
-    (h : ConditionallyIIDWith μ X ν) {i j : ℕ} (hXi : AEMeasurable (X i) μ)
-    (hXj : AEMeasurable (X j) μ) (hB : MeasurableSet B) (hij : i ≠ j) :
+    (h : ConditionallyIIDWith μ X ν) {i j : ℕ} (hB : MeasurableSet B) (hij : i ≠ j) :
     ∫ ω, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω * (X j ⁻¹' B).indicator (1 : Ω → ℝ) ω ∂μ
       = ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ := by
   have hu : Measurable fun ω => (ν ω : Measure α) B :=
@@ -296,10 +295,11 @@ private theorem ConditionallyIIDWith.integral_indicator_pair
   have hlin : ∫⁻ ω, (X i ⁻¹' B ∩ X j ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω ∂μ
       = ∫⁻ ω, (ν ω : Measure α) B ^ 2 ∂μ := by
     simpa using
-      h.lintegral_mul_indicator_pair (g := fun _ => 1) hXi hXj hij measurable_const hB
+      h.lintegral_mul_indicator_pair (g := fun _ => 1) hij measurable_const hB
   have := integral_toReal_eq_of_lintegral_eq
     (measurable_one.aemeasurable.indicator₀
-      ((hXi.nullMeasurableSet_preimage hB).inter (hXj.nullMeasurableSet_preimage hB)))
+      (((h.aemeasurable i).nullMeasurableSet_preimage hB).inter
+        ((h.aemeasurable j).nullMeasurableSet_preimage hB)))
     (hu.pow_const 2).aemeasurable (indicator_one_ne_top _)
     (fun ω => by simp [measure_ne_top (ν ω : Measure α) B]) hlin
   have hprod : ∀ ω, ((X i ⁻¹' B ∩ X j ⁻¹' B).indicator (1 : Ω → ℝ≥0∞) ω).toReal
@@ -311,7 +311,7 @@ private theorem ConditionallyIIDWith.integral_indicator_pair
 /-- **Cross moment.** Weighting one coordinate's indicator by the directing mass integrates to the
 same squared quantity — the moment the mixture identity alone does not determine. -/
 private theorem ConditionallyIIDWith.integral_directing_mul_indicator
-    (h : ConditionallyIIDWith μ X ν) (i : ℕ) (hXi : AEMeasurable (X i) μ)
+    (h : ConditionallyIIDWith μ X ν) (i : ℕ)
     (hB : MeasurableSet B) :
     ∫ ω, ((ν ω : Measure α) B).toReal * (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω ∂μ
       = ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ := by
@@ -320,10 +320,10 @@ private theorem ConditionallyIIDWith.integral_directing_mul_indicator
       h.measurable_directing
   have hg : Measurable fun p : ProbabilityMeasure α => (p : Measure α) B :=
     TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply hB
-  have hlin := h.lintegral_mul_indicator_single (g := fun p => (p : Measure α) B) i hXi hg hB
+  have hlin := h.lintegral_mul_indicator_single (g := fun p => (p : Measure α) B) i hg hB
   have := integral_toReal_eq_of_lintegral_eq
     (hu.aemeasurable.mul
-      (measurable_one.aemeasurable.indicator₀ (hXi.nullMeasurableSet_preimage hB)))
+      (measurable_one.aemeasurable.indicator₀ ((h.aemeasurable i).nullMeasurableSet_preimage hB)))
     (hu.mul hu).aemeasurable
     (fun ω => ENNReal.mul_ne_top (measure_ne_top _ _) (indicator_one_ne_top _ ω))
     (fun ω => ENNReal.mul_ne_top (measure_ne_top _ _) (measure_ne_top _ _)) hlin
@@ -338,7 +338,7 @@ This is the pairing hypothesis of `integral_sq_average_sub`, and it is the only 
 conditional i.i.d. structure enters beyond measurability of the directing map. -/
 private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indicator_sub_directing
     [IsFiniteMeasure μ] (h : ConditionallyIIDWith μ X ν) (i j : ℕ)
-    (hXi : AEMeasurable (X i) μ) (hXj : AEMeasurable (X j) μ) (hB : MeasurableSet B) :
+    (hB : MeasurableSet B) :
     ∫ ω, ((X i ⁻¹' B).indicator (1 : Ω → ℝ) ω - ((ν ω : Measure α) B).toReal)
         * ((X j ⁻¹' B).indicator (1 : Ω → ℝ) ω - ((ν ω : Measure α) B).toReal) ∂μ
       = if i = j then
@@ -348,9 +348,9 @@ private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indica
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_toMeasure_apply_toReal hB).comp
       h.measurable_directing
   have hei : AEMeasurable ((X i ⁻¹' B).indicator (1 : Ω → ℝ)) μ :=
-    measurable_one.aemeasurable.indicator₀ (hXi.nullMeasurableSet_preimage hB)
+    measurable_one.aemeasurable.indicator₀ ((h.aemeasurable i).nullMeasurableSet_preimage hB)
   have hej : AEMeasurable ((X j ⁻¹' B).indicator (1 : Ω → ℝ)) μ :=
-    measurable_one.aemeasurable.indicator₀ (hXj.nullMeasurableSet_preimage hB)
+    measurable_one.aemeasurable.indicator₀ ((h.aemeasurable j).nullMeasurableSet_preimage hB)
   have hb : ∀ i, ∀ᵐ ω ∂μ, 0 ≤ (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω
       ∧ (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω ≤ 1 := fun i => ae_of_all _ fun ω => by
     by_cases hmem : ω ∈ X i ⁻¹' B <;> simp [hmem]
@@ -372,13 +372,13 @@ private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indica
       intro ω
       by_cases hmem : ω ∈ X i ⁻¹' B <;> simp [hmem]
     rw [ite_eq_left rfl, integral_congr_ae (ae_of_all _ hsq),
-      h.integral_indicator_single i hXi hB, h.integral_directing_mul_indicator i hXi hB]
+      h.integral_indicator_single i hB, h.integral_directing_mul_indicator i hB]
     ring
   · -- Off the diagonal the pair moment and both cross moments are `∫ q²`, so the four terms of
     -- the expansion cancel.
-    rw [ite_eq_right hij, h.integral_indicator_pair hXi hXj hB hij,
-      h.integral_directing_mul_indicator i hXi hB,
-      h.integral_directing_mul_indicator j hXj hB]
+    rw [ite_eq_right hij, h.integral_indicator_pair hB hij,
+      h.integral_directing_mul_indicator i hB,
+      h.integral_directing_mul_indicator j hB]
     ring
 
 /-- **The `L²` rate for empirical frequencies.** For a conditionally i.i.d. process with directing
@@ -393,7 +393,7 @@ joint-law disintegration: the cross term `∫ (ν ·) B · 1_{Xᵢ ∈ B}` is th
 mixture identity alone does not determine. -/
 theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsFiniteMeasure μ]
     (h : ConditionallyIIDWith μ X ν) {n : ℕ}
-    (hX : ∀ i ∈ Finset.range n, AEMeasurable (X i) μ) (hB : MeasurableSet B)
+    (hB : MeasurableSet B)
     (hn : n ≠ 0) :
     ∫ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω)
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ
@@ -404,7 +404,7 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsFiniteMeasure
       h.measurable_directing
   have he : ∀ i ∈ Finset.range n,
       AEMeasurable ((X i ⁻¹' B).indicator (1 : Ω → ℝ)) μ := fun i hi =>
-    measurable_one.aemeasurable.indicator₀ ((hX i hi).nullMeasurableSet_preimage hB)
+    measurable_one.aemeasurable.indicator₀ ((h.aemeasurable i).nullMeasurableSet_preimage hB)
   -- the `[0, 1]` bounds feeding the `|·| ≤ 1` hypotheses of `integral_sq_average_sub`
   have hq0 : ∀ ω, 0 ≤ ((ν ω : Measure α) B).toReal := fun _ => ENNReal.toReal_nonneg
   have hq1 : ∀ ω, ((ν ω : Measure α) B).toReal ≤ 1 := fun _ => measureReal_le_one
@@ -417,7 +417,7 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq [IsFiniteMeasure
     (fun i _ ω => abs_le.mpr ⟨by linarith [he0 i ω], he1 i ω⟩)
     (fun ω => abs_le.mpr ⟨by linarith [hq0 ω], hq1 ω⟩)
     (fun i hi j hj =>
-      h.integral_indicator_sub_directing_mul_indicator_sub_directing i j (hX i hi) (hX j hj) hB)
+      h.integral_indicator_sub_directing_mul_indicator_sub_directing i j hB)
     hn
 
 /-- The mean square error of `ConditionallyIIDWith.integral_empiricalFrequency_sub_sq` is at most
@@ -428,7 +428,7 @@ rather than a finite one; at a general finite measure the right-hand side would 
 factor. -/
 theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilityMeasure μ]
     (h : ConditionallyIIDWith μ X ν) {n : ℕ}
-    (hX : ∀ i ∈ Finset.range n, AEMeasurable (X i) μ) (hB : MeasurableSet B)
+    (hB : MeasurableSet B)
     (hn : n ≠ 0) :
     ∫ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω)
           - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ ≤ (n : ℝ)⁻¹ := by
@@ -447,7 +447,7 @@ theorem ConditionallyIIDWith.integral_empiricalFrequency_sub_sq_le [IsProbabilit
   have hC : 0 ≤ ∫ ω, ((ν ω : Measure α) B).toReal ^ 2 ∂μ :=
     integral_nonneg fun ω => by positivity
   have hn' : (0 : ℝ) ≤ (n : ℝ)⁻¹ := by positivity
-  rw [h.integral_empiricalFrequency_sub_sq hX hB hn]
+  rw [h.integral_empiricalFrequency_sub_sq hB hn]
   nlinarith [hA, hC, hn']
 
 /-! ### Convergence of empirical frequencies -/
@@ -459,7 +459,7 @@ At a probability measure this is convergence in mean square.
 
 Indexed at `n + 1` so that no caller carries an `n ≠ 0` side condition. -/
 theorem ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq [IsFiniteMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) (hB : MeasurableSet B) :
+    (h : ConditionallyIIDWith μ X ν) (hB : MeasurableSet B) :
     Tendsto (fun n : ℕ => ∫ ω, (((n + 1 : ℕ) : ℝ)⁻¹ *
           (∑ i ∈ Finset.range (n + 1), (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω)
         - ((ν ω : Measure α) B).toReal) ^ 2 ∂μ) atTop (nhds 0) := by
@@ -467,7 +467,7 @@ theorem ConditionallyIIDWith.tendsto_integral_empiricalFrequency_sub_sq [IsFinit
     tendsto_one_div_add_atTop_nhds_zero_nat.congr fun n => by
       rw [one_div]; norm_cast
   simp only [fun n : ℕ =>
-    h.integral_empiricalFrequency_sub_sq (fun i _ => hX i) hB (Nat.succ_ne_zero n)]
+    h.integral_empiricalFrequency_sub_sq hB (Nat.succ_ne_zero n)]
   simpa using hupper.mul_const _
 
 end Probability

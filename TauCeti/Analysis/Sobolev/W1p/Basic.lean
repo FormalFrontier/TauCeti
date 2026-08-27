@@ -48,7 +48,8 @@ boundary regularity of `Ω` is used.
 * `TauCeti.mem_w1pSubmodule_iff_hasWeakFDerivOn`: membership is exactly weak
   differentiability of the value component with the recorded gradient.
 * `TauCeti.W1p.valueL` and `TauCeti.W1p.gradientL`: the two components as continuous linear
-  projections from the Sobolev space.
+  projections from the Sobolev space, with `TauCeti.W1p.value_coe` and
+  `TauCeti.W1p.gradient_coe` identifying them with the components of the ambient jet.
 
 ## References
 
@@ -371,17 +372,25 @@ omit [FiniteDimensional ℝ E] in
 theorem W1p.gradientL_apply (u : W1p mu Omega p) : W1p.gradientL u = W1p.gradient u := (rfl)
 
 omit [FiniteDimensional ℝ E] in
+/-- `W1p.valueL` is the ambient jet projection precomposed with the inclusion, so the Sobolev
+value component *is* the value component of the underlying ambient jet. -/
+theorem W1p.value_coe (u : W1p mu Omega p) :
+    W1p.value u = Sobolev1JetLp.value (u : Sobolev1JetLp mu Omega p) := (rfl)
+
+omit [FiniteDimensional ℝ E] in
 /-- The Sobolev value component agrees almost everywhere with the first component of its
 ambient value-gradient jet. -/
 theorem W1p.value_apply_ae (u : W1p mu Omega p) :
     ∀ᵐ x ∂mu.restrict Omega,
       W1p.value u x = WithLp.fst ((u : Sobolev1JetLp mu Omega p) x) := by
-  -- `W1p.valueL` is the ambient jet projection precomposed with the inclusion, so the two
-  -- value components are the same `Lᵖ` class; name that equation instead of relying on it
-  -- silently.
-  have hvalue : W1p.value u = Sobolev1JetLp.value (u : Sobolev1JetLp mu Omega p) := (rfl)
-  rw [hvalue]
+  rw [W1p.value_coe]
   exact Sobolev1JetLp.value_apply_ae (u : Sobolev1JetLp mu Omega p)
+
+omit [FiniteDimensional ℝ E] in
+/-- As for `TauCeti.W1p.value_coe`: the Sobolev gradient component is the gradient component of
+the underlying ambient jet. -/
+theorem W1p.gradient_coe (u : W1p mu Omega p) :
+    W1p.gradient u = Sobolev1JetLp.gradient (u : Sobolev1JetLp mu Omega p) := (rfl)
 
 omit [FiniteDimensional ℝ E] in
 /-- The Sobolev gradient component agrees almost everywhere with the second component of its
@@ -389,11 +398,7 @@ ambient value-gradient jet. -/
 theorem W1p.gradient_apply_ae (u : W1p mu Omega p) :
     ∀ᵐ x ∂mu.restrict Omega,
       W1p.gradient u x = WithLp.snd ((u : Sobolev1JetLp mu Omega p) x) := by
-  -- As for `W1p.value_apply_ae`: the Sobolev gradient is the ambient jet gradient of the
-  -- underlying jet, so record that equation before appealing to the ambient lemma.
-  have hgradient : W1p.gradient u = Sobolev1JetLp.gradient (u : Sobolev1JetLp mu Omega p) :=
-    (rfl)
-  rw [hgradient]
+  rw [W1p.gradient_coe]
   exact Sobolev1JetLp.gradient_apply_ae (u : Sobolev1JetLp mu Omega p)
 
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure]

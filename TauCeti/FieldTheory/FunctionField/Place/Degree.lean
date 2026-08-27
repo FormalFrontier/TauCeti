@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Localization.Module
+public import TauCeti.Algebra.Polynomial.CommonXPower
 public import TauCeti.FieldTheory.FunctionField.Basic
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
 public import TauCeti.FieldTheory.IntermediateField.Adjoin.Inv
@@ -32,7 +33,8 @@ a genuine positive natural number.
 * `TauCeti.Place.linearIndependent_over_adjoin_of_linearIndependent_residue`: the heart of the
   matter. If `x` has nonzero order at `P`, then elements of `𝒪_P` whose residues are linearly
   independent over `k` are themselves linearly independent over `k(x)`.
-* `TauCeti.Place.finiteDimensional_residueField`: the residue field of a place of an algebraic
+* `TauCeti.Place.finiteDimensional_residueField_of_ord_ne_zero` and
+  `TauCeti.Place.finiteDimensional_residueField`: the residue field of a place of an algebraic
   function field is a finite extension of the constants.
 * `TauCeti.Place.degree_le_finrank_over_adjoin`: `deg P ≤ [F : k(x)]` for every `x` with
   `ord_P x ≠ 0`.
@@ -40,6 +42,11 @@ a genuine positive natural number.
 * `TauCeti.Place.degree_eq_one_of_isAlgClosed_of_isFunctionField`: over an algebraically closed
   field of constants every place of an algebraic function field is rational (Stichtenoth,
   Remark 1.1.17).
+
+The auxiliary `TauCeti.Place.residue_aeval_of_residue_eq_zero`, that a polynomial expression in
+an element of the maximal ideal reduces to the constant term of the polynomial, is the residue
+computation Stichtenoth's argument turns on; it is reused by the bound on the zeros of a
+function in `TauCeti.FieldTheory.FunctionField.Place.Zeros`.
 
 The rational places themselves are characterised in
 `TauCeti.FieldTheory.FunctionField.Place.Basic`, where no function-field hypothesis is needed.
@@ -51,7 +58,8 @@ than over `k(x)`: the family is shown to be linearly independent over the `k`-su
 `k[x] = Algebra.adjoin k {x}`, and `LinearIndependent.iff_fractionRing` then upgrades this to
 `k(x) = k⟮x⟯`, which is the fraction field of `k[x]` by Mathlib's
 `IntermediateField.algebraAdjoinAdjoin` instances. Clearing the common power of `x` from a
-relation is done with `Polynomial.rootMultiplicity 0`, so no denominators ever appear.
+relation is `TauCeti.Polynomial.exists_common_X_pow_factor`, which runs on
+the least exponent with a nonzero coefficient across the family, so no denominators ever appear.
 
 ## References
 
@@ -81,43 +89,13 @@ variable {P : Place k F}
 
 /-- If `t` lies in the maximal ideal of `𝒪_P`, then the value of a polynomial `p` at `t` reduces
 to the constant term of `p`. -/
-private theorem residue_aeval_of_residue_eq_zero {t : P.integers}
+@[simp] theorem residue_aeval_of_residue_eq_zero {t : P.integers}
     (ht : IsLocalRing.residue P.integers t = 0) (p : k[X]) :
     IsLocalRing.residue P.integers (aeval t p) =
       algebraMap k P.ResidueField (p.coeff 0) := by
   rw [aeval_def, Polynomial.hom_eval₂, ht, eval₂_at_zero]
   rw [RingHom.comp_apply, IsScalarTower.algebraMap_apply k P.integers P.ResidueField,
     IsLocalRing.ResidueField.algebraMap_eq]
-
-/-- Dividing a finite family of polynomials, not all zero, by the largest power of `X` that
-divides every member leaves at least one quotient with nonzero constant term. The exponent is
-the least `Polynomial.rootMultiplicity 0` over the nonzero members. -/
-private theorem exists_common_X_pow_factor {ι : Type*} (s : Finset ι) (p : ι → k[X])
-    (hne : ∃ i ∈ s, p i ≠ 0) :
-    ∃ m, ∃ q : ι → k[X], (∀ i ∈ s, p i = X ^ m * q i) ∧
-      ∃ j ∈ s, (q j).coeff 0 ≠ 0 := by
-  classical
-  have hfilter : (s.filter fun i ↦ p i ≠ 0).Nonempty := by
-    obtain ⟨i, hi, hpi⟩ := hne
-    exact ⟨i, Finset.mem_filter.mpr ⟨hi, hpi⟩⟩
-  obtain ⟨j, hj, hjmin⟩ :=
-    (s.filter fun i ↦ p i ≠ 0).exists_min_image (fun i ↦ rootMultiplicity 0 (p i)) hfilter
-  obtain ⟨hjs, hjne⟩ := Finset.mem_filter.mp hj
-  let m := rootMultiplicity (0 : k) (p j)
-  let q : ι → k[X] := fun i ↦ p i /ₘ (X : k[X]) ^ m
-  have hdvd : ∀ i ∈ s, (X : k[X]) ^ m ∣ p i := by
-    intro i hi
-    rcases eq_or_ne (p i) 0 with h | h
-    · simp [h]
-    · refine dvd_trans (pow_dvd_pow _ (hjmin i (Finset.mem_filter.mpr ⟨hi, h⟩))) ?_
-      simpa [m] using pow_rootMultiplicity_dvd (p i) 0
-  have hfactor : ∀ i ∈ s, p i = (X : k[X]) ^ m * q i := by
-    intro i hi
-    conv_lhs => rw [← modByMonic_add_div (p i) ((X : k[X]) ^ m)]
-    rw [(modByMonic_eq_zero_iff_dvd (monic_X.pow m)).mpr (hdvd i hi), zero_add]
-  refine ⟨m, q, hfactor, j, hjs, ?_⟩
-  simpa [q, m, coeff_zero_eq_eval_zero] using
-    (eval_divByMonic_pow_rootMultiplicity_ne_zero (p := p j) 0 hjne)
 
 /-! ### Linear independence over `k(x)` of a lift of a `k`-independent family of residues -/
 
@@ -154,7 +132,7 @@ private theorem linearIndependent_over_adjoin_of_linearIndependent_residue_of_or
   have hpzero : ∀ i, p i = 0 ↔ g i = 0 := by
     intro i
     rw [← hinj.eq_iff, map_zero, hp i, ZeroMemClass.coe_eq_zero]
-  obtain ⟨m, q, hfactor, j, hjs, hqj⟩ := exists_common_X_pow_factor s p
+  obtain ⟨m, q, hfactor, j, hjs, hqj⟩ := Polynomial.exists_common_X_pow_factor s p
     ⟨i₀, hi₀, fun h ↦ hg0 ((hpzero i₀).mp h)⟩
   -- The relation, with the common factor `x ^ m` removed, lives in `𝒪_P`.
   have hsumF : ∑ i ∈ s, aeval x (q i) * (z i : F) = 0 := by
@@ -211,6 +189,14 @@ theorem rank_residueField_le_finrank_over_adjoin {x : F} (hx : P.ord x ≠ 0)
     (linearIndependent_over_adjoin_of_linearIndependent_residue hx hz').fintype_card_le_finrank
 
 variable (P) in
+/-- The residue field of a place is a finite extension of the constants as soon as `F` is finite
+over `k(x)` for a single `x` of nonzero order at `P` (Stichtenoth, Proposition 1.1.15). -/
+theorem finiteDimensional_residueField_of_ord_ne_zero {x : F} (hx : P.ord x ≠ 0)
+    [FiniteDimensional k⟮x⟯ F] : FiniteDimensional k P.ResidueField :=
+  Module.rank_lt_aleph0_iff.mp
+    ((rank_residueField_le_finrank_over_adjoin P hx).trans_lt Cardinal.natCast_lt_aleph0)
+
+variable (P) in
 /-- The residue field of a place of an algebraic function field is a finite extension of the
 constants (Stichtenoth, Proposition 1.1.15). This is what makes `TauCeti.Place.degree` a
 genuine invariant rather than a junk value. -/
@@ -218,12 +204,9 @@ theorem finiteDimensional_residueField (hF : IsFunctionField k F) :
     FiniteDimensional k P.ResidueField := by
   obtain ⟨t, ht⟩ := P.exists_isUniformizer
   rw [P.isUniformizer_iff_ord_eq_one] at ht
-  have hpos : 0 < P.ord t := by omega
   have : FiniteDimensional k⟮t⟯ F :=
-    hF.finiteDimensional_adjoin (P.transcendental_of_ord_ne_zero hpos.ne')
-  exact Module.rank_lt_aleph0_iff.mp
-    ((rank_residueField_le_finrank_over_adjoin P hpos.ne').trans_lt
-      Cardinal.natCast_lt_aleph0)
+    hF.finiteDimensional_adjoin (P.transcendental_of_ord_ne_zero (by omega))
+  exact P.finiteDimensional_residueField_of_ord_ne_zero (x := t) (by omega)
 
 variable (P) in
 /-- **Stichtenoth, Proposition 1.1.15**: the degree of a place is bounded by `[F : k(x)]` for

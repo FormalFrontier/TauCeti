@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.FixedPoints
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Frobenius
 
 /-!
@@ -212,9 +212,9 @@ theorem coe_iterateFrobeniusHopfIdealPoints_apply
     iterateFrobenius_def]
 
 /-- A matrix point of a closed subgroup scheme is fixed by the Frobenius endomorphism exactly when
-every one of its entries lies in the Frobenius-fixed subring. Since `TauCeti.mem_fixedSubgroup`
-rewrites membership in `fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A)` to the equation
-below, this is the membership criterion for the group of rational points. -/
+every one of its entries lies in the Frobenius-fixed subring. The generic equality-locus
+simplifier rewrites membership in `fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A)` to
+the equation below, so this is the membership criterion for the group of rational points. -/
 @[simp]
 theorem iterateFrobeniusHopfIdealPoints_eq_self_iff (x : hopfIdealPointsSubgroup n I A) :
     iterateFrobeniusHopfIdealPoints n p k I A x = x ↔
@@ -250,18 +250,9 @@ theorem map_subtype_fixedSubgroup_iterateFrobeniusHopfIdealPoints :
     (fixedSubgroup (iterateFrobeniusHopfIdealPoints n p k I A)).map
         (hopfIdealPointsSubgroup n I A).subtype =
       hopfIdealPointsSubgroup n I A ⊓
-        fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) := by
-  refine le_antisymm ?_ ?_
-  · rintro _ ⟨⟨g, hg⟩, hfix, rfl⟩
-    refine Subgroup.mem_inf.mpr ⟨hg, ?_⟩
-    have h : (iterateFrobeniusHopfIdealPoints n p k I A ⟨g, hg⟩ :
-        Matrix.GeneralLinearGroup (Fin n) A) = g := congrArg _ (mem_fixedSubgroup.mp hfix)
-    rwa [coe_iterateFrobeniusHopfIdealPoints] at h
-  · intro g hg
-    obtain ⟨hgI, hgF⟩ := Subgroup.mem_inf.mp hg
-    refine ⟨⟨g, hgI⟩, mem_fixedSubgroup.mpr (Subtype.ext ?_), rfl⟩
-    rw [coe_iterateFrobeniusHopfIdealPoints]
-    exact mem_fixedSubgroup.mp hgF
+        fixedSubgroup (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)) :=
+  TauCeti.map_subtype_fixedSubgroup_of_coe_eq _ _
+    (coe_iterateFrobeniusHopfIdealPoints n p k I)
 
 end ClosedSubgroup
 

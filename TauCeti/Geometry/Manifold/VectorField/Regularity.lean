@@ -22,6 +22,8 @@ manifold differential of a function to tangent vectors whose base point varies.
   normed vector space.
 * `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function on the
   tangent bundle is `C^m` when `m + 1 ≤ n`.
+* `ContMDiffOn.contMDiffOn_mvfderiv_apply`: the derivative of a `C^n` function along a `C^m`
+  vector field is `C^m` on an open set, when `m + 1 ≤ n`.
 
 ## References
 
@@ -31,7 +33,7 @@ manifold differential of a function to tangent vectors whose base point varies.
 
 public section
 
-open Bundle Manifold
+open Bundle Manifold Set
 open scoped ContDiff Manifold
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
@@ -107,3 +109,30 @@ theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
   -- On a model vector space, `NormedSpace.fromTangentSpace` is the identity on the underlying
   -- type, so the second projection computed by `h` agrees definitionally with `mvfderiv`.
   exact h.congr fun p => (htangent p).symm
+
+/-- The derivative of a `C^n` function along a `C^m` vector field is `C^m` on an open set, when
+`m + 1 ≤ n`. This is the set-local form of `ContMDiff.contMDiff_mvfderiv_apply`: only the germ of
+`f` on the open set `s` enters, so it applies to functions built from sections that are smooth on
+a chart domain only. -/
+theorem ContMDiffOn.contMDiffOn_mvfderiv_apply {f : M → F} {s : Set M}
+    {A : Π y : M, TangentSpace I y}
+    (hf : ContMDiffOn I 𝓘(𝕜, F) n f s) (hs : IsOpen s)
+    (hA : ContMDiffOn I I.tangent m (fun y ↦ (TotalSpace.mk' E y (A y) : TangentBundle I M)) s)
+    (hmn : m + 1 ≤ n) :
+    ContMDiffOn I 𝓘(𝕜, F) m (fun y ↦ mvfderiv I f y (A y)) s := by
+  have htangent : ContMDiffOn I.tangent 𝓘(𝕜, F).tangent m (tangentMapWithin I 𝓘(𝕜, F) f s)
+      (π E (TangentSpace I) ⁻¹' s) :=
+    hf.contMDiffOn_tangentMapWithin hmn hs.uniqueMDiffOn
+  have hsnd : ContMDiff 𝓘(𝕜, F).tangent 𝓘(𝕜, F) m
+      (fun p : TangentBundle 𝓘(𝕜, F) F ↦ p.2) :=
+    contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
+  have hproj : ContMDiffOn I.tangent 𝓘(𝕜, F) m
+      (fun p : TangentBundle I M ↦ (tangentMapWithin I 𝓘(𝕜, F) f s p).2)
+      (π E (TangentSpace I) ⁻¹' s) := hsnd.comp_contMDiffOn htangent
+  have hcomp := hproj.comp hA (fun y hy ↦ hy)
+  refine hcomp.congr fun y hy ↦ ?_
+  have hval : ((fun p : TangentBundle I M ↦ (tangentMapWithin I 𝓘(𝕜, F) f s p).2) ∘
+      (fun y : M ↦ (TotalSpace.mk' E y (A y) : TangentBundle I M))) y
+      = mfderivWithin I 𝓘(𝕜, F) f s y (A y) := by
+    exact tangentMapWithin_snd
+  rw [hval, mfderivWithin_of_isOpen hs hy, mvfderiv_apply_eq_mfderiv_apply]

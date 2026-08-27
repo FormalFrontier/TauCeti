@@ -239,8 +239,7 @@ theorem separableDegree_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
   let _ := ψ.fieldPullback.toRingHom.toAlgebra
   let _ := (ψ.comp φ).fieldPullback.toRingHom.toAlgebra
   have : IsScalarTower W₃.FunctionField W₂.FunctionField W₁.FunctionField :=
-    IsScalarTower.of_algebraMap_eq fun z ↦ by
-      simp [RingHom.algebraMap_toAlgebra, comp_fieldPullback]
+    isScalarTower_fieldPullback ψ φ
   have hφ : ∀ z, algebraMap _ _ z = φ.fieldPullback z :=
     φ.fieldPullback.algebraMap_toAlgebra_apply
   have hψ : ∀ z, algebraMap _ _ z = ψ.fieldPullback z :=
@@ -264,8 +263,7 @@ theorem inseparableDegree_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂)
   let _ := ψ.fieldPullback.toRingHom.toAlgebra
   let _ := (ψ.comp φ).fieldPullback.toRingHom.toAlgebra
   have : IsScalarTower W₃.FunctionField W₂.FunctionField W₁.FunctionField :=
-    IsScalarTower.of_algebraMap_eq fun z ↦ by
-      simp [RingHom.algebraMap_toAlgebra, comp_fieldPullback]
+    isScalarTower_fieldPullback ψ φ
   have hφ : ∀ z, algebraMap _ _ z = φ.fieldPullback z :=
     φ.fieldPullback.algebraMap_toAlgebra_apply
   have hψ : ∀ z, algebraMap _ _ z = ψ.fieldPullback z :=

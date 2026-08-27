@@ -139,8 +139,7 @@ theorem finrank_dvd_card : finrank k V ∣ Nat.card G := by
   let _ : Fintype G := Fintype.ofFinite G
   have hcard : (Nat.card G : k) ≠ 0 := Nat.cast_ne_zero.mpr Nat.card_pos.ne'
   have : Invertible (Nat.card G : k) := invertibleOfNonzero hcard
-  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] ρ.asModule
-  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
   refine dvd_of_isIntegral_of_natCast_mul_eq (k := k) ?_
     (finrank_mul_sum_centralCharacter_eq_card ρ) Module.finrank_pos.ne'
   refine IsIntegral.sum _ fun C _ => IsIntegral.mul

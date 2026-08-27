@@ -333,7 +333,10 @@ private lemma span_eq_top_of_pi_single {f : Fin 48 → (Fin 4 → ℤ)}
   rintro _ ⟨i, rfl⟩
   simpa only [Pi.basisFun_apply, SetLike.mem_coe] using h i
 
-private lemma span_f4Root_eq_top : span ℤ (range f4Root) = ⊤ := by
+/-- **The roots of the pinned type `F₄` datum span the character lattice.** -/
+theorem span_root_f4SimplyConnectedRootDatum_eq_top :
+    span ℤ (range f4SimplyConnectedRootDatum.root) = ⊤ := by
+  rw [f4SimplyConnectedRootDatum_root]
   refine span_eq_top_of_pi_single fun k => ?_
   have hr (j : Fin 48) : f4Root j ∈ span ℤ (range ⇑f4Root) := subset_span ⟨j, rfl⟩
   fin_cases k
@@ -349,7 +352,7 @@ private lemma span_f4Coroot_eq_top : span ℤ (range f4Coroot) = ⊤ :=
 /-- The pinned `F4` datum is a root system: its roots and coroots span the character and
 cocharacter lattices. Coroot spanning is the simply connected lattice condition. -/
 instance : f4SimplyConnectedRootDatum.IsRootSystem where
-  span_root_eq_top := span_f4Root_eq_top
+  span_root_eq_top := span_root_f4SimplyConnectedRootDatum_eq_top
   span_coroot_eq_top := span_f4Coroot_eq_top
 
 /-- The support of the Bourbaki-numbered base of the pinned `F4` datum: the first four root

@@ -26,6 +26,8 @@ bundle structures.
 * `TauCeti.Manifold.instRiemannianBundleOpen`,
   `TauCeti.Manifold.instIsContinuousRiemannianBundleOpen`, and
   `TauCeti.Manifold.instIsContMDiffRiemannianBundleOpen`: the corresponding scoped instances.
+* `TauCeti.Manifold.pathELength_subtypeVal_comp`: the length of a curve in an open submanifold
+  equals the length of its composition with the inclusion into the ambient manifold.
 
 The three instances are in the `TauCeti` scope; use `open scoped TauCeti` to install them. In
 particular, under the usual separation hypotheses this makes `EMetricSpace.ofRiemannianMetric`
@@ -344,5 +346,36 @@ theorem enorm_tangentSpace_open
     letI := instRiemannianBundleOpen (I := I) U
     ‖v‖ₑ = ‖tangentSpaceOpenEquiv (I := I) x v‖ₑ := by
   simp only [enorm, nnnorm, norm_tangentSpace_open]
+
+end TauCeti.Manifold
+
+namespace TauCeti.Manifold
+
+open Set
+
+variable
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+  [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
+  {U : Opens M}
+
+/-- Path length is intrinsic: restricting the metric of `M` to an open submanifold `U` does not
+change the length of a `C¹` curve read in `U`. -/
+@[simp]
+theorem pathELength_subtypeVal_comp {γ : ℝ → U} {a b : ℝ}
+    (hγ : CMDiff[Icc a b] 1 γ) :
+    pathELength I γ a b = pathELength I ((Subtype.val : U → M) ∘ γ) a b := by
+  rw [pathELength_eq_lintegral_mfderiv_Icc, pathELength_eq_lintegral_mfderiv_Icc,
+    ← MeasureTheory.restrict_Ioo_eq_restrict_Icc]
+  refine MeasureTheory.setLIntegral_congr_fun measurableSet_Ioo fun t ht ↦ ?_
+  have hd : ContMDiffAt 𝓘(ℝ, ℝ) I 1 γ t :=
+    (hγ t (Set.Ioo_subset_Icc_self ht)).contMDiffAt (Icc_mem_nhds ht.1 ht.2)
+  have hval : ContMDiffAt I I 1 (Subtype.val : U → M) (γ t) :=
+    contMDiff_subtype_val (γ t)
+  have hv' : MDiffAt (Subtype.val : U → M) (γ t) := hval.mdifferentiableAt one_ne_zero
+  have hd' : MDiffAt γ t := hd.mdifferentiableAt one_ne_zero
+  rw [(HasMFDerivAt.comp t hv'.hasMFDerivAt hd'.hasMFDerivAt).mfderiv, mfderiv_subtype_val]
+  simp
 
 end TauCeti.Manifold

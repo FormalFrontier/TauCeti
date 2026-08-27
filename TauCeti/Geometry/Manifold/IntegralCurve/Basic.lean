@@ -20,6 +20,8 @@ smooth vector fields on boundaryless smooth manifolds are smooth.
 * `IsMIntegralCurveOn.map_of_mfderiv_eq`: a map differentiable along an integral curve whose
   derivative intertwines the vector fields there sends it to an integral curve of the second field.
 * `IsMIntegralCurveAt.map_of_mfderiv_eq`: the corresponding result for local integral curves.
+* `IsMIntegralCurveOn.congr`: being an integral curve on a set only depends on the values of the
+  curve on that set.
 * `IsMIntegralCurve.contMDiff_succ`: an integral curve of a `C^n` vector field is `C^(n + 1)`.
 * `IsMIntegralCurve.contMDiff`: an integral curve of a smooth vector field is smooth.
 * `IsMIntegralCurveAt.of_extChartAt_symm`: a coordinate solution gives a manifold integral curve.
@@ -67,6 +69,13 @@ theorem map_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
     ((1 : ℝ →L[ℝ] ℝ).smulRight (W (f (γ t))))
   rw [← hder]
   exact (hf t ht).hasMFDerivAt.comp_hasMFDerivWithinAt t (hγ t ht)
+
+/-- **Being an integral curve on a set is a property of the values on that set.** The values of a
+curve outside its parameter set are junk, so a curve agreeing with an integral curve on the set is
+again an integral curve there. -/
+theorem congr {V : (x : M) → TangentSpace I x} {γ γ' : ℝ → M} {s : Set ℝ}
+    (hγ : IsMIntegralCurveOn γ V s) (h : Set.EqOn γ' γ s) : IsMIntegralCurveOn γ' V s := fun t ht ↦
+  ((hγ t ht).congr_mono h (h ht) Set.Subset.rfl).congr_mfderiv (by rw [h ht])
 
 end IsMIntegralCurveOn
 

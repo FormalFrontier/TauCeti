@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.ForwardDiff
 import Mathlib.Analysis.Normed.Group.Pointwise
 import TauCeti.Analysis.PositiveDefinite.Kernel.Kolmogorov
+public import TauCeti.Analysis.PositiveDefinite.Function.Difference
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
 
 /-!
@@ -31,17 +31,28 @@ Applying Bochner's theorem to those differences makes the corresponding alternat
 of the spatial Bochner measures positive, the time-regularity input required to assemble the BCR
 representing measure.
 
+An iterated time difference expands into the alternating binomial sum
+`(t, v) ↦ ∑ k ≤ n, (-1) ^ k (n choose k) F (t + k • h, v)`, so that sum is positive definite too.
+Positive definiteness is a statement about quadratic forms, not a pointwise sign: nonnegativity of
+the values themselves is asserted only along the zero-spatial axis, where it becomes the classical
+complete monotonicity of `t ↦ F (t, 0)` in the finite-difference sense. Those one-variable
+statements are read off the differences built here in
+`TauCeti/Analysis/PositiveDefinite/SemigroupGroup/Time/Axis.lean`.
+
 ## Main declarations
 
 * `TauCeti.timeDifference`: the one-step alternating time difference, the negative of Mathlib's
   forward difference `fwdDiff` applied in the time coordinate.
 * `TauCeti.listTimeDifference`: the alternating difference along a finite list of time steps, and
   `TauCeti.iteratedTimeDifference`: its equal-step specialization.
+* `TauCeti.iteratedTimeDifference_eq_alternating_sum`: the binomial expansion of an iterated time
+  difference.
 * `TauCeti.IsSemigroupGroupPD.timeDifference`: a bounded BCR-positive-definite function remains
   positive definite after subtracting a nonnegative forward time translate.
 * `TauCeti.IsSemigroupGroupPD.listTimeDifference` and
   `TauCeti.IsSemigroupGroupPD.iteratedTimeDifference`: every alternating time difference of a
-  bounded BCR-positive-definite function, along arbitrary or repeated steps, is positive definite.
+  bounded BCR-positive-definite function, along arbitrary or repeated steps, is positive definite,
+  and `TauCeti.IsSemigroupGroupPD.alternating_sum` says the same in binomial form.
 * `TauCeti.isBounded_range_listTimeDifference` and
   `TauCeti.isBounded_range_iteratedTimeDifference`: those differences stay bounded, so they can be
   differenced again.
@@ -60,7 +71,7 @@ representing measure.
 public section
 
 open ComplexConjugate InnerProductSpace Set
-open scoped ComplexOrder NNReal Pointwise
+open scoped ComplexOrder NNReal Pointwise fwdDiff
 
 namespace TauCeti
 
@@ -174,6 +185,36 @@ theorem iteratedTimeDifference_eq_listTimeDifference (n : ℕ) (h : ℝ≥0) (F 
   induction n with
   | zero => simp
   | succ n ih => rw [iteratedTimeDifference_succ, ih, List.replicate_succ, listTimeDifference_cons]
+
+/-- At a fixed spatial coordinate, the `n`-th time difference is the alternating `n`-th forward
+difference of the one-variable function `t ↦ F (t, v)`. This is the bridge to the generic
+finite-difference theory of `TauCeti/Analysis/PositiveDefinite/Function/Difference.lean`. -/
+theorem iteratedTimeDifference_apply_eq_fwdDiff (n : ℕ) (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) (t : ℝ≥0)
+    (v : V) :
+    iteratedTimeDifference n h F (t, v)
+      = (-1 : ℂ) ^ n * Δ_[h]^[n] (fun s : ℝ≥0 => F (s, v)) t := by
+  induction n generalizing F with
+  | zero => simp
+  | succ n ih =>
+      have hsucc : iteratedTimeDifference (n + 1) h F
+          = iteratedTimeDifference n h (timeDifference h F) :=
+        Function.iterate_succ_apply _ _ _
+      have hstep : (fun s : ℝ≥0 => timeDifference h F (s, v))
+          = -Δ_[h] fun s : ℝ≥0 => F (s, v) := by
+        funext s
+        simp [timeDifference, fwdDiff]
+      rw [hsucc, ih, hstep]
+      exact congrFun (neg_one_pow_mul_fwdDiff_iter_succ n (fun s : ℝ≥0 => F (s, v)) h) t
+
+/-- **The binomial expansion of an iterated time difference.** This is the form in which the
+measure-theoretic half of the Berg--Christensen--Ressel representation slices the differences by
+time. -/
+theorem iteratedTimeDifference_eq_alternating_sum (n : ℕ) (h : ℝ≥0) (F : ℝ≥0 × V → ℂ) :
+    iteratedTimeDifference n h F = fun p : ℝ≥0 × V =>
+      ∑ k ∈ Finset.range (n + 1), (-1 : ℂ) ^ k * (n.choose k) * F (p.1 + k • h, p.2) := by
+  funext p
+  obtain ⟨t, v⟩ := p
+  rw [iteratedTimeDifference_apply_eq_fwdDiff, neg_one_pow_mul_fwdDiff_iter_eq_alternating_sum]
 
 /-- Boundedness is preserved by taking a first time difference. -/
 theorem isBounded_range_timeDifference (hbounded : Bornology.IsBounded (range F)) (h : ℝ≥0) :
@@ -358,6 +399,16 @@ theorem iteratedTimeDifference (hF : IsSemigroupGroupPD F)
     IsSemigroupGroupPD (TauCeti.iteratedTimeDifference n h F) := by
   rw [TauCeti.iteratedTimeDifference_eq_listTimeDifference]
   exact hF.listTimeDifference hbounded _
+
+/-- **The alternating iterated time differences, expanded as binomial sums, are semigroup-group
+positive definite.** This is `IsSemigroupGroupPD.iteratedTimeDifference` with the differencing
+operator resolved into an explicit alternating sum over an arithmetic progression of times. -/
+theorem alternating_sum (hF : IsSemigroupGroupPD F)
+    (hbounded : Bornology.IsBounded (range F)) (n : ℕ) (h : ℝ≥0) :
+    IsSemigroupGroupPD fun p : ℝ≥0 × V =>
+      ∑ k ∈ Finset.range (n + 1), (-1 : ℂ) ^ k * (n.choose k) * F (p.1 + k • h, p.2) := by
+  rw [← TauCeti.iteratedTimeDifference_eq_alternating_sum]
+  exact hF.iteratedTimeDifference hbounded n h
 
 end IsSemigroupGroupPD
 

@@ -6,7 +6,9 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Parabolic
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Unipotent.ClosedSubgroup
 import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
 import Mathlib.LinearAlgebra.Charpoly.ToMatrix
 
@@ -22,10 +24,12 @@ The proof applies a representation to the extending polynomial family. Over the 
 polynomials the family is conjugate to the original action, so its characteristic polynomial is
 constant. At the origin the family is the identity, hence that constant is `(X - 1) ^ n`.
 
-## Main declaration
+## Main declarations
 
 * `TauCeti.Cocharacter.isUnipotentPoint_of_mem_unipotent`: every point of the dynamic unipotent
   subgroup is a unipotent point.
+* `TauCeti.Cocharacter.isUnipotentPoint_quotient_of_le_unipotent`: every point of a Hopf-ideal
+  quotient whose cut-out subgroup lies in a dynamic unipotent subgroup is unipotent.
 
 ## References
 
@@ -171,6 +175,25 @@ theorem isUnipotentPoint_of_mem_unipotent
     rw [hcoe]
     exact hEndCharpoly
   exact LinearMap.GeneralLinearGroup.isUnipotent_of_charpoly_eq _ hActionCharpoly
+
+/-- Every point of a Hopf-ideal quotient is unipotent when its ambient cut-out subgroup lies in a
+dynamic unipotent subgroup. -/
+theorem isUnipotentPoint_quotient_of_le_unipotent
+    (B : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R B)
+    (l : B →ₐc[R] LaurentPolynomial R) (L : Type u)
+    [Field L] [Algebra R L] [PerfectField L]
+    (hI : CommHopfAlgCat.quotientPointsSubgroup B I (CommAlgCat.of R L) ≤
+      unipotent (CommAlgCat.of R L) l)
+    (g : HopfAlgebra.points (R := R) (H := CommHopfAlgCat.quotient B I)
+      (CommAlgCat.of R L)) :
+    HopfAlgebra.IsUnipotentPoint g := by
+  apply (HopfAlgebra.isUnipotentPoint_mapDomain_iff_of_surjective
+    (CommHopfAlgCat.mkQuotient B I).hom
+    (CommHopfAlgCat.mkQuotient_surjective B I) g).mp
+  rw [← CommHopfAlgCat.quotientPointsHom_apply]
+  exact isUnipotentPoint_of_mem_unipotent l
+    (hI (CommHopfAlgCat.quotientPointsHom_mem_quotientPointsSubgroup B I
+      (CommAlgCat.of R L) g))
 
 end
 

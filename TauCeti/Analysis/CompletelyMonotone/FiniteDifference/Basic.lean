@@ -49,7 +49,8 @@ argument.
 
 * `TauCeti.fwdDiffList`: the forward difference `Δ_{h₁} ⋯ Δ_{hₙ} f` along a list of steps.
 * `TauCeti.fwdDiffList_congr`: on `[0, ∞)` a mixed difference with nonnegative steps only sees the
-  values of the function there.
+  values of the function there, and `TauCeti.fwdDiffList_congr_of_add_mem` sharpens this to any
+  set of arguments closed under adding the steps.
 * `TauCeti.IsDifferenceCompletelyMonotone`: complete monotonicity in the finite-difference sense.
 * `TauCeti.isDifferenceCompletelyMonotone_of_tendsto`: the predicate is closed under pointwise
   limits on `[0, ∞)`, unlike its derivative form.
@@ -145,6 +146,20 @@ theorem fwdDiffList_const_smul {R : Type*} [Monoid R] [DistribMulAction R G]
 theorem fwdDiffList_neg (l : List M) (f : M → G) :
     fwdDiffList l (fun t => -f t) = fun t => -fwdDiffList l f t := by
   simpa only [neg_one_zsmul] using fwdDiffList_const_smul (-1 : ℤ) l f
+
+/-- **A mixed forward difference only reads the function on a set closed under its steps.** If `S`
+contains the base point and is closed under adding each step, the difference at that point depends
+on the function only through its values on `S`. Compare `TauCeti.fwdDiffList_congr`, which is the
+case of nonnegative real steps and `S = [0, ∞)`. -/
+theorem fwdDiffList_congr_of_add_mem {S : Set M} {l : List M} {f g : M → G} {t : M}
+    (hS : ∀ h ∈ l, ∀ u ∈ S, u + h ∈ S) (ht : t ∈ S) (hfg : ∀ u ∈ S, f u = g u) :
+    fwdDiffList l f t = fwdDiffList l g t := by
+  induction l generalizing t with
+  | nil => simpa using hfg t ht
+  | cons h l ih =>
+      have hrest : ∀ k ∈ l, ∀ u ∈ S, u + k ∈ S := fun k hk => hS k (List.mem_cons_of_mem h hk)
+      simp only [fwdDiffList_cons, fwdDiff]
+      rw [ih hrest (hS h (by simp) t ht), ih hrest ht]
 
 variable {f g : ℝ → ℝ}
 

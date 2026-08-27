@@ -116,7 +116,7 @@ theorem pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith {μ : Measur
           Measure (ProbabilityMeasure α)).bind
           fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
   rw [deFinettiMeasure_toMeasure]
-  exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith (fun n => (hX n).aemeasurable) h
+  exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith h
 
 end Probability
 

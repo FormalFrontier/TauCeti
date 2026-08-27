@@ -73,6 +73,17 @@ theorem squarefree_prod_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscrimi
       (hi8.symm ▸ isEvenPrimeDiscriminant_neg_eight)
       (hj8.symm ▸ isEvenPrimeDiscriminant_eight)))
 
+/-- A product of the radicands of non-even prime discriminants is congruent to `1` modulo `4`,
+because the radicand of each such discriminant is. -/
+private theorem prod_primeDiscriminantRadicands_mod_four_eq_one_of_not_even
+    (hD : ∀ i ∈ S, IsPrimeDiscriminant (D i)) (hodd : ∀ i ∈ S, ¬ IsEvenPrimeDiscriminant (D i)) :
+    (∏ i ∈ S, primeDiscriminantRadicand (D i)) % 4 = 1 := by
+  rw [Finset.prod_int_mod,
+    Finset.prod_congr rfl fun i hi =>
+      (isEvenPrimeDiscriminant_or_primeDiscriminantRadicand_mod_four_eq_one
+        (hD i hi)).resolve_left (hodd i hi)]
+  simp
+
 /-- **Fundamental discriminant of a subset product of prime-discriminant radicands.** For a
 distinct family of prime discriminants with at most one even member,
 
@@ -99,15 +110,8 @@ theorem fundamentalDiscriminant_prod_primeDiscriminantRadicands
     have hrad : ∀ j ∈ S.erase i, primeDiscriminantRadicand (D j) = D j :=
       fun j hj => primeDiscriminantRadicand_eq_self_of_not_even
         (hD j (Finset.mem_of_mem_erase hj)) (hodd j hj)
-    have hterms : ∏ j ∈ S.erase i, D j % 4 = 1 := by
-      apply Finset.prod_eq_one
-      intro j hj
-      have h := (isEvenPrimeDiscriminant_or_primeDiscriminantRadicand_mod_four_eq_one
-        (hD j (Finset.mem_of_mem_erase hj))).resolve_left (hodd j hj)
-      rwa [hrad j hj] at h
-    have hoddmod : (∏ j ∈ S.erase i, primeDiscriminantRadicand (D j)) % 4 = 1 := by
-      rw [Finset.prod_congr rfl hrad, Finset.prod_int_mod, hterms]
-      norm_num
+    have hoddmod := prod_primeDiscriminantRadicands_mod_four_eq_one_of_not_even
+      (S := S.erase i) (fun j hj => hD j (Finset.mem_of_mem_erase hj)) hodd
     have hiMod := primeDiscriminantRadicand_mod_four_eq_three_or_two_of_even hiEven
     have hprodRad : (∏ j ∈ S, primeDiscriminantRadicand (D j)) =
         primeDiscriminantRadicand (D i) * ∏ j ∈ S.erase i,
@@ -138,15 +142,7 @@ theorem fundamentalDiscriminant_prod_primeDiscriminantRadicands
       fun i hi hiEven => hex ⟨i, hi, hiEven⟩
     have hrad : ∀ i ∈ S, primeDiscriminantRadicand (D i) = D i :=
       fun i hi => primeDiscriminantRadicand_eq_self_of_not_even (hD i hi) (hodd i hi)
-    have hterms : ∏ i ∈ S, D i % 4 = 1 := by
-      apply Finset.prod_eq_one
-      intro i hi
-      have h := (isEvenPrimeDiscriminant_or_primeDiscriminantRadicand_mod_four_eq_one
-        (hD i hi)).resolve_left (hodd i hi)
-      rwa [hrad i hi] at h
-    have hmod : (∏ i ∈ S, primeDiscriminantRadicand (D i)) % 4 = 1 := by
-      rw [Finset.prod_congr rfl hrad, Finset.prod_int_mod, hterms]
-      norm_num
+    have hmod := prod_primeDiscriminantRadicands_mod_four_eq_one_of_not_even hD hodd
     rw [fundamentalDiscriminant_of_mod_four_eq_one hmod, Finset.prod_congr rfl hrad]
 
 section Subfields

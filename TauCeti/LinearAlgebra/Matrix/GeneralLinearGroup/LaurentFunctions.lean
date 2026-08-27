@@ -9,7 +9,7 @@ module
 -- it; this module also re-exports `TauCeti.weightChar`.
 public import TauCeti.LinearAlgebra.Basis.DiagonalTorus.LaurentFunctions
 -- `TauCeti.diagGL`, the diagonal embedding of the torus points, and `TauCeti.det_diagGL`.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 -- `TauCeti.Matrix.GeneralLinearGroup.rationalFunctions`, restricted along `diagGL` below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.PolynomialFunctions
 

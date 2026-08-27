@@ -20,6 +20,8 @@ normal-subgroup condition for reductivity.
 
 * `TauCeti.semisimpleCommHopfAlgProperty.reductive`: every semisimple finite-type commutative Hopf
   algebra is reductive.
+* `TauCeti.semisimpleToReductiveCommHopfAlgFunctor`: the resulting fully faithful inclusion of
+  semisimple coordinate Hopf algebras into reductive ones.
 
 ## References
 
@@ -33,6 +35,8 @@ ReductiveGroups roadmap.
 public section
 
 namespace TauCeti
+
+open CategoryTheory
 
 universe u
 
@@ -55,6 +59,20 @@ theorem reductive (hH : semisimpleCommHopfAlgProperty k H) :
   exact hunipotent.2
 
 end semisimpleCommHopfAlgProperty
+
+/-- Semisimplicity is stronger than reductivity for finite-type commutative Hopf algebras. -/
+theorem semisimpleCommHopfAlgProperty_le_reductiveCommHopfAlgProperty
+    (k : Type u) [Field k] :
+    semisimpleCommHopfAlgProperty k ≤ reductiveCommHopfAlgProperty k :=
+  fun _ hH ↦ hH.reductive
+
+/-- The fully faithful inclusion of semisimple finite-type coordinate Hopf algebras into
+reductive finite-type coordinate Hopf algebras. -/
+noncomputable abbrev semisimpleToReductiveCommHopfAlgFunctor
+    (k : Type u) [Field k] :
+    SemisimpleCommHopfAlgCat.{u} k ⥤ ReductiveCommHopfAlgCat.{u} k :=
+  ObjectProperty.ιOfLE
+    (semisimpleCommHopfAlgProperty_le_reductiveCommHopfAlgProperty k)
 
 end
 

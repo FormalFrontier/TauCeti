@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
+public import TauCeti.Analysis.SpecialFunctions.Erf
 
 /-!
 # The lower incomplete gamma function
@@ -47,6 +48,8 @@ the parameter range.
   limits `Real.Gamma s` and `1` as `x → ∞`, with the resulting bounds
   `TauCeti.lowerIncompleteGamma_le_Gamma` and `TauCeti.regularizedGamma_le_one`;
 * `TauCeti.regularizedGamma_one` — `P(1, x) = 1 - e ^ (-x)` for `0 ≤ x`, the exponential cdf.
+* `TauCeti.Real.erf_eq_regularizedGamma_half_sq` — the error function is the regularized
+  incomplete gamma function of shape `1 / 2` after squaring, on the nonnegative half-line.
 
 ## Implementation
 
@@ -70,7 +73,8 @@ differentiable there for `s < 1`. The bridge is
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 2, the "Lower incomplete gamma"
   target.
 * *NIST Digital Library of Mathematical Functions*, [ch. 8](https://dlmf.nist.gov/8),
-  especially [§8.2](https://dlmf.nist.gov/8.2).
+  especially [§8.2](https://dlmf.nist.gov/8.2) for incomplete gamma functions and
+  [Eq. 8.4.1](https://dlmf.nist.gov/8.4.E1) for their relation with the error function.
 -/
 
 public section
@@ -373,6 +377,60 @@ theorem lowerIncompleteGamma_one (hx : 0 ≤ x) :
 @[simp]
 theorem regularizedGamma_one (hx : 0 ≤ x) : regularizedGamma 1 x = 1 - Real.exp (-x) := by
   rw [regularizedGamma_eq_div, lowerIncompleteGamma_one hx, Real.Gamma_one, div_one]
+
+/-! ### Relation with the error function -/
+
+/-- On the positive half-line, the regularized incomplete gamma function of shape `1 / 2`,
+composed with squaring, has the Gaussian derivative which defines the error function. -/
+theorem hasDerivAt_regularizedGamma_half_sq {x : ℝ} (hx : 0 < x) :
+    HasDerivAt (fun y : ℝ => regularizedGamma (1 / 2) (y ^ 2))
+      (2 / Real.sqrt Real.pi * Real.exp (-x ^ 2)) x := by
+  have hhalf : (0 : ℝ) < 1 / 2 := by norm_num
+  have hpow : (x ^ 2) ^ ((1 : ℝ) / 2 - 1) = x⁻¹ := by
+    rw [← Real.rpow_two x, ← Real.rpow_mul hx.le]
+    norm_num
+    rw [Real.rpow_neg hx.le, Real.rpow_one]
+  have hgamma : HasDerivAt (fun y : ℝ => regularizedGamma (1 / 2) (y ^ 2))
+      (((x ^ 2) ^ ((1 : ℝ) / 2 - 1) * Real.exp (-x ^ 2) / Real.Gamma (1 / 2)) *
+        (2 * x)) x := by
+    have houter := hasDerivAt_regularizedGamma (s := (1 : ℝ) / 2) (x := x ^ 2)
+      hhalf (sq_pos_of_pos hx)
+    have hinner := hasDerivAt_pow 2 x
+    simpa only [Function.comp_apply, Nat.reduceSub, pow_one] using!
+      houter.comp_of_eq x hinner rfl
+  convert hgamma using 1
+  rw [hpow, Real.Gamma_one_half_eq]
+  field_simp [hx.ne', Real.sqrt_ne_zero'.mpr Real.pi_pos]
+
+/-- For `0 ≤ x`, the error function is the regularized lower incomplete gamma function of shape
+`1 / 2` evaluated at `x²`. The restriction is necessary because the right-hand side is even,
+whereas the error function is odd. -/
+theorem Real.erf_eq_regularizedGamma_half_sq {x : ℝ} (hx : 0 ≤ x) :
+    Real.erf x = regularizedGamma (1 / 2) (x ^ 2) := by
+  let g : ℝ → ℝ := Real.erf - fun y => regularizedGamma (1 / 2) (y ^ 2)
+  have hgdiff : DifferentiableOn ℝ g (Set.Ioi 0) := fun y hy =>
+    ((Real.hasDerivAt_erf y).sub (hasDerivAt_regularizedGamma_half_sq hy)).differentiableAt
+      |>.differentiableWithinAt
+  have hgderiv : Set.EqOn (deriv g) 0 (Set.Ioi 0) := fun y hy => by
+    simpa [g] using
+      ((Real.hasDerivAt_erf y).sub (hasDerivAt_regularizedGamma_half_sq hy)).deriv
+  obtain ⟨c, hc⟩ :=
+    isOpen_Ioi.exists_is_const_of_deriv_eq_zero isPreconnected_Ioi hgdiff hgderiv
+  have hgcont : Continuous g :=
+    Real.continuous_erf.sub ((continuous_regularizedGamma _).comp (continuous_id.pow 2))
+  have hlim : Tendsto g (nhdsWithin 0 (Set.Ioi 0)) (𝓝 0) := by
+    have hg0 : g 0 = 0 := by simp [g]
+    have ht : Tendsto g (nhdsWithin 0 (Set.Ioi 0)) (𝓝 (g 0)) :=
+      hgcont.continuousAt.mono_left inf_le_left
+    simpa only [hg0] using ht
+  have heq : g =ᶠ[nhdsWithin 0 (Set.Ioi 0)] fun _ => c := by
+    filter_upwards [self_mem_nhdsWithin] with y hy
+    exact hc y hy
+  have hc0 : c = 0 :=
+    tendsto_nhds_unique (Tendsto.congr' heq.symm tendsto_const_nhds) hlim
+  rcases hx.eq_or_lt with rfl | hx
+  · simp
+  · exact sub_eq_zero.mp (by simpa [g] using (hc x hx).trans hc0)
 
 end TauCeti
 

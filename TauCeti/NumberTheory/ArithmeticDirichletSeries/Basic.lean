@@ -46,6 +46,8 @@ special coefficient systems on this general carrier, not replacements for it.
 
 ## References
 
+* `TauCetiRoadmap/ArithmeticDirichletSeries/Suggested.lean`, whose Layer 0.1 nonzero-ideal
+  carrier and zero-extension design are adapted here.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters II--III.
 -/
@@ -71,12 +73,43 @@ namespace IdealArithmeticFunction
 
 variable {K}
 
+/-- An ideal arithmetic function is multiplicative when it takes the unit ideal to `1` and
+respects products of relatively prime nonzero ideals. This is weaker than the complete
+multiplicativity carried by `MultiplicativeIdealWeight`. -/
+structure IsMultiplicative (f : IdealArithmeticFunction K) : Prop where
+  /-- A multiplicative ideal arithmetic function takes the unit ideal to `1`. -/
+  map_one : f 1 = 1
+  /-- A multiplicative ideal arithmetic function respects products of relatively prime ideals. -/
+  map_mul_of_isRelPrime {I J : (Ideal (𝓞 K))⁰}
+    (hIJ : IsRelPrime (I : Ideal (𝓞 K)) (J : Ideal (𝓞 K))) : f (I * J) = f I * f J
+
+/-- The everywhere-one ideal arithmetic function is multiplicative. -/
+theorem isMultiplicative_one : IsMultiplicative (1 : IdealArithmeticFunction K) := by
+  constructor <;> simp
+
+/-- Pointwise products of multiplicative ideal arithmetic functions are multiplicative. -/
+theorem IsMultiplicative.mul {f g : IdealArithmeticFunction K}
+    (hf : f.IsMultiplicative) (hg : g.IsMultiplicative) : (f * g).IsMultiplicative := by
+  refine ⟨by simp [hf.map_one, hg.map_one], fun hIJ ↦ ?_⟩
+  rw [Pi.mul_apply, Pi.mul_apply, Pi.mul_apply, hf.map_mul_of_isRelPrime hIJ,
+    hg.map_mul_of_isRelPrime hIJ]
+  ring
+
+/-- Complex conjugation preserves multiplicativity of ideal arithmetic functions. -/
+theorem IsMultiplicative.star {f : IdealArithmeticFunction K} (hf : f.IsMultiplicative) :
+    (star f).IsMultiplicative := by
+  refine ⟨by simp [hf.map_one], fun hIJ ↦ ?_⟩
+  simp only [Pi.star_apply, hf.map_mul_of_isRelPrime hIJ, star_mul']
+
 /-- Extend an ideal arithmetic function to all integral ideals by assigning zero to `⊥`.
 
 Use `zeroExtend_bot` and `zeroExtend_coe` to simplify its two characteristic cases, rather than
 unfolding this definition. -/
 noncomputable def zeroExtend (f : IdealArithmeticFunction K) : Ideal (𝓞 K) → ℂ := fun I =>
   Function.extend Subtype.val f 0 I
+
+private theorem zeroExtend_eq_extend (f : IdealArithmeticFunction K) :
+    f.zeroExtend = Function.extend Subtype.val f 0 := (rfl)
 
 /-- Restrict a function on all integral ideals to the nonzero ideals. -/
 def restrict (g : Ideal (𝓞 K) → ℂ) : IdealArithmeticFunction K := fun I => g I
@@ -168,42 +201,42 @@ theorem zeroExtend_ne_zero (f : IdealArithmeticFunction K) (hf : ∀ I, f I ≠ 
 /-- Zero extension preserves the pointwise zero function. -/
 @[simp]
 theorem zeroExtend_zero : zeroExtend (0 : IdealArithmeticFunction K) = 0 := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_zero (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)))
 
 /-- Zero extension preserves pointwise addition. -/
 @[simp]
 theorem zeroExtend_add (f g : IdealArithmeticFunction K) :
     zeroExtend (f + g) = f.zeroExtend + g.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_add (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f g 0 0)
 
 /-- Zero extension preserves pointwise negation. -/
 @[simp]
 theorem zeroExtend_neg (f : IdealArithmeticFunction K) : zeroExtend (-f) = -f.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_neg (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f 0)
 
 /-- Zero extension preserves pointwise subtraction. -/
 @[simp]
 theorem zeroExtend_sub (f g : IdealArithmeticFunction K) :
     zeroExtend (f - g) = f.zeroExtend - g.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_sub (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f g 0 0)
 
 /-- Zero extension preserves pointwise complex scalar multiplication. -/
 @[simp]
 theorem zeroExtend_smul (c : ℂ) (f : IdealArithmeticFunction K) :
     zeroExtend (c • f) = c • f.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_smul c (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f 0)
 
 /-- Zero extension preserves pointwise multiplication. -/
 @[simp]
 theorem zeroExtend_mul (f g : IdealArithmeticFunction K) :
     zeroExtend (f * g) = f.zeroExtend * g.zeroExtend := by
-  funext I
-  by_cases hI : I = ⊥ <;> simp [hI]
+  simpa [zeroExtend_eq_extend] using
+    (Function.extend_mul (Subtype.val : (Ideal (𝓞 K))⁰ → Ideal (𝓞 K)) f g 0 0)
 
 /-- **Rejection test.** The everywhere-one function on *all* integral ideals is not the zero
 extension of any ideal arithmetic function, since its value at `⊥` is one rather than zero. This

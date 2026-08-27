@@ -12,6 +12,7 @@ import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Naturality
 import TauCeti.Algebra.AlgebraicGroup.Unipotent.ClosedSubgroup
 import TauCeti.Algebra.AlgebraicGroup.UpperUnitriangular.Unipotent
 import TauCeti.Algebra.Coalgebra.Comodule.PointAction
+import TauCeti.Algebra.Coalgebra.Comodule.Transport
 import TauCeti.CategoryTheory.Comma.Over
 import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Kolchin
 
@@ -65,15 +66,17 @@ namespace TauCeti
 
 open AlgebraicGeometry CategoryTheory WithConv
 
-universe u
+universe u v w
 
 noncomputable section
 
-variable {k H M : Type u}
+namespace Comodule
+
+section IndependentUniverses
+
+variable {k : Type u} {H : Type v} {M : Type w}
 variable [Field k] [CommRing H] [HopfAlgebra k H]
 variable [AddCommGroup M] [Module k M] [Comodule k H M]
-
-namespace Comodule
 
 /-- If every point acts nilpotently minus the identity on a given comodule over a reduced
 finite-type commutative Hopf algebra over an algebraically closed field, then that comodule has a
@@ -108,10 +111,20 @@ theorem hasNonzeroFixedVector_of_forall_isUnipotentPoint
     [FiniteDimensional k M] [Nontrivial M]
     (hH : ∀ g : WithConv (H →ₐ[k] k), HopfAlgebra.IsUnipotentPoint g) :
     HasNonzeroFixedVector k H M := by
-  apply hasNonzeroFixedVector_of_forall_isNilpotent_endOfPoint_sub_one
-  intro g
-  exact (HopfAlgebra.isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one g).mp
-    (hH g) (FGComoduleCat.of (R := k) (C := H) M)
+  let e : M ≃ₗ[k] (Fin (Module.finrank k M) → k) := (Module.finBasis k M).equivFun
+  let _ : Comodule k H (Fin (Module.finrank k M) → k) := Comodule.Transport e
+  let _ : Nontrivial (Fin (Module.finrank k M) → k) := e.symm.toEquiv.nontrivial
+  have hfixed : HasNonzeroFixedVector k H (Fin (Module.finrank k M) → k) :=
+    hasNonzeroFixedVector_of_forall_isNilpotent_endOfPoint_sub_one fun g ↦
+      (HopfAlgebra.isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one g).mp
+        (hH g) (FGComoduleCat.of (R := k) (C := H) (Fin (Module.finrank k M) → k))
+  obtain ⟨v, hv, hvc⟩ := (hasNonzeroFixedVector_iff (k := k) (H := H)).mp hfixed
+  refine (hasNonzeroFixedVector_iff (k := k) (H := H)).mpr
+    ⟨e.symm v, e.symm.map_ne_zero_iff.mpr hv, ?_⟩
+  have hmap := (Comodule.transportInvHom (R := k) (C := H) e).map_coact_apply v
+  rw [hvc] at hmap
+  simpa only [Comodule.transportInvHom_apply, Comodule.transportInvHom_toLinearMap,
+    LinearEquiv.coe_coe, TensorProduct.map_tmul, LinearMap.id_apply] using hmap.symm
 
 /-- If all points are unipotent, every finite-dimensional comodule has a basis with upper
 unitriangular coefficient matrix. -/
@@ -123,6 +136,12 @@ theorem exists_basis_coefficientMatrix_isUpperUnitriangular_of_forall_isUnipoten
       (coefficientMatrix (C := H) b).IsUpperUnitriangular :=
   exists_basis_coefficientMatrix_isUpperUnitriangular_of_fixed_vectors fun V _ _ _ _ _ ↦
     hasNonzeroFixedVector_of_forall_isUnipotentPoint (M := V) hH
+
+end IndependentUniverses
+
+variable {k H M : Type u}
+variable [Field k] [CommRing H] [HopfAlgebra k H]
+variable [AddCommGroup M] [Module k M] [Comodule k H M]
 
 namespace upperUnitriangularCoordinateGroupSchemeHom
 
@@ -156,6 +175,11 @@ namespace geometricallyUnipotentPointsCommHopfAlgProperty
 
 open Comodule Comodule.upperUnitriangularCoordinateGroupSchemeHom
 
+section IndependentUniverses
+
+variable {k : Type u} {H : Type v}
+variable [Field k] [CommRing H] [HopfAlgebra k H]
+
 /-- Geometric unipotence implies that every point valued in the ground field is unipotent. -/
 theorem forall_isUnipotentPoint
     (hH : geometricallyUnipotentPointsCommHopfAlgProperty k (CommHopfAlgCat.of k H)) :
@@ -166,6 +190,12 @@ theorem forall_isUnipotentPoint
     (CommHopfAlgCat.of k H)).mp hH
   exact (HopfAlgebra.isUnipotentPoint_mapValue_iff_of_injective g φ φ.injective).mp
     (hgeom (AlgHom.mapValue (H := H) φ g))
+
+end IndependentUniverses
+
+variable {k H M : Type u}
+variable [Field k] [CommRing H] [HopfAlgebra k H]
+variable [AddCommGroup M] [Module k M] [Comodule k H M]
 
 /-- A closed immersion given by an upper-unitriangular comodule makes the represented affine group
 geometrically unipotent. -/

@@ -44,6 +44,8 @@ subgroups differ, and it is the stabiliser, not the kernel, that the classificat
 
 ## Main declarations
 
+* `TauCeti.coveringFiberEquiv`: monodromy along a homotopy class of paths is a bijection between
+  the fibres over its endpoints.
 * `TauCeti.IsCoveringMap.monodromy_eq_self_iff_mem_range`: a loop class of the base fixes the
   chosen lift under monodromy exactly when it is the image of a loop class of the cover.
 * `TauCeti.IsCoveringMap.stabilizer_eq_range`: the same statement for the monodromy
@@ -77,6 +79,21 @@ public section
 namespace TauCeti
 
 variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X] {p : E → X} {x : X}
+
+/-! ### Monodromy as a bijection between fibres -/
+
+/-- **Monodromy along a homotopy class of paths is a bijection between the fibres** over its
+endpoints. It is `IsCoveringMap.monodromy`, whose bijectivity Mathlib records, packaged as an
+equivalence. -/
+noncomputable def coveringFiberEquiv (hp : IsCoveringMap p) {x y : X}
+    (γ : Path.Homotopic.Quotient x y) : ↥(p ⁻¹' {x}) ≃ ↥(p ⁻¹' {y}) :=
+  Equiv.ofBijective _ (hp.monodromy_bijective γ)
+
+@[simp]
+theorem coveringFiberEquiv_apply (hp : IsCoveringMap p) {x y : X}
+    (γ : Path.Homotopic.Quotient x y) (e : ↥(p ⁻¹' {x})) :
+    coveringFiberEquiv hp γ e = hp.monodromy γ e :=
+  Equiv.ofBijective_apply _ _ _
 
 namespace IsCoveringMap
 

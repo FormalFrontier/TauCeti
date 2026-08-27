@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 -- The ambient root subgroup supplies the matrix calculation and the named `GLₙ` presentation.
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup
 -- The special-linear scheme supplies the group scheme, inclusion, and scheme points.
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Scheme
 
@@ -115,12 +115,6 @@ theorem mapValue_rootSubgroupPoints (φ : A →ₐ[R] B) (hij : i ≠ j)
       rootSubgroupPoints hij
         (AlgHom.mapValue (H := AdditiveGroup.coordinateHopfAlgebra R) φ f) := by
   apply (pointsMulEquiv (R := R) (A := B) N).injective
-  -- `AlgHom.mapValue` and `HopfAlgebra.mapPoints` expose the same postcomposition map, but there
-  -- is no comparison lemma between the bundled applications; restate it in the form used by the
-  -- public naturality theorem `pointsMulEquiv_mapValue`.
-  change (pointsMulEquiv (R := R) (A := B) N)
-      (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R N)
-        (CommAlgCat.ofHom φ) (rootSubgroupPoints hij f)) = _
   rw [pointsMulEquiv_mapValue,
     pointsMulEquiv_rootSubgroupPoints,
     pointsMulEquiv_rootSubgroupPoints, Matrix.SpecialLinearGroup.map_transvection,

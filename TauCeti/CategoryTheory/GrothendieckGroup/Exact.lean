@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.CategoryTheory.Exact.Equivalence
+public import TauCeti.CategoryTheory.Exact.ExtensionClosed
 public import TauCeti.CategoryTheory.Exact.Split
 public import TauCeti.CategoryTheory.GrothendieckGroup.Presentation
 public import TauCeti.CategoryTheory.GrothendieckGroup.Split
@@ -172,6 +173,26 @@ theorem of_eq_add_of_conflation {X Y Z : C} {i : X ⟶ Y} {p : Y ⟶ Z} (zero : 
     (hS : E.Conflation (ShortComplex.mk i p zero)) : (of Y : ExactK0 E) = of X + of Z :=
   of_conflation hS
 
+omit [EssentiallySmall.{w} C] in
+/-- An ambient conflation whose outer terms satisfy an extension-closed property gives the
+defining relation in the exact `K₀` of the induced full subcategory. -/
+theorem of_conflation_fullSubcategory {P : ObjectProperty C} [LocallySmall.{w} C]
+    [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
+    [P.IsClosedUnderBinaryProducts] (hP : E.IsExtensionClosed P)
+    {S : ShortComplex C} (hS : E.Conflation S)
+    (h₁ : P S.X₁) (h₃ : P S.X₃) :
+    (of ⟨S.X₂, hP.prop_X₂ hS h₁ h₃⟩ : ExactK0 (E.fullSubcategory P hP)) =
+      of ⟨S.X₁, h₁⟩ + of ⟨S.X₃, h₃⟩ := by
+  have hzero : (ObjectProperty.homMk S.f :
+        (⟨S.X₁, h₁⟩ : P.FullSubcategory) ⟶ ⟨S.X₂, hP.prop_X₂ hS h₁ h₃⟩) ≫
+      (ObjectProperty.homMk S.g :
+        (⟨S.X₂, hP.prop_X₂ hS h₁ h₃⟩ : P.FullSubcategory) ⟶ ⟨S.X₃, h₃⟩) = 0 :=
+    ObjectProperty.hom_ext _ S.zero
+  refine of_eq_add_of_conflation hzero ?_
+  rw [ExactStructure.fullSubcategory_conflation_iff]
+  convert hS using 1
+  rfl
+
 /-- The class of the subobject of a conflation is the difference of the other two classes. -/
 theorem of_eq_sub_of_conflation {S : ShortComplex C} (hS : E.Conflation S) :
     (of S.X₁ : ExactK0 E) = of S.X₂ - of S.X₃ := by
@@ -183,6 +204,25 @@ biproduct conflations. -/
 @[simp]
 theorem of_biprod (X Z : C) : (of (X ⊞ Z) : ExactK0 E) = of X + of Z :=
   of_conflation (E.conflation_biprodShortComplex X Z)
+
+section FullSubcategory
+
+variable {P : ObjectProperty C} [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
+
+omit [EssentiallySmall.{w} C] in
+/-- The class of an explicitly presented ambient biproduct in the exact `K₀` of an induced full
+subcategory is the sum of the classes of its summands. The middle object is the one supplied by
+closure under binary products; by proof irrelevance the statement applies to any presentation of
+it. -/
+theorem of_biprod_fullSubcategory [LocallySmall.{w} C]
+    [ObjectProperty.EssentiallySmall.{w} P] (hP : E.IsExtensionClosed P) {X Y : C}
+    (hX : P X) (hY : P Y) :
+    (of ⟨X ⊞ Y, P.prop_biprod_of_isClosedUnderBinaryProducts hX hY⟩ :
+        ExactK0 (E.fullSubcategory P hP)) =
+      of ⟨X, hX⟩ + of ⟨Y, hY⟩ :=
+  of_conflation_fullSubcategory hP (E.conflation_biprodShortComplex X Y) hX hY
+
+end FullSubcategory
 
 /-- The class of an object which is zero vanishes. -/
 @[simp]

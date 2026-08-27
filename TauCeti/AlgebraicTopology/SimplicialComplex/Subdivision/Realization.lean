@@ -34,6 +34,8 @@ The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear To
 
 * `AbstractSimplicialComplex.barycentricSubdivisionRealizationMap_vertex`: a subdivision vertex
   maps to the barycenter of the face it represents.
+* `AbstractSimplicialComplex.barycentricSubdivisionLinearMap_apply`: the coordinates of a linear
+  combination of face barycenters.
 -/
 
 public section
@@ -70,6 +72,15 @@ theorem barycentricSubdivisionLinearMap_single (K : AbstractSimplicialComplex ι
     (σ : Face K) :
     barycentricSubdivisionLinearMap K (Finsupp.single σ 1) = faceBarycenter K σ := by
   simp [barycentricSubdivisionLinearMap]
+
+/-- The coordinates of a linear combination of face barycenters. -/
+theorem barycentricSubdivisionLinearMap_apply (K : AbstractSimplicialComplex ι)
+    (a : Face K →₀ ℝ) (v : ι) :
+    barycentricSubdivisionLinearMap K a v =
+      ∑ σ ∈ a.support, a σ * if v ∈ σ.1 then (σ.1.card : ℝ)⁻¹ else 0 := by
+  rw [barycentricSubdivisionLinearMap, Finsupp.linearCombination_apply, Finsupp.sum,
+    Finset.sum_apply']
+  simp only [Finsupp.smul_apply, smul_eq_mul, faceBarycenter_apply]
 
 private theorem barycentricSubdivisionLinearMap_mem_closedSimplex
     (K : AbstractSimplicialComplex ι) {ρ : Finset (Face K)} (σ : Face K)

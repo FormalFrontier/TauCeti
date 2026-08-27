@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Geometry.Hodge.Decomposition
 public import TauCeti.Geometry.Hodge.Morphism
-public import TauCeti.Geometry.Hodge.Tate
+public import TauCeti.Geometry.Hodge.Tate.Basic
 
 /-!
 # The Weil operator of a pure Hodge structure

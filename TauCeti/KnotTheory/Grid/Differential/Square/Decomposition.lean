@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.KnotTheory.Grid.Differential.Square.Support
 public import TauCeti.KnotTheory.Grid.Rectangle.Swap
 
 /-!
@@ -27,6 +28,8 @@ between two given states is determined by its side columns.
 
 * `TauCeti.GridRectangleDecomposition.ext`: a decomposition is determined by the ordered side
   columns of its two rectangles.
+* `TauCeti.GridRectangleDecomposition.target_mem_twoStepColumnSwapNeighbors`: the target of a
+  decomposition is reached from its source by two nontrivial column transpositions.
 
 ## References
 
@@ -78,6 +81,17 @@ theorem ext {D E : GridRectangleDecomposition x z}
             GridRectangleBetween.eq_of_sides hsecondLeft hsecondRight
           subst Esecond
           rfl
+
+/-- The target of a two-step rectangle decomposition is a two-step column-swap neighbour of its
+source: each of the two rectangles transposes its pair of distinct side columns. -/
+theorem target_mem_twoStepColumnSwapNeighbors (D : GridRectangleDecomposition x z) :
+    z ∈ x.twoStepColumnSwapNeighbors :=
+  GridState.mem_twoStepColumnSwapNeighbors.mpr
+    ⟨D.middle,
+      GridState.mem_columnSwapNeighbors.mpr
+        ⟨D.first.left, D.first.right, D.first.left_ne_right, D.first.target_eq_swapColumns⟩,
+      GridState.mem_columnSwapNeighbors.mpr
+        ⟨D.second.left, D.second.right, D.second.left_ne_right, D.second.target_eq_swapColumns⟩⟩
 
 end GridRectangleDecomposition
 

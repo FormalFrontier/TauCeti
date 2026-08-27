@@ -346,6 +346,11 @@ theorem split_isDeflation_iff {Y Z : C} (p : Y ⟶ Z) :
     (ExactStructure.split C).IsDeflation p ↔ ∃ (X : C) (e : Y ≅ X ⊞ Z), e.inv ≫ p = biprod.snd :=
   ConflationClass.split_isDeflation_iff p
 
+/-- Every deflation of the split exact structure is a split epimorphism. -/
+theorem isSplitEpi_of_split_isDeflation {Y Z : C} {p : Y ⟶ Z}
+    (hp : (ExactStructure.split C).IsDeflation p) : IsSplitEpi p :=
+  ConflationClass.isSplitEpi_of_split_isDeflation hp
+
 /-- In every exact structure the biproduct short complex `X ⟶ X ⊞ Z ⟶ Z` is a conflation.
 
 No exact structure can therefore omit a biproduct decomposition. This is the key step of

@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.CategoryTheory.Projective.Cover
 public import TauCeti.RepresentationTheory.Quiver.Representation.Comparison
 
 /-!
@@ -38,9 +39,14 @@ is the composite of that generation lemma with the line lemma.
 
 Two consequences package the cover: the comparison morphism admits no endomorphism of `Pᵢ` over
 `Sᵢ` other than the identity (rigidity), and every projective representation mapping onto `Sᵢ`
-has `Pᵢ` as a direct summand (minimality). Rigidity is an ingredient of the uniqueness of "the"
-projective cover, not that uniqueness itself: that any two projective covers of `Sᵢ` are
-isomorphic over `Sᵢ` is a statement about two different covers, and is not proved here.
+has `Pᵢ` as a direct summand (minimality). They stand in different relations to the general
+theory. Rigidity *sharpens* it: `TauCeti.IsEssentialEpi.isIso_of_comp_eq` concludes only that such
+an endomorphism is an isomorphism, while here it is the identity. Minimality is an instantiation
+rather than a sharpening — the general split-factorization statement
+`TauCeti.IsEssentialEpi.exists_comp_eq_and_isSplitEpi` read at `Pᵢ ↠ Sᵢ`. Uniqueness — that any
+two projective covers of `Sᵢ` are isomorphic over `Sᵢ`, so `Pᵢ` is *the* projective cover of
+`Sᵢ` — is the general categorical statement
+`TauCeti.IsEssentialEpi.exists_iso`, instantiated here at `Pᵢ ↠ Sᵢ`.
 
 The cover is stated in the category of representations, not through the module-level
 `TauCeti.IsProjectiveCover`. It is the categorical reading of the *same* condition: over an
@@ -72,9 +78,13 @@ here.
   already a *split* epimorphism — so `Pᵢ` is the projective cover of `Sᵢ`.
 * `TauCeti.eq_id_of_comp_indecProjRepToSimpleRep_eq_self`: the cover is rigid — an endomorphism of
   `Pᵢ` commuting with it is the identity.
+* `TauCeti.isEssentialEpi_indecProjRepToSimpleRep`: the cover packaged as a
+  `TauCeti.IsEssentialEpi`, the form the general theory consumes.
 * `TauCeti.exists_comp_indecProjRepToSimpleRep_eq_and_isSplitEpi`: the cover is minimal — every
   projective representation mapping onto `Sᵢ` retracts onto `Pᵢ`, by a retraction that factors the
   given map through the cover.
+* `TauCeti.exists_iso_indecProjRep`: **the cover is unique** — every projective cover of `Sᵢ` is
+  isomorphic to `Pᵢ` over `Sᵢ`.
 
 ## References
 
@@ -160,9 +170,9 @@ theorem epi_of_epi_comp_indecProjRepToSimpleRep {i : Q}
 
 /-- **The cover is rigid**: with no nontrivial path `i → i`, an endomorphism of `Pᵢ` commuting
 with `Pᵢ ↠ Sᵢ` is the identity, not merely an isomorphism; in particular `Pᵢ ↠ Sᵢ` admits no
-automorphism over `Sᵢ` other than the identity. Rigidity is an ingredient of the uniqueness of
-"the" projective cover; uniqueness itself — that any two projective covers of `Sᵢ` are isomorphic
-over `Sᵢ` — is a statement about two different covers and is not proved here. -/
+automorphism over `Sᵢ` other than the identity. This is sharper than what an arbitrary projective
+cover gives, `TauCeti.IsEssentialEpi.isIso_of_comp_eq` concluding only that such an endomorphism is
+an isomorphism. -/
 theorem eq_id_of_comp_indecProjRepToSimpleRep_eq_self {i : Q}
     (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
     (f : indecProjRep k Q i ⟶ indecProjRep k Q i)
@@ -173,18 +183,35 @@ theorem eq_id_of_comp_indecProjRepToSimpleRep_eq_self {i : Q}
   rw [← indecProjRepHomEquiv_apply, ← indecProjRepHomEquiv_comp, hf,
     indecProjRepHomEquiv_apply, indecProjRepToSimpleRep_app_nil]
 
+/-- **`Pᵢ ↠ Sᵢ` is a projective cover**, packaged as a `TauCeti.IsEssentialEpi`: it is an
+epimorphism (`TauCeti.epi_indecProjRepToSimpleRep`) and essential
+(`TauCeti.epi_of_epi_comp_indecProjRepToSimpleRep`). Together with
+`TauCeti.projective_indecProjRep` this is the hypothesis the general theory of projective covers
+consumes. -/
+theorem isEssentialEpi_indecProjRepToSimpleRep {i : Q}
+    (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil) :
+    IsEssentialEpi (indecProjRepToSimpleRep k i) where
+  epi := inferInstance
+  epi_of_epi_comp g hg := epi_of_epi_comp_indecProjRepToSimpleRep k h g hg
+
 /-- **The cover is minimal**: with no nontrivial path `i → i`, every projective representation
 mapping onto `Sᵢ` retracts onto `Pᵢ`, so `Pᵢ` is a direct summand of it. The retraction is
-produced over the given map, factoring it through the cover. Projectivity lifts the map to `Pᵢ`
-along the cover, and `TauCeti.isSplitEpi_of_epi_comp_indecProjRepToSimpleRep` splits the lift. -/
+produced over the given map, factoring it through the cover. This is the general minimality
+statement `TauCeti.IsEssentialEpi.exists_comp_eq_and_isSplitEpi` read at `Pᵢ ↠ Sᵢ`. -/
 theorem exists_comp_indecProjRepToSimpleRep_eq_and_isSplitEpi {i : Q}
     (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
     {X : QuiverRep k Q} [Projective X] (f : X ⟶ simpleRep k Q i) (hf : Epi f) :
-    ∃ g : X ⟶ indecProjRep k Q i, g ≫ indecProjRepToSimpleRep k i = f ∧ IsSplitEpi g := by
-  have hcomp : Projective.factorThru f (indecProjRepToSimpleRep k i)
-      ≫ indecProjRepToSimpleRep k i = f := Projective.factorThru_comp _ _
-  refine ⟨_, hcomp, isSplitEpi_of_epi_comp_indecProjRepToSimpleRep k h _ ?_⟩
-  rw [hcomp]
-  exact hf
+    ∃ g : X ⟶ indecProjRep k Q i, g ≫ indecProjRepToSimpleRep k i = f ∧ IsSplitEpi g :=
+  (isEssentialEpi_indecProjRepToSimpleRep k h).exists_comp_eq_and_isSplitEpi hf
+
+/-- **The projective cover of `Sᵢ` is `Pᵢ`, uniquely.** With no nontrivial path `i → i`, every
+projective cover of the vertex simple `Sᵢ` — every essential epimorphism onto it from a projective
+representation — is isomorphic to `Pᵢ ↠ Sᵢ` by an isomorphism over `Sᵢ`. This is what makes `Pᵢ`
+*the* projective cover of `Sᵢ`, and it is the general uniqueness statement
+`TauCeti.IsEssentialEpi.exists_iso` read at the vertex cover. -/
+theorem exists_iso_indecProjRep {i : Q} (h : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
+    {X : QuiverRep k Q} [Projective X] {π : X ⟶ simpleRep k Q i} (hπ : IsEssentialEpi π) :
+    ∃ e : indecProjRep k Q i ≅ X, e.hom ≫ π = indecProjRepToSimpleRep k i :=
+  (isEssentialEpi_indecProjRepToSimpleRep k h).exists_iso hπ
 
 end TauCeti

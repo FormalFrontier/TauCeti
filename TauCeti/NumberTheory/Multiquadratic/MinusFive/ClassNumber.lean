@@ -6,11 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.ClassNumber
-public import Mathlib.RingTheory.AdjoinRoot
+public import TauCeti.NumberTheory.Multiquadratic.MinusFive.Basic
 import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
+import TauCeti.NumberTheory.NumberField.Quadratic.RamifiedPrimesClassGroup
 import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
-import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
-import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
@@ -149,12 +148,8 @@ private theorem minkowski_bound_lt_three
   have hfin : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
   have _ : IsTotallyComplex K :=
     isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin (by norm_num)
-  have hreal : InfinitePlace.nrRealPlaces K = 0 :=
-    NumberField.IsTotallyComplex.nrRealPlaces_eq_zero K
-  have hcomplex : InfinitePlace.nrComplexPlaces K = 1 := by
-    have hsignature := InfinitePlace.card_add_two_mul_card_eq_rank K
-    rw [hreal, hfin] at hsignature
-    omega
+  have hcomplex : InfinitePlace.nrComplexPlaces K = 1 :=
+    InfinitePlace.nrComplexPlaces_eq_one_of_finrank_eq_two hfin
   have hdisc := discr_eq_neg_twenty hmin hgen
   have hsqrt : Real.sqrt 20 < 9 / 2 := by
     rw [Real.sqrt_lt' (by norm_num)]
@@ -232,25 +227,8 @@ theorem classNumber_eq_two_of_minpoly_eq_X_sq_add_five
     exact (ClassGroup.mk0_eq_one_iff (mem_nonZeroDivisors_of_ne_zero hPne)).mp
       (by simpa [P0] using h)
   have hM := minkowski_bound_lt_three hmin hgen
-  have hclasses : ∀ C : ClassGroup (𝓞 K), C = 1 ∨ C = ClassGroup.mk0 P0 := by
-    intro C
-    obtain ⟨I, hIC, hIle⟩ := NumberField.exists_ideal_in_class_of_norm_le C
-    have hIlt : (I.1.absNorm : ℝ) < 3 := hIle.trans_lt hM
-    have hIleTwo : I.1.absNorm ≤ 2 := by
-      exact_mod_cast (Nat.lt_succ_iff.mp (by exact_mod_cast hIlt))
-    have hIpos : 0 < I.1.absNorm := absNorm_pos_of_nonZeroDivisors I
-    rcases (by omega : I.1.absNorm = 1 ∨ I.1.absNorm = 2) with hnorm | hnorm
-    · left
-      rw [← hIC]
-      exact (ClassGroup.mk0_eq_one_iff I.2).mpr <| by
-        rw [Ideal.absNorm_eq_one_iff.mp hnorm]
-        exact top_isPrincipal
-    · right
-      rw [← hIC]
-      have hIP : I.1 = P :=
-        eq_of_absNorm_eq_of_mem_ramifiedPrimes hfin hram P I.1 hnorm
-      apply congrArg ClassGroup.mk0
-      exact Subtype.ext hIP
+  have hclasses : ∀ C : ClassGroup (𝓞 K), C = 1 ∨ C = ClassGroup.mk0 P0 :=
+    class_eq_one_or_eq_classGroupMk0_primeAboveTwo_of_minkowskiBound_lt_three hfin hram hM P
   have hupper : NumberField.classNumber K ≤ 2 := by
     rw [NumberField.classNumber]
     calc
@@ -265,35 +243,12 @@ theorem classNumber_eq_two_of_minpoly_eq_X_sq_add_five
     exact Fintype.one_lt_card
   omega
 
-local instance : Fact (Irreducible (X ^ 2 - C (-5 : ℚ))) := ⟨by
-  exact (X_pow_sub_C_irreducible_iff_of_prime Nat.prime_two).mpr
-    (fun q _ => by nlinarith [sq_nonneg q])⟩
-
 /-- **Worked example.** The concrete number field `AdjoinRoot (X² + 5)`, modelling `ℚ(√-5)`,
 has class number `2`. -/
 @[simp]
 theorem classNumber_adjoinRoot_sqrt_neg_five_eq_two :
     NumberField.classNumber (AdjoinRoot (X ^ 2 - C (-5 : ℚ))) = 2 := by
-  let K := AdjoinRoot (X ^ 2 - C (-5 : ℚ))
-  let x : K := AdjoinRoot.root (X ^ 2 - C (-5 : ℚ))
-  have hx : x ^ 2 = algebraMap ℤ K (-5 : ℤ) := by
-    have hroot := AdjoinRoot.eval₂_root (X ^ 2 - C (-5 : ℚ))
-    rw [eval₂_sub, eval₂_pow, eval₂_X, eval₂_C, ← AdjoinRoot.algebraMap_eq, sub_eq_zero] at hroot
-    rw [hroot, IsScalarTower.algebraMap_apply ℤ ℚ K]
-    norm_num
-  let θ : 𝓞 K := integralSqrt hx
-  have hmin : minpoly ℤ θ = X ^ 2 - C (-5 : ℤ) :=
-    minpoly_integralSqrt hx (fun ⟨q, hq⟩ => by
-      norm_num at hq
-      nlinarith [mul_self_nonneg q])
-  have hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤ := by
-    have hfne : (X ^ 2 - C (-5 : ℚ)) ≠ 0 :=
-      (monic_X_pow_sub_C (-5 : ℚ) (by norm_num)).ne_zero
-    have hpb := (AdjoinRoot.powerBasis (f := X ^ 2 - C (-5 : ℚ)) hfne).adjoin_gen_eq_top
-    rw [AdjoinRoot.powerBasis_gen] at hpb
-    have hθx : (θ : K) = x := algebraMap_integralSqrt hx
-    rw [hθx]
-    exact hpb
+  obtain ⟨θ, hmin, hgen⟩ := exists_minpoly_eq_X_sq_add_five_and_adjoin_eq_top
   exact classNumber_eq_two_of_minpoly_eq_X_sq_add_five hmin hgen
 
 end TauCeti.NumberField

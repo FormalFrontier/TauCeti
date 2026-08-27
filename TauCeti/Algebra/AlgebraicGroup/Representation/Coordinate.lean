@@ -5,7 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.RingTheory.Coalgebra.CoassocSimps
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.HopfAlgebra
+public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Matrix
 import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 import TauCeti.Algebra.HopfAlgebra.Basic
@@ -34,6 +36,9 @@ faithful-representation criterion identifies with a closed immersion into `GLₙ
 * `TauCeti.Comodule.coordinateBialgHom_X`: the coordinate morphism sends the generic entry
   `Xᵢⱼ` to the corresponding coefficient-matrix entry.
 * `TauCeti.Comodule.coordinateBialgHom_antipode_X`: its value on the antipode generators.
+* `TauCeti.Comodule.coordinateBialgHom_corestrict`: its compatibility with corestriction.
+* `TauCeti.Comodule.coordinateBialgHom_eq_unit_comp_counit_of_coact_eq_tmul_one`: its value for
+  a trivial coaction.
 
 ## References
 
@@ -49,7 +54,7 @@ open Coalgebra Module WithConv
 
 namespace TauCeti.Comodule
 
-universe u v w
+universe u v w x
 
 noncomputable section
 
@@ -58,6 +63,7 @@ variable [CommRing R] [CommRing H] [HopfAlgebra R H]
 variable [AddCommMonoid M] [Module R M] [Comodule R H M]
 variable {n : ℕ}
 
+/-- The algebra morphism underlying the coordinate bialgebra morphism. -/
 private def coordinateAlgHom (b : Basis (Fin n) R M) :
     GeneralLinear.coordinateHopfAlgebra R n →ₐ[R] H :=
   (GeneralLinear.generalLinearToPoint (R := R) n
@@ -123,6 +129,62 @@ theorem coordinateBialgHom_antipode_X (b : Basis (Fin n) R M) (i j : Fin n) :
       HopfAlgebra.antipode R (coefficientMatrix (C := H) b i j) := by
   rw [← GeneralLinear.coordinateHopfAlgebra_antipode_X, BialgHomClass.map_antipode,
     coordinateBialgHom_X]
+
+section Corestrict
+
+variable {K : Type x} [CommRing K] [HopfAlgebra R K]
+
+/-- The coordinate morphism of a comodule corestricted along a bialgebra morphism is the
+composite of the original coordinate morphism with that bialgebra morphism. -/
+@[simp]
+theorem coordinateBialgHom_corestrict (f : H →ₐc[R] K) (b : Basis (Fin n) R M) :
+    letI : Comodule R K M := Corestrict f.toCoalgHom
+    coordinateBialgHom (H := K) b = f.comp (coordinateBialgHom (H := H) b) := by
+  let _ : Comodule R K M := Corestrict f.toCoalgHom
+  apply BialgHom.ext
+  intro z
+  have hAlg : (coordinateBialgHom (H := K) b).toAlgHom =
+      (f.comp (coordinateBialgHom (H := H) b)).toAlgHom := by
+    apply GeneralLinear.coordinateHopfAlgebra_algHom_ext R n
+    intro i j
+    rw [BialgHom.comp_toAlgHom, AlgHom.comp_apply]
+    erw [coordinateBialgHom_X (H := K), coordinateBialgHom_X (H := H)]
+    rw [coefficientMatrix_apply, coefficientMatrix_apply,
+      matrixCoefficient_def, matrixCoefficient_def, corestrict_coact_apply]
+    have h := LinearMap.congr_fun
+      (CoassocSimps.lid_comp_map (b.coord i) f.toLinearMap)
+      (coact (R := R) (C := H) (M := M) (b j))
+    rw [TensorProduct.map_map, LinearMap.id_comp, LinearMap.comp_id]
+    -- `lid_comp_map` states naturality for the underlying linear map; expose that coercion on
+    -- the right-hand side after tensor-map composition has been normalized.
+    change _ = f.toLinearMap _
+    exact h
+  exact DFunLike.congr_fun hAlg z
+
+end Corestrict
+
+/-- If every vector has trivial coaction, the coordinate morphism of the representation factors
+through the counit of `O(GLₙ)` and the unit of the coefficient Hopf algebra. -/
+@[simp]
+theorem coordinateBialgHom_eq_unit_comp_counit_of_coact_eq_tmul_one
+    (b : Basis (Fin n) R M)
+    (htrivial : ∀ m : M, coact (R := R) (C := H) m = m ⊗ₜ[R] (1 : H)) :
+    coordinateBialgHom (H := H) b =
+      (Bialgebra.unitBialgHom R H).comp
+        (Bialgebra.counitBialgHom R (GeneralLinear.coordinateHopfAlgebra R n)) := by
+  apply BialgHom.ext
+  intro z
+  have hAlg : (coordinateBialgHom (H := H) b).toAlgHom =
+      ((Bialgebra.unitBialgHom R H).comp
+        (Bialgebra.counitBialgHom R
+          (GeneralLinear.coordinateHopfAlgebra R n))).toAlgHom := by
+    apply GeneralLinear.coordinateHopfAlgebra_algHom_ext R n
+    intro i j
+    rw [BialgHom.comp_toAlgHom, AlgHom.comp_apply]
+    erw [coordinateBialgHom_X]
+    rw [coefficientMatrix_apply, matrixCoefficient_def, htrivial]
+    by_cases hij : i = j <;> simp [hij]
+  exact DFunLike.congr_fun hAlg z
 
 end
 

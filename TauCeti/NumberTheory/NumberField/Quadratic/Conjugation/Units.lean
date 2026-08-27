@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.InfinitePlace
 public import TauCeti.NumberTheory.NumberField.Units.ElementaryTwoQuotient
+import Mathlib.GroupTheory.CosetCover
 
 /-!
 # Units and quadratic conjugation
@@ -56,6 +57,37 @@ theorem isTotallyPositive_or_neg_of_mul_ringOfIntegersQuadraticConj_eq_one
   rw [hdiv]
   exact isTotallyPositive_sq huK
 
+/-- **A nonzero element of norm minus one makes `θ` times it `±` totally positive.** The `-1`
+companion of `isTotallyPositive_or_neg_of_mul_ringOfIntegersQuadraticConj_eq_one`: when
+`u σu = -1` the ratio `θu / σ(θu)` is the square `u ^ 2`, so `θu` and its conjugate have the same
+sign at every real place. The extra factor `θ` is what absorbs the sign that the `+1` case does
+not have to. -/
+theorem isTotallyPositive_or_neg_of_mul_ringOfIntegersQuadraticConj_eq_neg_one
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) {u : 𝓞 K}
+    (hnorm : u * ringOfIntegersQuadraticConj hmin hgen u = -1) :
+    IsTotallyPositive ((θ * u : 𝓞 K) : K) ∨ IsTotallyPositive (-((θ * u : 𝓞 K) : K)) := by
+  -- `u = 0` would make the norm `0`, not `-1`.
+  have hu : u ≠ 0 := by rintro rfl; simp at hnorm
+  have hθK : ((θ : 𝓞 K) : K) ≠ 0 := coe_gen_ne_zero hmin
+  have huK : (u : K) ≠ 0 := RingOfIntegers.coe_ne_zero_iff.mpr hu
+  have hu' : (u : K) * quadraticConj hmin hgen (u : K) = -1 := by
+    simpa [coe_ringOfIntegersQuadraticConj] using congrArg (fun x : 𝓞 K => (x : K)) hnorm
+  have hcjK : quadraticConj hmin hgen ((θ * u : 𝓞 K) : K) =
+      -(θ : K) * quadraticConj hmin hgen (u : K) := by
+    push_cast
+    rw [map_mul, quadraticConj_gen hmin hgen]
+  have hcjne : quadraticConj hmin hgen (u : K) ≠ 0 := fun h0 => by
+    rw [h0, mul_zero] at hu'
+    exact zero_ne_one (neg_eq_zero.mp hu'.symm).symm
+  have hdiv : ((θ * u : 𝓞 K) : K) /
+      quadraticConj hmin hgen ((θ * u : 𝓞 K) : K) = (u : K) ^ 2 := by
+    rw [hcjK, div_eq_iff (by simp [hθK, hcjne])]
+    push_cast
+    linear_combination ((θ : K) * (u : K)) * hu'
+  exact isTotallyPositive_or_isTotallyPositive_neg_of_isTotallyPositive_div_quadraticConj
+    hmin hgen (by rw [hdiv]; exact isTotallyPositive_sq huK)
+
+open scoped Pointwise in
 /-- **A real quadratic field with no unit of norm `-1` has a totally positive unit that is not a
 square.** With every unit of norm one, every unit is `±` a totally positive unit
 (`isTotallyPositive_or_neg_of_mul_ringOfIntegersQuadraticConj_eq_one`); were every totally positive
@@ -67,56 +99,31 @@ theorem exists_isTotallyPositive_notMem_square (hmin : minpoly ℤ θ = X ^ 2 - 
     (hnorm : ∀ u : (𝓞 K)ˣ,
       (u : 𝓞 K) * ringOfIntegersQuadraticConj hmin hgen (u : 𝓞 K) = 1) :
     ∃ ε : (𝓞 K)ˣ, IsTotallyPositive ((ε : 𝓞 K) : K) ∧ ε ∉ Subgroup.square (𝓞 K)ˣ := by
-  by_contra hcon
-  have hsquare : ∀ ε : (𝓞 K)ˣ, IsTotallyPositive ((ε : 𝓞 K) : K) →
-      ε ∈ Subgroup.square (𝓞 K)ˣ := by
-    intro ε hε
-    by_contra hmem
-    exact hcon ⟨ε, hε, hmem⟩
-  set H := Subgroup.square (𝓞 K)ˣ with hH
-  have hnegone : ((-1 : (𝓞 K)ˣ))⁻¹ = -1 := by
-    refine inv_eq_of_mul_eq_one_left ?_
-    ext
-    simp
-  -- Every unit is a square or `-1` times a square, so the quotient by the squares has at most two
-  -- elements.
-  have hcover : ∀ u : (𝓞 K)ˣ, QuotientGroup.mk' H u = 1 ∨
-      QuotientGroup.mk' H u = QuotientGroup.mk' H (-1) := by
-    intro u
+  by_contra! hsquare
+  set H := Subgroup.square (𝓞 K)ˣ
+  -- Every unit is a square or `-1` times a square, so those two cosets cover the group.
+  have hcovers : ⋃ i ∈ (Finset.univ : Finset (Fin 2)),
+      (![1, -1] i : (𝓞 K)ˣ) • (H : Set (𝓞 K)ˣ) = Set.univ := by
+    rw [Subgroup.leftCoset_cover_const_iff_surjOn]
+    rintro x -
+    obtain ⟨u, rfl⟩ := QuotientGroup.mk'_surjective H x
     rcases isTotallyPositive_or_neg_of_mul_ringOfIntegersQuadraticConj_eq_one hmin hgen
       u.ne_zero (hnorm u) with h | h
-    · exact Or.inl ((QuotientGroup.eq_one_iff _).mpr (hsquare u h))
-    · have hmem : (-1 : (𝓞 K)ˣ) * u ∈ H := by
-        rw [neg_one_mul]
-        exact hsquare (-u) (by simpa using h)
-      have h2 : QuotientGroup.mk' H ((-1 : (𝓞 K)ˣ) * u) = 1 :=
-        (QuotientGroup.eq_one_iff _).mpr hmem
-      rw [map_mul] at h2
-      refine Or.inr ?_
-      calc QuotientGroup.mk' H u = (QuotientGroup.mk' H (-1))⁻¹ := eq_inv_of_mul_eq_one_right h2
-        _ = QuotientGroup.mk' H ((-1 : (𝓞 K)ˣ)⁻¹) := (map_inv _ _).symm
-        _ = QuotientGroup.mk' H (-1) := by rw [hnegone]
-  have hsurj : Function.Surjective
-      (![1, QuotientGroup.mk' H (-1)] : Fin 2 → (𝓞 K)ˣ ⧸ H) := by
-    intro x
-    obtain ⟨u, rfl⟩ := QuotientGroup.mk'_surjective H x
-    rcases hcover u with h | h
-    · exact ⟨0, by simpa using h.symm⟩
-    · exact ⟨1, by simpa using h.symm⟩
+    · exact ⟨0, by simp, by simpa using ((QuotientGroup.eq_one_iff _).mpr (hsquare u h)).symm⟩
+    · refine ⟨1, by simp, ?_⟩
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq]
+      simpa using hsquare (-u) (by simpa using h)
   have hindex : H.index ≤ 2 := by
-    rw [Subgroup.index_eq_card]
-    simpa using Nat.card_le_card_of_surjective _ hsurj
-  -- A field with a real place and degree two has two real places, hence unit rank one.
-  have hfin : Module.finrank ℚ K = 2 := NumberField.finrank_rat_eq_two hmin hgen
-  have hnr : InfinitePlace.nrRealPlaces K ≠ 0 := fun h =>
-    hreal (nrRealPlaces_eq_zero_iff.mp h)
-  have hsum := InfinitePlace.card_add_two_mul_card_eq_rank K
-  have hcard : Fintype.card (InfinitePlace K) = 2 := by
-    rw [InfinitePlace.card_eq_nrRealPlaces_add_nrComplexPlaces]
-    omega
+    simpa only [Finset.card_fin] using Subgroup.index_le_of_leftCoset_cover_const hcovers
   have hrank : NumberField.Units.rank K = 1 := by
-    rw [NumberField.Units.rank, hcard]
-  rw [hH, NumberField.units_sq_index_eq, hrank] at hindex
+    -- A field with a real place and degree two has two real places, hence unit rank one.
+    rw [NumberField.Units.rank, InfinitePlace.card_eq_nrRealPlaces_add_nrComplexPlaces]
+    have hplaces := InfinitePlace.card_add_two_mul_card_eq_rank K
+    rw [NumberField.finrank_rat_eq_two hmin hgen] at hplaces
+    have hnr : InfinitePlace.nrRealPlaces K ≠ 0 := fun h =>
+      hreal (nrRealPlaces_eq_zero_iff.mp h)
+    omega
+  rw [NumberField.units_sq_index_eq, hrank] at hindex
   norm_num at hindex
 
 end NumberField

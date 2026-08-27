@@ -51,6 +51,10 @@ field distinct weights stay distinct (`TauCeti.weightChar_injective`).
 * `TauCeti.basisDiagonal_apply_of_repr_eq_zero`: a diagonal automorphism acts by a single scalar
   on any vector whose coordinates are supported where that scalar is attained.
 * `TauCeti.basisWeightTorus_apply_of_repr_eq_zero`: the special case for a weight vector.
+* `TauCeti.conj_basisWeightTorus_of_map_basis`: a compatible monomial basis automorphism
+  conjugates represented torus points by coordinate reindexing.
+* `TauCeti.map_basisWeightTorus_range_conj_of_map_basis`: such an automorphism normalizes the
+  represented weight torus.
 * `TauCeti.torusCharacter_weylReflectTorusPoint`: evaluation at a reflected point agrees with
   evaluation of the reflected character.
 * `TauCeti.weightChar_injective`: over an infinite field, distinct weights give distinct
@@ -59,7 +63,7 @@ field distinct weights stay distinct (`TauCeti.weightChar_injective`).
 ## References
 
 * J. C. Jantzen, *Representations of Algebraic Groups*, II.1.
-* R. W. Carter, *Simple Groups of Lie Type*, §4.4 and §7.1.
+* R. W. Carter, *Simple Groups of Lie Type*, §4.4, §7.1, and §12.2.
 -/
 
 public section
@@ -88,6 +92,17 @@ def torusCharacter (s : κ → Rˣ) (μ : κ → ℤ) : Rˣ := ∏ j, s j ^ μ j
 theorem torusCharacter_def (s : κ → Rˣ) (μ : κ → ℤ) :
     torusCharacter s μ = ∏ j, s j ^ μ j :=
   (rfl)
+
+/-- Evaluating a character at a point reindexed by `σ` is the same as precomposing the
+character with `σ`. -/
+@[simp]
+theorem torusCharacter_mulEquivArrowCongr (σ : Equiv.Perm κ) (s : κ → Rˣ) (μ : κ → ℤ) :
+    torusCharacter (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) μ =
+      torusCharacter s (μ ∘ σ) := by
+  rw [torusCharacter_def, torusCharacter_def]
+  simp only [MulEquiv.arrowCongr_apply, MulEquiv.refl_apply]
+  exact (Fintype.prod_equiv σ (fun j => s j ^ μ (σ j))
+    (fun j => s (σ.symm j) ^ μ j) fun j => by simp).symm
 
 /-- Writing a finite-support exponent vector as a function identifies its character value with
 the corresponding finitely supported product. -/
@@ -315,6 +330,25 @@ noncomputable def basisDiagonal (b : Basis ι R M) (w : ι → Rˣ) : M ≃ₗ[R
     basisDiagonal b w (b i) = (w i : R) • b i := by
   rw [basisDiagonal, Basis.equiv_apply, Equiv.refl_apply, Basis.unitsSMul_apply, Units.smul_def]
 
+/-- A basis automorphism acting by scalar multiples intertwines diagonal automorphisms whose
+diagonal entries correspond under the induced basis-index map. -/
+theorem basisDiagonal_intertwine_of_map_basis (b : Basis ι R M) (v w : ι → Rˣ) (c : ι → R)
+    (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hvw : ∀ i, w (τ i) = v i) :
+    θ * basisDiagonal b v = basisDiagonal b w * θ := by
+  refine LinearEquiv.toLinearMap_injective (b.ext fun i => ?_)
+  simp only [LinearEquiv.coe_coe, LinearEquiv.mul_apply, basisDiagonal_basis, map_smul, hθ, hvw]
+  rw [smul_smul, smul_smul, mul_comm]
+
+/-- Conjugating a diagonal automorphism by a compatible basis automorphism acting by scalar
+multiples reindexes its diagonal entries. -/
+theorem conj_basisDiagonal_of_map_basis (b : Basis ι R M) (v w : ι → Rˣ) (c : ι → R)
+    (τ : ι → ι) (θ : M ≃ₗ[R] M) (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hvw : ∀ i, w (τ i) = v i) :
+    θ * basisDiagonal b v * θ⁻¹ = basisDiagonal b w := by
+  rw [mul_inv_eq_iff_eq_mul]
+  exact basisDiagonal_intertwine_of_map_basis b v w c τ θ hθ hvw
+
 /-- The diagonal automorphism attached to the constant family `1` is the identity. -/
 @[simp] theorem basisDiagonal_one (b : Basis ι R M) : basisDiagonal b 1 = 1 := by
   refine LinearEquiv.toLinearMap_injective (b.ext fun i => ?_)
@@ -403,6 +437,50 @@ theorem basisWeightTorus_apply (b : Basis ι R M) (wt : ι → κ → ℤ) (s : 
 @[simp] theorem basisWeightTorus_basis (b : Basis ι R M) (wt : ι → κ → ℤ) (s : κ → Rˣ) (i : ι) :
     basisWeightTorus b wt s (b i) = (torusCharacter s (wt i) : R) • b i :=
   basisDiagonal_basis b _ i
+
+/-- A basis automorphism acting by scalar multiples whose basis-index map is compatible with a
+coordinate permutation intertwines each represented torus point with its reindexing. The
+basis-index map is only a function because the proof does not need its bijectivity. -/
+theorem basisWeightTorus_intertwine_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Rˣ) :
+    θ * basisWeightTorus b wt s =
+      basisWeightTorus b wt (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) * θ := by
+  rw [basisWeightTorus_apply, basisWeightTorus_apply]
+  apply basisDiagonal_intertwine_of_map_basis b _ _ c τ θ hθ
+  intro i
+  rw [torusCharacter_mulEquivArrowCongr]
+  congr 1
+  funext j
+  exact hwt i j
+
+/-- Conjugating a represented weight-torus point by a compatible basis automorphism
+reindexes that point. This is the normalizer form of
+`basisWeightTorus_intertwine_of_map_basis`. -/
+theorem conj_basisWeightTorus_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) (s : κ → Rˣ) :
+    θ * basisWeightTorus b wt s * θ⁻¹ =
+      basisWeightTorus b wt (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ) s) := by
+  rw [mul_inv_eq_iff_eq_mul]
+  exact basisWeightTorus_intertwine_of_map_basis b wt τ σ θ c hθ hwt s
+
+/-- **A compatible basis symmetry acting by scalar multiples normalizes the represented weight
+torus.** Conjugation by `θ` maps its range onto itself by reindexing torus points through `σ`. -/
+theorem map_basisWeightTorus_range_conj_of_map_basis (b : Basis ι R M) (wt : ι → κ → ℤ)
+    (τ : ι → ι) (σ : Equiv.Perm κ) (θ : M ≃ₗ[R] M) (c : ι → R)
+    (hθ : ∀ i, θ (b i) = c i • b (τ i))
+    (hwt : ∀ i j, wt (τ i) (σ j) = wt i j) :
+    Subgroup.map (MulAut.conj θ).toMonoidHom (basisWeightTorus b wt).range =
+      (basisWeightTorus b wt).range := by
+  have hcomp : (MulAut.conj θ).toMonoidHom.comp (basisWeightTorus b wt) =
+      (basisWeightTorus b wt).comp
+        (MulEquiv.arrowCongr σ (MulEquiv.refl Rˣ)).toMonoidHom :=
+    MonoidHom.ext fun s => conj_basisWeightTorus_of_map_basis b wt τ σ θ c hθ hwt s
+  rw [MonoidHom.map_range, hcomp, MonoidHom.range_comp,
+    MonoidHom.range_eq_top_of_surjective _ (MulEquiv.surjective _), ← MonoidHom.range_eq_map]
 
 /-- A torus point acts on a weight vector by the value of the corresponding character. -/
 theorem basisWeightTorus_apply_of_repr_eq_zero (b : Basis ι R M) (wt : ι → κ → ℤ) (s : κ → Rˣ)

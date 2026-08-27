@@ -6,6 +6,8 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.NumberTheory.HeckeRing.GL2.Degree
+-- `Matrix.invariant_factor_zero_dvd_entries`, used only inside a proof below, so private.
+import TauCeti.LinearAlgebra.Matrix.SmithNormalForm
 
 /-!
 # The `GL₂` multiplication table: telescoping identities
@@ -126,14 +128,6 @@ Every double coset in the support of the product `T(1,p) · T(1,pᵏ)` is `T(1, 
 `T(p, pᵏ)`: the determinant balances to `p^(k+1)`, and the first invariant factor divides
 `p` because the conjugated middle matrix stays integral. -/
 
-private lemma matrix_isolate_middle (L_ℤ M R_ℤ D : Matrix (Fin 2) (Fin 2) ℤ)
-    (hLadj : L_ℤ.adjugate * L_ℤ = 1) (hRadj : R_ℤ * R_ℤ.adjugate = 1)
-    (heq_LMR : L_ℤ * M * R_ℤ = D) : M = L_ℤ.adjugate * D * R_ℤ.adjugate := by
-  have hassoc : L_ℤ.adjugate * (L_ℤ * M * R_ℤ) * R_ℤ.adjugate =
-      L_ℤ.adjugate * L_ℤ * M * (R_ℤ * R_ℤ.adjugate) := by
-    simp [mul_assoc]
-  rw [← heq_LMR, hassoc, hLadj, hRadj, one_mul, mul_one]
-
 private lemma first_invariant_dvd_p_of_product (p : ℕ) (S : SpecialLinearGroup (Fin 2) ℤ)
     (a : Fin 2 → ℕ) (hdiv : IsDvdChain a) (L R : SpecialLinearGroup (Fin 2) ℤ) (k : ℕ)
     (heq : (L : Matrix (Fin 2) (Fin 2) ℤ) * Matrix.diagonal (![1, p] : Fin 2 → ℤ) *
@@ -143,25 +137,13 @@ private lemma first_invariant_dvd_p_of_product (p : ℕ) (S : SpecialLinearGroup
   set dpk := Matrix.diagonal (![1, p ^ k] : Fin 2 → ℤ)
   set S_ℤ := (S : Matrix (Fin 2) (Fin 2) ℤ)
   set M := dp * S_ℤ * dpk
-  set L_ℤ := (L : Matrix (Fin 2) (Fin 2) ℤ)
-  set R_ℤ := (R : Matrix (Fin 2) (Fin 2) ℤ)
-  have hLadj : L_ℤ.adjugate * L_ℤ = 1 := by rw [Matrix.adjugate_mul, L.prop, one_smul]
-  have hRadj : R_ℤ * R_ℤ.adjugate = 1 := by rw [Matrix.mul_adjugate, R.prop, one_smul]
-  have hM_eq : M = L_ℤ.adjugate * Matrix.diagonal (fun i ↦ (a i : ℤ)) * R_ℤ.adjugate :=
-    matrix_isolate_middle L_ℤ M R_ℤ _ hLadj hRadj (by
-      simpa only [M, mul_assoc] using heq)
-  have h_dvd_entry : ∀ i j : Fin 2, (a 0 : ℤ) ∣ M i j := by
-    intro i j
-    rw [hM_eq]
-    simp only [Matrix.mul_apply, Matrix.diagonal_apply, Fin.sum_univ_two,
-      mul_ite, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
-    apply dvd_add
-    · exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (dvd_refl _) _) _
-    -- The chain hypothesis is about ℕ-divisibility, but this goal is over ℤ; the `show` names
-    -- the cast form so `Int.natCast_dvd_natCast` has something to transport it into.
-    · exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right
-        (show (a 0 : ℤ) ∣ (a 1 : ℤ) from
-          Int.natCast_dvd_natCast.mpr (isDvdChain_iff.mp hdiv (Fin.zero_le 1))) _) _
+  -- `Matrix.invariant_factor_zero_dvd_entries` is exactly this step at general `n`: it inverts
+  -- the unimodular factors itself, so no adjugate bookkeeping is needed here.
+  have h_dvd_entry : ∀ i j : Fin 2, (a 0 : ℤ) ∣ M i j := fun i j ↦
+    Matrix.invariant_factor_zero_dvd_entries M (fun i ↦ (a i : ℤ))
+      (fun k ↦ Int.natCast_dvd_natCast.mpr (isDvdChain_iff.mp hdiv (Fin.zero_le k)))
+      L.toGL R.toGL
+      (by simpa only [M, mul_assoc, Matrix.SpecialLinearGroup.coe_GL_coe_matrix] using heq) i j
   have h_M00 : M 0 0 = S_ℤ 0 0 := by
     simp [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two]
   have h_M10 : M 1 0 = (p : ℤ) * S_ℤ 1 0 := by

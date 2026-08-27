@@ -12,6 +12,8 @@ public import TauCeti.Algebra.Lie.Weights.InvariantForm
 public import TauCeti.Algebra.Lie.Weights.Projection
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Vector
 
+import TauCeti.Algebra.Lie.UniversalEnveloping.Module
+
 public section
 
 /-!
@@ -367,9 +369,7 @@ private theorem representation_casimirElement_apply_eq_sum
     · exact Finset.sum_congr rfl fun α hα ↦ sum_casimirBilin_proj_pos bs hv
         ((mem_posRootsFinset _ base α).mp hα)
     · refine sum_casimirBilin_proj_neg bs hv ?_
-      rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg]
-      exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots (IsKilling.rootSystem H) base α).mpr
-        (by simpa [mem_posRootsFinset] using hα)
+      exact neg_mem_posRoots_of_mem_negRoots base (by simpa [mem_posRootsFinset] using hα)
   rw [hpart_zero, hpart_root, ← add_smul]
 
 /-- **The Casimir scalar of a highest weight.** This is the scalar by which the Casimir element
@@ -431,33 +431,8 @@ theorem casimir_smul_of_isHighestWeightVector_of_lieSpan_eq_top
     (hv : IsHighestWeightVector base lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤) (m : M) :
     UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m =
       casimirScalar base lam • m := by
-  set c := casimirScalar base lam
-  set f : M →ₗ[K] M :=
-    UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) - c • LinearMap.id with hf
-  have hker : ∀ w : M, f w = 0 ↔
-      UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) w = c • w := fun w ↦ by
-    simp [hf, sub_eq_zero]
-  have hcentral : ∀ (x : L) (w : M), f ⁅x, w⁆ = ⁅x, f w⁆ := by
-    intro x w
-    have h := congrArg (UniversalEnvelopingAlgebra.representation K L M)
-      (ι_mul_casimirElement (K := K) (L := L) x)
-    rw [map_mul, map_mul, UniversalEnvelopingAlgebra.representation_ι] at h
-    have h₁ := congrArg (fun g : Module.End K M ↦ g w) h
-    simp only [Module.End.mul_apply, LieModule.toEnd_apply_apply] at h₁
-    simp [hf, h₁]
-  set N : LieSubmodule K L M :=
-    { __ := LinearMap.ker f
-      lie_mem := fun {x w} hw ↦ by
-        have hw0 : f w = 0 := LinearMap.mem_ker.mp hw
-        exact LinearMap.mem_ker.mpr (by rw [hcentral, hw0, lie_zero]) }
-  have hvN : v ∈ N :=
-    LinearMap.mem_ker.mpr ((hker v).mpr
-      (casimir_smul_of_isHighestWeightVector hv))
-  have hNtop : N = ⊤ := by
-    rw [← top_le_iff, ← hgen]
-    exact LieSubmodule.lieSpan_le.mpr (by simpa using hvN)
-  have hmN : m ∈ N := by rw [hNtop]; exact LieSubmodule.mem_top m
-  exact (hker m).mp (LinearMap.mem_ker.mp hmN)
+  exact UniversalEnvelopingAlgebra.representation_eq_smul_of_mem_center_of_lieSpan_eq_top
+    K L M (casimirElement_mem_center K L) (casimir_smul_of_isHighestWeightVector hv) hgen m
 
 end Eigenvalue
 

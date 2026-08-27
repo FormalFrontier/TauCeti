@@ -5,10 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Group.Action.Units
 public import Mathlib.GroupTheory.Perm.Sign
 public import Mathlib.NumberTheory.EllipticDivisibilitySequence
 import Mathlib.Algebra.Module.Basic
 import Mathlib.Tactic.FinCases
+import Mathlib.Tactic.Ring
 
 /-!
 # The elliptic relator is sign-equivariant in its four indices

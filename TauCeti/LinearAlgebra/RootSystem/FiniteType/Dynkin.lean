@@ -73,12 +73,9 @@ theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
       = rootsE8ᴴ * rootsE8 := by
     ext i j
     -- The `(i, j)` entry of the Gram matrix of the doubled rows is four times the Cartan entry.
-    have hrow : ∑ k, e8DoubledSimpleRoot i k * e8DoubledSimpleRoot j k
-        = 4 * CartanMatrix.E 8 i j := by
-      have h := congrFun (congrFun e8DoubledSimpleRoot_mul_transpose i) j
-      simpa [_root_.Matrix.mul_apply, _root_.Matrix.transpose_apply] using h
     have hrowQ : ∑ k, (e8DoubledSimpleRoot i k : ℚ) * (e8DoubledSimpleRoot j k : ℚ)
-        = 4 * (CartanMatrix.E 8 i j : ℚ) := by exact_mod_cast hrow
+        = 4 * (CartanMatrix.E 8 i j : ℚ) := by
+      exact_mod_cast sum_e8DoubledSimpleRoot_mul_e8DoubledSimpleRoot i j
     -- Halving both factors divides each term of that sum by four.
     have hpoint : ∀ k : Fin 8, (2 : ℚ)⁻¹ * (e8DoubledSimpleRoot i k : ℚ) *
         ((2 : ℚ)⁻¹ * (e8DoubledSimpleRoot j k : ℚ))

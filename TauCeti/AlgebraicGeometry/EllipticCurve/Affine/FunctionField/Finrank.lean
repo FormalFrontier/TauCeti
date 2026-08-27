@@ -10,6 +10,7 @@ public import Mathlib.LinearAlgebra.Dimension.Localization
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
 public import Mathlib.FieldTheory.RatFunc.AsPolynomial
 public import Mathlib.FieldTheory.Relrank
+public import TauCeti.FieldTheory.FunctionField.Basic
 import TauCeti.FieldTheory.IntermediateField.FieldRange
 
 /-!
@@ -41,6 +42,8 @@ rational function field that sits *inside* `R(W)` as an intermediate field.
   `R[X]` — so it serves `RatFunc R` as well as `FractionRing R[X]`.
 * `WeierstrassCurve.Affine.finiteDimensional_functionField`: the extension is finite-dimensional
   over the same arbitrary `L`, which `finrank = 2` does not give by instance search.
+* `WeierstrassCurve.Affine.isFunctionField`: `W.FunctionField` is an algebraic function field of
+  one variable over `F`.
 * `WeierstrassCurve.Affine.ratFuncRange`: the copy of the rational function field `F(x)` inside
   `F(W)`, as an `IntermediateField`. Its API is `ratFuncRange_eq_map`, the defining equation in
   the `⊤.map` form that `IntermediateField.map` lemmas consume, and `mem_ratFuncRange`, the
@@ -168,6 +171,16 @@ section Field
 open scoped RatFunc
 
 variable {F : Type*} [Field F] (W : WeierstrassCurve.Affine F)
+
+/-- **The function field of a Weierstrass curve is an algebraic function field of one variable**
+over the base field, the affine coordinate `x` being a rational parameter: `F(W) / F(x)` is
+finite, of degree two.
+
+This is what makes the general theory of places, divisors and degrees applicable to a Weierstrass
+curve. -/
+theorem isFunctionField : TauCeti.IsFunctionField F W.FunctionField :=
+  TauCeti.isFunctionField_iff_functionField.2
+    (inferInstanceAs (FiniteDimensional (RatFunc F) W.FunctionField))
 
 /-- The image of the rational function field `F(x)` inside the function field `F(W)`. -/
 noncomputable def ratFuncRange : IntermediateField F W.FunctionField :=

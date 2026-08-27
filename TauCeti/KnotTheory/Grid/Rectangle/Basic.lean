@@ -60,8 +60,8 @@ This supplies a prerequisite for the Tau Ceti Heegaard Floer roadmap,
 states", asks for rectangles and empty rectangles `Rect°(x, y)`, and Lane G.3, "The complexes
 and `∂² = 0`", uses the opposite-rectangle bookkeeping in the rectangle-pairing arguments. The
 encoding follows the toroidal grid-diagram convention from Ozsváth--Stipsicz--Szabó, *Grid
-Homology for Knots and Links*, Chapter 3; the fully blocked marking-avoidance condition defining
-`GC̃` is in Chapter 4, Section 4.4.
+Homology for Knots and Links*, Chapter 3; the marking-avoidance condition defining the fully
+blocked complex is in Chapter 4, Section 4.4.
 -/
 
 @[expose] public section

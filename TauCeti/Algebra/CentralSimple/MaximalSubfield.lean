@@ -130,7 +130,7 @@ theorem exists_subalgebra_isField_finrank_eq_deg :
 /-- **A central division algebra is split by a subfield of degree `deg K D`.**
 
 This is the maximal-subfield route to a splitting field: unlike the passage to an algebraic
-closure (`TauCeti.Algebra.isSplittingField_of_isAlgClosed`), it produces a splitting field that is
+closure (`TauCeti.Algebra.isSplittingField_of_isSepClosed`), it produces a splitting field that is
 a *finite* extension of `K`, and one realized inside `D` by the accompanying homomorphism. -/
 theorem exists_isSplittingField_finrank_eq_deg :
     ∃ (L : Type u) (_ : Field L) (_ : Algebra K L) (_ : L →ₐ[K] D),

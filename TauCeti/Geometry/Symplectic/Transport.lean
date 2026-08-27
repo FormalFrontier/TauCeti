@@ -73,7 +73,7 @@ lemma transport_apply (J : AlmostComplexStructure V) (e : V ≃ₗ[ℝ] W) (w : 
 @[simp]
 lemma transport_refl (J : AlmostComplexStructure V) :
     J.transport (LinearEquiv.refl ℝ V) = J :=
-  toLinearMap_injective (by ext v; simp)
+  toLinearMap_injective (LinearEquiv.conj_refl J.toLinearMap)
 
 /-- Transport is functorial: transporting along `e₁` then `e₂` is transporting along their
 composite. -/
@@ -86,13 +86,13 @@ lemma transport_trans (J : AlmostComplexStructure V) (e₁ : V ≃ₗ[ℝ] W) (e
 
 /-- Transporting forward along `e` and back along `e.symm` returns the original structure. -/
 lemma transport_symm_transport (J : AlmostComplexStructure V) (e : V ≃ₗ[ℝ] W) :
-    (J.transport e).transport e.symm = J := by
-  rw [transport_trans, e.self_trans_symm, transport_refl]
+    (J.transport e).transport e.symm = J :=
+  toLinearMap_injective (e.conj_symm_conj J.toLinearMap)
 
 /-- Transporting back along `e.symm` and forward along `e` returns the original structure. -/
 lemma transport_transport_symm (J : AlmostComplexStructure W) (e : V ≃ₗ[ℝ] W) :
-    (J.transport e.symm).transport e = J := by
-  rw [transport_trans, e.symm_trans_self, transport_refl]
+    (J.transport e.symm).transport e = J :=
+  toLinearMap_injective (e.conj_conj_symm J.toLinearMap)
 
 /-- Transport commutes with negation of the almost complex structure. -/
 @[simp]

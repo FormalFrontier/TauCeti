@@ -7,7 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.RepresentationTheory.FiniteIndex
-public import Mathlib.RingTheory.Finiteness.Small
 public import TauCeti.RepresentationTheory.FDRep
 
 /-!
@@ -260,18 +259,6 @@ end Dimension
 
 end Rep
 
-/-- Conjugation by `Shrink.linearEquiv` gives an equivariant equivalence from the shrunk model
-back to the original representation. -/
-private noncomputable def shrinkRepEquiv {k : Type u} {G : Type v} {V : Type w}
-    [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V] [Small.{u} V]
-    (ρ : Representation k G V) :
-    Representation.Equiv
-      ((Shrink.linearEquiv k V).symm.conjRingEquiv.toMonoidHom.comp ρ) ρ := by
-  apply Representation.Equiv.mk (Shrink.linearEquiv k V)
-  intro g
-  ext x
-  simp
-
 /-- The small induced object together with its comparison to Mathlib's induced representation. -/
 private structure IndSmallModel {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) where
@@ -287,11 +274,9 @@ private noncomputable def indSmallModel {k : Type u} {G : Type v} [Field k] [Gro
   let V := Rep.ind S.subtype A'
   -- The forgotten carrier lies in `u`, so `w := 0` specializes `max w u` to `u`.
   letI : FiniteDimensional k V := Rep.finiteDimensional_ind.{u, v, 0} A'
-  letI : Small.{u} V := Module.Finite.small k V
-  let ρ := (Shrink.linearEquiv k V).symm.conjRingEquiv.toMonoidHom.comp V.ρ
-  -- `FDRep.of ρ` forgets back to `ρ` definitionally; Mathlib records the same identification as
-  -- `FDRep.forget₂_ρ` for rewriting outside this construction.
-  exact { object := FDRep.of ρ, equiv := shrinkRepEquiv V.ρ }
+  -- `FDRep.ofShrink` forgets back to its shrunk carrier definitionally; Mathlib records the same
+  -- identification as `FDRep.forget₂_ρ` for rewriting outside this construction.
+  exact { object := FDRep.ofShrink V.ρ, equiv := FDRep.ofShrinkEquiv V.ρ }
 
 /-- The finite-dimensional representation induced from a finite-index subgroup. -/
 noncomputable def indFDRep {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}

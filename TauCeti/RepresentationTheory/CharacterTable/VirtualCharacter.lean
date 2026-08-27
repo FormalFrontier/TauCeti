@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Table
+public import TauCeti.RepresentationTheory.FDRep
 
 /-!
 # The virtual-character lattice
@@ -144,9 +145,8 @@ theorem mul_mem_virtualCharacters {f g : G → k} (hf : f ∈ virtualCharacters 
 one-dimensional representation. -/
 @[simp]
 theorem one_mem_virtualCharacters : (1 : G → k) ∈ virtualCharacters k G := by
-  have h : (FDRep.of (Representation.trivial k G k)).character = 1 := by
-    funext g
-    simp [FDRep.character, Representation.trivial]
+  have h : (FDRep.of (Representation.trivial k G k)).character = 1 :=
+    funext fun g => FDRep.character_of_trivial g
   exact h ▸ character_mem_virtualCharacters _
 
 end Defs

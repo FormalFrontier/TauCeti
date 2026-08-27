@@ -238,11 +238,8 @@ theorem irreducibleCharacter_one (i : Fin (Nat.card (ConjClasses G))) :
 nonzero, so the space affording the character has positive dimension. -/
 theorem characterDegree_pos (i : Fin (Nat.card (ConjClasses G))) :
     0 < characterDegree k i := by
-  have hsimple : Nontrivial (irreducibleRepresentation k i).asModule :=
-    IsSimpleModule.nontrivial (MonoidAlgebra k G) _
-  have : Nontrivial (Fin (characterDegree k i) → k) :=
-    (irreducibleRepresentation k i).asModuleEquiv.symm.toEquiv.nontrivial
-  simpa using Module.finrank_pos (R := k) (M := Fin (characterDegree k i) → k)
+  simpa using Representation.IsIrreducible.finrank_pos
+    (inferInstance : (irreducibleRepresentation k i).IsIrreducible)
 
 /-- **The sum of the squares of the degrees is the order of the group**, as an identity of natural
 numbers. The representations affording the enumerated characters are pairwise inequivalent

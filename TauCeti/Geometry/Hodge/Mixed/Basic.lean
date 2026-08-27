@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Geometry.Hodge.Decomposition
 public import TauCeti.Geometry.Hodge.Graded
-public import TauCeti.Geometry.Hodge.Tate
+public import TauCeti.Geometry.Hodge.Tate.Basic
 
 /-!
 # Mixed Hodge structures
@@ -32,6 +32,7 @@ Tate structure `ℤ(m)` an explicit rank-one inhabitant.
 
 * `TauCeti.Hodge.MixedHodgeStructure`: the mixed Hodge structure itself.
 * `TauCeti.Hodge.MixedHodgeStructure.WC`: the complexified weight filtration.
+* `TauCeti.Hodge.MixedHodgeStructure.conjF`: the conjugate Hodge filtration.
 * `TauCeti.Hodge.MixedHodgeStructure.gradedHodgeStructure`: the pure Hodge structure of weight `k`
   carried by the `k`-th graded piece.
 * `TauCeti.Hodge.MixedHodgeStructure.ofPure`: a pure Hodge structure viewed as a mixed one.
@@ -95,8 +96,12 @@ namespace MixedHodgeStructure
 
 variable {hℚ : IsBaseChange ℚ ιℚ} {hℂ : IsBaseChange ℂ ιℂ} (mhs : MixedHodgeStructure hℚ hℂ)
 
-/-- The complexified weight filtration of a mixed Hodge structure. -/
-noncomputable def WC (k : ℤ) : Submodule ℂ Vℂ :=
+/-- The complexified weight filtration of a mixed Hodge structure.
+
+It is an `abbrev` because it is a name for the complexification of `WQ` rather than a new
+construction: the graded pieces of `WC` have to be *definitionally* those of the complexified
+rational filtration for the pure structure on a graded piece to transport onto them. -/
+noncomputable abbrev WC (k : ℤ) : Submodule ℂ Vℂ :=
   rationalToComplexSubmodule hℚ hℂ (mhs.WQ k)
 
 /-- The complex weight filtration is obtained by complexifying the rational weight filtration. -/
@@ -123,6 +128,53 @@ theorem WC_top : ∃ k, mhs.WC k = ⊤ := by
 theorem WC_bot : ∃ k, mhs.WC k = ⊥ := by
   obtain ⟨k, hk⟩ := mhs.WQ_bot
   exact ⟨k, by rw [WC, hk, rationalToComplexSubmodule_bot]⟩
+
+/-! ### The conjugate Hodge filtration -/
+
+/-- The conjugate `conj F^p` of the `p`-th step of the Hodge filtration of a mixed Hodge
+structure, taken for lattice-induced conjugation. -/
+noncomputable def conjF (p : ℤ) : Submodule ℂ Vℂ :=
+  (latticeConjugation hℂ).conjFiltration mhs.F p
+
+/-- The conjugate Hodge filtration step is the image of the Hodge filtration step under
+lattice-induced conjugation. -/
+theorem conjF_def (p : ℤ) : mhs.conjF p = (mhs.F p).map (latticeConj hℂ) := by
+  rw [conjF, Conjugation.conjFiltration_def, latticeConjugation_toLinearMap]
+
+/-- The conjugate Hodge filtration is decreasing. -/
+theorem conjF_antitone : Antitone mhs.conjF :=
+  (latticeConjugation hℂ).conjFiltration_antitone mhs.F_antitone
+
+/-- Membership in a conjugate Hodge filtration step is detected by conjugating. -/
+@[simp]
+theorem mem_conjF_iff (p : ℤ) (x : Vℂ) : x ∈ mhs.conjF p ↔ latticeConj hℂ x ∈ mhs.F p := by
+  rw [conjF_def, ← latticeConjugation_toLinearMap,
+    ← (latticeConjugation hℂ).conjFiltration_def mhs.F p]
+  exact (latticeConjugation hℂ).mem_conjFiltration_iff mhs.F p x
+
+/-- Conjugating a Hodge filtration step twice recovers it. -/
+@[simp]
+theorem conjF_conjF (p : ℤ) : (mhs.conjF p).map (latticeConj hℂ) = mhs.F p := by
+  rw [← latticeConjugation_toLinearMap]
+  exact (latticeConjugation hℂ).conjFiltration_conjFiltration mhs.F p
+
+/-- The conjugate Hodge filtration is exhaustive wherever the Hodge filtration is. -/
+theorem conjF_eq_top_of_F_eq_top {p : ℤ} (hp : mhs.F p = ⊤) : mhs.conjF p = ⊤ :=
+  Submodule.eq_top_iff'.2 fun x ↦ (mhs.mem_conjF_iff p x).2 (hp ▸ Submodule.mem_top)
+
+/-- The conjugate Hodge filtration is separated wherever the Hodge filtration is. -/
+theorem conjF_eq_bot_of_F_eq_bot {p : ℤ} (hp : mhs.F p = ⊥) : mhs.conjF p = ⊥ := by
+  rw [conjF_def, hp, Submodule.map_bot]
+
+/-- The conjugate Hodge filtration is exhaustive. -/
+theorem conjF_top : ∃ p, mhs.conjF p = ⊤ := by
+  obtain ⟨p, hp⟩ := mhs.F_top
+  exact ⟨p, mhs.conjF_eq_top_of_F_eq_top hp⟩
+
+/-- The conjugate Hodge filtration is separated. -/
+theorem conjF_bot : ∃ p, mhs.conjF p = ⊥ := by
+  obtain ⟨p, hp⟩ := mhs.F_bot
+  exact ⟨p, mhs.conjF_eq_bot_of_F_eq_bot hp⟩
 
 /-- The pure Hodge structure of weight `k` carried by the complexification of the `k`-th rational
 graded piece. Its filtration is the induced one on the nose, so the whole pure theory applies to
@@ -227,6 +279,28 @@ theorem MixedHodgeStructure.ofPure_WQ (hs : HodgeStructure hℂ n) :
 theorem MixedHodgeStructure.ofPure_F (hs : HodgeStructure hℂ n) :
     (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).F = hs.F :=
   (rfl)
+
+/-- The conjugate Hodge filtration of a pure Hodge structure viewed as a mixed one is its
+conjugate Hodge filtration. -/
+@[simp]
+theorem MixedHodgeStructure.ofPure_conjF (hs : HodgeStructure hℂ n) (p : ℤ) :
+    (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).conjF p = hs.conjF p := by
+  rw [MixedHodgeStructure.conjF_def, MixedHodgeStructure.ofPure_F,
+    HodgeStructureOn.conjF_def, latticeConjugation_toLinearMap]
+
+/-- The weight filtration of a pure Hodge structure of weight `n`, viewed as a mixed one, is the
+whole space from degree `n` on. -/
+theorem MixedHodgeStructure.ofPure_WC_eq_top_of_le (hs : HodgeStructure hℂ n) {k : ℤ} (hk : n ≤ k) :
+    (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).WC k = ⊤ := by
+  rw [MixedHodgeStructure.WC_def, MixedHodgeStructure.ofPure_WQ,
+    concentratedWeightFiltration_of_le hk, rationalToComplexSubmodule_top]
+
+/-- The weight filtration of a pure Hodge structure of weight `n`, viewed as a mixed one, vanishes
+below degree `n`. -/
+theorem MixedHodgeStructure.ofPure_WC_eq_bot_of_lt (hs : HodgeStructure hℂ n) {k : ℤ} (hk : k < n) :
+    (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).WC k = ⊥ := by
+  rw [MixedHodgeStructure.WC_def, MixedHodgeStructure.ofPure_WQ,
+    concentratedWeightFiltration_of_lt hk, rationalToComplexSubmodule_bot]
 
 /-- The Tate structure `ℤ(m)` as a mixed Hodge structure: a rank-one example whose weight
 filtration jumps in degree `-2m`. -/

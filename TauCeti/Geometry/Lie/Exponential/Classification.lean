@@ -118,37 +118,22 @@ private theorem eventually_continuousOneParameterLog_eq_two_smul_succ [FiniteDim
     (tendsto_add_atTop_nat 1).eventually hexp
   filter_upwards [hvU, htwoU, hexp, hexpSucc] with n hvn htwon hexpn hexpSuccn
   apply hinj hvn htwon
+  -- `φ` turns the doubled dyadic step into a square, and the exponential turns the square back
+  -- into a doubled Lie-algebra element.
+  have hsmul : (((2 : ℝ) • v (n + 1) : E) : GroupLieAlgebra I G) =
+      (2 : ℝ) • (v (n + 1) : GroupLieAlgebra I G) :=
+    (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul (2 : ℝ) (v (n + 1))
   calc
     mulInvariantExp (I := I) (G := G) (v n : GroupLieAlgebra I G) =
-        φ (Multiplicative.ofAdd (dyadicStep n)) := hexpn
-    _ = φ (Multiplicative.ofAdd
-        (dyadicStep (n + 1) + dyadicStep (n + 1))) := by
-      rw [← dyadicStep_eq_add_succ]
-    _ = φ (Multiplicative.ofAdd (dyadicStep (n + 1))) *
-        φ (Multiplicative.ofAdd (dyadicStep (n + 1))) := by
-      rw [ofAdd_add, map_mul]
-    _ = mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) *
-        mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) := by
-      rw [hexpSuccn]
-    _ = mulInvariantExp (I := I) (G := G)
-        (((1 : ℝ) + 1) • (v (n + 1) : GroupLieAlgebra I G)) := by
-      calc
         mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) *
-              mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) =
-            mulInvariantExp (I := I) (G := G)
-                ((1 : ℝ) • (v (n + 1) : GroupLieAlgebra I G)) *
-              mulInvariantExp (I := I) (G := G)
-                ((1 : ℝ) • (v (n + 1) : GroupLieAlgebra I G)) := by rw [one_smul]
-        _ = mulInvariantExp (I := I) (G := G)
-            (((1 : ℝ) + 1) • (v (n + 1) : GroupLieAlgebra I G)) :=
-        (mulInvariantExp_add_smul (I := I) (G := G)
-          (v (n + 1) : GroupLieAlgebra I G) (1 : ℝ) (1 : ℝ)).symm
-    _ = mulInvariantExp (I := I) (G := G)
-        (((2 : ℝ) • v (n + 1) : E) : GroupLieAlgebra I G) := by
-      have hsmul : (((2 : ℝ) • v (n + 1) : E) : GroupLieAlgebra I G) =
-          (2 : ℝ) • (v (n + 1) : GroupLieAlgebra I G) :=
-        (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul
-          (2 : ℝ) (v (n + 1))
+          mulInvariantExp (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) := by
+      rw [hexpn, hexpSuccn, dyadicStep_eq_add_succ n, ofAdd_add, map_mul]
+    _ = mulInvariantExp (I := I) (G := G) ((1 : ℝ) • (v (n + 1) : GroupLieAlgebra I G)) *
+          mulInvariantExp (I := I) (G := G) ((1 : ℝ) • (v (n + 1) : GroupLieAlgebra I G)) := by
+      rw [one_smul]
+    _ = mulInvariantExp (I := I) (G := G) (((1 : ℝ) + 1) • (v (n + 1) : GroupLieAlgebra I G)) :=
+      (mulInvariantExp_add_smul (I := I) (G := G) (v (n + 1) : GroupLieAlgebra I G) 1 1).symm
+    _ = mulInvariantExp (I := I) (G := G) (((2 : ℝ) • v (n + 1) : E) : GroupLieAlgebra I G) := by
       rw [hsmul]
       norm_num
 

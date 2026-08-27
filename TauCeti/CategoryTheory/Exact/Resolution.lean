@@ -7,6 +7,7 @@ module
 
 public import TauCeti.CategoryTheory.Exact.Biproduct
 public import TauCeti.CategoryTheory.Exact.Split
+public import TauCeti.CategoryTheory.ObjectProperty
 public import Mathlib.CategoryTheory.ObjectProperty.ContainsZero
 public import Mathlib.CategoryTheory.ObjectProperty.FiniteProducts
 
@@ -57,6 +58,10 @@ property, before any projectivity hypothesis is available.
   every index beyond the length.
 * `TauCeti.ExactStructure.FiniteResolution.length_biprod`: a direct sum of resolutions has the
   larger of the two lengths, the shorter chain being padded against the longer one.
+* `TauCeti.ExactStructure.exists_conflation_of_exists_finiteResolution_length_le_succ`: a
+  resolution of length at most `n + 1` yields a first conflation `K ↪ Q ↠ X` together with a
+  resolution of `K` of length at most `n`; this is how an induction on the length peels off one
+  step.
 * `TauCeti.ExactStructure.admitsFiniteResolution_induction`: the object property of admitting a
   finite `P`-resolution is the smallest one containing `P` and closed under passing from the
   subobject of a conflation with resolving middle term to its quotient.
@@ -80,8 +85,9 @@ only typecheck when its body is exposed.
 The closure hypotheses on `P` are Mathlib's object-property type classes, and are assumed only
 where they are used: repleteness for `ofIso`, `CategoryTheory.ObjectProperty.ContainsZero` for
 padding, and closure under binary products for direct sums, the last of these reaching
-biproducts through `CategoryTheory.ObjectProperty.prop_of_isLimit_binaryFan` applied to
-`CategoryTheory.Limits.BinaryBiproduct.isLimit`. The resolving-subcategory package,
+biproducts through
+`CategoryTheory.ObjectProperty.prop_biprod_of_isClosedUnderBinaryProducts`. The
+resolving-subcategory package,
 which bundles these with extension closure and closure under kernels of deflations, is
 downstream.
 
@@ -362,35 +368,35 @@ noncomputable def biprod :
     ∀ {X Y : C}, FiniteResolution E P X → FiniteResolution E P Y →
       FiniteResolution E P (X ⊞ Y)
   | _, _, .base hX, .base hY =>
-      .base (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hY)
+      .base (P.prop_biprod_of_isClosedUnderBinaryProducts hX hY)
   | X, _, .base hX, .step hQ i p zero hp s =>
-      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hQ)
+      .step (P.prop_biprod_of_isClosedUnderBinaryProducts hX hQ)
         (Limits.biprod.map (0 : (0 : C) ⟶ X) i) (Limits.biprod.map (𝟙 X) p)
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod (E.conflation_zero_id X) hp)
         (s.ofIso (isoZeroBiprod (isZero_zero C)))
   | _, Y, .step hQ i p zero hp r, .base hY =>
-      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hY)
+      .step (P.prop_biprod_of_isClosedUnderBinaryProducts hQ hY)
         (Limits.biprod.map i (0 : (0 : C) ⟶ Y)) (Limits.biprod.map p (𝟙 Y))
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod hp (E.conflation_zero_id Y))
         (r.ofIso (isoBiprodZero (isZero_zero C)))
   | _, _, .step hQ i p zero hp r, .step hQ' i' p' zero' hp' s =>
-      .step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hQ')
+      .step (P.prop_biprod_of_isClosedUnderBinaryProducts hQ hQ')
         (Limits.biprod.map i i') (Limits.biprod.map p p')
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero, reassoc_of% zero'])
         (E.conflation_biprod hp hp') (r.biprod s)
 
 @[simp] theorem biprod_base_base {X Y : C} (hX : P X) (hY : P Y) :
     (base (E := E) hX).biprod (base hY) =
-      base (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hY) := by
+      base (P.prop_biprod_of_isClosedUnderBinaryProducts hX hY) := by
   simp [biprod]
 
 @[simp] theorem biprod_base_step {X K Q Y : C} (hX : P X) (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ Y)
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (s : FiniteResolution E P K) :
     (base (E := E) hX).biprod (step hQ i p zero hp s) =
-      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hX hQ)
+      step (P.prop_biprod_of_isClosedUnderBinaryProducts hX hQ)
         (Limits.biprod.map (0 : (0 : C) ⟶ X) i) (Limits.biprod.map (𝟙 X) p)
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod (E.conflation_zero_id X) hp)
@@ -401,7 +407,7 @@ noncomputable def biprod :
     (zero : i ≫ p = 0) (hp : E.Conflation (ShortComplex.mk i p zero))
     (r : FiniteResolution E P K) (hY : P Y) :
     (step hQ i p zero hp r).biprod (base hY) =
-      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hY)
+      step (P.prop_biprod_of_isClosedUnderBinaryProducts hQ hY)
         (Limits.biprod.map i (0 : (0 : C) ⟶ Y)) (Limits.biprod.map p (𝟙 Y))
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero])
         (E.conflation_biprod hp (E.conflation_zero_id Y))
@@ -414,7 +420,7 @@ noncomputable def biprod :
     (zero' : i' ≫ p' = 0) (hp' : E.Conflation (ShortComplex.mk i' p' zero'))
     (s : FiniteResolution E P K') :
     (step hQ i p zero hp r).biprod (step hQ' i' p' zero' hp' s) =
-      step (P.prop_of_isLimit_binaryFan (BinaryBiproduct.isLimit _ _) hQ hQ')
+      step (P.prop_biprod_of_isClosedUnderBinaryProducts hQ hQ')
         (Limits.biprod.map i i') (Limits.biprod.map p p')
         (by apply Limits.biprod.hom_ext' <;> simp [reassoc_of% zero, reassoc_of% zero'])
         (E.conflation_biprod hp hp') (r.biprod s) := by
@@ -429,6 +435,21 @@ noncomputable def biprod :
 end Biprod
 
 end FiniteResolution
+
+/-- The first step of a finite `P`-resolution of length at most `n + 1`: a conflation
+`K ↪ Q ↠ X` with `P Q`, whose subobject `K` still admits a finite `P`-resolution of length at
+most `n`. A resolution of length zero contributes the trivial conflation `0 ↪ X ↠ X`. -/
+theorem exists_conflation_of_exists_finiteResolution_length_le_succ {P : ObjectProperty C}
+    [P.IsClosedUnderIsomorphisms] [P.ContainsZero] {X : C} {n : ℕ}
+    (h : ∃ r : E.FiniteResolution P X, r.length ≤ n + 1) :
+    ∃ (K Q : C) (m : K ⟶ Q) (a : Q ⟶ X) (hm : m ≫ a = 0), P Q ∧
+      E.Conflation (ShortComplex.mk m a hm) ∧ ∃ s : E.FiniteResolution P K, s.length ≤ n := by
+  obtain ⟨r, hr⟩ := h
+  cases r with
+  | base hX =>
+      exact ⟨0, X, 0, 𝟙 X, by simp, hX, E.conflation_zero_id X, .base P.prop_zero, by simp⟩
+  | step hQ i p zero hp r =>
+      exact ⟨_, _, i, p, zero, hQ, hp, r, by simpa using hr⟩
 
 variable (P : ObjectProperty C)
 
@@ -477,13 +498,9 @@ theorem admitsFiniteResolution_biprod [P.IsClosedUnderIsomorphisms]
   ⟨hX.some.biprod hY.some⟩
 
 instance [P.IsClosedUnderIsomorphisms] [P.IsClosedUnderBinaryProducts] :
-    (E.admitsFiniteResolution P).IsClosedUnderBinaryProducts where
-  limitsOfShape_le := by
-    rintro X ⟨p⟩
-    refine (E.admitsFiniteResolution P).prop_of_iso
-      (IsLimit.conePointUniqueUpToIso (BinaryBiproduct.isLimit _ _)
-        ((IsLimit.postcomposeHomEquiv (diagramIsoPair p.diag) _).2 p.isLimit))
-      (E.admitsFiniteResolution_biprod P (p.prop_diag_obj ⟨.left⟩) (p.prop_diag_obj ⟨.right⟩))
+    (E.admitsFiniteResolution P).IsClosedUnderBinaryProducts :=
+  ObjectProperty.isClosedUnderBinaryProducts_of_prop_biprod (E.admitsFiniteResolution P)
+    fun _ _ hX hY => E.admitsFiniteResolution_biprod P hX hY
 
 end ExactStructure
 

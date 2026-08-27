@@ -55,17 +55,6 @@ variable [AddCommMonoid M] [Module R M] [Comodule R C M]
 
 namespace Subcomodule
 
-omit [Coalgebra R C] [Comodule R C M] in
-private lemma tensor_range_mono {P Q : Submodule R M} (hPQ : P ≤ Q) :
-    LinearMap.range (TensorProduct.map P.subtype (LinearMap.id : C →ₗ[R] C)) ≤
-      LinearMap.range (TensorProduct.map Q.subtype (LinearMap.id : C →ₗ[R] C)) := by
-  rintro _ ⟨x, rfl⟩
-  refine ⟨TensorProduct.map (Submodule.inclusion hPQ) (LinearMap.id : C →ₗ[R] C) x, ?_⟩
-  induction x with
-  | zero => simp
-  | tmul p c => rfl
-  | add x y hx hy => simp [hx, hy]
-
 private lemma coact_mem_sup (N P : Subcomodule R C M) {m : M}
     (hm : m ∈ N.toSubmodule ⊔ P.toSubmodule) :
     Comodule.coact (R := R) (C := C) (M := M) m ∈
@@ -75,12 +64,10 @@ private lemma coact_mem_sup (N P : Subcomodule R C M) {m : M}
   rcases Submodule.mem_sup.1 hm with ⟨n, hn, p, hp, rfl⟩
   rw [LinearMap.map_add]
   exact add_mem
-    (tensor_range_mono
-      (P := N.toSubmodule) (Q := N.toSubmodule ⊔ P.toSubmodule) le_sup_left
-      (N.coact_mem hn))
-    (tensor_range_mono
-      (P := P.toSubmodule) (Q := N.toSubmodule ⊔ P.toSubmodule) le_sup_right
-      (P.coact_mem hp))
+    (TensorProduct.range_map_mono
+      (by simp only [Submodule.range_subtype]; exact le_sup_left) le_rfl (N.coact_mem hn))
+    (TensorProduct.range_map_mono
+      (by simp only [Submodule.range_subtype]; exact le_sup_right) le_rfl (P.coact_mem hp))
 
 private lemma coact_mem_sSup (S : Set (Subcomodule R C M)) {m : M}
     (hm : m ∈ ⨆ N : S, (N : Subcomodule R C M).toSubmodule) :
@@ -93,11 +80,11 @@ private lemma coact_mem_sSup (S : Set (Subcomodule R C M)) {m : M}
   rcases hm with ⟨f, hf, rfl⟩
   rw [Finsupp.sum, map_sum]
   exact Submodule.sum_mem _ fun N _ =>
-    tensor_range_mono
-      (P := (N : Subcomodule R C M).toSubmodule)
-      (Q := ⨆ N : S, (N : Subcomodule R C M).toSubmodule)
-      (le_iSup (fun N : S => (N : Subcomodule R C M).toSubmodule) N)
-      (N.1.coact_mem (hf N))
+    TensorProduct.range_map_mono
+      (by
+        simp only [Submodule.range_subtype]
+        exact le_iSup (fun N : S => (N : Subcomodule R C M).toSubmodule) N)
+      le_rfl (N.1.coact_mem (hf N))
 
 /-- The join of two subcomodules has underlying submodule the join of the underlying
 submodules. -/

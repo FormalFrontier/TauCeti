@@ -18,7 +18,7 @@ alone leaves a set of cells that is still a Young diagram.  So they index the wa
 one cell at a time, and hence the recursions that count standard Young tableaux.  The corners are
 also exactly the cells of hook length `1`, which is
 `YoungDiagram.isCorner_iff_hookLength_eq_one` in
-`TauCeti.Combinatorics.Young.HookLength`, downstream of this file.
+`TauCeti.Combinatorics.Young.HookLength.Basic`, downstream of this file.
 
 Deletion is `YoungDiagram.erase`.  It is defined without any hypothesis on the cell — it
 removes the whole principal upper set of `c`, that is `c` together with every cell weakly below and
@@ -54,7 +54,7 @@ public section
 
 namespace YoungDiagram
 
-variable {μ : YoungDiagram} {c d : ℕ × ℕ}
+variable {μ : YoungDiagram} {c d : ℕ × ℕ} {i j : ℕ}
 
 /-! ### Corners -/
 
@@ -183,6 +183,52 @@ theorem card_erase (h : IsCorner μ c) : (erase μ c).card + 1 = μ.card := by
 theorem card_pos (h : IsCorner μ c) : 0 < μ.card :=
   Finset.card_pos.mpr ⟨c, h.mem⟩
 
+/-! ### Rows and columns after erasure -/
+
+/-- Erasing a corner erases that cell from every row finset. Only its own row contains it. -/
+@[simp]
+theorem row_erase (h : IsCorner μ c) : (erase μ c).row i = (μ.row i).erase c := by
+  ext d
+  simp only [mem_row_iff, h.mem_erase_iff, Finset.mem_erase]
+  tauto
+
+/-- Erasing a corner erases that cell from every column finset. Only its own column contains it. -/
+@[simp]
+theorem col_erase (h : IsCorner μ c) : (erase μ c).col j = (μ.col j).erase c := by
+  ext d
+  simp only [mem_col_iff, h.mem_erase_iff, Finset.mem_erase]
+  tauto
+
+/-- Erasing a corner shortens its row by one and leaves every other row unchanged. -/
+@[simp]
+theorem rowLen_erase (h : IsCorner μ c) :
+    (erase μ c).rowLen i = if c.1 = i then μ.rowLen i - 1 else μ.rowLen i := by
+  rw [(erase μ c).rowLen_eq_card, h.row_erase, Finset.card_erase_eq_ite,
+    μ.rowLen_eq_card]
+  simp only [mem_row_iff, h.mem, true_and]
+
+/-- Erasing a corner shortens its column by one and leaves every other column unchanged. -/
+@[simp]
+theorem colLen_erase (h : IsCorner μ c) :
+    (erase μ c).colLen j = if c.2 = j then μ.colLen j - 1 else μ.colLen j := by
+  rw [(erase μ c).colLen_eq_card, h.col_erase, Finset.card_erase_eq_ite,
+    μ.colLen_eq_card]
+  simp only [mem_col_iff, h.mem, true_and]
+
+/-- A corner is the final cell of its row. -/
+theorem rowLen_eq_snd_add_one (h : IsCorner μ c) : μ.rowLen c.1 = c.2 + 1 := by
+  have hmem := _root_.YoungDiagram.mem_iff_lt_rowLen.mp h.mem
+  have hright := h.right_notMem
+  rw [_root_.YoungDiagram.mem_iff_lt_rowLen] at hright
+  omega
+
+/-- A corner is the final cell of its column. -/
+theorem colLen_eq_fst_add_one (h : IsCorner μ c) : μ.colLen c.2 = c.1 + 1 := by
+  have hmem := _root_.YoungDiagram.mem_iff_lt_colLen.mp h.mem
+  have hbelow := h.below_notMem
+  rw [_root_.YoungDiagram.mem_iff_lt_colLen] at hbelow
+  omega
+
 end IsCorner
 
 /-! ### Transposition -/
@@ -216,4 +262,3 @@ theorem erase_transpose (μ : YoungDiagram) (c : ℕ × ℕ) :
     not_congr ⟨fun h => ⟨h.2, h.1⟩, fun h => ⟨h.2, h.1⟩⟩
 
 end YoungDiagram
-

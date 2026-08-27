@@ -8,6 +8,8 @@ module
 public import Mathlib.Algebra.Ring.NonZeroDivisors
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Elementary
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Recurrence
+import Mathlib.Tactic.LinearCombination
+import Mathlib.Tactic.Ring
 
 /-!
 # An elliptic sequence is determined by its first four terms

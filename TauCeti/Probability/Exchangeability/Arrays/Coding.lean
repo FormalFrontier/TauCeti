@@ -7,7 +7,7 @@ module
 
 -- Public: the array symmetry and the inherited invariance of the row mixing law are the
 -- hypothesis and the conclusion of the representation.
-public import TauCeti.Probability.Exchangeability.Arrays.MixingLaw
+public import TauCeti.Probability.Exchangeability.Arrays.DeFinetti
 -- Public: the coding map and the barycenter identity it satisfies appear in every statement.
 public import TauCeti.Probability.DeFinetti.Coding
 -- Non-public: the mixture form of a row path law is used only inside proofs.
@@ -193,7 +193,7 @@ theorem SeparatelyExchangeable.exists_arrayLaw_eq_map_unitIntervalCoding
     exact hinv τ
   · have hpath : pathLaw μ (arrayRow X) = deFinettiBarycenter (μ.map ν) := by
       rw [deFinettiBarycenter_def]
-      exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith (aemeasurable_arrayRow hX)
+      exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith
         (mixedIIDWith_of_conditionallyIIDWith hν)
     simp only [ProbabilityMeasure.coe_mk]
     rw [map_prod_unitIntervalCoding_array (μ.map ν), ← hpath, map_uncurry_pathLaw_arrayRow hX]

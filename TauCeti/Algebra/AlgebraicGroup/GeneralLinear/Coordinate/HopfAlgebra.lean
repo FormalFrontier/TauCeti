@@ -95,6 +95,7 @@ theorem localizedGenericMatrix_apply (i j : Fin n) :
       coordinateRingMap R n (MvPolynomial.X (i, j)) := by
   simp [localizedGenericMatrix, Matrix.mvPolynomialX]
 
+/-- The matrix-monoid comultiplication followed by localization in both tensor factors. -/
 private noncomputable def comulBase :
     MatrixMonoid.CoordinateRing R n →ₐ[R]
       CoordinateRing R n ⊗[R] CoordinateRing R n :=
@@ -174,6 +175,7 @@ theorem counit_coordinateRingMap (x : MatrixMonoid.CoordinateRing R n) :
     counit R n (coordinateRingMap R n x) = MatrixMonoid.counit R n x := by
   simp [-coordinateRingMap_apply, counit, coordinateRingMap]
 
+/-- Evaluation of matrix coordinates at the inverse of the localized generic matrix. -/
 private noncomputable def antipodeBase :
     MatrixMonoid.CoordinateRing R n →ₐ[R] CoordinateRing R n :=
   MvPolynomial.aeval fun ij : Fin n × Fin n => ((localizedGenericMatrix R n)⁻¹) ij.1 ij.2
@@ -485,6 +487,38 @@ noncomputable def coordinateHopfAlgebraAlgEquiv :
   letI : HopfAlgebra R (CoordinateRing R n) := hopfAlgebra R n
   exact AlgEquiv.refl
 
+/-- The localized generic matrix, read in the bundled coordinate Hopf algebra of `GLₙ`. -/
+noncomputable def genericMatrix :
+    Matrix (Fin n) (Fin n) (coordinateHopfAlgebra R n) :=
+  (localizedGenericMatrix R n).map (coordinateHopfAlgebraAlgEquiv R n)
+
+/-- An entry of the bundled generic matrix is the corresponding bundled coordinate. -/
+@[simp]
+theorem genericMatrix_apply (i j : Fin n) :
+    genericMatrix R n i j =
+      coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j))) := by
+  rw [genericMatrix, Matrix.map_apply, localizedGenericMatrix_apply]
+
+/-- The determinant of the bundled generic matrix is a unit. -/
+theorem isUnit_det_genericMatrix : IsUnit (genericMatrix R n).det := by
+  rw [genericMatrix, ← AlgEquiv.mapMatrix_apply, ← AlgEquiv.map_det]
+  exact (isUnit_det_localizedGenericMatrix R n).map
+    (coordinateHopfAlgebraAlgEquiv R n).toAlgHom
+
+/-- An entry of the inverse bundled generic matrix is the bundled image of the corresponding
+localized inverse entry. -/
+theorem genericMatrix_inv_apply (i j : Fin n) :
+    (genericMatrix R n)⁻¹ i j =
+      coordinateHopfAlgebraAlgEquiv R n ((localizedGenericMatrix R n)⁻¹ i j) := by
+  have h : (genericMatrix R n)⁻¹ =
+      ((localizedGenericMatrix R n)⁻¹).map (coordinateHopfAlgebraAlgEquiv R n) := by
+    apply Matrix.inv_eq_left_inv
+    rw [genericMatrix, ← Matrix.map_mul,
+      Matrix.nonsing_inv_mul _ (isUnit_det_localizedGenericMatrix R n)]
+    exact Matrix.map_one _ (map_zero _) (map_one _)
+  rw [h, Matrix.map_apply]
+
 /-- Mathlib has no `CommHopfAlgCat.of_comul` lemma exposing the comultiplication stored by
 `CommHopfAlgCat.of`. This bridge locally crosses the two definitional wrappers:
 `coordinateHopfAlgebra` stores `(hopfAlgebra R n).toCoalgebra` on the raw coordinate ring, and
@@ -589,6 +623,39 @@ theorem coordinateHopfAlgebra_antipode_X (i j : Fin n) :
       coordinateHopfAlgebraAlgEquiv R n ((localizedGenericMatrix R n)⁻¹ i j) := by
   rw [coordinateHopfAlgebra_antipode_apply, antipode_X]
 
+/-- The counit sends the bundled generic matrix to the identity matrix. -/
+@[simp]
+theorem map_counit_genericMatrix :
+    (genericMatrix R n).map (Bialgebra.counitAlgHom R (coordinateHopfAlgebra R n)) = 1 := by
+  ext i j
+  rw [Matrix.map_apply, genericMatrix_apply, Bialgebra.counitAlgHom_apply,
+    coordinateHopfAlgebra_counit_X, Matrix.one_apply]
+
+/-- The comultiplication sends the bundled generic matrix to the product of its two tensor
+inclusions: `Δ X = (X ⊗ 1)(1 ⊗ X)`. -/
+@[simp]
+theorem map_comul_genericMatrix :
+    (genericMatrix R n).map (Bialgebra.comulAlgHom R (coordinateHopfAlgebra R n)) =
+      (genericMatrix R n).map (Algebra.TensorProduct.includeLeft (R := R) (S := R)) *
+        (genericMatrix R n).map (Algebra.TensorProduct.includeRight (R := R)) := by
+  ext i j
+  rw [Matrix.map_apply, genericMatrix_apply, Bialgebra.comulAlgHom_apply,
+    coordinateHopfAlgebra_comul_X, Matrix.mul_apply]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  rw [Matrix.map_apply, Matrix.map_apply, genericMatrix_apply, genericMatrix_apply,
+    Algebra.TensorProduct.includeLeft_apply, Algebra.TensorProduct.includeRight_apply,
+    Algebra.TensorProduct.tmul_mul_tmul, one_mul, mul_one]
+
+/-- The antipode sends the bundled generic matrix to its bundled inverse. -/
+@[simp]
+theorem map_antipode_genericMatrix :
+    (genericMatrix R n).map
+        (HopfAlgebra.antipodeAlgHom (R := R) (A := coordinateHopfAlgebra R n)) =
+      (genericMatrix R n)⁻¹ := by
+  ext i j
+  rw [Matrix.map_apply, genericMatrix_apply, HopfAlgebra.antipodeAlgHom_apply,
+    coordinateHopfAlgebra_antipode_X, genericMatrix_inv_apply]
+
 /-- Two algebra homomorphisms out of the bundled coordinate Hopf algebra of `GLₙ` are equal if
 they agree on the localized generic entries. This is the bundled counterpart of
 `algHom_ext_away`. -/
@@ -609,6 +676,19 @@ theorem coordinateHopfAlgebra_algHom_ext {T : Type*} [Semiring T] [Algebra R T]
   intro x
   obtain ⟨y, rfl⟩ := (coordinateHopfAlgebraAlgEquiv R n).surjective x
   exact DFunLike.congr_fun hcomp y
+
+/-- Two bialgebra homomorphisms out of the bundled coordinate Hopf algebra of `GLₙ` are equal
+if they agree on the localized generic entries. -/
+theorem coordinateHopfAlgebra_bialgHom_ext {T : Type*} [Semiring T] [Bialgebra R T]
+    {f g : coordinateHopfAlgebra R n →ₐc[R] T}
+    (h : ∀ i j, f (coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j)))) =
+      g (coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j))))) :
+    f = g := by
+  apply BialgHom.coe_toAlgHom_injective
+  apply coordinateHopfAlgebra_algHom_ext R n
+  exact h
 
 /-- The localized generic entries and their images under the stored antipode generate the carrier
 of the bundled general linear coordinate Hopf algebra. -/
@@ -654,6 +734,14 @@ noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :
 theorem finiteTypeCoordinateHopfAlgebra_obj :
     (finiteTypeCoordinateHopfAlgebra R n).obj = coordinateHopfAlgebra R n :=
   (rfl)
+
+/-- The coordinate Hopf algebra of `GL_n` carries the finite-type instance recorded by its
+bundled finite-type coordinate algebra. -/
+instance instAlgebraFiniteTypeCoordinateHopfAlgebra :
+    Algebra.FiniteType R (coordinateHopfAlgebra R n) := by
+  rw [← finiteTypeCoordinateHopfAlgebra_obj R n]
+  exact (finiteTypeCommHopfAlgProperty_iff _).mp
+    (finiteTypeCoordinateHopfAlgebra R n).property
 
 end GeneralLinear
 

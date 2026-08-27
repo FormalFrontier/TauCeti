@@ -82,7 +82,7 @@ mentions a decomposition, an isotypic component, a multiplicity or a `G`-orbit o
 What the file does leave in place is the translation machinery the **Clifford's theorem** milestone
 runs on, since it is the same machinery the semisimplicity statement is proved from; the
 single-orbit half of that milestone is
-`TauCeti/RepresentationTheory/Induction/Clifford/Orbit.lean`.
+`TauCeti/RepresentationTheory/Induction/Clifford/Orbit/Basic.lean`.
 
 The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Representation Theory of
 Finite Groups and Associative Algebras*, §49.
@@ -340,8 +340,7 @@ theorem isSemisimpleRepresentation_comp_subtype_of_isAtom [ρ.IsIrreducible]
 subgroup of a finite-dimensional irreducible representation is semisimple. -/
 theorem isSemisimpleRepresentation_comp_subtype [ρ.IsIrreducible] [FiniteDimensional k V] :
     _root_.Representation.IsSemisimpleRepresentation (ρ.comp N.subtype) := by
-  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] _
-  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
   obtain ⟨σ, hσ⟩ := exists_isAtom (ρ.comp N.subtype)
   exact isSemisimpleRepresentation_comp_subtype_of_isAtom ρ hσ
 

@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.GeneralLinear
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Torus
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Scheme
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic

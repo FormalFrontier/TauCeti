@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.Coalgebra.Equiv
 public import TauCeti.Algebra.Coalgebra.Comodule.Corestrict
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Basic
+public import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
 /-!
 # Corestriction of subcomodules
@@ -26,6 +27,8 @@ coalgebras must preserve the invariant subspaces of their comodules.
   coalgebra equivalence.
 * `TauCeti.Subcomodule.corestrictOrderIso`: the carrier-preserving order isomorphism induced
   by a coalgebra equivalence.
+* `TauCeti.Subcomodule.map_id_coact_coe_eq_tmul_one`: a vector of a subcomodule fixed by the
+  corestricted coaction is fixed by the corestricted coaction of the ambient comodule.
 
 ## References
 
@@ -186,6 +189,41 @@ theorem corestrictOrderIso_symm_apply (e : C ≃ₗc[R] D)
     let _ : Comodule R D M := Comodule.Corestrict e.toCoalgHom
     ext m
     rfl
+
+section Induced
+
+variable {R : Type u} [CommSemiring R]
+variable {C : Type v} {D : Type w}
+variable [AddCommMonoid C] [Module R C] [Coalgebra R C] [Module.Flat R C]
+variable [AddCommMonoid D] [Module R D] [Coalgebra R D] [One D]
+variable {M : Type x} [AddCommMonoid M] [Module R M] [Comodule R C M]
+
+/-- A vector of a subcomodule that the corestricted coaction fixes is fixed by the corestricted
+coaction of the ambient comodule.
+
+This is the corestricted analogue of `TauCeti.Subcomodule.coact_coe_eq_tmul_one`; the coalgebra
+morphism is spelled out rather than installed as a comodule instance, so that both sides read in
+the ambient coalgebra `C`. -/
+theorem map_id_coact_coe_eq_tmul_one (f : C →ₗc[R] D) (W : Subcomodule R C M) {n : W}
+    (hn : TensorProduct.map LinearMap.id f.toLinearMap
+        (Comodule.coact (R := R) (C := C) (M := W) n) = n ⊗ₜ[R] (1 : D)) :
+    TensorProduct.map LinearMap.id f.toLinearMap
+        (Comodule.coact (R := R) (C := C) (M := M) (n : M)) = (n : M) ⊗ₜ[R] (1 : D) := by
+  have h := congrArg
+    (TensorProduct.map (SMulMemClass.subtype W) (LinearMap.id : D →ₗ[R] D)) hn
+  rw [TensorProduct.map_tmul, SMulMemClass.subtype_apply, LinearMap.id_coe, id_eq] at h
+  rw [← LinearMap.comp_apply, ← TensorProduct.map_comp, LinearMap.id_comp,
+    LinearMap.comp_id] at h
+  -- The explicit factorization aligns the subtype coaction with the ambient tensor map;
+  -- elaboration cannot infer the intermediate tensor factors from the surrounding rewrite.
+  rw [show TensorProduct.map (SMulMemClass.subtype W) f.toLinearMap =
+      (TensorProduct.map (LinearMap.id : M →ₗ[R] M) f.toLinearMap).comp
+        (TensorProduct.map (SMulMemClass.subtype W) (LinearMap.id : C →ₗ[R] C)) by
+    rw [← TensorProduct.map_comp, LinearMap.id_comp, LinearMap.comp_id],
+    LinearMap.comp_apply, ← LinearMap.rTensor_def, Subcomodule.subtype_rTensor_coact] at h
+  exact h
+
+end Induced
 
 end Subcomodule
 

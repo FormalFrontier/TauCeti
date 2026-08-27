@@ -53,13 +53,8 @@ theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
     refine ConditionallyIIDWith.intro measurable_const fun m k hk => ?_
     simp
   refine ConditionallyIIDWith.intro measurable_const fun m k hk => ?_
-  have hblock_ne : blockLaw μ X k ≠ 0 := by
-    rw [h.blockLaw_eq_mixture k hk, Measure.bind_const]
-    intro hzero
-    have huniv := congrArg (fun q : Measure (Fin m → α) => q Set.univ) hzero
-    exact hμ (Measure.measure_univ_eq_zero.mp (by simpa using huniv))
   have hblock : AEMeasurable (fun ω (i : Fin m) => X (k i) ω) μ :=
-    AEMeasurable.of_map_ne_zero (by simpa only [blockLaw_def] using hblock_ne)
+    aemeasurable_pi_lambda _ fun i => h.aemeasurable (k i)
   calc μ.map (fun ω => (p, fun i : Fin m => X (k i) ω))
       = (μ.map fun ω (i : Fin m) => X (k i) ω).map (Prod.mk p) := by
         rw [measurable_prodMk_left.aemeasurable.map_map_of_aemeasurable hblock]

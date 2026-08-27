@@ -149,6 +149,38 @@ theorem MixedIIDWith.blockLaw_eq_mixture {μ : Measure Ω} {X : ι → Ω → α
     blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
   h.2 m k hk
 
+/-- **The mixture identity already forces coordinatewise a.e. measurability**, with no hypothesis on
+`μ` and none on the mixing representative beyond the one `MixedIIDWith` carries. -/
+theorem MixedIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) (i : ι) :
+    AEMeasurable (X i) μ := by
+  -- A one-coordinate block law is a mixture of probability measures, so it carries the whole mass
+  -- of `μ`, whereas `Measure.map` along a function that is not a.e. measurable is `0`.  At the zero
+  -- measure the conclusion is vacuous rather than mass-driven, so that case is separate.
+  rcases eq_or_ne μ 0 with rfl | hμ
+  · exact aemeasurable_zero_measure
+  have hblock := h.blockLaw_eq_mixture (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
+  rw [blockLaw_def] at hblock
+  have hmass : (μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin 1 => ν ω).toMeasure)
+      Set.univ = μ Set.univ := by
+    rw [TauCeti.MeasureTheory.bind_probabilityMeasure_pi_const_apply ν
+      h.measurable_mixingRepresentative.aemeasurable MeasurableSet.univ]
+    simp
+  have hne : (μ.map fun ω (_ : Fin 1) => X i ω) ≠ 0 := by
+    rw [hblock]
+    intro hzero
+    rw [hzero] at hmass
+    exact Measure.measure_univ_ne_zero.2 hμ hmass.symm
+  exact (measurable_pi_apply 0).comp_aemeasurable (AEMeasurable.of_map_ne_zero hne)
+
+/-- **Coordinatewise a.e. measurability from mixed i.i.d.-ness**, without naming a representative.
+The conclusion does not mention the mixing representative, so this is the natural level; the
+witness-level `MixedIIDWith.aemeasurable` is its specialization. -/
+theorem MixedIID.aemeasurable {μ : Measure Ω} {X : ι → Ω → α} (h : MixedIID μ X) (i : ι) :
+    AEMeasurable (X i) μ := by
+  obtain ⟨ν, hν⟩ := h
+  exact hν.aemeasurable i
+
 /-- A `MixedIID` family has a mixing representative. -/
 theorem MixedIID.exists_mixingRepresentative {μ : Measure Ω} {X : ι → Ω → α}
     (h : MixedIID μ X) :

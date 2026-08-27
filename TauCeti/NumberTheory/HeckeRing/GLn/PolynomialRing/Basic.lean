@@ -23,6 +23,8 @@ here.
 
 ## Main definitions
 
+* `HeckeRing.GLn.heckeGenExponent k` — the exponent vector of the `k`-th generator's diagonal,
+  `0` on the first `n - 1 - k` positions and `1` on the last `k + 1`.
 * `HeckeRing.GLn.heckeGen k` — the `k`-th generator `T(1, …, 1, p, …, p)`, with `k + 1` entries
   equal to `p`.
 * `HeckeRing.GLn.evalHom` — evaluation of `ℤ[X₁, …, Xₙ]` at the generators, into the ambient
@@ -86,6 +88,19 @@ section TGen
 
 variable (p : ℕ) (hp : p.Prime)
 
+/-- The exponent vector of the `k`-th generator's diagonal: `0` on the first `n - 1 - k`
+positions and `1` on the last `k + 1`, so that `heckeGenDiag n p k` is `p` raised to it
+entrywise (`heckeGenDiag_eq_primePowDiag`). -/
+def heckeGenExponent (k : Fin n) : Fin n → ℕ :=
+  fun i ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1
+
+/-- Defining equation for the sealed definition `heckeGenExponent`. -/
+@[simp]
+lemma heckeGenExponent_apply (k : Fin n) (i : Fin n) :
+    heckeGenExponent n k i = if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1 :=
+  -- `(rfl)` rather than `rfl`: see `heckeGenDiag_apply` below.
+  (rfl)
+
 /-- The diagonal for the k-th generator: `(1,...,1,p,...,p)` with `n-1-k` ones
     followed by `k+1` entries of `p`. Here `k : Fin n`, giving `n` generators. -/
 def heckeGenDiag (k : Fin n) : Fin n → ℕ :=
@@ -104,19 +119,18 @@ lemma heckeGenDiag_apply (k : Fin n) (i : Fin n) :
 lemma heckeGenDiag_one_eq_const (p : ℕ) : heckeGenDiag 1 p (0 : Fin 1) = fun _ ↦ p := by
   funext i; simp [heckeGenDiag_apply]
 
-/-- The heckeGen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
+/-- The heckeGen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1): it is `p`
+raised entrywise to `heckeGenExponent n k`. -/
 lemma heckeGenDiag_eq_primePowDiag (k : Fin n) :
-    heckeGenDiag n p k =
-    primePowDiag n p (fun i ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
+    heckeGenDiag n p k = primePowDiag n p (heckeGenExponent n k) := by
   funext i
-  simp only [heckeGenDiag_apply, primePowDiag_apply]
+  simp only [heckeGenDiag_apply, primePowDiag_apply, heckeGenExponent_apply]
   split_ifs <;> simp
 
 /-- The exponent function for heckeGen is monotone. -/
-lemma heckeGen_exp_monotone (k : Fin n) :
-    Monotone (fun i : Fin n ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
+lemma heckeGenExponent_monotone (k : Fin n) : Monotone (heckeGenExponent n k) := by
   intro i j hij
-  simp only
+  simp only [heckeGenExponent_apply]
   split_ifs <;> omega
 
 variable [NeZero n]
@@ -133,11 +147,10 @@ lemma heckeGen_def (k : Fin n) : heckeGen n p k = diagElem (heckeGenDiag n p k) 
 omit hp in
 /-- Each generator lies in the `p`-local subsemiring `R_p`. -/
 lemma heckeGen_mem_pLocalSubring (k : Fin n) : heckeGen n p k ∈ pLocalSubring n p := by
-  have h_eq : heckeGen n p k =
-      diagElem (primePowDiag n p (fun i ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1)) :=
+  have h_eq : heckeGen n p k = diagElem (primePowDiag n p (heckeGenExponent n k)) :=
     congrArg diagElem (heckeGenDiag_eq_primePowDiag n p k)
   rw [h_eq]
-  exact diagElem_primePowDiag_mem_pLocalSubring n p _ (heckeGen_exp_monotone n k)
+  exact diagElem_primePowDiag_mem_pLocalSubring n p _ (heckeGenExponent_monotone n k)
 
 omit hp
 

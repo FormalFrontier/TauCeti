@@ -190,6 +190,54 @@ theorem dividedPower_mul_of_ad_dividedPower_series {x : A} {d : ℕ → A}
 
 /-! ## The class-two case -/
 
+/-- The `k`-th divided power of the inner derivation `ad x`, applied to `y⁽ⁿ⁾`, in the class-two
+case: it is `y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾` while `k ≤ n`, and `0` beyond. -/
+private noncomputable def classTwoSeries (y z : A) (n k : ℕ) : A :=
+  if k ≤ n then dividedPower (n - k) y * dividedPower k z else 0
+
+private theorem classTwoSeries_eq_of_le {y z : A} {n k : ℕ} (hk : k ≤ n) :
+    classTwoSeries y z n k = dividedPower (n - k) y * dividedPower k z := by
+  simp [classTwoSeries, hk]
+
+private theorem classTwoSeries_eq_zero_of_lt {y z : A} {n k : ℕ} (hk : n < k) :
+    classTwoSeries y z n k = 0 := by
+  simp [classTwoSeries, Nat.not_le.mpr hk]
+
+private theorem classTwoSeries_zero {y z : A} (n : ℕ) :
+    classTwoSeries y z n 0 = dividedPower n y := by
+  rw [classTwoSeries_eq_of_le (Nat.zero_le n), Nat.sub_zero, dividedPower_zero, mul_one]
+
+-- The defining recurrence of the sequence: it is what `dividedPower_mul_of_ad_dividedPower_series`
+-- consumes. Below `k = n` both terms are present, since `x` either passes through the `y`-power or
+-- produces one `z`; at `k = n` the `y`-power is empty and no commutator term survives; past `k = n`
+-- the sequence has run out.
+private theorem mul_classTwoSeries {x y z : A} (hxy : x * y = y * x + z) (hxz : Commute x z)
+    (hyz : Commute y z) (n k : ℕ) :
+    x * classTwoSeries y z n k =
+      classTwoSeries y z n k * x + (k + 1) • classTwoSeries y z n (k + 1) := by
+  have hxzk : ∀ j, Commute x (dividedPower j z) := fun j ↦ by
+    simpa using commute_dividedPower_dividedPower hxz 1 j
+  rcases lt_trichotomy k n with hkn | hkn | hkn
+  · have hnk : n - k = (n - (k + 1)) + 1 := by omega
+    have hstep : x * dividedPower (n - k) y =
+        dividedPower (n - k) y * x + dividedPower (n - (k + 1)) y * z := by
+      rw [hnk]
+      exact mul_dividedPower_of_commutator_eq hxy hyz _
+    rw [classTwoSeries_eq_of_le hkn.le, classTwoSeries_eq_of_le hkn]
+    calc x * (dividedPower (n - k) y * dividedPower k z)
+        = x * dividedPower (n - k) y * dividedPower k z := by rw [mul_assoc]
+      _ = dividedPower (n - k) y * (x * dividedPower k z) +
+            dividedPower (n - (k + 1)) y * (z * dividedPower k z) := by
+          rw [hstep, add_mul, mul_assoc, mul_assoc]
+      _ = _ := by
+          rw [(hxzk k).eq, ← mul_assoc, self_mul_dividedPower, mul_smul_comm]
+  · have hnk : n - k = 0 := by omega
+    rw [classTwoSeries_eq_of_le hkn.le, classTwoSeries_eq_zero_of_lt (by omega), hnk,
+      dividedPower_zero, one_mul, smul_zero, add_zero]
+    exact (hxzk k).eq
+  · rw [classTwoSeries_eq_zero_of_lt hkn, classTwoSeries_eq_zero_of_lt (by omega), mul_zero,
+      zero_mul, smul_zero, add_zero]
+
 /-- **Coefficient-one normal ordering for divided powers with central commutator.** Suppose
 `x * y = y * x + z`, and `z` commutes with both `x` and `y`. Then
 
@@ -200,65 +248,27 @@ x⁽ᵐ⁾ y⁽ⁿ⁾ = ∑ k ≤ min(m,n), y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾ x⁽ᵐ�
 The summation is written as `range (min m n + 1)`, so every displayed subtraction is exact. This is
 the integral normal-ordering rule: every coefficient in the divided-power basis is `1`.
 
-This is the case `d k = y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾` of `dividedPower_mul_of_ad_dividedPower_series`: the
-class-two hypotheses make that truncated sequence a divided-power series for the inner derivation
-of `x`, and its vanishing beyond `k = n` is what stops the sum at `min m n`. -/
+This is the `classTwoSeries` case of `dividedPower_mul_of_ad_dividedPower_series`, truncated at
+`min m n` because that sequence vanishes beyond `k = n`. -/
 theorem dividedPower_mul_dividedPower_of_commutator_eq {x y z : A}
     (hxy : x * y = y * x + z) (hxz : Commute x z) (hyz : Commute y z) (m n : ℕ) :
     dividedPower m x * dividedPower n y =
       ∑ k ∈ range (min m n + 1),
         dividedPower (n - k) y * dividedPower k z * dividedPower (m - k) x := by
-  -- The divided powers `(ad x)ᵏ (y⁽ⁿ⁾) / k!` of the inner derivation are `y⁽ⁿ⁻ᵏ⁾ z⁽ᵏ⁾` for
-  -- `k ≤ n`, and vanish beyond that because `x` commutes with every `z⁽ᵏ⁾`.
-  set d : ℕ → A := fun k ↦ if k ≤ n then dividedPower (n - k) y * dividedPower k z else 0
-    with hd_def
-  have hval : ∀ k, k ≤ n → d k = dividedPower (n - k) y * dividedPower k z := by
-    intro k hk
-    simp [hd_def, hk]
-  have hvanish : ∀ k, n < k → d k = 0 := by
-    intro k hk
-    simp [hd_def, Nat.not_le.mpr hk]
-  have hxzk : ∀ k, Commute x (dividedPower k z) := fun k ↦ by
-    simpa using commute_dividedPower_dividedPower hxz 1 k
-  have hd : ∀ k, x * d k = d k * x + (k + 1) • d (k + 1) := by
-    intro k
-    rcases lt_trichotomy k n with hkn | hkn | hkn
-    · -- Both terms are present: `x` either passes through the `y`-power or produces one `z`.
-      have hnk : n - k = (n - (k + 1)) + 1 := by omega
-      have hstep : x * dividedPower (n - k) y =
-          dividedPower (n - k) y * x + dividedPower (n - (k + 1)) y * z := by
-        rw [hnk]
-        exact mul_dividedPower_of_commutator_eq hxy hyz _
-      rw [hval k hkn.le, hval (k + 1) hkn]
-      calc x * (dividedPower (n - k) y * dividedPower k z)
-          = x * dividedPower (n - k) y * dividedPower k z := by rw [mul_assoc]
-        _ = dividedPower (n - k) y * (x * dividedPower k z) +
-              dividedPower (n - (k + 1)) y * (z * dividedPower k z) := by
-            rw [hstep, add_mul, mul_assoc, mul_assoc]
-        _ = _ := by
-            rw [(hxzk k).eq, ← mul_assoc, self_mul_dividedPower, mul_smul_comm]
-    · -- At `k = n` the `y`-power is empty, so no commutator term survives.
-      have hnk : n - k = 0 := by omega
-      rw [hval k hkn.le, hvanish (k + 1) (by omega), hnk, dividedPower_zero, one_mul, smul_zero,
-        add_zero]
-      exact (hxzk k).eq
-    · -- Past `k = n` the sequence has run out.
-      rw [hvanish k hkn, hvanish (k + 1) (by omega), mul_zero, zero_mul, smul_zero, add_zero]
-  have hd0 : d 0 = dividedPower n y := by
-    rw [hval 0 (Nat.zero_le n), Nat.sub_zero, dividedPower_zero, mul_one]
-  have hmain := dividedPower_mul_of_ad_dividedPower_series hd m
-  rw [hd0] at hmain
+  have hmain := dividedPower_mul_of_ad_dividedPower_series (x := x)
+    (d := classTwoSeries y z n) (mul_classTwoSeries hxy hxz hyz n) m
+  rw [classTwoSeries_zero] at hmain
   -- The summands beyond `k = min m n` vanish, which truncates the sum of the general rule.
   have hzero : ∀ k ∈ range (m + 1), k ∉ range (min m n + 1) →
-      d k * dividedPower (m - k) x = 0 := by
+      classTwoSeries y z n k * dividedPower (m - k) x = 0 := by
     intro k hk hk'
     rw [Finset.mem_range, Nat.lt_succ_iff] at hk
     rw [Finset.mem_range, Nat.lt_succ_iff] at hk'
-    rw [hvanish k (by omega), zero_mul]
+    rw [classTwoSeries_eq_zero_of_lt (by omega), zero_mul]
   rw [hmain,
     ← Finset.sum_subset (Finset.range_subset_range.mpr (by omega : min m n + 1 ≤ m + 1)) hzero]
   refine Finset.sum_congr rfl fun k hk ↦ ?_
   rw [Finset.mem_range, Nat.lt_succ_iff] at hk
-  rw [hval k (le_trans hk (min_le_right m n))]
+  rw [classTwoSeries_eq_of_le (le_trans hk (min_le_right m n))]
 
 end TauCeti.Associative

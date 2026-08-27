@@ -12,10 +12,14 @@ public import Mathlib.Analysis.Complex.UnitDisc.Basic
 
 This file records the scalar pseudo-hyperbolic expression
 `‖(z - w) / (1 - conj w * z)‖` used in the Schwarz--Pick layer of the conformal-mapping
-roadmap.  The main API proves that the denominator is nonzero on the open unit disc, the
-expression is symmetric, it is strictly less than one for two points of the unit disc — hence
-lies in `Ioo (-1) 1` (`TauCeti.pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one`), the interval on
-which `Real.artanh` is a bijection onto `ℝ` — and it is jointly continuous there
+roadmap.  The main API proves that the denominator is nonzero on the open unit disc — hence of
+positive norm (`TauCeti.norm_one_sub_conj_mul_pos_of_norm_lt_one`), a positivity side condition
+used when manipulating inequalities involving that denominator — that the hyperbolic defect
+`1 - ‖z‖ ^ 2` is positive there (`TauCeti.one_sub_sq_norm_pos_of_norm_lt_one`), that the
+expression is symmetric, that it is strictly less than one for two points of the unit disc —
+hence lies in `Ioo (-1) 1`
+(`TauCeti.pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one`), the interval on which `Real.artanh` is a
+bijection onto `ℝ` — and that it is jointly continuous there
 (`TauCeti.continuousOn_pseudoHyperbolicExpr`).
 The Poincaré defect identity `TauCeti.norm_sq_one_sub_conj_mul_sub_norm_sq_sub` compares the
 numerator and the denominator, and yields
@@ -155,6 +159,17 @@ lemma one_sub_conj_mul_ne_zero_unitDisc (z w : Complex.UnitDisc) :
     1 - (starRingEnd ℂ) (w : ℂ) * (z : ℂ) ≠ 0 :=
   one_sub_conj_mul_ne_zero_of_norm_lt_one z.norm_lt_one w.norm_lt_one
 
+/-- On the open unit disc, the hyperbolic defect `1 - ‖z‖ ^ 2` is positive. -/
+lemma one_sub_sq_norm_pos_of_norm_lt_one {z : ℂ} (hz : ‖z‖ < 1) : 0 < 1 - ‖z‖ ^ 2 := by
+  nlinarith [norm_nonneg z]
+
+/-- On the open unit disc, the denominator in the pseudo-hyperbolic expression has positive norm.
+This is a positivity side condition used when manipulating inequalities involving this
+denominator. -/
+lemma norm_one_sub_conj_mul_pos_of_norm_lt_one {z w : ℂ} (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
+    0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
+  norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
+
 /-- For a point of norm at most one, the denominator of the Moebius factor evaluated at the
 factor's own center has norm `1 - ‖w‖ ^ 2`. -/
 lemma norm_one_sub_conj_mul_self_of_norm_le_one {w : ℂ} (hw : ‖w‖ ≤ 1) :
@@ -212,10 +227,8 @@ lemma norm_sub_eq_of_pseudoHyperbolicExpr_eq {z w z' w' : ℂ}
     ‖z' - w'‖ = ‖z - w‖ := by
   have hz' : ‖z'‖ < 1 := by rw [hnz]; exact hz
   have hw' : ‖w'‖ < 1 := by rw [hnw]; exact hw
-  have hc : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
-    have h1 : (0 : ℝ) < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
-    have h2 : (0 : ℝ) < 1 - ‖w‖ ^ 2 := by nlinarith [norm_nonneg w]
-    exact mul_pos h1 h2
+  have hc : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) :=
+    mul_pos (one_sub_sq_norm_pos_of_norm_lt_one hz) (one_sub_sq_norm_pos_of_norm_lt_one hw)
   have hden : ‖(1 : ℂ) - (starRingEnd ℂ) w * z‖ ≠ 0 :=
     norm_ne_zero_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
   have hden' : ‖(1 : ℂ) - (starRingEnd ℂ) w' * z'‖ ≠ 0 :=
@@ -269,9 +282,7 @@ than one. -/
 lemma pseudoHyperbolicExpr_lt_one_of_norm_lt_one {z w : ℂ}
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     pseudoHyperbolicExpr z w < 1 := by
-  have hden_ne : 1 - (starRingEnd ℂ) w * z ≠ 0 :=
-    one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw
-  have hden : 0 < ‖1 - (starRingEnd ℂ) w * z‖ := norm_pos_iff.mpr hden_ne
+  have hden : 0 < ‖1 - (starRingEnd ℂ) w * z‖ := norm_one_sub_conj_mul_pos_of_norm_lt_one hz hw
   have hlt := norm_sub_lt_norm_one_sub_conj_mul_of_norm_lt_one hz hw
   rw [pseudoHyperbolicExpr, norm_div]
   rwa [div_lt_one hden]

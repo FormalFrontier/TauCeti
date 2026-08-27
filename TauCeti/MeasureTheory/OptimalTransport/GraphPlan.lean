@@ -24,7 +24,7 @@ almost-everywhere measurable `T`, the graph plan couples `μ` and `ν` exactly w
 transport map from `μ` to `ν`. This is the passage from the Monge problem to the Kantorovich
 problem, whose effect on values is the change of variables `TauCeti.lintegral_graphPlan`; the
 resulting inequality of transport costs belongs to the cost theory and is stated in
-`TauCeti/MeasureTheory/OptimalTransport/Cost.lean`. Second, `TauCeti.eq_graphPlan_iff`: a plan
+`TauCeti/MeasureTheory/OptimalTransport/Cost/Basic.lean`. Second, `TauCeti.eq_graphPlan_iff`: a plan
 is a graph plan exactly when it is *deterministic*, that is, concentrated on the graph of `T`.
 With `TauCeti.graphPlan_eq_graphPlan_iff`, which says that the map is determined `μ`-almost
 everywhere by its graph plan, this makes the graph construction a bijection between transport
@@ -53,7 +53,7 @@ with measurable singletons.
 * `TauCeti.lintegral_graphPlan` — the change of variables
   `∫⁻ z, c z ∂graphPlan T μ = ∫⁻ x, c (x, T x) ∂μ`, which feeds the Monge-to-Kantorovich
   inequality `TauCeti.transportCost_le_lintegral_of_hasLaw` in
-  `TauCeti/MeasureTheory/OptimalTransport/Cost.lean`;
+  `TauCeti/MeasureTheory/OptimalTransport/Cost/Basic.lean`;
 * `TauCeti.eq_graphPlan_iff` — a plan is the graph plan of `T` exactly when it is concentrated
   on the graph of `T`, with `TauCeti.graphPlan_eq_graphPlan_iff` the uniqueness of the map that
   induces a given deterministic plan;
@@ -75,7 +75,7 @@ whatsoever, since a `T` that is not a.e. measurable makes both sides the zero me
 
 This module needs nothing from the transport cost, so it sits below it: the Monge-to-Kantorovich
 relaxation inequality of Layer 4, item 1, which the change of variables here supplies, is stated
-with the cost itself in `TauCeti/MeasureTheory/OptimalTransport/Cost.lean`.
+with the cost itself in `TauCeti/MeasureTheory/OptimalTransport/Cost/Basic.lean`.
 
 This is Layer 0, item 2 of the optimal-transport roadmap.
 
