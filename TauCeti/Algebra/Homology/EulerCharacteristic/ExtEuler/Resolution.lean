@@ -40,12 +40,14 @@ and that the displayed formula holds.
 
 * `TauCeti.ExactStructure.FiniteResolution.hasProjectiveDimensionLT`: a finite resolution by
   projectives bounds the projective dimension of the resolved object by its length.
-* `TauCeti.ExactStructure.FiniteResolution.isExtBoundedBy` and
-  `TauCeti.ExactStructure.FiniteResolution.isExtFinite`: the two halves of Euler-admissibility,
-  with the explicit vanishing bound `r.length + 1`; they are packaged as
-  `TauCeti.ExactStructure.FiniteResolution.isEulerAdmissible`.
-* `TauCeti.ExactStructure.FiniteResolution.extEuler_eq_homEuler`: every admissibility witness gives
-  the Ext-Euler characteristic as the alternating Hom dimension of the resolution.
+* `TauCeti.ExactStructure.FiniteResolution.isExtBoundedBy`: a finite resolution by projectives
+  makes the `Ext` groups vanish from degree `r.length + 1` on.
+* `TauCeti.ExactStructure.FiniteResolution.isExtFinite`: `Ext`-finiteness propagates along a
+  finite resolution from its resolving terms to the resolved object. Together with the previous
+  result it gives `TauCeti.ExactStructure.FiniteResolution.isEulerAdmissible`.
+* `TauCeti.ExactStructure.FiniteResolution.extEuler_eq_homEuler`: the Ext-Euler characteristic of
+  a pair resolved by a Hom-finite finite projective resolution is the alternating Hom dimension of
+  that resolution.
 * `TauCeti.ExactStructure.FiniteResolution.homEuler_eq_homEuler`: any two finite resolutions of
   `X`, along object properties consisting of projectives with finite-dimensional Hom spaces into
   `Y`, have the same alternating Hom dimension.
@@ -132,22 +134,17 @@ theorem isExtBoundedBy (r : (ExactStructure.abelian C).FiniteResolution P X)
   have := r.hasProjectiveDimensionLT hproj
   ⟨fun _ hn ↦ HasProjectiveDimensionLT.subsingleton X (r.length + 1) _ hn Y⟩
 
-/-- The `Ext` groups out of an object with a finite resolution whose `P`-objects are projective
-and have finite-dimensional Hom spaces into `Y` are finite-dimensional. -/
+/-- `Ext`-finiteness propagates along a finite resolution: if every `P`-object has
+finite-dimensional `Ext` groups into `Y`, then so does the resolved object. Projectivity plays no
+role here; the projective case is the one used by
+`TauCeti.ExactStructure.FiniteResolution.isEulerAdmissible`. -/
 theorem isExtFinite (r : (ExactStructure.abelian C).FiniteResolution P X)
-    (hproj : P ≤ (ExactStructure.abelian C).isProjective)
-    (hHom : ∀ Z, P Z → FiniteDimensional k (Z ⟶ Y)) :
+    (hfinite : ∀ Z, P Z → IsExtFinite.{w} k Z Y) :
     IsExtFinite.{w} k X Y := by
   induction r with
-  | @base X hX =>
-      have : Projective X := (ExactStructure.abelian_isProjective_iff X).mp (hproj X hX)
-      have := hHom X hX
-      exact isExtFinite_of_projective k X Y
+  | @base X hX => exact hfinite X hX
   | @step K Q X hQ i p zero hp r ih =>
-      have : Projective Q := (ExactStructure.abelian_isProjective_iff Q).mp (hproj Q hQ)
-      have := hHom Q hQ
-      exact ih.of_shortExact₃' ((ExactStructure.abelian_conflation _).mp hp)
-        (isExtFinite_of_projective k Q Y)
+      exact ih.of_shortExact₃' ((ExactStructure.abelian_conflation _).mp hp) (hfinite Q hQ)
 
 /-- A finite resolution along an object property whose objects are projective and have
 finite-dimensional Hom spaces into `Y` makes the resolved pair `(X,Y)` Euler-admissible. -/
@@ -155,7 +152,11 @@ theorem isEulerAdmissible (r : (ExactStructure.abelian C).FiniteResolution P X)
     (hproj : P ≤ (ExactStructure.abelian C).isProjective)
     (hHom : ∀ Z, P Z → FiniteDimensional k (Z ⟶ Y)) :
     IsEulerAdmissible.{w} k X Y :=
-  ⟨r.isExtFinite hproj hHom, (r.isExtBoundedBy (Y := Y) hproj).isExtBounded⟩
+  ⟨r.isExtFinite fun Z hZ ↦ by
+      have : Projective Z := (ExactStructure.abelian_isProjective_iff Z).mp (hproj Z hZ)
+      have := hHom Z hZ
+      exact isExtFinite_of_projective k Z Y,
+    (r.isExtBoundedBy (Y := Y) hproj).isExtBounded⟩
 
 /-- **Finite-projective-resolution formula for the Ext-Euler characteristic.** The value of
 `χ(X,Y)` is the alternating sum of the dimensions of `Hom(Pᵢ,Y)` along any finite `P`-resolution
@@ -163,22 +164,22 @@ of `X`, provided the `P`-objects are projective and those Hom spaces are finite-
 theorem extEuler_eq_homEuler
     (r : (ExactStructure.abelian C).FiniteResolution P X)
     (hproj : P ≤ (ExactStructure.abelian C).isProjective)
-    (hHom : ∀ Z, P Z → FiniteDimensional k (Z ⟶ Y))
-    (h : IsEulerAdmissible.{w} k X Y) :
-    extEuler.{w} k h = r.homEuler k Y := by
+    (hHom : ∀ Z, P Z → FiniteDimensional k (Z ⟶ Y)) :
+    extEuler.{w} k (r.isEulerAdmissible hproj hHom) = r.homEuler k Y := by
   induction r with
   | @base X hX =>
       have : Projective X := (ExactStructure.abelian_isProjective_iff X).mp (hproj X hX)
       rw [homEuler_base]
-      exact extEuler_projective k h
+      exact extEuler_projective k _
   | @step K Q X hQ i p zero hp r ih =>
       have : Projective Q := (ExactStructure.abelian_isProjective_iff Q).mp (hproj Q hQ)
       have := hHom Q hQ
-      have hK := r.isEulerAdmissible hproj hHom
       have hQ' := isEulerAdmissible_of_projective k Q Y
-      have hadd := extEuler_shortExact₁ ((ExactStructure.abelian_conflation _).mp hp) Y hK hQ' h
+      have hadd := extEuler_shortExact₁ ((ExactStructure.abelian_conflation _).mp hp) Y
+        (r.isEulerAdmissible hproj hHom) hQ'
+        ((step hQ i p zero hp r).isEulerAdmissible hproj hHom)
       have hQeval := extEuler_projective k hQ'
-      rw [homEuler_step, ← ih hK]
+      rw [homEuler_step, ← ih]
       omega
 
 /-- The alternating Hom dimension is the same along any two finite resolutions of `X` taken along
@@ -191,8 +192,7 @@ theorem homEuler_eq_homEuler {P' : ObjectProperty C}
     (hproj' : P' ≤ (ExactStructure.abelian C).isProjective)
     (hHom' : ∀ Z, P' Z → FiniteDimensional k (Z ⟶ Y)) :
     r.homEuler k Y = s.homEuler k Y := by
-  have h := r.isEulerAdmissible hproj hHom
-  rw [← r.extEuler_eq_homEuler hproj hHom h, ← s.extEuler_eq_homEuler hproj' hHom' h]
+  rw [← r.extEuler_eq_homEuler hproj hHom, ← s.extEuler_eq_homEuler hproj' hHom']
 
 end ExactStructure.FiniteResolution
 
