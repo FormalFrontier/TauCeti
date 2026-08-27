@@ -132,10 +132,10 @@ theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK 
   simp only [mem_ofPred_eq] at hq₁im hq₂im
   have hq₁p : q₁ ≠ p := by
     rintro rfl
-    simp at hq₁im
+    simp only [sub_self, zero_div, zero_im, lt_irrefl] at hq₁im
   have hq₂p : q₂ ≠ p := by
     rintro rfl
-    simp at hq₂im
+    simp only [sub_self, zero_div, zero_im, lt_irrefl] at hq₂im
   have hKΓ : K \ {p} ⊆ (Γ '' uIcc a (b + 1))ᶜ := by
     rintro q ⟨hqK, hqp⟩ ⟨t, ht, hqt⟩
     rw [uIcc_of_le (by linarith : a ≤ b + 1)] at ht
