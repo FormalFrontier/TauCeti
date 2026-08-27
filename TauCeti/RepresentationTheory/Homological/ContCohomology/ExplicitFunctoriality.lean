@@ -384,6 +384,18 @@ theorem explicitMap1_comp
         (DFunLike.congr_fun
           (cocyclesMap1_comp G M H N φ f hf hequiv K P ψ q hq hequivq hcomp) c)
 
+/-- Two compatible pairs with the same group homomorphism and the same coefficient map induce the
+same map on explicit `H¹`; the continuity and equivariance witnesses are irrelevant. This is the
+continuous counterpart of Mathlib's `groupCohomology.map_congr`, and it is what lets a composite
+pair be recognised as a named one. -/
+theorem explicitMap1_congr {φ ψ : H →ₜ* G} {f q : M →+ N} {hf : Continuous f} {hq : Continuous q}
+    {hequivf : ∀ (h : H) (m : M), f (φ h • m) = h • f m}
+    {hequivq : ∀ (h : H) (m : M), q (ψ h • m) = h • q m} (hφ : φ = ψ) (hfq : f = q) :
+    explicitMap1 G M H N φ f hf hequivf = explicitMap1 G M H N ψ q hq hequivq := by
+  subst hφ
+  subst hfq
+  rfl
+
 /-- Pullback on the explicit second continuous cohomology group along a compatible pair. -/
 noncomputable def explicitMap2 [ContinuousMul G] [ContinuousMul H]
     (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)

@@ -27,7 +27,9 @@ and the coefficients discrete, and is not stated here: no construction or law be
 either hypothesis, and no comparison map to continuous cohomology is constructed.
 
 The finite-level tower built here is the one the standard accounts of profinite cohomology
-describe; the references below state the colimit theorem this system is the source of.
+describe; the references below state the colimit theorem this system is the source of. The
+degree-one case of that theorem, on the roadmap's explicit low-degree model, is
+`TauCeti/RepresentationTheory/Homological/ContCohomology/FiniteQuotient/Colimit.lean`.
 
 ## Main definitions
 

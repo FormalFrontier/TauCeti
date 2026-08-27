@@ -47,6 +47,12 @@ theorem coe_quotientMk (N : Subgroup G) [N.Normal] :
     (quotientMk N : G →* G ⧸ N) = QuotientGroup.mk' N :=
   (rfl)
 
+/-- The projection onto a quotient sends an element to its class. -/
+@[simp]
+theorem quotientMk_apply (N : Subgroup G) [N.Normal] (g : G) :
+    quotientMk N g = (g : G ⧸ N) :=
+  (rfl)
+
 end ContinuousMonoidHom
 
 end TauCeti
