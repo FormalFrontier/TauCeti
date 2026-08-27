@@ -39,7 +39,7 @@ Algebraic closure is the splitting-field hypothesis used by the character pairin
 
 ## Main results
 
-* `TauCeti.FDRep.nonempty_iso_of_character_eq_of_charZero`: two finite-dimensional
+* `FDRep.nonempty_iso_of_character_eq_of_charZero`: two finite-dimensional
   representations with equal characters are isomorphic in the semisimple characteristic-zero
   regime.
 * `TauCeti.repRingCharacter_injective`: the character homomorphism on the representation ring is
@@ -65,7 +65,7 @@ namespace TauCeti
 
 universe u v
 
-namespace FDRep
+section FDRep
 
 variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k] [CharZero k]
 
@@ -75,7 +75,7 @@ decomposes the underlying group-algebra modules into finite sums of simple modul
 characters against a simple character equates the corresponding natural-number multiplicities;
 characteristic zero makes the cast of those multiplicities injective. Matching the summands in
 each simple-module isomorphism class then gives an isomorphism of representations. -/
-theorem nonempty_iso_of_character_eq_of_charZero (X Y : FDRep k G)
+theorem _root_.FDRep.nonempty_iso_of_character_eq_of_charZero (X Y : FDRep k G)
     (hchar : X.character = Y.character) : Nonempty (X ≅ Y) := by
   classical
   let _ : Fintype G := Fintype.ofFinite G
