@@ -26,13 +26,18 @@ theorem MonoidHom.eq_of_eventuallyEq_one
     [PreconnectedSpace G] [Monoid M]
     {φ ψ : G →* M} (h : φ =ᶠ[𝓝 (1 : G)] ψ) : φ = ψ := by
   let S := φ.eqLocus ψ
-  have hS : (S : Set G) ∈ 𝓝 (1 : G) := h
+  have hS : (S : Set G) ∈ 𝓝 (1 : G) := by
+    -- Expose equality-locus membership as the pointwise equality used by the filter statement.
+    change φ =ᶠ[𝓝 (1 : G)] ψ
+    exact h
   have hopen : IsOpen (S : Set G) := S.isOpen_of_mem_nhds hS
   have hclosed : IsClosed (S : Set G) := S.isClosed_of_isOpen hopen
   have huniv : (S : Set G) = Set.univ :=
     IsClopen.eq_univ ⟨hclosed, hopen⟩ ⟨1, S.one_mem⟩
   apply MonoidHom.ext
   intro g
+  -- Expose equality-locus membership as the pointwise equality required by extensionality.
+  change g ∈ S
   have hg : g ∈ (S : Set G) := by
     rw [huniv]
     trivial
