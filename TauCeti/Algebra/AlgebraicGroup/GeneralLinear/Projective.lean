@@ -115,42 +115,61 @@ theorem centerPointwiseQuotientIsoPGL_hom_mk (A : CommAlgCat.{u} k)
     (pointsMulEquiv (R := k) (A := A) n)
     (map_centerPointsSubgroup_pointsMulEquiv n A) q
 
+/-- The inverse quotient equivalence sends the class of an invertible matrix to the class of its
+associated `GLₙ`-point. -/
+@[simp]
+theorem centerPointwiseQuotientIsoPGL_inv_mk (A : CommAlgCat.{u} k)
+    (g : Matrix.GeneralLinearGroup (Fin n) A) :
+    (centerPointwiseQuotientIsoPGL n A).inv (Matrix.ProjGenLinGroup.mk g) =
+      CommHopfAlgCat.centerPointwiseQuotientMk (coordinateHopfAlgebra k n) A
+        ((pointsMulEquiv (R := k) (A := A) n).symm g) := by
+  have h := centerPointwiseQuotientIsoPGL_hom_mk n A
+    ((pointsMulEquiv (R := k) (A := A) n).symm g)
+  rw [MulEquiv.apply_symm_apply] at h
+  rw [← h, Iso.hom_inv_id_apply]
+
 /-- The group-valued point functor `A ↦ PGL(n, A)`. -/
-@[expose] noncomputable def projectivePointsFunctor {R : Type u} [CommRing R] :
+noncomputable def projectivePointsFunctor {R : Type u} [CommRing R] :
     CommAlgCat.{u} R ⥤ GrpCat.{u} where
   obj A := GrpCat.of (Matrix.ProjGenLinGroup (Fin n) A)
   map φ := GrpCat.ofHom (Matrix.ProjGenLinGroup.map φ.hom.toRingHom)
   map_id A := by
     apply GrpCat.hom_ext
-    apply MonoidHom.ext
-    intro x
-    induction x using Matrix.ProjGenLinGroup.induction_on with
-    | mk g => simp
+    exact Matrix.ProjGenLinGroup.map_id
   map_comp {A B C} φ ψ := by
     apply GrpCat.hom_ext
-    apply MonoidHom.ext
-    intro x
-    induction x using Matrix.ProjGenLinGroup.induction_on with
-    | mk g =>
-      apply congrArg Matrix.ProjGenLinGroup.mk
-      apply Matrix.GeneralLinearGroup.ext
-      intro i j
-      rfl
+    exact Matrix.ProjGenLinGroup.map_comp φ.hom.toRingHom ψ.hom.toRingHom
+
+private theorem projectivePointsFunctor_obj_private {R : Type u} [CommRing R]
+    (A : CommAlgCat.{u} R) :
+    (projectivePointsFunctor n).obj A =
+      GrpCat.of (Matrix.ProjGenLinGroup (Fin n) A) :=
+  rfl
 
 /-- The objects of `projectivePointsFunctor` are Mathlib's projective general linear groups. -/
 @[simp]
 theorem projectivePointsFunctor_obj {R : Type u} [CommRing R] (A : CommAlgCat.{u} R) :
     (projectivePointsFunctor n).obj A =
       GrpCat.of (Matrix.ProjGenLinGroup (Fin n) A) :=
-  rfl
+  projectivePointsFunctor_obj_private n A
+
+private theorem projectivePointsFunctor_obj_proof_eq_rfl {R : Type u} [CommRing R]
+    (A : CommAlgCat.{u} R) :
+    projectivePointsFunctor_obj n A = rfl :=
+  Subsingleton.elim _ _
 
 /-- The maps of `projectivePointsFunctor` are induced by entrywise extension of scalars. -/
 @[simp]
 theorem projectivePointsFunctor_map {R : Type u} [CommRing R]
     {A B : CommAlgCat.{u} R} (φ : A ⟶ B) :
-    (projectivePointsFunctor n).map φ =
-      GrpCat.ofHom (Matrix.ProjGenLinGroup.map (n := Fin n) φ.hom.toRingHom) :=
-  rfl
+    eqToHom (projectivePointsFunctor_obj n A).symm ≫
+        (projectivePointsFunctor n).map φ =
+      GrpCat.ofHom (Matrix.ProjGenLinGroup.map (n := Fin n) φ.hom.toRingHom) ≫
+        eqToHom (projectivePointsFunctor_obj n B).symm := by
+  rw [projectivePointsFunctor_obj_proof_eq_rfl n A,
+    projectivePointsFunctor_obj_proof_eq_rfl n B]
+  unfold projectivePointsFunctor
+  simp only [eqToHom_refl, Category.id_comp, Category.comp_id]
 
 /-- The quotient equivalence commutes with extension of scalars in the value algebra. -/
 theorem centerPointwiseQuotientIsoPGL_hom_naturality {A B : CommAlgCat.{u} k} (φ : A ⟶ B) :
@@ -223,10 +242,10 @@ noncomputable def centerPointwiseQuotientNatIsoPGL :
       have hprojective :
           eqToHom (projectivePointsFunctor_obj n A).symm ≫
               (projectivePointsFunctor n).map φ =
-            GrpCat.ofHom
+              GrpCat.ofHom
                 (Matrix.ProjGenLinGroup.map (n := Fin n) φ.hom.toRingHom) ≫
               eqToHom (projectivePointsFunctor_obj n B).symm := by
-        rfl
+        exact projectivePointsFunctor_map n φ
       simpa only [Iso.trans_hom, eqToIso.hom,
         CommHopfAlgCat.pointwiseQuotientFunctor_map, Category.assoc,
         eqToHom_trans_assoc, eqToHom_refl, Category.id_comp, Category.comp_id,
@@ -238,6 +257,54 @@ noncomputable def centerPointwiseQuotientNatIsoPGL :
             (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) A) ≫
               z ≫ eqToHom (projectivePointsFunctor_obj n B).symm)
           (centerPointwiseQuotientIsoPGL_hom_naturality n φ))
+
+private theorem centerPointwiseQuotientNatIsoPGL_hom_app_transports
+    (A : CommAlgCat.{u} k) :
+    eqToHom (CommHopfAlgCat.pointwiseQuotientFunctor_obj
+        (coordinateHopfAlgebra k n)
+        (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+        (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) A).symm ≫
+      (centerPointwiseQuotientNatIsoPGL n).hom.app A ≫
+        eqToHom (projectivePointsFunctor_obj n A) =
+      (centerPointwiseQuotientIsoPGL n A).hom := by
+  unfold centerPointwiseQuotientNatIsoPGL
+  simp
+
+private theorem centerPointwiseQuotientNatIsoPGL_hom_app_mk_private
+    (A : CommAlgCat.{u} k)
+    (q : HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k n) A) :
+    eqToHom (projectivePointsFunctor_obj n A)
+        ((centerPointwiseQuotientNatIsoPGL n).hom.app A
+          (eqToHom (CommHopfAlgCat.pointwiseQuotientFunctor_obj
+              (coordinateHopfAlgebra k n)
+              (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+              (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) A).symm
+            (CommHopfAlgCat.centerPointwiseQuotientMk (coordinateHopfAlgebra k n) A q))) =
+      Matrix.ProjGenLinGroup.mk (pointsMulEquiv (R := k) (A := A) n q) := by
+  change (eqToHom (CommHopfAlgCat.pointwiseQuotientFunctor_obj
+        (coordinateHopfAlgebra k n)
+        (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+        (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) A).symm ≫
+      (centerPointwiseQuotientNatIsoPGL n).hom.app A ≫
+        eqToHom (projectivePointsFunctor_obj n A))
+      (CommHopfAlgCat.centerPointwiseQuotientMk (coordinateHopfAlgebra k n) A q) = _
+  rw [centerPointwiseQuotientNatIsoPGL_hom_app_transports,
+    centerPointwiseQuotientIsoPGL_hom_mk]
+
+/-- After transport to the concrete quotient groups, the hom component of the natural
+identification sends a quotient class to the class of its associated invertible matrix. -/
+@[simp]
+theorem centerPointwiseQuotientNatIsoPGL_hom_app_mk (A : CommAlgCat.{u} k)
+    (q : HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k n) A) :
+    eqToHom (projectivePointsFunctor_obj n A)
+        ((centerPointwiseQuotientNatIsoPGL n).hom.app A
+          (eqToHom (CommHopfAlgCat.pointwiseQuotientFunctor_obj
+              (coordinateHopfAlgebra k n)
+              (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+              (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) A).symm
+            (CommHopfAlgCat.centerPointwiseQuotientMk (coordinateHopfAlgebra k n) A q))) =
+      Matrix.ProjGenLinGroup.mk (pointsMulEquiv (R := k) (A := A) n q) :=
+  centerPointwiseQuotientNatIsoPGL_hom_app_mk_private n A q
 
 end GeneralLinear
 
