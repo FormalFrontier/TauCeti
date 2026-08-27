@@ -123,11 +123,13 @@ private theorem isInternal_iSup_fiber {I J : Type*} [DecidableEq I] [DecidableEq
     · refine iSup_le fun j' ↦ iSup_le fun hj' ↦ iSup_le fun i ↦ iSup_le fun hi ↦ ?_
       have hi' : degree i ≠ j := by simpa only [hi] using hj'
       exact le_iSup_of_le i (le_iSup_of_le hi' le_rfl)
-  · rw [show (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⨆ i, P i by
-        apply le_antisymm
-        · exact iSup_le fun _ ↦ iSup_le fun i ↦ iSup_le fun _ ↦ le_iSup P i
-        · exact iSup_le fun i ↦
-            le_iSup_of_le (degree i) (le_iSup_of_le i (le_iSup_of_le rfl le_rfl))]
+  · -- Regrouping by fibers does not change the supremum of all the original pieces.
+    have htotal : (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⨆ i, P i := by
+      apply le_antisymm
+      · exact iSup_le fun _ ↦ iSup_le fun i ↦ iSup_le fun _ ↦ le_iSup P i
+      · exact iSup_le fun i ↦
+          le_iSup_of_le (degree i) (le_iSup_of_le i (le_iSup_of_le rfl le_rfl))
+    rw [htotal]
     exact hP.submodule_iSup_eq_top
 
 /-- The tensor product of internally graded modules, graded by total degree. -/
@@ -150,8 +152,11 @@ noncomputable def tensorProduct (G : InternalGrading R M) (H : InternalGrading R
         Subsingleton.elim _ _
       exact hdec ▸ H.isInternal
     apply isInternal_iSup_fiber
+    change DirectSum.IsInternal fun d : ℤ × ℤ ↦
+      Submodule.map₂ (TensorProduct.mk R M N) (G.piece d.1) (H.piece d.2)
     have hPair := DirectSum.IsInternal.tensorProduct G.piece H.piece hG hH
-    convert hPair using 1 <;> rfl
+    -- Only the proof-irrelevant decidable-equality and additive instances now differ.
+    convert hPair using 1
 
 @[simp]
 theorem tensorProduct_piece (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
