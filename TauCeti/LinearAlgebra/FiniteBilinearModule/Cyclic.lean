@@ -25,8 +25,8 @@ and, for nonzero `n`, packages it as `TauCeti.FiniteQuadraticModule.cyclic`.
 The companion `TauCeti.FiniteQuadraticModule.cyclicIsometryOfGenerator` shows that an additive
 equivalence out of `ZMod n` which matches the quadratic values of the standard generators is
 automatically an isometry.  Together these declarations give the shared presented-module API
-used to identify cyclic discriminant forms, including the `Aₙ`, odd `Dₙ`, `E₆`, and `E₇`
-root lattices.
+used to identify cyclic discriminant forms; the `E₆` and `E₇` root lattices are identified this
+way, and the `Aₙ` and odd `Dₙ` rows are intended to follow.
 
 ## Main declarations
 
@@ -58,17 +58,20 @@ variable (n : ℕ) (a : AddCircle (1 : ℚ))
 
 /-! ## The presenting quadratic map on `ℤ` -/
 
-/-- The bilinear map `(x, y) ↦ xya` on `ℤ`. -/
-private def intBilin : LinearMap.BilinMap ℤ ℤ (AddCircle (1 : ℚ)) :=
-  LinearMap.mk₂ ℤ (fun x y : ℤ ↦ (x * y) • a)
-    (fun x y z ↦ by rw [add_mul, add_smul])
-    (fun r x y ↦ by rw [smul_eq_mul, mul_assoc, mul_smul])
-    (fun x y z ↦ by rw [mul_add, add_smul])
-    (fun r x y ↦ by rw [smul_eq_mul, mul_left_comm, mul_smul])
-
-/-- The quadratic map `x ↦ x²a` on `ℤ`. -/
+/-- The quadratic map `x ↦ x²a` on `ℤ`, as the squaring map followed by multiplication by `a`. -/
 private def intQuadratic : QuadraticMap ℤ ℤ (AddCircle (1 : ℚ)) :=
-  (intBilin a).toQuadraticMap
+  (LinearMap.toSpanSingleton ℤ (AddCircle (1 : ℚ)) a).compQuadraticMap (QuadraticMap.sq (R := ℤ))
+
+private theorem intQuadratic_apply (x : ℤ) : intQuadratic a x = (x * x) • a := by
+  rw [intQuadratic, LinearMap.compQuadraticMap_apply, QuadraticMap.sq_apply,
+    LinearMap.toSpanSingleton_apply]
+
+private theorem polar_intQuadratic (x y : ℤ) :
+    QuadraticMap.polar (intQuadratic a) x y = (2 * (x * y)) • a := by
+  rw [QuadraticMap.polar, intQuadratic_apply, intQuadratic_apply, intQuadratic_apply,
+    ← sub_smul, ← sub_smul]
+  congr 1
+  ring
 
 /-- The two torsion hypotheses put the multiples of `n` in the quadratic radical. -/
 private theorem zmultiples_le_radical_intQuadratic
@@ -77,22 +80,13 @@ private theorem zmultiples_le_radical_intQuadratic
   intro x hx
   obtain ⟨k, rfl⟩ := AddSubgroup.mem_zmultiples_iff.mp hx
   constructor
-  -- The first radical condition unfolds `toQuadraticMap` and `intBilin` to the explicit
-  -- quadratic value of this representative; there is no rewriting lemma for this reduction.
-  · change (((k * (n : ℤ)) * (k * n)) • a) = 0
+  · rw [intQuadratic_apply, smul_eq_mul]
     have hcoeff : (k * (n : ℤ)) * (k * n) = (k * k) * (n * n) := by ring
     rw [hcoeff, mul_smul, hquad, smul_zero]
-  · apply LinearMap.ext
-    intro y
-    -- Unfolding the polar of `toQuadraticMap` exposes the two bilinear evaluations.
-    change QuadraticMap.polar (intQuadratic a) (k • (n : ℤ)) y = 0
-    rw [intQuadratic, LinearMap.BilinMap.polar_toQuadraticMap]
-    simp only [intBilin, LinearMap.mk₂_apply, smul_eq_mul]
-    -- The preceding rewrite exposes the two `intBilin` evaluations, whose integer actions on
-    -- `a` reduce definitionally to these two explicit scalar multiples.
-    change ((k * (n : ℤ) * y) • a) + ((y * (k * n)) • a) = 0
-    rw [← add_smul]
-    have hcoeff : k * (n : ℤ) * y + y * (k * n) = (k * y) * (2 * n) := by ring
+  · refine LinearMap.ext fun y ↦ ?_
+    rw [LinearMap.zero_apply, QuadraticMap.polarBilin_apply_apply, polar_intQuadratic,
+      smul_eq_mul]
+    have hcoeff : 2 * (k * (n : ℤ) * y) = (k * y) * (2 * n) := by ring
     rw [hcoeff, mul_smul, hpolar, smul_zero]
 
 /-- The quotient of `ℤ` by the multiples of `n`, as an integer-linear equivalence with
@@ -134,8 +128,7 @@ theorem cyclicMap_intCast (k : ℤ) :
     cyclicMap n a hquad hpolar (k : ZMod n) = (k * k) • a := by
   unfold cyclicMap
   rw [QuadraticMap.comp_apply, LinearEquiv.coe_coe, intQuotientEquivZMod_symm_intCast,
-    QuadraticMap.lift_mk]
-  simp [intQuadratic, intBilin]
+    QuadraticMap.lift_mk, intQuadratic_apply]
 
 /-- The standard generator of `cyclicMap` has value `a`. -/
 @[simp]
@@ -152,28 +145,30 @@ theorem polar_cyclicMap_intCast (k l : ℤ) :
   congr 1
   ring
 
+/-- The standard generator of `cyclicMap` pairs with itself to `2a`. -/
+@[simp]
+theorem polar_cyclicMap_one_one :
+    QuadraticMap.polar (cyclicMap n a hquad hpolar) 1 1 = (2 : ℤ) • a := by
+  simpa using polar_cyclicMap_intCast n a hquad hpolar 1 1
+
 variable [NeZero n]
 
 /-- **The finite quadratic module on `ZMod n` whose standard generator has value `a`.**
 
 The nonzero-modulus hypothesis is exactly what makes `ZMod n` finite. -/
-@[expose] noncomputable def cyclic : FiniteQuadraticModule where
-  toFiniteBilinearModule := {
-    carrier := ZMod n
-    pairing := LinearMap.toAddMonoidHom'.comp
-      (cyclicMap n a hquad hpolar).polarBilin.toAddMonoidHom
-    pairing_comm := fun x y ↦ QuadraticMap.polar_comm (cyclicMap n a hquad hpolar) x y }
-  quadratic := cyclicMap n a hquad hpolar
-  polar_eq_pairing' := fun _ _ ↦ (rfl)
+@[expose] noncomputable def cyclic : FiniteQuadraticModule :=
+  ofQuadraticMap (ZMod n) (cyclicMap n a hquad hpolar)
 
 @[simp]
 theorem cyclic_quadratic (x : ZMod n) :
-    (cyclic n a hquad hpolar).quadratic x = cyclicMap n a hquad hpolar x := (rfl)
+    (cyclic n a hquad hpolar).quadratic x = cyclicMap n a hquad hpolar x :=
+  ofQuadraticMap_quadratic _ _ x
 
 @[simp]
 theorem cyclic_pairing (x y : ZMod n) :
     (cyclic n a hquad hpolar).toFiniteBilinearModule.pairing x y =
-      QuadraticMap.polar (cyclicMap n a hquad hpolar) x y := (rfl)
+      QuadraticMap.polar (cyclicMap n a hquad hpolar) x y :=
+  ofQuadraticMap_pairing _ _ x y
 
 omit hquad hpolar [NeZero n] in
 /-- **An additive equivalence from `ZMod n` matching the generator values is an isometry.**

@@ -319,32 +319,35 @@ theorem discriminantPairing_typeE₆MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- Nine times the type-`E₆` quadratic value `2/3` vanishes in `ℚ/ℤ`. -/
-theorem nine_zsmul_typeE₆QuadraticValue_eq_zero :
+/-- Nine times `2/3`, the type-`E₆` discriminant quadratic value, vanishes in `ℚ/ℤ`. -/
+private theorem nine_zsmul_two_div_three_eq_zero :
     (9 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
-  change ((((9 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
-  rw [QuotientAddGroup.eq_zero_iff]
-  exact ⟨6, by norm_num⟩
+  rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
+  exact Submodule.mem_one.mpr ⟨6, by norm_num⟩
 
-/-- Six times the type-`E₆` quadratic value `2/3` vanishes in `ℚ/ℤ`. -/
-theorem six_zsmul_typeE₆QuadraticValue_eq_zero :
+/-- Six times `2/3`, the type-`E₆` discriminant quadratic value, vanishes in `ℚ/ℤ`. -/
+private theorem six_zsmul_two_div_three_eq_zero :
     (6 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
-  change ((((6 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
-  rw [QuotientAddGroup.eq_zero_iff]
-  exact ⟨4, by norm_num⟩
+  rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
+  exact Submodule.mem_one.mpr ⟨4, by norm_num⟩
 
 /-- The quadratic map on `ZMod 3` whose generator has value `2/3`. -/
 noncomputable def typeE₆StandardQuadraticMap :
     QuadraticMap ℤ (ZMod 3) (AddCircle (1 : ℚ)) :=
   FiniteQuadraticModule.cyclicMap 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
-    nine_zsmul_typeE₆QuadraticValue_eq_zero six_zsmul_typeE₆QuadraticValue_eq_zero
+    nine_zsmul_two_div_three_eq_zero six_zsmul_two_div_three_eq_zero
 
-/-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`. -/
+/-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`.
+
+The two descent hypotheses are discharged inline rather than by named lemmas: they are numeric
+torsion facts of no independent interest, and this definition is `@[expose]`d, so its body must
+mention only public declarations. -/
 @[expose] noncomputable def typeE₆StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
-    nine_zsmul_typeE₆QuadraticValue_eq_zero six_zsmul_typeE₆QuadraticValue_eq_zero
+    (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
+        exact Submodule.mem_one.mpr ⟨6, by norm_num⟩)
+    (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
+        exact Submodule.mem_one.mpr ⟨4, by norm_num⟩)
 
 /-- The generator of the standard type-`E₆` quadratic map has value `2/3`. -/
 @[simp]
@@ -608,24 +611,28 @@ theorem discriminantPairing_typeE₇MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- Four times the type-`E₇` quadratic value `3/4` vanishes in `ℚ/ℤ`. -/
-theorem four_zsmul_typeE₇QuadraticValue_eq_zero :
+/-- Four times `3/4`, the type-`E₇` discriminant quadratic value, vanishes in `ℚ/ℤ`. -/
+private theorem four_zsmul_three_div_four_eq_zero :
     (4 : ℤ) • ((((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
-  change ((((4 : ℚ) * (3 / 4)) : ℚ) : AddCircle (1 : ℚ)) = 0
-  rw [QuotientAddGroup.eq_zero_iff]
-  exact ⟨3, by norm_num⟩
+  rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
+  exact Submodule.mem_one.mpr ⟨3, by norm_num⟩
 
 /-- The quadratic map on `ZMod 2` whose generator has value `3/4`. -/
 noncomputable def typeE₇StandardQuadraticMap :
     QuadraticMap ℤ (ZMod 2) (AddCircle (1 : ℚ)) :=
   FiniteQuadraticModule.cyclicMap 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
-    four_zsmul_typeE₇QuadraticValue_eq_zero four_zsmul_typeE₇QuadraticValue_eq_zero
+    four_zsmul_three_div_four_eq_zero four_zsmul_three_div_four_eq_zero
 
-/-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`. -/
+/-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`.
+
+As for `typeE₆StandardQuadraticModule`, the descent hypotheses are discharged inline because this
+definition is `@[expose]`d. -/
 @[expose] noncomputable def typeE₇StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
-    four_zsmul_typeE₇QuadraticValue_eq_zero four_zsmul_typeE₇QuadraticValue_eq_zero
+    (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
+        exact Submodule.mem_one.mpr ⟨3, by norm_num⟩)
+    (by rw [AddCircle.zsmul_coe_eq_zero_iff_mem_one]
+        exact Submodule.mem_one.mpr ⟨3, by norm_num⟩)
 
 /-- The generator of the standard type-`E₇` quadratic map has value `3/4`. -/
 @[simp]
