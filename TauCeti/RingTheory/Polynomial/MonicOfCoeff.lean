@@ -59,7 +59,6 @@ specialization of Mathlib's `Polynomial.freeMonic` at the coefficient tuple `c`.
 of the coefficient-reading half of `TauCeti.Sym.coeffEquiv`, and is the natural object to state
 analytic dependence on the coefficients against: `TauCeti.Sym.coeffEquiv_symm_apply` describes the
 inverse chart as its root multiset. -/
-@[expose]
 noncomputable def monicOfCoeff (c : Fin n → R) : R[X] :=
   X ^ n + ∑ i : Fin n, monomial (i : ℕ) (c i)
 

@@ -311,15 +311,6 @@ theorem coeffEquiv_ofFn_apply (f : Fin n → K) (i : Fin n) :
     coeffEquiv K n (ofFn f) i = (∏ j, (X - C (f j))).coeff i := by
   rw [coeffEquiv_apply_eq_coeff, toMonic_ofFn]
 
-/-- The inverse chart sends a coefficient tuple to the root multiset of the monic polynomial it
-determines. -/
-@[simp]
-theorem coeffEquiv_symm_apply (f : Fin n → K) : (((coeffEquiv K n).symm f : Sym K n) : Multiset K) =
-      (Polynomial.monicOfCoeff f).roots := by
-  rw [coeffEquiv, Equiv.symm_trans_apply, Equiv.symm_trans_apply, coe_monicEquiv_symm_apply,
-    coe_monicEquivDegreeLT_symm_apply, coe_degreeLTEquiv_toEquiv_symm_apply]
-  rfl
-
 /-- The inverse chart, read as a polynomial rather than as a root multiset, is
 `TauCeti.Polynomial.monicOfCoeff`: the monic polynomial of the tuple with prescribed coordinates is
 the monic polynomial with those lower coefficients. Equivalently, the chart itself reads off the
@@ -327,9 +318,17 @@ lower coefficients of `TauCeti.Sym.toMonic`, which is `TauCeti.Sym.coeffEquiv_ap
 @[simp]
 theorem toMonic_coeffEquiv_symm (c : Fin n → K) :
     (toMonic ((coeffEquiv K n).symm c) : K[X]) = Polynomial.monicOfCoeff c := by
-  rw [coe_toMonic, coeffEquiv_symm_apply, ofMultiset_apply]
-  exact prod_multiset_X_sub_C_of_monic_of_roots_card_eq (Polynomial.monic_monicOfCoeff c)
-    (splits_iff_card_roots.mp (IsAlgClosed.splits _))
+  symm
+  simpa only [← coeffEquiv_apply_eq_coeff, Equiv.apply_symm_apply] using
+    Polynomial.monicOfCoeff_coeff (monic_toMonic ((coeffEquiv K n).symm c))
+      (natDegree_toMonic (s := (coeffEquiv K n).symm c))
+
+/-- The inverse chart sends a coefficient tuple to the root multiset of the monic polynomial it
+determines. -/
+@[simp]
+theorem coeffEquiv_symm_apply (f : Fin n → K) : (((coeffEquiv K n).symm f : Sym K n) : Multiset K) =
+      (Polynomial.monicOfCoeff f).roots := by
+  rw [← roots_toMonic ((coeffEquiv K n).symm f), toMonic_coeffEquiv_symm]
 
 /-- In degree one the chart is negation: the single coordinate of a one-point tuple is minus that
 point. -/

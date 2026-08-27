@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.RCLike.Basic
-public import TauCeti.RingTheory.Polynomial.SymmetricPower
+public import TauCeti.Analysis.Polynomial.SymmetricPower
 import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.Analytic.Linear
 import Mathlib.Analysis.Calculus.Deriv.Inverse
@@ -55,9 +55,6 @@ ordered lift of the (unordered) inverse chart, not analyticity of a preferred ro
 
 * `TauCeti.Polynomial.analyticAt_eval_monicOfCoeff`: the free monic polynomial is analytic in its
   coefficients and its argument jointly.
-* `TauCeti.Polynomial.analyticAt_coeff_prod_X_sub_C`: the coefficients of `∏ i ∈ s, (X - C (v i))`
-  are analytic in the tuple `v` of roots, the analytic counterpart of
-  `TauCeti.Sym.continuous_coeff_prod_X_sub_C`.
 * `TauCeti.Polynomial.exists_analyticAt_isRoot_monicOfCoeff`: **a simple root moves analytically**
   with the coefficients.
 * `TauCeti.Polynomial.exists_analyticAt_monicOfCoeff_eq_prod_X_sub_C`: a monic polynomial with `n`
@@ -65,8 +62,6 @@ ordered lift of the (unordered) inverse chart, not analyticity of a preferred ro
   coefficient tuple.
 * `TauCeti.Sym.exists_analyticAt_coeffEquiv_symm_eq_ofFn`: the same statement read through the
   elementary symmetric chart, as an analytic ordered lift of the inverse chart.
-* `TauCeti.Sym.analyticAt_coeffEquiv_ofFn`: the chart itself is analytic in an ordered
-  presentation of the tuple, being polynomial in it by Vieta's formulas.
 * `TauCeti.Sym.exists_analyticAt_coeffEquiv_ofFn_localInverse`: **the coefficient map of an
   ordered tuple is a local analytic isomorphism** at every tuple of pairwise distinct points, the
   ordered lift being a two-sided local inverse there.
@@ -120,41 +115,6 @@ theorem analyticAt_eval_monicOfCoeff (q : (Fin n → 𝕜) × 𝕜) :
       analyticAt_fst
   simp only [eval_monicOfCoeff]
   exact (hsnd.pow n).add (Finset.univ.analyticAt_fun_sum fun i _ => (hfst i).mul (hsnd.pow _))
-
-/-! ### The coefficients of a product of linear factors -/
-
-/-- The coefficients of `∏ i ∈ s, (X - C (v i))` depend analytically on the tuple `v` of roots.
-
-This is the elementary half of the chart, and the analytic counterpart of
-`TauCeti.Sym.continuous_coeff_prod_X_sub_C`: each coefficient is, up to sign, an elementary
-symmetric function of the roots, so the analyticity of the ring operations is all that is used. -/
-theorem analyticAt_coeff_prod_X_sub_C {ι : Type*} [Fintype ι] (s : Finset ι) (k : ℕ)
-    (v₀ : ι → 𝕜) : AnalyticAt 𝕜 (fun v : ι → 𝕜 => (∏ i ∈ s, (X - C (v i))).coeff k) v₀ := by
-  classical
-  have hproj : ∀ i : ι, AnalyticAt 𝕜 (fun v : ι → 𝕜 => v i) v₀ := fun i =>
-    (ContinuousLinearMap.proj (R := 𝕜) (φ := fun _ : ι => 𝕜) i).analyticAt _
-  induction s using Finset.induction_on generalizing k with
-  | empty =>
-    simp only [Finset.prod_empty]
-    exact analyticAt_const
-  | @insert a s ha ih =>
-    cases k with
-    | zero =>
-      have hpt : (fun v : ι → 𝕜 => (∏ i ∈ insert a s, (X - C (v i))).coeff 0) =
-          fun v => -v a * (∏ i ∈ s, (X - C (v i))).coeff 0 := by
-        funext v
-        rw [Finset.prod_insert ha, mul_coeff_zero]
-        simp
-      rw [hpt]
-      exact (hproj a).neg.mul (ih 0)
-    | succ k =>
-      have hpt : (fun v : ι → 𝕜 => (∏ i ∈ insert a s, (X - C (v i))).coeff (k + 1)) =
-          fun v => (∏ i ∈ s, (X - C (v i))).coeff k
-            - v a * (∏ i ∈ s, (X - C (v i))).coeff (k + 1) := by
-        funext v
-        rw [Finset.prod_insert ha, sub_mul, coeff_sub, coeff_X_mul, coeff_C_mul]
-      rw [hpt]
-      exact (ih k).sub ((hproj a).mul (ih (k + 1)))
 
 end Elementary
 
@@ -238,24 +198,7 @@ end SimpleRoot
 
 end Polynomial
 
-/-! ### The elementary symmetric chart -/
-
 namespace Sym
-
-section Chart
-
-variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [IsAlgClosed 𝕜] {n : ℕ}
-
-/-- The elementary symmetric chart is analytic in an ordered presentation of the tuple: by Vieta's
-formulas its coordinates are, up to sign, the elementary symmetric polynomials of the ordered
-tuple. -/
-theorem analyticAt_coeffEquiv_ofFn (v₀ : Fin n → 𝕜) :
-    AnalyticAt 𝕜 (fun v : Fin n → 𝕜 => coeffEquiv 𝕜 n (ofFn v)) v₀ := by
-  refine AnalyticAt.pi fun i => ?_
-  simp only [coeffEquiv_ofFn_apply]
-  exact Polynomial.analyticAt_coeff_prod_X_sub_C _ _ _
-
-end Chart
 
 section AlgClosed
 
