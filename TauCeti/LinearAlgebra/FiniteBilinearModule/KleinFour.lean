@@ -32,9 +32,9 @@ The companion `TauCeti.FiniteQuadraticModule.kleinFourIsometryOfGenerators` turn
 equivalence `(ℤ/2)² ≃+ A` matching the three displayed values into an isometry onto `A`, which is
 how a discriminant form of order four and exponent two is identified.
 
-The quotient construction is a rank-two adaptation of the private cyclic construction in
-`TauCeti/LinearAlgebra/IntegralLattice/RootLattice/TypeE.lean`; the two can be unified when that
-construction is promoted to shared API.
+The quotient construction is the rank-two adaptation of the cyclic one in
+`TauCeti.LinearAlgebra.FiniteBilinearModule.Cyclic`, which presents a form on `ℤ/m` by the single
+value of its generator.
 
 ## Main declarations
 
