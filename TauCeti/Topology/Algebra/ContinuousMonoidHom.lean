@@ -5,16 +5,18 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import Mathlib.Topology.Algebra.Group.Quotient
 
 /-!
-# The inclusion of a subgroup and the projection onto a quotient, as continuous homomorphisms
+# Subgroup inclusion, quotient projection and conjugation, as continuous homomorphisms
 
-Mathlib's `Subgroup.subtype` and `QuotientGroup.mk'` are bare `MonoidHom`s, and its coercion
-`ContinuousMonoidHom.toContinuousMonoidHom` applies only to bundled types that already carry a
-`ContinuousMapClass` instance, so neither map is available as a `ContinuousMonoidHom`. This file
-packages the two, for a topological group and the subspace and quotient topologies.
+Mathlib's `Subgroup.subtype`, `QuotientGroup.mk'` and `MulAut.conjNormal` are bare `MonoidHom`s
+and `MulEquiv`s, and its coercion `ContinuousMonoidHom.toContinuousMonoidHom` applies only to
+bundled types that already carry a `ContinuousMapClass` instance, so none of them is available as
+a `ContinuousMonoidHom`. This file packages the three, for a topological group and the subspace
+and quotient topologies.
 -/
 
 public section
@@ -46,6 +48,35 @@ continuous homomorphism. -/
 theorem coe_quotientMk (N : Subgroup G) [N.Normal] :
     (quotientMk N : G →* G ⧸ N) = QuotientGroup.mk' N :=
   (rfl)
+
+section Conjugation
+
+variable [ContinuousMul G] (N : Subgroup G) [N.Normal]
+
+/-- Conjugation `n ↦ g * n * g⁻¹` of a normal subgroup by an element of the ambient group, as a
+continuous homomorphism. The underlying monoid homomorphism is Mathlib's `MulAut.conjNormal g`;
+what is added here is its continuity. -/
+def conjNormal (g : G) : N →ₜ* N where
+  __ := (MulAut.conjNormal g : N ≃* N).toMonoidHom
+  continuous_toFun := continuous_induced_rng.2 <|
+    (continuous_const.mul continuous_subtype_val).mul continuous_const
+
+@[simp]
+theorem coe_conjNormal_apply (g : G) (n : N) : (conjNormal N g n : G) = g * n * g⁻¹ :=
+  MulAut.conjNormal_apply g n
+
+@[simp]
+theorem conjNormal_one : conjNormal N (1 : G) = ContinuousMonoidHom.id N := by
+  ext n
+  simp
+
+/-- Conjugation is an action: conjugating by `g * g'` is conjugating by `g'` and then by `g`. -/
+theorem conjNormal_mul (g g' : G) :
+    conjNormal N (g * g') = (conjNormal N g).comp (conjNormal N g') := by
+  ext n
+  simp [mul_assoc]
+
+end Conjugation
 
 end ContinuousMonoidHom
 
