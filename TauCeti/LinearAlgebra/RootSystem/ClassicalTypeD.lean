@@ -39,6 +39,9 @@ constructed directly on the set of squared-length-two vectors and proved involut
 * `TauCeti.DynkinType.sum_smul_typeDSimpleRootCoordinates` expands every root in that basis, and
   `TauCeti.DynkinType.typeDSimpleRootCoordinates_nonneg_or_nonpos` says the expansion has
   coefficients of one sign.
+* `TauCeti.DynkinType.sum_typeDSimpleRoot` gives their coordinate sums and
+  `TauCeti.DynkinType.typeDSimpleRoot_dotProduct_typeDSimpleRoot` their Gram matrix, the Cartan
+  matrix `CartanMatrix.D n`.
 * `TauCeti.DynkinType.linearIndependent_typeDSimpleRoot` says that basis is linearly independent.
 * `TauCeti.DynkinType.typeDRootReflectionEquiv` is reflection in a root, acting on the coordinates
   by `TauCeti.DynkinType.typeDSimpleRootCoordinates_typeDRootReflection`.
@@ -446,6 +449,93 @@ two coordinates. -/
       Pi.single ⟨n - 2, by omega⟩ 1 + Pi.single ⟨n - 1, by omega⟩ 1 :=
   dite_eq_right hi
 
+/-- The coordinate sum of a Bourbaki simple root of type `Dₙ`: a chain root `eᵢ - eᵢ₊₁` has sum
+zero and the fork root `e_{n-2} + e_{n-1}` has sum two. In particular every simple root has even
+coordinate sum. -/
+@[simp]
+theorem sum_typeDSimpleRoot (hn : 4 ≤ n) (i : Fin n) :
+    ∑ j : Fin n, typeDSimpleRoot n hn i j = if (i : ℕ) + 1 < n then 0 else 2 := by
+  split_ifs with hi
+  · rw [typeDSimpleRoot_of_add_one_lt hn hi]
+    simp_rw [Pi.sub_apply]
+    rw [Finset.sum_sub_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
+    omega
+  · rw [typeDSimpleRoot_of_not_add_one_lt hn hi]
+    simp_rw [Pi.add_apply]
+    rw [Finset.sum_add_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
+    norm_num
+
+/-! ## The Gram matrix of the Bourbaki simple roots -/
+
+private lemma typeDSimpleRoot_apply_of_add_one_lt (hn : 4 ≤ n) {i : Fin n}
+    (hi : (i : ℕ) + 1 < n) (k : Fin n) :
+    typeDSimpleRoot n hn i k =
+      (if (k : ℕ) = (i : ℕ) then 1 else 0) - (if (k : ℕ) = (i : ℕ) + 1 then 1 else 0) := by
+  rw [typeDSimpleRoot_of_add_one_lt hn hi]
+  simp [Pi.single_apply, Fin.ext_iff]
+
+private lemma typeDSimpleRoot_apply_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n}
+    (hi : ¬(i : ℕ) + 1 < n) (k : Fin n) :
+    typeDSimpleRoot n hn i k =
+      (if (k : ℕ) = n - 2 then 1 else 0) + (if (k : ℕ) = n - 1 then 1 else 0) := by
+  rw [typeDSimpleRoot_of_not_add_one_lt hn hi]
+  simp [Pi.single_apply, Fin.ext_iff]
+
+/-- The Bourbaki `Dₙ` diagram read off `CartanMatrix.D`: two distinct nodes are joined when they
+are consecutive among the first `n - 1` nodes, or are the branch node `n - 3` and the last node
+`n - 1`. Separating this from the six-way definition keeps the Gram-matrix case analysis below
+small. -/
+private lemma cartanMatrixD_apply (i j : Fin n) :
+    CartanMatrix.D n i j =
+      (if (i : ℕ) = (j : ℕ) then 2 else 0) -
+        (if ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) + 2 ≤ n) ∨
+              ((j : ℕ) + 1 = (i : ℕ) ∧ (i : ℕ) + 2 ≤ n) ∨
+              ((i : ℕ) + 3 = n ∧ (j : ℕ) + 1 = n) ∨ ((j : ℕ) + 3 = n ∧ (i : ℕ) + 1 = n) then 1
+          else 0) := by
+  have hi := i.isLt
+  have hj := j.isLt
+  simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff]
+  split_ifs <;> omega
+
+/-- A chain simple root pairs with the others by the corresponding row of the Cartan matrix. -/
+private lemma typeDSimpleRoot_dotProduct_of_add_one_lt (hn : 4 ≤ n) {i : Fin n}
+    (hi : (i : ℕ) + 1 < n) (j : Fin n) :
+    typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
+  have hi' := i.isLt
+  have hj' := j.isLt
+  rw [typeDSimpleRoot_of_add_one_lt hn hi, sub_dotProduct, single_dotProduct, single_dotProduct,
+    cartanMatrixD_apply]
+  by_cases hj : (j : ℕ) + 1 < n
+  · simp only [typeDSimpleRoot_apply_of_add_one_lt hn hj, one_mul]
+    split_ifs <;> omega
+  · simp only [typeDSimpleRoot_apply_of_not_add_one_lt hn hj, one_mul]
+    split_ifs <;> omega
+
+/-- The fork simple root pairs with the others by the last row of the Cartan matrix. -/
+private lemma typeDSimpleRoot_dotProduct_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n}
+    (hi : ¬(i : ℕ) + 1 < n) (j : Fin n) :
+    typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
+  have hi' := i.isLt
+  have hj' := j.isLt
+  rw [typeDSimpleRoot_of_not_add_one_lt hn hi, add_dotProduct, single_dotProduct,
+    single_dotProduct, cartanMatrixD_apply]
+  by_cases hj : (j : ℕ) + 1 < n
+  · simp only [typeDSimpleRoot_apply_of_add_one_lt hn hj, one_mul]
+    split_ifs <;> omega
+  · simp only [typeDSimpleRoot_apply_of_not_add_one_lt hn hj, one_mul]
+    split_ifs <;> omega
+
+/-- **The simple roots of type `Dₙ` have the Cartan matrix as Gram matrix.** Type `Dₙ` is simply
+laced and its roots have squared length two, so the coroot of a root is the root itself and the
+Cartan integer `⟨αᵢ, αⱼ^∨⟩` is the classical dot product. -/
+@[simp]
+theorem typeDSimpleRoot_dotProduct_typeDSimpleRoot (hn : 4 ≤ n) (i j : Fin n) :
+    typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
+  by_cases hi : (i : ℕ) + 1 < n
+  · exact typeDSimpleRoot_dotProduct_of_add_one_lt hn hi j
+  · exact typeDSimpleRoot_dotProduct_of_not_add_one_lt hn hi j
+
+
 /-- The first `n` entries of `typeDRootEquiv` are the Bourbaki-numbered simple roots. -/
 @[simp] theorem typeDRootEquiv_apply_typeDSimpleIndex (hn : 4 ≤ n) (i : Fin n) :
     (typeDRootEquiv n hn (typeDSimpleIndex n hn i)).1 = typeDSimpleRoot n hn i := by
@@ -496,19 +586,13 @@ private lemma typeDHalfTotal_typeDRootEquiv_apply_typeDSimpleIndex (hn : 4 ≤ n
       if (i : ℕ) + 1 < n then 0 else 1 := by
   by_cases hi : (i : ℕ) + 1 < n
   · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 0 := by
-      rw [typeDSimpleRoot_of_add_one_lt hn hi]
-      simp_rw [Pi.sub_apply]
-      rw [Finset.sum_sub_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
-      omega
+      rw [sum_typeDSimpleRoot hn i, ite_eq_left hi]
     rw [ite_eq_left hi]
     have h2 := two_mul_typeDHalfTotal (typeDRootEquiv n hn (typeDSimpleIndex n hn i))
     rw [typeDRootEquiv_apply_typeDSimpleIndex, htotal] at h2
     omega
   · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 2 := by
-      rw [typeDSimpleRoot_of_not_add_one_lt hn hi]
-      simp_rw [Pi.add_apply]
-      rw [Finset.sum_add_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
-      norm_num
+      rw [sum_typeDSimpleRoot hn i, ite_eq_right hi]
     rw [ite_eq_right hi]
     have h2 := two_mul_typeDHalfTotal (typeDRootEquiv n hn (typeDSimpleIndex n hn i))
     rw [typeDRootEquiv_apply_typeDSimpleIndex, htotal] at h2

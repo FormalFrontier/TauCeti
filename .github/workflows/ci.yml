@@ -61,8 +61,13 @@ jobs:
           python3 scripts/test_workflow_pins.py
           python3 scripts/test_landrun_pin.py
           python3 scripts/test_elan_pin.py
+          python3 scripts/test_attest_pr_config.py
+          python3 scripts/test_profile_workflow.py
+          python3 scripts/test_lake_cache_probe.py
+          PYTHONPATH=. python3 scripts/perf/test_perf.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
+          python3 scripts/test_check_expired_mathlib_shims.py
           python3 scripts/test_toolchain_tags.py
 
       # The two-library split is build convenience, not a trust boundary.
@@ -273,8 +278,9 @@ jobs:
       # through `$GITHUB_PATH`, or set LD_PRELOAD or BASH_ENV for every later step through
       # `$GITHUB_ENV`. A secret given to any later step of this job is a secret given to code
       # that landed on main, whatever that step does with it. So this job only stages the
-      # artifacts, and publish-lake-cache below, a fresh runner with no checkout, no
-      # workspace and no project code, is the only place the key exists.
+      # artifacts, and publish-lake-cache below, a fresh runner with only a sparse pin/helper
+      # checkout and no project workspace, is the only place the key exists. The helper stays
+      # inert until the key-bearing step has exited.
       - name: Configure the Lake cache staging (no-op unless the S3 endpoints are set)
         id: cachecfg
         env:
@@ -292,9 +298,31 @@ jobs:
             echo "::notice::Lake cache upload not configured, skipping (set the LAKE_CACHE_ARTIFACT_ENDPOINT / LAKE_CACHE_REVISION_ENDPOINT repo variables and the LAKE_CACHE_KEY secret to enable)"
           fi
 
+      # Merge-group CI normally publishes and publicly confirms the exact commit before GitHub
+      # lands it. Avoid packing and transferring the same map again on main when that happened.
+      # This is deliberately fail-open: only a downloaded, structurally valid exact map sets
+      # exists=true. A direct human merge has no map, and any 404, timeout, service error or
+      # malformed response therefore retains the staging/publication fallback below.
+      - name: Probe for this exact cache on the public endpoint
+        id: exact_cache
+        if: ${{ steps.cachecfg.outputs.enabled == 'true' }}
+        env:
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+          REVISION: ${{ github.sha }}
+        run: |
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+          TOOLCHAIN="$(cat lean-toolchain 2>/dev/null || true)"
+          if python3 scripts/lake_cache_probe.py \
+              "$PUBLIC_REVISION_ENDPOINT" "$TOOLCHAIN" "$REVISION"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Exact Lake cache map is already public; skipping duplicate staging and publication"
+          else
+            echo "::notice::Exact Lake cache map is absent or unreadable; retaining main's publication fallback"
+          fi
+
       - name: Stage TauCeti's oleans for the publish job
         id: stage
-        if: ${{ steps.cachecfg.outputs.enabled == 'true' }}
+        if: ${{ steps.cachecfg.outputs.enabled == 'true' && steps.exact_cache.outputs.exists != 'true' }}
         env:
           # Restated at step level, and the same values the restore step sets job-wide when the
           # public endpoints are configured, so staging works either way: with the restore on,
@@ -317,8 +345,8 @@ jobs:
           echo "root-package mapping entries: $(wc -l < .lake/outputs.jsonl)"
           lake cache stage .lake/outputs.jsonl "$RUNNER_TEMP/lake-cache-staging"
           # `lake cache put-staged` does not configure the workspace, which is precisely what
-          # keeps project code out of the publish job, so it cannot derive the toolchain and
-          # platform halves of the upload scope. The publish job supplies them from the pin
+          # keeps project build code out of the publisher, so it cannot derive the toolchain and
+          # platform halves of the upload scope. The publisher supplies them from the sparse pin
           # instead, which is right only while the package config keeps the two assumptions
           # below. Check them here, where the workspace does exist: `platformIndependent` is
           # what makes Lake leave the platform out of the scope (put-staged's default), while

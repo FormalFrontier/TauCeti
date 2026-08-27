@@ -56,6 +56,8 @@ infrastructure independent of the diamond operators.
   `CongruenceSubgroup.Gamma0_le_normalizer_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
 * `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
   `GL₂(ℝ)`.
+* `CongruenceSubgroup.Gamma1_map_le_Gamma1_map_of_dvd`: the antitonicity `Γ₁(N) ≤ Γ₁(M)` for
+  `M ∣ N`, after mapping to `GL₂(ℝ)`.
 * `CongruenceSubgroup.mapGL_mem_normalizer_Gamma1_map` and
   `CongruenceSubgroup.Gamma1_map_inv_conjAct_eq`: `(Gamma1 N).map (mapGL S)` is invariant
   under conjugation by `Γ₀(N)` elements in `GL₂(S)`, over any commutative ring `S`, stated as
@@ -179,6 +181,12 @@ theorem Gamma0_le_normalizer_Gamma1 (N : ℕ) :
 theorem Gamma1_map_le_Gamma0_map (N : ℕ) :
     (Gamma1 N).map (mapGL ℝ) ≤ (Gamma0 N).map (mapGL ℝ) :=
   Subgroup.map_mono (Gamma1_in_Gamma0 N)
+
+/-- The antitonicity `Γ₁(N) ≤ Γ₁(M)` for `M ∣ N`, transported to `GL₂(ℝ)`. This is the
+inclusion along which a form of level `M` is read as a form of level `N`. -/
+theorem Gamma1_map_le_Gamma1_map_of_dvd {M N : ℕ} (h : M ∣ N) :
+    (Gamma1 N).map (mapGL ℝ) ≤ (Gamma1 M).map (mapGL ℝ) :=
+  Subgroup.map_mono (Gamma1_le_Gamma1_of_dvd h)
 
 /-- **`Γ₀(N)` normalizes `Γ₁(N)` after mapping to `GL₂(S)`**, for any commutative ring `S`.
 This is `Gamma0_normalizes_Gamma1` transported along the monoid homomorphism `mapGL S`: the

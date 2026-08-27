@@ -37,6 +37,8 @@ closed-subgroup inclusion assumes the source Hopf algebra `H` is commutative.
   the inverse equivalence with the quotient-points inclusion.
 * `TauCeti.HopfIdeal.quotientPointsHom_quotientKerPointsMulEquiv_apply`: the corresponding
   compatibility for an arbitrary point of the kernel quotient.
+* `TauCeti.HopfIdeal.quotientPointsSubgroup_kerOfSurjective_eq_range`: the subgroup cut out by
+  the kernel consists exactly of points obtained by pre-composition with the morphism.
 
 ## References
 
@@ -169,6 +171,22 @@ theorem quotientPointsHom_quotientKerPointsMulEquiv_apply_apply (f : H →ₐc[R
         (kerOfSurjective f hf) A g).ofConv h =
       (quotientKerPointsMulEquiv f hf A g).ofConv (f h) := by
   rw [quotientPointsHom_quotientKerPointsMulEquiv_apply, AlgHom.mapDomain_apply_apply]
+
+/-- The closed subgroup cut out by the kernel of a surjective Hopf-algebra morphism has, on
+every value algebra, exactly the points obtained by pre-composition with that morphism. -/
+theorem quotientPointsSubgroup_kerOfSurjective_eq_range (f : H →ₐc[R] K)
+    (hf : Function.Surjective f) (A : CommAlgCat.{x} R) :
+    CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H)
+        (kerOfSurjective f hf) A =
+      (AlgHom.mapDomain (A := A) f).range := by
+  ext g
+  constructor
+  · rintro ⟨q, rfl⟩
+    exact ⟨quotientKerPointsMulEquiv f hf A q,
+      (quotientPointsHom_quotientKerPointsMulEquiv_apply f hf A q).symm⟩
+  · rintro ⟨q, rfl⟩
+    exact ⟨(quotientKerPointsMulEquiv f hf A).symm q,
+      quotientPointsHom_quotientKerPointsMulEquiv_symm_apply f hf A q⟩
 
 end CommSource
 

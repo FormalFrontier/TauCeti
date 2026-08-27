@@ -114,7 +114,27 @@ theorem measurePreserving_snd (hπ : IsCoupling π μ ν) :
 
 section Integral
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {E : Type*} [NormedAddCommGroup E]
+
+/-- An integrable function of the first marginal remains integrable after composition with the
+first projection from a coupling. -/
+theorem integrable_comp_fst (hπ : IsCoupling π μ ν) {f : X → E} (hf : Integrable f μ) :
+    Integrable (fun p : X × Y ↦ f p.1) π :=
+  hπ.measurePreserving_fst.integrable_comp_of_integrable hf
+
+/-- An integrable function of the second marginal remains integrable after composition with the
+second projection from a coupling. -/
+theorem integrable_comp_snd (hπ : IsCoupling π μ ν) {f : Y → E} (hf : Integrable f ν) :
+    Integrable (fun p : X × Y ↦ f p.2) π :=
+  hπ.measurePreserving_snd.integrable_comp_of_integrable hf
+
+/-- The sum of two integrable marginal functions is integrable against every coupling. -/
+theorem integrable_add_split (hπ : IsCoupling π μ ν) {f : X → E} {g : Y → E}
+    (hf : Integrable f μ) (hg : Integrable g ν) :
+    Integrable (fun p : X × Y ↦ f p.1 + g p.2) π :=
+  (hπ.integrable_comp_fst hf).add (hπ.integrable_comp_snd hg)
+
+variable [NormedSpace ℝ E]
 
 /-- A function of the first coordinate integrates against a coupling as it does against the first
 marginal. -/

@@ -135,6 +135,18 @@ noncomputable def relationMatrix :
       (genericMatrix R m)ᵀ -
     (JFin m R).map (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m)))
 
+/-- The relation matrix is the standard alternating form transported by the generic matrix,
+minus the form: `X Jₘ Xᵀ - Jₘ`. -/
+theorem relationMatrix_def :
+    relationMatrix R m =
+      genericMatrix R m *
+          (JFin m R).map
+            (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m))) *
+          (genericMatrix R m)ᵀ -
+        (JFin m R).map
+          (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m))) := by
+  rw [relationMatrix]
+
 /-- The set of defining relations: the entries of the relation matrix. -/
 def relationSet : Set (GeneralLinear.coordinateHopfAlgebra R (m + m)) :=
   Set.range fun ij : Fin (m + m) × Fin (m + m) => relationMatrix R m ij.1 ij.2
@@ -144,20 +156,31 @@ theorem relationMatrix_mem_relationSet (i j : Fin (m + m)) :
     relationMatrix R m i j ∈ relationSet R m :=
   ⟨(i, j), rfl⟩
 
+/-- An element is a symplectic defining relation exactly when it is an entry of the relation
+matrix. -/
+@[simp] theorem mem_relationSet_iff {x : GeneralLinear.coordinateHopfAlgebra R (m + m)} :
+    x ∈ relationSet R m ↔ ∃ i j, relationMatrix R m i j = x := by
+  constructor
+  · rintro ⟨⟨i, j⟩, rfl⟩
+    exact ⟨i, j, rfl⟩
+  · rintro ⟨i, j, rfl⟩
+    exact relationMatrix_mem_relationSet R m i j
+
 /-- Mapping the relation matrix through an algebra morphism gives the relation of the images:
 the generic matrix maps entrywise, and the constant form maps to the constant form. -/
-private theorem relationMatrix_map {T : Type*} [CommRing T] [Algebra R T]
+@[simp] theorem relationMatrix_map {T : Type*} [CommRing T] [Algebra R T]
     (phi : GeneralLinear.coordinateHopfAlgebra R (m + m) →ₐ[R] T) :
     (relationMatrix R m).map phi =
-      (genericMatrix R m).map phi * (JFin m R).map (algebraMap R T) *
+      (genericMatrix R m).map phi * JFin m T *
           ((genericMatrix R m).map phi)ᵀ -
-        (JFin m R).map (algebraMap R T) := by
+        JFin m T := by
   have hJ : ((JFin m R).map
         (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m)))).map phi =
       (JFin m R).map (algebraMap R T) := by
     rw [Matrix.map_map]
     exact congrArg _ (funext fun r => phi.commutes r)
-  rw [relationMatrix, Matrix.map_sub, Matrix.map_mul, Matrix.map_mul, hJ, Matrix.transpose_map]
+  rw [relationMatrix, Matrix.map_sub, Matrix.map_mul, Matrix.map_mul, hJ, JFin_map,
+    Matrix.transpose_map]
   exact fun a b => map_sub phi a b
 
 /-- An entry of a framed relation matrix `P (X Jₘ Xᵀ - Jₘ) Q` lies in any ideal containing the
@@ -187,8 +210,8 @@ private theorem counit_relationMatrix (i j : Fin (m + m)) :
   have h := congrFun (congrFun (relationMatrix_map R m
     (Bialgebra.counitAlgHom R (GeneralLinear.coordinateHopfAlgebra R (m + m)))) i) j
   rw [Matrix.map_apply, Bialgebra.counitAlgHom_apply] at h
-  rw [h, genericMatrix_map_counit, Algebra.algebraMap_self, RingHom.coe_id, Matrix.map_id,
-    Matrix.transpose_one, Matrix.one_mul, Matrix.mul_one, sub_self, Matrix.zero_apply]
+  rw [h, genericMatrix_map_counit, Matrix.transpose_one, Matrix.one_mul, Matrix.mul_one,
+    sub_self, Matrix.zero_apply]
 
 /-- The comultiplication sends the bundled generic matrix to the product of its two tensor
 inclusions: `Δ X = (X ⊗ 1)(1 ⊗ X)`. -/
@@ -283,7 +306,9 @@ private theorem relationMatrix_map_antipode :
           simp only [Matrix.mul_assoc]
       _ = (JFin m R).map (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m))) := by
           rw [genericMatrixInv_mul_genericMatrix, ht, Matrix.one_mul, Matrix.mul_one]
-  rw [relationMatrix_map R m, genericMatrix_map_antipode, hkey, neg_sub]
+  rw [relationMatrix_map R m, genericMatrix_map_antipode,
+    ← JFin_map (m := m)
+      (algebraMap R (GeneralLinear.coordinateHopfAlgebra R (m + m))), hkey, neg_sub]
 
 /-- The antipode carries every defining relation into the span of the relations. -/
 private theorem antipode_relationMatrix_mem (i j : Fin (m + m)) :
@@ -478,7 +503,7 @@ private theorem ofConv_relationMatrix
     ext i j
     rw [Matrix.map_apply, genericMatrix_apply]
     exact (GeneralLinear.pointToGeneralLinear_apply (m + m) g i j).symm
-  rw [relationMatrix_map R m g.ofConv, hg, JFin_map]
+  rw [relationMatrix_map R m g.ofConv, hg]
 
 /-- An ambient point belongs to the subgroup cut out by the symplectic Hopf ideal exactly when
 its matrix is symplectic. -/

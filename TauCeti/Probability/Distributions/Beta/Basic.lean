@@ -21,6 +21,7 @@ moment exists.
 
 ## Main results
 
+* `TauCeti.betaPDFReal_nonneg` — nonnegativity of the density;
 * `TauCeti.integral_pow_betaMeasure` — the natural raw moments as a quotient of Gamma values;
 * `TauCeti.integral_id_betaMeasure` — the mean is `α / (α + β)`;
 * `TauCeti.variance_id_betaMeasure` — the variance is
@@ -45,7 +46,9 @@ namespace TauCeti
 open MeasureTheory ProbabilityTheory Set
 open scoped ENNReal NNReal ProbabilityTheory
 
-private lemma betaPDFReal_nonneg {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) (x : ℝ) :
+/-- For positive shape parameters the beta density is nonnegative: it vanishes off the open unit
+interval, and on it the normalizing constant `ProbabilityTheory.beta α β` is positive. -/
+theorem betaPDFReal_nonneg {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) (x : ℝ) :
     0 ≤ betaPDFReal α β x := by
   rw [betaPDFReal]
   split_ifs with hx

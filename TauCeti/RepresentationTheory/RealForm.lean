@@ -48,7 +48,9 @@ transports the conjugation `c ⊗ₜ w ↦ conj c ⊗ₜ w` of `ℂ ⊗[ℝ] W` 
 realizability is *produced*: the route to it for an irreducible representation with
 Frobenius-Schur indicator `1` is to build the conjugation out of an invariant symmetric bilinear
 form and an invariant Hermitian inner product, and a real form on a carrier is not something one
-writes down directly.
+writes down directly.  That route is taken in
+`TauCeti/RepresentationTheory/InvariantForm/RealStructure.lean`, and read off as a criterion on the
+indicator in `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Realizability.lean`.
 
 ## Main definitions
 

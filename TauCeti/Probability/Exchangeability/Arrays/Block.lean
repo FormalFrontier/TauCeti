@@ -58,9 +58,6 @@ coordinates of each such pair agree.
   the chosen pair of index maps;
 * `TauCeti.Probability.JointlyExchangeable.map_arrayBlockPair_eq` — the corresponding canonical-law
   theorem for the pair-valued block;
-* `TauCeti.Probability.JointlyExchangeable.conditionallyIID_arrayRow_arrayBlock` and
-  `TauCeti.Probability.JointlyExchangeable.conditionallyIID_arrayRow_arrayBlockPair` — de Finetti
-  for the rows of a block of a jointly exchangeable array.
 
 ## References
 
@@ -323,29 +320,6 @@ theorem JointlyExchangeable.map_arrayBlockPair_eq [IsFiniteMeasure μ] {e' f' : 
     (fun _ _ _ _ x _ hu hv =>
       Prod.ext (congrArg x (Prod.ext hu hv)) (congrArg x (Prod.ext hv hu)))
     h hX he hf hd he' hf' hd'
-
-/-! ## De Finetti for the rows of a block -/
-
-/-- **De Finetti's theorem for the rows of a block of a jointly exchangeable array.** Over a
-nonempty standard Borel state space, the rows of a block along injections with disjoint ranges are
-conditionally i.i.d. as random elements of path space. -/
-theorem JointlyExchangeable.conditionallyIID_arrayRow_arrayBlock [StandardBorelSpace α] [Nonempty α]
-    [IsFiniteMeasure μ] (h : JointlyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
-    (he : Function.Injective e) (hf : Function.Injective f)
-    (hd : Disjoint (Set.range e) (Set.range f)) :
-    ConditionallyIID μ (arrayRow (arrayBlock X e f)) :=
-  (h.separatelyExchangeable_arrayBlock hX he hf hd).conditionallyIID_arrayRow
-    (aemeasurable_arrayBlock hX)
-
-/-- **De Finetti's theorem for the rows of a block of pairs.** The conclusion simultaneously
-describes both orientations of the selected rectangular cross-block. -/
-theorem JointlyExchangeable.conditionallyIID_arrayRow_arrayBlockPair [StandardBorelSpace α]
-    [Nonempty α] [IsFiniteMeasure μ] (h : JointlyExchangeable μ X)
-    (hX : ∀ p, AEMeasurable (X p) μ) (he : Function.Injective e) (hf : Function.Injective f)
-    (hd : Disjoint (Set.range e) (Set.range f)) :
-    ConditionallyIID μ (arrayRow (arrayBlockPair X e f)) :=
-  (h.separatelyExchangeable_arrayBlockPair hX he hf hd).conditionallyIID_arrayRow
-    (aemeasurable_arrayBlockPair hX)
 
 end Probability
 

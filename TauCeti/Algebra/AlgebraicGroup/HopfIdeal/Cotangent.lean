@@ -39,6 +39,8 @@ needed in Layer 2 of the ReductiveGroups roadmap.
 * `TauCeti.HopfIdeal.ker_quotientCotangentMap`: its kernel is the conormal subspace.
 * `TauCeti.HopfIdeal.finrank_quotientLie_add_finrank_conormal`: the resulting dimension formula.
 * `TauCeti.HopfIdeal.finrank_quotientLie_le`: the resulting closed-subgroup dimension bound.
+* `TauCeti.HopfIdeal.finrank_quotientLie_antitone`: inclusion of closed subgroups cannot increase
+  Lie dimension.
 
 ## References
 
@@ -88,6 +90,14 @@ theorem mem_conormalSubspace_iff (I : HopfIdeal k H)
     exact ⟨y, hy, rfl⟩
   · rintro ⟨y, hy, rfl⟩
     exact ⟨y, hy, rfl⟩
+
+/-- Enlarging the defining Hopf ideal enlarges the conormal space of the corresponding closed
+subgroup at the identity. -/
+theorem conormalSubspace_mono {I J : HopfIdeal k H} (hIJ : I ≤ J) :
+    conormalSubspace I ≤ conormalSubspace J := by
+  rw [conormalSubspace, conormalSubspace]
+  exact Submodule.map_mono (Submodule.restrictScalars_mono k
+    (HopfIdeal.toIdeal_le_toIdeal.mpr hIJ))
 
 /-- The quotient map carries the augmentation ideal of `H` into the augmentation ideal of
 `H/I`. -/
@@ -270,6 +280,23 @@ theorem finrank_quotientLie_le (I : HopfIdeal k H)
       Module.finrank k
         (Derivation k H (Bialgebra.CounitAlgebra k H k)) := by
   have h := finrank_quotientLie_add_finrank_conormal I
+  omega
+
+/-- Lie dimension is antitone in the defining Hopf ideal: if `I ≤ J`, then the closed subgroup
+cut out by `J` is contained in the one cut out by `I`, so its Lie dimension is no larger. -/
+theorem finrank_quotientLie_antitone
+    [FiniteDimensional k (Bialgebra.CotangentSpace k H)] :
+    Antitone fun I : HopfIdeal k H ↦
+      Module.finrank k
+        (Derivation k (H ⧸ I.toIdeal)
+          (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) := by
+  intro I J hIJ
+  dsimp only
+  have hI := finrank_quotientLie_add_finrank_conormal I
+  have hJ := finrank_quotientLie_add_finrank_conormal J
+  have hconormal : Module.finrank k (conormalSubspace I) ≤
+      Module.finrank k (conormalSubspace J) :=
+    Submodule.finrank_mono (conormalSubspace_mono hIJ)
   omega
 
 end Field
