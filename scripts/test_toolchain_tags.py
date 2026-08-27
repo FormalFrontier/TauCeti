@@ -326,7 +326,7 @@ class PostContent(unittest.TestCase):
 
     def test_it_carries_the_command_and_the_output(self):
         content = tt.post_content(self.ROWS, "0" * 16)
-        self.assertIn("```shell\npython3 scripts/toolchain_tags.py", content)
+        self.assertIn(tt.SHELL_FENCE, content)
         self.assertIn("v4.34.0", content)
         self.assertEqual(content.count("```"), 4, "two fenced blocks")
 
@@ -348,7 +348,8 @@ class PostContent(unittest.TestCase):
         # which no run of that command would produce.
         content = tt.post_content(self.ROWS, "0" * 16)
         command = content.split("```shell\n")[1].split("\n```")[0].strip()
-        self.assertEqual(command, "python3 scripts/toolchain_tags.py --brief")
+        self.assertEqual(command, tt.BRIEF_COMMAND)
+        self.assertEqual(tt.BRIEF_COMMAND, "python3 scripts/toolchain_tags.py --brief")
         shown = content.split("```text")[1].split("```")[0].strip()
         produced = tt.render(self.ROWS, include_policy=False, collapse_old=True).strip()
         self.assertEqual(shown, produced)
@@ -407,14 +408,25 @@ class PostIfChanged(unittest.TestCase):
         self.assertEqual(fake.sent, [])
         self.assertEqual(fake.updated, [])
 
-    def test_it_updates_formatting_when_the_state_is_unchanged(self):
+    def test_it_repairs_the_old_fence_when_the_state_is_unchanged(self):
         digest = tt.state_digest(self.ROWS)
-        old = tt.post_content(self.ROWS, digest).replace("```shell", "```", 1)
+        old = tt.post_content(self.ROWS, digest).replace(tt.SHELL_FENCE, tt.OLD_FENCE, 1)
         fake = FakeZulip([self._message(digest, content=old)])
         self._zulip(fake)
-        self.assertTrue(tt.post_if_changed(self.ROWS))
+        self.assertFalse(tt.post_if_changed(self.ROWS))
         self.assertEqual(fake.sent, [])
         self.assertEqual(fake.updated, [(1, tt.post_content(self.ROWS, digest))])
+
+    def test_it_does_not_rewrite_other_content_when_the_state_is_unchanged(self):
+        digest = tt.state_digest(self.ROWS)
+        older_rows = [dict(row, reason="older wording") for row in self.ROWS]
+        old = tt.post_content(older_rows, digest)
+        self.assertNotEqual(old, tt.post_content(self.ROWS, digest))
+        fake = FakeZulip([self._message(digest, content=old)])
+        self._zulip(fake)
+        self.assertFalse(tt.post_if_changed(self.ROWS))
+        self.assertEqual(fake.sent, [])
+        self.assertEqual(fake.updated, [])
 
     def test_it_posts_when_the_state_changed(self):
         fake = FakeZulip([self._message("0" * 16)])
@@ -422,11 +434,11 @@ class PostIfChanged(unittest.TestCase):
         self.assertTrue(tt.post_if_changed(self.ROWS))
 
     def test_it_corrects_the_old_fence_before_posting_a_new_state(self):
-        old = tt.post_content(self.ROWS, "0" * 16).replace("```shell", "```", 1)
+        old = tt.post_content(self.ROWS, "0" * 16).replace(tt.SHELL_FENCE, tt.OLD_FENCE, 1)
         fake = FakeZulip([self._message("0" * 16, content=old)])
         self._zulip(fake)
         self.assertTrue(tt.post_if_changed(self.ROWS))
-        self.assertEqual(fake.updated, [(1, old.replace("```", "```shell", 1))])
+        self.assertEqual(fake.updated, [(1, old.replace(tt.OLD_FENCE, tt.SHELL_FENCE, 1))])
         self.assertEqual(fake.sent, [tt.post_content(self.ROWS, tt.state_digest(self.ROWS))])
 
     def test_it_ignores_messages_from_other_accounts(self):

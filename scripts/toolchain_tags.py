@@ -497,6 +497,9 @@ def create_tag(row, dry_run=False):
 # --- waiting, and posting to Zulip ------------------------------------------
 
 MARKER_RE = re.compile(r"<!--toolchain-tags:v1 ([0-9a-f]{16})-->\s*\Z")
+BRIEF_COMMAND = "python3 scripts/toolchain_tags.py --brief"
+SHELL_FENCE = f"```shell\n{BRIEF_COMMAND}\n```"
+OLD_FENCE = f"```\n{BRIEF_COMMAND}\n```"
 
 
 def wait_for_ci(sha, timeout_minutes=180, poll_seconds=120, sleep=None):
@@ -546,15 +549,15 @@ def post_content(rows, digest):
     body = render(rows, include_policy=False, collapse_old=True).rstrip()
     # The command shown must be the one that produced what is shown. --brief is exactly
     # this transformation, so someone can paste it and get the same thing back.
-    return (f"```shell\npython3 scripts/toolchain_tags.py --brief\n```\n"
+    return (f"{SHELL_FENCE}\n"
             f"```text\n{body}\n```\n"
             f"<!--toolchain-tags:v1 {digest}-->")
 
 
 def post_if_changed(rows, dry_run=False):
-    """Post when the state changed, or update formatting in the current report.
+    """Repair a legacy command fence, then post when the state changed.
 
-    Returns True if a message was posted or updated."""
+    Returns True only if a new message was posted."""
     digest = state_digest(rows)
     content = post_content(rows, digest)
     if dry_run:
@@ -569,20 +572,15 @@ def post_if_changed(rows, dry_run=False):
     z = zp.Zulip(email, api_key, site)
     zp.check(z)
     message, previous = last_posted_report(z, z.my_user_id())
-    old_fence = "```\npython3 scripts/toolchain_tags.py --brief\n```"
-    shell_fence = "```shell\npython3 scripts/toolchain_tags.py --brief\n```"
-    if message and previous != digest and old_fence in message["content"]:
-        corrected = message["content"].replace(old_fence, shell_fence, 1)
+    # One-time migration for reports posted before the command fence specified `shell`.
+    # It can be removed after the existing old-style report has been repaired.
+    if message and OLD_FENCE in message["content"]:
+        corrected = message["content"].replace(OLD_FENCE, SHELL_FENCE, 1)
         log(f"correcting the shell fence in message {message['id']}")
         z.update_message(message["id"], corrected)
-        message = dict(message, content=corrected)
-    if previous == digest and message["content"] == content:
+    if previous == digest:
         log(f"state unchanged since the last post ({digest}); saying nothing")
         return False
-    if previous == digest:
-        log(f"state unchanged ({digest}), but report formatting changed; updating")
-        z.update_message(message["id"], content)
-        return True
     log(f"state changed ({previous or 'nothing posted yet'} -> {digest}); posting")
     z.send_message(content)
     return True
