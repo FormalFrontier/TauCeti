@@ -116,7 +116,8 @@ theorem centerPointwiseQuotientIsoPGL_hom_mk (A : CommAlgCat.{u} k)
     (map_centerPointsSubgroup_pointsMulEquiv n A) q
 
 /-- The group-valued point functor `A ↦ PGL(n, A)`. -/
-@[expose] noncomputable def projectivePointsFunctor : CommAlgCat.{u} k ⥤ GrpCat.{u} where
+noncomputable def projectivePointsFunctor {R : Type u} [CommRing R] :
+    CommAlgCat.{u} R ⥤ GrpCat.{u} where
   obj A := GrpCat.of (Matrix.ProjGenLinGroup (Fin n) A)
   map φ := GrpCat.ofHom (Matrix.ProjGenLinGroup.map φ.hom.toRingHom)
   map_id A := by
@@ -138,17 +139,69 @@ theorem centerPointwiseQuotientIsoPGL_hom_mk (A : CommAlgCat.{u} k)
 
 /-- The objects of `projectivePointsFunctor` are Mathlib's projective general linear groups. -/
 @[simp]
-theorem projectivePointsFunctor_obj (A : CommAlgCat.{u} k) :
+theorem projectivePointsFunctor_obj {R : Type u} [CommRing R] (A : CommAlgCat.{u} R) :
     (projectivePointsFunctor n).obj A =
       GrpCat.of (Matrix.ProjGenLinGroup (Fin n) A) :=
   rfl
 
 /-- The maps of `projectivePointsFunctor` are induced by entrywise extension of scalars. -/
 @[simp]
-theorem projectivePointsFunctor_map {A B : CommAlgCat.{u} k} (φ : A ⟶ B) :
+theorem projectivePointsFunctor_map {R : Type u} [CommRing R]
+    {A B : CommAlgCat.{u} R} (φ : A ⟶ B) :
     (projectivePointsFunctor n).map φ =
       GrpCat.ofHom (Matrix.ProjGenLinGroup.map (n := Fin n) φ.hom.toRingHom) :=
   rfl
+
+/-- The quotient equivalence commutes with extension of scalars in the value algebra. -/
+theorem centerPointwiseQuotientIsoPGL_hom_naturality {A B : CommAlgCat.{u} k} (φ : A ⟶ B) :
+    CommHopfAlgCat.mapPointwiseQuotient
+        (coordinateHopfAlgebra k n)
+        (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+        (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) φ ≫
+      (centerPointwiseQuotientIsoPGL n B).hom =
+    (centerPointwiseQuotientIsoPGL n A).hom ≫
+      GrpCat.ofHom (Matrix.ProjGenLinGroup.map (n := Fin n) φ.hom.toRingHom) := by
+  let _ : Group (CommHopfAlgCat.centerPointwiseQuotient
+      (coordinateHopfAlgebra k n) A) :=
+    (CommHopfAlgCat.centerPointwiseQuotient (coordinateHopfAlgebra k n) A).str
+  let _ : Group (CommHopfAlgCat.centerPointwiseQuotient
+      (coordinateHopfAlgebra k n) B) :=
+    (CommHopfAlgCat.centerPointwiseQuotient (coordinateHopfAlgebra k n) B).str
+  apply GrpCat.hom_ext
+  apply MonoidHom.ext
+  intro x
+  obtain ⟨q, rfl⟩ := CommHopfAlgCat.centerPointwiseQuotientMk_surjective
+    (coordinateHopfAlgebra k n) A x
+  have hmap :
+      CommHopfAlgCat.mapPointwiseQuotient
+          (coordinateHopfAlgebra k n)
+          (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+          (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) φ
+          (CommHopfAlgCat.centerPointwiseQuotientMk
+            (coordinateHopfAlgebra k n) A q) =
+        CommHopfAlgCat.centerPointwiseQuotientMk
+          (coordinateHopfAlgebra k n) B
+          (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra k n) φ q) := by
+    rw [CommHopfAlgCat.centerPointwiseQuotientMk_apply,
+      CommHopfAlgCat.centerPointwiseQuotientMk_apply]
+    rw [← CommHopfAlgCat.pointwiseQuotientMk_apply
+        (coordinateHopfAlgebra k n)
+        (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+        (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)),
+      ← CommHopfAlgCat.pointwiseQuotientMk_apply
+        (coordinateHopfAlgebra k n)
+        (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+        (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n))]
+    exact CommHopfAlgCat.mapPointwiseQuotient_mk
+      (coordinateHopfAlgebra k n)
+      (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
+      (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) φ q
+  simp only [GrpCat.hom_comp, MonoidHom.comp_apply, ConcreteCategory.hom_ofHom]
+  rw [hmap,
+    centerPointwiseQuotientIsoPGL_hom_mk,
+    centerPointwiseQuotientIsoPGL_hom_mk, Matrix.ProjGenLinGroup.map_mk,
+    HopfAlgebra.mapPoints_apply]
+  exact congrArg Matrix.ProjGenLinGroup.mk (pointsMulEquiv_mapValue n φ.hom q)
 
 /-- The pointwise center quotient of `GLₙ` is naturally isomorphic to the projective general
 linear point functor. -/
@@ -167,56 +220,6 @@ noncomputable def centerPointwiseQuotientNatIsoPGL :
       centerPointwiseQuotientIsoPGL n A ≪≫
       eqToIso (projectivePointsFunctor_obj n A).symm) (by
       intro A B φ
-      let _ : Group (CommHopfAlgCat.centerPointwiseQuotient
-          (coordinateHopfAlgebra k n) A) :=
-        (CommHopfAlgCat.centerPointwiseQuotient (coordinateHopfAlgebra k n) A).str
-      let _ : Group (CommHopfAlgCat.centerPointwiseQuotient
-          (coordinateHopfAlgebra k n) B) :=
-        (CommHopfAlgCat.centerPointwiseQuotient (coordinateHopfAlgebra k n) B).str
-      have hbare :
-          CommHopfAlgCat.mapPointwiseQuotient
-            (coordinateHopfAlgebra k n)
-            (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
-            (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) φ ≫
-          (centerPointwiseQuotientIsoPGL n B).hom =
-        (centerPointwiseQuotientIsoPGL n A).hom ≫
-          GrpCat.ofHom
-            (Matrix.ProjGenLinGroup.map (n := Fin n) φ.hom.toRingHom) := by
-        apply GrpCat.hom_ext
-        apply MonoidHom.ext
-        intro x
-        obtain ⟨q, rfl⟩ := CommHopfAlgCat.centerPointwiseQuotientMk_surjective
-          (coordinateHopfAlgebra k n) A x
-        have hmap :
-            CommHopfAlgCat.mapPointwiseQuotient
-                (coordinateHopfAlgebra k n)
-                (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
-                (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) φ
-                (CommHopfAlgCat.centerPointwiseQuotientMk
-                  (coordinateHopfAlgebra k n) A q) =
-              CommHopfAlgCat.centerPointwiseQuotientMk
-                (coordinateHopfAlgebra k n) B
-                (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra k n) φ q) := by
-          rw [CommHopfAlgCat.centerPointwiseQuotientMk_apply,
-            CommHopfAlgCat.centerPointwiseQuotientMk_apply]
-          rw [← CommHopfAlgCat.pointwiseQuotientMk_apply
-              (coordinateHopfAlgebra k n)
-              (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
-              (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)),
-            ← CommHopfAlgCat.pointwiseQuotientMk_apply
-              (coordinateHopfAlgebra k n)
-              (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
-              (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n))]
-          exact CommHopfAlgCat.mapPointwiseQuotient_mk
-            (coordinateHopfAlgebra k n)
-            (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
-            (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) φ q
-        simp only [GrpCat.hom_comp, MonoidHom.comp_apply, ConcreteCategory.hom_ofHom]
-        rw [hmap,
-          centerPointwiseQuotientIsoPGL_hom_mk,
-          centerPointwiseQuotientIsoPGL_hom_mk, Matrix.ProjGenLinGroup.map_mk,
-          HopfAlgebra.mapPoints_apply]
-        exact congrArg Matrix.ProjGenLinGroup.mk (pointsMulEquiv_mapValue n φ.hom q)
       have hprojective :
           eqToHom (projectivePointsFunctor_obj n A).symm ≫
               (projectivePointsFunctor n).map φ =
@@ -233,7 +236,8 @@ noncomputable def centerPointwiseQuotientNatIsoPGL :
             (coordinateHopfAlgebra k n)
             (CommHopfAlgCat.centerDefiningIdeal (coordinateHopfAlgebra k n))
             (CommHopfAlgCat.isNormal_centerDefiningIdeal (coordinateHopfAlgebra k n)) A) ≫
-              z ≫ eqToHom (projectivePointsFunctor_obj n B).symm) hbare)
+              z ≫ eqToHom (projectivePointsFunctor_obj n B).symm)
+          (centerPointwiseQuotientIsoPGL_hom_naturality n φ))
 
 end GeneralLinear
 
