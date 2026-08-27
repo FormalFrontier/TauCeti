@@ -15,10 +15,12 @@ The Schur polynomial `s_μ` is a sum of one monomial per semistandard tableau, s
 an exponent vector `d` is the Kostka number counting the tableaux of shape `μ` and content `d`
 (`TauCeti.coeff_schurPoly`).  That content is a *function* on the alphabet, while the Kostka
 numbers `TauCeti.kostkaNumber` are indexed by a *partition*: the two differ by sorting the
-exponents into decreasing order.  This file closes that gap and reads off the change of basis from
-the monomial symmetric polynomials `MvPolynomial.msymm` to the Schur polynomials,
+exponents into decreasing order.  This file closes that gap and reads off the expansion of a Schur
+polynomial in the monomial symmetric polynomials `MvPolynomial.msymm`,
 
-`s_μ = ∑_{ν ⊢ n} K_{μν} m_ν`.
+`s_μ = ∑_{ν ⊢ n} K_{μν} m_ν`,
+
+with the Kostka numbers as its coefficients.
 
 The bridge is the symmetry of `s_μ`.  Sorting the exponents of a monomial is a permutation of the
 alphabet, and a permutation of the alphabet does not change the coefficients of a symmetric
@@ -52,8 +54,12 @@ exactly as the Schur polynomial itself vanishes for such a shape
 * `TauCeti.coeff_schurPoly_eq_kostkaNumber`: **the coefficient of `s_μ` at any monomial of degree
   `n` is a Kostka number**, that of `μ` and the partition of the monomial's exponents.
 * `TauCeti.schurPoly_eq_sum_kostkaNumber_smul_msymm`: **the monomial expansion**
-  `s_μ = ∑_ν K_{μν} m_ν`, the statement that the Kostka numbers are the matrix of the change of
-  basis from the monomial symmetric polynomials to the Schur polynomials.
+  `s_μ = ∑_ν K_{μν} m_ν`, writing a Schur polynomial as the combination of the monomial symmetric
+  polynomials whose coefficients are the Kostka numbers.  This is the expansion only: that the two
+  families are bases of the symmetric polynomials — which would make the Kostka numbers a genuine
+  change-of-basis matrix, as the roadmap target below phrases it — is not proved here, and indeed
+  neither family is linearly independent as indexed here, both containing zero terms whenever the
+  partition has more parts than the alphabet has letters.
 
 ## Implementation notes
 
@@ -132,26 +138,22 @@ noncomputable def weightPartition (d : σ →₀ ℕ) (h : d.degree = n) : n.Par
   Nat.Partition.ofSym (weightSym d h)
 
 omit [Fintype σ] in
-/-- The partition of the exponents of a monomial is the partition of multiplicities of its multiset
-of letters. -/
-theorem weightPartition_def (d : σ →₀ ℕ) (h : d.degree = n) :
-    weightPartition d h = Nat.Partition.ofSym (weightSym d h) :=
-  (rfl)
-
-omit [Fintype σ] in
 /-- The parts of the partition of the exponents of a monomial are the exponents of the letters that
 actually occur in it. -/
+@[simp]
 theorem weightPartition_parts (d : σ →₀ ℕ) (h : d.degree = n) :
     (weightPartition d h).parts = Multiset.map d d.support.val := by
   have hdedup : d.toMultiset.dedup = d.support.val :=
     congrArg Finset.val (Finsupp.toFinset_toMultiset d)
+  -- `Nat.Partition.ofSym` is a bare structure instance, carrying no lemma for its `parts` field,
+  -- so the only way in is to unfold it (and `weightPartition`) definitionally.
   change d.toMultiset.dedup.map (fun a => Multiset.count a d.toMultiset) = _
   rw [hdedup]
   exact Multiset.map_congr rfl fun a _ => Finsupp.count_toMultiset d a
 
 /-- A monomial has one nonzero exponent per letter occurring in it, so the partition of its
 exponents has no more parts than the alphabet has letters. -/
-theorem card_parts_weightPartition (d : σ →₀ ℕ) (h : d.degree = n) :
+theorem card_parts_weightPartition_le (d : σ →₀ ℕ) (h : d.degree = n) :
     (weightPartition d h).parts.card ≤ Fintype.card σ := by
   rw [weightPartition_parts, Multiset.card_map]
   exact Finset.card_le_univ d.support
@@ -167,9 +169,8 @@ private theorem map_univ_val (d : σ →₀ ℕ) :
         + Multiset.replicate (Fintype.card σ - d.support.card) 0 := by
   classical
   have hval : (univ : Finset σ).val = d.support.val + d.supportᶜ.val := by
-    rw [show d.support.val + d.supportᶜ.val
-        = (d.support.disjUnion d.supportᶜ disjoint_compl_right).val from rfl,
-      Finset.disjUnion_eq_union, Finset.union_compl]
+    rw [Finset.compl_eq_univ_sdiff, Finset.sdiff_val,
+      add_tsub_cancel_of_le (Finset.val_le_iff.mpr d.support.subset_univ)]
   have hzero : Multiset.map d d.supportᶜ.val
       = Multiset.replicate (Fintype.card σ - d.support.card) 0 := by
     rw [Multiset.map_congr rfl (g := fun _ => (0 : ℕ)) fun x hx =>
@@ -222,7 +223,7 @@ parts of its `TauCeti.weightPartition`. -/
 theorem exists_perm_mapDomain_eq_partWeight (d : σ →₀ ℕ) (h : d.degree = n) :
     ∃ e : Equiv.Perm σ, Finsupp.mapDomain e d = partWeight σ (weightPartition d h) := by
   obtain ⟨e, he⟩ := exists_perm_comp_eq (f := ⇑d) (g := ⇑(partWeight σ (weightPartition d h)))
-    (by rw [map_univ_val d, map_univ_val_partWeight _ (card_parts_weightPartition d h),
+    (by rw [map_univ_val d, map_univ_val_partWeight _ (card_parts_weightPartition_le d h),
       weightPartition_parts, Multiset.card_map]; rfl)
   refine ⟨e, Finsupp.ext fun y => ?_⟩
   rw [← Finsupp.equivMapDomain_eq_mapDomain (e : σ ≃ σ) d, Finsupp.equivMapDomain_apply]
@@ -246,6 +247,7 @@ private theorem prod_map_X (m : Multiset σ) :
 
 /-- **A monomial symmetric polynomial is homogeneous**: it has no monomial whose total degree is
 not that of its partition. -/
+@[simp]
 theorem coeff_msymm_eq_zero_of_degree_ne (ν : n.Partition) {d : σ →₀ ℕ} (h : d.degree ≠ n) :
     coeff d (msymm σ R ν) = 0 := by
   rw [msymm, coeff_sum]
@@ -257,6 +259,7 @@ theorem coeff_msymm_eq_zero_of_degree_ne (ν : n.Partition) {d : σ →₀ ℕ} 
 /-- **The coefficients of a monomial symmetric polynomial are `0` and `1`**: `m_ν` is the sum of
 the monomials of total degree `n` whose nonzero exponents are the parts of `ν`, each occurring
 once. -/
+@[simp]
 theorem coeff_msymm (ν : n.Partition) {d : σ →₀ ℕ} (h : d.degree = n) :
     coeff d (msymm σ R ν) = if weightPartition d h = ν then 1 else 0 := by
   have hinj : ∀ s : Sym σ n, Multiset.toFinsupp (s : Multiset σ) = d ↔ s = weightSym d h :=
@@ -272,11 +275,14 @@ theorem coeff_msymm (ν : n.Partition) {d : σ →₀ ℕ} (h : d.degree = n) :
     · exact fun hmem => absurd (Finset.mem_univ _) hmem
   · refine (Finset.sum_eq_zero fun s _ => ite_eq_right fun hcoeff => hν ?_).trans
       (ite_eq_right hν).symm
-    rw [weightPartition_def, ← (hinj s.1).mp hcoeff]
-    exact s.2
+    -- `weightPartition d h` is `Nat.Partition.ofSym (weightSym d h)` by definition, and `s` ranges
+    -- over the multisets of letters whose partition is `ν`.
+    exact (congrArg (fun t : Sym σ n => Nat.Partition.ofSym t)
+      ((hinj s.1).mp hcoeff)).symm.trans s.2
 
 /-- **A monomial symmetric polynomial vanishes when its partition has more parts than the alphabet
 has letters**: no monomial in that alphabet uses that many distinct letters. -/
+@[simp]
 theorem msymm_eq_zero_of_card_lt (ν : n.Partition) (h : Fintype.card σ < ν.parts.card) :
     msymm σ R ν = 0 := by
   rw [msymm]
@@ -298,13 +304,14 @@ theorem coeff_schurPoly_eq_kostkaNumber {d : σ →₀ ℕ} (h : d.degree = n) :
   have hsymm : coeff (Finsupp.mapDomain e d) (schurPoly σ R μ) = coeff d (schurPoly σ R μ) := by
     conv_lhs => rw [← schurPoly_isSymmetric (R := R) μ e]
     exact coeff_rename_mapDomain _ e.injective _ _
-  rw [← hsymm, he,
-    coeff_schurPoly_partWeight μ _ (by rw [colLen_diagramOf]; exact card_parts_weightPartition d h)]
+  rw [← hsymm, he, coeff_schurPoly_partWeight μ _
+    (by rw [colLen_diagramOf]; exact card_parts_weightPartition_le d h)]
 
-/-- **The monomial expansion of a Schur polynomial**: `s_μ = ∑_ν K_{μν} m_ν`, so the Kostka numbers
-are the matrix of the change of basis from the monomial symmetric polynomials to the Schur
-polynomials.  The sum runs over every partition of `n`: those with more parts than the alphabet has
-letters contribute nothing, their monomial symmetric polynomial vanishing there. -/
+/-- **The monomial expansion of a Schur polynomial**: `s_μ = ∑_ν K_{μν} m_ν`, expanding `s_μ` in
+the monomial symmetric polynomials with the Kostka numbers as its coefficients.  The sum runs over
+every partition of `n`: those with more parts than the alphabet has letters contribute nothing,
+their monomial symmetric polynomial vanishing there.  (Being an expansion, this does not by itself
+say that the Kostka numbers are a change-of-basis matrix: no basis result is proved here.) -/
 theorem schurPoly_eq_sum_kostkaNumber_smul_msymm :
     schurPoly σ R μ = ∑ ν : n.Partition, (kostkaNumber μ ν : R) • msymm σ R ν := by
   ext d
