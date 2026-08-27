@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.SpecialFunctions.Log.InvLog
-public import Mathlib.NumberTheory.AbelSummation
+import Mathlib.Analysis.SpecialFunctions.Log.InvLog
+import Mathlib.NumberTheory.AbelSummation
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Counting
 
 /-!
