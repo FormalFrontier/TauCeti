@@ -220,10 +220,15 @@ private theorem mapPointsFunctor_apply_eq_mapValue_generic
         ((CommHopfAlgCat.mapPointsFunctor φ).app (CommAlgCat.of R K)
           (show HopfAlgebra.points (R := R) (H := K) (CommAlgCat.of R K) from
             toConv (AlgHom.id R K))) := by
+  -- The application lemmas cannot rewrite the cross-universe `pointsFunctor.obj` carrier at
+  -- implicit transparency. Expose `mapPointsFunctor`, `mapValue`, and `WithConv` so both sides
+  -- become the underlying pre- and post-compositions of algebra homomorphisms.
   change toConv (g.ofConv.comp φ.hom) =
     AlgHom.mapValue g.ofConv (toConv ((AlgHom.id R K).comp φ.hom.toAlgHom))
   apply WithConv.ofConv_injective
   ext h
+  -- After removing `WithConv`, expose the two `AlgHom.comp` applications; the remaining
+  -- difference is precisely evaluation through the generic identity point.
   change g.ofConv (φ.hom h) = g.ofConv ((AlgHom.id R K) (φ.hom h))
   rw [AlgHom.id_apply]
 
@@ -262,6 +267,8 @@ private theorem mapValue_weightParabolicGenericPoint (w : Fin N → ℤ)
     eqToHom (Cocharacter.parabolicFunctor_obj
       (weightCocharacter (R := R) w) (CommAlgCat.of R A))
       ((weightParabolicPointsIso R w).hom.app (CommAlgCat.of R A) g)
+  -- The theorem statement is a chain of `let`s. Fold its unfolded terms back to the typed local
+  -- abbreviations above so the following subtype proof can name both parabolic points explicitly.
   change (⟨AlgHom.mapValue g.ofConv
       (gP : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R N) PAlg),
     Cocharacter.parabolic_le_comap g.ofConv gP.2⟩ :
