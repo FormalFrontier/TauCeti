@@ -126,8 +126,13 @@ theorem fixedPoints_addSubgroup_eq_top_of_smul_eq (H : Subgroup G)
   ext m
   simp [h]
 
-/-- Invariants grow as the subgroup shrinks. This is Mathlib's `fixedPoints_subgroup_antitone` on
-the `AddSubgroup` carrier, the form `AddSubgroup.inclusion` consumes. -/
+/-- Invariants grow as the subgroup shrinks. Mathlib's `fixedPoints_subgroup_antitone` proves the
+inclusion of *sets* `fixedPoints H M ⊆ fixedPoints K M`; this transports it to the `≤` of
+`AddSubgroup M`, the form `AddSubgroup.inclusion` consumes. The transport is not cosmetic: the two
+inequalities are definitionally equal, so Mathlib's lemma does elaborate against an expected
+`AddSubgroup` inequality, but the term then *stores* a proof of the set inclusion, which makes the
+`AddSubgroup.inclusion` application ill-typed at `implicit` transparency and stops
+`AddSubgroup.coe_inclusion` from rewriting it downstream. -/
 theorem fixedPoints_addSubgroup_le {H K : Subgroup G} (h : K ≤ H) :
     FixedPoints.addSubgroup H M ≤ FixedPoints.addSubgroup K M :=
   fixedPoints_subgroup_antitone G M h
