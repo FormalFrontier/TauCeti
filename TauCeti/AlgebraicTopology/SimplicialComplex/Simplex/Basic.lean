@@ -6,6 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
+public import Mathlib.Data.Finset.Powerset
+public import Mathlib.Data.Fintype.Card
+public import Mathlib.Data.Set.Finite.Basic
+public import Mathlib.Order.Fin.Basic
 public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
 
 /-!
@@ -217,4 +221,3 @@ theorem mem_simplex_iff_mem_simplexBoundary_or_eq :
     · exact self_mem_simplex.mpr hV
 
 end PreAbstractSimplicialComplex
-

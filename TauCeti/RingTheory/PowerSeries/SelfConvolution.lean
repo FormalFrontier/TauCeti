@@ -36,6 +36,8 @@ defined through these convolutions well founded.
 * `PowerSeries.coeff_pow_two_eq_selfConvTwo`,
   `PowerSeries.coeff_pow_three_eq_selfConvThree`: those sums do compute the coefficients of
   `w ^ 2` and `w ^ 3`.
+* `PowerSeries.coeff_mul_congr`: the `n`-th coefficient of `q * v`, for `q` with vanishing
+  constant coefficient, depends only on the coefficients of `v` strictly below `n`.
 * `PowerSeries.selfConvTwo_congr_le`, `PowerSeries.selfConvThree_congr_le`: the convolution at
   `m` depends only on the values of the function on `[0, m]`. No hypothesis is needed.
 * `PowerSeries.selfConvTwo_congr`, `PowerSeries.selfConvThree_congr`: for a function vanishing at
@@ -84,6 +86,20 @@ def selfConvThree (f : ℕ → R) (n : ℕ) : R :=
 theorem selfConvThree_def (f : ℕ → R) (n : ℕ) :
     selfConvThree f n = ∑ i ∈ range (n + 1), ∑ j ∈ range (n - i + 1), f i * f j * f (n - i - j) :=
   (rfl)
+
+/-- Multiplying by a series with vanishing constant coefficient makes the `n`-th coefficient of
+the product depend only on the coefficients of the other factor strictly below `n`: the term that
+would use the `n`-th one carries the vanishing constant coefficient. -/
+theorem coeff_mul_congr {q v v' : PowerSeries R} (hq : constantCoeff q = 0) {n : ℕ}
+    (h : ∀ m, m < n → coeff m v = coeff m v') : coeff n (q * v) = coeff n (q * v') := by
+  have hq0 : coeff 0 q = 0 := by
+    rwa [coeff_zero_eq_constantCoeff_apply]
+  rw [coeff_mul, coeff_mul]
+  refine Finset.sum_congr rfl fun p hp => ?_
+  rw [Finset.mem_antidiagonal] at hp
+  rcases Nat.eq_zero_or_pos p.1 with h1 | h1
+  · rw [h1, hq0, zero_mul, zero_mul]
+  · rw [h p.2 (by omega)]
 
 /-- `selfConvTwo` computes the coefficients of a square. -/
 theorem coeff_pow_two_eq_selfConvTwo (w : PowerSeries R) (n : ℕ) :

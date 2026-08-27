@@ -9,7 +9,7 @@ public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
 public import TauCeti.RepresentationTheory.Quiver.Kronecker.Representation
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
-public import TauCeti.RingTheory.AdjoinRoot
+public import TauCeti.RingTheory.AdjoinRoot.Basic
 public import TauCeti.RingTheory.Polynomial.Truncated
 
 /-!

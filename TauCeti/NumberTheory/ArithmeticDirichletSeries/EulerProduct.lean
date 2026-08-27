@@ -8,7 +8,8 @@ module
 public import Mathlib.NumberTheory.ArithmeticFunction.LFunction
 public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Convolution
-import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
+import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Basic
+import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Norm
 
 /-!
 # Local factors for ideal arithmetic functions

@@ -288,43 +288,51 @@ theorem zsmul_toIntLinearMap (k : ℤ) (f : Hom source target) :
     (k • f).toIntLinearMap = k • f.toIntLinearMap :=
   rfl
 
+/-- `Hom.toLinearMap` bundled as an additive homomorphism `Hom source target →+ (W₁ →ₗ[ℂ] W₂)`:
+addition, negation and integer multiples of Hodge morphisms pass to the corresponding operations
+on their complexifications. -/
+private noncomputable def toLinearMapAddMonoidHom : Hom source target →+ (W₁ →ₗ[ℂ] W₂) :=
+  AddMonoidHom.mk' toLinearMap fun f g ↦ by
+    simp only [toLinearMap, add_toIntLinearMap, integralMapToComplex_add]
+
+/-- The bundled additive homomorphism acts as `Hom.toLinearMap`. -/
+@[simp]
+private theorem coe_toLinearMapAddMonoidHom :
+    ⇑(toLinearMapAddMonoidHom (source := source) (target := target)) = toLinearMap :=
+  rfl
+
 /-- The zero Hodge morphism acts as zero on complex vectors. -/
 @[simp]
 theorem zero_apply (x : W₁) : (0 : Hom source target) x = 0 := by
-  simp only [toLinearMap, zero_toIntLinearMap,
-    integralMapToComplex_zero, LinearMap.zero_apply]
+  have h := map_zero (toLinearMapAddMonoidHom (source := source) (target := target))
+  simpa using LinearMap.congr_fun h x
 
 /-- Addition of Hodge morphisms is pointwise addition on complex vectors. -/
 @[simp]
 theorem add_apply (f g : Hom source target) (x : W₁) : (f + g) x = f x + g x := by
-  simp only [toLinearMap, add_toIntLinearMap,
-    integralMapToComplex_add, LinearMap.add_apply]
+  simpa using LinearMap.congr_fun (map_add toLinearMapAddMonoidHom f g) x
 
 /-- Negation of Hodge morphisms is pointwise negation on complex vectors. -/
 @[simp]
 theorem neg_apply (f : Hom source target) (x : W₁) : (-f) x = -f x := by
-  simp only [toLinearMap, neg_toIntLinearMap,
-    integralMapToComplex_neg, LinearMap.neg_apply]
+  simpa using LinearMap.congr_fun (map_neg toLinearMapAddMonoidHom f) x
 
 /-- Subtraction of Hodge morphisms is pointwise subtraction on complex vectors. -/
 @[simp]
 theorem sub_apply (f g : Hom source target) (x : W₁) : (f - g) x = f x - g x := by
-  simp only [toLinearMap, sub_toIntLinearMap,
-    integralMapToComplex_sub, LinearMap.sub_apply]
+  simpa using LinearMap.congr_fun (map_sub toLinearMapAddMonoidHom f g) x
 
 /-- Natural-number multiples of Hodge morphisms are evaluated pointwise on complex vectors. -/
 @[simp]
 theorem nsmul_apply (k : ℕ) (f : Hom source target) (x : W₁) :
     (k • f) x = k • f x := by
-  simp only [toLinearMap, nsmul_toIntLinearMap,
-    integralMapToComplex_nsmul, LinearMap.smul_apply]
+  simpa using LinearMap.congr_fun (map_nsmul toLinearMapAddMonoidHom k f) x
 
 /-- Integer multiples of Hodge morphisms are evaluated pointwise on complex vectors. -/
 @[simp]
 theorem zsmul_apply (k : ℤ) (f : Hom source target) (x : W₁) :
     (k • f) x = k • f x := by
-  simp only [toLinearMap, zsmul_toIntLinearMap,
-    integralMapToComplex_zsmul, LinearMap.smul_apply]
+  simpa using LinearMap.congr_fun (map_zsmul toLinearMapAddMonoidHom k f) x
 
 /-- Composition is additive in the morphism applied second. -/
 @[simp]

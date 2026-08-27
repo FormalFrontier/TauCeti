@@ -123,13 +123,13 @@ private theorem kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorus :
 
 include hθe hσ hbasis hwt in
 /-- The forward ambient symmetry pulls the toral defining ideal into itself. -/
-private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_hom_le :
-    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comap
+private theorem kostantToralDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso_hom_le :
+    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comapOfSurjective
         (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom
         (ConcreteCategory.bijective_of_isIso
           (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).2 ≤
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
-  refine kostantToralDefiningIdeal_comap_le_of_comp_eq e h ρ M hM hnil b wt _ _
+  refine kostantToralDefiningIdeal_comapOfSurjective_le_of_comp_eq e h ρ M hM hnil b wt _ _
     (Function.surjInv hσ) (SplitTorus.relabelCoordinateMap ℤ torusPerm⁻¹)
     (SplitTorus.relabelCoordinateMap_injective ℤ torusPerm⁻¹) (fun i => ?_) ?_
   · rw [kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
@@ -139,14 +139,14 @@ private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_ho
 
 include hθe hbasis hwt in
 /-- The inverse ambient symmetry pulls the toral defining ideal into itself. -/
-private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_inv_le :
-    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comap
+private theorem kostantToralDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso_inv_le :
+    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comapOfSurjective
         (kostantNumberedSymmetryCoordinateIso M b θ hθM).inv.hom
         (ConcreteCategory.bijective_of_isIso
           (kostantNumberedSymmetryCoordinateIso M b θ hθM).inv).2 ≤
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
   let c := kostantNumberedSymmetryCoordinateIso M b θ hθM
-  refine kostantToralDefiningIdeal_comap_le_of_comp_eq e h ρ M hM hnil b wt c.inv _ σ
+  refine kostantToralDefiningIdeal_comapOfSurjective_le_of_comp_eq e h ρ M hM hnil b wt c.inv _ σ
     (SplitTorus.relabelCoordinateMap ℤ torusPerm)
     (SplitTorus.relabelCoordinateMap_injective ℤ torusPerm) (fun i => ?_) ?_
   · rw [← kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
@@ -162,21 +162,21 @@ include hθe hσ hbasis hwt in
 /-- **The numbered-symmetry coordinate automorphism preserves the toral defining ideal.** The root
 subgroups are permuted among themselves and the weight torus is carried to itself, so the largest
 Hopf ideal killed by all of them is invariant. -/
-private theorem kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso :
-    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comap
+private theorem kostantToralDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso :
+    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comapOfSurjective
         (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom
         (ConcreteCategory.bijective_of_isIso
           (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).2 =
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
   let c := kostantNumberedSymmetryCoordinateIso M b θ hθM
   let J := kostantToralDefiningIdeal e h ρ M hM hnil b wt
-  have hhom : J.comap c.hom.hom (ConcreteCategory.bijective_of_isIso c.hom).2 ≤ J :=
-    kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_hom_le
+  have hhom : J.comapOfSurjective c.hom.hom (ConcreteCategory.bijective_of_isIso c.hom).2 ≤ J :=
+    kostantToralDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso_hom_le
       e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt
-  have hinv : J.comap c.inv.hom (ConcreteCategory.bijective_of_isIso c.inv).2 ≤ J :=
-    kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso_inv_le
+  have hinv : J.comapOfSurjective c.inv.hom (ConcreteCategory.bijective_of_isIso c.inv).2 ≤ J :=
+    kostantToralDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso_inv_le
       e h ρ M hM hnil b wt σ θ hθM hθe basisPerm hbasis torusPerm hwt
-  exact HopfIdeal.comap_eq_of_comap_hom_le_of_comap_inv_le c J hhom hinv
+  exact HopfIdeal.comapOfSurjective_eq_of_hom_le_of_inv_le c J hhom hinv
 
 include hθe hσ hbasis hwt in
 /-- The coordinate automorphism induced on the toral-closure quotient. -/
@@ -188,7 +188,7 @@ private noncomputable def kostantToralCoordinateNumberedSymmetryIso :
   CommHopfAlgCat.quotientIsoOfComapEq
     (kostantNumberedSymmetryCoordinateIso M b θ hθM)
     (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
-    (kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso
+    (kostantToralDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso
       e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt)
 
 include hθe hσ hbasis hwt in
@@ -204,7 +204,7 @@ private theorem mkQuotient_comp_kostantToralCoordinateNumberedSymmetryIso_hom :
   exact CommHopfAlgCat.mkQuotient_comp_quotientIsoOfComapEq_hom
     (kostantNumberedSymmetryCoordinateIso M b θ hθM)
     (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
-    (kostantToralDefiningIdeal_comap_numberedSymmetryCoordinateIso
+    (kostantToralDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso
       e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt)
 
 include hθe hσ hbasis hwt in

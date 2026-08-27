@@ -76,8 +76,8 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
   let f : coordinateHopfAlgebra k n →ₐc[k] (finiteTypeCoordinateHopfAlgebra k n) :=
     CommHopfAlgCat.ofIso e
   have hf : Function.Bijective f := ConcreteCategory.bijective_of_isIso e.hom
-  let J : HopfIdeal k (coordinateHopfAlgebra k n) := I.comap f hf.2
-  have hJnormal : J.IsNormal := hI.comap_of_bijective f hf.1 hf.2
+  let J : HopfIdeal k (coordinateHopfAlgebra k n) := I.comapOfSurjective f hf.2
+  have hJnormal : J.IsNormal := hI.comapOfSurjective_of_bijective f hf.1 hf.2
   let qIso : CommHopfAlgCat.quotient (coordinateHopfAlgebra k n) J ≅
       CommHopfAlgCat.quotient (finiteTypeCoordinateHopfAlgebra k n).obj I :=
     CommHopfAlgCat.quotientIsoOfIso e I
@@ -109,8 +109,8 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
   have hJ : J = HopfIdeal.augmentation k (coordinateHopfAlgebra k n) :=
     Comodule.eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one J
       (isFaithful_standardComodule k n) htrivial
-  rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hf.2,
-    HopfIdeal.comap_augmentation]
+  rw [← HopfIdeal.comapOfSurjective_eq_comapOfSurjective_iff f hf.2,
+    HopfIdeal.comapOfSurjective_augmentation]
   exact hJ
 
 /-- **The general linear group is reductive over every field.** -/

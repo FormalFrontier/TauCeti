@@ -9,7 +9,7 @@ import TauCeti.Data.Int.LinearCongruence
 public import TauCeti.NumberTheory.HeckeRing.GL2.CosetDecomposition
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Diagonal.Coset
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.Basic
-public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Basic
 
 /-!
 # The double coset `Γ₁(N) · diag(1, p) · Γ₁(N)` at an index supported on the level
