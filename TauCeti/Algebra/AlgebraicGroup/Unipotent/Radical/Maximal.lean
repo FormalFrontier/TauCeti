@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Product
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Properties
+import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
 
 /-!
 # Maximal-dimensional unipotent-radical candidates
