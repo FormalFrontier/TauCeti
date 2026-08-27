@@ -319,7 +319,7 @@ character. -/
 @[simp]
 theorem rankOneTorusPoints_apply_baseChange_basis
     {A : Type u} [CommRing A] (s : Fin 1 → Aˣ) (i : Fin 2) :
-    (rankOneTorusPoints (CommAlgCat.of ℤ A) s).val ((b).baseChange A i) =
+    (rankOneTorusPoints (CommAlgCat.of ℤ A) s).val (1 ⊗ₜ[ℤ] b i) =
       (torusCharacter s (rankOneWeight i) : A) • (b).baseChange A i := by
   rw [Module.Basis.baseChange_apply, rankOneTorusPoints, kostantTorusPoints_tmul_basis]
   simp [smul_tmul']
