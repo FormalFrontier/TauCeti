@@ -55,7 +55,6 @@ def weights : Fin n → ℤ :=
   fun i ↦ (n : ℤ) - 1 - (i : ℤ)
 
 /-- Formula for a standard upper-triangular weight. -/
-@[simp]
 theorem weights_apply (i : Fin n) : weights n i = (n : ℤ) - 1 - (i : ℤ) :=
   (rfl)
 
@@ -236,7 +235,7 @@ inclusion is the ordinary inclusion of upper-triangular matrices into `GL_n`. -/
 theorem pointsMulEquiv_coe
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
       (CommAlgCat.of R A)) :
-    GeneralLinear.pointsMulEquiv n
+    GeneralLinear.pointToGeneralLinear n
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
           (CommAlgCat.of R A) f) =
@@ -245,6 +244,7 @@ theorem pointsMulEquiv_coe
     (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
     (CommAlgCat.of R A) f
   rw [pointsMulEquiv_apply_eq]
+  rw [← GeneralLinear.pointsMulEquiv_apply]
   exact congrArg
     (fun g => (pointsSubgroupToUpperTriangular R n g : upperTriangularGroup (Fin n) A).1)
     hcomponent.symm
@@ -258,7 +258,8 @@ theorem quotientPointsHom_pointsMulEquiv_symm (g : upperTriangularGroup (Fin n) 
         (CommAlgCat.of R A) ((pointsMulEquiv (R := R) (n := n) (A := A)).symm g) =
       (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).symm g.1 := by
   apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).injective
-  rw [pointsMulEquiv_coe, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
+  rw [GeneralLinear.pointsMulEquiv_apply, pointsMulEquiv_coe,
+    MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
 
 variable {B : Type w} [CommRing B] [Algebra R B]
 
@@ -278,7 +279,7 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
   have hcoe_rhs := pointsMulEquiv_coe (R := R) (n := n) (A := A) f
   rw [← hcoe_lhs, ← CommHopfAlgCat.mapPoints_quotientPointsHom,
     HopfAlgebra.mapPoints_apply, CommAlgCat.hom_ofHom, ← AlgHom.mapValue_apply,
-    GeneralLinear.pointsMulEquiv_mapValue, hcoe_rhs]
+    GeneralLinear.pointToGeneralLinear_mapValue, hcoe_rhs]
   exact (UpperTriangularGroup.coe_map phi.toRingHom _).symm
 
 end Points

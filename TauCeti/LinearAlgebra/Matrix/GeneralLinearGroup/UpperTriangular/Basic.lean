@@ -95,7 +95,6 @@ theorem coe_map {S : Type v} [CommRing S] (phi : R →+* S)
   by simp [map]
 
 /-- Entrywise application of a ring homomorphism to an upper-triangular matrix. -/
-@[simp]
 theorem map_apply {S : Type v} [CommRing S] (phi : R →+* S)
     (g : upperTriangularGroup m R) (i j : m) :
     ((map phi g : upperTriangularGroup m S) : GL m S) i j =

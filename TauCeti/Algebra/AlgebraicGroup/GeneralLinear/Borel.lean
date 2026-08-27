@@ -335,7 +335,7 @@ theorem pointsMulEquiv_diagonalTorusCoordinateMap
         (GeneralLinear.diagonalTorusPoints (R := R) (N := 2) f) := by
   have hcoe := UpperTriangular.pointsMulEquiv_coe (R := R) (n := 2) (A := A)
     (WithConv.toConv (f.ofConv.comp (diagonalTorusCoordinateMap R).hom))
-  rw [← hcoe]
+  rw [← hcoe, GeneralLinear.pointsMulEquiv_apply]
   congr 1
   rw [CommHopfAlgCat.quotientPointsHom_apply]
   have hcomp :
@@ -444,7 +444,7 @@ theorem pointsMulEquiv_rootSubgroupCoordinateMap
         (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) f) := by
   have hcoe := UpperTriangular.pointsMulEquiv_coe (R := R) (n := 2) (A := A)
     (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R).hom))
-  rw [← hcoe]
+  rw [← hcoe, GeneralLinear.pointsMulEquiv_apply]
   congr 1
   rw [CommHopfAlgCat.quotientPointsHom_apply]
   have hcomp :
