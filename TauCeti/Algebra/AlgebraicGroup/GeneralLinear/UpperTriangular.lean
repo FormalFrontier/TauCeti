@@ -60,7 +60,6 @@ def weights : Fin n → ℤ :=
   fun i ↦ (n : ℤ) - 1 - (i : ℤ)
 
 /-- Formula for a standard upper-triangular weight. -/
-@[simp]
 theorem weights_apply (i : Fin n) : weights n i = (n : ℤ) - 1 - (i : ℤ) :=
   (rfl)
 
@@ -140,7 +139,7 @@ instance isClosedImmersion_inclusion :
   infer_instance
 
 /-- The upper-triangular coordinate Hopf algebra, bundled with its finite-type property. -/
-noncomputable abbrev finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=
+noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=
   GeneralLinear.weightParabolicFiniteTypeCoordinateHopfAlgebra R (weights n)
 
 /-- The finite-type package has the upper-triangular coordinate Hopf algebra as its object. -/
