@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Sobolev.W1p.Zero
+public import TauCeti.Analysis.Sobolev.W1p.Extension
 public import TauCeti.MeasureTheory.Function.Lp.Translation
 
 /-!
@@ -45,10 +45,29 @@ Sobolev function need not be weakly differentiable across `∂Ω`. A local form 
 survives on compactly contained subsets for translations smaller than their distance to the
 boundary.
 
+## Translation after extension by zero
+
+For a proper domain `Ω`, the translation estimate is applied after extending by zero to the whole
+space. `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient` records the
+result directly in terms of the original gradient:
+
+`‖ũ(· + h) - ũ‖_p ≤ ‖h‖ ‖∇u‖_p`,
+
+where `ũ` is the zero extension of `u`. The zero extension vanishes almost everywhere off `Ω`,
+as recorded by `TauCeti.W1p0.value_extendByZeroL_eq_zero_ae_compl`. These are precisely the
+translation and fixed-support inputs used to apply the Fréchet--Kolmogorov compactness criterion
+to a norm-bounded family in `W^{1,p}_0(Ω)`.
+
 ## Main declarations
 
 * `TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient`: the translation estimate
   on `W^{1,p}_0(ℝⁿ)`.
+* `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient`: the translation
+  estimate for the zero extension of a function in `W^{1,p}_0(Ω)`.
+* `TauCeti.W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le`: zero extensions of a
+  norm-bounded family have uniformly small translation increments.
+* `TauCeti.W1p0.value_extendByZeroL_eq_zero_ae_compl`: the zero extension vanishes almost
+  everywhere off `Ω`.
 
 ## References
 
@@ -161,6 +180,92 @@ theorem W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient (hp : p ≠ �
   refine w1p0Submodule_subset_of_isClosed hclosed (fun phi => ?_) hu
   simpa only [Set.mem_ofPred_eq, W1p.value_ofTestFunctionₗ, W1p.gradient_ofTestFunctionₗ] using
     eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le hp h phi
+
+/-! ### Translation after extension by zero -/
+
+/-- The value component of the zero extension of `u ∈ W^{1,p}_0(Ω)` vanishes almost everywhere
+off `Ω`. This is the fixed-support input in the Fréchet--Kolmogorov proof of
+Rellich--Kondrachov on bounded domains. -/
+theorem W1p0.value_extendByZeroL_eq_zero_ae_compl {Omega : Opens E}
+    (u : W1p0 mu Omega p) :
+    ∀ᵐ x ∂mu, x ∉ (Omega : Set E) →
+      W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x = 0 := by
+  rw [W1p0.value_extendByZeroL (Omega' := ⊤) le_top u]
+  have hvalue := coeFn_extendByZeroLpₗᵢ ℝ Omega.isOpen.measurableSet
+    (SetLike.coe_subset_coe.mpr le_top) (W1p.value (u : W1p mu Omega p))
+  filter_upwards [hvalue.filter_mono (by simp)] with x hx hxo
+  rw [hx, Set.indicator_of_notMem hxo]
+
+/-- **The translation estimate for the zero extension of a Sobolev function.** For
+`u ∈ W^{1,p}_0(Ω)` and `1 ≤ p < ∞`, extend `u` by zero to the whole space. Then
+
+`‖ũ(· + h) - ũ‖_p ≤ ‖h‖ ‖∇u‖_p`.
+
+No boundary regularity or boundedness of `Ω` is needed. Membership in `W^{1,p}_0(Ω)` is the
+load-bearing condition that makes the zero extension weakly differentiable across `∂Ω`. -/
+theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient
+    {Omega : Opens E} (hp : p ≠ ∞) (h : E) (u : W1p0 mu Omega p) :
+    eLpNorm (fun x =>
+      W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
+        W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
+      ≤ ‖h‖ₑ * ‖W1p.gradient (u : W1p mu Omega p)‖ₑ := by
+  have hmain := W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient hp h
+    (u := (W1p0.extendByZeroL le_top u : W1p mu ⊤ p))
+    (W1p0.extendByZeroL le_top u).2
+  rw [W1p0.gradient_extendByZeroL,
+    (extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet
+      (SetLike.coe_subset_coe.mpr le_top)).enorm_map] at hmain
+  exact hmain
+
+/-- The graph-norm form of the zero-extension translation estimate. The `W^{1,p}` norm controls
+the gradient component, so `‖ũ(· + h) - ũ‖_p ≤ ‖h‖ ‖u‖_{W^{1,p}}`. This is the uniform estimate
+used for norm-bounded families in Rellich--Kondrachov. -/
+theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm
+    {Omega : Opens E} (hp : p ≠ ∞) (h : E) (u : W1p0 mu Omega p) :
+    eLpNorm (fun x =>
+      W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
+        W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
+      ≤ ‖h‖ₑ * ‖u‖ₑ := by
+  refine (W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient hp h u).trans ?_
+  apply mul_le_mul_right
+  have hgradient : ‖W1p.gradient (u : W1p mu Omega p)‖ ≤ ‖u‖ :=
+    W1p.norm_gradient_le (u : W1p mu Omega p)
+  rw [← ofReal_norm, ← ofReal_norm]
+  exact ENNReal.ofReal_mono hgradient
+
+/-- **Uniform smallness of translation increments for a norm-bounded Sobolev family.** If every
+`u ∈ S ⊆ W^{1,p}_0(Ω)` has graph norm at most `C`, then for every `ε > 0` there is a common
+`δ > 0` such that every zero extension `ũ` satisfies
+
+`‖ũ(· + h) - ũ‖_p ≤ ε` whenever `‖h‖ < δ`.
+
+Together with `TauCeti.W1p0.value_extendByZeroL_eq_zero_ae_compl`, this supplies the two
+family-level hypotheses of the fixed-bounded-support Fréchet--Kolmogorov criterion. -/
+theorem W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le
+    {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ} (hC : 0 ≤ C)
+    (hS : ∀ u ∈ S, ‖u‖ ≤ C) {epsilon : ℝ≥0∞} (hepsilon : 0 < epsilon) :
+    ∃ delta > 0, ∀ u ∈ S, ∀ h : E, ‖h‖ < delta →
+      eLpNorm (fun x =>
+        W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
+          W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
+        ≤ epsilon := by
+  rcases eq_or_ne epsilon ∞ with rfl | hepsilon_top
+  · exact ⟨1, zero_lt_one, fun _ _ _ _ => le_top⟩
+  let delta := epsilon.toReal / (C + 1)
+  have hdelta : 0 < delta := div_pos (ENNReal.toReal_pos hepsilon.ne' hepsilon_top) (by linarith)
+  refine ⟨delta, hdelta, fun u hu h hh =>
+    (W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm hp h u).trans ?_⟩
+  have hu_enorm : ‖u‖ₑ ≤ ENNReal.ofReal C := by
+    rw [← ofReal_norm]
+    exact ENNReal.ofReal_mono (hS u hu)
+  refine (mul_le_mul_right hu_enorm ‖h‖ₑ).trans ?_
+  rw [← ofReal_norm, ← ENNReal.ofReal_mul (norm_nonneg h),
+    ← ENNReal.ofReal_toReal hepsilon_top]
+  apply ENNReal.ofReal_mono
+  calc
+    ‖h‖ * C ≤ delta * C := mul_le_mul_of_nonneg_right hh.le hC
+    _ ≤ delta * (C + 1) := mul_le_mul_of_nonneg_left (by linarith) hdelta.le
+    _ = epsilon.toReal := div_mul_cancel₀ _ (by linarith)
 
 end Sobolev
 
