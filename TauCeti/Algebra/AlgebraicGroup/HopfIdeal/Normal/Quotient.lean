@@ -48,14 +48,13 @@ variable {H : _root_.CommHopfAlgCat.{v} R}
 when `I ≤ J`. -/
 @[simp]
 theorem comapOfSurjective_map_mkQuotient {I J : HopfIdeal R H} (hIJ : I ≤ J) :
-    (J.map (CommHopfAlgCat.mkQuotient H I).hom).comapOfSurjective
-        (CommHopfAlgCat.mkQuotient H I).hom
+    (J.map (Bialgebra.Quotient.mkBialgHom I.toIdeal)).comapOfSurjective
+        (Bialgebra.Quotient.mkBialgHom I.toIdeal)
         (CommHopfAlgCat.mkQuotient_surjective H I) = J := by
   rw [comapOfSurjective_map]
-  have hker : kerOfSurjective (CommHopfAlgCat.mkQuotient H I).hom
+  have hker : kerOfSurjective (Bialgebra.Quotient.mkBialgHom I.toIdeal)
       (CommHopfAlgCat.mkQuotient_surjective H I) = I := by
-    simpa only [CommHopfAlgCat.hom_mkQuotient] using
-      kerOfSurjective_mkBialgHom I
+    exact kerOfSurjective_mkBialgHom I
   rw [hker, sup_eq_left]
   exact hIJ
 
@@ -72,24 +71,32 @@ variable {H : _root_.CommHopfAlgCat.{v} k}
 in `H ⧸ I`. -/
 @[simp]
 theorem ker_quotientMapOfLe {I J : HopfIdeal k H} (hIJ : I ≤ J) :
-    HopfIdeal.ker (quotientMapOfLe H hIJ).hom = J.map (mkQuotient H I).hom := by
-  apply HopfIdeal.ext
-  intro q
-  rw [HopfIdeal.mem_ker]
-  constructor
-  · intro hq
-    obtain ⟨x, rfl⟩ := mkQuotient_surjective H I q
-    rw [mkQuotient_apply] at hq ⊢
-    rw [quotientMapOfLe_mk] at hq
-    exact HopfIdeal.mem_map_of_mem (mkQuotient H I).hom
-      ((HopfIdeal.mem_toIdeal (I := J)).mp ((mkQuotient_eq_zero_iff H J x).mp hq))
-  · intro hq
-    rw [HopfIdeal.mem_map_iff_of_surjective (mkQuotient_surjective H I)] at hq
-    obtain ⟨x, hx, rfl⟩ := hq
-    rw [mkQuotient_apply]
-    rw [quotientMapOfLe_mk]
-    exact (mkQuotient_eq_zero_iff H J x).mpr
-      ((HopfIdeal.mem_toIdeal (I := J)).mpr hx)
+    HopfIdeal.ker
+        (Bialgebra.Quotient.liftBialgHom I.toIdeal
+          (Bialgebra.Quotient.mkBialgHom (R := k) J.toIdeal)
+          (by simpa only [hom_mkQuotient] using
+            toIdeal_le_ker_mkQuotient_of_le H hIJ)) =
+      J.map (Bialgebra.Quotient.mkBialgHom (R := k) I.toIdeal) := by
+  have hcat : HopfIdeal.ker (quotientMapOfLe H hIJ).hom =
+      J.map (mkQuotient H I).hom := by
+    apply HopfIdeal.ext
+    intro q
+    rw [HopfIdeal.mem_ker]
+    constructor
+    · intro hq
+      obtain ⟨x, rfl⟩ := mkQuotient_surjective H I q
+      rw [mkQuotient_apply] at hq ⊢
+      rw [quotientMapOfLe_mk] at hq
+      exact HopfIdeal.mem_map_of_mem (mkQuotient H I).hom
+        ((HopfIdeal.mem_toIdeal (I := J)).mp ((mkQuotient_eq_zero_iff H J x).mp hq))
+    · intro hq
+      rw [HopfIdeal.mem_map_iff_of_surjective (mkQuotient_surjective H I)] at hq
+      obtain ⟨x, hx, rfl⟩ := hq
+      rw [mkQuotient_apply]
+      rw [quotientMapOfLe_mk]
+      exact (mkQuotient_eq_zero_iff H J x).mpr
+        ((HopfIdeal.mem_toIdeal (I := J)).mpr hx)
+  simpa only [quotientMapOfLe, hom_liftQuotient, hom_mkQuotient] using hcat
 
 end CommHopfAlgCat
 
