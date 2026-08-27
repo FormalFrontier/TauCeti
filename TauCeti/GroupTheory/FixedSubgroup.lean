@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.Group.Subgroup.Map
 public import Mathlib.Algebra.Group.End
 public import Mathlib.Algebra.Group.Equiv.Basic
-public import Mathlib.Algebra.Group.Subgroup.Ker
+public import TauCeti.Algebra.Group.Subgroup.Ker
 public import Mathlib.Dynamics.FixedPoints.Defs
 
 /-!
