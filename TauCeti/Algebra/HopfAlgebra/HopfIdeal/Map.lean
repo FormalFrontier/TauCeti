@@ -46,7 +46,8 @@ augmentation ideal under `f`.
 * `TauCeti.HopfIdeal.map_le_iff_le_comap`: the image is left adjoint to the inverse image
   along a surjective morphism, with the correspondence lemmas
   `TauCeti.HopfIdeal.map_comap_of_surjective`, `TauCeti.HopfIdeal.comap_map_of_surjective`,
-  and `TauCeti.HopfIdeal.map_eq_bot_iff_le_ker`.
+  `TauCeti.HopfIdeal.comap_map_of_bijective`, and
+  `TauCeti.HopfIdeal.map_eq_bot_iff_le_ker`.
 
 ## References
 
@@ -294,6 +295,11 @@ theorem comap_map_of_surjective (I : HopfIdeal R H) (f : H →ₐc[R] K)
       Ideal.comap_map_of_surjective (f : H →+* K) hf, ← mem_toIdeal, sup_toIdeal,
       kerOfSurjective_toIdeal, RingHom.ker_eq_comap_bot]
     exact Iff.rfl
+
+/-- Along a bijective morphism, inverse image after image recovers the Hopf ideal. -/
+theorem comap_map_of_bijective (I : HopfIdeal R H) (f : H →ₐc[R] K)
+    (hf : Function.Bijective f) : (I.map f).comap f hf.2 = I := by
+  rw [comap_map_of_surjective, (kerOfSurjective_eq_bot_iff f hf.2).2 hf.1, sup_bot_eq]
 
 /-- The image vanishes exactly on Hopf ideals contained in the kernel Hopf ideal: the
 surjective bundled form of `TauCeti.HopfIdeal.map_eq_bot_iff`. -/

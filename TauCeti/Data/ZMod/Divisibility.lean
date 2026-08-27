@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+import Mathlib.Data.ZMod.Units
 public import Mathlib.Data.ZMod.Basic
 
 /-!

@@ -98,6 +98,10 @@ theorem singleton_mem_simplexBoundary {v : ι} : {v} ∈ simplexBoundary V ↔ v
 theorem simplexBoundary_le_simplex : simplexBoundary V ≤ simplex V :=
   fun _ hσ => ⟨hσ.1, hσ.2.subset⟩
 
+/-- The boundary of an abstract simplex has finitely many faces. -/
+theorem finite_faces_simplexBoundary (V : Finset ι) : (simplexBoundary V).faces.Finite :=
+  (finite_faces_simplex V).subset simplexBoundary_le_simplex
+
 /-- The boundary of a simplex with nonempty spanning set is a strict subcomplex of the simplex. -/
 theorem simplexBoundary_lt_simplex (hV : V.Nonempty) : simplexBoundary V < simplex V := by
   refine lt_of_le_of_ne simplexBoundary_le_simplex ?_

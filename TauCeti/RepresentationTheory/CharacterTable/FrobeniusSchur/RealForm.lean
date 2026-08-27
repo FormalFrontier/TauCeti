@@ -37,16 +37,16 @@ stated for a finite group, and the summing step needs it again to build the inva
 real-form vocabulary is the part that needs none of it.
 
 The **converse** -- that an irreducible representation with `ν₂(ρ) = 1` is realizable over `ℝ` --
-is not proved here.  It is a strictly stronger statement than the existence of an invariant
-symmetric form supplied by
+is a strictly stronger statement than the existence of an invariant symmetric form supplied by
 `TauCeti.Representation.frobeniusSchurIndicator_eq_one_iff`: passing from the form to a real
 structure needs an invariant Hermitian inner product as well, and the antilinear involution built
-from the two of them.  The second half of that route is already available:
+from the two of them.  It is proved separately, in
+`TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Realizability.lean`, on top of the
+real-structure vocabulary of `TauCeti/RepresentationTheory/RealForm.lean`:
 `Representation.IsRealStructure` is such an involution, its fixed points are a real form
 (`Representation.IsRealStructure.isRealForm`), and
 `Representation.isRealizableOverReal_iff_exists_isRealStructure` turns one into realizability over
-`ℝ`.  What remains is building the involution itself out of the invariant symmetric and Hermitian
-forms.
+`ℝ`.
 
 ## Main results
 
@@ -104,7 +104,8 @@ theorem IsRealForm.frobeniusSchurIndicator_eq_one [ρ.IsIrreducible] (h : IsReal
 
 /-- **An irreducible representation realizable over `ℝ` has Frobenius-Schur indicator `1`.**  This
 is the "realizable" half of the orthogonality criterion; the converse, that indicator `1` produces
-a real form, is not proved here. -/
+a real form, is
+`Representation.isRealizableOverReal_of_frobeniusSchurIndicator_eq_one`. -/
 theorem frobeniusSchurIndicator_eq_one_of_isRealizableOverReal [ρ.IsIrreducible]
     (h : IsRealizableOverReal ρ) : frobeniusSchurIndicator ρ = 1 := by
   obtain ⟨σ, hσ⟩ := isRealizableOverReal_iff.mp h

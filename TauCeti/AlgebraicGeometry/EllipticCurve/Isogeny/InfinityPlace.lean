@@ -179,6 +179,35 @@ namespace CoordinatePullback
 
 variable {F : Type*} [Field F] {W₁ W₂ : WeierstrassCurve.Affine F}
 
+/-- Once an `F`-algebra map into the function field of `W₁` sends some element to one with a pole
+at infinity, the affine coordinate of `W₁` is integral over the image of that map. -/
+private theorem isIntegral_X_over_range_of_one_lt_infinityPlace {A : Type*} [CommSemiring A]
+    [Algebra F A] (f : A →ₐ[F] W₁.FunctionField) (a : A) (h : 1 < infinityPlace W₁ (f a)) :
+    IsIntegral f.range.toSubring (algebraMap F[X] W₁.FunctionField X) :=
+  isIntegral_of_forall_valuation_le_one fun v hvle ↦ by
+    let _ : ValuativeRel W₁.FunctionField := v
+    let u := ValuativeRel.valuation W₁.FunctionField
+    have hmemV : ∀ c : A, f c ∈ u.valuationSubring := fun c ↦
+      (Valuation.mem_valuationSubring_iff _ _).2
+        ((Valuation.vle_one_iff u).1 (hvle (f c) ⟨c, rfl⟩))
+    have hFV : ∀ c : F, algebraMap F W₁.FunctionField c ∈ u.valuationSubring := fun c ↦ by
+      rw [← f.commutes]
+      exact hmemV _
+    by_cases hu : u.valuationSubring = ⊤
+    · exact (Valuation.vle_one_iff u).2
+        ((Valuation.mem_valuationSubring_iff _ _).1 (hu ▸ trivial))
+    · set P := Place.ofValuationSubring W₁.isFunctionField hFV hu
+      have hPint : P.integers = u.valuationSubring :=
+        Place.integers_ofValuationSubring _ hFV hu
+      by_contra hx
+      have hpole : 1 < P.valuation (algebraMap F[X] W₁.FunctionField X) :=
+        not_le.1 fun hle ↦ hx ((Valuation.vle_one_iff u).2
+          ((Valuation.mem_valuationSubring_iff _ _).1
+            (hPint ▸ P.mem_integers_iff.2 hle)))
+      have hequiv := isEquiv_infinityPlace_of_one_lt (W := W₁) (v := P.valuation) hpole
+      refine absurd ((Valuation.isEquiv_iff_val_le_one.1 hequiv).1 ?_) (not_le.2 h)
+      exact P.mem_integers_iff.1 (hPint ▸ hmemV _)
+
 /-- **An embedding of function fields under which `x` acquires a pole at infinity maps infinity
 to infinity.** -/
 theorem mapsInfinity_of_one_lt_infinityPlace (σ : W₂.FunctionField →ₐ[F] W₁.FunctionField)
@@ -187,46 +216,17 @@ theorem mapsInfinity_of_one_lt_infinityPlace (σ : W₂.FunctionField →ₐ[F] 
   rw [mapsInfinity_iff]
   let f := σ.comp (IsScalarTower.toAlgHom F W₂.CoordinateRing W₂.FunctionField)
   let _ := f.toRingHom.toAlgebra
-  have hcoord : ∀ c : W₂.CoordinateRing,
-      algebraMap W₂.CoordinateRing W₁.FunctionField c = σ (algebraMap _ _ c) := fun _ ↦ rfl
   set C := integralClosure W₂.CoordinateRing W₁.FunctionField
   -- The affine coordinate of `W₁` is integral over the pulled-back coordinate ring.
   have hx₁ : algebraMap F[X] W₁.FunctionField X ∈ C := by
     rw [mem_integralClosure_iff]
-    let B := f.range.toSubring
     have hf : Function.Injective f :=
       σ.injective.comp (IsFractionRing.injective W₂.CoordinateRing W₂.FunctionField)
-    have hxB : IsIntegral B (algebraMap F[X] W₁.FunctionField X) :=
-      isIntegral_of_forall_valuation_le_one fun v hvle ↦ by
-        let _ : ValuativeRel W₁.FunctionField := v
-        let u := ValuativeRel.valuation W₁.FunctionField
-        have hmemV : ∀ c : W₂.CoordinateRing, f c ∈ u.valuationSubring := fun c ↦
-          (Valuation.mem_valuationSubring_iff _ _).2
-            ((Valuation.vle_one_iff u).1 (hvle (f c) ⟨c, rfl⟩))
-        have hFV : ∀ c : F, algebraMap F W₁.FunctionField c ∈ u.valuationSubring := fun c ↦ by
-          rw [← f.commutes]
-          exact hmemV _
-        by_cases hu : u.valuationSubring = ⊤
-        · exact (Valuation.vle_one_iff u).2
-            ((Valuation.mem_valuationSubring_iff _ _).1 (hu ▸ trivial))
-        · set P := Place.ofValuationSubring W₁.isFunctionField hFV hu
-          have hPint : P.integers = u.valuationSubring :=
-            Place.integers_ofValuationSubring _ hFV hu
-          by_contra hx
-          have hpole : 1 < P.valuation (algebraMap F[X] W₁.FunctionField X) :=
-            not_le.1 fun hle ↦ hx ((Valuation.vle_one_iff u).2
-              ((Valuation.mem_valuationSubring_iff _ _).1
-                (hPint ▸ P.mem_integers_iff.2 hle)))
-          have hequiv := isEquiv_infinityPlace_of_one_lt (W := W₁) (v := P.valuation) hpole
-          have hσx : σ (algebraMap F[X] W₂.FunctionField X) =
-              algebraMap W₂.CoordinateRing W₁.FunctionField
-                (algebraMap F[X] W₂.CoordinateRing X) := by
-            rw [hcoord, ← IsScalarTower.algebraMap_apply F[X] W₂.CoordinateRing W₂.FunctionField]
-          refine absurd ((Valuation.isEquiv_iff_val_le_one.1 hequiv).1 ?_) (not_le.2 h)
-          rw [hσx]
-          exact P.mem_integers_iff.1 (hPint ▸ hmemV _)
+    have hfX : f (algebraMap F[X] W₂.CoordinateRing X) = σ (algebraMap F[X] W₂.FunctionField X) :=
+      (congrArg σ (IsScalarTower.algebraMap_apply F[X] W₂.CoordinateRing W₂.FunctionField X)).symm
     let e := (AlgEquiv.ofInjective f hf).toRingEquiv
-    exact (e.isIntegral_iff (by rfl) _).2 hxB
+    exact (e.isIntegral_iff (by rfl) _).2
+      (isIntegral_X_over_range_of_one_lt_infinityPlace f _ (by rw [hfX]; exact h))
   -- Every polynomial in that coordinate is then integral, so `F[X]` acts on the integral closure.
   have hmemq : ∀ q : F[X], algebraMap F[X] W₁.FunctionField q ∈ C := by
     intro q

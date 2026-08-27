@@ -52,6 +52,11 @@ versus `MeromorphicOn` (on a set).
   excised integral eventually equals, and its limit `L`, concludes `HasCauchyPVAt` at `L`.
 * `intervalIntegrable_truncated_and_integral_truncated_eq_zero_of_norm_le` — where the curve
   stays within `ε` of the centre, the truncated integrand is integrable and integrates to `0`.
+* `aestronglyMeasurable_truncated` and `intervalIntegrable_truncated_mul_deriv` — the two halves
+  of integrability for a truncated integrand: measurability of the truncation, and domination by
+  `M · ‖deriv γ‖` from a bound off the ball. `intervalIntegrable_pow_inv_mul_deriv_truncated`
+  applies both to the order-`k` polar integrand `c / (z - z₀) ^ k`, and
+  `intervalIntegrable_inv_sub_truncated` is its simple-pole case `c = 1`, `k = 1`.
 * `HasCauchyPVAt.intro` — build the predicate from its two clauses; `HasCauchyPVAt.tendsto`,
   `HasCauchyPVAt.eventually_intervalIntegrable` — the clauses as named accessors;
   `HasCauchyPVAt.cauchyPVAt_eq`, `HasCauchyPVAt.unique` — the value and its uniqueness;
@@ -91,6 +96,11 @@ versus `MeromorphicOn` (on a set).
 Migrated and adapted from the AINTLIB `LeanModularForms` project, file
 `ForMathlib/ClassicalCPV.lean`, specialised to the raw-function (`γ : ℝ → ℂ` on `[a, b]`) design of
 the contour-integration roadmap, and strengthened with the truncated-integrability clause.
+`intervalIntegrable_pow_inv_mul_deriv_truncated` comes instead from the same development's
+`cpvIntegrand_higherOrder_intervalIntegrable`, in
+`ForMathlib/HungerbuhlerWasem/MultiCrossingCPV.lean`, and its simple-pole case
+`intervalIntegrable_inv_sub_truncated` from `cpvIntegrand_inv_intervalIntegrable` in that
+development's `LocalCutoffs.lean`.
 
 ## References
 
@@ -165,6 +175,25 @@ theorem CauchyPVExistsAt.intro {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} 
     (h : HasCauchyPVAt γ a b f z₀ L) : CauchyPVExistsAt γ a b f z₀ :=
   ⟨L, h⟩
 
+/-- **The `ε`-truncated integrand is a.e.-strongly measurable.** Truncating an a.e.-strongly
+measurable integrand to the parameters lying at distance `> ε` from `z₀` preserves a.e.-strong
+measurability: the truncation is the indicator of `{t | ε < ‖γ t - z₀‖}`, which is
+null-measurable as soon as `γ` is.
+
+The hypothesis on `γ` is a.e.-measurability rather than continuity, which is all the statement
+needs and is what lets the continuous-curve and merely-measurable-curve callers share it. -/
+theorem aestronglyMeasurable_truncated {γ F : ℝ → ℂ} {z₀ : ℂ} {a b ε : ℝ}
+    (hγ : AEMeasurable γ (MeasureTheory.volume.restrict (Set.uIoc a b)))
+    (hF : MeasureTheory.AEStronglyMeasurable F (MeasureTheory.volume.restrict (Set.uIoc a b))) :
+    MeasureTheory.AEStronglyMeasurable (fun t => if ‖γ t - z₀‖ > ε then F t else 0)
+      (MeasureTheory.volume.restrict (Set.uIoc a b)) := by
+  have h : (fun t => if ‖γ t - z₀‖ > ε then F t else 0)
+      = {t | ε < ‖γ t - z₀‖}.indicator F := by
+    funext t
+    simp [Set.indicator_apply]
+  rw [h]
+  exact hF.indicator₀ (nullMeasurableSet_lt aemeasurable_const ((hγ.sub_const z₀).norm))
+
 /-- **The `ε`-truncated integrand is interval-integrable from a bound off the ball**: whenever
 `f ∘ γ` is bounded by `M` at distance `> ε` from `z₀` and the truncated integrand is
 a.e.-strongly measurable, the truncated integrand is dominated by `M · ‖deriv γ‖`. -/
@@ -187,6 +216,42 @@ theorem intervalIntegrable_truncated_mul_deriv {γ : ℝ → ℂ} {f : ℂ → �
       _ ≤ ‖M * ‖deriv γ t‖‖ := le_abs_self _
   · rw [ite_eq_right h_far, norm_zero]
     positivity
+
+/-- The `ε`-truncated order-`k` polar integrand is interval-integrable: off the `ε`-ball it is
+dominated by `(‖c‖ / ε ^ k) · ‖deriv γ‖`. -/
+theorem intervalIntegrable_pow_inv_mul_deriv_truncated {γ : ℝ → ℂ} {z₀ : ℂ} {a b : ℝ}
+    (c : ℂ) (k : ℕ) (hγ_cont : ContinuousOn γ (Set.uIcc a b))
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume a b)
+    {ε : ℝ} (hε : 0 < ε) :
+    IntervalIntegrable
+      (fun t => if ‖γ t - z₀‖ > ε then c / (γ t - z₀) ^ k * deriv γ t else 0)
+      MeasureTheory.volume a b := by
+  have hγ_aem : AEMeasurable γ (MeasureTheory.volume.restrict (Set.uIoc a b)) :=
+    (hγ_cont.mono Set.uIoc_subset_uIcc).aemeasurable measurableSet_uIoc
+  have h_polar_aem : AEMeasurable (fun t => c / (γ t - z₀) ^ k)
+      (MeasureTheory.volume.restrict (Set.uIoc a b)) :=
+    (((hγ_aem.sub_const z₀).pow_const k).inv.const_mul c).congr
+      (Eventually.of_forall fun t => (div_eq_mul_inv c _).symm)
+  refine intervalIntegrable_truncated_mul_deriv (f := fun z => c / (z - z₀) ^ k)
+    (M := ‖c‖ / ε ^ k) hderiv_int
+    (aestronglyMeasurable_truncated hγ_aem ((h_polar_aem.mul
+      (intervalIntegrable_iff.mp hderiv_int).aestronglyMeasurable.aemeasurable
+      ).aestronglyMeasurable)) fun t h_far => ?_
+  rw [norm_div, norm_pow]
+  gcongr
+
+/-- The `ε`-truncated simple-pole integrand is interval-integrable: the simple pole is the
+order-`1` polar term with coefficient `1`, so this is
+`intervalIntegrable_pow_inv_mul_deriv_truncated` at `c = 1`, `k = 1`, where the domination bound
+reads `(1/ε) · ‖deriv γ‖`. -/
+theorem intervalIntegrable_inv_sub_truncated {γ : ℝ → ℂ} {z₀ : ℂ} {a b : ℝ}
+    (hγ_cont : ContinuousOn γ (Set.uIcc a b))
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume a b)
+    {ε : ℝ} (hε : 0 < ε) :
+    IntervalIntegrable (fun t => if ‖γ t - z₀‖ > ε then (γ t - z₀)⁻¹ * deriv γ t else 0)
+      MeasureTheory.volume a b := by
+  simpa using
+    intervalIntegrable_pow_inv_mul_deriv_truncated (z₀ := z₀) 1 1 hγ_cont hderiv_int hε
 
 /-- **Off the truncation the integrand is a logarithmic derivative.** Where the curve stays
 further than `ε` from the centre `z₀`, the `ε`-truncated winding integrand agrees with the

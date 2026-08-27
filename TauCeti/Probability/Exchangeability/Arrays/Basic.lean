@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Probability.DeFinetti.Theorem
 public import TauCeti.Probability.Exchangeability.Family
 public import TauCeti.Probability.Exchangeability.FullyExchangeable
 public import TauCeti.Probability.Exchangeability.IID
@@ -32,9 +31,9 @@ exchangeability is the invariance a symmetric array can consistently be asked to
 The main theorem here is the first step of the standard route to the Aldous–Hoover representation:
 the **rows of a separately exchangeable array form an exchangeable sequence of random paths**
 (`SeparatelyExchangeable.fullyExchangeable_arrayRow`), so de Finetti's theorem applies to them and
-makes them conditionally i.i.d. (`SeparatelyExchangeable.conditionallyIID_arrayRow`). The value
-space of that sequence is path space `ℕ → α`, which is standard Borel whenever `α` is, so no new
-hypothesis is needed beyond the ones de Finetti already asks of `α`.
+makes them conditionally i.i.d.  That consequence is drawn in `Arrays.DeFinetti`, which is where
+this subtree meets the representation theory; the value space of the sequence is path space
+`ℕ → α`, standard Borel whenever `α` is, so it needs no hypothesis beyond de Finetti's own.
 
 ## Main definitions
 
@@ -59,9 +58,6 @@ hypothesis is needed beyond the ones de Finetti already asks of `α`.
 * `TauCeti.Probability.SeparatelyExchangeable.fullyExchangeable_arrayRow` and
   `TauCeti.Probability.SeparatelyExchangeable.fullyExchangeable_arrayCol` — the rows, and the
   columns, of a separately exchangeable array form fully exchangeable sequences of paths.
-* `TauCeti.Probability.SeparatelyExchangeable.conditionallyIID_arrayRow` — **de Finetti for the
-  rows**: over a nonempty standard Borel state space, the rows of a separately exchangeable array
-  are conditionally i.i.d.
 * `TauCeti.Probability.JointlyExchangeable.fullyExchangeable_arrayDiag` — the diagonal of a jointly
   exchangeable array is a fully exchangeable sequence.
 * `TauCeti.Probability.ExchangeableFamily.separatelyExchangeable` and
@@ -373,28 +369,6 @@ theorem JointlyExchangeable.exchangeable_arrayDiag {μ : Measure Ω} {X : ℕ ×
     (h : JointlyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
     Exchangeable μ (arrayDiag X) :=
   FullyExchangeable.exchangeable (h.fullyExchangeable_arrayDiag hX) fun i => hX (i, i)
-
-/-! ## De Finetti for the rows -/
-
-/-- **De Finetti's theorem for the rows of a separately exchangeable array.** Over a nonempty
-standard Borel state space `α`, the rows of a separately exchangeable array are conditionally
-i.i.d. as random elements of path space `ℕ → α`.
-
-This is the first step of the standard route to the Aldous–Hoover representation. Path space is
-standard Borel because `α` is (`StandardBorelSpace.pi_countable`), so the hypotheses are exactly
-de Finetti's. -/
-theorem SeparatelyExchangeable.conditionallyIID_arrayRow [StandardBorelSpace α] [Nonempty α]
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α}
-    (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
-    ConditionallyIID μ (arrayRow X) :=
-  deFinetti (aemeasurable_arrayRow hX) (h.exchangeable_arrayRow hX)
-
-/-- **De Finetti's theorem for the columns of a separately exchangeable array.** -/
-theorem SeparatelyExchangeable.conditionallyIID_arrayCol [StandardBorelSpace α] [Nonempty α]
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α}
-    (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
-    ConditionallyIID μ (arrayCol X) :=
-  deFinetti (aemeasurable_arrayCol hX) (h.exchangeable_arrayCol hX)
 
 /-! ## The two symmetries are distinct -/
 
