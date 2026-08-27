@@ -38,6 +38,10 @@ differentials are the work that consumes this file.
 * `TauCeti.adeleFiltration`: the subspace `A_F(D)` attached to a divisor (Definition 1.5.3).
 * `TauCeti.diagonalRepartitions`: the diagonal copy of `F` inside `Place k F → F`, the image of
   `Pi.constAlgHom`.
+* `TauCeti.submoduleOfAdeleFiltrationSupDiagonalRepartitions`: the subspace `(A_F(D) + F) ∩ A_F`
+  of `A_F`, whose cokernel computes the index of specialty.
+* `TauCeti.repartitionMul`: multiplication of a repartition by a function, as a `k`-algebra map
+  to the `k`-linear endomorphisms of `A_F`.
 
 ## Main results
 
@@ -57,6 +61,8 @@ differentials are the work that consumes this file.
 * `TauCeti.smul_mem_adeleFiltration_iff` and
   `TauCeti.smul_mem_adeleFiltration_sub_principal`: multiplying by a function `z` translates the
   filtration by `div z`, exactly as it does for Riemann–Roch spaces.
+* `TauCeti.smul_mem_repartitionSpace` and `TauCeti.smul_mem_diagonalRepartitions`: both `A_F`
+  and the diagonal are stable under multiplication by a function.
 
 ## Implementation notes
 
@@ -366,6 +372,34 @@ theorem adeleFiltration_sup_diagonalRepartitions_le (hF : IsFunctionField k F)
     adeleFiltration D ⊔ diagonalRepartitions k F ≤ repartitionSpace k F :=
   sup_le (adeleFiltration_le_repartitionSpace D) (diagonalRepartitions_le_repartitionSpace hF)
 
+/-- The subspace `(A_F(D) + F) ∩ A_F` of the repartition space: the repartitions that differ
+from a constant by one whose poles are bounded by `D`.  Its cokernel in `A_F` is the index of
+specialty of `D`, and a Weil differential bounded by `D` is a `k`-linear form killing it. -/
+noncomputable def submoduleOfAdeleFiltrationSupDiagonalRepartitions (D : Divisor k F) :
+    Submodule k ↥(repartitionSpace k F) :=
+  (adeleFiltration D ⊔ diagonalRepartitions k F).submoduleOf (repartitionSpace k F)
+
+/-- `(A_F(D) + F) ∩ A_F` is `A_F(D) + F` cut down to `A_F` in the sense of
+`Submodule.submoduleOf`, so that combinator's API applies to it. -/
+theorem submoduleOfAdeleFiltrationSupDiagonalRepartitions_eq_submoduleOf (D : Divisor k F) :
+    submoduleOfAdeleFiltrationSupDiagonalRepartitions D =
+      (adeleFiltration D ⊔ diagonalRepartitions k F).submoduleOf (repartitionSpace k F) := by
+  rfl
+
+/-- Membership in `(A_F(D) + F) ∩ A_F` is membership in `A_F(D) + F` of the underlying family. -/
+@[simp]
+theorem mem_submoduleOfAdeleFiltrationSupDiagonalRepartitions_iff {D : Divisor k F}
+    {a : ↥(repartitionSpace k F)} :
+    a ∈ submoduleOfAdeleFiltrationSupDiagonalRepartitions D ↔
+      (a : Place k F → F) ∈ adeleFiltration D ⊔ diagonalRepartitions k F :=
+  (Iff.rfl)
+
+/-- Enlarging the divisor enlarges `(A_F(D) + F) ∩ A_F`. -/
+theorem submoduleOfAdeleFiltrationSupDiagonalRepartitions_mono {D E : Divisor k F} (h : D ≤ E) :
+    submoduleOfAdeleFiltrationSupDiagonalRepartitions D ≤
+      submoduleOfAdeleFiltrationSupDiagonalRepartitions E :=
+  Submodule.comap_mono (sup_le_sup_right (adeleFiltration_mono h) _)
+
 /-! ### Translating the filtration by a principal divisor -/
 
 /-- Multiplying a repartition by a nonzero function `z` translates the filtration by `div z`:
@@ -400,5 +434,37 @@ theorem smul_mem_repartitionSpace (hF : IsFunctionField k F) (f : F) {a : Place 
     simp [smul_eq_mul]
   rw [h]
   exact mul_mem_repartitionSpace (const_mem_repartitionSpace hF f) ha
+
+/-- The diagonal copy of `F` is stable under multiplication by a function: a constant times a
+constant is a constant. -/
+theorem smul_mem_diagonalRepartitions (f : F) {a : Place k F → F}
+    (ha : a ∈ diagonalRepartitions k F) : f • a ∈ diagonalRepartitions k F := by
+  obtain ⟨g, rfl⟩ := mem_diagonalRepartitions_iff.mp ha
+  refine mem_diagonalRepartitions_iff.mpr ⟨f * g, ?_⟩
+  funext P
+  simp [smul_eq_mul]
+
+/-- Multiplication of repartitions by a function, as a `k`-algebra map to the `k`-linear
+endomorphisms of the repartition space.  It lands in the repartition space because a function of
+an algebraic function field has only finitely many poles. -/
+noncomputable def repartitionMul (hF : IsFunctionField k F) :
+    F →ₐ[k] Module.End k ↥(repartitionSpace k F) where
+  toFun f :=
+    { toFun a := ⟨f • (a : Place k F → F), smul_mem_repartitionSpace hF f a.2⟩
+      map_add' a b := Subtype.ext (by simp [smul_add])
+      map_smul' c a := Subtype.ext (by simp [smul_comm f c]) }
+  map_one' := LinearMap.ext fun a ↦ Subtype.ext (by simp)
+  map_mul' f g := LinearMap.ext fun a ↦ Subtype.ext (by simp [mul_smul])
+  map_zero' := LinearMap.ext fun a ↦ Subtype.ext (by simp)
+  map_add' f g := LinearMap.ext fun a ↦ Subtype.ext (by simp [add_smul])
+  commutes' c := LinearMap.ext fun a ↦ Subtype.ext (by simp [algebraMap_smul])
+
+/-- Multiplying a repartition by `f` multiplies each of its entries by `f`. -/
+@[simp]
+theorem coe_repartitionMul_apply (hF : IsFunctionField k F) (f : F)
+    (a : ↥(repartitionSpace k F)) :
+    ((repartitionMul hF f a : ↥(repartitionSpace k F)) : Place k F → F) =
+      f • (a : Place k F → F) :=
+  (rfl)
 
 end TauCeti
