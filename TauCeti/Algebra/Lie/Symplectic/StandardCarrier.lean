@@ -231,6 +231,15 @@ theorem rep_ι_apply (x : sp (Fin (n + 1)) ℚ)
       (x : Matrix (Fin (n + 1) ⊕ Fin (n + 1)) (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) *ᵥ v :=
   LieSubalgebra.matrixRepresentation_ι_apply _ x v
 
+/-- A Cartan generator acts diagonally on every standard-module vector with the recorded
+coordinate weight. -/
+@[simp] theorem rep_cartanGenerator_apply (i : Fin (n + 1))
+    (v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ)
+    (a : Fin (n + 1) ⊕ Fin (n + 1)) :
+    rep n (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator n i)) v a =
+      (weight n a i : ℚ) * v a := by
+  rw [rep_ι_apply, val_cartanGenerator, cartanMatrix, Matrix.mulVec_diagonal]
+
 /-- A coordinate vector on which a numbered root generator is nonzero with coefficient one. -/
 def rootSource : Fin (n + 1) ⊕ Fin (n + 1) → Fin (n + 1) ⊕ Fin (n + 1)
   | .inl i => if hi : i = Fin.last n then .inr i else .inl (next n i hi)
@@ -535,7 +544,7 @@ def basisWeight (a : Fin ((n + 1) + (n + 1))) : Fin (n + 1) → ℤ :=
   weight n (finSumFinEquiv.symm a)
 
 /-- The enumerated coordinate weight is the weight at the corresponding sum index. -/
-@[simp] theorem basisWeight_apply (a : Fin ((n + 1) + (n + 1))) :
+@[simp] theorem basisWeight_def (a : Fin ((n + 1) + (n + 1))) :
     basisWeight n a = weight n (finSumFinEquiv.symm a) := (rfl)
 
 /-- A numbered root generator preserves the standard lattice. -/
@@ -731,15 +740,6 @@ theorem rep_rootGenerator_latticeBasis (k : Fin (n + 1) ⊕ Fin (n + 1)) :
         simp [rootAction]
       · simp [rootAction, hi]
 
-theorem rep_rootGenerator_rep_rootGenerator_latticeBasis_eq_zero
-    (k : Fin (n + 1) ⊕ Fin (n + 1)) :
-    rep n (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator n k))
-        (rep n (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator n k))
-          ((latticeBasis n (finSumFinEquiv (rootSource n k)) :
-              (lattice n).toAddSubgroup) :
-            (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ)) = 0 :=
-  rep_rootGenerator_rep_rootGenerator_eq_zero n k _
-
 /-- The coordinate-algebra map representing a numbered root subgroup is surjective. -/
 private theorem representedRootCoordinateMap_surjective
     (k : Fin (n + 1) ⊕ Fin (n + 1)) :
@@ -749,7 +749,7 @@ private theorem representedRootCoordinateMap_surjective
         k (isNilpotent_rep_rootGenerator n k) (latticeBasis n)).hom :=
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap_surjective _ _ _ _ _ _ _ _
     isUnit_one (rep_rootGenerator_latticeBasis n k)
-    (rep_rootGenerator_rep_rootGenerator_latticeBasis_eq_zero n k)
+    (rep_rootGenerator_rep_rootGenerator_eq_zero n k _)
 
 /-- The root-subgroup coordinate map remains surjective after adjoining the weight torus. -/
 theorem rootSubgroupCoordinateMap_surjective (k : Fin (n + 1) ⊕ Fin (n + 1)) :
