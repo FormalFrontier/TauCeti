@@ -197,17 +197,6 @@ section Points
 
 variable {A : Type w} [CommRing A] [Algebra R A]
 
-/-- The ambient point attached to an upper-triangular matrix is the general-linear point
-attached to its ordinary inclusion. -/
-@[simp]
-theorem quotientPointsHom_pointsMulEquiv_symm (g : GL2Borel A) :
-    CommHopfAlgCat.quotientPointsHom
-        (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-        (CommAlgCat.of R A)
-          ((UpperTriangular.pointsMulEquiv (R := R) (n := 2) (A := A)).symm g) =
-      (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).symm g.1 := by
-  exact UpperTriangular.quotientPointsHom_pointsMulEquiv_symm (R := R) (n := 2) g
-
 /-- The positive simple-root subgroup `x₀₁` of `GL₂` lands in the Borel subgroup on every
 algebra-valued point. -/
 theorem rootSubgroupPoints_mem

@@ -101,6 +101,24 @@ theorem map_apply {S : Type v} [CommRing S] (phi : R →+* S)
       phi (((g : upperTriangularGroup m R) : GL m R) i j) := by
   rw [coe_map, Matrix.GeneralLinearGroup.map_apply]
 
+/-- Entrywise mapping along the identity ring homomorphism is the identity. -/
+@[simp]
+theorem map_id :
+    map (m := m) (RingHom.id R) = MonoidHom.id (upperTriangularGroup m R) := by
+  ext g i j
+  simp only [map_apply, RingHom.id_apply, MonoidHom.id_apply]
+
+/-- Successive entrywise maps agree with mapping along the composite ring homomorphism. -/
+@[simp]
+theorem map_comp {S T : Type*} [CommRing S] [CommRing T]
+    (f : R →+* S) (g : S →+* T) :
+    map (m := m) (g.comp f) = (map (m := m) g).comp (map (m := m) f) := by
+  apply MonoidHom.ext
+  intro x
+  apply Subtype.ext
+  ext i j
+  simp only [map_apply, RingHom.coe_comp, Function.comp_apply, MonoidHom.coe_comp]
+
 /-- The diagonal projection from the upper-triangular group to the coordinatewise unit group.
 
 Reading off the diagonal is multiplicative on upper-triangular matrices, so it is a homomorphism
