@@ -40,6 +40,8 @@ roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 11) asks for on top
 * `PreAbstractSimplicialComplex.dimension_le_iff`: the dimension is bounded exactly when
   every face's dimension is.
 * `PreAbstractSimplicialComplex.dimension_mono`: dimension is monotone in the complex.
+* `PreAbstractSimplicialComplex.dimension_map_of_injective`: injective relabeling preserves
+  dimension.
 * `PreAbstractSimplicialComplex.dimension_eq_bot_iff`: only the void complex has dimension
   `⊥`.
 * `PreAbstractSimplicialComplex.dimension_eq_top_iff` /
@@ -47,6 +49,8 @@ roadmap (`TauCetiRoadmap/GeometricTopology/README.md`, layer 11) asks for on top
   finite dimension means that they have a uniform natural-number bound.
 * `PreAbstractSimplicialComplex.dimension_le_card_sub_one`: a finite set containing every
   face gives an explicit dimension bound.
+* `PreAbstractSimplicialComplex.exists_face_card_eq_of_dimension_eq`: a finite natural-number
+  dimension is attained by a face.
 * `PreAbstractSimplicialComplex.dimension_top_eq_top_of_infinite`: the full complex on an
   infinite vertex type has infinite dimension.
 * `PreAbstractSimplicialComplex.dimension_simplex` /
@@ -82,6 +86,21 @@ theorem dimension_le_iff {n : WithBot ℕ∞} :
 /-- Dimension is monotone in the complex. -/
 theorem dimension_mono (h : K ≤ L) : dimension K ≤ dimension L :=
   dimension_le_iff.mpr fun _ hσ => le_dimension (h hσ)
+
+/-- An injective relabeling preserves the dimension of a precomplex. -/
+theorem dimension_map_of_injective {κ : Type*} [DecidableEq κ]
+    (f : ι → κ) (hf : Function.Injective f) : dimension (K.map f) = dimension K := by
+  apply le_antisymm
+  · rw [dimension_le_iff]
+    intro τ hτ
+    obtain ⟨σ, hσ, rfl⟩ := mem_map_iff.mp hτ
+    rw [Finset.card_image_iff.mpr hf.injOn]
+    exact le_dimension hσ
+  · rw [dimension_le_iff]
+    intro σ hσ
+    have hmem : σ.image f ∈ K.map f := mem_map_iff.mpr ⟨σ, hσ, rfl⟩
+    rw [← Finset.card_image_iff.mpr hf.injOn]
+    exact le_dimension hmem
 
 /-- The void complex has dimension `⊥`. -/
 @[simp]
@@ -132,6 +151,40 @@ theorem dimension_lt_top_iff :
   · rintro ⟨n, hn⟩ h
     obtain ⟨σ, hσK, hcard⟩ := h (n + 1)
     exact (Nat.not_succ_le_self n) (hcard.trans (hn σ hσK))
+
+/-- If a precomplex has finite natural-number dimension `n`, some face has exactly `n + 1`
+vertices. -/
+theorem exists_face_card_eq_of_dimension_eq {n : ℕ}
+    (h : dimension K = (n : WithBot ℕ∞)) : ∃ σ ∈ K, σ.card = n + 1 := by
+  by_contra hex
+  push Not at hex
+  cases n with
+  | zero =>
+      have hK : K ≠ ⊥ := by
+        intro hbot
+        rw [hbot, dimension_bot] at h
+        exact (WithBot.natCast_ne_bot 0) h.symm
+      obtain ⟨σ, hσ, -⟩ := SetLike.exists_of_lt (bot_lt_iff_ne_bot.mpr hK)
+      have hle := le_dimension hσ
+      rw [h] at hle
+      have hcard : σ.card - 1 ≤ 0 := by exact_mod_cast hle
+      have hpos : 0 < σ.card := Finset.card_pos.mpr (K.isRelLowerSet_faces hσ).1
+      exact hex σ hσ (by omega)
+  | succ n =>
+      have hle : dimension K ≤ (n : WithBot ℕ∞) := by
+        rw [dimension_le_iff]
+        intro σ hσ
+        have hσle := le_dimension hσ
+        rw [h] at hσle
+        have hcard : σ.card - 1 ≤ n + 1 := by exact_mod_cast hσle
+        have hne := hex σ hσ
+        have hpos : 0 < σ.card := Finset.card_pos.mpr (K.isRelLowerSet_faces hσ).1
+        have hcard' : σ.card - 1 ≤ n := by omega
+        exact_mod_cast hcard'
+      rw [h] at hle
+      have hnot : ¬(n + 1 : WithBot ℕ∞) ≤ n := by
+        exact_mod_cast (show ¬n + 1 ≤ n by omega)
+      exact hnot hle
 
 /-- If every face of a complex is contained in a finite set `V`, then its dimension is at most
 `V.card - 1`. -/

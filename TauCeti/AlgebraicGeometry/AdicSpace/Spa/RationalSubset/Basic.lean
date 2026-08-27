@@ -61,6 +61,11 @@ layer deferred above.
   are the exported interface, as for `spa_def`/`mem_spa_iff`.
 * `TauCeti.ValuationSpectrum.rationalSubset_subset_spa` : every rational subset is contained
   in the adic spectrum.
+* `TauCeti.ValuationSpectrum.rationalSubset_subset_rationalSubset_of_subset` : the rational
+  subset is antitone in its numerator set.
+* `TauCeti.ValuationSpectrum.rationalSubset_insert_of_forall_vle` : a numerator already
+  dominated by the denominator throughout `R(T/s)` may be adjoined to `T` without changing the
+  subset.
 * `TauCeti.ValuationSpectrum.rationalSubset_insert_self` : the denominator may be inserted
   among the numerators.
 * `TauCeti.ValuationSpectrum.rationalSubset_singleton_one` : the whole spectrum is the
@@ -152,6 +157,15 @@ theorem rationalSubset_subset_rationalSubset_iff (Aplus : Subring A) (T T' : Fin
     exact (mem_rationalSubset_iff Aplus T s v).mpr
       ⟨rationalSubset_subset_spa Aplus T' s' hv, (h v hv).1, (h v hv).2⟩
 
+/-- **Enlarging the numerator set shrinks the rational subset.** Each numerator carries one
+domination condition, so asking for more of them can only cut the subset down. This is the
+containment that makes Wedhorn's chain of Remark 7.55 descend. -/
+theorem rationalSubset_subset_rationalSubset_of_subset (Aplus : Subring A) {T T' : Finset A}
+    (h : T ⊆ T') (s : A) :
+    rationalSubset Aplus T' s ⊆ rationalSubset Aplus T s := fun v hv ↦ by
+  rw [mem_rationalSubset_iff] at hv ⊢
+  exact ⟨hv.1, fun t ht ↦ hv.2.1 t (h ht), hv.2.2⟩
+
 open scoped Classical in
 /-- Inserting the denominator among the numerators changes nothing — Wedhorn's "one may
 replace `T` by `T ∪ {s}`" (Definition 7.29). -/
@@ -159,6 +173,27 @@ replace `T` by `T ∪ {s}`" (Definition 7.29). -/
 theorem rationalSubset_insert_self (Aplus : Subring A) (T : Finset A) (s : A) :
     rationalSubset Aplus (insert s T) s = rationalSubset Aplus T s := by
   rw [rationalSubset_def, rationalSubset_def, basicOpenFinset_insert_self]
+
+open scoped Classical in
+/-- **A numerator dominated by the denominator may be adjoined for free.** If every point of
+`R(T/s)` satisfies `v(u) ≤ v(s)`, then adjoining `u` to the numerators does not change the
+rational subset.
+
+This is the step that closes Wedhorn's chain of Remark 7.55 at `Xₙ = U`: the whole point of
+choosing `u` dominated by `s` on `U` is that the extra numerator condition it contributes is
+already satisfied there. -/
+theorem rationalSubset_insert_of_forall_vle (Aplus : Subring A) (T : Finset A) (s u : A)
+    (hu : ∀ v ∈ rationalSubset Aplus T s, v.toValuativeRel.vle u s) :
+    rationalSubset Aplus (insert u T) s = rationalSubset Aplus T s := by
+  refine Set.Subset.antisymm
+    (rationalSubset_subset_rationalSubset_of_subset Aplus (Finset.subset_insert u T) s)
+    fun v hv ↦ ?_
+  have hv' := (mem_rationalSubset_iff Aplus T s v).mp hv
+  refine (mem_rationalSubset_iff Aplus _ s v).mpr ⟨hv'.1, fun t ht ↦ ?_, hv'.2.2⟩
+  let _ := v.toValuativeRel
+  rcases Finset.mem_insert.mp ht with rfl | ht
+  · exact hu v hv
+  · exact hv'.2.1 t ht
 
 /-- The whole adic spectrum is the rational subset `R({1}/1)` — Wedhorn's observation that
 `Spa (A, A⁺)` itself is rational. The single condition `v(1) ≤ v(1) ≠ 0` holds at every

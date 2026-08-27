@@ -15,7 +15,7 @@ public import TauCeti.LinearAlgebra.Matrix.Commute
 -- `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center` is what does it for a central element.
 public import TauCeti.Algebra.Group.Conj
 -- `TauCeti.diagGL` and `TauCeti.diagonalTorus` occur in the statements below.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 -- `TauCeti.GL2NonSplitTorus` occurs in the statements below.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.NonSplitTorus
 -- `TauCeti.jordanGL` and `TauCeti.GL2ScalarUnipotent` occur in the statements below.
@@ -79,7 +79,7 @@ from the two semisimple ones.
 The fourth family, the **central** one, is the non-regular case this file's title excludes: a
 scalar matrix is central in `GL n R` for any index type and any commutative semiring, so its
 centralizer is everything and its class is a single point. The centralizer half is proved at that
-generality in `TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal`
+generality in `TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic`
 (`TauCeti.centralizer_scalar`); the class size, `TauCeti.ncard_carrier_mk_scalar`, is here with the
 other three.
 
@@ -425,7 +425,7 @@ conjugacy classes gathered in this file; nothing here is special to `Fin 2` or t
 statement is made for an arbitrary finite index type over a commutative semiring.
 
 The centralizer half of the statement, `TauCeti.centralizer_scalar`, is in
-`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal` with the rest of the general-index
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic` with the rest of the general-index
 material; only the class size is here, so that the foundational diagonal module does not have to
 import conjugacy theory for it. -/
 @[simp]

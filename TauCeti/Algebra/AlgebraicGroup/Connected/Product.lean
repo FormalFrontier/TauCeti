@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SemidirectProduct
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Basic
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Image.Properties
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Connected
 public import TauCeti.AlgebraicGeometry.Geometrically.Connected
 
@@ -28,6 +30,9 @@ isomorphism then identifies the result with the spectrum of the tensor product.
   geometrically connected commutative Hopf algebras is geometrically connected.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty.semidirectProduct`: a semidirect product
   associated to an action of geometrically connected affine groups is geometrically connected.
+* `TauCeti.geometricallyConnectedCommHopfAlgProperty.productOfNormal`: the multiplication image
+  of a normal subgroup and another connected subgroup is geometrically connected when both
+  factors are.
 
 ## References
 
@@ -105,6 +110,21 @@ theorem semidirectProduct (H K : CommHopfAlgCat.{u} k)
   let eL := Algebra.TensorProduct.congr
     A.coordinateAlgEquiv (AlgEquiv.refl : L ≃ₐ[k] L)
   exact (PrimeSpectrum.homeomorphOfRingEquiv eL.toRingEquiv).connectedSpace_iff.mpr (h L)
+
+/-- The scheme-theoretic multiplication image of a normal geometrically connected closed affine
+subgroup and another geometrically connected closed affine subgroup is geometrically connected. -/
+theorem productOfNormal (H : CommHopfAlgCat.{u} k) (I J : HopfIdeal k H)
+    (hI : I.IsNormal)
+    (hIc : geometricallyConnectedCommHopfAlgProperty k (CommHopfAlgCat.quotient H I))
+    (hJc : geometricallyConnectedCommHopfAlgProperty k (CommHopfAlgCat.quotient H J)) :
+    geometricallyConnectedCommHopfAlgProperty k
+      (CommHopfAlgCat.productOfNormal H I J hI) := by
+  let A := CommHopfAlgCat.quotientNormalConjugation H I J hI
+  apply image (CommHopfAlgCat.productMapOfNormal H I J hI)
+  exact (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso
+    (CommHopfAlgCat.normalSemidirectProductIso H I J hI).symm
+    (semidirectProduct (CommHopfAlgCat.quotient H I)
+      (CommHopfAlgCat.quotient H J) A hIc hJc)
 
 end geometricallyConnectedCommHopfAlgProperty
 

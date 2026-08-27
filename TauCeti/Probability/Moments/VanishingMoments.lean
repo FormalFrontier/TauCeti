@@ -120,7 +120,7 @@ private theorem integrable_exp_withDensity_ofReal
       (ν.withDensity fun x => ENNReal.ofReal (f x)) := by
   rw [integrable_withDensity_iff_integrable_smul₀' hfm hlt]
   refine hexp.mono ?_ ?_
-  · fun_prop
+  · exact hfm.ennreal_toReal.aestronglyMeasurable.smul (by fun_prop)
   · filter_upwards with x
     have hE : (0 : ℝ) < Real.exp (a * |x|) := Real.exp_pos _
     simp only [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, abs_mul,

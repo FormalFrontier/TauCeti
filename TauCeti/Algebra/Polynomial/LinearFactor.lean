@@ -8,22 +8,29 @@ module
 public import Mathlib.Algebra.Polynomial.Div
 
 /-!
-# Polynomials of degree at most one with a prescribed root
+# The linear factor `X - C x`, and its reverse
 
-Mathlib's `Polynomial.dvd_iff_isRoot` factors `X - C x` out of any polynomial vanishing at `x`,
-but leaves the cofactor unidentified. When the polynomial has degree at most one the cofactor is
-forced to be a constant, so the polynomial is `C γ * (X - C x)` for a single scalar `γ`. That
+Two facts about linear factors that Mathlib does not carry.
+
+The *reversed* factor `C x - X` — the shape that arises as `x - θ` in `AdjoinRoot f` — has degree
+`1`, like `X - C x` itself, which is the form Mathlib states.
+
+And Mathlib's `Polynomial.dvd_iff_isRoot` factors `X - C x` out of any polynomial vanishing at
+`x`, but leaves the cofactor unidentified. When the polynomial has degree at most one the cofactor
+is forced to be a constant, so the polynomial is `C γ * (X - C x)` for a single scalar `γ`. That
 sharpened form is what is needed to read off the *coefficient* of a linear factor, which
 `Polynomial.eq_X_add_C_of_natDegree_le_one` does not give once a root is prescribed.
 
 ## Main results
 
+* `Polynomial.natDegree_C_sub_X`: the reversed linear factor `C x - X` has degree `1`.
 * `Polynomial.exists_eq_C_mul_X_sub_C_of_natDegree_le_one`: a polynomial of `natDegree ≤ 1` with
   root `x` is `C γ * (X - C x)` for some `γ`.
 
 ## Provenance
 
-Adapted, with the author's proof, from Michael Stoll's `EllipticCurves` project
+`exists_eq_C_mul_X_sub_C_of_natDegree_le_one` is adapted, with the author's proof, from Michael
+Stoll's `EllipticCurves` project
 (`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0, pinned by
 `TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`), `EllipticCurves/Mathlib/Basic.lean`.
 Its consumer is the `x - T` descent map of
@@ -36,6 +43,11 @@ public section
 namespace Polynomial
 
 variable {R : Type*} [CommRing R]
+
+/-- The reversed linear polynomial `C x - X` has degree `1`, like `X - C x`. -/
+@[simp]
+theorem natDegree_C_sub_X [Nontrivial R] (x : R) : (C x - X).natDegree = 1 := by
+  rw [natDegree_sub, natDegree_X_sub_C]
 
 /-- A polynomial of degree at most one with prescribed root `x` is a scalar multiple of
 `X - C x`. -/

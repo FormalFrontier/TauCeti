@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicTopology.SimplicialComplex.Basic
+public import Mathlib.Data.Set.Finite.Basic
 
 /-!
 # Basic abstract simplicial complex API
@@ -47,6 +48,23 @@ end AbstractSimplicialComplex
 namespace PreAbstractSimplicialComplex
 
 variable {ι : Type*} {K L : PreAbstractSimplicialComplex ι} {σ : Finset ι} {v : ι}
+
+/-- A face belongs to the image complex exactly when it is the image of a face of the source
+complex. -/
+theorem mem_map_iff {κ : Type*} [DecidableEq κ] {f : ι → κ}
+    {τ : Finset κ} : τ ∈ K.map f ↔ ∃ σ, σ ∈ K ∧ σ.image f = τ :=
+  Iff.rfl
+
+/-- The face set of an image complex is the direct image of the source face set. -/
+theorem faces_map {κ : Type*} [DecidableEq κ] (f : ι → κ) :
+    (K.map f).faces = (fun σ : Finset ι => σ.image f) '' K.faces :=
+  rfl
+
+/-- An injective relabeling preserves and reflects finiteness of the face collection. -/
+theorem finite_faces_map_iff_of_injective {κ : Type*} [DecidableEq κ]
+    (f : ι → κ) (hf : Function.Injective f) : (K.map f).faces.Finite ↔ K.faces.Finite := by
+  rw [faces_map]
+  exact Set.finite_image_iff (Finset.image_injective hf).injOn
 
 /-- A finite set is a face of an intersection of two precomplexes exactly when it is a face of
 both. -/

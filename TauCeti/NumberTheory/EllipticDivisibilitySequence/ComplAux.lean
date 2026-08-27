@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.EllipticDivisibilitySequence
+import Mathlib.Tactic.Ring
 
 /-!
 # The auxiliary term of the second complement of a normalised EDS
@@ -132,4 +133,3 @@ variable {F : Type*} [FunLike F R S] [RingHomClass F R S] (f : F)
 theorem map_complEDS₂Aux :
     f (complEDS₂Aux b c d m) = complEDS₂Aux (f b) (f c) (f d) m := by
   simp [complEDS₂Aux_def, apply_ite f, map_preNormEDS]
-

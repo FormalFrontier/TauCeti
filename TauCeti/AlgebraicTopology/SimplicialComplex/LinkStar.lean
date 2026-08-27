@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicTopology.SimplicialComplex.Basic
+public import Mathlib.Data.Finset.Basic
 public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
 
 /-!

@@ -94,75 +94,6 @@ namespace DynkinType
 
 variable {n : ℕ}
 
-/-! ## The Gram matrix of the Bourbaki simple roots -/
-
-private lemma typeDSimpleRoot_apply_of_add_one_lt (hn : 4 ≤ n) {i : Fin n}
-    (hi : (i : ℕ) + 1 < n) (k : Fin n) :
-    typeDSimpleRoot n hn i k =
-      (if (k : ℕ) = (i : ℕ) then 1 else 0) - (if (k : ℕ) = (i : ℕ) + 1 then 1 else 0) := by
-  rw [typeDSimpleRoot_of_add_one_lt hn hi]
-  simp [Pi.single_apply, Fin.ext_iff]
-
-private lemma typeDSimpleRoot_apply_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n}
-    (hi : ¬(i : ℕ) + 1 < n) (k : Fin n) :
-    typeDSimpleRoot n hn i k =
-      (if (k : ℕ) = n - 2 then 1 else 0) + (if (k : ℕ) = n - 1 then 1 else 0) := by
-  rw [typeDSimpleRoot_of_not_add_one_lt hn hi]
-  simp [Pi.single_apply, Fin.ext_iff]
-
-/-- The Bourbaki `Dₙ` diagram read off `CartanMatrix.D`: two distinct nodes are joined when they
-are consecutive among the first `n - 1` nodes, or are the branch node `n - 3` and the last node
-`n - 1`. Separating this from the six-way definition keeps the Gram-matrix case analysis below
-small. -/
-private lemma cartanMatrixD_apply (i j : Fin n) :
-    CartanMatrix.D n i j =
-      (if (i : ℕ) = (j : ℕ) then 2 else 0) -
-        (if ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) + 2 ≤ n) ∨
-              ((j : ℕ) + 1 = (i : ℕ) ∧ (i : ℕ) + 2 ≤ n) ∨
-              ((i : ℕ) + 3 = n ∧ (j : ℕ) + 1 = n) ∨ ((j : ℕ) + 3 = n ∧ (i : ℕ) + 1 = n) then 1
-          else 0) := by
-  have hi := i.isLt
-  have hj := j.isLt
-  simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff]
-  split_ifs <;> omega
-
-/-- A chain simple root pairs with the others by the corresponding row of the Cartan matrix. -/
-private lemma typeDSimpleRoot_dotProduct_of_add_one_lt (hn : 4 ≤ n) {i : Fin n}
-    (hi : (i : ℕ) + 1 < n) (j : Fin n) :
-    typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
-  have hi' := i.isLt
-  have hj' := j.isLt
-  rw [typeDSimpleRoot_of_add_one_lt hn hi, sub_dotProduct, single_dotProduct, single_dotProduct,
-    cartanMatrixD_apply]
-  by_cases hj : (j : ℕ) + 1 < n
-  · simp only [typeDSimpleRoot_apply_of_add_one_lt hn hj, one_mul]
-    split_ifs <;> omega
-  · simp only [typeDSimpleRoot_apply_of_not_add_one_lt hn hj, one_mul]
-    split_ifs <;> omega
-
-/-- The fork simple root pairs with the others by the last row of the Cartan matrix. -/
-private lemma typeDSimpleRoot_dotProduct_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n}
-    (hi : ¬(i : ℕ) + 1 < n) (j : Fin n) :
-    typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
-  have hi' := i.isLt
-  have hj' := j.isLt
-  rw [typeDSimpleRoot_of_not_add_one_lt hn hi, add_dotProduct, single_dotProduct,
-    single_dotProduct, cartanMatrixD_apply]
-  by_cases hj : (j : ℕ) + 1 < n
-  · simp only [typeDSimpleRoot_apply_of_add_one_lt hn hj, one_mul]
-    split_ifs <;> omega
-  · simp only [typeDSimpleRoot_apply_of_not_add_one_lt hn hj, one_mul]
-    split_ifs <;> omega
-
-/-- **The simple roots of type `Dₙ` have the Cartan matrix as Gram matrix.** Type `Dₙ` is simply
-laced and its roots have squared length two, so the coroot of a root is the root itself and the
-Cartan integer `⟨αᵢ, αⱼ^∨⟩` is the classical dot product. -/
-private lemma typeDSimpleRoot_dotProduct (hn : 4 ≤ n) (i j : Fin n) :
-    typeDSimpleRoot n hn i ⬝ᵥ typeDSimpleRoot n hn j = CartanMatrix.D n i j := by
-  by_cases hi : (i : ℕ) + 1 < n
-  · exact typeDSimpleRoot_dotProduct_of_add_one_lt hn hi j
-  · exact typeDSimpleRoot_dotProduct_of_not_add_one_lt hn hi j
-
 /-- A combination of the simple roots orthogonal to every simple root is orthogonal to itself,
 hence zero. This is the nondegeneracy behind both injectivity of the roots and linear independence
 of the simple ones. -/
@@ -351,7 +282,7 @@ what pins the character lattice as the weight lattice. -/
       fun k => CartanMatrix.D n i k := by
   funext k
   rw [root_typeDSimplyConnectedRootDatum, typeDRootEquiv_apply_typeDSimpleIndex]
-  exact typeDSimpleRoot_dotProduct hn i k
+  exact typeDSimpleRoot_dotProduct_typeDSimpleRoot hn i k
 
 /-- **The simple coroots are the standard basis.** This is what pins the cocharacter lattice as the
 coroot lattice, so that the datum is the simply connected one. -/

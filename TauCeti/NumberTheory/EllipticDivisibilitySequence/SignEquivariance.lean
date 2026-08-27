@@ -10,6 +10,7 @@ public import Mathlib.GroupTheory.Perm.Sign
 public import Mathlib.NumberTheory.EllipticDivisibilitySequence
 import Mathlib.Algebra.Module.Basic
 import Mathlib.Tactic.FinCases
+import Mathlib.Tactic.Ring
 
 /-!
 # The elliptic relator is sign-equivariant in its four indices
