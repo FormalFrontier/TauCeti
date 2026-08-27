@@ -273,8 +273,7 @@ theorem lie_cartanGenerator_rootGenerator (k : Fin r ⊕ Fin r) (j : Fin r) :
       sl (Fin (r + 1)) ℚ) : Matrix (Fin (r + 1)) (Fin (r + 1)) ℚ) =
       ((rootGeneratorWeight r k j : ℤ) : ℚ) •
         Matrix.single (rootTarget r k) (rootSource r k) (1 : ℚ) := by
-    rw [← val_rootGenerator]
-    rfl
+    rw [SetLike.val_smul, val_rootGenerator]
   rw [LieSubalgebra.coe_bracket, hcoe]
   rw [val_cartanGenerator, val_rootGenerator,
     lie_single_of_mem_diagonalCartan
