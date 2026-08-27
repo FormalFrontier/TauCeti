@@ -14,7 +14,6 @@ import Mathlib.Analysis.Convex.Contractible
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.Topology.Piecewise
-import Mathlib.Topology.TietzeExtension
 
 /-!
 # Borsuk's separation criterion and Janiszewski's theorem
