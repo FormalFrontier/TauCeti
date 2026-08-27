@@ -47,6 +47,8 @@ produces all the others, and those differences span.
 * `TauCeti.isAtom_augmentationSubrepresentation`: the standard subrepresentation is an atom of the
   lattice of subrepresentations of `k[α]`, and
   `TauCeti.isIrreducible_standardRepresentation`: hence it is irreducible.
+* `TauCeti.char_standardRepresentation`: its character is the character of `k[α]` less `1`, the
+  trivial constituent the standard representation omits.
 
 The two remaining halves of the picture hold for an arbitrary permutation representation and are
 proved there, in `TauCeti.RepresentationTheory.Augmentation`: that `k[α]` is the direct sum of the
@@ -137,6 +139,21 @@ theorem coe_standardRepresentation_apply (g : Equiv.Perm α)
   (rfl)
 
 end Defn
+
+section Character
+
+variable {k : Type*} [Field k] {α : Type*} [Finite α] [Nonempty α]
+
+/-- **The character of the standard representation** is the character of the permutation
+representation `k[α]` less `1`.  The subtracted `1` is the trivial constituent, and no hypothesis
+on `|α|` in `k` is needed: it is the trace of a projection onto a line transverse to the standard
+subrepresentation, which exists whether or not the *invariant* line is one. -/
+theorem char_standardRepresentation (g : Equiv.Perm α) :
+    (standardRepresentation k α).character g =
+      (Representation.ofMulAction k (Equiv.Perm α) α).character g - 1 :=
+  character_augmentationSubrepresentation g
+
+end Character
 
 section WeakScalars
 
