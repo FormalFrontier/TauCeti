@@ -40,6 +40,9 @@ root lattices.
 
 * V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.1.
 * W. Ebeling, *Lattices and Codes*, Chapter 1.
+* The quotient construction and the generator-isometry argument below are promoted, essentially
+  unchanged, from the private `E₆`/`E₇` scaffolding formerly in
+  `TauCeti/LinearAlgebra/IntegralLattice/RootLattice/TypeE.lean`.
 
 This supplies the cyclic presented modules needed by Layer 5 of
 `TauCetiRoadmap/IntegralLattices/README.md`.
@@ -96,23 +99,19 @@ private theorem zmultiples_le_radical_intQuadratic
 `ZMod n`. -/
 private def intQuotientEquivZMod :
     (ℤ ⧸ (AddSubgroup.zmultiples (n : ℤ)).toIntSubmodule) ≃ₗ[ℤ] ZMod n :=
-  { Int.quotientZMultiplesNatEquivZMod n with
-    map_smul' := by
-      intro k x
-      convert! (Int.quotientZMultiplesNatEquivZMod n).toAddMonoidHom.map_zsmul k x using 1 }
+  (Int.quotientZMultiplesNatEquivZMod n).toIntLinearEquiv
+
+/-- The quotient equivalence sends the class of an integer to its reduction.
+
+This is the sole point at which the construction of `Int.quotientZMultiplesNatEquivZMod` is used:
+it is a kernel lift, so it computes on quotient representatives. -/
+private theorem intQuotientEquivZMod_mk (k : ℤ) :
+    intQuotientEquivZMod n (Submodule.Quotient.mk k) = (k : ZMod n) := rfl
 
 /-- The inverse quotient equivalence sends an integer class to its quotient representative. -/
 private theorem intQuotientEquivZMod_symm_intCast (k : ℤ) :
     (intQuotientEquivZMod n).symm (k : ZMod n) = Submodule.Quotient.mk k := by
-  apply (intQuotientEquivZMod n).injective
-  rw [LinearEquiv.apply_symm_apply]
-  have hs : (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).symm
-      (QuotientAddGroup.mk k) = QuotientAddGroup.mk k := by
-    apply (QuotientAddGroup.quotientAddEquivOfEq (ZMod.ker_intCastAddHom n)).injective
-    rw [AddEquiv.apply_symm_apply, QuotientAddGroup.quotientAddEquivOfEq_mk]
-  change (k : ZMod n) = Int.quotientZMultiplesNatEquivZMod n (QuotientAddGroup.mk k)
-  rw [Int.quotientZMultiplesNatEquivZMod, AddEquiv.trans_apply, hs]
-  rfl
+  rw [← intQuotientEquivZMod_mk, LinearEquiv.symm_apply_apply]
 
 /-! ## The cyclic quadratic module -/
 
@@ -134,11 +133,8 @@ noncomputable def cyclicMap : QuadraticMap ℤ (ZMod n) (AddCircle (1 : ℚ)) :=
 theorem cyclicMap_intCast (k : ℤ) :
     cyclicMap n a hquad hpolar (k : ZMod n) = (k * k) • a := by
   unfold cyclicMap
-  rw [QuadraticMap.comp_apply]
-  -- Expose the lifted quadratic map at the quotient representative.
-  change (intQuadratic a).lift (AddSubgroup.zmultiples (n : ℤ)).toIntSubmodule _
-    ((intQuotientEquivZMod n).symm (k : ZMod n)) = (k * k) • a
-  rw [intQuotientEquivZMod_symm_intCast, QuadraticMap.lift_mk]
+  rw [QuadraticMap.comp_apply, LinearEquiv.coe_coe, intQuotientEquivZMod_symm_intCast,
+    QuadraticMap.lift_mk]
   simp [intQuadratic, intBilin]
 
 /-- The standard generator of `cyclicMap` has value `a`. -/
@@ -191,8 +187,7 @@ noncomputable def cyclicIsometryOfGenerator {A : Type*} [AddCommGroup A]
   toLinearEquiv := e.toIntLinearEquiv
   map_app' x := by
     obtain ⟨k, rfl⟩ := ZMod.intCast_surjective x
-    -- Identify the bundled linear equivalence with its underlying additive equivalence.
-    change r (e (k : ZMod n)) = q (k : ZMod n)
+    simp only [LinearMap.toFun_eq_coe, LinearEquiv.coe_coe, AddEquiv.coe_toIntLinearEquiv]
     rw [← zsmul_one, map_zsmul, r.map_smul, q.map_smul, he]
 
 omit hquad hpolar [NeZero n] in
