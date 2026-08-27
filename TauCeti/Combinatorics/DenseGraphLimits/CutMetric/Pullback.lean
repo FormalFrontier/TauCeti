@@ -6,8 +6,9 @@ Authors: Claude
 module
 
 import Mathlib.Probability.Distributions.Bernoulli
+public import Mathlib.MeasureTheory.Constructions.UnitInterval
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Distance
-public import TauCeti.MeasureTheory.Measure.UnitIntervalMap
+import TauCeti.MeasureTheory.Measure.UnitIntervalMap
 import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Pullback
 
 /-!
