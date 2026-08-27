@@ -7,8 +7,12 @@ module
 
 public import TauCeti.Probability.DeFinetti.Theorem
 public import TauCeti.Probability.Exchangeability.FullyExchangeable
+-- Non-public: finite-support approximation is used to reduce the defining symmetry.
+import TauCeti.Algebra.GroupAction.FiniteSupportPerm
 -- Non-public: evaluating a random probability measure at a fixed measurable set is measurable.
 import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
+-- Non-public: equality of process laws is reduced to their finite-dimensional laws.
+import Mathlib.Probability.Process.FiniteDimensionalLaws
 
 /-!
 # Row exchangeable arrays and the factorization of their directing measure
@@ -43,6 +47,8 @@ representation of Markov exchangeable processes consumes.
 * `TauCeti.Probability.RowExchangeable.fullyExchangeable_row` and
   `TauCeti.Probability.RowExchangeable.fullyExchangeable_arrayColumn`: each row, and the column
   process, is fully exchangeable;
+* `TauCeti.Probability.rowExchangeable_iff_forall_finite_support`: it suffices to check families
+  of row permutations that move only finitely many cells altogether;
 * `TauCeti.Probability.RowExchangeable.map_values`: closure under coordinatewise pushforward;
 * `TauCeti.Probability.RowExchangeable.measure_setOf_forall_pair_eq`: the combinatorial core —
   the probability that each row of a finite set lands in its own target set at two prescribed
@@ -134,6 +140,47 @@ theorem rowExchangeable_def :
       (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) =
         μ.map fun ω (p : ι × ℕ) => Y p ω :=
   Iff.rfl
+
+/-- **It suffices to check row exchangeability for permutation families of finite total support.**
+For a finite base measure and an a.e.-measurable array, invariance under every family `π` that
+moves only finitely many cells `(a, k)` implies invariance under arbitrary row-wise permutations.
+
+Indeed, a finite-dimensional marginal reads only finitely many cells. On those cells an arbitrary
+family agrees with a family of finite total support
+(`Equiv.Perm.exists_finite_support_family_apply_eq_on_finset`), so the restricted laws agree;
+Mathlib's finite-dimensional-law uniqueness then gives equality of the full array laws. -/
+theorem rowExchangeable_iff_forall_finite_support [IsFiniteMeasure μ]
+    (hY : ∀ p, AEMeasurable (Y p) μ) :
+    RowExchangeable μ Y ↔
+      ∀ π : ι → Equiv.Perm ℕ, {p : ι × ℕ | π p.1 p.2 ≠ p.2}.Finite →
+        (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) =
+          μ.map fun ω (p : ι × ℕ) => Y p ω := by
+  constructor
+  · intro h π _
+    exact rowExchangeable_def.mp h π
+  · intro h
+    rw [rowExchangeable_def]
+    intro π
+    have hleft : AEMeasurable (fun ω => fun p : ι × ℕ => Y (p.1, π p.1 p.2) ω) μ :=
+      aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)
+    have hright : AEMeasurable (fun ω => fun p : ι × ℕ => Y p ω) μ :=
+      aemeasurable_pi_lambda _ hY
+    rw [ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq hleft hright]
+    intro F
+    obtain ⟨τ, hτfin, hτ⟩ :=
+      Equiv.Perm.exists_finite_support_family_apply_eq_on_finset π F
+    have hmap := h τ hτfin
+    have hrestrict : Measurable fun y : ι × ℕ → α => F.restrict y :=
+      Finset.measurable_restrict F
+    have hmap' := congrArg (fun ρ : Measure (ι × ℕ → α) => ρ.map (F.restrict ·)) hmap
+    rw [AEMeasurable.map_map_of_aemeasurable hrestrict.aemeasurable
+          (aemeasurable_pi_lambda _ fun p => hY (p.1, τ p.1 p.2)),
+      AEMeasurable.map_map_of_aemeasurable hrestrict.aemeasurable hright] at hmap'
+    have heq : (fun ω => F.restrict fun p : ι × ℕ => Y (p.1, τ p.1 p.2) ω) =
+        fun ω => F.restrict fun p : ι × ℕ => Y (p.1, π p.1 p.2) ω := by
+      funext ω p
+      exact congrArg (fun k => Y (p.1.1, k) ω) (hτ p.1 p.2)
+    simpa only [Function.comp_def, heq] using hmap'
 
 /-- Every column of an array with a.e. measurable entries is a.e. measurable. -/
 theorem aemeasurable_arrayColumn (hY : ∀ p, AEMeasurable (Y p) μ) (k : ℕ) :

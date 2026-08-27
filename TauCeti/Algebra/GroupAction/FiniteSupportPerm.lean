@@ -27,6 +27,10 @@ symmetric group** `Equiv.Perm.finitary ι`, a subgroup of `Equiv.Perm ι`.
 The finitary symmetric group on a countable index type is itself countable; countability is what
 lets an action of it be handled one group element at a time under a filter closed under countable
 intersections (Mathlib's `CountableInterFilter`), such as the a.e. filter of a measure.
+
+The file also supplies `Equiv.Perm.exists_finite_support_family_apply_eq_on_finset`: finitely many
+values of an arbitrary family of permutations can be matched by a family moving only finitely many
+indexed points altogether.
 -/
 
 public section
@@ -158,5 +162,51 @@ theorem exists_finite_compl_fixedBy_apply_eq {ι β : Type*} [Finite ι] (f g : 
     ∃ σ : Equiv.Perm β, (MulAction.fixedBy β σ)ᶜ.Finite ∧ ∀ i, σ (f i) = g i := by
   obtain ⟨σ, hsub, hval⟩ := exists_compl_fixedBy_subset_apply_eq f g
   exact ⟨σ, ((Set.finite_range f).union (Set.finite_range g)).subset hsub, hval⟩
+
+/-- **A family of permutations can be matched on finitely many indexed points by a family with
+finite total support.** Given `π : ι → Equiv.Perm β` and finitely many pairs `(i, b)`, there is a
+family `τ` agreeing with `π` at every listed pair and moving only finitely many pairs altogether.
+
+The family `τ` is the identity outside the finitely many first coordinates occurring in `F`; in
+each remaining fibre it is obtained by extending the two finite embeddings `b ↦ b` and
+`b ↦ π i b`. -/
+theorem exists_finite_support_family_apply_eq_on_finset {ι β : Type*}
+    (π : ι → Equiv.Perm β) (F : Finset (ι × β)) :
+    ∃ τ : ι → Equiv.Perm β, {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite ∧
+      ∀ p ∈ F, τ p.1 p.2 = π p.1 p.2 := by
+  classical
+  let rows : Finset ι := F.image Prod.fst
+  have hexists : ∀ a : ι, ∃ σ : Equiv.Perm β,
+      (MulAction.fixedBy β σ)ᶜ.Finite ∧
+        ∀ b : ↥((F.filter fun q => q.1 = a).image Prod.snd), σ b.1 = π a b.1 := by
+    intro a
+    let f : ↥((F.filter fun q => q.1 = a).image Prod.snd) ↪ β :=
+      Function.Embedding.subtype _
+    let g : ↥((F.filter fun q => q.1 = a).image Prod.snd) ↪ β :=
+      f.trans (π a).toEmbedding
+    obtain ⟨σ, hσ, hval⟩ := exists_finite_compl_fixedBy_apply_eq f g
+    refine ⟨σ, hσ, fun p => by
+      simpa only [f, g, Function.Embedding.coeFn_mk, Function.Embedding.trans_apply,
+        Function.Embedding.subtype_apply, Equiv.coe_toEmbedding] using hval p⟩
+  choose σ hσ using hexists
+  let τ : ι → Equiv.Perm β := fun a => if a ∈ rows then σ a else 1
+  refine ⟨τ, ?_, ?_⟩
+  · let S : Set (ι × β) := ⋃ a ∈ (rows : Set ι),
+        Prod.mk a '' (MulAction.fixedBy β (σ a))ᶜ
+    have hS : S.Finite := rows.finite_toSet.biUnion fun a _ =>
+      (hσ a).1.image (Prod.mk a)
+    refine hS.subset fun p hp => ?_
+    have hrow : p.1 ∈ rows := by
+      by_contra hnot
+      exact hp (by simp [τ, hnot])
+    refine Set.mem_iUnion.2 ⟨p.1, Set.mem_iUnion.2 ⟨hrow, ?_⟩⟩
+    refine ⟨p.2, ?_, rfl⟩
+    simpa [MulAction.mem_fixedBy, Equiv.Perm.smul_def, τ, hrow] using hp
+  · intro p hp
+    have hrow : p.1 ∈ rows := Finset.mem_image.2 ⟨p, hp, rfl⟩
+    have hpfilter : p ∈ F.filter fun q => q.1 = p.1 := Finset.mem_filter.2 ⟨hp, rfl⟩
+    have hmem : p.2 ∈ (F.filter fun q => q.1 = p.1).image Prod.snd :=
+      Finset.mem_image.2 ⟨p, hpfilter, rfl⟩
+    simpa [τ, hrow] using (hσ p.1).2 ⟨p.2, hmem⟩
 
 end Equiv.Perm
