@@ -70,6 +70,7 @@ noncomputable def centerPointwiseQuotientIsoPGL (A : CommAlgCat.{u} k) :
 
 /-- The quotient equivalence sends the class of a `GLₙ`-point to the class of its associated
 invertible matrix. -/
+@[simp]
 theorem centerPointwiseQuotientIsoPGL_hom_mk (A : CommAlgCat.{u} k)
     (q : HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k n) A) :
     (centerPointwiseQuotientIsoPGL n A).hom
@@ -90,6 +91,7 @@ theorem centerPointwiseQuotientIsoPGL_hom_mk (A : CommAlgCat.{u} k)
 
 /-- The inverse quotient equivalence sends the class of an invertible matrix to the class of its
 associated `GLₙ`-point. -/
+@[simp]
 theorem centerPointwiseQuotientIsoPGL_inv_mk (A : CommAlgCat.{u} k)
     (g : Matrix.GeneralLinearGroup (Fin n) A) :
     (centerPointwiseQuotientIsoPGL n A).inv (Matrix.ProjGenLinGroup.mk g) =
@@ -211,6 +213,7 @@ noncomputable def centerPointwiseQuotientNatIsoPGL :
 
 /-- After transport to the concrete quotient groups, the hom component of the natural
 identification is the objectwise quotient isomorphism. -/
+@[simp]
 theorem centerPointwiseQuotientNatIsoPGL_hom_app
     (A : CommAlgCat.{u} k) :
     eqToHom (CommHopfAlgCat.pointwiseQuotientFunctor_obj
@@ -225,6 +228,7 @@ theorem centerPointwiseQuotientNatIsoPGL_hom_app
 
 /-- After transport to the concrete quotient groups, the inverse component of the natural
 identification is the inverse objectwise quotient isomorphism. -/
+@[simp]
 theorem centerPointwiseQuotientNatIsoPGL_inv_app
     (A : CommAlgCat.{u} k) :
     eqToHom (pglPointsFunctor_obj n A).symm ≫
@@ -239,6 +243,7 @@ theorem centerPointwiseQuotientNatIsoPGL_inv_app
 
 /-- After transport to the concrete quotient groups, the hom component of the natural
 identification sends a quotient class to the class of its associated invertible matrix. -/
+@[simp]
 theorem centerPointwiseQuotientNatIsoPGL_hom_app_mk (A : CommAlgCat.{u} k)
     (q : HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k n) A) :
     eqToHom (pglPointsFunctor_obj n A)
@@ -259,6 +264,7 @@ theorem centerPointwiseQuotientNatIsoPGL_hom_app_mk (A : CommAlgCat.{u} k)
 
 /-- After transport to the concrete quotient groups, the inverse component of the natural
 identification sends the class of an invertible matrix to its associated quotient class. -/
+@[simp]
 theorem centerPointwiseQuotientNatIsoPGL_inv_app_mk (A : CommAlgCat.{u} k)
     (g : Matrix.GeneralLinearGroup (Fin n) A) :
     eqToHom (CommHopfAlgCat.pointwiseQuotientFunctor_obj
