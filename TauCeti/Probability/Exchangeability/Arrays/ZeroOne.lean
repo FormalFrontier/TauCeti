@@ -225,19 +225,6 @@ theorem JointlyDissociated.measure_eq_zero_or_one_of_tailProcess_arrayDiag [IsPr
     (hs : MeasurableSet[tailProcess (arrayDiag X)] s) : μ s = 0 ∨ μ s = 1 :=
   h.measure_eq_zero_or_one_of_arrayTail hX (tailProcess_arrayDiag_le_arrayTail X s hs)
 
-/-- **The diagonal of a jointly exchangeable, jointly dissociated array is i.i.d.**, with its common
-law named: over a standard Borel state space there is a probability measure `P` with `fun _ => P` a
-mixing representative of the diagonal, so the diagonal entries are independent with common law
-`P`. Dissociation supplies independence, while joint exchangeability supplies the common law. -/
-theorem JointlyDissociated.exists_mixedIIDWith_const_arrayDiag [StandardBorelSpace α]
-    [IsProbabilityMeasure μ] (h : JointlyDissociated μ X) (hexch : JointlyExchangeable μ X)
-    (hX : ∀ p, Measurable (X p)) :
-    ∃ P : ProbabilityMeasure α, MixedIIDWith μ (arrayDiag X) fun _ => P :=
-  exists_mixedIIDWith_const_of_exchangeable_of_tailProcess_trivial
-    (fun n => by simpa only [arrayDiag_apply] using (hX (n, n)).aemeasurable)
-    (hexch.exchangeable_arrayDiag fun p => (hX p).aemeasurable)
-    fun _ hs => h.measure_eq_zero_or_one_of_tailProcess_arrayDiag hX hs
-
 /-- **The diagonal entries of a jointly dissociated array are independent.** A diagonal entry is
 independent of the square block over any finite set of other indices, which gives the finite-family
 criterion for mutual independence. -/
@@ -269,6 +256,23 @@ theorem JointlyDissociated.iIndepFun_arrayDiag [IsProbabilityMeasure μ]
       · have : s = ∅ := Finset.not_nonempty_iff_eq_empty.mp hs
         subst s
         simp
+
+/-- **The diagonal of a jointly exchangeable, jointly dissociated array is i.i.d.**, with its common
+law named: there is a probability measure `P` with `fun _ => P` a mixing representative of the
+diagonal, so the diagonal entries are independent with common law `P`. Dissociation supplies
+independence, while joint exchangeability supplies the common law. -/
+theorem JointlyDissociated.exists_mixedIIDWith_const_arrayDiag [IsProbabilityMeasure μ]
+    (h : JointlyDissociated μ X) (hexch : JointlyExchangeable μ X)
+    (hX : ∀ p, AEMeasurable (X p) μ) :
+    ∃ P : ProbabilityMeasure α, MixedIIDWith μ (arrayDiag X) fun _ => P := by
+  have hdiag : ∀ i, AEMeasurable (arrayDiag X i) μ := fun i => by
+    simpa only [arrayDiag_apply] using hX (i, i)
+  let P : ProbabilityMeasure α :=
+    ⟨μ.map (arrayDiag X 0), Measure.isProbabilityMeasure_map (hdiag 0)⟩
+  refine ⟨P, MixedIIDWith.of_iIndepFun_map_eq h.iIndepFun_arrayDiag fun i => ?_⟩
+  change μ.map (arrayDiag X i) = μ.map (arrayDiag X 0)
+  exact ((hexch.exchangeable_arrayDiag hX).contractable hdiag).identDistrib_coord
+    (hdiag i) (hdiag 0) |>.map_eq
 
 end Probability
 
