@@ -126,6 +126,12 @@ theorem fixedPoints_addSubgroup_eq_top_of_smul_eq (H : Subgroup G)
   ext m
   simp [h]
 
+/-- Invariants grow as the subgroup shrinks. This is Mathlib's `fixedPoints_subgroup_antitone` on
+the `AddSubgroup` carrier, the form `AddSubgroup.inclusion` consumes. -/
+theorem fixedPoints_addSubgroup_le {H K : Subgroup G} (h : K ≤ H) :
+    FixedPoints.addSubgroup H M ≤ FixedPoints.addSubgroup K M :=
+  fixedPoints_subgroup_antitone G M h
+
 /-- The fixed-point subgroup of a subsingleton additive group is zero. -/
 @[simp]
 theorem fixedPoints_addSubgroup_eq_bot_of_subsingleton [Subsingleton M] (H : Subgroup G) :
