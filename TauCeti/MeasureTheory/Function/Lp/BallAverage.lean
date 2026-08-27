@@ -88,9 +88,7 @@ the maximal inequality, so the two developments are kept apart.
   commutes with translation, and its increment is the ball average of the increment.
 * `TauCeti.enorm_ballAverage_add_sub_ballAverage_le`: the equicontinuity estimate, with modulus
   the `Lᵖ` modulus of continuity of `f` itself.
-* `TauCeti.ballAverage_mem_closedBall_of_eLpNorm_le`,
-  `TauCeti.uniformEquicontinuous_ballAverage`: boundedness of a ball average and equicontinuity of
-  the ball averages of a family.
+* `TauCeti.uniformEquicontinuous_ballAverage`: equicontinuity of the ball averages of a family.
 * `TauCeti.continuous_ballAverage`, `TauCeti.memLp_ballAverage`: a ball average at positive
   scale is continuous and remains in `Lᵖ`.
 * `TauCeti.ballAverage_sub_self`, `TauCeti.eLpNorm_ballAverage_sub_le`: the deviation of `f` from
@@ -289,21 +287,6 @@ theorem enorm_ballAverage_add_sub_ballAverage_le (hp : 1 ≤ p) (hp' : p ≠ ∞
   rw [ballAverage_sub_ballAverage hp hf]
   exact enorm_ballAverage_le hp hp'
     (hshift.aestronglyMeasurable.sub hf.aestronglyMeasurable) hr x
-
-omit [CompleteSpace F] in
-/-- The ball average of an `Lᵖ`-bounded function lies in the corresponding closed ball. -/
-theorem ballAverage_mem_closedBall_of_eLpNorm_le {M : ℝ≥0∞}
-    (hp : 1 ≤ p) (hp' : p ≠ ∞) (hf : AEStronglyMeasurable f mu) (hr : 0 < r)
-    (hM : M ≠ ∞) (hbdd : eLpNorm f p mu ≤ M) (x : E) :
-    ballAverage mu r f x ∈
-      closedBall (0 : F) (mu (ball (0 : E) r) ^ (-(p.toReal)⁻¹) * M).toReal := by
-  rw [mem_closedBall, dist_zero_right]
-  have hV0 : mu (ball (0 : E) r) ≠ 0 := (measure_ball_pos mu 0 hr).ne'
-  have hVt : mu (ball (0 : E) r) ≠ ∞ := measure_ball_lt_top.ne
-  have hBt : mu (ball (0 : E) r) ^ (-(p.toReal)⁻¹) * M ≠ ∞ :=
-    ENNReal.mul_ne_top (ENNReal.rpow_ne_top_of_ne_zero hV0 hVt) hM
-  have h := (enorm_ballAverage_le hp hp' hf hr x).trans (mul_le_mul' le_rfl hbdd)
-  simpa using ENNReal.toReal_mono hBt h
 
 omit [CompleteSpace F] in
 /-- At a fixed positive scale, the ball averages of a family of `Lᵖ` functions whose translation
