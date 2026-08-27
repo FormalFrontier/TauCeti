@@ -6,9 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Group.TransferInstance
-public import Mathlib.RepresentationTheory.Basic
-public import Mathlib.Topology.Algebra.MulAction
-public import Mathlib.Topology.Algebra.OpenSubgroup
+public import Mathlib.Algebra.GroupWithZero.Action.Hom
 public import TauCeti.RepresentationTheory.Homological.ContCohomology.Discrete
 
 /-!
@@ -50,14 +48,14 @@ an instance, and by proving the topological content, which the roadmap does not.
 
 * `TauCeti.homAction_apply_smul`: evaluation is equivariant; on the carrier this is
   `TauCeti.InternalHom.evalPairing_equivariant`.
-* `TauCeti.homAction_eq_self_iff`: `g` fixes `φ` exactly when `φ` commutes with the action of `g`;
-  so `φ` is fixed by all of `G` exactly when it is `G`-equivariant
-  (`TauCeti.forall_homAction_eq_self_iff`, and `TauCeti.InternalHom.mem_fixedPoints_iff` on the
-  carrier).
-* `TauCeti.isOpen_setOfPred_homAction_eq_self`: for finite discrete `M` and discrete `N` the set of
-  group elements fixing `φ` is open. This is what the `ContinuousSMul G` instance on
+* `TauCeti.homAction_eq_self_iff`: `g` fixes `φ` exactly when `φ` commutes with the action of `g`
+  (`TauCeti.InternalHom.smul_eq_self_iff` on the carrier); so `φ` is fixed by all of `G` exactly
+  when it is `G`-equivariant (`TauCeti.forall_homAction_eq_self_iff`, and
+  `TauCeti.InternalHom.mem_fixedPoints_iff` on the carrier).
+* `TauCeti.isOpen_setOfPred_homAction_eq_self`: for finite `M` and discrete `N` the set of group
+  elements fixing a continuous `φ` is open. This is what the `ContinuousSMul G` instance on
   `TauCeti.InternalHom` rests on; with the discrete topology that carrier has by definition, it is
-  what makes it again a discrete `G`-module in that setting.
+  what makes it again a discrete `G`-module for finite discrete `M` and discrete `N`.
 * `TauCeti.exists_openNormalSubgroup_homAction_eq_self`: over a profinite group that set contains
   an open normal subgroup.
 
@@ -83,17 +81,20 @@ hypothesis of the additive ones. The additive structure is transported from `M �
 `of`/`toAddMonoidHom` equivalence, as an `AddCommMonoid` in general and as an `AddCommGroup` when
 `N` is one. That equivalence is written inline in the two instances rather than given a name, so
 that the only bundled form of the carrier map in the public surface is `evalPairing`; the
-transported structure is meant to be used only through the interface lemmas below. Those lemmas
-(`toAddMonoidHom_zero`, `toAddMonoidHom_add`, `of_zero`, `of_add`, their group-level
-counterparts, and `evalPairing_apply`) hold by
-`Equiv.add_def`/`Equiv.zero_def` on the transported instance, hence definitionally; they are
-written `(rfl)` rather than `rfl` because the module system rejects the latter for an *exported*
-theorem whose proof unfolds a definition that is not `@[expose]`d, and nothing here needs to be
-exposed.
+transported structure is meant to be used only through the interface lemmas below
+(`toAddMonoidHom_zero`, `toAddMonoidHom_add`, `toAddMonoidHom_nsmul`, `of_zero`, `of_add`,
+`of_nsmul` and their group-level counterparts), which hold by `rfl` on the transported instance.
+
+Two theorems are instead written `(rfl)` rather than `rfl`: `homAction_apply` and
+`evalPairing_apply`. The module system rejects a bare `rfl` for an *exported* theorem whose proof
+unfolds a definition that is not `@[expose]`d, and those two unfold `homAction` and `evalPairing`,
+which nothing here needs to be exposed. The parenthesized form elaborates the same proof as an
+ordinary term, without that check.
 
 Continuity in the group variable (`continuous_homAction_apply`) needs only that `φ` itself be
-continuous, the two actions occurring in `g • φ (g⁻¹ • m)` being continuous by hypothesis; the
-discrete source of the intended setting enters only where that continuity is discharged, by
+continuous, the two actions occurring in `g • φ (g⁻¹ • m)` being continuous by hypothesis, and
+`isOpen_setOfPred_homAction_eq_self` inherits that hypothesis; the discrete source of the intended
+setting enters only where it is discharged, in the `ContinuousSMul` instance, by
 `continuous_of_discreteTopology`.
 
 `Representation.linHom` is the same conjugation construction for `k`-linear maps `V →ₗ[k] W` of
@@ -102,8 +103,10 @@ bundled representations. It is not used as the definition here for two reasons. 
 routing through it would still need a bespoke definition round-tripping along
 `AddMonoidHom.toIntLinearMap` and `LinearMap.toAddMonoidHom`; and taking `k = ℤ` forces
 `Module ℤ M` and `Module ℤ N`, hence `AddCommGroup` on both sides, whereas everything below needs
-only `AddMonoid M` and `AddMonoid N`. The identification of the two constructions, in the
-generality where `Representation.linHom` is available, is `toIntLinearMap_homAction`.
+only `AddMonoid M` and `AddMonoid N`. In the generality where `Representation.linHom` is available
+the two constructions do agree, transported along `AddMonoidHom.toIntLinearMap`; that comparison is
+not recorded here, because it would pull `Mathlib.RepresentationTheory.Basic` — and with it the
+tensor, matrix and dual stack — into a file the whole continuous-cohomology development imports.
 
 Mathlib puts no topology on `M →+ N`. Discreteness of the internal hom enters here through the
 discreteness of the ambient function space `M → N`, which is what
@@ -111,10 +114,12 @@ discreteness of the ambient function space `M → N`, which is what
 definition, with no hypothesis on `M` or `N`: that is the intended topology in the discrete setting
 this file is written for, namely finite discrete `M` and discrete `N`, which is also the setting in
 which the action is proved continuous below. Those hypotheses are sufficient for that continuity,
-not necessary — a trivial action on an infinite `M`, for instance, is continuous too — and it is
-sufficiency that is established here. For infinite `M` the internal hom in the category of
-discrete `G`-modules is the sub-object of homomorphisms with open stabilizer, which is not
-`InternalHom G M N`; nothing here claims otherwise.
+not necessary — if `G` acts trivially on both `M` and `N` then it acts trivially on `M →+ N`, so
+the action is continuous for an infinite `M` too — and it is sufficiency that is established here.
+(A trivial action on `M` alone does not suffice: the stabilizer of `φ` is then the intersection of
+the stabilizers of the values `φ m`, which for infinitely many `m` need not be open.) For infinite
+`M` the internal hom in the category of discrete `G`-modules is the sub-object of homomorphisms
+with open stabilizer, which is not `InternalHom G M N`; nothing here claims otherwise.
 -/
 
 public section
@@ -155,8 +160,9 @@ section AddCommMonoid
 
 variable {N : Type*} [AddCommMonoid N] [DistribMulAction G N]
 
-/-- The conjugation action is additive in the homomorphism. This is the only one of the four laws
-that needs the pointwise addition on `M →+ N`, hence a commutative codomain. -/
+/-- The conjugation action is additive in the homomorphism. Of the four laws only `homAction_zero`
+holds for a bare additive-monoid codomain; this one and `homAction_neg` and `homAction_sub` all
+name the pointwise structure on `M →+ N`, hence need a commutative codomain. -/
 @[simp]
 theorem homAction_add (g : G) (φ ψ : M →+ N) :
     homAction g (φ + ψ) = homAction g φ + homAction g ψ := by
@@ -193,8 +199,9 @@ theorem homAction_apply_smul (g : G) (φ : M →+ N) (m : M) : homAction g φ (g
   simp
 
 /-- A group element fixes `φ` for the conjugation action exactly when `φ` commutes with its
-action. -/
-@[simp]
+action. It is deliberately not `@[simp]`: `homAction g φ = φ` is the shape in which the openness
+and profinite statements below are phrased, and rewriting it away would take them out of
+simp-normal form. -/
 theorem homAction_eq_self_iff {g : G} {φ : M →+ N} :
     homAction g φ = φ ↔ ∀ m : M, φ (g • m) = g • φ m := by
   constructor
@@ -229,22 +236,6 @@ theorem homAction_eq_smul_of_smul_eq_self {g : G} (h : ∀ m : M, g • m = m) (
 
 end Action
 
-section IntLinearMap
-
-variable {G : Type*} [Group G] {M : Type*} [AddCommGroup M] [DistribMulAction G M]
-  {N : Type*} [AddCommGroup N] [DistribMulAction G N]
-
-/-- The conjugation action on `M →+ N` is Mathlib's conjugation action `Representation.linHom` on
-`ℤ`-linear maps, transported along `AddMonoidHom.toIntLinearMap`. -/
-theorem toIntLinearMap_homAction (g : G) (φ : M →+ N) :
-    (homAction g φ).toIntLinearMap =
-      Representation.linHom (Representation.ofDistribMulAction ℤ G M)
-        (Representation.ofDistribMulAction ℤ G N) g φ.toIntLinearMap := by
-  ext m
-  simp
-
-end IntLinearMap
-
 section Topology
 
 variable {G : Type*} [Group G] [TopologicalSpace G] [ContinuousInv G]
@@ -264,18 +255,19 @@ theorem continuous_homAction_coe {φ : M →+ N} (hφ : Continuous φ) :
     Continuous fun g : G => ((homAction g φ : M →+ N) : M → N) :=
   continuous_pi fun m => continuous_homAction_apply hφ m
 
-/-- For a finite discrete `M` and a discrete `N` the set of group elements fixing `φ` is open.
-This is what the `ContinuousSMul G (InternalHom G M N)` instance below rests on, through
+/-- For a finite `M` and a discrete `N` the set of group elements fixing a continuous `φ` is open.
+Discreteness enters through the ambient function space `M → N`; as for the two continuity lemmas
+above, the source only has to be discrete where `Continuous φ` is discharged. This is what the
+`ContinuousSMul G (InternalHom G M N)` instance below rests on, through
 `continuousSMul_iff_stabilizer_isOpen`. -/
-theorem isOpen_setOfPred_homAction_eq_self [DiscreteTopology M] [Finite M] [DiscreteTopology N]
-    (φ : M →+ N) : IsOpen {g : G | homAction g φ = φ} := by
+theorem isOpen_setOfPred_homAction_eq_self [Finite M] [DiscreteTopology N] {φ : M →+ N}
+    (hφ : Continuous φ) : IsOpen {g : G | homAction g φ = φ} := by
   have hset : {g : G | homAction g φ = φ}
       = (fun g : G => ((homAction g φ : M →+ N) : M → N)) ⁻¹' {(φ : M → N)} := by
     ext g
     simp [DFunLike.coe_fn_eq]
   rw [hset]
-  exact (continuous_homAction_coe continuous_of_discreteTopology).isOpen_preimage _
-    (isOpen_discrete _)
+  exact (continuous_homAction_coe hφ).isOpen_preimage _ (isOpen_discrete _)
 
 end Topology
 
@@ -300,10 +292,11 @@ variable {G : Type*} {M : Type*} [AddMonoid M] {N : Type*} [AddMonoid N]
 @[simp]
 theorem of_toAddMonoidHom (φ : InternalHom G M N) : of G φ.toAddMonoidHom = φ := rfl
 
-@[simp]
-theorem toAddMonoidHom_inj {φ ψ : InternalHom G M N} :
-    φ.toAddMonoidHom = ψ.toAddMonoidHom ↔ φ = ψ :=
-  InternalHom.ext_iff.symm
+/-- The internal hom always carries the discrete topology, by definition; see the implementation
+notes for when that is the intended topology. -/
+instance : TopologicalSpace (InternalHom G M N) := ⊥
+
+instance : DiscreteTopology (InternalHom G M N) := ⟨rfl⟩
 
 section Additive
 
@@ -318,8 +311,8 @@ forgets the action, so that `evalPairing G φ m` is the evaluation `φ m`. Its e
 `evalPairing_equivariant`. -/
 def evalPairing : InternalHom G M N →+ (M →+ N) where
   toFun := toAddMonoidHom
-  map_zero' := (rfl)
-  map_add' _ _ := (rfl)
+  map_zero' := rfl
+  map_add' _ _ := rfl
 
 variable {G}
 
@@ -327,17 +320,24 @@ variable {G}
 theorem evalPairing_apply (φ : InternalHom G M N) : evalPairing G φ = φ.toAddMonoidHom := (rfl)
 
 @[simp]
-theorem toAddMonoidHom_zero : (0 : InternalHom G M N).toAddMonoidHom = 0 := (rfl)
+theorem toAddMonoidHom_zero : (0 : InternalHom G M N).toAddMonoidHom = 0 := rfl
 
 @[simp]
 theorem toAddMonoidHom_add (φ ψ : InternalHom G M N) :
-    (φ + ψ).toAddMonoidHom = φ.toAddMonoidHom + ψ.toAddMonoidHom := (rfl)
+    (φ + ψ).toAddMonoidHom = φ.toAddMonoidHom + ψ.toAddMonoidHom := rfl
 
 @[simp]
-theorem of_zero : of G (0 : M →+ N) = 0 := (rfl)
+theorem of_zero : of G (0 : M →+ N) = 0 := rfl
 
 @[simp]
-theorem of_add (φ ψ : M →+ N) : of G (φ + ψ) = of G φ + of G ψ := (rfl)
+theorem of_add (φ ψ : M →+ N) : of G (φ + ψ) = of G φ + of G ψ := rfl
+
+@[simp]
+theorem toAddMonoidHom_nsmul (n : ℕ) (φ : InternalHom G M N) :
+    (n • φ).toAddMonoidHom = n • φ.toAddMonoidHom := rfl
+
+@[simp]
+theorem of_nsmul (n : ℕ) (φ : M →+ N) : of G (n • φ) = n • of G φ := rfl
 
 end Additive
 
@@ -353,17 +353,24 @@ instance : AddCommGroup (InternalHom G M N) :=
 
 @[simp]
 theorem toAddMonoidHom_neg (φ : InternalHom G M N) :
-    (-φ).toAddMonoidHom = -φ.toAddMonoidHom := (rfl)
+    (-φ).toAddMonoidHom = -φ.toAddMonoidHom := rfl
 
 @[simp]
 theorem toAddMonoidHom_sub (φ ψ : InternalHom G M N) :
-    (φ - ψ).toAddMonoidHom = φ.toAddMonoidHom - ψ.toAddMonoidHom := (rfl)
+    (φ - ψ).toAddMonoidHom = φ.toAddMonoidHom - ψ.toAddMonoidHom := rfl
 
 @[simp]
-theorem of_neg (φ : M →+ N) : of G (-φ) = -of G φ := (rfl)
+theorem of_neg (φ : M →+ N) : of G (-φ) = -of G φ := rfl
 
 @[simp]
-theorem of_sub (φ ψ : M →+ N) : of G (φ - ψ) = of G φ - of G ψ := (rfl)
+theorem of_sub (φ ψ : M →+ N) : of G (φ - ψ) = of G φ - of G ψ := rfl
+
+@[simp]
+theorem toAddMonoidHom_zsmul (z : ℤ) (φ : InternalHom G M N) :
+    (z • φ).toAddMonoidHom = z • φ.toAddMonoidHom := rfl
+
+@[simp]
+theorem of_zsmul (z : ℤ) (φ : M →+ N) : of G (z • φ) = z • of G φ := rfl
 
 end AddCommGroup
 
@@ -386,6 +393,15 @@ instance : MulAction G (InternalHom G M N) where
   one_smul φ := by ext m; simp
   mul_smul g h φ := by ext m; simp [homAction_mul]
 
+/-- A single group element fixes an element of the internal hom exactly when the underlying
+homomorphism commutes with its action; this is `homAction_eq_self_iff` on the carrier, and the form
+in which a stabilizer membership or an `exists_openNormalSubgroup_smul_eq_self` hypothesis is
+consumed. Like `homAction_eq_self_iff` it is deliberately not `@[simp]`, since `g • φ = φ` is the
+shape in which those statements are phrased. -/
+theorem smul_eq_self_iff {g : G} {φ : InternalHom G M N} :
+    g • φ = φ ↔ ∀ m : M, φ.toAddMonoidHom (g • m) = g • φ.toAddMonoidHom m := by
+  rw [InternalHom.ext_iff, toAddMonoidHom_smul, homAction_eq_self_iff]
+
 /-- The fixed points of the internal hom are the `G`-equivariant homomorphisms. This is the
 degree-zero invariants of the conjugation action, phrased through Mathlib's
 `MulAction.fixedPoints`, which is the invariants object the surrounding development uses. It is
@@ -394,14 +410,8 @@ side, so a `simp` attribute here would be shadowed and the `simpNF` linter rejec
 theorem mem_fixedPoints_iff {φ : InternalHom G M N} :
     φ ∈ MulAction.fixedPoints G (InternalHom G M N) ↔
       ∀ (g : G) (m : M), φ.toAddMonoidHom (g • m) = g • φ.toAddMonoidHom m := by
-  simp only [MulAction.mem_fixedPoints, InternalHom.ext_iff, toAddMonoidHom_smul]
-  exact forall_homAction_eq_self_iff
-
-/-- The internal hom always carries the discrete topology, by definition; see the implementation
-notes for when that is the intended topology. -/
-instance : TopologicalSpace (InternalHom G M N) := ⊥
-
-instance : DiscreteTopology (InternalHom G M N) := ⟨rfl⟩
+  simp only [MulAction.mem_fixedPoints]
+  exact forall_congr' fun _ => smul_eq_self_iff
 
 /-- For a finite discrete `M` and a discrete `N` over a topological group, the conjugation action
 on the internal hom is continuous: this is the statement that `InternalHom G M N` is again a
@@ -414,9 +424,9 @@ instance [TopologicalSpace G] [IsTopologicalGroup G] [TopologicalSpace M] [Discr
       = {g : G | homAction g φ.toAddMonoidHom = φ.toAddMonoidHom} := by
     ext g
     simp only [SetLike.mem_coe, MulAction.mem_stabilizer_iff, Set.mem_ofPred_eq,
-      InternalHom.ext_iff, toAddMonoidHom_smul]
+      smul_eq_self_iff, homAction_eq_self_iff]
   rw [hset]
-  exact isOpen_setOfPred_homAction_eq_self _
+  exact isOpen_setOfPred_homAction_eq_self continuous_of_discreteTopology
 
 section Distrib
 
@@ -456,7 +466,7 @@ continuous cohomology. It is `exists_openNormalSubgroup_smul_eq_self` for the di
 theorem exists_openNormalSubgroup_homAction_eq_self (φ : M →+ N) :
     ∃ U : OpenNormalSubgroup G, ∀ u ∈ U, homAction u φ = φ := by
   obtain ⟨U, hU⟩ := exists_openNormalSubgroup_smul_eq_self (G := G) (InternalHom.of G φ)
-  exact ⟨U, fun u hu => by simpa using congrArg InternalHom.toAddMonoidHom (hU u hu)⟩
+  exact ⟨U, fun u hu => homAction_eq_self_iff.mpr (InternalHom.smul_eq_self_iff.mp (hU u hu))⟩
 
 end Profinite
 
