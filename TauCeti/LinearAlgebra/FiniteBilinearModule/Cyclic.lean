@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Isomorphisms
+public import Mathlib.Algebra.Algebra.Bilinear
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic
 
 /-!
@@ -23,11 +23,12 @@ q(k) = k²a,   b(j, k) = 2jk·a.
 The construction is a quotient, not a formula in `ZMod.val`: the parameter defines the honest
 `ℤ`-bilinear map `(x, y) ↦ xy·a` on `ℤ`, its associated quadratic map `x ↦ x²a` has the kernel of
 the reduction `ℤ → ℤ/m` inside its radical exactly under the two torsion hypotheses, and
-`QuadraticMap.lift` descends it.  The hypotheses are therefore not technical: `m²a = 0` is the
-statement that the quadratic value of the generator is well defined modulo `m`, and `2ma = 0` the
-corresponding statement for the pairing.  Neither implies the other: for `m = 1` and `a = 1/2` the
-second holds and the first fails, while for `m = 2` and `a = 1/4` the first holds and the second
-fails.
+`TauCeti.QuadraticMap.liftOfSurjective` descends it.  The hypotheses are therefore not technical:
+`m²a = 0` is the statement that the quadratic value of the generator is well defined modulo `m`,
+and `2ma = 0` the corresponding statement for the pairing.  Neither implies the other: for `m = 1`
+and `a = 1/2` the second holds (`2a = 0`) and the first fails (`a = 1/2`), while for `m = 3` and
+`a = 1/9` the first holds (`9a = 0`) and the second fails (`6a = 2/3`).  No witness of the latter
+kind has `m = 2`, where the two coefficients `m² = 4` and `2m = 4` agree.
 
 The companion `TauCeti.FiniteQuadraticModule.cyclicIsometryOfGenerator` turns an additive
 equivalence `ℤ/m ≃+ A` matching the single generator value into an isometry onto `A`, which is how
@@ -66,16 +67,12 @@ variable (m : ℕ) (a : AddCircle (1 : ℚ))
 
 /-! ## The presenting quadratic map on `ℤ` -/
 
-/-- The bilinear map `(x, y) ↦ xy·a` on `ℤ`. -/
+/-- The bilinear map `(x, y) ↦ xy·a` on `ℤ`: multiplication followed by the linear map sending
+`1` to `a`. -/
 private def cyclicBilin : LinearMap.BilinMap ℤ ℤ (AddCircle (1 : ℚ)) :=
-  LinearMap.mk₂ ℤ (fun x y : ℤ ↦ (x * y) • a)
-    (fun x y z ↦ by rw [add_mul, add_smul])
-    (fun r x y ↦ by rw [smul_eq_mul, mul_assoc, mul_smul])
-    (fun x y z ↦ by rw [mul_add, add_smul])
-    (fun r x y ↦ by rw [smul_eq_mul, mul_left_comm, mul_smul])
+  (LinearMap.mul ℤ ℤ).compr₂ (LinearMap.toSpanSingleton ℤ (AddCircle (1 : ℚ)) a)
 
-private theorem cyclicBilin_apply (x y : ℤ) : cyclicBilin a x y = (x * y) • a := by
-  rw [cyclicBilin, LinearMap.mk₂_apply]
+private theorem cyclicBilin_apply (x y : ℤ) : cyclicBilin a x y = (x * y) • a := (rfl)
 
 /-- The quadratic map `x ↦ x²a` on `ℤ`. -/
 private def cyclicAux : QuadraticMap ℤ ℤ (AddCircle (1 : ℚ)) :=
@@ -130,19 +127,13 @@ include hq hp
 
 /-- The quadratic map on `ℤ/m` sending the generator `1` to `a`. -/
 noncomputable def cyclicMap : QuadraticMap ℤ (ZMod m) (AddCircle (1 : ℚ)) :=
-  ((cyclicAux a).lift (LinearMap.ker (zmodProj m))
-      (ker_zmodProj_le_radical m a hq hp)).comp
-    ((zmodProj m).quotKerEquivOfSurjective (zmodProj_surjective m)).symm.toLinearMap
+  QuadraticMap.liftOfSurjective (cyclicAux a) (zmodProj m) (zmodProj_surjective m)
+    (ker_zmodProj_le_radical m a hq hp)
 
 /-- The value of `cyclicMap` on the reduction of an integer. -/
 theorem cyclicMap_intCast (k : ℤ) :
     cyclicMap m a hq hp (k : ZMod m) = (k * k) • a := by
-  have hsymm :
-      ((zmodProj m).quotKerEquivOfSurjective (zmodProj_surjective m)).symm (k : ZMod m) =
-        Submodule.Quotient.mk k := by
-    rw [← zmodProj_apply m k, LinearMap.quotKerEquivOfSurjective_symm_apply]
-  rw [cyclicMap, QuadraticMap.comp_apply, LinearEquiv.coe_coe, hsymm, QuadraticMap.lift_mk,
-    cyclicAux_apply]
+  rw [cyclicMap, ← zmodProj_apply m k, QuadraticMap.liftOfSurjective_apply, cyclicAux_apply]
 
 @[simp]
 theorem cyclicMap_one : cyclicMap m a hq hp 1 = a := by
@@ -163,13 +154,8 @@ theorem polar_cyclicMap_one_one :
   simpa using polar_cyclicMap_intCast m a hq hp 1 1
 
 /-- **The finite quadratic module on `ℤ/m` whose generator has value `a`.** -/
-@[expose] noncomputable def cyclic [NeZero m] : FiniteQuadraticModule where
-  toFiniteBilinearModule := {
-    carrier := ZMod m
-    pairing := LinearMap.toAddMonoidHom'.comp (cyclicMap m a hq hp).polarBilin.toAddMonoidHom
-    pairing_comm := fun x y ↦ QuadraticMap.polar_comm (cyclicMap m a hq hp) x y }
-  quadratic := cyclicMap m a hq hp
-  polar_eq_pairing' := fun _ _ ↦ (rfl)
+@[expose] noncomputable def cyclic [NeZero m] : FiniteQuadraticModule :=
+  ofQuadraticMap (cyclicMap m a hq hp)
 
 @[simp]
 theorem cyclic_quadratic [NeZero m] (x : ZMod m) :

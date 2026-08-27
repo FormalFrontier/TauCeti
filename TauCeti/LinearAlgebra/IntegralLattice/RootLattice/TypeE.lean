@@ -322,51 +322,44 @@ theorem discriminantPairing_typeE₆MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- The type-`E₆` generator value `2/3` is killed by `9`, so it is a legitimate quadratic value
-on `ℤ/3`. -/
-theorem typeE₆QuadraticValue_sq_torsion :
-    (9 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
-  change ((((9 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
-  rw [QuotientAddGroup.eq_zero_iff]
-  exact ⟨6, by norm_num⟩
-
-/-- The type-`E₆` generator value `2/3` is killed by `6`, so its polar form descends to `ℤ/3`. -/
-theorem typeE₆QuadraticValue_polar_torsion :
-    (6 : ℤ) • ((((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
-  change ((((6 : ℚ) * (2 / 3)) : ℚ) : AddCircle (1 : ℚ)) = 0
-  rw [QuotientAddGroup.eq_zero_iff]
-  exact ⟨4, by norm_num⟩
-
-/-- The quadratic map on `ZMod 3` whose generator has value `2/3`. -/
-noncomputable def typeE₆StandardQuadraticMap :
-    QuadraticMap ℤ (ZMod 3) (AddCircle (1 : ℚ)) :=
-  FiniteQuadraticModule.cyclicMap 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
-    typeE₆QuadraticValue_sq_torsion typeE₆QuadraticValue_polar_torsion
-
-/-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`. -/
+/-- The standard cyclic quadratic module of type `E₆`, on `ZMod 3`: the generator carries the
+discriminant value `2/3` of the minuscule weight.  The two torsion conditions demanded by the
+cyclic construction are `9 · (2/3) = 6` and `6 · (2/3) = 4`, both integers. -/
 @[expose] noncomputable def typeE₆StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 3 (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ))
-    typeE₆QuadraticValue_sq_torsion typeE₆QuadraticValue_polar_torsion
+    (by
+      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
+      refine ⟨6, ?_⟩
+      rw [zsmul_eq_mul, zsmul_eq_mul]
+      push_cast
+      ring)
+    (by
+      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
+      refine ⟨4, ?_⟩
+      rw [zsmul_eq_mul, zsmul_eq_mul]
+      push_cast
+      ring)
 
-/-- The generator of the standard type-`E₆` quadratic map has value `2/3`. -/
+/-- The generator of the standard type-`E₆` quadratic module has value `2/3`. -/
 @[simp]
-theorem typeE₆StandardQuadraticMap_one :
-    typeE₆StandardQuadraticMap 1 =
-      (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ)) :=
-  FiniteQuadraticModule.cyclicMap_one 3 _ _ _
+theorem typeE₆StandardQuadraticModule_quadratic_one :
+    typeE₆StandardQuadraticModule.quadratic (1 : ZMod 3) =
+      (((2 : ℚ) / 3 : ℚ) : AddCircle (1 : ℚ)) := by
+  unfold typeE₆StandardQuadraticModule
+  rw [FiniteQuadraticModule.cyclic_quadratic, FiniteQuadraticModule.cyclicMap_one]
 
 /-- The standard cyclic quadratic module of type `E₆` is isometric to the discriminant
 quadratic module of the `E₆` root lattice. -/
 noncomputable def typeE₆DiscriminantQuadraticIsometry :
     FiniteQuadraticModule.Isometry typeE₆StandardQuadraticModule
       (typeE₆RootLattice.discriminantQuadraticModule isEven_typeE₆RootLattice) :=
-  FiniteQuadraticModule.cyclicIsometryOfGenerator 3 typeE₆StandardQuadraticMap
+  FiniteQuadraticModule.cyclicIsometryOfGenerator 3
+    (FiniteQuadraticModule.cyclicMap 3 _ _ _)
     (typeE₆RootLattice.discriminantQuadraticMap isEven_typeE₆RootLattice)
     typeE₆DiscriminantGroupEquiv (by
       rw [typeE₆DiscriminantGroupEquiv_apply_one,
-        discriminantQuadraticMap_typeE₆MinusculeWeightClass, typeE₆StandardQuadraticMap_one])
+        discriminantQuadraticMap_typeE₆MinusculeWeightClass,
+        FiniteQuadraticModule.cyclicMap_one])
 
 /-- The underlying additive equivalence of the type-`E₆` quadratic isometry. -/
 @[simp]
@@ -610,43 +603,44 @@ theorem discriminantPairing_typeE₇MinusculeWeightClass :
     AddCircle.coe_eq_zero_iff_mem_one]
   exact Submodule.mem_one.mpr ⟨1, by norm_num⟩
 
-/-- The type-`E₇` generator value `3/4` is killed by `4`, which is both the square and the twice
-condition for `ℤ/2`. -/
-theorem typeE₇QuadraticValue_torsion :
-    (4 : ℤ) • ((((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))) = 0 := by
-  -- Expand the integer action through the quotient map `ℚ → ℚ/ℤ`.
-  change ((((4 : ℚ) * (3 / 4)) : ℚ) : AddCircle (1 : ℚ)) = 0
-  rw [QuotientAddGroup.eq_zero_iff]
-  exact ⟨3, by norm_num⟩
-
-/-- The quadratic map on `ZMod 2` whose generator has value `3/4`. -/
-noncomputable def typeE₇StandardQuadraticMap :
-    QuadraticMap ℤ (ZMod 2) (AddCircle (1 : ℚ)) :=
-  FiniteQuadraticModule.cyclicMap 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
-    typeE₇QuadraticValue_torsion typeE₇QuadraticValue_torsion
-
-/-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`. -/
+/-- The standard cyclic quadratic module of type `E₇`, on `ZMod 2`: the generator carries the
+discriminant value `3/4` of the minuscule weight.  Here `4` is at once the square and the twice
+condition demanded by the cyclic construction, and `4 · (3/4) = 3` is an integer. -/
 @[expose] noncomputable def typeE₇StandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic 2 (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ))
-    typeE₇QuadraticValue_torsion typeE₇QuadraticValue_torsion
+    (by
+      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
+      refine ⟨3, ?_⟩
+      rw [zsmul_eq_mul, zsmul_eq_mul]
+      push_cast
+      ring)
+    (by
+      rw [← AddCircle.coe_zsmul, AddCircle.coe_eq_zero_iff]
+      refine ⟨3, ?_⟩
+      rw [zsmul_eq_mul, zsmul_eq_mul]
+      push_cast
+      ring)
 
-/-- The generator of the standard type-`E₇` quadratic map has value `3/4`. -/
+/-- The generator of the standard type-`E₇` quadratic module has value `3/4`. -/
 @[simp]
-theorem typeE₇StandardQuadraticMap_one :
-    typeE₇StandardQuadraticMap 1 =
-      (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) :=
-  FiniteQuadraticModule.cyclicMap_one 2 _ _ _
+theorem typeE₇StandardQuadraticModule_quadratic_one :
+    typeE₇StandardQuadraticModule.quadratic (1 : ZMod 2) =
+      (((3 : ℚ) / 4 : ℚ) : AddCircle (1 : ℚ)) := by
+  unfold typeE₇StandardQuadraticModule
+  rw [FiniteQuadraticModule.cyclic_quadratic, FiniteQuadraticModule.cyclicMap_one]
 
 /-- The standard cyclic quadratic module of type `E₇` is isometric to the discriminant
 quadratic module of the `E₇` root lattice. -/
 noncomputable def typeE₇DiscriminantQuadraticIsometry :
     FiniteQuadraticModule.Isometry typeE₇StandardQuadraticModule
       (typeE₇RootLattice.discriminantQuadraticModule isEven_typeE₇RootLattice) :=
-  FiniteQuadraticModule.cyclicIsometryOfGenerator 2 typeE₇StandardQuadraticMap
+  FiniteQuadraticModule.cyclicIsometryOfGenerator 2
+    (FiniteQuadraticModule.cyclicMap 2 _ _ _)
     (typeE₇RootLattice.discriminantQuadraticMap isEven_typeE₇RootLattice)
     typeE₇DiscriminantGroupEquiv (by
       rw [typeE₇DiscriminantGroupEquiv_apply_one,
-        discriminantQuadraticMap_typeE₇MinusculeWeightClass, typeE₇StandardQuadraticMap_one])
+        discriminantQuadraticMap_typeE₇MinusculeWeightClass,
+        FiniteQuadraticModule.cyclicMap_one])
 
 /-- The underlying additive equivalence of the type-`E₇` quadratic isometry. -/
 @[simp]

@@ -51,8 +51,8 @@ For odd `n` the single value `q(s) = n / 8` already presents the form, because `
 cyclic group `ℤ/4`: `checkerboardCyclicQuadraticModule` is the cyclic model and
 `checkerboardCyclicQuadraticIsometry` is an isometry from it onto `A_L`.  The model records the
 whole of the odd `Dₙ` table row, since its value at `2` is the vector value `q(v) = 1 / 2` — an
-equality which holds in `ℚ/ℤ` exactly because `n` is odd — and its generator self-pairing is
-`b(s, s) = n / 4`.
+equality which holds in `ℚ/ℤ` exactly because `n` is odd, and `2` is carried to `v` by
+`checkerboardCyclicQuadraticIsometry_two` — and its generator self-pairing is `b(s, s) = n / 4`.
 
 The representatives are the ones fixed by Conway and Sloane, so that later glue calculations —
 in particular the enlargement of `D₈` to `E₈` — can reuse them without a change of
@@ -841,9 +841,9 @@ omit [NeZero n] in
 /-- **For odd `n` the vector class is twice the spinor class**, so the discriminant group is
 cyclic of order four. -/
 theorem two_zsmul_checkerboardSpinorClass_of_odd (hn : Odd n) :
-    letI : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+    letI : NeZero n := NeZero.of_pos hn.pos
     (2 : ℤ) • checkerboardSpinorClass n = checkerboardVectorClass n := by
-  let _ : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+  let _ : NeZero n := NeZero.of_pos hn.pos
   obtain ⟨k, hk⟩ := hn
   rw [← sub_eq_zero, checkerboardSpinorClass, checkerboardVectorClass, ← Submodule.Quotient.mk_smul,
     ← Submodule.Quotient.mk_sub, discriminantGroup_mk_eq_zero_iff, checkerboardLattice_carrier]
@@ -876,7 +876,7 @@ omit [NeZero n] in
 spinor class. -/
 noncomputable def zmodFourAddEquivCheckerboardDiscriminantGroup (hn : Odd n) :
     ZMod 4 ≃+ (checkerboardLattice n).DiscriminantGroup := by
-  let _ : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+  let _ : NeZero n := NeZero.of_pos hn.pos
   exact
     zmodAddEquivOfGenerator (g := checkerboardSpinorClass n)
       (fun x ↦ by
@@ -897,9 +897,9 @@ omit [NeZero n] in
 /-- The odd-rank identification sends the generator `1` of `ℤ/4` to the spinor class. -/
 @[simp]
 theorem zmodFourAddEquivCheckerboardDiscriminantGroup_apply_one (hn : Odd n) :
-    letI : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+    letI : NeZero n := NeZero.of_pos hn.pos
     zmodFourAddEquivCheckerboardDiscriminantGroup n hn 1 = checkerboardSpinorClass n := by
-  let _ : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+  let _ : NeZero n := NeZero.of_pos hn.pos
   rw [zmodFourAddEquivCheckerboardDiscriminantGroup]
   exact zmodAddEquivOfGenerator_apply_one _ _
 
@@ -1185,28 +1185,27 @@ This is the `Dₙ` row of the ADE table for odd `n`: not only is the discriminan
 quadratic form is the displayed one.  A single generator value suffices here, in contrast to the
 three values needed in the even-rank case. -/
 noncomputable def checkerboardCyclicQuadraticIsometry (hn : Odd n) :
-    letI : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+    letI : NeZero n := NeZero.of_pos hn.pos
     FiniteQuadraticModule.Isometry (checkerboardCyclicQuadraticModule n)
-      ((checkerboardLattice n).discriminantQuadraticModule (isEven_checkerboardLattice n)) := by
-  let _ : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
-  exact
-    FiniteQuadraticModule.cyclicIsometryOfGenerator 4
-      (FiniteQuadraticModule.cyclicMap 4 _ _ _)
-      ((checkerboardLattice n).discriminantQuadraticMap (isEven_checkerboardLattice n))
-      (zmodFourAddEquivCheckerboardDiscriminantGroup n hn)
-      (by
-        rw [zmodFourAddEquivCheckerboardDiscriminantGroup_apply_one,
-          discriminantQuadraticMap_checkerboardSpinorClass,
-          FiniteQuadraticModule.cyclicMap_one])
+      ((checkerboardLattice n).discriminantQuadraticModule (isEven_checkerboardLattice n)) :=
+  letI : NeZero n := NeZero.of_pos hn.pos
+  FiniteQuadraticModule.cyclicIsometryOfGenerator 4
+    (FiniteQuadraticModule.cyclicMap 4 _ _ _)
+    ((checkerboardLattice n).discriminantQuadraticMap (isEven_checkerboardLattice n))
+    (zmodFourAddEquivCheckerboardDiscriminantGroup n hn)
+    (by
+      rw [zmodFourAddEquivCheckerboardDiscriminantGroup_apply_one,
+        discriminantQuadraticMap_checkerboardSpinorClass,
+        FiniteQuadraticModule.cyclicMap_one])
 
 omit [NeZero n] in
 /-- The odd-rank quadratic isometry acts through the discriminant-group equivalence. -/
 @[simp]
 theorem checkerboardCyclicQuadraticIsometry_apply (hn : Odd n) (x : ZMod 4) :
-    letI : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+    letI : NeZero n := NeZero.of_pos hn.pos
     checkerboardCyclicQuadraticIsometry n hn x =
       zmodFourAddEquivCheckerboardDiscriminantGroup n hn x := by
-  let _ : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+  let _ : NeZero n := NeZero.of_pos hn.pos
   exact FiniteQuadraticModule.cyclicIsometryOfGenerator_apply 4 _ _ _ _ x
 
 omit [NeZero n] in
@@ -1214,18 +1213,34 @@ omit [NeZero n] in
 not a `simp` lemma: `checkerboardCyclicQuadraticIsometry_apply` already rewrites the left-hand side
 into the shape settled by `zmodFourAddEquivCheckerboardDiscriminantGroup_apply_one`. -/
 theorem checkerboardCyclicQuadraticIsometry_one (hn : Odd n) :
-    letI : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+    letI : NeZero n := NeZero.of_pos hn.pos
     checkerboardCyclicQuadraticIsometry n hn (1 : ZMod 4) = checkerboardSpinorClass n := by
-  let _ : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+  let _ : NeZero n := NeZero.of_pos hn.pos
   rw [checkerboardCyclicQuadraticIsometry_apply,
     zmodFourAddEquivCheckerboardDiscriminantGroup_apply_one]
+
+omit [NeZero n] in
+/-- **The odd-rank quadratic isometry carries the element `2` of `ℤ/4` to the vector class.**
+Together with `checkerboardCyclicQuadraticModule_quadratic_two` this reads the vector value
+`q(v) = 1 / 2` of the table row off the model.  This is not a `simp` lemma, for the same reason as
+`checkerboardCyclicQuadraticIsometry_one`. -/
+theorem checkerboardCyclicQuadraticIsometry_two (hn : Odd n) :
+    letI : NeZero n := NeZero.of_pos hn.pos
+    checkerboardCyclicQuadraticIsometry n hn (2 : ZMod 4) = checkerboardVectorClass n := by
+  let _ : NeZero n := NeZero.of_pos hn.pos
+  have h2 : (2 : ℤ) • (1 : ZMod 4) = (2 : ZMod 4) := by
+    rw [zsmul_eq_mul, mul_one]
+    norm_num
+  rw [checkerboardCyclicQuadraticIsometry_apply, ← h2, map_zsmul,
+    zmodFourAddEquivCheckerboardDiscriminantGroup_apply_one,
+    two_zsmul_checkerboardSpinorClass_of_odd n hn]
 
 omit [NeZero n] in
 /-- **The cyclic `ℤ/4` model is nondegenerate**, since the discriminant form of a nondegenerate
 lattice is. -/
 theorem isNondegenerate_checkerboardCyclicQuadraticModule (hn : Odd n) :
     (checkerboardCyclicQuadraticModule n).IsNondegenerate := by
-  let _ : NeZero n := ⟨by obtain ⟨k, hk⟩ := hn; omega⟩
+  let _ : NeZero n := NeZero.of_pos hn.pos
   exact ((checkerboardCyclicQuadraticIsometry n hn).isNondegenerate_iff).mpr
     (isNondegenerate_discriminantQuadraticModule _ _)
 
