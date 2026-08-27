@@ -72,11 +72,14 @@ theorem isMultiCoupling_piFinTwo (hπ : IsCoupling π (μ 0) (μ 1)) :
 when the original measure is a two-marginal coupling. -/
 @[simp]
 theorem isMultiCoupling_piFinTwo_iff :
-    Measure.IsMultiCoupling (π.map (MeasurableEquiv.piFinTwo X).symm) μ ↔
+    Measure.IsMultiCoupling
+        (π.map (fun p ↦ Fin.cons p.1 (Fin.cons p.2 finZeroElim))) μ ↔
       IsCoupling π (μ 0) (μ 1) := by
   constructor
   · intro hπ'
-    have hpair := hπ'.isCoupling_map_pair 0 1
+    have hπ'' : Measure.IsMultiCoupling (π.map (MeasurableEquiv.piFinTwo X).symm) μ := by
+      simpa only [MeasurableEquiv.piFinTwo_symm_apply] using hπ'
+    have hpair := hπ''.isCoupling_map_pair 0 1
     have hmap :
         (π.map (MeasurableEquiv.piFinTwo X).symm).map (fun x ↦ (x 0, x 1)) = π := by
       rw [Measure.map_map (measurable_pi_apply 0 |>.prodMk (measurable_pi_apply 1))
@@ -88,7 +91,8 @@ theorem isMultiCoupling_piFinTwo_iff :
       rw [hcomp, Measure.map_id]
     rw [hmap] at hpair
     exact hpair
-  · exact IsCoupling.isMultiCoupling_piFinTwo
+  · intro hπ
+    simpa only [MeasurableEquiv.piFinTwo_symm_apply] using hπ.isMultiCoupling_piFinTwo
 
 end IsCoupling
 
