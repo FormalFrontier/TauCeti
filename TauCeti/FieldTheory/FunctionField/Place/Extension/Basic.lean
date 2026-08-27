@@ -40,7 +40,12 @@ distinct modulo `e`.
   maximal ideals, and by the scaling of the order functions. Together with
   `TauCeti.Place.restrict` they say that every place of `F'` lies over exactly one place of `F`.
 * `TauCeti.Place.linearIndependent_mul_pow_of_linearIndependent_residue`: the independence
-  statement carrying the fundamental inequality.
+  statement carrying the fundamental inequality, together with the three ingredients of its
+  proof — `TauCeti.Place.ord_sum_eq_zero_of_isUnit`,
+  `TauCeti.Place.sum_ne_zero_of_linearIndependent_residue` and
+  `TauCeti.Place.ramificationIdx_dvd_ord_sum_of_linearIndependent_residue` — and the
+  ultrametric estimate `TauCeti.Place.sum_ne_zero_of_ord_eq_mul_add_natCast` with
+  `TauCeti.Place.ord_sum_le_of_ord_eq_mul_add_natCast` that combines them.
 * `TauCeti.Place.ramificationIdx_mul_relativeDegree_le_finrank`: `e(P' ∣ P) · f(P' ∣ P) ≤
   [F' : F]`, with `TauCeti.Place.ramificationIdx_le_finrank` and
   `TauCeti.Place.relativeDegree_le_finrank` its two halves (Stichtenoth, Corollary 3.1.12).
@@ -293,9 +298,13 @@ private theorem eq_of_mul_add_natCast_eq {e : ℕ} {j j' : Fin e} {a b : ℤ}
   simp only [key] at h'
   exact Fin.ext (by exact_mod_cast h')
 
-private theorem sum_ne_zero_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F')
+/-- The valuation of a sum whose nonzero terms have pairwise distinct orders is the valuation of a
+term of least order. -/
+private theorem exists_valuation_sum_eq {e : ℕ} (A : Fin e → F')
     (hAord : ∀ j, A j ≠ 0 → ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ))
-    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) : ∑ j, A j ≠ 0 := by
+    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) :
+    ∃ j₀, A j₀ ≠ 0 ∧ P'.ord (A j₀) ≤ P'.ord (A j₁) ∧
+      P'.valuation (∑ j, A j) = P'.valuation (A j₀) := by
   classical
   set J : Finset (Fin e) := {j | A j ≠ 0} with hJdef
   have hJ : J.Nonempty := ⟨j₁, by simp [hJdef, hj₁]⟩
@@ -315,10 +324,28 @@ private theorem sum_ne_zero_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F
         exact fun hcontra ↦ hj.2 (eq_of_mul_add_natCast_eq hcontra)
       have hge := hj₀ j (by simp [hJdef, hAj])
       exact valuation_lt_of_ord_lt P' hAj hj₀A (by omega)
+  exact ⟨j₀, hj₀A, hj₀ j₁ (by simp [hJdef, hj₁]),
+    P'.valuation.map_sum_eq_of_lt (Finset.mem_univ j₀) hlt⟩
+
+/-- **A sum whose nonzero terms have pairwise distinct orders is nonzero.** The hypothesis is the
+form in which the distinctness is met in the extension theory: the order of `A j` is congruent to
+`j` modulo `e`, so no two nonzero terms can cancel. -/
+theorem sum_ne_zero_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F')
+    (hAord : ∀ j, A j ≠ 0 → ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ))
+    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) : ∑ j, A j ≠ 0 := by
+  obtain ⟨j₀, hj₀A, -, hval⟩ := exists_valuation_sum_eq P' A hAord hj₁
   intro hsum
-  have hval := P'.valuation.map_sum_eq_of_lt (Finset.mem_univ j₀) hlt
   rw [hsum, map_zero] at hval
   exact (Valuation.ne_zero_iff _).mpr hj₀A hval.symm
+
+/-- **The order of a sum whose nonzero terms have pairwise distinct orders is the least of them**;
+in particular it is at most the order of any nonzero term. -/
+theorem ord_sum_le_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F')
+    (hAord : ∀ j, A j ≠ 0 → ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ))
+    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) : P'.ord (∑ j, A j) ≤ P'.ord (A j₁) := by
+  obtain ⟨j₀, -, hle, hval⟩ := exists_valuation_sum_eq P' A hAord hj₁
+  calc P'.ord (∑ j, A j) = P'.ord (A j₀) := by simp only [ord_def, hval]
+    _ ≤ P'.ord (A j₁) := hle
 
 /-- A combination of elements of `𝒪_{P'}` with coefficients in `𝒪_P`, one of them a unit, is a
 unit at `P'` as soon as the residues of the elements are independent over the residue field of
@@ -398,6 +425,39 @@ private theorem exists_ord_sum_eq_mul {ι : Type*} [Fintype ι] (s : ι → P'.i
   have hd' : algebraMap F F' (c i₀) ≠ 0 := by simpa using hd
   refine ⟨by rw [hsum]; exact mul_ne_zero hd' hne, ⟨P.ord (c i₀), ?_⟩⟩
   rw [hsum, P'.ord_mul hd' hne, hord, add_zero, ord_algebraMap_restrict k F P' (c i₀)]
+
+/-- A combination of elements of `𝒪_{P'}` with independent residues and coefficients in `𝒪_P`,
+one of them a unit, has order zero at `P'` — that is, it is again a unit there. -/
+theorem ord_sum_eq_zero_of_isUnit {ι : Type*} [Fintype ι] (s : ι → P'.integers)
+    (hind : LinearIndependent (P'.restrict k F).ResidueField
+      fun i ↦ IsLocalRing.residue P'.integers (s i))
+    (b : ι → (P'.restrict k F).integers) {i₀ : ι} (hb₀ : IsUnit (b i₀)) :
+    P'.ord (∑ i, algebraMap F F' (b i : F) * (s i : F')) = 0 :=
+  (ord_sum_eq_zero k F P' s hind b hb₀).2
+
+/-- A nontrivial `F`-combination of elements of `𝒪_{P'}` whose residues are independent over the
+residue field of the place below is nonzero. -/
+theorem sum_ne_zero_of_linearIndependent_residue {ι : Type*} [Fintype ι] (s : ι → P'.integers)
+    (hind : LinearIndependent (P'.restrict k F).ResidueField
+      fun i ↦ IsLocalRing.residue P'.integers (s i))
+    (c : ι → F) {i₁ : ι} (hi₁ : c i₁ ≠ 0) :
+    (∑ i, algebraMap F F' (c i) * (s i : F')) ≠ 0 :=
+  (exists_ord_sum_eq_mul k F P' s hind c hi₁).1
+
+/-- The order at `P'` of an `F`-combination of elements of `𝒪_{P'}` whose residues are independent
+over the residue field of the place below is divisible by the ramification index, because such a
+combination is a scalar in `F` times a unit at `P'`. -/
+theorem ramificationIdx_dvd_ord_sum_of_linearIndependent_residue {ι : Type*} [Fintype ι]
+    (s : ι → P'.integers)
+    (hind : LinearIndependent (P'.restrict k F).ResidueField
+      fun i ↦ IsLocalRing.residue P'.integers (s i))
+    (c : ι → F) :
+    (ramificationIdx F P' : ℤ) ∣ P'.ord (∑ i, algebraMap F F' (c i) * (s i : F')) := by
+  classical
+  by_cases hc : ∀ i, c i = 0
+  · simp [hc]
+  · obtain ⟨i₁, hi₁⟩ := not_forall.mp hc
+    exact (exists_ord_sum_eq_mul k F P' s hind c hi₁).2
 
 /-- **The independence statement behind the fundamental inequality** (Stichtenoth,
 Theorem 3.1.11): if the residues at `P'` of finitely many elements of `𝒪_{P'}` are independent
