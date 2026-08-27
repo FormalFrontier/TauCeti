@@ -474,6 +474,20 @@ theorem star_complexRoot [NeZero e] :
   exact (Complex.inv_eq_conj
     (isPrimitiveRoot_complexRoot.norm'_eq_one (NeZero.ne e))).symm
 
+/-- Complex conjugation sends the distinguished primitive root to its `(e - 1)`-st power. -/
+theorem star_complexRoot_eq_pow [NeZero e] :
+    starRingEnd ℂ (complexRoot e) = complexRoot e ^ (e - 1) := by
+  rw [star_complexRoot]
+  apply inv_eq_of_mul_eq_one_right
+  rw [← pow_succ', Nat.sub_add_cancel (NeZero.pos e)]
+  exact isPrimitiveRoot_complexRoot.pow_eq_one
+
+/-- The distinguished primitive cube root satisfies `ζ² + ζ + 1 = 0`. -/
+theorem complexRoot_three_sq_add_self_add_one_eq_zero :
+    complexRoot 3 ^ 2 + complexRoot 3 + 1 = 0 := by
+  have h := (isPrimitiveRoot_complexRoot (e := 3)).isRoot_cyclotomic (by norm_num)
+  simpa [Polynomial.cyclotomic_three, Polynomial.IsRoot] using h
+
 /-- The distinguished complex root annihilates the integral cyclotomic polynomial. -/
 theorem eval₂_cyclotomic_complexRoot [NeZero e] :
     (cyclotomic e ℤ).eval₂ (Int.castRingHom ℂ) (complexRoot e) = 0 := by

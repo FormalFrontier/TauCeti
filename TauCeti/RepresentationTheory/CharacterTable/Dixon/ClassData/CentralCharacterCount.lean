@@ -33,6 +33,10 @@ the coordinates (`Pi.evalAlgHomEquiv`); the class-algebra dictionary
 `TauCeti.ClassData.modularEigenrowEquiv` renumbers those into the numbered rows the executable
 search returns.
 
+## Main definitions
+
+* `TauCeti.ClassData.modularCentralRows`: candidate rows mapped into a prime field.
+
 ## Main results
 
 * `TauCeti.ClassData.nonempty_conjClasses_equiv_centralCharacterSearch`: under a splitting
@@ -44,6 +48,8 @@ search returns.
   prime.
 * `TauCeti.ClassData.centralCharacterSearch_nonempty`: the trivial central character ensures that
   the search is nonempty over any coefficient field, without a splitting hypothesis.
+* `TauCeti.ClassData.centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime`: a complete
+  set of candidate normalized eigenrows exhausts the good-prime search.
 
 ## Implementation notes
 
@@ -78,6 +84,23 @@ variable {G : Type*} [Group G] [Fintype G] [DecidableEq G]
 namespace ClassData
 
 variable (d : ClassData G) {F : Type*} [Field F] [Fintype F] [DecidableEq F]
+
+/-! ### Identifying a complete set of candidate rows -/
+
+/-- The rows of a numbered matrix, mapped into `ZMod p` and collected without an ordering. -/
+@[expose] def modularCentralRows {R : Type*} (p : ℕ) (f : R → ZMod p)
+    (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R) :
+    Finset (Fin d.numClasses → ZMod p) :=
+  Finset.univ.image fun i j => f (M i j)
+
+omit [Fintype G] [DecidableEq G] in
+/-- A modular row is displayed exactly when it is the mapped image of a matrix row. -/
+@[simp]
+theorem mem_modularCentralRows_iff {R : Type*} {p : ℕ} (f : R → ZMod p)
+    (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    {a : Fin d.numClasses → ZMod p} :
+    a ∈ d.modularCentralRows p f M ↔ ∃ i, (fun j => f (M i j)) = a := by
+  simp [modularCentralRows]
 
 /-- **When the coefficient field splits the centre of `F[G]`, there exists a bijection between the
 conjugacy classes and the rows returned by the executable search.** The bijection is non-canonical
@@ -123,6 +146,23 @@ theorem card_centralCharacterSearch_of_isGoodDixonPrime {p : ℕ} [Fact p.Prime]
     (hp : IsGoodDixonPrime G p) :
     (d.centralCharacterSearch (F := ZMod p)).card = d.numClasses :=
   d.card_centralCharacterSearch hp.nonempty_center_algEquiv_conjClasses
+
+/-- **Displayed normalized eigenrows exhaust the modular central-character search at a good Dixon
+prime** when the displayed set has the required number of rows. -/
+theorem centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime
+    {R : Type*} {p : ℕ} [Fact p.Prime] (hp : IsGoodDixonPrime G p)
+    (f : R → ZMod p) (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    (hone : ∀ i, f (M i (d.index 1)) = 1)
+    (heig : ∀ i, d.IsModularEigenrow (fun j => f (M i j)))
+    (hcard : (d.modularCentralRows p f M).card = d.numClasses) :
+    d.centralCharacterSearch (F := ZMod p) = d.modularCentralRows p f M := by
+  symm
+  apply Finset.eq_of_subset_of_card_le
+  · rw [modularCentralRows, Finset.image_subset_iff]
+    intro i _
+    rw [d.mem_centralCharacterSearch]
+    exact ⟨hone i, heig i⟩
+  · rw [d.card_centralCharacterSearch_of_isGoodDixonPrime hp, hcard]
 
 end ClassData
 

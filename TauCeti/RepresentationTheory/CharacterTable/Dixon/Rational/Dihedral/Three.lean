@@ -112,6 +112,7 @@ theorem isModularEigenrow_dihedralGroupThreeCentralCharacterTable_zmod
 @[simp]
 theorem card_dihedralGroupThreeModularCentralRows :
     ((dihedralClassData 3).modularCentralRows 7
+      (fun x : ℤ => (x : ZMod 7))
       dihedralGroupThreeCentralCharacterTable).card = (dihedralClassData 3).numClasses := by
   decide
 
@@ -121,13 +122,19 @@ theorem dihedralGroupThree_centralCharacterSearch :
     (dihedralClassData 3).centralCharacterSearch
         (F := ZMod dihedralGroupThreeDixonPrimeData.p) =
       (dihedralClassData 3).modularCentralRows dihedralGroupThreeDixonPrimeData.p
+        (fun x : ℤ => (x : ZMod dihedralGroupThreeDixonPrimeData.p))
         dihedralGroupThreeCentralCharacterTable :=
   (dihedralClassData 3).centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime
-    dihedralGroupThreeDixonPrimeData.isGoodDixonPrime dihedralGroupThreeCentralCharacterTable
+    dihedralGroupThreeDixonPrimeData.isGoodDixonPrime
+    (fun x : ℤ => (x : ZMod dihedralGroupThreeDixonPrimeData.p))
+    dihedralGroupThreeCentralCharacterTable
     (by intro i; fin_cases i <;> decide)
     isModularEigenrow_dihedralGroupThreeCentralCharacterTable_zmod
-    (by simpa only [dihedralGroupThreeDixonPrimeData_p] using
-      card_dihedralGroupThreeModularCentralRows)
+    (by
+      change ((dihedralClassData 3).modularCentralRows 7
+        (fun x : ℤ => (x : ZMod 7)) dihedralGroupThreeCentralCharacterTable).card =
+          (dihedralClassData 3).numClasses
+      exact card_dihedralGroupThreeModularCentralRows)
 
 /-- **The rational lift of the modular search is exactly the displayed integral
 central-character table, up to row order.** -/
