@@ -80,11 +80,9 @@ theorem ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot
   let _ : ConnectedSpace (PrimeSpectrum H) := hH_connected
   let _ : ConnectedSpace (PrimeSpectrum K) := hK_connected
   let _ : Algebra.Smooth k P.Ring := by
-    change Algebra.Smooth k H
-    infer_instance
+    simpa only [P] using (inferInstance : Algebra.Smooth k H)
   let _ : IsNoetherianRing P.Ring := by
-    change IsNoetherianRing H
-    exact Algebra.FiniteType.isNoetherianRing k H
+    simpa only [P] using (Algebra.FiniteType.isNoetherianRing k H)
   have hPker : P.ker = (HopfIdeal.ker f).toIdeal := by
     rw [HopfIdeal.ker_toIdeal]
     rfl
@@ -124,12 +122,13 @@ theorem ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot
     (IsScalarTower.toAlgHom k K κ).comp f.toAlgHom
   have hgker : RingHom.ker g = Bialgebra.AugmentationIdeal k H := by
     ext x
-    rw [RingHom.mem_ker, show g x = algebraMap K κ (f x) by rfl,
-      Ideal.algebraMap_residueField_eq_zero]
-    change f x ∈ RingHom.ker (Bialgebra.counitAlgHom k K) ↔
-      x ∈ RingHom.ker (Bialgebra.counitAlgHom k H)
-    simp only [RingHom.mem_ker, Bialgebra.counitAlgHom_apply]
-    rw [CoalgHomClass.counit_comp_apply f x]
+    rw [RingHom.mem_ker]
+    simp only [g, AlgHom.coe_comp, Function.comp_apply, IsScalarTower.toAlgHom_apply]
+    rw [Ideal.algebraMap_residueField_eq_zero]
+    simp only [p, Bialgebra.AugmentationIdeal, RingHom.mem_ker]
+    constructor
+    · exact fun hx ↦ (CoalgHomClass.counit_comp_apply f x).symm.trans hx
+    · exact fun hx ↦ (CoalgHomClass.counit_comp_apply f x).trans hx
   have hbaseChange_zero : P.cotangentComplex.lTensor κ = 0 := by
     apply LinearMap.ext
     intro z
@@ -161,6 +160,8 @@ theorem ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot
           KaehlerDifferential.kerCotangentToTensor_toCotangent] using
           congrArg (KaehlerDifferential.kerCotangentToTensor k H κ) hxzero
       rw [LinearMap.lTensor_tmul, P.cotangentComplex_mk]
+      -- `Extension.CotangentSpace` is an abbreviation for this nested tensor product; exposing
+      -- it is necessary to apply the associativity equivalence `cancelBaseChange` below.
       change a ⊗ₜ[K] (1 ⊗ₜ[H] KaehlerDifferential.D k H (x : H)) = 0
       apply (AlgebraTensorModule.cancelBaseChange H K κ κ
         (KaehlerDifferential k H)).injective
@@ -185,7 +186,7 @@ theorem ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot
   have hrank : Module.rankAtStalk (R := K) P.Cotangent = 0 := by
     apply funext
     intro q
-    change Module.rankAtStalk P.Cotangent q = 0
+    simp only [Pi.zero_apply]
     calc
       Module.rankAtStalk P.Cotangent q =
           Module.rankAtStalk P.Cotangent ⟨p, (inferInstance : p.IsMaximal).isPrime⟩ :=
@@ -216,7 +217,6 @@ theorem ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot
     apply RingHom.ker_ne_top (Bialgebra.counitAlgHom k H).toRingHom
     apply top_unique
     intro x _
-    change x ∈ Bialgebra.AugmentationIdeal k H
     apply hker_aug
     rw [hspan]
     simp
