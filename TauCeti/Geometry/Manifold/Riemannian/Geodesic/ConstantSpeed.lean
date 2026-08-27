@@ -5,35 +5,36 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Geometry.Manifold.Riemannian.Geodesic.Reparametrization
+public import TauCeti.Geometry.Manifold.Riemannian.Geodesic.Basic
 public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.AlongCurve.Metric
 
 /-!
 # Constant speed of geodesics
 
-A geodesic has constant speed on every open preconnected parameter set. We first prove that the
-inner product of its velocity with itself is constant, by differentiating it with the
-metric-product rule and using the geodesic equation. Taking square roots gives the usual
-constant-speed statement.
-
-The open-set formulation is the one used by maximal integral curves, whose parameter domains are
-open intervals. It also yields an all-time specialization directly.
+A geodesic has constant speed on every preconnected parameter set. We first prove that the inner
+product of its within-set velocity with itself is constant, by differentiating it with the
+within-set metric-product rule and using the geodesic equation. Taking square roots gives the usual
+constant-speed statement. On an open set this velocity agrees with the unrestricted
+`curveVelocity` by `curveVelocityWithin_of_mem_nhds`; the all-time specializations below are stated
+directly with `curveVelocity`.
 
 ## Main results
 
-* TauCeti.Manifold.IsGeodesicCurveOn.inner_curveVelocity_eq: squared speed is constant on an
-  open preconnected parameter set.
-* TauCeti.Manifold.IsGeodesicCurveOn.norm_curveVelocity_eq: speed is constant there.
-* TauCeti.Manifold.IsGeodesicCurve.norm_curveVelocity_eq: an all-time geodesic has the same
+* `TauCeti.Manifold.IsGeodesicCurveOn.inner_curveVelocityWithin_self_eq`: squared speed is constant
+  on a preconnected parameter set.
+* `TauCeti.Manifold.IsGeodesicCurveOn.norm_curveVelocityWithin_eq`: speed is constant there.
+* `TauCeti.Manifold.IsGeodesicCurve.inner_curveVelocity_self_eq`: an all-time geodesic has the
+  same squared speed at any two parameters.
+* `TauCeti.Manifold.IsGeodesicCurve.norm_curveVelocity_eq`: an all-time geodesic has the same
   speed at any two parameters.
 
 ## References
 
 * [Geodesics, the exponential map, and the Hopf--Rinow theorem roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HopfRinow/README.md),
   Layer 1, "Constant speed".
-* M. P. do Carmo, Riemannian Geometry, Chapter 3, §2.
+* M. P. do Carmo, *Riemannian Geometry*, Chapter 3, §2.
 * The proof follows the organization of
-  DoCarmoLib/Riemannian/Geodesic/HopfRinow/ConstantSpeed.lean in the Apache-2.0
+  `DoCarmoLib/Riemannian/Geodesic/HopfRinow/ConstantSpeed.lean` in the Apache-2.0
   [frenzymath/Poincare-Conjecture](https://github.com/frenzymath/Poincare-Conjecture)
   repository, revision 24f32e4d600878bfaac6bc2f2f9324175571c321, using Tau Ceti's
   set-aware geodesic predicate and Mathlib's Riemannian norm.
@@ -57,81 +58,69 @@ variable
   [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)]
   {γ : ℝ → M} {s : Set ℝ}
 
-/-- The coordinate reading of the unrestricted velocity of a C² curve is differentiable at
-each point of an open parameter set. -/
-private theorem IsGeodesicCurveOn.differentiableAt_sectionCoord_curveVelocity
-    (h : IsGeodesicCurveOn I γ s) (hs : IsOpen s) {t : ℝ} (ht : t ∈ s) :
-    DifferentiableAt ℝ
-      (sectionCoord (F := E) γ (curveVelocity I γ) (γ t)) t := by
-  let _ : IsManifold I ((1 : ℕ∞ω) + 1) M := IsManifold.of_le (n := 2) (by norm_num)
-  have hγ : ContMDiffOn 𝓘(ℝ, ℝ) I ((1 : ℕ∞ω) + 1) γ s := by
-    norm_num
-    exact h.contMDiffOn
-  have hwithin := (contDiffWithinAt_sectionCoord_curveVelocityWithin γ h.uniqueDiffOn hγ ht
-    (FiberBundle.mem_baseSet_trivializationAt E (TangentSpace I) (γ t))).differentiableWithinAt
-      (by norm_num)
-  have hdiff : DifferentiableAt ℝ
-      (sectionCoord (F := E) γ (curveVelocityWithin I γ s) (γ t)) t :=
-    hwithin.differentiableAt (hs.mem_nhds ht)
-  have heq : sectionCoord (F := E) γ (curveVelocityWithin I γ s) (γ t) =ᶠ[𝓝 t]
-      sectionCoord (F := E) γ (curveVelocity I γ) (γ t) := by
-    filter_upwards [hs.mem_nhds ht] with r hr
-    rw [sectionCoord_apply, sectionCoord_apply,
-      curveVelocityWithin_of_mem_nhds (hs.mem_nhds hr)]
-  exact heq.differentiableAt_iff.mp hdiff
-
-/-- Squared speed is constant along a geodesic. On an open preconnected parameter set, the
-inner product of the velocity with itself has the same value at every two parameters. -/
-theorem IsGeodesicCurveOn.inner_curveVelocity_eq
-    (h : IsGeodesicCurveOn I γ s) (hs : IsOpen s) (hconn : IsPreconnected s)
+/-- Squared speed is constant along a geodesic. On a preconnected parameter set, the inner product
+of the within-set velocity with itself has the same value at every two parameters. On an open set
+this velocity agrees with the unrestricted `curveVelocity` by
+`curveVelocityWithin_of_mem_nhds`. -/
+theorem IsGeodesicCurveOn.inner_curveVelocityWithin_self_eq
+    (h : IsGeodesicCurveOn I γ s) (hconn : IsPreconnected s)
     {a b : ℝ} (ha : a ∈ s) (hb : b ∈ s) :
-    inner ℝ (curveVelocity I γ a) (curveVelocity I γ a) =
-      inner ℝ (curveVelocity I γ b) (curveVelocity I γ b) := by
-  have hzero := (isGeodesicCurveOn_iff_of_isOpen hs).mp h |>.2
+    inner ℝ (curveVelocityWithin I γ s a) (curveVelocityWithin I γ s a) =
+      inner ℝ (curveVelocityWithin I γ s b) (curveVelocityWithin I γ s b) := by
   have hmetric := (isLeviCivita_leviCivita (I := I) (M := M)).isMetricCompatible
-  apply hs.is_const_of_deriv_eq_zero (f := fun t ↦
-    inner ℝ (curveVelocity I γ t) (curveVelocity I γ t)) hconn
+  apply hconn.ordConnected.convex.is_const_of_fderivWithin_eq_zero
+    (𝕜 := ℝ)
+    (f := fun t : ℝ ↦
+      inner ℝ (curveVelocityWithin I γ s t) (curveVelocityWithin I γ s t))
   · intro t ht
-    have hγt : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t :=
-      (h.contMDiffOn.contMDiffAt (hs.mem_nhds ht)).mdifferentiableAt (by norm_num)
-    exact (hmetric.differentiableAt_inner_alongCurve hγt
-      (h.differentiableAt_sectionCoord_curveVelocity hs ht)
-      (h.differentiableAt_sectionCoord_curveVelocity hs ht)).differentiableWithinAt
+    have hcoord := differentiableWithinAt_sectionCoord_curveVelocityWithin γ h.uniqueDiffOn
+      h.contMDiffOn ht (FiberBundle.mem_baseSet_trivializationAt E (TangentSpace I) (γ t))
+    exact hmetric.differentiableWithinAt_inner (h.uniqueDiffOn t ht)
+      (h.mdifferentiableOn t ht) hcoord hcoord
   · intro t ht
-    have hγt : MDifferentiableAt 𝓘(ℝ, ℝ) I γ t :=
-      (h.contMDiffOn.contMDiffAt (hs.mem_nhds ht)).mdifferentiableAt (by norm_num)
-    rw [hmetric.deriv_inner_alongCurve hγt
-      (h.differentiableAt_sectionCoord_curveVelocity hs ht)
-      (h.differentiableAt_sectionCoord_curveVelocity hs ht), hzero t ht]
-    simp
+    have hcoord := differentiableWithinAt_sectionCoord_curveVelocityWithin γ h.uniqueDiffOn
+      h.contMDiffOn ht (FiberBundle.mem_baseSet_trivializationAt E (TangentSpace I) (γ t))
+    have hprod := hmetric.hasDerivWithinAt_inner_alongCurveWithin (h.uniqueDiffOn t ht)
+      (h.mdifferentiableOn t ht) hcoord hcoord
+    have hderiv : HasDerivWithinAt (fun r ↦
+        inner ℝ (curveVelocityWithin I γ s r) (curveVelocityWithin I γ s r)) 0 s t :=
+      hprod.congr_deriv (by
+        rw [h.alongCurveWithin_curveVelocityWithin_eq_zero t ht]
+        simp)
+    simpa using hderiv.hasFDerivWithinAt.fderivWithin (h.uniqueDiffOn t ht)
   · exact ha
   · exact hb
 
-/-- A geodesic has constant speed. On an open preconnected parameter set, the norm of its
-velocity has the same value at every two parameters. -/
-theorem IsGeodesicCurveOn.norm_curveVelocity_eq
-    (h : IsGeodesicCurveOn I γ s) (hs : IsOpen s) (hconn : IsPreconnected s)
+/-- A geodesic has constant speed. On a preconnected parameter set, the norm of its within-set
+velocity has the same value at every two parameters. On an open set this velocity agrees with the
+unrestricted `curveVelocity` by `curveVelocityWithin_of_mem_nhds`. -/
+theorem IsGeodesicCurveOn.norm_curveVelocityWithin_eq
+    (h : IsGeodesicCurveOn I γ s) (hconn : IsPreconnected s)
     {a b : ℝ} (ha : a ∈ s) (hb : b ∈ s) :
-    ‖curveVelocity I γ a‖ = ‖curveVelocity I γ b‖ := by
+    ‖curveVelocityWithin I γ s a‖ = ‖curveVelocityWithin I γ s b‖ := by
   rw [norm_eq_sqrt_real_inner, norm_eq_sqrt_real_inner,
-    h.inner_curveVelocity_eq hs hconn ha hb]
+    h.inner_curveVelocityWithin_self_eq hconn ha hb]
 
-/-- An all-time geodesic has the same squared speed at every two parameters. -/
-theorem IsGeodesicCurve.inner_curveVelocity_eq
+/-- An all-time geodesic has the same squared speed, expressed using the unrestricted
+`curveVelocity`, at every two parameters. -/
+theorem IsGeodesicCurve.inner_curveVelocity_self_eq
     (h : IsGeodesicCurve I γ) (a b : ℝ) :
     inner ℝ (curveVelocity I γ a) (curveVelocity I γ a) =
-      inner ℝ (curveVelocity I γ b) (curveVelocity I γ b) :=
-  IsGeodesicCurveOn.inner_curveVelocity_eq
-    ((isGeodesicCurveOn_univ (I := I) (γ := γ)).mpr h) isOpen_univ isPreconnected_univ
-    (Set.mem_univ a) (Set.mem_univ b)
+      inner ℝ (curveVelocity I γ b) (curveVelocity I γ b) := by
+  simpa only [curveVelocityWithin_univ] using
+    IsGeodesicCurveOn.inner_curveVelocityWithin_self_eq
+      ((isGeodesicCurveOn_univ (I := I) (γ := γ)).mpr h) isPreconnected_univ
+      (Set.mem_univ a) (Set.mem_univ b)
 
-/-- An all-time geodesic has the same speed at every two parameters. -/
+/-- An all-time geodesic has the same speed, expressed using the unrestricted `curveVelocity`, at
+every two parameters. -/
 theorem IsGeodesicCurve.norm_curveVelocity_eq
     (h : IsGeodesicCurve I γ) (a b : ℝ) :
-    ‖curveVelocity I γ a‖ = ‖curveVelocity I γ b‖ :=
-  IsGeodesicCurveOn.norm_curveVelocity_eq
-    ((isGeodesicCurveOn_univ (I := I) (γ := γ)).mpr h) isOpen_univ isPreconnected_univ
-    (Set.mem_univ a) (Set.mem_univ b)
+    ‖curveVelocity I γ a‖ = ‖curveVelocity I γ b‖ := by
+  simpa only [curveVelocityWithin_univ] using
+    IsGeodesicCurveOn.norm_curveVelocityWithin_eq
+      ((isGeodesicCurveOn_univ (I := I) (γ := γ)).mpr h) isPreconnected_univ
+      (Set.mem_univ a) (Set.mem_univ b)
 
 end TauCeti.Manifold
 
