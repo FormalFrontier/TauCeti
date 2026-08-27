@@ -45,6 +45,8 @@ specialty, and are not proved here.
 * `TauCeti.weilDifferentialFiltration_antitone` and `TauCeti.mem_weilDifferentialSpace_iff`: the
   filtration is antitone and directed, so a `k`-linear form is a Weil differential exactly when
   some single divisor bounds it.
+* `TauCeti.weilDifferentialFiltration_sup`: `Ω_F(D ⊔ E) = Ω_F(D) ∩ Ω_F(E)`, the step towards the
+  divisor of a Weil differential.
 * `TauCeti.weilDifferentialFiltration_eq_bot_iff`: `Ω_F(D) = 0` exactly when every repartition
   differs from a constant by one bounded by `D`.
 * `TauCeti.repartitionDualMul_mem_weilDifferentialFiltration_iff`: for `z ∈ Fˣ`, a linear form
@@ -145,6 +147,18 @@ theorem weilDifferentialFiltration_antitone :
       Submodule k (Module.Dual k ↥(repartitionSpace k F))) := fun _ _ h ↦
   Submodule.dualAnnihilator_anti (submoduleOfAdeleFiltrationSupDiagonalRepartitions_mono h)
 
+/-- **The divisors bounding a fixed Weil differential are closed under pointwise maximum**:
+`Ω_F(D ⊔ E) = Ω_F(D) ∩ Ω_F(E)`.  Both `Ω_F(D)` and `A_F(D) + F` turn the pointwise maximum of
+divisors into a lattice operation — `TauCeti.submoduleOfAdeleFiltrationSupDiagonalRepartitions_sup`
+— and annihilators take the resulting sum to an intersection.  This is what makes the set of
+divisors bounding a nonzero Weil differential have a greatest element. -/
+@[simp]
+theorem weilDifferentialFiltration_sup (D E : Divisor k F) :
+    weilDifferentialFiltration (D ⊔ E) =
+      weilDifferentialFiltration D ⊓ weilDifferentialFiltration E := by
+  rw [weilDifferentialFiltration, weilDifferentialFiltration, weilDifferentialFiltration,
+    submoduleOfAdeleFiltrationSupDiagonalRepartitions_sup, Submodule.dualAnnihilator_sup_eq]
+
 /-- **`Ω_F(D)` vanishes exactly when `A_F(D) + F` is everything**: the only `k`-linear form on
 `A_F` vanishing on `A_F(D) + F` is `0` precisely when every repartition already differs from a
 constant by one whose poles are bounded by `D`. -/
@@ -204,6 +218,20 @@ theorem repartitionDualMul_apply_apply (hF : IsFunctionField k F) (f : F)
     repartitionDualMul hF f ω a = ω (repartitionMul hF f a) :=
   (rfl)
 
+/-- Multiplying by a nonzero function is invertible on the linear forms on `A_F`: multiplying back
+by the inverse function recovers the form. -/
+theorem repartitionDualMul_inv_repartitionDualMul (hF : IsFunctionField k F) (z : Fˣ)
+    (ω : Module.Dual k ↥(repartitionSpace k F)) :
+    repartitionDualMul hF ((z⁻¹ : Fˣ) : F) (repartitionDualMul hF (z : F) ω) = ω := by
+  rw [← Module.End.mul_apply, ← map_mul]
+  simp
+
+/-- Multiplying a nonzero linear form on `A_F` by a nonzero function leaves it nonzero. -/
+theorem repartitionDualMul_ne_zero (hF : IsFunctionField k F) (z : Fˣ)
+    {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ≠ 0) :
+    repartitionDualMul hF (z : F) ω ≠ 0 := fun h ↦ hω <| by
+  rw [← repartitionDualMul_inv_repartitionDualMul hF z ω, h, map_zero]
+
 /-- **Multiplication translates the filtration by a principal divisor**: for a nonzero function
 `z`, a linear form is bounded by `D` exactly when `z · ω` is bounded by `D + div z`, exactly as
 multiplication by `z` carries `A_F(D + div z)` into `A_F(D)`. -/
@@ -226,9 +254,7 @@ theorem repartitionDualMul_mem_weilDifferentialFiltration_iff (hF : IsFunctionFi
       rw [coe_repartitionMul_apply]
       exact smul_mem_diagonalRepartitions (y : F) ha
   refine ⟨fun h ↦ ?_, key z D ω⟩
-  have hzz : repartitionDualMul hF ((z⁻¹ : Fˣ) : F) (repartitionDualMul hF (z : F) ω) = ω := by
-    rw [← Module.End.mul_apply, ← map_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
-      map_one, Module.End.one_apply]
+  have hzz := repartitionDualMul_inv_repartitionDualMul hF z ω
   have hD : D + Divisor.principal hF z + Divisor.principal hF z⁻¹ = D := by
     rw [Divisor.principal_inv, add_neg_cancel_right]
   have h' := key z⁻¹ _ _ h
