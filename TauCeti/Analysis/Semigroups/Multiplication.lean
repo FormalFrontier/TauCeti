@@ -145,7 +145,7 @@ theorem StronglyContinuousSemigroup.ofMultiplication_apply (m : α →ᵇ ℝ) (
     ofMultiplication m t =
       ContinuousLinearMap.mul ℝ (α →ᵇ ℝ)
         (BoundedContinuousFunction.expNegMul (t : ℝ) m) := by
-  rw [ofMultiplication_eq_ofBounded, ofBounded_apply, expNegMul_eq_exp, ← map_smul,
+  rw [ofMultiplication, ofBounded_apply, expNegMul_eq_exp, ← map_smul,
     TauCeti.Lie.exp_mulLeft]
 
 /-- The multiplication semigroup at time `t` acts on `f` by multiplication with `e^{-t·m}`. -/
@@ -372,13 +372,6 @@ theorem ContractionSemigroup.ofMultiplication_resolvent_eq (m : α →ᵇ ℝ) (
     (ContractionSemigroup.ofMultiplication m hm) c hc).trans ?_
   simp only [ofMultiplication_toStronglyContinuousSemigroup]
   simpa [hneg] using StronglyContinuousSemigroup.ofMultiplication_resolvent_eq m hmc
-
-/-- The concrete resolvent bound `‖R(c)‖ ≤ 1 / c` for the multiplication contraction
-semigroup. -/
-theorem ContractionSemigroup.ofMultiplication_resolvent_norm_le (m : α →ᵇ ℝ) (hm : 0 ≤ m)
-    (c : ℝ) (hc : 0 < c) :
-    ‖(ContractionSemigroup.ofMultiplication m hm).resolvent c hc‖ ≤ 1 / c :=
-  (ContractionSemigroup.ofMultiplication m hm).resolvent_norm_le c hc
 
 end Semigroups
 
