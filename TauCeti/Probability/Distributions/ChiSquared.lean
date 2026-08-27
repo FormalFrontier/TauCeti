@@ -167,6 +167,14 @@ theorem chiSquaredPDFReal_nonneg (hk : 0 < k) (x : ℝ) : 0 ≤ chiSquaredPDFRea
   rw [chiSquaredPDFReal_eq_gammaPDFReal]
   exact gammaPDFReal_nonneg (by positivity) one_half_pos x
 
+/-- The real-valued chi-squared density is measurable. -/
+@[fun_prop]
+theorem measurable_chiSquaredPDFReal (k : ℝ) : Measurable (chiSquaredPDFReal k) := by
+  have h : chiSquaredPDFReal k = gammaPDFReal (k / 2) (1 / 2) :=
+    funext (chiSquaredPDFReal_eq_gammaPDFReal k)
+  rw [h]
+  exact measurable_gammaPDFReal _ _
+
 /-- The chi-squared density is measurable. -/
 @[fun_prop]
 theorem measurable_chiSquaredPDF (k : ℝ) : Measurable (chiSquaredPDF k) := by

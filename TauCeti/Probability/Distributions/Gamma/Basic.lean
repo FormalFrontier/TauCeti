@@ -324,6 +324,7 @@ The formula is obtained from `TauCeti.mgf_id_gammaMeasure` by analytic continuat
 `ProbabilityTheory.complexMGF` and the displayed power are analytic on the half-plane
 `{z | z.re < r}`, and they agree along the real points of that half-plane, which accumulate at
 `0`. -/
+@[simp]
 theorem charFun_gammaMeasure (ha : 0 < a) (hr : 0 < r) (t : ℝ) :
     charFun (gammaMeasure a r) t = (1 - Complex.I * t / r) ^ (-(a : ℂ)) := by
   have hpre : IsPreconnected {z : ℂ | z.re < r} := (convex_halfSpace_re_lt r).isPreconnected
