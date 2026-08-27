@@ -84,24 +84,26 @@ theorem typeDSpinWeight_apply {n : ℕ} (s : Finset (Fin n)) (i : Fin n) :
           (if i ∈ s then 1 else 0) - 1 :=
   (rfl)
 
-private theorem algebraMap_signIndicator {n : ℕ} (s : Finset (Fin n)) (i : Fin n) :
-    algebraMap ℤ ℚ (if i ∈ s then 1 else 0) = spinWeight ℚ s i + 1 / 2 := by
+private theorem algebraMap_signIndicator {K : Type*} [CommRing K] [Invertible (2 : K)]
+    {n : ℕ} (s : Finset (Fin n)) (i : Fin n) :
+    algebraMap ℤ K (if i ∈ s then 1 else 0) = spinWeight K s i + ⅟(2 : K) := by
   classical
   by_cases hi : i ∈ s
   · rw [ite_eq_left hi, map_one, spinWeight_of_mem hi]
-    norm_num
+    rw [← two_mul, mul_invOf_self]
   · rw [ite_eq_right hi, map_zero, spinWeight_of_notMem hi]
-    norm_num
+    simp
 
-/-- In rational coordinates, `typeDSpinWeight` is obtained from the orthonormal sign weight by
-pairing with the simple coroot: take an adjacent difference away from the terminal node and the
-sum of the last two coordinates at the terminal fork node. -/
-theorem algebraMap_typeDSpinWeight_apply {n : ℕ} (s : Finset (Fin n)) (i : Fin n) :
-    algebraMap ℤ ℚ (typeDSpinWeight s i) =
+/-- After mapping to any coefficient ring in which `2` is invertible, `typeDSpinWeight` is obtained
+from the orthonormal sign weight by pairing with the simple coroot: take an adjacent difference
+away from the terminal node and the sum of the last two coordinates at the terminal fork node. -/
+theorem algebraMap_typeDSpinWeight_apply {K : Type*} [CommRing K] [Invertible (2 : K)]
+    {n : ℕ} (s : Finset (Fin n)) (i : Fin n) :
+    algebraMap ℤ K (typeDSpinWeight s i) =
       if h : (i : ℕ) + 1 < n then
-        spinWeight ℚ s i - spinWeight ℚ s (⟨(i : ℕ) + 1, h⟩ : Fin n)
-      else spinWeight ℚ s (⟨(i : ℕ) - 1, by have := i.isLt; omega⟩ : Fin n) +
-        spinWeight ℚ s i := by
+        spinWeight K s i - spinWeight K s (⟨(i : ℕ) + 1, h⟩ : Fin n)
+      else spinWeight K s (⟨(i : ℕ) - 1, by have := i.isLt; omega⟩ : Fin n) +
+        spinWeight K s i := by
   classical
   rw [typeDSpinWeight_apply]
   by_cases hnext : (i : ℕ) + 1 < n
@@ -110,33 +112,36 @@ theorem algebraMap_typeDSpinWeight_apply {n : ℕ} (s : Finset (Fin n)) (i : Fin
     ring
   · simp only [dite_eq_right hnext]
     rw [map_sub, map_add, map_one, algebraMap_signIndicator, algebraMap_signIndicator]
+    ring_nf
+    rw [invOf_mul_self]
     ring
 
 /-- The comparison with half-integer spin weights, as an equality of coordinate vectors. -/
-theorem algebraMap_typeDSpinWeight {n : ℕ} (s : Finset (Fin n)) :
-    (fun i : Fin n => algebraMap ℤ ℚ (typeDSpinWeight s i)) =
+theorem algebraMap_typeDSpinWeight {K : Type*} [CommRing K] [Invertible (2 : K)]
+    {n : ℕ} (s : Finset (Fin n)) :
+    (fun i : Fin n => algebraMap ℤ K (typeDSpinWeight s i)) =
       fun i : Fin n => if h : (i : ℕ) + 1 < n then
-        spinWeight ℚ s i - spinWeight ℚ s (⟨(i : ℕ) + 1, h⟩ : Fin n)
-      else spinWeight ℚ s (⟨(i : ℕ) - 1, by have := i.isLt; omega⟩ : Fin n) +
-        spinWeight ℚ s i := by
+        spinWeight K s i - spinWeight K s (⟨(i : ℕ) + 1, h⟩ : Fin n)
+      else spinWeight K s (⟨(i : ℕ) - 1, by have := i.isLt; omega⟩ : Fin n) +
+        spinWeight K s i := by
   funext i
   exact algebraMap_typeDSpinWeight_apply s i
 
 /-- For a valid type `Dₙ`, the integral coordinate of a spin weight is its pairing with the
 corresponding Bourbaki simple coroot in orthonormal coordinates. Type `D` is simply laced, so the
 simple coroot is `typeDSimpleRoot n hn i`. -/
-theorem algebraMap_typeDSpinWeight_eq_dotProduct {n : ℕ} (hn : 4 ≤ n)
-    (s : Finset (Fin n)) (i : Fin n) :
-    algebraMap ℤ ℚ (typeDSpinWeight s i) =
-      spinWeight ℚ s ⬝ᵥ
-        fun j => algebraMap ℤ ℚ (typeDSimpleRoot n hn i j) := by
+theorem algebraMap_typeDSpinWeight_eq_dotProduct {K : Type*} [CommRing K]
+    [Invertible (2 : K)] {n : ℕ} (hn : 4 ≤ n) (s : Finset (Fin n)) (i : Fin n) :
+    algebraMap ℤ K (typeDSpinWeight s i) =
+      spinWeight K s ⬝ᵥ
+        fun j => algebraMap ℤ K (typeDSimpleRoot n hn i j) := by
   rw [algebraMap_typeDSpinWeight_apply]
   by_cases hnext : (i : ℕ) + 1 < n
   · rw [dite_eq_left hnext]
     have hmap :
-        (fun j => algebraMap ℤ ℚ (typeDSimpleRoot n hn i j)) =
+        (fun j => algebraMap ℤ K (typeDSimpleRoot n hn i j)) =
           (Pi.single i 1 - Pi.single (⟨(i : ℕ) + 1, hnext⟩ : Fin n) 1 :
-            Fin n → ℚ) := by
+            Fin n → K) := by
       rw [typeDSimpleRoot_of_add_one_lt hn hnext]
       funext j
       simp [Pi.sub_apply, Pi.single_apply]
@@ -149,20 +154,20 @@ theorem algebraMap_typeDSpinWeight_eq_dotProduct {n : ℕ} (hn : 4 ≤ n)
     have hprev : (⟨(i : ℕ) - 1, by have := i.isLt; omega⟩ : Fin n) =
         (⟨n - 2, by omega⟩ : Fin n) := by
       apply Fin.ext
-      change (i : ℕ) - 1 = n - 2
+      dsimp only
       omega
     rw [dite_eq_right hnext]
     have hmap :
-        (fun j => algebraMap ℤ ℚ (typeDSimpleRoot n hn i j)) =
+        (fun j => algebraMap ℤ K (typeDSimpleRoot n hn i j)) =
           (Pi.single (⟨n - 2, by omega⟩ : Fin n) 1 +
-            Pi.single (⟨n - 1, by omega⟩ : Fin n) 1 : Fin n → ℚ) := by
+            Pi.single (⟨n - 1, by omega⟩ : Fin n) 1 : Fin n → K) := by
       rw [typeDSimpleRoot_of_not_add_one_lt hn hnext]
       funext j
       simp [Pi.add_apply, Pi.single_apply]
     rw [hmap]
     rw [dotProduct_add, dotProduct_single, dotProduct_single, mul_one, mul_one]
-    exact congrArg₂ (· + ·) (congrArg (spinWeight ℚ s) hprev)
-      (congrArg (spinWeight ℚ s) hi)
+    exact congrArg₂ (· + ·) (congrArg (spinWeight K s) hprev)
+      (congrArg (spinWeight K s) hi)
 
 /-! ## A spanning family -/
 
@@ -195,12 +200,10 @@ private theorem typeDSpinWeight_cut_apply {n : ℕ} (i j : Fin n) :
   simp only [mem_typeDSpinCut_iff]
   by_cases hjnext : (j : ℕ) + 1 < n
   · rw [dite_eq_left hjnext]
-    change (if j ≤ i then 1 else 0) -
-      (if (j : ℕ) + 1 ≤ (i : ℕ) then 1 else 0) = _
+    simp only [Fin.le_def]
     split_ifs <;> omega
   · rw [dite_eq_right hjnext]
-    change (if (j : ℕ) - 1 ≤ (i : ℕ) then 1 else 0) +
-      (if j ≤ i then 1 else 0) - 1 = _
+    simp only [Fin.le_def]
     split_ifs <;> omega
 
 /-- At the terminal node, the cut sign weight is the terminal coordinate basis vector. -/
