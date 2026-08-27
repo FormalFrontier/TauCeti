@@ -110,6 +110,10 @@ private theorem fromBlocks_mem_sp (P Q S : Matrix (Fin (n + 1)) (Fin (n + 1)) �
 def next (i : Fin (n + 1)) (hi : i ≠ Fin.last n) : Fin (n + 1) :=
   (i.castPred hi).succ
 
+/-- The value of the successor of a nonfinal simple-root index. -/
+@[simp] theorem val_next (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
+    (next n i hi).val = i.val + 1 := (rfl)
+
 /-- A nonfinal index precedes its successor. -/
 theorem lt_next (i : Fin (n + 1)) (hi : i ≠ Fin.last n) : i < next n i hi := by
   exact Fin.lt_succ_castPred hi
@@ -264,7 +268,7 @@ def rootWeight (k : Fin (n + 1) ⊕ Fin (n + 1)) (j : Fin (n + 1)) : ℤ :=
   weight n (rootTarget n k) j - weight n (rootSource n k) j
 
 /-- The roots of the raising generators are the rows of the type-`C` Cartan matrix. -/
-theorem rootWeight_inl (i j : Fin (n + 1)) :
+@[simp] theorem rootWeight_inl (i j : Fin (n + 1)) :
     rootWeight n (.inl i) j = CartanMatrix.C (n + 1) i j := by
   by_cases hi : i = Fin.last n
   · subst hi
@@ -280,7 +284,7 @@ theorem rootWeight_inl (i j : Fin (n + 1)) :
 
 /-- The roots of the lowering generators are the negatives of the rows of the type-`C` Cartan
 matrix. -/
-theorem rootWeight_inr (i j : Fin (n + 1)) :
+@[simp] theorem rootWeight_inr (i j : Fin (n + 1)) :
     rootWeight n (.inr i) j = -CartanMatrix.C (n + 1) i j := by
   rw [← rootWeight_inl n i j, rootWeight, rootWeight, rootTarget_inl, rootSource_inr]
   by_cases hi : i = Fin.last n
@@ -293,14 +297,14 @@ theorem rootWeight_inr (i j : Fin (n + 1)) :
     ring
 
 /-- The final raising matrix is a single off-diagonal matrix unit. -/
-private theorem positiveRootMatrix_last :
+theorem positiveRootMatrix_last :
     positiveRootMatrix n (Fin.last n) =
       Matrix.single (.inl (Fin.last n)) (.inr (Fin.last n)) 1 := by
   ext a b
   cases a <;> cases b <;> simp [positiveRootMatrix, Matrix.fromBlocks, Matrix.single_apply]
 
 /-- A nonfinal raising matrix is the difference of its upper and lower matrix units. -/
-private theorem positiveRootMatrix_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
+theorem positiveRootMatrix_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
     positiveRootMatrix n i =
       Matrix.single (.inl i) (.inl (next n i hi)) 1 -
         Matrix.single (.inr (next n i hi)) (.inr i) 1 := by
@@ -309,14 +313,14 @@ private theorem positiveRootMatrix_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last 
     simp [positiveRootMatrix, hi, shortPositiveBlock, Matrix.fromBlocks, Matrix.single_apply]
 
 /-- The final lowering matrix is a single off-diagonal matrix unit. -/
-private theorem negativeRootMatrix_last :
+theorem negativeRootMatrix_last :
     negativeRootMatrix n (Fin.last n) =
       Matrix.single (.inr (Fin.last n)) (.inl (Fin.last n)) 1 := by
   ext a b
   cases a <;> cases b <;> simp [negativeRootMatrix, Matrix.fromBlocks, Matrix.single_apply]
 
 /-- A nonfinal lowering matrix is the difference of its upper and lower matrix units. -/
-private theorem negativeRootMatrix_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
+theorem negativeRootMatrix_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
     negativeRootMatrix n i =
       Matrix.single (.inl (next n i hi)) (.inl i) 1 -
         Matrix.single (.inr i) (.inr (next n i hi)) 1 := by
@@ -343,55 +347,68 @@ private theorem diagonal_commutator_sub (d : (Fin (n + 1) ⊕ Fin (n + 1)) → �
         (Matrix.diagonal d * B - B * Matrix.diagonal d) := by
   noncomm_ring
 
+/-- The matrix commutator of a Cartan generator with a raising generator. -/
+private theorem cartanMatrix_commutator_positiveRootMatrix (i j : Fin (n + 1)) :
+    cartanMatrix n j * positiveRootMatrix n i - positiveRootMatrix n i * cartanMatrix n j =
+      ((rootWeight n (.inl i) j : ℤ) : ℚ) • positiveRootMatrix n i := by
+  rw [cartanMatrix]
+  by_cases hi : i = Fin.last n
+  · subst hi
+    rw [positiveRootMatrix_last, diagonal_commutator_single]
+    simp [rootWeight]
+  · rw [positiveRootMatrix_of_ne n i hi, diagonal_commutator_sub,
+      diagonal_commutator_single, diagonal_commutator_single]
+    rw [rootWeight, rootTarget_inl, rootSource_inl_of_ne n i hi]
+    simp only [weight_inl, Matrix.smul_single, smul_eq_mul, mul_one, weight_inr,
+      Int.cast_neg, sub_neg_eq_add]
+    rw [smul_sub]
+    congr 1
+    · ext a b
+      simp [Matrix.single_apply]
+    · ext a b
+      simp [Matrix.single_apply]
+      split_ifs <;> ring
+
+/-- The matrix commutator of a Cartan generator with a lowering generator. -/
+private theorem cartanMatrix_commutator_negativeRootMatrix (i j : Fin (n + 1)) :
+    cartanMatrix n j * negativeRootMatrix n i - negativeRootMatrix n i * cartanMatrix n j =
+      ((rootWeight n (.inr i) j : ℤ) : ℚ) • negativeRootMatrix n i := by
+  rw [cartanMatrix]
+  by_cases hi : i = Fin.last n
+  · subst hi
+    rw [negativeRootMatrix_last, diagonal_commutator_single]
+    simp [rootWeight]
+  · rw [negativeRootMatrix_of_ne n i hi, diagonal_commutator_sub,
+      diagonal_commutator_single, diagonal_commutator_single]
+    rw [rootWeight, rootTarget_inr_of_ne n i hi, rootSource_inr]
+    simp only [weight_inl, Matrix.smul_single, smul_eq_mul, mul_one, weight_inr,
+      Int.cast_neg, sub_neg_eq_add]
+    rw [smul_sub]
+    congr 1
+    · ext a b
+      simp [Matrix.single_apply]
+    · ext a b
+      simp [Matrix.single_apply]
+      split_ifs <;> ring
+
 /-- The numbered Cartan generators act on the root generators through their recorded root
 characters, equivalently through the type-`C` Cartan matrix and its negatives. -/
 theorem lie_cartanGenerator_rootGenerator (k : Fin (n + 1) ⊕ Fin (n + 1))
     (j : Fin (n + 1)) :
     ⁅cartanGenerator n j, rootGenerator n k⁆ =
       ((rootWeight n k j : ℤ) : ℚ) • rootGenerator n k := by
+  let _ : LieRing (Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
   refine Subtype.ext ?_
-  change cartanMatrix n j * (rootGenerator n k : Matrix _ _ ℚ) -
-      (rootGenerator n k : Matrix _ _ ℚ) * cartanMatrix n j = _
-  rw [cartanMatrix]
   cases k with
   | inl i =>
-      rw [val_rootGenerator_inl]
-      change _ = ((rootWeight n (.inl i) j : ℤ) : ℚ) • positiveRootMatrix n i
-      by_cases hi : i = Fin.last n
-      · subst hi
-        rw [positiveRootMatrix_last, diagonal_commutator_single]
-        simp [rootWeight]
-      · rw [positiveRootMatrix_of_ne n i hi, diagonal_commutator_sub,
-          diagonal_commutator_single, diagonal_commutator_single]
-        rw [rootWeight, rootTarget_inl, rootSource_inl_of_ne n i hi]
-        simp only [weight_inl, Matrix.smul_single, smul_eq_mul, mul_one, weight_inr,
-          Int.cast_neg, sub_neg_eq_add]
-        rw [smul_sub]
-        congr 1
-        · ext a b
-          simp [Matrix.single_apply]
-        · ext a b
-          simp [Matrix.single_apply]
-          split_ifs <;> ring
+      rw [LieSubalgebra.coe_bracket, LieRing.of_associative_ring_bracket,
+        val_cartanGenerator, Submodule.coe_smul, val_rootGenerator_inl]
+      exact cartanMatrix_commutator_positiveRootMatrix n i j
   | inr i =>
-      rw [val_rootGenerator_inr]
-      change _ = ((rootWeight n (.inr i) j : ℤ) : ℚ) • negativeRootMatrix n i
-      by_cases hi : i = Fin.last n
-      · subst hi
-        rw [negativeRootMatrix_last, diagonal_commutator_single]
-        simp [rootWeight]
-      · rw [negativeRootMatrix_of_ne n i hi, diagonal_commutator_sub,
-          diagonal_commutator_single, diagonal_commutator_single]
-        rw [rootWeight, rootTarget_inr_of_ne n i hi, rootSource_inr]
-        simp only [weight_inl, Matrix.smul_single, smul_eq_mul, mul_one, weight_inr,
-          Int.cast_neg, sub_neg_eq_add]
-        rw [smul_sub]
-        congr 1
-        · ext a b
-          simp [Matrix.single_apply]
-        · ext a b
-          simp [Matrix.single_apply]
-          split_ifs <;> ring
+      rw [LieSubalgebra.coe_bracket, LieRing.of_associative_ring_bracket,
+        val_cartanGenerator, Submodule.coe_smul, val_rootGenerator_inr]
+      exact cartanMatrix_commutator_negativeRootMatrix n i j
 
 /-- The action of a numbered simple root generator on the standard module, written in coordinate
 vectors. -/
@@ -517,6 +534,10 @@ noncomputable def latticeBasis :
 def basisWeight (a : Fin ((n + 1) + (n + 1))) : Fin (n + 1) → ℤ :=
   weight n (finSumFinEquiv.symm a)
 
+/-- The enumerated coordinate weight is the weight at the corresponding sum index. -/
+@[simp] theorem basisWeight_apply (a : Fin ((n + 1) + (n + 1))) :
+    basisWeight n a = weight n (finSumFinEquiv.symm a) := (rfl)
+
 /-- A numbered root generator preserves the standard lattice. -/
 theorem rep_rootGenerator_mem_lattice (k : Fin (n + 1) ⊕ Fin (n + 1))
     {v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ} (hv : v ∈ lattice n) :
@@ -627,12 +648,13 @@ theorem span_range_weight_eq_top : Submodule.span ℤ (Set.range (weight n)) = �
 
 /-- Enumerating the coordinate basis does not change the span of its weights. -/
 theorem span_range_basisWeight_eq_top : Submodule.span ℤ (Set.range (basisWeight n)) = ⊤ := by
-  rw [show Set.range (basisWeight n) = Set.range (weight n) by
+  have hrange : Set.range (basisWeight n) = Set.range (weight n) := by
     apply Set.Subset.antisymm
     · rintro _ ⟨a, rfl⟩
       exact ⟨finSumFinEquiv.symm a, rfl⟩
     · rintro _ ⟨a, rfl⟩
-      exact ⟨finSumFinEquiv a, by simp [basisWeight]⟩]
+      exact ⟨finSumFinEquiv a, by simp⟩
+  rw [hrange]
   exact span_range_weight_eq_top n
 
 /-! ## The pinned carrier -/
@@ -793,7 +815,7 @@ theorem torusPoints_conj_rootSubgroupParam (k : Fin (n + 1) ⊕ Fin (n + 1))
 /-- The scheme-level pinning equation: conjugation by the weight torus acts on each numbered root
 subgroup through the corresponding row of the type-`C` Cartan matrix, with negative rows on
 lowering generators. -/
-theorem weightTorus_conj_rootSubgroup (k : Fin (n + 1) ⊕ Fin (n + 1))
+@[simp] theorem weightTorus_conj_rootSubgroup (k : Fin (n + 1) ⊕ Fin (n + 1))
     (A : Type) [CommRing A]
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ (Fin (n + 1))).X)
