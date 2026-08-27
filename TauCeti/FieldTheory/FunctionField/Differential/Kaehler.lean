@@ -7,8 +7,9 @@ module
 
 public import Mathlib.FieldTheory.RatFunc.AsPolynomial
 public import Mathlib.RingTheory.Etale.Field
+public import Mathlib.RingTheory.Etale.Kaehler
 public import Mathlib.RingTheory.Kaehler.Polynomial
-public import TauCeti.RingTheory.Kaehler.FormallyEtale
+public import Mathlib.RingTheory.TensorProduct.IsBaseChangeFree
 
 /-!
 # One-dimensionality of the Kähler differentials of a function field
@@ -28,7 +29,8 @@ under it — so it is carried as a hypothesis rather than bought with a blanket 
 The proof is the base-change route: `k(x)/k` is a localization of the polynomial ring, whose
 differentials are free of rank one on `d X`, and `F/k(x)` is separable, hence formally étale
 (`Algebra.FormallyEtale.of_isSeparable`), so `Ω[F⁄k]` is the base change of `Ω[k(x)⁄k]` along
-`k(x) → F` by `KaehlerDifferential.tensorKaehlerEquivOfFormallyEtale`.
+`k(x) → F` by `KaehlerDifferential.isBaseChange_of_formallyEtale`; `IsBaseChange.basis`
+transports the basis.
 
 ## Main results
 
@@ -65,7 +67,7 @@ variable (k : Type*) [Field k]
 def kaehlerBasisRatFunc : Basis Unit (RatFunc k) Ω[RatFunc k⁄k] :=
   haveI : Algebra.FormallyEtale k[X] (RatFunc k) :=
     Algebra.FormallyEtale.of_isLocalization (Rₘ := RatFunc k) (k[X])⁰
-  kaehlerBasisOfFormallyEtale k k[X] (RatFunc k)
+  (KaehlerDifferential.isBaseChange_of_formallyEtale k k[X] (RatFunc k)).basis
     ((Basis.singleton Unit k[X]).map (KaehlerDifferential.polynomialEquiv k).symm)
 
 @[simp]
@@ -73,15 +75,16 @@ theorem kaehlerBasisRatFunc_apply (i : Unit) :
     kaehlerBasisRatFunc k i = D k (RatFunc k) RatFunc.X := by
   have : Algebra.FormallyEtale k[X] (RatFunc k) :=
     Algebra.FormallyEtale.of_isLocalization (Rₘ := RatFunc k) (k[X])⁰
-  rw [kaehlerBasisRatFunc, kaehlerBasisOfFormallyEtale_apply]
+  rw [kaehlerBasisRatFunc, IsBaseChange.basis_apply]
   simp [KaehlerDifferential.map_D, RatFunc.algebraMap_X]
 
 variable {k} {F : Type*} [Field F] [Algebra k F] {x : F}
 
-/-- The differentials of `F` over `k` are free of rank one on `d x`, for `x` a separating
-element. This is the whole content of the file; the public statements below are read off it. -/
-private theorem exists_basis_unit_D (hx : Transcendental k x) [Algebra.IsSeparable k⟮x⟯ F] :
-    ∃ b : Basis Unit F Ω[F⁄k], b () = D k F x := by
+/-- The base-change basis of `Ω[F⁄k]` on `d x`, for `x` a separating element, bundled with the
+computation of its single vector. This is the whole content of the file; the public statements
+below are read off it. -/
+private def basisAux (hx : Transcendental k x) [Algebra.IsSeparable k⟮x⟯ F] :
+    {b : Basis Unit F Ω[F⁄k] // b () = D k F x} := by
   -- Realize the rational function field inside `F` along `X ↦ x`, and let `F` carry the
   -- resulting `RatFunc k`-algebra structure; it is separable, hence formally étale.
   let e : RatFunc k ≃ₐ[k] k⟮x⟯ := RatFunc.algEquivOfTranscendental x hx
@@ -95,33 +98,32 @@ private theorem exists_basis_unit_D (hx : Transcendental k x) [Algebra.IsSeparab
     Algebra.IsSeparable.of_equiv_equiv e.symm.toRingEquiv (RingEquiv.refl F)
       (by ext r; simp [halg])
   have : Algebra.FormallyEtale (RatFunc k) F := .of_isSeparable _ _
-  refine ⟨kaehlerBasisOfFormallyEtale k (RatFunc k) F (kaehlerBasisRatFunc k), ?_⟩
-  rw [kaehlerBasisOfFormallyEtale_apply, kaehlerBasisRatFunc_apply, KaehlerDifferential.map_D, hX]
+  refine ⟨(KaehlerDifferential.isBaseChange_of_formallyEtale k (RatFunc k) F).basis
+    (kaehlerBasisRatFunc k), ?_⟩
+  rw [IsBaseChange.basis_apply, kaehlerBasisRatFunc_apply, KaehlerDifferential.map_D, hX]
 
 variable [Algebra.IsSeparable k⟮x⟯ F] (hx : Transcendental k x)
 include hx
 
+/-- The differential `d x` of a separating element `x` is a basis of `Ω[F⁄k]`; its coordinate
+function sends `d y` to the derivative `dy/dx`. -/
+def kaehlerBasisOfSeparating (hx : Transcendental k x) : Basis Unit F Ω[F⁄k] :=
+  (basisAux hx).1
+
+@[simp]
+theorem kaehlerBasisOfSeparating_apply (i : Unit) : kaehlerBasisOfSeparating hx i = D k F x := by
+  obtain ⟨⟩ := i
+  exact (basisAux hx).2
+
 /-- The differential of a separating element is nonzero. -/
-theorem D_ne_zero_of_separating : D k F x ≠ 0 := by
-  obtain ⟨b, hb⟩ := exists_basis_unit_D hx
-  exact hb ▸ b.ne_zero ()
+theorem D_ne_zero_of_separating : D k F x ≠ 0 :=
+  kaehlerBasisOfSeparating_apply hx () ▸ (kaehlerBasisOfSeparating hx).ne_zero ()
 
 /-- **The Kähler differentials of a separably generated extension of transcendence degree one
 are one-dimensional**: if `x` is transcendental over `k` and `F` is separable over `k(x)`, then
 `Ω[F⁄k]` is a one-dimensional `F`-vector space. -/
 theorem finrank_kaehlerDifferential_eq_one_of_separating : finrank F Ω[F⁄k] = 1 := by
-  obtain ⟨b, -⟩ := exists_basis_unit_D hx
-  simpa using finrank_eq_card_basis b
-
-/-- The differential `d x` of a separating element `x` is a basis of `Ω[F⁄k]`; its coordinate
-function sends `d y` to the derivative `dy/dx`. -/
-def kaehlerBasisOfSeparating (hx : Transcendental k x) : Basis Unit F Ω[F⁄k] :=
-  FiniteDimensional.basisSingleton Unit
-    (finrank_kaehlerDifferential_eq_one_of_separating hx) (D k F x) (D_ne_zero_of_separating hx)
-
-@[simp]
-theorem kaehlerBasisOfSeparating_apply (i : Unit) : kaehlerBasisOfSeparating hx i = D k F x :=
-  FiniteDimensional.basisSingleton_apply _ _ _ _ i
+  simpa using finrank_eq_card_basis (kaehlerBasisOfSeparating hx)
 
 /-- The differential of a separating element spans all of `Ω[F⁄k]`. -/
 theorem span_D_eq_top_of_separating : Submodule.span F {D k F x} = ⊤ := by
