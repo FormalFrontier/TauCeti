@@ -95,7 +95,6 @@ apiece" bullet of Layer 4 ("knot theory, done properly") of the GeometricTopolog
 
 * J. Birman, *Braids, Links, and Mapping Class Groups*, Annals of Mathematics Studies 82, Princeton
   University Press (1974), Chapter 3 (the reduced Burau representation).
-* W. B. R. Lickorish, *An Introduction to Knot Theory*, Springer GTM 175 (1997), Chapter 3.
 -/
 
 public section
@@ -175,6 +174,7 @@ theorem burauCoordMatrix_apply (n : ℕ) (t : Rˣ) (i : Fin (n - 1)) (a : Fin n)
 /-- **The Burau columns are independent**: at a unit `t` the matrix of Burau columns has an
 explicit left inverse. In particular the submodule they span is free of rank `n - 1` and is a
 direct summand of the free module on the strands. -/
+@[simp]
 theorem burauCoordMatrix_mul_burauColMatrix (n : ℕ) (t : Rˣ) :
     burauCoordMatrix n t * burauColMatrix n (t : R) = 1 := by
   ext i k
@@ -487,7 +487,7 @@ theorem inv_burauMatrix_mul_burauColMatrix (t : Rˣ) (i : Fin (n - 1)) :
 
 /-! ### The braid relations, the inverse and the Hecke relation -/
 
-private theorem reducedBurauSelfPairing (t : R) (i : Fin (n - 1)) :
+private theorem reducedBurauRow_dotProduct_single (t : R) (i : Fin (n - 1)) :
     reducedBurauRow t i ⬝ᵥ Pi.single i 1 = t + 1 := by
   rw [dotProduct_single_one, reducedBurauRow_self]
 
@@ -506,7 +506,7 @@ theorem reducedBurauMatrix_braid (t : R) {i j : Fin (n - 1)}
     reducedBurauMatrix t i * reducedBurauMatrix t j * reducedBurauMatrix t i =
       reducedBurauMatrix t j * reducedBurauMatrix t i * reducedBurauMatrix t j :=
   RankOneMatrix.family_braid_of_adjacent t (fun i => Pi.single i (1 : R)) (reducedBurauRow t)
-    (reducedBurauSelfPairing t)
+    (reducedBurauRow_dotProduct_single t)
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ t h])
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ_rev t h]) h
 
@@ -517,7 +517,7 @@ theorem reducedBurauMatrix_mul_self (t : R) (i : Fin (n - 1)) :
     reducedBurauMatrix t i * reducedBurauMatrix t i =
       (1 - t) • reducedBurauMatrix t i + t • 1 :=
   RankOneMatrix.family_mul_self t (fun i => Pi.single i (1 : R)) (reducedBurauRow t) i
-    (reducedBurauSelfPairing t i)
+    (reducedBurauRow_dotProduct_single t i)
 
 /-! ### The reduced Burau representation -/
 
@@ -525,7 +525,7 @@ theorem reducedBurauMatrix_mul_self (t : R) (i : Fin (n - 1)) :
 `1 - t⁻¹ • vecMulVec (Pi.single i 1) (reducedBurauRow t i)`. -/
 def reducedBurauGL (t : Rˣ) (i : Fin (n - 1)) : GL (Fin (n - 1)) R :=
   RankOneMatrix.unit t (fun i => Pi.single i (1 : R)) (reducedBurauRow (t : R))
-    (reducedBurauSelfPairing (t : R)) i
+    (reducedBurauRow_dotProduct_single (t : R)) i
 
 /-- The matrix underlying `TauCeti.KnotTheory.reducedBurauGL`. -/
 @[simp]
@@ -539,13 +539,13 @@ theorem inv_reducedBurauMatrix (t : Rˣ) (i : Fin (n - 1)) :
     (reducedBurauMatrix (t : R) i)⁻¹ =
       1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (Pi.single i 1) (reducedBurauRow (t : R) i) :=
   RankOneMatrix.inv_family t (fun i => Pi.single i (1 : R)) (reducedBurauRow (t : R)) i
-    (reducedBurauSelfPairing (t : R) i)
+    (reducedBurauRow_dotProduct_single (t : R) i)
 
 /-- **The reduced Burau representation** of the braid group on `n` strands at a unit `t`, sending
 the elementary braid `sigma i` to `TauCeti.KnotTheory.reducedBurauGL t i`. -/
 def reducedBurau (n : ℕ) (t : Rˣ) : BraidGroup n →* GL (Fin (n - 1)) R :=
-  RankOneMatrix.representation n t (fun i => Pi.single i (1 : R)) (reducedBurauRow (t : R))
-    (reducedBurauSelfPairing (t : R))
+  RankOneMatrix.braidRepresentation n t (fun i => Pi.single i (1 : R)) (reducedBurauRow (t : R))
+    (reducedBurauRow_dotProduct_single (t : R))
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent (t : R) h])
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ (t : R) h])
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ_rev (t : R) h])
@@ -555,8 +555,8 @@ matrix. -/
 @[simp]
 theorem reducedBurau_sigma (t : Rˣ) (i : Fin (n - 1)) :
     reducedBurau n t (BraidGroup.sigma i) = (reducedBurauGL t i : GL (Fin (n - 1)) R) :=
-  RankOneMatrix.representation_sigma n t (fun i => Pi.single i (1 : R))
-    (reducedBurauRow (t : R)) (reducedBurauSelfPairing (t : R))
+  RankOneMatrix.braidRepresentation_sigma n t (fun i => Pi.single i (1 : R))
+    (reducedBurauRow (t : R)) (reducedBurauRow_dotProduct_single (t : R))
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent (t : R) h])
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ (t : R) h])
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ_rev (t : R) h]) i
@@ -566,8 +566,8 @@ for the unreduced representation. -/
 theorem det_reducedBurau (t : Rˣ) (b : BraidGroup n) :
     Matrix.GeneralLinearGroup.det (reducedBurau n t b : GL (Fin (n - 1)) R) =
       (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) :=
-  RankOneMatrix.det_representation n t (fun i => Pi.single i (1 : R))
-    (reducedBurauRow (t : R)) (reducedBurauSelfPairing (t : R))
+  RankOneMatrix.det_braidRepresentation n t (fun i => Pi.single i (1 : R))
+    (reducedBurauRow (t : R)) (reducedBurauRow_dotProduct_single (t : R))
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent (t : R) h])
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ (t : R) h])
     (fun h => by rw [dotProduct_single_one, reducedBurauRow_of_succ_rev (t : R) h]) b

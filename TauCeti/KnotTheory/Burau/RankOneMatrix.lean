@@ -17,12 +17,13 @@ have the values occurring in the Burau representation. The braid-independent mat
 
 ## Main definitions
 
-* `TauCeti.RankOneMatrix.representation`: the braid-group representation defined by a family with
-  the Burau pairings.
+* `TauCeti.RankOneMatrix.braidRepresentation`: the braid-group representation defined by a family
+  with the Burau pairings.
 
 ## Main results
 
-* `TauCeti.RankOneMatrix.det_representation`: the determinant character of the representation.
+* `TauCeti.RankOneMatrix.det_braidRepresentation`: the determinant character of the
+  representation.
 -/
 
 public section
@@ -43,7 +44,7 @@ variable [CommRing R] [Fintype α] [DecidableEq α]
 
 /-- The braid-group representation associated to a rank-one matrix family with the Burau
 pairings. -/
-def representation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
+def braidRepresentation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
       v i ⬝ᵥ u j = 0)
@@ -60,30 +61,30 @@ def representation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
 
 /-- A rank-one braid-group representation takes an elementary braid to its corresponding unit. -/
 @[simp]
-theorem representation_sigma (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
+theorem braidRepresentation_sigma (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
       v i ⬝ᵥ u j = 0)
     (hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v i ⬝ᵥ u j = -(t : R))
     (hreverse : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v j ⬝ᵥ u i = -1)
     (i : Fin (n - 1)) :
-    representation n t u v hself hcomm hforward hreverse (BraidGroup.sigma i) =
+    braidRepresentation n t u v hself hcomm hforward hreverse (BraidGroup.sigma i) =
       unit t u v hself i :=
   BraidGroup.lift_sigma _ _ _ i
 
 /-- The determinant character of a rank-one braid-group representation with the Burau
 pairings. -/
-theorem det_representation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
+theorem det_braidRepresentation (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
       v i ⬝ᵥ u j = 0)
     (hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v i ⬝ᵥ u j = -(t : R))
     (hreverse : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v j ⬝ᵥ u i = -1)
     (b : BraidGroup n) :
-    Matrix.GeneralLinearGroup.det (representation n t u v hself hcomm hforward hreverse b) =
+    Matrix.GeneralLinearGroup.det (braidRepresentation n t u v hself hcomm hforward hreverse b) =
       (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) := by
   have key : (Matrix.GeneralLinearGroup.det (n := α) (R := R)).comp
-      (representation n t u v hself hcomm hforward hreverse) =
+      (braidRepresentation n t u v hself hcomm hforward hreverse) =
       (zpowersHom Rˣ (-t)).comp (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1))) := by
     refine BraidGroup.hom_ext fun i => ?_
     apply Units.ext
