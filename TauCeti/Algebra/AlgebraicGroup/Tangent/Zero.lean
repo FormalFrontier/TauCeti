@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 import Mathlib.RingTheory.Ideal.IdempotentFG
-import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
+import TauCeti.RingTheory.Ideal.Cotangent.Basic
 
 /-!
 # Connected affine groups with zero tangent space
@@ -55,21 +55,8 @@ namespace HopfIdeal
 variable {k : Type u} {H : Type v}
 variable [Field k] [CommRing H] [HopfAlgebra k H]
 
-private theorem augmentationIdeal_eq_augmentation_toIdeal :
-    Bialgebra.AugmentationIdeal k H = (augmentation k H).toIdeal := by
-  ext x
-  simp only [Bialgebra.AugmentationIdeal, RingHom.mem_ker, mem_toIdeal,
-    mem_augmentation]
-  change (Bialgebra.counitAlgHom k H) x = 0 ↔
-    Coalgebra.counit (R := k) x = 0
-  rw [Bialgebra.counitAlgHom_apply]
-
 /-- **A connected noetherian affine group has zero augmentation ideal exactly when its tangent
-Lie algebra has dimension zero.**
-
-The nontrivial implication uses finite generation of the augmentation ideal to turn
-`m / m ^ 2 = 0` into an idempotent generator. Connectedness then rules out every generator
-except zero and one, and the counit rules out one. -/
+Lie algebra has dimension zero.** -/
 theorem augmentation_eq_bot_iff_finrank_lie_eq_zero
     [IsNoetherianRing H] [ConnectedSpace (PrimeSpectrum H)] :
     augmentation k H = ⊥ ↔
@@ -86,7 +73,7 @@ theorem augmentation_eq_bot_iff_finrank_lie_eq_zero
     have haugmentationIdeal : Bialgebra.AugmentationIdeal k H = ⊥ := by
       calc
         Bialgebra.AugmentationIdeal k H = (augmentation k H).toIdeal :=
-          augmentationIdeal_eq_augmentation_toIdeal
+          (augmentation_toIdeal k H).symm
         _ = (⊥ : HopfIdeal k H).toIdeal := congrArg HopfIdeal.toIdeal haugmentation
         _ = ⊥ := bot_toIdeal
     rw [haugmentationIdeal]
@@ -110,10 +97,9 @@ theorem augmentation_eq_bot_iff_finrank_lie_eq_zero
         simpa [hezero] using hspan
       apply HopfIdeal.ext
       intro x
-      change x ∈ (augmentation k H).toIdeal ↔
-        x ∈ (⊥ : HopfIdeal k H).toIdeal
-      rw [← augmentationIdeal_eq_augmentation_toIdeal, bot_toIdeal,
-        haugmentationIdeal]
+      rw [← mem_toIdeal, ← mem_toIdeal, augmentation_toIdeal, bot_toIdeal]
+      simpa only [Bialgebra.AugmentationIdeal, RingHom.ker_coe_toRingHom] using
+        SetLike.ext_iff.mp haugmentationIdeal x
     · exfalso
       apply RingHom.ker_ne_top (Bialgebra.counitAlgHom k H).toRingHom
       simpa [Bialgebra.AugmentationIdeal, heone] using hspan
