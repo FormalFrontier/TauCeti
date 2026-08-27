@@ -78,7 +78,7 @@ theorem mapLevi_limitToLevi {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
 
 /-- The dynamic limit homomorphisms `P(l)(A) → Z(l)(A)` form a natural transformation in the
 commutative value algebra `A`. -/
-@[expose] noncomputable def limitToLeviNatTrans : parabolicFunctor l ⟶ leviFunctor l where
+noncomputable def limitToLeviNatTrans : parabolicFunctor l ⟶ leviFunctor l where
   app A := GrpCat.ofHom (limitToLevi A l)
   naturality {A B} φ := by
     apply GrpCat.hom_ext
@@ -90,8 +90,7 @@ commutative value algebra `A`. -/
 homomorphism. -/
 @[simp]
 theorem limitToLeviNatTrans_app (A : CommAlgCat.{w} R) :
-    (limitToLeviNatTrans l).app A = GrpCat.ofHom (limitToLevi A l) :=
-  rfl
+    (limitToLeviNatTrans l).app A = GrpCat.ofHom (limitToLevi A l) := (rfl)
 
 /-- Extension of the value algebra commutes with inclusion of the dynamic unipotent subgroup
 into the dynamic parabolic. -/
@@ -116,7 +115,7 @@ theorem mapParabolic_leviToParabolic {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
 
 /-- The inclusions `Z(l)(A) → P(l)(A)` form a natural transformation in the commutative value
 algebra `A`. -/
-@[expose] noncomputable def leviToParabolicNatTrans : leviFunctor l ⟶ parabolicFunctor l where
+noncomputable def leviToParabolicNatTrans : leviFunctor l ⟶ parabolicFunctor l where
   app A := GrpCat.ofHom (leviToParabolic A l)
   naturality {A B} φ := by
     apply GrpCat.hom_ext
@@ -127,8 +126,7 @@ algebra `A`. -/
 /-- The component of the natural Levi inclusion is the pointwise subgroup inclusion. -/
 @[simp]
 theorem leviToParabolicNatTrans_app (A : CommAlgCat.{w} R) :
-    (leviToParabolicNatTrans l).app A = GrpCat.ofHom (leviToParabolic A l) :=
-  rfl
+    (leviToParabolicNatTrans l).app A = GrpCat.ofHom (leviToParabolic A l) := (rfl)
 
 /-- The natural Levi inclusion is a section of the dynamic limit. -/
 @[simp]

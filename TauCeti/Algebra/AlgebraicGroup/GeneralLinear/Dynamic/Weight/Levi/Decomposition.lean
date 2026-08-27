@@ -67,21 +67,37 @@ variable (R : Type u) [CommRing R] {N : ℕ}
 
 /-- The natural transformation on represented points obtained by transporting the dynamic limit
 from the weight parabolic to the weight Levi. -/
-@[expose] noncomputable def weightParabolicLimitPointsMap (w : Fin N → ℤ) :
+noncomputable def weightParabolicLimitPointsMap (w : Fin N → ℤ) :
     HopfAlgebra.pointsFunctor (R := R) (H := weightParabolicCoordinateHopfAlgebra R w) ⟶
       HopfAlgebra.pointsFunctor (R := R) (H := weightLeviCoordinateHopfAlgebra R w) :=
   (weightParabolicPointsIso R w).hom ≫
     Cocharacter.limitToLeviNatTrans (weightCocharacter (R := R) w) ≫
     (weightLeviPointsIso R w).inv
 
+/-- The represented limit map is the dynamic limit transported through the representing
+isomorphisms for the weight parabolic and weight Levi. -/
+theorem weightParabolicLimitPointsMap_def (w : Fin N → ℤ) :
+    weightParabolicLimitPointsMap R w =
+      (weightParabolicPointsIso R w).hom ≫
+        Cocharacter.limitToLeviNatTrans (weightCocharacter (R := R) w) ≫
+        (weightLeviPointsIso R w).inv := (rfl)
+
 /-- The natural inclusion of represented weight-Levi points into represented weight-parabolic
 points, transported from the dynamic subgroup inclusion. -/
-@[expose] noncomputable def weightLeviToParabolicPointsMap (w : Fin N → ℤ) :
+noncomputable def weightLeviToParabolicPointsMap (w : Fin N → ℤ) :
     HopfAlgebra.pointsFunctor (R := R) (H := weightLeviCoordinateHopfAlgebra R w) ⟶
       HopfAlgebra.pointsFunctor (R := R) (H := weightParabolicCoordinateHopfAlgebra R w) :=
   (weightLeviPointsIso R w).hom ≫
     Cocharacter.leviToParabolicNatTrans (weightCocharacter (R := R) w) ≫
     (weightParabolicPointsIso R w).inv
+
+/-- The represented Levi inclusion is the dynamic subgroup inclusion transported through the
+representing isomorphisms for the weight Levi and weight parabolic. -/
+theorem weightLeviToParabolicPointsMap_def (w : Fin N → ℤ) :
+    weightLeviToParabolicPointsMap R w =
+      (weightLeviPointsIso R w).hom ≫
+        Cocharacter.leviToParabolicNatTrans (weightCocharacter (R := R) w) ≫
+        (weightParabolicPointsIso R w).inv := (rfl)
 
 /-- At every value algebra, the represented Levi inclusion is the dynamic subgroup inclusion
 transported through the representing isomorphisms. -/
@@ -93,7 +109,23 @@ theorem weightLeviToParabolicPointsMap_app_apply (w : Fin N → ℤ)
       (weightParabolicPointsIso R w).inv.app A
         (Cocharacter.leviToParabolic A (weightCocharacter (R := R) w)
           ((weightLeviPointsIso R w).hom.app A z)) := by
-  rfl
+  let z' : (HopfAlgebra.pointsFunctor
+      (R := R) (H := weightLeviCoordinateHopfAlgebra R w)).obj A := z
+  calc
+    (weightLeviToParabolicPointsMap R w).app A z =
+        (weightLeviToParabolicPointsMap R w).app A z' := by rfl
+    _ = (((weightLeviPointsIso R w).hom ≫
+          Cocharacter.leviToParabolicNatTrans (weightCocharacter (R := R) w) ≫
+          (weightParabolicPointsIso R w).inv).app A) z' :=
+      ConcreteCategory.congr_hom
+        (NatTrans.congr_app (weightLeviToParabolicPointsMap_def R w) A) z'
+    _ = (weightParabolicPointsIso R w).inv.app A
+          (Cocharacter.leviToParabolic A (weightCocharacter (R := R) w)
+            ((weightLeviPointsIso R w).hom.app A z')) := by
+      rw [NatTrans.vcomp_app', NatTrans.vcomp_app', GrpCat.comp_apply, GrpCat.comp_apply,
+        Cocharacter.leviToParabolicNatTrans_app]
+      rfl
+    _ = _ := by rfl
 
 /-- The natural represented Levi inclusion is a section of the represented dynamic limit. -/
 @[simp]
@@ -102,7 +134,7 @@ theorem weightLeviToParabolicPointsMap_comp_weightParabolicLimitPointsMap
     weightLeviToParabolicPointsMap R w ≫ weightParabolicLimitPointsMap R w =
       𝟙 (HopfAlgebra.pointsFunctor
         (R := R) (H := weightLeviCoordinateHopfAlgebra R w)) := by
-  simp only [weightLeviToParabolicPointsMap, weightParabolicLimitPointsMap,
+  simp only [weightLeviToParabolicPointsMap_def, weightParabolicLimitPointsMap_def,
     Category.assoc, Iso.inv_hom_id_assoc]
   rw [← Category.assoc
     (Cocharacter.leviToParabolicNatTrans (weightCocharacter (R := R) w))
@@ -127,10 +159,17 @@ theorem weightParabolicLimitPointsMap_rightInverse (w : Fin N → ℤ)
 /-- The coordinate morphism representing the inclusion `L(w) → P(w)`. It is the canonical
 map between the two quotient coordinate Hopf algebras induced by containment of their defining
 Hopf ideals. -/
-@[expose] noncomputable def weightLeviToParabolicCoordinateMap (w : Fin N → ℤ) :
+noncomputable def weightLeviToParabolicCoordinateMap (w : Fin N → ℤ) :
     weightParabolicCoordinateHopfAlgebra R w ⟶ weightLeviCoordinateHopfAlgebra R w :=
   CommHopfAlgCat.quotientMapOfLe (coordinateHopfAlgebra R N)
     (weightParabolicDefiningHopfIdeal_le_weightLevi R w)
+
+/-- The coordinate map of the weight-Levi inclusion is the quotient map induced by containment
+of the defining Hopf ideals. -/
+theorem weightLeviToParabolicCoordinateMap_def (w : Fin N → ℤ) :
+    weightLeviToParabolicCoordinateMap R w =
+      CommHopfAlgCat.quotientMapOfLe (coordinateHopfAlgebra R N)
+        (weightParabolicDefiningHopfIdeal_le_weightLevi R w) := (rfl)
 
 /-- On points over a same-universe commutative algebra, the canonical quotient coordinate map is
 the represented dynamic Levi inclusion. -/
@@ -145,7 +184,7 @@ theorem mapPointsFunctor_weightLeviToParabolicCoordinateMap_app (w : Fin N → �
   apply CommHopfAlgCat.quotientPointsHom_injective
     (coordinateHopfAlgebra R N) (weightParabolicDefiningHopfIdeal R w)
     (CommAlgCat.of R A)
-  rw [weightLeviToParabolicCoordinateMap,
+  rw [weightLeviToParabolicCoordinateMap_def,
     CommHopfAlgCat.quotientPointsHom_mapPointsFunctor_quotientMapOfLe_app,
     weightLeviToParabolicPointsMap_app_apply,
     quotientPointsHom_weightParabolicPointsIso_inv_app_apply]
@@ -189,7 +228,23 @@ theorem weightParabolicLimitPointsMap_app_apply (w : Fin N → ℤ)
       (weightLeviPointsIso R w).inv.app A
         (Cocharacter.limitToLevi A (weightCocharacter (R := R) w)
           ((weightParabolicPointsIso R w).hom.app A g)) := by
-  rfl
+  let g' : (HopfAlgebra.pointsFunctor
+      (R := R) (H := weightParabolicCoordinateHopfAlgebra R w)).obj A := g
+  calc
+    (weightParabolicLimitPointsMap R w).app A g =
+        (weightParabolicLimitPointsMap R w).app A g' := by rfl
+    _ = (((weightParabolicPointsIso R w).hom ≫
+          Cocharacter.limitToLeviNatTrans (weightCocharacter (R := R) w) ≫
+          (weightLeviPointsIso R w).inv).app A) g' :=
+      ConcreteCategory.congr_hom
+        (NatTrans.congr_app (weightParabolicLimitPointsMap_def R w) A) g'
+    _ = (weightLeviPointsIso R w).inv.app A
+          (Cocharacter.limitToLevi A (weightCocharacter (R := R) w)
+            ((weightParabolicPointsIso R w).hom.app A g')) := by
+      rw [NatTrans.vcomp_app', NatTrans.vcomp_app', GrpCat.comp_apply, GrpCat.comp_apply,
+        Cocharacter.limitToLeviNatTrans_app]
+      rfl
+    _ = _ := by rfl
 
 /-- The coordinate morphism representing the limit `P(w) → L(w)`. Its direction is
 `O(L(w)) → O(P(w))`, opposite to the group-scheme morphism. -/
@@ -223,6 +278,8 @@ theorem weightParabolicLimitCoordinateMap_comp_weightLeviToParabolicCoordinateMa
   apply Quiver.Hom.op_inj
   apply (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
     (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).map_injective
+  -- The points functor is contravariant, so the coordinate composite appears in reverse order.
+  -- Writing it as `mapPointsFunctor` lets the two representing-map theorems rewrite it.
   change CommHopfAlgCat.mapPointsFunctor (weightLeviToParabolicCoordinateMap R w) ≫
       CommHopfAlgCat.mapPointsFunctor (weightParabolicLimitCoordinateMap R w) = 𝟙 _
   rw [mapPointsFunctor_weightLeviToParabolicCoordinateMap,
@@ -243,7 +300,7 @@ theorem mapPointsFunctor_weightParabolicLimitCoordinateMap_app (w : Fin N → �
   exact weightParabolicLimitPointsMap_app_apply R w A g
 
 /-- The group-scheme morphism `P(w) → L(w)` represented by the dynamic limit. -/
-@[expose] noncomputable def weightParabolicLimit (w : Fin N → ℤ) :
+noncomputable def weightParabolicLimit (w : Fin N → ℤ) :
     weightParabolicGroupScheme R w ⟶ weightLeviGroupScheme R w :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
     (weightParabolicLimitCoordinateMap R w).op
@@ -253,8 +310,7 @@ Hopf-algebra morphism. -/
 theorem weightParabolicLimit_def (w : Fin N → ℤ) :
     weightParabolicLimit R w =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (weightParabolicLimitCoordinateMap R w).op :=
-  rfl
+        (weightParabolicLimitCoordinateMap R w).op := (rfl)
 
 /-- The represented dynamic limit retracts the existing closed immersion of the weight Levi into
 the weight parabolic. -/
@@ -262,13 +318,11 @@ the weight parabolic. -/
 theorem weightLeviToParabolic_comp_weightParabolicLimit (w : Fin N → ℤ) :
     weightLeviToParabolic R w ≫ weightParabolicLimit R w =
       𝟙 (weightLeviGroupScheme R w) := by
-  unfold weightLeviToParabolic
-  rw [CommHopfAlgCat.quotientSpecMapOfLe_def, weightParabolicLimit_def,
+  rw [weightLeviToParabolic_def, CommHopfAlgCat.quotientSpecMapOfLe_def,
+    weightParabolicLimit_def,
     ← (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map_comp,
     ← op_comp]
-  change (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-      (weightParabolicLimitCoordinateMap R w ≫
-        weightLeviToParabolicCoordinateMap R w).op = _
+  rw [← weightLeviToParabolicCoordinateMap_def]
   rw [weightParabolicLimitCoordinateMap_comp_weightLeviToParabolicCoordinateMap]
   exact (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map_id _
 

@@ -271,15 +271,22 @@ noncomputable def weightLeviInParabolicGroupSchemeIso (w : Fin N → ℤ) :
 
 /-- The closed immersion of the weight-Levi group scheme into the weight-parabolic group scheme
 induced by inclusion of their defining Hopf ideals. -/
-@[expose] noncomputable def weightLeviToParabolic (w : Fin N → ℤ) :
+noncomputable def weightLeviToParabolic (w : Fin N → ℤ) :
     weightLeviGroupScheme R w ⟶ weightParabolicGroupScheme R w :=
   CommHopfAlgCat.quotientSpecMapOfLe (coordinateHopfAlgebra R N)
     (weightParabolicDefiningHopfIdeal_le_weightLevi R w)
 
+/-- The weight-Levi inclusion is the quotient-spectrum map induced by containment of the
+defining Hopf ideals. -/
+theorem weightLeviToParabolic_def (w : Fin N → ℤ) :
+    weightLeviToParabolic R w =
+      CommHopfAlgCat.quotientSpecMapOfLe (coordinateHopfAlgebra R N)
+        (weightParabolicDefiningHopfIdeal_le_weightLevi R w) := (rfl)
+
 /-- The weight-Levi-to-parabolic morphism is a closed immersion. -/
 instance isClosedImmersion_weightLeviToParabolic (w : Fin N → ℤ) :
     IsClosedImmersion (weightLeviToParabolic R w).hom.hom.left := by
-  rw [weightLeviToParabolic]
+  rw [weightLeviToParabolic_def]
   infer_instance
 
 /-- Including the weight-Levi group scheme through the weight parabolic agrees with its direct
@@ -288,7 +295,7 @@ inclusion into the general linear group scheme. -/
 theorem weightLeviToParabolic_comp_inclusion (w : Fin N → ℤ) :
     weightLeviToParabolic R w ≫ weightParabolicInclusion R w =
       weightLeviInclusion R w := by
-  rw [weightLeviToParabolic, weightParabolicInclusion_def,
+  rw [weightLeviToParabolic_def, weightParabolicInclusion_def,
     weightLeviInclusion_def, ← Category.assoc,
     CommHopfAlgCat.quotientSpecMapOfLe_comp_quotientSpecι]
 
