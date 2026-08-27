@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Spectral.ConstructibleTopology
+public import Mathlib.Topology.Spectral.Basic
 
 /-!
 # Pro-constructible subsets of a spectral space

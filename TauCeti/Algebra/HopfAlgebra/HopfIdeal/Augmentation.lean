@@ -25,8 +25,8 @@ induced morphism of affine group schemes (`TauCeti.CommHopfAlgCat.kernelHopfIdea
 * `TauCeti.HopfIdeal.mem_augmentation` and `TauCeti.HopfIdeal.augmentation_toIdeal`:
   characteristic API.
 * `TauCeti.HopfIdeal.le_augmentation`: every Hopf ideal is contained in the augmentation ideal.
-* `TauCeti.HopfIdeal.comap_augmentation`: the augmentation ideal is preserved by pullback
-  along a surjective bialgebra morphism.
+* `TauCeti.HopfIdeal.comapOfSurjective_augmentation`: the augmentation ideal is preserved by
+  pullback along a surjective bialgebra morphism.
 * `TauCeti.HopfIdeal.counitBialgEquivOfAugmentationEqBot`: a Hopf algebra with zero
   augmentation ideal is bialgebra-equivalent to its base ring via the counit.
 
@@ -89,10 +89,11 @@ variable [HopfAlgebra S K] [HopfAlgebra S L]
 
 /-- Pulling the augmentation ideal back along a surjective bialgebra morphism gives the
 augmentation ideal. -/
-theorem comap_augmentation (f : K →ₐc[S] L) (hf : Function.Surjective f) :
-    (augmentation S L).comap f hf = augmentation S K := by
+theorem comapOfSurjective_augmentation (f : K →ₐc[S] L) (hf : Function.Surjective f) :
+    (augmentation S L).comapOfSurjective f hf = augmentation S K := by
   ext x
-  rw [mem_comap, mem_augmentation, mem_augmentation, CoalgHomClass.counit_comp_apply]
+  rw [mem_comapOfSurjective, mem_augmentation, mem_augmentation,
+    CoalgHomClass.counit_comp_apply]
 
 /-- A Hopf algebra whose augmentation ideal is zero is bialgebra-equivalent to its base ring
 via the counit. -/

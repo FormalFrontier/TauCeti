@@ -115,9 +115,9 @@ instance (k : Type u) [Field k]
           ((smoothCommHopfAlgProperty_iff H.obj).mpr hH.1),
       (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e₀ hH.2.1, ?_⟩
     intro I hnormal hconnected hP
-    let J := I.comap f hfsurjective
+    let J := I.comapOfSurjective f hfsurjective
     have hnormalJ : J.IsNormal :=
-      hnormal.comap_of_bijective f hfinjective hfsurjective
+      hnormal.comapOfSurjective_of_bijective f hfinjective hfsurjective
     let qIso : FiniteTypeCommHopfAlgCat.quotient Hbar J ≅
         FiniteTypeCommHopfAlgCat.quotient Kbar I :=
       FiniteTypeCommHopfAlgCat.quotientIsoOfIso ebar I
@@ -131,8 +131,8 @@ instance (k : Type u) [Field k]
     have hPJ : P (FiniteTypeCommHopfAlgCat.quotient Hbar J) :=
       P.prop_of_iso qIso.symm hP
     have hJ := hH.2.2 J hnormalJ hconnectedJ hPJ
-    rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hfsurjective,
-      HopfIdeal.comap_augmentation]
+    rw [← HopfIdeal.comapOfSurjective_eq_comapOfSurjective_iff f hfsurjective,
+      HopfIdeal.comapOfSurjective_augmentation]
     exact hJ
 
 namespace geometricNormalSubgroupFreeCommHopfAlgProperty

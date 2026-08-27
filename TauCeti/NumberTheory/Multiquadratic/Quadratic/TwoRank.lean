@@ -139,12 +139,8 @@ theorem twoRank_eq_ncard_ramifiedPrimes_sub_one
   by_cases hgauss : d = -1
   · subst d
     have hfin : Module.finrank ℚ K = 2 := NumberField.finrank_rat_eq_two hmin hgen
-    have hreal : InfinitePlace.nrRealPlaces K = 0 :=
-      NumberField.IsTotallyComplex.nrRealPlaces_eq_zero K
-    have hcomplex : InfinitePlace.nrComplexPlaces K = 1 := by
-      have hsignature := InfinitePlace.card_add_two_mul_card_eq_rank K
-      rw [hreal, hfin] at hsignature
-      omega
+    have hcomplex : InfinitePlace.nrComplexPlaces K = 1 :=
+      InfinitePlace.nrComplexPlaces_eq_one_of_finrank_eq_two hfin
     have hdisc : NumberField.discr K = -4 := by
       simpa using NumberField.discr_eq_four_mul_of_mod_four_ne_one hmin hgen hsf (by norm_num)
     have hpid : IsPrincipalIdealRing (𝓞 K) := by

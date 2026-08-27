@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Calculus.Implicit
+public import Mathlib.Analysis.Calculus.FDeriv.Equiv
 public import Mathlib.Geometry.Manifold.ChartedSpace
 public import Mathlib.Topology.DiscreteSubset
 public import TauCeti.Analysis.Fredholm.Criteria

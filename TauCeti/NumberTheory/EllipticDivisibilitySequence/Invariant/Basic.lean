@@ -7,6 +7,7 @@ module
 
 public import Mathlib.NumberTheory.EllipticDivisibilitySequence
 import Mathlib.Tactic.LinearCombination
+import Mathlib.Tactic.Ring
 
 /-!
 # The invariant of an elliptic net

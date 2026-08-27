@@ -21,7 +21,7 @@ equality and is then carried through `hopfSpec`.
 
 ## Main declarations
 
-* `TauCeti.CommHopfAlgCat.comap_centerDefiningIdeal`: center ideals are preserved by
+* `TauCeti.CommHopfAlgCat.comapOfSurjective_centerDefiningIdeal`: center ideals are preserved by
   isomorphisms.
 * `TauCeti.CommHopfAlgCat.centerCoordinateMap`: restriction of an isomorphism to the coordinate
   Hopf algebras of the centers.
@@ -55,24 +55,24 @@ variable {H K : _root_.CommHopfAlgCat.{v} k}
 
 /-- **An isomorphism of commutative Hopf algebras preserves the ideal defining the center.** -/
 @[simp]
-theorem comap_centerDefiningIdeal (e : H ≅ K) :
-    (centerDefiningIdeal K).comap e.hom.hom
+theorem comapOfSurjective_centerDefiningIdeal (e : H ≅ K) :
+    (centerDefiningIdeal K).comapOfSurjective e.hom.hom
         (ConcreteCategory.bijective_of_isIso e.hom).2 = centerDefiningIdeal H := by
   let he : Function.Bijective e.hom.hom := ConcreteCategory.bijective_of_isIso e.hom
   let he' : Function.Bijective e.inv.hom := ConcreteCategory.bijective_of_isIso e.inv
   have hforward : centerDefiningIdeal H ≤
-      (centerDefiningIdeal K).comap e.hom.hom he.2 := by
+      (centerDefiningIdeal K).comapOfSurjective e.hom.hom he.2 := by
     rw [centerDefiningIdeal_le_iff]
-    exact (isCentral_centerDefiningIdeal K).comap_of_bijective e.hom.hom he.1 he.2
+    exact (isCentral_centerDefiningIdeal K).comapOfSurjective_of_bijective e.hom.hom he.1 he.2
   have hbackward : centerDefiningIdeal K ≤
-      (centerDefiningIdeal H).comap e.inv.hom he'.2 := by
+      (centerDefiningIdeal H).comapOfSurjective e.inv.hom he'.2 := by
     rw [centerDefiningIdeal_le_iff]
-    exact (isCentral_centerDefiningIdeal H).comap_of_bijective e.inv.hom he'.1 he'.2
+    exact (isCentral_centerDefiningIdeal H).comapOfSurjective_of_bijective e.inv.hom he'.1 he'.2
   apply le_antisymm
   · intro x hx
-    have hxK : e.hom.hom x ∈ centerDefiningIdeal K := HopfIdeal.mem_comap.mp hx
+    have hxK : e.hom.hom x ∈ centerDefiningIdeal K := HopfIdeal.mem_comapOfSurjective.mp hx
     have hxH : e.inv.hom (e.hom.hom x) ∈ centerDefiningIdeal H :=
-      HopfIdeal.mem_comap.mp (hbackward hxK)
+      HopfIdeal.mem_comapOfSurjective.mp (hbackward hxK)
     simpa using hxH
   · exact hforward
 
@@ -80,7 +80,7 @@ theorem comap_centerDefiningIdeal (e : H ≅ K) :
 to the centers. -/
 noncomputable def centerCoordinateIso (e : H ≅ K) :
     quotient H (centerDefiningIdeal H) ≅ quotient K (centerDefiningIdeal K) :=
-  eqToIso (congrArg (quotient H) (comap_centerDefiningIdeal e).symm) ≪≫
+  eqToIso (congrArg (quotient H) (comapOfSurjective_centerDefiningIdeal e).symm) ≪≫
     quotientIsoOfIso e (centerDefiningIdeal K)
 
 /-- The coordinate morphism obtained by restricting an ambient isomorphism to the centers. -/

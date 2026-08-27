@@ -102,7 +102,7 @@ inverse image of the base-changed defining ideal under the general-linear coordi
 base-change isomorphism. -/
 noncomputable def kostantToralBaseChangePresentationIdeal :
     HopfIdeal A (GeneralLinear.coordinateHopfAlgebra A n) :=
-  (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A).comap
+  (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A).comapOfSurjective
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).symm.hom.hom
     (ConcreteCategory.bijective_of_isIso
       (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).symm.hom).2
@@ -115,7 +115,7 @@ theorem mem_kostantToralBaseChangePresentationIdeal_iff
     x ∈ kostantToralBaseChangePresentationIdeal e h ρ M hM hnil b wt A ↔
       (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).inv.hom x ∈
         kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A :=
-  HopfIdeal.mem_comap
+  HopfIdeal.mem_comapOfSurjective
 
 /-- Transporting a pure tensor of a scalar and an integral defining equation produces an equation
 in the defining ideal over `A`. -/

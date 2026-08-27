@@ -5,22 +5,21 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.ModularForms.DiamondOperators
+import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Holomorphic
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Cusps
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Invariance
-public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.QExpansion
 
 /-!
 # The upper-triangular Hecke operator on `M_k(Γ₁(N))` and `S_k(Γ₁(N))`
 
-The four analytic inputs for `heckeSlashUpperTri` are in place — holomorphy
+The three analytic inputs for `heckeSlashUpperTri` are in place — holomorphy
 (`UpperTri/Holomorphic.lean`), boundedness and vanishing at every cusp (`UpperTri/Cusps.lean`),
-the `q`-expansion (`UpperTri/QExpansion.lean`) — and `UpperTri/Invariance.lean` supplies the
-missing algebraic one: at `p ∣ N` the sum preserves `Γ₁(N)`-invariance. This file assembles them
+and `UpperTri/Invariance.lean` supplies the missing algebraic one: at `p ∣ N` the sum preserves
+`Γ₁(N)`-invariance. This file assembles them
 into the operator itself, a `ℂ`-linear endomorphism of `ModularForm ((Gamma1 N).map (mapGL ℝ)) k`
-and of `CuspForm ((Gamma1 N).map (mapGL ℝ)) k`, and records the two facts that make it usable:
-it preserves each nebentypus space `M_k(N, χ)`, `S_k(N, χ)`, and on `q`-expansions it is
-`aₘ ↦ a_{p m}`.
+and of `CuspForm ((Gamma1 N).map (mapGL ℝ)) k`. Nebentypus preservation and the `q`-expansion
+recurrence for the canonical `heckeTNat` operator are recorded at every level-supported index in
+`HeckeSlash/LevelSupported.lean`.
 
 This is Layer 2(b) of the ModularForms roadmap at a level divisible by `p`. When `p` is prime,
 the classical `Tₚ` for `p ∤ N` needs one further coset representative and is not built here;
@@ -53,13 +52,6 @@ is `ModularForm.rat_slash_mapGL`, from `ModularForms/SlashActionRat.lean`.
 * `HeckeRing.GL2.coe_heckeSlashUpperTriModularFormEnd`,
   `HeckeRing.GL2.coe_heckeSlashUpperTriCuspFormEnd`: both are `heckeSlashUpperTri` on underlying
   functions.
-* `HeckeRing.GL2.heckeSlashUpperTriModularFormEnd_mem_modFormCharSpace`,
-  `HeckeRing.GL2.heckeSlashUpperTriCuspFormEnd_mem_cuspFormCharSpace`: **the operator preserves
-  the nebentypus**.
-* `HeckeRing.GL2.qExpansion_coeff_heckeSlashUpperTriModularFormEnd`,
-  `HeckeRing.GL2.qExpansion_coeff_heckeSlashUpperTriCuspFormEnd`: the coefficient at `m` is the
-  coefficient of the original form at `p m`.
-
 ## References
 
 * [F. Diamond and J. Shurman, *A first course in modular forms*][diamondshurman2005], §5.2–5.3.
@@ -84,12 +76,6 @@ private lemma rat_slash_eq_of_mem_Gamma1 {F : Type*} [FunLike F ℍ ℂ]
     (hδ : δ ∈ Gamma1 N) : (⇑f) ∣[k] (mapGL ℚ δ : GL (Fin 2) ℚ) = ⇑f := by
   rw [ModularForm.rat_slash_mapGL]
   exact SlashInvariantFormClass.slash_action_eq f _ (Subgroup.mem_map_of_mem _ hδ)
-
-/-- The width of `∞` for `Γ₁(N)` is `1`, so all `q`-expansions below are taken at width `1`. -/
-private lemma one_mem_strictPeriods_Gamma1 :
-    (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-  rw [strictPeriods_Gamma1]
-  exact AddSubgroup.mem_zmultiples 1
 
 variable [NeZero N]
 
@@ -161,54 +147,6 @@ noncomputable def heckeSlashUpperTriCuspFormEnd (hpN : p ∣ N) :
 @[simp] lemma coe_heckeSlashUpperTriCuspFormEnd (hpN : p ∣ N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ⇑(heckeSlashUpperTriCuspFormEnd k hpN f) = heckeSlashUpperTri k p f := (rfl)
-
-/-- **The operator preserves the nebentypus**: it maps `M_k(N, χ)` into itself. Not an
-assumption but a theorem: the factorisation of `UpperTri/Invariance.lean` replaces a `Γ₀(N)`
-matrix by one with the same lower-right entry modulo `N`, so the character value is unchanged. -/
-theorem heckeSlashUpperTriModularFormEnd_mem_modFormCharSpace (hpN : p ∣ N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) :
-    heckeSlashUpperTriModularFormEnd k hpN f ∈ modFormCharSpace k χ := by
-  let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
-  rw [mem_modFormCharSpace_iff_nebentypus] at hf ⊢
-  intro g
-  rw [coe_heckeSlashUpperTriModularFormEnd, ← ModularForm.rat_slash_mapGL]
-  exact heckeSlashUpperTri_slash_mapGL_of_nebentypus k hpN χ g
-    fun δ ↦ by rw [ModularForm.rat_slash_mapGL]; exact hf δ
-
-/-- **The operator preserves the nebentypus on cusp forms**: it maps `S_k(N, χ)` into itself. -/
-theorem heckeSlashUpperTriCuspFormEnd_mem_cuspFormCharSpace (hpN : p ∣ N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ cuspFormCharSpace k χ) :
-    heckeSlashUpperTriCuspFormEnd k hpN f ∈ cuspFormCharSpace k χ := by
-  let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
-  rw [mem_cuspFormCharSpace_iff_nebentypus] at hf ⊢
-  intro g
-  rw [coe_heckeSlashUpperTriCuspFormEnd, ← ModularForm.rat_slash_mapGL]
-  exact heckeSlashUpperTri_slash_mapGL_of_nebentypus k hpN χ g
-    fun δ ↦ by rw [ModularForm.rat_slash_mapGL]; exact hf δ
-
-/-- **The `q`-expansion recurrence**: the coefficient at `m` is `a_{p m}(f)` for `p ∣ N`.
-When `p` is prime, this is the Diamond–Shurman recurrence
-`aₘ(Tₚ f) = a_{m p}(f) + χ(p) p^{k-1} a_{m/p}(f)` in the case that makes the second term vanish,
-`χ(p) = 0`. -/
-theorem qExpansion_coeff_heckeSlashUpperTriModularFormEnd (hpN : p ∣ N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeSlashUpperTriModularFormEnd k hpN f)).coeff m
-      = (qExpansion 1 f).coeff (p * m) := by
-  rw [coe_heckeSlashUpperTriModularFormEnd]
-  exact qExpansion_coeff_heckeSlashUpperTri' k p one_mem_strictPeriods_Gamma1
-    (Nat.pos_of_ne_zero fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))) f m
-
-/-- **The `q`-expansion recurrence on cusp forms**: the coefficient at `m` is `a_{p m}(f)` for
-`p ∣ N`. -/
-theorem qExpansion_coeff_heckeSlashUpperTriCuspFormEnd (hpN : p ∣ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeSlashUpperTriCuspFormEnd k hpN f)).coeff m
-      = (qExpansion 1 f).coeff (p * m) := by
-  rw [coe_heckeSlashUpperTriCuspFormEnd]
-  exact qExpansion_coeff_heckeSlashUpperTri' k p one_mem_strictPeriods_Gamma1
-    (Nat.pos_of_ne_zero fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))) f m
 
 end HeckeRing.GL2
 

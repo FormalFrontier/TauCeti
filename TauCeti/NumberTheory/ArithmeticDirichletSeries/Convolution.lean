@@ -9,6 +9,7 @@ public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Basic
 public import Mathlib.RingTheory.UniqueFactorizationDomain.Finite
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.NormCoeff
+public import TauCeti.RingTheory.Ideal.Operations
 
 /-!
 # Ideal convolution of ideal arithmetic functions
@@ -102,6 +103,19 @@ theorem delta_one : delta (1 : (Ideal (𝓞 K))⁰) = 1 := by
 theorem delta_of_ne_one {A : (Ideal (𝓞 K))⁰} (hA : A ≠ 1) : delta A = 0 := by
   simp [delta, hA]
 
+/-- The convolution identity is multiplicative. -/
+theorem isMultiplicative_delta : IsMultiplicative (delta : IdealArithmeticFunction K) := by
+  refine ⟨delta_one, fun {I J} _ ↦ ?_⟩
+  by_cases hI : I = 1
+  · subst I
+    simp
+  by_cases hJ : J = 1
+  · subst J
+    simp
+  have hmul : I * J ≠ 1 := fun h ↦
+    hI (Subtype.ext (Ideal.eq_one_of_mul_eq_one (congrArg Subtype.val h)))
+  rw [delta_of_ne_one hmul, delta_of_ne_one hI, delta_of_ne_one hJ, zero_mul]
+
 end IdealArithmeticFunction
 
 variable {K : Type*} [Field K] [NumberField K]
@@ -174,13 +188,10 @@ theorem divisorsAntidiagonal_one :
   simp only [mem_divisorsAntidiagonal, Finset.mem_singleton, Prod.ext_iff]
   constructor
   · intro h
-    have h' : (p.1 : Ideal (𝓞 K)) * (p.2 : Ideal (𝓞 K)) = 1 := by
-      simpa using congrArg Subtype.val h
-    refine ⟨Subtype.ext ?_, Subtype.ext ?_⟩
-    · simpa [Ideal.one_eq_top] using
-        Ideal.isUnit_iff.mp (isUnit_of_dvd_one ⟨(p.2 : Ideal (𝓞 K)), h'.symm⟩)
-    · simpa [Ideal.one_eq_top] using Ideal.isUnit_iff.mp
-        (isUnit_of_dvd_one ⟨(p.1 : Ideal (𝓞 K)), by rw [← h', mul_comm]⟩)
+    refine ⟨Subtype.ext (Ideal.eq_one_of_mul_eq_one (congrArg Subtype.val h)),
+      Subtype.ext (Ideal.eq_one_of_mul_eq_one (I := (p.2 : Ideal (𝓞 K)))
+        (J := (p.1 : Ideal (𝓞 K))) ?_)⟩
+    simpa [mul_comm] using congrArg Subtype.val h
   · rintro ⟨h1, h2⟩
     rw [h1, h2, mul_one]
 

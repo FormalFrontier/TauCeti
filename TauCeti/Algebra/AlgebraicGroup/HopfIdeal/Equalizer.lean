@@ -217,10 +217,11 @@ theorem hom_ext_of_le_iff_forall_toIdeal_le_ker {I : HopfIdeal R H} {p : ∀ i, 
     {c : ∀ i, quotient H I ⟶ K i} (hc : ∀ i, mkQuotient H I ≫ c i = p i)
     {Y : _root_.CommHopfAlgCat.{v} R} (u v : Y ⟶ quotient H I)
     (h : ∀ i, u ≫ c i = v ≫ c i) : u = v := by
-  refine (equalizerHopfIdeal_eq_bot_iff u v).1 (eq_bot_of_comap_le _ ?_)
+  refine (equalizerHopfIdeal_eq_bot_iff u v).1 (eq_bot_of_comapOfSurjective_le _ ?_)
   rw [hI]
   intro i x hx
-  have hmem : (mkQuotient H I).hom x ∈ equalizerHopfIdeal u v := HopfIdeal.mem_comap.1 hx
+  have hmem : (mkQuotient H I).hom x ∈ equalizerHopfIdeal u v :=
+    HopfIdeal.mem_comapOfSurjective.1 hx
   have hzero : (c i).hom ((mkQuotient H I).hom x) = 0 :=
     RingHom.mem_ker.1 ((equalizerHopfIdeal_toIdeal_le_ker_iff u v (c i)).2 (h i) hmem)
   have hcomp : (c i).hom ((mkQuotient H I).hom x) = (p i).hom x :=

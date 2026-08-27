@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Complex.Harmonic.Poisson
+public import Mathlib.Analysis.Complex.Harmonic.MeanValue
 
 /-!
 # Harnack's inequality on a planar disk

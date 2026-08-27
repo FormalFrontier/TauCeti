@@ -6,16 +6,19 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.IntermediateRing.Basic
+public import Mathlib.RingTheory.DedekindDomain.Basic
 -- Proof-only: `finiteDimensional_functionField` is used inside the proof, not in the statement.
 import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Degree
-public import Mathlib.RingTheory.DedekindDomain.IntegralClosure
+-- Proof-only: the separability-free Dedekind route for an integral closure, used in the proof.
+import TauCeti.RingTheory.DedekindDomain.IntegralClosure
 
 /-!
 # The intermediate ring is a Dedekind domain
 
 For an isogeny `φ : Isogeny W₁ W₂`, the intermediate ring — the integral closure of
 `W₂.CoordinateRing` in `W₁.FunctionField` — is a Dedekind domain whenever the target's coordinate
-ring is one and the extension of function fields is separable.
+ring is one. Nothing is assumed about the function-field extension beyond what the isogeny already
+gives, so **inseparable isogenies are covered, Frobenius included**.
 
 This is what the relative ideal norm asks of the *middle* ring: `ClassGroup.relNorm`, and through
 it `ClassGroup.extendedRelNormHom`, is stated over a module-finite extension of Dedekind domains,
@@ -27,40 +30,30 @@ so `Isogeny.pushClass` needs `φ.intermediateRing` to be Dedekind and not merely
 
 ## Design
 
-**Why this is separate from `IntegrallyClosed.lean`, and why it costs more.**
-`Isogeny.isIntegrallyClosed_intermediateRing` is hypothesis-free: an integral closure is integrally
-closed because integral closure is idempotent, and that argument sees no trace form. Being
-*Dedekind* is a conjunction — integrally closed, Noetherian, dimension at most one — and the
-Noetherian half is where the cost enters. Mathlib's route, `IsIntegralClosure.isDedekindDomain`,
-is stated for a finite **separable** extension of the fraction field, because it obtains
-Noetherianity from the trace pairing, which is nondegenerate exactly in the separable case.
+**Why this is separate from `IntegrallyClosed.lean`.**
+`Isogeny.isIntegrallyClosed_intermediateRing` is proved from the formal fact that integrality is
+transitive, and sees neither a trace form nor a finiteness hypothesis. Being *Dedekind* is a
+conjunction — integrally closed, Noetherian, dimension at most one — and the Noetherian half is
+where the cost enters: it needs the extension `W₂.FunctionField ≤ W₁.FunctionField` to be finite,
+which is why this file takes the algebra structures and the tower that name that extension while
+its sibling takes only the isogeny.
 
-So the hypothesis set here matches the sibling `Isogeny.moduleFinite_intermediateRing` rather than
-`Isogeny.isIntegrallyClosed_intermediateRing`, and for the same reason: both go through the trace.
+**Where the separability hypothesis went.** Until `TauCeti.IsIntegralClosure.isDedekindDomain`
+existed, the Noetherian half could only be had from Mathlib's
+`IsIntegralClosure.isDedekindDomain`, whose route is the trace pairing and which therefore sits
+under the section variable `[Algebra.IsSeparable K L]` at
+`Mathlib/RingTheory/DedekindDomain/IntegralClosure.lean` line 147. This file carried that
+hypothesis for exactly that reason, and its own docstring recorded that the conclusion was
+expected to hold without it. Krull–Akizuki
+(`TauCeti/RingTheory/IntegralClosure/NormalizationFinite.lean`) removed the obstruction, and
+`TauCeti/RingTheory/DedekindDomain/IntegralClosure.lean` assembles the Dedekind conclusion from it,
+so the hypothesis is now gone from the statement.
 
-**The hypothesis is a limitation of the route, not of the result.** `W₂.CoordinateRing` is a
-finite-type algebra over a field and therefore Nagata, so its normalization in a finite extension
-is finite — and the conclusion is expected to hold with no separability at all, inseparable
-isogenies and Frobenius included. What blocks that here is availability, and it is measurable:
-every route to the Noetherian half in `Mathlib/RingTheory/DedekindDomain/IntegralClosure.lean`
-falls under the section variable `[Algebra.IsSeparable K L]` declared at its line 147, and the
-pinned Mathlib has no Krull–Akizuki (the identifier and the hyphenated prose spelling both occur
-zero times, against 69 files mentioning `IsDedekindDomain`) and no usable Nagata
-normalization-finiteness API.
-
-Removing the hypothesis means building that route in this repository, and its Noetherian half is
-now here. `TauCeti.IsIntegralClosure.isNoetherianRing`
-(`TauCeti/RingTheory/IntegralClosure/NormalizationFinite.lean`, with
-`TauCeti.integralClosure.isNoetherianRing` for Mathlib's subalgebra form) is Krull–Akizuki: the
-integral closure of a Noetherian domain of Krull dimension at most one in a finite extension of
-its fraction field is Noetherian, with no separability assumed, and it is stated for an abstract
-`IsIntegralClosure C A L` — so it applies to `φ.intermediateRing` directly. What is still missing
-for this file is the rest of the Dedekind conjunction along a separability-free route, replacing
-`IsIntegralClosure.isDedekindDomain` as a whole; that is a slice of its own under this
-repository's one-topic-per-PR rule, not something to be folded in here. This is the interim
-result until it lands. `IntermediateRing/Finite.lean` records the same limitation for the
-finiteness half, which Krull–Akizuki does not supply: the integral closure it produces is
-Noetherian but need not be a finite module.
+**The sibling `Finite.lean` still carries it, and no longer for a shared reason.**
+`Isogeny.moduleFinite_intermediateRing` concludes that `φ.intermediateRing` is a finite
+`W₂.CoordinateRing`-module, and Krull–Akizuki does not supply that: the integral closure it
+produces is Noetherian but need not be a finite module. Removing separability there is a
+normalization-finiteness question of Nagata type, separate from this one.
 
 `IsDedekindDomain W₂.CoordinateRing` is taken as a hypothesis rather than derived. For an elliptic
 curve it is supplied by `WeierstrassCurve.Affine.isDedekindDomain_coordinateRing`, which needs
@@ -72,12 +65,15 @@ exactly as the sibling takes `[IsIntegrallyClosed W₂.CoordinateRing]` rather t
 ⚠ *mathlib-track*. `TauCetiRoadmap/EllipticCurves/README.md:1092` lists the `IntermediateRing`
 with `intermediateRingFinite` and `intermediateRingIsIntegrallyClosed` among the components of
 D. Angdinata's shared isogeny development, on the way to `pushClass` and `toPointHom`; the Dedekind
-property is what those two facts are combined for.
+property is what those two facts are combined for. The same target records at `:1097` that the
+hypothesis inventory of that development is "genuinely minimal", which is what dropping
+separability here restores.
 
 AINTLIB proves the same statement about the same object as
 `NormConormIntegralClosure.instDedekindB` (`github.com/CBirkbeck/AINTLIB`, Apache-2.0,
 `HasseWeil/Curves/NormConormIntegralClosure.lean`, by Chris Birkbeck), for
-`B := integralClosure C₂.CoordinateRing C₁.FunctionField`. What is adapted here is the reduction to
+`B := integralClosure C₂.CoordinateRing C₁.FunctionField`, but only in the separable case and by
+the Mathlib route this file no longer uses. What is adapted here is the reduction to
 `intermediateRing` as this repository defines it — through the corestricted pullback and
 `Isogeny.isIntegralClosure_intermediateRing` — rather than to Mathlib's literal `integralClosure`
 subalgebra.
@@ -93,16 +89,16 @@ variable {F : Type*} [Field F] {W₁ W₂ : WeierstrassCurve.Affine F}
 
 /-- **The intermediate ring is a Dedekind domain.** It is the integral closure of
 `W₂.CoordinateRing` in `W₁.FunctionField`, and the integral closure of a Dedekind domain in a
-finite separable extension of its fraction field is again Dedekind.
+finite extension of its fraction field is again Dedekind.
 
-Separability is a restriction of the proof route, not of the result; the module docstring's
-Design section says why, and what removing it would take. -/
+No separability of the function-field extension is assumed — the Noetherian half comes from
+Krull–Akizuki through `TauCeti.IsIntegralClosure.isDedekindDomain` — so this covers inseparable
+isogenies, Frobenius included, exactly as `Isogeny.isIntegrallyClosed_intermediateRing` does. -/
 theorem isDedekindDomain_intermediateRing (φ : Isogeny W₁ W₂)
     [IsDedekindDomain W₂.CoordinateRing]
     [Algebra W₂.CoordinateRing W₁.FunctionField]
     [Algebra W₂.FunctionField W₁.FunctionField]
     [IsScalarTower W₂.CoordinateRing W₂.FunctionField W₁.FunctionField]
-    [Algebra.IsSeparable W₂.FunctionField W₁.FunctionField]
     (h : ∀ x, algebraMap W₂.CoordinateRing W₁.FunctionField x = φ.pullback x) :
     IsDedekindDomain φ.intermediateRing := by
   -- the algebra structure on the intermediate ring and its tower are the canonical ones built
@@ -113,8 +109,8 @@ theorem isDedekindDomain_intermediateRing (φ : Isogeny W₁ W₂)
   -- the integral-closure property is not assumed: it is what `intermediateRing` is
   have := φ.isIntegralClosure_intermediateRing h
   have := φ.finiteDimensional_functionField (φ.algebraMap_functionField_eq_fieldPullback h)
-  exact IsIntegralClosure.isDedekindDomain W₂.CoordinateRing W₂.FunctionField W₁.FunctionField
-    φ.intermediateRing
+  exact TauCeti.IsIntegralClosure.isDedekindDomain W₂.CoordinateRing W₂.FunctionField
+    W₁.FunctionField φ.intermediateRing
 
 end Isogeny
 

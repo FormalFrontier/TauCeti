@@ -43,9 +43,9 @@ of the Aldous–Hoover milestone in `TauCetiRoadmap/Exchangeability/README.md`, 
 * `SeparatelyExchangeable.mixingLaw_map_permReindex_arrayRow_eq` — the row mixing law is invariant
   under coordinate permutations;
 * `SeparatelyExchangeable.mixingLaw_map_permReindex_arrayCol_eq` — the symmetric column statement;
-* `SeparatelyExchangeable.exists_directing_arrayRow_mixingLaw_invariant` and
-  `SeparatelyExchangeable.exists_directing_arrayCol_mixingLaw_invariant` — directing-measure
-  versions supplied by de Finetti.
+
+Every result here holds of *any* supplied mixing representative; the existential versions, in which
+de Finetti produces one, are in `Arrays.DeFinetti`.
 
 ## References
 
@@ -173,32 +173,6 @@ theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayCol_eq
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν :=
   mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     (separatelyExchangeable_iff.mp h σ 1) hν
-
-/-- **De Finetti for the rows, with the inherited mixing-law symmetry.** A separately
-exchangeable array has a directing measure for its row process whose law is invariant under every
-permutation of the path coordinates. -/
-theorem SeparatelyExchangeable.exists_directing_arrayRow_mixingLaw_invariant
-    [StandardBorelSpace α] [Nonempty α]
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α}
-    (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
-    ∃ ν : Ω → ProbabilityMeasure (ℕ → α), ConditionallyIIDWith μ (arrayRow X) ν ∧
-      ∀ τ : Equiv.Perm ℕ,
-        μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν := by
-  obtain ⟨ν, hν⟩ := (h.conditionallyIID_arrayRow hX).exists_directing
-  exact ⟨ν, hν, fun τ ↦
-    h.mixingLaw_map_permReindex_arrayRow_eq (mixedIIDWith_of_conditionallyIIDWith hν) τ⟩
-
-/-- **De Finetti for the columns, with the inherited mixing-law symmetry.** -/
-theorem SeparatelyExchangeable.exists_directing_arrayCol_mixingLaw_invariant
-    [StandardBorelSpace α] [Nonempty α]
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α}
-    (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
-    ∃ ν : Ω → ProbabilityMeasure (ℕ → α), ConditionallyIIDWith μ (arrayCol X) ν ∧
-      ∀ σ : Equiv.Perm ℕ,
-        μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν := by
-  obtain ⟨ν, hν⟩ := (h.conditionallyIID_arrayCol hX).exists_directing
-  exact ⟨ν, hν, fun σ ↦
-    h.mixingLaw_map_permReindex_arrayCol_eq (mixedIIDWith_of_conditionallyIIDWith hν) σ⟩
 
 end Probability
 

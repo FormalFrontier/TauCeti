@@ -5,13 +5,17 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.Data.Nat.Prime.Int
+import TauCeti.Data.ZMod.Divisibility
 public import Mathlib.Data.ZMod.Units
 public import Mathlib.NumberTheory.ModularForms.QExpansion
 public import Mathlib.RingTheory.PowerSeries.Expand
 public import TauCeti.NumberTheory.ModularForms.Basic
 public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
+
+import TauCeti.Analysis.Complex.UpperHalfPlane.Manifold
 
 /-!
 # The level-raising degeneracy maps `V_d`
@@ -19,6 +23,13 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 For a positive integer `d`, the *level-raising* (or *degeneracy*) map `V_d` sends a function on
 the upper half-plane to `τ ↦ f (d τ)`. It is the slash action by `diag(d, 1)`, renormalized by
 `d ^ (1 - k)` so that no power of `d` is introduced.
+
+Properties of `f` transport **up** to `V_d f` — the level of the congruence subgroup, the
+eigenvalue and nebentypus transport, the `q`-expansion — which is what makes `V_d` a map of
+modular forms. Two of them also read back **down**: the slash transformation law
+(`slash_conjScale_eq_smul_of_slash_scaleGL`) and holomorphy
+(`mdifferentiable_of_comp_scaleGL_smul`), which is what recognizes a bare function as a form at
+the lower level. The `q`-expansion results go up only.
 
 ## Main definitions
 
@@ -38,6 +49,12 @@ the upper half-plane to `τ ↦ f (d τ)`. It is the slash action by `diag(d, 1)
 * `TauCeti.Gamma1_map_le_conjAct_scaleGL`, `TauCeti.Gamma0_map_le_conjAct_scaleGL`: the level
   transport, `Γ₁(dM) ≤ diag(d,1)⁻¹ Γ₁(M) diag(d,1)` and likewise for `Γ₀`, which is what makes
   `V_d` a map `M_k(Γ₁(M)) → M_k(Γ₁(dM))`.
+* `TauCeti.exists_eq_T_zpow_mul_conjScale_mul_T_zpow`: the `T`-factorisation, in the other
+  direction. For `l ∣ N`, every `γ' ∈ Γ₀(N / l)` is `T ^ i * conjScale l γ c * T ^ j` for some
+  `i, j, c : ℤ` and some `γ ∈ Γ₀(N)` whose lower-left entry factors as `γ 1 0 = l * c` — a level
+  can be raised back from `N / l` to `N` at the cost of two translations — together with the
+  bookkeeping `γ 1 1 = γ' 1 1 - γ' 1 0 * j` that pins the lower-right entry of `γ`, which is what
+  a nebentypus of level `N` reads off it.
 * `TauCeti.ModularForm.slash_levelRaise_eq_smul`, `TauCeti.CuspForm.slash_levelRaise_eq_smul`:
   the eigenvalue transport. Slashing `V_d f` by `γ` produces the same scalar that slashing `f`
   by the conjugate matrix `conjScale d γ` does.
@@ -48,6 +65,12 @@ the upper half-plane to `τ ↦ f (d τ)`. It is the slash action by `diag(d, 1)
   conjugate of a `Γ₀(dM)` matrix lies in `Γ₀(M)` with the same lower-right entry, `V_d` carries
   `M_k(Γ₁(M), χ)` into `M_k(Γ₁(dM), χ ∘ ZMod.unitsMap)`, and likewise for `S_k`: the nebentypus
   of `V_d f` is that of `f` read along `(ZMod (dM))ˣ → (ZMod M)ˣ`.
+* `TauCeti.slash_conjScale_eq_smul_of_slash_scaleGL`,
+  `TauCeti.mdifferentiable_of_comp_scaleGL_smul`: the descent, for an `f : ℍ → ℂ` not assumed to
+  be a form. If the level-raise of `f` is an eigenvector of the slash by `γ`, then `f` is one
+  for `conjScale d γ` with the same eigenvalue, and if the level-raise of `f` is holomorphic
+  then so is `f`. These are what read a transformation law and holomorphy back down from
+  `V_d f` to `f`, as the level-lowering step of the conductor theorem does.
 * `TauCeti.ModularForm.qExpansion_levelRaise`, `TauCeti.CuspForm.qExpansion_levelRaise`: the
   `q`-expansion of `V_d f` is that of `f` with `q` replaced by `q ^ d`, that is, its
   `PowerSeries.expand d`; on coefficients (`TauCeti.ModularForm.qExpansion_levelRaise_coeff`
@@ -61,13 +84,34 @@ and the conductor statement of Layer 4 is phrased with this normalization of `V_
 
 * Diamond–Shurman, *A first course in modular forms*, §5.6
 * Miyake, *Modular forms*, §4.6
+* The `T`-factorisation section is ported from the AINTLIB `LeanModularForms` project
+  (Chris Birkbeck),
+  [`HeckeRIngs/GL2/LevelRaise.lean`](https://github.com/CBirkbeck/AINTLIB), declarations
+  `exists_T_levelRaiseConj_T_factor` (:491) and its supports
+  `eq_T_zpow_mul_levelRaiseConj_mul_T_zpow` (:471), `primeProductCoprime` (:410),
+  `dvd_primeProductCoprime_of_not_dvd` (:413), `not_dvd_primeProductCoprime_of_dvd` (:419),
+  `exists_shift_isCoprime` (:430), `shiftJ` (:450), `shiftJ_spec` (:453) and
+  `natCast_dvd_levelRaiseConj_lower_left` (:465), all Apache-2.0 at commit
+  `2baa76f742bdb4fb8ee323fabba41203bd390e08`. The source's `levelRaiseConjOfDvd` (:98) is this
+  file's `conjScale`, so the statement is phrased with `conjScale` and TauCeti's `Gamma0` API
+  rather than porting a second conjugation; the source's `shiftJ`/`shiftJ_spec` pair is not
+  ported at all, its Bézout step being TauCeti's existing `ZMod.exists_dvd_sub_val_mul`.
+* The descent section adapts [AINTLIB](https://github.com/CBirkbeck/AINTLIB) commit
+  `2baa76f74`, Apache-2.0, Chris Birkbeck,
+  `projects/LeanModularForms/LeanModularForms/Eigenforms/ConductorTheorem.lean` lines 84-137 —
+  the level-lowering block of `conductor_theorem_dichotomy_cuspForm_strong`. Half of that block
+  is deliberately not ported: `ModularGroup_T_mem_Gamma1`, `conductor_slash_levelRaise_eq` and
+  `smul_levelRaiseFun` already exist here in more general form (`T_zpow_mem_Gamma1`,
+  `ModularForm.slash_levelRaise_eq_smul` with `mem_modFormCharSpace_iff_nebentypus`, and the
+  `ℂ`-linearity of `levelRaiseₗ`), and AINTLIB's two `fun_eq_..._inv_smul` lemmas are not
+  needed, mathlib's `mdifferentiable_smul` reaching the holomorphy descent directly.
 -/
 
 public noncomputable section
 
 open Matrix Matrix.SpecialLinearGroup UpperHalfPlane CongruenceSubgroup Function
 
-open scoped MatrixGroups ModularForm Pointwise
+open scoped Manifold MatrixGroups ModularForm Pointwise
 
 namespace TauCeti
 
@@ -128,6 +172,22 @@ lemma slash_scaleGL_apply [NeZero d] (k : ℤ) (f : ℍ → ℂ) (τ : ℍ) :
     (f ∣[k] scaleGL d) τ = (d : ℂ) ^ (k - 1) * f (scaleGL d • τ) := by
   rw [ModularForm.slash_apply, σ_eq_refl_of_det_pos val_det_scaleGL_pos]
   simp [mul_comm]
+
+/-- **The defining formula for `V_d`, for a bare function**: the renormalized slash
+`d ^ (1 - k) • (f ∣[k] diag(d, 1))` is `τ ↦ f (d τ)`, with no stray power of `d`. This is
+`ModularForm.levelRaise_apply` for an `f : ℍ → ℂ` that is not yet known to be a modular form,
+which is the situation of the conductor theorem: there the transformation law of `f` is what is
+being proved, so `f` cannot be assumed to carry one.
+
+Stated between functions rather than pointwise, because that is the form in which a hypothesis
+`⇑g = d ^ (1 - k) • (f ∣[k] diag(d, 1))` is rewritten; `congrFun` gives the values. It is not a
+`simp` lemma: `Pi.smul_apply` takes the pointwise left-hand side out of simp-normal form. -/
+lemma smul_slash_scaleGL_eq [NeZero d] (k : ℤ) (f : ℍ → ℂ) :
+    (d : ℂ) ^ (1 - k) • (f ∣[k] scaleGL d) = fun τ ↦ f (scaleGL d • τ) := by
+  have hd : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne d)
+  funext τ
+  rw [Pi.smul_apply, smul_eq_mul, slash_scaleGL_apply, ← mul_assoc, ← zpow_add₀ hd]
+  simp
 
 /-! ### The level-raising operator -/
 
@@ -367,6 +427,99 @@ theorem Gamma0_map_le_conjAct_scaleGL (M d : ℕ) [NeZero d] :
 
 end Transport
 
+/-! ### The `T`-factorisation of `Γ₀(N / l)` -/
+
+section TFactor
+
+/-- The product of those primes of `l` that do not divide `a`. Subtracting that multiple of `c`
+from `a` clears every prime of `l` out of `a` in one step; see `exists_sub_mul_isCoprime`. -/
+private def primeProductCoprime (a : ℤ) (l : ℕ) : ℕ :=
+  (l.primeFactors.filter fun p : ℕ ↦ ¬(p : ℤ) ∣ a).prod id
+
+/-- A prime of `l` that misses `a` divides `primeProductCoprime a l`. -/
+private lemma dvd_primeProductCoprime_of_not_dvd {a : ℤ} {l p : ℕ} (hp : p ∈ l.primeFactors)
+    (hpa : ¬(p : ℤ) ∣ a) : (p : ℤ) ∣ (primeProductCoprime a l : ℤ) :=
+  mod_cast Finset.dvd_prod_of_mem id (Finset.mem_filter.mpr ⟨hp, hpa⟩)
+
+/-- A prime dividing `a` does not divide `primeProductCoprime a l`, whose factors all miss `a`. -/
+private lemma not_dvd_primeProductCoprime_of_dvd {a : ℤ} {l p : ℕ} (hp : p.Prime)
+    (hpa : (p : ℤ) ∣ a) : ¬(p : ℤ) ∣ (primeProductCoprime a l : ℤ) := by
+  intro hdvd
+  rw [Int.natCast_dvd_natCast] at hdvd
+  obtain ⟨q, hq_mem, hq_dvd⟩ := (Prime.dvd_finsetProd_iff hp.prime id).mp hdvd
+  obtain ⟨hq_pf, hqa⟩ := Finset.mem_filter.mp hq_mem
+  exact hqa ((Nat.prime_dvd_prime_iff_eq hp (Nat.prime_of_mem_primeFactors hq_pf)).mp hq_dvd ▸ hpa)
+
+/-- **A coprime shift.** If `a` and `c` are coprime then some translate `a - i * c` is coprime to
+a prescribed nonzero modulus `l`: clear the primes of `l` that divide `a` by hand, and the primes
+that do not are already cleared because they would otherwise have to divide `c`. -/
+private lemma exists_sub_mul_isCoprime (a c : ℤ) (l : ℕ) [NeZero l] (hac : IsCoprime a c) :
+    ∃ i : ℤ, IsCoprime (a - i * c) (l : ℤ) := by
+  refine ⟨(primeProductCoprime a l : ℤ), ?_⟩
+  rw [Int.isCoprime_iff_gcd_eq_one, Int.gcd, Int.natAbs_natCast]
+  by_contra hne
+  obtain ⟨p, hp, hp_dvd⟩ := Nat.exists_prime_and_dvd hne
+  rw [Nat.dvd_gcd_iff] at hp_dvd
+  obtain ⟨hp_dvd_x, hp_dvd_l⟩ := hp_dvd
+  have hp_dvd_x_int : (p : ℤ) ∣ a - (primeProductCoprime a l : ℤ) * c := by
+    rwa [← Int.natAbs_dvd_natAbs, Int.natAbs_natCast]
+  have hp_int : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp
+  by_cases hpa : (p : ℤ) ∣ a
+  · rcases hp_int.dvd_mul.mp (by simpa using dvd_sub hpa hp_dvd_x_int) with h | h
+    · exact not_dvd_primeProductCoprime_of_dvd hp hpa h
+    · exact hp_int.not_isUnit (hac.isUnit_of_dvd' hpa h)
+  · exact hpa (by
+      simpa using dvd_add hp_dvd_x_int
+        ((dvd_primeProductCoprime_of_not_dvd
+          (Nat.mem_primeFactors.mpr ⟨hp, hp_dvd_l, NeZero.ne l⟩) hpa).mul_right c))
+
+/-- Membership in `Γ₀(N)` from a factored lower-left entry: if `l ∣ N` and `γ 1 0 = l * c` with
+`N / l ∣ c`, then `γ ∈ Γ₀(N)`. -/
+private lemma mem_Gamma0_of_eq_mul_of_dvd {l N : ℕ} (hlN : l ∣ N) {γ : SL(2, ℤ)} {c : ℤ}
+    (hc : γ 1 0 = l * c) (hdvd : ((N / l : ℕ) : ℤ) ∣ c) : γ ∈ Gamma0 N := by
+  refine Gamma0_mem.mpr ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr ?_)
+  rw [hc, ← Nat.mul_div_cancel' hlN, Nat.cast_mul]
+  exact mul_dvd_mul_left _ hdvd
+
+/-- **The `T`-factorisation of `Γ₀(N / l)`.** For `l ∣ N`, every `γ' ∈ Γ₀(N / l)` is a product
+`T ^ i * conjScale l γ c * T ^ j` for some `i, j, c : ℤ` and some `γ ∈ Γ₀(N)` whose lower-left
+entry factors as `γ 1 0 = l * c`: the level of `γ'` can be raised back from `N / l` to `N` at the
+cost of two translations. Since `conjScale` and the translations all fix the lower-right entry up
+to the recorded shift, the last conjunct `γ 1 1 = γ' 1 1 - γ' 1 0 * j` pins the lower-right entry
+of `γ`, which is what a nebentypus of level `N` reads off it. -/
+theorem exists_eq_T_zpow_mul_conjScale_mul_T_zpow (l N : ℕ) [NeZero l] (hlN : l ∣ N) (γ' : SL(2, ℤ))
+    (hγ' : γ' ∈ Gamma0 (N / l)) : ∃ (i j c : ℤ) (γ : SL(2, ℤ)) (hc : γ 1 0 = l * c),
+      γ ∈ Gamma0 N ∧ γ' = ModularGroup.T ^ i * conjScale l γ c hc * ModularGroup.T ^ j ∧
+        γ 1 1 = γ' 1 1 - γ' 1 0 * j := by
+  have hdet : γ' 0 0 * γ' 1 1 - γ' 0 1 * γ' 1 0 = 1 :=
+    Matrix.SpecialLinearGroup.fin_two_mul_sub_mul_eq_one γ'
+  -- move the upper-left entry, along its own column, until it is coprime to `l`
+  obtain ⟨i, hi⟩ := exists_sub_mul_isCoprime (γ' 0 0) (γ' 1 0) l
+    ⟨γ' 1 1, -γ' 0 1, by linear_combination hdet⟩
+  -- then clear the upper-right entry modulo `l`, which the previous step made possible
+  have hunit : IsUnit ((γ' 0 0 - i * γ' 1 0 : ℤ) : ZMod l) :=
+    (ZMod.coe_int_isUnit_iff_isCoprime _ _).mpr (isCoprime_comm.mp hi)
+  obtain ⟨j₀, k, hk⟩ :=
+    ZMod.exists_dvd_sub_val_mul l (γ' 0 1 - i * γ' 1 1) (γ' 0 0 - i * γ' 1 0) hunit
+  set j : ℤ := (j₀.val : ℤ) with hj
+  have hdetM : (!![γ' 0 0 - i * γ' 1 0, k; (l : ℤ) * γ' 1 0, γ' 1 1 - γ' 1 0 * j]).det = 1 := by
+    rw [Matrix.det_fin_two_of]
+    linear_combination hdet + γ' 1 0 * hk
+  -- keep `γ` a variable of type `SL(2, ℤ)` until the coercion lemmas have fired
+  set γ : SL(2, ℤ) := ⟨_, hdetM⟩ with hγ
+  have hc : γ 1 0 = l * γ' 1 0 := by simp [hγ]
+  refine ⟨i, j, γ' 1 0, γ, hc, mem_Gamma0_of_eq_mul_of_dvd hlN hc
+    ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hγ')), ?_, by simp [hγ]⟩
+  refine Subtype.ext ?_
+  rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul, ModularGroup.coe_T_zpow,
+    ModularGroup.coe_T_zpow, coe_conjScale]
+  simp only [hγ, Matrix.SpecialLinearGroup.coe_mk, Matrix.mul_fin_two, Matrix.of_apply,
+    Matrix.cons_val_zero, Matrix.cons_val_one]
+  conv_lhs => rw [Matrix.eta_fin_two (γ' : Matrix (Fin 2) (Fin 2) ℤ)]
+  congrm !![?_, ?_; ?_, ?_] <;> first | linear_combination hk | ring
+
+end TFactor
+
 /-! ### Slashing a level-raise, and the transport of the nebentypus -/
 
 section Slash
@@ -431,6 +584,44 @@ lemma CuspForm.slash_levelRaise_eq_smul [𝒢'.HasDetOne] [NeZero d]
   rw [σ_eq_refl_of_det_pos val_det_scaleGL_pos, ContinuousAlgEquiv.refl_apply]
 
 end Slash
+
+/-! ### Descending along the level-raise -/
+
+section Descent
+
+/-- Slashing by a fixed matrix can be cancelled: it is a group action, so slashing by `A⁻¹`
+undoes it. -/
+private lemma slash_left_cancel (k : ℤ) (A : GL (Fin 2) ℝ) {f g : ℍ → ℂ}
+    (h : f ∣[k] A = g ∣[k] A) : f = g := by
+  simpa [← SlashAction.slash_mul] using congrArg (· ∣[k] A⁻¹) h
+
+/-- **Eigenvalue descent**, the converse of `ModularForm.slash_levelRaise_eq_smul`. If the
+level-raise of `f` is an eigenvector of the slash by `γ` with eigenvalue `z`, then `f` itself is
+an eigenvector of the slash by the conjugate matrix `conjScale d γ`, with the same eigenvalue.
+
+Both sides of the hypothesis and of the conclusion scale together, so the normalizing scalar
+`d ^ (1 - k)` of `V_d` cancels and does not appear. Applied to `γ ∈ Γ₀(dM)`, this is what
+descends a nebentypus through `V_d`: the level-lowering step of the conductor theorem, where
+`f` is only known to be a function and this transformation law is what exhibits it as a form. -/
+lemma slash_conjScale_eq_smul_of_slash_scaleGL [NeZero d] (f : ℍ → ℂ) (γ : SL(2, ℤ)) {c : ℤ}
+    (hc : γ 1 0 = d * c) {z : ℂ}
+    (hf : (f ∣[k] scaleGL d) ∣[k] mapGL ℝ γ = z • (f ∣[k] scaleGL d)) :
+    f ∣[k] mapGL ℝ (conjScale d γ c hc) = z • f := by
+  rw [slash_scaleGL_slash_mapGL f γ hc] at hf
+  refine slash_left_cancel k (scaleGL d) ?_
+  rw [hf, _root_.ModularForm.smul_slash, σ_eq_refl_of_det_pos val_det_scaleGL_pos,
+    ContinuousAlgEquiv.refl_apply]
+
+/-- **Holomorphy descent.** If `τ ↦ f (d τ)` is holomorphic on `ℍ`, then so is `f`. This is
+`UpperHalfPlane.mdifferentiable_comp_smul_iff` — holomorphy is invariant under any
+positive-determinant Möbius action — read at `g = diag(d, 1)`; with `smul_slash_scaleGL_eq` it
+descends holomorphy through `V_d` at every weight. -/
+lemma mdifferentiable_of_comp_scaleGL_smul [NeZero d] {f : ℍ → ℂ}
+    (hf : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) fun τ ↦ f (scaleGL d • τ)) :
+    MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f :=
+  (UpperHalfPlane.mdifferentiable_comp_smul_iff val_det_scaleGL_pos).mp hf
+
+end Descent
 
 /-! ### The nebentypus character of a level-raise -/
 
@@ -522,14 +713,13 @@ end Nebentypus
 
 section QExpansion
 
-local notation "𝕢" => Function.Periodic.qParam
-
 variable {𝒢 𝒢' : Subgroup (GL (Fin 2) ℝ)}
 
 /-- Scaling the argument by `d` raises the local parameter at the cusp `∞` to the `d`-th
 power: `q(d τ) = q(τ) ^ d`. -/
 lemma qParam_one_scaleGL_smul [NeZero d] (τ : ℍ) :
-    𝕢 1 ((scaleGL d • τ : ℍ) : ℂ) = 𝕢 1 (τ : ℂ) ^ d := by
+    Function.Periodic.qParam 1 ((scaleGL d • τ : ℍ) : ℂ) =
+      Function.Periodic.qParam 1 (τ : ℂ) ^ d := by
   simp only [Function.Periodic.qParam, coe_scaleGL_smul]
   rw [← Complex.exp_nat_mul]
   ring_nf
@@ -543,7 +733,8 @@ theorem ModularForm.qExpansion_levelRaise [𝒢'.HasDetOne] [NeZero d]
       (qExpansion 1 f).expand d (NeZero.ne d) := by
   have hd : d ≠ 0 := NeZero.ne d
   have : Fact (IsCusp OnePoint.infty 𝒢) := ⟨Subgroup.isCusp_of_mem_strictPeriods one_pos h𝒢⟩
-  have key : ∀ τ : ℍ, HasSum (fun m ↦ ((qExpansion 1 f).expand d hd).coeff m • 𝕢 1 (τ : ℂ) ^ m)
+  have key : ∀ τ : ℍ, HasSum (fun m ↦ ((qExpansion 1 f).expand d hd).coeff m •
+      Function.Periodic.qParam 1 (τ : ℂ) ^ m)
       (ModularForm.levelRaise d hle f τ) := by
     intro τ
     have h1 := ModularForm.hasSum_qExpansion f (h := 1) one_pos h𝒢 (scaleGL d • τ)

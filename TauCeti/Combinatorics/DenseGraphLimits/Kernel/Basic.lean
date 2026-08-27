@@ -6,6 +6,8 @@ Authors: Claude
 module
 
 public import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
+public import Mathlib.MeasureTheory.Integral.Prod
+import Mathlib.MeasureTheory.Measure.FiniteMeasure
 
 /-!
 # Symmetric kernels
@@ -44,6 +46,8 @@ Consequently the algebra below needs no hypothesis on `μ` at all — in particu
 * `AddCommGroup` and `Module ℝ` instances, defined pointwise. The `coe_zero`, `coe_add`, `coe_neg`,
   `coe_sub` and `coe_smul` simp lemmas identify every operation with the corresponding operation on
   `Ω → Ω → ℝ`, so the module structure can be computed entirely by `simp`.
+* `SymmKernel.integrable_uncurry` says that a bounded kernel is integrable on the product of two
+  finite copies of its measure.
 * `comap_apply` evaluates a pullback, and `comap_zero` / `comap_add` / `comap_neg` / `comap_sub` /
   `comap_smul` say that pulling back is linear, so a pullback of a difference of kernels is the
   difference of the pullbacks. `comap_id` and `comap_comap` are the functoriality laws.
@@ -115,6 +119,13 @@ theorem measurable (K : SymmKernel Ω μ) : Measurable (Function.uncurry (K : Ω
 
 /-- A symmetric kernel is uniformly bounded. The constant is not canonical. -/
 theorem exists_bound (K : SymmKernel Ω μ) : ∃ C, ∀ x y, |K x y| ≤ C := K.bdd'
+
+/-- A bounded symmetric kernel is integrable on the product of two finite copies of its measure. -/
+theorem integrable_uncurry (μ : Measure Ω) [IsFiniteMeasure μ] (K : SymmKernel Ω μ) :
+    Integrable (fun p : Ω × Ω => K p.1 p.2) (μ.prod μ) := by
+  obtain ⟨C, hC⟩ := K.exists_bound
+  refine Integrable.of_bound K.measurable.aestronglyMeasurable C (ae_of_all _ fun p => ?_)
+  simpa [Function.uncurry_apply_pair, Real.norm_eq_abs] using hC p.1 p.2
 
 section Algebra
 

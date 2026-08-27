@@ -8,7 +8,8 @@ module
 public import Mathlib.Algebra.IsPrimePow
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
-public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
+public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Basic
+public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Norm
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.NormCoeff
 public import TauCeti.Order.Northcott
 

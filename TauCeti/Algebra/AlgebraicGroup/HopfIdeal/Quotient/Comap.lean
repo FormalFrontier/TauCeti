@@ -11,8 +11,9 @@ public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
 # Inverse images of Hopf ideals along a quotient morphism
 
 The quotient morphism `H ⟶ H ⧸ I` is surjective, so every Hopf ideal `J` of `H ⧸ I` has an
-inverse image `HopfIdeal.comap J` in `H`. This file records the resulting reflection principle:
-`J` is zero as soon as that inverse image is no larger than the Hopf ideal `I` quotiented by.
+inverse image `HopfIdeal.comapOfSurjective J` in `H`. This file records the resulting reflection
+principle: `J` is zero as soon as that inverse image is no larger than the Hopf ideal `I`
+quotiented by.
 
 Contravariantly, a closed subgroup scheme of a quotient group scheme is the whole quotient
 exactly when its preimage in the ambient group scheme is everything; the statement below is the
@@ -21,8 +22,8 @@ trivial".
 
 ## Main declarations
 
-* `TauCeti.CommHopfAlgCat.eq_bot_of_comap_le`: a Hopf ideal of `H ⧸ I` whose inverse image along
-  the quotient morphism lies inside `I` is zero.
+* `TauCeti.CommHopfAlgCat.eq_bot_of_comapOfSurjective_le`: a Hopf ideal of `H ⧸ I` whose
+  inverse image along the quotient morphism lies inside `I` is zero.
 
 ## References
 
@@ -47,12 +48,13 @@ variable {R : Type u} [CommRing R] {H : _root_.CommHopfAlgCat.{v} R}
 
 This is the reflection principle behind the rigidity statements for generated closed subgroup
 schemes: it turns "the preimage is small" into "the ideal is trivial". -/
-theorem eq_bot_of_comap_le {I : HopfIdeal R H} (J : HopfIdeal R (quotient H I))
-    (hJ : HopfIdeal.comap J (mkQuotient H I).hom (mkQuotient_surjective H I) ≤ I) :
+theorem eq_bot_of_comapOfSurjective_le {I : HopfIdeal R H} (J : HopfIdeal R (quotient H I))
+    (hJ : HopfIdeal.comapOfSurjective J (mkQuotient H I).hom (mkQuotient_surjective H I) ≤ I) :
     J = ⊥ := by
   refine le_bot_iff.1
-    (HopfIdeal.le_of_comap_le_comap_of_surjective _ (mkQuotient_surjective H I) ?_)
-  rw [HopfIdeal.comap_bot]
+    (HopfIdeal.le_of_comapOfSurjective_le_comapOfSurjective _
+      (mkQuotient_surjective H I) ?_)
+  rw [HopfIdeal.comapOfSurjective_bot]
   intro x hx
   rw [HopfIdeal.mem_kerOfSurjective]
   exact (mkQuotient_eq_zero_iff H I x).2 (hJ hx)

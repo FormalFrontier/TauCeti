@@ -205,7 +205,7 @@ change of the Chevalley carrier: the inverse image of the base-changed defining 
 identification of `O(GLₙ)` over `A` with `A ⊗[ℤ] O(GLₙ)`. -/
 noncomputable def kostantGeneratedGeneralLinearBaseChangeIdeal :
     HopfIdeal A (GeneralLinear.coordinateHopfAlgebra A n) :=
-  (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A).comap
+  (kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A).comapOfSurjective
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).symm.hom.hom
     (ConcreteCategory.bijective_of_isIso
       (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).symm.hom).2
@@ -218,7 +218,7 @@ theorem mem_kostantGeneratedGeneralLinearBaseChangeIdeal_iff
     x ∈ kostantGeneratedGeneralLinearBaseChangeIdeal e h ρ M hM hnil b A ↔
       (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A n).inv.hom x ∈
         kostantGeneratedBaseChangeIdeal e h ρ M hM hnil b A :=
-  HopfIdeal.mem_comap
+  HopfIdeal.mem_comapOfSurjective
 
 /-- The transported pure tensor of every scalar and defining equation over `ℤ` belongs to the
 general-linear base-change ideal over `A`. -/

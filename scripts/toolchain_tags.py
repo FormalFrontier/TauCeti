@@ -74,6 +74,8 @@ import subprocess
 import sys
 import time
 
+from lake_cache_probe import exact_map_url
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pr_status"))
 import zulip as zp  # noqa: E402
 
@@ -221,8 +223,7 @@ def cache_published(toolchain, sha):
     host answers python's default user agent with 403 while answering curl with 200, so a
     urllib probe reports every commit as uncached and the whole report becomes noise.
     Found by running the tool, not by reading it."""
-    scope = toolchain.replace("/", "--").replace(":", "---")
-    url = f"{REVISIONS}/{REPO}/tc/{scope}/{sha}.jsonl"
+    url = exact_map_url(REVISIONS, toolchain, sha, REPO)
     out = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
                           "--max-time", "30", url], capture_output=True, text=True)
     if out.returncode != 0:
@@ -497,6 +498,9 @@ def create_tag(row, dry_run=False):
 # --- waiting, and posting to Zulip ------------------------------------------
 
 MARKER_RE = re.compile(r"<!--toolchain-tags:v1 ([0-9a-f]{16})-->\s*\Z")
+BRIEF_COMMAND = "python3 scripts/toolchain_tags.py --brief"
+SHELL_FENCE = f"```shell\n{BRIEF_COMMAND}\n```"
+OLD_FENCE = f"```\n{BRIEF_COMMAND}\n```"
 
 
 def wait_for_ci(sha, timeout_minutes=180, poll_seconds=120, sleep=None):
@@ -523,8 +527,8 @@ def log(message):
     print(message, flush=True)
 
 
-def last_posted_digest(z, bot_id):
-    """The digest carried by this account's newest message in the topic, or None.
+def last_posted_report(z, bot_id):
+    """This account's newest marked message and its digest, or (None, None).
 
     The previous state lives in the topic rather than in a file, so the poster keeps no
     state of its own and a wiped topic simply reposts."""
@@ -537,8 +541,8 @@ def last_posted_digest(z, bot_id):
             continue
         match = MARKER_RE.search(message["content"])
         if match:
-            return match.group(1)
-    return None
+            return message, match.group(1)
+    return None, None
 
 
 def post_content(rows, digest):
@@ -546,14 +550,15 @@ def post_content(rows, digest):
     body = render(rows, include_policy=False, collapse_old=True).rstrip()
     # The command shown must be the one that produced what is shown. --brief is exactly
     # this transformation, so someone can paste it and get the same thing back.
-    return (f"```\npython3 scripts/toolchain_tags.py --brief\n```\n"
+    return (f"{SHELL_FENCE}\n"
             f"```text\n{body}\n```\n"
             f"<!--toolchain-tags:v1 {digest}-->")
 
 
 def post_if_changed(rows, dry_run=False):
-    """Post the report when the state has changed since the last message. Returns True if
-    a message was posted."""
+    """Repair a legacy command fence, then post when the state changed.
+
+    Returns True only if a new message was posted."""
     digest = state_digest(rows)
     content = post_content(rows, digest)
     if dry_run:
@@ -567,7 +572,13 @@ def post_if_changed(rows, dry_run=False):
         raise RuntimeError("ZULIP_EMAIL / ZULIP_API_KEY are not set")
     z = zp.Zulip(email, api_key, site)
     zp.check(z)
-    previous = last_posted_digest(z, z.my_user_id())
+    message, previous = last_posted_report(z, z.my_user_id())
+    # One-time migration for reports posted before the command fence specified `shell`.
+    # It can be removed after the existing old-style report has been repaired.
+    if message and OLD_FENCE in message["content"]:
+        corrected = message["content"].replace(OLD_FENCE, SHELL_FENCE, 1)
+        log(f"correcting the shell fence in message {message['id']}")
+        z.update_message(message["id"], corrected)
     if previous == digest:
         log(f"state unchanged since the last post ({digest}); saying nothing")
         return False

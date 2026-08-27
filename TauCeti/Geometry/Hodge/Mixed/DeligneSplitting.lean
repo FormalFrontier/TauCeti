@@ -31,13 +31,14 @@ formula itself:
   conjugate exchanged;
 * functoriality: a morphism of mixed Hodge structures carries `I^{p,q}` into `I^{p,q}`;
 * the computation of the bigrading of a *pure* Hodge structure viewed as a mixed one: it is
-  concentrated on the antidiagonal `p + q = n`, where it is the Hodge component `H^{p,q}`. In
-  particular the bigrading of a pure structure is an internal direct sum, namely its Hodge
-  decomposition.
+  concentrated on the antidiagonal `p + q = n`, where it is the Hodge component `H^{p,q}`.
 
-The remaining steps of Deligne's theorem — that `⨁_{p,q} I^{p,q}` is the whole space for an
-arbitrary mixed Hodge structure, the recovery of `F` and `W` from the bigrading, and the
-conjugation symmetry `I^{p,q} ≡ conj I^{q,p}` modulo lower bidegree — are not proved here.
+That `⨁_{p,q} I^{p,q}` is the whole space, and the recovery `W_k = ⨆_{p+q ≤ k} I^{p,q}` of the
+weight filtration, are proved in `TauCeti/Geometry/Hodge/Mixed/Decomposition.lean`, which needs
+the pure Hodge structure carried by the graded pieces and so cannot be part of this file. What
+remains of Deligne's theorem after that module is the recovery `F^p = ⨆_{p' ≥ p} ⨆_{q'} I^{p',q'}`
+of the Hodge filtration and the conjugation symmetry `I^{p,q} ≡ conj I^{q,p}` modulo lower
+bidegree.
 
 ## Main declarations
 
@@ -49,8 +50,6 @@ conjugation symmetry `I^{p,q} ≡ conj I^{q,p}` modulo lower bidegree — are no
 * `TauCeti.Hodge.MixedHodgeStructure.Hom.map_deligneSplitting_le`: functoriality.
 * `TauCeti.Hodge.MixedHodgeStructure.ofPure_deligneSplitting_eq_piece_of_add_eq` and
   `…deligneSplitting_eq_bot_of_add_ne`: the bigrading of a pure Hodge structure.
-* `TauCeti.Hodge.MixedHodgeStructure.isInternal_deligneSplittingFamily_ofPure`: for a pure Hodge
-  structure the bigrading is an internal direct sum, the Hodge decomposition.
 
 ## References
 
@@ -184,8 +183,10 @@ theorem deligneSplitting_le_F_inf_conjF_of_WC_eq_bot {m p q : ℤ} (hm : mhs.WC 
   simpa only [hfirst, hsecond, hm, sup_bot_eq] using
     mhs.deligneSplitting_le_conjF_sub_sup_WC p q (p + q - m - 2) hd
 
-/-- Above a Hodge filtration index at which the filtration vanishes, the bigrading vanishes. -/
-theorem deligneSplitting_eq_bot_of_F_eq_bot {b : ℤ} (hb : mhs.F b = ⊥) {p q : ℤ} (hbp : b ≤ p) :
+/-- Above a Hodge filtration index at which the filtration vanishes, the bigrading vanishes: the
+hypothesis bounds the *first* index. -/
+theorem deligneSplitting_eq_bot_of_F_eq_bot_left {b : ℤ} (hb : mhs.F b = ⊥) {p q : ℤ}
+    (hbp : b ≤ p) :
     mhs.deligneSplitting p q = ⊥ :=
   le_bot_iff.1 ((mhs.deligneSplitting_le_F p q).trans ((mhs.F_antitone hbp).trans_eq hb))
 
@@ -276,32 +277,6 @@ theorem ofPure_deligneSplitting_eq_bot_of_add_ne {p q : ℤ} (hpq : p + q ≠ n)
     have hindex : n - 1 + 2 - p = n + 1 - p := by omega
     exact hle.trans (by simpa only [hindex] using
       (hs.isCompl_F_conjF p).disjoint.le_bot)
-
-/-- **For a pure Hodge structure the Deligne bigrading is an internal direct sum**, namely the
-Hodge decomposition placed on the antidiagonal `p + q = n`. This is the case of Deligne's theorem
-in which the weight filtration has a single jump. -/
-theorem isInternal_deligneSplittingFamily_ofPure :
-    DirectSum.IsInternal
-      (MixedHodgeStructure.ofPure (Vℚ := Vℚ) hℚ hℂ hs).deligneSplittingFamily := by
-  classical
-  refine DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top ?_ (top_unique ?_)
-  · intro pq
-    rcases eq_or_ne (pq.1 + pq.2) n with h | h
-    · rw [deligneSplittingFamily_apply, ofPure_deligneSplitting_eq_piece_of_add_eq hℚ hℂ hs h]
-      refine (hs.piece_iSupIndep pq.1).mono_right (iSup₂_le fun rs hrs ↦ ?_)
-      rcases eq_or_ne (rs.1 + rs.2) n with h' | h'
-      · rw [deligneSplittingFamily_apply,
-          ofPure_deligneSplitting_eq_piece_of_add_eq hℚ hℂ hs h']
-        exact le_iSup₂_of_le rs.1 (fun hEq ↦ hrs (Prod.ext hEq (by omega))) le_rfl
-      · rw [deligneSplittingFamily_apply,
-          ofPure_deligneSplitting_eq_bot_of_add_ne hℚ hℂ hs h']
-        exact bot_le
-    · rw [deligneSplittingFamily_apply, ofPure_deligneSplitting_eq_bot_of_add_ne hℚ hℂ hs h]
-      exact disjoint_bot_left
-  · rw [← hs.iSup_piece_eq_top]
-    refine iSup_le fun p ↦ le_iSup_of_le (p, n - p) ?_
-    rw [deligneSplittingFamily_apply]
-    exact le_of_eq (ofPure_deligneSplitting_eq_piece_of_add_eq hℚ hℂ hs (by omega)).symm
 
 end MixedHodgeStructure
 

@@ -3,7 +3,7 @@
 
 This is the single place that reads what a PR's status *is* -- its lifecycle
 (open / merged / closed), its `build` CI state, and its review state (from the
-canonical `<!--tauceti-scoreboard-->` comment's meta JSON), plus whether a review
+newest repo-associated `<!--tauceti-scoreboard-->` comment's meta JSON), plus whether a review
 is in flight right now (from the engine's `<!--tauceti-review-in-progress-->`
 marker). Every status *sink* imports it and renders that one truth its own way:
 
@@ -13,10 +13,11 @@ marker). Every status *sink* imports it and renders that one truth its own way:
 Keeping the derivation here means the two sinks can never disagree about what a
 PR's state is: they read the same `derive()` and only differ in how they show it.
 
-Everything here reads only trusted GitHub data. The two review signals -- the
-scoreboard meta and the in-progress marker -- are taken only from comments by a
-repo-associated author (OWNER/MEMBER/COLLABORATOR), so a fork PR author cannot
-forge review state. Both are extracted from ONE comment fetch.
+Everything here reads only trusted GitHub data. The two review signals -- the scoreboard meta and
+the in-progress marker -- are taken only from comments by a repo-associated author
+(OWNER/MEMBER/COLLABORATOR), so a fork PR author cannot forge status labels or housekeeping state.
+This status-sink policy is deliberately narrower than auto-merge's newest-scoreboard policy. Both
+signals are extracted from ONE comment fetch.
 
 The module is a pure library -- importing it has no side effects, writes nothing,
 and needs only python3's standard library plus an authenticated `gh` CLI (via
@@ -203,8 +204,9 @@ def review_state(meta, head):
     The authoritative signal is the durable per-rubric `states` map, NOT the latest round's `runs`:
     a reply/partial round re-runs only some rubrics, so `runs` can show an approve for one rubric
     while another is still blocking in `states`. This mirrors the worker's `ledger_blocking` and the
-    signal CI's merge close reads, so they agree. `runs` is used only as a fallback for a legacy
-    scoreboard with no `states` map. State not at the current head (a fix landed since the last
+    per-rubric state representation auto-merge reads, although auto-merge selects scoreboards under a
+    different author policy. `runs` is used only as a fallback for a legacy scoreboard with no `states`
+    map. State not at the current head (a fix landed since the last
     review) reads as "running, green so far".
 
         "none"     nothing posted yet          (no Zulip review emoji / label awaiting-review)

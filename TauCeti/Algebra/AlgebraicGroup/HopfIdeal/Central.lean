@@ -42,8 +42,8 @@ producing a Hopf ideal from the cocommutativity defect of `H`.
 
 * `TauCeti.CommHopfAlgCat.isCentral_iff_forall_isCentralPoint`: **a Hopf ideal is central exactly
   when the points it cuts out are central points over every value algebra.**
-* `TauCeti.HopfIdeal.IsCentral.comap_of_bijective`: centrality is preserved by pullback along a
-  bijective bialgebra morphism.
+* `TauCeti.HopfIdeal.IsCentral.comapOfSurjective_of_bijective`: centrality is preserved by
+  pullback along a bijective bialgebra morphism.
 * `TauCeti.HopfIdeal.IsCentral.isNormal`: a central Hopf ideal is normal.
 * `TauCeti.HopfIdeal.IsCentral.isCocomm_quotient`: the coordinate Hopf algebra of a central
   closed subgroup is cocommutative.
@@ -268,16 +268,16 @@ variable {R : Type u} [CommRing R]
 /-- Pulling a central Hopf ideal back along a bijective bialgebra morphism preserves centrality.
 Contravariantly, an isomorphism of affine group schemes carries central closed subgroup schemes
 to central closed subgroup schemes. -/
-theorem IsCentral.comap_of_bijective {H K : Type v} [CommRing H] [CommRing K]
+theorem IsCentral.comapOfSurjective_of_bijective {H K : Type v} [CommRing H] [CommRing K]
     [HopfAlgebra R H] [HopfAlgebra R K] {I : HopfIdeal R K} (hI : I.IsCentral)
     (f : H →ₐc[R] K) (hinj : Function.Injective f) (hsurj : Function.Surjective f) :
-    (I.comap f hsurj).IsCentral := by
+    (I.comapOfSurjective f hsurj).IsCentral := by
   apply (CommHopfAlgCat.isCentral_iff_forall_isCentralPoint
-    (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj)).mpr
+    (_root_.CommHopfAlgCat.of R H) (I.comapOfSurjective f hsurj)).mpr
   intro A g hg
   let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
   let E := AlgHom.mapDomainMulEquiv (A := A) e
-  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff
     f hinj hsurj I A
   have hg' : E.symm g ∈ CommHopfAlgCat.quotientPointsSubgroup
       (_root_.CommHopfAlgCat.of R K) I A := by
