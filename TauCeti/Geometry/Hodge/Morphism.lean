@@ -105,6 +105,21 @@ theorem add {g' : W₁ →ₗ[ℂ] W₂} (h : IsMorphism hs₁ hs₂ g)
     rintro _ ⟨x, hx, rfl⟩
     exact Submodule.add_mem _ (h.map_F_le p ⟨x, hx, rfl⟩) (h'.map_F_le p ⟨x, hx, rfl⟩)
 
+/-- The negation of a morphism of pure Hodge structures is a morphism. -/
+theorem neg (h : IsMorphism hs₁ hs₂ g) : IsMorphism hs₁ hs₂ (-g) where
+  commutes_conj x := by
+    simp only [LinearMap.neg_apply, map_neg]
+    rw [h.commutes_conj]
+  map_F_le p := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact Submodule.neg_mem _ (h.map_F_le p ⟨x, hx, rfl⟩)
+
+/-- The difference of two morphisms of pure Hodge structures is a morphism. -/
+theorem sub {g' : W₁ →ₗ[ℂ] W₂} (h : IsMorphism hs₁ hs₂ g)
+    (h' : IsMorphism hs₁ hs₂ g') : IsMorphism hs₁ hs₂ (g - g') := by
+  rw [sub_eq_add_neg]
+  exact h.add h'.neg
+
 /-- A morphism of pure Hodge structures preserves the conjugate Hodge filtration. -/
 theorem map_conjF_le (h : IsMorphism hs₁ hs₂ g) (p : ℤ) : (hs₁.conjF p).map g ≤ hs₂.conjF p := by
   rw [hs₁.conjF_def, hs₂.conjF_def, ← ω₁.conjFiltration_def hs₁.F p,
