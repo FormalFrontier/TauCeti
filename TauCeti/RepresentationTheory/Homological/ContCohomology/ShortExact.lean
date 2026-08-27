@@ -45,6 +45,9 @@ sequence and has to name the same two coefficient maps.
 
 * `TauCeti.ContCohomology.DiscreteShortExact`: a short exact sequence of discrete `G`-modules.
 * `TauCeti.ContCohomology.DiscreteShortExact.restrict`: the same sequence over a subgroup.
+* `TauCeti.ContCohomology.DiscreteShortExact.inclDistribMulActionHom` and
+  `TauCeti.ContCohomology.DiscreteShortExact.projDistribMulActionHom`: the inclusion and projection
+  bundled as equivariant additive homomorphisms, suitable as inputs to `explicitCoeff0`.
 * `TauCeti.ContCohomology.DiscreteShortExact.explicitDelta0` and
   `TauCeti.ContCohomology.DiscreteShortExact.explicitDelta1`: the connecting homomorphisms
   `H⁰(G, C) → H¹(G, A)` and `H¹(G, C) → H²(G, A)`.
@@ -217,6 +220,22 @@ theorem ext {S T : DiscreteShortExact G A B C} (hincl : S.incl = T.incl)
 /-- The composite `A → B → C` vanishes. -/
 @[simp]
 theorem proj_incl (a : A) : S.proj (S.incl a) = 0 := S.exact.apply_apply_eq_zero a
+
+/-- The inclusion of a short exact sequence, bundled as an equivariant additive homomorphism. -/
+def inclDistribMulActionHom : A →+[G] B where
+  toAddMonoidHom := S.incl
+  map_smul' := S.incl_equivariant
+
+/-- The projection of a short exact sequence, bundled as an equivariant additive homomorphism. -/
+def projDistribMulActionHom : B →+[G] C where
+  toAddMonoidHom := S.proj
+  map_smul' := S.proj_equivariant
+
+@[simp]
+theorem inclDistribMulActionHom_apply (a : A) : S.inclDistribMulActionHom a = S.incl a := (rfl)
+
+@[simp]
+theorem projDistribMulActionHom_apply (b : B) : S.projDistribMulActionHom b = S.proj b := (rfl)
 
 /-- An element of `B` killed by the projection comes from `A`. -/
 theorem exists_incl_eq {b : B} (hb : S.proj b = 0) : ∃ a : A, S.incl a = b := S.exact b |>.1 hb

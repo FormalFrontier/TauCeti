@@ -33,6 +33,8 @@ before the multiplicativity and prime-power recurrences are developed.
 ## Main results
 
 * `HeckeRing.GL2.coe_heckeTNat`, `HeckeRing.GL2.coe_heckeTCuspNat`: the underlying slash sums.
+* `HeckeRing.GL2.heckeTNat_congr`, `HeckeRing.GL2.heckeTCuspNat_congr`: transport the index
+  across an equality despite its `NeZero` instance argument.
 * `HeckeRing.GL2.heckeTNat_one`, `HeckeRing.GL2.heckeTCuspNat_one`: `T₁` is the identity.
 * `HeckeRing.GL2.coe_heckeTNat_prime`, `HeckeRing.GL2.coe_heckeTCuspNat_prime`: the classical
   formula for `T_p` at every prime.
@@ -94,6 +96,20 @@ lemma heckeTNat_def (n : ℕ) [NeZero n] :
 lemma heckeTCuspNat_def (n : ℕ) [NeZero n] :
     heckeTCuspNat (N := N) k n = heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N n) :=
   (rfl)
+
+/-- **Transport `T_n` along an equality of indices.** The `NeZero` side condition is a `Prop`, so
+the two operators are the same object; the lemma exists because rewriting the index *inside*
+`heckeTNat` would leave the instance argument stranded at the old index. -/
+lemma heckeTNat_congr {n m : ℕ} [NeZero n] [NeZero m] (h : n = m) :
+    heckeTNat (N := N) k n = heckeTNat (N := N) k m := by
+  subst h
+  rfl
+
+/-- **Transport the cusp-form `T_n` along an equality of indices.** -/
+lemma heckeTCuspNat_congr {n m : ℕ} [NeZero n] [NeZero m] (h : n = m) :
+    heckeTCuspNat (N := N) k n = heckeTCuspNat (N := N) k m := by
+  subst h
+  rfl
 
 /-- On underlying functions, `T_n` is the slash sum of its defining double coset. -/
 @[simp] lemma coe_heckeTNat (n : ℕ) [NeZero n]

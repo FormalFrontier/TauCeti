@@ -174,6 +174,15 @@ theorem ord_div_zpow {f t : F} (hf : f ≠ 0) (ht : t ≠ 0) (n : ℤ) :
 theorem ord_surjective : Function.Surjective P.ord :=
   Valuation.ord_surjective P.valuation P.valuation_surjective
 
+/-- Every integer is the order of a *nonzero* function: the sharpening of
+`TauCeti.Place.ord_surjective` that the junk value `ord_P 0 = 0` makes necessary, since the
+element `ord_surjective` produces at `0` may itself be `0`. -/
+theorem exists_ne_zero_ord_eq (n : ℤ) : ∃ t : F, t ≠ 0 ∧ P.ord t = n := by
+  obtain ⟨t, ht⟩ := P.ord_surjective n
+  rcases eq_or_ne t 0 with rfl | ht0
+  · exact ⟨1, one_ne_zero, by rw [P.ord_one, ← ht, P.ord_zero]⟩
+  · exact ⟨t, ht0, ht⟩
+
 theorem mem_integers_iff_ord_nonneg {f : F} : f ∈ P.integers ↔ 0 ≤ P.ord f :=
   Valuation.mem_valuationSubring_iff_ord_nonneg P.valuation
 
@@ -364,6 +373,14 @@ noncomputable instance : Algebra k P.integers :=
 
 instance : IsScalarTower k P.integers F :=
   .of_algebraMap_eq fun _ => rfl
+
+/-- A constant, viewed in `𝒪_P` and then back in `F`, is that constant.  The name says
+`constants` rather than `integers` because `TauCeti.Place.coe_algebraMap_integers` is the
+corresponding statement for the algebra map between the valuation rings of two places. -/
+@[simp, norm_cast]
+theorem coe_algebraMap_constants (c : k) :
+    ((algebraMap k P.integers c : P.integers) : F) = algebraMap k F c := by
+  rw [IsScalarTower.algebraMap_apply k P.integers F, ValuationSubring.algebraMap_apply]
 
 /-- The residue field `F_P = 𝒪_P / 𝔪_P` of a place (Stichtenoth, Definition 1.1.14). The
 evaluation map `f ↦ f(P)` is `IsLocalRing.residue P.integers`. -/

@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.Spin.Structure
+public import TauCeti.RepresentationTheory.Spin.OddStructure
 public import TauCeti.RepresentationTheory.Irreducible
 -- Private: `IsSimpleModule.toSpanSingleton_surjective` is used only inside proofs.
 import Mathlib.RingTheory.SimpleModule.Basic
@@ -65,8 +65,27 @@ theorem is stated with, so no separate parity hypothesis is carried. The lattice
 only the zero-dimensional quadratic space: there `S = K` is entirely even and `S⁻` is zero. `S⁺`
 always contains the scalars, so it needs no such hypothesis, and neither does the inequivalence.
 
+The odd-dimensional case is the opposite of all this, and the last section records it. There the
+even subalgebra is a *single* block rather than a product, so the Fock action already carries it
+onto all of `Module.End K S` (`TauCeti.evenSpinAction_surjective`), and the whole spinor module —
+not a half of it — is the irreducible object: `TauCeti.spinRep_isIrreducible_of_odd`.
+As soon as `P.W ≠ ⊥`, exterior parity still splits `S` as a vector space but no longer as a
+representation, which `TauCeti.not_forall_map_spinRep_spinPlus_le` and
+`TauCeti.not_forall_map_spinRep_spinMinus_le` record: neither half is `⊥` or everything, so
+irreducibility alone forbids either from being invariant. The `P.line = ⊥` carried by every
+statement of the even-dimensional half is precisely what fails. Dimension one is the exception:
+there `W = ⊥` and `S = K` is entirely even, so `S⁺ = S` and `S⁻ = 0` are both invariant, for want
+of anything to split.
+
+The two parities are separated by exactly one hypothesis, the surjectivity of
+`TauCeti.evenSpinAction`, and `TauCeti.isIrreducible_spinRep_of_span_of_surjective` is stated
+against it rather than against a dimension, so the dichotomy is visible in the statement. It fails
+in even dimension except for the zero-dimensional quadratic space, where `S = K` is
+one-dimensional and there is no room for it to fail.
+
 What is not proved here is the odd-dimensional splitting of `CliffordAlgebra Q` into its two
-central summands, for which the results here are the even-dimensional half.
+central summands, for which the results here are the even-dimensional half; it is
+`CliffordAlgebra.nonempty_algEquiv_matrix_prod_of_finrank_eq_two_mul_add_one`.
 
 ## Main results
 
@@ -91,13 +110,27 @@ central summands, for which the results here are the even-dimensional half.
 * `TauCeti.isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_span`: **the two half-spin group
   representations are inequivalent** under the same spanning hypothesis, with analogous
   corollaries.
+* `TauCeti.isIrreducible_spinRep_of_span_of_surjective`: the spin representation is irreducible
+  once the Spin group spans the even subalgebra and that subalgebra exhausts the endomorphisms of
+  the spinor module.
+* `TauCeti.isIrreducible_spinRep_of_isSquare` and `TauCeti.spinRep_isIrreducible_of_odd`: **the
+  spin representation is irreducible in odd dimension**, the type `Bₗ` half of Layer 4, under the
+  square normalization and over a separably closed field respectively.
+* `TauCeti.not_forall_map_spinRep_spinPlus_le_of_isIrreducible` and
+  `TauCeti.not_forall_map_spinRep_spinMinus_le_of_isIrreducible`: **an irreducible spinor module
+  does not split along exterior parity**, provided `P.W ≠ ⊥`, which rules out only dimension one;
+  `TauCeti.not_forall_map_spinRep_spinPlus_le` and
+  `TauCeti.not_forall_map_spinRep_spinMinus_le` are their odd-dimensional specializations.
 
 ## References
 
 * W. Fulton and J. Harris, *Representation Theory: A First Course* (1991), §20.1, Lemma 20.9 and
   Proposition 20.15: the Clifford algebra of an even-dimensional space is the endomorphism algebra
   of `⋀·W`, its even subalgebra is the product of the endomorphism algebras of the two halves, and
-  the two half-spin modules are irreducible and inequivalent.
+  the two half-spin modules are irreducible and inequivalent; §20.2 for the odd-dimensional spin
+  representation, which does not split.
+* H. B. Lawson and M.-L. Michelsohn, *Spin Geometry*, Princeton University Press (1989),
+  Chapter I, §5: the complex spinor representations and their irreducibility in both parities.
 * C. Chevalley, *The Algebraic Theory of Spinors* (1954), Chapter II.
 * [Spin-representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
   Layers 1 and 4, "the structure theorem" and "the spin and half-spin representations".
@@ -125,21 +158,44 @@ private theorem eq_bot_or_eq_top_of_surjective_action {K : Type u} [Field K]
   obtain ⟨a, rfl⟩ := hF g
   exact hg ▸ hN a ⟨s, hs, rfl⟩
 
-private def spinGroupToEven {K : Type u} [Field K]
-    {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} :
-    spinGroup Q →* CliffordAlgebra.even Q :=
-  Submonoid.inclusion fun _ hx => spinGroup.mem_even hx
-
 private def spinGroupRepresentation {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
     {M : Type*} [AddCommGroup M] [Module K M]
     (F : CliffordAlgebra.even Q →ₐ[K] Module.End K M) : Representation K (spinGroup Q) M :=
-  F.toMonoidHom.comp spinGroupToEven
+  F.toMonoidHom.comp (spinGroupToEven Q)
+
+private theorem spinGroupRepresentation_apply {K : Type u} [Field K]
+    {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    {M : Type*} [AddCommGroup M] [Module K M]
+    (F : CliffordAlgebra.even Q →ₐ[K] Module.End K M) (g : spinGroup Q) :
+    spinGroupRepresentation F g = F (spinGroupToEven Q g) := rfl
+
+/-- The same, with the even element spelled out in the coordinates the half-spin lemmas of
+`TauCeti/RepresentationTheory/Spin/HalfSpin.lean` are stated in. Only the coercion lemma
+`TauCeti.coe_spinGroupToEven_apply` is used, not the definition of the inclusion. -/
+private theorem spinGroupRepresentation_apply_mk {K : Type u} [Field K]
+    {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    {M : Type*} [AddCommGroup M] [Module K M]
+    (F : CliffordAlgebra.even Q →ₐ[K] Module.End K M) (g : spinGroup Q) :
+    spinGroupRepresentation F g = F ⟨g, spinGroup.mem_even g.2⟩ := by
+  rw [spinGroupRepresentation_apply]
+  exact congrArg F (Subtype.ext (coe_spinGroupToEven_apply Q g))
 
 private noncomputable def spinGroupAlgebraHom {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} :
     MonoidAlgebra K (spinGroup Q) →ₐ[K] CliffordAlgebra.even Q :=
-  MonoidAlgebra.lift K (CliffordAlgebra.even Q) (spinGroup Q) spinGroupToEven
+  MonoidAlgebra.lift K (CliffordAlgebra.even Q) (spinGroup Q) (spinGroupToEven Q)
+
+/-- The range of the Spin-group inclusion, with its values spelled out as the subtype elements
+`⟨g, _⟩` that `Submodule.span_range_subtype_eq_top_iff` consumes. As for
+`TauCeti.spinGroupRepresentation_apply_mk`, only the coercion lemma
+`TauCeti.coe_spinGroupToEven_apply` is used, not the definition of the inclusion. -/
+private theorem range_spinGroupToEven {K : Type u} [Field K]
+    {V : Type v} [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) :
+    Set.range ⇑(spinGroupToEven Q) =
+      Set.range fun g : spinGroup Q ↦
+        (⟨g, spinGroup.mem_even g.2⟩ : CliffordAlgebra.even Q) :=
+  congrArg Set.range (funext fun g ↦ Subtype.ext (coe_spinGroupToEven_apply Q g))
 
 private theorem spinGroupAlgebraHom_surjective {K : Type u} [Field K]
     {V : Type v} [AddCommGroup V] [Module K V]
@@ -151,12 +207,13 @@ private theorem spinGroupAlgebraHom_surjective {K : Type u} [Field K]
   change Function.Surjective (spinGroupAlgebraHom (K := K) (Q := Q)).toLinearMap
   rw [← LinearMap.range_eq_top]
   rw [show (spinGroupAlgebraHom (K := K) (Q := Q)).toLinearMap =
-      (Finsupp.linearCombination K spinGroupToEven).comp
+      (Finsupp.linearCombination K (spinGroupToEven Q)).comp
         (MonoidAlgebra.coeffLinearEquiv K).toLinearMap by
     ext g
-    simp [spinGroupAlgebraHom, spinGroupToEven]]
+    simp [spinGroupAlgebraHom]]
   rw [LinearMap.range_comp_of_range_eq_top _ (LinearEquiv.range _),
     Finsupp.range_linearCombination]
+  rw [range_spinGroupToEven]
   apply (Submodule.span_range_subtype_eq_top_iff
     (CliffordAlgebra.even Q).toSubmodule
       (fun g : spinGroup Q ↦ spinGroup.mem_even g.2)).2
@@ -202,7 +259,8 @@ private theorem intertwines_even_of_intertwines_spinGroup {K : Type u} [Field K]
     (x : CliffordAlgebra.even Q) (m : M) : φ (F x m) = G x (φ m) := by
   obtain ⟨a, rfl⟩ := spinGroupAlgebraHom_surjective hspan x
   let φ' : (spinGroupRepresentation F).IntertwiningMap (spinGroupRepresentation G) :=
-    ⟨φ, fun g => LinearMap.ext fun m => hφ g m⟩
+    ⟨φ, fun g => LinearMap.ext fun m => by
+      simpa only [LinearMap.comp_apply, spinGroupRepresentation_apply_mk] using hφ g m⟩
   have h := (Representation.IntertwiningMap.equivLinearMapAsModule
     (spinGroupRepresentation F) (spinGroupRepresentation G) φ').map_smul' a m
   -- The module equivalence is definitionally the identity on carriers. Expose the algebra
@@ -340,6 +398,7 @@ theorem isIrreducible_spinPlusSubrep_of_span
     LinearEquiv.ofEq _ _ (toSubmodule_spinPlusSubrep P hline).symm
   refine Representation.isIrreducible_of_linearEquiv e ?_ hρ
   intro g s
+  rw [spinGroupRepresentation_apply_mk]
   apply Subtype.ext
   exact coe_spinPlusAction_spinGroup_apply P hline g s
 
@@ -358,6 +417,7 @@ theorem isIrreducible_spinMinusSubrep_of_span
     LinearEquiv.ofEq _ _ (toSubmodule_spinMinusSubrep P hline).symm
   refine Representation.isIrreducible_of_linearEquiv e ?_ hρ
   intro g s
+  rw [spinGroupRepresentation_apply_mk]
   apply Subtype.ext
   exact coe_spinMinusAction_spinGroup_apply P hline g s
 
@@ -380,13 +440,17 @@ theorem isEmpty_equiv_spinPlusSubrep_spinMinusSubrep_of_span
   refine ⟨f, fun x s => intertwines_even_of_intertwines_spinGroup hspan
     (spinPlusAction Q P hline) (spinMinusAction Q P hline) f.toLinearMap ?_ x s⟩
   intro g s
+  rw [← spinGroupRepresentation_apply_mk (spinPlusAction Q P hline) g,
+    ← spinGroupRepresentation_apply_mk (spinMinusAction Q P hline) g]
   have hPlus : ePlus ((spinGroupRepresentation (spinPlusAction Q P hline)) g s) =
       (spinPlusSubrep P hline).toRepresentation g (ePlus s) := by
+    rw [spinGroupRepresentation_apply_mk]
     apply Subtype.ext
     exact coe_spinPlusAction_spinGroup_apply P hline g s
   have hMinus (t : spinMinus Q P) :
       eMinus ((spinGroupRepresentation (spinMinusAction Q P hline)) g t) =
         (spinMinusSubrep P hline).toRepresentation g (eMinus t) := by
+    rw [spinGroupRepresentation_apply_mk]
     apply Subtype.ext
     exact coe_spinMinusAction_spinGroup_apply P hline g t
   have hef (t : spinPlus Q P) : e.toIntertwiningMap (ePlus t) = eMinus (f t) := by
@@ -466,5 +530,132 @@ theorem isEmpty_equiv_spinPlusSubrep_spinMinusSubrep [IsSepClosed K]
     (fun v w _ _ ↦ IsSepClosed.exists_eq_mul_self ((Q v)⁻¹ * (Q w)⁻¹)) hline
 
 end SpinGroup
+
+/-! ### Irreducibility of the spin representation in odd dimension -/
+
+section Odd
+
+variable {K : Type u} [Field K]
+  {V : Type v} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+  (P : SpinPolarizationData Q)
+
+/-- **The whole spin representation is irreducible** as soon as the Spin group linearly spans the
+even Clifford subalgebra and that subalgebra already exhausts the endomorphisms of the spinor
+module.
+
+The second hypothesis is exactly what separates the two parities of `finrank K V`. In *positive*
+even dimension it fails — the even subalgebra is the *product* of the two half-spin endomorphism
+algebras, by `TauCeti.SpinPolarizationData.evenCliffordEquivProdEnd`, and `S` visibly splits — and
+in odd dimension it holds, by `TauCeti.evenSpinAction_surjective`. Dimension zero is the exception
+on the even side: there `W = ⊥`, the odd block is zero, `S = K` is one-dimensional and the even
+subalgebra is already all of `Module.End K S`. -/
+theorem isIrreducible_spinRep_of_span_of_surjective
+    (hspan : Submodule.span K (spinGroup Q : Set (CliffordAlgebra Q)) =
+      (CliffordAlgebra.even Q).toSubmodule)
+    (hsurj : Function.Surjective (evenSpinAction Q P)) : (spinRep Q P).IsIrreducible := by
+  have hEq : spinGroupRepresentation (evenSpinAction Q P) = spinRep Q P :=
+    DFunLike.ext _ _ fun g => by
+      rw [spinGroupRepresentation_apply, evenSpinAction_apply, coe_spinGroupToEven_apply,
+        spinRep_apply]
+  exact hEq ▸ isIrreducible_spinGroupRepresentation hspan (evenSpinAction Q P) hsurj
+
+/-- A subspace of the spinor module that is neither zero nor everything is not invariant under the
+Spin group once the spin representation is irreducible, since invariance would make it a
+subrepresentation. -/
+private theorem not_forall_map_spinRep_le (hirr : (spinRep Q P).IsIrreducible)
+    {N : Submodule K (ExteriorAlgebra K P.W)} (hbot : N ≠ ⊥) (htop : N ≠ ⊤) :
+    ¬ ∀ g : spinGroup Q, N.map (spinRep Q P g) ≤ N := by
+  intro hinv
+  have _ : (spinRep Q P).IsIrreducible := hirr
+  let σ : Subrepresentation (spinRep Q P) :=
+    { toSubmodule := N
+      apply_mem_toSubmodule := fun g _ hv => hinv g ⟨_, hv, rfl⟩ }
+  rcases IsSimpleOrder.eq_bot_or_eq_top σ with h | h
+  · exact hbot (congrArg Subrepresentation.toSubmodule h)
+  · exact htop (congrArg Subrepresentation.toSubmodule h)
+
+/-- **An irreducible spinor module does not split along exterior parity.** The even part `S⁺` is
+not invariant under the Spin group, so it is not a subrepresentation of `spinRep`.
+
+Nothing about the anisotropic remainder is computed: the proof is by irreducibility, `S⁺` being
+neither `⊥` (it contains the scalars) nor everything (it misses the nonzero `S⁻`). The hypothesis
+`P.W ≠ ⊥` is what excludes `finrank K V = 1`, where `S = K` is entirely even, `S⁺ = S` is trivially
+invariant and there is nothing to split. In even dimension the same subspace *is* invariant, by
+`TauCeti.spinPlus_invariant`, and `spinRep` is correspondingly reducible. -/
+theorem not_forall_map_spinRep_spinPlus_le_of_isIrreducible (hirr : (spinRep Q P).IsIrreducible)
+    (hW : P.W ≠ ⊥) :
+    ¬ ∀ g : spinGroup Q, (spinPlus Q P).map (spinRep Q P g) ≤ spinPlus Q P :=
+  not_forall_map_spinRep_le P hirr
+    (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinPlus P))
+    ((isCompl_spinPlus_spinMinus P).symm.disjoint.ne_top_of_ne_bot
+      (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinMinus P hW)))
+
+/-- **The odd half of an irreducible spinor module is not invariant either.** The companion of
+`TauCeti.not_forall_map_spinRep_spinPlus_le_of_isIrreducible` for the other parity: `S⁻` is nonzero
+when `P.W ≠ ⊥` and is not everything, `S⁺` containing the scalars, so irreducibility forbids it
+from being a subrepresentation of `spinRep`. -/
+theorem not_forall_map_spinRep_spinMinus_le_of_isIrreducible (hirr : (spinRep Q P).IsIrreducible)
+    (hW : P.W ≠ ⊥) :
+    ¬ ∀ g : spinGroup Q, (spinMinus Q P).map (spinRep Q P g) ≤ spinMinus Q P :=
+  not_forall_map_spinRep_le P hirr
+    (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinMinus P hW))
+    ((isCompl_spinPlus_spinMinus P).disjoint.ne_top_of_ne_bot
+      (Submodule.nontrivial_iff_ne_bot.1 (nontrivial_spinPlus P)))
+
+variable [NeZero (2 : K)] [FiniteDimensional K V]
+
+/-- **The spin representation is irreducible in odd dimension** when anisotropic pairs admit the
+square normalization needed to span the even Clifford algebra.
+
+This is the generality of the even-dimensional `TauCeti.isIrreducible_spinPlusSubrep_of_isSquare`:
+no separably closed field, and no nondegeneracy hypothesis, the polarization data already carrying
+it by `TauCeti.SpinPolarizationData.nondegenerate`. The square normalization is only what lifts a
+product of two reflections to the Spin group, and it is the sole remaining hypothesis of this
+argument. -/
+theorem isIrreducible_spinRep_of_isSquare
+    (hsq : ∀ v w, Q v ≠ 0 → Q w ≠ 0 → IsSquare ((Q v)⁻¹ * (Q w)⁻¹))
+    (hodd : Odd (finrank K V)) : (spinRep Q P).IsIrreducible := by
+  have _ : Invertible (2 : K) := invertibleOfNonzero (NeZero.ne (2 : K))
+  exact isIrreducible_spinRep_of_span_of_surjective P
+    (CliffordAlgebra.span_spinGroup_eq_even_of_isSquare Q
+      (P.nondegenerate ((isUnit_of_invertible (2 : K)).isSMulRegular K)) hsq)
+    (evenSpinAction_surjective P hodd)
+
+variable [IsSepClosed K]
+
+/-- **The spin representation is irreducible in odd dimension.** For a polarized quadratic space of
+dimension `2 * l + 1` over a separably closed field of characteristic not two, the Spin group acts
+irreducibly on the whole spinor module `S = ⋀·W`.
+
+This is the type `Bₗ` half of the Layer-4 irreducibility statement, in the shape the roadmap pins.
+Nondegeneracy of `Q` is not assumed: the polarization data already carries it, by
+`TauCeti.SpinPolarizationData.nondegenerate`. Except in dimension one, where `W = ⊥` and `S = K` is
+entirely even, the exterior parity splitting `S = S⁺ ⊕ S⁻` is *not* a splitting of representations
+here: see `TauCeti.not_forall_map_spinRep_spinPlus_le`. The even-dimensional counterpart is the
+pair `TauCeti.isIrreducible_spinPlusSubrep`, `TauCeti.isIrreducible_spinMinusSubrep`, where `S`
+itself is reducible unless it is the zero-dimensional quadratic space. -/
+theorem spinRep_isIrreducible_of_odd (l : ℕ) (hV : finrank K V = 2 * l + 1) :
+    (spinRep Q P).IsIrreducible :=
+  isIrreducible_spinRep_of_isSquare P
+    (fun v w _ _ ↦ IsSepClosed.exists_eq_mul_self ((Q v)⁻¹ * (Q w)⁻¹)) ⟨l, hV⟩
+
+/-- **In odd dimension the spinor module does not split along exterior parity.** The
+separably closed specialization of
+`TauCeti.not_forall_map_spinRep_spinPlus_le_of_isIrreducible`, where
+`TauCeti.spinRep_isIrreducible_of_odd` supplies the irreducibility. Unlike in positive even
+dimension, `S⁺` is not a subrepresentation of `spinRep`; the hypothesis `P.line = ⊥` carried by
+`TauCeti.spinPlus_invariant` is what an odd-dimensional polarization cannot satisfy. -/
+theorem not_forall_map_spinRep_spinPlus_le (l : ℕ) (hV : finrank K V = 2 * l + 1) (hW : P.W ≠ ⊥) :
+    ¬ ∀ g : spinGroup Q, (spinPlus Q P).map (spinRep Q P g) ≤ spinPlus Q P :=
+  not_forall_map_spinRep_spinPlus_le_of_isIrreducible P (spinRep_isIrreducible_of_odd P l hV) hW
+
+/-- **In odd dimension the odd half of the spinor module is not invariant either.** The companion
+of `TauCeti.not_forall_map_spinRep_spinPlus_le` for the other parity, the separably closed
+specialization of `TauCeti.not_forall_map_spinRep_spinMinus_le_of_isIrreducible`. -/
+theorem not_forall_map_spinRep_spinMinus_le (l : ℕ) (hV : finrank K V = 2 * l + 1) (hW : P.W ≠ ⊥) :
+    ¬ ∀ g : spinGroup Q, (spinMinus Q P).map (spinRep Q P g) ≤ spinMinus Q P :=
+  not_forall_map_spinRep_spinMinus_le_of_isIrreducible P (spinRep_isIrreducible_of_odd P l hV) hW
+
+end Odd
 
 end TauCeti

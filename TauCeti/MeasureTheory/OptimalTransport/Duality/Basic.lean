@@ -35,6 +35,8 @@ be finite or measurable.
 
 * `TauCeti.dualFeasible_ofReal_iff` — for a nonnegative real cost, feasibility for the
   associated extended cost is the plain real pointwise inequality;
+* `TauCeti.kantorovichDualValue_eq_integral` — against any coupling the dual value is the
+  integral of the split sum of the two potentials;
 * `TauCeti.DualFeasible.kantorovichDualValue_le_lintegral` — weak duality against one coupling;
 * `TauCeti.DualFeasible.kantorovichDualValue_le_transportCost` — weak duality against the primal
   infimum;
@@ -160,6 +162,17 @@ theorem kantorovichDualValue_add_const_sub_const [IsFiniteMeasure μ]
   rw [hmassReal]
   ring
 
+/-- Against any coupling of the two marginals, the dual value is the integral of the split sum
+`(x, y) ↦ φ x + ψ y` of the two potentials. This identity is what turns the dual value into a
+statement about a single plan; it underlies both weak duality and complementary slackness. -/
+theorem kantorovichDualValue_eq_integral (hπ : IsCoupling π μ ν) (hφ : Integrable φ μ)
+    (hψ : Integrable ψ ν) :
+    kantorovichDualValue μ ν φ ψ = ∫ z, (φ z.1 + ψ z.2) ∂π := by
+  rw [kantorovichDualValue_def,
+    integral_add (hπ.integrable_comp_fst hφ) (hπ.integrable_comp_snd hψ),
+    hπ.integral_comp_fst hφ.aestronglyMeasurable,
+    hπ.integral_comp_snd hψ.aestronglyMeasurable]
+
 section WeakDuality
 
 private theorem real_coe_le_ennreal_coe_of_ofReal_le {x : ℝ} {a : ℝ≥0∞}
@@ -175,15 +188,7 @@ the dual value is bounded by the cost of every coupling. -/
 theorem DualFeasible.ofReal_kantorovichDualValue_le_lintegral (h : DualFeasible c φ ψ)
     (hφ : Integrable φ μ) (hψ : Integrable ψ ν) (hπ : IsCoupling π μ ν) :
     ENNReal.ofReal (kantorovichDualValue μ ν φ ψ) ≤ ∫⁻ z, c z ∂π := by
-  have hφπ : Integrable (fun z : X × Y ↦ φ z.1) π :=
-    hπ.measurePreserving_fst.integrable_comp_of_integrable hφ
-  have hψπ : Integrable (fun z : X × Y ↦ ψ z.2) π :=
-    hπ.measurePreserving_snd.integrable_comp_of_integrable hψ
-  have hvalue : kantorovichDualValue μ ν φ ψ = ∫ z, φ z.1 + ψ z.2 ∂π := by
-    rw [kantorovichDualValue_def, integral_add hφπ hψπ,
-      hπ.integral_comp_fst hφ.aestronglyMeasurable,
-      hπ.integral_comp_snd hψ.aestronglyMeasurable]
-  rw [hvalue]
+  rw [kantorovichDualValue_eq_integral hπ hφ hψ]
   exact
     (TauCeti.MeasureTheory.ofReal_integral_le_lintegral_ofReal
       (μ := π) (f := fun z : X × Y ↦ φ z.1 + ψ z.2)).trans <|

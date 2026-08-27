@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic

@@ -6,7 +6,8 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Basic
-public import Mathlib.Order.Partition.Finpartition
+public import TauCeti.Order.Partition.Finpartition
+import Mathlib.Data.Setoid.Partition
 
 /-!
 # Step graphons
@@ -61,10 +62,7 @@ variable (P : Finpartition (Set.univ : Set Ω))
 omit [MeasurableSpace Ω] in
 /-- Every point of the carrier belongs to one of the parts of a partition of `Set.univ`. -/
 private theorem exists_part (x : Ω) : ∃ p : P.parts, x ∈ (p : Set Ω) := by
-  have hx : x ∈ ⋃₀ (P.parts : Set (Set Ω)) := by
-    rw [← Finset.sup_id_set_eq_sUnion, P.sup_parts]
-    exact Set.mem_univ x
-  obtain ⟨p, hp, hxp⟩ := Set.mem_sUnion.mp hx
+  obtain ⟨p, ⟨hp, hxp⟩, _⟩ := P.isPartition_parts.2 x
   exact ⟨⟨p, hp⟩, hxp⟩
 
 /-- The finite rectangle-indicator sum underlying a step graphon. -/

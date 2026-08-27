@@ -8,12 +8,16 @@
 # drift apart.
 set -euo pipefail
 
+PROJECT_ROOT="${TAUCETI_PROJECT_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+TRUSTED_SCRIPTS="${TAUCETI_TRUSTED_SCRIPTS:-$PROJECT_ROOT/scripts}"
+cd "$PROJECT_ROOT"
+
 lint_src="$(mktemp -d "$PWD/.lake/lint-style-src.XXXXXX")"
 trap 'rm -rf "$lint_src"' EXIT
 lint_module="$lint_src/TauCetiLint/All.lean"
 mkdir -p "$(dirname "$lint_module")"
 
-. scripts/source-modules.sh
+. "$TRUSTED_SCRIPTS/source-modules.sh"
 tauceti_source_modules "$lint_src/files" "$lint_src/modules"
 mapfile -d '' files < "$lint_src/files"
 printf 'import TauCeti\n' > "$lint_module"
@@ -28,7 +32,7 @@ fi
 # Use the validated discovery list for the copyright/Authors audit. Keep going after a header
 # failure so contributors also see Mathlib's text-style diagnostics in the same CI round.
 status=0
-if ! lake env lean --run scripts/HeaderStyle.lean "${files[@]}"; then
+if ! lake env lean --run "$TRUSTED_SCRIPTS/HeaderStyle.lean" "${files[@]}"; then
   status=1
 fi
 

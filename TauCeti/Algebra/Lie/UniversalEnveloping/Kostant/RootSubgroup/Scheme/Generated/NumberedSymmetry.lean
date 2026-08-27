@@ -72,8 +72,8 @@ variable (hσ : Function.Surjective σ)
 
 include hθe hσ in
 /-- The numbered-symmetry coordinate automorphism preserves the common-kernel defining ideal. -/
-private theorem kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIso :
-    (kostantGeneratedDefiningIdeal e h ρ M hM hnil b).comap
+private theorem kostantGeneratedDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso :
+    (kostantGeneratedDefiningIdeal e h ρ M hM hnil b).comapOfSurjective
         (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom
         (ConcreteCategory.bijective_of_isIso
           (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).2 =
@@ -85,18 +85,19 @@ private theorem kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIs
       (fun i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b) :=
     kostantGeneratedDefiningIdeal_def e h ρ M hM hnil b
   -- the automorphism intertwines the family along a section of `σ`, its inverse along `σ` itself
-  have hhom : J.comap c.hom.hom (ConcreteCategory.bijective_of_isIso c.hom).2 ≤ J := by
+  have hhom : J.comapOfSurjective c.hom.hom (ConcreteCategory.bijective_of_isIso c.hom).2 ≤ J := by
     rw [hfam]
-    refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq _ c.hom _
+    refine CommHopfAlgCat.comapOfSurjective_commonKernelHopfIdeal_le_of_comp_eq _ c.hom _
       (Function.surjInv hσ) fun i => ?_
     rw [kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
       e h ρ M hM hnil b σ θ hθM hθe (Function.surjInv hσ i), Function.surjInv_eq hσ i]
-  have hinv : J.comap c.inv.hom (ConcreteCategory.bijective_of_isIso c.inv).2 ≤ J := by
+  have hinv : J.comapOfSurjective c.inv.hom (ConcreteCategory.bijective_of_isIso c.inv).2 ≤ J := by
     rw [hfam]
-    refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq _ c.inv _ σ fun i => ?_
+    refine CommHopfAlgCat.comapOfSurjective_commonKernelHopfIdeal_le_of_comp_eq
+      _ c.inv _ σ fun i => ?_
     rw [← kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap
       e h ρ M hM hnil b σ θ hθM hθe i, Iso.inv_hom_id_assoc]
-  exact HopfIdeal.comap_eq_of_comap_hom_le_of_comap_inv_le c J hhom hinv
+  exact HopfIdeal.comapOfSurjective_eq_of_hom_le_of_inv_le c J hhom hinv
 
 /-- The coordinate automorphism induced on the common-kernel quotient. -/
 private noncomputable def kostantGeneratedCoordinateNumberedSymmetryIso :
@@ -107,7 +108,7 @@ private noncomputable def kostantGeneratedCoordinateNumberedSymmetryIso :
   CommHopfAlgCat.quotientIsoOfComapEq
     (kostantNumberedSymmetryCoordinateIso M b θ hθM)
     (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
-    (kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIso
+    (kostantGeneratedDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso
       e h ρ M hM hnil b σ θ hθM hθe hσ)
 
 /-- The quotient coordinate automorphism is induced by the ambient coordinate automorphism. -/
@@ -122,7 +123,7 @@ private theorem mkQuotient_comp_kostantGeneratedCoordinateNumberedSymmetryIso_ho
   exact CommHopfAlgCat.mkQuotient_comp_quotientIsoOfComapEq_hom
     (kostantNumberedSymmetryCoordinateIso M b θ hθM)
     (kostantGeneratedDefiningIdeal e h ρ M hM hnil b)
-    (kostantGeneratedDefiningIdeal_comap_numberedSymmetryCoordinateIso
+    (kostantGeneratedDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso
       e h ρ M hM hnil b σ θ hθM hθe hσ)
 
 include hθe hσ in

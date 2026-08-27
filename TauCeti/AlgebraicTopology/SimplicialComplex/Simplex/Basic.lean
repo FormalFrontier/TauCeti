@@ -6,6 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
+public import Mathlib.Data.Finset.Powerset
+public import Mathlib.Data.Fintype.Card
+public import Mathlib.Data.Set.Finite.Basic
+public import Mathlib.Order.Fin.Basic
 public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
 
 /-!
@@ -97,6 +101,10 @@ theorem singleton_mem_simplexBoundary {v : ι} : {v} ∈ simplexBoundary V ↔ v
 /-- The boundary is a subcomplex of the simplex. -/
 theorem simplexBoundary_le_simplex : simplexBoundary V ≤ simplex V :=
   fun _ hσ => ⟨hσ.1, hσ.2.subset⟩
+
+/-- The boundary of an abstract simplex has finitely many faces. -/
+theorem finite_faces_simplexBoundary (V : Finset ι) : (simplexBoundary V).faces.Finite :=
+  (finite_faces_simplex V).subset simplexBoundary_le_simplex
 
 /-- The boundary of a simplex with nonempty spanning set is a strict subcomplex of the simplex. -/
 theorem simplexBoundary_lt_simplex (hV : V.Nonempty) : simplexBoundary V < simplex V := by
@@ -213,4 +221,3 @@ theorem mem_simplex_iff_mem_simplexBoundary_or_eq :
     · exact self_mem_simplex.mpr hV
 
 end PreAbstractSimplicialComplex
-

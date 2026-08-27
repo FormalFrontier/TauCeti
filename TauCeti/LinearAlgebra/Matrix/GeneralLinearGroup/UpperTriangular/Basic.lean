@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 -- `TauCeti.diagGL` supplies the diagonal section below.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 -- The upper-unitriangular subgroup is the kernel of the diagonal projection.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperUnitriangular.Basic
 

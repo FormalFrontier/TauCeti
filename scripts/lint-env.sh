@@ -177,9 +177,11 @@
 #   scripts/lint-env.sh --update   # rewrite the baseline from the current state
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
-BASELINE="scripts/lint-baseline.txt"
-ALLOWLIST="scripts/lint-nolints-allowlist.txt"
+PROJECT_ROOT="${TAUCETI_PROJECT_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+TRUSTED_SCRIPTS="${TAUCETI_TRUSTED_SCRIPTS:-$PROJECT_ROOT/scripts}"
+cd "$PROJECT_ROOT"
+BASELINE="$TRUSTED_SCRIPTS/lint-baseline.txt"
+ALLOWLIST="$TRUSTED_SCRIPTS/lint-nolints-allowlist.txt"
 UPDATE=0
 [ "${1:-}" = "--update" ] && UPDATE=1
 
@@ -235,7 +237,7 @@ LINTERS="checkType defsWithUnderscore deprecatedNoSince impossibleInstance nonCl
 LINTERS_LEAN=$(printf '"%s", ' $LINTERS | sed 's/, $//')
 
 MODULE_IMPORT_LIST="$TMP/modules.txt"
-. scripts/source-modules.sh
+. "$TRUSTED_SCRIPTS/source-modules.sh"
 tauceti_source_modules "$TMP/source-files" "$MODULE_IMPORT_LIST"
 mods=$(wc -l < "$MODULE_IMPORT_LIST")
 [ "${mods:-0}" -gt 0 ] || fail "found no TauCeti/*.lean modules — the lint is miswired"

@@ -7,6 +7,9 @@ module
 
 public import TauCeti.Data.Nat.Factorization.PrimePowerProd
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Diagonal.PrimePower
+-- The Atkin–Lehner anti-involution and the commutativity it buys are used only inside the
+-- proof of `heckeTCompositeGamma0_mul_of_coprime` below, so private.
+import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.AtkinLehner
 
 /-!
 # The composite diagonal element of the `Γ₀(N)` Hecke ring
@@ -32,13 +35,12 @@ hypothesis of the lemmas rather than as a guard inside the definition.
 
 ## What is not here
 
-Coprime multiplicativity `T_{mn} = T_m · T_n` and the per-prime product formula both need the
-blocks of the `Γ₀(N)` Hecke ring to commute — `TauCeti.Nat.primePowerProd_mul_of_coprime` is
-stated in a `Monoid`, but under the hypothesis that each block of `n` commutes with the blocks
-of `m` at larger primes, and the Chebyshev manipulation behind the product formula needs a
-`CommRing`. That commutativity is not on `main` yet, so neither result is stated here. Nothing
-below is blocked by its absence, and `heckeTCompositeGamma0_def` is the hook the multiplicative
-half will instantiate through.
+The per-prime product formula is not proved here: the Chebyshev manipulation behind it needs a
+`CommRing` structure on the Hecke ring, and the ordered product is built on a `Monoid` one.
+Coprime multiplicativity `T_{mn} = T_m · T_n` asks for strictly less — only that a block of
+`n` commute with the blocks of `m` at larger primes, which is the hypothesis
+`TauCeti.Nat.primePowerProd_mul_of_coprime` carries in place of a `CommMonoid` instance — so
+it *is* proved below, instantiated through `heckeTCompositeGamma0_def`.
 
 ## Main definitions
 
@@ -52,6 +54,8 @@ half will instantiate through.
 * `HeckeRing.GL2.heckeTCompositeGamma0_of_one_lt`: the peeling step, as a rewriting rule.
 * `HeckeRing.GL2.heckeTCompositeGamma0_prime_pow_of_not_coprime`: at a prime sharing a factor
   with the level the composite degenerates to a power of the generator.
+* `HeckeRing.GL2.heckeTCompositeGamma0_mul_of_coprime`: the composite is multiplicative on
+  coprime arguments, `T_{mn} = T_m · T_n`.
 
 ## References
 
@@ -60,13 +64,18 @@ half will instantiate through.
 * Ported from [AINTLIB](https://github.com/CBirkbeck/AINTLIB) commit
   `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck,
   `projects/LeanModularForms/LeanModularForms/HeckeRIngs/GL2/Unified/Gamma0RingDn.lean`,
-  declarations `heckeRingDn`, `heckeRingDn_ppow` and `heckeRingDn_peel`. The source guards its
-  block map with `if hp : Nat.Prime p then … else 1` because its prime-power family demands a
-  primality proof; this file's does not, so the guard is dropped and
+  declarations `heckeRingDn`, `heckeRingDn_ppow`, `heckeRingDn_peel` and
+  `heckeRingDn_mul_coprime`. The source guards its block map with
+  `if hp : Nat.Prime p then … else 1` because its prime-power family demands a primality
+  proof; this file's does not, so the guard is dropped and
   `heckeTCompositeGamma0_prime_pow` loses the source's `0 < v` hypothesis with it. The source's
   peeling combinator `peelProd` is generalised out of the Hecke namespace into
   `TauCeti.Nat.primePowerProd`, where it belongs — it is combinatorics about `Nat.minFac`, with
-  no Hecke content.
+  no Hecke content. For coprime multiplicativity the source installs a `CommRing` instance on
+  the Hecke ring and calls its `CommMonoid`-level peeling lemma; here
+  `TauCeti.Nat.primePowerProd_mul_of_coprime` asks instead for the commutations it actually
+  uses, so no instance is swapped in and the obligations are discharged from
+  `HeckeCosetModule.mul_comm_of_antiInvolution` directly.
 -/
 
 public section
@@ -152,5 +161,29 @@ theorem heckeTCompositeGamma0_prime_pow_of_not_coprime {p : ℕ} (hp : p.Prime)
     heckeTCompositeGamma0 N (p ^ v) = heckeTGeneratorGamma0 N p ^ v := by
   rw [heckeTCompositeGamma0_prime_pow N hp v,
     heckeTGeneratorRecGamma0_eq_generator_pow_of_not_coprime N hpN]
+
+/-- **Coprime multiplicativity**: `T_{mn} = T_m · T_n` when `m` and `n` share no prime factor.
+
+The classical multiplicative relation among the `Γ₀(N)` Hecke operators, at the level of the
+Hecke ring. Together with `heckeTCompositeGamma0_prime_pow`, which identifies the composite on
+a prime power with the Diamond–Shurman recurrence family, it determines `T_n` for every
+*positive* `n` from the prime-power data: split `n` into its prime powers here, then evaluate
+each factor there. The junk input `0` has no factorisation to split and is fixed separately by
+`heckeTCompositeGamma0_zero`. No hypothesis relates `m` or `n` to the level — the bad primes
+are already absorbed into the blocks. -/
+theorem heckeTCompositeGamma0_mul_of_coprime {m n : ℕ} (hmn : m.Coprime n) :
+    heckeTCompositeGamma0 N (m * n) = heckeTCompositeGamma0 N m * heckeTCompositeGamma0 N n := by
+  -- One application of `primePowerProd_mul_of_coprime`, not an induction: it already sorts the
+  -- interleaved blocks of `m * n` into those of `m` followed by those of `n`, and asks back only
+  -- that a block of `n` commute with the blocks of `m` at larger primes. The Atkin–Lehner
+  -- anti-involution commutes *any* two elements of this ring, so the primes never enter and the
+  -- hypothesis is discharged by a constant function. Reading commutativity off that lemma rather
+  -- than installing `commSemiringHeckeRingGamma0` as a local instance keeps this statement in the
+  -- ambient `Semiring` its neighbours use — the choice `GL2/Recurrence.lean` already makes for
+  -- the centrality of the scalar operator.
+  simpa only [heckeTCompositeGamma0_def] using
+    TauCeti.Nat.primePowerProd_mul_of_coprime (heckeTGeneratorRecGamma0 N) hmn fun _ _ _ _ _ ↦
+      HeckeCosetModule.mul_comm_of_antiInvolution ℤ (atkinLehnerAntiInvolution N)
+        (atkinLehnerAntiInvolution_onHeckeCoset_eq_self N) _ _
 
 end HeckeRing.GL2

@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Geometry.Manifold.MFDeriv.Curve
 public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.AlongCurve.Basic
 public import Mathlib.Geometry.Manifold.MFDeriv.Atlas
 
@@ -28,13 +29,22 @@ same tangent vector for every such `x`.
 
 The velocity of the curve is carried by a `HasMFDerivWithinAt` hypothesis, in the
 `ContinuousLinearMap.smulRight 1 w` form used by Mathlib's integral-curve API, so that no junk
-value can leak in; `CovariantDerivative.alongCurveWithin_pullback_mfderivWithin` restates the
-result for the canonical velocity `mfderivWithin 𝓘(𝕜, 𝕜) I γ s t 1`.
+value can leak in; `CovariantDerivative.alongCurveWithin_pullback_curveVelocityWithin` restates the
+result for the canonical velocity `TauCeti.Manifold.curveVelocityWithin`.
+
+The chart computation of this file also specializes to the *velocity field* `t ↦ γ' t` of the
+curve, which is not pulled back from an ambient vector field: reading it in a chart returns the
+derivative of the chart reading of the curve, so the moving-chart formula becomes the classical
+second-order expression `u'' + Γ (u', u')`.  Those lemmas are stated for an arbitrary connection;
+`TauCeti/Geometry/Manifold/Riemannian/Geodesic/Basic.lean` reads the geodesic equation off them
+for the Levi-Civita connection.
 
 ## Main results
 
 * `TauCeti.Manifold.derivWithin_extChartAt_comp`: the derivative of a curve read in the chart at
-  `x` is the reading of its velocity in the tangent-bundle trivialization at `x`.
+  `x` is the reading of its velocity in the tangent-bundle trivialization at `x`, with
+  `TauCeti.Manifold.sectionCoord_curveVelocityWithin_eventuallyEq` its eventual-equality form for
+  the velocity field.
 * `TauCeti.Manifold.derivWithin_sectionCoord_pullback`: the derivative of the coordinate reading
   of a pulled-back field is the reading of the flat frame derivative in the direction of the
   velocity.
@@ -46,8 +56,12 @@ result for the canonical velocity `mfderivWithin 𝓘(𝕜, 𝕜) I γ s t 1`.
 * `CovariantDerivative.symmL_alongCurveInChartWithin_pullback`: on pulled-back fields the
   coordinate formula is chart independent -- reading it in any chart around `γ t` and transporting
   back gives the moving-chart value.
-* `CovariantDerivative.alongCurveWithin_pullback_mfderivWithin`: the same identification with the
-  velocity written as `mfderivWithin 𝓘(𝕜, 𝕜) I γ s t 1`.
+* `CovariantDerivative.alongCurveWithin_pullback_curveVelocityWithin`: the same identification with
+  the velocity written as `TauCeti.Manifold.curveVelocityWithin`.
+* `CovariantDerivative.alongCurveInChartWithin_curveVelocityWithin`: the coordinate formula for the
+  velocity field of the curve is `u'' + Γ (u', u')`, and
+  `CovariantDerivative.alongCurveWithin_curveVelocityWithin_eq_zero_iff`: it vanishes exactly when
+  that second-order expression does, for the chart centred at the current point.
 
 ## References
 
@@ -80,25 +94,6 @@ variable
 variable (γ : 𝕜 → M) (X : Π y : M, TangentSpace I y)
 
 omit [CompleteSpace 𝕜] [FiniteDimensional 𝕜 E]
-  [IsManifold I 1 M]
-  [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I] in
-/-- Compose a manifold derivative with a curve of specified velocity, reading the resulting
-one-dimensional manifold derivative as an ordinary derivative. -/
-private theorem hasDerivWithinAt_comp_curve
-    {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F] [ContinuousSMul 𝕜 F]
-    {f : M → F} {s : Set 𝕜} {t : 𝕜}
-    {w : TangentSpace I (γ t)} {D : TangentSpace I (γ t) →L[𝕜] F}
-    (hf : HasMFDerivAt I 𝓘(𝕜, F) f (γ t) D)
-    (hγ : HasMFDerivAt[s] γ t (ContinuousLinearMap.smulRight (1 : 𝕜 →L[𝕜] 𝕜) w)) :
-    HasDerivWithinAt (f ∘ γ) (D w) s t := by
-  have hcomp : HasMFDerivAt[s] (f ∘ γ) t
-      (ContinuousLinearMap.smulRight (1 : 𝕜 →L[𝕜] 𝕜) (D w)) :=
-    (hf.comp_hasMFDerivWithinAt (hf := hγ)).congr_mfderiv (by
-      ext
-      exact D.map_smul (1 : 𝕜) w)
-  exact hcomp.hasFDerivWithinAt
-
-omit [CompleteSpace 𝕜] [FiniteDimensional 𝕜 E]
   [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I] in
 /-- The derivative of a curve read in the chart centred at `x`, taken within a parameter set with
 a unique derivative there, is the reading of the velocity of the curve in the tangent-bundle
@@ -112,10 +107,25 @@ theorem derivWithin_extChartAt_comp {x : M} {s : Set 𝕜} {t : 𝕜} {w : Tange
       (trivializationAt E (TangentSpace I) x).continuousLinearMapAt 𝕜 (γ t) w := by
   rw [TangentBundle.continuousLinearMapAt_trivializationAt
     (by simpa only [TangentBundle.trivializationAt_baseSet] using hx)]
-  set D := mfderiv% (extChartAt I x) (γ t)
-  have hchart : HasMFDerivAt% (extChartAt I x) (γ t) D :=
-    (mdifferentiableAt_extChartAt hx).hasMFDerivAt
-  exact (hasDerivWithinAt_comp_curve γ hchart hγ).derivWithin hu
+  exact (hasDerivWithinAt_comp_curve (mdifferentiableAt_extChartAt hx) hγ).derivWithin hu
+
+omit [CompleteSpace 𝕜] [FiniteDimensional 𝕜 E]
+  [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I] in
+/-- Along a curve differentiable within `s`, the coordinate reading of the velocity field in the
+tangent-bundle trivialization centred at `x` is the derivative within `s` of the curve read in the
+extended chart at `x`, at every nearby parameter of `s` at which the curve is still in that
+chart. -/
+theorem sectionCoord_curveVelocityWithin_eventuallyEq {x : M} {s : Set 𝕜} {t : 𝕜}
+    (hs : UniqueDiffOn 𝕜 s) (hγ : MDifferentiableOn 𝓘(𝕜, 𝕜) I γ s) (ht : t ∈ s)
+    (hx : γ t ∈ (trivializationAt E (TangentSpace I) x).baseSet) :
+    sectionCoord (F := E) γ (curveVelocityWithin I γ s) x =ᶠ[𝓝[s] t]
+      derivWithin (extChartAt I x ∘ γ) s := by
+  have hbase : ∀ᶠ r in 𝓝[s] t, γ r ∈ (trivializationAt E (TangentSpace I) x).baseSet :=
+    (hγ t ht).continuousWithinAt.preimage_mem_nhdsWithin
+      ((trivializationAt E (TangentSpace I) x).open_baseSet.mem_nhds hx)
+  filter_upwards [hbase, self_mem_nhdsWithin] with r hr hrs
+  rw [sectionCoord_apply, derivWithin_extChartAt_comp γ hr (hs r hrs)
+    (hasMFDerivWithinAt_curveVelocityWithin (hγ r hrs))]
 
 omit [FiniteDimensional 𝕜 E]
   [IsManifold I 1 M]
@@ -146,10 +156,8 @@ theorem derivWithin_sectionCoord_pullback
       rw [map_smul, continuousLinearMapAt_localFrame b hyb i]
       simp only [σ, LinearMap.piApply_apply_apply]
   -- Each frame coefficient is differentiable along the curve, with the expected derivative.
-  have hcoeff : ∀ i, HasDerivWithinAt (fun r ↦ σ i (γ r)) (d% (σ i) (γ t) w) s t := by
-    intro i
-    exact hasDerivWithinAt_comp_curve γ
-      (mdifferentiableAt_localFrameCoeff b hy hY i).hasMFDerivAt hγ
+  have hcoeff : ∀ i, HasDerivWithinAt (fun r ↦ σ i (γ r)) (d% (σ i) (γ t) w) s t := fun i ↦
+    hasDerivWithinAt_comp_curve (mdifferentiableAt_localFrameCoeff b hy hY i) hγ
   have hfun : (∑ i : ι, fun r ↦ σ i (γ r) • b i) = fun r ↦ ∑ i, σ i (γ r) • b i := by
     funext r
     simp [Finset.sum_apply]
@@ -244,18 +252,52 @@ theorem alongCurve_pullback {t : 𝕜} {w : TangentSpace I (γ t)}
   exact alongCurveWithin_pullback cov γ X uniqueDiffWithinAt_univ hγ.hasMFDerivWithinAt hX
 
 /-- Agreement with the ambient covariant derivative, with the velocity of the curve written as the
-canonical `mfderivWithin 𝓘(𝕜, 𝕜) I γ s t 1`. -/
-theorem alongCurveWithin_pullback_mfderivWithin {s : Set 𝕜} {t : 𝕜}
+canonical `TauCeti.Manifold.curveVelocityWithin`. -/
+theorem alongCurveWithin_pullback_curveVelocityWithin {s : Set 𝕜} {t : 𝕜}
     (hu : UniqueDiffWithinAt 𝕜 s t) (hγ : MDifferentiableWithinAt 𝓘(𝕜, 𝕜) I γ s t)
     (hX : MDiffAt (T% X) (γ t)) :
-    alongCurveWithin cov γ (fun r ↦ X (γ r)) s t =
-      cov X (γ t) (mfderivWithin 𝓘(𝕜, 𝕜) I γ s t (1 : 𝕜)) := by
-  refine alongCurveWithin_pullback cov γ X hu (hγ.hasMFDerivWithinAt.congr_mfderiv ?_) hX
-  ext
-  -- The tangent space of the scalar model is definitionally `𝕜`, but its topology instance blocks
-  -- rewriting by `ContinuousLinearMap.smulRight_apply` until that identification is exposed.
-  change (mfderivWithin 𝓘(𝕜, 𝕜) I γ s t) (1 : 𝕜) =
-    (1 : 𝕜) • (mfderivWithin 𝓘(𝕜, 𝕜) I γ s t) (1 : 𝕜)
-  rw [one_smul]
+    alongCurveWithin cov γ (fun r ↦ X (γ r)) s t = cov X (γ t) (curveVelocityWithin I γ s t) :=
+  alongCurveWithin_pullback cov γ X hu (hasMFDerivWithinAt_curveVelocityWithin hγ) hX
+
+/-! ### The velocity field of the curve -/
+
+/-- The moving-chart coordinate formula applied to the velocity field of the curve is the classical
+second-order expression `u'' + Γ (u', u')`, for `u` the curve read in the extended chart at `x`.
+The chart need not be the one centred at the current point of the curve. -/
+theorem alongCurveInChartWithin_curveVelocityWithin {x : M} {s : Set 𝕜} {t : 𝕜}
+    (hs : UniqueDiffOn 𝕜 s) (hγ : MDifferentiableOn 𝓘(𝕜, 𝕜) I γ s) (ht : t ∈ s)
+    (hx : γ t ∈ (trivializationAt E (TangentSpace I) x).baseSet) :
+    alongCurveInChartWithin cov γ (curveVelocityWithin I γ s) s x t =
+      derivWithin (derivWithin (extChartAt I x ∘ γ) s) s t +
+        christoffelMap (Module.finBasis 𝕜 E)
+          (cov.isCovariantDerivativeOn
+            (s := (trivializationAt E (TangentSpace I) x).baseSet)) (γ t)
+          (derivWithin (extChartAt I x ∘ γ) s t) (derivWithin (extChartAt I x ∘ γ) s t) := by
+  have hEq := sectionCoord_curveVelocityWithin_eventuallyEq γ hs hγ ht hx
+  have hpoint : sectionCoord (F := E) γ (curveVelocityWithin I γ s) x t =
+      derivWithin (extChartAt I x ∘ γ) s t := hEq.self_of_nhdsWithin ht
+  rw [alongCurveInChartWithin_apply, hEq.derivWithin_eq hpoint, hpoint]
+
+/-- The moving-chart candidate for the derivative of the velocity field along the curve vanishes
+exactly when the curve read in the extended chart at the current point solves the second-order
+equation `u'' + Γ (u', u') = 0` there. -/
+theorem alongCurveWithin_curveVelocityWithin_eq_zero_iff {s : Set 𝕜} {t : 𝕜}
+    (hs : UniqueDiffOn 𝕜 s) (hγ : MDifferentiableOn 𝓘(𝕜, 𝕜) I γ s) (ht : t ∈ s) :
+    alongCurveWithin cov γ (curveVelocityWithin I γ s) s t = 0 ↔
+      derivWithin (derivWithin (extChartAt I (γ t) ∘ γ) s) s t +
+        christoffelMap (Module.finBasis 𝕜 E)
+          (cov.isCovariantDerivativeOn
+            (s := (trivializationAt E (TangentSpace I) (γ t)).baseSet)) (γ t)
+          (derivWithin (extChartAt I (γ t) ∘ γ) s t)
+          (derivWithin (extChartAt I (γ t) ∘ γ) s t) = 0 := by
+  set e := trivializationAt E (TangentSpace I) (γ t)
+  have hmem : γ t ∈ e.baseSet :=
+    FiberBundle.mem_baseSet_trivializationAt E (TangentSpace I) (γ t)
+  rw [alongCurveWithin_apply, alongCurveInChartWithin_curveVelocityWithin cov γ hs hγ ht hmem]
+  refine ⟨fun h ↦ ?_, fun h ↦ by rw [h, map_zero]⟩
+  -- The coordinate formula is transported by a fibrewise linear equivalence, so its vanishing is
+  -- equivalent to the vanishing of its reading in the chart.
+  have h' := congrArg (e.continuousLinearMapAt 𝕜 (γ t)) h
+  rwa [e.continuousLinearMapAt_symmL (R := 𝕜) hmem, map_zero] at h'
 
 end CovariantDerivative

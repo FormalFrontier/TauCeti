@@ -106,6 +106,13 @@ noncomputable def diagonalRootDatum (n : ℕ) :
     RootDatum (DiagonalRootIndex n) (ULift.{u} (Fin n) →₀ ℤ) (ULift.{u} (Fin n) → ℤ) :=
   SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))
 
+/-- The diagonal root datum is the coordinate root datum on the universe-lifted indices. -/
+theorem diagonalRootDatum_eq_coordinateRootDatum (n : ℕ) :
+    diagonalRootDatum.{u} n = SplitTorus.coordinateRootDatum (ULift.{u} (Fin n)) :=
+  -- `(rfl)` opts out of exporting the definitional equality, so the definition can remain opaque
+  -- while this theorem provides the downstream rewriting interface.
+  (rfl)
+
 /-- The underlying bilinear map is the split-torus character--cocharacter dot pairing. -/
 @[simp]
 theorem diagonalRootDatum_toLinearMap (n : ℕ) :

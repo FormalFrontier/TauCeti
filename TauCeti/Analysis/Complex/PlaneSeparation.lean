@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.ContinuousLog
+public import TauCeti.Analysis.Complex.ContinuousLog.Basic
 import TauCeti.Topology.ConnectedComponents
 import Mathlib.Analysis.Complex.BranchLogRoot
 import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
@@ -20,7 +20,7 @@ import Mathlib.Topology.Piecewise
 
 Two points `a`, `b` of the plane lie in the same connected component of the complement of a compact
 set `K` **exactly when** the *Borsuk map* `z ↦ (z - a) / (z - b)` admits a continuous logarithm on
-`K`. `TauCeti/Analysis/Complex/ContinuousLog.lean` introduces the predicate
+`K`. `TauCeti/Analysis/Complex/ContinuousLog/Basic.lean` introduces the predicate
 `TauCeti.HasContinuousLogOn` and proves the implication that needs no duality — a logarithm exists
 as soon as the two points are joined inside `Kᶜ` (`TauCeti.hasContinuousLogOn_sub_div_sub`) — and
 records the converse as the missing input. This file proves the converse,
@@ -68,7 +68,7 @@ or to contain an arc; `K` enters only through the frontier of one component of i
 `TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence: the whole of
 `TauCeti/Analysis/Complex/Conformal/Caratheodory.lean` is proved from the single unmet hypothesis
 `∀ J, IsJordanCurve J → J ⊆ closure (filledHull J \ J)`, and the classical route to it runs through
-Janiszewski's theorem. `TauCeti/Analysis/Complex/ContinuousLog.lean` names exactly one missing
+Janiszewski's theorem. `TauCeti/Analysis/Complex/ContinuousLog/Basic.lean` names exactly one missing
 step on that route — "what remains before Janiszewski is the converse direction" — and this file
 supplies it, so `TauCeti.janiszewski` is now available to the separation theory that layer L5
 waits on.

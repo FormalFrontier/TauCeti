@@ -38,7 +38,8 @@ therefore conjugation-stable.
   component `H^{p,k-p}` of the graded piece. This is the form in which the pieces of Deligne's
   bigrading meet the graded Hodge structure, and
   `TauCeti.Hodge.MixedHodgeStructure.mem_complexGradedHodgeStructure_piece_iff` shows the
-  criterion is exact.
+  criterion is exact. `TauCeti.Hodge.MixedHodgeStructure.mk_mem_complexGradedHodgeStructure_F`
+  and its conjugate analogue are the corresponding criteria for the two induced filtrations.
 
 ## References
 
@@ -150,6 +151,21 @@ theorem isInternal_complexGradedHodgeStructure_piece (k : ℤ) :
     DirectSum.IsInternal (mhs.complexGradedHodgeStructure k).piece :=
   HodgeStructureOn.isInternal_piece _
 
+/-- A vector of `W_k` lying in `F^p` has its class in the `p`-th step of the filtration induced on
+the graded piece. -/
+theorem mk_mem_complexGradedHodgeStructure_F (k p : ℤ) (y : mhs.WC k) (hF : (y : Vℂ) ∈ mhs.F p) :
+    Submodule.Quotient.mk y ∈ (mhs.complexGradedHodgeStructure k).F p := by
+  rw [complexGradedHodgeStructure_F, mem_complexGradedF_iff]
+  exact ⟨y, hF, rfl⟩
+
+/-- A vector of `W_k` lying in `conj F^p` has its class in the `p`-th step of the conjugate
+filtration induced on the graded piece. -/
+theorem mk_mem_complexGradedHodgeStructure_conjF (k p : ℤ) (y : mhs.WC k)
+    (hF : (y : Vℂ) ∈ mhs.conjF p) :
+    Submodule.Quotient.mk y ∈ (mhs.complexGradedHodgeStructure k).conjF p := by
+  rw [complexGradedHodgeStructure_conjF, mem_complexGradedF_iff]
+  exact ⟨y, by rwa [← conjF_def], rfl⟩
+
 /-- **A representative criterion for the Hodge components of a complex graded piece.** A vector of
 `W_k` that lies in `F^p`, and that lies in the conjugate `conj F^{k-p}` modulo `W_{k-1}`, has its
 class in the Hodge component `H^{p,k-p}` of the graded piece.
@@ -170,13 +186,11 @@ theorem mk_mem_complexGradedHodgeStructure_piece (k p : ℤ) (y : mhs.WC k)
     have hay : a = (y : Vℂ) - b := eq_sub_of_add_eq hab
     rw [hay]
     exact Submodule.sub_mem _ y.2 hbk
-  refine (mem_complexGradedF_iff mhs.WC _ k (k - p) _).2 ⟨⟨a, hak⟩, ha, ?_⟩
-  refine (Submodule.Quotient.eq _).2 ?_
+  refine (mem_complexGradedF_iff mhs.WC _ k (k - p) _).2 ⟨⟨a, hak⟩, ha,
+    (weightGradedComplex_mk_eq_mk_iff mhs.WC k ⟨a, hak⟩ y).2 ?_⟩
   have hay : a - (y : Vℂ) = -b := by rw [← hab]; abel
-  have hsub : a - (y : Vℂ) ∈ mhs.WC (k - 1) := by
-    rw [hay]
-    exact Submodule.neg_mem _ hb
-  exact hsub
+  rw [hay]
+  exact Submodule.neg_mem _ hb
 
 /-- **The Hodge components of a complex graded piece, by representatives.** A class lies in the
 component `H^{p,k-p}` exactly when it has a representative in `W_k` that lies in `F^p` and lies in
@@ -199,8 +213,7 @@ theorem mem_complexGradedHodgeStructure_piece_iff (k p : ℤ)
       (mem_complexGradedF_iff mhs.WC _ k (k - p) u).1 hu.2
     refine ⟨y₁, hy₁, ?_, hy₁u⟩
     have hdiff : (y₁ : Vℂ) - (y₂ : Vℂ) ∈ mhs.WC (k - 1) :=
-      (Submodule.Quotient.eq ((mhs.WC (k - 1)).submoduleOf (mhs.WC k))).1
-        (hy₁u.trans hy₂u.symm)
+      (weightGradedComplex_mk_eq_mk_iff mhs.WC k y₁ y₂).1 (hy₁u.trans hy₂u.symm)
     have hsplit : (y₁ : Vℂ) = (y₂ : Vℂ) + ((y₁ : Vℂ) - (y₂ : Vℂ)) := by abel
     rw [hsplit]
     exact Submodule.add_mem_sup hy₂ hdiff

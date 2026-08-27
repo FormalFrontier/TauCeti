@@ -121,7 +121,7 @@ injective postcomposition pulls the toral defining ideal into itself.**
 
 The conclusion is one containment, not invariance: an automorphism fixing the ideal needs this
 lemma once for itself and once for its inverse. -/
-theorem kostantToralDefiningIdeal_comap_le_of_comp_eq
+theorem kostantToralDefiningIdeal_comapOfSurjective_le_of_comp_eq
     (φ : GeneralLinear.coordinateHopfAlgebra ℤ n ⟶ GeneralLinear.coordinateHopfAlgebra ℤ n)
     (hφ : Function.Surjective φ.hom) (s : I → I)
     (t : (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj ⟶
@@ -131,9 +131,9 @@ theorem kostantToralDefiningIdeal_comap_le_of_comp_eq
       kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
     (htorus : φ ≫ GeneralLinear.weightTorusCoordinateMap wt =
       GeneralLinear.weightTorusCoordinateMap wt ≫ t) :
-    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comap φ.hom hφ ≤
+    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comapOfSurjective φ.hom hφ ≤
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
-  refine CommHopfAlgCat.comap_commonKernelHopfIdeal_le_of_comp_eq_comp
+  refine CommHopfAlgCat.comapOfSurjective_commonKernelHopfIdeal_le_of_comp_eq_comp
     (kostantToralGeneratorMap e h ρ M hM hnil b wt) φ hφ
     (fun j => match j with | .inl i => .inl (s i) | .inr _ => .inr ())
     (fun j => match j with | .inl _ => 𝟙 _ | .inr _ => t) ?_ ?_
