@@ -35,7 +35,7 @@ count is `TauCeti.ClassData.card_centralCharacterSearch`; its good-prime special
 * `TauCeti.ClassData.IsModularEigenrow`: the numbered common-eigenrow condition.
 * `TauCeti.ClassData.reindexModularRow`: transport from numbered rows to conjugacy-class rows,
   bundled on the normalized eigenrows as `TauCeti.ClassData.modularEigenrowEquiv`.
-* `TauCeti.ClassData.complexTableOfHom`: map and reindex a numbered table into a table over
+* `TauCeti.ClassData.complexTableOfMap`: map and reindex a numbered table into a table over
   conjugacy classes.
 * `TauCeti.ClassData.centralCharacterSearch`: the executable simultaneous eigenvalue search.
 
@@ -235,7 +235,7 @@ end CommRing
 
 /-- Map a numbered table to `ℂ`, reindexing its rows by the cardinality of the conjugacy classes
 and its columns by the conjugacy classes themselves. -/
-noncomputable def complexTableOfHom {R : Type*}
+noncomputable def complexTableOfMap {R : Type*}
     (f : R → ℂ) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R) :
     Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ :=
   (table.map f).submatrix
@@ -243,21 +243,22 @@ noncomputable def complexTableOfHom {R : Type*}
 
 /-- The mapped and reindexed table, evaluated at arbitrary row and column indices. -/
 @[simp]
-theorem complexTableOfHom_apply {R : Type*}
+theorem complexTableOfMap_apply {R : Type*}
     (f : R → ℂ) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
     (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
-    d.complexTableOfHom f table i C =
+    d.complexTableOfMap f table i C =
       f (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
         (d.equivConjClasses.symm C)) :=
   (rfl)
 
 /-- The mapped and reindexed table evaluated at a numbered row and numbered class. -/
-theorem complexTableOfHom_apply_classOf {R : Type*}
+@[simp]
+theorem complexTableOfMap_apply_classOf {R : Type*}
     (f : R → ℂ) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
     (i j : Fin d.numClasses) :
-    d.complexTableOfHom f table (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
+    d.complexTableOfMap f table (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
       f (table i j) := by
-  rw [d.complexTableOfHom_apply]
+  rw [d.complexTableOfMap_apply]
   have hi : (finCongr d.numClasses_eq_card_conjClasses).symm
       (finCongr d.numClasses_eq_card_conjClasses i) = i :=
     (finCongr d.numClasses_eq_card_conjClasses).symm_apply_apply i

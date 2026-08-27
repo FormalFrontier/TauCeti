@@ -35,7 +35,7 @@ search returns.
 
 ## Main definitions
 
-* `TauCeti.ClassData.modularCentralRows`: candidate rows mapped into a prime field.
+* `TauCeti.ClassData.modularCentralRows`: candidate rows mapped into a residue ring `ZMod p`.
 
 ## Main results
 

@@ -469,6 +469,7 @@ theorem isPrimitiveRoot_complexRoot [NeZero e] : IsPrimitiveRoot (complexRoot e)
   Complex.isPrimitiveRoot_exp e (NeZero.ne e)
 
 /-- Complex conjugation sends the distinguished primitive root to its inverse. -/
+@[simp]
 theorem star_complexRoot [NeZero e] :
     starRingEnd ℂ (complexRoot e) = (complexRoot e)⁻¹ := by
   exact (Complex.inv_eq_conj

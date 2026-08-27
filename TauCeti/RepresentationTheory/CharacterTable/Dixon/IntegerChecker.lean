@@ -128,7 +128,7 @@ classes and its columns by the conjugacy classes themselves. -/
 noncomputable def complexTableOfInteger
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) :
     Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ :=
-  d.complexTableOfHom (Int.castRingHom ℂ) table
+  d.complexTableOfMap (Int.castRingHom ℂ) table
 
 /-- The cast-and-reindexed integer table, evaluated at arbitrary row and column indices. -/
 @[simp]
@@ -138,7 +138,7 @@ theorem complexTableOfInteger_apply
     d.complexTableOfInteger table i C =
       (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
         (d.equivConjClasses.symm C) : ℂ) := by
-  rw [complexTableOfInteger, d.complexTableOfHom_apply]
+  rw [complexTableOfInteger, d.complexTableOfMap_apply]
   rfl
 
 /-- The cast-and-reindexed integer table evaluated at a numbered row and numbered class. -/
@@ -146,7 +146,7 @@ theorem complexTableOfInteger_apply_classOf
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) (i j : Fin d.numClasses) :
     d.complexTableOfInteger table (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
       (table i j : ℂ) := by
-  rw [complexTableOfInteger, d.complexTableOfHom_apply_classOf]
+  rw [complexTableOfInteger, d.complexTableOfMap_apply_classOf]
   rfl
 
 namespace IsIntegerCharacterTableSpec

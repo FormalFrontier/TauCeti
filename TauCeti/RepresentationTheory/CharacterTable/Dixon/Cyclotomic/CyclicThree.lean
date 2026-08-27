@@ -167,6 +167,7 @@ private theorem cyclicGroupThreeExactCharacterTable_apply_reindex (i j : Fin 3) 
   rfl
 
 /-- Every exact row is normalized at the identity class. -/
+@[simp]
 theorem cyclicGroupThreeExactCharacterTable_index_one (i : CyclicGroupThreeClassIndex) :
     cyclicGroupThreeExactCharacterTable i ((cyclicClassData 3).index 1) = 1 := by
   fin_cases i <;> decide
@@ -229,8 +230,8 @@ theorem cyclicGroupThree_centralCharacterSearch :
   · intro i
     fin_cases i <;> decide
   · exact isModularEigenrow_cyclicGroupThreeExactCharacterTable_zmod
-  · change cyclicGroupThreeModularCentralRows.card = 3
-    exact card_cyclicGroupThreeModularCentralRows
+  · simpa only [cyclicGroupThreeModularCentralRows, numClasses_cyclicClassData] using
+      card_cyclicGroupThreeModularCentralRows
 
 /-- Every coordinate of every displayed exact entry satisfies Dixon's coefficient bound. -/
 theorem cyclicGroupThreeExactCharacterTable_natAbs_coeff_le_sqrt
@@ -264,7 +265,7 @@ theorem cyclicGroupThreeExactCharacterTable_lift_conjugateResidues
 noncomputable def cyclicGroupThreeComplexCharacterTable :
     Matrix (Fin (Nat.card (ConjClasses (Multiplicative (ZMod 3)))))
       (ConjClasses (Multiplicative (ZMod 3))) ℂ :=
-  (cyclicClassData 3).complexTableOfHom Cyclotomic.complexEmbedding
+  (cyclicClassData 3).complexTableOfMap Cyclotomic.complexEmbedding
     cyclicGroupThreeExactCharacterTable
 
 /-- The embedded table evaluated at arbitrary row and conjugacy-class indices. -/
@@ -277,9 +278,10 @@ theorem cyclicGroupThreeComplexCharacterTable_apply
         (cyclicGroupThreeExactCharacterTable
           ((finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses).symm i)
           ((cyclicClassData 3).equivConjClasses.symm C)) := by
-  exact (cyclicClassData 3).complexTableOfHom_apply _ _ _ _
+  exact (cyclicClassData 3).complexTableOfMap_apply _ _ _ _
 
 /-- The embedded table evaluated at a numbered row and numbered conjugacy class. -/
+@[simp]
 theorem cyclicGroupThreeComplexCharacterTable_apply_classOf
     (i j : CyclicGroupThreeClassIndex) :
     cyclicGroupThreeComplexCharacterTable
@@ -287,7 +289,7 @@ theorem cyclicGroupThreeComplexCharacterTable_apply_classOf
         ((cyclicClassData 3).classOf j) =
       Cyclotomic.complexEmbedding (cyclicGroupThreeExactCharacterTable i j) := by
   rw [cyclicGroupThreeComplexCharacterTable,
-    (cyclicClassData 3).complexTableOfHom_apply_classOf]
+    (cyclicClassData 3).complexTableOfMap_apply_classOf]
 
 private theorem cyclicGroupThreeComplexCharacterTable_row_orthonormal
     (i j : Fin (Nat.card (ConjClasses (Multiplicative (ZMod 3))))) :
@@ -328,7 +330,7 @@ private theorem cyclicGroupThreeComplexCharacterTable_row_orthonormal
       Cyclotomic.complexRoot 3 ^ 6 = (Cyclotomic.complexRoot 3 ^ 3) ^ 2 := by ring
       _ = 1 := by rw [hpow_three, one_pow]
   fin_cases i <;> fin_cases j <;>
-    (simp [Cyclotomic.star_complexRoot_eq_pow];
+    (simp [-Cyclotomic.star_complexRoot, Cyclotomic.star_complexRoot_eq_pow];
       ring_nf <;>
       (first | simp only [hpow_three, hpow_four, hpow_five, hpow_six] | skip) <;>
       first
