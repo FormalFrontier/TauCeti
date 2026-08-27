@@ -37,9 +37,7 @@ character does induce irreducibly; that half is not proved here, and needs the n
 * `TauCeti.card_stabilizer_permFinThree`: the point stabilizer in `S₃` has order two.
 * `TauCeti.not_normal_stabilizer_permFinThree`: it is not normal.
 * `TauCeti.not_simple_indFDRep_stabilizer_permFinThree`: **nothing induced from it is
-  irreducible.**
-* `TauCeti.not_simple_indFDRep_of_simple_stabilizer_permFinThree`: the same for an irreducible
-  representation of the stabilizer, the roadmap's linear-character case.
+  irreducible**, in particular not the roadmap's linear characters.
 
 ## References
 
@@ -85,9 +83,8 @@ private theorem one_ne_swap_permFinThree (a : Fin 3) :
 transposition, the roadmap's `⟨(1 2)⟩`. -/
 theorem card_stabilizer_permFinThree (a : Fin 3) :
     Nat.card (MulAction.stabilizer (Equiv.Perm (Fin 3)) a) = 2 := by
-  have hcoe : Nat.card (MulAction.stabilizer (Equiv.Perm (Fin 3)) a)
-      = (MulAction.stabilizer (Equiv.Perm (Fin 3)) a : Set (Equiv.Perm (Fin 3))).ncard := rfl
-  rw [hcoe, coe_stabilizer_permFinThree, Set.ncard_pair (one_ne_swap_permFinThree a)]
+  rw [← SetLike.coe_sort_coe, Nat.card_coe_set_eq, coe_stabilizer_permFinThree,
+    Set.ncard_pair (one_ne_swap_permFinThree a)]
 
 /-- Conjugating the transposition fixing `a` by a transposition that moves `a` leaves the
 stabilizer: the conjugate carries `a` elsewhere. -/
@@ -115,21 +112,11 @@ variable {k : Type} [Field k] [IsAlgClosed k] [CharZero k]
 /-- **Nothing induced from a point stabilizer of `S₃` is irreducible.** This is the roadmap's
 `Ind_{C₂}^{S₃}` example: the subgroup has prime order two and is not normal, so
 `TauCeti.not_simple_indFDRep_of_prime_card_of_not_normal` refutes irreducibility for every
-representation that is not a zero object. -/
+representation `A` whatsoever -- in particular for the linear characters the roadmap induces. -/
 theorem not_simple_indFDRep_stabilizer_permFinThree (a : Fin 3)
-    {A : FDRep k (MulAction.stabilizer (Equiv.Perm (Fin 3)) a)} (hA : ¬ Limits.IsZero A) :
-    ¬ Simple (indFDRep A) :=
+    {A : FDRep k (MulAction.stabilizer (Equiv.Perm (Fin 3)) a)} : ¬ Simple (indFDRep A) :=
   not_simple_indFDRep_of_prime_card_of_not_normal
     ((card_stabilizer_permFinThree a).symm ▸ Nat.prime_two)
-    (not_normal_stabilizer_permFinThree a) hA
-
-/-- **Inducing an irreducible representation of a point stabilizer of `S₃` never gives an
-irreducible representation of `S₃`.** This is the shape the roadmap's example is stated in: a
-linear character of the two-element subgroup is an irreducible representation of it, and an
-irreducible object is not a zero object. -/
-theorem not_simple_indFDRep_of_simple_stabilizer_permFinThree (a : Fin 3)
-    (A : FDRep k (MulAction.stabilizer (Equiv.Perm (Fin 3)) a)) [Simple A] :
-    ¬ Simple (indFDRep A) :=
-  not_simple_indFDRep_stabilizer_permFinThree a (Simple.not_isZero A)
+    (not_normal_stabilizer_permFinThree a)
 
 end TauCeti

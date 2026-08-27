@@ -14,9 +14,11 @@ The Mackey irreducibility criterion `TauCeti.simple_indFDRep_iff` asks the restr
 of its conjugate `{}^s A` to the Mackey subgroup `H ⊓ sHs⁻¹` to be disjoint for every `s ∉ H`.
 This file records the extreme case in which that condition **fails as badly as possible**: if the
 Mackey subgroup is trivial, then the two restrictions are representations of the trivial group on
-the same nonzero space, so the identity is a nonzero intertwiner and disjointness fails outright.
-Consequently an induced representation is reducible as soon as some conjugate of the subgroup
-meets it trivially, whatever the representation being induced.
+the same space, so the identity is an intertwiner between them, and it is nonzero unless `A` is a
+zero object; disjointness then fails outright. Consequently an induced representation is reducible
+as soon as some conjugate of the subgroup meets it trivially, whatever the representation being
+induced -- no nonzeroness need be assumed there, because an irreducible induced representation
+already forces the inducing representation to be irreducible, hence nonzero.
 
 The condition is not exotic. A subgroup of prime order either equals a conjugate of itself or
 meets it trivially, there being nothing in between, so
@@ -96,19 +98,24 @@ theorem not_mackeyDisjoint_of_mackeySubgroup_eq_bot {A : FDRep k H} {s : G}
       comm := fun g => by
         obtain rfl : g = 1 := Subsingleton.elim g 1
         simp only [map_one, End.one_def]
-        change 𝟙 A.V ≫ 𝟙 A.V = 𝟙 A.V ≫ 𝟙 A.V
-        rfl }
+        exact (Category.id_comp _).trans (Category.comp_id _).symm }
   intro hdisj
   have hzero : (𝟙 A.V : A.V ⟶ A.V) = 0 := congrArg Action.Hom.hom (hdisj.eq_zero φ)
   exact hA ((IsZero.iff_id_eq_zero A).mpr (Action.Hom.ext hzero))
 
 /-- **An induced representation is reducible as soon as some conjugate of the subgroup meets it
 trivially.** Read off `TauCeti.simple_indFDRep_iff` at the element `s`, whose Mackey term
-`TauCeti.not_mackeyDisjoint_of_mackeySubgroup_eq_bot` shows cannot vanish. -/
+`TauCeti.not_mackeyDisjoint_of_mackeySubgroup_eq_bot` shows cannot vanish. The criterion also
+returns simplicity of `A`, which supplies the nonzeroness that lemma needs, so this holds for
+every `A` whatsoever. -/
 theorem not_simple_indFDRep_of_mackeySubgroup_eq_bot [Finite G] [IsAlgClosed k] [CharZero k]
-    {A : FDRep k H} {s : G} (hs : s ∉ H) (hbot : mackeySubgroup s H H = ⊥) (hA : ¬ IsZero A) :
-    ¬ Simple (indFDRep A) := fun hsimple =>
-  not_mackeyDisjoint_of_mackeySubgroup_eq_bot hbot hA (((simple_indFDRep_iff A).mp hsimple).2 s hs)
+    {A : FDRep k H} {s : G} (hs : s ∉ H) (hbot : mackeySubgroup s H H = ⊥) :
+    ¬ Simple (indFDRep A) := by
+  intro hsimple
+  -- No nonzeroness need be assumed: the criterion returns simplicity of `A` itself, and a simple
+  -- object is not a zero object.
+  obtain ⟨hsimpleA, hdisj⟩ := (simple_indFDRep_iff A).mp hsimple
+  exact not_mackeyDisjoint_of_mackeySubgroup_eq_bot hbot (Simple.not_isZero A) (hdisj s hs)
 
 end Disjoint
 
@@ -149,14 +156,11 @@ theorem exists_notMem_mackeySubgroup_eq_bot_of_prime_card (hp : (Nat.card H).Pri
     (hH : ¬ H.Normal) : ∃ s ∉ H, mackeySubgroup s H H = ⊥ := by
   by_contra hcon
   push Not at hcon
-  refine hH ⟨fun x hx g => ?_⟩
+  refine hH (Subgroup.Normal.of_conjugate_fixed fun g => ?_)
   by_cases hg : g ∈ H
-  · exact H.mul_mem (H.mul_mem hg hx) (H.inv_mem hg)
+  · exact Subgroup.conj_smul_eq_self_of_mem hg
   · -- At an element outside `H` the Mackey subgroup is not `⊥`, so the conjugate is `H` itself.
-    have hconj : (MulAut.conj g • H : Subgroup G) = H :=
-      (mackeySubgroup_self_eq_bot_or_conj_smul_eq_self hp g).resolve_left (hcon g hg)
-    refine hconj ▸ (mem_conj_smul g H (g * x * g⁻¹)).mpr ?_
-    simpa [mul_assoc] using hx
+    exact (mackeySubgroup_self_eq_bot_or_conj_smul_eq_self hp g).resolve_left (hcon g hg)
 
 end PrimeCard
 
@@ -174,9 +178,9 @@ Both hypotheses are needed: over a normal subgroup the Mackey subgroup is always
 prime order the intersection with a conjugate can be a proper nontrivial subgroup, in which case
 irreducibility depends on the representation. -/
 theorem not_simple_indFDRep_of_prime_card_of_not_normal (hp : (Nat.card H).Prime)
-    (hH : ¬ H.Normal) {A : FDRep k H} (hA : ¬ IsZero A) : ¬ Simple (indFDRep A) := by
+    (hH : ¬ H.Normal) {A : FDRep k H} : ¬ Simple (indFDRep A) := by
   obtain ⟨s, hs, hbot⟩ := exists_notMem_mackeySubgroup_eq_bot_of_prime_card hp hH
-  exact not_simple_indFDRep_of_mackeySubgroup_eq_bot hs hbot hA
+  exact not_simple_indFDRep_of_mackeySubgroup_eq_bot hs hbot
 
 end PrimeReducible
 
