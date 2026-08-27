@@ -90,12 +90,13 @@ variable {X F ι : Type*} [PseudoMetricSpace X] [NormedAddCommGroup F] [NormedSp
 
 /-- The finite uniform net on a compact set extracted from Arzelà--Ascoli. -/
 private theorem exists_finite_approx_on_isCompact {K : Set X} (hK : IsCompact K)
-    {g : ι → X → F} (hg : ∀ i, Continuous (g i)) {C η : ℝ}
+    {g : ι → X → F} {C η : ℝ}
     (hC : ∀ i x, g i x ∈ closedBall (0 : F) C) (hequi : UniformEquicontinuous g) (hη : 0 < η) :
     ∃ t : Set ι, t.Finite ∧ ∀ i, ∃ j ∈ t, ∀ x ∈ K, dist (g i x) (g j x) ≤ η := by
   let _ : CompactSpace K := isCompact_iff_compactSpace.mp hK
   let φ : ι → BoundedContinuousFunction K F := fun i =>
-    BoundedContinuousFunction.mkOfCompact ⟨fun x : K => g i x, (hg i).comp continuous_subtype_val⟩
+    BoundedContinuousFunction.mkOfCompact
+      ⟨fun x : K => g i x, (hequi.equicontinuous.continuous i).comp continuous_subtype_val⟩
   let 𝒜 : Set (BoundedContinuousFunction K F) := Set.range φ
   have hφcoe : ∀ i : ι, ⇑(φ i) = K.domRestrict (g i) := fun i => by
     rfl
@@ -179,6 +180,52 @@ private theorem eLpNorm_sub_le_of_approx_of_dist_bdd_on {K : Set α}
           (eLpNorm (Kᶜ.indicator f) p mu + eLpNorm (Kᶜ.indicator f') p mu) :=
       add_le_add hnear htail_sub
 
+/-- A small tail off `s`, a small approximation error, and a uniformly bounded approximant give a
+small tail off `K` when `s \ K` has sufficiently small measure. -/
+private theorem eLpNorm_indicator_compl_le_of_approx_of_bound
+    (hp : 1 ≤ p) (hp' : p ≠ ∞) {K s : Set α} (hK : MeasurableSet K)
+    (hs : MeasurableSet s) {f A : α → F} (hf : AEStronglyMeasurable f mu)
+    (hA : AEStronglyMeasurable A mu) {B ε : ℝ≥0∞} (hBt : B ≠ ∞)
+    (htail : eLpNorm (sᶜ.indicator f) p mu ≤ ε) (happrox : eLpNorm (A - f) p mu ≤ ε)
+    (hbound : ∀ x, A x ∈ closedBall (0 : F) B.toReal)
+    (hsmall : B * mu (s ∩ Kᶜ) ^ (1 / p.toReal) ≤ ε) :
+    eLpNorm (Kᶜ.indicator f) p mu ≤ ε + ε + ε := by
+  have hsplit : Kᶜ.indicator f =
+      (Kᶜ ∩ sᶜ).indicator f + (Kᶜ ∩ s).indicator f := by
+    ext x
+    by_cases hxK : x ∈ K <;> by_cases hxs : x ∈ s <;> simp [hxK, hxs]
+  rw [hsplit]
+  refine (eLpNorm_add_le (hf.indicator (hK.compl.inter hs.compl))
+    (hf.indicator (hK.compl.inter hs)) hp).trans ?_
+  have hfirst : eLpNorm ((Kᶜ ∩ sᶜ).indicator f) p mu ≤ ε :=
+    (eLpNorm_mono_enorm fun x =>
+      enorm_indicator_le_of_subset inter_subset_right _ x).trans htail
+  have hsecond : eLpNorm ((Kᶜ ∩ s).indicator f) p mu ≤ ε + ε := by
+    have hsplit' : (Kᶜ ∩ s).indicator f =
+        (Kᶜ ∩ s).indicator (f - A) + (Kᶜ ∩ s).indicator A := by
+      rw [← Set.indicator_add']
+      congr 1
+      abel
+    rw [hsplit']
+    refine (eLpNorm_add_le ((hf.sub hA).indicator (hK.compl.inter hs))
+      (hA.indicator (hK.compl.inter hs)) hp).trans (add_le_add ?_ ?_)
+    · refine (eLpNorm_indicator_le _).trans ?_
+      rw [← neg_sub A f, eLpNorm_neg]
+      exact happrox
+    · have hA' : eLpNorm ((Kᶜ ∩ s).indicator A) p mu ≤
+          B * mu (s ∩ Kᶜ) ^ (1 / p.toReal) := by
+        have hbound' := eLpNorm_indicator_sub_le_of_dist_bdd (p := p) mu hp'
+          (hK.compl.inter hs) ENNReal.toReal_nonneg
+          (c := B.toReal) (f := A) (g := 0) (fun x _ => by
+            simpa only [mem_closedBall, Pi.zero_apply, dist_zero_right, dist_comm] using hbound x)
+        simpa only [Pi.zero_apply, sub_zero, ENNReal.ofReal_toReal hBt, inter_comm] using hbound'
+      exact hA'.trans hsmall
+  calc
+    eLpNorm ((Kᶜ ∩ sᶜ).indicator f) p mu +
+        eLpNorm ((Kᶜ ∩ s).indicator f) p mu ≤ ε + (ε + ε) :=
+      add_le_add hfirst hsecond
+    _ = ε + ε + ε := by ac_rfl
+
 end LpApproximation
 
 section FrechetKolmogorov
@@ -253,46 +300,10 @@ theorem totallyBounded_of_comp_add_sub_of_unifTight (hp' : p ≠ ∞)
   have hRS : ∀ f ∈ S,
       eLpNorm (Kᶜ.indicator ⇑f) p mu ≤ ε₁ + ε₁ + ε₁ := by
     intro f hf
-    let A : E → F := ballAverage mu r ⇑f
-    have hfm : AEStronglyMeasurable (⇑f) mu := Lp.aestronglyMeasurable f
-    have hAm : AEStronglyMeasurable A mu :=
-      (continuous_ballAverage hp hp' (Lp.memLp f) hr).aestronglyMeasurable
-    have hsplit : Kᶜ.indicator ⇑f =
-        (Kᶜ ∩ sᶜ).indicator ⇑f + (Kᶜ ∩ s).indicator ⇑f := by
-      ext x
-      by_cases hxK : x ∈ K <;> by_cases hxs : x ∈ s <;> simp [hxK, hxs]
-    rw [hsplit]
-    refine (eLpNorm_add_le (hfm.indicator (hmeasK.compl.inter hmeasS.compl))
-      (hfm.indicator (hmeasK.compl.inter hmeasS)) hp).trans ?_
-    have hfirst : eLpNorm ((Kᶜ ∩ sᶜ).indicator ⇑f) p mu ≤ ε₁ :=
-      (eLpNorm_mono_enorm fun x =>
-        enorm_indicator_le_of_subset inter_subset_right _ x).trans (htailS ⟨f, hf⟩)
-    have hsecond : eLpNorm ((Kᶜ ∩ s).indicator ⇑f) p mu ≤ ε₁ + ε₁ := by
-      have hsplit' : (Kᶜ ∩ s).indicator ⇑f =
-          (Kᶜ ∩ s).indicator (⇑f - A) + (Kᶜ ∩ s).indicator A := by
-        rw [← Set.indicator_add']
-        congr 1
-        abel
-      rw [hsplit']
-      refine (eLpNorm_add_le ((hfm.sub hAm).indicator (hmeasK.compl.inter hmeasS))
-        (hAm.indicator (hmeasK.compl.inter hmeasS)) hp).trans (add_le_add ?_ ?_)
-      · refine (eLpNorm_indicator_le _).trans ?_
-        rw [← neg_sub A ⇑f, eLpNorm_neg]
-        exact hsmooth f hf
-      · have hA : eLpNorm ((Kᶜ ∩ s).indicator A) p mu ≤
-            Bₑ * mu (s ∩ Kᶜ) ^ (1 / p.toReal) := by
-          have hbound := eLpNorm_indicator_sub_le_of_dist_bdd (p := p) mu hp'
-            (hmeasK.compl.inter hmeasS) ENNReal.toReal_nonneg
-            (c := Bₑ.toReal) (f := A) (g := 0) (fun x _ => by
-              simpa only [A, mem_closedBall, Pi.zero_apply, dist_zero_right, dist_comm] using
-                hgB ⟨f, hf⟩ x)
-          simpa only [Pi.zero_apply, sub_zero, ENNReal.ofReal_toReal hBₑt, inter_comm] using hbound
-        exact hA.trans hR.le
-    calc
-      eLpNorm ((Kᶜ ∩ sᶜ).indicator ⇑f) p mu +
-          eLpNorm ((Kᶜ ∩ s).indicator ⇑f) p mu ≤ ε₁ + (ε₁ + ε₁) :=
-        add_le_add hfirst hsecond
-      _ = ε₁ + ε₁ + ε₁ := by ac_rfl
+    exact eLpNorm_indicator_compl_le_of_approx_of_bound hp hp' hmeasK hmeasS
+      (Lp.aestronglyMeasurable f)
+      ((continuous_ballAverage hp hp' (Lp.memLp f) hr).aestronglyMeasurable) hBₑt
+      (htailS ⟨f, hf⟩) (hsmooth f hf) (hgB ⟨f, hf⟩) hR.le
   -- The scale of the uniform approximation on `K`, calibrated by the measure of `K`.
   have hKt : mu K ≠ ∞ := measure_closedBall_lt_top.ne
   set W : ℝ≥0∞ := mu K ^ (1 / p.toReal)
@@ -311,8 +322,7 @@ theorem totallyBounded_of_comp_add_sub_of_unifTight (hp' : p ≠ ∞)
       _ ≤ ENNReal.ofReal (ε / 4) := ENNReal.ofReal_le_ofReal hkey
   -- Arzelà--Ascoli supplies a finite uniform net for the restricted ball averages.
   obtain ⟨t, htfin, ht⟩ := exists_finite_approx_on_isCompact
-    (isCompact_closedBall (0 : E) R)
-    (fun i : S => continuous_ballAverage hp hp' (Lp.memLp (i : Lp F p mu)) hr) hgB hequi hη
+    (isCompact_closedBall (0 : E) R) hgB hequi hη
   refine ⟨Subtype.val '' t, htfin.image (fun i : S => (i : Lp F p mu)), fun f hf => ?_⟩
   obtain ⟨j, hjt, hmid⟩ := ht ⟨f, hf⟩
   refine mem_iUnion₂.2 ⟨(j : Lp F p mu), ⟨j, hjt, rfl⟩, ?_⟩
@@ -339,17 +349,9 @@ theorem totallyBounded_of_comp_add_sub_of_unifTight (hp' : p ≠ ∞)
               (add_le_add hWη (by simpa only [A', f'] using hsmooth (j : Lp F p mu) j.2)))
             (add_le_add (hRS f hf) (by simpa only [f'] using hRS (j : Lp F p mu) j.2))
       _ = ENNReal.ofReal (3 * ε / 4) := by
-          simp only [ε₁]
-          ring_nf
-          calc
-            ENNReal.ofReal (ε * (1 / 16)) * 8 + ENNReal.ofReal (ε * (1 / 4)) =
-                ENNReal.ofReal ((ε * (1 / 16)) * 8) + ENNReal.ofReal (ε * (1 / 4)) := by
-              rw [ENNReal.ofReal_mul (by positivity : 0 ≤ ε * (1 / 16 : ℝ)),
-                ENNReal.ofReal_ofNat]
-            _ = ENNReal.ofReal ((ε * (1 / 16)) * 8 + ε * (1 / 4)) :=
-              (ENNReal.ofReal_add (by positivity : 0 ≤ (ε * (1 / 16 : ℝ)) * 8)
-                (by positivity : 0 ≤ ε * (1 / 4 : ℝ))).symm
-            _ = ENNReal.ofReal (ε * (3 / 4)) := by congr 1; ring
+          simp (disch := positivity) only [ε₁, ← ENNReal.ofReal_add]
+          congr 1
+          ring
   rw [mem_ball, Lp.dist_def]
   have := ENNReal.toReal_mono ENNReal.ofReal_ne_top hmain
   rw [ENNReal.toReal_ofReal (by linarith)] at this
