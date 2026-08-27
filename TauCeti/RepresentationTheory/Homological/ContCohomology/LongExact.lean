@@ -10,12 +10,16 @@ public import TauCeti.RepresentationTheory.Homological.ContCohomology.ShortExact
 /-!
 # The degree-zero segment of the explicit long exact sequence
 
-A short exact sequence `0 → A → B → C → 0` of discrete modules over a topological
-group induces the exact sequence
+A short exact sequence `0 → A → B → C → 0` of discrete modules over a group induces
+exactness at the first two degree-zero nodes of
 
 ```text
 0 → H⁰(G, A) → H⁰(G, B) → H⁰(G, C) → H¹(G, A).
 ```
+
+No topology on `G` or continuity of its actions is needed at these first two nodes. Exactness at
+`H⁰(G, C)` additionally uses a topology on `G` and continuous actions on `A` and `B`, as required
+by the construction of `explicitDelta0` and its codomain `H¹(G, A)`.
 
 This file proves exactness at all three degree-zero nodes of the explicit continuous-cochain
 model. At the first two nodes the proof is the ordinary exactness argument restricted to fixed
@@ -31,8 +35,15 @@ coboundary is itself a coboundary lifted from `A`; subtracting that lift makes `
 
 The maps and their normalization are those of
 `TauCeti/RepresentationTheory/Homological/ContCohomology/LowDegree.lean` and
-`ShortExact.lean`. This is the degree-zero segment of the low-degree long exact sequence in
-Neukirch–Schmidt–Wingberg, *Cohomology of Number Fields*, 2nd ed., (1.3.2).
+`ShortExact.lean`. This implements the degree-zero nodes of the long exact sequence milestone of
+Layer 5 of the human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose
+`Suggested.lean` fixes the names `explicitLongExact_H0A`, `explicitLongExact_H0B` and
+`explicitLongExact_H0C`.
+
+## References
+
+* J. Neukirch, A. Schmidt, K. Wingberg, *Cohomology of Number Fields*, 2nd ed., (1.3.2): the
+  low-degree long exact sequence used here.
 -/
 
 public section
@@ -57,45 +68,48 @@ variable {G : Type u} [Group G] [TopologicalSpace G]
 omit [TopologicalSpace G] [ContinuousSMul G A] [ContinuousSMul G B] in
 /-- Exactness at `H⁰(G, A)`: the coefficient inclusion remains injective on invariants. -/
 theorem explicitLongExact_H0A :
-    Function.Injective (explicitCoeff0 G A S.inclHom) := by
+    Function.Injective (explicitCoeff0 G A S.inclDistribMulActionHom) := by
   intro a a' h
   apply Subtype.ext
   apply S.incl_injective
-  simpa only [coe_explicitCoeff0, inclHom_apply] using congrArg Subtype.val h
+  simpa only [coe_explicitCoeff0, inclDistribMulActionHom_apply] using congrArg Subtype.val h
 
 omit [TopologicalSpace G] [ContinuousSMul G A] [ContinuousSMul G B] in
 /-- Exactness at `H⁰(G, B)`: the invariant elements killed by the projection are precisely
 the invariant elements coming from `A`. -/
 theorem explicitLongExact_H0B :
-    (explicitCoeff0 G A S.inclHom).range = (explicitCoeff0 G B S.projHom).ker := by
+    (explicitCoeff0 G A S.inclDistribMulActionHom).range =
+      (explicitCoeff0 G B S.projDistribMulActionHom).ker := by
   apply le_antisymm
   · rintro b ⟨a, rfl⟩
     apply AddMonoidHom.mem_ker.2
     apply Subtype.ext
-    simp only [coe_explicitCoeff0, inclHom_apply, projHom_apply, S.proj_incl,
+    simp only [coe_explicitCoeff0, inclDistribMulActionHom_apply,
+      projDistribMulActionHom_apply, S.proj_incl,
       AddSubgroup.coe_zero]
   · intro b hb
     have hproj : S.proj (b : B) = 0 := by
       have := congrArg Subtype.val (AddMonoidHom.mem_ker.1 hb)
-      simpa only [coe_explicitCoeff0, projHom_apply, AddSubgroup.coe_zero] using this
+      simpa only [coe_explicitCoeff0, projDistribMulActionHom_apply,
+        AddSubgroup.coe_zero] using this
     obtain ⟨a, ha⟩ := S.exists_incl_eq hproj
     have ha_fixed : a ∈ H0 G A := (FixedPoints.mem_addSubgroup G A a).2 fun g => by
       apply S.incl_injective
       rw [S.incl_equivariant, ha]
       exact (FixedPoints.mem_addSubgroup G B (b : B)).1 b.2 g
     refine ⟨⟨a, ha_fixed⟩, Subtype.ext ?_⟩
-    simpa only [coe_explicitCoeff0, inclHom_apply] using ha
+    simpa only [coe_explicitCoeff0, inclDistribMulActionHom_apply] using ha
 
 /-- The image of `H⁰(G, B)` lies in the kernel of the connecting map. -/
 private theorem range_coeff0_le_ker_delta0 :
-    (explicitCoeff0 G B S.projHom).range ≤ S.explicitDelta0.ker := by
+    (explicitCoeff0 G B S.projDistribMulActionHom).range ≤ S.explicitDelta0.ker := by
   rintro c ⟨b, rfl⟩
   apply AddMonoidHom.mem_ker.2
   have hb : S.proj (b : B) =
-      ((explicitCoeff0 G B S.projHom b : H0 G C) : C) := by
-    simp only [coe_explicitCoeff0, projHom_apply]
+      ((explicitCoeff0 G B S.projDistribMulActionHom b : H0 G C) : C) := by
+    simp only [coe_explicitCoeff0, projDistribMulActionHom_apply]
   have hzero : (0 : G → A) ∈ Z1 G A := zero_mem _
-  rw [S.explicitDelta0_apply (explicitCoeff0 G B S.projHom b) hb hzero]
+  rw [S.explicitDelta0_apply (explicitCoeff0 G B S.projDistribMulActionHom b) hb hzero]
   · exact map_zero (H1pi G A)
   · intro g
     rw [Pi.zero_apply, map_zero, (FixedPoints.mem_addSubgroup G B (b : B)).1 b.2 g,
@@ -103,7 +117,7 @@ private theorem range_coeff0_le_ker_delta0 :
 
 /-- If `δ⁰(c) = 0`, then `c` has an invariant preimage in `B`. -/
 private theorem ker_delta0_le_range_coeff0 :
-    S.explicitDelta0.ker ≤ (explicitCoeff0 G B S.projHom).range := by
+    S.explicitDelta0.ker ≤ (explicitCoeff0 G B S.projDistribMulActionHom).range := by
   intro c hc
   obtain ⟨b, hb⟩ := S.proj_surjective (c : C)
   have hb_fixed : S.proj b ∈ H0 G C := by
@@ -126,19 +140,16 @@ private theorem ker_delta0_le_range_coeff0 :
       rw [← d0_apply b g, ← ha_incl g, ha₀', map_sub, S.incl_equivariant]
     dsimp only [b₀]
     rw [smul_sub]
-    calc
-      g • b - g • S.incl a₀ = (g • b - b) + (b - g • S.incl a₀) := by abel
-      _ = (g • S.incl a₀ - S.incl a₀) + (b - g • S.incl a₀) := by rw [hdiff]
-      _ = b - S.incl a₀ := by abel
+    exact sub_eq_sub_iff_sub_eq_sub.mpr hdiff
   refine ⟨⟨b₀, hb₀_fixed⟩, ?_⟩
   apply Subtype.ext
   dsimp only [b₀]
-  simp only [coe_explicitCoeff0, projHom_apply, map_sub, S.proj_incl, sub_zero, hb]
+  simp only [coe_explicitCoeff0, projDistribMulActionHom_apply, map_sub, S.proj_incl, sub_zero, hb]
 
 /-- Exactness at `H⁰(G, C)`: the image of the projection on invariants is the kernel of the
 connecting homomorphism `δ⁰ : H⁰(G, C) → H¹(G, A)`. -/
 theorem explicitLongExact_H0C :
-    (explicitCoeff0 G B S.projHom).range = S.explicitDelta0.ker :=
+    (explicitCoeff0 G B S.projDistribMulActionHom).range = S.explicitDelta0.ker :=
   le_antisymm S.range_coeff0_le_ker_delta0 S.ker_delta0_le_range_coeff0
 
 end
