@@ -102,16 +102,10 @@ This package is constructed directly from the coordinate differences. The theore
 `ofAdd_root_mem_nontrivialAdjointWeights` proves that its roots are adjoint weights; the converse
 classification is `mem_nontrivialAdjointWeights_iff_exists_diagonalRoot` in
 `GeneralLinear.Root.Adjoint`. -/
+@[expose]
 noncomputable def diagonalRootDatum (n : ℕ) :
     RootDatum (DiagonalRootIndex n) (ULift.{u} (Fin n) →₀ ℤ) (ULift.{u} (Fin n) → ℤ) :=
   SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))
-
-/-- The diagonal root datum is the coordinate-difference root datum on the universe-lifted
-matrix coordinates. This characteristic equation lets downstream modules use the generic
-coordinate-root-datum API without unfolding `diagonalRootDatum`. -/
-theorem diagonalRootDatum_eq_coordinateRootDatum (n : ℕ) :
-    diagonalRootDatum n = SplitTorus.coordinateRootDatum (ULift.{u} (Fin n)) :=
-  (rfl)
 
 /-- The underlying bilinear map is the split-torus character--cocharacter dot pairing. -/
 @[simp]
