@@ -203,18 +203,6 @@ private lemma range_diagonalSimpleCoroot (n : ℕ) :
           diagonalCocharacterCoordinate n ((i : ℕ) + 1)) :=
   congrArg range (funext (diagonalSimpleCoroot_eq_coordinate_sub n))
 
-private lemma diagonalRoot_eq_coordinateRoot (n : ℕ) (a b : Fin (n + 1)) :
-    diagonalRoot a b = SplitTorus.coordinateRoot (ULift.up a) (ULift.up b) := by
-  ext x
-  rw [diagonalRoot_apply, SplitTorus.coordinateRoot_apply]
-  split_ifs <;> rfl
-
-private lemma diagonalCoroot_eq_coordinateCoroot (n : ℕ) (a b : Fin (n + 1)) :
-    diagonalCoroot a b = SplitTorus.coordinateCoroot (ULift.up a) (ULift.up b) := by
-  ext x
-  rw [diagonalCoroot_apply, SplitTorus.coordinateCoroot_apply]
-  split_ifs <;> rfl
-
 /-- The root at the `i`-th diagonal simple-root index is the consecutive coordinate root
 `e_i - e_(i+1)`. -/
 theorem diagonalRootDatum_root_diagonalSimpleRootIndex (n : ℕ) (i : Fin n) :
@@ -222,7 +210,7 @@ theorem diagonalRootDatum_root_diagonalSimpleRootIndex (n : ℕ) (i : Fin n) :
       SplitTorus.coordinateRoot (ULift.up i.castSucc) (ULift.up i.succ) := by
   rw [diagonalRootDatum_root]
   simp only [diagonalSimpleRootIndex_fst, diagonalSimpleRootIndex_snd, ULift.down_up]
-  exact diagonalRoot_eq_coordinateRoot n i.castSucc i.succ
+  exact diagonalRoot_eq_coordinateRoot i.castSucc i.succ
 
 /-- The coroot at the `i`-th diagonal simple-root index is the consecutive coordinate coroot
 `e_i - e_(i+1)`. -/
@@ -231,7 +219,7 @@ theorem diagonalRootDatum_coroot_diagonalSimpleRootIndex (n : ℕ) (i : Fin n) :
       SplitTorus.coordinateCoroot (ULift.up i.castSucc) (ULift.up i.succ) := by
   rw [diagonalRootDatum_coroot]
   simp only [diagonalSimpleRootIndex_fst, diagonalSimpleRootIndex_snd, ULift.down_up]
-  exact diagonalCoroot_eq_coordinateCoroot n i.castSucc i.succ
+  exact diagonalCoroot_eq_coordinateCoroot i.castSucc i.succ
 
 /-- The support consisting of consecutive coordinate-root indices. -/
 private abbrev diagonalSimpleSupport (n : ℕ) : Finset (DiagonalRootIndex (n + 1)) :=
@@ -276,13 +264,13 @@ noncomputable def diagonalRootBase (n : ℕ) : (diagonalRootDatum.{u} (n + 1)).B
     rcases le_total (p.1.1.down : ℕ) (p.1.2.down : ℕ) with h | h
     · left
       rw [diagonalRootDatum_root]
-      rw [diagonalRoot_eq_coordinateRoot n p.1.1.down p.1.2.down,
+      rw [diagonalRoot_eq_coordinateRoot p.1.1.down p.1.2.down,
         coordinateRoot_eq_coordinate_sub n p.1.1.down p.1.2.down]
       exact sub_mem_closure_of_le (diagonalCharacterCoordinate n)
         (Nat.lt_succ_iff.mp p.1.2.down.isLt) h
     · right
       rw [diagonalRootDatum_root]
-      rw [diagonalRoot_eq_coordinateRoot n p.1.1.down p.1.2.down,
+      rw [diagonalRoot_eq_coordinateRoot p.1.1.down p.1.2.down,
         coordinateRoot_eq_coordinate_sub n p.1.1.down p.1.2.down, neg_sub]
       exact sub_mem_closure_of_le (diagonalCharacterCoordinate n)
         (Nat.lt_succ_iff.mp p.1.1.down.isLt) h
@@ -291,13 +279,13 @@ noncomputable def diagonalRootBase (n : ℕ) : (diagonalRootDatum.{u} (n + 1)).B
     rcases le_total (p.1.1.down : ℕ) (p.1.2.down : ℕ) with h | h
     · left
       rw [diagonalRootDatum_coroot]
-      rw [diagonalCoroot_eq_coordinateCoroot n p.1.1.down p.1.2.down,
+      rw [diagonalCoroot_eq_coordinateCoroot p.1.1.down p.1.2.down,
         coordinateCoroot_eq_coordinate_sub n p.1.1.down p.1.2.down]
       exact sub_mem_closure_of_le (diagonalCocharacterCoordinate n)
         (Nat.lt_succ_iff.mp p.1.2.down.isLt) h
     · right
       rw [diagonalRootDatum_coroot]
-      rw [diagonalCoroot_eq_coordinateCoroot n p.1.1.down p.1.2.down,
+      rw [diagonalCoroot_eq_coordinateCoroot p.1.1.down p.1.2.down,
         coordinateCoroot_eq_coordinate_sub n p.1.1.down p.1.2.down, neg_sub]
       exact sub_mem_closure_of_le (diagonalCocharacterCoordinate n)
         (Nat.lt_succ_iff.mp p.1.1.down.isLt) h
