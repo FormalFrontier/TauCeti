@@ -318,12 +318,7 @@ private lemma analyticOnNhd_one_sub_div_cpow (a : ℝ) (hr : 0 < r) :
     exact hz
 
 /-- The characteristic function of a gamma law with positive shape and rate is
-`(1 - I * t / r) ^ (-a)`, the principal power of a base of real part `1 - 0 = 1`.
-
-The formula is obtained from `TauCeti.mgf_id_gammaMeasure` by analytic continuation: both
-`ProbabilityTheory.complexMGF` and the displayed power are analytic on the half-plane
-`{z | z.re < r}`, and they agree along the real points of that half-plane, which accumulate at
-`0`. -/
+`(1 - I * t / r) ^ (-a)`, the principal power of a base of real part `1 - 0 = 1`. -/
 @[simp]
 theorem charFun_gammaMeasure (ha : 0 < a) (hr : 0 < r) (t : ℝ) :
     charFun (gammaMeasure a r) t = (1 - Complex.I * t / r) ^ (-(a : ℂ)) := by

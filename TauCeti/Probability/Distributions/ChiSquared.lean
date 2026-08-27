@@ -146,8 +146,7 @@ theorem chiSquaredPDF_of_nonneg (hx : 0 ≤ x) :
 theorem chiSquaredPDF_of_neg (hx : x < 0) : chiSquaredPDF k x = 0 := by
   rw [chiSquaredPDF_eq_ofReal, chiSquaredPDFReal_of_neg hx, ENNReal.ofReal_zero]
 
-/-- The chi-squared density is the gamma density of shape `k / 2` and rate `1 / 2`. The only
-content is `(1 / 2) ^ (k / 2) = (2 ^ (k / 2))⁻¹`. -/
+/-- The chi-squared density is the gamma density of shape `k / 2` and rate `1 / 2`. -/
 theorem chiSquaredPDFReal_eq_gammaPDFReal (k x : ℝ) :
     chiSquaredPDFReal k x = gammaPDFReal (k / 2) (1 / 2) x := by
   rw [chiSquaredPDFReal, gammaPDFReal]
