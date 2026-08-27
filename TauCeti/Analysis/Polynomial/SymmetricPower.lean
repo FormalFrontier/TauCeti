@@ -56,9 +56,11 @@ tori `T_α`, `T_β`, are separate later steps.
 
 public section
 
-namespace TauCeti
-
+-- `Polynomial` is opened outside `namespace TauCeti` so that it names Mathlib's namespace rather
+-- than `TauCeti.Polynomial`, which the import above populates.
 open Filter Polynomial Topology
+
+namespace TauCeti
 
 namespace Sym
 
