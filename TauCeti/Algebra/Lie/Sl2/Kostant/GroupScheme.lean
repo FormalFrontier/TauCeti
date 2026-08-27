@@ -194,6 +194,7 @@ noncomputable def rankOneWeightTorus :
     eqToHom rankOneGroupScheme_eq.symm
 
 /-- Including a root subgroup into `GL₂` recovers its represented Kostant root subgroup. -/
+@[simp]
 theorem rankOneRootSubgroup_comp_ι (i : Fin 2) :
     rankOneRootSubgroup i ≫ rankOneGroupSchemeι =
       kostantRootSubgroup e h ρ M hM i (hnil i) b :=
@@ -201,6 +202,7 @@ theorem rankOneRootSubgroup_comp_ι (i : Fin 2) :
 
 /-- Including the rank-one weight torus into `GL₂` recovers its diagonal weight
 representation. -/
+@[simp]
 theorem rankOneWeightTorus_comp_ι :
     rankOneWeightTorus ≫ rankOneGroupSchemeι =
       GeneralLinear.weightTorus (R := ℤ) rankOneWeight :=
@@ -236,6 +238,7 @@ noncomputable def rankOneTorusMatrix {A : Type*} [CommRing A] :
   kostantTorusMatrix M b rankOneWeight
 
 /-- A rank-one torus point is the diagonal matrix `diag(s, s⁻¹)`. -/
+@[simp]
 theorem rankOneTorusMatrix_apply {A : Type*} [CommRing A] (s : Fin 1 → Aˣ) :
     rankOneTorusMatrix s = diagGL ![s 0, (s 0)⁻¹] := by
   rw [rankOneTorusMatrix, kostantTorusMatrix_apply]
@@ -254,6 +257,7 @@ noncomputable def rankOneRootSubgroupParam (i : Fin 2) (A : CommAlgCat.{u} ℤ) 
 
 /-- A parametrized rank-one root element adds `t` times the `i`th basis vector to the opposite
 basis vector and fixes the other basis vector. -/
+@[simp]
 theorem rankOneRootSubgroupParam_apply_baseChange_basis
     {A : Type u} [CommRing A] (i s : Fin 2) (t : Multiplicative A) :
     (rankOneRootSubgroupParam i (CommAlgCat.of ℤ A) t).val ((b).baseChange A s) =
