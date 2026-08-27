@@ -245,8 +245,7 @@ theorem conormalSubspace_eq_bot_iff_toIdeal_le_sq_augmentationIdeal
     rw [hconormal, Submodule.mem_bot] at hxconormal
     let x' : Bialgebra.AugmentationIdeal k H :=
       ⟨x, toIdeal_le_augmentationIdeal I hx⟩
-    change Bialgebra.cotangentMap k H (x' : H) = 0 at hxconormal
-    rw [Bialgebra.cotangentMap_augmentation] at hxconormal
+    rw [Bialgebra.cotangentMap_augmentation (x := x')] at hxconormal
     exact
       ((Bialgebra.AugmentationIdeal k H).toCotangent_eq_zero x').1 hxconormal
   · intro hsquare
@@ -305,7 +304,7 @@ theorem quotientLieHom_surjective_iff_conormalSubspace_eq_bot
 /-- The kernel of a surjective Hopf-algebra morphism has zero conormal space when the
 differential of the morphism is surjective. -/
 theorem conormalSubspace_ker_eq_bot_of_surjective_of_derivationCompLieHom_surjective
-    {K : Type v} [CommRing K] [HopfAlgebra k K] (f : H →ₐc[k] K)
+    {K : Type w} [CommRing K] [HopfAlgebra k K] (f : H →ₐc[k] K)
     (hf : Function.Surjective f)
     (hdf : Function.Surjective (derivationCompLieHom (B := k) f)) :
     conormalSubspace (ker f) = ⊥ := by
