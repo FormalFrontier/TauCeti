@@ -45,8 +45,6 @@ None of it needs an exactness hypothesis on the constant field.
   `𝒪_S` and the two constructions are mutually inverse.
 * `TauCeti.isFractionRing_holomorphyRing`: `F` is the field of fractions of `𝒪_S` as soon as
   some place lies outside `S`.
-* `TauCeti.Place.exists_ord_neg_and_forall_ne_ord_nonneg`: every place is the only pole of some
-  function — the input to Corollary 3.2.8.
 
 ## Implementation notes
 
@@ -119,6 +117,7 @@ theorem holomorphyRing_empty : holomorphyRing (∅ : Set (Place k F)) = ⊤ := b
 
 /-- **The holomorphy ring of all the places is the constant field** (Stichtenoth,
 Corollary 1.1.20): a function regular everywhere is algebraic over `k`. -/
+@[simp]
 theorem holomorphyRing_univ (hF : IsFunctionField k F) :
     holomorphyRing (Set.univ : Set (Place k F)) = (algebraicClosure k F).toSubalgebra := by
   ext z
@@ -221,68 +220,11 @@ theorem holomorphyRing_setOf_subset_integers (hF : IsFunctionField k F) (R : Sub
 
 /-! ### Recovering the set of places -/
 
-/-- **Every place is the only pole of some function**: for a place `P` of an algebraic function
-field there is a function with a pole at `P` and no pole at any other place.
-
-Riemann's theorem makes `ℓ(n·P)` grow without bound, so some step of the ladder
-`L(0) ≤ L(P) ≤ L(2P) ≤ …` is strict, and a function in the larger space but not the smaller one
-has its only pole at `P`. -/
-theorem Place.exists_ord_neg_and_forall_ne_ord_nonneg (hF : IsFunctionField k F)
-    (P : Place k F) : ∃ z : F, P.ord z < 0 ∧ ∀ Q : Place k F, Q ≠ P → 0 ≤ Q.ord z := by
-  set D : ℕ → Divisor k F := fun n ↦ Finsupp.single P (n : ℤ) with hD
-  have hself : ∀ n : ℕ, (D n).coeff P = (n : ℤ) := fun _ ↦ Finsupp.single_eq_same
-  have hother : ∀ (n : ℕ) (Q : Place k F), Q ≠ P → (D n).coeff Q = 0 :=
-    fun _ _ hQ ↦ Finsupp.single_eq_of_ne hQ
-  -- some step of the ladder `L(0) ≤ L(P) ≤ L(2P) ≤ …` is strict
-  have hstep : ∃ m : ℕ, riemannRochSpace (D m) ≠ riemannRochSpace (D (m + 1)) := by
-    by_contra hcon
-    push Not at hcon
-    have hall : ∀ n : ℕ, riemannRochSpace (D n) = riemannRochSpace (D 0) := by
-      intro n
-      induction n with
-      | zero => rfl
-      | succ m ih => rw [← hcon m, ih]
-    set n : ℕ := Divisor.dim (D 0) + genus k F with hn
-    have hdim : Divisor.dim (D n) = Divisor.dim (D 0) := by
-      rw [Divisor.dim_def, Divisor.dim_def, hall n]
-    have hR := Divisor.degree_add_one_sub_genus_le_dim hF (D n)
-    have hPdeg : (1 : ℤ) ≤ P.degree := by
-      exact_mod_cast P.one_le_degree_of_isFunctionField hF
-    have hmul : (n : ℤ) ≤ n * P.degree :=
-      le_mul_of_one_le_right (Int.natCast_nonneg n) hPdeg
-    have hncast : (n : ℤ) = Divisor.dim (D 0) + genus k F := by rw [hn]; push_cast; ring
-    rw [hdim, hD, Divisor.degree_single] at hR
-    linarith
-  obtain ⟨m, hm⟩ := hstep
-  have hle : riemannRochSpace (D m) ≤ riemannRochSpace (D (m + 1)) :=
-    riemannRochSpace_mono (WeilDivisor.le_iff.mpr fun Q ↦ by
-      rcases eq_or_ne Q P with rfl | hQ
-      · rw [hself, hself]
-        exact_mod_cast Nat.le_succ m
-      · rw [hother _ _ hQ, hother _ _ hQ])
-  obtain ⟨z, hz1, hz2⟩ : ∃ z ∈ riemannRochSpace (D (m + 1)), z ∉ riemannRochSpace (D m) := by
-    by_contra h
-    push Not at h
-    exact hm (le_antisymm hle h)
-  have hz0 : z ≠ 0 := fun h ↦ hz2 (h ▸ Submodule.zero_mem _)
-  have hQ : ∀ Q : Place k F, Q ≠ P → 0 ≤ Q.ord z := fun Q hQP ↦ by
-    have h := (mem_riemannRochSpace_iff_neg_le_ord hz0).mp hz1 Q
-    rwa [hother _ _ hQP, neg_zero] at h
-  refine ⟨z, ?_, hQ⟩
-  rw [mem_riemannRochSpace_iff_neg_le_ord hz0] at hz2
-  push Not at hz2
-  obtain ⟨Q, hQlt⟩ := hz2
-  rcases eq_or_ne Q P with rfl | hne
-  · rw [hself] at hQlt
-    have : (0 : ℤ) ≤ m := Int.natCast_nonneg m
-    omega
-  · rw [hother _ _ hne, neg_zero] at hQlt
-    exact absurd (hQ Q hne) (by omega)
-
 /-- **Stichtenoth, Corollary 3.2.8.**  The functions of `𝒪_S` are all regular at a place `P`
 exactly when `P` belongs to `S`, so `S` is recovered from its holomorphy ring: together with
 `TauCeti.holomorphyRing_setOf_subset_integers` this makes sets of places and `k`-subalgebras of
 `F` integrally closed in `F` correspond antitonely. -/
+@[simp]
 theorem coe_holomorphyRing_subset_integers_iff (hF : IsFunctionField k F)
     {S : Set (Place k F)} {P : Place k F} :
     (holomorphyRing S : Set F) ⊆ P.integers ↔ P ∈ S := by
