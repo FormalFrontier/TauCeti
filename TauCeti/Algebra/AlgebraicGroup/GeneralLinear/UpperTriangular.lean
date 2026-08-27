@@ -31,9 +31,9 @@ The pointwise identifications are assembled into a natural isomorphism of group-
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2.
 * T. A. Springer, *Linear Algebraic Groups*, Sections 2.4 and 6.3.
 * J. S. Milne, *Algebraic Groups* (2017), Chapters 12--13.
-* The quotient-points equivalence, entrywise map, and functor proofs generalize the formalization
-  in `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel`, which follows the pattern of
-  `TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic`.
+* The quotient-points equivalence and functor proofs follow the pattern of
+  `TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic`;
+  `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel` is their rank-two specialization.
 
 This advances Layer 5, "Lie--Kolchin; solvable groups", of the ReductiveGroups roadmap. It
 constructs the general-rank group scheme whose abstract point groups were already proved solvable.
@@ -55,6 +55,7 @@ def weights : Fin n → ℤ :=
   fun i ↦ (n : ℤ) - 1 - (i : ℤ)
 
 /-- Formula for a standard upper-triangular weight. -/
+@[simp]
 theorem weights_apply (i : Fin n) : weights n i = (n : ℤ) - 1 - (i : ℤ) :=
   (rfl)
 
@@ -217,8 +218,21 @@ noncomputable def pointsMulEquiv :
       (CommAlgCat.of R A)).groupIsoToMulEquiv.trans
     (definingPointsSubgroupMulEquiv R n)
 
+/-- Internally, the upper-triangular point equivalence first forms the cut-out ambient subgroup
+point and then reads it as an upper-triangular matrix. -/
+private theorem pointsMulEquiv_apply_eq
+    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
+      (CommAlgCat.of R A)) :
+    pointsMulEquiv (R := R) (n := n) (A := A) f =
+      pointsSubgroupToUpperTriangular R n
+        (((CommHopfAlgCat.quotientPointsSubgroupNatIso
+          (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)).app
+          (CommAlgCat.of R A)).hom f) :=
+  rfl
+
 /-- Under the upper-triangular and general-linear point equivalences, the quotient-point
 inclusion is the ordinary inclusion of upper-triangular matrices into `GL_n`. -/
+@[simp]
 theorem pointsMulEquiv_coe
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
       (CommAlgCat.of R A)) :
@@ -230,6 +244,7 @@ theorem pointsMulEquiv_coe
   have hcomponent := CommHopfAlgCat.quotientPointsSubgroupNatIso_hom_app_apply
     (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
     (CommAlgCat.of R A) f
+  rw [pointsMulEquiv_apply_eq]
   exact congrArg
     (fun g => (pointsSubgroupToUpperTriangular R n g : upperTriangularGroup (Fin n) A).1)
     hcomponent.symm
@@ -247,33 +262,16 @@ theorem quotientPointsHom_pointsMulEquiv_symm (g : upperTriangularGroup (Fin n) 
 
 variable {B : Type w} [CommRing B] [Algebra R B]
 
-/-- Apply a ring homomorphism entrywise to an invertible upper-triangular matrix. -/
-def map (phi : A →+* B) :
-    upperTriangularGroup (Fin n) A →* upperTriangularGroup (Fin n) B where
-  toFun g := ⟨Matrix.GeneralLinearGroup.map phi g.1,
-    UpperTriangularGroup.mem_iff.mpr <| by
-      intro i j hji
-      rw [Matrix.GeneralLinearGroup.map_apply,
-        UpperTriangularGroup.isUpperTriangular g hji, map_zero]⟩
-  map_one' := Subtype.ext (map_one _)
-  map_mul' x y := Subtype.ext (map_mul _ x.1 y.1)
-
-/-- The matrix underlying an entrywise-mapped upper-triangular element is the entrywise map of
-its underlying matrix. -/
-@[simp]
-theorem coe_map (phi : A →+* B) (g : upperTriangularGroup (Fin n) A) :
-    ((map n phi g : upperTriangularGroup (Fin n) B) : GL (Fin n) B) =
-      Matrix.GeneralLinearGroup.map phi (g : GL (Fin n) A) :=
-  (rfl)
-
 /-- The upper-triangular point equivalence is natural in the value algebra. -/
+@[simp]
 theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
       (CommAlgCat.of R A)) :
     pointsMulEquiv (R := R) (n := n) (A := B)
         (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R n)
           (CommAlgCat.ofHom phi) f) =
-      map n phi.toRingHom (pointsMulEquiv (R := R) (n := n) (A := A) f) := by
+      UpperTriangularGroup.map phi.toRingHom
+        (pointsMulEquiv (R := R) (n := n) (A := A) f) := by
   apply Subtype.ext
   have hcoe_lhs := pointsMulEquiv_coe (R := R) (n := n) (A := B)
     (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R n) (CommAlgCat.ofHom phi) f)
@@ -281,7 +279,7 @@ theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
   rw [← hcoe_lhs, ← CommHopfAlgCat.mapPoints_quotientPointsHom,
     HopfAlgebra.mapPoints_apply, CommAlgCat.hom_ofHom, ← AlgHom.mapValue_apply,
     GeneralLinear.pointsMulEquiv_mapValue, hcoe_rhs]
-  rfl
+  exact (UpperTriangularGroup.coe_map phi.toRingHom _).symm
 
 end Points
 
@@ -291,13 +289,13 @@ section Functor
 private noncomputable abbrev upperTriangularFunctorUnlifted :
     CommAlgCat.{w} R ⥤ GrpCat.{w} where
   obj A := GrpCat.of (upperTriangularGroup (Fin n) A)
-  map phi := GrpCat.ofHom (map n phi.hom.toRingHom)
+  map phi := GrpCat.ofHom (UpperTriangularGroup.map phi.hom.toRingHom)
   map_id _ := by
     ext g i j
-    rfl
+    simp
   map_comp _ _ := by
     ext g i j
-    rfl
+    simp
 
 /-- The group-valued functor sending an `R`-algebra to its invertible upper-triangular matrices. -/
 noncomputable def upperTriangularFunctor :
@@ -309,6 +307,7 @@ matrix group. -/
 theorem upperTriangularFunctor_obj (A : CommAlgCat.{w} R) :
     (upperTriangularFunctor (R := R) n).obj A =
       GrpCat.of (ULift.{u, w} (upperTriangularGroup (Fin n) A)) := by
+  unfold upperTriangularFunctor upperTriangularFunctorUnlifted
   rfl
 
 /-- The morphism part of `upperTriangularFunctor` is entrywise application, transported across
@@ -318,8 +317,10 @@ theorem upperTriangularFunctor_map {A B : CommAlgCat.{w} R} (phi : A ⟶ B) :
       eqToHom (upperTriangularFunctor_obj (R := R) n A) ≫
         GrpCat.ofHom
           (MulEquiv.ulift.symm.toMonoidHom.comp
-            ((map n phi.hom.toRingHom).comp MulEquiv.ulift.toMonoidHom)) ≫
+            ((UpperTriangularGroup.map phi.hom.toRingHom).comp
+              MulEquiv.ulift.toMonoidHom)) ≫
         eqToHom (upperTriangularFunctor_obj (R := R) n B).symm := by
+  unfold upperTriangularFunctor upperTriangularFunctorUnlifted
   rfl
 
 /-- The morphism part of the upper-triangular functor applies an algebra morphism entrywise. -/
@@ -331,7 +332,8 @@ theorem upperTriangularFunctor_map_apply_apply {A B : CommAlgCat.{w} R} (phi : A
         (eqToHom (upperTriangularFunctor_obj (R := R) n A).symm g))).down :
           upperTriangularGroup (Fin n) B) : GL (Fin n) B) i j =
       phi.hom (((g.down : upperTriangularGroup (Fin n) A) : GL (Fin n) A) i j) := by
-  rfl
+  rw [upperTriangularFunctor_map]
+  exact UpperTriangularGroup.map_apply phi.hom.toRingHom g.down i j
 
 /-- The functor of points of the upper-triangular coordinate Hopf algebra is naturally
 isomorphic to the upper-triangular matrix-group functor. -/
@@ -347,6 +349,24 @@ noncomputable def pointsNatIso :
       apply ULift.ext
       exact pointsMulEquiv_mapValue (R := R) (n := n) (A := A) (B := B) phi.hom f)
 
+/-- The forward component of `pointsNatIso` is definitionally the pointwise equivalence followed
+by universe lifting. -/
+private theorem pointsNatIso_hom_app (A : CommAlgCat.{w} R) :
+    (pointsNatIso (R := R) n).hom.app A =
+      (((pointsMulEquiv (R := R) (n := n) (A := A)).trans
+        MulEquiv.ulift.symm).toGrpIso).hom := by
+  unfold pointsNatIso
+  rfl
+
+/-- The inverse component of `pointsNatIso` is definitionally inverse universe lifting followed
+by the inverse pointwise equivalence. -/
+private theorem pointsNatIso_inv_app (A : CommAlgCat.{w} R) :
+    (pointsNatIso (R := R) n).inv.app A =
+      (((pointsMulEquiv (R := R) (n := n) (A := A)).trans
+        MulEquiv.ulift.symm).toGrpIso).inv := by
+  unfold pointsNatIso
+  rfl
+
 /-- The forward component of `pointsNatIso` is the pointwise upper-triangular equivalence. -/
 @[simp]
 theorem pointsNatIso_hom_app_apply (A : CommAlgCat.{w} R)
@@ -354,6 +374,7 @@ theorem pointsNatIso_hom_app_apply (A : CommAlgCat.{w} R)
     (eqToHom (upperTriangularFunctor_obj (R := R) n A)
       ((pointsNatIso (R := R) n).hom.app A f)).down =
       pointsMulEquiv (R := R) (n := n) (A := A) f := by
+  rw [pointsNatIso_hom_app]
   rfl
 
 /-- The inverse component of `pointsNatIso` is the inverse pointwise upper-triangular
@@ -364,6 +385,7 @@ theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
     (pointsNatIso (R := R) n).inv.app A
         (eqToHom (upperTriangularFunctor_obj (R := R) n A).symm g) =
       (pointsMulEquiv (R := R) (n := n) (A := A)).symm g.down := by
+  rw [pointsNatIso_inv_app]
   rfl
 
 end Functor

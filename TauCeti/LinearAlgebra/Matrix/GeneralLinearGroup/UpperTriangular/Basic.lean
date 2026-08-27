@@ -43,7 +43,7 @@ namespace TauCeti
 
 open Matrix
 
-universe u
+universe u v
 
 variable (m : Type*) [Fintype m] [LinearOrder m] (R : Type u) [CommRing R]
 
@@ -74,6 +74,33 @@ theorem mem_iff {g : GL m R} :
 theorem isUpperTriangular (g : upperTriangularGroup m R) :
     ((g : GL m R) : Matrix m m R).IsUpperTriangular :=
   g.2
+
+/-- Apply a ring homomorphism entrywise to an invertible upper-triangular matrix. -/
+def map {S : Type v} [CommRing S] (phi : R →+* S) :
+    upperTriangularGroup m R →* upperTriangularGroup m S where
+  toFun g := ⟨Matrix.GeneralLinearGroup.map phi g.1,
+    mem_iff.mpr <| by
+      intro i j hji
+      rw [Matrix.GeneralLinearGroup.map_apply, isUpperTriangular g hji, map_zero]⟩
+  map_one' := Subtype.ext (map_one _)
+  map_mul' x y := Subtype.ext (map_mul _ x.1 y.1)
+
+/-- The matrix underlying an entrywise-mapped upper-triangular element is the entrywise map of
+its underlying matrix. -/
+@[simp]
+theorem coe_map {S : Type v} [CommRing S] (phi : R →+* S)
+    (g : upperTriangularGroup m R) :
+    ((map phi g : upperTriangularGroup m S) : GL m S) =
+      Matrix.GeneralLinearGroup.map phi (g : GL m R) :=
+  by simp [map]
+
+/-- Entrywise application of a ring homomorphism to an upper-triangular matrix. -/
+@[simp]
+theorem map_apply {S : Type v} [CommRing S] (phi : R →+* S)
+    (g : upperTriangularGroup m R) (i j : m) :
+    ((map phi g : upperTriangularGroup m S) : GL m S) i j =
+      phi (((g : upperTriangularGroup m R) : GL m R) i j) := by
+  rw [coe_map, Matrix.GeneralLinearGroup.map_apply]
 
 /-- The diagonal projection from the upper-triangular group to the coordinatewise unit group.
 
