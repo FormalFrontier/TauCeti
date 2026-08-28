@@ -86,27 +86,6 @@ theorem glCasimir_def :
     glCasimir K n = ∑ i, ∑ j, ι K (Matrix.single i j 1) * ι K (Matrix.single j i 1) :=
   (rfl)
 
-private theorem lie_single_single (a b i j : n) :
-    ⁅Matrix.single a b (1 : K), Matrix.single i j (1 : K)⁆ =
-      (if b = i then Matrix.single a j (1 : K) else 0) -
-        if j = a then Matrix.single i b (1 : K) else 0 := by
-  rw [LieRing.of_associative_ring_bracket]
-  by_cases hbi : b = i
-  · subst i
-    by_cases hja : j = a
-    · subst j
-      rw [Matrix.single_mul_single_same, Matrix.single_mul_single_same]
-      simp
-    · rw [Matrix.single_mul_single_same, Matrix.single_mul_single_of_ne (h := hja)]
-      simp [hja]
-  · by_cases hja : j = a
-    · subst j
-      rw [Matrix.single_mul_single_of_ne (h := hbi), Matrix.single_mul_single_same]
-      simp [hbi]
-    · rw [Matrix.single_mul_single_of_ne (h := hbi),
-        Matrix.single_mul_single_of_ne (h := hja)]
-      simp [hbi, hja]
-
 private theorem ι_lie_single_single (a b i j : n) :
     ι K ⁅Matrix.single a b (1 : K), Matrix.single i j (1 : K)⁆ =
       (if b = i then ι K (Matrix.single a j (1 : K)) else 0) -
