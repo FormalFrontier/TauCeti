@@ -57,7 +57,10 @@ private theorem contractLeft_basis_eq_zero_of_not_mem {I : Type w} [LinearOrder 
     exact hj
   · rfl
 
-private theorem basis_exteriorAlgebra_singleton_eq_ι {I : Type w} [LinearOrder I]
+/-- The exterior-basis vector indexed by a singleton is the image of the corresponding basis
+vector under the exterior-algebra generator. -/
+@[simp]
+theorem basis_singleton {I : Type w} [LinearOrder I]
     (b : Module.Basis I R M) (i : I) :
     b.ExteriorAlgebra {i} = ExteriorAlgebra.ι R (b i) := by
   let a : Set.powersetCard I 1 :=
@@ -97,7 +100,7 @@ theorem ι_mul_contractLeft_coord_basis {I : Type w} [LinearOrder I]
         contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i)
           (b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i)) =
         b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i) := by
-      rw [basis_exteriorAlgebra_singleton_eq_ι]
+      rw [basis_singleton]
       rw [contractLeft_ι_mul]
       simp only [Module.Basis.coord_apply, Module.Basis.repr_self, Finsupp.single_apply]
       rw [contractLeft_basis_eq_zero_of_not_mem b i (s.erase i) (by simp),
