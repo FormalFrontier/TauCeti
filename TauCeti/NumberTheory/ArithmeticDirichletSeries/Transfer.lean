@@ -11,11 +11,13 @@ public import TauCeti.NumberTheory.ArithmeticDirichletSeries.AbelSummation
 /-!
 # From the weighted prime count to the unweighted one
 
-Every prime-number-theorem argument produces an asymptotic for the *logarithmically weighted* count
-`ϑ`, because that is the count the von Mangoldt coefficients of a logarithmic derivative see.  The
-statement one wants is about the *unweighted* count `π`.  This file carries out the passage between
-the two for the primes of a number field: if `ϑ(x) = δx + o(x)`, then `π(x) = δ Li(x) + o(x/log x)`,
-where `Li` is the offset logarithmic integral of
+A prime-number-theorem argument delivers its conclusion for a *logarithmically weighted* count: a
+Tauberian theorem applied to a logarithmic derivative sees the von Mangoldt coefficients, hence the
+count `ψ` weighted by `log p` and taken over prime powers, and a separate elementary estimate for
+the prime-power contribution passes from `ψ` to the count `ϑ` over primes alone.  The statement one
+wants is about the *unweighted* count `π`.  This file carries out that last passage for the primes
+of a number field, taking the asymptotic for `ϑ` as given: if `ϑ(x) = δx + o(x)`, then
+`π(x) = δ Li(x) + o(x/log x)`, where `Li` is the offset logarithmic integral of
 `TauCeti/Analysis/SpecialFunctions/LogIntegral.lean`.
 
 The bridge is the exact Abel-summation identity
@@ -40,8 +42,7 @@ whose three remaining summands are each `o (x / log x)`.
 This is Layer **6.2** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`, which asks for the
 transfer `ϑ(x) ∼ δx ⟹ π(x) ∼ δ Li(x)` "including the zero-density and `δ = 0` cases"; Layer 10.3
 exports it as `primeCount_asymptotic_of_primeTheta`.  Nothing here uses an analytic continuation or
-a nonvanishing statement: the hypothesis on `ϑ` is exactly the input a Tauberian theorem produces,
-and Layer 10 supplies that input.
+a nonvanishing statement: the hypothesis on `ϑ` is taken as given here, and Layer 10 supplies it.
 
 ## References
 
