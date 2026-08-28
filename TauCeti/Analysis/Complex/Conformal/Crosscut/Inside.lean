@@ -127,6 +127,8 @@ theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall
     have ht1 : -1 < t := by linarith [ht.1, min_le_right η 1]
     obtain ⟨hlo, hmem⟩ := hηball htη
     rw [hφ0, sub_zero, Real.norm_eq_abs, abs_of_neg ht.2] at hlo
+    have hfactor : z₀ - ζ + t • (z₀ - ζ) = (1 + t) • (z₀ - ζ) := by
+      rw [add_smul, one_smul]
     refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, ?_⟩, hfg _ hmem⟩
     rw [mem_ball, dist_eq_norm]
     calc ‖g (v * t + f z₀) - ζ‖
@@ -138,9 +140,8 @@ theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall
           rwa [e] at this
       _ ≤ (1 + t) * ρ + ρ / 2 * (-t) := by
           gcongr
-          · rw [show z₀ - ζ + t • (z₀ - ζ) = (1 + t) • (z₀ - ζ) by
-                rw [add_smul, one_smul],
-              norm_smul, hnorm, Real.norm_eq_abs, abs_of_pos (by linarith)]
+          · rw [hfactor, norm_smul, hnorm, Real.norm_eq_abs,
+              abs_of_pos (by linarith)]
       _ < ρ := by nlinarith [ht.2]
   · -- `t > 0`: the pulled-back point is farther from `ζ` than `ρ`
     have htη : dist t 0 < η := by
@@ -148,15 +149,16 @@ theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall
       linarith [ht.2, min_le_left η 1]
     obtain ⟨hlo, hmem⟩ := hηball htη
     rw [hφ0, sub_zero, Real.norm_eq_abs, abs_of_pos ht.1] at hlo
+    have hfactor : z₀ - ζ + t • (z₀ - ζ) = (1 + t) • (z₀ - ζ) := by
+      rw [add_smul, one_smul]
     refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, fun hcb => ?_⟩, hfg _ hmem⟩
     rw [mem_closedBall, dist_eq_norm] at hcb
     have hlow : (1 + t) * ρ - ρ / 2 * t ≤ ‖g (v * t + f z₀) - ζ‖ := by
       calc (1 + t) * ρ - ρ / 2 * t
           ≤ ‖z₀ - ζ + t • (z₀ - ζ)‖ -
               ‖g (v * t + f z₀) - z₀ - t • (z₀ - ζ)‖ := by
-            rw [show z₀ - ζ + t • (z₀ - ζ) = (1 + t) • (z₀ - ζ) by
-                  rw [add_smul, one_smul],
-                norm_smul, hnorm, Real.norm_eq_abs, abs_of_pos (by linarith [ht.1])]
+            rw [hfactor, norm_smul, hnorm, Real.norm_eq_abs,
+              abs_of_pos (by linarith [ht.1])]
             linarith
         _ ≤ ‖g (v * t + f z₀) - ζ‖ := by
             have := norm_sub_norm_le (z₀ - ζ + t • (z₀ - ζ)) (g (v * t + f z₀) - ζ)
@@ -255,11 +257,13 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
     (hf : DifferentiableOn ℂ f (ball c r))
     (hinj : InjOn f (ball c r)) {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
-    (hγK : closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ K)
+    (hγK : f '' (ball c r ∩ sphere ζ ρ) ⊆ K)
     (hKsub : K ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r))
     (hKp : ∀ p ∈ f '' (ball c r ∩ sphere ζ ρ), IsPreconnected (K \ {p})) :
     f '' (ball c r ∩ ball ζ ρ) ⊆ filledHull K ∨
       f '' (ball c r \ closedBall ζ ρ) ⊆ filledHull K := by
+  have hγKcl : closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ K :=
+    hK.closure_subset_iff.mpr hγK
   have hr : 0 < r := by linarith
   -- a point of the crosscut: the point of `sphere ζ ρ` in the direction of the centre
   have hz₀ : circleMap ζ ρ (c - ζ).arg ∈ ball c r ∩ sphere ζ ρ :=
@@ -293,7 +297,7 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
     hnotK _ sdiff_subset (Set.disjoint_left.mpr fun x hx hx' => hx.2 (sphere_subset_closedBall hx'))
   -- the two-sidedness theorem, applied to `K` and the segment on `[-η/2, η/2]`
   have hpγ : p ∈ f '' (ball c r ∩ sphere ζ ρ) := mem_image_of_mem f hz₀
-  have hpK : p ∈ K := hγK (subset_closure hpγ)
+  have hpK : p ∈ K := hγKcl (subset_closure hpγ)
   have hseg : ∀ t ∈ Icc (-(η / 2)) (η / 2), v * t + p ∈ K → t = 0 := by
     intro t ht hKt
     by_contra ht0
@@ -301,7 +305,7 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
     · exact Set.disjoint_left.mp hnearK (hnear t ⟨by linarith [ht.1], hneg⟩) hKt
     · exact Set.disjoint_left.mp hfarK (hfar t ⟨hpos, by linarith [ht.2]⟩) hKt
   have hγK' : ∀ S : Set ℂ, f '' (ball c r ∩ sphere ζ ρ) ∩ S ⊆ K ∩ S := fun S =>
-    inter_subset_inter (subset_closure.trans hγK) subset_rfl
+    inter_subset_inter (subset_closure.trans hγKcl) subset_rfl
   have key := Contour.mem_filledHull_or_mem_filledHull_of_isPreconnected_sdiff_singleton
     (K := K) (v := v) (z₀ := p) (a := -(η / 2)) (b := η / 2) (s := 0)
     hK hKb hv ⟨by linarith, by linarith⟩
@@ -354,8 +358,8 @@ theorem image_subset_filledHull_of_disjoint_inter_sphere (hUo : IsOpen U)
   IsPreconnected.subset_filledHull (hVc.image f (hd.continuousOn.mono hVU))
     (disjoint_image_of_subset_closure_union_frontier hUo hd hinj hVU hV hK) hne
 
-/-- **One of the two image sides meets the inside of a curve with a point of its inside in the image
-domain.** -/
+/-- **One of the two image sides meets the inside of a curve, given an image-domain point adherent
+to the inside.** -/
 theorem nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull
     (hΩo : IsOpen (f '' U)) (hγ : f '' (U ∩ sphere ζ ρ) ⊆ K)
     (hp : p ∈ f '' U) (hin : p ∈ closure (filledHull K \ K)) :
