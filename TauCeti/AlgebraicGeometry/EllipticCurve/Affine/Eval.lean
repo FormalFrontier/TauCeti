@@ -20,13 +20,13 @@ itself, not a global `WeierstrassCurve R`.
 
 ## Main results
 
-* `TauCeti.WeierstrassCurve.evalEval_eq_of_mk_eq`: bivariate polynomials that are equal in the
+* `WeierstrassCurve.evalEval_eq_of_mk_eq`: bivariate polynomials that are equal in the
   coordinate ring evaluate equally at a point of the curve.
-* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.algHom_mk_eq_evalEval`: an algebra homomorphism
+* `WeierstrassCurve.Affine.CoordinateRing.algHom_mk_eq_evalEval`: an algebra homomorphism
   from the coordinate ring is evaluation at the images of the coordinate functions, and
-  `TauCeti.WeierstrassCurve.Affine.CoordinateRing.equation_of_algHom` says that those images
+  `WeierstrassCurve.Affine.CoordinateRing.equation_of_algHom` says that those images
   satisfy the Weierstrass equation.
-* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.ofEquation`: the converse construction from a
+* `WeierstrassCurve.Affine.CoordinateRing.ofEquation`: the converse construction from a
   solution of the base-changed equation, with computation and extensionality lemmas.
 
 Stated over an arbitrary commutative ring; the curve need not be elliptic, and `R` need not be a
@@ -45,11 +45,9 @@ open Polynomial WeierstrassCurve
 
 open scoped Polynomial.Bivariate
 
-namespace TauCeti
-
 namespace WeierstrassCurve
 
-variable {R : Type*} [CommRing R] (W : _root_.WeierstrassCurve.Affine R) {x y : R}
+variable {R : Type*} [CommRing R] (W : WeierstrassCurve.Affine R) {x y : R}
 
 /-- Bivariate polynomials that are equal in the coordinate ring `R[W]` evaluate equally at a
 point `(x, y)` of `W`. -/
@@ -62,7 +60,7 @@ theorem evalEval_eq_of_mk_eq (h : W.Equation x y) {p q : R[X][Y]}
 namespace Affine.CoordinateRing
 
 variable {A : Type*} [CommRing A] [Algebra R A]
-variable {W : _root_.WeierstrassCurve.Affine R}
+variable {W : WeierstrassCurve.Affine R}
 
 /-- An algebra homomorphism from the coordinate ring to a commutative `R`-algebra is evaluation at
 the images of the two coordinate functions. -/
@@ -166,5 +164,3 @@ theorem ofEquation_equation_ofAlgHom (f : W.CoordinateRing →ₐ[R] A) :
 end Affine.CoordinateRing
 
 end WeierstrassCurve
-
-end TauCeti

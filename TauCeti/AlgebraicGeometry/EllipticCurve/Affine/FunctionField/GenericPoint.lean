@@ -89,7 +89,7 @@ theorem evalEval_genericPoint (p : R[X][Y]) :
   symm
   simpa only [IsScalarTower.toAlgHom_apply, AdjoinRoot.mk_C, AdjoinRoot.mk_X,
     AdjoinRoot.algebraMap_eq, genericX_def, genericY_def] using
-      TauCeti.WeierstrassCurve.Affine.CoordinateRing.algHom_mk_eq_evalEval
+      WeierstrassCurve.Affine.CoordinateRing.algHom_mk_eq_evalEval
         (IsScalarTower.toAlgHom R W.CoordinateRing W.FunctionField) p
 
 /-- **The generic point is a point of the curve.** `(X, Y)` satisfies the equation of `W`
@@ -98,7 +98,7 @@ coordinate ring quotients out. -/
 theorem equation_genericPoint : W.functionFieldCurve.Equation W.genericX W.genericY := by
   simpa only [functionFieldCurve, IsScalarTower.toAlgHom_apply, AdjoinRoot.mk_C,
     AdjoinRoot.mk_X, AdjoinRoot.algebraMap_eq, genericX_def, genericY_def] using
-      TauCeti.WeierstrassCurve.Affine.CoordinateRing.equation_of_algHom
+      WeierstrassCurve.Affine.CoordinateRing.equation_of_algHom
         (IsScalarTower.toAlgHom R W.CoordinateRing W.FunctionField)
 
 /-- **The image of `R[X]` in the function field consists of the polynomials in the generic
