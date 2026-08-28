@@ -41,10 +41,8 @@ canonical factors developed here are prerequisites for that package, not a subst
 
 ## Main results
 
-* `TauCeti.IdealArithmeticFunction.IsMultiplicative.map_prod_pow`: a multiplicative ideal
-  arithmetic function factors over a prime-power factorization of a nonzero ideal.
-* `TauCeti.IdealArithmeticFunction.supportedPart_insert`: adjoining one prime to the support
-  convolves the restriction with the restriction to the powers of that prime.
+* `TauCeti.IdealArithmeticFunction.supportedPart_insert`: for a multiplicative `f`, adjoining one
+  prime to the support convolves the restriction with the restriction to the powers of that prime.
 * `TauCeti.IdealArithmeticFunction.normCoeff_supportedPart`: the **finite Euler product**
   `normCoeff (supportedPart f S) = ∏ P ∈ S, localArithmeticFactor f P` for a multiplicative `f`
   and a finite set `S` of height-one primes.
@@ -52,11 +50,13 @@ canonical factors developed here are prerequisites for that package, not a subst
 ## Implementation notes
 
 "Supported on `S`" is spelled `Ideal.IsPrimeTo · Sᶜ`: no prime *outside* `S` divides the ideal.
-That predicate, and the splitting `Ideal.IsPrimeTo.exists_pow_mul` of an ideal into a prime power
-times a cofactor together with its uniqueness `Ideal.eq_of_pow_mul_eq_pow_mul`, live in
-`TauCeti/RingTheory/DedekindDomain/Ideal.lean`, since nothing in them is specific to a number
+That predicate, and the splitting `Ideal.IsPrimeTo.exists_eq_pow_mul` of an ideal into a prime
+power times a cofactor together with its uniqueness `Ideal.eq_and_eq_of_pow_mul_eq_pow_mul`, live
+in `TauCeti/RingTheory/DedekindDomain/Ideal.lean`, since nothing in them is specific to a number
 field. Uniqueness is what makes the induction work: it is why exactly one summand of the ideal
-convolution survives at each ideal.
+convolution survives at each ideal. The multiplicativity of `f` over a prime-power factorization,
+`TauCeti.IdealArithmeticFunction.IsMultiplicative.map_prod_pow`, likewise lives with the predicate
+it elaborates, in `TauCeti/NumberTheory/ArithmeticDirichletSeries/Basic.lean`.
 
 `TauCeti.MultiplicativeIdealWeight.restrict` is the opposite regime and is not a substitute:
 it restricts *away from* a **finite** set of primes and stays inside the bundled weight carrier. A
@@ -221,46 +221,13 @@ theorem localArithmeticFactor_delta (P : HeightOneSpectrum (𝓞 K)) :
   rw [localArithmeticFactor, localPowerSeries_delta]
   exact (ArithmeticFunction.ofPowerSeries (Ideal.absNorm P.asIdeal)).map_one
 
-/-! ### Multiplicativity over a prime-power factorization -/
-
-/-- **A multiplicative ideal arithmetic function factors over a prime-power factorization.**
-Unique factorization writes every nonzero ideal as a product `∏ P ∈ S, P ^ e P` over a finite set
-of height-one primes, and a multiplicative `f` takes such a product to the product of its values
-on the prime powers. This is the ideal analogue of Mathlib's
-`ArithmeticFunction.IsMultiplicative.map_prod`. -/
-theorem IsMultiplicative.map_prod_pow {f : IdealArithmeticFunction K} (hf : f.IsMultiplicative)
-    (S : Finset (HeightOneSpectrum (𝓞 K))) (e : HeightOneSpectrum (𝓞 K) → ℕ)
-    (A : (Ideal (𝓞 K))⁰) (hA : (A : Ideal (𝓞 K)) = ∏ P ∈ S, P.asIdeal ^ e P) :
-    f A = ∏ P ∈ S,
-      f ⟨P.asIdeal ^ e P, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero _ P.ne_bot)⟩ := by
-  classical
-  induction S using Finset.induction_on generalizing A with
-  | empty =>
-      rw [Finset.prod_empty] at hA ⊢
-      rw [show A = 1 from Subtype.ext hA, hf.map_one]
-  | insert P S hPS ih =>
-      have hne : ∀ Q ∈ S, Q ∉ ({P} : Set (HeightOneSpectrum (𝓞 K))) := by
-        intro Q hQ hQP
-        exact hPS (Set.mem_singleton_iff.mp hQP ▸ hQ)
-      have hprod : (∏ Q ∈ S, Q.asIdeal ^ e Q) ≠ 0 :=
-        Finset.prod_ne_zero_iff.mpr fun Q _ ↦ pow_ne_zero _ Q.ne_bot
-      have hrel : IsRelPrime (P.asIdeal ^ e P) (∏ Q ∈ S, Q.asIdeal ^ e Q) :=
-        (Ideal.isPrimeTo_compl_singleton_iff.mpr ⟨e P, rfl⟩).isRelPrime
-          (by simpa using Ideal.isPrimeTo_prod fun Q hQ ↦
-            (Ideal.isPrimeTo_asIdeal_iff.mpr (hne Q hQ)).pow (e Q))
-      rw [Finset.prod_insert hPS] at hA ⊢
-      rw [show A = ⟨P.asIdeal ^ e P, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero _ P.ne_bot)⟩ *
-          ⟨_, mem_nonZeroDivisors_of_ne_zero hprod⟩ from Subtype.ext hA,
-        hf.map_mul_of_isRelPrime hrel,
-        ih ⟨_, mem_nonZeroDivisors_of_ne_zero hprod⟩ rfl]
-
 /-! ### Finite Euler products -/
 
 /-- The part of `f` supported on the nonzero ideals all of whose prime factors lie in `S`: it
 agrees with `f` there and vanishes on every other nonzero ideal. Being supported on `S` is
 `Ideal.IsPrimeTo · Sᶜ`, that no prime outside `S` divides the ideal. Use
-`supportedPart_apply_of_isPrimeTo` and `supportedPart_apply_of_not_isPrimeTo` rather than
-unfolding. -/
+`supportedPart_apply_of_isPrimeTo_compl` and `supportedPart_apply_of_not_isPrimeTo_compl` rather
+than unfolding. -/
 noncomputable def supportedPart (f : IdealArithmeticFunction K)
     (S : Set (HeightOneSpectrum (𝓞 K))) : IdealArithmeticFunction K :=
   Set.indicator {A : (Ideal (𝓞 K))⁰ | Ideal.IsPrimeTo (A : Ideal (𝓞 K)) Sᶜ} f
@@ -270,30 +237,57 @@ variable {f : IdealArithmeticFunction K} {S : Set (HeightOneSpectrum (𝓞 K))}
 
 omit [NumberField K] in
 /-- On an ideal supported on `S`, the restriction of `f` to `S` is `f`. -/
-theorem supportedPart_apply_of_isPrimeTo (hA : Ideal.IsPrimeTo (A : Ideal (𝓞 K)) Sᶜ) :
+@[simp]
+theorem supportedPart_apply_of_isPrimeTo_compl (hA : Ideal.IsPrimeTo (A : Ideal (𝓞 K)) Sᶜ) :
     supportedPart f S A = f A :=
   Set.indicator_of_mem
     (s := {A : (Ideal (𝓞 K))⁰ | Ideal.IsPrimeTo (A : Ideal (𝓞 K)) Sᶜ}) hA f
 
 omit [NumberField K] in
 /-- On an ideal with a prime factor outside `S`, the restriction of `f` to `S` vanishes. -/
-theorem supportedPart_apply_of_not_isPrimeTo (hA : ¬ Ideal.IsPrimeTo (A : Ideal (𝓞 K)) Sᶜ) :
+@[simp]
+theorem supportedPart_apply_of_not_isPrimeTo_compl (hA : ¬ Ideal.IsPrimeTo (A : Ideal (𝓞 K)) Sᶜ) :
     supportedPart f S A = 0 :=
   Set.indicator_of_notMem
     (s := {A : (Ideal (𝓞 K))⁰ | Ideal.IsPrimeTo (A : Ideal (𝓞 K)) Sᶜ}) hA f
 
 omit [NumberField K] in
 /-- The restriction of `f` to `S` is supported on the ideals supported on `S`. -/
-theorem isPrimeTo_of_supportedPart_apply_ne_zero (hA : supportedPart f S A ≠ 0) :
+theorem isPrimeTo_compl_of_supportedPart_apply_ne_zero (hA : supportedPart f S A ≠ 0) :
     Ideal.IsPrimeTo (A : Ideal (𝓞 K)) Sᶜ :=
-  not_not.mp fun h ↦ hA (supportedPart_apply_of_not_isPrimeTo h)
+  not_not.mp fun h ↦ hA (supportedPart_apply_of_not_isPrimeTo_compl h)
+
+/-- The unit ideal is supported on every set of primes. This is not marked `@[simp]`: `simp`
+already reaches it through `supportedPart_apply_of_isPrimeTo_compl`. -/
+theorem supportedPart_one (f : IdealArithmeticFunction K) (S : Set (HeightOneSpectrum (𝓞 K))) :
+    supportedPart f S 1 = f 1 :=
+  supportedPart_apply_of_isPrimeTo_compl (by simp [Ideal.one_eq_top])
+
+/-- Restricting a multiplicative ideal arithmetic function to the ideals supported on `S` keeps it
+multiplicative: an ideal is supported on `S` exactly when both factors of a product are. -/
+theorem IsMultiplicative.supportedPart (hf : f.IsMultiplicative)
+    (S : Set (HeightOneSpectrum (𝓞 K))) :
+    (IdealArithmeticFunction.supportedPart f S).IsMultiplicative := by
+  refine ⟨by rw [supportedPart_one, hf.map_one], fun {I J} hIJ ↦ ?_⟩
+  by_cases hI : Ideal.IsPrimeTo (I : Ideal (𝓞 K)) Sᶜ
+  · by_cases hJ : Ideal.IsPrimeTo (J : Ideal (𝓞 K)) Sᶜ
+    · rw [supportedPart_apply_of_isPrimeTo_compl (A := I * J)
+        (by rw [Submonoid.coe_mul]; exact Ideal.isPrimeTo_mul_iff.mpr ⟨hI, hJ⟩),
+        supportedPart_apply_of_isPrimeTo_compl hI, supportedPart_apply_of_isPrimeTo_compl hJ,
+        hf.map_mul_of_isRelPrime hIJ]
+    · rw [supportedPart_apply_of_not_isPrimeTo_compl (A := I * J)
+        (by rw [Submonoid.coe_mul, Ideal.isPrimeTo_mul_iff]; tauto),
+        supportedPart_apply_of_not_isPrimeTo_compl hJ, mul_zero]
+  · rw [supportedPart_apply_of_not_isPrimeTo_compl (A := I * J)
+      (by rw [Submonoid.coe_mul, Ideal.isPrimeTo_mul_iff]; tauto),
+      supportedPart_apply_of_not_isPrimeTo_compl hI, zero_mul]
 
 omit [NumberField K] in
 /-- Every nonzero ideal is supported on the set of all height-one primes. -/
 @[simp]
 theorem supportedPart_univ (f : IdealArithmeticFunction K) : supportedPart f Set.univ = f := by
   funext A
-  refine supportedPart_apply_of_isPrimeTo ?_
+  refine supportedPart_apply_of_isPrimeTo_compl ?_
   rw [Set.compl_univ]
   exact Ideal.isPrimeTo_empty.mpr (by simpa using nonZeroDivisors.coe_ne_zero A)
 
@@ -305,13 +299,13 @@ theorem supportedPart_empty (hf : f 1 = 1) : supportedPart f ∅ = delta := by
     rw [Set.compl_empty, Ideal.isPrimeTo_univ_iff, ← Ideal.one_eq_top]
     exact ⟨fun h ↦ Subtype.ext h, fun h ↦ congrArg Subtype.val h⟩
   rcases eq_or_ne A 1 with rfl | hA
-  · rw [supportedPart_apply_of_isPrimeTo (hiff.mpr rfl), delta_one, hf]
-  · rw [supportedPart_apply_of_not_isPrimeTo fun h ↦ hA (hiff.mp h), delta_of_ne_one hA]
+  · rw [supportedPart_apply_of_isPrimeTo_compl (hiff.mpr rfl), delta_one, hf]
+  · rw [supportedPart_apply_of_not_isPrimeTo_compl fun h ↦ hA (hiff.mp h), delta_of_ne_one hA]
 
-/-- **Splitting off one prime.** Adjoining a prime `P ∉ S` to the support convolves the
-restriction to `S` with the restriction to the powers of `P`; the factorization of an ideal
-supported on `insert P S` into its `P`-part and its `S`-part is unique, so exactly one summand of
-the convolution survives. -/
+/-- **Splitting off one prime.** For a multiplicative `f`, adjoining a prime `P ∉ S` to the support
+convolves the restriction to `S` with the restriction to the powers of `P`; the factorization of an
+ideal supported on `insert P S` into its `P`-part and its `S`-part is unique, so exactly one
+summand of the convolution survives. -/
 theorem supportedPart_insert (hf : f.IsMultiplicative) {P : HeightOneSpectrum (𝓞 K)}
     (hP : P ∉ S) :
     supportedPart f (insert P S) = convolution (supportedPart f S) (supportedPart f {P}) := by
@@ -322,13 +316,13 @@ theorem supportedPart_insert (hf : f.IsMultiplicative) {P : HeightOneSpectrum (�
       supportedPart f S p.1 * supportedPart f {P} p.2 ≠ 0 →
       Ideal.IsPrimeTo (p.1 : Ideal (𝓞 K)) Sᶜ ∧ ∃ m : ℕ, (p.2 : Ideal (𝓞 K)) = P.asIdeal ^ m := by
     intro p hp
-    exact ⟨isPrimeTo_of_supportedPart_apply_ne_zero (left_ne_zero_of_mul hp),
+    exact ⟨isPrimeTo_compl_of_supportedPart_apply_ne_zero (left_ne_zero_of_mul hp),
       Ideal.isPrimeTo_compl_singleton_iff.mp
-        (isPrimeTo_of_supportedPart_apply_ne_zero (right_ne_zero_of_mul hp))⟩
+        (isPrimeTo_compl_of_supportedPart_apply_ne_zero (right_ne_zero_of_mul hp))⟩
   funext A
   rw [convolution_apply]
   by_cases hA : Ideal.IsPrimeTo (A : Ideal (𝓞 K)) (insert P S)ᶜ
-  · obtain ⟨n, J, hJ, hAJ⟩ := hA.exists_pow_mul (𝔭 := P)
+  · obtain ⟨n, J, hJ, hAJ⟩ := hA.exists_eq_pow_mul (𝔭 := P)
     obtain ⟨B, hBval⟩ : ∃ B : (Ideal (𝓞 K))⁰, (B : Ideal (𝓞 K)) = J :=
       ⟨⟨J, mem_nonZeroDivisors_of_ne_zero (by simpa using hJ.ne_bot)⟩, rfl⟩
     obtain ⟨C, hCval⟩ : ∃ C : (Ideal (𝓞 K))⁰, (C : Ideal (𝓞 K)) = P.asIdeal ^ n :=
@@ -348,15 +342,15 @@ theorem supportedPart_insert (hf : f.IsMultiplicative) {P : HeightOneSpectrum (�
       have heq : P.asIdeal ^ m * (p.1 : Ideal (𝓞 K)) = P.asIdeal ^ n * J := by
         rw [← h2, mul_comm, hmul, hAJ]
       obtain ⟨rfl, hval⟩ :=
-        Ideal.eq_of_pow_mul_eq_pow_mul (h1.not_dvd hPS) (hJ.not_dvd hPS) heq
+        Ideal.eq_and_eq_of_pow_mul_eq_pow_mul P.ne_bot (h1.not_dvd hPS) (hJ.not_dvd hPS) heq
       exact hne (Prod.ext (Subtype.ext (hval.trans hBval.symm))
         (Subtype.ext (h2.trans hCval.symm)))
     rw [Finset.sum_eq_single_of_mem (B, C) (Ideal.mem_divisorsAntidiagonal.mpr hBC) hzero,
-      supportedPart_apply_of_isPrimeTo hA, supportedPart_apply_of_isPrimeTo hJ',
-      supportedPart_apply_of_isPrimeTo hCP,
+      supportedPart_apply_of_isPrimeTo_compl hA, supportedPart_apply_of_isPrimeTo_compl hJ',
+      supportedPart_apply_of_isPrimeTo_compl hCP,
       ← hf.map_mul_of_isRelPrime
         ((hJ'.mono (Set.singleton_subset_iff.mpr hPS)).isRelPrime hCP), hBC]
-  · rw [supportedPart_apply_of_not_isPrimeTo hA]
+  · rw [supportedPart_apply_of_not_isPrimeTo_compl hA]
     refine (Finset.sum_eq_zero fun p hp ↦ ?_).symm
     by_contra hp0
     obtain ⟨h1, m, h2⟩ := key p hp0
@@ -375,7 +369,7 @@ theorem normCoeff_supportedPart_singleton (f : IdealArithmeticFunction K)
   have hpow : ∀ I : (Ideal (𝓞 K))⁰,
       supportedPart f ({P} : Set (HeightOneSpectrum (𝓞 K))) I ≠ 0 →
       ∃ j : ℕ, (I : Ideal (𝓞 K)) = P.asIdeal ^ j := fun _ hI ↦
-    Ideal.isPrimeTo_compl_singleton_iff.mp (isPrimeTo_of_supportedPart_apply_ne_zero hI)
+    Ideal.isPrimeTo_compl_singleton_iff.mp (isPrimeTo_compl_of_supportedPart_apply_ne_zero hI)
   ext n
   rw [normCoeff_eq_sum_normFiber]
   by_cases hn : ∃ k : ℕ, Ideal.absNorm P.asIdeal ^ k = n
@@ -393,7 +387,7 @@ theorem normCoeff_supportedPart_singleton (f : IdealArithmeticFunction K)
         rw [← map_pow, ← hj]
         exact (mem_normFiber K).mp hI
       exact hIC (Subtype.ext (by rw [hj, hCval, Nat.pow_right_injective h2 hjk]))
-    rw [Finset.sum_eq_single_of_mem C hCmem hother, supportedPart_apply_of_isPrimeTo
+    rw [Finset.sum_eq_single_of_mem C hCmem hother, supportedPart_apply_of_isPrimeTo_compl
       (by rw [hCval]; exact Ideal.isPrimeTo_compl_singleton_iff.mpr ⟨k, rfl⟩),
       localArithmeticFactor_apply_pow]
     exact congrArg f (Subtype.ext hCval)
