@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 public import TauCeti.Geometry.Hodge.WeilOperator
-public import TauCeti.Geometry.Symplectic.AlmostComplex
-public import TauCeti.LinearAlgebra.Complex.Conjugation
 
 /-!
 # Effective Hodge structures of weight one
@@ -17,12 +15,11 @@ An effective pure Hodge structure of weight one has only the two Hodge component
 `H^{1,0}` and `H^{0,1}`. Its Weil operator acts on them by `i` and `-i`, respectively, and
 therefore descends to an almost complex structure on the real form fixed by conjugation.
 
-This file constructs that real almost complex structure. It then proves that its scalar extension
-to `ℂ` is the Weil operator under the canonical equivalence from the complexification of the real
-form, and identifies the resulting `i`- and `-i`-eigenspaces with `H^{1,0}` and `H^{0,1}`.
-Effectivity is needed only for the weight-one eigenspace identifications: the Weil operator gives an
-almost complex structure on the real form in every odd weight. In weight one without effectivity,
-its two eigenspaces aggregate all Hodge components according to their first index modulo two.
+This file identifies the `i`- and `-i`-eigenspaces of the Weil operator with `H^{1,0}` and
+`H^{0,1}`. It then transfers those identifications to the scalar extension of the real almost
+complex structure constructed in `TauCeti.Geometry.Hodge.WeilOperator`. In weight one without
+effectivity, the two eigenspaces aggregate all Hodge components according to their first index
+modulo two.
 
 The real form and its structure map are the generic constructions `TauCeti.realPoints` and
 `TauCeti.realPointsLift`; `TauCeti.realPointsEquiv` identifies its complexification with the
@@ -31,12 +28,6 @@ original complex vector space. The almost-complex structure reuses
 
 ## Main declarations
 
-* `TauCeti.Hodge.HodgeStructureOn.realAlmostComplexStructure`: the Weil operator restricted to the
-  real form of an odd-weight Hodge structure.
-* `TauCeti.Hodge.HodgeStructureOn.realPointsEquiv_baseChange_realAlmostComplexStructure`: after
-  scalar extension, that almost complex structure is the Weil operator; the corresponding identity
-  of linear maps is
-  `TauCeti.Hodge.HodgeStructureOn.realPointsEquiv_comp_baseChange_realAlmostComplexStructure`.
 * `TauCeti.Hodge.HodgeStructureOn.eigenspace_weilOperator_I` and
   `TauCeti.Hodge.HodgeStructureOn.eigenspace_weilOperator_neg_I`: for an effective structure, the
   two eigenspaces of the Weil operator are the two Hodge components.
@@ -59,57 +50,6 @@ namespace HodgeStructureOn
 
 variable {W : Type u} [AddCommGroup W] [Module ℂ W]
 variable {ω : Conjugation W}
-
-/-- The Weil operator of an odd-weight Hodge structure, restricted to the real form fixed by its
-conjugation. It squares to `-1`, so it is an almost complex structure on that real vector space. -/
-noncomputable def realAlmostComplexStructure {n : ℤ} (hs : HodgeStructureOn W ω n) (hn : Odd n) :
-    AlmostComplexStructure (realPoints ω.toEquiv.toLinearMap) where
-  toLinearMap :=
-    (hs.weilOperator.restrictScalars ℝ).restrict fun x hx ↦ by
-      rw [mem_realPoints] at hx ⊢
-      calc
-        ω.toEquiv ((hs.weilOperator.restrictScalars ℝ) x) =
-            ω.toEquiv (hs.weilOperator x) := (rfl)
-        _ = hs.weilOperator (ω.toEquiv x) := hs.conj_weilOperator x
-        _ = hs.weilOperator x := congrArg hs.weilOperator hx
-        _ = (hs.weilOperator.restrictScalars ℝ) x := (rfl)
-  square_neg := by
-    ext x
-    have h := LinearMap.congr_fun (hs.weilOperator_comp_weilOperator_of_odd hn) (x : W)
-    simpa only [LinearMap.comp_apply, LinearMap.neg_apply, LinearMap.id_apply,
-      LinearMap.restrict_apply, LinearMap.restrictScalars_apply, Submodule.coe_neg] using h
-
-/-- The almost complex structure on the real form acts by the ambient Weil operator. -/
-@[simp]
-theorem coe_realAlmostComplexStructure_apply {n : ℤ} (hs : HodgeStructureOn W ω n) (hn : Odd n)
-    (x : realPoints ω.toEquiv.toLinearMap) :
-    (hs.realAlmostComplexStructure hn x : W) = hs.weilOperator x :=
-  (rfl)
-
-/-- **The real almost complex structure complexifies to the Weil operator.** Under the canonical
-equivalence `ℂ ⊗[ℝ] V_ℝ ≃ₗ[ℂ] W`, extending `J` from the real form sends the same vectors to the
-same place as the Weil operator on `W`. -/
-@[simp]
-theorem realPointsEquiv_baseChange_realAlmostComplexStructure {n : ℤ}
-    (hs : HodgeStructureOn W ω n) (hn : Odd n)
-    (x : TensorProduct ℝ ℂ (realPoints ω.toEquiv.toLinearMap)) :
-    realPointsEquiv ω.involutive
-        ((LinearMap.baseChange ℂ (hs.realAlmostComplexStructure hn).toLinearMap) x) =
-      hs.weilOperator (realPointsEquiv ω.involutive x) := by
-  induction x with
-  | zero => simp
-  | tmul c x =>
-      rw [LinearMap.baseChange_tmul, realPointsEquiv_tmul, realPointsEquiv_tmul,
-        coe_realAlmostComplexStructure_apply, map_smul]
-  | add x y hx hy => simp only [map_add, hx, hy]
-
-/-- The complexification comparison as an identity of complex-linear maps. -/
-theorem realPointsEquiv_comp_baseChange_realAlmostComplexStructure
-    {n : ℤ} (hs : HodgeStructureOn W ω n) (hn : Odd n) :
-    (realPointsEquiv ω.involutive).toLinearMap ∘ₗ
-        LinearMap.baseChange ℂ (hs.realAlmostComplexStructure hn).toLinearMap =
-      hs.weilOperator ∘ₗ (realPointsEquiv ω.involutive).toLinearMap :=
-  LinearMap.ext (hs.realPointsEquiv_baseChange_realAlmostComplexStructure hn)
 
 /-- If an endomorphism acts by two distinct scalars on a pair of complementary subspaces, its
 eigenspace for the first scalar is the first subspace. -/
@@ -148,11 +88,15 @@ private theorem isCompl_piece_one_piece_zero (hs : HodgeStructureOn W ω 1)
     rw [hs.mem_conjF_iff, hFzero]
     exact Submodule.mem_top
   have hone : hs.piece 1 = hs.F 1 := by
-    rw [hs.piece_def, show (1 : ℤ) - 1 = 0 by omega, hconjFzero, inf_top_eq]
+    rw [hs.piece_def]
+    norm_num [hconjFzero]
   have hzero : hs.piece 0 = hs.conjF 1 := by
-    rw [hs.piece_def, show (1 : ℤ) - 0 = 1 by omega, hFzero, top_inf_eq]
+    rw [hs.piece_def]
+    norm_num [hFzero]
   rw [hone, hzero]
-  simpa only [show (1 : ℤ) + 1 - 1 = 1 by omega] using hs.isCompl_F_conjF 1
+  have hcompl := hs.isCompl_F_conjF 1
+  norm_num at hcompl
+  exact hcompl
 
 /-- For an effective weight-one Hodge structure, the `i`-eigenspace of the Weil operator is
 exactly the Hodge component `H^{1,0}`.
