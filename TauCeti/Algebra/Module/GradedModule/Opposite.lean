@@ -163,7 +163,7 @@ theorem map_refl (G : InternalGrading R M) : G.map (LinearEquiv.refl R M) = G :=
 
 /-- Successive transport agrees with transport along the composite equivalence. -/
 @[simp]
-theorem map_trans {P : Type*} [AddCommGroup P] [Module R P]
+theorem map_trans {P : Type*} [AddCommMonoid P] [Module R P]
     (G : InternalGrading R M) (e : M ≃ₗ[R] N) (f : N ≃ₗ[R] P) :
     (G.map e).map f = G.map (e.trans f) := by
   apply InternalGrading.ext
