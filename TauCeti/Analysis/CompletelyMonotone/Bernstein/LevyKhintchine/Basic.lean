@@ -213,6 +213,8 @@ theorem bernsteinLevyDerivativeMeasure_apply (μ : Measure ℝ≥0) {s : Set ℝ
   rw [bernsteinLevyDerivativeMeasure, withDensity_apply _ hs]
 
 /-- The coordinate-weighted Levy measure has no atom at zero: the weight vanishes there. -/
+-- This is not a simp lemma: `bernsteinLevyDerivativeMeasure_apply` already proves it by
+-- simplification, so the `simpNF` linter rejects the redundant specialization.
 theorem bernsteinLevyDerivativeMeasure_singleton_zero (μ : Measure ℝ≥0) :
     bernsteinLevyDerivativeMeasure μ {0} = 0 := by
   rw [bernsteinLevyDerivativeMeasure_apply μ (measurableSet_singleton 0),
