@@ -19,8 +19,6 @@ public section
 
 open CategoryTheory
 
-namespace TauCeti
-
 universe u v
 
 namespace CategoryTheory.GrothendieckTopology.CoversTop
@@ -76,5 +74,3 @@ noncomputable def commonRefinement {I₁ I₂ : Type*} {X₁ : I₁ → C} {X₂
         exact ⟨⟨Z, ⟨⟨i, ⟨a⟩⟩, ⟨j, ⟨b⟩⟩⟩⟩, ⟨𝟙 Z⟩⟩ }
 
 end CategoryTheory.GrothendieckTopology.CoversTop
-
-end TauCeti
