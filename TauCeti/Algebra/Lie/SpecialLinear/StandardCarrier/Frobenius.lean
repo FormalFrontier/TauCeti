@@ -73,13 +73,10 @@ variable (r p k : ℕ) (A : Type v) [CommRing A] [ExpChar A p]
 For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is the untwisted Steinberg
 endomorphism used to construct `A_r(p ^ k)`. -/
 def frobenius : points r A →* points r A :=
-  ((MulEquiv.subgroupCongr
-        (points_def r A)).symm.toMonoidHom).comp
-    ((TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius (rootGenerator r)
-          (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-          (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
-          (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A).comp
-      (MulEquiv.subgroupCongr (points_def r A)).toMonoidHom)
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius (rootGenerator r)
+    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A
 
 /-- The Frobenius endomorphism of the type-`A_r` carrier acts by entrywise Frobenius. -/
 @[simp]
@@ -87,12 +84,14 @@ theorem coe_frobenius (g : points r A) :
     (frobenius r p k A g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) =
       Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g := by
   rw [frobenius]
-  simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, MulEquiv.subgroupCongr_symm_apply,
-    TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius,
-    MulEquiv.subgroupCongr_apply]
+  exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius
+    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A g
 
 /-- Entrywise, the Frobenius endomorphism raises each matrix coefficient to its
 `p ^ k`-th power. -/
+@[simp]
 theorem coe_frobenius_apply (g : points r A) (i j : Fin (r + 1)) :
     ((frobenius r p k A g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
         Matrix (Fin (r + 1)) (Fin (r + 1)) A) i j =
@@ -152,9 +151,9 @@ theorem map_subtype_fixedSubgroup_frobenius_eq :
       (points r ↥(frobeniusFixedSubring A p k)).map
         (Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype) := by
   rw [TauCeti.map_subtype_fixedSubgroup_of_coe_eq (frobenius r p k A) _
-      (coe_frobenius r p k A),
-    points_def, points_def,
-    TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def,
+      (coe_frobenius r p k A)]
+  unfold points
+  rw [TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def,
     TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def,
     TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring]
 

@@ -506,22 +506,12 @@ theorem weightTorus_comp_carrierι :
     TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_comp_ι]
 
 /-- The `A`-valued points of the type `A_r` carrier, as matrices. -/
-noncomputable def points (A : Type v) [CommRing A] :
+@[expose] noncomputable def points (A : Type v) [CommRing A] :
     Subgroup (Matrix.GeneralLinearGroup (Fin (r + 1)) A) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
-
-/-- The type-`A_r` carrier points are the Kostant toral-closure points of the standard admissible
-lattice. -/
-theorem points_def (A : Type v) [CommRing A] :
-    points r A =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
-        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A := by
-  rw [points]
 
 /-- **The parametrized numbered root subgroup inside the type-`A_r` carrier points.** The
 parameter is read through the canonical multiplicative copy of the additive group of `A`. -/
@@ -534,7 +524,7 @@ noncomputable def rootSubgroupPoint (i : Fin r ⊕ Fin r) (A : Type v) [CommRing
       (isNilpotent_rep_rootGenerator r i) (latticeBasis r)).comp
         (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
     (points r A) fun u => by
-      rw [points_def]
+      rw [points]
       exact TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralPoints
         (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
         (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
@@ -562,7 +552,7 @@ noncomputable def weightTorusPoint (A : Type v) [CommRing A] :
     (TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
       (lattice r).toAddSubgroup (latticeBasis r) (weight r))
     (points r A) fun s => by
-      rw [points_def]
+      rw [points]
       exact TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints
         (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
         (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
