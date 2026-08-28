@@ -40,6 +40,8 @@ large the two bounds collide and no such `ω₂` exists.
   `dim_k Ω_F(D) = i(D)`, together with
   `TauCeti.finiteDimensional_weilDifferentialFiltration`.
 * `TauCeti.finrank_weilDifferentialFiltration_zero`: `dim_k Ω_F(0) = g` (Remark 1.5.12).
+* `TauCeti.exists_forall_weilDifferentialFiltration_eq_bot`: a divisor of large enough degree
+  bounds no nonzero Weil differential.
 * `TauCeti.weilDifferentialSpace_ne_bot`: there is a nonzero Weil differential.
 * `TauCeti.exists_repartitionDualMul_eq`: every Weil differential is a function multiple of a
   fixed nonzero one.
@@ -98,6 +100,16 @@ theorem weilDifferentialFiltration_eq_bot_iff_indexOfSpecialty_eq_zero
     weilDifferentialFiltration D = ⊥ ↔ Divisor.indexOfSpecialty D = 0 :=
   (weilDifferentialFiltration_eq_bot_iff hF D).trans
     (adeleFiltration_sup_diagonalRepartitions_eq_repartitionSpace_iff hF hex D)
+
+/-- **A divisor of large enough degree bounds no nonzero Weil differential.**  The divisors
+bounding none are the nonspecial ones, and the index of specialty vanishes in large degree
+(Stichtenoth, Theorem 1.4.17 read through Lemma 1.5.7). -/
+theorem exists_forall_weilDifferentialFiltration_eq_bot (hF : IsFunctionField k F)
+    (hex : IsIntegrallyClosedIn k F) :
+    ∃ c : ℤ, ∀ D : Divisor k F, c ≤ Divisor.degree D → weilDifferentialFiltration D = ⊥ := by
+  obtain ⟨c, hc⟩ := exists_forall_indexOfSpecialty_eq_zero hF hex
+  exact ⟨c, fun D hD ↦
+    (weilDifferentialFiltration_eq_bot_iff_indexOfSpecialty_eq_zero hF hex D).mpr (hc D hD)⟩
 
 /-- An algebraic function field has strictly positive divisors of arbitrarily large degree: a
 multiple of a single place already works, because every place has degree at least one. -/
