@@ -11,10 +11,12 @@ public import TauCeti.GroupTheory.Commutator
 /-!
 # Derived words and solvable groups
 
-The `n`th derived word is the balanced commutator word on `2 ^ n` inputs: the zeroth word is
-one group element, and the successor word is the commutator of two copies of the preceding word.
-This file proves that its values generate the `n`th derived subgroup. Consequently, a group is
-solvable exactly when one derived word is identically one.
+The `n`th derived word evaluates a perfect binary argument tree of depth `n` by balanced
+commutators: the zeroth word is one group element, and the successor word is the commutator of two
+copies of the preceding word. This file proves that its values generate the `n`th derived subgroup.
+Consequently, a group is solvable exactly when one derived word is identically one. It also records
+the characterization of solvability for direct products via the two surjective projections and the
+converse product instance.
 
 The identity formulation is useful when a group is represented by an affine scheme: an identity
 between derived words can be checked on a schematically dense family of points, while the
@@ -25,8 +27,11 @@ subgroup-valued definition of the derived series cannot be compared pointwise in
 * `TauCeti.isSolvable_prod_iff`: `G × H` is solvable if and only if both `G` and `H` are.
 * `TauCeti.DerivedWordArgs`: the recursively paired arguments of a derived word.
 * `TauCeti.derivedWord`: the balanced iterated commutator word.
+* `TauCeti.map_derivedWord`: derived words commute with group homomorphisms.
 * `TauCeti.derivedSeries_eq_closure_range_derivedWord`: the values of the `n`th derived word
   generate the `n`th derived subgroup.
+* `TauCeti.derivedWord_mem_derivedSeries`: derived-word values lie in the corresponding derived
+  subgroup.
 * `TauCeti.derivedSeries_eq_bot_iff_derivedWord_eq_one`: a fixed derived subgroup vanishes exactly
   when its derived word is identically one.
 * `TauCeti.isSolvable_iff_exists_derivedWord_eq_one`: solvability is equivalent to a derived-word
@@ -68,12 +73,12 @@ def map {G : Type u} {H : Type v} (f : G → H) :
   | _ + 1, .node x y => .node (map f _ x) (map f _ y)
 
 @[simp]
-theorem map_zero {G : Type u} {H : Type v} (f : G → H) (x : G) :
+theorem map_leaf {G : Type u} {H : Type v} (f : G → H) (x : G) :
     map f 0 (.leaf x) = .leaf (f x) :=
   (rfl)
 
 @[simp]
-theorem map_succ {G : Type u} {H : Type v} (f : G → H) (n : ℕ)
+theorem map_node {G : Type u} {H : Type v} (f : G → H) (n : ℕ)
     (x y : DerivedWordArgs G n) :
     map f (n + 1) (.node x y) = .node (map f n x) (map f n y) :=
   (rfl)
@@ -85,10 +90,10 @@ theorem map_id {G : Type u} (n : ℕ) (x : DerivedWordArgs G n) :
   induction n with
   | zero =>
       obtain ⟨x⟩ := x
-      rw [map_zero, id_eq]
+      rw [map_leaf, id_eq]
   | succ n ih =>
       obtain ⟨x, y⟩ := x
-      rw [map_succ, ih, ih]
+      rw [map_node, ih, ih]
 
 /-- Successive maps of derived-word arguments compose pointwise. -/
 theorem map_comp {G : Type u} {H : Type v} {K : Type*} (g : H → K) (f : G → H)
@@ -97,40 +102,36 @@ theorem map_comp {G : Type u} {H : Type v} {K : Type*} (g : H → K) (f : G → 
   induction n with
   | zero =>
       obtain ⟨x⟩ := x
-      rw [map_zero, map_zero, map_zero, Function.comp_apply]
+      rw [map_leaf, map_leaf, map_leaf, Function.comp_apply]
   | succ n ih =>
       obtain ⟨x, y⟩ := x
-      rw [map_succ, map_succ, map_succ, ih, ih]
+      rw [map_node, map_node, map_node, ih, ih]
 
 end DerivedWordArgs
 
-/-- The balanced iterated commutator word defining the derived series. -/
+/-- Evaluate a depth-`n` argument tree by balanced commutators: a leaf evaluates to its element,
+and a node to the commutator of the values of its two subtrees. Its values generate
+`derivedSeries G n` (`derivedSeries_eq_closure_range_derivedWord`). -/
 def derivedWord (G : Type u) [Group G] :
     (n : ℕ) → DerivedWordArgs G n → G
   | 0, .leaf x => x
   | _ + 1, .node x y => ⁅derivedWord G _ x, derivedWord G _ y⁆
 
 @[simp]
-theorem derivedWord_zero (G : Type u) [Group G] (x : G) :
+theorem derivedWord_leaf (G : Type u) [Group G] (x : G) :
     derivedWord G 0 (.leaf x) = x :=
   (rfl)
 
 @[simp]
-theorem derivedWord_succ (G : Type u) [Group G] (n : ℕ)
+theorem derivedWord_node (G : Type u) [Group G] (n : ℕ)
     (x y : DerivedWordArgs G n) :
     derivedWord G (n + 1) (.node x y) = ⁅derivedWord G n x, derivedWord G n y⁆ :=
   (rfl)
 
-end TauCeti
-
-namespace MonoidHom
-
-open TauCeti
-
 /-- Derived words commute with group homomorphisms. -/
 @[simp]
-theorem map_derivedWord {G : Type u} {H : Type v} [Group G] [Group H]
-    (f : G →* H) (n : ℕ) (x : DerivedWordArgs G n) :
+theorem map_derivedWord {G : Type u} {H : Type v} {F : Type*} [Group G] [Group H]
+    [FunLike F G H] [MonoidHomClass F G H] (f : F) (n : ℕ) (x : DerivedWordArgs G n) :
     f (derivedWord G n x) = derivedWord H n (DerivedWordArgs.map f n x) := by
   induction n with
   | zero =>
@@ -138,40 +139,15 @@ theorem map_derivedWord {G : Type u} {H : Type v} [Group G] [Group H]
       rfl
   | succ n ih =>
       obtain ⟨x, y⟩ := x
-      rw [DerivedWordArgs.map_succ, derivedWord_succ, derivedWord_succ,
+      rw [DerivedWordArgs.map_node, derivedWord_node, derivedWord_node,
         map_commutatorElement, ih, ih]
 
-end MonoidHom
-
-namespace TauCeti
-
 /-- Conjugating a derived-word value amounts to conjugating each of its arguments. -/
-theorem conj_derivedWord (G : Type u) [Group G] (g : G) (n : ℕ)
+private theorem conj_derivedWord (G : Type u) [Group G] (g : G) (n : ℕ)
     (x : DerivedWordArgs G n) :
     g * derivedWord G n x * g⁻¹ =
       derivedWord G n (DerivedWordArgs.map (MulAut.conj g) n x) := by
-  simpa only [MulEquiv.coe_toMonoidHom, MulAut.conj_apply] using
-    MonoidHom.map_derivedWord (MulAut.conj g).toMonoidHom n x
-
-private theorem normal_closure_range_derivedWord (G : Type u) [Group G] (n : ℕ) :
-    (Subgroup.closure (Set.range (derivedWord G n))).Normal where
-  conj_mem x hx g := by
-    induction hx using Subgroup.closure_induction with
-    | mem x hx =>
-        obtain ⟨a, rfl⟩ := hx
-        rw [conj_derivedWord]
-        exact Subgroup.subset_closure ⟨_, rfl⟩
-    | one => simp
-    | mul x y _ _ hx hy =>
-        have hconj : g * (x * y) * g⁻¹ = (g * x * g⁻¹) * (g * y * g⁻¹) := by
-          group
-        rw [hconj]
-        exact Subgroup.mul_mem _ hx hy
-    | inv x _ hx =>
-        have hconj : g * x⁻¹ * g⁻¹ = (g * x * g⁻¹)⁻¹ := by
-          group
-        rw [hconj]
-        exact Subgroup.inv_mem _ hx
+  simpa only [MulAut.conj_apply] using map_derivedWord (MulAut.conj g) n x
 
 /-- The values of the `n`th derived word generate the `n`th derived subgroup. -/
 theorem derivedSeries_eq_closure_range_derivedWord (G : Type u) [Group G] (n : ℕ) :
@@ -187,12 +163,14 @@ theorem derivedSeries_eq_closure_range_derivedWord (G : Type u) [Group G] (n : �
       rw [derivedSeries_succ, ih]
       apply le_antisymm
       · let N := Subgroup.closure (Set.range (derivedWord G (n + 1)))
-        let _ : N.Normal := normal_closure_range_derivedWord G (n + 1)
+        have hnorm : Subgroup.closure (Set.range (derivedWord G n)) ≤
+            Subgroup.normalizer (N : Set G) := Subgroup.le_normalizer_closure_iff.mpr <| by
+          rintro g _ _ ⟨x, rfl⟩
+          rw [conj_derivedWord]
+          exact Subgroup.subset_closure ⟨_, rfl⟩
         apply commutator_closure_closure_le
-        · rw [N.normalizer_eq_top]
-          exact le_top
-        · rw [N.normalizer_eq_top]
-          exact le_top
+        · exact hnorm
+        · exact hnorm
         · rintro _ ⟨x, rfl⟩ _ ⟨y, rfl⟩
           exact Subgroup.subset_closure ⟨.node x y, rfl⟩
       · rw [Subgroup.closure_le]
