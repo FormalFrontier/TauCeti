@@ -15,7 +15,7 @@ The unblocked grid complex `GC⁻` has one polynomial variable `V_c` for each `O
 the `O`-marking in a chosen column `i` means setting `V_i = 0`.  The resulting simply blocked
 theory keeps the variables indexed by the other columns and counts exactly the empty rectangles
 which cover neither an `X`-marking nor the blocked `O`-marking.  For a knot grid, this is the
-simply blocked theory `GĤ`.  For a multi-component link, defining `GĤ` instead requires blocking
+simply blocked theory `GĤ`.  For a multi-component link, defining `GĤ` instead requires blocking
 one `O`-marking on each component; that construction is not supplied here.
 
 This file constructs that specialization before the square-zero theorem.  The coefficient ring is
@@ -63,7 +63,7 @@ over the polynomial ring in the columns other than the blocked column. -/
 abbrev SimplyBlockedGridChain (R : Type*) [CommSemiring R] (n : ℕ) (i : Fin n) : Type _ :=
   GridChain (MvPolynomial (SimplyBlockedVariable i) R) n
 
-/-- The simply blocked grid chain module `GĤ`, indexed by a knot grid so that blocking one
+/-- The simply blocked grid chain module `GĤ`, indexed by a knot grid so that blocking one
 `O`-marking is sufficient. -/
 abbrev GridChainHat (R : Type*) [CommSemiring R] {n : ℕ} (_G : KnotGridDiagram n)
     (i : Fin n) : Type _ :=
@@ -212,7 +212,7 @@ theorem simplyBlockedDifferentialOnGenerator_support_subset (i : Fin n) (x : Gri
     ⟨r.left, r.right, r.left_ne_right, r.target_eq_swapColumns⟩
 
 /-- The simply blocked grid differential of a knot grid, linear over the polynomial ring in the
-unblocked columns.  Blocking one `O`-marking is the `GĤ` construction precisely under `hG`; a link
+unblocked columns.  Blocking one `O`-marking is the `GĤ` construction precisely under `hG`; a link
 with multiple components requires one blocked marking on each component instead. -/
 noncomputable def simplyBlockedDifferential (hG : G.IsKnot) (i : Fin n) :
     GridChainHat R ⟨G, hG⟩ i →ₗ[MvPolynomial (SimplyBlockedVariable i) R]
