@@ -195,32 +195,91 @@ private theorem gl2_tits_exists_conj_not_mem
     Fin.sum_univ_two]
 
 /-- The standard rank-one Tits system of `GL₂(k)`: `B` is the upper-triangular subgroup,
-`N` is the diagonal-torus normalizer, and the unique simple reflection is lifted by the Weyl
-permutation matrix. -/
+`N` is the diagonal-torus normalizer, and its unique simple reflection is represented by the
+Weyl permutation matrix. -/
 def gl2TitsSystem : TitsSystem (GL (Fin 2) k) where
   subgroupB := GL2Borel k
   subgroupN := GL2DiagonalNormalizer k
-  simpleReps := {gl2WeylNormalizer k}
   closure_subgroupB_union_subgroupN := gl2_borel_normalizer_closure k
   intersection_normal := by
     rw [gl2_borel_comap_normalizer_eq_diagonal]
     exact Subgroup.normal_in_normalizer
-  closure_intersection_union_simpleReps := gl2_normalizer_closure k
-  simpleRep_sq_mem s hs := by
-    rw [Set.mem_singleton_iff.mp hs]
+  simple := {QuotientGroup.mk (gl2WeylNormalizer k)}
+  closure_simple := by
+    let _ : ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype).Normal := by
+      rw [gl2_borel_comap_normalizer_eq_diagonal]
+      exact Subgroup.normal_in_normalizer
+    apply top_unique
+    intro s _
+    obtain ⟨g, rfl⟩ := QuotientGroup.mk'_surjective
+      ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) s
+    have hg : g ∈ Subgroup.closure
+        (((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype :
+            Set (GL2DiagonalNormalizer k)) ∪ {gl2WeylNormalizer k}) := by
+      rw [gl2_normalizer_closure]
+      exact Subgroup.mem_top g
+    have hmap : QuotientGroup.mk'
+          ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) g ∈
+        (Subgroup.closure
+          (((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype :
+              Set (GL2DiagonalNormalizer k)) ∪ {gl2WeylNormalizer k})).map
+            (QuotientGroup.mk'
+              ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype)) :=
+      ⟨g, hg, rfl⟩
+    rw [MonoidHom.map_closure] at hmap
+    exact ((Subgroup.closure_le
+      (Subgroup.closure
+        ({QuotientGroup.mk (gl2WeylNormalizer k)} :
+          Set (GL2DiagonalNormalizer k ⧸
+            (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype)))).mpr (fun x hx ↦ by
+      obtain ⟨y, hy, rfl⟩ := hx
+      rcases hy with hy | hy
+      · have hqy : QuotientGroup.mk'
+            ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) y = 1 :=
+          (QuotientGroup.eq_one_iff y).mpr hy
+        rw [hqy]
+        exact (Subgroup.closure
+          ({QuotientGroup.mk (gl2WeylNormalizer k)} :
+            Set (GL2DiagonalNormalizer k ⧸
+              (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype))).one_mem
+      · rw [Set.mem_singleton_iff] at hy
+        subst y
+        exact Subgroup.subset_closure (Set.mem_singleton _))) hmap
+  exists_simpleRep_sq_mem s hs := by
+    rw [Set.mem_singleton_iff] at hs
+    refine ⟨gl2WeylNormalizer k, hs.symm, ?_⟩
     rw [Subgroup.mem_comap, map_mul]
     simp only [Subgroup.subtype_apply, gl2WeylNormalizer]
     rw [gl2WeylElement_mul_self]
     exact (GL2Borel k).one_mem
-  mul_doubleCoset_subset := gl2_tits_mul_doubleCoset_subset k
-  exists_conj_not_mem := gl2_tits_exists_conj_not_mem k
+  mul_doubleCoset_subset s hs := by
+    rw [Set.mem_singleton_iff] at hs
+    exact ⟨gl2WeylNormalizer k, hs.symm,
+      gl2_tits_mul_doubleCoset_subset k (gl2WeylNormalizer k) (Set.mem_singleton _)⟩
+  exists_conj_not_mem s hs := by
+    rw [Set.mem_singleton_iff] at hs
+    obtain ⟨b, hb⟩ := gl2_tits_exists_conj_not_mem k
+      (gl2WeylNormalizer k) (Set.mem_singleton _)
+    exact ⟨gl2WeylNormalizer k, hs.symm, b, hb⟩
 
-/-- The chosen lift of the simple reflection in the standard `GL₂` Tits system. -/
+/-- The `B` subgroup of the standard `GL₂` Tits system is the upper-triangular subgroup. -/
+@[simp]
+theorem gl2TitsSystem_subgroupB : (gl2TitsSystem k).subgroupB = GL2Borel k :=
+  by rw [gl2TitsSystem]
+
+/-- The `N` subgroup of the standard `GL₂` Tits system is the diagonal-torus normalizer. -/
+@[simp]
+theorem gl2TitsSystem_subgroupN :
+    (gl2TitsSystem k).subgroupN =
+      Subgroup.normalizer (diagonalTorus k 2 : Set (GL (Fin 2) k)) :=
+  by rw [gl2TitsSystem]
+
+/-- The standard representative of the simple reflection in the `GL₂` Tits system. -/
 def gl2TitsSystemSimpleRep : (gl2TitsSystem k).subgroupN :=
   gl2WeylNormalizer k
 
-/-- The chosen simple lift is the usual Weyl permutation matrix after forgetting the normalizer
-subtype. -/
+/-- The standard simple representative is the Weyl permutation matrix after forgetting the
+normalizer subtype. -/
 @[simp]
 theorem coe_gl2TitsSystemSimpleRep :
     (gl2TitsSystemSimpleRep k : GL (Fin 2) k) = GL2WeylElement k :=
@@ -243,13 +302,10 @@ theorem gl2TitsSystem_mem_intersection (n : (gl2TitsSystem k).subgroupN) :
 permutation matrix. -/
 theorem gl2TitsSystem_simple :
     (gl2TitsSystem k).simple =
-      {QuotientGroup.mk' (gl2TitsSystem k).intersection (gl2TitsSystemSimpleRep k)} := by
-  have hreps : (gl2TitsSystem k).simpleReps = {gl2TitsSystemSimpleRep k} := by
-    rfl
+      {(QuotientGroup.mk (gl2TitsSystemSimpleRep k) : (gl2TitsSystem k).WeylGroup)} := by
   ext s
-  rw [TitsSystem.mem_simple, hreps]
-  simp only [Set.mem_singleton_iff, exists_eq_left]
-  exact eq_comm
+  simp only [gl2TitsSystem, gl2TitsSystemSimpleRep]
+  rfl
 
 end
 
