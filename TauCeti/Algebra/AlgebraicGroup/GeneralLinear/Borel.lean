@@ -5,8 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.DiagonalTorus
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic
 
 /-!
 # The upper-triangular Borel subgroup scheme of `GL₂`

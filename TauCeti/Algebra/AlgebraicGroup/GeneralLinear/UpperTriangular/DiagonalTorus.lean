@@ -145,10 +145,11 @@ theorem diagonalTorus_comp_inclusion :
   rw [← Category.assoc, hmap]
   rfl
 
-variable (A : Type u) [CommRing A] [Algebra R A]
+variable {A : Type w} [CommRing A] [Algebra R A]
 
 /-- Under the upper-triangular and general-linear point equivalences, the factored coordinate
 morphism gives the same diagonal matrix as the ambient diagonal-torus morphism. -/
+@[simp]
 theorem pointsMulEquiv_diagonalTorusCoordinateMap
     (f : WithConv
       (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin n) →₀ ℤ)) →ₐ[R] A)) :
