@@ -404,7 +404,11 @@ noncomputable def homogeneousCochainEquiv₀ :
     rw [homogeneousFun₀_invariant f x x, inv_mul_cancel])
   map_add' m m' := Subtype.ext (ContinuousMap.ext fun x => smul_add x m m')
 
-@[simp] theorem homogeneousFun₀_homogeneousCochainEquiv₀ (m : M) (x : G) :
+-- Not `@[simp]`: the cochain type `(TopRep.homogeneousCochains _).X 0` is itself reducible by
+-- `CategoryTheory.Functor.mapHomologicalComplex_obj_X`, so this left-hand side is not in simp
+-- normal form. It is used through explicit rewrites.
+/-- The function underlying the homogeneous `0`-cochain attached to `m` is `x ↦ x • m`. -/
+theorem homogeneousFun₀_homogeneousCochainEquiv₀ (m : M) (x : G) :
     homogeneousFun₀ G M (homogeneousCochainEquiv₀ G M m) x = x • m := (rfl)
 
 /-- **Degree one of the chain-level dictionary.** The continuous inhomogeneous `1`-cochains are the
@@ -437,11 +441,18 @@ noncomputable def homogeneousCochainEquiv₁ :
   map_add' c c' := Subtype.ext (ContinuousMap.ext fun x => ContinuousMap.ext fun y =>
     (smul_add x ((c : G → M) (x⁻¹ * y)) ((c' : G → M) (x⁻¹ * y)) : _))
 
-@[simp] theorem homogeneousFun₁_homogeneousCochainEquiv₁ (c : C1 G M) (x y : G) :
+-- Not `@[simp]`, for the reason recorded at
+-- `TauCeti.ContCohomology.homogeneousFun₀_homogeneousCochainEquiv₀`.
+/-- The function of two variables underlying the homogeneous `1`-cochain attached to `c` is
+`(x, y) ↦ x • c (x⁻¹ * y)`. -/
+theorem homogeneousFun₁_homogeneousCochainEquiv₁ (c : C1 G M) (x y : G) :
     homogeneousFun₁ G M (homogeneousCochainEquiv₁ G M c) x y = x • (c : G → M) (x⁻¹ * y) :=
   (rfl)
 
-@[simp] theorem coe_homogeneousCochainEquiv₁_symm
+-- Not `@[simp]`, for the reason recorded at
+-- `TauCeti.ContCohomology.homogeneousFun₀_homogeneousCochainEquiv₀`.
+/-- The continuous `1`-cochain attached to a homogeneous one is `g ↦ σ (1, g)`. -/
+theorem coe_homogeneousCochainEquiv₁_symm
     (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1) (g : G) :
     (((homogeneousCochainEquiv₁ G M).symm σ : C1 G M) : G → M) g = homogeneousFun₁ G M σ 1 g :=
   (rfl)
@@ -508,8 +519,12 @@ omit [ContinuousSMul G M] in
 /-- The short complex `TauCeti.ContCohomology.homogeneousSc₁` has `f = d⁰`, so the corestriction of
 its concrete left homology data is the degree-zero differential. This is
 `CategoryTheory.ShortComplex.coe_topModuleCatLeftHomologyData_f'` with the differential spelled out,
-which is the form the rewrites below match against. -/
-@[simp] theorem coe_homogeneousLeftHomologyData₁_f'
+which is the form the rewrites below match against.
+
+Not `@[simp]`: the ambient cochain types reduce through
+`CategoryTheory.Functor.mapHomologicalComplex_obj_X`, so this left-hand side is not in simp normal
+form. -/
+theorem coe_homogeneousLeftHomologyData₁_f'
     (m : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0) :
     ((homogeneousSc₁ G M).topModuleCatLeftHomologyData.f'.hom m).1
       = ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1).hom m := (rfl)
@@ -550,11 +565,19 @@ noncomputable def homogeneousCocycleEquiv₁ :
     rw [Submodule.coe_add, ← map_add]
     congr 1
 
-@[simp] theorem coe_homogeneousCocycleEquiv₁ (z : Z1 G M) :
+-- Not `@[simp]`, for the reason recorded at
+-- `TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`.
+/-- The homogeneous `1`-cocycle attached to a continuous one is its image under the chain-level
+dictionary. -/
+theorem coe_homogeneousCocycleEquiv₁ (z : Z1 G M) :
     (homogeneousCocycleEquiv₁ G M z).1
       = homogeneousCochainEquiv₁ G M ⟨(z : G → M), Z1_le_C1 G M z.2⟩ := (rfl)
 
-@[simp] theorem coe_homogeneousCocycleEquiv₁_symm (τ : TopModuleCat.ker (homogeneousSc₁ G M).g) :
+-- Not `@[simp]`, for the reason recorded at
+-- `TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`.
+/-- The continuous `1`-cocycle attached to a homogeneous one is the underlying function of its
+image under the inverse of the chain-level dictionary. -/
+theorem coe_homogeneousCocycleEquiv₁_symm (τ : TopModuleCat.ker (homogeneousSc₁ G M).g) :
     (((homogeneousCocycleEquiv₁ G M).symm τ : Z1 G M) : G → M)
       = (((homogeneousCochainEquiv₁ G M).symm τ.1 : C1 G M) : G → M) := (rfl)
 
