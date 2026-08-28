@@ -142,9 +142,12 @@ noncomputable def unipotentRadicalCoordinateMap
 @[simp]
 theorem unipotentRadicalCoordinateMap_ker
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    RingHom.ker (toBialgHom (unipotentRadicalCoordinateMap H)).toAlgHom.toRingHom =
+    RingHom.ker
+        (↑(↑(toBialgHom (unipotentRadicalCoordinateMap H)) :
+            H →ₐ[k] unipotentRadical H) : H →+* unipotentRadical H) =
       (unipotentRadicalDefiningIdeal H).toIdeal := by
-  rw [unipotentRadicalCoordinateMap, mkQuotient_ker]
+  simpa only [unipotentRadicalCoordinateMap, AlgHom.toRingHom_eq_coe] using
+    mkQuotient_ker H (unipotentRadicalDefiningIdeal H)
 
 /-- The coordinate Hopf algebra of the unipotent radical is geometrically connected. -/
 theorem geometricallyConnected_unipotentRadical
