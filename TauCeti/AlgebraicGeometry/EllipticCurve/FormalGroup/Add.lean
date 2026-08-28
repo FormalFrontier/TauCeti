@@ -85,6 +85,7 @@ theorem hasSubst_formalAdd : HasSubst (fun _ : Unit => formalAdd W) :=
   hasSubst_of_constantCoeff_zero fun _ => constantCoeff_formalAdd W
 
 /-- The addition series is unchanged when its two parameters are exchanged. -/
+@[simp]
 theorem rename_swap_formalAdd : rename Sum.swap (formalAdd W) = formalAdd W := by
   rw [formalAdd_def, rename_eq_subst,
     subst_comp_subst_apply (hasSubst_formalThirdRoot W) (HasSubst.X_comp _)]
