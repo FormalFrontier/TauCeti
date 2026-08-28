@@ -39,7 +39,7 @@ fixed-point group is finite or simple.
 
 * `TauCeti.SlStd.coe_frobenius` and `TauCeti.SlStd.coe_frobenius_apply`: the endomorphism acts by
   entrywise Frobenius.
-* `TauCeti.SlStd.frobenius_rootSubgroupPoint` and `TauCeti.SlStd.frobenius_weightTorusPoint`: the
+* `TauCeti.SlStd.frobenius_rootSubgroupPoints` and `TauCeti.SlStd.frobenius_weightTorusPoints`: the
   equations on the pinned generating root subgroups and split torus.
 * `TauCeti.SlStd.frobenius_zero` and `TauCeti.SlStd.frobenius_add`: the iteration laws.
 * `TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq`: the Frobenius-fixed points are the points
@@ -52,8 +52,8 @@ fixed-point group is finite or simple.
 
 This advances the "points over an algebraically closed field" and "Chevalley--Demazure
 construction" targets in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. Its consumer is
-milestone L1 of `TauCetiRoadmap/CFSGStatement/README.md`: on an algebraic closure of `ZMod p`, the
-ordinary `A_r(q)` Steinberg map is this Frobenius with `q = p ^ k`.
+milestone L1 of `TauCetiRoadmap/CFSGStatement/README.md`: this is the Frobenius component intended
+for a future construction of the `A_r(p ^ k)` Steinberg map over an algebraic closure of `ZMod p`.
 -/
 
 public section
@@ -68,15 +68,50 @@ noncomputable section
 
 variable (r p k : ℕ) (A : Type v) [CommRing A] [ExpChar A p]
 
+private theorem points_eq_kostantToralPointsSubgroup :
+    points r A =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A := by
+  ext g
+  rw [mem_points_iff,
+    TauCeti.UniversalEnvelopingAlgebra.mem_kostantToralPointsSubgroup_iff]
+
+private def pointsEquivKostantToralPoints :
+    points r A ≃*
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A :=
+  MulEquiv.subgroupCongr (points_eq_kostantToralPointsSubgroup r A)
+
+@[simp]
+private theorem coe_pointsEquivKostantToralPoints (g : points r A) :
+    (pointsEquivKostantToralPoints r A g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) = g :=
+  rfl
+
 /-- **The `p ^ k`-power Frobenius endomorphism of the full-weight type-`A_r` carrier.**
 
-For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is the untwisted Steinberg
-endomorphism used to construct `A_r(p ^ k)`. -/
+For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is the Frobenius component
+intended for a future construction of the `A_r(p ^ k)` Steinberg map. -/
 def frobenius : points r A →* points r A :=
-  TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius (rootGenerator r)
-    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
-    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A
+  (pointsEquivKostantToralPoints r A).symm.toMonoidHom.comp
+    ((TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius (rootGenerator r)
+      (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A).comp
+        (pointsEquivKostantToralPoints r A).toMonoidHom)
+
+private theorem pointsEquivKostantToralPoints_frobenius (g : points r A) :
+    pointsEquivKostantToralPoints r A (frobenius r p k A g) =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A
+        (pointsEquivKostantToralPoints r A g) := by
+  simp only [frobenius, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+    MulEquiv.apply_symm_apply]
 
 /-- The Frobenius endomorphism of the type-`A_r` carrier acts by entrywise Frobenius.
 
@@ -85,11 +120,9 @@ normal form. -/
 theorem coe_frobenius (g : points r A) :
     (frobenius r p k A g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) =
       Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g := by
-  rw [frobenius]
-  exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius
-    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
-    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A g
+  have h := congrArg Subtype.val (pointsEquivKostantToralPoints_frobenius r p k A g)
+  rw [TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius] at h
+  simpa only [coe_pointsEquivKostantToralPoints] using h
 
 /-- Entrywise, the Frobenius endomorphism raises each matrix coefficient to its
 `p ^ k`-th power. -/
@@ -99,42 +132,82 @@ theorem coe_frobenius_apply (g : points r A) (i j : Fin (r + 1)) :
         Matrix (Fin (r + 1)) (Fin (r + 1)) A) i j =
       ((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
         Matrix (Fin (r + 1)) (Fin (r + 1)) A) i j ^ p ^ k := by
-  rw [coe_frobenius, Matrix.GeneralLinearGroup.map_apply, iterateFrobenius_def]
+  have h := TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius_apply
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A
+      (pointsEquivKostantToralPoints r A g) i j
+  rw [← pointsEquivKostantToralPoints_frobenius] at h
+  simpa only [coe_pointsEquivKostantToralPoints] using h
 
 /-- **Frobenius raises the parameter of a numbered type-`A_r` root subgroup to its
 `p ^ k`-th power.** -/
 @[simp]
-theorem frobenius_rootSubgroupPoint (i : Fin r ⊕ Fin r) (u : Multiplicative A) :
-    frobenius r p k A (rootSubgroupPoint r i A u) =
-      rootSubgroupPoint r i A
-        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k)) :=
-  Subtype.ext (by
-    rw [coe_frobenius, coe_rootSubgroupPoint, coe_rootSubgroupPoint]
-    apply TauCeti.UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantRootSubgroupMatrix)
+theorem frobenius_rootSubgroupPoints (i : Fin r ⊕ Fin r) (u : Multiplicative A) :
+    frobenius r p k A (rootSubgroupPoints r i A u) =
+      rootSubgroupPoints r i A
+        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k)) := by
+  apply (pointsEquivKostantToralPoints r A).injective
+  rw [pointsEquivKostantToralPoints_frobenius]
+  apply Subtype.ext
+  rw [TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius,
+    coe_pointsEquivKostantToralPoints, coe_rootSubgroupPoints,
+    coe_pointsEquivKostantToralPoints, coe_rootSubgroupPoints]
+  have h := congrArg Subtype.val
+    (TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_kostantRootSubgroupMatrix
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A i u)
+  rw [TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius] at h
+  exact h
 
 /-- **Frobenius raises every coordinate of the pinned split torus to its `p ^ k`-th power.** -/
 @[simp]
-theorem frobenius_weightTorusPoint (s : Fin r → Aˣ) :
-    frobenius r p k A (weightTorusPoint r A s) = weightTorusPoint r A (s ^ p ^ k) :=
-  Subtype.ext (by
-    rw [coe_frobenius, coe_weightTorusPoint, coe_weightTorusPoint]
-    simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
-      TauCeti.UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantTorusMatrix
-        (M := (lattice r).toAddSubgroup) (b := latticeBasis r) (wt := weight r)
-        (p := p) (k := k) s)
+theorem frobenius_weightTorusPoints (s : Fin r → Aˣ) :
+    frobenius r p k A (weightTorusPoints r A s) = weightTorusPoints r A (s ^ p ^ k) := by
+  apply (pointsEquivKostantToralPoints r A).injective
+  rw [pointsEquivKostantToralPoints_frobenius]
+  apply Subtype.ext
+  rw [TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius,
+    coe_pointsEquivKostantToralPoints, coe_weightTorusPoints,
+    coe_pointsEquivKostantToralPoints, coe_weightTorusPoints]
+  have h := congrArg Subtype.val
+    (TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_kostantTorusMatrix
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A s)
+  rw [TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius] at h
+  simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using h
 
 /-- The zeroth Frobenius iterate is the identity on the type-`A_r` point group. -/
 @[simp]
 theorem frobenius_zero : frobenius r p 0 A = MonoidHom.id _ := by
-  refine MonoidHom.ext fun g ↦ Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j ↦ ?_)
-  rw [coe_frobenius_apply, MonoidHom.id_apply, pow_zero, pow_one]
+  apply MonoidHom.ext
+  intro g
+  apply (pointsEquivKostantToralPoints r A).injective
+  rw [pointsEquivKostantToralPoints_frobenius, MonoidHom.id_apply]
+  have h := DFunLike.congr_fun
+    (TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_zero
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p A)
+    (pointsEquivKostantToralPoints r A g)
+  simpa only [MonoidHom.id_apply] using h
 
 /-- Frobenius iterates add under composition on the type-`A_r` point group. -/
 theorem frobenius_add (m : ℕ) :
     frobenius r p (k + m) A = (frobenius r p k A).comp (frobenius r p m A) := by
-  refine MonoidHom.ext fun g ↦ Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j ↦ ?_)
-  rw [coe_frobenius_apply, MonoidHom.comp_apply, coe_frobenius_apply,
-    coe_frobenius_apply, ← pow_mul, ← pow_add, Nat.add_comm k m]
+  apply MonoidHom.ext
+  intro g
+  apply (pointsEquivKostantToralPoints r A).injective
+  rw [pointsEquivKostantToralPoints_frobenius, MonoidHom.comp_apply,
+    pointsEquivKostantToralPoints_frobenius, pointsEquivKostantToralPoints_frobenius]
+  exact DFunLike.congr_fun
+    (TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_add
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A m)
+    (pointsEquivKostantToralPoints r A g)
 
 /-- A type-`A_r` carrier point is fixed by Frobenius exactly when all of its matrix entries lie in
 the Frobenius-fixed subring. -/
@@ -143,8 +216,19 @@ theorem frobenius_eq_self_iff (g : points r A) :
     frobenius r p k A g = g ↔
       ∀ i j, ((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
           Matrix (Fin (r + 1)) (Fin (r + 1)) A) i j ∈ frobeniusFixedSubring A p k := by
-  rw [← SetLike.coe_eq_coe, coe_frobenius,
-    Matrix.GeneralLinearGroup.map_iterateFrobenius_eq_self_iff]
+  have h := TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius_eq_self_iff
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A
+      (pointsEquivKostantToralPoints r A g)
+  rw [← pointsEquivKostantToralPoints_frobenius] at h
+  simp only [coe_pointsEquivKostantToralPoints] at h
+  constructor
+  · intro hg
+    exact h.mp (congrArg (pointsEquivKostantToralPoints r A) hg)
+  · intro hg
+    apply (pointsEquivKostantToralPoints r A).injective
+    exact h.mpr hg
 
 /-- **The Frobenius-fixed points of the full-weight type-`A_r` carrier are its points over the
 Frobenius-fixed subring.** -/
@@ -153,11 +237,15 @@ theorem map_subtype_fixedSubgroup_frobenius_eq :
       (points r ↥(frobeniusFixedSubring A p k)).map
         (Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype) := by
   rw [TauCeti.map_subtype_fixedSubgroup_of_coe_eq (frobenius r p k A) _
-      (coe_frobenius r p k A)]
-  unfold points
-  rw [TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def,
-    TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def,
-    TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring]
+    (coe_frobenius r p k A)]
+  rw [points_eq_kostantToralPointsSubgroup,
+    points_eq_kostantToralPointsSubgroup]
+  rw [← TauCeti.UniversalEnvelopingAlgebra.map_subtype_fixedSubgroup_kostantToralFrobenius]
+  exact
+    TauCeti.UniversalEnvelopingAlgebra.map_subtype_fixedSubgroup_kostantToralFrobenius_eq
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A
 
 end
 
