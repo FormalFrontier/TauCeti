@@ -141,7 +141,7 @@ private theorem baseChangeTensorAlgEquiv_counit_comp :
 -- This is the comultiplication compatibility on pure tensors after rewriting by
 -- `TensorProduct.comul_tmul` and `CommSemiring.comul_apply`, so it compares the two
 -- `tensorTensorTensorComm` reorderings.
-private theorem baseChangeTensorAlgEquiv_comul_aux
+private theorem _root_.TensorProduct.baseChangeTensorAlgEquiv_comul_aux
     (s : K) (x : H ⊗[k] H) (y : L ⊗[k] L) :
     (Algebra.TensorProduct.map
         (Algebra.TensorProduct.baseChangeTensorAlgEquiv k K H L).toAlgHom
@@ -195,7 +195,7 @@ private theorem baseChangeTensorAlgEquiv_map_comp_comul :
       rw [he]
       simpa only [Bialgebra.comulAlgHom_apply, TensorProduct.comul_tmul,
         CommSemiring.comul_apply] using
-        baseChangeTensorAlgEquiv_comul_aux k K H L s
+        _root_.TensorProduct.baseChangeTensorAlgEquiv_comul_aux k K H L s
           (Coalgebra.comul (R := k) h) (Coalgebra.comul (R := k) l)
 
 /-- **Base change commutes with tensor products of bialgebras.**
