@@ -252,7 +252,6 @@ theorem complexTableOfMap_apply {R : Type*}
   (rfl)
 
 /-- The mapped and reindexed table evaluated at a numbered row and numbered class. -/
-@[simp]
 theorem complexTableOfMap_apply_classOf {R : Type*}
     (f : R → ℂ) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
     (i j : Fin d.numClasses) :

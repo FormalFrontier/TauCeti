@@ -167,7 +167,6 @@ private theorem cyclicGroupThreeExactCharacterTable_apply_reindex (i j : Fin 3) 
   rfl
 
 /-- Every exact row is normalized at the identity class. -/
-@[simp]
 theorem cyclicGroupThreeExactCharacterTable_index_one (i : CyclicGroupThreeClassIndex) :
     cyclicGroupThreeExactCharacterTable i ((cyclicClassData 3).index 1) = 1 := by
   fin_cases i <;> decide
@@ -281,7 +280,6 @@ theorem cyclicGroupThreeComplexCharacterTable_apply
   exact (cyclicClassData 3).complexTableOfMap_apply _ _ _ _
 
 /-- The embedded table evaluated at a numbered row and numbered conjugacy class. -/
-@[simp]
 theorem cyclicGroupThreeComplexCharacterTable_apply_classOf
     (i j : CyclicGroupThreeClassIndex) :
     cyclicGroupThreeComplexCharacterTable
