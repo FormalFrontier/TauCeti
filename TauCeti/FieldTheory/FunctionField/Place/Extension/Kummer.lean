@@ -15,27 +15,28 @@ public import TauCeti.FieldTheory.FunctionField.Place.Extension.Existence
 Let `P` be a place of an algebraic function field `F / k`, let `F' / k'` be a finite extension of
 `F / k`, and let `y : F'` be integral over the valuation ring `𝒪_P`, say `φ (y) = 0` for a monic
 `φ ∈ 𝒪_P[X]` whose image in `F[X]` is the minimal polynomial of `y`.  Reducing `φ` modulo the
-maximal ideal of `𝒪_P` gives a polynomial `φ̄` over the residue field `F_P`, and **each monic
-irreducible factor `γ` of `φ̄` produces a place `P'` of `F' / k'` over `P`** at which `γ (y)`
-vanishes and whose relative degree is at least `deg γ`; distinct factors produce distinct places.
-This is the unconditional half of Kummer's theorem, Stichtenoth,
-*Algebraic Function Fields and Codes*, 2nd ed., Theorem 3.3.7.
+maximal ideal of `𝒪_P` gives a polynomial over the residue field `F_P`, and **each monic
+irreducible factor `γ` of that reduction produces a place `P'` of `F' / k'` over `P`** at which
+`γ (y)` vanishes and whose relative degree is at least `deg γ`; distinct factors produce distinct
+places.  This is the unconditional half of Kummer's theorem, Stichtenoth, *Algebraic Function
+Fields and Codes*, 2nd ed., Theorem 3.3.7.
 
 The construction is direct.  A monic lift `g ∈ 𝒪_P[X]` of `γ` spans, together with the maximal
 ideal of `𝒪_P`, an ideal of `𝒪_P[y]` whose quotient is `F_P[X] / (γ)`, a field; the ideal is
 therefore proper, and it is nonzero because it contains a uniformizer of `P`.  Stichtenoth's
 existence theorem for places dominates it by a place `P'` of `F'`.  The valuation ring of `P'`
 then contains `𝒪_P`, so `P'` lies over `P`; and `g (y)` lies in the maximal ideal of `P'`, so the
-residue `ȳ` of `y` is a root of `γ` in `F'_{P'}`.  Since `γ` is irreducible it is the minimal
-polynomial of `ȳ` over `F_P`, which both bounds the relative degree below by `deg γ` and shows
-that `γ` is recovered from `P'` — whence the distinctness of the places attached to distinct
+residue of `y` is a root of `γ` in `F'_{P'}`.  Since `γ` is irreducible it is the minimal
+polynomial of that residue over `F_P`, which both bounds the relative degree below by `deg γ` and
+shows that `γ` is recovered from `P'` — whence the distinctness of the places attached to distinct
 factors.
 
 ⚠ Kummer's theorem in this unconditional form **bounds** the splitting of `P` in `F'` but does not
 determine it: the ramification indices are not computed and there may be places over `P` that no
-factor of `φ̄` produces.  The complementary statement, that the places produced are all of them
-with `e (P' ∣ P) = ε` the multiplicity of `γ` in `φ̄` and `f (P' ∣ P) = deg γ`, needs the
-monogenicity hypothesis `𝒪'_P = 𝒪_P[y]` (Stichtenoth, Corollary 3.3.8) and is not proved here.
+factor of the reduction produces.  The complementary statement, that the places produced are all
+of them with `e (P' ∣ P) = ε` the multiplicity of `γ` in the reduction and `f (P' ∣ P) = deg γ`,
+needs the monogenicity hypothesis `𝒪'_P = 𝒪_P[y]` (Stichtenoth, Corollary 3.3.8) and is not proved
+here.
 
 ## Main definitions
 
@@ -51,8 +52,8 @@ monogenicity hypothesis `𝒪'_P = 𝒪_P[y]` (Stichtenoth, Corollary 3.3.8) and
 * `TauCeti.Place.map_residue_eq_of_valuation_lt_one`: a place over `P` sees at most one
   irreducible factor, which is what makes the places of distinct factors distinct.
 * `TauCeti.Place.exists_injective_restrict_eq`: **Kummer's theorem**, packaged: an injective
-  family of places over `P`, indexed by a family of monic irreducible factors of `φ̄`, whose
-  relative degrees are at least the degrees of the factors.
+  family of places over `P`, indexed by a family of monic irreducible factors of the reduction of
+  `φ`, whose relative degrees are at least the degrees of the factors.
 
 ## References
 
@@ -171,7 +172,8 @@ variable {k F}
 /-- **Kummer's theorem sees one factor per place**: a place `P'` over `P` at which two monic
 polynomials with irreducible reductions both vanish reduces them to the same irreducible
 polynomial, namely the minimal polynomial of the residue of `y`.  This is what makes the places
-attached to distinct irreducible factors of `φ̄` distinct (Stichtenoth, Theorem 3.3.7). -/
+attached to distinct irreducible factors of the reduction of `φ` distinct (Stichtenoth,
+Theorem 3.3.7). -/
 theorem map_residue_eq_of_valuation_lt_one {P : Place k F} {P' : Place k' F'}
     (hres : P'.restrict k F = P) {y : F'} (hy : y ∈ P'.integers) {g₁ g₂ : P.integers[X]}
     (hg₁ : g₁.Monic) (hirr₁ : Irreducible (g₁.map (IsLocalRing.residue P.integers)))
