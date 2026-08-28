@@ -52,9 +52,9 @@ Since `e ≤ [F' : F] = n` and `m ≥ 1`, this forces `e = n` and `m = 1`.
 * `TauCeti.Place.isTotallyRamified_of_isEisensteinAt` and
   `TauCeti.Place.ord_eq_one_of_isEisensteinAt`: **the Eisenstein criterion** (Stichtenoth,
   Proposition 3.1.15).
-* `TauCeti.Place.isEisensteinAt_map`: a monic polynomial over `𝒪_P` that is Eisenstein at the
-  maximal ideal of `𝒪_P` in the sense of Mathlib's `Polynomial.IsEisensteinAt` is Eisenstein at
-  `P` in the sense used here.
+* `TauCeti.Place.isEisensteinAt_map`: a polynomial over `𝒪_P` that is Eisenstein at the maximal
+  ideal of `𝒪_P` in the sense of Mathlib's `Polynomial.IsEisensteinAt` is Eisenstein at `P` in
+  the sense used here.
 
 ## References
 
@@ -90,10 +90,16 @@ Stichtenoth's Definition 3.1.13 calls total ramification of that place of `F`. -
 def IsTotallyRamified (P' : Place k' F') : Prop :=
   ramificationIdx F P' = Module.finrank F F'
 
+/-- Total ramification unfolds to its defining equality of the ramification index with the
+degree. -/
+theorem isTotallyRamified_iff {P' : Place k' F'} :
+    IsTotallyRamified F P' ↔ ramificationIdx F P' = Module.finrank F F' := Iff.rfl
+
 variable (k) [FiniteDimensional F F']
 
 /-- **A totally ramified place has relative degree one**: the fundamental inequality has no room
 left for a residue field extension. -/
+@[simp]
 theorem relativeDegree_eq_one_of_isTotallyRamified {P' : Place k' F'}
     (h : IsTotallyRamified F P') : relativeDegree k F P' = 1 := by
   have hle := ramificationIdx_mul_relativeDegree_le_finrank k F P'
@@ -123,6 +129,7 @@ theorem eq_of_isTotallyRamified {P' Q' : Place k' F'} (h : IsTotallyRamified F P
 
 /-- The fibre of `TauCeti.Place.restrict` over the place below a totally ramified place is a
 single point. -/
+@[simp]
 theorem setOf_restrict_eq_eq_singleton_of_isTotallyRamified {P' : Place k' F'}
     (h : IsTotallyRamified F P') :
     {Q' : Place k' F' | Q'.restrict k F = P'.restrict k F} = {P'} :=
@@ -163,7 +170,8 @@ element `t` for `P` factors it as `t · t · u` with `u ∈ 𝒪_P`. -/
 private theorem mem_maximalIdeal_sq_of_two_le_ord (P : Place k F) {f : P.integers}
     (h : 2 ≤ P.ord (f : F)) : f ∈ IsLocalRing.maximalIdeal P.integers ^ 2 := by
   rcases eq_or_ne (f : F) 0 with hf0 | hf0
-  · rw [show f = 0 from Subtype.ext hf0]
+  · have hf : f = 0 := Subtype.ext hf0
+    rw [hf]
     exact Submodule.zero_mem _
   obtain ⟨t, ht⟩ := P.exists_isUniformizer
   rw [P.isUniformizer_iff_ord_eq_one] at ht
@@ -176,8 +184,9 @@ private theorem mem_maximalIdeal_sq_of_two_le_ord (P : Place k F) {f : P.integer
     refine P.mem_integers_iff_ord_nonneg.mpr ?_
     rw [P.ord_div hf0 (mul_ne_zero ht0 ht0), P.ord_mul ht0 ht0, ht]
     omega
+  have hcoe : ((⟨t, htmem⟩ : P.integers) : F) = t := rfl
   have hmem : (⟨t, htmem⟩ : P.integers) ∈ IsLocalRing.maximalIdeal P.integers :=
-    (P.mem_maximalIdeal_iff_ord_pos ht0).mpr (by change 0 < P.ord t; omega)
+    (P.mem_maximalIdeal_iff_ord_pos (by rw [hcoe]; exact ht0)).mpr (by rw [hcoe, ht]; omega)
   have hfeq : f = ⟨t, htmem⟩ * ⟨t, htmem⟩ * ⟨(f : F) / (t * t), hu⟩ := by
     refine Subtype.ext ?_
     push_cast
@@ -185,22 +194,38 @@ private theorem mem_maximalIdeal_sq_of_two_le_ord (P : Place k F) {f : P.integer
   rw [hfeq, pow_two]
   exact Ideal.mul_mem_right _ _ (Ideal.mul_mem_mul hmem hmem)
 
-/-- **Mathlib's Eisenstein condition is this one**: a monic polynomial over `𝒪_P` of positive
-degree which is Eisenstein at the maximal ideal of `𝒪_P` in the sense of
-`Polynomial.IsEisensteinAt` becomes, read in `F[X]`, a polynomial Eisenstein at `P`. The
-`Polynomial.IsEisensteinAt.notMem` field is what pins the order of the constant coefficient
-down to exactly one. -/
-theorem isEisensteinAt_map (P : Place k F) {ψ : Polynomial P.integers} (hmonic : ψ.Monic)
+/-- **Mathlib's Eisenstein condition is this one**: a polynomial over `𝒪_P` of positive degree
+which is Eisenstein at the maximal ideal of `𝒪_P` in the sense of `Polynomial.IsEisensteinAt`
+becomes, read in `F[X]`, a polynomial Eisenstein at `P`. No monicity is needed: the
+`Polynomial.IsEisensteinAt.leading` field already puts the leading coefficient outside the
+maximal ideal, hence makes it a unit of `𝒪_P`. The `Polynomial.IsEisensteinAt.notMem` field is
+what pins the order of the constant coefficient down to exactly one. -/
+theorem isEisensteinAt_map (P : Place k F) {ψ : Polynomial P.integers}
     (hdeg : 0 < ψ.natDegree) (h : ψ.IsEisensteinAt (IsLocalRing.maximalIdeal P.integers)) :
     P.IsEisensteinAt (ψ.map (algebraMap P.integers F)) := by
-  have hnat : (ψ.map (algebraMap P.integers F)).natDegree = ψ.natDegree := hmonic.natDegree_map _
+  have hinj : Function.Injective (algebraMap P.integers F) := fun a b hab =>
+    Subtype.ext (by simpa [ValuationSubring.algebraMap_apply] using hab)
+  have hnat : (ψ.map (algebraMap P.integers F)).natDegree = ψ.natDegree :=
+    Polynomial.natDegree_map_eq_of_injective hinj ψ
   refine ⟨?_, fun i hi => ?_, ?_⟩
-  · rw [(hmonic.map (algebraMap P.integers F)).leadingCoeff, P.ord_one]
+  · have hlc : (ψ.map (algebraMap P.integers F)).leadingCoeff = (ψ.leadingCoeff : F) := by
+      rw [Polynomial.leadingCoeff_map_of_injective hinj, ValuationSubring.algebraMap_apply]
+    have hlcne : ψ.leadingCoeff ≠ 0 := fun h0 =>
+      h.leading (by rw [h0]; exact Submodule.zero_mem _)
+    have hlc0 : (ψ.leadingCoeff : F) ≠ 0 := fun h0 => hlcne (Subtype.ext h0)
+    have hnonneg : 0 ≤ P.ord (ψ.leadingCoeff : F) :=
+      P.mem_integers_iff_ord_nonneg.mp ψ.leadingCoeff.2
+    have hnotpos : ¬0 < P.ord (ψ.leadingCoeff : F) := fun hp =>
+      h.leading ((P.mem_maximalIdeal_iff_ord_pos hlc0).mpr hp)
+    rw [hlc]
+    omega
   · rw [hnat] at hi
     rw [Polynomial.coeff_map, ValuationSubring.algebraMap_apply]
     exact P.mem_maximalIdeal_iff_valuation_lt_one.mp (h.mem hi)
-  · have hne : ((ψ.coeff 0 : P.integers) : F) ≠ 0 := fun h0 =>
-      h.notMem (by rw [show ψ.coeff 0 = 0 from Subtype.ext h0]; exact Submodule.zero_mem _)
+  · have hne : ((ψ.coeff 0 : P.integers) : F) ≠ 0 := by
+      intro h0
+      have hz : ψ.coeff 0 = 0 := Subtype.ext h0
+      exact h.notMem (by rw [hz]; exact Submodule.zero_mem _)
     have hpos : 0 < P.ord ((ψ.coeff 0 : P.integers) : F) :=
       (P.mem_maximalIdeal_iff_ord_pos hne).mp (h.mem hdeg)
     have hlt : ¬2 ≤ P.ord ((ψ.coeff 0 : P.integers) : F) := fun hh =>
@@ -277,12 +302,14 @@ theorem natDegree_mul_ord_eq_ramificationIdx {φ : F[X]}
     simp only
     rw [P'.ord_mul h1 (pow_ne_zero i hy0), P'.ord_pow, ord_algebraMap_restrict k F P']
   have hφ0 : φ ≠ 0 := fun h => by simp [h, hndef] at hdeg
-  have hcn0 : φ.coeff n ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hφ0
+  have hcoeff_n : φ.coeff n = φ.leadingCoeff := by rw [hndef, Polynomial.coeff_natDegree]
+  have hcn0 : φ.coeff n ≠ 0 := by
+    rw [hcoeff_n]
+    exact Polynomial.leadingCoeff_ne_zero.mpr hφ0
   have hTn0 : T n ≠ 0 := hTne n hcn0
   have hT00 : T 0 ≠ 0 := hTne 0 hc0
   have hordTn : P'.ord (T n) = n * m := by
-    rw [hordT n hcn0, show φ.coeff n = φ.leadingCoeff from rfl, hφ.ord_leadingCoeff, mul_zero,
-      zero_add]
+    rw [hordT n hcn0, hcoeff_n, hφ.ord_leadingCoeff, mul_zero, zero_add]
   have hordT0 : P'.ord (T 0) = e := by
     rw [hordT 0 hc0, hord0, mul_one, Nat.cast_zero, zero_mul, add_zero]
   have hlow : ∀ i, i < n → φ.coeff i ≠ 0 → e + i * m ≤ P'.ord (T i) := by
