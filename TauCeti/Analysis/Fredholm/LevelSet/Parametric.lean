@@ -1,0 +1,252 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.Analysis.Fredholm.LevelSet.Smooth
+public import TauCeti.Analysis.Fredholm.UniversalLevelSet
+import Mathlib.Analysis.Calculus.ContDiff.Comp
+import TauCeti.Analysis.Fredholm.SardSmale
+
+/-!
+# Parameter maps on universal Fredholm level sets
+
+Let `f : E × Λ → F` be a parametrized equation and suppose that its total linearization at a
+solution `(x, l)` is `D₁.coprod D₂`. When this linearization is surjective with complemented
+kernel, `TauCeti.levelSetChart` parametrizes the universal level set near `(x, l)` by
+`ker (D₁.coprod D₂)`. Composing its inverse with the projection to `Λ` gives the local parameter
+map `TauCeti.levelSetParameterMap`.
+
+This file calculates that map's derivative at the chart origin. It is exactly
+`TauCeti.parameterProj D₁ D₂`, the linear parameter projection developed in
+`TauCeti.Analysis.Fredholm.Parametric`. Consequently, when `D₁` is Fredholm, the local parameter
+map has Fredholm derivative of the same index as `D₁`; and its derivative is surjective exactly
+when `D₁` is surjective. The final theorem applies local Sard--Smale to show that nearby critical
+values of the parameter map form a closed nowhere dense set.
+
+These results are the local nonlinear calculation in the parametric transversality package of
+McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, 2nd ed., Appendix A.3. Passing
+from this one chart to a residual set of parameters for a whole universal moduli space requires
+smooth compatibility and a countable cover, and is not asserted here.
+
+## Main results
+
+* `TauCeti.hasStrictFDerivAt_levelSetParameterMap`: the derivative at the chart origin is the
+  linear parameter projection.
+* `TauCeti.surjective_fderiv_levelSetParameterMap_iff`: regularity of the local parameter map at
+  the origin is equivalent to regularity of the fixed-parameter equation.
+* `TauCeti.index_fderiv_levelSetParameterMap`: the local parameter map has the expected index.
+* `TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints_levelSetParameterMap`:
+  local Sard--Smale for the parameter map of a universal level set.
+
+## References
+
+* D. McDuff, D. Salamon, *J-holomorphic Curves and Symplectic Topology*, 2nd ed., AMS Colloquium
+  Publications 52, 2012, Appendix A.3.
+* S. Smale, *An infinite dimensional version of Sard's theorem*, Amer. J. Math. 87 (1965),
+  861--866.
+-/
+
+public section
+
+open Function Module Set
+open scoped ContDiff Topology
+
+namespace TauCeti
+
+variable {K E Λ F : Type*} [NontriviallyNormedField K]
+variable [NormedAddCommGroup E] [NormedSpace K E] [CompleteSpace E]
+variable [NormedAddCommGroup Λ] [NormedSpace K Λ] [CompleteSpace Λ]
+variable [NormedAddCommGroup F] [NormedSpace K F] [CompleteSpace F]
+variable {f : E × Λ → F} {D₁ : E →L[K] F} {D₂ : Λ →L[K] F}
+variable {x : E} {l : Λ} {c : F}
+
+/-- The local projection from a universal level set to its parameter space, written in the
+regular-level-set chart at `(x, l)`.
+
+The function is meaningful on the target of the level-set chart, a neighbourhood of the origin.
+As with `TauCeti.levelSetChart`, its value outside that target is an irrelevant total extension. -/
+noncomputable def levelSetParameterMap
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) : (D₁.coprod D₂).ker → Λ :=
+  fun k ↦ (((levelSetChart hf (LinearMap.range_eq_top.mpr hD) hker hxl).symm k :
+    ↥{z | f z = c}) : E × Λ).2
+
+/-- The local parameter map reads the parameter component of the inverse level-set chart. -/
+theorem levelSetParameterMap_apply
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) (k : (D₁.coprod D₂).ker) :
+    levelSetParameterMap hf hD hker hxl k =
+      (((levelSetChart hf (LinearMap.range_eq_top.mpr hD) hker hxl).symm k :
+        ↥{z | f z = c}) : E × Λ).2 := by
+  unfold levelSetParameterMap
+  rfl
+
+/-- The local parameter map, as an equality of functions, is the parameter component of the
+inverse level-set chart. -/
+private theorem levelSetParameterMap_eq
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    levelSetParameterMap hf hD hker hxl = fun k ↦
+      (((levelSetChart hf (LinearMap.range_eq_top.mpr hD) hker hxl).symm k :
+        ↥{z | f z = c}) : E × Λ).2 := by
+  funext k
+  exact levelSetParameterMap_apply hf hD hker hxl k
+
+/-- At the chart origin, the local parameter map returns the base parameter. -/
+@[simp]
+theorem levelSetParameterMap_zero
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    levelSetParameterMap hf hD hker hxl 0 = l := by
+  rw [levelSetParameterMap_apply, levelSetChart_symm_zero]
+
+/-- The local parameter map is as smooth at the chart origin as the parametrized equation. -/
+theorem contDiffAt_levelSetParameterMap {n : ℕ∞ω}
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hcont : ContDiffAt K n f (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    ContDiffAt K n (levelSetParameterMap hf hD hker hxl) 0 := by
+  have hchart := contDiffAt_coe_levelSetChart_symm hf hcont
+    (LinearMap.range_eq_top.mpr hD) hker hxl
+  rw [levelSetParameterMap_eq]
+  exact hchart.snd
+
+/-- The derivative at the chart origin of the local parameter map is the restriction of the
+ambient parameter projection to the kernel of the total linearization. -/
+theorem hasStrictFDerivAt_levelSetParameterMap
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    HasStrictFDerivAt (levelSetParameterMap hf hD hker hxl)
+      (parameterProj D₁ D₂) 0 := by
+  have hchart := hasStrictFDerivAt_coe_levelSetChart_symm hf
+    (LinearMap.range_eq_top.mpr hD) hker hxl
+  have hcomp := (ContinuousLinearMap.snd K E Λ).hasStrictFDerivAt.comp 0 hchart
+  have hlinear :
+      (ContinuousLinearMap.snd K E Λ).comp (D₁.coprod D₂).ker.subtypeL =
+        parameterProj D₁ D₂ := by
+    ext k
+    rw [parameterProj_apply]
+    rfl
+  rw [← hlinear]
+  rw [levelSetParameterMap_eq]
+  exact hcomp
+
+/-- The Fréchet derivative of the local parameter map at the chart origin is the linear
+parameter projection. -/
+theorem fderiv_levelSetParameterMap
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    fderiv K (levelSetParameterMap hf hD hker hxl) 0 = parameterProj D₁ D₂ :=
+  (hasStrictFDerivAt_levelSetParameterMap hf hD hker hxl).hasFDerivAt.fderiv
+
+/-- The local parameter map is regular at the chart origin exactly when the linearization of the
+equation with the parameter fixed is surjective. -/
+theorem surjective_fderiv_levelSetParameterMap_iff
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    Surjective (fderiv K (levelSetParameterMap hf hD hker hxl) 0) ↔ Surjective D₁ := by
+  rw [fderiv_levelSetParameterMap hf hD hker hxl]
+  exact parameterProj_surjective_iff D₁ D₂ hD
+
+/-- The derivative of the local parameter map has the same continuous-linear-map index as the
+fixed-parameter linearization. When the latter is Fredholm, this common value is their Fredholm
+index. -/
+theorem index_fderiv_levelSetParameterMap
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    ContinuousLinearMap.index (fderiv K (levelSetParameterMap hf hD hker hxl) 0) =
+      ContinuousLinearMap.index D₁ := by
+  rw [fderiv_levelSetParameterMap hf hD hker hxl]
+  exact index_parameterProj D₁ D₂ hD
+
+section RCLike
+
+variable [IsRCLikeNormedField K] [CompleteSpace K]
+
+/-- If the fixed-parameter linearization is Fredholm, then so is the derivative at the origin of
+the local parameter map. -/
+theorem isFredholm_fderiv_levelSetParameterMap
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) (hD₁ : ContinuousLinearMap.IsFredholm D₁) :
+    ContinuousLinearMap.IsFredholm (fderiv K (levelSetParameterMap hf hD hker hxl) 0) := by
+  rw [fderiv_levelSetParameterMap hf hD hker hxl]
+  exact isFredholm_parameterProj D₁ D₂ hD₁
+
+end RCLike
+
+section Real
+
+variable {E Λ F : Type*}
+variable [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+variable [NormedAddCommGroup Λ] [NormedSpace ℝ Λ] [CompleteSpace Λ]
+variable [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
+variable {f : E × Λ → F} {D₁ : E →L[ℝ] F} {D₂ : Λ →L[ℝ] F}
+variable {x : E} {l : Λ} {c : F}
+
+/-- **Local parametric Sard--Smale.** In a regular chart of a universal level set whose
+fixed-parameter linearization is Fredholm, the critical values of the local parameter map coming
+from a sufficiently small neighbourhood of the chart origin form a closed nowhere dense set.
+
+The differentiability threshold is the one currently supplied by
+`TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints`, rewritten using the fact
+that the kernel of `parameterProj D₁ D₂` has the same dimension as `ker D₁`. -/
+theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints_levelSetParameterMap
+    {n : ℕ∞ω}
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hcont : ContDiffAt ℝ n f (x, l))
+    (hD₁ : ContinuousLinearMap.IsFredholm D₁)
+    (hD : Surjective (D₁.coprod D₂))
+    (hxl : f (x, l) = c)
+    (hn : ((finrank ℝ D₁.ker * finrank ℝ D₁.ker + 1 : ℕ) : ℕ∞ω) ≤ n) :
+    let hker := hD₁.closedComplemented_ker_coprod hD
+    let g := levelSetParameterMap hf hD hker hxl
+    ∃ N ∈ 𝓝 (0 : (D₁.coprod D₂).ker),
+      IsClosed (g '' (N ∩ {k | ¬ Surjective (fderiv ℝ g k)})) ∧
+        IsNowhereDense (g '' (N ∩ {k | ¬ Surjective (fderiv ℝ g k)})) := by
+  dsimp only
+  let hker := hD₁.closedComplemented_ker_coprod hD
+  let g := levelSetParameterMap hf hD hker hxl
+  have hg : ContDiffAt ℝ n g 0 := contDiffAt_levelSetParameterMap hf hcont hD hker hxl
+  have hg' : fderiv ℝ g 0 = parameterProj D₁ D₂ :=
+    fderiv_levelSetParameterMap hf hD hker hxl
+  have hn' :
+      ((finrank ℝ (parameterProj D₁ D₂).ker * finrank ℝ (parameterProj D₁ D₂).ker + 1 : ℕ) :
+        ℕ∞ω) ≤ n := by
+    simpa only [finrank_ker_parameterProj] using hn
+  have hFred : ContinuousLinearMap.IsFredholm (fderiv ℝ g 0) := by
+    rw [hg']
+    exact isFredholm_parameterProj D₁ D₂ hD₁
+  have hn'' :
+      ((finrank ℝ (fderiv ℝ g 0).ker * finrank ℝ (fderiv ℝ g 0).ker + 1 : ℕ) : ℕ∞ω) ≤ n := by
+    rw [hg']
+    exact hn'
+  exact exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints hg hFred hn''
+
+end Real
+
+end TauCeti
+
+end
