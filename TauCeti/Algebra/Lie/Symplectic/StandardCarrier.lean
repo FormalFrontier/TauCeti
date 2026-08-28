@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Lie.Classical
 public import Mathlib.LinearAlgebra.Matrix.Cartan
+public import TauCeti.Algebra.Lie.Presentation.Serre
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ClosedImmersion
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Relations
@@ -58,6 +59,7 @@ asserted here.
 
 * `TauCeti.SpStd.rootGenerator` and `TauCeti.SpStd.cartanGenerator`: the numbered type-`C`
   Chevalley generators in the symplectic Lie algebra.
+* `TauCeti.SpStd.isSerreSystem_rootGenerator`: their characteristic Chevalley--Serre relations.
 * `TauCeti.SpStd.rep`: the standard representation, extended to the enveloping algebra.
 * `TauCeti.SpStd.lattice`, `TauCeti.SpStd.latticeBasis`, and `TauCeti.SpStd.weight`: the standard
   admissible lattice and its weights.
@@ -149,6 +151,18 @@ def negativeRootMatrix (i : Fin (n + 1)) :
   else
     _root_.Matrix.fromBlocks (shortNegativeBlock n i hi) 0 0 (-(shortNegativeBlock n i hi)ᵀ)
 
+private theorem negativeRootMatrix_eq_transpose (i : Fin (n + 1)) :
+    negativeRootMatrix n i = (positiveRootMatrix n i)ᵀ := by
+  rw [negativeRootMatrix, positiveRootMatrix]
+  split_ifs with hi
+  · ext a b
+    cases a <;> cases b <;>
+      simp [_root_.Matrix.fromBlocks, _root_.Matrix.single_apply, and_comm]
+  · ext a b
+    cases a <;> cases b <;>
+      simp [shortNegativeBlock, shortPositiveBlock, _root_.Matrix.fromBlocks,
+        _root_.Matrix.single_apply, and_comm]
+
 theorem positiveRootMatrix_mem_sp (i : Fin (n + 1)) :
     positiveRootMatrix n i ∈ sp (Fin (n + 1)) ℚ := by
   rw [positiveRootMatrix]
@@ -225,6 +239,42 @@ def cartanGenerator (i : Fin (n + 1)) : sp (Fin (n + 1)) ℚ :=
     (cartanGenerator n i :
       _root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1)) (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) =
         cartanMatrix n i := (rfl)
+
+private theorem lie_single_single
+    (a b i j : Fin (n + 1) ⊕ Fin (n + 1)) :
+    ⁅_root_.Matrix.single a b (1 : ℚ), _root_.Matrix.single i j (1 : ℚ)⁆ =
+      (if b = i then _root_.Matrix.single a j (1 : ℚ) else 0) -
+        if j = a then _root_.Matrix.single i b (1 : ℚ) else 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  rw [LieRing.of_associative_ring_bracket]
+  by_cases hbi : b = i
+  · subst i
+    by_cases hja : j = a
+    · subst j
+      rw [_root_.Matrix.single_mul_single_same, _root_.Matrix.single_mul_single_same]
+      simp
+    · rw [_root_.Matrix.single_mul_single_same,
+        _root_.Matrix.single_mul_single_of_ne (h := hja)]
+      simp [hja]
+  · by_cases hja : j = a
+    · subst j
+      rw [_root_.Matrix.single_mul_single_of_ne (h := hbi),
+        _root_.Matrix.single_mul_single_same]
+      simp [hbi]
+    · rw [_root_.Matrix.single_mul_single_of_ne (h := hbi),
+        _root_.Matrix.single_mul_single_of_ne (h := hja)]
+      simp [hbi, hja]
+
+private theorem cartanMatrix_commutator_cartanMatrix (i j : Fin (n + 1)) :
+    ⁅cartanMatrix n i, cartanMatrix n j⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  rw [cartanMatrix, cartanMatrix, LieRing.of_associative_ring_bracket]
+  ext a b
+  simp only [_root_.Matrix.diagonal_mul_diagonal, _root_.Matrix.sub_apply,
+    _root_.Matrix.diagonal_apply, _root_.Matrix.zero_apply]
+  split_ifs <;> ring
 
 /-- The standard representation of the symplectic Lie algebra, extended to its enveloping
 algebra. -/
@@ -361,6 +411,316 @@ theorem negativeRootMatrix_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
     simp [negativeRootMatrix, hi, shortNegativeBlock, _root_.Matrix.fromBlocks,
       _root_.Matrix.single_apply]
 
+private theorem positiveRootMatrix_commutator_negativeRootMatrix_self (i : Fin (n + 1)) :
+    ⁅positiveRootMatrix n i, negativeRootMatrix n i⁆ = cartanMatrix n i := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  have hlast : (Fin.last n : Fin (n + 1)).val = n := rfl
+  by_cases hi : i = Fin.last n
+  · subst i
+    rw [positiveRootMatrix_last, negativeRootMatrix_last, lie_single_single]
+    ext a b
+    cases a <;> cases b <;>
+      simp [cartanMatrix, weight, DynkinType.TypeC.weight_apply, _root_.Matrix.diagonal_apply,
+        _root_.Matrix.single_apply] <;>
+      split_ifs <;> simp_all [Fin.ext_iff, Fin.val_last] <;> omega
+  · rw [positiveRootMatrix_of_ne n i hi, negativeRootMatrix_of_ne n i hi,
+      sub_lie, lie_sub, lie_sub, lie_single_single, lie_single_single, lie_single_single,
+      lie_single_single]
+    ext a b
+    cases a <;> cases b <;>
+      simp [cartanMatrix, weight, DynkinType.TypeC.weight_apply, _root_.Matrix.diagonal_apply,
+        _root_.Matrix.single_apply] <;>
+      split_ifs <;> simp_all [Fin.ext_iff] <;> omega
+
+private theorem positiveRootMatrix_commutator_negativeRootMatrix_of_ne
+    (i j : Fin (n + 1)) (hij : i ≠ j) :
+    ⁅positiveRootMatrix n i, negativeRootMatrix n j⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  by_cases hi : i = Fin.last n
+  · subst i
+    have hj : j ≠ Fin.last n := Ne.symm hij
+    rw [positiveRootMatrix_last, negativeRootMatrix_of_ne n j hj, lie_sub,
+      lie_single_single, lie_single_single]
+    ext a b
+    cases a <;> cases b <;> simp [hj, Ne.symm hj]
+  · by_cases hj : j = Fin.last n
+    · subst j
+      rw [positiveRootMatrix_of_ne n i hi, negativeRootMatrix_last, sub_lie,
+        lie_single_single, lie_single_single]
+      ext a b
+      cases a <;> cases b <;> simp [hi, Ne.symm hi]
+    · rw [positiveRootMatrix_of_ne n i hi, negativeRootMatrix_of_ne n j hj,
+        sub_lie, lie_sub, lie_sub, lie_single_single, lie_single_single, lie_single_single,
+        lie_single_single]
+      ext a b
+      cases a <;> cases b <;>
+        simp [hij, Ne.symm hij, next]
+
+private theorem positiveRootMatrix_commutator_positiveRootMatrix_of_not_adjacent
+    (i j : Fin (n + 1)) (hij : i ≠ j)
+    (hij' : i.val + 1 ≠ j.val) (hji' : j.val + 1 ≠ i.val) :
+    ⁅positiveRootMatrix n i, positiveRootMatrix n j⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  have hlast : (Fin.last n : Fin (n + 1)).val = n := rfl
+  by_cases hi : i = Fin.last n
+  · subst i
+    have hj : j ≠ Fin.last n := Ne.symm hij
+    have hnextj : next n j hj ≠ Fin.last n := by
+      intro h
+      apply hji'
+      exact congrArg Fin.val h
+    rw [positiveRootMatrix_last, positiveRootMatrix_of_ne n j hj, lie_sub,
+      lie_single_single, lie_single_single]
+    ext a b
+    cases a <;> cases b <;> simp [hnextj, Ne.symm hnextj]
+  · by_cases hj : j = Fin.last n
+    · subst j
+      have hnexti : next n i hi ≠ Fin.last n := by
+        intro h
+        apply hij'
+        exact congrArg Fin.val h
+      rw [positiveRootMatrix_of_ne n i hi, positiveRootMatrix_last, sub_lie,
+        lie_single_single, lie_single_single]
+      ext a b
+      cases a <;> cases b <;> simp [hnexti, Ne.symm hnexti]
+    · have hnexti_ne_j : next n i hi ≠ j := by
+        intro h
+        apply hij'
+        exact congrArg Fin.val h
+      have hnextj_ne_i : next n j hj ≠ i := by
+        intro h
+        apply hji'
+        exact congrArg Fin.val h
+      rw [positiveRootMatrix_of_ne n i hi, positiveRootMatrix_of_ne n j hj,
+        sub_lie, lie_sub, lie_sub, lie_single_single, lie_single_single, lie_single_single,
+        lie_single_single]
+      ext a b
+      cases a <;> cases b <;>
+        simp [hnexti_ne_j, Ne.symm hnexti_ne_j, hnextj_ne_i, Ne.symm hnextj_ne_i]
+
+private theorem positiveRootMatrix_lie_lie_of_succ (i j : Fin (n + 1))
+    (hij : i.val + 1 = j.val) (hj : j ≠ Fin.last n) :
+    ⁅positiveRootMatrix n i, ⁅positiveRootMatrix n i, positiveRootMatrix n j⁆⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  have hlast : (Fin.last n : Fin (n + 1)).val = n := rfl
+  have hi : i ≠ Fin.last n := by
+    intro hi
+    subst i
+    simp only [Fin.val_last] at hij
+    omega
+  have hnexti : next n i hi = j := by
+    apply Fin.ext
+    simpa only [val_next] using hij
+  have hij_ne : i ≠ j := by
+    intro h
+    subst j
+    omega
+  have hnextj_ne_i : next n j hj ≠ i := by
+    intro h
+    have hv := congrArg Fin.val h
+    simp only [val_next] at hv
+    omega
+  rw [positiveRootMatrix_of_ne n i hi, positiveRootMatrix_of_ne n j hj]
+  simp only [sub_lie, lie_sub, lie_single_single]
+  ext a b
+  cases a <;> cases b <;>
+    simp [lie_single_single, hnexti, hij_ne, Ne.symm hij_ne,
+      hnextj_ne_i, Ne.symm hnextj_ne_i]
+
+private theorem positiveRootMatrix_lie_lie_of_eq_succ (i j : Fin (n + 1))
+    (hji : j.val + 1 = i.val) :
+    ⁅positiveRootMatrix n i, ⁅positiveRootMatrix n i, positiveRootMatrix n j⁆⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  have hlast : (Fin.last n : Fin (n + 1)).val = n := rfl
+  have hj : j ≠ Fin.last n := by
+    intro hj
+    subst j
+    simp only [Fin.val_last] at hji
+    omega
+  have hnextj : next n j hj = i := by
+    apply Fin.ext
+    simpa only [val_next] using hji
+  by_cases hi : i = Fin.last n
+  · rw [hi, positiveRootMatrix_last, positiveRootMatrix_of_ne n j hj]
+    simp only [lie_sub, lie_single_single]
+    ext a b
+    cases a <;> cases b <;> simp [lie_single_single, hnextj, hi]
+  · have hnexti_ne_j : next n i hi ≠ j := by
+      intro h
+      have hv := congrArg Fin.val h
+      simp only [val_next] at hv
+      omega
+    have hnexti_ne_i : next n i hi ≠ i := ne_of_gt (lt_next n i hi)
+    rw [positiveRootMatrix_of_ne n i hi, positiveRootMatrix_of_ne n j hj]
+    simp only [sub_lie, lie_sub, lie_single_single]
+    ext a b
+    cases a <;> cases b <;>
+      simp [lie_single_single, hnextj, hnexti_ne_j, Ne.symm hnexti_ne_j,
+        hnexti_ne_i, Ne.symm hnexti_ne_i]
+
+private theorem positiveRootMatrix_lie_lie_lie_long (i : Fin (n + 1))
+    (hi : i.val + 1 = n) :
+    ⁅positiveRootMatrix n i,
+        ⁅positiveRootMatrix n i, ⁅positiveRootMatrix n i,
+          positiveRootMatrix n (Fin.last n)⁆⁆⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  have hlast : (Fin.last n : Fin (n + 1)).val = n := rfl
+  have hilast : i ≠ Fin.last n := by
+    intro hilast
+    subst i
+    simp only [Fin.val_last] at hi
+    omega
+  have hnexti : next n i hilast = Fin.last n := by
+    apply Fin.ext
+    simpa only [val_next, Fin.val_last] using hi
+  rw [positiveRootMatrix_of_ne n i hilast, positiveRootMatrix_last]
+  simp only [sub_lie, lie_sub, lie_single_single]
+  ext a b
+  cases a <;> cases b <;>
+    simp [lie_single_single, hnexti, hilast, Ne.symm hilast]
+
+private theorem lie_lie_self_eq_reverse {L : Type*} [LieRing L] (x y : L) :
+    ⁅x, ⁅x, y⁆⁆ = ⁅⁅y, x⁆, x⁆ := by
+  rw [← lie_skew x ⁅x, y⁆, ← lie_skew x y, neg_lie, neg_neg]
+
+private theorem lie_lie_lie_self_eq_neg_reverse {L : Type*} [LieRing L] (x y : L) :
+    ⁅x, ⁅x, ⁅x, y⁆⁆⁆ = -⁅⁅⁅y, x⁆, x⁆, x⁆ := by
+  rw [← lie_skew x ⁅x, ⁅x, y⁆⁆, lie_lie_self_eq_reverse]
+
+private theorem negativeRootMatrix_commutator_negativeRootMatrix_of_not_adjacent
+    (i j : Fin (n + 1)) (hij : i ≠ j)
+    (hij' : i.val + 1 ≠ j.val) (hji' : j.val + 1 ≠ i.val) :
+    ⁅negativeRootMatrix n i, negativeRootMatrix n j⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  rw [negativeRootMatrix_eq_transpose, negativeRootMatrix_eq_transpose]
+  have h := congrArg _root_.Matrix.transpose
+    (positiveRootMatrix_commutator_positiveRootMatrix_of_not_adjacent n i j hij hij' hji')
+  simp only [_root_.Matrix.lie_transpose, _root_.Matrix.transpose_zero] at h
+  exact (lie_skew (positiveRootMatrix n i)ᵀ (positiveRootMatrix n j)ᵀ).symm.trans <| by
+    rw [h, neg_zero]
+
+private theorem negativeRootMatrix_lie_lie_of_succ (i j : Fin (n + 1))
+    (hij : i.val + 1 = j.val) (hj : j ≠ Fin.last n) :
+    ⁅negativeRootMatrix n i, ⁅negativeRootMatrix n i, negativeRootMatrix n j⁆⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  rw [negativeRootMatrix_eq_transpose, negativeRootMatrix_eq_transpose]
+  have h := congrArg _root_.Matrix.transpose
+    (positiveRootMatrix_lie_lie_of_succ n i j hij hj)
+  simp only [_root_.Matrix.lie_transpose, _root_.Matrix.transpose_zero] at h
+  exact (lie_lie_self_eq_reverse (positiveRootMatrix n i)ᵀ
+    (positiveRootMatrix n j)ᵀ).trans h
+
+private theorem negativeRootMatrix_lie_lie_of_eq_succ (i j : Fin (n + 1))
+    (hji : j.val + 1 = i.val) :
+    ⁅negativeRootMatrix n i, ⁅negativeRootMatrix n i, negativeRootMatrix n j⁆⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  rw [negativeRootMatrix_eq_transpose, negativeRootMatrix_eq_transpose]
+  have h := congrArg _root_.Matrix.transpose
+    (positiveRootMatrix_lie_lie_of_eq_succ n i j hji)
+  simp only [_root_.Matrix.lie_transpose, _root_.Matrix.transpose_zero] at h
+  exact (lie_lie_self_eq_reverse (positiveRootMatrix n i)ᵀ
+    (positiveRootMatrix n j)ᵀ).trans h
+
+private theorem negativeRootMatrix_lie_lie_lie_long (i : Fin (n + 1))
+    (hi : i.val + 1 = n) :
+    ⁅negativeRootMatrix n i,
+        ⁅negativeRootMatrix n i, ⁅negativeRootMatrix n i,
+          negativeRootMatrix n (Fin.last n)⁆⁆⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  rw [negativeRootMatrix_eq_transpose, negativeRootMatrix_eq_transpose]
+  have h := congrArg _root_.Matrix.transpose
+    (positiveRootMatrix_lie_lie_lie_long n i hi)
+  simp only [_root_.Matrix.lie_transpose, _root_.Matrix.transpose_zero] at h
+  exact (lie_lie_lie_self_eq_neg_reverse (positiveRootMatrix n i)ᵀ
+    (positiveRootMatrix n (Fin.last n))ᵀ).trans <| by
+      rw [h, neg_zero]
+
+section
+
+private local instance matrixLieRingForHigherSerre :
+    LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+    (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+
+private theorem ad_pow_lie_positiveRootMatrix (i j : Fin (n + 1)) :
+    ((LieAlgebra.ad ℚ _ (positiveRootMatrix n i)) ^
+        (-((CartanMatrix.C (n + 1))ᵀ i j)).toNat)
+      ⁅positiveRootMatrix n i, positiveRootMatrix n j⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  by_cases hij : i = j
+  · subst j
+    simp [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply]
+  · by_cases hij' : i.val + 1 = j.val
+    · by_cases hj : j = Fin.last n
+      · subst j
+        have hi : i.val + 1 = n := by simpa only [Fin.val_last] using hij'
+        have hbound : n + 1 ≠ i.val := by omega
+        simpa [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply,
+          hij, Ne.symm hij, hij', hbound, Fin.val_last, pow_two, Module.End.mul_apply,
+          LieAlgebra.ad_apply] using positiveRootMatrix_lie_lie_lie_long n i hi
+      · have hjval : j.val ≠ n := by
+          intro h
+          apply hj
+          apply Fin.ext
+          simpa only [Fin.val_last] using h
+        simpa [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply,
+          hij, Ne.symm hij, hij', hjval, pow_one, LieAlgebra.ad_apply] using
+            positiveRootMatrix_lie_lie_of_succ n i j hij' hj
+    · by_cases hji' : j.val + 1 = i.val
+      · simpa [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply,
+          hij, Ne.symm hij, hij', hji', pow_one, LieAlgebra.ad_apply] using
+            positiveRootMatrix_lie_lie_of_eq_succ n i j hji'
+      · simpa [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply,
+          hij, Ne.symm hij, hij', hji'] using
+            positiveRootMatrix_commutator_positiveRootMatrix_of_not_adjacent
+              n i j hij hij' hji'
+
+private theorem ad_pow_lie_negativeRootMatrix (i j : Fin (n + 1)) :
+    ((LieAlgebra.ad ℚ _ (negativeRootMatrix n i)) ^
+        (-((CartanMatrix.C (n + 1))ᵀ i j)).toNat)
+      ⁅negativeRootMatrix n i, negativeRootMatrix n j⁆ = 0 := by
+  let _ : LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+      (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+  by_cases hij : i = j
+  · subst j
+    simp [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply]
+  · by_cases hij' : i.val + 1 = j.val
+    · by_cases hj : j = Fin.last n
+      · subst j
+        have hi : i.val + 1 = n := by simpa only [Fin.val_last] using hij'
+        have hbound : n + 1 ≠ i.val := by omega
+        simpa [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply,
+          hij, Ne.symm hij, hij', hbound, Fin.val_last, pow_two, Module.End.mul_apply,
+          LieAlgebra.ad_apply] using negativeRootMatrix_lie_lie_lie_long n i hi
+      · have hjval : j.val ≠ n := by
+          intro h
+          apply hj
+          apply Fin.ext
+          simpa only [Fin.val_last] using h
+        simpa [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply,
+          hij, Ne.symm hij, hij', hjval, pow_one, LieAlgebra.ad_apply] using
+            negativeRootMatrix_lie_lie_of_succ n i j hij' hj
+    · by_cases hji' : j.val + 1 = i.val
+      · simpa [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply,
+          hij, Ne.symm hij, hij', hji', pow_one, LieAlgebra.ad_apply] using
+            negativeRootMatrix_lie_lie_of_eq_succ n i j hji'
+      · simpa [Matrix.transpose_apply, CartanMatrix.C, _root_.Matrix.of_apply,
+          hij, Ne.symm hij, hij', hji'] using
+            negativeRootMatrix_commutator_negativeRootMatrix_of_not_adjacent
+              n i j hij hij' hji'
+
+end
+
 /-- The matrix commutator of a Cartan generator with a raising generator. -/
 private theorem cartanMatrix_commutator_positiveRootMatrix (i j : Fin (n + 1)) :
     ⁅cartanMatrix n j, positiveRootMatrix n i⁆ =
@@ -429,6 +789,66 @@ theorem lie_cartanGenerator_rootGenerator (k : Fin (n + 1) ⊕ Fin (n + 1))
       rw [LieSubalgebra.coe_bracket, val_cartanGenerator, Submodule.coe_smul,
         val_rootGenerator_inr]
       exact cartanMatrix_commutator_negativeRootMatrix n i j
+
+section
+
+private local instance matrixLieRingForSerreSystem :
+    LieRing (_root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+    (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := LieRing.ofAssociativeRing
+
+private theorem coe_ad_pow_apply (x y : sp (Fin (n + 1)) ℚ) (k : ℕ) :
+    ((((LieAlgebra.ad ℚ (sp (Fin (n + 1)) ℚ) x) ^ k) y : sp (Fin (n + 1)) ℚ) :
+        _root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1)) (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) =
+      ((LieAlgebra.ad ℚ _ (x : _root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+        (Fin (n + 1) ⊕ Fin (n + 1)) ℚ)) ^ k)
+        (y : _root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1))
+          (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) := by
+  induction k with
+  | zero => rfl
+  | succ k ih =>
+      simp only [pow_succ', Module.End.mul_apply, LieAlgebra.ad_apply,
+        LieSubalgebra.coe_bracket, ih]
+
+/-- The standard type-`C` Chevalley generators satisfy the Serre relations for the transposed
+Cartan matrix, in the convention used by `IsSerreSystem`. -/
+theorem isSerreSystem_rootGenerator :
+    IsSerreSystem ℚ (CartanMatrix.C (n + 1))ᵀ
+      (cartanGenerator n)
+      (fun i => rootGenerator n (.inl i))
+      (fun i => rootGenerator n (.inr i)) where
+  lie_H_H i j := by
+    apply Subtype.ext
+    simpa only [LieSubalgebra.coe_bracket, val_cartanGenerator, Submodule.coe_zero] using
+      cartanMatrix_commutator_cartanMatrix n i j
+  lie_E_F_self i := by
+    apply Subtype.ext
+    simpa only [LieSubalgebra.coe_bracket, val_rootGenerator_inl, val_rootGenerator_inr,
+      val_cartanGenerator] using positiveRootMatrix_commutator_negativeRootMatrix_self n i
+  lie_E_F_of_ne i j hij := by
+    apply Subtype.ext
+    simpa only [LieSubalgebra.coe_bracket, val_rootGenerator_inl, val_rootGenerator_inr,
+      Submodule.coe_zero] using
+        positiveRootMatrix_commutator_negativeRootMatrix_of_ne n i j hij
+  lie_H_E i j := by
+    rw [Matrix.transpose_apply]
+    simpa only [rootWeight_inl, Int.cast_smul_eq_zsmul] using
+      lie_cartanGenerator_rootGenerator n (.inl j) i
+  lie_H_F i j := by
+    rw [Matrix.transpose_apply]
+    simpa only [rootWeight_inr, Int.cast_smul_eq_zsmul, neg_zsmul] using
+      lie_cartanGenerator_rootGenerator n (.inr j) i
+  ad_pow_lie_E_E i j := by
+    apply Subtype.ext
+    rw [coe_ad_pow_apply]
+    simpa only [LieSubalgebra.coe_bracket, val_rootGenerator_inl, Submodule.coe_zero] using
+      ad_pow_lie_positiveRootMatrix n i j
+  ad_pow_lie_F_F i j := by
+    apply Subtype.ext
+    rw [coe_ad_pow_apply]
+    simpa only [LieSubalgebra.coe_bracket, val_rootGenerator_inr, Submodule.coe_zero] using
+      ad_pow_lie_negativeRootMatrix n i j
+
+end
 
 /-- The action of a numbered simple root generator on the standard module, written in coordinate
 vectors. -/
