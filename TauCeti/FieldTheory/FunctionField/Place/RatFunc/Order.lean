@@ -33,6 +33,8 @@ rational function field.
 * `TauCeti.Place.valuation_ofIrreducible_le_one_iff` and
   `TauCeti.Place.residue_adicOfIrreducible_eq_zero_iff`: regularity and vanishing in the residue
   field are detected by the denominator and numerator respectively.
+* `TauCeti.Place.forall_ord_adicOfIrreducible_nonneg_iff`: the functions regular at every finite
+  place are the polynomials.
 
 ## References
 
@@ -177,6 +179,25 @@ theorem valuation_ofIrreducible_le_one_iff {q : k[X]} (hq : Irreducible q)
   rw [← valuation_adicOfIrreducible hq, ← (adicOfIrreducible hq).mem_integers_iff,
     (adicOfIrreducible hq).mem_integers_iff_ord_nonneg, ← not_lt,
     ord_adicOfIrreducible_neg_iff hq]
+
+/-- **A rational function is a polynomial exactly when it has no pole at any finite place.**  The
+finite places of `k(x)` are the places of the height-one primes of `k[X]`, so this is the
+Dedekind-domain fact that `k[X]` is the intersection of its localizations at them
+(`IsDedekindDomain.HeightOneSpectrum.mem_integers_of_valuation_le_one`), read in place
+vocabulary. -/
+theorem forall_ord_adicOfIrreducible_nonneg_iff {f : RatFunc k} :
+    (∀ (q : k[X]) (hq : Irreducible q), 0 ≤ (adicOfIrreducible hq).ord f) ↔
+      ∃ p : k[X], algebraMap k[X] (RatFunc k) p = f := by
+  constructor
+  · intro h
+    refine RingHom.mem_range.mp (HeightOneSpectrum.mem_integers_of_valuation_le_one
+      (R := k[X]) (RatFunc k) f fun v ↦ ?_)
+    obtain ⟨q, hq, -, rfl⟩ := v.exists_monic_irreducible_eq_ofIrreducible
+    rw [valuation_ofIrreducible_le_one_iff hq, ← ord_adicOfIrreducible_neg_iff hq, not_lt]
+    exact h q hq
+  · rintro ⟨p, rfl⟩ q hq
+    rw [adicOfIrreducible_def]
+    exact ord_algebraMap_adic_nonneg k (RatFunc k) _ p
 
 /-- A function regular at `P_q` has zero residue exactly when `q` divides its reduced numerator. -/
 theorem residue_adicOfIrreducible_eq_zero_iff {q : k[X]} (hq : Irreducible q)

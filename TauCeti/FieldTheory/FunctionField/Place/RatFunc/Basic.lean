@@ -128,11 +128,6 @@ theorem ord_infty (f : RatFunc k) : (infty k).ord f = -f.intDegree := by
   · simp
   · rw [Place.ord_def, valuation_infty_apply hf, WithZero.log_exp]
 
-/-- The order of a polynomial at the place at infinity is minus its degree. -/
-theorem ord_infty_algebraMap (p : k[X]) :
-    (infty k).ord (algebraMap k[X] (RatFunc k) p) = -p.natDegree := by
-  rw [ord_infty, RatFunc.intDegree_polynomial]
-
 /-- `x⁻¹` is a prime element for the place at infinity (Stichtenoth, Proposition 1.2.1(c)). -/
 theorem isUniformizer_infty : (infty k).valuation.IsUniformizer (RatFunc.X : RatFunc k)⁻¹ := by
   rw [isUniformizer_iff_ord_eq_one, ord_inv, ord_infty, RatFunc.intDegree_X, neg_neg]
@@ -326,9 +321,8 @@ theorem eq_infty_or_exists_eq_adicOfIrreducible (P : Place k (RatFunc k)) :
     P = infty k ∨ ∃ (q : k[X]) (hq : Irreducible q), P = adicOfIrreducible hq := by
   rcases eq_infty_or_exists_eq_adic P with rfl | ⟨p, rfl⟩
   · exact Or.inl rfl
-  obtain ⟨q, ⟨-, hqi, hspan⟩, -⟩ := p.existsUnique_monic_irreducible_span
-  exact Or.inr ⟨q, hqi, congrArg (adic k (RatFunc k))
-    (HeightOneSpectrum.ext (hspan.trans (HeightOneSpectrum.ofIrreducible_asIdeal hqi).symm))⟩
+  obtain ⟨q, hqi, -, rfl⟩ := p.exists_monic_irreducible_eq_ofIrreducible
+  exact Or.inr ⟨q, hqi, (adicOfIrreducible_def hqi).symm⟩
 
 variable (k)
 
@@ -405,10 +399,8 @@ variable {k}
 theorem adicOfIrreducible_X_sub_C_injective :
     Function.Injective fun a : k => adicOfIrreducible (irreducible_X_sub_C a) := by
   intro a b h
-  have h' := congrArg HeightOneSpectrum.asIdeal (adic_injective k (RatFunc k) h)
-  rw [HeightOneSpectrum.ofIrreducible_asIdeal, HeightOneSpectrum.ofIrreducible_asIdeal] at h'
   have hab := eq_of_monic_of_associated (monic_X_sub_C a) (monic_X_sub_C b)
-    (Ideal.span_singleton_eq_span_singleton.mp h')
+    ((adicOfIrreducible_eq_adicOfIrreducible_iff _ _).mp h)
   simpa using congrArg (fun p : k[X] => p.coeff 0) hab
 
 /-- **A rational place of `k(x)` is the place at infinity or the place of a linear polynomial**
