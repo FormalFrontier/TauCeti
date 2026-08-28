@@ -140,7 +140,8 @@ theorem unipotentRadicalCoordinateMap_comp_unipotentRadicalIsoOfIso_inv (e : H �
 
 /-- A morphism out of a unipotent radical is determined by its composite with the coordinate
 quotient map. -/
-private theorem hom_ext_unipotentRadical {X : FiniteTypeCommHopfAlgCat.{u, u} k}
+@[ext]
+theorem unipotentRadical_hom_ext {X : FiniteTypeCommHopfAlgCat.{u, u} k}
     {f g : unipotentRadical H ⟶ X}
     (h : unipotentRadicalCoordinateMap H ≫ f = unipotentRadicalCoordinateMap H ≫ g) :
     f = g := by
@@ -157,7 +158,7 @@ radical. -/
 theorem unipotentRadicalIsoOfIso_refl :
     unipotentRadicalIsoOfIso (Iso.refl H) = Iso.refl (unipotentRadical H) := by
   apply Iso.ext
-  apply hom_ext_unipotentRadical
+  apply unipotentRadical_hom_ext
   rw [unipotentRadicalCoordinateMap_comp_unipotentRadicalIsoOfIso_hom]
   rfl
 
@@ -167,7 +168,7 @@ theorem unipotentRadicalIsoOfIso_trans (e : H ≅ K) (f : K ≅ L) :
     unipotentRadicalIsoOfIso (e ≪≫ f) =
       unipotentRadicalIsoOfIso e ≪≫ unipotentRadicalIsoOfIso f := by
   apply Iso.ext
-  apply hom_ext_unipotentRadical
+  apply unipotentRadical_hom_ext
   rw [unipotentRadicalCoordinateMap_comp_unipotentRadicalIsoOfIso_hom]
   simp only [Iso.trans_hom]
   conv_rhs =>
@@ -183,7 +184,7 @@ the inverse ambient isomorphism. -/
 theorem unipotentRadicalIsoOfIso_symm (e : H ≅ K) :
     (unipotentRadicalIsoOfIso e).symm = unipotentRadicalIsoOfIso e.symm := by
   apply Iso.ext
-  apply hom_ext_unipotentRadical
+  apply unipotentRadical_hom_ext
   rw [Iso.symm_hom,
     unipotentRadicalCoordinateMap_comp_unipotentRadicalIsoOfIso_inv,
     unipotentRadicalCoordinateMap_comp_unipotentRadicalIsoOfIso_hom]
