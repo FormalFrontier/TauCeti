@@ -28,9 +28,9 @@ the arithmetic-Dirichlet-series roadmap, parameterized over an arbitrary field:
 
 It also carries the multiplicativity predicate
 `TauCeti.IdealArithmeticFunction.IsMultiplicative` — value `1` at the unit ideal, multiplicative on
-relatively prime nonzero ideals — together with its two factorization consequences over a number
-field: `IsMultiplicative.map_prod` for a pairwise relatively prime finite product, and
-`IsMultiplicative.map_prod_pow` for a prime-power factorization of a nonzero ideal, the
+relatively prime nonzero ideals — together with its two factorization consequences:
+`IsMultiplicative.map_prod` for a pairwise relatively prime finite product, and, over a number
+field, `IsMultiplicative.map_prod_pow` for a prime-power factorization of a nonzero ideal, the
 factorizations themselves being supplied by `Ideal.exists_eq_prod_pow`.
 
 The two operations are inverse precisely on functions vanishing at the zero ideal. The resulting
@@ -112,12 +112,17 @@ section Factorization
 
 open IsDedekindDomain (HeightOneSpectrum)
 
-variable [NumberField K] {f : IdealArithmeticFunction K}
+variable {f : IdealArithmeticFunction K}
 
 /-- **A multiplicative ideal arithmetic function factors over pairwise relatively prime
 products.** This is the ideal analogue of Mathlib's
-`ArithmeticFunction.IsMultiplicative.map_prod`. -/
-theorem IsMultiplicative.map_prod (hf : f.IsMultiplicative) {ι : Type*} (g : ι → (Ideal (𝓞 K))⁰)
+`ArithmeticFunction.IsMultiplicative.map_prod`.
+
+Passing from a pairwise hypothesis to relative primality against the whole product is exactly
+Mathlib's `IsRelPrime.prod_right`, which needs `DecompositionMonoid (Ideal (𝓞 K))`; that is all
+the ambient arithmetic this statement uses, and `[NumberField K]` supplies it. -/
+theorem IsMultiplicative.map_prod [DecompositionMonoid (Ideal (𝓞 K))] (hf : f.IsMultiplicative)
+    {ι : Type*} (g : ι → (Ideal (𝓞 K))⁰)
     (s : Finset ι) (hs : (s : Set ι).Pairwise fun i j ↦ IsRelPrime (g i : Ideal (𝓞 K)) (g j)) :
     f (∏ i ∈ s, g i) = ∏ i ∈ s, f (g i) := by
   classical
@@ -131,6 +136,8 @@ theorem IsMultiplicative.map_prod (hf : f.IsMultiplicative) {ι : Type*} (g : ι
           hs (by simp) (by simp [hj]) (by rintro rfl; exact hi hj)
       rw [Finset.prod_insert hi, Finset.prod_insert hi, hf.map_mul_of_isRelPrime hrel,
         ih (hs.mono (by rw [Finset.coe_insert]; exact Set.subset_insert i s))]
+
+variable [NumberField K]
 
 /-- **A multiplicative ideal arithmetic function factors over a prime-power factorization.**
 Unique factorization writes every nonzero ideal as a product `∏ P ∈ S, P ^ e P` over a finite set
