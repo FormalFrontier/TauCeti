@@ -109,6 +109,12 @@ canonical object the roadmap fixes.
   identification of the inhomogeneous description of continuous cohomology, which the explicit
   model here follows, with the homogeneous one computing the canonical object. The isomorphisms
   built in this file are the degree-zero and degree-one cases of that identification.
+* `Mathlib/RepresentationTheory/Homological/ContCohomology/LowDegree.lean` by Richard Hill,
+  Andrew Yang and Edison Xie: the formal precedent. Its `ContinuousCohomology.d₀kerIso` and
+  `ContinuousCohomology.zeroIso` compute the canonical side in degree zero; the degree-zero
+  comparison below is built directly from `zeroIso`, and the degree-one one follows the same
+  shape, replacing `zeroIso` by the quotient presentation
+  `TauCeti.ContCohomology.continuousCohomologyIsoCoker₁`.
 -/
 
 public section
@@ -301,7 +307,7 @@ is no uniform `Gⁿ⁺¹ → M` reader without the compact-open exponential law.
 
 variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DiscreteTopology M] [DistribMulAction G M] [ContinuousSMul G M]
+  [DiscreteTopology M] [DistribMulAction G M]
 
 /-- The function underlying a homogeneous `0`-cochain. -/
 def homogeneousFun₀ (f : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0) : G → M :=
@@ -318,7 +324,6 @@ def homogeneousFun₂ (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G 
 
 variable {G M}
 
-omit [ContinuousSMul G M] in
 /-- The homogeneity of a `0`-cochain. The coinduced action on `C(G, M)` is
 `(g • f) x = g • f (g⁻¹ * x)` by `ContRepresentation.coind₁_apply_apply`, so evaluating the
 invariance `f.2 g` at `x` gives exactly this. -/
@@ -326,7 +331,6 @@ theorem homogeneousFun₀_invariant (f : (TopRep.homogeneousCochains (ofDiscrete
     (g x : G) : homogeneousFun₀ G M f x = g • homogeneousFun₀ G M f (g⁻¹ * x) :=
   (congrArg (fun F => F x) (f.2 g)).symm
 
-omit [ContinuousSMul G M] in
 /-- The homogeneity of a `1`-cochain, `σ (x, y) = g • σ (g⁻¹ * x, g⁻¹ * y)`, in the form obtained
 by evaluating the invariance at a single group element. -/
 theorem homogeneousFun₁_invariant (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1)
@@ -334,12 +338,10 @@ theorem homogeneousFun₁_invariant (σ : (TopRep.homogeneousCochains (ofDiscret
     homogeneousFun₁ G M σ x y = g • homogeneousFun₁ G M σ (g⁻¹ * x) (g⁻¹ * y) :=
   (congrArg (fun F => F x y) (σ.2 g)).symm
 
-omit [ContinuousSMul G M] in
 /-- A homogeneous `1`-cochain is determined by its underlying function. -/
 theorem homogeneousFun₁_injective : Function.Injective (homogeneousFun₁ G M) := fun _ _ h =>
   Subtype.ext (ContinuousMap.ext fun x => ContinuousMap.ext fun y => congrFun (congrFun h x) y)
 
-omit [ContinuousSMul G M] in
 /-- A homogeneous `2`-cochain vanishes exactly when its underlying function does. -/
 theorem homogeneousFun₂_eq_zero_iff
     (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 2) :
@@ -348,7 +350,6 @@ theorem homogeneousFun₂_eq_zero_iff
    fun h => Subtype.ext (ContinuousMap.ext fun x => ContinuousMap.ext fun y =>
      ContinuousMap.ext fun z => h x y z)⟩
 
-omit [ContinuousSMul G M] in
 /-- The homogeneous differential `C⁰ → C¹` is `(d f) (x, y) = f y - f x`. -/
 theorem homogeneousFun₁_d (f : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0)
     (x y : G) :
@@ -358,7 +359,6 @@ theorem homogeneousFun₁_d (f : (TopRep.homogeneousCochains (ofDiscreteModule �
   rw [TopRep.homogeneousCochains.d_apply]
   rfl
 
-omit [ContinuousSMul G M] in
 /-- The homogeneous differential `C¹ → C²` is
 `(d σ) (x, y, z) = σ (y, z) - σ (x, z) + σ (x, y)`. -/
 theorem homogeneousFun₂_d (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1)
@@ -505,7 +505,7 @@ section DegreeOne
 
 variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DiscreteTopology M] [DistribMulAction G M] [ContinuousSMul G M]
+  [DiscreteTopology M] [DistribMulAction G M]
 
 /-- The short complex `C⁰ → C¹ → C²` of homogeneous cochains whose homology is
 `continuousCohomology 1`. It is spelled with the explicit indices `0, 1, 2` rather than through
@@ -515,7 +515,6 @@ noncomputable abbrev homogeneousSc₁ : ShortComplex (TopModuleCat ℤ) :=
     ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 1 2)
     ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d_comp_d 0 1 2)
 
-omit [ContinuousSMul G M] in
 /-- The short complex `TauCeti.ContCohomology.homogeneousSc₁` has `f = d⁰`, so the corestriction of
 its concrete left homology data is the degree-zero differential. This is
 `CategoryTheory.ShortComplex.coe_topModuleCatLeftHomologyData_f'` with the differential spelled out,
@@ -538,6 +537,12 @@ noncomputable def continuousCohomologyIsoCoker₁ :
       ≅ TopModuleCat.coker (homogeneousSc₁ G M).topModuleCatLeftHomologyData.f' :=
   (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).homologyIsoSc' 0 1 2 (by simp) (by simp)
     ≪≫ (homogeneousSc₁ G M).topModuleCatHomologyIso
+
+/-! Everything above concerns the canonical side alone and needs no continuity of the action; the
+dictionary with the explicit side does, because `TauCeti.ContCohomology.homogeneousCochainEquiv₁`
+sends `c` to the *continuous* map `(x, y) ↦ x • c (x⁻¹ * y)`. -/
+
+variable [ContinuousSMul G M]
 
 /-- The explicit continuous `1`-cocycles `Z¹(G, M)` are the kernel of the homogeneous degree-one
 differential. -/
@@ -630,6 +635,9 @@ noncomputable def explicitH1AddEquivContinuousCohomology :
         (TopModuleCat.coker (homogeneousSc₁ G M).topModuleCatLeftHomologyData.f'))).trans
     (continuousCohomologyIsoCoker₁ G M).symm.toContinuousLinearEquiv.toLinearEquiv.toAddEquiv
 
+-- Not `@[simp]`: `TauCeti.ContCohomology.H1pi` is `QuotientAddGroup.mk'`, which `simp` unfolds by
+-- `QuotientAddGroup.mk'_apply`, so this left-hand side is not in simp normal form. It is the
+-- characteristic rule for the comparison and is used through explicit rewrites.
 /-- The comparison sends the class of a continuous `1`-cocycle to the class of the homogeneous
 `1`-cocycle attached to it. -/
 theorem explicitH1AddEquivContinuousCohomology_H1pi (z : Z1 G M) :
@@ -665,7 +673,7 @@ noncomputable def explicitH1IsoContinuousCohomology [CompactSpace G] :
   TopModuleCat.ofIso (explicitH1ContinuousLinearEquiv G M)
 
 /-- The comparison in `TopModuleCat ℤ` is the additive comparison. -/
-theorem explicitH1IsoContinuousCohomology_hom_apply [CompactSpace G] (x : DiscreteH1 G M) :
+@[simp] theorem explicitH1IsoContinuousCohomology_hom_apply [CompactSpace G] (x : DiscreteH1 G M) :
     (explicitH1IsoContinuousCohomology G M).hom x
       = explicitH1AddEquivContinuousCohomology G M (discreteH1Equiv G M x) := (rfl)
 
