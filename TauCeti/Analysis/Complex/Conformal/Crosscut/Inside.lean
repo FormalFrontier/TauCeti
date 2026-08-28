@@ -23,8 +23,8 @@ set `K` through the image crosscut. The hypotheses are:
 
 * `K` contains the image crosscut and is contained in its closure union `frontier (f '' U)`.
 * `K \ {f z₀}` is preconnected at a chosen crosscut point `z₀`.
-* The two image pieces are preconnected (the `GeneralDomain` section) or `U = ball c r` and the
-  preconnectedness is derived from the ball geometry (the first section).
+* The two image pieces are preconnected (`hAc`, `hBc`). For `U = ball c r` these follow from the
+  ball geometry (`isConnected_ball_inter_ball`, `isConnected_ball_diff_closedBall`).
 
 The transversal segment through a point of the crosscut has the near side on one side and the
 far side on the other; the winding-number two-sidedness theorem
@@ -263,43 +263,58 @@ theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg {U : Set �
       ((((hclose ε hε).and hball).filter_mono nhdsWithin_le_nhds).and hneg).exists
     exact ⟨_, ⟨hmemγ t ht2, ht3⟩, by rw [dist_comm]; exact ht1⟩
 
+/-- **An image side that meets the inside of such a curve lies inside it.** The side is
+preconnected as a continuous image of a preconnected set and disjoint from `K` by
+`TauCeti.disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image`,
+so `TauCeti.IsPreconnected.subset_filledHull`
+traps it in the bounded component of `Kᶜ` it meets. Instantiate `V` at `U ∩ ball ζ ρ` for the near
+side and at `U \ closedBall ζ ρ` for the far side. -/
+theorem image_subset_filledHull_of_disjoint_inter_sphere {U V K : Set ℂ} (hUo : IsOpen U)
+    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hVU : V ⊆ U)
+    (hV : Disjoint V (U ∩ sphere ζ ρ)) (hVc : IsPreconnected V)
+    (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U))
+    (hne : (f '' V ∩ filledHull K).Nonempty) : f '' V ⊆ filledHull K :=
+  IsPreconnected.subset_filledHull (hVc.image f (hd.continuousOn.mono hVU))
+    (disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
+      hUo hd hinj hVU hV hK) hne
+
 /-- **One of the two image pieces lies in the filled hull of a closed bounded set through the image
 crosscut.** The transversal segment meets the set only at the crossing point, and the set minus that
 point is preconnected, so the winding-number two-sidedness theorem applies. The preconnectedness
 hypothesis `hKp` is required only at the selected crossing point `z₀`, not at every crosscut
 point. -/
-theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull
-    (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
-    (hf : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
-    (hγK : f '' (ball c r ∩ sphere ζ ρ) ⊆ K)
-    (hKsub : K ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r))
-    {z₀ : ℂ} (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ)
+theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull {U : Set ℂ}
+    (hUo : IsOpen U) (hρ : 0 < ρ)
+    (hf : DifferentiableOn ℂ f U)
+    (hinj : InjOn f U) (hAc : IsPreconnected (U ∩ ball ζ ρ))
+    (hBc : IsPreconnected (U \ closedBall ζ ρ))
+    {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
+    (hγK : f '' (U ∩ sphere ζ ρ) ⊆ K)
+    (hKsub : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U))
+    {z₀ : ℂ} (hz₀ : z₀ ∈ U ∩ sphere ζ ρ)
     (hKp : IsPreconnected (K \ {f z₀})) :
-    f '' (ball c r ∩ ball ζ ρ) ⊆ filledHull K ∨
-      f '' (ball c r \ closedBall ζ ρ) ⊆ filledHull K := by
-  have hγKcl : closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ K :=
+    f '' (U ∩ ball ζ ρ) ⊆ filledHull K ∨
+      f '' (U \ closedBall ζ ρ) ⊆ filledHull K := by
+  have hγKcl : closure (f '' (U ∩ sphere ζ ρ)) ⊆ K :=
     hK.closure_subset_iff.mpr hγK
-  have hr : 0 < r := by linarith
-  have hΩ : IsOpen (f '' ball c r) := isOpen_image_of_differentiableOn_of_injOn isOpen_ball hf hinj
   set p := f z₀ with hp_def
   set v := deriv f z₀ * (z₀ - ζ) with hv_def
   have hv : v ≠ 0 :=
-    mul_ne_zero (hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀.1)
+    mul_ne_zero (hf.deriv_ne_zero_of_injOn hUo hinj hz₀.1)
       (sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀.2 hρ.ne'))
   obtain ⟨η, hη, hnear, hfar⟩ :=
-    exists_mem_image_inter_ball_and_image_sdiff_closedBall hf isOpen_ball hinj hz₀ hρ
+    exists_mem_image_inter_ball_and_image_sdiff_closedBall hf hUo hinj hz₀ hρ
   obtain ⟨hleft, hright⟩ :=
-    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg hf isOpen_ball hinj hz₀ hρ
+    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg hf hUo hinj hz₀ hρ
   -- neither image piece meets `K`
-  have hnearK : Disjoint (f '' (ball c r ∩ ball ζ ρ)) K :=
+  have hnearK : Disjoint (f '' (U ∩ ball ζ ρ)) K :=
     disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
-      isOpen_ball hf hinj inter_subset_left disjoint_inter_ball_inter_sphere hKsub
-  have hfarK : Disjoint (f '' (ball c r \ closedBall ζ ρ)) K :=
+      hUo hf hinj inter_subset_left disjoint_inter_ball_inter_sphere hKsub
+  have hfarK : Disjoint (f '' (U \ closedBall ζ ρ)) K :=
     disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
-      isOpen_ball hf hinj sdiff_subset disjoint_sdiff_closedBall_inter_sphere hKsub
+      hUo hf hinj sdiff_subset disjoint_sdiff_closedBall_inter_sphere hKsub
   -- the two-sidedness theorem, applied to `K` and the segment on `[-η/2, η/2]`
-  have hpγ : p ∈ f '' (ball c r ∩ sphere ζ ρ) := mem_image_of_mem f hz₀
+  have hpγ : p ∈ f '' (U ∩ sphere ζ ρ) := mem_image_of_mem f hz₀
   have hpK : p ∈ K := hγKcl (subset_closure hpγ)
   have hseg : ∀ t ∈ Icc (-(η / 2)) (η / 2), v * t + p ∈ K → t = 0 := by
     intro t ht hKt
@@ -307,7 +322,7 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
     rcases lt_or_gt_of_ne ht0 with hneg | hpos
     · exact Set.disjoint_left.mp hnearK (hnear t ⟨by linarith [ht.1], hneg⟩) hKt
     · exact Set.disjoint_left.mp hfarK (hfar t ⟨hpos, by linarith [ht.2]⟩) hKt
-  have hγK' : ∀ S : Set ℂ, f '' (ball c r ∩ sphere ζ ρ) ∩ S ⊆ K ∩ S := fun S =>
+  have hγK' : ∀ S : Set ℂ, f '' (U ∩ sphere ζ ρ) ∩ S ⊆ K ∩ S := fun S =>
     inter_subset_inter (subset_closure.trans hγKcl) subset_rfl
   have key := Contour.mem_filledHull_or_mem_filledHull_of_isPreconnected_sdiff_singleton
     (K := K) (v := v) (z₀ := p) (a := -(η / 2)) (b := η / 2) (s := 0)
@@ -316,38 +331,36 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
     (by simpa using closure_mono (hγK' _) hleft) (by simpa using closure_mono (hγK' _) hright)
   rcases key with hx | hy
   · left
-    have hA : IsPreconnected (f '' (ball c r ∩ ball ζ ρ)) :=
-      ((isConnected_ball_inter_ball hr hρ (by rw [dist_comm, hζ]; linarith)).image f
-        (hf.continuousOn.mono inter_subset_left)).isPreconnected
-    exact IsPreconnected.subset_filledHull hA hnearK
+    exact image_subset_filledHull_of_disjoint_inter_sphere hUo hf hinj inter_subset_left
+      disjoint_inter_ball_inter_sphere hAc hKsub
       ⟨_, hnear (-(η / 2)) ⟨by linarith, by linarith⟩, by simpa using hx⟩
   · right
-    have hB : IsPreconnected (f '' (ball c r \ closedBall ζ ρ)) :=
-      ((isConnected_ball_diff_closedBall hζ hρ hρr).image f
-        (hf.continuousOn.mono sdiff_subset)).isPreconnected
-    exact IsPreconnected.subset_filledHull hB hfarK
+    exact image_subset_filledHull_of_disjoint_inter_sphere hUo hf hinj sdiff_subset
+      disjoint_sdiff_closedBall_inter_sphere hBc hKsub
       ⟨_, hfar (η / 2) ⟨by linarith, by linarith⟩, hy⟩
 
 /-- **Diameter selection: when the enclosing set is narrower than the far side, the near side is
 enclosed.** This consumes the disjunction
 `TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` by
 excluding the far-side case: trapping the far side inside `K` gives
-`diam (f '' (ball c r \ closedBall ζ ρ)) ≤ diam K`, contradicting the hypothesis. Unlike
+`diam (f '' (U \ closedBall ζ ρ)) ≤ diam K`, contradicting the hypothesis. Unlike
 `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt`, no `hp`/`hin` plane-separation input is
 needed — the preconnectedness hypothesis `hKp` on `K \ {p}` is discharged by
 `IsJordanCurve.isPathConnected_sdiff_singleton` in the intended application. -/
-theorem image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff
-    (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
-    (hf : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
-    (hγK : f '' (ball c r ∩ sphere ζ ρ) ⊆ K)
-    (hKsub : K ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r))
-    {z₀ : ℂ} (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ)
+theorem image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff {U : Set ℂ}
+    (hUo : IsOpen U) (hρ : 0 < ρ)
+    (hf : DifferentiableOn ℂ f U)
+    (hinj : InjOn f U) (hAc : IsPreconnected (U ∩ ball ζ ρ))
+    (hBc : IsPreconnected (U \ closedBall ζ ρ))
+    {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
+    (hγK : f '' (U ∩ sphere ζ ρ) ⊆ K)
+    (hKsub : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U))
+    {z₀ : ℂ} (hz₀ : z₀ ∈ U ∩ sphere ζ ρ)
     (hKp : IsPreconnected (K \ {f z₀}))
-    (hlt : diam K < diam (f '' (ball c r \ closedBall ζ ρ))) :
-    f '' (ball c r ∩ ball ζ ρ) ⊆ filledHull K := by
+    (hlt : diam K < diam (f '' (U \ closedBall ζ ρ))) :
+    f '' (U ∩ ball ζ ρ) ⊆ filledHull K := by
   rcases image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull
-    hζ hρ hρr hf hinj hK hKb hγK hKsub hz₀ hKp with h | h
+    hUo hρ hf hinj hAc hBc hK hKb hγK hKsub hz₀ hKp with h | h
   · exact h
   · exact absurd (diam_le_diam_of_subset_filledHull hKb h) (not_le.mpr hlt)
 
@@ -358,21 +371,6 @@ section GeneralDomain
 variable {U K V : Set ℂ} {p : ℂ}
 
 open Topology
-
-/-- **An image side that meets the inside of such a curve lies inside it.** The side is
-preconnected as a continuous image of a preconnected set and disjoint from `K` by
-`TauCeti.disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image`,
-so `TauCeti.IsPreconnected.subset_filledHull`
-traps it in the bounded component of `Kᶜ` it meets. Instantiate `V` at `U ∩ ball ζ ρ` for the near
-side and at `U \ closedBall ζ ρ` for the far side. -/
-theorem image_subset_filledHull_of_disjoint_inter_sphere (hUo : IsOpen U)
-    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hVU : V ⊆ U)
-    (hV : Disjoint V (U ∩ sphere ζ ρ)) (hVc : IsPreconnected V)
-    (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U))
-    (hne : (f '' V ∩ filledHull K).Nonempty) : f '' V ⊆ filledHull K :=
-  IsPreconnected.subset_filledHull (hVc.image f (hd.continuousOn.mono hVU))
-    (disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
-      hUo hd hinj hVU hV hK) hne
 
 /-- **One of the two image sides meets the inside of a curve with an image-domain point adherent to
 its inside.** If a point `p` of the image domain lies in `closure (filledHull K \ K)` — i.e. is a
