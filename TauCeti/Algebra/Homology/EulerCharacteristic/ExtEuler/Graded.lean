@@ -24,10 +24,10 @@ Their q-Euler characteristic is the Laurent polynomial
 χ_q(X,Y) = ∑ n, (-1)^n ∑ j, q⁻ʲ dim_k Ext^{n,j}(X,Y).
 ```
 
-This polynomial exists only under two separate support conditions.  For each cohomological
-degree, the internal-degree family must have finite Laurent support, and the Ext groups must
-vanish in every internal degree above a common cohomological bound.  These conditions are
-recorded separately by `TauCeti.IsGradedExtInternallyFinite` and
+This construction uses two separate support conditions.  For each cohomological degree, the
+internal-degree family must have finite Laurent support, and the Ext groups must vanish in every
+internal degree above a common cohomological bound.  These conditions are recorded separately by
+`TauCeti.IsGradedExtInternallyFinite` and
 `TauCeti.IsGradedExtBounded`.  Their conjunction `TauCeti.IsGradedEulerAdmissible` is consumed by
 `TauCeti.gradedExtEuler`; no infinite sum or totalized `finsum` occurs.
 
@@ -92,8 +92,8 @@ structure IsGradedExtBounded (X Y : C) : Prop where
   exists_bound : ∃ N, IsGradedExtBoundedBy.{w} e X Y N
 
 /-- A pair is **graded Euler-admissible** when its internal support is finite in each
-cohomological degree and its cohomological support has a uniform finite bound.  These are exactly
-the two conditions needed to define its Laurent-polynomial-valued Ext-Euler characteristic. -/
+cohomological degree and its cohomological support has a uniform finite bound.  The construction
+of its Laurent-polynomial-valued Ext-Euler characteristic uses these two conditions. -/
 structure IsGradedEulerAdmissible (X Y : C) : Prop where
   /-- Finite-dimensionality and finite internal support in every cohomological degree. -/
   internallyFinite : IsGradedExtInternallyFinite.{w} k e X Y
@@ -121,23 +121,24 @@ end IsGradedExtBoundedBy
 /-- The Laurent polynomial
 `∑ j, q⁻ʲ dim_k Ext^{n,j}(X,Y)` in one cohomological degree. -/
 noncomputable def gradedExtDimension {X Y : C}
-    (h : IsGradedExtInternallyFinite.{w} k e X Y) (n : ℕ) : LaurentPolynomial ℤ :=
-  targetShiftGradedDimension k (GradedExt.{w} e X Y n) (h.finiteLaurentSupport n)
+    {n : ℕ} (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) : LaurentPolynomial ℤ :=
+  targetShiftGradedDimension k (GradedExt.{w} e X Y n) h
 
 /-- The coefficient of `q^j` in the graded Ext dimension is
 `dim_k Ext^{n,-j}(X,Y)`. -/
 @[simp]
 theorem coeff_gradedExtDimension {X Y : C}
-    (h : IsGradedExtInternallyFinite.{w} k e X Y) (n : ℕ) (j : ℤ) :
-    (gradedExtDimension k e h n).coeff j =
+    {n : ℕ} (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) (j : ℤ) :
+    (gradedExtDimension k e h).coeff j =
       Module.finrank k (GradedExt.{w} e X Y n (-j)) :=
-  coeff_targetShiftGradedDimension (h.finiteLaurentSupport n) j
+  coeff_targetShiftGradedDimension h j
 
 /-- The q-Euler sum truncated to cohomological degrees below `N`.  The internal sum in every
 term is genuine because `h` supplies finite Laurent support. -/
 noncomputable def truncatedGradedExtEuler {X Y : C}
     (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) : LaurentPolynomial ℤ :=
-  ∑ n ∈ Finset.range N, ((-1 : ℤ) ^ n) • gradedExtDimension k e h n
+  ∑ n ∈ Finset.range N,
+    ((-1 : ℤ) ^ n) • gradedExtDimension k e (h.finiteLaurentSupport n)
 
 /-- The empty truncation of the graded Ext-Euler sum is zero. -/
 @[simp]
@@ -147,11 +148,12 @@ theorem truncatedGradedExtEuler_zero {X Y : C}
   Finset.sum_empty
 
 /-- Raising the truncation bound by one adds the signed graded dimension in the new degree. -/
+@[simp]
 theorem truncatedGradedExtEuler_succ {X Y : C}
     (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
     truncatedGradedExtEuler k e h (N + 1) =
       truncatedGradedExtEuler k e h N +
-        ((-1 : ℤ) ^ N) • gradedExtDimension k e h N :=
+        ((-1 : ℤ) ^ N) • gradedExtDimension k e (h.finiteLaurentSupport N) :=
   Finset.sum_range_succ _ N
 
 /-- The coefficient of a truncation is the finite alternating sum of the dimensions in the
@@ -163,19 +165,20 @@ theorem coeff_truncatedGradedExtEuler {X Y : C}
         (-1 : ℤ) ^ n * (Module.finrank k (GradedExt.{w} e X Y n (-j)) : ℤ) := by
   rw [truncatedGradedExtEuler]
   let coeffHom : LaurentPolynomial ℤ →+ ℤ :=
-    { toFun := fun p ↦ p.coeff j
-      map_zero' := by simp
-      map_add' := by simp }
-  change coeffHom (∑ n ∈ Finset.range N,
-    ((-1 : ℤ) ^ n) • gradedExtDimension k e h n) = _
-  simp only [map_sum]
-  refine Finset.sum_congr rfl fun n _ ↦ ?_
-  rw [map_zsmul]
-  rw [show coeffHom (gradedExtDimension k e h n) =
-    Module.finrank k (GradedExt.{w} e X Y n (-j)) from
-      coeff_gradedExtDimension k e h n j]
-  rw [zsmul_eq_mul]
-  simp
+    (Finsupp.applyAddHom j).comp AddMonoidAlgebra.coeffAddEquiv.toAddMonoidHom
+  calc
+    (∑ n ∈ Finset.range N,
+        ((-1 : ℤ) ^ n) • gradedExtDimension k e (h.finiteLaurentSupport n)).coeff j =
+      coeffHom (∑ n ∈ Finset.range N,
+        ((-1 : ℤ) ^ n) • gradedExtDimension k e (h.finiteLaurentSupport n)) := rfl
+    _ = ∑ n ∈ Finset.range N,
+        coeffHom (((-1 : ℤ) ^ n) • gradedExtDimension k e (h.finiteLaurentSupport n)) :=
+      map_sum coeffHom _ _
+    _ = _ := by
+      apply Finset.sum_congr rfl
+      intro n _
+      rw [map_zsmul]
+      simp [coeffHom]
 
 /-- Raising a truncation past a cohomological vanishing bound does not change it. -/
 theorem truncatedGradedExtEuler_eq_of_le {X Y : C} {N M : ℕ}
@@ -255,9 +258,10 @@ theorem IsGradedEulerAdmissible.of_iso (h : IsGradedEulerAdmissible.{w} k e X Y)
 /-- The graded Ext dimension in one cohomological degree is invariant under isomorphisms of the
 two objects. -/
 theorem gradedExtDimension_of_iso
-    (h : IsGradedExtInternallyFinite.{w} k e X Y)
-    (h' : IsGradedExtInternallyFinite.{w} k e X' Y') (i : X ≅ X') (j : Y ≅ Y') (n : ℕ) :
-    gradedExtDimension k e h n = gradedExtDimension k e h' n := by
+    {n : ℕ} (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n))
+    (h' : HasFiniteLaurentSupport k (GradedExt.{w} e X' Y' n))
+    (i : X ≅ X') (j : Y ≅ Y') :
+    gradedExtDimension k e h = gradedExtDimension k e h' := by
   apply targetShiftGradedDimension_congr
   intro d
   exact (extLinearEquivOfIso k i ((e ^ d).functor.mapIso j) n).finrank_eq
@@ -270,7 +274,8 @@ theorem truncatedGradedExtEuler_of_iso
     truncatedGradedExtEuler k e h N = truncatedGradedExtEuler k e h' N := by
   apply Finset.sum_congr rfl
   intro n _
-  rw [gradedExtDimension_of_iso k h h' i j n]
+  rw [gradedExtDimension_of_iso k (h.finiteLaurentSupport n)
+    (h'.finiteLaurentSupport n) i j]
 
 /-- The graded Ext-Euler characteristic depends only on the isomorphism classes of the two
 objects. -/
