@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Isomorphisms
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic
 
 /-!
@@ -24,17 +23,17 @@ q(1, 0) = α,   q(0, 1) = β,   q(1, 1) = α + β + γ,   b((1, 0), (0, 1)) = γ
 The construction is a quotient, not a formula in `ZMod.val`: the parameters define an honest
 `ℤ`-bilinear map on `ℤ × ℤ`, its associated quadratic map `(m, k) ↦ m²α + k²β + mkγ` has the
 kernel of the reduction `ℤ × ℤ → (ℤ/2)²` inside its radical exactly under the three torsion
-hypotheses, and `QuadraticMap.lift` descends it.  The torsion hypotheses are therefore not
-technical: `4α = 0` is the statement that `q` is well defined on a two-torsion generator, and
-`2γ = 0` the corresponding statement for the pairing.
+hypotheses, and `QuadraticMap.liftOfSurjective` descends it.  The torsion hypotheses are
+therefore not technical: `4α = 0` is the statement that `q` is well defined on a two-torsion
+generator, and `2γ = 0` the corresponding statement for the pairing.
 
 The companion `TauCeti.FiniteQuadraticModule.kleinFourIsometryOfGenerators` turns an additive
 equivalence `(ℤ/2)² ≃+ A` matching the three displayed values into an isometry onto `A`, which is
 how a discriminant form of order four and exponent two is identified.
 
-The quotient construction is a rank-two adaptation of the private cyclic construction in
-`TauCeti/LinearAlgebra/IntegralLattice/RootLattice/TypeE.lean`; the two can be unified when that
-construction is promoted to shared API.
+The quotient construction is the rank-two adaptation of the cyclic one in
+`TauCeti.LinearAlgebra.FiniteBilinearModule.Cyclic`, which presents a form on `ℤ/m` by the single
+value of its generator.
 
 ## Main declarations
 
@@ -159,19 +158,14 @@ include h₄α h₄β h₂γ
 /-- The quadratic map on `(ℤ/2)²` sending `(1, 0)` to `α`, `(0, 1)` to `β`, and `(1, 1)` to
 `α + β + γ`. -/
 noncomputable def kleinFourMap : QuadraticMap ℤ (ZMod 2 × ZMod 2) (AddCircle (1 : ℚ)) :=
-  ((kleinFourAux α β γ).lift (LinearMap.ker zmodTwoPairProj)
-      (ker_zmodTwoPairProj_le_radical α β γ h₄α h₄β h₂γ)).comp
-    (zmodTwoPairProj.quotKerEquivOfSurjective zmodTwoPairProj_surjective).symm.toLinearMap
+  QuadraticMap.liftOfSurjective (kleinFourAux α β γ) zmodTwoPairProj zmodTwoPairProj_surjective
+    (ker_zmodTwoPairProj_le_radical α β γ h₄α h₄β h₂γ)
 
 /-- The value of `kleinFourMap` on the reduction of a pair of integers. -/
 theorem kleinFourMap_intCast (m k : ℤ) :
     kleinFourMap α β γ h₄α h₄β h₂γ ((m : ZMod 2), (k : ZMod 2)) =
       (m * m) • α + (k * k) • β + (m * k) • γ := by
-  have hsymm :
-      (zmodTwoPairProj.quotKerEquivOfSurjective zmodTwoPairProj_surjective).symm
-          ((m : ZMod 2), (k : ZMod 2)) = Submodule.Quotient.mk (m, k) := by
-    rw [← zmodTwoPairProj_apply m k, LinearMap.quotKerEquivOfSurjective_symm_apply]
-  rw [kleinFourMap, QuadraticMap.comp_apply, LinearEquiv.coe_coe, hsymm, QuadraticMap.lift_mk,
+  rw [kleinFourMap, ← zmodTwoPairProj_apply m k, QuadraticMap.liftOfSurjective_apply,
     kleinFourAux_apply]
 
 @[simp]
@@ -196,14 +190,8 @@ theorem polar_kleinFourMap_one_zero_zero_one :
   abel
 
 /-- **The finite quadratic module on `(ℤ/2)²` with generator values `α`, `β` and `α + β + γ`.** -/
-@[expose] noncomputable def kleinFour : FiniteQuadraticModule where
-  toFiniteBilinearModule := {
-    carrier := ZMod 2 × ZMod 2
-    pairing := LinearMap.toAddMonoidHom'.comp
-      (kleinFourMap α β γ h₄α h₄β h₂γ).polarBilin.toAddMonoidHom
-    pairing_comm := fun x y ↦ QuadraticMap.polar_comm (kleinFourMap α β γ h₄α h₄β h₂γ) x y }
-  quadratic := kleinFourMap α β γ h₄α h₄β h₂γ
-  polar_eq_pairing' := fun _ _ ↦ (rfl)
+@[expose] noncomputable def kleinFour : FiniteQuadraticModule :=
+  ofQuadraticMap (kleinFourMap α β γ h₄α h₄β h₂γ)
 
 @[simp]
 theorem kleinFour_quadratic (x : ZMod 2 × ZMod 2) :

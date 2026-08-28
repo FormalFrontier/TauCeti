@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Semisimple
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Semisimple.Reductive
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Isomorphism
 
 /-!
@@ -59,7 +59,8 @@ variable {k : Type u} [Field k]
 /-- The forgetful functor from semisimple affine group schemes to group schemes. -/
 noncomputable abbrev semisimpleAffineGroupSchemeForget (k : Type u) [Field k] :
     SemisimpleAffineGroupSchemeCat k ⥤ Grp (Over (Spec (CommRingCat.of k))) :=
-  (semisimpleAffineGroupSchemeProperty k).ι ⋙
+  semisimpleToReductiveAffineGroupSchemeFunctor k ⋙
+    (reductiveAffineGroupSchemeProperty k).ι ⋙
     (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
       (affineGroupSchemeProperty (CommRingCat.of k)).ι
 

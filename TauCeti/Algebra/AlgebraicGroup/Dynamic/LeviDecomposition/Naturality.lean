@@ -33,6 +33,10 @@ parabolic, Levi, and unipotent subgroups of `GLₙ`.
   product.
 * `TauCeti.Cocharacter.leviSemidirectFunctor`: the dynamic semidirect product as a group-valued
   functor.
+* `TauCeti.Cocharacter.limitToLeviNatTrans`: the dynamic limit as a natural transformation from
+  the parabolic functor to the Levi functor.
+* `TauCeti.Cocharacter.leviToParabolicNatTrans`: the Levi inclusions as a natural transformation
+  splitting the dynamic limit.
 * `TauCeti.Cocharacter.leviDecompositionNatIso`: the dynamic Levi decomposition as a natural
   isomorphism of group-valued functors.
 
@@ -72,6 +76,22 @@ theorem mapLevi_limitToLevi {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
   apply Subtype.ext
   exact (coe_mapParabolic_apply l φ g).symm
 
+/-- The dynamic limit homomorphisms `P(l)(A) → Z(l)(A)` form a natural transformation in the
+commutative value algebra `A`. -/
+noncomputable def limitToLeviNatTrans : parabolicFunctor l ⟶ leviFunctor l where
+  app A := GrpCat.ofHom (limitToLevi A l)
+  naturality {A B} φ := by
+    apply GrpCat.hom_ext
+    apply MonoidHom.ext
+    intro g
+    exact (mapLevi_limitToLevi l φ g).symm
+
+/-- The component of the dynamic limit natural transformation is the pointwise limit
+homomorphism. -/
+@[simp]
+theorem limitToLeviNatTrans_app (A : CommAlgCat.{w} R) :
+    (limitToLeviNatTrans l).app A = GrpCat.ofHom (limitToLevi A l) := (rfl)
+
 /-- Extension of the value algebra commutes with inclusion of the dynamic unipotent subgroup
 into the dynamic parabolic. -/
 @[simp]
@@ -92,6 +112,28 @@ theorem mapParabolic_leviToParabolic {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
   apply Subtype.ext
   rw [coe_mapParabolic_apply, coe_leviToParabolic_apply,
     coe_leviToParabolic_apply, coe_mapLevi_apply]
+
+/-- The inclusions `Z(l)(A) → P(l)(A)` form a natural transformation in the commutative value
+algebra `A`. -/
+noncomputable def leviToParabolicNatTrans : leviFunctor l ⟶ parabolicFunctor l where
+  app A := GrpCat.ofHom (leviToParabolic A l)
+  naturality {A B} φ := by
+    apply GrpCat.hom_ext
+    apply MonoidHom.ext
+    intro g
+    exact (mapParabolic_leviToParabolic l φ g).symm
+
+/-- The component of the natural Levi inclusion is the pointwise subgroup inclusion. -/
+@[simp]
+theorem leviToParabolicNatTrans_app (A : CommAlgCat.{w} R) :
+    (leviToParabolicNatTrans l).app A = GrpCat.ofHom (leviToParabolic A l) := (rfl)
+
+/-- The natural Levi inclusion is a section of the dynamic limit. -/
+@[simp]
+theorem leviToParabolicNatTrans_comp_limitToLeviNatTrans :
+    leviToParabolicNatTrans l ≫ limitToLeviNatTrans l = 𝟙 (leviFunctor l) := by
+  ext A z
+  exact limitToLevi_leviToParabolic A l z
 
 /-- Extension of the value algebra preserves the conjugation action of the dynamic Levi subgroup
 on the dynamic unipotent subgroup. -/

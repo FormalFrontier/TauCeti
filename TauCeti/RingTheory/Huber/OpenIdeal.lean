@@ -105,6 +105,31 @@ theorem IsTateRing.isOpen_iff_eq_top [IsTateRing A] (J : Ideal A) :
     IsOpen (J : Set A) ↔ J = ⊤ :=
   ⟨IsTateRing.eq_top_of_isOpen, fun h ↦ h.symm ▸ isOpen_univ⟩
 
+/-- **No maximal ideal of a Tate ring is open.** An open ideal is `⊤` and a maximal ideal is
+proper, so the two cannot meet. This is the sharp form: one maximal ideal is enough, and no
+hypothesis about the others is needed. -/
+theorem IsTateRing.not_isOpen_of_isMaximal [IsTateRing A] {𝔪 : Ideal A} (h𝔪 : 𝔪.IsMaximal) :
+    ¬ IsOpen (𝔪 : Set A) :=
+  fun h ↦ h𝔪.ne_top ((IsTateRing.isOpen_iff_eq_top 𝔪).mp h)
+
+/-- **Requiring every maximal ideal to be open forces a Tate ring to be zero**, since a nonzero
+ring has a maximal ideal and `IsTateRing.not_isOpen_of_isMaximal` says that one cannot be open.
+
+Worth naming because that hypothesis is easy to write down and impossible to satisfy. Wedhorn's
+Proposition 7.52(2) carries it, and the statements that inherit it — among them
+`TauCeti.ValuationSpectrum.isUnit_of_forall_not_vle_zero` — are therefore vacuous on exactly the
+affinoid rings they are meant for, since those are Tate.
+
+Note the quantifier is doing real work: over the zero ring there is no maximal ideal, so `hmax`
+holds and the conclusion holds too. Dropping it to a single maximal ideal would give a statement
+whose own hypotheses are contradictory. -/
+theorem IsTateRing.subsingleton_of_forall_isMaximal_isOpen [IsTateRing A]
+    (hmax : ∀ 𝔪 : Ideal A, 𝔪.IsMaximal → IsOpen (𝔪 : Set A)) : Subsingleton A := by
+  rw [← not_nontrivial_iff_subsingleton]
+  intro _
+  obtain ⟨𝔪, h𝔪⟩ := Ideal.exists_maximal A
+  exact IsTateRing.not_isOpen_of_isMaximal h𝔪 (hmax 𝔪 h𝔪)
+
 end Tate
 
 end TauCeti.Huber

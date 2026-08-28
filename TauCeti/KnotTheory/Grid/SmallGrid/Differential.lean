@@ -7,7 +7,6 @@ module
 
 public import TauCeti.KnotTheory.Grid.Complex
 public import TauCeti.KnotTheory.Grid.Differential.Square.Annulus
-import TauCeti.KnotTheory.Grid.Rectangle.Count
 import TauCeti.KnotTheory.Grid.StateCardinality
 
 /-!
@@ -15,15 +14,17 @@ import TauCeti.KnotTheory.Grid.StateCardinality
 
 This file records the small-grid computations for the grid differentials.
 
-For the fully blocked differential the whole differential vanishes. In an `n × n` grid with
-`n ≤ 2`, every open cyclic interval in `Fin n` is empty. Consequently every toroidal rectangle has
-empty interior, so every oriented rectangle is empty and avoids all markings. Between two distinct
-grid states the two oriented rectangles therefore both contribute to the fully blocked count, and
-their total is zero in `ZMod 2`; between a state and itself there are no rectangles.
+For the fully blocked differential the whole differential vanishes. An oriented rectangle needs
+two distinct side columns, so grids of size at most one have no rectangles at all. On a `2 × 2`
+grid, an oriented rectangle covers a single square, and the four markings of the diagram occupy
+all four squares — two `O` markings and two `X` markings on the two diagonals — so every oriented
+rectangle contains a marking and no rectangle is fully blocked. In either case every fully
+blocked count vanishes, hence so does the whole differential.
 
 The cases `n = 0` and `n = 1` already follow from the column-swap support bound. The new content
-here is the size-two cancellation, which is the first nontrivial sanity check for the rectangle
-count defining the fully blocked grid complex.
+here is the size-two computation, which is the first sanity check for the marking-avoidance
+condition defining the fully blocked grid complex: on the `2 × 2` unknot grid every square is
+marked, so the fully blocked theory sees no rectangles at all.
 
 The unblocked differential `∂⁻` need not vanish, but it does square to zero, and on these grids
 the annular case of `Differential/Square/Annulus.lean` settles that on its own. At most two grid
@@ -34,6 +35,8 @@ if the source and the target coincide the term is annular.
 
 ## Main results
 
+* `TauCeti.GridDiagram.fullyBlockedRectangles_eq_empty_of_le_two`: no rectangle is fully
+  blocked in grid size at most two.
 * `TauCeti.GridDiagram.fullyBlockedRectangleCount_eq_zero_of_le_two`: every fully blocked
   rectangle coefficient vanishes in grid size at most two.
 * `TauCeti.GridDiagram.fullyBlockedDifferential_eq_zero_of_le_two`: the fully blocked
@@ -48,7 +51,8 @@ This supplies a prerequisite for
 `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`",
 and for the standing convention that the grid complexes compute on explicit small grids. The
 rectangle-count convention follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and
-Links*, Chapter 3.
+Links*, Chapter 3; the marking-avoidance condition defining the fully blocked complex is in
+Chapter 4, Section 4.4.
 -/
 
 public section
@@ -59,29 +63,40 @@ namespace GridDiagram
 
 variable {n : ℕ} (G : GridDiagram n)
 
-/-- In grid size at most two, the fully blocked rectangles are exactly all oriented rectangles:
-all rectangle interiors are empty, so emptiness and marking avoidance impose no extra condition. -/
-theorem fullyBlockedRectangles_eq_all_of_le_two (hn : n ≤ 2) (x y : GridState n) :
-    G.fullyBlockedRectangles x y = GridRectangleBetween.all x y := by
+/-- In grid size at most two, no oriented rectangle is fully blocked. A rectangle needs two
+distinct side columns and two distinct side rows, so it covers exactly the one square at its
+initial corner; that square holds a point of the source state, and in a column of only two
+squares the two distinct markings of that column leave no unmarked square for it. -/
+theorem fullyBlockedRectangles_eq_empty_of_le_two (hn : n ≤ 2) (x y : GridState n) :
+    G.fullyBlockedRectangles x y = ∅ := by
   ext R
-  rw [mem_fullyBlockedRectangles]
-  constructor
-  · intro _
-    exact GridRectangleBetween.mem_all R
-  · intro _
-    exact ⟨GridRectangleBetween.isEmpty_of_le_two hn R,
-      R.toGridRectangle.avoidsMarkings_of_le_two hn G⟩
+  simp only [mem_fullyBlockedRectangles, Finset.notMem_empty, iff_false, not_and]
+  intro _ havoid
+  have hpair : x R.left = G.O R.left ∨ x R.left = G.X R.left := by
+    by_contra hcon
+    push Not at hcon
+    have hOX : G.O R.left ≠ G.X R.left := G.disjoint R.left
+    have h1 := (G.O R.left).isLt
+    have h2 := (G.X R.left).isLt
+    have h3 := (x R.left).isLt
+    rw [← Fin.val_ne_iff] at hOX
+    obtain ⟨hO, hX⟩ := hcon
+    rw [← Fin.val_ne_iff] at hO hX
+    omega
+  have hsq : (R.left, x R.left) ∈ R.toGridRectangle.squares := by
+    simpa only [GridRectangleBetween.bottom] using R.left_bottom_mem_squares
+  rcases hpair with h | h
+  · exact Finset.disjoint_left.mp (R.disjoint_squares_OSet_of_avoidsMarkings havoid) hsq
+      ((G.mk_mem_OSet R.left (x R.left)).mpr h.symm)
+  · exact Finset.disjoint_left.mp (R.disjoint_squares_XSet_of_avoidsMarkings havoid) hsq
+      ((G.mk_mem_XSet R.left (x R.left)).mpr h.symm)
 
-/-- Every fully blocked rectangle coefficient vanishes in grid size at most two. If there are no
-rectangles the count is zero; otherwise there are exactly two oriented rectangles, which cancel
-over `ZMod 2`. -/
+/-- Every fully blocked rectangle coefficient vanishes in grid size at most two: no rectangle is
+fully blocked. -/
 theorem fullyBlockedRectangleCount_eq_zero_of_le_two (hn : n ≤ 2) (x y : GridState n) :
     G.fullyBlockedRectangleCount x y = 0 := by
-  rw [fullyBlockedRectangleCount_def, G.fullyBlockedRectangles_eq_all_of_le_two hn]
-  rcases (GridRectangleBetween.all x y).eq_empty_or_nonempty with h | h
-  · simp [h]
-  · rw [GridRectangleBetween.card_all_eq_two_of_nonempty h]
-    exact ZMod.natCast_self 2
+  rw [fullyBlockedRectangleCount_def, G.fullyBlockedRectangles_eq_empty_of_le_two hn]
+  simp
 
 /-- Every fully blocked rectangle coefficient vanishes on every `2 × 2` grid. -/
 @[simp]
@@ -107,8 +122,8 @@ theorem fullyBlockedDifferential_eq_zero_of_le_two (hn : n ≤ 2) :
   refine Finsupp.lhom_ext' fun x => LinearMap.ext_ring ?_
   simp [fullyBlockedDifferentialOnGenerator_eq_zero_of_le_two G hn x]
 
-/-- The fully blocked differential is zero on every `2 × 2` grid. This is the first
-nontrivial cancellation sanity check for the rectangle-count definition. -/
+/-- The fully blocked differential is zero on every `2 × 2` grid. This is the first sanity
+check for the marking-avoidance condition: every square of a `2 × 2` grid is marked. -/
 @[simp]
 theorem fullyBlockedDifferential_eq_zero_of_two (G : GridDiagram 2) :
     G.fullyBlockedDifferential =

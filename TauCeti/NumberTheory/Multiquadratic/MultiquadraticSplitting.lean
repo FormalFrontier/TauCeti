@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
 public import TauCeti.NumberTheory.Multiquadratic.Galois.Basic
 public import TauCeti.NumberTheory.NumberField.SplitsCompletely
+import TauCeti.NumberTheory.NumberField.AutomorphismAction
 import TauCeti.RingTheory.Ideal.LiesOver
 import TauCeti.NumberTheory.NumberField.IntegralSqrt
 
@@ -125,18 +126,13 @@ private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K) (hr : r ^ 2 =
   have hfacQ : (R - A) * (R + A) ∈ Q := by
     rw [heq]
     exact (TauCeti.algebraMap_int_mem_iff_dvd_of_liesOver Q _).mpr (dvd_sub_comm.mp hpa)
-  -- `algebraMap` intertwines the Galois action on `𝓞 K` with the one on `K`.
-  have hbridge (x : 𝓞 K) : algebraMap (𝓞 K) K (σ • x) = σ (algebraMap (𝓞 K) K x) := by
-    have hcoe : algebraMap (𝓞 K) K (σ • x) = σ • algebraMap (𝓞 K) K x :=
-      integralClosure.coe_smul σ x
-    rw [hcoe, AlgEquiv.smul_def]
   -- `σ` sends `R ↦ -R` and fixes the integer `A`.
   have hsR : σ • R = - R := by
     apply FaithfulSMul.algebraMap_injective (𝓞 K) K
-    rw [hbridge R, map_neg, algebraMap_integralSqrt, hflip]
+    rw [algebraMap_smul_eq_apply σ R, map_neg, algebraMap_integralSqrt, hflip]
   have hsA : σ • A = A := by
     apply FaithfulSMul.algebraMap_injective (𝓞 K) K
-    rw [hbridge A, hAdef, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K,
+    rw [algebraMap_smul_eq_apply σ A, hAdef, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K,
       IsScalarTower.algebraMap_apply ℤ ℚ K, AlgEquiv.commutes]
   -- Applying `σ` to whichever factor lies in `Q` and adding the two gives `2 A ∈ Q`.
   have hmapQ : ∀ x ∈ Q, σ • x ∈ Q := fun x hx => by

@@ -447,18 +447,28 @@ variable (G : Type uG) [Group G] [TopologicalSpace G]
   (M : Type uM) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] [ContinuousSMul G M]
 
+omit [TopologicalSpace M] [IsTopologicalAddGroup M] [ContinuousSMul G M] in
+/-- The identity coefficient map is equivariant along the inclusion of a subgroup: the
+compatible-pair hypothesis that restriction is the instance of `explicitMap1` at. It is a named
+theorem rather than an inline `rfl` because the type of that `rfl` holds only after the subgroup
+action is unfolded, which blocks rewriting inside any term carrying it. -/
+theorem id_subgroupSubtype_smul (S : Subgroup G) (s : S) (m : M) :
+    (AddMonoidHom.id M) (ContinuousMonoidHom.subgroupSubtype S s • m) =
+      s • (AddMonoidHom.id M) m :=
+  (rfl)
+
 /-- Restriction on explicit `H¹`, induced by the subgroup inclusion and the identity coefficient
 map. -/
 noncomputable def explicitRes1 (S : Subgroup G) : H1 G M →+ H1 S M :=
   explicitMap1 G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
-    continuous_id fun _ _ => rfl
+    continuous_id (id_subgroupSubtype_smul G M S)
 
 /-- Restriction sends the class of a continuous `1`-cocycle to the class of its restriction. -/
 @[simp]
 theorem explicitRes1_mk (S : Subgroup G) (c : Z1 G M) :
     explicitRes1 G M S (c : H1 G M) =
       (cocyclesMap1 G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
-        continuous_id (fun _ _ => rfl) c : H1 S M) :=
+        continuous_id (id_subgroupSubtype_smul G M S) c : H1 S M) :=
   explicitMap1_mk G M S M _ _ _ _ c
 
 /-- Restricting explicit `H¹` first to `S` and then to a subgroup `T` of `S` is restriction
@@ -470,23 +480,23 @@ theorem explicitRes1_comp (S : Subgroup G) (T : Subgroup S) :
           (ContinuousMonoidHom.subgroupSubtype T))
         (AddMonoidHom.id M) continuous_id (fun _ _ => rfl) := by
   exact (explicitMap1_comp G M S M (ContinuousMonoidHom.subgroupSubtype S)
-    (AddMonoidHom.id M) continuous_id (fun _ _ => rfl) T M
+    (AddMonoidHom.id M) continuous_id (id_subgroupSubtype_smul G M S) T M
     (ContinuousMonoidHom.subgroupSubtype T) (AddMonoidHom.id M) continuous_id
-    (fun _ _ => rfl) (fun _ _ => rfl)).symm
+    (id_subgroupSubtype_smul S M T) (fun _ _ => rfl)).symm
 
 /-- Restriction on explicit `H²`, induced by the subgroup inclusion and the identity coefficient
 map. -/
 noncomputable def explicitRes2 (S : Subgroup G) [ContinuousMul G] [ContinuousMul S] :
     H2 G M →+ H2 S M :=
   explicitMap2 G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
-    continuous_id fun _ _ => rfl
+    continuous_id (id_subgroupSubtype_smul G M S)
 
 /-- Restriction sends the class of a continuous `2`-cocycle to the class of its restriction. -/
 @[simp]
 theorem explicitRes2_mk (S : Subgroup G) [ContinuousMul G] [ContinuousMul S] (c : Z2 G M) :
     explicitRes2 G M S (c : H2 G M) =
       (cocyclesMap2 G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
-        continuous_id (fun _ _ => rfl) c : H2 S M) :=
+        continuous_id (id_subgroupSubtype_smul G M S) c : H2 S M) :=
   explicitMap2_mk G M S M _ _ _ _ c
 
 /-- Restricting explicit `H²` first to `S` and then to a subgroup `T` of `S` is restriction
@@ -499,9 +509,9 @@ theorem explicitRes2_comp (S : Subgroup G) (T : Subgroup S)
           (ContinuousMonoidHom.subgroupSubtype T))
         (AddMonoidHom.id M) continuous_id (fun _ _ => rfl) := by
   exact (explicitMap2_comp G M S M (ContinuousMonoidHom.subgroupSubtype S)
-    (AddMonoidHom.id M) continuous_id (fun _ _ => rfl) T M
+    (AddMonoidHom.id M) continuous_id (id_subgroupSubtype_smul G M S) T M
     (ContinuousMonoidHom.subgroupSubtype T) (AddMonoidHom.id M) continuous_id
-    (fun _ _ => rfl)).symm
+    (id_subgroupSubtype_smul S M T)).symm
 
 /-- The coefficient map on explicit `H¹` induced by a continuous equivariant additive
 homomorphism. -/
