@@ -10,7 +10,6 @@ import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
-import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
 import TauCeti.Analysis.Contour.Winding.Separation
 import TauCeti.Topology.MetricSpace.Cut
@@ -96,40 +95,40 @@ private theorem hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
 
 /-- **The transversal segment through a point of the image crosscut.** For small negative `t` the
 segment lies in the image of the near side, and for small positive `t` in the far side. -/
-theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall
-    (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ) (hρ : 0 < ρ) :
+theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall {U : Set ℂ}
+    (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U)
+    (hz₀ : z₀ ∈ U ∩ sphere ζ ρ) (hρ : 0 < ρ) :
     ∃ η : ℝ, 0 < η ∧
       (∀ t : ℝ, t ∈ Ioo (-η) 0 →
-        deriv f z₀ * (z₀ - ζ) * (t : ℂ) + f z₀ ∈ f '' (ball c r ∩ ball ζ ρ)) ∧
+        deriv f z₀ * (z₀ - ζ) * (t : ℂ) + f z₀ ∈ f '' (U ∩ ball ζ ρ)) ∧
       ∀ t : ℝ, t ∈ Ioo 0 η →
-        deriv f z₀ * (z₀ - ζ) * (t : ℂ) + f z₀ ∈ f '' (ball c r \ closedBall ζ ρ) := by
+        deriv f z₀ * (z₀ - ζ) * (t : ℂ) + f z₀ ∈ f '' (U \ closedBall ζ ρ) := by
   obtain ⟨hz₀b, hz₀s⟩ := hz₀
-  have hΩ : IsOpen (f '' ball c r) := isOpen_image_of_differentiableOn_of_injOn isOpen_ball hf hinj
-  have hp : f z₀ ∈ f '' ball c r := mem_image_of_mem f hz₀b
-  set g := Function.invFunOn f (ball c r) with hg_def
-  have hg : DifferentiableOn ℂ g (f '' ball c r) :=
-    TauCeti.DifferentiableOn.invFunOn hf isOpen_ball hinj
-  have hgf : ∀ z ∈ ball c r, g (f z) = z := fun z hz => hinj.leftInvOn_invFunOn hz
-  have hfg : ∀ w ∈ f '' ball c r, f (g w) = w := fun w hw => Function.invFunOn_eq hw
-  have hgmem : ∀ w ∈ f '' ball c r, g w ∈ ball c r := fun w hw => Function.invFunOn_mem hw
+  have hΩ : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hU hf hinj
+  have hp : f z₀ ∈ f '' U := mem_image_of_mem f hz₀b
+  set g := Function.invFunOn f U with hg_def
+  have hg : DifferentiableOn ℂ g (f '' U) :=
+    TauCeti.DifferentiableOn.invFunOn hf hU hinj
+  have hgf : ∀ z ∈ U, g (f z) = z := fun z hz => hinj.leftInvOn_invFunOn hz
+  have hfg : ∀ w ∈ f '' U, f (g w) = w := fun w hw => Function.invFunOn_eq hw
+  have hgmem : ∀ w ∈ f '' U, g w ∈ U := fun w hw => Function.invFunOn_mem hw
   have hd0 : deriv f z₀ ≠ 0 :=
-    hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀b
+    hf.deriv_ne_zero_of_injOn hU hinj hz₀b
   have hzζ : z₀ - ζ ≠ 0 := sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀s hρ.ne')
   set v := deriv f z₀ * (z₀ - ζ) with hv_def
   have hv : v ≠ 0 := mul_ne_zero hd0 hzζ
   -- the pulled-back segment has velocity `z₀ - ζ` at `t = 0`
   have hφ : HasDerivAt (fun t : ℝ => g (v * t + f z₀)) (z₀ - ζ) 0 :=
-    hasDerivAt_invFunOn_comp_segment hf isOpen_ball hinj hz₀b (z₀ - ζ)
+    hasDerivAt_invFunOn_comp_segment hf hU hinj hz₀b (z₀ - ζ)
   have hφ0 : g (v * ((0 : ℝ) : ℂ) + f z₀) = z₀ := by simp [hgf z₀ hz₀b]
   -- the little-`o` estimate at `t = 0`, and the segment staying in the image domain
   have hev : ∀ᶠ t : ℝ in 𝓝 0,
       ‖g (v * t + f z₀) - g (v * ((0 : ℝ) : ℂ) + f z₀) - (t - 0) • (z₀ - ζ)‖ ≤
         ρ / 2 * ‖t - 0‖ :=
     (hasDerivAt_iff_isLittleO.mp hφ).def (by positivity)
-  have hΩev : ∀ᶠ t : ℝ in 𝓝 0, v * t + f z₀ ∈ f '' ball c r := by
+  have hΩev : ∀ᶠ t : ℝ in 𝓝 0, v * t + f z₀ ∈ f '' U := by
     have hcont : Continuous fun t : ℝ => v * (t : ℂ) + f z₀ := by fun_prop
-    have h0 : (fun t : ℝ => v * (t : ℂ) + f z₀) 0 ∈ f '' ball c r := by simpa using hp
+    have h0 : (fun t : ℝ => v * (t : ℂ) + f z₀) 0 ∈ f '' U := by simpa using hp
     exact hcont.continuousAt.preimage_mem_nhds (hΩ.mem_nhds h0)
   obtain ⟨η, hη, hηball⟩ := Metric.eventually_nhds_iff.mp (hev.and hΩev)
   have hnorm : ‖z₀ - ζ‖ = ρ := by rwa [← dist_eq_norm, ← mem_sphere]
@@ -184,20 +183,20 @@ theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall
 
 /-- **The image crosscut is adherent from both sides of the transversal segment.** In the
 transversal coordinate the crosscut has velocity `i` at the crossing point. -/
-theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
-    (hf : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ) (hρ : 0 < ρ) :
-    f z₀ ∈ closure (f '' (ball c r ∩ sphere ζ ρ) ∩
+theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg {U : Set ℂ}
+    (hf : DifferentiableOn ℂ f U) (hU : IsOpen U)
+    (hinj : InjOn f U) (hz₀ : z₀ ∈ U ∩ sphere ζ ρ) (hρ : 0 < ρ) :
+    f z₀ ∈ closure (f '' (U ∩ sphere ζ ρ) ∩
         {q | 0 < ((q - f z₀) / (deriv f z₀ * (z₀ - ζ))).im}) ∧
-    f z₀ ∈ closure (f '' (ball c r ∩ sphere ζ ρ) ∩
+    f z₀ ∈ closure (f '' (U ∩ sphere ζ ρ) ∩
         {q | ((q - f z₀) / (deriv f z₀ * (z₀ - ζ))).im < 0}) := by
   obtain ⟨hz₀b, hz₀s⟩ := hz₀
   have hd0 : deriv f z₀ ≠ 0 :=
-    hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀b
+    hf.deriv_ne_zero_of_injOn hU hinj hz₀b
   have hzζ : z₀ - ζ ≠ 0 := sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀s hρ.ne')
   set v := deriv f z₀ * (z₀ - ζ) with hv_def
   have hfz : HasDerivAt f (deriv f z₀) z₀ :=
-    (hf.differentiableAt (isOpen_ball.mem_nhds hz₀b)).hasDerivAt
+    (hf.differentiableAt (hU.mem_nhds hz₀b)).hasDerivAt
   obtain ⟨θ₀, -, hθ₀⟩ := exists_mem_Icc_circleMap_eq 0 hz₀s
   rw [zero_add] at hθ₀
   -- the imaginary coordinate of the crosscut, as a function of the angle
@@ -237,20 +236,20 @@ theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
   have hcirc : Continuous fun t : ℝ => circleMap ζ ρ (θ₀ + t) :=
     (continuous_circleMap ζ ρ).comp (continuous_const.add continuous_id)
   have hcirc0 : circleMap ζ ρ (θ₀ + 0) = z₀ := by rw [add_zero, hθ₀]
-  have hball : ∀ᶠ t in 𝓝 (0 : ℝ), circleMap ζ ρ (θ₀ + t) ∈ ball c r := by
+  have hball : ∀ᶠ t in 𝓝 (0 : ℝ), circleMap ζ ρ (θ₀ + t) ∈ U := by
     refine hcirc.continuousAt.preimage_mem_nhds ?_
     rw [hcirc0]
-    exact isOpen_ball.mem_nhds hz₀b
+    exact hU.mem_nhds hz₀b
   have hclose : ∀ ε > 0, ∀ᶠ t in 𝓝 (0 : ℝ),
       dist (f (circleMap ζ ρ (θ₀ + t))) (f z₀) < ε := by
     intro ε hε
     have hfc : ContinuousAt (fun t : ℝ => f (circleMap ζ ρ (θ₀ + t))) 0 :=
-      (hf.continuousOn.continuousAt (isOpen_ball.mem_nhds hz₀b)).comp_of_eq
+      (hf.continuousOn.continuousAt (hU.mem_nhds hz₀b)).comp_of_eq
         hcirc.continuousAt hcirc0
     have := hfc.eventually (Metric.ball_mem_nhds _ hε)
     simpa [hθ₀] using this
-  have hmemγ : ∀ t : ℝ, circleMap ζ ρ (θ₀ + t) ∈ ball c r →
-      f (circleMap ζ ρ (θ₀ + t)) ∈ f '' (ball c r ∩ sphere ζ ρ) := fun t ht =>
+  have hmemγ : ∀ t : ℝ, circleMap ζ ρ (θ₀ + t) ∈ U →
+      f (circleMap ζ ρ (θ₀ + t)) ∈ f '' (U ∩ sphere ζ ρ) := fun t ht =>
     mem_image_of_mem f ⟨ht, circleMap_mem_sphere ζ hρ.le _⟩
   constructor
   · rw [Metric.mem_closure_iff]
@@ -289,9 +288,9 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
     mul_ne_zero (hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀.1)
       (sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀.2 hρ.ne'))
   obtain ⟨η, hη, hnear, hfar⟩ :=
-    exists_mem_image_inter_ball_and_image_sdiff_closedBall hf hinj hz₀ hρ
+    exists_mem_image_inter_ball_and_image_sdiff_closedBall hf isOpen_ball hinj hz₀ hρ
   obtain ⟨hleft, hright⟩ :=
-    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg hf hinj hz₀ hρ
+    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg hf isOpen_ball hinj hz₀ hρ
   -- neither image piece meets `K`
   have hnearK : Disjoint (f '' (ball c r ∩ ball ζ ρ)) K :=
     disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
