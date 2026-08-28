@@ -25,8 +25,8 @@ range of the squaring homomorphism has index at most `2 ^ S.card`.
 
 ## Main results
 
-* `TauCeti.mk_eq_one_iff_exists_pow`: the class of a unit in `Mˣ ⧸ (Mˣ)ⁿ` is trivial iff the unit
-  is an `n`th power in `M`.
+* `TauCeti.powMonoidHom_range_mk_eq_one_iff_exists_pow`: the class of a unit in `Mˣ ⧸ (Mˣ)ⁿ` is
+  trivial iff the unit is an `n`th power in `M`.
 * `TauCeti.square_eq_powMonoidHom_two_range`: `G²` is the range of the squaring homomorphism.
 * `TauCeti.index_square_le_of_closure_eq_top`: `[G : G²] ≤ 2 ^ S.card`.
 
@@ -36,7 +36,8 @@ The index argument is migrated from
 [kim-em/erdos-unit-distance](https://github.com/kim-em/erdos-unit-distance), where it was an
 abstract step towards bounding the index of squares in the unit group of a number field.
 
-`mk_eq_one_iff_exists_pow` generalises the `2`-descent's square-class criterion, which it replaces:
+`powMonoidHom_range_mk_eq_one_iff_exists_pow` generalises the `2`-descent's square-class
+criterion, which it replaces:
 that was stated only for the étale algebra of an elliptic curve, as
 `WeierstrassCurve.Affine.M.mk_eq_one_iff` in `MordellWeil/XSubT.lean`. The argument is Michael
 Stoll's, from `EllipticCurves/Mathlib/Basic.lean` lines 93-99 and 145-147
@@ -53,7 +54,7 @@ namespace TauCeti
 `M`.** Triviality of the class means `u = v ^ n` for a *unit* `v`, and the useful form asks only
 for a root `z : M`; the two agree because an `n`th root of a unit is a unit once `n ≠ 0`, and at
 `n = 0` both sides say `u = 1`. No hypothesis on `n` is needed, although the proof splits on it. -/
-theorem mk_eq_one_iff_exists_pow {M : Type*} [CommMonoid M] (n : ℕ) (u : Mˣ) :
+theorem powMonoidHom_range_mk_eq_one_iff_exists_pow {M : Type*} [CommMonoid M] (n : ℕ) (u : Mˣ) :
     (u : Mˣ ⧸ (powMonoidHom n : Mˣ →* Mˣ).range) = 1 ↔ ∃ z : M, z ^ n = u := by
   rw [QuotientGroup.eq_one_iff]
   simp only [MonoidHom.mem_range, powMonoidHom_apply]

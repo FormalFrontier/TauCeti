@@ -7,6 +7,9 @@ module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Construct
 public import TauCeti.Probability.Exchangeability.JointPathLaw
+-- Non-public: mixing-law uniqueness is used only inside the proof of
+-- `ConditionallyIIDWith.jointPathLaw_eq_of_pathLaw_eq`.
+import TauCeti.Probability.Exchangeability.MixedIID.Mixture
 import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
@@ -19,6 +22,8 @@ measure together with the entire process is the disintegration `∫ δ_{ν ω} �
 ## Main results
 
 * `TauCeti.Probability.ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw`
+* `TauCeti.Probability.ConditionallyIIDWith.jointPathLaw_eq_of_pathLaw_eq` — the joint law depends
+  on the process only through its path law.
 
 ## Implementation
 
@@ -107,6 +112,27 @@ theorem ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw [IsFiniteMeasure μ]
   rw [← hF, TauCeti.MeasureTheory.bind_map h.measurable_directing.aemeasurable
     hker.aemeasurable]
   rfl
+
+/-- **The joint law of a directing measure and a path is a function of the path law.** Two
+conditionally i.i.d. processes with the same path law — on possibly different sample spaces — have
+directing measures jointly distributed with the path in the same way.
+
+This is the conditional-side companion of `mixedIID_mixingLaw_eq_of_pathLaw_eq`, and is strictly
+stronger than it: the mixing law is the first marginal of the joint law. It fails for a mere
+mixing representative, whose coupling with the path is not determined — an independent copy of a
+directing measure witnesses `MixedIIDWith` with a different joint law.
+
+The proof is the full-path disintegration read twice: each joint law is the canonical two-stage
+law `iidMixtureLaw` of its mixing law, and equal path laws give equal mixing laws. -/
+theorem ConditionallyIIDWith.jointPathLaw_eq_of_pathLaw_eq {Ω' : Type*} [MeasurableSpace Ω']
+    [IsFiniteMeasure μ] {μ' : Measure Ω'} [IsFiniteMeasure μ'] {Y : ℕ → Ω' → α}
+    {ν' : Ω' → ProbabilityMeasure α}
+    (h : ConditionallyIIDWith μ X ν) (h' : ConditionallyIIDWith μ' Y ν')
+    (hpath : pathLaw μ X = pathLaw μ' Y) :
+    jointPathLaw μ X ν = jointPathLaw μ' Y ν' := by
+  rw [h.jointPathLaw_eq_iidMixtureLaw, h'.jointPathLaw_eq_iidMixtureLaw,
+    mixedIID_mixingLaw_eq_of_pathLaw_eq (mixedIIDWith_of_conditionallyIIDWith h)
+      (mixedIIDWith_of_conditionallyIIDWith h') hpath]
 
 end Probability
 

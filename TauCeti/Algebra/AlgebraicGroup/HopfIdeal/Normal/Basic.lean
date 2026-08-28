@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Conjugation
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
-public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Comap
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Map
 
 /-!
 # Normal Hopf ideals
@@ -36,6 +36,7 @@ cut out by `J`, namely its normal closure.
 * `TauCeti.HopfIdeal.isNormal_bot`: the zero Hopf ideal is normal.
 * `TauCeti.HopfIdeal.isNormal_iSup`: arbitrary suprema of normal Hopf ideals are normal.
 * `TauCeti.HopfIdeal.normalCore`: the largest normal Hopf ideal below a given Hopf ideal.
+* `TauCeti.HopfIdeal.IsNormal.map`: normality is preserved by the image of a Hopf ideal.
 * `TauCeti.HopfIdeal.IsNormal.comapOfSurjective_of_bijective`: normality is preserved by
   pullback along a bijective bialgebra morphism.
 * `TauCeti.CommHopfAlgCat.quotientPointsSubgroup_normal`: a normal Hopf ideal cuts out a normal
@@ -89,6 +90,35 @@ theorem IsNormal.conjugation_mem {I : HopfIdeal R H} (hI : I.IsNormal) {x : H} (
     HopfAlgebra.conjugationAlgHom (R := R) (H := H) x ∈
       rightTensorIdeal (R := R) (H := H) I.toIdeal :=
   (isNormal_iff_conjugation_mem I).mp hI hx
+
+/-- The image of a normal Hopf ideal under a morphism of commutative Hopf algebras is normal.
+
+Contravariantly, pulling a normal closed subgroup back along a morphism of affine group schemes
+again gives a normal closed subgroup. -/
+theorem IsNormal.map {K : Type w} [CommSemiring K] [HopfAlgebra R K]
+    {I : HopfIdeal R H} (hI : I.IsNormal) (f : H →ₐc[R] K) :
+    (I.map f).IsNormal := by
+  rw [isNormal_def, map_toIdeal, Ideal.map_map]
+  have hmap : f.toAlgHom.toRingHom = (f : H →+* K) := by
+    ext
+    rfl
+  rw [← hmap, ← map_tensor_rightTensorIdeal f.toAlgHom I.toIdeal]
+  rw [Ideal.map_le_iff_le_comap]
+  intro x hx
+  rw [Ideal.mem_comap]
+  have hnatural := AlgHom.congr_fun
+    (HopfAlgebra.tensorProduct_map_comp_conjugationAlgHom f) x
+  rw [AlgHom.comp_apply, AlgHom.comp_apply] at hnatural
+  have hnatural' :
+      (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom).toRingHom
+          (HopfAlgebra.conjugationAlgHom (R := R) (H := H) x) =
+        HopfAlgebra.conjugationAlgHom (R := R) (H := K) (f x) :=
+    hnatural
+  have himage := Ideal.mem_map_of_mem
+    (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom).toRingHom
+    (hI.conjugation_mem (mem_toIdeal.mp hx))
+  rw [hnatural'] at himage
+  exact himage
 
 /-- The zero Hopf ideal cuts out the whole affine group, hence is normal. -/
 @[simp]

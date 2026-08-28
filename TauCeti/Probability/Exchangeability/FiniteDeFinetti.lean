@@ -32,7 +32,7 @@ eventwise rather than packaged in a new total-variation definition.
 
 ## Main declarations
 
-* `TauCeti.Probability.empiricalPopulation`: the empirical probability measure of a nonempty
+* `TauCeti.Probability.empiricalMeasureOfFintype`: the empirical probability measure of a nonempty
   finite population;
 * `TauCeti.Probability.sampleWithReplacement`: the mixture of finite powers of those empirical
   measures;
@@ -71,11 +71,11 @@ variable {ι : Type*} [Fintype ι]
 
 /-- Independently sampling from a finite empirical population is the same as choosing a uniform
 map into the population and reading the selected entries. -/
-theorem pi_empiricalPopulation_eq_map_uniformOn (x : κ → α) :
-    (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure =
+theorem pi_empiricalMeasureOfFintype_eq_map_uniformOn (x : κ → α) :
+    (ProbabilityMeasure.pi fun _ : ι => empiricalMeasureOfFintype x).toMeasure =
       (uniformOn (Set.univ : Set (ι → κ))).map fun k i => x (k i) := by
   rw [ProbabilityMeasure.toMeasure_pi]
-  simp_rw [empiricalPopulation_eq_map_uniformOn]
+  simp_rw [empiricalMeasureOfFintype_eq_map_uniformOn]
   rw [← Measure.pi_map_pi fun _ : ι => (measurable_of_countable x).aemeasurable]
   rw [← uniformOn_pi (f := fun _ : ι => (Set.univ : Set κ))]
   congr 2
@@ -92,29 +92,30 @@ variable {ι κ : Type*} [Fintype ι] [Fintype κ] [Nonempty κ]
 For a population law `ρ`, this is the `ρ`-mixture of the `ι`-fold product of each population's
 empirical probability measure. -/
 def sampleWithReplacement (ρ : Measure (κ → α)) : Measure (ι → α) :=
-  ρ.bind fun x => (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure
+  ρ.bind fun x => (ProbabilityMeasure.pi fun _ : ι => empiricalMeasureOfFintype x).toMeasure
 
 /-- The product-measure mixture defining sampling with replacement is a measurable kernel. -/
-private theorem aemeasurable_pi_empiricalPopulation (ρ : Measure (κ → α)) :
+private theorem aemeasurable_pi_empiricalMeasureOfFintype (ρ : Measure (κ → α)) :
     AEMeasurable
-      (fun x => (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure) ρ :=
+      (fun x => (ProbabilityMeasure.pi fun _ : ι => empiricalMeasureOfFintype x).toMeasure) ρ :=
   (TauCeti.MeasureTheory.measurable_probabilityMeasure_pi_toMeasure
-      (fun _ : ι => empiricalPopulation) (fun _ => measurable_empiricalPopulation)).aemeasurable
+      (fun _ : ι => empiricalMeasureOfFintype)
+      (fun _ => measurable_empiricalMeasureOfFintype)).aemeasurable
 
 /-- Sampling with replacement from a random population preserves probability mass. -/
 theorem isProbabilityMeasure_sampleWithReplacement (ρ : Measure (κ → α))
     [IsProbabilityMeasure ρ] :
     IsProbabilityMeasure (sampleWithReplacement (ι := ι) ρ) :=
   isProbabilityMeasure_bind
-    (aemeasurable_pi_empiricalPopulation (ι := ι) (κ := κ) (α := α) ρ)
+    (aemeasurable_pi_empiricalMeasureOfFintype (ι := ι) (κ := κ) (α := α) ρ)
     (.of_forall fun _ => inferInstance)
 
 /-- Evaluation of the with-replacement law as an average over the random finite population. -/
 theorem sampleWithReplacement_apply {ρ : Measure (κ → α)} {A : Set (ι → α)}
     (hA : MeasurableSet A) :
     sampleWithReplacement ρ A =
-      ∫⁻ x, (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure A ∂ρ :=
-  Measure.bind_apply hA (aemeasurable_pi_empiricalPopulation ρ)
+      ∫⁻ x, (ProbabilityMeasure.pi fun _ : ι => empiricalMeasureOfFintype x).toMeasure A ∂ρ :=
+  Measure.bind_apply hA (aemeasurable_pi_empiricalMeasureOfFintype ρ)
 
 section DiscretePopulation
 
@@ -127,20 +128,20 @@ theorem sampleWithReplacement_eq_map_prod (ρ : Measure (κ → α)) [SFinite ρ
       ((uniformOn (Set.univ : Set (ι → κ))).prod ρ).map
         fun p i => p.2 (p.1 i) := by
   apply Measure.ext fun A hA => ?_
-  rw [sampleWithReplacement, Measure.bind_apply hA (aemeasurable_pi_empiricalPopulation ρ)]
+  rw [sampleWithReplacement, Measure.bind_apply hA (aemeasurable_pi_empiricalMeasureOfFintype ρ)]
   rw [Measure.map_apply measurable_reindexPopulation hA]
   rw [Measure.prod_apply_symm (measurable_reindexPopulation hA)]
   apply lintegral_congr
   intro x
   -- Expose the fixed-population section of the joint preimage so `Measure.map_apply` matches it.
-  change (ProbabilityMeasure.pi fun _ : ι => empiricalPopulation x).toMeasure A =
+  change (ProbabilityMeasure.pi fun _ : ι => empiricalMeasureOfFintype x).toMeasure A =
     uniformOn (Set.univ : Set (ι → κ)) ((fun k i => x (k i)) ⁻¹' A)
   rw [← Measure.map_apply
       (μ := uniformOn (Set.univ : Set (ι → κ)))
       (f := fun k i => x (k i))
       (measurable_pi_lambda _ fun i =>
         (measurable_of_countable x).comp (measurable_pi_apply i)) hA,
-    ← pi_empiricalPopulation_eq_map_uniformOn]
+    ← pi_empiricalMeasureOfFintype_eq_map_uniformOn]
 
 omit [Nonempty κ] [Fintype ι] [Fintype κ] in
 /-- Evaluation of the without-replacement law by conditioning first on the population. -/

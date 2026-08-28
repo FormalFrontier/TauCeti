@@ -225,29 +225,10 @@ theorem exists_nonempty_prod_narrowMk0_eq_one (hmin : minpoly ℤ θ = X ^ 2 - C
       exact hA ⟨1, Or.inl (isTotallyPositive_iff.mpr fun w hw =>
         absurd hw (InfinitePlace.not_isReal_iff_isComplex.mpr (IsTotallyComplex.isComplex w)))⟩
     have hnormone : ∀ u : (𝓞 K)ˣ,
-        (u : 𝓞 K) * ringOfIntegersQuadraticConj hmin hgen (u : 𝓞 K) = 1 := by
-      intro u
-      rcases mul_ringOfIntegersQuadraticConj_unit_eq_one_or_neg_one hmin hgen u with h | h
-      · exact h
-      · refine absurd ⟨u, ?_⟩ hA
-        -- With `u σu = -1`, the ratio `θu / σ(θu)` is the square `u²`.
-        have huK : ((u : 𝓞 K) : K) ≠ 0 := RingOfIntegers.coe_ne_zero_iff.mpr u.ne_zero
-        have hu' : ((u : 𝓞 K) : K) * quadraticConj hmin hgen ((u : 𝓞 K) : K) = -1 := by
-          simpa [coe_ringOfIntegersQuadraticConj] using congrArg (fun x : 𝓞 K => (x : K)) h
-        have hcjK : quadraticConj hmin hgen ((θ * (u : 𝓞 K) : 𝓞 K) : K) =
-            -(θ : K) * quadraticConj hmin hgen ((u : 𝓞 K) : K) := by
-          push_cast
-          rw [map_mul, quadraticConj_gen hmin hgen]
-        have hcjne : quadraticConj hmin hgen ((u : 𝓞 K) : K) ≠ 0 := fun h0 => by
-          rw [h0, mul_zero] at hu'
-          exact zero_ne_one (neg_eq_zero.mp hu'.symm).symm
-        have hdiv : ((θ * (u : 𝓞 K) : 𝓞 K) : K) /
-            quadraticConj hmin hgen ((θ * (u : 𝓞 K) : 𝓞 K) : K) = ((u : 𝓞 K) : K) ^ 2 := by
-          rw [hcjK, div_eq_iff (by simp [hθK, hcjne])]
-          push_cast
-          linear_combination ((θ : K) * ((u : 𝓞 K) : K)) * hu'
-        exact isTotallyPositive_or_isTotallyPositive_neg_of_isTotallyPositive_div_quadraticConj
-          hmin hgen (by rw [hdiv]; exact isTotallyPositive_sq huK)
+        (u : 𝓞 K) * ringOfIntegersQuadraticConj hmin hgen (u : 𝓞 K) = 1 := fun u =>
+      (mul_ringOfIntegersQuadraticConj_unit_eq_one_or_neg_one hmin hgen u).resolve_right
+        fun h => hA ⟨u, isTotallyPositive_or_neg_of_mul_ringOfIntegersQuadraticConj_eq_neg_one
+          hmin hgen h⟩
     obtain ⟨ε, hεpos, hεsq⟩ := exists_isTotallyPositive_notMem_square hmin hgen hcomplex hnormone
     refine exists_nonempty_prod_narrowMk0_eq_one_of_unit hmin hgen hprime hover hεpos fun v hv =>
       hεsq ?_

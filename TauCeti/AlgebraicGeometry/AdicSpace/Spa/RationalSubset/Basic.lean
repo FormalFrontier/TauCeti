@@ -7,6 +7,7 @@ module
 
 import TauCeti.RingTheory.Valuation.CofinalIdeal.Greatest
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Basic
+public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.Points
 
 /-!
 # Rational subsets of the adic spectrum
@@ -76,6 +77,9 @@ layer deferred above.
   relatively open in the subspace `spa A⁺`.
 * `TauCeti.ValuationSpectrum.rationalSubset_inter` : the intersection identity above — the
   set-level half of Remark 7.30(5).
+* `TauCeti.ValuationSpectrum.rationalSubset_eq_biInter_singleton` : over a nonempty `T`, a
+  rational subset is the intersection of its one-numerator pieces `R({t}/s)`, the decomposition
+  a refinement to a standard rational cover consumes.
 * `TauCeti.ValuationSpectrum.exists_refinement_of_subset` : the re-presentation step of Wedhorn
   §8.2 — from `R(T'/s') ⊆ R(T/s)`, a presentation `R(T''/(s · s'))` of the smaller subset whose
   denominator has each original denominator as a factor and whose numerators contain `t · s'` for
@@ -85,6 +89,11 @@ layer deferred above.
 * `TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_span_eq_top` : a finite set
   generating the unit ideal gives a standard rational cover, the forward implication of
   Corollary 7.53.
+* `TauCeti.ValuationSpectrum.span_eq_top_iff_forall_mem_spa_exists_not_vle_zero` : Corollary 7.53
+  in pointwise form — `T` generates the unit ideal exactly when no point vanishes on all of it.
+* `TauCeti.ValuationSpectrum.span_eq_top_iff_spa_eq_biUnion_rationalSubset` : Corollary 7.53 as
+  the roadmap states it — generating the unit ideal is equivalent to the standard family being a
+  cover. Only the `←` directions need the maximal ideals of `A` to be open.
 
 ## References
 
@@ -98,8 +107,18 @@ layer deferred above.
   intersection identity conditioned on each denominator lying in its numerator set and the
   same insert-absorption discharging that condition. Here the rational subset is instead the
   trace of the merged `Spv A`-level `basicOpenFinset`, so the identities are inherited from
-  `basicOpenFinset_insert_self` and `basicOpenFinset_inter` rather than reproved; nothing was
-  copied.
+  `basicOpenFinset_insert_self` and `basicOpenFinset_inter` rather than reproved; no proof code
+  is taken from that file.
+* `rationalSubset_eq_biInter_singleton` is adapted from a *different* AINTLIB file and revision:
+  commit `37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`,
+  `projects/AdicSpaces/Adic spaces/LaurentRefinementCore.lean`, theorem
+  `rationalOpen_eq_iInter_singleton` (line 48). The statement is restated for this repository's
+  API — that development spells the object `rationalOpen`, takes `A⁺` from a `[PlusSubring A]`
+  instance and carries the `spa` conjunct inline, whereas `rationalSubset` takes
+  `(Aplus : Subring A)` explicitly and cuts inside `spa Aplus` — but the *proof* follows the
+  source closely: the same `ext`/`constructor` split, the same three-part destructuring, and the
+  same use of a witness from `hT` to transport the two `t`-independent conditions. Only the
+  unfolding step differs, `mem_rationalSubset_iff` here against `rationalOpen` there.
 -/
 
 public section
@@ -250,6 +269,32 @@ theorem rationalSubset_inter (Aplus : Subring A) (T₁ T₂ : Finset A) (s₁ s�
   rw [rationalSubset_def, rationalSubset_def, rationalSubset_def, ← basicOpenFinset_inter]
   exact (Set.inter_inter_distrib_left _ _ _).symm
 
+/-- **A rational subset is the intersection of its one-numerator pieces**:
+`R(T/s) = ⋂ t ∈ T, R({t}/s)` for nonempty `T`. This is the finite-family companion of
+`rationalSubset_inter`, and it unfolds directly from Definition 7.29 — a point dominates every
+numerator by `s` exactly when it dominates each one separately. It is the decomposition that a
+refinement to a *standard* rational cover consumes.
+
+Nonemptiness of `T` cannot be dropped. Each `R({t}/s)` carries the ambient `spa A⁺` condition and
+the requirement that the denominator be off the support, alongside its own numerator condition, so
+some member of the family is what transports those two to the left-hand side. For `T = ∅` the
+left-hand side is still cut out inside `spa A⁺` while the empty intersection is everything, so the
+two sides need not agree. (They can still coincide: if `Spv A` is empty — as it is over the zero
+ring — both sides are empty.)
+
+Deliberately not `@[simp]`: the right-hand side is again a rational subset over a singleton, which
+matches the left-hand pattern, so the rewrite re-fires on each factor instead of terminating. -/
+theorem rationalSubset_eq_biInter_singleton (Aplus : Subring A) (T : Finset A) (hT : T.Nonempty)
+    (s : A) : rationalSubset Aplus T s = ⋂ t ∈ T, rationalSubset Aplus {t} s := by
+  ext v
+  simp only [Set.mem_iInter, mem_rationalSubset_iff, Finset.mem_singleton, forall_eq]
+  constructor
+  · rintro ⟨hv, hvT, hvs⟩ t ht
+    exact ⟨hv, hvT t ht, hvs⟩
+  · intro h
+    obtain ⟨t₀, ht₀⟩ := hT
+    exact ⟨(h t₀ ht₀).1, fun t ht => (h t ht).2.1, (h t₀ ht₀).2.2⟩
+
 /-! ### Re-presenting a contained rational subset -/
 
 open scoped Classical Pointwise in
@@ -307,6 +352,38 @@ theorem spa_eq_biUnion_rationalSubset_of_span_eq_top (Aplus : Subring A) {T : Fi
     obtain ⟨s, hs, hmem⟩ := mem_rationalSubset_of_span_eq_top_of_mem_spa Aplus hT hv
     exact Set.mem_iUnion₂_of_mem hs hmem
   · exact Set.iUnion₂_subset fun t _ ↦ rationalSubset_subset_spa Aplus T t
+
+/-- **Wedhorn Corollary 7.53.** A finite set `T` generates the unit ideal exactly when no point
+of `Spa(A, A⁺)` vanishes on all of it. Combined with
+`spa_eq_biUnion_rationalSubset_of_span_eq_top`, this is what makes the standard family
+`(R(T/t))_{t ∈ T}` an open *covering* rather than merely a family.
+
+Wedhorn assumes a complete affinoid ring, where every maximal ideal is open. Here that is the
+explicit hypothesis `hmax`, and only the `←` direction uses it: the forward direction is
+`mem_rationalSubset_of_span_eq_top_of_mem_spa`, which holds over an arbitrary commutative ring.
+A consumer who has `Ideal.span T = ⊤` and wants the cover should use that lemma directly rather
+than this iff, so as not to acquire `hmax` for nothing. -/
+theorem span_eq_top_iff_forall_mem_spa_exists_not_vle_zero (Aplus : Subring A)
+    (hmax : ∀ (𝔪 : Ideal A), 𝔪.IsMaximal → IsOpen (𝔪 : Set A)) {T : Finset A} :
+    Ideal.span (T : Set A) = ⊤ ↔ ∀ v ∈ spa Aplus, ∃ t ∈ T, ¬ v.toValuativeRel.vle t 0 := by
+  refine ⟨fun hT v hv ↦ ?_,
+    fun h ↦ span_eq_top_of_forall_mem_spa_exists_not_vle_zero Aplus hmax (T := (T : Set A)) h⟩
+  obtain ⟨s, hs, hmem⟩ := mem_rationalSubset_of_span_eq_top_of_mem_spa Aplus hT hv
+  exact ⟨s, hs, ((mem_rationalSubset_iff Aplus T s v).mp hmem).2.2⟩
+
+/-- **Wedhorn Corollary 7.53, in the form the roadmap states it.** A finite set `T` generates the
+unit ideal exactly when the standard family `(R(T/t))_{t ∈ T}` covers `Spa(A, A⁺)`.
+
+The `→` direction is `spa_eq_biUnion_rationalSubset_of_span_eq_top` and needs no hypothesis on
+`A`; only `←` uses `hmax`, so a consumer who already has `Ideal.span T = ⊤` should take the cover
+from that lemma directly rather than through this iff. -/
+theorem span_eq_top_iff_spa_eq_biUnion_rationalSubset (Aplus : Subring A)
+    (hmax : ∀ (𝔪 : Ideal A), 𝔪.IsMaximal → IsOpen (𝔪 : Set A)) {T : Finset A} :
+    Ideal.span (T : Set A) = ⊤ ↔ spa Aplus = ⋃ t ∈ T, rationalSubset Aplus T t := by
+  refine ⟨spa_eq_biUnion_rationalSubset_of_span_eq_top Aplus, fun hcov ↦ ?_⟩
+  refine (span_eq_top_iff_forall_mem_spa_exists_not_vle_zero Aplus hmax).mpr fun v hv ↦ ?_
+  obtain ⟨s, hs, hmem⟩ := Set.mem_iUnion₂.mp (hcov ▸ hv)
+  exact ⟨s, hs, ((mem_rationalSubset_iff Aplus T s v).mp hmem).2.2⟩
 
 end TauCeti.ValuationSpectrum
 

@@ -9,7 +9,7 @@ public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
 public import TauCeti.RepresentationTheory.Quiver.OneLoop.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
-public import TauCeti.RingTheory.AdjoinRoot
+public import TauCeti.RingTheory.AdjoinRoot.Basic
 public import TauCeti.RingTheory.Polynomial.Truncated
 public import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 
@@ -65,9 +65,9 @@ Indecomposability is proved throughout from
 `TauCeti.indecomposable_of_injective_of_isLocalRing` rather than from the brick criterion: for the
 Jordan blocks the endomorphism algebra is `k[X]/(Xⁿ⁺¹)`, which is not a field, so the brick
 criterion does not apply, and an endomorphism is pinned down instead by its value at `1`
-(`AdjoinRoot.eq_mulRight_of_root_mul`, from `TauCeti.RingTheory.AdjoinRoot`). That value records
-the endomorphism faithfully in the truncated polynomial algebra, sending `0` to `0`, the identity
-to `1` and squares to squares, and that algebra is local by
+(`AdjoinRoot.eq_mulRight_of_root_mul`, from `TauCeti.RingTheory.AdjoinRoot.Basic`). That value
+records the endomorphism faithfully in the truncated polynomial algebra, sending `0` to `0`, the
+identity to `1` and squares to squares, and that algebra is local by
 `TauCeti.isLocalRing_adjoinRoot_X_pow` from `TauCeti.RingTheory.Polynomial.Truncated`; a scalar
 representation is the same criterion read in the base field.
 

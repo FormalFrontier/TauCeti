@@ -94,7 +94,8 @@ private theorem basisFactor_apply {n : ℕ}
         (b.ExteriorAlgebra t) =
       (if (i ∈ s ↔ i ∈ t) then 1 else 0) • b.ExteriorAlgebra t := by
   by_cases his : i ∈ s <;> by_cases hit : i ∈ t <;>
-    simp [his, hit, occupationProjection, ι_mul_contractLeft_coord_basis,
+    simp [-contractLeft_coord_basis, his, hit, occupationProjection,
+      ι_mul_contractLeft_coord_basis,
       vacancyProjection_basis]
 
 private theorem listProd_basisFactor_apply {n : ℕ}

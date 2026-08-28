@@ -42,6 +42,8 @@ No faithfulness is asserted: an arbitrary weight family may have a common kernel
 * `TauCeti.GeneralLinear.weightCharacterMap`: the homomorphism on character lattices.
 * `TauCeti.GeneralLinear.weightTorusCoordinateMap`: the coordinate Hopf-algebra morphism of the
   represented weight torus.
+* `TauCeti.GeneralLinear.weightTorusCoordinateMap_surjective`: spanning weights make the
+  coordinate morphism surjective.
 * `TauCeti.GeneralLinear.weightTorusCoordinateBialgHom`: its direct diagonal-representation form,
   allowing the base ring and torus index to live in different universes.
 * `TauCeti.GeneralLinear.weightTorusBaseChangeCoordinateMap`: that morphism base changed along
@@ -194,6 +196,15 @@ theorem hom_weightTorusCoordinateMap (wt : Fin N → κ → ℤ) :
   apply coordinateHopfAlgebra_bialgHom_ext R N
   intro i j
   rw [weightTorusCoordinateMap_X, weightTorusCoordinateBialgHom_X]
+
+/-- A spanning family of weights makes the weight-torus coordinate morphism surjective. -/
+theorem weightTorusCoordinateMap_surjective (wt : Fin N → κ → ℤ)
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
+    Function.Surjective (weightTorusCoordinateMap (R := R) wt).hom := by
+  let _ : Fintype κ := Fintype.ofFinite κ
+  rw [hom_weightTorusCoordinateMap, weightTorusCoordinateBialgHom]
+  apply DiagonalizableGroup.surjective_diagonalCoordinateMap
+  exact SplitTorus.closure_range_weightCharacter_eq_top wt hwt
 
 /-- The group-scheme morphism from a split torus to `GL_N` prescribed by a family of weights.
 It factors through the diagonal torus: the `i`-th diagonal entry is the character `wt i`. -/
