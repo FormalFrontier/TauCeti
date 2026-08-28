@@ -6,17 +6,17 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
-public import TauCeti.Algebra.AlgebraicGroup.Reductive.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Maximal
 
 /-!
 # The unipotent radical of an affine group
 
 Let `H` be the coordinate Hopf algebra of a finite-type affine group over a field. A connected
-normal smooth unipotent closed subgroup is represented contravariantly by a Hopf ideal `I` such
-that `H/I` has those properties. The maximal-dimension construction and its product theorem show
-that one such ideal is contained in every other one. This file chooses that unique ideal and
-packages its quotient as the unipotent radical of `H`.
+normal smooth unipotent closed subgroup is represented contravariantly by a normal Hopf ideal `I`
+whose quotient `H/I` is geometrically connected, smooth, and geometrically unipotent. The
+maximal-dimension construction and its product theorem show that one such ideal is contained in
+every other one. This file chooses that unique ideal and packages its quotient as the unipotent
+radical of `H`.
 
 The order on Hopf ideals reverses inclusion of represented closed subgroups. Thus
 `unipotentRadicalDefiningIdeal_le` says precisely that every connected normal smooth unipotent
@@ -25,28 +25,29 @@ universal property determines it uniquely.
 
 Over a nonperfect field this construction is the `k`-unipotent radical: no claim is made that it
 commutes with extension to an algebraic closure. Applying the construction directly to the
-geometric fibre gives the geometric unipotent radical. Its triviality, together with smoothness
-and geometric connectedness of the ambient group, characterizes reductivity.
+geometric fibre gives the geometric unipotent radical.
 
 ## Main declarations
 
 * `TauCeti.FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal`: the Hopf ideal cutting out
   the unipotent radical.
-* `TauCeti.FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_le`: every unipotent-radical
-  candidate is contained in the radical.
+* `TauCeti.FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_le`: the radical's defining
+  ideal is below every candidate ideal, so every candidate subgroup lies in the radical.
+* `TauCeti.FiniteTypeCommHopfAlgCat.eq_unipotentRadicalDefiningIdeal_iff`: the choice-free
+  universal property characterizing the radical's defining ideal.
+* `TauCeti.FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_eq_augmentation_iff`: the
+  radical is trivial exactly when every candidate subgroup is trivial.
 * `TauCeti.FiniteTypeCommHopfAlgCat.unipotentRadical`: the coordinate Hopf algebra of the
   unipotent radical.
 * `TauCeti.FiniteTypeCommHopfAlgCat.unipotentRadicalSpec`: its affine group scheme.
-* `reductiveCommHopfAlgProperty_iff_smooth_and_geometricallyConnected_and_radical_eq_trivial`:
-  reductivity is equivalent to triviality of the geometric unipotent radical.
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), Proposition 6.42 and §§6.45--6.46.
 * A. Borel, *Linear Algebraic Groups*, §11.21.
 
-This completes the construction target in Layer 5, "The unipotent radical", and connects it to
-the definition of reductivity in Layer 6 of the ReductiveGroups roadmap.
+This completes the construction target in Layer 5, "The unipotent radical", of the
+ReductiveGroups roadmap.
 -/
 
 public section
@@ -138,6 +139,12 @@ noncomputable def unipotentRadicalCoordinateMap
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) : H ⟶ unipotentRadical H :=
   mkQuotient H (unipotentRadicalDefiningIdeal H)
 
+/-- The unipotent-radical coordinate morphism is the canonical quotient morphism. -/
+lemma unipotentRadicalCoordinateMap_def
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    unipotentRadicalCoordinateMap H = mkQuotient H (unipotentRadicalDefiningIdeal H) :=
+  (rfl)
+
 /-- The kernel of the unipotent-radical coordinate morphism is its defining ideal. -/
 @[simp]
 theorem unipotentRadicalCoordinateMap_ker
@@ -161,6 +168,11 @@ theorem smoothUnipotent_unipotentRadical (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     smoothUnipotentCommHopfAlgProperty k (unipotentRadical H) :=
   (isUnipotentRadicalCandidate_unipotentRadicalDefiningIdeal H).smoothUnipotent
 
+/-- The defining ideal of the unipotent radical is normal. -/
+theorem isNormal_unipotentRadicalDefiningIdeal (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    (unipotentRadicalDefiningIdeal H).IsNormal :=
+  (isUnipotentRadicalCandidate_unipotentRadicalDefiningIdeal H).isNormal
+
 /-- The affine group scheme represented by the unipotent radical's coordinate algebra. -/
 noncomputable abbrev unipotentRadicalSpec (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     Grp (Over (Spec (CommRingCat.of k))) :=
@@ -172,6 +184,24 @@ noncomputable abbrev unipotentRadicalSpecι (H : FiniteTypeCommHopfAlgCat.{u, u}
       (AlgebraicGeometry.hopfSpec (CommRingCat.of k)).obj (op H.obj) :=
   CommHopfAlgCat.quotientSpecι H.obj (unipotentRadicalDefiningIdeal H)
 
+/-- The inclusion of a candidate subgroup into the unipotent radical. -/
+noncomputable def unipotentRadicalSpecMapOfCandidate
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (I : HopfIdeal k H)
+    (hI : HopfIdeal.IsUnipotentRadicalCandidate H I) :
+    CommHopfAlgCat.quotientSpec H.obj I ⟶ unipotentRadicalSpec H :=
+  CommHopfAlgCat.quotientSpecMapOfLe H.obj (unipotentRadicalDefiningIdeal_le H I hI)
+
+/-- A candidate's inclusion into the radical followed by the radical's ambient inclusion is the
+candidate's ambient inclusion. -/
+@[simp]
+theorem unipotentRadicalSpecMapOfCandidate_comp_unipotentRadicalSpecι
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) (I : HopfIdeal k H)
+    (hI : HopfIdeal.IsUnipotentRadicalCandidate H I) :
+    unipotentRadicalSpecMapOfCandidate H I hI ≫ unipotentRadicalSpecι H =
+      CommHopfAlgCat.quotientSpecι H.obj I :=
+  CommHopfAlgCat.quotientSpecMapOfLe_comp_quotientSpecι H.obj
+    (unipotentRadicalDefiningIdeal_le H I hI)
+
 /-- The inclusion of the unipotent radical is a closed immersion. -/
 instance isClosedImmersion_unipotentRadicalSpecι
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
@@ -179,31 +209,6 @@ instance isClosedImmersion_unipotentRadicalSpecι
   inferInstance
 
 end FiniteTypeCommHopfAlgCat
-
-/-- A finite-type affine group is reductive exactly when it is smooth and geometrically
-connected and its geometric unipotent radical is trivial. -/
-theorem reductiveCommHopfAlgProperty_iff_smooth_and_geometricallyConnected_and_radical_eq_trivial
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    reductiveCommHopfAlgProperty k H ↔
-      Algebra.Smooth k H ∧
-        geometricallyConnectedCommHopfAlgProperty k H.obj ∧
-          FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
-              (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) =
-            HopfIdeal.augmentation (AlgebraicClosure k)
-              (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) := by
-  rw [reductiveCommHopfAlgProperty_iff]
-  constructor
-  · rintro ⟨hsmooth, hconnected, htrivial⟩
-    refine ⟨hsmooth, hconnected, ?_⟩
-    rw [FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_eq_augmentation_iff]
-    intro I hI
-    exact htrivial I hI.isNormal hI.geometricallyConnected hI.smoothUnipotent
-  · rintro ⟨hsmooth, hconnected, hradical⟩
-    refine ⟨hsmooth, hconnected, ?_⟩
-    intro I hnormal hIconnected hIunipotent
-    exact (FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_eq_augmentation_iff
-      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)).mp hradical I
-        (HopfIdeal.IsUnipotentRadicalCandidate.mk hnormal hIconnected hIunipotent)
 
 end
 
