@@ -193,7 +193,6 @@ theorem rnDeriv_chiSquaredMeasure_zero :
 /-! ### Cdf, moments, and transforms -/
 
 /-- The cdf of a positive-degree chi-squared law is the regularized Gamma function. -/
-@[simp]
 theorem cdf_chiSquaredMeasure_eq (hk : 0 < k) (x : ℝ) :
     cdf (chiSquaredMeasure k) x = regularizedGamma (k / 2) (x / 2) := by
   rw [chiSquaredMeasure_of_pos hk]
@@ -201,13 +200,11 @@ theorem cdf_chiSquaredMeasure_eq (hk : 0 < k) (x : ℝ) :
     TauCeti.cdf_gammaMeasure_eq (a := k / 2) (r := 1 / 2) (half_pos hk) (by norm_num) x
 
 /-- The cdf of the zero-degree chi-squared law is the step function at zero. -/
-@[simp]
 theorem cdf_chiSquaredMeasure_zero (x : ℝ) :
     cdf (chiSquaredMeasure 0) x = if 0 ≤ x then 1 else 0 := by
   rw [chiSquaredMeasure_zero, TauCeti.cdf_dirac]
 
 /-- The mean of a positive-degree chi-squared law is its degree of freedom. -/
-@[simp]
 theorem integral_id_chiSquaredMeasure (hk : 0 < k) :
     ∫ x, x ∂chiSquaredMeasure k = k := by
   rw [chiSquaredMeasure_of_pos hk,
@@ -215,12 +212,10 @@ theorem integral_id_chiSquaredMeasure (hk : 0 < k) :
   ring
 
 /-- The zero-degree chi-squared law has mean zero. -/
-@[simp]
 theorem integral_id_chiSquaredMeasure_zero : ∫ x, x ∂chiSquaredMeasure 0 = 0 := by
   rw [chiSquaredMeasure_zero, integral_dirac]
 
 /-- The variance of a positive-degree chi-squared law is twice its degree of freedom. -/
-@[simp]
 theorem variance_id_chiSquaredMeasure (hk : 0 < k) :
     variance id (chiSquaredMeasure k) = 2 * k := by
   rw [chiSquaredMeasure_of_pos hk,
@@ -228,26 +223,22 @@ theorem variance_id_chiSquaredMeasure (hk : 0 < k) :
   ring
 
 /-- The zero-degree chi-squared law has variance zero. -/
-@[simp]
 theorem variance_id_chiSquaredMeasure_zero : variance id (chiSquaredMeasure 0) = 0 := by
   rw [chiSquaredMeasure_zero, variance_dirac]
 
 /-- The exponential moments of a positive-degree chi-squared law exist exactly below `1 / 2`. -/
-@[simp]
 theorem integrableExpSet_id_chiSquaredMeasure (hk : 0 < k) :
     integrableExpSet id (chiSquaredMeasure k) = Iio (1 / 2 : ℝ) := by
   rw [chiSquaredMeasure_of_pos hk,
     TauCeti.integrableExpSet_id_gammaMeasure (half_pos hk) (by norm_num)]
 
 /-- Every exponential moment exists for the zero-degree chi-squared law. -/
-@[simp]
 theorem integrableExpSet_id_chiSquaredMeasure_zero :
     integrableExpSet id (chiSquaredMeasure 0) = univ := by
   rw [chiSquaredMeasure_zero]
   exact TauCeti.integrableExpSet_dirac _ _
 
 /-- The moment-generating function of a positive-degree chi-squared law. -/
-@[simp]
 theorem mgf_id_chiSquaredMeasure (hk : 0 < k) (ht : t < 1 / 2) :
     mgf id (chiSquaredMeasure k) t = (1 - 2 * t) ^ (-(k / 2)) := by
   rw [chiSquaredMeasure_of_pos hk,
@@ -256,26 +247,22 @@ theorem mgf_id_chiSquaredMeasure (hk : 0 < k) (ht : t < 1 / 2) :
   ring
 
 /-- The moment-generating function of the zero-degree chi-squared law is one. -/
-@[simp]
 theorem mgf_id_chiSquaredMeasure_zero (t : ℝ) : mgf id (chiSquaredMeasure 0) t = 1 := by
   rw [chiSquaredMeasure_zero, mgf_dirac']
   simp
 
 /-- The cumulant-generating function of a positive-degree chi-squared law is the real logarithm
 of its moment-generating function. -/
-@[simp]
 theorem cgf_id_chiSquaredMeasure (hk : 0 < k) (ht : t < 1 / 2) :
     cgf id (chiSquaredMeasure k) t = Real.log ((1 - 2 * t) ^ (-(k / 2))) := by
   rw [cgf, mgf_id_chiSquaredMeasure hk ht]
 
 /-- The cumulant-generating function of the zero-degree chi-squared law is zero. -/
-@[simp]
 theorem cgf_id_chiSquaredMeasure_zero (t : ℝ) : cgf id (chiSquaredMeasure 0) t = 0 := by
   rw [chiSquaredMeasure_zero, TauCeti.cgf_dirac']
   simp
 
 /-- The characteristic function of the zero-degree chi-squared law is one. -/
-@[simp]
 theorem charFun_chiSquaredMeasure_zero (t : ℝ) : charFun (chiSquaredMeasure 0) t = 1 := by
   rw [chiSquaredMeasure_zero, charFun_dirac]
   simp
@@ -299,7 +286,6 @@ theorem chiSquaredMeasure_conv_chiSquaredMeasure (hk : 0 ≤ k) (hl : 0 ≤ l) :
   ring
 
 /-- Two degrees of freedom give the exponential law of rate `1 / 2`. -/
-@[simp]
 theorem chiSquaredMeasure_two : chiSquaredMeasure 2 = expMeasure (1 / 2) := by
   rw [chiSquaredMeasure_of_pos (by norm_num)]
   norm_num [expMeasure]
