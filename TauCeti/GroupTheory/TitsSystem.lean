@@ -90,23 +90,19 @@ namespace TitsSystem
 variable {G : Type u} [Group G] (T : TitsSystem G)
 
 /-- The intersection `B ∩ N`, regarded as a subgroup of `N`. -/
-def intersection : Subgroup T.subgroupN :=
+abbrev intersection : Subgroup T.subgroupN :=
   T.subgroupB.comap T.subgroupN.subtype
 
 /-- Membership in the intersection means membership in `B` after forgetting the `N` subtype. -/
-@[simp]
 theorem mem_intersection (n : T.subgroupN) : n ∈ T.intersection ↔ (n : G) ∈ T.subgroupB :=
   Iff.rfl
-
-instance subgroupBComapNormal : (T.subgroupB.comap T.subgroupN.subtype).Normal :=
-  T.intersection_normal
 
 instance intersectionNormal : T.intersection.Normal :=
   T.intersection_normal
 
 /-- The Weyl group `W = N / (B ∩ N)` of a Tits system. -/
 abbrev WeylGroup :=
-  T.subgroupN ⧸ T.subgroupB.comap T.subgroupN.subtype
+  T.subgroupN ⧸ T.intersection
 
 /-- Every simple reflection has square one. -/
 theorem simple_sq_eq_one {s : T.WeylGroup} (hs : s ∈ T.simple) : s * s = 1 := by
