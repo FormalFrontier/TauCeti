@@ -511,14 +511,12 @@ theorem exists_isCoupling_eLpNorm_eq_wassersteinEDist (hp0 : p ≠ 0) (hp : p �
         (m • π).fst = m • π.fst := by simp only [Measure.fst, Measure.map_smul]
         _ = m • μ' := congrArg (m • ·) hπ.toIsCoupling.fst_eq
         _ = μ := by
-          change m • (m⁻¹ • μ) = μ
-          rw [smul_smul, ENNReal.mul_inv_cancel hm0 hmtop, one_smul]
+          simp only [μ', smul_smul, ENNReal.mul_inv_cancel hm0 hmtop, one_smul]
     · calc
         (m • π).snd = m • π.snd := by simp only [Measure.snd, Measure.map_smul]
         _ = m • ν' := congrArg (m • ·) hπ.toIsCoupling.snd_eq
         _ = ν := by
-          change m • (m⁻¹ • ν) = ν
-          rw [smul_smul, ENNReal.mul_inv_cancel hm0 hmtop, one_smul]
+          simp only [ν', smul_smul, ENNReal.mul_inv_cancel hm0 hmtop, one_smul]
   refine ⟨m • π, hscaled, le_antisymm ?_ (wassersteinEDist_le hscaled p)⟩
   refine le_wassersteinEDist fun σ hσ ↦ ?_
   have hσ' : IsCoupling (m⁻¹ • σ) μ' ν' := by
