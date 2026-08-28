@@ -291,7 +291,7 @@ coinduction along a closed subgroup of a profinite group sends a short exact seq
 theorem coindMap_surjective (hU : IsClosed (U : Set G)) (φ : A →+ B)
     (hφ : ∀ (u : U) (a : A), φ (u • a) = u • φ a) (hsurj : Function.Surjective φ) :
     Function.Surjective (coindMap G U φ hφ) := by
-  obtain ⟨w, r, hw_cont, hr_cont, hwr, hw_mul, hr_mul⟩ :=
+  obtain ⟨w, r, hw_cont, hr_cont, hwr, hw_mul, hr_mul, -⟩ :=
     exists_continuous_rightCosetFactorization U hU
   intro F
   have hF : IsLocallyConstant fun g : G => (F : G → B) (r g) :=

@@ -40,7 +40,8 @@ intersection of a chain of such `C`'s still meets every coset.
 * `TauCeti.exists_continuous_section`: the normalized continuous section `G ⧸ H → G`.
 * `TauCeti.exists_continuous_section_of_le`: the continuous section of `G ⧸ K → G ⧸ H` for `K ≤ H`.
 * `TauCeti.exists_continuous_rightCosetFactorization`: the right-coset form, `g = w g * r g` with
-  `w g ∈ H` and `r g` depending only on the right coset `H * g`, both continuous.
+  `w g ∈ H` and `r g` depending only on the right coset `H * g`, both continuous, and with `w`
+  normalized by `w 1 = 1`.
 
 ## Implementation notes
 
@@ -268,14 +269,17 @@ Mathlib's quotient `G ⧸ H` is the space of *left* cosets, so `TauCeti.exists_c
 produces a continuous choice of representatives of `g H`. Inverting exchanges the two sides:
 `r g = (s ⟦g⁻¹⟧)⁻¹` lies in `H * g` and depends only on `H * g`. This is the shape the coinduced
 module of Layer 7 consumes, since its defining equivariance `f (h * g) = h • f g` is along right
-cosets. -/
+cosets.
+
+The normalization `w 1 = 1` is inherited from the normalized section, and by equivariance it says
+that `w` restricts to the identity on `H`. -/
 theorem exists_continuous_rightCosetFactorization [CompactSpace G] [TotallyDisconnectedSpace G]
     (H : Subgroup G) (hH : IsClosed (H : Set G)) :
     ∃ (w : G → H) (r : G → G), Continuous w ∧ Continuous r ∧
       (∀ g : G, (w g : G) * r g = g) ∧
       (∀ (h : H) (g : G), w ((h : G) * g) = h * w g) ∧
-      (∀ (h : H) (g : G), r ((h : G) * g) = r g) := by
-  obtain ⟨s, hs_cont, hs_sec, -⟩ := exists_continuous_section H hH
+      (∀ (h : H) (g : G), r ((h : G) * g) = r g) ∧ w 1 = 1 := by
+  obtain ⟨s, hs_cont, hs_sec, hs_one⟩ := exists_continuous_section H hH
   have hcoset : ∀ (h : H) (g : G),
       (QuotientGroup.mk (((h : G) * g)⁻¹) : G ⧸ H) = QuotientGroup.mk g⁻¹ := by
     intro h g
@@ -287,11 +291,13 @@ theorem exists_continuous_rightCosetFactorization [CompactSpace G] [TotallyDisco
     rw [QuotientGroup.eq] at h
     simpa using H.inv_mem h
   refine ⟨fun g => ⟨g * s (QuotientGroup.mk g⁻¹), hmem g⟩,
-    fun g => (s (QuotientGroup.mk g⁻¹))⁻¹, ?_, ?_, fun g => by simp, fun h g => ?_, fun h g => ?_⟩
+    fun g => (s (QuotientGroup.mk g⁻¹))⁻¹, ?_, ?_, fun g => by simp, fun h g => ?_, fun h g => ?_,
+    ?_⟩
   · exact continuous_induced_rng.2 (continuous_id.mul
       (hs_cont.comp (QuotientGroup.continuous_mk.comp continuous_inv)))
   · exact (hs_cont.comp (QuotientGroup.continuous_mk.comp continuous_inv)).inv
   · exact Subtype.ext (by simp only [hcoset, mul_assoc, Subgroup.coe_mul])
   · simp only [hcoset]
+  · exact Subtype.ext (by simp [hs_one])
 
 end TauCeti
