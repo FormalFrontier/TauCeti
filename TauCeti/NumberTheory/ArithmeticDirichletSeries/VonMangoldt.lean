@@ -229,7 +229,6 @@ theorem log_apply (A : (Ideal (𝓞 K))⁰) :
   (rfl)
 
 /-- The ideal logarithm vanishes at the unit ideal. -/
-@[simp]
 theorem log_one : (log : IdealArithmeticFunction K) 1 = 0 := by
   simp [Ideal.one_eq_top]
 
