@@ -38,6 +38,9 @@ carrier.
 
 * `TauCeti.typeAGraphAutomorphism_transvectionUnit`: the sign-free equation on every positive
   simple-root subgroup.
+* `TauCeti.typeAGraphAutomorphism_transvectionUnit_lower`: the corresponding equation on every
+  negative simple-root subgroup.
+* `TauCeti.typeAGraphAutomorphism_diagGL`: the automorphism reverses and inverts diagonal entries.
 * `TauCeti.typeAGraphAutomorphism_mul_self`: the automorphism has order dividing two.
 * `TauCeti.map_typeAGraphAutomorphism`: the construction is natural in the coefficient ring.
 
@@ -313,6 +316,95 @@ theorem typeAGraphAutomorphism_transvectionUnit (r : ℕ) (i : Fin r) (c : A) :
       rw [diagGL_mul_transvectionUnit_mul_inv]
     _ = transvectionUnit hpos c := by
       rw [typeAGraphSign_castSucc_mul_neg_mul_inv_succ]
+
+private theorem typeAGraphSign_succ_mul_neg_mul_inv_castSucc (i : Fin r) (c : A) :
+    ((typeAGraphSign (A := A) i.succ : A) * (-c) *
+      ((typeAGraphSign (A := A) i.castSucc)⁻¹ : Aˣ)) = c := by
+  let s : Aˣ := typeAGraphSign (A := A) i.castSucc
+  have hs_sq : s * s = 1 := by
+    dsimp only [s, typeAGraphSign, Fin.val_castSucc]
+    rw [← pow_add, ← two_mul (i : ℕ), pow_mul]
+    simp
+  have hs_inv : s⁻¹ = s := inv_eq_iff_mul_eq_one.mpr hs_sq
+  have hsucc : typeAGraphSign (A := A) i.succ = -s := by
+    dsimp only [s, typeAGraphSign, Fin.val_succ]
+    rw [pow_succ]
+    simp
+  rw [hsucc, hs_inv]
+  simp only [Units.val_neg]
+  change (-(s : A)) * (-c) * (s : A) = c
+  have hneg : (-(s : A)) * (-c) * (s : A) = (s : A) * c * (s : A) := by ring
+  rw [hneg]
+  calc
+    (s : A) * c * (s : A) = c * ((s : A) * (s : A)) := by ac_rfl
+    _ = c := by rw [show (s : A) * (s : A) = 1 from congrArg Units.val hs_sq, mul_one]
+
+/-- The pinned graph automorphism reverses the negative simple-root subgroups without changing
+their parameters. -/
+@[simp]
+theorem typeAGraphAutomorphism_transvectionUnit_lower (r : ℕ) (i : Fin r) (c : A) :
+    typeAGraphAutomorphism r A
+        (transvectionUnit (Fin.castSucc_lt_succ (i := i)).ne' c) =
+      transvectionUnit (Fin.castSucc_lt_succ (i := i.rev)).ne' c := by
+  rw [typeAGraphAutomorphism_apply, inverseTranspose_transvectionUnit]
+  let d : GL (Fin (r + 1)) A := diagGL (typeAGraphSign (A := A))
+  let p : GL (Fin (r + 1)) A := permutationGL (k := A) Fin.revPerm
+  let hpos : i.castSucc ≠ i.succ := (Fin.castSucc_lt_succ (i := i)).ne
+  let hneg : i.rev.succ ≠ i.rev.castSucc := (Fin.castSucc_lt_succ (i := i.rev)).ne'
+  change (d * p) * transvectionUnit hpos (-c) * (d * p)⁻¹ = _
+  calc
+    _ = d * (p * transvectionUnit hpos (-c) * p⁻¹) * d⁻¹ := by group
+    _ = d * transvectionUnit (Fin.rev_injective.ne hpos) (-c) * d⁻¹ := by
+      rw [permutationGL_conj_transvectionUnit]
+    _ = d * transvectionUnit hneg (-c) * d⁻¹ := by
+      congr 3 <;> simp only [Fin.rev_castSucc, Fin.rev_succ]
+    _ = transvectionUnit hneg
+          (((typeAGraphSign (A := A)) i.rev.succ : A) * (-c) *
+            (((typeAGraphSign (A := A)) i.rev.castSucc)⁻¹ : Aˣ)) := by
+      rw [diagGL_mul_transvectionUnit_mul_inv]
+    _ = transvectionUnit hneg c := by
+      rw [typeAGraphSign_succ_mul_neg_mul_inv_castSucc]
+
+private theorem inverseTranspose_diagGL (r : ℕ) (d : Fin (r + 1) → Aˣ) :
+    Matrix.GeneralLinearGroup.inverseTranspose (diagGL d) =
+      diagGL (fun i => (d i)⁻¹) := by
+  have hInv : (diagGL d)⁻¹ = diagGL (fun i => (d i)⁻¹) := by
+    rw [← map_inv]
+    rfl
+  apply Units.ext
+  rw [Matrix.GeneralLinearGroup.coe_inverseTranspose, hInv]
+  ext i j
+  by_cases hij : i = j
+  · subst j
+    simp [Matrix.transpose_apply]
+  · have hji : j ≠ i := Ne.symm hij
+    simp [Matrix.transpose_apply, hij, hji]
+
+/-- On the diagonal torus, the pinned graph automorphism reverses and inverts the diagonal
+entries. -/
+@[simp]
+theorem typeAGraphAutomorphism_diagGL (r : ℕ) (d : Fin (r + 1) → Aˣ) :
+    typeAGraphAutomorphism r A (diagGL d) =
+      diagGL (fun i => (d i.rev)⁻¹) := by
+  rw [typeAGraphAutomorphism_apply, inverseTranspose_diagGL]
+  let s : Fin (r + 1) → Aˣ := typeAGraphSign (A := A)
+  let p : GL (Fin (r + 1)) A := permutationGL (k := A) Fin.revPerm
+  have hp : p * diagGL (fun i => (d i)⁻¹) * p⁻¹ =
+      diagGL (fun i => (d i.rev)⁻¹) := by
+    simpa only [p, Equiv.Perm.inv_def, Fin.revPerm_symm, Fin.revPerm_apply] using
+      permutationGL_mul_diagGL_mul_inv (k := A)
+        (Fin.revPerm : Equiv.Perm (Fin (r + 1))) (fun i => (d i)⁻¹)
+  change (diagGL s * p) * diagGL (fun i => (d i)⁻¹) * (diagGL s * p)⁻¹ = _
+  calc
+    _ = diagGL s * (p * diagGL (fun i => (d i)⁻¹) * p⁻¹) * (diagGL s)⁻¹ := by
+      group
+    _ = diagGL s * diagGL (fun i => (d i.rev)⁻¹) * (diagGL s)⁻¹ := by rw [hp]
+    _ = diagGL (fun i => (d i.rev)⁻¹) := by
+      rw [← map_inv]
+      simp only [← map_mul]
+      congr 1
+      funext i
+      simp [mul_assoc]
 
 /-- Entrywise base change carries the signed reversal matrix to the signed reversal matrix. -/
 @[simp]
