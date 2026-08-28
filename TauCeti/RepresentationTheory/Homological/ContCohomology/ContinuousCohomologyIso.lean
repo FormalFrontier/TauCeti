@@ -5,18 +5,20 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.RepresentationTheory.Homological.ContCohomology.CompactDiscrete
 public import TauCeti.RepresentationTheory.Homological.ContCohomology.DegreeZero
 public import TauCeti.RepresentationTheory.Homological.ContCohomology.LowDegree
 public import TauCeti.RepresentationTheory.Homological.ContCohomology.SmoothDiscrete
 
 /-!
-# The explicit model against the canonical object, in degree zero
+# The explicit model against the canonical object, in degrees zero and one
 
 The explicit low-degree complex presents `H⁰(G, M)` as the invariant subgroup `M^G` of a discrete
-`G`-module, while the canonical object is Mathlib's `continuousCohomology 0 X` for `X` a
-topological representation. This file identifies the two in degree zero, for `X` the image
-`TauCeti.ofDiscreteModule ℤ G M` of `M` under the coefficient dictionary, and transports the
-operations that exist in that degree across the identification.
+`G`-module and `H¹(G, M)` as `Z¹/B¹`, while the canonical object is Mathlib's
+`continuousCohomology n X` for `X` a topological representation. This file identifies the two in
+degrees zero and one, for `X` the image `TauCeti.ofDiscreteModule ℤ G M` of `M` under the
+coefficient dictionary, and transports the operations that exist in degree zero across the
+identification.
 
 The comparison is an isomorphism in `TopModuleCat ℤ`, not merely an additive one: `H⁰(G, M)` is a
 subgroup of the discrete `M`, so it is discrete already and needs no separate discrete synonym,
@@ -35,6 +37,22 @@ holds for every object of `TopRep ℤ G`. The comparison is nevertheless stated 
 the image of `TauCeti.ofDiscreteModule`, as Layer 3 of the roadmap requires: a general object of
 `TopRep ℤ G` need not be discrete, and the explicit complex is not a description of its cohomology.
 
+Degree one is the first degree where the two descriptions genuinely differ. A homogeneous
+`1`-cochain is a `G`-invariant element of `C(G, C(G, M))`, an inhomogeneous one a continuous
+`c : G → M`, and the classical dictionary between them is `σ (g₀, g₁) = g₀ • c (g₀⁻¹ * g₁)` with
+inverse `c g = σ (1, g)`. Passing from `c` to `σ` is `ContinuousMap.curry`, which carries no
+hypothesis, and passing back is evaluation at `1`; so — unlike degree two, where the inverse of
+currying is needed and hence `[LocallyCompactSpace G]` — the *additive* comparison
+`TauCeti.ContCohomology.explicitH1AddEquivContinuousCohomology` holds over an arbitrary topological
+group. Compactness of `G` enters only to make the comparison an isomorphism in `TopModuleCat ℤ`:
+it is what makes the canonical side discrete, by
+`TauCeti.discreteTopology_continuousCohomology`. Total disconnectedness is not used in this degree.
+
+The explicit side has to be *given* the discrete topology rather than left with the quotient of the
+pointwise topology on `G → M`, which is not discrete for an infinite profinite `G`; that is what
+`TauCeti.ContCohomology.DiscreteH1` is for, and the categorical statement below is stated against
+it.
+
 ## Main definitions
 
 * `TauCeti.ContCohomology.H0ContinuousLinearEquivInvariants`: the explicit `H⁰(G, M) = M^G` is the
@@ -42,6 +60,19 @@ the image of `TauCeti.ofDiscreteModule`, as Layer 3 of the roadmap requires: a g
   `ℤ`-modules.
 * `TauCeti.ContCohomology.explicitH0IsoContinuousCohomology`: the comparison
   `H⁰(G, M) ≅ continuousCohomology 0 (ofDiscreteModule ℤ G M)` in `TopModuleCat ℤ`.
+* `TauCeti.ContCohomology.homogeneousCochainEquiv₀`, `homogeneousCochainEquiv₁`: the chain-level
+  dictionary in degrees zero and one, together with the readers
+  `TauCeti.ContCohomology.homogeneousFun₀`, `homogeneousFun₁`, `homogeneousFun₂` that turn a
+  homogeneous cochain into a function of one, two or three variables.
+* `TauCeti.ContCohomology.homogeneousCocycleEquiv₁`: `Z¹(G, M)` is the kernel of the homogeneous
+  degree-one differential.
+* `TauCeti.ContCohomology.continuousCohomologyIsoCoker₁`: the quotient presentation of the
+  canonical side, `continuousCohomology 1 X` as an honest cokernel `ker d ⧸ im d` in
+  `TopModuleCat ℤ`.
+* `TauCeti.ContCohomology.explicitH1AddEquivContinuousCohomology`,
+  `TauCeti.ContCohomology.explicitH1IsoContinuousCohomology`: the comparison in degree one, as an
+  additive equivalence over an arbitrary topological group and as an isomorphism in
+  `TopModuleCat ℤ` over a compact one.
 
 ## Main results
 
@@ -50,17 +81,23 @@ the image of `TauCeti.ofDiscreteModule`, as Layer 3 of the roadmap requires: a g
   two named instances, carrying the explicit restriction and coefficient maps of degree zero to
   the canonical ones. The restriction square is typed by `TauCeti.res_ofDiscreteModule`, which
   identifies the restriction of a canonical object with the canonical object of the restriction.
+* `TauCeti.ContCohomology.homogeneousCochainEquiv₀_d`,
+  `TauCeti.ContCohomology.homogeneousCochainEquiv₁_mem_ker_iff`: the dictionary is a map of
+  complexes in the range of degrees that degree-one homology sees — it carries `d⁰` to the
+  homogeneous differential and the `1`-cocycle condition to the vanishing of the homogeneous one.
 
 ## Roadmap
 
-This implements the degree-zero part of the "comparison isomorphisms" milestone of Layer 3 of the
-human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose `Suggested.lean`
-fixes the name `explicitH0IsoContinuousCohomology`, together with the degree-zero rows of the
-transport table in its §2. The names of the three transports carry the degree explicitly, because
-`Suggested.lean` pins the unsuffixed `explicitIso_map`, `explicitIso_res` and `explicitIso_coeffMap`
-to degree one. Degrees one and two of the comparison need the passage between the canonical
-homogeneous cochains `C(G, C(G, …))` and functions on `Gⁿ`, hence the compact-open exponential law
-and profiniteness of `G`, and are not in this file.
+This implements the degree-zero and degree-one parts of the "comparison isomorphisms" milestone of
+Layer 3 of the human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`, whose
+`Suggested.lean` fixes the names `explicitH0IsoContinuousCohomology`,
+`explicitH1IsoContinuousCohomology` and `explicitH1AddEquivContinuousCohomology`, together with the
+degree-zero rows of the transport table in its §2. The names of the three degree-zero transports
+carry the degree explicitly, because `Suggested.lean` pins the unsuffixed `explicitIso_map`,
+`explicitIso_res` and `explicitIso_coeffMap` to degree one. Degree two of the comparison needs the
+passage from the canonical homogeneous cochains `C(G, C(G, C(G, M)))` back to functions on `G × G`,
+hence the compact-open exponential law, and is not in this file; neither are the degree-one
+transports, which are separate milestones of the same layer.
 
 The sibling file `GroupCohomologyIso.lean` compares the same explicit model with Mathlib's
 *discrete* `groupCohomology`; this file compares it with the *continuous* carrier, which is the
@@ -70,8 +107,8 @@ canonical object the roadmap fixes.
 
 * J. Neukirch, A. Schmidt, K. Wingberg, *Cohomology of Number Fields*, 2nd ed., Ch. I, §2: the
   identification of the inhomogeneous description of continuous cohomology, which the explicit
-  model here follows, with the homogeneous one computing the canonical object. The isomorphism
-  built in this file is the degree-zero case of that identification.
+  model here follows, with the homogeneous one computing the canonical object. The isomorphisms
+  built in this file are the degree-zero and degree-one cases of that identification.
 -/
 
 public section
@@ -250,5 +287,365 @@ theorem explicitH0Iso_coeffMap (N : Type u) [AddCommGroup N] [TopologicalSpace N
     (fun g m => map_smul f g m) x
 
 end Transport
+
+section HomogeneousCochains
+
+/-! ### The homogeneous cochains in coordinates
+
+A homogeneous `n`-cochain of `TauCeti.ofDiscreteModule ℤ G M` is a `G`-invariant element of the
+`(n+1)`-fold iterated function space `C(G, C(G, …, M))`. The three readers below turn such a
+cochain into a plain function of `n + 1` variables, which is the form in which the dictionary with
+the inhomogeneous complex is stated. They are separate declarations rather than one `n`-ary reader
+because Mathlib's canonical complex is built by iterating `C(G, -)` and not by currying, so there
+is no uniform `Gⁿ⁺¹ → M` reader without the compact-open exponential law. -/
+
+variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DiscreteTopology M] [DistribMulAction G M] [ContinuousSMul G M]
+
+/-- The function underlying a homogeneous `0`-cochain. -/
+def homogeneousFun₀ (f : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0) : G → M :=
+  fun x => f.1 x
+
+/-- The function of two variables underlying a homogeneous `1`-cochain. -/
+def homogeneousFun₁ (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1) : G → G → M :=
+  fun x y => σ.1 x y
+
+/-- The function of three variables underlying a homogeneous `2`-cochain. -/
+def homogeneousFun₂ (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 2) :
+    G → G → G → M :=
+  fun x y z => σ.1 x y z
+
+variable {G M}
+
+omit [ContinuousSMul G M] in
+/-- The homogeneity of a `0`-cochain. The coinduced action on `C(G, M)` is
+`(g • f) x = g • f (g⁻¹ * x)` by `ContRepresentation.coind₁_apply_apply`, so evaluating the
+invariance `f.2 g` at `x` gives exactly this. -/
+theorem homogeneousFun₀_invariant (f : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0)
+    (g x : G) : homogeneousFun₀ G M f x = g • homogeneousFun₀ G M f (g⁻¹ * x) :=
+  (congrArg (fun F => F x) (f.2 g)).symm
+
+omit [ContinuousSMul G M] in
+/-- The homogeneity of a `1`-cochain, `σ (x, y) = g • σ (g⁻¹ * x, g⁻¹ * y)`, in the form obtained
+by evaluating the invariance at a single group element. -/
+theorem homogeneousFun₁_invariant (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1)
+    (g x y : G) :
+    homogeneousFun₁ G M σ x y = g • homogeneousFun₁ G M σ (g⁻¹ * x) (g⁻¹ * y) :=
+  (congrArg (fun F => F x y) (σ.2 g)).symm
+
+omit [ContinuousSMul G M] in
+/-- A homogeneous `1`-cochain is determined by its underlying function. -/
+theorem homogeneousFun₁_injective : Function.Injective (homogeneousFun₁ G M) := fun _ _ h =>
+  Subtype.ext (ContinuousMap.ext fun x => ContinuousMap.ext fun y => congrFun (congrFun h x) y)
+
+omit [ContinuousSMul G M] in
+/-- A homogeneous `2`-cochain vanishes exactly when its underlying function does. -/
+theorem homogeneousFun₂_eq_zero_iff
+    (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 2) :
+    σ = 0 ↔ ∀ x y z : G, homogeneousFun₂ G M σ x y z = 0 :=
+  ⟨fun h _ _ _ => by rw [h]; rfl,
+   fun h => Subtype.ext (ContinuousMap.ext fun x => ContinuousMap.ext fun y =>
+     ContinuousMap.ext fun z => h x y z)⟩
+
+omit [ContinuousSMul G M] in
+/-- The homogeneous differential `C⁰ → C¹` is `(d f) (x, y) = f y - f x`. -/
+theorem homogeneousFun₁_d (f : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0)
+    (x y : G) :
+    homogeneousFun₁ G M (((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1).hom f) x y
+      = homogeneousFun₀ G M f y - homogeneousFun₀ G M f x := by
+  simp only [homogeneousFun₁, homogeneousFun₀]
+  rw [TopRep.homogeneousCochains.d_apply]
+  rfl
+
+omit [ContinuousSMul G M] in
+/-- The homogeneous differential `C¹ → C²` is
+`(d σ) (x, y, z) = σ (y, z) - σ (x, z) + σ (x, y)`. -/
+theorem homogeneousFun₂_d (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1)
+    (x y z : G) :
+    homogeneousFun₂ G M (((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 1 2).hom σ) x y z
+      = homogeneousFun₁ G M σ y z - homogeneousFun₁ G M σ x z + homogeneousFun₁ G M σ x y := by
+  -- the inductive definition of Mathlib's differential produces the bracketing `a - (b - c)`
+  have h : homogeneousFun₂ G M
+      (((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 1 2).hom σ) x y z
+      = homogeneousFun₁ G M σ y z - (homogeneousFun₁ G M σ x z - homogeneousFun₁ G M σ x y) := by
+    simp only [homogeneousFun₂, homogeneousFun₁]
+    rw [TopRep.homogeneousCochains.d_apply]
+    rfl
+  rw [h]
+  abel
+
+end HomogeneousCochains
+
+section ChainLevel
+
+/-! ### The chain-level dictionary in degrees zero and one -/
+
+variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DiscreteTopology M] [DistribMulAction G M] [ContinuousSMul G M]
+
+/-- **Degree zero of the chain-level dictionary.** A homogeneous `0`-cochain is `x ↦ x • m` for a
+unique `m ∈ M`, namely its value at `1`. -/
+noncomputable def homogeneousCochainEquiv₀ :
+    M ≃+ (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0 where
+  toFun m :=
+    ⟨(⟨fun x : G => x • m, continuous_id.smul continuous_const⟩ : C(G, M)),
+      fun g => ContinuousMap.ext fun x => by
+        -- `change` spells out the coinduced action on `C(G, M)`, which holds definitionally by
+        -- `ContRepresentation.coind₁_apply_apply`; there is no rewrite for it at this iterate
+        change (g • ((g⁻¹ * x) • m) : M) = x • m
+        rw [smul_smul, mul_inv_cancel_left]⟩
+  invFun f := homogeneousFun₀ G M f 1
+  left_inv m := one_smul G m
+  right_inv f := Subtype.ext (ContinuousMap.ext fun x => by
+    -- as above, `change` is what exposes the value of the constructed cochain at `x`
+    change (x • homogeneousFun₀ G M f 1 : M) = homogeneousFun₀ G M f x
+    rw [homogeneousFun₀_invariant f x x, inv_mul_cancel])
+  map_add' m m' := Subtype.ext (ContinuousMap.ext fun x => smul_add x m m')
+
+@[simp] theorem homogeneousFun₀_homogeneousCochainEquiv₀ (m : M) (x : G) :
+    homogeneousFun₀ G M (homogeneousCochainEquiv₀ G M m) x = x • m := (rfl)
+
+/-- **Degree one of the chain-level dictionary.** The continuous inhomogeneous `1`-cochains are the
+homogeneous ones, by `σ (x, y) = x • c (x⁻¹ * y)` with inverse `c g = σ (1, g)`.
+
+The forward direction is `ContinuousMap.curry`, which needs no hypothesis on `G`; this is why
+degree one, unlike degree two, does not need local compactness. -/
+noncomputable def homogeneousCochainEquiv₁ :
+    C1 G M ≃+ (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1 where
+  toFun c :=
+    ⟨(ContinuousMap.curry ⟨fun p : G × G => p.1 • (c : G → M) (p.1⁻¹ * p.2),
+        continuous_fst.smul ((mem_C1_iff.1 c.2).comp
+          (continuous_fst.inv.mul continuous_snd))⟩ : C(G, C(G, M))),
+      fun g => ContinuousMap.ext fun x => ContinuousMap.ext fun y => by
+        -- `change` spells out the twice-iterated coinduced action together with the value of the
+        -- curried map; both hold definitionally and neither has a rewrite at this iterate
+        change (g • ((g⁻¹ * x) • (c : G → M) ((g⁻¹ * x)⁻¹ * (g⁻¹ * y))) : M) =
+          x • (c : G → M) (x⁻¹ * y)
+        rw [smul_smul]
+        group⟩
+  invFun σ := ⟨homogeneousFun₁ G M σ 1, mem_C1_iff.2 ((σ.1 : C(G, C(G, M))) 1).continuous⟩
+  left_inv c := Subtype.ext (funext fun g => by
+    -- as above
+    change (1 : G) • (c : G → M) ((1 : G)⁻¹ * g) = (c : G → M) g
+    rw [one_smul, inv_one, one_mul])
+  right_inv σ := Subtype.ext (ContinuousMap.ext fun x => ContinuousMap.ext fun y => by
+    -- as above
+    change x • homogeneousFun₁ G M σ 1 (x⁻¹ * y) = homogeneousFun₁ G M σ x y
+    rw [homogeneousFun₁_invariant σ x x y, inv_mul_cancel])
+  map_add' c c' := Subtype.ext (ContinuousMap.ext fun x => ContinuousMap.ext fun y =>
+    (smul_add x ((c : G → M) (x⁻¹ * y)) ((c' : G → M) (x⁻¹ * y)) : _))
+
+@[simp] theorem homogeneousFun₁_homogeneousCochainEquiv₁ (c : C1 G M) (x y : G) :
+    homogeneousFun₁ G M (homogeneousCochainEquiv₁ G M c) x y = x • (c : G → M) (x⁻¹ * y) :=
+  (rfl)
+
+@[simp] theorem coe_homogeneousCochainEquiv₁_symm
+    (σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1) (g : G) :
+    (((homogeneousCochainEquiv₁ G M).symm σ : C1 G M) : G → M) g = homogeneousFun₁ G M σ 1 g :=
+  (rfl)
+
+/-- **The dictionary is a chain map in degree zero.** It carries the explicit `d⁰` to the
+homogeneous differential `C⁰ → C¹`. -/
+theorem homogeneousCochainEquiv₀_d (m : M) :
+    ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1).hom
+        (homogeneousCochainEquiv₀ G M m)
+      = homogeneousCochainEquiv₁ G M ⟨d0 G M m, mem_C1_iff.2 (continuous_d0_apply m)⟩ :=
+  homogeneousFun₁_injective (funext fun x => funext fun y => by
+    rw [homogeneousFun₁_d, homogeneousFun₁_homogeneousCochainEquiv₁,
+      homogeneousFun₀_homogeneousCochainEquiv₀, homogeneousFun₀_homogeneousCochainEquiv₀]
+    simp only [d0_apply, smul_sub, smul_smul, mul_inv_cancel_left])
+
+/-- **The dictionary is a chain map in degree one.** A continuous `1`-cochain is a `1`-cocycle
+exactly when the homogeneous cochain attached to it is killed by the homogeneous differential. -/
+theorem homogeneousCochainEquiv₁_mem_ker_iff (c : C1 G M) :
+    ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 1 2).hom
+        (homogeneousCochainEquiv₁ G M c) = 0 ↔ (c : G → M) ∈ Z1 G M := by
+  rw [homogeneousFun₂_eq_zero_iff, mem_Z1_iff]
+  refine ⟨fun h => ⟨mem_C1_iff.1 c.2, d1_apply_eq_zero_iff.1 (funext fun q => ?_)⟩,
+    fun h x y z => ?_⟩
+  · -- the inhomogeneous cocycle identity at `(g, h)` is the homogeneous one at `(1, g, g * h)`
+    obtain ⟨g, h'⟩ := q
+    have hg := h 1 g (g * h')
+    rw [homogeneousFun₂_d] at hg
+    simp only [homogeneousFun₁_homogeneousCochainEquiv₁, inv_one, one_mul, one_smul,
+      inv_mul_cancel_left] at hg
+    simpa only [d1_apply, Pi.zero_apply] using hg
+  · -- conversely the homogeneous identity at `(x, y, z)` is the inhomogeneous one at
+    -- `(x⁻¹ * y, y⁻¹ * z)`, translated by `x`
+    rw [homogeneousFun₂_d]
+    simp only [homogeneousFun₁_homogeneousCochainEquiv₁]
+    have hcy : y = x * (x⁻¹ * y) := by group
+    have hkey : (c : G → M) (x⁻¹ * z) =
+        (x⁻¹ * y) • (c : G → M) (y⁻¹ * z) + (c : G → M) (x⁻¹ * y) := by
+      have hcocycle := h.2 (x⁻¹ * y) (y⁻¹ * z)
+      rwa [show (x⁻¹ * y) * (y⁻¹ * z) = x⁻¹ * z by group] at hcocycle
+    rw [hkey, smul_add, smul_smul]
+    nth_rewrite 1 [hcy]
+    rw [mul_inv_cancel_left]
+    abel
+
+end ChainLevel
+
+section DegreeOne
+
+/-! ### The comparison in degree one -/
+
+variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DiscreteTopology M] [DistribMulAction G M] [ContinuousSMul G M]
+
+/-- The short complex `C⁰ → C¹ → C²` of homogeneous cochains whose homology is
+`continuousCohomology 1`. It is spelled with the explicit indices `0, 1, 2` rather than through
+`HomologicalComplex.sc`, whose neighbours are computed by `ComplexShape.prev` and `next`. -/
+noncomputable abbrev homogeneousSc₁ : ShortComplex (TopModuleCat ℤ) :=
+  ShortComplex.mk ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1)
+    ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 1 2)
+    ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d_comp_d 0 1 2)
+
+omit [ContinuousSMul G M] in
+/-- The short complex `TauCeti.ContCohomology.homogeneousSc₁` has `f = d⁰`, so the corestriction of
+its concrete left homology data is the degree-zero differential. This is
+`CategoryTheory.ShortComplex.coe_topModuleCatLeftHomologyData_f'` with the differential spelled out,
+which is the form the rewrites below match against. -/
+@[simp] theorem coe_homogeneousLeftHomologyData₁_f'
+    (m : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0) :
+    ((homogeneousSc₁ G M).topModuleCatLeftHomologyData.f'.hom m).1
+      = ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1).hom m := (rfl)
+
+/-- **The quotient presentation of the canonical side.** Continuous cohomology in degree one is the
+cokernel, in `TopModuleCat ℤ`, of the degree-zero differential corestricted to the homogeneous
+`1`-cocycles: the honest `ker d ⧸ im d`, with the subspace topology on the numerator and the
+quotient topology on the whole. -/
+noncomputable def continuousCohomologyIsoCoker₁ :
+    continuousCohomology 1 (ofDiscreteModule ℤ G M)
+      ≅ TopModuleCat.coker (homogeneousSc₁ G M).topModuleCatLeftHomologyData.f' :=
+  (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).homologyIsoSc' 0 1 2 (by simp) (by simp)
+    ≪≫ (homogeneousSc₁ G M).topModuleCatHomologyIso
+
+/-- The explicit continuous `1`-cocycles `Z¹(G, M)` are the kernel of the homogeneous degree-one
+differential. -/
+noncomputable def homogeneousCocycleEquiv₁ :
+    Z1 G M ≃+ TopModuleCat.ker (homogeneousSc₁ G M).g where
+  toFun z := ⟨homogeneousCochainEquiv₁ G M ⟨(z : G → M), Z1_le_C1 G M z.2⟩,
+    (homogeneousCochainEquiv₁_mem_ker_iff G M _).2 z.2⟩
+  invFun τ := ⟨(((homogeneousCochainEquiv₁ G M).symm τ.1 : C1 G M) : G → M),
+    (homogeneousCochainEquiv₁_mem_ker_iff G M _).1
+      ((congrArg (fun σ : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 1 =>
+          ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 1 2).hom σ)
+        ((homogeneousCochainEquiv₁ G M).apply_symm_apply τ.1)).trans
+        (LinearMap.mem_ker.1 τ.2))⟩
+  left_inv z := by
+    refine Subtype.ext ?_
+    -- `dsimp only` peels off the two anonymous constructors so that the round trip is visible
+    dsimp only
+    rw [(homogeneousCochainEquiv₁ G M).symm_apply_apply]
+  right_inv τ := by
+    refine Subtype.ext ?_
+    exact (homogeneousCochainEquiv₁ G M).apply_symm_apply τ.1
+  map_add' _ _ := by
+    refine Subtype.ext ?_
+    -- after `map_add` the two sides differ only in the membership proofs carried by `C¹`
+    rw [Submodule.coe_add, ← map_add]
+    congr 1
+
+@[simp] theorem coe_homogeneousCocycleEquiv₁ (z : Z1 G M) :
+    (homogeneousCocycleEquiv₁ G M z).1
+      = homogeneousCochainEquiv₁ G M ⟨(z : G → M), Z1_le_C1 G M z.2⟩ := (rfl)
+
+@[simp] theorem coe_homogeneousCocycleEquiv₁_symm (τ : TopModuleCat.ker (homogeneousSc₁ G M).g) :
+    (((homogeneousCocycleEquiv₁ G M).symm τ : Z1 G M) : G → M)
+      = (((homogeneousCochainEquiv₁ G M).symm τ.1 : C1 G M) : G → M) := (rfl)
+
+/-- The cocycle dictionary carries the explicit `1`-coboundaries onto the image of the homogeneous
+degree-zero differential. This is the statement that makes the two quotients agree. -/
+theorem map_homogeneousCocycleEquiv₁_B1 :
+    AddSubgroup.map (homogeneousCocycleEquiv₁ G M).toAddMonoidHom
+        ((B1 G M).addSubgroupOf (Z1 G M))
+      = (LinearMap.range
+          (homogeneousSc₁ G M).topModuleCatLeftHomologyData.f'.hom.toLinearMap).toAddSubgroup := by
+  ext τ
+  rw [AddSubgroup.mem_map_equiv, AddSubgroup.mem_addSubgroupOf,
+    Submodule.mem_toAddSubgroup, LinearMap.mem_range]
+  simp only [ContinuousLinearMap.coe_coe]
+  constructor
+  · intro hτ
+    obtain ⟨m, hm⟩ := mem_B1_iff.1 hτ
+    refine ⟨homogeneousCochainEquiv₀ G M m, Subtype.ext ?_⟩
+    rw [coe_homogeneousLeftHomologyData₁_f']
+    have h1 : (⟨d0 G M m, mem_C1_iff.2 (continuous_d0_apply m)⟩ : C1 G M)
+        = (homogeneousCochainEquiv₁ G M).symm τ.1 := by
+      refine Subtype.ext ?_
+      rw [← coe_homogeneousCocycleEquiv₁_symm]
+      exact funext fun g => (d0_apply m g).trans (hm g)
+    rw [homogeneousCochainEquiv₀_d, h1, AddEquiv.apply_symm_apply]
+  · rintro ⟨w, hw⟩
+    obtain ⟨m, rfl⟩ : ∃ m, homogeneousCochainEquiv₀ G M m = w :=
+      ⟨(homogeneousCochainEquiv₀ G M).symm w, (homogeneousCochainEquiv₀ G M).apply_symm_apply w⟩
+    have hw' : ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1).hom
+        (homogeneousCochainEquiv₀ G M m) = τ.1 := by
+      rw [← coe_homogeneousLeftHomologyData₁_f', hw]
+    have h3 : (homogeneousCochainEquiv₁ G M).symm τ.1
+        = ⟨d0 G M m, mem_C1_iff.2 (continuous_d0_apply m)⟩ := by
+      rw [← hw', homogeneousCochainEquiv₀_d, AddEquiv.symm_apply_apply]
+    rw [coe_homogeneousCocycleEquiv₁_symm, h3]
+    exact d0_mem_B1 m
+
+/-- **Layer 3, degree one against the canonical object, additively.** The explicit `H¹(G, M)` is
+Mathlib's `continuousCohomology 1` of the canonical object attached to `M`.
+
+Only the two hypotheses that make the two sides exist are needed: `G` is an arbitrary topological
+group and `M` a discrete `G`-module with a continuous action. Compactness of `G` is what upgrades
+this to an isomorphism of *topological* modules, in
+`TauCeti.ContCohomology.explicitH1IsoContinuousCohomology`. -/
+noncomputable def explicitH1AddEquivContinuousCohomology :
+    H1 G M ≃+ continuousCohomology 1 (ofDiscreteModule ℤ G M) :=
+  ((QuotientAddGroup.congr _ _ (homogeneousCocycleEquiv₁ G M)
+        (map_homogeneousCocycleEquiv₁_B1 G M)).trans
+      (AddEquiv.refl
+        (TopModuleCat.coker (homogeneousSc₁ G M).topModuleCatLeftHomologyData.f'))).trans
+    (continuousCohomologyIsoCoker₁ G M).symm.toContinuousLinearEquiv.toLinearEquiv.toAddEquiv
+
+/-- The comparison sends the class of a continuous `1`-cocycle to the class of the homogeneous
+`1`-cocycle attached to it. -/
+theorem explicitH1AddEquivContinuousCohomology_H1pi (z : Z1 G M) :
+    explicitH1AddEquivContinuousCohomology G M (H1pi G M z)
+      = (continuousCohomologyIsoCoker₁ G M).inv
+          (Submodule.Quotient.mk (homogeneousCocycleEquiv₁ G M z)) := (rfl)
+
+/-- **Degree one, as topological `ℤ`-modules.** Both sides are discrete — the explicit side by
+construction, the canonical side by `TauCeti.discreteTopology_continuousCohomology` — so the
+additive comparison is automatically continuous in both directions. -/
+noncomputable def explicitH1ContinuousLinearEquiv [CompactSpace G] :
+    DiscreteH1 G M ≃L[ℤ] continuousCohomology 1 (ofDiscreteModule ℤ G M) :=
+  haveI : DiscreteTopology (ofDiscreteModule ℤ G M).V := ‹DiscreteTopology M›
+  { toLinearEquiv :=
+      { __ := (discreteH1Equiv G M).trans (explicitH1AddEquivContinuousCohomology G M)
+        -- an additive map into a `ℤ`-module object is `ℤ`-linear
+        map_smul' := fun n a => by
+          simpa using map_intCast_smul
+            ((discreteH1Equiv G M).trans
+              (explicitH1AddEquivContinuousCohomology G M)).toAddMonoidHom ℤ ℤ n a }
+    continuous_toFun := continuous_of_discreteTopology
+    continuous_invFun := continuous_of_discreteTopology }
+
+/-- **Layer 3, degree one against the canonical object.** The explicit `H¹(G, M)`, carried by the
+discrete object `TauCeti.ContCohomology.DiscreteH1`, is Mathlib's `continuousCohomology 1` of the
+canonical object attached to `M`, as an isomorphism in `TopModuleCat ℤ`.
+
+Compactness of `G` is used, and only used, to know that the canonical side is discrete. Total
+disconnectedness is not needed in this degree: the chain-level dictionary rests on
+`ContinuousMap.curry`, which carries no hypothesis, whereas degree two needs its inverse. -/
+noncomputable def explicitH1IsoContinuousCohomology [CompactSpace G] :
+    TopModuleCat.of ℤ (DiscreteH1 G M) ≅ continuousCohomology 1 (ofDiscreteModule ℤ G M) :=
+  TopModuleCat.ofIso (explicitH1ContinuousLinearEquiv G M)
+
+/-- The comparison in `TopModuleCat ℤ` is the additive comparison. -/
+theorem explicitH1IsoContinuousCohomology_hom_apply [CompactSpace G] (x : DiscreteH1 G M) :
+    (explicitH1IsoContinuousCohomology G M).hom x
+      = explicitH1AddEquivContinuousCohomology G M (discreteH1Equiv G M x) := (rfl)
+
+end DegreeOne
 
 end TauCeti.ContCohomology
