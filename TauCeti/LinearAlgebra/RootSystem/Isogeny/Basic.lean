@@ -78,8 +78,6 @@ Composition makes the self-isogenies of `P` a monoid. This is the isogeny analog
   matrices.
 * `TauCeti.RootPairingIsogeny.pow_exponent`: the exponent of an iterate is the product along the
   corresponding orbit of indices.
-* `TauCeti.RootPairingIsogeny.pow_two_mul_of_mul_self`: an isogeny squaring to a scaling has scalar
-  even powers.
 
 ## References
 
@@ -593,113 +591,6 @@ theorem pow_exponent (f : RootPairingIsogeny P P) (k : ℕ) (i : ι) :
     rw [pow_succ', mul_exponent, ih, pow_indexEquiv, Finset.prod_range_succ]
 
 end Iterate
-
-/-! ### Iterates of a square root of a scaling -/
-
-section Scaling
-
-variable {ι M N : Type*} [AddCommGroup M] [AddCommGroup N]
-  [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N] [Module.Finite ℤ N]
-  {P : RootPairing ι ℤ M N}
-
-/-- Scaling by one is the identity isogeny. -/
-@[simp] theorem smulId_one : smulId P 1 = 1 := by
-  refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_ <;> ext <;> simp
-
-/-- The product of two scalings is the scaling by the product. -/
-@[simp] theorem smulId_mul_smulId (c d : ℕ+) : smulId P c * smulId P d = smulId P (c * d) := by
-  refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
-  · ext x
-    simp [mul_smul]
-  · ext x
-    rw [mul_comm c d]
-    simp [mul_smul]
-  · ext i
-    simp
-  · funext i
-    simp only [mul_exponent, smulId_exponent, smulId_indexEquiv]
-    push_cast
-    ring
-
-/-- Iterating a scaling raises the scalar to the corresponding power. -/
-@[simp] theorem smulId_pow (c : ℕ+) (k : ℕ) : smulId P c ^ k = smulId P (c ^ k) := by
-  induction k with
-  | zero => simp
-  | succ k ih => rw [pow_succ, ih, smulId_mul_smulId, pow_succ]
-
-variable {f : RootPairingIsogeny P P} {c : ℕ+}
-
-/-- **An isogeny that squares to a scaling has scalar even powers.** The special isogenies in
-characteristics two and three are square roots of the Frobenius scaling in this sense, and this is
-what makes an odd power of one of them differ from a Frobenius by a single further application. -/
-theorem pow_two_mul_of_mul_self (hf : f * f = smulId P c) (m : ℕ) :
-    f ^ (2 * m) = smulId P (c ^ m) := by
-  rw [pow_mul, pow_two, hf, smulId_pow]
-
-/-- **Every power of an isogeny that squares to a scaling again squares to a scaling.** -/
-theorem pow_mul_pow_of_mul_self (hf : f * f = smulId P c) (k : ℕ) :
-    f ^ k * f ^ k = smulId P (c ^ k) := by
-  rw [← pow_add, ← two_mul, pow_two_mul_of_mul_self hf]
-
-/-- An odd power is a scaling composed with the original isogeny. -/
-theorem pow_two_mul_add_one_of_mul_self (hf : f * f = smulId P c) (m : ℕ) :
-    f ^ (2 * m + 1) = smulId P (c ^ m) * f := by
-  rw [pow_succ, pow_two_mul_of_mul_self hf]
-
-/-- An odd power of an isogeny that squares to a scaling acts on indices exactly as the isogeny
-itself does. -/
-theorem pow_odd_indexEquiv_of_mul_self_eq_smulId (hf : f * f = smulId P c) (m : ℕ) :
-    (f ^ (2 * m + 1)).indexEquiv = f.indexEquiv := by
-  rw [pow_two_mul_add_one_of_mul_self hf, mul_indexEquiv, smulId_indexEquiv,
-    ← Equiv.Perm.one_def, one_mul]
-
-/-- **The exponent of an odd power of an isogeny that squares to scaling by `c`.** It is the
-exponent of the isogeny itself, multiplied by `c ^ m`. -/
-theorem pow_odd_exponent_of_mul_self_eq_smulId (hf : f * f = smulId P c) (m : ℕ) (i : ι) :
-    (f ^ (2 * m + 1)).exponent i = f.exponent i * (c : ℤ) ^ m := by
-  rw [pow_two_mul_add_one_of_mul_self hf, mul_exponent, smulId_exponent]
-  push_cast
-  ring
-
-/-- The character-lattice map of an odd power is that of the isogeny itself, scaled by `c ^ m`. -/
-theorem pow_odd_weightMap_of_mul_self_eq_smulId (hf : f * f = smulId P c) (m : ℕ) :
-    (f ^ (2 * m + 1)).weightMap = ((c : ℕ) ^ m) • f.weightMap := by
-  rw [pow_two_mul_add_one_of_mul_self hf, mul_weightMap, smulId_weightMap,
-    LinearMap.smul_comp, LinearMap.id_comp, PNat.pow_coe]
-
-/-- The cocharacter map of an odd power is that of the isogeny itself, scaled by `c ^ m`. -/
-theorem pow_odd_coweightMap_of_mul_self_eq_smulId (hf : f * f = smulId P c) (m : ℕ) :
-    (f ^ (2 * m + 1)).coweightMap = ((c : ℕ) ^ m) • f.coweightMap := by
-  rw [pow_two_mul_add_one_of_mul_self hf, mul_coweightMap, smulId_coweightMap]
-  ext x
-  simp only [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.id_apply, PNat.pow_coe]
-  exact map_nsmul f.coweightMap _ x
-
-/-- The action of an odd power on a root, in terms of the original isogeny. -/
-theorem root_weightMap_pow_odd_of_mul_self_eq_smulId (hf : f * f = smulId P c) (m : ℕ) (i : ι) :
-    (f ^ (2 * m + 1)).weightMap (P.root i) =
-      (f.exponent i * (c : ℤ) ^ m) • P.root (f.indexEquiv i) := by
-  rw [(f ^ (2 * m + 1)).root_weightMap, pow_odd_exponent_of_mul_self_eq_smulId hf,
-    pow_odd_indexEquiv_of_mul_self_eq_smulId hf]
-  simp only [Int.cast_id]
-
-/-- The action of an odd power on a coroot, in terms of the original isogeny. -/
-theorem coroot_coweightMap_pow_odd_of_mul_self_eq_smulId (hf : f * f = smulId P c) (m : ℕ)
-    (i : ι) :
-    (f ^ (2 * m + 1)).coweightMap (P.coroot (f.indexEquiv i)) =
-      (f.exponent i * (c : ℤ) ^ m) • P.coroot i := by
-  rw [← pow_odd_indexEquiv_of_mul_self_eq_smulId hf,
-    (f ^ (2 * m + 1)).coroot_coweightMap, pow_odd_exponent_of_mul_self_eq_smulId hf]
-  simp only [Int.cast_id]
-
-/-- **The two exponents of a power at an index and at its image multiply to `c ^ k`.** -/
-theorem pow_exponent_mul_exponent_indexEquiv_of_mul_self_eq_smulId
-    (hf : f * f = smulId P c) (k : ℕ) (i : ι) :
-    (f ^ k).exponent i * (f ^ k).exponent ((f ^ k).indexEquiv i) = (c : ℤ) ^ k := by
-  have h := congrArg (fun g : RootPairingIsogeny P P => g.exponent i) (pow_mul_pow_of_mul_self hf k)
-  simpa using h
-
-end Scaling
 
 end RootPairingIsogeny
 
