@@ -41,6 +41,9 @@ it is why no sign condition on the off-diagonal entries of `LieAlgebra.Basis.A` 
 
 ## Main results
 
+* `TauCeti.hasPrimitiveVectorWith_symm_of_lie` and
+  `TauCeti.ad_pow_lie_eq_zero_of_isSl2Triple`: the primitive-vector and higher-string arguments
+  from bare `sl₂`-triple, weight, and annihilation hypotheses.
 * `TauCeti.ad_pow_lie_lieBasis_e_e` and `TauCeti.ad_pow_lie_lieBasis_f_f`: the two higher Serre
   relations for the generators of a Lie algebra basis.
 * `TauCeti.isSerreSystem_lieBasis`: those generators form a Serre system for the transposed matrix
@@ -78,19 +81,19 @@ variable {ι K L : Type*} [Finite ι] [CommRing K] [IsDomain K] [CharZero K] [Li
   [LieAlgebra K L] [Module.IsTorsionFree K L] [IsNoetherian K L]
   {H : LieSubalgebra K L} (b : LieAlgebra.Basis ι H)
 
-/-! ## Primitive vectors among the generators -/
+/-! ## Primitive vectors and finite strings -/
 
-omit [IsDomain K] [CharZero K] [Module.IsTorsionFree K L] [IsNoetherian K L] in
-/-- For `i ≠ j` the raising generator `eⱼ` is primitive of eigenvalue `-Aⱼᵢ` for the triple
-`(-hᵢ, fᵢ, eᵢ)` obtained from `LieAlgebra.Basis.sl2` by exchanging the raising and lowering
-generators and negating `hᵢ`. -/
-private theorem hasPrimitiveVectorWith_lieBasis_e {i j : ι} (hij : i ≠ j) :
-    (b.sl2 i).symm.HasPrimitiveVectorWith (M := L) (b.e j) ((-b.A j i : ℤ) : K) where
-  ne_zero := (b.sl2 j).e_ne_zero
-  lie_h := by
-    rw [neg_lie, b.lie_h_e j i, Int.cast_smul_eq_zsmul, neg_smul]
-  lie_e := by
-    rw [← lie_skew, b.lie_e_f_ne j i hij.symm, neg_zero]
+omit [Finite ι] [IsDomain K] [CharZero K] [Module.IsTorsionFree K L]
+    [IsNoetherian K L] in
+/-- A nonzero weight vector killed by the lowering element is primitive for the symmetric
+`sl₂`-triple, with the negated weight. -/
+theorem hasPrimitiveVectorWith_symm_of_lie {h e f m : L} {a : ℤ}
+    (ht : IsSl2Triple h e f) (hm : m ≠ 0)
+    (hhm : ⁅h, m⁆ = ((a : ℤ) : K) • m) (hfm : ⁅f, m⁆ = 0) :
+    ht.symm.HasPrimitiveVectorWith (M := L) m ((-a : ℤ) : K) where
+  ne_zero := hm
+  lie_h := by rw [neg_lie, hhm, Int.cast_neg, neg_smul]
+  lie_e := hfm
 
 /-! ## The higher Serre relations -/
 
@@ -98,7 +101,8 @@ omit [Finite ι] in
 /-- The string below a primitive vector of integer eigenvalue `n` stops after `n.toNat` steps.
 This is the common core of the two higher Serre relations: `y` is the lowering generator of the
 triple being iterated and `m` the primitive vector. -/
-private theorem ad_pow_succ_toNat_eq_zero {x y z m : L} {ht : IsSl2Triple z x y} {n : ℤ}
+theorem ad_pow_succ_toNat_eq_zero_of_hasPrimitiveVectorWith
+    {x y z m : L} {ht : IsSl2Triple z x y} {n : ℤ}
     (P : ht.HasPrimitiveVectorWith (M := L) m ((n : ℤ) : K)) :
     ((ad K L y) ^ (n.toNat + 1)) m = 0 := by
   obtain ⟨k, hk⟩ := P.exists_nat
@@ -110,15 +114,27 @@ private theorem ad_pow_succ_toNat_eq_zero {x y z m : L} {ht : IsSl2Triple z x y}
   rw [hadt, htn]
   exact P.pow_toEnd_f_eq_zero_of_eq_nat hk
 
+omit [Finite ι] in
+/-- The higher-Serre string relation supplied by an `sl₂`-triple: if `m` has integral weight `a`
+for `h`, is nonzero, and is killed by `f`, then `1 - a` applications of `e` kill `m`. -/
+theorem ad_pow_lie_eq_zero_of_isSl2Triple {h e f m : L} {a : ℤ}
+    (ht : IsSl2Triple h e f) (hm : m ≠ 0)
+    (hhm : ⁅h, m⁆ = ((a : ℤ) : K) • m) (hfm : ⁅f, m⁆ = 0) :
+    ((ad K L e) ^ (-a).toNat) ⁅e, m⁆ = 0 := by
+  have h0 := ad_pow_succ_toNat_eq_zero_of_hasPrimitiveVectorWith (K := K)
+    (hasPrimitiveVectorWith_symm_of_lie (K := K) ht hm hhm hfm)
+  rw [pow_succ, Module.End.mul_apply, ad_apply] at h0
+  exact h0
+
 /-- **The higher Serre relation on the raising generators of a Lie algebra basis.** -/
 theorem ad_pow_lie_lieBasis_e_e (i j : ι) :
     ((ad K L (b.e i)) ^ (-b.Aᵀ i j).toNat) ⁅b.e i, b.e j⁆ = 0 := by
   rcases eq_or_ne i j with rfl | hij
   · simp
-  · have h0 := ad_pow_succ_toNat_eq_zero (K := K) (hasPrimitiveVectorWith_lieBasis_e b hij)
-    rw [pow_succ, Module.End.mul_apply, ad_apply] at h0
-    rw [Matrix.transpose_apply]
-    exact h0
+  · rw [Matrix.transpose_apply]
+    exact ad_pow_lie_eq_zero_of_isSl2Triple (b.sl2 i) (b.sl2 j).e_ne_zero
+      (by rw [b.lie_h_e j i, Int.cast_smul_eq_zsmul])
+      (by rw [← lie_skew, b.lie_e_f_ne j i hij.symm, neg_zero])
 
 /-- **The higher Serre relation on the lowering generators of a Lie algebra basis.** -/
 theorem ad_pow_lie_lieBasis_f_f (i j : ι) :
