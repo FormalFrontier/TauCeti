@@ -152,7 +152,7 @@ theorem eigenspace_baseChange_realAlmostComplexStructure_I
       (hs.piece 1).comap (realPointsEquiv ω.involutive).toLinearMap := by
   rw [eigenspace_eq_comap_of_intertwine (realPointsEquiv ω.involutive)
     (LinearMap.baseChange ℂ (hs.realAlmostComplexStructure (by norm_num)).toLinearMap)
-    hs.weilOperator (hs.realPointsEquiv_baseChange_realAlmostComplexStructure (by norm_num))
+    hs.weilOperator (hs.realPointsEquiv_baseChange_realAlmostComplexStructure_apply (by norm_num))
     Complex.I,
     hs.eigenspace_weilOperator_I heff]
 
@@ -166,7 +166,7 @@ theorem eigenspace_baseChange_realAlmostComplexStructure_neg_I
       (hs.piece 0).comap (realPointsEquiv ω.involutive).toLinearMap := by
   rw [eigenspace_eq_comap_of_intertwine (realPointsEquiv ω.involutive)
     (LinearMap.baseChange ℂ (hs.realAlmostComplexStructure (by norm_num)).toLinearMap)
-    hs.weilOperator (hs.realPointsEquiv_baseChange_realAlmostComplexStructure (by norm_num))
+    hs.weilOperator (hs.realPointsEquiv_baseChange_realAlmostComplexStructure_apply (by norm_num))
     (-Complex.I),
     hs.eigenspace_weilOperator_neg_I heff]
 

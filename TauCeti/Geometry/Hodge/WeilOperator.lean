@@ -256,7 +256,8 @@ theorem coe_realAlmostComplexStructure_apply (hs : HodgeStructureOn W ω n) (hn 
 equivalence `ℂ ⊗[ℝ] V_ℝ ≃ₗ[ℂ] W`, extending `J` from the real form sends the same vectors to the
 same place as the Weil operator on `W`. -/
 @[simp]
-theorem realPointsEquiv_baseChange_realAlmostComplexStructure (hs : HodgeStructureOn W ω n)
+theorem realPointsEquiv_baseChange_realAlmostComplexStructure_apply
+    (hs : HodgeStructureOn W ω n)
     (hn : Odd n) (x : TensorProduct ℝ ℂ (realPoints ω.toEquiv.toLinearMap)) :
     realPointsEquiv ω.involutive
         ((LinearMap.baseChange ℂ (hs.realAlmostComplexStructure hn).toLinearMap) x) =
@@ -274,7 +275,7 @@ theorem realPointsEquiv_comp_baseChange_realAlmostComplexStructure
     (realPointsEquiv ω.involutive).toLinearMap ∘ₗ
         LinearMap.baseChange ℂ (hs.realAlmostComplexStructure hn).toLinearMap =
       hs.weilOperator ∘ₗ (realPointsEquiv ω.involutive).toLinearMap :=
-  LinearMap.ext (hs.realPointsEquiv_baseChange_realAlmostComplexStructure hn)
+  LinearMap.ext (hs.realPointsEquiv_baseChange_realAlmostComplexStructure_apply hn)
 
 end HodgeStructureOn
 
