@@ -204,16 +204,16 @@ theorem ord_add_eq_min_of_ord_ne {f g : F} (hf : f ≠ 0) (hg : g ≠ 0)
 
 /-- A finite sum one of whose summands has strictly least order at `P` does not vanish. -/
 theorem sum_ne_zero_of_forall_ord_lt {ι : Type*} {s : Finset ι} {f : ι → F} {j : ι} (hj : j ∈ s)
-    (hf : ∀ i ∈ s, f i ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
+    (hfj : f j ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
     ∑ i ∈ s, f i ≠ 0 :=
-  Valuation.sum_ne_zero_of_forall_ord_lt P.valuation hj hf hlt
+  Valuation.sum_ne_zero_of_forall_ord_lt P.valuation hj hfj hlt
 
 /-- The **strict triangle inequality for a finite sum**: a summand of strictly least order at `P`
 dictates the order of the sum. -/
 theorem ord_sum_eq_of_forall_lt {ι : Type*} {s : Finset ι} {f : ι → F} {j : ι} (hj : j ∈ s)
-    (hf : ∀ i ∈ s, f i ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
+    (hfj : f j ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
     P.ord (∑ i ∈ s, f i) = P.ord (f j) :=
-  Valuation.ord_sum_eq_of_forall_lt P.valuation hj hf hlt
+  Valuation.ord_sum_eq_of_forall_lt P.valuation hj hfj hlt
 
 section Constants
 
