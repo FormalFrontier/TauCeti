@@ -28,6 +28,8 @@ between two given states is determined by its side columns.
 
 * `TauCeti.GridRectangleDecomposition.ext`: a decomposition is determined by the ordered side
   columns of its two rectangles.
+* `TauCeti.GridRectangleDecomposition.transpose`: diagonal reflection of both constituent
+  rectangles gives a decomposition between the transposed endpoint states.
 * `TauCeti.GridRectangleDecomposition.target_mem_twoStepColumnSwapNeighbors`: the target of a
   decomposition is reached from its source by two nontrivial column transpositions.
 
@@ -81,6 +83,38 @@ theorem ext {D E : GridRectangleDecomposition x z}
             GridRectangleBetween.eq_of_sides hsecondLeft hsecondRight
           subst Esecond
           rfl
+
+/-- The diagonal reflection of a two-step rectangle decomposition. It reflects both constituent
+rectangles and the intermediate state, and hence gives a decomposition between the transposed
+endpoint states. -/
+@[expose] def transpose (D : GridRectangleDecomposition x z) :
+    GridRectangleDecomposition x.transpose z.transpose where
+  middle := D.middle.transpose
+  first := D.first.transpose
+  second := D.second.transpose
+
+/-- The intermediate state of a transposed decomposition is the transposed intermediate state. -/
+@[simp]
+theorem transpose_middle (D : GridRectangleDecomposition x z) :
+    D.transpose.middle = D.middle.transpose :=
+  rfl
+
+/-- The first rectangle of a transposed decomposition is the transposed first rectangle. -/
+@[simp]
+theorem transpose_first (D : GridRectangleDecomposition x z) :
+    D.transpose.first = D.first.transpose :=
+  rfl
+
+/-- The second rectangle of a transposed decomposition is the transposed second rectangle. -/
+@[simp]
+theorem transpose_second (D : GridRectangleDecomposition x z) :
+    D.transpose.second = D.second.transpose :=
+  rfl
+
+/-- Reflecting a two-step rectangle decomposition twice recovers the original decomposition. -/
+@[simp]
+theorem transpose_transpose (D : GridRectangleDecomposition x z) : D.transpose.transpose = D := by
+  ext <;> simp
 
 /-- The target of a two-step rectangle decomposition is a two-step column-swap neighbour of its
 source: each of the two rectangles transposes its pair of distinct side columns. -/
