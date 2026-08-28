@@ -134,8 +134,10 @@ theorem contractLeft_coord_basis {I : Type w} [LinearOrder I]
   · exact contractLeft_coord_basis_eq_zero_of_not_mem b i s hi
 
 /-- Creation after contraction by a basis coordinate is the projection onto exterior basis
-vectors containing that coordinate. -/
-@[simp]
+vectors containing that coordinate.
+
+This is not a `simp` lemma because `contractLeft_coord_basis` is the canonical normal form for
+the contraction in its left-hand side. -/
 theorem ι_mul_contractLeft_coord_basis {I : Type w} [LinearOrder I]
     (b : Module.Basis I R M) (i : I) (s : Finset I) :
     ExteriorAlgebra.ι R (b i) *
