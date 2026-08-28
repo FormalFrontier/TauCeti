@@ -19,38 +19,48 @@ back is the same as cupping with the corestricted class. That is the **projectio
 cor (res a ⌣ b) = a ⌣ cor b,        cor (b ⌣ res n) = cor b ⌣ n,
 ```
 
-proved here in the five low-degree shapes that have a degree-`0` factor.
+proved here in all six low-degree shapes.
 
-In each of those shapes the degree-`0` factor is invariant, so partial application of the pairing
-at it is an *equivariant* additive map — `TauCeti.ContCohomology.pairingLeft` in the first display
-and `TauCeti.ContCohomology.pairingRight` in the second — and the cup with a degree-`0` class is
-the coefficient map that equivariant map induces. In positive degrees the projection formula is
-therefore exactly naturality of the corestriction cochain in an equivariant coefficient map,
-`TauCeti.ContCohomology.map_cochainsCor1` and `map_cochainsCor2`, and it holds already on
-cochains, with no coboundary correction. Those two cochain identities are stated for a variable
-transversal, so the statements below transport to any other transversal through
+In the five shapes with a degree-`0` factor that factor is invariant, so partial application of the
+pairing at it is an *equivariant* additive map — `TauCeti.ContCohomology.pairingLeft` in the first
+display and `TauCeti.ContCohomology.pairingRight` in the second — and the cup with a degree-`0`
+class is the coefficient map that equivariant map induces. In positive degrees the projection
+formula is therefore exactly naturality of the corestriction cochain in an equivariant coefficient
+map, `TauCeti.ContCohomology.map_cochainsCor1` and `map_cochainsCor2`, and in those five shapes it
+holds already on cochains, with no coboundary correction. Those two cochain identities are stated
+for a variable transversal, so the statements below transport to any other transversal through
 `TauCeti.ContCohomology.explicitCor1_eq_transversal` and `explicitCor2_eq_transversal`. In the
 `(1,0)` and `(2,0)` shapes
 the translation factors `g •` and `(g * h) •` of the cup formula are absorbed by the invariance of
 the degree-`0` factor before that naturality is applied; in degree `0` the same absorption is
 `TauCeti.ContCohomology.pairingLeft_smul` applied to each summand of the norm.
 
-The `(1,1)` shape, the one shape of the six without a degree-`0` factor, is deliberately absent:
-the degree-two corestriction pairs the transversal word of the first variable with the
-*translated* transversal word of the second, so the two sides differ by a coboundary rather than
-agreeing on cochains. Layer 8 of the roadmap asks for the projection formula in the shapes with a
-degree-`0` factor and does not supply a `(1,1)` form.
+The `(1,1)` shape, the one shape of the six without a degree-`0` factor, is the one shape where
+the two sides do *not* agree on cochains: the degree-two corestriction pairs the transversal word
+of the first variable with the *translated* transversal word of the second, so the two sides
+differ by a coboundary. That coboundary is exhibited by the explicit `1`-cochain
+`TauCeti.ContCohomology.cup11ProjectionHomotopy`,
+
+```text
+kᵗ(γ) = ∑ u : G ⧸ U, μ (a (t u)) (t u • b (ℓᵗ_u γ)),
+```
+
+whose `d¹` is the difference of the two sides
+(`TauCeti.ContCohomology.cup11ProjectionHomotopy_spec`); the identity on classes follows.
 
 ## Main statements
 
 * `TauCeti.ContCohomology.explicitCup_projection`: the `(0,1)` shape
   `cor¹ (res⁰ a ⌣ b) = a ⌣ cor¹ b`. The roadmap's `Suggested.lean` fixes the unsuffixed name for
-  this shape, which is why the four companions below carry their bidegree and this one does not.
+  this shape, which is why the five companions below carry their bidegree and this one does not.
 * `TauCeti.ContCohomology.explicitCup_projection00`,
   `TauCeti.ContCohomology.explicitCup_projection10`,
   `TauCeti.ContCohomology.explicitCup_projection02` and
   `TauCeti.ContCohomology.explicitCup_projection20`: the same identity in the four remaining
   low-degree shapes with a degree-`0` factor.
+* `TauCeti.ContCohomology.explicitCup_projection11`: the `(1,1)` shape
+  `cor² (res¹ a ⌣ b) = a ⌣ cor¹ b`, deduced from
+  `TauCeti.ContCohomology.cup11ProjectionHomotopy_spec`.
 
 This implements the projection-formula item of the "compatibilities" milestone of Layer 8 of the
 human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`.
@@ -229,5 +239,186 @@ theorem explicitCup_projection20 (b : H2 U M) (n : H0 G N) :
     exact key.symm
 
 end DegreeTwo
+
+section CupOneOneHomotopy
+
+/-! ### The `(1,1)` homotopy
+
+The `(1,1)` shape is the one shape of the six in which neither factor is invariant, and the two
+sides of the projection formula are genuinely different cochains. Their difference is a
+coboundary, and this section writes down a primitive for it. Nothing here needs a topology: the
+identity `TauCeti.ContCohomology.cup11ProjectionHomotopy_spec` is an identity of plain cochains,
+just like the corestriction cochain identities it is proved from. -/
+
+variable (G : Type u) [Group G]
+  (M : Type v) [AddCommGroup M] [DistribMulAction G M]
+  (N : Type w) [AddCommGroup N] [DistribMulAction G N]
+  (P : Type x) [AddCommGroup P] [DistribMulAction G P]
+  (U : Subgroup G) [U.FiniteIndex]
+  (μ : M →+ N →+ P)
+  (t : G ⧸ U → G) (ht : ∀ u : G ⧸ U, (QuotientGroup.mk (t u) : G ⧸ U) = u)
+
+attribute [local instance] Subgroup.fintypeQuotientOfFiniteIndex
+
+/-- **The `(1,1)` projection-formula homotopy** for a transversal `t`,
+
+```text
+kᵗ(γ) = ∑ u : G ⧸ U, μ (α (t u)) (t u • β (ℓᵗ_u γ)),
+```
+
+where `ℓᵗ` is the transversal word `TauCeti.lWord`. It is the corestriction sum of the pairing of
+`α` against `β`, evaluated at the transversal representatives in the first variable and at the
+transversal words in the second. Its `d¹` is the difference of the two sides of the `(1,1)`
+projection formula, `TauCeti.ContCohomology.cup11ProjectionHomotopy_spec`. -/
+noncomputable def cup11ProjectionHomotopy (α : G → M) (β : U → N) (γ : G) : P :=
+  ∑ u : G ⧸ U, μ (α (t u)) (t u • β ⟨lWord U t u γ, lWord_mem U t ht u γ⟩)
+
+omit [DistribMulAction G M] [DistribMulAction G P] in
+/-- The defining formula for the `(1,1)` projection-formula homotopy. -/
+@[simp]
+theorem cup11ProjectionHomotopy_apply (α : G → M) (β : U → N) (γ : G) :
+    cup11ProjectionHomotopy G M N P U μ t ht α β γ =
+      ∑ u : G ⧸ U, μ (α (t u)) (t u • β ⟨lWord U t u γ, lWord_mem U t ht u γ⟩) := (rfl)
+
+/-- **The `(1,1)` projection formula on cochains, up to the explicit coboundary.** For a `1`-cocycle
+`α` of `G` and a `1`-cocycle `β` of `U`, the difference between the corestriction of the cup of
+`α|_U` with `β` and the cup of `α` with the corestriction of `β` is `d¹` of
+`TauCeti.ContCohomology.cup11ProjectionHomotopy`.
+
+The whole content is the transversal identity `TauCeti.transversal_smul_mul_lWord`, applied twice:
+once to move the factor `t u •` of the corestriction across the pairing on the left-hand side, and
+once, through the cocycle law for `α`, to turn the value `t (γ • u) • α (ℓᵗ_{γ • u} γ)` that
+appears there into `γ • α (t u) - α (t (γ • u)) + α γ`. The first two of those three terms are
+what `d¹` of the homotopy contributes and the third is the right-hand side. -/
+theorem cup11ProjectionHomotopy_spec
+    (hequiv : ∀ (g : G) (m : M) (y : N), μ (g • m) (g • y) = g • μ m y)
+    {α : G → M} (hα : groupCohomology.IsCocycle₁ α)
+    {β : U → N} (hβ : groupCohomology.IsCocycle₁ β) (γ η : G) :
+    γ • cup11ProjectionHomotopy G M N P U μ t ht α β η -
+        cup11ProjectionHomotopy G M N P U μ t ht α β (γ * η) +
+        cup11ProjectionHomotopy G M N P U μ t ht α β γ =
+      cochainsCor2 G P U t ht (fun q : U × U => μ (α (q.1 : G)) ((q.1 : G) • β q.2)) (γ, η) -
+        μ (α γ) (γ • cochainsCor1 G N U t ht β η) := by
+  -- The four sums below are all indexed so that their second pairing argument is
+  -- `(γ * t u) • β (ℓᵗ_u η)`; only the first argument differs.
+  have h1 : γ • cup11ProjectionHomotopy G M N P U μ t ht α β η =
+      ∑ u : G ⧸ U, μ (γ • α (t u))
+        ((γ * t u) • β ⟨lWord U t u η, lWord_mem U t ht u η⟩) := by
+    rw [cup11ProjectionHomotopy_apply, Finset.smul_sum]
+    exact Finset.sum_congr rfl fun u _ => by rw [← hequiv, mul_smul]
+  have h2 : cup11ProjectionHomotopy G M N P U μ t ht α β (γ * η) =
+      cup11ProjectionHomotopy G M N P U μ t ht α β γ +
+        ∑ u : G ⧸ U, μ (α (t (γ • u)))
+          ((γ * t u) • β ⟨lWord U t u η, lWord_mem U t ht u η⟩) := by
+    have hsplit : ∀ u : G ⧸ U,
+        μ (α (t u)) (t u • β ⟨lWord U t u (γ * η), lWord_mem U t ht u (γ * η)⟩) =
+          μ (α (t u)) (t u • β ⟨lWord U t u γ, lWord_mem U t ht u γ⟩) +
+            μ (α (t u)) ((γ * t (γ⁻¹ • u)) •
+              β ⟨lWord U t (γ⁻¹ • u) η, lWord_mem U t ht (γ⁻¹ • u) η⟩) := by
+      intro u
+      have hmul : (⟨lWord U t u γ, lWord_mem U t ht u γ⟩ : U) *
+          ⟨lWord U t (γ⁻¹ • u) η, lWord_mem U t ht (γ⁻¹ • u) η⟩ =
+            ⟨lWord U t u (γ * η), lWord_mem U t ht u (γ * η)⟩ :=
+        Subtype.ext (lWord_mul_lWord U t u γ η)
+      rw [← hmul, hβ, Subgroup.smul_def, smul_add, smul_smul, transversal_mul_lWord, map_add]
+      abel
+    rw [cup11ProjectionHomotopy_apply, cup11ProjectionHomotopy_apply,
+      Finset.sum_congr rfl fun u _ => hsplit u, Finset.sum_add_distrib]
+    refine congrArg _ (Fintype.sum_equiv (MulAction.toPerm γ) _ _ fun u => ?_).symm
+    simp only [MulAction.toPerm_apply, inv_smul_smul]
+  -- The cocycle law for `α` at the factorization `t (γ • u) * ℓᵗ_{γ • u}(γ) = γ * t u`.
+  have hkey : ∀ u : G ⧸ U, t (γ • u) • α (lWord U t (γ • u) γ) =
+      γ • α (t u) - α (t (γ • u)) + α γ := by
+    intro u
+    have h := hα (t (γ • u)) (lWord U t (γ • u) γ)
+    rw [transversal_smul_mul_lWord, hα γ (t u)] at h
+    have h' : t (γ • u) • α (lWord U t (γ • u) γ) = γ • α (t u) + α γ - α (t (γ • u)) := by
+      rw [h]; abel
+    rw [h']; abel
+  have h3 : cochainsCor2 G P U t ht
+      (fun q : U × U => μ (α (q.1 : G)) ((q.1 : G) • β q.2)) (γ, η) =
+        ∑ u : G ⧸ U, μ (γ • α (t u) - α (t (γ • u)) + α γ)
+          ((γ * t u) • β ⟨lWord U t u η, lWord_mem U t ht u η⟩) := by
+    rw [cochainsCor2_apply]
+    refine (Fintype.sum_equiv (MulAction.toPerm γ) _ _ fun u => ?_).symm
+    rw [← hkey u]
+    simp only [MulAction.toPerm_apply, inv_smul_smul]
+    rw [← hequiv, smul_smul, transversal_smul_mul_lWord]
+  have h4 : μ (α γ) (γ • cochainsCor1 G N U t ht β η) =
+      ∑ u : G ⧸ U, μ (α γ) ((γ * t u) • β ⟨lWord U t u η, lWord_mem U t ht u η⟩) := by
+    rw [cochainsCor1_apply, Finset.smul_sum, map_sum]
+    exact Finset.sum_congr rfl fun u _ => by rw [mul_smul]
+  rw [h1, h2, h3, h4]
+  simp only [map_sub, map_add, AddMonoidHom.sub_apply, AddMonoidHom.add_apply,
+    Finset.sum_add_distrib, Finset.sum_sub_distrib]
+  abel
+
+end CupOneOneHomotopy
+
+section CupOneOne
+
+/-! ### The `(1,1)` shape
+
+Continuity of the homotopy is what makes it a primitive in `B²`, which is the image of the
+*continuous* `1`-cochains, and it comes — as everywhere in this file — from openness of `U`
+through `TauCeti.continuous_lWord`. -/
+
+variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  (M : Type v) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+    [DistribMulAction G M] [ContinuousSMul G M]
+  (N : Type w) [AddCommGroup N] [TopologicalSpace N] [IsTopologicalAddGroup N]
+    [DistribMulAction G N] [ContinuousSMul G N]
+  (P : Type x) [AddCommGroup P] [TopologicalSpace P] [IsTopologicalAddGroup P]
+    [DistribMulAction G P] [ContinuousSMul G P]
+  (U : Subgroup G) [U.FiniteIndex] (hU : IsOpen (U : Set G))
+  (μ : M →+ N →+ P) (hμ : Continuous fun p : M × N => μ p.1 p.2)
+  (t : G ⧸ U → G) (ht : ∀ u : G ⧸ U, (QuotientGroup.mk (t u) : G ⧸ U) = u)
+
+attribute [local instance] Subgroup.fintypeQuotientOfFiniteIndex
+
+include hU hμ
+
+omit [IsTopologicalAddGroup M] [DistribMulAction G M] [ContinuousSMul G M]
+  [IsTopologicalAddGroup N] [DistribMulAction G P] [ContinuousSMul G P] in
+/-- The `(1,1)` projection-formula homotopy of continuous data is continuous. As for the
+corestriction cochains themselves, no continuity is required of the transversal `t`. -/
+theorem continuous_cup11ProjectionHomotopy (α : G → M) {β : U → N} (hβ : Continuous β) :
+    Continuous (cup11ProjectionHomotopy G M N P U μ t ht α β) := by
+  -- Put the cochain in the pointwise-sum form `continuous_finsetSum` expects.
+  rw [funext (cup11ProjectionHomotopy_apply G M N P U μ t ht α β)]
+  exact continuous_finsetSum _ fun u _ =>
+    hμ.comp (continuous_const.prodMk
+      ((hβ.comp ((continuous_lWord U t hU u).subtype_mk _)).const_smul (t u)))
+
+variable (hequiv : ∀ (g : G) (m : M) (y : N), μ (g • m) (g • y) = g • μ m y)
+
+include hequiv
+
+/-- **The `(1,1)` projection formula**, `cor² (res¹ a ⌣ b) = a ⌣ cor¹ b`. Unlike the five shapes
+with a degree-`0` factor, this one is not an identity of cochains: the two sides differ by `d¹` of
+`TauCeti.ContCohomology.cup11ProjectionHomotopy`, which is
+`TauCeti.ContCohomology.cup11ProjectionHomotopy_spec`. -/
+theorem explicitCup_projection11 (a : H1 G M) (b : H1 U N) :
+    explicitCor2 G P U hU
+        (explicitCup11 U M N P μ hμ (fun g m y => hequiv (g : G) m y)
+          (explicitRes1 G M U a) b) =
+      explicitCup11 G M N P μ hμ hequiv a (explicitCor1 G N U hU b) := by
+  induction a using QuotientAddGroup.induction_on with
+  | _ α =>
+    induction b using QuotientAddGroup.induction_on with
+    | _ c =>
+      simp only [explicitRes1_mk, explicitCor1_mk, explicitCup11_mk, explicitCor2_mk,
+        H2pi_eq_iff]
+      refine mem_B2_iff'.2 ⟨cup11ProjectionHomotopy G M N P U μ Quotient.out Quotient.out_eq
+        (α : G → M) (c : U → N),
+        continuous_cup11ProjectionHomotopy G M N P U hU μ hμ Quotient.out Quotient.out_eq
+          (α : G → M) (mem_Z1_iff.1 c.2).1, fun γ η => ?_⟩
+      -- Restriction is evaluation of the cochain at the inclusion, by `cocyclesMap1_apply`.
+      simp only [Pi.sub_apply, coe_cocyclesCor2, coe_cocyclesCor1, cocyclesMap1_apply,
+        Subgroup.smul_def]
+      exact cup11ProjectionHomotopy_spec G M N P U μ Quotient.out Quotient.out_eq hequiv
+        (mem_Z1_iff.1 α.2).2 (mem_Z1_iff.1 c.2).2 γ η
+
+end CupOneOne
 
 end TauCeti.ContCohomology
