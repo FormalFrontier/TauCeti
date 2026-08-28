@@ -7,7 +7,7 @@ module
 
 import TauCeti.LinearAlgebra.IntegralLattice.Basic
 
-public import TauCeti.Algebra.Module.Lattice
+public import Mathlib.Algebra.Module.Lattice
 public import TauCeti.LinearAlgebra.ExteriorAlgebra.Contraction
 
 /-!
@@ -184,46 +184,11 @@ coordinate integral lattice. -/
 theorem contractLeft_coord_basis_mem_integralLattice (i : ι) (s : Finset ι) :
     CliffordAlgebra.contractLeft (Q := (0 : QuadraticForm ℚ M)) (b.coord i)
         (b.ExteriorAlgebra s) ∈ integralLattice b := by
-  classical
-  induction s using Finset.induction_on with
-  | empty =>
-      simp [_root_.ExteriorAlgebra.basis_apply]
-  | @insert a s ha ih =>
-      let u : Set.powersetCard ι 1 := ⟨{a}, Finset.card_singleton a⟩
-      let t : Set.powersetCard ι s.card := ⟨s, rfl⟩
-      have hdisj : Disjoint u.val t.val := by
-        simp [u, t, ha]
-      have hunion : (Set.powersetCard.disjUnion hdisj).val = insert a s := by
-        ext j
-        simp [Set.powersetCard.disjUnion, u, t]
-      have hprod := _root_.ExteriorAlgebra.basis_mul_of_disjoint b u t hdisj
-      rw [hunion] at hprod
-      have hfirst : (b.coord i) (b a) • b.ExteriorAlgebra s ∈ integralLattice b := by
-        simp only [Module.Basis.coord_apply, Module.Basis.repr_self, Finsupp.single_apply]
-        split_ifs <;> simp only [one_smul, zero_smul, basis_mem_integralLattice, zero_mem]
-      have hsecond : _root_.ExteriorAlgebra.ι ℚ (b a) *
-          CliffordAlgebra.contractLeft (Q := (0 : QuadraticForm ℚ M)) (b.coord i)
-            (b.ExteriorAlgebra s) ∈ integralLattice b :=
-        ι_basis_mul_mem_integralLattice b a ih
-      have hleft : CliffordAlgebra.contractLeft (Q := (0 : QuadraticForm ℚ M)) (b.coord i)
-          (b.ExteriorAlgebra {a} * b.ExteriorAlgebra s) ∈ integralLattice b := by
-        rw [basis_singleton, CliffordAlgebra.contractLeft_ι_mul]
-        exact sub_mem hfirst hsecond
-      rcases Int.units_eq_one_or (Equiv.Perm.sign
-        (Set.powersetCard.permOfDisjoint hdisj)) with hsign | hsign
-      · rw [hsign, one_smul] at hprod
-        rw [← hprod]
-        exact hleft
-      · rw [hsign] at hprod
-        have hprod' : b.ExteriorAlgebra {a} * b.ExteriorAlgebra s =
-            -b.ExteriorAlgebra (insert a s) := by
-          simpa [u, t] using hprod
-        have hneg : -CliffordAlgebra.contractLeft
-            (Q := (0 : QuadraticForm ℚ M)) (b.coord i)
-              (b.ExteriorAlgebra (insert a s)) ∈ integralLattice b := by
-          rw [← map_neg, ← hprod']
-          exact hleft
-        exact (neg_mem_iff.mp hneg)
+  rw [contractLeft_coord_basis]
+  split_ifs
+  · exact Submodule.smul_mem _ (basisEraseSign i s : ℤ)
+      (basis_mem_integralLattice b (s.erase i))
+  · exact zero_mem _
 
 /-- Contraction by a dual basis coordinate preserves the coordinate integral lattice. This is the
 annihilation-operator counterpart of `ι_basis_mul_mem_integralLattice`. -/

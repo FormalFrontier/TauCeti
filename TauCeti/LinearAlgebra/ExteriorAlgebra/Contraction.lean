@@ -38,7 +38,9 @@ private theorem contractLeft_ιMulti_eq_zero {n : ℕ}
       rw [ExteriorAlgebra.ιMulti_succ_apply, contractLeft_ι_mul, h 0, zero_smul,
         ih (Matrix.vecTail v) (fun i ↦ h i.succ), mul_zero, sub_zero]
 
-private theorem contractLeft_basis_eq_zero_of_not_mem {I : Type w} [LinearOrder I]
+/-- Contracting an exterior-basis vector by a coordinate not in its index set gives zero. -/
+@[simp]
+theorem contractLeft_coord_basis_eq_zero_of_not_mem {I : Type w} [LinearOrder I]
     (b : Module.Basis I R M) (i : I) (s : Finset I) (hi : i ∉ s) :
     contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i) (b.ExteriorAlgebra s) = 0 := by
   rw [ExteriorAlgebra.basis_apply]
@@ -57,6 +59,12 @@ private theorem contractLeft_basis_eq_zero_of_not_mem {I : Type w} [LinearOrder 
     exact hj
   · rfl
 
+/-- The sign of moving `i` to the front of the ordered exterior-basis vector indexed by `s`. -/
+def basisEraseSign {I : Type w} [LinearOrder I] (i : I) (s : Finset I) : ℤˣ :=
+  let u : Set.powersetCard I 1 := ⟨{i}, Finset.card_singleton i⟩
+  let t : Set.powersetCard I (s.erase i).card := ⟨s.erase i, rfl⟩
+  (Set.powersetCard.permOfDisjoint (s := u) (t := t) (by simp [u, t])).sign
+
 /-- The exterior-basis vector indexed by a singleton is the image of the corresponding basis
 vector under the exterior-algebra generator. -/
 @[simp]
@@ -74,6 +82,55 @@ theorem basis_singleton {I : Type w} [LinearOrder I]
   have heq : Set.powersetCard.ofFinEmbEquiv.symm a 0 = i := Finset.eq_of_mem_singleton hj'
   exact congrArg (fun j ↦ ExteriorAlgebra.ι R (b j)) heq
 
+/-- Multiplying the basis vector for `i` by the basis vector for `s.erase i` reconstructs the
+basis vector for `s`, with the shuffle sign that moves `i` to the front. -/
+theorem basis_singleton_mul_basis_erase {I : Type w} [LinearOrder I]
+    (b : Module.Basis I R M) (i : I) (s : Finset I) (hi : i ∈ s) :
+    b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i) =
+      basisEraseSign i s • b.ExteriorAlgebra s := by
+  let u : Set.powersetCard I 1 := ⟨{i}, Finset.card_singleton i⟩
+  let t : Set.powersetCard I (s.erase i).card := ⟨s.erase i, rfl⟩
+  have hdisj : Disjoint u.val t.val := by simp [u, t]
+  have hunion : Set.powersetCard.disjUnion hdisj =
+      (Set.powersetCard.ofCard (s := s) (by
+        rw [Finset.card_erase_of_mem hi]
+        have : 0 < s.card := Finset.card_pos.mpr ⟨i, hi⟩
+        omega) : Set.powersetCard I (1 + (s.erase i).card)) := by
+    apply Subtype.ext
+    simp [Set.powersetCard.disjUnion, u, t, hi]
+  have hprod := ExteriorAlgebra.basis_mul_of_disjoint b u t hdisj
+  rw [hunion] at hprod
+  simpa [basisEraseSign, u, t] using hprod
+
+/-- Contracting an exterior-basis vector erases the contracted coordinate, with the shuffle sign
+that moves that coordinate to the front; it is zero when the coordinate is absent. -/
+theorem contractLeft_coord_basis {I : Type w} [LinearOrder I]
+    (b : Module.Basis I R M) (i : I) (s : Finset I) :
+    contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i) (b.ExteriorAlgebra s) =
+      if i ∈ s then basisEraseSign i s • b.ExteriorAlgebra (s.erase i) else 0 := by
+  classical
+  split_ifs with hi
+  · have hprod' := basis_singleton_mul_basis_erase b i s hi
+    have hcontract : contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i)
+        (b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i)) =
+        b.ExteriorAlgebra (s.erase i) := by
+      rw [basis_singleton, contractLeft_ι_mul]
+      simp only [Module.Basis.coord_apply, Module.Basis.repr_self, Finsupp.single_apply]
+      rw [contractLeft_coord_basis_eq_zero_of_not_mem b i (s.erase i) (by simp),
+        mul_zero, sub_zero]
+      simp
+    rcases Int.units_eq_one_or (basisEraseSign i s) with hsign | hsign
+    · rw [hsign, one_smul] at hprod' ⊢
+      rw [← hprod']
+      exact hcontract
+    · have hprodNeg : b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i) =
+          -b.ExteriorAlgebra s := by
+        simpa [hsign] using hprod'
+      rw [hprodNeg, map_neg] at hcontract
+      have h := congrArg Neg.neg hcontract
+      simpa [hsign] using h
+  · exact contractLeft_coord_basis_eq_zero_of_not_mem b i s hi
+
 /-- Creation after contraction by a basis coordinate is the projection onto exterior basis
 vectors containing that coordinate. -/
 @[simp]
@@ -82,34 +139,12 @@ theorem ι_mul_contractLeft_coord_basis {I : Type w} [LinearOrder I]
     ExteriorAlgebra.ι R (b i) *
         contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i) (b.ExteriorAlgebra s) =
       if i ∈ s then b.ExteriorAlgebra s else 0 := by
+  rw [contractLeft_coord_basis]
   split_ifs with hi
-  · let a : Set.powersetCard I 1 := ⟨{i}, Finset.card_singleton i⟩
-    let t : Set.powersetCard I (s.erase i).card := ⟨s.erase i, rfl⟩
-    have hdisj : Disjoint a.val t.val := by simp [a, t]
-    have hunion : Set.powersetCard.disjUnion hdisj =
-        (Set.powersetCard.ofCard (s := s) (by
-          rw [Finset.card_erase_of_mem hi]
-          have : 0 < s.card := Finset.card_pos.mpr ⟨i, hi⟩
-          omega) : Set.powersetCard I (1 + (s.erase i).card)) := by
-      apply Subtype.ext
-      simp [Set.powersetCard.disjUnion, a, t, hi]
-    have hprod := ExteriorAlgebra.basis_mul_of_disjoint b a t hdisj
-    rw [hunion] at hprod
-    simp only [a, t, Set.powersetCard.val_ofCard] at hprod
-    have hfixed : ExteriorAlgebra.ι R (b i) *
-        contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i)
-          (b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i)) =
-        b.ExteriorAlgebra {i} * b.ExteriorAlgebra (s.erase i) := by
-      rw [basis_singleton]
-      rw [contractLeft_ι_mul]
-      simp only [Module.Basis.coord_apply, Module.Basis.repr_self, Finsupp.single_apply]
-      rw [contractLeft_basis_eq_zero_of_not_mem b i (s.erase i) (by simp),
-        mul_zero, sub_zero]
-      simp
-    rw [hprod] at hfixed
-    rcases Int.units_eq_one_or (Equiv.Perm.sign
-      (Set.powersetCard.permOfDisjoint hdisj)) with hsign | hsign <;>
-      rw [hsign] at hfixed <;> simpa using hfixed
-  · rw [contractLeft_basis_eq_zero_of_not_mem b i s hi, mul_zero]
+  · rw [← basis_singleton]
+    rw [mul_smul_comm]
+    rw [basis_singleton_mul_basis_erase b i s hi]
+    rcases Int.units_eq_one_or (basisEraseSign i s) with hsign | hsign <;> simp [hsign]
+  · rw [mul_zero]
 
 end TauCeti.ExteriorAlgebra
