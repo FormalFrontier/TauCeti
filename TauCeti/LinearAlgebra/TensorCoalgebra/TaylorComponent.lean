@@ -123,20 +123,38 @@ theorem IsGradedCoderivation.comp_self_eq_zero_iff_taylorComponent_eq_zero
   (hb.isCoderivation_comp_self hodd).eq_zero_iff_taylorComponent_eq_zero
 
 /-- The Taylor component of the square of a graded Taylor expansion is obtained by applying the
-outer Taylor map to every signed one-block collapse made by the inner expansion. -/
+outer Taylor map to every signed nonempty one-block collapse made by the inner expansion. -/
 theorem taylorComponent_gradedCoderiv_comp_self_of_tprod
     (G : InternalGrading R M) (F : ReducedTensorWords R M →ₗ[R] M) (q : ℤ)
     {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
     taylorComponent (gradedCoderiv G F q ∘ₗ gradedCoderiv G F q) ⟨n, hn⟩
         (PiTensorProduct.tprod R x) =
-      ∑ p ∈ Finset.range n, ∑ d ∈ Finset.range (n + 1),
+      ∑ p ∈ Finset.range n, ∑ d ∈ Finset.Icc 1 (n - p),
         F (splice R (InternalGrading.twistedTuple G q x 0 p) 0 n p d
           (F (subword R x p d))) := by
-  rw [taylorComponent_apply]
-  simp only [LinearMap.comp_apply]
-  rw [← LinearMap.comp_apply (letter R M), letter_comp_gradedCoderiv,
-    gradedCoderiv_of_tprod, map_sum]
-  exact Finset.sum_congr rfl fun p _ ↦ by rw [map_sum]
+  calc
+    _ = ∑ p ∈ Finset.range n, ∑ d ∈ Finset.range (n + 1),
+        F (splice R (InternalGrading.twistedTuple G q x 0 p) 0 n p d
+          (F (subword R x p d))) := by
+      rw [taylorComponent_apply]
+      simp only [LinearMap.comp_apply]
+      rw [← LinearMap.comp_apply (letter R M), letter_comp_gradedCoderiv,
+        gradedCoderiv_of_tprod, map_sum]
+      exact Finset.sum_congr rfl fun p _ ↦ by rw [map_sum]
+    _ = _ := by
+      refine Finset.sum_congr rfl fun p hp ↦ ?_
+      apply (Finset.sum_subset ?_ ?_).symm
+      · intro d hd
+        rw [Finset.mem_Icc] at hd
+        rw [Finset.mem_range]
+        omega
+      · intro d _ hd
+        have hfit : ¬(0 < d ∧ p + d ≤ n) := by
+          intro h
+          apply hd
+          rw [Finset.mem_Icc]
+          omega
+        rw [splice_eq_zero_of_not_fits R _ _ hfit, map_zero]
 
 /-- On homogeneous inputs, the Taylor component of the square is the Stasheff insertion sum with
 the Koszul sign contributed by the degrees of the letters preceding the inserted operation. -/
@@ -146,21 +164,39 @@ theorem taylorComponent_gradedCoderiv_comp_self_of_tprod_of_homogeneous
     (hx : ∀ i, x i ∈ G.piece (𝒟 i)) :
     taylorComponent (gradedCoderiv G F q ∘ₗ gradedCoderiv G F q) ⟨n, hn⟩
         (PiTensorProduct.tprod R x) =
-      ∑ p ∈ Finset.range n, ∑ d ∈ Finset.range (n + 1),
+      ∑ p ∈ Finset.range n, ∑ d ∈ Finset.Icc 1 (n - p),
         (((q * ∑ j ∈ Finset.range p,
           if h : j < n then 𝒟 ⟨j, h⟩ else 0).negOnePow : ℤ) : R) •
           F (splice R x 0 n p d (F (subword R x p d))) := by
-  rw [taylorComponent_apply]
-  simp only [LinearMap.comp_apply]
-  rw [← LinearMap.comp_apply (letter R M), letter_comp_gradedCoderiv,
-    gradedCoderiv_of_tprod_of_homogeneous G F q hn x 𝒟 hx, map_sum]
-  refine Finset.sum_congr rfl fun p _ ↦ ?_
-  rw [map_sum]
-  exact Finset.sum_congr rfl fun d _ ↦ by rw [map_smul]
+  calc
+    _ = ∑ p ∈ Finset.range n, ∑ d ∈ Finset.range (n + 1),
+        (((q * ∑ j ∈ Finset.range p,
+          if h : j < n then 𝒟 ⟨j, h⟩ else 0).negOnePow : ℤ) : R) •
+          F (splice R x 0 n p d (F (subword R x p d))) := by
+      rw [taylorComponent_apply]
+      simp only [LinearMap.comp_apply]
+      rw [← LinearMap.comp_apply (letter R M), letter_comp_gradedCoderiv,
+        gradedCoderiv_of_tprod_of_homogeneous G F q hn x 𝒟 hx, map_sum]
+      refine Finset.sum_congr rfl fun p _ ↦ ?_
+      rw [map_sum]
+      exact Finset.sum_congr rfl fun d _ ↦ by rw [map_smul]
+    _ = _ := by
+      refine Finset.sum_congr rfl fun p hp ↦ ?_
+      apply (Finset.sum_subset ?_ ?_).symm
+      · intro d hd
+        rw [Finset.mem_Icc] at hd
+        rw [Finset.mem_range]
+        omega
+      · intro d _ hd
+        have hfit : ¬(0 < d ∧ p + d ≤ n) := by
+          intro h
+          apply hd
+          rw [Finset.mem_Icc]
+          omega
+        rw [splice_eq_zero_of_not_fits R _ _ hfit, map_zero, smul_zero]
 
 /-- For a twist-one coderivation, the coefficient in the square's Taylor component is the usual
-Koszul sign of the total degree of the prefix.  Terms with `d = 0` or `p + d > n` are zero by the
-definitions of `subword` and `splice`; the remaining indices are exactly the decompositions
+Koszul sign of the total degree of the prefix.  The indices are exactly the decompositions
 `n = p + d + t` with `d ≥ 1`. -/
 theorem taylorComponent_gradedCoderiv_one_comp_self_of_tprod_of_homogeneous
     (G : InternalGrading R M) (F : ReducedTensorWords R M →ₗ[R] M)
@@ -168,7 +204,7 @@ theorem taylorComponent_gradedCoderiv_one_comp_self_of_tprod_of_homogeneous
     (hx : ∀ i, x i ∈ G.piece (𝒟 i)) :
     taylorComponent (gradedCoderiv G F 1 ∘ₗ gradedCoderiv G F 1) ⟨n, hn⟩
         (PiTensorProduct.tprod R x) =
-      ∑ p ∈ Finset.range n, ∑ d ∈ Finset.range (n + 1),
+      ∑ p ∈ Finset.range n, ∑ d ∈ Finset.Icc 1 (n - p),
         (((∑ j ∈ Finset.range p,
           if h : j < n then 𝒟 ⟨j, h⟩ else 0).negOnePow : ℤ) : R) •
           F (splice R x 0 n p d (F (subword R x p d))) := by
