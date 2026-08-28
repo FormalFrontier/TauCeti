@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Scheme
-public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier
+public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.Basic
 
 /-!
 # The type A full-weight carrier has determinant one
