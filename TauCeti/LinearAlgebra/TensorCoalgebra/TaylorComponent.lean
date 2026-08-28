@@ -14,16 +14,16 @@ For the reduced tensor coalgebra `Tᶜ(M)`, the arity-`n` Taylor component of an
 its restriction to words of length `n`, followed by projection to words of length one.  A
 coderivation is zero exactly when all these components vanish.
 
-This file computes the Taylor components of the square of the graded Taylor expansion
-`gradedCoderiv G F q`.  On homogeneous letters the result is
+This file computes the Taylor components of the graded Taylor expansion and of its square.  On
+homogeneous letters the square's component is
 
 `∑_{r+s+t=n} (-1)^(q (|x₁| + ⋯ + |xᵣ|))
   F(x₁,…,xᵣ,F(xᵣ₊₁,…,xᵣ₊ₛ),…,xₙ)`,
 
-the suspended Stasheff sum when `q = 1`.  We also prove the general algebraic fact behind the
-square-zero test: if a `q`-twisted coderivation anticommutes with its Koszul twist, then its square
-is an ordinary coderivation.  Consequently its square vanishes if and only if every displayed
-Taylor component vanishes.
+the suspended Stasheff sum when `q = 1`.  The general algebraic fact that a `q`-twisted
+coderivation anticommuting with its Koszul twist has an ordinary coderivation as its square is in
+`TauCeti.LinearAlgebra.TensorCoalgebra.GradedCoderivation`.  Consequently its square vanishes if
+and only if every displayed Taylor component vanishes.
 
 The anticommutation hypothesis is the intrinsic oddness condition used in the cancellation of the
 two mixed co-Leibniz terms.  A later suspension bridge can discharge it from degree-one
@@ -40,8 +40,8 @@ homogeneity and identify the displayed sums with the unsuspended Stasheff identi
   vanishes exactly when all of its Taylor components vanish.
 * `TauCeti.ReducedTensorWords.taylorComponent_gradedCoderiv_comp_self_of_tprod_of_homogeneous`:
   the signed arity formula for the square of a graded Taylor expansion.
-* `TauCeti.ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self`: the square of an odd
-  graded coderivation is an ordinary coderivation.
+* `TauCeti.ReducedTensorWords.taylorComponent_gradedCoderiv`: the Taylor component of a graded
+  Taylor expansion is the corresponding restriction of its defining Taylor map.
 
 ## References
 
@@ -103,85 +103,13 @@ section Ring
 
 variable {R : Type uR} {M : Type uM} [CommRing R] [AddCommMonoid M] [Module R M]
 
-/-- Applying the same Koszul twist twice to every letter of a tensor word is the identity. -/
+/-- The arity-`n` Taylor component of a graded Taylor expansion is the restriction of its
+defining Taylor map to words of length `n`. -/
 @[simp]
-theorem map_koszulTwist_comp_self (G : InternalGrading R M) (q : ℤ) :
-    ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) ∘ₗ
-        ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) =
-      LinearMap.id := by
-  rw [← ReducedTensorWords.map_comp, InternalGrading.koszulTwist_comp_self,
-    ReducedTensorWords.map_id]
-
-/-- The square of an odd graded coderivation is an ordinary coderivation.  Here oddness is stated
-intrinsically as anticommutation with the letterwise Koszul twist; this is exactly the relation
-that cancels the two mixed terms after applying the graded co-Leibniz rule twice. -/
-theorem IsGradedCoderivation.isCoderivation_comp_self {G : InternalGrading R M} {q : ℤ}
-    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
-    (hb : IsGradedCoderivation G q b)
-    (hodd : b ∘ₗ ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) +
-        ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) ∘ₗ b = 0) :
-    IsCoderivation R (b ∘ₗ b) := by
-  rw [isCoderivation_iff]
-  apply LinearMap.ext
-  intro z
-  simp only [LinearMap.comp_apply, LinearMap.add_apply]
-  rw [hb.deconcatenation_apply (b z), hb.deconcatenation_apply z]
-  simp only [map_add]
-  let τ := ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q)
-  let w := deconcatenation R M z
-  have hfirst :
-      LinearMap.rTensor (ReducedTensorWords R M) b
-          (LinearMap.rTensor (ReducedTensorWords R M) b w) =
-        LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
-    rw [← LinearMap.rTensor_comp_apply]
-  have hcrossLeft :
-      LinearMap.rTensor (ReducedTensorWords R M) b
-          (LinearMap.lTensor (ReducedTensorWords R M) b
-            (LinearMap.rTensor (ReducedTensorWords R M) τ w)) =
-        TensorProduct.map (b ∘ₗ τ) b w := by
-    rw [← LinearMap.comp_apply, LinearMap.rTensor_comp_lTensor, LinearMap.map_rTensor]
-  have hcrossRight :
-      LinearMap.lTensor (ReducedTensorWords R M) b
-          (LinearMap.rTensor (ReducedTensorWords R M) τ
-            (LinearMap.rTensor (ReducedTensorWords R M) b w)) =
-        TensorProduct.map (τ ∘ₗ b) b w := by
-    rw [← LinearMap.rTensor_comp_apply, ← LinearMap.comp_apply,
-      LinearMap.lTensor_comp_rTensor]
-  have hcross :
-      TensorProduct.map (b ∘ₗ τ) b w + TensorProduct.map (τ ∘ₗ b) b w = 0 := by
-    have hodd' : b ∘ₗ τ + τ ∘ₗ b = 0 := hodd
-    rw [← LinearMap.add_apply, ← TensorProduct.map_add_left,
-      hodd', TensorProduct.map_zero_left, LinearMap.zero_apply]
-  have hcommute (y : ReducedTensorWords R M ⊗[R] ReducedTensorWords R M) :
-      LinearMap.rTensor (ReducedTensorWords R M) τ
-          (LinearMap.lTensor (ReducedTensorWords R M) b y) =
-        LinearMap.lTensor (ReducedTensorWords R M) b
-          (LinearMap.rTensor (ReducedTensorWords R M) τ y) := by
-    rw [← LinearMap.comp_apply, LinearMap.rTensor_comp_lTensor,
-      ← LinearMap.comp_apply, LinearMap.lTensor_comp_rTensor]
-  have hlast :
-      LinearMap.lTensor (ReducedTensorWords R M) b
-          (LinearMap.rTensor (ReducedTensorWords R M) τ
-            (LinearMap.lTensor (ReducedTensorWords R M) b
-              (LinearMap.rTensor (ReducedTensorWords R M) τ w))) =
-        LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
-    have hτ : τ ∘ₗ τ = LinearMap.id := map_koszulTwist_comp_self G q
-    rw [hcommute, ← LinearMap.lTensor_comp_apply, ← LinearMap.rTensor_comp_apply,
-      hτ, LinearMap.rTensor_id_apply]
-  rw [hfirst, hcrossLeft, hcrossRight, hlast]
-  calc
-    (LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w +
-          TensorProduct.map (b ∘ₗ τ) b w) +
-        (TensorProduct.map (τ ∘ₗ b) b w +
-          LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w) =
-      LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w +
-          (TensorProduct.map (b ∘ₗ τ) b w +
-            TensorProduct.map (τ ∘ₗ b) b w) +
-        LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
-          ac_rfl
-    _ = LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w +
-        LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
-      rw [hcross, add_zero]
+theorem taylorComponent_gradedCoderiv (G : InternalGrading R M)
+    (F : ReducedTensorWords R M →ₗ[R] M) (q : ℤ) (n : {n : ℕ // 0 < n}) :
+    taylorComponent (gradedCoderiv G F q) n = F ∘ₗ of R M n := by
+  rw [taylorComponent, letter_comp_gradedCoderiv]
 
 /-- Under the intrinsic oddness relation, a graded coderivation squares to zero exactly when all
 Taylor components of its square vanish. -/
