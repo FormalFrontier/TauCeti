@@ -175,18 +175,6 @@ private theorem gl2_doubleCoset_weyl_mul_union_eq_univ (g : GL2DiagonalNormalize
     rw [hwgCoset, GL2Borel.doubleCoset_one_eq, hgCoset,
       GL2Borel.union_doubleCoset_weyl_eq_univ]
 
-private theorem gl2_tits_mul_doubleCoset_subset
-    (s : GL2DiagonalNormalizer k)
-    (hs : s ∈ ({gl2WeylNormalizer k} : Set (GL2DiagonalNormalizer k)))
-    (g : GL2DiagonalNormalizer k) :
-    DoubleCoset.doubleCoset (s : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) *
-        DoubleCoset.doubleCoset (g : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) ⊆
-      DoubleCoset.doubleCoset ((s * g : GL2DiagonalNormalizer k) : GL (Fin 2) k)
-          (GL2Borel k) (GL2Borel k) ∪
-        DoubleCoset.doubleCoset (g : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) := by
-  rw [Set.mem_singleton_iff.mp hs, gl2_doubleCoset_weyl_mul_union_eq_univ]
-  exact Set.subset_univ _
-
 omit [Nontrivial kˣ] in
 private theorem gl2_tits_exists_conj_not_mem
     (s : GL2DiagonalNormalizer k)
@@ -259,8 +247,9 @@ def gl2TitsSystem : TitsSystem (GL (Fin 2) k) where
     exact (GL2Borel k).one_mem
   mul_doubleCoset_subset s hs := by
     rw [Set.mem_singleton_iff] at hs
-    exact ⟨gl2WeylNormalizer k, hs.symm,
-      gl2_tits_mul_doubleCoset_subset k (gl2WeylNormalizer k) (Set.mem_singleton _)⟩
+    refine ⟨gl2WeylNormalizer k, hs.symm, fun g ↦ ?_⟩
+    rw [gl2_doubleCoset_weyl_mul_union_eq_univ]
+    exact Set.subset_univ _
   exists_conj_not_mem s hs := by
     rw [Set.mem_singleton_iff] at hs
     obtain ⟨b, hb⟩ := gl2_tits_exists_conj_not_mem k
