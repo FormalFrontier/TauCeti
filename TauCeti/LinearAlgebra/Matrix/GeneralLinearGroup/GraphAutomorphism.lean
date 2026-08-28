@@ -114,7 +114,7 @@ universe u
 variable {A : Type u} [CommRing A]
 
 /-- The alternating diagonal signs used to pin the type-`A_r` graph automorphism. -/
-def typeAGraphSign (i : Fin (r + 1)) : Aˣ := (-1 : Aˣ) ^ (i : ℕ)
+private def typeAGraphSign (i : Fin (r + 1)) : Aˣ := (-1 : Aˣ) ^ (i : ℕ)
 
 /-- The signed reversal matrix `Q` used in the pinned type-`A_r` graph automorphism. It first
 reverses the standard basis and then applies alternating signs. -/
@@ -252,6 +252,7 @@ private theorem permutationGL_conj_transvectionUnit {i j : Fin (r + 1)}
     Matrix.single_apply, Fin.revPerm_apply, Fin.rev_eq_iff, Fin.rev_injective.eq_iff]
 
 /-- Inverse transpose swaps the indices of a transvection and negates its parameter. -/
+@[simp]
 theorem inverseTranspose_transvectionUnit {n : Type*} [Fintype n] [DecidableEq n] {i j : n}
     (hij : i ≠ j) (c : A) :
     Matrix.GeneralLinearGroup.inverseTranspose (transvectionUnit hij c) =
