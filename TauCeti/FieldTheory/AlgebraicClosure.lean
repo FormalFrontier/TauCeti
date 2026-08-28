@@ -13,20 +13,20 @@ public import Mathlib.RingTheory.Polynomial.IsIntegral
 
 Let `F / k` be a field extension in which `k` is relatively algebraically closed, that is,
 `IsIntegrallyClosedIn k F` — equivalently `algebraicClosure k F = ⊥` — and let `E` be a further
-extension of `F`.  An element `x` of `E` algebraic over `k` then has the same minimal polynomial
-over `F` as over `k`: the coefficients of `minpoly F x` are integral over `k`, because that
-polynomial divides the monic polynomial `(minpoly k x).map (algebraMap k F)`, and relative
+commutative `F`-algebra.  An element `x` of `E` algebraic over `k` then has the same minimal
+polynomial over `F` as over `k`: the coefficients of `minpoly F x` are integral over `k`, because
+that polynomial divides the monic polynomial `(minpoly k x).map (algebraMap k F)`, and relative
 algebraic closedness puts them back into `k`.
 
-Consequently `F⟮x⟯ / F` and `k⟮x⟯ / k` have the same degree.  This is the mechanism behind the
-degree behaviour of a constant field extension: adjoining constants to `F` costs exactly what
-adjoining them to `k` costs.
+Consequently, for `E` a field, `F⟮x⟯ / F` and `k⟮x⟯ / k` have the same degree.  This is the
+mechanism behind the degree behaviour of a constant field extension: adjoining constants to `F`
+costs exactly what adjoining them to `k` costs.
 
 ## Main results
 
-* `TauCeti.map_minpoly_eq_minpoly_of_isIntegrallyClosedIn`: `minpoly F x` is the image of
-  `minpoly k x`.
-* `TauCeti.finrank_adjoin_eq_finrank_adjoin_of_isIntegrallyClosedIn`: `[F⟮x⟯ : F] = [k⟮x⟯ : k]`.
+* `TauCeti.minpoly.map_eq_of_isIntegrallyClosedIn`: `minpoly F x` is the image of `minpoly k x`.
+* `TauCeti.IntermediateField.finrank_adjoin_simple_eq_finrank_adjoin_simple_of_isIntegrallyClosedIn`
+  : `[F⟮x⟯ : F] = [k⟮x⟯ : k]`.
 
 ## References
 
@@ -38,14 +38,17 @@ adjoining them to `k` costs.
 
 public section
 
-namespace TauCeti
-
 open IntermediateField Polynomial
+
+namespace TauCeti
 
 universe u v w
 
-variable {k : Type u} {F : Type v} {E : Type w} [Field k] [Field F] [Field E]
-variable [Algebra k F] [Algebra k E] [Algebra F E] [IsScalarTower k F E]
+variable {k : Type u} {F : Type v} {E : Type w} [Field k] [Field F] [Algebra k F]
+
+section CommRing
+
+variable [CommRing E] [Algebra k E] [Algebra F E] [IsScalarTower k F E]
 
 /-- If `k` is relatively algebraically closed in `F`, then an element of an extension of `F` that
 is algebraic over `k` has the same minimal polynomial over `F` as over `k`.
@@ -53,7 +56,7 @@ is algebraic over `k` has the same minimal polynomial over `F` as over `k`.
 Without the hypothesis only the divisibility `minpoly F x ∣ (minpoly k x).map (algebraMap k F)`
 holds; the content is that the coefficients of the left-hand factor, being integral over `k` and
 lying in `F`, are constants. -/
-theorem map_minpoly_eq_minpoly_of_isIntegrallyClosedIn (hex : IsIntegrallyClosedIn k F) {x : E}
+theorem minpoly.map_eq_of_isIntegrallyClosedIn (hex : IsIntegrallyClosedIn k F) {x : E}
     (hx : IsIntegral k x) : (minpoly k x).map (algebraMap k F) = minpoly F x := by
   -- make the exactness hypothesis available to instance search
   have := hex
@@ -63,12 +66,21 @@ theorem map_minpoly_eq_minpoly_of_isIntegrallyClosedIn (hex : IsIntegrallyClosed
   exact Polynomial.isIntegral_coeff_of_dvd _ _ (minpoly.monic hx) (minpoly.monic hx.tower_top)
     (minpoly.dvd_map_of_isScalarTower k F x) n
 
+end CommRing
+
+section Field
+
+variable [Field E] [Algebra k E] [Algebra F E] [IsScalarTower k F E]
+
 /-- If `k` is relatively algebraically closed in `F`, then adjoining an element algebraic over `k`
 to `F` raises the degree by exactly as much as adjoining it to `k` does. -/
-theorem finrank_adjoin_eq_finrank_adjoin_of_isIntegrallyClosedIn (hex : IsIntegrallyClosedIn k F)
-    {x : E} (hx : IsIntegral k x) : Module.finrank F F⟮x⟯ = Module.finrank k k⟮x⟯ := by
+theorem IntermediateField.finrank_adjoin_simple_eq_finrank_adjoin_simple_of_isIntegrallyClosedIn
+    (hex : IsIntegrallyClosedIn k F) {x : E} (hx : IsIntegral k x) :
+    Module.finrank F F⟮x⟯ = Module.finrank k k⟮x⟯ := by
   rw [adjoin.finrank hx.tower_top, adjoin.finrank hx,
-    ← map_minpoly_eq_minpoly_of_isIntegrallyClosedIn hex hx,
+    ← minpoly.map_eq_of_isIntegrallyClosedIn hex hx,
     Polynomial.natDegree_map_eq_of_injective (algebraMap k F).injective]
+
+end Field
 
 end TauCeti
