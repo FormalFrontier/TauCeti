@@ -75,7 +75,7 @@ curve outside its parameter set are junk, so a curve agreeing with an integral c
 again an integral curve there. -/
 theorem congr {V : (x : M) → TangentSpace I x} {γ γ' : ℝ → M} {s : Set ℝ}
     (hγ : IsMIntegralCurveOn γ V s) (h : Set.EqOn γ' γ s) : IsMIntegralCurveOn γ' V s := fun t ht ↦
-  ((hγ t ht).congr_mono h (h ht) Set.Subset.rfl).congr_mfderiv (by rw [h ht])
+  ((hγ t ht).congr_mono h (h ht) Set.Subset.rfl).congr_mfderiv (by rw [h ht]; rfl)
 
 end IsMIntegralCurveOn
 

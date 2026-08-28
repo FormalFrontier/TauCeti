@@ -144,10 +144,10 @@ private theorem map_frestrictLe_zero_prefixLimit
     (prefixLimit P).map (frestrictLe 0) = P 0 := by
   let e : (∀ i : Iic 0, X i) ≃ᵐ X 0 := MeasurableEquiv.piUnique _
   have hprefix : (prefixLimit P).map (frestrictLe 0) = (initialLaw P).map e.symm := by
-    rw [prefixLimit, Kernel.trajMeasure, MeasureTheory.Measure.map_comp,
+    rw [prefixLimit, Kernel.trajMeasure,
+      MeasureTheory.Measure.map_comp _ _ (measurable_frestrictLe 0),
       Kernel.traj_map_frestrictLe, Kernel.partialTraj_self, MeasureTheory.Measure.id_comp]
-    · rfl
-    · fun_prop
+    rfl
   calc
     (prefixLimit P).map (frestrictLe 0) = (initialLaw P).map e.symm := hprefix
     _ = ((P 0).map e).map e.symm := rfl

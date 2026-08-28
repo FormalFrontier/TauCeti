@@ -30,8 +30,8 @@ that Mathlib does not provide directly, used across the multiquadratic developme
   not change squareness — the statement that squareness depends only on the square class.
 * `Int.exists_squarefree_mul_sq` and `Rat.exists_squarefree_int_mul_sq`: the **squarefree part**.
   Every nonzero integer, and every nonzero rational, is a squarefree *integer* times a nonzero
-  square. Mathlib has this for the natural numbers only (`Nat.sq_mul_squarefree`); these are the
-  integer and rational forms, which is what a square-class argument over `ℚ` needs.
+  square. Mathlib has this for general rings (`exists_sq_mul_squarefree`); these are the integer
+  and rational forms, which is what a square-class argument over `ℚ` needs.
 * `Nat.four_dvd_or_exists_odd_prime_and_dvd_of_squarefree`: squarefreeness of *every* prime
   divisor of an `n > 2`, read in a commutative ring, yields the single branch that Mathlib's
   `Nat.four_dvd_or_exists_odd_prime_and_dvd_of_two_lt` splits into. This is the bridge from a
@@ -69,11 +69,11 @@ theorem isSquare_mul_sq_iff {G₀ : Type*} [CommGroupWithZero G₀] {x y : G₀}
   rwa [mul_assoc, ← mul_pow, mul_inv_cancel₀ hy, one_pow, mul_one] at h'
 
 /-- **The squarefree part of an integer.** Every nonzero integer is a squarefree integer times the
-square of a nonzero integer. This is the integer form of Mathlib's `Nat.sq_mul_squarefree`; the
+square of a nonzero integer. This is the integer form of Mathlib's `exists_sq_mul_squarefree`; the
 sign is carried by the squarefree factor. -/
 theorem Int.exists_squarefree_mul_sq {n : ℤ} (hn : n ≠ 0) :
     ∃ a b : ℤ, Squarefree a ∧ b ≠ 0 ∧ n = a * b ^ 2 := by
-  obtain ⟨a, b, hab, ha⟩ := Nat.sq_mul_squarefree n.natAbs
+  obtain ⟨b, a, hab, ha⟩ := exists_sq_mul_squarefree n.natAbs
   have habZ : (n.natAbs : ℤ) = (a : ℤ) * (b : ℤ) ^ 2 := by
     rw [← hab]; push_cast; ring
   have hb : (b : ℤ) ≠ 0 := by
