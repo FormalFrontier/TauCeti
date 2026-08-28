@@ -131,10 +131,10 @@ theorem prime_rationalPrimeBelow (𝔭 : HeightOneSpectrum (𝓞 K)) :
 /-- The absolute norm of a height-one prime is the rational prime below it raised to the residue
 degree. -/
 theorem absNorm_eq_rationalPrimeBelow_pow (𝔭 : HeightOneSpectrum (𝓞 K)) :
-    rationalPrimeBelow 𝔭 ^ Ideal.inertiaDeg 𝔭.asIdeal ℤ =
-      Ideal.absNorm 𝔭.asIdeal := by
+    Ideal.absNorm 𝔭.asIdeal =
+      rationalPrimeBelow 𝔭 ^ Ideal.inertiaDeg 𝔭.asIdeal ℤ := by
   have := 𝔭.isPrime
-  exact Ideal.absNorm_pow_inertiaDeg (Ideal.under ℤ 𝔭.asIdeal) 𝔭.asIdeal
+  exact (Ideal.absNorm_pow_inertiaDeg (Ideal.under ℤ 𝔭.asIdeal) 𝔭.asIdeal).symm
 
 /-- A height-one prime has residue degree above one exactly when its absolute norm is not a prime
 number: the norm is `p ^ f`, which is prime precisely for `f = 1`. -/
@@ -142,7 +142,7 @@ theorem mem_higherDegreePrimes_iff_not_prime_absNorm {𝔭 : HeightOneSpectrum (
     𝔭 ∈ higherDegreePrimes K ↔ ¬ (Ideal.absNorm 𝔭.asIdeal).Prime := by
   have := 𝔭.isPrime
   have hpos := Ideal.inertiaDeg_pos 𝔭.asIdeal ℤ
-  rw [mem_higherDegreePrimes, ← absNorm_eq_rationalPrimeBelow_pow 𝔭, Nat.prime_iff, prime_pow_iff,
+  rw [mem_higherDegreePrimes, absNorm_eq_rationalPrimeBelow_pow 𝔭, Nat.prime_iff, prime_pow_iff,
     ← Nat.prime_iff, not_and_or, or_iff_right (not_not_intro (prime_rationalPrimeBelow 𝔭))]
   omega
 
@@ -151,7 +151,7 @@ it. -/
 theorem sq_rationalPrimeBelow_le_absNorm {𝔭 : HeightOneSpectrum (𝓞 K)}
     (h𝔭 : 𝔭 ∈ higherDegreePrimes K) :
     rationalPrimeBelow 𝔭 ^ 2 ≤ Ideal.absNorm 𝔭.asIdeal := by
-  rw [← absNorm_eq_rationalPrimeBelow_pow 𝔭]
+  rw [absNorm_eq_rationalPrimeBelow_pow 𝔭]
   exact Nat.pow_le_pow_right (prime_rationalPrimeBelow 𝔭).one_lt.le h𝔭
 
 /-! ### Fibring the primes over the rational primes below them -/
