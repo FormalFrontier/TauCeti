@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.Homology.ShortComplex.Exact
 public import Mathlib.CategoryTheory.Limits.Shapes.BinaryBiproducts
 public import Mathlib.CategoryTheory.Preadditive.Biproducts
+public import Mathlib.CategoryTheory.Simple
 public import TauCeti.CategoryTheory.IrreducibleMorphism
 
 /-!
@@ -57,13 +58,13 @@ what ties the sequence to the arrows of the Auslander-Reiten quiver.
   `TauCeti.isRightAlmostSplit_comp_iso_iff`, `TauCeti.isRightAlmostSplit_iso_comp_iff` and their
   left-hand analogues, so the notions descend to a skeleton.
 
-Four facts about binary biproducts are proved on the way and stated for reuse:
-`TauCeti.isZero_of_isIso_biprod_inl`, `TauCeti.isZero_of_isIso_biprod_inr`,
-`TauCeti.isZero_of_isIso_biprod_fst` and `TauCeti.isZero_of_isIso_biprod_snd`. Mathlib proves
-`CategoryTheory.Limits.biprod.isIso_inl_iff_id_eq_fst_comp_inl` and remarks that the three
-variations on it "are likely not separately useful"; the statements below are a different
-conclusion from the same hypothesis — an invertible structure map of a biproduct annihilates the
-*other* summand — which is exactly what the indecomposability arguments consume.
+Mathlib's `CategoryTheory.Biprod.isIso_inl_iff_isZero` says that an invertible `biprod.inl`
+forces the other summand to vanish, and remarks that the three variations on it "are likely not
+separately useful". The indecomposability arguments below consume all four structure maps, so the
+three remaining cases are recorded here as transports of the Mathlib lemma —
+`TauCeti.isZero_of_isIso_biprod_inr` along `CategoryTheory.Limits.biprod.braiding`, and
+`TauCeti.isZero_of_isIso_biprod_fst`, `TauCeti.isZero_of_isIso_biprod_snd` by inverting
+`biprod.inl ≫ biprod.fst = 𝟙` and `biprod.inr ≫ biprod.snd = 𝟙`.
 
 ## Implementation notes
 
@@ -120,55 +121,34 @@ variable {C : Type u} [Category.{v} C]
 
 section Biproduct
 
-variable [HasZeroMorphisms C] (A B : C) [HasBinaryBiproduct A B]
+variable [Preadditive C] [HasBinaryBiproducts C] (A B : C)
 
-/-- **If the first inclusion of a binary biproduct is invertible, the second summand is zero.**
-Composing the inverse of `biprod.inl` with `biprod.inl ≫ biprod.snd = 0` shows `biprod.snd` is
-zero, and `biprod.snd` retracts `biprod.inr`. -/
-theorem isZero_of_isIso_biprod_inl [IsIso (biprod.inl : A ⟶ A ⊞ B)] : IsZero B := by
-  have hsnd : (biprod.snd : A ⊞ B ⟶ B) = 0 :=
-    calc (biprod.snd : A ⊞ B ⟶ B)
-        = (inv (biprod.inl : A ⟶ A ⊞ B) ≫ biprod.inl) ≫ biprod.snd := by
-          rw [IsIso.inv_hom_id, Category.id_comp]
-      _ = 0 := by rw [Category.assoc, biprod.inl_snd, comp_zero]
-  rw [IsZero.iff_id_eq_zero]
-  calc 𝟙 B = (biprod.inr : B ⟶ A ⊞ B) ≫ biprod.snd := biprod.inr_snd.symm
-    _ = 0 := by rw [hsnd, comp_zero]
-
-/-- **If the second inclusion of a binary biproduct is invertible, the first summand is zero.** -/
+/-- **If the second inclusion of a binary biproduct is invertible, the first summand is zero**:
+`CategoryTheory.Biprod.isIso_inl_iff_isZero` transported along the braiding, which carries
+`biprod.inr : B ⟶ A ⊞ B` to `biprod.inl : B ⟶ B ⊞ A`. -/
 theorem isZero_of_isIso_biprod_inr [IsIso (biprod.inr : B ⟶ A ⊞ B)] : IsZero A := by
-  have hfst : (biprod.fst : A ⊞ B ⟶ A) = 0 :=
-    calc (biprod.fst : A ⊞ B ⟶ A)
-        = (inv (biprod.inr : B ⟶ A ⊞ B) ≫ biprod.inr) ≫ biprod.fst := by
-          rw [IsIso.inv_hom_id, Category.id_comp]
-      _ = 0 := by rw [Category.assoc, biprod.inr_fst, comp_zero]
-  rw [IsZero.iff_id_eq_zero]
-  calc 𝟙 A = (biprod.inl : A ⟶ A ⊞ B) ≫ biprod.fst := biprod.inl_fst.symm
-    _ = 0 := by rw [hfst, comp_zero]
+  have h : (biprod.inr : B ⟶ A ⊞ B) ≫ (biprod.braiding A B).hom = biprod.inl := by
+    apply biprod.hom_ext <;> simp [biprod.braiding]
+  have : IsIso (biprod.inl : B ⟶ B ⊞ A) := by rw [← h]; infer_instance
+  exact (Biprod.isIso_inl_iff_isZero B A).mp this
 
-/-- **If the first projection of a binary biproduct is invertible, the second summand is zero.**
-Composing `biprod.inr ≫ biprod.fst = 0` with the inverse of `biprod.fst` shows `biprod.inr` is
-zero, and `biprod.inr` sections `biprod.snd`. -/
+/-- **If the first projection of a binary biproduct is invertible, the second summand is zero**:
+`biprod.inl ≫ biprod.fst = 𝟙` makes `biprod.inl` the inverse of `biprod.fst`, so
+`CategoryTheory.Biprod.isIso_inl_iff_isZero` applies. -/
 theorem isZero_of_isIso_biprod_fst [IsIso (biprod.fst : A ⊞ B ⟶ A)] : IsZero B := by
-  have hinr : (biprod.inr : B ⟶ A ⊞ B) = 0 :=
-    calc (biprod.inr : B ⟶ A ⊞ B)
-        = biprod.inr ≫ ((biprod.fst : A ⊞ B ⟶ A) ≫ inv biprod.fst) := by
-          rw [IsIso.hom_inv_id, Category.comp_id]
-      _ = 0 := by rw [← Category.assoc, biprod.inr_fst, zero_comp]
-  rw [IsZero.iff_id_eq_zero]
-  calc 𝟙 B = (biprod.inr : B ⟶ A ⊞ B) ≫ biprod.snd := biprod.inr_snd.symm
-    _ = 0 := by rw [hinr, zero_comp]
+  have h : inv (biprod.fst : A ⊞ B ⟶ A) = biprod.inl :=
+    IsIso.inv_eq_of_inv_hom_id biprod.inl_fst
+  have : IsIso (biprod.inl : A ⟶ A ⊞ B) := by rw [← h]; infer_instance
+  exact (Biprod.isIso_inl_iff_isZero A B).mp this
 
-/-- **If the second projection of a binary biproduct is invertible, the first summand is zero.** -/
+/-- **If the second projection of a binary biproduct is invertible, the first summand is zero**:
+`biprod.inr ≫ biprod.snd = 𝟙` makes `biprod.inr` the inverse of `biprod.snd`, so
+`TauCeti.isZero_of_isIso_biprod_inr` applies. -/
 theorem isZero_of_isIso_biprod_snd [IsIso (biprod.snd : A ⊞ B ⟶ B)] : IsZero A := by
-  have hinl : (biprod.inl : A ⟶ A ⊞ B) = 0 :=
-    calc (biprod.inl : A ⟶ A ⊞ B)
-        = biprod.inl ≫ ((biprod.snd : A ⊞ B ⟶ B) ≫ inv biprod.snd) := by
-          rw [IsIso.hom_inv_id, Category.comp_id]
-      _ = 0 := by rw [← Category.assoc, biprod.inl_snd, zero_comp]
-  rw [IsZero.iff_id_eq_zero]
-  calc 𝟙 A = (biprod.inl : A ⟶ A ⊞ B) ≫ biprod.fst := biprod.inl_fst.symm
-    _ = 0 := by rw [hinl, zero_comp]
+  have h : inv (biprod.snd : A ⊞ B ⟶ B) = biprod.inr :=
+    IsIso.inv_eq_of_inv_hom_id biprod.inr_snd
+  have : IsIso (biprod.inr : B ⟶ A ⊞ B) := by rw [← h]; infer_instance
+  exact isZero_of_isIso_biprod_inr A B
 
 end Biproduct
 
@@ -249,13 +229,10 @@ split.** -/
 theorem IsRightAlmostSplit.comp_iso (hf : IsRightAlmostSplit f) {Y' : C} (e : Y ≅ Y') :
     IsRightAlmostSplit (f ≫ e.hom) := by
   refine ⟨fun _ => hf.not_isSplitEpi (isSplitEpi_of_isSplitEpi_comp_iso f e), fun Z g hg => ?_⟩
-  have hg' : ¬ IsSplitEpi (g ≫ e.inv) := by
-    intro _
-    have hcomp : IsSplitEpi ((g ≫ e.inv) ≫ e.hom) := inferInstance
-    rw [Category.assoc, e.inv_hom_id, Category.comp_id] at hcomp
-    exact hg hcomp
-  obtain ⟨h, hh⟩ := hf.factors Z (g ≫ e.inv) hg'
-  exact ⟨h, by rw [← Category.assoc, hh, Category.assoc, e.inv_hom_id, Category.comp_id]⟩
+  have hg' : ¬ IsSplitEpi (g ≫ e.symm.hom) :=
+    fun _ => hg (isSplitEpi_of_isSplitEpi_comp_iso g e.symm)
+  obtain ⟨h, hh⟩ := hf.factors Z (g ≫ e.symm.hom) hg'
+  exact ⟨h, by rw [← Category.assoc, hh]; simp⟩
 
 /-- **Precomposing a right almost split morphism with an isomorphism keeps it right almost
 split.** -/
@@ -271,13 +248,10 @@ split.** -/
 theorem IsLeftAlmostSplit.iso_comp (hf : IsLeftAlmostSplit f) {X' : C} (e : X' ≅ X) :
     IsLeftAlmostSplit (e.hom ≫ f) := by
   refine ⟨fun _ => hf.not_isSplitMono (isSplitMono_of_isSplitMono_iso_comp e f), fun Z g hg => ?_⟩
-  have hg' : ¬ IsSplitMono (e.inv ≫ g) := by
-    intro _
-    have hcomp : IsSplitMono (e.hom ≫ e.inv ≫ g) := inferInstance
-    rw [← Category.assoc, e.hom_inv_id, Category.id_comp] at hcomp
-    exact hg hcomp
-  obtain ⟨h, hh⟩ := hf.factors Z (e.inv ≫ g) hg'
-  exact ⟨h, by rw [Category.assoc, hh, ← Category.assoc, e.hom_inv_id, Category.id_comp]⟩
+  have hg' : ¬ IsSplitMono (e.symm.hom ≫ g) :=
+    fun _ => hg (isSplitMono_of_isSplitMono_iso_comp e.symm g)
+  obtain ⟨h, hh⟩ := hf.factors Z (e.symm.hom ≫ g) hg'
+  exact ⟨h, by rw [Category.assoc, hh]; simp⟩
 
 /-- **Postcomposing a left almost split morphism with an isomorphism keeps it left almost
 split.** -/
@@ -391,7 +365,7 @@ theorem IsRightAlmostSplit.indecomposable (hf : IsRightAlmostSplit f) : Indecomp
       have hh : (biprod.inl ≫ e.inv) ≫ e.hom = (biprod.inl : A ⟶ A ⊞ B) := by simp
       rw [← hh]
       infer_instance
-    exact hB (isZero_of_isIso_biprod_inl A B)
+    exact hB ((Biprod.isIso_inl_iff_isZero A B).mp hinl)
   have hiB : ¬ IsSplitEpi (biprod.inr ≫ e.inv : B ⟶ Y) := by
     intro _
     have : IsSplitMono (biprod.inr ≫ e.inv : B ⟶ Y) :=
