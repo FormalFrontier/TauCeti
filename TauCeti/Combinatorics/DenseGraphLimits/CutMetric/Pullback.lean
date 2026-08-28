@@ -5,7 +5,6 @@ Authors: Claude
 -/
 module
 
-import Mathlib.Probability.Distributions.Bernoulli
 public import Mathlib.MeasureTheory.Constructions.UnitInterval
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Distance
 import TauCeti.MeasureTheory.Measure.UnitIntervalMap
@@ -31,10 +30,11 @@ forward onto the coupling itself — a probability measure on the standard Borel
 and `exists_measurePreserving_from_unitInterval` (Janson, Thm A.9) does that with no atomless
 hypothesis. That is the whole content of the harder direction: an *arbitrary* coupling, however
 atomic, is realized by a pair of measure-preserving maps out of `(I, volume)`, because the pair of
-projections of such a realization has the coupling as its joint law. The three regressions at the
-end of the file instantiate the equivalence at a point-mass coupling, at a finitely atomic one, and
-at one mixing an atomic with a continuous direction; they are what the absence of an atomless
-hypothesis buys, and each fails to typecheck for any formulation that assumes one.
+projections of such a realization has the coupling as its joint law. The companion
+`CutMetric.PullbackValidation` module instantiates the equivalence at a point-mass coupling, at a
+finitely atomic one, and at one mixing an atomic with a continuous direction; these regressions are
+what the absence of an atomless hypothesis buys, and each fails to typecheck for any formulation
+that assumes one.
 
 **Why the easy direction is easy.** A pair of measure-preserving maps `f, g` out of a common
 carrier pushes that carrier forward to a coupling along `x ↦ (f x, g x)`, and the overlaid
@@ -319,34 +319,6 @@ theorem cutDistPullback_le_cutNorm_sub (U W : Graphon Ω μ) :
     exact cutNorm_nonneg μ _
 
 end CommonCarrier
-
-/-! ### Regressions: couplings with atoms
-
-The harder direction of `cutDist_eq_cutDistPullback` applies Janson's Thm A.9 to the *coupling*, so
-the atomic cases to check are atomic couplings. These three instantiations run the equivalence at a
-point-mass coupling, at a finitely atomic one, and at one mixing an atomic with a continuous
-direction; each of them fails to typecheck for any formulation that assumes the carriers, or the
-coupling, atomless. -/
-
-/-- Regression: both carriers are point masses, so every coupling of them is a point mass. -/
-private theorem cutDist_eq_cutDistPullback_dirac (U : Graphon ℝ (Measure.dirac 0))
-    (W : Graphon ℝ (Measure.dirac 1)) : cutDist U W = cutDistPullback U W :=
-  cutDist_eq_cutDistPullback U W
-
-/-- Regression: both carriers are Bernoulli laws, carried by at most two atoms — an endpoint
-parameter collapses one to a point mass — so every coupling of them is finitely atomic. -/
-private theorem cutDist_eq_cutDistPullback_finite_atomic {p q : I}
-    (U : Graphon ℝ (ProbabilityTheory.bernoulliMeasure 0 1 p))
-    (W : Graphon ℝ (ProbabilityTheory.bernoulliMeasure 0 1 q)) :
-    cutDist U W = cutDistPullback U W :=
-  cutDist_eq_cutDistPullback U W
-
-/-- Regression: one carrier is atomic — at most two atoms, one if `p` is an endpoint — and the
-other is `(I, volume)`, so a coupling of them has an atomic and a continuous direction at once. -/
-private theorem cutDist_eq_cutDistPullback_mixed {p : I}
-    (U : Graphon ℝ (ProbabilityTheory.bernoulliMeasure 0 1 p)) (W : Graphon I volume) :
-    cutDist U W = cutDistPullback U W :=
-  cutDist_eq_cutDistPullback U W
 
 end DenseGraphLimits
 
