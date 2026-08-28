@@ -149,6 +149,7 @@ theorem logNormalPDFReal_of_nonpos (hx : x ≤ 0) (m : ℝ) (v : ℝ≥0) :
   rw [logNormalPDFReal, ite_eq_left hx]
 
 /-- On the positive half-line the log-normal density is the stated formula. -/
+@[simp]
 theorem logNormalPDFReal_of_pos (hx : 0 < x) (m : ℝ) (v : ℝ≥0) :
     logNormalPDFReal m v x = (x * √(2 * π * v))⁻¹ * Real.exp (-(Real.log x - m) ^ 2 / (2 * v)) := by
   rw [logNormalPDFReal, ite_eq_right (not_le.mpr hx)]
@@ -160,6 +161,7 @@ theorem logNormalPDF_of_nonpos (hx : x ≤ 0) (m : ℝ) (v : ℝ≥0) :
   rw [logNormalPDF, logNormalPDFReal_of_nonpos hx, ENNReal.ofReal_zero]
 
 /-- On the positive half-line the `ℝ≥0∞`-valued log-normal density is the stated formula. -/
+@[simp]
 theorem logNormalPDF_of_pos (hx : 0 < x) (m : ℝ) (v : ℝ≥0) :
     logNormalPDF m v x =
       ENNReal.ofReal ((x * √(2 * π * v))⁻¹ * Real.exp (-(Real.log x - m) ^ 2 / (2 * v))) := by
@@ -195,7 +197,7 @@ theorem measurable_logNormalPDFReal (m : ℝ) (v : ℝ≥0) : Measurable (logNor
 
 @[fun_prop]
 theorem measurable_logNormalPDF (m : ℝ) (v : ℝ≥0) : Measurable (logNormalPDF m v) := by
-  change Measurable fun x => ENNReal.ofReal (logNormalPDFReal m v x)
+  unfold logNormalPDF
   exact (measurable_logNormalPDFReal m v).ennreal_ofReal
 
 /-- The log-normal density is supported on the positive half-line. -/
