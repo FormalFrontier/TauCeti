@@ -163,11 +163,8 @@ theorem pointsMulEquiv_diagonalTorusCoordinateMap
   rw [← hcoe, GeneralLinear.pointsMulEquiv_apply]
   congr 1
   rw [CommHopfAlgCat.quotientPointsHom_apply]
-  have hcomp :
-      (coordinateMap R n ≫ diagonalTorusCoordinateMap R n).hom.toAlgHom =
-        (diagonalTorusCoordinateMap R n).hom.toAlgHom.comp
-          (coordinateMap R n).hom.toAlgHom := rfl
-  rw [WithConv.ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R n, ← hcomp,
+  rw [WithConv.ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R n,
+    ← BialgHom.comp_toAlgHom, ← CommHopfAlgCat.hom_comp,
     coordinateMap_comp_diagonalTorusCoordinateMap]
   have hmap := GeneralLinear.mapPointsFunctor_diagonalTorusCoordinateMap_app
     (R := R) (N := n) (CommAlgCat.of R A) f
