@@ -65,7 +65,7 @@ theorem coveredSquares_union_eq_of_mem_cIoo {a b c u v w : Fin n}
         ({ left := a, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares =
       ({ left := b, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares ∪
         ({ left := a, right := b, bottom := u, top := w } : GridRectangle n).coveredSquares := by
-  simp only [coveredSquares_def, coveredColumns_def, coveredRows_def]
+  simp only [coveredSquares_def, GridRectangle.coveredColumns, GridRectangle.coveredRows]
   rw [← Grid.cIco_union_cIco_eq_cIco_of_mem_cIoo hcol,
     ← Grid.cIco_union_cIco_eq_cIco_of_mem_cIoo hrow]
   exact product_union_eq_union_product
@@ -78,7 +78,7 @@ theorem coveredSquares_union_eq_of_mem_cIoo' {a b c u v w : Fin n}
         ({ left := a, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares =
       ({ left := a, right := c, bottom := u, top := w } : GridRectangle n).coveredSquares ∪
         ({ left := c, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares := by
-  simp only [coveredSquares_def, coveredColumns_def, coveredRows_def]
+  simp only [coveredSquares_def, GridRectangle.coveredColumns, GridRectangle.coveredRows]
   rw [← Grid.cIco_union_cIco_eq_cIco_of_mem_cIoo hcol,
     ← Grid.cIco_union_cIco_eq_cIco_of_mem_cIoo hrow]
   simpa only [Finset.union_comm] using
@@ -104,12 +104,12 @@ theorem prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo
       ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares
       ({ left := a, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares :=
     (disjoint_coveredSquares_iff _ _).mpr (Or.inr (by
-      simpa only [coveredRows_def] using Grid.disjoint_cIco_cIco_of_mem_cIoo hrow))
+      simpa only [GridRectangle.coveredRows] using Grid.disjoint_cIco_cIco_of_mem_cIoo hrow))
   have hright : Disjoint
       ({ left := b, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares
       ({ left := a, right := b, bottom := u, top := w } : GridRectangle n).coveredSquares :=
     (disjoint_coveredSquares_iff _ _).mpr (Or.inl (by
-      simpa only [coveredColumns_def] using
+      simpa only [GridRectangle.coveredColumns] using
         (Grid.disjoint_cIco_cIco_of_mem_cIoo hcol).symm))
   rw [← Finset.prod_union hleft,
     coveredSquares_union_eq_of_mem_cIoo hcol hrow,
@@ -132,12 +132,12 @@ theorem prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo'
       ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares
       ({ left := a, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares :=
     (disjoint_coveredSquares_iff _ _).mpr (Or.inr (by
-      simpa only [coveredRows_def] using Grid.disjoint_cIco_cIco_of_mem_cIoo hrow))
+      simpa only [GridRectangle.coveredRows] using Grid.disjoint_cIco_cIco_of_mem_cIoo hrow))
   have hright : Disjoint
       ({ left := a, right := c, bottom := u, top := w } : GridRectangle n).coveredSquares
       ({ left := c, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares :=
     (disjoint_coveredSquares_iff _ _).mpr (Or.inl (by
-      simpa only [coveredColumns_def] using Grid.disjoint_cIco_cIco_of_mem_cIoo hcol))
+      simpa only [GridRectangle.coveredColumns] using Grid.disjoint_cIco_cIco_of_mem_cIoo hcol))
   rw [← Finset.prod_union hleft,
     coveredSquares_union_eq_of_mem_cIoo' hcol hrow,
     Finset.prod_union hright]

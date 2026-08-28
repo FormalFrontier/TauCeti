@@ -40,8 +40,6 @@ everything it feeds.
 
 ## Main results
 
-* `TauCeti.GridRectangle.coveredColumns_def`, `TauCeti.GridRectangle.coveredRows_def`: the
-  one-dimensional covered domains are the corresponding half-open cyclic intervals.
 * `TauCeti.GridRectangle.interior_subset_coveredSquares`: every grid point strictly inside a
   rectangle names a square the rectangle covers.
 * `TauCeti.GridRectangle.disjoint_coveredSquares_iff`: two covered-square domains are disjoint
@@ -68,12 +66,12 @@ variable {n : ℕ} (R : GridRectangle n)
 
 /-- The columns of squares covered by a toroidal grid rectangle: the clockwise half-open arc
 from the initial vertical side to the terminal one. -/
-noncomputable def coveredColumns : Finset (Fin n) :=
+@[expose] noncomputable def coveredColumns : Finset (Fin n) :=
   Grid.cIco R.left R.right
 
 /-- The rows of squares covered by a toroidal grid rectangle: the clockwise half-open arc from
 the initial horizontal side to the terminal one. -/
-noncomputable def coveredRows : Finset (Fin n) :=
+@[expose] noncomputable def coveredRows : Finset (Fin n) :=
   Grid.cIco R.bottom R.top
 
 /-- Membership in the covered columns is membership in the corresponding half-open circular
@@ -87,14 +85,6 @@ interval. -/
 @[simp]
 theorem mem_coveredRows (r : Fin n) : r ∈ R.coveredRows ↔ r ∈ Grid.cIco R.bottom R.top :=
   Iff.rfl
-
-/-- The covered columns are the half-open cyclic interval between the vertical sides. -/
-theorem coveredColumns_def : R.coveredColumns = Grid.cIco R.left R.right :=
-  Finset.ext fun c => R.mem_coveredColumns c
-
-/-- The covered rows are the half-open cyclic interval between the horizontal sides. -/
-theorem coveredRows_def : R.coveredRows = Grid.cIco R.bottom R.top :=
-  Finset.ext fun r => R.mem_coveredRows r
 
 /-- Every interior column is a covered column. For distinct vertical sides the covered columns
 also contain the initial column; for coincident sides both sets are empty. -/
