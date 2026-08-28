@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.Matrix.NegTranspose
 public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier
+import TauCeti.Algebra.Lie.Sl2.Basic
 
 /-!
 # The pinned graph automorphism of the type-A Lie algebra
@@ -242,19 +243,25 @@ theorem lieGraphAutomorphism_rootGenerator (k : Fin r ⊕ Fin r) :
       · omega
       · rfl
 
-private theorem lie_rootGenerator_pos_neg (i : Fin r) :
-    ⁅rootGenerator r (.inl i), rootGenerator r (.inr i)⁆ = cartanGenerator r i := by
-  apply SetCoe.ext
-  rw [LieSubalgebra.coe_bracket, val_rootGenerator, val_rootGenerator, val_cartanGenerator,
-    rootTarget_inl, rootSource_inl, rootTarget_inr, rootSource_inr,
-    LieRing.of_associative_ring_bracket, Matrix.single_mul_single_same,
-    Matrix.single_mul_single_same]
-  norm_num
-
 /-- The type-`A` Lie graph automorphism reverses the numbered Cartan generators. -/
 @[simp]
 theorem lieGraphAutomorphism_cartanGenerator (i : Fin r) :
     lieGraphAutomorphism r (cartanGenerator r i) = cartanGenerator r i.rev := by
+  have lie_rootGenerator_pos_neg (s : ℕ) (j : Fin s) :
+      ⁅rootGenerator s (.inl j), rootGenerator s (.inr j)⁆ = cartanGenerator s j := by
+    have hpos : rootGenerator s (.inl j) =
+        single j.castSucc j.succ j.castSucc_lt_succ.ne 1 := by
+      apply SetCoe.ext
+      rw [val_rootGenerator, val_single, rootTarget_inl, rootSource_inl]
+    have hneg : rootGenerator s (.inr j) =
+        single j.succ j.castSucc j.castSucc_lt_succ.ne' 1 := by
+      apply SetCoe.ext
+      rw [val_rootGenerator, val_single, rootTarget_inr, rootSource_inr]
+    have hcart : cartanGenerator s j = singleSubSingle j.castSucc j.succ 1 := by
+      apply SetCoe.ext
+      rw [val_cartanGenerator, val_singleSubSingle]
+    rw [hpos, hneg, hcart]
+    exact TauCeti.lie_single_single_eq_singleSubSingle j.castSucc_lt_succ.ne 1
   calc
     lieGraphAutomorphism r (cartanGenerator r i) =
         lieGraphAutomorphism r ⁅rootGenerator r (.inl i), rootGenerator r (.inr i)⁆ := by

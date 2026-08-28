@@ -44,15 +44,9 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 Transposition reverses an associative product, while the negative sign reverses the resulting
 commutator once more. -/
 def negTransposeLieEquiv : Matrix n n R ≃ₗ⁅R⁆ Matrix n n R where
-  toFun X := -Xᵀ
-  invFun X := -Xᵀ
-  left_inv X := by simp
-  right_inv X := by simp
-  map_add' X Y := by simp [add_comm]
-  map_smul' r X := by simp
+  __ := (transposeLinearEquiv n n R R).trans (LinearEquiv.neg R)
   map_lie' {X Y} := by
-    simp only [LieRing.of_associative_ring_bracket, transpose_sub, transpose_mul, neg_sub,
-      neg_mul, mul_neg]
+    simp only [LieRing.of_associative_ring_bracket]
     simp
 
 /-- Negative transposition evaluates as `-Xᵀ`. -/
