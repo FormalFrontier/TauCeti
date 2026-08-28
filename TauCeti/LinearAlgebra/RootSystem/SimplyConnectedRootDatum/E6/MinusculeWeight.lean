@@ -107,18 +107,16 @@ reflection.** -/
 def e6MinusculeReflection (i : Fin 6) : Equiv.Perm (Fin 27) :=
   (e6MinusculeReflectionIndex_involutive i).toPerm
 
-private def e6MinusculeSimpleRoot : Fin 6 → Fin 6 → ℤ := ![
-  ![2, 0, -1, 0, 0, 0], ![0, 2, 0, -1, 0, 0], ![-1, 0, 2, -1, 0, 0],
-  ![0, -1, -1, 2, -1, 0], ![0, 0, 0, -1, 2, -1], ![0, 0, 0, 0, -1, 2]]
-
-private theorem e6Root_e6SimpleIndex_eq_minusculeSimpleRoot (i : Fin 6) :
-    e6Root (e6SimpleIndex i) = e6MinusculeSimpleRoot i := by
-  rw [root_e6SimpleIndex, CartanMatrix.E_six_eq]
-  fin_cases i <;> decide +kernel
+/-- Applying the same simple reflection twice fixes every index in the weight table. -/
+@[simp]
+theorem e6MinusculeReflection_self (i : Fin 6) (a : Fin 27) :
+    e6MinusculeReflection i (e6MinusculeReflection i a) = a :=
+  e6MinusculeReflectionIndex_involutive i a
 
 private theorem e6MinusculeWeight_reflection_table (i : Fin 6) (a : Fin 27) :
     e6MinusculeWeight (e6MinusculeReflection i a) =
-      e6MinusculeWeight a - e6MinusculeWeight a i • e6MinusculeSimpleRoot i := by
+      e6MinusculeWeight a - e6MinusculeWeight a i • CartanMatrix.E 6 i := by
+  rw [CartanMatrix.E_six_eq]
   decide +kernel +revert
 
 /-- **The coordinate equation for a simple reflection on the minuscule weights.** Reflection in
@@ -127,7 +125,7 @@ theorem e6MinusculeWeight_reflection (i : Fin 6) (a : Fin 27) :
     e6MinusculeWeight (e6MinusculeReflection i a) =
       e6MinusculeWeight a -
         e6MinusculeWeight a i • e6Root (e6SimpleIndex i) := by
-  rw [e6Root_e6SimpleIndex_eq_minusculeSimpleRoot]
+  rw [root_e6SimpleIndex]
   exact e6MinusculeWeight_reflection_table i a
 
 /-- The explicit permutation agrees with reflection in the pinned simply connected root datum. -/
@@ -174,6 +172,8 @@ private theorem e6MinusculeWeight_mem_orbit (a : Fin 27) :
     | h n ih =>
         by_cases hzero : n = 0
         · subst n
+          -- The proof that the dependent index lies in `Fin 27` is definitionally irrelevant;
+          -- expose the zero index so the public highest-weight lemma applies.
           change e6MinusculeWeight 0 ∈
             MulAction.orbit e6SimplyConnectedRootDatum.weylGroup
               (Pi.single 0 1 : Fin 6 → ℤ)
@@ -186,6 +186,8 @@ private theorem e6MinusculeWeight_mem_orbit (a : Fin 27) :
             omega
           have hparent : (e6MinusculeParent a : ℕ) < n := by
             have h := e6MinusculeParent_lt_succ a
+            -- `hasucc` is an equality of `Fin` values; applying `Fin.val` exposes exactly the
+            -- natural-number endpoint in `h` without changing either index.
             rw [show (a.succ : ℕ) = n from congrArg Fin.val hasucc] at h
             exact h
           rw [← hasucc, e6MinusculeWeight_succ_eq_reflection_parent]
@@ -212,6 +214,8 @@ theorem range_e6MinusculeWeight :
         simp
     | cons i l ih =>
         obtain ⟨a, ha⟩ := ih
+        -- Unfold the orbit witness's coercion to the Weyl action so `ha` states the induction
+        -- invariant directly in terms of `wordProd`.
         change e6MinusculeWeight a =
           wordProd e6SimplyConnectedRootDatum e6SimplyConnectedBase l •
             (Pi.single 0 1 : Fin 6 → ℤ) at ha
@@ -219,6 +223,8 @@ theorem range_e6MinusculeWeight :
         have hij : (i : Fin 72) = e6SimpleIndex j := Fin.ext (by simp [j])
         refine ⟨e6MinusculeReflection j a, ?_⟩
         rw [wordProd_cons]
+        -- The range witness is definitionally the Weyl action; expose its product so `mul_smul`
+        -- and the reflection-action API can rewrite it.
         change e6MinusculeWeight (e6MinusculeReflection j a) =
           (RootPairing.weylGroup.ofIdx e6SimplyConnectedRootDatum (i : Fin 72) *
             wordProd e6SimplyConnectedRootDatum e6SimplyConnectedBase l) •
@@ -248,6 +254,9 @@ theorem span_range_e6MinusculeWeight_eq_top :
   have h (a : Fin 27) : e6MinusculeWeight a ∈ S :=
     Submodule.subset_span (Set.mem_range_self a)
   fin_cases i
+  -- In each branch `Pi.basisFun` is definitionally the corresponding `Pi.single`, while `S`
+  -- unfolds to the span in the goal. The displayed equalities are explicit identities from the
+  -- weight table, after which submodule closure proves membership.
   · change Pi.single (0 : Fin 6) 1 ∈ S
     rw [show Pi.single (0 : Fin 6) 1 = e6MinusculeWeight 0 by decide +kernel]
     exact h 0
