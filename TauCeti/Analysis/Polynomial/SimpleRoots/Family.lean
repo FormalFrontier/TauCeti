@@ -22,7 +22,7 @@ points lying in finitely many disjoint coordinate patches. If the multiplicity i
 coordinate is analytic on one block when its roots are distinct. This file applies that result to
 a finite family of blocks and then conjugates the family by the possibly different source and
 target regroupings. The assembled statement is
-`TauCeti.Sym.analyticAt_piSigmaConst_coeffEquiv_map_coeffEquiv_symm`.
+`TauCeti.Sym.analyticAt_piSigmaConstHomeomorph_coeffEquiv_map_coeffEquiv_symm`.
 
 Thus the blockwise coordinate-change expression used by elementary-symmetric charts is analytic
 at tuples that are multiplicity-free inside every block. The case where points collide remains
@@ -101,7 +101,7 @@ The bijections `e` and `e'` are the independent choices used to identify the sou
 families of coefficient blocks with `Fin n → 𝕜`. The transition first undoes `e`, changes the
 underlying coordinate separately on each root block, and then regroups along `e'`. It is analytic
 at every tuple whose roots are pairwise distinct inside each block. -/
-theorem analyticAt_piSigmaConst_coeffEquiv_map_coeffEquiv_symm
+theorem analyticAt_piSigmaConstHomeomorph_coeffEquiv_map_coeffEquiv_symm
     (e e' : (Σ i, Fin (m i)) ≃ Fin n)
     {φ : ι → 𝕜 → 𝕜} {c₀ z : ∀ i, Fin (m i) → 𝕜}
     (hz : ∀ i, Function.Injective (z i))

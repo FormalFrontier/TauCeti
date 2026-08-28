@@ -42,7 +42,7 @@ single coordinate patch at a multiplicity-free coefficient tuple,
 `TauCeti.Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm` in
 `TauCeti/Analysis/Polynomial/SimpleRoots/Basic.lean`. Its assembly across the blocks that a chart
 below splits a tuple into, along the regrouping `e`, is
-`TauCeti.Sym.analyticAt_piSigmaConst_coeffEquiv_map_coeffEquiv_symm` in
+`TauCeti.Sym.analyticAt_piSigmaConstHomeomorph_coeffEquiv_map_coeffEquiv_symm` in
 `TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`. The case of colliding points is not done;
 there the degree-`m i` elementary symmetric coordinates genuinely appear.
 
