@@ -35,7 +35,7 @@ Applications 100 (2002), 147--165.
   reconstruction only ever consumes successor entries that the original prefix consumes too.
 * `TauCeti.successorArray_pathOfReindexedSuccessors_of_lt_visitCount`: the entries it consumes are
   the prescribed reindexed ones.
-* `TauCeti.visitCount_pathOfReindexedSuccessors`, `TauCeti.pathOfReindexedSuccessors_endpoint` and
+* `TauCeti.visitCount_pathOfReindexedSuccessors`, `TauCeti.pathOfReindexedSuccessors_eq` and
   `TauCeti.transitionCount_pathOfReindexedSuccessors`: the last-exit reconstruction has the same
   visit counts, the same endpoint, and the same transition counts as the original prefix.
 
@@ -58,20 +58,15 @@ variable {α : Type*}
 
 attribute [local instance] Classical.decEq
 
-/-- **A permutation fixing every index from `q` on permutes the indices below `q`.** This is the
-bridge from the "fixes all unused entries" form of a row reindexing to the weaker hypothesis the
-reconstruction theorems below ask for, namely that each row permutes its used prefix among
-itself. -/
-theorem perm_apply_lt_of_fixed_of_lt (σ : Equiv.Perm ℕ) {q k : ℕ} (hfix : ∀ l, q ≤ l → σ l = l)
-    (hk : k < q) : σ k < q := by
-  by_contra h
-  have hsfix : σ (σ k) = σ k := hfix (σ k) (not_lt.mp h)
-  have hsk : σ k = k := σ.injective hsfix
-  exact (not_lt_of_ge ((not_lt.mp h).trans_eq hsk)) hk
-
 /-- Rebuild `x` after reindexing the entries in each row of its successor array by `π`. -/
 def pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : ℕ → α) : ℕ → α :=
   pathOfSuccessors (x 0) fun a k => successorArray x a (π a k)
+
+/-- The defining equation for reconstruction from reindexed successor rows. -/
+theorem pathOfReindexedSuccessors_def (π : α → Equiv.Perm ℕ) (x : ℕ → α) :
+    pathOfReindexedSuccessors π x =
+      pathOfSuccessors (x 0) fun a k => successorArray x a (π a k) :=
+  (rfl)
 
 /-- A rebuilt path starts where the original does. -/
 @[simp]
@@ -91,7 +86,7 @@ theorem pathOfReindexedSuccessors_succ (π : α → Equiv.Perm ℕ) (x : ℕ →
 /-- Reindexing every successor row by the identity leaves the path unchanged. -/
 @[simp]
 theorem pathOfReindexedSuccessors_one (x : ℕ → α) :
-    pathOfReindexedSuccessors (fun _ => 1) x = x := by
+    pathOfReindexedSuccessors (1 : α → Equiv.Perm ℕ) x = x := by
   rw [pathOfReindexedSuccessors]
   exact pathOfSuccessors_successorArray x
 
@@ -334,30 +329,6 @@ private theorem exists_maximal_visitCount_lt (π : α → Equiv.Perm ℕ) (x : �
   have hle := hrmax j (Finset.mem_filter.2 ⟨Finset.mem_range.2 hjm, hlt⟩)
   omega
 
-/-- **The last-exit identity at the maximal deficient index.** If the original prefix has already
-been matched at every index after `r` but not at `r`, then it never returns to `x r` after time
-`r`, so time `r` carries its last visit to that state. -/
-private theorem visitCount_eq_visitCount_add_one_of_maximal (π : α → Equiv.Perm ℕ) (x : ℕ → α)
-    (m t r : ℕ) (hr : r < m)
-    (hmax : ∀ j, r < j → j < m →
-      visitCount (pathOfReindexedSuccessors π x) (x j) t = visitCount x (x j) m)
-    (hrinc : visitCount (pathOfReindexedSuccessors π x) (x r) t < visitCount x (x r) m) :
-    visitCount x (x r) m = visitCount x (x r) r + 1 := by
-  have hne : ∀ j, r < j → j < m → x j ≠ x r := by
-    intro j hrj hjm hja
-    have h := hmax j hrj hjm
-    rw [hja] at h
-    omega
-  have hzero : visitCount (fun j => x (r + 1 + j)) (x r) (m - (r + 1)) = 0 := by
-    apply visitCount_eq_zero_of_forall_ne
-    intro j hj
-    exact hne (r + 1 + j) (by omega) (by omega)
-  calc visitCount x (x r) m = visitCount x (x r) (r + 1 + (m - (r + 1))) := by
-        rw [Nat.add_sub_of_le hr]
-    _ = visitCount x (x r) (r + 1) + visitCount (fun j => x (r + 1 + j)) (x r) (m - (r + 1)) :=
-        visitCount_add x (x r) (r + 1) (m - (r + 1))
-    _ = visitCount x (x r) r + 1 := by rw [hzero, Nat.add_zero, visitCount_succ_of_eq rfl]
-
 /-- **The reconstruction cannot consume a fixed last exit.** If `π` fixes the index of the last
 visit of `x` to `x r` and the reconstruction has not yet used up that state's row, then no step of
 the reconstruction is paired with time `r`. -/
@@ -416,7 +387,12 @@ theorem visitCount_pathOfReindexedSuccessors_lt_visitCount (π : α → Equiv.Pe
       pathOfReindexedSuccessors_eq_of_visitCount_eq π x m t hused hmaps hcount
     -- Take the last index at which the original prefix is still ahead.
     obtain ⟨r, hr, hrinc, hmax⟩ := exists_maximal_visitCount_lt π x m t hused hmaps hi
-    have hq := visitCount_eq_visitCount_add_one_of_maximal π x m t r hr hmax hrinc
+    have hne : ∀ j, r < j → j < m → x j ≠ x r := by
+      intro j hrj hjm hja
+      have h := hmax j hrj hjm
+      rw [hja] at h
+      omega
+    have hq := visitCount_eq_succ_of_forall_ne x hr hne
     -- Time `r` is the last visit of `x` to `x r`, so `hlast` fixes the entry it consumes.
     have hfixed : π (x r) (visitCount x (x r) r) = visitCount x (x r) r := by
       have hsub : visitCount x (x r) m - 1 = visitCount x (x r) r := by omega
@@ -451,7 +427,9 @@ private theorem reindexStepEquiv_apply (π : α → Equiv.Perm ℕ) (x : ℕ →
     reindexStepEquiv π x m hmaps hlast i =
       reindexStepEmbedding π x m m
         (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m hmaps hlast) hmaps i :=
-  rfl
+  by
+    rw [reindexStepEquiv, ← Equiv.coe_toEmbedding,
+      Function.Embedding.toEmbedding_equivOfFiniteSelfEmbedding]
 
 /-- `TauCeti.reindexStepIndex_source`, read off the permutation. -/
 private theorem reindexStepEquiv_source (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
@@ -486,7 +464,7 @@ theorem visitCount_pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : �
 
 /-- A finite path reconstructed after last-exit reindexing has the same endpoint as the original
 prefix. -/
-theorem pathOfReindexedSuccessors_endpoint (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
+theorem pathOfReindexedSuccessors_eq (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
     (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) :
