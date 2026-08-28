@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Intervals
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Subdivision.Injective
 
 /-!
@@ -17,9 +16,10 @@ the barycenter of that face and extends affinely over subdivision simplices.
 
 Continuity of the inverse is proved simplex by simplex, using the weak topology on realizations.
 Each original simplex is covered by the finitely many closed chambers obtained by ordering its
-barycentric coordinates. On one chamber the inverse has a fixed affine formula: consecutive
-coordinate differences are the coefficients of the nested initial faces in that order. These
-formulas are continuous and agree on chamber intersections because the forward map is injective.
+barycentric coordinates. On one chamber the inverse has a fixed affine formula: cardinality-scaled
+consecutive coordinate differences are the coefficients of the nested initial faces in that order.
+These formulas are continuous and agree on chamber intersections because the forward map is
+injective.
 
 This completes the subdivision part of the geometric-realization milestone in Layer 11 of the
 GeometricTopology roadmap. The construction follows Rourke--Sanderson, *Introduction to

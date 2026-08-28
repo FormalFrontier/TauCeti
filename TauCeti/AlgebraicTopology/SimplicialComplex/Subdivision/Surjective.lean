@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.Algebra.BigOperators.Intervals
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Subdivision.Realization
 
 /-!
@@ -120,7 +121,7 @@ private def orderedWeight (c : ℕ → ℝ) (i : ℕ) : ℝ :=
   (i + 1 : ℝ) * (c i - c (i + 1))
 
 /-- Summation by parts for consecutive coordinate differences. -/
-theorem sum_range_succ_mul_sub (f : ℕ → ℝ) (n : ℕ) :
+private theorem sum_range_succ_mul_sub (f : ℕ → ℝ) (n : ℕ) :
     ∑ i ∈ Finset.range n, (i + 1 : ℝ) * (f i - f (i + 1)) =
       ∑ i ∈ Finset.range n, f i - (n : ℝ) * f n := by
   induction n with
@@ -131,25 +132,15 @@ theorem sum_range_succ_mul_sub (f : ℕ → ℝ) (n : ℕ) :
       ring
 
 /-- The tail of a telescoping sum of consecutive differences. -/
-theorem sum_range_ite_le_sub (f : ℕ → ℝ) {j n : ℕ} (hjn : j < n) :
+private theorem sum_range_ite_le_sub (f : ℕ → ℝ) {j n : ℕ} (hjn : j < n) :
     ∑ i ∈ Finset.range n, (if j ≤ i then f i - f (i + 1) else 0) = f j - f n := by
-  induction n with
-  | zero => omega
-  | succ n ih =>
-      rw [Finset.sum_range_succ]
-      by_cases hj : j = n
-      · subst j
-        have hz : ∑ i ∈ Finset.range n, (if n ≤ i then f i - f (i + 1) else 0) = 0 := by
-          apply Finset.sum_eq_zero
-          intro i hi
-          simp only [Finset.mem_range] at hi
-          simp [Nat.not_le_of_lt hi]
-        rw [hz]
-        simp
-      · have hjn' : j < n := by omega
-        rw [ih hjn']
-        simp only [hjn'.le, ↓reduceIte]
-        ring
+  rw [← Finset.sum_filter]
+  have hfilter : (Finset.range n).filter (j ≤ ·) = Finset.Ico j n := by
+    ext i
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+    omega
+  rw [hfilter]
+  simpa only [neg_sub_neg] using Finset.sum_Ico_sub (fun k => -f k) hjn.le
 
 /-- The barycentric-subdivision coordinates associated to an ordered coordinate sequence. -/
 private noncomputable def orderedCoordinates {K : AbstractSimplicialComplex ι} (σ : Face K)
@@ -176,6 +167,7 @@ private theorem orderedCoordinates_nonneg {K : AbstractSimplicialComplex ι} (σ
     (e : VertexOrder σ) (c : ℕ → ℝ) (hc : ∀ {k}, k < σ.1.card → c (k + 1) ≤ c k)
     (ρ : Face K) : 0 ≤ orderedCoordinates σ e c ρ := by
   rw [orderedCoordinates]
+  -- Expose evaluation of the finite `Finsupp` sum so nonnegativity reduces coordinatewise.
   change 0 ≤ Finsupp.applyAddHom ρ
     (∑ i : Fin σ.1.card, Finsupp.single (orderedPrefixFace σ e i) (orderedWeight c i))
   rw [map_sum]
@@ -330,6 +322,8 @@ theorem continuous_orderedSubdivisionPoint {K : AbstractSimplicialComplex ι} {�
   apply continuous_induced_rng.mpr
   apply continuous_pi
   intro ρ
+  -- The realization and simplex topologies are induced from the ambient coordinate function;
+  -- expose that coordinate, then expand the finite `Finsupp.single` sum pointwise.
   change Continuous (fun a => orderedCoordinates σ e (c a) ρ)
   rw [show (fun a => orderedCoordinates σ e (c a) ρ) = fun a =>
       ∑ i : Fin σ.1.card,
