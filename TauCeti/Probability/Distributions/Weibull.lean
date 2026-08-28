@@ -37,7 +37,7 @@ Natural moments reduce to Euler's Gamma integral.
 * `cdf_weibullMeasure_eq` gives the closed cdf;
 * `integral_pow_weibullMeasure` gives every natural moment;
 * `integral_id_weibullMeasure` and `variance_id_weibullMeasure` give the mean and variance;
-* `cdf_weibullMeasure_one_eq_expMeasure` recovers the exponential cdf at shape one;
+* `cdf_weibullMeasure_one_eq_cdf_expMeasure` recovers the exponential cdf at shape one;
 * `measurable_weibullMeasure` makes the family available for kernel constructions.
 
 ## References
@@ -85,11 +85,6 @@ def weibullMeasure (k lam : ℝ) : Measure ℝ :=
 theorem weibullPDF_eq_ofReal (k lam x : ℝ) :
     weibullPDF k lam x = ENNReal.ofReal (weibullPDFReal k lam x) := by
   rw [weibullPDF]
-
-/-- The defining presentation of the Weibull law as a density against Lebesgue measure. -/
-theorem weibullMeasure_eq_withDensity (k lam : ℝ) :
-    weibullMeasure k lam = volume.withDensity (weibullPDF k lam) := by
-  rw [weibullMeasure]
 
 /-- The real density has its usual formula at valid parameters and a positive point. -/
 @[simp]
@@ -222,7 +217,7 @@ private lemma integrableOn_weibullKernel (hk : 0 < k) :
     IntegrableOn (weibullKernel k) (Ioi 0) := by
   have h := (integrableOn_Ioi_comp_rpow_iff (fun y : ℝ ↦ Real.exp (-y)) hk.ne').2
     (integrableOn_exp_neg_Ioi 0)
-  change IntegrableOn (fun z : ℝ ↦ k * z ^ (k - 1) * Real.exp (-z ^ k)) (Ioi 0)
+  unfold weibullKernel
   simpa only [abs_of_pos hk, smul_eq_mul] using h
 
 /-- The real density is integrable for all parameters. -/
@@ -233,7 +228,7 @@ theorem integrable_weibullPDFReal (k lam : ℝ) : Integrable (weibullPDFReal k l
       refine IntegrableOn.congr_fun ((integrableOn_weibullKernel hk).const_mul lam⁻¹) ?_
         measurableSet_Ioi
       intro z hz
-      change lam⁻¹ * weibullKernel k z = weibullPDFReal k lam (lam * z)
+      dsimp only
       rw [← scale_mul_weibullPDFReal hk hlam hz]
       field_simp
     have hpos : IntegrableOn (weibullPDFReal k lam) (Ioi 0) := by
@@ -254,12 +249,9 @@ theorem integrable_weibullPDFReal (k lam : ℝ) : Integrable (weibullPDFReal k l
 /-- The unit-scale kernel has total mass one. -/
 private lemma integral_weibullKernel (hk : 0 < k) :
     ∫ z in Ioi (0 : ℝ), weibullKernel k z = 1 := by
-  rw [show (∫ z in Ioi (0 : ℝ), weibullKernel k z) =
-      ∫ z in Ioi 0, (k * z ^ (k - 1)) • Real.exp (-(z ^ k)) by
-    refine setIntegral_congr_fun measurableSet_Ioi fun z _ ↦ ?_
-    simp [weibullKernel, smul_eq_mul]]
   have h := integral_comp_rpow_Ioi_of_pos
     (g := fun y : ℝ ↦ Real.exp (-y)) hk
+  unfold weibullKernel
   simpa only [smul_eq_mul, integral_exp_neg_Ioi_zero] using h
 
 /-- The real Weibull density has total mass one at valid parameters. -/
@@ -270,7 +262,8 @@ theorem integral_weibullPDFReal (hk : 0 < k) (hlam : 0 < lam) :
   have hleft : ∫ y in Iic (0 : ℝ), weibullPDFReal k lam y = 0 := by
     exact integral_eq_zero_of_ae (ae_restrict_mem measurableSet_Iic |>.mono
       fun y hy ↦ weibullPDFReal_of_nonpos hy k lam)
-  rw [hleft, zero_add, ← show lam * 0 = (0 : ℝ) by simp,
+  have hzero : lam * (0 : ℝ) = 0 := mul_zero lam
+  rw [hleft, zero_add, ← hzero,
     ← integral_comp_mul_left_Ioi' (weibullPDFReal k lam) 0 hlam, smul_eq_mul,
     ← integral_const_mul]
   calc
@@ -296,6 +289,7 @@ theorem isProbabilityMeasure_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) :
     lintegral_weibullPDF_eq_one hk hlam]
 
 /-- The Weibull law is a probability measure exactly for positive shape and scale. -/
+@[simp]
 theorem isProbabilityMeasure_weibullMeasure_iff :
     IsProbabilityMeasure (weibullMeasure k lam) ↔ 0 < k ∧ 0 < lam := by
   constructor
@@ -304,8 +298,8 @@ theorem isProbabilityMeasure_weibullMeasure_iff :
     rw [weibullMeasure_of_not_pos h] at hp
     have hone : (0 : Measure ℝ) Set.univ = 1 :=
       @IsProbabilityMeasure.measure_univ ℝ _ (0 : Measure ℝ) hp
-    change (0 : ℝ≥0∞) = 1 at hone
-    exact zero_ne_one hone
+    have hzero_eq_one : (0 : ℝ≥0∞) = 1 := hone
+    exact zero_ne_one hzero_eq_one
   · rintro ⟨hk, hlam⟩
     exact isProbabilityMeasure_weibullMeasure hk hlam
 
@@ -389,7 +383,7 @@ theorem cdf_weibullMeasure_eq (hk : 0 < k) (hlam : 0 < lam) (x : ℝ) :
     simp
 
 /-- At shape one, the Weibull cdf is the cdf of the exponential law of rate `lam⁻¹`. -/
-theorem cdf_weibullMeasure_one_eq_expMeasure (hlam : 0 < lam) (x : ℝ) :
+theorem cdf_weibullMeasure_one_eq_cdf_expMeasure (hlam : 0 < lam) (x : ℝ) :
     cdf (weibullMeasure 1 lam) x = cdf (expMeasure lam⁻¹) x := by
   rw [cdf_weibullMeasure_eq one_pos hlam, cdf_expMeasure_eq (inv_pos.mpr hlam)]
   by_cases hx : x ≤ 0
@@ -403,6 +397,13 @@ theorem cdf_weibullMeasure_one_eq_expMeasure (hlam : 0 < lam) (x : ℝ) :
 
 /-! ### Natural moments, mean, and variance -/
 
+/-- Combine a positive real power with a natural power. -/
+private lemma rpow_sub_one_mul_pow (hz : 0 < x) (k : ℝ) (n : ℕ) :
+    x ^ (k - 1) * x ^ n = x ^ (k + (n : ℝ) - 1) := by
+  rw [← Real.rpow_natCast x n, ← Real.rpow_add hz]
+  congr 1
+  ring
+
 /-- The weighted density defining the `n`th moment is integrable. -/
 private lemma integrable_weibullPDFReal_mul_pow (hk : 0 < k) (hlam : 0 < lam) (n : ℕ) :
     Integrable (fun y ↦ weibullPDFReal k lam y * y ^ n) := by
@@ -413,19 +414,13 @@ private lemma integrable_weibullPDFReal_mul_pow (hk : 0 < k) (hlam : 0 < lam) (n
     (s := k + (n : ℝ) - 1) hq hk
   have hkernel : IntegrableOn (fun z : ℝ ↦ weibullKernel k z * z ^ n) (Ioi 0) := by
     refine IntegrableOn.congr_fun (hbase.const_mul k) (fun z hz ↦ ?_) measurableSet_Ioi
-    have hpows : z ^ (k - 1) * z ^ n = z ^ (k + (n : ℝ) - 1) := by
-      rw [← Real.rpow_natCast z n, ← Real.rpow_add hz]
-      congr 1
-      ring
     simp only [weibullKernel]
-    rw [← hpows]
+    rw [← rpow_sub_one_mul_pow hz k n]
     ring
   have hcomp : IntegrableOn
       (fun z ↦ weibullPDFReal k lam (lam * z) * (lam * z) ^ n) (Ioi 0) := by
     refine IntegrableOn.congr_fun
       ((hkernel.const_mul (lam ^ n)).const_mul lam⁻¹) (fun z hz ↦ ?_) measurableSet_Ioi
-    change lam⁻¹ * (lam ^ n * (weibullKernel k z * z ^ n)) =
-      weibullPDFReal k lam (lam * z) * (lam * z) ^ n
     rw [mul_pow, ← scale_mul_weibullPDFReal hk hlam hz]
     field_simp
   have hpos : IntegrableOn (fun y ↦ weibullPDFReal k lam y * y ^ n) (Ioi 0) := by
@@ -455,12 +450,8 @@ private lemma integral_weibullKernel_mul_pow (hk : 0 < k) (n : ℕ) :
             z ^ (k + (n : ℝ) - 1) * Real.exp (-z ^ k) := by
           rw [← integral_const_mul]
           exact setIntegral_congr_fun measurableSet_Ioi fun z hz ↦ by
-            have hpows : z ^ (k - 1) * z ^ n = z ^ (k + (n : ℝ) - 1) := by
-              rw [← Real.rpow_natCast z n, ← Real.rpow_add hz]
-              congr 1
-              ring
             simp only [weibullKernel]
-            rw [← hpows]
+            rw [← rpow_sub_one_mul_pow hz k n]
             ring
     _ = Real.Gamma (1 + (n : ℝ) / k) := by
           rw [h, harg]
@@ -491,7 +482,8 @@ theorem integral_pow_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) (n : ℕ) :
   have hleft : ∫ y in Iic (0 : ℝ), weibullPDFReal k lam y * y ^ n = 0 := by
     exact integral_eq_zero_of_ae (ae_restrict_mem measurableSet_Iic |>.mono
       fun y hy ↦ by simp [weibullPDFReal_of_nonpos hy k lam])
-  rw [hleft, zero_add, ← show lam * 0 = (0 : ℝ) by simp,
+  have hzero : lam * (0 : ℝ) = 0 := mul_zero lam
+  rw [hleft, zero_add, ← hzero,
     ← integral_comp_mul_left_Ioi'
       (fun y ↦ weibullPDFReal k lam y * y ^ n) 0 hlam, smul_eq_mul,
     ← integral_const_mul]
