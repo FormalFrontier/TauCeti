@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.RepresentationTheory.ClassicalGroups.BrauerGenerators.Basic
 public import TauCeti.RepresentationTheory.ClassicalGroups.Orthogonal
 public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 public import TauCeti.RepresentationTheory.Tensor.Power
@@ -250,22 +251,6 @@ theorem orthogonalCap_comp_piTensorProductMap {A : Matrix (Fin n) (Fin n) k} (hA
     PiTensorProduct.map_tprod, orthogonalCap_tprod, Matrix.mulVecLin_apply]
   rw [Matrix.dotProduct_mulVec, Matrix.vecMul_mulVec, hA, Matrix.vecMul_one]
 
-/-- A sum over the functions `Fin 2 → Fin n` is a double sum. -/
-private theorem sum_pi_fin_two {M : Type*} [AddCommMonoid M] (f : Fin n → Fin n → M) :
-    ∑ r : Fin 2 → Fin n, f (r 0) (r 1) = ∑ p : Fin n, ∑ q : Fin n, f p q :=
-  Eq.trans
-    (Fintype.sum_equiv (piFinTwoEquiv fun _ : Fin 2 => Fin n) _
-      (fun pq : Fin n × Fin n => f pq.1 pq.2) fun _ => rfl)
-    (Fintype.sum_prod_type' f)
-
-/-- A pure tensor of standard basis vectors on two strands, written in `![·, ·]` form. -/
-private theorem tprod_single_pi_fin_two (r : Fin 2 → Fin n) :
-    PiTensorProduct.tprod k (fun i : Fin 2 => Pi.single (r i) (1 : k))
-      = PiTensorProduct.tprod k ![Pi.single (r 0) (1 : k), Pi.single (r 1) (1 : k)] := by
-  congr 1
-  funext i
-  fin_cases i <;> simp
-
 /-- **The cup is invariant** under every matrix `A` with `A * Aᵀ = 1`. This is the other one-sided
 identity: the cap consumes `Aᵀ * A = 1` and the cup consumes `A * Aᵀ = 1`. -/
 theorem piTensorProductMap_comp_orthogonalCup {A : Matrix (Fin n) (Fin n) k} (hA : A * Aᵀ = 1) :
@@ -301,7 +286,9 @@ theorem piTensorProductMap_comp_orthogonalCup {A : Matrix (Fin n) (Fin n) k} (hA
             PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)] := by
           rw [← sum_pi_fin_two fun p q => ((1 : Matrix (Fin n) (Fin n) k) p q) •
             PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)]]
-          exact Finset.sum_congr rfl fun r _ => by rw [tprod_single_pi_fin_two]
+          exact Finset.sum_congr rfl fun r _ =>
+            congrArg (fun t : ⨂[k]^2 (Fin n → k) =>
+              ((1 : Matrix (Fin n) (Fin n) k) (r 0) (r 1)) • t) (tprod_fin_two _)
     _ = ∑ j : Fin n, PiTensorProduct.tprod k fun _ : Fin 2 => Pi.single j (1 : k) := by
           refine Finset.sum_congr rfl fun p _ => ?_
           rw [Finset.sum_eq_single p]

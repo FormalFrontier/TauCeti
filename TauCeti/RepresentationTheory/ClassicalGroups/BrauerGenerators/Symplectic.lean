@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.RepresentationTheory.ClassicalGroups.BrauerGenerators.Basic
 public import TauCeti.RepresentationTheory.ClassicalGroups.Symplectic
 public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 public import TauCeti.RepresentationTheory.Tensor.Power
@@ -46,13 +47,17 @@ So on the permutation diagrams the symplectic Brauer action is the *sign-twisted
 action rather than the bare one; that twist is the standard symplectic convention, and it is the
 same phenomenon that makes the Brauer parameter negative.
 
-The loop value is negative for the same reason. A closed loop is a cup stacked under a cap, and
-it evaluates to the trace of the alternating pairing, which is `-2n` and not `dim V`.
+The loop value is negative for the same reason. A closed loop is a cup stacked under a cap, so it
+contracts the pairing `J` against the copairing `-J`, and that contraction is
+`-∑ₓ ∑_y (J x y) * (J x y) = -tr (J * Jᵀ) = -tr 1 = -2n`. It is `-dim V` rather than `dim V`; it
+is not the trace of `J`, which vanishes.
 
 ## Implementation notes
 
-The alternating form needs subtraction, so, unlike the orthogonal file, everything here is stated
-over a commutative ring rather than a commutative semiring.
+The alternating form needs subtraction, so, unlike the orthogonal file, the cap, the cup, the
+crossing and the Brauer relations are stated over a commutative ring rather than a commutative
+semiring. The flip of the two tensor factors and its involutivity carry no sign, so they are
+stated over a commutative semiring.
 
 The two invariance statements are recorded for a bare matrix rather than only for an element of
 `Matrix.symplecticGroup (Fin n) k`, because they consume the defining identity from opposite
@@ -71,9 +76,9 @@ The index set is `Fin n ⊕ Fin n` rather than a general `l ⊕ l`, even though 
 `TauCeti.stdSymplecticBilinForm` and the standard representation `TauCeti.stdSymplecticRep` that
 this file consumes are pinned at `Fin n`.
 
-Two of the private helpers, `sum_pi_fin_two` and `tprod_single_pi_fin_two`, are the index-general
-forms of the same glue used by the orthogonal file; they are combinatorial bookkeeping for pure
-tensors on two strands and carry no symplectic content.
+The bookkeeping for pure tensors on two strands that this file shares with the orthogonal one --
+`TauCeti.sum_pi_fin_two` and `TauCeti.tprod_fin_two` -- carries no symplectic content and lives in
+`TauCeti.RepresentationTheory.ClassicalGroups.BrauerGenerators.Basic`.
 
 ## Main definitions
 
@@ -115,7 +120,35 @@ universe u
 
 namespace TauCeti
 
-variable (k : Type u) (n : ℕ) [CommRing k]
+variable (k : Type u) (n : ℕ)
+
+section Flip
+
+variable [CommSemiring k]
+
+/-- **The flip** of the two tensor factors of `V^{⊗2}`. It is *not* the Brauer crossing: the
+crossing is its negative, see `TauCeti.symplecticCrossing`. -/
+noncomputable def symplecticFlip : Module.End k (⨂[k]^2 ((Fin n ⊕ Fin n) → k)) :=
+  PiTensorProduct.reindexRepresentation k ((Fin n ⊕ Fin n) → k) (Fin 2) (Equiv.swap 0 1)
+
+@[simp]
+theorem symplecticFlip_tprod (v : Fin 2 → ((Fin n ⊕ Fin n) → k)) :
+    symplecticFlip k n (PiTensorProduct.tprod k v) =
+      PiTensorProduct.tprod k ![v 1, v 0] := by
+  rw [symplecticFlip, PiTensorProduct.reindexRepresentation_apply, LinearEquiv.coe_coe,
+    PiTensorProduct.reindex_tprod]
+  congr 1
+  funext i
+  fin_cases i <;> simp
+
+/-- The flip is an involution: swapping the two tensor factors twice is the identity. -/
+@[simp]
+theorem symplecticFlip_mul_self : symplecticFlip k n * symplecticFlip k n = 1 := by
+  rw [symplecticFlip, ← map_mul, Equiv.swap_mul_self, map_one]
+
+end Flip
+
+variable [CommRing k]
 
 section Cap
 
@@ -164,9 +197,12 @@ end Cap
 section Cup
 
 /-- **The cup**: minus the bivector of `J`, that is the bivector of `-J`, drawn as an arc joining
-the two top points of a Brauer diagram. It is not an inverse of the cap -- the two have different
-sources and targets, and `TauCeti.symplecticCap_comp_symplecticCup` computes their composite to be
-multiplication by `-2n`. -/
+the two top points of a Brauer diagram. Since `Matrix.J_squared` gives `J * J = -1`, the matrix
+`-J` is the inverse `J⁻¹`, so this is the copairing inverse to the pairing that the cap contracts
+against. It is not a two-sided inverse of `TauCeti.symplecticCap` as a linear map -- as a pairing
+and a copairing the two have different sources and targets, and
+`TauCeti.symplecticCap_comp_symplecticCup` computes their composite to be multiplication by
+`-2n`. -/
 noncomputable def symplecticCup : k →ₗ[k] (⨂[k]^2 ((Fin n ⊕ Fin n) → k)) :=
   LinearMap.toSpanSingleton k _
     (-∑ x : Fin n ⊕ Fin n, ∑ y : Fin n ⊕ Fin n,
@@ -206,8 +242,9 @@ private theorem sum_J_mul_J (x : Fin n ⊕ Fin n) :
   have h := congrFun (congrFun hJ x) x
   simpa only [Matrix.mul_apply, Matrix.one_apply_eq, Matrix.transpose_apply] using h
 
-/-- **The loop value.** A cup stacked under a cap closes into a loop, and the loop evaluates to
-the trace `-2n` of the standard alternating pairing. -/
+/-- **The loop value.** A cup stacked under a cap closes into a loop, and the loop contracts the
+pairing `J` against the copairing `-J`: the value is `-∑ₓ ∑_y (J x y) * (J x y)`, which is
+`-tr (J * Jᵀ) = -tr 1 = -2n`. -/
 theorem symplecticCap_comp_symplecticCup_apply (c : k) :
     symplecticCap k n (symplecticCup k n c) = -(2 * n : k) * c := by
   have h : symplecticCap k n
@@ -259,38 +296,27 @@ theorem symplecticCupCap_mul_self :
   rw [Module.End.mul_apply, LinearMap.smul_apply, symplecticCupCap_apply, symplecticCupCap_apply,
     symplecticCap_comp_symplecticCup_apply, ← smul_eq_mul, map_smul]
 
-/-- **The flip** of the two tensor factors of `V^{⊗2}`. It is *not* the Brauer crossing: the
-crossing is its negative, see `TauCeti.symplecticCrossing`. -/
-noncomputable def symplecticFlip : Module.End k (⨂[k]^2 ((Fin n ⊕ Fin n) → k)) :=
-  PiTensorProduct.reindexRepresentation k ((Fin n ⊕ Fin n) → k) (Fin 2) (Equiv.swap 0 1)
-
-@[simp]
-theorem symplecticFlip_tprod (v : Fin 2 → ((Fin n ⊕ Fin n) → k)) :
-    symplecticFlip k n (PiTensorProduct.tprod k v) =
-      PiTensorProduct.tprod k ![v 1, v 0] := by
-  rw [symplecticFlip, PiTensorProduct.reindexRepresentation_apply, LinearEquiv.coe_coe,
-    PiTensorProduct.reindex_tprod]
-  congr 1
-  funext i
-  fin_cases i <;> simp
-
 /-- **The Brauer crossing `s`** on two strands: *minus* the flip of the two tensor factors. The
 sign is forced by the alternating form; see the module docstring. -/
 noncomputable def symplecticCrossing : Module.End k (⨂[k]^2 ((Fin n ⊕ Fin n) → k)) :=
   -symplecticFlip k n
 
-/-- The flip is an involution: swapping the two tensor factors twice is the identity. -/
-theorem symplecticFlip_mul_self : symplecticFlip k n * symplecticFlip k n = 1 := by
-  rw [symplecticFlip, ← map_mul, Equiv.swap_mul_self, map_one]
+/-- The crossing swaps the two factors of a pure tensor and changes its sign. -/
+@[simp]
+theorem symplecticCrossing_tprod (v : Fin 2 → ((Fin n ⊕ Fin n) → k)) :
+    symplecticCrossing k n (PiTensorProduct.tprod k v) =
+      -PiTensorProduct.tprod k ![v 1, v 0] := by
+  rw [symplecticCrossing, LinearMap.neg_apply, symplecticFlip_tprod]
 
 /-- **The relation `s² = 1`**: the crossing is an involution. The two signs cancel, so this is the
 bare statement that the flip is an involution. -/
+@[simp]
 theorem symplecticCrossing_mul_self :
     symplecticCrossing k n * symplecticCrossing k n = 1 := by
   have h : symplecticCrossing k n * symplecticCrossing k n
       = symplecticFlip k n * symplecticFlip k n := by
     refine LinearMap.ext fun x => ?_
-    simp [symplecticCrossing, Module.End.mul_apply]
+    simp only [Module.End.mul_apply, symplecticCrossing, LinearMap.neg_apply, map_neg, neg_neg]
   rw [h, symplecticFlip_mul_self]
 
 /-- The flip **anti**fixes the cup: swapping the two top points of the arc reverses its
@@ -341,6 +367,7 @@ theorem symplecticCap_comp_symplecticCrossing :
     neg_neg]
 
 /-- **The relation `s e = e`**: the crossing is absorbed by the cup on top of `e`. -/
+@[simp]
 theorem symplecticCrossing_mul_symplecticCupCap :
     symplecticCrossing k n * symplecticCupCap k n = symplecticCupCap k n := by
   refine LinearMap.ext fun x => ?_
@@ -349,6 +376,7 @@ theorem symplecticCrossing_mul_symplecticCupCap :
     LinearMap.congr_fun (symplecticCrossing_comp_symplecticCup k n) (symplecticCap k n x)
 
 /-- **The relation `e s = e`**: the crossing is absorbed by the cap at the bottom of `e`. -/
+@[simp]
 theorem symplecticCupCap_mul_symplecticCrossing :
     symplecticCupCap k n * symplecticCrossing k n = symplecticCupCap k n := by
   refine LinearMap.ext fun x => ?_
@@ -378,14 +406,6 @@ theorem symplecticCap_comp_piTensorProductMap
   rw [Matrix.mulVec_mulVec, Matrix.dotProduct_mulVec, ← Matrix.vecMul_transpose,
     Matrix.vecMul_vecMul, ← Matrix.mul_assoc, hA, ← Matrix.dotProduct_mulVec]
 
-/-- A sum over the functions `Fin 2 → ι` is a double sum. -/
-private theorem sum_pi_fin_two {ι M : Type*} [Fintype ι] [AddCommMonoid M] (f : ι → ι → M) :
-    ∑ r : Fin 2 → ι, f (r 0) (r 1) = ∑ p : ι, ∑ q : ι, f p q :=
-  Eq.trans
-    (Fintype.sum_equiv (piFinTwoEquiv fun _ : Fin 2 => ι) _
-      (fun pq : ι × ι => f pq.1 pq.2) fun _ => rfl)
-    (Fintype.sum_prod_type' f)
-
 /-- Two nested double sums may be exchanged as a whole. -/
 private theorem sum_comm_four {ι M : Type*} [Fintype ι] [AddCommMonoid M]
     (F : ι → ι → ι → ι → M) :
@@ -399,14 +419,6 @@ private theorem sum_comm_four {ι M : Type*} [Fintype ι] [AddCommMonoid M]
         Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => Finset.sum_comm
     _ = ∑ p : ι, ∑ q : ι, ∑ x : ι, ∑ y : ι, F x y p q :=
         Finset.sum_congr rfl fun _ _ => Finset.sum_comm
-
-/-- A pure tensor of standard basis vectors on two strands, written in `![·, ·]` form. -/
-private theorem tprod_single_pi_fin_two (r : Fin 2 → (Fin n ⊕ Fin n)) :
-    PiTensorProduct.tprod k (fun i : Fin 2 => Pi.single (r i) (1 : k))
-      = PiTensorProduct.tprod k ![Pi.single (r 0) (1 : k), Pi.single (r 1) (1 : k)] := by
-  congr 1
-  funext i
-  fin_cases i <;> simp
 
 /-- Applying a matrix in both tensor factors turns the bivector of `K` into the bivector of the
 congruate `A * K * Aᵀ`. This is the computation behind the invariance of the cup. -/
@@ -441,7 +453,10 @@ private theorem piTensorProductMap_bivector
       ← sum_pi_fin_two fun p q => (A p x * A q y) •
         PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)]]
     refine Finset.sum_congr rfl fun r _ => ?_
-    rw [MultilinearMap.map_smul_univ, tprod_single_pi_fin_two, Fin.prod_univ_two]
+    have hr : PiTensorProduct.tprod k (fun i : Fin 2 => Pi.single (r i) (1 : k))
+        = PiTensorProduct.tprod k ![Pi.single (r 0) (1 : k), Pi.single (r 1) (1 : k)] :=
+      tprod_fin_two _
+    rw [MultilinearMap.map_smul_univ, hr, Fin.prod_univ_two]
     simp
   have hcoef : ∀ p q : Fin n ⊕ Fin n,
       ∑ x : Fin n ⊕ Fin n, ∑ y : Fin n ⊕ Fin n, K x y * (A p x * A q y) = (A * K * Aᵀ) p q := by
