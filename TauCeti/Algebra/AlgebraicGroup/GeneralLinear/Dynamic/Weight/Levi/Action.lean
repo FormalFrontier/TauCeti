@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi.Decomposition
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Normal
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Basic
 
 /-!
@@ -94,6 +94,8 @@ theorem coe_weightLeviInParabolicPointsMulEquiv_apply (w : Fin N → ℤ)
         (CommHopfAlgCat.quotientPointsHom (weightParabolicCoordinateHopfAlgebra R w)
           (weightLeviInParabolicHopfIdeal R w) A z) := by
   rcases A with ⟨A⟩
+  -- Unwrap the category object and the equality transport defining `leviFunctor_obj` so
+  -- the pointwise comparison lemma for `weightLeviPointsIso` matches the goal.
   change (((eqToHom (Cocharacter.leviFunctor_obj
       (weightCocharacter (R := R) w) (CommAlgCat.of R A)))
     ((weightLeviPointsIso R w).hom.app (CommAlgCat.of R A)
@@ -136,6 +138,8 @@ theorem coe_weightUnipotentInParabolicPointsMulEquiv_apply (w : Fin N → ℤ)
         (CommHopfAlgCat.quotientPointsHom (weightParabolicCoordinateHopfAlgebra R w)
           (weightUnipotentInParabolicHopfIdeal R w) A g) := by
   rcases A with ⟨A⟩
+  -- Unwrap the category object and the equality transport defining `unipotentFunctor_obj`
+  -- so the pointwise comparison lemma for `weightUnipotentPointsIso` matches the goal.
   change (((eqToHom (Cocharacter.unipotentFunctor_obj
       (weightCocharacter (R := R) w) (CommAlgCat.of R A)))
     ((weightUnipotentPointsIso R w).hom.app (CommAlgCat.of R A)
@@ -162,42 +166,6 @@ theorem coe_weightUnipotentInParabolicPointsMulEquiv_apply (w : Fin N → ℤ)
     weightParabolicCoordinateMap_apply] at h
   exact congrArg g.ofConv h
 
-private theorem quotientPointsHom_quotientNormalConjugation_apply
-    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H) (hI : I.IsNormal)
-    (A : CommAlgCat.{u} R)
-    (z : HopfAlgebra.points (R := R) (H := CommHopfAlgCat.quotient H J) A)
-    (g : HopfAlgebra.points (R := R) (H := CommHopfAlgCat.quotient H I) A) :
-    CommHopfAlgCat.quotientPointsHom H I A
-        (CommHopfAlgCat.grpObjPointsMulEquiv (CommHopfAlgCat.quotient H I) (op A)
-          ((CommHopfAlgCat.quotientNormalConjugation H I J hI).act
-            ((CommHopfAlgCat.grpObjPointsMulEquiv
-              (CommHopfAlgCat.quotient H J) (op A)).symm z)
-            ((CommHopfAlgCat.grpObjPointsMulEquiv
-              (CommHopfAlgCat.quotient H I) (op A)).symm g))) =
-      CommHopfAlgCat.quotientPointsHom H J A z *
-        CommHopfAlgCat.quotientPointsHom H I A g *
-          (CommHopfAlgCat.quotientPointsHom H J A z)⁻¹ := by
-  let i := CommHopfAlgCat.quotientGrpObjInclusion H I
-  let j := CommHopfAlgCat.quotientGrpObjInclusion H J
-  let z' := (CommHopfAlgCat.grpObjPointsMulEquiv
-    (CommHopfAlgCat.quotient H J) (op A)).symm z
-  let g' := (CommHopfAlgCat.grpObjPointsMulEquiv
-    (CommHopfAlgCat.quotient H I) (op A)).symm g
-  let _ : IsMonHom.Normal i :=
-    (CommHopfAlgCat.quotientGrpObjInclusion_normal_iff H I).2 hI
-  have hact :
-      (CommHopfAlgCat.quotientNormalConjugation H I J hI).act z' g' ≫ i =
-        (z' ≫ j) * (g' ≫ i) * (z' ≫ j)⁻¹ := by
-    change (GrpObj.Action.normalConjugation i j).act z' g' ≫ i = _
-    rw [GrpObj.Action.normalConjugation_act, Category.assoc]
-    exact TauCeti.lift_normalConjugation_comp i (z' ≫ j) g'
-  have hpoints := congrArg (CommHopfAlgCat.grpObjPointsMulEquiv H (op A)) hact
-  simp only [i, j, z', g', map_mul, map_inv] at hpoints
-  rw [CommHopfAlgCat.grpObjPointsMulEquiv_comp_quotientGrpObjInclusion,
-    CommHopfAlgCat.grpObjPointsMulEquiv_comp_quotientGrpObjInclusion,
-    CommHopfAlgCat.grpObjPointsMulEquiv_comp_quotientGrpObjInclusion] at hpoints
-  simpa only [MulEquiv.apply_symm_apply] using hpoints
-
 /-- Conjugation of the relative Levi quotient on the normal relative unipotent quotient. -/
 private noncomputable def weightRelativeLeviConjugation (w : Fin N → ℤ) :
     GrpObj.Action
@@ -210,32 +178,6 @@ private noncomputable def weightRelativeLeviConjugation (w : Fin N → ℤ) :
   CommHopfAlgCat.quotientNormalConjugation (weightParabolicCoordinateHopfAlgebra R w)
     (weightUnipotentInParabolicHopfIdeal R w) (weightLeviInParabolicHopfIdeal R w)
     (isNormal_weightUnipotentInParabolicHopfIdeal R w)
-
-/-- Evaluation of represented relative conjugation after transport to dynamic points. -/
-private noncomputable def representedWeightLeviConjugationApply (w : Fin N → ℤ)
-    (A : CommAlgCat.{u} R)
-    (z : Cocharacter.levi A (weightCocharacter (R := R) w))
-    (g : Cocharacter.unipotent A (weightCocharacter (R := R) w)) :
-    Cocharacter.unipotent A (weightCocharacter (R := R) w) := by
-  letI : GrpObj (CommHopfAlgCat.grpObj
-      (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
-        (weightLeviInParabolicHopfIdeal R w))) := CommAlgCat.grpObjOpOf
-  letI : GrpObj (CommHopfAlgCat.grpObj
-      (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
-        (weightUnipotentInParabolicHopfIdeal R w))) := CommAlgCat.grpObjOpOf
-  exact weightUnipotentInParabolicPointsMulEquiv R w A
-    ((CommHopfAlgCat.grpObjPointsMulEquiv
-      (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
-        (weightUnipotentInParabolicHopfIdeal R w)) (op A))
-      ((weightRelativeLeviConjugation R w).act
-        ((CommHopfAlgCat.grpObjPointsMulEquiv
-          (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
-            (weightLeviInParabolicHopfIdeal R w)) (op A)).symm
-          ((weightLeviInParabolicPointsMulEquiv R w A).symm z))
-        ((CommHopfAlgCat.grpObjPointsMulEquiv
-          (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
-            (weightUnipotentInParabolicHopfIdeal R w)) (op A)).symm
-          ((weightUnipotentInParabolicPointsMulEquiv R w A).symm g))))
 
 /-- The categorical conjugation action of the represented relative Levi subgroup on the
 represented relative unipotent subgroup, transported to dynamic points. -/
@@ -273,14 +215,12 @@ theorem representedWeightLeviConjugation_eq_dynamic (w : Fin N → ℤ)
   intro g
   unfold representedWeightLeviConjugation
   simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, MulAut.congr_apply,
-    MulEquiv.trans_apply, GrpObj.Action.toMulAutHom_apply]
-  change representedWeightLeviConjugationApply R w A z g = _
+    MulEquiv.trans_apply, MulEquiv.symm_trans_apply, GrpObj.Action.toMulAutHom_apply]
   apply Subtype.ext
   rw [Cocharacter.coe_leviConjugation_apply]
-  unfold representedWeightLeviConjugationApply
   rw [coe_weightUnipotentInParabolicPointsMulEquiv_apply,
     weightRelativeLeviConjugation,
-    quotientPointsHom_quotientNormalConjugation_apply]
+    CommHopfAlgCat.quotientPointsHom_quotientNormalConjugation_apply]
   simp only [map_mul, map_inv]
   rw [← coe_weightLeviInParabolicPointsMulEquiv_apply,
     ← coe_weightUnipotentInParabolicPointsMulEquiv_apply]
