@@ -21,7 +21,11 @@ The resulting maps are `TauCeti.ContCohomology.explicitMap1` and `explicitMap2`.
 and composition laws make the construction genuinely functorial, while the `_mk` theorems fix
 their values on cocycle classes. The named specializations `explicitRes1`, `explicitRes2`,
 `explicitCoeff1`, and `explicitCoeff2` provide restriction and coefficient maps in positive
-degrees.
+degrees, and `explicitRes1_eq_explicitMap1`, `explicitRes2_eq_explicitMap2`,
+`explicitCoeff1_eq_explicitMap1` and `explicitCoeff2_eq_explicitMap2` exhibit each of them as the
+compatible pair it is, so that a theorem proved for a general pair specializes to all four. They
+are the positive-degree counterparts of `explicitRes0_eq_explicitMap0` and
+`explicitCoeff0_eq_explicitMap0`.
 
 This is functoriality of the *explicit* model: the carriers are the quotients `Z¹/B¹` and `Z²/B²`
 of plain continuous cochains. Mathlib's `ContinuousCohomology.map` is the compatible-pair pullback
@@ -471,6 +475,18 @@ theorem explicitRes1_mk (S : Subgroup G) (c : Z1 G M) :
         continuous_id (id_subgroupSubtype_smul G M S) c : H1 S M) :=
   explicitMap1_mk G M S M _ _ _ _ c
 
+/-- Restriction on explicit `H¹` is the compatible-pair pullback along the inclusion of the
+subgroup with the identity on the coefficients, the degree-one counterpart of
+`TauCeti.ContCohomology.explicitRes0_eq_explicitMap0`. -/
+theorem explicitRes1_eq_explicitMap1 (S : Subgroup G) :
+    explicitRes1 G M S =
+      explicitMap1 G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
+        continuous_id (id_subgroupSubtype_smul G M S) := by
+  apply AddMonoidHom.ext
+  intro x
+  induction x using QuotientAddGroup.induction_on with
+  | _ c => rw [explicitRes1_mk, explicitMap1_mk]
+
 /-- Restricting explicit `H¹` first to `S` and then to a subgroup `T` of `S` is restriction
 along the composite inclusion. -/
 theorem explicitRes1_comp (S : Subgroup G) (T : Subgroup S) :
@@ -498,6 +514,17 @@ theorem explicitRes2_mk (S : Subgroup G) [ContinuousMul G] [ContinuousMul S] (c 
       (cocyclesMap2 G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
         continuous_id (id_subgroupSubtype_smul G M S) c : H2 S M) :=
   explicitMap2_mk G M S M _ _ _ _ c
+
+/-- Restriction on explicit `H²` is the compatible-pair pullback along the inclusion of the
+subgroup with the identity on the coefficients. -/
+theorem explicitRes2_eq_explicitMap2 (S : Subgroup G) [ContinuousMul G] [ContinuousMul S] :
+    explicitRes2 G M S =
+      explicitMap2 G M S M (ContinuousMonoidHom.subgroupSubtype S) (AddMonoidHom.id M)
+        continuous_id (id_subgroupSubtype_smul G M S) := by
+  apply AddMonoidHom.ext
+  intro x
+  induction x using QuotientAddGroup.induction_on with
+  | _ c => rw [explicitRes2_mk, explicitMap2_mk]
 
 /-- Restricting explicit `H²` first to `S` and then to a subgroup `T` of `S` is restriction
 along the composite inclusion. -/
@@ -529,6 +556,24 @@ theorem explicitCoeff1_mk {N : Type uN} [AddCommGroup N] [TopologicalSpace N]
       (cocyclesMap1 G M G N (ContinuousMonoidHom.id G) f hf
         (fun g m => f.map_smul g m) c : H1 G N) :=
   explicitMap1_mk G M G N _ _ _ _ c
+
+/-- A coefficient map on explicit `H¹` is the compatible-pair pullback along the identity of the
+group, the degree-one counterpart of
+`TauCeti.ContCohomology.explicitCoeff0_eq_explicitMap0`. -/
+theorem explicitCoeff1_eq_explicitMap1 {N : Type uN} [AddCommGroup N] [TopologicalSpace N]
+    [IsTopologicalAddGroup N] [DistribMulAction G N] [ContinuousSMul G N]
+    (f : M →+[G] N) (hf : Continuous f) :
+    explicitCoeff1 G M f hf =
+      explicitMap1 G M G N (ContinuousMonoidHom.id G) f hf (fun g m => f.map_smul g m) := by
+  apply AddMonoidHom.ext
+  intro x
+  induction x using QuotientAddGroup.induction_on with
+  | _ c =>
+    -- `hf : Continuous ⇑f` is stated for the bundled `f`, so the two sides differ by the
+    -- coercion `M →+[G] N → M →+ N` and `rw` cannot see through it on the right.
+    rw [explicitCoeff1_mk]
+    exact (explicitMap1_mk G M G N (ContinuousMonoidHom.id G) (f : M →+ N) hf
+      (fun g m => f.map_smul g m) c).symm
 
 /-- The identity coefficient map induces the identity on explicit `H¹`. -/
 @[simp]
@@ -569,6 +614,23 @@ theorem explicitCoeff2_mk [ContinuousMul G]
       (cocyclesMap2 G M G N (ContinuousMonoidHom.id G) f hf
         (fun g m => f.map_smul g m) c : H2 G N) :=
   explicitMap2_mk G M G N _ _ _ _ c
+
+/-- A coefficient map on explicit `H²` is the compatible-pair pullback along the identity of the
+group. -/
+theorem explicitCoeff2_eq_explicitMap2 [ContinuousMul G]
+    {N : Type uN} [AddCommGroup N] [TopologicalSpace N]
+    [IsTopologicalAddGroup N] [DistribMulAction G N] [ContinuousSMul G N]
+    (f : M →+[G] N) (hf : Continuous f) :
+    explicitCoeff2 G M f hf =
+      explicitMap2 G M G N (ContinuousMonoidHom.id G) f hf (fun g m => f.map_smul g m) := by
+  apply AddMonoidHom.ext
+  intro x
+  induction x using QuotientAddGroup.induction_on with
+  | _ c =>
+    -- As in degree one, the coercion of `f` blocks a rewrite on the right-hand side.
+    rw [explicitCoeff2_mk]
+    exact (explicitMap2_mk G M G N (ContinuousMonoidHom.id G) (f : M →+ N) hf
+      (fun g m => f.map_smul g m) c).symm
 
 /-- The identity coefficient map induces the identity on explicit `H²`. -/
 @[simp]
