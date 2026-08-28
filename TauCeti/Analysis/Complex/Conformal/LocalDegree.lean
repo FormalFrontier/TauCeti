@@ -49,6 +49,8 @@ converse is Mathlib's inverse function theorem
 * `TauCeti.not_injOn_of_deriv_eq_zero` — a critical point destroys injectivity on *every*
   neighbourhood of `z₀`.
 * `TauCeti.exists_injOn_nhds_iff_deriv_ne_zero` — the local injectivity criterion.
+* `DifferentiableOn.deriv_ne_zero_of_injOn` — the derivative of a holomorphic injection of
+  an open set vanishes nowhere on it.
 
 ## Coordination with upstream Mathlib
 

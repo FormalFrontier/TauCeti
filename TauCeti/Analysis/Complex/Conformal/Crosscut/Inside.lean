@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import TauCeti.Analysis.Complex.Conformal.Crosscut.SmallJordanCurve
 public import TauCeti.Analysis.Normed.Module.FilledHull
 import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.MeasureTheory.Integral.CircleIntegral
@@ -15,17 +14,23 @@ import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
 import TauCeti.Analysis.Contour.Winding.Separation
 import TauCeti.Topology.MetricSpace.Cut
-import TauCeti.Topology.JordanCurve.Separation
 
 /-!
 # One image piece of a crosscut lies inside a compact enclosing set
 
-For a holomorphic injection of `ball c r`, one of the two image pieces — the near side
-`ball c r ∩ ball ζ ρ` or the far side `ball c r \ closedBall ζ ρ` — lies in the filled hull of a
-compact set through the image crosscut. The transversal segment through a point of the crosscut has
-the near side on one side and the far side on the other, and the enclosing set is adherent from both
-sides; the winding-number two-sidedness theorem puts one end in the filled hull. No Jordan curve
-theorem is used.
+For a holomorphic injection of an open set `U`, one of the two image pieces — the near side
+`U ∩ ball ζ ρ` or the far side `U \ closedBall ζ ρ` — lies in the filled hull of a closed bounded
+set `K` through the image crosscut. The hypotheses are:
+
+* `K` contains the image crosscut and is contained in its closure union `frontier (f '' U)`.
+* `K \ {f z₀}` is preconnected at a chosen crosscut point `z₀`.
+* The two image pieces are preconnected (the `GeneralDomain` section) or `U = ball c r` and the
+  preconnectedness is derived from the ball geometry (the first section).
+
+The transversal segment through a point of the crosscut has the near side on one side and the
+far side on the other; the winding-number two-sidedness theorem
+(`Contour.mem_filledHull_or_mem_filledHull_of_isPreconnected_sdiff_singleton`) puts one end in the
+filled hull. No Jordan curve theorem is used.
 
 This is the planar-separation step of the `ConformalMapping` roadmap (L5).
 
@@ -37,10 +42,10 @@ This is the planar-separation step of the `ConformalMapping` roadmap (L5).
   adherent to each of its points from both sides of the transversal.**
 * `TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` —
   **one of the two image pieces lies in the filled hull of a closed bounded set through the image
-  crosscut.**
-* `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt'` — diameter selection: when the enclosing
-  set is narrower than the far side, the near side is enclosed. Consumes the disjunction above
-  without the `hp`/`hin` plane-separation input.
+  crosscut.** Requires `K \ {f z₀}` preconnected.
+* `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff` — diameter
+  selection: when the enclosing set is narrower than the far side, the near side is enclosed.
+  Consumes the disjunction above without the `hp`/`hin` plane-separation input.
 * `TauCeti.image_subset_filledHull_of_disjoint_inter_sphere` — an image side meeting the inside of
   such a curve lies inside it.
 * `TauCeti.nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull` —
@@ -49,13 +54,15 @@ This is the planar-separation step of the `ConformalMapping` roadmap (L5).
   `hin : p ∈ closure (filledHull K \ K)` is introduced; the diameter criterion below passes it on
   unchanged.
 * `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` — such a curve, if narrower than the far
-  side, encloses the *near* side.
+  side, encloses the *near* side. Takes preconnectedness of the two sides as hypotheses.
 * `TauCeti.image_inter_ball_subset_filledHull_of_frontier_subset` — the enclosure hypothesis is
   implied by the boundary-piece hypothesis of `Conformal/CutDiameter.lean`.
 
 ## References
 
-* Ch. Pommerenke, *Boundary Behaviour of Conformal Maps*, Section 2.2.
+* C. Carathéodory, *Über die Begrenzung einfach zusammenhängender Gebiete*, Math. Ann. 73, 1913.
+* P. L. Duren, *Univalent Functions*, Chapter 3.
+* Ch. Pommerenke, *Boundary Behaviour of Conformal Maps*, Section 2.3.
 * J. B. Garnett and D. E. Marshall, *Harmonic Measure*, Theorem I.3.1.
 -/
 
@@ -68,13 +75,6 @@ open scoped Topology
 namespace TauCeti
 
 variable {f : ℂ → ℂ} {c ζ z₀ : ℂ} {r ρ : ℝ}
-
-/-- A point of a sphere of positive radius is not its centre. -/
-private theorem sub_ne_zero_of_mem_sphere (hρ : 0 < ρ) (hz₀ : z₀ ∈ sphere ζ ρ) :
-    z₀ - ζ ≠ 0 := by
-  intro h
-  rw [mem_sphere, dist_eq_norm, h, norm_zero] at hz₀
-  exact hρ.ne hz₀
 
 private theorem hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U) {z₀ : ℂ}
@@ -115,7 +115,7 @@ theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall
   have hgmem : ∀ w ∈ f '' ball c r, g w ∈ ball c r := fun w hw => Function.invFunOn_mem hw
   have hd0 : deriv f z₀ ≠ 0 :=
     hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀b
-  have hzζ : z₀ - ζ ≠ 0 := sub_ne_zero_of_mem_sphere hρ hz₀s
+  have hzζ : z₀ - ζ ≠ 0 := sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀s hρ.ne')
   set v := deriv f z₀ * (z₀ - ζ) with hv_def
   have hv : v ≠ 0 := mul_ne_zero hd0 hzζ
   -- the pulled-back segment has velocity `z₀ - ζ` at `t = 0`
@@ -194,7 +194,7 @@ theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
   obtain ⟨hz₀b, hz₀s⟩ := hz₀
   have hd0 : deriv f z₀ ≠ 0 :=
     hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀b
-  have hzζ : z₀ - ζ ≠ 0 := sub_ne_zero_of_mem_sphere hρ hz₀s
+  have hzζ : z₀ - ζ ≠ 0 := sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀s hρ.ne')
   set v := deriv f z₀ * (z₀ - ζ) with hv_def
   have hfz : HasDerivAt f (deriv f z₀) z₀ :=
     (hf.differentiableAt (isOpen_ball.mem_nhds hz₀b)).hasDerivAt
@@ -287,7 +287,7 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
   set v := deriv f z₀ * (z₀ - ζ) with hv_def
   have hv : v ≠ 0 :=
     mul_ne_zero (hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀.1)
-      (sub_ne_zero_of_mem_sphere hρ hz₀.2)
+      (sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀.2 hρ.ne'))
   obtain ⟨η, hη, hnear, hfar⟩ :=
     exists_mem_image_inter_ball_and_image_sdiff_closedBall hf hinj hz₀ hρ
   obtain ⟨hleft, hright⟩ :=
@@ -337,7 +337,7 @@ excluding the far-side case: trapping the far side inside `K` gives
 `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt`, no `hp`/`hin` plane-separation input is
 needed — the preconnectedness hypothesis `hKp` on `K \ {p}` is discharged by
 `IsJordanCurve.isPathConnected_sdiff_singleton` in the intended application. -/
-theorem image_inter_ball_subset_filledHull_of_diam_lt'
+theorem image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
     (hf : DifferentiableOn ℂ f (ball c r))
     (hinj : InjOn f (ball c r)) {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
@@ -354,7 +354,7 @@ theorem image_inter_ball_subset_filledHull_of_diam_lt'
 
 /-! ## An enclosed side is trapped, and narrow -/
 
-section OldInside
+section GeneralDomain
 
 variable {U K V : Set ℂ} {p : ℂ}
 
@@ -441,6 +441,6 @@ theorem image_inter_ball_subset_filledHull_of_frontier_subset (hUo : IsOpen U)
     hb
     fun _ hw => (frontier_image_inter_ball_subset hUo hd hinj hw).imp id fun h => hE ⟨h, hw⟩
 
-end OldInside
+end GeneralDomain
 
 end TauCeti
