@@ -43,8 +43,6 @@ its normalizer is all of `GL₂` and the displayed rank-one intersection would i
 * `TauCeti.UpperTriangularGroup.inf_normalizer_diagonalTorus_eq`: in every dimension, the
   intersection of the upper-triangular subgroup with the diagonal normalizer is the diagonal
   torus.
-* `TauCeti.GL2Borel.inf_normalizer_diagonalTorus_eq`: the intersection of the Borel subgroup with
-  the diagonal normalizer is the diagonal torus.
 
 ## References
 
@@ -72,6 +70,7 @@ variable (R : Type u) [Semiring R]
 
 /-- The Weyl element in the Bruhat decomposition of `GL₂` is the permutation matrix of the
 transposition of the two coordinate lines. -/
+@[simp]
 theorem gl2WeylElement_eq_permutationGL_swap :
     GL2WeylElement R = permutationGL (k := R) (Equiv.swap 0 1) := by
   apply Units.ext
@@ -95,25 +94,13 @@ variable {k : Type u} [Field k]
 variable [Nontrivial kˣ]
 
 /-- The coordinate permutation induced by the Bruhat Weyl element is the transposition. -/
-@[simp]
 theorem diagonalNormalizerPerm_gl2WeylElement :
     diagonalNormalizerPerm (k := k) (n := 2)
         ⟨GL2WeylElement k,
           gl2WeylElement_mem_normalizer_diagonalTorus (R := k)⟩ =
       Equiv.swap 0 1 := by
-  apply diagonalNormalizerPerm_eq_of_eq_diagGL_mul_permutationGL _
-    (fun _ ↦ (1 : kˣ)) (Equiv.swap 0 1)
-  calc
-    ((⟨GL2WeylElement k,
-        gl2WeylElement_mem_normalizer_diagonalTorus (R := k)⟩ :
-        Subgroup.normalizer (diagonalTorus k 2 : Set (GL (Fin 2) k))) : GL (Fin 2) k) =
-        GL2WeylElement k := rfl
-    _ = permutationGL (k := k) (Equiv.swap 0 1) :=
-      gl2WeylElement_eq_permutationGL_swap k
-    _ = diagGL (fun _ : Fin 2 ↦ (1 : kˣ)) *
-        permutationGL (k := k) (Equiv.swap 0 1) := by
-      rw [show diagGL (fun _ : Fin 2 ↦ (1 : kˣ)) = 1 by
-        exact map_one (diagGL (k := k) (ι := Fin 2)), one_mul]
+  simpa only [gl2WeylElement_eq_permutationGL_swap] using
+    diagonalNormalizerPerm_permutationGL (k := k) (n := 2) (Equiv.swap 0 1)
 
 end Field
 
@@ -198,18 +185,6 @@ theorem inf_normalizer_diagonalTorus_eq :
     exact ⟨diagonalTorus_le hg, Subgroup.le_normalizer hg⟩
 
 end UpperTriangularGroup
-
-namespace GL2Borel
-
-/-- For `GL₂` over a field with at least two units, the intersection of the standard Borel
-subgroup with the normalizer of the diagonal torus is exactly the diagonal torus. This identifies
-the subgroup `H = B ∩ N` in the rank-one `(B, N)`-pair. -/
-theorem inf_normalizer_diagonalTorus_eq :
-    GL2Borel k ⊓ Subgroup.normalizer (diagonalTorus k 2 : Set (GL (Fin 2) k)) =
-      diagonalTorus k 2 :=
-  UpperTriangularGroup.inf_normalizer_diagonalTorus_eq
-
-end GL2Borel
 
 end Field
 
