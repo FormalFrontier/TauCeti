@@ -380,7 +380,13 @@ theorem jordanHolderMultiplicity_quotient_le [IsNoetherian R M] [IsArtinian R M]
   exact Nat.le_add_left _ _
 
 /-- **Additivity in a short exact sequence** `0 → A → M → B → 0`: the multiplicity of `S` in the
-middle term is the sum of its multiplicities in the two ends. -/
+middle term is the sum of its multiplicities in the two ends.
+
+Mathematically the finiteness of `A` and of `B` follows from that of `M`, through `A ≃ₗ[R] range f`
+and `M ⧸ ker g ≃ₗ[R] B`.  The assumptions are nevertheless binders here rather than facts derived
+in the proof, because `jordanHolderMultiplicity R A S` and `jordanHolderMultiplicity R B S` carry
+them in their own signatures: the conclusion does not elaborate without them, so a caller holds
+them already in order to state it. -/
 theorem jordanHolderMultiplicity_eq_add_of_exact [IsNoetherian R M] [IsArtinian R M]
     {A : Type w} [AddCommGroup A] [Module R A] [IsNoetherian R A] [IsArtinian R A]
     {B : Type w'} [AddCommGroup B] [Module R B] [IsNoetherian R B] [IsArtinian R B]
