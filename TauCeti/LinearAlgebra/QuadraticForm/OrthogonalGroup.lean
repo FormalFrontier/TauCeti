@@ -301,9 +301,11 @@ end Det
 section Coordinate
 
 variable {R : Type u} [CommRing R] {n : Type v} [Fintype n] [DecidableEq n]
+  {N : Type w} [AddCommMonoid N] [Module R N]
 
 /-- The coordinate inclusion of a special orthogonal group into `GL(n, R)`. -/
-noncomputable def specialOrthogonalToGeneralLinear (Q : QuadraticForm R (n → R)) :
+noncomputable def _root_.TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear
+    (Q : QuadraticMap R (n → R) N) :
     specialOrthogonalGroup Q →* Matrix.GeneralLinearGroup n R :=
   (Matrix.GeneralLinearGroup.toLin (n := n) (R := R)).symm.toMonoidHom.comp
     ((LinearMap.GeneralLinearGroup.generalLinearEquiv R (n → R)).symm.toMonoidHom.comp
@@ -311,14 +313,16 @@ noncomputable def specialOrthogonalToGeneralLinear (Q : QuadraticForm R (n → R
 
 /-- A special orthogonal transformation acts through its usual coordinate matrix. -/
 @[simp]
-theorem specialOrthogonalToGeneralLinear_apply (Q : QuadraticForm R (n → R))
+theorem _root_.TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear_apply
+    (Q : QuadraticMap R (n → R) N)
     (g : specialOrthogonalGroup Q) (i j : n) :
     specialOrthogonalToGeneralLinear Q g i j =
       (g : (n → R) ≃ₗ[R] (n → R)) (Pi.single j 1) i := by
   rfl
 
 /-- The coordinate inclusion of a special orthogonal group is injective. -/
-theorem specialOrthogonalToGeneralLinear_injective (Q : QuadraticForm R (n → R)) :
+theorem _root_.TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear_injective
+    (Q : QuadraticMap R (n → R) N) :
     Function.Injective (specialOrthogonalToGeneralLinear Q) :=
   (Matrix.GeneralLinearGroup.toLin (n := n) (R := R)).symm.injective.comp
     ((LinearMap.GeneralLinearGroup.generalLinearEquiv R (n → R)).symm.injective.comp

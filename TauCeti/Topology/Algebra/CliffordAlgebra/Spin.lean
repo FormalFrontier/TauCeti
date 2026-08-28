@@ -26,7 +26,7 @@ fibration, or universal-cover claim.
 
 ## Continuity argument
 
-For `x : spinPQ p q` and a fixed vector `v`, the public action equation gives
+For `x : spinGroup Q` and a fixed vector `v`, the public action equation gives
 
 `ι Q (spinVectorAction Q x v) = x * ι Q v * star x`.
 
@@ -44,7 +44,7 @@ topologized special orthogonal group.
 
 * `CliffordAlgebra.instIsTopologicalGroupRealSpinGroup` equips `spinGroup Q` with a topological
   group structure for its canonical subtype topology.
-* `CliffordAlgebra.continuous_spinToSpecialOrthogonal_realPi` proves continuity of the Spin
+* `CliffordAlgebra.continuous_spinToSpecialOrthogonal_pi` proves continuity of the Spin
   projection for every quadratic form on a finite real coordinate space.
 * `CliffordAlgebra.continuous_realCliffordSpinDoubleCoverZero_rightHom` specializes this result to
   the projection field of the packaged compact real double cover.
@@ -79,12 +79,8 @@ instance instIsTopologicalGroupRealSpinGroup (Q : QuadraticForm ℝ V) :
   continuous_inv := continuous_induced_rng.mpr continuous_subtype_val.star
 
 /-- For a fixed vector, its image under the real Spin action depends continuously on the Spin
-element.
-
-After applying the continuous vector-part map `ιInv`, the action is the product
-`x * ι(v) * star x` in the Clifford algebra. Both the subtype coercion and Clifford star are
-continuous. -/
-private theorem continuous_spinVectorAction_realPi
+element. -/
+private theorem continuous_spinVectorAction_pi
     {n : Type u} [Finite n] (Q : QuadraticForm ℝ (n → ℝ)) (v : n → ℝ) :
     Continuous (fun x : spinGroup Q => spinVectorAction Q x v) := by
   let _ := Fintype.ofFinite n
@@ -101,24 +97,10 @@ private theorem continuous_spinVectorAction_realPi
   rw [← ιInv_ι Q (spinVectorAction Q x v), ι_spinVectorAction_apply]
   rfl
 
-/-- The matrix entry of the coordinate realization of the Spin projection is the corresponding
-coordinate of the action on a standard basis vector. This bridge isolates the nested coercions
-from the special orthogonal group through matrix units. -/
-private theorem coe_spinProjectionGeneralLinear_apply
-    {n : Type u} [Fintype n] [DecidableEq n] (Q : QuadraticForm ℝ (n → ℝ))
-    (x : spinGroup Q) (i j : n) :
-    (((Units.coeHom (Matrix n n ℝ)).comp
-      ((TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear Q).comp
-        (spinToSpecialOrthogonal Q))) x) i j =
-      spinVectorAction Q x (Pi.single j 1) i := by
-  rw [MonoidHom.comp_apply, Units.coeHom_apply, MonoidHom.comp_apply,
-    TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear_apply,
-    coe_spinToSpecialOrthogonal_apply]
-
 /-- The real Spin action of a quadratic form on a finite coordinate space is continuous as a map to
 the special orthogonal group with its standard coordinate topology. -/
 @[fun_prop]
-theorem continuous_spinToSpecialOrthogonal_realPi
+theorem continuous_spinToSpecialOrthogonal_pi
     {n : Type u} [Fintype n] [DecidableEq n] (Q : QuadraticForm ℝ (n → ℝ)) :
     Continuous (spinToSpecialOrthogonal Q) := by
   apply (TauCeti.QuadraticMap.isEmbedding_specialOrthogonalToGeneralLinear
@@ -129,9 +111,11 @@ theorem continuous_spinToSpecialOrthogonal_realPi
     apply Continuous.of_coeHom_comp
     apply continuous_matrix
     intro i j
-    simpa only [coe_spinProjectionGeneralLinear_apply, Function.comp_def] using
+    simpa only [MonoidHom.comp_apply, Units.coeHom_apply,
+      TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear_apply,
+      coe_spinToSpecialOrthogonal_apply, Function.comp_def] using
       (continuous_apply i).comp
-        (continuous_spinVectorAction_realPi Q (Pi.single j 1))
+        (continuous_spinVectorAction_pi Q (Pi.single j 1))
   simpa only [MonoidHom.coe_comp] using h
 
 /-- The projection field of the compact real Spin double cover is continuous. -/
@@ -139,7 +123,7 @@ theorem continuous_spinToSpecialOrthogonal_realPi
 theorem continuous_realCliffordSpinDoubleCoverZero_rightHom (n : ℕ) [NeZero n] :
     Continuous (realCliffordSpinDoubleCoverZero n).rightHom := by
   rw [realCliffordSpinDoubleCoverZero_rightHom]
-  exact continuous_spinToSpecialOrthogonal_realPi (realCliffordForm n 0)
+  exact continuous_spinToSpecialOrthogonal_pi (realCliffordForm n 0)
 
 end
 

@@ -7,17 +7,16 @@ module
 
 public import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup
 public import Mathlib.Topology.Algebra.Group.Matrix
-public import Mathlib.Topology.Algebra.Ring.Real
 
 /-!
-# Topology on real special orthogonal groups in coordinates
+# Topology on special orthogonal groups in coordinates
 
-For a quadratic form `Q` on a finite real coordinate space `n → ℝ`, this file induces the
-standard coordinate topology from the faithful map of `specialOrthogonalGroup Q` into `GL(n, ℝ)`
+For a quadratic map `Q` on a finite coordinate space `n → R`, this file induces the
+standard coordinate topology from the faithful map of `specialOrthogonalGroup Q` into `GL(n, R)`
 defined in `TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup`. The resulting special orthogonal
 group is Hausdorff and a topological group.
 
-The construction applies to an arbitrary quadratic form on the coordinate space. It does not use a
+The construction applies to an arbitrary quadratic map on the coordinate space. It does not use a
 Clifford algebra or a Spin group.
 
 ## Main results
@@ -35,29 +34,36 @@ namespace QuadraticMap
 
 noncomputable section
 
-universe u
+universe u v w
 
 
 variable {n : Type u} [Fintype n] [DecidableEq n]
+  {R : Type v} [CommRing R] [TopologicalSpace R]
+  {N : Type w} [AddCommMonoid N] [Module R N]
 
-/-- The canonical topology on a real special orthogonal group in coordinates is induced by its
-faithful representation in `GL(n, ℝ)`. -/
-instance instTopologicalSpaceSpecialOrthogonalGroupRealPi (Q : QuadraticForm ℝ (n → ℝ)) :
+/-- The canonical topology on a special orthogonal group in coordinates is induced by its
+faithful representation in `GL(n, R)`. -/
+instance _root_.TauCeti.QuadraticMap.instTopologicalSpaceSpecialOrthogonalGroupPi
+    (Q : QuadraticMap R (n → R) N) :
     TopologicalSpace (specialOrthogonalGroup Q) :=
   TopologicalSpace.induced (specialOrthogonalToGeneralLinear Q) inferInstance
 
-/-- The coordinate inclusion of a real special orthogonal group is a topological embedding. -/
-theorem isEmbedding_specialOrthogonalToGeneralLinear (Q : QuadraticForm ℝ (n → ℝ)) :
+/-- The coordinate inclusion of a special orthogonal group is a topological embedding. -/
+theorem _root_.TauCeti.QuadraticMap.isEmbedding_specialOrthogonalToGeneralLinear
+    (Q : QuadraticMap R (n → R) N) :
     Topology.IsEmbedding (specialOrthogonalToGeneralLinear Q) :=
   (specialOrthogonalToGeneralLinear_injective Q).isEmbedding_induced
 
-/-- A real special orthogonal group in coordinates is a topological group. -/
-instance instIsTopologicalGroupSpecialOrthogonalGroupRealPi (Q : QuadraticForm ℝ (n → ℝ)) :
+/-- A special orthogonal group in coordinates over a topological ring is a topological group. -/
+instance _root_.TauCeti.QuadraticMap.instIsTopologicalGroupSpecialOrthogonalGroupPi
+    [IsTopologicalRing R]
+    (Q : QuadraticMap R (n → R) N) :
     IsTopologicalGroup (specialOrthogonalGroup Q) :=
   topologicalGroup_induced (specialOrthogonalToGeneralLinear Q)
 
-/-- A real special orthogonal group in coordinates is Hausdorff. -/
-instance instT2SpaceSpecialOrthogonalGroupRealPi (Q : QuadraticForm ℝ (n → ℝ)) :
+/-- A special orthogonal group in Hausdorff coordinates is Hausdorff. -/
+instance _root_.TauCeti.QuadraticMap.instT2SpaceSpecialOrthogonalGroupPi [T2Space R]
+    (Q : QuadraticMap R (n → R) N) :
     T2Space (specialOrthogonalGroup Q) :=
   (isEmbedding_specialOrthogonalToGeneralLinear Q).t2Space
 
