@@ -44,6 +44,7 @@ topologized special orthogonal group.
 
 * `CliffordAlgebra.instIsTopologicalGroupRealSpinGroup` equips `spinGroup Q` with a topological
   group structure for its canonical subtype topology.
+* `CliffordAlgebra.continuous_spinVectorAction` proves fixed-vector continuity of the Spin action.
 * `CliffordAlgebra.continuous_spinToSpecialOrthogonal_pi` proves continuity of the Spin
   projection for every quadratic form on a finite real coordinate space.
 * `CliffordAlgebra.continuous_realCliffordSpinDoubleCoverZero_rightHom` specializes this result to
@@ -80,10 +81,11 @@ instance instIsTopologicalGroupRealSpinGroup (Q : QuadraticForm ℝ V) :
 
 /-- For a fixed vector, its image under the real Spin action depends continuously on the Spin
 element. -/
-private theorem continuous_spinVectorAction_pi
-    {n : Type u} [Finite n] (Q : QuadraticForm ℝ (n → ℝ)) (v : n → ℝ) :
+@[fun_prop]
+theorem continuous_spinVectorAction [TopologicalSpace V] [IsModuleTopology ℝ V]
+    (Q : QuadraticForm ℝ V) (v : V) :
     Continuous (fun x : spinGroup Q => spinVectorAction Q x v) := by
-  let _ := Fintype.ofFinite n
+  let _ : IsTopologicalAddGroup V := IsModuleTopology.topologicalAddGroup ℝ V
   have hval : Continuous (fun x : spinGroup Q => (x : CliffordAlgebra Q)) :=
     continuous_subtype_val
   have hstar : Continuous (fun x : spinGroup Q => star (x : CliffordAlgebra Q)) :=
@@ -115,7 +117,7 @@ theorem continuous_spinToSpecialOrthogonal_pi
       TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear_apply,
       coe_spinToSpecialOrthogonal_apply, Function.comp_def] using
       (continuous_apply i).comp
-        (continuous_spinVectorAction_pi Q (Pi.single j 1))
+        (continuous_spinVectorAction Q (Pi.single j 1))
   simpa only [MonoidHom.coe_comp] using h
 
 /-- The projection field of the compact real Spin double cover is continuous. -/
