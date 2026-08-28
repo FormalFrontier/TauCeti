@@ -26,9 +26,10 @@ The proof glues a composition series of `p` and a composition series of `M ⧸ p
 `TauCeti.mapCompositionSeries` of `TauCeti/RingTheory/CompositionSeries/Basic.lean` does not apply:
 the lower half is carried along the *injective* map `p.subtype` and the upper half along the
 *surjective* map `p.mkQ`.  Those two transports are built here in the generality that makes them
-symmetric — an arbitrary injective, respectively surjective, linear map — and each rests on the
-identification of the subquotients it induces (`TauCeti.factorEquivMapOfInjective`,
-`TauCeti.factorEquivComapOfSurjective`), which is also what turns coverings into coverings.  The
+symmetric — an arbitrary injective, respectively surjective, linear map — on top of Mathlib's
+`Submodule.map_covBy_of_injective` and `Submodule.comap_covBy_of_surjective`; that each keeps the
+factors themselves, and not just their number, is the identification of the subquotients the map
+induces (`TauCeti.factorEquivMapOfInjective`, `TauCeti.factorEquivComapOfSurjective`).  The
 resulting series are glued with `RelSeries.smash`, whose index lemmas split the count.
 
 ## Main definitions
@@ -59,10 +60,10 @@ resulting series are glued with `RelSeries.smash`, whose index lemmas split the 
 `TauCeti/RingTheory/CompositionSeries/Multiplicity.lean` are stated against it, and replacing it by
 the injective form is a refactor of its own.
 
-Coverings are transported through `covBy_iff_quot_is_simple` rather than through an order
-isomorphism: the two factor equivalences are needed anyway, and reading a covering as simplicity of
-its subquotient turns both transports into one line.  The alternative, `Set.OrdConnected` ranges,
-would need a separate argument for each of the two maps.
+The two factor equivalences are stated as `≃ₗ[R]` rather than as an isomorphism of the two
+subquotients' lattices, because what the multiplicity counts is the isomorphism class of each
+factor: `IsSimpleModule.congr` and `Nonempty (· ≃ₗ[R] S)` both read off a linear equivalence
+directly.
 
 ## References
 
@@ -114,15 +115,6 @@ noncomputable def factorEquivMapOfInjective (f : M →ₗ[R] N) (hf : Function.I
   (Submodule.Quotient.equiv _ _ (Submodule.equivMapOfInjective f hf B)
     (map_equivMapOfInjective_comap_subtype f hf hAB)).symm
 
-/-- An injective linear map preserves coverings of submodules: the subquotient at the image is the
-subquotient itself, hence again simple. -/
-theorem covBy_map_of_injective (f : M →ₗ[R] N) (hf : Function.Injective f) {A B : Submodule R M}
-    (h : A ⋖ B) : A.map f ⋖ B.map f := by
-  have hsimple : IsSimpleModule R (↥B ⧸ Submodule.comap B.subtype A) :=
-    (covBy_iff_quot_is_simple h.le).mp h
-  exact (covBy_iff_quot_is_simple (Submodule.map_mono h.le)).mpr
-    (IsSimpleModule.congr (factorEquivMapOfInjective f hf h.le))
-
 end Injective
 
 /-! ### Subquotients along a surjective linear map -/
@@ -131,23 +123,9 @@ section Surjective
 
 variable (f : M →ₗ[R] N)
 
-/-- A linear map restricted to the preimage of a submodule. -/
-def restrictComap (B : Submodule R N) : ↥(B.comap f) →ₗ[R] ↥B :=
-  f.restrict fun _ hx => hx
-
-@[simp]
-theorem coe_restrictComap_apply (B : Submodule R N) (x : ↥(B.comap f)) :
-    (restrictComap f B x : N) = f x :=
-  (rfl)
-
-theorem restrictComap_surjective (hf : Function.Surjective f) (B : Submodule R N) :
-    Function.Surjective (restrictComap f B) := fun y => by
-  obtain ⟨x, hx⟩ := hf (y : N)
-  refine ⟨⟨x, ?_⟩, Subtype.ext ?_⟩ <;> simp [hx]
-
 /-- The kernel of `X ↦ f X mod A`, on the preimage of `B`, is the trace of the preimage of `A`. -/
-theorem ker_mkQ_comp_restrictComap (A B : Submodule R N) :
-    LinearMap.ker ((Submodule.comap B.subtype A).mkQ ∘ₗ restrictComap f B)
+theorem ker_mkQ_comp_submoduleComap (A B : Submodule R N) :
+    LinearMap.ker ((Submodule.comap B.subtype A).mkQ ∘ₗ f.submoduleComap B)
       = Submodule.comap (B.comap f).subtype (A.comap f) := by
   ext x
   simp
@@ -157,18 +135,10 @@ preimages `A.comap f ≤ B.comap f` is the subquotient `B ⧸ A` itself. -/
 noncomputable def factorEquivComapOfSurjective (hf : Function.Surjective f) (A B : Submodule R N) :
     (↥(B.comap f) ⧸ Submodule.comap (B.comap f).subtype (A.comap f)) ≃ₗ[R]
       (↥B ⧸ Submodule.comap B.subtype A) :=
-  (Submodule.quotEquivOfEq _ _ (ker_mkQ_comp_restrictComap f A B).symm).trans
+  (Submodule.quotEquivOfEq _ _ (ker_mkQ_comp_submoduleComap f A B).symm).trans
     (LinearMap.quotKerEquivOfSurjective _
-      ((Submodule.mkQ_surjective _).comp (restrictComap_surjective f hf B)))
-
-/-- A surjective linear map preserves coverings of submodules: the subquotient at the preimage is
-the subquotient itself, hence again simple. -/
-theorem covBy_comap_of_surjective (hf : Function.Surjective f) {A B : Submodule R N} (h : A ⋖ B) :
-    A.comap f ⋖ B.comap f := by
-  have hsimple : IsSimpleModule R (↥B ⧸ Submodule.comap B.subtype A) :=
-    (covBy_iff_quot_is_simple h.le).mp h
-  exact (covBy_iff_quot_is_simple (Submodule.comap_mono h.le)).mpr
-    (IsSimpleModule.congr (factorEquivComapOfSurjective f hf A B))
+      ((Submodule.mkQ_surjective _).comp
+        (LinearMap.submoduleComap_surjective_of_surjective f B hf)))
 
 end Surjective
 
@@ -180,7 +150,7 @@ end Surjective
 the factor lemmas below rest on. -/
 @[expose] def mapCompositionSeriesOfInjective (f : M →ₗ[R] N) (hf : Function.Injective f)
     (s : CompositionSeries (Submodule R M)) : CompositionSeries (Submodule R N) :=
-  s.map ⟨fun A => A.map f, fun h => covBy_map_of_injective f hf h⟩
+  s.map ⟨fun A => A.map f, Submodule.map_covBy_of_injective hf⟩
 
 @[simp]
 theorem mapCompositionSeriesOfInjective_apply (f : M →ₗ[R] N) (hf : Function.Injective f)
@@ -210,7 +180,7 @@ theorem last_mapCompositionSeriesOfInjective (f : M →ₗ[R] N) (hf : Function.
 for the same reason as `TauCeti.mapCompositionSeriesOfInjective`. -/
 @[expose] def comapCompositionSeriesOfSurjective (f : M →ₗ[R] N) (hf : Function.Surjective f)
     (s : CompositionSeries (Submodule R N)) : CompositionSeries (Submodule R M) :=
-  s.map ⟨fun A => A.comap f, fun h => covBy_comap_of_surjective f hf h⟩
+  s.map ⟨fun A => A.comap f, Submodule.comap_covBy_of_surjective hf⟩
 
 @[simp]
 theorem comapCompositionSeriesOfSurjective_apply (f : M →ₗ[R] N) (hf : Function.Surjective f)
