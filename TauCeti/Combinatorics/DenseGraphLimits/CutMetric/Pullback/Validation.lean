@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 import Mathlib.Probability.Distributions.Bernoulli
-import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Pullback
+import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Pullback.Basic
 
 /-!
 # Atomic regressions for the map form of the cut distance
@@ -18,8 +18,8 @@ direction. Each fails to typecheck for any formulation that assumes the carriers
 atomless.
 
 Keeping these roadmap design-validation checks separate avoids adding their Bernoulli dependency
-to the canonical `CutMetric.Pullback` API module. The repository build includes this module, so the
-regressions remain part of the build gate for the contract they test.
+to the canonical `CutMetric.Pullback.Basic` API module. The repository build includes this module,
+so the regressions remain part of the build gate for the contract they test.
 
 ## References
 

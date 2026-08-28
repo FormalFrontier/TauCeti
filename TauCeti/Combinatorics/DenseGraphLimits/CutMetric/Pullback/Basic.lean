@@ -31,7 +31,7 @@ and `exists_measurePreserving_from_unitInterval` (Janson, Thm A.9) does that wit
 hypothesis. That is the whole content of the harder direction: an *arbitrary* coupling, however
 atomic, is realized by a pair of measure-preserving maps out of `(I, volume)`, because the pair of
 projections of such a realization has the coupling as its joint law. The companion
-`CutMetric.PullbackValidation` module instantiates the equivalence at a point-mass coupling, at a
+`CutMetric.Pullback.Validation` module instantiates the equivalence at a point-mass coupling, at a
 finitely atomic one, and at one mixing an atomic with a continuous direction; these regressions are
 what the absence of an atomless hypothesis buys, and each fails to typecheck for any formulation
 that assumes one.
