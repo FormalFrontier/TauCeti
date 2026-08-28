@@ -149,11 +149,6 @@ theorem W1p0.valueL_apply (u : W1p0 mu Omega p) :
     W1p0.valueL u = W1p.value (u : W1p mu Omega p) :=
   by simp [W1p0.valueL]
 
-/-- The `Lᵖ` norm of the value of a zero-boundary Sobolev function is bounded by its Sobolev
-norm. -/
-theorem W1p0.norm_value_le (u : W1p0 mu Omega p) : ‖W1p0.valueL u‖ ≤ ‖u‖ :=
-  by rw [W1p0.valueL_apply]; exact W1p.norm_value_le (u : W1p mu Omega p)
-
 /-- `W^{1,p}_0(Ω)` is complete: it is a closed subspace of the complete space `W^{1,p}(Ω)`. -/
 instance : CompleteSpace (W1p0 mu Omega p) :=
   (w1p0Submodule mu Omega p).isClosed.completeSpace_coe

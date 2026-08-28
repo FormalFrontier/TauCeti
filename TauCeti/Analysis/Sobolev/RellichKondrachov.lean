@@ -70,32 +70,31 @@ private def univLpL : Lp ℝ p (mu.restrict (Set.univ : Set E)) →L[ℝ] Lp ℝ
 
 /-- The value of a zero-boundary Sobolev function, extended by zero to the whole space. -/
 private def W1p0.valueExtendByZeroL : W1p0 mu Omega p →L[ℝ] Lp ℝ p mu :=
-  univLpL.comp <| (extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet
-    (subset_univ (Omega : Set E))).toContinuousLinearMap.comp W1p0.valueL
+  univLpL.comp <| (W1p0.valueL (Omega := ⊤)).comp (W1p0.extendByZeroL le_top)
 
 private theorem W1p0.norm_valueExtendByZeroL_le (u : W1p0 mu Omega p) :
     ‖W1p0.valueExtendByZeroL u‖ ≤ ‖u‖ := by
   calc
     ‖W1p0.valueExtendByZeroL u‖ ≤ ‖univLpL (E := E) (mu := mu) (p := p)‖ *
-        ‖(extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (subset_univ (Omega : Set E)))
-          (W1p0.valueL u)‖ := by
+        ‖W1p0.valueL (W1p0.extendByZeroL le_top u)‖ := by
       exact (univLpL (E := E) (mu := mu) (p := p)).le_opNorm _
-    _ ≤ 1 * ‖(extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet
-        (subset_univ (Omega : Set E))) (W1p0.valueL u)‖ := by
+    _ ≤ 1 * ‖W1p0.valueL (W1p0.extendByZeroL le_top u)‖ := by
       gcongr
       exact (Lp.norm_LpToLpOfMeasureLeSMul_le ENNReal.one_ne_top (by simp)).trans_eq <| by simp
-    _ = ‖W1p0.valueL u‖ := by rw [one_mul, LinearIsometry.norm_map]
-    _ ≤ ‖u‖ := W1p0.norm_value_le u
+    _ = ‖W1p.value (W1p0.extendByZeroL le_top u : W1p mu (⊤ : Opens E) p)‖ := by
+      rw [one_mul, W1p0.valueL_apply]
+    _ ≤ ‖W1p0.extendByZeroL le_top u‖ := W1p.norm_value_le _
+    _ = ‖u‖ := W1p0.norm_extendByZeroL le_top u
 
 private theorem W1p0.coeFn_valueExtendByZeroL (u : W1p0 mu Omega p) :
     (W1p0.valueExtendByZeroL u : E → ℝ) =ᵐ[mu]
       (Omega : Set E).indicator (W1p.value (u : W1p mu Omega p) : E → ℝ) := by
   exact (Lp.coeFn_LpToLpOfMeasureLeSMul ENNReal.one_ne_top (by simp)
-    ((extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (subset_univ (Omega : Set E)))
-      (W1p0.valueL u))).trans <| by
-        simpa only [W1p0.valueL_apply, Measure.restrict_univ] using
+    (W1p0.valueL (W1p0.extendByZeroL le_top u))).trans <| by
+        rw [W1p0.valueL_apply, W1p0.value_extendByZeroL]
+        simpa only [Measure.restrict_univ] using
           coeFn_extendByZeroLpₗᵢ ℝ Omega.isOpen.measurableSet
-            (subset_univ (Omega : Set E)) (W1p0.valueL u)
+            (subset_univ (Omega : Set E)) (W1p.value (u : W1p mu Omega p))
 
 private theorem W1p0.translation_valueExtendByZeroL (hp : p ≠ ∞) (u : W1p0 mu Omega p)
     (h : E) :
