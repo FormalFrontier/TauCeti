@@ -229,7 +229,7 @@ theorem genusCharFun_def (s : Finset ℤ) (n : ℤ) :
   simp [genusCharFun_def, primeDiscriminantCharFun_mul_right, Finset.prod_mul_distrib]
 
 /-- A genus character takes the value `1` at `1`. -/
-@[simp] theorem genusCharFun_at_one (s : Finset ℤ) : genusCharFun s 1 = 1 := by
+@[simp] theorem genusCharFun_one (s : Finset ℤ) : genusCharFun s 1 = 1 := by
   simp [genusCharFun_def]
 
 /-- A genus character depends only on the residue class modulo the absolute value of the product

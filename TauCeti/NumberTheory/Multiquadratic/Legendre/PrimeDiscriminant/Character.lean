@@ -115,7 +115,7 @@ particular it depends only on `p`, not on the sign normalization `p* = (-1) ^ ((
   split_ifs <;> push_cast <;> simp [map_mul, jacobiSym.mul_left]
 
 /-- The character attached to a prime discriminant takes the value `1` at `1`. -/
-@[simp] theorem primeDiscriminantCharFun_at_one (P : ℤ) : primeDiscriminantCharFun P 1 = 1 := by
+@[simp] theorem primeDiscriminantCharFun_one (P : ℤ) : primeDiscriminantCharFun P 1 = 1 := by
   unfold primeDiscriminantCharFun
   split_ifs <;> simp
 
