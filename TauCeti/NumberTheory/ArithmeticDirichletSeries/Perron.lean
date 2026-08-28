@@ -45,8 +45,9 @@ residue is what produces the step.
   `‖K x c T - perronStep x‖ ≤ x ^ c / (π * T * |log x|)` for `x ≠ 1`, together with its two halves
   `TauCeti.norm_truncatedPerronKernel_le_of_lt_one` and
   `TauCeti.norm_truncatedPerronKernel_sub_one_le_of_one_lt`.
-* `TauCeti.tendsto_truncatedPerronKernel`: consequently the kernel tends to the sharp step as the
-  height tends to infinity, at every `x ≠ 1`.
+* `TauCeti.tendsto_truncatedPerronKernel`: consequently the kernel tends to the sharp step
+  `TauCeti.perronStep`, which carries the customary half-weight at the endpoint, as the height
+  tends to infinity, at every positive `x`.
 
 ## Roadmap role
 
@@ -601,19 +602,23 @@ theorem norm_truncatedPerronKernel_sub_one_le_of_one_lt (hx1 : 1 < x) (hc : 0 < 
         have hL' : |Real.log x| ≠ 0 := hL.ne'
         field_simp
 
-/-- The sharp step that the truncated Perron kernel approximates: `1` above the endpoint and `0`
-below it.  Its value at the endpoint `x = 1` is `0`, a convention on which nothing here depends:
-every estimate below excludes `x = 1`, where the kernel has no limit shared with either value at
-finite height. -/
-noncomputable def perronStep (x : ℝ) : ℂ := if 1 < x then 1 else 0
+/-- The sharp step that the truncated Perron kernel approximates: `1` above the endpoint, `0`
+below it, and the customary Perron half-weight `1 / 2` at the endpoint `x = 1`, which is the
+value the kernel tends to there (`TauCeti.tendsto_truncatedPerronKernel_one`) even though it
+never attains it at finite height (`TauCeti.truncatedPerronKernel_one_ne_half`). -/
+noncomputable def perronStep (x : ℝ) : ℂ := if 1 < x then 1 else if x = 1 then 1 / 2 else 0
 
 @[simp]
 theorem perronStep_of_one_lt (hx : 1 < x) : perronStep x = 1 := by
   simp [perronStep, hx]
 
 @[simp]
-theorem perronStep_of_le_one (hx : x ≤ 1) : perronStep x = 0 := by
-  simp [perronStep, not_lt.2 hx]
+theorem perronStep_one : perronStep 1 = 1 / 2 := by
+  simp [perronStep]
+
+@[simp]
+theorem perronStep_of_lt_one (hx : x < 1) : perronStep x = 0 := by
+  simp [perronStep, not_lt.2 hx.le, hx.ne]
 
 /-- **The truncated Perron kernel is a smoothed step.**  Away from the endpoint `x = 1` it differs
 from `TauCeti.perronStep` by at most `x ^ c / (π * T * |log x|)`.
@@ -625,13 +630,17 @@ theorem norm_truncatedPerronKernel_sub_step_le (hx : 0 < x) (hx1 : x ≠ 1) (hc 
     (hT : 0 < T) :
     ‖truncatedPerronKernel x c T - perronStep x‖ ≤ x ^ c / (π * T * |Real.log x|) := by
   rcases hx1.lt_or_gt with h | h
-  · simpa [perronStep_of_le_one h.le] using norm_truncatedPerronKernel_le_of_lt_one hx h hc hT
+  · simpa [perronStep_of_lt_one h] using norm_truncatedPerronKernel_le_of_lt_one hx h hc hT
   · simpa [perronStep_of_one_lt h] using norm_truncatedPerronKernel_sub_one_le_of_one_lt h hc hT
 
 /-- As the height tends to infinity the truncated Perron kernel tends to the sharp step, at every
-positive `x ≠ 1`. -/
-theorem tendsto_truncatedPerronKernel (hx : 0 < x) (hx1 : x ≠ 1) (hc : 0 < c) :
+positive `x`; at the endpoint `x = 1` this is the half-weight limit
+`TauCeti.tendsto_truncatedPerronKernel_one`. -/
+theorem tendsto_truncatedPerronKernel (hx : 0 < x) (hc : 0 < c) :
     Tendsto (truncatedPerronKernel x c) atTop (𝓝 (perronStep x)) := by
+  rcases eq_or_ne x 1 with rfl | hx1
+  · rw [perronStep_one]
+    exact tendsto_truncatedPerronKernel_one hc
   have hL : 0 < |Real.log x| := abs_pos.2 (Real.log_ne_zero_of_pos_of_ne_one hx hx1)
   rw [← tendsto_sub_nhds_zero_iff]
   refine squeeze_zero_norm' (eventually_atTop.2 ⟨1, fun T hT =>
