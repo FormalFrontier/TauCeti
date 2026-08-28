@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct.Basic
-public import Mathlib.Algebra.Category.ModuleCat.Presheaf.Pushforward
+public import Mathlib.Algebra.Category.ModuleCat.Presheaf.PushforwardZeroMonoidal
 public import Mathlib.Algebra.Category.ModuleCat.Sheaf.Localization
 public import Mathlib.Algebra.Category.ModuleCat.Sheaf.PushforwardContinuous
 public import Mathlib.CategoryTheory.Sites.PreservesLocallyBijective
@@ -22,10 +22,15 @@ The comparison is obtained from the unit of Mathlib's sheafification adjunction 
 presheaves of modules. Its underlying morphism of presheaves of abelian groups is the
 sheafification map restricted along `Over.forget X`. Since that functor is cocontinuous,
 Mathlib's local-bijectivity results show that the comparison becomes an isomorphism after
-sheafification.
+sheafification. No formalization is vendored: the ingredients are Mathlib's
+`PresheafOfModules.sheafificationAdjunction`,
+`PresheafOfModules.inverseImage_W_toPresheaf_eq_inverseImage_isomorphisms`, and
+`Presheaf.isLocallyInjective_whisker`/`Presheaf.isLocallySurjective_whisker`.
 
 ## Main declaration
 
+* `SheafOfModules.sheafificationOverIso` identifies restriction of a sheafification with
+  sheafification after restriction;
 * `SheafOfModules.tensorProductOverIso` identifies restriction of a tensor product with
   the tensor product of the restrictions.
 
@@ -39,7 +44,7 @@ and the group structure on isomorphism classes.
 
 public section
 
-open CategoryTheory Category Opposite
+open CategoryTheory Category MonoidalCategory Opposite
 
 namespace TauCeti
 
@@ -55,67 +60,105 @@ variable (M N : SheafOfModules.{u} (SheafOfModules.ringCatSheaf R))
 
 namespace SheafOfModules
 
-private abbrev presheafTensor : PresheafOfModules.{u} (ringCatSheaf R).obj :=
-  PresheafOfModules.Monoidal.tensorObj M.val N.val
-
-private abbrev tensorSheafification : SheafOfModules.{u} (ringCatSheaf R) :=
-  (PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).obj (presheafTensor R M N)
-
-private abbrev overModule (X : C)
-    (P : SheafOfModules.{u} (ringCatSheaf R)) :
-    SheafOfModules.{u} (ringCatSheaf (R.over X)) :=
-  P.over X
-
-/-- Before sheafification, taking the tensor product commutes definitionally with
-restriction to a slice site. -/
-private def overTensorPresheafIso (X : C) :
-    PresheafOfModules.Monoidal.tensorObj
-        (overModule R X M).val (overModule R X N).val ≅
-      (PresheafOfModules.pushforward (𝟙 _)).obj (presheafTensor R M N) :=
-  PresheafOfModules.isoMk (fun _ ↦ Iso.refl _) (by intros; rfl)
-
-/-- The restriction of the global sheafification map, viewed as a morphism of presheaves
-of modules on the slice site. -/
-private def restrictedTensorUnit (X : C) :
-    (PresheafOfModules.pushforward (𝟙 _)).obj (presheafTensor R M N) ⟶
-      ((tensorSheafification R M N).over X).val :=
+/-- The restriction of a sheafification unit, viewed as a morphism of presheaves of
+modules on the slice site. -/
+def overSheafificationUnit (P : PresheafOfModules.{u} (ringCatSheaf R).obj) (X : C) :
+    (PresheafOfModules.pushforward (𝟙 _)).obj P ⟶
+      (((PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).obj P).over X).val :=
   (PresheafOfModules.pushforward (𝟙 _)).map
     ((PresheafOfModules.sheafificationAdjunction
-      (R := ringCatSheaf R) (𝟙 (ringCatSheaf R).obj)).unit.app (presheafTensor R M N))
+      (R := ringCatSheaf R) (𝟙 (ringCatSheaf R).obj)).unit.app P)
 
-/-- The presheaf-level comparison from the tensor product of the restrictions to the
-restriction of the tensor product. -/
-private def overTensorPresheafMap (X : C) :
-    PresheafOfModules.Monoidal.tensorObj
-        (overModule R X M).val (overModule R X N).val ⟶
-      ((tensorSheafification R M N).over X).val :=
-  (overTensorPresheafIso R M N X).hom ≫ restrictedTensorUnit R M N X
-
-private theorem toPresheaf_overTensorPresheafMap (X : C) :
-    (PresheafOfModules.toPresheaf _).map (overTensorPresheafMap R M N X) =
+private theorem toPresheaf_map_overSheafificationUnit
+    (P : PresheafOfModules.{u} (ringCatSheaf R).obj) (X : C) :
+    (PresheafOfModules.toPresheaf _).map (overSheafificationUnit R P X) =
       Functor.whiskerLeft (Over.forget X).op
-        (CategoryTheory.toSheafify J (presheafTensor R M N).presheaf) := by
+        (CategoryTheory.toSheafify J P.presheaf) := by
+  -- This is `toPresheaf_map_sheafificationAdjunction_unit_app` whiskered using
+  -- the definitional comparison `pushforwardCompToPresheaf`.
   rfl
 
-private theorem overTensorPresheafMap_mem_W (X : C)
+private theorem W_toPresheaf_map_overSheafificationUnit
+    (P : PresheafOfModules.{u} (ringCatSheaf R).obj) (X : C)
     [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
     (J.over X).W
-      ((PresheafOfModules.toPresheaf _).map (overTensorPresheafMap R M N X)) := by
-  rw [toPresheaf_overTensorPresheafMap]
+      ((PresheafOfModules.toPresheaf _).map (overSheafificationUnit R P X)) := by
+  rw [toPresheaf_map_overSheafificationUnit]
   exact ((J.over X).W_iff_isLocallyBijective _).mpr
     ⟨Presheaf.isLocallyInjective_whisker (J.over X) J (Over.forget X) _,
       Presheaf.isLocallySurjective_whisker (J.over X) J (Over.forget X) _⟩
 
-private theorem isIso_sheafification_map_overTensorPresheafMap (X : C)
+private theorem isIso_sheafification_map_overSheafificationUnit
+    (P : PresheafOfModules.{u} (ringCatSheaf R).obj) (X : C)
     [HasWeakSheafify (J.over X) AddCommGrpCat.{u}]
     [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
     IsIso ((PresheafOfModules.sheafification
-      (𝟙 (ringCatSheaf (R.over X)).obj)).map (overTensorPresheafMap R M N X)) := by
+      (𝟙 (ringCatSheaf (R.over X)).obj)).map (overSheafificationUnit R P X)) := by
+  -- Unfold the inverse-image properties here: the source ring presheaf is definitionally
+  -- `ringCatSheaf (R.over X)`, but the direct `inverseImage_iff` rewrite does not see that
+  -- equality at its default transparency.
   change ((MorphismProperty.isomorphisms _).inverseImage
     (PresheafOfModules.sheafification (𝟙 (ringCatSheaf (R.over X)).obj)))
-      (overTensorPresheafMap R M N X)
+      (overSheafificationUnit R P X)
   rw [← PresheafOfModules.inverseImage_W_toPresheaf_eq_inverseImage_isomorphisms]
-  exact overTensorPresheafMap_mem_W R M N X
+  exact W_toPresheaf_map_overSheafificationUnit R P X
+
+/-- The canonical comparison from sheafification after restriction to the restriction of
+sheafification. -/
+def sheafificationOverHom (P : PresheafOfModules.{u} (ringCatSheaf R).obj) (X : C)
+    [HasWeakSheafify (J.over X) AddCommGrpCat.{u}]
+    [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
+    (PresheafOfModules.sheafification
+        (𝟙 (ringCatSheaf (R.over X)).obj)).obj
+          (((PresheafOfModules.pushforward (𝟙 _)) :
+            PresheafOfModules.{u} (ringCatSheaf R).obj ⥤
+              PresheafOfModules.{u} (ringCatSheaf (R.over X)).obj).obj P) ⟶
+      ((PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).obj P).over X :=
+  (PresheafOfModules.sheafification
+      (𝟙 (ringCatSheaf (R.over X)).obj)).map (overSheafificationUnit R P X) ≫
+    (sheafificationIso (R.over X)
+      (((PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).obj P).over X)).hom
+
+/-- Restriction to a slice site commutes with sheafification of presheaves of modules. -/
+def sheafificationOverIso (P : PresheafOfModules.{u} (ringCatSheaf R).obj) (X : C)
+    [HasWeakSheafify (J.over X) AddCommGrpCat.{u}]
+    [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
+    ((PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).obj P).over X ≅
+      (PresheafOfModules.sheafification
+        (𝟙 (ringCatSheaf (R.over X)).obj)).obj
+          (((PresheafOfModules.pushforward (𝟙 _)) :
+            PresheafOfModules.{u} (ringCatSheaf R).obj ⥤
+              PresheafOfModules.{u} (ringCatSheaf (R.over X)).obj).obj P) := by
+  haveI := isIso_sheafification_map_overSheafificationUnit R P X
+  exact (sheafificationIso (R.over X)
+      (((PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).obj P).over X)).symm ≪≫
+    (asIso ((PresheafOfModules.sheafification
+      (𝟙 (ringCatSheaf (R.over X)).obj)).map (overSheafificationUnit R P X))).symm
+
+/-- The inverse of `sheafificationOverIso` is the canonical sheafification comparison. -/
+@[simp]
+theorem sheafificationOverIso_inv (P : PresheafOfModules.{u} (ringCatSheaf R).obj) (X : C)
+    [HasWeakSheafify (J.over X) AddCommGrpCat.{u}]
+    [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
+    (sheafificationOverIso R P X).inv = sheafificationOverHom R P X := by
+  rfl
+
+/-- The canonical comparison from the tensor product of the restrictions to the
+restriction of the tensor product. -/
+def tensorProductOverHom (X : C)
+    [HasWeakSheafify (J.over X) AddCommGrpCat.{u}]
+    [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
+    tensorProduct (R.over X) (M.over X) (N.over X) ⟶
+      (tensorProduct R M N).over X :=
+  (tensorProductIso (R.over X) (M.over X) (N.over X)).hom ≫
+    (PresheafOfModules.sheafification
+      (𝟙 (ringCatSheaf (R.over X)).obj)).map
+        (Functor.Monoidal.μIso
+          (PresheafOfModules.pushforward₀OfCommRingCat (Over.forget X) R.obj)
+          M.val N.val).hom ≫
+    sheafificationOverHom R (M.val ⊗ N.val) X ≫
+    (SheafOfModules.overFunctor (ringCatSheaf R) X).map
+      (tensorProductIso R M N).inv
 
 /-- Restriction to a slice site commutes with the tensor product of sheaves of modules.
 
@@ -126,15 +169,24 @@ def tensorProductOverIso (X : C)
     [HasWeakSheafify (J.over X) AddCommGrpCat.{u}]
     [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
     (tensorProduct R M N).over X ≅
-      tensorProduct (R.over X) (M.over X) (N.over X) := by
-  let f := (PresheafOfModules.sheafification
-    (𝟙 (ringCatSheaf (R.over X)).obj)).map (overTensorPresheafMap R M N X)
-  have hf : IsIso f := isIso_sheafification_map_overTensorPresheafMap R M N X
-  exact (SheafOfModules.overFunctor (ringCatSheaf R) X).mapIso
+      tensorProduct (R.over X) (M.over X) (N.over X) :=
+  (SheafOfModules.overFunctor (ringCatSheaf R) X).mapIso
       (tensorProductIso R M N) ≪≫
-    (sheafificationIso (R.over X) ((tensorSheafification R M N).over X)).symm ≪≫
-    (@asIso _ _ _ _ f hf).symm ≪≫
+    sheafificationOverIso R (M.val ⊗ N.val) X ≪≫
+    (PresheafOfModules.sheafification
+      (𝟙 (ringCatSheaf (R.over X)).obj)).mapIso
+        (Functor.Monoidal.μIso
+          (PresheafOfModules.pushforward₀OfCommRingCat (Over.forget X) R.obj)
+          M.val N.val).symm ≪≫
     (tensorProductIso (R.over X) (M.over X) (N.over X)).symm
+
+/-- The inverse of `tensorProductOverIso` is the canonical tensor-product comparison. -/
+@[simp]
+theorem tensorProductOverIso_inv (X : C)
+    [HasWeakSheafify (J.over X) AddCommGrpCat.{u}]
+    [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
+    (tensorProductOverIso R M N X).inv = tensorProductOverHom R M N X := by
+  rfl
 
 end SheafOfModules
 

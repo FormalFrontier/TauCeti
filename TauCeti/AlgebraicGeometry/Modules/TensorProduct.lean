@@ -12,7 +12,7 @@ public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct.Basic
 # The tensor product of `𝒪ₓ`-modules on a scheme
 
 The site-level sheafified tensor product of sheaves of modules
-(`TauCeti/Algebra/Category/ModuleCat/Sheaf/TensorProduct.lean`) specializes to a scheme
+(`TauCeti/Algebra/Category/ModuleCat/Sheaf/TensorProduct/Basic.lean`) specializes to a scheme
 `X` by taking the sheaf of commutative rings to be the structure sheaf of `X`.
 
 ## Main declarations
