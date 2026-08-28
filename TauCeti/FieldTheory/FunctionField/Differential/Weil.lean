@@ -23,7 +23,7 @@ This file constructs `Ω_F(D)`, `Ω_F` and that `F`-action.  It is Stichtenoth, 
 Fields and Codes*, 2nd ed., Definitions 1.5.6 and 1.5.8.  The two theorems that make the objects
 built here compute — `dim_k Ω_F(D) = i(D)` (Lemma 1.5.7) and `dim_F Ω_F = 1` (Proposition 1.5.9)
 — rest on the quotient interpretation `i(D) = dim_k (A_F ⧸ (A_F(D) + F))` of the index of
-specialty, and are not proved here.
+specialty, and are proved in `TauCeti/FieldTheory/FunctionField/Differential/Dimension.lean`.
 
 ## Main definitions
 
@@ -203,6 +203,13 @@ theorem repartitionDualMul_apply_apply (hF : IsFunctionField k F) (f : F)
     (ω : Module.Dual k ↥(repartitionSpace k F)) (a : ↥(repartitionSpace k F)) :
     repartitionDualMul hF f ω a = ω (repartitionMul hF f a) :=
   (rfl)
+
+/-- Multiplying twice is multiplying once by the product.  It is not a `simp` lemma: `map_mul`
+rewrites in the opposite direction. -/
+theorem repartitionDualMul_repartitionDualMul (hF : IsFunctionField k F) (f g : F)
+    (ω : Module.Dual k ↥(repartitionSpace k F)) :
+    repartitionDualMul hF f (repartitionDualMul hF g ω) = repartitionDualMul hF (f * g) ω := by
+  rw [← Module.End.mul_apply, ← map_mul]
 
 /-- **Multiplication translates the filtration by a principal divisor**: for a nonzero function
 `z`, a linear form is bounded by `D` exactly when `z · ω` is bounded by `D + div z`, exactly as

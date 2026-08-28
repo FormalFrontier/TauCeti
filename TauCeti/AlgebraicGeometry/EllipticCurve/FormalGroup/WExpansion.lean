@@ -45,6 +45,9 @@ equation at the substituted parameter rather than at `z`.
 * `WeierstrassCurve.eq_of_wEquation`: uniqueness at any parameter that itself has vanishing
   constant coefficient — two series with vanishing constant coefficient solving the equation at
   that parameter are equal.
+* `WeierstrassCurve.eq_of_wEquation_mvPowerSeries`: that same uniqueness one index type up, for
+  series in `MvPowerSeries σ R`. It is a sibling of `eq_of_wEquation` and not a generalisation of
+  it: filtering by total degree means subtracting, which costs the `CommSemiring` hypothesis.
 * `WeierstrassCurve.subst_wEquationRHS` and `WeierstrassCurve.subst_formalW_wEquation`:
   substituting a series `q` into the equation gives the equation at `q`, so `w(q)` solves it
   there. When moreover `constantCoeff q = 0`, `eq_subst_formalW_of_wEquation` combines this with
@@ -78,11 +81,21 @@ The statement of uniqueness at an arbitrary parameter is adapted from Michael St
 `TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`),
 `EllipticCurves/WeierstrassFormalGroup/Chord.lean`, declarations `wStepAt` and
 `eq_of_wStepAt_fixed`. There the equation is a `def` used only internally; here it is the public
-`wEquationRHS`, so the existing statements in this file are phrased through it too. The proof is
-not Stoll's: that argues by contraction for the `z`-adic filtration, which needs subtraction,
-whereas the coefficient induction used here works at the `CommSemiring` generality of everything
-in this file except the substitution lemmas, which are `CommRing` only because Mathlib's
-`PowerSeries.subst` is.
+`wEquationRHS`, so the existing statements in this file are phrased through it too. The univariate
+proof is not Stoll's: that argues by contraction for the `z`-adic filtration, which needs
+subtraction, whereas the coefficient induction used for `eq_of_wEquation` works at the
+`CommSemiring` generality of everything in this file except the substitution lemmas, which are
+`CommRing` only because Mathlib's `PowerSeries.subst` is.
+
+The multivariate uniqueness statement `eq_of_wEquation_mvPowerSeries` does take Stoll's
+contraction route, adapted from the same project's
+`EllipticCurves/WeierstrassFormalGroup/ThirdPoint.lean`, declarations `mvWStepAt` and
+`eq_of_mvWStepAt_fixed`. Two things there are deliberately not ported. Stoll's `mvWStepAt` is a
+second copy of the equation; `wEquationRHS` is stated over an arbitrary `R`-algebra, so reading it
+in `MvPowerSeries σ R` already *is* that definition. And Stoll's filtration is carried by a private
+predicate `LowVanish k f`, "every coefficient of total degree below `k` vanishes" — that is
+Mathlib's `MvPowerSeries.order`, so the estimates here are stated as `(k : ℕ∞) ≤ f.order` and the
+predicate and its nine lemmas are not ported either.
 
 Changes from the AINTLIB source. Its convolution helpers `conv₂` and `conv₃`, and its
 coefficient and truncation lemmas for them, are stated only for `formalW`, although none of
@@ -100,7 +113,8 @@ The AINTLIB source does **not** prove uniqueness: its closing note records that 
 step is blocked by a `PowerSeries` typeclass gap (`RightDistribClass` and `IsRightCancelAdd`
 failing to synthesize), and names coefficient induction as the untried alternative. That is the
 route `eq_formalW_of_wEquation` takes here. Stoll's project does prove uniqueness, by the
-contraction route recorded above rather than by the coefficient induction used here.
+contraction route recorded above rather than by the coefficient induction used here for the
+univariate statement.
 
 The AINTLIB source's own generic formal-group scaffolding (`FormalGroupLaw`,
 `bmul`, `binv`, `bpow`, `bcomp`) is deliberately not ported: it predates and duplicates Mathlib's
@@ -444,6 +458,96 @@ theorem eq_subst_formalW_of_wEquation {q v : PowerSeries R}
   have ha : PowerSeries.HasSubst q := PowerSeries.HasSubst.of_constantCoeff_zero' hq
   refine eq_of_wEquation W hq hv ?_ h (subst_formalW_wEquation W ha)
   exact PowerSeries.constantCoeff_subst_eq_zero hq (formalW W) (constantCoeff_formalW W)
+
+/-! ### Uniqueness over a multivariate power series ring
+
+`eq_of_wEquation` argues by strong induction on the coefficient index, which needs that index to be
+linearly ordered. Over `MvPowerSeries σ R` no such order is available, so the induction runs on the
+total degree instead: `MvPowerSeries.order` is exactly the filtration by total degree, and the
+right-hand side of the `w`-equation is a contraction for it. That argument needs additive inverses,
+so this material stays in the `CommRing` section rather than joining the `CommSemiring` development
+above; the two uniqueness statements are siblings and neither subsumes the other.
+-/
+
+/-- The `w`-equation in `MvPowerSeries σ R` itself, where the structure map is `MvPowerSeries.C`.
+This is the spelling the order estimates below match against. -/
+theorem wEquationRHS_mvPowerSeries {σ : Type*} (q v : MvPowerSeries σ R) :
+    wEquationRHS W q v =
+      q ^ 3 + MvPowerSeries.C W.a₁ * q * v + MvPowerSeries.C W.a₂ * q ^ 2 * v +
+        MvPowerSeries.C W.a₃ * v ^ 2 + MvPowerSeries.C W.a₄ * q * v ^ 2 +
+        MvPowerSeries.C W.a₆ * v ^ 3 :=
+  (rfl)
+
+/-- **The right-hand side of the `w`-equation is a contraction for the total-degree filtration.**
+If two candidate solutions agree below total degree `k`, then the values of the equation at them
+agree below total degree `k + 1`. Every occurrence of the unknown is multiplied by the parameter,
+which has positive order, or sits in a square or a cube of a series of positive order, and that is
+where the extra degree comes from. -/
+private theorem le_order_wEquationRHS_sub {σ : Type*} {q u v : MvPowerSeries σ R}
+    (hq : 1 ≤ q.order) (hu : 1 ≤ u.order) (hv : 1 ≤ v.order) {k : ℕ}
+    (h : (k : ℕ∞) ≤ (u - v).order) :
+    ((k + 1 : ℕ) : ℕ∞) ≤ (wEquationRHS W q u - wEquationRHS W q v).order := by
+  -- The order estimates used below, in the vocabulary of `MvPowerSeries.order`.
+  have hmono : ∀ {m n : ℕ} {f : MvPowerSeries σ R}, m ≤ n → (n : ℕ∞) ≤ f.order →
+      (m : ℕ∞) ≤ f.order := fun hmn hf => (Nat.cast_le.mpr hmn).trans hf
+  have hadd : ∀ {m : ℕ} {f g : MvPowerSeries σ R}, (m : ℕ∞) ≤ f.order → (m : ℕ∞) ≤ g.order →
+      (m : ℕ∞) ≤ (f + g).order :=
+    fun hf hg => (le_min hf hg).trans MvPowerSeries.min_order_le_add
+  have hmul : ∀ {m n : ℕ} {f g : MvPowerSeries σ R}, (m : ℕ∞) ≤ f.order → (n : ℕ∞) ≤ g.order →
+      ((m + n : ℕ) : ℕ∞) ≤ (f * g).order := by
+    intro m n f g hf hg
+    push_cast
+    exact (add_le_add hf hg).trans MvPowerSeries.le_order_mul
+  have hC : ∀ {m : ℕ} (a : R) {f : MvPowerSeries σ R}, (m : ℕ∞) ≤ f.order →
+      (m : ℕ∞) ≤ (MvPowerSeries.C a * f).order := by
+    intro m a f hf
+    exact (hf.trans le_add_self).trans MvPowerSeries.le_order_mul
+  -- The three differences that carry the gain.
+  have hq2 : ((2 : ℕ) : ℕ∞) ≤ (q * q).order := hmul hq hq
+  have hlin : ((k + 1 : ℕ) : ℕ∞) ≤ (q * (u - v)).order := hmono (by omega) (hmul hq h)
+  have hsq : ((k + 1 : ℕ) : ℕ∞) ≤ (u ^ 2 - v ^ 2).order := by
+    have he : u ^ 2 - v ^ 2 = (u + v) * (u - v) := by ring
+    rw [he]
+    exact hmono (by omega) (hmul (hadd hu hv) h)
+  have hcb : ((k + 1 : ℕ) : ℕ∞) ≤ (u ^ 3 - v ^ 3).order := by
+    have he : u ^ 3 - v ^ 3 = (u * u + u * v + v * v) * (u - v) := by ring
+    rw [he]
+    exact hmono (by omega) (hmul (hadd (hadd (hmul hu hu) (hmul hu hv)) (hmul hv hv)) h)
+  -- Reassemble the difference and bound each summand.
+  have hstep : wEquationRHS W q u - wEquationRHS W q v =
+      MvPowerSeries.C W.a₁ * (q * (u - v)) + MvPowerSeries.C W.a₂ * (q * q * (u - v)) +
+        MvPowerSeries.C W.a₃ * (u ^ 2 - v ^ 2) + MvPowerSeries.C W.a₄ * (q * (u ^ 2 - v ^ 2)) +
+        MvPowerSeries.C W.a₆ * (u ^ 3 - v ^ 3) := by
+    rw [wEquationRHS_mvPowerSeries, wEquationRHS_mvPowerSeries]
+    ring
+  rw [hstep]
+  refine hadd (hadd (hadd (hadd (hC _ hlin) (hC _ ?_)) (hC _ hsq)) (hC _ ?_)) (hC _ hcb)
+  · exact hmono (by omega) (hmul hq2 h)
+  · exact hmono (by omega) (hmul hq hsq)
+
+/-- **Uniqueness of the solution of the `w`-equation over a multivariate power series ring.** Two
+series with vanishing constant coefficient that satisfy the `w`-equation at the same parameter `q`
+are equal, provided `q` too has vanishing constant coefficient.
+
+This is `eq_of_wEquation` one index type up. It is not a generalisation of it: the argument here
+subtracts, so it needs a `CommRing`, whereas the univariate statement holds over a `CommSemiring`.
+-/
+theorem eq_of_wEquation_mvPowerSeries {σ : Type*} {q v v' : MvPowerSeries σ R}
+    (hq : MvPowerSeries.constantCoeff q = 0) (hv : MvPowerSeries.constantCoeff v = 0)
+    (hv' : MvPowerSeries.constantCoeff v' = 0) (h : v = wEquationRHS W q v)
+    (h' : v' = wEquationRHS W q v') : v = v' := by
+  rw [← MvPowerSeries.one_le_order_iff_constCoeff_eq_zero] at hq hv hv'
+  -- The difference vanishes below every total degree, so it is zero.
+  have key : ∀ k : ℕ, (k : ℕ∞) ≤ (v - v').order := by
+    intro k
+    induction k with
+    | zero => simp
+    | succ k ih =>
+      have := le_order_wEquationRHS_sub W hq hv hv' ih
+      rwa [← h, ← h'] at this
+  have hzero : (v - v').order = ⊤ := ENat.eq_top_iff_forall_ge.mpr key
+  rw [MvPowerSeries.order_eq_top_iff] at hzero
+  exact sub_eq_zero.mp hzero
 
 /-! ### Base change
 

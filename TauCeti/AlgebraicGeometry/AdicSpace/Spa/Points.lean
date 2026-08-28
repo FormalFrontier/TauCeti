@@ -86,7 +86,15 @@ theorem span_eq_top_of_forall_mem_spa_exists_not_vle_zero (Aplus : Subring A)
 `Spa(A, A⁺)` vanishes on `f`, then `f` is a unit.
 
 Wedhorn states this for a complete affinoid ring; as with the converse above, openness of the
-maximal ideals is what replaces completeness. -/
+maximal ideals is what replaces completeness.
+
+⚠ That replacement is not innocent: `hmax` is unsatisfiable over a nonzero Tate ring, so this
+statement and the converse above are vacuous on the affinoid rings Wedhorn applies them to. In a
+Tate ring an ideal is open exactly when it is `⊤`, so no proper ideal is open; see
+`TauCeti.Huber.IsTateRing.not_isOpen_of_isMaximal`, and its consequence
+`TauCeti.Huber.IsTateRing.subsingleton_of_forall_isMaximal_isOpen`. A form usable for Tate rings
+has to reach the point of Proposition 7.51 without going through an open maximal ideal —
+`mem_of_forall_vle_one`, which is 7.52(1), avoids the problem entirely. -/
 theorem isUnit_of_forall_not_vle_zero (Aplus : Subring A)
     (hmax : ∀ (𝔪 : Ideal A), 𝔪.IsMaximal → IsOpen (𝔪 : Set A)) {f : A}
     (h : ∀ v ∈ spa Aplus, ¬ v.toValuativeRel.vle f 0) : IsUnit f := by

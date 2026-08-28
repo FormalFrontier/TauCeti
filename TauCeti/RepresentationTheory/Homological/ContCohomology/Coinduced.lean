@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.Topology.Algebra.ConstMulAction
+public import Mathlib.Topology.Algebra.MulAction
 public import TauCeti.Topology.Algebra.Group.LocallyConstant
 public import TauCeti.Topology.Algebra.Group.ProfiniteSection
 
@@ -32,6 +33,9 @@ argument consume:
 * it is **exact** in `A`: `TauCeti.coindMap_injective`, `TauCeti.coindMap_surjective` and
   `TauCeti.coindMap_range_eq_ker` send a short exact sequence of discrete `U`-modules to a short
   exact sequence;
+* it is carried as a *discrete* `G`-module by `TauCeti.DiscreteCoind`, the same additive group
+  with the discrete topology imposed, which is the coefficient object the explicit low-degree
+  cohomology of Layer 2 takes;
 * the two degenerate subgroups are computed: `TauCeti.mem_coind_bot_iff` characterizes membership
   in `Coind_1^G A` as local constancy, so it is the group of all locally constant maps `G → A`,
   the acyclic module of the dimension-shifting argument, and
@@ -301,6 +305,156 @@ theorem coindMap_surjective (hU : IsClosed (U : Set G)) (φ : A →+ B)
       ← apply_mul_of_mem_coind F.2 (w g) (r g), hwr g]
 
 end Surjectivity
+
+section DiscreteCarrier
+
+variable (G : Type*) [Group G] [TopologicalSpace G] (U : Subgroup G)
+  (A : Type*) [AddCommGroup A] [DistribMulAction U A]
+
+/-- `Coind_U^G A` **as a discrete `G`-module**: the additive group `TauCeti.coind` carrying the
+discrete topology.
+
+The topology is imposed, not inherited. Viewed as an `AddSubgroup` of `G → A` the coinduced module
+inherits the pointwise topology, in which a basic neighbourhood constrains only finitely many
+values and therefore does not isolate a locally constant function; that is the same trap
+`TauCeti.ContCohomology.DiscreteH1` records for the low-degree cohomology quotients. The
+coefficients of continuous cohomology are *discrete* modules, and
+`TauCeti.isOpen_stabilizer_coind` is exactly the statement that the right-translation action is
+continuous for the discrete topology once `G` is compact
+(`TauCeti.DiscreteCoind.instContinuousSMul`). `TauCeti.DiscreteCoind.toCoind` keeps the
+computations on representatives available.
+
+The body is `@[expose]`d because every carrier instance below transports one from
+`TauCeti.coind` along it, and an exposed instance may only be built from exposed definitions. -/
+@[expose] def DiscreteCoind : Type _ := coind G U A
+
+namespace DiscreteCoind
+
+instance : AddCommGroup (DiscreteCoind G U A) := inferInstanceAs (AddCommGroup (coind G U A))
+
+instance : TopologicalSpace (DiscreteCoind G U A) := ⊥
+
+instance : DiscreteTopology (DiscreteCoind G U A) := ⟨rfl⟩
+
+/-- The additive equivalence between the discrete carrier and the coinduced subgroup: the identity
+on elements, so that a computation performed on the underlying function transfers unchanged. The
+body is `@[expose]`d because the coercion to a function below is defined through it. -/
+@[expose] def toCoind : DiscreteCoind G U A ≃+ coind G U A := AddEquiv.refl _
+
+variable {G U A}
+
+instance instFunLike : FunLike (DiscreteCoind G U A) G A where
+  coe f := ((toCoind G U A f : coind G U A) : G → A)
+  coe_injective _ _ h := (toCoind G U A).injective (Subtype.ext h)
+
+@[ext]
+theorem ext {f f' : DiscreteCoind G U A} (h : ∀ g : G, f g = f' g) : f = f' :=
+  DFunLike.ext _ _ h
+
+@[simp]
+theorem coe_toCoind (f : DiscreteCoind G U A) :
+    ((toCoind G U A f : coind G U A) : G → A) = ⇑f := rfl
+
+@[simp]
+theorem coe_toCoind_symm (f : coind G U A) :
+    ⇑((toCoind G U A).symm f) = (f : G → A) := rfl
+
+/-- The underlying function of an element of `Coind_U^G A` lies in `TauCeti.coind`. -/
+theorem coe_mem (f : DiscreteCoind G U A) : ⇑f ∈ coind G U A := (toCoind G U A f).2
+
+/-- An element of `Coind_U^G A` is locally constant. -/
+theorem isLocallyConstant (f : DiscreteCoind G U A) : IsLocallyConstant ⇑f :=
+  isLocallyConstant_of_mem_coind (coe_mem f)
+
+/-- The defining equivariance `f (u * g) = u • f g`. -/
+@[simp]
+theorem apply_mul (f : DiscreteCoind G U A) (u : U) (g : G) : f ((u : G) * g) = u • f g :=
+  apply_mul_of_mem_coind (coe_mem f) u g
+
+/-- Equivariance at an element of `U`, in simp-normal form. -/
+@[simp]
+theorem apply_coe (f : DiscreteCoind G U A) (u : U) : f (u : G) = u • f 1 := by
+  simpa using apply_mul f u 1
+
+variable (G U A) in
+/-- An element of `Coind_U^G A` from a locally constant `U`-equivariant function. The body is
+`@[expose]`d so that `TauCeti.DiscreteCoind.coe_mk` recovers the function it was built from. -/
+@[expose] def mk (f : G → A) (hlc : IsLocallyConstant f)
+    (heq : ∀ (u : U) (g : G), f ((u : G) * g) = u • f g) : DiscreteCoind G U A :=
+  (toCoind G U A).symm ⟨f, mem_coind_iff.2 ⟨hlc, heq⟩⟩
+
+@[simp]
+theorem coe_mk (f : G → A) (hlc : IsLocallyConstant f)
+    (heq : ∀ (u : U) (g : G), f ((u : G) * g) = u • f g) : ⇑(mk G U A f hlc heq) = f := rfl
+
+@[simp]
+theorem mk_apply (f : G → A) (hlc : IsLocallyConstant f)
+    (heq : ∀ (u : U) (g : G), f ((u : G) * g) = u • f g) (g : G) :
+    mk G U A f hlc heq g = f g := rfl
+
+@[simp]
+theorem coe_zero : ⇑(0 : DiscreteCoind G U A) = 0 := rfl
+
+@[simp]
+theorem coe_add (f f' : DiscreteCoind G U A) : ⇑(f + f') = ⇑f + ⇑f' := rfl
+
+@[simp]
+theorem coe_neg (f : DiscreteCoind G U A) : ⇑(-f) = -⇑f := rfl
+
+@[simp]
+theorem coe_sub (f f' : DiscreteCoind G U A) : ⇑(f - f') = ⇑f - ⇑f' := rfl
+
+variable (G U A) in
+/-- **Evaluation at `1`** on the discrete carrier, the counit of coinduction. -/
+def eval : DiscreteCoind G U A →+ A := (coindEval G U).comp (toCoind G U A).toAddMonoidHom
+
+@[simp]
+theorem eval_apply (f : DiscreteCoind G U A) : eval G U A f = f 1 := (rfl)
+
+/-- Evaluation at `1` is continuous, the source being discrete. -/
+theorem continuous_eval [TopologicalSpace A] : Continuous (eval G U A) :=
+  continuous_of_discreteTopology
+
+variable (G U A) in
+/-- Evaluation at a point is continuous, the source being discrete. -/
+theorem continuous_apply [TopologicalSpace A] (x : G) :
+    Continuous fun f : DiscreteCoind G U A => f x := continuous_of_discreteTopology
+
+section Action
+
+variable [ContinuousMul G]
+
+instance instDistribMulAction : DistribMulAction G (DiscreteCoind G U A) :=
+  inferInstanceAs (DistribMulAction G (coind G U A))
+
+@[simp]
+theorem coe_smul (g : G) (f : DiscreteCoind G U A) (x : G) : (g • f) x = f (x * g) := (rfl)
+
+/-- The counit is `U`-equivariant for the restriction of the right-translation action. This is the
+compatible-pair hypothesis Shapiro's lemma is an instance of. -/
+theorem eval_smul (u : U) (f : DiscreteCoind G U A) :
+    eval G U A ((u : G) • f) = u • eval G U A f := by simp
+
+/-- The `G`-stabilizer of an element of `Coind_U^G A` is its right-translation stabilizer. -/
+theorem stabilizer_eq (f : DiscreteCoind G U A) :
+    MulAction.stabilizer G f = rightTranslationStabilizer ⇑f := by
+  ext g
+  simp [MulAction.mem_stabilizer_iff, DFunLike.ext_iff]
+
+end Action
+
+/-- **`Coind_U^G A` is a discrete `G`-module over a compact group**: the right-translation action
+on the discrete carrier is continuous, because a locally constant function on a compact group is
+uniformly locally constant. -/
+instance instContinuousSMul [IsTopologicalGroup G] [CompactSpace G] :
+    ContinuousSMul G (DiscreteCoind G U A) :=
+  continuousSMul_iff_stabilizer_isOpen.2 fun f => by
+    rw [stabilizer_eq]
+    exact isOpen_rightTranslationStabilizer (isLocallyConstant f)
+
+end DiscreteCoind
+
+end DiscreteCarrier
 
 section Degenerate
 

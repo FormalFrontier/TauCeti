@@ -49,7 +49,9 @@ Adapted, with the author's proofs, from Michael Stoll's `EllipticCurves` project
 `TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`),
 `EllipticCurves/Mathlib/Basic.lean`, section `DedekindDomain`. The source carries its own
 `HeightOneSpectrum.below`; at our Mathlib pin that map is `HeightOneSpectrum.under`, which is
-used here instead. The source is written against Lean `v4.32.0`; this is a forward port.
+used here instead.
+
+The source is written against Lean `v4.32.0`; this is a forward port.
 -/
 
 public section

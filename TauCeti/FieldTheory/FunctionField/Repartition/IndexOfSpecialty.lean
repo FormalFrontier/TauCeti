@@ -142,14 +142,9 @@ theorem exists_adeleFiltration_sup_diagonalRepartitions_eq_repartitionSpace
   obtain ⟨c, hc⟩ := exists_forall_indexOfSpecialty_eq_zero hF hex
   obtain ⟨P⟩ := Place.nonempty hF
   -- enlarge `D` at the place `P` until the degree passes the nonspeciality threshold `c`
-  set n := (c - Divisor.degree D).toNat with hn
+  obtain ⟨n, hdeg⟩ := Divisor.exists_le_degree_add_nsmul_ofPoint hF D P c
   have hDE : D ≤ D + n • WeilDivisor.ofPoint P := le_add_of_nonneg_right
     (nsmul_nonneg (WeilDivisor.isEffective_iff_zero_le.mp (WeilDivisor.isEffective_ofPoint P)) n)
-  have hdeg : c ≤ Divisor.degree (D + n • WeilDivisor.ofPoint P) := by
-    have hP : (1 : ℤ) ≤ P.degree := by exact_mod_cast P.one_le_degree_of_isFunctionField hF
-    have hmul : (n : ℤ) ≤ (n : ℤ) * P.degree := le_mul_of_one_le_right (by positivity) hP
-    rw [Divisor.degree_add, map_nsmul, Divisor.degree_ofPoint, nsmul_eq_mul]
-    omega
   set E := D + n • WeilDivisor.ofPoint P
   refine ⟨E, hDE, hc E hdeg, le_antisymm (adeleFiltration_sup_diagonalRepartitions_le hF E)
     fun a ha ↦ ?_⟩

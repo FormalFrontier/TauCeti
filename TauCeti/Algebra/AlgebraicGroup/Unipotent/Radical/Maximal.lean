@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Product
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Properties
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.SmoothContainment
 import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
 
 /-!
@@ -19,8 +20,8 @@ shows that the scheme-theoretic product `UV` is another candidate containing bot
 
 This file combines those two inputs. Containment makes Lie dimension monotone, while maximality
 gives the reverse inequality, so `U` and `UV` have equal Lie dimension for every candidate `V`.
-This is the equality needed to show that the connected quotient `UV/U` has zero-dimensional Lie
-algebra and is therefore trivial, proving that `U` contains every candidate.
+The resulting tangent-space equality, together with smoothness and connectedness, proves `UV = U`
+and hence that `U` contains every candidate.
 
 ## Main declarations
 
@@ -33,6 +34,10 @@ The declarations are in `TauCeti.HopfIdeal.IsUnipotentRadicalCandidate`.
   bijection on tangent Lie algebras.
 * `conormalSubspace_productOfNormal_le_left_eq_bot_of_maximal`:
   the relative defining ideal of the maximal candidate in that product has zero conormal space.
+* `productOfNormal_eq_left_of_maximal`:
+  a maximal-dimensional candidate contains every candidate, because their product equals it.
+* `le_of_finrank_maximal`:
+  a maximal-dimensional candidate is the greatest unipotent-radical candidate.
 
 ## References
 
@@ -148,6 +153,88 @@ theorem conormalSubspace_productOfNormal_le_left_eq_bot_of_maximal
       I.map (Bialgebra.Quotient.mkBialgHom P.toIdeal) :=
     CommHopfAlgCat.ker_quotientMapOfLe H.obj hPI
   simpa only [P] using hker ▸ hconormal
+
+/-- Multiplying a maximal-dimensional unipotent-radical candidate by any other candidate does
+not enlarge it.
+
+The preceding tangent-space calculation gives zero conormal space for the inclusion of the
+maximal candidate in the product. Both groups are smooth and connected, so
+`HopfIdeal.ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot` upgrades this
+first-order equality to equality of the closed subgroups. -/
+theorem productOfNormal_eq_left_of_maximal
+    (hI : IsUnipotentRadicalCandidate H I)
+    (hmax : ∀ K : HopfIdeal k H, IsUnipotentRadicalCandidate H K →
+      Module.finrank k
+          (Derivation k (H ⧸ K.toIdeal)
+            (Bialgebra.CounitAlgebra k (H ⧸ K.toIdeal) k)) ≤
+        Module.finrank k
+          (Derivation k (H ⧸ I.toIdeal)
+            (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)))
+    (hJ : IsUnipotentRadicalCandidate H J) :
+    HopfIdeal.ker
+        (CommHopfAlgCat.productMapOfNormal H.obj I J hI.isNormal).hom = I := by
+  let P : HopfIdeal k H :=
+    HopfIdeal.ker (CommHopfAlgCat.productMapOfNormal H.obj I J hI.isNormal).hom
+  let hPI : P ≤ I :=
+    CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI.isNormal
+  let q := FiniteTypeCommHopfAlgCat.toBialgHom
+    (FiniteTypeCommHopfAlgCat.quotientMapOfLe H hPI)
+  have hP : IsUnipotentRadicalCandidate H P := hI.productOfNormal hJ
+  have hP_smooth : smoothCommHopfAlgProperty k
+      (_root_.CommHopfAlgCat.of k (H ⧸ P.toIdeal)) :=
+    (smoothCommHopfAlgProperty_iff _).mpr
+      ((smoothUnipotentCommHopfAlgProperty_iff k
+        (FiniteTypeCommHopfAlgCat.quotient H P)).mp hP.smoothUnipotent).1
+  have hI_smooth : smoothCommHopfAlgProperty k
+      (_root_.CommHopfAlgCat.of k (H ⧸ I.toIdeal)) :=
+    (smoothCommHopfAlgProperty_iff _).mpr
+      ((smoothUnipotentCommHopfAlgProperty_iff k
+        (FiniteTypeCommHopfAlgCat.quotient H I)).mp hI.smoothUnipotent).1
+  have hP_connected : ConnectedSpace (PrimeSpectrum (H ⧸ P.toIdeal)) :=
+    geometricallyConnectedCommHopfAlgProperty.connectedSpace k _ hP.geometricallyConnected
+  have hI_connected : ConnectedSpace (PrimeSpectrum (H ⧸ I.toIdeal)) :=
+    geometricallyConnectedCommHopfAlgProperty.connectedSpace k _ hI.geometricallyConnected
+  have hker_q : HopfIdeal.ker q =
+      I.map (Bialgebra.Quotient.mkBialgHom P.toIdeal) :=
+    CommHopfAlgCat.ker_quotientMapOfLe H.obj hPI
+  have hconormal_q : HopfIdeal.conormalSubspace (HopfIdeal.ker q) = ⊥ := by
+    rw [hker_q]
+    simpa only [P] using
+      hI.conormalSubspace_productOfNormal_le_left_eq_bot_of_maximal hmax hJ
+  have hqker : HopfIdeal.ker q = ⊥ :=
+    HopfIdeal.ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot q
+      (FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective H hPI)
+      hP_smooth hP_connected hI_smooth hI_connected
+      hconormal_q
+  have hmap : I.map (Bialgebra.Quotient.mkBialgHom P.toIdeal) = ⊥ := by
+    rw [← CommHopfAlgCat.ker_quotientMapOfLe H.obj hPI]
+    exact hqker
+  have hIP : I ≤ P := by
+    rw [← toIdeal_le_toIdeal]
+    have hle := (HopfIdeal.map_eq_bot_iff I
+      (Bialgebra.Quotient.mkBialgHom P.toIdeal)).mp hmap
+    intro x hx
+    have hxker := hle hx
+    rw [RingHom.mem_ker] at hxker
+    exact Ideal.Quotient.eq_zero_iff_mem.mp hxker
+  exact le_antisymm hPI hIP
+
+/-- A maximal-dimensional unipotent-radical candidate is the greatest candidate.
+
+The order on Hopf ideals reverses inclusion of the represented closed subgroups: `I ≤ J` says
+that the subgroup defined by `I` contains the subgroup defined by `J`. -/
+theorem le_of_finrank_maximal
+    (hI : IsUnipotentRadicalCandidate H I)
+    (hmax : ∀ K : HopfIdeal k H, IsUnipotentRadicalCandidate H K →
+      Module.finrank k
+          (Derivation k (H ⧸ K.toIdeal)
+            (Bialgebra.CounitAlgebra k (H ⧸ K.toIdeal) k)) ≤
+        Module.finrank k
+          (Derivation k (H ⧸ I.toIdeal)
+            (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)))
+    (hJ : IsUnipotentRadicalCandidate H J) : I ≤ J := by
+  rw [← hI.productOfNormal_eq_left_of_maximal hmax hJ]
+  exact CommHopfAlgCat.ker_productMapOfNormal_le_right H.obj I J hI.isNormal
 
 end HopfIdeal.IsUnipotentRadicalCandidate
 

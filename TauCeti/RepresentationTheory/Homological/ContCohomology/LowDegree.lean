@@ -39,8 +39,9 @@ H⁰(G, M) = M^G,   H¹(G, M) = Z¹/B¹,   H²(G, M) = Z²/B².
 * `TauCeti.ContCohomology.H0`, `H1`, `H2`, their class maps `H1pi`, `H2pi`, and the discrete
   carriers `DiscreteH1`, `DiscreteH2` used by the comparison with canonical cohomology, together
   with their identifications `discreteH1Equiv`, `discreteH2Equiv` with `H1` and `H2`.
-* `TauCeti.ContCohomology.explicitRes0`, `explicitCoeff0`: restriction and coefficient maps on
-  the explicit degree-zero carrier.
+* `TauCeti.ContCohomology.explicitMap0`: the compatible-pair pullback on the explicit degree-zero
+  carrier, with `TauCeti.ContCohomology.explicitRes0` and `explicitCoeff0` its two named
+  instances.
 
 ## Main statements
 
@@ -343,6 +344,58 @@ theorem H0_eq_top_of_smul_eq_self (htriv : ∀ (g : G) (m : M), g • m = m) : H
 
 end Complex
 
+section CompatiblePairDegreeZero
+
+/-! Degree zero is a subgroup of the coefficients rather than a quotient, so the pullback along a
+compatible pair needs neither inverses in the acting monoids nor a topology anywhere. -/
+
+variable (G : Type u) [Monoid G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
+
+/-- **The compatible-pair pullback in degree zero.** A monoid homomorphism `φ : H →* G` together
+with an additive map `f : M →+ N` satisfying `f (φ h • m) = h • f m` carries the `G`-invariants of
+`M` into the `H`-invariants of `N`. This is the degree-zero counterpart of
+`TauCeti.ContCohomology.explicitMap1` and `explicitMap2`; unlike them it needs no topology at all,
+a degree-zero cochain being a single element rather than a function. Restriction and coefficient
+maps are its two named instances, by `TauCeti.ContCohomology.explicitRes0_eq_explicitMap0` and
+`TauCeti.ContCohomology.explicitCoeff0_eq_explicitMap0`. -/
+def explicitMap0 {H : Type*} [Monoid H] {N : Type*} [AddCommGroup N] [DistribMulAction H N]
+    (φ : H →* G) (f : M →+ N) (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) :
+    H0 G M →+ H0 H N where
+  toFun m := ⟨f (m : M), (FixedPoints.mem_addSubgroup H N (f (m : M))).2 fun h => by
+    rw [← hequiv h (m : M), (FixedPoints.mem_addSubgroup G M (m : M)).1 m.2 (φ h)]⟩
+  map_zero' := Subtype.ext (map_zero f)
+  map_add' _ _ := Subtype.ext (map_add f _ _)
+
+/-- The degree-zero compatible-pair pullback applies the coefficient map. -/
+@[simp]
+theorem coe_explicitMap0 {H : Type*} [Monoid H] {N : Type*} [AddCommGroup N]
+    [DistribMulAction H N] (φ : H →* G) (f : M →+ N)
+    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (m : H0 G M) :
+    (explicitMap0 G M φ f hequiv m : N) = f (m : M) :=
+  (rfl)
+
+/-- Pullback along the identity compatible pair is the identity on degree-zero cohomology. -/
+@[simp]
+theorem explicitMap0_id :
+    explicitMap0 G M (MonoidHom.id G) (AddMonoidHom.id M) (fun _ _ => rfl) =
+      AddMonoidHom.id (H0 G M) :=
+  AddMonoidHom.ext fun _ => Subtype.ext (rfl)
+
+/-- Pullback in degree zero respects composition of compatible pairs: it is contravariant in the
+group homomorphism and covariant in the coefficient map. Compatibility of the composite pair is
+not a hypothesis: it is `hequiv` at `ψ k` followed by `hequivq`. -/
+theorem explicitMap0_comp {H : Type*} [Monoid H] {N : Type*} [AddCommGroup N]
+    [DistribMulAction H N] {K : Type*} [Monoid K] {P : Type*} [AddCommGroup P]
+    [DistribMulAction K P] (φ : H →* G) (f : M →+ N)
+    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (ψ : K →* H) (q : N →+ P)
+    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) :
+    explicitMap0 G M (φ.comp ψ) (q.comp f)
+        (fun k m => (congrArg (q : N → P) (hequiv (ψ k) m)).trans (hequivq k (f m))) =
+      (explicitMap0 H N ψ q hequivq).comp (explicitMap0 G M φ f hequiv) :=
+  AddMonoidHom.ext fun _ => Subtype.ext (rfl)
+
+end CompatiblePairDegreeZero
+
 section RestrictionDegreeZero
 
 variable (G : Type u) [Group G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
@@ -397,6 +450,23 @@ theorem map_explicitRes0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
     _ = (explicitCoeff0 G M f m : N) := (coe_explicitCoeff0 G M f m).symm
     _ = (explicitRes0 G N U (explicitCoeff0 G M f m) : N) :=
       (coe_explicitRes0 G N U _).symm
+
+/-- Restriction in degree zero is the compatible-pair pullback along the inclusion of the subgroup
+with the identity on the coefficients. -/
+theorem explicitRes0_eq_explicitMap0 :
+    explicitRes0 G M U =
+      explicitMap0 G M U.subtype (AddMonoidHom.id M) (fun _ _ => rfl) :=
+  AddMonoidHom.ext fun m => Subtype.ext ((coe_explicitRes0 G M U m).trans
+    (coe_explicitMap0 G M U.subtype (AddMonoidHom.id M) (fun _ _ => rfl) m).symm)
+
+/-- A coefficient map in degree zero is the compatible-pair pullback along the identity of the
+group. -/
+theorem explicitCoeff0_eq_explicitMap0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+    (f : M →+[G] N) :
+    explicitCoeff0 G M f =
+      explicitMap0 G M (MonoidHom.id G) f.toAddMonoidHom (fun g m => f.map_smul g m) :=
+  AddMonoidHom.ext fun m => Subtype.ext ((coe_explicitCoeff0 G M f m).trans
+    (coe_explicitMap0 G M (MonoidHom.id G) f.toAddMonoidHom (fun g m => f.map_smul g m) m).symm)
 
 end RestrictionDegreeZero
 

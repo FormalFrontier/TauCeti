@@ -37,6 +37,8 @@ coordinate algebra in the basic reductive example.
   `GLₙ`-points.
 * `TauCeti.GeneralLinear.scalarTorusCenterNatIso`: the natural isomorphism from `𝔾ₘ`-points
   to the represented center of `GLₙ`.
+* `TauCeti.GeneralLinear.map_centerPointsSubgroup_pointsMulEquiv_eq_center`: the represented
+  center maps onto the ordinary center of the point group.
 * `TauCeti.GeneralLinear.centerCoordinateLaurentIso`: the center coordinate Hopf algebra of
   `GLₙ` is the Laurent-polynomial Hopf algebra.
 
@@ -76,6 +78,15 @@ theorem pointToGeneralLinear_scalarTorusPoints {A : Type w} [CommRing A] [Algebr
       Matrix.GeneralLinearGroup.scalar (Fin n)
         (MultiplicativeGroup.pointsMulEquiv (R := R) (A := A) f) := by
   simp [scalarTorusPoints]
+
+/-- Under the multiplicative point equivalences, a scalar-torus point is the corresponding
+scalar matrix. -/
+theorem pointsMulEquiv_scalarTorusPoints {A : Type w} [CommRing A] [Algebra R A]
+    (f : WithConv (R[T;T⁻¹] →ₐ[R] A)) :
+    pointsMulEquiv n (scalarTorusPoints n f) =
+      Matrix.GeneralLinearGroup.scalar (Fin n)
+        (MultiplicativeGroup.pointsMulEquiv (R := R) (A := A) f) := by
+  rw [pointsMulEquiv_apply, pointToGeneralLinear_scalarTorusPoints]
 
 /-- The scalar-matrix construction is natural in the value algebra. -/
 theorem mapValue_scalarTorusPoints {A : Type w} {B : Type w'} [CommRing A] [CommRing B]
@@ -178,8 +189,7 @@ theorem scalarTorusCenterHom_bijective (hn : 0 < n) (A : CommAlgCat.{u} k) :
     apply Subtype.ext
     rw [coe_scalarTorusCenterHom_apply]
     apply (pointsMulEquiv (R := k) (A := A) n).injective
-    rw [pointsMulEquiv_apply, pointToGeneralLinear_scalarTorusPoints,
-      MulEquiv.apply_symm_apply]
+    rw [pointsMulEquiv_scalarTorusPoints, MulEquiv.apply_symm_apply]
     exact ha
 
 /-- A general-linear point is universally central exactly when it is a scalar point. -/
@@ -201,6 +211,40 @@ theorem mem_centerPointsSubgroup_iff_exists_scalarTorusPoints (hn : 0 < n)
       _ = g := congrArg Subtype.val hf
   · rintro ⟨f, rfl⟩
     exact scalarTorusPoints_mem_centerPointsSubgroup n f
+
+/-- Under the standard equivalence between `GLₙ`-points and invertible matrices, the represented
+center maps onto the ordinary group-theoretic center. -/
+theorem map_centerPointsSubgroup_pointsMulEquiv_eq_center (A : CommAlgCat.{u} k) :
+    (CommHopfAlgCat.centerPointsSubgroup (coordinateHopfAlgebra k n) A).map
+        (pointsMulEquiv (R := k) (A := A) n) =
+      Subgroup.center (Matrix.GeneralLinearGroup (Fin n) A) := by
+  by_cases hn : n = 0
+  · subst n
+    apply le_antisymm <;> intro g hg
+    all_goals
+      have hg_one : g = 1 := by
+        apply Matrix.GeneralLinearGroup.ext
+        exact fun i ↦ i.elim0
+      rw [hg_one]
+      exact Subgroup.one_mem _
+  · apply le_antisymm
+    · rintro _ ⟨q, hq, rfl⟩
+      obtain ⟨f, rfl⟩ :=
+        (mem_centerPointsSubgroup_iff_exists_scalarTorusPoints n
+          (Nat.pos_of_ne_zero hn) A q).1 hq
+      rw [Matrix.GeneralLinearGroup.center_eq_range_scalar]
+      exact ⟨MultiplicativeGroup.pointsMulEquiv f,
+        (pointsMulEquiv_scalarTorusPoints n f).symm⟩
+    · intro g hg
+      rw [Matrix.GeneralLinearGroup.center_eq_range_scalar] at hg
+      obtain ⟨a, ha⟩ := hg
+      let f := (MultiplicativeGroup.pointsMulEquiv (R := k) (A := A)).symm a
+      refine ⟨scalarTorusPoints n f,
+        (mem_centerPointsSubgroup_iff_exists_scalarTorusPoints n
+          (Nat.pos_of_ne_zero hn) A _).2 ⟨f, rfl⟩, ?_⟩
+      exact (pointsMulEquiv_scalarTorusPoints n f).trans
+        ((congrArg (Matrix.GeneralLinearGroup.scalar (Fin n))
+          ((MultiplicativeGroup.pointsMulEquiv (R := k) (A := A)).apply_symm_apply a)).trans ha)
 
 /-- For every value algebra, scalar matrices identify the multiplicative group with the
 represented center of `GLₙ`. -/

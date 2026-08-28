@@ -179,6 +179,53 @@ theorem weightedMapCompletion_comp {C : Type*} [CommRing C] [TopologicalSpace C]
   simp only [weightedMapCompletion, weightedMap_comp hφ hψ hT hS hR hTS' hSR']
   exact UniformSpace.Completion.mapRingHom_comp _ _
 
+/-- **The isomorphism `A⟨X⟩_T ≃+* B⟨X⟩_S` induced by a bicontinuous ring isomorphism**, acting
+coefficientwise on completions. Continuity of `e` and of `e.symm` are both hypotheses; neither
+follows from the other for a bare `RingEquiv`, because `TauCeti.Huber.weightedMapCompletion` goes
+through `UniformSpace.Completion.mapRingHom`, which induces nothing from a discontinuous map.
+
+This is the `RingEquiv` packaging of `TauCeti.Huber.weightedMapCompletion`: the two induced maps
+are mutually inverse by `TauCeti.Huber.weightedMapCompletion_comp` and
+`TauCeti.Huber.weightedMapCompletion_id`. -/
+noncomputable def weightedMapCompletionEquiv (e : A ≃+* B) (he : Continuous e)
+    (he' : Continuous e.symm) (hT : IsWeightFamily T) (hS : IsWeightFamily S)
+    (hTS : ∀ i, (e : A →+* B) '' T i ⊆ S i) (hST : ∀ i, (e.symm : B →+* A) '' S i ⊆ T i) :
+    UniformSpace.Completion (weightedRestrictedSubring T hT) ≃+*
+      UniformSpace.Completion (weightedRestrictedSubring S hS) :=
+  RingEquiv.ofRingHom
+    (weightedMapCompletion (φ := (e : A →+* B)) he hT hS hTS)
+    (weightedMapCompletion (φ := (e.symm : B →+* A)) he' hS hT hST)
+    (by
+      rw [weightedMapCompletion_comp he' he hS hT hS
+        (fun i ↦ Set.image_subset_iff.mp (hST i)) (fun i ↦ Set.image_subset_iff.mp (hTS i))]
+      simp)
+    (by
+      rw [weightedMapCompletion_comp he he' hT hS hT
+        (fun i ↦ Set.image_subset_iff.mp (hTS i)) (fun i ↦ Set.image_subset_iff.mp (hST i))]
+      simp)
+
+/-- **The forward direction of `TauCeti.Huber.weightedMapCompletionEquiv`** is the induced map
+`TauCeti.Huber.weightedMapCompletion`, so the equivalence acts coefficientwise. -/
+@[simp]
+theorem weightedMapCompletionEquiv_apply (e : A ≃+* B) (he : Continuous e)
+    (he' : Continuous e.symm) (hT : IsWeightFamily T) (hS : IsWeightFamily S)
+    (hTS : ∀ i, (e : A →+* B) '' T i ⊆ S i) (hST : ∀ i, (e.symm : B →+* A) '' S i ⊆ T i)
+    (x : UniformSpace.Completion (weightedRestrictedSubring T hT)) :
+    weightedMapCompletionEquiv e he he' hT hS hTS hST x
+      = weightedMapCompletion (φ := (e : A →+* B)) he hT hS hTS x := by
+  simp [weightedMapCompletionEquiv]
+
+/-- **The inverse direction of `TauCeti.Huber.weightedMapCompletionEquiv`** is the map induced by
+`e.symm`. -/
+@[simp]
+theorem weightedMapCompletionEquiv_symm_apply (e : A ≃+* B) (he : Continuous e)
+    (he' : Continuous e.symm) (hT : IsWeightFamily T) (hS : IsWeightFamily S)
+    (hTS : ∀ i, (e : A →+* B) '' T i ⊆ S i) (hST : ∀ i, (e.symm : B →+* A) '' S i ⊆ T i)
+    (y : UniformSpace.Completion (weightedRestrictedSubring S hS)) :
+    (weightedMapCompletionEquiv e he he' hT hS hTS hST).symm y
+      = weightedMapCompletion (φ := (e.symm : B →+* A)) he' hS hT hST y := by
+  simp [weightedMapCompletionEquiv]
+
 end Functoriality
 
 /-! ### Zero variables -/
