@@ -26,8 +26,8 @@ comparison of the two conjugation actions, and then applies the pointwise decomp
 
 ## Main declarations
 
-* `TauCeti.GeneralLinear.Dynamic.weightParabolicNormalSemidirectProduct`: the coordinate Hopf
-  algebra of the represented unipotent-by-Levi semidirect product.
+* `TauCeti.GeneralLinear.Dynamic.weightParabolicSemidirectProductCoordinateHopfAlgebra`: the
+  coordinate Hopf algebra of the represented unipotent-by-Levi semidirect product.
 * `TauCeti.GeneralLinear.Dynamic.weightParabolicSemidirectProductCoordinateMap`: the coordinate
   morphism dual to multiplication into the parabolic.
 * `TauCeti.GeneralLinear.Dynamic.weightParabolicSemidirectProductPointsMulEquiv`: the represented
@@ -60,7 +60,7 @@ noncomputable section
 variable (R : Type u) [CommRing R] {N : ℕ}
 
 /-- The coordinate Hopf algebra of the represented semidirect product `U(w) ⋊ L(w)`. -/
-noncomputable abbrev weightParabolicNormalSemidirectProduct (w : Fin N → ℤ) :
+noncomputable def weightParabolicSemidirectProductCoordinateHopfAlgebra (w : Fin N → ℤ) :
     _root_.CommHopfAlgCat.{u} R :=
   (CommHopfAlgCat.quotientNormalConjugation
     (weightParabolicCoordinateHopfAlgebra R w)
@@ -72,7 +72,7 @@ noncomputable abbrev weightParabolicNormalSemidirectProduct (w : Fin N → ℤ) 
 `U(w) ⋊ L(w) → P(w)`. -/
 noncomputable def weightParabolicSemidirectProductCoordinateMap (w : Fin N → ℤ) :
     weightParabolicCoordinateHopfAlgebra R w ⟶
-      weightParabolicNormalSemidirectProduct R w :=
+      weightParabolicSemidirectProductCoordinateHopfAlgebra R w :=
   CommHopfAlgCat.productMapOfNormal
     (weightParabolicCoordinateHopfAlgebra R w)
     (weightUnipotentInParabolicHopfIdeal R w)
@@ -82,12 +82,14 @@ noncomputable def weightParabolicSemidirectProductCoordinateMap (w : Fin N → �
         (weightParabolicCoordinateHopfAlgebra R w)
         (weightUnipotentInParabolicHopfIdeal R w)
         (weightLeviInParabolicHopfIdeal R w)
-        (isNormal_weightUnipotentInParabolicHopfIdeal R w)).hom
+        (isNormal_weightUnipotentInParabolicHopfIdeal R w)).hom ≫
+      eqToHom (by rw [weightParabolicSemidirectProductCoordinateHopfAlgebra])
 
 /-- Categorical points of the represented semidirect product, split into quotient points. -/
 private noncomputable def weightParabolicCategoricalSemidirectPointsMulEquiv
     (w : Fin N → ℤ) (A : CommAlgCat.{u} R) :
-    HopfAlgebra.points (R := R) (H := weightParabolicNormalSemidirectProduct R w) A ≃*
+    HopfAlgebra.points (R := R)
+      (H := weightParabolicSemidirectProductCoordinateHopfAlgebra R w) A ≃*
       ((op A ⟶ CommHopfAlgCat.grpObj
           (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
             (weightUnipotentInParabolicHopfIdeal R w))) ⋊[(CommHopfAlgCat.quotientNormalConjugation
@@ -239,7 +241,8 @@ equivalent to represented weight-parabolic points. Under this equivalence, a pai
 to the product `u * z` of its two subgroup inclusions. -/
 noncomputable def weightParabolicSemidirectProductPointsMulEquiv
     (w : Fin N → ℤ) (A : CommAlgCat.{u} R) :
-    HopfAlgebra.points (R := R) (H := weightParabolicNormalSemidirectProduct R w) A ≃*
+    HopfAlgebra.points (R := R)
+      (H := weightParabolicSemidirectProductCoordinateHopfAlgebra R w) A ≃*
       HopfAlgebra.points (R := R) (H := weightParabolicCoordinateHopfAlgebra R w) A :=
   (weightParabolicCategoricalSemidirectPointsMulEquiv R w A).trans
     ((weightCategoricalSemidirectPointsMulEquiv R w A).trans
@@ -249,7 +252,8 @@ noncomputable def weightParabolicSemidirectProductPointsMulEquiv
 
 private theorem weightParabolicDynamicPointsMulEquiv_weightParabolicSemidirectProductPointsMulEquiv
     (w : Fin N → ℤ) (A : CommAlgCat.{u} R)
-    (g : HopfAlgebra.points (R := R) (H := weightParabolicNormalSemidirectProduct R w) A) :
+    (g : HopfAlgebra.points (R := R)
+      (H := weightParabolicSemidirectProductCoordinateHopfAlgebra R w) A) :
     weightParabolicDynamicPointsMulEquiv R w A
         (weightParabolicSemidirectProductPointsMulEquiv R w A g) =
       Cocharacter.leviDecompositionMulEquiv A (weightCocharacter (R := R) w)
@@ -261,7 +265,8 @@ private theorem weightParabolicDynamicPointsMulEquiv_weightParabolicSemidirectPr
 
 private theorem mapPointsFunctor_weightParabolicSemidirectProductCoordinateMap_apply
     (w : Fin N → ℤ) (A : CommAlgCat.{u} R)
-    (g : HopfAlgebra.points (R := R) (H := weightParabolicNormalSemidirectProduct R w) A) :
+    (g : HopfAlgebra.points (R := R)
+      (H := weightParabolicSemidirectProductCoordinateHopfAlgebra R w) A) :
     let x := weightParabolicCategoricalSemidirectPointsMulEquiv R w A g
     (CommHopfAlgCat.mapPointsFunctor
       (weightParabolicSemidirectProductCoordinateMap R w)).app A g =
@@ -282,18 +287,18 @@ private theorem mapPointsFunctor_weightParabolicSemidirectProductCoordinateMap_a
   -- Work first with the categorical semidirect-product point corresponding to `g`.
   let q : op A ⟶ action.semidirectProduct.toMon.X :=
     (CommHopfAlgCat.grpObjPointsMulEquiv
-      action.coordinateHopfAlgebra (op A)).symm g
+      (weightParabolicSemidirectProductCoordinateHopfAlgebra R w) (op A)).symm g
   have hmap : CommHopfAlgCat.grpObjMap
       (weightParabolicSemidirectProductCoordinateMap R w) =
       (GrpObj.Action.normalSemidirectMul
         (CommHopfAlgCat.quotientGrpObjInclusion H I)
         (CommHopfAlgCat.quotientGrpObjInclusion H J)).hom.hom := by
-    unfold weightParabolicNormalSemidirectProduct
-    rw [weightParabolicSemidirectProductCoordinateMap,
-      CommHopfAlgCat.grpObjMap_comp]
+    simp only [weightParabolicSemidirectProductCoordinateMap,
+      weightParabolicSemidirectProductCoordinateHopfAlgebra]
+    rw [CommHopfAlgCat.grpObjMap_comp]
     exact CommHopfAlgCat.grpObjMap_productMapOfNormal H I J hI
   have hq : CommHopfAlgCat.grpObjPointsMulEquiv
-      action.coordinateHopfAlgebra (op A) q = g :=
+      (weightParabolicSemidirectProductCoordinateHopfAlgebra R w) (op A) q = g :=
     MulEquiv.apply_symm_apply _ g
   -- The two coordinates of `q` are exactly the components used by the point equivalence.
   have hxleft :
@@ -348,7 +353,8 @@ coordinate morphism dual to multiplication. -/
 @[simp]
 theorem weightParabolicSemidirectProductPointsMulEquiv_apply
     (w : Fin N → ℤ) (A : CommAlgCat.{u} R)
-    (g : HopfAlgebra.points (R := R) (H := weightParabolicNormalSemidirectProduct R w) A) :
+    (g : HopfAlgebra.points (R := R)
+      (H := weightParabolicSemidirectProductCoordinateHopfAlgebra R w) A) :
     weightParabolicSemidirectProductPointsMulEquiv R w A g =
       (CommHopfAlgCat.mapPointsFunctor
         (weightParabolicSemidirectProductCoordinateMap R w)).app A g := by
@@ -380,7 +386,7 @@ private noncomputable instance isIso_mapPointsFunctor_weightParabolicSemidirectP
     -- Unpack the value-algebra object so the exposed carrier of `pointsFunctor.obj` reduces to
     -- the `HopfAlgebra.points` type used by the pointwise equivalence.
     change HopfAlgebra.points
-      (R := R) (H := weightParabolicNormalSemidirectProduct R w)
+      (R := R) (H := weightParabolicSemidirectProductCoordinateHopfAlgebra R w)
         (CommAlgCat.of R A) at x y
     apply (weightParabolicSemidirectProductPointsMulEquiv R w (CommAlgCat.of R A)).injective
     rw [weightParabolicSemidirectProductPointsMulEquiv_apply,
@@ -416,7 +422,7 @@ noncomputable instance isIso_weightParabolicSemidirectProductCoordinateMap
 coordinate Hopf algebra of its represented unipotent-by-Levi semidirect product. -/
 noncomputable def weightParabolicSemidirectProductCoordinateIso (w : Fin N → ℤ) :
     weightParabolicCoordinateHopfAlgebra R w ≅
-      weightParabolicNormalSemidirectProduct R w :=
+      weightParabolicSemidirectProductCoordinateHopfAlgebra R w :=
   asIso (weightParabolicSemidirectProductCoordinateMap R w)
 
 /-- The forward morphism of the weight-parabolic coordinate isomorphism is dual to
