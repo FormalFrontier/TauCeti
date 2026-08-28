@@ -73,13 +73,6 @@ variable {R S : Type*} [CommRing R] [CommRing S] [Algebra R S]
 variable [IsDomain R] [IsIntegrallyClosed R] [IsDedekindDomain S] [Module.IsTorsionFree R S]
 variable {x : S} {p : Ideal R}
 
-omit [IsDomain R] [IsIntegrallyClosed R] [IsDedekindDomain S] [Module.IsTorsionFree R S] in
-/-- Monogenicity discharges the conductor hypothesis at every ideal: if `S` is generated over `R`
-by `x` then the conductor of `R[x]` is the unit ideal. -/
-theorem comap_conductor_sup_eq_top_of_adjoin_eq_top (hx : Algebra.adjoin R {x} = ⊤) (I : Ideal R) :
-    (conductor R x).comap (algebraMap R S) ⊔ I = ⊤ := by
-  rw [conductor_eq_top_of_adjoin_eq_top hx, Ideal.comap_top, top_sup_eq]
-
 variable (hp : p.IsMaximal) (hp0 : p ≠ ⊥)
   (hx : (conductor R x).comap (algebraMap R S) ⊔ p = ⊤) (hx' : IsIntegral R x)
 

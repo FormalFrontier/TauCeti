@@ -38,8 +38,8 @@ beyond that dictionary; in particular no hypothesis on `k`, `k'` or the constant
 The polynomial being factored is Stichtenoth's `φ`: `R` is integrally closed with fraction field
 `F`, so `minpoly R y` maps to `minpoly F y` under `R → F`, by Mathlib's
 `minpoly.isIntegrallyClosed_eq_field_fractions`.  The conductor hypothesis holds at every prime
-as soon as `S = R[y]`, by
-`TauCeti.KummerDedekind.comap_conductor_sup_eq_top_of_adjoin_eq_top`.
+as soon as `S = R[y]`, since then the conductor is the unit ideal by Mathlib's
+`conductor_eq_top_of_adjoin_eq_top`.
 
 The places of `F' / k'` outside the finite chart of `S` are reached, as always, by running the
 same statement at a second model, exactly as for the fundamental identity.
@@ -51,6 +51,8 @@ same statement at a second model, exactly as for the fundamental identity.
 
 ## Main results
 
+* `TauCeti.Place.restrictOfPrimeEquivNormalizedFactors_symm_apply_coe_eq_ofPrime`: the place
+  attached to the class of a lift `Q` is the place of the prime `span (𝔭 S ∪ {Q (y)})` of `S`.
 * `TauCeti.Place.valuation_restrictOfPrimeEquivNormalizedFactors_symm_apply_lt_one`: the place
   attached to a factor is a zero of that factor evaluated at `y`.
 * `TauCeti.Place.relativeDegree_restrictOfPrimeEquivNormalizedFactors_symm_apply`: the relative
@@ -139,6 +141,21 @@ private theorem asIdeal_primeOfFactor {Q : R[X]}
   have := FaithfulSMul.of_field_isFractionRing R S F F'
   KummerDedekind.primesOverEquivNormalizedFactorsMinPolyMk_symm_apply_coe
     𝔭.isMaximal 𝔭.ne_bot hy hy' hQ
+
+open scoped Classical in
+/-- **The place attached to a Kummer factor, explicitly**: for `Q` a lift of a normalized
+irreducible factor of `minpoly R y` modulo `𝔭`, the place of `F' / k'` attached to that factor is
+the place of the prime of `S` spanned by `𝔭 S` together with `Q (y)`. -/
+theorem restrictOfPrimeEquivNormalizedFactors_symm_apply_coe_eq_ofPrime {Q : R[X]}
+    (hQ : Q.map (Ideal.Quotient.mk 𝔭.asIdeal) ∈
+      normalizedFactors ((minpoly R y).map (Ideal.Quotient.mk 𝔭.asIdeal)))
+    (𝔓 : HeightOneSpectrum S)
+    (h𝔓 : 𝔓.asIdeal = Ideal.span (𝔭.asIdeal.map (algebraMap R S) ∪ {aeval y Q})) :
+    ((restrictOfPrimeEquivNormalizedFactors (k' := k') (F' := F') k F 𝔭 hy hy').symm
+        ⟨Q.map (Ideal.Quotient.mk 𝔭.asIdeal), hQ⟩).1 = ofPrime k' F' 𝔓 := by
+  have h : primeOfFactor (F' := F') F 𝔭 hy hy' hQ = 𝔓 :=
+    HeightOneSpectrum.ext ((asIdeal_primeOfFactor F 𝔭 hy hy' hQ).trans h𝔓.symm)
+  rw [coe_restrictOfPrimeEquivNormalizedFactors_symm_apply, h]
 
 open scoped Classical in
 /-- **The place attached to a Kummer factor is the one where that factor vanishes**: for `Q` a lift
