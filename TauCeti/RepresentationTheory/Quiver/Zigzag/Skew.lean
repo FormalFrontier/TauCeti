@@ -5,7 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.Quiver.Zigzag.Relations
+public import TauCeti.RepresentationTheory.Quiver.Zigzag.PathAlgebra
+public import Mathlib.RingTheory.Ideal.Quotient.Operations
+public import Mathlib.RingTheory.TwoSidedIdeal.Kernel
+public import Mathlib.RingTheory.TwoSidedIdeal.Operations
 
 /-!
 # Scalar-labelled skew-zigzag relation quotients
@@ -55,6 +58,7 @@ universe u w
 with a common source.  The units make nonzeroness part of the type, and the fields below record
 the coefficient identities.  Gauge equivalence of parameters is intentionally not imposed by this
 presentation. -/
+@[ext]
 structure SkewZigzagParameter (k : Type w) [Monoid k] {V : Type u} (G : SimpleGraph V) where
   /-- The ratio from the backtrack indexed by `h` to the one indexed by `h'`. -/
   ratio : ∀ ⦃i j j' : V⦄, G.Adj i j → G.Adj i j' → kˣ
@@ -66,6 +70,8 @@ structure SkewZigzagParameter (k : Type w) [Monoid k] {V : Type u} (G : SimpleGr
   /-- Ratios between three backtracks satisfy the multiplicative cocycle identity. -/
   ratio_cocycle : ∀ ⦃i j j' j'' : V⦄ (h : G.Adj i j) (h' : G.Adj i j')
     (h'' : G.Adj i j''), ratio h h' * ratio h' h'' * ratio h'' h = 1
+
+attribute [simp] SkewZigzagParameter.ratio_self
 
 namespace SkewZigzagParameter
 
@@ -138,6 +144,19 @@ theorem skewZigzagMk_eq_zero_of_isSkewZigzagRelator {x : pathAlgebra k (DoubledQ
     (hx : IsSkewZigzagRelator k G c x) : skewZigzagMk k G c x = 0 :=
   (skewZigzagMk_eq_zero_iff k G c).mpr (mem_skewZigzagIdeal_of_isSkewZigzagRelator k G c hx)
 
+/-- A length-two path whose endpoints differ dies in the skew-zigzag quotient. -/
+@[simp]
+theorem skewZigzagMk_ofPath_eq_zero_of_ne {i j : DoubledQuiver G} (p : _root_.Quiver.Path i j)
+    (hp : p.length = 2) (hij : i ≠ j) : skewZigzagMk k G c (ofPath ⟨i, j, p⟩) = 0 :=
+  skewZigzagMk_eq_zero_of_isSkewZigzagRelator k G c
+    (IsSkewZigzagRelator.nonreturn p hp hij)
+
+/-- A path of length at least three dies in the skew-zigzag quotient. -/
+@[simp]
+theorem skewZigzagMk_ofPath_eq_zero_of_three_le (x : Quiver.TotalPath (DoubledQuiver G))
+    (hx : 3 ≤ x.2.2.length) : skewZigzagMk k G c (ofPath x) = 0 :=
+  skewZigzagMk_eq_zero_of_isSkewZigzagRelator k G c (IsSkewZigzagRelator.long_path x hx)
+
 /-- **The defining skew relation:** backtracks at one vertex differ by the prescribed nonzero
 scalar ratio. -/
 theorem skewZigzagMk_backtrackElem_eq_smul {i j j' : V} (h : G.Adj i j) (h' : G.Adj i j') :
@@ -152,7 +171,7 @@ theorem skewZigzagMk_backtrackElem_eq_smul {i j j' : V} (h : G.Adj i j) (h' : G.
 
 section Lift
 
-variable {B : Type*} [CommRing B] [Algebra k B]
+variable {B : Type*} [Ring B] [Algebra k B]
 
 /-- An algebra map which kills the skew relators kills the two-sided ideal they generate. -/
 theorem skewZigzagIdeal_le_ker (f : pathAlgebra k (DoubledQuiver G) →ₐ[k] B)
