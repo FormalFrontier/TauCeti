@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Data.Finsupp.Multiset
+public import TauCeti.Algebra.MvPolynomial.Monomial
 public import TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Symmetric
 
 /-!
@@ -63,10 +64,9 @@ exactly as the Schur polynomial itself vanishes for such a shape
 
 ## Implementation notes
 
-Two general facts are used and kept `private` here rather than stated for their own sake: that two
+One general fact is used and kept `private` here rather than stated for its own sake: that two
 families on a finite type taking the same multiset of values differ by a permutation of the index
-type, and that the multiset of values of a family is unchanged by a relabelling of the index type.
-They are the shape of the sorting argument in this file and have no other consumer yet.
+type.  It is the shape of the sorting argument in this file and has no other consumer yet.
 
 ## References
 
@@ -103,15 +103,6 @@ private theorem exists_perm_comp_eq {β : Type*} {f g : σ → β}
     simpa only [Finset.card, Finset.filter_val, eq_comm (a := b)] using hb
   exact ⟨Equiv.ofFiberEquiv fun b => Fintype.equivOfCardEq (hcard b),
     funext fun x => Equiv.ofFiberEquiv_map _ x⟩
-
-/-- The multiset of values of a family on a finite type is unchanged by a relabelling of the index
-type. -/
-private theorem map_equiv_univ_val {α β : Type*} [Fintype α] [Fintype β] (e : α ≃ β) :
-    Multiset.map e (univ : Finset α).val = (univ : Finset β).val := by
-  have h : ((univ : Finset α).map e.toEmbedding).val = Multiset.map e (univ : Finset α).val :=
-    Finset.map_val _ _
-  rw [Finset.map_univ_equiv] at h
-  exact h.symm
 
 /-! ### The partition of the exponents of a monomial -/
 
@@ -203,7 +194,7 @@ private theorem map_univ_val_partWeight (ν : n.Partition)
             rw [partWeight_apply, rowLen_diagramOf]; rfl
       _ = ((List.range (Fintype.card σ)).map
             fun i => (ν.parts.sort (· ≥ ·)).getD i 0 : List ℕ) := by
-          rw [← Multiset.map_map, ← Multiset.map_map, map_equiv_univ_val, hval]
+          rw [← Multiset.map_map, ← Multiset.map_map, Multiset.map_univ_val_equiv, hval]
           rfl
   -- Sorted decreasingly, the exponents are the parts of `ν` followed by zeros.
   have hlist : ((List.range (Fintype.card σ)).map fun i => (ν.parts.sort (· ≥ ·)).getD i 0)
@@ -235,16 +226,6 @@ theorem exists_perm_mapDomain_eq_partWeight (d : σ →₀ ℕ) (h : d.degree = 
 
 variable (R : Type*) [CommSemiring R]
 
-omit [Fintype σ] in
-/-- The monomial attached to a multiset of letters, one factor per letter. -/
-private theorem prod_map_X (m : Multiset σ) :
-    (m.map (X : σ → MvPolynomial σ R)).prod = monomial (Multiset.toFinsupp m) 1 := by
-  induction m using Multiset.induction with
-  | empty => simp
-  | cons a m ih =>
-    rw [Multiset.map_cons, Multiset.prod_cons, ih, ← Multiset.singleton_add,
-      Multiset.toFinsupp_add, Multiset.toFinsupp_singleton, monomial_single_add, pow_one]
-
 /-- **A monomial symmetric polynomial is homogeneous**: it has no monomial whose total degree is
 not that of its partition. -/
 @[simp]
@@ -252,7 +233,7 @@ theorem coeff_msymm_eq_zero_of_degree_ne (ν : n.Partition) {d : σ →₀ ℕ} 
     coeff d (msymm σ R ν) = 0 := by
   rw [msymm, coeff_sum]
   refine Finset.sum_eq_zero fun s _ => ?_
-  rw [prod_map_X, coeff_monomial, ite_eq_right]
+  rw [prod_map_X_eq_monomial, coeff_monomial, ite_eq_right]
   rintro rfl
   exact h (by rw [← card_toMultiset_eq_degree, Multiset.toFinsupp_toMultiset]; exact s.1.2)
 
@@ -265,7 +246,7 @@ theorem coeff_msymm (ν : n.Partition) {d : σ →₀ ℕ} (h : d.degree = n) :
   have hinj : ∀ s : Sym σ n, Multiset.toFinsupp (s : Multiset σ) = d ↔ s = weightSym d h :=
     fun s => by rw [Multiset.toFinsupp_eq_iff, ← Sym.coe_inj, coe_weightSym]
   rw [msymm, coeff_sum]
-  simp only [prod_map_X, coeff_monomial]
+  simp only [prod_map_X_eq_monomial, coeff_monomial]
   by_cases hν : weightPartition d h = ν
   · rw [ite_eq_left hν,
       Finset.sum_eq_single (⟨weightSym d h, hν⟩ : {a : Sym σ n // Nat.Partition.ofSym a = ν})]
