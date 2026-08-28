@@ -252,6 +252,13 @@ private theorem toConv_assoc_comp_map_comul_comp_includeLeft :
     ext h
     simp [up]
 
+/-- Associativity of conjugation: conjugating by a product is conjugating successively. Stated for
+an abstract group so it elaborates against a single, canonical `Group` instance at the call site,
+rather than through `SemiconjBy` combinators whose own instance resolution need not match. -/
+private theorem conj_mul_assoc {G : Type*} [Group G] (a b x : G) :
+    a * b * x * (a * b)⁻¹ = a * (b * x * b⁻¹) * a⁻¹ := by
+  simp [mul_inv_rev, mul_assoc]
+
 /-- The coordinate morphism of left conjugation satisfies the action-associativity law.
 
 The left side represents conjugation by the product of the first two universal points, while the
@@ -305,10 +312,7 @@ theorem conjugationAlgHom_coassoc :
     rw [comp_conjugationAlgHom mulFirst, comp_conjugationAlgHom actSecond,
       hmulFirstLeft, hmulFirstRight, hactSecondLeft, hactSecondRight]
     apply congrArg WithConv.ofConv
-    exact
-      mul_inv_eq_iff_eq_mul.2
-        ((SemiconjBy.conj_mk g₁ (g₂ * x * g₂⁻¹)).mul_left
-          (SemiconjBy.conj_mk g₂ x)).eq
+    exact conj_mul_assoc g₁ g₂ x
   simpa only [mulFirst, actSecond, assoc, c, AlgHom.comp_assoc] using hcoassoc
 
 end HopfAlgebra
