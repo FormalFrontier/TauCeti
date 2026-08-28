@@ -55,8 +55,7 @@ open scoped Gradient
 noncomputable section
 
 variable {Eₛ Eᵤ : Type*}
-  [NormedAddCommGroup Eₛ] [InnerProductSpace ℝ Eₛ]
-  [NormedAddCommGroup Eᵤ] [InnerProductSpace ℝ Eᵤ]
+  [NormedAddCommGroup Eₛ] [NormedAddCommGroup Eᵤ]
 
 namespace TauCeti
 
@@ -67,7 +66,8 @@ def splitQuadratic (z : WithLp 2 (Eₛ × Eᵤ)) : ℝ :=
 
 /-- The gradient of the split quadratic function is the identity on the first factor and minus
 the identity on the second. -/
-theorem hasGradientAt_splitQuadratic [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
+theorem hasGradientAt_splitQuadratic [InnerProductSpace ℝ Eₛ] [InnerProductSpace ℝ Eᵤ]
+    [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
     (z : WithLp 2 (Eₛ × Eᵤ)) :
     HasGradientAt (splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ))
       (WithLp.toLp 2 (z.fst, -z.snd)) z := by
@@ -80,14 +80,16 @@ theorem hasGradientAt_splitQuadratic [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
 
 /-- Formula for the gradient of the split quadratic function. -/
 @[simp]
-theorem gradient_splitQuadratic [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
+theorem gradient_splitQuadratic [InnerProductSpace ℝ Eₛ] [InnerProductSpace ℝ Eᵤ]
+    [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
     (z : WithLp 2 (Eₛ × Eᵤ)) :
     ∇ (splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ)) z =
       WithLp.toLp 2 (z.fst, -z.snd) := by
   exact (hasGradientAt_splitQuadratic z).gradient
 
 /-- The origin is the unique critical point of the split quadratic function. -/
-theorem gradient_splitQuadratic_eq_zero_iff [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
+theorem gradient_splitQuadratic_eq_zero_iff [InnerProductSpace ℝ Eₛ] [InnerProductSpace ℝ Eᵤ]
+    [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
     (z : WithLp 2 (Eₛ × Eᵤ)) :
     ∇ (splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ)) z = 0 ↔ z = 0 := by
   rw [gradient_splitQuadratic]
@@ -99,6 +101,10 @@ theorem gradient_splitQuadratic_eq_zero_iff [CompleteSpace Eₛ] [CompleteSpace 
     · simpa using congrArg WithLp.snd h
   · rintro rfl
     simp
+
+section
+
+variable [NormedSpace ℝ Eₛ] [NormedSpace ℝ Eᵤ]
 
 /-- The explicit hyperbolic flow of the split quadratic function.  Its first coordinate contracts
 in forward time and its second coordinate contracts in backward time. -/
@@ -120,14 +126,18 @@ theorem splitQuadraticFlow_apply (t : ℝ) (z : WithLp 2 (Eₛ × Eᵤ)) :
       WithLp.toLp 2 (Real.exp (-t) • z.fst, Real.exp t • z.snd) :=
   (rfl)
 
+end
+
 end TauCeti
 
 /-- Every orbit of the explicit split flow solves the negative-gradient equation for
 `TauCeti.splitQuadratic`. -/
-theorem Flow.isNegativeGradient_splitQuadraticFlow [CompleteSpace Eₛ] [CompleteSpace Eᵤ] :
+theorem Flow.isNegativeGradient_splitQuadraticFlow
+    [InnerProductSpace ℝ Eₛ] [InnerProductSpace ℝ Eᵤ]
+    [CompleteSpace Eₛ] [CompleteSpace Eᵤ] :
     Flow.IsNegativeGradient (TauCeti.splitQuadraticFlow (Eₛ := Eₛ) (Eᵤ := Eᵤ))
       (TauCeti.splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ)) := by
-  simp only [Flow.IsNegativeGradient]
+  rw [Flow.isNegativeGradient_iff]
   intro z t
   have hs : HasDerivAt (fun u : ℝ ↦ Real.exp (-u) • z.fst)
       (-Real.exp (-t) • z.fst) t := by
@@ -140,11 +150,14 @@ theorem Flow.isNegativeGradient_splitQuadraticFlow [CompleteSpace Eₛ] [Complet
     (WithLp.prodContinuousLinearEquiv 2 ℝ Eₛ Eᵤ).symm.hasFDerivAt.comp t hprod
   convert htoLp.hasDerivAt using 1
   · rfl
-  · change -∇ TauCeti.splitQuadratic
+  · -- Expose the vector-field value so the explicit gradient formula rewrites the goal.
+    change -∇ TauCeti.splitQuadratic
         (TauCeti.splitQuadraticFlow (Eₛ := Eₛ) (Eᵤ := Eᵤ) t z) = _
     rw [TauCeti.gradient_splitQuadratic]
     apply WithLp.ofLp_injective
     ext <;> simp
+
+variable [NormedSpace ℝ Eₛ] [NormedSpace ℝ Eᵤ]
 
 namespace TauCeti
 
@@ -180,8 +193,9 @@ theorem tendsto_splitQuadraticFlow_atTop_iff (z : WithLp 2 (Eₛ × Eᵤ)) :
       (((WithLp.sndL 2 ℝ Eₛ Eᵤ).continuous.continuousAt.tendsto.comp h).congr'
         (Eventually.of_forall fun _ ↦ rfl))
   · intro hz
+    have hzero : Tendsto (fun _ : ℝ ↦ (0 : Eᵤ)) atTop (𝓝 0) := tendsto_const_nhds
     have hprod := (tendsto_exp_neg_smul_atTop z.fst).prodMk_nhds
-      (show Tendsto (fun _ : ℝ ↦ (0 : Eᵤ)) atTop (𝓝 0) from tendsto_const_nhds)
+      hzero
     have hto := (WithLp.prod_continuous_toLp 2 Eₛ Eᵤ).continuousAt.tendsto.comp hprod
     convert hto using 1
     · simp [Function.comp_def, hz]
@@ -197,9 +211,8 @@ theorem tendsto_splitQuadraticFlow_atBot_iff (z : WithLp 2 (Eₛ × Eᵤ)) :
       (((WithLp.fstL 2 ℝ Eₛ Eᵤ).continuous.continuousAt.tendsto.comp h).congr'
         (Eventually.of_forall fun _ ↦ rfl))
   · intro hz
-    have hprod :=
-      (show Tendsto (fun _ : ℝ ↦ (0 : Eₛ)) atBot (𝓝 0) from tendsto_const_nhds).prodMk_nhds
-        (tendsto_exp_smul_atBot z.snd)
+    have hzero : Tendsto (fun _ : ℝ ↦ (0 : Eₛ)) atBot (𝓝 0) := tendsto_const_nhds
+    have hprod := hzero.prodMk_nhds (tendsto_exp_smul_atBot z.snd)
     have hto := (WithLp.prod_continuous_toLp 2 Eₛ Eᵤ).continuousAt.tendsto.comp hprod
     convert hto using 1
     · simp [Function.comp_def, hz]
