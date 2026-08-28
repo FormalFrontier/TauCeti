@@ -153,18 +153,15 @@ theorem span_range_weight_eq_top (n : ℕ) :
       rw [Subsingleton.elim x 0]
       exact Submodule.zero_mem _
   | succ n =>
-      let S := Submodule.span ℤ
-        (Set.range (fun a : Fin (n + 1) => weight (n + 1) a))
-      change S = ⊤
       apply top_unique
       rw [← (Pi.basisFun ℤ (Fin (n + 1))).span_eq]
       refine Submodule.span_le.2 ?_
       rintro _ ⟨a, rfl⟩
       rw [Pi.basisFun_apply]
-      change Pi.single a 1 ∈ S
       induction a using Fin.induction with
       | zero =>
-          have h : weight (n + 1) (0 : Fin (n + 1)) ∈ S :=
+          have h : weight (n + 1) (0 : Fin (n + 1)) ∈
+              Submodule.span ℤ (Set.range (fun a : Fin (n + 1) => weight (n + 1) a)) :=
             Submodule.subset_span (Set.mem_range_self _)
           have heq : Pi.single (0 : Fin (n + 1)) 1 = weight (n + 1) (0 : Fin (n + 1)) := by
             funext i
@@ -182,8 +179,9 @@ theorem span_range_weight_eq_top (n : ℕ) :
           rw [heq]
           exact h
       | succ a ih =>
-          have h : weight (n + 1) a.succ + Pi.single a.castSucc 1 ∈ S :=
-            Submodule.add_mem S (Submodule.subset_span (Set.mem_range_self a.succ)) ih
+          have h : weight (n + 1) a.succ + Pi.single a.castSucc 1 ∈
+              Submodule.span ℤ (Set.range (fun a : Fin (n + 1) => weight (n + 1) a)) :=
+            Submodule.add_mem _ (Submodule.subset_span (Set.mem_range_self a.succ)) ih
           have heq : Pi.single a.succ 1 = weight (n + 1) a.succ + Pi.single a.castSucc 1 := by
             funext i
             simp only [weight_apply, Pi.single_apply, Pi.add_apply, Fin.val_succ]
