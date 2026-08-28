@@ -100,8 +100,9 @@ hypothesis rather than derived so that the shapes are available at the general t
 coefficients the explicit complex is built for.
 
 Associativity is stated relative to four `G`-equivariant biadditive pairings
-`μ₁ : A →+ B →+ D`, `μ₂ : D →+ C →+ E`, `ν₁ : B →+ C →+ F` and `ν₂ : A →+ F →+ E` subject to the
-coefficient identity `μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c)`; nothing weaker types both sides. The
+`μ₁ : A →+ B →+ D`, `μ₂ : D →+ C →+ E`, `ν₁ : B →+ C →+ F` and `ν₂ : A →+ F →+ E`: these four are
+what it takes to type the two composites, and the coefficient identity
+`μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c)` is the hypothesis that identifies them. The
 `(1,0)` and `(0,0)` shapes are in the family because the instances `explicitCup_assoc110` and
 `explicitCup_assoc100` need them on their right-hand sides.
 
@@ -786,9 +787,10 @@ end CommOneOne
 
 /-! ### Associativity
 
-Typing both sides of an associativity statement needs four `G`-equivariant biadditive pairings
-`μ₁ : A →+ B →+ D`, `μ₂ : D →+ C →+ E`, `ν₁ : B →+ C →+ F` and `ν₂ : A →+ F →+ E` together with
-the coefficient identity `μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c)`. The ten instances below are the ten
+Typing the two sides of an associativity statement needs four `G`-equivariant biadditive pairings
+`μ₁ : A →+ B →+ D`, `μ₂ : D →+ C →+ E`, `ν₁ : B →+ C →+ F` and `ν₂ : A →+ F →+ E`. The coefficient
+identity `μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c)` is not part of that: it is the hypothesis under which
+the two well-typed composites are equal. The ten instances below are the ten
 tridegrees `(p, q, r)` with `p + q + r ≤ 2`, each named `explicitCup_assoc` followed by the three
 digits `p`, `q`, `r`. Each holds already on cochains; the classes are equal because their
 representatives are.
@@ -1107,9 +1109,9 @@ section AssocRing
 
 The specialization the applications use: one coefficient ring `R` acted on by ring
 automorphisms, all four pairings its multiplication `AddMonoidHom.mul`, and the coefficient
-identity `mul_assoc`. Each of the ten statements below is the corresponding general statement
-instantiated there; the four pairings and their continuity and equivariance witnesses are
-determined by the statement, so only the coefficient identity has to be supplied. -/
+identity `mul_assoc`. The continuity and equivariance a pairing has to come with are
+`continuous_mul` and `smul_mul'`, which apply to `AddMonoidHom.mul` as they stand. Each of the
+ten statements below is the corresponding general statement instantiated there. -/
 
 universe uR
 
@@ -1117,146 +1119,122 @@ variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
   (R : Type uR) [Ring R] [TopologicalSpace R] [IsTopologicalRing R] [MulSemiringAction G R]
   [ContinuousSMul G R]
 
-/-- The multiplication of a topological ring is jointly continuous, in the bundled form
-`AddMonoidHom.mul` in which the cup products take their pairing. -/
-theorem continuous_addMonoidHomMul :
-    Continuous fun p : R × R => (AddMonoidHom.mul : R →+ R →+ R) p.1 p.2 := by
-  simp only [AddMonoidHom.mul_apply]
-  exact continuous_mul
-
-omit [TopologicalSpace G] [ContinuousMul G] [TopologicalSpace R] [IsTopologicalRing R]
-  [ContinuousSMul G R] in
-/-- **The multiplication of a `G`-ring is a `G`-equivariant pairing.** -/
-theorem addMonoidHomMul_equivariant (g : G) (a b : R) :
-    (AddMonoidHom.mul : R →+ R →+ R) (g • a) (g • b) =
-      g • (AddMonoidHom.mul : R →+ R →+ R) a b := by
-  simp only [AddMonoidHom.mul_apply]
-  exact (smul_mul' g a b).symm
-
-omit [TopologicalSpace R] [IsTopologicalRing R] in
-/-- **The coefficient identity for a ring**, `mul_assoc` in the bundled form the associativity
-statements take it in. -/
-theorem addMonoidHomMul_assoc (a b c : R) :
-    (AddMonoidHom.mul : R →+ R →+ R) ((AddMonoidHom.mul : R →+ R →+ R) a b) c =
-      (AddMonoidHom.mul : R →+ R →+ R) a ((AddMonoidHom.mul : R →+ R →+ R) b c) := by
-  simp only [AddMonoidHom.mul_apply, mul_assoc]
-
 omit [TopologicalSpace G] [ContinuousMul G] [TopologicalSpace R] [IsTopologicalRing R]
   [ContinuousSMul G R] in
 /-- **Associativity of the ring cup product in tridegree `(0,0,0)`.** -/
 theorem explicitCup_assoc000_mul (x y z : H0 G R) :
-    explicitCup00 G R R R AddMonoidHom.mul (addMonoidHomMul_equivariant G R)
-        (explicitCup00 G R R R AddMonoidHom.mul (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup00 G R R R AddMonoidHom.mul (addMonoidHomMul_equivariant G R) x
-        (explicitCup00 G R R R AddMonoidHom.mul (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc000 G R R R R R R _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc000 G R R R R R R _ _ _ _ _ _ _ _ mul_assoc x y z
 
 omit [ContinuousMul G] in
 /-- **Associativity of the ring cup product in tridegree `(0,0,1)`.** -/
 theorem explicitCup_assoc001_mul (x y : H0 G R) (z : H1 G R) :
-    explicitCup01 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup00 G R R R AddMonoidHom.mul (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup01 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup01 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc001 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc001 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 /-- **Associativity of the ring cup product in tridegree `(0,0,2)`.** -/
 theorem explicitCup_assoc002_mul (x y : H0 G R) (z : H2 G R) :
-    explicitCup02 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup00 G R R R AddMonoidHom.mul (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup02 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup02 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc002 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc002 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 omit [ContinuousMul G] in
 /-- **Associativity of the ring cup product in tridegree `(0,1,0)`.** -/
 theorem explicitCup_assoc010_mul (x : H0 G R) (y : H1 G R) (z : H0 G R) :
-    explicitCup10 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup01 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup01 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup10 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc010 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc010 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 /-- **Associativity of the ring cup product in tridegree `(0,2,0)`.** -/
 theorem explicitCup_assoc020_mul (x : H0 G R) (y : H2 G R) (z : H0 G R) :
-    explicitCup20 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup02 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup02 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup20 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc020 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc020 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 omit [ContinuousMul G] in
 /-- **Associativity of the ring cup product in tridegree `(1,0,0)`.** -/
 theorem explicitCup_assoc100_mul (x : H1 G R) (y z : H0 G R) :
-    explicitCup10 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup10 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup10 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup00 G R R R AddMonoidHom.mul (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc100 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc100 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 /-- **Associativity of the ring cup product in tridegree `(2,0,0)`.** -/
 theorem explicitCup_assoc200_mul (x : H2 G R) (y z : H0 G R) :
-    explicitCup20 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup20 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup20 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup00 G R R R AddMonoidHom.mul (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc200 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc200 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 /-- **Associativity of the ring cup product in tridegree `(0,1,1)`.** -/
 theorem explicitCup_assoc011_mul (x : H0 G R) (y z : H1 G R) :
-    explicitCup11 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup01 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup02 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup11 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc011 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc011 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 /-- **Associativity of the ring cup product in tridegree `(1,1,0)`.** -/
 theorem explicitCup_assoc110_mul (x y : H1 G R) (z : H0 G R) :
-    explicitCup20 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup11 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup11 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup10 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc110 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc110 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 /-- **Associativity of the ring cup product in tridegree `(1,0,1)`.** -/
 theorem explicitCup_assoc101_mul (x : H1 G R) (y : H0 G R) (z : H1 G R) :
-    explicitCup11 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R)
-        (explicitCup10 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) x y) z =
-      explicitCup11 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-        (addMonoidHomMul_equivariant G R) x
-        (explicitCup01 G R R R AddMonoidHom.mul (continuous_addMonoidHomMul R)
-          (addMonoidHomMul_equivariant G R) y z) :=
-  explicitCup_assoc101 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ (addMonoidHomMul_assoc R) x y z
+    explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc101 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
 
 end AssocRing
 
