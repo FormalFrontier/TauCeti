@@ -27,26 +27,25 @@ reach the additive world of cohomology through exactly this instance.
 
 public section
 
-namespace TauCeti
+namespace Additive
 
 variable {M A : Type*} [Monoid M] [Monoid A] [MulDistribMulAction M A]
 
 /-- A monoid acting on a monoid by monoid endomorphisms acts distributively on the additive type
 tag: `smul_one` becomes `smul_zero` and `smul_mul'` becomes `smul_add`. -/
-instance Additive.distribMulAction : DistribMulAction M (Additive A) where
-  smul g x := Additive.ofMul (g • x.toMul)
-  one_smul x := congrArg Additive.ofMul (one_smul M x.toMul)
-  mul_smul g h x := congrArg Additive.ofMul (mul_smul g h x.toMul)
-  smul_zero g := congrArg Additive.ofMul (smul_one g)
-  smul_add g x y := congrArg Additive.ofMul (smul_mul' g x.toMul y.toMul)
+instance distribMulAction : DistribMulAction M (Additive A) where
+  smul g x := ofMul (g • x.toMul)
+  one_smul x := congrArg ofMul (one_smul M x.toMul)
+  mul_smul g h x := congrArg ofMul (mul_smul g h x.toMul)
+  smul_zero g := congrArg ofMul (smul_one g)
+  smul_add g x y := congrArg ofMul (smul_mul' g x.toMul y.toMul)
 
 @[simp]
-theorem Additive.ofMul_smul (g : M) (a : A) :
-    g • Additive.ofMul a = Additive.ofMul (g • a) :=
+theorem ofMul_smul (g : M) (a : A) : g • ofMul a = ofMul (g • a) :=
   rfl
 
 @[simp]
-theorem Additive.toMul_smul (g : M) (x : Additive A) : (g • x).toMul = g • x.toMul :=
+theorem toMul_smul (g : M) (x : Additive A) : (g • x).toMul = g • x.toMul :=
   rfl
 
-end TauCeti
+end Additive
