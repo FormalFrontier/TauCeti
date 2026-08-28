@@ -511,11 +511,15 @@ theorem laplaceMeasure_map_add_const (μ y b : ℝ) :
   by_cases hb : 0 < b
   · let e : ℝ ≃ᵐ ℝ := (Homeomorph.addRight y).symm.toMeasurableEquiv
     have he' : ∀ x, HasDerivAt e ((fun _ ↦ 1) x) x := fun x ↦ (hasDerivAt_id x).sub_const y
-    -- By construction, `e.symm` is the translation `fun x ↦ x + y`.
-    change (laplaceMeasure μ b).map e.symm = laplaceMeasure (μ + y) b
+    have he_symm : e.symm = (fun x : ℝ ↦ x + y) := by
+      ext x
+      simp [e, Homeomorph.addRight]
+    rw [← he_symm]
     ext s hs
-    rw [laplaceMeasure_eq_withDensity]
-    change (volume.withDensity (fun x ↦ ENNReal.ofReal (laplacePDFReal μ b x))).map e.symm s = _
+    have hpdf : laplacePDF μ b = fun x ↦ ENNReal.ofReal (laplacePDFReal μ b x) := by
+      funext x
+      rw [laplacePDF_eq_ofReal]
+    rw [laplaceMeasure_eq_withDensity, hpdf]
     rw [e.withDensity_ofReal_map_symm_apply_eq_integral_abs_deriv_mul' hs he'
       (.of_forall fun x ↦ laplacePDFReal_nonneg μ b x) (integrable_laplacePDFReal μ),
       laplaceMeasure_apply_eq_integral (μ + y) b hs]

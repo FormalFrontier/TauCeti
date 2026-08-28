@@ -105,26 +105,15 @@ theorem integrableOn_exp_mul_Ioi_iff {a c : ℝ} :
   by_contra hne
   exact not_integrableOn_exp_mul_Ioi (not_lt.mp hne) h
 
-/-- At a nonpositive rate the integrand is bounded below by a positive constant on `(-∞, c]`, a
-set of infinite measure, so it is not integrable there. -/
-private theorem not_integrableOn_exp_mul_Iic {a c : ℝ} (ha : a ≤ 0) :
-    ¬ IntegrableOn (fun x : ℝ => Real.exp (a * x)) (Set.Iic c) := by
-  intro h
-  have hsub : Set.Iic c ⊆ {x : ℝ | Real.exp (a * c) ≤ Real.exp (a * x)} := by
-    intro x hx
-    exact Real.exp_le_exp.2 (mul_le_mul_of_nonpos_left (Set.mem_Iic.mp hx) ha)
-  have h1 : (volume.restrict (Set.Iic c)) (Set.Iic c) < ⊤ :=
-    lt_of_le_of_lt (measure_mono hsub) (h.measure_ge_lt_top (Real.exp_pos (a * c)))
-  rw [Measure.restrict_apply_self, Real.volume_Iic] at h1
-  exact absurd h1 (by simp)
-
 /-- **The exact integrability rate on a left half-line.** `fun x => exp (a * x)` is integrable
 on `(-∞, c]` precisely when the rate is positive. -/
 @[simp]
 theorem integrableOn_exp_mul_Iic_iff {a c : ℝ} :
     IntegrableOn (fun x : ℝ => Real.exp (a * x)) (Set.Iic c) ↔ 0 < a := by
-  refine ⟨fun h => ?_, fun ha => integrableOn_exp_mul_Iic ha c⟩
-  by_contra hne
-  exact not_integrableOn_exp_mul_Iic (not_lt.mp hne) h
+  rw [integrableOn_Iic_iff_integrableOn_Iio,
+    ← (Measure.measurePreserving_neg (volume : Measure ℝ)).integrableOn_comp_preimage
+      (Homeomorph.neg ℝ).measurableEmbedding]
+  simpa only [Function.comp_def, neg_preimage, neg_Iio, neg_neg, mul_neg, neg_mul,
+    neg_lt_zero] using (integrableOn_exp_mul_Ioi_iff (a := -a) (c := -c))
 
 end TauCeti
