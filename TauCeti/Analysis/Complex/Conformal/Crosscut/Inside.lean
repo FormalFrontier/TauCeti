@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Crosscut.SmallJordanCurve
+import TauCeti.Analysis.Complex.Conformal.Crosscut.SmallJordanCurve
 public import TauCeti.Analysis.Normed.Module.FilledHull
 import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.MeasureTheory.Integral.CircleIntegral
@@ -18,24 +18,26 @@ import TauCeti.Topology.MetricSpace.Cut
 import TauCeti.Topology.JordanCurve.Separation
 
 /-!
-# The piece a short crosscut cuts off lies inside the small Jordan curve through it
+# One image piece of a crosscut lies inside a compact enclosing set
 
-For a holomorphic injection of `ball c r`, the image of the near side `ball c r ∩ ball ζ ρ` lies
-in the filled hull of a small compact set through the image crosscut when `ρ` is small enough. The
-transversal segment through a point of the crosscut has the near side on one side and the far side
-on the other, and the enclosing set is adherent from both sides; the winding-number two-sidedness
-theorem puts one end in the filled hull. No Jordan curve theorem is used.
+For a holomorphic injection of `ball c r`, one of the two image pieces — the near side
+`ball c r ∩ ball ζ ρ` or the far side `ball c r \ closedBall ζ ρ` — lies in the filled hull of a
+compact set through the image crosscut. The transversal segment through a point of the crosscut has
+the near side on one side and the far side on the other, and the enclosing set is adherent from both
+sides; the winding-number two-sidedness theorem puts one end in the filled hull. No Jordan curve
+theorem is used.
 
 This is the planar-separation step of the `ConformalMapping` roadmap (L5).
 
 ## Main results
 
-* `TauCeti.exists_forall_mem_image_inter_ball_of_mem_ball_inter_sphere` — **the transversal
+* `TauCeti.exists_mem_image_inter_ball_and_image_diff_closedBall` — **the transversal
   segment through a point of the image crosscut, with near side and far side on opposite sides.**
-* `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos` — **the image crosscut is
+* `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg` — **the image crosscut is
   adherent to each of its points from both sides of the transversal.**
 * `TauCeti.image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_filledHull` —
-  **one of the two image pieces lies inside a small compact set through the image crosscut.**
+  **one of the two image pieces lies in the filled hull of a closed bounded set through the image
+  crosscut.**
 
 ## References
 
@@ -62,7 +64,7 @@ private theorem sub_ne_zero_of_mem_sphere (hρ : 0 < ρ) (hz₀ : z₀ ∈ spher
 
 /-- **The transversal segment through a point of the image crosscut.** For small negative `t` the
 segment lies in the image of the near side, and for small positive `t` in the far side. -/
-theorem exists_forall_mem_image_inter_ball_of_mem_ball_inter_sphere
+theorem exists_mem_image_inter_ball_and_image_diff_closedBall
     (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ) (hρ : 0 < ρ) :
     ∃ η : ℝ, 0 < η ∧
@@ -86,7 +88,7 @@ theorem exists_forall_mem_image_inter_ball_of_mem_ball_inter_sphere
   have hv : v ≠ 0 := mul_ne_zero hd0 hzζ
   -- the pulled-back segment has velocity `z₀ - ζ` at `t = 0`
   have hφ : HasDerivAt (fun t : ℝ => g (v * t + f z₀)) (z₀ - ζ) 0 :=
-    hf.hasDerivAt_invFunOn_comp_segment isOpen_ball hinj hz₀b (z₀ - ζ)
+    hasDerivAt_invFunOn_comp_segment hf isOpen_ball hinj hz₀b (z₀ - ζ)
   have hφ0 : g (v * ((0 : ℝ) : ℂ) + f z₀) = z₀ := by simp [hgf z₀ hz₀b]
   -- the little-`o` estimate at `t = 0`, and the segment staying in the image domain
   have hev : ∀ᶠ t : ℝ in 𝓝 0,
@@ -148,7 +150,8 @@ theorem exists_forall_mem_image_inter_ball_of_mem_ball_inter_sphere
 
 /-- **The image crosscut is adherent from both sides of the transversal segment.** In the
 transversal coordinate the crosscut has velocity `i` at the crossing point. -/
-theorem mem_closure_image_inter_sphere_inter_setOf_im_pos (hf : DifferentiableOn ℂ f (ball c r))
+theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
+    (hf : DifferentiableOn ℂ f (ball c r))
     (hinj : InjOn f (ball c r)) (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ) (hρ : 0 < ρ) :
     f z₀ ∈ closure (f '' (ball c r ∩ sphere ζ ρ) ∩
         {q | 0 < ((q - f z₀) / (deriv f z₀ * (z₀ - ζ))).im}) ∧
@@ -184,8 +187,7 @@ theorem mem_closure_image_inter_sphere_inter_setOf_im_pos (hf : DifferentiableOn
     rw [h6] at h5
     exact h5
   have hχ0 : χ θ₀ = 0 := by
-    change ((f (circleMap ζ ρ θ₀) - f z₀) / v).im = 0
-    rw [hθ₀, sub_self, zero_div, Complex.zero_im]
+    simp [χ, hθ₀]
   -- the sign of `χ` on either side of `θ₀`
   have hpos : ∀ᶠ t in 𝓝[>] (0 : ℝ), 0 < χ (θ₀ + t) := by
     filter_upwards [hχ.tendsto_slope_zero_right.eventually (lt_mem_nhds zero_lt_one),
@@ -228,9 +230,9 @@ theorem mem_closure_image_inter_sphere_inter_setOf_im_pos (hf : DifferentiableOn
       ((((hclose ε hε).and hball).filter_mono nhdsWithin_le_nhds).and hneg).exists
     exact ⟨_, ⟨hmemγ t ht2, ht3⟩, by rw [dist_comm]; exact ht1⟩
 
-/-- **One of the two image pieces lies inside a small compact set through the image crosscut.**
-The transversal segment meets the set only at the crossing point, and the set minus that point is
-preconnected, so the winding-number two-sidedness theorem applies. -/
+/-- **One of the two image pieces lies in the filled hull of a closed bounded set through the image
+crosscut.** The transversal segment meets the set only at the crossing point, and the set minus that
+point is preconnected, so the winding-number two-sidedness theorem applies. -/
 theorem image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_filledHull
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
     (hf : DifferentiableOn ℂ f (ball c r))
@@ -253,8 +255,9 @@ theorem image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_fille
     mul_ne_zero (hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀.1)
       (sub_ne_zero_of_mem_sphere hρ hz₀.2)
   obtain ⟨η, hη, hnear, hfar⟩ :=
-    exists_forall_mem_image_inter_ball_of_mem_ball_inter_sphere hf hinj hz₀ hρ
-  obtain ⟨hleft, hright⟩ := mem_closure_image_inter_sphere_inter_setOf_im_pos hf hinj hz₀ hρ
+    exists_mem_image_inter_ball_and_image_diff_closedBall hf hinj hz₀ hρ
+  obtain ⟨hleft, hright⟩ :=
+    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg hf hinj hz₀ hρ
   -- neither image piece meets `K`
   have hnotK : ∀ V ⊆ ball c r, Disjoint V (sphere ζ ρ) → Disjoint (f '' V) K := by
     intro V hV hVs
@@ -359,7 +362,7 @@ theorem nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_int
   rw [image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere] at hqΩ
   exact (hqΩ.resolve_right fun h => hqK (hγ h)).imp (fun h => ⟨q, h, hqH⟩) fun h => ⟨q, h, hqH⟩
 
-/-- **A narrow curve next to a crosscut encloses the near side.** -/
+/-- **When `K` is narrower than the far-side image, the near side is enclosed.** -/
 theorem image_inter_ball_subset_filledHull_of_diam_lt (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U)
     (hAc : IsPreconnected (U ∩ ball ζ ρ)) (hBc : IsPreconnected (U \ closedBall ζ ρ))

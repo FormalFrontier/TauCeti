@@ -85,19 +85,11 @@ theorem _root_.DifferentiableOn.hasDerivAt_invFunOn {f : ℂ → ℂ} {U : Set �
   have := eq_inv_of_mul_eq_one_right (hcomp.unique hid)
   rwa [this] at hgp
 
-/-- **The derivative of the holomorphic inverse**, as a value: `deriv (invFunOn f U) (f z₀) =
-(deriv f z₀)⁻¹`. -/
-private theorem deriv_invFunOn_apply {f : ℂ → ℂ} {U : Set ℂ}
-    (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U) {z₀ : ℂ}
-    (hz₀ : z₀ ∈ U) :
-    deriv (Function.invFunOn f U) (f z₀) = (deriv f z₀)⁻¹ :=
-  (hf.hasDerivAt_invFunOn hU hinj hz₀).deriv
-
 /-- **The pulled-back transversal segment.** Pulled back by the holomorphic inverse of an
 injection `f`, the straight segment `t ↦ deriv f z₀ * n * t + f z₀` through `f z₀` in the
 direction `deriv f z₀ * n` is a curve through `z₀` with velocity `n`: the pushforward of a
 direction at `z₀` is pulled back to that direction. -/
-theorem _root_.DifferentiableOn.hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
+theorem hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U) {z₀ : ℂ}
     (hz₀ : z₀ ∈ U) (n : ℂ) :
     HasDerivAt (fun t : ℝ => Function.invFunOn f U (deriv f z₀ * n * t + f z₀)) n 0 := by
