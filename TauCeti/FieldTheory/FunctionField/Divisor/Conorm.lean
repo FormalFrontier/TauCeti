@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.WeilDivisor.FiniteSum
 public import TauCeti.FieldTheory.FunctionField.Divisor.Principal
+public import TauCeti.FieldTheory.FunctionField.GeometricDegree
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Existence
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Fundamental
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Tower
@@ -32,8 +33,9 @@ to a homomorphism of divisor class groups.
 The degree identity `[k' : k] · deg (Con D) = [F' : F] · deg D` is proved here from the
 fundamental identity `∑_{P' ∣ P} e(P' ∣ P) f(P' ∣ P) = [F' : F]`, so it carries that identity's
 separability hypothesis on `F' / F`.  It is stated cross-multiplied, since the divisibility
-`[k' : k] ∣ [F' : F]` that would turn it into `deg (Con D) = ([F' : F] / [k' : k]) · deg D` is
-itself a theorem, available when `F` and `k'` are linearly disjoint over `k`.
+`[k' : k] ∣ [F' : F]` that turns it into `deg (Con D) = n(F'/F) · deg D` needs `F` and `k'` to be
+linearly disjoint over `k`; under that hypothesis the divided form is `degree_conorm`, with
+`n(F'/F)` the geometric degree of the extension.
 
 ## Main definitions
 
@@ -54,6 +56,8 @@ itself a theorem, available when `F` and `k'` are linearly disjoint over `k`.
 * `TauCeti.Divisor.conorm_injective`: the conorm is injective.
 * `TauCeti.Divisor.finrank_mul_degree_conorm`: **the degree of a conorm**,
   `[k' : k] · deg (Con D) = [F' : F] · deg D` (Stichtenoth, Corollary 3.1.14).
+* `TauCeti.Divisor.degree_conorm`: the same identity divided through by `[k' : k]`, for `F` and
+  `k'` linearly disjoint over `k`: `deg (Con D) = n(F'/F) · deg D`.
 
 ## Implementation notes
 
@@ -229,6 +233,25 @@ theorem finrank_mul_degree_conorm (D : Divisor k F) :
     rw [WeilDivisor.single_eq_zsmul_ofPoint, map_zsmul, degree_zsmul, degree_zsmul,
       degree_ofPoint]
     linear_combination (n : ℤ) * finrank_mul_degree_conorm_ofPoint k' F' P
+
+/-- **The degree of a conorm, divided through**: when `F` and the constant field `k'` are linearly
+disjoint over `k`, so that `[k' : k]` divides `[F' : F]` with quotient the geometric degree
+`n(F'/F)`, the conorm multiplies degrees by `n(F'/F)`.
+
+This is the quotient-valued form of Stichtenoth's Corollary 3.1.14; the cross-multiplied
+`TauCeti.Divisor.finrank_mul_degree_conorm` is the form that holds without linear disjointness.
+The hypothesis makes the constant field extension finite, so no separate finiteness assumption on
+`k' / k` is needed. -/
+theorem degree_conorm
+    (h : Module.finrank F (constantCompositum F k' F') = Module.finrank k k') (D : Divisor k F) :
+    degree (conorm k' F' D) = geometricDegree F k' F' * degree D := by
+  have hne : (Module.finrank k k' : ℤ) ≠ 0 := by
+    have : 0 < Module.finrank k k' := h ▸ Module.finrank_pos
+    exact_mod_cast this.ne'
+  refine mul_left_cancel₀ hne ?_
+  rw [finrank_mul_degree_conorm k' F' D, finrank_eq_geometricDegree_mul F k' F' h]
+  push_cast
+  ring
 
 end Degree
 
