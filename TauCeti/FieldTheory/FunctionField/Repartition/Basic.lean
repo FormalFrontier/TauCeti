@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Algebra.Pi
+public import Mathlib.LinearAlgebra.Finsupp.Pi
 public import TauCeti.FieldTheory.FunctionField.Divisor.Principal
 public import TauCeti.FieldTheory.FunctionField.RiemannRoch.Basic
 
@@ -85,11 +86,11 @@ form on it.  Its multiplicative structure is not lost: `TauCeti.one_mem_repartit
 `TauCeti.smul_mem_repartitionSpace` records the `F`-scalar multiplication that the `F`-vector
 space structure on the Weil differentials is built from.
 
-`ι_P x` is built with `Set.indicator` on the singleton `{P}` rather than with `Pi.single` or
-`LinearMap.single`: the latter two carry a `DecidableEq` argument, and no instance supplies a
-decidable equality of places, whereas `Set.indicator` is deliberately noncomputable and needs
-none.  The representation itself is private; `TauCeti.singleRepartition_self` and
-`TauCeti.singleRepartition_of_ne` are the interface, and they determine `ι_P x` entrywise.
+`ι_P x` is built from `Finsupp.lsingle P`, not from `Pi.single` or `LinearMap.single`: the latter
+two carry a `DecidableEq` argument, and no instance supplies a decidable equality of places, while
+`Finsupp.single` needs none.  `TauCeti.singleRepartition_self` and
+`TauCeti.singleRepartition_of_ne` determine `ι_P x` entrywise, so nothing downstream has to
+mention `Finsupp`.
 
 ## References
 
@@ -480,48 +481,29 @@ theorem coe_repartitionMul_apply (hF : IsFunctionField k F) (f : F)
 
 /-! ### Repartitions supported at a single place -/
 
-/-- A family with a single nonzero entry is a repartition: its exceptional set is contained in
-the singleton carrying that entry. -/
-private theorem indicator_singleton_mem_repartitionSpace (P : Place k F) (x : F) :
-    Set.indicator {P} (fun _ ↦ x) ∈ repartitionSpace k F := by
-  rw [mem_repartitionSpace_iff_finite]
-  refine (Set.finite_singleton P).subset fun Q hQ ↦ ?_
-  by_contra hne
-  exact hQ (by simp [Set.indicator_of_notMem hne])
-
 /-- The repartition `ι_P x` with the entry `x` at the place `P` and `0` at every other place
-(Stichtenoth, Definition 1.7.1), as a `k`-linear map `F →ₗ[k] A_F`. -/
-noncomputable def singleRepartition (P : Place k F) : F →ₗ[k] ↥(repartitionSpace k F) where
-  toFun x := ⟨Set.indicator {P} (fun _ ↦ x), indicator_singleton_mem_repartitionSpace P x⟩
-  map_add' x y := Subtype.ext <| funext fun Q ↦ by
-    rcases eq_or_ne Q P with rfl | hQ
-    · simp
-    · simp [Set.indicator_of_notMem (fun h ↦ hQ (Set.mem_singleton_iff.mp h))]
-  map_smul' c x := Subtype.ext <| funext fun Q ↦ by
-    rcases eq_or_ne Q P with rfl | hQ
-    · simp
-    · simp [Set.indicator_of_notMem (fun h ↦ hQ (Set.mem_singleton_iff.mp h))]
+(Stichtenoth, Definition 1.7.1), as a `k`-linear map `F →ₗ[k] A_F`.
 
-/-- The entries of `ι_P x`: the definition of `TauCeti.singleRepartition`, unfolded.  It is the
-`Set.indicator` representation that the two pointwise lemmas below package away, and is not part
-of the public interface. -/
-private theorem coe_singleRepartition (P : Place k F) (x : F) :
-    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) =
-      Set.indicator {P} (fun _ ↦ x) :=
-  (rfl)
+It is `Finsupp.single P x`, read as a family indexed by all the places; a finitely supported
+family is integral outside its support, hence a repartition. -/
+noncomputable def singleRepartition (P : Place k F) : F →ₗ[k] ↥(repartitionSpace k F) :=
+  LinearMap.codRestrict _ (Finsupp.lcoeFun ∘ₗ Finsupp.lsingle P) fun x ↦
+    mem_repartitionSpace_iff_finite.mpr <|
+      (Finsupp.single P x).support.finite_toSet.subset fun Q hQ ↦ by
+        by_contra hne
+        exact hQ (by simp [Finsupp.notMem_support_iff.mp hne])
 
 /-- The entry of `ι_P x` at `P` is `x`. -/
 @[simp]
 theorem singleRepartition_self (P : Place k F) (x : F) :
-    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) P = x := by
-  rw [coe_singleRepartition, Set.indicator_of_mem (Set.mem_singleton_iff.mpr rfl)]
+    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) P = x :=
+  Finsupp.single_eq_same
 
 /-- The entries of `ι_P x` away from `P` vanish. -/
 @[simp]
 theorem singleRepartition_of_ne {P Q : Place k F} (h : Q ≠ P) (x : F) :
-    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) Q = 0 := by
-  rw [coe_singleRepartition,
-    Set.indicator_of_notMem (fun hQ ↦ h (Set.mem_singleton_iff.mp hQ))]
+    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) Q = 0 :=
+  Finsupp.single_eq_of_ne h
 
 /-- `ι_P x` is bounded by `D` exactly when the pole of `x` at `P` is: at every other place its
 entry is `0`, which every divisor bounds.

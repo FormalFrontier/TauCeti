@@ -46,7 +46,7 @@ filtration, which are all they depend on.
 
 * `TauCeti.repartitionDualComponent_apply_eq_zero_of_le`: the local component at `P` of a Weil
   differential bounded by `D` vanishes on the functions whose pole at `P` is bounded by `D`.
-* `TauCeti.finite_support_repartitionDualComponent` and
+* `TauCeti.finite_support_repartitionDualComponent_apply` and
   `TauCeti.apply_eq_finsum_repartitionDualComponent`: **`ω a = ∑_P ω_P (a P)`, with cofinite
   vanishing** (Stichtenoth, Proposition 1.7.2).
 * `TauCeti.mem_weilDifferentialFiltration_iff_repartitionDualComponent_eq_zero`: a Weil
@@ -88,7 +88,11 @@ theorem repartitionDualComponent_apply (ω : Module.Dual k ↥(repartitionSpace 
     repartitionDualComponent ω P x = ω (singleRepartition P x) :=
   (rfl)
 
-/-- The local components of a multiple of a linear form: `(f · ω)_P x = ω_P (f x)`. -/
+/-- The local components of a multiple of a linear form: `(f · ω)_P x = ω_P (f x)`.
+
+This is not `@[simp]`: `simp` already proves it from `repartitionDualComponent_apply`,
+`repartitionDualMul_apply_apply` and `repartitionMul_singleRepartition`, so tagging it is a
+simp-normal-form violation that `scripts/lint-env.sh` rejects. -/
 theorem repartitionDualComponent_repartitionDualMul (hF : IsFunctionField k F) (f : F)
     (ω : Module.Dual k ↥(repartitionSpace k F)) (P : Place k F) (x : F) :
     repartitionDualComponent (repartitionDualMul hF f ω) P x =
@@ -104,13 +108,14 @@ theorem repartitionDualComponent_apply_eq_zero_of_le {D : Divisor k F}
   weilDifferentialFiltration_apply_eq_zero_of_mem_adeleFiltration hω _
     (singleRepartition_mem_adeleFiltration_iff.mpr hx)
 
-/-- **The local components of a Weil differential sum to it**, in the form carrying the finite set
-outside which the terms vanish (Stichtenoth, Proposition 1.7.2).
-
-Take a divisor `E` bounding the repartition `a`.  Off the support of `E - D` the entry `a P` is
-already bounded by `D`, so `ι_P (a P)` lies in `A_F(D)` and `ω_P (a P) = 0`; and subtracting from
-`a` the finitely many repartitions `ι_P (a P)` with `P` in that support leaves a repartition
-bounded by `D`, which `ω` kills. -/
+/-- **A finite set of places carrying `ω`**: outside it the values `ω_P (a P)` vanish, and over it
+they sum to `ω a` (Stichtenoth, Proposition 1.7.2).  This is the common witness behind the two
+public halves, `TauCeti.finite_support_repartitionDualComponent_apply` and
+`TauCeti.apply_eq_finsum_repartitionDualComponent`. -/
+-- The witness is the support of `E - D` for a divisor `E` bounding `a`: off it the entry `a P` is
+-- already bounded by `D`, so `ι_P (a P)` lies in `A_F(D)` and `ω_P (a P) = 0`; and subtracting
+-- from `a` the finitely many repartitions `ι_P (a P)` with `P` in that support leaves a
+-- repartition bounded by `D`, which `ω` kills.
 private theorem exists_finset_repartitionDualComponent {D : Divisor k F}
     {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ∈ weilDifferentialFiltration D)
     (a : ↥(repartitionSpace k F)) :
@@ -155,7 +160,8 @@ private theorem exists_finset_repartitionDualComponent {D : Divisor k F}
 values `ω_P (a P)` of the local components of a Weil differential vanish at all but finitely many
 places `P` (Stichtenoth, Proposition 1.7.2).  It says nothing about a single local component
 `ω_P`, which is a linear form on all of `F` and need not vanish anywhere. -/
-theorem finite_support_repartitionDualComponent {ω : Module.Dual k ↥(repartitionSpace k F)}
+theorem finite_support_repartitionDualComponent_apply
+    {ω : Module.Dual k ↥(repartitionSpace k F)}
     (hω : ω ∈ weilDifferentialSpace k F) (a : ↥(repartitionSpace k F)) :
     (Function.support fun P ↦ repartitionDualComponent ω P ((a : Place k F → F) P)).Finite := by
   obtain ⟨D, hD⟩ := mem_weilDifferentialSpace_iff.mp hω
