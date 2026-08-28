@@ -8,7 +8,6 @@ module
 public import Mathlib.NumberTheory.ArithmeticFunction.LFunction
 public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Convolution
-public import TauCeti.RingTheory.DedekindDomain.Ideal
 import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Basic
 import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Norm
 
@@ -362,6 +361,7 @@ theorem supportedPart_insert (hf : f.IsMultiplicative) {P : HeightOneSpectrum (
 
 /-- The norm coefficients of the restriction to the powers of a single prime `P` are exactly its
 canonical local arithmetic factor. -/
+@[simp]
 theorem normCoeff_supportedPart_singleton (f : IdealArithmeticFunction K)
     (P : HeightOneSpectrum (ùìû K)) :
     normCoeff K (supportedPart f {P}) = localArithmeticFactor f P := by

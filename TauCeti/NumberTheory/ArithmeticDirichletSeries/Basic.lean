@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.NumberTheory.NumberField.Basic
-public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 public import TauCeti.RingTheory.DedekindDomain.Ideal
 
 /-!

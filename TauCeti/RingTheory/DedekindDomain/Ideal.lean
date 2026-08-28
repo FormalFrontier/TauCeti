@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
+import Mathlib.RingTheory.DedekindDomain.Factorization
 
 /-!
 # Complements on ideals of a Dedekind domain
@@ -156,7 +157,10 @@ end IsDedekindDomain.HeightOneSpectrum
 
 namespace Ideal
 
-open IsDedekindDomain
+-- `_root_` disambiguates: inside `namespace Ideal`, a bare `open IsDedekindDomain` would resolve
+-- to the `Ideal.IsDedekindDomain` namespace of Mathlib's ramification indices, which the
+-- `Factorization` import above makes visible here.
+open _root_.IsDedekindDomain
 
 variable {R : Type*} [CommRing R] [IsDedekindDomain R]
 
@@ -325,34 +329,33 @@ theorem exists_eq_prod_pow (hI : I ≠ ⊥) :
     ∃ (S : Finset (HeightOneSpectrum R)) (e : HeightOneSpectrum R → ℕ),
       I = ∏ 𝔭 ∈ S, 𝔭.asIdeal ^ e 𝔭 := by
   classical
-  refine (isPrimeTo_empty.mpr hI).induction_on ⟨∅, 0, by simp⟩ ?_
-  rintro 𝔭 J - - ⟨S, e, rfl⟩
-  by_cases h𝔭 : 𝔭 ∈ S
-  · -- `𝔭` already occurs in the factorization, so its exponent goes up by one.
-    refine ⟨S, Function.update e 𝔭 (e 𝔭 + 1), ?_⟩
-    rw [← Finset.mul_prod_erase S (fun 𝔮 : HeightOneSpectrum R ↦ 𝔮.asIdeal ^ e 𝔮) h𝔭,
-      ← Finset.mul_prod_erase S
-        (fun 𝔮 : HeightOneSpectrum R ↦ 𝔮.asIdeal ^ Function.update e 𝔭 (e 𝔭 + 1) 𝔮) h𝔭,
-      Function.update_self, pow_succ', ← mul_assoc]
-    exact congrArg _ (Finset.prod_congr rfl fun 𝔮 h𝔮 ↦ by
-      rw [Function.update_of_ne (Finset.ne_of_mem_erase h𝔮)])
-  · -- `𝔭` is a new prime factor, so it joins the index set with exponent one.
-    refine ⟨insert 𝔭 S, Function.update e 𝔭 1, ?_⟩
-    rw [Finset.prod_insert h𝔭, Function.update_self, pow_one]
-    exact congrArg _ (Finset.prod_congr rfl fun 𝔮 h𝔮 ↦ by
-      rw [Function.update_of_ne (by rintro rfl; exact h𝔭 h𝔮)])
+  -- Mathlib's `finprod_heightOneSpectrum_factorization` is the same product over *all* height-one
+  -- primes; its multiplicative support is finite, and restricting to it gives a `Finset` product.
+  have hI0 : I ≠ 0 := by simpa using hI
+  have hfin : (Function.mulSupport fun 𝔭 : HeightOneSpectrum R ↦
+      𝔭.asIdeal ^ (Associates.mk 𝔭.asIdeal).count (Associates.mk I).factors).Finite :=
+    Ideal.hasFiniteMulSupport hI0
+  have hprod := finprod_eq_finsetProd_of_mulSupport_subset
+    (fun 𝔭 : HeightOneSpectrum R ↦
+      𝔭.asIdeal ^ (Associates.mk 𝔭.asIdeal).count (Associates.mk I).factors)
+    (s := hfin.toFinset) (by simp)
+  exact ⟨hfin.toFinset, fun 𝔭 ↦ (Associates.mk 𝔭.asIdeal).count (Associates.mk I).factors,
+    by rw [← hprod]; exact (Ideal.finprod_heightOneSpectrum_factorization hI0).symm⟩
 
 /-- **Splitting off one allowed prime.** An ideal all of whose prime factors lie in `insert 𝔭 S`
 is a power of `𝔭` times an ideal all of whose prime factors lie in `S`. -/
 theorem IsPrimeTo.exists_eq_pow_mul {𝔭 : HeightOneSpectrum R} (h : IsPrimeTo I (insert 𝔭 S)ᶜ) :
     ∃ (n : ℕ) (J : Ideal R), IsPrimeTo J Sᶜ ∧ I = 𝔭.asIdeal ^ n * J := by
-  refine h.induction_on ⟨0, ⊤, isPrimeTo_top, by simp⟩ ?_
-  rintro 𝔮 J h𝔮 - ⟨n, J', hJ', rfl⟩
-  rw [Set.notMem_compl_iff, Set.mem_insert_iff] at h𝔮
-  rcases h𝔮 with rfl | h𝔮
-  · exact ⟨n + 1, J', hJ', by rw [pow_succ']; ring⟩
-  · exact ⟨n, 𝔮.asIdeal * J', isPrimeTo_mul_iff.mpr
-      ⟨isPrimeTo_asIdeal_iff.mpr (by simpa using h𝔮), hJ'⟩, by ring⟩
+  have hmax := 𝔭.isMaximal
+  obtain ⟨Q, hQsup, heq⟩ := Ideal.eq_prime_pow_mul_coprime h.ne_bot 𝔭.asIdeal
+  refine ⟨_, Q, ⟨fun hQ ↦ h.ne_bot (by rw [heq, hQ, Ideal.mul_bot]), fun 𝔮 h𝔮 hdvd ↦ ?_⟩, heq⟩
+  -- A prime dividing the cofactor divides the whole ideal, so it is excluded unless it is `𝔭`;
+  -- and `𝔭` cannot divide the cofactor, which Mathlib returns coprime to `𝔭`.
+  refine h.not_dvd ?_ (by rw [heq]; exact hdvd.mul_left _)
+  rw [Set.mem_compl_iff, Set.mem_insert_iff]
+  rintro (rfl | h𝔮')
+  · exact hmax.ne_top (by rwa [sup_eq_left.mpr (Ideal.le_of_dvd hdvd)] at hQsup)
+  · exact h𝔮 h𝔮'
 
 private theorem multiplicity_pow_mul {p J : Ideal R} (hp : p ≠ ⊥) (hJ : ¬ p ∣ J) (n : ℕ) :
     multiplicity p (p ^ n * J) = n := by
