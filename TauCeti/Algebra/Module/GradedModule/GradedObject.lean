@@ -89,45 +89,15 @@ theorem gradedObjectPieceEquiv_apply (p : ℤ) (x : X p) :
   rw [gradedObjectPieceEquiv]
   exact LinearEquiv.ofInjective_apply _ x
 
-private noncomputable def gradedObjectPiecesEquiv :
-    (⨁ p : ℤ, X p) ≃ₗ[R] (⨁ p : ℤ, gradedObjectPiece R X p) :=
-  DirectSum.congrLinearEquiv fun p ↦ gradedObjectPieceEquiv R X p
-
-private theorem gradedObjectPiecesEquiv_lof (p : ℤ) (x : X p) :
-    gradedObjectPiecesEquiv R X (DirectSum.lof R ℤ (fun q ↦ X q) p x) =
-      DirectSum.lof R ℤ (fun q ↦ gradedObjectPiece R X q) p
-        ((gradedObjectPieceEquiv R X p).toLinearMap x) := by
-  -- Expose the bundled linear map so Mathlib's direct-sum application lemmas can rewrite it.
-  change (gradedObjectPiecesEquiv R X).toLinearMap
-    (DirectSum.lof R ℤ (fun q ↦ X q) p x) = _
-  rw [gradedObjectPiecesEquiv, DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_lof]
-
-private theorem gradedObjectPiecesEquiv_symm_eq_coeLinearMap :
-    (gradedObjectPiecesEquiv R X).symm.toLinearMap =
-      DirectSum.coeLinearMap (gradedObjectPiece R X) := by
-  apply DirectSum.linearMap_ext R
-  intro p
-  apply LinearMap.ext
-  intro x
-  simp only [LinearMap.comp_apply, DirectSum.coeLinearMap_lof]
-  apply (LinearEquiv.symm_apply_eq (gradedObjectPiecesEquiv R X)).2
-  obtain ⟨y, hy⟩ := x.property
-  have hx : x = gradedObjectPieceEquiv R X p y := by
-    apply Subtype.ext
-    rw [gradedObjectPieceEquiv_apply]
-    exact hy.symm
-  rw [← hy, hx]
-  exact (gradedObjectPiecesEquiv_lof R X p y).symm
-
 /-- The external direct sum of a graded object carries the internal grading by its canonical
 component copies. -/
 noncomputable def ofGradedObject : InternalGrading R (⨁ p : ℤ, X p) where
   piece := gradedObjectPiece R X
   isInternal := by
-    -- `IsInternal` uses additive recomposition; its linear version has the same underlying map.
-    change Function.Bijective (DirectSum.coeLinearMap (gradedObjectPiece R X))
-    rw [← gradedObjectPiecesEquiv_symm_eq_coeLinearMap]
-    exact (gradedObjectPiecesEquiv R X).symm.bijective
+    refine TauCeti.DirectSum.isInternal_of_lof (e := fun p ↦ gradedObjectPieceEquiv R X p)
+      (E := LinearEquiv.refl R (⨁ p : ℤ, X p)) ?_
+    intro p x
+    simpa only [LinearEquiv.refl_apply] using (gradedObjectPieceEquiv_apply R X p x).symm
 
 @[simp]
 theorem ofGradedObject_piece (p : ℤ) :

@@ -11,9 +11,8 @@ public import TauCeti.Algebra.Module.GradedModule.Internal
 # Direct sums of internally graded modules
 
 This file equips an external direct sum of internally graded modules with its canonical internal
-grading.  Its degree-`p` piece is the range of the map that includes the direct sum of the
-degree-`p` pieces into the ambient direct sum.  Thus the internal and external presentations of a
-grading remain compatible when taking arbitrary direct sums.
+grading.  Its degree-`p` piece is the direct sum of the componentwise degree-`p` pieces, included
+in the ambient direct sum, so membership is characterized componentwise.
 
 This is the direct-sum compatibility target in Layer 0 of the `DGAInfinity` roadmap.
 
@@ -26,7 +25,6 @@ This is the direct-sum compatibility target in Layer 0 of the `DGAInfinity` road
 
 ## References
 
-* B. Keller, *Introduction to A-infinity algebras and modules*, Sections 3.1 and 3.6.
 * Mathlib's `DirectSum` API.
 -/
 
@@ -47,11 +45,19 @@ variable [Semiring R] [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)]
 underlying modules. -/
 def directSumPieceInclusion (G : ∀ i, InternalGrading R (M i)) (p : ℤ) :
     (⨁ i, (G i).piece p) →ₗ[R] ⨁ i, M i :=
-  DirectSum.lmap fun i ↦ ((G i).piece p).subtype
+  TauCeti.DirectSum.piInclusion fun i ↦ (G i).piece p
+
+/-- The componentwise formula for the graded direct-sum inclusion. -/
+@[simp]
+theorem directSumPieceInclusion_apply (G : ∀ i, InternalGrading R (M i)) (p : ℤ)
+    (x : ⨁ i, (G i).piece p) (i : ι) :
+    directSumPieceInclusion G p x i = (x i : M i) := by
+  simpa only [directSumPieceInclusion] using
+    (TauCeti.DirectSum.piInclusion_apply (fun i ↦ (G i).piece p) x i)
 
 /-- The degree-`p` piece in the direct sum of a family of internally graded modules. -/
 def directSumPiece (G : ∀ i, InternalGrading R (M i)) (p : ℤ) : Submodule R (⨁ i, M i) :=
-  LinearMap.range (directSumPieceInclusion G p)
+  TauCeti.DirectSum.piSubmodule fun i ↦ (G i).piece p
 
 /-- On a homogeneous summand, `directSumPieceInclusion` is the usual external direct-sum
 inclusion. -/
@@ -60,20 +66,13 @@ theorem directSumPieceInclusion_lof (G : ∀ i, InternalGrading R (M i)) (p : �
     (x : (G i).piece p) [DecidableEq ι] :
     directSumPieceInclusion G p (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x) =
       DirectSum.lof R ι M i x := by
-  simp [directSumPieceInclusion]
-
-private theorem directSumPieceInclusion_injective (G : ∀ i, InternalGrading R (M i)) (p : ℤ) :
-    Function.Injective (directSumPieceInclusion G p) := by
-  rw [directSumPieceInclusion]
-  refine (DirectSum.lmap_injective fun i ↦ ((G i).piece p).subtype).mpr fun i ↦ ?_
-  exact ((G i).piece p).injective_subtype
+  exact TauCeti.DirectSum.piInclusion_lof (fun i ↦ (G i).piece p) i x
 
 /-- The linear equivalence from the external direct sum of degree-`p` pieces to its range in the
 ambient direct sum. -/
 noncomputable def directSumPieceEquiv (G : ∀ i, InternalGrading R (M i)) (p : ℤ) :
     (⨁ i, (G i).piece p) ≃ₗ[R] directSumPiece G p :=
-  LinearEquiv.ofInjective (directSumPieceInclusion G p)
-    (directSumPieceInclusion_injective G p)
+  TauCeti.DirectSum.piSubmoduleEquiv fun i ↦ (G i).piece p
 
 /-- The underlying element of `directSumPieceEquiv` is the canonical inclusion. -/
 @[simp]
@@ -81,8 +80,14 @@ theorem directSumPieceEquiv_apply (G : ∀ i, InternalGrading R (M i)) (p : ℤ)
     (x : ⨁ i, (G i).piece p) :
     ((directSumPieceEquiv G p x : directSumPiece G p) : ⨁ i, M i) =
       directSumPieceInclusion G p x := by
-  rw [directSumPieceEquiv]
-  exact LinearEquiv.ofInjective_apply _ x
+  exact TauCeti.DirectSum.piSubmoduleEquiv_apply (fun i ↦ (G i).piece p) x
+
+/-- The componentwise formula for the inverse of `directSumPieceEquiv`. -/
+@[simp]
+theorem directSumPieceEquiv_symm_apply (G : ∀ i, InternalGrading R (M i)) (p : ℤ)
+    (y : directSumPiece G p) (i : ι) :
+    ((directSumPieceEquiv G p).symm y i : M i) = (y : ⨁ i, M i) i := by
+  exact TauCeti.DirectSum.piSubmoduleEquiv_symm_apply (fun i ↦ (G i).piece p) y i
 
 private def sigmaSwap (ι : Type v) : (Σ _ : ℤ, ι) ≃ (Σ _ : ι, ℤ) where
   toFun := fun ⟨p, i⟩ ↦ ⟨i, p⟩
@@ -95,37 +100,34 @@ private def sigmaSwapPieceEquiv (G : ∀ i, InternalGrading R (M i)) (z : Σ _ :
   obtain ⟨i, p⟩ := z
   exact LinearEquiv.refl R _
 
-private theorem sigmaLcurryEquiv_symm_lof_lof (G : ∀ i, InternalGrading R (M i))
-    (p : ℤ) (i : ι) (x : (G i).piece p) [DecidableEq ι] :
-    (DirectSum.sigmaLcurryEquiv R (δ := fun p i ↦ (G i).piece p)).symm
-        (DirectSum.lof R ℤ (fun p ↦ ⨁ i, (G i).piece p) p
-          (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x)) =
-      DirectSum.lof R (Σ _ : ℤ, ι) (fun z ↦ (G z.2).piece z.1) ⟨p, i⟩ x := by
-  apply (DirectSum.sigmaLcurryEquiv R (δ := fun p i ↦ (G i).piece p)).injective
-  simp only [LinearEquiv.apply_symm_apply]
-  -- Expose the curry equivalence on a generator so `sigmaCurry_of` applies.
-  change DirectSum.lof R ℤ (fun p ↦ ⨁ i, (G i).piece p) p
-      (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x) =
-    DirectSum.sigmaCurry
-      (DirectSum.lof R (Σ _ : ℤ, ι) (fun z ↦ (G z.2).piece z.1) ⟨p, i⟩ x)
-  rw [DirectSum.lof_eq_of R ℤ, DirectSum.lof_eq_of R ι,
-    DirectSum.lof_eq_of R (Σ _ : ℤ, ι)]
-  exact (DirectSum.sigmaCurry_of (δ := fun p i ↦ (G i).piece p) ⟨p, i⟩ x).symm
+private theorem sigmaLcurryEquiv_apply {ι κ : Type*} {δ : ι → κ → Type*}
+    [DecidableEq ι] [∀ i j, AddCommMonoid (δ i j)]
+    [∀ i j, Module R (δ i j)] (x : ⨁ z : Σ _ : ι, κ, δ z.1 z.2) :
+    DirectSum.sigmaLcurryEquiv R (δ := δ) x = DirectSum.sigmaCurry x := by
+  rfl
 
-private theorem sigmaLcurryEquiv_lof_lof (G : ∀ i, InternalGrading R (M i))
-    (i : ι) (p : ℤ) (x : (G i).piece p) [DecidableEq ι] :
-    DirectSum.sigmaLcurryEquiv R (δ := fun i p ↦ (G i).piece p)
-        (DirectSum.lof R (Σ _ : ι, ℤ) (fun z ↦ (G z.1).piece z.2) ⟨i, p⟩ x) =
-      DirectSum.lof R ι (fun i ↦ ⨁ p, (G i).piece p) i
-        (DirectSum.lof R ℤ (fun p ↦ (G i).piece p) p x) := by
-  -- The equivalence is definitionally the direct-sum curry map.
-  change DirectSum.sigmaCurry
-      (DirectSum.lof R (Σ _ : ι, ℤ) (fun z ↦ (G z.1).piece z.2) ⟨i, p⟩ x) =
-    DirectSum.lof R ι (fun i ↦ ⨁ p, (G i).piece p) i
-      (DirectSum.lof R ℤ (fun p ↦ (G i).piece p) p x)
-  rw [DirectSum.lof_eq_of R (Σ _ : ι, ℤ), DirectSum.lof_eq_of R ι,
-    DirectSum.lof_eq_of R ℤ]
-  exact DirectSum.sigmaCurry_of (δ := fun i p ↦ (G i).piece p) ⟨i, p⟩ x
+private theorem sigmaLcurryEquiv_lof_lof {ι κ : Type*} {δ : ι → κ → Type*}
+    [DecidableEq ι] [DecidableEq κ] [∀ i j, AddCommMonoid (δ i j)]
+    [∀ i j, Module R (δ i j)] (i : ι) (j : κ) (x : δ i j) :
+    DirectSum.sigmaLcurryEquiv R (δ := δ)
+        (DirectSum.lof R (Σ _ : ι, κ) (fun z ↦ δ z.1 z.2) ⟨i, j⟩ x) =
+      DirectSum.lof R ι (fun i ↦ ⨁ j, δ i j) i
+        (DirectSum.lof R κ (fun j ↦ δ i j) j x) := by
+  rw [sigmaLcurryEquiv_apply]
+  rw [DirectSum.lof_eq_of R (Σ _ : ι, κ), DirectSum.lof_eq_of R ι,
+    DirectSum.lof_eq_of R κ]
+  exact DirectSum.sigmaCurry_of (δ := δ) ⟨i, j⟩ x
+
+private theorem sigmaLcurryEquiv_symm_lof_lof {ι κ : Type*} {δ : ι → κ → Type*}
+    [DecidableEq ι] [DecidableEq κ] [∀ i j, AddCommMonoid (δ i j)]
+    [∀ i j, Module R (δ i j)] (i : ι) (j : κ) (x : δ i j) :
+    (DirectSum.sigmaLcurryEquiv R (δ := δ)).symm
+        (DirectSum.lof R ι (fun i ↦ ⨁ j, δ i j) i
+          (DirectSum.lof R κ (fun j ↦ δ i j) j x)) =
+      DirectSum.lof R (Σ _ : ι, κ) (fun z ↦ δ z.1 z.2) ⟨i, j⟩ x := by
+  apply (DirectSum.sigmaLcurryEquiv R (δ := δ)).injective
+  rw [LinearEquiv.apply_symm_apply]
+  exact (sigmaLcurryEquiv_lof_lof i j x).symm
 
 private noncomputable def directSumRecomposeEquiv (G : ∀ i, InternalGrading R (M i))
     [DecidableEq ι] : (⨁ p, directSumPiece G p) ≃ₗ[R] ⨁ i, M i :=
@@ -137,24 +139,7 @@ private noncomputable def directSumRecomposeEquiv (G : ∀ i, InternalGrading R 
             DirectSum.congrLinearEquiv fun i ↦
               (DirectSum.decomposeLinearEquiv (G i).piece).symm
 
-private theorem directSumPieceEquivs_lof (G : ∀ i, InternalGrading R (M i))
-    (p : ℤ) (i : ι) (x : (G i).piece p) [DecidableEq ι] :
-    (DirectSum.congrLinearEquiv fun p ↦ (directSumPieceEquiv G p).symm)
-        (DirectSum.lof R ℤ (fun p ↦ directSumPiece G p) p
-          (directSumPieceEquiv G p
-            (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x))) =
-      DirectSum.lof R ℤ (fun p ↦ ⨁ i, (G i).piece p) p
-        (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x) := by
-  -- Expose the bundled map so the direct-sum generator lemma can be rewritten.
-  change (DirectSum.congrLinearEquiv fun p ↦ (directSumPieceEquiv G p).symm).toLinearMap
-      (DirectSum.lof R ℤ (fun p ↦ directSumPiece G p) p
-        (directSumPieceEquiv G p
-          (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x))) = _
-  rw [DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_lof]
-  congr 1
-  exact (directSumPieceEquiv G p).symm_apply_apply _
-
-private theorem directSumRecomposeEquiv_lof (G : ∀ i, InternalGrading R (M i))
+private theorem directSumRecomposeEquiv_lof_lof (G : ∀ i, InternalGrading R (M i))
     (p : ℤ) (i : ι) (x : (G i).piece p) [DecidableEq ι] :
     directSumRecomposeEquiv G
         (DirectSum.lof R ℤ (fun p ↦ directSumPiece G p) p
@@ -174,7 +159,17 @@ private theorem directSumRecomposeEquiv_lof (G : ∀ i, InternalGrading R (M i))
                 (DirectSum.lof R ℤ (fun p ↦ directSumPiece G p) p
                   (directSumPieceEquiv G p
                     (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x)))))))) = _
-  rw [directSumPieceEquivs_lof]
+  have hpieces :
+      (DirectSum.congrLinearEquiv fun p ↦ (directSumPieceEquiv G p).symm)
+          (DirectSum.lof R ℤ (fun p ↦ directSumPiece G p) p
+            (directSumPieceEquiv G p
+              (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x))) =
+        DirectSum.lof R ℤ (fun p ↦ ⨁ i, (G i).piece p) p
+          (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x) := by
+    rw [DirectSum.coe_congrLinearEquiv, DirectSum.lmap_lof]
+    congr 1
+    exact (directSumPieceEquiv G p).symm_apply_apply _
+  rw [hpieces]
   rw [sigmaLcurryEquiv_symm_lof_lof]
   rw [DirectSum.lequivCongrLeft_lof
     (M := fun z : Σ _ : ℤ, ι ↦ (G z.2).piece z.1) R (e := sigmaSwap ι)
@@ -186,45 +181,38 @@ private theorem directSumRecomposeEquiv_lof (G : ∀ i, InternalGrading R (M i))
         (DirectSum.lof R (Σ _ : ι, ℤ) (fun z ↦ (G z.1).piece z.2) ⟨i, p⟩ x)) = _
   rw [sigmaLcurryEquiv_lof_lof]
   -- The last congruence map acts componentwise on the single summand.
-  change (DirectSum.congrLinearEquiv fun i ↦
-      (DirectSum.decomposeLinearEquiv (G i).piece).symm).toLinearMap
-      (DirectSum.lof R ι (fun i ↦ ⨁ p, (G i).piece p) i
-        (DirectSum.lof R ℤ (fun p ↦ (G i).piece p) p x)) = _
-  rw [DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_lof]
+  rw [DirectSum.coe_congrLinearEquiv, DirectSum.lmap_lof]
   congr 1
   exact DirectSum.decomposeLinearEquiv_symm_lof (G i).piece p x
 
-private theorem coeLinearMap_directSumPiece_eq (G : ∀ i, InternalGrading R (M i))
-    [DecidableEq ι] :
-    DirectSum.coeLinearMap (directSumPiece G) = (directSumRecomposeEquiv G).toLinearMap := by
-  classical
-  apply DirectSum.linearMap_ext R
-  intro p
-  apply LinearMap.ext
-  intro x
+private theorem directSumRecomposeEquiv_lof (G : ∀ i, InternalGrading R (M i))
+    (p : ℤ) (x : directSumPiece G p) [DecidableEq ι] :
+    directSumRecomposeEquiv G
+        (DirectSum.lof R ℤ (fun p ↦ directSumPiece G p) p x) =
+      (x : ⨁ i, M i) := by
   obtain ⟨y, rfl⟩ := (directSumPieceEquiv G p).surjective x
   induction y using DirectSum.induction_on with
-  | zero => simp [directSumRecomposeEquiv]
+  | zero => simp
   | of i y =>
-    simp only [LinearMap.comp_apply, DirectSum.coeLinearMap_lof]
-    rw [← DirectSum.lof_eq_of R ι (fun i ↦ (G i).piece p)]
-    rw [directSumPieceEquiv_apply, directSumPieceInclusion_lof]
-    exact (directSumRecomposeEquiv_lof G p i y).symm
+    rw [← DirectSum.lof_eq_of R ι (fun i ↦ (G i).piece p), directSumPieceEquiv_apply,
+      directSumPieceInclusion_lof]
+    exact directSumRecomposeEquiv_lof_lof G p i y
   | add x y hx hy =>
-    simpa only [map_add, LinearMap.comp_apply] using congrArg₂ (· + ·) hx hy
+    simpa only [map_add, Submodule.coe_add] using congrArg₂ (· + ·) hx hy
 
 /-- The canonical degreewise ranges in an external direct sum form an internal direct sum. -/
 theorem isInternal_directSumPiece (G : ∀ i, InternalGrading R (M i)) :
     DirectSum.IsInternal (directSumPiece G) := by
-  classical
   let _ : DecidableEq ι := Classical.decEq _
-  change Function.Bijective (DirectSum.coeLinearMap (directSumPiece G))
-  rw [coeLinearMap_directSumPiece_eq]
-  exact (directSumRecomposeEquiv G).bijective
+  refine TauCeti.DirectSum.isInternal_of_lof
+    (e := fun p ↦ LinearEquiv.refl R (directSumPiece G p))
+    (E := directSumRecomposeEquiv G) ?_
+  intro p x
+  simpa only [LinearEquiv.refl_apply] using directSumRecomposeEquiv_lof G p x
 
 /-- The external direct sum of internally graded modules, with degree-`p` piece the image of the
 direct sum of the degree-`p` pieces. -/
-noncomputable def directSum (G : ∀ i, InternalGrading R (M i)) :
+def directSum (G : ∀ i, InternalGrading R (M i)) :
     InternalGrading R (⨁ i, M i) where
   piece := directSumPiece G
   isInternal := isInternal_directSumPiece G
@@ -234,16 +222,7 @@ noncomputable def directSum (G : ∀ i, InternalGrading R (M i)) :
 theorem mem_directSumPiece_iff (G : ∀ i, InternalGrading R (M i)) (p : ℤ)
     (x : ⨁ i, M i) :
     x ∈ directSumPiece G p ↔ ∀ i, x i ∈ (G i).piece p := by
-  rw [directSumPiece, directSumPieceInclusion, DirectSum.range_lmap]
-  simp only [Submodule.mem_comap, DirectSum.coeFnLinearMap_apply, Submodule.mem_pi,
-    Set.mem_univ, LinearMap.mem_range]
-  constructor
-  · intro hx i
-    obtain ⟨y, hy⟩ := hx i trivial
-    rw [← hy]
-    exact y.property
-  · intro hx i _
-    exact ⟨⟨x i, hx i⟩, rfl⟩
+  exact TauCeti.DirectSum.mem_piSubmodule_iff (fun i ↦ (G i).piece p) x
 
 /-- The homogeneous pieces of `directSum` are the ranges of the canonical degreewise inclusions. -/
 @[simp]
@@ -253,11 +232,10 @@ theorem directSum_piece (G : ∀ i, InternalGrading R (M i)) (p : ℤ) :
 
 /-- The inclusion of a degree-`p` element from one summand belongs to the degree-`p` piece of the
 direct-sum grading. -/
-theorem directSum_lof_mem_piece (G : ∀ i, InternalGrading R (M i)) (p : ℤ) (i : ι)
+theorem lof_mem_directSumPiece (G : ∀ i, InternalGrading R (M i)) (p : ℤ) (i : ι)
     (x : (G i).piece p) [DecidableEq ι] :
-    DirectSum.lof R ι M i x ∈ (directSum G).piece p := by
-  refine ⟨DirectSum.lof R ι (fun i ↦ (G i).piece p) i x, ?_⟩
-  simpa only [directSum_piece] using directSumPieceInclusion_lof G p i x
+    DirectSum.lof R ι M i x ∈ directSumPiece G p := by
+  exact TauCeti.DirectSum.lof_mem_piSubmodule (fun i ↦ (G i).piece p) i x
 
 end InternalGrading
 
