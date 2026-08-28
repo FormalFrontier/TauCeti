@@ -152,7 +152,11 @@ theorem notMem_connectedComponentIn_compl_of_isPreconnected_sdiff_singleton (hK 
   have hJ := hjump q₁ (by rw [mem_ball, dist_comm]; exact hq₁r) q₂
     (by rw [mem_ball, dist_comm]; exact hq₂r) hq₁im hq₂im
   rw [hW] at hJ
-  simp at hJ
+  have h0 := sub_eq_zero.mpr hJ
+  have h1 : windingNumber Γ a (b + 1) q₂ -
+      (windingNumber Γ a (b + 1) q₂ + 1) = -1 := by ring
+  rw [h1] at h0
+  exact absurd (neg_eq_zero.mp h0) one_ne_zero
 
 /-- **One end of a segment crossing a bounded set once lies in its filled hull.**
 Under the same hypotheses as

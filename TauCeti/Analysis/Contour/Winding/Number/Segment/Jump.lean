@@ -14,14 +14,14 @@ import TauCeti.Analysis.Contour.Winding.LocallyConstant
 import TauCeti.Analysis.Contour.Winding.Number.Concat
 
 /-!
-# The jump of the winding number across a straight segment
+# The winding number differs by one across a straight segment
 
 Letting the reference point `v · (s ± h·i) + z₀` approach an interior point `v · s + z₀`
 of the segment from the two sides as `h → 0⁺`, the two limits of the index integral differ
-by exactly `1`: this is the jump across the segment.
+by exactly `1`.
 
-For a *closed* piecewise-`C¹` curve one of whose pieces is a straight segment, the rest of the
-curve stays away from an interior point `p` of that piece and contributes a difference that is
+For a *closed* piecewise-`C¹` curve one of whose pieces is a straight segment, if the rest of the
+curve avoids an interior point `p` of that piece (hypothesis `hp`), the non-segment contribution is
 continuous at `p`, so the winding number of the whole curve differs by exactly `1` between the two
 sides of the segment near `p`: it is one larger on the side to the left of the direction of travel.
 
@@ -30,10 +30,10 @@ sides of the segment near `p`: it is one larger on the side to the left of the d
 * `TauCeti.Contour.tendsto_windingNumber_segment_add_mul_I` and
   `TauCeti.Contour.tendsto_windingNumber_segment_sub_mul_I` — one-sided limits of the winding
   number at an interior point, from the left and from the right.
-* `TauCeti.Contour.tendsto_windingNumber_segment_jump` — the difference of
+* `TauCeti.Contour.tendsto_windingNumber_segment_sub` — the difference of
   the winding numbers tends to `1`.
 * `TauCeti.Contour.exists_forall_windingNumber_eq_add_one_of_eqOn_segment` — **a closed curve
-  jumps by one across a straight piece**.
+  differs by one across a straight piece**.
 
 ## References
 
@@ -50,13 +50,10 @@ namespace TauCeti.Contour
 
 variable {v z₀ : ℂ} {a b c s : ℝ}
 
-private theorem eq_of_dist_intCast_lt_one {m n : ℤ}
-    (h : dist (m : ℂ) (n : ℂ) < 1) : m = n := by
-  by_contra hne
-  have : (1 : ℝ) ≤ dist (m : ℂ) (n : ℂ) := by
-    rw [Complex.isometry_intCast.dist_eq]
-    exact Int.pairwise_one_le_dist hne
-  linarith
+private theorem norm_ofReal_sub_eq (hs : s ∈ Ioo a b) :
+    ‖(a : ℂ) - (s : ℂ)‖ = s - a := by
+  rw [← ofReal_sub, norm_real, Real.norm_eq_abs, abs_sub_comm,
+    abs_of_pos (by linarith [hs.1])]
 
 private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
     Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝[>] 0) (𝓝 ((r : ℂ) - s)) := by
@@ -101,9 +98,7 @@ theorem tendsto_windingNumber_segment_add_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
     simpa using hh
   have h2 := (tendsto_log_nhdsWithin_im_neg_of_re_neg_of_im_zero (z := (a : ℂ) - s)
     (by simp only [sub_re, ofReal_re]; linarith [hs.1]) (by simp)).comp h1
-  have hnorm : ‖(a : ℂ) - s‖ = s - a := by
-    rw [← ofReal_sub, norm_real, Real.norm_eq_abs, abs_sub_comm, abs_of_pos (by linarith [hs.1])]
-  simpa [Function.comp_def, hnorm] using h2
+  simpa [Function.comp_def, norm_ofReal_sub_eq hs] using h2
 
 /-- **The winding number of a segment about a point approaching it from the right.** For
 `s ∈ (a, b)` and `h → 0⁺`, the winding number about `v (s - h i) + z₀` — the side to the right of
@@ -133,14 +128,12 @@ theorem tendsto_windingNumber_segment_sub_mul_I (hv : v ≠ 0) (hs : s ∈ Ioo a
     simpa using hh.le
   have h2 := (tendsto_log_nhdsWithin_im_nonneg_of_re_neg_of_im_zero (z := (a : ℂ) - s)
     (by simp only [sub_re, ofReal_re]; linarith [hs.1]) (by simp)).comp h1
-  have hnorm : ‖(a : ℂ) - s‖ = s - a := by
-    rw [← ofReal_sub, norm_real, Real.norm_eq_abs, abs_sub_comm, abs_of_pos (by linarith [hs.1])]
-  simpa [Function.comp_def, hnorm] using h2
+  simpa [Function.comp_def, norm_ofReal_sub_eq hs] using h2
 
 /-- **The jump of the winding number across a straight segment is `1`.** As `h → 0⁺`, the winding
 numbers about the two points `v (s ± h i) + z₀` on either side of the interior point `v s + z₀`
 differ by a quantity tending to `1`: the left side minus the right side. -/
-theorem tendsto_windingNumber_segment_jump (hv : v ≠ 0) (hs : s ∈ Ioo a b) :
+theorem tendsto_windingNumber_segment_sub (hv : v ≠ 0) (hs : s ∈ Ioo a b) :
     Tendsto (fun h : ℝ =>
         windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s + h * I) + z₀) -
           windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (s - h * I) + z₀))
@@ -313,7 +306,7 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
       ring
     refine Tendsto.congr' h_eq ?_
     simpa using
-      (tendsto_windingNumber_segment_jump (z₀ := z₀) hv hs).add h_rest
+      (tendsto_windingNumber_segment_sub (z₀ := z₀) hv hs).add h_rest
   -- Stage 5: integrality forces the limit to be exactly 1, propagate to the half-discs
   have h_near : ∀ᶠ h : ℝ in 𝓝[>] 0,
       dist (windingNumber Γ a c (v * (s + h * I) + z₀) - windingNumber Γ a c (v * (s - h * I) + z₀))
