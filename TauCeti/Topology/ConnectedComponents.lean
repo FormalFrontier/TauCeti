@@ -78,13 +78,7 @@ over `C`, so this decomposition does not require choosing representatives. -/
 noncomputable def connectedComponentsSigmaHomeomorph [LocallyConnectedSpace X] :
     (Σ C : ConnectedComponents X, (ConnectedComponents.mk ⁻¹' {C} : Set X)) ≃ₜ X := by
   let e : (Σ C : ConnectedComponents X, (ConnectedComponents.mk ⁻¹' {C} : Set X)) ≃ X :=
-    Equiv.ofBijective (fun z ↦ (z.2 : X)) ⟨by
-      rintro ⟨C, x⟩ ⟨D, y⟩ hxy
-      have hCD : C = D := by
-        exact x.2.symm.trans (congrArg ConnectedComponents.mk hxy) |>.trans y.2
-      subst D
-      exact Sigma.ext rfl (heq_of_eq (Subtype.ext hxy)), fun x ↦
-        ⟨⟨ConnectedComponents.mk x, ⟨x, Set.mem_singleton _⟩⟩, rfl⟩⟩
+    Equiv.sigmaPreimageEquiv ConnectedComponents.mk
   exact e.toHomeomorphOfContinuousOpen
     (continuous_sigma fun _ ↦ continuous_subtype_val)
     (isOpenMap_sigma.mpr fun C ↦
@@ -99,9 +93,8 @@ theorem connectedComponentsSigmaHomeomorph_apply [LocallyConnectedSpace X]
 @[simp]
 theorem connectedComponentsSigmaHomeomorph_symm_apply [LocallyConnectedSpace X] (x : X) :
     connectedComponentsSigmaHomeomorph.symm x =
-      ⟨ConnectedComponents.mk x, ⟨x, Set.mem_singleton _⟩⟩ := by
-  apply connectedComponentsSigmaHomeomorph.injective
-  rw [Homeomorph.apply_symm_apply, connectedComponentsSigmaHomeomorph_apply]
+      ⟨ConnectedComponents.mk x, ⟨x, Set.mem_singleton _⟩⟩ :=
+  (rfl)
 
 /-- A space with finitely many irreducible components has finitely many connected components. -/
 theorem finite_connectedComponents_of_finite_irreducibleComponents
