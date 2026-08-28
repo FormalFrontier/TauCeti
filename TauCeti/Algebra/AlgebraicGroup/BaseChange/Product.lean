@@ -19,7 +19,7 @@ represent the projections from a product to its factors.
 
 ## Main declarations
 
-* `TauCeti.CommHopfAlgCat.baseChangeTensorProductBialgEquiv`: the bialgebra equivalence between
+* `TauCeti.CommBialgCat.baseChangeTensorProductBialgEquiv`: the bialgebra equivalence between
   the base change of a tensor product and the tensor product of the base changes.
 * `TauCeti.FiniteTypeCommHopfAlgCat.baseChangeTensorProductIso`: the equivalence bundled in the
   finite-type commutative Hopf-algebra category.
@@ -40,10 +40,10 @@ namespace TauCeti
 
 universe u v w
 
-namespace CommHopfAlgCat
+namespace CommBialgCat
 
 variable (k : Type u) (K : Type w) [CommRing k] [CommRing K] [Algebra k K]
-variable (H L : _root_.CommHopfAlgCat.{v} k)
+variable (H L : _root_.CommBialgCat.{v} k)
 
 private theorem baseChangeTensorAlgEquiv_counit_comp :
     (Bialgebra.counitAlgHom K
@@ -114,15 +114,18 @@ private theorem baseChangeTensorAlgEquiv_map_comp_comul :
         baseChangeTensorAlgEquiv_comul_aux k K H L s
           (Coalgebra.comul (R := k) h) (Coalgebra.comul (R := k) l)
 
-/-- **Base change commutes with tensor products of commutative Hopf algebras.**
+/-- **Base change commutes with tensor products of commutative bialgebras.**
 
 The underlying algebra equivalence distributes scalar extension across a tensor product. This
-bundling records that it also preserves the counit and comultiplication, so contravariantly it is
-the canonical identification `(G × H)_K ≅ G_K × H_K` of affine groups. -/
+bundling records that it also preserves the counit and comultiplication. For commutative Hopf
+algebras, it is contravariantly the canonical identification `(G × H)_K ≅ G_K × H_K` of affine
+groups. -/
 noncomputable def baseChangeTensorProductBialgEquiv :
-    baseChange (K := K) (_root_.CommHopfAlgCat.of k (H ⊗[k] L)) ≃ₐc[K]
+    K ⊗[k] (H ⊗[k] L) ≃ₐc[K]
       ((K ⊗[k] H) ⊗[K] (K ⊗[k] L)) :=
   BialgEquiv.ofAlgEquiv (Algebra.TensorProduct.baseChangeTensorAlgEquiv k K H L)
+    (R := K) (A := K ⊗[k] (H ⊗[k] L))
+    (B := (K ⊗[k] H) ⊗[K] (K ⊗[k] L))
     (baseChangeTensorAlgEquiv_counit_comp k K H L)
     (baseChangeTensorAlgEquiv_map_comp_comul k K H L)
 
@@ -143,7 +146,7 @@ theorem baseChangeTensorProductBialgEquiv_symm_tmul
       (s * t) ⊗ₜ[k] (h ⊗ₜ[k] l) :=
   Algebra.TensorProduct.baseChangeTensorAlgEquiv_symm_tmul k K H L s t h l
 
-end CommHopfAlgCat
+end CommBialgCat
 
 namespace FiniteTypeCommHopfAlgCat
 
@@ -152,24 +155,38 @@ variable (H L : FiniteTypeCommHopfAlgCat.{u, v} k)
 
 /-- **Base change commutes with finite-type affine-group products.**
 
-This is `CommHopfAlgCat.baseChangeTensorProductBialgEquiv` bundled as an isomorphism in the
+This is `CommBialgCat.baseChangeTensorProductBialgEquiv` bundled as an isomorphism in the
 finite-type commutative Hopf-algebra category. -/
-noncomputable abbrev baseChangeTensorProductIso :
+noncomputable def baseChangeTensorProductIso :
     baseChange (K := K) (tensorProduct H L) ≅
       tensorProduct (baseChange (K := K) H) (baseChange (K := K) L) :=
   ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
-    CommHopfAlgCat.baseChangeTensorProductBialgEquiv k K H.obj L.obj
+    CommBialgCat.baseChangeTensorProductBialgEquiv k K
+      (_root_.CommBialgCat.of k H.obj) (_root_.CommBialgCat.of k L.obj)
 
 /-- The underlying bialgebra equivalence of the finite-type product/base-change isomorphism is
 the canonical tensor-product comparison. -/
 @[simp]
 theorem toBialgHom_baseChangeTensorProductIso_hom :
     toBialgHom (baseChangeTensorProductIso k K H L).hom =
-      CommHopfAlgCat.baseChangeTensorProductBialgEquiv k K H.obj L.obj :=
-  rfl
+      CommBialgCat.baseChangeTensorProductBialgEquiv k K
+        (_root_.CommBialgCat.of k H.obj) (_root_.CommBialgCat.of k L.obj) := by
+  simp only [baseChangeTensorProductIso, ObjectProperty.isoMk_hom,
+    _root_.CommHopfAlgCat.isoMk_hom, toBialgHom_ofHom]
+
+private theorem baseChangeTensorProductIso_hom_apply_tmul (s : K) (h : H) (l : L) :
+    toBialgHom (baseChangeTensorProductIso k K H L).hom (s ⊗ₜ[k] (h ⊗ₜ[k] l)) =
+      (s ⊗ₜ[k] h) ⊗ₜ[K] (1 ⊗ₜ[k] l) := by
+  simp only [baseChangeTensorProductIso, ObjectProperty.isoMk_hom,
+    _root_.CommHopfAlgCat.isoMk_hom, toBialgHom_ofHom,
+    CommBialgCat.baseChangeTensorProductBialgEquiv]
+  change Algebra.TensorProduct.baseChangeTensorAlgEquiv k K H L
+      (s ⊗ₜ[k] (h ⊗ₜ[k] l)) = (s ⊗ₜ[k] h) ⊗ₜ[K] (1 ⊗ₜ[k] l)
+  exact Algebra.TensorProduct.baseChangeTensorAlgEquiv_tmul k K H L s h l
 
 /-- The product/base-change isomorphism carries the base change of the left coordinate inclusion
 to the left coordinate inclusion between the base-changed factors. -/
+@[simp]
 theorem baseChangeMap_includeLeft_comp_baseChangeTensorProductIso_hom :
     baseChangeMap (K := K) (includeLeft H L) ≫
         (baseChangeTensorProductIso k K H L).hom =
@@ -178,23 +195,20 @@ theorem baseChangeMap_includeLeft_comp_baseChangeTensorProductIso_hom :
   apply _root_.BialgHom.coe_toAlgHom_injective
   apply Algebra.TensorProduct.ext'
   intro s h
-  simp only [ObjectProperty.isoMk_hom, _root_.CommHopfAlgCat.isoMk_hom,
-    toBialgHom_comp, toBialgHom_ofHom, ObjectProperty.homMk_hom,
-    ConcreteCategory.hom_ofHom, BialgHom.comp_toAlgHom,
-    _root_.Bialgebra.TensorProduct.map_toAlgHom, BialgHom.id_toAlgHom,
-    Bialgebra.TensorProduct.includeLeft_toAlgHom, AlgHom.coe_comp,
-    BialgHom.coe_toAlgHom, BialgHom.coe_coe, Function.comp_apply,
-    Algebra.TensorProduct.map_tmul, AlgHom.coe_id, id_eq,
-    Algebra.TensorProduct.includeLeft_apply]
-  exact (CommHopfAlgCat.baseChangeTensorProductBialgEquiv_tmul
-    k K H.obj L.obj s h 1).trans <| by
-      exact (congrArg (fun z : K ⊗[k] L ↦ (s ⊗ₜ[k] h) ⊗ₜ[K] z)
-        (Algebra.TensorProduct.one_def (R := k) (A := K) (B := L))).symm |>.trans
-          (includeLeft_apply (baseChange (K := K) H) (baseChange (K := K) L)
-            (s ⊗ₜ[k] h)).symm
+  change toBialgHom (baseChangeTensorProductIso k K H L).hom
+      (toBialgHom (baseChangeMap (K := K) (includeLeft H L)) (s ⊗ₜ[k] h)) =
+    toBialgHom (includeLeft (baseChange (K := K) H) (baseChange (K := K) L))
+      (s ⊗ₜ[k] h)
+  rw [baseChangeMap_apply_tmul, includeLeft_apply,
+    baseChangeTensorProductIso_hom_apply_tmul]
+  exact (congrArg (fun z : K ⊗[k] L ↦ (s ⊗ₜ[k] h) ⊗ₜ[K] z)
+    (Algebra.TensorProduct.one_def (R := k) (A := K) (B := L)).symm).trans
+      (includeLeft_apply (baseChange (K := K) H) (baseChange (K := K) L)
+        (s ⊗ₜ[k] h)).symm
 
 /-- The product/base-change isomorphism carries the base change of the right coordinate inclusion
 to the right coordinate inclusion between the base-changed factors. -/
+@[simp]
 theorem baseChangeMap_includeRight_comp_baseChangeTensorProductIso_hom :
     baseChangeMap (K := K) (includeRight H L) ≫
         (baseChangeTensorProductIso k K H L).hom =
@@ -203,23 +217,19 @@ theorem baseChangeMap_includeRight_comp_baseChangeTensorProductIso_hom :
   apply _root_.BialgHom.coe_toAlgHom_injective
   apply Algebra.TensorProduct.ext'
   intro s l
-  simp only [ObjectProperty.isoMk_hom, _root_.CommHopfAlgCat.isoMk_hom,
-    toBialgHom_comp, toBialgHom_ofHom, ObjectProperty.homMk_hom,
-    ConcreteCategory.hom_ofHom, BialgHom.comp_toAlgHom,
-    _root_.Bialgebra.TensorProduct.map_toAlgHom, BialgHom.id_toAlgHom,
-    Bialgebra.TensorProduct.includeRight_toAlgHom, AlgHom.coe_comp,
-    BialgHom.coe_toAlgHom, BialgHom.coe_coe, Function.comp_apply,
-    Algebra.TensorProduct.map_tmul, AlgHom.coe_id, id_eq,
-    Algebra.TensorProduct.includeRight_apply]
-  exact (CommHopfAlgCat.baseChangeTensorProductBialgEquiv_tmul
-    k K H.obj L.obj s 1 l).trans <| by
-      rw [includeRight_apply, Algebra.TensorProduct.one_def]
-      have hsH : s ⊗ₜ[k] (1 : H) = s • ((1 : K) ⊗ₜ[k] (1 : H)) :=
-        TensorProduct.tmul_eq_smul_one_tmul s (1 : H)
-      have hsL : s ⊗ₜ[k] l = s • ((1 : K) ⊗ₜ[k] l) :=
-        TensorProduct.tmul_eq_smul_one_tmul s l
-      rw [hsH, hsL]
-      exact TensorProduct.smul_tmul s ((1 : K) ⊗ₜ[k] (1 : H)) ((1 : K) ⊗ₜ[k] l)
+  change toBialgHom (baseChangeTensorProductIso k K H L).hom
+      (toBialgHom (baseChangeMap (K := K) (includeRight H L)) (s ⊗ₜ[k] l)) =
+    toBialgHom (includeRight (baseChange (K := K) H) (baseChange (K := K) L))
+      (s ⊗ₜ[k] l)
+  rw [baseChangeMap_apply_tmul, includeRight_apply,
+    baseChangeTensorProductIso_hom_apply_tmul]
+  rw [includeRight_apply, Algebra.TensorProduct.one_def]
+  have hsH : s ⊗ₜ[k] (1 : H) = s • ((1 : K) ⊗ₜ[k] (1 : H)) :=
+    TensorProduct.tmul_eq_smul_one_tmul s (1 : H)
+  have hsL : s ⊗ₜ[k] l = s • ((1 : K) ⊗ₜ[k] l) :=
+    TensorProduct.tmul_eq_smul_one_tmul s l
+  rw [hsH, hsL]
+  exact TensorProduct.smul_tmul s ((1 : K) ⊗ₜ[k] (1 : H)) ((1 : K) ⊗ₜ[k] l)
 
 end FiniteTypeCommHopfAlgCat
 
