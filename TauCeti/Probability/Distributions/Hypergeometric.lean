@@ -62,6 +62,19 @@ def hypergeometricWeight (N K n k : ℕ) : ℝ≥0∞ :=
     (K.choose k : ℝ≥0∞) * ((N - K).choose (n - k) : ℝ≥0∞) / (N.choose n : ℝ≥0∞)
   else 0
 
+/-- The hypergeometric weight agrees with its defining ratio when `k ≤ n`. -/
+@[simp]
+theorem hypergeometricWeight_of_le {N K n k : ℕ} (hkn : k ≤ n) :
+    hypergeometricWeight N K n k =
+      (K.choose k : ℝ≥0∞) * ((N - K).choose (n - k) : ℝ≥0∞) / (N.choose n : ℝ≥0∞) := by
+  simp [hypergeometricWeight, hkn]
+
+/-- The hypergeometric weight vanishes when `n < k`. -/
+@[simp]
+theorem hypergeometricWeight_of_not_le {N K n k : ℕ} (hkn : ¬ k ≤ n) :
+    hypergeometricWeight N K n k = 0 := by
+  simp [hypergeometricWeight, hkn]
+
 /-- The hypergeometric measure with population size `N`, marked count `K`, and sample size `n`.
 
 It is the classical probability measure when `K ≤ N` and `n ≤ N`, and is the zero measure
@@ -78,7 +91,7 @@ theorem measurable_hypergeometricMeasure :
 
 /-- Outside the valid parameter range, the hypergeometric measure is zero. -/
 @[simp]
-theorem hypergeometricMeasure_of_invalid {N K n : ℕ} (h : ¬ (K ≤ N ∧ n ≤ N)) :
+theorem hypergeometricMeasure_eq_zero_of_invalid {N K n : ℕ} (h : ¬ (K ≤ N ∧ n ≤ N)) :
     hypergeometricMeasure N K n = 0 := by
   simp [hypergeometricMeasure, h]
 
@@ -160,6 +173,7 @@ theorem hypergeometricMeasure_real_singleton (hK : K ≤ N) (hn : n ≤ N) (k : 
   · simp
 
 /-- A hypergeometric weight is nonzero exactly on its classical support. -/
+@[simp]
 theorem hypergeometricWeight_ne_zero_iff (N K n k : ℕ) :
     hypergeometricWeight N K n k ≠ 0 ↔
       k ≤ K ∧ k ≤ n ∧ n - k ≤ N - K := by
@@ -170,6 +184,7 @@ theorem hypergeometricWeight_ne_zero_iff (N K n k : ℕ) :
 
 /-- The singleton mass of a valid hypergeometric law is nonzero exactly on its classical
 support. -/
+@[simp]
 theorem hypergeometricMeasure_singleton_ne_zero_iff (hK : K ≤ N) (hn : n ≤ N) (k : ℕ) :
     hypergeometricMeasure N K n {k} ≠ 0 ↔
       k ≤ K ∧ k ≤ n ∧ n - k ≤ N - K := by
