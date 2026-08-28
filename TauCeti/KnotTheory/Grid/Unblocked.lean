@@ -345,6 +345,16 @@ theorem unblockedDifferential_apply_apply (c : GridChainMinus R n) (y : GridStat
   rw [unblockedDifferential_apply]
   simp [Finsupp.sum_apply]
 
+/-- The matrix of the square of the unblocked differential: its `(x, z)` entry is the sum over
+intermediate grid states of the products of the two matrix coefficients. -/
+theorem unblockedDifferential_sq_single_apply (x z : GridState n) :
+    G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1)) z =
+      ∑ y : GridState n, G.unblockedCoefficient R x y * G.unblockedCoefficient R y z := by
+  rw [unblockedDifferential_single, unblockedDifferential_apply_apply,
+    Finsupp.sum_fintype _ _ fun _ => zero_mul _]
+  exact Finset.sum_congr rfl fun y _ => by
+    rw [unblockedDifferentialOnGenerator_apply]
+
 /-! ### The bidegree of the unblocked differential -/
 
 /-- A rectangle counted by the unblocked differential drops the `O`-Maslov grading by one, once

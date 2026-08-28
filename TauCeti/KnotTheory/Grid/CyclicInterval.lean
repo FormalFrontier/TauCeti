@@ -408,14 +408,8 @@ points occur in the cyclic order `c`, `a`, `d`, `b`, so `d` lies on the clockwis
 `b`. -/
 theorem mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo c d)
     (hb : b ∈ cIoo d c) : d ∈ cIoo a b := by
-  have hab : a ≠ b := fun h => (Finset.disjoint_left.mp (disjoint_cIoo_swap c d) ha) (h ▸ hb)
-  rw [mem_cIoo] at ha hb ⊢
-  obtain ⟨hcd, ha⟩ := ha
-  obtain ⟨-, hb⟩ := hb
-  have hcd' : c.val ≠ d.val := fun h => hcd (Fin.val_injective h)
-  have hab' : a.val ≠ b.val := fun h => hab (Fin.val_injective h)
-  refine ⟨hab, ?_⟩
-  split_ifs at ha hb ⊢ <;> omega
+  simp only [cIoo, Set.Finite.mem_toFinset, Set.mem_cIoo] at ha hb ⊢
+  exact sbtw_cyclic_left (sbtw_trans_left (sbtw_cyclic_left hb) ha)
 
 /-- The two opposite cyclic intervals cover exactly the complement of their endpoints. -/
 @[simp]

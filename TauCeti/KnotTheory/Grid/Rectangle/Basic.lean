@@ -464,6 +464,13 @@ theorem toGridRectangle_bottom : R.toGridRectangle.bottom = R.bottom :=
 theorem toGridRectangle_top : R.toGridRectangle.top = R.top :=
   rfl
 
+/-- Membership in the interior of an oriented rectangle is membership in the open cyclic
+intervals between its side columns and the corresponding source-state rows. -/
+theorem mem_toGridRectangle_interior (p : Fin n × Fin n) :
+    p ∈ R.toGridRectangle.interior ↔
+      p.1 ∈ Grid.cIoo R.left R.right ∧ p.2 ∈ Grid.cIoo (x R.left) (x R.right) := by
+  simp [bottom, top]
+
 /-- The opposite oriented rectangle, obtained by reversing the two side columns.
 
 If `R` goes from `x` to `y`, then `R.symm` goes from `y` back to `x`. It has the same two

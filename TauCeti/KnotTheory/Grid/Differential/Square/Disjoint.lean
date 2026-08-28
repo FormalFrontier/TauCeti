@@ -280,14 +280,30 @@ theorem commute_middle_mem_twoStepColumnSwapIntermediates
 
 /-! ### Reordering preserves emptiness -/
 
-/-- The interior of the first rectangle of a decomposition, as a product of cyclic arcs of the
-source state. -/
-private theorem mem_interior_first_iff (D : GridRectangleDecomposition x z)
-    (p : Fin n × Fin n) :
-    p ∈ D.first.toGridRectangle.interior ↔
-      p.1 ∈ Grid.cIoo D.first.left D.first.right ∧
-        p.2 ∈ Grid.cIoo (x D.first.left) (x D.first.right) := by
-  simp [GridRectangleBetween.bottom, GridRectangleBetween.top]
+/-- A point off both endpoints and excluded from one cyclic arc by a paired condition lies on the
+opposite arc. -/
+private theorem mem_cIoo_swap_of_notMem_pair {a b u c d v : Fin n} (hab : a ≠ b)
+    (hua : u ≠ a) (hub : u ≠ b) (hout : ¬(u ∈ Grid.cIoo a b ∧ v ∈ Grid.cIoo c d))
+    (hv : v ∈ Grid.cIoo c d) : u ∈ Grid.cIoo b a :=
+  ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hab).mpr ⟨hua, hub⟩).resolve_left
+    fun hu => hout ⟨hu, hv⟩
+
+/-- The same opposite-arc resolution when the excluded coordinate is the second member of the
+paired condition. -/
+private theorem mem_cIoo_swap_of_notMem_pair_right {a b u c d v : Fin n} (hab : a ≠ b)
+    (hua : u ≠ a) (hub : u ≠ b) (hout : ¬(v ∈ Grid.cIoo c d ∧ u ∈ Grid.cIoo a b))
+    (hv : v ∈ Grid.cIoo c d) : u ∈ Grid.cIoo b a :=
+  ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hab).mpr ⟨hua, hub⟩).resolve_left
+    fun hu => hout ⟨hv, hu⟩
+
+/-- Cyclic separation in two coordinates puts the latter endpoint pair inside the rectangle
+spanned by the former pair. -/
+private theorem pair_mem_cIoo_of_separation {a b c d a' b' c' d' : Fin n}
+    (ha : a ∈ Grid.cIoo c d) (hb : b ∈ Grid.cIoo d c)
+    (ha' : a' ∈ Grid.cIoo c' d') (hb' : b' ∈ Grid.cIoo d' c') :
+    d ∈ Grid.cIoo a b ∧ d' ∈ Grid.cIoo a' b' :=
+  ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha hb,
+    Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha' hb'⟩
 
 /-- The interior of the second rectangle of a decomposition with disjoint side columns, as a
 product of cyclic arcs of the *source* state: the intermediate state agrees with the source away
@@ -302,7 +318,7 @@ private theorem mem_interior_second_iff (D : GridRectangleDecomposition x z)
     D.first.map_of_ne _ hll.symm hrl.symm
   have hright : D.middle D.second.right = x D.second.right :=
     D.first.map_of_ne _ hlr.symm hrr.symm
-  simp [GridRectangleBetween.bottom, GridRectangleBetween.top, hleft, hright]
+  simpa only [hleft, hright] using D.second.mem_toGridRectangle_interior p
 
 /-- The intermediate state of a decomposition occupies the initial side column of the first
 rectangle in the terminal row. -/
@@ -349,37 +365,29 @@ theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDis
     rw [← hpx] at hrow
     rw [hpleft] at hcol hrow
     have hb : D.first.right ∈ Grid.cIoo D.second.right D.second.left :=
-      ((Grid.mem_cIoo_or_mem_cIoo_swap_iff D.second.left_ne_right).mpr
-        ⟨hrl, hrr⟩).resolve_left fun hc => hout₂ ⟨hc, hrow⟩
+      mem_cIoo_swap_of_notMem_pair D.second.left_ne_right hrl hrr hout₂ hrow
     have hxb : x D.first.right ∈
         Grid.cIoo (x D.second.right) (x D.second.left) :=
-      ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hxcd).mpr
-        ⟨fun hc => hrl (x.toPerm.injective hc),
-          fun hc => hrr (x.toPerm.injective hc)⟩).resolve_left
-        fun hc => hout₁ ⟨hcol, hc⟩
+      mem_cIoo_swap_of_notMem_pair_right hxcd (x.toPerm.injective.ne hrl)
+        (x.toPerm.injective.ne hrr) hout₁ hcol
     exact D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.right (x D.second.right)).mpr rfl)
-      ((D.mem_interior_first_iff _).mpr
-        ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hcol hb,
-          Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hrow hxb⟩)
+      ((D.first.mem_toGridRectangle_interior _).mpr
+        (pair_mem_cIoo_of_separation hcol hb hrow hxb))
   by_cases hpright : p.1 = D.first.right
   · -- the source point on the terminal side column of the first rectangle
     rw [← hpx] at hrow
     rw [hpright] at hcol hrow
     have ha : D.first.left ∈ Grid.cIoo D.second.right D.second.left :=
-      ((Grid.mem_cIoo_or_mem_cIoo_swap_iff D.second.left_ne_right).mpr
-        ⟨hll, hlr⟩).resolve_left fun hc => hout₁ ⟨hc, hrow⟩
+      mem_cIoo_swap_of_notMem_pair D.second.left_ne_right hll hlr hout₁ hrow
     have hxa : x D.first.left ∈
         Grid.cIoo (x D.second.right) (x D.second.left) :=
-      ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hxcd).mpr
-        ⟨fun hc => hll (x.toPerm.injective hc),
-          fun hc => hlr (x.toPerm.injective hc)⟩).resolve_left
-        fun hc => hout₂ ⟨hcol, hc⟩
+      mem_cIoo_swap_of_notMem_pair_right hxcd (x.toPerm.injective.ne hll)
+        (x.toPerm.injective.ne hlr) hout₂ hcol
     exact D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.left (x D.second.left)).mpr rfl)
-      ((D.mem_interior_first_iff _).mpr
-        ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha hcol,
-          Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hxa hrow⟩)
+      ((D.first.mem_toGridRectangle_interior _).mpr
+        (pair_mem_cIoo_of_separation ha hcol hxa hrow))
   · -- away from the first pair of side columns the two states agree
     exact D.second.not_mem_interior_of_isEmpty h₂
       ((D.middle.mem_pointSet p).mpr (by rw [D.first.map_of_ne p.1 hpleft hpright, hpx]))
@@ -402,15 +410,15 @@ theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDi
       x D.second.left ∈ Grid.cIoo (x D.first.left) (x D.first.right)) :=
     fun hc => D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.left (x D.second.left)).mpr rfl)
-      ((D.mem_interior_first_iff _).mpr hc)
+      ((D.first.mem_toGridRectangle_interior _).mpr hc)
   have hout₂ : ¬((D.second.right ∈ Grid.cIoo D.first.left D.first.right) ∧
       x D.second.right ∈ Grid.cIoo (x D.first.left) (x D.first.right)) :=
     fun hc => D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.right (x D.second.right)).mpr rfl)
-      ((D.mem_interior_first_iff _).mpr hc)
+      ((D.first.mem_toGridRectangle_interior _).mpr hc)
   rw [GridRectangleBetween.isEmpty_iff]
   intro p hp hmem
-  rw [D.commute_second_toGridRectangle h, D.mem_interior_first_iff] at hmem
+  rw [D.commute_second_toGridRectangle h, D.first.mem_toGridRectangle_interior] at hmem
   obtain ⟨hcol, hrow⟩ := hmem
   have hpx : x (Equiv.swap D.second.left D.second.right p.1) = p.2 := by
     have := ((D.commute h).middle.mem_pointSet p).mp hp
@@ -421,38 +429,30 @@ theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDi
     rw [← hpx] at hrow
     rw [hpleft] at hcol
     have hd : D.second.right ∈ Grid.cIoo D.first.right D.first.left :=
-      ((Grid.mem_cIoo_or_mem_cIoo_swap_iff D.first.left_ne_right).mpr
-        ⟨hlr.symm, hrr.symm⟩).resolve_left fun hc => hout₂ ⟨hc, hrow⟩
+      mem_cIoo_swap_of_notMem_pair D.first.left_ne_right hlr.symm hrr.symm hout₂ hrow
     have hxc : x D.second.left ∈ Grid.cIoo (x D.first.right) (x D.first.left) :=
-      ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hxab).mpr
-        ⟨fun hc => hll.symm (x.toPerm.injective hc),
-          fun hc => hrl.symm (x.toPerm.injective hc)⟩).resolve_left
-        fun hc => hout₁ ⟨hcol, hc⟩
+      mem_cIoo_swap_of_notMem_pair_right hxab (x.toPerm.injective.ne hll.symm)
+        (x.toPerm.injective.ne hrl.symm) hout₁ hcol
     exact D.second.not_mem_interior_of_isEmpty h₂ D.first_right_mem_middle_pointSet
       ((D.mem_interior_second_iff h _).mpr
-        ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hcol hd,
-          Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hxc hrow⟩)
+        (pair_mem_cIoo_of_separation hcol hd hxc hrow))
   by_cases hpright : p.1 = D.second.right
   · -- the point of the new source state on the terminal side column of the second rectangle
     rw [hpright, Equiv.swap_apply_right] at hpx
     rw [← hpx] at hrow
     rw [hpright] at hcol
     have hc : D.second.left ∈ Grid.cIoo D.first.right D.first.left :=
-      ((Grid.mem_cIoo_or_mem_cIoo_swap_iff D.first.left_ne_right).mpr
-        ⟨hll.symm, hrl.symm⟩).resolve_left fun hc => hout₁ ⟨hc, hrow⟩
+      mem_cIoo_swap_of_notMem_pair D.first.left_ne_right hll.symm hrl.symm hout₁ hrow
     have hxd : x D.second.right ∈ Grid.cIoo (x D.first.right) (x D.first.left) :=
-      ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hxab).mpr
-        ⟨fun hc => hlr.symm (x.toPerm.injective hc),
-          fun hc => hrr.symm (x.toPerm.injective hc)⟩).resolve_left
-        fun hc => hout₂ ⟨hcol, hc⟩
+      mem_cIoo_swap_of_notMem_pair_right hxab (x.toPerm.injective.ne hlr.symm)
+        (x.toPerm.injective.ne hrr.symm) hout₂ hcol
     exact D.second.not_mem_interior_of_isEmpty h₂ D.first_left_mem_middle_pointSet
       ((D.mem_interior_second_iff h _).mpr
-        ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hc hcol,
-          Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hrow hxd⟩)
+        (pair_mem_cIoo_of_separation hc hcol hrow hxd))
   · -- away from the second pair of side columns the two states agree
     rw [Equiv.swap_apply_of_ne_of_ne hpleft hpright] at hpx
     exact D.first.not_mem_interior_of_isEmpty h₁ ((x.mem_pointSet p).mpr hpx)
-      ((D.mem_interior_first_iff p).mpr ⟨hcol, hrow⟩)
+      ((D.first.mem_toGridRectangle_interior p).mpr ⟨hcol, hrow⟩)
 
 end GridRectangleDecomposition
 

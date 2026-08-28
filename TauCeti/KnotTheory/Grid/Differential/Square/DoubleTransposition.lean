@@ -7,10 +7,11 @@ module
 
 import Mathlib.RingTheory.MvPolynomial.Basic
 public import Mathlib.Algebra.CharP.Two
+public import TauCeti.KnotTheory.Grid.Differential.Square.Count
 public import TauCeti.KnotTheory.Grid.Differential.Square.SideOverlap
 
 /-!
-# The double-transposition terms of the unblocked grid differential square vanish
+# Disjoint double-transposition terms vanish in characteristic two
 
 The square of the unblocked grid differential `∂⁻` of `Unblocked.lean` is a sum over pairs of
 composable rectangles, and the juxtaposition argument for `∂⁻ ∘ ∂⁻ = 0` splits those pairs
@@ -22,11 +23,13 @@ That configuration is exactly the disjoint-side case of the case split in `SideO
 disjoint column transpositions move four columns, whereas two transpositions sharing a column move
 only three, so every two-step decomposition of such a target has disjoint pairs of side columns.
 Reordering the two rectangle moves, `GridRectangleDecomposition.commute`, is then an involution on
-the decompositions the unblocked differential counts: it exchanges the two toroidal domains, hence
-preserves emptiness, `X`-avoidance and the weight `V^{O(r)}`, and it changes the intermediate
-state, so it has no fixed point. In characteristic two the paired terms cancel.
+the decompositions the unblocked differential counts. Exchanging the two toroidal domains
+preserves `X`-avoidance and the weight `V^{O(r)}`. Emptiness is transferred separately by
+`isEmpty_commute_first` and `isEmpty_commute_second`, using the cyclic-separation lemma
+`Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap`. Reordering also changes the intermediate state, so
+it has no fixed point. In characteristic two the paired terms cancel.
 
-The shared bookkeeping in `Decomposition.lean` first reindexes the two-step terms as a single sum
+The shared bookkeeping in `Count.lean` first reindexes the two-step terms as a single sum
 over the finite set of decompositions both of whose rectangles the unblocked differential counts.
 That reindexing holds for every pair of grid states and coefficient ring, and is also the entry
 point for the remaining case: two rectangles sharing exactly one side column,
@@ -37,7 +40,7 @@ point for the remaining case: two rectangles sharing exactly one side column,
 * `TauCeti.GridRectangleDecomposition.hasDisjointSides_of_disjoint`: every two-step decomposition
   whose target is the source with two disjoint column transpositions applied has disjoint pairs of
   side columns.
-* `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply_eq_zero_of_disjoint`: in
+* `unblockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero_of_disjoint`: in
   characteristic two, that entry vanishes when the target is the source with two disjoint column
   transpositions applied.
 
@@ -86,7 +89,7 @@ theorem hasDisjointSides_of_disjoint (x : GridState n) {a b c d : Fin n} (hab : 
     intro e he
     by_contra hnot
     rw [Finset.mem_union, not_or] at hnot
-    have hfix := D.apply_eq_of_notMem_sideColumns hnot.1 hnot.2
+    have hfix := D.target_apply_of_notMem_sideColumns hnot.1 hnot.2
     simp only [Finset.mem_insert, Finset.mem_singleton] at he
     rcases he with rfl | rfl | rfl | rfl
     · exact hab (x.toPerm.injective (hza ▸ hfix).symm)
@@ -145,9 +148,9 @@ theorem commute_mem_unblockedDecompositions_iff {x z : GridState n}
   have hforward : ∀ (E : GridRectangleDecomposition x z) (hE : E.HasDisjointSides),
       E ∈ G.unblockedDecompositions x z → E.commute hE ∈ G.unblockedDecompositions x z := by
     intro E hE hmem
-    rw [G.mem_unblockedDecompositions E] at hmem
+    rw [G.mem_unblockedDecompositions x z E] at hmem
     obtain ⟨h₁, h₂⟩ := hmem
-    refine (G.mem_unblockedDecompositions _).mpr ⟨?_, ?_⟩
+    refine (G.mem_unblockedDecompositions x z _).mpr ⟨?_, ?_⟩
     · rw [G.mem_unblockedRectangles]
       refine ⟨E.isEmpty_commute_first hE (G.isEmpty_of_mem_unblockedRectangles h₁)
         (G.isEmpty_of_mem_unblockedRectangles h₂), ?_⟩
@@ -173,7 +176,7 @@ vanishes.
 Every two-step decomposition of such a target has disjoint pairs of side columns, so reordering
 the two rectangle moves is a weight-preserving involution on the counted decompositions with no
 fixed point. -/
-theorem sum_unblockedCoefficient_mul_unblockedCoefficient_eq_zero_of_disjoint
+theorem sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero
     (x : GridState n) {a b c d : Fin n} (hab : a ≠ b) (hcd : c ≠ d)
     (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d}) :
     ∑ y : GridState n, G.unblockedCoefficient R x y *
@@ -193,14 +196,15 @@ between a grid state and the state obtained from it by two disjoint column trans
 
 Together with the vanishing of the diagonal entries in `Annulus.lean`, this leaves only the case
 of two rectangles sharing exactly one side column. -/
-theorem unblockedDifferential_sq_single_apply_eq_zero_of_disjoint
+theorem unblockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero_of_disjoint
     (x : GridState n) {a b c d : Fin n} (hab : a ≠ b) (hcd : c ≠ d)
     (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d}) :
     G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1))
       ((x.swapColumns a b).swapColumns c d) = 0 := by
   rw [G.unblockedDifferential_sq_single_apply R x]
-  exact G.sum_unblockedCoefficient_mul_unblockedCoefficient_eq_zero_of_disjoint R x hab hcd
-    hdisjoint
+  exact
+    G.sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero
+      R x hab hcd hdisjoint
 
 end GridDiagram
 

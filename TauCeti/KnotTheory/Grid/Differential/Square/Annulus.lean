@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.KnotTheory.Grid.Rectangle.Annulus
-public import TauCeti.KnotTheory.Grid.Differential.Square.Decomposition
+public import TauCeti.KnotTheory.Grid.Unblocked
 
 /-!
 # The annular terms of the unblocked grid differential square vanish
