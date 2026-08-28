@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Algebra.ClopenNhdofOne
-public import TauCeti.Topology.Algebra.Group.Compact
 public import TauCeti.Topology.Algebra.Group.Quotient
 
 /-!
@@ -28,8 +27,7 @@ topological-group and separation instances, `G ⧸ N` is then a profinite group 
 Closedness of `N` is needed only for the total-disconnectedness results: a quotient by a
 non-closed subgroup is not even `T1` (take `ℤ̂ ⧸ ℤ` with `ℤ` dense), so
 `QuotientGroup.connectedComponent_one` and `QuotientGroup.instTotallyDisconnectedSpace`
-carry the hypothesis, while the clopen-image statement and the correspondence
-`QuotientGroup.comapMk'OpenNormalOrderIso` are valid for an arbitrary normal subgroup.
+carry the hypothesis, while the clopen-image statement is valid for an arbitrary normal subgroup.
 
 ## Main results
 
@@ -39,8 +37,6 @@ carry the hypothesis, while the clopen-image statement and the correspondence
   the quotient of a profinite group by a closed normal subgroup is totally disconnected.
 * `Subgroup.iInf_openNormalSubgroup_eq_bot`: the infimum of the open normal subgroups of a
   profinite group is trivial.
-* `QuotientGroup.comapMk'OpenNormalOrderIso`: open normal subgroups of `G ⧸ N` correspond,
-  as lattices, to the open normal subgroups of `G` containing `N`.
 
 ## References
 
@@ -140,7 +136,8 @@ theorem connectedComponent_one (hN : IsClosed (N : Set G)) :
     intro y hy
     have hy' : y ∈ ⋂ U : OpenNormalSubgroup G,
         (QuotientGroup.mk : G → G ⧸ N) '' (U : Set G) :=
-      Set.mem_iInter.mpr fun U => IsClopen.connectedComponent_subset (isClopen_image_mk U)
+      Set.mem_iInter.mpr fun U =>
+        IsClopen.connectedComponent_subset (isClopen_image_mk U.toOpenSubgroup)
         ⟨1, U.one_mem', QuotientGroup.mk_one N⟩ hy
     rw [key, himg] at hy'
     exact hy'
@@ -152,51 +149,6 @@ Together with the compactness, topological-group and separation instances, this 
 instance instTotallyDisconnectedSpace [hN : IsClosed (N : Set G)] :
     TotallyDisconnectedSpace (G ⧸ N) :=
   totallyDisconnectedSpace_iff_connectedComponent_one.mpr (connectedComponent_one hN)
-
-/-- The correspondence theorem for open normal subgroups: the open normal subgroups of
-`G ⧸ N` correspond, as lattices, to the open normal subgroups of `G` containing `N`. -/
-def comapMk'OpenNormalOrderIso (N : Subgroup G) [N.Normal] :
-    OpenNormalSubgroup (G ⧸ N) ≃o
-      { U : OpenNormalSubgroup G // (N : Subgroup G) ≤ U.toSubgroup } where
-  toFun U :=
-    ⟨{ toOpenSubgroup :=
-        ⟨Subgroup.comap (QuotientGroup.mk' N) U.toSubgroup,
-          (U.toOpenSubgroup.isOpen').preimage (QuotientGroup.continuous_mk (N := N))⟩ },
-      QuotientGroup.le_comap_mk' N U.toSubgroup⟩
-  invFun U :=
-    { toOpenSubgroup :=
-        ⟨Subgroup.map (QuotientGroup.mk' N) U.1.toSubgroup,
-          QuotientGroup.isOpenMap_coe _ U.1.toOpenSubgroup.isOpen'⟩
-      isNormal' :=
-        Subgroup.Normal.map inferInstance (QuotientGroup.mk' N) (QuotientGroup.mk'_surjective N) }
-  left_inv U := OpenNormalSubgroup.toSubgroup_injective
-    (Subgroup.map_comap_eq_self_of_surjective (QuotientGroup.mk'_surjective N) _)
-  right_inv U := Subtype.ext <| OpenNormalSubgroup.toSubgroup_injective <|
-    by
-      dsimp only
-      rw [QuotientGroup.comap_map_mk']
-      exact sup_eq_right.mpr U.2
-  map_rel_iff' {U V} := by
-    constructor
-    · intro h
-      exact (Subgroup.comap_le_comap_of_surjective (QuotientGroup.mk'_surjective N)).mp h
-    · intro h
-      exact (Subgroup.comap_le_comap_of_surjective (QuotientGroup.mk'_surjective N)).mpr h
-
-omit [CompactSpace G] [TotallyDisconnectedSpace G] in
-@[simp]
-theorem comapMk'OpenNormalOrderIso_apply_toSubgroup (U : OpenNormalSubgroup (G ⧸ N)) :
-    (comapMk'OpenNormalOrderIso N U : OpenNormalSubgroup G).toSubgroup =
-      Subgroup.comap (QuotientGroup.mk' N) U.toSubgroup := by
-  simp [comapMk'OpenNormalOrderIso]
-
-omit [CompactSpace G] [TotallyDisconnectedSpace G] in
-@[simp]
-theorem comapMk'OpenNormalOrderIso_symm_apply_toSubgroup
-    (U : { V : OpenNormalSubgroup G // (N : Subgroup G) ≤ V.toSubgroup }) :
-    ((comapMk'OpenNormalOrderIso N).symm U : OpenNormalSubgroup (G ⧸ N)).toSubgroup =
-      Subgroup.map (QuotientGroup.mk' N) U.1.toSubgroup := by
-  simp [comapMk'OpenNormalOrderIso]
 
 end QuotientGroup
 
