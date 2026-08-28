@@ -8,7 +8,6 @@ module
 public import TauCeti.Analysis.Complex.ContinuousLog.Basic
 import TauCeti.Topology.ConnectedComponents
 import Mathlib.Analysis.Complex.BranchLogRoot
-import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.Complex.Tietze
 import Mathlib.Analysis.Convex.Contractible
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
