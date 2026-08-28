@@ -251,13 +251,6 @@ theorem directSum_piece (G : ∀ i, InternalGrading R (M i)) (p : ℤ) :
     (directSum G).piece p = directSumPiece G p :=
   by rw [directSum]
 
-/-- Membership in a homogeneous piece of the direct-sum grading is componentwise. -/
-@[simp]
-theorem mem_directSum_piece_iff (G : ∀ i, InternalGrading R (M i)) (p : ℤ)
-    (x : ⨁ i, M i) :
-    x ∈ (directSum G).piece p ↔ ∀ i, x i ∈ (G i).piece p := by
-  simpa only [directSum_piece] using mem_directSumPiece_iff G p x
-
 /-- The inclusion of a degree-`p` element from one summand belongs to the degree-`p` piece of the
 direct-sum grading. -/
 theorem directSum_lof_mem_piece (G : ∀ i, InternalGrading R (M i)) (p : ℤ) (i : ι)
