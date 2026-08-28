@@ -6,7 +6,10 @@ Authors: Chris Birkbeck
 module
 
 public import Mathlib.NumberTheory.Modular
+public import TauCeti.Analysis.Complex.UpperHalfPlane.MoebiusAction
 public import TauCeti.Analysis.Complex.UpperHalfPlane.Measure
+public import TauCeti.GroupTheory.Index
+public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Basic
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 
@@ -16,9 +19,9 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 The measure theory of the standard fundamental domain `𝒟 = ModularGroup.fd` for `SL₂(ℤ)`,
 complementing its topology from `Mathlib/NumberTheory/Modular.lean`: `𝒟` has finite
 invariant measure, its frontier is null, and therefore integrals over `𝒟` and its interior
-`𝒟ᵒ` agree. The last section records the *tiling* half of the same picture — the translates
-`γ • 𝒟ᵒ` are open and pairwise disjoint — which is what turns a sum of integrals over
-translates into a single integral over their union.
+`𝒟ᵒ` agree. The last section records that the translates `γ • 𝒟ᵒ` are open and that two are
+disjoint unless their translating elements differ by a sign; these facts turn suitable finite
+sums of integrals over translates into a single integral over their union.
 
 ## Main results
 
@@ -30,13 +33,16 @@ translates into a single integral over their union.
 * `ModularGroup.isOpen_smul_fdo` and `ModularGroup.disjoint_smul_fdo`: the translates of the
   open fundamental domain are open, and two of them are disjoint unless the translating
   elements differ by a sign.
-* `ModularGroup.sl_smul_set`: the `SL(2, ℤ)`-action on subsets of `ℍ` is the `GL(2, ℝ)`-action
-  along the coercion.
+* `ModularGroup.pairwise_disjoint_smul_fdo_out_withCenter`: the translates of `𝒟ᵒ` indexed by
+  the cosets of `Γ·{±I}` are pairwise disjoint.
 
 Split out of the Petersson inner-product development ported from the AINTLIB
 `LeanModularForms` project
 (<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>,
 `Modularforms/PeterssonInnerProduct.lean`, Chris Birkbeck).
+
+The final section on translates of `𝒟ᵒ` was developed in Tau Ceti and has no counterpart in
+that AINTLIB source.
 -/
 
 public section
@@ -166,19 +172,12 @@ theorem fd_ae_eq_fdo : (fd : Set ℍ) =ᶠ[ae (volume : Measure ℍ)] fdo :=
   ((fdo_eq_interior_fd.symm ▸ interior_ae_eq_of_null_frontier volume_frontier_fd :
     (fdo : Set ℍ) =ᶠ[ae (volume : Measure ℍ)] fd)).symm
 
-/-! ### The translates of the open fundamental domain tile `ℍ` -/
-
-/-- **The `SL(2, ℤ)`-action on subsets of `ℍ` is the `GL(2, ℝ)`-action along the coercion**, the
-pointwise-image counterpart of `ModularGroup.sl_moeb`. Translates of `𝒟ᵒ` are naturally indexed
-by `SL(2, ℤ)`, where the orbit theory lives, while the continuity and measure-invariance
-instances are stated for the `GL(2, ℝ)`-action; this identification is the bridge, and it is
-needed as a rewrite even though the two actions are definitionally equal. -/
-theorem sl_smul_set (γ : SL(2, ℤ)) (S : Set ℍ) : γ • S = (γ : GL (Fin 2) ℝ) • S := (rfl)
+/-! ### Disjointness of translates of the open fundamental domain -/
 
 /-- Every translate of the open fundamental domain is open: translation is a homeomorphism
 of `ℍ`. -/
 theorem isOpen_smul_fdo (γ : SL(2, ℤ)) : IsOpen (γ • fdo) := by
-  rw [sl_smul_set]
+  rw [UpperHalfPlane.sl_smul_set]
   exact isOpen_fdo.smul _
 
 /-- **Distinct translates of the open fundamental domain are disjoint.** A point of
@@ -190,9 +189,30 @@ theorem disjoint_smul_fdo {γ δ : SL(2, ℤ)} (h₁ : γ⁻¹ * δ ≠ 1) (h₂
     Disjoint (γ • fdo) (δ • fdo) := by
   rw [Set.disjoint_left]
   rintro w ⟨z, hz, rfl⟩ ⟨z', hz', hw⟩
+  -- Beta-reduce the pointwise-set action recorded by membership in the translated set.
   have hw' : δ • z' = γ • z := hw
   refine (eq_one_or_neg_one_of_mem_fdo_mem_fdo hz' (g := γ⁻¹ * δ) ?_).elim h₁ h₂
   rw [mul_smul, hw', inv_smul_smul]
   exact hz
+
+/-- **The translates of `𝒟ᵒ` indexed by the cosets of `Γ·{±I}` are pairwise disjoint.** By
+`ModularGroup.disjoint_smul_fdo` it suffices that the chosen representatives of two distinct
+cosets differ neither by `1` nor by `−1`; and both `1` and `−1` lie in `Γ·{±I}`, so either
+coincidence would identify the two cosets. -/
+theorem pairwise_disjoint_smul_fdo_out_withCenter (Γ : Subgroup SL(2, ℤ)) :
+    Pairwise (Function.onFun Disjoint
+      fun q : SL(2, ℤ) ⧸ Γ.withCenter ↦ ((q.out)⁻¹ • fdo)) := by
+  intro q₁ q₂ hq
+  refine disjoint_smul_fdo ?_ ?_ <;> rw [inv_inv] <;> intro h <;> apply hq
+  · rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, mul_inv_eq_one.mp h]
+  · have hneg : q₁.out = -q₂.out := by
+      rw [mul_inv_eq_iff_eq_mul] at h
+      simpa using h
+    rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, hneg]
+    refine QuotientGroup.eq.mpr ?_
+    have hcalc : (-q₂.out)⁻¹ * q₂.out = -1 := by rw [← neg_inv, neg_mul, inv_mul_cancel]
+    rw [hcalc]
+    exact Γ.center_le_withCenter
+      (Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mpr (Or.inr rfl))
 
 end ModularGroup

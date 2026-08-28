@@ -9,7 +9,7 @@ public import TauCeti.Analysis.Complex.UpperHalfPlane.MoebiusAction
 public import TauCeti.NumberTheory.ModularForms.Petersson.FiniteIndex
 
 /-!
-# The Petersson product under a slash, and the fundamental-domain form of the product
+# The Petersson product under a slash and as an integral over translated domains
 
 Slashing by `α ∈ GL(2, ℝ)` of positive determinant moves the Petersson integrand along the
 Möbius action, and the invariant measure of `ℍ` does not see that motion. Writing
@@ -45,15 +45,13 @@ The same change of variables identifies the coset sum defining the Petersson pro
 `⟪f ∣[k] q⁻¹, g ∣[k] q⁻¹⟫_𝒟` is the integral of the unslashed Petersson integrand over the
 translate `q⁻¹ • 𝒟`; passing to the open domain `𝒟ᵒ`, which differs from `𝒟` by a null set,
 those translates — one for each coset of `Γ·{±I}` — become pairwise *disjoint*. So `⟪f, g⟫` is
-the integral of `petersson k f g` over `⋃_q q⁻¹ • 𝒟ᵒ`: the definition by cosets and the
-classical definition as an integral over a fundamental domain agree.
+the integral of `petersson k f g` over `⋃_q q⁻¹ • 𝒟ᵒ`. This file does not formalize that this
+union is itself a fundamental domain for `Γ`.
 
 ## Main results
 
 * `UpperHalfPlane.peterssonInner_smul_set`: the change of variables, `⟪f, h⟫_{α • S}` is the
   integral over `S` of the integrand composed with `α`.
-* `UpperHalfPlane.integrableOn_smul_set_iff`: integrability transports along the same
-  translation.
 * `UpperHalfPlane.peterssonInner_slash_slash_of_det_pos`: a simultaneous slash by a
   positive-determinant `α` rescales the pairing by `(det α) ^ (k - 2)` and translates the
   domain.
@@ -62,10 +60,12 @@ classical definition as an integral over a fundamental domain agree.
   from one argument of the pairing to the other.
 * `UpperHalfPlane.peterssonInner_slash_slash_SL`: the determinant-one case, where the scalar
   disappears and only the domain moves.
-* `Subgroup.pairwise_disjoint_smul_fdo_out`: the translates of `𝒟ᵒ` indexed by the cosets of
-  `Γ·{±I}` are pairwise disjoint.
-* `CuspForm.peterssonInnerCosets_eq_peterssonInner`: the Petersson product of `S_k(Γ)` is the
-  integral of `petersson k f g` over the union of those translates.
+* `UpperHalfPlane.integrableOn_petersson_sl_smul_fd`: the Petersson integrand of a cusp form
+  and a modular form is integrable over every `SL(2, ℤ)`-translate of `𝒟`.
+* `CuspForm.peterssonInnerCosets_eq_sum_smul_fd`: the coset pairing is a sum of integrals over
+  translates of `𝒟`.
+* `CuspForm.peterssonInnerCosets_eq_peterssonInner`: that sum is the single integral of
+  `petersson k f g` over the union of the corresponding translates of `𝒟ᵒ`.
 
 ## References
 
@@ -96,13 +96,6 @@ theorem peterssonInner_smul_set (k : ℤ) (g : GL (Fin 2) ℝ) (S : Set ℍ) (f 
   exact (measurePreserving_smul g volume).setIntegral_image_emb
     (measurableEmbedding_const_smul g) _ S
 
-/-- **Integrability transports along a translation of the domain**, again because the invariant
-measure of `ℍ` is `GL(2, ℝ)`-invariant. -/
-theorem integrableOn_smul_set_iff (g : GL (Fin 2) ℝ) (S : Set ℍ) (F : ℍ → ℂ) :
-    IntegrableOn F (g • S) volume ↔ IntegrableOn (fun τ ↦ F (g • τ)) S volume := by
-  rw [← Set.image_smul]
-  exact (measurePreserving_smul g volume).integrableOn_image (measurableEmbedding_const_smul g)
-
 /-! ### Slashing by an element of positive determinant -/
 
 /-- **A simultaneous slash rescales the Petersson pairing and translates its domain**:
@@ -110,13 +103,15 @@ theorem integrableOn_smul_set_iff (g : GL (Fin 2) ℝ) (S : Set ℍ) (F : ℍ �
 
 No integrability hypothesis is needed: both sides are the same set integral after the change of
 variables, and `MeasureTheory.integral` is defined (as `0`) even where it fails to converge. -/
-theorem peterssonInner_slash_slash_of_det_pos (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det)
+theorem peterssonInner_slash_slash_of_det_pos (k : ℤ)
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det)
     (S : Set ℍ) (f h : ℍ → ℂ) :
     peterssonInner k S (f ∣[k] g) (h ∣[k] g) =
       ((g : Matrix (Fin 2) (Fin 2) ℝ).det : ℂ) ^ (k - 2) * peterssonInner k (g • S) f h := by
   rw [peterssonInner_smul_set, peterssonInner_def]
   simp_rw [petersson_slash]
-  rw [σ_eq_refl_of_det_pos hg, Matrix.GeneralLinearGroup.val_det_apply, abs_of_pos hg]
+  simp only [σ_eq_refl_of_det_pos hg, ContinuousAlgEquiv.refl_apply,
+    Matrix.GeneralLinearGroup.val_det_apply, abs_of_pos hg]
   exact MeasureTheory.integral_const_mul _ _
 
 /-- **The adjoint of a slash, on the left argument**:
@@ -125,23 +120,25 @@ theorem peterssonInner_slash_slash_of_det_pos (hg : 0 < (g : Matrix (Fin 2) (Fin
 The classical statement uses the main involution `α^ι = (det α) · α⁻¹` in place of `α⁻¹`;
 slashing by the scalar matrix `(det α) · I` is multiplication by `(det α) ^ (k - 2)`, which is
 precisely the factor carried here. -/
-theorem peterssonInner_slash_left_of_det_pos (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det)
+theorem peterssonInner_slash_left_of_det_pos (k : ℤ)
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det)
     (S : Set ℍ) (f h : ℍ → ℂ) :
     peterssonInner k S (f ∣[k] g) h =
       ((g : Matrix (Fin 2) (Fin 2) ℝ).det : ℂ) ^ (k - 2) *
         peterssonInner k (g • S) f (h ∣[k] g⁻¹) := by
-  have hslash := peterssonInner_slash_slash_of_det_pos (k := k) hg S f (h ∣[k] g⁻¹)
+  have hslash := peterssonInner_slash_slash_of_det_pos k hg S f (h ∣[k] g⁻¹)
   rwa [← SlashAction.slash_mul, inv_mul_cancel, SlashAction.slash_one] at hslash
 
 /-- **The adjoint of a slash, on the right argument**:
 `⟪f, h ∣[k] α⟫_S = (det α) ^ (k - 2) · ⟪f ∣[k] α⁻¹, h⟫_{α • S}`. The mirror of
 `peterssonInner_slash_left_of_det_pos`, with the same proof. -/
-theorem peterssonInner_slash_right_of_det_pos (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det)
+theorem peterssonInner_slash_right_of_det_pos (k : ℤ)
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det)
     (S : Set ℍ) (f h : ℍ → ℂ) :
     peterssonInner k S f (h ∣[k] g) =
       ((g : Matrix (Fin 2) (Fin 2) ℝ).det : ℂ) ^ (k - 2) *
         peterssonInner k (g • S) (f ∣[k] g⁻¹) h := by
-  have hslash := peterssonInner_slash_slash_of_det_pos (k := k) hg S (f ∣[k] g⁻¹) h
+  have hslash := peterssonInner_slash_slash_of_det_pos k hg S (f ∣[k] g⁻¹) h
   rwa [← SlashAction.slash_mul, inv_mul_cancel, SlashAction.slash_one] at hslash
 
 /-! ### Slashing by an element of `SL(2, ℤ)` -/
@@ -151,34 +148,36 @@ the determinant is `1`, so the scalar of `peterssonInner_slash_slash_of_det_pos`
 theorem peterssonInner_slash_slash_SL (k : ℤ) (γ : SL(2, ℤ)) (S : Set ℍ) (f h : ℍ → ℂ) :
     peterssonInner k S (f ∣[k] γ) (h ∣[k] γ) = peterssonInner k (γ • S) f h := by
   have hdet_eq : (((γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det) = 1 := by
-    change ((Matrix.SpecialLinearGroup.mapGL ℝ γ).det : ℝ) = 1
+    rw [← Matrix.GeneralLinearGroup.val_det_apply]
     exact congrArg Units.val (Matrix.SpecialLinearGroup.det_mapGL γ)
   have hdet : 0 < (((γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det) :=
-    hdet_eq.symm ▸ one_pos
+    det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨γ, rfl⟩)
   simpa only [ModularForm.SL_slash, hdet_eq, Complex.ofReal_one, one_zpow, one_mul,
-    sl_smul_set] using
-    peterssonInner_slash_slash_of_det_pos (g := (γ : GL (Fin 2) ℝ)) (k := k) hdet S f h
+    sl_smul_set] using peterssonInner_slash_slash_of_det_pos
+      (g := (γ : GL (Fin 2) ℝ)) k hdet S f h
+
+/-- **The Petersson integrand of a cusp form and a modular form is integrable over every
+`SL(2, ℤ)`-translate of `𝒟`.** Transporting the integral back to `𝒟` turns the integrand into
+that of the simultaneously slashed pair, where the cusp-form bound applies. -/
+theorem integrableOn_petersson_sl_smul_fd {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
+    (k : ℤ) (𝒢 : Subgroup (GL (Fin 2) ℝ)) [𝒢.IsArithmetic]
+    [CuspFormClass F 𝒢 k] [ModularFormClass F' 𝒢 k]
+    (f : F) (f' : F') (γ : SL(2, ℤ)) :
+    IntegrableOn (petersson k ⇑f ⇑f') (γ • fd) volume := by
+  rw [sl_smul_set, integrableOn_smul_set_iff]
+  refine (integrableOn_petersson_slash k 𝒢 f f' γ).congr_fun (fun τ _ ↦ ?_)
+    isClosed_fd.measurableSet
+  simp only [petersson_slash_SL, ModularGroup.sl_moeb]
 
 end UpperHalfPlane
 
-/-! ### The Petersson product as an integral over a fundamental domain -/
+/-! ### The Petersson product as an integral over a union of translated domains -/
 
 namespace CuspForm
 
 open Matrix.SpecialLinearGroup
 
 variable {Γ : Subgroup SL(2, ℤ)} [Γ.FiniteIndex] {k : ℤ}
-
-/-- **The Petersson integrand of two cusp forms is integrable over every translate of
-`𝒟ᵒ`.** Transporting the integral back to `𝒟` turns the integrand into that of the slashed
-pair, where the cusp-form bound applies (`UpperHalfPlane.integrableOn_petersson_slash`). -/
-theorem integrableOn_petersson_smul_fdo (f g : CuspForm (Γ.map (mapGL ℝ)) k) (γ : SL(2, ℤ)) :
-    IntegrableOn (petersson k ⇑f ⇑g) (γ • fdo) volume := by
-  refine IntegrableOn.mono_set ?_ (Set.smul_set_mono fdo_subset_fd)
-  rw [sl_smul_set, UpperHalfPlane.integrableOn_smul_set_iff]
-  refine (UpperHalfPlane.integrableOn_petersson_slash k (Γ.map (mapGL ℝ)) f g γ).congr_fun
-    (fun τ _ ↦ ?_) isClosed_fd.measurableSet
-  simp only [petersson_slash_SL, sl_moeb]
 
 /-- **The Petersson product of `S_k(Γ)` is a sum of integrals over translates of `𝒟`.** Each
 coset summand of `CuspForm.peterssonInnerCosets` slashes both arguments by the same element of
@@ -191,25 +190,25 @@ theorem peterssonInnerCosets_eq_sum_smul_fd (f g : CuspForm (Γ.map (mapGL ℝ))
   rw [peterssonInnerCosets_def]
   exact Finset.sum_congr rfl fun q _ ↦ UpperHalfPlane.peterssonInner_slash_slash_SL _ _ _ _ _
 
-/-- **The Petersson product of `S_k(Γ)` is the integral over a fundamental domain.** The
-translates `q⁻¹ • 𝒟ᵒ`, one for each coset of `Γ·{±I}` in `SL(2, ℤ)`, are open, pairwise
-disjoint, and carry an integrable Petersson integrand, so the sum of integrals over them is the
-integral over their union. Together with `peterssonInnerCosets_eq_sum_smul_fd` — and the fact
-that `𝒟` and `𝒟ᵒ` differ by a null set — this identifies the coset-sum definition of the
-Petersson product with the classical definition as an integral over a fundamental domain. -/
+/-- **The Petersson product of `S_k(Γ)` is a single integral over a union of translates.** The
+sets `q⁻¹ • 𝒟ᵒ`, one for each coset of `Γ·{±I}` in `SL(2, ℤ)`, are open and pairwise disjoint,
+and carry an integrable Petersson integrand, so the sum of integrals over them is the integral
+over their union. This theorem does not assert that the union is a fundamental domain for
+`Γ`. -/
 theorem peterssonInnerCosets_eq_peterssonInner (f g : CuspForm (Γ.map (mapGL ℝ)) k) :
     peterssonInnerCosets f g =
       UpperHalfPlane.peterssonInner k
         (⋃ q : SL(2, ℤ) ⧸ Γ.withCenter, ((q.out)⁻¹ • fdo)) ⇑f ⇑g := by
   rw [UpperHalfPlane.peterssonInner_def, integral_iUnion_fintype
       (fun q ↦ (isOpen_smul_fdo _).measurableSet)
-      Γ.pairwise_disjoint_smul_fdo_out
-      (fun q ↦ integrableOn_petersson_smul_fdo f g _),
+      (ModularGroup.pairwise_disjoint_smul_fdo_out_withCenter Γ)
+      (fun q ↦ (UpperHalfPlane.integrableOn_petersson_sl_smul_fd
+        k (Γ.map (mapGL ℝ)) f g _).mono_set (Set.smul_set_mono fdo_subset_fd)),
     peterssonInnerCosets_eq_sum_smul_fd]
   refine Finset.sum_congr rfl fun q _ ↦ ?_
   have hae : ((((q.out)⁻¹ : SL(2, ℤ)) • fd : Set ℍ)) =ᵐ[volume]
       (((q.out)⁻¹ : SL(2, ℤ)) • fdo) := by
-    rw [sl_smul_set, sl_smul_set]
+    rw [UpperHalfPlane.sl_smul_set, UpperHalfPlane.sl_smul_set]
     exact (MeasureTheory.smul_set_ae_eq _).mpr fd_ae_eq_fdo
   rw [UpperHalfPlane.peterssonInner_congr_set hae, UpperHalfPlane.peterssonInner_def]
 

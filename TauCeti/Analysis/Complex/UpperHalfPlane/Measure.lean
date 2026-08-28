@@ -22,11 +22,16 @@ subsets of `ℂ` are null in `ℍ`.
   `UpperHalfPlane.comap_absolutelyContinuous_volume`: mutual absolute continuity.
 * the `IsOpenPosMeasure` instance for `volume : Measure ℍ`.
 * `UpperHalfPlane.volume_preimage_coe_null`: preimages of Lebesgue-null sets are null.
+* `UpperHalfPlane.integrableOn_smul_set_iff`: integrability transports along the
+  `GL(2, ℝ)`-action.
 
 Split out of the Petersson inner-product development ported from the AINTLIB
 `LeanModularForms` project
 (<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>,
 `Modularforms/PeterssonInnerProduct.lean`, Chris Birkbeck).
+
+The action-transport lemma was developed in Tau Ceti and has no counterpart in that AINTLIB
+source.
 -/
 
 public section
@@ -35,9 +40,17 @@ noncomputable section
 
 open MeasureTheory Measure Set
 
-open scoped NNReal
+open scoped MatrixGroups NNReal Pointwise
 
 namespace UpperHalfPlane
+
+/-- **Integrability transports along a translation of the domain**, because the invariant
+measure of `ℍ` is `GL(2, ℝ)`-invariant. -/
+theorem integrableOn_smul_set_iff {E : Type*} [TopologicalSpace E] [ContinuousENorm E]
+    (g : GL (Fin 2) ℝ) (S : Set ℍ) (F : ℍ → E) :
+    IntegrableOn F (g • S) volume ↔ IntegrableOn (fun τ ↦ F (g • τ)) S volume := by
+  rw [← Set.image_smul]
+  exact (measurePreserving_smul g volume).integrableOn_image (measurableEmbedding_const_smul g)
 
 /-- The pullback of the Lebesgue measure along `ℍ ↪ ℂ` is positive on nonempty open sets. -/
 instance : IsOpenPosMeasure (Measure.comap UpperHalfPlane.coe (volume : Measure ℂ)) :=
