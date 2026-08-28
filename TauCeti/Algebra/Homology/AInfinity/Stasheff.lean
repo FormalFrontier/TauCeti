@@ -458,6 +458,56 @@ section LowArity
 variable [CommRing R] [AddCommGroup A] [Module R A]
 variable (m : ∀ k : ℕ, MultilinearMap R (fun _ : Fin k ↦ A) A) (d : ℕ → ℤ) (x : ℕ → A)
 
+/- Keep the implementation-level sign and tuple normalization in this private layer.  The
+displayed identities below then only choose the relevant terms and collect them additively. -/
+private theorem stasheffTerm_normalize (p s t : ℕ) :
+    stasheffTerm m d x p s t =
+      negOnePowCast R ((p : ℤ) + s * t) •
+        negOnePowCast R ((2 - s) * ∑ i ∈ Finset.range p, d i) •
+          evalNat (m (p + 1 + t))
+            (replaceBlock x p s (evalNat (m s) fun j ↦ x (p + j))) := by
+  rw [stasheffTerm_def, negOnePowCast_add, mul_smul]
+
+private theorem evalNat_replaceBlock_one (s : ℕ) (v : A) :
+    evalNat (m 1) (replaceBlock x 0 s v) = m 1 ![v] := by
+  simp only [evalNat_one, replaceBlock_self]
+
+private theorem evalNat_replaceBlock_two_zero (s : ℕ) (v : A) :
+    evalNat (m 2) (replaceBlock x 0 s v) = m 2 ![v, x s] := by
+  simp [evalNat_two]
+
+private theorem evalNat_replaceBlock_two_one (s : ℕ) (v : A) :
+    evalNat (m 2) (replaceBlock x 1 s v) = m 2 ![x 0, v] := by
+  simp [evalNat_two]
+
+private theorem evalNat_replaceBlock_three_zero (s : ℕ) (v : A) :
+    evalNat (m 3) (replaceBlock x 0 s v) = m 3 ![v, x s, x (s + 1)] := by
+  simp [evalNat_three, Nat.add_comm]
+
+private theorem evalNat_replaceBlock_three_one (s : ℕ) (v : A) :
+    evalNat (m 3) (replaceBlock x 1 s v) = m 3 ![x 0, v, x (s + 1)] := by
+  simp [evalNat_three, Nat.add_comm]
+
+private theorem evalNat_replaceBlock_three_two (s : ℕ) (v : A) :
+    evalNat (m 3) (replaceBlock x 2 s v) = m 3 ![x 0, x 1, v] := by
+  simp [evalNat_three]
+
+private theorem evalNat_replaceBlock_four_zero (s : ℕ) (v : A) :
+    evalNat (m 4) (replaceBlock x 0 s v) = m 4 ![v, x s, x (s + 1), x (s + 2)] := by
+  simp [evalNat_four, Nat.add_comm]
+
+private theorem evalNat_replaceBlock_four_one (s : ℕ) (v : A) :
+    evalNat (m 4) (replaceBlock x 1 s v) = m 4 ![x 0, v, x (s + 1), x (s + 2)] := by
+  simp [evalNat_four, Nat.add_comm]
+
+private theorem evalNat_replaceBlock_four_two (s : ℕ) (v : A) :
+    evalNat (m 4) (replaceBlock x 2 s v) = m 4 ![x 0, x 1, v, x (s + 2)] := by
+  simp [evalNat_four, Nat.add_comm]
+
+private theorem evalNat_replaceBlock_four_three (s : ℕ) (v : A) :
+    evalNat (m 4) (replaceBlock x 3 s v) = m 4 ![x 0, x 1, x 2, v] := by
+  simp [evalNat_four]
+
 /- These expansions isolate the finite indexing arithmetic from the element-level sign audit
 below.  Keeping them private avoids adding arity-specific combinatorics to the public API. -/
 private theorem stasheffSum_one_terms :
@@ -500,9 +550,11 @@ private theorem stasheffSum_four_terms :
 /-- The arity-one identity is `m₁ m₁ = 0`. -/
 theorem stasheffSum_one : stasheffSum m d x 1 = m 1 ![m 1 ![x 0]] := by
   rw [stasheffSum_one_terms]
-  simp only [stasheffTerm_def, Nat.reduceAdd, CharP.cast_eq_zero, zero_add,
+  simp only [stasheffTerm_normalize, evalNat_replaceBlock_one]
+  simp only [CharP.cast_eq_zero, zero_add,
     Finset.range_zero, Finset.sum_empty, mul_zero, add_zero, Nat.cast_one,
-    negOnePowCast_zero, evalNat_one, replaceBlock_self, one_smul]
+    evalNat_one]
+  simp only [negOnePowCast_zero, one_smul]
 
 /-- The arity-two identity, evaluated: `m₁ m₂ - m₂ (m₁ ⊗ 1) - m₂ (1 ⊗ m₁)`, where the Koszul rule
 turns the last term into `(-1) ^ (d 0)` times `m₂ (a, m₁ b)`. -/
@@ -510,13 +562,13 @@ theorem stasheffSum_two : stasheffSum m d x 2
     = m 1 ![m 2 ![x 0, x 1]] - m 2 ![m 1 ![x 0], x 1]
       - negOnePowCast R (d 0) • m 2 ![x 0, m 1 ![x 1]] := by
   rw [stasheffSum_two_terms]
-  simp only [stasheffTerm_def, Nat.reduceAdd, negOnePowCast_add, CharP.cast_eq_zero,
-    negOnePowCast_zero, one_mul, Finset.range_one,
-    Finset.sum_singleton, Finset.range_zero, Finset.sum_empty, mul_zero, mul_one,
-    zero_add, Nat.cast_one, negOnePowCast_one, evalNat_one, evalNat_two,
-    replaceBlock_self, Order.lt_one_iff, replaceBlock_of_gt, neg_smul, one_smul,
-    Nat.cast_ofNat, Nat.reduceSub, Nat.add_zero, neg_mul, Int.reduceSub, add_zero,
-    replaceBlock_of_lt]
+  simp only [stasheffTerm_normalize, evalNat_replaceBlock_one,
+    evalNat_replaceBlock_two_zero, evalNat_replaceBlock_two_one]
+  simp only [CharP.cast_eq_zero,
+    Finset.range_one, Finset.sum_singleton, Finset.range_zero, Finset.sum_empty,
+    mul_zero, mul_one, one_mul, zero_add, add_zero, Nat.cast_one, Nat.cast_ofNat,
+    Int.reduceSub, evalNat_one, evalNat_two]
+  simp only [negOnePowCast_zero, negOnePowCast_one, one_smul, neg_smul]
   abel
 
 /-- The arity-three identity, evaluated using the supplied degrees `d 0, d 1, d 2` (without a
@@ -531,14 +583,16 @@ theorem stasheffSum_three : stasheffSum m d x 3
       + negOnePowCast R (d 0 + d 1) • m 3 ![x 0, x 1, m 1 ![x 2]] := by
   have h2 : negOnePowCast R 2 = 1 := negOnePowCast_even (by norm_num)
   rw [stasheffSum_three_terms]
-  simp only [stasheffTerm_def, Nat.reduceAdd, negOnePowCast_add, CharP.cast_eq_zero,
-    negOnePowCast_zero, one_mul, Finset.sum_range_succ, Finset.range_one,
-    Finset.sum_singleton, Finset.range_zero, Finset.sum_empty, mul_zero, mul_one,
-    zero_add, Nat.cast_one, Nat.cast_ofNat, h2, evalNat_one, evalNat_three,
-    replaceBlock_self, Order.lt_one_iff, replaceBlock_of_gt, Order.lt_two_iff, zero_le,
-    one_smul, Nat.reduceSub, evalNat_two, Nat.add_zero, negOnePowCast_one, neg_mul,
-    neg_smul, Int.reduceSub, add_zero, replaceBlock_of_lt, Std.le_refl, sub_self,
-    zero_mul, neg_neg]
+  simp only [stasheffTerm_normalize, evalNat_replaceBlock_one,
+    evalNat_replaceBlock_two_zero, evalNat_replaceBlock_two_one,
+    evalNat_replaceBlock_three_zero, evalNat_replaceBlock_three_one,
+    evalNat_replaceBlock_three_two]
+  simp only [Nat.reduceAdd, CharP.cast_eq_zero,
+    Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton, Finset.range_zero,
+    Finset.sum_empty, mul_zero, mul_one, one_mul, zero_add, add_zero, Nat.cast_one,
+    Nat.cast_ofNat, Int.reduceAdd, Int.reduceSub, evalNat_one,
+    evalNat_two, evalNat_three, sub_self, zero_mul]
+  simp only [negOnePowCast_zero, negOnePowCast_one, h2, one_smul, neg_smul]
   abel
 
 /-- The arity-four identity, evaluated using the supplied degrees `d 0, d 1, d 2, d 3` (without a
@@ -560,15 +614,19 @@ theorem stasheffSum_four : stasheffSum m d x 4
   have h3 : negOnePowCast R 3 = -1 := negOnePowCast_odd (by use 1; norm_num)
   have h4 : negOnePowCast R 4 = 1 := negOnePowCast_even (by use 2; norm_num)
   rw [stasheffSum_four_terms]
-  simp only [stasheffTerm_def, Nat.reduceAdd, negOnePowCast_add, CharP.cast_eq_zero,
-    negOnePowCast_zero, one_mul, Finset.sum_range_succ, Finset.range_one,
-    Finset.sum_singleton, Finset.range_zero, Finset.sum_empty, mul_zero, mul_one,
-    zero_add, Nat.cast_one, Nat.cast_ofNat, h3, evalNat_one, evalNat_four,
-    replaceBlock_self, Order.lt_one_iff, replaceBlock_of_gt, Order.lt_two_iff, zero_le,
-    Nat.ofNat_pos, neg_smul, one_smul, Nat.reduceSub, Int.reduceMul, h4, evalNat_two,
-    evalNat_three, Nat.add_zero, negOnePowCast_one, neg_mul, h2, Int.reduceSub, add_zero,
-    replaceBlock_of_lt, Std.le_refl, Nat.one_lt_ofNat, sub_self, zero_mul,
-    negOnePowCast_neg, Nat.lt_add_one]
+  simp only [stasheffTerm_normalize, evalNat_replaceBlock_one,
+    evalNat_replaceBlock_two_zero, evalNat_replaceBlock_two_one,
+    evalNat_replaceBlock_three_zero, evalNat_replaceBlock_three_one,
+    evalNat_replaceBlock_three_two, evalNat_replaceBlock_four_zero,
+    evalNat_replaceBlock_four_one, evalNat_replaceBlock_four_two,
+    evalNat_replaceBlock_four_three]
+  simp only [Nat.reduceAdd, CharP.cast_eq_zero,
+    Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton, Finset.range_zero,
+    Finset.sum_empty, mul_zero, mul_one, one_mul, zero_add, add_zero, Nat.cast_one,
+    Nat.cast_ofNat, Int.reduceAdd, Int.reduceMul, Int.reduceSub, neg_mul,
+    evalNat_one, evalNat_two, evalNat_three, evalNat_four, sub_self, zero_mul]
+  simp only [negOnePowCast_zero, negOnePowCast_one, h2, h3, h4, negOnePowCast_neg,
+    one_smul, neg_smul]
   abel
 
 /-- The arity-two identity is the Leibniz rule for `m₁` and `m₂`, with the Koszul sign
