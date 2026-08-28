@@ -41,7 +41,12 @@ noncomputable def continuousMonoidHomEquiv :
       (ConcreteCategory.homEquiv (C := GrpCat))
 
 /-- The unbundled profinite-completion correspondence restricts a continuous homomorphism along
-the canonical map. -/
+the canonical map.
+
+Mathlib provides no propositional computation rule for the forward direction of
+`ProfiniteGrp.ProfiniteCompletion.homEquiv`: its forward map is definitionally precomposition by
+the unit. The proof below intentionally isolates that definitional reduction behind this opaque
+simp theorem. -/
 @[simp]
 theorem continuousMonoidHomEquiv_apply
     (f : ProfiniteGrp.ProfiniteCompletion.completion (GrpCat.of G) →ₜ* P) (g : G) :
