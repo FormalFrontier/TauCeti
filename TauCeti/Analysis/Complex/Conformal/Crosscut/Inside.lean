@@ -38,6 +38,19 @@ This is the planar-separation step of the `ConformalMapping` roadmap (L5).
 * `TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` —
   **one of the two image pieces lies in the filled hull of a closed bounded set through the image
   crosscut.**
+* `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt'` — diameter selection: when the enclosing
+  set is narrower than the far side, the near side is enclosed. Consumes the disjunction above
+  without the `hp`/`hin` plane-separation input.
+* `TauCeti.image_subset_filledHull_of_disjoint_inter_sphere` — an image side meeting the inside of
+  such a curve lies inside it.
+* `TauCeti.nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull` —
+  one of the two image sides meets the inside of a curve with inside points next to the image
+  domain. This is where the inside assumption `hin : p ∈ closure (filledHull K \ K)` is
+  introduced; the diameter criterion below passes it on unchanged.
+* `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` — such a curve, if narrower than the far
+  side, encloses the *near* side.
+* `TauCeti.image_inter_ball_subset_filledHull_of_frontier_subset` — the enclosure hypothesis is
+  implied by the boundary-piece hypothesis of `Conformal/CutDiameter.lean`.
 
 ## References
 
@@ -281,20 +294,12 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
   obtain ⟨hleft, hright⟩ :=
     mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg hf hinj hz₀ hρ
   -- neither image piece meets `K`
-  have hnotK : ∀ V ⊆ ball c r, Disjoint V (sphere ζ ρ) → Disjoint (f '' V) K := by
-    intro V hV hVs
-    rw [Set.disjoint_left]
-    intro w hwV hwK
-    rcases hKsub hwK with hcl | hfr
-    · exact Set.disjoint_left.mp
-        (disjoint_image_closure_image_inter_sphere isOpen_ball hf hinj hV hVs) hwV hcl
-    · exact (Set.eq_empty_iff_forall_notMem.mp hΩ.inter_frontier_eq) w
-        ⟨image_mono hV hwV, hfr⟩
   have hnearK : Disjoint (f '' (ball c r ∩ ball ζ ρ)) K :=
-    hnotK _ inter_subset_left
-      (Set.disjoint_left.mpr fun x hx hx' => (mem_ball.mp hx.2).ne (mem_sphere.mp hx'))
+    disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
+      isOpen_ball hf hinj inter_subset_left disjoint_inter_ball_inter_sphere hKsub
   have hfarK : Disjoint (f '' (ball c r \ closedBall ζ ρ)) K :=
-    hnotK _ sdiff_subset (Set.disjoint_left.mpr fun x hx hx' => hx.2 (sphere_subset_closedBall hx'))
+    disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
+      isOpen_ball hf hinj sdiff_subset disjoint_sdiff_closedBall_inter_sphere hKsub
   -- the two-sidedness theorem, applied to `K` and the segment on `[-η/2, η/2]`
   have hpγ : p ∈ f '' (ball c r ∩ sphere ζ ρ) := mem_image_of_mem f hz₀
   have hpK : p ∈ K := hγKcl (subset_closure hpγ)
@@ -325,6 +330,28 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
     exact IsPreconnected.subset_filledHull hB hfarK
       ⟨_, hfar (η / 2) ⟨by linarith, by linarith⟩, hy⟩
 
+/-- **Diameter selection: when the enclosing set is narrower than the far side, the near side is
+enclosed.** This consumes the disjunction
+`TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` by
+excluding the far-side case: trapping the far side inside `K` gives
+`diam (f '' (ball c r \ closedBall ζ ρ)) ≤ diam K`, contradicting the hypothesis. Unlike
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt`, no `hp`/`hin` plane-separation input is
+needed — the preconnectedness hypothesis `hKp` on `K \ {p}` is discharged by
+`IsJordanCurve.isPathConnected_sdiff_singleton` in the intended application. -/
+theorem image_inter_ball_subset_filledHull_of_diam_lt'
+    (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
+    (hf : DifferentiableOn ℂ f (ball c r))
+    (hinj : InjOn f (ball c r)) {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
+    (hγK : f '' (ball c r ∩ sphere ζ ρ) ⊆ K)
+    (hKsub : K ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r))
+    (hKp : ∀ p ∈ f '' (ball c r ∩ sphere ζ ρ), IsPreconnected (K \ {p}))
+    (hlt : diam K < diam (f '' (ball c r \ closedBall ζ ρ))) :
+    f '' (ball c r ∩ ball ζ ρ) ⊆ filledHull K := by
+  rcases image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull
+    hζ hρ hρr hf hinj hK hKb hγK hKsub hKp with h | h
+  · exact h
+  · exact absurd (diam_le_diam_of_subset_filledHull hKb h) (not_le.mpr hlt)
+
 /-! ## An enclosed side is trapped, and narrow -/
 
 section OldInside
@@ -333,33 +360,31 @@ variable {U K V : Set ℂ} {p : ℂ}
 
 open Topology
 
-private theorem disjoint_image_of_subset_closure_union_frontier (hUo : IsOpen U)
-    (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hVU : V ⊆ U)
-    (hV : Disjoint V (U ∩ sphere ζ ρ))
-    (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U)) : Disjoint (f '' V) K := by
-  have hΩo : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hd hinj
-  rw [Set.disjoint_left]
-  intro w hwV hwK
-  rcases hK hwK with hcl | hfr
-  · have hVs : Disjoint V (sphere ζ ρ) := by
-      rw [Set.disjoint_left] at hV ⊢
-      exact fun x hxV hxs => hV hxV ⟨hVU hxV, hxs⟩
-    exact Set.disjoint_left.mp
-      (disjoint_image_closure_image_inter_sphere hUo hd hinj hVU hVs) hwV hcl
-  · exact (Set.eq_empty_iff_forall_notMem.mp hΩo.inter_frontier_eq) w
-      ⟨image_mono hVU hwV, hfr⟩
-
-/-- **An image side that meets the inside of such a curve lies inside it.** -/
+/-- **An image side that meets the inside of such a curve lies inside it.** The side is
+preconnected as a continuous image of a preconnected set and disjoint from `K` by
+`TauCeti.disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image`,
+so `TauCeti.IsPreconnected.subset_filledHull`
+traps it in the bounded component of `Kᶜ` it meets. Instantiate `V` at `U ∩ ball ζ ρ` for the near
+side and at `U \ closedBall ζ ρ` for the far side. -/
 theorem image_subset_filledHull_of_disjoint_inter_sphere (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hVU : V ⊆ U)
     (hV : Disjoint V (U ∩ sphere ζ ρ)) (hVc : IsPreconnected V)
     (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U))
     (hne : (f '' V ∩ filledHull K).Nonempty) : f '' V ⊆ filledHull K :=
   IsPreconnected.subset_filledHull (hVc.image f (hd.continuousOn.mono hVU))
-    (disjoint_image_of_subset_closure_union_frontier hUo hd hinj hVU hV hK) hne
+    (disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
+      hUo hd hinj hVU hV hK) hne
 
-/-- **One of the two image sides meets the inside of a curve, given an image-domain point adherent
-to the inside.** -/
+/-- **One of the two image sides meets the inside of a curve with a point of its inside in the image
+domain.** If a point `p` of the image domain is a limit of points of `filledHull K \ K`,
+then such a point
+`q` close enough to `p` lies in the open image domain; being off `K` it is off the image crosscut,
+so it lies on one of the two image sides, and it lies in `filledHull K`.
+
+This is where the inside assumption is introduced, at one point as a hypothesis; the diameter
+criterion below passes it on unchanged. For a Jordan curve `K` the hypothesis is the
+plane-separation statement `J ⊆ closure (filledHull J \ J)` recorded in the roadmap section of
+`TauCeti/Topology/FilledHull.lean`, read at `p`. -/
 theorem nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull
     (hΩo : IsOpen (f '' U)) (hγ : f '' (U ∩ sphere ζ ρ) ⊆ K)
     (hp : p ∈ f '' U) (hin : p ∈ closure (filledHull K \ K)) :
@@ -370,7 +395,18 @@ theorem nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_int
   rw [image_eq_image_inter_ball_union_image_sdiff_closedBall_union_image_inter_sphere] at hqΩ
   exact (hqΩ.resolve_right fun h => hqK (hγ h)).imp (fun h => ⟨q, h, hqH⟩) fun h => ⟨q, h, hqH⟩
 
-/-- **When `K` is narrower than the far-side image, the near side is enclosed.** -/
+/-- **A narrow curve next to a crosscut encloses the near side.** Let `K` be bounded, run from the
+image crosscut along the boundary of the image domain, and have a point of its inside next to the
+image crosscut. If `K` is narrower than the *far* image side — the situation at a small crosscut
+radius, where the far side is nearly the whole image domain — then it is the *near* side that `K`
+encloses, and by `TauCeti.diam_le_diam_of_subset_filledHull` that side is no wider than `K`.
+
+Of the two alternatives
+`TauCeti.nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull`
+offers, the far one
+is excluded: it would trap the far side inside `K` and so make it no wider than `K`. The theorem
+still requires both cut sides to be preconnected, a point in the image domain, and the strict
+far-side diameter bound; those inputs are not produced here. -/
 theorem image_inter_ball_subset_filledHull_of_diam_lt (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U)
     (hAc : IsPreconnected (U ∩ ball ζ ρ)) (hBc : IsPreconnected (U \ closedBall ζ ρ))
@@ -387,7 +423,15 @@ theorem image_inter_ball_subset_filledHull_of_diam_lt (hUo : IsOpen U)
       (image_subset_filledHull_of_disjoint_inter_sphere hUo hd hinj sdiff_subset
         disjoint_sdiff_closedBall_inter_sphere hBc hK h)) (not_le.mpr hlt)
 
-/-- **A boundary piece enclosing what the near side clings to encloses the near side.** -/
+/-- **A boundary piece enclosing what the near side clings to encloses the near side.** If every
+boundary point of the image domain on the frontier of the near image side lies in `E`, then the
+frontier of that side lies in `f '' (U ∩ sphere ζ ρ) ∪ E` by
+`TauCeti.frontier_image_inter_ball_subset`, so `TauCeti.subset_filledHull_of_frontier_subset`
+encloses the side.
+
+Thus the frontier route supplies the same filled-hull inclusion as the enclosure route, with the
+same `E`; either inclusion becomes a width bound on the near side by
+`TauCeti.diam_le_diam_of_subset_filledHull`. -/
 theorem image_inter_ball_subset_filledHull_of_frontier_subset (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U)
     (hb : IsBounded (f '' (U ∩ ball ζ ρ))) {E : Set ℂ}

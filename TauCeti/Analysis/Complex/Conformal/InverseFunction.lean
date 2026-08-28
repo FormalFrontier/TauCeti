@@ -45,8 +45,7 @@ theorem DifferentiableOn.invFunOn {f : ℂ → ℂ} {U : Set ℂ} (hf : Differen
   exact ((analyticAt_comp_iff_of_deriv_ne_zero hfz hderiv).mp hcomp).differentiableAt
     |>.differentiableWithinAt
 
-/-- The inverse of a holomorphic open partial homeomorphism of `ℂ` is holomorphic on its
-target. -/
+/-- The inverse of a holomorphic open partial homeomorphism of `ℂ` is holomorphic on its target. -/
 theorem OpenPartialHomeomorph.differentiableOn_symm {e : OpenPartialHomeomorph ℂ ℂ}
     (he : DifferentiableOn ℂ e e.source) :
     DifferentiableOn ℂ e.symm e.target := by

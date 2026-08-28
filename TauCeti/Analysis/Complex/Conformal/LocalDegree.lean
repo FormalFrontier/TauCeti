@@ -24,34 +24,31 @@ change of coordinates. Nothing here is derived from Mathlib's
 dependency.
 
 The proof is a Rouché comparison. On a circle small enough that `z₀` is the only solution of
-`f z = f z₀` inside, `‖f - f z₀‖` attains a positive minimum `δ`; for
-`‖w - f z₀‖ < δ` the difference `(f - f z₀) - (f - w) = w - f z₀` is smaller than
-`‖f - f z₀‖` there, so Rouché equates the zero counts of `f - w` and `f - f z₀` inside.
-The latter count collapses to the single order at `z₀`, because `z₀` is its only zero in the
-disc.
+`f z = f z₀` inside, `‖f - f z₀‖` attains a positive minimum `δ`; for `‖w - f z₀‖ < δ` the
+difference `(f - f z₀) - (f - w) = w - f z₀` is smaller than `‖f - f z₀‖` there, so Rouché equates
+the zero counts of `f - w` and `f - f z₀` inside. The latter count collapses to the single order at
+`z₀`, because `z₀` is its only zero in the disc.
 
 Adding the hypothesis that `f'` is zero-free on the punctured disc upgrades the count with
 multiplicity to the sharper classical statement: for `w ≠ f z₀` the `n` solutions are *distinct*
 and each is a *simple* zero of `f - w`.
 
 That refinement yields the **local injectivity criterion**: an analytic function is injective on
-some neighbourhood of `z₀` exactly when `deriv f z₀ ≠ 0`. The forward direction is proved
-here — a critical point makes the degree at least `2`, so a nearby value is attained twice —
-and needs no non-constancy hypothesis, since a function constant near `z₀` is not injective
-there either. The converse is Mathlib's inverse function theorem
+some neighbourhood of `z₀` exactly when `deriv f z₀ ≠ 0`. The forward direction is proved here — a
+critical point makes the degree at least `2`, so a nearby value is attained twice — and needs no
+non-constancy hypothesis, since a function constant near `z₀` is not injective there either. The
+converse is Mathlib's inverse function theorem
 (`HasStrictDerivAt.eventually_left_inverse`), consumed rather than reproved.
 
 ## Main results
 
 * `TauCeti.localDegree` — the count form, with the radius supplied by the caller.
 * `TauCeti.localDegree_card` — the distinct-and-simple form.
-* `TauCeti.exists_localDegree` — the textbook form: if `z₀` is an isolated solution of
-  `f z = f z₀`, suitable radii exist.
+* `TauCeti.exists_localDegree` — the textbook form: if `z₀` is an isolated solution of `f z = f z₀`,
+  suitable radii exist.
 * `TauCeti.not_injOn_of_deriv_eq_zero` — a critical point destroys injectivity on *every*
   neighbourhood of `z₀`.
 * `TauCeti.exists_injOn_nhds_iff_deriv_ne_zero` — the local injectivity criterion.
-* `DifferentiableOn.deriv_ne_zero_of_injOn` — its pointwise form on an open set: a
-  holomorphic injection has nonvanishing derivative throughout.
 
 ## Coordination with upstream Mathlib
 
@@ -123,8 +120,7 @@ theorem localDegree {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
 
 /-- When every zero in the disc is simple, the count with multiplicity is the number of *distinct*
 zeros. -/
-private lemma count_eq_ncard {A : ℂ → ℂ} {c : ℂ} {R : ℝ}
-    (hA : AnalyticOnNhd ℂ A (closedBall c R))
+private lemma count_eq_ncard {A : ℂ → ℂ} {c : ℂ} {R : ℝ} (hA : AnalyticOnNhd ℂ A (closedBall c R))
     (hsimple : ∀ z ∈ ball c R, A z = 0 → analyticOrderNatAt A z = 1) :
     (∑ᶠ z ∈ ball c R, analyticOrderNatAt A z) = {z ∈ ball c R | A z = 0}.ncard := by
   have hAb : AnalyticOnNhd ℂ A (ball c R) := hA.mono ball_subset_closedBall
@@ -146,8 +142,7 @@ private lemma count_eq_ncard {A : ℂ → ℂ} {c : ℂ} {R : ℝ}
 
 /-- The fiber counted by `count_eq_ncard` is finite, which is what makes its cardinality
 statement mean "exactly this many preimages". -/
-private lemma zeros_finite {A : ℂ → ℂ} {c : ℂ} {R : ℝ}
-    (hA : AnalyticOnNhd ℂ A (closedBall c R))
+private lemma zeros_finite {A : ℂ → ℂ} {c : ℂ} {R : ℝ} (hA : AnalyticOnNhd ℂ A (closedBall c R))
     (hsimple : ∀ z ∈ ball c R, A z = 0 → analyticOrderNatAt A z = 1) :
     {z ∈ ball c R | A z = 0}.Finite := by
   refine Set.Finite.subset (MeromorphicOn.divisor_ball_support_finite hA.meromorphicOn)
@@ -164,8 +159,8 @@ private lemma zeros_finite {A : ℂ → ℂ} {c : ℂ} {R : ℝ}
   simp [Function.mem_support, MeromorphicOn.AnalyticOnNhd.divisor_apply hAb hzb, hord]
 
 /-- **The open-mapping degree**, distinct-and-simple form. Under the additional hypothesis that
-`f'` is zero-free on the punctured disc, every `w ≠ f z₀` close enough to `f z₀` has
-exactly `n` *distinct* preimages in the open disc, each of them a simple zero of `f - w`. -/
+`f'` is zero-free on the punctured disc, every `w ≠ f z₀` close enough to `f z₀` has exactly `n`
+*distinct* preimages in the open disc, each of them a simple zero of `f - w`. -/
 theorem localDegree_card {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     (hf : AnalyticOnNhd ℂ f (closedBall z₀ r))
     (hisol : ∀ z ∈ closedBall z₀ r, z ≠ z₀ → f z ≠ f z₀)
@@ -177,8 +172,7 @@ theorem localDegree_card {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
   obtain ⟨δ, hδ, hcount⟩ := localDegree hr hf hisol
   refine ⟨δ, hδ, fun w hw hwδ => ?_⟩
   have hA : AnalyticOnNhd ℂ (fun ζ => f ζ - w) (closedBall z₀ r) := hf.sub analyticOnNhd_const
-  have hsimple : ∀ z ∈ ball z₀ r, f z - w = 0 →
-      analyticOrderNatAt (fun ζ => f ζ - w) z = 1 := by
+  have hsimple : ∀ z ∈ ball z₀ r, f z - w = 0 → analyticOrderNatAt (fun ζ => f ζ - w) z = 1 := by
     intro z hz hz0
     have hzne : z ≠ z₀ := by
       rintro rfl
@@ -195,9 +189,9 @@ theorem localDegree_card {f : ℂ → ℂ} {z₀ : ℂ} {r : ℝ} (hr : 0 < r)
     fun z hz hfz => hsimple z hz (by rw [hfz, sub_self])⟩
   rw [← hcount w hwδ, count_eq_ncard hA hsimple, hset]
 
-/-- **The open-mapping degree**, textbook form. If `f` is analytic at `z₀` and `z₀` is an
-isolated solution of `f z = f z₀` — equivalently, `f` is not constant near `z₀` — then
-there are radii `r` and `δ` for which `localDegree` applies. -/
+/-- **The open-mapping degree**, textbook form. If `f` is analytic at `z₀` and `z₀` is an isolated
+solution of `f z = f z₀` — equivalently, `f` is not constant near `z₀` — then there are radii `r`
+and `δ` for which `localDegree` applies. -/
 theorem exists_localDegree {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f z₀)
     (hisol : ∀ᶠ z in 𝓝[≠] z₀, f z ≠ f z₀) :
     ∃ r > 0, AnalyticOnNhd ℂ f (closedBall z₀ r) ∧
@@ -205,8 +199,7 @@ theorem exists_localDegree {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f
         (∑ᶠ z ∈ ball z₀ r, analyticOrderNatAt (fun ζ => f ζ - w) z)
           = analyticOrderNatAt (fun ζ => f ζ - f z₀) z₀ := by
   obtain ⟨ε₁, hε₁, hA₁⟩ := Metric.eventually_nhds_iff.mp hf.eventually_analyticAt
-  obtain ⟨ε₂, hε₂, hI₂⟩ := Metric.eventually_nhds_iff.mp
-    (eventually_nhdsWithin_iff.mp hisol)
+  obtain ⟨ε₂, hε₂, hI₂⟩ := Metric.eventually_nhds_iff.mp (eventually_nhdsWithin_iff.mp hisol)
   refine ⟨min (ε₁ / 2) (ε₂ / 2), lt_min (by linarith) (by linarith), fun z hz => ?_, ?_⟩
   · exact hA₁ (lt_of_le_of_lt (mem_closedBall.mp hz)
       (lt_of_le_of_lt (min_le_left _ _) (by linarith)))
@@ -282,10 +275,9 @@ private theorem eventually_deriv_ne_zero_of_eventually_ne {f : ℂ → ℂ} {z�
 /-- **Local injectivity fails at a critical point.** An analytic function whose derivative vanishes
 at `z₀` is not injective on *any* neighbourhood of `z₀`.
 
-No non-constancy hypothesis is needed: if `f` is constant near `z₀` the conclusion is
-immediate, and otherwise `f - f z₀` vanishes at `z₀` to finite order `n`, which
-`deriv f z₀ = 0` forces to be at least `2`, so `localDegree_card` produces two distinct
-preimages of a nearby value. -/
+No non-constancy hypothesis is needed: if `f` is constant near `z₀` the conclusion is immediate,
+and otherwise `f - f z₀` vanishes at `z₀` to finite order `n`, which `deriv f z₀ = 0` forces to be
+at least `2`, so `localDegree_card` produces two distinct preimages of a nearby value. -/
 theorem not_injOn_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ}
     (hf : AnalyticAt ℂ f z₀) (hd₀ : deriv f z₀ = 0)
     {V : Set ℂ} (hV : V ∈ 𝓝 z₀) :
@@ -324,8 +316,7 @@ theorem not_injOn_of_deriv_eq_zero {f : ℂ → ℂ} {z₀ : ℂ}
 
 The forward direction is `not_injOn_of_deriv_eq_zero`; the reverse is Mathlib's inverse function
 theorem, consumed rather than reproved. -/
-theorem exists_injOn_nhds_iff_deriv_ne_zero {f : ℂ → ℂ} {z₀ : ℂ}
-    (hf : AnalyticAt ℂ f z₀) :
+theorem exists_injOn_nhds_iff_deriv_ne_zero {f : ℂ → ℂ} {z₀ : ℂ} (hf : AnalyticAt ℂ f z₀) :
     (∃ V ∈ 𝓝 z₀, Set.InjOn f V) ↔ deriv f z₀ ≠ 0 := by
   constructor
   · rintro ⟨V, hV, hinj⟩ hd₀
