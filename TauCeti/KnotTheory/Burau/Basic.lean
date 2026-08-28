@@ -322,7 +322,7 @@ theorem burauMatrix_mulVec_one (t : R) (i : Fin (n - 1)) :
   simp
 
 /-- The geometric row vector `(1, t, …, t ^ (n - 1))` annihilates every Burau column. -/
-theorem geom_dotProduct_burauCol (t : R) (i : Fin (n - 1)) :
+theorem geom_dotProduct_burauCol_eq_zero (t : R) (i : Fin (n - 1)) :
     (fun k : Fin n => t ^ (k : ℕ)) ⬝ᵥ burauCol t i = 0 := by
   rw [dotProduct_burauCol, BraidGroup.val_strand, BraidGroup.val_strandSucc, pow_succ, sub_self]
 
@@ -330,7 +330,7 @@ theorem geom_dotProduct_burauCol (t : R) (i : Fin (n - 1)) :
 @[simp]
 theorem vecMul_burauMatrix_geom (t : R) (i : Fin (n - 1)) :
     (fun k : Fin n => t ^ (k : ℕ)) ᵥ* burauMatrix t i = fun k : Fin n => t ^ (k : ℕ) := by
-  rw [vecMul_burauMatrix, geom_dotProduct_burauCol, zero_smul, sub_zero]
+  rw [vecMul_burauMatrix, geom_dotProduct_burauCol_eq_zero, zero_smul, sub_zero]
 
 end Ring
 
@@ -523,6 +523,37 @@ theorem vecMul_burau_of_forall {t : Rˣ} {w : Fin n → R}
       rw [Matrix.vecMul_vecMul, ← Units.val_mul, ← map_mul, mul_inv_cancel, map_one,
         Units.val_one, Matrix.vecMul_one]
     rwa [hb] at hmul
+
+/-- A matrix intertwining every elementary Burau matrix with the corresponding value of a
+representation `ρ` intertwines the whole Burau representation with `ρ`. -/
+theorem burau_mul_of_forall {β : Type*} [Fintype β] [DecidableEq β] {t : Rˣ}
+    {C : Matrix (Fin n) β R} {ρ : BraidGroup n →* GL β R}
+    (h : ∀ i : Fin (n - 1),
+      burauMatrix (t : R) i * C = C * (ρ (BraidGroup.sigma i) : Matrix β β R))
+    (b : BraidGroup n) :
+    (burau n t b : Matrix (Fin n) (Fin n) R) * C = C * (ρ b : Matrix β β R) := by
+  refine BraidGroup.sigma_induction_on
+    (p := fun b => (burau n t b : Matrix (Fin n) (Fin n) R) * C = C * (ρ b : Matrix β β R)) b
+    (fun i => by simp only [burau_sigma, coe_burauGL]; exact h i) ?_ ?_ ?_
+  · rw [map_one, map_one, Units.val_one, Units.val_one, Matrix.one_mul, Matrix.mul_one]
+  · intro b b' hb hb'
+    rw [map_mul, map_mul, Units.val_mul, Units.val_mul, Matrix.mul_assoc, hb', ← Matrix.mul_assoc,
+      hb, Matrix.mul_assoc]
+  · intro b hb
+    have hM : ((burau n t b⁻¹ : GL (Fin n) R) : Matrix (Fin n) (Fin n) R) *
+        ((burau n t b : GL (Fin n) R) : Matrix (Fin n) (Fin n) R) = 1 := by
+      rw [← Units.val_mul, ← map_mul, inv_mul_cancel, map_one, Units.val_one]
+    have hρ : ((ρ b : GL β R) : Matrix β β R) * ((ρ b⁻¹ : GL β R) : Matrix β β R) = 1 := by
+      rw [← Units.val_mul, ← map_mul, mul_inv_cancel, map_one, Units.val_one]
+    calc ((burau n t b⁻¹ : GL (Fin n) R) : Matrix (Fin n) (Fin n) R) * C
+        = ((burau n t b⁻¹ : GL (Fin n) R) : Matrix (Fin n) (Fin n) R) *
+            (C * ((ρ b : GL β R) : Matrix β β R)) * ((ρ b⁻¹ : GL β R) : Matrix β β R) := by
+          rw [Matrix.mul_assoc, Matrix.mul_assoc, hρ, Matrix.mul_one]
+      _ = ((burau n t b⁻¹ : GL (Fin n) R) : Matrix (Fin n) (Fin n) R) *
+            (((burau n t b : GL (Fin n) R) : Matrix (Fin n) (Fin n) R) * C) *
+            ((ρ b⁻¹ : GL β R) : Matrix β β R) := by rw [hb]
+      _ = C * ((ρ b⁻¹ : GL β R) : Matrix β β R) := by
+          rw [← Matrix.mul_assoc, hM, Matrix.one_mul]
 
 /-- **The all-ones column vector is fixed by the Burau representation.** The line it spans is
 therefore an invariant submodule; for `2 ≤ n` over a nontrivial ring it is a proper nonzero one,
