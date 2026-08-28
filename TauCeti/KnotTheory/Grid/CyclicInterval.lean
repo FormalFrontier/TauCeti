@@ -40,6 +40,9 @@ directions before taking products.
 * `TauCeti.Grid.mem_cIco`: membership in the clockwise half-open arc.
 * `TauCeti.Grid.card_cIco`: the length of a half-open arc in standard representatives.
 * `TauCeti.Grid.cIco_union_swap`: opposite nondegenerate half-open arcs partition the grid.
+* `TauCeti.Grid.cIco_union_cIco_eq_cIco_of_mem_cIoo`: an interior point cuts a half-open arc
+  into two adjacent half-open arcs.
+* `TauCeti.Grid.disjoint_cIco_cIco_of_mem_cIoo`: the two pieces of such a cut are disjoint.
 * `TauCeti.Grid.Noninterleaving`: two endpoint pairs lie on the same cyclic side of each other.
 * `TauCeti.Grid.noninterleaving_rev`: non-interleaving is preserved by reversing every endpoint
   with `Fin.rev`, exchanging the two endpoints within each pair.
@@ -379,28 +382,9 @@ theorem mem_cIoo_or_mem_cIoo_swap_iff {a b x : Fin n} (h : a ≠ b) :
           have hxb : x.val < b.val := Nat.lt_of_le_of_ne (Nat.le_of_not_gt hbx) (by omega)
           simp [hab, hxb]⟩)
 
-/-- Cyclically rotating three distinct points preserves their clockwise order. -/
-theorem mem_cIoo_rotate {a b c : Fin n} :
-    b ∈ cIoo a c ↔ c ∈ cIoo b a := by
-  constructor
-  · intro h
-    have hba : b ≠ a := fun hba => by
-      subst b
-      exact Grid.left_notMem_cIoo a c h
-    rw [mem_cIoo] at h ⊢
-    refine ⟨hba, ?_⟩
-    split_ifs at h ⊢ <;> omega
-  · intro h
-    have hac : a ≠ c := fun hac => by
-      subst c
-      exact Grid.right_notMem_cIoo b a h
-    rw [mem_cIoo] at h ⊢
-    refine ⟨hac, ?_⟩
-    split_ifs at h ⊢ <;> omega
-
 /-- A point strictly between two endpoints cuts their half-open cyclic interval into two
 adjacent half-open intervals. -/
-theorem cIco_union_cIco_eq_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+theorem cIco_union_cIco_eq_cIco_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
     cIco a b ∪ cIco b c = cIco a c := by
   ext x
   rw [Finset.mem_union, mem_cIco, mem_cIco, mem_cIco]

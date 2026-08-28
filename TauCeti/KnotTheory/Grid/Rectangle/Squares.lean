@@ -40,8 +40,12 @@ everything it feeds.
 
 ## Main results
 
+* `TauCeti.GridRectangle.coveredColumns_def`, `TauCeti.GridRectangle.coveredRows_def`: the
+  one-dimensional covered domains are the corresponding half-open cyclic intervals.
 * `TauCeti.GridRectangle.interior_subset_coveredSquares`: every grid point strictly inside a
   rectangle names a square the rectangle covers.
+* `TauCeti.GridRectangle.disjoint_coveredSquares_iff`: two covered-square domains are disjoint
+  exactly when their covered columns or their covered rows are disjoint.
 * `TauCeti.GridRectangle.card_coveredSquares`: the number of covered squares is the product of the
   two arc lengths.
 
@@ -83,6 +87,14 @@ interval. -/
 @[simp]
 theorem mem_coveredRows (r : Fin n) : r ∈ R.coveredRows ↔ r ∈ Grid.cIco R.bottom R.top :=
   Iff.rfl
+
+/-- The covered columns are the half-open cyclic interval between the vertical sides. -/
+theorem coveredColumns_def : R.coveredColumns = Grid.cIco R.left R.right :=
+  Finset.ext fun c => R.mem_coveredColumns c
+
+/-- The covered rows are the half-open cyclic interval between the horizontal sides. -/
+theorem coveredRows_def : R.coveredRows = Grid.cIco R.bottom R.top :=
+  Finset.ext fun r => R.mem_coveredRows r
 
 /-- Every interior column is a covered column. For distinct vertical sides the covered columns
 also contain the initial column; for coincident sides both sets are empty. -/
@@ -128,6 +140,14 @@ theorem coveredSquares_def : R.coveredSquares = R.coveredColumns ×ˢ R.coveredR
 theorem mem_coveredSquares (p : Fin n × Fin n) :
     p ∈ R.coveredSquares ↔ p.1 ∈ R.coveredColumns ∧ p.2 ∈ R.coveredRows := by
   simp [coveredSquares]
+
+/-- Two rectangles have disjoint covered-square domains exactly when their covered columns or
+their covered rows are disjoint. -/
+theorem disjoint_coveredSquares_iff (R S : GridRectangle n) :
+    Disjoint R.coveredSquares S.coveredSquares ↔
+      Disjoint R.coveredColumns S.coveredColumns ∨ Disjoint R.coveredRows S.coveredRows := by
+  rw [coveredSquares_def, coveredSquares_def]
+  exact Finset.disjoint_product
 
 /-- Every grid point strictly inside a rectangle names a square that the rectangle covers. -/
 theorem interior_subset_coveredSquares : R.interior ⊆ R.coveredSquares :=
