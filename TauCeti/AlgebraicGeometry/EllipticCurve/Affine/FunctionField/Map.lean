@@ -86,7 +86,7 @@ variable (W : WeierstrassCurve.Affine F) (f : F →+* K)
 /-- The coordinate ring of `W` sits inside the function field of `W.map f`, injectively: the
 composite of Mathlib's `CoordinateRing.map` with the embedding of a domain in its fraction field.
 This is the map `FunctionField.map` extends. -/
-theorem injective_algebraMap_comp_map : Function.Injective
+private theorem algebraMap_comp_map_injective : Function.Injective
     ((algebraMap (W.map f).CoordinateRing (W.map f).FunctionField).comp
       (CoordinateRing.map W f)) :=
   (FaithfulSMul.algebraMap_injective _ _).comp (CoordinateRing.map_injective f.injective)
@@ -95,7 +95,7 @@ theorem injective_algebraMap_comp_map : Function.Injective
 field of `F[W]`, which lands injectively in the field `K(W.map f)`, so there is exactly one
 extension of that map across fractions. -/
 noncomputable def map : W.FunctionField →+* (W.map f).FunctionField :=
-  IsFractionRing.lift (injective_algebraMap_comp_map W f)
+  IsFractionRing.lift (algebraMap_comp_map_injective W f)
 
 /-- **`FunctionField.map` restricts to `CoordinateRing.map`**, which is the property that
 determines it. -/
@@ -103,7 +103,7 @@ determines it. -/
 theorem map_algebraMap_coordinateRing (z : W.CoordinateRing) :
     map W f (algebraMap W.CoordinateRing W.FunctionField z) =
       algebraMap (W.map f).CoordinateRing (W.map f).FunctionField (CoordinateRing.map W f z) :=
-  IsFractionRing.lift_algebraMap (injective_algebraMap_comp_map W f) z
+  IsFractionRing.lift_algebraMap (algebraMap_comp_map_injective W f) z
 
 /-- **`FunctionField.map` is compatible with the scalars**: a constant of `F` goes to the
 corresponding constant of `K`. -/
@@ -142,6 +142,7 @@ theorem map_id_eq : map W (RingHom.id F) = RingHom.id W.FunctionField :=
 
 /-- **`FunctionField.map` is functorial.** As for `CoordinateRing.map_comp_map`, the curve equality
 `(W.map f).map g = W.map (g.comp f)` holds definitionally, so no transport appears. -/
+@[simp]
 theorem map_comp_map (g : K →+* L) :
     (map (W.map f) g).comp (map W f) = map W (g.comp f) :=
   IsFractionRing.ringHom_ext (A := W.CoordinateRing) fun z ↦ by

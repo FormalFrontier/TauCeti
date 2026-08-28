@@ -88,7 +88,7 @@ namespace CoordinatePullback
 /-- **The coordinates of a pullback, carried along `f`, are a point of `W₂.map f`** over the
 function field of `W₁.map f`. This is `equation_apply` pushed through
 `WeierstrassCurve.Affine.FunctionField.map`. -/
-theorem equation_map (φ : CoordinatePullback W₁ W₂) (f : F →+* K) :
+private theorem equation_map (φ : CoordinatePullback W₁ W₂) (f : F →+* K) :
     ((W₂.map f).map (algebraMap K (W₁.map f).FunctionField)).Equation
       (FunctionField.map W₁ f (φ (AdjoinRoot.of W₂.polynomial X)))
       (FunctionField.map W₁ f (φ (AdjoinRoot.root W₂.polynomial))) := by
@@ -223,6 +223,7 @@ theorem map_id_eq (φ : Isogeny W₁ W₂) : φ.map (RingHom.id F) = φ :=
     (by rw [map_pullback, CoordinatePullback.map_root, FunctionField.map_id_eq]; rfl)
 
 /-- **Base change is functorial in the base map.** -/
+@[simp]
 theorem map_map (φ : Isogeny W₁ W₂) (f : F →+* K) (g : K →+* L) :
     (φ.map f).map g = φ.map (g.comp f) := by
   refine Isogeny.ext (CoordinatePullback.ext_coords ?_ ?_)

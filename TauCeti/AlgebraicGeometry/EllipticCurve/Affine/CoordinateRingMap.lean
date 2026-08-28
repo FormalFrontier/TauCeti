@@ -172,6 +172,7 @@ lemma map_id_eq : map W (RingHom.id R) = RingHom.id W.CoordinateRing :=
 
 /-- **`CoordinateRing.map` is functorial.** The curve equality `(W.map f).map g = W.map (g.comp f)`
 holds definitionally, so the statement needs no transport. -/
+@[simp]
 lemma map_comp_map {T : Type*} [CommRing T] (f : R →+* S) (g : S →+* T) :
     (map (W.map f) g).comp (map W f) = map W (g.comp f) :=
   RingHom.ext fun z ↦ by
