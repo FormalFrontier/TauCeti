@@ -27,9 +27,9 @@ property, rather than by choosing a maximal element of a collection of fields, s
 under `ℚ`-algebra equivalence. The theorem `IsGenusField.nonempty_algEquiv` makes that uniqueness
 explicit.
 
-For squarefree negative `d` which is not a rational square,
-`isGenusField_candidateGenusField` assembles the existing arithmetic and archimedean inputs. The
-finite-prime theorem is `isUnramifiedIn_candidateGenusField`, the infinite-place theorem is
+For squarefree negative `d`, `isGenusField_candidateGenusField` assembles the existing arithmetic
+and archimedean inputs. The finite-prime theorem is `isUnramifiedIn_candidateGenusField`, the
+infinite-place theorem is
 `isUnramifiedAtInfinitePlaces_candidateGenusField`, and maximality is
 `nonempty_algHom_candidateGenusField`.
 
@@ -113,12 +113,12 @@ theorem nonempty_algEquiv (hL : IsGenusField d L y) (hM : IsGenusField d M z) :
 end IsGenusField
 
 /-- **The prime-discriminant compositum is the genus field in the imaginary quadratic case.**
-For a squarefree negative integer `d` which is not a rational square,
-`candidateGenusField hd` is abelian over `ℚ`, is unramified at every place over its embedded copy
-of `ℚ(√d)`, and contains every other abelian extension with those properties. -/
-theorem isGenusField_candidateGenusField {d : ℤ} (hd : Squarefree d) (hneg : d < 0)
-    (hnsq : ¬ IsSquare ((d : ℤ) : ℚ)) :
+For a squarefree negative integer `d`, `candidateGenusField hd` is abelian over `ℚ`, is unramified
+at every place over its embedded copy of `ℚ(√d)`, and contains every other abelian extension with
+those properties. -/
+theorem isGenusField_candidateGenusField {d : ℤ} (hd : Squarefree d) (hneg : d < 0) :
     IsGenusField d (candidateGenusField hd) (candidateGenusFieldBaseRoot hd) := by
+  have hnsq : ¬ IsSquare ((d : ℤ) : ℚ) := not_isSquare_of_neg (by exact_mod_cast hneg)
   refine
     { root_sq := ?_
       finrank_adjoin := ?_
