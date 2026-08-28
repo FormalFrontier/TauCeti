@@ -6,10 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Algebra.Subalgebra.Lattice
-public import Mathlib.Algebra.Algebra.TransferInstance
-public import Mathlib.RingTheory.Congruence.Hom
-public import Mathlib.RingTheory.TwoSidedIdeal.Lattice
+public import Mathlib.RingTheory.TwoSidedIdeal.Operations
 public import TauCeti.Algebra.Homology.DG.Algebra.Defs
+public import TauCeti.RingTheory.GradedAlgebra.Homogeneous.Quotient
 
 /-!
 # The cohomology algebra of a differential graded algebra
@@ -30,7 +29,8 @@ grading up to a shift of one.  Consequently the degree-`p` component of a bounda
 homogeneous ideal -- the input to the independence half of the decomposition of `H(A)`.
 
 Because `A` is not assumed commutative, the boundaries are recorded as a `TwoSidedIdeal` of the
-cycles and the cohomology algebra is the associated `RingCon` quotient.
+cycles; its underlying ideal is two-sided, so the cohomology algebra uses Mathlib's
+`Ideal.Quotient`.
 
 ## Main definitions
 
@@ -38,9 +38,8 @@ cycles and the cohomology algebra is the associated `RingCon` quotient.
 * `TauCeti.IsDGAlgebra.cyclesDeg`: the homogeneous cycles of a fixed degree.
 * `TauCeti.IsDGAlgebra.boundaries`: the image of the differential, as a two-sided ideal of the
   cycles.
-* `TauCeti.IsDGAlgebra.cohomology`, `TauCeti.IsDGAlgebra.toCohomology`, and
-  `TauCeti.IsDGAlgebra.cohomologyLift`: the cohomology algebra, its quotient map, and its universal
-  property for algebra homomorphisms.
+* `TauCeti.IsDGAlgebra.Cohomology`: the cohomology algebra, implemented by Mathlib's quotient of
+  the cycles by the underlying ideal of boundaries.
 * `TauCeti.IsDGAlgebra.cohomologyGrading`: the grading of the cohomology algebra by the classes of
   homogeneous cycles.
 * `TauCeti.algEquivCohomologyOfZero`: a graded algebra with zero differential is its own
@@ -48,19 +47,19 @@ cycles and the cohomology algebra is the associated `RingCon` quotient.
 
 ## Main results
 
-* `TauCeti.IsDGAlgebra.iSup_cyclesDeg` and `TauCeti.IsDGAlgebra.iSup_cohomologyGrading`: every
-  cycle, and every cohomology class, is a sum of homogeneous ones.
-* `TauCeti.IsDGAlgebra.iSupIndep_cohomologyGrading`: homogeneous cohomology classes of distinct
-  degrees are independent.
+* `TauCeti.IsDGAlgebra.iSup_cyclesDeg`: every cycle is a sum of homogeneous ones.
 * `TauCeti.IsDGAlgebra.instGradedAlgebraCohomologyGrading`: **the cohomology of a differential
   graded algebra is a graded algebra.**
-* `TauCeti.map_algEquivCohomologyOfZero`: the identification of a graded algebra carrying the zero
-  differential with its own cohomology matches the two gradings degreewise.
+* `TauCeti.map_algEquivCohomologyOfZero_eq_cohomologyGrading`: the identification of a graded
+  algebra carrying the zero differential with its own cohomology matches the two gradings
+  degreewise.
 
 This advances `TauCetiRoadmap/DGAInfinity/README.md`, Layer 1, item "DG algebras, categories,
 modules, and bimodules", specifically its first request for "cycles, boundaries, and the induced
-graded cohomology algebra".  No formalization is vendored: the graded decomposition, the two-sided
-ideal interface and the ring-congruence quotient are Mathlib's.
+graded cohomology algebra".  The induced grading reuses
+`TauCeti.GradedAlgebra.gradedAlgebraGradeQuot` from
+`TauCeti.RingTheory.GradedAlgebra.Homogeneous.Quotient`, whose construction follows Mathlib PR
+[#36501](https://github.com/leanprover-community/mathlib4/pull/36501) by Antoine Chambert-Loir.
 
 ## References
 
@@ -85,7 +84,7 @@ rule applied componentwise, a product of cycles is a cycle. -/
 def cycles (h : IsDGAlgebra 𝒜 d) : Subalgebra R A where
   carrier := {a | d a = 0}
   mul_mem' ha hb := h.map_mul_eq_zero ha hb
-  one_mem' := h.map_one
+  one_mem' := h.map_one_eq_zero
   add_mem' {a b} ha hb := by
     have ha' : d a = 0 := ha
     have hb' : d b = 0 := hb
@@ -95,6 +94,15 @@ def cycles (h : IsDGAlgebra 𝒜 d) : Subalgebra R A where
 
 @[simp]
 lemma mem_cycles (h : IsDGAlgebra 𝒜 d) {a : A} : a ∈ h.cycles ↔ d a = 0 := Iff.rfl
+
+/-- The differential of every element is a cycle, by the square-zero axiom. -/
+theorem map_mem_cycles (h : IsDGAlgebra 𝒜 d) (a : A) : d a ∈ h.cycles :=
+  h.sq_zero a
+
+/-- The image of the differential lies in the cycles. -/
+theorem range_le_cycles (h : IsDGAlgebra 𝒜 d) : LinearMap.range d ≤ h.cycles.toSubmodule := by
+  rintro _ ⟨a, rfl⟩
+  exact h.map_mem_cycles a
 
 /-- The degree-`p` homogeneous cycles, as a submodule of the algebra of cycles. -/
 def cyclesDeg (h : IsDGAlgebra 𝒜 d) (p : ℤ) : Submodule R h.cycles :=
@@ -121,211 +129,135 @@ theorem iSup_cyclesDeg (h : IsDGAlgebra 𝒜 d) : ⨆ p : ℤ, h.cyclesDeg p = �
   exact Submodule.sum_mem _ fun p _ =>
     Submodule.mem_iSup_of_mem p (SetLike.coe_mem (decompose 𝒜 (z : A) p))
 
-/-- The **boundaries** of a differential graded algebra: the image of the differential, viewed
-inside the cycles.  It is a two-sided ideal there: a cycle times a boundary is a boundary by the
-Leibniz rule read backwards, and a boundary times a cycle is the differential of the same
-product. -/
-def boundaries (h : IsDGAlgebra 𝒜 d) : TwoSidedIdeal h.cycles := by
-  have zero_mem : ((0 : h.cycles) : A) ∈ LinearMap.range d := by
-    simpa only [Subalgebra.coe_zero] using Submodule.zero_mem (LinearMap.range d)
-  have add_mem {x y : h.cycles} (hx : (x : A) ∈ LinearMap.range d)
-      (hy : (y : A) ∈ LinearMap.range d) : ((x + y : h.cycles) : A) ∈ LinearMap.range d := by
-    simpa only [Subalgebra.coe_add] using Submodule.add_mem (LinearMap.range d) hx hy
-  have neg_mem {x : h.cycles} (hx : (x : A) ∈ LinearMap.range d) :
-      ((-x : h.cycles) : A) ∈ LinearMap.range d := by
-    simpa only [Subalgebra.coe_neg] using Submodule.neg_mem (LinearMap.range d) hx
-  have mul_left_mem {x y : h.cycles} (hy : (y : A) ∈ LinearMap.range d) :
-      ((x * y : h.cycles) : A) ∈ LinearMap.range d := by
-    obtain ⟨b, hb⟩ := hy
-    simpa only [Subalgebra.coe_mul, ← hb] using h.mul_mem_range_of_map_left_eq_zero x.2 b
-  have mul_right_mem {x y : h.cycles} (hx : (x : A) ∈ LinearMap.range d) :
-      ((x * y : h.cycles) : A) ∈ LinearMap.range d := by
-    obtain ⟨a, ha⟩ := hx
-    exact ⟨a * (y : A), by
-      rw [h.map_mul_of_map_right_eq_zero a y.2, ha, Subalgebra.coe_mul]⟩
-  exact TwoSidedIdeal.mk' {z : h.cycles | (z : A) ∈ LinearMap.range d}
-    zero_mem add_mem neg_mem mul_left_mem mul_right_mem
-
-@[simp]
-lemma mem_boundaries (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
-    z ∈ h.boundaries ↔ (z : A) ∈ LinearMap.range d := by
-  rw [boundaries]
-  exact TwoSidedIdeal.mem_mk' _ _ _ _ _ _ _
-
-/-- The **cohomology algebra** `H(A)` of a differential graded algebra: the cycles modulo the
-boundaries.  Its quotient representation is wrapped; maps out of cohomology are constructed with
-`TauCeti.IsDGAlgebra.cohomologyLift`. -/
-structure cohomology (h : IsDGAlgebra 𝒜 d) where
-  /-- The underlying quotient class.  Use `TauCeti.IsDGAlgebra.cohomologyLift` to define algebra
-  homomorphisms out of cohomology. -/
-  quotient : h.boundaries.ringCon.Quotient
-
-instance instRingCohomology (h : IsDGAlgebra 𝒜 d) : Ring h.cohomology := by
-  let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
-    ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
-  exact { Equiv.ring e with toSemiring := Equiv.semiring e }
-
-instance instAlgebraCohomology (h : IsDGAlgebra 𝒜 d) : Algebra R h.cohomology := by
-  let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
-    ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
-  exact Equiv.algebra R e
-
-/-- The passage from a cycle to its cohomology class. -/
-@[expose]
-def toCohomology (h : IsDGAlgebra 𝒜 d) : h.cycles →ₐ[R] h.cohomology := by
-  let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
-    ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
-  exact (Equiv.algEquiv R e).symm.toAlgHom.comp (RingCon.mkₐ R h.boundaries.ringCon)
-
-lemma toCohomology_surjective (h : IsDGAlgebra 𝒜 d) : Function.Surjective h.toCohomology :=
-  fun x => by
-    obtain ⟨x⟩ := x
-    obtain ⟨z, hz⟩ := (RingCon.mkₐ_surjective (α := R) h.boundaries.ringCon) x
-    refine ⟨z, ?_⟩
-    change cohomology.mk (RingCon.mkₐ R h.boundaries.ringCon z) = cohomology.mk x
-    rw [hz]
-
-/-- Descend an algebra homomorphism from cycles to cohomology, provided that it annihilates every
-boundary. -/
-@[expose]
-def cohomologyLift (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Algebra R B]
-    (f : h.cycles →ₐ[R] B) (hf : ∀ z : h.cycles, z ∈ h.boundaries → f z = 0) :
-    h.cohomology →ₐ[R] B := by
-  let e : h.cohomology ≃ h.boundaries.ringCon.Quotient :=
-    ⟨fun x => x.quotient, cohomology.mk, fun ⟨_⟩ => rfl, fun _ => rfl⟩
-  exact (h.boundaries.ringCon.liftₐ f fun x y hxy => by
-      rw [RingCon.ker_apply]
-      have hzero := hf (x - y) ((h.boundaries.rel_iff x y).mp hxy)
-      rw [map_sub, sub_eq_zero] at hzero
-      change f x = f y
-      exact hzero).comp (Equiv.algEquiv R e).toAlgHom
-
-@[simp]
-theorem cohomologyLift_toCohomology (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Algebra R B]
-    (f : h.cycles →ₐ[R] B) (hf : ∀ z : h.cycles, z ∈ h.boundaries → f z = 0)
-    (z : h.cycles) : h.cohomologyLift f hf (h.toCohomology z) = f z :=
-  rfl
-
-/-- Algebra homomorphisms out of cohomology are equal if they agree on all cycle classes. -/
-@[ext]
-theorem cohomologyHom_ext (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Algebra R B]
-    {f g : h.cohomology →ₐ[R] B} (hfg : f.comp h.toCohomology = g.comp h.toCohomology) :
-    f = g := by
-  apply AlgHom.ext
-  intro x
-  obtain ⟨z, rfl⟩ := h.toCohomology_surjective x
-  exact DFunLike.congr_fun hfg z
-
-/-- The lift from cohomology is the unique algebra homomorphism with the prescribed values on
-cycle classes. -/
-theorem cohomologyLift_unique (h : IsDGAlgebra 𝒜 d) {B : Type*} [Ring B] [Algebra R B]
-    (f : h.cycles →ₐ[R] B) (hf : ∀ z : h.cycles, z ∈ h.boundaries → f z = 0)
-    (g : h.cohomology →ₐ[R] B) (hg : g.comp h.toCohomology = f) :
-    g = h.cohomologyLift f hf := by
-  apply h.cohomologyHom_ext
-  rw [hg]
-  ext z
-  exact (h.cohomologyLift_toCohomology f hf z).symm
-
-@[simp]
-lemma toCohomology_eq_zero_iff (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
-    h.toCohomology z = 0 ↔ z ∈ h.boundaries := by
-  constructor
-  · intro hz
-    have hz' := congrArg cohomology.quotient hz
-    change (z : h.boundaries.ringCon.Quotient) = 0 at hz'
-    have hrel := (RingCon.eq h.boundaries.ringCon).mp hz'
-    simpa only [TwoSidedIdeal.rel_iff, sub_zero] using hrel
-  · intro hz
-    have quotient_injective : Function.Injective
-        (cohomology.quotient : h.cohomology → h.boundaries.ringCon.Quotient) := by
-      rintro ⟨x⟩ ⟨y⟩ hxy
-      congr
-    apply quotient_injective
-    change (z : h.boundaries.ringCon.Quotient) = 0
-    apply (RingCon.eq h.boundaries.ringCon).mpr
-    simpa only [TwoSidedIdeal.rel_iff, sub_zero] using hz
-
-/-- The homogeneous projections annihilate everything supported in the other degrees. -/
-private theorem proj_eq_zero_of_mem_biSup {p : ℤ} {x : A}
-    (hx : x ∈ ⨆ (q : ℤ) (_ : q ≠ p), 𝒜 q) : GradedRing.proj 𝒜 p x = 0 := by
-  refine Submodule.iSup_induction (motive := fun y => GradedRing.proj 𝒜 p y = 0) _ hx
-    (fun q y hy => ?_) (map_zero _) (fun y y' hy hy' => by rw [map_add, hy, hy', add_zero])
-  by_cases hq : q = p
-  · subst hq
-    rw [iSup_neg (fun hne => hne rfl), Submodule.mem_bot] at hy
-    rw [hy, map_zero]
-  · rw [iSup_pos hq] at hy
-    exact DirectSum.decompose_of_mem_ne 𝒜 hy hq
-
-/-- The grading of the cohomology algebra: the degree-`p` piece consists of the classes of the
-homogeneous cycles of degree `p`. -/
-def cohomologyGrading (h : IsDGAlgebra 𝒜 d) (p : ℤ) : Submodule R h.cohomology :=
-  (h.cyclesDeg p).map h.toCohomology.toLinearMap
-
-lemma mem_cohomologyGrading (h : IsDGAlgebra 𝒜 d) {p : ℤ} {x : h.cohomology} :
-    x ∈ h.cohomologyGrading p ↔ ∃ z : h.cycles, (z : A) ∈ 𝒜 p ∧ h.toCohomology z = x :=
-  Submodule.mem_map
-
-instance instGradedMonoidCohomologyGrading (h : IsDGAlgebra 𝒜 d) :
-    SetLike.GradedMonoid h.cohomologyGrading where
-  one_mem := h.mem_cohomologyGrading.mpr
-    ⟨1, by simpa only [Subalgebra.coe_one] using SetLike.one_mem_graded 𝒜,
-      _root_.map_one h.toCohomology⟩
-  mul_mem := by
-    rintro i j x y hx hy
-    obtain ⟨z, hz, rfl⟩ := h.mem_cohomologyGrading.mp hx
-    obtain ⟨w, hw, rfl⟩ := h.mem_cohomologyGrading.mp hy
-    refine h.mem_cohomologyGrading.mpr ⟨z * w, ?_, map_mul _ _ _⟩
-    simpa only [Subalgebra.coe_mul] using SetLike.mul_mem_graded hz hw
-
-/-- Every cohomology class is a sum of homogeneous classes. -/
-theorem iSup_cohomologyGrading (h : IsDGAlgebra 𝒜 d) : ⨆ p : ℤ, h.cohomologyGrading p = ⊤ := by
-  have hgrading : (⨆ p : ℤ, h.cohomologyGrading p) =
-      Submodule.map h.toCohomology.toLinearMap (⨆ p : ℤ, h.cyclesDeg p) :=
-    (Submodule.map_iSup _ _).symm
-  rw [hgrading, h.iSup_cyclesDeg, Submodule.map_top, LinearMap.range_eq_top]
-  exact h.toCohomology_surjective
-
-/-- The homogeneous cohomology classes of distinct degrees are independent: a homogeneous cycle
-whose class is a sum of classes of cycles of other degrees is itself a boundary, because taking
-the degree-`p` component of a boundary again gives a boundary. -/
-theorem iSupIndep_cohomologyGrading (h : IsDGAlgebra 𝒜 d) : iSupIndep h.cohomologyGrading := by
+/-- The homogeneous cycle spaces are independent, as subspaces of the independent grading of the
+ambient algebra. -/
+theorem iSupIndep_cyclesDeg (h : IsDGAlgebra 𝒜 d) : iSupIndep h.cyclesDeg := by
   intro p
   rw [Submodule.disjoint_def]
-  rintro x hx hx'
-  obtain ⟨z, hz, rfl⟩ := h.mem_cohomologyGrading.mp hx
-  have hother : (⨆ (q : ℤ) (_ : q ≠ p), h.cohomologyGrading q) =
-      Submodule.map h.toCohomology.toLinearMap
-        (⨆ (q : ℤ) (_ : q ≠ p), h.cyclesDeg q) := by
-    simp only [cohomologyGrading, Submodule.map_iSup]
-  rw [hother] at hx'
-  obtain ⟨w, hw, hwz⟩ := hx'
-  have hle : Submodule.map h.cycles.val.toLinearMap (⨆ (q : ℤ) (_ : q ≠ p), h.cyclesDeg q)
-      ≤ ⨆ (q : ℤ) (_ : q ≠ p), 𝒜 q := by
+  rintro z hz hz'
+  have hle : Submodule.map h.cycles.val.toLinearMap
+      (⨆ (q : ℤ) (_ : q ≠ p), h.cyclesDeg q) ≤ ⨆ (q : ℤ) (_ : q ≠ p), 𝒜 q := by
     rw [Submodule.map_iSup]
     refine iSup_le fun q => ?_
     rw [Submodule.map_iSup]
     exact iSup_le fun hq => le_iSup_of_le q (le_iSup_of_le hq (Submodule.map_comap_le _ _))
-  have hwp : GradedRing.proj 𝒜 p (w : A) = 0 :=
-    proj_eq_zero_of_mem_biSup (hle (Submodule.mem_map_of_mem hw))
-  have hzw : ((z - w : h.cycles) : A) ∈ LinearMap.range d :=
-    h.mem_boundaries.mp (h.toCohomology_eq_zero_iff.mp
-      (by rw [map_sub]; exact sub_eq_zero_of_eq hwz.symm))
-  have hzz : GradedRing.proj 𝒜 p (z : A) = (z : A) := by
-    rw [GradedRing.proj_apply]
-    exact DirectSum.decompose_of_mem_same 𝒜 hz
-  have hz_boundary : (z : A) ∈ LinearMap.range d := by
-    simpa only [Subalgebra.coe_sub, map_sub, hwp, sub_zero, hzz] using h.proj_mem_range hzw p
-  exact h.toCohomology_eq_zero_iff.mpr (h.mem_boundaries.mpr hz_boundary)
+  have hz'prop : (z : A) ∈ ⨆ (q : ℤ) (_ : q ≠ p), 𝒜 q :=
+    hle (Submodule.mem_map_of_mem hz')
+  have hambient := (DirectSum.Decomposition.isInternal 𝒜).submodule_iSupIndep p
+  rw [Submodule.disjoint_def] at hambient
+  have hzprop : (z : A) ∈ 𝒜 p := hz
+  have hz0 : (z : A) ∈ (⊥ : Submodule R A) := hambient (z : A) hzprop hz'prop
+  apply Subtype.ext
+  simpa only [Subalgebra.coe_zero, Submodule.mem_bot] using hz0
 
-/-- **The cohomology of a differential graded algebra is a graded algebra.**  Its degree-`p` piece
-is the module of degree-`p` cohomology classes. -/
+/-- The homogeneous cycle spaces form an internal direct sum. -/
+theorem isInternal_cyclesDeg (h : IsDGAlgebra 𝒜 d) : DirectSum.IsInternal h.cyclesDeg :=
+  DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top h.iSupIndep_cyclesDeg
+    h.iSup_cyclesDeg
+
+instance instGradedMonoidCyclesDeg (h : IsDGAlgebra 𝒜 d) :
+    SetLike.GradedMonoid h.cyclesDeg where
+  one_mem := by
+    simpa only [mem_cyclesDeg, Subalgebra.coe_one] using SetLike.one_mem_graded 𝒜
+  mul_mem _ _ x y hx hy := by
+    change (x : A) ∈ 𝒜 _ at hx
+    change (y : A) ∈ 𝒜 _ at hy
+    change ((x * y : h.cycles) : A) ∈ 𝒜 _
+    exact SetLike.mul_mem_graded hx hy
+
+/-- The cycles inherit the grading of the ambient differential graded algebra. -/
+noncomputable instance instGradedAlgebraCyclesDeg (h : IsDGAlgebra 𝒜 d) :
+    GradedAlgebra h.cyclesDeg :=
+  { h.instGradedMonoidCyclesDeg, h.isInternal_cyclesDeg.chooseDecomposition with }
+
+/-- The **boundaries** of a differential graded algebra: the image of the differential, viewed
+inside the cycles.  It is a two-sided ideal there: a cycle times a boundary is a boundary by the
+Leibniz rule read backwards, and a boundary times a cycle is the differential of the same
+product. -/
+def boundaries (h : IsDGAlgebra 𝒜 d) : TwoSidedIdeal h.cycles :=
+  TwoSidedIdeal.mk' {z : h.cycles | (z : A) ∈ LinearMap.range d}
+    (show ((0 : h.cycles) : A) ∈ LinearMap.range d from Submodule.zero_mem _)
+    (fun {x y} hx hy => show (((x + y : h.cycles) : A) ∈ LinearMap.range d) from
+      Submodule.add_mem (LinearMap.range d) hx hy)
+    (fun {x} hx => show (((-x : h.cycles) : A) ∈ LinearMap.range d) from
+      Submodule.neg_mem (LinearMap.range d) hx)
+    (fun {x y} hy => by
+      obtain ⟨b, hb⟩ := hy
+      change (((x * y : h.cycles) : A) ∈ LinearMap.range d)
+      simpa only [Subalgebra.coe_mul, ← hb] using h.mul_map_mem_range_of_map_left_eq_zero x.2 b)
+    (fun {x y} hx => by
+      obtain ⟨a, ha⟩ := hx
+      change (((x * y : h.cycles) : A) ∈ LinearMap.range d)
+      exact ⟨a * (y : A), by
+        rw [h.leibniz_of_map_right_eq_zero a y.2, ha, Subalgebra.coe_mul]⟩)
+
+@[simp]
+lemma mem_boundaries (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
+    z ∈ h.boundaries ↔ (z : A) ∈ LinearMap.range d :=
+  TwoSidedIdeal.mem_mk' _ _ _ _ _ _ _
+
+/-- The cycle represented by a differential is a boundary. -/
+theorem map_mem_boundaries (h : IsDGAlgebra 𝒜 d) (a : A) :
+    (⟨d a, h.map_mem_cycles a⟩ : h.cycles) ∈ h.boundaries :=
+  h.mem_boundaries.mpr ⟨a, rfl⟩
+
+/-- The **cohomology algebra** `H(A)` of a differential graded algebra: the cycles modulo the
+underlying ideal of boundaries. -/
+abbrev Cohomology (h : IsDGAlgebra 𝒜 d) := h.cycles ⧸ h.boundaries.asIdeal
+
+/-- Under the inherited grading of the cycles, homogeneous projection agrees with homogeneous
+projection in the ambient algebra. -/
+theorem coe_decompose_cyclesDeg (h : IsDGAlgebra 𝒜 d) (p : ℤ) (z : h.cycles) :
+    ((decompose h.cyclesDeg z p : h.cycles) : A) = GradedRing.proj 𝒜 p (z : A) := by
+  induction z using DirectSum.Decomposition.inductionOn h.cyclesDeg with
+  | zero => simp [GradedRing.proj_apply]
+  | @homogeneous q z =>
+    have hz : (z : h.cycles) ∈ h.cyclesDeg q := z.2
+    have hzA : ((z : h.cycles) : A) ∈ 𝒜 q := hz
+    by_cases hpq : p = q
+    · subst hpq
+      rw [DirectSum.decompose_of_mem_same h.cyclesDeg hz, GradedRing.proj_apply,
+        DirectSum.decompose_of_mem_same 𝒜 hzA]
+    · rw [DirectSum.decompose_of_mem_ne h.cyclesDeg hz (Ne.symm hpq),
+        ZeroMemClass.coe_zero, GradedRing.proj_apply,
+        DirectSum.decompose_of_mem_ne 𝒜 hzA (Ne.symm hpq)]
+  | add x y hx hy =>
+    rw [decompose_add, DFinsupp.add_apply, Submodule.coe_add, Subalgebra.coe_add, hx, hy,
+      Subalgebra.coe_add, map_add]
+
+/-- The boundary ideal is homogeneous in the inherited grading of the cycles. -/
+theorem boundaries_isHomogeneous (h : IsDGAlgebra 𝒜 d) :
+    h.boundaries.asIdeal.IsHomogeneous h.cyclesDeg := by
+  intro p z hz
+  rw [TwoSidedIdeal.mem_asIdeal, h.mem_boundaries] at hz ⊢
+  rw [h.coe_decompose_cyclesDeg]
+  exact h.proj_mem_range hz p
+
+/-- The grading of the cohomology algebra: the degree-`p` piece consists of the classes of the
+homogeneous cycles of degree `p`. -/
+noncomputable abbrev cohomologyGrading (h : IsDGAlgebra 𝒜 d) (p : ℤ) :
+    Submodule R h.Cohomology :=
+  GradedAlgebra.gradeQuot h.cyclesDeg h.boundaries.asIdeal p
+
+lemma mem_cohomologyGrading (h : IsDGAlgebra 𝒜 d) {p : ℤ} {x : h.Cohomology} :
+    x ∈ h.cohomologyGrading p ↔
+      ∃ z : h.cycles, (z : A) ∈ 𝒜 p ∧ Ideal.Quotient.mk h.boundaries.asIdeal z = x :=
+  GradedAlgebra.mem_gradeQuot_iff h.cyclesDeg h.boundaries.asIdeal
+
+/-- The class of a differential vanishes in cohomology. -/
+@[simp]
+theorem quotient_mk_map_eq_zero (h : IsDGAlgebra 𝒜 d) (a : A) :
+    Ideal.Quotient.mk h.boundaries.asIdeal
+        (⟨d a, h.map_mem_cycles a⟩ : h.cycles) = 0 :=
+  Ideal.Quotient.eq_zero_iff_mem.mpr
+    (TwoSidedIdeal.mem_asIdeal.mpr (h.map_mem_boundaries a))
+
+/-- **The cohomology of a differential graded algebra is a graded algebra.**  This is the generic
+grading on a quotient by a homogeneous ideal. -/
 noncomputable instance instGradedAlgebraCohomologyGrading (h : IsDGAlgebra 𝒜 d) :
     GradedAlgebra h.cohomologyGrading :=
-  { h.instGradedMonoidCohomologyGrading,
-    (DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-      h.iSupIndep_cohomologyGrading h.iSup_cohomologyGrading).chooseDecomposition with }
+  GradedAlgebra.gradedAlgebraGradeQuot h.cyclesDeg h.boundaries.asIdeal
+    h.boundaries_isHomogeneous
 
 end IsDGAlgebra
 
@@ -346,31 +278,37 @@ theorem boundaries_isDGAlgebra_zero : (isDGAlgebra_zero 𝒜).boundaries = ⊥ :
       Submodule.mem_bot]
     exact ⟨fun hz => Subtype.ext (by simpa using hz), fun hz => by simp [hz]⟩
 
-theorem toCohomology_isDGAlgebra_zero_bijective :
-    Function.Bijective (isDGAlgebra_zero 𝒜).toCohomology := by
-  refine ⟨fun z w hzw => ?_, (isDGAlgebra_zero 𝒜).toCohomology_surjective⟩
-  have hb : z - w ∈ (isDGAlgebra_zero 𝒜).boundaries :=
-    (isDGAlgebra_zero 𝒜).toCohomology_eq_zero_iff.mp (by rw [map_sub, hzw, sub_self])
-  rwa [boundaries_isDGAlgebra_zero, TwoSidedIdeal.mem_bot, sub_eq_zero] at hb
+theorem quotientMk_isDGAlgebra_zero_bijective : Function.Bijective
+    (Ideal.Quotient.mkₐ R (isDGAlgebra_zero 𝒜).boundaries.asIdeal) := by
+  refine ⟨fun z w hzw => ?_, Ideal.Quotient.mkₐ_surjective R _⟩
+  have hb : z - w ∈ (isDGAlgebra_zero 𝒜).boundaries.asIdeal :=
+    Ideal.Quotient.eq_zero_iff_mem.mp (by
+      change Ideal.Quotient.mk _ z = Ideal.Quotient.mk _ w at hzw
+      rw [map_sub, hzw, sub_self])
+  rw [TwoSidedIdeal.mem_asIdeal, boundaries_isDGAlgebra_zero, TwoSidedIdeal.mem_bot,
+    sub_eq_zero] at hb
+  exact hb
 
 /-- **A graded algebra with zero differential is its own cohomology.**  Every element is a cycle by
 `TauCeti.cycles_isDGAlgebra_zero` and the only boundary is zero, so passing to cohomology changes
 nothing.  That this identification is one of *graded* algebras is
-`TauCeti.map_algEquivCohomologyOfZero`. -/
-noncomputable def algEquivCohomologyOfZero : A ≃ₐ[R] (isDGAlgebra_zero 𝒜).cohomology :=
+`TauCeti.map_algEquivCohomologyOfZero_eq_cohomologyGrading`. -/
+noncomputable def algEquivCohomologyOfZero : A ≃ₐ[R] (isDGAlgebra_zero 𝒜).Cohomology :=
   (Subalgebra.topEquiv.symm.trans
       (Subalgebra.equivOfEq _ _ (cycles_isDGAlgebra_zero 𝒜).symm)).trans
-    (AlgEquiv.ofBijective _ (toCohomology_isDGAlgebra_zero_bijective 𝒜))
+    (AlgEquiv.ofBijective _ (quotientMk_isDGAlgebra_zero_bijective 𝒜))
 
 @[simp]
 theorem algEquivCohomologyOfZero_apply (a : A) :
     algEquivCohomologyOfZero 𝒜 a =
-      (isDGAlgebra_zero 𝒜).toCohomology ⟨a, (isDGAlgebra_zero 𝒜).mem_cycles.mpr rfl⟩ :=
-  (rfl)
+      Ideal.Quotient.mk (isDGAlgebra_zero 𝒜).boundaries.asIdeal
+        ⟨a, (isDGAlgebra_zero 𝒜).mem_cycles.mpr rfl⟩ := by
+  simp only [algEquivCohomologyOfZero, AlgEquiv.trans_apply, AlgEquiv.ofBijective_apply]
+  rfl
 
 /-- The identification of a graded algebra with zero differential with its own cohomology respects
 the gradings: it carries the degree-`p` piece of `𝒜` onto the degree-`p` piece of the cohomology. -/
-theorem map_algEquivCohomologyOfZero (p : ℤ) :
+theorem map_algEquivCohomologyOfZero_eq_cohomologyGrading (p : ℤ) :
     (𝒜 p).map (algEquivCohomologyOfZero 𝒜).toLinearMap =
       (isDGAlgebra_zero 𝒜).cohomologyGrading p := by
   ext x
