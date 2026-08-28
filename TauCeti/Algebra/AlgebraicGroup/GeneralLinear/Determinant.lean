@@ -172,6 +172,15 @@ theorem point_apply_determinantGroupLike
       ext i j
       simp
 
+/-- A Hopf-algebra morphism out of the general-linear coordinate ring evaluates the generic
+determinant as the determinant of its tautological matrix point. -/
+theorem map_determinantGroupLike_eq_det_point
+    {H : _root_.CommHopfAlgCat R} (f : coordinateHopfAlgebra R n ⟶ H) :
+    f.hom (determinantGroupLike R n : coordinateHopfAlgebra R n) =
+      Matrix.det (pointToGeneralLinear n (toConv f.hom.toAlgHom)).val := by
+  simpa only [WithConv.ofConv_toConv, BialgHom.coe_toAlgHom] using
+    (point_apply_determinantGroupLike (R := R) (n := n) (toConv f.hom.toAlgHom))
+
 /-- Under the diagonalizable-group and general-linear point equivalences, precomposition with
 the determinant coordinate morphism is the ordinary unit-valued matrix determinant. -/
 theorem pointsMulEquiv_determinantPoints
