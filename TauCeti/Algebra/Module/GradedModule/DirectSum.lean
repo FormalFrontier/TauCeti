@@ -214,7 +214,7 @@ private theorem coeLinearMap_directSumPiece_eq (G : ∀ i, InternalGrading R (M 
     simpa only [map_add, LinearMap.comp_apply] using congrArg₂ (· + ·) hx hy
 
 /-- The canonical degreewise ranges in an external direct sum form an internal direct sum. -/
-theorem directSum_isInternal (G : ∀ i, InternalGrading R (M i)) :
+theorem isInternal_directSumPiece (G : ∀ i, InternalGrading R (M i)) :
     DirectSum.IsInternal (directSumPiece G) := by
   classical
   let _ : DecidableEq ι := Classical.decEq _
@@ -227,7 +227,7 @@ direct sum of the degree-`p` pieces. -/
 noncomputable def directSum (G : ∀ i, InternalGrading R (M i)) :
     InternalGrading R (⨁ i, M i) where
   piece := directSumPiece G
-  isInternal := directSum_isInternal G
+  isInternal := isInternal_directSumPiece G
 
 /-- Membership in the direct sum of degree-`p` pieces is componentwise. -/
 @[simp]
