@@ -23,10 +23,15 @@ larger function field. Locality ensures that the resulting valuation subring is 
 valuation subrings are integrally closed, it contains the enlarged constant field, so it defines a
 place whose restriction is the original place.
 
-## Main result
+Enlarging the constants does not change which valuations of `F'` are places at all: that is
+`TauCeti.Place.constantsEquiv`, the observation that lets a place of `F' / k'` be produced from
+data — a subring, an ideal — which only sees the smaller constant field `k`.
+
+## Main results
 
 * `TauCeti.Place.restrict_surjective`: every place downstairs is the restriction of a place
   upstairs (Stichtenoth, Proposition 3.1.7).
+* `TauCeti.Place.constantsEquiv`: the places of `F' / k` are the places of `F' / k'`.
 
 ## References
 
@@ -47,6 +52,55 @@ variable [Field k] [Field k'] [Field F] [Field F']
 variable [Algebra k k'] [Algebra k F] [Algebra k' F'] [Algebra F F'] [Algebra k F']
 variable [IsScalarTower k k' F'] [IsScalarTower k F F']
 variable [Algebra.IsIntegral k k'] [Algebra.IsIntegral F F']
+
+section Constants
+
+omit [Algebra.IsIntegral F F']
+
+variable (k k' F')
+
+/-- **Enlarging an algebraic constant field does not change the places**: a valuation of `F'` is
+trivial on `k` exactly when it is trivial on `k'`, because every nonzero element of `k'` is
+algebraic over `k` and every nonzero element of `k` is one of `k'`.  So the places of `F' / k` and
+the places of `F' / k'` are the same, with the same valuations. -/
+def constantsEquiv : Place k F' ≃ Place k' F' where
+  toFun Q :=
+    { valuation := Q.valuation
+      valuation_surjective := Q.valuation_surjective
+      isTrivialOn := ⟨fun c hc ↦ Q.valuation_eq_one_of_isAlgebraic
+        (IsIntegral.algebraMap (Algebra.IsIntegral.isIntegral (R := k) c)).isAlgebraic
+        fun h ↦ hc ((algebraMap k' F').injective (by rw [h, map_zero]))⟩ }
+  invFun Q :=
+    { valuation := Q.valuation
+      valuation_surjective := Q.valuation_surjective
+      isTrivialOn := ⟨fun c hc ↦ by
+        rw [IsScalarTower.algebraMap_apply k k' F']
+        exact Q.isTrivialOn.eq_one _ fun h ↦
+          hc ((algebraMap k k').injective (by rw [h, map_zero]))⟩ }
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+variable {k k' F'}
+
+@[simp]
+theorem valuation_constantsEquiv (Q : Place k F') :
+    (constantsEquiv k k' F' Q).valuation = Q.valuation := (rfl)
+
+@[simp]
+theorem valuation_constantsEquiv_symm (Q : Place k' F') :
+    ((constantsEquiv k k' F').symm Q).valuation = Q.valuation := (rfl)
+
+@[simp]
+theorem integers_constantsEquiv (Q : Place k F') :
+    (constantsEquiv k k' F' Q).integers = Q.integers :=
+  SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv]
+
+@[simp]
+theorem integers_constantsEquiv_symm (Q : Place k' F') :
+    ((constantsEquiv k k' F').symm Q).integers = Q.integers :=
+  SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv_symm]
+
+end Constants
 
 /-- **Existence of extensions of places** (Stichtenoth, Proposition 3.1.7): if both the field
 extension and the extension of constants are integral, every place of `F / k` is the restriction
