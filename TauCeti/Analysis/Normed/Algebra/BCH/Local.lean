@@ -147,21 +147,21 @@ variable {B : Type*} [NormedRing B] [NormedAlgebra ℝ B] [CompleteSpace B]
 
 /-- Continuous real algebra homomorphisms commute with the local
 Baker--Campbell--Hausdorff germ. -/
-theorem map_localBCH (f : A →A[ℝ] B) :
+@[simp]
+theorem map_localBCH {F : Type*} [FunLike F A B] [RingHomClass F A B]
+    (f : F) (hf : Continuous f) :
     (localBCH A).map f =
       (localBCH B).compTendsto (Prod.map f f) (by
-        exact (f.continuous.prodMap f.continuous).tendsto' (0, 0) (0, 0) (by simp)) := by
+        exact (hf.prodMap hf).tendsto' (0, 0) (0, 0) (by simp)) := by
+  let _ : NormedAlgebra ℚ A := NormedAlgebra.restrictScalars ℚ ℝ A
+  let _ : NormedAlgebra ℚ B := NormedAlgebra.restrictScalars ℚ ℝ B
   rw [localBCH_def, Germ.map_coe, localBCH_def, Germ.coe_compTendsto, Germ.coe_eq]
   filter_upwards [(tendsto_exp_mul_exp_sub_one A).eventually
-    (eventually_map_logOneAdd f)] with p hp
+    (eventually_map_logOneAdd (𝕂 := ℝ) f hf)] with p hp
   dsimp only [Function.comp_apply, Prod.map]
   rw [hp]
-  have hx : f (exp p.1) = exp (f p.1) :=
-    map_exp_of_mem_ball (f := f) f.continuous p.1
-      ((expSeries_radius_eq_top ℝ A).symm ▸ edist_lt_top _ _)
-  have hy : f (exp p.2) = exp (f p.2) :=
-    map_exp_of_mem_ball (f := f) f.continuous p.2
-      ((expSeries_radius_eq_top ℝ A).symm ▸ edist_lt_top _ _)
+  have hx : f (exp p.1) = exp (f p.1) := map_exp f hf p.1
+  have hy : f (exp p.2) = exp (f p.2) := map_exp f hf p.2
   rw [map_sub, map_mul, map_one, hx, hy]
 
 end Naturality
