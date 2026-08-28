@@ -121,9 +121,15 @@ theorem derivedWord_succ (G : Type u) [Group G] (n : ℕ)
     derivedWord G (n + 1) (.node x y) = ⁅derivedWord G n x, derivedWord G n y⁆ :=
   (rfl)
 
+end TauCeti
+
+namespace MonoidHom
+
+open TauCeti
+
 /-- Derived words commute with group homomorphisms. -/
 @[simp]
-theorem MonoidHom.map_derivedWord {G : Type u} {H : Type v} [Group G] [Group H]
+theorem map_derivedWord {G : Type u} {H : Type v} [Group G] [Group H]
     (f : G →* H) (n : ℕ) (x : DerivedWordArgs G n) :
     f (derivedWord G n x) = derivedWord H n (DerivedWordArgs.map f n x) := by
   induction n with
@@ -134,6 +140,10 @@ theorem MonoidHom.map_derivedWord {G : Type u} {H : Type v} [Group G] [Group H]
       obtain ⟨x, y⟩ := x
       rw [DerivedWordArgs.map_succ, derivedWord_succ, derivedWord_succ,
         map_commutatorElement, ih, ih]
+
+end MonoidHom
+
+namespace TauCeti
 
 /-- Conjugating a derived-word value amounts to conjugating each of its arguments. -/
 theorem conj_derivedWord (G : Type u) [Group G] (g : G) (n : ℕ)
