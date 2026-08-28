@@ -50,6 +50,14 @@ namespace TauCeti.Contour
 
 variable {v z₀ : ℂ} {a b c s : ℝ}
 
+private theorem eq_of_dist_intCast_lt_one {m n : ℤ}
+    (h : dist (m : ℂ) (n : ℂ) < 1) : m = n := by
+  by_contra hne
+  have : (1 : ℝ) ≤ dist (m : ℂ) (n : ℂ) := by
+    rw [Complex.isometry_intCast.dist_eq]
+    exact Int.pairwise_one_le_dist hne
+  linarith
+
 private theorem tendsto_ofReal_sub_add_mul_I (r s : ℝ) (σ : ℝ) :
     Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝[>] 0) (𝓝 ((r : ℂ) - s)) := by
   have : Tendsto (fun h : ℝ => (r : ℂ) - (s + (σ * h : ℝ) * I)) (𝓝 0)
@@ -217,21 +225,22 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     rw [this]; simp only [mul_im, ofReal_re, I_re, mul_zero, ofReal_im, I_im, mul_one, add_zero]
   have h_im_sub : ∀ h : ℝ, ((v * (s - h * I) + z₀ - p) / v).im = -h := by
     intro h
-    have : (v * (s - h * I) + z₀ - p) / v = -(h * I) := by
+    have key : (v * (s - h * I) + z₀ - p) / v = -(h * I) := by
       rw [hp_def]; field_simp; ring
-    rw [this]; simp only [neg_im, mul_im, ofReal_re, I_re, mul_zero, ofReal_im, I_im, mul_one,
-      add_zero]
+    simp only [key, neg_im, mul_im, ofReal_re, I_re, mul_zero,
+      ofReal_im, I_im, mul_one, add_zero]
   have h_dist_add : ∀ h : ℝ, dist (v * (s + h * I) + z₀) p = ‖v‖ * |h| := by
     intro h
     rw [dist_eq_norm, hp_def]
     have : v * (s + h * I) + z₀ - (v * s + z₀) = v * (h * I) := by ring
-    rw [this, norm_mul, norm_mul, Complex.norm_I, mul_one, Complex.norm_real, Real.norm_eq_abs]
+    rw [this, norm_mul, norm_mul, Complex.norm_I, mul_one, Complex.norm_real,
+      Real.norm_eq_abs]
   have h_dist_sub : ∀ h : ℝ, dist (v * (s - h * I) + z₀) p = ‖v‖ * |h| := by
     intro h
     rw [dist_eq_norm, hp_def]
     have : v * (s - h * I) + z₀ - (v * s + z₀) = -(v * (h * I)) := by ring
-    rw [this, norm_neg, norm_mul, norm_mul, Complex.norm_I, mul_one, Complex.norm_real,
-      Real.norm_eq_abs]
+    rw [this, norm_neg, norm_mul, norm_mul, Complex.norm_I, mul_one,
+      Complex.norm_real, Real.norm_eq_abs]
   have h_small : ∀ᶠ h : ℝ in 𝓝[>] 0, 0 < h ∧ ‖v‖ * |h| < r := by
     have hlt : ∀ᶠ h : ℝ in 𝓝 (0 : ℝ), ‖v‖ * |h| < r := by
       have : Continuous fun h : ℝ => ‖v‖ * |h| := by fun_prop
@@ -319,10 +328,11 @@ theorem exists_forall_windingNumber_eq_add_one_of_eqOn_segment {Γ : ℝ → ℂ
     h_off_add h hh_pos hh_lt ⟨t, ht, heq⟩
   obtain ⟨n, hn⟩ := hΓ.exists_int_windingNumber hclosed fun t ht heq =>
     h_off_sub h hh_pos hh_lt ⟨t, ht, heq⟩
+  have hcast : ((n + 1 : ℤ) : ℂ) = (n : ℂ) + 1 := by push_cast; ring
   have hmn : m = n + 1 :=
     eq_of_dist_intCast_lt_one (n := n + 1) (by
       rw [hm, hn] at hh_near
-      rw [show ((n + 1 : ℤ) : ℂ) = (n : ℂ) + 1 from by push_cast; ring]
+      rw [hcast]
       have : dist ((m : ℂ) - (n : ℂ)) 1 = dist (m : ℂ) ((n : ℂ) + 1) := by
         simp only [dist_eq_norm]; ring_nf
       linarith)
