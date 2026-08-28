@@ -184,7 +184,6 @@ theorem hypergeometricWeight_ne_zero_iff (N K n k : ℕ) :
 
 /-- The singleton mass of a valid hypergeometric law is nonzero exactly on its classical
 support. -/
-@[simp]
 theorem hypergeometricMeasure_singleton_ne_zero_iff (hK : K ≤ N) (hn : n ≤ N) (k : ℕ) :
     hypergeometricMeasure N K n {k} ≠ 0 ↔
       k ≤ K ∧ k ≤ n ∧ n - k ≤ N - K := by
