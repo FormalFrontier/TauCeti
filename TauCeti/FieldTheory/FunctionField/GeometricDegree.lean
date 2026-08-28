@@ -18,14 +18,18 @@ constant field upstairs and `k` the constant field downstairs.  The two degrees 
 **geometric degree** `n(F'/F)`, the degree of the extension after the constants have been
 absorbed.
 
-When `F` and `k'` are linearly disjoint over `k` — equivalently `[F·k' : F] = [k' : k]`, the form
-in which the hypothesis is carried here — this reads `[F' : F] = n(F'/F) · [k' : k]`.  In
-particular `[k' : k]` divides `[F' : F]`, which is what turns the cross-multiplied degree identity
-`[k' : k] · deg (Con D) = [F' : F] · deg D` for the conorm into `deg (Con D) = n(F'/F) · deg D`.
+When `F` and `k'` are linearly disjoint over `k` this reads `[F' : F] = n(F'/F) · [k' : k]`.  The
+hypothesis is carried here in the degree form `[F·k' : F] = [k' : k]`; that equality is equivalent
+to linear disjointness when `k' / k` is finite and `k` sits in both `F` and `k'` compatibly with
+the two routes into `F'`, and without those provisos it can hold for want of content, both sides
+being `0`.  In particular `[k' : k]` divides `[F' : F]`, which is what turns the cross-multiplied
+degree identity `[k' : k] · deg (Con D) = [F' : F] · deg D` for the conorm into
+`deg (Con D) = n(F'/F) · deg D`.
 
 Linear disjointness is not automatic; it is what an inseparable constant field extension can
 destroy.  It does hold whenever `k' / k` is finite separable and `k` is the exact constant field
-of `F`, and that is proved here from `TauCeti.finrank_adjoin_eq_finrank_adjoin`.
+of `F`, and that is proved here from
+`TauCeti.finrank_adjoin_eq_finrank_adjoin_of_isIntegrallyClosedIn`.
 
 ## Main definitions
 
@@ -37,14 +41,19 @@ of `F`, and that is proved here from `TauCeti.finrank_adjoin_eq_finrank_adjoin`.
 * `TauCeti.finrank_constantCompositum_mul_geometricDegree`: the tower law
   `[F·k' : F] · n(F'/F) = [F' : F]`.
 * `TauCeti.finrank_eq_geometricDegree_mul`: `[F' : F] = n(F'/F) · [k' : k]` for linearly disjoint
-  `F` and `k'`, and `TauCeti.finrank_dvd_finrank` for the divisibility it contains.
+  `F` and `k'`, and `TauCeti.finrank_dvd_finrank_of_finrank_constantCompositum_eq` for the
+  divisibility it contains.
 * `TauCeti.finrank_constantCompositum_eq_finrank`: linear disjointness holds for a finite
   separable constant field extension over an exact constant field.
 
 ## References
 
 * H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., GTM 254, Springer, 2009,
-  Section III.1.
+  Section III.6: the persistence of linear independence over `k'` (Proposition 3.6.1(b)) is
+  `TauCeti.finrank_constantCompositum_eq_finrank`, the geometric degree `[F' : F·k']` is the
+  factor appearing in Corollary 3.6.4, and the splitting `[F' : F] = n(F'/F) · [k' : k]` is the
+  companion of Proposition 3.6.6.  Section III.1 (Corollary 3.1.14) is the cross-multiplied conorm
+  identity this feeds, in `TauCeti.FieldTheory.FunctionField.Divisor.Conorm`.
 
 ## Implementation notes
 
@@ -95,9 +104,20 @@ theorem constantCompositum_le_iff {K : IntermediateField F F'} :
 once the constants of `F'` have been adjoined to `F`.
 
 Under linear disjointness of `F` and `k'` over `k` it is the quotient `[F' : F] / [k' : k]`; see
-`TauCeti.finrank_eq_geometricDegree_mul`. -/
+`TauCeti.finrank_eq_geometricDegree_mul`.  It is the factor `[F' : F·k']` by which the conorm
+multiplies degrees in Stichtenoth's Corollary 3.6.4. -/
 noncomputable def geometricDegree : ℕ :=
   Module.finrank (constantCompositum F k' F') F'
+
+/-
+Proved by `(rfl)`, not `rfl`: the body of `geometricDegree` is not `@[expose]`d, so the equation is
+definitional only inside this module, and downstream consumers need this lemma to pin the value.
+-/
+/-- The defining equation of the geometric degree: `n(F'/F)` is the degree of `F'` over the
+compositum `F · k'`. -/
+theorem geometricDegree_def :
+    geometricDegree F k' F' = Module.finrank (constantCompositum F k' F') F' :=
+  (rfl)
 
 /-- The tower law for the compositum: `[F·k' : F] · n(F'/F) = [F' : F]`. -/
 theorem finrank_constantCompositum_mul_geometricDegree :
@@ -128,7 +148,9 @@ proved, and of `TauCeti.Divisor.degree_conorm`, where it is consumed.  Establish
 that compatibility does the work, and where the condition can fail — an inseparable `k' / k` can
 destroy it.  Deducing the degree identity from `h` is arithmetic in the tower `F ⊆ F·k' ⊆ F'`
 alone, so no scalar tower relating `k` to `F` is assumed here: assuming one would leave it unused
-in the proof and in the statement. -/
+in the proof and in the statement.
+
+This is the companion of Stichtenoth's Proposition 3.6.6, which splits `[F' : F]` the same way. -/
 theorem finrank_eq_geometricDegree_mul
     (h : Module.finrank F (constantCompositum F k' F') = Module.finrank k k') :
     Module.finrank F F' = geometricDegree F k' F' * Module.finrank k k' := by
@@ -137,7 +159,7 @@ theorem finrank_eq_geometricDegree_mul
 /-- **The degree of the constant field extension divides the degree of the function field
 extension**, under the same hypothesis as `TauCeti.finrank_eq_geometricDegree_mul` — the degree
 form of linear disjointness of `F` and `k'` over `k`; the quotient is the geometric degree. -/
-theorem finrank_dvd_finrank
+theorem finrank_dvd_finrank_of_finrank_constantCompositum_eq
     (h : Module.finrank F (constantCompositum F k' F') = Module.finrank k k') :
     Module.finrank k k' ∣ Module.finrank F F' :=
   ⟨geometricDegree F k' F', by rw [finrank_eq_geometricDegree_mul F k' F' h, mul_comm]⟩
@@ -145,14 +167,15 @@ theorem finrank_dvd_finrank
 variable [Algebra k F] [Algebra k F'] [IsScalarTower k k' F'] [IsScalarTower k F F']
 
 /-- **A finite separable constant field extension is linearly disjoint from the lower function
-field**, provided the constant field downstairs is exact: adjoining the constants of `F'` to `F`
-costs exactly `[k' : k]`.
+field** (Stichtenoth, Proposition 3.6.1(b)), provided the constant field downstairs is exact:
+adjoining the constants of `F'` to `F` costs exactly `[k' : k]`.
 
 This is the statement in which linear disjointness has content, and it is stated over the full
 compatible tower: `k` embeds in `F` and in `k'`, and the two routes `k → F → F'` and `k → k' → F'`
 agree.  Both hypotheses are used: exactness of `k` in `F` keeps the minimal polynomial of a
-constant irreducible over `F` (`TauCeti.map_minpoly_eq_minpoly`), and separability makes `k' / k`
-simple, so that a single such minimal polynomial computes the whole degree. -/
+constant irreducible over `F` (`TauCeti.map_minpoly_eq_minpoly_of_isIntegrallyClosedIn`), and
+separability makes `k' / k` simple, so that a single such minimal polynomial computes the whole
+degree. -/
 theorem finrank_constantCompositum_eq_finrank (hex : IsIntegrallyClosedIn k F)
     [FiniteDimensional k k'] [Algebra.IsSeparable k k'] :
     Module.finrank F (constantCompositum F k' F') = Module.finrank k k' := by
@@ -166,12 +189,14 @@ theorem finrank_constantCompositum_eq_finrank (hex : IsIntegrallyClosedIn k F)
       rw [← IsScalarTower.toAlgHom_fieldRange k k' F', AlgHom.fieldRange_eq_map, ← hβ,
         IntermediateField.adjoin_map]
       simp [hα]
-    refine le_antisymm ?_ (adjoin_simple_le_iff.2 (algebraMap_mem_constantCompositum F k' F' β))
-    rw [constantCompositum, IntermediateField.adjoin_le_iff, hrange]
     have hle : k⟮α⟯ ≤ (F⟮α⟯).restrictScalars k :=
-      adjoin_simple_le_iff.2 (mem_adjoin_simple_self F α)
-    exact fun y hy ↦ hle hy
-  rw [hcomp, finrank_adjoin_eq_finrank_adjoin hex hαint, adjoin.finrank hαint, hα,
+      adjoin_simple_le_iff.2 ((mem_restrictScalars k).2 (mem_adjoin_simple_self F α))
+    refine le_antisymm ((constantCompositum_le_iff F k' F').2 fun c ↦ ?_)
+      (adjoin_simple_le_iff.2 (algebraMap_mem_constantCompositum F k' F' β))
+    have hc : algebraMap k' F' c ∈ k⟮α⟯ := hrange.le (Set.mem_range_self c)
+    exact (mem_restrictScalars k).1 (hle hc)
+  rw [hcomp, finrank_adjoin_eq_finrank_adjoin_of_isIntegrallyClosedIn hex hαint,
+    adjoin.finrank hαint, hα,
     minpoly.algebraMap_eq (algebraMap k' F').injective β, ← adjoin.finrank hβint, hβ,
     IntermediateField.finrank_top']
 

@@ -57,7 +57,8 @@ linearly disjoint over `k`; under that hypothesis the divided form is `degree_co
 * `TauCeti.Divisor.finrank_mul_degree_conorm`: **the degree of a conorm**,
   `[k' : k] · deg (Con D) = [F' : F] · deg D` (Stichtenoth, Corollary 3.1.14).
 * `TauCeti.Divisor.degree_conorm`: the same identity divided through by `[k' : k]`, for `F` and
-  `k'` linearly disjoint over `k`: `deg (Con D) = n(F'/F) · deg D`.
+  `k'` linearly disjoint over `k`: `deg (Con D) = n(F'/F) · deg D` (Stichtenoth,
+  Corollary 3.6.4).
 
 ## Implementation notes
 
@@ -74,7 +75,9 @@ immediate, whereas the sum form needs the fibres to be disjoint before either ca
 ## References
 
 * H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., GTM 254, Springer, 2009,
-  Section III.1.
+  Sections III.1 and III.6.  The conorm and its cross-multiplied degree identity are III.1
+  (Definition 3.1.8, Proposition 3.1.9, Corollary 3.1.14); the quotient-valued degree identity
+  `deg (Con A) = [F' : F·k'] · deg A` is Corollary 3.6.4.
 -/
 
 public section
@@ -216,11 +219,11 @@ private theorem finrank_mul_degree_conorm_ofPoint (P : Place k F) :
   rw [hdeg, Finset.mul_sum, Finset.sum_congr rfl hterm, ← Finset.sum_mul, ← Nat.cast_sum,
     Place.sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable k F P hs]
 
-/-- **The degree of a conorm** (Stichtenoth, Corollary 3.1.14): the conorm multiplies degrees by
-the geometric degree of the extension.  The identity is stated cross-multiplied, as
-`[k' : k] · deg (Con D) = [F' : F] · deg D`: the divisibility `[k' : k] ∣ [F' : F]` needed to
-divide through is a separate theorem, available when `F` and `k'` are linearly disjoint
-over `k`.
+/-- **The degree of a conorm, cross-multiplied** (Stichtenoth, Corollary 3.1.14):
+`[k' : k] · deg (Con D) = [F' : F] · deg D`.  Nothing here is divided, so no divisibility is
+presupposed; dividing through by `[k' : k]` needs
+`TauCeti.finrank_dvd_finrank_of_finrank_constantCompositum_eq`, and the divided identity is
+`TauCeti.Divisor.degree_conorm`.
 
 The separability hypothesis is the one carried by
 `TauCeti.Place.sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable`. -/
@@ -238,10 +241,14 @@ theorem finrank_mul_degree_conorm (D : Divisor k F) :
 disjoint over `k`, so that `[k' : k]` divides `[F' : F]` with quotient the geometric degree
 `n(F'/F)`, the conorm multiplies degrees by `n(F'/F)`.
 
-This is the quotient-valued form of Stichtenoth's Corollary 3.1.14; the cross-multiplied
-`TauCeti.Divisor.finrank_mul_degree_conorm` is the form that holds without linear disjointness.
-The hypothesis makes the constant field extension finite, so no separate finiteness assumption on
-`k' / k` is needed. -/
+This is Stichtenoth's Corollary 3.6.4; the cross-multiplied
+`TauCeti.Divisor.finrank_mul_degree_conorm` (Corollary 3.1.14) is the form that holds without
+linear disjointness, and this is that identity divided through by `[k' : k]`.
+
+The hypothesis `h` is supplied by `TauCeti.finrank_constantCompositum_eq_finrank` whenever `k' / k`
+is finite separable and `k` is the exact constant field of `F`.  Together with the section's
+`[FiniteDimensional F F']` it forces `[k' : k]` to be finite and positive, which is what licenses
+the division; no separate finiteness assumption on `k' / k` is needed. -/
 theorem degree_conorm
     (h : Module.finrank F (constantCompositum F k' F') = Module.finrank k k') (D : Divisor k F) :
     degree (conorm k' F' D) = geometricDegree F k' F' * degree D := by
