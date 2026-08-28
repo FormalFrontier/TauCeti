@@ -45,6 +45,16 @@ of `F`, and that is proved here from `TauCeti.finrank_adjoin_eq_finrank_adjoin`.
 
 * H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., GTM 254, Springer, 2009,
   Section III.1.
+
+## Implementation notes
+
+Only `TauCeti.finrank_constantCompositum_eq_finrank`, where linear disjointness is *established*,
+is stated over the compatible tower `k → F → F'`, `k → k' → F'`; so is its consumer
+`TauCeti.Divisor.degree_conorm`.  The two lemmas that *use* the hypothesis
+`[F·k' : F] = [k' : k]` are arithmetic in the tower `F ⊆ F·k' ⊆ F'` and assume no relation
+between `k` and `F`, because Lean's `unusedSectionVars` linter — which this repository enforces
+and does not disable — rejects a statement carrying instances that appear neither in it nor in
+its proof.
 -/
 
 public section
@@ -108,19 +118,25 @@ section LinearDisjoint
 
 variable [Algebra k k'] [Algebra k' F'] [Algebra F F'] (F k' F')
 
-/-- **The degree of a function field extension in terms of its geometric degree**: if `F` and the
-constant field `k'` are linearly disjoint over `k`, so that the constants cost `[k' : k]` to
-adjoin, then `[F' : F] = n(F'/F) · [k' : k]`.
+/-- **The degree of a function field extension in terms of its geometric degree**: if adjoining
+the constants of `F'` to `F` costs exactly `[k' : k]`, then `[F' : F] = n(F'/F) · [k' : k]`.
 
-The hypothesis is stated as the degree of the compositum, the form in which linear disjointness is
-used; it can fail when `k' / k` is inseparable. -/
+The hypothesis `h` is the degree form of linear disjointness of `F` and `k'` over `k`; it is that
+condition in the situation where `k` sits in both `F` and `k'` compatibly with the two routes into
+`F'`, which is the situation of `TauCeti.finrank_constantCompositum_eq_finrank`, where `h` is
+proved, and of `TauCeti.Divisor.degree_conorm`, where it is consumed.  Establishing `h` is where
+that compatibility does the work, and where the condition can fail — an inseparable `k' / k` can
+destroy it.  Deducing the degree identity from `h` is arithmetic in the tower `F ⊆ F·k' ⊆ F'`
+alone, so no scalar tower relating `k` to `F` is assumed here: assuming one would leave it unused
+in the proof and in the statement. -/
 theorem finrank_eq_geometricDegree_mul
     (h : Module.finrank F (constantCompositum F k' F') = Module.finrank k k') :
     Module.finrank F F' = geometricDegree F k' F' * Module.finrank k k' := by
   rw [← finrank_constantCompositum_mul_geometricDegree F k' F', h, mul_comm]
 
 /-- **The degree of the constant field extension divides the degree of the function field
-extension**, for linearly disjoint `F` and `k'`; the quotient is the geometric degree. -/
+extension**, under the same hypothesis as `TauCeti.finrank_eq_geometricDegree_mul` — the degree
+form of linear disjointness of `F` and `k'` over `k`; the quotient is the geometric degree. -/
 theorem finrank_dvd_finrank
     (h : Module.finrank F (constantCompositum F k' F') = Module.finrank k k') :
     Module.finrank k k' ∣ Module.finrank F F' :=
@@ -132,9 +148,11 @@ variable [Algebra k F] [Algebra k F'] [IsScalarTower k k' F'] [IsScalarTower k F
 field**, provided the constant field downstairs is exact: adjoining the constants of `F'` to `F`
 costs exactly `[k' : k]`.
 
-Both hypotheses are used: exactness of `k` in `F` keeps the minimal polynomial of a constant
-irreducible over `F` (`TauCeti.map_minpoly_eq_minpoly`), and separability makes `k' / k` simple,
-so that a single such minimal polynomial computes the whole degree. -/
+This is the statement in which linear disjointness has content, and it is stated over the full
+compatible tower: `k` embeds in `F` and in `k'`, and the two routes `k → F → F'` and `k → k' → F'`
+agree.  Both hypotheses are used: exactness of `k` in `F` keeps the minimal polynomial of a
+constant irreducible over `F` (`TauCeti.map_minpoly_eq_minpoly`), and separability makes `k' / k`
+simple, so that a single such minimal polynomial computes the whole degree. -/
 theorem finrank_constantCompositum_eq_finrank (hex : IsIntegrallyClosedIn k F)
     [FiniteDimensional k k'] [Algebra.IsSeparable k k'] :
     Module.finrank F (constantCompositum F k' F') = Module.finrank k k' := by
