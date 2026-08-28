@@ -786,6 +786,7 @@ the standard-module weights. -/
 
 /-- Two morphisms out of the type-`C_(n+1)` carrier agree when they agree on every numbered root
 subgroup and on the split weight torus. -/
+@[ext]
 theorem groupScheme_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
     (φ ψ : groupScheme n ⟶
       (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).obj (Opposite.op Y))
@@ -803,6 +804,14 @@ noncomputable def points (A : Type) [CommRing A] :
   TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator n)
     (cartanGenerator n) (rep n) (lattice n).toAddSubgroup (kostantForm_apply_mem_lattice n)
     (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) A
+
+/-- The points of the type-`C_(n+1)` carrier are cut out by its defining Hopf ideal. -/
+theorem points_def (A : Type) [CommRing A] :
+    points n A =
+      TauCeti.GeneralLinear.hopfIdealPointsSubgroup ((n + 1) + (n + 1)) (definingIdeal n) A := by
+  rw [points, definingIdeal]
+  exact TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def
+    _ _ _ _ _ _ _ _ A
 
 /-- A matrix is a point of the type-`C_(n+1)` carrier exactly when its associated convolution
 point kills the carrier's defining Hopf ideal. -/
