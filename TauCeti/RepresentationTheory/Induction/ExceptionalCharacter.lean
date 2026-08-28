@@ -22,9 +22,10 @@ a multiple of the trivial character, and to add that multiple back on `G`:
 `φ* = Ind_H^G (φ - φ(1) · 1_H) + φ(1) · 1_G`.
 
 This file builds that class function, `TauCeti.ClassFunction.indExtend H φ`, as a `k`-linear map in
-`φ`, and proves what makes it useful.  It **restricts back to `φ`**
-(`TauCeti.ClassFunction.comap_subtype_indExtend`), so it has the same degree; and the assignment
-`φ ↦ φ*` **preserves the character pairing**
+`φ`, and proves what makes it useful.  It has the same degree
+(`TauCeti.ClassFunction.indExtend_apply_one`) and **restricts back to `φ`**
+(`TauCeti.ClassFunction.comap_subtype_indExtend`); and the assignment `φ ↦ φ*` **preserves the
+character pairing**
 (`TauCeti.ClassFunction.characterPairing_indExtend_indExtend`), so it carries a norm-`1` virtual
 character of `H` to a norm-`1` virtual character of `G`.  Over an algebraically closed field of
 characteristic zero in which `|G|` is invertible, a norm-`1` virtual character is `±` an irreducible
@@ -146,6 +147,7 @@ theorem indExtend_def [H.FiniteIndex] (φ : ClassFunction k H) :
 Here the correction cancels the induction outright, `1_H - 1_H = 0`, so nothing is induced and the
 whole value is the correction term on `G`.  No hypothesis on `H` is needed, and the normalization
 this records is what makes the extension an *extension* rather than an arbitrary repair. -/
+@[simp]
 theorem indExtend_ofCharacter_trivial [H.FiniteIndex] :
     indExtend H (ofCharacter (Representation.trivial k H k)) =
       ofCharacter (Representation.trivial k G k) := by
@@ -184,6 +186,17 @@ private theorem coe_ofCharacter_trivial :
     ((ofCharacter (Representation.trivial k G k) : ClassFunction k G) : G → k) = 1 :=
   funext fun _ => by simp
 
+/-- Induction takes a class function vanishing at the identity to one vanishing at the identity:
+every summand of the coset sum at the identity is the value of `f` at the identity. -/
+private theorem ind_apply_one_of_apply_one_eq_zero [H.FiniteIndex] {f : ClassFunction k H}
+    (hf : (f : H → k) 1 = 0) : (ind H f).1 1 = 0 := by
+  classical
+  rw [ind_apply, indClassFun_apply]
+  refine Finset.sum_eq_zero fun t _ => ?_
+  -- the representative conjugates the identity to the identity, so every summand is `f 1`
+  simp only [mul_one, inv_mul_cancel, one_mem, ↓reduceDIte]
+  exact hf
+
 /-- Expanding the pairing of two class functions each corrected by a multiple of the trivial
 character. -/
 private theorem characterPairing_sub_smul_trivial [Fintype G] (hG : IsUnit (Nat.card G : k))
@@ -207,6 +220,18 @@ private theorem characterPairing_sub_smul_trivial_right [Fintype G]
     characterPairing_ofCharacter_trivial_self hG]
   ring
 
+/-- **The exceptional extension has the same degree as the class function it came from.**
+
+The correction term is what makes this work: `φ - φ(1) · 1_H` vanishes at the identity, so its
+induction does too, and the value at the identity is the correction term alone. -/
+@[simp]
+theorem indExtend_apply_one [H.FiniteIndex] (φ : ClassFunction k H) :
+    (indExtend H φ).1 1 = φ.1 1 := by
+  rw [indExtend_def, Submodule.coe_add, Pi.add_apply,
+    ind_apply_one_of_apply_one_eq_zero (sub_smul_trivial_apply_one φ), SetLike.val_smul,
+    coe_ofCharacter_trivial]
+  simp
+
 section Restriction
 
 variable [Finite G]
@@ -222,12 +247,6 @@ theorem comap_subtype_indExtend (hH : IsTISubgroup H) (hk : IsUnit (Nat.card H :
   rw [indExtend_def, map_add, map_smul,
     comap_subtype_ind_eq_self hH hk _ (sub_smul_trivial_apply_one φ),
     comap_subtype_ofCharacter_trivial, sub_add_cancel]
-
-/-- **The exceptional extension has the same degree as the class function it came from.** -/
-theorem indExtend_apply_one (hH : IsTISubgroup H) (hk : IsUnit (Nat.card H : k))
-    (φ : ClassFunction k H) : (indExtend H φ).1 1 = φ.1 1 := by
-  have h := congrArg (fun f : ClassFunction k H => f.1 1) (comap_subtype_indExtend hH hk φ)
-  simpa using h
 
 /-- **Distinct class functions have distinct exceptional extensions**, restriction being a left
 inverse of the extension. -/
@@ -374,7 +393,7 @@ theorem indExtend_mem_irreducibleCharacters (hH : IsTISubgroup H) {φ : ClassFun
     exact irreducibleCharacter_mem k i
   -- the negative alternative would force a sum of two positive naturals to vanish in `k`
   · exfalso
-    have hone : (indExtend H φ).1 1 = φ.1 1 := indExtend_apply_one hH hk φ
+    have hone : (indExtend H φ).1 1 = φ.1 1 := indExtend_apply_one φ
     rw [hdeg] at hone
     have hval : -(irreducibleCharacter k i (1 : G)) = (characterDegree k j : k) := by
       rw [← hone, hi]; rfl
