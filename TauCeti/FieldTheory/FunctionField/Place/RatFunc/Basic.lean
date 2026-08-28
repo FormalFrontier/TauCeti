@@ -258,6 +258,7 @@ theorem degree_adicOfIrreducible {q : k[X]} (hq : Irreducible q) :
 /-- **Two irreducible polynomials define the same finite place exactly when they are
 associated** (Stichtenoth, Proposition 1.2.1(a)): the place remembers the prime `(q)`, and
 nothing more. -/
+@[simp]
 theorem adicOfIrreducible_eq_adicOfIrreducible_iff {q r : k[X]} (hq : Irreducible q)
     (hr : Irreducible r) :
     adicOfIrreducible hq = adicOfIrreducible hr ↔ Associated q r := by
@@ -299,6 +300,7 @@ theorem adic_ne_infty (p : HeightOneSpectrum (k[X])) : adic k (RatFunc k) p ≠ 
 variable {k}
 
 /-- The finite place of an irreducible polynomial is not the place at infinity. -/
+@[simp]
 theorem adicOfIrreducible_ne_infty {q : k[X]} (hq : Irreducible q) :
     adicOfIrreducible hq ≠ infty k := by
   rw [adicOfIrreducible_def]
