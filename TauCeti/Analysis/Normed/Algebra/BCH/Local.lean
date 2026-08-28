@@ -13,11 +13,9 @@ public import TauCeti.Analysis.Normed.Algebra.LogOneAdd.Inverse
 # The local Baker--Campbell--Hausdorff map
 
 This file defines the germ at `(0, 0)` represented by
-`logOneAdd (exp x * exp y - 1)` in a real normed algebra. Using a germ records
+`logOneAdd (exp x * exp y - 1)` in a complete real normed algebra. Using a germ records
 that this expression is a local logarithm; its values away from the origin
-have no mathematical role. The definition, representative equation, and value
-at the origin need only a normed algebra; all subsequent results also assume
-completeness.
+have no mathematical role.
 
 The exponential of this germ is the product of the two exponentials. Its
 restrictions to either coordinate axis are the identity germ, and its chosen
@@ -54,11 +52,12 @@ variable (A : Type*) [NormedRing A] [NormedAlgebra ℝ A]
 
 /-- The germ at `(0, 0)` represented by the local logarithm
 `fun p ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1)` of `exp p.1 * exp p.2`. -/
-def localBCH : Germ (𝓝 ((0, 0) : A × A)) A :=
+def localBCH [hA : CompleteSpace A] : Germ (𝓝 ((0, 0) : A × A)) A :=
+  let _ := hA
   (fun p : A × A ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1) : A × A → A)
 
 /-- `localBCH` is the germ of `fun p ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1)`. -/
-theorem localBCH_def :
+theorem localBCH_def [CompleteSpace A] :
     localBCH A =
       (↑(fun p : A × A ↦ logOneAdd ℝ A (exp p.1 * exp p.2 - 1)) :
         Germ (𝓝 ((0, 0) : A × A)) A) :=
@@ -66,7 +65,7 @@ theorem localBCH_def :
 
 /-- The local Baker--Campbell--Hausdorff germ takes the value zero at the origin. -/
 @[simp]
-theorem localBCH_value : (localBCH A).value = 0 := by
+theorem localBCH_value [CompleteSpace A] : (localBCH A).value = 0 := by
   simp [localBCH]
 
 variable [CompleteSpace A]
