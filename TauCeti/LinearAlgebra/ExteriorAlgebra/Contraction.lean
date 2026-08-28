@@ -40,7 +40,7 @@ private theorem contractLeft_ιMulti_eq_zero {n : ℕ}
 
 /-- Contracting an exterior-basis vector by a coordinate not in its index set gives zero. -/
 @[simp]
-theorem contractLeft_coord_basis_eq_zero_of_not_mem {I : Type w} [LinearOrder I]
+private theorem contractLeft_coord_basis_eq_zero_of_not_mem {I : Type w} [LinearOrder I]
     (b : Module.Basis I R M) (i : I) (s : Finset I) (hi : i ∉ s) :
     contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i) (b.ExteriorAlgebra s) = 0 := by
   rw [ExteriorAlgebra.basis_apply]
@@ -105,6 +105,7 @@ theorem basis_singleton_mul_basis_erase {I : Type w} [LinearOrder I]
 
 /-- Contracting an exterior-basis vector erases the contracted coordinate, with the shuffle sign
 that moves that coordinate to the front; it is zero when the coordinate is absent. -/
+@[simp]
 theorem contractLeft_coord_basis {I : Type w} [LinearOrder I]
     (b : Module.Basis I R M) (i : I) (s : Finset I) :
     contractLeft (Q := (0 : QuadraticForm R M)) (b.coord i) (b.ExteriorAlgebra s) =

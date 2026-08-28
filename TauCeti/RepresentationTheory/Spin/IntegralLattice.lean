@@ -31,6 +31,8 @@ step.
 
 * `TauCeti.SpinPolarizationData.integralSpinActionSubring`: the Clifford elements whose action
   preserves the coordinate integral lattice.
+* `TauCeti.SpinPolarizationData.integralSpinAction`: their induced integral representation on
+  that lattice.
 * `TauCeti.SpinPolarizationData.ι_basis_mem_integralSpinActionSubring`: creation operators are
   integral.
 * `TauCeti.SpinPolarizationData.ι_dualVector_mem_integralSpinActionSubring`: annihilation
@@ -91,6 +93,35 @@ theorem mem_integralSpinActionSubring {c : CliffordAlgebra Q} :
         (TauCeti.ExteriorAlgebra.integralLattice b)
         (TauCeti.ExteriorAlgebra.integralLattice b) :=
   Iff.rfl
+
+/-- The integral representation obtained by restricting the spin action to the Clifford elements
+that preserve the coordinate integral lattice. -/
+noncomputable def integralSpinAction :
+    P.integralSpinActionSubring b →+*
+      Module.End ℤ (TauCeti.ExteriorAlgebra.integralLattice b) where
+  toFun c :=
+    { toFun := fun x =>
+        ⟨spinAction Q P (c : CliffordAlgebra Q) x,
+          c.property x.property⟩
+      map_add' := fun x y => Subtype.ext (by simp)
+      map_smul' := fun z x => Subtype.ext
+        (map_zsmul (spinAction Q P (c : CliffordAlgebra Q)) z
+          (x : ExteriorAlgebra ℚ P.W)) }
+  map_one' := LinearMap.ext fun x => Subtype.ext (by simp)
+  map_mul' := fun c d => LinearMap.ext fun x => Subtype.ext (by simp)
+  map_zero' := LinearMap.ext fun x => Subtype.ext (by simp)
+  map_add' := fun c d => LinearMap.ext fun x => Subtype.ext (by simp)
+
+/-- The ambient value of the integral spin action is the original rational spin action. -/
+@[simp]
+theorem coe_integralSpinAction_apply (c : P.integralSpinActionSubring b)
+    (x : TauCeti.ExteriorAlgebra.integralLattice b) :
+    ((P.integralSpinAction b c x : TauCeti.ExteriorAlgebra.integralLattice b) :
+        ExteriorAlgebra ℚ P.W) =
+      spinAction Q P (c : CliffordAlgebra Q) (x : ExteriorAlgebra ℚ P.W) :=
+  by
+    rw [integralSpinAction]
+    rfl
 
 /-- A basis vector in the first isotropic summand acts integrally on the spinor lattice: its
 Clifford action is exterior multiplication by that basis vector. -/
