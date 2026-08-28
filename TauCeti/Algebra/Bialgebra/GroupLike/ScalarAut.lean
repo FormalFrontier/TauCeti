@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RingTheory.Bialgebra.TensorProduct
 public import TauCeti.Algebra.Bialgebra.GroupLike.Map
+public import TauCeti.Algebra.GroupAction.TypeTags
 public import TauCeti.Algebra.TensorProduct.BaseChange
 
 /-!
@@ -14,14 +15,14 @@ public import TauCeti.Algebra.TensorProduct.BaseChange
 
 For a commutative semiring extension `L/K` and a `K`-bialgebra `A`, the scalar-factor action on
 `L ⊗[K] A` preserves the counit and comultiplication equations defining group-like elements. It
-therefore induces actions on the group-like elements and on their additive form.
+therefore induces an action on the group-like elements, and `Additive.distribMulAction` transports
+that action to their additive form.
 
 ## Main declarations
 
 * `TauCeti.ScalarAut.isGroupLikeElem_smul`: scalar automorphisms preserve group-like elements.
 * `TauCeti.ScalarAut.groupLikeMap_smul`: the induced map on group-like elements is equivariant.
 * `TauCeti.ScalarAut.instGroupLikeDistribMulAction`: the induced action on group-like elements.
-* `TauCeti.ScalarAut.instAdditiveDistribMulAction`: the transported additive action.
 -/
 
 public section
@@ -110,28 +111,6 @@ theorem groupLikeMap_smul {B : Type*} [Semiring B] [Bialgebra K B] (f : A →ₐ
   apply _root_.GroupLike.val_injective
   simp only [GroupLike.val_map, val_smul]
   exact baseChangeMap_smul (f : A →ₐ[K] B) σ x.val
-
-/-- The scalar action transported to the additive form of the group-like monoid. -/
-noncomputable instance instAdditiveDistribMulAction :
-    DistribMulAction (L ≃ₐ[K] L) (Additive (_root_.GroupLike L (L ⊗[K] A))) where
-  smul σ x := Additive.ofMul (σ • x.toMul)
-  one_smul x := congrArg Additive.ofMul (one_smul _ x.toMul)
-  mul_smul σ τ x := congrArg Additive.ofMul (mul_smul σ τ x.toMul)
-  smul_zero σ := congrArg Additive.ofMul (smul_one σ)
-  smul_add σ x y := congrArg Additive.ofMul (smul_mul' σ x.toMul y.toMul)
-
-/-- The additive scalar action is transported from the group-like action. -/
-@[simp]
-theorem smul_ofMul (σ : L ≃ₐ[K] L) (x : _root_.GroupLike L (L ⊗[K] A)) :
-    σ • Additive.ofMul x = Additive.ofMul (σ • x) :=
-  rfl
-
-/-- Passing back to the multiplicative group-like element commutes with the scalar action. -/
-@[simp]
-theorem toMul_smul (σ : L ≃ₐ[K] L)
-    (x : Additive (_root_.GroupLike L (L ⊗[K] A))) :
-    (σ • x).toMul = σ • x.toMul :=
-  rfl
 
 end ScalarAut
 
