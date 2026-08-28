@@ -69,8 +69,10 @@ section WeylElement
 variable (R : Type u) [Semiring R]
 
 /-- The Weyl element in the Bruhat decomposition of `GL₂` is the permutation matrix of the
-transposition of the two coordinate lines. -/
-@[simp]
+transposition of the two coordinate lines.
+
+This is not a simp lemma: `GL2WeylElement` is the canonical name used by the Bruhat API, and
+unfolding it makes those theorem statements fail the simp-normal-form linter. -/
 theorem gl2WeylElement_eq_permutationGL_swap :
     GL2WeylElement R = permutationGL (k := R) (Equiv.swap 0 1) := by
   apply Units.ext
