@@ -31,6 +31,8 @@ The empty-rank case is included. For positive rank the decomposition is supplied
 
 These are the two pinned `sl ↔ gl` transfer statements in Layer 9 of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
+The exact suggested signature for the upgrade theorem is in
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`.
 -/
 
 public section
@@ -121,10 +123,9 @@ theorem gl_equiv_of_sl_equiv_of_central_scalar (c : K)
   obtain ⟨X, r, hA⟩ := exists_sl_add_smul_one_eq A
   have hXaction :
       e ⁅(X : Matrix (Fin n) (Fin n) K), m⁆ = ⁅(X : Matrix (Fin n) (Fin n) K), e m⁆ := by
-    change e ⁅X, m⁆ = ⁅X, e m⁆
-    exact e.map_lie X m
-  rw [← hA, add_lie, add_lie, map_add, hXaction, smul_lie, smul_lie,
-    hM, hM', map_smul, map_smul]
+    simpa only [LieSubalgebra.coe_bracket_of_module, LieModuleEquiv.coe_toLieModuleHom]
+      using e.map_lie X m
+  simp only [← hA, add_lie, map_add, hXaction, smul_lie, hM, hM', map_smul]
 
 end Upgrade
 
