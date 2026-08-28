@@ -157,25 +157,43 @@ theorem isEvenPrimeDiscriminant_eq_of_four_mul_eq {a d c e E F m n : ℤ}
   have hc2 : c % 2 = 1 := by omega
   rcases hE with rfl | rfl | rfl <;> rcases hF with rfl | rfl | rfl
   · rfl
-  · exact absurd (show c * e ^ 2 = 2 * -(m * n) by
-      rw [← hade]; have : a = -m := by omega
-      rw [this, show d = 2 * n by omega]; ring) (odd_mul_sq_ne_two_mul_odd hc2 hmnneg)
-  · exact absurd (show c * e ^ 2 = 2 * (m * n) by
-      rw [← hade]; rw [show a = -m by omega, show d = -(2 * n) by omega]; ring)
-      (odd_mul_sq_ne_two_mul_odd hc2 hmn)
-  · exact absurd (show c * e ^ 2 = 2 * -(m * n) by
-      rw [← hade]; rw [show a = 2 * m by omega, show d = -n by omega]; ring)
-      (odd_mul_sq_ne_two_mul_odd hc2 hmnneg)
+  · have hcontra : c * e ^ 2 = 2 * -(m * n) := by
+      have ha : a = -m := by omega
+      have hd : d = 2 * n := by omega
+      rw [← hade, ha, hd]
+      ring
+    exact absurd hcontra (odd_mul_sq_ne_two_mul_odd hc2 hmnneg)
+  · have hcontra : c * e ^ 2 = 2 * (m * n) := by
+      have ha : a = -m := by omega
+      have hd : d = -(2 * n) := by omega
+      rw [← hade, ha, hd]
+      ring
+    exact absurd hcontra (odd_mul_sq_ne_two_mul_odd hc2 hmn)
+  · have hcontra : c * e ^ 2 = 2 * -(m * n) := by
+      have ha : a = 2 * m := by omega
+      have hd : d = -n := by omega
+      rw [← hade, ha, hd]
+      ring
+    exact absurd hcontra (odd_mul_sq_ne_two_mul_odd hc2 hmnneg)
   · rfl
-  · exact absurd (show c * e ^ 2 = -4 * (m * n) by
-      rw [← hade]; rw [show a = 2 * m by omega, show d = -(2 * n) by omega]; ring)
-      (mod_four_mul_sq_ne_neg_four_mul hc hmn4)
-  · exact absurd (show c * e ^ 2 = 2 * (m * n) by
-      rw [← hade]; rw [show a = -(2 * m) by omega, show d = -n by omega]; ring)
-      (odd_mul_sq_ne_two_mul_odd hc2 hmn)
-  · exact absurd (show c * e ^ 2 = -4 * (m * n) by
-      rw [← hade]; rw [show a = -(2 * m) by omega, show d = 2 * n by omega]; ring)
-      (mod_four_mul_sq_ne_neg_four_mul hc hmn4)
+  · have hcontra : c * e ^ 2 = -4 * (m * n) := by
+      have ha : a = 2 * m := by omega
+      have hd : d = -(2 * n) := by omega
+      rw [← hade, ha, hd]
+      ring
+    exact absurd hcontra (mod_four_mul_sq_ne_neg_four_mul hc hmn4)
+  · have hcontra : c * e ^ 2 = 2 * (m * n) := by
+      have ha : a = -(2 * m) := by omega
+      have hd : d = -n := by omega
+      rw [← hade, ha, hd]
+      ring
+    exact absurd hcontra (odd_mul_sq_ne_two_mul_odd hc2 hmn)
+  · have hcontra : c * e ^ 2 = -4 * (m * n) := by
+      have ha : a = -(2 * m) := by omega
+      have hd : d = 2 * n := by omega
+      rw [← hade, ha, hd]
+      ring
+    exact absurd hcontra (mod_four_mul_sq_ne_neg_four_mul hc hmn4)
   · rfl
 
 /-- **A prime-discriminant factorization sits inside another.** Let `u` and `s` be finite sets of

@@ -5,11 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Degree
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Ramification
 public import TauCeti.NumberTheory.Multiquadratic.Unramified.Basic
 public import TauCeti.NumberTheory.Multiquadratic.Unramified.Subfields
-import TauCeti.Algebra.Squarefree
+import TauCeti.FieldTheory.IntermediateField.Quadratic
 import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Subfactorization
 
 /-!
@@ -52,7 +51,7 @@ In the namespace `TauCeti.Multiquadratic`:
 
 * `exists_mem_candidateGenusField_sq_eq_intCast`: a quadratic subfield `ℚ(√a)` of such an `M` has
   its square root inside the candidate genus field.
-* `exists_algHom_mem_candidateGenusField`: `M` embeds over `ℚ` into the candidate genus field.
+* `nonempty_algHom_candidateGenusField`: `M` embeds over `ℚ` into the candidate genus field.
 * `finrank_le_finrank_candidateGenusField`: hence `[M : ℚ] ≤ [K_gen : ℚ]`, and
   `finrank_le_two_pow_card_genusPrimeDiscriminants` reads that bound off as `2 ^ t`.
 * `nonempty_algEquiv_candidateGenusField`: an extension attaining the bound is `ℚ`-isomorphic to
@@ -73,10 +72,11 @@ namespace TauCeti.Multiquadratic
 field.** If the prime discriminants in `u ⊆ genusPrimeDiscriminants hd` have product
 `fundamentalDiscriminant a`, then `candidateGenusField hd` contains an element squaring to `a`. -/
 theorem exists_mem_candidateGenusField_sq_eq_intCast_of_subset {d a : ℤ} (hd : Squarefree d)
-    {u : Finset ℤ} (hu : ∀ P ∈ u, IsPrimeDiscriminant P)
-    (huprod : ∏ P ∈ u, P = fundamentalDiscriminant a)
+    {u : Finset ℤ} (huprod : ∏ P ∈ u, P = fundamentalDiscriminant a)
     (hsub : u ⊆ genusPrimeDiscriminants hd) :
     ∃ z ∈ candidateGenusField hd, z ^ 2 = ((a : ℤ) : ℂ) := by
+  have hu : ∀ P ∈ u, IsPrimeDiscriminant P := fun P hP =>
+    (genusPrimeDiscriminants_spec hd).1 P (hsub hP)
   obtain ⟨z, hzmem, hz⟩ := exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq hu huprod
     (L := ℂ) (fun P => genusFieldRoot hd ⟨P.val, hsub P.property⟩) fun P => by simp
   refine ⟨z, adjoin_le_iff.mpr ?_ hzmem, ?_⟩
@@ -86,11 +86,33 @@ theorem exists_mem_candidateGenusField_sq_eq_intCast_of_subset {d a : ℤ} (hd :
 
 variable {M : Type*} [Field M] [NumberField M]
 
+private theorem finrank_adjoin_sq_eq_intCast {d : ℤ}
+    (hnsqd : ¬ IsSquare ((d : ℤ) : ℚ)) {y : M} (hy : y ^ 2 = algebraMap ℤ M d) :
+    Module.finrank ℚ (adjoin ℚ {y} : IntermediateField ℚ M) = 2 := by
+  have hy_sq_mem : y ^ 2 ∈ (⊥ : IntermediateField ℚ M) := by
+    rw [hy, IsScalarTower.algebraMap_apply ℤ ℚ M]
+    exact IntermediateField.algebraMap_mem _ _
+  have hyQ : y ^ 2 = algebraMap ℚ M ((d : ℤ) : ℚ) := by
+    rw [hy, IsScalarTower.algebraMap_apply ℤ ℚ M]
+    norm_num
+  have hy_not_mem : y ∉ (⊥ : IntermediateField ℚ M) := by
+    intro hy_mem
+    rw [IntermediateField.mem_bot] at hy_mem
+    obtain ⟨r, hr⟩ := hy_mem
+    apply hnsqd
+    refine ⟨r, ?_⟩
+    apply (algebraMap ℚ M).injective
+    simpa only [map_mul, hr, pow_two] using hyQ.symm
+  have hdeg := TauCeti.IntermediateField.finrank_sup_adjoin_simple_eq_mul_two
+    (⊥ : IntermediateField ℚ M) hy_sq_mem hy_not_mem
+  rw [bot_sup_eq] at hdeg
+  simpa using hdeg
+
 section IsGalois
 
 variable [IsGalois ℚ M]
 
-/-- **A quadratic subfield of an unramified abelian extension lies in the candidate genus field.**
+/-- **A quadratic subfield of an unramified Galois extension lies in the candidate genus field.**
 Let `M / ℚ` be Galois, let `y ∈ M` be a square root of a squarefree non-square `d` generating a
 quadratic subfield, and assume `M` is unramified over that subfield at every finite prime. Then for
 every squarefree non-square `a` with a square root in `M`, the candidate genus field
@@ -101,7 +123,6 @@ prime-discriminant factorization of the discriminant of `ℚ(√d)`. -/
 theorem exists_mem_candidateGenusField_sq_eq_intCast {d a : ℤ} (hd : Squarefree d)
     (hnsqd : ¬ IsSquare ((d : ℤ) : ℚ)) (hsfa : Squarefree a) (hnsqa : ¬ IsSquare ((a : ℤ) : ℚ))
     {x y : M} (hx : x ^ 2 = algebraMap ℤ M a) (hy : y ^ 2 = algebraMap ℤ M d)
-    (hdeg : Module.finrank ℚ (adjoin ℚ {y} : IntermediateField ℚ M) = 2)
     (hunr : ∀ q : Ideal (𝓞 (adjoin ℚ {y} : IntermediateField ℚ M)), q.IsPrime → q ≠ ⊥ →
       Algebra.IsUnramifiedIn (𝓞 M) q) :
     ∃ z ∈ candidateGenusField hd, z ^ 2 = ((a : ℤ) : ℂ) := by
@@ -128,12 +149,13 @@ theorem exists_mem_candidateGenusField_sq_eq_intCast {d a : ℤ} (hd : Squarefre
     obtain ⟨u, hu, hue, huprod⟩ :=
       (isFundamentalDiscriminant_fundamentalDiscriminant hsfa).exists_finset_primeDiscriminant
     obtain ⟨hs, hse, hsprod⟩ := genusPrimeDiscriminants_spec hd
-    refine exists_mem_candidateGenusField_sq_eq_intCast_of_subset hd hu huprod
+    refine exists_mem_candidateGenusField_sq_eq_intCast_of_subset hd huprod
       (subset_of_forall_prime_dvd_fundamentalDiscriminant hs hse hsprod hu hue huprod hce
         (fun p hp hpa => dvd_fundamentalDiscriminant_base_of_dvd_subfield hsfa hnsqa hd hnsqd hx hy
           hunr hp hpa) fun h2 => ?_)
-    have h := not_dvd_fundamentalDiscriminant_mul_of_dvd_subfield hsfa hnsqa hsfc hnsqc hx hy hdeg
-      hunr he hce (p := 2) Nat.prime_two (by exact_mod_cast h2)
+    have hdeg := finrank_adjoin_sq_eq_intCast hnsqd hy
+    have h := not_dvd_fundamentalDiscriminant_mul_of_dvd_subfield hsfa hnsqa hsfc hnsqc hx hy
+      hdeg hunr he hce (p := 2) Nat.prime_two (by exact_mod_cast h2)
     exact_mod_cast h
 
 end IsGalois
@@ -145,17 +167,17 @@ variable [IsAbelianGalois ℚ M]
 /-- **Maximality of the candidate genus field.** Let `M / ℚ` be an abelian number-field extension
 containing a square root `y` of a squarefree non-square `d` that generates a quadratic subfield, and
 suppose `M` is unramified over that subfield at every finite prime. Then `M` admits a `ℚ`-embedding
-into `ℂ` whose image lies inside `candidateGenusField hd`.
+into `candidateGenusField hd`.
 
 Together with the facts that `candidateGenusField hd` is itself abelian over `ℚ`, contains a square
 root of `d`, and is unramified over `ℚ(√d)` at every finite prime, this says it is the largest such
 extension — the maximality half of the genus-field characterisation. -/
-theorem exists_algHom_mem_candidateGenusField {d : ℤ} (hd : Squarefree d)
+theorem nonempty_algHom_candidateGenusField {d : ℤ} (hd : Squarefree d)
     (hnsqd : ¬ IsSquare ((d : ℤ) : ℚ)) {y : M} (hy : y ^ 2 = algebraMap ℤ M d)
-    (hdeg : Module.finrank ℚ (adjoin ℚ {y} : IntermediateField ℚ M) = 2)
     (hunr : ∀ q : Ideal (𝓞 (adjoin ℚ {y} : IntermediateField ℚ M)), q.IsPrime → q ≠ ⊥ →
       Algebra.IsUnramifiedIn (𝓞 M) q) :
-    ∃ φ : M →ₐ[ℚ] ℂ, ∀ m : M, φ m ∈ candidateGenusField hd := by
+    Nonempty (M →ₐ[ℚ] candidateGenusField hd) := by
+  have hdeg := finrank_adjoin_sq_eq_intCast hnsqd hy
   obtain ⟨n, a, root, hsf, hroot, hindep, htop, -⟩ :=
     exists_squarefree_root_adjoin_range_eq_top_of_isUnramifiedIn_over_quadratic
       (adjoin ℚ {y} : IntermediateField ℚ M) hdeg hunr
@@ -166,9 +188,8 @@ theorem exists_algHom_mem_candidateGenusField {d : ℤ} (hd : Squarefree d)
     have hxi : root i ^ 2 = algebraMap ℤ M (a i) := by
       rw [hroot i, IsScalarTower.algebraMap_apply ℤ ℚ M]
       norm_num
-    exact exists_mem_candidateGenusField_sq_eq_intCast hd hnsqd (hsf i) hnsqa hxi hy hdeg hunr
+    exact exists_mem_candidateGenusField_sq_eq_intCast hd hnsqd (hsf i) hnsqa hxi hy hunr
   choose z hzmem hzsq using key
-  refine ⟨IsAlgClosed.lift (R := ℚ) (S := M) (M := ℂ), fun m => ?_⟩
   set φ : M →ₐ[ℚ] ℂ := IsAlgClosed.lift
   have hle : adjoin ℚ (Set.range root) ≤ (candidateGenusField hd).comap φ := by
     rw [adjoin_le_iff]
@@ -176,26 +197,24 @@ theorem exists_algHom_mem_candidateGenusField {d : ℤ} (hd : Squarefree d)
     have hsqeq : φ (root i) ^ 2 = z i ^ 2 := by
       rw [← map_pow, hroot i, AlgHom.commutes, hzsq i]
       simp
-    change φ (root i) ∈ candidateGenusField hd
+    apply (Subalgebra.mem_comap (candidateGenusField hd).toSubalgebra φ (root i)).mpr
     rcases sq_eq_sq_iff_eq_or_eq_neg.mp hsqeq with h | h
     · rw [h]; exact hzmem i
     · rw [h]; exact neg_mem (hzmem i)
+  refine ⟨φ.codRestrict (candidateGenusField hd).toSubalgebra fun m => ?_⟩
   exact hle (by rw [htop]; exact IntermediateField.mem_top)
 
 /-- **The degree bound from maximality.** Under the hypotheses of
-`exists_algHom_mem_candidateGenusField`, the degree of `M` over `ℚ` is at most the degree of the
+`nonempty_algHom_candidateGenusField`, the degree of `M` over `ℚ` is at most the degree of the
 candidate genus field. -/
 theorem finrank_le_finrank_candidateGenusField {d : ℤ} (hd : Squarefree d)
     (hnsqd : ¬ IsSquare ((d : ℤ) : ℚ)) {y : M} (hy : y ^ 2 = algebraMap ℤ M d)
-    (hdeg : Module.finrank ℚ (adjoin ℚ {y} : IntermediateField ℚ M) = 2)
     (hunr : ∀ q : Ideal (𝓞 (adjoin ℚ {y} : IntermediateField ℚ M)), q.IsPrime → q ≠ ⊥ →
       Algebra.IsUnramifiedIn (𝓞 M) q) :
     Module.finrank ℚ M ≤ Module.finrank ℚ (candidateGenusField hd) := by
-  obtain ⟨φ, hφ⟩ := exists_algHom_mem_candidateGenusField hd hnsqd hy hdeg hunr
-  set ψ : M →ₐ[ℚ] candidateGenusField hd :=
-    φ.codRestrict (candidateGenusField hd).toSubalgebra hφ
-  exact LinearMap.finrank_le_finrank_of_injective (f := ψ.toLinearMap)
-    fun _ _ h => ψ.toRingHom.injective h
+  obtain ⟨φ⟩ := nonempty_algHom_candidateGenusField hd hnsqd hy hunr
+  exact LinearMap.finrank_le_finrank_of_injective (f := φ.toLinearMap)
+    fun _ _ h => φ.toRingHom.injective h
 
 /-- **`[M : ℚ] ≤ 2 ^ t`.** An abelian extension of `ℚ` that is unramified at every finite prime
 over its quadratic subfield `ℚ(√d)` has degree at most `2 ^ t`, where `t` is the number of prime
@@ -204,34 +223,30 @@ discriminants dividing `fundamentalDiscriminant d` — equivalently, by
 `ℚ(√d)`. The bound is attained by the candidate genus field itself. -/
 theorem finrank_le_two_pow_card_genusPrimeDiscriminants {d : ℤ} (hd : Squarefree d)
     (hnsqd : ¬ IsSquare ((d : ℤ) : ℚ)) {y : M} (hy : y ^ 2 = algebraMap ℤ M d)
-    (hdeg : Module.finrank ℚ (adjoin ℚ {y} : IntermediateField ℚ M) = 2)
     (hunr : ∀ q : Ideal (𝓞 (adjoin ℚ {y} : IntermediateField ℚ M)), q.IsPrime → q ≠ ⊥ →
       Algebra.IsUnramifiedIn (𝓞 M) q) :
     Module.finrank ℚ M ≤ 2 ^ (genusPrimeDiscriminants hd).card :=
-  (finrank_le_finrank_candidateGenusField hd hnsqd hy hdeg hunr).trans
+  (finrank_le_finrank_candidateGenusField hd hnsqd hy hunr).trans
     (finrank_candidateGenusField hd).le
 
 /-- **Uniqueness at the maximal degree.** An abelian extension of `ℚ` that is unramified at every
 finite prime over its quadratic subfield `ℚ(√d)` and attains the maximal degree `2 ^ t` is
 `ℚ`-isomorphic to the candidate genus field: the embedding of
-`exists_algHom_mem_candidateGenusField` is then forced to be onto. -/
+`nonempty_algHom_candidateGenusField` is then forced to be onto. -/
 theorem nonempty_algEquiv_candidateGenusField {d : ℤ} (hd : Squarefree d)
     (hnsqd : ¬ IsSquare ((d : ℤ) : ℚ)) {y : M} (hy : y ^ 2 = algebraMap ℤ M d)
-    (hdeg : Module.finrank ℚ (adjoin ℚ {y} : IntermediateField ℚ M) = 2)
     (hunr : ∀ q : Ideal (𝓞 (adjoin ℚ {y} : IntermediateField ℚ M)), q.IsPrime → q ≠ ⊥ →
       Algebra.IsUnramifiedIn (𝓞 M) q)
     (hfr : Module.finrank ℚ M = 2 ^ (genusPrimeDiscriminants hd).card) :
     Nonempty (M ≃ₐ[ℚ] candidateGenusField hd) := by
-  obtain ⟨φ, hφ⟩ := exists_algHom_mem_candidateGenusField hd hnsqd hy hdeg hunr
-  set ψ : M →ₐ[ℚ] candidateGenusField hd :=
-    φ.codRestrict (candidateGenusField hd).toSubalgebra hφ
-  have hinj : Function.Injective ψ := fun _ _ h => ψ.toRingHom.injective h
+  obtain ⟨φ⟩ := nonempty_algHom_candidateGenusField hd hnsqd hy hunr
+  have hinj : Function.Injective φ := fun _ _ h => φ.toRingHom.injective h
   have hrank : Module.finrank ℚ M = Module.finrank ℚ (candidateGenusField hd) := by
     rw [hfr, finrank_candidateGenusField hd]
-  have hsurj : Function.Surjective ψ :=
+  have hsurj : Function.Surjective φ :=
     (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hrank
-      (f := ψ.toLinearMap)).mp hinj
-  exact ⟨AlgEquiv.ofBijective ψ ⟨hinj, hsurj⟩⟩
+      (f := φ.toLinearMap)).mp hinj
+  exact ⟨AlgEquiv.ofBijective φ ⟨hinj, hsurj⟩⟩
 
 end IsAbelianGalois
 
