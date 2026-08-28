@@ -36,9 +36,9 @@ carrier.
 
 ## Main results
 
-* `TauCeti.typeAGraphAutomorphism_transvection`: the sign-free equation on every positive
+* `TauCeti.typeAGraphAutomorphism_transvectionUnit`: the sign-free equation on every positive
   simple-root subgroup.
-* `TauCeti.typeAGraphAutomorphism_sq`: the automorphism has order dividing two.
+* `TauCeti.typeAGraphAutomorphism_mul_self`: the automorphism has order dividing two.
 * `TauCeti.map_typeAGraphAutomorphism`: the construction is natural in the coefficient ring.
 
 ## References
@@ -175,7 +175,7 @@ private theorem inverseTranspose_typeAGraphConjugator (r : ℕ) :
     inverseTranspose_permutationGL_rev]
 
 /-- The square of the signed reversal matrix is the scalar matrix `(-1)^r I`. -/
-theorem typeAGraphConjugator_sq (r : ℕ) :
+theorem typeAGraphConjugator_mul_self (r : ℕ) :
     typeAGraphConjugator r A * typeAGraphConjugator r A =
       Matrix.GeneralLinearGroup.scalar (Fin (r + 1)) ((-1 : Aˣ) ^ r) := by
   let d : GL (Fin (r + 1)) A := diagGL (typeAGraphSign (A := A))
@@ -224,14 +224,14 @@ theorem typeAGraphAutomorphism_typeAGraphAutomorphism (r : ℕ)
           (typeAGraphConjugator r A * typeAGraphConjugator r A)⁻¹ := by group
     _ = Matrix.GeneralLinearGroup.scalar (Fin (r + 1)) ((-1 : Aˣ) ^ r) * g *
           (Matrix.GeneralLinearGroup.scalar (Fin (r + 1)) ((-1 : Aˣ) ^ r))⁻¹ := by
-      rw [typeAGraphConjugator_sq]
+      rw [typeAGraphConjugator_mul_self]
     _ = g := by
       rw [Matrix.GeneralLinearGroup.scalar_commute]
       group
 
 /-- The pinned type-`A` graph automorphism has order dividing two. -/
 @[simp]
-theorem typeAGraphAutomorphism_sq (r : ℕ) :
+theorem typeAGraphAutomorphism_mul_self (r : ℕ) :
     typeAGraphAutomorphism r A * typeAGraphAutomorphism r A = 1 := by
   apply DFunLike.ext _ _
   intro g
@@ -289,7 +289,7 @@ private theorem typeAGraphSign_castSucc_mul_neg_mul_inv_succ (i : Fin r) (c : A)
 /-- **The pinned graph automorphism reverses the positive simple-root subgroups without changing
 their parameters.** In Bourbaki numbering, the node `i` is carried to `i.rev`. -/
 @[simp]
-theorem typeAGraphAutomorphism_transvection (r : ℕ) (i : Fin r) (c : A) :
+theorem typeAGraphAutomorphism_transvectionUnit (r : ℕ) (i : Fin r) (c : A) :
     typeAGraphAutomorphism r A
         (transvectionUnit (Fin.castSucc_lt_succ (i := i)).ne c) =
       transvectionUnit (Fin.castSucc_lt_succ (i := i.rev)).ne c := by
