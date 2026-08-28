@@ -31,8 +31,9 @@ preserves `X`-avoidance and the product of the `O`-monomial weights in the one-c
   repartition identity.
 * `TauCeti.GridRectangle.coveredSquares_union_eq_of_mem_cIoo'`: the complementary orientation
   of the same identity.
-* `TauCeti.GridRectangle.disjoint_coveredSquares_of_mem_cIoo`: the two pieces on each side of
-  the first identity are disjoint.
+* `TauCeti.GridRectangle.disjoint_coveredSquares_of_row_mem_cIoo` and
+  `TauCeti.GridRectangle.disjoint_coveredSquares_of_col_mem_cIoo`: the two pieces on the left
+  and right sides of the first identity are disjoint.
 * `TauCeti.GridRectangle.prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo`: any
   multiplicative weight is preserved by the repartition.
 
@@ -87,7 +88,7 @@ theorem coveredSquares_union_eq_of_mem_cIoo' {a b c u v w : Fin n}
 
 /-- In the first L-shaped repartition, the two rectangles on the left have disjoint covered
 square domains. -/
-theorem disjoint_coveredSquares_of_mem_cIoo {a b c u v w : Fin n}
+theorem disjoint_coveredSquares_of_row_mem_cIoo {a b c u v w : Fin n}
     (hrow : v ∈ Grid.cIoo u w) :
     Disjoint
       ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares
@@ -103,7 +104,7 @@ theorem disjoint_coveredSquares_of_mem_cIoo {a b c u v w : Fin n}
 
 /-- In the first L-shaped repartition, the two rectangles on the right have disjoint covered
 square domains. -/
-theorem disjoint_coveredSquares_of_mem_cIoo_alt {a b c u v w : Fin n}
+theorem disjoint_coveredSquares_of_col_mem_cIoo {a b c u v w : Fin n}
     (hcol : b ∈ Grid.cIoo a c) :
     Disjoint
       ({ left := b, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares
@@ -119,7 +120,7 @@ theorem disjoint_coveredSquares_of_mem_cIoo_alt {a b c u v w : Fin n}
 
 /-- In the complementary L-shaped repartition, the two alternate rectangles have disjoint
 covered-square domains. -/
-theorem disjoint_coveredSquares_of_mem_cIoo_alt' {a b c u v w : Fin n}
+theorem disjoint_coveredSquares_of_col_mem_cIoo_compl {a b c u v w : Fin n}
     (hcol : c ∈ Grid.cIoo a b) :
     Disjoint
       ({ left := a, right := c, bottom := u, top := w } : GridRectangle n).coveredSquares
@@ -147,9 +148,9 @@ theorem prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo
           f p) *
         ∏ p ∈ ({ left := a, right := b, bottom := u, top := w } : GridRectangle n).coveredSquares,
           f p := by
-  rw [← Finset.prod_union (disjoint_coveredSquares_of_mem_cIoo hrow),
+  rw [← Finset.prod_union (disjoint_coveredSquares_of_row_mem_cIoo hrow),
     coveredSquares_union_eq_of_mem_cIoo hcol hrow,
-    Finset.prod_union (disjoint_coveredSquares_of_mem_cIoo_alt hcol)]
+    Finset.prod_union (disjoint_coveredSquares_of_col_mem_cIoo hcol)]
 
 /-- Recutting the complementary L-shaped domain preserves the product of any commutative weight
 on its covered squares. -/
@@ -164,9 +165,9 @@ theorem prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo'
           f p) *
         ∏ p ∈ ({ left := c, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares,
           f p := by
-  rw [← Finset.prod_union (disjoint_coveredSquares_of_mem_cIoo hrow),
+  rw [← Finset.prod_union (disjoint_coveredSquares_of_row_mem_cIoo hrow),
     coveredSquares_union_eq_of_mem_cIoo' hcol hrow,
-    Finset.prod_union (disjoint_coveredSquares_of_mem_cIoo_alt' hcol)]
+    Finset.prod_union (disjoint_coveredSquares_of_col_mem_cIoo_compl hcol)]
 
 end GridRectangle
 
