@@ -10,19 +10,17 @@ public import Mathlib.Analysis.Real.Pi.Bounds
 public import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 public import Mathlib.NumberTheory.NumberField.DirichletDensity
 public import Mathlib.NumberTheory.ZetaValues
-public import Mathlib.RingTheory.Ideal.Int
-public import Mathlib.RingTheory.RamificationInertia.Inertia
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Counting
-public import TauCeti.NumberTheory.NumberField.PrimeIdeal
+public import TauCeti.NumberTheory.NumberField.ResidueDegree
 
 /-!
 # The primes of residue degree above one are negligible
 
 A height-one prime `𝔭` of `𝓞 K` lies over a unique rational prime `p`, and its absolute norm is
-`p ^ f` for `f` the residue degree `Ideal.inertiaDeg 𝔭.asIdeal ℤ`.  The primes with `f = 1`
-carry all the mass of every prime-indexed Dirichlet series and of every prime count; this file
-proves the estimates that make that precise, bounding the contribution of the remaining primes,
-those of residue degree at least `2`.
+`p ^ f` for `f` the residue degree `Ideal.inertiaDeg 𝔭.asIdeal ℤ`.  This file bounds the
+contribution of the primes with `f ≥ 2`, the set `TauCeti.higherDegreePrimes K`: they number
+`O(√x)` up to norm `x`, hence also `o(x / log x)`, and their Dirichlet series `∑ N(𝔭) ^ (-s)`
+converges for every `s > 1/2`, with a bound that is uniform on `s ≥ 1`.
 
 Two elementary inputs carry the whole argument.
 
@@ -30,6 +28,7 @@ Two elementary inputs carry the whole argument.
   of size `N(𝔭)` but by one of size at most `√(N(𝔭))`.
 * At most `[K : ℚ]` height-one primes lie over one rational prime, by the fundamental identity
   `∑ e f = [K : ℚ]`; this is the already available
+  `TauCeti.card_filter_rationalPrimeBelow_le_finrank`, itself resting on
   `TauCeti.NumberField.card_primesOverFinset_le_finrank`.
 
 Together these compare any finite sum over the degree-above-one primes with `[K : ℚ]` times a sum
@@ -38,17 +37,8 @@ over the rational primes with the exponent doubled, which is
 `m ^ (-2s)` gives convergence for every `s > 1/2` together with a bound on the partial Dirichlet
 series that is *uniform* on `s ≥ 1`.
 
-## Main definitions
-
-* `TauCeti.rationalPrimeBelow 𝔭` is the rational prime below a height-one prime `𝔭` of `𝓞 K`,
-  namely the absolute norm of `𝔭 ∩ ℤ`.
-* `TauCeti.higherDegreePrimes K` is the set of height-one primes of `𝓞 K` whose residue degree
-  over `ℚ` exceeds `1`.
-
 ## Main results
 
-* `TauCeti.mem_higherDegreePrimes_iff_not_prime_absNorm`: a height-one prime has residue degree
-  above one exactly when its absolute norm is not a prime number.
 * `TauCeti.primeCount_higherDegreePrimes_le`: the explicit count
   `π_K(x; f ≥ 2) ≤ [K : ℚ] · √x`, with `TauCeti.primeCount_higherDegreePrimes_isBigO` and
   `TauCeti.primeCount_higherDegreePrimes_isLittleO` its `O(√x)` and `o(x / log x)` forms.
@@ -68,10 +58,9 @@ function `x / log x`, not against `π_K`.
 
 ## Implementation notes
 
-`rationalPrimeBelow` is named rather than spelled out as `Ideal.absNorm (Ideal.under ℤ 𝔭.asIdeal)`
-because every statement below fibres the primes over it: keeping it a single head symbol is what
-makes the fibrewise rewriting elaborate, and it is the object `Chebotarev` will name when it
-compares a prime of `K` with the rational prime under it.
+The set `TauCeti.higherDegreePrimes` and the map `TauCeti.rationalPrimeBelow` the estimates fibre
+over, together with their elementary norm and inertia theory, are algebraic rather than analytic
+and live in `TauCeti.NumberTheory.NumberField.ResidueDegree`.
 
 ## Roadmap role
 
@@ -103,90 +92,7 @@ namespace TauCeti
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- The height-one primes of `𝓞 K` whose residue degree over `ℚ` is greater than one, that is,
-whose absolute norm is a proper power of the rational prime below them. -/
-def higherDegreePrimes (K : Type*) [Field K] :
-    Set (HeightOneSpectrum (𝓞 K)) :=
-  {𝔭 | 1 < Ideal.inertiaDeg 𝔭.asIdeal ℤ}
-
-omit [NumberField K] in
-@[simp]
-theorem mem_higherDegreePrimes {𝔭 : HeightOneSpectrum (𝓞 K)} :
-    𝔭 ∈ higherDegreePrimes K ↔ 1 < Ideal.inertiaDeg 𝔭.asIdeal ℤ :=
-  Iff.rfl
-
-/-! ### The rational prime below a height-one prime -/
-
-/-- The rational prime below a height-one prime `𝔭` of `𝓞 K`, that is, the residue
-characteristic of `𝔭`.  It is the absolute norm of the prime `𝔭 ∩ ℤ` of `ℤ`. -/
-noncomputable def rationalPrimeBelow (𝔭 : HeightOneSpectrum (𝓞 K)) : ℕ :=
-  Ideal.absNorm (Ideal.under ℤ 𝔭.asIdeal)
-
-omit [NumberField K] in
-/-- The defining formula for `TauCeti.rationalPrimeBelow`. -/
-theorem rationalPrimeBelow_def (𝔭 : HeightOneSpectrum (𝓞 K)) :
-    rationalPrimeBelow 𝔭 = Ideal.absNorm (Ideal.under ℤ 𝔭.asIdeal) := by
-  rw [rationalPrimeBelow]
-
-omit [NumberField K] in
-/-- The rational prime below a height-one prime really is a prime number. -/
-theorem prime_rationalPrimeBelow (𝔭 : HeightOneSpectrum (𝓞 K)) :
-    (rationalPrimeBelow 𝔭).Prime := by
-  have := 𝔭.isPrime
-  have : NeZero 𝔭.asIdeal := ⟨𝔭.ne_bot⟩
-  exact Nat.absNorm_under_prime 𝔭.asIdeal
-
-/-- The absolute norm of a height-one prime is the rational prime below it raised to the residue
-degree. -/
-theorem absNorm_eq_rationalPrimeBelow_pow (𝔭 : HeightOneSpectrum (𝓞 K)) :
-    Ideal.absNorm 𝔭.asIdeal =
-      rationalPrimeBelow 𝔭 ^ Ideal.inertiaDeg 𝔭.asIdeal ℤ := by
-  have := 𝔭.isPrime
-  exact (Ideal.absNorm_pow_inertiaDeg (Ideal.under ℤ 𝔭.asIdeal) 𝔭.asIdeal).symm
-
-/-- A height-one prime has residue degree above one exactly when its absolute norm is not a prime
-number: the norm is `p ^ f`, which is prime precisely for `f = 1`. -/
-theorem mem_higherDegreePrimes_iff_not_prime_absNorm {𝔭 : HeightOneSpectrum (𝓞 K)} :
-    𝔭 ∈ higherDegreePrimes K ↔ ¬ (Ideal.absNorm 𝔭.asIdeal).Prime := by
-  have := 𝔭.isPrime
-  have hpos := Ideal.inertiaDeg_pos 𝔭.asIdeal ℤ
-  rw [mem_higherDegreePrimes, absNorm_eq_rationalPrimeBelow_pow 𝔭, Nat.prime_iff, prime_pow_iff,
-    ← Nat.prime_iff, not_and_or, or_iff_right (not_not_intro (prime_rationalPrimeBelow 𝔭))]
-  omega
-
-/-- A prime of residue degree above one has norm at least the square of the rational prime below
-it. -/
-theorem sq_rationalPrimeBelow_le_absNorm {𝔭 : HeightOneSpectrum (𝓞 K)}
-    (h𝔭 : 𝔭 ∈ higherDegreePrimes K) :
-    rationalPrimeBelow 𝔭 ^ 2 ≤ Ideal.absNorm 𝔭.asIdeal := by
-  rw [absNorm_eq_rationalPrimeBelow_pow 𝔭]
-  exact Nat.pow_le_pow_right (prime_rationalPrimeBelow 𝔭).one_lt.le h𝔭
-
-/-! ### Fibring the primes over the rational primes below them -/
-
-/-- In any finite set of height-one primes of `𝓞 K`, at most `[K : ℚ]` have a given rational
-prime below them: this is the height-one-spectrum fibre form of
-`TauCeti.NumberField.card_primesOverFinset_le_finrank`. -/
-theorem card_filter_rationalPrimeBelow_le_finrank (F : Finset (HeightOneSpectrum (𝓞 K))) (m : ℕ) :
-    (F.filter fun 𝔮 ↦ rationalPrimeBelow 𝔮 = m).card ≤
-      Module.finrank ℚ K := by
-  rcases Finset.eq_empty_or_nonempty
-    (F.filter fun 𝔮 ↦ rationalPrimeBelow 𝔮 = m) with h | ⟨𝔭, h𝔭⟩
-  · simp [h]
-  -- Every prime in the fibre lies over the ideal `span {m}` of `ℤ`, which is therefore maximal.
-  have key : ∀ 𝔮 ∈ F.filter fun 𝔮 ↦ rationalPrimeBelow 𝔮 = m,
-      Ideal.under ℤ 𝔮.asIdeal = Ideal.span {(m : ℤ)} := by
-    intro 𝔮 h𝔮
-    rw [← (Finset.mem_filter.mp h𝔮).2, rationalPrimeBelow_def, Int.ideal_span_absNorm_eq_self]
-  have h𝔭' := 𝔭.isPrime
-  have hspan : (Ideal.span {(m : ℤ)}).IsPrime := key 𝔭 h𝔭 ▸ Ideal.IsPrime.under ℤ 𝔭.asIdeal
-  have hne : (Ideal.span {(m : ℤ)} : Ideal ℤ) ≠ ⊥ :=
-    key 𝔭 h𝔭 ▸ Ideal.under_ne_bot (A := ℤ) 𝔭.ne_bot
-  have : (Ideal.span {(m : ℤ)}).IsMaximal := hspan.isMaximal hne
-  refine le_trans (Finset.card_le_card_of_injOn (fun 𝔮 ↦ 𝔮.asIdeal) (fun 𝔮 h𝔮 ↦ ?_)
-    (fun 𝔮 _ 𝔮' _ h ↦ HeightOneSpectrum.ext h))
-    (NumberField.card_primesOverFinset_le_finrank (K := K) hne)
-  exact (IsDedekindDomain.mem_primesOverFinset_iff hne (𝓞 K)).mpr ⟨𝔮.isPrime, ⟨(key 𝔮 h𝔮).symm⟩⟩
+/-! ### Fibring a sum over the rational primes below the primes -/
 
 /-- Comparison of a finite sum over height-one primes with a sum over the rational primes below
 them: the fibres have at most `[K : ℚ]` elements. -/
@@ -333,7 +239,7 @@ theorem primeIdealZetaSum_higherDegreePrimes_le {s : ℝ} (hs : 1 ≤ s) :
   classical
   rw [NumberField.Set.primeIdealZetaSum_def]
   refine Real.tsum_le_of_sum_le (fun 𝔭 ↦ Real.rpow_nonneg (Nat.cast_nonneg _) _) fun u ↦ ?_
-  have hsum := sum_rpow_le_finrank_mul_tsum (K := K) (s := s) (show (1 : ℝ) / 2 < s by linarith)
+  have hsum := sum_rpow_le_finrank_mul_tsum (K := K) (s := s) (by linarith)
     (F := u.image Subtype.val) (fun 𝔭 h𝔭 ↦ by
       obtain ⟨𝔮, -, rfl⟩ := Finset.mem_image.mp h𝔭
       exact 𝔮.2)
