@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.LSeries.Convergence
 public import Mathlib.NumberTheory.LSeries.SumCoeff
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
+public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Trivial
 
 /-!
@@ -38,7 +39,9 @@ of a convergent series of nonnegative terms must become arbitrarily small.
 * `TauCeti.idealCount_linearBounds`: such a package exists for every number field.
 * `TauCeti.abscissaOfAbsConv_normCoeff_one`: the abscissa of absolute convergence of the trivial
   ideal weight is exactly `1`; `TauCeti.LSeriesSummable_normCoeff_one_iff` is the sharp
-  convergence criterion.
+  convergence criterion, and `TauCeti.idealAbscissaOfAbsConv_one` the same value for the
+  ideal-indexed series, which the nonnegativity of the coefficients makes agree with the grouped
+  one.
 * `TauCeti.abscissaOfAbsConv_dedekindZetaCoeff` and `TauCeti.LSeriesSummable_dedekindZetaCoeff_iff`
   are the same two statements for `TauCeti.dedekindZetaCoeff`, the coefficient system Mathlib's
   `NumberField.dedekindZeta` is the `LSeries` of.  That system counts *all* integral ideals, so it
@@ -409,6 +412,16 @@ theorem LSeriesSummable_normCoeff_one_iff {s : ℂ} :
         (not_LSeriesSummable_normCoeff_one K)
   · rw [abscissaOfAbsConv_normCoeff_one K]
     exact_mod_cast h
+
+open scoped ComplexOrder in
+/-- **The ideal-indexed abscissa of absolute convergence of the trivial ideal weight is `1`.**
+Its coefficients are nonnegative, so there is no cancellation inside a norm fibre to separate the
+ideal-indexed abscissa from the grouped one. -/
+@[simp]
+theorem idealAbscissaOfAbsConv_one :
+    idealAbscissaOfAbsConv K (1 : IdealArithmeticFunction K) = 1 := by
+  rw [idealAbscissaOfAbsConv_eq_abscissaOfAbsConv K 1 fun _ ↦ zero_le_one,
+    abscissaOfAbsConv_normCoeff_one]
 
 /-- **The Dedekind zeta series has abscissa of absolute convergence `1`.** -/
 @[simp]
