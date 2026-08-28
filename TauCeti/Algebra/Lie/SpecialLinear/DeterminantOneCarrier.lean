@@ -111,19 +111,14 @@ private theorem rootCoordinateMap_determinantGroupLike (k : Fin r ⊕ Fin r) :
     f.hom (GeneralLinear.determinantGroupLike ℤ (r + 1) :
         GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) =
         Matrix.det (GeneralLinear.pointToGeneralLinear (r + 1)
-          (toConv f.hom.toAlgHom)).val :=
-      GeneralLinear.map_determinantGroupLike_eq_det_point ℤ (r + 1) f
+          (toConv f.hom.toAlgHom)).val := by
+      simpa only [WithConv.ofConv_toConv, BialgHom.coe_toAlgHom] using
+        (GeneralLinear.point_apply_determinantGroupLike (R := ℤ) (n := r + 1)
+          (toConv f.hom.toAlgHom))
     _ = Matrix.det m.val := congrArg (fun g => Matrix.det g.val) hpoint'
     _ = 1 := by
       rw [hmatrix, ← Matrix.GeneralLinearGroup.val_det_apply,
         TauCeti.det_transvectionUnit, Units.val_one]
-
-private theorem weightTorusCoordinateMap_determinantGroupLike :
-    (GeneralLinear.weightTorusCoordinateMap (R := ℤ) (weight r)).hom
-      (GeneralLinear.determinantGroupLike ℤ (r + 1) :
-        GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) = 1 :=
-  GeneralLinear.weightTorusCoordinateMap_determinantGroupLike (R := ℤ) (weight r)
-    (sum_weight_eq_zero r)
 
 /-- **The determinant-one equation belongs to the defining Hopf ideal of the full-weight type
 `A_r` carrier.** Equivalently, every represented root subgroup and the represented weight torus
@@ -140,7 +135,8 @@ theorem specialLinearDefiningHopfIdeal_le_kostantToralDefiningIdeal :
     exact SpecialLinear.definingHopfIdeal_toIdeal_le_ker_of_map_determinant_eq_one ℤ (r + 1) _
       (rootCoordinateMap_determinantGroupLike r k)
   · exact SpecialLinear.definingHopfIdeal_toIdeal_le_ker_of_map_determinant_eq_one ℤ (r + 1) _
-      (weightTorusCoordinateMap_determinantGroupLike r)
+      (GeneralLinear.weightTorusCoordinateMap_determinantGroupLike (R := ℤ) (weight r)
+        (sum_weight_eq_zero r))
 
 /-- Every matrix-valued point of the full-weight type `A_r` carrier has determinant one. -/
 theorem det_eq_one_of_mem_points {A : Type} [CommRing A]

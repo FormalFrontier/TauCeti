@@ -226,16 +226,10 @@ fundamental weights. -/
 def weight (k : Fin (r + 1)) (i : Fin r) : ℤ :=
   (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0)
 
-@[simp]
-theorem weight_apply (k : Fin (r + 1)) (i : Fin r) :
-    weight r k i =
-      (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0) :=
-  by rw [weight]
-
 /-- The weights of the standard representation sum to zero. -/
 theorem sum_weight_eq_zero : ∑ k, weight r k = 0 := by
   funext i
-  simp [weight_apply]
+  simp [weight]
 
 /-- The root of a numbered raising or lowering generator, as an integral character of the
 numbered Cartan generators: the `i`-th row of the type `A` Cartan matrix on a raising generator
