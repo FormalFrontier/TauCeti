@@ -157,11 +157,12 @@ private theorem W1p0.isCompactOperator_valueExtendByZeroL (hp : p ≠ ∞)
     intro f hf
     obtain ⟨u, hu, rfl⟩ := hf
     rw [mem_ball, dist_zero_right] at hu
-    rw [← Lp.enorm_def, ← ofReal_norm]
-    change ENNReal.ofReal ‖W1p0.valueExtendByZeroL u‖ ≤ 1
-    simpa only [ENNReal.ofReal_one] using ENNReal.ofReal_mono
+    rw [← Lp.enorm_def]
+    calc
+      ‖W1p0.valueExtendByZeroL u‖ₑ ≤ ‖(1 : ℝ)‖ₑ := enorm_le_iff_norm_le.mpr
         ((W1p0.norm_valueExtendByZeroL_le (mu := mu) (Omega := Omega) (p := p) u).trans
-          hu.le)
+          (by simpa using hu.le))
+      _ = 1 := by simp
   -- The Sobolev translation estimate is uniform on the open unit ball.
   have htrans : ∀ epsilon : ENNReal, 0 < epsilon → ∃ delta > 0, ∀ f ∈ S, ∀ h : E,
       ‖h‖ < delta → eLpNorm (fun x => f (x + h) - f x) p mu ≤ epsilon := by
@@ -191,11 +192,9 @@ private theorem W1p0.isCompactOperator_valueExtendByZeroL (hp : p ≠ ∞)
     isCompact_closure_of_comp_add_sub_of_isBounded_of_ae_eq_zero_compl
       (E := E) (F := ℝ) (mu := mu) (p := p) (S := S) (s := (Omega : Set E)) (M := 1)
       hp hOmega hsupp ENNReal.one_ne_top hbdd htrans
-  have hT : IsCompactOperator T.toLinearMap := by
-    change IsCompactOperator (T : W1p0 mu Omega p → Lp ℝ p mu)
-    apply (isCompactOperator_iff_exists_mem_nhds_isCompact_closure_image T).2
-    exact ⟨ball 0 1, ball_mem_nhds 0 one_pos, by simpa only [S] using hcompact⟩
-  exact hT
+  apply (isCompactOperator_iff_isCompact_closure_image_ball T.toLinearMap one_pos).2
+  rw [ContinuousLinearMap.coe_coe T]
+  simpa only [S] using hcompact
 
 /-- **Rellich--Kondrachov for zero-boundary Sobolev spaces.**  If `Ω` is bounded and
 `1 ≤ p < ∞`, the canonical value map `W^{1,p}_0(Ω) → Lᵖ(Ω)` is a compact operator.
