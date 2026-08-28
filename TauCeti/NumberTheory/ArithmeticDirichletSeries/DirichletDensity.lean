@@ -36,11 +36,13 @@ the part of the density calculus that does not need the all-prime asymptotic of 
   complementation, and positivity of the partial sums at `s > 1`.
 * `NumberField.Set.IsLowerDirichletDensityBound` and
   `NumberField.Set.IsUpperDirichletDensityBound`: the one-sided epsilon bounds on the density
-  ratio, and `NumberField.Set.hasDirichletDensity_of_upperBound_of_lowerBound`, which turns a
-  matching pair of them into a genuine density.
+  ratio, characterized by `NumberField.Set.isLowerDirichletDensityBound_iff` and
+  `NumberField.Set.isUpperDirichletDensityBound_iff`, and
+  `NumberField.Set.hasDirichletDensity_of_upperBound_of_lowerBound`, which turns a matching pair
+  of them into a genuine density.
 * `NumberField.Set.hasDirichletDensity_of_subset_of_subset`: the resulting squeeze.
 * `NumberField.Set.HasDirichletDensity.union`,
-  `NumberField.Set.HasDirichletDensity.finsetBiUnion`,
+  `NumberField.Set.HasDirichletDensity.biUnion_finset`,
   `NumberField.Set.hasDirichletDensity_univ` and `NumberField.Set.HasDirichletDensity.compl`:
   the additivity laws.
 
@@ -52,7 +54,9 @@ for it, so downstream modules cannot see through the definition. This file there
 Mathlib module a second time as a private `import all`, which makes the body visible to proofs
 without making this file's public interface depend on it, and states the unfolding once as
 `NumberField.Set.hasDirichletDensity_iff_tendsto`. Every proof below goes through that lemma into
-the `Filter.Tendsto` API rather than through definitional unfolding.
+the `Filter.Tendsto` API rather than through definitional unfolding. The two bound predicates
+defined here are opaque downstream for the same reason, so each comes with a characteristic
+`_iff` lemma restating its defining eventual inequality.
 
 The partial sums are unfolded with Mathlib's `NumberField.Set.primeIdealZetaSum_def`, and the
 general `tsum` lemmas are then handed the summand `fun 𝔭 ↦ N(𝔭) ^ (-s)` explicitly, sparing them
@@ -230,6 +234,24 @@ def IsUpperDirichletDensityBound (S : Set (HeightOneSpectrum (𝓞 K))) (δ : �
   ∀ ε > 0, ∀ᶠ s : ℝ in 𝓝[>] 1,
     S.primeIdealZetaSum s / primeIdealZetaSum (univ : Set (HeightOneSpectrum (𝓞 K))) s < δ + ε
 
+/-- Characterization of `NumberField.Set.IsLowerDirichletDensityBound`: it is exactly the family
+of eventual lower bounds `δ - ε` on the density ratio. -/
+theorem isLowerDirichletDensityBound_iff :
+    S.IsLowerDirichletDensityBound δ ↔
+      ∀ ε > 0, ∀ᶠ s : ℝ in 𝓝[>] 1,
+        δ - ε < S.primeIdealZetaSum s /
+          primeIdealZetaSum (univ : Set (HeightOneSpectrum (𝓞 K))) s :=
+  Iff.rfl
+
+/-- Characterization of `NumberField.Set.IsUpperDirichletDensityBound`: it is exactly the family
+of eventual upper bounds `δ + ε` on the density ratio. -/
+theorem isUpperDirichletDensityBound_iff :
+    S.IsUpperDirichletDensityBound δ ↔
+      ∀ ε > 0, ∀ᶠ s : ℝ in 𝓝[>] 1,
+        S.primeIdealZetaSum s /
+          primeIdealZetaSum (univ : Set (HeightOneSpectrum (𝓞 K))) s < δ + ε :=
+  Iff.rfl
+
 /-- Lower Dirichlet density bounds are downward closed: any `δ' ≤ δ` is again a lower bound. -/
 theorem IsLowerDirichletDensityBound.weaken {δ' : ℝ} (h : S.IsLowerDirichletDensityBound δ)
     (hδ : δ' ≤ δ) : S.IsLowerDirichletDensityBound δ' :=
@@ -325,6 +347,12 @@ theorem hasDirichletDensity_univ :
   have hs : (1 : ℝ) < s := mem_Ioi.mp hmem
   exact (div_self (primeIdealZetaSum_univ_pos (K := K) hs).ne').symm
 
+/-- The Dirichlet density of the set of all nonzero primes is `1`. -/
+@[simp]
+theorem dirichletDensity_univ :
+    dirichletDensity (univ : Set (HeightOneSpectrum (𝓞 K))) = 1 :=
+  hasDirichletDensity_univ.dirichletDensity_eq
+
 /-- **Complementation.** If `S` has Dirichlet density `δ`, its complement has density `1 - δ`. -/
 theorem HasDirichletDensity.compl (h : S.HasDirichletDensity δ) :
     Sᶜ.HasDirichletDensity (1 - δ) := by
@@ -338,7 +366,7 @@ theorem HasDirichletDensity.compl (h : S.HasDirichletDensity δ) :
   linarith
 
 /-- **Additivity of Dirichlet density over a finite pairwise-disjoint family.** -/
-theorem HasDirichletDensity.finsetBiUnion {ι : Type*} {t : Finset ι}
+theorem HasDirichletDensity.biUnion_finset {ι : Type*} {t : Finset ι}
     {A : ι → Set (HeightOneSpectrum (𝓞 K))} {d : ι → ℝ}
     (hd : (t : Set ι).Pairwise (Function.onFun Disjoint A))
     (h : ∀ i ∈ t, (A i).HasDirichletDensity (d i)) :
