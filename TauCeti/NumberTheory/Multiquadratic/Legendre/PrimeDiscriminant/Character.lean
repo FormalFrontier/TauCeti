@@ -94,7 +94,7 @@ theorem primeDiscriminantCharFun_def (P n : ℤ) :
   norm_num [primeDiscriminantCharFun_def]
 
 /-- Away from the three even prime discriminants the character is a Jacobi symbol. -/
-theorem primeDiscriminantCharFun_of_not_isEvenPrimeDiscriminant {P : ℤ}
+theorem primeDiscriminantCharFun_eq_jacobiSym_of_not_isEvenPrimeDiscriminant {P : ℤ}
     (hP : ¬ IsEvenPrimeDiscriminant P) (n : ℤ) :
     primeDiscriminantCharFun P n = jacobiSym n P.natAbs := by
   simp only [IsEvenPrimeDiscriminant, not_or] at hP
@@ -104,7 +104,7 @@ theorem primeDiscriminantCharFun_of_not_isEvenPrimeDiscriminant {P : ℤ}
 particular it depends only on `p`, not on the sign normalization `p* = (-1) ^ ((p - 1) / 2) * p`. -/
 @[simp] theorem primeDiscriminantCharFun_oddPrimeDiscriminant {p : ℕ} (hodd : Odd p) (n : ℤ) :
     primeDiscriminantCharFun (oddPrimeDiscriminant p) n = jacobiSym n p := by
-  rw [primeDiscriminantCharFun_of_not_isEvenPrimeDiscriminant
+  rw [primeDiscriminantCharFun_eq_jacobiSym_of_not_isEvenPrimeDiscriminant
     (not_isEvenPrimeDiscriminant_oddPrimeDiscriminant hodd), oddPrimeDiscriminant_natAbs]
 
 /-- The character attached to a prime discriminant is completely multiplicative. -/
