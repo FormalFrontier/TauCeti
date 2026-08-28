@@ -120,10 +120,7 @@ theorem diagonalTorus_le :
     diagonalTorus R n ≤ upperTriangularGroup (Fin n) R := by
   intro g hg
   obtain ⟨d, rfl⟩ := mem_diagonalTorus_iff_exists_diagGL.mp hg
-  rw [mem_iff]
-  intro i j hji
-  rw [diagGL_coe]
-  exact Matrix.diagonal_apply_ne _ (ne_of_gt hji)
+  simpa only [coe_diagonalHom] using (diagonalHom d).property
 
 end UpperTriangularGroup
 
@@ -171,8 +168,9 @@ theorem mem_diagonalTorus_of_mem
     have hsumlt : (∑ ι : Fin n, (σ ι).val) < ∑ ι : Fin n, ι.val :=
       Finset.sum_lt_sum (fun ι _ ↦ hle ι) hstrict
     exact hsumlt.ne hsum
-  rw [hσ, map_one, mul_one] at hfactor
-  exact mem_diagonalTorus_iff_exists_diagGL.mpr ⟨d, hfactor.symm⟩
+  have hperm : diagonalNormalizerPerm (k := k) (n := n) g = 1 := by
+    rw [diagonalNormalizerPerm_eq_of_eq_diagGL_mul_permutationGL g d σ hfactor, hσ]
+  exact (diagonalNormalizerPerm_eq_one_iff g).mp hperm
 
 /-- Over a field with at least two units, the intersection of the upper-triangular subgroup of
 `GLₙ` with the normalizer of the diagonal torus is exactly the diagonal torus. -/
