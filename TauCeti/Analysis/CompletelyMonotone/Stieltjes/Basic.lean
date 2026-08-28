@@ -73,34 +73,11 @@ theorem representsStieltjes_iff {μ : Measure ℝ≥0} {a b : ℝ≥0} {f : ℝ 
         ∀ t : ℝ, 0 < t → f t = (a : ℝ) / t + (b : ℝ) + ∫ x, (t + (x : ℝ))⁻¹ ∂μ :=
   Iff.rfl
 
-/-- The integral term in a Stieltjes representation is nonnegative at every positive parameter. -/
-theorem integral_inv_add_nonneg (μ : Measure ℝ≥0) {t : ℝ} (ht : 0 < t) :
-    0 ≤ ∫ x : ℝ≥0, (t + (x : ℝ))⁻¹ ∂μ := by
-  exact integral_nonneg fun x => inv_nonneg.mpr (add_nonneg ht.le x.coe_nonneg)
-
-namespace RepresentsStieltjes
-
-variable {μ ν : Measure ℝ≥0} {a b c d : ℝ≥0} {f g : ℝ → ℝ}
-
-/-- A Stieltjes representing measure has no atom at zero. -/
-lemma measure_singleton_zero (h : RepresentsStieltjes μ a b f) : μ {0} = 0 := h.1
-
-/-- The weighted integrability condition on a Stieltjes representing measure. -/
-lemma integrable_weight (h : RepresentsStieltjes μ a b f) : Integrable stieltjesWeight μ := h.2.1
-
-/-- Evaluation of a Stieltjes representation at a positive parameter. -/
-lemma eq_div_add_add_integral_inv_add (h : RepresentsStieltjes μ a b f) {t : ℝ} (ht : 0 < t) :
-    f t = (a : ℝ) / t + (b : ℝ) + ∫ x : ℝ≥0, (t + (x : ℝ))⁻¹ ∂μ :=
-  h.2.2 t ht
-
-/-- The kernel of a Stieltjes representation is integrable at every positive parameter.
-
-For `t ≥ 1` it is bounded by the defining weight.  For `0 < t ≤ 1`, it is bounded by
-`t⁻¹` times that weight. -/
-theorem integrable_inv_add (h : RepresentsStieltjes μ a b f) {t : ℝ} (ht : 0 < t) :
-    Integrable (fun x : ℝ≥0 => (t + (x : ℝ))⁻¹) μ := by
+/-- The Stieltjes kernel is integrable at every positive parameter when its standard weight is. -/
+theorem integrable_inv_add {μ : Measure ℝ≥0} (hμ : Integrable stieltjesWeight μ)
+    {t : ℝ} (ht : 0 < t) : Integrable (fun x : ℝ≥0 => (t + (x : ℝ))⁻¹) μ := by
   let C : ℝ := max 1 t⁻¹
-  refine ((h.integrable_weight.const_mul C).mono' (by fun_prop) ?_)
+  refine ((hμ.const_mul C).mono' (by fun_prop) ?_)
   filter_upwards [] with x
   have hx : 0 ≤ (x : ℝ) := x.coe_nonneg
   have htx : 0 < t + (x : ℝ) := add_pos_of_pos_of_nonneg ht hx
@@ -119,11 +96,26 @@ theorem integrable_inv_add (h : RepresentsStieltjes μ a b f) {t : ℝ} (ht : 0 
       exact (inv_le_inv₀ htx (mul_pos ht h1x)).2 hmul
     exact hinv.trans <| mul_le_mul_of_nonneg_right (le_max_right _ _) (inv_nonneg.mpr h1x.le)
 
+namespace RepresentsStieltjes
+
+variable {μ ν : Measure ℝ≥0} {a b c d : ℝ≥0} {f g : ℝ → ℝ}
+
+/-- A Stieltjes representing measure has no atom at zero. -/
+lemma measure_singleton_zero (h : RepresentsStieltjes μ a b f) : μ {0} = 0 := h.1
+
+/-- The weighted integrability condition on a Stieltjes representing measure. -/
+lemma integrable_weight (h : RepresentsStieltjes μ a b f) : Integrable stieltjesWeight μ := h.2.1
+
+/-- Evaluation of a Stieltjes representation at a positive parameter. -/
+lemma eq_div_add_add_integral_inv_add (h : RepresentsStieltjes μ a b f) {t : ℝ} (ht : 0 < t) :
+    f t = (a : ℝ) / t + (b : ℝ) + ∫ x : ℝ≥0, (t + (x : ℝ))⁻¹ ∂μ :=
+  h.2.2 t ht
+
 /-- A represented Stieltjes function is nonnegative on `(0, ∞)`. -/
 lemma nonneg (h : RepresentsStieltjes μ a b f) {t : ℝ} (ht : 0 < t) : 0 ≤ f t := by
   rw [h.eq_div_add_add_integral_inv_add ht]
   exact add_nonneg (add_nonneg (div_nonneg a.coe_nonneg ht.le) b.coe_nonneg)
-    (integral_inv_add_nonneg μ ht)
+    (integral_nonneg fun x => inv_nonneg.mpr (add_nonneg ht.le x.coe_nonneg))
 
 /-- A Stieltjes representation depends only on the represented function's values on `(0, ∞)`. -/
 lemma congr (h : RepresentsStieltjes μ a b f) (hfg : EqOn g f (Ioi 0)) :
@@ -139,23 +131,22 @@ lemma add (hf : RepresentsStieltjes μ a b f) (hg : RepresentsStieltjes ν c d g
     hf.integrable_weight.add_measure hg.integrable_weight, fun t ht => ?_⟩
   rw [Pi.add_apply, hf.eq_div_add_add_integral_inv_add ht,
     hg.eq_div_add_add_integral_inv_add ht,
-    integral_add_measure (hf.integrable_inv_add ht)
-      (hg.integrable_inv_add ht)]
+    integral_add_measure (integrable_inv_add hf.integrable_weight ht)
+      (integrable_inv_add hg.integrable_weight ht)]
   push_cast
   ring
 
 /-- A nonnegative scalar multiple of a Stieltjes representation is represented by scaling its
 coefficients and measure. -/
-lemma smul (h : RepresentsStieltjes μ a b f) (r : ℝ≥0) :
-    RepresentsStieltjes ((r : ℝ≥0∞) • μ) (r * a) (r * b) (r • f) := by
+lemma smul (h : RepresentsStieltjes μ a b f) {r : ℝ} (hr : 0 ≤ r) :
+    RepresentsStieltjes ((ENNReal.ofReal r) • μ) (r.toNNReal * a) (r.toNNReal * b) (r • f) := by
   refine ⟨by simp [h.measure_singleton_zero],
-    h.integrable_weight.smul_measure (ENNReal.coe_ne_top), fun t ht => ?_⟩
-  -- The `NNReal` scalar action on a real-valued function elaborates through two coercions;
-  -- exposing it as real multiplication lets the integral scaling lemma apply directly.
-  change (r : ℝ) * f t = _
+    h.integrable_weight.smul_measure ENNReal.ofReal_ne_top, fun t ht => ?_⟩
+  change r * f t = _
   rw [h.eq_div_add_add_integral_inv_add ht, integral_smul_measure]
-  simp only [ENNReal.coe_toReal, smul_eq_mul]
+  simp only [ENNReal.toReal_ofReal hr, smul_eq_mul]
   push_cast
+  rw [Real.coe_toNNReal r hr]
   ring
 
 end RepresentsStieltjes
@@ -176,6 +167,7 @@ namespace IsStieltjesFunction
 variable {f g : ℝ → ℝ}
 
 /-- A Stieltjes function is nonnegative on `(0, ∞)`. -/
+@[grind =>]
 lemma nonneg (hf : IsStieltjesFunction f) {t : ℝ} (ht : 0 < t) : 0 ≤ f t := by
   obtain ⟨a, b, μ, hμ⟩ := hf
   exact hμ.nonneg ht
@@ -193,22 +185,23 @@ lemma add (hf : IsStieltjesFunction f) (hg : IsStieltjesFunction g) :
   exact ⟨a + c, b + d, μ + ν, hμ.add hν⟩
 
 /-- Stieltjes functions are closed under multiplication by a nonnegative scalar. -/
-lemma smul (hf : IsStieltjesFunction f) (r : ℝ≥0) : IsStieltjesFunction (r • f) := by
+lemma smul (hf : IsStieltjesFunction f) {r : ℝ} (hr : 0 ≤ r) :
+    IsStieltjesFunction (r • f) := by
   obtain ⟨a, b, μ, hμ⟩ := hf
-  exact ⟨r * a, r * b, (r : ℝ≥0∞) • μ, hμ.smul r⟩
+  exact ⟨r.toNNReal * a, r.toNNReal * b, ENNReal.ofReal r • μ, hμ.smul hr⟩
 
 end IsStieltjesFunction
 
 /-- Every nonnegative constant function is Stieltjes. -/
-theorem isStieltjesFunction_const (b : ℝ≥0) :
-    IsStieltjesFunction (fun _ : ℝ => (b : ℝ)) := by
-  refine ⟨0, b, 0, ?_⟩
+theorem isStieltjesFunction_const {b : ℝ} (hb : 0 ≤ b) :
+    IsStieltjesFunction (fun _ : ℝ => b) := by
+  refine ⟨0, b.toNNReal, 0, ?_⟩
   refine ⟨by simp, integrable_zero_measure, fun t ht => ?_⟩
-  simp
+  simp [Real.coe_toNNReal b hb]
 
 /-- The zero function is Stieltjes. -/
 theorem isStieltjesFunction_zero : IsStieltjesFunction (fun _ : ℝ => 0) := by
-  simpa using isStieltjesFunction_const 0
+  simpa using isStieltjesFunction_const le_rfl
 
 /-- The reciprocal `t ↦ t⁻¹` is Stieltjes; it is the singular coefficient with zero measure. -/
 theorem isStieltjesFunction_inv : IsStieltjesFunction (fun t : ℝ => t⁻¹) := by
@@ -218,15 +211,17 @@ theorem isStieltjesFunction_inv : IsStieltjesFunction (fun t : ℝ => t⁻¹) :=
 
 /-- For `x ≥ 0`, the shifted reciprocal `t ↦ (t + x)⁻¹` is Stieltjes.  At `x = 0` it is the
 singular term; for `0 < x` it is represented by the Dirac mass at `x`. -/
-theorem isStieltjesFunction_inv_const_add (x : ℝ≥0) :
-    IsStieltjesFunction (fun t : ℝ => ((x : ℝ) + t)⁻¹) := by
-  by_cases hx : x = 0
+theorem isStieltjesFunction_inv_const_add {x : ℝ} (hx : 0 ≤ x) :
+    IsStieltjesFunction (fun t : ℝ => (x + t)⁻¹) := by
+  by_cases hzero : x = 0
   · subst x
     simpa using isStieltjesFunction_inv
-  · refine ⟨0, 0, Measure.dirac x, ?_⟩
-    refine ⟨by simp [hx], integrable_dirac (by simp), fun t _ht => ?_⟩
+  · have hxpos : 0 < x := lt_of_le_of_ne hx (Ne.symm hzero)
+    have hxnn : x.toNNReal ≠ 0 := ne_of_gt (Real.toNNReal_pos.mpr hxpos)
+    refine ⟨0, 0, Measure.dirac x.toNNReal, ?_⟩
+    refine ⟨by simp [hxnn], integrable_dirac (by simp), fun t _ht => ?_⟩
     rw [integral_dirac]
-    simp [add_comm]
+    simp [Real.coe_toNNReal x hx, add_comm]
 
 end TauCeti
 
