@@ -6,20 +6,20 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Sobolev.Translation
-public import TauCeti.Analysis.Sobolev.W1p.Extension
+public import TauCeti.MeasureTheory.Function.Lp.CastMeasure
 public import TauCeti.MeasureTheory.Function.Lp.FrechetKolmogorov
 public import Mathlib.Analysis.Normed.Operator.Compact.Basic
 
 /-!
 # Rellich--Kondrachov for zero-boundary first-order Sobolev spaces
 
-This file proves the compact embedding
+This file proves that the canonical value map
 
 `W^{1,p}_0(Ω) → Lᵖ(Ω)`
 
-for a bounded open subset `Ω` of a finite-dimensional real inner-product space and
-`1 ≤ p < ∞`.  No regularity of the boundary is needed: a zero-boundary Sobolev function extends
-by zero to a whole-space Sobolev function, and the extension is supported in `Ω`.
+is a compact operator, for `1 ≤ p < ∞` and a bounded open subset `Ω` of a finite-dimensional real
+inner-product space.  No regularity of the boundary is needed: a zero-boundary Sobolev function
+extends by zero to a whole-space Sobolev function, and the extension is supported in `Ω`.
 
 The proof applies the Fréchet--Kolmogorov criterion to the zero-extended values of the open unit
 ball.  Their `Lᵖ` norms are uniformly bounded by their Sobolev norms, their supports lie in the
@@ -27,8 +27,8 @@ fixed bounded set `Ω`, and the whole-space Sobolev translation estimate bounds 
 increment by `‖h‖ ‖∇u‖ₚ`.  Restriction back to `Ω` then gives compactness of the canonical value
 map `TauCeti.W1p0.valueL`.
 
-The corresponding compact embedding for all of `W^{1,p}(Ω)` requires a boundary-regular
-extension operator and is not claimed here.
+The corresponding statement for all of `W^{1,p}(Ω)` requires a boundary-regular extension
+operator and is not claimed here.
 
 ## Main declaration
 
@@ -55,87 +55,54 @@ variable {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E] [InnerProductSpa
   [FiniteDimensional ℝ E] [BorelSpace E] {mu : Measure E} [mu.IsAddHaarMeasure]
   {Omega : Opens E} {p : ENNReal} [Fact (1 ≤ p)]
 
-/-- Shortcut instance for the norm inherited through the two nested Sobolev subspaces. -/
-noncomputable local instance instSeminormedAddCommGroupW1p0 :
-    SeminormedAddCommGroup (W1p0 mu Omega p) := inferInstance
-
-/-- Shortcut instance for the scalar action inherited through the two nested Sobolev subspaces. -/
-noncomputable local instance instNormedSpaceW1p0 :
-    NormedSpace ℝ (W1p0 mu Omega p) := inferInstance
-
-/-- Regard an `Lᵖ` class for the restriction to `univ` as an `Lᵖ` class for the original
-measure. -/
-private def univLpL : Lp ℝ p (mu.restrict (Set.univ : Set E)) →L[ℝ] Lp ℝ p mu :=
-  Lp.LpToLpOfMeasureLeSMul ENNReal.one_ne_top (by simp)
+omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] in
+/-- Restricting to `⊤` leaves a measure unchanged; this identifies the whole-space `Lᵖ` space in
+which the zero extension takes its values with `Lᵖ(mu)`. -/
+private theorem restrict_coe_top (nu : Measure E) :
+    nu.restrict ((⊤ : Opens E) : Set E) = nu := by
+  rw [Opens.coe_top, Measure.restrict_univ]
 
 /-- The value of a zero-boundary Sobolev function, extended by zero to the whole space. -/
 private def W1p0.valueExtendByZeroL : W1p0 mu Omega p →L[ℝ] Lp ℝ p mu :=
-  univLpL.comp <| (W1p0.valueL (Omega := ⊤)).comp (W1p0.extendByZeroL le_top)
+  (castLpₗᵢ (𝕜 := ℝ) (restrict_coe_top mu)).toLinearIsometry.toContinuousLinearMap.comp <|
+    (W1p0.valueL (Omega := ⊤)).comp (W1p0.extendByZeroL le_top)
+
+private theorem W1p0.valueExtendByZeroL_apply (u : W1p0 mu Omega p) :
+    W1p0.valueExtendByZeroL u =
+      castLpₗᵢ (𝕜 := ℝ) (restrict_coe_top mu)
+        (W1p0.valueL (W1p0.extendByZeroL le_top u)) :=
+  rfl
 
 private theorem W1p0.norm_valueExtendByZeroL_le (u : W1p0 mu Omega p) :
     ‖W1p0.valueExtendByZeroL u‖ ≤ ‖u‖ := by
   calc
-    ‖W1p0.valueExtendByZeroL u‖ ≤ ‖univLpL (E := E) (mu := mu) (p := p)‖ *
-        ‖W1p0.valueL (W1p0.extendByZeroL le_top u)‖ := by
-      exact (univLpL (E := E) (mu := mu) (p := p)).le_opNorm _
-    _ ≤ 1 * ‖W1p0.valueL (W1p0.extendByZeroL le_top u)‖ := by
-      gcongr
-      exact (Lp.norm_LpToLpOfMeasureLeSMul_le ENNReal.one_ne_top (by simp)).trans_eq <| by simp
-    _ = ‖W1p.value (W1p0.extendByZeroL le_top u : W1p mu (⊤ : Opens E) p)‖ := by
-      rw [one_mul, W1p0.valueL_apply]
+    ‖W1p0.valueExtendByZeroL u‖
+        = ‖W1p.value (W1p0.extendByZeroL le_top u : W1p mu (⊤ : Opens E) p)‖ := by
+      rw [W1p0.valueExtendByZeroL_apply, LinearIsometryEquiv.norm_map, W1p0.valueL_apply]
     _ ≤ ‖W1p0.extendByZeroL le_top u‖ := W1p.norm_value_le _
     _ = ‖u‖ := W1p0.norm_extendByZeroL le_top u
+
+/-- The isometric cast does not move representatives, so the zero-extended value is represented
+by the value of the whole-space Sobolev extension. -/
+private theorem W1p0.coeFn_valueExtendByZeroL_eq_value (u : W1p0 mu Omega p) :
+    (W1p0.valueExtendByZeroL u : E → ℝ) =
+      (W1p.value (W1p0.extendByZeroL le_top u : W1p mu (⊤ : Opens E) p) : E → ℝ) :=
+  funext fun _ => by rw [W1p0.valueExtendByZeroL_apply, coeFn_castLpₗᵢ, W1p0.valueL_apply]
 
 private theorem W1p0.coeFn_valueExtendByZeroL (u : W1p0 mu Omega p) :
     (W1p0.valueExtendByZeroL u : E → ℝ) =ᵐ[mu]
       (Omega : Set E).indicator (W1p.value (u : W1p mu Omega p) : E → ℝ) := by
-  exact (Lp.coeFn_LpToLpOfMeasureLeSMul ENNReal.one_ne_top (by simp)
-    (W1p0.valueL (W1p0.extendByZeroL le_top u))).trans <| by
-        rw [W1p0.valueL_apply, W1p0.value_extendByZeroL]
-        simpa only [Measure.restrict_univ] using
-          coeFn_extendByZeroLpₗᵢ ℝ Omega.isOpen.measurableSet
-            (subset_univ (Omega : Set E)) (W1p.value (u : W1p mu Omega p))
+  rw [W1p0.coeFn_valueExtendByZeroL_eq_value, W1p0.value_extendByZeroL]
+  simpa only [Opens.coe_top, Measure.restrict_univ] using
+    coeFn_extendByZeroLpₗᵢ ℝ Omega.isOpen.measurableSet
+      (SetLike.coe_subset_coe.mpr (le_top : Omega ≤ ⊤)) (W1p.value (u : W1p mu Omega p))
 
-private theorem W1p0.translation_valueExtendByZeroL (hp : p ≠ ∞) (u : W1p0 mu Omega p)
-    (h : E) :
+private theorem W1p0.eLpNorm_valueExtendByZeroL_comp_add_sub_le_mul_enorm_gradient (hp : p ≠ ∞)
+    (u : W1p0 mu Omega p) (h : E) :
     eLpNorm (fun x => W1p0.valueExtendByZeroL u (x + h) - W1p0.valueExtendByZeroL u x) p mu
-      ≤ ‖h‖ₑ * ‖u‖ₑ := by
-  let u0 : W1p0 mu (⊤ : Opens E) p := W1p0.extendByZeroL le_top u
-  have hvalue : (W1p0.valueExtendByZeroL u : E → ℝ) =ᵐ[mu]
-      (W1p.value (u0 : W1p mu (⊤ : Opens E) p) : E → ℝ) := by
-    have hu0 : W1p.value (u0 : W1p mu (⊤ : Opens E) p) =
-        extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet (subset_univ (Omega : Set E))
-          (W1p0.valueL u) := by
-      dsimp only [u0]
-      rw [W1p0.value_extendByZeroL, W1p0.valueL_apply]
-    have hu0ae : (W1p.value (u0 : W1p mu (⊤ : Opens E) p) : E → ℝ) =ᵐ[mu]
-        (Omega : Set E).indicator (W1p.value (u : W1p mu Omega p) : E → ℝ) := by
-      rw [hu0]
-      simpa only [W1p0.valueL_apply, Measure.restrict_univ] using
-        coeFn_extendByZeroLpₗᵢ ℝ Omega.isOpen.measurableSet
-          (subset_univ (Omega : Set E)) (W1p0.valueL u)
-    exact (W1p0.coeFn_valueExtendByZeroL u).trans hu0ae.symm
-  have hvalue_add := hvalue.comp_tendsto
-    (measurePreserving_add_right mu h).quasiMeasurePreserving.tendsto_ae
-  calc
-    eLpNorm (fun x => W1p0.valueExtendByZeroL u (x + h) - W1p0.valueExtendByZeroL u x) p mu
-        = eLpNorm (fun x => W1p.value (u0 : W1p mu (⊤ : Opens E) p) (x + h) -
-            W1p.value (u0 : W1p mu (⊤ : Opens E) p) x) p mu := by
-          refine eLpNorm_congr_ae ?_
-          filter_upwards [hvalue, hvalue_add] with x hx hxadd
-          simp only [Function.comp_apply] at hxadd
-          rw [hx, hxadd]
-    _ ≤ ‖h‖ₑ * ‖W1p.gradient (u0 : W1p mu (⊤ : Opens E) p)‖ₑ :=
-      W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient hp h u0.2
-    _ ≤ ‖h‖ₑ * ‖u0‖ₑ := by
-      gcongr
-      rw [← ofReal_norm, ← ofReal_norm]
-      exact ENNReal.ofReal_mono (W1p.norm_gradient_le _)
-    _ = ‖h‖ₑ * ‖u‖ₑ := by
-      congr 1
-      dsimp only [u0]
-      rw [← ofReal_norm, ← ofReal_norm]
-      exact congrArg ENNReal.ofReal (W1p0.norm_extendByZeroL le_top u)
+      ≤ ‖h‖ₑ * ‖W1p.gradient (u : W1p mu Omega p)‖ₑ := by
+  rw [W1p0.coeFn_valueExtendByZeroL_eq_value]
+  exact W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient hp h u
 
 private theorem W1p0.isCompactOperator_valueExtendByZeroL (hp : p ≠ ∞)
     (hOmega : IsBounded (Omega : Set E)) :
@@ -175,14 +142,18 @@ private theorem W1p0.isCompactOperator_valueExtendByZeroL (hp : p ≠ ∞)
     have hh' : ‖h‖ₑ ≤ eta := by
       rw [← ofReal_norm]
       exact (ENNReal.ofReal_le_iff_le_toReal heta_top).2 hh.le
-    have hu' : ‖u‖ₑ ≤ 1 := by
-      rw [← ofReal_norm]
-      simpa only [ENNReal.ofReal_one] using ENNReal.ofReal_mono hu.le
+    have hu' : ‖u‖ₑ ≤ 1 :=
+      calc ‖u‖ₑ ≤ ‖(1 : ℝ)‖ₑ := enorm_le_iff_norm_le.mpr (by simpa using hu.le)
+        _ = 1 := by simp
     calc
       eLpNorm (fun x => W1p0.valueExtendByZeroL u (x + h) -
           W1p0.valueExtendByZeroL u x) p mu
-          ≤ ‖h‖ₑ * ‖u‖ₑ := W1p0.translation_valueExtendByZeroL
-            (mu := mu) (Omega := Omega) hp u h
+          ≤ ‖h‖ₑ * ‖W1p.gradient (u : W1p mu Omega p)‖ₑ :=
+            W1p0.eLpNorm_valueExtendByZeroL_comp_add_sub_le_mul_enorm_gradient
+              (mu := mu) (Omega := Omega) hp u h
+      _ ≤ ‖h‖ₑ * ‖u‖ₑ := by
+        gcongr
+        exact enorm_le_iff_norm_le.mpr (W1p.norm_gradient_le _)
       _ ≤ eta * 1 := mul_le_mul' hh' hu'
       _ = eta := mul_one eta
       _ ≤ epsilon := min_le_left _ _
@@ -211,15 +182,15 @@ theorem W1p0.isCompactOperator_valueL (hp : p ≠ ∞)
       (LpToLpRestrictCLM E ℝ ℝ mu p (Omega : Set E)).comp T = W1p0.valueL := by
     dsimp only [T]
     ext u
-    have hvalue : (W1p.value (u : W1p mu Omega p) : E → ℝ) =ᵐ[mu.restrict Omega]
+    -- On `Ω` the zero extension restricts back to the original value.
+    have hvalue : (W1p0.valueExtendByZeroL u : E → ℝ) =ᵐ[mu.restrict (Omega : Set E)]
         (W1p0.valueL u : E → ℝ) := by
-      rw [← Lp.ext_iff]
-      exact (W1p0.valueL_apply u).symm
-    filter_upwards [LpToLpRestrictCLM_coeFn ℝ (Omega : Set E) (T u),
-      (W1p0.coeFn_valueExtendByZeroL (mu := mu) (Omega := Omega) (p := p) u).filter_mono
-        (ae_mono Measure.restrict_le_self), ae_restrict_mem Omega.isOpen.measurableSet, hvalue]
-        with x hx hTux hxOmega hvaluex
-    rw [ContinuousLinearMap.comp_apply, hx, hTux, indicator_of_mem hxOmega, hvaluex]
+      rw [W1p0.coeFn_valueExtendByZeroL_eq_value, W1p0.value_extendByZeroL, W1p0.valueL_apply]
+      exact coeFn_extendByZeroLpₗᵢ_restrict ℝ Omega.isOpen.measurableSet
+        (SetLike.coe_subset_coe.mpr (le_top : Omega ≤ ⊤)) (W1p.value (u : W1p mu Omega p))
+    filter_upwards [LpToLpRestrictCLM_coeFn ℝ (Omega : Set E) (T u), hvalue] with x hx hvaluex
+    rw [ContinuousLinearMap.comp_apply, hx]
+    exact hvaluex
   rw [← hrestrict]
   exact hT.clm_comp (LpToLpRestrictCLM E ℝ ℝ mu p (Omega : Set E))
 
