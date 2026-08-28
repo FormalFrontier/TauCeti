@@ -58,19 +58,21 @@ variable {ι : Type*} [DecidableEq ι] [Fintype ι]
 
 /-! ### Long roots -/
 
-/-- The ambient root matrix for the long type-`B` root `εᵢ - εⱼ`. -/
-def typeBLongRootMatrix (i j : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
+/-- The ambient root matrix for the long type-`B` root `εᵢ - εⱼ`; the inequality witness
+excludes the degenerate zero-weight case. -/
+def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
+    Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inr (.inl j)) 1 -
     single (.inr (.inr j)) (.inr (.inr i)) 1
 
 /-- The long-root matrix is skew-adjoint for the split odd orthogonal form. -/
-theorem typeBLongRootMatrix_mem_typeB (i j : ι) :
-    typeBLongRootMatrix (K := K) i j ∈ LieAlgebra.Orthogonal.typeB ι K := by
+theorem typeBLongRootMatrix_mem_typeB (i j : ι) (hij : i ≠ j) :
+    typeBLongRootMatrix (K := K) i j hij ∈ LieAlgebra.Orthogonal.typeB ι K := by
   rw [LieAlgebra.Orthogonal.typeB, mem_skewAdjointMatricesLieSubalgebra,
     mem_skewAdjointMatricesSubmodule]
   -- Unfold subtype membership to expose the ambient skew-adjoint matrix equation.
-  change (typeBLongRootMatrix (K := K) i j)ᵀ * LieAlgebra.Orthogonal.JB ι K =
-    LieAlgebra.Orthogonal.JB ι K * (-typeBLongRootMatrix (K := K) i j)
+  change (typeBLongRootMatrix (K := K) i j hij)ᵀ * LieAlgebra.Orthogonal.JB ι K =
+    LieAlgebra.Orthogonal.JB ι K * (-typeBLongRootMatrix (K := K) i j hij)
   ext (a | (a | a)) (b | (b | b)) <;>
     simp [typeBLongRootMatrix, LieAlgebra.Orthogonal.JB, LieAlgebra.Orthogonal.JD,
       Matrix.mul_apply, Matrix.one_apply, Matrix.single_apply, eq_comm]
@@ -79,38 +81,41 @@ theorem typeBLongRootMatrix_mem_typeB (i j : ι) :
       by_cases hib : i = b <;> by_cases hjb : j = b <;> simp_all <;> aesop
 
 /-- The long-root vector `e_{εᵢ-εⱼ}` in the split type-`B` Lie algebra. -/
-def typeBLongRootGenerator (i j : ι) :
+def typeBLongRootGenerator (i j : ι) (hij : i ≠ j) :
     LieAlgebra.Orthogonal.typeB ι K :=
-  ⟨typeBLongRootMatrix i j, typeBLongRootMatrix_mem_typeB i j⟩
+  ⟨typeBLongRootMatrix i j hij, typeBLongRootMatrix_mem_typeB i j hij⟩
 
 @[simp]
-theorem coe_typeBLongRootGenerator (i j : ι) :
-    (typeBLongRootGenerator (K := K) i j :
-      Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBLongRootMatrix i j :=
+theorem coe_typeBLongRootGenerator (i j : ι) (hij : i ≠ j) :
+    (typeBLongRootGenerator (K := K) i j hij :
+      Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBLongRootMatrix i j hij :=
   (rfl)
 
-/-- The diagonal coroot matrix paired with the long root `εᵢ - εⱼ`. -/
-def typeBLongCorootMatrix (i j : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
+/-- The diagonal coroot matrix paired with the long root `εᵢ - εⱼ`; the inequality witness
+excludes the degenerate zero-weight case. -/
+def typeBLongCorootMatrix (i j : ι) (_hij : i ≠ j) :
+    Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   typeBDiagonalMatrix (Pi.single i 1 - Pi.single j 1)
 
 /-- The long coroot `h_{εᵢ-εⱼ}` in the split type-`B` Lie algebra. -/
-def typeBLongCorootGenerator (i j : ι) : LieAlgebra.Orthogonal.typeB ι K :=
-  ⟨typeBLongCorootMatrix i j, typeBDiagonalMatrix_mem_typeB _⟩
+def typeBLongCorootGenerator (i j : ι) (hij : i ≠ j) : LieAlgebra.Orthogonal.typeB ι K :=
+  ⟨typeBLongCorootMatrix i j hij, typeBDiagonalMatrix_mem_typeB _⟩
 
 @[simp]
-theorem coe_typeBLongCorootGenerator (i j : ι) :
-    (typeBLongCorootGenerator (K := K) i j :
-      Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBLongCorootMatrix i j :=
+theorem coe_typeBLongCorootGenerator (i j : ι) (hij : i ≠ j) :
+    (typeBLongCorootGenerator (K := K) i j hij :
+      Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBLongCorootMatrix i j hij :=
   (rfl)
 
 /-- Opposite long-root vectors bracket to their diagonal coroot. -/
-theorem typeBLongRootGenerator_lie_swap (i j : ι) :
-    ⁅typeBLongRootGenerator (K := K) i j,
-      typeBLongRootGenerator (K := K) j i⁆ = typeBLongCorootGenerator i j := by
+theorem typeBLongRootGenerator_lie_swap (i j : ι) (hij : i ≠ j) :
+    ⁅typeBLongRootGenerator (K := K) i j hij,
+      typeBLongRootGenerator (K := K) j i hij.symm⁆ = typeBLongCorootGenerator i j hij := by
   apply Subtype.ext
   -- The subtype bracket reduces definitionally to the ambient matrix commutator.
-  change typeBLongRootMatrix (K := K) i j * typeBLongRootMatrix j i -
-      typeBLongRootMatrix j i * typeBLongRootMatrix i j = typeBLongCorootMatrix i j
+  change typeBLongRootMatrix (K := K) i j hij * typeBLongRootMatrix j i hij.symm -
+      typeBLongRootMatrix j i hij.symm * typeBLongRootMatrix i j hij =
+        typeBLongCorootMatrix i j hij
   ext (a | (a | a)) (b | (b | b)) <;>
     simp [typeBLongRootMatrix, typeBLongCorootMatrix, typeBDiagonalMatrix_apply,
       mul_sub, sub_mul, Matrix.single_mul_single_same, Matrix.single_mul_single_of_ne,
@@ -119,7 +124,7 @@ theorem typeBLongRootGenerator_lie_swap (i j : ι) :
 
 /-- Every long-root vector in the standard representation is square-zero. -/
 theorem typeBLongRootMatrix_sq (i j : ι) (hij : i ≠ j) :
-    typeBLongRootMatrix (K := K) i j * typeBLongRootMatrix i j = 0 := by
+    typeBLongRootMatrix (K := K) i j hij * typeBLongRootMatrix i j hij = 0 := by
   have hpos : (Sum.inr (Sum.inl j) : Unit ⊕ ι ⊕ ι) ≠ .inr (.inl i) := by
     simpa using hij.symm
   have hneg : (Sum.inr (Sum.inr i) : Unit ⊕ ι ⊕ ι) ≠ .inr (.inr j) := by
@@ -261,19 +266,19 @@ the long roots `εⱼ - εⱼ₊₁`, and the last node is the short root `εₙ
 def typeBSimpleRootMatrix (i : Fin (n + 1)) :
     Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K :=
   Fin.lastCases (typeBShortRootMatrix (Fin.last (n)))
-    (fun j => typeBLongRootMatrix j.castSucc j.succ) i
+    (fun j => typeBLongRootMatrix j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ)) i
 
 /-- The negative simple-root matrices of `Bₙ₊₁` in Bourbaki order. -/
 def typeBSimpleNegativeRootMatrix (i : Fin (n + 1)) :
     Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K :=
   Fin.lastCases (typeBShortNegativeRootMatrix (Fin.last (n)))
-    (fun j => typeBLongRootMatrix j.succ j.castSucc) i
+    (fun j => typeBLongRootMatrix j.succ j.castSucc (ne_of_gt j.castSucc_lt_succ)) i
 
 /-- The simple coroot matrices of `Bₙ₊₁` in Bourbaki order. -/
 def typeBSimpleCorootMatrix (i : Fin (n + 1)) :
     Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K :=
   Fin.lastCases (typeBShortCorootMatrix (Fin.last (n)))
-    (fun j => typeBLongCorootMatrix j.castSucc j.succ) i
+    (fun j => typeBLongCorootMatrix j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ)) i
 
 @[simp]
 theorem typeBSimpleRootMatrix_last :
@@ -283,7 +288,8 @@ theorem typeBSimpleRootMatrix_last :
 
 @[simp]
 theorem typeBSimpleRootMatrix_castSucc (j : Fin (n)) :
-    typeBSimpleRootMatrix (K := K) j.castSucc = typeBLongRootMatrix j.castSucc j.succ :=
+    typeBSimpleRootMatrix (K := K) j.castSucc =
+      typeBLongRootMatrix j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ) :=
   by simp [typeBSimpleRootMatrix]
 
 @[simp]
@@ -295,7 +301,7 @@ theorem typeBSimpleNegativeRootMatrix_last :
 @[simp]
 theorem typeBSimpleNegativeRootMatrix_castSucc (j : Fin (n)) :
     typeBSimpleNegativeRootMatrix (K := K) j.castSucc =
-      typeBLongRootMatrix j.succ j.castSucc :=
+      typeBLongRootMatrix j.succ j.castSucc (ne_of_gt j.castSucc_lt_succ) :=
   by simp [typeBSimpleNegativeRootMatrix]
 
 @[simp]
@@ -306,7 +312,8 @@ theorem typeBSimpleCorootMatrix_last :
 
 @[simp]
 theorem typeBSimpleCorootMatrix_castSucc (j : Fin (n)) :
-    typeBSimpleCorootMatrix (K := K) j.castSucc = typeBLongCorootMatrix j.castSucc j.succ :=
+    typeBSimpleCorootMatrix (K := K) j.castSucc =
+      typeBLongCorootMatrix j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ) :=
   by simp [typeBSimpleCorootMatrix]
 
 /-- Every Bourbaki simple-root matrix belongs to the split type-`B` Lie algebra. -/
@@ -317,6 +324,7 @@ theorem typeBSimpleRootMatrix_mem_typeB (i : Fin (n + 1)) :
     exact typeBShortRootMatrix_mem_typeB (K := K) _
   · rw [typeBSimpleRootMatrix_castSucc]
     exact typeBLongRootMatrix_mem_typeB (K := K) j.castSucc j.succ
+      (ne_of_lt j.castSucc_lt_succ)
 
 /-- Every negative Bourbaki simple-root matrix belongs to the split type-`B` Lie algebra. -/
 theorem typeBSimpleNegativeRootMatrix_mem_typeB (i : Fin (n + 1)) :
@@ -327,24 +335,25 @@ theorem typeBSimpleNegativeRootMatrix_mem_typeB (i : Fin (n + 1)) :
     exact typeBShortNegativeRootMatrix_mem_typeB (K := K) _
   · rw [typeBSimpleNegativeRootMatrix_castSucc]
     exact typeBLongRootMatrix_mem_typeB (K := K) j.succ j.castSucc
+      (ne_of_gt j.castSucc_lt_succ)
 
 /-- The positive simple-root vector `eᵢ` for the Bourbaki pinning of `Bₙ₊₁`. -/
 def typeBSimpleRootGenerator (i : Fin (n + 1)) :
     LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K :=
   Fin.lastCases (typeBShortRootGenerator (Fin.last n))
-    (fun j => typeBLongRootGenerator j.castSucc j.succ) i
+    (fun j => typeBLongRootGenerator j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ)) i
 
 /-- The negative simple-root vector `fᵢ` for the Bourbaki pinning of `Bₙ₊₁`. -/
 def typeBSimpleNegativeRootGenerator (i : Fin (n + 1)) :
     LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K :=
   Fin.lastCases (typeBShortNegativeRootGenerator (Fin.last n))
-    (fun j => typeBLongRootGenerator j.succ j.castSucc) i
+    (fun j => typeBLongRootGenerator j.succ j.castSucc (ne_of_gt j.castSucc_lt_succ)) i
 
 /-- The simple coroot `hᵢ` for the Bourbaki pinning of `Bₙ₊₁`. -/
 def typeBSimpleCorootGenerator (i : Fin (n + 1)) :
     LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K :=
   Fin.lastCases (typeBShortCorootGenerator (Fin.last (n)))
-    (fun j => typeBLongCorootGenerator j.castSucc j.succ) i
+    (fun j => typeBLongCorootGenerator j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ)) i
 
 @[simp]
 theorem typeBSimpleRootGenerator_last :
@@ -355,7 +364,7 @@ theorem typeBSimpleRootGenerator_last :
 @[simp]
 theorem typeBSimpleRootGenerator_castSucc (j : Fin n) :
     typeBSimpleRootGenerator (K := K) j.castSucc =
-      typeBLongRootGenerator j.castSucc j.succ := by
+      typeBLongRootGenerator j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ) := by
   simp [typeBSimpleRootGenerator]
 
 @[simp]
@@ -367,7 +376,7 @@ theorem typeBSimpleNegativeRootGenerator_last :
 @[simp]
 theorem typeBSimpleNegativeRootGenerator_castSucc (j : Fin n) :
     typeBSimpleNegativeRootGenerator (K := K) j.castSucc =
-      typeBLongRootGenerator j.succ j.castSucc := by
+      typeBLongRootGenerator j.succ j.castSucc (ne_of_gt j.castSucc_lt_succ) := by
   simp [typeBSimpleNegativeRootGenerator]
 
 @[simp]
@@ -379,7 +388,7 @@ theorem typeBSimpleCorootGenerator_last :
 @[simp]
 theorem typeBSimpleCorootGenerator_castSucc (j : Fin n) :
     typeBSimpleCorootGenerator (K := K) j.castSucc =
-      typeBLongCorootGenerator j.castSucc j.succ := by
+      typeBLongCorootGenerator j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ) := by
   simp [typeBSimpleCorootGenerator]
 
 @[simp]
@@ -418,7 +427,8 @@ theorem typeBSimpleRootGenerator_lie_negative (i : Fin (n + 1)) :
       (typeBShortRootGenerator_lie_negative (K := K) (Fin.last n))
   · simpa [typeBSimpleRootGenerator, typeBSimpleNegativeRootGenerator,
       typeBSimpleCorootGenerator] using
-      (typeBLongRootGenerator_lie_swap (K := K) j.castSucc j.succ)
+      (typeBLongRootGenerator_lie_swap (K := K) j.castSucc j.succ
+        (ne_of_lt j.castSucc_lt_succ))
 
 /-- The divided square of a Bourbaki simple-root matrix. It vanishes at long nodes and is the
 integral short-root divided square at the terminal node. -/
