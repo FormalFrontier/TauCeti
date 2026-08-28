@@ -59,7 +59,8 @@ theorem contractLeft_coord_basis_eq_zero_of_not_mem {I : Type w} [LinearOrder I]
     exact hj
   · rfl
 
-/-- The sign of moving `i` to the front of the ordered exterior-basis vector indexed by `s`. -/
+/-- The shuffle sign for the singleton basis vector indexed by `i` followed by the basis vector
+indexed by `s.erase i`. When `i ∈ s`, this is the sign of moving `i` to the front of `s`. -/
 def basisEraseSign {I : Type w} [LinearOrder I] (i : I) (s : Finset I) : ℤˣ :=
   let u : Set.powersetCard I 1 := ⟨{i}, Finset.card_singleton i⟩
   let t : Set.powersetCard I (s.erase i).card := ⟨s.erase i, rfl⟩
