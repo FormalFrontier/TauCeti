@@ -73,16 +73,13 @@ theorem genusPrimeDiscriminants_spec {d : ℤ} (hd : Squarefree d) :
   simpa only [genusPrimeDiscriminants] using h.choose_spec
 
 /-- **Characterization of the chosen prime-discriminant factorization.** Every factorization of
-`fundamentalDiscriminant d` into distinct prime discriminants with at most one even member is the
-finset `genusPrimeDiscriminants hd`. -/
+`fundamentalDiscriminant d` into distinct prime discriminants is the finset
+`genusPrimeDiscriminants hd`. -/
 theorem genusPrimeDiscriminants_eq {d : ℤ} (hd : Squarefree d) {s : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
-    (heven : ∀ P ∈ s, ∀ Q ∈ s, IsEvenPrimeDiscriminant P →
-      IsEvenPrimeDiscriminant Q → P = Q)
     (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d) : genusPrimeDiscriminants hd = s := by
-  obtain ⟨hgenus, hgenusEven, hgenusProd⟩ := genusPrimeDiscriminants_spec hd
-  exact finset_primeDiscriminant_eq_of_prod_eq hgenus hgenusEven hs heven
-    (hgenusProd.trans hprod.symm)
+  obtain ⟨hgenus, _, hgenusProd⟩ := genusPrimeDiscriminants_spec hd
+  exact finset_primeDiscriminant_eq_of_prod_eq hgenus hs (hgenusProd.trans hprod.symm)
 
 /-- A chosen complex square root of the radicand of each prime discriminant in
 `genusPrimeDiscriminants hd` (available since `ℂ` is algebraically closed). -/

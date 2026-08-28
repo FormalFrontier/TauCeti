@@ -17,10 +17,10 @@ one even value is a fundamental discriminant. This file supplies the **analysis*
 converse existence statement: every fundamental discriminant `D` is a product of a finite set of
 prime discriminants, at most one of which is even.
 
-The factorization is unique once its factors are required to be distinct and to contain at most
-one even prime discriminant.  Its proof first matches the odd factors through the unique rational
-prime below each prime discriminant.  After cancelling their common product, the remaining
-products contain at most one factor each, so the even factors match as well.
+The factorization is unique once its factors are required to be distinct. Its proof first matches
+the odd factors through the unique rational prime below each prime discriminant. After cancelling
+their common product, the remaining factors belong to the three-element set `{-4, 8, -8}`; its
+eight subsets have pairwise distinct products, so the even factors match as well.
 
 This is the classical prime-discriminant factorization; see D. A. Cox, *Primes of the Form
 x² + ny²*, §3.B and §6.A, and F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2.
@@ -44,10 +44,10 @@ discriminant — odd, `4 ·` odd, `8 ·` odd — then differ only in the single 
 * `TauCeti.Multiquadratic.IsFundamentalDiscriminant.exists_finset_primeDiscriminant`: every
   fundamental discriminant is a product of a finite set of prime discriminants with at most one
   even value — the converse of `isFundamentalDiscriminant_prod`.
-* `TauCeti.Multiquadratic.finset_primeDiscriminant_eq_of_prod_eq`: two such factorizations with
-  the same product have the same factors.
+* `TauCeti.Multiquadratic.finset_primeDiscriminant_eq_of_prod_eq`: two finite sets of prime
+  discriminants with the same product have the same factors.
 * `TauCeti.Multiquadratic.IsFundamentalDiscriminant.existsUnique_finset_primeDiscriminant`: every
-  fundamental discriminant has a unique such factorization.
+  fundamental discriminant has a unique factorization into a finite set of prime discriminants.
 -/
 
 public section
@@ -192,57 +192,33 @@ private theorem mem_of_not_isEvenPrimeDiscriminant_of_prod_eq {s t : Finset ℤ}
   rwa [hPQ]
 
 open Classical in
-/-- If a finset contains at most one even prime discriminant and contains `P`, then its even
-filter is the singleton `P`. -/
-private theorem filter_isEvenPrimeDiscriminant_eq_singleton {s : Finset ℤ}
-    (hseven : ∀ P ∈ s, ∀ Q ∈ s, IsEvenPrimeDiscriminant P →
-      IsEvenPrimeDiscriminant Q → P = Q) {P : ℤ} (hPs : P ∈ s)
-    (hPeven : IsEvenPrimeDiscriminant P) : s.filter IsEvenPrimeDiscriminant = {P} := by
+/-- A finset of even prime discriminants is determined by its product. -/
+private theorem finset_isEvenPrimeDiscriminant_eq_of_prod_eq {s t : Finset ℤ}
+    (hs : ∀ P ∈ s, IsEvenPrimeDiscriminant P)
+    (ht : ∀ P ∈ t, IsEvenPrimeDiscriminant P)
+    (hprod : ∏ P ∈ s, P = ∏ P ∈ t, P) : s = t := by
   classical
-  ext Q
-  simp only [Finset.mem_filter, Finset.mem_singleton]
-  exact ⟨fun hQ => hseven Q hQ.1 P hPs hQ.2 hPeven, fun hQP => hQP ▸ ⟨hPs, hPeven⟩⟩
+  have hs_mem : s ∈ ({-4, 8, -8} : Finset ℤ).powerset := by
+    rw [Finset.mem_powerset]
+    intro P hP
+    simpa only [Finset.mem_insert, Finset.mem_singleton, IsEvenPrimeDiscriminant] using hs P hP
+  have ht_mem : t ∈ ({-4, 8, -8} : Finset ℤ).powerset := by
+    rw [Finset.mem_powerset]
+    intro P hP
+    simpa only [Finset.mem_insert, Finset.mem_singleton, IsEvenPrimeDiscriminant] using ht P hP
+  fin_cases hs_mem <;> fin_cases ht_mem
+  all_goals norm_num at hprod
+  all_goals rfl
 
-open Classical in
-/-- Equality of the products of two at-most-singleton even-factor sets transfers membership from
-one set to the other. -/
-private theorem mem_of_isEvenPrimeDiscriminant_of_even_prod_eq {s t : Finset ℤ}
-    (hseven : ∀ P ∈ s, ∀ Q ∈ s, IsEvenPrimeDiscriminant P →
-      IsEvenPrimeDiscriminant Q → P = Q)
-    (hteven : ∀ P ∈ t, ∀ Q ∈ t, IsEvenPrimeDiscriminant P →
-      IsEvenPrimeDiscriminant Q → P = Q)
-    (hprod : (∏ P ∈ s with IsEvenPrimeDiscriminant P, P) =
-      ∏ P ∈ t with IsEvenPrimeDiscriminant P, P)
-    {P : ℤ} (hPs : P ∈ s) (hPeven : IsEvenPrimeDiscriminant P) : P ∈ t := by
-  classical
-  have hsfilter := filter_isEvenPrimeDiscriminant_eq_singleton hseven hPs hPeven
-  have hPprod : P = ∏ Q ∈ t with IsEvenPrimeDiscriminant Q, Q := by
-    simpa only [hsfilter, Finset.prod_singleton] using hprod
-  have htfilter_ne : t.filter IsEvenPrimeDiscriminant ≠ ∅ := by
-    intro htempty
-    rw [htempty] at hPprod
-    simp only [Finset.prod_empty] at hPprod
-    rcases hPeven with rfl | rfl | rfl <;> norm_num at hPprod
-  obtain ⟨Q, hQfilter⟩ := Finset.nonempty_iff_ne_empty.mpr htfilter_ne
-  have hQt := (Finset.mem_filter.mp hQfilter).1
-  have hQeven := (Finset.mem_filter.mp hQfilter).2
-  have htfilter := filter_isEvenPrimeDiscriminant_eq_singleton hteven hQt hQeven
-  have hPQ : P = Q := by simpa only [htfilter, Finset.prod_singleton] using hPprod
-  rwa [hPQ]
+/-- **Uniqueness of a prime-discriminant factorization.** Two finite sets of prime discriminants
+are equal when their products are equal.
 
-/-- **Uniqueness of a prime-discriminant factorization.** Two finite sets of prime discriminants,
-each containing at most one even prime discriminant, are equal when their products are equal.
-
-Odd factors are determined by their unique underlying rational prime.  Once those common factors
-are cancelled from the product equality, each remaining even-factor set has at most one member,
-so its product determines that member too. -/
+Odd factors are determined by their unique underlying rational prime. Once those common factors
+are cancelled from the product equality, each remaining factor belongs to `{-4, 8, -8}`; the
+products of the eight possible subsets are distinct, so the even factors match too. -/
 theorem finset_primeDiscriminant_eq_of_prod_eq {s t : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
-    (hseven : ∀ P ∈ s, ∀ Q ∈ s, IsEvenPrimeDiscriminant P →
-      IsEvenPrimeDiscriminant Q → P = Q)
     (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
-    (hteven : ∀ P ∈ t, ∀ Q ∈ t, IsEvenPrimeDiscriminant P →
-      IsEvenPrimeDiscriminant Q → P = Q)
     (hprod : ∏ P ∈ s, P = ∏ P ∈ t, P) : s = t := by
   classical
   have hodd : s.filter (fun P => ¬ IsEvenPrimeDiscriminant P) =
@@ -266,27 +242,24 @@ theorem finset_primeDiscriminant_eq_of_prod_eq {s t : Finset ℤ}
     apply mul_right_cancel₀ hodd_ne
     rw [Finset.prod_filter_mul_prod_filter_not, hodd,
       Finset.prod_filter_mul_prod_filter_not, hprod]
-  apply Finset.Subset.antisymm
-  · intro P hPs
-    by_cases hPeven : IsEvenPrimeDiscriminant P
-    · exact mem_of_isEvenPrimeDiscriminant_of_even_prod_eq hseven hteven heven_prod hPs hPeven
-    · exact mem_of_not_isEvenPrimeDiscriminant_of_prod_eq hs ht hprod hPs hPeven
-  · intro P hPt
-    by_cases hPeven : IsEvenPrimeDiscriminant P
-    · exact mem_of_isEvenPrimeDiscriminant_of_even_prod_eq hteven hseven heven_prod.symm hPt hPeven
-    · exact mem_of_not_isEvenPrimeDiscriminant_of_prod_eq ht hs hprod.symm hPt hPeven
+  have heven : s.filter IsEvenPrimeDiscriminant = t.filter IsEvenPrimeDiscriminant :=
+    finset_isEvenPrimeDiscriminant_eq_of_prod_eq
+      (fun P hP => (Finset.mem_filter.mp hP).2)
+      (fun P hP => (Finset.mem_filter.mp hP).2) heven_prod
+  ext P
+  by_cases hPeven : IsEvenPrimeDiscriminant P
+  · simpa only [Finset.ext_iff, Finset.mem_filter, hPeven, and_true] using
+      Finset.ext_iff.mp heven P
+  · simpa only [Finset.ext_iff, Finset.mem_filter, hPeven, not_false_eq_true, and_true] using
+      Finset.ext_iff.mp hodd P
 
 /-- **Unique prime-discriminant factorization of a fundamental discriminant.** Every fundamental
-discriminant is the product of a unique finite set of prime discriminants containing at most one
-even member. -/
+discriminant is the product of a unique finite set of prime discriminants. -/
 theorem IsFundamentalDiscriminant.existsUnique_finset_primeDiscriminant {D : ℤ}
     (hD : IsFundamentalDiscriminant D) :
-    ∃! s : Finset ℤ, (∀ P ∈ s, IsPrimeDiscriminant P) ∧
-      (∀ P ∈ s, ∀ Q ∈ s, IsEvenPrimeDiscriminant P →
-        IsEvenPrimeDiscriminant Q → P = Q) ∧
-      ∏ P ∈ s, P = D := by
-  obtain ⟨s, hs, hseven, hprod⟩ := hD.exists_finset_primeDiscriminant
-  refine ⟨s, ⟨hs, hseven, hprod⟩, fun t ht => ?_⟩
-  exact finset_primeDiscriminant_eq_of_prod_eq ht.1 ht.2.1 hs hseven (ht.2.2.trans hprod.symm)
+    ∃! s : Finset ℤ, (∀ P ∈ s, IsPrimeDiscriminant P) ∧ ∏ P ∈ s, P = D := by
+  obtain ⟨s, hs, _, hprod⟩ := hD.exists_finset_primeDiscriminant
+  refine ⟨s, ⟨hs, hprod⟩, fun t ht => ?_⟩
+  exact finset_primeDiscriminant_eq_of_prod_eq ht.1 hs (ht.2.trans hprod.symm)
 
 end TauCeti.Multiquadratic
