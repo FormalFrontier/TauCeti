@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.Finsupp.Multiset
 public import TauCeti.Algebra.MvPolynomial.Monomial
 public import TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Symmetric
 
@@ -107,7 +106,9 @@ private theorem exists_perm_comp_eq {β : Type*} {f g : σ → β}
 /-! ### The partition of the exponents of a monomial -/
 
 omit [Fintype σ] [DecidableEq σ] in
-/-- The number of letters of the monomial with exponent vector `d` is its total degree. -/
+/-- The number of letters of the monomial with exponent vector `d` is its total degree.  This is
+not a `simp` lemma: `Finsupp.card_toMultiset` already rewrites the left-hand side to
+`d.sum fun _ => id`, so tagging it would leave it out of simp-normal form. -/
 theorem card_toMultiset_eq_degree (d : σ →₀ ℕ) : Multiset.card d.toMultiset = d.degree := by
   rw [Finsupp.card_toMultiset, Finsupp.degree_apply]
   rfl
@@ -279,6 +280,7 @@ variable (μ : n.Partition)
 that of the shape `μ` and the partition of the monomial's exponents.  The exponents need not be
 sorted, since sorting them is a permutation of the alphabet, which a symmetric polynomial does not
 see. -/
+@[simp]
 theorem coeff_schurPoly_eq_kostkaNumber {d : σ →₀ ℕ} (h : d.degree = n) :
     coeff d (schurPoly σ R μ) = (kostkaNumber μ (weightPartition d h) : R) := by
   obtain ⟨e, he⟩ := exists_perm_mapDomain_eq_partWeight d h
@@ -286,7 +288,7 @@ theorem coeff_schurPoly_eq_kostkaNumber {d : σ →₀ ℕ} (h : d.degree = n) :
     conv_lhs => rw [← schurPoly_isSymmetric (R := R) μ e]
     exact coeff_rename_mapDomain _ e.injective _ _
   rw [← hsymm, he, coeff_schurPoly_partWeight μ _
-    (by rw [colLen_diagramOf]; exact card_parts_weightPartition_le d h)]
+    (by rw [colLen_zero_diagramOf]; exact card_parts_weightPartition_le d h)]
 
 /-- **The monomial expansion of a Schur polynomial**: `s_μ = ∑_ν K_{μν} m_ν`, expanding `s_μ` in
 the monomial symmetric polynomials with the Kostka numbers as its coefficients.  The sum runs over
