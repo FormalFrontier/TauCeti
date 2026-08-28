@@ -47,7 +47,7 @@ the class functions make sense, every value is a class function.
 For a **finite group** `G` over an algebraically closed field of characteristic zero, injectivity is
 proved in `TauCeti/RepresentationTheory/RepresentationRing/Injective.lean` as
 `TauCeti.repRingCharacter_injective`. Its object-level input,
-`TauCeti.FDRep.nonempty_iso_of_character_eq`, says that equal characters determine isomorphic
+`FDRep.nonempty_iso_of_character_eq`, says that equal characters determine isomorphic
 representations. Outside the finite semisimple regime — for a monoid, or in modular characteristic
 — injectivity is not to be expected in general.
 

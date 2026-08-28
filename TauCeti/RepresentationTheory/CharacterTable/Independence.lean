@@ -46,8 +46,8 @@ below uses them.
   on `G`; `TauCeti.ClassFunction.linearIndependent_ofFDRep` and
   `TauCeti.ClassFunction.linearIndependent_character_fdRep` are the `FDRep` mirrors.
 * `TauCeti.Representation.nonempty_equiv_of_character_eq` and
-  `TauCeti.FDRep.nonempty_iso_of_character_eq_of_simple`: **an irreducible representation is
-  determined by its character**. `TauCeti.FDRep.nonempty_iso_of_character_eq` drops the simplicity
+  `FDRep.nonempty_iso_of_character_eq_of_simple`: **an irreducible representation is
+  determined by its character**. `FDRep.nonempty_iso_of_character_eq` drops the simplicity
   hypotheses in characteristic zero.
 * `TauCeti.ClassFunction.card_le_card_conjClasses` and
   `TauCeti.ClassFunction.card_le_card_conjClasses_fdRep`: **there are at most as many pairwise
@@ -199,7 +199,7 @@ end Pairwise
 
 end Representation
 
-namespace FDRep
+section FDRep
 
 section Simple
 
@@ -207,10 +207,11 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k
   [Invertible (Nat.card G : k)]
 
 /-- **A simple object of `FDRep k G` is determined by its character**: two simple objects with
-the same character are isomorphic. See `TauCeti.FDRep.nonempty_iso_of_character_eq` for the
+the same character are isomorphic. See `FDRep.nonempty_iso_of_character_eq` for the
 characteristic-zero theorem without simplicity hypotheses. -/
-theorem nonempty_iso_of_character_eq_of_simple (X Y : FDRep k G) [CategoryTheory.Simple X]
-    [CategoryTheory.Simple Y] (h : X.character = Y.character) : Nonempty (X ≅ Y) := by
+theorem _root_.FDRep.nonempty_iso_of_character_eq_of_simple (X Y : FDRep k G)
+    [CategoryTheory.Simple X] [CategoryTheory.Simple Y]
+    (h : X.character = Y.character) : Nonempty (X ≅ Y) := by
   let _ := Fintype.ofFinite G
   rw [← not_isEmpty_iff]
   intro hempty
@@ -260,9 +261,9 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k
 /-- **Finite-dimensional representations are determined by their characters in characteristic
 zero.** Maschke decompositions and the character pairing identify the multiplicity of every simple
 module, so equal characters give isomorphic representations. This generalizes
-`TauCeti.FDRep.nonempty_iso_of_character_eq_of_simple`, which instead assumes both objects simple
+`FDRep.nonempty_iso_of_character_eq_of_simple`, which instead assumes both objects simple
 and only that the finite group order is invertible in the field. -/
-theorem nonempty_iso_of_character_eq (X Y : FDRep k G)
+theorem _root_.FDRep.nonempty_iso_of_character_eq (X Y : FDRep k G)
     (hchar : X.character = Y.character) : Nonempty (X ≅ Y) := by
   classical
   let _ : Fintype G := Fintype.ofFinite G
