@@ -41,25 +41,34 @@ noncomputable def continuousMonoidHomEquiv :
       (ConcreteCategory.homEquiv (C := GrpCat))
 
 /-- The unbundled profinite-completion correspondence restricts a continuous homomorphism along
-the canonical map.
-
-Mathlib provides no propositional computation rule for the forward direction of
-`ProfiniteGrp.ProfiniteCompletion.homEquiv`: its forward map is definitionally precomposition by
-the unit. The proof below intentionally isolates that definitional reduction behind this opaque
-simp theorem. -/
+the canonical map. -/
 @[simp]
 theorem continuousMonoidHomEquiv_apply
     (f : ProfiniteGrp.ProfiniteCompletion.completion (GrpCat.of G) →ₜ* P) (g : G) :
     continuousMonoidHomEquiv G P f g =
-      f (ProfiniteGrp.ProfiniteCompletion.etaFn (GrpCat.of G) g) :=
-  (rfl)
+      f (ProfiniteGrp.ProfiniteCompletion.etaFn (GrpCat.of G) g) := by
+  -- The forward direction of `ProfiniteGrp.ProfiniteCompletion.homEquiv` is inverse to
+  -- `ProfiniteGrp.ProfiniteCompletion.lift`, so Mathlib's `lift_eta` computes it.
+  have key : ∀ F : ProfiniteGrp.ProfiniteCompletion.completion (GrpCat.of G) ⟶
+        ProfiniteGrp.of P,
+      ProfiniteGrp.ProfiniteCompletion.homEquiv (GrpCat.of G) (ProfiniteGrp.of P) F =
+        ProfiniteGrp.ProfiniteCompletion.eta (GrpCat.of G) ≫ (forget₂ _ _).map F := by
+    intro F
+    have h : ProfiniteGrp.ProfiniteCompletion.lift
+        (ProfiniteGrp.ProfiniteCompletion.homEquiv (GrpCat.of G) (ProfiniteGrp.of P) F) = F :=
+      Equiv.symm_apply_apply
+        (ProfiniteGrp.ProfiniteCompletion.homEquiv (GrpCat.of G) (ProfiniteGrp.of P)) F
+    conv_rhs => rw [← h]
+    exact (ProfiniteGrp.ProfiniteCompletion.lift_eta _).symm
+  -- The remaining concrete-category plumbing is definitional.
+  exact congrArg (fun m : GrpCat.of G ⟶ GrpCat.of P => m.hom g) (key (ConcreteCategory.ofHom f))
 
 /-- The continuous lift of an abstract homomorphism agrees with it on the original group. -/
 @[simp]
 theorem continuousMonoidHomEquiv_symm_apply_etaFn (f : G →* P) (g : G) :
     (continuousMonoidHomEquiv G P).symm f
       (ProfiniteGrp.ProfiniteCompletion.etaFn (GrpCat.of G) g) = f g := by
-  exact DFunLike.congr_fun ((continuousMonoidHomEquiv G P).apply_symm_apply f) g
+  rw [← continuousMonoidHomEquiv_apply, Equiv.apply_symm_apply]
 
 /-- Two continuous homomorphisms from a profinite completion to a Hausdorff topological group
 agree if they agree on the canonical dense image of the original group. -/
