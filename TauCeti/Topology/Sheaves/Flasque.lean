@@ -52,7 +52,7 @@ are Mathlib's `Mathlib/Topology/Sheaves/Flasque.lean`, and the long exact sequen
 ## References
 
 * R. Hartshorne, *Algebraic Geometry*, III.2.4–2.5.
-* The Stacks Project, tag 01EB, *Cohomology of Sheaves*.
+* The Stacks Project, tag 09SY, Lemma 20.12.3, *Flasque sheaves*.
 -/
 
 public section
