@@ -155,7 +155,11 @@ private theorem isCompl_piece_one_piece_zero (hs : HodgeStructureOn W ω 1)
   simpa only [show (1 : ℤ) + 1 - 1 = 1 by omega] using hs.isCompl_F_conjF 1
 
 /-- For an effective weight-one Hodge structure, the `i`-eigenspace of the Weil operator is
-exactly the Hodge component `H^{1,0}`. -/
+exactly the Hodge component `H^{1,0}`.
+
+This and the other effective weight-one eigenspace equalities are intentionally not simp lemmas:
+`isEffective_iff` simplifies their `IsEffective` hypothesis, so `simpNF` rejects the attributes.
+Use them as explicit rewrite rules. -/
 theorem eigenspace_weilOperator_I (hs : HodgeStructureOn W ω 1) (heff : hs.IsEffective) :
     Module.End.eigenspace hs.weilOperator Complex.I = hs.piece 1 := by
   refine eigenspace_eq_of_isCompl (μ := Complex.I) (ν := -Complex.I)
