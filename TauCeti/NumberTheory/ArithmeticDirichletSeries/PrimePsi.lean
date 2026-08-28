@@ -273,6 +273,12 @@ theorem primeVonMangoldtWeight_of_not_exists_dvd {A : (Ideal (𝓞 K))⁰}
   Set.indicator_of_notMem
     (s := {I : (Ideal (𝓞 K))⁰ | ∃ 𝔭 ∈ S, 𝔭.asIdeal ∣ (I : Ideal (𝓞 K))}) h _
 
+/-- The empty set of primes carries no von Mangoldt weight. -/
+@[simp]
+theorem primeVonMangoldtWeight_empty (A : (Ideal (𝓞 K))⁰) :
+    primeVonMangoldtWeight K (∅ : Set (HeightOneSpectrum (𝓞 K))) A = 0 :=
+  primeVonMangoldtWeight_of_not_exists_dvd (by simp)
+
 /-- The von Mangoldt weight of `S` vanishes away from the prime-power ideals. -/
 @[simp]
 theorem primeVonMangoldtWeight_eq_zero_of_not_isPrimePow {A : (Ideal (𝓞 K))⁰}
@@ -373,7 +379,7 @@ theorem primeVonMangoldtCoeff_nonneg (S : Set (HeightOneSpectrum (𝓞 K))) (n :
 theorem primeVonMangoldtCoeff_empty (n : ℕ) :
     primeVonMangoldtCoeff K (∅ : Set (HeightOneSpectrum (𝓞 K))) n = 0 := by
   rw [primeVonMangoldtCoeff_apply]
-  exact Finset.sum_eq_zero fun I _ ↦ primeVonMangoldtWeight_of_not_exists_dvd (by simp)
+  exact Finset.sum_eq_zero fun I _ ↦ primeVonMangoldtWeight_empty I
 
 /-- The von Mangoldt coefficient at `1` vanishes: the unit ideal is the only ideal of absolute
 norm one, and it is not a prime power. -/
