@@ -39,6 +39,7 @@ subspace under a suitable geometric hypothesis but not on all of `W^{1,p}(Ω)`.
   `C_c^∞(Ω) → W^{1,p}(Ω)`, and its injectivity.
 * `TauCeti.w1p0Submodule` and `TauCeti.W1p0`: the space `W^{1,p}_0(Ω)`, complete for the graph
   norm.
+* `TauCeti.W1p0.valueL`: the canonical continuous inclusion into `Lᵖ(Ω)`.
 * `TauCeti.w1p0Submodule_subset_of_isClosed`: a closed set containing every test-function jet
   contains `W^{1,p}_0(Ω)`, which is how a property is extended from test functions to the whole
   space.
@@ -138,6 +139,20 @@ theorem w1p0Submodule_subset_of_isClosed {s : Set (W1p mu Omega p)} (hs : IsClos
 /-- **The Sobolev space `W^{1,p}_0(Ω)`**, the closure of `C_c^∞(Ω)` in `W^{1,p}(Ω)`. -/
 abbrev W1p0 (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 ≤ p)] := (w1p0Submodule mu Omega p).toSubmodule
+
+/-- The continuous linear inclusion of `W^{1,p}_0(Ω)` into its `Lᵖ(Ω)` value space. -/
+def W1p0.valueL : W1p0 mu Omega p →L[ℝ] Lp ℝ p (mu.restrict Omega) :=
+  W1p.valueL.comp (w1p0Submodule mu Omega p).toSubmodule.subtypeL
+
+@[simp]
+theorem W1p0.valueL_apply (u : W1p0 mu Omega p) :
+    W1p0.valueL u = W1p.value (u : W1p mu Omega p) :=
+  by simp [W1p0.valueL]
+
+/-- The `Lᵖ` norm of the value of a zero-boundary Sobolev function is bounded by its Sobolev
+norm. -/
+theorem W1p0.norm_value_le (u : W1p0 mu Omega p) : ‖W1p0.valueL u‖ ≤ ‖u‖ :=
+  by rw [W1p0.valueL_apply]; exact W1p.norm_value_le (u : W1p mu Omega p)
 
 /-- `W^{1,p}_0(Ω)` is complete: it is a closed subspace of the complete space `W^{1,p}(Ω)`. -/
 instance : CompleteSpace (W1p0 mu Omega p) :=
