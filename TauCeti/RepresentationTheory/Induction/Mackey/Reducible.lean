@@ -93,8 +93,14 @@ theorem not_mackeyDisjoint_of_mackeySubgroup_eq_bot {A : FDRep k H} {s : G}
         simp only [map_one, End.one_def]
         exact (Category.id_comp _).trans (Category.comp_id _).symm }
   intro hdisj
-  have hzero : (𝟙 A.V : A.V ⟶ A.V) = 0 := congrArg Action.Hom.hom (hdisj.eq_zero φ)
-  exact hA ((IsZero.iff_id_eq_zero A).mpr (Action.Hom.ext hzero))
+  -- Both objects `φ` connects have `A.V` as their underlying module, `Action.res` and `resFDRep`
+  -- changing only the action; `φ` is introduced by `let` so that `φ.hom` still reduces to `𝟙 A.V`.
+  have hzero : (𝟙 A.V : A.V ⟶ A.V) = 0 := by
+    have h := congrArg Action.Hom.hom (hdisj.eq_zero φ)
+    rwa [Action.zero_hom] at h
+  refine hA ((IsZero.iff_id_eq_zero A).mpr (Action.Hom.ext ?_))
+  rw [Action.id_hom, Action.zero_hom]
+  exact hzero
 
 /-- **An induced representation is not irreducible as soon as some conjugate of the subgroup meets
 it trivially.** Read off `TauCeti.simple_indFDRep_iff` at the element `s`, whose Mackey term

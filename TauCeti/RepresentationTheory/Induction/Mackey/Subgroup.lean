@@ -77,10 +77,10 @@ roadmap-specific subgroup the induction and restriction of that layer run along.
   `|KsH| · |K ⊓ sHs⁻¹| = |K| · |H|`.
 * `TauCeti.stabilizer_smul_eq_mackeySubgroup_subgroupOf`: the same stabilizer description for an
   arbitrary `G`-set, at a translate `s • p`.
-* `TauCeti.mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card`: for `H` of prime order the Mackey
-  subgroup is `⊥` unless the whole conjugate `sHs⁻¹` lies in `K`.
-* `TauCeti.mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card`: at `K = H` that
-  dichotomy reads: `H` meets each of its conjugates in `⊥` or in itself.
+* `TauCeti.inf_eq_bot_or_le_of_prime_card`: a subgroup of prime order meets `K` trivially or lies
+  inside it, the lattice fact the Mackey dichotomy runs on.
+* `TauCeti.mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card`: read at the conjugate
+  `sHs⁻¹`, that dichotomy says `H` meets each of its conjugates in `⊥` or in itself.
 * `TauCeti.exists_notMem_mackeySubgroup_eq_bot_of_prime_card_of_not_normal`: a non-normal subgroup
   of prime order therefore has a conjugate meeting it trivially.
 
@@ -384,26 +384,31 @@ private theorem card_conj_smul_eq (s : G) (H : Subgroup G) :
     Nat.card (MulAut.conj s • H : Subgroup G) = Nat.card H :=
   Nat.card_congr (Subgroup.equivSMul (MulAut.conj s) H).toEquiv.symm
 
-/-- **A subgroup of prime order either meets `K` trivially after conjugation, or is carried inside
-`K` altogether.** The Mackey subgroup `K ⊓ sHs⁻¹` sits inside the conjugate `sHs⁻¹`, a group of
-prime order `Nat.card H`, so read inside `sHs⁻¹` it is `⊥` or `⊤`. -/
-theorem mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card (hp : (Nat.card H).Prime) (s : G)
-    (K : Subgroup G) :
-    mackeySubgroup s H K = ⊥ ∨ (MulAut.conj s • H : Subgroup G) ≤ K := by
-  have _ : Fact (Nat.card (MulAut.conj s • H : Subgroup G)).Prime :=
-    ⟨by rw [card_conj_smul_eq]; exact hp⟩
-  rcases Subgroup.eq_bot_or_eq_top_of_prime_card
-      ((mackeySubgroup s H K).subgroupOf (MulAut.conj s • H)) with h | h
-  · exact Or.inl ((Subgroup.subgroupOf_eq_bot.mp h).eq_bot_of_le mackeySubgroup_le_conj)
-  · exact Or.inr ((Subgroup.subgroupOf_eq_top.mp h).trans mackeySubgroup_le_right)
+/-- **A subgroup of prime order either meets `K` trivially or lies inside it.** There is nothing
+in between: read inside `P`, the intersection `K ⊓ P` is a subgroup of a group of prime order,
+hence `⊥` or `⊤`.
+
+This is the subgroup-lattice fact behind the Mackey dichotomy below; nothing about the Mackey
+subgroup enters, and at `P = sHs⁻¹` it says the Mackey subgroup `K ⊓ sHs⁻¹` is trivial unless the
+whole conjugate lies in `K`. -/
+theorem inf_eq_bot_or_le_of_prime_card {P : Subgroup G} (hp : (Nat.card P).Prime) (K : Subgroup G) :
+    K ⊓ P = ⊥ ∨ P ≤ K := by
+  have _ : Fact (Nat.card P).Prime := ⟨hp⟩
+  rcases Subgroup.eq_bot_or_eq_top_of_prime_card ((K ⊓ P).subgroupOf P) with h | h
+  · exact Or.inl ((Subgroup.subgroupOf_eq_bot.mp h).eq_bot_of_le inf_le_right)
+  · exact Or.inr ((Subgroup.subgroupOf_eq_top.mp h).trans inf_le_left)
 
 /-- **A subgroup of prime order meets each of its conjugates in `⊥` or in itself.** This is
-`TauCeti.mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card` at `K = H`: the containment
-`sHs⁻¹ ≤ H` it produces is an equality because conjugate subgroups have the same finite order. -/
+`TauCeti.inf_eq_bot_or_le_of_prime_card` at the conjugate `sHs⁻¹`, which has the same prime order
+as `H`: the containment `sHs⁻¹ ≤ H` it produces is an equality because conjugate subgroups have
+the same finite order. -/
 theorem mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card (hp : (Nat.card H).Prime)
     (s : G) : mackeySubgroup s H H = ⊥ ∨ (MulAut.conj s • H : Subgroup G) = H := by
   have _ : Finite H := Nat.finite_of_card_ne_zero hp.ne_zero
-  refine (mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card hp s H).imp id fun hle => ?_
+  have hpc : (Nat.card (MulAut.conj s • H : Subgroup G)).Prime := by
+    rw [card_conj_smul_eq]; exact hp
+  rw [mackeySubgroup_def]
+  refine (inf_eq_bot_or_le_of_prime_card hpc H).imp id fun hle => ?_
   exact Subgroup.eq_of_le_of_card_ge hle (card_conj_smul_eq s H).ge
 
 /-- **A non-normal subgroup of prime order has a conjugate meeting it trivially.** If every
