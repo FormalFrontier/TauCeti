@@ -621,8 +621,8 @@ class is invariant. Neither statement mentions a topology or an action on the se
 
 variable (G : Type uG) [Group G]
   (M : Type uM) [AddCommGroup M] [DistribMulAction G M]
-  (N : Type uN) [AddCommGroup N]
-  (P : Type uP) [AddCommGroup P]
+  (N : Type uN) [AddCommMonoid N]
+  (P : Type uP) [AddCommMonoid P]
   (μ : M →+ N →+ P)
 
 /-- **Graded commutativity in bidegree `(0,1)`, at cochain level.** The `(1,0)` cup of a cochain
