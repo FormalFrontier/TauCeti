@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Reduced
 
 /-!
@@ -109,7 +110,7 @@ def e6MinusculeReflection (i : Fin 6) : Equiv.Perm (Fin 27) :=
 
 /-- Applying the same simple reflection twice fixes every index in the weight table. -/
 @[simp]
-theorem e6MinusculeReflection_self (i : Fin 6) (a : Fin 27) :
+theorem e6MinusculeReflection_apply_apply (i : Fin 6) (a : Fin 27) :
     e6MinusculeReflection i (e6MinusculeReflection i a) = a :=
   e6MinusculeReflectionIndex_involutive i a
 
@@ -127,6 +128,23 @@ theorem e6MinusculeWeight_reflection (i : Fin 6) (a : Fin 27) :
         e6MinusculeWeight a i • e6Root (e6SimpleIndex i) := by
   rw [root_e6SimpleIndex]
   exact e6MinusculeWeight_reflection_table i a
+
+/-- A simple reflection fixes a minuscule weight exactly when its simple-coroot coordinate is
+zero. -/
+@[simp]
+theorem e6MinusculeReflection_eq_self_iff (i : Fin 6) (a : Fin 27) :
+    e6MinusculeReflection i a = a ↔ e6MinusculeWeight a i = 0 := by
+  constructor
+  · intro h
+    have hweight := congrArg e6MinusculeWeight h
+    rw [e6MinusculeWeight_reflection] at hweight
+    have hi := congrFun hweight i
+    simp [root_e6SimpleIndex, CartanMatrix.E_six_eq] at hi
+    fin_cases i <;> simp_all
+  · intro h
+    apply e6MinusculeWeight_injective
+    rw [e6MinusculeWeight_reflection]
+    simp [h]
 
 /-- The explicit permutation agrees with reflection in the pinned simply connected root datum. -/
 @[simp]
