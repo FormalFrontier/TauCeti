@@ -69,6 +69,10 @@ private noncomputable def orderedPrefixFace {K : AbstractSimplicialComplex ι} (
   ⟨orderedPrefixVertices e i, K.isRelLowerSet_faces.mem_of_le σ.2
     (orderedPrefixVertices_subset e i) (orderedPrefixVertices_nonempty e i)⟩
 
+private theorem orderedPrefixFace_val {K : AbstractSimplicialComplex ι} (σ : Face K)
+    (e : VertexOrder σ) (i : Fin σ.1.card) :
+    (orderedPrefixFace σ e i).1 = orderedPrefixVertices e i := rfl
+
 private theorem orderedPrefixFace_mono {K : AbstractSimplicialComplex ι} (σ : Face K)
     (e : VertexOrder σ) {i j : Fin σ.1.card} (hij : i ≤ j) :
     orderedPrefixFace σ e i ≤ orderedPrefixFace σ e j := by
@@ -80,7 +84,7 @@ private theorem orderedPrefixFace_mono {K : AbstractSimplicialComplex ι} (σ : 
 private theorem card_orderedPrefixFace {K : AbstractSimplicialComplex ι} (σ : Face K)
     (e : VertexOrder σ) (i : Fin σ.1.card) :
     (orderedPrefixFace σ e i).1.card = i.1 + 1 := by
-  change (orderedPrefixVertices e i).card = i.1 + 1
+  rw [orderedPrefixFace_val]
   rw [orderedPrefixVertices, Finset.card_image_iff.mpr]
   · exact Fin.card_Iic i
   · exact fun _ _ _ _ h => e.injective (Subtype.ext h)
@@ -310,13 +314,13 @@ theorem barycentricSubdivisionRealizationMap_orderedSubdivisionPoint
     exact (Finsupp.notMem_support_iff.mp
       (fun hsupport => hv (StandardSimplex.support_subset x hsupport))).symm
 
-/-- The shared ordered-coordinate construction is continuous when all its coordinates are. -/
+/-- The shared ordered-coordinate construction is continuous when all its used coordinates are. -/
 theorem continuous_orderedSubdivisionPoint {K : AbstractSimplicialComplex ι} {α : Type*}
     [TopologicalSpace α] (σ : Face K) (e : VertexOrder σ) (c : α → ℕ → ℝ)
     (hc : ∀ a {k}, k < σ.1.card → c a (k + 1) ≤ c a k)
     (hsum : ∀ a, ∑ k ∈ Finset.range σ.1.card, c a k = 1)
     (hcard : ∀ a, c a σ.1.card = 0)
-    (hcontinuous : ∀ k, Continuous fun a => c a k) :
+    (hcontinuous : ∀ k ≤ σ.1.card, Continuous fun a => c a k) :
     Continuous fun a => orderedSubdivisionPoint σ e (c a) (hc a) (hsum a) (hcard a) := by
   apply (continuous_faceInclusion _ (orderedSubdivisionFace σ e)).comp
   apply continuous_induced_rng.mpr
@@ -337,7 +341,8 @@ theorem continuous_orderedSubdivisionPoint {K : AbstractSimplicialComplex ι} {�
   intro i _
   by_cases hi : orderedPrefixFace σ e i = ρ
   · simp only [hi, ↓reduceIte, orderedWeight]
-    exact continuous_const.mul ((hcontinuous i.1).sub (hcontinuous (i.1 + 1)))
+    exact continuous_const.mul
+      ((hcontinuous i.1 i.2.le).sub (hcontinuous (i.1 + 1) (Nat.succ_le_of_lt i.2)))
   · simp only [hi, ↓reduceIte]
     exact continuous_const
 

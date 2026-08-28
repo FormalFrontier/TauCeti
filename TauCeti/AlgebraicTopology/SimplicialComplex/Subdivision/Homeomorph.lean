@@ -178,7 +178,7 @@ private theorem continuous_chamberMap {K : AbstractSimplicialComplex ι} (σ : F
     (fun x k => chamberOrderedCoord σ e x k)
     (fun x _ hk => chamberOrderedCoord_succ_le σ e x hk)
     (sum_chamberOrderedCoord σ e) (chamberOrderedCoord_card σ e)
-    (continuous_chamberOrderedCoord σ e)
+    (fun k _ => continuous_chamberOrderedCoord σ e k)
 
 private theorem barycentricSubdivisionRealizationMap_chamberMap
     {K : AbstractSimplicialComplex ι} (σ : Face K) (e : VertexOrder σ)
