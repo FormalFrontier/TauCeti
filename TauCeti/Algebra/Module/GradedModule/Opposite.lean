@@ -264,7 +264,7 @@ section GradedAlgebra
 variable {R : Type u} {A : Type v}
   [CommSemiring R] [Semiring A] [Algebra R A]
 
-variable (G : InternalGrading R A) [GradedAlgebra G.piece]
+variable (G : InternalGrading R A) [SetLike.GradedMonoid G.piece]
 
 /-- The opposite pieces are multiplicative: reversing the factors reverses their degrees, which
 does not change their sum in the integer grading. -/
