@@ -98,6 +98,7 @@ theorem inverseTranspose_inverseTranspose (g : GL n A) :
   (inverseTranspose : GL n A ≃* GL n A).left_inv g
 
 /-- Inverse transpose commutes with entrywise application of a ring homomorphism. -/
+@[simp]
 theorem map_inverseTranspose {B : Type*} [CommRing B] (f : A →+* B) (g : GL n A) :
     map f (inverseTranspose g) = inverseTranspose (map f g) := by
   apply Units.ext
@@ -151,17 +152,18 @@ private theorem inverseTranspose_diagGL_typeAGraphSign (r : ℕ) :
   · have hji : j ≠ i := Ne.symm hij
     simp [typeAGraphSign, Matrix.transpose_apply, hij, hji]
 
+private theorem permutationGL_rev_inv (r : ℕ) :
+    (permutationGL (k := A) (Fin.revPerm : Equiv.Perm (Fin (r + 1))))⁻¹ =
+      permutationGL (k := A) Fin.revPerm := by
+  rw [← map_inv]
+  congr 1
+
 private theorem inverseTranspose_permutationGL_rev (r : ℕ) :
     Matrix.GeneralLinearGroup.inverseTranspose
         (permutationGL (k := A) (Fin.revPerm : Equiv.Perm (Fin (r + 1)))) =
       permutationGL (k := A) Fin.revPerm := by
-  have hInv :
-      (permutationGL (k := A) (Fin.revPerm : Equiv.Perm (Fin (r + 1))))⁻¹ =
-        permutationGL (k := A) Fin.revPerm := by
-    rw [← map_inv]
-    congr 1
   apply Units.ext
-  rw [Matrix.GeneralLinearGroup.coe_inverseTranspose, hInv]
+  rw [Matrix.GeneralLinearGroup.coe_inverseTranspose, permutationGL_rev_inv]
   simp only [permutationGL_coe, Matrix.transpose_permMatrix, inv_inv]
   exact congrArg (fun σ : Equiv.Perm (Fin (r + 1)) => σ.permMatrix A)
     Fin.revPerm_symm.symm
@@ -172,22 +174,19 @@ private theorem inverseTranspose_typeAGraphConjugator (r : ℕ) :
   rw [typeAGraphConjugator, map_mul, inverseTranspose_diagGL_typeAGraphSign,
     inverseTranspose_permutationGL_rev]
 
-private theorem typeAGraphConjugator_sq (r : ℕ) :
+/-- The square of the signed reversal matrix is the scalar matrix `(-1)^r I`. -/
+theorem typeAGraphConjugator_sq (r : ℕ) :
     typeAGraphConjugator r A * typeAGraphConjugator r A =
       Matrix.GeneralLinearGroup.scalar (Fin (r + 1)) ((-1 : Aˣ) ^ r) := by
   let d : GL (Fin (r + 1)) A := diagGL (typeAGraphSign (A := A))
   let p : GL (Fin (r + 1)) A := permutationGL (k := A) Fin.revPerm
-  have hp : p * p = 1 := by
-    dsimp only [p]
-    rw [← map_mul]
-    rw [show (Fin.revPerm : Equiv.Perm (Fin (r + 1))) * Fin.revPerm = 1 by
-      ext i
-      simp]
-    exact map_one _
+  have hp : p * p = 1 :=
+    inv_eq_iff_mul_eq_one.mp (permutationGL_rev_inv (A := A) r)
   have hpd : p * d * p⁻¹ = diagGL (fun i => typeAGraphSign (A := A) i.rev) := by
     simpa only [p, d, Equiv.Perm.inv_def, Fin.revPerm_symm, Fin.revPerm_apply] using
       permutationGL_mul_diagGL_mul_inv (k := A)
         (Fin.revPerm : Equiv.Perm (Fin (r + 1))) (typeAGraphSign (A := A))
+  -- Normalize the public conjugator definition to the local names used in the calculation.
   change (d * p) * (d * p) = _
   calc
     _ = d * (p * d * p⁻¹) * (p * p) := by group
@@ -208,13 +207,11 @@ private theorem typeAGraphConjugator_sq (r : ℕ) :
       rw [diagGL_coe, Matrix.GeneralLinearGroup.coe_scalar]
       rw [Matrix.scalar_apply]
 
-/-- The pinned type-`A` graph automorphism has order dividing two. -/
+/-- Applying the pinned type-`A` graph automorphism twice is the identity. -/
 @[simp]
-theorem typeAGraphAutomorphism_sq (r : ℕ) :
-    typeAGraphAutomorphism r A * typeAGraphAutomorphism r A = 1 := by
-  apply DFunLike.ext _ _
-  intro g
-  change typeAGraphAutomorphism r A (typeAGraphAutomorphism r A g) = g
+theorem typeAGraphAutomorphism_typeAGraphAutomorphism (r : ℕ)
+    (g : GL (Fin (r + 1)) A) :
+    typeAGraphAutomorphism r A (typeAGraphAutomorphism r A g) = g := by
   rw [typeAGraphAutomorphism_apply, typeAGraphAutomorphism_apply, map_mul, map_mul,
     inverseTranspose_typeAGraphConjugator,
     Matrix.GeneralLinearGroup.inverseTranspose_inverseTranspose, map_inv,
@@ -232,16 +229,20 @@ theorem typeAGraphAutomorphism_sq (r : ℕ) :
       rw [Matrix.GeneralLinearGroup.scalar_commute]
       group
 
+/-- The pinned type-`A` graph automorphism has order dividing two. -/
+@[simp]
+theorem typeAGraphAutomorphism_sq (r : ℕ) :
+    typeAGraphAutomorphism r A * typeAGraphAutomorphism r A = 1 := by
+  apply DFunLike.ext _ _
+  intro g
+  exact typeAGraphAutomorphism_typeAGraphAutomorphism r g
+
 private theorem permutationGL_conj_transvectionUnit {i j : Fin (r + 1)}
     (hij : i ≠ j) (c : A) :
     permutationGL (k := A) Fin.revPerm * transvectionUnit hij c *
         (permutationGL (k := A) Fin.revPerm)⁻¹ =
       transvectionUnit (Fin.rev_injective.ne hij) c := by
-  have hp : (permutationGL (k := A) (Fin.revPerm : Equiv.Perm (Fin (r + 1))))⁻¹ =
-      permutationGL (k := A) (Fin.revPerm : Equiv.Perm (Fin (r + 1))) := by
-    rw [← map_inv]
-    rfl
-  rw [hp]
+  rw [permutationGL_rev_inv]
   apply Units.ext
   rw [Units.val_mul, Units.val_mul, permutationGL_coe]
   simp only [coe_transvectionUnit, Equiv.Perm.inv_def]
@@ -250,7 +251,8 @@ private theorem permutationGL_conj_transvectionUnit {i j : Fin (r + 1)}
   simp [Matrix.transvection, Matrix.submatrix_apply, Matrix.one_apply,
     Matrix.single_apply, Fin.revPerm_apply, Fin.rev_eq_iff, Fin.rev_injective.eq_iff]
 
-private theorem inverseTranspose_transvectionUnit {i j : Fin (r + 1)}
+/-- Inverse transpose swaps the indices of a transvection and negates its parameter. -/
+theorem inverseTranspose_transvectionUnit {n : Type*} [Fintype n] [DecidableEq n] {i j : n}
     (hij : i ≠ j) (c : A) :
     Matrix.GeneralLinearGroup.inverseTranspose (transvectionUnit hij c) =
       transvectionUnit hij.symm (-c) := by
@@ -276,6 +278,7 @@ private theorem typeAGraphSign_castSucc_mul_neg_mul_inv_succ (i : Fin r) (c : A)
   simp only [Units.val_neg]
   have hcast : typeAGraphSign (A := A) i.castSucc = s := rfl
   rw [hcast]
+  -- Expose the values of the units so the remaining equality is an identity in `A`.
   change (s : A) * (-c) * (-(s : A)) = c
   have hneg : (s : A) * (-c) * (-(s : A)) = (s : A) * c * (s : A) := by ring
   rw [hneg]
@@ -295,6 +298,7 @@ theorem typeAGraphAutomorphism_transvection (r : ℕ) (i : Fin r) (c : A) :
   let p : GL (Fin (r + 1)) A := permutationGL (k := A) Fin.revPerm
   let hneg : i.succ ≠ i.castSucc := (Fin.castSucc_lt_succ (i := i)).ne'
   let hpos : i.rev.castSucc ≠ i.rev.succ := (Fin.castSucc_lt_succ (i := i.rev)).ne
+  -- Normalize the conjugator and the two index inequalities to their local names.
   change (d * p) * transvectionUnit hneg (-c) * (d * p)⁻¹ = _
   calc
     _ = d * (p * transvectionUnit hneg (-c) * p⁻¹) * d⁻¹ := by group
@@ -310,6 +314,7 @@ theorem typeAGraphAutomorphism_transvection (r : ℕ) (i : Fin r) (c : A) :
       rw [typeAGraphSign_castSucc_mul_neg_mul_inv_succ]
 
 /-- Entrywise base change carries the signed reversal matrix to the signed reversal matrix. -/
+@[simp]
 theorem map_typeAGraphConjugator {B : Type*} [CommRing B] (f : A →+* B) (r : ℕ) :
     Matrix.GeneralLinearGroup.map f (typeAGraphConjugator r A) =
       typeAGraphConjugator r B := by
@@ -318,6 +323,7 @@ theorem map_typeAGraphConjugator {B : Type*} [CommRing B] (f : A →+* B) (r : �
   simp [typeAGraphConjugator, typeAGraphSign]
 
 /-- The pinned type-`A` graph automorphism is natural in the coefficient ring. -/
+@[simp]
 theorem map_typeAGraphAutomorphism {B : Type*} [CommRing B] (f : A →+* B) (r : ℕ)
     (g : GL (Fin (r + 1)) A) :
     Matrix.GeneralLinearGroup.map f (typeAGraphAutomorphism r A g) =
