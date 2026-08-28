@@ -557,11 +557,8 @@ theorem pointsMulEquiv_rootSubgroupCoordinateMap (hij : i < j)
   rw [← hcoe, GeneralLinear.pointsMulEquiv_apply]
   congr 1
   rw [CommHopfAlgCat.quotientPointsHom_apply]
-  have hcomp :
-      (coordinateMap R n ≫ rootSubgroupCoordinateMap R hij).hom.toAlgHom =
-        (rootSubgroupCoordinateMap R hij).hom.toAlgHom.comp
-          (coordinateMap R n).hom.toAlgHom := rfl
-  rw [ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R n, ← hcomp,
+  rw [ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R n,
+    ← BialgHom.comp_toAlgHom, ← CommHopfAlgCat.hom_comp,
     coordinateMap_comp_rootSubgroupCoordinateMap]
   let id_pt :
       WithConv
@@ -576,27 +573,17 @@ theorem pointsMulEquiv_rootSubgroupCoordinateMap (hij : i < j)
     rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
     exact congrArg WithConv.ofConv hmap
   rw [hcomp_alg]
-  have hmap_gl :
-      GeneralLinear.pointsMulEquiv n
-          (toConv (f.ofConv.comp
-            (GeneralLinear.rootSubgroupPoints hij.ne id_pt).ofConv)) =
-        Matrix.GeneralLinearGroup.map f.ofConv.toRingHom
-          (GeneralLinear.pointsMulEquiv n
-            (GeneralLinear.rootSubgroupPoints hij.ne id_pt)) := by
-    apply Matrix.GeneralLinearGroup.ext
-    intro a b
-    rw [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply,
-      Matrix.GeneralLinearGroup.map_apply, GeneralLinear.pointsMulEquiv_apply,
-      GeneralLinear.pointToGeneralLinear_apply]
-    rfl
+  rw [← AlgHom.mapValue_apply]
   have hid_pt : AlgHom.mapValue f.ofConv id_pt = f := by
     apply WithConv.ext
     exact AlgHom.comp_id f.ofConv
   have hcoe_ring (x : AdditiveGroup.coordinateHopfAlgebra R) :
-      f.ofConv.toRingHom x = f.ofConv x := rfl
+      f.ofConv.toRingHom x = f.ofConv x :=
+    congrFun (AlgHom.coe_toRingHom f.ofConv) x
   apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).injective
-  rw [hmap_gl, GeneralLinear.pointsMulEquiv_rootSubgroupPoints,
-    map_transvectionUnit, hcoe_ring,
+  rw [GeneralLinear.pointsMulEquiv_mapValue,
+    GeneralLinear.pointsMulEquiv_rootSubgroupPoints, map_transvectionUnit,
+    hcoe_ring,
     ← AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue f.ofConv id_pt,
     hid_pt,
     GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
