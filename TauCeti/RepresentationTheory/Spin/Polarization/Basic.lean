@@ -189,7 +189,7 @@ theorem pairingEquiv_dualVector (i : ι) : P.pairingEquiv (P.dualVector b i) = b
 
 section DualBasis
 
-variable [Fintype ι]
+variable [Finite ι]
 
 /-- The basis of the second isotropic summand dual to `b` under the polarization pairing. -/
 noncomputable def dualBasis : Module.Basis ι K P.W' :=
