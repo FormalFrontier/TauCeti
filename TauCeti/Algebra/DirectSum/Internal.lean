@@ -92,6 +92,7 @@ theorem DirectSum.piSubmoduleEquiv_symm_apply {R ι : Type*} {M : ι → Type*} 
   simpa only [TauCeti.DirectSum.piInclusion_apply] using hi.symm
 
 /-- Membership in the direct sum of a family of submodules is componentwise. -/
+@[simp]
 theorem DirectSum.mem_piSubmodule_iff {R ι : Type*} {M : ι → Type*} [Semiring R]
     [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)] (N : ∀ i, Submodule R (M i))
     (x : ⨁ i, M i) :
@@ -108,6 +109,22 @@ theorem DirectSum.lof_mem_piSubmodule {R ι : Type*} {M : ι → Type*} [Semirin
   refine ⟨DirectSum.lof R ι (fun i ↦ N i) i x, ?_⟩
   exact TauCeti.DirectSum.piInclusion_lof N i x
 
+-- The inverse congruence is definitionally the direct sum of the componentwise inverses; this
+-- helper exposes that computation through the `DirectSum.lmap` API.
+private theorem DirectSum.congrLinearEquiv_symm_apply {R ι : Type*} {N P : ι → Type*}
+    [Semiring R] [∀ i, AddCommMonoid (N i)] [∀ i, Module R (N i)]
+    [∀ i, AddCommMonoid (P i)] [∀ i, Module R (P i)]
+    (e : ∀ i, N i ≃ₗ[R] P i) (x : ⨁ i, P i) :
+    (DirectSum.congrLinearEquiv e).symm x =
+      DirectSum.lmap (fun i ↦ (e i).symm.toLinearMap) x := by
+  rfl
+
+private theorem DirectSum.isInternal_iff_bijective_coeLinearMap {R ι M : Type*}
+    [Semiring R] [DecidableEq ι] [AddCommMonoid M] [Module R M]
+    {A : ι → Submodule R M} :
+    DirectSum.IsInternal A ↔ Function.Bijective (DirectSum.coeLinearMap A) := by
+  rfl
+
 /-- The canonical inclusions of a family of submodules form an internal direct sum when they are
 identified with the summands of an equivalence. -/
 theorem DirectSum.isInternal_of_lof {R ι M : Type*} [Semiring R] [DecidableEq ι]
@@ -120,9 +137,8 @@ theorem DirectSum.isInternal_of_lof {R ι M : Type*} [Semiring R] [DecidableEq �
     (DirectSum.congrLinearEquiv e).symm.trans E
   have hF : ∀ i (x : A i), F (DirectSum.lof R ι (fun i ↦ A i) i x) = (x : M) := by
     intro i x
-    change E (DirectSum.lmap (fun i ↦ (e i).symm.toLinearMap)
-      (DirectSum.lof R ι (fun i ↦ A i) i x)) = (x : M)
-    rw [DirectSum.lmap_lof]
+    simp only [F, LinearEquiv.trans_apply]
+    rw [DirectSum.congrLinearEquiv_symm_apply, DirectSum.lmap_lof]
     simpa using hE i ((e i).symm x)
   have hcoe : DirectSum.coeLinearMap A = F.toLinearMap := by
     apply DirectSum.linearMap_ext R
@@ -131,8 +147,7 @@ theorem DirectSum.isInternal_of_lof {R ι M : Type*} [Semiring R] [DecidableEq �
     intro x
     simp only [LinearMap.comp_apply, DirectSum.coeLinearMap_lof]
     exact (hF i x).symm
-  change Function.Bijective (DirectSum.coeLinearMap A)
-  rw [hcoe]
+  rw [DirectSum.isInternal_iff_bijective_coeLinearMap, hcoe]
   exact F.bijective
 
 end TauCeti

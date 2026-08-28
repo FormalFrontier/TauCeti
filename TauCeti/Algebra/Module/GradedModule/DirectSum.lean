@@ -27,6 +27,7 @@ This is the direct-sum compatibility target in Layer 0 of the `DGAInfinity` road
 ## References
 
 * Mathlib's `DirectSum` API.
+* B. Keller, *Introduction to A-infinity algebras and modules*, Section 3.6.
 -/
 
 public section
@@ -101,6 +102,20 @@ private def sigmaSwapPieceEquiv (G : ∀ i, InternalGrading R (M i)) (z : Σ _ :
   obtain ⟨i, p⟩ := z
   exact LinearEquiv.refl R _
 
+-- Evaluating the reindexing equivalence on a generator identifies this map with the identity
+-- on the corresponding degree-and-summand component.
+private theorem sigmaSwapPieceEquiv_lof (G : ∀ i, InternalGrading R (M i)) (p : ℤ) (i : ι)
+    (x : (G i).piece p) [DecidableEq ι] :
+    DirectSum.congrLinearEquiv (fun z ↦ sigmaSwapPieceEquiv G z)
+        (DirectSum.lof R (Σ _ : ι, ℤ)
+          (fun z ↦ (G ((sigmaSwap ι).symm z).2).piece ((sigmaSwap ι).symm z).1) ⟨i, p⟩ x) =
+      DirectSum.lof R (Σ _ : ι, ℤ) (fun z ↦ (G z.1).piece z.2) ⟨i, p⟩ x := by
+  change DirectSum.lmap
+      (fun z : Σ _ : ι, ℤ ↦ (LinearEquiv.refl R ((G z.1).piece z.2)).toLinearMap)
+      (DirectSum.lof R (Σ _ : ι, ℤ) (fun z ↦ (G z.1).piece z.2) ⟨i, p⟩ x) = _
+  rw [DirectSum.lmap_lof]
+  rfl
+
 private theorem sigmaLcurryEquiv_apply {ι κ : Type*} {δ : ι → κ → Type*}
     [DecidableEq ι] [∀ i j, AddCommMonoid (δ i j)]
     [∀ i j, Module R (δ i j)] (x : ⨁ z : Σ _ : ι, κ, δ z.1 z.2) :
@@ -149,17 +164,6 @@ private theorem directSumRecomposeEquiv_lof_lof (G : ∀ i, InternalGrading R (M
       DirectSum.lof R ι M i x := by
   rw [directSumRecomposeEquiv]
   simp only [LinearEquiv.trans_apply]
-  -- Expand the composite on a degree-and-summand generator.
-  change (DirectSum.congrLinearEquiv fun i ↦
-      (DirectSum.decomposeLinearEquiv (G i).piece).symm)
-      (DirectSum.sigmaLcurryEquiv R (δ := fun i p ↦ (G i).piece p)
-        ((DirectSum.congrLinearEquiv fun z ↦ sigmaSwapPieceEquiv G z)
-          (DirectSum.lequivCongrLeft R (sigmaSwap ι)
-            ((DirectSum.sigmaLcurryEquiv R (δ := fun p i ↦ (G i).piece p)).symm
-              ((DirectSum.congrLinearEquiv fun p ↦ (directSumPieceEquiv G p).symm)
-                (DirectSum.lof R ℤ (fun p ↦ directSumPiece G p) p
-                  (directSumPieceEquiv G p
-                    (DirectSum.lof R ι (fun i ↦ (G i).piece p) i x)))))))) = _
   have hpieces :
       (DirectSum.congrLinearEquiv fun p ↦ (directSumPieceEquiv G p).symm)
           (DirectSum.lof R ℤ (fun p ↦ directSumPiece G p) p
@@ -176,10 +180,7 @@ private theorem directSumRecomposeEquiv_lof_lof (G : ∀ i, InternalGrading R (M
     (M := fun z : Σ _ : ℤ, ι ↦ (G z.2).piece z.1) R (e := sigmaSwap ι)
     (i := Sigma.mk p i) (k := Sigma.mk i p) rfl x x rfl]
   -- After swapping the indices, apply the second curry generator formula.
-  change (DirectSum.congrLinearEquiv fun i ↦
-      (DirectSum.decomposeLinearEquiv (G i).piece).symm)
-      (DirectSum.sigmaLcurryEquiv R (δ := fun i p ↦ (G i).piece p)
-        (DirectSum.lof R (Σ _ : ι, ℤ) (fun z ↦ (G z.1).piece z.2) ⟨i, p⟩ x)) = _
+  rw [sigmaSwapPieceEquiv_lof]
   rw [sigmaLcurryEquiv_lof_lof]
   -- The last congruence map acts componentwise on the single summand.
   rw [DirectSum.coe_congrLinearEquiv, DirectSum.lmap_lof]
