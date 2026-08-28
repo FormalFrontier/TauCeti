@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.GroupTheory.TitsSystem
+public import TauCeti.GroupTheory.TitsSystem.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Bruhat
 
 import TauCeti.Data.Fin.Basic
