@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Scheme
 public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
 
 /-!
 # The type A full-weight carrier has determinant one
@@ -148,8 +148,8 @@ private theorem definingHopfIdeal_toIdeal_le_ker_of_map_determinant_eq_one
       RingHom.ker f.hom.toAlgHom.toRingHom := by
   rw [SpecialLinear.definingHopfIdeal_toIdeal, Ideal.span_singleton_le_iff_mem,
     RingHom.mem_ker, map_sub]
-  change f.hom _ - f.hom 1 = 0
-  rw [hdet, map_one, sub_self]
+  simp only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe, BialgHom.coe_toAlgHom, hdet,
+    map_one, sub_self]
 
 private theorem rootCoordinateMap_determinantGroupLike (k : Fin r ⊕ Fin r) :
     (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap (rootGenerator r)
