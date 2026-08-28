@@ -132,11 +132,12 @@ theorem eventually_implicitFunctionOfComplemented_eq (hf : HasStrictFDerivAt f f
     (e.continuousAt_symm htarget).comp hslice
   have hmem : ∀ᶠ k : f'.ker in 𝓝 0, (f a, k) ∈ e.target :=
     hslice.preimage_mem_nhds (e.open_target.mem_nhds htarget)
-  have hnear := hsymm.preimage_mem_nhds
-    (show {x | hf.implicitFunctionOfComplemented f f' hf' hker (f x) (e x).snd = x} ∈
-      𝓝 (e.symm (f a, 0)) by
-      rw [he, hf.implicitToOpenPartialHomeomorphOfComplemented_symm_self hf' hker]
-      exact hf.eq_implicitFunctionOfComplemented hf' hker)
+  have himplicit :
+      {x | hf.implicitFunctionOfComplemented f f' hf' hker (f x) (e x).snd = x} ∈
+        𝓝 (e.symm (f a, 0)) := by
+    rw [he, hf.implicitToOpenPartialHomeomorphOfComplemented_symm_self hf' hker]
+    exact hf.eq_implicitFunctionOfComplemented hf' hker
+  have hnear := hsymm.preimage_mem_nhds himplicit
   filter_upwards [hmem, hnear] with k hk hkey
   have hright := e.right_inv hk
   have hfst : f (e.symm (f a, k)) = f a :=
