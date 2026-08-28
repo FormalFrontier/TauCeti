@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Geometry.Hodge.Mixed.Decomposition
+public import TauCeti.Order.CompactlyGenerated
 
 /-!
 # Strictness of a morphism of mixed Hodge structures
@@ -35,6 +36,8 @@ complexification with intersections is needed.
 
 ## Main declarations
 
+* `TauCeti.Hodge.MixedHodgeStructure.Hom.range_inf_iSup_deligneSplittingFamily_eq_map_iSup`:
+  strictness against an arbitrary set of bidegrees.
 * `TauCeti.Hodge.MixedHodgeStructure.Hom.range_inf_F_eq_map_F`: **strictness for the Hodge
   filtration**, `im f ∩ F'^p = f(F^p)`.
 * `TauCeti.Hodge.MixedHodgeStructure.Hom.range_inf_WQ_eq_map_WQ`: **strictness for the weight
@@ -53,25 +56,6 @@ public section
 namespace TauCeti.Hodge
 
 universe u v w u' v' w'
-
-/-- **A subfamily of an independent family truncates a dominated sum.** If `B i ≤ A i` for every
-`i` and the `A i` are independent, then the total sum of the `B` meets the partial sum of the `A`
-over the indices satisfying `P` in exactly the partial sum of the `B` over those indices.
-
-This is the lattice content of strictness: `A` is the target's bigrading, `B` the image of the
-source's bigrading, and `P` cuts out the bidegrees of a filtration step. -/
-private theorem iSup_inf_iSup_of_le {R : Type*} {N : Type*} {ι : Type*} [Ring R] [AddCommGroup N]
-    [Module R N] {A B : ι → Submodule R N} (hA : iSupIndep A) (hB : ∀ i, B i ≤ A i)
-    (P : ι → Prop) :
-    (⨆ (i) (_ : P i), A i) ⊓ ⨆ i, B i = ⨆ (i) (_ : P i), B i := by
-  have hle : (⨆ (i) (_ : P i), B i) ≤ ⨆ (i) (_ : P i), A i := iSup₂_mono fun i _ ↦ hB i
-  have hdisj : Disjoint (⨆ (i) (_ : P i), A i) (⨆ (i) (_ : ¬ P i), B i) := by
-    have h₀ : Disjoint (⨆ (i) (_ : P i), A i) (⨆ (i) (_ : ¬ P i), A i) := by
-      simpa only [Set.mem_ofPred_eq] using
-        hA.disjoint_biSup_biSup (s := {i | P i}) (t := {i | ¬ P i})
-          (Set.disjoint_left.2 fun i hi hi' ↦ hi' hi)
-    exact h₀.mono_right (iSup₂_mono fun i _ ↦ hB i)
-  rw [iSup_split B P, inf_comm, sup_inf_assoc_of_le _ hle, inf_comm, hdisj.eq_bot, sup_bot_eq]
 
 namespace MixedHodgeStructure.Hom
 
@@ -99,12 +83,12 @@ corresponding sum for the source.
 
 Both filtrations of a mixed Hodge structure are sums of bigrading pieces over such a set, so this
 single statement carries every strictness assertion below. -/
-private theorem range_inf_iSup_deligneSplittingFamily (f : Hom source target)
+theorem range_inf_iSup_deligneSplittingFamily_eq_map_iSup (f : Hom source target)
     (P : ℤ × ℤ → Prop) :
     LinearMap.range f.toLinearMap ⊓ ⨆ (pq) (_ : P pq), target.deligneSplittingFamily pq =
       (⨆ (pq) (_ : P pq), source.deligneSplittingFamily pq).map f.toLinearMap := by
   rw [f.range_eq_iSup_map_deligneSplittingFamily, inf_comm,
-    iSup_inf_iSup_of_le (A := target.deligneSplittingFamily)
+    TauCeti.iSupIndep.iSup₂_inf_iSup_eq_iSup₂ (A := target.deligneSplittingFamily)
       (B := fun pq ↦ (source.deligneSplittingFamily pq).map f.toLinearMap)
       target.iSupIndep_deligneSplittingFamily
       (fun pq ↦ by
@@ -125,7 +109,7 @@ theorem range_inf_F_eq_map_F (f : Hom source target) (p : ℤ) :
     LinearMap.range f.toLinearMap ⊓ target.F p = (source.F p).map f.toLinearMap := by
   simpa only [deligneSplittingFamily_apply, ← target.F_eq_iSup_deligneSplitting p,
     ← source.F_eq_iSup_deligneSplitting p] using
-    f.range_inf_iSup_deligneSplittingFamily fun pq ↦ p ≤ pq.1
+    f.range_inf_iSup_deligneSplittingFamily_eq_map_iSup fun pq ↦ p ≤ pq.1
 
 /-- **Strictness of a morphism of mixed Hodge structures for the complexified weight
 filtration.** -/
@@ -133,7 +117,7 @@ theorem range_inf_WC_eq_map_WC (f : Hom source target) (k : ℤ) :
     LinearMap.range f.toLinearMap ⊓ target.WC k = (source.WC k).map f.toLinearMap := by
   simpa only [deligneSplittingFamily_apply, ← target.WC_eq_iSup_deligneSplitting k,
     ← source.WC_eq_iSup_deligneSplitting k] using
-    f.range_inf_iSup_deligneSplittingFamily fun pq ↦ pq.1 + pq.2 ≤ k
+    f.range_inf_iSup_deligneSplittingFamily_eq_map_iSup fun pq ↦ pq.1 + pq.2 ≤ k
 
 /-- **Strictness of a morphism of mixed Hodge structures for the weight filtration.** A rational
 vector lying both in the image of `f` and in the target's weight step `W_k` is the image of a

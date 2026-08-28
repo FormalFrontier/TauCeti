@@ -152,14 +152,9 @@ theorem rationalToComplexLinearEquiv_one_tmul_mem (hℚ : IsBaseChange ℚ ιℚ
   rw [rationalToComplexSubmodule_eq_span]
   exact Submodule.subset_span ⟨x, hx, rfl⟩
 
-/-- Complexification of rational subspaces is monotone. -/
-theorem rationalToComplexSubmodule_mono (hℚ : IsBaseChange ℚ ιℚ)
-    (hℂ : IsBaseChange ℂ ιℂ) :
-    Monotone (rationalToComplexSubmodule hℚ hℂ) := fun _ _ h ↦
-  Submodule.map_mono (Submodule.baseChange_mono ℂ h)
-
 /-- Complexification of rational subspaces reflects inclusions: `ℂ` is faithfully flat over `ℚ`,
 so an inclusion of rational subspaces may be tested on the complexifications. -/
+@[simp]
 theorem rationalToComplexSubmodule_le_iff (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (W₁ W₂ : Submodule ℚ Vℚ) :
     rationalToComplexSubmodule hℚ hℂ W₁ ≤ rationalToComplexSubmodule hℚ hℂ W₂ ↔ W₁ ≤ W₂ := by
@@ -168,6 +163,12 @@ theorem rationalToComplexSubmodule_le_iff (hℚ : IsBaseChange ℚ ιℚ)
       (f := (rationalToComplexLinearEquiv hℚ hℂ).toLinearMap)
       (rationalToComplexLinearEquiv hℚ hℂ).injective,
     Submodule.baseChange_le_iff]
+
+/-- Complexification of rational subspaces is monotone. -/
+theorem rationalToComplexSubmodule_mono (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) :
+    Monotone (rationalToComplexSubmodule hℚ hℂ) := fun _ _ h ↦
+  (rationalToComplexSubmodule_le_iff hℚ hℂ _ _).2 h
 
 @[simp]
 theorem rationalToComplexSubmodule_bot (hℚ : IsBaseChange ℚ ιℚ)
@@ -181,10 +182,8 @@ over `ℚ`. -/
 theorem rationalToComplexSubmodule_eq_bot_iff (hℚ : IsBaseChange ℚ ιℚ)
     (hℂ : IsBaseChange ℂ ιℂ) (W : Submodule ℚ Vℚ) :
     rationalToComplexSubmodule hℚ hℂ W = ⊥ ↔ W = ⊥ := by
-  rw [rationalToComplexSubmodule, Submodule.map_eq_bot_iff]
-  refine ⟨fun h ↦ Submodule.baseChange_injective (A := ℂ) (by simp [h]), ?_⟩
-  rintro rfl
-  simp
+  rw [← le_bot_iff, ← rationalToComplexSubmodule_bot hℚ hℂ,
+    rationalToComplexSubmodule_le_iff, le_bot_iff]
 
 @[simp]
 theorem rationalToComplexSubmodule_top (hℚ : IsBaseChange ℚ ιℚ)

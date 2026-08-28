@@ -302,6 +302,19 @@ theorem map_deligneSplitting_eq_piece (p q : ℤ) :
   · have hW := (mhs.WC_eq_iSup_deligneSplitting (p + q - 1)).le
     simpa only [add_sub_cancel_left] using mhs.piece_le_map_deligneSplitting hW p
 
+/-- The image of `I^{p,q}` in `gr^W_k` is the pure Hodge component `H^{p,q}` of that graded
+piece, for a total degree `k = p + q` supplied as a hypothesis.
+
+Deligne's theory constantly matches a bidegree against a weight index, and the graded piece the
+image lands in occurs in the *type* of that image; naming the weight index separately keeps those
+matches out of dependent rewriting. -/
+private theorem map_deligneSplitting_eq_piece_of_add_eq {p q k : ℤ} (hk : p + q = k) :
+    ((mhs.deligneSplitting p q).submoduleOf (mhs.WC k)).map
+        ((mhs.WC (k - 1)).submoduleOf (mhs.WC k)).mkQ =
+      (mhs.complexGradedHodgeStructure k).piece p := by
+  subst hk
+  exact mhs.map_deligneSplitting_eq_piece p q
+
 /-- **Deligne's bigrading spans**: the supremum of all the pieces `I^{p,q}` is the whole complex
 vector space. -/
 theorem iSup_deligneSplittingFamily_eq_top :
@@ -539,21 +552,8 @@ theorem isInternal_deligneSplittingFamily :
 
 /-! ### The recovery of the Hodge filtration -/
 
-/-- The image of the bigrading piece `I^{p,q}` in the graded piece of its total degree, with the
-total degree presented as an equation.
-
-Deligne's theory constantly matches a bidegree against a weight index, and the graded piece the
-image lands in occurs in the *type* of that image; naming the weight index separately keeps those
-matches out of dependent rewriting. -/
-theorem map_deligneSplitting_eq_piece_of_add_eq {p q k : ℤ} (hk : p + q = k) :
-    ((mhs.deligneSplitting p q).submoduleOf (mhs.WC k)).map
-        ((mhs.WC (k - 1)).submoduleOf (mhs.WC k)).mkQ =
-      (mhs.complexGradedHodgeStructure k).piece p := by
-  subst hk
-  exact mhs.map_deligneSplitting_eq_piece p q
-
 /-- Every bigrading piece whose first index is at least `p` lies in `F^p`. -/
-theorem iSup_deligneSplitting_le_F (p : ℤ) :
+private theorem iSup_deligneSplitting_of_le_le_F (p : ℤ) :
     (⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2) ≤ mhs.F p :=
   iSup₂_le fun rs hrs ↦ (mhs.deligneSplitting_le_F rs.1 rs.2).trans (mhs.F_antitone hrs)
 
@@ -593,7 +593,8 @@ private theorem F_inf_WC_le_of_F_inf_WC_sub_one_le {p k : ℤ}
     rw [Submodule.mkQ_apply] at hxy
     exact (weightGradedComplex_mk_eq_mk_iff mhs.WC k y ⟨x, hxW⟩).1 hxy
   have hxy' : x - (y : Vℂ) ∈ mhs.F p ⊓ mhs.WC (k - 1) :=
-    Submodule.mem_inf.2 ⟨Submodule.sub_mem _ hxF (mhs.iSup_deligneSplitting_le_F p hyG), by
+    Submodule.mem_inf.2
+      ⟨Submodule.sub_mem _ hxF (mhs.iSup_deligneSplitting_of_le_le_F p hyG), by
       simpa only [neg_sub] using Submodule.neg_mem _ hdiff⟩
   have hsplit : x = x - (y : Vℂ) + (y : Vℂ) := by abel
   rw [hsplit]
@@ -609,7 +610,7 @@ bigrading piece, so correcting the vector by a representative of that sum drops 
 `F^p ∩ W_{k-1}`. -/
 theorem F_eq_iSup_deligneSplitting (p : ℤ) :
     mhs.F p = ⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2 := by
-  refine le_antisymm ?_ (mhs.iSup_deligneSplitting_le_F p)
+  refine le_antisymm ?_ (mhs.iSup_deligneSplitting_of_le_le_F p)
   obtain ⟨k₀, hk₀⟩ := mhs.WC_bot
   obtain ⟨k₁, hk₁⟩ := mhs.WC_top
   have key : ∀ m : ℤ, k₀ ≤ m → mhs.F p ⊓ mhs.WC m ≤
