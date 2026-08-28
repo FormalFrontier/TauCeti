@@ -142,10 +142,6 @@ def logNormalPDFReal (m : ℝ) (v : ℝ≥0) (x : ℝ) : ℝ :=
 def logNormalPDF (m : ℝ) (v : ℝ≥0) (x : ℝ) : ℝ≥0∞ :=
   ENNReal.ofReal (logNormalPDFReal m v x)
 
-theorem logNormalPDF_eq_ofReal (m : ℝ) (v : ℝ≥0) (x : ℝ) :
-    logNormalPDF m v x = ENNReal.ofReal (logNormalPDFReal m v x) := by
-  rw [logNormalPDF]
-
 /-- The log-normal density vanishes off the positive half-line. -/
 @[simp]
 theorem logNormalPDFReal_of_nonpos (hx : x ≤ 0) (m : ℝ) (v : ℝ≥0) :
@@ -156,6 +152,18 @@ theorem logNormalPDFReal_of_nonpos (hx : x ≤ 0) (m : ℝ) (v : ℝ≥0) :
 theorem logNormalPDFReal_of_pos (hx : 0 < x) (m : ℝ) (v : ℝ≥0) :
     logNormalPDFReal m v x = (x * √(2 * π * v))⁻¹ * Real.exp (-(Real.log x - m) ^ 2 / (2 * v)) := by
   rw [logNormalPDFReal, ite_eq_right (not_le.mpr hx)]
+
+/-- The `ℝ≥0∞`-valued log-normal density vanishes off the positive half-line. -/
+@[simp]
+theorem logNormalPDF_of_nonpos (hx : x ≤ 0) (m : ℝ) (v : ℝ≥0) :
+    logNormalPDF m v x = 0 := by
+  rw [logNormalPDF, logNormalPDFReal_of_nonpos hx, ENNReal.ofReal_zero]
+
+/-- On the positive half-line the `ℝ≥0∞`-valued log-normal density is the stated formula. -/
+theorem logNormalPDF_of_pos (hx : 0 < x) (m : ℝ) (v : ℝ≥0) :
+    logNormalPDF m v x =
+      ENNReal.ofReal ((x * √(2 * π * v))⁻¹ * Real.exp (-(Real.log x - m) ^ 2 / (2 * v))) := by
+  rw [logNormalPDF, logNormalPDFReal_of_pos hx]
 
 /-- The log-normal density is the Gaussian density at `log x`, scaled by `x⁻¹`: this is the
 Jacobian factor of the exponential change of variables. -/
@@ -187,7 +195,7 @@ theorem measurable_logNormalPDFReal (m : ℝ) (v : ℝ≥0) : Measurable (logNor
 
 @[fun_prop]
 theorem measurable_logNormalPDF (m : ℝ) (v : ℝ≥0) : Measurable (logNormalPDF m v) := by
-  rw [funext (logNormalPDF_eq_ofReal m v)]
+  change Measurable fun x => ENNReal.ofReal (logNormalPDFReal m v x)
   exact (measurable_logNormalPDFReal m v).ennreal_ofReal
 
 /-- The log-normal density is supported on the positive half-line. -/
@@ -322,9 +330,13 @@ theorem variance_id_logNormalMeasure (m : ℝ) (v : ℝ≥0) :
     simpa using integral_sq_logNormalMeasure m v
   have h₁ : (logNormalMeasure m v)[(id : ℝ → ℝ)] = Real.exp (m + (v : ℝ) / 2) := by
     simpa using integral_id_logNormalMeasure m v
-  rw [h₂, h₁, ← Real.exp_nat_mul (m + (v : ℝ) / 2) 2,
-    show ((2 : ℕ) : ℝ) * (m + (v : ℝ) / 2) = 2 * m + (v : ℝ) by push_cast; ring,
-    show 2 * m + 2 * (v : ℝ) = (v : ℝ) + (2 * m + (v : ℝ)) by ring, Real.exp_add]
+  have hMeanExponent : ((2 : ℕ) : ℝ) * (m + (v : ℝ) / 2) = 2 * m + (v : ℝ) := by
+    push_cast
+    ring
+  have hSecondExponent : 2 * m + 2 * (v : ℝ) = (v : ℝ) + (2 * m + (v : ℝ)) := by
+    ring
+  rw [h₂, h₁, ← Real.exp_nat_mul (m + (v : ℝ) / 2) 2, hMeanExponent, hSecondExponent,
+    Real.exp_add]
   ring
 
 /-! ### Exponential moments -/
