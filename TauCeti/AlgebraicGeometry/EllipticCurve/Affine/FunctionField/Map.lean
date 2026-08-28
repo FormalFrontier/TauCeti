@@ -56,8 +56,9 @@ both, and neither reading is built into the statements.
 * `WeierstrassCurve.Affine.FunctionField.map_genericX` and
   `WeierstrassCurve.Affine.FunctionField.map_genericY`: it sends the generic point of `W` to the
   generic point of `W.map f`.
-* `WeierstrassCurve.Affine.FunctionField.map_id_eq` and
-  `WeierstrassCurve.Affine.FunctionField.map_comp_map`: functoriality in `f`.
+* `WeierstrassCurve.Affine.FunctionField.map_id_eq`,
+  `WeierstrassCurve.Affine.FunctionField.map_map`, and its homomorphism-level companion
+  `map_comp_map`: functoriality in `f`.
 * `WeierstrassCurve.Affine.FunctionField.map_map_algebraMap`: the commuting square above, at the
   level of a second curve base-changed to the function field.
 
@@ -142,13 +143,18 @@ theorem map_id_eq : map W (RingHom.id F) = RingHom.id W.FunctionField :=
 
 /-- **`FunctionField.map` is functorial.** As for `CoordinateRing.map_comp_map`, the curve equality
 `(W.map f).map g = W.map (g.comp f)` holds definitionally, so no transport appears. -/
-@[simp]
 theorem map_comp_map (g : K →+* L) :
     (map (W.map f) g).comp (map W f) = map W (g.comp f) :=
   IsFractionRing.ringHom_ext (A := W.CoordinateRing) fun z ↦ by
     rw [RingHom.comp_apply, map_algebraMap_coordinateRing, map_algebraMap_coordinateRing]
     rw [← RingHom.comp_apply (CoordinateRing.map (W.map f) g), CoordinateRing.map_comp_map]
     exact (map_algebraMap_coordinateRing W (g.comp f) z).symm
+
+/-- **Pointwise functoriality of `FunctionField.map`.** -/
+@[simp]
+theorem map_map (g : K →+* L) (z : W.FunctionField) :
+    map (W.map f) g (map W f z) = map W (g.comp f) z :=
+  RingHom.congr_fun (map_comp_map W f g) z
 
 variable (W₂ : WeierstrassCurve.Affine F)
 

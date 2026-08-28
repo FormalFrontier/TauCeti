@@ -68,7 +68,7 @@ public section
 
 namespace TauCeti
 
-open Polynomial WeierstrassCurve.Affine
+open Polynomial _root_.WeierstrassCurve.Affine
 open scoped Polynomial.Bivariate
 
 variable {F : Type*} [Field F]

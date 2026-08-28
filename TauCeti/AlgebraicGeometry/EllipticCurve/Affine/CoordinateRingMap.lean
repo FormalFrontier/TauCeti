@@ -36,8 +36,9 @@ through.
   `WeierstrassCurve.Affine.CoordinateRing.map_root` and
   `WeierstrassCurve.Affine.CoordinateRing.map_algebraMap`: `map W f` fixes the two coordinates and
   is compatible with the scalars — it is a map of `R`-algebras up to `f` itself.
-* `WeierstrassCurve.Affine.CoordinateRing.map_id_eq` and
-  `WeierstrassCurve.Affine.CoordinateRing.map_comp_map`: `map` is a functor in `f`. The curve
+* `WeierstrassCurve.Affine.CoordinateRing.map_id_eq`,
+  `WeierstrassCurve.Affine.CoordinateRing.map_map`, and its homomorphism-level companion
+  `map_comp_map`: `map` is a functor in `f`. The curve
   equalities `W.map (RingHom.id R) = W` and `(W.map f).map g = W.map (g.comp f)` hold
   definitionally, so neither statement carries a transport.
 
@@ -137,18 +138,25 @@ lemma map_XYIdeal (f : R →+* S) (x : R) (y : R[X]) :
   congr 1
   rw [Set.image_insert_eq, Set.image_singleton, map_XClass, map_YClass]
 
+/-- Mathlib's base-change map on a coordinate ring is `AdjoinRoot.map` along the coefficientwise
+map of bivariate polynomials. -/
+theorem map_eq_adjoinRootMap (f : R →+* S) :
+    map W f = AdjoinRoot.map (mapRingHom f) W.polynomial (W.map f).polynomial
+      (dvd_of_eq (_root_.WeierstrassCurve.Affine.map_polynomial W f)) :=
+  rfl
+
 /-- **`CoordinateRing.map` sends the class of `X` to the class of `X`.** -/
 @[simp]
 lemma map_of_X (f : R →+* S) :
     map W f (AdjoinRoot.of W.polynomial X) = AdjoinRoot.of (W.map f).polynomial X := by
-  rw [map, AdjoinRoot.lift_of]
+  rw [map_eq_adjoinRootMap, AdjoinRoot.map_of]
   simp
 
 /-- **`CoordinateRing.map` sends the class of `Y` to the class of `Y`.** -/
 @[simp]
 lemma map_root (f : R →+* S) :
     map W f (AdjoinRoot.root W.polynomial) = AdjoinRoot.root (W.map f).polynomial := by
-  rw [map, AdjoinRoot.lift_root]
+  rw [map_eq_adjoinRootMap, AdjoinRoot.map_root]
 
 /-- **`CoordinateRing.map` commutes with the scalars**: it is a map of `R`-algebras up to the
 base change `f` itself. -/
@@ -172,16 +180,22 @@ lemma map_id_eq : map W (RingHom.id R) = RingHom.id W.CoordinateRing :=
 
 /-- **`CoordinateRing.map` is functorial.** The curve equality `(W.map f).map g = W.map (g.comp f)`
 holds definitionally, so the statement needs no transport. -/
-@[simp]
 lemma map_comp_map {T : Type*} [CommRing T] (f : R →+* S) (g : S →+* T) :
     (map (W.map f) g).comp (map W f) = map W (g.comp f) :=
-  RingHom.ext fun z ↦ by
-    induction z using AdjoinRoot.induction_on with
-    | ih p =>
-      have h : (p.map (mapRingHom f)).map (mapRingHom g) = p.map (mapRingHom (g.comp f)) := by
-        rw [Polynomial.map_map, ← mapRingHom_comp]
-      rw [RingHom.comp_apply, map_mk, map_mk, h]
-      exact (map_mk (W' := W) (g.comp f) p).symm
+  by
+    rw [map_eq_adjoinRootMap, map_eq_adjoinRootMap, map_eq_adjoinRootMap]
+    simpa only [Polynomial.mapRingHom_comp, _root_.WeierstrassCurve.map_map] using
+      AdjoinRoot.map_comp_map (mapRingHom f) (mapRingHom g) W.polynomial
+        (W.map f).polynomial ((W.map f).map g).polynomial
+        (dvd_of_eq (_root_.WeierstrassCurve.Affine.map_polynomial W f))
+        (dvd_of_eq (_root_.WeierstrassCurve.Affine.map_polynomial (W.map f) g))
+
+/-- **Pointwise functoriality of `CoordinateRing.map`.** -/
+@[simp]
+lemma map_map {T : Type*} [CommRing T] (f : R →+* S) (g : S →+* T)
+    (z : W.CoordinateRing) :
+    map (W.map f) g (map W f z) = map W (g.comp f) z :=
+  RingHom.congr_fun (map_comp_map W f g) z
 
 end WeierstrassCurve.Affine.CoordinateRing
 

@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.CoordinateRingMap
 public import Mathlib.Algebra.CharP.Algebra
 public import Mathlib.Algebra.Polynomial.Expand
 
@@ -107,15 +107,6 @@ theorem relativeFrobenius_root :
     relativeFrobenius p W (AdjoinRoot.root (W.map (frobenius R p)).polynomial) =
       AdjoinRoot.root W.polynomial ^ p :=
   AdjoinRoot.lift_root (eval₂_relativeFrobenius_eq_zero p W)
-
-/-- Mathlib's base-change map on a coordinate ring is `AdjoinRoot.map` along the coefficientwise
-map of bivariate polynomials, so `AdjoinRoot.map_of` and `AdjoinRoot.map_root` describe it on the
-two coordinates. -/
-private theorem map_eq_adjoinRootMap {S : Type*} [CommRing S] (f : R →+* S) :
-    _root_.WeierstrassCurve.Affine.CoordinateRing.map W f =
-      AdjoinRoot.map (mapRingHom f) W.polynomial (W.map f).polynomial
-        (dvd_of_eq (_root_.WeierstrassCurve.Affine.map_polynomial W f)) :=
-  rfl
 
 /-- **The absolute Frobenius factors through the twist.** Mathlib's base-change map
 `W.CoordinateRing →+* (W.map (frobenius R p)).CoordinateRing` is semilinear over the coefficient
