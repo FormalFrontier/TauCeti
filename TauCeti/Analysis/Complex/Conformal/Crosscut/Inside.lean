@@ -44,9 +44,10 @@ This is the planar-separation step of the `ConformalMapping` roadmap (L5).
 * `TauCeti.image_subset_filledHull_of_disjoint_inter_sphere` — an image side meeting the inside of
   such a curve lies inside it.
 * `TauCeti.nonempty_image_inter_ball_inter_filledHull_or_image_sdiff_closedBall_inter_filledHull` —
-  one of the two image sides meets the inside of a curve with inside points next to the image
-  domain. This is where the inside assumption `hin : p ∈ closure (filledHull K \ K)` is
-  introduced; the diameter criterion below passes it on unchanged.
+  one of the two image sides meets the inside of a curve when an image-domain point lies in
+  `closure (filledHull K \ K)`. This is where the inside assumption
+  `hin : p ∈ closure (filledHull K \ K)` is introduced; the diameter criterion below passes it on
+  unchanged.
 * `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` — such a curve, if narrower than the far
   side, encloses the *near* side.
 * `TauCeti.image_inter_ball_subset_filledHull_of_frontier_subset` — the enclosure hypothesis is
@@ -265,24 +266,22 @@ theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
 
 /-- **One of the two image pieces lies in the filled hull of a closed bounded set through the image
 crosscut.** The transversal segment meets the set only at the crossing point, and the set minus that
-point is preconnected, so the winding-number two-sidedness theorem applies. -/
+point is preconnected, so the winding-number two-sidedness theorem applies. The preconnectedness
+hypothesis `hKp` is required only at the selected crossing point `z₀`, not at every crosscut
+point. -/
 theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
     (hf : DifferentiableOn ℂ f (ball c r))
     (hinj : InjOn f (ball c r)) {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
     (hγK : f '' (ball c r ∩ sphere ζ ρ) ⊆ K)
     (hKsub : K ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r))
-    (hKp : ∀ p ∈ f '' (ball c r ∩ sphere ζ ρ), IsPreconnected (K \ {p})) :
+    {z₀ : ℂ} (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ)
+    (hKp : IsPreconnected (K \ {f z₀})) :
     f '' (ball c r ∩ ball ζ ρ) ⊆ filledHull K ∨
       f '' (ball c r \ closedBall ζ ρ) ⊆ filledHull K := by
   have hγKcl : closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ K :=
     hK.closure_subset_iff.mpr hγK
   have hr : 0 < r := by linarith
-  -- a point of the crosscut: the point of `sphere ζ ρ` in the direction of the centre
-  have hz₀ : circleMap ζ ρ (c - ζ).arg ∈ ball c r ∩ sphere ζ ρ :=
-    ⟨(circleMap_mem_ball_iff hζ hρ _).mpr (by simpa using hρr),
-      circleMap_mem_sphere ζ hρ.le _⟩
-  set z₀ := circleMap ζ ρ (c - ζ).arg with hz₀_def
   have hΩ : IsOpen (f '' ball c r) := isOpen_image_of_differentiableOn_of_injOn isOpen_ball hf hinj
   set p := f z₀ with hp_def
   set v := deriv f z₀ * (z₀ - ζ) with hv_def
@@ -314,7 +313,7 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
   have key := Contour.mem_filledHull_or_mem_filledHull_of_isPreconnected_sdiff_singleton
     (K := K) (v := v) (z₀ := p) (a := -(η / 2)) (b := η / 2) (s := 0)
     hK hKb hv ⟨by linarith, by linarith⟩
-    (by simpa using hseg) (by simpa using hKp p hpγ)
+    (by simpa using hseg) (by simpa using hKp)
     (by simpa using closure_mono (hγK' _) hleft) (by simpa using closure_mono (hγK' _) hright)
   rcases key with hx | hy
   · left
@@ -344,11 +343,12 @@ theorem image_inter_ball_subset_filledHull_of_diam_lt'
     (hinj : InjOn f (ball c r)) {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
     (hγK : f '' (ball c r ∩ sphere ζ ρ) ⊆ K)
     (hKsub : K ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r))
-    (hKp : ∀ p ∈ f '' (ball c r ∩ sphere ζ ρ), IsPreconnected (K \ {p}))
+    {z₀ : ℂ} (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ)
+    (hKp : IsPreconnected (K \ {f z₀}))
     (hlt : diam K < diam (f '' (ball c r \ closedBall ζ ρ))) :
     f '' (ball c r ∩ ball ζ ρ) ⊆ filledHull K := by
   rcases image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull
-    hζ hρ hρr hf hinj hK hKb hγK hKsub hKp with h | h
+    hζ hρ hρr hf hinj hK hKb hγK hKsub hz₀ hKp with h | h
   · exact h
   · exact absurd (diam_le_diam_of_subset_filledHull hKb h) (not_le.mpr hlt)
 
@@ -375,11 +375,11 @@ theorem image_subset_filledHull_of_disjoint_inter_sphere (hUo : IsOpen U)
     (disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
       hUo hd hinj hVU hV hK) hne
 
-/-- **One of the two image sides meets the inside of a curve with a point of its inside in the image
-domain.** If a point `p` of the image domain is a limit of points of `filledHull K \ K`,
-then such a point
-`q` close enough to `p` lies in the open image domain; being off `K` it is off the image crosscut,
-so it lies on one of the two image sides, and it lies in `filledHull K`.
+/-- **One of the two image sides meets the inside of a curve with an image-domain point adherent to
+its inside.** If a point `p` of the image domain lies in `closure (filledHull K \ K)` — i.e. is a
+limit of points of `filledHull K \ K` — then a point `q` close enough to `p` lies in the open image
+domain; being off `K` it is off the image crosscut, so it lies on one of the two image sides, and it
+lies in `filledHull K`.
 
 This is where the inside assumption is introduced, at one point as a hypothesis; the diameter
 criterion below passes it on unchanged. For a Jordan curve `K` the hypothesis is the
