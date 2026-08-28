@@ -105,16 +105,6 @@ theorem integrableOn_smul_set_iff (g : GL (Fin 2) ℝ) (S : Set ℍ) (F : ℍ �
 
 /-! ### Slashing by an element of positive determinant -/
 
-/-- **The Petersson integrand of a simultaneously slashed pair**, for a slash of positive
-determinant: it is the integrand of the original pair, evaluated at the moved point and scaled
-by `(det α) ^ (k - 2)`. This is `UpperHalfPlane.petersson_slash` with the absolute value and the
-twist `σ` resolved. -/
-theorem petersson_slash_of_det_pos (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det)
-    (f h : ℍ → ℂ) (τ : ℍ) :
-    petersson k (f ∣[k] g) (h ∣[k] g) τ =
-      ((g : Matrix (Fin 2) (Fin 2) ℝ).det : ℂ) ^ (k - 2) * petersson k f h (g • τ) := by
-  simp [petersson_slash, σ_eq_refl_of_det_pos hg, abs_of_pos hg]
-
 /-- **A simultaneous slash rescales the Petersson pairing and translates its domain**:
 `⟪f ∣[k] α, h ∣[k] α⟫_S = (det α) ^ (k - 2) · ⟪f, h⟫_{α • S}`.
 
@@ -125,7 +115,8 @@ theorem peterssonInner_slash_slash_of_det_pos (hg : 0 < (g : Matrix (Fin 2) (Fin
     peterssonInner k S (f ∣[k] g) (h ∣[k] g) =
       ((g : Matrix (Fin 2) (Fin 2) ℝ).det : ℂ) ^ (k - 2) * peterssonInner k (g • S) f h := by
   rw [peterssonInner_smul_set, peterssonInner_def]
-  simp_rw [petersson_slash_of_det_pos hg]
+  simp_rw [petersson_slash]
+  rw [σ_eq_refl_of_det_pos hg, Matrix.GeneralLinearGroup.val_det_apply, abs_of_pos hg]
   exact MeasureTheory.integral_const_mul _ _
 
 /-- **The adjoint of a slash, on the left argument**:
@@ -156,41 +147,21 @@ theorem peterssonInner_slash_right_of_det_pos (hg : 0 < (g : Matrix (Fin 2) (Fin
 /-! ### Slashing by an element of `SL(2, ℤ)` -/
 
 /-- **A simultaneous slash by `SL(2, ℤ)` only translates the domain of the Petersson pairing**:
-the determinant is `1`, so the scalar of `peterssonInner_slash_slash_of_det_pos` disappears.
-Mathlib's `UpperHalfPlane.petersson_slash_SL` already records the determinant-free pointwise
-identity, so the proof is the change of variables alone. -/
+the determinant is `1`, so the scalar of `peterssonInner_slash_slash_of_det_pos` disappears. -/
 theorem peterssonInner_slash_slash_SL (k : ℤ) (γ : SL(2, ℤ)) (S : Set ℍ) (f h : ℍ → ℂ) :
     peterssonInner k S (f ∣[k] γ) (h ∣[k] γ) = peterssonInner k (γ • S) f h := by
-  rw [sl_smul_set, peterssonInner_smul_set, peterssonInner_def]
-  simp_rw [petersson_slash_SL, sl_moeb]
+  have hdet_eq : (((γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det) = 1 := by
+    change ((Matrix.SpecialLinearGroup.mapGL ℝ γ).det : ℝ) = 1
+    exact congrArg Units.val (Matrix.SpecialLinearGroup.det_mapGL γ)
+  have hdet : 0 < (((γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det) :=
+    hdet_eq.symm ▸ one_pos
+  simpa only [ModularForm.SL_slash, hdet_eq, Complex.ofReal_one, one_zpow, one_mul,
+    sl_smul_set] using
+    peterssonInner_slash_slash_of_det_pos (g := (γ : GL (Fin 2) ℝ)) (k := k) hdet S f h
 
 end UpperHalfPlane
 
 /-! ### The Petersson product as an integral over a fundamental domain -/
-
-namespace Subgroup
-
-/-- **The translates of `𝒟ᵒ` indexed by the cosets of `Γ·{±I}` are pairwise disjoint.** By
-`ModularGroup.disjoint_smul_fdo` it suffices that the chosen representatives of two distinct
-cosets differ neither by `1` nor by `−1`; and both `1` and `−1` lie in `Γ·{±I}`, so either
-coincidence would identify the two cosets. -/
-theorem pairwise_disjoint_smul_fdo_out (Γ : Subgroup SL(2, ℤ)) :
-    Pairwise (Function.onFun Disjoint
-      fun q : SL(2, ℤ) ⧸ Γ.withCenter ↦ ((q.out)⁻¹ • fdo)) := by
-  intro q₁ q₂ hq
-  refine disjoint_smul_fdo ?_ ?_ <;> rw [inv_inv] <;> intro h <;> apply hq
-  · rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, mul_inv_eq_one.mp h]
-  · have hneg : q₁.out = -q₂.out := by
-      rw [mul_inv_eq_iff_eq_mul] at h
-      simpa using h
-    rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, hneg]
-    refine QuotientGroup.eq.mpr ?_
-    have hcalc : (-q₂.out)⁻¹ * q₂.out = -1 := by rw [← neg_inv, neg_mul, inv_mul_cancel]
-    rw [hcalc]
-    exact Γ.center_le_withCenter
-      (Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mpr (Or.inr rfl))
-
-end Subgroup
 
 namespace CuspForm
 
