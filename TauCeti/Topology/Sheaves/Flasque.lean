@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Homology.Ext.Basic
-public import TauCeti.CategoryTheory.Sites.FreeYoneda
+public import TauCeti.CategoryTheory.Sites.SheafCohomology.FreeYoneda
 public import TauCeti.CategoryTheory.Sites.SheafCohomology.Terminal
 public import Mathlib.CategoryTheory.Abelian.GrothendieckCategory.HasExt
 public import Mathlib.Topology.Sheaves.Abelian
@@ -34,7 +34,7 @@ The proof is the classical dimension shift. Embedding a flasque sheaf `F` in an 
 `Ext` presents `Hⁿ⁺¹(U, F)` as a quotient of `Hⁿ(U, Q)`. In degree zero, the sections of `Q` over
 `U` lift to sections of `I` because `F` is flasque, so the quotient vanishes; in higher degrees
 `Q` is again flasque, because `I` is, and induction applies. That `I` is flasque is the point at
-which `TauCeti/CategoryTheory/Sites/FreeYoneda.lean` enters: an inclusion of open
+which `TauCeti/CategoryTheory/Sites/SheafCohomology/FreeYoneda.lean` enters: an inclusion of open
 subsets induces a monomorphism of the free abelian sheaves they generate, and `Hom(-, I)` turns it
 into the restriction map of `I`.
 
