@@ -25,7 +25,8 @@ and one of the candidates has maximal Lie dimension.
 To turn a maximal-dimensional candidate into the solvable radical, one must next show that the
 scheme-theoretic multiplication image of two candidates is again a candidate. The connectedness,
 smoothness, and source-solvability results already exist; the remaining input is solvability of
-the image, equivalently the relevant faithfully-flat image theorem.
+the image, for which the current image theorem requires faithful flatness of the canonical Hopf
+image inclusion.
 
 ## Main declarations
 
