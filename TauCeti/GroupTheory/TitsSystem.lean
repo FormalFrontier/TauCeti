@@ -54,44 +54,44 @@ quotient is exposed by `TitsSystem.simple`. -/
 @[ext]
 structure TitsSystem (G : Type u) [Group G] where
   /-- The subgroup conventionally denoted `B`. -/
-  borel : Subgroup G
+  subgroupB : Subgroup G
   /-- The subgroup conventionally denoted `N`. -/
-  normalizer : Subgroup G
+  subgroupN : Subgroup G
   /-- Chosen lifts in `N` of the simple reflections. -/
-  simpleReps : Set normalizer
+  simpleReps : Set subgroupN
   /-- The subgroups `B` and `N` generate the ambient group. -/
-  closure_borel_union_normalizer :
-    Subgroup.closure ((borel : Set G) ∪ normalizer) = ⊤
+  closure_subgroupB_union_subgroupN :
+    Subgroup.closure ((subgroupB : Set G) ∪ subgroupN) = ⊤
   /-- The intersection `B ∩ N`, regarded inside `N`, is normal. -/
-  intersection_normal : (borel.comap normalizer.subtype).Normal
+  intersection_normal : (subgroupB.comap subgroupN.subtype).Normal
   /-- The simple lifts together with `B ∩ N` generate `N`. -/
   closure_intersection_union_simpleReps :
-    Subgroup.closure ((borel.comap normalizer.subtype : Set normalizer) ∪ simpleReps) = ⊤
+    Subgroup.closure ((subgroupB.comap subgroupN.subtype : Set subgroupN) ∪ simpleReps) = ⊤
   /-- Every simple lift squares into `B ∩ N`. -/
-  simpleRep_sq_mem (s : normalizer) (hs : s ∈ simpleReps) :
-    s * s ∈ borel.comap normalizer.subtype
+  simpleRep_sq_mem (s : subgroupN) (hs : s ∈ simpleReps) :
+    s * s ∈ subgroupB.comap subgroupN.subtype
   /-- Multiplying a Bruhat cell on the left by a simple cell produces at most the adjacent cell
   and the original cell. -/
-  mul_doubleCoset_subset (s : normalizer) (hs : s ∈ simpleReps) (w : normalizer) :
-    DoubleCoset.doubleCoset (s : G) borel borel *
-        DoubleCoset.doubleCoset (w : G) borel borel ⊆
-      DoubleCoset.doubleCoset ((s * w : normalizer) : G) borel borel ∪
-        DoubleCoset.doubleCoset (w : G) borel borel
+  mul_doubleCoset_subset (s : subgroupN) (hs : s ∈ simpleReps) (w : subgroupN) :
+    DoubleCoset.doubleCoset (s : G) subgroupB subgroupB *
+        DoubleCoset.doubleCoset (w : G) subgroupB subgroupB ⊆
+      DoubleCoset.doubleCoset ((s * w : subgroupN) : G) subgroupB subgroupB ∪
+        DoubleCoset.doubleCoset (w : G) subgroupB subgroupB
   /-- No simple reflection conjugates `B` into `B`. -/
-  exists_conj_not_mem (s : normalizer) (hs : s ∈ simpleReps) :
-    ∃ b : borel, (s : G) * (b : G) * (s : G)⁻¹ ∉ borel
+  exists_conj_not_mem (s : subgroupN) (hs : s ∈ simpleReps) :
+    ∃ b : subgroupB, (s : G) * (b : G) * (s : G)⁻¹ ∉ subgroupB
 
 namespace TitsSystem
 
 variable {G : Type u} [Group G] (T : TitsSystem G)
 
 /-- The intersection `B ∩ N`, regarded as a subgroup of `N`. -/
-def intersection : Subgroup T.normalizer :=
-  T.borel.comap T.normalizer.subtype
+def intersection : Subgroup T.subgroupN :=
+  T.subgroupB.comap T.subgroupN.subtype
 
 /-- Membership in the intersection means membership in `B` after forgetting the `N` subtype. -/
 @[simp]
-theorem mem_intersection (n : T.normalizer) : n ∈ T.intersection ↔ (n : G) ∈ T.borel :=
+theorem mem_intersection (n : T.subgroupN) : n ∈ T.intersection ↔ (n : G) ∈ T.subgroupB :=
   Iff.rfl
 
 instance intersectionNormal : T.intersection.Normal :=
@@ -99,27 +99,29 @@ instance intersectionNormal : T.intersection.Normal :=
 
 /-- The Weyl group `W = N / (B ∩ N)` of a Tits system. -/
 abbrev WeylGroup :=
-  T.normalizer ⧸ T.intersection
+  T.subgroupN ⧸ T.intersection
 
 /-- The simple reflections in the Weyl group, obtained from the chosen lifts. -/
 def simple : Set T.WeylGroup :=
   QuotientGroup.mk' T.intersection '' T.simpleReps
 
-/-- The simple reflections are the images of the chosen simple representatives. -/
-theorem simple_def : T.simple = QuotientGroup.mk' T.intersection '' T.simpleReps :=
-  (rfl)
+/-- Membership in the simple set means being the image of a chosen simple representative. -/
+@[simp]
+theorem mem_simple (s : T.WeylGroup) :
+    s ∈ T.simple ↔ ∃ r ∈ T.simpleReps, QuotientGroup.mk' T.intersection r = s :=
+  Iff.rfl
 
 /-- Every chosen simple representative maps to a simple reflection. -/
-theorem mk_mem_simple (s : T.normalizer) (hs : s ∈ T.simpleReps) :
+theorem mk_mem_simple (s : T.subgroupN) (hs : s ∈ T.simpleReps) :
     QuotientGroup.mk' T.intersection s ∈ T.simple :=
-  ⟨s, hs, rfl⟩
+  (T.mem_simple _).2 ⟨s, hs, rfl⟩
 
 /-- Every simple reflection has square one. -/
 theorem simple_sq_eq_one {s : T.WeylGroup} (hs : s ∈ T.simple) : s * s = 1 := by
-  obtain ⟨s, hs, rfl⟩ := hs
+  obtain ⟨r, hr, rfl⟩ := (T.mem_simple _).1 hs
   rw [← map_mul]
-  exact (QuotientGroup.eq_one_iff (N := T.intersection) (s * s)).mpr
-    (T.simpleRep_sq_mem s hs)
+  exact (QuotientGroup.eq_one_iff (N := T.intersection) (r * r)).mpr
+    (T.simpleRep_sq_mem r hr)
 
 /-- The simple reflections generate the Weyl group. -/
 theorem closure_simple : Subgroup.closure T.simple = ⊤ := by
@@ -127,12 +129,12 @@ theorem closure_simple : Subgroup.closure T.simple = ⊤ := by
   intro w _
   obtain ⟨n, rfl⟩ := QuotientGroup.mk'_surjective T.intersection w
   have hn : n ∈ Subgroup.closure
-      ((T.borel.comap T.normalizer.subtype : Set T.normalizer) ∪ T.simpleReps) := by
+      ((T.subgroupB.comap T.subgroupN.subtype : Set T.subgroupN) ∪ T.simpleReps) := by
     rw [T.closure_intersection_union_simpleReps]
     exact Subgroup.mem_top n
   have hmap : QuotientGroup.mk' T.intersection n ∈
       (Subgroup.closure
-        ((T.borel.comap T.normalizer.subtype : Set T.normalizer) ∪ T.simpleReps)).map
+        ((T.subgroupB.comap T.subgroupN.subtype : Set T.subgroupN) ∪ T.simpleReps)).map
           (QuotientGroup.mk' T.intersection) :=
     ⟨n, hn, rfl⟩
   rw [MonoidHom.map_closure] at hmap
@@ -148,12 +150,13 @@ theorem closure_simple : Subgroup.closure T.simple = ⊤ := by
 
 /-- A simple reflection is not the identity. -/
 theorem simple_ne_one {s : T.WeylGroup} (hs : s ∈ T.simple) : s ≠ 1 := by
-  obtain ⟨s, hs, rfl⟩ := hs
+  obtain ⟨r, hr, rfl⟩ := (T.mem_simple _).1 hs
   intro heq
-  have hsB : (s : G) ∈ T.borel :=
-    (T.mem_intersection s).mp ((QuotientGroup.eq_one_iff s).mp heq)
-  obtain ⟨b, hb⟩ := T.exists_conj_not_mem s hs
-  exact hb (T.borel.mul_mem (T.borel.mul_mem hsB b.property) (T.borel.inv_mem hsB))
+  have hsB : (r : G) ∈ T.subgroupB :=
+    (T.mem_intersection r).mp ((QuotientGroup.eq_one_iff r).mp heq)
+  obtain ⟨b, hb⟩ := T.exists_conj_not_mem r hr
+  exact hb (T.subgroupB.mul_mem
+    (T.subgroupB.mul_mem hsB b.property) (T.subgroupB.inv_mem hsB))
 
 end TitsSystem
 

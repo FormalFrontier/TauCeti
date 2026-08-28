@@ -8,8 +8,7 @@ module
 public import TauCeti.GroupTheory.TitsSystem
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Bruhat
 
--- Non-public: `perm_fin_two_eq_one_or_swap` classifies the permutation quotient in rank one.
-import TauCeti.LinearAlgebra.TensorSquare
+import TauCeti.Data.Fin.Basic
 
 /-!
 # The rank-one Tits system of `GL₂`
@@ -66,7 +65,7 @@ private theorem gl2_borel_comap_normalizer_eq_diagonal :
     (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype =
       (diagonalTorus k 2).subgroupOf (GL2DiagonalNormalizer k) := by
   ext g
-  change (g : GL (Fin 2) k) ∈ GL2Borel k ↔ (g : GL (Fin 2) k) ∈ diagonalTorus k 2
+  rw [Subgroup.mem_comap, Subgroup.mem_subgroupOf]
   constructor
   · intro hg
     have hmem : (g : GL (Fin 2) k) ∈
@@ -83,11 +82,6 @@ private theorem gl2_mem_borel_iff_normalizerPerm_eq_one (g : GL2DiagonalNormaliz
   constructor
   · exact fun hg ↦ (diagonalNormalizerPerm_eq_one_iff g).mpr (hinter.mp hg)
   · exact fun hg ↦ hinter.mpr ((diagonalNormalizerPerm_eq_one_iff g).mp hg)
-
-private theorem finTwo_swap_ne_one : Equiv.swap (0 : Fin 2) 1 ≠ 1 := by
-  intro h
-  have h0 := congrArg (fun σ : Equiv.Perm (Fin 2) ↦ σ 0) h
-  simp at h0
 
 private theorem gl2_normalizer_closure :
     Subgroup.closure
@@ -112,8 +106,7 @@ private theorem gl2_normalizer_closure :
   · exact hinter_le ((gl2_mem_borel_iff_normalizerPerm_eq_one k g).mpr hg)
   · have hker : g * (gl2WeylNormalizer k)⁻¹ ∈
         (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype := by
-      change ((g * (gl2WeylNormalizer k)⁻¹ : GL2DiagonalNormalizer k) :
-        GL (Fin 2) k) ∈ GL2Borel k
+      rw [Subgroup.mem_comap, Subgroup.subtype_apply]
       apply (gl2_mem_borel_iff_normalizerPerm_eq_one k _).mpr
       rw [map_mul, map_inv, hg, hφweyl, mul_inv_cancel]
     have hfactor : g = (g * (gl2WeylNormalizer k)⁻¹) * gl2WeylNormalizer k := by
@@ -136,25 +129,6 @@ private theorem gl2_borel_normalizer_closure :
   rw [GL2Borel.closure_insert_gl2WeylElement_eq_top] at hle
   exact top_unique hle
 
-omit [Nontrivial kˣ] in
-private theorem gl2_doubleCoset_eq_borel_of_mem
-    {g : GL (Fin 2) k} (hg : g ∈ GL2Borel k) :
-    DoubleCoset.doubleCoset g (GL2Borel k) (GL2Borel k) = (GL2Borel k : Set _) := by
-  calc
-    DoubleCoset.doubleCoset g (GL2Borel k) (GL2Borel k) =
-        DoubleCoset.doubleCoset 1 (GL2Borel k) (GL2Borel k) :=
-      DoubleCoset.doubleCoset_eq_of_mem (by
-        rw [GL2Borel.doubleCoset_one_eq]
-        exact hg)
-    _ = (GL2Borel k : Set _) := GL2Borel.doubleCoset_one_eq
-
-omit [Nontrivial kˣ] in
-private theorem gl2_doubleCoset_eq_weyl_of_notMem
-    {g : GL (Fin 2) k} (hg : g ∉ GL2Borel k) :
-    DoubleCoset.doubleCoset g (GL2Borel k) (GL2Borel k) =
-      DoubleCoset.doubleCoset (GL2WeylElement k) (GL2Borel k) (GL2Borel k) :=
-  DoubleCoset.doubleCoset_eq_of_mem (GL2Borel.mem_doubleCoset_weyl_of_notMem hg)
-
 private theorem gl2_tits_mul_doubleCoset_subset
     (s : GL2DiagonalNormalizer k)
     (hs : s ∈ ({gl2WeylNormalizer k} : Set (GL2DiagonalNormalizer k)))
@@ -176,19 +150,35 @@ private theorem gl2_tits_mul_doubleCoset_subset
         GL (Fin 2) k) ∉ GL2Borel k := by
       rw [gl2_mem_borel_iff_normalizerPerm_eq_one]
       simp [φ, hφweyl, hg]
-    rw [gl2_doubleCoset_eq_weyl_of_notMem k hwg,
-      gl2_doubleCoset_eq_borel_of_mem k hgB, Set.union_comm,
+    have hwgCoset := DoubleCoset.doubleCoset_eq_of_mem
+      (GL2Borel.mem_doubleCoset_weyl_of_notMem hwg)
+    have hgCoset :
+        DoubleCoset.doubleCoset (g : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) =
+          DoubleCoset.doubleCoset (1 : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) :=
+      DoubleCoset.doubleCoset_eq_of_mem (by
+        rw [GL2Borel.doubleCoset_one_eq]
+        exact hgB)
+    rw [hwgCoset, hgCoset, GL2Borel.doubleCoset_one_eq, Set.union_comm,
       GL2Borel.union_doubleCoset_weyl_eq_univ]
     exact Set.mem_univ x
   · have hgB : (g : GL (Fin 2) k) ∉ GL2Borel k := by
       rw [gl2_mem_borel_iff_normalizerPerm_eq_one]
-      exact hg.trans_ne finTwo_swap_ne_one
+      exact hg.trans_ne (Equiv.swap_eq_one_iff.not.mpr Fin.zero_ne_one)
     have hwg : ((gl2WeylNormalizer k * g : GL2DiagonalNormalizer k) :
         GL (Fin 2) k) ∈ GL2Borel k := by
       rw [gl2_mem_borel_iff_normalizerPerm_eq_one]
       simp [φ, hφweyl, hg]
-    rw [gl2_doubleCoset_eq_borel_of_mem k hwg,
-      gl2_doubleCoset_eq_weyl_of_notMem k hgB,
+    have hwgCoset :
+        DoubleCoset.doubleCoset
+            ((gl2WeylNormalizer k * g : GL2DiagonalNormalizer k) : GL (Fin 2) k)
+            (GL2Borel k) (GL2Borel k) =
+          DoubleCoset.doubleCoset (1 : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) :=
+      DoubleCoset.doubleCoset_eq_of_mem (by
+        rw [GL2Borel.doubleCoset_one_eq]
+        exact hwg)
+    have hgCoset := DoubleCoset.doubleCoset_eq_of_mem
+      (GL2Borel.mem_doubleCoset_weyl_of_notMem hgB)
+    rw [hwgCoset, GL2Borel.doubleCoset_one_eq, hgCoset,
       GL2Borel.union_doubleCoset_weyl_eq_univ]
     exact Set.mem_univ x
 
@@ -208,26 +198,26 @@ private theorem gl2_tits_exists_conj_not_mem
 `N` is the diagonal-torus normalizer, and the unique simple reflection is lifted by the Weyl
 permutation matrix. -/
 def gl2TitsSystem : TitsSystem (GL (Fin 2) k) where
-  borel := GL2Borel k
-  normalizer := GL2DiagonalNormalizer k
+  subgroupB := GL2Borel k
+  subgroupN := GL2DiagonalNormalizer k
   simpleReps := {gl2WeylNormalizer k}
-  closure_borel_union_normalizer := gl2_borel_normalizer_closure k
+  closure_subgroupB_union_subgroupN := gl2_borel_normalizer_closure k
   intersection_normal := by
     rw [gl2_borel_comap_normalizer_eq_diagonal]
     exact Subgroup.normal_in_normalizer
   closure_intersection_union_simpleReps := gl2_normalizer_closure k
   simpleRep_sq_mem s hs := by
     rw [Set.mem_singleton_iff.mp hs]
-    change GL2WeylElement k * GL2WeylElement k ∈ GL2Borel k
+    rw [Subgroup.mem_comap, map_mul]
+    simp only [Subgroup.subtype_apply, gl2WeylNormalizer]
     rw [gl2WeylElement_mul_self]
     exact (GL2Borel k).one_mem
   mul_doubleCoset_subset := gl2_tits_mul_doubleCoset_subset k
   exists_conj_not_mem := gl2_tits_exists_conj_not_mem k
 
 /-- The chosen lift of the simple reflection in the standard `GL₂` Tits system. -/
-def gl2TitsSystemSimpleRep : (gl2TitsSystem k).normalizer := by
-  change GL2DiagonalNormalizer k
-  exact gl2WeylNormalizer k
+def gl2TitsSystemSimpleRep : (gl2TitsSystem k).subgroupN :=
+  gl2WeylNormalizer k
 
 /-- The chosen simple lift is the usual Weyl permutation matrix after forgetting the normalizer
 subtype. -/
@@ -238,28 +228,28 @@ theorem coe_gl2TitsSystemSimpleRep :
 
 /-- In the standard `GL₂` Tits system, membership in `B ∩ N` is exactly membership in the
 diagonal torus after forgetting the normalizer subtype. -/
-theorem gl2TitsSystem_mem_intersection (n : (gl2TitsSystem k).normalizer) :
+theorem gl2TitsSystem_mem_intersection (n : (gl2TitsSystem k).subgroupN) :
     n ∈ (gl2TitsSystem k).intersection ↔
       (n : GL (Fin 2) k) ∈ diagonalTorus k 2 := by
   rw [TitsSystem.mem_intersection]
-  rw [show (gl2TitsSystem k).borel = GL2Borel k from rfl]
-  have hn : (n : GL (Fin 2) k) ∈ GL2DiagonalNormalizer k := by
-    have hn' := n.property
-    change (n : GL (Fin 2) k) ∈ GL2DiagonalNormalizer k at hn'
-    exact hn'
+  let n' : GL2DiagonalNormalizer k :=
+    ⟨n, by simpa only [gl2TitsSystem] using n.property⟩
   have hinter := SetLike.ext_iff.mp (gl2_borel_comap_normalizer_eq_diagonal k)
-    ⟨n, hn⟩
-  exact hinter
+    n'
+  rw [Subgroup.mem_comap, Subgroup.mem_subgroupOf, Subgroup.subtype_apply] at hinter
+  simpa only [n', gl2TitsSystem] using hinter
 
 /-- The simple set of the standard `GL₂` Tits system is the singleton represented by the Weyl
 permutation matrix. -/
 theorem gl2TitsSystem_simple :
     (gl2TitsSystem k).simple =
       {QuotientGroup.mk' (gl2TitsSystem k).intersection (gl2TitsSystemSimpleRep k)} := by
-  rw [TitsSystem.simple_def]
   have hreps : (gl2TitsSystem k).simpleReps = {gl2TitsSystemSimpleRep k} := by
     rfl
-  rw [hreps, Set.image_singleton]
+  ext s
+  rw [TitsSystem.mem_simple, hreps]
+  simp only [Set.mem_singleton_iff, exists_eq_left]
+  exact eq_comm
 
 end
 
