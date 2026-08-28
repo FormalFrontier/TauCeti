@@ -155,7 +155,7 @@ variable {X : Fin 2 → Type v} [∀ i, MeasurableSpace (X i)]
 /-- Converting a two-marginal coupling to a `Fin 2` multi-marginal coupling and back is the
 identity. -/
 @[simp]
-theorem Coupling.toMultiCouplingFinTwo_toCouplingFinTwo (π : Coupling (μ 0) (μ 1)) :
+theorem Coupling.toCouplingFinTwo_toMultiCouplingFinTwo (π : Coupling (μ 0) (μ 1)) :
     π.toMultiCouplingFinTwo.toCouplingFinTwo = π := by
   apply Coupling.ext
   calc
@@ -182,7 +182,7 @@ theorem Coupling.toMultiCouplingFinTwo_toCouplingFinTwo (π : Coupling (μ 0) (�
 /-- Converting a `Fin 2` multi-marginal coupling to a two-marginal coupling and back is the
 identity. -/
 @[simp]
-theorem MultiCoupling.toCouplingFinTwo_toMultiCouplingFinTwo (π : MultiCoupling μ) :
+theorem MultiCoupling.toMultiCouplingFinTwo_toCouplingFinTwo (π : MultiCoupling μ) :
     π.toCouplingFinTwo.toMultiCouplingFinTwo = π := by
   apply MultiCoupling.ext
   calc
@@ -212,8 +212,8 @@ theorem MultiCoupling.toCouplingFinTwo_toMultiCouplingFinTwo (π : MultiCoupling
 def couplingEquivMultiCouplingFinTwo : Coupling (μ 0) (μ 1) ≃ MultiCoupling μ where
   toFun := Coupling.toMultiCouplingFinTwo
   invFun := MultiCoupling.toCouplingFinTwo
-  left_inv := Coupling.toMultiCouplingFinTwo_toCouplingFinTwo
-  right_inv := MultiCoupling.toCouplingFinTwo_toMultiCouplingFinTwo
+  left_inv := Coupling.toCouplingFinTwo_toMultiCouplingFinTwo
+  right_inv := MultiCoupling.toMultiCouplingFinTwo_toCouplingFinTwo
 
 /-- Applying the coupling equivalence to a two-marginal coupling gives its corresponding
 `Fin 2`-indexed multi-marginal coupling. -/
