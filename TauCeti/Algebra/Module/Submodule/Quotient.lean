@@ -5,13 +5,15 @@ Authors: Codex
 -/
 module
 
+public import Mathlib.LinearAlgebra.Isomorphisms
 public import Mathlib.LinearAlgebra.Quotient.Basic
 
 /-!
 # Submodule intervals and quotients
 
 This file records the generic order correspondence between a submodule interval and submodules of
-the associated quotient.
+the associated quotient, and the identifications of *subquotients* `↥B ⧸ A` that a linear map
+induces when it is injective or surjective.
 
 ## Main declarations
 
@@ -19,6 +21,10 @@ the associated quotient.
   along the inclusion.
 * `TauCeti.iccOrderIsoQuotientOfMapEq`: the interval/quotient correspondence for a
   specified copy of the lower endpoint inside the upper endpoint.
+* `TauCeti.mapSubquotientEquivOfInjective`: an injective linear map identifies the subquotient of
+  the images of two submodules with the subquotient of the two submodules themselves.
+* `TauCeti.comapSubquotientEquivOfSurjective`: a surjective linear map identifies the subquotient
+  of the preimages of two submodules with the subquotient of the two submodules themselves.
 -/
 
 public section
@@ -98,5 +104,74 @@ theorem mem_iccOrderIsoQuotientOfMapEq_symm_apply_iff {p q : Submodule R M}
       ((iccOrderIsoQuotientOfMapEq r hr).symm Q) x).symm
 
 end QuotientInterval
+
+section Subquotient
+
+variable {R M N : Type*} [Ring R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+
+/-- An injective linear map carries the trace of `A` in `B` onto the trace of `A.map f` in
+`B.map f`, so it descends to the subquotients. -/
+theorem map_equivMapOfInjective_comap_subtype (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (A B : Submodule R M) :
+    Submodule.map ((Submodule.equivMapOfInjective f hf B : ↥B ≃ₗ[R] ↥(B.map f)) :
+        ↥B →ₗ[R] ↥(B.map f)) (Submodule.comap B.subtype A)
+      = Submodule.comap (B.map f).subtype (A.map f) := by
+  ext y
+  simp only [Submodule.mem_map, Submodule.mem_comap, Submodule.coe_subtype]
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨(x : M), hx, (Submodule.coe_equivMapOfInjective_apply f hf B x).symm⟩
+  · rintro ⟨a, ha, hay⟩
+    obtain ⟨b, hb, hby⟩ := y.2
+    have haB : a ∈ B := by rw [hf (hay.trans hby.symm)]; exact hb
+    exact ⟨⟨a, haB⟩, ha, Subtype.ext
+      ((Submodule.coe_equivMapOfInjective_apply f hf B ⟨a, haB⟩).trans hay)⟩
+
+/-- **An injective linear map identifies subquotients.**  For arbitrary submodules `A`, `B` of `M`
+the subquotient cut out by the images `A.map f`, `B.map f` is the subquotient cut out by `A` and
+`B` themselves; for `A ≤ B` this reads `B.map f ⧸ A.map f ≃ₗ[R] B ⧸ A`. -/
+noncomputable def mapSubquotientEquivOfInjective (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (A B : Submodule R M) :
+    (↥(B.map f) ⧸ Submodule.comap (B.map f).subtype (A.map f)) ≃ₗ[R]
+      (↥B ⧸ Submodule.comap B.subtype A) :=
+  (Submodule.Quotient.equiv _ _ (Submodule.equivMapOfInjective f hf B)
+    (map_equivMapOfInjective_comap_subtype f hf A B)).symm
+
+/-- `TauCeti.mapSubquotientEquivOfInjective` read on representatives: its inverse is induced by
+the restriction `Submodule.equivMapOfInjective` of `f` to `B`. -/
+theorem mapSubquotientEquivOfInjective_symm_apply (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (A B : Submodule R M) (x : ↥B) :
+    (mapSubquotientEquivOfInjective f hf A B).symm (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (Submodule.equivMapOfInjective f hf B x) :=
+  (rfl)
+
+/-- The kernel of `x ↦ f x mod A`, on the preimage of `B`, is the trace of the preimage of `A`. -/
+theorem ker_mkQ_comp_submoduleComap (f : M →ₗ[R] N) (A B : Submodule R N) :
+    LinearMap.ker ((Submodule.comap B.subtype A).mkQ ∘ₗ f.submoduleComap B)
+      = Submodule.comap (B.comap f).subtype (A.comap f) := by
+  ext x
+  simp
+
+/-- **A surjective linear map identifies subquotients.**  For arbitrary submodules `A`, `B` of `N`
+the subquotient cut out by the preimages `A.comap f`, `B.comap f` is the subquotient cut out by `A`
+and `B` themselves; for `A ≤ B` this reads `B.comap f ⧸ A.comap f ≃ₗ[R] B ⧸ A`. -/
+noncomputable def comapSubquotientEquivOfSurjective (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (A B : Submodule R N) :
+    (↥(B.comap f) ⧸ Submodule.comap (B.comap f).subtype (A.comap f)) ≃ₗ[R]
+      (↥B ⧸ Submodule.comap B.subtype A) :=
+  (Submodule.quotEquivOfEq _ _ (ker_mkQ_comp_submoduleComap f A B).symm).trans
+    (LinearMap.quotKerEquivOfSurjective _
+      ((Submodule.mkQ_surjective _).comp
+        (LinearMap.submoduleComap_surjective_of_surjective f B hf)))
+
+/-- `TauCeti.comapSubquotientEquivOfSurjective` read on representatives: it is induced by the
+restriction `LinearMap.submoduleComap` of `f` to the preimage of `B`. -/
+theorem comapSubquotientEquivOfSurjective_apply (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (A B : Submodule R N) (x : ↥(B.comap f)) :
+    comapSubquotientEquivOfSurjective f hf A B (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (f.submoduleComap B x) :=
+  (rfl)
+
+end Subquotient
 
 end TauCeti
