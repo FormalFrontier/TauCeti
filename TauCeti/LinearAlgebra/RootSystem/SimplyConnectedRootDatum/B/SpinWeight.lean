@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Data.Fin.SuccPredOrder
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Datum
 public import TauCeti.RepresentationTheory.Spin.Weight
 
@@ -53,35 +54,23 @@ open Set Submodule
 
 /-! ## Integral spin weights -/
 
-/-- The next coordinate used to read a type `B` spin weight, staying at the terminal coordinate
-when there is no successor. -/
-def typeBSpinNext {n : ℕ} (i : Fin n) : Fin n :=
-  ⟨min ((i : ℕ) + 1) (n - 1), by have := i.isLt; omega⟩
+private theorem orderSucc_eq_mk_of_lt {n : ℕ} (i : Fin n) (h : (i : ℕ) + 1 < n) :
+    Order.succ i = (⟨(i : ℕ) + 1, h⟩ : Fin n) := by
+  cases n with
+  | zero => exact Fin.elim0 i
+  | succ n =>
+      have hi : i ≠ Fin.last n := by
+        intro hi
+        subst i
+        simp at h
+      obtain ⟨j, rfl⟩ := Fin.eq_castSucc_of_ne_last hi
+      rw [Fin.orderSucc_castSucc]
+      apply Fin.ext
+      rfl
 
-/-- Away from the terminal coordinate, `typeBSpinNext` increments the index. -/
-@[simp]
-theorem typeBSpinNext_val_of_lt {n : ℕ} (i : Fin n) (h : (i : ℕ) + 1 < n) :
-    (typeBSpinNext i : ℕ) = (i : ℕ) + 1 := by
-  simp only [typeBSpinNext, Fin.val_mk]
-  omega
-
-/-- At the terminal coordinate, `typeBSpinNext` fixes the index. -/
-@[simp]
-theorem typeBSpinNext_eq_self_of_not_lt {n : ℕ} (i : Fin n) (h : ¬(i : ℕ) + 1 < n) :
-    typeBSpinNext i = i := by
-  apply Fin.ext
-  simp only [typeBSpinNext, Fin.val_mk]
-  have := i.isLt
-  omega
-
-private theorem typeBSpinNext_eq_mk {n : ℕ} (i : Fin n) (h : (i : ℕ) + 1 < n) :
-    typeBSpinNext i = (⟨(i : ℕ) + 1, h⟩ : Fin n) := by
-  apply Fin.ext
-  exact typeBSpinNext_val_of_lt i h
-
-private theorem typeBSpinNext_le_iff {n : ℕ} (i j : Fin n) (h : (i : ℕ) + 1 < n) :
-    typeBSpinNext i ≤ j ↔ (i : ℕ) + 1 ≤ (j : ℕ) := by
-  rw [typeBSpinNext_eq_mk i h]
+private theorem orderSucc_le_iff {n : ℕ} (i j : Fin n) (h : (i : ℕ) + 1 < n) :
+    Order.succ i ≤ j ↔ (i : ℕ) + 1 ≤ (j : ℕ) := by
+  rw [orderSucc_eq_mk_of_lt i h]
   exact Fin.mk_le_mk
 
 /-- The weight of a type `Bₙ` spinor basis vector in fundamental-weight coordinates.
@@ -92,7 +81,7 @@ last sign, because the last simple coroot is `2e_{n-1}`. -/
 def typeBSpinWeight {n : ℕ} (s : Finset (Fin n)) (i : Fin n) : ℤ :=
   if (i : ℕ) + 1 < n then
     (if i ∈ s then 1 else 0) -
-      if typeBSpinNext i ∈ s then 1 else 0
+      if Order.succ i ∈ s then 1 else 0
   else 2 * (if i ∈ s then 1 else 0) - 1
 
 /-- The coordinate formula for a type `B` spin weight. -/
@@ -100,7 +89,7 @@ theorem typeBSpinWeight_apply {n : ℕ} (s : Finset (Fin n)) (i : Fin n) :
     typeBSpinWeight s i =
       if (i : ℕ) + 1 < n then
         (if i ∈ s then 1 else 0) -
-          if typeBSpinNext i ∈ s then 1 else 0
+          if Order.succ i ∈ s then 1 else 0
       else 2 * (if i ∈ s then 1 else 0) - 1 :=
   (rfl)
 
@@ -115,7 +104,7 @@ theorem algebraMap_typeBSpinWeight_apply {n : ℕ} (s : Finset (Fin n)) (i : Fin
   classical
   rw [typeBSpinWeight_apply]
   by_cases hnext : (i : ℕ) + 1 < n
-  · rw [ite_eq_left hnext, typeBSpinNext_eq_mk i hnext, dite_eq_left hnext]
+  · rw [ite_eq_left hnext, orderSucc_eq_mk_of_lt i hnext, dite_eq_left hnext]
     by_cases hi : i ∈ s
     · rw [ite_eq_left hi]
       by_cases hsucc : (⟨(i : ℕ) + 1, hnext⟩ : Fin n) ∈ s
@@ -201,7 +190,7 @@ private theorem typeBSpinWeight_cut_add_univ_eq_single {n : ℕ} (i : Fin n)
   · have hjnotlast : ¬(j : ℕ) + 1 = n := by omega
     rw [ite_eq_left hjnext, ite_eq_right hjnotlast]
     simp only [mem_typeBSpinCut_iff]
-    simp only [typeBSpinNext_le_iff j i hjnext]
+    simp only [orderSucc_le_iff j i hjnext]
     split_ifs <;> omega
   · have hjlast : (j : ℕ) + 1 = n := by omega
     rw [ite_eq_right hjnext, ite_eq_left hjlast]
