@@ -477,6 +477,22 @@ theorem kostantTorusMatrix_apply (s : κ → Aˣ) :
     (kostantTorusPoints_toLinearEquiv M b wt s)
   rw [hlinear, basisWeightTorus_apply, toMatrix_basisDiagonal, diagGL_coe]
 
+omit [Module ℚ V] in
+/-- **The matrix torus is natural in the value ring.** Applying a ring homomorphism entrywise to a
+torus point written in a weight basis gives the torus point of the transported parameters. The
+`p ^ k`-power Frobenius is the case
+`TauCeti.UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantTorusMatrix`. -/
+-- Not `@[simp]`: `kostantTorusMatrix_apply` already simplifies the left-hand side to its
+-- diagonal form, so `simpNF` rejects this higher-level equation as not being in normal form.
+theorem map_kostantTorusMatrix {B : Type*} [CommRing B] [Algebra ℤ B] (φ : A →+* B) (s : κ → Aˣ) :
+    Matrix.GeneralLinearGroup.map φ (kostantTorusMatrix M b wt s) =
+      kostantTorusMatrix M b wt fun j => Units.map (φ : A →* B) (s j) := by
+  refine Matrix.GeneralLinearGroup.ext fun r c => ?_
+  simp only [Matrix.GeneralLinearGroup.map_apply, kostantTorusMatrix_apply, diagGL_apply]
+  split_ifs
+  · rw [← map_torusCharacter φ s (wt r), Units.coe_map, MonoidHom.coe_coe]
+  · exact map_zero φ
+
 end Matrix
 
 /-! ## The pinning equation -/
