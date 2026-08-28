@@ -139,7 +139,7 @@ theorem specialLinearDefiningHopfIdeal_le_kostantToralDefiningIdeal :
         (sum_weight_eq_zero r))
 
 /-- Every matrix-valued point of the full-weight type `A_r` carrier has determinant one. -/
-theorem det_eq_one_of_mem_points {A : Type} [CommRing A]
+theorem det_eq_one_of_mem_points {A : Type*} [CommRing A]
     {g : Matrix.GeneralLinearGroup (Fin (r + 1)) A} (hg : g ∈ points r A) :
     Matrix.GeneralLinearGroup.det g = 1 := by
   let p := (GeneralLinear.pointsMulEquiv (R := ℤ) (r + 1)).symm g
