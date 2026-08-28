@@ -124,8 +124,7 @@ private theorem MultipliesBruhatCells.mul {q₁ q₂ : T.WeylGroup}
   obtain ⟨n₁, hn₁⟩ := QuotientGroup.mk'_surjective T.intersection q₁
   obtain ⟨n₂, hn₂⟩ := QuotientGroup.mk'_surjective T.intersection q₂
   have hn₁n₂ : QuotientGroup.mk (n₁ * n₂) = q₁ * q₂ := by
-    change QuotientGroup.mk' T.intersection (n₁ * n₂) = q₁ * q₂
-    rw [map_mul, hn₁, hn₂]
+    rw [← QuotientGroup.mk'_apply T.intersection, map_mul, hn₁, hn₂]
   rw [T.doubleCoset_eq_of_mk_eq (hn.trans hn₁n₂.symm)]
   rintro g ⟨x, hx, y, hy, rfl⟩
   obtain ⟨b₁, hb₁, b₂, hb₂, rfl⟩ := DoubleCoset.mem_doubleCoset.mp hx
@@ -177,13 +176,14 @@ private theorem bruhatCells_inv_mem {x : G} (hx : x ∈ T.bruhatCells) :
       simp [mul_assoc]⟩
 
 /-- The Bruhat cells cover the ambient group. -/
-theorem bruhatCells_eq_univ : T.bruhatCells = Set.univ := by
+@[simp] theorem bruhatCells_eq_univ : T.bruhatCells = Set.univ := by
   let C : Subgroup G :=
     { carrier := T.bruhatCells
       one_mem' := (T.mem_bruhatCells_iff 1).mpr
         ⟨1, DoubleCoset.mem_doubleCoset_self T.subgroupB T.subgroupB 1⟩
       mul_mem' := fun hx hy ↦ T.bruhatCells_mul_mem hx hy
       inv_mem' := fun hx ↦ T.bruhatCells_inv_mem hx }
+  have hcarrier : (C : Set G) = T.bruhatCells := rfl
   have hBN : (T.subgroupB : Set G) ∪ T.subgroupN ⊆ C := by
     rintro g (hg | hg)
     · exact (T.mem_bruhatCells_iff g).mpr
@@ -194,9 +194,8 @@ theorem bruhatCells_eq_univ : T.bruhatCells = Set.univ := by
   have htop : C = ⊤ := by
     rw [← top_le_iff, ← T.closure_subgroupB_union_subgroupN]
     exact (Subgroup.closure_le C).mpr hBN
-  change (C : Set G) = Set.univ
-  rw [htop]
-  rfl
+  exact hcarrier.symm.trans <|
+    (congrArg (fun H : Subgroup G ↦ (H : Set G)) htop).trans Subgroup.coe_top
 
 /-- Every element of the ambient group belongs to a Bruhat cell represented by an element of
 `N`. -/
