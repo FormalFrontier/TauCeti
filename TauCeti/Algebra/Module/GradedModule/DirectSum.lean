@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Module.GradedModule.Internal
+public import TauCeti.Algebra.DirectSum.Internal
 
 /-!
 # Direct sums of internally graded modules

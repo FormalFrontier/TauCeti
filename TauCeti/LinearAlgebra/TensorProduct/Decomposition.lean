@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.TensorProduct.Decomposition
-public import TauCeti.Algebra.DirectSum.Internal
 
 /-!
 # Tensor products of internal decompositions
@@ -105,16 +104,25 @@ theorem tensorProduct (hA : DirectSum.IsInternal A) (hB : DirectSum.IsInternal B
       rw [DirectSum.coe_congrLinearEquiv, DirectSum.lmap_lof]
       rfl
     | add a b ha hb => simp [ha, hb]
-  let F : (⨁ p : ι × κ, A p.1 ⊗[K] B p.2) ≃ₗ[K] M ⊗[K] N :=
-    (DirectSum.congrLinearEquiv (fun p ↦ summandEquiv A B p.1 p.2)).trans E.symm
-  refine TauCeti.DirectSum.isInternal_of_lof
-    (e := fun p ↦ summandEquiv A B p.1 p.2) (E := F) ?_
-  intro p z
-  apply E.injective
-  change E (E.symm ((DirectSum.congrLinearEquiv (fun p ↦ summandEquiv A B p.1 p.2))
-      (DirectSum.lof K (ι × κ) (fun p ↦ A p.1 ⊗[K] B p.2) p z))) = _
-  rw [E.apply_symm_apply]
-  rw [DirectSum.coe_congrLinearEquiv, DirectSum.lmap_lof]
-  exact (hE p.1 p.2 z).symm
+  have hcoe :
+      DirectSum.coeLinearMap
+          (fun p : ι × κ ↦ Submodule.map₂ (TensorProduct.mk K M N) (A p.1) (B p.2)) =
+        E.symm.toLinearMap := by
+    apply DirectSum.linearMap_ext
+    rintro ⟨i, j⟩
+    apply LinearMap.ext
+    intro z
+    obtain ⟨x, rfl⟩ := (summandEquiv A B i j).surjective z
+    simp only [LinearMap.comp_apply]
+    rw [DirectSum.coeLinearMap_lof]
+    apply E.injective
+    simpa using hE i j x
+  -- `DirectSum.IsInternal` is defined using `coeAddMonoidHom`; its underlying function is
+  -- definitionally the same as this linear map, whose inverse is the linear equivalence `E.symm`.
+  change Function.Bijective
+    (DirectSum.coeLinearMap
+      (fun p : ι × κ ↦ Submodule.map₂ (TensorProduct.mk K M N) (A p.1) (B p.2)))
+  rw [hcoe]
+  exact E.symm.bijective
 
 end DirectSum.IsInternal

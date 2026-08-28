@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.DirectSum.Internal
+public import Mathlib.Algebra.DirectSum.Decomposition
 public import Mathlib.Algebra.Ring.NegOnePow
 
 /-!
