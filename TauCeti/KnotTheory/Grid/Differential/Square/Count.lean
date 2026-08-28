@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 public import TauCeti.KnotTheory.Grid.Differential.Square.Coefficient
 public import TauCeti.KnotTheory.Grid.Differential.Square.Decomposition
 public import TauCeti.KnotTheory.Grid.Unblocked
