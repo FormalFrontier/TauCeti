@@ -38,7 +38,10 @@ so no decidability hypothesis is needed on `S`.
 A prime-power ideal is `𝔭 ^ k` for a unique height-one prime `𝔭` and a unique `k ≥ 1`;
 `TauCeti.primePowerBase` and `TauCeti.primePowerExponent` name that pair, and
 `TauCeti.idealPrimePower_eq_of_base_eq_of_exponent_eq` records that it determines the ideal.  The
-exponent is `1` exactly on the primes themselves, which is `TauCeti.primePowerExponent_eq_one_iff`.
+exponent is `1` exactly on the primes themselves, which is `TauCeti.primePowerExponent_eq_one_iff`;
+`TauCeti.IdealPrimePower.ofPrime` is the resulting inclusion of the prime carrier into the
+prime-power carrier, and `TauCeti.primePowerSummatory_eq_primeSummatory` uses it to read a
+prime-power sum concentrated on the exponent-one part as a sum over primes.
 
 For `0 ≤ x`, a real cutoff and its floor select the same indices, so
 `TauCeti.normLE_eq_normLE_natFloor` and `TauCeti.summatory_eq_summatory_natFloor` convert between
@@ -211,6 +214,63 @@ theorem two_le_primePowerExponent {A : IdealPrimePower K} (hA : ¬ Prime (A : Id
   have h₂ : primePowerExponent A ≠ 1 := fun h ↦ hA ((primePowerExponent_eq_one_iff A).mp h)
   omega
 
+/-- A height-one prime, seen as the prime-power ideal of exponent one that it is. -/
+def IdealPrimePower.ofPrime (v : HeightOneSpectrum (𝓞 K)) : IdealPrimePower K :=
+  ⟨⟨v.asIdeal, mem_nonZeroDivisors_of_ne_zero v.ne_bot⟩,
+    v.asIdeal, 1, Ideal.prime_of_isPrime v.ne_bot v.isPrime, one_pos, pow_one _⟩
+
+/-- The ideal underlying `TauCeti.IdealPrimePower.ofPrime v` is the prime ideal of `v`. -/
+@[simp]
+theorem IdealPrimePower.coe_ofPrime (v : HeightOneSpectrum (𝓞 K)) :
+    (IdealPrimePower.ofPrime v : Ideal (𝓞 K)) = v.asIdeal :=
+  (rfl)
+
+/-- The underlying ideal of a height-one prime is prime. -/
+theorem IdealPrimePower.prime_ofPrime (v : HeightOneSpectrum (𝓞 K)) :
+    Prime ((IdealPrimePower.ofPrime v : IdealPrimePower K) : Ideal (𝓞 K)) :=
+  Ideal.prime_of_isPrime v.ne_bot v.isPrime
+
+/-- A height-one prime is its own prime base. -/
+@[simp]
+theorem primePowerBase_ofPrime (v : HeightOneSpectrum (𝓞 K)) :
+    primePowerBase (IdealPrimePower.ofPrime v) = v :=
+  HeightOneSpectrum.ext
+    (primePowerBase_asIdeal_eq (IdealPrimePower.prime_ofPrime v) (pow_one _))
+
+/-- A height-one prime has exponent one as a prime-power ideal. -/
+@[simp]
+theorem primePowerExponent_ofPrime (v : HeightOneSpectrum (𝓞 K)) :
+    primePowerExponent (IdealPrimePower.ofPrime v) = 1 :=
+  primePowerExponent_eq (IdealPrimePower.prime_ofPrime v) (pow_one _)
+
+/-- A prime prime-power ideal is its own prime base, seen as a prime-power ideal. -/
+@[simp]
+theorem IdealPrimePower.ofPrime_primePowerBase {A : IdealPrimePower K}
+    (hA : Prime (A : Ideal (𝓞 K))) : IdealPrimePower.ofPrime (primePowerBase A) = A := by
+  refine Subtype.ext (Subtype.ext ?_)
+  rw [IdealPrimePower.coe_ofPrime, ← primePowerBase_pow_primePowerExponent A,
+    (primePowerExponent_eq_one_iff A).mpr hA, pow_one]
+
+/-- Below a cutoff, the prime-power ideals which are themselves prime are exactly the images
+under `TauCeti.IdealPrimePower.ofPrime` of the height-one primes below that cutoff. -/
+private theorem primePowersLE_filter_prime (x : ℝ)
+    [DecidablePred fun A : IdealPrimePower K ↦ Prime (A : Ideal (𝓞 K))] :
+    (primePowersLE K x).filter (fun A : IdealPrimePower K ↦ Prime (A : Ideal (𝓞 K)))
+      = (primesLE K x).image IdealPrimePower.ofPrime := by
+  ext A
+  simp only [Finset.mem_filter, Finset.mem_image, mem_normLE]
+  refine ⟨fun ⟨hle, hA⟩ ↦ ⟨primePowerBase A, ?_, IdealPrimePower.ofPrime_primePowerBase hA⟩,
+    fun ⟨v, hv, hvA⟩ ↦ ?_⟩
+  · have hbase : ((IdealPrimePower.ofPrime (primePowerBase A) : IdealPrimePower K) :
+        Ideal (𝓞 K)) = (A : Ideal (𝓞 K)) :=
+      congrArg (fun B : IdealPrimePower K ↦ (B : Ideal (𝓞 K)))
+        (IdealPrimePower.ofPrime_primePowerBase hA)
+    rw [IdealPrimePower.coe_ofPrime] at hbase
+    rw [hbase]
+    exact hle
+  · subst hvA
+    exact ⟨hv, IdealPrimePower.prime_ofPrime v⟩
+
 /-- Below the cutoff `1` there is no nonzero integral ideal to count. -/
 theorem idealsLE_eq_empty_of_lt_one {x : ℝ} (hx : x < 1) : idealsLE K x = ∅ :=
   normLE_eq_empty_of_lt _ one_le_absNorm_real_of_nonZeroDivisors hx
@@ -285,6 +345,22 @@ theorem primePowerSummatory_apply {M : Type*} [AddCommMonoid M]
     (w : IdealPrimePower K → M) (x : ℝ) :
     primePowerSummatory K w x = ∑ A ∈ primePowersLE K x, w A :=
   summatory_apply _ w x
+
+/-- A prime-power weight vanishing off the primes themselves has the same summatory function as
+its restriction to the primes.  This is what separates the exponent-one part of a sum over prime
+powers, such as Chebyshev's `ϑ` inside `ψ`. -/
+theorem primePowerSummatory_eq_primeSummatory {M : Type*} [AddCommMonoid M]
+    (w : IdealPrimePower K → M)
+    (hw : ∀ A : IdealPrimePower K, ¬ Prime (A : Ideal (𝓞 K)) → w A = 0) (x : ℝ) :
+    primePowerSummatory K w x =
+      primeSummatory K (fun v ↦ w (IdealPrimePower.ofPrime v)) x := by
+  classical
+  rw [primePowerSummatory_apply, primeSummatory_apply,
+    ← Finset.sum_filter_of_ne (p := fun A : IdealPrimePower K ↦ Prime (A : Ideal (𝓞 K)))
+      fun A _ hne ↦ not_not.mp fun h ↦ hne (hw A h),
+    primePowersLE_filter_prime]
+  exact Finset.sum_image fun v _ w' _ h ↦ HeightOneSpectrum.ext
+    (by simpa using congrArg (fun B : IdealPrimePower K ↦ (B : Ideal (𝓞 K))) h)
 
 /-- Prime-power summation distributes over pointwise addition of weights. -/
 theorem primePowerSummatory_add {M : Type*} [AddCommMonoid M]
