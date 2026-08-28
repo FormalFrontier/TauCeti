@@ -28,7 +28,8 @@ This is `TauCeti.ContCohomology.DiscreteShortExact.explicitCor_delta0`, the degr
 
 The square commutes already on cochains, and that is how it is proved. Choose a preimage `b ∈ B` of
 an invariant `c ∈ C^U`, so that `x ↦ x • b - b` takes its values in the image of `A` and lifts to a
-cochain `a : U → A` representing `δ⁰ c`. Then `incl_cochainsCor1_eq_d0` says
+cochain `a : U → A` representing `δ⁰ c`. Then `TauCeti.ContCohomology.map_cochainsCor1` followed by
+`TauCeti.ContCohomology.cochainsCor1_d0` gives
 
 ```text
 incl ((cor¹_t a) γ) = (cor¹_t (d⁰ b)) γ = γ • (∑ u, t u • b) - (∑ u, t u • b),
@@ -37,8 +38,8 @@ incl ((cor¹_t a) γ) = (cor¹_t (d⁰ b)) γ = γ • (∑ u, t u • b) - (∑
 so the cochain `cor¹_t a` lies under the coboundary of the norm `∑ u, t u • b`, which is a preimage
 of `cor⁰_t c`. Both descriptions of `δ⁰` on representatives then identify the two sides. No
 reindexing is done here: the translation `∑ u, t u • b ↦ γ • ∑ u, t u • b` that the identity needs
-is exactly the content of the already merged `TauCeti.ContCohomology.cochainsCor1_d0`, and the
-representative factor `t u •` is carried throughout.
+is exactly the content of the already merged `cochainsCor1_d0`, and the representative factor
+`t u •` is carried throughout.
 
 As everywhere in this directory the transversal is kept variable first
 (`explicitCorTransversal_delta0`) and the public statement is its specialization at
@@ -50,8 +51,6 @@ two, which the explicit model does not yet have.
 
 ## Main statements
 
-* `TauCeti.ContCohomology.DiscreteShortExact.incl_cochainsCor1_eq_d0`: the commuting square on
-  cochains, before any cocycle or invariance hypothesis.
 * `TauCeti.ContCohomology.DiscreteShortExact.explicitCorTransversal_delta0`: the commuting square
   for a variable transversal.
 * `TauCeti.ContCohomology.DiscreteShortExact.explicitCor_delta0`: the commuting square for the
@@ -70,30 +69,6 @@ namespace TauCeti.ContCohomology
 universe u vA vB vC
 
 namespace DiscreteShortExact
-
-section Cochains
-
-variable {G : Type u} [Group G]
-  {A : Type vA} [AddCommGroup A] [TopologicalSpace A] [DiscreteTopology A] [DistribMulAction G A]
-  {B : Type vB} [AddCommGroup B] [TopologicalSpace B] [DiscreteTopology B] [DistribMulAction G B]
-  {C : Type vC} [AddCommGroup C] [TopologicalSpace C] [DiscreteTopology C] [DistribMulAction G C]
-  (S : DiscreteShortExact G A B C) (U : Subgroup G) [U.FiniteIndex]
-  (t : G ⧸ U → G) (ht : ∀ u : G ⧸ U, (QuotientGroup.mk (t u) : G ⧸ U) = u)
-
-attribute [local instance] Subgroup.fintypeQuotientOfFiniteIndex
-
-/-- **The square commutes on cochains.** A cochain `a : U → A` lying under the coboundary of
-`b : B` corestricts to a cochain lying under the coboundary of the norm `∑ u, t u • b`. Neither
-side needs a topology on `G`, a cocycle hypothesis on `a`, or an invariance hypothesis on the
-image of `b`: those enter only when the two cochains are recognized as representatives of `δ⁰`. -/
-theorem incl_cochainsCor1_eq_d0 {b : B} {a : U → A}
-    (hab : ∀ x : U, S.incl (a x) = x • b - b) (γ : G) :
-    S.incl (cochainsCor1 G A U t ht a γ) = d0 G B (∑ u : G ⧸ U, t u • b) γ := by
-  have hd : (fun x : U => S.incl (a x)) = d0 U B b :=
-    funext fun x => (hab x).trans (d0_apply b x).symm
-  rw [map_cochainsCor1 G A U t ht S.incl S.incl_equivariant a γ, hd, cochainsCor1_d0]
-
-end Cochains
 
 section Delta0
 
@@ -130,10 +105,11 @@ theorem explicitCorTransversal_delta0 (c : H0 U C) :
     rw [coe_explicitCor0Transversal, map_sum]
     exact Finset.sum_congr rfl fun u _ => by rw [S.proj_equivariant, hb]
   -- The corestricted cochain lies under the coboundary of that norm.
+  have hd : (fun x : U => S.incl (a x)) = d0 U B b :=
+    funext fun x => by rw [← S.restrict_incl U, d0_apply]; exact hab x
   have hincl : ∀ γ : G, S.incl (cochainsCor1 G A U t ht a γ) =
-      γ • (∑ u : G ⧸ U, t u • b) - ∑ u : G ⧸ U, t u • b := fun γ =>
-    (S.incl_cochainsCor1_eq_d0 U t ht
-      (fun x => by rw [← S.restrict_incl U]; exact hab x) γ).trans (d0_apply _ γ)
+      γ • (∑ u : G ⧸ U, t u • b) - ∑ u : G ⧸ U, t u • b := fun γ => by
+    rw [map_cochainsCor1 G A U t ht S.incl S.incl_equivariant a γ, hd, cochainsCor1_d0, d0_apply]
   have hleft : explicitCor1Transversal G A U t ht hU ((S.restrict U).explicitDelta0 c) =
       H1pi G A ⟨cochainsCor1 G A U t ht a, hcor⟩ := by
     rw [(S.restrict U).explicitDelta0_apply c hbU ha hab]
