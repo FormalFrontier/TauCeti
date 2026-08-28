@@ -73,6 +73,13 @@ def IsSplitCompletely (P : Place k F) : Prop :=
   FiniteDimensional F F' ∧
     {P' : Place k' F' | P'.restrict k F = P}.ncard = Module.finrank F F'
 
+/-- The characteristic property of a place splitting completely. -/
+theorem isSplitCompletely_iff (P : Place k F) :
+    P.IsSplitCompletely (k' := k') (F' := F') ↔
+      FiniteDimensional F F' ∧
+        {P' : Place k' F' | P'.restrict k F = P}.ncard = Module.finrank F F' :=
+  Iff.rfl
+
 variable [FiniteDimensional F F']
 
 /-- The definition of a place splitting completely, restated for rewriting. -/
@@ -90,6 +97,57 @@ theorem not_isSplitCompletely_iff_ncard_lt (P : Place k F) :
   rw [isSplitCompletely_def]
   have hle := ncard_setOf_restrict_eq_le_finrank (k' := k') (F' := F') k F P
   omega
+
+private theorem IsSplitCompletely.ramificationIdx_eq_one_and_relativeDegree_eq_one
+    {P : Place k F} (hP : P.IsSplitCompletely (k' := k') (F' := F'))
+    {P' : Place k' F'} (hP' : P'.restrict k F = P) :
+    ramificationIdx F P' = 1 ∧ relativeDegree k F P' = 1 := by
+  classical
+  let s := (finite_setOf_restrict_eq (k' := k') (F' := F') k F P).toFinset
+  have hs : ∀ Q : Place k' F', Q ∈ s ↔ Q.restrict k F = P :=
+    fun Q ↦ Set.Finite.mem_toFinset _
+  have hcard : s.card = Module.finrank F F' := by
+    rw [← Set.ncard_eq_toFinset_card _ (finite_setOf_restrict_eq k F P)]
+    exact (isSplitCompletely_def P).mp hP
+  have hone : ∀ Q ∈ s, 1 ≤ ramificationIdx F Q * relativeDegree k F Q := fun Q _ ↦
+    Nat.one_le_iff_ne_zero.mpr <| Nat.mul_ne_zero (ramificationIdx_pos F Q).ne'
+      (Nat.one_le_iff_ne_zero.mp (one_le_relativeDegree k F Q))
+  have hle := sum_ramificationIdx_mul_relativeDegree_le_finrank k F P s
+    fun Q hQ ↦ (hs Q).mp hQ
+  have hEqSum : ∑ _Q ∈ s, (1 : ℕ) =
+      ∑ Q ∈ s, ramificationIdx F Q * relativeDegree k F Q := by
+    apply Nat.le_antisymm
+    · simpa only [Finset.sum_const, smul_eq_mul, mul_one] using
+        Finset.card_nsmul_le_sum s
+          (fun Q ↦ ramificationIdx F Q * relativeDegree k F Q) 1 hone
+    · simpa only [Finset.sum_const, smul_eq_mul, mul_one, hcard] using hle
+  have hterm := (Finset.sum_eq_sum_iff_of_le hone).mp hEqSum P' ((hs P').mpr hP')
+  exact ⟨Nat.eq_one_of_mul_eq_one_right hterm.symm,
+    Nat.eq_one_of_mul_eq_one_left hterm.symm⟩
+
+/-- A place above a completely split place has ramification index one. -/
+theorem IsSplitCompletely.ramificationIdx_eq_one {P : Place k F}
+    (hP : P.IsSplitCompletely (k' := k') (F' := F')) {P' : Place k' F'}
+    (hP' : P'.restrict k F = P) :
+    ramificationIdx F P' = 1 :=
+  (hP.ramificationIdx_eq_one_and_relativeDegree_eq_one hP').1
+
+/-- A place above a completely split place has relative residue degree one. -/
+theorem IsSplitCompletely.relativeDegree_eq_one {P : Place k F}
+    (hP : P.IsSplitCompletely (k' := k') (F' := F')) {P' : Place k' F'}
+    (hP' : P'.restrict k F = P) :
+    relativeDegree k F P' = 1 :=
+  (hP.ramificationIdx_eq_one_and_relativeDegree_eq_one hP').2
+
+/-- At a place above a completely split place, the map between residue fields is bijective. -/
+theorem IsSplitCompletely.bijective_algebraMap_residueField (P' : Place k' F')
+    (hP : (P'.restrict k F).IsSplitCompletely (k' := k') (F' := F')) :
+    Function.Bijective
+      (algebraMap (P'.restrict k F).ResidueField P'.ResidueField) := by
+  have hfinrank : Module.finrank (P'.restrict k F).ResidueField P'.ResidueField = 1 := by
+    rw [← relativeDegree_def k F P']
+    exact hP.relativeDegree_eq_one rfl
+  exact Algebra.finrank_eq_one_iff_bijective_algebraMap.mp hfinrank
 
 section FundamentalIdentity
 
@@ -112,18 +170,7 @@ theorem isSplitCompletely_iff_forall_ramificationIdx_eq_one_and_relativeDegree_e
   have hsum := sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable k F P hs
   constructor
   · intro hsplit P' hP'
-    have hcard : s.card = Module.finrank F F' := by
-      rw [← Set.ncard_eq_toFinset_card _ (finite_setOf_restrict_eq k F P)]
-      exact (isSplitCompletely_def P).mp hsplit
-    have hone : ∀ Q ∈ s, 1 ≤ ramificationIdx F Q * relativeDegree k F Q := fun Q _ ↦
-      Nat.one_le_iff_ne_zero.mpr <| Nat.mul_ne_zero (ramificationIdx_pos F Q).ne'
-        (Nat.one_le_iff_ne_zero.mp (one_le_relativeDegree k F Q))
-    have hEqSum : ∑ _Q ∈ s, (1 : ℕ) =
-        ∑ Q ∈ s, ramificationIdx F Q * relativeDegree k F Q := by
-      rw [Finset.sum_const, smul_eq_mul, mul_one, hcard, hsum]
-    have hterm := (Finset.sum_eq_sum_iff_of_le hone).mp hEqSum P' ((hs P').mpr hP')
-    exact ⟨Nat.eq_one_of_mul_eq_one_right hterm.symm,
-      Nat.eq_one_of_mul_eq_one_left hterm.symm⟩
+    exact hsplit.ramificationIdx_eq_one_and_relativeDegree_eq_one hP'
   · intro htrivial
     rw [isSplitCompletely_def, Set.ncard_eq_toFinset_card _
       (finite_setOf_restrict_eq k F P)]
@@ -134,32 +181,6 @@ theorem isSplitCompletely_iff_forall_ramificationIdx_eq_one_and_relativeDegree_e
           obtain ⟨he, hf⟩ := htrivial P' ((hs P').mp hP')
           rw [he, hf]
       _ = Module.finrank F F' := hsum
-
-/-- A place above a completely split place has ramification index one. -/
-theorem IsSplitCompletely.ramificationIdx_eq_one {P : Place k F}
-    (hP : P.IsSplitCompletely (k' := k') (F' := F')) {P' : Place k' F'}
-    (hP' : P'.restrict k F = P) :
-    ramificationIdx F P' = 1 :=
-  ((isSplitCompletely_iff_forall_ramificationIdx_eq_one_and_relativeDegree_eq_one P).mp hP
-    P' hP').1
-
-/-- A place above a completely split place has relative residue degree one. -/
-theorem IsSplitCompletely.relativeDegree_eq_one {P : Place k F}
-    (hP : P.IsSplitCompletely (k' := k') (F' := F')) {P' : Place k' F'}
-    (hP' : P'.restrict k F = P) :
-    relativeDegree k F P' = 1 :=
-  ((isSplitCompletely_iff_forall_ramificationIdx_eq_one_and_relativeDegree_eq_one P).mp hP
-    P' hP').2
-
-/-- At a place above a completely split place, the map between residue fields is bijective. -/
-theorem IsSplitCompletely.bijective_algebraMap_residueField (P' : Place k' F')
-    (hP : (P'.restrict k F).IsSplitCompletely (k' := k') (F' := F')) :
-    Function.Bijective
-      (algebraMap (P'.restrict k F).ResidueField P'.ResidueField) := by
-  have hfinrank : Module.finrank (P'.restrict k F).ResidueField P'.ResidueField = 1 := by
-    rw [← relativeDegree_def k F P']
-    exact hP.relativeDegree_eq_one rfl
-  exact Algebra.finrank_eq_one_iff_bijective_algebraMap.mp hfinrank
 
 end FundamentalIdentity
 
@@ -185,14 +206,17 @@ splitting. -/
 theorem isSplitCompletely_iff_stabilizer_eq_bot (P' : Place k F') :
     (P'.restrict k F).IsSplitCompletely (k' := k) (F' := F') ↔
       MulAction.stabilizer (F' ≃ₐ[F] F') P' = ⊥ := by
+  let _ := Fintype.ofFinite (F' ≃ₐ[F] F')
+  let _ := (Finite.finite_mulAction_orbit (M := F' ≃ₐ[F] F') P').fintype
+  let _ := Fintype.ofFinite (MulAction.stabilizer (F' ≃ₐ[F] F') P')
   have horbit : MulAction.orbit (F' ≃ₐ[F] F') P' =
       {Q : Place k F' | Q.restrict k F = P'.restrict k F} :=
     (setOf_restrict_eq_eq_orbit P').symm
   have hkey : {Q : Place k F' | Q.restrict k F = P'.restrict k F}.ncard *
       Nat.card (MulAction.stabilizer (F' ≃ₐ[F] F') P') = Module.finrank F F' := by
-    rw [← Nat.card_coe_set_eq, ← horbit, ← Nat.card_prod,
-      Nat.card_congr (MulAction.orbitProdStabilizerEquivGroup (F' ≃ₐ[F] F') P'),
-      IsGalois.card_aut_eq_finrank]
+    rw [← Nat.card_coe_set_eq, ← horbit, Nat.card_eq_fintype_card,
+      Nat.card_eq_fintype_card, MulAction.card_orbit_mul_card_stabilizer_eq_card_group,
+      ← Nat.card_eq_fintype_card, IsGalois.card_aut_eq_finrank]
   have hpos : 0 < Module.finrank F F' := Module.finrank_pos
   constructor
   · intro hsplit
