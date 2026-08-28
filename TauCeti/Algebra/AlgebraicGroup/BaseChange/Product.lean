@@ -59,7 +59,7 @@ private theorem baseChangeTensorAlgEquiv_counit_comp :
       simpa only [TensorProduct.tmul_add, map_add] using congrArg₂ (· + ·) hx hy
   | tmul h l => simp [smul_smul, mul_comm]
 
-private theorem baseChangeTensorAlgEquiv_comul_aux
+private theorem _root_.TensorProduct.baseChangeTensorAlgEquiv_comul_aux
     (s : K) (x : H ⊗[k] H) (y : L ⊗[k] L) :
     (Algebra.TensorProduct.map
         (Algebra.TensorProduct.baseChangeTensorAlgEquiv k K H L).toAlgHom
@@ -112,7 +112,7 @@ private theorem baseChangeTensorAlgEquiv_map_comp_comul :
       rw [he]
       simpa only [Bialgebra.comulAlgHom_apply, TensorProduct.comul_tmul,
         CommSemiring.comul_apply] using
-        baseChangeTensorAlgEquiv_comul_aux k K H L s
+        _root_.TensorProduct.baseChangeTensorAlgEquiv_comul_aux k K H L s
           (Coalgebra.comul (R := k) h) (Coalgebra.comul (R := k) l)
 
 /-- **Base change commutes with tensor products of commutative bialgebras.**
