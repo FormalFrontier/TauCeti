@@ -18,7 +18,7 @@ The correspondence is obtained from `ProfiniteGrp.ProfiniteCompletion.homEquiv`;
 result uses its canonical map's dense range and Mathlib's residual-finiteness criterion.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -26,7 +26,7 @@ open CategoryTheory
 
 namespace ProfiniteCompletion
 
-universe u
+universe u v
 
 variable (G : Type u) [Group G]
 variable (P : Type u) [Group P] [TopologicalSpace P] [IsTopologicalGroup P]
@@ -47,7 +47,7 @@ theorem continuousMonoidHomEquiv_apply
     (f : ProfiniteGrp.ProfiniteCompletion.completion (GrpCat.of G) →ₜ* P) (g : G) :
     continuousMonoidHomEquiv G P f g =
       f (ProfiniteGrp.ProfiniteCompletion.etaFn (GrpCat.of G) g) :=
-  rfl
+  (rfl)
 
 /-- The continuous lift of an abstract homomorphism agrees with it on the original group. -/
 @[simp]
@@ -56,17 +56,18 @@ theorem continuousMonoidHomEquiv_symm_apply_etaFn (f : G →* P) (g : G) :
       (ProfiniteGrp.ProfiniteCompletion.etaFn (GrpCat.of G) g) = f g := by
   exact DFunLike.congr_fun ((continuousMonoidHomEquiv G P).apply_symm_apply f) g
 
-/-- Two continuous homomorphisms from a profinite completion agree if they agree on the
-canonical dense image of the original group. -/
+/-- Two continuous homomorphisms from a profinite completion to a Hausdorff topological group
+agree if they agree on the canonical dense image of the original group. -/
 @[ext]
 theorem continuousMonoidHom_ext
-    {f g : ProfiniteGrp.ProfiniteCompletion.completion (GrpCat.of G) →ₜ* P}
+    {Q : Type v} [Group Q] [TopologicalSpace Q] [T2Space Q]
+    {f g : ProfiniteGrp.ProfiniteCompletion.completion (GrpCat.of G) →ₜ* Q}
     (h : ∀ x : G,
       f (ProfiniteGrp.ProfiniteCompletion.etaFn (GrpCat.of G) x) =
         g (ProfiniteGrp.ProfiniteCompletion.etaFn (GrpCat.of G) x)) : f = g := by
-  apply (continuousMonoidHomEquiv G P).injective
-  ext x
-  simpa using h x
+  apply DFunLike.coe_injective
+  exact (ProfiniteGrp.ProfiniteCompletion.denseRange (G := GrpCat.of G)).equalizer
+    f.continuous_toFun g.continuous_toFun (funext h)
 
 /-- The canonical map from a finite group to its profinite completion is bijective. -/
 theorem etaFn_bijective_of_finite [Finite G] :

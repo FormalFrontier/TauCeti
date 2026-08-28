@@ -18,7 +18,7 @@ import Mathlib.Topology.Homeomorph.Lemmas
 # Continuous sections of profinite quotients
 
 Let `G` be a profinite group — compact, totally disconnected, and topological, in the unbundled
-classes — and let `H` be a *closed* subgroup. This file proves that the quotient map
+classes — and let `H` be a *closed* subgroup. This module proves that the quotient map
 `G → G ⧸ H` admits a continuous section normalized at the identity coset, and deduces the same
 for the projection `G ⧸ K → G ⧸ H` attached to a pair of subgroups `K ≤ H`.
 
