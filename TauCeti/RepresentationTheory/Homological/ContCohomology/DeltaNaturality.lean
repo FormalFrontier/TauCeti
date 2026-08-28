@@ -27,22 +27,25 @@ H⁰(H, C') -δ⁰-> H¹(H, A')          H¹(H, C') -δ¹-> H²(H, A')
 
 Taking `φ` to be the inclusion of a subgroup and the three coefficient maps to be the identity
 gives naturality of `δ` under restriction, and taking `φ` to be the identity of `G` gives its
-naturality in a morphism of short exact sequences. Inflation is the remaining named instance and
-is again the same square, at the quotient homomorphism `G → G ⧸ N`; it is not stated separately
-because the invariants of a short exact sequence need not be exact, so the sequence over `G ⧸ N`
-is data a caller supplies rather than something constructible here.
+naturality in a morphism of short exact sequences. Inflation is the same square at the quotient
+homomorphism `G → G ⧸ N`, but this file exports no inflation theorem: the invariants of a short
+exact sequence need not be exact, so the sequence over `G ⧸ N` is data a caller supplies rather
+than something constructible here, and inflation is left as a direct specialization of the two
+general squares.
 
 There is no compatible-pair map in degree zero to state the left-hand leg against: the
 degree-zero carrier `H⁰(G, C) = C^G` has the two named maps `explicitRes0` and `explicitCoeff0`
-and no general one. The two theorems below therefore take the image `c'` of the invariant `c` as
-an argument, together with the hypothesis `(c' : C') = fC c` identifying it; each named instance
-discharges that hypothesis by the `coe_` lemma of its own degree-zero map.
+and no general one. Only `explicitDelta0_naturality` is affected: it takes the image `c'` of the
+invariant `c` as an argument, together with the hypothesis `(c' : C') = fC c` identifying it, and
+so does not assume `fC` equivariant at all; each named degree-zero instance discharges that
+hypothesis by the `coe_` lemma of its own degree-zero map. In degree one both legs are
+compatible-pair maps, so `explicitDelta1_naturality` takes only the class `x : H¹(G, C)`.
 
 Continuity of a coefficient map is never a hypothesis here: every module in sight is discrete.
 
 Mathlib's discrete `groupCohomology.δ_naturality` is the corresponding statement for `Rep k G`; it
-keeps the group fixed and varies only the short complex, so it covers the `explicitDelta_coeffMap`
-half and not the change of group.
+keeps the group fixed and varies only the short complex, so it covers the `explicitDelta0_coeffMap`
+and `explicitDelta1_coeffMap` half and not the change of group.
 
 ## Main statements
 
@@ -148,18 +151,20 @@ variable {G : Type uG} [Monoid G] [TopologicalSpace G]
   (φ : H →ₜ* G) (fA : A →+ A') (fB : B →+ B') (fC : C →+ C')
 
 /-- **`δ⁰` is natural in compatible pairs.** For a continuous homomorphism `φ : H →ₜ* G` and
-coefficient maps equivariant along it and commuting with the two maps of the sequences, the square
+coefficient maps `fA` and `fB` equivariant along it and commuting with the two maps of the
+sequences, the square
 
 ```text
 H⁰(G, C) --δ⁰--> H¹(G, A)
    |                 |
-   fC                fA
+ c ↦ c'              fA
    v                 v
 H⁰(H, C') -δ⁰-> H¹(H, A')
 ```
 
-commutes. Degree zero carries no general compatible-pair map, so the left-hand leg is presented by
-an invariant `c'` of `C'` lying over `c`. -/
+commutes. Degree zero carries no general compatible-pair map, so the left-hand leg is not `fC` but
+an invariant `c'` of `C'` supplied together with the relation `(c' : C') = fC c`. Only `fA` and
+`fB` are assumed equivariant; `fC` enters through that relation alone. -/
 theorem explicitDelta0_naturality
     (hfA : ∀ (h : H) (a : A), fA (φ h • a) = h • fA a)
     (hfB : ∀ (h : H) (b : B), fB (φ h • b) = h • fB b)
@@ -239,6 +244,7 @@ variable {G : Type uG} [Group G] [TopologicalSpace G]
 /-- **Restriction commutes with `δ⁰`.** The compatible pair is the inclusion of `T` together with
 the identity on the coefficients, and the sequence over `T` is
 `TauCeti.ContCohomology.DiscreteShortExact.restrict`. -/
+@[simp]
 theorem explicitDelta0_res (c : H0 G C) :
     explicitRes1 G A T (S.explicitDelta0 c) =
       (S.restrict T).explicitDelta0 (explicitRes0 G C T c) := by
@@ -250,6 +256,7 @@ theorem explicitDelta0_res (c : H0 G C) :
 
 /-- **Restriction commutes with `δ¹`**, the degree-one counterpart of
 `TauCeti.ContCohomology.DiscreteShortExact.explicitDelta0_res`. -/
+@[simp]
 theorem explicitDelta1_res [ContinuousMul G] [ContinuousMul T] [ContinuousSMul G C]
     (x : H1 G C) :
     explicitRes2 G A T (S.explicitDelta1 x) =
