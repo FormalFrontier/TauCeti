@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.FieldTheory.FunctionField.Differential.Dimension
+public import TauCeti.FieldTheory.FunctionField.Differential.Weil
+import TauCeti.FieldTheory.FunctionField.Differential.Dimension
 
 /-!
 # Local components of a Weil differential
@@ -66,8 +67,8 @@ filtration, which are all they depend on.
   `TauCeti.bddAbove_setOf_forall_repartitionDualComponent_eq_zero` the bound a nonvanishing local
   component puts on the pole orders it kills.
 * `TauCeti.eq_of_repartitionDualComponent_eq` and
-  `TauCeti.injOn_repartitionDualComponent`: **one local component determines a Weil
-  differential**.
+  `TauCeti.repartitionDualComponent_injOn_weilDifferentialSpace`: **one local component determines
+  a Weil differential**.
 
 ## References
 
@@ -250,7 +251,7 @@ theorem repartitionDualComponent_ne_zero (hF : IsFunctionField k F)
     repartitionDualComponent ω P ≠ 0 := by
   intro hP
   obtain ⟨D, hD⟩ := mem_weilDifferentialSpace_iff.mp hω
-  obtain ⟨c, hc⟩ := exists_forall_weilDifferentialFiltration_eq_bot hF hex
+  obtain ⟨c, hc⟩ := exists_forall_indexOfSpecialty_eq_zero hF hex
   obtain ⟨n, hn⟩ := Divisor.exists_le_degree_add_nsmul_ofPoint hF D P c
   have hmem : ω ∈ weilDifferentialFiltration (D + n • WeilDivisor.ofPoint P) := by
     rw [mem_weilDifferentialFiltration_iff_repartitionDualComponent_eq_zero hω]
@@ -258,7 +259,9 @@ theorem repartitionDualComponent_ne_zero (hF : IsFunctionField k F)
     rcases eq_or_ne Q P with rfl | hQ
     · simp [hP]
     · exact repartitionDualComponent_apply_eq_zero_of_le hD Q (by simpa [hQ] using hx)
-  exact hω0 (by simpa [hc _ hn] using hmem)
+  exact hω0 (by
+    simpa [(weilDifferentialFiltration_eq_bot_iff_indexOfSpecialty_eq_zero hF hex _).mpr
+      (hc _ hn)] using hmem)
 
 /-- **The pole orders a nonvanishing local component kills are bounded**: if `ω_P ≠ 0` then the
 integers `r` such that `ω_P` vanishes on every function whose pole at `P` is bounded by `r` are
@@ -297,7 +300,7 @@ theorem eq_of_repartitionDualComponent_eq (hF : IsFunctionField k F)
   simpa using sub_eq_zero.mpr (DFunLike.congr_fun h x)
 
 /-- Taking the local component at a fixed place is injective on Weil differentials. -/
-theorem injOn_repartitionDualComponent (hF : IsFunctionField k F)
+theorem repartitionDualComponent_injOn_weilDifferentialSpace (hF : IsFunctionField k F)
     (hex : IsIntegrallyClosedIn k F) (P : Place k F) :
     Set.InjOn (repartitionDualComponent · P) (weilDifferentialSpace k F) :=
   fun _ hω _ hω' h ↦ eq_of_repartitionDualComponent_eq hF hex hω hω' h
