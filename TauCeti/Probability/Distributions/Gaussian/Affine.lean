@@ -42,6 +42,7 @@ variable {ι κ : Type*} [Fintype ι] [Fintype κ] [DecidableEq ι] [DecidableEq
 
 /-- The image of a multivariate Gaussian under a rectangular affine map is the multivariate
 Gaussian with the corresponding transformed mean and covariance. -/
+@[simp]
 theorem map_affine_multivariateGaussian (m : EuclideanSpace ℝ ι) {S : Matrix ι ι ℝ}
     (hS : S.PosSemidef) (L : Matrix κ ι ℝ) (c : EuclideanSpace ℝ κ) :
     (multivariateGaussian m S).map (fun x => L.toEuclideanLin x + c) =
@@ -53,7 +54,9 @@ theorem map_affine_multivariateGaussian (m : EuclideanSpace ℝ ι) {S : Matrix 
       (multivariateGaussian m S).map (fun x => L.toEuclideanLin x + c) =
         ((multivariateGaussian m S).map T).map (fun y => y + c) := by
     rw [Measure.map_map]
-    · rfl
+    · refine congrArg (fun f => (multivariateGaussian m S).map f) ?_
+      funext x
+      simp only [T, Function.comp_apply, LinearMap.coe_toContinuousLinearMap']
     · fun_prop
     · fun_prop
   rw [h_map]
@@ -71,12 +74,15 @@ theorem map_affine_multivariateGaussian (m : EuclideanSpace ℝ ι) {S : Matrix 
           rw [T.integral_id_map IsGaussian.integrable_id, integral_id_multivariateGaussian,
             integral_const]
           simp
-        _ = L.toEuclideanLin m + c := rfl
+        _ = L.toEuclideanLin m + c := by
+          simp only [T, LinearMap.coe_toContinuousLinearMap']
     · fun_prop
     · fun_prop
-  · rw [show (fun y : EuclideanSpace ℝ κ => y + c) = (fun y => c + y) by
+  · -- The covariance API states translation with the constant on the left.
+    have h_translate : (fun y : EuclideanSpace ℝ κ => y + c) = fun y => c + y := by
       funext y
-      exact add_comm y c]
+      exact add_comm y c
+    rw [h_translate]
     rw [covarianceBilin_map_const_add]
     ext x y
     -- Over `ℝ`, conjugate transpose is ordinary transpose; this also proves positivity of the
@@ -96,7 +102,9 @@ theorem map_affine_multivariateGaussian (m : EuclideanSpace ℝ ι) {S : Matrix 
       covarianceBilin_multivariateGaussian hLS, hTadj]
     simp only [LinearMap.coe_toContinuousLinearMap']
     have h_apply (z : EuclideanSpace ℝ κ) :
-        (L.transpose.toEuclideanLin z).ofLp = Matrix.mulVec L.transpose z.ofLp := rfl
+        (L.transpose.toEuclideanLin z).ofLp = Matrix.mulVec L.transpose z.ofLp := by
+      simpa only [Matrix.toLin'_apply] using
+        Matrix.ofLp_toLpLin (p := 2) (q := 2) L.transpose z
     rw [h_apply, h_apply, ← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec]
     nth_rw 2 [Matrix.dotProduct_mulVec]
     rw [← Matrix.mulVec_transpose]
