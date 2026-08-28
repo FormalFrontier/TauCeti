@@ -225,41 +225,6 @@ end Sampling
 
 section FiniteExchangeability
 
-/-- **Quantitative finite de Finetti bound, exchangeable law to empirical mixture.** If the first
-`n` coordinates of a process are exchangeable and `m ≤ n`, then every measurable event under the
-`m`-prefix law has mass at most its mass under the mixture of `m`-fold products of the empirical
-distribution of the first `n` coordinates, plus `choose m 2 / n`. -/
-theorem ExchangeableAt.prefixLaw_le_sampleWithReplacement_add
-    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} {m n : ℕ} [NeZero n] (h : ExchangeableAt μ X n) (hmn : m ≤ n)
-    (hX : ∀ i : Fin n, AEMeasurable (X i.val) μ) {A : Set (Fin m → α)}
-    (hA : MeasurableSet A) :
-    prefixLaw μ X m A ≤ sampleWithReplacement (ι := Fin m) (prefixLaw μ X n) A +
-      m.choose 2 / n := by
-  let _ : IsProbabilityMeasure (prefixLaw μ X n) := by
-    rw [prefixLaw_def, blockLaw_def]
-    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
-  rw [← h.sampleWithoutReplacement_eq_prefixLaw hmn hX]
-  simpa using sampleWithoutReplacement_le_sampleWithReplacement_add
-    (ρ := prefixLaw μ X n) hA
-
-/-- **Quantitative finite de Finetti bound, empirical mixture to exchangeable law.** Under the
-same hypotheses, every measurable event under the empirical-product mixture has mass at most its
-mass under the `m`-prefix law plus `choose m 2 / n`. -/
-theorem ExchangeableAt.sampleWithReplacement_le_prefixLaw_add
-    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
-    {X : ℕ → Ω → α} {m n : ℕ} [NeZero n] (h : ExchangeableAt μ X n) (hmn : m ≤ n)
-    (hX : ∀ i : Fin n, AEMeasurable (X i.val) μ) {A : Set (Fin m → α)}
-    (hA : MeasurableSet A) :
-    sampleWithReplacement (ι := Fin m) (prefixLaw μ X n) A ≤ prefixLaw μ X m A +
-      m.choose 2 / n := by
-  let _ : IsProbabilityMeasure (prefixLaw μ X n) := by
-    rw [prefixLaw_def, blockLaw_def]
-    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
-  rw [← h.sampleWithoutReplacement_eq_prefixLaw hmn hX]
-  simpa using sampleWithReplacement_le_sampleWithoutReplacement_add
-    (ρ := prefixLaw μ X n) hA
-
 /-- **Finite de Finetti theorem.** If the first `n` coordinates of a process are exchangeable and
 `m ≤ n`, then its `m`-prefix law and the empirical-product mixture of its `n`-prefix law differ by
 at most `choose m 2 / n` on every measurable event, in both directions. -/
@@ -271,9 +236,41 @@ theorem ExchangeableAt.finiteDeFinetti
     prefixLaw μ X m A ≤ sampleWithReplacement (ι := Fin m) (prefixLaw μ X n) A +
         m.choose 2 / n ∧
       sampleWithReplacement (ι := Fin m) (prefixLaw μ X n) A ≤ prefixLaw μ X m A +
-        m.choose 2 / n :=
-  ⟨h.prefixLaw_le_sampleWithReplacement_add hmn hX hA,
-    h.sampleWithReplacement_le_prefixLaw_add hmn hX hA⟩
+        m.choose 2 / n := by
+  let _ : IsProbabilityMeasure (prefixLaw μ X n) := by
+    rw [prefixLaw_def, blockLaw_def]
+    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
+  rw [← h.sampleWithoutReplacement_eq_prefixLaw hmn hX]
+  constructor
+  · simpa using sampleWithoutReplacement_le_sampleWithReplacement_add
+      (ρ := prefixLaw μ X n) hA
+  · simpa using sampleWithReplacement_le_sampleWithoutReplacement_add
+      (ρ := prefixLaw μ X n) hA
+
+/-- **Quantitative finite de Finetti bound, exchangeable law to empirical mixture.** If the first
+`n` coordinates of a process are exchangeable and `m ≤ n`, then every measurable event under the
+`m`-prefix law has mass at most its mass under the mixture of `m`-fold products of the empirical
+distribution of the first `n` coordinates, plus `choose m 2 / n`. -/
+theorem ExchangeableAt.prefixLaw_le_sampleWithReplacement_add
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ℕ → Ω → α} {m n : ℕ} [NeZero n] (h : ExchangeableAt μ X n) (hmn : m ≤ n)
+    (hX : ∀ i : Fin n, AEMeasurable (X i.val) μ) {A : Set (Fin m → α)}
+    (hA : MeasurableSet A) :
+    prefixLaw μ X m A ≤ sampleWithReplacement (ι := Fin m) (prefixLaw μ X n) A +
+      m.choose 2 / n :=
+  (h.finiteDeFinetti hmn hX hA).1
+
+/-- **Quantitative finite de Finetti bound, empirical mixture to exchangeable law.** Under the
+same hypotheses, every measurable event under the empirical-product mixture has mass at most its
+mass under the `m`-prefix law plus `choose m 2 / n`. -/
+theorem ExchangeableAt.sampleWithReplacement_le_prefixLaw_add
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ℕ → Ω → α} {m n : ℕ} [NeZero n] (h : ExchangeableAt μ X n) (hmn : m ≤ n)
+    (hX : ∀ i : Fin n, AEMeasurable (X i.val) μ) {A : Set (Fin m → α)}
+    (hA : MeasurableSet A) :
+    sampleWithReplacement (ι := Fin m) (prefixLaw μ X n) A ≤ prefixLaw μ X m A +
+      m.choose 2 / n :=
+  (h.finiteDeFinetti hmn hX hA).2
 
 end FiniteExchangeability
 
