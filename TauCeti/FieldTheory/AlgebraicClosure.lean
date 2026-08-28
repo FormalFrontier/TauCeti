@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.FieldTheory.AlgebraicClosure
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Basic
 public import Mathlib.RingTheory.Polynomial.IsIntegral
 
