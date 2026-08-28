@@ -1,4 +1,6 @@
-import Mathlib.Topology.Algebra.Category.ProfiniteGrp.Completion
+module
+
+public import Mathlib.Topology.Algebra.Category.ProfiniteGrp.Completion
 
 /-!
 # The universal property of profinite completion
@@ -10,6 +12,8 @@ a finite group to its profinite completion is bijective.
 The correspondence is obtained from `ProfiniteGrp.ProfiniteCompletion.homEquiv`; the finite-group
 result uses its canonical map's dense range and Mathlib's residual-finiteness criterion.
 -/
+
+@[expose] public section
 
 namespace TauCeti
 
