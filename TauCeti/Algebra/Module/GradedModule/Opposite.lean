@@ -124,15 +124,16 @@ theorem map_piece (G : InternalGrading R M) (e : M ≃ₗ[R] N) (p : ℤ) :
     (G.map e).piece p = (G.piece p).map e.toLinearMap :=
   (rfl)
 
-/-- Membership in a transported piece can be checked after applying the inverse equivalence. -/
-@[simp]
+/-- Membership in a transported piece can be checked after applying the inverse equivalence.
+
+This is not a `simp` lemma: `map_piece` already rewrites the left-hand side to a `Submodule.map`,
+on which the `simp` set fires `Submodule.mem_map_equiv` to reach the same right-hand side. -/
 theorem mem_map_piece_iff (G : InternalGrading R M) (e : M ≃ₗ[R] N) (p : ℤ) (y : N) :
     y ∈ (G.map e).piece p ↔ e.symm y ∈ G.piece p := by
   exact Submodule.mem_map_equiv (p := G.piece p) (e := e)
 
 /-- A linear equivalence maps a homogeneous element into the transported piece of the same
-degree. -/
-@[simp]
+degree. This is the special case of `mem_map_piece_iff` that `simp` already reaches. -/
 theorem apply_mem_map_piece_iff (G : InternalGrading R M) (e : M ≃ₗ[R] N) (p : ℤ) (x : M) :
     e x ∈ (G.map e).piece p ↔ x ∈ G.piece p := by
   simp
@@ -188,15 +189,16 @@ theorem opposite_piece (G : InternalGrading R M) (p : ℤ) :
     G.opposite.piece p = (G.piece p).map (opLinearEquiv R).toLinearMap :=
   (rfl)
 
-/-- An opposite element belongs to degree `p` exactly when the original element does. -/
-@[simp]
+/-- An opposite element belongs to degree `p` exactly when the original element does. This is the
+special case of `mem_opposite_piece_iff` that `simp` already reaches. -/
 theorem op_mem_opposite_piece_iff (G : InternalGrading R M) (p : ℤ) (x : M) :
     op x ∈ G.opposite.piece p ↔ x ∈ G.piece p := by
   simp [opposite]
 
-/-- Membership in an opposite piece is membership of the underlying element in the original
-piece. -/
-@[simp]
+/-- Membership in an opposite piece is membership of the underlying element in the original piece.
+
+This is not a `simp` lemma: `opposite_piece` already rewrites the left-hand side to a
+`Submodule.map`, from which the `simp` set reaches the same right-hand side. -/
 theorem mem_opposite_piece_iff (G : InternalGrading R M) (p : ℤ) (x : Mᵐᵒᵖ) :
     x ∈ G.opposite.piece p ↔ x.unop ∈ G.piece p := by
   simp [opposite]
