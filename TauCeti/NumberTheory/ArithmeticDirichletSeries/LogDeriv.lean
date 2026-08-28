@@ -9,7 +9,6 @@ public import Mathlib.Analysis.Calculus.LogDeriv
 public import Mathlib.NumberTheory.LSeries.Convolution
 public import Mathlib.NumberTheory.LSeries.Deriv
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Estimates
-public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.VonMangoldt
 
 /-!
@@ -18,7 +17,10 @@ public import TauCeti.NumberTheory.ArithmeticDirichletSeries.VonMangoldt
 For a completely multiplicative ideal weight `χ`, the von Mangoldt transform `χ Λ` is the
 coefficient system of the logarithmic derivative of the Dirichlet series of `χ`: on the half-plane
 where the ideal-indexed series of `χ` converges absolutely,
-`∑_A χ(A) Λ(A) N(A)^{-s} = -L'(s) / L(s)`.
+`(∑_A χ(A) Λ(A) N(A)^{-s}) L(s) = -L'(s)`, hence `∑_A χ(A) Λ(A) N(A)^{-s} = -L'(s) / L(s)` at every
+point of that half-plane at which `L(s) ≠ 0`.  The nonvanishing is an explicit hypothesis of the
+quotient forms below: it is not proved here, since for the Dedekind zeta function it is the Euler
+product of Layer 3.
 
 The proof is purely algebraic apart from one convergence estimate. The divisor sum
 `TauCeti.IdealArithmeticFunction.convolution_vonMangoldt_one` identifies `Λ ⋆ 1` with the ideal
@@ -36,10 +38,12 @@ needed.
   transform of `f` converges absolutely wherever that of `f` does.
 * `TauCeti.MultiplicativeIdealWeight.convolution_vonMangoldtTransform`: the convolution identity
   `(χ Λ) ⋆ χ = (log N) χ` for a completely multiplicative weight.
+* `TauCeti.MultiplicativeIdealWeight.LSeries_normCoeff_vonMangoldtTransform_mul_eq_neg_deriv`:
+  the identity in product form, on the whole half-plane and with no nonvanishing hypothesis.
 * `TauCeti.MultiplicativeIdealWeight.LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv`:
-  the logarithmic derivative identity.
+  the logarithmic derivative identity, assuming `L(s) ≠ 0`.
 * `TauCeti.LSeries_normCoeff_vonMangoldt_eq_neg_logDeriv_dedekindZeta`: its instance at the trivial
-  weight, `-ζ_K'(s) / ζ_K(s) = ∑_A Λ(A) N(A)^{-s}` on `Re s > 1`.
+  weight, `-ζ_K'(s) / ζ_K(s) = ∑_A Λ(A) N(A)^{-s}` for `Re s > 1` with `ζ_K(s) ≠ 0`.
 
 ## Roadmap role
 
@@ -50,6 +54,7 @@ nonnegative von Mangoldt coefficient system on `Re s > 1`.
 
 ## References
 
+* H. Davenport, *Multiplicative Number Theory*, Chapter 1.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters I.2 and II.
 * Mathlib's `ArithmeticFunction.vonMangoldt_mul_zeta` is the rational-prime analogue of the divisor
