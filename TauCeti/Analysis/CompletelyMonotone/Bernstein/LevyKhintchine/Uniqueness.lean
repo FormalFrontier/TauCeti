@@ -52,29 +52,31 @@ private noncomputable def bernsteinLevyKhintchineDerivativeMeasure
     (b : ℝ) (μ : Measure ℝ≥0) : Measure ℝ≥0 :=
   ENNReal.ofReal b • Measure.dirac 0 + bernsteinLevyDerivativeMeasure μ
 
+private lemma integrable_exp_neg_mul_driftMeasure (b t : ℝ) :
+    Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
+      (ENNReal.ofReal b • Measure.dirac 0) :=
+  (integrable_dirac' (by fun_prop) (by simp)).smul_measure (by simp)
+
+private lemma integrable_exp_neg_mul_jumpDerivativeMeasure
+    {μ : Measure ℝ≥0} (hμ : IsBernsteinLevyMeasure μ) {t : ℝ} (ht : 0 < t) :
+    Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
+      (bernsteinLevyDerivativeMeasure μ) :=
+  integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure hμ.integrable_min_one ht
+
 private lemma integrable_exp_neg_mul_bernsteinLevyKhintchineDerivativeMeasure
     {μ : Measure ℝ≥0} (hμ : IsBernsteinLevyMeasure μ) {b t : ℝ} (ht : 0 < t) :
     Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
       (bernsteinLevyKhintchineDerivativeMeasure b μ) := by
-  have hatom : Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
-      (ENNReal.ofReal b • Measure.dirac 0) :=
-    (integrable_dirac' (by fun_prop) (by simp)).smul_measure (by simp)
-  have hjump : Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
-      (bernsteinLevyDerivativeMeasure μ) :=
-    integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure hμ.integrable_min_one ht
-  exact hatom.add_measure hjump
+  exact (integrable_exp_neg_mul_driftMeasure b t).add_measure
+    (integrable_exp_neg_mul_jumpDerivativeMeasure hμ ht)
 
 private lemma laplaceTransform_bernsteinLevyKhintchineDerivativeMeasure
     {μ : Measure ℝ≥0} (hμ : IsBernsteinLevyMeasure μ) {b t : ℝ}
     (hb : 0 ≤ b) (ht : 0 < t) :
     laplaceTransform (bernsteinLevyKhintchineDerivativeMeasure b μ) t =
       b + ∫ x : ℝ≥0, (x : ℝ) * Real.exp (-(t * (x : ℝ))) ∂μ := by
-  have hatom : Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
-      (ENNReal.ofReal b • Measure.dirac 0) :=
-    (integrable_dirac' (by fun_prop) (by simp)).smul_measure (by simp)
-  have hjump : Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
-      (bernsteinLevyDerivativeMeasure μ) :=
-    integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure hμ.integrable_min_one ht
+  have hatom := integrable_exp_neg_mul_driftMeasure b t
+  have hjump := integrable_exp_neg_mul_jumpDerivativeMeasure hμ ht
   rw [bernsteinLevyKhintchineDerivativeMeasure,
     laplaceTransform_add_measure _ _ hatom hjump,
     laplaceTransform_smul_measure, laplaceTransform_dirac,

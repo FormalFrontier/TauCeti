@@ -205,11 +205,18 @@ transform is the derivative of its jump exponent. -/
 noncomputable def bernsteinLevyDerivativeMeasure (μ : Measure ℝ≥0) : Measure ℝ≥0 :=
   μ.withDensity fun x : ℝ≥0 => (x : ℝ≥0∞)
 
+/-- The mass that the coordinate-weighted Levy measure assigns to a measurable set. -/
+@[simp]
+theorem bernsteinLevyDerivativeMeasure_apply (μ : Measure ℝ≥0) {s : Set ℝ≥0}
+    (hs : MeasurableSet s) :
+    bernsteinLevyDerivativeMeasure μ s = ∫⁻ x in s, (x : ℝ≥0∞) ∂μ := by
+  rw [bernsteinLevyDerivativeMeasure, withDensity_apply _ hs]
+
 /-- The coordinate-weighted Levy measure has no atom at zero: the weight vanishes there. -/
 @[simp]
 theorem bernsteinLevyDerivativeMeasure_singleton_zero (μ : Measure ℝ≥0) :
     bernsteinLevyDerivativeMeasure μ {0} = 0 := by
-  rw [bernsteinLevyDerivativeMeasure, withDensity_apply _ (measurableSet_singleton 0),
+  rw [bernsteinLevyDerivativeMeasure_apply μ (measurableSet_singleton 0),
     lintegral_eq_zero_iff (by fun_prop)]
   filter_upwards [ae_restrict_mem (measurableSet_singleton 0)] with x hx
   rw [Set.mem_singleton_iff] at hx
