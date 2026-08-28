@@ -28,15 +28,6 @@ built to supply them: it is the **diagonal** tail, cutting *both* index axes at 
 rows are all one common i.i.d. random path is separately dissociated, and its row tail carries the
 whole path.
 
-The application is the diagonal. Dissociation separates any diagonal entry from the square block
-over a finite set of other indices, and hence makes the whole diagonal independent
-(`JointlyDissociated.iIndepFun_arrayDiag`). Joint exchangeability supplies the common law, so the
-diagonal is i.i.d. (`JointlyDissociated.exists_mixedIIDWith_const_arrayDiag`). This is the array
-analogue of a product law's being the extreme case of an exchangeable law, and it matches the
-ergodic Aldous--Hoover coding
-`X (i, j) = f (U_vert i) (U_vert j) (U_cell {i, j})` in `Arrays/AldousHoover.lean`, whose diagonal
-reads a fresh vertex and cell variable at each index.
-
 These results advance the exchangeable-arrays milestone of
 `TauCetiRoadmap/Exchangeability/README.md`, Layer 8: the ergodic form of the Aldous--Hoover
 representation is the dissociated one, and this is the zero-one law separating it from the general
@@ -53,9 +44,7 @@ form.
 * `TauCeti.Probability.JointlyDissociated.measure_eq_zero_or_one_of_arrayTail` — **the zero-one
   law**: the tail σ-algebra of a jointly dissociated array is trivial;
 * `TauCeti.Probability.SeparatelyDissociated.measure_eq_zero_or_one_of_arrayTail` — the same for the
-  stronger symmetry;
-* `TauCeti.Probability.JointlyDissociated.iIndepFun_arrayDiag` — the diagonal of a jointly
-  dissociated array is independent.
+  stronger symmetry.
 
 ## References
 
@@ -139,6 +128,12 @@ theorem arrayTail_le_arrayTailFamily (X : ℕ × ℕ → Ω → α) (n : ℕ) :
   rw [arrayTail_eq_iInf_arrayTailFamily]
   exact iInf_le _ n
 
+omit [MeasurableSpace Ω] in
+/-- Universal property of the array tail σ-algebra. -/
+theorem le_arrayTail_iff {m : MeasurableSpace Ω} :
+    m ≤ arrayTail X ↔ ∀ n, m ≤ arrayTailFamily X n := by
+  rw [arrayTail_eq_iInf_arrayTailFamily, le_iInf_iff]
+
 /-- A member of the tail family is a sub-σ-algebra of the ambient one when the entries it sees are
 measurable. -/
 theorem arrayTailFamily_le_ambient (n : ℕ)
@@ -158,8 +153,9 @@ omit [MeasurableSpace Ω] in
 both indices at least `n`, so they generate a sub-σ-algebra of the tail family at `n`. -/
 theorem tailProcess_arrayDiag_le_arrayTail (X : ℕ × ℕ → Ω → α) :
     tailProcess (arrayDiag X) ≤ arrayTail X := by
-  rw [arrayTail_eq_iInf_arrayTailFamily]
-  refine le_iInf fun n => (tailProcess_le_tailFamily _ n).trans (tailFamily_le_iff.mpr ?_)
+  rw [le_arrayTail_iff]
+  intro n
+  refine (tailProcess_le_tailFamily _ n).trans (tailFamily_le_iff.mpr ?_)
   intro k hk
   simpa only [arrayDiag_apply] using
     (arrayTailFamily_le_iff (X := X) (m := arrayTailFamily X n)).mp le_rfl k k hk hk
@@ -171,7 +167,7 @@ theorem JointlyDissociated.indep_blockSigma_Iic_arrayTailFamily (h : JointlyDiss
     (n : ℕ) :
     Indep (blockSigma X (Set.Iic n ×ˢ Set.Iic n)) (arrayTailFamily X (n + 1)) μ := by
   rw [arrayTailFamily_eq_blockSigma]
-  exact h.indep_blockSigma_prod ⟨0, by simp⟩ ⟨n + 1, by simp⟩
+  exact h.indep_blockSigma_prod_of_nonempty ⟨0, by simp⟩ ⟨n + 1, by simp⟩
     (Set.disjoint_left.mpr fun i hi hi' =>
       (Nat.not_succ_le_self n) (hi'.trans hi))
 
@@ -222,52 +218,6 @@ theorem JointlyDissociated.measure_eq_zero_or_one_of_tailProcess_arrayDiag [IsPr
     (h : JointlyDissociated μ X) (hX : ∀ p, Measurable (X p)) {s : Set Ω}
     (hs : MeasurableSet[tailProcess (arrayDiag X)] s) : μ s = 0 ∨ μ s = 1 :=
   h.measure_eq_zero_or_one_of_arrayTail hX (tailProcess_arrayDiag_le_arrayTail X s hs)
-
-/-- **The diagonal entries of a jointly dissociated array are independent.** A diagonal entry is
-independent of the square block over any finite set of other indices, which gives the finite-family
-criterion for mutual independence. -/
-theorem JointlyDissociated.iIndepFun_arrayDiag [IsProbabilityMeasure μ]
-    (h : JointlyDissociated μ X) : iIndepFun (arrayDiag X) μ := by
-  rw [iIndepFun_iff]
-  intro s f hf
-  induction s using Finset.induction_on with
-  | empty => simp
-  | @insert i s hi ih =>
-      by_cases hs : s.Nonempty
-      · have hdisj : Disjoint ({i} : Set ℕ) (s : Set ℕ) := by
-          simpa [Set.disjoint_left] using hi
-        have hindep := h.indep_blockSigma_prod (S := {i}) (T := (s : Set ℕ))
-          (Set.singleton_nonempty i) hs hdisj
-        have hfi' := hf i (Finset.mem_insert_self i s)
-        rw [arrayDiag_apply] at hfi'
-        have hfi : MeasurableSet[blockSigma X (({i} : Set ℕ) ×ˢ {i})] (f i) :=
-          (measurable_blockSigma_of_mem (Z := X) (by simp)).comap_le _ hfi'
-        have hrest : MeasurableSet[blockSigma X ((s : Set ℕ) ×ˢ (s : Set ℕ))]
-            (⋂ j ∈ s, f j) := by
-          refine s.measurableSet_biInter fun j hj => ?_
-          have hfj := hf j (Finset.mem_insert_of_mem hj)
-          rw [arrayDiag_apply] at hfj
-          exact (measurable_blockSigma_of_mem (Z := X) (by simp [hj])).comap_le _ hfj
-        rw [Finset.prod_insert hi, ← ih fun j hj => hf j (Finset.mem_insert_of_mem hj)]
-        simpa only [Finset.set_biInter_insert] using
-          (Indep_iff _ _ _).mp hindep _ _ hfi hrest
-      · have : s = ∅ := Finset.not_nonempty_iff_eq_empty.mp hs
-        subst s
-        simp
-
-/-- **The diagonal of a jointly exchangeable, jointly dissociated array is i.i.d.**, with its common
-law named: there is a probability measure `P` with `fun _ => P` a mixing representative of the
-diagonal, so the diagonal entries are independent with common law `P`. Dissociation supplies
-independence, while joint exchangeability supplies the common law. -/
-theorem JointlyDissociated.exists_mixedIIDWith_const_arrayDiag [IsProbabilityMeasure μ]
-    (h : JointlyDissociated μ X) (hexch : JointlyExchangeable μ X)
-    (hX : ∀ p, AEMeasurable (X p) μ) :
-    ∃ P : ProbabilityMeasure α, MixedIIDWith μ (arrayDiag X) fun _ => P := by
-  have hdiag : ∀ i, AEMeasurable (arrayDiag X i) μ := fun i => by
-    simpa only [arrayDiag_apply] using hX (i, i)
-  have hident : ∀ i, IdentDistrib (arrayDiag X i) (arrayDiag X 0) μ μ := fun i =>
-    ((hexch.exchangeable_arrayDiag hX).contractable hdiag).identDistrib_coord (hdiag i) (hdiag 0)
-  exact ⟨_, MixedIIDWith.of_iIndepFun_identDistrib h.iIndepFun_arrayDiag hident⟩
 
 end Probability
 
