@@ -103,9 +103,8 @@ theorem zigzagCornerMap_apply (i j : V) (x : nonisolatedZigzagQuotient k G) :
   cornerMap_apply k _ _ x
 
 /-- **The corner `e_i Z e_j` of a zigzag algebra**, as a `k`-submodule of the relation quotient:
-the elements which `e_i` fixes on the left and `e_j` fixes on the right.  It is `@[expose]`d so
-that downstream files may recognize it as the corner attached to the two vertex idempotents. -/
-@[expose] noncomputable def zigzagCorner (i j : V) :
+the elements which `e_i` fixes on the left and `e_j` fixes on the right. -/
+noncomputable def zigzagCorner (i j : V) :
     Submodule k (nonisolatedZigzagQuotient k G) :=
   cornerSubmodule k (zigzagVertexIdempotent k G i) (zigzagVertexIdempotent k G j)
 

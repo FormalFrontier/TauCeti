@@ -27,6 +27,9 @@ the roadmap asks it to be, a matrix of graded dimensions of homomorphism spaces,
 
 `C_G(q)_{i,j} = ∑_d dim_k Hom(P_i{d}, P_j) q^d = (1 + q²) δ_{i,j} + q A_{i,j}`.
 
+Moving the internal shift from source to target reverses its sign: intrinsically degree-`d` maps
+are `Hom(P_i{d}, P_j)`, equivalently `Hom(P_i, P_j{-d})`, not `Hom(P_i, P_j{d})`.
+
 ## Main definitions
 
 * `TauCeti.zigzagProjectiveHomEquivCorner`: **the dictionary `Hom_Z(P_i, P_j) ≃ₗ[k] e_i Z e_j`.**
@@ -62,8 +65,9 @@ matrix consumes.
 ## References
 
 This is the homomorphism half of Layer 3 of `TauCetiRoadmap/ZigzagPreprojective/README.md`, which
-asks for `P_i` together with "all homogeneous `Hom(P_i,P_j{d})` spaces"; by its pinned shift
-convention, these are equivalently indexed as `Hom(P_i{d},P_j)`.  See
+asks for `P_i` together with "all homogeneous `Hom(P_i,P_j{d})` spaces".  Under its pinned shift
+convention, moving that target shift to the source reverses the sign; the nonnegative
+degree-raising part formalized here is `Hom(P_i{d},P_j) = Hom(P_i,P_j{-d})`.  See
 Huerfano--Khovanov, *A category for the adjoint representation*, Section 3, and
 Ehrig--Tubbenhauer, *Algebraic properties of zigzag algebras*, Section 2.
 -/
@@ -80,6 +84,107 @@ variable (k : Type w) [Field k] {V : Type u} (G : SimpleGraph V) [Finite V]
 
 /-! ### The ungraded dictionary -/
 
+private theorem zigzagProjective_eq_spanSingleton (i : V) :
+    zigzagProjective k G i = Ideal.span {zigzagVertexIdempotent k G i} := by
+  ext x
+  rw [mem_zigzagProjective_iff,
+    mem_span_singleton_iff_mul_eq_self (zigzagMk_vertexIdempotent_mul_self k G i)]
+
+private theorem zigzagCorner_eq_cornerSubmodule (i j : V) :
+    zigzagCorner k G i j =
+      cornerSubmodule k (zigzagVertexIdempotent k G i) (zigzagVertexIdempotent k G j) := by
+  ext x
+  rw [mem_zigzagCorner_iff, mem_cornerSubmodule_iff k
+    (zigzagMk_vertexIdempotent_mul_self k G i)
+    (zigzagMk_vertexIdempotent_mul_self k G j)]
+
+private noncomputable def zigzagProjectiveEquivSpanSingleton (i : V) :
+    zigzagProjective k G i ≃ₗ[nonisolatedZigzagQuotient k G]
+      (Ideal.span {zigzagVertexIdempotent k G i} :
+        Ideal (nonisolatedZigzagQuotient k G)) :=
+  LinearEquiv.ofEq _ _ (zigzagProjective_eq_spanSingleton k G i)
+
+private noncomputable def zigzagProjectiveHomEquivSpanSingletonHom (i j : V) :
+    (zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G] zigzagProjective k G j) ≃ₗ[k]
+      ((Ideal.span {zigzagVertexIdempotent k G i} :
+          Ideal (nonisolatedZigzagQuotient k G)) →ₗ[nonisolatedZigzagQuotient k G]
+        (Ideal.span {zigzagVertexIdempotent k G j} :
+          Ideal (nonisolatedZigzagQuotient k G))) :=
+  (LinearEquiv.arrowCongrAddEquiv (zigzagProjectiveEquivSpanSingleton k G i)
+    (zigzagProjectiveEquivSpanSingleton k G j)).toLinearEquiv (by
+      intro c φ
+      ext x
+      simp only [LinearEquiv.arrowCongrAddEquiv, AddEquiv.coe_mk, Equiv.coe_fn_mk,
+        LinearMap.coe_comp, Function.comp_apply, LinearMap.smul_apply]
+      exact congr_arg Subtype.val
+        ((zigzagProjectiveEquivSpanSingleton k G j).toLinearMap.map_smul_of_tower c
+          (φ ((zigzagProjectiveEquivSpanSingleton k G i).symm x))))
+
+private noncomputable def zigzagCornerEquivCornerSubmodule (i j : V) :
+    zigzagCorner k G i j ≃ₗ[k]
+      cornerSubmodule k (zigzagVertexIdempotent k G i) (zigzagVertexIdempotent k G j) :=
+  LinearEquiv.ofEq _ _ (zigzagCorner_eq_cornerSubmodule k G i j)
+
+private theorem coe_zigzagProjectiveEquivSpanSingleton_apply (i : V)
+    (x : zigzagProjective k G i) :
+    (zigzagProjectiveEquivSpanSingleton k G i x : nonisolatedZigzagQuotient k G) = x := by
+  simpa only [zigzagProjectiveEquivSpanSingleton] using
+    LinearEquiv.coe_ofEq_apply (zigzagProjective_eq_spanSingleton k G i) x
+
+private theorem coe_zigzagProjectiveEquivSpanSingleton_symm_apply (i : V)
+    (x : (Ideal.span {zigzagVertexIdempotent k G i} :
+      Ideal (nonisolatedZigzagQuotient k G))) :
+    ((zigzagProjectiveEquivSpanSingleton k G i).symm x : nonisolatedZigzagQuotient k G) = x := by
+  simpa only [zigzagProjectiveEquivSpanSingleton, LinearEquiv.ofEq_symm] using
+    LinearEquiv.coe_ofEq_apply (zigzagProjective_eq_spanSingleton k G i).symm x
+
+private theorem coe_zigzagCornerEquivCornerSubmodule_apply (i j : V)
+    (x : zigzagCorner k G i j) :
+    (zigzagCornerEquivCornerSubmodule k G i j x : nonisolatedZigzagQuotient k G) = x := by
+  simpa only [zigzagCornerEquivCornerSubmodule] using
+    LinearEquiv.coe_ofEq_apply (zigzagCorner_eq_cornerSubmodule k G i j) x
+
+private theorem coe_zigzagCornerEquivCornerSubmodule_symm_apply (i j : V)
+    (x : cornerSubmodule k (zigzagVertexIdempotent k G i) (zigzagVertexIdempotent k G j)) :
+    ((zigzagCornerEquivCornerSubmodule k G i j).symm x :
+      nonisolatedZigzagQuotient k G) = x := by
+  simpa only [zigzagCornerEquivCornerSubmodule, LinearEquiv.ofEq_symm] using
+    LinearEquiv.coe_ofEq_apply (zigzagCorner_eq_cornerSubmodule k G i j).symm x
+
+private theorem coe_zigzagProjectiveHomEquivSpanSingletonHom_apply {i j : V}
+    (φ : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
+      zigzagProjective k G j) :
+    ((zigzagProjectiveHomEquivSpanSingletonHom k G i j φ)
+        (spanSingletonGenerator (zigzagVertexIdempotent k G i)) :
+      nonisolatedZigzagQuotient k G) =
+        (φ (zigzagProjectiveGenerator k G i) : nonisolatedZigzagQuotient k G) := by
+  change ((zigzagProjectiveEquivSpanSingleton k G j)
+      (φ ((zigzagProjectiveEquivSpanSingleton k G i).symm
+        (spanSingletonGenerator (zigzagVertexIdempotent k G i)))) :
+    nonisolatedZigzagQuotient k G) = _
+  rw [coe_zigzagProjectiveEquivSpanSingleton_apply]
+  have harg : (zigzagProjectiveEquivSpanSingleton k G i).symm
+      (spanSingletonGenerator (zigzagVertexIdempotent k G i)) =
+        zigzagProjectiveGenerator k G i := by
+    apply Subtype.ext
+    rw [coe_zigzagProjectiveEquivSpanSingleton_symm_apply, coe_spanSingletonGenerator,
+      coe_zigzagProjectiveGenerator]
+  rw [harg]
+
+private theorem coe_zigzagProjectiveHomEquivSpanSingletonHom_symm_apply {i j : V}
+    (φ : (Ideal.span {zigzagVertexIdempotent k G i} :
+        Ideal (nonisolatedZigzagQuotient k G)) →ₗ[nonisolatedZigzagQuotient k G]
+      (Ideal.span {zigzagVertexIdempotent k G j} :
+        Ideal (nonisolatedZigzagQuotient k G))) (y : zigzagProjective k G i) :
+    (((zigzagProjectiveHomEquivSpanSingletonHom k G i j).symm φ) y :
+      nonisolatedZigzagQuotient k G) =
+        (φ (zigzagProjectiveEquivSpanSingleton k G i y) :
+          nonisolatedZigzagQuotient k G) := by
+  change ((zigzagProjectiveEquivSpanSingleton k G j).symm
+      (φ (zigzagProjectiveEquivSpanSingleton k G i y)) :
+    nonisolatedZigzagQuotient k G) = _
+  rw [coe_zigzagProjectiveEquivSpanSingleton_symm_apply]
+
 /-- **The homomorphisms `Z e_i → Z e_j` are the corner `e_i Z e_j`**, by evaluation at the
 generator `e_i`.  This is the dictionary through which the corners computed by
 `TauCeti.RepresentationTheory.Quiver.Zigzag.CartanMatrix` are homomorphism spaces of the vertex
@@ -87,8 +192,10 @@ projectives. -/
 noncomputable def zigzagProjectiveHomEquivCorner (i j : V) :
     (zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G] zigzagProjective k G j) ≃ₗ[k]
       zigzagCorner k G i j :=
-  spanSingletonHomEquivCorner (zigzagMk_vertexIdempotent_mul_self k G i)
-    (zigzagMk_vertexIdempotent_mul_self k G j)
+  (zigzagProjectiveHomEquivSpanSingletonHom k G i j).trans
+    ((spanSingletonHomEquivCorner (zigzagMk_vertexIdempotent_mul_self k G i)
+        (zigzagMk_vertexIdempotent_mul_self k G j)).trans
+      (zigzagCornerEquivCornerSubmodule k G i j).symm)
 
 @[simp]
 theorem coe_zigzagProjectiveHomEquivCorner_apply {i j : V}
@@ -96,14 +203,53 @@ theorem coe_zigzagProjectiveHomEquivCorner_apply {i j : V}
     ((zigzagProjectiveHomEquivCorner k G i j φ : zigzagCorner k G i j) :
         nonisolatedZigzagQuotient k G) =
       (φ (zigzagProjectiveGenerator k G i) : nonisolatedZigzagQuotient k G) :=
-  (rfl)
+  by
+    change ((zigzagCornerEquivCornerSubmodule k G i j).symm
+      (spanSingletonHomEquivCorner (zigzagMk_vertexIdempotent_mul_self k G i)
+        (zigzagMk_vertexIdempotent_mul_self k G j)
+        (zigzagProjectiveHomEquivSpanSingletonHom k G i j φ)) :
+          nonisolatedZigzagQuotient k G) = _
+    calc
+      _ = (spanSingletonHomEquivCorner (zigzagMk_vertexIdempotent_mul_self k G i)
+          (zigzagMk_vertexIdempotent_mul_self k G j)
+          (zigzagProjectiveHomEquivSpanSingletonHom k G i j φ) :
+            nonisolatedZigzagQuotient k G) :=
+        coe_zigzagCornerEquivCornerSubmodule_symm_apply k G i j _
+      _ = ((zigzagProjectiveHomEquivSpanSingletonHom k G i j φ)
+          (spanSingletonGenerator (zigzagVertexIdempotent k G i)) :
+            nonisolatedZigzagQuotient k G) :=
+        coe_spanSingletonHomEquivCorner_apply (zigzagMk_vertexIdempotent_mul_self k G i)
+          (zigzagMk_vertexIdempotent_mul_self k G j) _
+      _ = _ := coe_zigzagProjectiveHomEquivSpanSingletonHom_apply k G φ
 
 @[simp]
 theorem coe_zigzagProjectiveHomEquivCorner_symm_apply {i j : V} (x : zigzagCorner k G i j)
     (y : zigzagProjective k G i) :
     (((zigzagProjectiveHomEquivCorner k G i j).symm x) y : nonisolatedZigzagQuotient k G) =
       (y : nonisolatedZigzagQuotient k G) * (x : nonisolatedZigzagQuotient k G) :=
-  (rfl)
+  by
+    change (((zigzagProjectiveHomEquivSpanSingletonHom k G i j).symm
+      ((spanSingletonHomEquivCorner (zigzagMk_vertexIdempotent_mul_self k G i)
+        (zigzagMk_vertexIdempotent_mul_self k G j)).symm
+          (zigzagCornerEquivCornerSubmodule k G i j x))) y :
+            nonisolatedZigzagQuotient k G) = _
+    calc
+      _ = (((spanSingletonHomEquivCorner (zigzagMk_vertexIdempotent_mul_self k G i)
+          (zigzagMk_vertexIdempotent_mul_self k G j)).symm
+            (zigzagCornerEquivCornerSubmodule k G i j x))
+              (zigzagProjectiveEquivSpanSingleton k G i y) :
+                nonisolatedZigzagQuotient k G) :=
+        coe_zigzagProjectiveHomEquivSpanSingletonHom_symm_apply k G _ _
+      _ = (zigzagProjectiveEquivSpanSingleton k G i y :
+            nonisolatedZigzagQuotient k G) *
+          (zigzagCornerEquivCornerSubmodule k G i j x :
+            nonisolatedZigzagQuotient k G) :=
+        coe_spanSingletonHomEquivCorner_symm_apply
+          (zigzagMk_vertexIdempotent_mul_self k G i)
+          (zigzagMk_vertexIdempotent_mul_self k G j) _ _
+      _ = _ := by
+        rw [coe_zigzagProjectiveEquivSpanSingleton_apply,
+          coe_zigzagCornerEquivCornerSubmodule_apply]
 
 /-- A homomorphism `Z e_i → Z e_j` is right multiplication by its value at the generator. -/
 theorem coe_zigzagProjectiveHom_apply {i j : V}
@@ -112,7 +258,20 @@ theorem coe_zigzagProjectiveHom_apply {i j : V}
     (φ x : nonisolatedZigzagQuotient k G) =
       (x : nonisolatedZigzagQuotient k G) *
         (φ (zigzagProjectiveGenerator k G i) : nonisolatedZigzagQuotient k G) :=
-  coe_apply_eq_mul_apply_generator (zigzagMk_vertexIdempotent_mul_self k G i) φ x
+  by
+    calc
+      (φ x : nonisolatedZigzagQuotient k G) =
+          (((zigzagProjectiveHomEquivCorner k G i j).symm
+            (zigzagProjectiveHomEquivCorner k G i j φ)) x :
+              nonisolatedZigzagQuotient k G) := by
+        rw [LinearEquiv.symm_apply_apply]
+      _ = (x : nonisolatedZigzagQuotient k G) *
+          (zigzagProjectiveHomEquivCorner k G i j φ :
+            nonisolatedZigzagQuotient k G) :=
+        coe_zigzagProjectiveHomEquivCorner_symm_apply k G _ _
+      _ = (x : nonisolatedZigzagQuotient k G) *
+          (φ (zigzagProjectiveGenerator k G i) : nonisolatedZigzagQuotient k G) := by
+        rw [coe_zigzagProjectiveHomEquivCorner_apply]
 
 /-! ### The graded dictionary -/
 
@@ -131,6 +290,7 @@ def zigzagProjectiveHomOfDegree (i j : V) (d : ℕ) :
 /-- **A homomorphism raises degree by `d` exactly when its value at the generator is a degree-`d`
 element of the corner.** The generator `e_i` has degree zero, which gives one direction, and
 multiplication adds degrees, which gives the other. -/
+@[simp]
 theorem mem_zigzagProjectiveHomOfDegree_iff {i j : V} {d : ℕ}
     {φ : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G] zigzagProjective k G j} :
     φ ∈ zigzagProjectiveHomOfDegree k G i j d ↔
@@ -143,8 +303,9 @@ theorem mem_zigzagProjectiveHomOfDegree_iff {i j : V} {d : ℕ}
   constructor
   · intro hφ
     refine (mem_zigzagGradedCorner_iff k G).2
-      ⟨apply_generator_mem_cornerSubmodule (zigzagMk_vertexIdempotent_mul_self k G i)
-        (zigzagMk_vertexIdempotent_mul_self k G j) φ, ?_⟩
+      ⟨?_, ?_⟩
+    · rw [← coe_zigzagProjectiveHomEquivCorner_apply]
+      exact (zigzagProjectiveHomEquivCorner k G i j φ).2
     simpa only [Nat.zero_add] using hφ 0 (zigzagProjectiveGenerator k G i) hgen
   · intro hφ n x hx
     rw [coe_zigzagProjectiveHom_apply]

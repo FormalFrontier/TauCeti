@@ -128,7 +128,7 @@ theorem apply_generator_mem_cornerSubmodule (he : IsIdempotentElem e) (hf : IsId
   rw [hleft, hright]
 
 /-- Right multiplication by an element of the corner `eAf`, as a homomorphism `Ae → Af`. -/
-@[expose] def cornerToSpanSingletonHom (hf : IsIdempotentElem f) (x : cornerSubmodule k e f) :
+def cornerToSpanSingletonHom (hf : IsIdempotentElem f) (x : cornerSubmodule k e f) :
     (Ideal.span {e} : Ideal A) →ₗ[A] (Ideal.span {f} : Ideal A) where
   toFun y := ⟨(y : A) * (x : A), (mem_span_singleton_iff_mul_eq_self hf).2 (by
     rw [mul_assoc, (mem_span_singleton_iff_mul_eq_self hf).1
@@ -144,7 +144,7 @@ theorem coe_cornerToSpanSingletonHom_apply (hf : IsIdempotentElem f) (x : corner
 
 /-- **The homomorphisms from `Ae` to `Af` are the corner `eAf`**, by evaluation at the generator
 `e`. The inverse sends an element of the corner to right multiplication by it. -/
-@[expose] def spanSingletonHomEquivCorner (he : IsIdempotentElem e) (hf : IsIdempotentElem f) :
+def spanSingletonHomEquivCorner (he : IsIdempotentElem e) (hf : IsIdempotentElem f) :
     ((Ideal.span {e} : Ideal A) →ₗ[A] (Ideal.span {f} : Ideal A)) ≃ₗ[k]
       cornerSubmodule k e f where
   toFun φ := ⟨(φ (spanSingletonGenerator e) : A), apply_generator_mem_cornerSubmodule he hf φ⟩
