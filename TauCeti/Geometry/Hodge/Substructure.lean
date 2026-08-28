@@ -170,6 +170,14 @@ theorem hodgeStructure_piece (h : hs.IsSubstructure U) (p : ℤ) :
   rw [HodgeStructureOn.piece_def, hodgeStructure_F, hodgeStructure_conjF, hs.piece_def,
     Submodule.comap_inf]
 
+/-- The inclusion of a sub-Hodge structure into its ambient Hodge structure is a morphism. -/
+theorem isMorphism_subtype (h : hs.IsSubstructure U) :
+    IsMorphism h.hodgeStructure hs U.subtype where
+  commutes_conj x := by simp
+  map_F_le p := by
+    rw [h.hodgeStructure_F]
+    exact Submodule.map_comap_le U.subtype (hs.F p)
+
 /-! #### Quotients by a sub-Hodge structure -/
 
 /-- Conjugating in the quotient by a sub-Hodge structure is conjugating upstairs. -/
@@ -230,6 +238,36 @@ filtration. -/
 theorem quotient_conjF (h : hs.IsSubstructure U) (p : ℤ) :
     h.quotient.conjF p = (hs.conjF p).map U.mkQ := by
   rw [HodgeStructureOn.conjF_def, quotient_F, h.map_quotient_conj_map_mkQ, ← hs.conjF_def]
+
+variable {W' : Type v} [AddCommGroup W'] [Module ℂ W']
+variable {ω' : Conjugation W'} {hs' : HodgeStructureOn W' ω' n} {g : W →ₗ[ℂ] W'}
+
+/-- A morphism killing a sub-Hodge structure descends to a morphism from the quotient. -/
+theorem isMorphism_liftQ (h : hs.IsSubstructure U) (hg : IsMorphism hs hs' g)
+    (hU : U ≤ LinearMap.ker g) : IsMorphism h.quotient hs' (U.liftQ g hU) where
+  commutes_conj x := by
+    obtain ⟨x, rfl⟩ := U.mkQ_surjective x
+    simp only [Submodule.mkQ_apply, Conjugation.quotient_toEquiv_mk, Submodule.liftQ_apply]
+    exact hg.commutes_conj x
+  map_F_le p := by
+    rw [h.quotient_F, ← Submodule.map_comp, U.liftQ_mkQ]
+    exact hg.map_F_le p
+
+/-- The descended Hodge morphism is the unique one whose composite with the quotient map is the
+original morphism. -/
+theorem existsUnique_isMorphism_liftQ (h : hs.IsSubstructure U) (hg : IsMorphism hs hs' g)
+    (hU : U ≤ LinearMap.ker g) :
+    ∃! q : (W ⧸ U) →ₗ[ℂ] W',
+      IsMorphism h.quotient hs' q ∧ q ∘ₗ U.mkQ = g := by
+  refine ⟨U.liftQ g hU, ⟨h.isMorphism_liftQ hg hU, U.liftQ_mkQ g hU⟩, ?_⟩
+  intro q hq
+  apply LinearMap.ext
+  intro x
+  obtain ⟨y, rfl⟩ := U.mkQ_surjective x
+  calc
+    q (U.mkQ y) = g y := DFunLike.congr_fun hq.2 y
+    _ = U.liftQ g hU (U.mkQ y) := by
+      simp only [Submodule.mkQ_apply, Submodule.liftQ_apply]
 
 end IsSubstructure
 
