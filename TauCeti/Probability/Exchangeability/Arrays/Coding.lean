@@ -93,7 +93,7 @@ variable [StandardBorelSpace α] [Nonempty α]
 
 /-- The law of the array coded by a parameter and one uniform variable per row, computed through
 its row process: it is the uncurried de Finetti barycenter of the parameter law. -/
-private theorem map_prod_unitIntervalCoding_array
+theorem map_prod_unitIntervalCoding_array
     (π : Measure (ProbabilityMeasure (ℕ → α))) :
     ((π.prod (Measure.infinitePi fun _ : ℕ => (volume : Measure unitInterval))).map
         fun q p => unitIntervalCoding (ℕ → α) q.1 (q.2 p.1) p.2)

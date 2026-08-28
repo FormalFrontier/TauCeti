@@ -170,6 +170,13 @@ theorem aemeasurable_arrayRow {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
     (hX : ∀ p, AEMeasurable (X p) μ) (i : ℕ) : AEMeasurable (arrayRow X i) μ :=
   aemeasurable_pi_lambda _ fun j => hX (i, j)
 
+/-- Measurability of every row as a path implies measurability of every array entry. -/
+theorem aemeasurable_entry_of_arrayRow {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
+    (hX : ∀ i, AEMeasurable (arrayRow X i) μ) (p : ℕ × ℕ) : AEMeasurable (X p) μ := by
+  rcases p with ⟨i, j⟩
+  simpa only [Function.comp_def, arrayRow] using
+    (measurable_pi_apply j).comp_aemeasurable (hX i)
+
 theorem aemeasurable_arrayCol {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
     (hX : ∀ p, AEMeasurable (X p) μ) (j : ℕ) : AEMeasurable (arrayCol X j) μ :=
   aemeasurable_pi_lambda _ fun i => hX (i, j)

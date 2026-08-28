@@ -97,11 +97,8 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     (hcol : (μ.map fun ω p ↦ X (p.1, τ p.2) ω) = μ.map fun ω p ↦ X p ω)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν) :
     μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν := by
-  -- the witness gives row measurability; the entries are its coordinates
-  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := fun p => by
-    have h1 : AEMeasurable (fun ω => arrayRow X p.1 ω p.2) μ :=
-      (measurable_pi_apply p.2).comp_aemeasurable (hν.aemeasurable p.1)
-    simpa [arrayRow_apply] using h1
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ :=
+    aemeasurable_entry_of_arrayRow hν.aemeasurable
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex τ)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
