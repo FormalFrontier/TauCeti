@@ -80,6 +80,10 @@ theorem constantCoeff_formalAdd : constantCoeff (formalAdd W) = 0 :=
   constantCoeff_subst_eq_zero (hasSubst_formalThirdRoot W)
     (fun _ => constantCoeff_formalThirdRoot W) (constantCoeff_formalInverse W)
 
+/-- The formal addition series may be substituted into a power series. -/
+theorem hasSubst_formalAdd : HasSubst (fun _ : Unit => formalAdd W) :=
+  hasSubst_of_constantCoeff_zero fun _ => constantCoeff_formalAdd W
+
 /-- The addition series is unchanged when its two parameters are exchanged. -/
 theorem rename_swap_formalAdd : rename Sum.swap (formalAdd W) = formalAdd W := by
   rw [formalAdd_def, rename_eq_subst,
@@ -155,6 +159,7 @@ private theorem map_invOfUnit {R' : Type*} [CommRing R'] {σ τ : Type*} {F : Ty
 theorem subst_inr_zero_formalThirdRoot :
     subst (Sum.elim X (fun _ => 0) : Unit ⊕ Unit → MvPowerSeries Unit R)
       (formalThirdRoot W) = formalInverse W := by
+  -- First specialize the slope and derive its fixed-point equation from the Weierstrass equation.
   set L : PowerSeries R :=
     subst (Sum.elim X (fun _ => 0) : Unit ⊕ Unit → MvPowerSeries Unit R)
       (formalSlope W) with hL
@@ -173,6 +178,7 @@ theorem subst_inr_zero_formalThirdRoot :
   have hL0 : PowerSeries.constantCoeff L = 0 := by
     have h := congrArg PowerSeries.constantCoeff hLfix
     simpa [pow_two] using h
+  -- Next identify the specialized denominator and commute its formal inverse with substitution.
   set D : MvPowerSeries (Unit ⊕ Unit) R :=
     1 + C W.a₂ * formalSlope W + C W.a₄ * formalSlope W ^ 2 +
       C W.a₆ * formalSlope W ^ 3 with hD
@@ -197,6 +203,7 @@ theorem subst_inr_zero_formalThirdRoot :
     have h := map_invOfUnit (R' := R) (substAlgHom (hasSubst_inr_zero (R := R))) hD1
       (by rw [coe_substAlgHom, hDsub]; exact hD1')
     rwa [coe_substAlgHom, hDsub] at h
+  -- Expanding the third-root formula now expresses the specialization solely in terms of `L`.
   have hexp : subst
       (Sum.elim X (fun _ => 0) : Unit ⊕ Unit → MvPowerSeries Unit R)
       (formalThirdRoot W) = -PowerSeries.X -
@@ -207,6 +214,8 @@ theorem subst_inr_zero_formalThirdRoot :
     simp only [map_sub, map_neg, map_add, map_mul, map_pow, map_ofNat,
       coe_substAlgHom, subst_C, subst_X (hasSubst_inr_zero (R := R)), hInv,
       subst_inr_zero_formalIntercept,
+      -- `PowerSeries R` abbreviates `MvPowerSeries Unit R`, and its `C` is definitionally the
+      -- multivariate constant-series hom; Mathlib has no separate conversion lemma to apply here.
       show (MvPowerSeries.C : R →+* MvPowerSeries Unit R) = PowerSeries.C from rfl]
     have hr : (Sum.elim X (fun _ => 0) : Unit ⊕ Unit → MvPowerSeries Unit R)
         (Sum.inr ()) = 0 := rfl
@@ -216,6 +225,8 @@ theorem subst_inr_zero_formalThirdRoot :
     rw [← hL]
     ring
   rw [hexp]
+  -- Finally clear the two unit denominators and discharge the resulting polynomial identity
+  -- with the slope fixed-point equation.
   set d : PowerSeries R := invOfUnit
     (1 + PowerSeries.C W.a₂ * L + PowerSeries.C W.a₄ * L ^ 2 +
       PowerSeries.C W.a₆ * L ^ 3) 1 with hd
@@ -236,6 +247,7 @@ theorem subst_inr_zero_formalThirdRoot :
       hUnit2 - (PowerSeries.C W.a₁ + PowerSeries.C W.a₃ * L) * hLfix
 
 /-- Adding zero in the second parameter does nothing. -/
+@[simp]
 theorem subst_inr_zero_formalAdd :
     subst (Sum.elim X (fun _ => 0) : Unit ⊕ Unit → MvPowerSeries Unit R)
       (formalAdd W) = PowerSeries.X := by
@@ -254,6 +266,7 @@ private theorem hasSubst_inl_zero :
   hasSubst_of_constantCoeff_zero (by rintro (j | j) <;> simp)
 
 /-- Adding zero in the first parameter does nothing. -/
+@[simp]
 theorem subst_inl_zero_formalAdd :
     subst (Sum.elim (fun _ => 0) X : Unit ⊕ Unit → MvPowerSeries Unit R)
       (formalAdd W) = PowerSeries.X := by
@@ -285,6 +298,8 @@ private theorem coeff_single_eq_one_of_subst_eq_X {f : MvPowerSeries (Unit ⊕ U
       exact constantCoeff_X ()
     · rw [hfam s h, map_zero]
   have h := congrArg (coeff (Finsupp.single () 1)) hsubst
+  -- `PowerSeries R` is the abbreviation `MvPowerSeries Unit R`, under which the two `X`
+  -- constants are definitionally equal; no coercion or wrapper theorem is available or needed.
   rw [coeff_subst hS, show (PowerSeries.X : PowerSeries R) = X () from rfl,
     coeff_X, ite_eq_left rfl] at h
   rw [finsum_eq_single _ (Finsupp.single s₀ 1) (fun d hd => ?_)] at h
