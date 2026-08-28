@@ -202,6 +202,36 @@ noncomputable def representedWeightLeviConjugation (w : Fin N → ℤ)
           (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
             (weightLeviInParabolicHopfIdeal R w)) (op A)).symm).toMonoidHom)
 
+/-- The represented conjugation action on categorical quotient points is conjugation after
+transporting both quotient-point groups to their dynamic models. -/
+theorem representedWeightLeviConjugation_apply (w : Fin N → ℤ)
+    (A : CommAlgCat.{u} R)
+    (z : op A ⟶ CommHopfAlgCat.grpObj
+      (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
+        (weightLeviInParabolicHopfIdeal R w)))
+    (g : op A ⟶ CommHopfAlgCat.grpObj
+      (CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
+        (weightUnipotentInParabolicHopfIdeal R w))) :
+    representedWeightLeviConjugation R w A
+        (weightLeviInParabolicPointsMulEquiv R w A
+          (CommHopfAlgCat.grpObjPointsMulEquiv _ (op A) z))
+        (weightUnipotentInParabolicPointsMulEquiv R w A
+          (CommHopfAlgCat.grpObjPointsMulEquiv _ (op A) g)) =
+      weightUnipotentInParabolicPointsMulEquiv R w A
+        (CommHopfAlgCat.grpObjPointsMulEquiv _ (op A)
+          ((CommHopfAlgCat.quotientNormalConjugation
+            (weightParabolicCoordinateHopfAlgebra R w)
+            (weightUnipotentInParabolicHopfIdeal R w)
+            (weightLeviInParabolicHopfIdeal R w)
+            (isNormal_weightUnipotentInParabolicHopfIdeal R w)).toMulAutHom (op A) z g)) := by
+  unfold representedWeightLeviConjugation
+  simp only [MulEquiv.toMonoidHom_eq_coe, MulEquiv.coe_monoidHom_trans,
+    MonoidHom.coe_comp, MonoidHom.coe_coe, Function.comp_apply,
+    MulEquiv.symm_apply_apply, MulAut.congr_apply, MulEquiv.trans_apply,
+    MulEquiv.symm_trans_apply, GrpObj.Action.toMulAutHom_apply,
+    EmbeddingLike.apply_eq_iff_eq]
+  rw [weightRelativeLeviConjugation]
+
 /-- The categorical conjugation action of the represented Levi subgroup is exactly the dynamic
 Levi conjugation action on every commutative algebra of points. -/
 @[simp]
