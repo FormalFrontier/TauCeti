@@ -1024,18 +1024,13 @@ theorem rep_ringChoose_cartanGenerator_mem_lattice (i : Fin (n + 1)) (m : ℕ)
     rep n (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator n i)) m) v ∈
       lattice n := by
   rw [lattice] at hv ⊢
-  induction hv using Submodule.span_induction with
-  | mem v hv =>
-      obtain ⟨a, rfl⟩ := hv
-      rw [Pi.basisFun_apply, Ring.map_choose]
-      have hweight := (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-        (cartanGenerator n) (rep n)).1 (isCartanWeightVector_single n a) i
-      rw [ringChoose_end_apply_of_apply_eq_smul hweight m, TauCeti.Ring.choose_intCast,
-        Int.cast_smul_eq_zsmul ℚ]
-      exact Submodule.smul_mem _ _ (single_mem_lattice n a)
-  | zero => rw [map_zero]; exact zero_mem _
-  | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
-  | smul z x _ hx => rw [map_zsmul]; exact Submodule.smul_mem _ z hx
+  rw [Ring.map_choose]
+  apply ringChoose_end_apply_mem_span_of_apply_eq_intCast_smul
+    (weight := fun a => weight n a i) (n := m) ?_ hv
+  intro a
+  rw [Pi.basisFun_apply]
+  exact (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
+    (cartanGenerator n) (rep n)).1 (isCartanWeightVector_single n a) i
 
 /-- The standard coordinate lattice is stable under the Kostant integral form. -/
 theorem rep_kostantForm_mem_lattice
@@ -1051,46 +1046,15 @@ theorem rep_kostantForm_mem_lattice
 
 /-! ## The full weight lattice -/
 
-/-- The upper standard weights generate every coordinate character. -/
-private theorem single_mem_span_range_weight (a : Fin (n + 1)) :
-    Pi.single a (1 : ℤ) ∈ Submodule.span ℤ (Set.range (weight n)) := by
-  induction a using Fin.induction with
-  | zero =>
-      have h : weight n (.inl (0 : Fin (n + 1))) ∈
-          Submodule.span ℤ (Set.range (weight n)) :=
-        Submodule.subset_span (Set.mem_range_self _)
-      convert h using 1
-      funext i
-      by_cases hi : i = 0
-      · subst i
-        simp only [weight_inl, DynkinType.TypeC.weight_apply, Pi.single_eq_same, Fin.val_zero,
-          ↓reduceIte, zero_add, Nat.zero_ne_add_one, sub_zero]
-      · have hval : (i : ℕ) ≠ 0 := by
-          intro hval
-          apply hi
-          exact Fin.ext hval
-        have hval' : (0 : ℕ) ≠ (i : ℕ) := Ne.symm hval
-        simp only [weight_inl, DynkinType.TypeC.weight_apply, Pi.single_eq_of_ne hi,
-          Fin.val_zero, hval', ↓reduceIte, Nat.zero_ne_add_one, sub_self]
-  | succ a ih =>
-      have h := add_mem
-        (Submodule.subset_span (s := Set.range (weight n))
-          (Set.mem_range_self (Sum.inl a.succ))) ih
-      convert h using 1
-      funext i
-      simp only [weight_inl, DynkinType.TypeC.weight_apply, Pi.single_apply, Pi.add_apply,
-        Fin.val_succ]
-      split_ifs <;> simp only [Fin.ext_iff, Fin.val_succ, Fin.val_castSucc] at * <;> omega
-
 /-- The weights of the standard symplectic module span the full character lattice. -/
 theorem span_range_weight_eq_top : Submodule.span ℤ (Set.range (weight n)) = ⊤ := by
   apply top_unique
-  intro x _
-  rw [← (Pi.basisFun ℤ (Fin (n + 1))).sum_repr x]
-  apply Submodule.sum_mem
-  intro a _
-  rw [Pi.basisFun_apply]
-  exact Submodule.smul_mem _ _ (single_mem_span_range_weight n a)
+  rw [← DynkinType.TypeC.span_range_weight_eq_top (n + 1)]
+  apply Submodule.span_mono
+  rintro _ ⟨a, rfl⟩
+  refine ⟨Sum.inl a, ?_⟩
+  funext i
+  exact weight_inl n a i
 
 /-- Enumerating the coordinate basis does not change the span of its weights. -/
 theorem span_range_basisWeight_eq_top : Submodule.span ℤ (Set.range (basisWeight n)) = ⊤ := by
