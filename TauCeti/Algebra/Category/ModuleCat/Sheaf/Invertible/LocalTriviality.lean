@@ -134,20 +134,12 @@ private lemma coversTop_of_sieve (t : LocalTrivializations M) (s : LocalTriviali
       (fun z : {Z : Over (t.X i) // Sieve.ofObjects s.X (t.X i) Z.hom} ↦ z.1) := by
   intro W
   rw [J.mem_over_iff]
-  apply J.superset_covering
-    (show (Sieve.ofObjects s.X (t.X i)).pullback W.hom ≤
-      Sieve.overEquiv W (Sieve.ofObjects
-        (fun z : {Z : Over (t.X i) // Sieve.ofObjects s.X (t.X i) Z.hom} ↦ z.1) W) from ?_)
+  refine J.superset_covering ?_
     (J.pullback_stable W.hom (s.coversTop (t.X i)))
   intro V f hf
-  change ∃ (Z : Over (t.X i)) (g : Z ⟶ W) (h : V ⟶ Z.left),
-    (Sieve.ofObjects
-      (fun z : {Z : Over (t.X i) // Sieve.ofObjects s.X (t.X i) Z.hom} ↦ z.1) W) g ∧
-      f = h ≫ g.left
+  rw [Sieve.overEquiv_iff, Sieve.mem_ofObjects_iff]
   let Z : Over (t.X i) := Over.mk (f ≫ W.hom)
-  refine ⟨Z, Over.homMk f, 𝟙 _, ?_, ?_⟩
-  · refine ⟨⟨Z, hf⟩, ⟨𝟙 Z⟩⟩
-  · simp
+  exact ⟨⟨Z, hf⟩, ⟨𝟙 Z⟩⟩
 
 /-- Construct a common refinement of any two local trivialization atlases.
 
