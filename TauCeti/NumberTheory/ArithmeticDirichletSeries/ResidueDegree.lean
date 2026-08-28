@@ -21,7 +21,8 @@ public import TauCeti.NumberTheory.NumberField.PrimeIdeal
 A height-one prime `𝔭` of `𝓞 K` lies over a unique rational prime `p`, and its absolute norm is
 `p ^ f` for `f` the residue degree `Ideal.inertiaDeg 𝔭.asIdeal ℤ`.  The primes with `f = 1`
 carry all the mass of every prime-indexed Dirichlet series and of every prime count; this file
-proves that the remaining ones, those of residue degree at least `2`, do not.
+proves the estimates that make that precise, bounding the contribution of the remaining primes,
+those of residue degree at least `2`.
 
 Two elementary inputs carry the whole argument.
 
@@ -56,12 +57,14 @@ series that is *uniform* on `s ≥ 1`.
 * `TauCeti.primeIdealZetaSum_higherDegreePrimes_le`: that sum, in Mathlib's
   `NumberField.Set.primeIdealZetaSum` vocabulary, is at most `2 [K : ℚ]` for every `s ≥ 1`.
 
-The last statement is the shape Dirichlet density consumes: the numerator over the
-degree-above-one primes stays bounded as `s → 1⁺`, while the denominator over all primes does
-not, so the density is `0`.  The `o(x / log x)` form is the same statement for natural counts,
-`x / log x` being the order of magnitude the prime ideal theorem gives for `π_K`.  Neither the
-divergence of the all-prime denominator nor the prime ideal theorem is available here, so both
-statements are proved from the explicit `√x` bound rather than against an asymptotic for `π_K`.
+No density-zero statement is proved here, and none is claimed.  What this file supplies is the
+numerator half of one: `NumberField.Set.HasDirichletDensity (higherDegreePrimes K) 0` asks for
+`primeIdealZetaSum (higherDegreePrimes K) s / primeIdealZetaSum univ s → 0` as `s → 1⁺`, and the
+bound below controls only the numerator; the divergence of the denominator is a separate result,
+not available here.  Likewise `primeCount K (higherDegreePrimes K) =o[atTop] primeCount K univ`
+would need a lower bound on the full prime count, which the prime ideal theorem supplies and
+which is also not available here; the `o(x / log x)` statement below is against the explicit
+function `x / log x`, not against `π_K`.
 
 ## Implementation notes
 
@@ -72,12 +75,17 @@ compares a prime of `K` with the rational prime under it.
 
 ## Roadmap role
 
-This is Layer **5.3** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`, "Degree-above-one
-primes", which asks for "the standard convergence and density-zero statements for residue degree
-greater than one" and completes Layer 5.  Layer 7.2 uses the convergence statement to replace the
-all-prime Dirichlet sum by the sum over rational primes when proving
-`P_all(s) = log (1 / (s - 1)) + O(1)`, and the roadmap records `Chebotarev` as the consumer that
-needs it when moving between a field and a fixed subfield.
+This advances Layer **5.3** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`,
+"Degree-above-one primes", which asks for "the standard convergence and density-zero statements
+for residue degree greater than one".  It delivers the convergence statements and the explicit
+counting bounds; the density-zero statements themselves are *not* proved here and Layer 5.3 is
+not complete, because both need input this repository does not yet have — the divergence of the
+all-prime Dirichlet sum for the Dirichlet density, and the prime ideal theorem for the natural
+one.  Layer 7.2 uses the convergence statement to replace the all-prime Dirichlet sum by the sum
+over rational primes when proving `P_all(s) = log (1 / (s - 1)) + O(1)`, and once that is
+available the bound below turns into the Dirichlet-density-zero statement.  The roadmap records
+`Chebotarev` as the consumer that needs these estimates when moving between a field and a fixed
+subfield.
 
 ## References
 
@@ -243,9 +251,10 @@ private theorem sqrt_isLittleO_div_log : Real.sqrt =o[atTop] fun x ↦ x / Real.
       (isLittleO_log_rpow_atTop (r := 1 / 2) (by norm_num)).tendsto_div_nhds_zero
   exact Tendsto.congr' hquot.symm h0
 
-/-- The primes of residue degree above one are a vanishing proportion of all primes: their count
-is `o(x / log x)`, and `x / log x` is the order of magnitude the prime ideal theorem gives for the
-full prime count `π_K(x)`. -/
+/-- The primes of residue degree above one and norm at most `x` number `o(x / log x)`.  The
+comparison is with the explicit function `x / log x`, not with the full prime count `π_K(x)`;
+`x / log x` is the order of magnitude the prime ideal theorem gives for `π_K`, but that theorem
+is not available here, so this is not a statement of natural density zero. -/
 theorem primeCount_higherDegreePrimes_isLittleO :
     primeCount K (higherDegreePrimes K) =o[atTop] fun x ↦ x / Real.log x :=
   primeCount_higherDegreePrimes_isBigO.trans_isLittleO sqrt_isLittleO_div_log
@@ -316,8 +325,9 @@ theorem summable_absNorm_rpow_higherDegreePrimes {s : ℝ} (hs : 1 / 2 < s) :
   rwa [Finset.sum_image fun _ _ _ _ h ↦ Subtype.ext h] at this
 
 /-- Uniformly in `s ≥ 1`, the partial Dirichlet sum over the primes of residue degree above one is
-at most `2 [K : ℚ]`.  This is the density-zero input: the numerator stays bounded as `s → 1⁺`
-while the all-prime denominator does not. -/
+at most `2 [K : ℚ]`.  This bounds the numerator of `NumberField.Set.HasDirichletDensity` as
+`s → 1⁺`; it is one half of Dirichlet density zero, the other half being the divergence of the
+all-prime denominator, which is not proved here. -/
 theorem primeIdealZetaSum_higherDegreePrimes_le {s : ℝ} (hs : 1 ≤ s) :
     (higherDegreePrimes K).primeIdealZetaSum s ≤ 2 * Module.finrank ℚ K := by
   classical
