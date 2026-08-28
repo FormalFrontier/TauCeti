@@ -43,8 +43,10 @@ Hausdorff — over a complete Hausdorff base, and over a discrete one — is
 
 ## Main results
 
-* `TauCeti.Huber.continuous_algebraMap_restrictedMvPowerSeriesCompletion`: the structure map
-  `A → A⟨X₁,…,Xₖ⟩` is continuous.
+* `TauCeti.Huber.continuous_algebraMap_completion_weightedRestrictedSubring`: the structure map
+  `A → A⟨X⟩_T` into the completion is continuous, for an arbitrary weight family;
+  `TauCeti.Huber.continuous_algebraMap_restrictedMvPowerSeriesCompletion` is the trivial-weight
+  case, the structure map `A → A⟨X₁,…,Xₖ⟩`.
 * `TauCeti.Huber.weightedMapCompletion_coe` and
   `TauCeti.Huber.continuous_weightedMapCompletion`: the induced map on the image of `A⟨X⟩_T`,
   and its continuity.
@@ -86,14 +88,22 @@ noncomputable abbrev restrictedMvPowerSeriesCompletion : Type _ :=
   UniformSpace.Completion
     (weightedRestrictedSubring (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight)
 
-/-- The structure map `A → A⟨X₁,…,Xₖ⟩` is continuous. -/
-theorem continuous_algebraMap_restrictedMvPowerSeriesCompletion :
-    Continuous (algebraMap A (restrictedMvPowerSeriesCompletion k A)) := by
-  have h : Continuous (algebraMap A (weightedRestrictedSubring
-      (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight)) :=
-    (continuous_weightedC isWeightFamily_one_weight).congr fun a ↦ Subtype.ext (by simp)
+/-- The structure map `A → A⟨X⟩_T` into the completion of a weighted restricted power-series ring
+is continuous. Nothing in the argument uses the shape of the weights, so it is stated for an
+arbitrary weight family; `continuous_algebraMap_restrictedMvPowerSeriesCompletion` is the trivial
+one. -/
+theorem continuous_algebraMap_completion_weightedRestrictedSubring {T : Fin k → Set A}
+    (hT : IsWeightFamily T) :
+    Continuous (algebraMap A (UniformSpace.Completion (weightedRestrictedSubring T hT))) := by
+  have h : Continuous (algebraMap A (weightedRestrictedSubring T hT)) :=
+    (continuous_weightedC hT).congr fun a ↦ Subtype.ext (by simp)
   exact ((UniformSpace.Completion.continuous_coe _).comp h).congr fun a ↦
     (UniformSpace.Completion.algebraMap_def _ _ a).symm
+
+/-- The structure map `A → A⟨X₁,…,Xₖ⟩` is continuous. -/
+theorem continuous_algebraMap_restrictedMvPowerSeriesCompletion :
+    Continuous (algebraMap A (restrictedMvPowerSeriesCompletion k A)) :=
+  continuous_algebraMap_completion_weightedRestrictedSubring k A isWeightFamily_one_weight
 
 /-! ### Functoriality in the coefficient ring -/
 

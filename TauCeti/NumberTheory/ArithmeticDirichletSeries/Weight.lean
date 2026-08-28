@@ -405,6 +405,12 @@ def toIdealArithmeticFunction (χ : MultiplicativeIdealWeight K) : IdealArithmet
 theorem toIdealArithmeticFunction_apply (χ : MultiplicativeIdealWeight K) (I : (Ideal (𝓞 K))⁰) :
     χ.toIdealArithmeticFunction I = χ I := (rfl)
 
+/-- The ideal arithmetic function underlying a completely multiplicative ideal weight is
+multiplicative on relatively prime ideals. -/
+theorem isMultiplicative_toIdealArithmeticFunction (χ : MultiplicativeIdealWeight K) :
+    χ.toIdealArithmeticFunction.IsMultiplicative := by
+  constructor <;> simp
+
 /-- An ideal weight is recovered from its restriction to the nonzero ideals by extending by
 zero: the zero-ideal law `χ ⊥ = 0` is exactly what makes this work. -/
 @[simp]
@@ -800,6 +806,12 @@ def toIdealArithmeticFunction (χ : UnitaryIdealWeight K) : IdealArithmeticFunct
 @[simp]
 theorem toIdealArithmeticFunction_apply (χ : UnitaryIdealWeight K) (I : (Ideal (𝓞 K))⁰) :
     χ.toIdealArithmeticFunction I = χ.1 I := (rfl)
+
+/-- The ideal arithmetic function underlying a unitary ideal weight is multiplicative on
+relatively prime ideals. -/
+theorem isMultiplicative_toIdealArithmeticFunction (χ : UnitaryIdealWeight K) :
+    χ.toIdealArithmeticFunction.IsMultiplicative :=
+  MultiplicativeIdealWeight.isMultiplicative_toIdealArithmeticFunction χ.1
 
 /-- A unitary weight is recovered from its underlying ideal arithmetic function by extending
 by zero, just as in `TauCeti.MultiplicativeIdealWeight.zeroExtend_toIdealArithmeticFunction`. -/

@@ -5,15 +5,17 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.AlgebraicGeometry.Morphisms.FlatMono
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Basic
 
 /-!
 # Central isogenies and isomorphisms
 
-Central isogenies are unchanged by replacing their source or target by an isomorphic group
-scheme. This file proves the corresponding `MorphismProperty.RespectsIso` instance. It also
-records the underlying fact that the all-test-schemes central-kernel condition is invariant under
-pre- and postcomposition with an isomorphism.
+An isogeny with monic underlying scheme morphism is an isomorphism. Central isogenies are also
+unchanged by replacing their source or target by an isomorphic group scheme. This file proves the
+corresponding `MorphismProperty.RespectsIso` instance and records the underlying fact that the
+all-test-schemes central-kernel condition is invariant under pre- and postcomposition with an
+isomorphism.
 
 The proofs stay at the functor-of-points level used by `GroupScheme.HasCentralKernel`. A morphism
 monic in `Over X` induces an injective map on points over every test scheme. On the source this
@@ -30,6 +32,8 @@ pointwise kernel.
   `Over X` preserves and reflects central kernels.
 * `TauCeti.GroupScheme.hasCentralKernel_respectsIso`: having central kernel respects isomorphisms
   of arrows.
+* `TauCeti.GroupScheme.IsIsogeny.isIso_of_mono`: an isogeny whose underlying scheme morphism is
+  monic is an isomorphism.
 * `TauCeti.GroupScheme.centralIsogenies_respectsIso`: central isogenies respect isomorphisms of
   arrows.
 
@@ -104,6 +108,24 @@ instance hasCentralKernel_respectsIso : (hasCentralKernel X).RespectsIso := by
 section Isogeny
 
 variable {k : Type u} [Field k]
+variable {G H : Grp (Over (Spec (CommRingCat.of k)))}
+
+namespace IsIsogeny
+
+/-- A group-scheme isogeny whose underlying scheme morphism is monic is an isomorphism. -/
+theorem isIso_of_mono {f : G ⟶ H} (hf : IsIsogeny f) [Mono f.hom.hom.left] : IsIso f := by
+  let _ : IsFinite f.hom.hom.left := hf.isFinite
+  let _ : Flat f.hom.hom.left := hf.flat
+  let _ : Surjective f.hom.hom.left := hf.surjective
+  apply (isIso_iff_of_reflects_iso f
+    (Grp.forget₂Mon (Over (Spec (CommRingCat.of k))))).mp
+  apply (isIso_iff_of_reflects_iso f.hom
+    (Mon.forget (Over (Spec (CommRingCat.of k))))).mp
+  apply (isIso_iff_of_reflects_iso f.hom.hom
+    (Over.forget (Spec (CommRingCat.of k)))).mp
+  exact Flat.isIso_of_surjective_of_mono f.hom.hom.left
+
+end IsIsogeny
 
 /-- Central isogenies are invariant under pre- and postcomposition with isomorphisms. -/
 instance centralIsogenies_respectsIso : (centralIsogenies k).RespectsIso := by

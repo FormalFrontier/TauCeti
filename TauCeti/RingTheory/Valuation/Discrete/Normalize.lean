@@ -28,6 +28,8 @@ extension.
 ## Main results
 
 * `Valuation.ordIndex_dvd_ord`: every order attained by `v` is a multiple of the index.
+* `Valuation.ordIndex_eq_mul_of_forall_ord_eq`: indices multiply when one order function is a
+  positive integral multiple of another.
 * `Valuation.ord_normalization_mul_ordIndex`: the order function of `v` is the index times the
   order function of its normalization — the defining relation between the two.
 * `Valuation.isEquiv_normalization`: a valuation is equivalent to its normalization; in
@@ -229,6 +231,45 @@ theorem normalization_surjective (hv : ordIndex v ≠ 0) :
     refine ⟨t ^ (-n), ?_⟩
     rw [normalization_apply v (zpow_ne_zero _ ht0), ord_zpow, ht,
       Int.mul_ediv_cancel _ he, neg_neg]
+
+/-- If the order function of a nontrivial valuation is a positive integral multiple of the
+order function of another, then their indices differ by the same factor. -/
+theorem ordIndex_eq_mul_of_forall_ord_eq (w : _root_.Valuation F ℤᵐ⁰) {e : ℕ} (he : 0 < e)
+    (hw : ordIndex w ≠ 0) (hord : ∀ f : F, ord v f = e * ord w f) :
+    ordIndex v = e * ordIndex w := by
+  obtain ⟨f, hf⟩ := ord_surjective (normalization w) (normalization_surjective w hw) 1
+  have hwf : ord w f = (ordIndex w : ℤ) := by
+    rw [← ord_normalization_mul_ordIndex w f, hf, one_mul]
+  have hvf : ord v f = (e * ordIndex w : ℕ) := by
+    rw [hord, hwf]
+    norm_cast
+  have hprodPos : 0 < e * ordIndex w := Nat.mul_pos he (Nat.pos_of_ne_zero hw)
+  have hle := ordIndex_le v hprodPos hvf
+  have hv : ordIndex v ≠ 0 := by
+    exact Nat.ne_of_gt (ordIndex_pos v (by rw [hvf]; exact_mod_cast hprodPos.ne'))
+  obtain ⟨g, hg⟩ := exists_ord_eq_ordIndex v hv
+  have hwordPos : 0 < ord w g := by
+    have := hord g
+    rw [hg] at this
+    have he' : (0 : ℤ) < e := by exact_mod_cast he
+    have hv' : (0 : ℤ) < ordIndex v := by exact_mod_cast Nat.pos_of_ne_zero hv
+    nlinarith
+  have hwordEq : ord w g = (ord w g).toNat := by omega
+  have hwle := ordIndex_le w (n := (ord w g).toNat) (by omega) hwordEq
+  have hge : e * ordIndex w ≤ ordIndex v := by
+    have hordg := hord g
+    rw [hg] at hordg
+    have hwle' : (ordIndex w : ℤ) ≤ ord w g := by
+      calc
+        (ordIndex w : ℤ) ≤ ((ord w g).toNat : ℕ) := by exact_mod_cast hwle
+        _ = ord w g := by omega
+    have he' : (0 : ℤ) ≤ e := by positivity
+    have : (e * ordIndex w : ℕ) ≤ ordIndex v := by
+      exact_mod_cast (calc
+        (e : ℤ) * ordIndex w ≤ (e : ℤ) * ord w g := mul_le_mul_of_nonneg_left hwle' he'
+        _ = (ordIndex v : ℤ) := hordg.symm)
+    exact this
+  omega
 
 /-- Normalization preserves triviality on a base ring. -/
 theorem IsTrivialOn.normalization {A : Type*} [CommRing A] [Algebra A F]

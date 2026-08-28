@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.FiniteStability
+public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.Product
 

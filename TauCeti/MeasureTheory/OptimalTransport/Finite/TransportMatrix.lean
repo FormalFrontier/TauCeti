@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Data.Matrix.Basic
-public import Mathlib.Probability.ProbabilityMassFunction.Constructions
+public import TauCeti.Probability.ProbabilityMassFunction.Finite
 
 /-!
 # Finite transport plans as matrices
@@ -112,6 +112,16 @@ theorem apply_ne_top (A : TransportMatrix μ ν) (i : ι) (j : κ) : A i j ≠ �
   rw [← A.row_sum i]
   exact Finset.single_le_sum (f := fun j ↦ A i j) (fun _ _ ↦ zero_le) (Finset.mem_univ j)
 
+/-- Every entry of a transportation matrix is at most its row mass. -/
+theorem apply_le_row (A : TransportMatrix μ ν) (i : ι) (j : κ) : A i j ≤ μ i := by
+  rw [← A.row_sum i]
+  exact Finset.single_le_sum (f := fun j ↦ A i j) (fun _ _ ↦ zero_le) (Finset.mem_univ j)
+
+/-- Every entry of a transportation matrix is at most its column mass. -/
+theorem apply_le_col (A : TransportMatrix μ ν) (i : ι) (j : κ) : A i j ≤ ν j := by
+  rw [← A.col_sum j]
+  exact Finset.single_le_sum (f := fun i ↦ A i j) (fun _ _ ↦ zero_le) (Finset.mem_univ i)
+
 /-- The entries of a transportation matrix, read as a real-valued function on the product. -/
 def toRealFun (A : TransportMatrix μ ν) (q : ι × κ) : ℝ := (A q.1 q.2).toReal
 
@@ -136,6 +146,10 @@ theorem sum_toRealFun_col (A : TransportMatrix μ ν) (j : κ) :
   simp only [toRealFun_apply]
   rw [← ENNReal.toReal_sum fun i _ ↦ A.apply_ne_top i j, A.col_sum]
 
+/-- The real-valued entries of a transportation matrix have total mass one. -/
+theorem sum_toRealFun (A : TransportMatrix μ ν) : ∑ p, A.toRealFun p = 1 := by
+  simpa only [toRealFun_apply, toPMF_apply] using PMF.sum_toReal_eq_one A.toPMF
+
 /-- The total cost of a finite transportation matrix. The cost function is real-valued, so
 negative costs are allowed. -/
 def cost (c : ι × κ → ℝ) (A : TransportMatrix μ ν) : ℝ := ∑ q, c q * A.toRealFun q
@@ -144,6 +158,13 @@ def cost (c : ι × κ → ℝ) (A : TransportMatrix μ ν) : ℝ := ∑ q, c q 
 the lemma downstream modules should rewrite with. -/
 theorem cost_def (c : ι × κ → ℝ) (A : TransportMatrix μ ν) :
     A.cost c = ∑ q, c q * A.toRealFun q := (rfl)
+
+/-- Adding a constant to every entry of a cost adds that constant to the matrix cost. -/
+@[simp]
+theorem cost_add_const (c : ι × κ → ℝ) (A : TransportMatrix μ ν) (a : ℝ) :
+    A.cost (fun p ↦ c p + a) = A.cost c + a := by
+  simp only [cost_def, add_mul, Finset.sum_add_distrib, ← Finset.mul_sum, A.sum_toRealFun,
+    mul_one]
 
 end TransportMatrix
 

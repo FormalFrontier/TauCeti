@@ -21,6 +21,8 @@ powers and factors the absolute Frobenius through Mathlib's base-change map.
 
 * `WeierstrassCurve.Affine.CoordinateRing.relativeFrobenius`: the relative Frobenius on coordinate
   rings.
+* `WeierstrassCurve.Affine.CoordinateRing.iterateRelativeFrobenius`: its `n`-fold iterate, from
+  the coordinate ring of `W.map (iterateFrobenius R p n)` to that of `W`.
 
 ## Main results
 
@@ -29,6 +31,8 @@ powers and factors the absolute Frobenius through Mathlib's base-change map.
 * `relativeFrobenius_comp_map`: composing relative Frobenius with the base-change map recovers
   absolute Frobenius.
 * `relativeFrobenius_map`: the pointwise form of that identity.
+* `iterateRelativeFrobenius_comp_map`: the iterated coefficient Frobenius followed by the
+  iterated relative Frobenius is the `p ^ n`-power map.
 
 ## Roadmap
 
@@ -138,6 +142,93 @@ theorem relativeFrobenius_map (z : W.CoordinateRing) :
   simpa [frobenius_def] using
     congrArg (fun f : W.CoordinateRing →+* W.CoordinateRing ↦ f z)
       (relativeFrobenius_comp_map p W)
+
+/-! ### Iterated relative Frobenius -/
+
+/-- Substituting `X ^ (p ^ n)` into the coefficientwise iterated Frobenius of a polynomial is
+its `p ^ n`-th power. -/
+private theorem expand_map_iterateFrobenius (n : ℕ) (g : R[X]) :
+    expand R (p ^ n) (g.map (iterateFrobenius R p n)) = g ^ p ^ n := by
+  rw [← Polynomial.map_expand, Polynomial.map_iterateFrobenius_expand]
+
+/-- Substituting `(x ^ (p ^ n), y ^ (p ^ n))` into the equation of the `n`-th Frobenius twist
+gives zero. -/
+private theorem eval₂_iterateRelativeFrobenius_eq_zero (n : ℕ) :
+    Polynomial.eval₂
+        ((AdjoinRoot.of W.polynomial).comp (expand R (p ^ n)).toRingHom)
+        (AdjoinRoot.root W.polynomial ^ p ^ n)
+        (W.map (iterateFrobenius R p n)).polynomial = 0 := by
+  have hcomp : ((AdjoinRoot.of W.polynomial).comp
+      (expand R (p ^ n)).toRingHom).comp
+        (mapRingHom (iterateFrobenius R p n)) =
+      (iterateFrobenius W.CoordinateRing p n).comp (AdjoinRoot.of W.polynomial) := by
+    apply RingHom.ext
+    intro g
+    simp only [AlgHom.toRingHom_eq_coe, RingHom.comp_apply, Polynomial.coe_mapRingHom,
+      AlgHom.coe_toRingHom, iterateFrobenius_def, expand_map_iterateFrobenius, map_pow]
+  rw [_root_.WeierstrassCurve.Affine.map_polynomial, Polynomial.eval₂_map, hcomp,
+    ← iterateFrobenius_def, ← Polynomial.hom_eval₂, AdjoinRoot.eval₂_root, map_zero]
+
+/-- **The iterated relative Frobenius on coordinate rings.** It maps the coordinate ring of the
+`n`-th Frobenius twist `W.map (iterateFrobenius R p n)` to `W.CoordinateRing`, sending the two
+coordinates to their `p ^ n`-th powers. -/
+noncomputable def iterateRelativeFrobenius (n : ℕ) :
+    (W.map (iterateFrobenius R p n)).CoordinateRing →ₐ[R] W.CoordinateRing :=
+  { AdjoinRoot.lift
+      ((AdjoinRoot.of W.polynomial).comp (expand R (p ^ n)).toRingHom)
+      (AdjoinRoot.root W.polynomial ^ p ^ n)
+      (eval₂_iterateRelativeFrobenius_eq_zero p W n) with
+    commutes' := fun c ↦ by
+      rw [IsScalarTower.algebraMap_apply R R[X]
+          (W.map (iterateFrobenius R p n)).CoordinateRing,
+        IsScalarTower.algebraMap_apply R R[X] W.CoordinateRing]
+      simp [AdjoinRoot.algebraMap_eq] }
+
+/-- The iterated relative Frobenius substitutes `X ^ (p ^ n)` into a polynomial in the affine
+coordinate. -/
+@[simp]
+theorem iterateRelativeFrobenius_of (n : ℕ) (g : R[X]) :
+    iterateRelativeFrobenius p W n
+        (AdjoinRoot.of (W.map (iterateFrobenius R p n)).polynomial g) =
+      AdjoinRoot.of W.polynomial (expand R (p ^ n) g) :=
+  AdjoinRoot.lift_of (eval₂_iterateRelativeFrobenius_eq_zero p W n)
+
+/-- The iterated relative Frobenius sends the second coordinate of the twist to its
+`p ^ n`-th power. -/
+@[simp]
+theorem iterateRelativeFrobenius_root (n : ℕ) :
+    iterateRelativeFrobenius p W n
+        (AdjoinRoot.root (W.map (iterateFrobenius R p n)).polynomial) =
+      AdjoinRoot.root W.polynomial ^ p ^ n :=
+  AdjoinRoot.lift_root (eval₂_iterateRelativeFrobenius_eq_zero p W n)
+
+/-- **The iterated absolute Frobenius factors through the `n`-th twist.** Composing the
+coefficient map with the iterated relative Frobenius is the `p ^ n`-power map on
+`W.CoordinateRing`. -/
+theorem iterateRelativeFrobenius_comp_map (n : ℕ) :
+    (iterateRelativeFrobenius p W n).toRingHom.comp
+        (_root_.WeierstrassCurve.Affine.CoordinateRing.map W
+          (iterateFrobenius R p n)) =
+      iterateFrobenius W.CoordinateRing p n := by
+  rw [map_eq_adjoinRootMap]
+  refine AdjoinRoot.ringHom_ext ?_ ?_
+  · apply RingHom.ext
+    intro g
+    simp only [AlgHom.toRingHom_eq_coe, RingHom.comp_apply, AdjoinRoot.map_of,
+      Polynomial.coe_mapRingHom, AlgHom.coe_toRingHom, iterateFrobenius_def,
+      iterateRelativeFrobenius_of, expand_map_iterateFrobenius, map_pow]
+  · simp [iterateFrobenius_def]
+
+/-- Pointwise form of `iterateRelativeFrobenius_comp_map`. -/
+@[simp]
+theorem iterateRelativeFrobenius_map (n : ℕ) (z : W.CoordinateRing) :
+    iterateRelativeFrobenius p W n
+        (_root_.WeierstrassCurve.Affine.CoordinateRing.map W
+          (iterateFrobenius R p n) z) =
+      z ^ p ^ n := by
+  simpa [iterateFrobenius_def] using
+    congrArg (fun f : W.CoordinateRing →+* W.CoordinateRing ↦ f z)
+      (iterateRelativeFrobenius_comp_map p W n)
 
 end CoordinateRing
 

@@ -7,9 +7,12 @@ module
 
 public import Mathlib.Analysis.Normed.Group.Bounded
 public import Mathlib.Analysis.Polynomial.CauchyBound
+public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Topology.Algebra.Polynomial
 public import TauCeti.RingTheory.Polynomial.SymmetricPower
 public import TauCeti.Topology.Sym.Disjoint
+import Mathlib.Analysis.Analytic.Constructions
+import Mathlib.Analysis.Analytic.Linear
 
 /-!
 # The elementary symmetric chart is a homeomorphism
@@ -33,6 +36,9 @@ Both halves are elementary, but neither is formal:
 
 * `TauCeti.Sym.continuous_coeffEquiv_comp_ofFn`: the coefficients depend continuously on an
   ordered tuple of roots.
+* `TauCeti.Polynomial.analyticAt_coeff_prod_X_sub_C` and
+  `TauCeti.Sym.analyticAt_coeffEquiv_ofFn`: the same forward coefficient map is analytic over any
+  nontrivially normed field.
 * `TauCeti.Sym.norm_le_norm_coeffEquiv_ofFn_add_one`: Cauchy's bound on the symmetric power, that
   an ordered tuple is bounded by one more than the norm of its coefficient tuple.
 * `TauCeti.Sym.isProperMap_coeffEquiv_comp_ofFn`: consequently the coefficient map
@@ -48,17 +54,83 @@ structure (elementary symmetric functions)", after Ozsváth--Szabó
 ([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1): a holomorphic coordinate on the
 surface identifies a neighbourhood in `Sym^g(Σ)` with an open subset of `Sym^g(ℂ)`, and the chart
 below is what makes that a chart on a topological manifold; the charted structure is assembled
-from it in `TauCeti/Geometry/Manifold/SymmetricPower.lean`. The complex structure itself, and the
-totally real tori `T_α`, `T_β`, are separate later steps.
+from it in `TauCeti/Geometry/Manifold/SymmetricPower.lean`. Away from the diagonal the continuity
+proved here is upgraded to analyticity in
+`TauCeti/Analysis/Polynomial/SimpleRoots.lean`. The complex structure itself, and the totally real
+tori `T_α`, `T_β`, are separate later steps.
 -/
 
 public section
 
-namespace TauCeti
-
+-- `Polynomial` is opened outside `namespace TauCeti` so that it names Mathlib's namespace rather
+-- than `TauCeti.Polynomial`, which the import above populates.
 open Filter Polynomial Topology
 
+namespace TauCeti
+
+namespace Polynomial
+
+/-! ### Analyticity of the coefficients -/
+
+section Analyticity
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+
+/-- The coefficients of `∏ i ∈ s, (X - C (v i))` depend analytically on the tuple `v` of roots.
+
+This is the elementary half of the chart, and the analytic counterpart of
+`TauCeti.Sym.continuous_coeff_prod_X_sub_C`: each coefficient is, up to sign, an elementary
+symmetric function of the roots, so the analyticity of the ring operations is all that is used. -/
+theorem analyticAt_coeff_prod_X_sub_C {ι : Type*} [Fintype ι] (s : Finset ι) (k : ℕ)
+    (v₀ : ι → 𝕜) : AnalyticAt 𝕜 (fun v : ι → 𝕜 => (∏ i ∈ s, (X - C (v i))).coeff k) v₀ := by
+  classical
+  have hproj : ∀ i : ι, AnalyticAt 𝕜 (fun v : ι → 𝕜 => v i) v₀ := fun i =>
+    (ContinuousLinearMap.proj (R := 𝕜) (φ := fun _ : ι => 𝕜) i).analyticAt _
+  induction s using Finset.induction_on generalizing k with
+  | empty =>
+    simp only [Finset.prod_empty]
+    exact analyticAt_const
+  | @insert a s ha ih =>
+    cases k with
+    | zero =>
+      have hpt : (fun v : ι → 𝕜 => (∏ i ∈ insert a s, (X - C (v i))).coeff 0) =
+          fun v => -v a * (∏ i ∈ s, (X - C (v i))).coeff 0 := by
+        funext v
+        rw [Finset.prod_insert ha, mul_coeff_zero]
+        simp
+      rw [hpt]
+      exact (hproj a).neg.mul (ih 0)
+    | succ k =>
+      have hpt : (fun v : ι → 𝕜 => (∏ i ∈ insert a s, (X - C (v i))).coeff (k + 1)) =
+          fun v => (∏ i ∈ s, (X - C (v i))).coeff k
+            - v a * (∏ i ∈ s, (X - C (v i))).coeff (k + 1) := by
+        funext v
+        rw [Finset.prod_insert ha, sub_mul, coeff_sub, coeff_X_mul, coeff_C_mul]
+      rw [hpt]
+      exact (ih k).sub ((hproj a).mul (ih (k + 1)))
+
+end Analyticity
+
+end Polynomial
+
 namespace Sym
+
+/-! ### Analyticity of the coefficients -/
+
+section Analyticity
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [IsAlgClosed 𝕜] {n : ℕ}
+
+/-- The elementary symmetric chart is analytic in an ordered presentation of the tuple: by Vieta's
+formulas its coordinates are, up to sign, the elementary symmetric polynomials of the ordered
+tuple. -/
+theorem analyticAt_coeffEquiv_ofFn (v₀ : Fin n → 𝕜) :
+    AnalyticAt 𝕜 (fun v : Fin n → 𝕜 => coeffEquiv 𝕜 n (ofFn v)) v₀ := by
+  refine AnalyticAt.pi fun i => ?_
+  simp only [coeffEquiv_ofFn_apply]
+  exact Polynomial.analyticAt_coeff_prod_X_sub_C _ _ _
+
+end Analyticity
 
 /-! ### Continuity of the coefficients -/
 

@@ -10,6 +10,7 @@ import Mathlib.Algebra.Lie.BaseChange
 import Mathlib.Data.Fin.Rev
 import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 import Mathlib.RingTheory.Flat.Equalizer
+import TauCeti.Algebra.Lie.Submodule.Decomposition
 
 /-!
 # Symmetry of the weight multiplicities of an `sl₂`-module
@@ -78,7 +79,9 @@ private theorem nonempty_linearEquiv_eigenspace_neg_of_eq_top (t : IsSl2Triple h
     Nonempty
       ((toEnd K L M h).eigenspace μ ≃ₗ[K] (toEnd K L M h).eigenspace (-μ)) := by
   classical
-  obtain ⟨k, N, hint, hirr⟩ := exists_isInternal_isIrreducible M htop
+  have _i : ComplementedLattice (LieSubmodule K L M) :=
+    ⟨exists_isCompl_of_toLieSubalgebra_eq_top htop⟩
+  obtain ⟨k, N, hint, hirr⟩ := exists_isInternal_isIrreducible K L M
   have hprimitive : ∀ i, ∃ (m : N i) (n : ℕ), t.HasPrimitiveVectorWith m (n : K) := by
     intro i
     let _ : LieModule.IsIrreducible K L (N i) := hirr i

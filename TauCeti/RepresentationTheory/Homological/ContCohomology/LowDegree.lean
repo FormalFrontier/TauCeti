@@ -189,6 +189,13 @@ theorem map_d0_apply {N : Type w} [AddCommGroup N] [DistribSMul G N] (φ : M →
 theorem mem_B1_iff {f : G → M} : f ∈ B1 G M ↔ groupCohomology.IsCoboundary₁ f := by
   simp only [B1, AddMonoidHom.mem_range, groupCohomology.IsCoboundary₁, funext_iff, d0_apply]
 
+/-- The introduction rule for `B¹`: every `d⁰`-image is a `1`-coboundary.
+
+This is deliberately not `@[simp]`: `mem_B1_iff` already rewrites the left-hand side to
+`groupCohomology.IsCoboundary₁ (d0 G M m)`. -/
+theorem d0_mem_B1 (m : M) : d0 G M m ∈ B1 G M :=
+  AddMonoidHom.mem_range.2 ⟨m, rfl⟩
+
 section TrivialAction
 
 variable (htriv : ∀ (g : G) (m : M), g • m = m)

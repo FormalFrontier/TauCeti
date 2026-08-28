@@ -10,7 +10,7 @@ public import TauCeti.Analysis.Contour.Crossing.FiniteExcision
 public import TauCeti.Analysis.Contour.ExitTime
 public import TauCeti.Analysis.Contour.PwC1ImmersionOn
 import TauCeti.Analysis.Contour.InvSubCPVExistence
-import TauCeti.Analysis.Contour.PerWindow.CPV
+import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
 
 /-!
 # Equal-radius cap windows at crossings

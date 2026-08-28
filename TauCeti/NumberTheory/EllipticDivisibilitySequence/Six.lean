@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.EllipticDivisibilitySequence
+import Mathlib.Tactic.Ring
 
 /-!
 # The sixth term of a normalised elliptic divisibility sequence

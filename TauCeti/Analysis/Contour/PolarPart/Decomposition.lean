@@ -321,21 +321,16 @@ theorem intervalIntegrable_polarPart_mul_deriv_truncated (decomp : PolarPartDeco
       MeasureTheory.volume a b := by
   classical
   set M : ℝ := ∑ k : Fin (decomp.order s), ‖decomp.coeff s k‖ / ε ^ (k.val + 1) with hM_def
-  have h_meas : Measurable (fun t =>
-      if ‖γ t - (s : ℂ)‖ > ε then decomp.polarPart s (γ t) * deriv γ t else 0) := by
-    have hA : MeasurableSet {t : ℝ | ε < ‖γ t - (s : ℂ)‖} :=
-      measurableSet_lt measurable_const ((hγ_meas.sub_const _).norm)
-    refine Measurable.ite hA ?_ measurable_const
-    have h_polar : Measurable fun t => decomp.polarPart s (γ t) := by
-      have h_eq : (fun t => decomp.polarPart s (γ t)) = fun t =>
-          ∑ k : Fin (decomp.order s), decomp.coeff s k / (γ t - (s : ℂ)) ^ (k.val + 1) :=
-        funext fun t => decomp.polarPart_eq s (γ t)
-      rw [h_eq]
-      exact Finset.measurable_sum _ fun k _ =>
-        (((hγ_meas.sub_const _).pow_const _).const_div _)
-    exact h_polar.mul (measurable_deriv _)
-  refine intervalIntegrable_truncated_mul_deriv (f := decomp.polarPart s) (M := M)
-    hderiv_int h_meas.aestronglyMeasurable fun t h_far => ?_
+  have h_polar : Measurable fun t => decomp.polarPart s (γ t) := by
+    have h_eq : (fun t => decomp.polarPart s (γ t)) = fun t =>
+        ∑ k : Fin (decomp.order s), decomp.coeff s k / (γ t - (s : ℂ)) ^ (k.val + 1) :=
+      funext fun t => decomp.polarPart_eq s (γ t)
+    rw [h_eq]
+    exact Finset.measurable_sum _ fun k _ =>
+      (((hγ_meas.sub_const _).pow_const _).const_div _)
+  refine intervalIntegrable_truncated_mul_deriv (f := decomp.polarPart s) (M := M) hderiv_int
+    (aestronglyMeasurable_truncated hγ_meas.aemeasurable
+      (h_polar.mul (measurable_deriv _)).aestronglyMeasurable) fun t h_far => ?_
   rw [decomp.polarPart_eq s (γ t), hM_def]
   refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun k _ => ?_)
   rw [norm_div, norm_pow]

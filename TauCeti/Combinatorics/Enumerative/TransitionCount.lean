@@ -50,6 +50,8 @@ transition counts of a path are the sufficient statistic: see
   pairs.
 * `TauCeti.transitionCount_getD`: the transition counts of a list, read as a `Fin`-indexed word,
   count its consecutive pairs.
+* `TauCeti.prod_consecutivePairs_getD`: a product of transition weights along a list, read as a
+  `Fin`-indexed word, is the product over its consecutive pairs.
 * `TauCeti.prod_transitionCount`: a product of transition weights along a word depends on the word
   only through its transition counts.
 * `TauCeti.prod_eq_of_transitionCount_eq`: the resulting comparison of two words with equal
@@ -180,6 +182,28 @@ theorem transitionCount_getD [DecidableEq α] (d a b : α) :
       consecutivePairs_cons_cons, List.count_cons]
     simp only [Fin.val_zero, Fin.val_one, List.getD_cons_zero, List.getD_cons_succ, beq_iff_eq,
       Prod.mk.injEq]
+
+/-- **A product of transition weights along a word is a product over its consecutive pairs.**
+Reading a list of length `n + 1` as a word indexed by `Fin (n + 1)`, the product of a weight over
+the `n` transitions of the word is the product of that weight over the list of its consecutive
+pairs. This is the multiplicative counterpart of `transitionCount_getD`. -/
+theorem prod_consecutivePairs_getD {M : Type*} [CommMonoid M] (p : α → α → M) (d : α) :
+    ∀ (n : ℕ) (l : List α), l.length = n + 1 →
+      ∏ i : Fin n, p (l.getD i.val d) (l.getD (i.val + 1) d) =
+        (l.consecutivePairs.map fun q => p q.1 q.2).prod
+  | _, [], hl => by simp at hl
+  | n, [x], hl => by
+    obtain rfl : n = 0 := by simp only [List.length_cons, List.length_nil] at hl; omega
+    simp [List.consecutivePairs]
+  | n, x :: y :: t, hl => by
+    obtain rfl : n = t.length + 1 := by simp only [List.length_cons] at hl; omega
+    rw [Fin.prod_univ_succ, consecutivePairs_cons_cons]
+    have htail : ∀ i : Fin t.length,
+        p ((x :: y :: t).getD i.succ.val d) ((x :: y :: t).getD (i.succ.val + 1) d) =
+          p ((y :: t).getD i.val d) ((y :: t).getD (i.val + 1) d) := fun i => by simp
+    rw [Finset.prod_congr rfl fun i _ => htail i,
+      prod_consecutivePairs_getD p d t.length (y :: t) rfl]
+    simp
 
 /-- Summing the transitions out of `a` counts the positions carrying `a` other than the last one.
 The index set `S` only has to contain the successors of transitions in `w`. -/

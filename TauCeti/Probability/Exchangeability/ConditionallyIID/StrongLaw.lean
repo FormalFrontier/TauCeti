@@ -147,7 +147,7 @@ The limit is random: it is `∫ f dν(ω)`. It reduces to a constant when the di
 almost everywhere constant, but also for observables — `f = 0`, say — whose integral happens not to
 see the randomness of `ν`. -/
 theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
+    (h : ConditionallyIIDWith μ X ν)
     {f : α → E} (hf : Measurable f) {C : ℝ} (hbdd : ∀ x, ‖f x‖ ≤ C) :
     ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f (X i ω)) atTop
       (𝓝 (∫ y, f y ∂(ν ω : Measure α))) := by
@@ -170,7 +170,7 @@ theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
     TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const
       (id : ProbabilityMeasure α → ProbabilityMeasure α) measurable_id
   have hnull : jointPathLaw μ X ν Gᶜ = 0 := by
-    rw [h.jointPathLaw_eq_iidMixtureLaw hX]
+    rw [h.jointPathLaw_eq_iidMixtureLaw]
     simp only [iidMixtureLaw_def, id_eq]
     rw [Measure.bind_apply hGmeas.compl hker.aemeasurable]
     simp [hfibre]
@@ -179,7 +179,7 @@ theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
     mem_ae_iff.mpr (by rwa [jointPathLaw_def] at hnull)
   have hmap : AEMeasurable
       (fun ω => (ν ω, fun i => X i ω) : Ω → ProbabilityMeasure α × (ℕ → α)) μ :=
-    h.measurable_directing.aemeasurable.prodMk (aemeasurable_pi_lambda _ hX)
+    h.measurable_directing.aemeasurable.prodMk (aemeasurable_pi_lambda _ h.aemeasurable)
   filter_upwards [(ae_map_iff hmap
     (p := fun z : ProbabilityMeasure α × (ℕ → α) => z ∈ G) hGmeas).mp hjointae] with ω hω
   simpa only [hG, Set.mem_ofPred_eq] using hω
@@ -188,13 +188,13 @@ theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
 measurable observable against the empirical measure of a conditionally i.i.d. process converges
 almost surely to its integral against the directing measure. -/
 theorem ConditionallyIIDWith.tendsto_integral_empiricalMeasure_ae [IsFiniteMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
+    (h : ConditionallyIIDWith μ X ν)
     {f : α → ℝ} (hf : Measurable f) {C : ℝ} (hbdd : ∀ x, |f x| ≤ C) :
     ∀ᵐ ω ∂μ, Tendsto
       (fun n : ℕ => ∫ y, f y ∂(empiricalMeasure (fun i => X i ω) n : Measure α)) atTop
       (𝓝 (∫ y, f y ∂(ν ω : Measure α))) := by
   have hbdd' : ∀ x, ‖f x‖ ≤ C := fun x => by simpa only [Real.norm_eq_abs] using hbdd x
-  filter_upwards [h.tendsto_average_ae hX hf hbdd'] with ω hω
+  filter_upwards [h.tendsto_average_ae hf hbdd'] with ω hω
   -- `empiricalMeasure … n` averages the first `n + 1` terms, so the limit is along the shifted
   -- sequence.
   refine Tendsto.congr (fun n => ?_) (hω.comp (tendsto_add_atTop_nat 1))
@@ -212,7 +212,7 @@ The `L²` form of the same convergence is
 `ConditionallyIIDWith.integral_empiricalMeasure_apply_sub_sq` computes its exact finite-sample
 error. -/
 theorem ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae [IsFiniteMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
+    (h : ConditionallyIIDWith μ X ν)
     {B : Set α} (hB : MeasurableSet B) :
     ∀ᵐ ω ∂μ, Tendsto
       (fun n : ℕ => ((empiricalMeasure (fun i => X i ω) n : Measure α) B).toReal) atTop
@@ -220,7 +220,7 @@ theorem ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae [IsFiniteMeasure 
   have hf : Measurable (B.indicator (1 : α → ℝ)) := measurable_one.indicator hB
   have hbdd : ∀ x, |B.indicator (1 : α → ℝ) x| ≤ 1 := fun x => by
     by_cases hx : x ∈ B <;> simp [hx]
-  filter_upwards [h.tendsto_integral_empiricalMeasure_ae hX hf hbdd] with ω hω
+  filter_upwards [h.tendsto_integral_empiricalMeasure_ae hf hbdd] with ω hω
   simpa only [integral_indicator_one hB, measureReal_def] using hω
 
 /-- **A single null set serves a countable family of sets.** Almost surely, the empirical
@@ -230,12 +230,12 @@ Interchanging the two quantifiers is not cosmetic: an upgrade of setwise converg
 in the weak topology on `ProbabilityMeasure α` tests against a countable determining class, and
 needs the null set to be chosen before the class is inspected. -/
 theorem ConditionallyIIDWith.tendsto_empiricalMeasure_apply_ae_forall [IsFiniteMeasure μ]
-    {ι : Type*} [Countable ι] (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ)
+    {ι : Type*} [Countable ι] (h : ConditionallyIIDWith μ X ν)
     {B : ι → Set α} (hB : ∀ j, MeasurableSet (B j)) :
     ∀ᵐ ω ∂μ, ∀ j, Tendsto
       (fun n : ℕ => ((empiricalMeasure (fun i => X i ω) n : Measure α) (B j)).toReal) atTop
       (𝓝 (((ν ω : Measure α) (B j)).toReal)) :=
-  ae_all_iff.2 fun j => h.tendsto_empiricalMeasure_apply_ae hX (hB j)
+  ae_all_iff.2 fun j => h.tendsto_empiricalMeasure_apply_ae (hB j)
 
 end Probability
 

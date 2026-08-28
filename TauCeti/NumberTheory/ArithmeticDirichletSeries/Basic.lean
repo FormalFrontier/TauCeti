@@ -73,6 +73,34 @@ namespace IdealArithmeticFunction
 
 variable {K}
 
+/-- An ideal arithmetic function is multiplicative when it takes the unit ideal to `1` and
+respects products of relatively prime nonzero ideals. This is weaker than the complete
+multiplicativity carried by `MultiplicativeIdealWeight`. -/
+structure IsMultiplicative (f : IdealArithmeticFunction K) : Prop where
+  /-- A multiplicative ideal arithmetic function takes the unit ideal to `1`. -/
+  map_one : f 1 = 1
+  /-- A multiplicative ideal arithmetic function respects products of relatively prime ideals. -/
+  map_mul_of_isRelPrime {I J : (Ideal (𝓞 K))⁰}
+    (hIJ : IsRelPrime (I : Ideal (𝓞 K)) (J : Ideal (𝓞 K))) : f (I * J) = f I * f J
+
+/-- The everywhere-one ideal arithmetic function is multiplicative. -/
+theorem isMultiplicative_one : IsMultiplicative (1 : IdealArithmeticFunction K) := by
+  constructor <;> simp
+
+/-- Pointwise products of multiplicative ideal arithmetic functions are multiplicative. -/
+theorem IsMultiplicative.mul {f g : IdealArithmeticFunction K}
+    (hf : f.IsMultiplicative) (hg : g.IsMultiplicative) : (f * g).IsMultiplicative := by
+  refine ⟨by simp [hf.map_one, hg.map_one], fun hIJ ↦ ?_⟩
+  rw [Pi.mul_apply, Pi.mul_apply, Pi.mul_apply, hf.map_mul_of_isRelPrime hIJ,
+    hg.map_mul_of_isRelPrime hIJ]
+  ring
+
+/-- Complex conjugation preserves multiplicativity of ideal arithmetic functions. -/
+theorem IsMultiplicative.star {f : IdealArithmeticFunction K} (hf : f.IsMultiplicative) :
+    (star f).IsMultiplicative := by
+  refine ⟨by simp [hf.map_one], fun hIJ ↦ ?_⟩
+  simp only [Pi.star_apply, hf.map_mul_of_isRelPrime hIJ, star_mul']
+
 /-- Extend an ideal arithmetic function to all integral ideals by assigning zero to `⊥`.
 
 Use `zeroExtend_bot` and `zeroExtend_coe` to simplify its two characteristic cases, rather than

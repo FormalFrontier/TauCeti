@@ -41,7 +41,9 @@ that divisor theory on the finite chart of a model is exactly the ideal theory o
 
 * `TauCeti.Place.center_ofPrime` and `TauCeti.Place.ofPrime_center`: the two constructions are
   mutually inverse, and `TauCeti.Place.exists_eq_ofPrime_iff` identifies the places in the image
-  as exactly the places finite on the model.
+  as exactly the places finite on the model, with `TauCeti.Place.range_ofPrime` and
+  `TauCeti.Place.compl_range_ofPrime` the same statement for the finite chart and its complement
+  as sets of places.
 * `TauCeti.Place.ord_ofPrime_algebraMap`: the coefficient formula `ord_P r = mult_𝔭 (r)`, for
   `r ≠ 0`, the `𝔭`-form of `TauCeti.Place.ord_algebraMap_eq_multiplicity_center`.
 * `TauCeti.Place.quotientAlgEquivResidueField`: the residue field of a place finite on the model
@@ -154,6 +156,24 @@ theorem exists_eq_ofPrime_iff (P : Place k F) :
     (∃ 𝔭 : HeightOneSpectrum R, ofPrime k F 𝔭 = P) ↔ ∀ r : R, algebraMap R F r ∈ P.integers :=
   ⟨fun ⟨𝔭, h⟩ r ↦ h ▸ algebraMap_mem_integers_ofPrime k F 𝔭 r,
     fun hR ↦ ⟨P.center hR, ofPrime_center k F P hR⟩⟩
+
+variable (R) in
+/-- **The finite chart of an affine model, as a set of places**: the image of
+`TauCeti.Place.ofPrime` consists of the places finite on `R`. -/
+theorem range_ofPrime :
+    Set.range (ofPrime (R := R) k F) = {P : Place k F | ∀ r : R, algebraMap R F r ∈ P.integers} :=
+  Set.ext fun P ↦ exists_eq_ofPrime_iff k F P
+
+variable (R) in
+/-- **The places infinite on an affine model** are the complement of its finite chart: a place
+lies outside the image of `TauCeti.Place.ofPrime` exactly when some element of the model has a
+pole there. -/
+theorem compl_range_ofPrime :
+    (Set.range (ofPrime (R := R) k F))ᶜ =
+      {P : Place k F | ∃ r : R, algebraMap R F r ∉ P.integers} := by
+  rw [range_ofPrime]
+  ext P
+  simp only [Set.mem_compl_iff, Set.mem_ofPred_eq, not_forall]
 
 /-- **The coefficient formula on the finite chart**: the order at the place of `𝔭` of a nonzero
 element of the model is the multiplicity of `𝔭` in the ideal it generates. This is

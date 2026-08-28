@@ -117,22 +117,25 @@ def e6Root : Fin 72 ↪ (Fin 6 → ℤ) where
 /-! ## The three blocks of root indices -/
 
 /-- The `i`-th simple root of type `E₆` sits at root index `i`, the Bourbaki node `i + 1`. -/
-def e6SimpleIndex (i : Fin 6) : Fin 72 := ⟨i, by omega⟩
+def e6SimpleIndex (i : Fin 6) : Fin 72 := Fin.castAdd 66 i
 
 /-- The `i`-th positive root of type `E₆` sits at root index `i`. -/
-def e6PositiveIndex (i : Fin 36) : Fin 72 := ⟨i, by omega⟩
+def e6PositiveIndex (i : Fin 36) : Fin 72 := Fin.castAdd 36 i
 
 /-- The negative of the `i`-th positive root of type `E₆` sits at root index `i + 36`. -/
-def e6NegativeIndex (i : Fin 36) : Fin 72 := ⟨i + 36, by omega⟩
+def e6NegativeIndex (i : Fin 36) : Fin 72 := Fin.addNat i 36
 
-@[simp] lemma e6SimpleIndex_val (i : Fin 6) : (e6SimpleIndex i : ℕ) = i := (rfl)
+@[simp] lemma e6SimpleIndex_val (i : Fin 6) : (e6SimpleIndex i : ℕ) = i := by
+  simp [e6SimpleIndex]
 
-@[simp] lemma e6PositiveIndex_val (i : Fin 36) : (e6PositiveIndex i : ℕ) = i := (rfl)
+@[simp] lemma e6PositiveIndex_val (i : Fin 36) : (e6PositiveIndex i : ℕ) = i := by
+  simp [e6PositiveIndex]
 
-@[simp] lemma e6NegativeIndex_val (i : Fin 36) : (e6NegativeIndex i : ℕ) = (i : ℕ) + 36 := (rfl)
+@[simp] lemma e6NegativeIndex_val (i : Fin 36) : (e6NegativeIndex i : ℕ) = (i : ℕ) + 36 := by
+  simp [e6NegativeIndex]
 
 lemma e6SimpleIndex_injective : Function.Injective e6SimpleIndex :=
-  fun _ _ h => Fin.ext (by simpa using congrArg Fin.val h)
+  Fin.castAdd_injective 6 66
 
 /-! ## The Cartan matrix as the bridge between the two embeddings -/
 

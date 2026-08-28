@@ -133,7 +133,7 @@ excursion never visits the state it is an excursion from, so almost every mixing
 the excursion process gives the words through `a₀` mass zero. -/
 theorem ConditionallyIIDWith.ae_measure_setOf_mem_eq_zero_of_excursionProcess
     [Countable α] [MeasurableSingletonClass α]
-    (hX : ∀ i, AEMeasurable (X i) μ) {ν : Ω → ProbabilityMeasure (List α)}
+    {ν : Ω → ProbabilityMeasure (List α)}
     (h : ConditionallyIIDWith μ (excursionProcess X a₀) ν) :
     ∀ᵐ ω ∂μ, (ν ω : Measure (List α)) {l : List α | a₀ ∈ l} = 0 := by
   set S : Set (List α) := {l : List α | a₀ ∈ l} with hS
@@ -146,7 +146,7 @@ theorem ConditionallyIIDWith.ae_measure_setOf_mem_eq_zero_of_excursionProcess
       (Set.univ.pi fun _ : Fin 1 => S) = 0 := by
     have hf : AEMeasurable
         (fun ω => fun _ : Fin 1 => excursionProcess X a₀ 0 ω) μ :=
-      aemeasurable_pi_lambda _ fun _ => aemeasurable_excursionProcess hX a₀ 0
+      aemeasurable_pi_lambda _ fun _ => h.aemeasurable 0
     rw [blockLaw_def, Measure.map_apply_of_aemeasurable hf
       (MeasurableSet.univ_pi fun _ => hSmeas)]
     convert measure_empty (μ := μ)
@@ -189,7 +189,7 @@ theorem MarkovExchangeable.exists_pathLaw_eq_map_deFinettiBarycenter [IsProbabil
   have hSmeas : MeasurableSet {l : List α | a₀ ∈ l} := MeasurableSet.of_discrete
   refine ⟨μ.map ν, Measure.isProbabilityMeasure_map hν_meas.aemeasurable, ?_, ?_⟩
   · refine (ae_map_iff hν_meas.aemeasurable ?_).2
-      (hν.ae_measure_setOf_mem_eq_zero_of_excursionProcess h.aemeasurable)
+      hν.ae_measure_setOf_mem_eq_zero_of_excursionProcess
     exact ((Measure.measurable_coe hSmeas).comp measurable_subtype_coe)
       (measurableSet_singleton (0 : ENNReal))
   · rw [hrec.pathLaw_eq_map_pathOfExcursions h.aemeasurable h0,

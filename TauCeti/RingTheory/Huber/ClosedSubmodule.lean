@@ -7,13 +7,19 @@ module
 
 public import TauCeti.RingTheory.Huber.DenseSubmodule
 public import TauCeti.Topology.Algebra.IsUniformGroup.Submodule
+public import Mathlib.Algebra.Exact.Basic
+import Mathlib.Algebra.Module.FinitePresentation
+import TauCeti.Topology.Algebra.Nonarchimedean.Pi
 
 /-!
 # Submodules with a module-finite closure are closed
 
 A submodule of a complete, metrisable module over a complete Tate ring whose topological closure
 is module-finite is itself closed. This is Bosch–Güntzer–Remmert §3.7.2/1 in its closure form, and
-it is the closedness prerequisite on the route to Wedhorn 6.17/6.18.
+it is the closedness prerequisite on the route to Wedhorn 6.17/6.18. Its consequence for a
+noetherian ring — every submodule of a finitely generated module is closed — is what makes a finite
+presentation of a finite module *strict*, which is the form in which Wedhorn's Remark 8.29 consumes
+Proposition 6.18(2).
 
 The proof is one application of `TauCeti.Huber.eq_top_of_dense_of_module_finite`, made inside the
 closure `N.topologicalClosure` rather than inside the ambient module. That closure is closed in a
@@ -28,11 +34,15 @@ the closure, that is `N.topologicalClosure = N`, and `N` is closed because its c
 * `TauCeti.Huber.isClosed_of_module_finite_topologicalClosure`: a submodule whose topological
   closure is module-finite is closed.
 * `TauCeti.Huber.isClosed_of_isNoetherian`: in a noetherian module, *every* submodule is closed.
+* `TauCeti.Huber.IsTateRing.exists_presentation_isStrictMap_isOpenMap`: over a complete
+  noetherian Tate ring, a finite module with its module topology has a presentation
+  `Aⁿ →[u] Aᵐ →[p] M → 0` with `u` strict and `p` open — Wedhorn's Remark 8.29's use of
+  Proposition 6.18(2).
 
 ## References
 
 * [Bosch, Güntzer, Remmert, *Non-Archimedean Analysis*][bosch_guntzer_remmert], §3.7.2/1.
-* [Wedhorn, *Adic Spaces*][wedhorn_adic], Propositions 6.17–6.18.
+* [Wedhorn, *Adic Spaces*][wedhorn_adic], Propositions 6.17–6.18 and Remark 8.29.
 
 ## Provenance
 
@@ -117,5 +127,44 @@ theorem isClosed_of_isNoetherian [IsNoetherian A V] (N : Submodule A V) :
     IsClosed (N : Set V) :=
   isClosed_of_module_finite_topologicalClosure N <|
     Module.Finite.iff_fg.mpr (IsNoetherian.noetherian _)
+
+section ModuleFinite
+
+variable {A : Type*} [CommRing A] [UniformSpace A] [IsUniformAddGroup A] [CompleteSpace A]
+  [(𝓤 A).IsCountablyGenerated] [T0Space A] [NonarchimedeanRing A] [IsTateRing A]
+  [IsNoetherianRing A]
+  {M : Type*} [AddCommGroup M] [Module A M] [Module.Finite A M] [TopologicalSpace M]
+  [IsModuleTopology A M]
+
+/-- **A finite module over a complete noetherian Tate ring has a strict finite presentation.**
+This is the sentence Wedhorn's Remark 8.29 opens with: "we find a presentation
+`Aⁿ →[u] Aᵐ →[p] M → 0` (because `A` is noetherian). Proposition 6.18(2) shows that `u` and `p`
+are continuous and open onto its image."
+
+`M` carries its canonical topology, which is Mathlib's module topology: every complete
+first-countable module topology on a finite module is the module topology
+(`TauCeti.Huber.IsTateRing.isModuleTopology`), so `IsModuleTopology A M` is the topology
+Proposition 6.18(1) speaks of, and nothing else is asked of `M`. The presentation is Mathlib's
+`Module.FinitePresentation.exists_fin'`, available because a finite module over a noetherian ring
+is finitely presented. Both maps are continuous by `IsModuleTopology.continuous_of_linearMap`,
+`p` is open by `IsModuleTopology.isOpenMap_of_surjective` — the module topology on `M` is the
+quotient topology along any linear surjection from `Aᵐ` — and `u` is strict by
+`TauCeti.Huber.IsTateRing.isStrictMap_of_isClosed_range`, its range being closed in `Aᵐ` by
+`TauCeti.Huber.isClosed_of_isNoetherian`. That closedness is the one place, beyond the existence
+of the presentation, where `A` being noetherian enters, and the open mapping theorem is spent on
+the free module `Aᵐ`, not on `M`. -/
+theorem IsTateRing.exists_presentation_isStrictMap_isOpenMap :
+    ∃ (n m : ℕ) (u : (Fin n → A) →ₗ[A] (Fin m → A)) (p : (Fin m → A) →ₗ[A] M),
+      Continuous u ∧ Continuous p ∧ Function.Surjective p ∧ Function.Exact u p ∧
+        Topology.IsStrictMap u ∧ IsOpenMap p := by
+  have := Module.finitePresentation_of_finite A M
+  have := IsModuleTopology.toContinuousAdd A M
+  obtain ⟨m, n, p, u, hsurj, hexact⟩ := Module.FinitePresentation.exists_fin' A M
+  have hu : Continuous u := IsModuleTopology.continuous_of_linearMap u
+  exact ⟨n, m, u, p, hu, IsModuleTopology.continuous_of_linearMap p, hsurj, hexact,
+    IsTateRing.isStrictMap_of_isClosed_range u hu.continuousAt (isClosed_of_isNoetherian _),
+    IsModuleTopology.isOpenMap_of_surjective hsurj⟩
+
+end ModuleFinite
 
 end TauCeti.Huber

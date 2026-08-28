@@ -43,7 +43,8 @@ previous paragraph can use it. Only the `Finsupp.prod` comparison needs the full
 ## Main results
 
 * `TauCeti.Nat.primePowerProd_of_one_lt`: the peeling step, as a rewriting rule.
-* `TauCeti.Nat.primePowerProd_prime_pow`: on a prime power the product is a single block.
+* `TauCeti.Nat.primePowerProd_prime_pow`: on a prime power the product is a single block;
+  `TauCeti.Nat.primePowerProd_prime` is the same at a bare prime.
 * `Commute.primePowerProd_right`: an element commuting with every block commutes with the
   ordered product.
 * `TauCeti.Nat.primePowerProd_mul_of_coprime`: multiplicativity on coprime arguments, given
@@ -160,6 +161,14 @@ theorem primePowerProd_prime_pow (f : ℕ → ℕ → M) {p : ℕ} (hp : p.Prime
     primePowerProd f (p ^ v) = f p v := by
   simpa [hp.pow_minFac hv, hp.factorization_self, Nat.div_self (pow_pos hp.pos v)]
     using primePowerProd_of_one_lt f (Nat.one_lt_pow hv hp.one_lt)
+
+/-- At a prime the product is the single block `f p 1`: the case `v = 1` of
+`primePowerProd_prime_pow`, stated separately because a bare prime is not syntactically a
+power, so that lemma cannot fire on it. -/
+@[simp]
+theorem primePowerProd_prime (f : ℕ → ℕ → M) {p : ℕ} (hp : p.Prime) :
+    primePowerProd f p = f p 1 := by
+  simpa using primePowerProd_prime_pow f hp one_ne_zero
 
 end MulOneClass
 

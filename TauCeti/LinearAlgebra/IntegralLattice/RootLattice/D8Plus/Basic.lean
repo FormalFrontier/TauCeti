@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Index
-public import TauCeti.LinearAlgebra.IntegralLattice.RootLattice.TypeD
+public import TauCeti.LinearAlgebra.IntegralLattice.RootLattice.TypeD.Basic
 
 /-!
 # The spinor glue enlargement of the checkerboard lattice in rank eight

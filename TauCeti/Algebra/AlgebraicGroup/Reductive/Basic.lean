@@ -121,8 +121,8 @@ theorem reductiveCommHopfAlgProperty_of_geometricFiber_iso
       FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H :=
     FiniteTypeCommHopfAlgCat.toBialgHom e.inv
   have hf : Function.Bijective f := ConcreteCategory.bijective_of_isIso e.inv
-  let J : HopfIdeal (AlgebraicClosure k) G := I.comap f hf.2
-  have hJnormal : J.IsNormal := hI.comap_of_bijective f hf.1 hf.2
+  let J : HopfIdeal (AlgebraicClosure k) G := I.comapOfSurjective f hf.2
+  have hJnormal : J.IsNormal := hI.comapOfSurjective_of_bijective f hf.1 hf.2
   let qIso : FiniteTypeCommHopfAlgCat.quotient G J ≅
       FiniteTypeCommHopfAlgCat.quotient
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I :=
@@ -132,8 +132,8 @@ theorem reductiveCommHopfAlgProperty_of_geometricFiber_iso
     (smoothUnipotentCommHopfAlgProperty (AlgebraicClosure k)).prop_of_iso qIso.symm hU
   have hJ : J = HopfIdeal.augmentation (AlgebraicClosure k) G :=
     htrivial J hJnormal hJU
-  rw [← HopfIdeal.comap_eq_comap_iff_of_surjective f hf.2,
-    HopfIdeal.comap_augmentation]
+  rw [← HopfIdeal.comapOfSurjective_eq_comapOfSurjective_iff f hf.2,
+    HopfIdeal.comapOfSurjective_augmentation]
   exact hJ
 
 /-- The category of reductive finite-type commutative Hopf algebras over a field. -/

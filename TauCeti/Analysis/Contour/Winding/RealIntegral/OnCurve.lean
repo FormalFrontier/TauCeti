@@ -13,7 +13,7 @@ import TauCeti.Analysis.Contour.Crossing.Finiteness
 import TauCeti.Analysis.Contour.Crossing.PVAggregation
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.InvSubCPVExistence
-import TauCeti.Analysis.Contour.PerWindow.CPV
+import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
 public import TauCeti.Analysis.Contour.Winding.LipschitzBoundedIntegrand
 import TauCeti.Analysis.Contour.Winding.SegmentSum
 import TauCeti.Analysis.Contour.Winding.PrincipalValueRealIntegral
