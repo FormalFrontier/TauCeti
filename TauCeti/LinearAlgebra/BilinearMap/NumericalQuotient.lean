@@ -16,9 +16,9 @@ defines the two radicals separately, quotients each argument by the appropriate 
 descends `b` to a nondegenerate pairing between the resulting quotients. An ordinary biadditive
 pairing of additive groups is reinterpreted over `ℤ` by `TauCeti.biadditiveToIntBilinear`.
 
-The intermediate pairings with only one argument quotiented are also provided.  Quotienting the
-left argument makes the pairing left-separating, while quotienting the right argument makes it
-right-separating; no assertion is made about the other side until both quotients are taken.
+The intermediate pairings use Mathlib's `Submodule.liftQ`. Quotienting the left argument makes the
+pairing left-separating, while quotienting the right argument makes it right-separating; no
+assertion is made about the other side until both quotients are taken.
 
 ## Main definitions
 
@@ -26,8 +26,6 @@ right-separating; no assertion is made about the other side until both quotients
 * `TauCeti.leftRadical` and `TauCeti.rightRadical`: the two radicals of a bilinear map.
 * `TauCeti.LeftNumericalQuotient` and `TauCeti.RightNumericalQuotient`: the corresponding
   quotient modules.
-* `TauCeti.leftNumericalPairing` and `TauCeti.rightNumericalPairing`: the one-sided quotient
-  pairings.
 * `TauCeti.numericalPairing`: the pairing between both numerical quotients.
 
 ## Main results
@@ -61,20 +59,14 @@ variable {A B D : Type*} [AddCommGroup A] [AddCommGroup B] [AddCommGroup D]
 
 This is the bridge from pairings such as an Euler pairing, naturally constructed as
 `A →+ B →+ D`, to the bilinear numerical-quotient API in this file. -/
-def biadditiveToIntBilinear (b : A →+ B →+ D) : A →ₗ[ℤ] B →ₗ[ℤ] D where
-  toFun a := (addMonoidHomLequivInt ℤ) (b a)
-  map_add' a a' := by
-    ext x
-    simp
-  map_smul' n a := by
-    ext x
-    simp
+def biadditiveToIntBilinear (b : A →+ B →+ D) : A →ₗ[ℤ] B →ₗ[ℤ] D :=
+  (addMonoidHomLequivInt ℤ).toLinearMap ∘ₗ b.toIntLinearMap
 
 /-- Reinterpreting a biadditive pairing over `ℤ` does not change its values. -/
 @[simp]
 theorem biadditiveToIntBilinear_apply (b : A →+ B →+ D) (a : A) (x : B) :
     biadditiveToIntBilinear b a x = b a x :=
-  (rfl)
+  by simp [biadditiveToIntBilinear]
 
 end Biadditive
 
@@ -84,45 +76,23 @@ variable (b : L →ₗ[R] M →ₗ[R] P)
 
 /-- The **left radical** of a bilinear map: the elements in the first argument which pair to zero
 with every element of the second argument. -/
-def leftRadical : Submodule R L :=
+abbrev leftRadical : Submodule R L :=
   b.ker
 
 /-- The **right radical** of a bilinear map: the elements in the second argument which pair to zero
 with every element of the first argument. -/
-def rightRadical : Submodule R M :=
+abbrev rightRadical : Submodule R M :=
   b.flip.ker
 
 /-- Membership in the left radical means pairing to zero against every second argument. -/
 @[simp]
 theorem mem_leftRadical_iff (x : L) : x ∈ leftRadical b ↔ ∀ y : M, b x y = 0 := by
-  rw [leftRadical, LinearMap.mem_ker]
-  constructor
-  · intro h y
-    rw [h, LinearMap.zero_apply]
-  · intro h
-    ext y
-    exact (h y).trans (LinearMap.zero_apply y).symm
+  simp [leftRadical, LinearMap.ext_iff]
 
 /-- Membership in the right radical means pairing to zero against every first argument. -/
 @[simp]
 theorem mem_rightRadical_iff (y : M) : y ∈ rightRadical b ↔ ∀ x : L, b x y = 0 := by
-  rw [rightRadical, LinearMap.mem_ker]
-  constructor
-  · intro h x
-    rw [← b.flip_apply x y, h, LinearMap.zero_apply]
-  · intro h
-    ext x
-    simpa only [LinearMap.flip_apply, LinearMap.zero_apply] using h x
-
-/-- A bilinear map is left-separating exactly when its left radical is trivial. -/
-theorem separatingLeft_iff_leftRadical_eq_bot :
-    b.SeparatingLeft ↔ leftRadical b = ⊥ := by
-  rw [leftRadical, LinearMap.separatingLeft_iff_ker_eq_bot]
-
-/-- A bilinear map is right-separating exactly when its right radical is trivial. -/
-theorem separatingRight_iff_rightRadical_eq_bot :
-    b.SeparatingRight ↔ rightRadical b = ⊥ := by
-  rw [rightRadical, LinearMap.separatingRight_iff_flip_ker_eq_bot]
+  simp [rightRadical, LinearMap.ext_iff]
 
 end Radicals
 
@@ -136,102 +106,25 @@ abbrev LeftNumericalQuotient := L ⧸ leftRadical b
 /-- The quotient of the second argument by the right radical. -/
 abbrev RightNumericalQuotient := M ⧸ rightRadical b
 
-/-- The quotient map from the first argument to its left numerical quotient. -/
-def leftNumericalQuotientMk : L →ₗ[R] LeftNumericalQuotient b :=
-  (leftRadical b).mkQ
-
-/-- The quotient map from the second argument to its right numerical quotient. -/
-def rightNumericalQuotientMk : M →ₗ[R] RightNumericalQuotient b :=
-  (rightRadical b).mkQ
-
-/-- The kernel of the left numerical quotient map is the left radical. -/
-@[simp]
-theorem ker_leftNumericalQuotientMk : (leftNumericalQuotientMk b).ker = leftRadical b :=
-  (leftRadical b).ker_mkQ
-
-/-- The kernel of the right numerical quotient map is the right radical. -/
-@[simp]
-theorem ker_rightNumericalQuotientMk : (rightNumericalQuotientMk b).ker = rightRadical b :=
-  (rightRadical b).ker_mkQ
-
-/-- The left numerical quotient map is surjective. -/
-theorem leftNumericalQuotientMk_surjective :
-    Function.Surjective (leftNumericalQuotientMk b) :=
-  (leftRadical b).mkQ_surjective
-
-/-- The right numerical quotient map is surjective. -/
-theorem rightNumericalQuotientMk_surjective :
-    Function.Surjective (rightNumericalQuotientMk b) :=
-  (rightRadical b).mkQ_surjective
-
-/-- A class in the left numerical quotient vanishes exactly when its representative lies in the
-left radical. -/
-@[simp]
-theorem leftNumericalQuotientMk_eq_zero_iff (x : L) :
-    leftNumericalQuotientMk b x = 0 ↔ x ∈ leftRadical b := by
-  rw [← LinearMap.mem_ker, ker_leftNumericalQuotientMk]
-
-/-- A class in the right numerical quotient vanishes exactly when its representative lies in the
-right radical. -/
-@[simp]
-theorem rightNumericalQuotientMk_eq_zero_iff (y : M) :
-    rightNumericalQuotientMk b y = 0 ↔ y ∈ rightRadical b := by
-  rw [← LinearMap.mem_ker, ker_rightNumericalQuotientMk]
-
-/-- Two elements have the same left numerical class exactly when their difference lies in the
-left radical. -/
-@[simp]
-theorem leftNumericalQuotientMk_eq_iff (x x' : L) :
-    leftNumericalQuotientMk b x = leftNumericalQuotientMk b x' ↔
-      x - x' ∈ leftRadical b := by
-  rw [← sub_eq_zero, ← map_sub, leftNumericalQuotientMk_eq_zero_iff]
-
-/-- Two elements have the same right numerical class exactly when their difference lies in the
-right radical. -/
-@[simp]
-theorem rightNumericalQuotientMk_eq_iff (y y' : M) :
-    rightNumericalQuotientMk b y = rightNumericalQuotientMk b y' ↔
-      y - y' ∈ rightRadical b := by
-  rw [← sub_eq_zero, ← map_sub, rightNumericalQuotientMk_eq_zero_iff]
-
 /-- Quotienting only the first argument by the left radical gives a pairing on the left numerical
-quotient and the original second argument. -/
-def leftNumericalPairing : LeftNumericalQuotient b →ₗ[R] M →ₗ[R] P :=
-  (leftRadical b).liftQ b le_rfl
-
-/-- Quotienting only the second argument by the right radical gives a pairing on the original
-first argument and the right numerical quotient. -/
-def rightNumericalPairing : L →ₗ[R] RightNumericalQuotient b →ₗ[R] P :=
-  ((rightRadical b).liftQ b.flip le_rfl).flip
-
-/-- The left quotient pairing is represented by the original pairing. -/
-@[simp]
-theorem leftNumericalPairing_mk (x : L) (y : M) :
-    leftNumericalPairing b (leftNumericalQuotientMk b x) y = b x y := by
-  rw [leftNumericalPairing, leftNumericalQuotientMk, Submodule.mkQ_apply]
-  exact DFunLike.congr_fun (Submodule.liftQ_apply (leftRadical b) b x) y
-
-/-- The right quotient pairing is represented by the original pairing. -/
-@[simp]
-theorem rightNumericalPairing_mk (x : L) (y : M) :
-    rightNumericalPairing b x (rightNumericalQuotientMk b y) = b x y := by
-  rw [rightNumericalPairing, rightNumericalQuotientMk, Submodule.mkQ_apply]
-  simpa only [LinearMap.flip_apply] using
-    DFunLike.congr_fun (Submodule.liftQ_apply (rightRadical b) b.flip y) x
-
-/-- Quotienting the first argument by the left radical makes the pairing left-separating. -/
-theorem leftNumericalPairing_separatingLeft : (leftNumericalPairing b).SeparatingLeft := by
+quotient and the original second argument, and makes it left-separating. -/
+theorem leftNumericalPairing_separatingLeft :
+    ((leftRadical b).liftQ b le_rfl).SeparatingLeft := by
   intro q hq
-  obtain ⟨x, rfl⟩ := leftNumericalQuotientMk_surjective b q
-  rw [leftNumericalQuotientMk_eq_zero_iff]
-  exact (mem_leftRadical_iff b x).mpr fun y ↦ leftNumericalPairing_mk b x y ▸ hq y
+  obtain ⟨x, rfl⟩ := (leftRadical b).mkQ_surjective q
+  rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
+  exact (mem_leftRadical_iff b x).mpr fun y ↦ by
+    simpa only [Submodule.mkQ_apply, Submodule.liftQ_apply] using hq y
 
-/-- Quotienting the second argument by the right radical makes the pairing right-separating. -/
-theorem rightNumericalPairing_separatingRight : (rightNumericalPairing b).SeparatingRight := by
+/-- Quotienting only the second argument by the right radical gives a pairing on the original first
+argument and the right numerical quotient, and makes it right-separating. -/
+theorem rightNumericalPairing_separatingRight :
+    (((rightRadical b).liftQ b.flip le_rfl).flip).SeparatingRight := by
   intro q hq
-  obtain ⟨y, rfl⟩ := rightNumericalQuotientMk_surjective b q
-  rw [rightNumericalQuotientMk_eq_zero_iff]
-  exact (mem_rightRadical_iff b y).mpr fun x ↦ rightNumericalPairing_mk b x y ▸ hq x
+  obtain ⟨y, rfl⟩ := (rightRadical b).mkQ_surjective q
+  rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
+  exact (mem_rightRadical_iff b y).mpr fun x ↦ by
+    simpa only [LinearMap.flip_apply, Submodule.mkQ_apply, Submodule.liftQ_apply] using hq x
 
 /-- The pairing descended through both the left and right radicals. -/
 def numericalPairing :
@@ -241,57 +134,44 @@ def numericalPairing :
 /-- The numerical pairing is represented by the original pairing. -/
 @[simp]
 theorem numericalPairing_mk (x : L) (y : M) :
-    numericalPairing b (leftNumericalQuotientMk b x) (rightNumericalQuotientMk b y) =
+    numericalPairing b ((leftRadical b).mkQ x) ((rightRadical b).mkQ y) =
       b x y := by
-  rw [numericalPairing, leftNumericalQuotientMk, rightNumericalQuotientMk,
-    Submodule.mkQ_apply]
+  rw [numericalPairing, Submodule.mkQ_apply]
   exact LinearMap.liftQ₂_mk le_rfl le_rfl x y
 
 /-- The numerical pairing is the unique bilinear map between the two quotients which agrees with
 the original pairing on representatives. -/
 theorem numericalPairing_unique
     (c : LeftNumericalQuotient b →ₗ[R] RightNumericalQuotient b →ₗ[R] P)
-    (hc : ∀ x y, c (leftNumericalQuotientMk b x) (rightNumericalQuotientMk b y) = b x y) :
+    (hc : ∀ x y, c ((leftRadical b).mkQ x) ((rightRadical b).mkQ y) = b x y) :
     c = numericalPairing b := by
   apply LinearMap.ext₂
   intro q r
-  obtain ⟨x, rfl⟩ := leftNumericalQuotientMk_surjective b q
-  obtain ⟨y, rfl⟩ := rightNumericalQuotientMk_surjective b r
+  obtain ⟨x, rfl⟩ := (leftRadical b).mkQ_surjective q
+  obtain ⟨y, rfl⟩ := (rightRadical b).mkQ_surjective r
   rw [hc, numericalPairing_mk]
 
 /-- The numerical pairing has trivial left radical. -/
 theorem numericalPairing_separatingLeft : (numericalPairing b).SeparatingLeft := by
   intro q hq
-  obtain ⟨x, rfl⟩ := leftNumericalQuotientMk_surjective b q
-  rw [leftNumericalQuotientMk_eq_zero_iff]
+  obtain ⟨x, rfl⟩ := (leftRadical b).mkQ_surjective q
+  rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
   refine (mem_leftRadical_iff b x).mpr fun y ↦ ?_
   rw [← numericalPairing_mk b x y]
-  exact hq (rightNumericalQuotientMk b y)
+  exact hq ((rightRadical b).mkQ y)
 
 /-- The numerical pairing has trivial right radical. -/
 theorem numericalPairing_separatingRight : (numericalPairing b).SeparatingRight := by
   intro q hq
-  obtain ⟨y, rfl⟩ := rightNumericalQuotientMk_surjective b q
-  rw [rightNumericalQuotientMk_eq_zero_iff]
+  obtain ⟨y, rfl⟩ := (rightRadical b).mkQ_surjective q
+  rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero]
   refine (mem_rightRadical_iff b y).mpr fun x ↦ ?_
   rw [← numericalPairing_mk b x y]
-  exact hq (leftNumericalQuotientMk b x)
+  exact hq ((leftRadical b).mkQ x)
 
 /-- Quotienting both arguments by their respective radicals produces a nondegenerate pairing. -/
 theorem numericalPairing_nondegenerate : (numericalPairing b).Nondegenerate :=
   ⟨numericalPairing_separatingLeft b, numericalPairing_separatingRight b⟩
-
-/-- The left radical of the numerical pairing is trivial. -/
-@[simp]
-theorem leftRadical_numericalPairing : leftRadical (numericalPairing b) = ⊥ :=
-  (separatingLeft_iff_leftRadical_eq_bot (numericalPairing b)).mp
-    (numericalPairing_separatingLeft b)
-
-/-- The right radical of the numerical pairing is trivial. -/
-@[simp]
-theorem rightRadical_numericalPairing : rightRadical (numericalPairing b) = ⊥ :=
-  (separatingRight_iff_rightRadical_eq_bot (numericalPairing b)).mp
-    (numericalPairing_separatingRight b)
 
 end Quotients
 
