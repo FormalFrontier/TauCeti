@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.FiniteDimensional
 public import TauCeti.RingTheory.Semisimple.Schur
+public import TauCeti.RingTheory.Semisimple.RegularIsotypicComponent
 
 /-!
 # The multiplicity of a simple module, as the dimension of a hom space
@@ -42,6 +43,8 @@ space of intertwiners".
 * `TauCeti.natCard_eq_natCard_of_linearEquiv_pi`: consequently equivalent finite products of
   simple modules have the same number of factors isomorphic to `S`; applied to two decompositions
   of one module, this says that the multiplicity is well defined.
+* `TauCeti.nonempty_linearEquiv_of_natCard_eq`: conversely, two finite products of simple modules
+  are linearly equivalent when their numbers of factors in every simple-module class agree.
 * `TauCeti.finrank_linearMap_pos_iff_exists_nonempty_linearEquiv`: the multiplicity is positive
   exactly when `S` occurs among the factors, so the hom space detects the constituents.
 * `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi_const`: the isotypic case, where `M` is
@@ -160,6 +163,41 @@ theorem natCard_eq_natCard_of_linearEquiv_pi {κ : Type*} [Finite κ] {P : κ �
 
 end Multiplicity
 
+/-! ### Reconstructing a finite sum from its multiplicities -/
+
+section Reconstruction
+
+variable {R : Type*} [Ring R] [IsSemisimpleRing R]
+variable {ι κ : Type*} [Finite ι] [Finite κ]
+variable {N : ι → Type*} [∀ i, AddCommGroup (N i)] [∀ i, Module R (N i)]
+  [∀ i, IsSimpleModule R (N i)]
+variable {P : κ → Type*} [∀ j, AddCommGroup (P j)] [∀ j, Module R (P j)]
+  [∀ j, IsSimpleModule R (P j)]
+
+/-- **Finite sums of simple modules are determined by their multiplicities.** If two finite
+families contain equally many modules in every simple-module isomorphism class, their products are
+linearly equivalent. -/
+theorem nonempty_linearEquiv_of_natCard_eq
+    (h : ∀ c : SimpleSubmoduleClasses R R,
+      Nat.card {i // simpleModuleClass R (N i) = c} =
+        Nat.card {j // simpleModuleClass R (P j) = c}) :
+    Nonempty ((∀ i, N i) ≃ₗ[R] ∀ j, P j) := by
+  classical
+  have efiber : ∀ c, {i // simpleModuleClass R (N i) = c} ≃
+      {j // simpleModuleClass R (P j) = c} := fun c ↦ by
+    letI := Fintype.ofFinite {i // simpleModuleClass R (N i) = c}
+    letI := Fintype.ofFinite {j // simpleModuleClass R (P j) = c}
+    exact Fintype.equivOfCardEq (by simpa [Nat.card_eq_fintype_card] using h c)
+  let σ : ι ≃ κ := Equiv.ofFiberEquiv efiber
+  have hclass (i : ι) : simpleModuleClass R (N i) = simpleModuleClass R (P (σ i)) :=
+    (Equiv.ofFiberEquiv_map efiber i).symm
+  have hiso (i : ι) : Nonempty (N i ≃ₗ[R] P (σ i)) :=
+    simpleModuleClass_eq_iff.mp (hclass i)
+  exact ⟨(LinearEquiv.piCongrRight fun i ↦ (hiso i).some).trans
+    (LinearEquiv.piCongrLeft R P σ)⟩
+
+end Reconstruction
+
 /-! ### The isotypic case -/
 
 section Isotypic
@@ -208,4 +246,3 @@ theorem finrank_linearMap_pos_of_ne_bot {S : Submodule A M} (hS : S ≠ ⊥) :
 end Positivity
 
 end TauCeti
-
