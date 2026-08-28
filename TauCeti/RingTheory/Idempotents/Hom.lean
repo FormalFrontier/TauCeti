@@ -17,8 +17,9 @@ module into, and this file identifies the homomorphisms between two of them:
 
 `Hom_A(Ae, Af) ≅ eAf`, by `φ ↦ φ e`.
 
-The corner `eAf` is defined here as the fixed points of the `k`-linear map `x ↦ e x f`, so
-membership in it is the single equation `e x f = x`, and the identification is `k`-linear.
+The corner `eAf` is defined here as the range of the `k`-linear map `x ↦ e x f`.  When `e` and
+`f` are idempotent, membership in it is the single equation `e x f = x`, and the identification is
+`k`-linear.
 
 Both directions are elementary. A homomorphism `φ` out of `Ae` is right multiplication by `φ e`
 (`TauCeti.coe_apply_eq_mul_apply_generator`, proved for an arbitrary target ideal), which
@@ -71,16 +72,23 @@ def cornerMap (e f : A) : A →ₗ[k] A :=
 theorem cornerMap_apply (e f x : A) : cornerMap k e f x = e * x * f :=
   (mul_assoc _ _ _).symm
 
-/-- **The corner `eAf`**, as a `k`-submodule of `A`: the elements which `e` fixes on the left and
-`f` fixes on the right. -/
+/-- **The corner `eAf`**, as a `k`-submodule of `A`: the range of the map `x ↦ e * x * f`. -/
 def cornerSubmodule (e f : A) : Submodule k A :=
-  LinearMap.eqLocus (cornerMap k e f) LinearMap.id
+  LinearMap.range (cornerMap k e f)
 
-/-- Membership in the corner `eAf`: an element belongs to it exactly when multiplying it by `e` on
-the left and by `f` on the right fixes it. -/
+/-- For idempotents `e` and `f`, an element belongs to the corner `eAf` exactly when multiplying it
+by `e` on the left and by `f` on the right fixes it. -/
 @[simp]
-theorem mem_cornerSubmodule_iff {e f x : A} : x ∈ cornerSubmodule k e f ↔ e * x * f = x := by
-  simp only [cornerSubmodule, LinearMap.mem_eqLocus, cornerMap_apply, LinearMap.id_coe, id_eq]
+theorem mem_cornerSubmodule_iff {e f x : A} (he : IsIdempotentElem e)
+    (hf : IsIdempotentElem f) : x ∈ cornerSubmodule k e f ↔ e * x * f = x := by
+  constructor
+  · rintro ⟨y, rfl⟩
+    simp only [cornerMap_apply]
+    calc
+      e * (e * y * f) * f = (e * e) * y * (f * f) := by simp only [mul_assoc]
+      _ = e * y * f := by rw [he.eq, hf.eq]
+  · intro h
+    exact ⟨x, by simpa only [cornerMap_apply] using h⟩
 
 variable {k}
 
@@ -88,22 +96,20 @@ variable {k}
 `Af`. -/
 theorem mem_span_singleton_of_mem_cornerSubmodule {e f x : A} (hf : IsIdempotentElem f)
     (hx : x ∈ cornerSubmodule k e f) : x ∈ (Ideal.span {f} : Ideal A) := by
-  have h : e * x * f = x := (mem_cornerSubmodule_iff k).1 hx
+  rcases hx with ⟨y, rfl⟩
   refine (mem_span_singleton_iff_mul_eq_self hf).2 ?_
-  calc x * f = e * x * f * f := by rw [h]
-    _ = e * x * (f * f) := mul_assoc _ _ _
-    _ = e * x * f := by rw [hf.eq]
-    _ = x := h
+  simp only [cornerMap_apply]
+  rw [mul_assoc, hf.eq]
 
 /-- An element of the corner `eAf` is fixed by `e` on the left. -/
-theorem mul_eq_self_of_mem_cornerSubmodule {e f x : A} (hf : IsIdempotentElem f)
+theorem mul_eq_self_of_mem_cornerSubmodule {e f x : A} (he : IsIdempotentElem e)
     (hx : x ∈ cornerSubmodule k e f) : e * x = x := by
-  have h : e * x * f = x := (mem_cornerSubmodule_iff k).1 hx
-  have hxf : x * f = x := (mem_span_singleton_iff_mul_eq_self hf).1
-    (mem_span_singleton_of_mem_cornerSubmodule hf hx)
-  calc e * x = e * (x * f) := by rw [hxf]
-    _ = e * x * f := (mul_assoc _ _ _).symm
-    _ = x := h
+  rcases hx with ⟨y, rfl⟩
+  simp only [cornerMap_apply]
+  calc
+    e * (e * y * f) = (e * (e * y)) * f := (mul_assoc _ _ _).symm
+    _ = (e * e) * y * f := by rw [← mul_assoc e e y]
+    _ = e * y * f := by rw [he.eq]
 
 /-! ### The dictionary -/
 
@@ -113,7 +119,7 @@ variable {e f : A}
 theorem apply_generator_mem_cornerSubmodule (he : IsIdempotentElem e) (hf : IsIdempotentElem f)
     (φ : (Ideal.span {e} : Ideal A) →ₗ[A] (Ideal.span {f} : Ideal A)) :
     (φ (spanSingletonGenerator e) : A) ∈ cornerSubmodule k e f := by
-  rw [mem_cornerSubmodule_iff]
+  rw [mem_cornerSubmodule_iff k he hf]
   have hright : (φ (spanSingletonGenerator e) : A) * f = (φ (spanSingletonGenerator e) : A) :=
     (mem_span_singleton_iff_mul_eq_self hf).1 (φ (spanSingletonGenerator e)).2
   have hleft : e * (φ (spanSingletonGenerator e) : A) = (φ (spanSingletonGenerator e) : A) := by
@@ -152,7 +158,7 @@ theorem coe_cornerToSpanSingletonHom_apply (hf : IsIdempotentElem f) (x : corner
   right_inv x := by
     refine Subtype.ext ?_
     rw [coe_cornerToSpanSingletonHom_apply, coe_spanSingletonGenerator]
-    exact mul_eq_self_of_mem_cornerSubmodule hf x.2
+    exact mul_eq_self_of_mem_cornerSubmodule he x.2
 
 @[simp]
 theorem coe_spanSingletonHomEquivCorner_apply (he : IsIdempotentElem e) (hf : IsIdempotentElem f)

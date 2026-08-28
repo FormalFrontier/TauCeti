@@ -115,7 +115,8 @@ that downstream files may recognize it as the corner attached to the two vertex 
 theorem mem_zigzagCorner_iff {i j : V} {x : nonisolatedZigzagQuotient k G} :
     x ∈ zigzagCorner k G i j ↔
       zigzagVertexIdempotent k G i * x * zigzagVertexIdempotent k G j = x :=
-  mem_cornerSubmodule_iff k
+  mem_cornerSubmodule_iff k (zigzagMk_vertexIdempotent_mul_self k G i)
+    (zigzagMk_vertexIdempotent_mul_self k G j)
 
 /-- The corner `e_i Z e_j` sits inside the vertex projective `Z e_j`. -/
 theorem mem_zigzagProjective_of_mem_zigzagCorner {i j : V}

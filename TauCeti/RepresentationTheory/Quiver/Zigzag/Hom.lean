@@ -18,25 +18,25 @@ files leave open, namely
 `Hom_Z(P_i, P_j) ≅ e_i Z e_j`,
 
 together with its refinement by the path-length grading: the homomorphisms which raise degree by
-`d` — that is, the degree-zero homomorphisms `P_i → P_j{d}` in the graded module category — are
+`d` — that is, the degree-zero homomorphisms `P_i{d} → P_j` in the graded module category — are
 the degree-`d` part of the corner.
 
 Combining the two identifications with the entrywise computation of the graded corners in
 `TauCeti.RepresentationTheory.Quiver.Zigzag.CartanMatrix` turns the graded Cartan matrix into what
 the roadmap asks it to be, a matrix of graded dimensions of homomorphism spaces,
 
-`C_G(q)_{i,j} = ∑_d dim_k Hom(P_i, P_j{d}) q^d = (1 + q²) δ_{i,j} + q A_{i,j}`.
+`C_G(q)_{i,j} = ∑_d dim_k Hom(P_i{d}, P_j) q^d = (1 + q²) δ_{i,j} + q A_{i,j}`.
 
 ## Main definitions
 
 * `TauCeti.zigzagProjectiveHomEquivCorner`: **the dictionary `Hom_Z(P_i, P_j) ≃ₗ[k] e_i Z e_j`.**
 * `TauCeti.zigzagProjectiveHomOfDegree`: the homomorphisms `P_i → P_j` raising path degree by
-  `d`, that is `Hom(P_i, P_j{d})`.
+  `d`, that is `Hom(P_i{d}, P_j)`.
 
 ## Main results
 
 * `TauCeti.zigzagGradedProjectiveHomEquiv`: **the graded dictionary**
-  `Hom(P_i, P_j{d}) ≃ₗ[k] (e_i Z e_j)_d`.
+  `Hom(P_i{d}, P_j) ≃ₗ[k] (e_i Z e_j)_d`.
 * `TauCeti.zigzagProjectiveHomOfDegree_eq_bot_of_three_le`: no homomorphism raises degree by three
   or more, so the graded homomorphism spaces are concentrated in degrees `0`, `1` and `2`.
 * `TauCeti.id_mem_zigzagProjectiveHomOfDegree_zero` and
@@ -48,21 +48,22 @@ the roadmap asks it to be, a matrix of graded dimensions of homomorphism spaces,
   homogeneous homomorphism spaces — the identity of `P_i`, the map along an edge, and the map
   through the volume class — with the vanishing of all the others.
 * `TauCeti.zigzagGradedCartanMatrix_eq_sum_finrank_zigzagProjectiveHomOfDegree`: **the graded
-  Cartan entry is the graded dimension of the homomorphism spaces**, `∑_d dim Hom(P_i, P_j{d}) qᵈ`.
+  Cartan entry is the graded dimension of the homomorphism spaces**, `∑_d dim Hom(P_i{d}, P_j) qᵈ`.
 
 ## Implementation notes
 
-`Hom(P_i, P_j{d})` is defined by the intrinsic degree-raising condition, quantified over every
+`Hom(P_i{d}, P_j)` is defined by the intrinsic degree-raising condition, quantified over every
 homogeneous element of `P_i`, rather than as the preimage of the graded corner; the comparison
 `TauCeti.mem_zigzagProjectiveHomOfDegree_iff` with the value at the generator is a theorem.  Only
-the internal shift `{d}` of the target appears, so no graded module category is set up here: a
+the internal shift `{d}` of the source appears, so no graded module category is set up here: a
 `k`-submodule of the ungraded homomorphism space carries all the information the graded Cartan
 matrix consumes.
 
 ## References
 
 This is the homomorphism half of Layer 3 of `TauCetiRoadmap/ZigzagPreprojective/README.md`, which
-asks for `P_i` together with "all homogeneous `Hom(P_i,P_j{d})` spaces".  See
+asks for `P_i` together with "all homogeneous `Hom(P_i,P_j{d})` spaces"; by its pinned shift
+convention, these are equivalently indexed as `Hom(P_i{d},P_j)`.  See
 Huerfano--Khovanov, *A category for the adjoint representation*, Section 3, and
 Ehrig--Tubbenhauer, *Algebraic properties of zigzag algebras*, Section 2.
 -/
@@ -115,7 +116,7 @@ theorem coe_zigzagProjectiveHom_apply {i j : V}
 
 /-! ### The graded dictionary -/
 
-/-- **The homomorphisms `P_i → P_j{d}`**: those `Z`-linear maps `Z e_i → Z e_j` which send a
+/-- **The homomorphisms `P_i{d} → P_j`**: those `Z`-linear maps `Z e_i → Z e_j` which send a
 homogeneous element of degree `n` to a homogeneous element of degree `n + d`. -/
 def zigzagProjectiveHomOfDegree (i j : V) (d : ℕ) :
     Submodule k
@@ -160,7 +161,7 @@ theorem zigzagProjectiveHomOfDegree_eq_comap (i j : V) (d : ℕ) :
   simp only [LinearEquiv.coe_coe, Submodule.subtype_apply,
     coe_zigzagProjectiveHomEquivCorner_apply]
 
-/-- **The graded dictionary**: the homomorphisms `P_i → P_j{d}` are the degree-`d` part of the
+/-- **The graded dictionary**: the homomorphisms `P_i{d} → P_j` are the degree-`d` part of the
 corner `e_i Z e_j`. -/
 noncomputable def zigzagGradedProjectiveHomEquiv (i j : V) (d : ℕ) :
     zigzagProjectiveHomOfDegree k G i j d ≃ₗ[k] zigzagGradedCorner k G i j d :=
@@ -250,7 +251,7 @@ theorem finrank_zigzagProjectiveHomOfDegree_two_of_ne {i j : V} (h : i ≠ j) :
 /-! ### The graded Cartan matrix as a matrix of homomorphism dimensions -/
 
 /-- **The graded Cartan entry is the graded dimension of the homomorphism spaces of the vertex
-projectives**, `∑_d dim_k Hom(P_i, P_j{d}) qᵈ`.  Together with
+projectives**, `∑_d dim_k Hom(P_i{d}, P_j) qᵈ`.  Together with
 `TauCeti.zigzagGradedCartanMatrix_eq` this is the roadmap's graded Cartan formula read on the
 projectives themselves, and by
 `TauCeti.zigzagProjectiveHomOfDegree_eq_bot_of_three_le` the truncation of the sum below degree
