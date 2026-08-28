@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RingTheory.Polynomial.DegreeLT
 public import TauCeti.FieldTheory.FunctionField.Place.RatFunc.Basic
+public import TauCeti.FieldTheory.FunctionField.RiemannRoch.DegreeZero
 public import TauCeti.FieldTheory.FunctionField.RiemannRoch.Genus
 
 /-!
@@ -46,6 +47,10 @@ classification.
 * `TauCeti.genus_ratFunc`: **the rational function field has genus zero**.
 * `TauCeti.Divisor.degree_add_one_le_dim_ratFunc`: Riemann's theorem on `k(x)`, with the genus
   evaluated: `ℓ(D) ≥ deg D + 1` for every divisor `D` of `k(x)`.
+* `TauCeti.Divisor.linearlyEquivalent_zsmul_ofPoint_infty`: every divisor of `k(x)` is linearly
+  equivalent to `(deg D) · P_∞`, so a divisor class on the rational function field is determined
+  by its degree; hence `TauCeti.Divisor.dim_ratFunc`, the closed formula
+  `ℓ(D) = (deg D + 1)⁺` for **every** divisor of `k(x)`, not only the multiples of `P_∞`.
 
 ## Provenance
 
@@ -196,5 +201,44 @@ theorem Divisor.degree_add_one_le_dim_ratFunc (D : Divisor k (RatFunc k)) :
   have h := Divisor.degree_add_one_sub_genus_le_dim (IsFunctionField.ratFunc k) D
   rw [genus_ratFunc] at h
   omega
+
+/-! ### Divisor classes on `k(x)` -/
+
+/-- **A divisor class on `k(x)` is determined by its degree**: every divisor `D` of the rational
+function field is linearly equivalent to `(deg D) · P_∞`.
+
+Since `deg P_∞ = 1`, the difference `D - (deg D) · P_∞` has degree zero, and Riemann's theorem
+on `k(x)` gives it a nonzero Riemann–Roch space; a degree-zero divisor with a nonzero
+Riemann–Roch space is principal (Stichtenoth, Corollary 1.4.12(c)). -/
+theorem Divisor.linearlyEquivalent_zsmul_ofPoint_infty (D : Divisor k (RatFunc k)) :
+    (Place.orderSystem (IsFunctionField.ratFunc k)).LinearlyEquivalent D
+      (Divisor.degree D • WeilDivisor.ofPoint (Place.infty k)) := by
+  have hdegW : Divisor.degree
+      (Divisor.degree D • WeilDivisor.ofPoint (Place.infty k) : Divisor k (RatFunc k)) =
+      Divisor.degree D := by
+    rw [Divisor.degree_zsmul, Divisor.degree_ofPoint, Place.degree_infty, Nat.cast_one, mul_one]
+  have hdeg : Divisor.degree
+      (D - Divisor.degree D • WeilDivisor.ofPoint (Place.infty k)) = 0 := by
+    rw [Divisor.degree_sub, hdegW, sub_self]
+  have hdim : 1 ≤ Divisor.dim (D - Divisor.degree D • WeilDivisor.ofPoint (Place.infty k)) := by
+    have h := Divisor.degree_add_one_le_dim_ratFunc
+      (D - Divisor.degree D • WeilDivisor.ofPoint (Place.infty k))
+    rw [hdeg] at h
+    omega
+  obtain ⟨z, hz⟩ :=
+    (Divisor.one_le_dim_iff_exists_principal_eq_of_degree_eq_zero
+      (IsFunctionField.ratFunc k) hdeg).mp hdim
+  exact (Divisor.linearlyEquivalent_iff _).mpr ⟨z, hz⟩
+
+/-- **`ℓ(D)` on the rational function field, for every divisor**: `ℓ(D) = (deg D + 1)⁺`.
+
+Every divisor of `k(x)` is linearly equivalent to `(deg D) · P_∞`, where the dimension was
+computed by hand in `TauCeti.Divisor.dim_zsmul_ofPoint_infty`.  This is the Riemann–Roch answer
+on `k(x)`, obtained without the Riemann–Roch theorem. -/
+theorem Divisor.dim_ratFunc (D : Divisor k (RatFunc k)) :
+    Divisor.dim D = (Divisor.degree D + 1).toNat := by
+  rw [Divisor.dim_eq_of_linearlyEquivalent (IsFunctionField.ratFunc k)
+      (Divisor.linearlyEquivalent_zsmul_ofPoint_infty D),
+    Divisor.dim_zsmul_ofPoint_infty]
 
 end TauCeti
