@@ -46,7 +46,8 @@ while `Li` itself is the case `n = 1`.
 
 This is the analytic half of Layer **6.2** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`,
 which asks for `Li` together with `Li(x) ∼ x/log x` on the way to the transfer
-`ϑ(x) ∼ δx ⟹ π(x) ∼ δ Li(x)` that Layer 10.3 exports as `primeCount_asymptotic_of_primeTheta`.
+`ϑ(x) ∼ δx ⟹ π(x) ∼ δ Li(x)` of `TauCeti/NumberTheory/ArithmeticDirichletSeries/Transfer.lean`,
+whose quotient form Layer 10.3 exports as `primeCount_asymptotic_of_primeTheta`.
 The weighted-remainder estimate `isLittleO_integral_div_mul_log_sq` is the analytic input to that
 transfer: it is what absorbs the integral produced by Abel summation.
 

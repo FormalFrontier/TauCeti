@@ -24,8 +24,10 @@ The bridge is the exact Abel-summation identity
 `TauCeti.primeCount_eq_primeTheta_div_log_add_integral` of Layer 6.1 together with the
 antiderivative identity `TauCeti.Real.logIntegral_eq_div_log_sub_add` for `Li`.  Subtracting the two
 cancels the main terms and leaves
-`TauCeti.primeCount_sub_mul_logIntegral_eq`, an identity valid for every `x ≥ 2` and every `δ`,
-whose three remaining summands are each `o (x / log x)`.
+`TauCeti.primeCount_sub_mul_logIntegral_eq`, an identity valid for every `x ≥ 2` and every `δ`, with
+no hypothesis relating `ϑ` and `δ`.  Its constant summand is unconditionally `o (x / log x)`, and
+*under the hypothesis `ϑ(x) = δx + o(x)`* so are the remaining two, the boundary quotient and the
+weighted integral.
 
 ## Main results
 
@@ -33,9 +35,12 @@ whose three remaining summands are each `o (x / log x)`.
   `π(x) - δ Li(x) = (ϑ(x) - δx)/log x + ∫ t in 2..x, (ϑ(t) - δt)/(t log² t) + 2δ/log 2`.
 * `TauCeti.primeCount_sub_mul_logIntegral_isLittleO`: the transfer itself, stated so that it covers
   the density `δ = 0` as well.
-* `TauCeti.primeCount_asymptotic_of_primeTheta`: the quotient form `ϑ(x) ∼ δx ⟹ π(x) ∼ δ Li(x)`
-  for `δ ≠ 0`, and `TauCeti.primeCount_isLittleO_logIntegral` for the zero-density case, where an
-  asymptotic equivalence would be false and the correct statement is `π(x) = o(Li x)`.
+* `TauCeti.primeCount_asymptotic_of_primeTheta`: the quotient form
+  `ϑ(x)/x → δ ⟹ π(x)/(x/log x) → δ`, for every real `δ`.
+* `TauCeti.primeCount_isEquivalent_const_mul_logIntegral`: the equivalence
+  `ϑ(x) ∼ δx ⟹ π(x) ∼ δ Li(x)` for `δ ≠ 0`, and `TauCeti.primeCount_isLittleO_logIntegral` for the
+  zero-density case, where an asymptotic equivalence would be false and the correct statement is
+  `π(x) = o(Li x)`.
 
 ## Roadmap role
 
@@ -59,7 +64,7 @@ public section
 namespace TauCeti
 
 open Asymptotics Filter MeasureTheory
-open scoped nonZeroDivisors NumberField
+open scoped nonZeroDivisors NumberField Topology
 open IsDedekindDomain
 
 variable {K : Type*} [Field K] [NumberField K] {S : Set (HeightOneSpectrum (𝓞 K))} {δ : ℝ}
@@ -104,8 +109,9 @@ theorem primeCount_sub_mul_logIntegral_eq (S : Set (HeightOneSpectrum (𝓞 K)))
 /-- **The transfer from `ϑ` to `π`.**  If the logarithmically weighted count of the primes of `S`
 satisfies `ϑ(x) = δx + o(x)`, then the unweighted count satisfies `π(x) = δ Li(x) + o(x/log x)`.
 
-Stated with an error term rather than as an equivalence, this covers `δ = 0` as well; the two
-quotient forms are `TauCeti.primeCount_asymptotic_of_primeTheta` and
+Stated with an error term rather than as an equivalence, this covers `δ = 0` as well; the quotient
+forms are `TauCeti.primeCount_asymptotic_of_primeTheta`,
+`TauCeti.primeCount_isEquivalent_const_mul_logIntegral` and
 `TauCeti.primeCount_isLittleO_logIntegral`. -/
 theorem primeCount_sub_mul_logIntegral_isLittleO
     (h : (fun x ↦ primeTheta K S x - δ * x) =o[atTop] id) :
@@ -124,6 +130,32 @@ theorem primeCount_sub_mul_logIntegral_isLittleO
   filter_upwards [eventually_ge_atTop (2 : ℝ)] with x hx
   exact (primeCount_sub_mul_logIntegral_eq S δ hx).symm
 
+/-- **`ϑ(x)/x → δ` implies `π(x)/(x/log x) → δ`.**  This is the transfer the prime-number-theorem
+chain consumes: Layer 10 produces the limit for `ϑ` from a Tauberian theorem, and this turns it
+into one for `π`.  In this quotient form the statement is uniform in `δ`, the zero density
+included; for `δ ≠ 0` it sharpens to the equivalence
+`TauCeti.primeCount_isEquivalent_const_mul_logIntegral`. -/
+theorem primeCount_asymptotic_of_primeTheta (S : Set (HeightOneSpectrum (𝓞 K))) (δ : ℝ)
+    (hϑ : Tendsto (fun x : ℝ ↦ primeTheta K S x / x) atTop (𝓝 δ)) :
+    Tendsto (fun x : ℝ ↦ primeCount K S x / (x / Real.log x)) atTop (𝓝 δ) := by
+  have h : (fun x ↦ primeTheta K S x - δ * x) =o[atTop] (id : ℝ → ℝ) := by
+    refine (isLittleO_iff_tendsto' ?_).mpr ?_
+    · filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx hx0
+      exact absurd hx0 hx.ne'
+    · have hϑ' := hϑ.sub_const δ
+      rw [sub_self] at hϑ'
+      refine hϑ'.congr' ?_
+      filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
+      rw [id_eq, sub_div, mul_div_assoc, div_self hx.ne', mul_one]
+  have hLi : Tendsto (fun x : ℝ ↦ Real.logIntegral x / (x / Real.log x)) atTop (𝓝 1) := by
+    refine (isEquivalent_iff_tendsto_one ?_).mp Real.logIntegral_isEquivalent_div_log
+    filter_upwards [eventually_gt_atTop (2 : ℝ)] with x hx
+    exact (div_pos (by linarith) (Real.log_pos (by linarith))).ne'
+  have hsum := (primeCount_sub_mul_logIntegral_isLittleO h).tendsto_div_nhds_zero.add
+    (hLi.const_mul δ)
+  rw [zero_add, mul_one] at hsum
+  exact hsum.congr fun x ↦ by ring
+
 /-- **The zero-density case.**  If the logarithmically weighted count of `S` is `o(x)`, then `S`
 contains `o(Li x)` primes up to `x`.  An asymptotic equivalence is *not* the right statement here:
 `π ~ 0` would force `π` to vanish eventually. -/
@@ -134,10 +166,10 @@ theorem primeCount_isLittleO_logIntegral (h : primeTheta K S =o[atTop] id) :
     primeCount_sub_mul_logIntegral_isLittleO (by simpa using h)
   simpa using h0.trans_isBigO Real.logIntegral_isEquivalent_div_log.isBigO_symm
 
-/-- **`ϑ(x) ∼ δx` implies `π(x) ∼ δ Li(x)`,** for a nonzero density `δ`.  This is the transfer the
-prime-number-theorem chain consumes: Layer 10 produces the asymptotic for `ϑ` from a Tauberian
-theorem, and this turns it into one for `π`. -/
-theorem primeCount_asymptotic_of_primeTheta (hδ : δ ≠ 0)
+/-- **`ϑ(x) ∼ δx` implies `π(x) ∼ δ Li(x)`,** for a nonzero density `δ`.  The hypothesis `δ ≠ 0` is
+needed for the equivalence form; the quotient form valid for every `δ` is
+`TauCeti.primeCount_asymptotic_of_primeTheta`. -/
+theorem primeCount_isEquivalent_const_mul_logIntegral (hδ : δ ≠ 0)
     (h : primeTheta K S ~[atTop] fun x ↦ δ * x) :
     primeCount K S ~[atTop] fun x ↦ δ * Real.logIntegral x := by
   have hlin : (fun x : ℝ ↦ δ * x) =O[atTop] (id : ℝ → ℝ) :=
