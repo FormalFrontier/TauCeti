@@ -158,8 +158,8 @@ variable {G : Type uG} [Group G]
 
 /-- Pairing with an invariant second factor commutes with the action of `G` on the first. -/
 theorem pairing_smul_left (g : G) (a : A) (y : H0 G B) :
-    P.pairing (g • a) (y : B) = g • P.pairing a (y : B) := by
-  rw [← P.equivariant g a (y : B), (FixedPoints.mem_addSubgroup G B (y : B)).1 y.2 g]
+    P.pairing (g • a) (y : B) = g • P.pairing a (y : B) :=
+  pairingRight_smul P.pairing P.equivariant y g a
 
 variable [TopologicalSpace G] [ContinuousSMul G A'] [ContinuousSMul G A]
   [ContinuousSMul G A''] [ContinuousSMul G B] [ContinuousSMul G C'] [ContinuousSMul G C]
@@ -295,8 +295,8 @@ variable {G : Type uG} [Group G]
 
 /-- Pairing with an invariant first factor commutes with the action of `G` on the second. -/
 theorem pairing_smul_right (g : G) (x : H0 G A) (b : B) :
-    P.pairing (x : A) (g • b) = g • P.pairing (x : A) b := by
-  rw [← P.equivariant g (x : A) b, (FixedPoints.mem_addSubgroup G A (x : A)).1 x.2 g]
+    P.pairing (x : A) (g • b) = g • P.pairing (x : A) b :=
+  pairingLeft_smul P.pairing P.equivariant x g b
 
 variable [TopologicalSpace G] [ContinuousSMul G A] [ContinuousSMul G B']
   [ContinuousSMul G B] [ContinuousSMul G B''] [ContinuousSMul G C'] [ContinuousSMul G C]

@@ -649,12 +649,7 @@ a cochain is in hand. -/
 theorem exists_mem_Z2_incl_comp_eq_d1 {e : G → B} (hc : Continuous e)
     (he : groupCohomology.IsCocycle₁ fun g => S.proj (e g)) :
     ∃ w ∈ Z2 G A, ∀ g h : G, S.incl (w (g, h)) = g • e h - e (g * h) + e g := by
-  have hzero : ∀ q : G × G, S.proj (d1 G B e q) = 0 := by
-    rintro ⟨g, h⟩
-    have hgh : S.proj (e (g * h)) = g • S.proj (e h) + S.proj (e g) := he g h
-    rw [d1_apply, map_add, map_sub, S.proj_equivariant, hgh]
-    abel
-  choose w hw using fun q : G × G => S.exists_incl_eq (hzero q)
+  choose w hw using fun q : G × G => S.exists_incl_eq (proj_d1_eq_zero (fun _ => rfl) he q)
   have hwd : ∀ g h : G, S.incl (w (g, h)) = g • e h - e (g * h) + e g := fun g h =>
     (hw (g, h)).trans (d1_apply e g h)
   exact ⟨w, S.mem_Z2_of_incl_comp_eq_d1 hc hwd, hwd⟩
