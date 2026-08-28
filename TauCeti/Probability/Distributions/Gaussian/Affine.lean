@@ -106,7 +106,12 @@ theorem map_affine_multivariateGaussian (m : EuclideanSpace ℝ ι) {S : Matrix 
       simpa only [Matrix.toLin'_apply] using
         Matrix.ofLp_toLpLin (p := 2) (q := 2) L.transpose z
     rw [h_apply, h_apply, ← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec]
-    nth_rw 2 [Matrix.dotProduct_mulVec]
-    rw [← Matrix.mulVec_transpose]
+    calc
+      L.transpose.mulVec x.ofLp ⬝ᵥ S.mulVec (L.transpose.mulVec y.ofLp) =
+          Matrix.vecMul x.ofLp L ⬝ᵥ S.mulVec (L.transpose.mulVec y.ofLp) := by
+        rw [Matrix.mulVec_transpose]
+      _ = x.ofLp ⬝ᵥ L.mulVec (S.mulVec (L.transpose.mulVec y.ofLp)) :=
+        (Matrix.dotProduct_mulVec x.ofLp L
+          (S.mulVec (L.transpose.mulVec y.ofLp))).symm
 
 end TauCeti
