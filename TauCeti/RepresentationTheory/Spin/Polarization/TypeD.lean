@@ -20,6 +20,10 @@ algebra and then with the quadratic elements of the Clifford algebra.
 The standard diagonal matrix indexed by `i` acts by `1` on the `i`-th isotropic basis vector and
 by `-1` on its dual. Under the comparison it is therefore the diagonal Clifford bivector used to
 compute the spin weights.
+
+## References
+
+* [Tau Ceti Roadmap, Spin Representations, Layer 5](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md#layer-5-the-fundamental-representations-of-b%E2%82%97-and-d%E2%82%97)
 -/
 
 public section
@@ -129,6 +133,13 @@ private noncomputable def typeDSkewAdjointEquiv
         f ∈ skewAdjointLieSubalgebra Q.polarBilin
       exact P.mem_typeD_toMatrix_iff b hline f
 
+@[simp]
+private theorem typeDSkewAdjointEquiv_apply (hline : P.line = ⊥)
+    (A : LieAlgebra.Orthogonal.typeD ι K) :
+    (P.typeDSkewAdjointEquiv b hline A : Module.End K V) =
+      (LinearMap.toMatrixAlgEquiv (P.typeDBasis b hline)).symm A := by
+  rfl
+
 end PreQuadratic
 
 section Quadratic
@@ -157,7 +168,7 @@ theorem typeDQuadraticEquiv_lie_ι (hline : P.line = ⊥)
         ((LinearMap.toMatrixAlgEquiv (P.typeDBasis b hline)).symm A x) := by
   let _ : Module.Finite K V := Module.Finite.of_basis (P.typeDBasis b hline)
   rw [typeDQuadraticEquiv, LieEquiv.trans_apply, soEquivQuadratic_lie_ι]
-  rfl
+  rw [P.typeDSkewAdjointEquiv_apply]
 
 /-- The standard one-coordinate diagonal matrix is the diagonal Clifford bivector of the
 corresponding polarization coordinate. -/
