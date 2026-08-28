@@ -90,17 +90,13 @@ private theorem coordinateHopfAlgebraBaseChangeIso_hom_relationMatrix (i j : Fin
         (1 ⊗ₜ[R] relationMatrix R m i j) =
       relationMatrix K m i j := by
   rw [← baseChangeAlgHom_apply R K m]
-  have hgeneric : (genericMatrix R m).map (baseChangeAlgHom R K m) = genericMatrix K m := by
-    ext i j
-    rw [Matrix.map_apply, genericMatrix_apply, genericMatrix_apply]
-    have h := congrFun (congrFun
-      (GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_genericMatrix R K (m + m)) i) j
-    rw [Matrix.map_apply, GeneralLinear.genericMatrix_apply,
-      GeneralLinear.genericMatrix_apply] at h
-    simpa only [baseChangeAlgHom] using h
-  have hmatrix := relationMatrix_map R m (baseChangeAlgHom R K m)
-  rw [hgeneric] at hmatrix
-  rw [relationMatrix_def K m, JFin_map]
+  have hgeneric : (GeneralLinear.genericMatrix R (m + m)).map (baseChangeAlgHom R K m) =
+      GeneralLinear.genericMatrix K (m + m) := by
+    simpa only [baseChangeAlgHom] using
+      GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_genericMatrix R K (m + m)
+  have hmatrix := ConstantForm.relationMatrix_map R (m + m) (JFin m R) (baseChangeAlgHom R K m)
+  rw [hgeneric, JFin_map] at hmatrix
+  rw [relationMatrix_def K m]
   exact congrFun (congrFun hmatrix i) j
 
 /-- The general-linear base-change isomorphism carries the base-changed symplectic defining Hopf
@@ -112,7 +108,8 @@ private theorem map_baseChangeHopfIdeal_definingHopfIdeal :
   refine CommHopfAlgCat.map_baseChangeHopfIdeal_of_toIdeal_eq_span
     (definingHopfIdeal R m) (definingHopfIdeal K m)
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m))
-    (definingHopfIdeal_toIdeal R m) (definingHopfIdeal_toIdeal K m) ?_
+    (ConstantForm.definingHopfIdeal_toIdeal R (m + m) (JFin m R))
+    (ConstantForm.definingHopfIdeal_toIdeal K (m + m) (JFin m K)) ?_
   have hrel (i j : Fin (m + m)) :
       (fun x : GeneralLinear.coordinateHopfAlgebra R (m + m) =>
         (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K (m + m)).hom.hom
@@ -121,11 +118,12 @@ private theorem map_baseChangeHopfIdeal_definingHopfIdeal :
   ext x
   constructor
   · rintro ⟨_, hy, rfl⟩
-    obtain ⟨i, j, rfl⟩ := (mem_relationSet_iff R m).mp hy
-    exact (hrel i j).symm ▸ relationMatrix_mem_relationSet K m i j
+    obtain ⟨i, j, rfl⟩ := (ConstantForm.mem_relationSet_iff R (m + m) (JFin m R)).mp hy
+    exact (hrel i j).symm ▸ ConstantForm.relationMatrix_mem_relationSet K (m + m) (JFin m K) i j
   · intro hx
-    obtain ⟨i, j, rfl⟩ := (mem_relationSet_iff K m).mp hx
-    exact ⟨relationMatrix R m i j, relationMatrix_mem_relationSet R m i j,
+    obtain ⟨i, j, rfl⟩ := (ConstantForm.mem_relationSet_iff K (m + m) (JFin m K)).mp hx
+    exact ⟨relationMatrix R m i j,
+      ConstantForm.relationMatrix_mem_relationSet R (m + m) (JFin m R) i j,
       hrel i j⟩
 
 /-- Base change of the symplectic coordinate Hopf algebra is canonically the symplectic
@@ -157,7 +155,8 @@ noncomputable def finiteTypeCoordinateHopfAlgebraBaseChangeIso :
     FiniteTypeCommHopfAlgCat.baseChange (K := K) (finiteTypeCoordinateHopfAlgebra R m) ≅
       finiteTypeCoordinateHopfAlgebra K m :=
   FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso
-    (finiteTypeCoordinateHopfAlgebra_obj R m) (finiteTypeCoordinateHopfAlgebra_obj K m)
+    (finiteTypeCoordinateHopfAlgebra_obj R m)
+    (finiteTypeCoordinateHopfAlgebra_obj K m)
     (coordinateHopfAlgebraBaseChangeIso R K m)
 
 /-- The underlying commutative-Hopf-algebra morphism of the finite-type base-change isomorphism
@@ -169,9 +168,11 @@ theorem finiteTypeCoordinateHopfAlgebraBaseChangeIso_hom :
       (eqToIso (congrArg (CommHopfAlgCat.baseChange (K := K))
           (finiteTypeCoordinateHopfAlgebra_obj R m)) ≪≫
         coordinateHopfAlgebraBaseChangeIso R K m ≪≫
-        eqToIso (finiteTypeCoordinateHopfAlgebra_obj K m).symm).hom := by
+        eqToIso
+          (finiteTypeCoordinateHopfAlgebra_obj K m).symm).hom := by
   exact FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso_hom
-    (finiteTypeCoordinateHopfAlgebra_obj R m) (finiteTypeCoordinateHopfAlgebra_obj K m)
+    (finiteTypeCoordinateHopfAlgebra_obj R m)
+    (finiteTypeCoordinateHopfAlgebra_obj K m)
     (coordinateHopfAlgebraBaseChangeIso R K m)
 
 end TauCeti.Symplectic

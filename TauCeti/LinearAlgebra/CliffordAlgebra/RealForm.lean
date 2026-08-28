@@ -24,6 +24,8 @@ coordinates and `-1` in the last `q`, written as a `QuadraticMap.weightedSumSqua
 sign vector `TauCeti.realCliffordWeight p q`. It is nondegenerate
 (`TauCeti.nondegenerate_realCliffordForm`), and its Clifford algebra has dimension `2 ^ (p + q)`
 (`TauCeti.finrank_cliffordAlgebra_realCliffordForm`).
+The compact form `realCliffordForm n 0` is positive definite
+(`TauCeti.posDef_realCliffordForm_zero`).
 Negating the form swaps the two signature indices through
 `TauCeti.realCliffordFormNegIsometry`; its coordinate action is given by
 `TauCeti.realCliffordFormNegIsometry_pos_of_neg` and
@@ -148,6 +150,18 @@ theorem nondegenerate_realCliffordForm (p q : ℕ) : (realCliffordForm p q).Nond
   intro v hv
   funext j
   exact Pi.mem_spanSubset_iff.1 hv j (realCliffordWeight_ne_zero p q j)
+
+/-- The standard signature form with no negative coordinates is positive definite. -/
+theorem posDef_realCliffordForm_zero (n : ℕ) : (realCliffordForm n 0).PosDef := by
+  intro v hv
+  rw [realCliffordForm_apply]
+  refine Finset.sum_pos' (fun i _ ↦ ?_) ?_
+  · rw [realCliffordWeight_of_lt (by omega), one_mul]
+    exact mul_self_nonneg (v i)
+  · obtain ⟨i, hi⟩ := Function.ne_iff.mp hv
+    refine ⟨i, Finset.mem_univ i, ?_⟩
+    rw [realCliffordWeight_of_lt (by omega), one_mul]
+    exact mul_self_pos.mpr hi
 
 /-- The real Clifford algebra of signature `(p, q)` has dimension `2 ^ (p + q)`, as every Clifford
 algebra of a space of that dimension does. This is the count that forces the surjections built

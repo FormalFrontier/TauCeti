@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Compositum
 public import TauCeti.NumberTheory.NumberField.RamifiedPrimes
+import TauCeti.NumberTheory.NumberField.AutomorphismAction
 import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 import TauCeti.NumberTheory.RamificationInertia.Tower
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
@@ -107,12 +108,6 @@ private theorem eq_primeDiscriminantPrime_of_apply_eq_neg {M : Type v} [Field M]
     (hσ : ∀ z : 𝓞 M, σ • z - z ∈ P) (hneg : σ x = -x) :
     p = primeDiscriminantPrime D := by
   have : Fact p.Prime := ⟨hp⟩
-  have hbridge (z : 𝓞 M) : algebraMap (𝓞 M) M (σ • z) = σ (algebraMap (𝓞 M) M z) := by
-    have hcoe : algebraMap (𝓞 M) M (σ • z) = σ • algebraMap (𝓞 M) M z := by
-      rw [← NumberField.RingOfIntegers.coe_eq_algebraMap,
-        ← NumberField.RingOfIntegers.coe_eq_algebraMap]
-      exact integralClosure.coe_smul σ z
-    rw [hcoe, AlgEquiv.smul_def]
   by_cases hp2 : p = 2
   · subst p
     by_contra hne
@@ -125,7 +120,7 @@ private theorem eq_primeDiscriminantPrime_of_apply_eq_neg {M : Type v} [Field M]
     -- `W` is given by its value, so its image in `M` is that value definitionally.
     have hWval : algebraMap (𝓞 M) M W = (1 + x) / 2 := rfl
     have hWcoe : algebraMap (𝓞 M) M (σ • W - W) = -x := by
-      rw [map_sub, hbridge, hWval, map_div₀, map_add, map_one, hneg, map_ofNat]
+      rw [map_sub, algebraMap_smul_eq_apply, hWval, map_div₀, map_add, map_one, hneg, map_ofNat]
       ring
     have hWsq : (σ • W - W) ^ 2 = algebraMap ℤ (𝓞 M) (primeDiscriminantRadicand D) := by
       apply FaithfulSMul.algebraMap_injective (𝓞 M) M
@@ -138,7 +133,7 @@ private theorem eq_primeDiscriminantPrime_of_apply_eq_neg {M : Type v} [Field M]
   · let R : 𝓞 M := NumberField.integralSqrt hx
     have hR : σ • R = -R := by
       apply FaithfulSMul.algebraMap_injective (𝓞 M) M
-      rw [hbridge, map_neg]
+      rw [algebraMap_smul_eq_apply, map_neg]
       simpa only [R, NumberField.algebraMap_integralSqrt] using hneg
     have htwoR : (2 : 𝓞 M) * R ∈ P := by
       have hsub := hσ R

@@ -134,17 +134,12 @@ theorem cuspFormsOld_le [NeZero N] {V : Submodule ℂ (CuspForm ((Gamma1 N).map 
 level-raise `V₁`. -/
 theorem ofLe_mem_cuspFormsOld [NeZero N] (h : M ∣ N) (hM : M ≠ N) (k : ℤ)
     (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    _root_.CuspForm.ofLe (Subgroup.map_mono (Gamma1_le_Gamma1_of_dvd h)) f ∈
+    _root_.CuspForm.ofLe (Gamma1_map_le_Gamma1_map_of_dvd h) f ∈
       cuspFormsOld N k := by
   have h1 : 1 * M ∣ N := by rwa [one_mul]
   have := levelRaise_mem_cuspFormsOld h1 hM k f
   -- At `d = 1`, level-raising is exactly restriction along the subgroup inclusion.
-  have levelRaise_one_eq_ofLe :
-      CuspForm.levelRaise 1 (Gamma1_map_le_conjAct_scaleGL_of_dvd h1) f =
-        _root_.CuspForm.ofLe (Subgroup.map_mono (Gamma1_le_Gamma1_of_dvd h)) f :=
-    _root_.CuspForm.ext fun τ ↦ (CuspForm.levelRaise_one_apply _ f τ).trans
-      (congrFun (_root_.CuspForm.coe_ofLe _ f) τ).symm
-  rwa [levelRaise_one_eq_ofLe] at this
+  rwa [_root_.CuspForm.levelRaise_one] at this
 
 /-- **Level one has no oldforms**: `1` has no proper divisors. -/
 @[simp]

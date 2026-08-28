@@ -23,10 +23,9 @@ reflection `GridRectangleBetween.transpose` preserves emptiness and marking avoi
 `BlockedRectangle.lean` turns this into the rectangle-count symmetries
 `fullyBlockedRectangleCount_transpose` and `fullyBlockedRectangleCount_swapMarkings`. Here we lift
 those matrix coefficients to the differential itself: the marking swap fixes the whole
-differential, while the diagonal reflection and the half-turn rotation intertwine the differentials
-of `G` and `G.transpose` (resp. `G.rotate`) through the chain relabelings `GridChain.transposeEquiv`
-and `GridChain.rotateEquiv` (defined in `Complex.lean`) induced by `GridState.transpose` and
-`GridState.rotate`.
+differential, while the diagonal reflection intertwines the differentials of `G` and
+`G.transpose` through the chain relabeling `GridChain.transposeEquiv` (defined in `Complex.lean`)
+induced by `GridState.transpose`.
 
 ## Main results
 
@@ -35,9 +34,6 @@ and `GridChain.rotateEquiv` (defined in `Complex.lean`) induced by `GridState.tr
 * `TauCeti.GridDiagram.fullyBlockedDifferential_transpose`: the differential commutes with the
   transpose chain relabeling, intertwining the differentials of `G` and `G.transpose`; this is the
   chain symmetry of the diagonal reflection.
-* `TauCeti.GridDiagram.fullyBlockedDifferential_rotate`: the differential commutes with the
-  rotation chain relabeling, intertwining the differentials of `G` and `G.rotate`; this is the
-  chain symmetry of the half-turn rotation.
 
 ## References
 
@@ -94,27 +90,6 @@ theorem fullyBlockedDifferential_transpose :
   simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, Finsupp.lsingle_apply,
     GridChain.transposeEquiv_single, fullyBlockedDifferential_single]
   exact G.fullyBlockedDifferentialOnGenerator_transpose x
-
-/-- The generator row of the fully blocked differential intertwines the half-turn rotation: the
-rotated diagram's row on `x.rotate` is the rotation relabeling of the original row on `x`. -/
-theorem fullyBlockedDifferentialOnGenerator_rotate (x : GridState n) :
-    G.rotate.fullyBlockedDifferentialOnGenerator x.rotate =
-      GridChain.rotateEquiv (ZMod 2) n (G.fullyBlockedDifferentialOnGenerator x) := by
-  refine Finsupp.ext fun y => ?_
-  rw [GridChain.rotateEquiv_apply, fullyBlockedDifferentialOnGenerator_apply,
-    fullyBlockedDifferentialOnGenerator_apply,
-    ← G.fullyBlockedRectangleCount_rotate x y.rotate, GridState.rotate_rotate]
-
-/-- The fully blocked grid differential commutes with the rotation chain relabeling, intertwining
-the differentials of `G` and `G.rotate`. This is the chain-level form of the statement that the
-half-turn rotation is a symmetry of the fully blocked grid complex. -/
-theorem fullyBlockedDifferential_rotate :
-    G.rotate.fullyBlockedDifferential ∘ₗ (GridChain.rotateEquiv (ZMod 2) n).toLinearMap =
-      (GridChain.rotateEquiv (ZMod 2) n).toLinearMap ∘ₗ G.fullyBlockedDifferential := by
-  refine Finsupp.lhom_ext' fun x => LinearMap.ext_ring ?_
-  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, Finsupp.lsingle_apply,
-    GridChain.rotateEquiv_single, fullyBlockedDifferential_single]
-  exact G.fullyBlockedDifferentialOnGenerator_rotate x
 
 end GridDiagram
 

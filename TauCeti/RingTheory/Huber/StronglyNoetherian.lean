@@ -173,30 +173,13 @@ variable {A B : Type*} [CommRing A] [TopologicalSpace A] [NonarchimedeanRing A]
 /-- **The isomorphism `A⟨X₁,…,Xₖ⟩ ≃+* B⟨X₁,…,Xₖ⟩` induced by a bicontinuous ring isomorphism
 `e : A ≃+* B`**, acting coefficientwise. Continuity of `e` and of `e.symm` are both hypotheses;
 neither follows from the other for a bare `RingEquiv`. -/
--- Built from `weightedMapCompletion` in each direction; the two are mutually inverse by
--- `weightedMapCompletion_id` and `weightedMapCompletion_comp`. Both continuity hypotheses are
--- load-bearing because `weightedMapCompletion` goes through `UniformSpace.Completion.mapRingHom`,
--- which induces nothing on completions from a discontinuous map.
+-- The equiv is `TauCeti.Huber.weightedMapCompletionEquiv` at the constant weight family; both
+-- continuity hypotheses are load-bearing there.
 private noncomputable def restrictedMvPowerSeriesCompletionCongr (e : A ≃+* B) (he : Continuous e)
     (he' : Continuous e.symm) (k : ℕ) :
     restrictedMvPowerSeriesCompletion k A ≃+* restrictedMvPowerSeriesCompletion k B :=
-  RingEquiv.ofRingHom
-    (weightedMapCompletion (φ := (e : A →+* B)) he isWeightFamily_one_weight
-      isWeightFamily_one_weight
-      fun _ ↦ by simp)
-    (weightedMapCompletion (φ := (e.symm : B →+* A)) he' isWeightFamily_one_weight
-      isWeightFamily_one_weight
-      fun _ ↦ by simp)
-    (by
-      rw [weightedMapCompletion_comp he' he isWeightFamily_one_weight isWeightFamily_one_weight
-        isWeightFamily_one_weight (fun _ ↦ by simp)
-        (fun _ ↦ by simp)]
-      simp)
-    (by
-      rw [weightedMapCompletion_comp he he' isWeightFamily_one_weight isWeightFamily_one_weight
-        isWeightFamily_one_weight (fun _ ↦ by simp)
-        (fun _ ↦ by simp)]
-      simp)
+  weightedMapCompletionEquiv e he he' isWeightFamily_one_weight isWeightFamily_one_weight
+    (fun _ ↦ by simp) (fun _ ↦ by simp)
 
 /-- **Strong noetherianness is invariant under a bicontinuous ring isomorphism.** Continuity of
 `e` and of `e.symm` are both hypotheses; neither follows from the other for a bare `RingEquiv`. -/

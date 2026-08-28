@@ -83,6 +83,13 @@ theorem colLen_diagramOf_indiscrete_le_one (n : ℕ) :
     YoungDiagram.mem_iff_lt_colLen.mpr hlt
   exact absurd (YoungDiagram.mem_iff_lt_rowLen.mp hmem) (by omega)
 
+/-- **The Young diagram of a partition has one row per part**: its rows are the parts, so the
+length of its first column counts them. -/
+@[simp]
+theorem colLen_zero_diagramOf {n : ℕ} (ν : n.Partition) :
+    (diagramOf ν).colLen 0 = ν.parts.card := by
+  rw [← YoungDiagram.length_rowLens, rowLens_diagramOf, Multiset.length_sort]
+
 /-- The partition of the cells of a Young diagram: its parts are the row lengths. -/
 def toPartition {n : ℕ} (μ : YoungDiagram) (h : μ.card = n) : n.Partition where
   parts := μ.rowLens

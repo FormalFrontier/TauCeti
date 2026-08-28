@@ -58,4 +58,12 @@ theorem coeff_toMvPowerSeries (i : σ) (w : PowerSeries R) (d : σ →₀ ℕ) :
     rw [← hy, Finsupp.unique_single y, Finsupp.mapDomain_single]
     simp
 
+omit [DecidableEq σ] in
+/-- Base change commutes with viewing a one-variable series in a single variable `i`. -/
+@[simp]
+theorem map_toMvPowerSeries {S : Type*} [CommSemiring S] (φ : R →+* S) (i : σ) (w : PowerSeries R) :
+    MvPowerSeries.map φ (w.toMvPowerSeries i) = (PowerSeries.map φ w).toMvPowerSeries i := by
+  simp only [toMvPowerSeries_apply, PowerSeries.map, ← MvPowerSeries.rename_map]
+
+
 end PowerSeries
