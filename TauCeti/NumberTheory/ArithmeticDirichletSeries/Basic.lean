@@ -7,7 +7,8 @@ module
 
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.NumberTheory.NumberField.Basic
-public import TauCeti.RingTheory.DedekindDomain.Ideal
+public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
+import TauCeti.RingTheory.DedekindDomain.Ideal
 
 /-!
 # Arithmetic functions on nonzero ideals
