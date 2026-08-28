@@ -306,24 +306,14 @@ theorem geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice
         (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i)) n) v ∈
       t.geckCoordinateLattice ht := by
   rw [geckCoordinateLattice] at hv ⊢
-  induction hv using Submodule.span_induction with
-  | mem v hv =>
-      obtain ⟨x, rfl⟩ := hv
-      rw [Pi.basisFun_apply]
-      rw [Ring.map_choose]
-      have hweight := (UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-        (h := (t.lieBasis ht).h) (ρ := t.geckRepresentation ht)).1
-          (t.isCartanWeightVector_geckRepresentation_single ht x) i
-      rw [ringChoose_end_apply_of_apply_eq_smul hweight n,
-        TauCeti.Ring.choose_intCast, Int.cast_smul_eq_zsmul ℚ]
-      have hx : Pi.single x (1 : ℚ) ∈
-          Submodule.span ℤ (range (Pi.basisFun ℚ (t.GeckIndex ht))) := by
-        rw [← Pi.basisFun_apply]
-        exact Submodule.subset_span (mem_range_self x)
-      exact Submodule.smul_mem _ _ hx
-  | zero => rw [map_zero]; exact zero_mem _
-  | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
-  | smul z x _ hx => rw [map_zsmul]; exact Submodule.smul_mem _ z hx
+  rw [Ring.map_choose]
+  apply ringChoose_end_apply_mem_span_of_apply_eq_intCast_smul
+    (weight := fun x => t.geckWeight ht x i) (n := n) ?_ hv
+  intro x
+  rw [Pi.basisFun_apply]
+  exact (UniversalEnvelopingAlgebra.isCartanWeightVector_iff
+    (h := (t.lieBasis ht).h) (ρ := t.geckRepresentation ht)).1
+      (t.isCartanWeightVector_geckRepresentation_single ht x) i
 
 /-! ## Divided powers of the numbered root generators -/
 

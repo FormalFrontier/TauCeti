@@ -45,6 +45,8 @@ Fields and Codes*, 2nd ed., Definition 1.4.4 through Definition 1.4.10.
 * `TauCeti.finrank_quotient_riemannRochSpace_le_degree_sub`: for `D ≤ E` the quotient
   `L(E)/L(D)` has dimension at most `deg E - deg D`, equivalently
   `TauCeti.Divisor.dim_le_dim_add_degree_sub`: `ℓ(E) ≤ ℓ(D) + (deg E - deg D)` (Lemma 1.4.8).
+* `TauCeti.rank_quotient_riemannRochSpace_add_dim`: the rank of `L(E)/L(D)` is exactly
+  `ℓ(E) - ℓ(D)`, in the subtraction-free form `rank (L(E)/L(D)) + ℓ(D) = ℓ(E)`.
 * `TauCeti.finiteDimensional_riemannRochSpace` and
   `TauCeti.Divisor.dim_le_degree_posPart_add_one`: `L(D)` is finite-dimensional, with
   `ℓ(D) ≤ deg D⁺ + [algebraicClosure k F : k]` and hence `ℓ(D) ≤ deg D⁺ + 1` over an exact
@@ -381,23 +383,49 @@ theorem Divisor.dim_le_dim_add_degree_sub (hF : IsFunctionField k F) {D E : Divi
 
 /-- **Stichtenoth, Lemma 1.4.8** in the quotient form Stichtenoth states it in: for `D ≤ E` the
 quotient `L(E) / L(D)` has dimension at most `deg E - deg D`.  Inside `L(E)` the subspace `L(D)`
-is the comap along the subtype map of the inclusion `TauCeti.riemannRochSpace_mono`; the
+is the trace `Submodule.submoduleOf` of the inclusion `TauCeti.riemannRochSpace_mono`; the
 arithmetic form of the same bound is `TauCeti.Divisor.dim_le_dim_add_degree_sub`. -/
 theorem finrank_quotient_riemannRochSpace_le_degree_sub (hF : IsFunctionField k F)
     {D E : Divisor k F} (h : D ≤ E) :
     (Module.finrank k (riemannRochSpace E ⧸
-        Submodule.comap (riemannRochSpace E).subtype (riemannRochSpace D)) : ℤ) ≤
+        (riemannRochSpace D).submoduleOf (riemannRochSpace E)) : ℤ) ≤
       Divisor.degree E - Divisor.degree D := by
   have := finiteDimensional_riemannRochSpace hF E
   have hsub : Module.finrank k
-      (Submodule.comap (riemannRochSpace E).subtype (riemannRochSpace D)) = Divisor.dim D :=
-    (Submodule.comapSubtypeEquivOfLe (riemannRochSpace_mono h)).finrank_eq.trans
+      ((riemannRochSpace D).submoduleOf (riemannRochSpace E)) = Divisor.dim D :=
+    (Submodule.submoduleOfEquivOfLe (riemannRochSpace_mono h)).finrank_eq.trans
       (Divisor.dim_def D).symm
   have hquot := Submodule.finrank_quotient_add_finrank
-    (Submodule.comap (riemannRochSpace E).subtype (riemannRochSpace D))
+    ((riemannRochSpace D).submoduleOf (riemannRochSpace E))
   have hE : Module.finrank k (riemannRochSpace E) = Divisor.dim E := (Divisor.dim_def E).symm
   have hle := Divisor.dim_le_dim_add_degree_sub hF h
   omega
+
+/-- **Lemma 1.4.8 as an exact count of ranks**: for `D ≤ E` the rank of the quotient
+`L(E) / L(D)` is `ℓ(E) - ℓ(D)`, stated without subtraction as
+
+`rank (L(E)/L(D)) + ℓ(D) = ℓ(E)`.
+
+This is the `Module.rank`-valued companion of
+`TauCeti.finrank_quotient_riemannRochSpace_le_degree_sub`, for use where the ambient module is
+not yet known to be finite-dimensional. -/
+theorem rank_quotient_riemannRochSpace_add_dim (hF : IsFunctionField k F) {D E : Divisor k F}
+    (h : D ≤ E) :
+    Module.rank k (riemannRochSpace E ⧸ (riemannRochSpace D).submoduleOf (riemannRochSpace E)) +
+        (Divisor.dim D : Cardinal) = (Divisor.dim E : Cardinal) := by
+  have hfinE := finiteDimensional_riemannRochSpace hF E
+  have hfinD := finiteDimensional_riemannRochSpace hF D
+  have hsub : Module.rank k ((riemannRochSpace D).submoduleOf (riemannRochSpace E)) =
+      (Divisor.dim D : Cardinal) := by
+    rw [(Submodule.submoduleOfEquivOfLe (riemannRochSpace_mono h)).rank_eq, Divisor.dim_def,
+      Module.finrank_eq_rank]
+  have hdimE : (Divisor.dim E : Cardinal) = Module.rank k (riemannRochSpace E) := by
+    rw [Divisor.dim_def, Module.finrank_eq_rank]
+  have hquot := Submodule.rank_quotient_add_rank
+    ((riemannRochSpace D).submoduleOf (riemannRochSpace E))
+  rw [hsub] at hquot
+  rw [hdimE]
+  exact hquot
 
 /-- **Stichtenoth, Proposition 1.4.9**, with the bound for a general constant field:
 `ℓ(D) ≤ deg D⁺ + [algebraicClosure k F : k]`. -/

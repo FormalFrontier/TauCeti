@@ -8,7 +8,7 @@ module
 public import TauCeti.NumberTheory.HeckeRing.Associativity
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma1.Basic
 public import TauCeti.NumberTheory.HeckeRing.Normalizer
-public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Basic
 
 /-!
 # The diamond double cosets of the `Γ₁(N)` Hecke ring

@@ -44,9 +44,13 @@ namespace Polynomial
 
 variable {R : Type*} [CommRing R]
 
-/-- The reversed linear polynomial `C x - X` has degree `1`, like `X - C x`. -/
+/-- The reversed linear polynomial `C x - X` has degree `1`, like `X - C x`.
+
+Stated over a `Ring` rather than the file's ambient `CommRing`: neither the statement nor its
+proof uses commutativity. -/
 @[simp]
-theorem natDegree_C_sub_X [Nontrivial R] (x : R) : (C x - X).natDegree = 1 := by
+theorem natDegree_C_sub_X {R : Type*} [Ring R] [Nontrivial R] (x : R) :
+    (C x - X).natDegree = 1 := by
   rw [natDegree_sub, natDegree_X_sub_C]
 
 /-- A polynomial of degree at most one with prescribed root `x` is a scalar multiple of

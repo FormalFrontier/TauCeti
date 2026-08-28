@@ -29,8 +29,10 @@ strictly stronger than nonconstancy.
 * `TauCeti.Divisor.degree_zeros` and `TauCeti.Divisor.degree_poles` compute the two effective
   parts of the principal divisor of a function transcendental over `k`.
 * `TauCeti.Divisor.degree_principal` is the product formula.
-* `TauCeti.Divisor.degreeClass` descends degree to the divisor class group, and
-  `TauCeti.Divisor.degree_eq_of_linearlyEquivalent` records invariance under linear equivalence.
+* `TauCeti.Divisor.degreeClass` descends degree to the divisor class group, with
+  `TauCeti.Divisor.ker_degreeClass_eq_picZero` identifying its kernel `Cl⁰(F)` with the abstract
+  `Pic⁰`, and `TauCeti.Divisor.degree_eq_of_linearlyEquivalent` records invariance under linear
+  equivalence.
 * `TauCeti.riemannRochSpace_eq_bot_of_degree_neg` and
   `TauCeti.Divisor.dim_eq_zero_of_degree_neg` are the negative-degree consequence.
 
@@ -269,6 +271,13 @@ theorem degreeClass_divisorClass (hF : IsFunctionField k F) (D : Divisor k F) :
     degreeClass hF ((Place.orderSystem hF).divisorClass D) = degree D := by
   rw [degreeClass, (Place.orderSystem hF).weightedDegreeClass_divisorClass,
     weightedDegree_placeDegree_eq_degree]
+
+/-- **`Cl⁰(F)` is the abstract `Pic⁰` of the function-field order system**: the kernel of the
+degree map on divisor classes is the weighted-degree-zero part of the class group, for the
+residue-degree weights. -/
+theorem ker_degreeClass_eq_picZero (hF : IsFunctionField k F) :
+    (degreeClass hF).ker = (Place.orderSystem hF).picZero (fun P ↦ (P.degree : ℤ))
+      (Place.isWeightedDegreeZero_orderSystem hF) := (rfl)
 
 /-- Linearly equivalent divisors have the same degree (Stichtenoth, Corollary 1.4.12(a)). -/
 theorem degree_eq_of_linearlyEquivalent (hF : IsFunctionField k F) {A B : Divisor k F}

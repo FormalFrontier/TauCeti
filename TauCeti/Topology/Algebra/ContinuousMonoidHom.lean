@@ -36,6 +36,10 @@ variable {G : Type*} [Group G] [TopologicalSpace G]
 theorem coe_subgroupSubtype (S : Subgroup G) : (subgroupSubtype S : S →* G) = S.subtype :=
   (rfl)
 
+@[simp]
+theorem subgroupSubtype_apply (S : Subgroup G) (s : S) : subgroupSubtype S s = (s : G) :=
+  (rfl)
+
 /-- The projection onto the quotient by a normal subgroup, carrying the quotient topology, as a
 continuous homomorphism. -/
 @[expose] def quotientMk (N : Subgroup G) [N.Normal] : G →ₜ* G ⧸ N where
@@ -45,6 +49,10 @@ continuous homomorphism. -/
 @[simp]
 theorem coe_quotientMk (N : Subgroup G) [N.Normal] :
     (quotientMk N : G →* G ⧸ N) = QuotientGroup.mk' N :=
+  (rfl)
+
+@[simp]
+theorem quotientMk_apply (N : Subgroup G) [N.Normal] (g : G) : quotientMk N g = (g : G ⧸ N) :=
   (rfl)
 
 end ContinuousMonoidHom

@@ -8,7 +8,6 @@ module
 public import Mathlib.LinearAlgebra.Determinant
 public import Mathlib.RingTheory.AdjoinRoot
 public import Mathlib.RingTheory.Norm.Basic
-public import Mathlib.RingTheory.Polynomial.Resultant.Basic
 public import TauCeti.Algebra.Polynomial.LinearFactor
 public import TauCeti.RingTheory.Polynomial.DegreeLT
 public import TauCeti.RingTheory.Polynomial.Resultant.Basic
@@ -47,9 +46,11 @@ No signs appear anywhere: `B` is an endomorphism, so the two blocks are never re
   onto `AdjoinRoot g`, with `coe_degreeLTEquiv_symm_apply`/`_mk` characterising its inverse.
 * `AdjoinRoot.norm_mk_eq_det_mulModByMonic`, `AdjoinRoot.norm_mk_eq_resultant` — the norm as a
   determinant, and then as a resultant.
-* `AdjoinRoot.norm_mk_C_sub_X`, `AdjoinRoot.norm_mk_C_sub_X_add` — the two values that resultant
-  algebra reads off it: the norm of `x - θ`, and, when `g` has `x` as a root, the norm of the
-  corrected representative `x - θ + q θ` that replaces it.
+* `AdjoinRoot.norm_algebraMap_sub_root`, `AdjoinRoot.norm_mk_C_sub_X_add` — the two values that
+  resultant algebra reads off it: the norm of `x - θ`, and, when `g` has `x` as a root, the norm
+  of the corrected representative `x - θ + q θ` that replaces it. The first is stated in
+  simp-normal form and is `@[simp]`; the second carries side conditions `simp` cannot discharge
+  and is used by explicit `rw`.
 
 ## Provenance
 
@@ -62,7 +63,8 @@ rather than a copy: `degreeLTEquiv` is built from Mathlib's `AdjoinRoot.modByMon
 from a bijectivity argument, and the source's `Monic.resultant_one_right` is replaced by
 Mathlib's `Polynomial.resultant_one_right`.
 
-`norm_mk_C_sub_X` and `norm_mk_C_sub_X_add` come from the same repository at the same commit,
+`norm_algebraMap_sub_root` and `norm_mk_C_sub_X_add` come from the same repository at the same
+commit,
 `EllipticCurves/WeakMordellWeil.lean` lines 277-313, where they are stated for the polynomial of
 an elliptic curve. Their proofs use no curve input beyond monicity and the factorization, so they
 are stated here at that level instead.
@@ -300,16 +302,28 @@ theorem norm_mk_eq_resultant (hg : g.Monic) (p : R[X]) :
     Matrix.det_mul, toMatrix_sylvesterMap' g 1 le_rfl (by simp), ← resultant,
     resultant_one_right, hg.coeff_natDegree, one_pow, one_mul]
 
-/-- **The norm of `x - θ` is `g x`.** Here `θ` is the image of `X` in `AdjoinRoot g`, so
-`mk g (C x - X)` is `x - θ`. -/
-theorem norm_mk_C_sub_X (hg : g.Monic) (x : R) :
-    Algebra.norm R (mk g (C x - X)) = g.eval x := by
+/-- **The norm of `x - θ` is `g x`.** Here `θ` is `root g`, the image of `X` in `AdjoinRoot g`,
+and `of g x` is the image of `x`, so the left-hand side is the norm of `x - θ`.
+
+Stated in this form rather than as `Algebra.norm R (mk g (C x - X))` because that is what `simp`
+normalises to: `mk` is a ring hom and `mk_C`, `mk_X` are `rfl`, so the `mk` spelling rewrites away
+before any lemma stated in it can match. -/
+@[simp]
+theorem norm_algebraMap_sub_root (hg : g.Monic) (x : R) :
+    Algebra.norm R (of g x - root g) = g.eval x := by
   nontriviality R
-  rw [norm_mk_eq_resultant hg, natDegree_C_sub_X, resultant_C_sub_X_right _ _ _ le_rfl]
+  have h : of g x - root g = mk g (C x - X) := by simp
+  rw [h, norm_mk_eq_resultant hg, natDegree_C_sub_X, resultant_C_sub_X_right _ _ _ le_rfl]
 
 /-- **At a root the corrected representative has square norm.** If `g = q * (X - C x)` with `q`
 monic, then `x - θ` is a zero divisor in `AdjoinRoot g`, and the corrected representative
 `x - θ + q θ` that replaces it has norm `(q.eval x) ^ 2`.
+
+Deliberately **not** `@[simp]`, unlike `norm_algebraMap_sub_root`: `g`, `q` and `x` are all fixed
+by the left-hand side, so `hgq : g = q * (X - C x)` and `hq : q.Monic` become rigid side goals
+that the default discharger would have to prove. At the shape this targets they are
+`f_eq_mul_of_eval_eq_zero hx` — which needs a hypothesis not visible to `simp` — and the untagged
+`monic_fCofactor`. Use it by explicit `rw`.
 
 For `2 ≤ q.natDegree` the factorization splits the resultant into two factors, each equal to
 `q.eval x`: against `X - C x` the corrected representative is evaluated at `x`, and against `q`

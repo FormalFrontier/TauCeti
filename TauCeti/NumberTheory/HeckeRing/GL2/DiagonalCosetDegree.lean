@@ -6,7 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.NumberTheory.HeckeRing.GLn.DiagonalCosets
-public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Basic
 
 /-!
 # The degree of a rank-two diagonal double coset
@@ -18,7 +18,7 @@ conjugating `SL₂(ℤ)` by `natDiagGL 2 a` carves out exactly `Γ₀(N)`, so
 `deg T(a₀, a₁) = [SL₂(ℤ) : Γ₀(N)]`,
 
 and specializing to `N = pᵏ` with the index computed in
-`TauCeti.NumberTheory.ModularForms.CongruenceSubgroups` gives Shimura's `pᵏ⁻¹(p + 1)`.
+`TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Basic` gives Shimura's `pᵏ⁻¹(p + 1)`.
 
 Positivity of the ratio is needed: it forces both entries positive, and so rules out the
 tuples on which `natDiagGL` takes its junk value `1` (for `a = (0, 0)` the ratio is `0`).

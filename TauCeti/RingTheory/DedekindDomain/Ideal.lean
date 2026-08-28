@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.RingTheory.Valuation.Discrete.IsDiscreteValuationRing
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 
 /-!
@@ -34,12 +35,33 @@ of an ideal weight on a number field; the design of the predicate — nonzerones
 `⊥` is prime to no set at all — is taken from there, while nothing in it is specific to a number
 field.
 
+The file also identifies any height-one prime of a discrete valuation ring with its maximal ideal
+(`IsDedekindDomain.HeightOneSpectrum.eq_maximalIdeal`), which is what lets a condition stated at
+the height-one primes of such a ring be read as a condition on its valuation. It was split out of
+material adapted from Michael Stoll's elliptic-curves formalisation
+(`EllipticCurves/Mathlib/AdicCompletionExtension.lean` at the roadmap's pin `66889eada51a`,
+Apache 2.0, by Michael Stoll), where it is the step behind `valuation_adicCompletion_algebraMap`.
+
 The theorem `IsDedekindDomain.HeightOneSpectrum.exists_mem_notMem` was split out of material
 adapted from Michael Stoll's elliptic-curves formalisation
 (`github.com/MichaelStollBayreuth/EllipticCurves`, `EllipticCurves/Mathlib/SIntegers.lean` at the
 roadmap's pin `66889eada51a`, Apache 2.0, by Michael Stoll); following this repository's
 convention for adapted material, the upstream authorship is credited here rather than in the
 copyright header.
+
+`IsDedekindDomain.HeightOneSpectrum.comapOfNeBot` and its projection are likewise adapted from that
+formalisation (`github.com/MichaelStollBayreuth/EllipticCurves`, `EllipticCurves/Mathlib/Basic.lean`
+line 539, at the roadmap's pin `66889eada51a74c2f5dfb7fb5909b0b5a0a2d96e`, Apache 2.0, by Michael
+Stoll). The construction is the source's; what changed is the hypothesis — the source and this
+version take the nonvanishing of the contraction as a hypothesis, where Mathlib's
+`HeightOneSpectrum.comap` instead derives it from surjectivity of the map.
+
+`Ideal.ne_bot_of_comap_ne_bot` plays the role of the source's
+`comap_ne_bot_of_comap_comap_ne_bot` (`EllipticCurves/Mathlib/Basic.lean` line 270): it is what
+discharges that nonvanishing hypothesis when a prime is contracted through an intermediate ring.
+It is stated here in the general form — an arbitrary ideal and an injective ring homomorphism,
+with the map producing the ideal dropped, since it plays no role — and proved from Mathlib's
+`Ideal.comap_bot_of_injective`.
 -/
 
 public section
@@ -106,9 +128,62 @@ theorem count_factors_map_of_ringEquiv (e : R ≃+* R') {p I : Ideal R} (hp : Pr
 
 end RingEquivDedekind
 
+section Injective
+
+/-- If the contraction of `J` along an injective ring homomorphism is nonzero, so is `J` itself.
+
+This is the eliminator that discharges the nonvanishing hypothesis of
+`IsDedekindDomain.HeightOneSpectrum.comapOfNeBot` when a prime is contracted through an
+intermediate ring: contract all the way down to a base where nonvanishing is already known, and
+read the intermediate step off from that. Only injectivity of the *lower* map is needed; the map
+producing `J` plays no role, so it does not appear. -/
+theorem ne_bot_of_comap_ne_bot {R S F : Type*} [Semiring R] [Semiring S] [FunLike F R S]
+    [RingHomClass F R S] (f : F) (hf : Function.Injective f) {J : Ideal S}
+    (h : J.comap f ≠ ⊥) : J ≠ ⊥ :=
+  fun h0 ↦ h (h0 ▸ comap_bot_of_injective f hf)
+
+end Injective
+
 end Ideal
 
 namespace IsDedekindDomain.HeightOneSpectrum
+
+section Comap
+
+variable {B C : Type*} [CommRing B] [IsDedekindDomain B] [CommRing C] [IsDedekindDomain C]
+
+/-- The height-one prime of `B` obtained by contracting a height-one prime of `C` along a ring
+homomorphism `ψ : B →+* C`, given that the contraction is nonzero.
+
+Mathlib's `IsDedekindDomain.HeightOneSpectrum.comap` is the same construction, but it asks for `ψ`
+to be **surjective** and derives the `ne_bot` field from that. `comapOfNeBot` **generalises** it:
+the surjective case is recovered by supplying `(Ideal.eq_bot_of_comap_eq_bot' hf).mt w.ne_bot`, and
+only the converse fails.
+
+The generality is needed because the maps contracted along here are embeddings into completions —
+`R → v.adicCompletionIntegers K` — which are neither surjective, so Mathlib's `comap` does not
+apply, nor integral `Algebra` maps, so `HeightOneSpectrum.under` does not either. (`ℤ → ℤ_p` is
+flat, not integral.) The `ne_bot` hypothesis has to be supplied by hand.
+
+Adapted from Michael Stoll's `EllipticCurves` (`EllipticCurves/Mathlib/Basic.lean` line 539, Apache
+2.0, at the roadmap's pin `66889eada51a74c2f5dfb7fb5909b0b5a0a2d96e`); the `ne_bot`-as-hypothesis
+formulation is the source's. -/
+def comapOfNeBot (ψ : B →+* C) (w : HeightOneSpectrum C) (hne : w.asIdeal.comap ψ ≠ ⊥) :
+    HeightOneSpectrum B where
+  asIdeal := w.asIdeal.comap ψ
+  isPrime := w.isPrime.comap ψ
+  ne_bot := hne
+
+omit [IsDedekindDomain B] [IsDedekindDomain C] in
+-- `(rfl)` elaborates here, where the definition is visible.
+/-- The underlying ideal of `comapOfNeBot` is the contracted ideal. -/
+@[simp]
+lemma comapOfNeBot_asIdeal (ψ : B →+* C) (w : HeightOneSpectrum C)
+    (hne : w.asIdeal.comap ψ ≠ ⊥) :
+    (comapOfNeBot ψ w hne).asIdeal = w.asIdeal.comap ψ :=
+  (rfl)
+
+end Comap
 
 section RingEquivTransport
 
@@ -256,5 +331,25 @@ theorem IsPrimeTo.induction_on {motive : Ideal R → Prop} (h : IsPrimeTo I S)
       exact mul_prime (HeightOneSpectrum.ofPrime hp) J hbad hJ (ih hJ)
 
 end Ideal
+
+section DiscreteValuationRing
+
+namespace IsDedekindDomain.HeightOneSpectrum
+
+/-- The maximal ideal is the only height-one prime of a discrete valuation ring.
+
+Mathlib has `IsDiscreteValuationRing.maximalIdeal` as a `HeightOneSpectrum` and
+`IsLocalRing.eq_maximalIdeal` for ideals, but not that the two agree at the level of
+`HeightOneSpectrum`. That identification is what lets a statement about the height-one primes of a
+discrete valuation ring be read as a statement about its valuation. -/
+-- Not `@[simp]`: the left-hand side is the bare variable `P`, so its head symbol is a variable and
+-- the compiler rejects the annotation outright ("the theorem will be tried on every simp step").
+lemma eq_maximalIdeal {A : Type*} [CommRing A] [IsDomain A] [IsDiscreteValuationRing A]
+    (P : HeightOneSpectrum A) : P = IsDiscreteValuationRing.maximalIdeal A :=
+  HeightOneSpectrum.ext (IsLocalRing.eq_maximalIdeal P.isMaximal)
+
+end IsDedekindDomain.HeightOneSpectrum
+
+end DiscreteValuationRing
 
 end

@@ -167,27 +167,8 @@ theorem exists_isUnipotentRadicalCandidate_maximal_finrank_quotientLie
             Module.finrank k
               (Derivation k (H ⧸ I.toIdeal)
                 (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) := by
-  let dimensions : Set ℕ := {n | ∃ I : HopfIdeal k H,
-    IsUnipotentRadicalCandidate H I ∧
-      Module.finrank k
-        (Derivation k (H ⧸ I.toIdeal)
-          (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) = n}
-  have hdimensions_finite : dimensions.Finite := by
-    apply (Set.finite_Iic
-      (Module.finrank k (Derivation k H (Bialgebra.CounitAlgebra k H k)))).subset
-    rintro n ⟨I, _, rfl⟩
-    exact finrank_quotientLie_le I
-  have hdimensions_nonempty : dimensions.Nonempty := by
-    exact ⟨_, augmentation k H, isUnipotentRadicalCandidate_augmentation H, rfl⟩
-  obtain ⟨n, hn, hnmax⟩ :=
-    Set.exists_max_image dimensions id hdimensions_finite hdimensions_nonempty
-  obtain ⟨I, hI, hIn⟩ := hn
-  refine ⟨I, hI, fun J hJ ↦ ?_⟩
-  have hJmem : Module.finrank k
-      (Derivation k (H ⧸ J.toIdeal)
-        (Bialgebra.CounitAlgebra k (H ⧸ J.toIdeal) k)) ∈ dimensions :=
-    ⟨J, hJ, rfl⟩
-  simpa only [id_eq, hIn] using hnmax _ hJmem
+  exact exists_maximal_finrank_quotientLie (IsUnipotentRadicalCandidate H)
+    ⟨augmentation k H, isUnipotentRadicalCandidate_augmentation H⟩
 
 end HopfIdeal
 

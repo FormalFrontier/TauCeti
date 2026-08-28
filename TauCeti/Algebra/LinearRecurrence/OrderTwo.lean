@@ -6,29 +6,31 @@ Authors: Chris Birkbeck
 module
 
 public import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Tactic.LinearCombination
-import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Abel
 
 /-!
 # Products in a second-order linear recurrence
 
-Fix a commutative ring `R`, two elements `D S : R`, and a sequence `d : ℕ → R` obeying the
+Fix a ring `R`, not necessarily commutative, two elements `D S : R`, and a sequence
+`d : ℕ → R` obeying the
 second-order recurrence
 
 `d (r + 2) = D * d (r + 1) - S * d r`.
 
-Two identities hold for every such sequence. Neither asks `d` to be a polynomial, and neither
-asks `R` for an order, a characteristic, or an invertible `2`.
+Two identities hold for such a sequence: the first for every one of them, the second once `d` is
+normalised by `d 0 = 1` and `d 1 = D` and `D` commutes with `S`. Neither asks `d` to be a
+polynomial, neither asks `R` to be commutative, and neither asks it for an order, a
+characteristic, or an invertible `2`.
 
 ## Main results
 
-* `TauCeti.linearRec₂_mul_eq_succ_add_mul_pred`: multiplying a term by `D` moves it one step up
-  and leaves `S` times the term one step down,
-  `D * d m = d (m + 1) + S * d (m - 1)` for `0 < m`.
+* `TauCeti.linearRec₂_mul_eq_succ_add_mul_pred`: for `0 < m`, multiplying a term by `D` moves it
+  one step up and leaves `S` times the term one step down,
+  `D * d m = d (m + 1) + S * d (m - 1)`. It needs no hypothesis on `D` and `S`.
   This is the recurrence itself, re-indexed so that the multiplication rather than the top term
   is the subject; in that form it is what an induction on a product can apply term by term.
 * `TauCeti.linearRec₂_mul_eq_sum_pow_mul`: once `d` is normalised by `d 0 = 1` and `d 1 = D`,
-  a product of two terms is a *sum* of single terms,
+  and `D` commutes with `S`, a product of two terms is a *sum* of single terms,
   `d r * d s = ∑ i ∈ Finset.range (r + 1), S ^ i * d (r + s - 2 * i)` for `r ≤ s`.
 
 The second identity is the point. It is the Clebsch–Gordan shape: the product of two terms
@@ -91,56 +93,52 @@ namespace TauCeti
 
 open Finset
 
-variable {R : Type*} [CommRing R] {D S : R} {d : ℕ → R}
+variable {R : Type*} [Ring R] {D S : R} {d : ℕ → R}
 
 /-- **Multiplying by `D` shifts a term up.** For a sequence obeying
-`d (r + 2) = D * d (r + 1) - S * d r`, multiplication by `D` sends `d m` to the next term plus
-`S` times the previous one. This is the recurrence re-indexed, with the product as the subject. -/
+`d (r + 2) = D * d (r + 1) - S * d r`, multiplication by `D` sends `d m`, for `0 < m`, to the next
+term plus `S` times the previous one. This is the recurrence re-indexed, with the product as the
+subject. No hypothesis relating `D` and `S` is needed. -/
 theorem linearRec₂_mul_eq_succ_add_mul_pred
     (hd : ∀ r, d (r + 2) = D * d (r + 1) - S * d r) {m : ℕ} (hm : 0 < m) :
     D * d m = d (m + 1) + S * d (m - 1) := by
   obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-  rw [show k + 1 + 1 = k + 2 by omega, Nat.add_sub_cancel, hd k]
-  ring
+  rw [show k + 1 + 1 = k + 2 by omega, Nat.add_sub_cancel, hd k, sub_add_cancel]
 
 /-- **A product of two terms is a sum of single terms.** For a sequence obeying
-`d (r + 2) = D * d (r + 1) - S * d r` and normalised by `d 0 = 1`, `d 1 = D`, the product
-`d r * d s` with `r ≤ s` equals `∑ i ∈ range (r + 1), S ^ i * d (r + s - 2 * i)`: no product of
-`d`-values survives on the right. -/
-theorem linearRec₂_mul_eq_sum_pow_mul (h0 : d 0 = 1) (h1 : d 1 = D)
-    (hd : ∀ r, d (r + 2) = D * d (r + 1) - S * d r) :
-    ∀ {r s : ℕ}, r ≤ s → d r * d s = ∑ i ∈ range (r + 1), S ^ i * d (r + s - 2 * i) := by
-  intro r
-  induction r using Nat.strong_induction_on with
-  | _ r ih =>
-    intro s hrs
-    match r, ih with
-    | 0, _ => simp [h0]
-    | 1, _ =>
-      rw [h1, linearRec₂_mul_eq_succ_add_mul_pred hd (m := s) (by omega),
-        sum_range_succ, sum_range_one, pow_zero, one_mul, pow_one,
-        show 1 + s - 2 * 0 = s + 1 by omega, show 1 + s - 2 * 1 = s - 1 by omega]
-    | (r + 2), ih =>
-      have key : ∀ i ∈ range (r + 2),
-          D * (S ^ i * d (r + 1 + s - 2 * i)) =
-            S ^ i * d (r + 2 + s - 2 * i) + S ^ (i + 1) * d (r + s - 2 * i) := by
-        intro i hi
-        rw [mem_range] at hi
-        have h := linearRec₂_mul_eq_succ_add_mul_pred hd (m := r + 1 + s - 2 * i) (by omega)
-        rw [show r + 1 + s - 2 * i + 1 = r + 2 + s - 2 * i by omega,
-          show r + 1 + s - 2 * i - 1 = r + s - 2 * i by omega] at h
-        linear_combination S ^ i * h
-      have hL : d (r + 2) * d s = D * (d (r + 1) * d s) - S * (d r * d s) := by
-        linear_combination d s * hd r
-      rw [hL, ih (r + 1) (by omega) (by omega), ih r (by omega) (by omega),
-        mul_sum, sum_congr rfl key, sum_add_distrib]
-      have hshift : S * ∑ i ∈ range (r + 1), S ^ i * d (r + s - 2 * i) =
-          ∑ i ∈ range (r + 1), S ^ (i + 1) * d (r + s - 2 * i) := by
-        rw [mul_sum]
-        exact sum_congr rfl fun i _ ↦ by ring
-      rw [hshift, sum_range_succ (fun i ↦ S ^ (i + 1) * d (r + s - 2 * i)) (r + 1),
-        sum_range_succ (fun i ↦ S ^ i * d (r + 2 + s - 2 * i)) (r + 2),
-        show r + 2 + s - 2 * (r + 2) = r + s - 2 * (r + 1) by omega]
-      ring
+`d (r + 2) = D * d (r + 1) - S * d r`, normalised by `d 0 = 1` and `d 1 = D`, and with `D`
+commuting with `S`, the product `d r * d s` with `r ≤ s` equals
+`∑ i ∈ range (r + 1), S ^ i * d (r + s - 2 * i)`: no product of `d`-values survives on the
+right. -/
+theorem linearRec₂_mul_eq_sum_pow_mul (h0 : d 0 = 1) (h1 : d 1 = D) (hDS : Commute D S)
+    (hd : ∀ r, d (r + 2) = D * d (r + 1) - S * d r) {r s : ℕ} (hrs : r ≤ s) :
+    d r * d s = ∑ i ∈ range (r + 1), S ^ i * d (r + s - 2 * i) := by
+  induction r using Nat.twoStepInduction generalizing s with
+  | zero => simp [h0]
+  | one =>
+    rw [h1, linearRec₂_mul_eq_succ_add_mul_pred hd (m := s) (by omega), sum_range_succ,
+      sum_range_one, show 1 + s - 2 * 0 = s + 1 by omega, show 1 + s - 2 * 1 = s - 1 by omega]
+    simp
+  | more r ih1 ih2 =>
+    have key : ∀ i ∈ range (r + 2),
+        D * (S ^ i * d (r + 1 + s - 2 * i)) =
+          S ^ i * d (r + 2 + s - 2 * i) + S ^ (i + 1) * d (r + s - 2 * i) := by
+      intro i hi
+      rw [mem_range] at hi
+      have h := linearRec₂_mul_eq_succ_add_mul_pred hd (m := r + 1 + s - 2 * i) (by omega)
+      rw [show r + 1 + s - 2 * i + 1 = r + 2 + s - 2 * i by omega,
+        show r + 1 + s - 2 * i - 1 = r + s - 2 * i by omega] at h
+      rw [← mul_assoc, (hDS.pow_right i).eq, mul_assoc, h, mul_add, ← mul_assoc, ← pow_succ]
+    have hL : d (r + 2) * d s = D * (d (r + 1) * d s) - S * (d r * d s) := by
+      rw [hd r, sub_mul, mul_assoc, mul_assoc]
+    have hshift : S * ∑ i ∈ range (r + 1), S ^ i * d (r + s - 2 * i) =
+        ∑ i ∈ range (r + 1), S ^ (i + 1) * d (r + s - 2 * i) := by
+      rw [mul_sum]
+      exact sum_congr rfl fun i _ ↦ by rw [← mul_assoc, ← pow_succ']
+    rw [hL, ih2 (by omega), ih1 (by omega), mul_sum, sum_congr rfl key, sum_add_distrib, hshift,
+      sum_range_succ (fun i ↦ S ^ (i + 1) * d (r + s - 2 * i)) (r + 1),
+      sum_range_succ (fun i ↦ S ^ i * d (r + 2 + s - 2 * i)) (r + 2),
+      show r + 2 + s - 2 * (r + 2) = r + s - 2 * (r + 1) by omega]
+    abel
 
 end TauCeti

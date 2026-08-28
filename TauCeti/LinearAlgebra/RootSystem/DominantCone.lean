@@ -153,6 +153,70 @@ theorem finite_setOf_dominant_sub_mem_posRootCone (lam : M) :
     rw [← hf]
     abel
 
+omit [Finite ι] [IsDomain R] [P.IsRootSystem] [P.IsCrystallographic] in
+/-- **A reflection-stable set containing the dominant members contains everything below `lam`.**
+The induction is on the height `∑ j, f j` of `lam - mu`: a member on which some simple coroot is
+negative is moved by that reflection strictly closer to `lam`. -/
+private theorem mem_of_sub_eq_sum_nsmul_root_of_reflection_stable {lam : M} {S T : Set M}
+    (hcone : ∀ mu ∈ S, lam - mu ∈ posRootCone P b)
+    (hint : ∀ mu ∈ S, ∀ i ∈ b.support, ∃ z : ℤ, P.coroot' i mu = (z : R))
+    (hrefl : ∀ mu ∈ S, ∀ i ∈ b.support, P.reflection i mu ∈ S)
+    (hTrefl : ∀ (i : ι) (x : M), x ∈ T → P.reflection i x ∈ T)
+    (hdomMem : ∀ mu ∈ S, (∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)) → mu ∈ T) :
+    ∀ k : ℕ, ∀ mu ∈ S, ∀ f : ι → ℕ,
+      lam - mu = ∑ j ∈ b.support, f j • P.root j → ∑ j ∈ b.support, f j = k → mu ∈ T := by
+  classical
+  -- The simple roots are linearly independent, so the coefficients of a member are determined.
+  have hli : LinearIndepOn ℤ P.root (b.support : Set ι) :=
+    b.linearIndepOn_root.restrict_scalars' ℤ
+  intro k
+  induction k using Nat.strong_induction_on with
+  | _ k ih =>
+    intro mu hmu f hf hsum
+    by_cases hdom : ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)
+    · exact hdomMem mu hmu hdom
+    push Not at hdom
+    obtain ⟨i, hi, hnotnat⟩ := hdom
+    obtain ⟨z, hz⟩ := hint mu hmu i hi
+    have hzneg : z < 0 := by
+      by_contra hc
+      push Not at hc
+      refine hnotnat z.toNat ?_
+      rw [hz, ← Int.cast_natCast (R := R) z.toNat, Int.toNat_of_nonneg hc]
+    -- Reflecting in `αᵢ` raises `mu`, so it lowers the height of `lam - mu`.
+    have hnu : P.reflection i mu ∈ S := hrefl mu hmu i hi
+    obtain ⟨g, hg⟩ := (mem_posRootCone P b).mp (hcone _ hnu)
+    have hrel : ∑ j ∈ b.support, (g j : ℤ) • P.root j
+        = ∑ j ∈ b.support, (f j : ℤ) • P.root j + z • P.root i := by
+      have h₁ : lam - P.reflection i mu = (lam - mu) + z • P.root i := by
+        rw [P.reflection_apply, hz, Int.cast_smul_eq_zsmul]
+        abel
+      simp only [natCast_zsmul]
+      rw [← hg, h₁, hf]
+    have hcoeff : ∀ j ∈ b.support,
+        ((g j : ℤ) - (f j : ℤ) - (if j = i then z else 0)) = 0 := by
+      refine linearIndepOn_iff'.mp hli b.support _ subset_rfl ?_
+      have hsingle : ∑ j ∈ b.support, (if j = i then z else 0) • P.root j = z • P.root i := by
+        rw [Finset.sum_eq_single i (fun j _ hj ↦ by simp [hj]) fun hni ↦ absurd hi hni]
+        simp
+      simp only [sub_smul]
+      rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, hsingle, hrel]
+      abel
+    have hgsum : ((∑ j ∈ b.support, g j : ℕ) : ℤ) = ((∑ j ∈ b.support, f j : ℕ) : ℤ) + z := by
+      have hsplit : ∀ j ∈ b.support, (g j : ℤ) = (f j : ℤ) + (if j = i then z else 0) := by
+        intro j hj
+        have := hcoeff j hj
+        omega
+      push_cast
+      rw [Finset.sum_congr rfl hsplit, Finset.sum_add_distrib]
+      congr 1
+      rw [Finset.sum_eq_single i (fun j _ hj ↦ by simp [hj]) fun hni ↦ absurd hi hni]
+      simp
+    have hlt : ∑ j ∈ b.support, g j < k := by omega
+    have hmem := ih _ hlt _ hnu g hg rfl
+    have hback : P.reflection i (P.reflection i mu) = mu := P.reflection_same i mu
+    exact hback ▸ hTrefl i _ hmem
+
 /-- **A reflection-stable set of weights below a weight is finite.** Let `S` be a set of weights
 with `lam - mu` in the positive root cone for every `mu ∈ S`, on which every simple coroot takes
 integer values, and which every simple reflection carries into itself. Then `S` is finite.
@@ -182,60 +246,10 @@ theorem finite_of_forall_reflection_mem_of_sub_mem_posRootCone {lam : M} {S : Se
     refine ⟨RootPairing.weylGroup.ofIdx P i * w, v, hv, ?_⟩
     rw [mul_smul]
     simp
-  -- The simple roots are linearly independent, so the coefficients of a member are determined.
-  have hli : LinearIndepOn ℤ P.root (b.support : Set ι) :=
-    b.linearIndepOn_root.restrict_scalars' ℤ
-  have main : ∀ k : ℕ, ∀ mu ∈ S, ∀ f : ι → ℕ,
-      lam - mu = ∑ j ∈ b.support, f j • P.root j → ∑ j ∈ b.support, f j = k → mu ∈ T := by
-    intro k
-    induction k using Nat.strong_induction_on with
-    | _ k ih =>
-      intro mu hmu f hf hsum
-      by_cases hdom : ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)
-      · exact Set.mem_iUnion.mpr ⟨1, mu, ⟨hcone mu hmu, hdom⟩, one_smul _ _⟩
-      push Not at hdom
-      obtain ⟨i, hi, hnotnat⟩ := hdom
-      obtain ⟨z, hz⟩ := hint mu hmu i hi
-      have hzneg : z < 0 := by
-        by_contra hc
-        push Not at hc
-        refine hnotnat z.toNat ?_
-        rw [hz, ← Int.cast_natCast (R := R) z.toNat, Int.toNat_of_nonneg hc]
-      -- Reflecting in `αᵢ` raises `mu`, so it lowers the height of `lam - mu`.
-      have hnu : P.reflection i mu ∈ S := hrefl mu hmu i hi
-      obtain ⟨g, hg⟩ := (mem_posRootCone P b).mp (hcone _ hnu)
-      have hrel : ∑ j ∈ b.support, (g j : ℤ) • P.root j
-          = ∑ j ∈ b.support, (f j : ℤ) • P.root j + z • P.root i := by
-        have h₁ : lam - P.reflection i mu = (lam - mu) + z • P.root i := by
-          rw [P.reflection_apply, hz, Int.cast_smul_eq_zsmul]
-          abel
-        simp only [natCast_zsmul]
-        rw [← hg, h₁, hf]
-      have hcoeff : ∀ j ∈ b.support,
-          ((g j : ℤ) - (f j : ℤ) - (if j = i then z else 0)) = 0 := by
-        refine linearIndepOn_iff'.mp hli b.support _ subset_rfl ?_
-        have hsingle : ∑ j ∈ b.support, (if j = i then z else 0) • P.root j = z • P.root i := by
-          rw [Finset.sum_eq_single i (fun j _ hj ↦ by simp [hj]) fun hni ↦ absurd hi hni]
-          simp
-        simp only [sub_smul]
-        rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, hsingle, hrel]
-        abel
-      have hgsum : ((∑ j ∈ b.support, g j : ℕ) : ℤ) = ((∑ j ∈ b.support, f j : ℕ) : ℤ) + z := by
-        have hsplit : ∀ j ∈ b.support, (g j : ℤ) = (f j : ℤ) + (if j = i then z else 0) := by
-          intro j hj
-          have := hcoeff j hj
-          omega
-        push_cast
-        rw [Finset.sum_congr rfl hsplit, Finset.sum_add_distrib]
-        congr 1
-        rw [Finset.sum_eq_single i (fun j _ hj ↦ by simp [hj]) fun hni ↦ absurd hi hni]
-        simp
-      have hlt : ∑ j ∈ b.support, g j < k := by omega
-      have hmem := ih _ hlt _ hnu g hg rfl
-      have hback : P.reflection i (P.reflection i mu) = mu := P.reflection_same i mu
-      exact hback ▸ hTrefl i _ hmem
   refine hT.subset fun mu hmu ↦ ?_
   obtain ⟨f, hf⟩ := (mem_posRootCone P b).mp (hcone mu hmu)
-  exact main _ mu hmu f hf rfl
+  exact mem_of_sub_eq_sum_nsmul_root_of_reflection_stable b hcone hint hrefl hTrefl
+    (fun nu hnu hdom => Set.mem_iUnion.mpr ⟨1, nu, ⟨hcone nu hnu, hdom⟩, one_smul _ _⟩)
+    _ mu hmu f hf rfl
 
 end TauCeti

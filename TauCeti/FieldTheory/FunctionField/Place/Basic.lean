@@ -149,6 +149,10 @@ theorem ord_one : P.ord 1 = 0 := Valuation.ord_one P.valuation
 theorem ord_mul {f g : F} (hf : f ≠ 0) (hg : g ≠ 0) : P.ord (f * g) = P.ord f + P.ord g :=
   Valuation.ord_mul P.valuation hf hg
 
+theorem ord_prod {ι : Type*} (s : Finset ι) {f : ι → F} (hf : ∀ i ∈ s, f i ≠ 0) :
+    P.ord (∏ i ∈ s, f i) = ∑ i ∈ s, P.ord (f i) :=
+  Valuation.ord_prod P.valuation s hf
+
 @[simp]
 theorem ord_inv (f : F) : P.ord f⁻¹ = -P.ord f := Valuation.ord_inv P.valuation f
 
@@ -197,6 +201,19 @@ have distinct orders, the order of their sum is the smaller of the two. -/
 theorem ord_add_eq_min_of_ord_ne {f g : F} (hf : f ≠ 0) (hg : g ≠ 0)
     (h : P.ord f ≠ P.ord g) : P.ord (f + g) = min (P.ord f) (P.ord g) :=
   Valuation.ord_add_eq_min_of_ord_ne P.valuation hf hg h
+
+/-- A finite sum one of whose summands has strictly least order at `P` does not vanish. -/
+theorem sum_ne_zero_of_forall_ord_lt {ι : Type*} {s : Finset ι} {f : ι → F} {j : ι} (hj : j ∈ s)
+    (hfj : f j ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
+    ∑ i ∈ s, f i ≠ 0 :=
+  Valuation.sum_ne_zero_of_forall_ord_lt P.valuation hj hfj hlt
+
+/-- The **strict triangle inequality for a finite sum**: a summand of strictly least order at `P`
+dictates the order of the sum. -/
+theorem ord_sum_eq_of_forall_lt {ι : Type*} {s : Finset ι} {f : ι → F} {j : ι} (hj : j ∈ s)
+    (hfj : f j ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
+    P.ord (∑ i ∈ s, f i) = P.ord (f j) :=
+  Valuation.ord_sum_eq_of_forall_lt P.valuation hj hfj hlt
 
 section Constants
 
