@@ -5,14 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Complex.RemovableSingularity
 public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-public import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 public import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 public import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
-public import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.ArctanDeriv
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Analysis.Complex.RemovableSingularity
+import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
+import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 
 /-!
 # The truncated Perron kernel
@@ -310,7 +310,11 @@ private theorem norm_integral_perronFn_vertical_le (hx : 0 < x) (hc : c ≠ 0) (
   have h := intervalIntegral.norm_integral_le_of_norm_le_const
     (f := fun t : ℝ => perronFn x ((c : ℂ) + t * I)) (C := x ^ c / |c|) (a := -T) (b := T)
     fun t _ => by simpa using norm_perronFn_le_re hx (s := (c : ℂ) + t * I) (by simpa using hc)
-  rwa [show |T - -T| = 2 * T by rw [show T - -T = 2 * T by ring, abs_of_nonneg (by linarith)]] at h
+  -- `norm_integral_le_of_norm_le_const` measures the segment by `|b - a|`; here that is `2 * T`.
+  have hlen : |T - -T| = 2 * T := by
+    rw [sub_neg_eq_add, abs_of_nonneg (by linarith : (0 : ℝ) ≤ T + T)]
+    ring
+  rwa [hlen] at h
 
 /-- The Cauchy–Goursat theorem for the rectangle with horizontal sides at heights `±T` and
 vertical sides at abscissae `a` and `b`, in the parameterization used throughout this file. -/
@@ -369,9 +373,11 @@ private theorem norm_integral_perronFn_le_of_lt_one (hx : 0 < x) (hx1 : x < 1) (
         ‖∫ σ in c..B, perronFn x ((σ : ℂ) + u * I)‖ ≤ x ^ c / (T * |Real.log x|) := by
       intro u hu habs
       refine (norm_integral_perronFn_horizontal_le hx hu hcB).trans ?_
-      rw [habs, integral_rpow_const_base hx hx1.ne,
-        show (x ^ B - x ^ c) / Real.log x = (x ^ c - x ^ B) / |Real.log x| by
-          rw [abs_of_neg hlogneg]; ring]
+      -- `log x` is negative here, so moving to `|log x|` also swaps the two powers.
+      have hflip : (x ^ B - x ^ c) / Real.log x = (x ^ c - x ^ B) / |Real.log x| := by
+        rw [abs_of_neg hlogneg]
+        ring
+      rw [habs, integral_rpow_const_base hx hx1.ne, hflip]
       have hxB : 0 ≤ x ^ B := Real.rpow_nonneg hx.le B
       calc (x ^ c - x ^ B) / |Real.log x| / T ≤ x ^ c / |Real.log x| / T := by
             gcongr
@@ -587,7 +593,9 @@ theorem norm_truncatedPerronKernel_sub_one_le_of_one_lt (hx1 : 1 < x) (hc : 0 < 
   have hrw : truncatedPerronKernel x c T - 1
       = ((2 * π : ℝ) : ℂ)⁻¹ * ((∫ t in (-T)..T, perronFn x ((c : ℂ) + t * I)) - 2 * π) := by
     have hcancel : ((2 * π : ℝ) : ℂ)⁻¹ * (2 * (π : ℂ)) = 1 := by
-      rw [show (2 * (π : ℂ)) = ((2 * π : ℝ) : ℂ) by push_cast; ring, inv_mul_cancel₀ hpi]
+      -- The factor `2 * π` reaches the goal built up in `ℂ`, not pushed through the coercion.
+      have hcast : (2 * (π : ℂ)) = ((2 * π : ℝ) : ℂ) := by push_cast; ring
+      rw [hcast, inv_mul_cancel₀ hpi]
     rw [truncatedPerronKernel]
     simp only [perronIntegrand_eq_perronFn]
     rw [mul_sub, hcancel]
