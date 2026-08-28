@@ -45,16 +45,16 @@ universe u
 `Type u`.
 
 The three carrier types and the two base-change witnesses are bundled so that objects may have
-different underlying lattices. A morphism is still a single rational map: the integral carrier is
-the arithmetic source of the base-change models, not an extra component of a morphism. -/
+different underlying integral carriers. A morphism is still a single rational map: the integral
+carrier is the arithmetic source of the base-change models, not an extra component of a morphism. -/
 structure MixedHodgeStructureCat where
-  /-- The integral lattice underlying a mixed Hodge structure. -/
+  /-- The integral carrier underlying a mixed Hodge structure. -/
   intCarrier : Type u
   /-- The rational vector space underlying a mixed Hodge structure. -/
   ratCarrier : Type u
   /-- The complex vector space underlying a mixed Hodge structure. -/
   complexCarrier : Type u
-  /-- The additive group structure on the integral lattice. -/
+  /-- The additive group structure on the integral carrier. -/
   [intAddCommGroup : AddCommGroup intCarrier]
   /-- The additive group structure on the rational vector space. -/
   [ratAddCommGroup : AddCommGroup ratCarrier]
@@ -64,13 +64,13 @@ structure MixedHodgeStructureCat where
   [complexAddCommGroup : AddCommGroup complexCarrier]
   /-- The complex module structure. -/
   [complexModule : Module ℂ complexCarrier]
-  /-- The structure map from the integral lattice to the rational model. -/
+  /-- The structure map from the integral carrier to the rational model. -/
   toRat : intCarrier →ₗ[ℤ] ratCarrier
-  /-- The structure map from the integral lattice to the complex model. -/
+  /-- The structure map from the integral carrier to the complex model. -/
   toComplex : intCarrier →ₗ[ℤ] complexCarrier
-  /-- The rational model is a base change of the integral lattice. -/
+  /-- The rational model is a base change of the integral carrier. -/
   isBaseChangeRat : IsBaseChange ℚ toRat
-  /-- The complex model is a base change of the integral lattice. -/
+  /-- The complex model is a base change of the integral carrier. -/
   isBaseChangeComplex : IsBaseChange ℂ toComplex
   /-- The mixed Hodge structure on the bundled base-change models. -/
   hs : MixedHodgeStructure isBaseChangeRat isBaseChangeComplex
@@ -122,7 +122,7 @@ theorem comp_toRatLinearMap {X Y Z : MixedHodgeStructureCat.{u}} (f : X ⟶ Y) (
 
 /-- The identity morphism has the identity complex linear map. -/
 @[simp]
-theorem id_toComplexLinearMap (X : MixedHodgeStructureCat.{u}) :
+theorem id_toLinearMap (X : MixedHodgeStructureCat.{u}) :
     MixedHodgeStructure.Hom.toLinearMap (𝟙 X) = LinearMap.id := by
   apply LinearMap.ext
   intro x
@@ -130,7 +130,7 @@ theorem id_toComplexLinearMap (X : MixedHodgeStructureCat.{u}) :
 
 /-- Composition of categorical morphisms is composition of their complex linear maps. -/
 @[simp]
-theorem comp_toComplexLinearMap {X Y Z : MixedHodgeStructureCat.{u}}
+theorem comp_toLinearMap {X Y Z : MixedHodgeStructureCat.{u}}
     (f : X ⟶ Y) (g : Y ⟶ Z) :
     MixedHodgeStructure.Hom.toLinearMap (f ≫ g) = g.toLinearMap ∘ₗ f.toLinearMap := by
   apply LinearMap.ext
@@ -177,15 +177,15 @@ noncomputable instance : rational.Faithful where
 
 noncomputable instance : rational.Additive where
   map_add := by
-    intros
+    intro X Y f g
     apply ModuleCat.hom_ext
-    rfl
+    exact MixedHodgeStructure.Hom.add_toRatLinearMap f g
 
 noncomputable instance : rational.Linear ℚ where
   map_smul := by
-    intros
+    intro X Y f q
     apply ModuleCat.hom_ext
-    rfl
+    exact MixedHodgeStructure.Hom.smul_toRatLinearMap q f
 
 /-- The complex realization of a mixed Hodge structure and the complexification of its
 morphisms. -/
@@ -195,10 +195,10 @@ noncomputable def complex : MixedHodgeStructureCat.{u} ⥤ ModuleCat.{u} ℂ whe
   map f := ModuleCat.ofHom f.toLinearMap
   map_id X := by
     apply ModuleCat.hom_ext
-    exact id_toComplexLinearMap X
+    exact id_toLinearMap X
   map_comp f g := by
     apply ModuleCat.hom_ext
-    exact comp_toComplexLinearMap f g
+    exact comp_toLinearMap f g
 
 /-- The complex realization sends a mixed Hodge structure to its complex vector space. -/
 @[simp]
