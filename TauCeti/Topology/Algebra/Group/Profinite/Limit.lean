@@ -10,7 +10,7 @@ public import TauCeti.Topology.Algebra.Group.Profinite.Basic
 /-!
 # Profinite groups: the finite-quotient limit description
 
-Two unbundled workhorses of profinite group theory, phrased for the type-class stack
+The unbundled workhorse of profinite group theory, phrased for the type-class stack
 `[Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]`
 (with `TotallyDisconnectedSpace G` only where needed) so that consumers outside the
 `ProfiniteGrp` category can use them directly.
