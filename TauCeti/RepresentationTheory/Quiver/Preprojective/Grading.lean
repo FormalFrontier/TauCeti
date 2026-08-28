@@ -175,6 +175,7 @@ theorem preprojectiveMk_mem_preprojectiveGrade {n : ℕ} {y : pathAlgebra k (Sym
 
 /-- Membership in the induced degree-`n` piece is being the class of a degree-`n` element of the
 doubled path algebra. -/
+@[simp]
 theorem mem_preprojectiveGrade_iff {n : ℕ} {x : preprojectiveAlgebra k Q} :
     x ∈ preprojectiveGrade k Q n ↔
       ∃ y ∈ grade k (Symmetrify Q) n, preprojectiveMk k Q y = x := by
