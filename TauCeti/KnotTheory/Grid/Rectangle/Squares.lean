@@ -66,13 +66,21 @@ variable {n : ℕ} (R : GridRectangle n)
 
 /-- The columns of squares covered by a toroidal grid rectangle: the clockwise half-open arc
 from the initial vertical side to the terminal one. -/
-@[expose] noncomputable def coveredColumns : Finset (Fin n) :=
+noncomputable def coveredColumns : Finset (Fin n) :=
   Grid.cIco R.left R.right
+
+/-- The covered columns are the half-open cyclic interval between the vertical sides. -/
+theorem coveredColumns_def : R.coveredColumns = Grid.cIco R.left R.right :=
+  (rfl)
 
 /-- The rows of squares covered by a toroidal grid rectangle: the clockwise half-open arc from
 the initial horizontal side to the terminal one. -/
-@[expose] noncomputable def coveredRows : Finset (Fin n) :=
+noncomputable def coveredRows : Finset (Fin n) :=
   Grid.cIco R.bottom R.top
+
+/-- The covered rows are the half-open cyclic interval between the horizontal sides. -/
+theorem coveredRows_def : R.coveredRows = Grid.cIco R.bottom R.top :=
+  (rfl)
 
 /-- Membership in the covered columns is membership in the corresponding half-open circular
 interval. -/
