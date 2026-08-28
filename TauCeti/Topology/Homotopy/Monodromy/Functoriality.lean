@@ -28,7 +28,7 @@ packages its functoriality in the covering map.
   between their monodromy functors.
 * `TauCeti.IsCoveringMap.monodromyNatIso`: an isomorphism of covers induces a natural
   isomorphism between their monodromy functors.
-* `TauCeti.IsCoveringMap.monodromyHomeomorphCompNatIso`: changing the base by a homeomorphism
+* `IsCoveringMap.monodromyHomeomorphCompNatIso`: changing the base by a homeomorphism
   transports the monodromy functor by the inverse homeomorphism.
 
 ## References
@@ -234,7 +234,8 @@ theorem homeomorphCompFiberEquiv_symm_apply_coe (h : X ≃ₜ Y) (y : Y)
 /-- Fibre transport after changing the base by a homeomorphism agrees with transport along the
 inverse image of the path. -/
 @[simp]
-theorem homeomorphCompFiberEquiv_monodromy (hp : _root_.IsCoveringMap p)
+theorem _root_.IsCoveringMap.homeomorphCompFiberEquiv_monodromy
+    (hp : _root_.IsCoveringMap p)
     (h : X ≃ₜ Y) {x y : Y} (a : Path.Homotopic.Quotient x y)
     (e : (h ∘ p) ⁻¹' {x}) :
     homeomorphCompFiberEquiv (p := p) h y ((hp.homeomorph_comp h).monodromy a e) =
@@ -261,7 +262,8 @@ theorem homeomorphCompFiberEquiv_monodromy (hp : _root_.IsCoveringMap p)
 
 /-- **Changing the base of a covering map by a homeomorphism transports monodromy along the
 inverse homeomorphism.** -/
-noncomputable def monodromyHomeomorphCompNatIso (hp : _root_.IsCoveringMap p)
+noncomputable def _root_.IsCoveringMap.monodromyHomeomorphCompNatIso
+    (hp : _root_.IsCoveringMap p)
     (h : X ≃ₜ Y) :
     (hp.homeomorph_comp h).monodromyFunctor ≅
       FundamentalGroupoid.map (h.symm : C(Y, X)) ⋙ hp.monodromyFunctor :=
@@ -270,14 +272,15 @@ noncomputable def monodromyHomeomorphCompNatIso (hp : _root_.IsCoveringMap p)
     (by
       intro x y a
       ext e
-      exact homeomorphCompFiberEquiv_monodromy hp h a e)
+      exact hp.homeomorphCompFiberEquiv_monodromy h a e)
 
 /-- The forward component of the monodromy isomorphism for a homeomorphic base is the canonical
 equivalence of fibres. -/
 @[simp]
-theorem monodromyHomeomorphCompNatIso_hom_app (hp : _root_.IsCoveringMap p)
+theorem _root_.IsCoveringMap.monodromyHomeomorphCompNatIso_hom_app
+    (hp : _root_.IsCoveringMap p)
     (h : X ≃ₜ Y) (y : Y) :
-    (monodromyHomeomorphCompNatIso hp h).hom.app (FundamentalGroupoid.mk y) =
+    (hp.monodromyHomeomorphCompNatIso h).hom.app (FundamentalGroupoid.mk y) =
       (homeomorphCompFiberEquiv (p := p) h y).toIso.hom :=
   (rfl)
 

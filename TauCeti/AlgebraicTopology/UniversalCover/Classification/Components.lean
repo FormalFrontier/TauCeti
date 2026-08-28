@@ -21,7 +21,7 @@ universal-cover construction.
 The disjoint-union classification in
 `TauCeti.AlgebraicTopology.UniversalCover.Classification.Sigma` therefore applies. Composing the
 resulting covering projection with the component homeomorphism gives a cover of `X`; monodromy
-is transported by `TauCeti.IsCoveringMap.monodromyHomeomorphCompNatIso`. This proves essential
+is transported by `IsCoveringMap.monodromyHomeomorphCompNatIso`. This proves essential
 surjectivity over an arbitrary base. Fullness only needs local path-connectedness, and
 faithfulness has no hypothesis, so monodromy is an equivalence.
 
@@ -90,7 +90,7 @@ theorem exists_monodromyFunctor_iso_of_locallyPathConnectedSpace
     FundamentalGroupoidFunctor.equivOfHomotopyEquiv h.toHomotopyEquiv
   exact eqToIso (monodromyFunctor_obj p) ≪≫
     IsCoveringMap.monodromyNatIso p.isCoveringMap_proj hp totalHomeomorph htotal ≪≫
-    IsCoveringMap.monodromyHomeomorphCompNatIso q.isCoveringMap_proj h ≪≫
+    q.isCoveringMap_proj.monodromyHomeomorphCompNatIso h ≪≫
     Functor.isoWhiskerLeft (FundamentalGroupoid.map (h.symm : C(X, _))) qIso ≪≫
     (Functor.associator _ _ _).symm ≪≫
     Functor.isoWhiskerRight componentEquivalence.counitIso F ≪≫
