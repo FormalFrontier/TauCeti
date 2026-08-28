@@ -20,6 +20,11 @@ constants and — because `F'` is algebraic over `F`, so that a valuation ring o
 is the **ramification index** `e(P' | P)`. The residue field of `P` embeds in the residue field
 of `P'`, and the degree of that extension is the **relative degree** `f(P' | P)`.
 
+The constant field may grow along with `F`: if `k'` is integral over `k` then a valuation of `F'`
+is trivial on `k` exactly when it is trivial on `k'`, so the places of `F' / k` and of `F' / k'`
+are literally the same objects. That is `TauCeti.Place.constantsEquiv`, which lets a place of
+`F' / k'` be produced from data that only sees the smaller constant field `k`.
+
 The main theorem is the bound `e(P' | P) · f(P' | P) ≤ [F' : F]`: residues of elements of `𝒪_{P'}`
 that are independent over `F_P`, multiplied by the powers `t^j` of a prime element for `P'` with
 `0 ≤ j < e`, are independent over `F`, because the orders of the resulting blocks are pairwise
@@ -27,6 +32,8 @@ distinct modulo `e`.
 
 ## Main definitions
 
+* `TauCeti.Place.constantsEquiv`: the places of `F' / k` are the places of `F' / k'`, for `k'`
+  integral over `k`; enlarging the constants by an algebraic extension changes nothing.
 * `TauCeti.Place.restrict`: the place of `F / k` that a place of `F' / k'` lies over.
 * `TauCeti.Place.ramificationIdx`: the ramification index `e(P' | P)`.
 * `TauCeti.Place.relativeDegree`: the relative degree `f(P' | P) = [F'_{P'} : F_P]`.
@@ -73,6 +80,53 @@ variable {k : Type u} {k' : Type u'} {F : Type v} {F' : Type v'}
 variable [Field k] [Field k'] [Field F] [Field F']
 variable [Algebra k k'] [Algebra k F] [Algebra k' F'] [Algebra F F'] [Algebra k F']
 variable [IsScalarTower k k' F'] [IsScalarTower k F F']
+
+section Constants
+
+variable (k k' F') [Algebra.IsIntegral k k']
+
+/-- **Enlarging an algebraic constant field does not change the places**: a valuation of `F'` is
+trivial on `k` exactly when it is trivial on `k'`, because every nonzero element of `k'` is
+algebraic over `k` and every nonzero element of `k` is one of `k'`.  So the places of `F' / k` and
+the places of `F' / k'` are the same, with the same valuations. -/
+def constantsEquiv : Place k F' ≃ Place k' F' where
+  toFun Q :=
+    { valuation := Q.valuation
+      valuation_surjective := Q.valuation_surjective
+      isTrivialOn := ⟨fun c hc ↦ Q.valuation_eq_one_of_isAlgebraic
+        (IsIntegral.algebraMap (Algebra.IsIntegral.isIntegral (R := k) c)).isAlgebraic
+        fun h ↦ hc ((algebraMap k' F').injective (by rw [h, map_zero]))⟩ }
+  invFun Q :=
+    { valuation := Q.valuation
+      valuation_surjective := Q.valuation_surjective
+      isTrivialOn := ⟨fun c hc ↦ by
+        rw [IsScalarTower.algebraMap_apply k k' F']
+        exact Q.isTrivialOn.eq_one _ fun h ↦
+          hc ((algebraMap k k').injective (by rw [h, map_zero]))⟩ }
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+variable {k k' F'}
+
+@[simp]
+theorem valuation_constantsEquiv (Q : Place k F') :
+    (constantsEquiv k k' F' Q).valuation = Q.valuation := (rfl)
+
+@[simp]
+theorem valuation_constantsEquiv_symm (Q : Place k' F') :
+    ((constantsEquiv k k' F').symm Q).valuation = Q.valuation := (rfl)
+
+@[simp]
+theorem integers_constantsEquiv (Q : Place k F') :
+    (constantsEquiv k k' F' Q).integers = Q.integers :=
+  SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv]
+
+@[simp]
+theorem integers_constantsEquiv_symm (Q : Place k' F') :
+    ((constantsEquiv k k' F').symm Q).integers = Q.integers :=
+  SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv_symm]
+
+end Constants
 
 section Restrict
 

@@ -125,6 +125,36 @@ theorem dvd_of_integersEval_eq_zero {y : F'} {φ : P.integers[X]} (hφ : φ.Moni
 
 end IntegersEval
 
+/-! ### Integrality of `y` at a place over `P` -/
+
+section Integral
+
+variable [FiniteDimensional F F']
+
+omit [Algebra k F'] [IsScalarTower k k' F'] in
+/-- A polynomial over `𝒪_P` whose image in `F[X]` is the minimal polynomial of `y : F'` is monic,
+because `𝒪_P → F` is injective. -/
+private theorem monic_of_map_eq_minpoly {P : Place k F} {y : F'} {φ : P.integers[X]}
+    (hmin : φ.map (algebraMap P.integers F) = minpoly F y) : φ.Monic :=
+  Polynomial.monic_of_injective (IsFractionRing.injective P.integers F)
+    (hmin ▸ minpoly.monic (IsIntegral.of_finite F y))
+
+/-- A root `y : F'` of a polynomial over `𝒪_P` whose image in `F[X]` is the minimal polynomial of
+`y` is integral at every place of `F' / k'` lying over `P`: that polynomial is monic, the
+valuation ring of such a place contains `𝒪_P`, and valuation rings are integrally closed. -/
+private theorem mem_integers_of_map_eq_minpoly {P : Place k F} {P' : Place k' F'}
+    (hres : P'.restrict k F = P) {y : F'} {φ : P.integers[X]}
+    (hmin : φ.map (algebraMap P.integers F) = minpoly F y) : y ∈ P'.integers := by
+  let _ : Algebra P.integers F' := ((algebraMap F F').comp (algebraMap P.integers F)).toAlgebra
+  refine P'.mem_integers_of_isIntegral (fun r ↦ ?_) ⟨φ, monic_of_map_eq_minpoly hmin, ?_⟩
+  · rw [RingHom.algebraMap_toAlgebra, RingHom.comp_apply, ValuationSubring.algebraMap_apply]
+    exact (restrict_eq_iff_integers_le k F P' P).mp hres _ r.2
+  · rw [RingHom.algebraMap_toAlgebra, ← coe_eval₂RingHom, ← integersEval,
+      integersEval_eq_aeval_map, hmin]
+    exact minpoly.aeval F y
+
+end Integral
+
 /-! ### The residue of `y` at a place over `P` -/
 
 section Residue
@@ -232,8 +262,7 @@ theorem exists_restrict_eq_of_irreducible_map_residue (hF : IsFunctionField k F)
     ∃ P' : Place k' F', P'.restrict k F = P ∧ P'.valuation (P.integersEval y g) < 1 ∧
       (g.map (IsLocalRing.residue P.integers)).natDegree ≤ relativeDegree k F P' := by
   classical
-  have hφ : φ.Monic := Polynomial.monic_of_injective (IsFractionRing.injective P.integers F)
-    (hmin ▸ minpoly.monic (IsIntegral.of_finite F y))
+  have hφ : φ.Monic := monic_of_map_eq_minpoly (F' := F') hmin
   set res := IsLocalRing.residue P.integers with hresdef
   set γ := g.map res with hγdef
   set ev := P.integersEval (F' := F') y with hevdef
@@ -291,17 +320,8 @@ theorem exists_restrict_eq_of_irreducible_map_residue (hF : IsFunctionField k F)
     have hgK : g ∈ K := (hmemK g).mpr dvd_rfl
     simpa [hP'def, hevdef] using hQval _ (Ideal.mem_map_of_mem ev.rangeRestrict hgK)
   -- `y` is integral over `𝒪_P`, hence lies in the valuation ring of `P'`.
-  have hyint : y ∈ P'.integers := by
-    let _ : Algebra P.integers F' := ((algebraMap F F').comp (algebraMap P.integers F)).toAlgebra
-    have halg : ∀ r : P.integers, algebraMap P.integers F' r ∈ P'.integers := fun r ↦ by
-      rw [RingHom.algebraMap_toAlgebra, RingHom.comp_apply, ValuationSubring.algebraMap_apply]
-      exact (restrict_eq_iff_integers_le k F P' P).mp hrestrict _ r.2
-    refine P'.mem_integers_of_isIntegral halg ⟨φ, hφ, ?_⟩
-    rw [RingHom.algebraMap_toAlgebra, ← coe_eval₂RingHom, ← integersEval,
-      integersEval_eq_aeval_map, hmin]
-    exact minpoly.aeval F y
-  exact ⟨P', hrestrict, hvg,
-    natDegree_map_residue_le_relativeDegree hrestrict hyint hg hirr hvg⟩
+  exact ⟨P', hrestrict, hvg, natDegree_map_residue_le_relativeDegree hrestrict
+    (mem_integers_of_map_eq_minpoly hrestrict hmin) hg hirr hvg⟩
 
 /-- **Kummer's theorem** (Stichtenoth, Theorem 3.3.7), packaged.  Let `P` be a place of `F / k`
 and let `y : F'` be a root of a monic `φ ∈ 𝒪_P[X]` whose image in `F[X]` is the minimal
@@ -319,19 +339,11 @@ theorem exists_injective_restrict_eq (hF : IsFunctionField k F) (P : Place k F) 
     ∃ Q : ι → Place k' F', Function.Injective Q ∧
       ∀ i, (Q i).restrict k F = P ∧ (γ i).natDegree ≤ relativeDegree k F (Q i) := by
   choose g hgm hgmap using fun i ↦ P.exists_monic_map_residue_eq (hmonic i)
-  have hφ : φ.Monic := Polynomial.monic_of_injective (IsFractionRing.injective P.integers F)
-    (hmin ▸ minpoly.monic (IsIntegral.of_finite F y))
   choose Q hQres hQval hQdeg using fun i ↦ exists_restrict_eq_of_irreducible_map_residue
     (k' := k') hF P y hmin (hgm i) (hgmap i ▸ hirr i) (hgmap i ▸ hdvd i)
   -- `y` is integral over `𝒪_P`, so it has a residue at each of these places.
-  have hyint : ∀ i, y ∈ (Q i).integers := fun i ↦ by
-    let _ : Algebra P.integers F' := ((algebraMap F F').comp (algebraMap P.integers F)).toAlgebra
-    refine (Q i).mem_integers_of_isIntegral (fun r ↦ ?_) ⟨φ, hφ, ?_⟩
-    · rw [RingHom.algebraMap_toAlgebra, RingHom.comp_apply, ValuationSubring.algebraMap_apply]
-      exact (restrict_eq_iff_integers_le k F (Q i) P).mp (hQres i) _ r.2
-    · rw [RingHom.algebraMap_toAlgebra, ← coe_eval₂RingHom, ← integersEval,
-        integersEval_eq_aeval_map, hmin]
-      exact minpoly.aeval F y
+  have hyint : ∀ i, y ∈ (Q i).integers := fun i ↦
+    mem_integers_of_map_eq_minpoly (hQres i) hmin
   refine ⟨Q, fun i j hij ↦ hinj ?_, fun i ↦ ⟨hQres i, hgmap i ▸ hQdeg i⟩⟩
   rw [← hgmap i, ← hgmap j]
   refine map_residue_eq_of_valuation_lt_one (hQres i) (hyint i) (hgm i) (hgmap i ▸ hirr i)
