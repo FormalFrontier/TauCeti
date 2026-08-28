@@ -139,7 +139,7 @@ private theorem map_permReindex_one (P : ProbabilityMeasure (ℕ → α)) :
 
 /-- Reassembling the array from its row process turns the joint law of a random measure and the row
 process into the joint law of that random measure and the array. -/
-private theorem map_prod_jointPathLaw_arrayRow (hX : ∀ p, AEMeasurable (X p) μ)
+theorem map_uncurry_jointPathLaw_arrayRow (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : Measurable ν) :
     (jointPathLaw μ (arrayRow X) ν).map (Prod.map id Function.uncurry)
       = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
@@ -151,7 +151,7 @@ private theorem map_prod_jointPathLaw_arrayRow (hX : ∀ p, AEMeasurable (X p) �
 
 /-- Reassembling the array from its column process turns the joint law of a random measure and the
 column process into the joint law of that random measure and the array. -/
-private theorem map_prod_jointPathLaw_arrayCol (hX : ∀ p, AEMeasurable (X p) μ)
+theorem map_uncurrySwap_jointPathLaw_arrayCol (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : Measurable ν) :
     (jointPathLaw μ (arrayCol X) ν).map
         (Prod.map id fun x : ℕ → ℕ → α => fun p : ℕ × ℕ => x p.2 p.1)
@@ -195,8 +195,8 @@ theorem SeparatelyExchangeable.jointLaw_arrayRow_pairReindex_eq [IsFiniteMeasure
   have hν' : Measurable fun ω => (ν ω).map (measurable_reindex (α := α) τ).aemeasurable :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_reindex τ)).comp
       hν.measurable_directing
-  rw [← map_prod_jointPathLaw_arrayRow (X := fun p => X (σ p.1, τ p.2)) (fun p => hX _) hν',
-    ← map_prod_jointPathLaw_arrayRow hX hν.measurable_directing,
+  rw [← map_uncurry_jointPathLaw_arrayRow (X := fun p => X (σ p.1, τ p.2)) (fun p => hX _) hν',
+    ← map_uncurry_jointPathLaw_arrayRow hX hν.measurable_directing,
     h.jointPathLaw_arrayRow_pairReindex_eq hX hν σ τ]
 
 /-- **Row permutations leave the row directing measure alone.** The rows are the coordinates of the
@@ -267,8 +267,8 @@ theorem SeparatelyExchangeable.jointLaw_arrayCol_pairReindex_eq [IsFiniteMeasure
   have hν' : Measurable fun ω => (ν ω).map (measurable_reindex (α := α) σ).aemeasurable :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_reindex σ)).comp
       hν.measurable_directing
-  rw [← map_prod_jointPathLaw_arrayCol (X := fun p => X (σ p.1, τ p.2)) (fun p => hX _) hν',
-    ← map_prod_jointPathLaw_arrayCol hX hν.measurable_directing,
+  rw [← map_uncurrySwap_jointPathLaw_arrayCol (X := fun p => X (σ p.1, τ p.2)) (fun p => hX _) hν',
+    ← map_uncurrySwap_jointPathLaw_arrayCol hX hν.measurable_directing,
     h.jointPathLaw_arrayCol_pairReindex_eq hX hν σ τ]
 
 /-- **Row permutations push the column directing measure forward.** This is the half of
