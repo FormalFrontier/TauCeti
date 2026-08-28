@@ -41,7 +41,7 @@ instance distribMulAction : DistribMulAction M (Additive A) where
   smul_add g x y := congrArg ofMul (smul_mul' g x.toMul y.toMul)
 
 @[simp]
-theorem ofMul_smul (g : M) (a : A) : g • ofMul a = ofMul (g • a) :=
+theorem ofMul_smul (g : M) (a : A) : ofMul (g • a) = g • ofMul a :=
   rfl
 
 @[simp]

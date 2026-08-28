@@ -21,7 +21,7 @@ asks for; `TauCeti.unitsCoeff_continuousSMul` is that consequence for a separabl
 
 ## Main results
 
-* `TauCeti.isOpen_stabilizer_units`: the stabilizer of a unit of `L` is an open subgroup of
+* `TauCeti.stabilizer_isOpen_units`: the stabilizer of a unit of `L` is an open subgroup of
   `Gal(L/K)`.
 -/
 
@@ -33,7 +33,7 @@ variable {K L : Type*} [Field K] [Field L] [Algebra K L]
 
 /-- The stabilizer of a unit of an integral extension is open: an automorphism fixes a unit
 exactly when it fixes the underlying element. -/
-theorem isOpen_stabilizer_units [Algebra.IsIntegral K L] (u : Lˣ) :
+theorem stabilizer_isOpen_units [Algebra.IsIntegral K L] (u : Lˣ) :
     IsOpen (MulAction.stabilizer Gal(L/K) u : Set Gal(L/K)) := by
   convert stabilizer_isOpen_of_isIntegral (K := K) (u : L) using 2
   ext σ
