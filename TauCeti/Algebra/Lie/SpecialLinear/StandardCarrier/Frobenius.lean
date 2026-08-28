@@ -68,28 +68,18 @@ noncomputable section
 
 variable (r p k : ℕ) (A : Type v) [CommRing A] [ExpChar A p]
 
-/-- The standard carrier's named point group is the generic toral-closure point group to which the
-generic Frobenius API applies. -/
-private theorem points_eq_kostantToralPointsSubgroup :
-    points r A =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
-        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-        (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
-        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A :=
-  points_def r A
-
 /-- **The `p ^ k`-power Frobenius endomorphism of the full-weight type-`A_r` carrier.**
 
 For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is the untwisted Steinberg
 endomorphism used to construct `A_r(p ^ k)`. -/
 def frobenius : points r A →* points r A :=
   ((MulEquiv.subgroupCongr
-        (points_eq_kostantToralPointsSubgroup r A)).symm.toMonoidHom).comp
+        (points_def r A)).symm.toMonoidHom).comp
     ((TauCeti.UniversalEnvelopingAlgebra.kostantToralFrobenius (rootGenerator r)
           (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
           (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
           (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A).comp
-      (MulEquiv.subgroupCongr (points_eq_kostantToralPointsSubgroup r A)).toMonoidHom)
+      (MulEquiv.subgroupCongr (points_def r A)).toMonoidHom)
 
 /-- The Frobenius endomorphism of the type-`A_r` carrier acts by entrywise Frobenius. -/
 @[simp]
