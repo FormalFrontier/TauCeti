@@ -213,6 +213,12 @@ fundamental weights. -/
 def weight (k : Fin (r + 1)) (i : Fin r) : ℤ :=
   (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0)
 
+@[simp]
+theorem weight_apply (k : Fin (r + 1)) (i : Fin r) :
+    weight r k i =
+      (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0) :=
+  by rw [weight]
+
 /-- The root of a numbered raising or lowering generator, as an integral character of the
 numbered Cartan generators: the `i`-th row of the type `A` Cartan matrix on a raising generator
 and its negative on a lowering one. -/
@@ -463,6 +469,16 @@ noncomputable def carrierι : groupScheme r ⟶ TauCeti.GeneralLinear.groupSchem
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+
+/-- The ambient inclusion of the type `A_r` carrier is the inclusion supplied by the generic
+Kostant toral-closure construction. -/
+theorem carrierι_def :
+    carrierι r =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
+  rw [carrierι]
 
 /-- **The type `A_r` carrier is a closed subgroup scheme of `GL_{r+1}`.** -/
 instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι r).hom.hom.left := by
