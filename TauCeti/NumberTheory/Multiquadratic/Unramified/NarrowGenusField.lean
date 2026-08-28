@@ -6,7 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
-public import TauCeti.NumberTheory.Multiquadratic.Unramified.Maximality
+public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Degree
+public import TauCeti.NumberTheory.Multiquadratic.Unramified.Basic
+import TauCeti.NumberTheory.Multiquadratic.Unramified.Maximality
 
 /-!
 # The narrow genus field of a quadratic field
@@ -25,8 +27,8 @@ This is the narrow convention: no condition is imposed at the infinite places. F
 quadratic field this is the field whose Galois group is governed by the narrow class group, unlike
 the everywhere-unramified genus field governed by the ordinary class group. The universal
 property is expressed through embeddings instead of a chosen algebraic closure, and
-`IsNarrowGenusField.nonempty_algEquiv` records the resulting uniqueness up to `ℚ`-algebra
-equivalence.
+`IsNarrowGenusField.exists_algEquiv_apply_eq` records the resulting uniqueness by an equivalence
+that respects the chosen square roots.
 
 For every squarefree `d` which is not a rational square,
 `isNarrowGenusField_candidateGenusField` assembles the already-established finite-prime
@@ -77,7 +79,6 @@ structure IsNarrowGenusField (d : ℤ) (L : Type u) [Field L] [NumberField L] (y
   maximal :
     ∀ {M : Type u} [Field M] [NumberField M] [IsAbelianGalois ℚ M] {z : M},
       z ^ 2 = algebraMap ℤ M d →
-      Module.finrank ℚ (adjoin ℚ {z} : IntermediateField ℚ M) = 2 →
       (∀ q : Ideal (𝓞 (adjoin ℚ {z} : IntermediateField ℚ M)),
         q.IsPrime → q ≠ ⊥ → Algebra.IsUnramifiedIn (𝓞 M) q) →
       Nonempty (M →ₐ[ℚ] L)
@@ -88,16 +89,35 @@ variable {d : ℤ}
 variable {L M : Type u} [Field L] [NumberField L] [Field M] [NumberField M]
 variable {y : L} {z : M}
 
-/-- Any two narrow genus fields for the same radicand are isomorphic as `ℚ`-algebras.
+private theorem minpoly_eq_X_sq_sub_C (hL : IsNarrowGenusField d L y) :
+    minpoly ℚ y = Polynomial.X ^ 2 - Polynomial.C ((d : ℤ) : ℚ) := by
+  have hy : IsIntegral ℚ y := Algebra.IsIntegral.isIntegral y
+  have haeval :
+      Polynomial.aeval y (Polynomial.X ^ 2 - Polynomial.C ((d : ℤ) : ℚ)) = 0 := by
+    rw [map_sub, map_pow, Polynomial.aeval_X, Polynomial.aeval_C, hL.root_sq,
+      IsScalarTower.algebraMap_apply ℤ ℚ L]
+    norm_num
+  have hdeg : (minpoly ℚ y).natDegree = 2 := by
+    rw [← IntermediateField.adjoin.finrank hy]
+    exact hL.finrank_adjoin
+  symm
+  exact Polynomial.eq_of_monic_of_dvd_of_natDegree_le (minpoly.monic hy)
+    (Polynomial.monic_X_pow_sub_C _ (by norm_num)) (minpoly.dvd ℚ y haeval) (by
+      rw [Polynomial.natDegree_X_pow_sub_C, hdeg])
+
+/-- Any two narrow genus fields for the same radicand are isomorphic as `ℚ`-algebras by an
+equivalence carrying the chosen square root in the first field to the chosen square root in the
+second.
 
 Each universal property supplies an embedding in one direction. Finite-dimensionality turns the
-two resulting degree inequalities into equality, after which either embedding is surjective. -/
-theorem nonempty_algEquiv (hL : IsNarrowGenusField d L y) (hM : IsNarrowGenusField d M z) :
-    Nonempty (L ≃ₐ[ℚ] M) := by
+two resulting degree inequalities into equality, after which either embedding is surjective. A
+target automorphism supplied by normality then makes the equivalence respect the chosen roots. -/
+theorem exists_algEquiv_apply_eq (hL : IsNarrowGenusField d L y)
+    (hM : IsNarrowGenusField d M z) : ∃ e : L ≃ₐ[ℚ] M, e y = z := by
   let _ : IsAbelianGalois ℚ L := hL.isAbelianGalois
   let _ : IsAbelianGalois ℚ M := hM.isAbelianGalois
-  obtain ⟨φ⟩ := hM.maximal hL.root_sq hL.finrank_adjoin hL.isUnramifiedAtFinitePlaces
-  obtain ⟨ψ⟩ := hL.maximal hM.root_sq hM.finrank_adjoin hM.isUnramifiedAtFinitePlaces
+  obtain ⟨φ⟩ := hM.maximal hL.root_sq hL.isUnramifiedAtFinitePlaces
+  obtain ⟨ψ⟩ := hL.maximal hM.root_sq hM.isUnramifiedAtFinitePlaces
   have hLM : Module.finrank ℚ L ≤ Module.finrank ℚ M :=
     LinearMap.finrank_le_finrank_of_injective (f := φ.toLinearMap) φ.injective
   have hML : Module.finrank ℚ M ≤ Module.finrank ℚ L :=
@@ -106,7 +126,20 @@ theorem nonempty_algEquiv (hL : IsNarrowGenusField d L y) (hM : IsNarrowGenusFie
   have hsurj : Function.Surjective φ :=
     (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hrank
       (f := φ.toLinearMap)).mp φ.injective
-  exact ⟨AlgEquiv.ofBijective φ ⟨φ.injective, hsurj⟩⟩
+  let e : L ≃ₐ[ℚ] M := AlgEquiv.ofBijective φ ⟨φ.injective, hsurj⟩
+  have hmin : minpoly ℚ (e y) = minpoly ℚ z := by
+    rw [minpoly.algEquiv_eq e y, minpoly_eq_X_sq_sub_C hL, minpoly_eq_X_sq_sub_C hM]
+  have heval : Polynomial.aeval (e y) (minpoly ℚ z) = 0 := by
+    rw [← hmin]
+    exact minpoly.aeval ℚ (e y)
+  obtain ⟨σ, hσ⟩ := minpoly.exists_algEquiv_of_root
+    (Algebra.IsAlgebraic.isAlgebraic z) heval
+  exact ⟨e.trans σ, by simpa only [AlgEquiv.trans_apply] using hσ⟩
+
+/-- Any two narrow genus fields for the same radicand are isomorphic as `ℚ`-algebras. -/
+theorem nonempty_algEquiv (hL : IsNarrowGenusField d L y) (hM : IsNarrowGenusField d M z) :
+    Nonempty (L ≃ₐ[ℚ] M) :=
+  (exists_algEquiv_apply_eq hL hM).nonempty
 
 end IsNarrowGenusField
 
@@ -129,7 +162,7 @@ theorem isNarrowGenusField_candidateGenusField {d : ℤ} (hd : Squarefree d)
     exact finrank_candidateGenusFieldBase hd hnsq
   · rw [← candidateGenusFieldBase_def hd]
     exact fun q hq _ ↦ isUnramifiedIn_candidateGenusField hd hnsq q
-  · intro M _ _ _ z hz _ hfinite
+  · intro M _ _ _ z hz hfinite
     exact nonempty_algHom_candidateGenusField hd hnsq hz hfinite
 
 end TauCeti.Multiquadratic
