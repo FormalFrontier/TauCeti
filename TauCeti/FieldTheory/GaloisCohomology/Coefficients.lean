@@ -134,6 +134,7 @@ theorem toMul_kummerCoeffIncl (x : KummerCoeff K n) :
     (kummerCoeffIncl K n x).toMul = (x.toMul : (SeparableClosure K)ˣ) :=
   (rfl)
 
+@[simp]
 theorem kummerCoeffIncl_equivariant (g : AbsoluteGaloisGroup K) (x : KummerCoeff K n) :
     kummerCoeffIncl K n (g • x) = g • kummerCoeffIncl K n x :=
   Additive.toMul.injective (by simp)
@@ -155,6 +156,7 @@ theorem toMul_unitsCoeffPow (x : UnitsCoeff K) :
 theorem unitsCoeffPow_eq_nsmul (x : UnitsCoeff K) : unitsCoeffPow K n x = n • x :=
   Additive.toMul.injective <| by simp [toMul_nsmul]
 
+@[simp]
 theorem unitsCoeffPow_equivariant (g : AbsoluteGaloisGroup K) (x : UnitsCoeff K) :
     unitsCoeffPow K n (g • x) = g • unitsCoeffPow K n x :=
   Additive.toMul.injective <| by simp [smul_pow']
