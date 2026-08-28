@@ -6,9 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Algebra.ClopenNhdofOne
+public import TauCeti.Topology.Algebra.Group.Compact
+public import TauCeti.Topology.Algebra.Group.Quotient
 
 /-!
-# Profinite groups: quotients by closed normal subgroups, and open subgroups
+# Profinite groups: quotients by normal subgroups, and open subgroups
 
 The foundational layer for profinite groups in the unbundled classes: `G` is a group with a
 topology making it a topological group, compact and totally disconnected. The separation chain
@@ -23,8 +25,11 @@ intersection is the image of `N`, and in a compact Hausdorff group the connected
 the identity is the intersection of its clopen neighbourhoods. With the compactness,
 topological-group and separation instances, `G ⧸ N` is then a profinite group again.
 
-Closedness of `N` is a hypothesis throughout, not decoration: a quotient by a non-closed
-subgroup is not even `T1` (take `ℤ̂ ⧸ ℤ` with `ℤ` dense).
+Closedness of `N` is needed only for the total-disconnectedness results: a quotient by a
+non-closed subgroup is not even `T1` (take `ℤ̂ ⧸ ℤ` with `ℤ` dense), so
+`QuotientGroup.connectedComponent_one` and `QuotientGroup.instTotallyDisconnectedSpace`
+carry the hypothesis, while the clopen-image statement and the correspondence
+`QuotientGroup.comapMk'OpenNormalOrderIso` are valid for an arbitrary normal subgroup.
 
 ## Main results
 
@@ -32,10 +37,8 @@ subgroup is not even `T1` (take `ℤ̂ ⧸ ℤ` with `ℤ` dense).
   subgroups `N ⊔ U` with `U` open normal.
 * `QuotientGroup.connectedComponent_one`, `QuotientGroup.instTotallyDisconnectedSpace`:
   the quotient of a profinite group by a closed normal subgroup is totally disconnected.
-* `Subgroup.iInf_openNormalSubgroup_eq_bot`: an element lying in every open normal subgroup
-  is `1`.
-* `Subgroup.isOpen_iff_isClosed_and_finiteIndex`: in a compact group a subgroup is open
-  exactly when it is closed of finite index.
+* `Subgroup.iInf_openNormalSubgroup_eq_bot`: the infimum of the open normal subgroups of a
+  profinite group is trivial.
 * `QuotientGroup.comapMk'OpenNormalOrderIso`: open normal subgroups of `G ⧸ N` correspond,
   as lattices, to the open normal subgroups of `G` containing `N`.
 
@@ -65,8 +68,12 @@ theorem _root_.Subgroup.eq_iInf_sup_openNormalSubgroup (N : Subgroup G)
       ∃ K : Subgroup G, IsOpen (K : Set G) ∧ N ≤ K ∧ x ∉ K := by
     by_contra! hall
     refine hxN ?_
-    rw [show (N : Subgroup G) = sInf {K : Subgroup G | IsOpen (K : Set G) ∧ N ≤ K} from
-      ProfiniteGrp.closedSubgroup_eq_sInf_open ⟨N, hN⟩]
+    -- `closedSubgroup_eq_sInf_open` is stated for a bundled `ClosedSubgroup`; its coercion
+    -- to `Subgroup G` is definitionally `N`, but `rw` matches only syntactic patterns, so
+    -- record the coercion-free equation first.
+    have hNsInf : (N : Subgroup G) = sInf {K : Subgroup G | IsOpen (K : Set G) ∧ N ≤ K} :=
+      ProfiniteGrp.closedSubgroup_eq_sInf_open ⟨N, hN⟩
+    rw [hNsInf]
     exact Subgroup.mem_sInf.mpr fun K hK => hall K hK.1 hK.2
   obtain ⟨U₀, hU₀⟩ :=
     ProfiniteGrp.exist_openNormalSubgroup_sub_open_nhds_of_one hKopen (Subgroup.one_mem K)
@@ -83,48 +90,20 @@ theorem _root_.Subgroup.eq_one_of_mem_iInf_openNormalSubgroup {x : G}
   exact (Set.mem_compl_singleton_iff.mp (hU₀ (hx U₀))) rfl
 
 /-- In a profinite group, the infimum of the open normal subgroups is trivial. -/
+@[simp]
 theorem _root_.Subgroup.iInf_openNormalSubgroup_eq_bot :
-    (⨅ U : OpenNormalSubgroup G, U.toSubgroup) = ⊥ :=
-  le_antisymm
-    (fun _x hx => Subgroup.mem_bot.mpr
-      (Subgroup.eq_one_of_mem_iInf_openNormalSubgroup fun U => Subgroup.mem_iInf.mp hx U))
-    bot_le
-
-/-- In a compact group, a subgroup is open exactly when it is closed of finite index. -/
-theorem _root_.Subgroup.isOpen_iff_isClosed_and_finiteIndex {G : Type*} [Group G]
-    [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G] (H : Subgroup G) :
-    IsOpen (H : Set G) ↔ IsClosed (H : Set G) ∧ H.FiniteIndex := by
-  constructor
-  · intro hH
-    have hHclosed : IsClosed (H : Set G) := Subgroup.isClosed_of_isOpen _ hH
-    have hHdisc : DiscreteTopology (G ⧸ H) := QuotientGroup.discreteTopology hH
-    have hHfin : Finite (G ⧸ H) := finite_of_compact_of_discrete
-    exact ⟨hHclosed, @Subgroup.finiteIndex_of_finite_quotient _ _ _ hHfin⟩
-  · rintro ⟨hHclosed, hHfi⟩
-    exact @Subgroup.isOpen_of_isClosed_of_finiteIndex _ _ _ _ _ hHfi hHclosed
+    (⨅ U : OpenNormalSubgroup G, U.toSubgroup) = ⊥ := by
+  simpa using (Subgroup.eq_iInf_sup_openNormalSubgroup (⊥ : Subgroup G)
+    isClosed_singleton).symm
 
 namespace QuotientGroup
 
 variable {N : Subgroup G} [N.Normal]
 
-omit [CompactSpace G] [TotallyDisconnectedSpace G] in
-/-- The image of an open normal subgroup of `G` in the quotient by a normal subgroup `N` is
-clopen: it is open because the quotient map is open, and closed because it is an open
-subgroup of the topological group `G ⧸ N`. -/
-theorem isClopen_image_mk (U : OpenNormalSubgroup G) :
-    IsClopen ((QuotientGroup.mk : G → G ⧸ N) '' (U : Set G)) := by
-  have hopen : IsOpen ((QuotientGroup.mk : G → G ⧸ N) '' (U : Set G)) :=
-    QuotientGroup.isOpenMap_coe _ U.toOpenSubgroup.isOpen'
-  have heq : (QuotientGroup.mk : G → G ⧸ N) '' (U : Set G) =
-      (Subgroup.map (QuotientGroup.mk' N) U.toOpenSubgroup.toSubgroup : Set (G ⧸ N)) := by
-    rw [show (U : Set G) = ((↑U : Subgroup G) : Set G) from rfl]
-    exact (Subgroup.coe_map (QuotientGroup.mk' N) U.toOpenSubgroup.toSubgroup).symm
-  rw [heq]
-  exact ⟨Subgroup.isClosed_of_isOpen _ hopen, hopen⟩
-
 /-- In the quotient of a profinite group by a closed normal subgroup, the connected
 component of the identity is trivial: it is contained in every clopen image `mk '' U`, and
 the intersection of those images is the image of `N`, a single point. -/
+@[simp]
 theorem connectedComponent_one (hN : IsClosed (N : Set G)) :
     connectedComponent (1 : G ⧸ N) = {1} := by
   have key : ⋂ U : OpenNormalSubgroup G, (QuotientGroup.mk : G → G ⧸ N) '' (U : Set G) =
@@ -141,7 +120,10 @@ theorem connectedComponent_one (hN : IsClosed (N : Set G)) :
         have hgU : g ∈ (QuotientGroup.mk : G → G ⧸ N) ⁻¹'
             ((QuotientGroup.mk : G → G ⧸ N) '' (U : Set G)) := by simpa using h U
         rw [QuotientGroup.preimage_image_mk_eq_mul] at hgU
-        -- normalize the `SetLike` coercion of `U`, so that `Subgroup.mul_normal` applies
+        -- `Subgroup.mul_normal` is stated for the `Set G` coercion of a `Subgroup`, but `U`
+        -- coerces through the `OpenNormalSubgroup` `SetLike` instance; the two coercions are
+        -- definitionally equal and Mathlib provides no lemma bridging them, so normalize by
+        -- `rfl` before the rewrite.
         rw [show ((U : Set G) : Set G) = ((↑U : Subgroup G) : Set G) from rfl] at hgU
         rwa [← Subgroup.mul_normal] at hgU
       rwa [← Subgroup.eq_iInf_sup_openNormalSubgroup N hN] at hN'
@@ -201,6 +183,21 @@ def comapMk'OpenNormalOrderIso (N : Subgroup G) [N.Normal] :
       exact (Subgroup.comap_le_comap_of_surjective (QuotientGroup.mk'_surjective N)).mp h
     · intro h
       exact (Subgroup.comap_le_comap_of_surjective (QuotientGroup.mk'_surjective N)).mpr h
+
+omit [CompactSpace G] [TotallyDisconnectedSpace G] in
+@[simp]
+theorem comapMk'OpenNormalOrderIso_apply_toSubgroup (U : OpenNormalSubgroup (G ⧸ N)) :
+    (comapMk'OpenNormalOrderIso N U : OpenNormalSubgroup G).toSubgroup =
+      Subgroup.comap (QuotientGroup.mk' N) U.toSubgroup := by
+  simp [comapMk'OpenNormalOrderIso]
+
+omit [CompactSpace G] [TotallyDisconnectedSpace G] in
+@[simp]
+theorem comapMk'OpenNormalOrderIso_symm_apply_toSubgroup
+    (U : { V : OpenNormalSubgroup G // (N : Subgroup G) ≤ V.toSubgroup }) :
+    ((comapMk'OpenNormalOrderIso N).symm U : OpenNormalSubgroup (G ⧸ N)).toSubgroup =
+      Subgroup.map (QuotientGroup.mk' N) U.1.toSubgroup := by
+  simp [comapMk'OpenNormalOrderIso]
 
 end QuotientGroup
 

@@ -15,35 +15,18 @@ Two unbundled workhorses of profinite group theory, phrased for the type-class s
 (with `TotallyDisconnectedSpace G` only where needed) so that consumers outside the
 `ProfiniteGrp` category can use them directly.
 
-* The compactness lemma: a family of nonempty closed subsets of a compact space directed by
-  reverse inclusion has nonempty total intersection
-  (`nonempty_iInter_of_directed_nonempty_isClosed`; Ribes and Zalesskii, *Profinite Groups*,
-  Proposition 1.1.4).
 * The limit description: a family of cosets of the open normal subgroups of a compact totally
   disconnected group, compatible along the canonical quotient maps, is realized by a unique
-  element of `G` (`existsUnique_forall_mk_eq`). This is the unbundled counterpart of
-  `ProfiniteGrp.toLimit_surjective` and `ProfiniteGrp.toLimit_injective`, which describe the
-  same identification for the `ProfiniteGrp` category.
+  element of `G` (`existsUnique_forall_mk_eq`; Ribes and Zalesskii, *Profinite Groups*,
+  Proposition 1.1.4). This is the unbundled counterpart of `ProfiniteGrp.toLimit_surjective`
+  and `ProfiniteGrp.toLimit_injective`, which describe the same identification for the
+  `ProfiniteGrp` category. The compactness input is Mathlib's
+  `IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed`.
 -/
 
 public section
 
 namespace TauCeti
-
-section Compactness
-
-variable {X : Type*} [TopologicalSpace X] [CompactSpace X]
-
-/-- **Compactness lemma for profinite spaces** (Ribes and Zalesskii, *Profinite Groups*,
-Proposition 1.1.4). A family of nonempty closed subsets of a compact space, directed by
-reverse inclusion, has nonempty total intersection. -/
-theorem nonempty_iInter_of_directed_nonempty_isClosed {ι : Type*} [Nonempty ι] {S : ι → Set X}
-    (hdir : Directed (· ⊇ ·) S) (hne : ∀ i, (S i).Nonempty) (hcl : ∀ i, IsClosed (S i)) :
-    (⋂ i, S i).Nonempty :=
-  IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed S hdir hne
-    (fun i => (hcl i).isCompact) hcl
-
-end Compactness
 
 section LimitDescription
 
@@ -76,7 +59,10 @@ theorem existsUnique_forall_mk_eq (x : ∀ U : OpenNormalSubgroup G, G ⧸ (U : 
       exact hcompat (U ⊓ V) U inf_le_left g hgU
     · rw [Set.mem_preimage, Set.mem_singleton_iff] at hgV ⊢
       exact hcompat (U ⊓ V) V inf_le_right g hgV
-  obtain ⟨g, hg⟩ := nonempty_iInter_of_directed_nonempty_isClosed hdir hne hcl
+  obtain ⟨g, hg⟩ :=
+    IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed
+      (fun U : OpenNormalSubgroup G => (QuotientGroup.mk' (U : Subgroup G)) ⁻¹' {x U}) hdir hne
+      (fun U => (hcl U).isCompact) hcl
   refine ⟨g, fun U => Set.mem_iInter.mp hg U, fun g' hg' => ?_⟩
   have hgg : ∀ U : OpenNormalSubgroup G, QuotientGroup.mk' (U : Subgroup G) g = x U :=
     fun U => Set.mem_iInter.mp hg U
