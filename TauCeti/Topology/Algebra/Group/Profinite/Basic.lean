@@ -103,7 +103,6 @@ variable {N : Subgroup G} [N.Normal]
 /-- In the quotient of a profinite group by a closed normal subgroup, the connected
 component of the identity is trivial: it is contained in every clopen image `mk '' U`, and
 the intersection of those images is the image of `N`, a single point. -/
-@[simp]
 theorem connectedComponent_one (hN : IsClosed (N : Set G)) :
     connectedComponent (1 : G ⧸ N) = {1} := by
   have key : ⋂ U : OpenNormalSubgroup G, (QuotientGroup.mk : G → G ⧸ N) '' (U : Set G) =
