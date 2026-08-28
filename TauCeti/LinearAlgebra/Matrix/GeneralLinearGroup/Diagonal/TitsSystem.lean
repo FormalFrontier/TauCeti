@@ -129,17 +129,12 @@ private theorem gl2_borel_normalizer_closure :
   rw [GL2Borel.closure_insert_gl2WeylElement_eq_top] at hle
   exact top_unique hle
 
-private theorem gl2_tits_mul_doubleCoset_subset
-    (s : GL2DiagonalNormalizer k)
-    (hs : s ∈ ({gl2WeylNormalizer k} : Set (GL2DiagonalNormalizer k)))
-    (g : GL2DiagonalNormalizer k) :
-    DoubleCoset.doubleCoset (s : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) *
-        DoubleCoset.doubleCoset (g : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) ⊆
-      DoubleCoset.doubleCoset ((s * g : GL2DiagonalNormalizer k) : GL (Fin 2) k)
+private theorem gl2_doubleCoset_weyl_mul_union_eq_univ (g : GL2DiagonalNormalizer k) :
+    DoubleCoset.doubleCoset
+          ((gl2WeylNormalizer k * g : GL2DiagonalNormalizer k) : GL (Fin 2) k)
           (GL2Borel k) (GL2Borel k) ∪
-        DoubleCoset.doubleCoset (g : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) := by
-  rw [Set.mem_singleton_iff.mp hs]
-  intro x _
+        DoubleCoset.doubleCoset (g : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) =
+      Set.univ := by
   let φ := diagonalNormalizerPerm (k := k) (n := 2)
   have hφweyl : φ (gl2WeylNormalizer k) = Equiv.swap 0 1 :=
     diagonalNormalizerPerm_gl2WeylElement (k := k)
@@ -160,7 +155,6 @@ private theorem gl2_tits_mul_doubleCoset_subset
         exact hgB)
     rw [hwgCoset, hgCoset, GL2Borel.doubleCoset_one_eq, Set.union_comm,
       GL2Borel.union_doubleCoset_weyl_eq_univ]
-    exact Set.mem_univ x
   · have hgB : (g : GL (Fin 2) k) ∉ GL2Borel k := by
       rw [gl2_mem_borel_iff_normalizerPerm_eq_one]
       exact hg.trans_ne (Equiv.swap_eq_one_iff.not.mpr Fin.zero_ne_one)
@@ -180,7 +174,18 @@ private theorem gl2_tits_mul_doubleCoset_subset
       (GL2Borel.mem_doubleCoset_weyl_of_notMem hgB)
     rw [hwgCoset, GL2Borel.doubleCoset_one_eq, hgCoset,
       GL2Borel.union_doubleCoset_weyl_eq_univ]
-    exact Set.mem_univ x
+
+private theorem gl2_tits_mul_doubleCoset_subset
+    (s : GL2DiagonalNormalizer k)
+    (hs : s ∈ ({gl2WeylNormalizer k} : Set (GL2DiagonalNormalizer k)))
+    (g : GL2DiagonalNormalizer k) :
+    DoubleCoset.doubleCoset (s : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) *
+        DoubleCoset.doubleCoset (g : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) ⊆
+      DoubleCoset.doubleCoset ((s * g : GL2DiagonalNormalizer k) : GL (Fin 2) k)
+          (GL2Borel k) (GL2Borel k) ∪
+        DoubleCoset.doubleCoset (g : GL (Fin 2) k) (GL2Borel k) (GL2Borel k) := by
+  rw [Set.mem_singleton_iff.mp hs, gl2_doubleCoset_weyl_mul_union_eq_univ]
+  exact Set.subset_univ _
 
 omit [Nontrivial kˣ] in
 private theorem gl2_tits_exists_conj_not_mem

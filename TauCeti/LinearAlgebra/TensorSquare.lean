@@ -8,8 +8,9 @@ module
 public import Mathlib.Algebra.Ring.Invertible
 public import Mathlib.LinearAlgebra.ExteriorPower.Pairing
 public import Mathlib.LinearAlgebra.TensorPower.Basic
-public import TauCeti.Data.Fin.Basic
 public import TauCeti.LinearAlgebra.SymmetricPower.Basic
+
+import TauCeti.Data.Fin.Basic
 
 /-!
 # Decomposing a tensor square
