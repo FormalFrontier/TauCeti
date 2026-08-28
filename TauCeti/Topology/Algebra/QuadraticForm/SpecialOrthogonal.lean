@@ -12,17 +12,16 @@ public import Mathlib.Topology.Algebra.Ring.Real
 /-!
 # Topology on real special orthogonal groups in coordinates
 
-For a quadratic form `Q` on a finite real coordinate space `n → ℝ`, this file sends
-`specialOrthogonalGroup Q` faithfully to `GL(n, ℝ)` and induces the standard coordinate topology
-from that embedding. The resulting special orthogonal group is Hausdorff and a topological group.
+For a quadratic form `Q` on a finite real coordinate space `n → ℝ`, this file induces the
+standard coordinate topology from the faithful map of `specialOrthogonalGroup Q` into `GL(n, ℝ)`
+defined in `TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup`. The resulting special orthogonal
+group is Hausdorff and a topological group.
 
 The construction applies to an arbitrary quadratic form on the coordinate space. It does not use a
 Clifford algebra or a Spin group.
 
-## Main definitions and results
+## Main results
 
-* `TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear` is the faithful coordinate map.
-* `TauCeti.QuadraticMap.specialOrthogonalToGeneralLinear_apply` gives its matrix entries.
 * `TauCeti.QuadraticMap.isEmbedding_specialOrthogonalToGeneralLinear` records that it is a
   topological embedding.
 -/
@@ -40,28 +39,6 @@ universe u
 
 
 variable {n : Type u} [Fintype n] [DecidableEq n]
-
-/-- The coordinate inclusion of a real special orthogonal group into `GL(n, ℝ)`. -/
-noncomputable def specialOrthogonalToGeneralLinear (Q : QuadraticForm ℝ (n → ℝ)) :
-    specialOrthogonalGroup Q →* Matrix.GeneralLinearGroup n ℝ :=
-  (Matrix.GeneralLinearGroup.toLin (n := n) (R := ℝ)).symm.toMonoidHom.comp
-    ((LinearMap.GeneralLinearGroup.generalLinearEquiv ℝ (n → ℝ)).symm.toMonoidHom.comp
-      (specialOrthogonalGroup Q).subtype)
-
-/-- A real special orthogonal transformation acts through its usual coordinate matrix. -/
-@[simp]
-theorem specialOrthogonalToGeneralLinear_apply (Q : QuadraticForm ℝ (n → ℝ))
-    (g : specialOrthogonalGroup Q) (i j : n) :
-    specialOrthogonalToGeneralLinear Q g i j =
-      (g : (n → ℝ) ≃ₗ[ℝ] (n → ℝ)) (Pi.single j 1) i := by
-  rfl
-
-/-- The coordinate inclusion of a real special orthogonal group is injective. -/
-theorem specialOrthogonalToGeneralLinear_injective (Q : QuadraticForm ℝ (n → ℝ)) :
-    Function.Injective (specialOrthogonalToGeneralLinear Q) :=
-  (Matrix.GeneralLinearGroup.toLin (n := n) (R := ℝ)).symm.injective.comp
-    ((LinearMap.GeneralLinearGroup.generalLinearEquiv ℝ (n → ℝ)).symm.injective.comp
-      Subtype.coe_injective)
 
 /-- The canonical topology on a real special orthogonal group in coordinates is induced by its
 faithful representation in `GL(n, ℝ)`. -/
