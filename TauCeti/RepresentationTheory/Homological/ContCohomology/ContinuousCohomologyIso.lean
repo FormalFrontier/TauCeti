@@ -68,7 +68,8 @@ it.
   degree-one differential.
 * `TauCeti.ContCohomology.continuousCohomologyIsoCoker₁`: the quotient presentation of the
   canonical side, `continuousCohomology 1 X` as an honest cokernel `ker d ⧸ im d` in
-  `TopModuleCat ℤ`.
+  `TopModuleCat k`. It concerns the canonical side alone, so it is stated for an arbitrary
+  `X : TopRep k G`, and only used at `X = ofDiscreteModule ℤ G M`.
 * `TauCeti.ContCohomology.explicitH1AddEquivContinuousCohomology`,
   `TauCeti.ContCohomology.explicitH1IsoContinuousCohomology`: the comparison in degree one, as an
   additive equivalence over an arbitrary topological group and as an isomorphism in
@@ -499,21 +500,24 @@ theorem homogeneousCochainEquiv₁_mem_ker_iff (c : C1 G M) :
 
 end ChainLevel
 
-section DegreeOne
+section CanonicalDegreeOne
 
-/-! ### The comparison in degree one -/
+/-! ### The canonical side in degree one, as a quotient
 
-variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-  (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
-  [DiscreteTopology M] [DistribMulAction G M]
+Nothing here mentions the explicit model, or even discreteness: for an arbitrary topological
+representation, degree-one continuous cohomology is the homology of `C⁰ → C¹ → C²`, hence an
+honest quotient of the homogeneous `1`-cocycles. -/
+
+variable {k G : Type*} [Ring k] [TopologicalSpace k] [Group G] [TopologicalSpace G]
+  [IsTopologicalGroup G] (X : TopRep k G)
 
 /-- The short complex `C⁰ → C¹ → C²` of homogeneous cochains whose homology is
 `continuousCohomology 1`. It is spelled with the explicit indices `0, 1, 2` rather than through
 `HomologicalComplex.sc`, whose neighbours are computed by `ComplexShape.prev` and `next`. -/
-noncomputable abbrev homogeneousSc₁ : ShortComplex (TopModuleCat ℤ) :=
-  ShortComplex.mk ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1)
-    ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 1 2)
-    ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d_comp_d 0 1 2)
+noncomputable abbrev homogeneousSc₁ : ShortComplex (TopModuleCat k) :=
+  ShortComplex.mk ((TopRep.homogeneousCochains X).d 0 1)
+    ((TopRep.homogeneousCochains X).d 1 2)
+    ((TopRep.homogeneousCochains X).d_comp_d 0 1 2)
 
 /-- The short complex `TauCeti.ContCohomology.homogeneousSc₁` has `f = d⁰`, so the corestriction of
 its concrete left homology data is the degree-zero differential. This is
@@ -523,31 +527,38 @@ which is the form the rewrites below match against.
 Not `@[simp]`: the ambient cochain types reduce through
 `CategoryTheory.Functor.mapHomologicalComplex_obj_X`, so this left-hand side is not in simp normal
 form. -/
-theorem coe_homogeneousLeftHomologyData₁_f'
-    (m : (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).X 0) :
-    ((homogeneousSc₁ G M).topModuleCatLeftHomologyData.f'.hom m).1
-      = ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1).hom m := (rfl)
+theorem coe_homogeneousLeftHomologyData₁_f' (m : (TopRep.homogeneousCochains X).X 0) :
+    ((homogeneousSc₁ X).topModuleCatLeftHomologyData.f'.hom m).1
+      = ((TopRep.homogeneousCochains X).d 0 1).hom m := (rfl)
 
 /-- **The quotient presentation of the canonical side.** Continuous cohomology in degree one is the
-cokernel, in `TopModuleCat ℤ`, of the degree-zero differential corestricted to the homogeneous
+cokernel, in `TopModuleCat k`, of the degree-zero differential corestricted to the homogeneous
 `1`-cocycles: the honest `ker d ⧸ im d`, with the subspace topology on the numerator and the
 quotient topology on the whole. -/
 noncomputable def continuousCohomologyIsoCoker₁ :
-    continuousCohomology 1 (ofDiscreteModule ℤ G M)
-      ≅ TopModuleCat.coker (homogeneousSc₁ G M).topModuleCatLeftHomologyData.f' :=
-  (TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).homologyIsoSc' 0 1 2 (by simp) (by simp)
-    ≪≫ (homogeneousSc₁ G M).topModuleCatHomologyIso
+    continuousCohomology 1 X
+      ≅ TopModuleCat.coker (homogeneousSc₁ X).topModuleCatLeftHomologyData.f' :=
+  (TopRep.homogeneousCochains X).homologyIsoSc' 0 1 2 (by simp) (by simp)
+    ≪≫ (homogeneousSc₁ X).topModuleCatHomologyIso
 
-/-! Everything above concerns the canonical side alone and needs no continuity of the action; the
-dictionary with the explicit side does, because `TauCeti.ContCohomology.homogeneousCochainEquiv₁`
-sends `c` to the *continuous* map `(x, y) ↦ x • c (x⁻¹ * y)`. -/
+end CanonicalDegreeOne
 
-variable [ContinuousSMul G M]
+section DegreeOne
+
+/-! ### The comparison in degree one
+
+The dictionary with the explicit side needs continuity of the action, because
+`TauCeti.ContCohomology.homogeneousCochainEquiv₁` sends `c` to the *continuous* map
+`(x, y) ↦ x • c (x⁻¹ * y)`. -/
+
+variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+  (M : Type u) [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
+  [DiscreteTopology M] [DistribMulAction G M] [ContinuousSMul G M]
 
 /-- The explicit continuous `1`-cocycles `Z¹(G, M)` are the kernel of the homogeneous degree-one
 differential. -/
 noncomputable def homogeneousCocycleEquiv₁ :
-    Z1 G M ≃+ TopModuleCat.ker (homogeneousSc₁ G M).g where
+    Z1 G M ≃+ TopModuleCat.ker (homogeneousSc₁ (ofDiscreteModule ℤ G M)).g where
   toFun z := ⟨homogeneousCochainEquiv₁ G M ⟨(z : G → M), Z1_le_C1 G M z.2⟩,
     (homogeneousCochainEquiv₁_mem_ker_iff G M _).2 z.2⟩
   invFun τ := ⟨(((homogeneousCochainEquiv₁ G M).symm τ.1 : C1 G M) : G → M),
@@ -582,7 +593,8 @@ theorem coe_homogeneousCocycleEquiv₁ (z : Z1 G M) :
 -- `TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`.
 /-- The continuous `1`-cocycle attached to a homogeneous one is the underlying function of its
 image under the inverse of the chain-level dictionary. -/
-theorem coe_homogeneousCocycleEquiv₁_symm (τ : TopModuleCat.ker (homogeneousSc₁ G M).g) :
+theorem coe_homogeneousCocycleEquiv₁_symm
+    (τ : TopModuleCat.ker (homogeneousSc₁ (ofDiscreteModule ℤ G M)).g) :
     (((homogeneousCocycleEquiv₁ G M).symm τ : Z1 G M) : G → M)
       = (((homogeneousCochainEquiv₁ G M).symm τ.1 : C1 G M) : G → M) := (rfl)
 
@@ -591,8 +603,9 @@ degree-zero differential. This is the statement that makes the two quotients agr
 theorem map_homogeneousCocycleEquiv₁_B1 :
     AddSubgroup.map (homogeneousCocycleEquiv₁ G M).toAddMonoidHom
         ((B1 G M).addSubgroupOf (Z1 G M))
-      = (LinearMap.range
-          (homogeneousSc₁ G M).topModuleCatLeftHomologyData.f'.hom.toLinearMap).toAddSubgroup := by
+      = (LinearMap.range (homogeneousSc₁
+          (ofDiscreteModule ℤ G M)).topModuleCatLeftHomologyData.f'.hom.toLinearMap).toAddSubgroup
+          := by
   ext τ
   rw [AddSubgroup.mem_map_equiv, AddSubgroup.mem_addSubgroupOf,
     Submodule.mem_toAddSubgroup, LinearMap.mem_range]
@@ -631,9 +644,10 @@ noncomputable def explicitH1AddEquivContinuousCohomology :
     H1 G M ≃+ continuousCohomology 1 (ofDiscreteModule ℤ G M) :=
   ((QuotientAddGroup.congr _ _ (homogeneousCocycleEquiv₁ G M)
         (map_homogeneousCocycleEquiv₁_B1 G M)).trans
-      (AddEquiv.refl
-        (TopModuleCat.coker (homogeneousSc₁ G M).topModuleCatLeftHomologyData.f'))).trans
-    (continuousCohomologyIsoCoker₁ G M).symm.toContinuousLinearEquiv.toLinearEquiv.toAddEquiv
+      (AddEquiv.refl (TopModuleCat.coker
+        (homogeneousSc₁ (ofDiscreteModule ℤ G M)).topModuleCatLeftHomologyData.f'))).trans
+    (continuousCohomologyIsoCoker₁
+      (ofDiscreteModule ℤ G M)).symm.toContinuousLinearEquiv.toLinearEquiv.toAddEquiv
 
 -- Not `@[simp]`: `TauCeti.ContCohomology.H1pi` is `QuotientAddGroup.mk'`, which `simp` unfolds by
 -- `QuotientAddGroup.mk'_apply`, so this left-hand side is not in simp normal form. It is the
@@ -642,8 +656,19 @@ noncomputable def explicitH1AddEquivContinuousCohomology :
 `1`-cocycle attached to it. -/
 theorem explicitH1AddEquivContinuousCohomology_H1pi (z : Z1 G M) :
     explicitH1AddEquivContinuousCohomology G M (H1pi G M z)
-      = (continuousCohomologyIsoCoker₁ G M).inv
-          (Submodule.Quotient.mk (homogeneousCocycleEquiv₁ G M z)) := (rfl)
+      = (continuousCohomologyIsoCoker₁ (ofDiscreteModule ℤ G M)).inv
+          (Submodule.Quotient.mk (homogeneousCocycleEquiv₁ G M z)) := by
+  -- spell out the composite the comparison is defined to be, then peel off its two outer factors
+  change (continuousCohomologyIsoCoker₁
+      (ofDiscreteModule ℤ G M)).symm.toContinuousLinearEquiv.toLinearEquiv.toAddEquiv
+        (((QuotientAddGroup.congr _ _ (homogeneousCocycleEquiv₁ G M)
+            (map_homogeneousCocycleEquiv₁_B1 G M)).trans (AddEquiv.refl _)) (H1pi G M z)) = _
+  rw [AddEquiv.trans_apply, AddEquiv.refl_apply]
+  -- two definitional steps are left, neither of which Mathlib names: the value of
+  -- `QuotientAddGroup.congr` on a class, whose multiplicative form `QuotientGroup.congr_mk'` is
+  -- itself `rfl` and carries no `@[to_additive]`, read through the `Submodule.Quotient.mk` of the
+  -- cokernel; and the value of `CategoryTheory.Iso.toContinuousLinearEquiv`, which is `Iso.hom`
+  rfl
 
 /-- **Degree one, as topological `ℤ`-modules.** Both sides are discrete — the explicit side by
 construction, the canonical side by `TauCeti.discreteTopology_continuousCohomology` — so the
@@ -675,7 +700,10 @@ noncomputable def explicitH1IsoContinuousCohomology [CompactSpace G] :
 /-- The comparison in `TopModuleCat ℤ` is the additive comparison. -/
 @[simp] theorem explicitH1IsoContinuousCohomology_hom_apply [CompactSpace G] (x : DiscreteH1 G M) :
     (explicitH1IsoContinuousCohomology G M).hom x
-      = explicitH1AddEquivContinuousCohomology G M (discreteH1Equiv G M x) := (rfl)
+      = explicitH1AddEquivContinuousCohomology G M (discreteH1Equiv G M x) := by
+  simp only [explicitH1IsoContinuousCohomology, TopModuleCat.ofIso, TopModuleCat.hom_ofHom,
+    ContinuousLinearEquiv.coe_coe]
+  exact AddEquiv.trans_apply (discreteH1Equiv G M) (explicitH1AddEquivContinuousCohomology G M) x
 
 end DegreeOne
 
