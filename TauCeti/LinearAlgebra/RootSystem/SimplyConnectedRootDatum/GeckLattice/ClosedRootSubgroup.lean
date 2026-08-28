@@ -243,21 +243,26 @@ theorem geckRootSubgroupCoordinateMap_surjective (i : Fin t.rank ⊕ Fin t.rank)
 scheme-theoretic image is a closed copy of `𝔾ₐ`, as required of the root subgroups in a pinning. -/
 instance isClosedImmersion_geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
     IsClosedImmersion (t.geckRootSubgroup ht i).hom.hom.left := by
-  let e₁ := (eqToHom (AdditiveGroup.groupScheme_def ℤ)).hom.hom.left
-  let c := ((AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
-    (t.geckRootSubgroupCoordinateMap ht i).op).hom.hom.left
   let e₂ := (eqToHom (t.geckGroupScheme_def ht).symm).hom.hom.left
-  have hc : IsClosedImmersion c :=
-    (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _).2
+  have hroot :=
+    TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroupToToral_of_surjective
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+      (t.geckCoordinateLattice ht).toAddSubgroup
+      (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+      (t.isNilpotent_geckRepresentation_rootGenerator ht)
+      (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i
       (t.geckRootSubgroupCoordinateMap_surjective ht i)
-  have he₁c : IsClosedImmersion (e₁ ≫ c) :=
-    (MorphismProperty.cancel_left_of_respectsIso _ e₁ c).2 hc
-  have he₁ce₂ : IsClosedImmersion ((e₁ ≫ c) ≫ e₂) :=
-    (MorphismProperty.cancel_right_of_respectsIso _ (e₁ ≫ c) e₂).2 he₁c
-  rw [geckRootSubgroup_def,
-    TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_def]
+  have hcomp :=
+    (MorphismProperty.cancel_right_of_respectsIso _
+      (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
+        (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+        (t.geckCoordinateLattice ht).toAddSubgroup
+        (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+        (t.isNilpotent_geckRepresentation_rootGenerator ht)
+        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i).hom.hom.left e₂).2 hroot
+  rw [geckRootSubgroup_def]
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
-  exact he₁ce₂
+  exact hcomp
 
 /-- Every numbered root-subgroup map into the Geck carrier is a monomorphism. -/
 theorem mono_geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
