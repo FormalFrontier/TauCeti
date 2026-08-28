@@ -78,8 +78,10 @@ def frobenius : points r A →* points r A :=
     (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) p k A
 
-/-- The Frobenius endomorphism of the type-`A_r` carrier acts by entrywise Frobenius. -/
-@[simp]
+/-- The Frobenius endomorphism of the type-`A_r` carrier acts by entrywise Frobenius.
+
+This is not a `simp` lemma because `coe_frobenius_apply` is the canonical coefficient-level
+normal form. -/
 theorem coe_frobenius (g : points r A) :
     (frobenius r p k A g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) =
       Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g := by
