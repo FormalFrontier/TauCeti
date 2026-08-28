@@ -32,6 +32,8 @@ standard upper-triangular subgroup scheme.
 
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate I.
 * J. E. Humphreys, *Linear Algebraic Groups* (1975), Sections 26--28.
+* The upper-triangular root-subgroup declarations generalize the rank-two construction formerly
+  in `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel` under the `GL2Borel` API.
 
 This identifies the positive roots selected by the standard Borel in the split `GL_n` example of
 Layer 7, "Structure theory", of the ReductiveGroups roadmap.
@@ -123,8 +125,7 @@ theorem diagonalRootBase_isPos_iff (n : ℕ)
       diagonalRootIndexOfNe_isPos_of_lt n _ _ hrev
     let _ := (diagonalRootDatum.{u} (n + 1)).indexNeg
     have hneg : -p = q := by
-      change (diagonalRootDatum.{u} (n + 1)).reflectionPerm p p = q
-      rw [diagonalRootDatum_reflectionPerm]
+      rw [RootPairing.indexNeg_neg, diagonalRootDatum_reflectionPerm]
       apply Subtype.ext
       rw [diagonalReflectionIndex_coe]
       simp [q, diagonalRootIndexOfNe]
@@ -209,6 +210,67 @@ theorem coordinateMap_comp_rootSubgroupCoordinateMap (hij : i < j) :
       GeneralLinear.rootSubgroupCoordinateMap hij.ne := by
   rw [coordinateMap_def, rootSubgroupCoordinateMap]
   exact CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
+
+/-- Under the upper-triangular and general-linear point equivalences, the factored positive-root
+coordinate morphism gives the same transvection as the ambient root-subgroup morphism. -/
+@[simp]
+theorem pointsMulEquiv_rootSubgroupCoordinateMap (hij : i < j)
+    {A : Type w} [CommRing A] [Algebra R A]
+    (f : HopfAlgebra.points
+      (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) (CommAlgCat.of R A)) :
+    ((pointsMulEquiv (R := R) (n := n) (A := A)
+        (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R hij).hom)) :
+      upperTriangularGroup (Fin n) A) : GL (Fin n) A) =
+      GeneralLinear.pointsMulEquiv n
+        (GeneralLinear.rootSubgroupPoints hij.ne f) := by
+  have hcoe := pointsMulEquiv_coe (R := R) (n := n) (A := A)
+    (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R hij).hom))
+  rw [← hcoe, GeneralLinear.pointsMulEquiv_apply]
+  congr 1
+  rw [CommHopfAlgCat.quotientPointsHom_apply]
+  have hcomp :
+      (coordinateMap R n ≫ rootSubgroupCoordinateMap R hij).hom.toAlgHom =
+        (rootSubgroupCoordinateMap R hij).hom.toAlgHom.comp
+          (coordinateMap R n).hom.toAlgHom := rfl
+  rw [ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R n, ← hcomp,
+    coordinateMap_comp_rootSubgroupCoordinateMap]
+  let id_pt :
+      WithConv
+        (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R]
+          AdditiveGroup.coordinateHopfAlgebra R) :=
+    toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))
+  have hcomp_alg :
+      (GeneralLinear.rootSubgroupCoordinateMap hij.ne).hom.toAlgHom =
+        (GeneralLinear.rootSubgroupPoints hij.ne id_pt).ofConv := by
+    have hmap := GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app (R := R)
+      hij.ne (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R)) id_pt
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
+    exact congrArg WithConv.ofConv hmap
+  rw [hcomp_alg]
+  have hmap_gl :
+      GeneralLinear.pointsMulEquiv n
+          (toConv (f.ofConv.comp
+            (GeneralLinear.rootSubgroupPoints hij.ne id_pt).ofConv)) =
+        Matrix.GeneralLinearGroup.map f.ofConv.toRingHom
+          (GeneralLinear.pointsMulEquiv n
+            (GeneralLinear.rootSubgroupPoints hij.ne id_pt)) := by
+    apply Matrix.GeneralLinearGroup.ext
+    intro a b
+    rw [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply,
+      Matrix.GeneralLinearGroup.map_apply, GeneralLinear.pointsMulEquiv_apply,
+      GeneralLinear.pointToGeneralLinear_apply]
+    rfl
+  have hid_pt : AlgHom.mapValue f.ofConv id_pt = f := by
+    apply WithConv.ext
+    exact AlgHom.comp_id f.ofConv
+  have hcoe_ring (x : AdditiveGroup.coordinateHopfAlgebra R) :
+      f.ofConv.toRingHom x = f.ofConv x := rfl
+  apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).injective
+  rw [hmap_gl, GeneralLinear.pointsMulEquiv_rootSubgroupPoints,
+    map_transvectionUnit, hcoe_ring,
+    ← AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue f.ofConv id_pt,
+    hid_pt,
+    GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
 
 /-- The positive root subgroup `x_ij : 𝔾ₐ → B_n` inside the standard upper-triangular
 subgroup scheme, for an ordered pair `i < j`. -/

@@ -21,7 +21,7 @@ existing group `TauCeti.GL2Borel A`.
 This is the Borel component of the standard pinning of `GL₂`. It is a worked example for the
 pinning interface required by Layer 9 of the ReductiveGroups roadmap: the diagonal split torus
 can be placed in this closed subgroup scheme, and the positive simple-root subgroup is proved to
-land in it below.
+land in it by the general-rank `UpperTriangular` API.
 
 The construction uses the equation
 
@@ -43,9 +43,6 @@ arbitrary commutative base ring.
   Borel subgroup scheme.
 * `TauCeti.GeneralLinear.Borel.diagonalTorus_comp_inclusion`: composing the Borel diagonal torus
   with the inclusion is the ambient diagonal torus of `GL₂`.
-* `TauCeti.GeneralLinear.Borel.rootSubgroup`: the positive root subgroup morphism `x₀₁ : 𝔾ₐ → B`.
-* `TauCeti.GeneralLinear.Borel.rootSubgroup_comp_inclusion`: composing the Borel root subgroup with
-  the inclusion is the ambient `GL₂` root subgroup `x₀₁`.
 
 ## References
 
@@ -185,16 +182,6 @@ section Points
 
 variable {A : Type w} [CommRing A] [Algebra R A]
 
-/-- The positive simple-root subgroup `x₀₁` of `GL₂` lands in the Borel subgroup on every
-algebra-valued point. -/
-theorem rootSubgroupPoints_mem
-    (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
-    GeneralLinear.rootSubgroupPoints (R := R) (N := 2) (by decide : (0 : Fin 2) ≠ 1) f ∈
-      CommHopfAlgCat.quotientPointsSubgroup
-        (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-        (CommAlgCat.of R A) := by
-  exact UpperTriangular.rootSubgroupPoints_mem R (by decide : (0 : Fin 2) < 1) f
-
 /-- The diagonal torus of `GL₂` lands in the Borel subgroup on every algebra-valued point. -/
 theorem diagonalTorusPoints_mem
     (f : WithConv
@@ -328,45 +315,6 @@ end DiagonalTorus
 
 section RootSubgroup
 
-/-- The coordinate morphism of the positive root subgroup into the Borel coordinate Hopf algebra. -/
-noncomputable def rootSubgroupCoordinateMap :
-    coordinateHopfAlgebra R ⟶ AdditiveGroup.coordinateHopfAlgebra R :=
-  UpperTriangular.rootSubgroupCoordinateMap R (by decide : (0 : Fin 2) < 1)
-
-/-- Precomposing the Borel root-subgroup coordinate morphism with the quotient coordinate map
-yields the ambient general-linear root-subgroup coordinate morphism. -/
-@[simp]
-theorem coordinateMap_comp_rootSubgroupCoordinateMap :
-    coordinateMap R ≫ rootSubgroupCoordinateMap R =
-      GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1) := by
-  exact UpperTriangular.coordinateMap_comp_rootSubgroupCoordinateMap R
-    (by decide : (0 : Fin 2) < 1)
-
-/-- **The positive simple-root subgroup of `GL₂` inside the Borel subgroup scheme**: the affine
-group-scheme morphism `x₀₁ : 𝔾ₐ → B` whose value on points is `c ↦ x₀₁(c)`. -/
-noncomputable def rootSubgroup :
-    AdditiveGroup.groupScheme R ⟶ groupScheme R :=
-  UpperTriangular.rootSubgroup R (by decide : (0 : Fin 2) < 1)
-
-/-- The root subgroup into the Borel subgroup scheme is relative spectrum applied contravariantly
-to its coordinate morphism, transported across the named presentations of `𝔾ₐ` and `B`. -/
-theorem rootSubgroup_def :
-    rootSubgroup R =
-      eqToHom (AdditiveGroup.groupScheme_def R) ≫
-        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (rootSubgroupCoordinateMap R).op ≫
-        eqToHom (groupScheme_def R).symm := by
-  rw [rootSubgroup, UpperTriangular.rootSubgroup_def]
-  rfl
-
-/-- Composing the Borel root-subgroup morphism with the Borel inclusion into `GL₂` gives the
-standard general-linear root subgroup `x₀₁`. -/
-@[simp]
-theorem rootSubgroup_comp_inclusion :
-    rootSubgroup R ≫ inclusion R =
-      GeneralLinear.rootSubgroup (by decide : (0 : Fin 2) ≠ 1) := by
-  exact UpperTriangular.rootSubgroup_comp_inclusion R (by decide : (0 : Fin 2) < 1)
-
 variable (A : Type w) [CommRing A] [Algebra R A]
 
 /-- The positive root subgroup morphism lands in the expected upper-triangular matrix on
@@ -374,55 +322,13 @@ algebra-valued points. -/
 theorem pointsMulEquiv_rootSubgroupCoordinateMap
     (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
     ((UpperTriangular.pointsMulEquiv (R := R) (n := 2) (A := A)
-        (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R).hom)) : GL2Borel A) : GL (Fin 2) A) =
+        (toConv (f.ofConv.comp
+          (UpperTriangular.rootSubgroupCoordinateMap R
+            (by decide : (0 : Fin 2) < 1)).hom)) : GL2Borel A) : GL (Fin 2) A) =
       GeneralLinear.pointsMulEquiv 2
         (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) f) := by
-  have hcoe := UpperTriangular.pointsMulEquiv_coe (R := R) (n := 2) (A := A)
-    (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R).hom))
-  rw [← hcoe, GeneralLinear.pointsMulEquiv_apply]
-  congr 1
-  rw [CommHopfAlgCat.quotientPointsHom_apply]
-  have hcomp :
-      (coordinateMap R ≫ rootSubgroupCoordinateMap R).hom.toAlgHom =
-      (rootSubgroupCoordinateMap R).hom.toAlgHom.comp (coordinateMap R).hom.toAlgHom := rfl
-  rw [ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R, ← hcomp,
-    coordinateMap_comp_rootSubgroupCoordinateMap]
-  let id_pt :
-      WithConv
-        (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] AdditiveGroup.coordinateHopfAlgebra R) :=
-    toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))
-  have hcomp_alg :
-      (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1)).hom.toAlgHom =
-        (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt).ofConv := by
-    have hmap := GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app (R := R)
-      (by decide : (0 : Fin 2) ≠ 1) (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R)) id_pt
-    rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
-    exact congrArg WithConv.ofConv hmap
-  rw [hcomp_alg]
-  have hmap_gl :
-      GeneralLinear.pointsMulEquiv 2
-          (toConv (f.ofConv.comp
-            (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt).ofConv)) =
-        Matrix.GeneralLinearGroup.map f.ofConv.toRingHom
-          (GeneralLinear.pointsMulEquiv 2
-            (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt)) := by
-    apply Matrix.GeneralLinearGroup.ext
-    intro i j
-    rw [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply,
-      Matrix.GeneralLinearGroup.map_apply, GeneralLinear.pointsMulEquiv_apply,
-      GeneralLinear.pointToGeneralLinear_apply]
-    rfl
-  have hid_pt : AlgHom.mapValue f.ofConv id_pt = f := by
-    apply WithConv.ext
-    exact AlgHom.comp_id f.ofConv
-  have hcoe_ring (x : AdditiveGroup.coordinateHopfAlgebra R) :
-      f.ofConv.toRingHom x = f.ofConv x := rfl
-  apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).injective
-  rw [hmap_gl, GeneralLinear.pointsMulEquiv_rootSubgroupPoints,
-    map_transvectionUnit, hcoe_ring,
-    ← AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue f.ofConv id_pt,
-    hid_pt,
-    GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
+  exact UpperTriangular.pointsMulEquiv_rootSubgroupCoordinateMap R
+    (by decide : (0 : Fin 2) < 1) f
 
 end RootSubgroup
 
