@@ -100,6 +100,8 @@ is the image of the degree-`p` piece of the source. -/
 noncomputable def map (G : InternalGrading R M) (e : M ≃ₗ[R] N) : InternalGrading R N where
   piece p := (G.piece p).map e.toLinearMap
   isInternal := by
+    -- Expose `coeLinearMap` rather than its definitionally equal additive coercion so it can be
+    -- composed with `mapPiecesEquiv` below.
     change Function.Bijective
       (DirectSum.coeLinearMap fun p : ℤ ↦ (G.piece p).map e.toLinearMap)
     let E := mapPiecesEquiv G e
@@ -177,7 +179,7 @@ end Map
 section Opposite
 
 variable {R : Type u} {M : Type v}
-  [CommSemiring R] [AddCommMonoid M] [Module R M]
+  [Semiring R] [AddCommMonoid M] [Module R M]
 
 /-- The internal grading on the multiplicative opposite, with `op x` in the same degree as `x`. -/
 noncomputable def opposite (G : InternalGrading R M) : InternalGrading R Mᵐᵒᵖ :=
@@ -220,7 +222,7 @@ end Opposite
 section KoszulTwist
 
 variable {R : Type u} {M : Type v}
-  [CommRing R] [AddCommGroup M] [Module R M]
+  [CommRing R] [AddCommMonoid M] [Module R M]
 
 /-- The Koszul twist commutes with the linear equivalence to the multiplicative opposite. -/
 theorem opLinearEquiv_comp_koszulTwist (G : InternalGrading R M) (q : ℤ) :
