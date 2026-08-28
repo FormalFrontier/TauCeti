@@ -213,7 +213,6 @@ theorem bernsteinLevyDerivativeMeasure_apply (μ : Measure ℝ≥0) {s : Set ℝ
   rw [bernsteinLevyDerivativeMeasure, withDensity_apply _ hs]
 
 /-- The coordinate-weighted Levy measure has no atom at zero: the weight vanishes there. -/
-@[simp]
 theorem bernsteinLevyDerivativeMeasure_singleton_zero (μ : Measure ℝ≥0) :
     bernsteinLevyDerivativeMeasure μ {0} = 0 := by
   rw [bernsteinLevyDerivativeMeasure_apply μ (measurableSet_singleton 0),
