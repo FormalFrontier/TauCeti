@@ -126,6 +126,16 @@ theorem integers_constantsEquiv_symm (Q : Place k' F') :
     ((constantsEquiv k k' F').symm Q).integers = Q.integers :=
   SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv_symm]
 
+@[simp]
+theorem ord_constantsEquiv (Q : Place k F') (f : F') :
+    (constantsEquiv k k' F' Q).ord f = Q.ord f := by
+  rw [ord_def, ord_def, valuation_constantsEquiv]
+
+@[simp]
+theorem ord_constantsEquiv_symm (Q : Place k' F') (f : F') :
+    ((constantsEquiv k k' F').symm Q).ord f = Q.ord f := by
+  rw [ord_def, ord_def, valuation_constantsEquiv_symm]
+
 end Constants
 
 section Restrict

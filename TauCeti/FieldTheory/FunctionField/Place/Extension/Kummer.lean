@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.Polynomial.Lifts
 public import TauCeti.FieldTheory.FunctionField.Place.Existence
-public import TauCeti.FieldTheory.FunctionField.Place.Extension.Existence
+public import TauCeti.FieldTheory.FunctionField.Place.Extension.Basic
 
 /-!
 # Kummer's theorem: places over a place, from a factorization modulo that place
@@ -142,7 +142,7 @@ private theorem monic_of_map_eq_minpoly {P : Place k F} {y : F'} {φ : P.integer
 /-- A root `y : F'` of a polynomial over `𝒪_P` whose image in `F[X]` is the minimal polynomial of
 `y` is integral at every place of `F' / k'` lying over `P`: that polynomial is monic, the
 valuation ring of such a place contains `𝒪_P`, and valuation rings are integrally closed. -/
-private theorem mem_integers_of_map_eq_minpoly {P : Place k F} {P' : Place k' F'}
+theorem mem_integers_of_map_eq_minpoly {P : Place k F} {P' : Place k' F'}
     (hres : P'.restrict k F = P) {y : F'} {φ : P.integers[X]}
     (hmin : φ.map (algebraMap P.integers F) = minpoly F y) : y ∈ P'.integers := by
   let _ : Algebra P.integers F' := ((algebraMap F F').comp (algebraMap P.integers F)).toAlgebra
@@ -165,7 +165,7 @@ variable (k F) [FiniteDimensional F F']
 irreducible reduction `γ` over the residue field `F_P`, and `g (y)` vanishes at a place `P'` of
 `F' / k'` over `P` at which `y` is integral, then `γ` is the minimal polynomial over `F_P` of the
 residue of `y` at `P'`. -/
-private theorem minpoly_residue_eq (P' : Place k' F') {y : F'} (hy : y ∈ P'.integers)
+theorem minpoly_residue_eq (P' : Place k' F') {y : F'} (hy : y ∈ P'.integers)
     {g : (P'.restrict k F).integers[X]} (hg : g.Monic)
     (hirr : Irreducible (g.map (IsLocalRing.residue (P'.restrict k F).integers)))
     (hv : P'.valuation ((P'.restrict k F).integersEval y g) < 1) :
