@@ -28,14 +28,13 @@ roadmap and supplies the grading used by tensor products of DG objects.
 
 ## Main definitions
 
-* `TauCeti.InternalGrading.tensorProductPiece`: the submodule of tensors of a fixed total degree.
 * `TauCeti.InternalGrading.tensorProduct`: the internal total-degree grading.
 
 ## Main results
 
-* `TauCeti.InternalGrading.tensorProductPiece_eq_iSup`: the degree-`n` piece is the sum over
+* `TauCeti.InternalGrading.tensorProduct_piece_eq_iSup`: the degree-`n` piece is the sum over
   `G.piece p ⊗ H.piece (n - p)`.
-* `TauCeti.InternalGrading.tmul_mem_tensorProductPiece`: degrees add on pure tensors.
+* `TauCeti.InternalGrading.tmul_mem_tensorProduct`: degrees add on pure tensors.
 * `TauCeti.LinearMap.IsHomogeneous.tensorProduct`: tensoring homogeneous maps adds their degrees.
 
 The proof reuses Tau Ceti's two-factor internal decomposition theorem
@@ -63,15 +62,12 @@ private def tensorProductBidegreePiece (G : InternalGrading R M) (H : InternalGr
     (d : ℤ × ℤ) : Submodule R (M ⊗[R] N) :=
   Submodule.map₂ (TensorProduct.mk R M N) (G.piece d.1) (H.piece d.2)
 
-/-- The degree-`n` submodule in the tensor product of internally graded modules: the sum of the
-bidegree pieces whose two degrees add to `n`. -/
-def tensorProductPiece (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
+private def tensorProductPiece (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
     Submodule R (M ⊗[R] N) :=
   ⨆ d : ℤ × ℤ, ⨆ _ : d.1 + d.2 = n, tensorProductBidegreePiece G H d
 
-/-- The total-degree piece can be indexed by the degree in the first tensor factor; the degree in
-the second factor is then uniquely `n - p`. -/
-theorem tensorProductPiece_eq_iSup (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
+private theorem tensorProductPiece_eq_iSup (G : InternalGrading R M)
+    (H : InternalGrading R N) (n : ℤ) :
     tensorProductPiece G H n =
       ⨆ p : ℤ, Submodule.map₂ (TensorProduct.mk R M N) (G.piece p) (H.piece (n - p)) := by
   apply le_antisymm
@@ -86,15 +82,6 @@ theorem tensorProductPiece_eq_iSup (G : InternalGrading R M) (H : InternalGradin
     refine le_iSup_of_le (by omega) ?_
     rfl
 
-/-- A pure tensor of elements of degrees `p` and `q` belongs to total degree `p + q`. -/
-theorem tmul_mem_tensorProductPiece (G : InternalGrading R M) (H : InternalGrading R N)
-    {p q : ℤ} {x : M} {y : N} (hx : x ∈ G.piece p) (hy : y ∈ H.piece q) :
-    x ⊗ₜ[R] y ∈ tensorProductPiece G H (p + q) := by
-  rw [tensorProductPiece_eq_iSup]
-  refine Submodule.mem_iSup_of_mem p ?_
-  simpa only [add_sub_cancel_left, TensorProduct.mk_apply] using
-    Submodule.apply_mem_map₂ (TensorProduct.mk R M N) hx hy
-
 end Pieces
 
 section Internal
@@ -103,11 +90,19 @@ variable {R : Type u} [CommSemiring R]
 variable {M : Type v} {N : Type w}
 variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
 
-/-- Collecting an internal decomposition along an arbitrary degree map again gives an internal
-decomposition. This local form is used to collect tensor bidegrees by their sum. -/
-private theorem isInternal_iSup_fiber {I J : Type*} [DecidableEq I] [DecidableEq J]
+/-- Regrouping a family by the fibers of a degree map does not alter its supremum. -/
+private theorem iSup_fiber_eq_iSup {I J : Type*} (P : I → Submodule R M) (degree : I → J) :
+    (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⨆ i, P i := by
+  apply le_antisymm
+  · exact iSup_le fun _ ↦ iSup_le fun i ↦ iSup_le fun _ ↦ le_iSup P i
+  · exact iSup_le fun i ↦
+      le_iSup_of_le (degree i) (le_iSup_of_le i (le_iSup_of_le rfl le_rfl))
+
+/-- Projection onto each fiber proves that the canonical recomposition map for the collected
+pieces is injective. -/
+private theorem coeLinearMap_iSup_fiber_injective {I J : Type*} [DecidableEq I] [DecidableEq J]
     {P : I → Submodule R M} (hP : DirectSum.IsInternal P) (degree : I → J) :
-    DirectSum.IsInternal fun j ↦ ⨆ i, ⨆ _ : degree i = j, P i := by
+    Function.Injective <| DirectSum.coeLinearMap fun j ↦ ⨆ i, ⨆ _ : degree i = j, P i := by
   let Q : J → Submodule R M := fun j ↦ ⨆ i, ⨆ _ : degree i = j, P i
   let _ : DirectSum.Decomposition P := hP.chooseDecomposition
   let projection (j : J) : M →ₗ[R] M :=
@@ -118,6 +113,7 @@ private theorem isInternal_iSup_fiber {I J : Type*} [DecidableEq I] [DecidableEq
       projection j x = if degree i = j then x else 0 := by
     dsimp only [projection]
     rw [LinearMap.comp_apply]
+    -- The decomposition lemma takes an element of the summand; `hx` supplies that subtype view.
     change (DirectSum.toModule R I M fun i ↦
       if degree i = j then (P i).subtype else 0)
         ((DirectSum.decomposeLinearEquiv P) (⟨x, hx⟩ : P i)) = _
@@ -147,21 +143,23 @@ private theorem isInternal_iSup_fiber {I J : Type*} [DecidableEq I] [DecidableEq
     | add x y ihx ihy =>
         rw [map_add (DirectSum.coeLinearMap Q), map_add (projection j), ihx, ihy]
         rfl
-  change DirectSum.IsInternal Q
-  change Function.Bijective (DirectSum.coeLinearMap Q)
-  constructor
-  · intro x y hxy
-    apply DirectSum.ext fun j ↦ Subtype.ext ?_
-    exact (projection_coe j x).symm.trans ((congrArg (projection j) hxy).trans
-      (projection_coe j y))
-  · rw [← LinearMap.range_eq_top, DirectSum.range_coeLinearMap]
-    change (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⊤
-    rw [show (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⨆ i, P i by
-      apply le_antisymm
-      · exact iSup_le fun _ ↦ iSup_le fun i ↦ iSup_le fun _ ↦ le_iSup P i
-      · exact iSup_le fun i ↦
-          le_iSup_of_le (degree i) (le_iSup_of_le i (le_iSup_of_le rfl le_rfl))]
-    exact hP.submodule_iSup_eq_top
+  intro x y hxy
+  apply DirectSum.ext fun j ↦ Subtype.ext ?_
+  exact (projection_coe j x).symm.trans ((congrArg (projection j) hxy).trans
+    (projection_coe j y))
+
+/-- Collecting an internal decomposition along an arbitrary degree map again gives an internal
+decomposition. This local form is used to collect tensor bidegrees by their sum. -/
+private theorem isInternal_iSup_fiber {I J : Type*} [DecidableEq I] [DecidableEq J]
+    {P : I → Submodule R M} (hP : DirectSum.IsInternal P) (degree : I → J) :
+    DirectSum.IsInternal fun j ↦ ⨆ i, ⨆ _ : degree i = j, P i := by
+  -- `IsInternal` uses the canonical additive recomposition map. For submodules its underlying
+  -- function is definitionally the canonical linear recomposition map used below.
+  change Function.Bijective (DirectSum.coeLinearMap fun j ↦ ⨆ i, ⨆ _ : degree i = j, P i)
+  refine ⟨coeLinearMap_iSup_fiber_injective hP degree, ?_⟩
+  rw [← LinearMap.range_eq_top, DirectSum.range_coeLinearMap]
+  rw [iSup_fiber_eq_iSup P degree]
+  exact hP.submodule_iSup_eq_top
 
 /-- The tensor product of internally graded modules, graded by total degree. -/
 noncomputable def tensorProduct (G : InternalGrading R M) (H : InternalGrading R N) :
@@ -183,23 +181,29 @@ noncomputable def tensorProduct (G : InternalGrading R M) (H : InternalGrading R
         Subsingleton.elim _ _
       exact hdec ▸ H.isInternal
     apply isInternal_iSup_fiber
+    -- Unfold the private bidegree wrapper to match the reused tensor-product decomposition.
     change DirectSum.IsInternal fun d : ℤ × ℤ ↦
       Submodule.map₂ (TensorProduct.mk R M N) (G.piece d.1) (H.piece d.2)
     have hPair := DirectSum.IsInternal.tensorProduct G.piece H.piece hG hH
     -- Only the proof-irrelevant decidable-equality and additive instances now differ.
     convert hPair using 1
 
-@[simp]
-theorem tensorProduct_piece (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
-    (G.tensorProduct H).piece n = tensorProductPiece G H n :=
-  (rfl)
+/-- The degree-`n` piece of the tensor-product grading is the sum of the tensor-product images
+whose first degree is `p` and whose second degree is `n - p`. -/
+theorem tensorProduct_piece_eq_iSup (G : InternalGrading R M) (H : InternalGrading R N) (n : ℤ) :
+    (G.tensorProduct H).piece n =
+      ⨆ p : ℤ, Submodule.map₂ (TensorProduct.mk R M N) (G.piece p) (H.piece (n - p)) :=
+  tensorProductPiece_eq_iSup G H n
 
 /-- A pure tensor of elements of degrees `p` and `q` is homogeneous of degree `p + q` in the
 tensor-product grading. -/
 theorem tmul_mem_tensorProduct (G : InternalGrading R M) (H : InternalGrading R N)
     {p q : ℤ} {x : M} {y : N} (hx : x ∈ G.piece p) (hy : y ∈ H.piece q) :
     x ⊗ₜ[R] y ∈ (G.tensorProduct H).piece (p + q) := by
-  simpa only [tensorProduct_piece] using tmul_mem_tensorProductPiece G H hx hy
+  rw [tensorProduct_piece_eq_iSup]
+  refine Submodule.mem_iSup_of_mem p ?_
+  simpa only [add_sub_cancel_left, TensorProduct.mk_apply] using
+    Submodule.apply_mem_map₂ (TensorProduct.mk R M N) hx hy
 
 end Internal
 
@@ -222,10 +226,8 @@ theorem tensorProduct {G : InternalGrading R M} {H : InternalGrading R N}
       (G'.tensorProduct H').piece (a + b) := by
   rw [LinearMap.isHomogeneous_def]
   intro n z hz
-  rw [InternalGrading.tensorProduct_piece,
-    InternalGrading.tensorProductPiece_eq_iSup] at hz
-  rw [InternalGrading.tensorProduct_piece,
-    InternalGrading.tensorProductPiece_eq_iSup]
+  rw [InternalGrading.tensorProduct_piece_eq_iSup] at hz
+  rw [InternalGrading.tensorProduct_piece_eq_iSup]
   let target := ⨆ p : ℤ,
     Submodule.map₂ (TensorProduct.mk R M' N') (G'.piece p)
       (H'.piece (n + (a + b) - p))
