@@ -37,6 +37,15 @@ The Brauer crossing is therefore taken to be **minus** the flip,
 `TauCeti.symplecticCrossing`, and with that choice all three relations hold. This is the sign that
 has to be fixed before a Brauer action on `V^{⊗k}` is well defined.
 
+The sign is forced, not chosen. The two anti-invariances give `flip * e = -e`, so if the bare flip
+were the crossing then `s * e = e` would force `2 • e = 0`, which is false over `ℂ` for `n ≥ 1`
+because `cap ∘ e ∘ cup` is multiplication by `(-2n)^2`. Re-ordering the arcs does not repair it:
+each of the two orderings only changes `cap` or `cup` by a sign, which changes `e` by a sign at
+most and leaves `cap ∘ flip = -cap` and `flip ∘ cup = -cup` -- hence `flip * e = -e` -- intact.
+So on the permutation diagrams the symplectic Brauer action is the *sign-twisted* permutation
+action rather than the bare one; that twist is the standard symplectic convention, and it is the
+same phenomenon that makes the Brauer parameter negative.
+
 The loop value is negative for the same reason. A closed loop is a cup stacked under a cap, and
 it evaluates to the trace of the alternating pairing, which is `-2n` and not `dim V`.
 
