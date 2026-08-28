@@ -6,10 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Module.GradedModule.Internal
-public import TauCeti.LinearAlgebra.Graded.Multilinear
+public import TauCeti.LinearAlgebra.Graded.LinearMap
 public import TauCeti.LinearAlgebra.TensorProduct.Decomposition
-
-import Mathlib.Order.CompactlyGenerated.Basic
 
 /-!
 # Tensor products of internally graded modules
@@ -46,7 +44,7 @@ The proof reuses Tau Ceti's two-factor internal decomposition theorem
 
 public section
 
-open scoped TensorProduct
+open scoped DirectSum TensorProduct
 
 namespace TauCeti
 
@@ -101,35 +99,68 @@ end Pieces
 
 section Internal
 
-variable {R : Type u} [CommRing R]
+variable {R : Type u} [CommSemiring R]
 variable {M : Type v} {N : Type w}
-variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
 
 /-- Collecting an internal decomposition along an arbitrary degree map again gives an internal
 decomposition. This local form is used to collect tensor bidegrees by their sum. -/
 private theorem isInternal_iSup_fiber {I J : Type*} [DecidableEq I] [DecidableEq J]
     {P : I → Submodule R M} (hP : DirectSum.IsInternal P) (degree : I → J) :
     DirectSum.IsInternal fun j ↦ ⨆ i, ⨆ _ : degree i = j, P i := by
-  apply DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-  · rw [iSupIndep_def]
-    intro j
-    let same : Set I := {i | degree i = j}
-    let other : Set I := {i | degree i ≠ j}
-    have hdisjoint : Disjoint same other := Set.disjoint_left.2 fun _ hi hi' ↦ hi' hi
-    have h := hP.submodule_iSupIndep.disjoint_biSup_biSup hdisjoint
-    refine h.mono ?_ ?_
+  let Q : J → Submodule R M := fun j ↦ ⨆ i, ⨆ _ : degree i = j, P i
+  let _ : DirectSum.Decomposition P := hP.chooseDecomposition
+  let projection (j : J) : M →ₗ[R] M :=
+    (DirectSum.toModule R I M fun i ↦
+      if degree i = j then (P i).subtype else 0) ∘ₗ
+        (DirectSum.decomposeLinearEquiv P).toLinearMap
+  have projection_piece (j : J) (i : I) {x : M} (hx : x ∈ P i) :
+      projection j x = if degree i = j then x else 0 := by
+    dsimp only [projection]
+    rw [LinearMap.comp_apply]
+    change (DirectSum.toModule R I M fun i ↦
+      if degree i = j then (P i).subtype else 0)
+        ((DirectSum.decomposeLinearEquiv P) (⟨x, hx⟩ : P i)) = _
+    rw [DirectSum.decomposeLinearEquiv_apply_coe, DirectSum.toModule_lof]
+    split <;> rfl
+  have Q_eq (j : J) : Q j = ⨆ i : {i // degree i = j}, P i := by
+    apply le_antisymm
     · refine iSup_le fun i ↦ iSup_le fun hi ↦ ?_
-      exact le_iSup_of_le i (le_iSup_of_le hi le_rfl)
-    · refine iSup_le fun j' ↦ iSup_le fun hj' ↦ iSup_le fun i ↦ iSup_le fun hi ↦ ?_
-      have hi' : degree i ≠ j := by simpa only [hi] using hj'
-      exact le_iSup_of_le i (le_iSup_of_le hi' le_rfl)
-  · -- Regrouping by fibers does not change the supremum of all the original pieces.
-    have htotal : (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⨆ i, P i := by
+      exact le_iSup_of_le ⟨i, hi⟩ le_rfl
+    · exact iSup_le fun i ↦ le_iSup_of_le i.1 (le_iSup_of_le i.2 le_rfl)
+  have projection_mem (j k : J) {x : M} (hx : x ∈ Q k) :
+      projection j x = if k = j then x else 0 := by
+    rw [Q_eq] at hx
+    refine Submodule.iSup_induction (fun i : {i // degree i = k} ↦ P i)
+      (motive := fun y ↦ projection j y = if k = j then y else 0) hx
+      (fun i x hx ↦ ?_) (by simp) (fun x y ihx ihy ↦ ?_)
+    · simpa only [i.property] using projection_piece j i hx
+    · simp only [map_add, ihx, ihy, ite_add_zero]
+  have projection_coe (j : J) (z : ⨁ k, ↥(Q k)) :
+      projection j (DirectSum.coeLinearMap Q z) = z j := by
+    induction z using DirectSum.induction_on with
+    | zero => simp
+    | of k x =>
+        rw [DirectSum.coeLinearMap_of, projection_mem j k x.property]
+        simp only [DirectSum.coe_of_apply]
+        split <;> rfl
+    | add x y ihx ihy =>
+        rw [map_add (DirectSum.coeLinearMap Q), map_add (projection j), ihx, ihy]
+        rfl
+  change DirectSum.IsInternal Q
+  change Function.Bijective (DirectSum.coeLinearMap Q)
+  constructor
+  · intro x y hxy
+    apply DirectSum.ext fun j ↦ Subtype.ext ?_
+    exact (projection_coe j x).symm.trans ((congrArg (projection j) hxy).trans
+      (projection_coe j y))
+  · rw [← LinearMap.range_eq_top, DirectSum.range_coeLinearMap]
+    change (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⊤
+    rw [show (⨆ j, ⨆ i, ⨆ _ : degree i = j, P i) = ⨆ i, P i by
       apply le_antisymm
       · exact iSup_le fun _ ↦ iSup_le fun i ↦ iSup_le fun _ ↦ le_iSup P i
       · exact iSup_le fun i ↦
-          le_iSup_of_le (degree i) (le_iSup_of_le i (le_iSup_of_le rfl le_rfl))
-    rw [htotal]
+          le_iSup_of_le (degree i) (le_iSup_of_le i (le_iSup_of_le rfl le_rfl))]
     exact hP.submodule_iSup_eq_top
 
 /-- The tensor product of internally graded modules, graded by total degree. -/
@@ -167,8 +198,8 @@ theorem tensorProduct_piece (G : InternalGrading R M) (H : InternalGrading R N) 
 tensor-product grading. -/
 theorem tmul_mem_tensorProduct (G : InternalGrading R M) (H : InternalGrading R N)
     {p q : ℤ} {x : M} {y : N} (hx : x ∈ G.piece p) (hy : y ∈ H.piece q) :
-    x ⊗ₜ[R] y ∈ (G.tensorProduct H).piece (p + q) :=
-  tmul_mem_tensorProductPiece G H hx hy
+    x ⊗ₜ[R] y ∈ (G.tensorProduct H).piece (p + q) := by
+  simpa only [tensorProduct_piece] using tmul_mem_tensorProductPiece G H hx hy
 
 end Internal
 
@@ -176,10 +207,10 @@ end InternalGrading
 
 namespace LinearMap.IsHomogeneous
 
-variable {R : Type u} [CommRing R]
+variable {R : Type u} [CommSemiring R]
 variable {M : Type v} {N : Type w} {M' : Type v'} {N' : Type w'}
-variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-variable [AddCommGroup M'] [Module R M'] [AddCommGroup N'] [Module R N']
+variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
+variable [AddCommMonoid M'] [Module R M'] [AddCommMonoid N'] [Module R N']
 
 /-- Tensoring homogeneous linear maps adds their degrees for the total tensor-product gradings. -/
 @[grind →]
