@@ -87,7 +87,6 @@ theorem gradient_splitQuadratic [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
   exact (hasGradientAt_splitQuadratic z).gradient
 
 /-- The origin is the unique critical point of the split quadratic function. -/
-@[simp]
 theorem gradient_splitQuadratic_eq_zero_iff [CompleteSpace Eₛ] [CompleteSpace Eᵤ]
     (z : WithLp 2 (Eₛ × Eᵤ)) :
     ∇ (splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ)) z = 0 ↔ z = 0 := by
