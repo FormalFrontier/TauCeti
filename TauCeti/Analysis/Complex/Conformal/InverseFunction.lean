@@ -85,26 +85,4 @@ theorem _root_.DifferentiableOn.hasDerivAt_invFunOn {f : ℂ → ℂ} {U : Set �
   have := eq_inv_of_mul_eq_one_right (hcomp.unique hid)
   rwa [this] at hgp
 
-/-- **The pulled-back transversal segment.** Pulled back by the holomorphic inverse of an
-injection `f`, the straight segment `t ↦ deriv f z₀ * n * t + f z₀` through `f z₀` in the
-direction `deriv f z₀ * n` is a curve through `z₀` with velocity `n`: the pushforward of a
-direction at `z₀` is pulled back to that direction. -/
-theorem hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
-    (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U) {z₀ : ℂ}
-    (hz₀ : z₀ ∈ U) (n : ℂ) :
-    HasDerivAt (fun t : ℝ => Function.invFunOn f U (deriv f z₀ * n * t + f z₀)) n 0 := by
-  have h1 : HasDerivAt (fun t : ℝ => deriv f z₀ * n * (t : ℂ) + f z₀)
-      (deriv f z₀ * n) 0 := by
-    simpa using
-      (((hasDerivAt_id (0 : ℝ)).ofReal_comp.const_mul (deriv f z₀ * n)).add_const (f z₀))
-  have h2 : HasDerivAt (Function.invFunOn f U) (deriv f z₀)⁻¹
-      (deriv f z₀ * n * ((0 : ℝ) : ℂ) + f z₀) := by
-    simpa using hf.hasDerivAt_invFunOn hU hinj hz₀
-  have h3 := HasDerivAt.scomp (0 : ℝ) h2 h1
-  have h4 : (deriv f z₀ * n) • (deriv f z₀)⁻¹ = n := by
-    rw [smul_eq_mul]
-    field_simp [hf.deriv_ne_zero_of_injOn hU hinj hz₀]
-  rw [h4] at h3
-  exact h3
-
 end TauCeti

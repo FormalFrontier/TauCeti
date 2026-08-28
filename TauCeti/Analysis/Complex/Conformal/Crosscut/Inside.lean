@@ -31,11 +31,11 @@ This is the planar-separation step of the `ConformalMapping` roadmap (L5).
 
 ## Main results
 
-* `TauCeti.exists_mem_image_inter_ball_and_image_diff_closedBall` — **the transversal
+* `TauCeti.exists_mem_image_inter_ball_and_image_sdiff_closedBall` — **the transversal
   segment through a point of the image crosscut, with near side and far side on opposite sides.**
 * `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg` — **the image crosscut is
   adherent to each of its points from both sides of the transversal.**
-* `TauCeti.image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_filledHull` —
+* `TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` —
   **one of the two image pieces lies in the filled hull of a closed bounded set through the image
   crosscut.**
 
@@ -62,9 +62,27 @@ private theorem sub_ne_zero_of_mem_sphere (hρ : 0 < ρ) (hz₀ : z₀ ∈ spher
   rw [mem_sphere, dist_eq_norm, h, norm_zero] at hz₀
   exact hρ.ne hz₀
 
+private theorem hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
+    (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U) {z₀ : ℂ}
+    (hz₀ : z₀ ∈ U) (n : ℂ) :
+    HasDerivAt (fun t : ℝ => Function.invFunOn f U (deriv f z₀ * n * t + f z₀)) n 0 := by
+  have h1 : HasDerivAt (fun t : ℝ => deriv f z₀ * n * (t : ℂ) + f z₀)
+      (deriv f z₀ * n) 0 := by
+    simpa using
+      (((hasDerivAt_id (0 : ℝ)).ofReal_comp.const_mul (deriv f z₀ * n)).add_const (f z₀))
+  have h2 : HasDerivAt (Function.invFunOn f U) (deriv f z₀)⁻¹
+      (deriv f z₀ * n * ((0 : ℝ) : ℂ) + f z₀) := by
+    simpa using hf.hasDerivAt_invFunOn hU hinj hz₀
+  have h3 := HasDerivAt.scomp (0 : ℝ) h2 h1
+  have h4 : (deriv f z₀ * n) • (deriv f z₀)⁻¹ = n := by
+    rw [smul_eq_mul]
+    field_simp [hf.deriv_ne_zero_of_injOn hU hinj hz₀]
+  rw [h4] at h3
+  exact h3
+
 /-- **The transversal segment through a point of the image crosscut.** For small negative `t` the
 segment lies in the image of the near side, and for small positive `t` in the far side. -/
-theorem exists_mem_image_inter_ball_and_image_diff_closedBall
+theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall
     (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hz₀ : z₀ ∈ ball c r ∩ sphere ζ ρ) (hρ : 0 < ρ) :
     ∃ η : ℝ, 0 < η ∧
@@ -233,7 +251,7 @@ theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
 /-- **One of the two image pieces lies in the filled hull of a closed bounded set through the image
 crosscut.** The transversal segment meets the set only at the crossing point, and the set minus that
 point is preconnected, so the winding-number two-sidedness theorem applies. -/
-theorem image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_filledHull
+theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
     (hf : DifferentiableOn ℂ f (ball c r))
     (hinj : InjOn f (ball c r)) {K : Set ℂ} (hK : IsClosed K) (hKb : IsBounded K)
@@ -255,7 +273,7 @@ theorem image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_fille
     mul_ne_zero (hf.deriv_ne_zero_of_injOn isOpen_ball hinj hz₀.1)
       (sub_ne_zero_of_mem_sphere hρ hz₀.2)
   obtain ⟨η, hη, hnear, hfar⟩ :=
-    exists_mem_image_inter_ball_and_image_diff_closedBall hf hinj hz₀ hρ
+    exists_mem_image_inter_ball_and_image_sdiff_closedBall hf hinj hz₀ hρ
   obtain ⟨hleft, hright⟩ :=
     mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg hf hinj hz₀ hρ
   -- neither image piece meets `K`
@@ -302,20 +320,6 @@ theorem image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_fille
         (hf.continuousOn.mono sdiff_subset)).isPreconnected
     exact IsPreconnected.subset_filledHull hB hfarK
       ⟨_, hfar (η / 2) ⟨by linarith, by linarith⟩, hy⟩
-
-/-- **One of the two image pieces lies inside the small Jordan curve through the crosscut.** -/
-private theorem
-    image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_filledHull_of_isJordanCurve
-    (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
-    (hf : DifferentiableOn ℂ f (ball c r))
-    (hinj : InjOn f (ball c r)) {J : Set ℂ} (hJ : IsJordanCurve J)
-    (hγJ : closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ J)
-    (hJsub : J ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r)) :
-    f '' (ball c r ∩ ball ζ ρ) ⊆ filledHull J ∨
-      f '' (ball c r \ closedBall ζ ρ) ⊆ filledHull J :=
-  image_inter_ball_subset_filledHull_or_image_diff_closedBall_subset_filledHull hζ hρ hρr hf hinj
-    hJ.isClosed hJ.isCompact.isBounded hγJ hJsub fun p _ =>
-      (IsPathConnected.isConnected (hJ.isPathConnected_sdiff_singleton p)).isPreconnected
 
 /-! ## An enclosed side is trapped, and narrow -/
 
