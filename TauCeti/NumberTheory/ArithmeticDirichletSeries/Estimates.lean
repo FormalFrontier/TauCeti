@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.LSeries.Convergence
 public import Mathlib.NumberTheory.LSeries.SumCoeff
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
+public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Counting
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Trivial
 
 /-!
@@ -17,7 +18,9 @@ Mathlib's `NumberField.Ideal.tendsto_norm_le_div_atTop₀` says that the number 
 ideals of `𝓞 K` of absolute norm at most `x` is asymptotic to `ρ x`, with `ρ` the positive residue
 of the Dedekind zeta function.  This file turns that single asymptotic into the *two-sided* linear
 bounds that every later estimate of the roadmap counts against, and then spends them on the exact
-abscissa of absolute convergence of the trivial ideal weight.
+abscissa of absolute convergence of the trivial ideal weight and on the unconditional `O(n)` bound
+for the partial sums of an arbitrary *unitary* ideal weight, whose coefficients the trivial ones
+dominate.
 
 Both directions are needed.  Convergence uses the upper bound alone: it makes the partial sums of
 the norm coefficients `O(n)`, so Mathlib's `LSeriesSummable_of_sum_norm_bigO` gives absolute
@@ -44,6 +47,11 @@ of a convergent series of nonnegative terms must become arbitrarily small.
   `NumberField.dedekindZeta` is the `LSeries` of.  That system counts *all* integral ideals, so it
   differs from the trivial norm coefficients at `n = 0` and the two statements are related only
   through the `n ≠ 0` congruence `LSeries.abscissaOfAbsConv_congr`.
+* `TauCeti.isBigO_sum_norm_normCoeff`, `TauCeti.isBigO_sum_Icc_normCoeff` and
+  `TauCeti.LSeriesSummable_normCoeff_of_one_lt_re` transfer the upper count to an arbitrary
+  unitary ideal weight, whose coefficients are dominated by the trivial ones because a unitary
+  weight has modulus at most `1` at every ideal.  These are the unconditional bounds that the
+  cancellation hypothesis of Layer 6 improves.
 
 ## Implementation notes
 
@@ -62,7 +70,8 @@ prove convergence at `Re s > 1`, and it has no lower bound at all.
 This is Layer **5.1** (the ideal-count half) together with Layer **5.1a** of
 `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`.  As that layer demands, the exact abscissa
 is derived from the two-sided linear ideal counts alone: neither the analytic continuation of the
-Dedekind zeta function nor its pole at `s = 1` is used.
+Dedekind zeta function nor its pole at `s = 1` is used.  The unitary-weight comparison at the end
+of the file is the Layer 5 estimate that Layer 6 consumes for Abel summation.
 
 ## References
 
@@ -202,25 +211,12 @@ absolute norm at most `n`, because the absolute-norm fibres partition them. -/
 theorem sum_norm_normCoeff_one (n : ℕ) :
     ∑ k ∈ Finset.Icc 1 n, ‖normCoeff K (1 : IdealArithmeticFunction K) k‖
       = Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ (n : ℝ)} := by
-  classical
-  have hfin := finite_setOf_absNorm_real_le K (n : ℝ)
-  have key : hfin.toFinset.card = ∑ k ∈ Finset.Icc 1 n, (normFiber K k).card := by
-    refine Finset.card_eq_sum_card_fiberwise
-      (f := fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K)))
-      (t := Finset.Icc 1 n) (fun I hI ↦ ?_) |>.trans (Finset.sum_congr rfl fun k hk ↦ ?_)
-    · rw [Finset.mem_coe, Finset.mem_Icc]
-      refine ⟨Ideal.absNorm_pos_of_nonZeroDivisors I, ?_⟩
-      rw [Finset.mem_coe, Set.Finite.mem_toFinset] at hI
-      exact_mod_cast hI
-    · congr 1
-      ext I
-      rw [Finset.mem_filter, Set.Finite.mem_toFinset, Set.mem_ofPred_eq, mem_normFiber]
-      refine ⟨fun h ↦ h.2, fun h ↦ ⟨?_, h⟩⟩
-      rw [h]
-      exact_mod_cast (Finset.mem_Icc.mp hk).2
   have hcard : Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ (n : ℝ)}
-      = hfin.toFinset.card := Nat.card_eq_card_finite_toFinset hfin
-  rw [hcard, key, Nat.cast_sum]
+      = ∑ k ∈ Finset.Icc 1 n, (normFiber K k).card := by
+    rw [Nat.card_coe_normLE (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K))) (n : ℝ)]
+    simpa [idealSummatory_apply] using
+      idealSummatory_natCast_eq_sum_Icc_sum_normFiber K (fun _ ↦ (1 : ℕ)) n
+  rw [hcard, Nat.cast_sum]
   exact Finset.sum_congr rfl fun k _ ↦ norm_normCoeff_one K k
 
 /-! ### The exact abscissa of the trivial ideal weight -/
@@ -424,5 +420,48 @@ theorem LSeriesSummable_dedekindZetaCoeff_iff {s : ℂ} :
     LSeriesSummable (fun n ↦ (dedekindZetaCoeff K n : ℂ)) s ↔ 1 < s.re := by
   rw [← LSeriesSummable_normCoeff_one_iff K]
   exact LSeriesSummable_congr s fun {n} hn ↦ by rw [normCoeff_one_apply, ite_eq_right hn]
+
+/-! ### Unconditional bounds for a general unitary weight -/
+
+variable {K}
+
+/-- The norm coefficient of a unitary weight at `n` is bounded by the number of nonzero ideals of
+absolute norm `n`, since every value of the weight has modulus at most `1`. -/
+theorem norm_normCoeff_le_card_normFiber (χ : UnitaryIdealWeight K) (n : ℕ) :
+    ‖normCoeff K χ.1.toIdealArithmeticFunction n‖ ≤ (normFiber K n).card := by
+  rw [normCoeff_eq_sum_normFiber]
+  refine (norm_sum_le _ _).trans ?_
+  simpa using Finset.sum_le_card_nsmul _ _ 1 fun I _ ↦ UnitaryIdealWeight.norm_le_one χ _
+
+/-- The partial sums of the absolute values of the norm coefficients of a unitary weight are
+`O(n)`, by comparison with the trivial weight. -/
+theorem isBigO_sum_norm_normCoeff (χ : UnitaryIdealWeight K) :
+    (fun n : ℕ ↦ ∑ k ∈ Finset.Icc 1 n, ‖normCoeff K χ.1.toIdealArithmeticFunction k‖)
+      =O[atTop] fun n : ℕ ↦ (n : ℝ) ^ (1 : ℝ) := by
+  refine Asymptotics.IsBigO.trans (Asymptotics.isBigO_of_le _ fun n ↦ ?_)
+    (isBigO_sum_norm_normCoeff_one K)
+  rw [Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ ↦ norm_nonneg _),
+    Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ ↦ norm_nonneg _)]
+  refine Finset.sum_le_sum fun k _ ↦ ?_
+  rw [norm_normCoeff_one]
+  exact norm_normCoeff_le_card_normFiber χ k
+
+/-- The partial sums of the norm coefficients of a unitary weight are `O(n)`; equivalently, by
+`TauCeti.idealSummatory_natCast_eq_sum_Icc_normCoeff`, so are its ideal partial sums. This is the
+unconditional bound that Layer 6's cancellation hypothesis improves. -/
+theorem isBigO_sum_Icc_normCoeff (χ : UnitaryIdealWeight K) :
+    (fun n : ℕ ↦ ∑ k ∈ Finset.Icc 1 n, normCoeff K χ.1.toIdealArithmeticFunction k)
+      =O[atTop] fun n : ℕ ↦ (n : ℝ) ^ (1 : ℝ) :=
+  (Asymptotics.isBigO_of_le _ fun n ↦ by
+    simpa [Real.norm_of_nonneg (Finset.sum_nonneg fun _ (_ : _ ∈ Finset.Icc 1 n) ↦
+      norm_nonneg _)] using
+      norm_sum_le (Finset.Icc 1 n) fun k ↦ normCoeff K χ.1.toIdealArithmeticFunction k).trans
+    (isBigO_sum_norm_normCoeff χ)
+
+/-- The Dirichlet series of the norm coefficients of a unitary weight converges absolutely on
+`Re s > 1`. -/
+theorem LSeriesSummable_normCoeff_of_one_lt_re (χ : UnitaryIdealWeight K) {s : ℂ}
+    (hs : 1 < s.re) : LSeriesSummable (normCoeff K χ.1.toIdealArithmeticFunction) s :=
+  LSeriesSummable_of_sum_norm_bigO (isBigO_sum_norm_normCoeff χ) zero_le_one hs
 
 end TauCeti

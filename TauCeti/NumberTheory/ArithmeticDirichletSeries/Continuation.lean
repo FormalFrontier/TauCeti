@@ -36,9 +36,12 @@ and no downstream character family may assume it for free.
 
 ## Implementation notes
 
-The bridge between the two indexings is `TauCeti.idealSummatory_eq_sum_Icc_normCoeff`: an ideal
-partial sum is the partial sum of the norm coefficients over `1 ≤ k ≤ ⌊x⌋₊`, because the
-absolute-norm fibres partition the nonzero ideals of bounded norm. Through it, Mathlib's
+The bridge between the two indexings is the Layer 4 regrouping lemma
+`TauCeti.idealSummatory_eq_sum_Icc_normCoeff` of `Counting.lean`: an ideal partial sum is the
+partial sum of the norm coefficients over `1 ≤ k ≤ ⌊x⌋₊`, because the absolute-norm fibres
+partition the nonzero ideals of bounded norm. The unconditional `O(n)` bounds on those partial
+sums are the Layer 5 estimates `TauCeti.isBigO_sum_Icc_normCoeff` and
+`TauCeti.LSeriesSummable_normCoeff_of_one_lt_re` of `Estimates.lean`. Through them, Mathlib's
 `LSeries_eq_mul_integral` — Abel summation in its integral form — supplies the identity on
 `Re s > 1`, and Mathlib's `mellin_differentiableAt_of_isBigO_rpow` supplies the analyticity: the
 integral is the Mellin transform of `A_χ` at `-s`, and `A_χ` vanishes below the cutoff `1`, so the
@@ -68,44 +71,10 @@ public section
 
 namespace TauCeti
 
-open Filter Finset MeasureTheory
+open Filter MeasureTheory
 open scoped nonZeroDivisors NumberField Topology
 
 variable {K : Type*} [Field K] [NumberField K]
-
-/-! ### Ideal partial sums and partial sums of norm coefficients -/
-
-/-- **An ideal partial sum is a partial sum of norm coefficients.** Summing an ideal arithmetic
-function over the nonzero ideals of absolute norm at most `n` is the same as summing its norm
-coefficients over `1 ≤ k ≤ n`, since the absolute-norm fibres partition those ideals. -/
-theorem idealSummatory_natCast_eq_sum_Icc_normCoeff (f : IdealArithmeticFunction K) (n : ℕ) :
-    idealSummatory K f (n : ℝ) = ∑ k ∈ Icc 1 n, normCoeff K f k := by
-  classical
-  have hmaps : ∀ I ∈ idealsLE K (n : ℝ), Ideal.absNorm (I : Ideal (𝓞 K)) ∈ Icc 1 n := by
-    intro I hI
-    rw [mem_normLE] at hI
-    exact mem_Icc.mpr ⟨Ideal.absNorm_pos_of_nonZeroDivisors I, by exact_mod_cast hI⟩
-  rw [idealSummatory_apply, ← Finset.sum_fiberwise_of_maps_to hmaps f]
-  refine Finset.sum_congr rfl fun k hk ↦ ?_
-  rw [normCoeff_eq_sum_normFiber]
-  refine Finset.sum_congr (Finset.ext fun I ↦ ?_) fun _ _ ↦ rfl
-  rw [Finset.mem_filter, mem_normFiber, mem_normLE]
-  refine ⟨fun h ↦ h.2, fun h ↦ ⟨?_, h⟩⟩
-  rw [h]
-  exact_mod_cast (mem_Icc.mp hk).2
-
-/-- The real-cutoff form of `TauCeti.idealSummatory_natCast_eq_sum_Icc_normCoeff`: the ideal
-partial sum at a nonnegative cutoff `x` is the partial sum of the norm coefficients up to `⌊x⌋₊`.
--/
-theorem idealSummatory_eq_sum_Icc_normCoeff (f : IdealArithmeticFunction K) {x : ℝ} (hx : 0 ≤ x) :
-    idealSummatory K f x = ∑ k ∈ Icc 1 ⌊x⌋₊, normCoeff K f k := by
-  rw [show idealSummatory K f x = idealSummatory K f (⌊x⌋₊ : ℝ) from
-      summatory_eq_summatory_natFloor _ f hx, idealSummatory_natCast_eq_sum_Icc_normCoeff]
-
-/-- Conjugating an ideal arithmetic function conjugates its ideal partial sums. -/
-theorem idealSummatory_star (f : IdealArithmeticFunction K) (x : ℝ) :
-    idealSummatory K (fun I ↦ star (f I)) x = star (idealSummatory K f x) := by
-  rw [idealSummatory_apply, idealSummatory_apply, star_sum]
 
 /-! ### The cancellation exponent -/
 
@@ -206,46 +175,6 @@ theorem not_hasCancellation_one : ¬ HasCancellation (1 : UnitaryIdealWeight K) 
   rw [mul_comm] at hkey
   linarith
 
-/-! ### Elementary bounds for a unitary weight -/
-
-/-- The norm coefficient of a unitary weight at `n` is bounded by the number of nonzero ideals of
-absolute norm `n`, since every value of the weight has modulus at most `1`. -/
-theorem norm_normCoeff_le_card_normFiber (χ : UnitaryIdealWeight K) (n : ℕ) :
-    ‖normCoeff K χ.1.toIdealArithmeticFunction n‖ ≤ (normFiber K n).card := by
-  rw [normCoeff_eq_sum_normFiber]
-  refine (norm_sum_le _ _).trans ?_
-  simpa using Finset.sum_le_card_nsmul _ _ 1 fun I _ ↦ UnitaryIdealWeight.norm_le_one χ _
-
-/-- The partial sums of the absolute values of the norm coefficients of a unitary weight are
-`O(n)`, by comparison with the trivial weight. -/
-theorem isBigO_sum_norm_normCoeff (χ : UnitaryIdealWeight K) :
-    (fun n : ℕ ↦ ∑ k ∈ Icc 1 n, ‖normCoeff K χ.1.toIdealArithmeticFunction k‖)
-      =O[atTop] fun n : ℕ ↦ (n : ℝ) ^ (1 : ℝ) := by
-  refine Asymptotics.IsBigO.trans (Asymptotics.isBigO_of_le _ fun n ↦ ?_)
-    (isBigO_sum_norm_normCoeff_one K)
-  rw [Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ ↦ norm_nonneg _),
-    Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ ↦ norm_nonneg _)]
-  refine Finset.sum_le_sum fun k _ ↦ ?_
-  rw [norm_normCoeff_one]
-  exact norm_normCoeff_le_card_normFiber χ k
-
-/-- The partial sums of the norm coefficients of a unitary weight are `O(n)`; equivalently, by
-`TauCeti.idealSummatory_natCast_eq_sum_Icc_normCoeff`, so are its ideal partial sums. This is the
-unconditional bound that `TauCeti.HasCancellation` improves. -/
-theorem isBigO_sum_Icc_normCoeff (χ : UnitaryIdealWeight K) :
-    (fun n : ℕ ↦ ∑ k ∈ Icc 1 n, normCoeff K χ.1.toIdealArithmeticFunction k)
-      =O[atTop] fun n : ℕ ↦ (n : ℝ) ^ (1 : ℝ) :=
-  (Asymptotics.isBigO_of_le _ fun n ↦ by
-    simpa [Real.norm_of_nonneg (Finset.sum_nonneg fun _ (_ : _ ∈ Icc 1 n) ↦ norm_nonneg _)] using
-      norm_sum_le (Icc 1 n) fun k ↦ normCoeff K χ.1.toIdealArithmeticFunction k).trans
-    (isBigO_sum_norm_normCoeff χ)
-
-/-- The Dirichlet series of the norm coefficients of a unitary weight converges absolutely on
-`Re s > 1`. -/
-theorem LSeriesSummable_normCoeff_of_one_lt_re (χ : UnitaryIdealWeight K) {s : ℂ}
-    (hs : 1 < s.re) : LSeriesSummable (normCoeff K χ.1.toIdealArithmeticFunction) s :=
-  LSeriesSummable_of_sum_norm_bigO (isBigO_sum_norm_normCoeff χ) zero_le_one hs
-
 /-! ### The continued L-function of a unitary weight -/
 
 /-- The **continued L-function of a unitary ideal weight**: the Mellin integral
@@ -275,7 +204,7 @@ theorem continuedLFunctionOfWeight_eq_LSeries (χ : UnitaryIdealWeight K) {s : �
       (isBigO_sum_Icc_normCoeff χ)]
   congr 1
   refine setIntegral_congr_fun measurableSet_Ioi fun t ht ↦ ?_
-  rw [idealSummatory_eq_sum_Icc_normCoeff _ (by linarith [Set.mem_Ioi.mp ht] : (0 : ℝ) ≤ t)]
+  rw [idealSummatory_eq_sum_Icc_normCoeff K _ (by linarith [Set.mem_Ioi.mp ht] : (0 : ℝ) ≤ t)]
 
 /-! ### Analyticity past the line `Re s = 1` -/
 
@@ -288,7 +217,7 @@ private theorem locallyIntegrableOn_idealSummatory (f : IdealArithmeticFunction 
   refine (h.mono_set Set.Ioi_subset_Ici_self).congr
     ((ae_restrict_iff' measurableSet_Ioi).2 (.of_forall fun t ht ↦ ?_))
   rw [one_mul]
-  exact (idealSummatory_eq_sum_Icc_normCoeff f (le_of_lt ht)).symm
+  exact (idealSummatory_eq_sum_Icc_normCoeff K f (le_of_lt ht)).symm
 
 /-- Ideal partial sums vanish near `0`, so they are `O` of every real power there. -/
 private theorem isBigO_idealSummatory_nhdsGT_zero (f : IdealArithmeticFunction K) (c : ℝ) :
@@ -311,13 +240,16 @@ private theorem integral_Ioi_one_eq_mellin (f : IdealArithmeticFunction K) (s : 
       (fun t ht ↦ Set.mem_Ioi.mpr (lt_of_lt_of_le zero_lt_one (Set.mem_Ici.mp ht))) ?_
     rintro t ⟨-, ht⟩
     rw [idealSummatory_eq_zero_of_lt_one K f (by simpa using ht), smul_zero]
+  -- Mathlib writes the Mellin exponent as `(-s) - 1`, the integrand above as `-(s + 1)`.
+  have hexp : (-s) - 1 = -(s + 1) := by ring
   rw [mellin, h, integral_Ici_eq_integral_Ioi]
   refine setIntegral_congr_fun measurableSet_Ioi fun t _ ↦ ?_
-  rw [smul_eq_mul, mul_comm ((t : ℂ) ^ ((-s) - 1)), show (-s) - 1 = -(s + 1) from by ring]
+  rw [smul_eq_mul, mul_comm ((t : ℂ) ^ ((-s) - 1)), hexp]
 
-/-- **The continued L-function is analytic past `Re s = 1`.** Cancellation at rate
-`1 - 1 / [K : ℚ]` makes the defining Mellin integral converge, and depend analytically on `s`,
-throughout the half-plane `Re s > 1 - 1 / [K : ℚ]`. -/
+/-- **The continued L-function is complex differentiable past `Re s = 1`.** Cancellation at rate
+`1 - 1 / [K : ℚ]` makes the defining Mellin integral converge, and depend differentiably on `s`,
+at every point of the half-plane `Re s > 1 - 1 / [K : ℚ]`. The half-plane form, and with it
+analyticity on a neighbourhood, is `TauCeti.analyticOnNhd_continuedLFunctionOfWeight`. -/
 theorem differentiableAt_continuedLFunctionOfWeight {χ : UnitaryIdealWeight K}
     (hχ : HasCancellation χ) {s : ℂ} (hs : cancellationExponent K < s.re) :
     DifferentiableAt ℂ (continuedLFunctionOfWeight χ) s := by

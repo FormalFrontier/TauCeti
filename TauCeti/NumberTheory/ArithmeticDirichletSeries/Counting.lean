@@ -40,6 +40,14 @@ A prime-power ideal is `𝔭 ^ k` for a unique height-one prime `𝔭` and a uni
 `TauCeti.idealPrimePower_eq_of_base_eq_of_exponent_eq` records that it determines the ideal.  The
 exponent is `1` exactly on the primes themselves, which is `TauCeti.primePowerExponent_eq_one_iff`.
 
+The absolute-norm fibres of `TauCeti.normFiber` partition the ideals of bounded norm, so an ideal
+summatory function regroups by absolute norm:
+`TauCeti.idealSummatory_natCast_eq_sum_Icc_sum_normFiber` for a general weight, and
+`TauCeti.idealSummatory_natCast_eq_sum_Icc_normCoeff` together with its real-cutoff form
+`TauCeti.idealSummatory_eq_sum_Icc_normCoeff` for the norm coefficients of an ideal arithmetic
+function. This is the bridge between the ideal and the natural-number indexings, used by Layer 5
+for the ideal counts and by Layer 6 for Abel summation.
+
 For `0 ≤ x`, a real cutoff and its floor select the same indices, so
 `TauCeti.normLE_eq_normLE_natFloor` and `TauCeti.summatory_eq_summatory_natFloor` convert between
 the real and natural conventions. The small-cutoff cases are degenerate for a reason worth
@@ -330,6 +338,48 @@ theorem idealSummatory_eq_zero_of_lt_one {M : Type*} [AddCommMonoid M]
 theorem idealSummatory_one {M : Type*} [AddCommMonoid M] (w : (Ideal (𝓞 K))⁰ → M) :
     idealSummatory K w 1 = w 1 := by
   rw [idealSummatory_apply, idealsLE_one, Finset.sum_singleton]
+
+/-- Conjugating a weight conjugates its ideal summatory function. -/
+theorem idealSummatory_star {M : Type*} [AddCommMonoid M] [StarAddMonoid M]
+    (w : (Ideal (𝓞 K))⁰ → M) (x : ℝ) :
+    idealSummatory K (fun I ↦ star (w I)) x = star (idealSummatory K w x) := by
+  rw [idealSummatory_apply, idealSummatory_apply, star_sum]
+
+/-! ### Regrouping an ideal summatory function by absolute norm -/
+
+/-- **The absolute-norm fibres partition the ideals of bounded norm.** Summing a weight over the
+nonzero integral ideals of absolute norm at most `n` is the same as summing it over the fibres
+`TauCeti.normFiber K k` for `1 ≤ k ≤ n`, since a nonzero ideal has absolute norm at least `1`. -/
+theorem idealSummatory_natCast_eq_sum_Icc_sum_normFiber {M : Type*} [AddCommMonoid M]
+    (w : (Ideal (𝓞 K))⁰ → M) (n : ℕ) :
+    idealSummatory K w (n : ℝ) = ∑ k ∈ Finset.Icc 1 n, ∑ I ∈ normFiber K k, w I := by
+  classical
+  have hmaps : ∀ I ∈ idealsLE K (n : ℝ), Ideal.absNorm (I : Ideal (𝓞 K)) ∈ Finset.Icc 1 n := by
+    intro I hI
+    rw [mem_normLE] at hI
+    exact Finset.mem_Icc.mpr ⟨Ideal.absNorm_pos_of_nonZeroDivisors I, by exact_mod_cast hI⟩
+  rw [idealSummatory_apply, ← Finset.sum_fiberwise_of_maps_to hmaps w]
+  refine Finset.sum_congr rfl fun k hk ↦ Finset.sum_congr (Finset.ext fun I ↦ ?_) fun _ _ ↦ rfl
+  rw [Finset.mem_filter, mem_normFiber, mem_normLE]
+  refine ⟨fun h ↦ h.2, fun h ↦ ⟨?_, h⟩⟩
+  rw [h]
+  exact_mod_cast (Finset.mem_Icc.mp hk).2
+
+/-- **An ideal partial sum is a partial sum of norm coefficients.** Summing an ideal arithmetic
+function over the nonzero ideals of absolute norm at most `n` is the same as summing its norm
+coefficients over `1 ≤ k ≤ n`, since the absolute-norm fibres partition those ideals. -/
+theorem idealSummatory_natCast_eq_sum_Icc_normCoeff (f : IdealArithmeticFunction K) (n : ℕ) :
+    idealSummatory K f (n : ℝ) = ∑ k ∈ Finset.Icc 1 n, normCoeff K f k := by
+  rw [idealSummatory_natCast_eq_sum_Icc_sum_normFiber]
+  exact Finset.sum_congr rfl fun k _ ↦ (normCoeff_eq_sum_normFiber K f k).symm
+
+/-- The real-cutoff form of `TauCeti.idealSummatory_natCast_eq_sum_Icc_normCoeff`: the ideal
+partial sum at a nonnegative cutoff `x` is the partial sum of the norm coefficients up to `⌊x⌋₊`.
+-/
+theorem idealSummatory_eq_sum_Icc_normCoeff (f : IdealArithmeticFunction K) {x : ℝ} (hx : 0 ≤ x) :
+    idealSummatory K f x = ∑ k ∈ Finset.Icc 1 ⌊x⌋₊, normCoeff K f k :=
+  (summatory_eq_summatory_natFloor _ f hx).trans
+    (idealSummatory_natCast_eq_sum_Icc_normCoeff K f ⌊x⌋₊)
 
 /-! ### The weighted prime counts -/
 
