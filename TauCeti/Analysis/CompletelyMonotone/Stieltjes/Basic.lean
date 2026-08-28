@@ -142,7 +142,7 @@ lemma smul (h : RepresentsStieltjes μ a b f) {r : ℝ} (hr : 0 ≤ r) :
     RepresentsStieltjes ((ENNReal.ofReal r) • μ) (r.toNNReal * a) (r.toNNReal * b) (r • f) := by
   refine ⟨by simp [h.measure_singleton_zero],
     h.integrable_weight.smul_measure ENNReal.ofReal_ne_top, fun t ht => ?_⟩
-  change r * f t = _
+  rw [Pi.smul_apply, smul_eq_mul]
   rw [h.eq_div_add_add_integral_inv_add ht, integral_smul_measure]
   simp only [ENNReal.toReal_ofReal hr, smul_eq_mul]
   push_cast
