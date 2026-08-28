@@ -711,8 +711,8 @@ include hequiv in
 omit [ContinuousMul G] [ContinuousSMul G M] [ContinuousSMul G N] [TopologicalSpace P]
   [IsTopologicalAddGroup P] [ContinuousSMul G P] in
 /-- **The homotopy behind graded commutativity in bidegree `(1,1)`.** The two cochains
-`a ⌣_μ b` and `b ⌣_{μᵒᵖ} a` are *not* equal; their sum is the coboundary of the `1`-cochain
-`g ↦ -μ (a g) (b g)`. -/
+`a ⌣_μ b` and `b ⌣_{μᵒᵖ} a` need not be equal in general; their sum is the coboundary of the
+`1`-cochain `g ↦ -μ (a g) (b g)`. -/
 theorem cup11_add_cup11_flip_eq_d1 {a : G → M} (ha : a ∈ Z1 G M) {b : G → N} (hb : b ∈ Z1 G N) :
     ((fun q : G × G => μ (a q.1) (q.1 • b q.2)) +
         fun q : G × G => μ.flip (b q.1) (q.1 • a q.2)) =
