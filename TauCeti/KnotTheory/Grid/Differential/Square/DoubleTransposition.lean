@@ -176,7 +176,8 @@ vanishes.
 Every two-step decomposition of such a target has disjoint pairs of side columns, so reordering
 the two rectangle moves is a weight-preserving involution on the counted decompositions with no
 fixed point. -/
-theorem sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero
+theorem
+    sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero_of_disjoint
     (x : GridState n) {a b c d : Fin n} (hab : a ≠ b) (hcd : c ≠ d)
     (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d}) :
     ∑ y : GridState n, G.unblockedCoefficient R x y *
@@ -203,7 +204,7 @@ theorem unblockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero_of
       ((x.swapColumns a b).swapColumns c d) = 0 := by
   rw [G.unblockedDifferential_sq_single_apply R x]
   exact
-    G.sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero
+    G.sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero_of_disjoint
       R x hab hcd hdisjoint
 
 end GridDiagram
