@@ -36,6 +36,10 @@ eventwise rather than packaged in a new total-variation definition.
   finite population;
 * `TauCeti.Probability.sampleWithReplacement`: the mixture of finite powers of those empirical
   measures;
+* `TauCeti.Probability.sampleWithReplacement_eq_bind_pi_empiricalMeasureOfFintype`: its
+  product-mixture characterization;
+* `TauCeti.Probability.ExchangeableAt.finiteDeFinetti`: the paired eventwise finite de Finetti
+  bound;
 * `TauCeti.Probability.ExchangeableAt.prefixLaw_le_sampleWithReplacement_add` and
   `TauCeti.Probability.ExchangeableAt.sampleWithReplacement_le_prefixLaw_add`: the two sides of
   the finite de Finetti bound.
@@ -93,6 +97,14 @@ For a population law `ρ`, this is the `ρ`-mixture of the `ι`-fold product of 
 empirical probability measure. -/
 def sampleWithReplacement (ρ : Measure (κ → α)) : Measure (ι → α) :=
   ρ.bind fun x => (ProbabilityMeasure.pi fun _ : ι => empiricalMeasureOfFintype x).toMeasure
+
+/-- Sampling with replacement is the mixture of the finite product measures of the populations'
+empirical distributions. -/
+@[simp]
+theorem sampleWithReplacement_eq_bind_pi_empiricalMeasureOfFintype (ρ : Measure (κ → α)) :
+    sampleWithReplacement ρ =
+      ρ.bind fun x => (ProbabilityMeasure.pi fun _ : ι => empiricalMeasureOfFintype x).toMeasure :=
+  (rfl)
 
 /-- The product-measure mixture defining sampling with replacement is a measurable kernel. -/
 private theorem aemeasurable_pi_empiricalMeasureOfFintype (ρ : Measure (κ → α)) :
@@ -247,6 +259,21 @@ theorem ExchangeableAt.sampleWithReplacement_le_prefixLaw_add
   rw [← h.sampleWithoutReplacement_eq_prefixLaw hmn hX]
   simpa using sampleWithReplacement_le_sampleWithoutReplacement_add
     (ρ := prefixLaw μ X n) hA
+
+/-- **Finite de Finetti theorem.** If the first `n` coordinates of a process are exchangeable and
+`m ≤ n`, then its `m`-prefix law and the empirical-product mixture of its `n`-prefix law differ by
+at most `choose m 2 / n` on every measurable event, in both directions. -/
+theorem ExchangeableAt.finiteDeFinetti
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+    {X : ℕ → Ω → α} {m n : ℕ} [NeZero n] (h : ExchangeableAt μ X n) (hmn : m ≤ n)
+    (hX : ∀ i : Fin n, AEMeasurable (X i.val) μ) {A : Set (Fin m → α)}
+    (hA : MeasurableSet A) :
+    prefixLaw μ X m A ≤ sampleWithReplacement (ι := Fin m) (prefixLaw μ X n) A +
+        m.choose 2 / n ∧
+      sampleWithReplacement (ι := Fin m) (prefixLaw μ X n) A ≤ prefixLaw μ X m A +
+        m.choose 2 / n :=
+  ⟨h.prefixLaw_le_sampleWithReplacement_add hmn hX hA,
+    h.sampleWithReplacement_le_prefixLaw_add hmn hX hA⟩
 
 end FiniteExchangeability
 
