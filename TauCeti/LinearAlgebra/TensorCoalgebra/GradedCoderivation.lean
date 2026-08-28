@@ -56,8 +56,8 @@ by `isHomogeneous_gradedCoderiv` and `IsGradedCoderivation.isHomogeneous`.
   coderivation with letter component `F`.
 * `TauCeti.ReducedTensorWords.IsGradedCoderivation.eq_of_letter_comp_eq`: a graded coderivation is
   determined by its letter component.
-* `TauCeti.ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self`: the square of an odd
-  graded coderivation is an ordinary coderivation.
+* `TauCeti.ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self`: a graded coderivation
+  anticommuting with its letterwise Koszul twist has an ordinary coderivation as its square.
 * `TauCeti.ReducedTensorWords.isHomogeneous_gradedCoderiv`: if `F` raises degrees by `r` then so
   does `gradedCoderiv G F q`, independently of the twist parameter.
 * `TauCeti.ReducedTensorWords.gradedCoderivEquivTaylor`: the `q`-twisted coderivations form a
@@ -700,6 +700,14 @@ theorem ReducedTensorWords.letter_comp_gradedCoderiv (G : InternalGrading R M)
     · exact letter_splice_self R (twistedTuple G q x 0 0)
         (F (subword R x 0 n)) hn (by omega)
 
+/-- The arity-`n` component of a graded Taylor expansion is the restriction of its defining
+Taylor map to words of length `n`. -/
+@[simp]
+theorem ReducedTensorWords.taylorComponent_gradedCoderiv (G : InternalGrading R M)
+    (F : ReducedTensorWords R M →ₗ[R] M) (q : ℤ) (n : {n : ℕ // 0 < n}) :
+    taylorComponent (gradedCoderiv G F q) n = F ∘ₗ of R M n := by
+  rw [taylorComponent_def, letter_comp_gradedCoderiv]
+
 /-- A graded coderivation whose letter component raises degrees by `r` raises degrees by `r`:
 being determined by its letter component, it inherits homogeneity from it. The twist parameter
 `q` of the co-Leibniz identity is independent of this shift. -/
@@ -714,7 +722,7 @@ theorem ReducedTensorWords.IsGradedCoderivation.isHomogeneous {G : InternalGradi
 
 end Letter
 
-/-! ### Squares of odd graded coderivations -/
+/-! ### Squares of anticommuting graded coderivations -/
 
 /-- Applying the same Koszul twist twice to every letter of a tensor word is the identity. -/
 @[simp]
@@ -725,9 +733,10 @@ theorem ReducedTensorWords.map_koszulTwist_comp_self (G : InternalGrading R M) (
   rw [← ReducedTensorWords.map_comp, InternalGrading.koszulTwist_comp_self,
     ReducedTensorWords.map_id]
 
-/-- The square of an odd graded coderivation is an ordinary coderivation.  Here oddness is stated
-intrinsically as anticommutation with the letterwise Koszul twist; this is exactly the relation
-that cancels the two mixed terms after applying the graded co-Leibniz rule twice. -/
+/-- The square of a graded coderivation anticommuting with the letterwise Koszul twist is an
+ordinary coderivation.  The anticommutation relation expresses oddness when `q` is odd and cancels
+the two mixed terms after applying the graded co-Leibniz rule twice.  For even `q`, the twist is the
+identity and the hypothesis instead reduces to `b + b = 0`. -/
 theorem ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self
     {G : InternalGrading R M} {q : ℤ}
     {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
@@ -796,6 +805,29 @@ theorem ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self
     _ = LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w +
         LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
       rw [hcross, add_zero]
+
+/-- Under anticommutation with the letterwise Koszul twist, a graded coderivation squares to zero
+exactly when all Taylor arity component maps of its square vanish. -/
+theorem ReducedTensorWords.IsGradedCoderivation.comp_self_eq_zero_iff_taylorComponent_eq_zero
+    {G : InternalGrading R M} {q : ℤ}
+    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
+    (hb : IsGradedCoderivation G q b)
+    (hanti : b ∘ₗ ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) +
+        ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) ∘ₗ b = 0) :
+    b ∘ₗ b = 0 ↔ ∀ n, taylorComponent (b ∘ₗ b) n = 0 :=
+  (hb.isCoderivation_comp_self hanti).eq_zero_iff_taylorComponent_eq_zero
+
+/-- Under anticommutation with the letterwise Koszul twist, a graded coderivation squares to zero
+exactly when all Taylor arity components of its square vanish on pure tensors. -/
+theorem ReducedTensorWords.IsGradedCoderivation.comp_self_eq_zero_iff_taylorComponent_tprod_eq_zero
+    {G : InternalGrading R M} {q : ℤ}
+    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
+    (hb : IsGradedCoderivation G q b)
+    (hanti : b ∘ₗ ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) +
+        ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) ∘ₗ b = 0) :
+    b ∘ₗ b = 0 ↔ ∀ n (x : Fin n.1 → M),
+      taylorComponent (b ∘ₗ b) n (PiTensorProduct.tprod R x) = 0 :=
+  (hb.isCoderivation_comp_self hanti).eq_zero_iff_taylorComponent_tprod_eq_zero
 
 /-! ### Twist parameter zero -/
 
