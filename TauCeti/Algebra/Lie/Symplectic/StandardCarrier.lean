@@ -236,9 +236,11 @@ coordinate weight. -/
 @[simp] theorem rep_cartanGenerator_apply (i : Fin (n + 1))
     (v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ)
     (a : Fin (n + 1) ⊕ Fin (n + 1)) :
-    rep n (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator n i)) v a =
+    rep n ((_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ _)
+      (_root_.TensorAlgebra.ι ℚ (cartanGenerator n i))) v a =
       (weight n a i : ℚ) * v a := by
-  rw [rep_ι_apply, val_cartanGenerator, cartanMatrix, Matrix.mulVec_diagonal]
+  rw [← _root_.UniversalEnvelopingAlgebra.ι_apply, rep_ι_apply, val_cartanGenerator,
+    cartanMatrix, Matrix.mulVec_diagonal]
 
 /-- A coordinate vector on which a numbered root generator is nonzero with coefficient one. -/
 def rootSource : Fin (n + 1) ⊕ Fin (n + 1) → Fin (n + 1) ⊕ Fin (n + 1)
