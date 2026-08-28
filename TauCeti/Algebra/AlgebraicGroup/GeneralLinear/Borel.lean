@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.Basic
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Positive
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 import TauCeti.CategoryTheory.Comma.Over
 
@@ -312,24 +312,5 @@ theorem pointsMulEquiv_diagonalTorusCoordinateMap
   exact hmap
 
 end DiagonalTorus
-
-section RootSubgroup
-
-variable (A : Type w) [CommRing A] [Algebra R A]
-
-/-- The positive root subgroup morphism lands in the expected upper-triangular matrix on
-algebra-valued points. -/
-theorem pointsMulEquiv_rootSubgroupCoordinateMap
-    (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
-    ((UpperTriangular.pointsMulEquiv (R := R) (n := 2) (A := A)
-        (toConv (f.ofConv.comp
-          (UpperTriangular.rootSubgroupCoordinateMap R
-            (by decide : (0 : Fin 2) < 1)).hom)) : GL2Borel A) : GL (Fin 2) A) =
-      GeneralLinear.pointsMulEquiv 2
-        (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) f) := by
-  exact UpperTriangular.pointsMulEquiv_rootSubgroupCoordinateMap R
-    (by decide : (0 : Fin 2) < 1) f
-
-end RootSubgroup
 
 end TauCeti.GeneralLinear.Borel
