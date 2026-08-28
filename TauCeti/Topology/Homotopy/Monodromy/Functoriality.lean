@@ -198,6 +198,7 @@ section BaseHomeomorph
 
 variable {Y : Type v} [TopologicalSpace Y]
 
+omit [TopologicalSpace E] in
 /-- The fibre of a covering map after composing its projection with a base homeomorphism is the
 original fibre over the inverse image of the basepoint. -/
 def homeomorphCompFiberEquiv (h : X ≃ₜ Y) (y : Y) :
@@ -209,8 +210,9 @@ def homeomorphCompFiberEquiv (h : X ≃ₜ Y) (y : Y) :
     simpa only [Set.mem_preimage, Set.mem_singleton_iff, Function.comp_apply] using e.2⟩
   invFun e := ⟨e, by
     simp only [Set.mem_preimage, Set.mem_singleton_iff, Function.comp_apply]
-    rw [show p e = h.symm y by
-      simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e.2, h.apply_symm_apply]⟩
+    have he : p e = h.symm y := by
+      simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e.2
+    rw [he, h.apply_symm_apply]⟩
   left_inv _ := Subtype.ext rfl
   right_inv _ := Subtype.ext rfl
 
@@ -255,8 +257,9 @@ theorem _root_.IsCoveringMap.homeomorphCompFiberEquiv_monodromy
     · funext t
       -- Expose the composite projection so the lift equation for `Γ` can be applied pointwise.
       change h (p (Γ t)) = γ t
-      rw [show p (Γ t) = h.symm (γ t) from congrFun (hp.liftPath_lifts
-        (γ.map h.symm.continuous) e _) t, h.apply_symm_apply]
+      have hΓt : p (Γ t) = h.symm (γ t) :=
+        congrFun (hp.liftPath_lifts (γ.map h.symm.continuous) e _) t
+      rw [hΓt, h.apply_symm_apply]
     · exact hp.liftPath_zero (γ.map h.symm.continuous) e _
   exact congrArg (fun q : C(I, E) ↦ q 1) hΓ.symm
 
