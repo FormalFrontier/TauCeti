@@ -33,9 +33,9 @@ Two elementary inputs carry the whole argument.
 
 Together these compare any finite sum over the degree-above-one primes with `[K : ℚ]` times a sum
 over the rational primes with the exponent doubled, which is
-`TauCeti.sum_rpow_le_finrank_mul_tsum` below.  Counting gives the `O(√x)` bound, and summing
-`m ^ (-2s)` gives convergence for every `s > 1/2` together with a bound on the partial Dirichlet
-series that is *uniform* on `s ≥ 1`.
+`TauCeti.sum_absNorm_rpow_higherDegreePrimes_le_finrank_mul_tsum` below.  Counting gives the
+`O(√x)` bound, and summing `m ^ (-2s)` gives convergence for every `s > 1/2` together with a
+bound on the partial Dirichlet series that is *uniform* on `s ≥ 1`.
 
 ## Main results
 
@@ -187,7 +187,7 @@ private theorem tsum_nat_rpow_neg_le_two {t : ℝ} (ht : 2 ≤ t) :
 
 /-- The key comparison: a finite sum of `N(𝔭) ^ (-s)` over primes of residue degree above one is
 bounded by `[K : ℚ]` times the full sum of `m ^ (-2s)` over the natural numbers. -/
-theorem sum_rpow_le_finrank_mul_tsum {s : ℝ} (hs : 1 / 2 < s)
+theorem sum_absNorm_rpow_higherDegreePrimes_le_finrank_mul_tsum {s : ℝ} (hs : 1 / 2 < s)
     {F : Finset (HeightOneSpectrum (𝓞 K))} (hF : ∀ 𝔭 ∈ F, 𝔭 ∈ higherDegreePrimes K) :
     ∑ 𝔭 ∈ F, (Ideal.absNorm 𝔭.asIdeal : ℝ) ^ (-s) ≤
       Module.finrank ℚ K * ∑' m : ℕ, (m : ℝ) ^ (-(2 * s)) := by
@@ -224,7 +224,7 @@ theorem summable_absNorm_rpow_higherDegreePrimes {s : ℝ} (hs : 1 / 2 < s) :
   classical
   refine summable_of_sum_le (c := Module.finrank ℚ K * ∑' m : ℕ, (m : ℝ) ^ (-(2 * s)))
     (fun 𝔭 ↦ Real.rpow_nonneg (Nat.cast_nonneg _) _) fun u ↦ ?_
-  have := sum_rpow_le_finrank_mul_tsum (K := K) hs
+  have := sum_absNorm_rpow_higherDegreePrimes_le_finrank_mul_tsum (K := K) hs
     (F := u.image Subtype.val) (fun 𝔭 h𝔭 ↦ by
       obtain ⟨𝔮, -, rfl⟩ := Finset.mem_image.mp h𝔭
       exact 𝔮.2)
@@ -239,7 +239,8 @@ theorem primeIdealZetaSum_higherDegreePrimes_le {s : ℝ} (hs : 1 ≤ s) :
   classical
   rw [NumberField.Set.primeIdealZetaSum_def]
   refine Real.tsum_le_of_sum_le (fun 𝔭 ↦ Real.rpow_nonneg (Nat.cast_nonneg _) _) fun u ↦ ?_
-  have hsum := sum_rpow_le_finrank_mul_tsum (K := K) (s := s) (by linarith)
+  have hsum := sum_absNorm_rpow_higherDegreePrimes_le_finrank_mul_tsum
+    (K := K) (s := s) (by linarith)
     (F := u.image Subtype.val) (fun 𝔭 h𝔭 ↦ by
       obtain ⟨𝔮, -, rfl⟩ := Finset.mem_image.mp h𝔭
       exact 𝔮.2)
