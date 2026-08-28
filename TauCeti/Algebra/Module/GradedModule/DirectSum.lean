@@ -103,7 +103,13 @@ private def sigmaSwapPieceEquiv (G : ∀ i, InternalGrading R (M i)) (z : Σ _ :
   exact LinearEquiv.refl R _
 
 -- Evaluating the reindexing equivalence on a generator identifies this map with the identity
--- on the corresponding degree-and-summand component.
+-- on the corresponding degree-and-summand component.  An API-level rewrite
+-- (`DirectSum.coe_congrLinearEquiv` followed by `DirectSum.lmap_lof`) does not typecheck here:
+-- the domain family of `sigmaSwapPieceEquiv G z` is
+-- `fun z ↦ (G ((sigmaSwap ι).symm z).2).piece ((sigmaSwap ι).symm z).1`, which agrees with the
+-- `lof` family `fun z ↦ (G z.1).piece z.2` only up to the semireducible reindexing
+-- `(sigmaSwap ι).symm`, and rewrite-step unification does not unfold it.  The `change` below
+-- confines that definitional reduction to this private, single-purpose helper.
 private theorem sigmaSwapPieceEquiv_lof (G : ∀ i, InternalGrading R (M i)) (p : ℤ) (i : ι)
     (x : (G i).piece p) [DecidableEq ι] :
     DirectSum.congrLinearEquiv (fun z ↦ sigmaSwapPieceEquiv G z)
@@ -116,6 +122,12 @@ private theorem sigmaSwapPieceEquiv_lof (G : ∀ i, InternalGrading R (M i)) (p 
   rw [DirectSum.lmap_lof]
   rfl
 
+-- Mathlib defines `DirectSum.sigmaLcurryEquiv` as `DFinsupp.sigmaCurryLEquiv` and states no
+-- application lemma for it, so its action cannot be rewritten through public API.  It is
+-- nevertheless definitionally the additive currying map `DirectSum.sigmaCurry`, whose generator
+-- behaviour Mathlib does expose (`DirectSum.sigmaCurry_apply`, `DirectSum.sigmaCurry_of`).
+-- This private helper isolates that definitional identification, and a Mathlib refactor of
+-- either definition will surface exactly here.
 private theorem sigmaLcurryEquiv_apply {ι κ : Type*} {δ : ι → κ → Type*}
     [DecidableEq ι] [∀ i j, AddCommMonoid (δ i j)]
     [∀ i j, Module R (δ i j)] (x : ⨁ z : Σ _ : ι, κ, δ z.1 z.2) :

@@ -119,11 +119,18 @@ private theorem DirectSum.congrLinearEquiv_symm_apply {R ι : Type*} {N P : ι �
       DirectSum.lmap (fun i ↦ (e i).symm.toLinearMap) x := by
   rfl
 
+-- Mathlib defines `DirectSum.IsInternal A` as bijectivity of the canonical map
+-- `DirectSum.coeAddMonoidHom A`; for a family of submodules that canonical map is
+-- `DirectSum.coeLinearMap A` (the same function packaged as a `LinearMap`).  Mathlib states no
+-- iff lemma for this module-level form, so the equivalence below is a definitional unfolding,
+-- the same one Mathlib's own API relies on (e.g. `IsInternal.ofBijective_coeLinearMap_same`).
+-- The helper is private and single-purpose, so a Mathlib refactor of either definition will
+-- surface exactly here.
 private theorem DirectSum.isInternal_iff_bijective_coeLinearMap {R ι M : Type*}
     [Semiring R] [DecidableEq ι] [AddCommMonoid M] [Module R M]
     {A : ι → Submodule R M} :
-    DirectSum.IsInternal A ↔ Function.Bijective (DirectSum.coeLinearMap A) := by
-  rfl
+    DirectSum.IsInternal A ↔ Function.Bijective (DirectSum.coeLinearMap A) :=
+  Iff.rfl
 
 /-- The canonical inclusions of a family of submodules form an internal direct sum when they are
 identified with the summands of an equivalence. -/
