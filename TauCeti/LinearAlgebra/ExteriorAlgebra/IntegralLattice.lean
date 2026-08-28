@@ -102,7 +102,8 @@ section Finite
 
 variable [Finite ι]
 
-noncomputable local instance : Fintype ι := Fintype.ofFinite ι
+/-- The finite type structure on the index type used within this section. -/
+noncomputable local instance finiteIndexFintype : Fintype ι := Fintype.ofFinite ι
 
 noncomputable instance : Module.Finite ℤ (integralLattice b) :=
   Module.Finite.of_basis (integralLatticeBasis b)
