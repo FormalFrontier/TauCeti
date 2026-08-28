@@ -554,10 +554,6 @@ noncomputable def latticeBasis :
 def basisWeight (a : Fin ((n + 1) + (n + 1))) : Fin (n + 1) → ℤ :=
   weight n (finSumFinEquiv.symm a)
 
-/-- The enumerated coordinate weight is the weight at the corresponding sum index. -/
-@[simp] theorem basisWeight_def (a : Fin ((n + 1) + (n + 1))) :
-    basisWeight n a = weight n (finSumFinEquiv.symm a) := (rfl)
-
 /-- A numbered root generator preserves the standard lattice. -/
 theorem rep_rootGenerator_mem_lattice (k : Fin (n + 1) ⊕ Fin (n + 1))
     {v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ} (hv : v ∈ lattice n) :
@@ -683,7 +679,7 @@ theorem span_range_basisWeight_eq_top : Submodule.span ℤ (Set.range (basisWeig
     · rintro _ ⟨a, rfl⟩
       exact ⟨finSumFinEquiv.symm a, rfl⟩
     · rintro _ ⟨a, rfl⟩
-      exact ⟨finSumFinEquiv a, by simp⟩
+      exact ⟨finSumFinEquiv a, by rw [basisWeight, Equiv.symm_apply_apply]⟩
   rw [hrange]
   exact span_range_weight_eq_top n
 
@@ -721,7 +717,7 @@ noncomputable def definingIdeal :
 
 /-- The full-weight Chevalley carrier of type `C_(n+1)`, obtained as the smallest closed subgroup
 of the standard general linear group containing its numbered root subgroups and weight torus. -/
-@[expose] noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
+noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme (rootGenerator n)
     (cartanGenerator n) (rep n) (lattice n).toAddSubgroup (kostantForm_apply_mem_lattice n)
     (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n)
@@ -741,22 +737,13 @@ noncomputable def carrierι :
     (cartanGenerator n) (rep n) (lattice n).toAddSubgroup (kostantForm_apply_mem_lattice n)
     (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n)
 
-/-- The ambient inclusion is the generic inclusion of the Kostant toral closure. -/
-theorem carrierι_def :
-    carrierι n =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator n)
-        (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) := by
-  rw [carrierι]
-
 /-- The type-`C_(n+1)` carrier is a closed subgroup scheme of its ambient general linear group. -/
 instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι n).hom.hom.left := by
-  change IsClosedImmersion
-    (TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator n)
-      (cartanGenerator n) (rep n) (lattice n).toAddSubgroup (kostantForm_apply_mem_lattice n)
-      (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n)).hom.hom.left
-  infer_instance
+  rw [carrierι]
+  exact TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantToralGroupSchemeι
+    (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
+    (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+    (latticeBasis n) (basisWeight n)
 
 /-- A numbered root subgroup of the type `C_(n+1)` carrier. -/
 noncomputable def rootSubgroup (k : Fin (n + 1) ⊕ Fin (n + 1)) :
@@ -765,30 +752,12 @@ noncomputable def rootSubgroup (k : Fin (n + 1) ⊕ Fin (n + 1)) :
     (cartanGenerator n) (rep n) (lattice n).toAddSubgroup (kostantForm_apply_mem_lattice n)
     (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) k
 
-/-- The generic construction underlying a numbered root subgroup of the type-`C` carrier. -/
-theorem rootSubgroup_def (k : Fin (n + 1) ⊕ Fin (n + 1)) :
-    rootSubgroup n k =
-      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral (rootGenerator n)
-        (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) k := by
-  rw [rootSubgroup]
-
 /-- The rank-`n+1` split weight torus in the type `C_(n+1)` carrier. -/
 noncomputable def weightTorus :
     SplitTorus.groupScheme ℤ (Fin (n + 1)) ⟶ groupScheme n :=
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator n)
     (cartanGenerator n) (rep n) (lattice n).toAddSubgroup (kostantForm_apply_mem_lattice n)
     (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n)
-
-/-- The generic construction underlying the split weight torus of the type-`C` carrier. -/
-theorem weightTorus_def :
-    weightTorus n =
-      TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator n)
-        (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) := by
-  rw [weightTorus]
 
 /-- Including a numbered root subgroup into the ambient general linear group recovers its
 represented Kostant root subgroup. -/
@@ -798,15 +767,7 @@ represented Kostant root subgroup. -/
         (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
         (kostantForm_apply_mem_lattice n) k (isNilpotent_rep_rootGenerator n k)
         (latticeBasis n) := by
-  change
-    TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral (rootGenerator n)
-        (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) k ≫
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator n)
-        (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) = _
+  rw [rootSubgroup, carrierι]
   exact TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_comp_ι
     (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
     (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
@@ -817,15 +778,7 @@ the standard-module weights. -/
 @[simp] theorem weightTorus_comp_carrierι :
     weightTorus n ≫ carrierι n =
       TauCeti.GeneralLinear.weightTorus (R := ℤ) (basisWeight n) := by
-  change
-    TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator n)
-        (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) ≫
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator n)
-        (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) = _
+  rw [weightTorus, carrierι]
   exact TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_comp_ι
     (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
     (kostantForm_apply_mem_lattice n) (isNilpotent_rep_rootGenerator n)
@@ -845,7 +798,7 @@ theorem groupScheme_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
     (latticeBasis n) (basisWeight n) φ ψ hroot htorus
 
 /-- The matrix-valued points of the type `C_(n+1)` carrier. -/
-@[expose] noncomputable def points (A : Type) [CommRing A] :
+noncomputable def points (A : Type) [CommRing A] :
     Subgroup (_root_.Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator n)
     (cartanGenerator n) (rep n) (lattice n).toAddSubgroup (kostantForm_apply_mem_lattice n)
