@@ -180,8 +180,6 @@ private theorem peterssonOrthogonal_eq_orthogonal
 theorem peterssonOrthogonal_peterssonOrthogonal
     (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
     peterssonOrthogonal (peterssonOrthogonal V) = V := by
-  let _ : Module.Finite ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
-    Module.Finite.of_injective CuspForm.toModularFormₗ CuspForm.toModularFormₗ_injective
   rw [peterssonOrthogonal_eq_orthogonal, peterssonOrthogonal_eq_orthogonal,
     Submodule.orthogonal_orthogonal]
 
@@ -189,8 +187,6 @@ theorem peterssonOrthogonal_peterssonOrthogonal
 theorem sup_peterssonOrthogonal_eq_top
     (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
     V ⊔ peterssonOrthogonal V = ⊤ := by
-  let _ : Module.Finite ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
-    Module.Finite.of_injective CuspForm.toModularFormₗ CuspForm.toModularFormₗ_injective
   rw [peterssonOrthogonal_eq_orthogonal]
   exact Submodule.sup_orthogonal_of_hasOrthogonalProjection
 

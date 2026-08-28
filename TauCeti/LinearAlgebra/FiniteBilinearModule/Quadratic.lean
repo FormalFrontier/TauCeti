@@ -7,6 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.OrthogonalComplement
 public import Mathlib.Algebra.Group.Subgroup.Map
+public import Mathlib.LinearAlgebra.Isomorphisms
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 public import Mathlib.LinearAlgebra.QuadraticForm.Prod
 
@@ -25,8 +26,12 @@ the polar pairing is therefore `B(x, y)` modulo `ℤ`.
 
 ## Main definitions
 
+* `QuadraticMap.liftOfSurjective`: descent of a quadratic map along a surjection whose
+  kernel lies in the radical.
 * `TauCeti.FiniteQuadraticModule`: a finite abelian group with an `AddCircle (1 : ℚ)`-valued
   quadratic map.
+* `TauCeti.FiniteQuadraticModule.ofQuadraticMap`: the finite quadratic module presented by a
+  quadratic map on a finite abelian group.
 * `TauCeti.FiniteQuadraticModule.toFiniteBilinearModule`: the canonical polar bilinear module.
 * `TauCeti.FiniteQuadraticModule.Hom`: a quadratic-map-preserving additive homomorphism.
 * `TauCeti.FiniteQuadraticModule.Isometry`: a quadratic-map isometric equivalence.
@@ -51,9 +56,35 @@ This is the finite-quadratic-module part of Layer 3 of
 
 public section
 
-namespace TauCeti
-
 universe u v
+
+/-! ## Descent of a quadratic map along a surjection -/
+
+namespace QuadraticMap
+
+variable {R M N P : Type*} [CommRing R] [AddCommGroup M] [AddCommGroup N] [AddCommGroup P]
+  [Module R M] [Module R N] [Module R P]
+
+/-- Descend a quadratic map along a surjective linear map whose kernel lies in its radical.
+
+Mathlib's `QuadraticMap.lift` descends along the quotient by a submodule of the radical.  A
+quotient is usually presented instead by a surjection onto a concrete group — reduction modulo `m`
+onto `ZMod m`, say — and this is that formulation. -/
+noncomputable def liftOfSurjective (Q : QuadraticMap R M P) (f : M →ₗ[R] N)
+    (hf : Function.Surjective f) (h : LinearMap.ker f ≤ Q.radical) : QuadraticMap R N P :=
+  (Q.lift (LinearMap.ker f) h).comp (f.quotKerEquivOfSurjective hf).symm.toLinearMap
+
+/-- The descended quadratic map takes the original value on every representative. -/
+@[simp]
+theorem liftOfSurjective_apply (Q : QuadraticMap R M P) (f : M →ₗ[R] N)
+    (hf : Function.Surjective f) (h : LinearMap.ker f ≤ Q.radical) (x : M) :
+    liftOfSurjective Q f hf h (f x) = Q x := by
+  rw [liftOfSurjective, QuadraticMap.comp_apply, LinearEquiv.coe_coe,
+    LinearMap.quotKerEquivOfSurjective_symm_apply, QuadraticMap.lift_mk]
+
+end QuadraticMap
+
+namespace TauCeti
 
 /-- A finite abelian group equipped with a quadratic map to `ℚ/ℤ`.
 
@@ -71,6 +102,31 @@ namespace FiniteQuadraticModule
 /-- A finite quadratic module coerces to its underlying type. -/
 instance : CoeSort FiniteQuadraticModule (Type u) :=
   ⟨fun A ↦ A.toFiniteBilinearModule.carrier⟩
+
+/-- **The finite quadratic module presented by a quadratic map** on a finite abelian group.  The
+pairing is the polar form, which is what the structure demands anyway, so no data beyond the
+quadratic map is needed.
+
+Exposed for the same reason as `quotientOfLeQuadraticRadical`: so that its carrier reduces to the
+given group and maps into or out of it are definable. -/
+@[expose] def ofQuadraticMap {C : Type u} [AddCommGroup C] [Finite C]
+    (q : QuadraticMap ℤ C (AddCircle (1 : ℚ))) : FiniteQuadraticModule where
+  toFiniteBilinearModule := {
+    carrier := C
+    pairing := LinearMap.toAddMonoidHom'.comp q.polarBilin.toAddMonoidHom
+    pairing_comm := fun x y ↦ QuadraticMap.polar_comm q x y }
+  quadratic := q
+  polar_eq_pairing' := fun _ _ ↦ (rfl)
+
+@[simp]
+theorem ofQuadraticMap_quadratic {C : Type u} [AddCommGroup C] [Finite C]
+    (q : QuadraticMap ℤ C (AddCircle (1 : ℚ))) (x : C) :
+    (ofQuadraticMap q).quadratic x = q x := (rfl)
+
+@[simp]
+theorem ofQuadraticMap_pairing {C : Type u} [AddCommGroup C] [Finite C]
+    (q : QuadraticMap ℤ C (AddCircle (1 : ℚ))) (x y : C) :
+    (ofQuadraticMap q).toFiniteBilinearModule.pairing x y = QuadraticMap.polar q x y := (rfl)
 
 variable (A : FiniteQuadraticModule)
 

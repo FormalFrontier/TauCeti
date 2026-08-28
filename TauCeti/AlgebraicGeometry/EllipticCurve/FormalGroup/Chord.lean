@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.MvPowerSeries.Inverse
 public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.WExpansion
 public import TauCeti.RingTheory.MvPowerSeries.Equiv
+public import TauCeti.RingTheory.MvPowerSeries.Inverse
 
 /-!
 # The chord through two points of a Weierstrass curve near the origin
@@ -73,9 +74,12 @@ Adapted from Michael Stoll's `EllipticCurves` project
 series together with the swap-invariance block — declarations `slopeSeries`, `coeff_slopeSeries`,
 `slopeSeries_mul_sub`, `interceptSeries`, `interceptSeries_eq`, `constantCoeff_slopeSeries`,
 `constantCoeff_interceptSeries`, `thirdRootSeries`, `constantCoeff_thirdRootSeries`,
-`rename_swap_slopeSeries`, `rename_swap_interceptSeries`, `rename_swap_invOfUnit` and
-`rename_swap_thirdRootSeries`. The source's `wSeries` and `vSeries` are `formalW` and `formalU`,
-so neither is re-ported and everything here is stated over the existing `w`-expansion API. Where
+`rename_swap_slopeSeries`, `rename_swap_interceptSeries` and `rename_swap_thirdRootSeries`.
+The source's `rename_swap_invOfUnit` is not ported: it is the general
+`MvPowerSeries.ringHom_invOfUnit` specialised to `rename Sum.swap`, and is used as such.
+
+The source's `wSeries` and `vSeries` are `formalW` and `formalU`, so neither is re-ported and
+everything here is stated over the existing `w`-expansion API. Where
 the source writes `MvPowerSeries.rename (fun _ => i)`, this file uses the equal Mathlib map
 `PowerSeries.toMvPowerSeries i`.
 -/
@@ -230,6 +234,15 @@ theorem rename_swap_formalIntercept :
 
 /-! ### The third point of the chord -/
 
+/-- The denominator `1 + a₂λ + a₄λ² + a₆λ³` of Vieta's formula for the third root is `1` at the
+origin, hence a unit. This is what lets `formalThirdRoot` divide by it, and it is recorded here
+rather than reproved at each use. -/
+@[simp]
+theorem constantCoeff_formalThirdRootDenom :
+    constantCoeff (1 + C W.a₂ * formalSlope W + C W.a₄ * formalSlope W ^ 2 +
+      C W.a₆ * formalSlope W ^ 3) = 1 := by
+  simp
+
 /-- The parameter `z₃(z₁, z₂)` of the third point in which the chord through the points with
 parameters `z₁` and `z₂` meets the curve.
 
@@ -262,34 +275,63 @@ theorem constantCoeff_formalThirdRoot : constantCoeff (formalThirdRoot W) = 0 :=
   rw [formalThirdRoot_def]
   simp
 
-/-- Renaming commutes with `invOfUnit` on a series with constant coefficient `1`. -/
-private theorem rename_swap_invOfUnit {D : MvPowerSeries (Unit ⊕ Unit) R}
-    (hD : constantCoeff D = 1) :
-    rename Sum.swap (invOfUnit D 1) = invOfUnit (rename Sum.swap D) 1 := by
-  have h1 : rename Sum.swap D * rename Sum.swap (invOfUnit D 1) = 1 := by
-    rw [← map_mul, mul_invOfUnit D 1 (by rw [hD]; rfl), map_one]
-  have h2 : rename Sum.swap D * invOfUnit (rename Sum.swap D) 1 = 1 :=
-    mul_invOfUnit _ 1 (by rw [constantCoeff_rename, hD]; rfl)
-  calc rename Sum.swap (invOfUnit D 1)
-      = rename Sum.swap (invOfUnit D 1) *
-        (rename Sum.swap D * invOfUnit (rename Sum.swap D) 1) := by rw [h2, mul_one]
-    _ = (rename Sum.swap D * rename Sum.swap (invOfUnit D 1)) *
-        invOfUnit (rename Sum.swap D) 1 := by ring
-    _ = invOfUnit (rename Sum.swap D) 1 := by rw [h1, one_mul]
-
 /-- The third point of the chord is unchanged by exchanging the two parameters. This is what
 makes the formal group law commutative. -/
 theorem rename_swap_formalThirdRoot :
     rename Sum.swap (formalThirdRoot W) = formalThirdRoot W := by
-  have hD : constantCoeff (1 + C W.a₂ * formalSlope W + C W.a₄ * formalSlope W ^ 2 +
-      C W.a₆ * formalSlope W ^ 3) = 1 := by
-    simp
+  have hD := constantCoeff_formalThirdRootDenom W
+  have hD' : constantCoeff (rename Sum.swap (1 + C W.a₂ * formalSlope W +
+      C W.a₄ * formalSlope W ^ 2 + C W.a₆ * formalSlope W ^ 3)) = 1 := by
+    rw [constantCoeff_rename]; exact hD
   rw [formalThirdRoot_def]
   simp only [map_sub, map_neg, map_add, map_mul, map_pow, map_one, map_ofNat, rename_X,
-    rename_C, rename_swap_formalSlope, rename_swap_formalIntercept, rename_swap_invOfUnit hD]
+    rename_C, rename_swap_formalSlope, rename_swap_formalIntercept,
+    MvPowerSeries.ringHom_invOfUnit (u := 1) (v := 1) (rename Sum.swap) hD hD']
   simp only [show Sum.swap (Sum.inl () : Unit ⊕ Unit) = Sum.inr () from rfl,
     show Sum.swap (Sum.inr () : Unit ⊕ Unit) = Sum.inl () from rfl]
   ring
+
+/-! ### Base change
+
+The chord data is built from `formalW` and the coefficients by ring operations, so it commutes
+with base change; `WExpansion.lean` has the corresponding statement for the `w`-expansion itself.
+-/
+
+section BaseChange
+
+variable {S : Type*} [CommRing S] (φ : R →+* S)
+
+/-- The slope of the chord commutes with base change. -/
+@[simp]
+theorem map_formalSlope :
+    formalSlope (W.map φ) = MvPowerSeries.map φ (formalSlope W) := by
+  ext d
+  rw [MvPowerSeries.coeff_map, coeff_formalSlope, coeff_formalSlope, map_formalW W φ,
+    PowerSeries.coeff_map]
+
+/-- The intercept of the chord commutes with base change. -/
+@[simp]
+theorem map_formalIntercept :
+    formalIntercept (W.map φ) = MvPowerSeries.map φ (formalIntercept W) := by
+  rw [formalIntercept_def, formalIntercept_def, map_sub, map_mul, MvPowerSeries.map_X,
+    map_formalSlope W φ, map_formalW W φ, PowerSeries.map_toMvPowerSeries]
+
+/-- The parameter of the third point of the chord commutes with base change. -/
+@[simp]
+theorem map_formalThirdRoot :
+    formalThirdRoot (W.map φ) = MvPowerSeries.map φ (formalThirdRoot W) := by
+  have hinv := MvPowerSeries.ringHom_invOfUnit (σ := Unit ⊕ Unit) (τ := Unit ⊕ Unit)
+    (MvPowerSeries.map φ)
+    (D := 1 + C W.a₂ * formalSlope W + C W.a₄ * formalSlope W ^ 2 + C W.a₆ * formalSlope W ^ 3)
+    (u := 1) (v := 1) (constantCoeff_formalThirdRootDenom W)
+    (by rw [MvPowerSeries.constantCoeff_map, constantCoeff_formalThirdRootDenom]; simp)
+  rw [formalThirdRoot_def, formalThirdRoot_def]
+  simp only [map_sub, map_neg, map_add, map_one, map_mul, map_pow, map_ofNat,
+    MvPowerSeries.map_X, MvPowerSeries.map_C, map_formalSlope W φ, map_formalIntercept W φ,
+    hinv, WeierstrassCurve.map_a₁, WeierstrassCurve.map_a₂,
+    WeierstrassCurve.map_a₃, WeierstrassCurve.map_a₄, WeierstrassCurve.map_a₆]
+
+end BaseChange
 
 end CommRing
 

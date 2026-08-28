@@ -14,7 +14,7 @@ public import Mathlib.Probability.UniformOn
 # Empirical measures of sequences
 
 This file defines the empirical probability measure of a nonempty finite population
-(`empiricalPopulation`) and, as its `κ := Fin (n + 1)` case, of the first `n + 1` terms of a
+(`empiricalMeasureOfFintype`) and, as its `κ := Fin (n + 1)` case, of the first `n + 1` terms of a
 sequence (`empiricalMeasure`), together with their evaluation, integration, and measurability API.
 The successor indexing is what supplies the `Nonempty` instance for the sequence form, so it needs
 no side condition, and it matches the shape used in limit theorems.
@@ -22,8 +22,8 @@ no side condition, and it matches the shape used in limit theorems.
 There is one construction, not two: the sequence form is *defined* as the specialization, so the
 two can never drift apart.
 
-It also provides `empiricalPopulation` for a population indexed by an arbitrary nonempty finite
-type. This is the finite-population form used by quantitative sampling arguments.
+It also provides `empiricalMeasureOfFintype` for a population indexed by an arbitrary nonempty
+finite type. This is the finite-population form used by quantitative sampling arguments.
 
 The construction is a uniform finite sum of Dirac measures.  It is the process-level prerequisite
 for the empirical-measure form of de Finetti's theorem in the `Exchangeability` roadmap.
@@ -51,7 +51,7 @@ variable {κ : Type*} [Fintype κ] [Nonempty κ]
 
 Unlike `empiricalMeasure`, its population can have an arbitrary nonempty finite index type rather
 than a natural-number prefix. -/
-def empiricalPopulation (x : κ → α) : ProbabilityMeasure α :=
+def empiricalMeasureOfFintype (x : κ → α) : ProbabilityMeasure α :=
   ⟨∑ i, ((Fintype.card κ : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (x i), by
     refine ⟨?_⟩
     have hκ0 : ((Fintype.card κ : ℕ) : ℝ≥0∞) ≠ 0 := by simp
@@ -61,28 +61,28 @@ def empiricalPopulation (x : κ → α) : ProbabilityMeasure α :=
 /-- The measure underlying a finite empirical population is the normalized sum of its Dirac
 masses. -/
 @[simp]
-theorem empiricalPopulation_toMeasure (x : κ → α) :
-    (empiricalPopulation x : Measure α) =
+theorem empiricalMeasureOfFintype_toMeasure (x : κ → α) :
+    (empiricalMeasureOfFintype x : Measure α) =
       ∑ i, ((Fintype.card κ : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (x i) :=
   (rfl)
 
 /-- Evaluation of a finite empirical population on a measurable set is its empirical
 frequency. -/
-theorem empiricalPopulation_apply {x : κ → α} {s : Set α} (hs : MeasurableSet s) :
-    (empiricalPopulation x : Measure α) s = ((Fintype.card κ : ℕ) : ℝ≥0∞)⁻¹ *
+theorem empiricalMeasureOfFintype_apply {x : κ → α} {s : Set α} (hs : MeasurableSet s) :
+    (empiricalMeasureOfFintype x : Measure α) s = ((Fintype.card κ : ℕ) : ℝ≥0∞)⁻¹ *
       ∑ i, s.indicator (1 : α → ℝ≥0∞) (x i) := by
-  rw [empiricalPopulation_toMeasure]
+  rw [empiricalMeasureOfFintype_toMeasure]
   simp only [Measure.coe_finsetSum, Measure.coe_smul, Finset.sum_apply, Pi.smul_apply,
     smul_eq_mul, Measure.dirac_apply' _ hs, Finset.mul_sum]
 
 /-- On a discrete finite index type, a finite empirical population is the pushforward of the
 uniform law on its indices. -/
-theorem empiricalPopulation_eq_map_uniformOn [MeasurableSpace κ] [MeasurableSingletonClass κ]
+theorem empiricalMeasureOfFintype_eq_map_uniformOn [MeasurableSpace κ] [MeasurableSingletonClass κ]
     (x : κ → α) :
-    (empiricalPopulation x : Measure α) =
+    (empiricalMeasureOfFintype x : Measure α) =
       (ProbabilityTheory.uniformOn (Set.univ : Set κ)).map x := by
   ext s hs
-  rw [empiricalPopulation_apply hs, Measure.map_apply (measurable_of_countable x) hs,
+  rw [empiricalMeasureOfFintype_apply hs, Measure.map_apply (measurable_of_countable x) hs,
     ProbabilityTheory.uniformOn_univ]
   classical
   have hpreimage :
@@ -97,11 +97,12 @@ theorem empiricalPopulation_eq_map_uniformOn [MeasurableSpace κ] [MeasurableSin
   simp
 
 /-- Integrating against a finite empirical population is averaging over its values. -/
-theorem integral_empiricalPopulation [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+theorem integral_empiricalMeasureOfFintype [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [CompleteSpace E]
     {x : κ → α} {f : α → E} (hf : StronglyMeasurable f) :
-    ∫ y, f y ∂(empiricalPopulation x : Measure α) =
+    ∫ y, f y ∂(empiricalMeasureOfFintype x : Measure α) =
       ((Fintype.card κ : ℕ) : ℝ)⁻¹ • ∑ i, f (x i) := by
-  rw [empiricalPopulation_toMeasure, integral_finsetSum_measure]
+  rw [empiricalMeasureOfFintype_toMeasure, integral_finsetSum_measure]
   · simp_rw [integral_smul_measure, integral_dirac' f _ hf]
     rw [← Finset.smul_sum]
     congr 1
@@ -111,27 +112,27 @@ theorem integral_empiricalPopulation [NormedAddCommGroup E] [NormedSpace ℝ E] 
     exact (integrable_dirac' hf (by simp)).smul_measure (by simp)
 
 /-- Finite empirical distributions depend measurably on the population. -/
-theorem measurable_empiricalPopulation :
-    Measurable (empiricalPopulation : (κ → α) → ProbabilityMeasure α) := by
+theorem measurable_empiricalMeasureOfFintype :
+    Measurable (empiricalMeasureOfFintype : (κ → α) → ProbabilityMeasure α) := by
   apply Measurable.subtype_mk
   refine Measure.measurable_of_measurable_coe _ fun s hs => ?_
-  simp_rw [← empiricalPopulation_toMeasure, empiricalPopulation_apply hs]
+  simp_rw [← empiricalMeasureOfFintype_toMeasure, empiricalMeasureOfFintype_apply hs]
   fun_prop
 
 end FinitePopulation
 
 /-- The empirical probability measure of the first `n + 1` terms of a sequence.
 
-This is the `κ := Fin (n + 1)` case of `empiricalPopulation`; the successor indexing is what
+This is the `κ := Fin (n + 1)` case of `empiricalMeasureOfFintype`; the successor indexing is what
 supplies the `Nonempty` instance, so no side condition is needed. -/
 def empiricalMeasure (x : ℕ → α) (n : ℕ) : ProbabilityMeasure α :=
-  empiricalPopulation (fun i : Fin (n + 1) => x i)
+  empiricalMeasureOfFintype (fun i : Fin (n + 1) => x i)
 
 /-- The measure underlying an empirical measure is the uniform finite sum of Dirac measures. -/
 @[simp]
 theorem empiricalMeasure_toMeasure (x : ℕ → α) (n : ℕ) : (empiricalMeasure x n : Measure α) =
       ∑ i ∈ Finset.range (n + 1), (((n + 1 : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (x i)) := by
-  rw [empiricalMeasure, empiricalPopulation_toMeasure]
+  rw [empiricalMeasure, empiricalMeasureOfFintype_toMeasure]
   simp only [Fintype.card_fin]
   exact Fin.sum_univ_eq_sum_range
     (fun i => ((n + 1 : ℕ) : ℝ≥0∞)⁻¹ • Measure.dirac (x i)) (n + 1)

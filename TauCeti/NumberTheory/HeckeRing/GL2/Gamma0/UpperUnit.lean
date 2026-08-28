@@ -8,7 +8,7 @@ module
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Basic
 -- `intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0`: the diagonal entries of a `Γ₀(N)`
 -- matrix are mutually inverse mod `N`.
-public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Adjugate
 
 /-!

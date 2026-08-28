@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-public import TauCeti.RingTheory.AdjoinRoot
+public import TauCeti.RingTheory.AdjoinRoot.Basic
 
 /-!
 # The coordinate-ring map: surjectivity, and the generators of `XYIdeal`
@@ -18,8 +18,9 @@ ideal `XYIdeal` they span. This file fills the two gaps between those: `map` is 
 when `f` is, and `map` commutes with all three of those constructions.
 
 Neither gap is deep. Since `R[W]` is `AdjoinRoot W.polynomial`, the surjectivity argument lives at
-the `AdjoinRoot` level in `TauCeti/RingTheory/AdjoinRoot.lean` and the coordinate-ring statement
-follows in a line; the commutation statements unfold the classes and push `map_mk` through.
+the `AdjoinRoot` level in `TauCeti/RingTheory/AdjoinRoot/Basic.lean` and the coordinate-ring
+statement follows in a line; the commutation statements unfold the classes and push `map_mk`
+through.
 
 ## Main results
 
@@ -70,8 +71,8 @@ declaration `coordRingMap_bijective`. There they are bundled as bijectivity of o
 file that also constructs the function-field Frobenius. Here there is no inverse to lift along:
 the statement is for an arbitrary surjective `f : R →+* S`, matching the generality of Mathlib's
 `CoordinateRing.map_injective`, and preimages come from `Polynomial.map_surjective`. The argument
-itself lives one level down, in `TauCeti/RingTheory/AdjoinRoot.lean`; the equivalence the source
-bundled it for is left to the use site.
+itself lives one level down, in `TauCeti/RingTheory/AdjoinRoot/Basic.lean`; the equivalence the
+source bundled it for is left to the use site.
 
 `map_XClass`, `map_YClass` and `map_XYIdeal` are adapted from the same project's
 `HasseWeil/WeilPairing/DivisorGalois.lean` (declarations of the same names), where they are stated

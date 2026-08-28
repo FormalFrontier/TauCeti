@@ -35,6 +35,9 @@ property, before any projectivity hypothesis is available.
 
 * `TauCeti.ExactStructure.FiniteResolution E P X`: a finite `P`-resolution of `X`, as data.
 * `TauCeti.ExactStructure.FiniteResolution.length`: the number of conflations in the chain.
+* `TauCeti.ExactStructure.FiniteResolution.foldAlternating`: the alternating fold of a function on
+  the objects satisfying `P` along a resolution, the common shape of the Euler-type invariants of
+  a resolution.
 * `TauCeti.ExactStructure.FiniteResolution.syzygy` and
   `TauCeti.ExactStructure.FiniteResolution.truncate`: the `n`-th syzygy of a resolution, and the
   resolution of it obtained by discarding the first `n` conflations.
@@ -144,6 +147,25 @@ def length : ∀ {X : C}, FiniteResolution E P X → ℕ
 @[simp] theorem length_step {K Q X : C} (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X) (zero : i ≫ p = 0)
     (hp : E.Conflation (ShortComplex.mk i p zero)) (r : FiniteResolution E P K) :
     (step hQ i p zero hp r).length = r.length + 1 := (rfl)
+
+/-- The alternating fold of `f` along a resolution: `f Q₀ - f Q₁ + ⋯ + (-1)ⁿ f Kₙ`, where `f`
+assigns an element of an additive group to every object satisfying `P`.
+
+This is the common shape of the Euler-type invariants of a finite resolution;
+`TauCeti.ExactStructure.FiniteResolution.homEuler` is the alternating Hom dimension obtained
+from it. -/
+def foldAlternating {A : Type*} [AddGroup A] (f : ∀ Z : C, P Z → A) :
+    ∀ {X : C}, FiniteResolution E P X → A
+  | _, .base hX => f _ hX
+  | _, .step (Q := Q) hQ _ _ _ _ r => f Q hQ - foldAlternating f r
+
+@[simp] theorem foldAlternating_base {A : Type*} [AddGroup A] (f : ∀ Z : C, P Z → A) {X : C}
+    (hX : P X) : (base (E := E) hX).foldAlternating f = f X hX := (rfl)
+
+@[simp] theorem foldAlternating_step {A : Type*} [AddGroup A] (f : ∀ Z : C, P Z → A) {K Q X : C}
+    (hQ : P Q) (i : K ⟶ Q) (p : Q ⟶ X) (zero : i ≫ p = 0)
+    (hp : E.Conflation (ShortComplex.mk i p zero)) (r : FiniteResolution E P K) :
+    (step hQ i p zero hp r).foldAlternating f = f Q hQ - r.foldAlternating f := (rfl)
 
 /-- The `n`-th syzygy of a resolution of `X`: the object resolved by what is left after
 discarding the first `n` conflations. It is `X` itself for `n = 0`, and it stabilises at the
