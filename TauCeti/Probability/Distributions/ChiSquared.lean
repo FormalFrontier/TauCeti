@@ -156,10 +156,12 @@ theorem chiSquaredPDFReal_eq_gammaPDFReal (k x : ℝ) :
 theorem chiSquaredPDF_eq_gammaPDF (k x : ℝ) : chiSquaredPDF k x = gammaPDF (k / 2) (1 / 2) x := by
   rw [chiSquaredPDF, gammaPDF, chiSquaredPDFReal_eq_gammaPDFReal]
 
-/-- The chi-squared density is nonnegative for positive degrees of freedom. -/
-theorem chiSquaredPDFReal_nonneg (hk : 0 < k) (x : ℝ) : 0 ≤ chiSquaredPDFReal k x := by
-  rw [chiSquaredPDFReal_eq_gammaPDFReal]
-  exact gammaPDFReal_nonneg (by positivity) one_half_pos x
+/-- The chi-squared density is nonnegative for nonnegative degrees of freedom. -/
+theorem chiSquaredPDFReal_nonneg (hk : 0 ≤ k) (x : ℝ) : 0 ≤ chiSquaredPDFReal k x := by
+  rcases hk.eq_or_lt' with rfl | hk
+  · simp [chiSquaredPDFReal_eq_gammaPDFReal, gammaPDFReal]
+  · rw [chiSquaredPDFReal_eq_gammaPDFReal]
+    exact gammaPDFReal_nonneg (by positivity) one_half_pos x
 
 /-- The real-valued chi-squared density is measurable. -/
 @[fun_prop]
