@@ -42,19 +42,6 @@ noncomputable section
 
 variable (R : Type u) [CommRing R] {N : ℕ}
 
-private theorem diagonalTorusCoordinateMap_coordinate_eq_zero
-    (i j : Fin N) (hij : i ≠ j) :
-    (diagonalTorusCoordinateMap (R := R) (N := N)).hom.toAlgHom.toRingHom
-        (coordinateHopfAlgebraAlgEquiv R N
-          (coordinateRingMap R N (MvPolynomial.X (i, j)))) = 0 := by
-  -- The kernel API exposes the underlying `RingHom`, while the coordinate computation is stated
-  -- for the bundled Hopf morphism. This lemma performs that definitional wrapper conversion once.
-  change (diagonalTorusCoordinateMap (R := R) (N := N)).hom
-    (coordinateHopfAlgebraAlgEquiv R N
-      (coordinateRingMap R N (MvPolynomial.X (i, j)))) = 0
-  simpa only [hij, ↓reduceIte] using
-    diagonalTorusCoordinateMap_X (R := R) (N := N) i j
-
 private theorem weightLeviDefiningHopfIdeal_le_ker_diagonalTorusCoordinateMap
     (w : Fin N → ℤ) :
     (weightLeviDefiningHopfIdeal R w).toIdeal ≤
@@ -69,15 +56,25 @@ private theorem weightLeviDefiningHopfIdeal_le_ker_diagonalTorusCoordinateMap
     rw [mem_weightParabolicRelationSet_iff] at hx
     obtain ⟨i, j, hij, rfl⟩ := hx
     rw [SetLike.mem_coe, RingHom.mem_ker]
-    exact diagonalTorusCoordinateMap_coordinate_eq_zero R i j
-      (fun h ↦ hij.ne (congrArg w h))
+    -- The kernel API exposes the underlying `RingHom`; the coordinate API uses the bundled map.
+    change (diagonalTorusCoordinateMap (R := R) (N := N)).hom
+      (coordinateHopfAlgebraAlgEquiv R N
+        (coordinateRingMap R N (MvPolynomial.X (i, j)))) = 0
+    have hne : i ≠ j := fun h ↦ hij.ne (congrArg w h)
+    simpa only [hne, ↓reduceIte] using
+      diagonalTorusCoordinateMap_X (R := R) (N := N) i j
   · rw [Ideal.span_le]
     intro x hx
     rw [mem_weightParabolicRelationSet_iff] at hx
     obtain ⟨i, j, hij, rfl⟩ := hx
     rw [SetLike.mem_coe, RingHom.mem_ker]
-    exact diagonalTorusCoordinateMap_coordinate_eq_zero R i j
-      (fun h ↦ hij.ne (congrArg (-w) h))
+    -- The kernel API exposes the underlying `RingHom`; the coordinate API uses the bundled map.
+    change (diagonalTorusCoordinateMap (R := R) (N := N)).hom
+      (coordinateHopfAlgebraAlgEquiv R N
+        (coordinateRingMap R N (MvPolynomial.X (i, j)))) = 0
+    have hne : i ≠ j := fun h ↦ hij.ne (congrArg (-w) h)
+    simpa only [hne, ↓reduceIte] using
+      diagonalTorusCoordinateMap_X (R := R) (N := N) i j
 
 /-- Restriction from a weight Levi to the diagonal torus. The construction exists for every
 weight because diagonal matrices preserve every weight space. -/
@@ -191,6 +188,21 @@ noncomputable def weightLeviDiagonalCoordinateIso
       (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R))).isIso_of_isIso_map f.op
   let _ : IsIso f := isIso_of_op f
   exact asIso f
+
+/-- The injective-weight Levi coordinate isomorphism restricts the ambient general-linear
+coordinate map to the diagonal-torus coordinate map. -/
+@[simp]
+theorem weightLeviCoordinateMap_comp_weightLeviDiagonalCoordinateIso_hom
+    (w : Fin N → ℤ) (hw : Function.Injective w) :
+    CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra R N)
+        (weightLeviDefiningHopfIdeal R w) ≫
+      (weightLeviDiagonalCoordinateIso R w hw).hom =
+        diagonalTorusCoordinateMap (R := R) (N := N) := by
+  -- Expose the isomorphism's defining morphism inside its characteristic API theorem.
+  change CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra R N)
+      (weightLeviDefiningHopfIdeal R w) ≫
+    weightLeviDiagonalCoordinateMap R w = _
+  exact weightLeviCoordinateMap_comp_weightLeviDiagonalCoordinateMap R w
 
 end
 

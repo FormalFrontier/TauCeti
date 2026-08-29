@@ -76,22 +76,12 @@ private theorem geometricallyConnected_weightLeviCoordinateHopfAlgebra
 theorem smooth_weightParabolicCoordinateHopfAlgebra
     (k : Type u) [Field k] (w : Fin N → ℤ) (hw : Function.Injective w) :
     smoothCommHopfAlgProperty k (weightParabolicCoordinateHopfAlgebra k w) := by
-  let A := CommHopfAlgCat.quotientNormalConjugation
-    (weightParabolicCoordinateHopfAlgebra k w)
-    (Dynamic.weightUnipotentInParabolicHopfIdeal k w)
-    (Dynamic.weightLeviInParabolicHopfIdeal k w)
-    (Dynamic.isNormal_weightUnipotentInParabolicHopfIdeal k w)
   apply (smoothCommHopfAlgProperty k).prop_of_iso
     (Dynamic.weightParabolicSemidirectProductCoordinateIso k w).symm
-  unfold Dynamic.weightParabolicSemidirectProductCoordinateHopfAlgebra
-  apply smoothCommHopfAlgProperty.semidirectProduct _ _ A
-  · apply (smoothCommHopfAlgProperty k).prop_of_iso
-      (Dynamic.weightUnipotentInParabolicCoordinateIso k w)
-    rw [smoothCommHopfAlgProperty_iff]
+  apply Dynamic.smooth_weightParabolicSemidirectProductCoordinateHopfAlgebra
+  · rw [smoothCommHopfAlgProperty_iff]
     infer_instance
-  · apply (smoothCommHopfAlgProperty k).prop_of_iso
-      (Dynamic.weightLeviInParabolicCoordinateIso k w)
-    exact smooth_weightLeviCoordinateHopfAlgebra k w hw
+  · exact smooth_weightLeviCoordinateHopfAlgebra k w hw
 
 /-- The coordinate Hopf algebra of an injective-weight parabolic is geometrically connected
 over every field. -/
@@ -99,21 +89,11 @@ theorem geometricallyConnected_weightParabolicCoordinateHopfAlgebra
     (k : Type u) [Field k] (w : Fin N → ℤ) (hw : Function.Injective w) :
     geometricallyConnectedCommHopfAlgProperty k
       (weightParabolicCoordinateHopfAlgebra k w) := by
-  let A := CommHopfAlgCat.quotientNormalConjugation
-    (weightParabolicCoordinateHopfAlgebra k w)
-    (Dynamic.weightUnipotentInParabolicHopfIdeal k w)
-    (Dynamic.weightLeviInParabolicHopfIdeal k w)
-    (Dynamic.isNormal_weightUnipotentInParabolicHopfIdeal k w)
   apply (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso
     (Dynamic.weightParabolicSemidirectProductCoordinateIso k w).symm
-  unfold Dynamic.weightParabolicSemidirectProductCoordinateHopfAlgebra
-  apply geometricallyConnectedCommHopfAlgProperty.semidirectProduct _ _ A
-  · apply (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso
-      (Dynamic.weightUnipotentInParabolicCoordinateIso k w)
-    exact geometricallyConnectedCommHopfAlgProperty_weightUnipotentCoordinateHopfAlgebra k w
-  · apply (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso
-      (Dynamic.weightLeviInParabolicCoordinateIso k w)
-    exact geometricallyConnected_weightLeviCoordinateHopfAlgebra k w hw
+  exact Dynamic.geometricallyConnected_weightParabolicSemidirectProductCoordinateHopfAlgebra
+    k w (geometricallyConnectedCommHopfAlgProperty_weightUnipotentCoordinateHopfAlgebra k w)
+    (geometricallyConnected_weightLeviCoordinateHopfAlgebra k w hw)
 
 end
 
