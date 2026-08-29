@@ -291,7 +291,7 @@ variable {R CM} {H E F : B → L} {σ : Equiv.Perm B}
 
 omit [DecidableEq B] in
 /-- If the `n`-fold adjoint action of `x` annihilates `y`, then so does that of `-x`. -/
-private theorem ad_neg_pow_apply_eq_zero {x y : L} {n : ℕ} (h : (ad R L x ^ n) y = 0) :
+theorem ad_neg_pow_apply_eq_zero {x y : L} {n : ℕ} (h : (ad R L x ^ n) y = 0) :
     (ad R L (-x) ^ n) y = 0 := by
   have hneg : ad R L (-x) = (-1 : R) • ad R L x := by rw [map_neg, neg_smul, one_smul]
   rw [hneg, smul_pow, LinearMap.smul_apply, h, smul_zero]
