@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.LocalField.Basic
-public import Mathlib.NumberTheory.Padics.PadicIntegers
 public import Mathlib.NumberTheory.Padics.ProperSpace
 public import Mathlib.NumberTheory.Padics.ValuativeRel
 
@@ -26,6 +25,9 @@ local-field API of `Mathlib/NumberTheory/LocalField/Basic.lean` usable on `ℚ_[
   topology with the valuative topology and drives the instances.
 * `TauCeti.Padic.instIsValuativeTopology` and `TauCeti.Padic.instIsNonarchimedeanLocalField`:
   the two instances.
+* `TauCeti.Padic.uniformSpace_eq_rightUniformSpace` and `TauCeti.Padic.isAdicComplete`: the metric
+  uniformity agrees with the right uniformity of the valuative topology, and the integer ring is
+  adically complete.
 * `TauCeti.Padic.valuation_lt_iff` and
   `TauCeti.Padic.mem_integer_iff_norm_le_one`: the canonical valuation and the integer ring
   `𝒪[ℚ_[p]]` in terms of `Padic.mulValuation`.
@@ -90,7 +92,8 @@ theorem mem_integer_iff_norm_le_one (x : ℚ_[p]) : x ∈ 𝒪[ℚ_[p]] ↔ ‖x
 /-- The integer ring `𝒪[ℚ_[p]]` of the valuative relation is the ring of `p`-adic integers. -/
 theorem integer_eq_padicIntSubring : 𝒪[ℚ_[p]] = PadicInt.subring p := by
   ext x
-  exact (mem_integer_iff_norm_le_one x).trans Iff.rfl
+  exact (mem_integer_iff_norm_le_one x).trans
+    (PadicInt.mem_subring_iff (p := p) (x := x)).symm
 
 /-! ### The valuative topology -/
 
@@ -146,10 +149,21 @@ instance instIsValuativeTopology : IsValuativeTopology ℚ_[p] := by
   have : ContinuousConstVAdd ℚ_[p] ℚ_[p] := ⟨continuous_const_add⟩
   exact IsValuativeTopology.of_zero (mem_nhds_zero_iff)
 
-/-- **`ℚ_[p]` is a nonarchimedean local field.** Local compactness comes from the compactness of
-`ℤ_[p]` (`PadicInt.compactSpace`), which is a neighbourhood of zero in the ultrametric `ℚ_[p]`;
-nontriviality of the valuation is Mathlib's `Padic` instance. -/
+/-- **`ℚ_[p]` carries its canonical nonarchimedean local-field structure**, compatible with its
+existing norm topology and valuative relation. -/
 instance instIsNonarchimedeanLocalField : IsNonarchimedeanLocalField ℚ_[p] where
   toIsValuativeTopology := instIsValuativeTopology
+
+/-! ### The uniformity -/
+
+/-- The metric uniformity on `ℚ_[p]` agrees with the right uniformity of the valuative topology. -/
+theorem uniformSpace_eq_rightUniformSpace :
+    IsTopologicalAddGroup.rightUniformSpace ℚ_[p] = (inferInstance : UniformSpace ℚ_[p]) :=
+  IsUniformAddGroup.rightUniformSpace_eq
+
+/-! ### Consequences for the integer ring -/
+
+/-- The integer ring `𝒪[ℚ_[p]]` is complete for its maximal-ideal-adic topology. -/
+theorem isAdicComplete : IsAdicComplete 𝓂[ℚ_[p]] 𝒪[ℚ_[p]] := inferInstance
 
 end TauCeti.Padic
