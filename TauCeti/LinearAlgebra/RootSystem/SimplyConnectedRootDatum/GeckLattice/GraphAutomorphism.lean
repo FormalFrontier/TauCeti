@@ -211,6 +211,7 @@ private theorem diagramRootGeneratorPerm_pow (tau : Equiv.Perm (Fin t.rank)) (k 
 
 /-- **The order of the graph automorphism divides that of the diagram symmetry.** An involution of
 the numbered diagram therefore gives `γ ^ 2 = 1`, and the triality of `D₄` gives `γ ^ 3 = 1`. -/
+@[simp]
 theorem geckGraphAut_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {m : ℕ}
     (hm : sigma ^ m = 1) : t.geckGraphAut ht hsigma ^ m = 1 := by
   have hgen : diagramRootGeneratorPerm sigma ^ m = 1 := by
@@ -224,9 +225,8 @@ theorem geckGraphAut_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {m : ℕ}
 
 /-- The identity symmetry of the diagram gives the identity automorphism of the Geck carrier. -/
 @[simp]
-theorem geckGraphAut_one (h1 : (1 : Equiv.Perm (Fin t.rank)) ∈ t.diagramSymmetry) :
-    t.geckGraphAut ht h1 = 1 := by
-  simpa using geckGraphAut_pow_eq_one ht h1 (m := 1) (pow_one _)
+theorem geckGraphAut_one : t.geckGraphAut ht t.diagramSymmetry.one_mem = 1 := by
+  simpa using geckGraphAut_pow_eq_one ht t.diagramSymmetry.one_mem (m := 1) (pow_one _)
 
 end
 
