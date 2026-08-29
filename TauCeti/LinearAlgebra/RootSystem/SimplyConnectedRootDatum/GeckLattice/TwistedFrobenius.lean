@@ -77,10 +77,12 @@ public section
 
 namespace TauCeti.DynkinType
 
+universe v
+
 noncomputable section
 
 variable {t : DynkinType} (ht : t.Valid) {sigma : Equiv.Perm (Fin t.rank)}
-variable (hsigma : sigma ∈ t.diagramSymmetry) (p k : ℕ) (A : Type) [CommRing A] [ExpChar A p]
+variable (hsigma : sigma ∈ t.diagramSymmetry) (p k : ℕ) (A : Type v) [CommRing A] [ExpChar A p]
 
 /-- **The graph automorphism of the points of the pinned Geck carrier commutes with its
 Frobenius endomorphism.** This is the relation the graph-twisted Steinberg maps of a finite group

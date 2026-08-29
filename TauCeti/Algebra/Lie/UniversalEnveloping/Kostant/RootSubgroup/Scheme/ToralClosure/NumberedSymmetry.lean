@@ -86,7 +86,7 @@ open AlgebraicGeometry CategoryTheory TensorProduct WithConv
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-universe u w
+universe u v w
 
 attribute [local instance high] Algebra.toModule
 
@@ -477,7 +477,7 @@ toral closure**, in both directions. The symmetry permutes the represented root 
 carries the represented weight torus to itself, so it preserves the Hopf ideal cut out by them and
 hence the matrices which kill that ideal. -/
 theorem conj_kostantNumberedSymmetryMatrix_mem_kostantToralPointsSubgroup_iff
-    (A : Type) [CommRing A] (g : Matrix.GeneralLinearGroup (Fin n) A) :
+    (A : Type v) [CommRing A] (g : Matrix.GeneralLinearGroup (Fin n) A) :
     kostantNumberedSymmetryMatrix M b θ hθM A * g *
           (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ ∈
         kostantToralPointsSubgroup e h ρ M hM hnil b wt A ↔
@@ -489,30 +489,22 @@ theorem conj_kostantNumberedSymmetryMatrix_mem_kostantToralPointsSubgroup_iff
   have hpoint : (GeneralLinear.pointsMulEquiv (R := ℤ) n).symm
       (kostantNumberedSymmetryMatrix M b θ hθM A * g *
         (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹) =
-      (CommHopfAlgCat.mapPointsFunctor
-          (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).app (CommAlgCat.of ℤ A)
-        ((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g) := by
-    refine (GeneralLinear.pointsMulEquiv (R := ℤ) n).symm_apply_eq.mpr
-      (Eq.trans ?_ (pointsMulEquiv_mapPointsFunctor_kostantNumberedSymmetryCoordinateIso
-        M b θ hθM (CommAlgCat.of ℤ A)
-        ((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g)).symm)
-    exact congrArg
-      (fun z => kostantNumberedSymmetryMatrix M b θ hθM A * z *
-        (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹)
-      (MulEquiv.apply_symm_apply (GeneralLinear.pointsMulEquiv (R := ℤ) n) g).symm
-  -- The conjugated point is the original one precomposed with the coordinate automorphism. The
-  -- two sides live over `A` and over `CommAlgCat.of ℤ A`, which `rw` will not identify, so the
-  -- consequence is transported by `congrArg` rather than by rewriting.
+      toConv (((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g).ofConv.comp
+        ((kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom :
+          GeneralLinear.coordinateHopfAlgebra ℤ n →ₐ[ℤ]
+            GeneralLinear.coordinateHopfAlgebra ℤ n)) := by
+    refine (GeneralLinear.pointsMulEquiv (R := ℤ) n).symm_apply_eq.mpr ?_
+    rw [pointsMulEquiv_toConv_comp_kostantNumberedSymmetryCoordinateIso M b θ hθM,
+      MulEquiv.apply_symm_apply]
+  -- The conjugated point is the original one precomposed with the coordinate automorphism.
   have hval : ∀ x, ((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm
         (kostantNumberedSymmetryMatrix M b θ hθM A * g *
           (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹)).ofConv x =
       ((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g).ofConv
-        ((kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom x) := fun x =>
-    (congrArg (fun q : HopfAlgebra.points (R := ℤ)
-        (H := GeneralLinear.coordinateHopfAlgebra ℤ n) (CommAlgCat.of ℤ A) =>
-      WithConv.ofConv q x) hpoint).trans
-      (CommHopfAlgCat.mapPointsFunctor_app_apply_apply
-        (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom (CommAlgCat.of ℤ A) _ x)
+        ((kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom x) := fun x => by
+    -- The algebra-map coercion of the Hopf-algebra morphism is its own application.
+    rw [hpoint, ofConv_toConv, AlgHom.comp_apply]
+    rfl
   rw [mem_kostantToralPointsSubgroup_iff, mem_kostantToralPointsSubgroup_iff]
   constructor
   · intro hall x hx
@@ -529,7 +521,7 @@ include hθe hσ hbasis hwt in
 /-- **The matrix of a numbered symmetry normalizes the algebra-valued points of the toral
 closure.** This is the form in which conjugation by that matrix restricts to an automorphism of the
 point group. -/
-theorem map_kostantToralPointsSubgroup_conj_numberedSymmetryMatrix (A : Type) [CommRing A] :
+theorem map_kostantToralPointsSubgroup_conj_numberedSymmetryMatrix (A : Type v) [CommRing A] :
     (kostantToralPointsSubgroup e h ρ M hM hnil b wt A).map
         (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM A)).toMonoidHom =
       kostantToralPointsSubgroup e h ρ M hM hnil b wt A := by
