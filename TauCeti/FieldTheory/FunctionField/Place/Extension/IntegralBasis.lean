@@ -141,9 +141,10 @@ theorem IsIntegralBasis.isIntegral_iff_repr_mem {ι : Type*} {b : Basis ι F F'}
 
 /-! ### The local integral closure -/
 
-variable [FiniteDimensional F F']
+section Localization
 
-attribute [local instance] isLocalization_integralClosure
+variable [IsLocalization
+  (Algebra.algebraMapSubmonoid (integralClosure (P.integers) F') (P.integers)⁰) F']
 
 /-- Extending any `𝒪_P`-basis of the local integral closure `𝒪'_P` to the fraction fields gives
 an integral basis at `P`.  This is Stichtenoth, Corollary 3.3.5. -/
@@ -153,6 +154,12 @@ theorem isIntegralBasis_localizationLocalization {ι : Type*}
   rw [IsIntegralBasis, Basis.localizationLocalization_span F (P.integers)⁰ F']
   ext x
   simp
+
+end Localization
+
+variable [FiniteDimensional F F']
+
+attribute [local instance] isLocalization_integralClosure
 
 variable [Algebra.IsSeparable F F']
 
