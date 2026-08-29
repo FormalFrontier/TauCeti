@@ -92,23 +92,43 @@ theorem prod_map_mem_range_pow (l : List M) :
     exact Submodule.mul_mem_mul (LinearMap.mem_range_self f m) ih
 
 open Pointwise in
-/-- Words of length exactly `n` span the `n`-th power of the generator range. -/
-theorem span_prod_map_eq_range_pow (n : ℕ) :
-    Submodule.span R {a | ∃ l : List M, l.length = n ∧ (l.map f).prod = a} =
-      LinearMap.range f ^ n := by
-  rw [Submodule.pow_eq_span_pow_set]
+/-- Words of length exactly `n` in a spanning family span the `n`-th power of the generator
+range. -/
+theorem span_prod_map_eq_range_pow_of_span {ι : Type*} (e : ι → M)
+    (he : Submodule.span R (Set.range e) = ⊤) (n : ℕ) :
+    Submodule.span R {a | ∃ l : List ι, l.length = n ∧
+      (l.map fun i ↦ f (e i)).prod = a} = LinearMap.range f ^ n := by
+  have hrange : LinearMap.range f = Submodule.span R (Set.range fun i ↦ f (e i)) := by
+    rw [LinearMap.range_eq_map, ← he, Submodule.map_span]
+    congr 2
+    ext a
+    simp only [Set.mem_image, Set.mem_range]
+    constructor
+    · rintro ⟨m, ⟨i, rfl⟩, rfl⟩
+      exact ⟨i, rfl⟩
+    · rintro ⟨i, rfl⟩
+      exact ⟨e i, ⟨i, rfl⟩, rfl⟩
+  rw [hrange, Submodule.span_pow]
   congr 1
   ext a
   simp only [Set.mem_ofPred_eq, Set.mem_pow]
   constructor
   · rintro ⟨l, rfl, rfl⟩
-    exact ⟨fun i => ⟨f l[(i : ℕ)], LinearMap.mem_range_self f _⟩,
-      congrArg List.prod (List.ofFn_getElem_eq_map l f)⟩
+    exact ⟨fun i ↦ ⟨f (e l[(i : ℕ)]), Set.mem_range_self _⟩, congrArg List.prod
+      (List.ofFn_getElem_eq_map l fun i ↦ f (e i))⟩
   · rintro ⟨g, rfl⟩
-    choose m hm using fun i => LinearMap.mem_range.mp (g i).2
-    exact ⟨List.ofFn m, List.length_ofFn, by
+    choose i hi using fun j ↦ (Set.mem_range.mp (g j).2)
+    exact ⟨List.ofFn i, List.length_ofFn, by
       rw [List.map_ofFn]
-      simp [Function.comp_def, hm]⟩
+      simp [Function.comp_def, hi]⟩
+
+/-- Words of length exactly `n` span the `n`-th power of the generator range. -/
+theorem span_prod_map_eq_range_pow (n : ℕ) :
+    Submodule.span R {a | ∃ l : List M, l.length = n ∧ (l.map f).prod = a} =
+      LinearMap.range f ^ n := by
+  have hid : Submodule.span R (Set.range (id : M → M)) = ⊤ := by
+    rw [Set.range_id, Submodule.span_univ]
+  simpa only [id_eq] using span_prod_map_eq_range_pow_of_span f id hid n
 
 /-- A word of length at most `k` belongs to the `k`-th word-filtration step. -/
 theorem prod_map_mem_wordFiltration {k : ℕ} {l : List M} (hl : l.length ≤ k) :

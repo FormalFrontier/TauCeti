@@ -26,9 +26,11 @@ Consequently every class in that quotient has a homogeneous symmetric representa
 `n`.
 
 Under the standard hypotheses ensuring PBW over a commutative ring, such as projectivity of `L` as
-an `R`-module, injectivity of these component maps is the remaining linear-independence half of the
-Poincaré--Birkhoff--Witt theorem. Thus the componentwise surjections isolate the next obstruction
-degree by degree, while retaining the global associated-graded map.
+an `R`-module, injectivity of these component maps together with an internal direct-sum
+decomposition of `SymmetricAlgebra R L` into its homogeneous submodules would give the remaining
+linear-independence half of the Poincaré--Birkhoff--Witt theorem. Thus the componentwise
+surjections isolate one part of the next obstruction degree by degree, while retaining the global
+associated-graded map.
 
 ## Main definitions and results
 
@@ -64,8 +66,6 @@ universe u v
 variable (R : Type u) (L : Type v) [CommRing R] [LieRing L] [LieAlgebra R L]
 
 attribute [local instance 100] LieRing.ofAssociativeRing
-
-local notation "U" => _root_.UniversalEnvelopingAlgebra R L
 
 /-- The canonical map sends the degree-`n` homogeneous submodule into the degree-`n` summand of
 the associated graded. The target is a submodule, so only the spanning words need checking. -/
