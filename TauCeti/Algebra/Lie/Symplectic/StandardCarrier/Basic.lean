@@ -12,7 +12,7 @@ public import TauCeti.Algebra.Lie.Presentation.Serre
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
 public import TauCeti.Algebra.Module.Rat
-public import TauCeti.LinearAlgebra.Eigenspace.Binomial
+public import TauCeti.LinearAlgebra.CoordinateLattice
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Datum
 public import TauCeti.RingTheory.Binomial
 public import TauCeti.RingTheory.DividedPowers.Associative
@@ -689,31 +689,34 @@ theorem isCartanWeightVector_single (a : Fin (n + 1) ⊕ Fin (n + 1)) :
 
 /-- The standard coordinate `ℤ`-lattice in the symplectic module. -/
 def lattice : Submodule ℤ ((Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) :=
-  Submodule.span ℤ (Set.range (Pi.basisFun ℚ (Fin (n + 1) ⊕ Fin (n + 1))))
+  TauCeti.coordinateLattice (Fin (n + 1) ⊕ Fin (n + 1))
 
 /-- A vector is in the standard lattice exactly when all its coordinates are integers. -/
 @[simp] theorem mem_lattice_iff {v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ} :
-    v ∈ lattice n ↔ ∀ a, ∃ z : ℤ, (z : ℚ) = v a := by
-  rw [lattice, Module.Basis.mem_span_iff_repr_mem]
-  simp only [Pi.basisFun_repr, algebraMap_int_eq, Int.coe_castRingHom, Set.mem_range]
+    v ∈ lattice n ↔ ∀ a, ∃ z : ℤ, (z : ℚ) = v a :=
+  TauCeti.mem_coordinateLattice_iff (Fin (n + 1) ⊕ Fin (n + 1))
 
 theorem single_mem_lattice (a : Fin (n + 1) ⊕ Fin (n + 1)) :
     Pi.single a (1 : ℚ) ∈ lattice n := by
-  rw [lattice, ← Pi.basisFun_apply]
-  exact Submodule.subset_span (Set.mem_range_self a)
+  rw [← Pi.basisFun_apply]
+  exact TauCeti.basisFun_mem_coordinateLattice (Fin (n + 1) ⊕ Fin (n + 1)) a
 
 /-- The coordinate basis of the standard lattice, enumerated by a finite interval as required by
-the matrix carrier construction. -/
+the matrix carrier construction.
+
+The carrier subtype and `ℤ`-module structure of a submodule are definitionally equal to those of
+its underlying additive subgroup, so the reindexed coordinate basis has the displayed target
+type. -/
 noncomputable def latticeBasis :
     Module.Basis (Fin ((n + 1) + (n + 1))) ℤ (lattice n).toAddSubgroup :=
-  ((Pi.basisFun ℚ (Fin (n + 1) ⊕ Fin (n + 1))).restrictScalars ℤ).reindex
-    finSumFinEquiv
+  (TauCeti.coordinateLatticeBasis (Fin (n + 1) ⊕ Fin (n + 1))).reindex finSumFinEquiv
 
 @[simp] theorem coe_latticeBasis (a : Fin ((n + 1) + (n + 1))) :
     ((latticeBasis n a : (lattice n).toAddSubgroup) :
       (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) = Pi.single (finSumFinEquiv.symm a) 1 := by
   unfold latticeBasis lattice
-  rw [Module.Basis.reindex_apply, Module.Basis.restrictScalars_apply, Pi.basisFun_apply]
+  rw [Module.Basis.reindex_apply, ← Pi.basisFun_apply]
+  exact TauCeti.coe_coordinateLatticeBasis (Fin (n + 1) ⊕ Fin (n + 1)) _
 
 /-- The weight attached to the enumerated coordinate basis. -/
 def basisWeight (a : Fin ((n + 1) + (n + 1))) : Fin (n + 1) → ℤ :=
@@ -764,8 +767,8 @@ theorem rep_ringChoose_cartanGenerator_mem_lattice (i : Fin (n + 1)) (m : ℕ)
       lattice n := by
   rw [lattice] at hv ⊢
   rw [Ring.map_choose]
-  apply ringChoose_end_apply_mem_span_of_apply_eq_intCast_smul
-    (weight := fun a => weight n a i) (n := m) ?_ hv
+  refine TauCeti.ringChoose_end_apply_mem_coordinateLattice_of_apply_eq_intCast_smul
+    (Fin (n + 1) ⊕ Fin (n + 1)) (weight := fun a => weight n a i) ?_ m hv
   intro a
   rw [Pi.basisFun_apply]
   exact (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
