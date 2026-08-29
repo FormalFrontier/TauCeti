@@ -75,19 +75,9 @@ variable {R : Type*} [CommSemiring R] {σ τ : Type*}
 /-- Substitute the univariate polynomial `q` into every variable of a multivariate polynomial:
 the variable `X i` is replaced by `q` evaluated at `X i`. This is the ring-theoretic shadow of
 postcomposing the points of a tuple with the polynomial function of `q`. -/
-noncomputable def MvPolynomial.substVar (q : R[X]) :
+noncomputable def _root_.MvPolynomial.substVar (q : R[X]) :
     MvPolynomial σ R →ₐ[R] MvPolynomial σ R :=
   MvPolynomial.aeval fun i => Polynomial.aeval (MvPolynomial.X i) q
-
-/-- An `R`-algebra homomorphism applied to a substitution of generators is the substitution of
-the images of the generators. -/
-theorem MvPolynomial.map_aeval {S : Type*} [CommSemiring S] [Algebra R S]
-    (f : MvPolynomial σ R →ₐ[R] S) (g : σ → MvPolynomial σ R) (p : MvPolynomial σ R) :
-    f (MvPolynomial.aeval g p) = MvPolynomial.aeval (fun i => f (g i)) p := by
-  have h : (f.comp (MvPolynomial.aeval g)) =
-      (MvPolynomial.aeval (fun i => f (g i)) : MvPolynomial σ R →ₐ[R] S) :=
-    MvPolynomial.algHom_ext fun i => by simp
-  rw [← AlgHom.comp_apply, h]
 
 /-- Over the base ring itself, the algebraic evaluation `aeval` of a univariate polynomial agrees
 with its plain evaluation. -/
@@ -97,11 +87,11 @@ theorem Polynomial.aeval_eq_eval (x : R) (p : R[X]) :
 
 /-- Evaluating a substituted polynomial at a point of an `R`-algebra is the evaluation of the
 original polynomial at the point with `q` substituted into each coordinate. -/
-theorem MvPolynomial.aeval_substVar {S : Type*} [CommSemiring S] [Algebra R S]
+theorem _root_.MvPolynomial.aeval_substVar {S : Type*} [CommSemiring S] [Algebra R S]
     (q : R[X]) (t : σ → S) (p : MvPolynomial σ R) :
     MvPolynomial.aeval t (MvPolynomial.substVar q p)
       = MvPolynomial.aeval (fun i => Polynomial.aeval (t i) q) p := by
-  rw [MvPolynomial.substVar, MvPolynomial.map_aeval]
+  rw [MvPolynomial.substVar, MvPolynomial.comp_aeval_apply]
   refine congrArg (fun g => MvPolynomial.aeval g p) (funext fun i => ?_)
   calc MvPolynomial.aeval t (Polynomial.aeval (MvPolynomial.X i) q)
       = Polynomial.aeval (MvPolynomial.aeval t (MvPolynomial.X i)) q :=
@@ -109,7 +99,7 @@ theorem MvPolynomial.aeval_substVar {S : Type*} [CommSemiring S] [Algebra R S]
     _ = Polynomial.aeval (t i) q := by rw [MvPolynomial.aeval_X]
 
 /-- Substituting a univariate polynomial into every variable preserves symmetry. -/
-theorem MvPolynomial.IsSymmetric.substVar {p : MvPolynomial σ R} (hp : p.IsSymmetric)
+theorem _root_.MvPolynomial.IsSymmetric.substVar {p : MvPolynomial σ R} (hp : p.IsSymmetric)
     (q : R[X]) : (MvPolynomial.substVar q p).IsSymmetric := by
   intro e
   have h : (MvPolynomial.rename e).comp (MvPolynomial.substVar q)
@@ -167,7 +157,7 @@ private theorem aeval_chartSubst (c : Fin n → 𝕜) (p : MvPolynomial (Fin n) 
       = MvPolynomial.aeval
           (fun j : Fin n => (-1 : 𝕜) ^ ((j : ℕ) + 1)
             * c (⟨n - ((j : ℕ) + 1), by have := j.isLt; omega⟩ : Fin n)) p := by
-  rw [chartSubst, MvPolynomial.map_aeval]
+  rw [chartSubst, MvPolynomial.comp_aeval_apply]
   refine congrArg (fun g => MvPolynomial.aeval g p) (funext fun j => ?_)
   rw [aeval_eq_eval]
   simp only [esymmInChart, MvPolynomial.eval_mul, MvPolynomial.eval_C, MvPolynomial.eval_X]
@@ -268,7 +258,7 @@ theorem Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (q : 𝕜[X]) :
             (fun j : Fin n => (-1 : 𝕜) ^ ((j : ℕ) + 1)
               * c (⟨n - ((j : ℕ) + 1), by have := j.isLt; omega⟩ : Fin n))
             (W (⟨n - ((i : ℕ) + 1), by have := i.isLt; omega⟩ : Fin n)) := by
-        rw [MvPolynomial.map_aeval]
+        rw [MvPolynomial.comp_aeval_apply]
         refine congrArg (fun g => (-1 : 𝕜) ^ (n - (i : ℕ)) * MvPolynomial.aeval g
           (W (⟨n - ((i : ℕ) + 1), by have := i.isLt; omega⟩ : Fin n))) (funext fun j => ?_)
         rw [MvPolynomial.aeval_esymm_eq_multiset_esymm, multiset_esymm_succ_eq_chart, hvc]
