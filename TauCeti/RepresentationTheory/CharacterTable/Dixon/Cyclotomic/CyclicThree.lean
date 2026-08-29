@@ -185,6 +185,15 @@ def cyclicGroupThreeModularCentralRows :
     (Cyclotomic.reduce 7 cyclicGroupThreeDixonPrimeData.root)
     cyclicGroupThreeExactCharacterTable
 
+/-- A modular row is displayed exactly when it is the reduction of a row of the exact table. -/
+@[simp]
+theorem mem_cyclicGroupThreeModularCentralRows_iff
+    {a : CyclicGroupThreeClassIndex → ZMod 7} :
+    a ∈ cyclicGroupThreeModularCentralRows ↔
+      ∃ i, (fun j => Cyclotomic.reduce 7 cyclicGroupThreeDixonPrimeData.root
+        (cyclicGroupThreeExactCharacterTable i j)) = a := by
+  simp [cyclicGroupThreeModularCentralRows]
+
 /-- Reduction at the chosen root preserves the exact eigenrow equations. -/
 theorem isModularEigenrow_cyclicGroupThreeExactCharacterTable_zmod
     (i : CyclicGroupThreeClassIndex) :
@@ -305,18 +314,28 @@ private theorem cyclicGroupThreeComplexCharacterTable_row_orthonormal
   have hgeom : 1 + Cyclotomic.complexRoot 3 + Cyclotomic.complexRoot 3 ^ 2 = 0 := by
     simpa [Finset.sum_range_succ] using
       (Cyclotomic.isPrimitiveRoot_complexRoot (e := 3)).geom_sum_eq_zero (by norm_num)
-  -- `simp` evaluates the displayed entries, pushes the embedding onto `ζ` and rewrites each
-  -- conjugate as `ζ²`, leaving nine polynomial identities in `ζ` modulo `1 + ζ + ζ²`.
-  fin_cases i <;> fin_cases j <;> simp
+  have hcube : Cyclotomic.complexRoot 3 ^ 3 = 1 :=
+    Cyclotomic.isPrimitiveRoot_complexRoot.pow_eq_one
+  -- Evaluate the displayed entries, push the embedding onto `ζ` and rewrite each conjugated
+  -- entry as a power of `ζ`.  The nine remaining goals are polynomial identities in `ζ`, each
+  -- following from the vanishing geometric sum `hgeom` after reducing exponents with `hcube`.
+  fin_cases i <;> fin_cases j <;>
+    simp only [Fin.isValue, Fin.zero_eta, Fin.mk_one, Fin.reduceFinMk, Fin.reduceEq,
+      of_apply, cons_val', cons_val, cons_val_zero, cons_val_one, cons_val_fin_one,
+      map_one, map_pow, Cyclotomic.complexEmbedding_zeta, RCLike.star_def, star_one, star_pow,
+      Cyclotomic.conj_complexRoot_eq_pow_sub_one, Nat.add_one_sub_one, one_mul, mul_one,
+      zero_ne_one, one_ne_zero, ↓reduceIte, Nat.cast_ofNat, CharP.cast_eq_zero]
   · norm_num
-  · linear_combination (Cyclotomic.complexRoot 3 ^ 2 - Cyclotomic.complexRoot 3 + 1) * hgeom
-  · linear_combination (Cyclotomic.complexRoot 3 ^ 2 - Cyclotomic.complexRoot 3 + 1) * hgeom
+  · linear_combination hgeom + Cyclotomic.complexRoot 3 * hcube
+  · linear_combination hgeom + Cyclotomic.complexRoot 3 * hcube
   · linear_combination hgeom
-  · linear_combination (Cyclotomic.complexRoot 3 - 1) * (Cyclotomic.complexRoot 3 ^ 3 + 2) * hgeom
-  · linear_combination (Cyclotomic.complexRoot 3 ^ 3 - Cyclotomic.complexRoot 3 + 1) * hgeom
+  · linear_combination (Cyclotomic.complexRoot 3 ^ 3 + 2) * hcube
+  · linear_combination hgeom +
+      (Cyclotomic.complexRoot 3 ^ 2 + Cyclotomic.complexRoot 3) * hcube
   · linear_combination hgeom
-  · linear_combination (Cyclotomic.complexRoot 3 ^ 3 - Cyclotomic.complexRoot 3 + 1) * hgeom
-  · linear_combination (Cyclotomic.complexRoot 3 - 1) * (Cyclotomic.complexRoot 3 ^ 3 + 2) * hgeom
+  · linear_combination hgeom +
+      (Cyclotomic.complexRoot 3 ^ 2 + Cyclotomic.complexRoot 3) * hcube
+  · linear_combination (Cyclotomic.complexRoot 3 ^ 3 + 2) * hcube
 
 /-- The embedded exact `C₃` table satisfies the character-table specification and therefore is
 the complex character table up to a permutation of rows. -/
