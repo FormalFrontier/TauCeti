@@ -10,10 +10,10 @@ public import TauCeti.Algebra.Lie.Orthogonal.TypeB.DiagonalCartan
 /-!
 # Simple-root generators for the split orthogonal Lie algebra of type B
 
-This file constructs integral matrices for the positive and negative roots in the standard
-split model `LieAlgebra.Orthogonal.typeB ι K`. For a long root `εᵢ - εⱼ`, the matrices are the
-usual paired matrix units. For a short root `εᵢ`, the normalization forced by Mathlib's form
-matrix `diag(2, J)` is
+This file constructs integral matrices for both signs of the Bourbaki simple roots in the standard
+split model `LieAlgebra.Orthogonal.typeB ι K`, together with the auxiliary difference-root family
+`εᵢ - εⱼ`. For a difference root, the matrices are the usual paired matrix units. For a short
+root `εᵢ`, the normalization forced by Mathlib's form matrix `diag(2, J)` is
 
 ```text
 eᵢ = 2 Eᵢ₀ - E₀,-ᵢ,       fᵢ = E₀,ᵢ - 2 E-ᵢ,₀.
@@ -108,6 +108,7 @@ theorem coe_typeBLongCorootGenerator (i j : ι) (hij : i ≠ j) :
   (rfl)
 
 /-- Opposite long-root vectors bracket to their diagonal coroot. -/
+@[simp]
 theorem typeBLongRootGenerator_lie_swap (i j : ι) (hij : i ≠ j) :
     ⁅typeBLongRootGenerator (K := K) i j hij,
       typeBLongRootGenerator (K := K) j i hij.symm⁆ = typeBLongCorootGenerator i j hij := by
@@ -204,6 +205,7 @@ theorem coe_typeBShortCorootGenerator (i : ι) :
   (rfl)
 
 /-- The positive and negative short-root vectors bracket to the short coroot. -/
+@[simp]
 theorem typeBShortRootGenerator_lie_negative (i : ι) :
     ⁅typeBShortRootGenerator (K := K) i, typeBShortNegativeRootGenerator (K := K) i⁆ =
       typeBShortCorootGenerator i := by
@@ -340,14 +342,12 @@ theorem typeBSimpleNegativeRootMatrix_mem_typeB (i : Fin (n + 1)) :
 /-- The positive simple-root vector `eᵢ` for the Bourbaki pinning of `Bₙ₊₁`. -/
 def typeBSimpleRootGenerator (i : Fin (n + 1)) :
     LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K :=
-  Fin.lastCases (typeBShortRootGenerator (Fin.last n))
-    (fun j => typeBLongRootGenerator j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ)) i
+  ⟨typeBSimpleRootMatrix i, typeBSimpleRootMatrix_mem_typeB i⟩
 
 /-- The negative simple-root vector `fᵢ` for the Bourbaki pinning of `Bₙ₊₁`. -/
 def typeBSimpleNegativeRootGenerator (i : Fin (n + 1)) :
     LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K :=
-  Fin.lastCases (typeBShortNegativeRootGenerator (Fin.last n))
-    (fun j => typeBLongRootGenerator j.succ j.castSucc (ne_of_gt j.castSucc_lt_succ)) i
+  ⟨typeBSimpleNegativeRootMatrix i, typeBSimpleNegativeRootMatrix_mem_typeB i⟩
 
 /-- The simple coroot `hᵢ` for the Bourbaki pinning of `Bₙ₊₁`. -/
 def typeBSimpleCorootGenerator (i : Fin (n + 1)) :
@@ -359,24 +359,28 @@ def typeBSimpleCorootGenerator (i : Fin (n + 1)) :
 theorem typeBSimpleRootGenerator_last :
     typeBSimpleRootGenerator (K := K) (Fin.last n) =
       typeBShortRootGenerator (Fin.last n) := by
+  apply Subtype.ext
   simp [typeBSimpleRootGenerator]
 
 @[simp]
 theorem typeBSimpleRootGenerator_castSucc (j : Fin n) :
     typeBSimpleRootGenerator (K := K) j.castSucc =
       typeBLongRootGenerator j.castSucc j.succ (ne_of_lt j.castSucc_lt_succ) := by
+  apply Subtype.ext
   simp [typeBSimpleRootGenerator]
 
 @[simp]
 theorem typeBSimpleNegativeRootGenerator_last :
     typeBSimpleNegativeRootGenerator (K := K) (Fin.last n) =
       typeBShortNegativeRootGenerator (Fin.last n) := by
+  apply Subtype.ext
   simp [typeBSimpleNegativeRootGenerator]
 
 @[simp]
 theorem typeBSimpleNegativeRootGenerator_castSucc (j : Fin n) :
     typeBSimpleNegativeRootGenerator (K := K) j.castSucc =
       typeBLongRootGenerator j.succ j.castSucc (ne_of_gt j.castSucc_lt_succ) := by
+  apply Subtype.ext
   simp [typeBSimpleNegativeRootGenerator]
 
 @[simp]
@@ -396,18 +400,14 @@ theorem coe_typeBSimpleRootGenerator (i : Fin (n + 1)) :
     (typeBSimpleRootGenerator (K := K) i :
       Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K) =
       typeBSimpleRootMatrix i :=
-  by
-    refine Fin.lastCases ?_ (fun j => ?_) i <;>
-      simp [typeBSimpleRootGenerator, typeBSimpleRootMatrix]
+  by simp [typeBSimpleRootGenerator]
 
 @[simp]
 theorem coe_typeBSimpleNegativeRootGenerator (i : Fin (n + 1)) :
     (typeBSimpleNegativeRootGenerator (K := K) i :
       Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K) =
       typeBSimpleNegativeRootMatrix i :=
-  by
-    refine Fin.lastCases ?_ (fun j => ?_) i <;>
-      simp [typeBSimpleNegativeRootGenerator, typeBSimpleNegativeRootMatrix]
+  by simp [typeBSimpleNegativeRootGenerator]
 
 @[simp]
 theorem coe_typeBSimpleCorootGenerator (i : Fin (n + 1)) :
@@ -418,15 +418,16 @@ theorem coe_typeBSimpleCorootGenerator (i : Fin (n + 1)) :
     simp [typeBSimpleCorootGenerator, typeBSimpleCorootMatrix]
 
 /-- Each positive and negative Bourbaki simple-root pair brackets to its simple coroot. -/
+@[simp]
 theorem typeBSimpleRootGenerator_lie_negative (i : Fin (n + 1)) :
     ⁅typeBSimpleRootGenerator (K := K) i, typeBSimpleNegativeRootGenerator (K := K) i⁆ =
       typeBSimpleCorootGenerator i := by
   refine Fin.lastCases ?_ (fun j => ?_) i
-  · simpa [typeBSimpleRootGenerator, typeBSimpleNegativeRootGenerator,
-      typeBSimpleCorootGenerator] using
+  · simpa only [typeBSimpleRootGenerator_last, typeBSimpleNegativeRootGenerator_last,
+      typeBSimpleCorootGenerator_last] using
       (typeBShortRootGenerator_lie_negative (K := K) (Fin.last n))
-  · simpa [typeBSimpleRootGenerator, typeBSimpleNegativeRootGenerator,
-      typeBSimpleCorootGenerator] using
+  · simpa only [typeBSimpleRootGenerator_castSucc,
+      typeBSimpleNegativeRootGenerator_castSucc, typeBSimpleCorootGenerator_castSucc] using
       (typeBLongRootGenerator_lie_swap (K := K) j.castSucc j.succ
         (ne_of_lt j.castSucc_lt_succ))
 
