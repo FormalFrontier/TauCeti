@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Relations
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Rigidity
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Torus
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.Basic
 
 /-!
@@ -60,6 +61,9 @@ statement is asserted.
 * `TauCeti.DynkinType.geckRootSubgroup_comp_ι` and `TauCeti.DynkinType.geckWeightTorus_comp_ι`:
   both families recover their represented morphisms into `GLₙ`.
 * `TauCeti.DynkinType.geckWeightTorus_conj_geckRootSubgroup`: the scheme-level pinning equation.
+* `TauCeti.DynkinType.isClosedImmersion_geckWeightTorus` and
+  `TauCeti.DynkinType.geckTorusPoints_injective`: weights generating the character lattice embed
+  the weight torus in the carrier, on schemes and on points.
 * `TauCeti.DynkinType.geckGroupScheme_hom_ext`: morphisms from the carrier into affine group
   schemes represented by commutative Hopf algebras are determined by their composites with the
   root subgroups and weight torus.
@@ -250,6 +254,16 @@ theorem geckWeightTorus_comp_ι :
       GeneralLinear.weightTorus (R := ℤ) (t.geckWeightFin ht) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_comp_ι _ _ _ _ _ _ _ _
 
+/-- **Weights generating the character lattice embed the weight torus as a closed subgroup scheme
+of the Geck carrier.** The hypothesis fails in general, since the Geck weights generate only the
+root lattice; the types where it holds are settled in
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.FullWeight`. -/
+theorem isClosedImmersion_geckWeightTorus
+    (hwt : Submodule.span ℤ (Set.range (t.geckWeightFin ht)) = ⊤) :
+    IsClosedImmersion (t.geckWeightTorus ht).hom.hom.left :=
+  TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantWeightTorusToToral
+    _ _ _ _ _ _ _ _ hwt
+
 /-- **The intrinsic pinning equation for the Geck carrier.** On points over a commutative ring,
 conjugation by a weight-torus point rescales the parameter of a numbered root subgroup by the
 corresponding root character. -/
@@ -317,6 +331,17 @@ abbrev geckTorusPoints (A : CommAlgCat.{v} ℤ) :
   TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints
     (t.geckCoordinateLattice ht).toAddSubgroup (t.geckCoordinateBasisFin ht)
     (t.geckWeightFin ht) A
+
+/-- **Weights generating the character lattice make the Geck weight torus injective on points**,
+over every value algebra. This is the point-level counterpart of
+`TauCeti.DynkinType.isClosedImmersion_geckWeightTorus`, proved from the same hypothesis rather
+than transported across it: the identification of `Fin t.rank → Aˣ` with the scheme-theoretic
+`A`-points of the split torus, and the compatibility of `geckTorusPoints` with `geckWeightTorus`,
+are not established here. -/
+theorem geckTorusPoints_injective (A : CommAlgCat.{v} ℤ)
+    (hwt : Submodule.span ℤ (Set.range (t.geckWeightFin ht)) = ⊤) :
+    Function.Injective (t.geckTorusPoints ht A) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_injective _ _ _ hwt
 
 /-- The parametrized root subgroup for a numbered Geck root generator. -/
 abbrev geckRootSubgroupParam (i : Fin t.rank ⊕ Fin t.rank) (A : CommAlgCat.{v} ℤ) :
