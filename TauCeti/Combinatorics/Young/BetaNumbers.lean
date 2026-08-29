@@ -19,9 +19,9 @@ construction, and it is all this file proves.
 
 Beta-numbers are the bookkeeping device behind the Frobenius determinant formula and the
 Frame-Robinson-Thrall route to the hook-length formula. Their relation to hook lengths --- for the
-exact row count `r = μ.colLen 0` the beta-numbers are the hook lengths of the first column, and in
-general they describe a row of hook lengths --- needs the hook-length API and is developed in
-`TauCeti/Combinatorics/Young/HookLength/BetaNumbers.lean`.
+exact row count `r = μ.colLen 0` the beta-numbers of the nonempty rows `i < μ.colLen 0` are the
+hook lengths of the first column, and in general they describe a row of hook lengths --- needs the
+hook-length API and is developed in `TauCeti/Combinatorics/Young/HookLength/BetaNumbers.lean`.
 
 ## Main definitions
 
@@ -47,8 +47,8 @@ variable {μ : YoungDiagram} {r i j : ℕ}
 
 /-- The `i`-th **beta-number** of a Young diagram `μ`, relative to a bound `r` on its number of
 rows: the length of row `i` plus the number `r - 1 - i` of rows of the bounding `r`-row strip that
-lie below it. For `r = μ.colLen 0` this is the hook length of the first cell of row `i`; see
-`YoungDiagram.betaNumber_eq_hookLength`. -/
+lie below it. For `r = μ.colLen 0` and a nonempty row `i < μ.colLen 0` this is the hook length of
+the first cell of row `i`; see `YoungDiagram.betaNumber_eq_hookLength`. -/
 def betaNumber (μ : YoungDiagram) (r i : ℕ) : ℕ := μ.rowLen i + (r - 1 - i)
 
 theorem betaNumber_def (μ : YoungDiagram) (r i : ℕ) :

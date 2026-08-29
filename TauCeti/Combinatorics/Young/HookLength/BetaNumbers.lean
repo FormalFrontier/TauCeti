@@ -14,10 +14,11 @@ public import TauCeti.Combinatorics.Young.HookLength.Basic
 Fix a Young diagram `μ` and a bound `r` on its number of rows, and write `βᵢ` for the beta-number
 `YoungDiagram.betaNumber μ r i = μ.rowLen i + (r - 1 - i)` of row `i`, defined in
 `TauCeti/Combinatorics/Young/BetaNumbers.lean`. For the exact row count `r = μ.colLen 0`, and only
-for it, the beta-numbers are the hook lengths of the first column: `βᵢ` is then the hook length of
-the cell `(i, 0)` at the head of row `i` (`YoungDiagram.betaNumber_eq_hookLength`). A larger bound
-`r` does not merely append entries to that list; it raises every beta-number of a nonempty row by
-the excess `r - μ.colLen 0`, and contributes the beta-numbers `r - 1 - i` of the empty rows `i`.
+for it, the beta-numbers of the nonempty rows are the hook lengths of the first column: for
+`i < μ.colLen 0` the number `βᵢ` is the hook length of the cell `(i, 0)` at the head of row `i`
+(`YoungDiagram.betaNumber_eq_hookLength`). A larger bound `r` does not merely append entries to
+that list; it raises every beta-number of a nonempty row by the excess `r - μ.colLen 0`, and
+contributes the beta-numbers `r - 1 - i` of the empty rows `i`.
 
 The theorem of this file is the identity
 
@@ -53,12 +54,12 @@ when `(j, c) ∉ μ`. Disjointness plus a count of both sides then forces the un
 
 ## Main results
 
-* `YoungDiagram.betaNumber_eq_hookLength`: for `r = μ.colLen 0` the beta-numbers are the hook
-  lengths of the first column.
 * `YoungDiagram.hookLength_add_eq_betaNumber`: the complement of a hook length of row `i` inside
   `βᵢ` is `c + r - μ.colLen c`.
 * `YoungDiagram.betaNumber_sub_hookLength_ne_betaNumber`: that complement is not a beta-number `βⱼ`
   of an index `j < r`.
+* `YoungDiagram.betaNumber_eq_hookLength`: for `r = μ.colLen 0` the beta-numbers of the nonempty
+  rows `i < μ.colLen 0` are the hook lengths of the first column.
 * `YoungDiagram.image_betaNumber_sub_hookLength_union_image_betaNumber`: the row description of the
   hook lengths.
 * `YoungDiagram.prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial`: the identity for one row.
@@ -83,17 +84,6 @@ namespace YoungDiagram
 open Finset Nat
 
 variable {μ : YoungDiagram} {r i j c : ℕ}
-
-/-! ### Beta-numbers as hook lengths -/
-
-/-- Relative to the exact number of rows, the beta-numbers of a Young diagram are the hook lengths
-of its first column. -/
-@[simp]
-theorem betaNumber_eq_hookLength (hi : i < μ.colLen 0) :
-    μ.betaNumber (μ.colLen 0) i = μ.hookLength (i, 0) := by
-  have hrow : 0 < μ.rowLen i := mem_iff_lt_rowLen.mp (mem_iff_lt_colLen.mpr hi)
-  simp only [betaNumber_def, hookLength_def, armLength_def, legLength_def]
-  omega
 
 /-! ### The complement of a hook length in its beta-number -/
 
@@ -147,6 +137,20 @@ theorem betaNumber_sub_hookLength_ne_betaNumber (hi : i < r) (hc : c < μ.rowLen
     have h2 : μ.rowLen j ≤ c := Nat.not_lt.mp fun h => hm (mem_iff_lt_rowLen.mpr h)
     omega
 
+/-! ### Beta-numbers as hook lengths -/
+
+/-- Relative to the exact number of rows, the beta-numbers of the nonempty rows of a Young diagram
+are the hook lengths of its first column: the `c = 0`, `r = μ.colLen 0` case of
+`YoungDiagram.hookLength_add_eq_betaNumber`, where the complement `c + r - μ.colLen c` vanishes. -/
+@[simp]
+theorem betaNumber_eq_hookLength (hi : i < μ.colLen 0) :
+    μ.betaNumber (μ.colLen 0) i = μ.hookLength (i, 0) := by
+  have hrow : 0 < μ.rowLen i := mem_iff_lt_rowLen.mp (mem_iff_lt_colLen.mpr hi)
+  have := hookLength_add_eq_betaNumber (μ := μ) (c := 0) (r := μ.colLen 0) le_rfl hrow
+  omega
+
+/-! ### A row of hook lengths -/
+
 /-- The complements of the hook lengths of a row increase strictly, because the hook lengths of a
 row strictly decrease (`YoungDiagram.hookLength_lt_hookLength_of_col_lt`) and are bounded by the
 beta-number of that row. -/
@@ -176,8 +180,6 @@ private theorem disjoint_image_betaNumber_sub_hookLength (hr : μ.colLen 0 ≤ r
   simp only [disjoint_left, mem_image, mem_range, mem_Ico]
   rintro m ⟨c, hc, rfl⟩ ⟨j, ⟨-, hj⟩, hmj⟩
   exact betaNumber_sub_hookLength_ne_betaNumber (lt_of_lt_rowLen hr hc) hc hj hmj.symm
-
-/-! ### A row of hook lengths -/
 
 /-- **The hook lengths of a single row, through beta-numbers.** The complements
 `βᵢ - hookLength μ (i, c)` of the hook lengths of row `i`, together with the later beta-numbers
@@ -225,6 +227,12 @@ theorem prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial (hr : μ.colLen
 
 /-! ### The hook-length product -/
 
+/-- The cells of `μ` whose row index is `i` are the row `μ.row i`, by `YoungDiagram.mem_row_iff`. -/
+private theorem filter_cells_fst_eq_row (μ : YoungDiagram) (i : ℕ) :
+    {c ∈ μ.cells | c.1 = i} = μ.row i := by
+  ext c
+  simp [mem_row_iff, mem_cells]
+
 /-- A product over the cells of a diagram with at most `r` rows, read row by row: the cells are
 fibred over their row index by `Prod.fst`, and the fibre of `i` is the row `μ.row i`. -/
 private theorem prod_cells_eq_prod_range {M : Type*} [CommMonoid M] (hr : μ.colLen 0 ≤ r)
@@ -236,8 +244,7 @@ private theorem prod_cells_eq_prod_range {M : Type*} [CommMonoid M] (hr : μ.col
       ((mem_iff_lt_colLen.mp ((mem_cells _).mp hc)).trans_le (colLen_le_of_colLen_zero_le hr b))
   rw [← prod_fiberwise_of_maps_to hmaps f]
   refine prod_congr rfl fun i _ => ?_
-  rw [show {c ∈ μ.cells | c.1 = i} = μ.row i from rfl, row_eq_prod, Finset.prod_product,
-    prod_singleton]
+  rw [filter_cells_fst_eq_row, row_eq_prod, Finset.prod_product, prod_singleton]
 
 /-- **The hook-length product identity.** For a Young diagram `μ` with at most `r` rows, the
 product of all its hook lengths, multiplied by the Vandermonde-style product of the differences of
