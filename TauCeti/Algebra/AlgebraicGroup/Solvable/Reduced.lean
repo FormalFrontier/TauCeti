@@ -306,6 +306,8 @@ theorem of_injective_of_smooth (f : H ⟶ K) (hf : Function.Injective f.hom)
     derivedWordCoordinateAlgebra.smooth hK_smooth n
   let _ : IsReduced (derivedWordCoordinateAlgebra K n) :=
     isReduced_of_smooth_of_field k (derivedWordCoordinateAlgebra K n)
+  -- Point separation promotes the derived-word identity on geometric points of `K` to an
+  -- identity for its universal derived word.
   have hKuniv : HopfAlgebra.universalDerivedWord K n = 1 := by
     apply WithConv.ofConv_injective
     apply AlgHom.ext
@@ -320,6 +322,8 @@ theorem of_injective_of_smooth (f : H ⟶ K) (hf : Function.Injective f.hom)
       (CommAlgCat.of k (AlgebraicClosure k)) ↦ g.ofConv z) hq
     rw [hn] at hqz
     simpa [AlgHom.mapValue_apply, AlgHom.convOne_apply] using hqz
+  -- Naturality and injectivity of the iterated tensor power of `f` reflect that universal
+  -- identity from `K` to `H`.
   have hHuniv : HopfAlgebra.universalDerivedWord H n = 1 := by
     apply WithConv.ofConv_injective
     apply AlgHom.ext
@@ -342,6 +346,7 @@ theorem of_injective_of_smooth (f : H ⟶ K) (hf : Function.Injective f.hom)
       _ = (derivedWordCoordinateAlgebra.map f₀ n) ((1 : HopfAlgebra.points
           (R := k) (H := H) (CommAlgCat.of k (derivedWordCoordinateAlgebra H n))).ofConv z) := by
         rw [AlgHom.convOne_apply]
+  -- Specialize the universal identity for `H` to the requested tree of geometric points.
   rw [← HopfAlgebra.mapValue_universalDerivedWord (A := AlgebraicClosure k) H n x,
     hHuniv]
   apply WithConv.ofConv_injective
