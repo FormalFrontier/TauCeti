@@ -13,7 +13,7 @@ public import TauCeti.Algebra.Lie.GeneralLinear.Basic
 
 Mathlib defines an abstract `sl₂` triple (`IsSl2Triple h e f`: the relations `⁅e, f⁆ = h`,
 `⁅h, e⁆ = 2e`, `⁅h, f⁆ = -2f`, with `h ≠ 0`) and the whole primitive-vector calculus that rests on
-it. This file adds four things Mathlib does not have.
+it. This file adds three things Mathlib does not have.
 
 The first is a supply of triples, none being exhibited in the special linear Lie algebra. For every
 pair `i ≠ j` of indices, the matrix units

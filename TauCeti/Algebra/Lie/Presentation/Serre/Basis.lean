@@ -6,8 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Basis.Basic
-public import TauCeti.Algebra.Lie.Sl2.WeightString
+public import TauCeti.Algebra.Lie.Sl2.Basic
 public import TauCeti.Algebra.Lie.Presentation.Serre
+import TauCeti.Algebra.Lie.Sl2.WeightString
 
 /-!
 # The Serre system carried by a Lie algebra basis
@@ -86,7 +87,7 @@ theorem ad_pow_lie_lieBasis_e_e (i j : ι) :
   rcases eq_or_ne i j with rfl | hij
   · simp
   · rw [Matrix.transpose_apply]
-    exact ad_pow_lie_eq_zero_of_isSl2Triple (b.sl2 i)
+    exact ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero (b.sl2 i)
       (by rw [b.lie_h_e j i, Int.cast_smul_eq_zsmul])
       (by rw [← lie_skew, b.lie_e_f_ne j i hij.symm, neg_zero])
 

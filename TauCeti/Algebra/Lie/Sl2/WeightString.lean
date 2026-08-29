@@ -48,11 +48,13 @@ verifies for the standard triple of `sl (Fin 2) K`.
 
 ## Main results
 
-* `TauCeti.hasPrimitiveVectorWith_symm_of_lie`: a nonzero weight vector killed by the lowering
-  element is primitive for the symmetric triple, at the negated scalar weight.
+* `TauCeti.hasPrimitiveVectorWith_symm_of_ne_zero_of_lie_h_eq_smul_of_lie_f_eq_zero`: a nonzero
+  weight vector killed by the lowering element is primitive for the symmetric triple, at the
+  negated scalar weight.
 * `TauCeti.pow_toEnd_f_succ_toNat_eq_zero_of_hasPrimitiveVectorWith`: the endpoint of an
   integral-weight string in a torsion-free Noetherian module, with
-  `TauCeti.ad_pow_lie_eq_zero_of_isSl2Triple` as the consumer-facing adjoint consequence.
+  `TauCeti.ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero` as the
+  consumer-facing adjoint consequence.
 * `TauCeti.pow_toEnd_f_eq_zero_of_lt`: the string of a primitive vector of weight `n : ℕ` stops
   after `n` steps, not merely at step `n + 1`.
 * `TauCeti.linearIndependent_pow_toEnd_f`: the `n + 1` vectors of the string are linearly
@@ -91,7 +93,8 @@ variable {K L M : Type*} [CommRing K] [LieRing L]
 
 /-- A nonzero weight vector killed by the lowering element is primitive for the symmetric
 `sl₂`-triple, with the negated scalar weight. -/
-theorem hasPrimitiveVectorWith_symm_of_lie {h e f : L} {m : M} {a : K}
+theorem hasPrimitiveVectorWith_symm_of_ne_zero_of_lie_h_eq_smul_of_lie_f_eq_zero
+    {h e f : L} {m : M} {a : K}
     (ht : IsSl2Triple h e f) (hm : m ≠ 0)
     (hhm : ⁅h, m⁆ = a • m) (hfm : ⁅f, m⁆ = 0) :
     ht.symm.HasPrimitiveVectorWith (M := M) m (-a) where
@@ -223,7 +226,8 @@ variable [Module.IsTorsionFree K L] [IsNoetherian K L]
 /-- The higher-string relation supplied by an `sl₂`-triple: if `m` has integral weight `a` for
 `h` and is killed by `f`, then one bracket with `e` followed by `(-a).toNat` further adjoint
 applications vanishes. -/
-theorem ad_pow_lie_eq_zero_of_isSl2Triple {h e f m : L} {a : ℤ}
+theorem ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero
+    {h e f m : L} {a : ℤ}
     (ht : IsSl2Triple h e f)
     (hhm : ⁅h, m⁆ = ((a : ℤ) : K) • m) (hfm : ⁅f, m⁆ = 0) :
     ((LieAlgebra.ad K L e) ^ (-a).toNat) ⁅e, m⁆ = 0 := by
@@ -232,12 +236,10 @@ theorem ad_pow_lie_eq_zero_of_isSl2Triple {h e f m : L} {a : ℤ}
     simp
   · have P : ht.symm.HasPrimitiveVectorWith (M := L) m (((-a : ℤ) : K)) := by
       simpa only [Int.cast_neg] using
-        (hasPrimitiveVectorWith_symm_of_lie (K := K) ht hm hhm hfm)
+        (hasPrimitiveVectorWith_symm_of_ne_zero_of_lie_h_eq_smul_of_lie_f_eq_zero
+          (K := K) ht hm hhm hfm)
     have h0 := pow_toEnd_f_succ_toNat_eq_zero_of_hasPrimitiveVectorWith (K := K) P
-    have hadt : (LieAlgebra.ad K L e : Module.End K L) = LieModule.toEnd K L L e := by
-      ext w
-      simp
-    rw [← hadt, pow_succ, Module.End.mul_apply, LieAlgebra.ad_apply] at h0
+    rw [pow_succ, Module.End.mul_apply, LieModule.toEnd_apply_apply] at h0
     exact h0
 
 end AdjointFiniteString
