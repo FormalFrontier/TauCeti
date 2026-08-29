@@ -30,6 +30,8 @@ The definitions follow Rourke--Sanderson, *Introduction to Piecewise-Linear Topo
 
 * `PreAbstractSimplicialComplex.simplex`: the complex of nonempty subsets of a finite vertex set.
 * `PreAbstractSimplicialComplex.simplexBoundary`: its proper faces.
+* `AbstractSimplicialComplex.standardSimplexBoundary`: the boundary complex of the standard
+  `(n + 1)`-simplex.
 -/
 
 public section
@@ -221,3 +223,44 @@ theorem mem_simplex_iff_mem_simplexBoundary_or_eq :
     · exact self_mem_simplex.mpr hV
 
 end PreAbstractSimplicialComplex
+
+namespace AbstractSimplicialComplex
+
+private theorem singleton_mem_standardSimplexBoundaryPrecomplex (n : ℕ) (v : Fin (n + 2)) :
+    {v} ∈ (PreAbstractSimplicialComplex.simplexBoundary
+      (Finset.univ : Finset (Fin (n + 2)))).faces := by
+  exact PreAbstractSimplicialComplex.singleton_mem_simplexBoundary.mpr
+    ⟨Finset.mem_univ v, by
+      intro h
+      have := congrArg Finset.card h
+      simp at this⟩
+
+/-- The boundary complex of the standard `(n + 1)`-simplex.  Its vertices are `Fin (n + 2)` and
+its faces are the nonempty proper subsets of all vertices. -/
+def standardSimplexBoundary (n : ℕ) : AbstractSimplicialComplex (Fin (n + 2)) :=
+  { PreAbstractSimplicialComplex.simplexBoundary
+      (Finset.univ : Finset (Fin (n + 2))) with
+    singleton_mem := singleton_mem_standardSimplexBoundaryPrecomplex n }
+
+/-- The underlying precomplex of `standardSimplexBoundary n` is the boundary of the simplex on
+all `n + 2` vertices. -/
+@[simp]
+theorem standardSimplexBoundary_toPreAbstractSimplicialComplex (n : ℕ) :
+    (standardSimplexBoundary n).toPreAbstractSimplicialComplex =
+      PreAbstractSimplicialComplex.simplexBoundary
+        (Finset.univ : Finset (Fin (n + 2))) :=
+  by
+    ext σ
+    rfl
+
+/-- The faces of the standard simplex boundary are exactly the nonempty proper subsets of its
+vertex set. -/
+@[simp]
+theorem mem_standardSimplexBoundary_iff {n : ℕ} {σ : Finset (Fin (n + 2))} :
+    σ ∈ standardSimplexBoundary n ↔ σ.Nonempty ∧ σ ⊂ Finset.univ :=
+  by
+    rw [← mem_toPreAbstractSimplicialComplex,
+      standardSimplexBoundary_toPreAbstractSimplicialComplex,
+      PreAbstractSimplicialComplex.mem_simplexBoundary]
+
+end AbstractSimplicialComplex

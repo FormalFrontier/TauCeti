@@ -51,31 +51,6 @@ arguments below combine terms whose instances would otherwise be the syntactical
 local instance (priority := 2000) finDecidableEq (n : ℕ) : DecidableEq (Fin n) :=
   Classical.decEq _
 
-/-- The boundary complex of the standard `(n + 1)`-simplex.  Its vertices are `Fin (n + 2)` and
-its faces are the nonempty proper subsets of all vertices. -/
-def standardSimplexBoundary (n : ℕ) : AbstractSimplicialComplex (Fin (n + 2)) :=
-  { PreAbstractSimplicialComplex.simplexBoundary
-      (Finset.univ : Finset (Fin (n + 2))) with
-    singleton_mem := fun v => by
-      change {v} ∈ PreAbstractSimplicialComplex.simplexBoundary
-        (Finset.univ : Finset (Fin (n + 2)))
-      rw [PreAbstractSimplicialComplex.singleton_mem_simplexBoundary]
-      refine ⟨Finset.mem_univ v, ?_⟩
-      intro h
-      have := congrArg Finset.card h
-      simp at this }
-
-/-- The underlying precomplex of `standardSimplexBoundary n` is the boundary of the simplex on
-all `n + 2` vertices. -/
-@[simp]
-theorem standardSimplexBoundary_toPreAbstractSimplicialComplex (n : ℕ) :
-    (standardSimplexBoundary n).toPreAbstractSimplicialComplex =
-      PreAbstractSimplicialComplex.simplexBoundary
-        (Finset.univ : Finset (Fin (n + 2))) :=
-  by
-    ext σ
-    rfl
-
 private noncomputable def sphereAffineBasis (n : ℕ) :
     AffineBasis (Fin (n + 2)) ℝ (EuclideanSpace ℝ (Fin (n + 1))) :=
   Classical.choice (AffineBasis.exists_affineBasis_of_finiteDimensional (by simp))
@@ -149,9 +124,7 @@ private theorem boundaryToPolytope_mem_frontier (n : ℕ)
   rw [mem_frontier_simplexPolytope_iff]
   refine ⟨fun i => boundaryToPolytope_coord n x i ▸ Realization.nonneg _ x i, ?_⟩
   have hsupp := support_mem (standardSimplexBoundary n) x
-  rw [← mem_toPreAbstractSimplicialComplex,
-    standardSimplexBoundary_toPreAbstractSimplicialComplex,
-    PreAbstractSimplicialComplex.mem_simplexBoundary] at hsupp
+  rw [mem_standardSimplexBoundary_iff] at hsupp
   obtain ⟨i, hi⟩ : ∃ i : Fin (n + 2), i ∉ x.1.support := by
     by_contra h
     have huniv : x.1.support = Finset.univ :=
@@ -187,9 +160,7 @@ private theorem boundaryWeights_sum_eq_one (n : ℕ)
 private theorem boundaryWeights_support_mem (n : ℕ)
     (y : {y // y ∈ frontier (simplexPolytope n)}) :
     (boundaryWeights n y).support ∈ standardSimplexBoundary n := by
-  rw [← mem_toPreAbstractSimplicialComplex,
-    standardSimplexBoundary_toPreAbstractSimplicialComplex,
-    PreAbstractSimplicialComplex.mem_simplexBoundary]
+  rw [mem_standardSimplexBoundary_iff]
   constructor
   · rw [Finsupp.support_nonempty_iff]
     intro hzero
@@ -208,6 +179,12 @@ private noncomputable def boundaryWeightsPoint (n : ℕ)
   ⟨boundaryWeights n y, by
     rw [Finset.coe_image, mem_standardSimplex_iff]
     exact ⟨boundaryWeights_nonneg n y, boundaryWeights_sum_eq_one n y, Finset.Subset.rfl⟩⟩
+
+@[simp]
+private theorem boundaryWeightsPoint_val (n : ℕ)
+    (y : {y // y ∈ frontier (simplexPolytope n)}) :
+    (boundaryWeightsPoint n y : Fin (n + 2) →₀ ℝ) = boundaryWeights n y :=
+  rfl
 
 private noncomputable def polytopeToBoundary (n : ℕ)
     (y : {y // y ∈ frontier (simplexPolytope n)}) :
@@ -261,9 +238,7 @@ private theorem iUnion_zeroCoordSet (n : ℕ) :
 private def boundaryFacet (n : ℕ) (i : Fin (n + 2)) :
     Face (standardSimplexBoundary n) :=
   ⟨Finset.univ.erase i, by
-    rw [← mem_toPreAbstractSimplicialComplex,
-      standardSimplexBoundary_toPreAbstractSimplicialComplex,
-      PreAbstractSimplicialComplex.mem_simplexBoundary]
+    rw [mem_standardSimplexBoundary_iff]
     refine ⟨?_, Finset.erase_ssubset (Finset.mem_univ i)⟩
     rw [Finset.nonempty_iff_ne_empty]
     intro h
@@ -284,6 +259,12 @@ private noncomputable def fixedBoundaryWeightsPoint (n : ℕ) (i : Fin (n + 2))
     exact (Finsupp.mem_support_iff.mp hj) (by
       simpa only [boundaryWeights_apply] using hyzero)⟩
 
+@[simp]
+private theorem fixedBoundaryWeightsPoint_val (n : ℕ) (i : Fin (n + 2))
+    (y : zeroCoordSet n i) :
+    (fixedBoundaryWeightsPoint n i y : Fin (n + 2) →₀ ℝ) = boundaryWeights n y.1 :=
+  rfl
+
 private noncomputable def fixedPolytopeToBoundary (n : ℕ) (i : Fin (n + 2))
     (y : zeroCoordSet n i) : Realization (standardSimplexBoundary n) :=
   faceInclusion (standardSimplexBoundary n) (boundaryFacet n i)
@@ -303,8 +284,7 @@ private theorem polytopeToBoundary_eq_fixed (n : ℕ) (i : Fin (n + 2))
     polytopeToBoundary n y.1 = fixedPolytopeToBoundary n i y := by
   apply Subtype.ext
   rw [polytopeToBoundary, fixedPolytopeToBoundary, faceInclusion_val, faceInclusion_val]
-  change boundaryWeights n y.1 = boundaryWeights n y.1
-  rfl
+  rw [boundaryWeightsPoint_val, fixedBoundaryWeightsPoint_val]
 
 private theorem continuousOn_iUnion_finset_of_isClosed {X Y I : Type*}
     [TopologicalSpace X] [TopologicalSpace Y] {f : X → Y} (s : Finset I) (u : I → Set X)
