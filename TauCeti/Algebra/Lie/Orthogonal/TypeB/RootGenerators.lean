@@ -65,6 +65,14 @@ def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
   single (.inr (.inl i)) (.inr (.inl j)) 1 -
     single (.inr (.inr j)) (.inr (.inr i)) 1
 
+omit [Fintype ι] in
+/-- The long type-`B` root matrix as a difference of two matrix units. -/
+theorem typeBLongRootMatrix_def (i j : ι) (hij : i ≠ j) :
+    typeBLongRootMatrix (K := K) i j hij =
+      single (.inr (.inl i)) (.inr (.inl j)) 1 -
+        single (.inr (.inr j)) (.inr (.inr i)) 1 :=
+  (rfl)
+
 /-- The long-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBLongRootMatrix_mem_typeB (i j : ι) (hij : i ≠ j) :
     typeBLongRootMatrix (K := K) i j hij ∈ LieAlgebra.Orthogonal.typeB ι K := by
@@ -151,9 +159,23 @@ normalization adapted to the middle coefficient `2` in `LieAlgebra.Orthogonal.JB
 def typeBShortRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1
 
+omit [Fintype ι] in
+/-- The positive short type-`B` root matrix as a difference of two matrix units. -/
+theorem typeBShortRootMatrix_def (i : ι) :
+    typeBShortRootMatrix (K := K) i =
+      single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1 :=
+  (rfl)
+
 /-- The ambient root matrix for the opposite short root `-εᵢ`. -/
 def typeBShortNegativeRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2
+
+omit [Fintype ι] in
+/-- The negative short type-`B` root matrix as a difference of two matrix units. -/
+theorem typeBShortNegativeRootMatrix_def (i : ι) :
+    typeBShortNegativeRootMatrix (K := K) i =
+      single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2 :=
+  (rfl)
 
 /-- The positive short-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBShortRootMatrix_mem_typeB (i : ι) :
