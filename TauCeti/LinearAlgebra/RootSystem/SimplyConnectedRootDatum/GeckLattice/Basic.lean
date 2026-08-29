@@ -132,15 +132,8 @@ theorem intCast_geckCoordinateBasisFin_repr
     (v : (t.geckCoordinateLattice ht).toAddSubgroup) (i : Fin (t.geckDim ht)) :
     ((t.geckCoordinateBasisFin ht).repr v i : ℚ) =
       (v : t.GeckIndex ht → ℚ) ((Fintype.equivFin (t.GeckIndex ht)).symm i) := by
-  unfold geckCoordinateBasisFin geckCoordinateBasis geckCoordinateLattice
-    TauCeti.coordinateLatticeBasis TauCeti.coordinateLattice at *
-  rw [Module.Basis.repr_reindex_apply]
-  let v' : Submodule.span ℤ (Set.range (Pi.basisFun ℚ (t.GeckIndex ht))) :=
-    ⟨v, v.property⟩
-  change ((Module.Basis.restrictScalars ℤ (Pi.basisFun ℚ (t.GeckIndex ht))).repr v'
-      ((Fintype.equivFin (t.GeckIndex ht)).symm i) : ℚ) = _
-  rw [← eq_intCast (algebraMap ℤ ℚ) _, Module.Basis.restrictScalars_repr_apply]
-  rfl
+  rw [geckCoordinateBasisFin, Module.Basis.repr_reindex_apply]
+  exact TauCeti.intCast_coordinateLatticeBasis_repr (t.GeckIndex ht) v _
 
 /-- The integral weight of a finite-ordinal Geck coordinate basis vector. The Cartan argument uses
 the Bourbaki numbering, while the coordinate argument uses the `Fintype.equivFin` ordering of
@@ -161,22 +154,22 @@ theorem isCartanWeightVector_geckCoordinateBasisFin (i : Fin (t.geckDim ht)) :
 the latter contains every standard coordinate vector. -/
 theorem geckCoordinateLattice_le_geckOrbit :
     t.geckCoordinateLattice ht ≤ t.geckOrbit ht := by
-  rw [geckCoordinateLattice, TauCeti.coordinateLattice_def, Submodule.span_le]
-  rintro - ⟨i, rfl⟩
-  rw [Pi.basisFun_apply]
-  exact t.single_mem_geckOrbit ht i
+  intro v hv
+  rw [geckCoordinateLattice] at hv
+  refine TauCeti.coordinateLattice_induction (t.GeckIndex ht) hv ?_ (zero_mem _) ?_ ?_
+  · intro i
+    rw [Pi.basisFun_apply]
+    exact t.single_mem_geckOrbit ht i
+  · intro x y hx hy
+    exact add_mem hx hy
+  · intro z x hx
+    exact Submodule.smul_mem _ z hx
 
 /-- The coordinate lattice is finitely generated over `ℤ` and spans the ambient rational Geck
 module. -/
 instance instIsLatticeGeckCoordinateLattice :
     Submodule.IsLattice ℚ (t.geckCoordinateLattice ht) where
-  fg := by
-    rw [geckCoordinateLattice, TauCeti.coordinateLattice_def]
-    exact Submodule.fg_span (Set.finite_range _)
-  span_eq_top := by
-    rw [geckCoordinateLattice, TauCeti.coordinateLattice_def,
-      Submodule.span_span_of_tower,
-      (Pi.basisFun ℚ (t.GeckIndex ht)).span_eq]
+  __ := TauCeti.instIsLatticeCoordinateLattice (t.GeckIndex ht)
 
 /-! ## Stability under integral matrices -/
 
@@ -304,15 +297,29 @@ theorem geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice
     t.geckRepresentation ht
         (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i)) n) v ∈
       t.geckCoordinateLattice ht := by
-  rw [geckCoordinateLattice, TauCeti.coordinateLattice_def] at hv ⊢
+  rw [geckCoordinateLattice] at hv ⊢
   rw [Ring.map_choose]
-  apply ringChoose_end_apply_mem_span_of_apply_eq_intCast_smul
-    (weight := fun x => t.geckWeight ht x i) (n := n) ?_ hv
-  intro x
-  rw [Pi.basisFun_apply]
-  exact (UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-    (h := (t.lieBasis ht).h) (ρ := t.geckRepresentation ht)).1
-      (t.isCartanWeightVector_geckRepresentation_single ht x) i
+  refine TauCeti.coordinateLattice_induction (t.GeckIndex ht)
+    (p := fun w => Ring.choose (t.geckRepresentation ht
+      (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i))) n w ∈
+        TauCeti.coordinateLattice (t.GeckIndex ht)) (v := v) hv ?_ ?_ ?_ ?_
+  · intro x
+    rw [Pi.basisFun_apply]
+    have hweight := (UniversalEnvelopingAlgebra.isCartanWeightVector_iff
+      (h := (t.lieBasis ht).h) (ρ := t.geckRepresentation ht)).1
+        (t.isCartanWeightVector_geckRepresentation_single ht x) i
+    rw [ringChoose_end_apply_of_apply_eq_smul hweight n, TauCeti.Ring.choose_intCast,
+      Int.cast_smul_eq_zsmul ℚ]
+    rw [← Pi.basisFun_apply]
+    exact zsmul_mem (TauCeti.basisFun_mem_coordinateLattice (t.GeckIndex ht) x) _
+  · rw [map_zero]
+    exact zero_mem _
+  · intro x y hx hy
+    rw [map_add]
+    exact add_mem hx hy
+  · intro z x hx
+    rw [map_zsmul]
+    exact Submodule.smul_mem _ z hx
 
 /-! ## Divided powers of the numbered root generators -/
 
@@ -383,8 +390,8 @@ theorem geckOrbit_le_geckCoordinateLattice :
   · rw [← LieAlgebra.Basis.kostantForm_def, ← t.kostantForm_def ht]
     exact hu
   · rw [← Pi.basisFun_apply (R := ℚ)]
-    rw [geckCoordinateLattice, TauCeti.coordinateLattice_def]
-    exact Submodule.subset_span (mem_range_self x)
+    rw [geckCoordinateLattice]
+    exact TauCeti.basisFun_mem_coordinateLattice (t.GeckIndex ht) x
 
 /-- **The integral orbit of the standard coordinate vectors is the coordinate lattice.** The
 containment `TauCeti.DynkinType.geckCoordinateLattice_le_geckOrbit` holds because the identity of

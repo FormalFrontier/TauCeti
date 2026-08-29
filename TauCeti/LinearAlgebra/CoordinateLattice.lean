@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Module.Lattice
 public import Mathlib.LinearAlgebra.Basis.Submodule
 public import Mathlib.LinearAlgebra.StdBasis
 
@@ -33,15 +34,11 @@ namespace TauCeti
 
 universe u
 
-variable (ι : Type u) [Fintype ι]
+variable (ι : Type u) [Finite ι]
 
 /-- The standard integral lattice in the rational coordinate space `ι → ℚ`. -/
-@[expose] def coordinateLattice : Submodule ℤ (ι → ℚ) :=
+def coordinateLattice : Submodule ℤ (ι → ℚ) :=
   Submodule.span ℤ (Set.range (Pi.basisFun ℚ ι))
-
-/-- The coordinate lattice is the span of the standard basis. -/
-theorem coordinateLattice_def :
-    coordinateLattice ι = Submodule.span ℤ (Set.range (Pi.basisFun ℚ ι)) := rfl
 
 /-- A rational coordinate vector lies in the standard lattice exactly when every coordinate is
 an integer. -/
@@ -56,8 +53,25 @@ theorem basisFun_mem_coordinateLattice (i : ι) :
   rw [coordinateLattice]
   exact Submodule.subset_span (Set.mem_range_self i)
 
+/-- To prove a property of every vector in the coordinate lattice, it is enough to prove it for
+the standard coordinate vectors and show that it is preserved by the `ℤ`-module operations. -/
+theorem coordinateLattice_induction {p : (ι → ℚ) → Prop} {v : ι → ℚ}
+    (hv : v ∈ coordinateLattice ι)
+    (basis : ∀ i, p (Pi.basisFun ℚ ι i))
+    (zero : p 0)
+    (add : ∀ x y, p x → p y → p (x + y))
+    (smul : ∀ (z : ℤ) x, p x → p (z • x)) : p v := by
+  rw [coordinateLattice] at hv
+  induction hv using Submodule.span_induction with
+  | mem x hx =>
+      obtain ⟨i, rfl⟩ := hx
+      exact basis i
+  | zero => exact zero
+  | add x y _ _ hx hy => exact add x y hx hy
+  | smul z x _ hx => exact smul z x hx
+
 /-- The standard coordinate vectors, regarded as a basis of the coordinate lattice over `ℤ`. -/
-@[expose] noncomputable def coordinateLatticeBasis :
+noncomputable def coordinateLatticeBasis :
     Module.Basis ι ℤ (coordinateLattice ι) :=
   (Pi.basisFun ℚ ι).restrictScalars ℤ
 
@@ -72,7 +86,16 @@ coordinate. -/
 @[simp] theorem intCast_coordinateLatticeBasis_repr (v : coordinateLattice ι) (i : ι) :
     ((coordinateLatticeBasis ι).repr v i : ℚ) = (v : ι → ℚ) i := by
   unfold coordinateLatticeBasis coordinateLattice at *
-  rw [← eq_intCast (algebraMap ℤ ℚ) _, Module.Basis.restrictScalars_repr_apply]
-  rfl
+  rw [← eq_intCast (algebraMap ℤ ℚ) _, Module.Basis.restrictScalars_repr_apply,
+    Pi.basisFun_repr]
+
+/-- The standard coordinate lattice is finitely generated and spans its rational coordinate
+space. -/
+instance instIsLatticeCoordinateLattice : Submodule.IsLattice ℚ (coordinateLattice ι) where
+  fg := by
+    rw [coordinateLattice]
+    exact Submodule.fg_span (Set.finite_range _)
+  span_eq_top := by
+    rw [coordinateLattice, Submodule.span_span_of_tower, (Pi.basisFun ℚ ι).span_eq]
 
 end TauCeti

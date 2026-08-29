@@ -362,23 +362,28 @@ theorem rep_ringChoose_cartanGenerator_mem_lattice (i : Fin r) (n : ℕ)
     {v : Fin (r + 1) → ℚ} (hv : v ∈ lattice r) :
     rep r (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator r i)) n) v ∈
       lattice r := by
-  rw [lattice, TauCeti.coordinateLattice_def] at hv ⊢
-  induction hv using Submodule.span_induction with
-  | mem v hv =>
-      obtain ⟨x, rfl⟩ := hv
-      rw [Pi.basisFun_apply, Ring.map_choose]
-      have hweight := (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-        (cartanGenerator r) (rep r)).1 (isCartanWeightVector_single r x) i
-      rw [ringChoose_end_apply_of_apply_eq_smul hweight n, TauCeti.Ring.choose_intCast,
-        Int.cast_smul_eq_zsmul ℚ]
-      have hx : Pi.single x (1 : ℚ) ∈
-          Submodule.span ℤ (Set.range (Pi.basisFun ℚ (Fin (r + 1)))) := by
-        rw [← Pi.basisFun_apply]
-        exact Submodule.subset_span (Set.mem_range_self x)
-      exact Submodule.smul_mem _ _ hx
-  | zero => rw [map_zero]; exact zero_mem _
-  | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
-  | smul z x _ hx => rw [map_zsmul]; exact Submodule.smul_mem _ z hx
+  rw [lattice] at hv ⊢
+  refine TauCeti.coordinateLattice_induction (Fin (r + 1))
+    (p := fun w => rep r
+      (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator r i)) n) w ∈
+        TauCeti.coordinateLattice (Fin (r + 1))) (v := v) hv ?_ ?_ ?_ ?_
+  · intro x
+    rw [Pi.basisFun_apply, Ring.map_choose]
+    have hweight := (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
+      (cartanGenerator r) (rep r)).1 (isCartanWeightVector_single r x) i
+    rw [ringChoose_end_apply_of_apply_eq_smul hweight n, TauCeti.Ring.choose_intCast,
+      Int.cast_smul_eq_zsmul ℚ]
+    rw [← Pi.basisFun_apply]
+    exact Submodule.smul_mem _ _
+      (TauCeti.basisFun_mem_coordinateLattice (Fin (r + 1)) x)
+  · rw [map_zero]
+    exact zero_mem _
+  · intro x y hx hy
+    rw [map_add]
+    exact add_mem hx hy
+  · intro z x hx
+    rw [map_zsmul]
+    exact Submodule.smul_mem _ z hx
 
 /-- **The standard lattice is an admissible lattice**: the Kostant `ℤ`-form presented by the
 numbered Chevalley generators preserves it. -/
