@@ -205,6 +205,19 @@ theorem coe_pointsMulEquiv_apply (A : CommAlgCat.{v} ℤ)
   exact GeneralLinear.coe_hopfIdealPointsSubgroupMulEquiv_apply
     ((n + 1) + (n + 1)) (definingIdeal n) A q
 
+/-- Including the ambient Hopf-algebra point underlying the inverse of `pointsMulEquiv` recovers
+the point corresponding to the underlying matrix. -/
+@[simp]
+theorem quotientPointsHom_pointsMulEquiv_symm (A : CommAlgCat.{v} ℤ) (g : points n A) :
+    CommHopfAlgCat.quotientPointsHom
+        (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) (definingIdeal n) A
+        ((pointsMulEquiv n A).symm g) =
+      (GeneralLinear.pointsMulEquiv (R := ℤ) ((n + 1) + (n + 1))).symm
+        (g : Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) := by
+  simp only [pointsMulEquiv, MulEquiv.symm_trans_apply, MulEquiv.symm_symm]
+  rw [GeneralLinear.quotientPointsHom_hopfIdealPointsSubgroupMulEquiv_symm,
+    MulEquiv.subgroupCongr_apply]
+
 /-- The pointwise identification with quotient Hopf-algebra points is natural in the value
 algebra. -/
 @[simp]
