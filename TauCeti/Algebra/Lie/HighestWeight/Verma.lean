@@ -438,6 +438,10 @@ vector of `L(lam)` is reached. -/
 noncomputable def irreducibleQuotientMk : VermaModule b lam →ₗ⁅K,L⁆ irreducibleQuotient b lam :=
   LieSubmodule.Quotient.mk' (maximalSubmodule H (VermaModule b lam) lam)
 
+/-- **The canonical projection onto `L(lam)` is surjective**: every vector of `L(lam)` is the
+class of one of `M(lam)`. This is the elimination rule matching
+`TauCeti.irreducibleQuotientMk`, and it is what lets a statement about `L(lam)` be checked on
+representatives without unfolding the quotient. -/
 theorem irreducibleQuotientMk_surjective : Function.Surjective (irreducibleQuotientMk b lam) :=
   fun q => LieSubmodule.Quotient.surjective_mk' _ q
 
