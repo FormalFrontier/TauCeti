@@ -3,7 +3,8 @@ name: Auto-merge
 # Merge a PR automatically once it is genuinely ready, WITHOUT generating any reviews here (that is
 # expensive — it spends API budget — and is gated off in review.yml). Reviews are produced by people
 # running tauceti-review / tauceti locally and posting a head-pinned scoreboard comment. This workflow
-# reads the newest such scoreboard and merges when ready; TauCetiData is a separate analytics archive.
+# reconciles the queue from all current-head scoreboards and live review markers; TauCetiData is a
+# separate analytics archive.
 #
 # It calls the lightweight TauCetiReview merge-only workflow, which mints no provider keys, runs no
 # reviewer, and merges only when the engine's own rule says so: build green on HEAD, every blocking
@@ -12,33 +13,42 @@ name: Auto-merge
 # gate; trusted CI supplies the build, scope, axiom, path, and bump-guard boundaries.
 
 on:
+  # A pushed head is immediately unsafe until it has current-head reviews.
+  pull_request_target:
+    types: [synchronize]
   # Head is freshly green: re-check whether this PR is now mergeable.
   workflow_run:
     workflows: ["pr-build"]
     types: [completed]
-  # A review scoreboard was just posted or edited (a local review may have turned the PR green).
+  # A scoreboard or live-review marker changed. Deletion matters: finishing a review removes its
+  # marker and should immediately make an otherwise-green head eligible again.
   issue_comment:
-    types: [created, edited]
+    types: [created, edited, deleted]
 
 permissions:
   contents: read
   pull-requests: read
 
 concurrency:
-  group: auto-merge-${{ github.event.issue.number || github.event.workflow_run.head_sha }}
+  group: auto-merge-${{ github.event.issue.number || github.event.pull_request.number || github.event.workflow_run.head_sha }}
   cancel-in-progress: false
 
 jobs:
   resolve:
     runs-on: ubuntu-latest
-    # Only react to a successful build, or to a comment carrying the scoreboard marker on a PR.
+    # Only react to a head update, a successful build, or a review-state comment on a PR. For edits,
+    # inspect the old body too so removing a marker still triggers reconciliation.
     if: >
-      (github.event_name == 'workflow_run'
+      github.event_name == 'pull_request_target'
+      || (github.event_name == 'workflow_run'
         && github.event.workflow_run.conclusion == 'success'
         && github.event.workflow_run.event == 'pull_request_target')
       || (github.event_name == 'issue_comment'
         && github.event.issue.pull_request != null
-        && contains(github.event.comment.body, 'tauceti-meta:v1'))
+        && (contains(github.event.comment.body, 'tauceti-scoreboard')
+          || contains(github.event.comment.body, 'tauceti-review-in-progress')
+          || contains(github.event.changes.body.from, 'tauceti-scoreboard')
+          || contains(github.event.changes.body.from, 'tauceti-review-in-progress')))
     outputs:
       pr: ${{ steps.r.outputs.pr }}
     steps:
@@ -48,25 +58,28 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "issue_comment" ]; then
-            echo "pr=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
-          else
-            pr="${{ github.event.workflow_run.pull_requests[0].number }}"
-            if [ -z "$pr" ]; then
-              pr=$(gh api "repos/$REPO/commits/${{ github.event.workflow_run.head_sha }}/pulls" --jq '.[0].number // empty')
-            fi
-            echo "pr=$pr" >> "$GITHUB_OUTPUT"
-          fi
+          case "${{ github.event_name }}" in
+            issue_comment)
+              pr="${{ github.event.issue.number }}" ;;
+            pull_request_target)
+              pr="${{ github.event.pull_request.number }}" ;;
+            *)
+              pr="${{ github.event.workflow_run.pull_requests[0].number }}"
+              if [ -z "$pr" ]; then
+                pr=$(gh api "repos/$REPO/commits/${{ github.event.workflow_run.head_sha }}/pulls" --jq '.[0].number // empty')
+              fi ;;
+          esac
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
 
   merge:
     needs: resolve
     if: ${{ needs.resolve.outputs.pr != '' }}
     # Pinned to a TauCetiReview commit; bump deliberately. The reusable workflow receives the App
     # secrets, so a floating @main would be a supply-chain risk.
-    uses: TauCetiProject/TauCetiReview/.github/workflows/merge-only.yml@a66b04d97721565b13c8abe07f750fb1d2959ad5
+    uses: TauCetiProject/TauCetiReview/.github/workflows/merge-only.yml@e4607c8728dbf7d68b9e30ddfa3ef559f9e555bd
     with:
       pr: ${{ needs.resolve.outputs.pr }}
-      review_ref: a66b04d97721565b13c8abe07f750fb1d2959ad5
+      review_ref: e4607c8728dbf7d68b9e30ddfa3ef559f9e555bd
     # Pass only the App credentials merge-only needs, not all of TauCeti's secrets.
     secrets:
       APP_ID: ${{ secrets.APP_ID }}

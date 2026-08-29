@@ -239,6 +239,14 @@ private def diagUnit (u : (ZMod N)ˣ) : SpecialLinearGroup (Fin 2) (ZMod N) :=
 private lemma coe_diagUnit (u : (ZMod N)ˣ) :
     (diagUnit u : Matrix (Fin 2) (Fin 2) (ZMod N)) = !![(↑u⁻¹ : ZMod N), 0; 0, ↑u] := rfl
 
+/-- **The value of Mathlib's `Gamma0Map`**: the lower-right entry of the matrix, reduced mod `N`.
+
+`Gamma0Map` is a bare `MonoidHom.mk`, so this holds definitionally; naming it keeps that one
+definitional step out of the `simp` sets that consume it, and gives downstream files a lemma to
+rewrite with instead of unfolding the definition. -/
+theorem Gamma0Map_apply (g : ↥(Gamma0 N)) :
+    Gamma0Map N g = (((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℤ) : ZMod N) := (rfl)
+
 /-- `(Gamma0Map N).toHomUnits` is surjective: every unit `u ∈ (ZMod N)ˣ` is realized as the
 lower-right entry of some `g ∈ Gamma0 N`, by strong approximation for `SL₂`. -/
 theorem Gamma0Map_toHomUnits_surjective :
@@ -280,7 +288,7 @@ lemma gamma0Twist_mem_Gamma0 {p : ℕ} (h : Nat.Coprime p N) : gamma0Twist N p h
 lemma Gamma0Map_toHomUnits_gamma0Twist {p : ℕ} (h : Nat.Coprime p N) :
     (Gamma0Map N).toHomUnits ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩ =
       ZMod.unitOfCoprime p h :=
-  Units.ext (by simp [Gamma0Map, gamma0Twist_apply_one_one h])
+  Units.ext (by simp [Gamma0Map_apply, gamma0Twist_apply_one_one h])
 
 /-- `-I` lies in `Γ₀(N)`: its lower-left entry is `0`. -/
 theorem neg_one_mem_Gamma0 : (-1 : SL(2, ℤ)) ∈ Gamma0 N := by
@@ -296,7 +304,7 @@ lemma Gamma0.coe_negOne (N : ℕ) : (Gamma0.negOne N : SL(2, ℤ)) = -1 := (rfl)
 /-- The lower-right entry of `-I ∈ Γ₀(N)` is `-1`. -/
 @[simp]
 theorem Gamma0Map_negOne : Gamma0Map N (Gamma0.negOne N) = -1 := by
-  simp [Gamma0Map, Gamma0.coe_negOne]
+  simp [Gamma0Map_apply, Gamma0.coe_negOne]
 
 /-- The unit-valued lower-right entry of `-I ∈ Γ₀(N)` is the unit `-1`. -/
 @[simp]

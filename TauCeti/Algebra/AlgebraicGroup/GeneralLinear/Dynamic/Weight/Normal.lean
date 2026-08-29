@@ -253,7 +253,7 @@ private theorem mkQuotient_comp_eqToIso {H : _root_.CommHopfAlgCat.{u} R}
 
 /-- The quotient-coordinate isomorphism underlying the identification of the relative
 weight-Levi quotient spectrum. -/
-private noncomputable def weightLeviInParabolicCoordinateIso (w : Fin N → ℤ) :
+noncomputable def weightLeviInParabolicCoordinateIso (w : Fin N → ℤ) :
     weightLeviCoordinateHopfAlgebra R w ≅
       CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
         (weightLeviInParabolicHopfIdeal R w) :=
@@ -263,6 +263,22 @@ private noncomputable def weightLeviInParabolicCoordinateIso (w : Fin N → ℤ)
       (weightParabolicCoordinateMap R w)
       (weightParabolicCoordinateMap_surjective R w)
       (weightLeviInParabolicHopfIdeal R w)
+
+/-- The relative Levi coordinate identification commutes with the two inclusions into the
+ambient general linear coordinate algebra. -/
+@[simp]
+theorem mkQuotient_weightLevi_comp_weightLeviInParabolicCoordinateIso_hom
+    (w : Fin N → ℤ) :
+    CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra R N)
+          (weightLeviDefiningHopfIdeal R w) ≫
+        (weightLeviInParabolicCoordinateIso R w).hom =
+      weightParabolicCoordinateMap R w ≫
+        CommHopfAlgCat.mkQuotient (weightParabolicCoordinateHopfAlgebra R w)
+          (weightLeviInParabolicHopfIdeal R w) := by
+  rw [weightLeviInParabolicCoordinateIso, Iso.trans_hom, ← Category.assoc,
+    mkQuotient_comp_eqToIso (R := R)
+      (weightLeviInParabolicHopfIdeal_comapOfSurjective R w).symm,
+    CommHopfAlgCat.mkQuotient_comp_quotientIsoOfSurjective_hom]
 
 /-- The relative quotient spectrum cut out inside the weight parabolic is canonically
 isomorphic to the weight-Levi group scheme. -/
@@ -385,7 +401,7 @@ theorem weightLeviInParabolicGroupSchemeIso_hom_comp_weightLeviToParabolic
 
 /-- The quotient-coordinate isomorphism underlying the identification of the relative
 weight-unipotent quotient spectrum. -/
-private noncomputable def weightUnipotentInParabolicCoordinateIso (w : Fin N → ℤ) :
+noncomputable def weightUnipotentInParabolicCoordinateIso (w : Fin N → ℤ) :
     weightUnipotentCoordinateHopfAlgebra R w ≅
       CommHopfAlgCat.quotient (weightParabolicCoordinateHopfAlgebra R w)
         (weightUnipotentInParabolicHopfIdeal R w) :=
@@ -395,6 +411,22 @@ private noncomputable def weightUnipotentInParabolicCoordinateIso (w : Fin N →
       (weightParabolicCoordinateMap R w)
       (weightParabolicCoordinateMap_surjective R w)
       (weightUnipotentInParabolicHopfIdeal R w)
+
+/-- The relative unipotent coordinate identification commutes with the two inclusions into the
+ambient general linear coordinate algebra. -/
+@[simp]
+theorem mkQuotient_weightUnipotent_comp_weightUnipotentInParabolicCoordinateIso_hom
+    (w : Fin N → ℤ) :
+    CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra R N)
+          (weightUnipotentDefiningHopfIdeal R w) ≫
+        (weightUnipotentInParabolicCoordinateIso R w).hom =
+      weightParabolicCoordinateMap R w ≫
+        CommHopfAlgCat.mkQuotient (weightParabolicCoordinateHopfAlgebra R w)
+          (weightUnipotentInParabolicHopfIdeal R w) := by
+  rw [weightUnipotentInParabolicCoordinateIso, Iso.trans_hom, ← Category.assoc,
+    mkQuotient_comp_eqToIso (R := R)
+      (weightUnipotentInParabolicHopfIdeal_comapOfSurjective R w).symm,
+    CommHopfAlgCat.mkQuotient_comp_quotientIsoOfSurjective_hom]
 
 /-- The relative quotient spectrum cut out inside the weight parabolic is canonically
 isomorphic to the weight-unipotent group scheme. -/

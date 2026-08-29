@@ -10,6 +10,8 @@ public import Mathlib.LinearAlgebra.ExteriorPower.Pairing
 public import Mathlib.LinearAlgebra.TensorPower.Basic
 public import TauCeti.LinearAlgebra.SymmetricPower.Basic
 
+import TauCeti.Data.Fin.Basic
+
 /-!
 # Decomposing a tensor square
 
@@ -46,31 +48,6 @@ variable (R : Type) (M : Type v)
 
 namespace TauCeti
 
-/-- A permutation of `Fin 2` is either the identity or the transposition: the classification
-that drives every computation with the two orders on a tensor square. -/
-theorem perm_fin_two_eq_one_or_swap (e : Equiv.Perm (Fin 2)) :
-    e = 1 ∨ e = Equiv.swap 0 1 := by
-  by_cases h0 : e 0 = 0
-  · left
-    apply Equiv.ext
-    intro i
-    fin_cases i
-    · exact h0
-    · apply Fin.eq_one_of_ne_zero
-      intro h1
-      exact one_ne_zero (e.injective (h1.trans h0.symm))
-  · right
-    have h0' : e 0 = 1 := Fin.eq_one_of_ne_zero _ h0
-    apply Equiv.ext
-    intro i
-    fin_cases i
-    · simpa using h0'
-    · have h1 : e 1 = 0 := by
-        by_contra h
-        have h1' : e 1 = 1 := Fin.eq_one_of_ne_zero _ h
-        exact one_ne_zero (e.injective (h1'.trans h0'.symm))
-      simpa using h1
-
 section Swap
 
 variable [CommSemiring R] [AddCommMonoid M] [Module R M]
@@ -106,6 +83,7 @@ variable [CommRing R] [Invertible (2 : R)] [AddCommGroup M] [Module R M]
 
 namespace TauCeti
 
+/-- Projection onto the symmetric part of a tensor square. -/
 private noncomputable def symmetricProjection : (⨂[R]^2 M) →ₗ[R] ⨂[R]^2 M :=
   (⅟ (2 : R)) • (LinearMap.id + (tensorSwap R M).toLinearMap)
 
@@ -184,12 +162,14 @@ end exteriorPower
 
 namespace TauCeti
 
+/-- The comparison map from a tensor square to its symmetric and exterior square quotients. -/
 private noncomputable def tensorSquareToSymmetricExterior :
     (⨂[R]^2 M) →ₗ[R] (Sym[R]^2 M) × (⋀[R]^2 M) :=
   (SymmetricPower.mk R (Fin 2) M).prod
     (PiTensorProduct.lift
       (exteriorPower.ιMulti R 2 (M := M)).toMultilinearMap)
 
+/-- The sum of the canonical maps from the symmetric and exterior squares into the tensor square. -/
 private noncomputable def symmetricExteriorToTensorSquare :
     (Sym[R]^2 M) × (⋀[R]^2 M) →ₗ[R] ⨂[R]^2 M :=
   (SymmetricPower.toTensorSquare R M).coprod
