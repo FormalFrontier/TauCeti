@@ -16,18 +16,19 @@ public import TauCeti.RingTheory.Semisimple.Multiplicity
 without the universal enveloping algebra, in the same way as the Lie isotypy interface of
 `TauCeti/Algebra/Lie/Isotypic.lean`. This file connects it to the ring-level multiplicity theory of
 `TauCeti/RingTheory/Semisimple/Multiplicity.lean` across the enveloping-algebra dictionary, so that
-the two are one theory rather than two parallel ones: the multiplicity of `S` in `M` is the
-dimension of the space of `U(L)`-linear maps `S → M`, and hence, for a decomposition of `M` into
-simple `U(L)`-modules, the number of factors isomorphic to `S`.
+the two are one theory rather than two parallel ones: the general invariant is the finrank of the
+space of `U(L)`-linear maps `S → M`, and over an algebraically closed field, for a finite
+decomposition of `M` into simple `U(L)`-modules and a finite-dimensional simple `S`, it is the
+number of factors isomorphic to `S`.
 
 The translation is `TauCeti.UniversalEnvelopingAlgebra.lieModuleHomEquiv`: a morphism of Lie
 modules is exactly a `U(L)`-linear map, `R`-linearly in the morphism, so the two morphism spaces
-have the same dimension.
+have the same finrank.
 
 ## Main results
 
-* `LieModule.isotypicMultiplicity_eq_finrank_linearMap_of_ι_smul`: the multiplicity is the
-  dimension of the space of `U(L)`-linear maps.
+* `LieModule.isotypicMultiplicity_eq_finrank_linearMap_of_ι_smul`: the invariant is the
+  finrank of the space of `U(L)`-linear maps.
 * `LieModule.isotypicMultiplicity_eq_natCard_of_linearEquiv_pi`: for a decomposition of `M` into
   simple `U(L)`-modules, the multiplicity is the ring-level count of
   `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi`.
@@ -59,8 +60,8 @@ variable [IsScalarTower R (_root_.UniversalEnvelopingAlgebra R L) M]
 
 local notation "U" => _root_.UniversalEnvelopingAlgebra R L
 
-/-- **The multiplicity is the dimension of an enveloping-algebra morphism space.** For compatible
-`U(L)`-actions, `LieModule.isotypicMultiplicity R L M S` is the dimension of the space of
+/-- **The invariant is the finrank of an enveloping-algebra morphism space.** For compatible
+`U(L)`-actions, `LieModule.isotypicMultiplicity R L M S` is the finrank of the space of
 `U(L)`-linear maps `S → M`. -/
 theorem isotypicMultiplicity_eq_finrank_linearMap_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)

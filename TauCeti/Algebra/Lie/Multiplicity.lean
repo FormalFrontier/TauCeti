@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Dimension.Constructions
-public import TauCeti.Algebra.Lie.DirectSum
 public import TauCeti.Algebra.Lie.Schur
 public import TauCeti.Algebra.Lie.Submodule.DirectSum
 
@@ -15,9 +13,9 @@ public section
 /-!
 # The multiplicity of an irreducible Lie module
 
-`LieModule.isotypicMultiplicity R L M S` is the dimension `dim_R (S →ₗ⁅R,L⁆ M)` of the space of
-morphisms from a Lie module `S` to a Lie module `M`. This file proves that when `S` is irreducible
-and both `S` and `M` are finite-dimensional over an algebraically closed field, this number counts
+`LieModule.isotypicMultiplicity R L M S` is the finrank of the space `S →ₗ⁅R,L⁆ M` of morphisms
+from a Lie module `S` to a Lie module `M`. This file proves that when `S` is finite-dimensional and
+irreducible over an algebraically closed field, this number counts
 the summands equivalent to `S` in any decomposition of `M` into irreducible Lie submodules, and is
 therefore independent of the decomposition chosen: it is the **multiplicity** of `S` in `M`.
 
@@ -56,8 +54,8 @@ enveloping-algebra dictionary lives,
 
 ## Main definitions
 
-* `LieModule.isotypicMultiplicity`: the dimension `dim_R (S →ₗ⁅R,L⁆ M)` that the theorems below
-  identify with the multiplicity.
+* `LieModule.isotypicMultiplicity`: the finrank of `S →ₗ⁅R,L⁆ M`, which the theorems below
+  identify with the multiplicity under their field, irreducibility, and decomposition hypotheses.
 
 ## Main results
 
@@ -93,42 +91,6 @@ with the minuscule Pieri rule, are untouched here.
 
 universe u v w w₁ w₂ w₃
 
-namespace TauCeti.LieModule
-
-open Module (finrank)
-
-/-! ### Additivity over an internal decomposition -/
-
-section Internal
-
-variable {K : Type u} {L : Type v} {M : Type w} {ι : Type w₂} [DecidableEq ι] [Fintype ι]
-variable [Field K] [LieRing L] [LieAlgebra K L]
-variable [AddCommGroup M] [Module K M] [LieRingModule L M] [_root_.LieModule K L M]
-variable [FiniteDimensional K M]
-variable (S : Type w₁) [AddCommGroup S] [Module K S] [LieRingModule L S] [_root_.LieModule K L S]
-variable [FiniteDimensional K S]
-
-omit [_root_.LieModule K L S] in
-/-- **Additivity of the morphism space over a decomposition of the target.** If the Lie submodules
-`N i` decompose `M`, the dimension of `S →ₗ⁅K,L⁆ M` is the sum of the dimensions of the
-`S →ₗ⁅K,L⁆ N i`. Finite-dimensionality of `S` is what makes each summand's morphism space
-finite-dimensional, so that the dimensions really add. -/
-theorem finrank_lieModuleHom_eq_sum_of_isInternal (N : ι → LieSubmodule K L M)
-    (h : DirectSum.IsInternal fun i ↦ (N i).toSubmodule) :
-    finrank K (S →ₗ⁅K,L⁆ M) = ∑ i, finrank K (S →ₗ⁅K,L⁆ N i) := by
-  have hfin : ∀ i, FiniteDimensional K (N i) := fun i ↦
-    FiniteDimensional.of_injective (N i).toSubmodule.subtype Subtype.val_injective
-  have hhom : ∀ i, FiniteDimensional K (S →ₗ⁅K,L⁆ (N i : Type w)) := fun i ↦
-    have := hfin i; inferInstance
-  rw [← (LieModuleEquiv.congrRight (M := S)
-      (DirectSum.lieModuleEquivOfIsInternal N h)).finrank_eq,
-    (lieModuleHomDirectSumEquiv K L S fun i ↦ (N i : Type w)).finrank_eq,
-    Module.finrank_pi_fintype]
-
-end Internal
-
-end TauCeti.LieModule
-
 namespace LieModule
 
 open Module (finrank)
@@ -142,18 +104,18 @@ variable [CommRing R] [LieRing L] [LieAlgebra R L]
 variable [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
 variable [AddCommGroup S] [Module R S] [LieRingModule L S]
 
-/-- **The dimension of the space of morphisms `S →ₗ⁅R,L⁆ M`.** For an irreducible,
+/-- **The finrank of the space of morphisms `S →ₗ⁅R,L⁆ M`.** For an irreducible,
 finite-dimensional `S` over an algebraically closed field this is the multiplicity of `S` in `M`:
-the number of summands equivalent to `S` in any decomposition of a finite-dimensional `M` into
+the number of summands equivalent to `S` in any finite decomposition of `M` into
 irreducibles (`LieModule.isotypicMultiplicity_eq_ncard_of_isInternal`), and stating it as the
-dimension of a morphism space is what makes it manifestly independent of the decomposition. In the
+finrank of a morphism space is what makes it manifestly independent of the decomposition. In the
 generality of the definition it is not itself a multiplicity: for a finite-dimensional irreducible
-`S` over a field it is the multiplicity times `dim End_L(S)`, a factor that Schur's lemma makes `1`
-over an algebraically closed field. -/
+`S` over a field and a finite irreducible direct-sum decomposition of `M`, it is the multiplicity
+times `dim End_L(S)`, a factor that Schur's lemma makes `1` over an algebraically closed field. -/
 noncomputable def isotypicMultiplicity : ℕ :=
   finrank R (S →ₗ⁅R,L⁆ M)
 
-/-- The multiplicity is the dimension of the morphism space. The definition is not exposed, so
+/-- The multiplicity is the finrank of the morphism space. The definition is not exposed, so
 this is how it is unfolded. -/
 theorem isotypicMultiplicity_def : isotypicMultiplicity R L M S = finrank R (S →ₗ⁅R,L⁆ M) :=
   (rfl)
@@ -196,13 +158,29 @@ variable [Field K] [LieRing L] [LieAlgebra K L]
 variable [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 variable [AddCommGroup S] [Module K S] [LieRingModule L S] [LieModule K L S]
 
+section Additivity
+
+variable {ι : Type w₂} [DecidableEq ι] [Fintype ι]
+
+omit [LieModule K L S] in
+/-- **Multiplicity is additive over an internal decomposition of its ambient module.** -/
+theorem isotypicMultiplicity_eq_sum_of_isInternal (N : ι → LieSubmodule K L M)
+    (h : DirectSum.IsInternal fun i ↦ (N i).toSubmodule)
+    (hfin : ∀ i, FiniteDimensional K (S →ₗ⁅K,L⁆ N i)) :
+    isotypicMultiplicity K L M S = ∑ i, isotypicMultiplicity K L (N i) S := by
+  rw [isotypicMultiplicity_def,
+    TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal S N h hfin]
+  simp_rw [isotypicMultiplicity_def]
+
+end Additivity
+
 /-- **An irreducible module occurs in itself with multiplicity one.** -/
 @[simp]
 theorem isotypicMultiplicity_self [IsAlgClosed K] [FiniteDimensional K S] [IsIrreducible K L S] :
     isotypicMultiplicity K L S S = 1 :=
   TauCeti.LieModule.finrank_lieModuleHom_self K L S
 
-variable [FiniteDimensional K M] [IsAlgClosed K]
+variable [IsAlgClosed K]
 variable [FiniteDimensional K S] [IsIrreducible K L S]
 
 section Count
@@ -214,16 +192,19 @@ variable (hirr : ∀ i, IsIrreducible K L (N i))
 include h hirr
 
 open scoped Classical in
-/-- **The multiplicity counts the summands equivalent to `S`.** For a decomposition of a
-finite-dimensional module into irreducible Lie submodules over an algebraically closed field, the
+/-- **The multiplicity counts the summands equivalent to `S`.** For a finite decomposition of a
+module into irreducible Lie submodules over an algebraically closed field, the
 multiplicity of a finite-dimensional irreducible `S` is the number of indices whose summand is
 equivalent to `S`: Schur's lemma makes each such summand contribute `1` to the morphism space and
 every other summand contribute `0`. -/
 theorem isotypicMultiplicity_eq_ncard_of_isInternal :
     isotypicMultiplicity K L M S = {i | Nonempty (S ≃ₗ⁅K,L⁆ N i)}.ncard := by
   have _i : Fintype ι := Fintype.ofFinite ι
+  have hfin : ∀ i, FiniteDimensional K (S →ₗ⁅K,L⁆ N i) := fun i ↦
+    have := hirr i
+    TauCeti.LieModule.finiteDimensional_lieModuleHom_of_isIrreducible K L
   rw [isotypicMultiplicity_def,
-    TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal S N h]
+    TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal S N h hfin]
   have hsum : ∀ i : ι,
       finrank K (S →ₗ⁅K,L⁆ N i) = if Nonempty (S ≃ₗ⁅K,L⁆ N i) then 1 else 0 := fun i ↦
     have := hirr i

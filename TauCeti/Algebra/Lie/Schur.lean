@@ -45,6 +45,8 @@ file goes no further than the two-irreducible dimension count.
 * `TauCeti.LieModule.finrank_lieModuleHom_self`: **the endomorphisms of a finite-dimensional
   irreducible Lie module over an algebraically closed field are the scalars**, so the
   endomorphism space is a line.
+* `TauCeti.LieModule.finiteDimensional_lieModuleHom_of_isIrreducible`: the morphism space from a
+  finite-dimensional irreducible to any irreducible is finite-dimensional.
 * `TauCeti.LieModule.finrank_lieModuleHom_eq_one_iff`,
   `TauCeti.LieModule.finrank_lieModuleHom_eq_zero_iff` and
   `TauCeti.LieModule.finrank_lieModuleHom_le_one`: the dimension of the morphism space is `1` when
@@ -181,6 +183,19 @@ theorem finrank_lieModuleHom_eq_zero_of_isEmpty_lieModuleEquiv (h : IsEmpty (M �
   have := subsingleton_lieModuleHom_of_isEmpty_lieModuleEquiv h
   Module.finrank_zero_of_subsingleton
 
+omit [IsAlgClosed K] in
+/-- The morphism space from a finite-dimensional irreducible Lie module to any irreducible Lie
+module is finite-dimensional: by Schur's lemma it is a line or trivial. -/
+theorem finiteDimensional_lieModuleHom_of_isIrreducible :
+    FiniteDimensional K (M →ₗ⁅K,L⁆ N) := by
+  by_cases h : Nonempty (M ≃ₗ⁅K,L⁆ N)
+  · have hend : FiniteDimensional K (M →ₗ⁅K,L⁆ M) := inferInstance
+    exact Module.Finite.equiv (LieModuleEquiv.congrRight (M := M) h.some)
+  · have : Subsingleton (M →ₗ⁅K,L⁆ N) :=
+      subsingleton_lieModuleHom_of_isEmpty_lieModuleEquiv (not_nonempty_iff.mp h)
+    exact Module.Finite.of_surjective (0 : K →ₗ[K] (M →ₗ⁅K,L⁆ N))
+      fun _ ↦ ⟨0, Subsingleton.elim _ _⟩
+
 /-- **The morphism space of two finite-dimensional irreducible Lie modules is one-dimensional
 exactly when they are equivalent.** -/
 theorem finrank_lieModuleHom_eq_one_iff :
@@ -213,7 +228,7 @@ field, in its dimension form**: the morphism space is a line for equivalent modu
 inequivalent ones. This is the per-summand contribution that a multiplicity count of `S` in `M`
 reads off `dim_K (S →ₗ⁅K,L⁆ M)`, which additivity of the morphism space over a decomposition of `M`
 supplies: `TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal` of
-`TauCeti/Algebra/Lie/Multiplicity.lean`. -/
+`TauCeti/Algebra/Lie/Submodule/DirectSum.lean`. -/
 theorem finrank_lieModuleHom :
     finrank K (M →ₗ⁅K,L⁆ N) = if Nonempty (M ≃ₗ⁅K,L⁆ N) then 1 else 0 := by
   split

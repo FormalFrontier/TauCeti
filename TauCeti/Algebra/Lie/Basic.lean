@@ -133,6 +133,7 @@ section Sum
 variable {ι : Type w₂}
 
 /-- A finite sum of morphisms of Lie modules is evaluated summandwise. -/
+@[simp]
 theorem sum_apply {s : Finset ι} (F : ι → (M →ₗ⁅R,L⁆ N)) (m : M) :
     (∑ i ∈ s, F i) m = ∑ i ∈ s, F i m := by
   classical

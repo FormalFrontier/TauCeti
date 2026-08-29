@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import TauCeti.Algebra.Lie.DirectSum
 
 public section
@@ -35,6 +36,8 @@ in `M` is read off a decomposition of `M` into irreducibles in
 
 * `DirectSum.coeLieModuleHom_toLinearMap` and `DirectSum.coeLieModuleHom_bijective_iff`: the sum
   map refines `DirectSum.coeLinearMap`, so its bijectivity is `DirectSum.IsInternal`.
+* `TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal`: the finrank of a morphism space
+  is additive over an internal decomposition of its target.
 
 ## Roadmap
 
@@ -48,7 +51,7 @@ consumed here.
 
 open scoped DirectSum
 
-universe u v w w₁
+universe u v w w₁ w₂
 
 namespace DirectSum
 
@@ -84,6 +87,7 @@ noncomputable def coeLieModuleHom : (⨁ i, N i) →ₗ⁅R,L⁆ M :=
 
 /-- The underlying linear map of the sum map of a family of Lie submodules is Mathlib's
 `DirectSum.coeLinearMap` of the underlying submodules. -/
+@[simp]
 theorem coeLieModuleHom_toLinearMap :
     (coeLieModuleHom N : (⨁ i, N i) →ₗ[R] M) = coeLinearMap fun i ↦ (N i).toSubmodule :=
   (rfl)
@@ -98,6 +102,8 @@ internally: by `DirectSum.coeLieModuleHom_toLinearMap` the two statements are ab
 underlying map. -/
 theorem coeLieModuleHom_bijective_iff :
     Function.Bijective (coeLieModuleHom N) ↔ IsInternal fun i ↦ (N i).toSubmodule := by
+  -- The preceding lemma equates bundled linear maps, whereas `Function.Bijective` exposes their
+  -- coerced functions, so transport that equality across the coercion before applying `Iff.rfl`.
   rw [show ⇑(coeLieModuleHom N) = ⇑(coeLinearMap fun i ↦ (N i).toSubmodule) from
     congrArg DFunLike.coe (coeLieModuleHom_toLinearMap N)]
   exact Iff.rfl
@@ -116,3 +122,33 @@ theorem lieModuleEquivOfIsInternal_apply (h : IsInternal fun i ↦ (N i).toSubmo
   TauCeti.LieModuleEquiv.ofBijective_apply _ _ _
 
 end DirectSum
+
+namespace TauCeti.LieModule
+
+open Module (finrank)
+
+section Internal
+
+variable {K : Type u} {L : Type v} {M : Type w} {ι : Type w₁} [DecidableEq ι] [Fintype ι]
+variable [Field K] [LieRing L] [LieAlgebra K L]
+variable [AddCommGroup M] [Module K M] [LieRingModule L M] [_root_.LieModule K L M]
+variable (S : Type w₂) [AddCommGroup S] [Module K S] [LieRingModule L S]
+  [_root_.LieModule K L S]
+
+omit [_root_.LieModule K L S] in
+/-- **Additivity of the morphism space over a decomposition of the target.** If the Lie submodules
+`N i` decompose `M` and every component morphism space is finite-dimensional, the finrank of
+`S →ₗ⁅K,L⁆ M` is the sum of the finranks of the `S →ₗ⁅K,L⁆ N i`. -/
+theorem finrank_lieModuleHom_eq_sum_of_isInternal (N : ι → LieSubmodule K L M)
+    (h : DirectSum.IsInternal fun i ↦ (N i).toSubmodule)
+    (hfin : ∀ i, FiniteDimensional K (S →ₗ⁅K,L⁆ N i)) :
+    finrank K (S →ₗ⁅K,L⁆ M) = ∑ i, finrank K (S →ₗ⁅K,L⁆ N i) := by
+  let _ : ∀ i, FiniteDimensional K (S →ₗ⁅K,L⁆ N i) := hfin
+  rw [← (LieModuleEquiv.congrRight (M := S)
+      (DirectSum.lieModuleEquivOfIsInternal N h)).finrank_eq,
+    (lieModuleHomDirectSumEquiv K L S fun i ↦ (N i : Type w)).finrank_eq,
+    Module.finrank_pi_fintype]
+
+end Internal
+
+end TauCeti.LieModule
