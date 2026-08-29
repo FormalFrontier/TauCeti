@@ -30,7 +30,7 @@ The definitions follow Rourke--Sanderson, *Introduction to Piecewise-Linear Topo
 
 * `PreAbstractSimplicialComplex.simplex`: the complex of nonempty subsets of a finite vertex set.
 * `PreAbstractSimplicialComplex.simplexBoundary`: its proper faces.
-* `AbstractSimplicialComplex.standardSimplexBoundary`: the boundary complex of the standard
+* `AbstractSimplicialComplex.standardSuccSimplexBoundary`: the boundary complex of the standard
   `(n + 1)`-simplex.
 -/
 
@@ -226,7 +226,7 @@ end PreAbstractSimplicialComplex
 
 namespace AbstractSimplicialComplex
 
-private theorem singleton_mem_standardSimplexBoundaryPrecomplex (n : ℕ) (v : Fin (n + 2)) :
+private theorem singleton_mem_standardSuccSimplexBoundaryPrecomplex (n : ℕ) (v : Fin (n + 2)) :
     {v} ∈ (PreAbstractSimplicialComplex.simplexBoundary
       (Finset.univ : Finset (Fin (n + 2)))).faces := by
   exact PreAbstractSimplicialComplex.singleton_mem_simplexBoundary.mpr
@@ -237,30 +237,30 @@ private theorem singleton_mem_standardSimplexBoundaryPrecomplex (n : ℕ) (v : F
 
 /-- The boundary complex of the standard `(n + 1)`-simplex.  Its vertices are `Fin (n + 2)` and
 its faces are the nonempty proper subsets of all vertices. -/
-def standardSimplexBoundary (n : ℕ) : AbstractSimplicialComplex (Fin (n + 2)) :=
+def standardSuccSimplexBoundary (n : ℕ) : AbstractSimplicialComplex (Fin (n + 2)) :=
   { PreAbstractSimplicialComplex.simplexBoundary
       (Finset.univ : Finset (Fin (n + 2))) with
-    singleton_mem := singleton_mem_standardSimplexBoundaryPrecomplex n }
+    singleton_mem := singleton_mem_standardSuccSimplexBoundaryPrecomplex n }
 
-/-- The underlying precomplex of `standardSimplexBoundary n` is the boundary of the simplex on
+/-- The underlying precomplex of `standardSuccSimplexBoundary n` is the boundary of the simplex on
 all `n + 2` vertices. -/
 @[simp]
-theorem standardSimplexBoundary_toPreAbstractSimplicialComplex (n : ℕ) :
-    (standardSimplexBoundary n).toPreAbstractSimplicialComplex =
+theorem standardSuccSimplexBoundary_toPreAbstractSimplicialComplex (n : ℕ) :
+    (standardSuccSimplexBoundary n).toPreAbstractSimplicialComplex =
       PreAbstractSimplicialComplex.simplexBoundary
         (Finset.univ : Finset (Fin (n + 2))) :=
   by
     ext σ
     rfl
 
-/-- The faces of the standard simplex boundary are exactly the nonempty proper subsets of its
-vertex set. -/
+/-- The faces of the boundary of the standard `(n + 1)`-simplex are exactly the nonempty proper
+subsets of its vertex set. -/
 @[simp]
-theorem mem_standardSimplexBoundary_iff {n : ℕ} {σ : Finset (Fin (n + 2))} :
-    σ ∈ standardSimplexBoundary n ↔ σ.Nonempty ∧ σ ⊂ Finset.univ :=
+theorem mem_standardSuccSimplexBoundary_iff {n : ℕ} {σ : Finset (Fin (n + 2))} :
+    σ ∈ standardSuccSimplexBoundary n ↔ σ.Nonempty ∧ σ ⊂ Finset.univ :=
   by
     rw [← mem_toPreAbstractSimplicialComplex,
-      standardSimplexBoundary_toPreAbstractSimplicialComplex,
+      standardSuccSimplexBoundary_toPreAbstractSimplicialComplex,
       PreAbstractSimplicialComplex.mem_simplexBoundary]
 
 end AbstractSimplicialComplex
