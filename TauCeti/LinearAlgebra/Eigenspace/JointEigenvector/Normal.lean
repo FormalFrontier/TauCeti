@@ -71,6 +71,7 @@ maps the joint `N`-eigenspace of `χ` exactly onto the joint eigenspace of the c
 character `n ↦ χ (g⁻¹ * n * g)`.
 
 No field, finite-dimensionality, commutativity of `N`, or semisimplicity hypothesis is needed. -/
+@[simp]
 theorem map_iInf_eigenspace_unitHom_eq_conjNormal (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G) (χ : N →* Kˣ) :
     (⨅ n : N, (ρ n).eigenspace (χ n)).map (ρ g) =
@@ -82,7 +83,14 @@ theorem map_iInf_eigenspace_unitHom_eq_conjNormal (N : Subgroup G) [N.Normal]
     have h := map_iInf_eigenspace_unitHom_le_conjNormal N ρ g⁻¹
       ((MulAut.conjNormal g).monoidHomCongrLeftEquiv χ)
     have hmapped := h ⟨v, hv, rfl⟩
-    simpa [map_inv, MulAut.inv_def] using hmapped
+    have hcharacter :
+        (MulAut.conjNormal g⁻¹).monoidHomCongrLeftEquiv
+          ((MulAut.conjNormal g).monoidHomCongrLeftEquiv χ) = χ := by
+      rw [map_inv (MulAut.conjNormal (H := N)) g, MulAut.inv_def,
+        ← MulEquiv.symm_monoidHomCongrLeftEquiv]
+      exact Equiv.symm_apply_apply _ χ
+    rw [hcharacter] at hmapped
+    exact hmapped
   refine ⟨ρ g⁻¹ v, hpreimage, ?_⟩
   simp [← Module.End.mul_apply, ← map_mul]
 
