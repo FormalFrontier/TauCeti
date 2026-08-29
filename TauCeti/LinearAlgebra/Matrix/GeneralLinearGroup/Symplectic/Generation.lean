@@ -124,7 +124,7 @@ theorem differenceShortRootUnit_mem_of_adjacent
       i.val + 1 = j.val ∨ j.val + 1 = i.val → differenceShortRootUnit hij c ∈ H)
     {i j : Fin m} (hij : i ≠ j) (c : R) :
     differenceShortRootUnit hij c ∈ H := by
-  exact TauCeti.Subgroup.mem_of_adjacent_of_commutator H
+  exact Subgroup.mem_of_adjacent_of_commutator H
     (fun hij c => differenceShortRootUnit hij c)
     (fun hij hjk hik a b =>
       commutatorElement_differenceShortRootUnit_differenceShortRootUnit hij hjk hik a b)

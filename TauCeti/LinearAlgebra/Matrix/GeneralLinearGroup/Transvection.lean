@@ -247,7 +247,7 @@ theorem transvectionUnit_mem_of_adjacent {m : ℕ}
     (hadjacent : ∀ {i j : Fin (m + 1)} (hij : i ≠ j) (c : A),
       i.val + 1 = j.val ∨ j.val + 1 = i.val → transvectionUnit hij c ∈ H)
     {i j : Fin (m + 1)} (hij : i ≠ j) (c : A) : transvectionUnit hij c ∈ H := by
-  exact TauCeti.Subgroup.mem_of_adjacent_of_commutator H
+  exact Subgroup.mem_of_adjacent_of_commutator H
     (fun hij c => transvectionUnit hij c)
     (fun hij hjk hik a b => commutatorElement_transvectionUnit hij hjk hik a b)
     hadjacent hij c
