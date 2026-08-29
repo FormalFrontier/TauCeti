@@ -213,7 +213,6 @@ theorem toSemigroup_realOperator (U : StronglyContinuousGroup X) {t : ℝ} (ht :
   rw [StronglyContinuousSemigroup.realOperator_def, toSemigroup_apply, Real.coe_toNNReal t ht]
 
 /-- At a nonnegative real time the reversed group's forward semigroup runs `U` backwards. -/
-@[simp]
 theorem reflect_toSemigroup_realOperator (U : StronglyContinuousGroup X) {t : ℝ} (ht : 0 ≤ t) :
     U.reflect.toSemigroup.realOperator t = U (-t) := by
   rw [U.reflect.toSemigroup_realOperator ht, reflect_apply]
