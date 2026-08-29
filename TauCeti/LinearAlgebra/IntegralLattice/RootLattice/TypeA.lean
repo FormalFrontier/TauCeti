@@ -415,6 +415,8 @@ theorem discriminantQuadraticMap_zsmul_typeAFundamentalWeightClass (k : ℤ) :
 
 /-- **The discriminant pairing of the `j`-th and `k`-th multiples of the class of `ω₁` is
 `j k n / (n + 1)`.** -/
+-- This is not a simp lemma: its left-hand side reduces further by bilinearity and the generator
+-- value, so the simp-normal-form linter rejects the attribute.
 theorem discriminantPairing_zsmul_typeAFundamentalWeightClass (j k : ℤ) :
     (typeARootLattice n).discriminantPairing (j • typeAFundamentalWeightClass n)
         (k • typeAFundamentalWeightClass n) =
