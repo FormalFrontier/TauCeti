@@ -201,17 +201,6 @@ theorem coe_typeBShortNegativeRootGenerator (i : ι) :
 
 /-! ### Diagonal action on root generators -/
 
-/-- Two elements of the split diagonal Cartan commute in the ambient type-`B` Lie algebra. -/
-theorem typeBDiagonalEquiv_lie_diagonalEquiv (d e : ι → K) :
-    ⁅((typeBDiagonalEquiv (K := K) (ι := ι) d : typeBDiagonalCartan K ι) :
-        LieAlgebra.Orthogonal.typeB ι K),
-      ((typeBDiagonalEquiv (K := K) (ι := ι) e : typeBDiagonalCartan K ι) :
-        LieAlgebra.Orthogonal.typeB ι K)⁆ = 0 := by
-  have h : ⁅typeBDiagonalEquiv (K := K) (ι := ι) d,
-      typeBDiagonalEquiv (K := K) (ι := ι) e⁆ = 0 :=
-    LieModule.IsTrivial.trivial _ _
-  exact congrArg Subtype.val h
-
 /-- A split diagonal element acts on the long-root vector of weight `εᵢ - εⱼ` by that
 weight. -/
 theorem typeBDiagonalEquiv_lie_longRootGenerator (d : ι → K) (i j : ι) (hij : i ≠ j) :
@@ -220,6 +209,7 @@ theorem typeBDiagonalEquiv_lie_longRootGenerator (d : ι → K) (i j : ι) (hij 
       (d i - d j) • typeBLongRootGenerator i j hij := by
   apply Subtype.ext
   rw [coe_typeBDiagonalEquiv_apply]
+  -- The subtype bracket reduces definitionally to the ambient matrix commutator.
   change typeBDiagonalMatrix d * typeBLongRootMatrix i j hij -
       typeBLongRootMatrix i j hij * typeBDiagonalMatrix d =
         (d i - d j) • typeBLongRootMatrix i j hij
@@ -237,6 +227,7 @@ theorem typeBDiagonalEquiv_lie_shortRootGenerator (d : ι → K) (i : ι) :
       d i • typeBShortRootGenerator i := by
   apply Subtype.ext
   rw [coe_typeBDiagonalEquiv_apply]
+  -- The subtype bracket reduces definitionally to the ambient matrix commutator.
   change typeBDiagonalMatrix d * typeBShortRootMatrix i -
       typeBShortRootMatrix i * typeBDiagonalMatrix d = d i • typeBShortRootMatrix i
   ext (a | (a | a)) (b | (b | b)) <;>
@@ -250,6 +241,7 @@ theorem typeBDiagonalEquiv_lie_shortNegativeRootGenerator (d : ι → K) (i : ι
       -(d i) • typeBShortNegativeRootGenerator i := by
   apply Subtype.ext
   rw [coe_typeBDiagonalEquiv_apply]
+  -- The subtype bracket reduces definitionally to the ambient matrix commutator.
   change typeBDiagonalMatrix d * typeBShortNegativeRootMatrix i -
       typeBShortNegativeRootMatrix i * typeBDiagonalMatrix d =
         -(d i) • typeBShortNegativeRootMatrix i
