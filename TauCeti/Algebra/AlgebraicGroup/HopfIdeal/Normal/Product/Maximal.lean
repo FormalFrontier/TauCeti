@@ -15,7 +15,7 @@ import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
 # Maximal-dimensional families of normal closed subgroups
 
 Let `H` be the coordinate Hopf algebra of a finite-type affine group over a field, and let
-`P` be a family of normal closed subgroups that are smooth and geometrically connected. Suppose
+`P` be a family of normal closed subgroups that are smooth and connected. Suppose
 that `P` is closed under scheme-theoretic multiplication images. Then any member of `P` of
 maximal Lie dimension contains every other member.
 
@@ -30,8 +30,8 @@ radical.
 
 ## Main declaration
 
-* `TauCeti.HopfIdeal.le_of_finrank_maximal_of_product`: a maximal-dimensional member of a
-  product-closed family of smooth geometrically connected normal closed subgroups is greatest.
+* `TauCeti.HopfIdeal.le_of_product_of_finrank_maximal`: a maximal-dimensional member of a
+  product-closed family of smooth connected normal closed subgroups is greatest.
 
 ## References
 
@@ -55,17 +55,16 @@ namespace HopfIdeal
 variable {k : Type u} [Field k]
 variable {H : FiniteTypeCommHopfAlgCat.{u, u} k} {I J : HopfIdeal k H}
 
-/-- A maximal-dimensional member of a product-closed family of smooth geometrically connected
+/-- A maximal-dimensional member of a product-closed family of smooth connected
 normal closed subgroups contains every member of the family.
 
 The order on Hopf ideals reverses inclusion of represented closed subgroups, so the conclusion
 `I ≤ J` says that the subgroup cut out by `I` contains the one cut out by `J`. -/
-theorem le_of_finrank_maximal_of_product
+theorem le_of_product_of_finrank_maximal
     (P : HopfIdeal k H → Prop)
     (normal : ∀ {K : HopfIdeal k H}, P K → K.IsNormal)
     (connected : ∀ {K : HopfIdeal k H}, P K →
-      geometricallyConnectedCommHopfAlgProperty k
-        (FiniteTypeCommHopfAlgCat.quotient H K).obj)
+      ConnectedSpace (PrimeSpectrum (H ⧸ K.toIdeal)))
     (smooth : ∀ {K : HopfIdeal k H}, P K →
       Algebra.Smooth k (FiniteTypeCommHopfAlgCat.quotient H K))
     (product : ∀ {K L : HopfIdeal k H} (hK : P K), P L →
@@ -111,10 +110,8 @@ theorem le_of_finrank_maximal_of_product
   have hI_smooth : smoothCommHopfAlgProperty k
       (_root_.CommHopfAlgCat.of k (H ⧸ I.toIdeal)) :=
     (smoothCommHopfAlgProperty_iff _).mpr (smooth hI)
-  have hK_connected : ConnectedSpace (PrimeSpectrum (H ⧸ K.toIdeal)) :=
-    geometricallyConnectedCommHopfAlgProperty.connectedSpace k _ (connected hK)
-  have hI_connected : ConnectedSpace (PrimeSpectrum (H ⧸ I.toIdeal)) :=
-    geometricallyConnectedCommHopfAlgProperty.connectedSpace k _ (connected hI)
+  have hK_connected : ConnectedSpace (PrimeSpectrum (H ⧸ K.toIdeal)) := connected hK
+  have hI_connected : ConnectedSpace (PrimeSpectrum (H ⧸ I.toIdeal)) := connected hI
   have hq_kernel : HopfIdeal.ker q = ⊥ :=
     ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot q hq_surjective
       hK_smooth hK_connected hI_smooth hI_connected hconormal
@@ -122,13 +119,7 @@ theorem le_of_finrank_maximal_of_product
     rw [← CommHopfAlgCat.ker_quotientMapOfLe H.obj hKI]
     exact hq_kernel
   have hIK : I ≤ K := by
-    rw [← toIdeal_le_toIdeal]
-    have hle := (HopfIdeal.map_eq_bot_iff I
-      (Bialgebra.Quotient.mkBialgHom K.toIdeal)).mp hmap
-    intro x hx
-    have hxker := hle hx
-    rw [RingHom.mem_ker] at hxker
-    exact Ideal.Quotient.eq_zero_iff_mem.mp hxker
+    simpa using (HopfIdeal.map_eq_bot_iff_le_ker I _ Ideal.Quotient.mk_surjective).mp hmap
   have hKI_eq : K = I := le_antisymm hKI hIK
   rw [← hKI_eq]
   exact CommHopfAlgCat.ker_productMapOfNormal_le_right H.obj I J hI_normal

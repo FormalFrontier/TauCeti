@@ -62,10 +62,11 @@ theorem le_of_finrank_maximal
           (Derivation k (H ⧸ I.toIdeal)
             (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)))
     (hJ : IsUnipotentRadicalCandidate H J) : I ≤ J := by
-  apply HopfIdeal.le_of_finrank_maximal_of_product
+  apply HopfIdeal.le_of_product_of_finrank_maximal
       (IsUnipotentRadicalCandidate H)
       (fun hK ↦ hK.isNormal)
-      (fun hK ↦ hK.geometricallyConnected)
+      (fun hK ↦
+        geometricallyConnectedCommHopfAlgProperty.connectedSpace k _ hK.geometricallyConnected)
       (fun hK ↦
         ((smoothUnipotentCommHopfAlgProperty_iff k
           (FiniteTypeCommHopfAlgCat.quotient H _)).mp hK.smoothUnipotent).1)
