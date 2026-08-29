@@ -22,11 +22,12 @@ These are the two lifting properties an **almost-split (Auslander-Reiten) sequen
 `0 → τM → E → M → 0` carries: `E ⟶ M` is right almost split and `τM ⟶ E` is left almost split.
 This file builds them as conditions on a single morphism of an arbitrary category, so that the
 sequence-level notion can be assembled from them, and proves the two facts that make the
-definition of an almost-split sequence non-redundant: **the target of a right almost split
-morphism is indecomposable**, and dually **the source of a left almost split morphism is
-indecomposable**. Neither end of an almost-split sequence has to be *assumed* indecomposable — the
-lifting properties already force it — and a short complex whose `g` is right almost split admits
-no splitting, so non-splitness is likewise a consequence rather than a hypothesis.
+indecomposability clauses in the definition of an almost-split sequence redundant: **the target of
+a right almost split morphism is indecomposable**, and dually **the source of a left almost split
+morphism is indecomposable**. Neither end of an almost-split sequence has to be *assumed*
+indecomposable — the lifting properties already force it — and a short complex whose `g` is right
+almost split admits no splitting, so non-splitness is likewise a consequence rather than a
+hypothesis.
 
 The connection to `TauCeti.IsIrreducibleMorphism` is the sharpened factorization
 `TauCeti.IsRightAlmostSplit.exists_isSplitMono_of_isIrreducibleMorphism`: an irreducible morphism
@@ -234,7 +235,7 @@ theorem IsRightAlmostSplit.comp_iso (hf : IsRightAlmostSplit f) {Y' : C} (e : Y 
   have hg' : ¬ IsSplitEpi (g ≫ e.symm.hom) :=
     fun _ => hg (isSplitEpi_of_isSplitEpi_comp_iso g e.symm)
   obtain ⟨h, hh⟩ := hf.factors Z (g ≫ e.symm.hom) hg'
-  exact ⟨h, by rw [← Category.assoc, hh]; simp⟩
+  exact ⟨h, by simp [reassoc_of% hh]⟩
 
 /-- **Precomposing a right almost split morphism with an isomorphism keeps it right almost
 split.** -/
@@ -242,8 +243,7 @@ theorem IsRightAlmostSplit.iso_comp (hf : IsRightAlmostSplit f) {X' : C} (e : X'
     IsRightAlmostSplit (e.hom ≫ f) := by
   refine ⟨fun _ => hf.not_isSplitEpi (isSplitEpi_of_isSplitEpi_comp e.hom f), fun Z g hg => ?_⟩
   obtain ⟨h, hh⟩ := hf.factors Z g hg
-  exact ⟨h ≫ e.inv, by rw [Category.assoc, ← Category.assoc e.inv, e.inv_hom_id,
-    Category.id_comp, hh]⟩
+  exact ⟨h ≫ e.inv, by simp [hh]⟩
 
 /-- **Precomposing a left almost split morphism with an isomorphism keeps it left almost
 split.** -/
@@ -253,7 +253,7 @@ theorem IsLeftAlmostSplit.iso_comp (hf : IsLeftAlmostSplit f) {X' : C} (e : X' �
   have hg' : ¬ IsSplitMono (e.symm.hom ≫ g) :=
     fun _ => hg (isSplitMono_of_isSplitMono_iso_comp e.symm g)
   obtain ⟨h, hh⟩ := hf.factors Z (e.symm.hom ≫ g) hg'
-  exact ⟨h, by rw [Category.assoc, hh]; simp⟩
+  exact ⟨h, by simp [hh]⟩
 
 /-- **Postcomposing a left almost split morphism with an isomorphism keeps it left almost
 split.** -/
@@ -261,8 +261,7 @@ theorem IsLeftAlmostSplit.comp_iso (hf : IsLeftAlmostSplit f) {Y' : C} (e : Y �
     IsLeftAlmostSplit (f ≫ e.hom) := by
   refine ⟨fun _ => hf.not_isSplitMono (isSplitMono_of_isSplitMono_comp f e.hom), fun Z g hg => ?_⟩
   obtain ⟨h, hh⟩ := hf.factors Z g hg
-  exact ⟨e.inv ≫ h, by rw [Category.assoc, ← Category.assoc e.hom, e.hom_inv_id,
-    Category.id_comp, hh]⟩
+  exact ⟨e.inv ≫ h, by simp [hh]⟩
 
 /-- Being right almost split is invariant under an isomorphism of the target. -/
 @[simp]
