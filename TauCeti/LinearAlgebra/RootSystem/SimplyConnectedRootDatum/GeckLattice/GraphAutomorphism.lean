@@ -168,10 +168,10 @@ the numbered diagram therefore gives `γ ^ 2 = 1`, and the triality of `D₄` gi
 @[simp]
 theorem geckGraphAut_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {m : ℕ}
     (hm : sigma ^ m = 1) : t.geckGraphAut ht hsigma ^ m = 1 := by
+  have hpair : ((sigma, sigma) : Equiv.Perm (Fin t.rank) × Equiv.Perm (Fin t.rank)) ^ m = 1 :=
+    Prod.ext hm hm
   have hgen : diagramRootGeneratorPerm sigma ^ m = 1 := by
-    rw [diagramRootGeneratorPerm_pow, hm]
-    ext x
-    cases x <;> simp
+    rw [diagramRootGeneratorPerm_eq_sumCongrHom, ← map_pow, hpair, map_one]
   have htoral : toralGraphAut ht hsigma ^ m = 1 :=
     TauCeti.UniversalEnvelopingAlgebra.kostantToralNumberedSymmetryIso_pow_eq_one _ _ _ _ _ _ _ _
       _ _ _ _ _ _ _ _ _ m (by rw [← Equiv.Perm.coe_pow, hgen]; rfl) hm

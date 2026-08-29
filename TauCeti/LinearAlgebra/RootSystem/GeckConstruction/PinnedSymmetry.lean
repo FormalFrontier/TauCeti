@@ -205,7 +205,12 @@ theorem equivFin_symm_geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry)
   simp [geckDiagramFinPerm, Equiv.permCongr_apply]
 
 /-- The pinned Geck-module symmetry permutes the finite-ordinal coordinate basis. This is the
-basis-permutation hypothesis of the Kostant toral-closure symmetry construction. -/
+basis-permutation hypothesis of the Kostant toral-closure symmetry construction.
+
+This is deliberately not a `simp` lemma: `TauCeti.DynkinType.coe_geckCoordinateBasisFin` and
+`TauCeti.DynkinType.geckDiagramModuleEquiv_single` are themselves `simp`, so both sides are
+already rewritten to the same standard coordinate vector and `simp` proves this statement
+outright. -/
 theorem geckDiagramModuleEquiv_geckCoordinateBasisFin (hsigma : sigma ∈ t.diagramSymmetry)
     (i : Fin (t.geckDim ht)) :
     t.geckDiagramModuleEquiv ht hsigma
@@ -219,6 +224,7 @@ theorem geckDiagramModuleEquiv_geckCoordinateBasisFin (hsigma : sigma ∈ t.diag
 /-- The finite-ordinal Geck weights are equivariant for the coordinate permutation and the node
 permutation. This is the weight hypothesis of the Kostant toral-closure symmetry construction, and
 it is what makes the same permutation intertwine the represented split torus with relabelling. -/
+@[simp]
 theorem geckWeightFin_geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry)
     (i : Fin (t.geckDim ht)) (k : Fin t.rank) :
     t.geckWeightFin ht (t.geckDiagramFinPerm ht hsigma i) (sigma k) = t.geckWeightFin ht i k := by
@@ -232,11 +238,15 @@ def diagramRootGeneratorPerm (sigma : Equiv.Perm (Fin t.rank)) :
     Equiv.Perm (Fin t.rank ⊕ Fin t.rank) :=
   Equiv.sumCongr sigma sigma
 
-/-- The permutation of the numbered generator indices is a power in the node permutation, because
-it is the value of `Equiv.Perm.sumCongrHom` on the diagonal. -/
-theorem diagramRootGeneratorPerm_pow (tau : Equiv.Perm (Fin t.rank)) (k : ℕ) :
-    diagramRootGeneratorPerm tau ^ k = diagramRootGeneratorPerm (tau ^ k) :=
-  ((Equiv.Perm.sumCongrHom (Fin t.rank) (Fin t.rank)).map_pow (tau, tau) k).symm
+/-- The permutation of the numbered generator indices is the diagonal value of the bundled
+homomorphism `Equiv.Perm.sumCongrHom`, so it obeys that homomorphism's laws. The body of
+`TauCeti.DynkinType.diagramRootGeneratorPerm` is not exposed, so consumers in other modules need
+this equation to reach them. -/
+theorem diagramRootGeneratorPerm_eq_sumCongrHom (tau : Equiv.Perm (Fin t.rank)) :
+    diagramRootGeneratorPerm tau =
+      Equiv.Perm.sumCongrHom (Fin t.rank) (Fin t.rank) (tau, tau) := by
+  rw [diagramRootGeneratorPerm]
+  rfl
 
 /-- The diagram permutation acts on a raising-generator index through `sigma`. -/
 @[simp]
