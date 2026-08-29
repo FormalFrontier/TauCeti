@@ -90,7 +90,7 @@ private theorem ι_lie_single_single (a b i j : n) :
     ι K ⁅Matrix.single a b (1 : K), Matrix.single i j (1 : K)⁆ =
       (if b = i then ι K (Matrix.single a j (1 : K)) else 0) -
         if j = a then ι K (Matrix.single i b (1 : K)) else 0 := by
-  rw [lie_single_single]
+  rw [lie_single_single a b i j 1 1]
   by_cases hbi : b = i <;> by_cases hja : j = a <;> simp [hbi, hja]
 
 private theorem ι_single_mul_glCasimir (a b : n) :
