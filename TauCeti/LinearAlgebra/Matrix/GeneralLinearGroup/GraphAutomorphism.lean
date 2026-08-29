@@ -315,6 +315,8 @@ private theorem typeAGraphAutomorphism_transvectionUnit_aux (r : ℕ)
   rw [typeAGraphAutomorphism_apply, inverseTranspose_transvectionUnit]
   let d : GL (Fin (r + 1)) A := diagGL (typeAGraphSign (A := A))
   let p : GL (Fin (r + 1)) A := permutationGL (k := A) Fin.revPerm
+  -- Unfold the public conjugator into the local diagonal/reversal factors; rewriting cannot
+  -- match this factorization beneath both multiplication and inversion at once.
   change (d * p) * transvectionUnit hij.symm (-c) * (d * p)⁻¹ = _
   calc
     _ = d * (p * transvectionUnit hij.symm (-c) * p⁻¹) * d⁻¹ := by group

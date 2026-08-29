@@ -146,6 +146,24 @@ private theorem universalPoint_comp
   ext z
   rfl
 
+/-- Recover an ambient coordinate-map identity from its matrix equality on the universal point. -/
+private theorem typeAGraphCoordinateIso_hom_comp_eq_of_universalPoint
+    {K : _root_.CommHopfAlgCat.{0} ℤ}
+    (x y : GeneralLinear.coordinateHopfAlgebra ℤ (r + 1) ⟶ K)
+    (h : TauCeti.typeAGraphAutomorphism r (CommAlgCat.of ℤ K)
+        (GeneralLinear.pointToGeneralLinear (r + 1)
+          (toConv ((AlgHom.id ℤ K).comp x.hom.toAlgHom))) =
+      GeneralLinear.pointToGeneralLinear (r + 1)
+        (toConv ((AlgHom.id ℤ K).comp y.hom.toAlgHom))) :
+    (GeneralLinear.typeAGraphCoordinateIso r).hom ≫ x = y := by
+  apply hom_eq_of_universalPoint_eq
+  rw [universalPoint_comp]
+  apply (GeneralLinear.pointsMulEquiv
+    (R := ℤ) (A := CommAlgCat.of ℤ K) (r + 1)).injective
+  rw [GeneralLinear.pointsMulEquiv_comp_typeAGraphCoordinateIso,
+    GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointsMulEquiv_apply]
+  exact h
+
 private theorem ambientGraphCoordinateIso_hom_comp_rootSubgroupCoordinateMap
     (k : Fin r ⊕ Fin r) :
     (GeneralLinear.typeAGraphCoordinateIso r).hom ≫
@@ -157,7 +175,6 @@ private theorem ambientGraphCoordinateIso_hom_comp_rootSubgroupCoordinateMap
         (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
         (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (graphRootPerm r k)
         (isNilpotent_rep_rootGenerator r (graphRootPerm r k)) (latticeBasis r) := by
-  let c := (GeneralLinear.typeAGraphCoordinateIso r).hom
   let x := TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) k
@@ -166,19 +183,12 @@ private theorem ambientGraphCoordinateIso_hom_comp_rootSubgroupCoordinateMap
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (graphRootPerm r k)
     (isNilpotent_rep_rootGenerator r (graphRootPerm r k)) (latticeBasis r)
-  apply hom_eq_of_universalPoint_eq
+  apply typeAGraphCoordinateIso_hom_comp_eq_of_universalPoint
   let q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ]
       AdditiveGroup.coordinateHopfAlgebra ℤ) :=
     toConv (AlgHom.id ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))
-  let f : HopfAlgebra.points
-      (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
-        (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) :=
-    toConv (q.ofConv.comp x.hom.toAlgHom)
-  let g : HopfAlgebra.points
-      (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
-        (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) :=
-    toConv (q.ofConv.comp y.hom.toAlgHom)
-  have hx : GeneralLinear.pointToGeneralLinear (r + 1) f =
+  have hx : GeneralLinear.pointToGeneralLinear (r + 1)
+      (toConv (q.ofConv.comp x.hom.toAlgHom)) =
       TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix (rootGenerator r)
         (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
         (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) k
@@ -188,7 +198,8 @@ private theorem ambientGraphCoordinateIso_hom_comp_rootSubgroupCoordinateMap
       (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) k
       (isNilpotent_rep_rootGenerator r k) (latticeBasis r)
       (A := AdditiveGroup.coordinateHopfAlgebra ℤ) q
-  have hy : GeneralLinear.pointToGeneralLinear (r + 1) g =
+  have hy : GeneralLinear.pointToGeneralLinear (r + 1)
+      (toConv (q.ofConv.comp y.hom.toAlgHom)) =
       TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix (rootGenerator r)
         (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
         (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (graphRootPerm r k)
@@ -198,18 +209,9 @@ private theorem ambientGraphCoordinateIso_hom_comp_rootSubgroupCoordinateMap
       (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (graphRootPerm r k)
       (isNilpotent_rep_rootGenerator r (graphRootPerm r k)) (latticeBasis r)
       (A := AdditiveGroup.coordinateHopfAlgebra ℤ) q
-  have hp : toConv (f.ofConv.comp c.hom.toAlgHom) = g := by
-    apply (GeneralLinear.pointsMulEquiv
-      (R := ℤ) (A := CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))
-        (r + 1)).injective
-    rw [GeneralLinear.pointsMulEquiv_comp_typeAGraphCoordinateIso,
-      GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointsMulEquiv_apply]
-    have hleft := congrArg (TauCeti.typeAGraphAutomorphism r
-      (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))) hx
-    exact hleft.trans ((typeAGraphAutomorphism_kostantRootSubgroupMatrix
-      (A := CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) r k q).trans hy.symm)
-  rw [universalPoint_comp]
-  exact hp
+  rw [hx, hy]
+  exact typeAGraphAutomorphism_kostantRootSubgroupMatrix
+    (A := CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) r k q
 
 private theorem ambientGraphCoordinateIso_hom_comp_weightTorusCoordinateMap :
     (GeneralLinear.typeAGraphCoordinateIso r).hom ≫
@@ -221,18 +223,11 @@ private theorem ambientGraphCoordinateIso_hom_comp_weightTorusCoordinateMap :
   let y := GeneralLinear.weightTorusCoordinateMap (R := ℤ)
     (fun i => weight r i ∘ Fin.revPerm)
   have hxy : c ≫ x = y := by
-    apply hom_eq_of_universalPoint_eq
+    apply typeAGraphCoordinateIso_hom_comp_eq_of_universalPoint
     let T := MonoidAlgebra ℤ (SplitTorus.characterGroup (Fin r))
     let q : WithConv (T →ₐ[ℤ] T) := toConv (AlgHom.id ℤ T)
-    let f : HopfAlgebra.points
-        (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
-          (CommAlgCat.of ℤ T) :=
-      toConv (q.ofConv.comp x.hom.toAlgHom)
-    let g : HopfAlgebra.points
-        (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
-          (CommAlgCat.of ℤ T) :=
-      toConv (q.ofConv.comp y.hom.toAlgHom)
-    have hx : GeneralLinear.pointsMulEquiv (r + 1) f =
+    have hx : GeneralLinear.pointsMulEquiv (r + 1)
+        (toConv (q.ofConv.comp x.hom.toAlgHom)) =
         diagGL fun i => TauCeti.torusCharacter (SplitTorus.pointsMulEquiv q) (weight r i) := by
       calc
         _ = GeneralLinear.pointsMulEquiv (r + 1)
@@ -240,7 +235,8 @@ private theorem ambientGraphCoordinateIso_hom_comp_weightTorusCoordinateMap :
           rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
         _ = _ := GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
           (weight r) (CommAlgCat.of ℤ T) q
-    have hy : GeneralLinear.pointsMulEquiv (r + 1) g =
+    have hy : GeneralLinear.pointsMulEquiv (r + 1)
+        (toConv (q.ofConv.comp y.hom.toAlgHom)) =
         diagGL fun i => TauCeti.torusCharacter (SplitTorus.pointsMulEquiv q)
           (weight r i ∘ Fin.revPerm) := by
       calc
@@ -249,16 +245,11 @@ private theorem ambientGraphCoordinateIso_hom_comp_weightTorusCoordinateMap :
           rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
         _ = _ := GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
           (fun i => weight r i ∘ Fin.revPerm) (CommAlgCat.of ℤ T) q
-    have hp : toConv (f.ofConv.comp c.hom.toAlgHom) = g := by
-      apply (GeneralLinear.pointsMulEquiv (R := ℤ) (A := CommAlgCat.of ℤ T)
-        (r + 1)).injective
-      rw [GeneralLinear.pointsMulEquiv_comp_typeAGraphCoordinateIso, hx, hy,
-        TauCeti.typeAGraphAutomorphism_diagGL]
-      congr 1
-      funext i
-      exact torusCharacter_weight_rev_reindex r (SplitTorus.pointsMulEquiv q) i
-    rw [universalPoint_comp]
-    exact hp
+    rw [← GeneralLinear.pointsMulEquiv_apply, ← GeneralLinear.pointsMulEquiv_apply,
+      hx, hy, TauCeti.typeAGraphAutomorphism_diagGL]
+    congr 1
+    funext i
+    exact torusCharacter_weight_rev_reindex r (SplitTorus.pointsMulEquiv q) i
   calc
     (GeneralLinear.typeAGraphCoordinateIso r).hom ≫
         GeneralLinear.weightTorusCoordinateMap (R := ℤ) (weight r) = y := hxy
@@ -564,6 +555,8 @@ theorem typeAGraphAutomorphism_mem_points {A : Type} [CommRing A]
       ((GeneralLinear.pointsMulEquiv
         (R := ℤ) (A := CommAlgCat.of ℤ A) (r + 1)).apply_symm_apply g).symm
   rw [hpoint]
+  -- `mem_points_iff` evaluates the represented point as an algebra hom, whereas `hpoint`
+  -- retains the `WithConv` and bialgebra-hom wrappers around that same evaluation.
   change q.ofConv ((GeneralLinear.typeAGraphCoordinateIso r).hom.hom x) = 0
   apply hg
   apply HopfIdeal.mem_comapOfSurjective.mp
