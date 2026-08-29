@@ -486,6 +486,15 @@ theorem one_lt_fieldOrder (d : LieTypeIndex) : 1 < d.fieldOrder := by
   rw [d.fieldOrder_eq_characteristic_pow]
   exact Nat.one_lt_pow d.fieldExponent_pos.ne' d.characteristic_prime.one_lt
 
+/-- The Frobenius parameter as a positive natural number, packaging `one_lt_fieldOrder`. This is
+the form taken by the later constructions that scale by `q` and need it to be positive. -/
+def fieldOrderPNat (d : LieTypeIndex) : ℕ+ :=
+  ⟨d.fieldOrder, Nat.zero_lt_one.trans d.one_lt_fieldOrder⟩
+
+@[simp] theorem coe_fieldOrderPNat (d : LieTypeIndex) : (d.fieldOrderPNat : ℕ) = d.fieldOrder := by
+  rw [fieldOrderPNat]
+  rfl
+
 end LieTypeIndex
 
 /-- A Lie-type index satisfying its rank, field, and preferred-representative conditions. Later
@@ -544,10 +553,6 @@ theorem fieldOrder_eq_characteristic_pow (d : ValidLieTypeIndex) :
 /-- The field exponent of a valid index is positive. -/
 theorem fieldExponent_pos (d : ValidLieTypeIndex) : 0 < d.fieldExponent :=
   d.1.fieldExponent_pos
-
-/-- The Frobenius parameter of a valid index is at least two. -/
-theorem one_lt_fieldOrder (d : ValidLieTypeIndex) : 1 < d.fieldOrder :=
-  d.1.one_lt_fieldOrder
 
 end ValidLieTypeIndex
 

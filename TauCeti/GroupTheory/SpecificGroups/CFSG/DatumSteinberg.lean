@@ -25,8 +25,8 @@ equations themselves. Second, the composite is *defined* in the order `γ ∘ Fr
 to agree with `Frob_q ∘ γ`. That agreement,
 `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_comp`,
 is the root-datum form of the relation "`γ` commutes with `Frob_q`" which L1 requires of the
-graph-twisted families, and it comes from the general fact that scaling is central among isogenies,
-`TauCeti.RootPairingIsogeny.comp_smulId`.
+graph-twisted families, and it comes from the general naturality of scaling among isogenies,
+`TauCeti.RootPairingIsogeny.comp_smulId`, at the endo-isogenies of a single datum.
 
 ## The orientation of the graph factor
 
@@ -55,7 +55,6 @@ degenerates to its Frobenius exactly on the nine untwisted families, so `²Aₙ(
 
 ## Main definitions
 
-* `TauCeti.ValidLieTypeIndex.fieldOrderPNat`: the Frobenius parameter as a positive natural number.
 * `TauCeti.ValidLieTypeIndex.datumFrobenius`: multiplication by the Frobenius parameter, as an
   isogeny of the pinned simply connected root datum; the root-datum shadow of `Frob_q`.
 * `TauCeti.GraphTwistedIndex.datumSteinberg`: the root-datum shadow of the Steinberg map
@@ -63,8 +62,8 @@ degenerates to its Frobenius exactly on the nine untwisted families, so `²Aₙ(
 
 ## Main results
 
-* `TauCeti.RootPairingIsogeny.comp_smulId` (in the isogeny file): scaling commutes with every
-  isogeny, which is the general form of the required relation.
+* `TauCeti.RootPairingIsogeny.comp_smulId` (in the isogeny file): every isogeny intertwines scaling
+  on its source with scaling on its target, which is the general form of the required relation.
 * `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_comp`: `γ ∘ Frob_q = Frob_q ∘ γ`.
 * `TauCeti.GraphTwistedIndex.datumSteinberg_root` and
   `TauCeti.GraphTwistedIndex.datumSteinberg_root_simpleIndex`: the Steinberg map multiplies the
@@ -100,14 +99,6 @@ namespace ValidLieTypeIndex
 
 variable (d : ValidLieTypeIndex)
 
-/-- The Frobenius parameter of a valid index as a positive natural number, which is the form the
-scaling isogeny `TauCeti.RootPairingIsogeny.smulId` consumes. -/
-def fieldOrderPNat : ℕ+ := ⟨d.fieldOrder, Nat.zero_lt_one.trans d.one_lt_fieldOrder⟩
-
-@[simp] theorem coe_fieldOrderPNat : (d.fieldOrderPNat : ℕ) = d.fieldOrder := by
-  rw [fieldOrderPNat]
-  rfl
-
 noncomputable section
 
 /-- **The root-datum shadow of the `q`-power Frobenius** of a valid Lie-type index: multiplication
@@ -117,17 +108,17 @@ here; the twisting of a family is carried entirely by the graph automorphism it 
 def datumFrobenius :
     RootPairingIsogeny (d.dynkinType.simplyConnectedRootDatum d.dynkinType_valid)
       (d.dynkinType.simplyConnectedRootDatum d.dynkinType_valid) :=
-  RootPairingIsogeny.smulId _ d.fieldOrderPNat
+  RootPairingIsogeny.smulId _ d.1.fieldOrderPNat
 
 /-- The Frobenius shadow acts on the character lattice as multiplication by `q`. -/
 @[simp] theorem datumFrobenius_weightMap :
     d.datumFrobenius.weightMap = d.fieldOrder • LinearMap.id := by
-  rw [datumFrobenius, RootPairingIsogeny.smulId_weightMap, coe_fieldOrderPNat]
+  rw [datumFrobenius, RootPairingIsogeny.smulId_weightMap, LieTypeIndex.coe_fieldOrderPNat]
 
 /-- The Frobenius shadow acts on the cocharacter lattice as multiplication by `q`. -/
 @[simp] theorem datumFrobenius_coweightMap :
     d.datumFrobenius.coweightMap = d.fieldOrder • LinearMap.id := by
-  rw [datumFrobenius, RootPairingIsogeny.smulId_coweightMap, coe_fieldOrderPNat]
+  rw [datumFrobenius, RootPairingIsogeny.smulId_coweightMap, LieTypeIndex.coe_fieldOrderPNat]
 
 /-- The Frobenius shadow fixes the root enumeration: it rescales the roots and does not move
 them. -/
@@ -138,7 +129,7 @@ them. -/
 /-- The Frobenius shadow rescales every root by `q`. -/
 @[simp] theorem datumFrobenius_exponent (k : Fin d.dynkinType.numRoots) :
     d.datumFrobenius.exponent k = (d.fieldOrder : ℤ) := by
-  rw [datumFrobenius, RootPairingIsogeny.smulId_exponent, coe_fieldOrderPNat]
+  rw [datumFrobenius, RootPairingIsogeny.smulId_exponent, LieTypeIndex.coe_fieldOrderPNat]
 
 end
 
@@ -169,8 +160,7 @@ theorem datumSteinberg_eq_datumFrobenius_comp :
     d.datumSteinberg =
       d.1.datumFrobenius.comp (RootPairingIsogeny.ofEquiv d.datumGraphAut) := by
   rw [datumSteinberg, ValidLieTypeIndex.datumFrobenius]
-  exact RootPairingIsogeny.comp_smulId (RootPairingIsogeny.ofEquiv d.datumGraphAut)
-    d.1.fieldOrderPNat
+  exact RootPairingIsogeny.comp_smulId (RootPairingIsogeny.ofEquiv d.datumGraphAut) _
 
 /-- The Steinberg map acts on the character lattice as multiplication by `q` followed by the weight
 map of the graph automorphism. -/
