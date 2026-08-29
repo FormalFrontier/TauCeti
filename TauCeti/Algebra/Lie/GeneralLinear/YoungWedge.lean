@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.GeneralLinear.BlockDiagonal
 public import TauCeti.Combinatorics.Young.Cells
 
-import Mathlib.LinearAlgebra.ExteriorPower.Basis
-
 public section
 
 /-!
