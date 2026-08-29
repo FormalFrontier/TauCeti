@@ -219,8 +219,11 @@ theorem toSemigroup_realOperator_of_nonneg (U : StronglyContinuousGroup X) {t : 
     U.toSemigroup.realOperator t = U t := by
   rw [StronglyContinuousSemigroup.realOperator_def, toSemigroup_apply, Real.coe_toNNReal t ht]
 
-/-- At a nonnegative real time the reversed group's forward semigroup runs `U` backwards. -/
-@[simp]
+/-- At a nonnegative real time the reversed group's forward semigroup runs `U` backwards.
+
+Not a `simp` lemma: `simp` already reaches this form through
+`toSemigroup_realOperator_of_nonneg` and `reflect_apply`, so tagging it duplicates a rule
+`simp` derives anyway. -/
 theorem reflect_toSemigroup_realOperator_of_nonneg
     (U : StronglyContinuousGroup X) {t : ℝ} (ht : 0 ≤ t) :
     U.reflect.toSemigroup.realOperator t = U (-t) := by
