@@ -43,6 +43,7 @@ order `8` as a closed instance of everything here.
 * `TauCeti.ClassData.ofList`: such a list, extracted from any list meeting every conjugacy class.
 * `TauCeti.ClassData.index`, `TauCeti.ClassData.rep`: the numbering and its representatives.
 * `TauCeti.ClassData.equivConjClasses`: the numbering as an equivalence with `ConjClasses G`.
+* `TauCeti.ClassData.rowsOfMap`: the rows of a numbered matrix, mapped entrywise into another type.
 * `TauCeti.ClassData.reindexTableOfMap`: map the entries of a numbered table and reindex it by the
   conjugacy classes.
 * `TauCeti.ClassData.classFinset`, `TauCeti.ClassData.classes`: the `i`-th conjugacy class and the
@@ -182,6 +183,22 @@ theorem nodup_reps : d.reps.Nodup := by
   refine d.pairwise_not_isConj.imp fun {a b} h => ?_
   rintro rfl
   exact h (IsConj.refl a)
+
+/-! ### Rows of a numbered matrix -/
+
+/-- The rows of a numbered matrix, mapped entrywise by `f` and collected without an ordering. -/
+@[expose] def rowsOfMap {R S : Type*} [DecidableEq S] (f : R → S)
+    (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R) :
+    Finset (Fin d.numClasses → S) :=
+  Finset.univ.image fun i j => f (M i j)
+
+/-- A row is displayed exactly when it is the mapped image of a matrix row. -/
+@[simp]
+theorem mem_rowsOfMap_iff {R S : Type*} [DecidableEq S] (f : R → S)
+    (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    {a : Fin d.numClasses → S} :
+    a ∈ d.rowsOfMap f M ↔ ∃ i, (fun j => f (M i j)) = a := by
+  simp [rowsOfMap]
 
 section Executable
 

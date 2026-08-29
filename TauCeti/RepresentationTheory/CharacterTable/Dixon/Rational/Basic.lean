@@ -17,10 +17,11 @@ with `ZMod.valMinAbs`, once the modular search is known to return exactly the re
 rows and every entry lies in the signed least-residue range.
 
 The earlier steps live upstream: the reduced candidate rows are collected by
-`TauCeti.ClassData.rowsOfMap`, and
+`TauCeti.ClassData.rowsOfMap`, in
+`TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Basic`, and
 `TauCeti.ClassData.centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime` identifies
-them with the complete modular search at a good Dixon prime; both are in
-`TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount`, and the
+them with the complete modular search at a good Dixon prime, in
+`TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount`; the
 hypothesis of the theorem below is stated in terms of them.
 
 ## Main definitions

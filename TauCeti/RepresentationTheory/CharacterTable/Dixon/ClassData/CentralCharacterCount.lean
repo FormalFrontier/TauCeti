@@ -33,11 +33,6 @@ the coordinates (`Pi.evalAlgHomEquiv`); the class-algebra dictionary
 `TauCeti.ClassData.modularEigenrowEquiv` renumbers those into the numbered rows the executable
 search returns.
 
-## Main definitions
-
-* `TauCeti.ClassData.rowsOfMap`: the rows of a numbered matrix, mapped entrywise into the
-  coefficient ring the search runs over.
-
 ## Main results
 
 * `TauCeti.ClassData.nonempty_conjClasses_equiv_centralCharacterSearch`: under a splitting
@@ -134,21 +129,6 @@ theorem card_centralCharacterSearch_of_isGoodDixonPrime {p : ℕ} [Fact p.Prime]
   d.card_centralCharacterSearch hp.nonempty_center_algEquiv_conjClasses
 
 /-! ### Identifying a complete set of candidate rows -/
-
-/-- The rows of a numbered matrix, mapped entrywise by `f` and collected without an ordering. -/
-@[expose] def rowsOfMap {R S : Type*} [DecidableEq S] (f : R → S)
-    (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R) :
-    Finset (Fin d.numClasses → S) :=
-  Finset.univ.image fun i j => f (M i j)
-
-omit [Fintype G] [DecidableEq G] in
-/-- A row is displayed exactly when it is the mapped image of a matrix row. -/
-@[simp]
-theorem mem_rowsOfMap_iff {R S : Type*} [DecidableEq S] (f : R → S)
-    (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
-    {a : Fin d.numClasses → S} :
-    a ∈ d.rowsOfMap f M ↔ ∃ i, (fun j => f (M i j)) = a := by
-  simp [rowsOfMap]
 
 /-- **Displayed normalized eigenrows exhaust the central-character search** over a coefficient
 field splitting the centre of `F[G]`, when the displayed set has the required number of rows. -/
