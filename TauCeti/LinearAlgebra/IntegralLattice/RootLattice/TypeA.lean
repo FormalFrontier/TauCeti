@@ -547,8 +547,7 @@ theorem typeADiscriminantQuadraticIsometry_one :
     typeADiscriminantQuadraticIsometry n (1 : ZMod (n + 1)) = typeAFundamentalWeightClass n := by
   rw [typeADiscriminantQuadraticIsometry_apply, typeADiscriminantGroupEquiv_apply_one]
 
-/-- **The cyclic `ℤ/(n+1)` model is nondegenerate**, since the discriminant form of a
-nondegenerate lattice is. -/
+/-- **The cyclic `ℤ/(n+1)` model is nondegenerate.** -/
 theorem isNondegenerate_typeAStandardQuadraticModule :
     (typeAStandardQuadraticModule n).IsNondegenerate :=
   ((typeADiscriminantQuadraticIsometry n).isNondegenerate_iff).mpr
