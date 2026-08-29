@@ -32,10 +32,10 @@ subgroup containing both `B` and `N`, hence is all of `G` by the generation axio
 * `TauCeti.TitsSystem.bruhatCells_eq_univ`: the Bruhat cells cover the ambient group.
 * `TauCeti.TitsSystem.doubleCoset_eq_of_mk_eq`: a Bruhat cell depends only on the Weyl-group
   element represented by its element of `N`.
-* `TauCeti.TitsSystem.mul_doubleCoset_eq_or_eq_union`: multiplication on the left by a simple
-  Bruhat cell gives either the adjacent cell or its union with the original cell.
-* `TauCeti.TitsSystem.bruhatCell_simple_mul_self`: the square of a simple cell is its union with
-  the identity cell.
+* `TauCeti.TitsSystem.mul_doubleCoset_eq_or_eq_union_of_mem_simple`: multiplication on the left
+  by a simple Bruhat cell gives either the adjacent cell or its union with the original cell.
+* `TauCeti.TitsSystem.bruhatCell_mul_self_eq_union_of_mem_simple`: the square of a simple cell is
+  its union with the identity cell.
 * `TauCeti.TitsSystem.exists_mem_doubleCoset`: every group element lies in a cell represented
   by `N`.
 * `TauCeti.TitsSystem.doubleCosetMk_surjective`: the induced map `N → B \ G / B` is
@@ -109,8 +109,8 @@ theorem bruhatCell_one : T.bruhatCell 1 = (T.subgroupB : Set G) := by
     _ = DoubleCoset.doubleCoset (1 : G) T.subgroupB T.subgroupB := T.bruhatCell_mk 1
     _ = T.subgroupB := doubleCoset_one_self T.subgroupB
 
-/-- The union over `N` defining `bruhatCells` can equivalently be indexed without repetition by
-the Weyl group. -/
+/-- The union over `N` defining `bruhatCells` can equivalently be indexed canonically by the Weyl
+group. -/
 theorem bruhatCells_eq_iUnion_bruhatCell :
     T.bruhatCells = ⋃ w : T.WeylGroup, T.bruhatCell w := by
   apply Set.Subset.antisymm
@@ -163,7 +163,7 @@ lies in `N`, then `(B r B)(B w B)` is either the adjacent cell `B (r w) B` or th
 cell with `B w B`.
 
 The conclusion is independent of the chosen representative `r` of the simple reflection. -/
-theorem mul_doubleCoset_eq_or_eq_union {s : T.WeylGroup} (hs : s ∈ T.simple)
+theorem mul_doubleCoset_eq_or_eq_union_of_mem_simple {s : T.WeylGroup} (hs : s ∈ T.simple)
     (r : T.subgroupN) (hr : (QuotientGroup.mk r : T.WeylGroup) = s)
     (w : T.subgroupN) :
     DoubleCoset.doubleCoset (r : G) T.subgroupB T.subgroupB *
@@ -210,7 +210,7 @@ theorem mul_doubleCoset_eq_or_eq_union {s : T.WeylGroup} (hs : s ∈ T.simple)
 /-- **Weyl-indexed multiplication by a simple Bruhat cell.** For a simple reflection `s` and a
 Weyl-group element `w`, the product of their cells is either the cell at `s * w` or its union
 with the cell at `w`. -/
-theorem bruhatCell_mul_eq_or_eq_union {s : T.WeylGroup} (hs : s ∈ T.simple)
+theorem bruhatCell_mul_eq_or_eq_union_of_mem_simple {s : T.WeylGroup} (hs : s ∈ T.simple)
     (w : T.WeylGroup) :
     T.bruhatCell s * T.bruhatCell w = T.bruhatCell (s * w) ∨
       T.bruhatCell s * T.bruhatCell w = T.bruhatCell (s * w) ∪ T.bruhatCell w := by
@@ -218,14 +218,14 @@ theorem bruhatCell_mul_eq_or_eq_union {s : T.WeylGroup} (hs : s ∈ T.simple)
   obtain ⟨n, rfl⟩ := QuotientGroup.mk'_surjective T.intersection w
   simpa only [QuotientGroup.mk'_apply, ← QuotientGroup.mk_mul, Subgroup.comap_subtype,
     bruhatCell_mk] using
-    T.mul_doubleCoset_eq_or_eq_union hs r rfl n
+    T.mul_doubleCoset_eq_or_eq_union_of_mem_simple hs r rfl n
 
 /-- The square of a simple Bruhat cell is the union of that cell with the identity cell:
 `(B s B)(B s B) = B ∪ B s B`.
 
 The nondegeneracy axiom rules out the smaller alternative in
-`TauCeti.TitsSystem.bruhatCell_mul_eq_or_eq_union`. -/
-theorem bruhatCell_simple_mul_self {s : T.WeylGroup} (hs : s ∈ T.simple) :
+`TauCeti.TitsSystem.bruhatCell_mul_eq_or_eq_union_of_mem_simple`. -/
+theorem bruhatCell_mul_self_eq_union_of_mem_simple {s : T.WeylGroup} (hs : s ∈ T.simple) :
     T.bruhatCell s * T.bruhatCell s = T.bruhatCell 1 ∪ T.bruhatCell s := by
   obtain ⟨r, hr, b, hb⟩ := T.exists_conj_not_mem s hs
   have hs_inv : s⁻¹ = s := inv_eq_of_mul_eq_one_right (T.simple_sq_eq_one hs)
@@ -259,7 +259,7 @@ theorem bruhatCell_simple_mul_self {s : T.WeylGroup} (hs : s ∈ T.simple) :
         apply T.doubleCoset_eq_of_mk_eq (n := r * r) (m := 1)
         rw [QuotientGroup.mk_mul, hr, T.simple_sq_eq_one hs, QuotientGroup.mk_one]
       _ = T.subgroupB := doubleCoset_one_self T.subgroupB
-  rcases T.mul_doubleCoset_eq_or_eq_union hs r hr r with hsmall | hbig
+  rcases T.mul_doubleCoset_eq_or_eq_union_of_mem_simple hs r hr r with hsmall | hbig
   · exfalso
     have hx' := hx
     rw [hsmall, hsq] at hx'
