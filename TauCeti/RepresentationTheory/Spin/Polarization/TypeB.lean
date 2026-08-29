@@ -145,9 +145,11 @@ private theorem mem_typeB_toMatrix_iff (f : Module.End K V) :
     exact Matrix.toLinearMap₂_toMatrix₂ _ _ Q.polarBilin
   rw [LieAlgebra.Orthogonal.typeB, mem_skewAdjointMatricesLieSubalgebra,
     mem_skewAdjointMatricesSubmodule]
-  rw [show f ∈ skewAdjointLieSubalgebra Q.polarBilin ↔
-      f ∈ Q.polarBilin.skewAdjointSubmodule by
-    exact LieSubalgebra.mem_mk_iff' _ _, LinearMap.mem_skewAdjointSubmodule]
+  -- Expose the two bundled skew-adjoint predicates after transporting the Gram matrix.
+  change (LieAlgebra.Orthogonal.JB ι K).IsSkewAdjoint
+      (LinearMap.toMatrix (P.typeBBasis b z hz) (P.typeBBasis b z hz) f) ↔
+    f ∈ Q.polarBilin.skewAdjointSubmodule
+  rw [LinearMap.mem_skewAdjointSubmodule]
   rw [Matrix.IsSkewAdjoint, LinearMap.IsSkewAdjoint]
   symm
   simpa [hB] using
