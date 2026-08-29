@@ -107,6 +107,11 @@ requires identifying this carrier with the simply connected group, which is not 
 def geckTwistedFrobenius : t.geckPoints ht A →* t.geckPoints ht A :=
   (t.geckGraphAutPoints ht hsigma A).toMonoidHom.comp (t.geckFrobenius ht p k A)
 
+/-- The twisted Frobenius applies the Frobenius first and then the graph automorphism. -/
+theorem geckTwistedFrobenius_apply (g : t.geckPoints ht A) :
+    t.geckTwistedFrobenius ht hsigma p k A g =
+      t.geckGraphAutPoints ht hsigma A (t.geckFrobenius ht p k A g) := (rfl)
+
 /-- The twisted Frobenius is the composite in either order. -/
 theorem geckTwistedFrobenius_eq_geckFrobenius_comp :
     t.geckTwistedFrobenius ht hsigma p k A =
@@ -122,8 +127,7 @@ theorem coe_geckTwistedFrobenius (g : t.geckPoints ht A) :
       t.geckGraphAutMatrix ht hsigma A *
           Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g *
         (t.geckGraphAutMatrix ht hsigma A)⁻¹ := by
-  rw [geckTwistedFrobenius, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
-    coe_geckGraphAutPoints, coe_geckFrobenius]
+  rw [geckTwistedFrobenius_apply, coe_geckGraphAutPoints, coe_geckFrobenius]
 
 /-- **The twisted Frobenius raises the parameter of a numbered Geck root subgroup to its
 `p ^ k`-th power and renumbers it by the diagram symmetry.** This is the defining equation of a
@@ -139,8 +143,8 @@ theorem geckTwistedFrobenius_geckRootSubgroupMatrix (i : Fin t.rank ⊕ Fin t.ra
           ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
             (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k))),
         t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
-  rw [geckTwistedFrobenius, MonoidHom.comp_apply, geckFrobenius_geckRootSubgroupMatrix,
-    MulEquiv.coe_toMonoidHom, geckGraphAutPoints_geckRootSubgroupMatrix]
+  rw [geckTwistedFrobenius_apply, geckFrobenius_geckRootSubgroupMatrix,
+    geckGraphAutPoints_geckRootSubgroupMatrix]
 
 /-- **The twisted Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power
 and relabels its coordinates** by the inverse of the diagram symmetry. -/
@@ -152,8 +156,8 @@ theorem geckTwistedFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
             t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
       ⟨t.geckTorusMatrix ht fun j => (s (sigma⁻¹ j)) ^ p ^ k,
         t.geckTorusMatrix_mem_geckPoints ht A _⟩ := by
-  rw [geckTwistedFrobenius, MonoidHom.comp_apply, geckFrobenius_geckTorusMatrix,
-    MulEquiv.coe_toMonoidHom, geckPoints_mk_geckTorusMatrix, geckGraphAutPoints_geckTorusMatrix]
+  rw [geckTwistedFrobenius_apply, geckFrobenius_geckTorusMatrix, geckPoints_mk_geckTorusMatrix,
+    geckGraphAutPoints_geckTorusMatrix]
   exact Subtype.ext (congrArg (t.geckTorusMatrix ht) (funext fun j => Pi.pow_apply s (p ^ k) _))
 
 end
