@@ -80,8 +80,9 @@ that composes to zero is already zero.
 * `IsSl2Triple.rescale`: rescaling the raising element by a unit and the lowering element by its
   inverse preserves an `sl₂` triple.
 * `TauCeti.hasPrimitiveVectorWith_symm_of_lie` and
-  `TauCeti.ad_pow_lie_eq_zero_of_isSl2Triple`: the primitive-vector and higher-string arguments
-  from bare `sl₂`-triple, weight, and annihilation hypotheses.
+  `TauCeti.pow_toEnd_succ_toNat_eq_zero_of_hasPrimitiveVectorWith`: the module-generic
+  primitive-vector and finite-string arguments, with
+  `TauCeti.ad_pow_lie_eq_zero_of_isSl2Triple` as their adjoint specialization.
 
 ## Implementation notes
 
@@ -141,14 +142,15 @@ theorem _root_.IsSl2Triple.rescale {S L : Type*} [CommRing S] [LieRing L] [LieAl
 
 section PrimitiveVector
 
-variable {K L : Type*} [CommRing K] [LieRing L] [LieAlgebra K L]
+variable {K L M : Type*} [CommRing K] [LieRing L]
+  [AddCommGroup M] [Module K M] [LieRingModule L M]
 
 /-- A nonzero weight vector killed by the lowering element is primitive for the symmetric
 `sl₂`-triple, with the negated weight. -/
-theorem hasPrimitiveVectorWith_symm_of_lie {h e f m : L} {a : ℤ}
+theorem hasPrimitiveVectorWith_symm_of_lie {h e f : L} {m : M} {a : ℤ}
     (ht : IsSl2Triple h e f) (hm : m ≠ 0)
     (hhm : ⁅h, m⁆ = ((a : ℤ) : K) • m) (hfm : ⁅f, m⁆ = 0) :
-    ht.symm.HasPrimitiveVectorWith (M := L) m ((-a : ℤ) : K) where
+    ht.symm.HasPrimitiveVectorWith (M := M) m ((-a : ℤ) : K) where
   ne_zero := hm
   lie_h := by rw [neg_lie, hhm, Int.cast_neg, neg_smul]
   lie_e := hfm
@@ -157,25 +159,40 @@ end PrimitiveVector
 
 section FiniteString
 
+variable {K L M : Type*} [CommRing K] [IsDomain K] [CharZero K] [LieRing L]
+  [LieAlgebra K L] [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+  [Module.IsTorsionFree K M] [IsNoetherian K M]
+
+/-- The string below a primitive vector of integer eigenvalue `n` stops after `n.toNat` steps in
+any torsion-free Noetherian module. Here `y` is the lowering generator of the triple. -/
+theorem pow_toEnd_succ_toNat_eq_zero_of_hasPrimitiveVectorWith
+    {x y z : L} {m : M} {ht : IsSl2Triple z x y} {n : ℤ}
+    (P : ht.HasPrimitiveVectorWith (M := M) m ((n : ℤ) : K)) :
+    ((LieModule.toEnd K L M y) ^ (n.toNat + 1)) m = 0 := by
+  obtain ⟨k, hk⟩ := P.exists_nat
+  have hnk : n = (k : ℤ) := by exact_mod_cast hk
+  have htn : n.toNat = k := by omega
+  rw [htn]
+  exact P.pow_toEnd_f_eq_zero_of_eq_nat hk
+
+end FiniteString
+
+section AdjointFiniteString
+
 variable {K L : Type*} [CommRing K] [IsDomain K] [CharZero K] [LieRing L]
   [LieAlgebra K L] [Module.IsTorsionFree K L] [IsNoetherian K L]
 
-/-- The string below a primitive vector of integer eigenvalue `n` stops after `n.toNat` steps.
-Here `y` is the lowering generator of the triple being iterated and `m` the primitive vector. -/
+/-- The adjoint specialization of the module-generic finite-string theorem. -/
 theorem ad_pow_succ_toNat_eq_zero_of_hasPrimitiveVectorWith
     {x y z m : L} {ht : IsSl2Triple z x y} {n : ℤ}
     (P : ht.HasPrimitiveVectorWith (M := L) m ((n : ℤ) : K)) :
     ((LieAlgebra.ad K L y) ^ (n.toNat + 1)) m = 0 := by
-  obtain ⟨k, hk⟩ := P.exists_nat
-  have hnk : n = (k : ℤ) := by exact_mod_cast hk
-  have htn : n.toNat = k := by omega
-  -- Mathlib states the `sl₂` string API for `LieModule.toEnd`, so the adjoint action is written
-  -- in that shape first; the two agree extensionally on the adjoint module.
+  have h := pow_toEnd_succ_toNat_eq_zero_of_hasPrimitiveVectorWith (K := K) P
   have hadt : (LieAlgebra.ad K L y : Module.End K L) = LieModule.toEnd K L L y := by
     ext w
     simp
-  rw [hadt, htn]
-  exact P.pow_toEnd_f_eq_zero_of_eq_nat hk
+  rw [hadt]
+  exact h
 
 /-- The higher-string relation supplied by an `sl₂`-triple: if `m` has integral weight `a` for
 `h` and is killed by `f`, then one bracket with `e` followed by `(-a).toNat` further adjoint
@@ -192,7 +209,7 @@ theorem ad_pow_lie_eq_zero_of_isSl2Triple {h e f m : L} {a : ℤ}
     rw [pow_succ, Module.End.mul_apply, LieAlgebra.ad_apply] at h0
     exact h0
 
-end FiniteString
+end AdjointFiniteString
 
 variable (R : Type*) [CommRing R] {n : Type*} [DecidableEq n] [Fintype n]
 
