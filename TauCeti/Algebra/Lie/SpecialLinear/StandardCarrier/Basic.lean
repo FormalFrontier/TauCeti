@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Lie.Classical
 public import Mathlib.LinearAlgebra.Matrix.Cartan
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.CoordinateLattice
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ClosedImmersion
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Relations
@@ -14,7 +15,6 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
 public import TauCeti.LinearAlgebra.CoordinateLattice
 public import TauCeti.LinearAlgebra.Eigenspace.Binomial
-public import TauCeti.RingTheory.Binomial
 import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
 import TauCeti.CategoryTheory.Comma.Over
 
@@ -352,44 +352,19 @@ theorem rep_rootGenerator_mem_lattice (k : Fin r ⊕ Fin r) {v : Fin (r + 1) →
   rw [rep_rootGenerator_apply, ← hz, Int.cast_smul_eq_zsmul]
   exact zsmul_mem (single_mem_lattice r _) z
 
-/-- **Every divided power of a numbered root generator preserves the standard lattice.** The
-generator squares to zero on the standard module, so only the zeroth and first divided powers are
-nonzero, and both are visibly integral. -/
-theorem rep_dividedPower_rootGenerator_mem_lattice (k : Fin r ⊕ Fin r) (n : ℕ)
-    {v : Fin (r + 1) → ℚ} (hv : v ∈ lattice r) :
-    rep r (Associative.dividedPower n
-        (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k))) v ∈ lattice r := by
-  rw [Associative.map_dividedPower]
-  exact Associative.dividedPower_apply_mem_of_pow_two_eq_zero _ _
-    (pow_two_rep_rootGenerator_eq_zero r k) (rep_rootGenerator_mem_lattice r k) n hv
-
-/-- **Every Cartan binomial operator preserves the standard lattice.** The coordinate vectors are
-weight vectors with integer weights, so the binomial coefficients act on them by integers. -/
-theorem rep_ringChoose_cartanGenerator_mem_lattice (i : Fin r) (n : ℕ)
-    {v : Fin (r + 1) → ℚ} (hv : v ∈ lattice r) :
-    rep r (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator r i)) n) v ∈
-      lattice r := by
-  rw [lattice] at hv ⊢
-  rw [Ring.map_choose]
-  refine TauCeti.ringChoose_end_apply_mem_coordinateLattice_of_apply_eq_intCast_smul
-    (Fin (r + 1)) (weight := fun x => weight r x i) ?_ n hv
-  intro x
-  rw [Pi.basisFun_apply]
-  exact (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-    (cartanGenerator r) (rep r)).1 (isCartanWeightVector_single r x) i
-
 /-- **The standard lattice is an admissible lattice**: the Kostant `ℤ`-form presented by the
-numbered Chevalley generators preserves it. -/
+numbered Chevalley generators preserves it. The root generators square to zero on the standard
+module and preserve the lattice, and the coordinate vectors are weight vectors with integer
+weights. -/
 theorem rep_kostantForm_mem_lattice
     {u : _root_.UniversalEnvelopingAlgebra ℚ (sl (Fin (r + 1)) ℚ)}
     (hu : u ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm (rootGenerator r)
       (cartanGenerator r))
     {v : Fin (r + 1) → ℚ} (hv : v ∈ lattice r) :
     rep r u v ∈ lattice r :=
-  TauCeti.UniversalEnvelopingAlgebra.kostantForm_apply_mem (rootGenerator r) (cartanGenerator r)
-    (rep r) (lattice r)
-    (fun k n _ hv => rep_dividedPower_rootGenerator_mem_lattice r k n hv)
-    (fun i n _ hv => rep_ringChoose_cartanGenerator_mem_lattice r i n hv) u hu hv
+  TauCeti.UniversalEnvelopingAlgebra.kostantForm_apply_mem_coordinateLattice (rootGenerator r)
+    (cartanGenerator r) (rep r) (wt := weight r) (pow_two_rep_rootGenerator_eq_zero r)
+    (fun k _ hw => rep_rootGenerator_mem_lattice r k hw) (isCartanWeightVector_single r) hu hv
 
 /-! ## The weights generate the full character lattice -/
 

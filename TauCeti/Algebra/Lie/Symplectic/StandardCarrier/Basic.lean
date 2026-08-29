@@ -9,13 +9,12 @@ public import Mathlib.Algebra.Lie.Classical
 public import Mathlib.Algebra.Lie.Sl2
 public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import TauCeti.Algebra.Lie.Presentation.Serre
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.CoordinateLattice
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
 public import TauCeti.Algebra.Module.Rat
 public import TauCeti.LinearAlgebra.CoordinateLattice
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Datum
-public import TauCeti.RingTheory.Binomial
-public import TauCeti.RingTheory.DividedPowers.Associative
 import TauCeti.Algebra.Lie.GeneralLinear.Basic
 import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
 import TauCeti.Algebra.Lie.Sl2.WeightString
@@ -59,12 +58,29 @@ asserted here.
 
 * `TauCeti.SpStd.rootGenerator` and `TauCeti.SpStd.cartanGenerator`: the numbered type-`C`
   Chevalley generators in the symplectic Lie algebra.
+* `TauCeti.SpStd.rep`: the standard representation, extended to the enveloping algebra.
+* `TauCeti.SpStd.weight` and `TauCeti.SpStd.rootGeneratorWeight`: the integral weights of the
+  standard coordinates and the root characters of the numbered generators.
+* `TauCeti.SpStd.lattice`, `TauCeti.SpStd.latticeBasis`, and `TauCeti.SpStd.basisWeight`: the
+  standard admissible lattice, its enumerated coordinate basis, and the weights of that basis.
+* `TauCeti.SpStd.rootSubgroupParam` and `TauCeti.SpStd.torusPoints`: the parametrized numbered
+  root subgroups and the split weight torus on points of a value algebra.
+
+## Main results
+
 * `TauCeti.SpStd.isSl2Triple_rootGenerator`: the `sl₂` triple at each numbered index, from which
   the higher Serre relations are read off.
-* `TauCeti.SpStd.isSerreSystem_rootGenerator`: their characteristic Chevalley--Serre relations.
-* `TauCeti.SpStd.rep`: the standard representation, extended to the enveloping algebra.
-* `TauCeti.SpStd.lattice`, `TauCeti.SpStd.latticeBasis`, and `TauCeti.SpStd.weight`: the standard
-  admissible lattice and its weights.
+* `TauCeti.SpStd.isSerreSystem_rootGenerator`: the characteristic Chevalley--Serre relations of
+  the numbered generators.
+* `TauCeti.SpStd.lie_cartanGenerator_rootGenerator`: the numbered Cartan generators act on the
+  root generators through the rows of the type-`C` Cartan matrix.
+* `TauCeti.SpStd.isNilpotent_rep_rootGenerator`: each numbered root generator squares to zero on
+  the standard module.
+* `TauCeti.SpStd.rep_kostantForm_mem_lattice`: the Kostant `ℤ`-form preserves the standard
+  lattice, so the lattice is admissible.
+* `TauCeti.SpStd.span_range_weight_eq_top`: the weights of the standard module generate the full
+  character lattice.
+* `TauCeti.SpStd.torusPoints_conj_rootSubgroupParam`: the pointwise pinning equation.
 
 ## References
 
@@ -187,13 +203,19 @@ def weight (a : Fin (n + 1) ⊕ Fin (n + 1)) : Fin (n + 1) → ℤ :=
     DynkinType.TypeC.signedWeight_true, Pi.neg_apply]
 
 /-- The diagonal matrix of the `i`-th simple coroot in the standard symplectic representation. -/
-def cartanMatrix (i : Fin (n + 1)) :
+def cartanGeneratorMatrix (i : Fin (n + 1)) :
     _root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1)) (Fin (n + 1) ⊕ Fin (n + 1)) ℚ :=
   _root_.Matrix.diagonal fun k => (weight n k i : ℚ)
 
-theorem cartanMatrix_mem_sp (i : Fin (n + 1)) :
-    cartanMatrix n i ∈ sp (Fin (n + 1)) ℚ := by
-  have hblocks : cartanMatrix n i =
+/-- The entries of the diagonal matrix of a Cartan generator are the coordinate weights. -/
+@[simp] theorem cartanGeneratorMatrix_apply (i : Fin (n + 1))
+    (a b : Fin (n + 1) ⊕ Fin (n + 1)) :
+    cartanGeneratorMatrix n i a b = if a = b then (weight n a i : ℚ) else 0 := by
+  rw [cartanGeneratorMatrix, _root_.Matrix.diagonal_apply]
+
+theorem cartanGeneratorMatrix_mem_sp (i : Fin (n + 1)) :
+    cartanGeneratorMatrix n i ∈ sp (Fin (n + 1)) ℚ := by
+  have hblocks : cartanGeneratorMatrix n i =
       _root_.Matrix.fromBlocks
         (_root_.Matrix.diagonal fun a : Fin (n + 1) =>
           (DynkinType.TypeC.weight (n + 1) a i : ℚ)) 0 0
@@ -201,7 +223,7 @@ theorem cartanMatrix_mem_sp (i : Fin (n + 1)) :
           (DynkinType.TypeC.weight (n + 1) a i : ℚ)) := by
     ext a b
     cases a <;> cases b <;>
-      simp [cartanMatrix, _root_.Matrix.fromBlocks, _root_.Matrix.diagonal_apply]
+      simp [cartanGeneratorMatrix, _root_.Matrix.fromBlocks, _root_.Matrix.diagonal_apply]
   rw [hblocks]
   exact fromBlocks_mem_sp n _ 0 0 _ (by simp) (by simp) (by simp)
 
@@ -212,7 +234,7 @@ def rootGenerator : Fin (n + 1) ⊕ Fin (n + 1) → sp (Fin (n + 1)) ℚ
 
 /-- The Bourbaki-numbered Cartan generators in the standard symplectic representation. -/
 def cartanGenerator (i : Fin (n + 1)) : sp (Fin (n + 1)) ℚ :=
-  ⟨cartanMatrix n i, cartanMatrix_mem_sp n i⟩
+  ⟨cartanGeneratorMatrix n i, cartanGeneratorMatrix_mem_sp n i⟩
 
 @[simp] theorem val_rootGenerator_inl (i : Fin (n + 1)) :
     (rootGenerator n (.inl i) :
@@ -227,11 +249,11 @@ def cartanGenerator (i : Fin (n + 1)) : sp (Fin (n + 1)) ℚ :=
 @[simp] theorem val_cartanGenerator (i : Fin (n + 1)) :
     (cartanGenerator n i :
       _root_.Matrix (Fin (n + 1) ⊕ Fin (n + 1)) (Fin (n + 1) ⊕ Fin (n + 1)) ℚ) =
-        cartanMatrix n i := (rfl)
+        cartanGeneratorMatrix n i := (rfl)
 
-private theorem cartanMatrix_commutator_cartanMatrix (i j : Fin (n + 1)) :
-    ⁅cartanMatrix n i, cartanMatrix n j⁆ = 0 := by
-  rw [cartanMatrix, cartanMatrix, LieRing.of_associative_ring_bracket]
+private theorem lie_cartanGeneratorMatrix_cartanGeneratorMatrix (i j : Fin (n + 1)) :
+    ⁅cartanGeneratorMatrix n i, cartanGeneratorMatrix n j⁆ = 0 := by
+  rw [cartanGeneratorMatrix, cartanGeneratorMatrix, LieRing.of_associative_ring_bracket]
   ext a b
   simp only [_root_.Matrix.diagonal_mul_diagonal, _root_.Matrix.sub_apply,
     _root_.Matrix.diagonal_apply, _root_.Matrix.zero_apply]
@@ -252,19 +274,21 @@ theorem rep_ι_apply (x : sp (Fin (n + 1)) ℚ)
 
 /-- A Cartan generator acts diagonally on every standard-module vector with the recorded
 coordinate weight. -/
-theorem rep_cartanGenerator_apply (i : Fin (n + 1))
+theorem rep_cartanGenerator_apply_apply (i : Fin (n + 1))
     (v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ)
     (a : Fin (n + 1) ⊕ Fin (n + 1)) :
     rep n (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator n i)) v a =
       (weight n a i : ℚ) * v a := by
-  rw [rep_ι_apply, val_cartanGenerator, cartanMatrix, _root_.Matrix.mulVec_diagonal]
+  rw [rep_ι_apply, val_cartanGenerator, cartanGeneratorMatrix, _root_.Matrix.mulVec_diagonal]
 
-/-- A coordinate vector on which a numbered root generator is nonzero with coefficient one. -/
+/-- The source coordinate of a numbered root generator: the coordinate on whose basis vector the
+generator is nonzero with coefficient one. -/
 def rootSource : Fin (n + 1) ⊕ Fin (n + 1) → Fin (n + 1) ⊕ Fin (n + 1)
   | .inl i => if hi : i = Fin.last n then .inr i else .inl (next n i hi)
   | .inr i => .inl i
 
-/-- The coordinate vector obtained from `rootSource` by applying its numbered root generator. -/
+/-- The target coordinate of a numbered root generator: the coordinate carrying the image of the
+basis vector at `rootSource`. -/
 def rootTarget : Fin (n + 1) ⊕ Fin (n + 1) → Fin (n + 1) ⊕ Fin (n + 1)
   | .inl i => .inl i
   | .inr i => if hi : i = Fin.last n then .inr i else .inl (next n i hi)
@@ -311,8 +335,7 @@ theorem rootGeneratorWeight_inl_eq_root (i : Fin (n + 1)) :
     split_ifs <;> simp only [Fin.ext_iff, Fin.val_last] at * <;> omega
   · rw [rootGeneratorWeight, rootTarget_inl, rootSource_inl_of_ne n i hi]
     simp only [weight_inl, DynkinType.TypeC.weight_apply, CartanMatrix.C, _root_.Matrix.of_apply]
-    have hinext : i.val + 1 = (next n i hi).val := by
-      simp [next]
+    have hinext : i.val + 1 = (next n i hi).val := (val_next n i hi).symm
     split_ifs <;> simp only [Fin.ext_iff] at * <;> omega
 
 /-- The roots of the raising generators are the rows of the type-`C` Cartan matrix. -/
@@ -353,32 +376,37 @@ theorem positiveRootMatrix_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
     simp [positiveRootMatrix, hi, shortPositiveBlock, _root_.Matrix.fromBlocks,
       _root_.Matrix.single_apply]
 
+/-- Each lowering matrix is the transpose of the raising matrix at the same index. -/
+theorem negativeRootMatrix_eq_transpose (i : Fin (n + 1)) :
+    negativeRootMatrix n i = (positiveRootMatrix n i)ᵀ := by
+  rw [negativeRootMatrix, positiveRootMatrix]
+  split_ifs with hi <;>
+    simp [_root_.Matrix.fromBlocks_transpose, shortPositiveBlock, shortNegativeBlock,
+      _root_.Matrix.transpose_single]
+
 /-- The final lowering matrix is a single off-diagonal matrix unit. -/
 theorem negativeRootMatrix_last :
     negativeRootMatrix n (Fin.last n) =
       _root_.Matrix.single (.inr (Fin.last n)) (.inl (Fin.last n)) 1 := by
-  ext a b
-  cases a <;> cases b <;>
-    simp [negativeRootMatrix, _root_.Matrix.fromBlocks, _root_.Matrix.single_apply]
+  rw [negativeRootMatrix_eq_transpose, positiveRootMatrix_last, _root_.Matrix.transpose_single]
 
 /-- A nonfinal lowering matrix is the difference of its upper and lower matrix units. -/
 theorem negativeRootMatrix_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
     negativeRootMatrix n i =
       _root_.Matrix.single (.inl (next n i hi)) (.inl i) 1 -
         _root_.Matrix.single (.inr i) (.inr (next n i hi)) 1 := by
-  ext a b
-  cases a <;> cases b <;>
-    simp [negativeRootMatrix, hi, shortNegativeBlock, _root_.Matrix.fromBlocks,
-      _root_.Matrix.single_apply]
+  rw [negativeRootMatrix_eq_transpose, positiveRootMatrix_of_ne n i hi,
+    _root_.Matrix.transpose_sub, _root_.Matrix.transpose_single,
+    _root_.Matrix.transpose_single]
 
-private theorem positiveRootMatrix_commutator_negativeRootMatrix_self (i : Fin (n + 1)) :
-    ⁅positiveRootMatrix n i, negativeRootMatrix n i⁆ = cartanMatrix n i := by
+private theorem lie_positiveRootMatrix_negativeRootMatrix_self (i : Fin (n + 1)) :
+    ⁅positiveRootMatrix n i, negativeRootMatrix n i⁆ = cartanGeneratorMatrix n i := by
   by_cases hi : i = Fin.last n
   · subst i
     rw [positiveRootMatrix_last, negativeRootMatrix_last, lie_single_single]
     ext a b
     cases a <;> cases b <;>
-      simp [cartanMatrix, DynkinType.TypeC.weight_apply, _root_.Matrix.diagonal_apply,
+      simp [cartanGeneratorMatrix, DynkinType.TypeC.weight_apply, _root_.Matrix.diagonal_apply,
         _root_.Matrix.single_apply] <;>
       split_ifs <;> simp_all [Fin.ext_iff, Fin.val_last] <;> omega
   · rw [positiveRootMatrix_of_ne n i hi, negativeRootMatrix_of_ne n i hi,
@@ -386,11 +414,11 @@ private theorem positiveRootMatrix_commutator_negativeRootMatrix_self (i : Fin (
       lie_single_single]
     ext a b
     cases a <;> cases b <;>
-      simp [cartanMatrix, DynkinType.TypeC.weight_apply, _root_.Matrix.diagonal_apply,
+      simp [cartanGeneratorMatrix, DynkinType.TypeC.weight_apply, _root_.Matrix.diagonal_apply,
         _root_.Matrix.single_apply] <;>
       split_ifs <;> simp_all [Fin.ext_iff] <;> omega
 
-private theorem positiveRootMatrix_commutator_negativeRootMatrix_of_ne
+private theorem lie_positiveRootMatrix_negativeRootMatrix_of_ne
     (i j : Fin (n + 1)) (hij : i ≠ j) :
     ⁅positiveRootMatrix n i, negativeRootMatrix n j⁆ = 0 := by
   by_cases hi : i = Fin.last n
@@ -415,20 +443,20 @@ private theorem positiveRootMatrix_commutator_negativeRootMatrix_of_ne
 
 /-- A Cartan generator scales every matrix unit by the difference of the coordinate weights at its
 row and column. -/
-private theorem cartanMatrix_commutator_single (j : Fin (n + 1))
+private theorem lie_cartanGeneratorMatrix_single (j : Fin (n + 1))
     (a b : Fin (n + 1) ⊕ Fin (n + 1)) :
-    ⁅cartanMatrix n j, _root_.Matrix.single a b (1 : ℚ)⁆ =
+    ⁅cartanGeneratorMatrix n j, _root_.Matrix.single a b (1 : ℚ)⁆ =
       ((weight n a j - weight n b j : ℤ) : ℚ) • _root_.Matrix.single a b (1 : ℚ) := by
-  rw [cartanMatrix, lie_single_of_mem_diagonalCartan (diagonal_mem_diagonalCartan _),
+  rw [cartanGeneratorMatrix, lie_single_of_mem_diagonalCartan (diagonal_mem_diagonalCartan _),
     _root_.Matrix.diagonal_apply_eq, _root_.Matrix.diagonal_apply_eq, Int.cast_sub]
 
 /-- The matrix commutator of a Cartan generator with a raising generator. -/
-private theorem cartanMatrix_commutator_positiveRootMatrix (i j : Fin (n + 1)) :
-    ⁅cartanMatrix n j, positiveRootMatrix n i⁆ =
+private theorem lie_cartanGeneratorMatrix_positiveRootMatrix (i j : Fin (n + 1)) :
+    ⁅cartanGeneratorMatrix n j, positiveRootMatrix n i⁆ =
       ((rootGeneratorWeight n (.inl i) j : ℤ) : ℚ) • positiveRootMatrix n i := by
   by_cases hi : i = Fin.last n
   · subst hi
-    rw [positiveRootMatrix_last, cartanMatrix_commutator_single, rootGeneratorWeight,
+    rw [positiveRootMatrix_last, lie_cartanGeneratorMatrix_single, rootGeneratorWeight,
       rootTarget_inl, rootSource_inl_last]
   · have hupper : weight n (.inl i) j - weight n (.inl (next n i hi)) j =
         rootGeneratorWeight n (.inl i) j := by
@@ -438,27 +466,29 @@ private theorem cartanMatrix_commutator_positiveRootMatrix (i j : Fin (n + 1)) :
       rw [← hupper]
       simp only [weight_inl, weight_inr]
       ring
-    rw [positiveRootMatrix_of_ne n i hi, lie_sub, cartanMatrix_commutator_single,
-      cartanMatrix_commutator_single, hupper, hlower, smul_sub]
+    rw [positiveRootMatrix_of_ne n i hi, lie_sub, lie_cartanGeneratorMatrix_single,
+      lie_cartanGeneratorMatrix_single, hupper, hlower, smul_sub]
 
-/-- The matrix commutator of a Cartan generator with a lowering generator. -/
-private theorem cartanMatrix_commutator_negativeRootMatrix (i j : Fin (n + 1)) :
-    ⁅cartanMatrix n j, negativeRootMatrix n i⁆ =
+/-- The matrix commutator of a Cartan generator with a lowering generator, read off from the
+raising case by transposing: the Cartan matrix is symmetric and the lowering root character is the
+negative of the raising one. -/
+private theorem lie_cartanGeneratorMatrix_negativeRootMatrix (i j : Fin (n + 1)) :
+    ⁅cartanGeneratorMatrix n j, negativeRootMatrix n i⁆ =
       ((rootGeneratorWeight n (.inr i) j : ℤ) : ℚ) • negativeRootMatrix n i := by
-  by_cases hi : i = Fin.last n
-  · subst hi
-    rw [negativeRootMatrix_last, cartanMatrix_commutator_single, rootGeneratorWeight,
-      rootTarget_inr_last, rootSource_inr]
-  · have hupper : weight n (.inl (next n i hi)) j - weight n (.inl i) j =
-        rootGeneratorWeight n (.inr i) j := by
-      rw [rootGeneratorWeight, rootTarget_inr_of_ne n i hi, rootSource_inr]
-    have hlower : weight n (.inr i) j - weight n (.inr (next n i hi)) j =
-        rootGeneratorWeight n (.inr i) j := by
-      rw [← hupper]
-      simp only [weight_inl, weight_inr]
-      ring
-    rw [negativeRootMatrix_of_ne n i hi, lie_sub, cartanMatrix_commutator_single,
-      cartanMatrix_commutator_single, hupper, hlower, smul_sub]
+  have hsymm : (cartanGeneratorMatrix n j)ᵀ = cartanGeneratorMatrix n j := by
+    rw [cartanGeneratorMatrix, _root_.Matrix.diagonal_transpose]
+  have hpos := lie_cartanGeneratorMatrix_positiveRootMatrix n i j
+  rw [LieRing.of_associative_ring_bracket] at hpos
+  rw [negativeRootMatrix_eq_transpose, LieRing.of_associative_ring_bracket,
+    rootGeneratorWeight_inr, ← rootGeneratorWeight_inl n i j]
+  have hswap : cartanGeneratorMatrix n j * (positiveRootMatrix n i)ᵀ -
+      (positiveRootMatrix n i)ᵀ * cartanGeneratorMatrix n j =
+      -(cartanGeneratorMatrix n j * positiveRootMatrix n i -
+        positiveRootMatrix n i * cartanGeneratorMatrix n j)ᵀ := by
+    rw [_root_.Matrix.transpose_sub, _root_.Matrix.transpose_mul, _root_.Matrix.transpose_mul,
+      hsymm]
+    abel
+  rw [hswap, hpos, Int.cast_neg, neg_smul, _root_.Matrix.transpose_smul]
 
 /-- The numbered Cartan generators act on the root generators through their recorded root
 characters, equivalently through the type-`C` Cartan matrix and its negatives. -/
@@ -471,11 +501,11 @@ theorem lie_cartanGenerator_rootGenerator (k : Fin (n + 1) ⊕ Fin (n + 1))
   | inl i =>
       rw [LieSubalgebra.coe_bracket, val_cartanGenerator, Submodule.coe_smul,
         val_rootGenerator_inl]
-      exact cartanMatrix_commutator_positiveRootMatrix n i j
+      exact lie_cartanGeneratorMatrix_positiveRootMatrix n i j
   | inr i =>
       rw [LieSubalgebra.coe_bracket, val_cartanGenerator, Submodule.coe_smul,
         val_rootGenerator_inr]
-      exact cartanMatrix_commutator_negativeRootMatrix n i j
+      exact lie_cartanGeneratorMatrix_negativeRootMatrix n i j
 
 /-! ## The `sl₂` triples of the numbered generators -/
 
@@ -492,16 +522,8 @@ private theorem positiveRootMatrix_ne_zero (i : Fin (n + 1)) : positiveRootMatri
     simp at h
 
 private theorem negativeRootMatrix_ne_zero (i : Fin (n + 1)) : negativeRootMatrix n i ≠ 0 := by
-  by_cases hi : i = Fin.last n
-  · subst hi
-    rw [negativeRootMatrix_last]
-    intro hzero
-    have h := congrFun (congrFun hzero (.inr (Fin.last n))) (.inl (Fin.last n))
-    simp at h
-  · rw [negativeRootMatrix_of_ne n i hi]
-    intro hzero
-    have h := congrFun (congrFun hzero (.inl (next n i hi))) (.inl i)
-    simp at h
+  rw [negativeRootMatrix_eq_transpose, Ne, _root_.Matrix.transpose_eq_zero]
+  exact positiveRootMatrix_ne_zero n i
 
 private theorem rootGenerator_ne_zero (k : Fin (n + 1) ⊕ Fin (n + 1)) :
     rootGenerator n k ≠ 0 := by
@@ -520,14 +542,11 @@ private theorem lie_rootGenerator_inl_inr_of_ne (i j : Fin (n + 1)) (hij : i ≠
     ⁅rootGenerator n (.inl i), rootGenerator n (.inr j)⁆ = 0 := by
   apply Subtype.ext
   simpa only [LieSubalgebra.coe_bracket, val_rootGenerator_inl, val_rootGenerator_inr,
-    Submodule.coe_zero] using positiveRootMatrix_commutator_negativeRootMatrix_of_ne n i j hij
-
-private theorem cartanMatrix_C_self (i : Fin (n + 1)) : CartanMatrix.C (n + 1) i i = 2 := by
-  simp [CartanMatrix.C]
+    Submodule.coe_zero] using lie_positiveRootMatrix_negativeRootMatrix_of_ne n i j hij
 
 private theorem lie_cartanGenerator_rootGenerator_inl_self (i : Fin (n + 1)) :
     ⁅cartanGenerator n i, rootGenerator n (.inl i)⁆ = (2 : ℚ) • rootGenerator n (.inl i) := by
-  rw [lie_cartanGenerator_rootGenerator, rootGeneratorWeight_inl, cartanMatrix_C_self]
+  rw [lie_cartanGenerator_rootGenerator, rootGeneratorWeight_inl, CartanMatrix.C_diag]
   norm_num
 
 private theorem cartanGenerator_ne_zero (i : Fin (n + 1)) : cartanGenerator n i ≠ 0 := by
@@ -547,11 +566,11 @@ theorem isSl2Triple_rootGenerator (i : Fin (n + 1)) :
   lie_e_f := by
     apply Subtype.ext
     simpa only [LieSubalgebra.coe_bracket, val_rootGenerator_inl, val_rootGenerator_inr,
-      val_cartanGenerator] using positiveRootMatrix_commutator_negativeRootMatrix_self n i
+      val_cartanGenerator] using lie_positiveRootMatrix_negativeRootMatrix_self n i
   lie_h_e_nsmul := by
     rw [lie_cartanGenerator_rootGenerator_inl_self, two_smul, two_nsmul]
   lie_h_f_nsmul := by
-    rw [lie_cartanGenerator_rootGenerator, rootGeneratorWeight_inr, cartanMatrix_C_self,
+    rw [lie_cartanGenerator_rootGenerator, rootGeneratorWeight_inr, CartanMatrix.C_diag,
       two_nsmul]
     push_cast
     rw [neg_smul, two_smul]
@@ -566,7 +585,7 @@ theorem isSerreSystem_rootGenerator :
   lie_H_H i j := by
     apply Subtype.ext
     simpa only [LieSubalgebra.coe_bracket, val_cartanGenerator, Submodule.coe_zero] using
-      cartanMatrix_commutator_cartanMatrix n i j
+      lie_cartanGeneratorMatrix_cartanGeneratorMatrix n i j
   lie_E_F_self i := (isSl2Triple_rootGenerator n i).lie_e_f
   lie_E_F_of_ne i j hij := lie_rootGenerator_inl_inr_of_ne n i j hij
   lie_H_E i j := by
@@ -614,6 +633,30 @@ def rootAction (k : Fin (n + 1) ⊕ Fin (n + 1))
         v (.inl i) • Pi.single (.inl (next n i hi)) 1 -
           v (.inr (next n i hi)) • Pi.single (.inr i) 1
 
+@[simp] theorem rootAction_inl_last (v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) :
+    rootAction n (.inl (Fin.last n)) v =
+      v (.inr (Fin.last n)) • Pi.single (.inl (Fin.last n)) 1 := by
+  simp [rootAction]
+
+@[simp] theorem rootAction_inl_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n)
+    (v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) :
+    rootAction n (.inl i) v =
+      v (.inl (next n i hi)) • Pi.single (.inl i) 1 -
+        v (.inr i) • Pi.single (.inr (next n i hi)) 1 := by
+  simp [rootAction, hi]
+
+@[simp] theorem rootAction_inr_last (v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) :
+    rootAction n (.inr (Fin.last n)) v =
+      v (.inl (Fin.last n)) • Pi.single (.inr (Fin.last n)) 1 := by
+  simp [rootAction]
+
+@[simp] theorem rootAction_inr_of_ne (i : Fin (n + 1)) (hi : i ≠ Fin.last n)
+    (v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) :
+    rootAction n (.inr i) v =
+      v (.inl i) • Pi.single (.inl (next n i hi)) 1 -
+        v (.inr (next n i hi)) • Pi.single (.inr i) 1 := by
+  simp [rootAction, hi]
+
 /-- The standard action of a numbered root generator is the explicit coordinate operation
 `rootAction`. -/
 theorem rep_rootGenerator_apply (k : Fin (n + 1) ⊕ Fin (n + 1))
@@ -622,22 +665,28 @@ theorem rep_rootGenerator_apply (k : Fin (n + 1) ⊕ Fin (n + 1))
   rw [rep_ι_apply]
   cases k with
   | inl i =>
-      rw [val_rootGenerator_inl, positiveRootMatrix, rootAction]
+      rw [val_rootGenerator_inl, positiveRootMatrix]
       split_ifs with hi
-      · funext x
+      · subst hi
+        rw [rootAction_inl_last]
+        funext x
         cases x <;>
           simp [_root_.Matrix.fromBlocks_mulVec, _root_.Matrix.single_mulVec_eq, Pi.single_apply]
-      · funext x
+      · rw [rootAction_inl_of_ne n i hi]
+        funext x
         cases x <;>
           simp [_root_.Matrix.fromBlocks_mulVec, shortPositiveBlock, _root_.Matrix.single_mulVec_eq,
             _root_.Matrix.transpose_single, _root_.Matrix.neg_mulVec, Pi.single_apply, mul_comm]
   | inr i =>
-      rw [val_rootGenerator_inr, negativeRootMatrix, rootAction]
+      rw [val_rootGenerator_inr, negativeRootMatrix]
       split_ifs with hi
-      · funext x
+      · subst hi
+        rw [rootAction_inr_last]
+        funext x
         cases x <;>
           simp [_root_.Matrix.fromBlocks_mulVec, _root_.Matrix.single_mulVec_eq, Pi.single_apply]
-      · funext x
+      · rw [rootAction_inr_of_ne n i hi]
+        funext x
         cases x <;>
           simp [_root_.Matrix.fromBlocks_mulVec, shortNegativeBlock, _root_.Matrix.single_mulVec_eq,
             _root_.Matrix.transpose_single, _root_.Matrix.neg_mulVec, Pi.single_apply, mul_comm]
@@ -651,17 +700,15 @@ theorem rep_rootGenerator_rep_rootGenerator_eq_zero
   rw [rep_rootGenerator_apply, rep_rootGenerator_apply]
   cases k with
   | inl i =>
-      rw [rootAction]
-      split_ifs with hi
-      · simp [rootAction, hi]
-      · simp [rootAction, hi, (lt_next n i hi).ne,
-          (lt_next n i hi).ne']
+      by_cases hi : i = Fin.last n
+      · subst hi
+        simp
+      · simp [hi, (lt_next n i hi).ne, (lt_next n i hi).ne']
   | inr i =>
-      rw [rootAction]
-      split_ifs with hi
-      · simp [rootAction, hi]
-      · simp [rootAction, hi, (lt_next n i hi).ne,
-          (lt_next n i hi).ne']
+      by_cases hi : i = Fin.last n
+      · subst hi
+        simp
+      · simp [hi, (lt_next n i hi).ne, (lt_next n i hi).ne']
 
 /-- Every numbered root generator squares to zero in the standard representation. -/
 theorem pow_two_rep_rootGenerator_eq_zero (k : Fin (n + 1) ⊕ Fin (n + 1)) :
@@ -683,7 +730,7 @@ theorem isCartanWeightVector_single (a : Fin (n + 1) ⊕ Fin (n + 1)) :
       (weight n a) (Pi.single a 1) := by
   refine (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
     (cartanGenerator n) (rep n)).mpr fun i => ?_
-  rw [rep_ι_apply, val_cartanGenerator, cartanMatrix, _root_.Matrix.diagonal_mulVec_single]
+  rw [rep_ι_apply, val_cartanGenerator, cartanGeneratorMatrix, _root_.Matrix.diagonal_mulVec_single]
   rw [← Pi.single_smul']
   simp
 
@@ -722,69 +769,46 @@ noncomputable def latticeBasis :
 def basisWeight (a : Fin ((n + 1) + (n + 1))) : Fin (n + 1) → ℤ :=
   weight n (finSumFinEquiv.symm a)
 
+@[simp] theorem basisWeight_apply (a : Fin ((n + 1) + (n + 1))) :
+    basisWeight n a = weight n (finSumFinEquiv.symm a) := (rfl)
+
 /-- A numbered root generator preserves the standard lattice. -/
 theorem rep_rootGenerator_mem_lattice (k : Fin (n + 1) ⊕ Fin (n + 1))
     {v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ} (hv : v ∈ lattice n) :
     rep n (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator n k)) v ∈ lattice n := by
+  have key : ∀ a b : Fin (n + 1) ⊕ Fin (n + 1), v a • Pi.single b (1 : ℚ) ∈ lattice n := by
+    intro a b
+    obtain ⟨z, hz⟩ := (mem_lattice_iff n).1 hv a
+    rw [← hz, Int.cast_smul_eq_zsmul]
+    exact zsmul_mem (single_mem_lattice n b) z
   rw [rep_rootGenerator_apply]
   cases k with
   | inl i =>
-      rw [rootAction]
-      split_ifs with hi
-      · obtain ⟨z, hz⟩ := (mem_lattice_iff n).1 hv (.inr i)
-        rw [← hz, Int.cast_smul_eq_zsmul]
-        exact zsmul_mem (single_mem_lattice n _) z
-      · obtain ⟨z₁, hz₁⟩ := (mem_lattice_iff n).1 hv (.inl (next n i hi))
-        obtain ⟨z₂, hz₂⟩ := (mem_lattice_iff n).1 hv (.inr i)
-        rw [← hz₁, ← hz₂, Int.cast_smul_eq_zsmul, Int.cast_smul_eq_zsmul]
-        exact sub_mem (zsmul_mem (single_mem_lattice n _) z₁)
-          (zsmul_mem (single_mem_lattice n _) z₂)
+      by_cases hi : i = Fin.last n
+      · subst hi
+        rw [rootAction_inl_last]
+        exact key _ _
+      · rw [rootAction_inl_of_ne n i hi]
+        exact sub_mem (key _ _) (key _ _)
   | inr i =>
-      rw [rootAction]
-      split_ifs with hi
-      · obtain ⟨z, hz⟩ := (mem_lattice_iff n).1 hv (.inl i)
-        rw [← hz, Int.cast_smul_eq_zsmul]
-        exact zsmul_mem (single_mem_lattice n _) z
-      · obtain ⟨z₁, hz₁⟩ := (mem_lattice_iff n).1 hv (.inl i)
-        obtain ⟨z₂, hz₂⟩ := (mem_lattice_iff n).1 hv (.inr (next n i hi))
-        rw [← hz₁, ← hz₂, Int.cast_smul_eq_zsmul, Int.cast_smul_eq_zsmul]
-        exact sub_mem (zsmul_mem (single_mem_lattice n _) z₁)
-          (zsmul_mem (single_mem_lattice n _) z₂)
+      by_cases hi : i = Fin.last n
+      · subst hi
+        rw [rootAction_inr_last]
+        exact key _ _
+      · rw [rootAction_inr_of_ne n i hi]
+        exact sub_mem (key _ _) (key _ _)
 
-/-- Every divided power of a numbered root generator preserves the standard lattice. -/
-theorem rep_dividedPower_rootGenerator_mem_lattice (k : Fin (n + 1) ⊕ Fin (n + 1)) (m : ℕ)
-    {v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ} (hv : v ∈ lattice n) :
-    rep n (Associative.dividedPower m
-      (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator n k))) v ∈ lattice n := by
-  rw [Associative.map_dividedPower]
-  exact Associative.dividedPower_apply_mem_of_pow_two_eq_zero _ _
-    (pow_two_rep_rootGenerator_eq_zero n k) (rep_rootGenerator_mem_lattice n k) m hv
-
-/-- Every Cartan binomial operator preserves the standard lattice. -/
-theorem rep_ringChoose_cartanGenerator_mem_lattice (i : Fin (n + 1)) (m : ℕ)
-    {v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ} (hv : v ∈ lattice n) :
-    rep n (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator n i)) m) v ∈
-      lattice n := by
-  rw [lattice] at hv ⊢
-  rw [Ring.map_choose]
-  refine TauCeti.ringChoose_end_apply_mem_coordinateLattice_of_apply_eq_intCast_smul
-    (Fin (n + 1) ⊕ Fin (n + 1)) (weight := fun a => weight n a i) ?_ m hv
-  intro a
-  rw [Pi.basisFun_apply]
-  exact (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-    (cartanGenerator n) (rep n)).1 (isCartanWeightVector_single n a) i
-
-/-- The standard coordinate lattice is stable under the Kostant integral form. -/
+/-- The standard coordinate lattice is stable under the Kostant integral form: the root generators
+square to zero and preserve it, and the coordinate vectors have integral weights. -/
 theorem rep_kostantForm_mem_lattice
     {u : _root_.UniversalEnvelopingAlgebra ℚ (sp (Fin (n + 1)) ℚ)}
     (hu : u ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm (rootGenerator n)
       (cartanGenerator n))
     {v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ} (hv : v ∈ lattice n) :
     rep n u v ∈ lattice n :=
-  TauCeti.UniversalEnvelopingAlgebra.kostantForm_apply_mem (rootGenerator n) (cartanGenerator n)
-    (rep n) (lattice n)
-    (fun k m _ hv => rep_dividedPower_rootGenerator_mem_lattice n k m hv)
-    (fun i m _ hv => rep_ringChoose_cartanGenerator_mem_lattice n i m hv) u hu hv
+  TauCeti.UniversalEnvelopingAlgebra.kostantForm_apply_mem_coordinateLattice (rootGenerator n)
+    (cartanGenerator n) (rep n) (wt := weight n) (pow_two_rep_rootGenerator_eq_zero n)
+    (fun k _ hw => rep_rootGenerator_mem_lattice n k hw) (isCartanWeightVector_single n) hu hv
 
 /-! ## The full weight lattice -/
 
@@ -800,12 +824,8 @@ theorem span_range_weight_eq_top : Submodule.span ℤ (Set.range (weight n)) = �
 
 /-- Enumerating the coordinate basis does not change the span of its weights. -/
 theorem span_range_basisWeight_eq_top : Submodule.span ℤ (Set.range (basisWeight n)) = ⊤ := by
-  have hrange : Set.range (basisWeight n) = Set.range (weight n) := by
-    apply Set.Subset.antisymm
-    · rintro _ ⟨a, rfl⟩
-      exact ⟨finSumFinEquiv.symm a, rfl⟩
-    · rintro _ ⟨a, rfl⟩
-      exact ⟨finSumFinEquiv a, by rw [basisWeight, Equiv.symm_apply_apply]⟩
+  have hrange : Set.range (basisWeight n) = Set.range (weight n) :=
+    finSumFinEquiv.symm.surjective.range_comp (weight n)
   rw [hrange]
   exact span_range_weight_eq_top n
 
@@ -824,13 +844,13 @@ theorem rep_rootGenerator_latticeBasis (k : Fin (n + 1) ⊕ Fin (n + 1)) :
   | inl i =>
       by_cases hi : i = Fin.last n
       · subst hi
-        simp [rootAction]
-      · simp [rootAction, hi]
+        simp
+      · simp [hi]
   | inr i =>
       by_cases hi : i = Fin.last n
       · subst hi
-        simp [rootAction]
-      · simp [rootAction, hi]
+        simp
+      · simp [hi]
 
 attribute [local instance high] Algebra.toModule
 
@@ -842,5 +862,34 @@ theorem isCartanWeightVector_latticeBasis (a : Fin ((n + 1) + (n + 1))) :
         (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) := by
   rw [coe_latticeBasis]
   exact isCartanWeightVector_single n (finSumFinEquiv.symm a)
+
+/-- The parametrized numbered root subgroup on points of a value algebra. -/
+noncomputable def rootSubgroupParam (k : Fin (n + 1) ⊕ Fin (n + 1)) (A : CommAlgCat ℤ) :
+    Multiplicative A →* LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (lattice n).toAddSubgroup) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupParam (rootGenerator n)
+    (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) k
+    (isNilpotent_rep_rootGenerator n k) A
+
+/-- The split weight torus on points of a value algebra. -/
+noncomputable def torusPoints (A : CommAlgCat ℤ) :
+    (Fin (n + 1) → Aˣ) →*
+      LinearMap.GeneralLinearGroup A (A ⊗[ℤ] (lattice n).toAddSubgroup) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints (lattice n).toAddSubgroup
+    (latticeBasis n) (basisWeight n) A
+
+/-- **The pointwise pinning equation of the type `C_(n+1)` carrier.** A torus point `s`
+conjugates the root-subgroup element of parameter `u` into the one of parameter `α_k(s) u`, where
+`α_k` is the `k`-th row of the type-`C` Cartan matrix on a raising generator and its negative on a
+lowering one. -/
+theorem torusPoints_conj_rootSubgroupParam (k : Fin (n + 1) ⊕ Fin (n + 1))
+    (A : CommAlgCat ℤ) (s : Fin (n + 1) → Aˣ) (u : Multiplicative A) :
+    torusPoints n A s * rootSubgroupParam n k A u * (torusPoints n A s)⁻¹ =
+      rootSubgroupParam n k A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s (rootGeneratorWeight n k) : A) * Multiplicative.toAdd u)) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_conj_kostantRootSubgroupParam
+    _ _ _ _ _ _ _ (isCartanWeightVector_latticeBasis n)
+    (fun j => lie_cartanGenerator_rootGenerator n k j) _ A s u
 
 end TauCeti.SpStd
