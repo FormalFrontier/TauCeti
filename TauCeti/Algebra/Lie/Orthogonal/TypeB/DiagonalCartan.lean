@@ -251,17 +251,6 @@ instance : IsLieAbelian (typeBDiagonalCartan K ι) where
     apply Subtype.ext
     exact lie_eq_zero_of_isDiag (hd ▸ isDiag_diagonal _) (he ▸ isDiag_diagonal _)
 
-/-- Two elements of the split diagonal Cartan commute in the ambient type-`B` Lie algebra. -/
-theorem typeBDiagonalEquiv_lie_diagonalEquiv (d e : ι → K) :
-    ⁅((typeBDiagonalEquiv (K := K) (ι := ι) d : typeBDiagonalCartan K ι) :
-        LieAlgebra.Orthogonal.typeB ι K),
-      ((typeBDiagonalEquiv (K := K) (ι := ι) e : typeBDiagonalCartan K ι) :
-        LieAlgebra.Orthogonal.typeB ι K)⁆ = 0 := by
-  have h : ⁅typeBDiagonalEquiv (K := K) (ι := ι) d,
-      typeBDiagonalEquiv (K := K) (ι := ι) e⁆ = 0 :=
-    LieModule.IsTrivial.trivial _ _
-  exact congrArg Subtype.val h
-
 /-! ### Self-normalization -/
 
 section

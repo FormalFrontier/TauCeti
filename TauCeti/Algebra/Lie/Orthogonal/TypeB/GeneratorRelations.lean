@@ -27,7 +27,7 @@ Cartan matrix, and proving the remaining mixed and higher Serre relations, are s
 
 * `TauCeti.typeBSimpleCorootCoordinate`: the diagonal coordinate of a simple coroot.
 * `TauCeti.typeBSimpleCorootGenerator_eq_diagonal`: the corresponding matrix identity.
-* `TauCeti.typeBSimpleCorootGenerator_lie_coroot`: simple coroots commute.
+* `TauCeti.typeBSimpleCorootGenerator_lie_eq_zero`: simple coroots commute.
 * `TauCeti.typeBSimpleCorootGenerator_lie_root_last` and
   `TauCeti.typeBSimpleCorootGenerator_lie_root_castSucc`: Cartan action on positive generators.
 * `TauCeti.typeBSimpleCorootGenerator_lie_negativeRoot_last` and
@@ -83,13 +83,19 @@ theorem typeBSimpleCorootGenerator_eq_diagonal (i : Fin (n + 1)) :
 
 /-- The simple coroot generators in the standard split type-`B` model commute. -/
 @[simp]
-theorem typeBSimpleCorootGenerator_lie_coroot (i j : Fin (n + 1)) :
+theorem typeBSimpleCorootGenerator_lie_eq_zero (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i, typeBSimpleCorootGenerator (K := K) j⁆ = 0 := by
   rw [typeBSimpleCorootGenerator_eq_diagonal,
     typeBSimpleCorootGenerator_eq_diagonal]
-  exact typeBDiagonalEquiv_lie_diagonalEquiv _ _
+  have h : ⁅typeBDiagonalEquiv (K := K) (ι := Fin (n + 1))
+      (typeBSimpleCorootCoordinate i),
+      typeBDiagonalEquiv (K := K) (ι := Fin (n + 1))
+        (typeBSimpleCorootCoordinate j)⁆ = 0 :=
+    LieModule.IsTrivial.trivial _ _
+  exact congrArg Subtype.val h
 
 /-- The action of a simple coroot on the positive generator at the final short node. -/
+@[simp]
 theorem typeBSimpleCorootGenerator_lie_root_last (i : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
       typeBSimpleRootGenerator (K := K) (Fin.last n)⁆ =
@@ -99,6 +105,7 @@ theorem typeBSimpleCorootGenerator_lie_root_last (i : Fin (n + 1)) :
   exact typeBDiagonalEquiv_lie_shortRootGenerator _ _
 
 /-- The action of a simple coroot on a positive generator at a long node. -/
+@[simp]
 theorem typeBSimpleCorootGenerator_lie_root_castSucc (i : Fin (n + 1)) (j : Fin n) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
       typeBSimpleRootGenerator (K := K) j.castSucc⁆ =
@@ -109,6 +116,7 @@ theorem typeBSimpleCorootGenerator_lie_root_castSucc (i : Fin (n + 1)) (j : Fin 
   exact typeBDiagonalEquiv_lie_longRootGenerator _ _ _ _
 
 /-- The action of a simple coroot on the negative generator at the final short node. -/
+@[simp]
 theorem typeBSimpleCorootGenerator_lie_negativeRoot_last (i : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
       typeBSimpleNegativeRootGenerator (K := K) (Fin.last n)⁆ =
@@ -118,6 +126,7 @@ theorem typeBSimpleCorootGenerator_lie_negativeRoot_last (i : Fin (n + 1)) :
   exact typeBDiagonalEquiv_lie_shortNegativeRootGenerator _ _
 
 /-- The action of a simple coroot on a negative generator at a long node. -/
+@[simp]
 theorem typeBSimpleCorootGenerator_lie_negativeRoot_castSucc (i : Fin (n + 1)) (j : Fin n) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
       typeBSimpleNegativeRootGenerator (K := K) j.castSucc⁆ =

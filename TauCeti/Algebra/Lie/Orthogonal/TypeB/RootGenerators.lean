@@ -203,6 +203,7 @@ theorem coe_typeBShortNegativeRootGenerator (i : ι) :
 
 /-- A split diagonal element acts on the long-root vector of weight `εᵢ - εⱼ` by that
 weight. -/
+@[simp]
 theorem typeBDiagonalEquiv_lie_longRootGenerator (d : ι → K) (i j : ι) (hij : i ≠ j) :
     ⁅((typeBDiagonalEquiv (K := K) (ι := ι) d : typeBDiagonalCartan K ι) :
         LieAlgebra.Orthogonal.typeB ι K), typeBLongRootGenerator (K := K) i j hij⁆ =
@@ -221,6 +222,7 @@ theorem typeBDiagonalEquiv_lie_longRootGenerator (d : ι → K) (i j : ι) (hij 
       by_cases hib : i = b <;> by_cases hjb : j = b <;> simp_all <;> aesop
 
 /-- A split diagonal element acts on the positive short-root vector of weight `εᵢ`. -/
+@[simp]
 theorem typeBDiagonalEquiv_lie_shortRootGenerator (d : ι → K) (i : ι) :
     ⁅((typeBDiagonalEquiv (K := K) (ι := ι) d : typeBDiagonalCartan K ι) :
         LieAlgebra.Orthogonal.typeB ι K), typeBShortRootGenerator (K := K) i⁆ =
@@ -235,6 +237,7 @@ theorem typeBDiagonalEquiv_lie_shortRootGenerator (d : ι → K) (i : ι) :
       Matrix.single_apply] <;> aesop
 
 /-- A split diagonal element acts on the negative short-root vector of weight `-εᵢ`. -/
+@[simp]
 theorem typeBDiagonalEquiv_lie_shortNegativeRootGenerator (d : ι → K) (i : ι) :
     ⁅((typeBDiagonalEquiv (K := K) (ι := ι) d : typeBDiagonalCartan K ι) :
         LieAlgebra.Orthogonal.typeB ι K), typeBShortNegativeRootGenerator (K := K) i⁆ =
