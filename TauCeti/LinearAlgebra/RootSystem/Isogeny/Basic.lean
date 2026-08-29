@@ -583,7 +583,7 @@ the order, but a power of an endomorphism commutes with itself, so no reversal i
 /-- **The exponent of an iterate accumulates along the forward orbit of the index bijection.**
 Unlike the other three fields the exponent is not multiplicative: the exponent of a composite at
 an index is the product of the exponents met at the successive images of that index. -/
-theorem pow_exponent (f : RootPairingIsogeny P P) (k : ℕ) (i : ι) :
+@[simp] theorem pow_exponent (f : RootPairingIsogeny P P) (k : ℕ) (i : ι) :
     (f ^ k).exponent i = ∏ j ∈ Finset.range k, f.exponent ((f.indexEquiv ^ j) i) := by
   induction k with
   | zero => simp
