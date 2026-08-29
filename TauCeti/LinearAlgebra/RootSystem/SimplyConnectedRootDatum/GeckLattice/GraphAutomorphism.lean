@@ -41,8 +41,6 @@ asserts reductivity, maximality of the weight torus, or any finiteness or simpli
 
 ## Main definitions
 
-* `TauCeti.DynkinType.geckDiagramFinPerm`: the coordinate permutation of a diagram symmetry, in the
-  finite-ordinal indexing used by the group-scheme construction.
 * `TauCeti.DynkinType.geckGraphAut`: the graph automorphism of the pinned Geck carrier.
 
 ## Main results
@@ -50,7 +48,7 @@ asserts reductivity, maximality of the weight torus, or any finiteness or simpli
 * `TauCeti.DynkinType.geckRootSubgroup_comp_geckGraphAut_hom` and its inverse counterpart: the
   graph automorphism renumbers the pinned root subgroups by `σ`.
 * `TauCeti.DynkinType.geckWeightTorus_comp_geckGraphAut_hom` and its inverse counterpart: it
-  normalizes the represented weight torus and acts on it by relabelling.
+  intertwines the weight torus morphism with the relabelling of its coordinates.
 * `TauCeti.DynkinType.geckGraphAut_pow_eq_one`: the order relation.
 * `TauCeti.DynkinType.geckGraphAut_one`: the identity symmetry gives the identity automorphism.
 
@@ -77,45 +75,6 @@ namespace TauCeti.DynkinType
 noncomputable section
 
 variable {t : DynkinType} (ht : t.Valid) {sigma : Equiv.Perm (Fin t.rank)}
-
-/-! ## The coordinate permutation in the finite-ordinal indexing -/
-
-/-- **The coordinate permutation of a diagram symmetry, in the finite-ordinal indexing.** The
-group-scheme construction indexes the Geck coordinate basis by `Fin (t.geckDim ht)` through
-`Fintype.equivFin`; this is `TauCeti.DynkinType.geckDiagramIndexEquiv` transported along that
-reindexing. -/
-def geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry) :
-    Equiv.Perm (Fin (t.geckDim ht)) :=
-  (Fintype.equivFin (t.GeckIndex ht)).permCongr (t.geckDiagramIndexEquiv ht hsigma)
-
-@[simp]
-theorem equivFin_symm_geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry)
-    (i : Fin (t.geckDim ht)) :
-    (Fintype.equivFin (t.GeckIndex ht)).symm (t.geckDiagramFinPerm ht hsigma i) =
-      t.geckDiagramIndexEquiv ht hsigma ((Fintype.equivFin (t.GeckIndex ht)).symm i) := by
-  simp [geckDiagramFinPerm, Equiv.permCongr_apply]
-
-/-- The pinned Geck-module symmetry permutes the finite-ordinal coordinate basis. This is the
-basis-permutation hypothesis of the Kostant toral-closure symmetry construction. -/
-theorem geckDiagramModuleEquiv_geckCoordinateBasisFin (hsigma : sigma ∈ t.diagramSymmetry)
-    (i : Fin (t.geckDim ht)) :
-    t.geckDiagramModuleEquiv ht hsigma
-        ((t.geckCoordinateBasisFin ht i : (t.geckCoordinateLattice ht).toAddSubgroup) :
-          t.GeckIndex ht → ℚ) =
-      ((t.geckCoordinateBasisFin ht (t.geckDiagramFinPerm ht hsigma i) :
-          (t.geckCoordinateLattice ht).toAddSubgroup) : t.GeckIndex ht → ℚ) := by
-  rw [coe_geckCoordinateBasisFin, coe_geckCoordinateBasisFin, geckDiagramModuleEquiv_single,
-    equivFin_symm_geckDiagramFinPerm]
-
-/-- The finite-ordinal Geck weights are equivariant for the coordinate permutation and the node
-permutation. This is the weight hypothesis of the Kostant toral-closure symmetry construction, and
-it is what makes the same permutation normalize the represented weight torus. -/
-theorem geckWeightFin_geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry)
-    (i : Fin (t.geckDim ht)) (k : Fin t.rank) :
-    t.geckWeightFin ht (t.geckDiagramFinPerm ht hsigma i) (sigma k) = t.geckWeightFin ht i k := by
-  simp only [geckWeightFin, equivFin_symm_geckDiagramFinPerm, geckWeight_geckDiagramIndexEquiv]
-
-/-! ## The graph automorphism -/
 
 /-- The Kostant toral-closure symmetry of the pinned Geck data. -/
 private def toralGraphAut (hsigma : sigma ∈ t.diagramSymmetry) :
@@ -173,8 +132,10 @@ theorem geckRootSubgroup_comp_geckGraphAut_inv (hsigma : sigma ∈ t.diagramSymm
   rw [← geckRootSubgroup_comp_geckGraphAut_hom ht hsigma i, Category.assoc,
     (t.geckGraphAut ht hsigma).hom_inv_id, Category.comp_id]
 
-/-- **The graph automorphism normalizes the represented weight torus**, acting on it by the
-relabelling attached to the diagram symmetry. -/
+/-- **The graph automorphism intertwines the represented weight torus with the relabelling**
+attached to the diagram symmetry: composing the torus morphism with `γ` is the same as relabelling
+its coordinates by `σ⁻¹` first. Nothing here asserts that this morphism is an immersion, so this
+is an equation of morphisms and not a statement that `γ` normalizes a subgroup scheme. -/
 @[reassoc (attr := simp)]
 theorem geckWeightTorus_comp_geckGraphAut_hom (hsigma : sigma ∈ t.diagramSymmetry) :
     t.geckWeightTorus ht ≫ (t.geckGraphAut ht hsigma).hom =
@@ -201,13 +162,6 @@ theorem geckWeightTorus_comp_geckGraphAut_inv (hsigma : sigma ∈ t.diagramSymme
         simp only [Category.assoc]
     _ = SplitTorus.relabel ℤ sigma ≫ t.geckWeightTorus ht := by
         rw [Category.assoc, (t.geckGraphAut ht hsigma).hom_inv_id, Category.comp_id]
-
-/-- The permutation of the numbered generator indices is a power in the node permutation. -/
-private theorem diagramRootGeneratorPerm_pow (tau : Equiv.Perm (Fin t.rank)) (k : ℕ) :
-    diagramRootGeneratorPerm tau ^ k = diagramRootGeneratorPerm (tau ^ k) := by
-  induction k with
-  | zero => ext x; cases x <;> simp
-  | succ k ih => ext x; cases x <;> simp [pow_succ, ih]
 
 /-- **The order of the graph automorphism divides that of the diagram symmetry.** An involution of
 the numbered diagram therefore gives `γ ^ 2 = 1`, and the triality of `D₄` gives `γ ^ 3 = 1`. -/
