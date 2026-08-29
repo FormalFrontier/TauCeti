@@ -240,6 +240,7 @@ theorem ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero
           (K := K) ht hm hhm hfm)
     have h0 := pow_toEnd_f_toNat_add_one_eq_zero_of_hasPrimitiveVectorWith (K := K) P
     rw [pow_succ, Module.End.mul_apply, LieModule.toEnd_apply_apply] at h0
+    -- `LieAlgebra.ad` is definitionally the adjoint `LieModule.toEnd`.
     exact h0
 
 end AdjointFiniteString
