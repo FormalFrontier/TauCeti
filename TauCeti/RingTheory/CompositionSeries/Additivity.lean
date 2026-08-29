@@ -188,6 +188,7 @@ theorem jordanHolderMultiplicity_le_of_surjective [IsNoetherian R M] [IsArtinian
   exact Nat.le_add_left _ _
 
 /-- **Additivity on a binary product**: `[M × N : S] = [M : S] + [N : S]`. -/
+@[simp]
 theorem jordanHolderMultiplicity_prod [IsNoetherian R M] [IsArtinian R M] [IsNoetherian R N]
     [IsArtinian R N] :
     jordanHolderMultiplicity R (M × N) S =

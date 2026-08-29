@@ -140,8 +140,9 @@ the restriction `Submodule.equivMapOfInjective` of `f` to `B`. -/
 theorem mapSubquotientEquivOfInjective_symm_apply (f : M →ₗ[R] N) (hf : Function.Injective f)
     (A B : Submodule R M) (x : ↥B) :
     (mapSubquotientEquivOfInjective f hf A B).symm (Submodule.Quotient.mk x) =
-      Submodule.Quotient.mk (Submodule.equivMapOfInjective f hf B x) :=
-  (rfl)
+      Submodule.Quotient.mk (Submodule.equivMapOfInjective f hf B x) := by
+  rw [mapSubquotientEquivOfInjective, LinearEquiv.symm_symm, Submodule.Quotient.equiv_apply,
+    Submodule.mapQ_apply, LinearEquiv.coe_coe]
 
 /-- `TauCeti.mapSubquotientEquivOfInjective` read on representatives, in the forward direction:
 it undoes the restriction `Submodule.equivMapOfInjective` of `f` to `B`. -/
@@ -179,8 +180,9 @@ restriction `LinearMap.submoduleComap` of `f` to the preimage of `B`. -/
 theorem comapSubquotientEquivOfSurjective_apply (f : M →ₗ[R] N) (hf : Function.Surjective f)
     (A B : Submodule R N) (x : ↥(B.comap f)) :
     comapSubquotientEquivOfSurjective f hf A B (Submodule.Quotient.mk x) =
-      Submodule.Quotient.mk (f.submoduleComap B x) :=
-  (rfl)
+      Submodule.Quotient.mk (f.submoduleComap B x) := by
+  rw [comapSubquotientEquivOfSurjective, LinearEquiv.trans_apply, Submodule.quotEquivOfEq_mk,
+    LinearMap.quotKerEquivOfSurjective_apply_mk, LinearMap.comp_apply, Submodule.mkQ_apply]
 
 /-- `TauCeti.comapSubquotientEquivOfSurjective` read on representatives, in the inverse direction:
 it undoes the restriction `LinearMap.submoduleComap` of `f` to the preimage of `B`. -/
