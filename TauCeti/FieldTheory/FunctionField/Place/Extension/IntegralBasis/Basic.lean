@@ -57,6 +57,8 @@ The basis material is the place-local analogue of Mathlib's `NumberField.integra
   integral vectors, and an integral span that detects integrality.
 * `TauCeti.Place.isIntegralBasis_iff_isIntegral_iff_repr_mem`: an arbitrary basis is integral
   exactly when integrality is detected coordinatewise over `𝒪_P`.
+* `TauCeti.Place.IsIntegralBasis.of_isIntegral_of_isIntegral_traceDual`: a basis and its trace
+  dual being integral at a place is sufficient for the basis to be an integral basis there.
 * `TauCeti.Place.finrank_integralClosure`: `rank_{𝒪_P} 𝒪'_P = [F' : F]`.
 * `TauCeti.Place.isIntegralBasis_localizationLocalization`: extending any `𝒪_P`-basis of `𝒪'_P`
   to the fraction fields gives an integral basis at `P`.
@@ -138,6 +140,22 @@ theorem IsIntegralBasis.isIntegral_iff_repr_mem {ι : Type*} {b : Basis ι F F'}
     (hb : P.IsIntegralBasis F' b) {x : F'} :
     IsIntegral (P.integers) x ↔ ∀ i, b.repr x i ∈ P.integers :=
   (isIntegralBasis_iff_isIntegral_iff_repr_mem F' P b).mp hb x
+
+/-- If an `F`-basis of `F'` and its trace-dual basis are integral over `𝒪_P`, then the basis is
+an integral basis at `P`. -/
+theorem IsIntegralBasis.of_isIntegral_of_isIntegral_traceDual {ι : Type*} [Finite ι]
+    [DecidableEq ι] [FiniteDimensional F F'] [Algebra.IsSeparable F F'] (P : Place k F)
+    (b : Basis ι F F')
+    (hb : ∀ i, IsIntegral P.integers (b i))
+    (hbdual : ∀ i, IsIntegral P.integers (b.traceDual i)) :
+    P.IsIntegralBasis F' b := by
+  rw [IsIntegralBasis]
+  apply le_antisymm
+  · rw [Submodule.span_le]
+    rintro _ ⟨i, rfl⟩
+    exact (mem_integralClosure_iff (P.integers) F').mpr (hb i)
+  · simpa only [← Basis.traceDual_def, Basis.traceDual_traceDual] using
+      (integralClosure_le_span_dualBasis (A := P.integers) b.traceDual hbdual)
 
 /-! ### The local integral closure -/
 
