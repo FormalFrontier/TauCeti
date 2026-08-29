@@ -166,7 +166,7 @@ private theorem typeBSignReindex_typeBSimpleRootMatrix (i : Fin (n + 1)) :
       simp [typeBSignReindex, typeBSignEquiv, Matrix.reindex_apply,
         typeBLongRootMatrix_def, Matrix.single_apply]
 
-private theorem LieEquiv.map_ad_pow {L L' : Type*} [LieRing L] [LieAlgebra K L]
+private theorem lieEquiv_map_ad_pow {L L' : Type*} [LieRing L] [LieAlgebra K L]
     [LieRing L'] [LieAlgebra K L'] (e : L ≃ₗ⁅K⁆ L') (x y : L) (m : ℕ) :
     e (((ad K L x) ^ m) y) = ((ad K L' (e x)) ^ m) (e y) := by
   induction m with
@@ -184,7 +184,7 @@ private theorem ad_pow_lie_typeBSimpleNegativeRootMatrix (i j : Fin (n + 1)) :
           typeBSimpleNegativeRootMatrix (K := K) j⁆ = 0 := by
   let e := typeBSignReindex (K := K) (Fin (n + 1))
   have h := congrArg e (ad_pow_lie_typeBSimpleRootMatrix (K := K) i j)
-  rw [map_zero, LieEquiv.map_ad_pow, e.map_lie,
+  rw [map_zero, lieEquiv_map_ad_pow, e.map_lie,
     typeBSignReindex_typeBSimpleRootMatrix,
     typeBSignReindex_typeBSimpleRootMatrix] at h
   simp only [neg_lie, lie_neg, neg_neg] at h
