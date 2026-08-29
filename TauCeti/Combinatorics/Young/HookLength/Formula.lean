@@ -20,8 +20,8 @@ number of standard Young tableaux. This file proves the **multiplicative hook-le
 `f^μ * ∏ c ∈ μ.cells, hookLength μ c = n !`
 
 (`TauCeti.standardCount_mul_prod_hookLength`), the milestone of Layer 5 of the Schur--Weyl
-roadmap. It carries no division obligation; the quotient form `f^μ = n ! / ∏ hooks` needs the
-separate divisibility statement `∏ hooks ∣ n !` and is not derived here.
+roadmap. It carries no division obligation, and the quotient form `f^μ = n ! / ∏ hooks`, which
+follows from it because the hook lengths are positive, is simply not stated here.
 
 ## The route
 
@@ -59,8 +59,6 @@ lengths sum to `n` and the shifts `r - 1 - i` are a reflection of `0, 1, …, r 
 
 ## Main results
 
-* `YoungDiagram.IsCorner.betaNumber_erase`: erasing a corner lowers exactly one beta-number, by
-  one.
 * `TauCeti.standardCount_mul_prod_factorial_betaNumber`: **the Frobenius determinant formula.**
 * `TauCeti.standardCount_mul_prod_hookLength`: **the multiplicative hook-length formula.**
 
@@ -80,18 +78,6 @@ namespace YoungDiagram
 variable {μ : YoungDiagram} {c : ℕ × ℕ} {r i : ℕ}
 
 /-! ### Corners and beta-numbers -/
-
-/-- Erasing a corner lowers the beta-number of its row by one and leaves the other beta-numbers
-unchanged. -/
-@[simp]
-theorem IsCorner.betaNumber_erase (h : IsCorner μ c) (r i : ℕ) :
-    (μ.erase c).betaNumber r i
-      = if c.1 = i then μ.betaNumber r i - 1 else μ.betaNumber r i := by
-  have hrow : 0 < μ.rowLen c.1 := by rw [h.rowLen_eq_snd_add_one]; omega
-  rw [betaNumber_def, h.rowLen_erase, betaNumber_def]
-  split_ifs with hi
-  · subst hi; omega
-  · rfl
 
 /-- The beta-number of the row of an erased corner, as a special case of
 `YoungDiagram.IsCorner.betaNumber_erase`. -/
@@ -286,22 +272,27 @@ private theorem standardCount_mul_prod_factorial_betaNumber_aux (n : ℕ) :
 `μ`: for any bound `r` on the number of rows, `f^μ` times the product of the factorials of the
 beta-numbers is `μ.card !` times the product of their differences over the ordered pairs of rows.
 
-This is the multiplicative form of `f^μ = n ! * ∏_{i < j} (βᵢ - βⱼ) / ∏_i βᵢ !`, and carries no
+The differences are differences of natural numbers, and are truncated at no ordered pair: the
+beta-numbers strictly decrease across `k < l < r`.
+
+This is the multiplicative form of `f^μ = n ! * ∏_{k < l} (β_k - β_l) / ∏_k β_k !`, and carries no
 division obligation. -/
 theorem standardCount_mul_prod_factorial_betaNumber (μ : YoungDiagram) {r : ℕ}
     (hr : μ.colLen 0 ≤ r) :
-    (standardCount μ : ℤ) * ∏ i ∈ range r, ((μ.betaNumber r i) ! : ℤ)
-      = (μ.card ! : ℤ) * ∏ k ∈ range r, ∏ l ∈ Ico (k + 1) r,
-          ((μ.betaNumber r k : ℤ) - (μ.betaNumber r l : ℤ)) :=
-  standardCount_mul_prod_factorial_betaNumber_aux μ.card μ r rfl hr
+    standardCount μ * ∏ i ∈ range r, (μ.betaNumber r i) !
+      = μ.card ! * ∏ k ∈ range r, ∏ l ∈ Ico (k + 1) r,
+          (μ.betaNumber r k - μ.betaNumber r l) := by
+  have h := standardCount_mul_prod_factorial_betaNumber_aux μ.card μ r rfl hr
+  rw [← cast_prod_betaNumber_sub] at h
+  exact_mod_cast h
 
 /-! ### The hook-length formula -/
 
 /-- **The multiplicative hook-length formula.** The number of standard Young tableaux of shape `μ`,
 times the product of the hook lengths of the cells of `μ`, is the factorial of the number of cells.
 
-The quotient form `f^μ = μ.card ! / ∏ hooks` needs the separate divisibility statement
-`∏ hooks ∣ μ.card !` and is not stated here. -/
+The quotient form `f^μ = μ.card ! / ∏ hooks`, which follows from this one because the hook lengths
+are positive, is not stated here. -/
 theorem standardCount_mul_prod_hookLength (μ : YoungDiagram) :
     standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! := by
   obtain ⟨r, hr⟩ : ∃ r, μ.colLen 0 ≤ r := ⟨μ.colLen 0, le_rfl⟩
@@ -311,15 +302,8 @@ theorem standardCount_mul_prod_hookLength (μ : YoungDiagram) :
       have := μ.betaNumber_lt_betaNumber (i := k) (j := l) (by omega) hl.2
       omega
   have hhook := YoungDiagram.prod_hookLength_mul_prod_betaNumber_sub_eq_prod_factorial μ hr
-  have hfrob := standardCount_mul_prod_factorial_betaNumber μ hr
-  rw [← cast_prod_betaNumber_sub, ← Nat.cast_prod, ← hhook, Nat.cast_mul] at hfrob
-  have hgoal : ((standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c : ℕ) : ℤ)
-      = ((μ.card ! : ℕ) : ℤ) := by
-    rw [Nat.cast_mul]
-    refine mul_right_cancel₀ (b := ((∏ k ∈ range r, ∏ l ∈ Ico (k + 1) r,
-      (μ.betaNumber r k - μ.betaNumber r l) : ℕ) : ℤ)) (by exact_mod_cast hV.ne') ?_
-    rw [mul_assoc]
-    exact hfrob
-  exact_mod_cast hgoal
+  refine Nat.eq_of_mul_eq_mul_right hV ?_
+  rw [mul_assoc, hhook]
+  exact standardCount_mul_prod_factorial_betaNumber μ hr
 
 end TauCeti

@@ -11,13 +11,14 @@ public import Mathlib.Data.Pi.Interval
 public import Mathlib.LinearAlgebra.Vandermonde
 public import Mathlib.RingTheory.Polynomial.Pochhammer
 import Mathlib.LinearAlgebra.Matrix.Block
+import TauCeti.LinearAlgebra.Determinant
 
 /-!
 # Vandermonde determinants in the falling-factorial basis
 
-The falling factorials `descPochhammer ℤ j` are monic of degree `j`, so Mathlib's
+The falling factorials `descPochhammer R j` are monic of degree `j`, so Mathlib's
 `Matrix.det_eval_matrixOfPolynomials_eq_det_vandermonde` rewrites `det (vandermonde y)` as the
-determinant of the matrix `(descPochhammer ℤ j).eval (yᵢ)`.  Unlike the powers, the falling
+determinant of the matrix `(descPochhammer R j).eval (yᵢ)`.  Unlike the powers, the falling
 factorials have a closed-form discrete antiderivative and a closed-form left shift, and this file
 proves the two identities for the Vandermonde determinant that those two facts supply.
 
@@ -52,8 +53,9 @@ survives — contributes the same sign, so the two determinants agree.
 
 ## The lowering identity
 
-Lower a single node `yᵢ` by one and weight the resulting Vandermonde determinant by `yᵢ`.  Summing
-over the nodes gives back the original determinant, scaled by `∑ yᵢ - (0 + 1 + ⋯ + (m - 1))`:
+Over an arbitrary commutative ring, lower a single node `yᵢ` by one and weight the resulting
+Vandermonde determinant by `yᵢ`.  Summing over the nodes gives back the original determinant,
+scaled by `∑ yᵢ - (0 + 1 + ⋯ + (m - 1))`:
 
 `∑ i, yᵢ · det (vandermonde (update y i (yᵢ - 1))) = (∑ i, yᵢ - ∑ i, i) · det (vandermonde y)`,
 
@@ -68,16 +70,21 @@ multiplying the lowered row by `yᵢ` turns the falling-factorial matrix of the 
 into the same matrix with its `i`-th row shifted up one degree, and
 `x^{underline (j+1)} = x^{underline j} · (x - j)` expands that row as `yᵢ` times the original minus
 `j` times the original, entry by entry.  *Jacobi's row formula*
-`TauCeti.sum_det_updateRow_mul_row`: summing over the rows the determinant of a matrix with one row
+`Matrix.sum_det_updateRow_mul_row`: summing over the rows the determinant of a matrix with one row
 scaled entry by entry multiplies the determinant by the total of the scaling factors, which turns
 the `j`-weighted correction into `(0 + 1 + ⋯ + (m - 1)) · det`.
+
+Mathlib's `monic_descPochhammer` and `descPochhammer_natDegree` assume the coefficient ring is a
+nontrivial ring without zero divisors, which the lowering identity does not; the two facts hold in
+general because `descPochhammer R j` is the image of `descPochhammer ℤ j` under the unique ring
+homomorphism, and a monic polynomial stays monic of the same degree under any ring homomorphism to
+a nontrivial ring.  The trivial ring is handled separately, where the identity is vacuous.
 
 ## Main results
 
 * `TauCeti.sum_Icc_descPochhammer_eval`: the discrete antiderivative of a falling factorial.
 * `TauCeti.factorial_mul_sum_det_vandermonde`: **the box-sum identity for Vandermonde
   determinants.**
-* `TauCeti.sum_det_updateRow_mul_row`: Jacobi's formula for a determinant, in row form.
 * `TauCeti.sum_mul_det_vandermonde_update_sub_one` and `TauCeti.sum_mul_prod_sub_update_sub_one`:
   **the lowering identity for Vandermonde determinants.**
 -/
@@ -86,14 +93,16 @@ public section
 
 namespace TauCeti
 
-open Finset Matrix Polynomial
+-- `_root_.Matrix`, because importing `TauCeti.LinearAlgebra.Determinant` puts a `TauCeti.Matrix`
+-- namespace in scope as well.
+open Finset _root_.Matrix Polynomial
 
 /-! ### The discrete antiderivative of a falling factorial -/
 
 /-- Shifting the argument of a falling factorial by one strips off its trailing linear factor:
 the degree `m + 1` falling factorial at `x + 1` is `(x + 1)` times the degree `m` one at `x`. -/
-private theorem descPochhammer_succ_eval_add_one (m : ℕ) (x : ℤ) :
-    (descPochhammer ℤ (m + 1)).eval (x + 1) = (x + 1) * (descPochhammer ℤ m).eval x := by
+private theorem descPochhammer_succ_eval_add_one {R : Type*} [CommRing R] (m : ℕ) (x : R) :
+    (descPochhammer R (m + 1)).eval (x + 1) = (x + 1) * (descPochhammer R m).eval x := by
   rw [descPochhammer_succ_left, eval_mul, eval_X, eval_comp, eval_sub, eval_X, eval_one,
     add_sub_cancel_right]
 
@@ -141,14 +150,31 @@ theorem sum_Icc_descPochhammer_eval (m : ℕ) {p q : ℤ} (h : p ≤ q) :
 
 /-! ### The box-sum identity -/
 
+/-- A falling factorial is monic over any commutative ring, being the image of the falling
+factorial over `ℤ` under the unique ring homomorphism.  Mathlib's `monic_descPochhammer` assumes
+the ring is nontrivial and has no zero divisors. -/
+private theorem monic_descPochhammer' (R : Type*) [CommRing R] (m : ℕ) :
+    (descPochhammer R m).Monic := by
+  rw [← descPochhammer_map (Int.castRingHom R) m]
+  exact (monic_descPochhammer ℤ m).map _
+
+/-- A falling factorial has the expected degree over any nontrivial commutative ring, monic
+polynomials keeping their degree under a ring homomorphism to a nontrivial ring.  Mathlib's
+`descPochhammer_natDegree` also assumes there are no zero divisors. -/
+private theorem descPochhammer_natDegree' (R : Type*) [CommRing R] [Nontrivial R] (m : ℕ) :
+    (descPochhammer R m).natDegree = m := by
+  rw [← descPochhammer_map (Int.castRingHom R) m, (monic_descPochhammer ℤ m).natDegree_map,
+    descPochhammer_natDegree ℤ m]
+
 /-- The Vandermonde determinant of a node vector, computed in the falling-factorial basis: the
 falling factorials are monic of degree `j`, so they give the same determinant as the powers. -/
-private theorem det_vandermonde_eq_det_descPochhammer (m : ℕ) (y : Fin m → ℤ) :
+private theorem det_vandermonde_eq_det_descPochhammer {R : Type*} [CommRing R] [Nontrivial R]
+    (m : ℕ) (y : Fin m → R) :
     (Matrix.vandermonde y).det
-      = (Matrix.of fun i j : Fin m => (descPochhammer ℤ (j : ℕ)).eval (y i)).det :=
+      = (Matrix.of fun i j : Fin m => (descPochhammer R (j : ℕ)).eval (y i)).det :=
   Matrix.det_eval_matrixOfPolynomials_eq_det_vandermonde y
-    (fun j => descPochhammer ℤ (j : ℕ)) (fun j => descPochhammer_natDegree (R := ℤ) (j : ℕ))
-    (fun j => monic_descPochhammer (R := ℤ) (j : ℕ))
+    (fun j => descPochhammer R (j : ℕ)) (fun j => descPochhammer_natDegree' R (j : ℕ))
+    (fun j => monic_descPochhammer' R (j : ℕ))
 
 /-- The one surviving term of a sum whose summand is supported on the index one step above a
 given one. -/
@@ -324,51 +350,13 @@ theorem factorial_mul_sum_det_vandermonde {n : ℕ} (x : Fin (n + 1) → ℤ)
 
 /-! ### The lowering identity -/
 
-/-- Subtracting one row vector from another is subtraction of the two determinants. -/
-private theorem det_updateRow_sub {ι : Type*} [DecidableEq ι] [Fintype ι] {R : Type*} [CommRing R]
-    (M : Matrix ι ι R) (i : ι) (u v : ι → R) :
-    (M.updateRow i (u - v)).det = (M.updateRow i u).det - (M.updateRow i v).det :=
-  eq_sub_of_add_eq <| by
-    have h := Matrix.det_updateRow_add M i (u - v) v
-    rw [sub_add_cancel] at h
-    exact h.symm
-
-/-- **Jacobi's formula for a determinant, in row form.**  Rescale one row of a matrix entry by
-entry along a fixed vector of factors, and sum the resulting determinants over the rows: the
-answer is the determinant multiplied by the total of the factors.
-
-Only the factor met on the diagonal of a permutation survives in each term of the Leibniz
-expansion, and summing over the rows meets each factor exactly once. -/
-theorem sum_det_updateRow_mul_row {ι : Type*} [DecidableEq ι] [Fintype ι] {R : Type*} [CommRing R]
-    (A : Matrix ι ι R) (d : ι → R) :
-    (∑ k, (A.updateRow k fun j => d j * A k j).det) = (∑ j, d j) * A.det := by
-  have key : ∀ k : ι, (A.updateRow k fun j => d j * A k j).det
-      = ∑ σ : Equiv.Perm ι,
-          ((Equiv.Perm.sign σ : ℤ) : R) * (d (σ⁻¹ k) * ∏ i, A (σ i) i) := by
-    intro k
-    rw [Matrix.det_apply']
-    refine Finset.sum_congr rfl fun σ _ => ?_
-    have hterm : ∀ i : ι, (A.updateRow k fun j => d j * A k j) (σ i) i
-        = (if i = σ⁻¹ k then d i else 1) * A (σ i) i := by
-      intro i
-      rcases eq_or_ne i (σ⁻¹ k) with rfl | h
-      · simp [Matrix.updateRow_apply]
-      · have hk : σ i ≠ k := fun hc => h (by rw [← hc]; simp)
-        rw [Matrix.updateRow_apply, ite_eq_right hk, ite_eq_right h, one_mul]
-    rw [Finset.prod_congr rfl fun i _ => hterm i, Finset.prod_mul_distrib,
-      Finset.prod_ite_eq' Finset.univ (σ⁻¹ k) d]
-    simp
-  rw [Finset.sum_congr rfl fun k _ => key k, Finset.sum_comm, Matrix.det_apply', Finset.mul_sum]
-  refine Finset.sum_congr rfl fun σ _ => ?_
-  rw [← Finset.mul_sum, ← Finset.sum_mul, Equiv.sum_comp (σ⁻¹ : Equiv.Perm ι) d]
-  ring
-
 /-- Lowering one node of a Vandermonde matrix by one, read in the falling-factorial basis: only
 the corresponding row of the matrix changes. -/
-private theorem det_vandermonde_update_sub_one {m : ℕ} (y : Fin m → ℤ) (i : Fin m) :
+private theorem det_vandermonde_update_sub_one {R : Type*} [CommRing R] [Nontrivial R] {m : ℕ}
+    (y : Fin m → R) (i : Fin m) :
     (Matrix.vandermonde (Function.update y i (y i - 1))).det
-      = ((Matrix.of fun k j : Fin m => (descPochhammer ℤ (j : ℕ)).eval (y k)).updateRow i
-          fun j : Fin m => (descPochhammer ℤ (j : ℕ)).eval (y i - 1)).det := by
+      = ((Matrix.of fun k j : Fin m => (descPochhammer R (j : ℕ)).eval (y k)).updateRow i
+          fun j : Fin m => (descPochhammer R (j : ℕ)).eval (y i - 1)).det := by
   classical
   rw [det_vandermonde_eq_det_descPochhammer]
   congr 1
@@ -380,38 +368,41 @@ private theorem det_vandermonde_update_sub_one {m : ℕ} (y : Fin m → ℤ) (i 
 /-- **The lowering identity for Vandermonde determinants.**  Lowering a single node by one and
 weighting by that node, then summing over the nodes, multiplies the Vandermonde determinant by the
 total of the nodes less `0 + 1 + ⋯ + (m - 1)`. -/
-theorem sum_mul_det_vandermonde_update_sub_one {m : ℕ} (y : Fin m → ℤ) :
+theorem sum_mul_det_vandermonde_update_sub_one {R : Type*} [CommRing R] {m : ℕ} (y : Fin m → R) :
     (∑ i, y i * (Matrix.vandermonde (Function.update y i (y i - 1))).det)
-      = ((∑ i, y i) - ∑ i : Fin m, ((i : ℕ) : ℤ)) * (Matrix.vandermonde y).det := by
+      = ((∑ i, y i) - ∑ i : Fin m, ((i : ℕ) : R)) * (Matrix.vandermonde y).det := by
   classical
-  set N : Matrix (Fin m) (Fin m) ℤ :=
-    Matrix.of fun k j : Fin m => (descPochhammer ℤ (j : ℕ)).eval (y k) with hNdef
+  -- over the trivial ring there is nothing to prove, and the falling factorials have no degree
+  rcases subsingleton_or_nontrivial R with _ | _
+  · exact Subsingleton.elim _ _
+  set N : Matrix (Fin m) (Fin m) R :=
+    Matrix.of fun k j : Fin m => (descPochhammer R (j : ℕ)).eval (y k) with hNdef
   have hdet : (Matrix.vandermonde y).det = N.det := det_vandermonde_eq_det_descPochhammer m y
   have key : ∀ i : Fin m, y i * (Matrix.vandermonde (Function.update y i (y i - 1))).det
-      = y i * N.det - (N.updateRow i fun j : Fin m => ((j : ℕ) : ℤ) * N i j).det := by
+      = y i * N.det - (N.updateRow i fun j : Fin m => ((j : ℕ) : R) * N i j).det := by
     intro i
-    have hrow : (y i • fun j : Fin m => (descPochhammer ℤ (j : ℕ)).eval (y i - 1))
-        = (y i • N i) - fun j : Fin m => ((j : ℕ) : ℤ) * N i j := by
+    have hrow : (y i • fun j : Fin m => (descPochhammer R (j : ℕ)).eval (y i - 1))
+        = (y i • N i) - fun j : Fin m => ((j : ℕ) : R) * N i j := by
       funext j
       -- the left shift `x · (x - 1)^{underline j} = x^{underline (j+1)}` …
-      have hleft : (descPochhammer ℤ ((j : ℕ) + 1)).eval (y i)
-          = y i * (descPochhammer ℤ (j : ℕ)).eval (y i - 1) := by
+      have hleft : (descPochhammer R ((j : ℕ) + 1)).eval (y i)
+          = y i * (descPochhammer R (j : ℕ)).eval (y i - 1) := by
         simpa using descPochhammer_succ_eval_add_one (j : ℕ) (y i - 1)
       -- … against the trailing factor `x^{underline (j+1)} = x^{underline j} · (x - j)`
-      have hright := descPochhammer_succ_eval (S := ℤ) (j : ℕ) (y i)
+      have hright := descPochhammer_succ_eval (S := R) (j : ℕ) (y i)
       simp only [hNdef, Matrix.of_apply, Pi.smul_apply, smul_eq_mul, Pi.sub_apply]
       rw [← hleft, hright]
       ring
-    rw [det_vandermonde_update_sub_one, ← Matrix.det_updateRow_smul, hrow, det_updateRow_sub,
-      Matrix.det_updateRow_smul, Matrix.updateRow_eq_self]
+    rw [det_vandermonde_update_sub_one, ← Matrix.det_updateRow_smul, hrow,
+      Matrix.det_updateRow_sub, Matrix.det_updateRow_smul, Matrix.updateRow_eq_self]
   rw [Finset.sum_congr rfl fun i _ => key i, Finset.sum_sub_distrib, ← Finset.sum_mul,
-    sum_det_updateRow_mul_row, hdet]
+    Matrix.sum_det_updateRow_mul_row, hdet]
   ring
 
 /-- The Vandermonde determinant of the first `m` values of a sequence, as a product of the
 differences over the ordered pairs of `Finset.range m`.  The sign is left as an unevaluated power
 of `-1`: the lowering identity multiplies it into both of its sides, where it cancels. -/
-private theorem det_vandermonde_eq_prod_range (m : ℕ) (b : ℕ → ℤ) :
+private theorem det_vandermonde_eq_prod_range {R : Type*} [CommRing R] (m : ℕ) (b : ℕ → R) :
     (Matrix.vandermonde fun i : Fin m => b i).det
       = (-1) ^ (∑ i : Fin m, (Finset.Ioi i).card)
         * ∏ k ∈ Finset.range m, ∏ l ∈ Finset.Ico (k + 1) m, (b k - b l) := by
@@ -436,24 +427,30 @@ private theorem det_vandermonde_eq_prod_range (m : ℕ) (b : ℕ → ℤ) :
     Finset.prod_pow_eq_pow_sum,
     Fin.prod_univ_eq_prod_range (fun k : ℕ => ∏ l ∈ Finset.Ico (k + 1) m, (b k - b l)) m]
 
-/-- Cancelling a common nonzero factor carried by every term of a sum and by the value it is
-compared to. -/
-private theorem mul_left_cancel₀_sum {ι : Type*} [Fintype ι] {c : ℤ} (hc : c ≠ 0)
-    {f g : ι → ℤ} {a p : ℤ} (h : ∑ i, f i * (c * g i) = a * (c * p)) :
-    (∑ i, f i * g i) = a * p := by
-  refine mul_left_cancel₀ hc ?_
-  rw [Finset.mul_sum,
-    Finset.sum_congr rfl fun i (_ : i ∈ Finset.univ) => mul_left_comm c (f i) (g i), h]
-  ring
+/-- Cancelling a common factor of square one carried by every term of a sum and by the value it is
+compared to.  A sign is such a factor over any commutative ring, where it need not be cancellable
+in the sense of `mul_left_cancel₀`. -/
+private theorem mul_self_cancel_sum {ι : Type*} [Fintype ι] {R : Type*} [CommRing R] {c : R}
+    (hc : c * c = 1) {f g : ι → R} {a p : R} (h : ∑ i, f i * (c * g i) = a * (c * p)) :
+    (∑ i, f i * g i) = a * p :=
+  calc (∑ i, f i * g i)
+      = c * ∑ i, f i * (c * g i) := by
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun i _ => by
+          rw [show c * (f i * (c * g i)) = c * c * (f i * g i) by ring, hc, one_mul]
+    _ = c * (a * (c * p)) := by rw [h]
+    _ = a * p := by rw [show c * (a * (c * p)) = c * c * (a * p) by ring, hc, one_mul]
 
-/-- **The lowering identity, unwound.**  For a sequence of integers, the product of the differences
-over the ordered pairs below a bound, with one term of the sequence lowered by one and the result
-weighted by that term, summed over the terms below the bound. -/
-theorem sum_mul_prod_sub_update_sub_one (m : ℕ) (b : ℕ → ℤ) :
+/-- **The lowering identity, unwound.**  For a sequence in a commutative ring, the product of the
+differences over the ordered pairs below a bound, with one term of the sequence lowered by one and
+the result weighted by that term, summed over the terms below the bound, is the total of the terms
+below the bound less `0 + 1 + ⋯ + (m - 1)`, times the product of the differences of the original
+sequence. -/
+theorem sum_mul_prod_sub_update_sub_one {R : Type*} [CommRing R] (m : ℕ) (b : ℕ → R) :
     (∑ i ∈ Finset.range m, b i *
         ∏ k ∈ Finset.range m, ∏ l ∈ Finset.Ico (k + 1) m,
           (Function.update b i (b i - 1) k - Function.update b i (b i - 1) l))
-      = ((∑ i ∈ Finset.range m, b i) - ∑ i ∈ Finset.range m, (i : ℤ))
+      = ((∑ i ∈ Finset.range m, b i) - ∑ i ∈ Finset.range m, (i : R))
         * ∏ k ∈ Finset.range m, ∏ l ∈ Finset.Ico (k + 1) m, (b k - b l) := by
   classical
   have hupd : ∀ i : Fin m, Function.update (fun k : Fin m => b k) i (b (i : ℕ) - 1)
@@ -474,13 +471,14 @@ theorem sum_mul_prod_sub_update_sub_one (m : ℕ) (b : ℕ → ℤ) :
   have key := sum_mul_det_vandermonde_update_sub_one fun i : Fin m => b i
   rw [Finset.sum_congr rfl fun i _ => by rw [hterm i], det_vandermonde_eq_prod_range m b] at key
   -- both sides now carry the same sign, which cancels
-  have hcancel := mul_left_cancel₀_sum
-    (pow_ne_zero (∑ i : Fin m, (Finset.Ioi i).card) (by norm_num : (-1 : ℤ) ≠ 0)) key
+  have hcancel := mul_self_cancel_sum
+    (show ((-1 : R) ^ (∑ i : Fin m, (Finset.Ioi i).card)) * (-1) ^ _ = 1 by
+      rw [← mul_pow]; norm_num) key
   rw [Fin.sum_univ_eq_sum_range (fun i : ℕ => b i * ∏ k ∈ Finset.range m,
       ∏ l ∈ Finset.Ico (k + 1) m,
         (Function.update b i (b i - 1) k - Function.update b i (b i - 1) l)) m,
     Fin.sum_univ_eq_sum_range b m,
-    Fin.sum_univ_eq_sum_range (fun i : ℕ => (i : ℤ)) m] at hcancel
+    Fin.sum_univ_eq_sum_range (fun i : ℕ => (i : R)) m] at hcancel
   exact hcancel
 
 end TauCeti
