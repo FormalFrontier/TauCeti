@@ -28,6 +28,8 @@ maps to a Lie submodule strictly below `N`, while `LieSubmodule.comap_incl_eq_to
   it is an atom of the lattice of Lie submodules of the ambient module.
 * `TauCeti.lieSpan_singleton_eq_top_of_ne_zero`: every nonzero vector of an irreducible Lie module
   generates the whole module.
+* `TauCeti.lieSpan_singleton_eq_top_of_lieSpan_eq`: the generator of a cyclic Lie submodule
+  generates that submodule, read as a Lie module in its own right.
 
 ## References
 
@@ -51,6 +53,23 @@ theorem lieSpan_singleton_eq_top_of_ne_zero [LieModule.IsIrreducible R L M]
     (LieSubmodule.nontrivial_iff_ne_bot R L M).mpr fun hbot ↦
       hm ((LieSubmodule.lieSpan_eq_bot_iff R L M).mp hbot m (Set.mem_singleton m))
   exact LieSubmodule.eq_top_of_isIrreducible R L M _
+
+/-- **The generator of a cyclic Lie submodule generates it.** If a Lie submodule `N` of `M` is
+spanned by a single vector `m`, then that vector, read inside `N`, spans the whole of `N`.
+Otherwise the Lie submodule of `N` it spans would map to a Lie submodule strictly below `N`
+(`LieSubmodule.map_incl_lt_iff_lt_top`), which nonetheless still contains `m`. -/
+theorem lieSpan_singleton_eq_top_of_lieSpan_eq {N : LieSubmodule R L M} {m : M}
+    (h : LieSubmodule.lieSpan R L {m} = N) :
+    LieSubmodule.lieSpan R L {(⟨m, h ▸ LieSubmodule.subset_lieSpan rfl⟩ : N)} = ⊤ := by
+  have hm : m ∈ N := h ▸ LieSubmodule.subset_lieSpan rfl
+  by_contra hne
+  have hlt : (LieSubmodule.lieSpan R L {(⟨m, hm⟩ : N)}).map N.incl < N :=
+    LieSubmodule.map_incl_lt_iff_lt_top.mpr (lt_top_iff_ne_top.mpr hne)
+  have hle : LieSubmodule.lieSpan R L {m} ≤ (LieSubmodule.lieSpan R L {(⟨m, hm⟩ : N)}).map N.incl :=
+    LieSubmodule.lieSpan_le.mpr (Set.singleton_subset_iff.mpr
+      ⟨⟨m, hm⟩, LieSubmodule.subset_lieSpan rfl, rfl⟩)
+  rw [h] at hle
+  exact absurd (hlt.trans_le hle) (lt_irrefl _)
 
 /-- **The irreducible Lie submodules are the atoms.** A Lie submodule `N` of `M` is irreducible as
 a Lie module exactly when it is an atom of `LieSubmodule R L M`, that is, when `N ≠ ⊥` and the only

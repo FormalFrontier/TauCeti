@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.Module.Lattice
 public import TauCeti.Algebra.Lie.Sl2.Standard
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
+public import TauCeti.LinearAlgebra.CoordinateLattice
 public import TauCeti.RingTheory.Binomial
 import Mathlib.Tactic.FinCases
 
@@ -229,31 +230,28 @@ variable (n : ℕ)
 A vector belongs to this submodule exactly when each of its coordinates is an integer viewed in
 `ℚ`; see `mem_integralLattice_iff`. -/
 def integralLattice : Submodule ℤ (Sl2Std ℚ n) :=
-  Submodule.span ℤ (Set.range (basis ℚ n))
+  TauCeti.coordinateLattice (Fin (n + 1))
 
 /-- A vector belongs to the standard integral lattice exactly when all its coordinates are
 integer-valued. -/
 @[simp]
 theorem mem_integralLattice_iff {v : Sl2Std ℚ n} :
     v ∈ integralLattice n ↔ ∀ i, ∃ z : ℤ, (z : ℚ) = v i := by
-  rw [integralLattice, Module.Basis.mem_span_iff_repr_mem]
-  simp only [basis_repr_apply, Set.mem_range, eq_comm]
-  rfl
+  exact TauCeti.mem_coordinateLattice_iff (Fin (n + 1))
 
 /-- Integer coordinate vectors are linearly equivalent to the standard integral lattice. -/
 noncomputable def integerCoordinatesLinearEquiv :
     (Fin (n + 1) → ℤ) ≃ₗ[ℤ] integralLattice n :=
-  ((basis ℚ n).restrictScalars ℤ).equivFun.symm
+  (TauCeti.coordinateLatticeBasis (Fin (n + 1))).equivFun.symm
 
 /-- Inverse evaluation of the coordinate linear equivalence yields the integer coordinates. -/
 @[simp]
 theorem coe_integerCoordinatesLinearEquiv_symm_apply (v : integralLattice n) (i : Fin (n + 1)) :
     (((integerCoordinatesLinearEquiv n).symm v i : ℤ) : ℚ) = (v : Sl2Std ℚ n) i := by
-  have h := Module.Basis.restrictScalars_repr_apply ℤ (basis ℚ n) v i
   have hequiv : (integerCoordinatesLinearEquiv n).symm v i =
-      ((basis ℚ n).restrictScalars ℤ).repr v i := rfl
+      (TauCeti.coordinateLatticeBasis (Fin (n + 1))).repr v i := rfl
   rw [hequiv]
-  exact h.trans (basis_repr_apply (v : Sl2Std ℚ n) i)
+  exact TauCeti.intCast_coordinateLatticeBasis_repr (Fin (n + 1)) v i
 
 /-- Forward evaluation of the coordinate linear equivalence on a coordinate vector. -/
 @[simp]
@@ -264,15 +262,15 @@ theorem coe_integerCoordinatesLinearEquiv_apply (z : Fin (n + 1) → ℤ) (i : F
   exact h.symm
 
 noncomputable instance : Module.Free ℤ (integralLattice n) :=
-  Module.Free.of_basis ((basis ℚ n).restrictScalars ℤ)
+  Module.Free.of_basis (TauCeti.coordinateLatticeBasis (Fin (n + 1)))
 
 noncomputable instance : Module.Finite ℤ (integralLattice n) :=
-  Module.Finite.of_basis ((basis ℚ n).restrictScalars ℤ)
+  Module.Finite.of_basis (TauCeti.coordinateLatticeBasis (Fin (n + 1)))
 
 /-- The standard integral lattice has rank `n + 1`. -/
 @[simp]
 theorem finrank_integralLattice : Module.finrank ℤ (integralLattice n) = n + 1 := by
-  have h := Module.finrank_eq_card_basis ((basis ℚ n).restrictScalars ℤ)
+  have h := Module.finrank_eq_card_basis (TauCeti.coordinateLatticeBasis (Fin (n + 1)))
   rw [Fintype.card_fin] at h
   exact h
 
@@ -330,13 +328,10 @@ theorem ringChoose_diag_mem_integralLattice (k : ℕ) {v : Sl2Std ℚ n}
 /-- The rational span of the standard integral lattice is the whole standard module. -/
 theorem span_integralLattice_eq_top :
     Submodule.span ℚ (integralLattice n : Set (Sl2Std ℚ n)) = ⊤ := by
-  rw [integralLattice, Submodule.span_span_of_tower, (basis ℚ n).span_eq]
+  exact (TauCeti.instIsLatticeCoordinateLattice (Fin (n + 1))).span_eq_top
 
 instance : Submodule.IsLattice ℚ (integralLattice n) where
-  fg := by
-    rw [← Module.Finite.iff_fg]
-    infer_instance
-  span_eq_top := span_integralLattice_eq_top n
+  __ := TauCeti.instIsLatticeCoordinateLattice (Fin (n + 1))
 
 /-! ### The restricted rank-one Kostant action -/
 

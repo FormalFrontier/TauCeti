@@ -45,6 +45,11 @@ global étale algebra with its images in the completions passes through exactly 
   `IsDedekindDomain.HeightOneSpectrum.valuation_adicCompletion_algebraMap`: the two restrictions
   of it the square-class conditions of the `2`-descent are stated in — on units of `K`, and on the
   image of `K`.
+* `IsDedekindDomain.HeightOneSpectrum.ringChar_residueField_adicCompletionIntegers_ne_two`: at a
+  place not dividing `2`, the residue field of `𝒪_v` has odd characteristic.
+* `IsDedekindDomain.HeightOneSpectrum.exists_unit_not_isSquare`: at such a place, with finite
+  residue field, `𝒪_v` carries a unit that is not a square in `K_v`. This is the input the
+  local image count at a good odd place needs.
 * `IsDedekindDomain.HeightOneSpectrum.valued_adicCompletionExtension`: along the extension the
   valuation is raised to the ramification index.
 * `IsDedekindDomain.HeightOneSpectrum.comap_maximalIdeal_adicCompletionIntegersExtension`: the
@@ -78,6 +83,15 @@ The three completion-integers results — `span_singleton_eq_maximalIdeal_pow`,
 `exists_valued_sub_lt_one` and `residueFieldEquivAdicCompletionIntegers` — come from that same
 Stoll file; they are the substrate its residue-field comparison rests on, restated here against
 this repository's `HeightOneSpectrum` interface.
+
+`exists_unit_not_isSquare` comes from the same source file (`:183`). Two deliberate departures from
+its proof: the source contracts the maximal ideal with its own
+`comap_maximalIdeal_adicCompletionIntegers`, which this repository states as
+`under_maximalIdeal_adicCompletionIntegers` (`Ideal.under R I` is by definition
+`I.comap (algebraMap R S)`); and where the source derives `v d = 1` from a square by manipulating
+`WithZero.log`, this uses Mathlib's `mul_self_le_one_iff` and `one_le_mul_self_iff`, which say the
+same thing about the ordered value monoid in one line. The odd-residue-characteristic step is split
+out as `ringChar_residueField_adicCompletionIntegers_ne_two`, which the source keeps inline.
 
 Only the part the `2`-descent consumes is ported: the Henselian and completeness chain of the
 source, which serves other consumers, is deliberately left out. The source is written against Lean
@@ -290,6 +304,58 @@ theorem residueFieldEquivAdicCompletionIntegers_apply_mk (a : R) :
     v.residueFieldEquivAdicCompletionIntegers (K := K) (Ideal.Quotient.mk v.asIdeal a) =
       Ideal.Quotient.mk (IsLocalRing.maximalIdeal (v.adicCompletionIntegers K))
         (algebraMap R (v.adicCompletionIntegers K) a) := (rfl)
+
+/-- **At a place not dividing `2`, the residue characteristic is odd.** The residue field of `𝒪_v`
+is the residue field of `v` by `residueFieldEquivAdicCompletionIntegers`, so this is the hypothesis
+`2 ∉ v` transported along that equivalence — stated as a statement about `ringChar` because that is
+the form `FiniteField.exists_nonsquare` consumes. -/
+theorem ringChar_residueField_adicCompletionIntegers_ne_two (hv2 : (2 : R) ∉ v.asIdeal) :
+    ringChar (IsLocalRing.ResidueField (v.adicCompletionIntegers K)) ≠ 2 := by
+  -- first, `2` is not in the maximal ideal of `𝒪_v`: it contracts to `v`
+  have h2 : IsLocalRing.residue (v.adicCompletionIntegers K) 2 ≠ 0 := by
+    intro h0
+    refine hv2 ?_
+    rw [← v.under_maximalIdeal_adicCompletionIntegers (K := K), Ideal.under_def, Ideal.mem_comap,
+      map_ofNat]
+    exact Ideal.Quotient.eq_zero_iff_mem.mp h0
+  -- characteristic `2` would make the residue of `2` vanish
+  intro h
+  refine h2 ?_
+  rw [map_ofNat, ← Nat.cast_ofNat, ← h]
+  exact ringChar.Nat.cast_ringChar
+
+/-- **At a place of odd residue characteristic and finite residue field, `𝒪_v` has a unit that is
+not a square in `K_v`.** Any lift of a non-square of the residue field works: a square root in
+`K_v` would have valuation `1`, hence lie in `𝒪_v`, and would reduce to a square root of the
+non-square. -/
+theorem exists_unit_not_isSquare [Finite (R ⧸ v.asIdeal)] (hv2 : (2 : R) ∉ v.asIdeal) :
+    ∃ c : (v.adicCompletionIntegers K)ˣ,
+      ¬ IsSquare (algebraMap (v.adicCompletionIntegers K) (v.adicCompletion K)
+        (c : v.adicCompletionIntegers K)) := by
+  have hfin : Finite (IsLocalRing.ResidueField (v.adicCompletionIntegers K)) :=
+    Finite.of_equiv _ (v.residueFieldEquivAdicCompletionIntegers (K := K)).toEquiv
+  -- `𝒪_v` is the ring of integers of the valuation of `K_v`; that supplies both the
+  -- injectivity of `𝒪_v → K_v` and the characterization of its units by valuation `1`
+  have hint := adicCompletionIntegers.integers K v
+  obtain ⟨a, ha⟩ := FiniteField.exists_nonsquare
+    (v.ringChar_residueField_adicCompletionIntegers_ne_two (K := K) hv2)
+  have ha0 : a ≠ 0 := fun h ↦ ha (h ▸ IsSquare.zero)
+  -- lift the non-square to a unit of `𝒪_v`
+  obtain ⟨x, rfl⟩ := IsLocalRing.residue_surjective (R := v.adicCompletionIntegers K) a
+  have hxu : IsUnit x := (IsLocalRing.residue_ne_zero_iff_isUnit x).mp ha0
+  refine ⟨hxu.unit, fun ⟨d, hd⟩ ↦ ?_⟩
+  rw [IsUnit.unit_spec] at hd
+  -- a square root of a unit has valuation `1`, because the value group is torsion-free
+  have hx1 : Valued.v (algebraMap (v.adicCompletionIntegers K) (v.adicCompletion K) x) = 1 :=
+    hint.isUnit_iff_valuation_eq_one.mp hxu
+  rw [hd, map_mul] at hx1
+  have hd1 : Valued.v d = 1 :=
+    le_antisymm (mul_self_le_one_iff.mp hx1.le) (one_le_mul_self_iff.mp hx1.ge)
+  -- hence it lies in `𝒪_v` and reduces to a square root of the non-square
+  have hdmem : d ∈ v.adicCompletionIntegers K := (mem_adicCompletionIntegers R K v).mpr hd1.le
+  have hx_eq : x = (⟨d, hdmem⟩ : v.adicCompletionIntegers K) * ⟨d, hdmem⟩ :=
+    hint.hom_inj (by rw [map_mul]; exact hd)
+  exact ha ⟨IsLocalRing.residue _ ⟨d, hdmem⟩, by rw [hx_eq, map_mul]⟩
 
 end IsDedekindDomain.HeightOneSpectrum
 

@@ -13,6 +13,7 @@ public import TauCeti.RingTheory.Polynomial.SymmetricPower
 public import TauCeti.Topology.Sym.Disjoint
 import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.Analytic.Linear
+import Mathlib.Analysis.Analytic.Polynomial
 
 /-!
 # The elementary symmetric chart is a homeomorphism
@@ -48,6 +49,9 @@ Both halves are elementary, but neither is formal:
   embedding, whose symmetric power is an open subspace of affine space.
 * `TauCeti.Sym.isOpenEmbedding_coeffEquiv_comp_ofFn_map`: the chart on a product mapped into
   pairwise disjoint open coordinate ranges, one point in each.
+* `TauCeti.Sym.analyticOnNhd_coeffEquiv_map_eval_coeffEquiv_symm`: applying a univariate
+  polynomial to every point induces an analytic map in coefficient coordinates, including at
+  tuples where points collide.
 
 Lane F4.1 of the analytic Heegaard Floer roadmap opens with "`Sym^g(Σ)` geometry: smooth complex
 structure (elementary symmetric functions)", after Ozsváth--Szabó
@@ -58,8 +62,9 @@ from it in `TauCeti/Geometry/Manifold/SymmetricPower.lean`. Away from the diagon
 proved here is upgraded to analyticity in
 `TauCeti/Analysis/Polynomial/SimpleRoots/Basic.lean`, and its assembly across the blocks of an
 elementary-symmetric chart is in `TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`. The complex
-structure itself, including transition maps at colliding tuples, and the totally real tori
-`T_α`, `T_β`, are separate later steps.
+structure itself and the totally real tori `T_α`, `T_β`, are separate later steps. For transition
+maps at colliding tuples, this file handles the case induced by a univariate polynomial; the
+general holomorphic case remains open.
 -/
 
 public section
@@ -131,6 +136,22 @@ theorem analyticAt_coeffEquiv_ofFn (v₀ : Fin n → 𝕜) :
   refine AnalyticAt.pi fun i => ?_
   simp only [coeffEquiv_ofFn_apply]
   exact Polynomial.analyticAt_coeff_prod_X_sub_C _ _ _
+
+/-- **Applying a polynomial to a tuple is analytic in elementary symmetric coefficients.**
+The coordinate representation is analytic everywhere, including at coefficient tuples whose
+corresponding points collide. -/
+theorem analyticOnNhd_coeffEquiv_map_eval_coeffEquiv_symm (q : 𝕜[X]) :
+    AnalyticOnNhd 𝕜 (fun c => coeffEquiv 𝕜 n
+      (Sym.map (fun z => eval z q) ((coeffEquiv 𝕜 n).symm c))) Set.univ := by
+  obtain ⟨Q, hQ⟩ := exists_coeffEquiv_map_eval_coeffEquiv_symm_eq_eval
+    (K := 𝕜) (n := n) q
+  refine fun c _ => AnalyticAt.congr (f := fun c i => MvPolynomial.eval c (Q i))
+    (AnalyticAt.pi fun i => ?_) ?_
+  · have h := AnalyticOnNhd.eval_continuousLinearMap
+      (ContinuousLinearMap.id 𝕜 (Fin n → 𝕜)) (Q i) c (Set.mem_univ c)
+    simp only [ContinuousLinearMap.id_apply] at h
+    exact h
+  · filter_upwards with c using (hQ c).symm
 
 end Analyticity
 

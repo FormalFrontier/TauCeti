@@ -59,9 +59,7 @@ theorem heckeTCuspNat_mem_cuspFormsOld [NeZero N] (hp : p.Prime)
   have : NeZero p := ⟨hp.ne_zero⟩
   refine cuspFormsOld_le (V := (cuspFormsOld N k).comap (HeckeRing.GL2.heckeTCuspNat k p)) ?_ hf
   intro M d hdvd hM g
-  -- `Newforms/Basic.lean`'s `neZero_of_mul_dvd_right` is private, so derive the instance here,
-  -- by the same argument `heckeTCuspNat_levelRaise` uses in its own statement.
-  have : NeZero M := ⟨fun hM ↦ NeZero.ne N (by simpa [hM] using hdvd)⟩
+  have : NeZero M := NeZero.of_dvd (dvd_of_mul_left_dvd hdvd)
   rw [Submodule.mem_comap,
     HeckeRing.GL2.heckeTCuspNat_levelRaise (k := k) (d := d) (M := M) (p := p) hdvd hp hpN]
   exact levelRaise_mem_cuspFormsOld hdvd hM k _

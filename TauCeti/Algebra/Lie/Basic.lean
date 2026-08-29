@@ -17,6 +17,8 @@ This file supplies general constructions for Lie modules that are missing from M
 ## Main definitions
 
 * `TauCeti.LieModuleEquiv.ofBijective`: a bijective morphism of Lie modules is an equivalence.
+* `TauCeti.LieModuleEquiv.congrRight`: postcomposition with an equivalence of Lie modules, as a
+  linear equivalence of morphism spaces.
 * `TauCeti.lieAnnihilator`: the Lie subalgebra of elements annihilating a vector in a Lie
   module.
 
@@ -30,7 +32,7 @@ This file supplies general constructions for Lie modules that are missing from M
 
 namespace TauCeti
 
-universe u v w w₁
+universe u v w w₁ w₂
 
 variable {R : Type u} {L : Type v} {M : Type w} {N : Type w₁}
 variable [CommRing R] [LieRing L] [AddCommGroup M] [Module R M] [LieRingModule L M]
@@ -52,6 +54,37 @@ theorem ofBijective_apply (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective f) 
   -- representation boundary before applying the corresponding linear-equivalence interface lemma.
   change (LinearEquiv.ofBijective (f : M →ₗ[R] N) hf) m = f m
   exact LinearEquiv.ofBijective_apply _ _
+
+section CongrRight
+
+variable {P : Type w₂} [AddCommGroup P] [Module R P] [LieRingModule L P]
+variable [LieAlgebra R L] [LieModule R L M] [LieModule R L N] [LieModule R L P]
+
+/-- **Postcomposition with an equivalence of Lie modules**, as an `R`-linear equivalence
+`(M →ₗ⁅R,L⁆ N) ≃ₗ[R] (M →ₗ⁅R,L⁆ P)` of morphism spaces. This is the Lie-module analogue of
+`LinearEquiv.congrRight`, which is unavailable here because a `LieModuleHom` is not a
+`LinearMap`. -/
+def congrRight (e : N ≃ₗ⁅R,L⁆ P) : (M →ₗ⁅R,L⁆ N) ≃ₗ[R] (M →ₗ⁅R,L⁆ P) where
+  toFun f := (e : N →ₗ⁅R,L⁆ P).comp f
+  invFun g := (e.symm : P →ₗ⁅R,L⁆ N).comp g
+  map_add' _ _ := by ext m; simp
+  map_smul' _ _ := by ext m; simp
+  left_inv f := by ext m; simp
+  right_inv g := by ext m; simp
+
+omit [LieModule R L M] in
+@[simp]
+theorem congrRight_apply (e : N ≃ₗ⁅R,L⁆ P) (f : M →ₗ⁅R,L⁆ N) (m : M) :
+    congrRight (M := M) e f m = e (f m) :=
+  (rfl)
+
+omit [LieModule R L M] in
+@[simp]
+theorem congrRight_symm_apply (e : N ≃ₗ⁅R,L⁆ P) (g : M →ₗ⁅R,L⁆ P) (m : M) :
+    (congrRight (M := M) e).symm g m = e.symm (g m) :=
+  (rfl)
+
+end CongrRight
 
 end LieModuleEquiv
 

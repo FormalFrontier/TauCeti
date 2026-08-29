@@ -6,8 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Basis.Basic
-public import Mathlib.Algebra.Lie.Sl2
+public import TauCeti.Algebra.Lie.Sl2.Basic
 public import TauCeti.Algebra.Lie.Presentation.Serre
+import TauCeti.Algebra.Lie.Sl2.WeightString
 
 /-!
 # The Serre system carried by a Lie algebra basis
@@ -78,47 +79,17 @@ variable {ι K L : Type*} [Finite ι] [CommRing K] [IsDomain K] [CharZero K] [Li
   [LieAlgebra K L] [Module.IsTorsionFree K L] [IsNoetherian K L]
   {H : LieSubalgebra K L} (b : LieAlgebra.Basis ι H)
 
-/-! ## Primitive vectors among the generators -/
-
-omit [IsDomain K] [CharZero K] [Module.IsTorsionFree K L] [IsNoetherian K L] in
-/-- For `i ≠ j` the raising generator `eⱼ` is primitive of eigenvalue `-Aⱼᵢ` for the triple
-`(-hᵢ, fᵢ, eᵢ)` obtained from `LieAlgebra.Basis.sl2` by exchanging the raising and lowering
-generators and negating `hᵢ`. -/
-private theorem hasPrimitiveVectorWith_lieBasis_e {i j : ι} (hij : i ≠ j) :
-    (b.sl2 i).symm.HasPrimitiveVectorWith (M := L) (b.e j) ((-b.A j i : ℤ) : K) where
-  ne_zero := (b.sl2 j).e_ne_zero
-  lie_h := by
-    rw [neg_lie, b.lie_h_e j i, Int.cast_smul_eq_zsmul, neg_smul]
-  lie_e := by
-    rw [← lie_skew, b.lie_e_f_ne j i hij.symm, neg_zero]
-
 /-! ## The higher Serre relations -/
-
-omit [Finite ι] in
-/-- The string below a primitive vector of integer eigenvalue `n` stops after `n.toNat` steps.
-This is the common core of the two higher Serre relations: `y` is the lowering generator of the
-triple being iterated and `m` the primitive vector. -/
-private theorem ad_pow_succ_toNat_eq_zero {x y z m : L} {ht : IsSl2Triple z x y} {n : ℤ}
-    (P : ht.HasPrimitiveVectorWith (M := L) m ((n : ℤ) : K)) :
-    ((ad K L y) ^ (n.toNat + 1)) m = 0 := by
-  obtain ⟨k, hk⟩ := P.exists_nat
-  have hnk : n = (k : ℤ) := by exact_mod_cast hk
-  have htn : n.toNat = k := by omega
-  -- Mathlib states the `sl₂` string API for `LieModule.toEnd`, so the adjoint action is written
-  -- in that shape first; the two agree extensionally on the adjoint module.
-  have hadt : (ad K L y : Module.End K L) = toEnd K L L y := by ext w; simp
-  rw [hadt, htn]
-  exact P.pow_toEnd_f_eq_zero_of_eq_nat hk
 
 /-- **The higher Serre relation on the raising generators of a Lie algebra basis.** -/
 theorem ad_pow_lie_lieBasis_e_e (i j : ι) :
     ((ad K L (b.e i)) ^ (-b.Aᵀ i j).toNat) ⁅b.e i, b.e j⁆ = 0 := by
   rcases eq_or_ne i j with rfl | hij
   · simp
-  · have h0 := ad_pow_succ_toNat_eq_zero (K := K) (hasPrimitiveVectorWith_lieBasis_e b hij)
-    rw [pow_succ, Module.End.mul_apply, ad_apply] at h0
-    rw [Matrix.transpose_apply]
-    exact h0
+  · rw [Matrix.transpose_apply]
+    exact ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero (b.sl2 i)
+      (by rw [b.lie_h_e j i, Int.cast_smul_eq_zsmul])
+      (by rw [← lie_skew, b.lie_e_f_ne j i hij.symm, neg_zero])
 
 /-- **The higher Serre relation on the lowering generators of a Lie algebra basis.** -/
 theorem ad_pow_lie_lieBasis_f_f (i j : ι) :
