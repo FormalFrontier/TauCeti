@@ -560,6 +560,7 @@ private theorem gradedPiece_mk_eq_mk (f : M →ₗ[R] A) {k : ℕ} {a : A}
   rfl
 
 /-- A word of length strictly below `k` has zero class in the degree-`k` graded piece. -/
+@[simp]
 theorem gradedPiece_mk_prod_map_eq_zero_of_length_lt (f : M →ₗ[R] A) {k : ℕ} {l : List M}
     (hl : l.length < k) :
     (Submodule.Quotient.mk
