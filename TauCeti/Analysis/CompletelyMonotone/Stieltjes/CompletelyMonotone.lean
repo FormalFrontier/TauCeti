@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.CompletelyMonotone.Bernstein.OpenHalfLine
+public import TauCeti.Analysis.CompletelyMonotone.Power
 public import TauCeti.Analysis.CompletelyMonotone.Stieltjes.Basic
 import Mathlib.Analysis.Calculus.ParametricIntegral
 import Mathlib.Analysis.Calculus.Deriv.ZPow
@@ -26,6 +26,8 @@ integrability hypothesis in `RepresentsStieltjes` suffices at every derivative o
 
 ## Main declarations
 
+* `TauCeti.integrable_zpow_neg_one_sub_add`: all derivative-order Stieltjes kernels are
+  integrable at positive parameters.
 * `TauCeti.iteratedDeriv_integral_inv_add`: the derivative formula for the integral term.
 * `TauCeti.isCompletelyMonotoneOnIoi_integral_inv_add`: a Stieltjes integral is completely
   monotone on `(0, ∞)`.
@@ -59,6 +61,12 @@ private lemma stieltjesDerivKernel_zero (t : ℝ) (x : ℝ≥0) :
     stieltjesDerivKernel 0 t x = (t + (x : ℝ))⁻¹ := by
   simp [stieltjesDerivKernel]
 
+private lemma zpow_neg_le_zpow_neg {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) (k : ℕ) :
+    b ^ (-(k : ℤ)) ≤ a ^ (-(k : ℤ)) := by
+  rw [zpow_neg, zpow_natCast, zpow_neg, zpow_natCast]
+  exact (inv_le_inv₀ (pow_pos (ha.trans_le hab) k) (pow_pos ha k)).2
+    (pow_le_pow_left₀ ha.le hab k)
+
 private lemma hasDerivAt_stieltjesDerivKernel (n : ℕ) {t : ℝ} (x : ℝ≥0)
     (ht : 0 < t) :
     HasDerivAt (fun u => stieltjesDerivKernel n u x) (stieltjesDerivKernel (n + 1) t x) t := by
@@ -70,43 +78,48 @@ private lemma hasDerivAt_stieltjesDerivKernel (n : ℕ) {t : ℝ} (x : ℝ≥0)
   have h := hpow.const_mul ((-1 : ℝ) ^ n * n.factorial)
   refine (h.congr_of_eventuallyEq ?_).congr_deriv ?_
   · filter_upwards [] with u
-    rfl
+    simp only [stieltjesDerivKernel, Function.comp_def]
   · unfold stieltjesDerivKernel
     have hexp : -1 - ((n + 1 : ℕ) : ℤ) = -1 - (n : ℤ) - 1 := by omega
     rw [hexp]
     push_cast [Nat.factorial_succ]
     ring
 
-private lemma integrable_stieltjesZPow (hμ : Integrable stieltjesWeight μ) (n : ℕ)
-    {r : ℝ} (hr : 0 < r) :
-    Integrable (fun x : ℝ≥0 => (r + (x : ℝ)) ^ (-1 - (n : ℤ))) μ := by
-  refine ((integrable_inv_add hμ hr).const_mul (r ^ (-(n : ℤ)))).mono' ?_ ?_
+/-! ### Integrability and domination of the derivative kernels -/
+
+/-- Every integer-power kernel occurring in a derivative of a Stieltjes integral is integrable
+at a positive parameter. -/
+theorem integrable_zpow_neg_one_sub_add (hμ : Integrable stieltjesWeight μ) (n : ℕ)
+    {t : ℝ} (ht : 0 < t) :
+    Integrable (fun x : ℝ≥0 => (t + (x : ℝ)) ^ (-1 - (n : ℤ))) μ := by
+  refine ((integrable_inv_add hμ ht).const_mul (t ^ (-(n : ℤ)))).mono' ?_ ?_
   · exact (((continuous_const.add continuous_subtype_val).zpow₀ _ fun (x : ℝ≥0) =>
-      Or.inl (add_pos_of_pos_of_nonneg hr x.coe_nonneg).ne')).aestronglyMeasurable
+      Or.inl (add_pos_of_pos_of_nonneg ht x.coe_nonneg).ne')).aestronglyMeasurable
   filter_upwards [] with x
-  have hpos : 0 < r + (x : ℝ) := add_pos_of_pos_of_nonneg hr x.coe_nonneg
-  have hfactor : (r + (x : ℝ)) ^ (-1 - (n : ℤ)) =
-      (r + (x : ℝ))⁻¹ * (r + (x : ℝ)) ^ (-(n : ℤ)) := by
+  have hpos : 0 < t + (x : ℝ) := add_pos_of_pos_of_nonneg ht x.coe_nonneg
+  have hfactor : (t + (x : ℝ)) ^ (-1 - (n : ℤ)) =
+      (t + (x : ℝ))⁻¹ * (t + (x : ℝ)) ^ (-(n : ℤ)) := by
     rw [sub_eq_add_neg, zpow_add₀ hpos.ne', zpow_neg_one]
-  have hpow : (r + (x : ℝ)) ^ (-(n : ℤ)) ≤ r ^ (-(n : ℤ)) := by
-    rw [zpow_neg, zpow_natCast, zpow_neg, zpow_natCast]
-    have hrx : r ≤ r + (x : ℝ) := by linarith [x.coe_nonneg]
-    exact (inv_le_inv₀ (pow_pos hpos n) (pow_pos hr n)).2
-      (pow_le_pow_left₀ hr.le hrx n)
-  have hval : (r + (x : ℝ)) ^ (-1 - (n : ℤ)) ≤
-      r ^ (-(n : ℤ)) * (r + (x : ℝ))⁻¹ := by
+  have htx : t ≤ t + (x : ℝ) := by linarith [x.coe_nonneg]
+  have hpow : (t + (x : ℝ)) ^ (-(n : ℤ)) ≤ t ^ (-(n : ℤ)) :=
+    zpow_neg_le_zpow_neg ht htx n
+  have hval : (t + (x : ℝ)) ^ (-1 - (n : ℤ)) ≤
+      t ^ (-(n : ℤ)) * (t + (x : ℝ))⁻¹ := by
     rw [hfactor]
     calc
-      (r + (x : ℝ))⁻¹ * (r + (x : ℝ)) ^ (-(n : ℤ))
-          ≤ (r + (x : ℝ))⁻¹ * r ^ (-(n : ℤ)) :=
+      (t + (x : ℝ))⁻¹ * (t + (x : ℝ)) ^ (-(n : ℤ))
+          ≤ (t + (x : ℝ))⁻¹ * t ^ (-(n : ℤ)) :=
         mul_le_mul_of_nonneg_left hpow (inv_nonneg.mpr hpos.le)
-      _ = r ^ (-(n : ℤ)) * (r + (x : ℝ))⁻¹ := by ring
+      _ = t ^ (-(n : ℤ)) * (t + (x : ℝ))⁻¹ := by ring
   simpa only [Real.norm_eq_abs, abs_of_pos (zpow_pos hpos _),
-    abs_of_pos (mul_pos (zpow_pos hr _) (inv_pos.mpr hpos))] using hval
+    abs_of_pos (mul_pos (zpow_pos ht _) (inv_pos.mpr hpos))] using hval
 
 private lemma integrable_stieltjesDerivKernel (hμ : Integrable stieltjesWeight μ) (n : ℕ)
     {t : ℝ} (ht : 0 < t) : Integrable (stieltjesDerivKernel n t) μ := by
-  exact (integrable_stieltjesZPow hμ n ht).const_mul ((-1 : ℝ) ^ n * n.factorial)
+  change Integrable (fun x : ℝ≥0 =>
+    ((-1 : ℝ) ^ n * n.factorial) * (t + (x : ℝ)) ^ (-1 - (n : ℤ))) μ
+  exact (integrable_zpow_neg_one_sub_add hμ n ht).const_mul
+    ((-1 : ℝ) ^ n * n.factorial)
 
 private lemma norm_stieltjesDerivKernel_le (n : ℕ) (x : ℝ≥0) {r t : ℝ}
     (hr : 0 < r) (hrt : r ≤ t) :
@@ -116,18 +129,20 @@ private lemma norm_stieltjesDerivKernel_le (n : ℕ) (x : ℝ≥0) {r t : ℝ}
   have htx : 0 < t + (x : ℝ) := lt_of_lt_of_le hrx hrtx
   have hbase : (t + (x : ℝ)) ^ (-1 - (n : ℤ)) ≤
       (r + (x : ℝ)) ^ (-1 - (n : ℤ)) := by
-    rw [show -1 - (n : ℤ) = -((n + 1 : ℕ) : ℤ) by omega,
-      zpow_neg, zpow_natCast, zpow_neg, zpow_natCast]
-    exact (inv_le_inv₀ (pow_pos htx (n + 1)) (pow_pos hrx (n + 1))).2
-      (pow_le_pow_left₀ hrx.le hrtx (n + 1))
-  unfold stieltjesDerivKernel
-  rw [Real.norm_eq_abs, abs_mul, abs_mul, abs_of_pos (zpow_pos htx _),
-    Real.norm_eq_abs, abs_mul, abs_mul, abs_of_pos (zpow_pos hrx _)]
+    rw [show -1 - (n : ℤ) = -((n + 1 : ℕ) : ℤ) by omega]
+    exact zpow_neg_le_zpow_neg hrx hrtx (n + 1)
+  simp only [stieltjesDerivKernel, Real.norm_eq_abs, abs_mul,
+    abs_of_pos (zpow_pos htx _), abs_of_pos (zpow_pos hrx _)]
   exact mul_le_mul_of_nonneg_left hbase (mul_nonneg (abs_nonneg _) (abs_nonneg _))
 
 /-- The integral of the kernel obtained after `n` differentiations. -/
 private def stieltjesDerivIntegral (μ : Measure ℝ≥0) (n : ℕ) (t : ℝ) : ℝ :=
   ∫ x, stieltjesDerivKernel n t x ∂μ
+
+private lemma stieltjesDerivIntegral_zero (μ : Measure ℝ≥0) :
+    stieltjesDerivIntegral μ 0 = fun t : ℝ => ∫ x : ℝ≥0, (t + (x : ℝ))⁻¹ ∂μ := by
+  funext t
+  simp only [stieltjesDerivIntegral, stieltjesDerivKernel_zero]
 
 private lemma hasDerivAt_stieltjesDerivIntegral (hμ : Integrable stieltjesWeight μ) (n : ℕ)
     {t : ℝ} (ht : 0 < t) :
@@ -197,29 +212,19 @@ theorem iteratedDeriv_integral_inv_add (hμ : Integrable stieltjesWeight μ) (n 
     iteratedDeriv n (fun u : ℝ => ∫ x : ℝ≥0, (u + (x : ℝ))⁻¹ ∂μ) t =
       (-1 : ℝ) ^ n * n.factorial *
         ∫ x : ℝ≥0, (t + (x : ℝ)) ^ (-1 - (n : ℤ)) ∂μ := by
-  have hfun : (fun u : ℝ => ∫ x : ℝ≥0, (u + (x : ℝ))⁻¹ ∂μ) =
-      stieltjesDerivIntegral μ 0 := by
-    funext u
-    rw [stieltjesDerivIntegral]
-    exact integral_congr_ae (Filter.Eventually.of_forall fun x =>
-      (stieltjesDerivKernel_zero u x).symm)
-  rw [hfun, iteratedDeriv_stieltjesDerivIntegral_zero hμ n ht,
+  rw [← stieltjesDerivIntegral_zero, iteratedDeriv_stieltjesDerivIntegral_zero hμ n ht,
     stieltjesDerivIntegral]
-  exact integral_const_mul ((-1 : ℝ) ^ n * n.factorial)
-    (fun x : ℝ≥0 => (t + (x : ℝ)) ^ (-1 - (n : ℤ)))
+  simpa only [stieltjesDerivKernel] using
+    integral_const_mul ((-1 : ℝ) ^ n * n.factorial)
+      (fun x : ℝ≥0 => (t + (x : ℝ)) ^ (-1 - (n : ℤ)))
 
 /-- Integrating the shifted reciprocal kernels against a measure satisfying the Stieltjes
 weight condition gives a function completely monotone on `(0, ∞)`. -/
 theorem isCompletelyMonotoneOnIoi_integral_inv_add
     (hμ : Integrable stieltjesWeight μ) :
     IsCompletelyMonotoneOnIoi fun t : ℝ => ∫ x : ℝ≥0, (t + (x : ℝ))⁻¹ ∂μ := by
-  have hfun : (fun t : ℝ => ∫ x : ℝ≥0, (t + (x : ℝ))⁻¹ ∂μ) =
-      stieltjesDerivIntegral μ 0 := by
-    funext t
-    rw [stieltjesDerivIntegral]
-    exact integral_congr_ae (Filter.Eventually.of_forall fun x =>
-      (stieltjesDerivKernel_zero t x).symm)
-  refine ⟨hfun ▸ contDiffOn_stieltjesDerivIntegral hμ 0, fun n t ht => ?_⟩
+  refine ⟨stieltjesDerivIntegral_zero μ ▸ contDiffOn_stieltjesDerivIntegral hμ 0,
+    fun n t ht => ?_⟩
   rw [iteratedDeriv_integral_inv_add hμ n ht]
   have hint : 0 ≤ ∫ x : ℝ≥0, (t + (x : ℝ)) ^ (-1 - (n : ℤ)) ∂μ :=
     integral_nonneg fun x => (zpow_pos (add_pos_of_pos_of_nonneg ht x.coe_nonneg) _).le
@@ -239,8 +244,9 @@ variable {a b : ℝ≥0} {f : ℝ → ℝ}
 lemma isCompletelyMonotoneOnIoi (h : RepresentsStieltjes μ a b f) :
     IsCompletelyMonotoneOnIoi f := by
   have ha : IsCompletelyMonotoneOnIoi fun t : ℝ => (a : ℝ) / t := by
-    have hs := isCompletelyMonotoneOnIoi_one_div.smul a.coe_nonneg
-    exact hs.congr fun t _ => by simp [Pi.smul_apply, smul_eq_mul, div_eq_mul_inv]
+    have hs := (isCompletelyMonotoneOnIoi_rpow_neg (s := 1) zero_le_one).smul a.coe_nonneg
+    exact hs.congr fun t _ => by
+      simp [Pi.smul_apply, smul_eq_mul, Real.rpow_neg_one, div_eq_mul_inv]
   have hb : IsCompletelyMonotoneOnIoi fun _ : ℝ => (b : ℝ) :=
     (isCompletelyMonotone_const b.coe_nonneg).isCompletelyMonotoneOnIoi
   have hi : IsCompletelyMonotoneOnIoi fun t : ℝ =>
