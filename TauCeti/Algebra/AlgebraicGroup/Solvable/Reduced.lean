@@ -223,7 +223,7 @@ private theorem map_comp_map {A B C D E F : Type v}
 /-- Evaluating the universal point at a tree of points gives the corresponding derived word. -/
 @[simp] private theorem mapValue_universalDerivedWord {A : Type u} [CommRing A] [Algebra k A]
     (n : ℕ) (x : DerivedWordArgs (points (R := k) (H := H) (CommAlgCat.of k A)) n) :
-    AlgHom.mapValue (derivedWordEvaluation H n x) (universalDerivedWord H n) =
+    toConv ((derivedWordEvaluation H n x).comp (universalDerivedWord H n).ofConv) =
       derivedWord (points (R := k) (H := H) (CommAlgCat.of k A)) n x := by
   induction n with
   | zero =>
@@ -241,13 +241,13 @@ private theorem map_comp_map {A B C D E F : Type v}
           have ihx : (derivedWordEvaluation H n x).comp
               (universalDerivedWord H n).ofConv =
               (derivedWord (points (R := k) (H := H) (CommAlgCat.of k A)) n x).ofConv := by
-            simpa only [AlgHom.mapValue_apply] using congrArg WithConv.ofConv (ih x)
+            simpa only [ofConv_toConv] using congrArg WithConv.ofConv (ih x)
           have ihy : (derivedWordEvaluation H n y).comp
               (universalDerivedWord H n).ofConv =
               (derivedWord (points (R := k) (H := H) (CommAlgCat.of k A)) n y).ofConv := by
-            simpa only [AlgHom.mapValue_apply] using congrArg WithConv.ofConv (ih y)
+            simpa only [ofConv_toConv] using congrArg WithConv.ofConv (ih y)
           simp only [universalDerivedWord_succ,
-            AlgHom.mapValue_apply, ofConv_toConv, derivedWord_node]
+            ofConv_toConv, derivedWord_node]
           rw [← AlgHom.comp_assoc, productMap_comp_map, ihx, ihy]
           exact TauCeti.HopfAlgebra.productMap_comp_commutatorAlgHom _ _
 
@@ -343,7 +343,11 @@ theorem of_injective_of_smooth (f : H ⟶ K) (hf : Function.Injective f.hom)
           (R := k) (H := H) (CommAlgCat.of k (derivedWordCoordinateAlgebra H n))).ofConv z) := by
         rw [AlgHom.convOne_apply]
   rw [← HopfAlgebra.mapValue_universalDerivedWord (A := AlgebraicClosure k) H n x,
-    hHuniv, map_one]
+    hHuniv]
+  apply WithConv.ofConv_injective
+  ext z
+  simp only [AlgHom.comp_apply, AlgHom.convOne_apply]
+  exact (HopfAlgebra.derivedWordEvaluation H n x).commutes _
 
 end geometricallySolvablePointsCommHopfAlgProperty
 
