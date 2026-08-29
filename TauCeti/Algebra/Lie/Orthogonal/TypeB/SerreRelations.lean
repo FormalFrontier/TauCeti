@@ -20,11 +20,12 @@ computations:
 
 * positive and negative generators at distinct simple nodes commute;
 * the iterated adjoint actions between two positive generators, and between two negative
-  generators, vanish with the exponents prescribed by the transposed type-`B` Cartan matrix.
+  generators, vanish with the exponents prescribed by the type-`B` Cartan matrix.
 
-The transpose is the convention used by the existing Cartan-action API: the coroot index is the
-first index in `⁅hᵢ, eⱼ⁆`. All results hold over an arbitrary commutative ring, including in
-characteristic two. Together with the Cartan-action relations, these are the inputs for packaging
+The reversed matrix indices encode the convention used by the existing Cartan-action API: the
+coroot index is the first index in `⁅hᵢ, eⱼ⁆`. All results hold over an arbitrary commutative
+ring, including in characteristic two. Together with the Cartan-action relations, these are the
+inputs for packaging
 the standard matrices as a `TauCeti.IsSerreSystem` and hence for mapping the integral Kostant form
 into the standard type-`B` representation.
 
@@ -92,13 +93,13 @@ theorem typeBSimpleRootGenerator_lie_negativeRoot_of_ne
       lie_typeBSimpleRootMatrix_typeBSimpleNegativeRootMatrix_of_ne (K := K) i j hij
 
 /-- The higher Serre relation for the positive simple-root generators of the standard split
-type-`B` Lie algebra. The Cartan matrix is transposed to match the coroot-first convention in the
+type-`B` Lie algebra. The reversed Cartan-matrix indices match the coroot-first convention in the
 Cartan-action relations. -/
 @[simp]
 theorem ad_pow_lie_typeBSimpleRootGenerator (i j : Fin (n + 1)) :
     (ad K (LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K)
         (typeBSimpleRootGenerator (K := K) i) ^
-      (-(CartanMatrix.B (n + 1)).transpose i j).toNat)
+      (-CartanMatrix.B (n + 1) j i).toNat)
         ⁅typeBSimpleRootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ = 0 := by
   apply Subtype.ext
   rw [LieSubalgebra.coe_ad_pow, LieSubalgebra.coe_bracket,
@@ -112,7 +113,7 @@ theorem ad_pow_lie_typeBSimpleRootGenerator (i j : Fin (n + 1)) :
       rcases j₀ with ⟨j, hj⟩
       have hjn : j ≠ n := by omega
       have hnj : n ≠ j := hjn.symm
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.transpose_apply, Matrix.of_apply]
+      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
       split_ifs <;> simp_all [LieAlgebra.ad_apply, lie_sub, sub_lie,
         lie_single_single, Fin.ext_iff, pow_two, Module.End.mul_apply] <;>
         omega
@@ -122,7 +123,7 @@ theorem ad_pow_lie_typeBSimpleRootGenerator (i j : Fin (n + 1)) :
       rcases i₀ with ⟨i, hi⟩
       have hin : i ≠ n := by omega
       have hni : n ≠ i := hin.symm
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.transpose_apply, Matrix.of_apply]
+      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
       split_ifs <;> simp_all [LieAlgebra.ad_apply, lie_sub, sub_lie,
         lie_single_single, Fin.ext_iff] <;>
         omega
@@ -130,7 +131,7 @@ theorem ad_pow_lie_typeBSimpleRootGenerator (i j : Fin (n + 1)) :
       simp_rw [typeBLongRootMatrix_def]
       rcases i₀ with ⟨i, hi⟩
       rcases j₀ with ⟨j, hj⟩
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.transpose_apply, Matrix.of_apply]
+      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
       split_ifs <;> simp only [Fin.succ_mk, map_sub, Int.reduceNeg, neg_neg,
         Int.reduceToNat, Int.toNat_one, pow_one, neg_zero, Int.toNat_zero, pow_zero,
         lie_sub, sub_lie, lie_single_single, Sum.inr.injEq, Sum.inl.injEq,
@@ -150,7 +151,7 @@ type-`B` Lie algebra. -/
 theorem ad_pow_lie_typeBSimpleNegativeRootGenerator (i j : Fin (n + 1)) :
     (ad K (LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K)
         (typeBSimpleNegativeRootGenerator (K := K) i) ^
-      (-(CartanMatrix.B (n + 1)).transpose i j).toNat)
+      (-CartanMatrix.B (n + 1) j i).toNat)
         ⁅typeBSimpleNegativeRootGenerator (K := K) i,
           typeBSimpleNegativeRootGenerator (K := K) j⁆ = 0 := by
   apply Subtype.ext
@@ -166,7 +167,7 @@ theorem ad_pow_lie_typeBSimpleNegativeRootGenerator (i j : Fin (n + 1)) :
       rcases j₀ with ⟨j, hj⟩
       have hjn : j ≠ n := by omega
       have hnj : n ≠ j := hjn.symm
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.transpose_apply, Matrix.of_apply]
+      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
       split_ifs <;> simp_all [LieAlgebra.ad_apply, lie_sub, sub_lie,
         lie_single_single, Fin.ext_iff, pow_two, Module.End.mul_apply] <;>
         omega
@@ -177,7 +178,7 @@ theorem ad_pow_lie_typeBSimpleNegativeRootGenerator (i j : Fin (n + 1)) :
       rcases i₀ with ⟨i, hi⟩
       have hin : i ≠ n := by omega
       have hni : n ≠ i := hin.symm
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.transpose_apply, Matrix.of_apply]
+      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
       split_ifs <;> simp_all [LieAlgebra.ad_apply, lie_sub, sub_lie,
         lie_single_single, Fin.ext_iff] <;>
         omega
@@ -185,7 +186,7 @@ theorem ad_pow_lie_typeBSimpleNegativeRootGenerator (i j : Fin (n + 1)) :
       simp_rw [typeBLongRootMatrix_def]
       rcases i₀ with ⟨i, hi⟩
       rcases j₀ with ⟨j, hj⟩
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.transpose_apply, Matrix.of_apply]
+      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
       split_ifs <;> simp only [Fin.succ_mk, map_sub, Int.reduceNeg, neg_neg,
         Int.reduceToNat, Int.toNat_one, pow_one, neg_zero, Int.toNat_zero, pow_zero,
         lie_sub, sub_lie, lie_single_single, Sum.inr.injEq, Sum.inl.injEq,
