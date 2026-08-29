@@ -227,12 +227,6 @@ theorem prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial (hr : μ.colLen
 
 /-! ### The hook-length product -/
 
-/-- The cells of `μ` whose row index is `i` are the row `μ.row i`, by `YoungDiagram.mem_row_iff`. -/
-private theorem filter_cells_fst_eq_row (μ : YoungDiagram) (i : ℕ) :
-    {c ∈ μ.cells | c.1 = i} = μ.row i := by
-  ext c
-  simp [mem_row_iff, mem_cells]
-
 /-- A product over the cells of a diagram with at most `r` rows, read row by row: the cells are
 fibred over their row index by `Prod.fst`, and the fibre of `i` is the row `μ.row i`. -/
 private theorem prod_cells_eq_prod_range {M : Type*} [CommMonoid M] (hr : μ.colLen 0 ≤ r)
@@ -244,7 +238,8 @@ private theorem prod_cells_eq_prod_range {M : Type*} [CommMonoid M] (hr : μ.col
       ((mem_iff_lt_colLen.mp ((mem_cells _).mp hc)).trans_le (colLen_le_of_colLen_zero_le hr b))
   rw [← prod_fiberwise_of_maps_to hmaps f]
   refine prod_congr rfl fun i _ => ?_
-  rw [filter_cells_fst_eq_row, row_eq_prod, Finset.prod_product, prod_singleton]
+  -- the fibre of `i` is `YoungDiagram.row`, defined as exactly this filter
+  rw [← row, row_eq_prod, Finset.prod_product, prod_singleton]
 
 /-- **The hook-length product identity.** For a Young diagram `μ` with at most `r` rows, the
 product of all its hook lengths, multiplied by the Vandermonde-style product of the differences of
