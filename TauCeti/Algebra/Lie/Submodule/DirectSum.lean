@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.DirectSum
-public import Mathlib.LinearAlgebra.DFinsupp
 public import TauCeti.Algebra.Lie.Basic
 
 public section
@@ -26,11 +25,21 @@ applied to `M` can be computed summand by summand, which is how the multiplicity
 in `M` is read off a decomposition of `M` into irreducibles in
 `TauCeti/Algebra/Lie/Multiplicity.lean`.
 
+Mathlib's inclusion and projection for an external direct sum of Lie modules,
+`DirectSum.lieModuleOf` and `DirectSum.lieModuleComponent`, come with no application lemmas; the
+two that say they are the underlying `DirectSum.of` and evaluation are recorded here, so that no
+consumer has to unfold either definition.
+
 ## Main definitions
 
 * `TauCeti.LieSubmodule.directSumCoe`: the sum map `⨁ i, N i →ₗ⁅R,L⁆ M`.
 * `TauCeti.LieSubmodule.directSumEquiv`: the resulting equivalence of Lie modules
   `⨁ i, N i ≃ₗ⁅R,L⁆ M`, for an internal decomposition.
+
+## Main results
+
+* `DirectSum.lieModuleOf_apply` and `DirectSum.lieModuleComponent_apply`: the inclusion and the
+  projection of an external direct sum of Lie modules are `DirectSum.of` and evaluation.
 
 ## Roadmap
 
@@ -42,11 +51,36 @@ decompositions it counts are produced by `TauCeti.exists_isInternal_isIrreducibl
 consumed here.
 -/
 
-namespace TauCeti.LieSubmodule
-
 open scoped DirectSum
 
 universe u v w w₁
+
+namespace DirectSum
+
+section LieModules
+
+variable (R : Type u) (ι : Type w₁) (L : Type v) (P : ι → Type w)
+variable [CommRing R] [LieRing L]
+variable [∀ i, AddCommGroup (P i)] [∀ i, Module R (P i)]
+variable [∀ i, LieRingModule L (P i)]
+
+/-- The inclusion of a summand into an external direct sum of Lie modules is `DirectSum.of`. -/
+@[simp]
+theorem lieModuleOf_apply [DecidableEq ι] (i : ι) (x : P i) :
+    lieModuleOf R ι L P i x = of P i x :=
+  (rfl)
+
+/-- The projection of an external direct sum of Lie modules onto a summand is evaluation. -/
+@[simp]
+theorem lieModuleComponent_apply (i : ι) (x : ⨁ i, P i) :
+    lieModuleComponent R ι L P i x = x i :=
+  (rfl)
+
+end LieModules
+
+end DirectSum
+
+namespace TauCeti.LieSubmodule
 
 variable {R : Type u} {L : Type v} {M : Type w} {ι : Type w₁} [DecidableEq ι]
 variable [CommRing R] [LieRing L] [AddCommGroup M] [Module R M] [LieRingModule L M]
@@ -88,7 +122,7 @@ theorem directSumCoe_of (i : ι) (y : N i) :
 
 /-- The sum map of a family of Lie submodules is bijective exactly when the family decomposes `M`
 internally: the two statements are about the same underlying linear map. -/
-theorem bijective_directSumCoe_iff :
+theorem directSumCoe_bijective_iff :
     Function.Bijective (directSumCoe N) ↔ DirectSum.IsInternal fun i ↦ (N i).toSubmodule :=
   Iff.rfl
 
@@ -97,7 +131,7 @@ whose underlying submodules decompose `M` presents `M` as the direct sum of the 
 modules. -/
 noncomputable def directSumEquiv (h : DirectSum.IsInternal fun i ↦ (N i).toSubmodule) :
     (⨁ i, N i) ≃ₗ⁅R,L⁆ M :=
-  LieModuleEquiv.ofBijective (directSumCoe N) h
+  LieModuleEquiv.ofBijective (directSumCoe N) ((directSumCoe_bijective_iff N).mpr h)
 
 @[simp]
 theorem directSumEquiv_apply (h : DirectSum.IsInternal fun i ↦ (N i).toSubmodule)

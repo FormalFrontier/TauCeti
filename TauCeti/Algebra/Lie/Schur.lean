@@ -29,8 +29,9 @@ transporting along an equivalence gives the same for `M → N`. Together:
 That dichotomy is the input a *multiplicity* count needs: in a decomposition of `M` into
 irreducibles, each summand contributes `1` to `dim_K (S →ₗ⁅K,L⁆ M)` when it is equivalent to `S`
 and `0` when it is not. Reading the multiplicity off `dim_K (S →ₗ⁅K,L⁆ M)` needs one further
-ingredient, additivity of the morphism space over a direct sum, which is not proved here; this
-file goes no further than the two-irreducible dimension count.
+ingredient, additivity of the morphism space over a direct sum; that is
+`TauCeti.LieModule.lieModuleHomDirectSumEquiv` of `TauCeti/Algebra/Lie/Multiplicity.lean`, and
+this file goes no further than the two-irreducible dimension count.
 
 ## Main results
 
@@ -63,9 +64,11 @@ This is the uniqueness input for the multiplicity `m_λ = dim Hom_L(L(λ), M)` o
 toolkit in Layer 6 of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`
 (the `isotypicMultiplicity` target of its `Suggested.lean`, whose "`Hom` definition is the one that
 makes uniqueness automatic"): the morphism space between irreducibles has dimension `1` or `0`
-according as they are equivalent. The multiplicity theorem itself is not proved here; it needs, in
-addition, additivity of the morphism space over a direct-sum decomposition, and for the
-`L(λ)`-indexed form the irreducible quotient `L(λ)`.
+according as they are equivalent. The multiplicity theorem itself is
+`LieModule.isotypicMultiplicity_eq_ncard_of_isInternal` of
+`TauCeti/Algebra/Lie/Multiplicity.lean`, which adds to this file the additivity of the morphism
+space over a direct-sum decomposition; the `L(λ)`-indexed form additionally needs the irreducible
+quotient `L(λ)`.
 
 ## References
 
