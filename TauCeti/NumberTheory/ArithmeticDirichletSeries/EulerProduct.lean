@@ -457,13 +457,6 @@ theorem normCoeff_eq_eulerProduct (hf : f.IsMultiplicative) :
   rw [normCoeff_supportedPart hf S] at hcoeff
   exact hcoeff.symm.trans hprod
 
-/-- Regrouping a multiplicative ideal arithmetic function by absolute norm produces a
-multiplicative arithmetic function. -/
-theorem IsMultiplicative.normCoeff (hf : f.IsMultiplicative) :
-    (normCoeff K f).IsMultiplicative := by
-  rw [normCoeff_eq_eulerProduct hf]
-  exact isMultiplicative_eulerProduct hf.map_one
-
 end IdealArithmeticFunction
 
 end TauCeti
