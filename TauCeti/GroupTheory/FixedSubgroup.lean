@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.Group.Subgroup.Map
 public import Mathlib.Algebra.Group.End
 public import Mathlib.Algebra.Group.Equiv.Basic
-public import Mathlib.Algebra.Group.Subgroup.Ker
+public import TauCeti.Algebra.Group.Subgroup.Ker
 public import Mathlib.Dynamics.FixedPoints.Defs
 
 /-!
@@ -68,7 +68,6 @@ variable {G : Type*} [Group G]
 /-- The subgroup of points fixed by an endomorphism of a group, `F.eqLocus (MonoidHom.id G)`. -/
 abbrev fixedSubgroup (F : G →* G) : Subgroup G := F.eqLocus (MonoidHom.id G)
 
-@[simp]
 theorem mem_fixedSubgroup {F : G →* G} {x : G} : x ∈ fixedSubgroup F ↔ F x = x := Iff.rfl
 
 /-- Only the identity fixes every point. -/

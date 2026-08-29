@@ -32,8 +32,10 @@ expected to be the adjoint form; those identifications are not formalized here. 
 connected carrier required by milestone L0 of
 `TauCetiRoadmap/CFSGStatement/README.md` needs instead an admissible lattice whose weights generate
 the full weight lattice. That lattice, the Borel, root subgroups for nonsimple roots, the Chevalley
-commutator relations, functoriality of `geckPoints` in the value ring, and the root-datum properties
-that turn a carrier into a pinned split reductive group scheme are the Layer 9 work that remains.
+commutator relations, and the root-datum properties that turn a carrier into a pinned split
+reductive group scheme are the Layer 9 work that remains; the functoriality of `geckPoints` in the
+value ring is supplied by
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.PointsFunctor`.
 
 This construction supplies part of the interface that Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md` asks for: the closed immersion into `GLₙ`, the root

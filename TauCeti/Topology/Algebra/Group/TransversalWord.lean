@@ -17,7 +17,9 @@ This file adds the one statement about it that needs a topology: if `G` is a top
 `U` is *open*, then `γ ↦ ℓᵗ_u(γ)` is continuous (`TauCeti.continuous_lWord`). Of the three factors,
 `(t u)⁻¹` is constant and `γ ↦ γ` is the continuous identity; the only one whose continuity is not
 immediate is `γ ↦ t (γ⁻¹ • u)`, and openness of `U` makes `G ⧸ U` discrete, so that factor is
-locally constant and no continuity is required of `t` itself.
+locally constant and no continuity is required of `t` itself. The variant
+`TauCeti.continuous_lWord_inv_smul` lets the coset index itself be translated by a second group
+variable, which is the shape the degree-two corestriction sum is indexed by.
 
 This is the continuity clause of the transversal calculus of the Layer 6 milestone of the
 human-authored roadmap at `TauCetiRoadmap/ProfiniteCohomology/README.md`. It lives here, rather
@@ -40,5 +42,22 @@ theorem continuous_lWord (hU : IsOpen (U : Set G)) (u : G ⧸ U) : Continuous (l
   rw [h]
   exact (continuous_const.mul continuous_id).mul
     (continuous_of_discreteTopology.comp (continuous_inv.smul continuous_const))
+
+/-- For an *open* subgroup `U` the transversal word is continuous jointly in its group variable
+and in a coset index translated by a second group variable: `(γ, η) ↦ ℓᵗ_{γ⁻¹ • u}(η)`. Here both
+`γ ↦ t (γ⁻¹ • u)` and `(γ, η) ↦ t (η⁻¹ • γ⁻¹ • u)` are locally constant, again because `G ⧸ U` is
+discrete, so no continuity is required of `t` itself. -/
+theorem continuous_lWord_inv_smul (hU : IsOpen (U : Set G)) (u : G ⧸ U) :
+    Continuous fun q : G × G => lWord U t (q.1⁻¹ • u) q.2 := by
+  have : DiscreteTopology (G ⧸ U) := QuotientGroup.discreteTopology hU
+  have h : (fun q : G × G => lWord U t (q.1⁻¹ • u) q.2) =
+      fun q : G × G => (t (q.1⁻¹ • u))⁻¹ * q.2 * t (q.2⁻¹ • q.1⁻¹ • u) :=
+    funext fun q => lWord_def U t _ _
+  rw [h]
+  have hfst : Continuous fun q : G × G => (q.1⁻¹ • u : G ⧸ U) :=
+    (continuous_inv.comp continuous_fst).smul continuous_const
+  exact ((continuous_of_discreteTopology.comp hfst).inv.mul continuous_snd).mul
+    (continuous_of_discreteTopology.comp
+      ((continuous_inv.comp continuous_snd).smul hfst))
 
 end TauCeti

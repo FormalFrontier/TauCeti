@@ -120,6 +120,15 @@ theorem torusCharacter_add (s : κ → Rˣ) (μ ν : κ → ℤ) :
     torusCharacter s (μ + ν) = torusCharacter s μ * torusCharacter s ν := by
   simp [torusCharacter, zpow_add, prod_mul_distrib]
 
+/-- Evaluating a finite sum of characters is the product of their evaluations. -/
+theorem torusCharacter_sum {ι : Type*} (s : κ → Rˣ) (t : Finset ι) (μ : ι → κ → ℤ) :
+    torusCharacter s (∑ i ∈ t, μ i) = ∏ i ∈ t, torusCharacter s (μ i) := by
+  classical
+  induction t using Finset.induction_on with
+  | empty => simp
+  | @insert i t hi ih =>
+      rw [Finset.sum_insert hi, Finset.prod_insert hi, torusCharacter_add, ih]
+
 /-- Scaling a weight by a natural number raises its value to that power. -/
 theorem torusCharacter_nsmul (s : κ → Rˣ) (μ : κ → ℤ) (n : ℕ) :
     torusCharacter s (n • μ) = torusCharacter s μ ^ n := by

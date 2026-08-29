@@ -10,6 +10,7 @@ public import Mathlib.GroupTheory.Solvable
 public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Product
+public import TauCeti.GroupTheory.Solvable
 
 /-!
 # Geometric solvability of affine groups
@@ -147,20 +148,7 @@ theorem geometricallySolvablePointsCommHopfAlgProperty_tensorProduct_iff
           WithConv (K →ₐ[k] AlgebraicClosure k))
         (G' := WithConv (((H : Type v) ⊗[k] (K : Type v)) →ₐ[k] AlgebraicClosure k))
         (f := finv) hfinv_injective
-    let _ : Group.IsSolvable
-        (WithConv (H →ₐ[k] AlgebraicClosure k) ×
-          WithConv (K →ₐ[k] AlgebraicClosure k)) := hprod
-    constructor
-    · exact Group.isSolvable_of_surjective
-        (G := WithConv (H →ₐ[k] AlgebraicClosure k) ×
-          WithConv (K →ₐ[k] AlgebraicClosure k))
-        (G' := WithConv (H →ₐ[k] AlgebraicClosure k))
-        (f := MonoidHom.fst _ _) (fun x ↦ ⟨(x, 1), rfl⟩)
-    · exact Group.isSolvable_of_surjective
-        (G := WithConv (H →ₐ[k] AlgebraicClosure k) ×
-          WithConv (K →ₐ[k] AlgebraicClosure k))
-        (G' := WithConv (K →ₐ[k] AlgebraicClosure k))
-        (f := MonoidHom.snd _ _) (fun x ↦ ⟨(1, x), rfl⟩)
+    exact isSolvable_prod_iff.mp hprod
   · rintro ⟨hH, hK⟩
     let _ : Group.IsSolvable (WithConv (H →ₐ[k] AlgebraicClosure k)) := hH
     let _ : Group.IsSolvable (WithConv (K →ₐ[k] AlgebraicClosure k)) := hK

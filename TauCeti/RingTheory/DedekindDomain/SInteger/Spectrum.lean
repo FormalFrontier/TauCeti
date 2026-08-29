@@ -145,14 +145,12 @@ lemma integer_map_le_map_pow_iff {v : HeightOneSpectrum R} (hv : v ∉ S) (J : I
 
 /-- The prime of `R` below a prime `P` of `𝒪_S`: its contraction. -/
 noncomputable def integerPrimeUnder (P : HeightOneSpectrum (S.integer K)) :
-    HeightOneSpectrum R where
-  asIdeal := P.asIdeal.comap (algebraMap R (S.integer K))
-  isPrime := P.isPrime.comap _
-  ne_bot := integer_comap_ne_bot K S P.ne_bot
+    HeightOneSpectrum R :=
+  HeightOneSpectrum.comapOfNeBot (algebraMap R (S.integer K)) P (integer_comap_ne_bot K S P.ne_bot)
 
 @[simp] lemma integerPrimeUnder_asIdeal (P : HeightOneSpectrum (S.integer K)) :
-    (integerPrimeUnder K S P).asIdeal = P.asIdeal.comap (algebraMap R (S.integer K)) := by
-  simp only [integerPrimeUnder]
+    (integerPrimeUnder K S P).asIdeal = P.asIdeal.comap (algebraMap R (S.integer K)) :=
+  HeightOneSpectrum.comapOfNeBot_asIdeal _ _ _
 
 /-- A prime under a prime of `𝒪_S` never lies in `S`. -/
 lemma integerPrimeUnder_notMem (P : HeightOneSpectrum (S.integer K)) :
@@ -167,13 +165,16 @@ lemma integerPrimeUnder_notMem (P : HeightOneSpectrum (S.integer K)) :
 @[simp] lemma integerPrimeUnder_integerPrimeOverOfNotMem {v : HeightOneSpectrum R} (hv : v ∉ S) :
     integerPrimeUnder K S (integerPrimeOverOfNotMem K S hv) = v :=
   have := v.isMaximal
-  HeightOneSpectrum.ext <|
-    Ideal.comap_map_eq_self_of_isMaximal _ (integer_map_asIdeal_ne_top K S hv)
+  HeightOneSpectrum.ext <| by
+    rw [integerPrimeUnder_asIdeal, integerPrimeOverOfNotMem_asIdeal]
+    exact Ideal.comap_map_eq_self_of_isMaximal _ (integer_map_asIdeal_ne_top K S hv)
 
 /-- Contracting a prime of `𝒪_S` and extending back returns it. -/
 @[simp] lemma integerPrimeOverOfNotMem_integerPrimeUnder (P : HeightOneSpectrum (S.integer K)) :
     integerPrimeOverOfNotMem K S (integerPrimeUnder_notMem K S P) = P :=
-  HeightOneSpectrum.ext <| integer_map_comap_eq K S P.asIdeal
+  HeightOneSpectrum.ext <| by
+    rw [integerPrimeOverOfNotMem_asIdeal, integerPrimeUnder_asIdeal]
+    exact integer_map_comap_eq K S P.asIdeal
 
 /-- **The height-one primes of `𝒪_S` are exactly the height-one primes of `R` not in `S`.** -/
 noncomputable def integerHeightOneSpectrumEquiv :
