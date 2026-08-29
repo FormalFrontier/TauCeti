@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.Perm.Cycle.Type
-public import Mathlib.Logic.Equiv.Fin.Rotate
+import Mathlib.Logic.Equiv.Fin.Rotate
 
 /-!
 # Cycle types that count fixed points
@@ -89,6 +89,7 @@ theorem _root_.Equiv.Perm.count_one_parts_partition (σ : Equiv.Perm α) :
 
 /-- At every value other than one, `Equiv.Perm.partition` counts a part as often as
 `Equiv.Perm.cycleType` does. -/
+@[simp]
 theorem _root_.Equiv.Perm.count_parts_partition_of_ne_one (σ : Equiv.Perm α) {n : ℕ} (hn : n ≠ 1) :
     σ.partition.parts.count n = σ.cycleType.count n := by
   simp [parts_partition, Multiset.count_replicate, hn.symm]
@@ -226,6 +227,7 @@ theorem _root_.Equiv.Perm.sign_of_parts_partition (σ : Equiv.Perm α) :
 Mathlib has this for `Equiv.Perm.sign` as `Equiv.Perm.sign_permCongr`, and for the extension of a
 permutation to a larger type as `Equiv.Perm.cycleType_extendDomain`; relabelling is the case of
 the latter in which the predicate cut out is `True`. -/
+@[simp]
 theorem _root_.Equiv.Perm.cycleType_permCongr (e : α ≃ β) (σ : Equiv.Perm α) :
     (e.permCongr σ).cycleType = σ.cycleType := by
   have h : e.permCongr σ =
@@ -237,6 +239,7 @@ theorem _root_.Equiv.Perm.cycleType_permCongr (e : α ≃ β) (σ : Equiv.Perm �
 
 /-- Relabelling the underlying type does not change the number of points that a permutation
 moves. -/
+@[simp]
 theorem _root_.Equiv.Perm.card_support_permCongr (e : α ≃ β) (σ : Equiv.Perm α) :
     (e.permCongr σ).support.card = σ.support.card := by
   rw [← sum_cycleType, ← sum_cycleType, cycleType_permCongr]
