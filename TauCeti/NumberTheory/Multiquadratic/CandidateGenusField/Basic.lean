@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.Multiquadratic.GenusField
+public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Construction
 public import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Factorization
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 
@@ -21,9 +21,9 @@ infinite places: e.g. `d = 3` has `disc = 12 = (-4)·(-3)`, so the compositum is
 at the real places over `ℚ(√3)`. Identifying it with the genus field unramified at *all* places —
 the ordinary one for real `d`, which needs the infinite-place condition — is later work.
 
-This file gives the object a name. `GenusField` proved the underlying square-class facts for an
-arbitrary finite set of prime discriminants with chosen roots; here we fix a choice — the
-factorization finset `genusPrimeDiscriminants` from
+This file gives the object a name. `CandidateGenusField.Construction` proves the underlying
+square-class facts for an arbitrary finite set of prime discriminants with chosen roots; here we
+fix a choice — the factorization finset `genusPrimeDiscriminants` from
 `IsFundamentalDiscriminant.exists_finset_primeDiscriminant`, and chosen complex roots
 `genusFieldRoot` of the radicands (using that `ℂ` is algebraically closed) — and package the
 compositum as `candidateGenusField`. (Both choices are made with `choose`; independence of the
@@ -132,8 +132,8 @@ underlying value. -/
   simp only [candidateGenusField_def, adjoin_le_iff, Set.range_subset_iff, SetLike.mem_coe]
 
 /-- **The candidate genus field of `ℚ(√d)` contains a square root of `d`.** This is what makes it a
-candidate genus field *of `ℚ(√d)`*; it specializes the square-class containment of `GenusField` to
-the chosen factorization and roots. -/
+candidate genus field *of `ℚ(√d)`*; it specializes the square-class containment from
+`CandidateGenusField.Construction` to the chosen factorization and roots. -/
 theorem exists_mem_candidateGenusField_sq_eq {d : ℤ} (hd : Squarefree d) :
     ∃ x ∈ candidateGenusField hd, x ^ 2 = algebraMap ℚ ℂ ((d : ℤ) : ℚ) := by
   obtain ⟨hs, _, hprod⟩ := genusPrimeDiscriminants_spec hd
