@@ -19,9 +19,9 @@ symmetric polynomials.
 
 ## Main declarations
 
-* `TauCeti.MvPolynomial.IsSymmetric.bind₁_aeval_X`: uniform univariate substitution preserves
+* `MvPolynomial.IsSymmetric.bind₁_aeval_X`: uniform univariate substitution preserves
   symmetry.
-* `TauCeti.MvPolynomial.IsSymmetric.exists_aeval_esymm_eq_bind₁_aeval_X`: the substituted
+* `MvPolynomial.IsSymmetric.exists_aeval_esymm_eq_bind₁_aeval_X`: the substituted
   polynomial is a polynomial in the elementary symmetric polynomials.
 -/
 
@@ -31,11 +31,10 @@ open Polynomial
 
 namespace TauCeti
 
-namespace MvPolynomial.IsSymmetric
-
 /-- Substituting the same univariate polynomial into every variable of a symmetric multivariate
 polynomial preserves symmetry. -/
-theorem bind₁_aeval_X {σ R : Type*} [CommSemiring R] {p : MvPolynomial σ R}
+theorem _root_.MvPolynomial.IsSymmetric.bind₁_aeval_X
+    {σ R : Type*} [CommSemiring R] {p : MvPolynomial σ R}
     (hp : p.IsSymmetric) (q : R[X]) :
     (MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p).IsSymmetric := by
   intro e
@@ -63,20 +62,19 @@ theorem bind₁_aeval_X {σ R : Type*} [CommSemiring R] {p : MvPolynomial σ R}
 /-- Over a commutative ring, uniformly substituting a univariate polynomial into a symmetric
 polynomial in `n` variables yields a polynomial in the first `n` elementary symmetric
 polynomials. -/
-theorem exists_aeval_esymm_eq_bind₁_aeval_X {R : Type*} [CommRing R] {n : ℕ}
+theorem _root_.MvPolynomial.IsSymmetric.exists_aeval_esymm_eq_bind₁_aeval_X
+    {R : Type*} [CommRing R] {n : ℕ}
     {p : MvPolynomial (Fin n) R} (hp : p.IsSymmetric) (q : R[X]) :
     ∃ W : MvPolynomial (Fin n) R,
       MvPolynomial.aeval
           (fun j : Fin n => MvPolynomial.esymm (Fin n) R ((j : ℕ) + 1)) W =
         MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p := by
   let p' := MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p
-  have hp' : p'.IsSymmetric := bind₁_aeval_X hp q
+  have hp' : p'.IsSymmetric := hp.bind₁_aeval_X q
   obtain ⟨W, hW⟩ := (MvPolynomial.esymmAlgHom_fin_bijective R n).surjective
     (⟨p', hp'⟩ : MvPolynomial.symmetricSubalgebra (Fin n) R)
   refine ⟨W, ?_⟩
   rw [← MvPolynomial.esymmAlgHom_apply]
   exact congrArg Subtype.val hW
-
-end MvPolynomial.IsSymmetric
 
 end TauCeti

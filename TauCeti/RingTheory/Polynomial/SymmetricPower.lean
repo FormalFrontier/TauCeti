@@ -414,8 +414,7 @@ theorem exists_coeffEquiv_map_eval_coeffEquiv_symm_eq_eval (q : K[X]) :
       MvPolynomial.aeval (fun j : Fin n => esymm (Fin n) K ((j : ℕ) + 1)) W =
         MvPolynomial.bind₁ (fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q)
           (esymm (Fin n) K k) := fun k =>
-    TauCeti.MvPolynomial.IsSymmetric.exists_aeval_esymm_eq_bind₁_aeval_X
-      (esymm_isSymmetric (Fin n) K k) q
+    (esymm_isSymmetric (Fin n) K k).exists_aeval_esymm_eq_bind₁_aeval_X q
   choose W hW using hftsf
   refine ⟨fun i => MvPolynomial.C ((-1 : K) ^ (n - (i : ℕ))) *
     coeffSubst (W (n - (i : ℕ))), fun c => ?_⟩
