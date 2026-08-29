@@ -89,12 +89,6 @@ theorem tailBacktrackElem_mem_grade_two {i j : Q} (a : i ⟶ j) :
   refine ofPath_mem_grade_of_length ?_
   simp only [Path.length_comp, Quiver.Path.length_toPath]
 
-/-- The doubled vertex idempotent at a vertex has degree zero. -/
-theorem doubledVertexIdempotent_mem_grade_zero (v : Q) :
-    doubledVertexIdempotent k v ∈ grade k (Symmetrify Q) 0 := by
-  rw [PathAlgebra.grade_zero_eq_span_range_vertexIdempotent k (Symmetrify Q)]
-  exact Submodule.subset_span ⟨Symmetrify.of.obj v, (doubledVertexIdempotent_def k v).symm⟩
-
 end Generators
 
 /-! ### The relators have degree two -/
