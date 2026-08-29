@@ -166,6 +166,7 @@ noncomputable def preprojectiveGrade (n : ℕ) : Submodule k (preprojectiveAlgeb
   TauCeti.GradedAlgebra.gradeQuot (grade k (Symmetrify Q)) (preprojectiveIdeal k Q).asIdeal n
 
 /-- A homogeneous element lands in the piece its degree names. -/
+@[simp]
 theorem preprojectiveMk_mem_preprojectiveGrade {n : ℕ} {y : pathAlgebra k (Symmetrify Q)}
     (hy : y ∈ grade k (Symmetrify Q) n) :
     preprojectiveMk k Q y ∈ preprojectiveGrade k Q n := by
