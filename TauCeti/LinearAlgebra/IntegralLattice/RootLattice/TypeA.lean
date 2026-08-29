@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.SpecificGroups.Cyclic
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.Cyclic
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Cardinality
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Quadratic
 public import TauCeti.LinearAlgebra.Matrix.CartanTypeA
@@ -19,7 +20,7 @@ simple-root basis is the Cartan matrix `CartanMatrix.A n`.  This file constructs
 `Fin n → ℚ`, proves it even and nondegenerate, and computes its discriminant form:
 
 ```text
-det Aₙ = n + 1,   A_{Aₙ} ≃+ ℤ/(n+1),   q(ω₁) = n / (2 (n + 1)).
+det Aₙ = n + 1,   A_{Aₙ} ≃+ ℤ/(n+1),   q(ω₁) = n / (2 (n + 1)),   b(ω₁, ω₁) = n / (n + 1).
 ```
 
 The generator is the class of the first fundamental weight `ω₁`, written in the simple-root
@@ -33,6 +34,14 @@ trivial.  The discriminant group has that same order, so `ω₁` generates.
 
 The half-norm convention is the one fixed by the integral-lattices roadmap: `q_L(x) = ⟨x,x⟩ / 2`
 in `ℚ/ℤ`.  Nikulin's full-norm value for this row is `n / (n + 1)`.
+
+Those values determine the finite quadratic module, not merely the group: since `ω₁` generates,
+the quadratic value `k² n / (2 (n + 1))` of `k • ω₁` and the pairing `j k n / (n + 1)` of `j • ω₁`
+with `k • ω₁` are recorded for every integer multiple, and the resulting form is identified with
+the cyclic model `TauCeti.IntegralLattice.typeAStandardQuadraticModule` on `ℤ/(n+1)` whose
+generator carries `n / (2 (n + 1))`.  That identification is an isometry of finite quadratic
+modules, so it also transports nondegeneracy from the discriminant form of the nondegenerate
+lattice to the model.
 
 ## Main declarations
 
@@ -52,6 +61,13 @@ in `ℚ/ℤ`.  Nikulin's full-norm value for this row is `n / (n + 1)`.
   `ZMod (n + 1) ≃+ A_{Aₙ}`.
 * `TauCeti.IntegralLattice.discriminantQuadraticMap_typeAFundamentalWeightClass`:
   `q(ω₁) = n / (2 (n + 1))`.
+* `TauCeti.IntegralLattice.discriminantPairing_typeAFundamentalWeightClass`:
+  `b(ω₁, ω₁) = n / (n + 1)`.
+* `TauCeti.IntegralLattice.typeAStandardQuadraticModule`: the cyclic model on `ℤ/(n+1)`.
+* `TauCeti.IntegralLattice.typeADiscriminantQuadraticIsometry`: the model is the discriminant
+  quadratic module of the `Aₙ` root lattice.
+* `TauCeti.IntegralLattice.isNondegenerate_typeAStandardQuadraticModule`: the model is
+  nondegenerate.
 
 ## References
 
@@ -369,6 +385,146 @@ theorem discriminantQuadraticMap_typeAFundamentalWeightClass :
   congr 1
   rw [coe_typeAFundamentalWeightDual, form_typeAFundamentalWeight_self]
   field_simp
+
+/-- **The discriminant bilinear value of the first fundamental weight is `n / (n + 1)`**, which is
+twice the half-norm value, as the polar identity demands. -/
+@[simp]
+theorem discriminantPairing_typeAFundamentalWeightClass :
+    (typeARootLattice n).discriminantPairing (typeAFundamentalWeightClass n)
+        (typeAFundamentalWeightClass n) =
+      (((n : ℚ) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
+  rw [typeAFundamentalWeightClass, discriminantPairing_mk, coe_typeAFundamentalWeightDual,
+    form_typeAFundamentalWeight_self]
+
+/-! ## The discriminant form on every class
+
+The class of `ω₁` generates, so the two computations below give the discriminant form on the whole
+of `A_{Aₙ}` rather than only on the generator. -/
+
+/-- The ambient pairing of two rational multiples of the first fundamental weight. -/
+theorem form_zsmul_typeAFundamentalWeight (j k : ℤ) :
+    (typeARootLattice n).form (j • typeAFundamentalWeight n) (k • typeAFundamentalWeight n) =
+      (j : ℚ) * (k : ℚ) * (n : ℚ) / ((n : ℚ) + 1) := by
+  rw [← Int.cast_smul_eq_zsmul ℚ j, ← Int.cast_smul_eq_zsmul ℚ k]
+  simp only [map_smul, LinearMap.smul_apply, smul_eq_mul, form_typeAFundamentalWeight_self]
+  ring
+
+/-- **The discriminant quadratic value of the `k`-th multiple of the class of `ω₁` is
+`k² n / (2 (n + 1))`.** -/
+theorem discriminantQuadraticMap_zsmul_typeAFundamentalWeightClass (k : ℤ) :
+    (typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n)
+        (k • typeAFundamentalWeightClass n) =
+      ((((k : ℚ) * (k : ℚ) * (n : ℚ)) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
+  have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
+  rw [typeAFundamentalWeightClass, ← Submodule.Quotient.mk_smul, discriminantQuadraticMap_mk,
+    SetLike.val_smul, coe_typeAFundamentalWeightDual, form_zsmul_typeAFundamentalWeight]
+  congr 1
+  field_simp
+
+/-- **The discriminant pairing of the `j`-th and `k`-th multiples of the class of `ω₁` is
+`j k n / (n + 1)`.** -/
+theorem discriminantPairing_zsmul_typeAFundamentalWeightClass (j k : ℤ) :
+    (typeARootLattice n).discriminantPairing (j • typeAFundamentalWeightClass n)
+        (k • typeAFundamentalWeightClass n) =
+      ((((j : ℚ) * (k : ℚ) * (n : ℚ)) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
+  rw [typeAFundamentalWeightClass, ← Submodule.Quotient.mk_smul, ← Submodule.Quotient.mk_smul,
+    discriminantPairing_mk, SetLike.val_smul, SetLike.val_smul, coe_typeAFundamentalWeightDual,
+    form_zsmul_typeAFundamentalWeight]
+
+/-! ## The cyclic model of the discriminant quadratic module -/
+
+/-- **The cyclic `ℤ/(n+1)` model of the type `Aₙ` discriminant form**: the generator carries the
+half-norm value `n / (2 (n + 1))` of the first fundamental weight.
+
+The two torsion conditions demanded by the cyclic construction are
+`(n + 1)² · n / (2 (n + 1)) = n (n + 1) / 2` and `2 (n + 1) · n / (2 (n + 1)) = n`, both integers,
+the first because `n (n + 1)` is even.  Unlike the exceptional rows, the integrality witness of
+the first condition depends on the parity of `n`, so it is produced from
+`Int.even_mul_succ_self` rather than written down. -/
+@[expose] noncomputable def typeAStandardQuadraticModule : FiniteQuadraticModule :=
+  FiniteQuadraticModule.cyclic (n + 1) (((n : ℚ) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ))
+    (by
+      have hn : ((n : ℚ) + 1) ≠ 0 := by positivity
+      obtain ⟨c, hc⟩ := Int.even_mul_succ_self (n : ℤ)
+      have hc' : (n : ℚ) * ((n : ℚ) + 1) = (c : ℚ) + (c : ℚ) := by exact_mod_cast hc
+      refine AddCircle.zsmul_coe_eq_zero (c := c) ?_
+      have key : ((((n + 1 : ℕ) : ℤ) * ((n + 1 : ℕ) : ℤ) : ℤ) : ℚ) *
+          ((n : ℚ) / (2 * ((n : ℚ) + 1))) = (n : ℚ) * ((n : ℚ) + 1) / 2 := by
+        push_cast
+        field_simp
+      rw [key, hc']
+      ring)
+    (by
+      have hn : ((n : ℚ) + 1) ≠ 0 := by positivity
+      refine AddCircle.zsmul_coe_eq_zero (c := (n : ℤ)) ?_
+      push_cast
+      field_simp)
+
+/-- The generator of the cyclic model has quadratic value `n / (2 (n + 1))`. -/
+@[simp]
+theorem typeAStandardQuadraticModule_quadratic_one :
+    (typeAStandardQuadraticModule n).quadratic (1 : ZMod (n + 1)) =
+      (((n : ℚ) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
+  unfold typeAStandardQuadraticModule
+  rw [FiniteQuadraticModule.cyclic_quadratic, FiniteQuadraticModule.cyclicMap_one]
+
+/-- The generator of the cyclic model has self-pairing `n / (n + 1)`. -/
+@[simp]
+theorem typeAStandardQuadraticModule_pairing_one_one :
+    (typeAStandardQuadraticModule n).toFiniteBilinearModule.pairing
+        (1 : ZMod (n + 1)) (1 : ZMod (n + 1)) =
+      (((n : ℚ) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
+  have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
+  unfold typeAStandardQuadraticModule
+  rw [FiniteQuadraticModule.cyclic_pairing, QuadraticMap.polar_self,
+    FiniteQuadraticModule.cyclicMap_one, ← AddCircle.coe_nsmul]
+  congr 1
+  rw [nsmul_eq_mul]
+  push_cast
+  field_simp
+
+/-- **The cyclic model is isometric to the discriminant quadratic module of the type `Aₙ` root
+lattice**, by the identification carrying `1` to the class of the first fundamental weight.
+
+This is the `Aₙ` row of the ADE table: not only is the discriminant group cyclic of order `n + 1`,
+its quadratic form is the displayed one.  A single generator value suffices, because an additive
+equivalence out of a cyclic group is determined by the image of its generator. -/
+noncomputable def typeADiscriminantQuadraticIsometry :
+    FiniteQuadraticModule.Isometry (typeAStandardQuadraticModule n)
+      ((typeARootLattice n).discriminantQuadraticModule (isEven_typeARootLattice n)) :=
+  FiniteQuadraticModule.cyclicIsometryOfGenerator (n + 1)
+    (FiniteQuadraticModule.cyclicMap (n + 1) _ _ _)
+    ((typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n))
+    (typeADiscriminantGroupEquiv n)
+    (by
+      rw [typeADiscriminantGroupEquiv_apply_one,
+        discriminantQuadraticMap_typeAFundamentalWeightClass,
+        FiniteQuadraticModule.cyclicMap_one])
+
+/-- The underlying additive equivalence of the type-`Aₙ` quadratic isometry. -/
+@[simp]
+theorem typeADiscriminantQuadraticIsometry_toAddEquiv :
+    (typeADiscriminantQuadraticIsometry n).toAddEquiv = typeADiscriminantGroupEquiv n :=
+  FiniteQuadraticModule.cyclicIsometryOfGenerator_toAddEquiv (n + 1) _ _ _ _
+
+/-- The type-`Aₙ` quadratic isometry acts through the discriminant-group equivalence. -/
+@[simp]
+theorem typeADiscriminantQuadraticIsometry_apply (x : ZMod (n + 1)) :
+    typeADiscriminantQuadraticIsometry n x = typeADiscriminantGroupEquiv n x :=
+  FiniteQuadraticModule.cyclicIsometryOfGenerator_apply (n + 1) _ _ _ _ x
+
+/-- The type-`Aₙ` quadratic isometry carries the generator of `ℤ/(n+1)` to the class of the first
+fundamental weight. -/
+theorem typeADiscriminantQuadraticIsometry_one :
+    typeADiscriminantQuadraticIsometry n (1 : ZMod (n + 1)) = typeAFundamentalWeightClass n := by
+  rw [typeADiscriminantQuadraticIsometry_apply, typeADiscriminantGroupEquiv_apply_one]
+
+/-- **The cyclic `ℤ/(n+1)` model is nondegenerate**, since the discriminant form of a
+nondegenerate lattice is. -/
+theorem isNondegenerate_typeAStandardQuadraticModule :
+    (typeAStandardQuadraticModule n).IsNondegenerate :=
+  ((typeADiscriminantQuadraticIsometry n).isNondegenerate_iff).mpr
+    (isNondegenerate_discriminantQuadraticModule _ _)
 
 end IntegralLattice
 
