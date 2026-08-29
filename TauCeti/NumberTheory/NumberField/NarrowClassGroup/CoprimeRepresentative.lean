@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.NumberField.NarrowClassGroup.Basic
-public import Mathlib.RingTheory.DedekindDomain.Factorization
+import Mathlib.RingTheory.DedekindDomain.Factorization
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
 /-!
