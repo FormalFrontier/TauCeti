@@ -89,7 +89,6 @@ structure IsDGAlgebra (𝒜 : ℤ → Submodule R A) [GradedAlgebra 𝒜] (d : A
     d (a * b) = d a * b + p.negOnePow • (a * d b)
 
 attribute [grind =>] IsDGAlgebra.map_mem
-attribute [simp] IsDGAlgebra.sq_zero
 
 variable {𝒜 : ℤ → Submodule R A} [GradedAlgebra 𝒜] {d : A →ₗ[R] A}
 
@@ -97,14 +96,12 @@ namespace IsDGAlgebra
 
 /-- The differential of a differential graded algebra annihilates the unit: the Leibniz rule for
 `1 * 1` reads `d 1 = d 1 + d 1`. -/
-@[simp]
 theorem map_one_eq_zero (h : IsDGAlgebra 𝒜 d) : d 1 = 0 := by
   have key := h.leibniz (SetLike.one_mem_graded 𝒜) 1
   simp only [mul_one, one_mul, Int.negOnePow_zero, one_smul] at key
   exact left_eq_add.mp key
 
 /-- The differential of a differential graded algebra annihilates the image of the ground ring. -/
-@[simp]
 theorem map_algebraMap (h : IsDGAlgebra 𝒜 d) (r : R) : d (algebraMap R A r) = 0 := by
   rw [Algebra.algebraMap_eq_smul_one, map_smul, h.map_one_eq_zero, smul_zero]
 
