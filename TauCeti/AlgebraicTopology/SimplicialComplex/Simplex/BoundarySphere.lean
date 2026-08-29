@@ -238,10 +238,7 @@ private def boundaryFacet (n : ℕ) (i : Fin (n + 2)) :
   ⟨Finset.univ.erase i, by
     rw [mem_standardSuccSimplexBoundary_iff]
     refine ⟨?_, Finset.erase_ssubset (Finset.mem_univ i)⟩
-    rw [Finset.nonempty_iff_ne_empty]
-    intro h
-    have := congrArg Finset.card h
-    simp at this⟩
+    exact (Finset.erase_nonempty (Finset.mem_univ i)).2 Finset.univ_nontrivial⟩
 
 private noncomputable def fixedBoundaryWeightsPoint (n : ℕ) (i : Fin (n + 2))
     (y : zeroCoordSet n i) : StandardSimplex (boundaryFacet n i).1 :=

@@ -230,17 +230,15 @@ private theorem singleton_mem_standardSuccSimplexBoundaryPrecomplex (n : ℕ) (v
     {v} ∈ (PreAbstractSimplicialComplex.simplexBoundary
       (Finset.univ : Finset (Fin (n + 2)))).faces := by
   exact PreAbstractSimplicialComplex.singleton_mem_simplexBoundary.mpr
-    ⟨Finset.mem_univ v, by
-      intro h
-      have := congrArg Finset.card h
-      simp at this⟩
+    ⟨Finset.mem_univ v, (Finset.singleton_ne_univ v).symm⟩
 
 /-- The boundary complex of the standard `(n + 1)`-simplex.  Its vertices are `Fin (n + 2)` and
 its faces are the nonempty proper subsets of all vertices. -/
 def standardSuccSimplexBoundary (n : ℕ) : AbstractSimplicialComplex (Fin (n + 2)) :=
-  { PreAbstractSimplicialComplex.simplexBoundary
-      (Finset.univ : Finset (Fin (n + 2))) with
-    singleton_mem := singleton_mem_standardSuccSimplexBoundaryPrecomplex n }
+  PreAbstractSimplicialComplex.toAbstractSimplicialComplex (Fin (n + 2))
+    (PreAbstractSimplicialComplex.simplexBoundary
+      (Finset.univ : Finset (Fin (n + 2))))
+    (singleton_mem_standardSuccSimplexBoundaryPrecomplex n)
 
 /-- The underlying precomplex of `standardSuccSimplexBoundary n` is the boundary of the simplex on
 all `n + 2` vertices. -/
