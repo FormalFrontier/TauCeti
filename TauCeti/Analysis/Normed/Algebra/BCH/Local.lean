@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.Analysis.Analytic.Constructions
-public import Mathlib.Topology.Germ
 public import TauCeti.Analysis.Normed.Algebra.LogOneAdd.Inverse
 public import TauCeti.Analysis.Normed.Algebra.LogOneAdd.Naturality
 
