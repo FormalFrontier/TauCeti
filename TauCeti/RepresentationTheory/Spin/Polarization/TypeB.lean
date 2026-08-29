@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Orthogonal.TypeB.DiagonalCartan
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.Realization
 public import TauCeti.RepresentationTheory.Spin.Polarization.Basic
+public import Mathlib.Algebra.Lie.Classical
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 
 /-!
@@ -145,10 +145,9 @@ private theorem mem_typeB_toMatrix_iff (f : Module.End K V) :
     exact Matrix.toLinearMap₂_toMatrix₂ _ _ Q.polarBilin
   rw [LieAlgebra.Orthogonal.typeB, mem_skewAdjointMatricesLieSubalgebra,
     mem_skewAdjointMatricesSubmodule]
-  change (LieAlgebra.Orthogonal.JB ι K).IsSkewAdjoint
-      (LinearMap.toMatrix (P.typeBBasis b z hz) (P.typeBBasis b z hz) f) ↔
-    f ∈ Q.polarBilin.skewAdjointSubmodule
-  rw [LinearMap.mem_skewAdjointSubmodule]
+  rw [show f ∈ skewAdjointLieSubalgebra Q.polarBilin ↔
+      f ∈ Q.polarBilin.skewAdjointSubmodule by
+    exact LieSubalgebra.mem_mk_iff' _ _, LinearMap.mem_skewAdjointSubmodule]
   rw [Matrix.IsSkewAdjoint, LinearMap.IsSkewAdjoint]
   symm
   simpa [hB] using
@@ -166,6 +165,8 @@ private noncomputable def typeBSkewAdjointEquiv :
     (LinearMap.toMatrixAlgEquiv (P.typeBBasis b z hz)).symm.toLieEquiv <| by
       ext f
       simp only [Submodule.mem_map_equiv, LieSubalgebra.mem_map_submodule]
+      -- `toMatrixAlgEquiv` has no application lemma identifying the inverse linear equivalence
+      -- produced here with `LinearMap.toMatrix`, so expose that definitional equality explicitly.
       change LinearMap.toMatrix (P.typeBBasis b z hz) (P.typeBBasis b z hz) f ∈
           LieAlgebra.Orthogonal.typeB ι K ↔
         f ∈ skewAdjointLieSubalgebra Q.polarBilin
