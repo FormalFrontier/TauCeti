@@ -27,6 +27,8 @@ model with the algebraic cotangent model `V × Module.Dual ℝ V`.
   `V × StrongDual ℝ V`.
 * `TauCeti.strongDualCotangentEquiv`: the finite-dimensional identification with
   `V × Module.Dual ℝ V`.
+* `TauCeti.cotangentSymplecticForm_strongDualCotangentEquiv_apply`: the identification
+  preserves the canonical symplectic forms.
 -/
 
 public section
@@ -40,34 +42,15 @@ variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
 /-- The bilinear form underlying the canonical symplectic form on
 `V × StrongDual ℝ V`. -/
 private def strongDualCotangentBilinForm :
-    LinearMap.BilinForm ℝ (V × StrongDual ℝ V) where
-  toFun x :=
-    { toFun := fun y ↦ y.2 x.1 - x.2 y.1
-      map_add' := by
-        intro y z
-        simp
-        ring
-      map_smul' := by
-        intro c y
-        simp
-        ring }
-  map_add' := by
-    intro x y
-    apply LinearMap.ext
-    intro z
-    simp
-    ring
-  map_smul' := by
-    intro c x
-    apply LinearMap.ext
-    intro y
-    simp
-    ring
+    LinearMap.BilinForm ℝ (V × StrongDual ℝ V) :=
+  (cotangentSymplecticForm (V := V)).toBilinForm.compl₁₂
+    (LinearMap.prodMap LinearMap.id (ContinuousLinearMap.coeLM ℝ))
+    (LinearMap.prodMap LinearMap.id (ContinuousLinearMap.coeLM ℝ))
 
 @[simp]
 private lemma strongDualCotangentBilinForm_apply (x y : V × StrongDual ℝ V) :
     strongDualCotangentBilinForm x y = y.2 x.1 - x.2 y.1 := by
-  rfl
+  simp [strongDualCotangentBilinForm]
 
 private lemma strongDualCotangentBilinForm_isAlt :
     (strongDualCotangentBilinForm (V := V)).IsAlt := by
@@ -102,7 +85,7 @@ noncomputable def strongDualCotangentSymplecticForm :
 @[simp]
 lemma strongDualCotangentSymplecticForm_apply (x y : V × StrongDual ℝ V) :
     strongDualCotangentSymplecticForm x y = y.2 x.1 - x.2 y.1 := by
-  rfl
+  exact strongDualCotangentBilinForm_apply x y
 
 section FiniteDimensional
 
@@ -125,6 +108,17 @@ lemma strongDualCotangentEquiv_apply (q : V) (p : StrongDual ℝ V) :
 lemma strongDualCotangentEquiv_symm_apply (q : V) (p : Module.Dual ℝ V) :
     strongDualCotangentEquiv.symm (q, p) = (q, LinearMap.toContinuousLinearMap p) := by
   simp [strongDualCotangentEquiv]
+
+/-- The finite-dimensional identification of cotangent models preserves their canonical
+symplectic forms. -/
+@[simp]
+lemma cotangentSymplecticForm_strongDualCotangentEquiv_apply
+    (x y : V × StrongDual ℝ V) :
+    cotangentSymplecticForm (strongDualCotangentEquiv x) (strongDualCotangentEquiv y) =
+      strongDualCotangentSymplecticForm x y := by
+  rcases x with ⟨q, p⟩
+  rcases y with ⟨r, s⟩
+  simp
 
 end FiniteDimensional
 
