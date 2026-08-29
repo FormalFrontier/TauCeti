@@ -11,7 +11,7 @@ public import TauCeti.RepresentationTheory.CharacterTable.GL2.PrincipalSeries.Ba
 -- `TauCeti.indClassFun_ofFDRep_character` rewrites the character of an induced representation as
 -- the induced class function, whose coset sum `TauCeti.indClassFun_eq_sum_of_smul_eq_self_mem`
 -- then cuts down to the fixed cosets.
-public import TauCeti.RepresentationTheory.Induction.Character
+import TauCeti.RepresentationTheory.Induction.Character
 -- The fixed-coset counts of the four families, and the representatives `TauCeti.diagGL`,
 -- `TauCeti.jordanGL` and `TauCeti.GL2NonSplitTorusHom` at which they are stated.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.ProjectiveLine
