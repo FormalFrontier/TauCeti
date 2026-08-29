@@ -382,23 +382,6 @@ theorem typeADiscriminantGroupEquiv_apply_one :
 The class of `ω₁` generates, so the two computations below give the discriminant form on the whole
 of `A_{Aₙ}` rather than only on the generator. -/
 
-private theorem discriminantQuadraticMap_typeAFundamentalWeightClass_aux :
-    (typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n)
-        (typeAFundamentalWeightClass n) =
-      (((n : ℚ) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
-  have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
-  rw [typeAFundamentalWeightClass, discriminantQuadraticMap_mk]
-  congr 1
-  rw [coe_typeAFundamentalWeightDual, form_typeAFundamentalWeight_self]
-  field_simp
-
-private theorem discriminantPairing_typeAFundamentalWeightClass_aux :
-    (typeARootLattice n).discriminantPairing (typeAFundamentalWeightClass n)
-        (typeAFundamentalWeightClass n) =
-      (((n : ℚ) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
-  rw [typeAFundamentalWeightClass, discriminantPairing_mk, coe_typeAFundamentalWeightDual,
-    form_typeAFundamentalWeight_self]
-
 /-- **The discriminant quadratic value of the `k`-th multiple of the class of `ω₁` is
 `k² n / (2 (n + 1))`.** -/
 @[simp]
@@ -406,8 +389,16 @@ theorem discriminantQuadraticMap_zsmul_typeAFundamentalWeightClass (k : ℤ) :
     (typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n)
         (k • typeAFundamentalWeightClass n) =
       ((((k : ℚ) * (k : ℚ) * (n : ℚ)) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
-  rw [QuadraticMap.map_smul, discriminantQuadraticMap_typeAFundamentalWeightClass_aux,
-    ← AddCircle.coe_zsmul]
+  have hgen :
+    (typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n)
+        (typeAFundamentalWeightClass n) =
+      (((n : ℚ) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
+    have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
+    rw [typeAFundamentalWeightClass, discriminantQuadraticMap_mk]
+    congr 1
+    rw [coe_typeAFundamentalWeightDual, form_typeAFundamentalWeight_self]
+    field_simp
+  rw [QuadraticMap.map_smul, hgen, ← AddCircle.coe_zsmul]
   congr 1
   rw [zsmul_eq_mul]
   push_cast
@@ -421,8 +412,13 @@ theorem discriminantPairing_zsmul_typeAFundamentalWeightClass (j k : ℤ) :
     (typeARootLattice n).discriminantPairing (j • typeAFundamentalWeightClass n)
         (k • typeAFundamentalWeightClass n) =
       ((((j : ℚ) * (k : ℚ) * (n : ℚ)) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
-  rw [map_zsmul, map_zsmul, LinearMap.smul_apply,
-    discriminantPairing_typeAFundamentalWeightClass_aux,
+  have hgen :
+    (typeARootLattice n).discriminantPairing (typeAFundamentalWeightClass n)
+        (typeAFundamentalWeightClass n) =
+      (((n : ℚ) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
+    rw [typeAFundamentalWeightClass, discriminantPairing_mk,
+      coe_typeAFundamentalWeightDual, form_typeAFundamentalWeight_self]
+  rw [map_zsmul, map_zsmul, LinearMap.smul_apply, hgen,
     ← AddCircle.coe_zsmul, ← AddCircle.coe_zsmul]
   congr 1
   rw [zsmul_eq_mul, zsmul_eq_mul]
@@ -450,6 +446,8 @@ theorem discriminantPairing_typeAFundamentalWeightClass :
 
 /-- **The cyclic `ℤ/(n+1)` model of the type `Aₙ` discriminant form**: the generator carries the
 half-norm value `n / (2 (n + 1))` of the first fundamental weight. -/
+-- Exposing the body makes the model's carrier definitionally `ZMod (n + 1)`, as required by its
+-- evaluation and isometry API; the analogous standard models for the other ADE rows do the same.
 @[expose] noncomputable def typeAStandardQuadraticModule : FiniteQuadraticModule :=
   FiniteQuadraticModule.cyclic (n + 1) (((n : ℚ) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ))
     (by
