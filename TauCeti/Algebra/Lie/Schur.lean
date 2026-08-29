@@ -30,8 +30,8 @@ That dichotomy is the input a *multiplicity* count needs: in a decomposition of 
 irreducibles, each summand contributes `1` to `dim_K (S →ₗ⁅K,L⁆ M)` when it is equivalent to `S`
 and `0` when it is not. Reading the multiplicity off `dim_K (S →ₗ⁅K,L⁆ M)` needs one further
 ingredient, additivity of the morphism space over a direct sum; that is
-`TauCeti.LieModule.lieModuleHomDirectSumEquiv` of `TauCeti/Algebra/Lie/Multiplicity.lean`, and
-this file goes no further than the two-irreducible dimension count.
+`TauCeti.LieModule.lieModuleHomDirectSumEquiv` of `TauCeti/Algebra/Lie/DirectSum.lean`, and this
+file goes no further than the two-irreducible dimension count.
 
 ## Main results
 
@@ -211,8 +211,9 @@ open scoped Classical in
 /-- **Schur's lemma for finite-dimensional irreducible Lie modules over an algebraically closed
 field, in its dimension form**: the morphism space is a line for equivalent modules and zero for
 inequivalent ones. This is the per-summand contribution that a multiplicity count of `S` in `M`
-reads off `dim_K (S →ₗ⁅K,L⁆ M)`, once additivity of the morphism space over a decomposition of `M`
-is available. -/
+reads off `dim_K (S →ₗ⁅K,L⁆ M)`, which additivity of the morphism space over a decomposition of `M`
+supplies: `TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal` of
+`TauCeti/Algebra/Lie/Multiplicity.lean`. -/
 theorem finrank_lieModuleHom :
     finrank K (M →ₗ⁅K,L⁆ N) = if Nonempty (M ≃ₗ⁅K,L⁆ N) then 1 else 0 := by
   split
