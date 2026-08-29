@@ -34,6 +34,8 @@ Natural moments reduce to Euler's Gamma integral.
 
 * `weibullPDFReal`, `weibullPDF` and `weibullMeasure` define the density and law;
 * `isProbabilityMeasure_weibullMeasure_iff` characterizes the valid parameter range;
+* `ae_pos_weibullMeasure` records that every Weibull measure is concentrated on the positive
+  half-line;
 * `cdf_weibullMeasure_eq` gives the closed cdf;
 * `integral_pow_weibullMeasure` gives every natural moment;
 * `integral_id_weibullMeasure` and `variance_id_weibullMeasure` give the mean and variance;
@@ -81,10 +83,20 @@ For invalid parameters this is the zero measure. -/
 def weibullMeasure (k lam : ℝ) : Measure ℝ :=
   volume.withDensity (weibullPDF k lam)
 
+/-- A Weibull measure is Lebesgue measure weighted by its density. -/
+theorem weibullMeasure_eq_withDensity (k lam : ℝ) :
+    weibullMeasure k lam = volume.withDensity (weibullPDF k lam) := by
+  rfl
+
 /-- The `ℝ≥0∞`-valued density is the nonnegative coercion of the real density. -/
 theorem weibullPDF_eq_ofReal (k lam x : ℝ) :
     weibullPDF k lam x = ENNReal.ofReal (weibullPDFReal k lam x) := by
   rw [weibullPDF]
+
+/-- The Weibull density is finite everywhere. -/
+theorem weibullPDF_lt_top (k lam x : ℝ) : weibullPDF k lam x < ⊤ := by
+  rw [weibullPDF_eq_ofReal]
+  exact ENNReal.ofReal_lt_top
 
 /-- The real density has its usual formula at valid parameters and a positive point. -/
 @[simp]
@@ -196,6 +208,21 @@ theorem weibullMeasure_of_not_pos (h : ¬ (0 < k ∧ 0 < lam)) : weibullMeasure 
     rw [ite_eq_right (fun hy ↦ h ⟨hy.1, hy.2.1⟩), ENNReal.ofReal_zero]
     rfl
   rw [weibullMeasure, hpdf, withDensity_zero]
+
+/-- A Weibull measure gives no mass to the nonpositive half-line. This also holds at invalid
+parameters, where the measure is zero. -/
+@[simp]
+theorem weibullMeasure_Iic_zero (k lam : ℝ) : weibullMeasure k lam (Iic 0) = 0 := by
+  rw [weibullMeasure, withDensity_apply _ measurableSet_Iic]
+  refine lintegral_eq_zero_of_ae_eq_zero ?_
+  filter_upwards [ae_restrict_mem measurableSet_Iic] with x hx
+  simpa only [Pi.zero_apply] using weibullPDF_of_nonpos hx k lam
+
+/-- A Weibull random variable is almost surely positive. This remains true vacuously at invalid
+parameters, where `weibullMeasure` is the zero measure. -/
+theorem ae_pos_weibullMeasure (k lam : ℝ) : ∀ᵐ x ∂weibullMeasure k lam, 0 < x := by
+  rw [ae_iff]
+  simpa only [not_lt, ← Iic_def] using weibullMeasure_Iic_zero k lam
 
 /-! ### Normalization and tails -/
 
