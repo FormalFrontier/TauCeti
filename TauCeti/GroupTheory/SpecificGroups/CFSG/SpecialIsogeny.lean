@@ -66,8 +66,10 @@ Chevalley--Demazure group schemes, and hence the finite groups themselves, are s
 * `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_indexEquiv_simpleIndex` and
   `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_exponent_simpleIndex`: the selected isogeny permutes
   the simple-root indices by the pinned length permutation, with the pinned exponents.
-* `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_weightMap_root_simpleIndex`: the defining relation of
-  the exceptional isogeny on the simple roots, in the exponent convention of the CFSG roadmap.
+* `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_weightMap_root_simpleIndex` and
+  `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_coweightMap_coroot_simpleIndex`: the defining
+  relation of the exceptional isogeny on the simple roots and on the simple coroots, in the
+  exponent convention of the CFSG roadmap.
 * `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_comp_self`: its square is scaling by the defining
   characteristic, which is the root-datum form of `τ ^ 2 = Frob_p`.
 
@@ -169,66 +171,98 @@ section Branches
 
 variable (m : ℕ)
 
+/-- The character map of the isogeny selected by a Suzuki index is that of the `B₂` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_weightMap_suzuki (hv : (LieTypeIndex.suzuki m).Valid) :
     (datumSpecialIsogeny ⟨⟨.suzuki m, hv⟩, by simp⟩).weightMap = b2SpecialIsogeny.weightMap :=
   (rfl)
 
+/-- The cocharacter map of the isogeny selected by a Suzuki index is that of the `B₂` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_coweightMap_suzuki (hv : (LieTypeIndex.suzuki m).Valid) :
     (datumSpecialIsogeny ⟨⟨.suzuki m, hv⟩, by simp⟩).coweightMap = b2SpecialIsogeny.coweightMap :=
   (rfl)
 
+/-- The root permutation of the isogeny selected by a Suzuki index is that of the `B₂` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_indexEquiv_suzuki (hv : (LieTypeIndex.suzuki m).Valid) :
     (datumSpecialIsogeny ⟨⟨.suzuki m, hv⟩, by simp⟩).indexEquiv = b2SpecialIsogeny.indexEquiv :=
   (rfl)
 
+/-- The rescaling exponents of the isogeny selected by a Suzuki index are those of the `B₂` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_exponent_suzuki (hv : (LieTypeIndex.suzuki m).Valid) :
     (datumSpecialIsogeny ⟨⟨.suzuki m, hv⟩, by simp⟩).exponent = b2SpecialIsogeny.exponent :=
   (rfl)
 
+/-- The character map of the isogeny selected by a Ree `G₂` index is that of the `G₂` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_weightMap_reeG2 (hv : (LieTypeIndex.reeG2 m).Valid) :
     (datumSpecialIsogeny ⟨⟨.reeG2 m, hv⟩, by simp⟩).weightMap = g2SpecialIsogeny.weightMap :=
   (rfl)
 
+/-- The cocharacter map of the isogeny selected by a Ree `G₂` index is that of the `G₂` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_coweightMap_reeG2 (hv : (LieTypeIndex.reeG2 m).Valid) :
     (datumSpecialIsogeny ⟨⟨.reeG2 m, hv⟩, by simp⟩).coweightMap = g2SpecialIsogeny.coweightMap :=
   (rfl)
 
+/-- The root permutation of the isogeny selected by a Ree `G₂` index is that of the `G₂` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_indexEquiv_reeG2 (hv : (LieTypeIndex.reeG2 m).Valid) :
     (datumSpecialIsogeny ⟨⟨.reeG2 m, hv⟩, by simp⟩).indexEquiv = g2SpecialIsogeny.indexEquiv :=
   (rfl)
 
+/-- The rescaling exponents of the isogeny selected by a Ree `G₂` index are those of the `G₂`
+special isogeny. -/
 @[simp] theorem datumSpecialIsogeny_exponent_reeG2 (hv : (LieTypeIndex.reeG2 m).Valid) :
     (datumSpecialIsogeny ⟨⟨.reeG2 m, hv⟩, by simp⟩).exponent = g2SpecialIsogeny.exponent :=
   (rfl)
 
+/-- The character map of the isogeny selected by a Ree `F₄` index is that of the `F₄` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_weightMap_reeF4 (hv : (LieTypeIndex.reeF4 m).Valid) :
     (datumSpecialIsogeny ⟨⟨.reeF4 m, hv⟩, by simp⟩).weightMap = f4SpecialIsogeny.weightMap :=
   (rfl)
 
+/-- The cocharacter map of the isogeny selected by a Ree `F₄` index is that of the `F₄` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_coweightMap_reeF4 (hv : (LieTypeIndex.reeF4 m).Valid) :
     (datumSpecialIsogeny ⟨⟨.reeF4 m, hv⟩, by simp⟩).coweightMap = f4SpecialIsogeny.coweightMap :=
   (rfl)
 
+/-- The root permutation of the isogeny selected by a Ree `F₄` index is that of the `F₄` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_indexEquiv_reeF4 (hv : (LieTypeIndex.reeF4 m).Valid) :
     (datumSpecialIsogeny ⟨⟨.reeF4 m, hv⟩, by simp⟩).indexEquiv = f4SpecialIsogeny.indexEquiv :=
   (rfl)
 
+/-- The rescaling exponents of the isogeny selected by a Ree `F₄` index are those of the `F₄`
+special isogeny. -/
 @[simp] theorem datumSpecialIsogeny_exponent_reeF4 (hv : (LieTypeIndex.reeF4 m).Valid) :
     (datumSpecialIsogeny ⟨⟨.reeF4 m, hv⟩, by simp⟩).exponent = f4SpecialIsogeny.exponent :=
   (rfl)
 
+/-- The character map of the isogeny selected by the Tits index is that of the `F₄` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_weightMap_tits :
     (datumSpecialIsogeny ⟨⟨.tits, by simp⟩, by simp⟩).weightMap = f4SpecialIsogeny.weightMap :=
   (rfl)
 
+/-- The cocharacter map of the isogeny selected by the Tits index is that of the `F₄` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_coweightMap_tits :
     (datumSpecialIsogeny ⟨⟨.tits, by simp⟩, by simp⟩).coweightMap = f4SpecialIsogeny.coweightMap :=
   (rfl)
 
+/-- The root permutation of the isogeny selected by the Tits index is that of the `F₄` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_indexEquiv_tits :
     (datumSpecialIsogeny ⟨⟨.tits, by simp⟩, by simp⟩).indexEquiv = f4SpecialIsogeny.indexEquiv :=
   (rfl)
 
+/-- The rescaling exponents of the isogeny selected by the Tits index are those of the `F₄` special
+isogeny. -/
 @[simp] theorem datumSpecialIsogeny_exponent_tits :
     (datumSpecialIsogeny ⟨⟨.tits, by simp⟩, by simp⟩).exponent = f4SpecialIsogeny.exponent :=
   (rfl)
@@ -305,7 +339,7 @@ root-systems roadmap.** The squared length of the node paired with `i` by the le
 is the exponent the exceptional isogeny attaches to the root subgroup of `i`: it is `1` when `i`
 is long, because the paired node is then short, and the defining characteristic when `i` is
 short. -/
-theorem rootLength_lengthPerm (e : SuzukiReeIndex) (i : Fin e.1.rank) :
+@[simp] theorem rootLength_lengthPerm (e : SuzukiReeIndex) (i : Fin e.1.rank) :
     e.1.dynkinType.rootLength (e.lengthPerm i) = (e.exponent i : ℤ) := by
   by_cases hi : e.1.dynkinType.IsLongSimpleRoot i
   · rw [exponent_of_isLongSimpleRoot e i hi, Nat.cast_one]
@@ -433,6 +467,24 @@ theorem datumSpecialIsogeny_weightMap_root_simpleIndex (e : SuzukiReeIndex) (i :
           (e.1.dynkinType.simpleIndex e.1.dynkinType_valid i) := by
   rw [e.datumSpecialIsogeny.root_weightMap, datumSpecialIsogeny_indexEquiv_simpleIndex,
     lengthPerm_lengthPerm, datumSpecialIsogeny_exponent_simpleIndex, rootLength_lengthPerm]
+  simp only [Int.cast_id]
+
+/-- **The defining relation of the exceptional isogeny on the simple coroots.** Dually to
+`TauCeti.SuzukiReeIndex.datumSpecialIsogeny_weightMap_root_simpleIndex`, the cocharacter map runs
+the other way, so it carries the simple coroot at `i` to the one at the length-exchanged node,
+rescaled by the same `TauCeti.SuzukiReeIndex.exponent i`. -/
+theorem datumSpecialIsogeny_coweightMap_coroot_simpleIndex (e : SuzukiReeIndex)
+    (i : Fin e.1.rank) :
+    e.datumSpecialIsogeny.coweightMap
+        ((e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid).coroot
+          (e.1.dynkinType.simpleIndex e.1.dynkinType_valid i)) =
+      (e.exponent i : ℤ) •
+        (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid).coroot
+          (e.1.dynkinType.simpleIndex e.1.dynkinType_valid (e.lengthPerm i)) := by
+  have h := e.datumSpecialIsogeny.coroot_coweightMap
+    (e.1.dynkinType.simpleIndex e.1.dynkinType_valid (e.lengthPerm i))
+  rw [datumSpecialIsogeny_indexEquiv_simpleIndex, lengthPerm_lengthPerm] at h
+  rw [h, datumSpecialIsogeny_exponent_simpleIndex, rootLength_lengthPerm]
   simp only [Int.cast_id]
 
 /-! ## The square relation -/
