@@ -33,7 +33,8 @@ lies in that subring by `TauCeti.SlStd.mem_frobeniusFixedSubring_of_twistedFrobe
 Second, the pinned Gram matrix has a parity. `Q` is the reversal matrix with alternating signs, so
 transposing it reverses the sign pattern: `Qᵀ = (-1) ^ r • Q`, equivalently `Qᵀ = Q⁻¹` together
 with `Q * Q = (-1) ^ r`, which is `TauCeti.typeAGraphConjugator_mul_self`. Where the `q`-power map
-is an involution the form is therefore Hermitian for even `r` and skew-Hermitian for odd `r`; and
+is an involution the form is therefore Hermitian for even `r` and skew-Hermitian for odd `r`, the
+latter being Hermitian too exactly where `-1 = 1`, as in characteristic two; and
 where the `q`-power map is the identity, as on `ZMod p` with `q = p`, the form is bilinear,
 symmetric for even `r` and alternating for odd `r`, so that the equation is then the symplectic
 condition (for `r = 3`, `A = ZMod 3` and `q = 3` it is exactly `gᵀ * Q * g = Q` for a
@@ -129,7 +130,8 @@ the entrywise `q`-th power of `g`, the condition is `g* * Q * g = Q`.
 
 This is the shape in which the classical unitarity condition is written, `g ↦ g*` being an
 adjoint where the `q`-power map is an involution; since `Qᵀ = (-1) ^ r • Q`, the form there is
-Hermitian for even `r` and skew-Hermitian for odd `r`, as the module documentation records.
+Hermitian for even `r` and skew-Hermitian for odd `r`, the latter being Hermitian too where
+`-1 = 1`, as the module documentation records.
 `TauCeti.SlStd.twistedFrobenius_eq_self_iff` is the same condition with the two outer factors
 exchanged, which is the form the graph automorphism produces directly. -/
 theorem twistedFrobenius_eq_self_iff_transpose (g : points r A) :

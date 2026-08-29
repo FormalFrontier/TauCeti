@@ -256,8 +256,10 @@ Composing with an entrywise ring endomorphism `σ` and taking `g = σ h` reads t
 invariance of the `σ`-sesquilinear form of Gram matrix `Q` under `h`, in the transposed form
 recorded by `TauCeti.typeAGraphAutomorphism_eq_iff_transpose`. That is the shape of a unitarity
 condition, but not yet that condition: `σ` is only assumed to be a ring endomorphism, and `Q` is
-the reversal matrix with alternating signs, so `Qᵀ = (-1) ^ r • Q` and the form is Hermitian only
-for even `r`, being skew-Hermitian for odd `r`. -/
+the reversal matrix with alternating signs, so `Qᵀ = (-1) ^ r • Q`. Even `r` therefore makes the
+form Hermitian; odd `r` makes it skew-Hermitian, which is again Hermitian exactly where `-1 = 1`,
+as in characteristic two. -/
+@[simp]
 theorem typeAGraphAutomorphism_eq_iff (r : ℕ) (g h : GL (Fin (r + 1)) A) :
     typeAGraphAutomorphism r A g = h ↔
       (h : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
@@ -295,8 +297,9 @@ square of the signed reversal matrix is a scalar. Composing with an entrywise ri
 `σ` and taking `g = σ h`, this is the equation `h* * Q * h = Q` saying that `h` is an isometry of
 the `σ`-sesquilinear form of Gram matrix `Q`, with `h* = (σ h)ᵀ`. It is the classical unitarity
 condition only where that form is Hermitian, which needs `σ` an involution, not assumed here, and
-`r` even, since `Qᵀ = (-1) ^ r • Q`; for odd `r` the form is skew-Hermitian, and for `σ` the
-identity it is symmetric for even `r` and alternating for odd `r`. -/
+needs `Qᵀ = Q`: since `Qᵀ = (-1) ^ r • Q`, even `r` gives that outright, while odd `r` gives a
+skew-Hermitian form, again Hermitian exactly where `-1 = 1`, as in characteristic two. For `σ` the
+identity the form is bilinear, symmetric for even `r` and alternating for odd `r`. -/
 theorem typeAGraphAutomorphism_eq_iff_transpose (r : ℕ) (g h : GL (Fin (r + 1)) A) :
     typeAGraphAutomorphism r A g = h ↔
       (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).transpose *
