@@ -58,9 +58,7 @@ def ofBounded (A : X →L[ℝ] X) : StronglyContinuousSemigroup X where
   map_zero' := by
     rw [NNReal.coe_zero, zero_smul, exp_zero, ContinuousLinearMap.one_def]
   map_add' s t := by
-    let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
-    rw [NNReal.coe_add, add_smul,
-      exp_add_of_commute (((Commute.refl A).smul_left _).smul_right _), ContinuousLinearMap.mul_def]
+    rw [NNReal.coe_add, TauCeti.exp_add_smul]
   continuousAt_zero' x :=
     (((differentiable_exp_smul_const ℝ A).continuous.comp NNReal.continuous_coe).clm_apply
       continuous_const).continuousAt

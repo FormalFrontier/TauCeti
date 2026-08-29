@@ -10,7 +10,12 @@ public import Mathlib.Analysis.Normed.Operator.Basic
 /-!
 # Basic facts about bounded operators
 
-This file records general-purpose facts about continuous linear maps.
+This file records a shared uniform-bound lemma for continuous linear maps. It lets an evaluation
+`T i (g i)` pass to the limit when the operators `T i` are eventually uniformly bounded, their
+values at the limiting argument converge, and the arguments `g i` converge. In particular, it
+supplies the common continuity step for
+`StronglyContinuousSemigroup.tendsto_realOperator_apply` and
+`StronglyContinuousGroup.tendsto_apply`.
 -/
 
 public section
@@ -26,8 +31,8 @@ variable [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
 
 namespace ContinuousLinearMap
 
-/-- A uniformly bounded family of continuous linear maps is jointly continuous along convergent
-operator evaluations and arguments. -/
+/-- If `T i` is eventually uniformly bounded, `T i z` tends to `w`, and `g i` tends to `z`, then
+the moving evaluations `T i (g i)` tend to `w`. -/
 theorem tendsto_apply_of_eventually_norm_le {ι : Type*} {l : Filter ι}
     {T : ι → X →L[𝕜] Y} {C : ℝ} {g : ι → X} {z : X} {w : Y}
     (hT : ∀ᶠ i in l, ‖T i‖ ≤ C) (hz : Tendsto (fun i => T i z) l (𝓝 w))

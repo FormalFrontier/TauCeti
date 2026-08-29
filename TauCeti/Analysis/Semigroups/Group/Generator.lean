@@ -135,7 +135,7 @@ theorem generator_map (U : StronglyContinuousGroup X) (x : U.domain) (t : ℝ) :
 
 /-- The positive-time difference quotient at `0` extracted from a two-sided derivative of an
 orbit. -/
-theorem generator_tendsto_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {y c : X}
+theorem tendsto_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {y c : X}
     (h : HasDerivAt (fun s : ℝ => U s y) c 0) :
     Tendsto (fun t : ℝ => (1 / t) • (U t y - y)) (𝓝[>] (0 : ℝ)) (𝓝 c) := by
   rw [hasDerivAt_iff_tendsto_slope] at h
@@ -146,14 +146,14 @@ theorem generator_tendsto_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {y 
 /-- A vector whose orbit is differentiable at `0` belongs to the generator domain. -/
 theorem mem_domain_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {x y : X}
     (h : HasDerivAt (fun t : ℝ => U t x) y 0) : x ∈ U.domain :=
-  (U.mem_domain_iff_tendsto x).mpr ⟨y, U.generator_tendsto_of_hasDerivAt_zero h⟩
+  (U.mem_domain_iff_tendsto x).mpr ⟨y, U.tendsto_of_hasDerivAt_zero h⟩
 
 /-- The generator value is the derivative at `0` of the orbit. -/
 theorem generator_eq_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {x y : X}
     (h : HasDerivAt (fun t : ℝ => U t x) y 0) :
     U.generator ⟨x, by rw [U.generator_domain]; exact U.mem_domain_of_hasDerivAt_zero h⟩ = y :=
   U.generator_eq_of_tendsto (U.mem_domain_of_hasDerivAt_zero h)
-    (U.generator_tendsto_of_hasDerivAt_zero h)
+    (U.tendsto_of_hasDerivAt_zero h)
 
 variable [CompleteSpace X]
 
@@ -287,9 +287,7 @@ def ofBounded (A : X →L[ℝ] X) : StronglyContinuousGroup X where
   toFun t := exp (t • A)
   map_zero' := by rw [zero_smul, exp_zero, ContinuousLinearMap.one_def]
   map_add' s t := by
-    let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
-    rw [add_smul, exp_add_of_commute (((Commute.refl A).smul_left _).smul_right _),
-      ContinuousLinearMap.mul_def]
+    rw [TauCeti.exp_add_smul]
   continuousAt_zero' x :=
     (((differentiable_exp_smul_const ℝ A).continuous).clm_apply continuous_const).continuousAt
 
