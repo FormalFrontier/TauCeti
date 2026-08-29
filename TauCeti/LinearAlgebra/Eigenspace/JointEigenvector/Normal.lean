@@ -19,8 +19,9 @@ character `χ` onto the joint eigenspace of the conjugated character
 `n ↦ χ (g⁻¹ * n * g)`.
 
 This is the representation-theoretic bridge used in the Lie--Kolchin argument. The derived
-subgroup supplies character weight spaces; normality makes the ambient group permute those spaces,
-and connectedness can then force that permutation to be trivial.
+subgroup supplies characters with nonzero joint weight spaces; normality makes the ambient group
+permute those characters while transporting their corresponding spaces, and connectedness can then
+force that permutation to be trivial.
 
 ## Main declarations
 
@@ -29,7 +30,7 @@ and connectedness can then force that permutation to be trivial.
 * `iInf_eigenspace_unitHom_conjNormal_ne_bot_iff`: conjugation preserves which character
   weight spaces are nonzero.
 * `nonzeroJointWeightAction`: the resulting permutation action of the ambient group on the
-  nonzero character weight spaces.
+  characters having nonzero joint weight space.
 
 ## References
 
@@ -122,8 +123,8 @@ theorem nonzeroJointWeightEquiv_apply_coe (N : Subgroup G) [N.Normal]
         (MulAut.conjNormal g).monoidHomCongrLeftEquiv χ := by
   rfl
 
-/-- The ambient group acts by permutations on the nonzero joint character weight spaces of a
-normal subgroup. This is the abstract permutation action used in the Lie--Kolchin argument. -/
+/-- The ambient group acts by permutations on the characters having nonzero joint weight space for
+a normal subgroup. This is the abstract permutation action used in the Lie--Kolchin argument. -/
 def nonzeroJointWeightAction (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) :
     G →* Equiv.Perm {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} where
