@@ -20,7 +20,7 @@ functions that are injective on an open set and for holomorphic open partial hom
 
 * `TauCeti.DifferentiableOn.invFunOn` — the inverse of a holomorphic injection on an open set is
   holomorphic on its image.
-* `DifferentiableOn.hasDerivAt_invFunOn` — the derivative of the inverse at `f z₀` is
+* `TauCeti.hasDerivAt_invFunOn` — the derivative of the inverse at `f z₀` is
   `(deriv f z₀)⁻¹`, via `HasDerivAt.of_local_left_inverse`.
 * `TauCeti.OpenPartialHomeomorph.differentiableOn_symm` — the inverse of a holomorphic open partial
   homeomorphism is holomorphic on its target.
@@ -44,7 +44,7 @@ theorem DifferentiableOn.invFunOn {f : ℂ → ℂ} {U : Set ℂ} (hf : Differen
     DifferentiableOn ℂ (Function.invFunOn f U) (f '' U) := by
   rintro _ ⟨z, hz, rfl⟩
   have hfz : AnalyticAt ℂ f z := hf.analyticAt (hU.mem_nhds hz)
-  have hderiv : deriv f z ≠ 0 := hf.deriv_ne_zero_of_injOn hU hinj hz
+  have hderiv : deriv f z ≠ 0 := deriv_ne_zero_of_injOn hf hU hinj hz
   have hleft : (Function.invFunOn f U ∘ f) =ᶠ[𝓝 z] id := by
     filter_upwards [hU.mem_nhds hz] with w hw
     exact hinj.leftInvOn_invFunOn hw
@@ -71,7 +71,7 @@ theorem OpenPartialHomeomorph.differentiableOn_symm {e : OpenPartialHomeomorph �
 of a holomorphic injection `f` of the open set `U` has derivative `(deriv f z₀)⁻¹`, by
 `HasDerivAt.of_local_left_inverse` applied to the right-inverse relation
 `f (invFunOn f U w) = w` on the open image `f '' U`. -/
-theorem _root_.DifferentiableOn.hasDerivAt_invFunOn {f : ℂ → ℂ} {U : Set ℂ}
+theorem hasDerivAt_invFunOn {f : ℂ → ℂ} {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U) {z₀ : ℂ}
     (hz₀ : z₀ ∈ U) :
     HasDerivAt (Function.invFunOn f U) (deriv f z₀)⁻¹ (f z₀) := by
@@ -83,7 +83,7 @@ theorem _root_.DifferentiableOn.hasDerivAt_invFunOn {f : ℂ → ℂ} {U : Set �
   have hgz : Function.invFunOn f U (f z₀) = z₀ := hinj.leftInvOn_invFunOn hz₀
   have hfz : HasDerivAt f (deriv f z₀) (Function.invFunOn f U (f z₀)) := by
     rw [hgz]; exact (hf.differentiableAt (hU.mem_nhds hz₀)).hasDerivAt
-  have hd0 : deriv f z₀ ≠ 0 := hf.deriv_ne_zero_of_injOn hU hinj hz₀
+  have hd0 : deriv f z₀ ≠ 0 := deriv_ne_zero_of_injOn hf hU hinj hz₀
   have hfg : ∀ᶠ y in 𝓝 (f z₀), f (Function.invFunOn f U y) = y :=
     Filter.eventually_of_mem (hΩ.mem_nhds hp) fun w hw => Function.invFunOn_eq hw
   exact HasDerivAt.of_local_left_inverse hgcont hfz hd0 hfg

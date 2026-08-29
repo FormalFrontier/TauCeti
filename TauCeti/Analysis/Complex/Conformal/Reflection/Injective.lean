@@ -203,7 +203,7 @@ theorem deriv_schwarzReflection_ne_zero (hΩopen : IsOpen Ω) (hΩ : Set.MapsTo 
   have hd := differentiableOn_schwarzReflection_of_symmetric hΩopen hΩ hcont hholo hreal
   have hi := injOn_schwarzReflection_of_symmetric hΩ hupper
     (fun w hw h => (hreal w hw h).ge) hinj
-  exact hd.deriv_ne_zero_of_injOn hΩopen hi hz
+  exact deriv_ne_zero_of_injOn hd hΩopen hi hz
 
 /-- **Schwarz reflection of a conformal map is conformal.** Under the hypotheses of the reflection
 principle, together with injectivity of `f` on the closed upper part and the requirement that the
