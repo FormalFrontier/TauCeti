@@ -219,7 +219,7 @@ private theorem simpleIndex_A (n : ℕ) (ht : (A n).Valid) (i : Fin n) :
   exact simpleIndex_val (A n) ht i
 
 /-- The simple-root index of the dispatcher at type `B n` is type `B`'s own simple-root index. -/
-theorem simpleIndex_B (n : ℕ) (ht : (B n).Valid) (i : Fin n) :
+@[simp] theorem simpleIndex_B (n : ℕ) (ht : (B n).Valid) (i : Fin n) :
     (B n).simpleIndex ht i = typeBSimpleIndex n i := by
   apply Fin.ext
   rw [typeBSimpleIndex_val]
@@ -256,11 +256,11 @@ private theorem simpleIndex_E8 (ht : E8.Valid) (i : Fin 8) :
   exact simpleIndex_val E8 ht i
 
 /-- The simple-root index of the dispatcher at type `F₄` is type `F₄`'s own simple-root index. -/
-theorem simpleIndex_F4 (ht : F4.Valid) (i : Fin 4) :
+@[simp] theorem simpleIndex_F4 (ht : F4.Valid) (i : Fin 4) :
     F4.simpleIndex ht i = Fin.castAdd 44 i := Fin.ext rfl
 
 /-- The simple-root index of the dispatcher at type `G₂` is type `G₂`'s own simple-root index. -/
-theorem simpleIndex_G2 (ht : G2.Valid) (i : Fin 2) :
+@[simp] theorem simpleIndex_G2 (ht : G2.Valid) (i : Fin 2) :
     G2.simpleIndex ht i = Fin.castAdd 10 i := Fin.ext rfl
 
 /-- The simple coroots of the pinned datum are the standard basis of the cocharacter lattice. -/

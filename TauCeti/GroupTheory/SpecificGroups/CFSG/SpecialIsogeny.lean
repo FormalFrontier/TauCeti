@@ -492,7 +492,7 @@ theorem datumSpecialIsogeny_coweightMap_coroot_simpleIndex (e : SuzukiReeIndex)
 /-- **The square of the selected isogeny is scaling by the defining characteristic.** This is the
 root-datum form of `τ ^ 2 = Frob_p`, uniformly over the four half-Frobenius families; the odd
 powers of `τ` that cut out the Suzuki, Ree and Tits groups are read off it. -/
-theorem datumSpecialIsogeny_comp_self (e : SuzukiReeIndex) :
+@[simp] theorem datumSpecialIsogeny_comp_self (e : SuzukiReeIndex) :
     e.datumSpecialIsogeny.comp e.datumSpecialIsogeny =
       RootPairingIsogeny.smulId _ ⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ := by
   obtain ⟨⟨d, hvalid⟩, hhalf⟩ := e
