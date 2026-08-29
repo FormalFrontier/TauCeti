@@ -61,9 +61,7 @@ private theorem map_iInf_eigenspace_unitHom_le_conjNormal (N : Subgroup G) [N.No
       rw [Module.End.mem_eigenspace_iff.mp (hvn (MulAut.conjNormal g⁻¹ n))]
     _ = (χ (MulAut.conjNormal g⁻¹ n) : K) • ρ g v := by rw [map_smul]
     _ = (MonoidHom.conjNormal g χ n : K) • ρ g v := by
-      rw [show MulAut.conjNormal g⁻¹ n = (MulAut.conjNormal g).symm n by
-        apply Subtype.ext
-        simp]
+      rw [MulAut.conjNormal_inv]
       rw [MonoidHom.conjNormal_apply]
 
 /-- Let `N` be a normal subgroup of `G`. For a representation `ρ` of `G`, the operator `ρ g`
@@ -119,8 +117,8 @@ theorem nonzeroJointWeightEquiv_apply_coe (N : Subgroup G) [N.Normal]
     ((nonzeroJointWeightEquiv N ρ g χ :
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
         MonoidHom.conjNormal g χ := by
-  change MonoidHom.conjNormalEquiv N Kˣ g χ = MonoidHom.conjNormal g χ
-  rw [MonoidHom.conjNormalEquiv_apply]
+  simp only [nonzeroJointWeightEquiv, Equiv.subtypeEquiv_apply,
+    MonoidHom.conjNormalEquiv_apply]
 
 /-- The ambient group acts by permutations on the nonzero joint character weight spaces of a
 normal subgroup. This is the abstract group action underlying the finite permutation
@@ -142,6 +140,14 @@ def nonzeroJointWeightAction (N : Subgroup G) [N.Normal]
     simpa only [Equiv.Perm.mul_apply, nonzeroJointWeightEquiv_apply_coe] using
       MonoidHom.conjNormal_mul g₁ g₂ (χ : N →* Kˣ)
 
+theorem nonzeroJointWeightAction_apply (N : Subgroup G) [N.Normal]
+    (ρ : G →* Module.End K V) (g : G)
+    (χ : {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) :
+    nonzeroJointWeightAction N ρ g χ = nonzeroJointWeightEquiv N ρ g χ := by
+  -- Package the monoid-hom constructor's definitional projection as a stable application rule.
+  change nonzeroJointWeightEquiv N ρ g χ = nonzeroJointWeightEquiv N ρ g χ
+  rfl
+
 @[simp]
 theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G)
@@ -149,8 +155,7 @@ theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
     (((nonzeroJointWeightAction N ρ g) χ :
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
         MonoidHom.conjNormal g χ := by
-  change ((nonzeroJointWeightEquiv N ρ g χ :
-    {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) = _
+  rw [nonzeroJointWeightAction_apply]
   exact nonzeroJointWeightEquiv_apply_coe N ρ g χ
 
 end TauCeti

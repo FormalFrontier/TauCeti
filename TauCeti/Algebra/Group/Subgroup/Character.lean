@@ -27,6 +27,12 @@ namespace TauCeti
 
 variable {G A : Type*} [Group G] [Monoid A]
 
+/-- Inverse conjugation is the inverse of conjugation on a normal subgroup. -/
+theorem _root_.MulAut.conjNormal_inv {N : Subgroup G} [N.Normal] (g : G) :
+    (MulAut.conjNormal (H := N)) g⁻¹ = ((MulAut.conjNormal (H := N)) g).symm := by
+  exact (map_inv (MulAut.conjNormal (H := N)) g).trans
+    (MulAut.inv_def N ((MulAut.conjNormal (H := N)) g))
+
 /-- Precomposition by inverse conjugation gives the action of an ambient group element on
 characters of a normal subgroup. Thus `(conjNormal g χ) n = χ (g⁻¹ * n * g)`. -/
 def _root_.MonoidHom.conjNormal {N : Subgroup G} [N.Normal]
