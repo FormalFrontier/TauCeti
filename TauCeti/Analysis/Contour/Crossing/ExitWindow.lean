@@ -217,14 +217,6 @@ theorem sum_exitCapWindows {M : Type*} [AddCommMonoid M] (f : CircularCapWindow 
   rw [exitCapWindows, List.map_map, ← List.sum_toFinset _ (T.sort_nodup (· ≤ ·))]
   simp
 
-/-- Summing a function over the ordered exit-window list is the same as summing its value at the
-window of each member of the indexing finset. -/
-theorem sum_map_exitCapWindows {M : Type*} [AddCommMonoid M] (f : CircularCapWindow → M)
-    (γ : ℝ → ℂ) (s : ℂ) (T : Finset ℝ) (δ ε : ℝ) (L_R L_L : ℝ → ℂ) :
-    (exitCapWindows γ s T δ ε L_R L_L |>.map f).sum =
-      ∑ t ∈ T, f (exitCapWindow γ s t δ ε (L_R t) (L_L t)) :=
-  sum_exitCapWindows f γ s T δ ε L_R L_L
-
 /-- Membership in `exitCapWindows` means being the exit-time window of a listed crossing. -/
 @[simp] theorem mem_exitCapWindows_iff {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} :
