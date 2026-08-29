@@ -74,8 +74,7 @@ theorem map_eval (π : FiniteMultiCoupling μ) (i : ι) : π.1.map (Function.eva
 
 /-- The measure of a finite multi-marginal coupling is a measure-theoretic multi-coupling of the
 measures associated to its marginals. -/
-theorem isMultiCoupling_toMeasure [∀ i, MeasurableSpace (X i)]
-    [∀ i, MeasurableSingletonClass (X i)] (π : FiniteMultiCoupling μ) :
+theorem isMultiCoupling_toMeasure [∀ i, MeasurableSpace (X i)] (π : FiniteMultiCoupling μ) :
     Measure.IsMultiCoupling π.1.toMeasure (fun i ↦ (μ i).toMeasure) := by
   constructor
   intro i
@@ -83,7 +82,7 @@ theorem isMultiCoupling_toMeasure [∀ i, MeasurableSpace (X i)]
 
 /-- A finite multi-marginal coupling, regarded as the bundled measure-theoretic coupling of the
 probability measures associated to its marginals. -/
-def toMultiCoupling [∀ i, MeasurableSpace (X i)] [∀ i, MeasurableSingletonClass (X i)]
+def toMultiCoupling [∀ i, MeasurableSpace (X i)]
     (π : FiniteMultiCoupling μ) :
     MultiCoupling (fun i ↦ (⟨(μ i).toMeasure, inferInstance⟩ : ProbabilityMeasure (X i))) :=
   ⟨⟨π.1.toMeasure, inferInstance⟩, π.isMultiCoupling_toMeasure⟩
@@ -92,7 +91,7 @@ def toMultiCoupling [∀ i, MeasurableSpace (X i)] [∀ i, MeasurableSingletonCl
 of its probability mass function. -/
 @[simp]
 theorem coe_toMultiCoupling [∀ i, MeasurableSpace (X i)]
-    [∀ i, MeasurableSingletonClass (X i)] (π : FiniteMultiCoupling μ) :
+    (π : FiniteMultiCoupling μ) :
     (π.toMultiCoupling : ProbabilityMeasure (∀ i, X i)).toMeasure = π.1.toMeasure := (rfl)
 
 section Independent
