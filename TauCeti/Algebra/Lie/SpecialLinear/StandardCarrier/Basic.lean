@@ -363,27 +363,13 @@ theorem rep_ringChoose_cartanGenerator_mem_lattice (i : Fin r) (n : ℕ)
     rep r (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator r i)) n) v ∈
       lattice r := by
   rw [lattice] at hv ⊢
-  refine TauCeti.coordinateLattice_induction (Fin (r + 1))
-    (p := fun w => rep r
-      (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ (cartanGenerator r i)) n) w ∈
-        TauCeti.coordinateLattice (Fin (r + 1))) (v := v) hv ?_ ?_ ?_ ?_
-  · intro x
-    rw [Pi.basisFun_apply, Ring.map_choose]
-    have hweight := (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-      (cartanGenerator r) (rep r)).1 (isCartanWeightVector_single r x) i
-    rw [ringChoose_end_apply_of_apply_eq_smul hweight n, TauCeti.Ring.choose_intCast,
-      Int.cast_smul_eq_zsmul ℚ]
-    rw [← Pi.basisFun_apply]
-    exact Submodule.smul_mem _ _
-      (TauCeti.basisFun_mem_coordinateLattice (Fin (r + 1)) x)
-  · rw [map_zero]
-    exact zero_mem _
-  · intro x y hx hy
-    rw [map_add]
-    exact add_mem hx hy
-  · intro z x hx
-    rw [map_zsmul]
-    exact Submodule.smul_mem _ z hx
+  rw [Ring.map_choose]
+  refine TauCeti.ringChoose_end_apply_mem_coordinateLattice_of_apply_eq_intCast_smul
+    (Fin (r + 1)) (weight := fun x => weight r x i) ?_ n hv
+  intro x
+  rw [Pi.basisFun_apply]
+  exact (TauCeti.UniversalEnvelopingAlgebra.isCartanWeightVector_iff
+    (cartanGenerator r) (rep r)).1 (isCartanWeightVector_single r x) i
 
 /-- **The standard lattice is an admissible lattice**: the Kostant `ℤ`-form presented by the
 numbered Chevalley generators preserves it. -/

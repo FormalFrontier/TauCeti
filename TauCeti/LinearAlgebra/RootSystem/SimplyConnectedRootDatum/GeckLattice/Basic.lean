@@ -154,16 +154,15 @@ theorem isCartanWeightVector_geckCoordinateBasisFin (i : Fin (t.geckDim ht)) :
 the latter contains every standard coordinate vector. -/
 theorem geckCoordinateLattice_le_geckOrbit :
     t.geckCoordinateLattice ht ≤ t.geckOrbit ht := by
+  classical
   intro v hv
-  rw [geckCoordinateLattice] at hv
-  refine TauCeti.coordinateLattice_induction (t.GeckIndex ht) hv ?_ (zero_mem _) ?_ ?_
-  · intro i
-    rw [Pi.basisFun_apply]
-    exact t.single_mem_geckOrbit ht i
-  · intro x y hx hy
-    exact add_mem hx hy
-  · intro z x hx
-    exact Submodule.smul_mem _ z hx
+  choose z hz using (t.mem_geckCoordinateLattice_iff ht).1 hv
+  have hv_eq : v = ∑ i, z i • Pi.single i (1 : ℚ) := by
+    funext j
+    simp [Pi.single_apply, hz]
+  rw [hv_eq]
+  exact Submodule.sum_mem _ fun i _ =>
+    Submodule.smul_mem _ (z i) (t.single_mem_geckOrbit ht i)
 
 /-- The coordinate lattice is finitely generated over `ℤ` and spans the ambient rational Geck
 module. -/
@@ -299,27 +298,13 @@ theorem geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice
       t.geckCoordinateLattice ht := by
   rw [geckCoordinateLattice] at hv ⊢
   rw [Ring.map_choose]
-  refine TauCeti.coordinateLattice_induction (t.GeckIndex ht)
-    (p := fun w => Ring.choose (t.geckRepresentation ht
-      (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i))) n w ∈
-        TauCeti.coordinateLattice (t.GeckIndex ht)) (v := v) hv ?_ ?_ ?_ ?_
-  · intro x
-    rw [Pi.basisFun_apply]
-    have hweight := (UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-      (h := (t.lieBasis ht).h) (ρ := t.geckRepresentation ht)).1
-        (t.isCartanWeightVector_geckRepresentation_single ht x) i
-    rw [ringChoose_end_apply_of_apply_eq_smul hweight n, TauCeti.Ring.choose_intCast,
-      Int.cast_smul_eq_zsmul ℚ]
-    rw [← Pi.basisFun_apply]
-    exact zsmul_mem (TauCeti.basisFun_mem_coordinateLattice (t.GeckIndex ht) x) _
-  · rw [map_zero]
-    exact zero_mem _
-  · intro x y hx hy
-    rw [map_add]
-    exact add_mem hx hy
-  · intro z x hx
-    rw [map_zsmul]
-    exact Submodule.smul_mem _ z hx
+  refine TauCeti.ringChoose_end_apply_mem_coordinateLattice_of_apply_eq_intCast_smul
+    (t.GeckIndex ht) (weight := fun x => t.geckWeight ht x i) ?_ n hv
+  intro x
+  rw [Pi.basisFun_apply]
+  exact (UniversalEnvelopingAlgebra.isCartanWeightVector_iff
+    (h := (t.lieBasis ht).h) (ρ := t.geckRepresentation ht)).1
+      (t.isCartanWeightVector_geckRepresentation_single ht x) i
 
 /-! ## Divided powers of the numbered root generators -/
 

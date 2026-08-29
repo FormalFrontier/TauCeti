@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.Module.Lattice
 public import Mathlib.LinearAlgebra.Basis.Submodule
 public import Mathlib.LinearAlgebra.StdBasis
+public import TauCeti.LinearAlgebra.Eigenspace.Binomial
 
 /-!
 # The integral lattice in a rational coordinate space
@@ -36,6 +37,8 @@ universe u
 
 variable (ι : Type u) [Finite ι]
 
+attribute [local instance] TauCeti.moduleNNRat
+
 /-- The standard integral lattice in the rational coordinate space `ι → ℚ`. -/
 def coordinateLattice : Submodule ℤ (ι → ℚ) :=
   Submodule.span ℤ (Set.range (Pi.basisFun ℚ ι))
@@ -53,22 +56,15 @@ theorem basisFun_mem_coordinateLattice (i : ι) :
   rw [coordinateLattice]
   exact Submodule.subset_span (Set.mem_range_self i)
 
-/-- To prove a property of every vector in the coordinate lattice, it is enough to prove it for
-the standard coordinate vectors and show that it is preserved by the `ℤ`-module operations. -/
-theorem coordinateLattice_induction {p : (ι → ℚ) → Prop} {v : ι → ℚ}
-    (hv : v ∈ coordinateLattice ι)
-    (basis : ∀ i, p (Pi.basisFun ℚ ι i))
-    (zero : p 0)
-    (add : ∀ x y, p x → p y → p (x + y))
-    (smul : ∀ (z : ℤ) x, p x → p (z • x)) : p v := by
-  rw [coordinateLattice] at hv
-  induction hv using Submodule.span_induction with
-  | mem x hx =>
-      obtain ⟨i, rfl⟩ := hx
-      exact basis i
-  | zero => exact zero
-  | add x y _ _ hx hy => exact add x y hx hy
-  | smul z x _ hx => exact smul z x hx
+/-- Binomial coefficients of an endomorphism preserve the coordinate lattice when every standard
+coordinate vector is an eigenvector with an integer eigenvalue. -/
+theorem ringChoose_end_apply_mem_coordinateLattice_of_apply_eq_intCast_smul
+    {f : Module.End ℚ (ι → ℚ)} {weight : ι → ℤ}
+    (heigen : ∀ i, f (Pi.basisFun ℚ ι i) = (weight i : ℚ) • Pi.basisFun ℚ ι i)
+    (n : ℕ) {v : ι → ℚ} (hv : v ∈ coordinateLattice ι) :
+    (Ring.choose f n) v ∈ coordinateLattice ι := by
+  rw [coordinateLattice] at hv ⊢
+  exact ringChoose_end_apply_mem_span_of_apply_eq_intCast_smul heigen n hv
 
 /-- The standard coordinate vectors, regarded as a basis of the coordinate lattice over `ℤ`. -/
 noncomputable def coordinateLatticeBasis :
