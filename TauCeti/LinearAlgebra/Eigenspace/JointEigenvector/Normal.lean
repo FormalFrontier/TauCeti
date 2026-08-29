@@ -61,9 +61,9 @@ private theorem map_iInf_eigenspace_unitHom_le_conjNormal (N : Subgroup G) [N.No
       rw [Module.End.mem_eigenspace_iff.mp (hvn (MulAut.conjNormal g⁻¹ n))]
     _ = (χ (MulAut.conjNormal g⁻¹ n) : K) • ρ g v := by rw [map_smul]
     _ = ((MulAut.conjNormal g).monoidHomCongrLeftEquiv χ n : K) • ρ g v := by
-      change (χ (MulAut.conjNormal g⁻¹ n) : K) • ρ g v =
-        (χ ((MulAut.conjNormal g).symm n) : K) • ρ g v
+      rw [MulEquiv.monoidHomCongrLeftEquiv_apply, MonoidHom.comp_apply]
       rw [map_inv (MulAut.conjNormal (H := N)) g, MulAut.inv_def]
+      simp only [MulEquiv.coe_toMonoidHom]
 
 /-- Let `N` be a normal subgroup of `G`. For a representation `ρ` of `G`, the operator `ρ g`
 maps the joint `N`-eigenspace of `χ` exactly onto the joint eigenspace of the conjugated
