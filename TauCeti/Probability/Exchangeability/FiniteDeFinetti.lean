@@ -226,7 +226,7 @@ theorem ExchangeableAt.prefixLaw_le_sampleWithReplacement_add
       m.choose 2 / n := by
   let _ : IsProbabilityMeasure (prefixLaw μ X n) := by
     rw [prefixLaw_def, blockLaw_def]
-    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
+    infer_instance
   rw [← h.sampleWithoutReplacement_eq_prefixLaw hmn hX]
   simpa using sampleWithoutReplacement_le_sampleWithReplacement_add
     (ρ := prefixLaw μ X n) hA
@@ -243,7 +243,7 @@ theorem ExchangeableAt.sampleWithReplacement_le_prefixLaw_add
       m.choose 2 / n := by
   let _ : IsProbabilityMeasure (prefixLaw μ X n) := by
     rw [prefixLaw_def, blockLaw_def]
-    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
+    infer_instance
   rw [← h.sampleWithoutReplacement_eq_prefixLaw hmn hX]
   simpa using sampleWithReplacement_le_sampleWithoutReplacement_add
     (ρ := prefixLaw μ X n) hA

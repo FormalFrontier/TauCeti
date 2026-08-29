@@ -63,37 +63,43 @@ namespace Probability
 
 variable {Ω α ι κ : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- Conditional i.i.d.-ness with a specified directing measure `ν`: the random measure `ν` is
-measurable, and along every finite selection `k` of **distinct** coordinates the *joint* law of
-`(ν, block)` is the `ν`-disintegration `∫ δ_{ν ω} ⊗ (ν ω)^{⊗m} dμ(ω)`.
+/-- Conditional i.i.d.-ness with a specified directing measure `ν`: the coordinates are a.e.
+measurable, the random measure `ν` is measurable, and along every finite selection `k` of
+**distinct** coordinates the *joint* law of `(ν, block)` is the `ν`-disintegration
+`∫ δ_{ν ω} ⊗ (ν ω)^{⊗m} dμ(ω)`.
 
 Constraining the joint law, rather than just the block's marginal, is exactly what makes this the
 conditional statement: see `MixedIIDWith` for the marginal-only version and
-`mixedIIDWith_of_conditionallyIIDWith` for the arrow between them. -/
+`mixedIIDWith_of_conditionallyIIDWith` for the arrow between them.
+
+Coordinatewise a.e. measurability is part of the definition because `Measure.map` sends a
+function that is not a.e. measurable to a junk Dirac mass, so the joint-law identity alone
+cannot see measurability; compare `ProbabilityTheory.HasLaw` in Mathlib. -/
 def ConditionallyIIDWith (μ : Measure Ω) (X : ι → Ω → α) (ν : Ω → ProbabilityMeasure α) : Prop :=
-  Measurable ν ∧
+  (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
     ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
         μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure
 
-/-- Constructor: a measurable directing measure together with the joint-law disintegration. -/
+/-- Constructor: a.e. measurable coordinates and a measurable directing measure together with
+the joint-law disintegration. -/
 theorem ConditionallyIIDWith.intro {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α}
-    (hν : Measurable ν)
+    (hX : ∀ i, AEMeasurable (X i) μ) (hν : Measurable ν)
     (h : ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
         μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) :
     ConditionallyIIDWith μ X ν :=
-  ⟨hν, h⟩
+  ⟨hX, hν, h⟩
 
 /-- Simp normal form for `ConditionallyIIDWith`. -/
 @[simp]
 theorem conditionallyIIDWith_iff {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} :
     ConditionallyIIDWith μ X ν ↔
-      Measurable ν ∧
+      (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
         ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
             μ.bind fun ω =>
@@ -116,11 +122,17 @@ theorem conditionallyIID_iff {μ : Measure Ω} {X : ι → Ω → α} :
     ConditionallyIID μ X ↔ ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν :=
   Iff.rfl
 
+/-- The coordinates of a `ConditionallyIIDWith` family are a.e. measurable. -/
+theorem ConditionallyIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) (i : ι) :
+    AEMeasurable (X i) μ :=
+  h.1 i
+
 /-- The directing measure of a `ConditionallyIIDWith` witness is measurable. -/
 @[grind →]
 theorem ConditionallyIIDWith.measurable_directing {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : Measurable ν :=
-  h.1
+  h.2.1
 
 /-- The defining joint-law disintegration of a `ConditionallyIIDWith` witness. -/
 @[grind =>]
@@ -130,7 +142,7 @@ theorem ConditionallyIIDWith.jointLaw_eq_disintegration {μ : Measure Ω} {X : �
     μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) =
       μ.bind fun ω =>
         (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
-  h.2 m k hk
+  h.2.2 m k hk
 
 /-- A `ConditionallyIID` family has a directing measure. -/
 theorem ConditionallyIID.exists_directing {μ : Measure Ω} {X : ι → Ω → α}
@@ -144,7 +156,8 @@ theorem ConditionallyIIDWith.comp_injective
     {μ : Measure Ω} {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
     (h : ConditionallyIIDWith μ X ν) {f : κ → ι} (hf : Function.Injective f) :
     ConditionallyIIDWith μ (fun j => X (f j)) ν := by
-  refine ConditionallyIIDWith.intro h.measurable_directing fun m k hk => ?_
+  refine ConditionallyIIDWith.intro (fun j => h.aemeasurable (f j))
+    h.measurable_directing fun m k hk => ?_
   simpa only [Function.comp_apply] using
     h.jointLaw_eq_disintegration (f ∘ k) (hf.comp hk)
 
@@ -160,19 +173,20 @@ theorem ConditionallyIID.comp_injective
 identity is the joint disintegration with the `ν` coordinate integrated out.
 
 Taking the second marginal of both sides does exactly that. On the left, `Measure.snd_map_prodMk₀`
-discards the `ν` coordinate needing only measurability of `ν` itself — which the predicate
-supplies — so no hypothesis on the coordinates of `X` is required. On the right, naturality of
-`bind` pushes the marginal inside the mixture, where each `δ_{ν ω}` factor integrates away. -/
+discards the `ν` coordinate needing only measurability of `ν` itself, which the predicate
+supplies. On the right, naturality of `bind` pushes the marginal inside the mixture, where each
+`δ_{ν ω}` factor integrates away. -/
 theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : MixedIIDWith μ X ν := by
-  refine MixedIIDWith.intro h.measurable_directing fun m k hk => ?_
+  refine MixedIIDWith.intro h.aemeasurable h.measurable_directing fun m k hk => ?_
   have hK : AEMeasurable (fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν
       h.measurable_directing).aemeasurable
   calc blockLaw μ X k
       = (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).snd := by
-        rw [blockLaw_def, Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable]
+        rw [blockLaw_def, Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable
+          (aemeasurable_pi_lambda _ fun i => h.aemeasurable (k i))]
     _ = (μ.bind fun ω => (Measure.dirac (ν ω)).prod
           (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).snd := by
         rw [h.jointLaw_eq_disintegration k hk]
@@ -180,13 +194,6 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ι → Ω �
         simp only [Measure.snd]
         rw [TauCeti.MeasureTheory.map_bind hK measurable_snd]
         simp
-
-/-- A conditionally i.i.d. family with a named directing measure has a.e.-measurable coordinates,
-so no separate coordinate measurability hypothesis is needed. -/
-theorem ConditionallyIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
-    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) (i : ι) :
-    AEMeasurable (X i) μ :=
-  (mixedIIDWith_of_conditionallyIIDWith h).aemeasurable i
 
 /-- The existential form of the easy arrow. -/
 theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ι → Ω → α}

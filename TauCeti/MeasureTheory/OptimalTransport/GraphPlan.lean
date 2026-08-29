@@ -68,10 +68,9 @@ convention is available as `TauCeti.map_swap_graphPlan`, which identifies the co
 of a graph plan with the pushforward along `x ↦ (T x, x)`.
 
 Measurability hypotheses are `AEMeasurable` rather than `Measurable` throughout, because that
-is what `ProbabilityTheory.HasLaw` supplies and what the pushforward really uses. The two
-marginal formulas are asymmetric in this respect: `TauCeti.snd_graphPlan` holds for every `T`
-whatsoever, since a `T` that is not a.e. measurable makes both sides the zero measure, while
-`TauCeti.fst_graphPlan` genuinely needs `T` to be a.e. measurable.
+is what `ProbabilityTheory.HasLaw` supplies and what the pushforward really uses. Both marginal
+formulas need `T` to be a.e. measurable: `Measure.map` sends a function that is not a.e.
+measurable to a junk Dirac mass, which neither marginal formula survives.
 
 This module needs nothing from the transport cost, so it sits below it: the Monge-to-Kantorovich
 relaxation inequality of Layer 4, item 1, which the change of variables here supplies, is stated
@@ -135,21 +134,21 @@ theorem graphPlan_prod (hT : AEMeasurable T μ) {s : Set X} {t : Set Y}
     graphPlan T μ (s ×ˢ t) = μ (s ∩ T ⁻¹' t) :=
   graphPlan_apply hT (hs.prod ht)
 
-/-- The second marginal of the graph plan of `T` is the pushforward of `μ` along `T`. No
-measurability is needed: if `T` is not a.e. measurable then both sides are the zero measure. -/
+/-- The second marginal of the graph plan of an a.e. measurable `T` is the pushforward of `μ`
+along `T`. -/
 @[simp]
-theorem snd_graphPlan (T : X → Y) (μ : Measure X) : (graphPlan T μ).snd = μ.map T :=
-  Measure.snd_map_prodMk₀ aemeasurable_id
+theorem snd_graphPlan (hT : AEMeasurable T μ) : (graphPlan T μ).snd = μ.map T :=
+  Measure.snd_map_prodMk₀ aemeasurable_id hT
 
 /-- The first marginal of the graph plan of an a.e. measurable `T` is `μ`. -/
 @[simp]
-theorem fst_graphPlan (hT : AEMeasurable T μ) : (graphPlan T μ).fst = μ := by
-  rw [graphPlan_def, Measure.fst_map_prodMk₀ hT, Measure.map_id']
+theorem fst_graphPlan (hT : AEMeasurable T μ) : (graphPlan T μ).fst = μ :=
+  (Measure.fst_map_prodMk₀ aemeasurable_id hT).trans Measure.map_id
 
 /-- The graph plan of an a.e. measurable `T` couples `μ` and the pushforward `μ.map T`. -/
 theorem isCoupling_graphPlan_map (hT : AEMeasurable T μ) :
     IsCoupling (graphPlan T μ) μ (μ.map T) :=
-  ⟨fst_graphPlan hT, snd_graphPlan T μ⟩
+  ⟨fst_graphPlan hT, snd_graphPlan hT⟩
 
 /-- **From the Monge problem to the Kantorovich problem**: the graph plan of a transport map
 from `μ` to `ν` is a coupling of `μ` and `ν`. -/
@@ -161,7 +160,7 @@ transport map from `μ` to `ν`. The Monge problem is therefore the Kantorovich 
 restricted to the graph plans. -/
 theorem isCoupling_graphPlan_iff (hT : AEMeasurable T μ) :
     IsCoupling (graphPlan T μ) μ ν ↔ HasLaw T ν μ :=
-  ⟨fun h ↦ ⟨hT, by rw [← snd_graphPlan T μ, h.snd_eq]⟩, isCoupling_graphPlan⟩
+  ⟨fun h ↦ ⟨hT, by rw [← snd_graphPlan hT, h.snd_eq]⟩, isCoupling_graphPlan⟩
 
 /-- The identity is a transport map from `μ` to itself, so its graph plan — the diagonal plan,
 carried by the diagonal of `X × X` — couples `μ` with itself. -/
@@ -200,7 +199,7 @@ pushes its graph plan forward in the second coordinate. Together with
 theorem map_prodMap_id_graphPlan {R : Y → Z} (hR : AEMeasurable R (μ.map T))
     (hT : AEMeasurable T μ) :
     (graphPlan T μ).map (Prod.map id R) = graphPlan (R ∘ T) μ := by
-  have hsnd : (graphPlan T μ).map Prod.snd = μ.map T := snd_graphPlan T μ
+  have hsnd : (graphPlan T μ).map Prod.snd = μ.map T := snd_graphPlan hT
   have hR' : AEMeasurable (Prod.map id R) (graphPlan T μ) :=
     measurable_fst.aemeasurable.prodMk
       (AEMeasurable.comp_aemeasurable' (by rw [hsnd]; exact hR) measurable_snd.aemeasurable)
@@ -323,7 +322,7 @@ variable {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y}
 /-- The graph plan of a transport map between two probability measures, bundled as an element of
 `TauCeti.Coupling`. -/
 def graph (hT : HasLaw T ν.toMeasure μ.toMeasure) : Coupling μ ν :=
-  ⟨μ.map (aemeasurable_prodMk_self hT.aemeasurable), by
+  ⟨μ.map (fun x ↦ (x, T x)), by
     rw [ProbabilityMeasure.toMeasure_map]
     exact isCoupling_graphPlan hT⟩
 

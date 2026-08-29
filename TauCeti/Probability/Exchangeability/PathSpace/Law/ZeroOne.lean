@@ -81,7 +81,7 @@ theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α]
       measurable_tailProcess_directingProbabilityMeasure hA
     exact pathTail_le_exchangeableSigma _ (by rwa [pathTail_eq_tailProcess])
   have hprob : IsProbabilityMeasure (ρ.map ν) :=
-    Measure.isProbabilityMeasure_map hν_meas.aemeasurable
+    inferInstance
   have hzo : IsZeroOneMeasure (ρ.map ν) :=
     ⟨fun A hA => by rw [Measure.map_apply hν_meas hA]; exact htriv _ (hpre hA)⟩
   obtain ⟨P, hP⟩ :=

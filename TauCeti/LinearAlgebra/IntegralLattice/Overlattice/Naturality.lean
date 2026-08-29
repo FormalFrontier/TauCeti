@@ -94,7 +94,7 @@ restricts to an order isomorphism between the intervals of intermediate carriers
 def intermediateCarrierEquiv (e : Isometry L M) :
     L.IntermediateCarrier ≃o M.IntermediateCarrier :=
   (OrderIso.Icc (Submodule.orderIsoMapComap e.ambientEquiv) L.carrier L.dualCarrier).trans
-    (OrderIso.setCongr _ _ (by
+    (OrderIso.Set.congr _ _ (by
       simp only [Submodule.orderIsoMapComap_apply]
       have hambient : e.ambientEquiv.toLinearMap =
           ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).toLinearMap := by

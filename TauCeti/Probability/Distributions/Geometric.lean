@@ -160,7 +160,7 @@ theorem variance_id_map_cast_geometricMeasure :
   · subst p
     norm_num [geometricMeasure]
   · let _ : IsProbabilityMeasure ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) :=
-      Measure.isProbabilityMeasure_map (by fun_prop)
+      inferInstance
     have hmem : MemLp id 2 ((geometricMeasure p).map (Nat.cast : ℕ → ℝ)) :=
       (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
         (integrable_sq_id_map_cast_geometricMeasure hp)

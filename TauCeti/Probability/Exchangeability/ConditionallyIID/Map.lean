@@ -67,14 +67,15 @@ measure and a block, so the transported map acts on the tag as well: it is
 theorem ConditionallyIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν)
     {f : α → β} (hf : Measurable f) :
-    ConditionallyIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map hf.aemeasurable := by
-  have hmapQ : Measurable fun Q : ProbabilityMeasure α => Q.map hf.aemeasurable :=
+    ConditionallyIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map f := by
+  have hmapQ : Measurable fun Q : ProbabilityMeasure α => Q.map f :=
     TauCeti.MeasureTheory.measurable_probabilityMeasure_map hf
-  refine ConditionallyIIDWith.intro (hmapQ.comp h.measurable_directing) fun m k hk => ?_
+  refine ConditionallyIIDWith.intro (fun i => hf.comp_aemeasurable (h.aemeasurable i))
+    (hmapQ.comp h.measurable_directing) fun m k hk => ?_
   set F : (Fin m → α) → Fin m → β := fun x i => f (x i) with hF
   have hFmeas : Measurable F := measurable_pi_lambda _ fun i => hf.comp (measurable_pi_apply i)
   have hΦ : Measurable
-      (Prod.map (fun Q : ProbabilityMeasure α => Q.map hf.aemeasurable) F) :=
+      (Prod.map (fun Q : ProbabilityMeasure α => Q.map f) F) :=
     hmapQ.prodMap hFmeas
   have hinner : AEMeasurable (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) μ :=
     h.measurable_directing.aemeasurable.prodMk
@@ -83,24 +84,23 @@ theorem ConditionallyIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν
       h.measurable_directing).aemeasurable
-  calc μ.map (fun ω => ((ν ω).map hf.aemeasurable, fun i : Fin m => f (X (k i) ω)))
+  calc μ.map (fun ω => ((ν ω).map f, fun i : Fin m => f (X (k i) ω)))
       = (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).map
-          (Prod.map (fun Q : ProbabilityMeasure α => Q.map hf.aemeasurable) F) := by
+          (Prod.map (fun Q : ProbabilityMeasure α => Q.map f) F) := by
         rw [AEMeasurable.map_map_of_aemeasurable hΦ.aemeasurable hinner]
         exact congrArg (μ.map ·) (funext fun ω => by simp [hF, Prod.map])
     _ = (μ.bind fun ω => (Measure.dirac (ν ω)).prod
           (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
-          (Prod.map (fun Q : ProbabilityMeasure α => Q.map hf.aemeasurable) F) := by
+          (Prod.map (fun Q : ProbabilityMeasure α => Q.map f) F) := by
         rw [h.jointLaw_eq_disintegration k hk]
     _ = μ.bind fun ω => ((Measure.dirac (ν ω)).prod
           (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
-          (Prod.map (fun Q : ProbabilityMeasure α => Q.map hf.aemeasurable) F) :=
+          (Prod.map (fun Q : ProbabilityMeasure α => Q.map f) F) :=
         TauCeti.MeasureTheory.map_bind hK hΦ
-    _ = μ.bind fun ω => (Measure.dirac ((ν ω).map hf.aemeasurable)).prod
-          (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map hf.aemeasurable).toMeasure := by
+    _ = μ.bind fun ω => (Measure.dirac ((ν ω).map f)).prod
+          (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map f).toMeasure := by
         refine congrArg (μ.bind ·) (funext fun ω => ?_)
-        have : IsProbabilityMeasure ((ν ω : Measure α).map f) :=
-          (ν ω : Measure α).isProbabilityMeasure_map hf.aemeasurable
+        have : IsProbabilityMeasure ((ν ω : Measure α).map f) := inferInstance
         simp only [ProbabilityMeasure.toMeasure_pi, ProbabilityMeasure.toMeasure_map]
         rw [← Measure.map_dirac' hmapQ (ν ω),
           ← Measure.pi_map_pi (f := fun _ : Fin m => f) fun _ => hf.aemeasurable]
@@ -126,7 +126,7 @@ theorem ConditionallyIIDWith.of_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α
     ConditionallyIIDWith μ X fun ω => ν fun i => X i ω := by
   have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
   have hνm : Measurable ν := hν.measurable_directing
-  refine ConditionallyIIDWith.intro (hνm.comp hφ) ?_
+  refine ConditionallyIIDWith.intro (fun i => (hX_meas i).aemeasurable) (hνm.comp hφ) ?_
   intro m k hk
   have hcoord : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
     measurable_pi_lambda _ fun i => measurable_pi_apply (k i)

@@ -131,7 +131,7 @@ This holds by definition: both sides are `ProbabilityTheory.cond volume (Set.Ioc
 theorem isUniform_of_hasLaw_uniformMeasure {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {a b : ℝ} (hX : HasLaw X (uniformMeasure a b) P) :
     pdf.IsUniform X (Set.Ioc a b) P volume :=
-  hX.map_eq
+  hX
 
 /-! ### The probability density function
 
@@ -417,7 +417,7 @@ private theorem map_volume_affine {a c : ℝ} (hc : c ≠ 0) :
     Measure.map (fun x => a + c * x) volume = ENNReal.ofReal |c|⁻¹ • volume := by
   have h : (fun x : ℝ => a + c * x) = (fun y => a + y) ∘ (fun x => c * x) := rfl
   rw [h, ← Measure.map_map (by fun_prop) (by fun_prop),
-    Real.map_volume_mul_left hc, Measure.map_smul,
+    Real.map_volume_mul_left hc, Measure.map_smul _ (by fun_prop),
     Measure.IsAddLeftInvariant.map_add_left_eq_self]
   congr 1
   rw [abs_inv]

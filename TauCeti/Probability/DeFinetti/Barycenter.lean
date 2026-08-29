@@ -147,7 +147,7 @@ theorem deFinettiBarycenter_add (π₁ π₂ : Measure (ProbabilityMeasure α)) 
 @[simp]
 theorem deFinettiBarycenter_smul (c : ℝ≥0∞) (π : Measure (ProbabilityMeasure α)) :
     deFinettiBarycenter (c • π) = c • deFinettiBarycenter π :=
-  Measure.bind_smul c π _
+  Measure.bind_smul c π TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable
 
 /-- **The barycenter is natural in the state space.** Pushing every coordinate of a barycenter
 forward by a measurable `f : α → β` gives the barycenter of the mixing law pushed forward by
@@ -156,8 +156,8 @@ to each term, is the same as drawing `P.map f` and then an i.i.d. sequence from 
 theorem map_pi_deFinettiBarycenter {β : Type*} [MeasurableSpace β]
     (π : Measure (ProbabilityMeasure α)) {f : α → β} (hf : Measurable f) :
     (deFinettiBarycenter π).map (fun x i => f (x i))
-      = deFinettiBarycenter (π.map fun P => P.map hf.aemeasurable) := by
-  have hmap : Measurable fun P : ProbabilityMeasure α => P.map hf.aemeasurable :=
+      = deFinettiBarycenter (π.map fun P => P.map f) := by
+  have hmap : Measurable fun P : ProbabilityMeasure α => P.map f :=
     ((Measure.measurable_map f hf).comp measurable_subtype_coe).subtype_mk
   have hpi : Measurable fun x : ℕ → α => fun i => f (x i) :=
     measurable_pi_lambda _ fun i => hf.comp (measurable_pi_apply i)
@@ -166,12 +166,12 @@ theorem map_pi_deFinettiBarycenter {β : Type*} [MeasurableSpace β]
           fun x i => f (x i) :=
         TauCeti.MeasureTheory.map_bind
           TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable hpi
-    _ = π.bind fun P => Measure.infinitePi fun _ : ℕ => (P.map hf.aemeasurable : Measure β) :=
+    _ = π.bind fun P => Measure.infinitePi fun _ : ℕ => (P.map f : Measure β) :=
         congrArg (Measure.bind π) (funext fun P => by
           rw [Measure.infinitePi_map_pi (μ := fun _ : ℕ => (P : Measure α))
             (f := fun _ : ℕ => f) fun _ => hf]
           simp)
-    _ = deFinettiBarycenter (π.map fun P => P.map hf.aemeasurable) := by
+    _ = deFinettiBarycenter (π.map fun P => P.map f) := by
         rw [deFinettiBarycenter_def, TauCeti.MeasureTheory.bind_map hmap.aemeasurable
           TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable, Function.comp_def]
 

@@ -126,18 +126,19 @@ theorem graphPlan_zero (T : X → Y) : graphPlan T (0 : Measure X) = 0 :=
 
 /-- The first marginal of a graph plan is the source measure. -/
 @[simp]
-theorem fst_graphPlan (hT : AEMeasurable T μ) : (graphPlan T μ).fst = μ := by
-  rw [graphPlan, Measure.fst_map_prodMk₀ hT, Measure.map_id']
+theorem fst_graphPlan (hT : AEMeasurable T μ) : (graphPlan T μ).fst = μ :=
+  (Measure.fst_map_prodMk₀ aemeasurable_id hT).trans Measure.map_id
 
 /-- The second marginal of a graph plan is the pushforward of the source measure. -/
 @[simp]
-theorem snd_graphPlan (T : X → Y) (μ : Measure X) : (graphPlan T μ).snd = μ.map T :=
-  Measure.snd_map_prodMk₀ aemeasurable_id
+theorem snd_graphPlan (hT : AEMeasurable T μ) : (graphPlan T μ).snd = μ.map T :=
+  Measure.snd_map_prodMk₀ aemeasurable_id hT
 
 /-- A graph plan over a probability measure is a probability measure. -/
-theorem isProbabilityMeasure_graphPlan [IsProbabilityMeasure μ] (hT : AEMeasurable T μ) :
-    IsProbabilityMeasure (graphPlan T μ) :=
-  Measure.isProbabilityMeasure_map (aemeasurable_prodMk_self hT)
+theorem isProbabilityMeasure_graphPlan [IsProbabilityMeasure μ] :
+    IsProbabilityMeasure (graphPlan T μ) := by
+  rw [graphPlan]
+  infer_instance
 
 /-- Integration against a graph plan is integration of the composite `x ↦ f (x, T x)`.
 
@@ -154,14 +155,14 @@ theorem lintegral_graphPlan (hT : AEMeasurable T μ) {f : X × Y → ℝ≥0∞}
 is `ν`. -/
 theorem hasLaw_iff_snd_graphPlan_eq (hT : AEMeasurable T μ) :
     HasLaw T ν μ ↔ (graphPlan T μ).snd = ν := by
-  rw [snd_graphPlan]
+  rw [snd_graphPlan hT]
   exact ⟨fun h ↦ h.map_eq, fun h ↦ ⟨hT, h⟩⟩
 
 /-- The second marginal of the graph plan of a transport map from `μ` to `ν` is `ν`; together
 with `Measure.fst_graphPlan` this is the passage from a Monge map to a Kantorovich
 plan. -/
 theorem snd_graphPlan_of_hasLaw (hT : HasLaw T ν μ) : (graphPlan T μ).snd = ν := by
-  rw [snd_graphPlan, hT.map_eq]
+  rw [snd_graphPlan hT.aemeasurable, hT.map_eq]
 
 /-- Chaining two transport maps chains the targets of their graph plans. -/
 theorem snd_graphPlan_comp {R : Y → Z} {ρ : Measure Z} (hR : HasLaw R ρ ν) (hT : HasLaw T ν μ) :
@@ -193,9 +194,9 @@ theorem graphPlan_add {μ₁ μ₂ : Measure X} (hT₁ : AEMeasurable T μ₁) (
 /-- Taking the graph plan of a fixed map commutes with rescaling the source measure by an
 extended nonnegative real. -/
 @[simp]
-theorem graphPlan_smul (T : X → Y) (c : ℝ≥0∞) (μ : Measure X) :
+theorem graphPlan_smul (c : ℝ≥0∞) {μ : Measure X} (hT : AEMeasurable T μ) :
     graphPlan T (c • μ) = c • graphPlan T μ :=
-  Measure.map_smul _ _ _
+  Measure.map_smul c (aemeasurable_prodMk_self hT)
 
 /-- The graph plan over a Dirac measure is the Dirac measure at the corresponding graph point. -/
 @[simp]
@@ -206,7 +207,7 @@ theorem graphPlan_dirac {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
 /-- Postcomposing a transport map pushes the graph plan through the second coordinate. -/
 theorem graphPlan_comp {R : Y → Z} (hT : AEMeasurable T μ) (hR : AEMeasurable R (μ.map T)) :
     graphPlan (R ∘ T) μ = (graphPlan T μ).map (Prod.map id R) := by
-  have hR' : AEMeasurable R (graphPlan T μ).snd := by rwa [snd_graphPlan]
+  have hR' : AEMeasurable R (graphPlan T μ).snd := by rwa [snd_graphPlan hT]
   have hmap : AEMeasurable (Prod.map (id : X → X) R) (μ.map fun x ↦ (x, T x)) :=
     measurable_fst.aemeasurable.prodMk (hR'.comp_aemeasurable' measurable_snd.aemeasurable)
   simp only [graphPlan]
