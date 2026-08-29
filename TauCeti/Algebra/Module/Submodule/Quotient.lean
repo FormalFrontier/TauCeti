@@ -116,16 +116,13 @@ theorem map_equivMapOfInjective_comap_subtype (f : M →ₗ[R] N) (hf : Function
     Submodule.map ((Submodule.equivMapOfInjective f hf B : ↥B ≃ₗ[R] ↥(B.map f)) :
         ↥B →ₗ[R] ↥(B.map f)) (Submodule.comap B.subtype A)
       = Submodule.comap (B.map f).subtype (A.map f) := by
-  ext y
-  simp only [Submodule.mem_map, Submodule.mem_comap, Submodule.coe_subtype]
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    exact ⟨(x : M), hx, (Submodule.coe_equivMapOfInjective_apply f hf B x).symm⟩
-  · rintro ⟨a, ha, hay⟩
-    obtain ⟨b, hb, hby⟩ := y.2
-    have haB : a ∈ B := by rw [hf (hay.trans hby.symm)]; exact hb
-    exact ⟨⟨a, haB⟩, ha, Subtype.ext
-      ((Submodule.coe_equivMapOfInjective_apply f hf B ⟨a, haB⟩).trans hay)⟩
+  refine Submodule.map_injective_of_injective (B.map f).injective_subtype ?_
+  have hcomp : (B.map f).subtype ∘ₗ
+      ((Submodule.equivMapOfInjective f hf B : ↥B ≃ₗ[R] ↥(B.map f)) : ↥B →ₗ[R] ↥(B.map f))
+        = f ∘ₗ B.subtype :=
+    LinearMap.ext fun x => Submodule.coe_equivMapOfInjective_apply f hf B x
+  rw [← Submodule.map_comp, hcomp, Submodule.map_comp, Submodule.map_comap_subtype,
+    Submodule.map_comap_subtype, Submodule.map_inf f hf]
 
 /-- **An injective linear map identifies subquotients.**  For arbitrary submodules `A`, `B` of `M`
 the subquotient cut out by the images `A.map f`, `B.map f` is the subquotient cut out by `A` and
