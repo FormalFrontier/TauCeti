@@ -204,11 +204,9 @@ private theorem polytopeToBoundary_boundaryToPolytope (n : ℕ)
     (x : Realization (standardSimplexBoundary n)) :
     polytopeToBoundary n ⟨boundaryToPolytope n x, boundaryToPolytope_mem_frontier n x⟩ = x := by
   apply Subtype.ext
-  rw [polytopeToBoundary, faceInclusion_val]
+  rw [polytopeToBoundary, faceInclusion_val, boundaryWeightsPoint_val]
   apply Finsupp.ext
   intro i
-  change boundaryWeights n
-      ⟨boundaryToPolytope n x, boundaryToPolytope_mem_frontier n x⟩ i = x.1 i
   rw [boundaryWeights_apply, boundaryToPolytope_coord]
 
 private noncomputable def boundaryEquivPolytopeFrontier (n : ℕ) :
