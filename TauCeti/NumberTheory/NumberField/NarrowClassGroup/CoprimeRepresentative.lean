@@ -45,6 +45,21 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
+/-- Shifting a generator by an element of `H` preserves the ideal generated together with `H`. -/
+private theorem sup_span_singleton_eq_of_sub_mem {R : Type*} [CommRing R] {H : Ideal R} {a b : R}
+    (hba : b - a ∈ H) : H ⊔ Ideal.span {b} = H ⊔ Ideal.span {a} := by
+  apply le_antisymm
+  · refine sup_le le_sup_left ?_
+    rw [Ideal.span_singleton_le_iff_mem, ← sub_add_cancel b a]
+    exact Ideal.add_mem _ (Ideal.mem_sup_left hba)
+      (Ideal.mem_sup_right (Ideal.mem_span_singleton_self a))
+  · refine sup_le le_sup_left ?_
+    rw [Ideal.span_singleton_le_iff_mem]
+    have hab : a = b - (b - a) := by abel
+    rw [hab]
+    exact Ideal.sub_mem _ (Ideal.mem_sup_right (Ideal.mem_span_singleton_self b))
+      (Ideal.mem_sup_left hba)
+
 /-- **A totally positive coprime quotient of an ideal.** Given nonzero integral ideals `I` and `M`,
 there are a nonzero totally positive algebraic integer `a` and a nonzero ideal `J`, coprime to `M`,
 such that `(a) = I * J`.
@@ -63,6 +78,7 @@ theorem exists_isTotallyPositive_span_eq_mul_isCoprime (I M : (Ideal (𝓞 K))�
   have hH0 : H ≠ 0 := mul_ne_zero hI0 hM0
   have hHI : H ≤ (I : Ideal (𝓞 K)) := by
     exact Ideal.mul_le_left
+  -- Dedekind approximation supplies an initial generator with the required ideal identity.
   obtain ⟨a, ha⟩ := IsDedekindDomain.exists_sup_span_eq hHI hH0
   let q : 𝓞 K := Ideal.absNorm H
   have hqH : q ∈ H := by
@@ -73,6 +89,7 @@ theorem exists_isTotallyPositive_span_eq_mul_isCoprime (I M : (Ideal (𝓞 K))�
     simpa [Ideal.absNorm_eq_zero_iff] using hH0
   let B : ℝ := ∑ w : {w : InfinitePlace K // w.IsReal},
     |embedding_of_isReal w.2 (a : K)|
+  -- The norm bound and positivity shift the generator by a large positive multiple of `q`.
   obtain ⟨n, hn⟩ := exists_nat_gt B
   let b : 𝓞 K := a + n * q
   have hbsub : b - a ∈ H := by
@@ -92,24 +109,10 @@ theorem exists_isTotallyPositive_span_eq_mul_isCoprime (I M : (Ideal (𝓞 K))�
     rw [hbmap]
     have halower : -B ≤ embedding_of_isReal hw (a : K) := (abs_le.mp habs).1
     linarith
+  -- The shift lies in `H`, so the span identity is preserved.
   have hsupb : H ⊔ Ideal.span {b} = (I : Ideal (𝓞 K)) := by
-    have hba : b ∈ H ⊔ Ideal.span {a} := by
-      rw [← sub_add_cancel b a]
-      exact Ideal.add_mem _ (Ideal.mem_sup_left hbsub)
-        (Ideal.mem_sup_right (Ideal.mem_span_singleton_self a))
-    have hab : a ∈ H ⊔ Ideal.span {b} := by
-      have habEq : a = b - (b - a) := by abel
-      rw [habEq]
-      exact Ideal.sub_mem _ (Ideal.mem_sup_right (Ideal.mem_span_singleton_self b))
-        (Ideal.mem_sup_left hbsub)
-    rw [← ha]
-    apply le_antisymm
-    · refine sup_le le_sup_left ?_
-      rw [Ideal.span_singleton_le_iff_mem]
-      exact hba
-    · refine sup_le le_sup_left ?_
-      rw [Ideal.span_singleton_le_iff_mem]
-      exact hab
+    exact (sup_span_singleton_eq_of_sub_mem hbsub).trans ha
+  -- If the shifted generator vanishes, fall back to the positive norm element `q`.
   let c : 𝓞 K := if b = 0 then q else b
   have hc0 : c ≠ 0 := by
     by_cases hb0 : b = 0
@@ -146,6 +149,7 @@ theorem exists_isTotallyPositive_span_eq_mul_isCoprime (I M : (Ideal (𝓞 K))�
     have hmulEq : (I : Ideal (𝓞 K)) * ((M : Ideal (𝓞 K)) ⊔ J) =
         (I : Ideal (𝓞 K)) * ⊤ := by
       rw [Ideal.mul_sup, Ideal.mul_top, ← hJ, hsupc']
+    -- Cancel the nonzero ideal `I` to obtain coprimality of `J` and `M`.
     exact mul_left_cancel₀ hI0 hmulEq
   exact ⟨c, ⟨J, by simpa using hJ0⟩, hc0, hcpos, hJ, hcop⟩
 
