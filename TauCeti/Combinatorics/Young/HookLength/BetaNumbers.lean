@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.BigOperators.Intervals
-public import Mathlib.Data.Nat.Factorial.BigOperators
 public import TauCeti.Combinatorics.Young.HookLength.Basic
 
 /-!
@@ -14,9 +12,11 @@ public import TauCeti.Combinatorics.Young.HookLength.Basic
 
 Fix a Young diagram `μ` and a bound `r` on its number of rows. The `i`-th **beta-number**
 `YoungDiagram.betaNumber μ r i = μ.rowLen i + (r - 1 - i)` is the row length of row `i` shifted by
-the number of rows below it. For `r = μ.colLen 0` it is exactly the hook length of the cell
-`(i, 0)` at the head of the row (`YoungDiagram.betaNumber_eq_hookLength`), so the beta-numbers are
-the first-column hook lengths, padded with the extra rows that a larger `r` adds.
+the number of rows below it. For the exact row count `r = μ.colLen 0`, and only for it, the
+beta-numbers are the hook lengths of the first column: `βᵢ` is then the hook length of the cell
+`(i, 0)` at the head of row `i` (`YoungDiagram.betaNumber_eq_hookLength`). A larger bound `r` does
+not merely append entries to that list; it raises every beta-number of a nonempty row by the excess
+`r - μ.colLen 0`, and contributes the beta-numbers `r - 1 - i` of the empty rows `i`.
 
 The theorem of this file is the identity
 
@@ -56,7 +56,8 @@ the union to exhaust `{0, …, βᵢ - 1}`, with no separate surjectivity argume
 
 * `YoungDiagram.betaNumber_eq_hookLength`: for `r = μ.colLen 0` the beta-numbers are the hook
   lengths of the first column.
-* `YoungDiagram.betaNumber_lt_betaNumber`: the beta-numbers strictly decrease.
+* `YoungDiagram.betaNumber_lt_betaNumber`: the beta-numbers strictly decrease across the indices
+  `i < j < r` inside the bound.
 * `YoungDiagram.hookLength_add_eq_betaNumber`: the complement of a hook length of row `i` inside
   `βᵢ` is `c + r - μ.colLen c`.
 * `YoungDiagram.image_betaNumber_sub_hookLength_union_image_betaNumber`: the row description of the
@@ -173,9 +174,9 @@ theorem betaNumber_sub_hookLength_ne_betaNumber (hr : μ.colLen 0 ≤ r)
 strictly decrease (`YoungDiagram.hookLength_lt_hookLength_of_col_lt`) and are bounded by the
 beta-number of that row. -/
 private theorem injOn_betaNumber_sub_hookLength (hr : μ.colLen 0 ≤ r) :
-    Set.InjOn (fun c => μ.betaNumber r i - μ.hookLength (i, c)) (Set.Iio (μ.rowLen i)) := by
+    Set.InjOn (fun c => μ.betaNumber r i - μ.hookLength (i, c)) ↑(range (μ.rowLen i)) := by
   intro a ha b hb hab
-  simp only [Set.mem_Iio] at ha hb
+  simp only [coe_range, Set.mem_Iio] at ha hb
   have hab' : μ.betaNumber r i - μ.hookLength (i, a)
       = μ.betaNumber r i - μ.hookLength (i, b) := hab
   have hla := hookLength_le_betaNumber hr ha
@@ -189,6 +190,23 @@ private theorem injOn_betaNumber_sub_hookLength (hr : μ.colLen 0 ≤ r) :
       (μ.hookLength_lt_hookLength_of_col_lt (mem_iff_lt_rowLen.mpr ha)
         (lt_of_le_of_ne h (Ne.symm hne))).ne
 
+/-- The beta-numbers of the rows strictly below `i` and inside the bound are distinct; the special
+case of `YoungDiagram.injOn_betaNumber` used to count and to reindex products over them. -/
+private theorem injOn_betaNumber_Ico (μ : YoungDiagram) (r i : ℕ) :
+    Set.InjOn (μ.betaNumber r) ↑(Ico (i + 1) r) :=
+  (μ.injOn_betaNumber r).mono fun j hj => by
+    simp only [coe_Ico, Set.mem_Ico] at hj
+    exact Set.mem_Iio.mpr hj.2
+
+/-- The complements of the hook lengths of row `i` and the later beta-numbers are disjoint, by
+`YoungDiagram.betaNumber_sub_hookLength_ne_betaNumber`. -/
+private theorem disjoint_image_betaNumber_sub_hookLength (hr : μ.colLen 0 ≤ r) :
+    Disjoint ((range (μ.rowLen i)).image fun c => μ.betaNumber r i - μ.hookLength (i, c))
+      ((Ico (i + 1) r).image (μ.betaNumber r)) := by
+  simp only [disjoint_left, mem_image, mem_range, mem_Ico]
+  rintro m ⟨c, hc, rfl⟩ ⟨j, ⟨-, hj⟩, hmj⟩
+  exact betaNumber_sub_hookLength_ne_betaNumber hr hc hj hmj.symm
+
 /-! ### A row of hook lengths -/
 
 /-- **The hook lengths of a single row, through beta-numbers.** The complements
@@ -200,13 +218,6 @@ members respectively, which is exactly `βᵢ` in total; so the inclusion is an 
 theorem image_betaNumber_sub_hookLength_union_image_betaNumber (hr : μ.colLen 0 ≤ r) :
     ((range (μ.rowLen i)).image fun c => μ.betaNumber r i - μ.hookLength (i, c)) ∪
         ((Ico (i + 1) r).image (μ.betaNumber r)) = range (μ.betaNumber r i) := by
-  have hinjA : Set.InjOn (fun c => μ.betaNumber r i - μ.hookLength (i, c))
-      ↑(range (μ.rowLen i)) := by
-    simpa only [coe_range] using injOn_betaNumber_sub_hookLength hr
-  have hinjB : Set.InjOn (μ.betaNumber r) ↑(Ico (i + 1) r) :=
-    (μ.injOn_betaNumber r).mono fun j hj => by
-      simp only [coe_Ico, Set.mem_Ico] at hj
-      exact Set.mem_Iio.mpr hj.2
   refine eq_of_subset_of_card_le ?_ ?_
   · intro m hm
     rcases mem_union.mp hm with hm | hm
@@ -218,13 +229,9 @@ theorem image_betaNumber_sub_hookLength_union_image_betaNumber (hr : μ.colLen 0
     · obtain ⟨j, hj, rfl⟩ := mem_image.mp hm
       obtain ⟨hj₁, hj₂⟩ := mem_Ico.mp hj
       exact mem_range.mpr (μ.betaNumber_lt_betaNumber hj₁ hj₂)
-  · have hdisj : Disjoint
-        ((range (μ.rowLen i)).image fun c => μ.betaNumber r i - μ.hookLength (i, c))
-        ((Ico (i + 1) r).image (μ.betaNumber r)) := by
-      simp only [disjoint_left, mem_image, mem_range, mem_Ico]
-      rintro m ⟨c, hc, rfl⟩ ⟨j, ⟨-, hj⟩, hmj⟩
-      exact betaNumber_sub_hookLength_ne_betaNumber hr hc hj hmj.symm
-    rw [card_union_of_disjoint hdisj, card_image_of_injOn hinjA, card_image_of_injOn hinjB,
+  · rw [card_union_of_disjoint (disjoint_image_betaNumber_sub_hookLength hr),
+      card_image_of_injOn (injOn_betaNumber_sub_hookLength hr),
+      card_image_of_injOn (μ.injOn_betaNumber_Ico r i),
       card_range, card_range, Nat.card_Ico, betaNumber_def]
     omega
 
@@ -234,30 +241,12 @@ theorem prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial (hr : μ.colLen
     ((∏ c ∈ range (μ.rowLen i), μ.hookLength (i, c)) *
         ∏ j ∈ Ico (i + 1) r, (μ.betaNumber r i - μ.betaNumber r j))
       = (μ.betaNumber r i) ! := by
-  have hinjA : Set.InjOn (fun c => μ.betaNumber r i - μ.hookLength (i, c))
-      ↑(range (μ.rowLen i)) := by
-    simpa only [coe_range] using injOn_betaNumber_sub_hookLength hr
-  have hinjB : Set.InjOn (μ.betaNumber r) ↑(Ico (i + 1) r) :=
-    (μ.injOn_betaNumber r).mono fun j hj => by
-      simp only [coe_Ico, Set.mem_Ico] at hj
-      exact Set.mem_Iio.mpr hj.2
-  have hdisj : Disjoint
-      ((range (μ.rowLen i)).image fun c => μ.betaNumber r i - μ.hookLength (i, c))
-      ((Ico (i + 1) r).image (μ.betaNumber r)) := by
-    simp only [disjoint_left, mem_image, mem_range, mem_Ico]
-    rintro m ⟨c, hc, rfl⟩ ⟨j, ⟨-, hj⟩, hmj⟩
-    exact betaNumber_sub_hookLength_ne_betaNumber hr hc hj hmj.symm
   -- the descending product `∏_{m < L} (L - m)` is `L !`
   have hfact : ∏ m ∈ range (μ.betaNumber r i), (μ.betaNumber r i - m) = (μ.betaNumber r i) ! := by
     rw [← Nat.descFactorial_eq_prod_range, Nat.descFactorial_self]
-  have hA : ∀ x ∈ range (μ.rowLen i), ∀ y ∈ range (μ.rowLen i),
-      μ.betaNumber r i - μ.hookLength (i, x) = μ.betaNumber r i - μ.hookLength (i, y) → x = y :=
-    fun x hx y hy h => hinjA (by simpa using hx) (by simpa using hy) h
-  have hB : ∀ x ∈ Ico (i + 1) r, ∀ y ∈ Ico (i + 1) r,
-      μ.betaNumber r x = μ.betaNumber r y → x = y :=
-    fun x hx y hy h => hinjB (by simpa using hx) (by simpa using hy) h
   rw [← hfact, ← image_betaNumber_sub_hookLength_union_image_betaNumber hr,
-    prod_union hdisj, prod_image hA, prod_image hB]
+    prod_union (disjoint_image_betaNumber_sub_hookLength hr),
+    prod_image (injOn_betaNumber_sub_hookLength hr), prod_image (μ.injOn_betaNumber_Ico r i)]
   refine congrArg₂ (· * ·) (prod_congr rfl fun c hc => ?_) rfl
   have hc' : c < μ.rowLen i := mem_range.mp hc
   have := hookLength_add_eq_betaNumber hr hc'
