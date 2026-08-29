@@ -134,7 +134,6 @@ theorem IsIntegralBasis.mem_span_iff_isIntegral {ι : Type*} {b : Basis ι F F'}
 
 /-- Integrality over `𝒪_P`, expressed in the coordinate normal form supplied by an integral
 basis at `P`. -/
-@[simp]
 theorem IsIntegralBasis.isIntegral_iff_repr_mem {ι : Type*} {b : Basis ι F F'}
     (hb : P.IsIntegralBasis F' b) {x : F'} :
     IsIntegral (P.integers) x ↔ ∀ i, b.repr x i ∈ P.integers :=
@@ -205,6 +204,7 @@ theorem isIntegralBasis_localIntegralBasis :
 
 /-- **An element of `F'` is integral over `𝒪_P` exactly when all of its coordinates in the local
 integral basis lie in `𝒪_P`** (Stichtenoth, Corollary 3.3.5). -/
+@[simp]
 theorem isIntegral_iff_repr_mem {x : F'} :
     IsIntegral (P.integers) x ↔
       ∀ i, (localIntegralBasis F' P).repr x i ∈ P.integers := by
