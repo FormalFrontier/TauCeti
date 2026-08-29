@@ -19,6 +19,8 @@ symmetric polynomials.
 
 ## Main declarations
 
+* `MvPolynomial.IsSymmetric.exists_aeval_esymm`: the fundamental theorem of symmetric polynomials,
+  unbundled: a symmetric polynomial is a polynomial in the elementary symmetric polynomials.
 * `MvPolynomial.IsSymmetric.bind₁_aeval_X`: uniform univariate substitution preserves
   symmetry.
 * `MvPolynomial.IsSymmetric.exists_aeval_esymm_eq_bind₁_aeval_X`: the substituted
@@ -59,22 +61,32 @@ theorem _root_.MvPolynomial.IsSymmetric.bind₁_aeval_X
     _ = MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p := by
       rw [hp e]
 
+/-- **The fundamental theorem of symmetric polynomials**, unbundled: a symmetric polynomial in `n`
+variables over a commutative ring is a polynomial in the first `n` elementary symmetric
+polynomials. -/
+theorem _root_.MvPolynomial.IsSymmetric.exists_aeval_esymm
+    {R : Type*} [CommRing R] {n : ℕ} {p : MvPolynomial (Fin n) R}
+    (hp : p.IsSymmetric) :
+    ∃ W : MvPolynomial (Fin n) R,
+      MvPolynomial.aeval (fun j : Fin n => MvPolynomial.esymm (Fin n) R ((j : ℕ) + 1)) W = p := by
+  obtain ⟨W, hW⟩ := (MvPolynomial.esymmAlgHom_fin_bijective R n).surjective
+    (⟨p, hp⟩ : MvPolynomial.symmetricSubalgebra (Fin n) R)
+  refine ⟨W, ?_⟩
+  rw [← MvPolynomial.esymmAlgHom_apply]
+  exact congrArg Subtype.val hW
+
 /-- Over a commutative ring, uniformly substituting a univariate polynomial into a symmetric
 polynomial in `n` variables yields a polynomial in the first `n` elementary symmetric
-polynomials. -/
+polynomials: the substituted polynomial is symmetric by
+`MvPolynomial.IsSymmetric.bind₁_aeval_X`, so the fundamental theorem
+(`MvPolynomial.IsSymmetric.exists_aeval_esymm`) applies to it. -/
 theorem _root_.MvPolynomial.IsSymmetric.exists_aeval_esymm_eq_bind₁_aeval_X
     {R : Type*} [CommRing R] {n : ℕ}
     {p : MvPolynomial (Fin n) R} (hp : p.IsSymmetric) (q : R[X]) :
     ∃ W : MvPolynomial (Fin n) R,
       MvPolynomial.aeval
           (fun j : Fin n => MvPolynomial.esymm (Fin n) R ((j : ℕ) + 1)) W =
-        MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p := by
-  let p' := MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p
-  have hp' : p'.IsSymmetric := hp.bind₁_aeval_X q
-  obtain ⟨W, hW⟩ := (MvPolynomial.esymmAlgHom_fin_bijective R n).surjective
-    (⟨p', hp'⟩ : MvPolynomial.symmetricSubalgebra (Fin n) R)
-  refine ⟨W, ?_⟩
-  rw [← MvPolynomial.esymmAlgHom_apply]
-  exact congrArg Subtype.val hW
+        MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p :=
+  (hp.bind₁_aeval_X q).exists_aeval_esymm
 
 end TauCeti

@@ -147,9 +147,10 @@ theorem analyticOnNhd_coeffEquiv_map_eval_coeffEquiv_symm (q : 𝕜[X]) :
     (K := 𝕜) (n := n) q
   refine fun c _ => AnalyticAt.congr (f := fun c i => MvPolynomial.eval c (Q i))
     (AnalyticAt.pi fun i => ?_) ?_
-  · simpa using
-      (AnalyticOnNhd.eval_continuousLinearMap
-        (ContinuousLinearMap.id 𝕜 (Fin n → 𝕜)) (Q i) c (Set.mem_univ c))
+  · have h := AnalyticOnNhd.eval_continuousLinearMap
+      (ContinuousLinearMap.id 𝕜 (Fin n → 𝕜)) (Q i) c (Set.mem_univ c)
+    simp only [ContinuousLinearMap.id_apply] at h
+    exact h
   · filter_upwards with c using (hQ c).symm
 
 end Analyticity
