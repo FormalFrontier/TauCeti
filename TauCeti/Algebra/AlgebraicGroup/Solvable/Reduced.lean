@@ -209,17 +209,6 @@ private theorem productMap_comp_map {A B C D : Type v} {E : Type u}
   intro a b
   simp [Algebra.TensorProduct.productMap_apply_tmul]
 
-/-- Tensor maps preserve composition. -/
-private theorem map_comp_map {A B C D E F : Type v}
-    [CommRing A] [CommRing B] [CommRing C] [CommRing D] [CommRing E] [CommRing F]
-    [Algebra k A] [Algebra k B] [Algebra k C] [Algebra k D] [Algebra k E] [Algebra k F]
-    (f : A →ₐ[k] C) (g : B →ₐ[k] D) (q : C →ₐ[k] E) (r : D →ₐ[k] F) :
-    (Algebra.TensorProduct.map q r).comp (Algebra.TensorProduct.map f g) =
-      Algebra.TensorProduct.map (q.comp f) (r.comp g) := by
-  apply Algebra.TensorProduct.ext'
-  intro a b
-  simp
-
 /-- Evaluating the universal point at a tree of points gives the corresponding derived word. -/
 @[simp] private theorem mapValue_universalDerivedWord {A : Type u} [CommRing A] [Algebra k A]
     (n : ℕ) (x : DerivedWordArgs (points (R := k) (H := H) (CommAlgCat.of k A)) n) :
@@ -273,8 +262,9 @@ private theorem universalDerivedWord_natural (f : H →ₐc[k] K) (n : ℕ) :
       simp only [derivedWordCoordinateAlgebra.map_succ, universalDerivedWord_succ,
         AlgHom.mapValue_apply,
         AlgHom.mapDomain_apply, ofConv_toConv]
-      rw [← AlgHom.comp_assoc, Bialgebra.TensorProduct.map_toAlgHom, map_comp_map,
-        ih', ← map_comp_map, AlgHom.comp_assoc]
+      rw [← AlgHom.comp_assoc, Bialgebra.TensorProduct.map_toAlgHom,
+        ← Algebra.TensorProduct.map_comp, ih', Algebra.TensorProduct.map_comp,
+        AlgHom.comp_assoc]
       have hcomm := TauCeti.HopfAlgebra.map_comp_commutatorAlgHom f
       rw [Bialgebra.TensorProduct.map_toAlgHom] at hcomm
       rw [hcomm, ← AlgHom.comp_assoc]
