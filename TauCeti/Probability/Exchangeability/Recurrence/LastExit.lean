@@ -50,20 +50,18 @@ namespace TauCeti
 variable {α : Type*}
 
 /-- **Finitely many moved cells on attained rows are eventually last-exit admissible along a
-recurrent path.** Here recurrence is stated pointwise: every state attained by `x` is attained
-infinitely often. Each attained row's visit count eventually exceeds every moved position in the
-finite attained support. -/
+recurrent path.** Here recurrence is needed only for attained rows on which `π` moves a cell.
+Each such row's visit count eventually exceeds every moved position in the finite attained
+support. -/
 theorem eventually_lastExitAdmissible_of_recurrent {π : α → Equiv.Perm ℕ} {x : ℕ → α}
-    (hrec : ∀ k : ℕ, {n | x n = x k}.Infinite)
+    (hrec : ∀ a, (∃ k, π a k ≠ k) → (∃ t, x t = a) → {n | x n = a}.Infinite)
     (hπ : {p : α × ℕ | π p.1 p.2 ≠ p.2 ∧ ∃ t, x t = p.1}.Finite) :
     ∀ᶠ m in atTop, LastExitAdmissible π x m := by
   classical
   have hsupported : ∀ p ∈ {p : α × ℕ | π p.1 p.2 ≠ p.2 ∧ ∃ t, x t = p.1},
       ∀ᶠ m in atTop, p.2 + 1 < visitCount x p.1 m := by
     intro p hp
-    obtain ⟨t, ht⟩ := hp.2
-    have hinfinite : {n | x n = p.1}.Infinite := by
-      simpa only [ht] using hrec t
+    have hinfinite := hrec p.1 ⟨p.2, hp.1⟩ hp.2
     have hcount : Tendsto (visitCount x p.1) atTop atTop := by
       refine tendsto_atTop_atTop.2 fun b => ?_
       obtain ⟨n, -, hn⟩ := exists_visitCount_of_infinite hinfinite b
@@ -91,7 +89,9 @@ theorem Recurrent.ae_eventually_lastExitAdmissible (h : Recurrent μ X)
     (π : α → Equiv.Perm ℕ) (hπ : {p : α × ℕ | π p.1 p.2 ≠ p.2}.Finite) :
     ∀ᵐ ω ∂μ, ∀ᶠ m in atTop, LastExitAdmissible π (fun n => X n ω) m := by
   filter_upwards [h.ae_infinite_setOf_eq] with ω hω
-  exact eventually_lastExitAdmissible_of_recurrent hω <| hπ.subset fun _ hp => hp.1
+  exact eventually_lastExitAdmissible_of_recurrent
+    (fun _ _ ⟨t, ht⟩ => by simpa only [ht] using hω t) <|
+      hπ.subset fun _ hp => hp.1
 
 end Probability
 
