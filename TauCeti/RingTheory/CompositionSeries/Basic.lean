@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.SimpleModule.Basic
-public import TauCeti.Algebra.Module.Submodule.Quotient
 
 /-!
 # Transporting a composition series along a linear map
@@ -32,6 +31,13 @@ two one-sided forms, for the inclusion of a submodule and the projection onto a 
   linear map.
 * `TauCeti.comapCompositionSeriesOfSurjective`: the preimage of a composition series under a
   surjective linear map.
+
+## References
+
+The two transports are exactly the anonymous `let`s inside the proof of Mathlib's
+`Module.length_eq_add_of_exact` (`Mathlib/RingTheory/Length.lean`, by Andrew Yang), packaged here
+as named definitions with an API so that they can be shown to preserve the factors themselves and
+not just their number.
 -/
 
 public section
@@ -45,25 +51,39 @@ variable {N : Type v'} [AddCommGroup N] [Module R N]
 
 /-- The image of a composition series of `M` under an injective linear map `f : M →ₗ[R] N`.
 
-The body is `@[expose]`d on purpose: `mapCompositionSeriesOfInjective f hf s i` is definitionally
-`Submodule.map f (s i)`, and the *statements* of the endpoint lemmas below and of the factor
-lemmas downstream all rest on that definitional identity, which without `@[expose]` would have to
-be carried by `Fin.cast`s and dependent rewrites. -/
+The body is `@[expose]`d on purpose.  The `_apply` and `_length` lemmas below name the two
+definitional identities it provides, but a *statement* about the transported series at a general
+index also needs the index types `Fin (mapCompositionSeriesOfInjective f hf s).length` and
+`Fin s.length` to be identified, and that identification is only available definitionally: this is
+what lets the factor lemmas of `TauCeti.RingTheory.CompositionSeries.Multiplicity` be stated for
+`i : Fin s.length` instead of carrying `Fin.cast`s and dependent rewrites. -/
 @[expose] def mapCompositionSeriesOfInjective (f : M →ₗ[R] N) (hf : Function.Injective f)
     (s : CompositionSeries (Submodule R M)) : CompositionSeries (Submodule R N) :=
   s.map ⟨fun A => A.map f, Submodule.map_covBy_of_injective hf⟩
 
 @[simp]
+theorem mapCompositionSeriesOfInjective_apply (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (s : CompositionSeries (Submodule R M)) (i : Fin (s.length + 1)) :
+    mapCompositionSeriesOfInjective f hf s i = (s i).map f :=
+  (rfl)
+
+@[simp]
+theorem mapCompositionSeriesOfInjective_length (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (s : CompositionSeries (Submodule R M)) :
+    (mapCompositionSeriesOfInjective f hf s).length = s.length :=
+  (rfl)
+
+@[simp]
 theorem head_mapCompositionSeriesOfInjective (f : M →ₗ[R] N) (hf : Function.Injective f)
     (s : CompositionSeries (Submodule R M)) :
     (mapCompositionSeriesOfInjective f hf s).head = s.head.map f :=
-  (rfl)
+  mapCompositionSeriesOfInjective_apply f hf s 0
 
 @[simp]
 theorem last_mapCompositionSeriesOfInjective (f : M →ₗ[R] N) (hf : Function.Injective f)
     (s : CompositionSeries (Submodule R M)) :
     (mapCompositionSeriesOfInjective f hf s).last = s.last.map f :=
-  (rfl)
+  mapCompositionSeriesOfInjective_apply f hf s (Fin.last _)
 
 /-- The preimage of a composition series of `N` under a surjective linear map `f : M →ₗ[R] N`.
 The body is `@[expose]`d for the same reason as
@@ -73,15 +93,27 @@ The body is `@[expose]`d for the same reason as
   s.map ⟨fun A => A.comap f, Submodule.comap_covBy_of_surjective hf⟩
 
 @[simp]
+theorem comapCompositionSeriesOfSurjective_apply (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (s : CompositionSeries (Submodule R N)) (i : Fin (s.length + 1)) :
+    comapCompositionSeriesOfSurjective f hf s i = (s i).comap f :=
+  (rfl)
+
+@[simp]
+theorem comapCompositionSeriesOfSurjective_length (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (s : CompositionSeries (Submodule R N)) :
+    (comapCompositionSeriesOfSurjective f hf s).length = s.length :=
+  (rfl)
+
+@[simp]
 theorem head_comapCompositionSeriesOfSurjective (f : M →ₗ[R] N) (hf : Function.Surjective f)
     (s : CompositionSeries (Submodule R N)) :
     (comapCompositionSeriesOfSurjective f hf s).head = s.head.comap f :=
-  (rfl)
+  comapCompositionSeriesOfSurjective_apply f hf s 0
 
 @[simp]
 theorem last_comapCompositionSeriesOfSurjective (f : M →ₗ[R] N) (hf : Function.Surjective f)
     (s : CompositionSeries (Submodule R N)) :
     (comapCompositionSeriesOfSurjective f hf s).last = s.last.comap f :=
-  (rfl)
+  comapCompositionSeriesOfSurjective_apply f hf s (Fin.last _)
 
 end TauCeti

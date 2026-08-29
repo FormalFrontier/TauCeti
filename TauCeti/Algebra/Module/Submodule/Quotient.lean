@@ -139,11 +139,23 @@ noncomputable def mapSubquotientEquivOfInjective (f : M →ₗ[R] N) (hf : Funct
 
 /-- `TauCeti.mapSubquotientEquivOfInjective` read on representatives: its inverse is induced by
 the restriction `Submodule.equivMapOfInjective` of `f` to `B`. -/
+@[simp]
 theorem mapSubquotientEquivOfInjective_symm_apply (f : M →ₗ[R] N) (hf : Function.Injective f)
     (A B : Submodule R M) (x : ↥B) :
     (mapSubquotientEquivOfInjective f hf A B).symm (Submodule.Quotient.mk x) =
       Submodule.Quotient.mk (Submodule.equivMapOfInjective f hf B x) :=
   (rfl)
+
+/-- `TauCeti.mapSubquotientEquivOfInjective` read on representatives, in the forward direction:
+it undoes the restriction `Submodule.equivMapOfInjective` of `f` to `B`. -/
+@[simp]
+theorem mapSubquotientEquivOfInjective_apply (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (A B : Submodule R M) (x : ↥B) :
+    mapSubquotientEquivOfInjective f hf A B
+        (Submodule.Quotient.mk (Submodule.equivMapOfInjective f hf B x)) =
+      Submodule.Quotient.mk x := by
+  rw [← mapSubquotientEquivOfInjective_symm_apply f hf A B x,
+    LinearEquiv.apply_symm_apply]
 
 /-- The kernel of `x ↦ f x mod A`, on the preimage of `B`, is the trace of the preimage of `A`. -/
 theorem ker_mkQ_comp_submoduleComap (f : M →ₗ[R] N) (A B : Submodule R N) :
@@ -166,11 +178,22 @@ noncomputable def comapSubquotientEquivOfSurjective (f : M →ₗ[R] N) (hf : Fu
 
 /-- `TauCeti.comapSubquotientEquivOfSurjective` read on representatives: it is induced by the
 restriction `LinearMap.submoduleComap` of `f` to the preimage of `B`. -/
+@[simp]
 theorem comapSubquotientEquivOfSurjective_apply (f : M →ₗ[R] N) (hf : Function.Surjective f)
     (A B : Submodule R N) (x : ↥(B.comap f)) :
     comapSubquotientEquivOfSurjective f hf A B (Submodule.Quotient.mk x) =
       Submodule.Quotient.mk (f.submoduleComap B x) :=
   (rfl)
+
+/-- `TauCeti.comapSubquotientEquivOfSurjective` read on representatives, in the inverse direction:
+it undoes the restriction `LinearMap.submoduleComap` of `f` to the preimage of `B`. -/
+@[simp]
+theorem comapSubquotientEquivOfSurjective_symm_apply (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (A B : Submodule R N) (x : ↥(B.comap f)) :
+    (comapSubquotientEquivOfSurjective f hf A B).symm
+        (Submodule.Quotient.mk (f.submoduleComap B x)) = Submodule.Quotient.mk x := by
+  rw [← comapSubquotientEquivOfSurjective_apply f hf A B x,
+    LinearEquiv.symm_apply_apply]
 
 end Subquotient
 

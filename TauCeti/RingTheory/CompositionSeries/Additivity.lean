@@ -26,9 +26,12 @@ The proof glues a composition series of `p` and a composition series of `M ⧸ p
 `M`: the lower half is carried along the *injective* map `p.subtype` by
 `TauCeti.mapCompositionSeriesOfInjective` and the upper half along the *surjective* map `p.mkQ` by
 `TauCeti.comapCompositionSeriesOfSurjective`, both of
-`TauCeti/RingTheory/CompositionSeries/Basic.lean`, which preserve every multiplicity.  The two
-resulting series meet at `p` and are glued with `RelSeries.smash`, whose `castAdd`/`natAdd` index
-lemmas split the count of factors isomorphic to `S` into the two halves.
+`TauCeti/RingTheory/CompositionSeries/Basic.lean`; that these transports preserve every
+multiplicity is `TauCeti.compositionMultiplicity_mapCompositionSeriesOfInjective` and
+`TauCeti.compositionMultiplicity_comapCompositionSeriesOfSurjective`, of
+`TauCeti/RingTheory/CompositionSeries/Multiplicity.lean`.  The two resulting series meet at `p` and
+are glued with `RelSeries.smash`, whose `castAdd`/`natAdd` index lemmas split the count of factors
+isomorphic to `S` into the two halves.
 
 ## Main results
 
@@ -36,11 +39,12 @@ lemmas split the count of factors isomorphic to `S` into the two halves.
   to end add.
 * `TauCeti.jordanHolderMultiplicity_eq_submodule_add_quotient`: **additivity**,
   `[M : S] = [p : S] + [M ⧸ p : S]`.
-* `TauCeti.jordanHolderMultiplicity_submodule_le` and
-  `TauCeti.jordanHolderMultiplicity_quotient_le`: a submodule and a quotient each contribute at
-  most the whole module's multiplicity.
 * `TauCeti.jordanHolderMultiplicity_eq_add_of_exact`: the same statement for a short exact sequence
   `0 → A → M → B → 0`.
+* `TauCeti.jordanHolderMultiplicity_le_of_injective` and
+  `TauCeti.jordanHolderMultiplicity_le_of_surjective`: a submodule and a quotient — more generally
+  the source of an injective map into `M` and the target of a surjective map out of `M` — each
+  contribute at most `M`'s multiplicity.
 * `TauCeti.jordanHolderMultiplicity_prod`: `[M × N : S] = [M : S] + [N : S]`.
 
 ## References
@@ -52,8 +56,12 @@ a surjective map, the same `RelSeries.smash` gluing, and the same `map_bot`/`com
 bookkeeping.  The monotonicity and product corollaries below are likewise the multiplicity
 analogues of `Module.length_le_of_injective`, `Module.length_le_of_surjective` and
 `Module.length_prod`.  What is new is that the transports are shown to preserve each factor's
-isomorphism class and not merely the number of factors, in
-`TauCeti/RingTheory/CompositionSeries/Basic.lean`.
+isomorphism class and not merely the number of factors: the identification of the subquotients is
+`TauCeti.mapSubquotientEquivOfInjective` and `TauCeti.comapSubquotientEquivOfSurjective` of
+`TauCeti/Algebra/Module/Submodule/Quotient.lean`, and the resulting factor-by-factor comparison is
+`TauCeti.isCompositionFactorAt_mapCompositionSeriesOfInjective_iff` and its surjective counterpart
+in `TauCeti/RingTheory/CompositionSeries/Multiplicity.lean`;
+`TauCeti/RingTheory/CompositionSeries/Basic.lean` supplies the transports themselves.
 
 The additivity of `[Pᵢ : Sⱼ]` is what makes the Cartan matrix of a finite-dimensional algebra
 computable, in Layer 3 of
@@ -102,21 +110,9 @@ theorem compositionMultiplicity_smash :
     compositionMultiplicity (p.smash q h) S =
       compositionMultiplicity p S + compositionMultiplicity q S := by
   classical
-  have hsplit :
-      (∑ i : Fin (p.length + q.length),
-          if IsCompositionFactorAt (p.smash q h) i S then 1 else 0)
-        = (∑ i : Fin p.length,
-            if IsCompositionFactorAt (p.smash q h) (i.castAdd q.length) S then 1 else 0)
-          + ∑ i : Fin q.length,
-            if IsCompositionFactorAt (p.smash q h) (i.natAdd p.length) S then 1 else 0 :=
-    Fin.sum_univ_add _
   rw [compositionMultiplicity_eq_sum_ite, compositionMultiplicity_eq_sum_ite,
     compositionMultiplicity_eq_sum_ite]
-  exact hsplit.trans (congrArg₂ (· + ·)
-    (Finset.sum_congr rfl fun i _ =>
-      if_congr (isCompositionFactorAt_smash_castAdd_iff p q h i) rfl rfl)
-    (Finset.sum_congr rfl fun i _ =>
-      if_congr (isCompositionFactorAt_smash_natAdd_iff p q h i) rfl rfl))
+  exact (Fin.sum_univ_add _).trans (by simp)
 
 end Smash
 
@@ -146,20 +142,6 @@ theorem jordanHolderMultiplicity_eq_submodule_add_quotient [IsNoetherian R M] [I
     compositionMultiplicity_eq_jordanHolderMultiplicity t htbot httop S,
     compositionMultiplicity_eq_jordanHolderMultiplicity u hubot hutop S]
 
-/-- A submodule contributes at most the whole module's multiplicity. -/
-theorem jordanHolderMultiplicity_submodule_le [IsNoetherian R M] [IsArtinian R M]
-    (p : Submodule R M) :
-    jordanHolderMultiplicity R p S ≤ jordanHolderMultiplicity R M S := by
-  rw [jordanHolderMultiplicity_eq_submodule_add_quotient p]
-  exact Nat.le_add_right _ _
-
-/-- A quotient contributes at most the whole module's multiplicity. -/
-theorem jordanHolderMultiplicity_quotient_le [IsNoetherian R M] [IsArtinian R M]
-    (p : Submodule R M) :
-    jordanHolderMultiplicity R (M ⧸ p) S ≤ jordanHolderMultiplicity R M S := by
-  rw [jordanHolderMultiplicity_eq_submodule_add_quotient p]
-  exact Nat.le_add_left _ _
-
 /-- **Additivity in a short exact sequence** `0 → A → M → B → 0`: the multiplicity of `S` in the
 middle term is the sum of its multiplicities in the two ends.
 
@@ -180,6 +162,24 @@ theorem jordanHolderMultiplicity_eq_add_of_exact [IsNoetherian R M] [IsArtinian 
     ← jordanHolderMultiplicity_eq_of_linearEquiv
       ((Submodule.quotEquivOfEq _ _ (LinearMap.exact_iff.mp hfg).symm).trans
         (g.quotKerEquivOfSurjective hg)) S]
+
+/-- A module that embeds in `M` contributes at most `M`'s multiplicity. -/
+theorem jordanHolderMultiplicity_le_of_injective [IsNoetherian R M] [IsArtinian R M]
+    {A : Type w} [AddCommGroup A] [Module R A] [IsNoetherian R A] [IsArtinian R A]
+    (f : A →ₗ[R] M) (hf : Function.Injective f) :
+    jordanHolderMultiplicity R A S ≤ jordanHolderMultiplicity R M S := by
+  rw [jordanHolderMultiplicity_eq_add_of_exact f (LinearMap.range f).mkQ hf
+    (Submodule.mkQ_surjective _) (LinearMap.exact_map_mkQ_range f)]
+  exact Nat.le_add_right _ _
+
+/-- A quotient of `M` contributes at most `M`'s multiplicity. -/
+theorem jordanHolderMultiplicity_le_of_surjective [IsNoetherian R M] [IsArtinian R M]
+    {B : Type w'} [AddCommGroup B] [Module R B] [IsNoetherian R B] [IsArtinian R B]
+    (g : M →ₗ[R] B) (hg : Function.Surjective g) :
+    jordanHolderMultiplicity R B S ≤ jordanHolderMultiplicity R M S := by
+  rw [jordanHolderMultiplicity_eq_add_of_exact (LinearMap.ker g).subtype g
+    (Submodule.injective_subtype _) hg (LinearMap.exact_subtype_ker_map g)]
+  exact Nat.le_add_left _ _
 
 /-- **Additivity on a binary product**: `[M × N : S] = [M : S] + [N : S]`. -/
 theorem jordanHolderMultiplicity_prod [IsNoetherian R M] [IsArtinian R M] [IsNoetherian R N]

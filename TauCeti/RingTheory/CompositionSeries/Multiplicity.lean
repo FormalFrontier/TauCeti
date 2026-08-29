@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Length
+public import TauCeti.Algebra.Module.Submodule.Quotient
 public import TauCeti.RingTheory.CompositionSeries.Basic
 
 /-!
