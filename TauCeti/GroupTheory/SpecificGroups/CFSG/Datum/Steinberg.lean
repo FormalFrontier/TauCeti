@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.GroupTheory.SpecificGroups.CFSG.DatumFrobenius
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.Datum.Frobenius
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.RootDatumAutomorphism
 public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Basic
 

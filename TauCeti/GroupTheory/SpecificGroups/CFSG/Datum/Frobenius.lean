@@ -25,7 +25,7 @@ exactly as the field-level `TauCeti.ValidLieTypeIndex.frobeniusEquiv` is, and th
 family is carried entirely by whatever the Frobenius shadow is composed with. For the graph-twisted
 families that partner is the root-datum graph automorphism, and the composite is
 `TauCeti.GraphTwistedIndex.datumSteinberg` in
-`TauCeti/GroupTheory/SpecificGroups/CFSG/DatumSteinberg.lean`.
+`TauCeti/GroupTheory/SpecificGroups/CFSG/Datum/Steinberg.lean`.
 
 This is the root-datum layer and not the group layer: nothing here mentions a group scheme, its
 points, or a finite group.
