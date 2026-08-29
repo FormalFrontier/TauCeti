@@ -15,7 +15,7 @@ import TauCeti.Algebra.AlgebraicGroup.Smooth.Product
 /-!
 # Solvability of normal products
 
-Let `I` and `J` cut out smooth solvable closed subgroups of a finite-type affine group, with
+Let `I` and `J` cut out smooth solvable closed subgroups of an affine group, with
 `I` normal. Multiplication is a homomorphism from their conjugation semidirect product into the
 ambient group, and `CommHopfAlgCat.productOfNormal` is its scheme-theoretic image.
 
@@ -59,22 +59,22 @@ solvable geometric points when the first subgroup is normal.
 The conjugation semidirect-product source is smooth and solvable. The canonical coordinate map
 from the image into that source is injective, so the derived-word identity for solvability
 descends to the image. -/
-theorem productOfNormal (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+theorem productOfNormal (H : CommHopfAlgCat.{u} k)
     (I J : HopfIdeal k H) (hI : I.IsNormal)
-    (hIs : smoothCommHopfAlgProperty k (CommHopfAlgCat.quotient H.obj I))
-    (hJs : smoothCommHopfAlgProperty k (CommHopfAlgCat.quotient H.obj J))
+    (hIs : smoothCommHopfAlgProperty k (CommHopfAlgCat.quotient H I))
+    (hJs : smoothCommHopfAlgProperty k (CommHopfAlgCat.quotient H J))
     (hIsolv : geometricallySolvablePointsCommHopfAlgProperty k
-      (CommHopfAlgCat.quotient H.obj I))
+      (CommHopfAlgCat.quotient H I))
     (hJsolv : geometricallySolvablePointsCommHopfAlgProperty k
-      (CommHopfAlgCat.quotient H.obj J)) :
+      (CommHopfAlgCat.quotient H J)) :
     geometricallySolvablePointsCommHopfAlgProperty k
-      (CommHopfAlgCat.productOfNormal H.obj I J hI) := by
-  let f := CommHopfAlgCat.productMapOfNormal H.obj I J hI
+      (CommHopfAlgCat.productOfNormal H I J hI) := by
+  let f := CommHopfAlgCat.productMapOfNormal H I J hI
   apply of_injective_of_smooth (CommHopfAlgCat.imageι f)
     (CommHopfAlgCat.imageι_injective f)
   · exact (smoothCommHopfAlgProperty_iff _).mp
-      (smoothCommHopfAlgProperty.normalSemidirectProduct H.obj I J hI hIs hJs)
-  · exact normalSemidirectProduct k H.obj I J hI hIsolv hJsolv
+      (smoothCommHopfAlgProperty.normalSemidirectProduct H I J hI hIs hJs)
+  · exact normalSemidirectProduct k H I J hI hIsolv hJsolv
 
 end geometricallySolvablePointsCommHopfAlgProperty
 

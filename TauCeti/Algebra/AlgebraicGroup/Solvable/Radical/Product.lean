@@ -89,7 +89,7 @@ theorem geometricallySolvable_productOfNormal
     (hJ : IsSolvableRadicalCandidate H J) :
     geometricallySolvablePointsCommHopfAlgProperty k
       (CommHopfAlgCat.productOfNormal H.obj I J hI.isNormal) := by
-  exact geometricallySolvablePointsCommHopfAlgProperty.productOfNormal H I J hI.isNormal
+  exact geometricallySolvablePointsCommHopfAlgProperty.productOfNormal H.obj I J hI.isNormal
     ((smoothCommHopfAlgProperty_iff _).mpr hI.smooth)
     ((smoothCommHopfAlgProperty_iff _).mpr hJ.smooth)
     hI.geometricallySolvable hJ.geometricallySolvable
