@@ -311,6 +311,25 @@ theorem JointlyDissociated.separatelyDissociated_arrayBlock
   rw [← hfun]
   exact (h.separatelyDissociated_arrayBlockPair he hf hd).map_values measurable_fst
 
+/-! ## The canonical block, along the even and the odd indices -/
+
+/-- **The canonical separately dissociated block of a jointly dissociated array**: read the rows
+along the even indices and the columns along the odd ones. -/
+theorem JointlyDissociated.separatelyDissociated_arrayBlock_evenOdd
+    (h : JointlyDissociated μ X) :
+    SeparatelyDissociated μ (arrayBlock X (fun i => 2 * i) fun j => 2 * j + 1) :=
+  h.separatelyDissociated_arrayBlock (mul_right_injective₀ two_ne_zero)
+    ((add_left_injective 1).comp (mul_right_injective₀ two_ne_zero)) (by
+      simp [Set.disjoint_left])
+
+/-- **The canonical separately dissociated block of pairs of a jointly dissociated array.** -/
+theorem JointlyDissociated.separatelyDissociated_arrayBlockPair_evenOdd
+    (h : JointlyDissociated μ X) :
+    SeparatelyDissociated μ (arrayBlockPair X (fun i => 2 * i) fun j => 2 * j + 1) :=
+  h.separatelyDissociated_arrayBlockPair (mul_right_injective₀ two_ne_zero)
+    ((add_left_injective 1).comp (mul_right_injective₀ two_ne_zero)) (by
+      simp [Set.disjoint_left])
+
 end Stability
 
 section IID
