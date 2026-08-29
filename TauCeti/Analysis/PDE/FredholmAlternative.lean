@@ -122,7 +122,6 @@ theorem isWeakSolutionDirichletMassShift_iff (kappa : ℝ)
   simp only [IsWeakSolutionDirichletMassShift, dirichletForcing_apply_eq_setIntegral]
 
 /-- A zero mass shift recovers the unshifted Dirichlet weak equation. -/
-@[simp]
 theorem isWeakSolutionDirichletMassShift_zero_iff (f : Lp ℝ 2 (mu.restrict Omega))
     (u : W1p0 mu Omega 2) :
     IsWeakSolutionDirichletMassShift a b c 0 f u ↔ IsWeakSolutionDirichlet a b c f u := by
