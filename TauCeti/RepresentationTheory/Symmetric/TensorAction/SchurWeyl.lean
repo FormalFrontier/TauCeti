@@ -21,9 +21,9 @@ One half is already available:
 `TauCeti.mem_span_range_map_const_iff_forall_commute_permTensorAction` says that the commutant of
 the symmetric-group action is the span of the diagonal operators, and it needs only that `d !` is
 invertible. This file records that half as an identity of centralizers
-(`TauCeti.coe_centralizer_range_permTensorActionAlgHom`) and proves the other half, which needs
-semisimplicity: over a field in which `d !` is nonzero, an endomorphism commuting with every
-diagonal operator already lies in the image of the group algebra `k[S_d]`.
+(`TauCeti.coe_centralizer_range_permTensorActionAlgHom_eq_span_range_map_const`) and proves the
+other half, which needs semisimplicity: over a field in which `d !` is nonzero, an endomorphism
+commuting with every diagonal operator already lies in the image of the group algebra `k[S_d]`.
 
 ## The argument
 
@@ -50,11 +50,12 @@ statement and is not proved here. Nothing below is therefore a statement about t
 
 ## Main results
 
-* `TauCeti.commute_permTensorActionAlgHom_of_forall_commute` and
-  `TauCeti.commute_of_mem_span_range_map_const`: commuting with the permutations, respectively
-  with the diagonal operators, propagates to the span each of them generates.
-* `TauCeti.coe_centralizer_range_permTensorActionAlgHom`: the commutant of the symmetric-group
-  image is the span of the diagonal operators.
+* `TauCeti.commute_permTensorActionAlgHom_of_forall_commute`: commuting with every factor
+  permutation propagates to the whole image of the group algebra the permutations span. (In the
+  other direction, commuting with every diagonal operator propagates to their span by Mathlib's
+  `Commute.span_right`.)
+* `TauCeti.coe_centralizer_range_permTensorActionAlgHom_eq_span_range_map_const`: the commutant of
+  the symmetric-group image is the span of the diagonal operators.
 * `TauCeti.centralizer_span_range_map_const_eq_range_permTensorActionAlgHom`: **the commutant of
   the diagonal operators is the symmetric-group image**, the half that needs semisimplicity.
 * `TauCeti.mem_range_permTensorActionAlgHom_iff_forall_commute`: the same statement as a
@@ -94,20 +95,6 @@ theorem commute_permTensorActionAlgHom_of_forall_commute
   | add a b ha hb => rw [map_add]; exact ha.add_right hb
   | smul r a ha => rw [map_smul]; exact ha.smul_right r
 
-/-- An endomorphism of `(Rⁿ)^{⊗d}` commuting with every diagonal operator `f^{⊗d}` commutes with
-every `R`-linear combination of them. -/
-theorem commute_of_mem_span_range_map_const
-    {y z : Module.End R (⨂[R] _ : Fin d, Fin n → R)}
-    (hy : ∀ f : (Fin n → R) →ₗ[R] (Fin n → R), Commute y (map fun _ : Fin d => f))
-    (hz : z ∈ Submodule.span R
-      (Set.range fun f : (Fin n → R) →ₗ[R] (Fin n → R) => map fun _ : Fin d => f)) :
-    Commute y z := by
-  induction hz using Submodule.span_induction with
-  | mem z hz => obtain ⟨f, rfl⟩ := hz; exact hy f
-  | zero => exact Commute.zero_right y
-  | add a b _ _ ha hb => exact ha.add_right hb
-  | smul r a _ ha => exact ha.smul_right r
-
 end CommSemiring
 
 section CommRing
@@ -118,7 +105,8 @@ variable {R : Type*} {n d : ℕ} [CommRing R]
 `TauCeti.mem_span_range_map_const_iff_forall_commute_permTensorAction` read as an identity of
 centralizers rather than as a membership criterion: passing from the permutations to the group
 algebra they span does not change the commutant. -/
-theorem coe_centralizer_range_permTensorActionAlgHom (h : IsUnit (d ! : R)) :
+theorem coe_centralizer_range_permTensorActionAlgHom_eq_span_range_map_const
+    (h : IsUnit (d ! : R)) :
     (Subalgebra.centralizer R
         ((permTensorActionAlgHom R n d).range : Set (Module.End R (⨂[R] _ : Fin d, Fin n → R))) :
         Set (Module.End R (⨂[R] _ : Fin d, Fin n → R))) =
@@ -143,11 +131,11 @@ variable {k : Type*} {n d : ℕ} [Field k] [NeZero (d ! : k)]
 operators `f^{⊗d}` on `(kⁿ)^{⊗d}`, taken over all endomorphisms `f` of `kⁿ`, is exactly the image
 of the group algebra `k[S_d]` acting by permuting the tensor factors.
 
-Together with `TauCeti.coe_centralizer_range_permTensorActionAlgHom`, which computes the commutant
-in the other direction, this says that the symmetric-group image and the span of the diagonal
-operators are each other's commutants. The general linear group acts through the invertible
-`g^{⊗d}`, which are among the `f^{⊗d}`; that they span the same subalgebra, and hence that the
-commutant here is the commutant of the image of `k[GLₙ]`, is not proved here. -/
+Together with `TauCeti.coe_centralizer_range_permTensorActionAlgHom_eq_span_range_map_const`, which
+computes the commutant in the other direction, this says that the symmetric-group image and the
+span of the diagonal operators are each other's commutants. The general linear group acts through
+the invertible `g^{⊗d}`, which are among the `f^{⊗d}`; that they span the same subalgebra, and
+hence that the commutant here is the commutant of the image of `k[GLₙ]`, is not proved here. -/
 @[simp]
 theorem centralizer_span_range_map_const_eq_range_permTensorActionAlgHom :
     Subalgebra.centralizer k
@@ -157,7 +145,8 @@ theorem centralizer_span_range_map_const_eq_range_permTensorActionAlgHom :
   -- Maschke's theorem, for the group `S_d` of order `d !`.
   have : NeZero (Nat.card (Equiv.Perm (Fin d)) : k) := by
     rwa [Nat.card_eq_fintype_card, Fintype.card_perm, Fintype.card_fin]
-  rw [← coe_centralizer_range_permTensorActionAlgHom (isUnit_iff_ne_zero.2 (NeZero.ne _))]
+  rw [← coe_centralizer_range_permTensorActionAlgHom_eq_span_range_map_const
+    (isUnit_iff_ne_zero.2 (NeZero.ne _))]
   exact centralizer_centralizer_range (permTensorActionAlgHom k n d)
 
 /-- **Schur-Weyl duality, as a membership criterion.** An endomorphism of `(kⁿ)^{⊗d}` is the action
@@ -169,8 +158,11 @@ theorem mem_range_permTensorActionAlgHom_iff_forall_commute
       ∀ f : (Fin n → k) →ₗ[k] (Fin n → k), Commute x (map fun _ : Fin d => f) := by
   rw [← centralizer_span_range_map_const_eq_range_permTensorActionAlgHom,
     Subalgebra.mem_centralizer_iff]
-  exact ⟨fun hx f => (hx _ (Submodule.subset_span ⟨f, rfl⟩)).symm,
-    fun hx g hg => (commute_of_mem_span_range_map_const hx hg).symm⟩
+  refine ⟨fun hx f => (hx _ (Submodule.subset_span ⟨f, rfl⟩)).symm, fun hx g hg => ?_⟩
+  -- Commuting with every diagonal operator propagates to their span.
+  refine (Commute.span_right ?_ g hg).symm
+  rintro _ ⟨f, rfl⟩
+  exact hx f
 
 end Field
 

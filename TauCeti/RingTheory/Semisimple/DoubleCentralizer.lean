@@ -52,8 +52,8 @@ implies the other.
 * `TauCeti.algEquivEndEndOfIsSimpleRing`: the finite-dimensional-algebra form, where the finiteness
   hypothesis is supplied by finiteness over a commutative base ring acting compatibly.
 * `TauCeti.centralizer_centralizer_of_isSemisimpleModule`: the **subalgebra form**. A subalgebra
-  `A` of `Module.End K N` over which `N` is semisimple, `N` finite over `K`, is its own double
-  centralizer inside `Module.End K N`.
+  `A` of `Module.End K N` over which `N` is semisimple, `N` finite over `Module.End A N`, is its
+  own double centralizer inside `Module.End K N`.
 * `TauCeti.centralizer_centralizer_range`: the same statement for the image of a semisimple
   algebra, the form a representation supplies. The image, not the algebra itself, is what the
   double centralizer returns, since the representation need not be faithful.
@@ -268,21 +268,23 @@ private theorem restrictScalars_mem_centralizer (g : Module.End A N) :
   exact (g.map_smul ⟨a, ha⟩ m).symm
 
 /-- **The double centralizer theorem inside an endomorphism algebra.** Let `A` be a `K`-subalgebra
-of `Module.End K N` for a finite `K`-module `N`, and suppose `N` is semisimple as an `A`-module.
-Then `A` is its own double centralizer: an endomorphism commuting with everything that commutes
-with `A` already lies in `A`.
+of `Module.End K N`, and suppose `N` is semisimple as an `A`-module and finite over
+`Module.End A N`. Then `A` is its own double centralizer: an endomorphism commuting with everything
+that commutes with `A` already lies in `A`.
 
 The inclusion `A ≤ A''` is formal (`Subalgebra.le_centralizer_centralizer`); the content is the
 reverse one, which is Jacobson density. The centralizer `A'` is the ring of `A`-linear
 endomorphisms of `N`, so an element of `A''` is an `A'`-linear endomorphism, and density writes
-every such endomorphism as the action of an element of `A`. -/
-theorem centralizer_centralizer_of_isSemisimpleModule [Module.Finite K N]
+every such endomorphism as the action of an element of `A`.
+
+Finiteness is over `Module.End A N`, the hypothesis density actually needs; a caller with a finite
+`K`-module `N` gets it from `TauCeti.finite_end_of_smulCommClass`. -/
+theorem centralizer_centralizer_of_isSemisimpleModule [Module.Finite (Module.End A N) N]
     [IsSemisimpleModule A N] :
     Subalgebra.centralizer K
         (Subalgebra.centralizer K (A : Set (Module.End K N)) : Set (Module.End K N)) = A := by
   refine le_antisymm (fun x hx => ?_) (Subalgebra.le_centralizer_centralizer K)
   rw [Subalgebra.mem_centralizer_iff] at hx
-  have hfin : Module.Finite (Module.End A N) N := finite_end_of_smulCommClass (R := A) K
   -- `x` commutes with every `A`-linear endomorphism, so it is `A'`-linear.
   let f : Module.End (Module.End A N) N :=
     { toFun := x
@@ -307,8 +309,9 @@ semisimple `K`-algebra `S` in `Module.End K N`, for a finite `K`-module `N`, is 
 centralizer.
 
 The image is a quotient of `S`, hence semisimple, so `N` is a semisimple module over it and
-`TauCeti.centralizer_centralizer_of_isSemisimpleModule` applies. It is the image and not `S` that
-is recovered: the representation `S → Module.End K N` need not be injective. -/
+`TauCeti.centralizer_centralizer_of_isSemisimpleModule` applies, its finiteness hypothesis coming
+from `TauCeti.finite_end_of_smulCommClass`. It is the image and not `S` that is recovered: the
+representation `S → Module.End K N` need not be injective. -/
 theorem centralizer_centralizer_range [Module.Finite K N] {S : Type*} [Ring S] [Algebra K S]
     [IsSemisimpleRing S] (ρ : S →ₐ[K] Module.End K N) :
     Subalgebra.centralizer K
@@ -318,6 +321,7 @@ theorem centralizer_centralizer_range [Module.Finite K N] {S : Type*} [Ring S] [
     RingHom.isSemisimpleRing_of_surjective ρ.rangeRestrict.toRingHom
       (AlgHom.rangeRestrict_surjective _)
   have : IsSemisimpleModule ρ.range N := IsSemisimpleRing.isSemisimpleModule
+  have : Module.Finite (Module.End ρ.range N) N := finite_end_of_smulCommClass (R := ρ.range) K
   exact centralizer_centralizer_of_isSemisimpleModule _
 
 end EndSubalgebra
