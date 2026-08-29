@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.GroupTheory.SpecificGroups.CFSG.SuzukiRee
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.SuzukiRee.Basic
 public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Special
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 public import TauCeti.LinearAlgebra.RootSystem.SpecialNodePermutations
