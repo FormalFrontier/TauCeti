@@ -256,15 +256,8 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteS
 `γ' = -∇f(γ)`.  Regularity and uniqueness assumptions used to construct the flow remain
 separate; this predicate records precisely the differential equation needed by its dynamical
 consequences. -/
-def IsNegativeGradient (φ : _root_.Flow ℝ E) (f : E → ℝ) : Prop :=
+@[expose] def IsNegativeGradient (φ : _root_.Flow ℝ E) (f : E → ℝ) : Prop :=
   ∀ x, IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y)
-
-/-- A flow is a negative gradient flow exactly when each of its orbit curves solves the
-negative gradient equation. -/
-theorem isNegativeGradient_iff :
-    IsNegativeGradient φ f ↔
-      ∀ x, IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y) :=
-  Iff.rfl
 
 /-- Each orbit curve of a negative gradient flow solves the negative gradient equation. -/
 theorem IsNegativeGradient.isIntegralCurve (hφ : IsNegativeGradient φ f) (x : E) :
