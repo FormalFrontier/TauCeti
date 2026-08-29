@@ -35,14 +35,20 @@ is the entrywise action of a ring endomorphism of that same coefficient ring.
 
 The square relation has an arithmetic reading. Every point fixed by the twisted map is fixed by
 `Frob_(q ^ 2)`, so its matrix entries lie in the subring of `A` fixed by the `q ^ 2`-power
-Frobenius: for `A` an algebraic closure of `ZMod p`, the field of `q ^ 2` elements. That is the
-usual statement that the twisted family of type `A` at parameter `q` has a matrix realization over
-`𝔽_{q ^ 2}` while its Frobenius parameter is `q`. Only that containment is proved; no reverse
-containment is claimed, and nothing here asserts that either fixed group is finite, is perfect, or
-is simple.
+Frobenius. That subring is a field of `q ^ 2` elements only under hypotheses none of the statements
+below assume: `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`. Under those hypotheses,
+and for `2 ≤ r`, it is the usual statement that the twisted family of type `A` at parameter `q` has
+a matrix realization over `𝔽_{q ^ 2}` while its Frobenius parameter is `q`. At the other permitted
+parameters the reading fails; at `k = 0` the exponent `q ^ 2` is `1` and the fixed subring is all
+of `A`. Only the containment is proved; no reverse containment is claimed, and nothing here
+asserts that either fixed group is finite, is perfect, or is simple.
 
-The value ring is taken in `Type`, matching `TauCeti.SlStd.graphAutomorphismPoints`, which is
-descended from an automorphism of the coordinate Hopf algebra of `GL_{r+1}` over `ℤ`.
+The value ring is taken in `Type`, matching `TauCeti.SlStd.graphAutomorphismPoints`. That is
+inherited rather than chosen here: the coordinate automorphism the graph automorphism descends from
+is recovered through the full faithfulness of the points functor on `CommAlgCat.{0} ℤ`, so
+`TauCeti.GeneralLinear.pointsMulEquiv_comp_typeAGraphCoordinateIso` and every point-level
+consequence of it are stated at universe `0`. `TauCeti.SlStd.frobenius`, which is
+universe-polymorphic, is specialized to that universe here.
 
 ## Main definitions
 
@@ -57,8 +63,9 @@ descended from an automorphism of the coordinate Hopf algebra of `GL_{r+1}` over
   `TauCeti.SlStd.twistedFrobenius_weightTorusPoints`: the equations on the pinned generating root
   subgroups and split torus, which reverse the Bourbaki numbering and raise the parameter to its
   `p ^ k`-th power.
-* `TauCeti.SlStd.twistedFrobenius_comp_self`: the square of the twisted map is the
-  `p ^ (2 * k)`-power Frobenius.
+* `TauCeti.SlStd.twistedFrobenius_twistedFrobenius` and
+  `TauCeti.SlStd.twistedFrobenius_comp_self`: the square of the twisted map is the
+  `p ^ (2 * k)`-power Frobenius, pointwise and as an identity of endomorphisms.
 * `TauCeti.SlStd.fixedSubgroup_twistedFrobenius_le_fixedSubgroup_frobenius` and
   `TauCeti.SlStd.map_subtype_fixedSubgroup_twistedFrobenius_le`: its fixed points lie among the
   points over the `p ^ (2 * k)`-power Frobenius-fixed subring.
@@ -107,9 +114,10 @@ theorem graphAutomorphismPoints_comp_frobenius :
 /-- **The graph-twisted `p ^ k`-power Frobenius of the full-weight type-`A_r` carrier**, the
 composite `γ ∘ Frob_q` of the pinned graph automorphism with the Frobenius endomorphism.
 
-For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is the Steinberg map
-intended for a future construction of the twisted family `²A_r(p ^ k)`. Nothing here asserts that
-its fixed group is finite or simple. -/
+For `2 ≤ r`, `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is the Steinberg
+map intended for a future construction of the twisted family `²A_r(p ^ k)`; at `r ≤ 1` the type-`A`
+diagram has no nontrivial symmetry and there is no such family. None of those hypotheses are
+assumed here, and nothing here asserts that the fixed group is finite or simple. -/
 def twistedFrobenius : points r A →* points r A :=
   (graphAutomorphismPoints r A).toMonoidHom.comp (frobenius r p k A)
 
@@ -150,27 +158,37 @@ theorem twistedFrobenius_weightTorusPoints (s : Fin r → Aˣ) :
 
 /-! ## The square relation -/
 
-/-- **The square of the twisted Frobenius is the `p ^ (2 * k)`-power Frobenius.** This is what makes
-the twisted map a Steinberg endomorphism: a power of it is a Frobenius. -/
+/-- **Applying the twisted Frobenius twice raises every matrix entry to its `p ^ (2 * k)`-th
+power.** This is what makes the twisted map a Steinberg endomorphism: a power of it is a
+Frobenius. -/
+@[simp]
+theorem twistedFrobenius_twistedFrobenius (g : points r A) :
+    twistedFrobenius r p k A (twistedFrobenius r p k A g) = frobenius r p (2 * k) A g := by
+  rw [twistedFrobenius_apply, twistedFrobenius_apply, ← graphAutomorphismPoints_frobenius,
+    graphAutomorphismPoints_graphAutomorphismPoints, two_mul, frobenius_add, MonoidHom.comp_apply]
+
+/-- The square of the twisted Frobenius is the `p ^ (2 * k)`-power Frobenius, as an identity of
+endomorphisms. -/
 theorem twistedFrobenius_comp_self :
-    (twistedFrobenius r p k A).comp (twistedFrobenius r p k A) = frobenius r p (2 * k) A := by
-  refine MonoidHom.ext fun g => ?_
-  rw [MonoidHom.comp_apply, twistedFrobenius_apply, twistedFrobenius_apply,
-    ← graphAutomorphismPoints_frobenius, graphAutomorphismPoints_graphAutomorphismPoints,
-    two_mul, frobenius_add, MonoidHom.comp_apply]
+    (twistedFrobenius r p k A).comp (twistedFrobenius r p k A) = frobenius r p (2 * k) A :=
+  MonoidHom.ext (twistedFrobenius_twistedFrobenius r p k A)
 
 /-- A point fixed by the twisted Frobenius is fixed by the `p ^ (2 * k)`-power Frobenius. No
 reverse containment is claimed. -/
 theorem fixedSubgroup_twistedFrobenius_le_fixedSubgroup_frobenius :
     fixedSubgroup (twistedFrobenius r p k A) ≤ fixedSubgroup (frobenius r p (2 * k) A) := by
-  intro g hg
-  rw [mem_fixedSubgroup] at hg ⊢
-  rw [← twistedFrobenius_comp_self, MonoidHom.comp_apply, hg, hg]
+  have hsq : (show Monoid.End _ from twistedFrobenius r p k A) ^ 2 =
+      frobenius r p (2 * k) A :=
+    (pow_two (show Monoid.End _ from twistedFrobenius r p k A)).trans
+      (twistedFrobenius_comp_self r p k A)
+  rw [← hsq]
+  exact TauCeti.fixedSubgroup_le_fixedSubgroup_pow _ 2
 
 /-- **Every matrix entry of a point fixed by the twisted Frobenius lies in the subring fixed by the
-`p ^ (2 * k)`-power Frobenius.** Over an algebraic closure of `ZMod p` that subring is the field of
-`p ^ (2 * k)` elements, so the twisted family at Frobenius parameter `q = p ^ k` is realized by
-matrices over `𝔽_{q ^ 2}`. -/
+`p ^ (2 * k)`-power Frobenius.** For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`
+that subring is the field of `p ^ (2 * k)` elements, so the twisted family at Frobenius parameter
+`q = p ^ k` is realized by matrices over `𝔽_{q ^ 2}`. Without those hypotheses the subring need not
+be a finite field; at `k = 0` it is all of `A`. -/
 theorem mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self {g : points r A}
     (hg : twistedFrobenius r p k A g = g) (i j : Fin (r + 1)) :
     ((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
