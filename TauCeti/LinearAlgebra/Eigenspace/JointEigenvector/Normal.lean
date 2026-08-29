@@ -44,8 +44,6 @@ noncomputable section
 
 namespace TauCeti
 
-namespace MonoidHom
-
 variable {G A : Type*} [Group G] [Monoid A]
 
 /-- Precomposition by inverse conjugation gives the action of an ambient group element on
@@ -53,61 +51,67 @@ characters of a normal subgroup. Thus `(conjNormal g χ) n = χ (g⁻¹ * n * g)
 
 The inverse in the definition is the convention for which a representation operator `ρ g`
 sends the `χ`-weight space to the `conjNormal g χ`-weight space. -/
-def conjNormal {N : Subgroup G} [N.Normal] (g : G) (χ : N →* A) : N →* A :=
+def _root_.MonoidHom.conjNormal {N : Subgroup G} [N.Normal]
+    (g : G) (χ : N →* A) : N →* A :=
   χ.comp (MulAut.conjNormal g⁻¹).toMonoidHom
 
 @[simp]
-theorem conjNormal_apply {N : Subgroup G} [N.Normal] (g : G) (χ : N →* A) (n : N) :
-    conjNormal g χ n = χ ((MulAut.conjNormal g).symm n) := by
+theorem _root_.MonoidHom.conjNormal_apply {N : Subgroup G} [N.Normal] (g : G)
+    (χ : N →* A) (n : N) :
+    MonoidHom.conjNormal g χ n = χ ((MulAut.conjNormal g).symm n) := by
   rfl
 
 @[simp]
-theorem conjNormal_one {N : Subgroup G} [N.Normal] (χ : N →* A) :
-    conjNormal 1 χ = χ := by
+theorem _root_.MonoidHom.conjNormal_one {N : Subgroup G} [N.Normal] (χ : N →* A) :
+    MonoidHom.conjNormal 1 χ = χ := by
   ext n
-  simp [conjNormal]
+  simp [MonoidHom.conjNormal]
 
 /-- Conjugating characters is a left action: `g₁ * g₂` first acts by `g₂`, then by `g₁`. -/
-theorem conjNormal_mul {N : Subgroup G} [N.Normal] (g₁ g₂ : G) (χ : N →* A) :
-    conjNormal (g₁ * g₂) χ = conjNormal g₁ (conjNormal g₂ χ) := by
+theorem _root_.MonoidHom.conjNormal_mul {N : Subgroup G} [N.Normal]
+    (g₁ g₂ : G) (χ : N →* A) :
+    MonoidHom.conjNormal (g₁ * g₂) χ =
+      MonoidHom.conjNormal g₁ (MonoidHom.conjNormal g₂ χ) := by
   ext n
-  simp only [conjNormal_apply]
+  simp only [MonoidHom.conjNormal_apply]
   apply congrArg χ
   apply Subtype.ext
   simp only [MulAut.conjNormal_symm_apply]
   group
 
 @[simp]
-theorem conjNormal_inv_apply_conjNormal {N : Subgroup G} [N.Normal] (g : G) (χ : N →* A) :
-    conjNormal g⁻¹ (conjNormal g χ) = χ := by
-  simp only [← conjNormal_mul, inv_mul_cancel, conjNormal_one]
+theorem _root_.MonoidHom.conjNormal_inv_apply_conjNormal {N : Subgroup G} [N.Normal]
+    (g : G) (χ : N →* A) :
+    MonoidHom.conjNormal g⁻¹ (MonoidHom.conjNormal g χ) = χ := by
+  simp only [← MonoidHom.conjNormal_mul, inv_mul_cancel, MonoidHom.conjNormal_one]
 
 @[simp]
-theorem conjNormal_apply_inv_conjNormal {N : Subgroup G} [N.Normal] (g : G) (χ : N →* A) :
-    conjNormal g (conjNormal g⁻¹ χ) = χ := by
-  simp only [← conjNormal_mul, mul_inv_cancel, conjNormal_one]
+theorem _root_.MonoidHom.conjNormal_apply_inv_conjNormal {N : Subgroup G} [N.Normal]
+    (g : G) (χ : N →* A) :
+    MonoidHom.conjNormal g (MonoidHom.conjNormal g⁻¹ χ) = χ := by
+  simp only [← MonoidHom.conjNormal_mul, mul_inv_cancel, MonoidHom.conjNormal_one]
 
 /-- Conjugation by `g` is an equivalence of the character set of a normal subgroup, with
 inverse given by conjugation by `g⁻¹`. -/
-def conjNormalEquiv (N : Subgroup G) [N.Normal] (A : Type*) [Monoid A] (g : G) :
+def _root_.MonoidHom.conjNormalEquiv (N : Subgroup G) [N.Normal]
+    (A : Type*) [Monoid A] (g : G) :
     (N →* A) ≃ (N →* A) where
-  toFun := conjNormal g
-  invFun := conjNormal g⁻¹
-  left_inv := conjNormal_inv_apply_conjNormal g
-  right_inv := conjNormal_apply_inv_conjNormal g
+  toFun := MonoidHom.conjNormal g
+  invFun := MonoidHom.conjNormal g⁻¹
+  left_inv := MonoidHom.conjNormal_inv_apply_conjNormal g
+  right_inv := MonoidHom.conjNormal_apply_inv_conjNormal g
 
 @[simp]
-theorem conjNormalEquiv_apply {N : Subgroup G} [N.Normal] (g : G) (χ : N →* A) :
-    conjNormalEquiv N A g χ = conjNormal g χ :=
-  by simp [conjNormalEquiv]
+theorem _root_.MonoidHom.conjNormalEquiv_apply {N : Subgroup G} [N.Normal]
+    (g : G) (χ : N →* A) :
+    MonoidHom.conjNormalEquiv N A g χ = MonoidHom.conjNormal g χ :=
+  by simp [MonoidHom.conjNormalEquiv]
 
 @[simp]
-theorem conjNormalEquiv_symm {N : Subgroup G} [N.Normal] (g : G) :
-    (conjNormalEquiv N A g).symm = conjNormalEquiv N A g⁻¹ := by
+theorem _root_.MonoidHom.conjNormalEquiv_symm {N : Subgroup G} [N.Normal] (g : G) :
+    (MonoidHom.conjNormalEquiv N A g).symm = MonoidHom.conjNormalEquiv N A g⁻¹ := by
   ext χ n
-  simp [conjNormalEquiv]
-
-end MonoidHom
+  simp [MonoidHom.conjNormalEquiv]
 
 variable {G K V : Type*} [Group G] [CommRing K] [AddCommGroup V] [Module K V]
 
