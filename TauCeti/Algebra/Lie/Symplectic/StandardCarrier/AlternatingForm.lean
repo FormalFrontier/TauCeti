@@ -156,28 +156,20 @@ private theorem eq_zero_of_map_intCast {N : ℕ} {P : Matrix (Fin N) (Fin N) ℤ
   have hrc := congrFun (congrFun h r) c
   simpa using hrc
 
-private theorem JFin_apply {m : ℕ} {R : Type*} [CommRing R] (r c : Fin (m + m)) :
-    TauCeti.JFin m R r c =
-      Matrix.J (Fin m) R (finSumFinEquiv.symm r) (finSumFinEquiv.symm c) := by
-  rw [← TauCeti.JFin_submatrix m (R := R), Matrix.submatrix_apply, Equiv.apply_symm_apply,
-    Equiv.apply_symm_apply]
-
-private theorem JFin_eq_submatrix (m : ℕ) (R : Type*) [CommRing R] :
-    TauCeti.JFin m R =
-      (Matrix.J (Fin m) R).submatrix finSumFinEquiv.symm finSumFinEquiv.symm := by
-  ext r c
-  rw [Matrix.submatrix_apply, JFin_apply]
-
 private theorem rootIntMatrix_mul_JFin_add_eq_zero (k : Fin (n + 1) ⊕ Fin (n + 1)) :
     rootIntMatrix n k * TauCeti.JFin (n + 1) ℤ +
       TauCeti.JFin (n + 1) ℤ * (rootIntMatrix n k)ᵀ = 0 := by
   have key := mul_J_add_J_mul_transpose_eq_zero_of_mem_sp (rootGenerator n k).2
+  have hJ : TauCeti.JFin (n + 1) ℚ =
+      (Matrix.J (Fin (n + 1)) ℚ).submatrix finSumFinEquiv.symm finSumFinEquiv.symm := by
+    rw [← TauCeti.JFin_submatrix (n + 1) (R := ℚ), Matrix.submatrix_submatrix]
+    simp
   refine eq_zero_of_map_intCast ?_
   rw [← RingHom.mapMatrix_apply, map_add, map_mul, map_mul]
   simp only [RingHom.mapMatrix_apply]
   rw [TauCeti.JFin_map (n + 1) (Int.castRingHom ℚ)]
   rw [show ((Int.castRingHom ℚ : ℤ →+* ℚ) : ℤ → ℚ) = (Int.cast : ℤ → ℚ) from rfl]
-  rw [Matrix.transpose_map, map_rootIntMatrix, JFin_eq_submatrix, Matrix.transpose_submatrix,
+  rw [Matrix.transpose_map, map_rootIntMatrix, hJ, Matrix.transpose_submatrix,
     Matrix.submatrix_mul_equiv, Matrix.submatrix_mul_equiv]
   ext r c
   have h := congrFun (congrFun key (finSumFinEquiv.symm r)) (finSumFinEquiv.symm c)
@@ -335,7 +327,11 @@ private theorem torusCoordinateMap_symplectic :
   intro r c
   obtain ⟨a, rfl⟩ : ∃ a, finSumFinEquiv a = r := ⟨finSumFinEquiv.symm r, by simp⟩
   obtain ⟨b, rfl⟩ : ∃ b, finSumFinEquiv b = c := ⟨finSumFinEquiv.symm c, by simp⟩
-  rw [JFin_apply, Equiv.symm_apply_apply, Equiv.symm_apply_apply]
+  have hJ := congrFun (congrFun (TauCeti.JFin_submatrix (n + 1)
+    (R := (DiagonalizableGroup.coordinateRing ℤ
+      (SplitTorus.characterGroup (Fin (n + 1)))).obj)) a) b
+  rw [Matrix.submatrix_apply] at hJ
+  rw [hJ]
   cases a with
   | inl x =>
     cases b with
